@@ -1,3 +1,8 @@
+RISCV Sail Model
+================
+
+This repository contains a model of the RISCV architecture written in [Sail](https://www.cl.cam.ac.uk/~pes20/sail/). It used to be contained in the [Sail repository](https://github.com/rems-project/sail).
+
 Booting Linux with the C backend:
 ---------------------------------
 
