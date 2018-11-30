@@ -5,6 +5,9 @@ This repository contains a model of the RISCV architecture written in
 [Sail](https://www.cl.cam.ac.uk/~pes20/sail/). It used to be contained
 in the [Sail repository](https://github.com/rems-project/sail).
 
+It currently implements enough of RV64IMAC to boot a conventional OS
+with a terminal output device.  Work on a 32-bit model is ongoing.
+
 
 Building the model:
 -------------------
