@@ -40,9 +40,8 @@ Booting Linux with the OCaml backend:
 
 The OCaml model only needs the ELF-version of the BBL, since it can generate its
 own DTB.
-
+```
 $ ./platform bbl > execution-trace.log 2> console.log
-
-  Some
-information on additional configuration options is available from
+```
+Some information on additional configuration options is available from
 ```./platform -h```.
