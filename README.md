@@ -102,3 +102,15 @@ spike --dump-dts . | dtc > spike.dtb
 
 (The '.' above is to workaround a minor Spike bug and may not be
 needed in future Spike versions.)
+
+Caveats for OS boot
+-------------------
+
+- Some OS toolchains generate obsolete LR/SC instructions with now
+  illegal combinations of `.aq` and `.rl` flags.  You can work-around
+  this by changing `riscv_mem.sail` to accept these flags.
+
+- One needs to manually ensure that the DTB used for the C model
+  accurately describes the physical memory map implemented in the C
+  platform.  This will not be needed once the C model can generate its
+  own DTB.
