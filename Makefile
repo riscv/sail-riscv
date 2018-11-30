@@ -148,8 +148,8 @@ riscv.vo: riscv_types.vo riscv_extras.vo
 riscv_duopod.vo: riscv_duopod_types.vo riscv_extras.vo
 
 # we exclude prelude.sail here, most code there should move to sail lib
-LOC_FILES:=$(SAIL_SRCS) main.sail
-include $(SAIL_DIR)/etc/loc.mk
+#LOC_FILES:=$(SAIL_SRCS) main.sail
+#include $(SAIL_DIR)/etc/loc.mk
 
 clean:
 	-rm -rf riscv _sbuild
