@@ -73,8 +73,8 @@ Booting Linux with the C backend
 The C model needs an ELF-version of the BBL (Berkeley-Boot-Loader)
 that contains the Linux kernel as an embedded payload.  It also needs
 a DTB (device-tree blob) file describing the platform (say in the file
-`spike.dtb`).  Once those are available, the model should be run
-as:
+`spike.dtb`).  Once those are available (see below for suggestions),
+the model should be run as:
 
 ```
 $ ./riscv_sim -t console.log -b spike.dtb bbl > execution-trace.log 2>&1 &
@@ -91,8 +91,8 @@ own DTB.
 $ ./platform bbl > execution-trace.log 2> console.log
 ```
 
-Generating Linux binaries
--------------------------
+Generating input files for Linux boot
+-------------------------------------
 
 One could directly build Linux and the toolchain using
 `https://github.com/sifive/freedom-u-sdk`.  The built `bbl`
