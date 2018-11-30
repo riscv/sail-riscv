@@ -474,6 +474,7 @@ void rvfi_send_trace(void) {
     fprintf(stderr, "Writing RVFI DII trace failed: %s", strerror(errno));
     exit(1);
   }
+  KILL(lbits)(&packet);
 }
 #endif
 
@@ -520,6 +521,7 @@ void run_sail(void)
       stepped = zrvfi_step(sail_step);
       if (have_exception) goto step_exception;
       flush_logs();
+      KILL(sail_int)(&sail_step);
       if (stepped) {
         need_instr = true;
         rvfi_send_trace();
