@@ -53,7 +53,9 @@ Generating Linux binaries:
 
 One could directly build Linux and the toolchain using
 ```https://github.com/sifive/freedom-u-sdk```.  The built ```bbl```
-will be available in ```./work/riscv-pk/bbl```.
+will be available in ```./work/riscv-pk/bbl```.  You will need to configure
+a kernel that can be booted on Spike; in particular, it should be
+configured to use the HTIF console.
 
 The DTB can be generated using Spike and the DeviceTree compiler
 ```dtc``` as:
