@@ -496,7 +496,16 @@ void run_sail(void)
     if (rvfi_dii) {
       if (need_instr) {
         mach_bits instr_bits;
-        if (read(rvfi_dii_sock, &instr_bits, sizeof(instr_bits)) == -1) {
+        int res = read(rvfi_dii_sock, &instr_bits, sizeof(instr_bits));
+        if (res == 0) {
+          rvfi_dii = false;
+          return;
+        }
+        if (res < sizeof(instr_bits)) {
+          fprintf(stderr, "Reading RVFI DII command failed: insufficient input");
+          exit(1);
+        }
+        if (res == -1) {
           fprintf(stderr, "Reading RVFI DII command failed: %s", strerror(errno));
           exit(1);
         }
@@ -670,10 +679,9 @@ int main(int argc, char **argv)
 #ifndef RVFI_DII
   } while (0);
 #else
+    model_fini();
     if (rvfi_dii) {
-      /* Reset for next test; currently we only quit when the connection breaks
-         and we crash due to SIGPIPE. */
-      model_fini();
+      /* Reset for next test */
       init_sail(entry);
     }
   } while (rvfi_dii);
