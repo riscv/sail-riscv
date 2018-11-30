@@ -10,8 +10,8 @@ with a terminal output device.  Work on a 32-bit model is ongoing.
 The model specifies assembly language formats of the instructions, and
 implements the corresponding encoders and decoders.
 
-A tour of the specification
----------------------------
+An outline of the specification
+-------------------------------
 
 The model contains the following Sail modules:
 
@@ -38,7 +38,7 @@ The model contains the following Sail modules:
 Simulators
 ----------
 
-The files in OCaml and C simulators implement ELF-loading and the
+The files in the OCaml and C simulators implement ELF-loading and the
 platform devices, define the physical memory map, and use command-line
 options to select implementation-specific ISA choices.
 
@@ -51,9 +51,21 @@ your environment pointing to its top-level directory.
 ```
 $ make
 ```
-will build the OCaml simulator in ```platform```, the C simulator in
-```riscv_sim```, and the Isabelle model in ```Riscv.thy```, and the Coq
-model in ```riscv.v```.
+will build the OCaml simulator in `platform`, the C simulator in
+`riscv_sim`, the Isabelle model in `Riscv.thy`, and the Coq
+model in `riscv.v`.
+
+Executing test binaries
+-----------------------
+
+The C and OCaml simulators can be used to execute small test RV64 binaries.
+
+```
+$ ./platform  <elf-file>
+$ ./riscv_sim <elf-file>
+```
+Some information on additional configuration options for each simulator is available
+from `./platform -h` and `./riscv_sim -h`.
 
 Booting Linux with the C backend
 --------------------------------
@@ -61,17 +73,14 @@ Booting Linux with the C backend
 The C model needs an ELF-version of the BBL (Berkeley-Boot-Loader)
 that contains the Linux kernel as an embedded payload.  It also needs
 a DTB (device-tree blob) file describing the platform (say in the file
-```spike.dtb```).  Once those are available, the model should be run
+`spike.dtb`).  Once those are available, the model should be run
 as:
 
 ```
 $ ./riscv_sim -t console.log -b spike.dtb bbl > execution-trace.log 2>&1 &
 $ tail -f console.log
 ```
-
-The ```console.log``` file contains the console boot messages.  Some
-information on additional configuration options is available from
-```./riscv_sim -h```.
+The `console.log` file contains the console boot messages.
 
 Booting Linux with the OCaml backend
 ------------------------------------
@@ -81,20 +90,18 @@ own DTB.
 ```
 $ ./platform bbl > execution-trace.log 2> console.log
 ```
-Some information on additional configuration options is available from
-```./platform -h```.
 
 Generating Linux binaries
 -------------------------
 
 One could directly build Linux and the toolchain using
-```https://github.com/sifive/freedom-u-sdk```.  The built ```bbl```
-will be available in ```./work/riscv-pk/bbl```.  You will need to configure
+`https://github.com/sifive/freedom-u-sdk`.  The built `bbl`
+will be available in `./work/riscv-pk/bbl`.  You will need to configure
 a kernel that can be booted on Spike; in particular, it should be
 configured to use the HTIF console.
 
 The DTB can be generated using Spike and the DeviceTree compiler
-```dtc``` as:
+`dtc` as:
 
 ```
 spike --dump-dts . | dtc > spike.dtb
