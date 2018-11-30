@@ -49,7 +49,9 @@ C_LIBS  += -L $(TV_SPIKE_DIR) -ltv_spike -Wl,-rpath=$(TV_SPIKE_DIR)
 C_LIBS  += -L $(RISCV)/lib -lfesvr -lriscv -Wl,-rpath=$(RISCV)/lib
 endif
 
-all: platform Riscv.thy
+all: platform riscv_sim riscv_isa riscv_coq
+
+.PHONY: all riscv_coq riscv_isa
 
 check: $(SAIL_SRCS) main.sail Makefile
 	$(SAIL) $(SAIL_FLAGS) $(SAIL_SRCS) main.sail
@@ -113,7 +115,9 @@ Riscv_duopod.thy: riscv_duopod.lem riscv_extras.lem
 
 riscv_duopod: riscv_duopod_ocaml Riscv_duopod.thy
 
-Riscv.thy: riscv.lem riscv_extras.lem
+riscv_isa: Riscv.thy
+
+Riscv.thy: riscv.lem riscv_extras.lem Makefile
 	lem -isa -outdir . -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
 		riscv_extras.lem \
 		riscv_types.lem \
@@ -138,7 +142,9 @@ riscvTheory.uo riscvTheory.ui: riscvScript.sml
 
 COQ_LIBS = -R $(BBV_DIR)/theories bbv -R $(SAIL_LIB_DIR)/coq Sail
 
-riscv.v riscv_types.v: $(SAIL_SRCS)
+riscv_coq: riscv.v riscv_types.v
+
+riscv.v riscv_types.v: $(SAIL_SRCS) Makefile
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -o riscv -coq_lib riscv_extras $(SAIL_SRCS)
 riscv_duopod.v riscv_duopod_types.v:  prelude.sail riscv_duopod.sail
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -o riscv_duopod -coq_lib riscv_extras $^
