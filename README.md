@@ -22,10 +22,12 @@ model in ```riscv.v```.
 Booting Linux with the C backend:
 ---------------------------------
 
-The C model needs an ELF-version of the BBL (Berkeley-Boot-Loader) that contains
-the Linux kernel as an embedded payload.  It also needs a DTB (device-tree blob)
-file describing the platform.  Once those are available, the model should be run
+The C model needs an ELF-version of the BBL (Berkeley-Boot-Loader)
+that contains the Linux kernel as an embedded payload.  It also needs
+a DTB (device-tree blob) file describing the platform (say in the file
+```spike.dtb```).  Once those are available, the model should be run
 as:
+
 ```
 $ ./riscv_sim -t console.log -b spike.dtb bbl > execution-trace.log 2>&1 &
 $ tail -f console.log
@@ -45,3 +47,20 @@ $ ./platform bbl > execution-trace.log 2> console.log
 ```
 Some information on additional configuration options is available from
 ```./platform -h```.
+
+Generating Linux binaries:
+--------------------------
+
+One could directly build Linux and the toolchain using
+```https://github.com/sifive/freedom-u-sdk```.  The built ```bbl```
+will be available in ```./work/riscv-pk/bbl```.
+
+The DTB can be generated using Spike and the DeviceTree compiler
+```dtc``` as:
+
+```
+spike --dump-dts . | dtc > spike.dtb
+```
+
+(The '.' above is to workaround a minor Spike bug and may not be
+needed in future Spike versions.)
