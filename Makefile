@@ -95,7 +95,7 @@ riscv_c: riscv.c $(C_INCS) $(C_SRCS) Makefile
 	gcc $(C_WARNINGS) $(C_FLAGS) riscv.c $(C_SRCS) $(SAIL_LIB_DIR)/*.c -lgmp -lz -I $(SAIL_LIB_DIR) -o riscv_c
 
 riscv_model.c: $(SAIL_SRCS) main.sail Makefile
-	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 - -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) main.sail 1> $@
+	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) main.sail 1> $@
 
 riscv_sim: riscv_model.c riscv_sim.c $(C_INCS) $(C_SRCS) $(CPP_SRCS) Makefile
 	gcc -g $(C_WARNINGS) $(C_FLAGS) riscv_model.c riscv_sim.c $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
