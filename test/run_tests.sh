@@ -67,6 +67,8 @@ for test in $DIR/tests/*.elf; do
     fi
 done
 
+finish_suite "RISCV OCaml tests"
+
 if make riscv_sim;
 then
     green "Building RISCV specification to C" "ok"
@@ -83,7 +85,7 @@ for test in $DIR/tests/*.elf; do
     fi
 done
 
-finish_suite "RISCV tests"
+finish_suite "RISCV C tests"
 
 printf "</testsuites>\n" >> $DIR/tests.xml
 
