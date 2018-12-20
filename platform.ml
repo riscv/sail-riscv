@@ -128,6 +128,8 @@ let insns_per_tick () = Big_int.of_int P.insns_per_tick
 
 (* load reservation *)
 
+let speculate_conditional () = true
+
 let reservation = ref "none"  (* shouldn't match any valid address *)
 
 let load_reservation addr =

@@ -42,6 +42,9 @@ unit load_reservation(mach_bits addr)
   return UNIT;
 }
 
+bool speculate_conditional(unit u)
+{ return true; }
+
 bool match_reservation(mach_bits addr)
 { return reservation_valid && reservation == addr; }
 

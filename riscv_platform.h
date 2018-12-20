@@ -15,6 +15,7 @@ mach_bits plat_rom_size(unit);
 mach_bits plat_clint_base(unit);
 mach_bits plat_clint_size(unit);
 
+bool speculate_conditional(unit);
 unit load_reservation(mach_bits);
 bool match_reservation(mach_bits);
 unit cancel_reservation(unit);

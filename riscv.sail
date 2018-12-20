@@ -852,57 +852,57 @@ mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
 function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
-  /* RMEM FIXME:  This definition differs from the Sail1 version:
-   * rs1 is read *before* speculate_conditional_success
-   * (called via match_reservation), partly due to the current api of
-   * match_reservation.  Reverting back to the weaker Sail1 version
-   * will require changes to the API for the ghost reservation state.
-   */
-  vaddr : xlenbits = X(rs1);
-  let aligned : bool =
-    /* BYTE and HALF would only occur due to invalid decodes, but it doesn't hurt
-     * to treat them as valid here; otherwise we'd need to throw an internal_error.
-     * May need to revisit for latex output.
-     */
-    match width {
-      BYTE   => true,
-      HALF   => vaddr[0]    == 0b0,
-      WORD   => vaddr[1..0] == 0b00,
-      DOUBLE => vaddr[2..0] == 0b000
-    } in
-  if (~ (aligned))
-  then { handle_mem_exception(vaddr, E_SAMO_Addr_Align); false }
-  else {
-    if   match_reservation(vaddr) == false
-    then { X(rd) = EXTZ(0b1); true }
+  if speculate_conditional () then {
+    /* normal non-rmem case */
+    vaddr : xlenbits = X(rs1);
+    let aligned : bool =
+      /* BYTE and HALF would only occur due to invalid decodes, but it doesn't hurt
+       * to treat them as valid here; otherwise we'd need to throw an internal_error.
+       * May need to revisit for latex output.
+       */
+      match width {
+        BYTE   => true,
+        HALF   => vaddr[0]    == 0b0,
+        WORD   => vaddr[1..0] == 0b00,
+        DOUBLE => vaddr[2..0] == 0b000
+      } in
+    if (~ (aligned))
+    then { handle_mem_exception(vaddr, E_SAMO_Addr_Align); false }
     else {
-      match translateAddr(vaddr, Write, Data) {
-        TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
-        TR_Address(addr) => {
-          let eares : MemoryOpResult(unit) = match width {
-            WORD   => mem_write_ea(addr, 4, aq, rl, true),
-            DOUBLE => mem_write_ea(addr, 8, aq, rl, true),
-            _      => internal_error("STORECON expected word or double")
-          };
-          match (eares) {
-            MemException(e)  => { handle_mem_exception(addr, e); false },
-            MemValue(_) => {
-              rs2_val = X(rs2);
-              let res : MemoryOpResult(bool) = match width {
-                WORD   => mem_write_value(addr, 4, rs2_val[31..0], aq, rl, true),
-                DOUBLE => mem_write_value(addr, 8, rs2_val,        aq, rl, true),
-                _      => internal_error("STORECON expected word or double")
-              };
-              match (res) {
-                MemValue(true)     => { X(rd) = EXTZ(0b0); cancel_reservation(); true },
-                MemValue(false)    => { X(rd) = EXTZ(0b1); cancel_reservation(); true },
-                MemException(e)    => { handle_mem_exception(addr, e); false }
+      if   match_reservation(vaddr) == false
+      then { X(rd) = EXTZ(0b1); true }
+      else {
+        match translateAddr(vaddr, Write, Data) {
+          TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
+          TR_Address(addr) => {
+            let eares : MemoryOpResult(unit) = match width {
+              WORD   => mem_write_ea(addr, 4, aq, rl, true),
+              DOUBLE => mem_write_ea(addr, 8, aq, rl, true),
+              _      => internal_error("STORECON expected word or double")
+            };
+            match (eares) {
+              MemException(e)  => { handle_mem_exception(addr, e); false },
+              MemValue(_) => {
+                rs2_val = X(rs2);
+                let res : MemoryOpResult(bool) = match width {
+                  WORD   => mem_write_value(addr, 4, rs2_val[31..0], aq, rl, true),
+                  DOUBLE => mem_write_value(addr, 8, rs2_val,        aq, rl, true),
+                  _      => internal_error("STORECON expected word or double")
+                };
+                match (res) {
+                  MemValue(true)     => { X(rd) = EXTZ(0b0); cancel_reservation(); true },
+                  MemValue(false)    => { X(rd) = EXTZ(0b1); cancel_reservation(); true },
+                  MemException(e)    => { handle_mem_exception(addr, e); false }
+                }
               }
             }
           }
         }
       }
     }
+  } else {
+    /* should only happen in rmem */
+    false
   }
 }
 
