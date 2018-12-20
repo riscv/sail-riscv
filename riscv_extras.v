@@ -132,3 +132,13 @@ Definition prerr_string (_:string) : unit := tt.
 Definition putchar {T} (_:T) : unit := tt.
 Require DecimalString.
 Definition string_of_int z := DecimalString.NilZero.string_of_int (Z.to_int z).
+
+(* The constraint solver can do this itself, but a Coq bug puts
+   anonymous_subproof into the term instead of an actual subproof. *)
+Lemma n_leading_spaces_fact {w__0} :
+  w__0 >= 0 -> exists ex17629_ : Z, 1 + w__0 = 1 + ex17629_ /\ 0 <= ex17629_.
+intro.
+exists w__0.
+omega.
+Qed.
+Hint Resolve n_leading_spaces_fact : sail.

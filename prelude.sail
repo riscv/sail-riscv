@@ -956,11 +956,11 @@ val lor_int = "lor_int" : (int, int) -> int
 val land_int = "land_int" : (int, int) -> int
 val lxor_int = "lxor_int" : (int, int) -> int
 
-val min_nat = {ocaml: "min_int", lem: "min", c: "min_int"} : (nat, nat) -> nat
+val min_nat = {ocaml: "min_int", lem: "min", coq: "min_nat", c: "min_int"} : (nat, nat) -> nat
 
 val min_int = {ocaml: "min_int", lem: "min", coq: "Z.min", c: "min_int"} : (int, int) -> int
 
-val max_nat = {ocaml: "max_int", lem: "max", c: "max_int"} : (nat, nat) -> nat
+val max_nat = {ocaml: "max_int", lem: "max", coq: "max_nat", c: "max_int"} : (nat, nat) -> nat
 
 val max_int = {ocaml: "max_int", lem: "max", coq: "Z.max", c: "max_int"} : (int, int) -> int
 
