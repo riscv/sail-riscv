@@ -644,6 +644,24 @@ mapping fence_bits : bits(4) <-> string = {
 mapping clause assembly = FENCE(pred, succ) <-> "fence" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ)
 
 /* ****************************************************************** */
+union clause ast = FENCE_TSO : (bits(4), bits(4))
+
+mapping clause encdec = FENCE_TSO(pred, succ) <-> 0b1000 @ pred @ succ @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
+
+function clause execute (FENCE_TSO(pred, succ)) = {
+  match (pred, succ) {
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => MEM_fence_rw_rw(),
+    (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
+
+    _ => { print("FIXME: unsupported fence");
+           () }
+  };
+  true
+}
+
+mapping clause assembly = FENCE_TSO(pred, succ) <-> "fence.tso" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ)
+
+/* ****************************************************************** */
 union clause ast = FENCEI : unit
 
 mapping clause encdec = FENCEI() <-> 0b000000000000 @ 0b00000 @ 0b001 @ 0b00000 @ 0b0001111
