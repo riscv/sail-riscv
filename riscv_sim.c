@@ -167,7 +167,7 @@ char *process_args(int argc, char **argv)
     case 'z':
       ram_size = atol(optarg);
       if (ram_size) {
-        fprintf(stderr, "setting ram-size to %ld MB\n", ram_size);
+        fprintf(stderr, "setting ram-size to %llu MB\n", ram_size);
         rv_ram_size = ram_size << 20;
       }
       break;
@@ -216,7 +216,7 @@ uint64_t load_sail(char *f)
     fprintf(stderr, "32-bit RISC-V not yet supported.\n");
     exit(1);
   }
-  fprintf(stdout, "ELF Entry @ %lx\n", entry);
+  fprintf(stdout, "ELF Entry @ %llx\n", entry);
   /* locate htif ports */
   if (lookup_sym(f, "tohost", &rv_htif_tohost) < 0) {
     fprintf(stderr, "Unable to locate htif tohost port.\n");
@@ -580,7 +580,7 @@ void run_sail(void)
       if (zhtif_exit_code == 0)
         fprintf(stdout, "SUCCESS\n");
       else
-        fprintf(stdout, "FAILURE: %ld\n", zhtif_exit_code);
+        fprintf(stdout, "FAILURE: %llu\n", zhtif_exit_code);
     }
 
     if (insn_cnt == rv_insns_per_tick) {
