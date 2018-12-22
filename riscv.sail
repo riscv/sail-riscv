@@ -650,7 +650,7 @@ mapping clause encdec = FENCE_TSO(pred, succ) <-> 0b1000 @ pred @ succ @ 0b00000
 
 function clause execute (FENCE_TSO(pred, succ)) = {
   match (pred, succ) {
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => MEM_fence_rw_rw(),
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => MEM_fence_tso(),
     (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
 
     _ => { print("FIXME: unsupported fence");

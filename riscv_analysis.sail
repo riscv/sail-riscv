@@ -126,10 +126,13 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                  (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => IK_simple (),
 
                  _ => internal_error("barrier type not implemented in initial_analysis")
-  //               case (FM_NORMAL, _, _) -> exit "not implemented"
-
-  //               case (FM_TSO, 0b0011, 0b0011) -> IK_barrier (Barrier_RISCV_tso)
-  //               case (FM_TSO, _, _) -> exit "not implemented"
+               };
+      },
+      FENCE_TSO(pred, succ) => {
+             ik =
+               match (pred, succ) {
+                 (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => IK_barrier (Barrier_RISCV_tso),
+                 _ => internal_error("barrier type not implemented in initial_analysis")
                };
       },
      FENCEI() => {

@@ -187,4 +187,7 @@ val MEM_fence_w_rw  = {lem: "MEM_fence_w_rw", coq: "MEM_fence_w_rw", _: "skip"} 
 val MEM_fence_rw_r  = {lem: "MEM_fence_rw_r", coq: "MEM_fence_rw_r", _: "skip"}  : unit -> unit effect {barr}
 val MEM_fence_r_w   = {lem: "MEM_fence_r_w", coq: "MEM_fence_r_w", _: "skip"}   : unit -> unit effect {barr}
 val MEM_fence_w_r   = {lem: "MEM_fence_w_r", coq: "MEM_fence_w_r", _: "skip"}   : unit -> unit effect {barr}
+
+val MEM_fence_tso = {lem: "MEM_fence_tso", coq: "MEM_fence_tso", _: "skip"} : unit -> unit effect {barr}
+
 val MEM_fence_i     = {lem: "MEM_fence_i", coq: "MEM_fence_i", _: "skip"}     : unit -> unit effect {barr}

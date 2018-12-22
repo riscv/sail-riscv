@@ -61,7 +61,10 @@
       translate_reg "rs1" rs1,
       translate_reg "rd" rd,
       translate_ropw op)
-| `RISCVFENCE(mode, pred, succ) -> FENCE(
+| `RISCVFENCE(pred, succ) -> FENCE(
+      translate_imm4 "pred" pred,
+      translate_imm4 "succ" succ)
+| `RISCVFENCE_TSO(pred, succ) -> FENCE_TSO(
       translate_imm4 "pred" pred,
       translate_imm4 "succ" succ)
 | `RISCVFENCEI -> FENCEI ()

@@ -109,13 +109,19 @@
       translate_ropw "op" op;
     ],
     [])
-| `RISCVFENCE(mode, pred, succ) ->
+| `RISCVFENCE(pred, succ) ->
   ("FENCE", 
   [
-     translate_fm_mode "mode" mode;
      translate_imm4 "pred" pred;
      translate_imm4 "succ" succ;
   ], 
+  [])
+| `RISCVFENCE_TSO(pred, succ) ->
+  ("FENCE_TSO",
+  [
+     translate_imm4 "pred" pred;
+     translate_imm4 "succ" succ;
+  ],
   [])
 | `RISCVFENCEI ->
   ("FENCEI",
