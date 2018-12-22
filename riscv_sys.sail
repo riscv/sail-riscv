@@ -772,11 +772,11 @@ function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
  * where cancellation can be performed.
  */
 
-val speculate_conditional = {ocaml: "Platform.speculate_conditional", c: "speculate_conditional", lem: "speculate_conditional_success"} : unit -> bool
+val speculate_conditional = {ocaml: "Platform.speculate_conditional", c: "speculate_conditional", lem: "speculate_conditional_success"} : unit -> bool effect {exmem}
 
 val load_reservation = {ocaml: "Platform.load_reservation", c: "load_reservation", lem: "load_reservation"} : xlenbits -> unit
 
-val match_reservation = {ocaml: "Platform.match_reservation", lem: "match_reservation", c: "match_reservation"} : xlenbits -> bool effect {exmem}
+val match_reservation = {ocaml: "Platform.match_reservation", lem: "match_reservation", c: "match_reservation"} : xlenbits -> bool
 
 val cancel_reservation = {ocaml: "Platform.cancel_reservation", c: "cancel_reservation", lem: "cancel_reservation"} : unit -> unit
 

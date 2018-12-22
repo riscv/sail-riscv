@@ -852,8 +852,15 @@ mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
 function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
-  if speculate_conditional () then {
-    /* normal non-rmem case */
+  if speculate_conditional () == false then {
+    /* should only happen in rmem
+     * rmem: allow SC to fail very early
+     */
+    X(rd) = EXTZ(0b1); true
+  } else {
+    /* normal non-rmem case
+     * rmem: SC is allowed to succeed (but might fail later)
+     */
     vaddr : xlenbits = X(rs1);
     let aligned : bool =
       /* BYTE and HALF would only occur due to invalid decodes, but it doesn't hurt
@@ -869,9 +876,10 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
     if (~ (aligned))
     then { handle_mem_exception(vaddr, E_SAMO_Addr_Align); false }
     else {
-      if   match_reservation(vaddr) == false
-      then { X(rd) = EXTZ(0b1); true }
-      else {
+      if   match_reservation(vaddr) == false then {
+        /* cannot happen in rmem */
+        X(rd) = EXTZ(0b1); true
+      } else {
         match translateAddr(vaddr, Write, Data) {
           TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
           TR_Address(addr) => {
@@ -900,9 +908,6 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
         }
       }
     }
-  } else {
-    /* should only happen in rmem */
-    false
   }
 }
 
