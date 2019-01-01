@@ -11,6 +11,7 @@ SAIL_OTHER_RVFI_SRCS = prelude.sail rvfi_dii.sail riscv_types.sail riscv_sys.sai
 SAIL_SRCS      = $(SAIL_OTHER_SRCS) $(SAIL_SEQ_INST_SRCS)  riscv_step.sail riscv_analysis.sail
 SAIL_RMEM_SRCS = $(SAIL_OTHER_SRCS) $(SAIL_RMEM_INST_SRCS) riscv_step.sail riscv_analysis.sail
 SAIL_RVFI_SRCS = $(SAIL_OTHER_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS)  riscv_step.sail riscv_analysis.sail
+SAIL_COQ_SRCS  = $(SAIL_OTHER_SRCS) $(SAIL_SEQ_INST_SRCS)  riscv_termination.sail riscv_analysis.sail
 
 PLATFORM_OCAML_SRCS = platform.ml platform_impl.ml platform_main.ml
 
@@ -160,8 +161,8 @@ COQ_LIBS = -R $(BBV_DIR)/theories bbv -R $(SAIL_LIB_DIR)/coq Sail
 
 riscv_coq: riscv.v riscv_types.v
 
-riscv.v riscv_types.v: $(SAIL_SRCS) Makefile
-	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -o riscv -coq_lib riscv_extras $(SAIL_SRCS)
+riscv.v riscv_types.v: $(SAIL_COQ_SRCS) Makefile
+	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -o riscv -coq_lib riscv_extras $(SAIL_COQ_SRCS)
 riscv_duopod.v riscv_duopod_types.v:  prelude.sail riscv_duopod.sail
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -o riscv_duopod -coq_lib riscv_extras $^
 %.vo: %.v
