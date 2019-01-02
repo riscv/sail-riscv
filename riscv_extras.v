@@ -18,6 +18,7 @@ Definition MEM_fence_w_rw  {rv e} (_:unit) : monad rv unit e := barrier Barrier_
 Definition MEM_fence_rw_r  {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_rw_r.
 Definition MEM_fence_r_w   {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_r_w.
 Definition MEM_fence_w_r   {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_w_r.
+Definition MEM_fence_tso   {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_tso.
 Definition MEM_fence_i     {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_i.
 (*
 val MEMea                            : forall 'rv 'a 'e. Size 'a => bitvector 'a -> integer -> monad 'rv unit 'e
