@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/ip.h>
 #include <fcntl.h>
@@ -42,6 +43,7 @@ struct tv_spike_t;
 
 static bool do_dump_dts = false;
 static bool disable_compressed = false;
+static bool do_show_times = false;
 struct tv_spike_t *s = NULL;
 char *term_log = NULL;
 char *dtb_file = NULL;
@@ -61,6 +63,9 @@ bool config_print_reg = true;
 bool config_print_mem_access = true;
 bool config_print_platform = true;
 
+struct timeval init_start, init_end, run_end;
+int total_insns = 0;
+
 static struct option options[] = {
   {"enable-dirty",                no_argument,       0, 'd'},
   {"enable-misaligned",           no_argument,       0, 'm'},
@@ -70,6 +75,7 @@ static struct option options[] = {
   {"dump-dts",                    no_argument,       0, 's'},
   {"device-tree-blob",            required_argument, 0, 'b'},
   {"terminal-log",                required_argument, 0, 't'},
+  {"show-times",                  required_argument, 0, 'p'},
 #ifdef RVFI_DII
   {"rvfi-dii",                    required_argument, 0, 'r'},
 #endif
@@ -145,7 +151,7 @@ char *process_args(int argc, char **argv)
   int c, idx = 1;
   uint64_t ram_size = 0;
   while(true) {
-    c = getopt_long(argc, argv, "dmCsz:b:t:v:hr:", options, &idx);
+    c = getopt_long(argc, argv, "dmCspz:b:t:v:hr:", options, &idx);
     if (c == -1) break;
     switch (c) {
     case 'd':
@@ -164,10 +170,13 @@ char *process_args(int argc, char **argv)
     case 's':
       do_dump_dts = true;
       break;
+    case 'p':
+      do_show_times = true;
+      break;
     case 'z':
       ram_size = atol(optarg);
       if (ram_size) {
-        fprintf(stderr, "setting ram-size to %llu MB\n", ram_size);
+        fprintf(stderr, "setting ram-size to %lu MB\n", ram_size);
         rv_ram_size = ram_size << 20;
       }
       break;
@@ -216,7 +225,7 @@ uint64_t load_sail(char *f)
     fprintf(stderr, "32-bit RISC-V not yet supported.\n");
     exit(1);
   }
-  fprintf(stdout, "ELF Entry @ %llx\n", entry);
+  fprintf(stdout, "ELF Entry @ %lx\n", entry);
   /* locate htif ports */
   if (lookup_sym(f, "tohost", &rv_htif_tohost) < 0) {
     fprintf(stderr, "Unable to locate htif tohost port.\n");
@@ -381,6 +390,19 @@ void finish(int ec)
 #ifdef ENABLE_SPIKE
   tv_free(s);
 #endif
+  if (gettimeofday(&run_end, NULL) < 0) {
+    fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
+    exit(1);
+  }
+  if (do_show_times) {
+    int init_msecs = (init_end.tv_sec - init_start.tv_sec)*1000 + (init_end.tv_usec - init_start.tv_usec)/1000;
+    int exec_msecs = (run_end.tv_sec - init_end.tv_sec)*1000 + (run_end.tv_usec - init_end.tv_usec)/1000;
+    double Kips    = ((double)total_insns)/((double)exec_msecs);
+    fprintf(stderr, "Initialization:   %d msecs\n", init_msecs);
+    fprintf(stderr, "Execution:        %d msecs\n", exec_msecs);
+    fprintf(stderr, "Instructions:     %d\n", total_insns);
+    fprintf(stderr, "Perf:             %.3f Kips\n", Kips);
+  }
   exit(ec);
 }
 
@@ -550,6 +572,7 @@ void run_sail(void)
     if (stepped) {
       step_no++;
       insn_cnt++;
+      total_insns++;
     }
 
 #ifdef ENABLE_SPIKE
@@ -580,7 +603,7 @@ void run_sail(void)
       if (zhtif_exit_code == 0)
         fprintf(stdout, "SUCCESS\n");
       else
-        fprintf(stdout, "FAILURE: %llu\n", zhtif_exit_code);
+        fprintf(stdout, "FAILURE: %lu\n", zhtif_exit_code);
     }
 
     if (insn_cnt == rv_insns_per_tick) {
@@ -624,6 +647,11 @@ int main(int argc, char **argv)
 {
   char *file = process_args(argc, argv);
   init_logs();
+
+  if (gettimeofday(&init_start, NULL) < 0) {
+    fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
+    exit(1);
+  }
 
 #ifdef RVFI_DII
   uint64_t entry;
@@ -673,6 +701,11 @@ int main(int argc, char **argv)
   init_sail(entry);
 
   if (!init_check(s)) finish(1);
+
+  if (gettimeofday(&init_end, NULL) < 0) {
+    fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
+    exit(1);
+  }
 
   do {
     run_sail();

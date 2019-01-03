@@ -77,7 +77,7 @@ else
 fi
 
 for test in $DIR/tests/*.elf; do
-    if timeout 5 $RISCVDIR/riscv_sim $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
+    if timeout 5 $RISCVDIR/riscv_sim -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
     then
 	green "$(basename $test)" "ok"
     else
