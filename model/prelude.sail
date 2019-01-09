@@ -268,13 +268,36 @@ overload min = {min_nat, min_int}
 
 overload max = {max_nat, max_int}
 
-val __WriteRAM = "write_ram" : forall 'n 'm.
+val __WriteRAM = {lem: "MEMw", _: "write_ram"} : forall 'n 'm.
   (atom('m), atom('n), bits('m), bits('m), bits(8 * 'n)) -> bool effect {wmv}
 
-val __RISCV_write : forall 'n. (bits(64), atom('n), bits(8 * 'n)) -> bool effect {wmv}
-function __RISCV_write (addr, width, data) = {
-  __WriteRAM(64, width, 0x0000_0000_0000_0000, addr, data)
-}
+val __WriteRAM_release = {lem: "MEMw_release", _: "write_ram"} : forall 'n 'm.
+  (atom('m), atom('n), bits('m), bits('m), bits(8 * 'n)) -> bool effect {wmv}
+
+val __WriteRAM_strong_release = {lem: "MEMw_strong_release", _: "write_ram"} : forall 'n 'm.
+  (atom('m), atom('n), bits('m), bits('m), bits(8 * 'n)) -> bool effect {wmv}
+
+val __WriteRAM_conditional = {lem: "MEMw_conditional", _: "write_ram"} : forall 'n 'm.
+  (atom('m), atom('n), bits('m), bits('m), bits(8 * 'n)) -> bool effect {wmv}
+
+val __WriteRAM_conditional_release = {lem: "MEMw_conditional_release", _: "write_ram"} : forall 'n 'm.
+  (atom('m), atom('n), bits('m), bits('m), bits(8 * 'n)) -> bool effect {wmv}
+
+val __WriteRAM_conditional_strong_release = {lem: "MEMw_conditional_strong_release", _: "write_ram"} : forall 'n 'm.
+  (atom('m), atom('n), bits('m), bits('m), bits(8 * 'n)) -> bool effect {wmv}
+
+val __RISCV_write : forall 'n. (bits(64), atom('n), bits(8 * 'n), bool, bool, bool) -> bool effect {wmv}
+function __RISCV_write (addr, width, data, aq, rl, con) =
+  match (aq, rl, con) {
+    (false, false, false) => __WriteRAM(64, width, 0x0000_0000_0000_0000, addr, data),
+    (false, true,  false) => __WriteRAM_release(64, width, 0x0000_0000_0000_0000, addr, data),
+    (false, false, true)  => __WriteRAM_conditional(64, width, 0x0000_0000_0000_0000, addr, data),
+    (false, true,  true)  => __WriteRAM_conditional_release(64, width, 0x0000_0000_0000_0000, addr, data),
+    (true,  true,  false) => __WriteRAM_strong_release(64, width, 0x0000_0000_0000_0000, addr, data),
+    (true,  true,  true)  => __WriteRAM_conditional_strong_release(64, width, 0x0000_0000_0000_0000, addr, data),
+    (true,  false, false) => false,
+    (true,  false, true)  => false
+  }
 
 val __TraceMemoryWrite : forall 'n 'm.
   (atom('n), bits('m), bits(8 * 'n)) -> unit

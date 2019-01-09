@@ -49,15 +49,19 @@ let MEMr_reserved addrsize size hexRAM addr                = read_mem Read_RISCV
 let MEMr_reserved_acquire addrsize size hexRAM addr        = read_mem Read_RISCV_reserved_acquire addr size
 let MEMr_reserved_strong_acquire addrsize size hexRAM addr = read_mem Read_RISCV_reserved_strong_acquire addr size
 
-val write_ram : forall 'rv 'a 'b 'e. Size 'a, Size 'b =>
-  integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
-let write_ram addrsize size hexRAM address value =
-  write_mem_val value
+val MEMw                            : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
+val MEMw_release                    : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
+val MEMw_strong_release             : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
+val MEMw_conditional                : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
+val MEMw_conditional_release        : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
+val MEMw_conditional_strong_release : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
 
-val read_ram : forall 'rv 'a 'b 'e. Size 'a, Size 'b =>
-  integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
-let read_ram addrsize size hexRAM address =
-  read_mem Read_plain address size
+let MEMw addrsize size hexRAM addr                            = write_mem Write_plain addr size
+let MEMw_release addrsize size hexRAM addr                    = write_mem Write_RISCV_release addr size
+let MEMw_strong_release addrsize size hexRAM addr             = write_mem Write_RISCV_strong_release addr size
+let MEMw_conditional addrsize size hexRAM addr                = write_mem Write_RISCV_conditional addr size
+let MEMw_conditional_release addrsize size hexRAM addr        = write_mem Write_RISCV_conditional_release addr size
+let MEMw_conditional_strong_release addrsize size hexRAM addr = write_mem Write_RISCV_conditional_strong_release addr size
 
 val load_reservation : forall 'a. Size 'a => bitvector 'a -> unit
 let load_reservation addr = ()

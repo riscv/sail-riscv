@@ -313,7 +313,7 @@ function translate39(vAddr, ac, priv, mxr, do_sum, level) = {
               n_ent.pte = update_BITS(ent.pte, pbits.bits());
               writeTLB39(idx, n_ent);
               /* update page table */
-              match checked_mem_write(EXTZ(ent.pteAddr), 8, ent.pte.bits()) {
+              match checked_mem_write(EXTZ(ent.pteAddr), 8, ent.pte.bits(), false, false, false) {
                 MemValue(_) => (),
                 MemException(e) => internal_error("invalid physical address in TLB")
               };
@@ -339,7 +339,7 @@ function translate39(vAddr, ac, priv, mxr, do_sum, level) = {
                 TR39_Failure(PTW_PTE_Update)
               } else {
                 w_pte : SV39_PTE = update_BITS(pte, pbits.bits());
-                match checked_mem_write(EXTZ(pteAddr), 8, w_pte.bits()) {
+                match checked_mem_write(EXTZ(pteAddr), 8, w_pte.bits(), false, false, false) {
                   MemValue(_) => {
                     addToTLB39(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
                     TR39_Address(pAddr)

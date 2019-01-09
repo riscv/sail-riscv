@@ -26,20 +26,6 @@ function checked_mem_read forall 'n, 'n > 0. (t : ReadType, addr : xlenbits, wid
 
 /* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
 
-val MEMr                         : forall 'n, 'n > 0. (xlenbits, atom('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rreg}
-val MEMr_acquire                 : forall 'n, 'n > 0. (xlenbits, atom('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rreg}
-val MEMr_strong_acquire          : forall 'n, 'n > 0. (xlenbits, atom('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rreg}
-val MEMr_reserved                : forall 'n, 'n > 0. (xlenbits, atom('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rreg}
-val MEMr_reserved_acquire        : forall 'n, 'n > 0. (xlenbits, atom('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rreg}
-val MEMr_reserved_strong_acquire : forall 'n, 'n > 0. (xlenbits, atom('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rreg}
-
-function MEMr                         (addr, width) = checked_mem_read(Data, addr, width, false, false, false)
-function MEMr_acquire                 (addr, width) = checked_mem_read(Data, addr, width, true, false, false)
-function MEMr_strong_acquire          (addr, width) = checked_mem_read(Data, addr, width, true, true, false)
-function MEMr_reserved                (addr, width) = checked_mem_read(Data, addr, width, false, false, true)
-function MEMr_reserved_acquire        (addr, width) = checked_mem_read(Data, addr, width, true, false, true)
-function MEMr_reserved_strong_acquire (addr, width) = checked_mem_read(Data, addr, width, true, true, true)
-
 $ifdef RVFI_DII
 val rvfi_read : forall 'n, 'n > 0. (xlenbits, atom('n), MemoryOpResult(bits(8 * 'n))) -> unit effect {wreg}
 function rvfi_read (addr, width, result) = {
@@ -71,14 +57,9 @@ function mem_read (addr, width, aq, rl, res) = {
   if (aq | res) & (~ (is_aligned_addr(addr, width)))
   then MemException(E_Load_Addr_Align)
   else match (aq, rl, res) {
-    (false, false, false) => checked_mem_read(Data, addr, width, false, false, false),
-    (true,  false, false) => MEMr_acquire(addr, width),
-    (false, false, true)  => MEMr_reserved(addr, width),
-    (true,  false, true)  => MEMr_reserved_acquire(addr, width),
     (false, true,  false) => throw(Error_not_implemented("load.rl")),
-    (true,  true,  false) => MEMr_strong_acquire(addr, width),
     (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
-    (true,  true,  true)  => MEMr_reserved_strong_acquire(addr, width)
+    (_, _, _)             => checked_mem_read(Data, addr, width, aq, rl, res)
   };
  rvfi_read(addr, width, result);
  result
@@ -115,35 +96,20 @@ function mem_write_ea (addr, width, aq, rl, con) = {
 }
 
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_write forall 'n. (addr : xlenbits, width : atom('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) = {
+function phys_mem_write forall 'n. (addr : xlenbits, width : atom('n), data: bits(8 * 'n), aq : bool, rl : bool, con : bool) -> MemoryOpResult(bool) = {
   print_mem("mem[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data));
-  MemValue(__RISCV_write(addr, width, data))
+  MemValue(__RISCV_write(addr, width, data, aq, rl, con))
 }
 
 // dispatches to MMIO regions or physical memory regions depending on physical memory map
-function checked_mem_write forall 'n, 'n > 0. (addr : xlenbits, width : atom('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
+function checked_mem_write forall 'n, 'n > 0. (addr : xlenbits, width : atom('n), data: bits(8 * 'n), aq : bool, rl : bool, con : bool) -> MemoryOpResult(bool) =
   if   within_mmio_writable(addr, width)
   then mmio_write(addr, width, data)
   else if within_phys_mem(addr, width)
-  then phys_mem_write(addr, width, data)
+  then phys_mem_write(addr, width, data, aq, rl, con)
   else MemException(E_SAMO_Access_Fault)
 
 /* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
-
-val MEMval                            : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> MemoryOpResult(bool) effect {wmv, rreg, wreg}
-val MEMval_release                    : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> MemoryOpResult(bool) effect {wmv, rreg, wreg}
-val MEMval_strong_release             : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> MemoryOpResult(bool) effect {wmv, rreg, wreg}
-val MEMval_conditional                : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> MemoryOpResult(bool) effect {wmv, rreg, wreg}
-val MEMval_conditional_release        : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> MemoryOpResult(bool) effect {wmv, rreg, wreg}
-val MEMval_conditional_strong_release : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> MemoryOpResult(bool) effect {wmv, rreg, wreg}
-
-function MEMval                            (addr, width, data) = checked_mem_write(addr, width, data)
-function MEMval_release                    (addr, width, data) = checked_mem_write(addr, width, data)
-function MEMval_strong_release             (addr, width, data) = checked_mem_write(addr, width, data)
-function MEMval_conditional                (addr, width, data) = checked_mem_write(addr, width, data)
-function MEMval_conditional_release        (addr, width, data) = checked_mem_write(addr, width, data)
-function MEMval_conditional_strong_release (addr, width, data) = checked_mem_write(addr, width, data)
-
 
 $ifdef RVFI_DII
 val rvfi_write : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> unit effect {wreg}
@@ -167,14 +133,9 @@ function mem_write_value (addr, width, value, aq, rl, con) = {
   if (rl | con) & (~ (is_aligned_addr(addr, width)))
   then MemException(E_SAMO_Addr_Align)
   else match (aq, rl, con) {
-    (false, false, false) => checked_mem_write(addr, width, value),
-    (false, true,  false) => MEMval_release(addr, width, value),
-    (false, false, true)  => MEMval_conditional(addr, width, value),
-    (false, true,  true)  => MEMval_conditional_release(addr, width, value),
     (true,  false, false) => throw(Error_not_implemented("store.aq")),
-    (true,  true,  false) => MEMval_strong_release(addr, width, value),
     (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
-    (true,  true,  true)  => MEMval_conditional_strong_release(addr, width, value)
+    (_, _, _)             => checked_mem_write(addr, width, value, aq, rl, con)
   }
 }
 
