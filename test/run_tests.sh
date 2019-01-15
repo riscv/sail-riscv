@@ -51,7 +51,7 @@ cd $RISCVDIR
 
 printf "Building RISCV specification...\n"
 
-if make platform ;
+if make ocaml/platform ;
 then
     green "Building RISCV specification" "ok"
 else
@@ -59,7 +59,7 @@ else
 fi
 
 for test in $DIR/tests/*.elf; do
-    if $RISCVDIR/platform "$test" >"${test/.elf/.out}" 2>&1 && grep -q SUCCESS "${test/.elf/.out}"
+    if $RISCVDIR/ocaml/platform "$test" >"${test/.elf/.out}" 2>&1 && grep -q SUCCESS "${test/.elf/.out}"
     then
        green "$(basename $test)" "ok"
     else
@@ -69,7 +69,7 @@ done
 
 finish_suite "RISCV OCaml tests"
 
-if make riscv_sim;
+if make c/riscv_sim;
 then
     green "Building RISCV specification to C" "ok"
 else
@@ -77,7 +77,7 @@ else
 fi
 
 for test in $DIR/tests/*.elf; do
-    if timeout 5 $RISCVDIR/riscv_sim -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
+    if timeout 5 $RISCVDIR/c/riscv_sim -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
     then
 	green "$(basename $test)" "ok"
     else
