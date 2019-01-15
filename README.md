@@ -77,7 +77,7 @@ your environment pointing to its top-level directory.
 ```
 $ make
 ```
-will build the OCaml simulator in `ocaml/platform`, the C simulator in
+will build the OCaml simulator in `ocaml/riscv_ocaml_sim`, the C simulator in
 `c/riscv_sim`, the Isabelle model in `generated_models/isabelle/Riscv.thy`, and the Coq
 model in `generated_models/coq/riscv.v`.
 
@@ -87,11 +87,11 @@ Executing test binaries
 The C and OCaml simulators can be used to execute small test RV64 binaries.
 
 ```
-$ ./ocaml/platform  <elf-file>
+$ ./ocaml/riscv_ocaml_sim  <elf-file>
 $ ./c/riscv_sim <elf-file>
 ```
 Some information on additional configuration options for each simulator is available
-from `./ocaml/platform -h` and `./c/riscv_sim -h`.
+from `./ocaml/riscv_ocaml_sim -h` and `./c/riscv_sim -h`.
 
 Booting Linux with the C backend
 --------------------------------
@@ -114,7 +114,7 @@ Booting Linux with the OCaml backend
 The OCaml model only needs the ELF-version of the BBL, since it can generate its
 own DTB.
 ```
-$ ./ocaml/platform bbl > execution-trace.log 2> console.log
+$ ./ocaml/riscv_ocaml_sim bbl > execution-trace.log 2> console.log
 ```
 
 Generating input files for Linux boot

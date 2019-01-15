@@ -13,7 +13,7 @@ SAIL_RMEM_SRCS = $(addprefix model/,$(SAIL_OTHER_SRCS) $(SAIL_RMEM_INST_SRCS) ri
 SAIL_RVFI_SRCS = $(addprefix model/,$(SAIL_OTHER_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS)  riscv_step.sail riscv_analysis.sail)
 SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_OTHER_SRCS) $(SAIL_SEQ_INST_SRCS)  riscv_termination.sail riscv_analysis.sail)
 
-PLATFORM_OCAML_SRCS = $(addprefix ocaml/,platform.ml platform_impl.ml platform_main.ml)
+PLATFORM_OCAML_SRCS = $(addprefix ocaml/,platform.ml platform_impl.ml riscv_ocaml_sim.ml)
 
 #Attempt to work with either sail from opam or built from repo in SAIL_DIR
 ifneq ($(SAIL_DIR),)
@@ -57,7 +57,7 @@ else
 C_FLAGS += -O2
 endif
 
-all: ocaml/platform c/riscv_sim riscv_isa riscv_coq
+all: ocaml/riscv_ocaml_sim c/riscv_sim riscv_isa riscv_coq
 
 .PHONY: all riscv_coq riscv_isa
 
@@ -73,21 +73,21 @@ cgen: $(SAIL_SRCS) model/main.sail
 generated_models/ocaml/riscv.ml: $(SAIL_SRCS) Makefile
 	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml-nobuild -ocaml_build_dir generated_models/ocaml -o riscv $(SAIL_SRCS)
 
-ocaml/_sbuild/platform_main.native: generated_models/ocaml/riscv.ml ocaml/_tags $(PLATFORM_OCAML_SRCS) Makefile
+ocaml/_sbuild/riscv_ocaml_sim.native: generated_models/ocaml/riscv.ml ocaml/_tags $(PLATFORM_OCAML_SRCS) Makefile
 	mkdir -p ocaml/_sbuild
 	cp ocaml/_tags $(PLATFORM_OCAML_SRCS) generated_models/ocaml/*.ml ocaml/_sbuild
-	cd ocaml/_sbuild && ocamlbuild -use-ocamlfind platform_main.native
+	cd ocaml/_sbuild && ocamlbuild -use-ocamlfind riscv_ocaml_sim.native
 
 ocaml/_sbuild/coverage.native: ocaml/_sbuild/riscv.ml ocaml/_tags.bisect $(PLATFORM_OCAML_SRCS) Makefile
 	cp $(PLATFORM_OCAML_SRCS) generated_models/ocaml/*.ml ocaml/_sbuild
 	cp ocaml/_tags.bisect ocaml/_sbuild/_tags
-	cd ocaml/_sbuild && ocamlbuild -use-ocamlfind platform_main.native && cp -L platform_main.native coverage.native
+	cd ocaml/_sbuild && ocamlbuild -use-ocamlfind riscv_ocaml_sim.native && cp -L riscv_ocaml_sim.native coverage.native
 
-ocaml/platform: ocaml/_sbuild/platform_main.native
-	rm -f $@ && ln -s _sbuild/platform_main.native $@
+ocaml/riscv_ocaml_sim: ocaml/_sbuild/riscv_ocaml_sim.native
+	rm -f $@ && ln -s _sbuild/riscv_ocaml_sim.native $@
 
 ocaml/coverage: ocaml/_sbuild/coverage.native
-	rm -f ocaml/platform && ln -s _sbuild/coverage.native ocaml/platform # since the test scripts runs this file
+	rm -f ocaml/riscv_ocaml_sim && ln -s _sbuild/coverage.native ocaml/riscv_ocaml_sim # since the test scripts runs this file
 	rm -rf bisect*.out bisect ocaml/coverage
 	./test/run_tests.sh # this will generate bisect*.out files in this directory
 	mkdir ocaml/bisect && mv bisect*.out bisect/
@@ -179,7 +179,7 @@ clean:
 	-rm -rf generated_models/ocaml/* generated_models/c/*
 	-rm -rf generated_models/lem/* generated_models/isabelle/* generated_models/hol4/* generated_models/coq/*
 	-rm -f c/riscv_sim c/riscv_rvfi
-	-rm -rf ocaml/_sbuild ocaml/_build ocaml/platform ocaml/tracecmp
+	-rm -rf ocaml/_sbuild ocaml/_build ocaml/riscv_ocaml_sim ocaml/tracecmp
 	-rm -f *.gcno *.gcda
 	-Holmake cleanAll
 	ocamlbuild -clean
