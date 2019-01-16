@@ -28,12 +28,15 @@ sail-riscv
 |     +---- hol4         // HOL4 model
 |
 |                        // Handwritten files
-+---- c                  // C simulator
-+---- ocaml              // OCaml simulator
+|
++---- c_emulator         // supporting platform files for C emulator
++---- ocaml_emulator     // supporting platform files for OCaml emulator
 +---- lem                // Lem library
 +---- coq                // Coq library
 |
-+---- test               // unit test files
++---- test               // test files
+      |
+      +---- riscv-tests  // snapshot of tests from the riscv/riscv-tests github repo
 ```
 
 An outline of the specification
