@@ -58,7 +58,7 @@ else
     red "Building RISCV specification" "fail"
 fi
 
-for test in $DIR/tests/*.elf; do
+for test in $DIR/riscv-tests/*.elf; do
     if $RISCVDIR/ocaml_emulator/riscv_ocaml_sim "$test" >"${test/.elf/.out}" 2>&1 && grep -q SUCCESS "${test/.elf/.out}"
     then
        green "$(basename $test)" "ok"
@@ -76,7 +76,7 @@ else
     red "Building RISCV specification to C" "fail"
 fi
 
-for test in $DIR/tests/*.elf; do
+for test in $DIR/riscv-tests/*.elf; do
     if timeout 5 $RISCVDIR/c_emulator/riscv_sim -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
     then
 	green "$(basename $test)" "ok"
