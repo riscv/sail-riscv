@@ -1,9 +1,9 @@
 session "Sail-RISC-V" = "Sail" +
   options [document = false]
   theories
-    Riscv_lemmas
+    "../generated_models/lem/Riscv_lemmas"
 
 session "Sail-RISC-V-Duopod" = "Sail" +
   options [document = false]
   theories
-    Riscv_duopod_lemmas
+    "../generated_models/lem/Riscv_duopod_lemmas"
