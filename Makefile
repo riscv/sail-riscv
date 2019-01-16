@@ -71,6 +71,7 @@ cgen: $(SAIL_SRCS) model/main.sail
 	$(SAIL) -cgen $(SAIL_FLAGS) $(SAIL_SRCS) model/main.sail
 
 generated_models/ocaml/riscv.ml: $(SAIL_SRCS) Makefile
+	mkdir -p generated_models/ocaml
 	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml-nobuild -ocaml_build_dir generated_models/ocaml -o riscv $(SAIL_SRCS)
 
 ocaml/_sbuild/riscv_ocaml_sim.native: generated_models/ocaml/riscv.ml ocaml/_tags $(PLATFORM_OCAML_SRCS) Makefile
@@ -97,24 +98,28 @@ gcovr:
 	gcovr -r . --html --html-detail -o index.html
 
 generated_models/ocaml/riscv_duopod_ocaml: model/prelude.sail model/riscv_duopod.sail
+	mkdir -p generated_models/ocaml
 	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml_build_dir generated_models/ocaml -o riscv_duopod_ocaml $^
 
 ocaml/tracecmp: ocaml/tracecmp.ml
 	ocamlfind ocamlopt -annot -linkpkg -package unix $^ -o $@
 
 generated_models/c/riscv.c: $(SAIL_SRCS) model/main.sail Makefile
+	mkdir -p generated_models/c
 	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h $(SAIL_SRCS) model/main.sail 1> $@
 
 c/riscv_c: generated_models/c/riscv.c $(C_INCS) $(C_SRCS) Makefile
 	gcc $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c -lgmp -lz -I $(SAIL_LIB_DIR) -o $@
 
 generated_models/c/riscv_model.c: $(SAIL_SRCS) model/main.sail Makefile
+	mkdir -p generated_models/c
 	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail 1> $@
 
 c/riscv_sim: generated_models/c/riscv_model.c c/riscv_sim.c $(C_INCS) $(C_SRCS) $(CPP_SRCS) Makefile
 	gcc -g $(C_WARNINGS) $(C_FLAGS) $< c/riscv_sim.c $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
 generated_models/c/riscv_rvfi_model.c: $(SAIL_RVFI_SRCS) model/main_rvfi.sail Makefile
+	mkdir -p generated_models/c
 	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main_rvfi.sail | sed '/^[[:space:]]*$$/d' > $@
 
 c/riscv_rvfi: generated_models/c/riscv_rvfi_model.c c/riscv_sim.c $(C_INCS) $(C_SRCS) $(CPP_SRCS) Makefile
@@ -124,6 +129,7 @@ latex: $(SAIL_SRCS) Makefile
 	$(SAIL) -latex -latex_prefix sail -o sail_ltx $(SAIL_SRCS)
 
 generated_models/lem/riscv_duopod.lem: $(addprefix model/, prelude.sail riscv_duopod.sail)
+	mkdir -p generated_models/lem
 	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_models/lem -lem_mwords -lem_lib Riscv_extras -o riscv_duopod $^
 generated_models/isabelle/Riscv_duopod.thy: generated_models/lem/riscv_duopod.lem lem/riscv_extras.lem
 	lem -isa -outdir generated_models/isabelle -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
@@ -136,12 +142,15 @@ riscv_duopod: generated_models/ocaml/riscv_duopod_ocaml generated_models/isabell
 riscv_isa: generated_models/isabelle/Riscv.thy
 
 generated_models/lem/riscv.lem: $(SAIL_SRCS) Makefile
+	mkdir -p generated_models/lem
 	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_models/lem -o riscv -lem_mwords -lem_lib Riscv_extras $(SAIL_SRCS)
 
 generated_models/lem/riscv_sequential.lem: $(SAIL_SRCS) Makefile
+	mkdir -p generated_models/lem
 	$(SAIL_DIR)/sail -lem -lem_output_dir generated_models/lem -lem_sequential -o riscv_sequential -lem_mwords -lem_lib Riscv_extras_sequential $(SAIL_SRCS)
 
 generated_models/isabelle/Riscv.thy: generated_models/lem/riscv.lem lem/riscv_extras.lem Makefile
+	mkdir -p generated_models/isabelle
 	lem -isa -outdir generated_models/isabelle -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
 		lem/riscv_extras.lem \
 		generated_models/lem/riscv_types.lem \
@@ -149,6 +158,7 @@ generated_models/isabelle/Riscv.thy: generated_models/lem/riscv.lem lem/riscv_ex
 	sed -i 's/datatype ast/datatype (plugins only: size) ast/' generated_models/isabelle/Riscv_types.thy
 
 generated_models/hol4/riscvScript.sml: generated_models/lem/riscv.lem lem/riscv_extras.lem
+	mkdir -p generated_models/hol4
 	lem -hol -outdir generated_models/hol4 -lib $(SAIL_LIB_DIR)/hol -i $(SAIL_LIB_DIR)/hol/sail2_prompt_monad.lem -i $(SAIL_LIB_DIR)/hol/sail2_prompt.lem \
 	    -lib $(SAIL_DIR)/src/lem_interp -lib $(SAIL_DIR)/src/gen_lib \
 		lem/riscv_extras.lem \
@@ -163,8 +173,10 @@ COQ_LIBS = -R $(BBV_DIR)/theories bbv -R $(SAIL_LIB_DIR)/coq Sail -R coq '' -R g
 riscv_coq: $(addprefix generated_models/coq/,riscv.v riscv_types.v)
 
 $(addprefix generated_models/coq/,riscv.v riscv_types.v): $(SAIL_COQ_SRCS) Makefile
+	mkdir -p generated_models/coq
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_models/coq -o riscv -coq_lib riscv_extras $(SAIL_COQ_SRCS)
 $(addprefix generated_models/coq/,riscv_duopod.v riscv_duopod_types.v): model/prelude.sail model/riscv_duopod.sail
+	mkdir -p generated_models/coq
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_models/coq -o riscv_duopod -coq_lib riscv_extras $^
 %.vo: %.v
 	coqc $(COQ_LIBS) $<
