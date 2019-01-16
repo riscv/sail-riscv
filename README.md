@@ -77,8 +77,8 @@ your environment pointing to its top-level directory.
 ```
 $ make
 ```
-will build the OCaml simulator in `ocaml/riscv_ocaml_sim`, the C simulator in
-`c/riscv_sim`, the Isabelle model in `generated_models/isabelle/Riscv.thy`, and the Coq
+will build the OCaml simulator in `ocaml_emulator/riscv_ocaml_sim`, the C simulator in
+`c_emulator/riscv_sim`, the Isabelle model in `generated_models/isabelle/Riscv.thy`, and the Coq
 model in `generated_models/coq/riscv.v`.
 
 Executing test binaries
@@ -87,11 +87,11 @@ Executing test binaries
 The C and OCaml simulators can be used to execute small test RV64 binaries.
 
 ```
-$ ./ocaml/riscv_ocaml_sim  <elf-file>
-$ ./c/riscv_sim <elf-file>
+$ ./ocaml_emulator/riscv_ocaml_sim  <elf-file>
+$ ./c_emulator/riscv_sim <elf-file>
 ```
 Some information on additional configuration options for each simulator is available
-from `./ocaml/riscv_ocaml_sim -h` and `./c/riscv_sim -h`.
+from `./ocaml_emulator/riscv_ocaml_sim -h` and `./c_emulator/riscv_sim -h`.
 
 Booting Linux with the C backend
 --------------------------------
@@ -103,7 +103,7 @@ a DTB (device-tree blob) file describing the platform (say in the file
 the model should be run as:
 
 ```
-$ ./c/riscv_sim -t console.log -b spike.dtb bbl > execution-trace.log 2>&1 &
+$ ./c_emulator/riscv_sim -t console.log -b spike.dtb bbl > execution-trace.log 2>&1 &
 $ tail -f console.log
 ```
 The `console.log` file contains the console boot messages.
@@ -114,7 +114,7 @@ Booting Linux with the OCaml backend
 The OCaml model only needs the ELF-version of the BBL, since it can generate its
 own DTB.
 ```
-$ ./ocaml/riscv_ocaml_sim bbl > execution-trace.log 2> console.log
+$ ./ocaml_emulator/riscv_ocaml_sim bbl > execution-trace.log 2> console.log
 ```
 
 Generating input files for Linux boot

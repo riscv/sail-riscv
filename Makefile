@@ -13,7 +13,7 @@ SAIL_RMEM_SRCS = $(addprefix model/,$(SAIL_OTHER_SRCS) $(SAIL_RMEM_INST_SRCS) ri
 SAIL_RVFI_SRCS = $(addprefix model/,$(SAIL_OTHER_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS)  riscv_step.sail riscv_analysis.sail)
 SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_OTHER_SRCS) $(SAIL_SEQ_INST_SRCS)  riscv_termination.sail riscv_analysis.sail)
 
-PLATFORM_OCAML_SRCS = $(addprefix ocaml/,platform.ml platform_impl.ml riscv_ocaml_sim.ml)
+PLATFORM_OCAML_SRCS = $(addprefix ocaml_emulator/,platform.ml platform_impl.ml riscv_ocaml_sim.ml)
 
 #Attempt to work with either sail from opam or built from repo in SAIL_DIR
 ifneq ($(SAIL_DIR),)
@@ -33,10 +33,10 @@ BBV_DIR?=../bbv
 
 C_WARNINGS ?=
 #-Wall -Wextra -Wno-unused-label -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-function
-C_INCS = $(addprefix c/,riscv_prelude.h riscv_platform_impl.h riscv_platform.h)
-C_SRCS = $(addprefix c/,riscv_prelude.c riscv_platform_impl.c riscv_platform.c)
+C_INCS = $(addprefix c_emulator/,riscv_prelude.h riscv_platform_impl.h riscv_platform.h)
+C_SRCS = $(addprefix c_emulator/,riscv_prelude.c riscv_platform_impl.c riscv_platform.c)
 
-C_FLAGS = -I $(SAIL_LIB_DIR) -I c
+C_FLAGS = -I $(SAIL_LIB_DIR) -I c_emulator
 C_LIBS  = -lgmp -lz
 
 # The C simulator can be built to be linked against Spike for tandem-verification.
@@ -57,7 +57,7 @@ else
 C_FLAGS += -O2
 endif
 
-all: ocaml/riscv_ocaml_sim c/riscv_sim riscv_isa riscv_coq
+all: ocaml_emulator/riscv_ocaml_sim c_emulator/riscv_sim riscv_isa riscv_coq
 
 .PHONY: all riscv_coq riscv_isa
 
@@ -74,25 +74,26 @@ generated_models/ocaml/riscv.ml: $(SAIL_SRCS) Makefile
 	mkdir -p generated_models/ocaml
 	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml-nobuild -ocaml_build_dir generated_models/ocaml -o riscv $(SAIL_SRCS)
 
-ocaml/_sbuild/riscv_ocaml_sim.native: generated_models/ocaml/riscv.ml ocaml/_tags $(PLATFORM_OCAML_SRCS) Makefile
-	mkdir -p ocaml/_sbuild
-	cp ocaml/_tags $(PLATFORM_OCAML_SRCS) generated_models/ocaml/*.ml ocaml/_sbuild
-	cd ocaml/_sbuild && ocamlbuild -use-ocamlfind riscv_ocaml_sim.native
+ocaml_emulator/_sbuild/riscv_ocaml_sim.native: generated_models/ocaml/riscv.ml ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) Makefile
+	mkdir -p ocaml_emulator/_sbuild
+	cp ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) generated_models/ocaml/*.ml ocaml_emulator/_sbuild
+	cd ocaml_emulator/_sbuild && ocamlbuild -use-ocamlfind riscv_ocaml_sim.native
 
-ocaml/_sbuild/coverage.native: ocaml/_sbuild/riscv.ml ocaml/_tags.bisect $(PLATFORM_OCAML_SRCS) Makefile
-	cp $(PLATFORM_OCAML_SRCS) generated_models/ocaml/*.ml ocaml/_sbuild
-	cp ocaml/_tags.bisect ocaml/_sbuild/_tags
-	cd ocaml/_sbuild && ocamlbuild -use-ocamlfind riscv_ocaml_sim.native && cp -L riscv_ocaml_sim.native coverage.native
+ocaml_emulator/_sbuild/coverage.native: generated_models/ocaml/riscv.ml ocaml_emulator/_tags.bisect $(PLATFORM_OCAML_SRCS) Makefile
+	mkdir -p ocaml_emulator/_sbuild
+	cp $(PLATFORM_OCAML_SRCS) generated_models/ocaml/*.ml ocaml_emulator/_sbuild
+	cp ocaml_emulator/_tags.bisect ocaml_emulator/_sbuild/_tags
+	cd ocaml_emulator/_sbuild && ocamlbuild -use-ocamlfind riscv_ocaml_sim.native && cp -L riscv_ocaml_sim.native coverage.native
 
-ocaml/riscv_ocaml_sim: ocaml/_sbuild/riscv_ocaml_sim.native
+ocaml_emulator/riscv_ocaml_sim: ocaml_emulator/_sbuild/riscv_ocaml_sim.native
 	rm -f $@ && ln -s _sbuild/riscv_ocaml_sim.native $@
 
-ocaml/coverage: ocaml/_sbuild/coverage.native
-	rm -f ocaml/riscv_ocaml_sim && ln -s _sbuild/coverage.native ocaml/riscv_ocaml_sim # since the test scripts runs this file
-	rm -rf bisect*.out bisect ocaml/coverage
+ocaml_emulator/coverage: ocaml_emulator/_sbuild/coverage.native
+	rm -f ocaml_emulator/riscv_ocaml_sim && ln -s ocaml_emulator/_sbuild/coverage.native ocaml_emulator/riscv_ocaml_sim # since the test scripts runs this file
+	rm -rf bisect*.out bisect ocaml_emulator/coverage
 	./test/run_tests.sh # this will generate bisect*.out files in this directory
-	mkdir ocaml/bisect && mv bisect*.out bisect/
-	mkdir ocaml/coverage && bisect-ppx-report -html ocaml/coverage/ -I ocaml/_sbuild/ bisect/bisect*.out
+	mkdir ocaml_emulator/bisect && mv bisect*.out bisect/
+	mkdir ocaml_emulator/coverage && bisect-ppx-report -html ocaml_emulator/coverage/ -I ocaml_emulator/_sbuild/ bisect/bisect*.out
 
 gcovr:
 	gcovr -r . --html --html-detail -o index.html
@@ -101,29 +102,29 @@ generated_models/ocaml/riscv_duopod_ocaml: model/prelude.sail model/riscv_duopod
 	mkdir -p generated_models/ocaml
 	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml_build_dir generated_models/ocaml -o riscv_duopod_ocaml $^
 
-ocaml/tracecmp: ocaml/tracecmp.ml
+ocaml_emulator/tracecmp: ocaml_emulator/tracecmp.ml
 	ocamlfind ocamlopt -annot -linkpkg -package unix $^ -o $@
 
 generated_models/c/riscv.c: $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_models/c
 	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h $(SAIL_SRCS) model/main.sail 1> $@
 
-c/riscv_c: generated_models/c/riscv.c $(C_INCS) $(C_SRCS) Makefile
+c_emulator/riscv_c: generated_models/c/riscv.c $(C_INCS) $(C_SRCS) Makefile
 	gcc $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c -lgmp -lz -I $(SAIL_LIB_DIR) -o $@
 
 generated_models/c/riscv_model.c: $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_models/c
 	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail 1> $@
 
-c/riscv_sim: generated_models/c/riscv_model.c c/riscv_sim.c $(C_INCS) $(C_SRCS) $(CPP_SRCS) Makefile
-	gcc -g $(C_WARNINGS) $(C_FLAGS) $< c/riscv_sim.c $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
+c_emulator/riscv_sim: generated_models/c/riscv_model.c c_emulator/riscv_sim.c $(C_INCS) $(C_SRCS) $(CPP_SRCS) Makefile
+	gcc -g $(C_WARNINGS) $(C_FLAGS) $< c_emulator/riscv_sim.c $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
 generated_models/c/riscv_rvfi_model.c: $(SAIL_RVFI_SRCS) model/main_rvfi.sail Makefile
 	mkdir -p generated_models/c
 	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main_rvfi.sail | sed '/^[[:space:]]*$$/d' > $@
 
-c/riscv_rvfi: generated_models/c/riscv_rvfi_model.c c/riscv_sim.c $(C_INCS) $(C_SRCS) $(CPP_SRCS) Makefile
-	gcc -g $(C_WARNINGS) $(C_FLAGS) $< -DRVFI_DII c/riscv_sim.c $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
+c_emulator/riscv_rvfi: generated_models/c/riscv_rvfi_model.c c_emulator/riscv_sim.c $(C_INCS) $(C_SRCS) $(CPP_SRCS) Makefile
+	gcc -g $(C_WARNINGS) $(C_FLAGS) $< -DRVFI_DII c_emulator/riscv_sim.c $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
 latex: $(SAIL_SRCS) Makefile
 	$(SAIL) -latex -latex_prefix sail -o sail_ltx $(SAIL_SRCS)
@@ -190,8 +191,8 @@ generated_models/coq/riscv_duopod.vo: generated_models/coq/riscv_duopod_types.vo
 clean:
 	-rm -rf generated_models/ocaml/* generated_models/c/*
 	-rm -rf generated_models/lem/* generated_models/isabelle/* generated_models/hol4/* generated_models/coq/*
-	-rm -f c/riscv_sim c/riscv_rvfi
-	-rm -rf ocaml/_sbuild ocaml/_build ocaml/riscv_ocaml_sim ocaml/tracecmp
+	-rm -f c_emulator/riscv_sim c_emulator/riscv_rvfi
+	-rm -rf ocaml_emulator/_sbuild ocaml_emulator/_build ocaml_emulator/riscv_ocaml_sim ocaml_emulator/tracecmp
 	-rm -f *.gcno *.gcda
 	-Holmake cleanAll
 	ocamlbuild -clean
