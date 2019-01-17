@@ -70,18 +70,18 @@ interpret: $(SAIL_SRCS) model/main.sail
 cgen: $(SAIL_SRCS) model/main.sail
 	$(SAIL) -cgen $(SAIL_FLAGS) $(SAIL_SRCS) model/main.sail
 
-generated_models/ocaml/riscv.ml: $(SAIL_SRCS) Makefile
-	mkdir -p generated_models/ocaml
-	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml-nobuild -ocaml_build_dir generated_models/ocaml -o riscv $(SAIL_SRCS)
+generated_definitions/ocaml/riscv.ml: $(SAIL_SRCS) Makefile
+	mkdir -p generated_definitions/ocaml
+	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml-nobuild -ocaml_build_dir generated_definitions/ocaml -o riscv $(SAIL_SRCS)
 
-ocaml_emulator/_sbuild/riscv_ocaml_sim.native: generated_models/ocaml/riscv.ml ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) Makefile
+ocaml_emulator/_sbuild/riscv_ocaml_sim.native: generated_definitions/ocaml/riscv.ml ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) Makefile
 	mkdir -p ocaml_emulator/_sbuild
-	cp ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) generated_models/ocaml/*.ml ocaml_emulator/_sbuild
+	cp ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) generated_definitions/ocaml/*.ml ocaml_emulator/_sbuild
 	cd ocaml_emulator/_sbuild && ocamlbuild -use-ocamlfind riscv_ocaml_sim.native
 
-ocaml_emulator/_sbuild/coverage.native: generated_models/ocaml/riscv.ml ocaml_emulator/_tags.bisect $(PLATFORM_OCAML_SRCS) Makefile
+ocaml_emulator/_sbuild/coverage.native: generated_definitions/ocaml/riscv.ml ocaml_emulator/_tags.bisect $(PLATFORM_OCAML_SRCS) Makefile
 	mkdir -p ocaml_emulator/_sbuild
-	cp $(PLATFORM_OCAML_SRCS) generated_models/ocaml/*.ml ocaml_emulator/_sbuild
+	cp $(PLATFORM_OCAML_SRCS) generated_definitions/ocaml/*.ml ocaml_emulator/_sbuild
 	cp ocaml_emulator/_tags.bisect ocaml_emulator/_sbuild/_tags
 	cd ocaml_emulator/_sbuild && ocamlbuild -use-ocamlfind riscv_ocaml_sim.native && cp -L riscv_ocaml_sim.native coverage.native
 
@@ -98,100 +98,100 @@ ocaml_emulator/coverage: ocaml_emulator/_sbuild/coverage.native
 gcovr:
 	gcovr -r . --html --html-detail -o index.html
 
-generated_models/ocaml/riscv_duopod_ocaml: model/prelude.sail model/riscv_duopod.sail
-	mkdir -p generated_models/ocaml
-	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml_build_dir generated_models/ocaml -o riscv_duopod_ocaml $^
+generated_definitions/ocaml/riscv_duopod_ocaml: model/prelude.sail model/riscv_duopod.sail
+	mkdir -p generated_definitions/ocaml
+	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml_build_dir generated_definitions/ocaml -o riscv_duopod_ocaml $^
 
 ocaml_emulator/tracecmp: ocaml_emulator/tracecmp.ml
 	ocamlfind ocamlopt -annot -linkpkg -package unix $^ -o $@
 
-generated_models/c/riscv.c: $(SAIL_SRCS) model/main.sail Makefile
-	mkdir -p generated_models/c
+generated_definitions/c/riscv.c: $(SAIL_SRCS) model/main.sail Makefile
+	mkdir -p generated_definitions/c
 	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h $(SAIL_SRCS) model/main.sail 1> $@
 
-c_emulator/riscv_c: generated_models/c/riscv.c $(C_INCS) $(C_SRCS) Makefile
+c_emulator/riscv_c: generated_definitions/c/riscv.c $(C_INCS) $(C_SRCS) Makefile
 	gcc $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c -lgmp -lz -I $(SAIL_LIB_DIR) -o $@
 
-generated_models/c/riscv_model.c: $(SAIL_SRCS) model/main.sail Makefile
-	mkdir -p generated_models/c
+generated_definitions/c/riscv_model.c: $(SAIL_SRCS) model/main.sail Makefile
+	mkdir -p generated_definitions/c
 	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail 1> $@
 
-c_emulator/riscv_sim: generated_models/c/riscv_model.c c_emulator/riscv_sim.c $(C_INCS) $(C_SRCS) $(CPP_SRCS) Makefile
+c_emulator/riscv_sim: generated_definitions/c/riscv_model.c c_emulator/riscv_sim.c $(C_INCS) $(C_SRCS) $(CPP_SRCS) Makefile
 	gcc -g $(C_WARNINGS) $(C_FLAGS) $< c_emulator/riscv_sim.c $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
-generated_models/c/riscv_rvfi_model.c: $(SAIL_RVFI_SRCS) model/main_rvfi.sail Makefile
-	mkdir -p generated_models/c
+generated_definitions/c/riscv_rvfi_model.c: $(SAIL_RVFI_SRCS) model/main_rvfi.sail Makefile
+	mkdir -p generated_definitions/c
 	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main_rvfi.sail | sed '/^[[:space:]]*$$/d' > $@
 
-c_emulator/riscv_rvfi: generated_models/c/riscv_rvfi_model.c c_emulator/riscv_sim.c $(C_INCS) $(C_SRCS) $(CPP_SRCS) Makefile
+c_emulator/riscv_rvfi: generated_definitions/c/riscv_rvfi_model.c c_emulator/riscv_sim.c $(C_INCS) $(C_SRCS) $(CPP_SRCS) Makefile
 	gcc -g $(C_WARNINGS) $(C_FLAGS) $< -DRVFI_DII c_emulator/riscv_sim.c $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
 latex: $(SAIL_SRCS) Makefile
-	mkdir -p generated_models/latex
-	$(SAIL) -latex -latex_prefix sail -o generated_models/latex $(SAIL_SRCS)
+	mkdir -p generated_definitions/latex
+	$(SAIL) -latex -latex_prefix sail -o generated_definitions/latex $(SAIL_SRCS)
 
-generated_models/lem/riscv_duopod.lem: $(addprefix model/, prelude.sail riscv_duopod.sail)
-	mkdir -p generated_models/lem
-	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_models/lem -lem_mwords -lem_lib Riscv_extras -o riscv_duopod $^
-generated_models/isabelle/Riscv_duopod.thy: generated_models/lem/riscv_duopod.lem lem/riscv_extras.lem
-	lem -isa -outdir generated_models/isabelle -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
-		lem/riscv_extras.lem \
-		generated_models/lem/riscv_duopod_types.lem \
-		generated_models/lem/riscv_duopod.lem
+generated_definitions/lem/riscv_duopod.lem: $(addprefix model/, prelude.sail riscv_duopod.sail)
+	mkdir -p generated_definitions/lem
+	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem -lem_mwords -lem_lib Riscv_extras -o riscv_duopod $^
+generated_definitions/isabelle/Riscv_duopod.thy: generated_definitions/lem/riscv_duopod.lem handwritten_support/riscv_extras.lem
+	lem -isa -outdir generated_definitions/isabelle -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
+		handwritten_support/riscv_extras.lem \
+		generated_definitions/lem/riscv_duopod_types.lem \
+		generated_definitions/lem/riscv_duopod.lem
 
-riscv_duopod: generated_models/ocaml/riscv_duopod_ocaml generated_models/isabelle/Riscv_duopod.thy
+riscv_duopod: generated_definitions/ocaml/riscv_duopod_ocaml generated_definitions/isabelle/Riscv_duopod.thy
 
-riscv_isa: generated_models/isabelle/Riscv.thy
+riscv_isa: generated_definitions/isabelle/Riscv.thy
 
-generated_models/lem/riscv.lem: $(SAIL_SRCS) Makefile
-	mkdir -p generated_models/lem
-	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_models/lem -o riscv -lem_mwords -lem_lib Riscv_extras $(SAIL_SRCS)
+generated_definitions/lem/riscv.lem: $(SAIL_SRCS) Makefile
+	mkdir -p generated_definitions/lem
+	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem -o riscv -lem_mwords -lem_lib Riscv_extras $(SAIL_SRCS)
 
-generated_models/lem/riscv_sequential.lem: $(SAIL_SRCS) Makefile
-	mkdir -p generated_models/lem
-	$(SAIL_DIR)/sail -lem -lem_output_dir generated_models/lem -lem_sequential -o riscv_sequential -lem_mwords -lem_lib Riscv_extras_sequential $(SAIL_SRCS)
+generated_definitions/lem/riscv_sequential.lem: $(SAIL_SRCS) Makefile
+	mkdir -p generated_definitions/lem
+	$(SAIL_DIR)/sail -lem -lem_output_dir generated_definitions/lem -lem_sequential -o riscv_sequential -lem_mwords -lem_lib Riscv_extras_sequential $(SAIL_SRCS)
 
-generated_models/isabelle/Riscv.thy: generated_models/lem/riscv.lem lem/riscv_extras.lem Makefile
-	mkdir -p generated_models/isabelle
-	lem -isa -outdir generated_models/isabelle -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
-		lem/riscv_extras.lem \
-		generated_models/lem/riscv_types.lem \
-		generated_models/lem/riscv.lem
-	sed -i 's/datatype ast/datatype (plugins only: size) ast/' generated_models/isabelle/Riscv_types.thy
+generated_definitions/isabelle/Riscv.thy: generated_definitions/lem/riscv.lem handwritten_support/riscv_extras.lem Makefile
+	mkdir -p generated_definitions/isabelle
+	lem -isa -outdir generated_definitions/isabelle -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
+		handwritten_support/riscv_extras.lem \
+		generated_definitions/lem/riscv_types.lem \
+		generated_definitions/lem/riscv.lem
+	sed -i 's/datatype ast/datatype (plugins only: size) ast/' generated_definitions/isabelle/Riscv_types.thy
 
-generated_models/hol4/riscvScript.sml: generated_models/lem/riscv.lem lem/riscv_extras.lem
-	mkdir -p generated_models/hol4
-	lem -hol -outdir generated_models/hol4 -lib $(SAIL_LIB_DIR)/hol -i $(SAIL_LIB_DIR)/hol/sail2_prompt_monad.lem -i $(SAIL_LIB_DIR)/hol/sail2_prompt.lem \
+generated_definitions/hol4/riscvScript.sml: generated_definitions/lem/riscv.lem handwritten_support/riscv_extras.lem
+	mkdir -p generated_definitions/hol4
+	lem -hol -outdir generated_definitions/hol4 -lib $(SAIL_LIB_DIR)/hol -i $(SAIL_LIB_DIR)/hol/sail2_prompt_monad.lem -i $(SAIL_LIB_DIR)/hol/sail2_prompt.lem \
 	    -lib $(SAIL_DIR)/src/lem_interp -lib $(SAIL_DIR)/src/gen_lib \
-		lem/riscv_extras.lem \
-		generated_models/lem/riscv_types.lem \
-		generated_models/lem/riscv.lem
+		handwritten_support/riscv_extras.lem \
+		generated_definitions/lem/riscv_types.lem \
+		generated_definitions/lem/riscv.lem
 
-$(addprefix generated_models/hol4/,riscvTheory.uo riscvTheory.ui): generated_models/hol4/riscvScript.sml
-	(cd generated_models/hol4 && Holmake riscvTheory.uo)
+$(addprefix generated_definitions/hol4/,riscvTheory.uo riscvTheory.ui): generated_definitions/hol4/riscvScript.sml
+	(cd generated_definitions/hol4 && Holmake riscvTheory.uo)
 
-COQ_LIBS = -R $(BBV_DIR)/theories bbv -R $(SAIL_LIB_DIR)/coq Sail -R coq '' -R generated_models/coq ''
+COQ_LIBS = -R $(BBV_DIR)/theories bbv -R $(SAIL_LIB_DIR)/coq Sail -R coq '' -R generated_definitions/coq ''
 
-riscv_coq: $(addprefix generated_models/coq/,riscv.v riscv_types.v)
+riscv_coq: $(addprefix generated_definitions/coq/,riscv.v riscv_types.v)
 
-$(addprefix generated_models/coq/,riscv.v riscv_types.v): $(SAIL_COQ_SRCS) Makefile
-	mkdir -p generated_models/coq
-	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_models/coq -o riscv -coq_lib riscv_extras $(SAIL_COQ_SRCS)
-$(addprefix generated_models/coq/,riscv_duopod.v riscv_duopod_types.v): model/prelude.sail model/riscv_duopod.sail
-	mkdir -p generated_models/coq
-	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_models/coq -o riscv_duopod -coq_lib riscv_extras $^
+$(addprefix generated_definitions/coq/,riscv.v riscv_types.v): $(SAIL_COQ_SRCS) Makefile
+	mkdir -p generated_definitions/coq
+	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq -o riscv -coq_lib riscv_extras $(SAIL_COQ_SRCS)
+$(addprefix generated_definitions/coq/,riscv_duopod.v riscv_duopod_types.v): model/prelude.sail model/riscv_duopod.sail
+	mkdir -p generated_definitions/coq
+	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq -o riscv_duopod -coq_lib riscv_extras $^
 %.vo: %.v
 	coqc $(COQ_LIBS) $<
-generated_models/coq/riscv.vo: generated_models/coq/riscv_types.vo coq/riscv_extras.vo
-generated_models/coq/riscv_duopod.vo: generated_models/coq/riscv_duopod_types.vo coq/riscv_extras.vo
+generated_definitions/coq/riscv.vo: generated_definitions/coq/riscv_types.vo handwritten_support/riscv_extras.vo
+generated_definitions/coq/riscv_duopod.vo: generated_definitions/coq/riscv_duopod_types.vo handwritten_support/riscv_extras.vo
 
 # we exclude prelude.sail here, most code there should move to sail lib
 #LOC_FILES:=$(SAIL_SRCS) main.sail
 #include $(SAIL_DIR)/etc/loc.mk
 
 clean:
-	-rm -rf generated_models/ocaml/* generated_models/c/*
-	-rm -rf generated_models/lem/* generated_models/isabelle/* generated_models/hol4/* generated_models/coq/*
+	-rm -rf generated_definitions/ocaml/* generated_definitions/c/*
+	-rm -rf generated_definitions/lem/* generated_definitions/isabelle/* generated_definitions/hol4/* generated_definitions/coq/*
 	-rm -f c_emulator/riscv_sim c_emulator/riscv_rvfi
 	-rm -rf ocaml_emulator/_sbuild ocaml_emulator/_build ocaml_emulator/riscv_ocaml_sim ocaml_emulator/tracecmp
 	-rm -f *.gcno *.gcda
