@@ -127,7 +127,8 @@ c_emulator/riscv_rvfi: generated_models/c/riscv_rvfi_model.c c_emulator/riscv_si
 	gcc -g $(C_WARNINGS) $(C_FLAGS) $< -DRVFI_DII c_emulator/riscv_sim.c $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
 latex: $(SAIL_SRCS) Makefile
-	$(SAIL) -latex -latex_prefix sail -o sail_ltx $(SAIL_SRCS)
+	mkdir -p generated_models/latex
+	$(SAIL) -latex -latex_prefix sail -o generated_models/latex $(SAIL_SRCS)
 
 generated_models/lem/riscv_duopod.lem: $(addprefix model/, prelude.sail riscv_duopod.sail)
 	mkdir -p generated_models/lem
