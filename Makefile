@@ -130,10 +130,14 @@ latex: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/latex
 	$(SAIL) -latex -latex_prefix sail -o generated_definitions/latex $(SAIL_SRCS)
 
+generated_definitions/isabelle/ROOT: handwritten_support/ROOT
+	mkdir -p generated_definitions/isabelle
+	cp handwritten_support/ROOT generated_definitions/isabelle/
+
 generated_definitions/lem/riscv_duopod.lem: $(addprefix model/, prelude.sail riscv_duopod.sail)
 	mkdir -p generated_definitions/lem
-	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem -lem_mwords -lem_lib Riscv_extras -o riscv_duopod $^
-generated_definitions/isabelle/Riscv_duopod.thy: generated_definitions/lem/riscv_duopod.lem handwritten_support/riscv_extras.lem
+	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem -isa_output_dir generated_definitions/isabelle -lem_mwords -lem_lib Riscv_extras -o riscv_duopod $^
+generated_definitions/isabelle/Riscv_duopod.thy: generated_definitions/isabelle/ROOT generated_definitions/lem/riscv_duopod.lem handwritten_support/riscv_extras.lem
 	lem -isa -outdir generated_definitions/isabelle -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
 		handwritten_support/riscv_extras.lem \
 		generated_definitions/lem/riscv_duopod_types.lem \
@@ -145,14 +149,13 @@ riscv_isa: generated_definitions/isabelle/Riscv.thy
 
 generated_definitions/lem/riscv.lem: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/lem
-	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem -o riscv -lem_mwords -lem_lib Riscv_extras $(SAIL_SRCS)
+	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem -isa_output_dir generated_definitions/isabelle -o riscv -lem_mwords -lem_lib Riscv_extras $(SAIL_SRCS)
 
 generated_definitions/lem/riscv_sequential.lem: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/lem
-	$(SAIL_DIR)/sail -lem -lem_output_dir generated_definitions/lem -lem_sequential -o riscv_sequential -lem_mwords -lem_lib Riscv_extras_sequential $(SAIL_SRCS)
+	$(SAIL_DIR)/sail -lem -lem_output_dir generated_definitions/lem -isa_output_dir generated_definitions/isabelle -lem_sequential -o riscv_sequential -lem_mwords -lem_lib Riscv_extras_sequential $(SAIL_SRCS)
 
-generated_definitions/isabelle/Riscv.thy: generated_definitions/lem/riscv.lem handwritten_support/riscv_extras.lem Makefile
-	mkdir -p generated_definitions/isabelle
+generated_definitions/isabelle/Riscv.thy: generated_definitions/isabelle/ROOT generated_definitions/lem/riscv.lem handwritten_support/riscv_extras.lem Makefile
 	lem -isa -outdir generated_definitions/isabelle -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
 		handwritten_support/riscv_extras.lem \
 		generated_definitions/lem/riscv_types.lem \
