@@ -127,9 +127,9 @@ mapping encdec_iop : iop <-> bits(3) = {
   RISCV_ADDI  <-> 0b000,
   RISCV_SLTI  <-> 0b010,
   RISCV_SLTIU <-> 0b011,
-  RISCV_XORI  <-> 0b100,
+  RISCV_ANDI  <-> 0b111,
   RISCV_ORI   <-> 0b110,
-  RISCV_ANDI  <-> 0b111
+  RISCV_XORI  <-> 0b100
 }
 
 mapping clause encdec = ITYPE(imm, rs1, rd, op) <-> imm @ rs1 @ encdec_iop(op) @ rd @ 0b0010011
@@ -141,9 +141,9 @@ function clause execute (ITYPE (imm, rs1, rd, op)) = {
     RISCV_ADDI  => rs1_val + immext,
     RISCV_SLTI  => EXTZ(rs1_val <_s immext),
     RISCV_SLTIU => EXTZ(rs1_val <_u immext),
-    RISCV_XORI  => rs1_val ^ immext,
+    RISCV_ANDI  => rs1_val & immext,
     RISCV_ORI   => rs1_val | immext,
-    RISCV_ANDI  => rs1_val & immext
+    RISCV_XORI  => rs1_val ^ immext
   };
   X(rd) = result;
   true
@@ -198,30 +198,30 @@ mapping clause assembly = SHIFTIOP(shamt, rs1, rd, op)
 union clause ast = RTYPE : (regbits, regbits, regbits, rop)
 
 mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_ADD)  <-> 0b0000000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SUB)  <-> 0b0100000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SLL)  <-> 0b0000000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011
 mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SLT)  <-> 0b0000000 @ rs2 @ rs1 @ 0b010 @ rd @ 0b0110011
 mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SLTU) <-> 0b0000000 @ rs2 @ rs1 @ 0b011 @ rd @ 0b0110011
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_XOR)  <-> 0b0000000 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0110011
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SRL)  <-> 0b0000000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SRA)  <-> 0b0100000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_OR)   <-> 0b0000000 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0110011
 mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_AND)  <-> 0b0000000 @ rs2 @ rs1 @ 0b111 @ rd @ 0b0110011
+mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_OR)   <-> 0b0000000 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0110011
+mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_XOR)  <-> 0b0000000 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0110011
+mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SLL)  <-> 0b0000000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011
+mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SRL)  <-> 0b0000000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011
+mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SUB)  <-> 0b0100000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SRA)  <-> 0b0100000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011
 
 function clause execute (RTYPE(rs2, rs1, rd, op)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   let result : xlenbits = match op {
     RISCV_ADD  => rs1_val + rs2_val,
-    RISCV_SUB  => rs1_val - rs2_val,
-    RISCV_SLL  => rs1_val << (rs2_val[5..0]),
     RISCV_SLT  => EXTZ(rs1_val <_s rs2_val),
     RISCV_SLTU => EXTZ(rs1_val <_u rs2_val),
-    RISCV_XOR  => rs1_val ^ rs2_val,
-    RISCV_SRL  => rs1_val >> (rs2_val[5..0]),
-    RISCV_SRA  => shift_right_arith64(rs1_val, rs2_val[5..0]),
+    RISCV_AND  => rs1_val & rs2_val,
     RISCV_OR   => rs1_val | rs2_val,
-    RISCV_AND  => rs1_val & rs2_val
+    RISCV_XOR  => rs1_val ^ rs2_val,
+    RISCV_SLL  => rs1_val << (rs2_val[5..0]),
+    RISCV_SRL  => rs1_val >> (rs2_val[5..0]),
+    RISCV_SUB  => rs1_val - rs2_val,
+    RISCV_SRA  => shift_right_arith64(rs1_val, rs2_val[5..0])
   };
   X(rd) = result;
   true
@@ -229,15 +229,15 @@ function clause execute (RTYPE(rs2, rs1, rd, op)) = {
 
 mapping rtype_mnemonic : rop <-> string = {
   RISCV_ADD  <-> "add",
-  RISCV_SUB  <-> "sub",
-  RISCV_SLL  <-> "sll",
   RISCV_SLT  <-> "slt",
   RISCV_SLTU <-> "sltu",
-  RISCV_XOR  <-> "xor",
-  RISCV_SRL  <-> "srl",
-  RISCV_SRA  <-> "sra",
+  RISCV_AND  <-> "and",
   RISCV_OR   <-> "or",
-  RISCV_AND  <-> "and"
+  RISCV_XOR  <-> "xor",
+  RISCV_SLL  <-> "sll",
+  RISCV_SRL  <-> "srl",
+  RISCV_SUB  <-> "sub",
+  RISCV_SRA  <-> "sra"
 }
 
 mapping clause assembly = RTYPE(rs2, rs1, rd, op)
@@ -281,10 +281,14 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) =
     TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
     TR_Address(addr) =>
       match width {
-        BYTE   => process_load(rd, vaddr, mem_read(addr, 1, aq, rl, false), is_unsigned),
-        HALF   => process_load(rd, vaddr, mem_read(addr, 2, aq, rl, false), is_unsigned),
-        WORD   => process_load(rd, vaddr, mem_read(addr, 4, aq, rl, false), is_unsigned),
-        DOUBLE => process_load(rd, vaddr, mem_read(addr, 8, aq, rl, false), is_unsigned)
+        BYTE   =>
+	  process_load(rd, vaddr, mem_read(addr, 1, aq, rl, false), is_unsigned),
+        HALF   =>
+	  process_load(rd, vaddr, mem_read(addr, 2, aq, rl, false), is_unsigned),
+        WORD   =>
+	  process_load(rd, vaddr, mem_read(addr, 4, aq, rl, false), is_unsigned),
+        DOUBLE =>
+	  process_load(rd, vaddr, mem_read(addr, 8, aq, rl, false), is_unsigned)
       }
   }
 
