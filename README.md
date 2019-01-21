@@ -7,8 +7,8 @@ in the [Sail repository](https://github.com/rems-project/sail).
 
 It currently implements enough of RV64IMAC to boot a conventional OS
 with a terminal output device.  Work on a 32-bit model is ongoing.
-The model specifies assembly language formats of the instructions, and
-implements the corresponding encoders and decoders.
+The model specifies assembly language formats of the instructions, 
+the corresponding encoders and decoders, and the instruction semantics.
 
 Directory Structure
 -------------------
@@ -135,7 +135,7 @@ The DTB can be generated using Spike and the DeviceTree compiler
 spike --dump-dts . | dtc > spike.dtb
 ```
 
-(The '.' above is to workaround a minor Spike bug and may not be
+(The '.' above is to work around a minor Spike bug and may not be
 needed in future Spike versions.)
 
 Caveats for OS boot
