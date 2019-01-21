@@ -772,8 +772,6 @@ val vector_concat = {ocaml: "append", lem: "append_list"} : forall ('n : Int) ('
 
 overload append = {bitvector_concat, vector_concat}
 
-val not_bool = {coq: "negb", _: "not"} : bool -> bool
-
 val not_vec = {c: "not_bits", _: "not_vec"} : forall 'n. bits('n) -> bits('n)
 
 overload ~ = {not_bool, not_vec}
@@ -899,29 +897,21 @@ overload operator * = {mult_atom, mult_int, mult_real}
 
 val Sqrt = {ocaml: "sqrt_real", lem: "realSqrt"} : real -> real
 
-val gteq_int = {coq: "Z.geb", _: "gteq"} : (int, int) -> bool
-
 val gteq_real = {ocaml: "gteq_real", lem: "gteq"} : (real, real) -> bool
 
-overload operator >= = {gteq_atom, gteq_int, gteq_real}
-
-val lteq_int = {coq: "Z.leb", _: "lteq"} : (int, int) -> bool
+overload operator >= = {gteq_real}
 
 val lteq_real = {ocaml: "lteq_real", lem: "lteq"} : (real, real) -> bool
 
-overload operator <= = {lteq_atom, lteq_int, lteq_real}
-
-val gt_int = {coq: "Z.gtb", _: "gt"} : (int, int) -> bool
+overload operator <= = {lteq_real}
 
 val gt_real = {ocaml: "gt_real", lem: "gt"} : (real, real) -> bool
 
-overload operator > = {gt_atom, gt_int, gt_real}
-
-val lt_int = {coq: "Z.ltb", _: "lt"} : (int, int) -> bool
+overload operator > = {gt_real}
 
 val lt_real = {ocaml: "lt_real", lem: "lt"} : (real, real) -> bool
 
-overload operator < = {lt_atom, lt_int, lt_real}
+overload operator < = {lt_real}
 
 val RoundDown = {ocaml: "round_down", lem: "realFloor"} : real -> int
 

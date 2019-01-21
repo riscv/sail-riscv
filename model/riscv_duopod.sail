@@ -27,7 +27,7 @@ and rX (r if r > 0) = Xs[r]
 val wX : forall 'n, 0 <= 'n < 32. (regno('n), xlen_t) -> unit effect {wreg}
 
 function wX (r, v) =
-  if (r != 0) then {
+  if r != 0 then {
      Xs[r] = v;
   }
 
@@ -37,17 +37,18 @@ overload X = {rX, wX}
 
 val MEMr : forall 'n, 'n >= 0. (xlen_t, atom('n)) -> bits(8 * 'n) effect {rmem}
 function MEMr (addr, width) =
-  match __RISCV_read(addr, width, false, false, false) { Some(v) => v, None() => zeros(8 * width) }
+  match __RISCV_read(addr, width, false, false, false) {
+    Some(v) => v,
+    None() => zeros(8 * width)
+  }
 
 /* Instruction decode and execute */
-enum iop = {RISCV_ADDI, RISCV_SLTI, RISCV_SLTIU, RISCV_XORI, RISCV_ORI, RISCV_ANDI} /* immediate ops */
+enum iop = {RISCV_ADDI, RISCV_SLTI, RISCV_SLTIU, RISCV_XORI, RISCV_ORI, RISCV_ANDI}
 scattered union ast
 
 val decode : bits(32) -> option(ast) effect pure
-scattered function decode
 
 val execute : ast -> unit effect {rmem, rreg, wreg}
-scattered function execute
 
 /* ****************************************************************** */
 
@@ -81,6 +82,3 @@ function clause execute(LOAD(imm, rs1, rd)) =
 
 function clause decode _ = None()
 
-end ast
-end decode
-end execute
