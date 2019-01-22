@@ -61,7 +61,7 @@ else
 C_FLAGS += -O2
 endif
 
-all: ocaml_emulator/riscv_ocaml_sim c_emulator/riscv_sim riscv_isa riscv_coq
+all: ocaml_emulator/riscv_ocaml_sim c_emulator/riscv_sim riscv_isa riscv_coq riscv_hol
 
 .PHONY: all riscv_coq riscv_isa
 
