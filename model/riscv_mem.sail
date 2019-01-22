@@ -12,13 +12,13 @@ function phys_mem_read forall 'n, 'n >= 0. (t : ReadType, addr : xlenbits, width
   match (t, __RISCV_read(addr, width, aq, rl, res)) {
     (Instruction, None()) => MemException(E_Fetch_Access_Fault),
     (Data, None())        => MemException(E_Load_Access_Fault),
-    (_, Some(v))          => { print_mem("mem[" ^ t ^ "," ^ BitStr(addr) ^ "] -> " ^ BitStr(v));
+    (_, Some(v))          => { /* print_mem("mem[" ^ t ^ "," ^ BitStr(addr) ^ "] -> " ^ BitStr(v)); */
                                MemValue(v) }
   }
 
 function checked_mem_read forall 'n, 'n > 0. (t : ReadType, addr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
   /* treat MMIO regions as not executable for now. TODO: this should actually come from PMP/PMA. */
-  if   t == Data & within_mmio_readable(addr, width)
+  if   readType_is_Data(t) & within_mmio_readable(addr, width)
   then mmio_read(addr, width)
   else if within_phys_mem(addr, width)
   then phys_mem_read(t, addr, width, aq, rl, res)
@@ -97,7 +97,7 @@ val MEMea_conditional_release = {lem: "MEMea_conditional_release", coq: "MEMea_c
 val MEMea_conditional_strong_release = {lem: "MEMea_conditional_strong_release", coq: "MEMea_conditional_strong_release", _: "memea"} : forall 'n.
   (xlenbits, atom('n)) -> unit effect {eamem}
 
-val mem_write_ea : forall 'n. (xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(unit) effect {eamem, escape}
+val mem_write_ea : forall 'n. (xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(unit) effect {eamem}
 
 function mem_write_ea (addr, width, aq, rl, con) = {
   if (rl | con) & (~ (is_aligned_addr(addr, width)))
@@ -107,16 +107,16 @@ function mem_write_ea (addr, width, aq, rl, con) = {
     (false, true,  false) => MemValue(MEMea_release(addr, width)),
     (false, false, true)  => MemValue(MEMea_conditional(addr, width)),
     (false, true , true)  => MemValue(MEMea_conditional_release(addr, width)),
-    (true,  false, false) => throw(Error_not_implemented("store.aq")),
+    (true,  false, false) => MemValue(MEMea(addr, width)), //throw(Error_not_implemented("store.aq")),
     (true,  true,  false) => MemValue(MEMea_strong_release(addr, width)),
-    (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
+    (true,  false, true)  => MemValue(MEMea(addr, width)), //throw(Error_not_implemented("sc.aq")),
     (true,  true , true)  => MemValue(MEMea_conditional_strong_release(addr, width))
   }
 }
 
 // only used for actual memory regions, to avoid MMIO effects
 function phys_mem_write forall 'n. (addr : xlenbits, width : atom('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) = {
-  print_mem("mem[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data));
+  /* print_mem("mem[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data)); */
   MemValue(__RISCV_write(addr, width, data))
 }
 
@@ -160,7 +160,7 @@ function rvfi_write (addr, width, value) = ()
 $endif
 
 /* NOTE: The wreg effect is due to MMIO, the rreg is due to checking mtime. */
-val mem_write_value : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n), bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, rreg, wreg, escape}
+val mem_write_value : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n), bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, rreg, wreg}
 
 function mem_write_value (addr, width, value, aq, rl, con) = {
   rvfi_write(addr, width, value);
@@ -171,9 +171,9 @@ function mem_write_value (addr, width, value, aq, rl, con) = {
     (false, true,  false) => MEMval_release(addr, width, value),
     (false, false, true)  => MEMval_conditional(addr, width, value),
     (false, true,  true)  => MEMval_conditional_release(addr, width, value),
-    (true,  false, false) => throw(Error_not_implemented("store.aq")),
+    (true,  false, false) => checked_mem_write(addr, width, value), //throw(Error_not_implemented("store.aq")),
     (true,  true,  false) => MEMval_strong_release(addr, width, value),
-    (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
+    (true,  false, true)  => checked_mem_write(addr, width, value), //throw(Error_not_implemented("sc.aq")),
     (true,  true,  true)  => MEMval_conditional_strong_release(addr, width, value)
   }
 }

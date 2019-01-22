@@ -742,10 +742,10 @@ val vector_subrange = {ocaml: "subrange", lem: "subrange_vec_dec", coq: "subrang
   (bits('n), atom('m), atom('o)) -> bits('m - ('o - 1))
 */
 
-val bitvector_access = {c: "bitvector_access", ocaml: "access", lem: "access_vec_dec", coq: "access_vec_dec"} : forall ('n : Int) ('m : Int), 0 <= 'm < 'n.
+val bitvector_access = {c: "vector_access", ocaml: "access", lem: "access_vec_dec", coq: "access_vec_dec"} : forall ('n : Int) ('m : Int), 0 <= 'm < 'n.
   (bits('n), atom('m)) -> bit
 
-val any_vector_access = {ocaml: "access", lem: "access_list_dec", coq: "vec_access_dec"} : forall ('n : Int) ('m : Int) ('a : Type), 0 <= 'm < 'n.
+val any_vector_access = {c: "vector_access", ocaml: "access", lem: "access_list_dec", coq: "vec_access_dec"} : forall ('n : Int) ('m : Int) ('a : Type), 0 <= 'm < 'n.
   (vector('n, dec, 'a), atom('m)) -> 'a
 
 overload vector_access = {bitvector_access, any_vector_access}
@@ -923,11 +923,11 @@ val abs_real = {ocaml: "abs_real", lem: "abs"} : real -> real
 
 overload abs = {abs_int, abs_real}
 
-val quotient_nat = {ocaml: "quotient", lem: "integerDiv"} : (nat, nat) -> nat
+val quotient_nat = {ocaml: "quotient", c: "tdiv_int", lem: "integerDiv"} : (nat, nat) -> nat
 
 val quotient_real = {ocaml: "quotient_real", lem: "realDiv"} : (real, real) -> real
 
-val quotient = {ocaml: "quotient", lem: "integerDiv"} : (int, int) -> int
+val quotient = {ocaml: "quotient", c: "tdiv_int", lem: "integerDiv"} : (int, int) -> int
 
 overload operator / = {quotient_nat, quotient, quotient_real}
 

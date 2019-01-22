@@ -11,6 +11,7 @@ val elf_entry = {
 val main : unit -> unit effect {barr, eamem, escape, exmem, rmem, rreg, wmv, wreg}
 
 function main () = {
+  startTime = get_time_ns();
 
   // PC = __GetSlice_int(64, elf_entry(), 0);
   PC = zero_extend(0x1000, 64);

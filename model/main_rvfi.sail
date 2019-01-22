@@ -44,13 +44,13 @@ function rvfi_step(step_no) = {
           F_RVC(h) => {
             match decodeCompressed(h) {
               None() => {
-                print("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") <no-decode>");
+                //print("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") <no-decode>");
                 instbits = EXTZ(h);
                 handle_illegal();
                 (false, true)
               },
               Some(ast) => {
-                print("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ ast);
+                //print("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ ast);
                 nextPC = PC + 2;
                 (execute(ast), true)
               }
@@ -59,13 +59,13 @@ function rvfi_step(step_no) = {
           F_Base(w) => {
             match decode(w) {
               None() => {
-                print("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") <no-decode>");
+                //print("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") <no-decode>");
                 instbits = EXTZ(w);
                 handle_illegal();
                 (false, true)
               },
               Some(ast) => {
-                print("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ ast);
+                //print("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ ast);
                 nextPC = PC + 4;
                 (execute(ast), true)
               }
@@ -90,13 +90,13 @@ function main () = {
 
   // PC = __GetSlice_int(64, elf_entry(), 0);
   rvfi_set_instr_packet(0x0000000000000000);
-  print_bits("", rvfi_get_cmd());
+  //print_bits("", rvfi_get_cmd());
   let _ = rvfi_step(0);
   rvfi_zero_exec_packet();
   rvfi_halt_exec_packet();
   let _ = rvfi_get_exec_packet();
   PC = zero_extend(0x1000, 64);
-  print_bits("PC = ", PC);
+  //print_bits("PC = ", PC);
   try {
     init_platform();
     init_sys();

@@ -566,7 +566,7 @@ void run_sail(void)
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
       stepped = zstep(sail_step);
       if (have_exception) goto step_exception;
-      flush_logs();
+      //flush_logs();
       KILL(sail_int)(&sail_step);
     }
     if (stepped) {

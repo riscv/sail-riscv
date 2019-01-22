@@ -46,7 +46,7 @@ function checkPTEPermission(ac : AccessType, priv : Privilege, mxr : bool, do_su
 }
 
 function update_PTE_Bits(p : PTE_Bits, a : AccessType) -> option(PTE_Bits) = {
-  let update_d = (a == Write | a == ReadWrite) & p.D() == false; // dirty-bit
+  let update_d = (is_Write(a) | is_ReadWrite(a)) & p.D() == false; // dirty-bit
   let update_a = p.A() == false;                                 // accessed-bit
   if update_d | update_a then {
     let np = update_A(p, true);

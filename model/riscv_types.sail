@@ -164,7 +164,7 @@ function wX (r, v) = {
   if (r != 0) then {
      rvfi_wX(r,v);
      // Xs[r] = v;
-     print_reg("x" ^ string_of_int(r) ^ " <- " ^ BitStr(v));
+     // print_reg("x" ^ string_of_int(r) ^ " <- " ^ BitStr(v));
   }
 }
 
@@ -270,7 +270,7 @@ function privLevel_to_str (p) =
 
 enum AccessType = {Read, Write, ReadWrite, Execute}
 
-val cast accessType_to_str : AccessType -> string
+val accessType_to_str : AccessType -> string
 function accessType_to_str (a) =
   match (a) {
     Read      => "R",
@@ -279,13 +279,24 @@ function accessType_to_str (a) =
     Execute   => "X"
   }
 
+function is_Read(a: AccessType) -> bool = match a { Read => true, _ => false }
+function is_Write(a: AccessType) -> bool = match a { Write => true, _ => false }
+function is_ReadWrite(a: AccessType) -> bool = match a { ReadWrite => true, _ => false }
+function is_Execute(a: AccessType) -> bool = match a { Execute => true, _ => false }
+
 enum ReadType   = {Instruction, Data}
 
-val cast readType_to_str : ReadType -> string
+val readType_to_str : ReadType -> string
 function readType_to_str (r) =
   match (r) {
     Instruction => "I",
     Data        => "D"
+  }
+
+function readType_is_Data(r: ReadType) -> bool =
+  match r {
+    Data => true,
+    _ => false
   }
 
 enum word_width = {BYTE, HALF, WORD, DOUBLE}

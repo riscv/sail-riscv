@@ -42,14 +42,30 @@ function fetch() -> FetchResult =
     }
   }
 
+val "get_time_ns" : unit -> int
+
+register startTime : int
+register instCount : int
+
 /* returns whether to increment the step count in the trace */
 val step : int -> bool effect {barr, eamem, escape, exmem, rmem, rreg, wmv, wreg}
 function step(step_no) = {
+  if (instCount == 1000000) then {
+    endTime = get_time_ns();
+    elapsed = endTime - startTime;
+    inst_1e9 = instCount * 1000000000;
+    ips = inst_1e9 / elapsed;
+    print_int("*IPS*: ", ips);
+    startTime = get_time_ns();
+    instCount = 0;
+  };
+  instCount = instCount + 1;
+
   minstret_written = false;     /* see note for minstret */
   let (retired, stepped) : (bool, bool) =
     match curInterrupt(cur_privilege, mip, mie, mideleg) {
       Some(intr, priv) => {
-        print_bits("Handling interrupt: ", intr);
+        //print_bits("Handling interrupt: ", intr);
         handle_interrupt(intr, priv);
         (false, false)
       },
@@ -62,13 +78,13 @@ function step(step_no) = {
           F_RVC(h) => {
             match decodeCompressed(h) {
               None() => {
-                print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") <no-decode>");
+                //print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") <no-decode>");
                 instbits = EXTZ(h);
                 handle_illegal();
                 (false, true)
               },
               Some(ast) => {
-                print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ ast);
+                //print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ ast);
                 nextPC = PC + 2;
                 (execute(ast), true)
               }
@@ -77,13 +93,13 @@ function step(step_no) = {
           F_Base(w) => {
             match decode(w) {
               None() => {
-                print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") <no-decode>");
+                //print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") <no-decode>");
                 instbits = EXTZ(w);
                 handle_illegal();
                 (false, true)
               },
               Some(ast) => {
-                print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ ast);
+                //print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ ast);
                 nextPC = PC + 4;
                 (execute(ast), true)
               }
