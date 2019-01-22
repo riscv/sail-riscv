@@ -1,6 +1,10 @@
 A guide to reading the specification
 ------------------------------------
 
+The model is written in the Sail language.  Although specifications in
+Sail are quite readable as pseudocode, it would help to have the [Sail
+manual](https://github.com/rems-project/sail/blob/sail2/manual.pdf) handy.
+
 The model contains the following Sail modules in the `model` directory:
 
 - `prelude.sail` contains useful Sail library functions.  This file
