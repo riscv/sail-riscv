@@ -7,7 +7,7 @@ in the [Sail repository](https://github.com/rems-project/sail).
 
 It currently implements enough of RV64IMAC to boot a conventional OS
 with a terminal output device.  Work on a 32-bit model is ongoing.
-The model specifies assembly language formats of the instructions, 
+The model specifies assembly language formats of the instructions,
 the corresponding encoders and decoders, and the instruction semantics.
 
 Directory Structure
@@ -32,6 +32,8 @@ sail-riscv
 |
 +---- c_emulator              // supporting platform files for C emulator
 +---- ocaml_emulator          // supporting platform files for OCaml emulator
+|
++---- doc                     // documentation, including a reading-guide
 |
 +---- test                    // test files
       |
