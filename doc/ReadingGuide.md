@@ -8,7 +8,9 @@ manual](https://github.com/rems-project/sail/blob/sail2/manual.pdf) handy.
 The model contains the following Sail modules in the `model` directory:
 
 - `prelude.sail` contains useful Sail library functions.  This file
-  should be referred to as needed.
+  should be referred to as needed.  The lowest level memory access
+  primitives are defined in this file, and are typically implemented
+  by the various Sail backends.
 
 - `riscv_types.sail` contains some basic RISC-V definitions.  This
   file should be read first, since it provides basic definitions that
@@ -69,3 +71,6 @@ The model contains the following Sail modules in the `model` directory:
 
 - `riscv_analysis.sail` is used in the formal operational RVWMO memory
   model.
+
+Note that the files above are listed in dependency order, i.e. files
+earlier in the order do not depend on later files.
