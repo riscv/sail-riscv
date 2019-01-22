@@ -13,11 +13,12 @@ privilege level (such as hypervisor-mode registers), additional access
 control checks would need to be provided as is done for the standard
 CSRs in `riscv_sys.sail`.
 
-Adding a new privilege level will normally be accompanied by defining
-new exception causes and their encodings.  This will require modifying
-and extending the existing definitions for privilege levels and
-exceptions in `riscv_types.sail`, and modifying the exception handling
-and privilege transition functions in `riscv_sys.sail`.
+Adding a new privilege level or functionality restricted by privilege
+level will normally be accompanied by defining new exception causes
+and their encodings.  This will require modifying and extending the
+existing definitions for privilege levels and exceptions in
+`riscv_types.sail`, and modifying the exception handling and privilege
+transition functions in `riscv_sys.sail`.
 
 Adding low-level platform functionality
 ---------------------------------------
@@ -28,14 +29,14 @@ purview of the formal model itself, and typically is not done
 directly in the Sail model.  However, bindings to this external
 functionality can be provided to Sail definitions using the `extern`
 construct of the Sail language. `riscv_platform.sail` can be examined
-for how this is done for the SiFive core-local interrupt (CLINT)
-controller, and the HTIF timer and terminal devices.  The
+to see how this is done for the SiFive core-local interrupt (CLINT)
+controller, the HTIF timer and terminal devices.  The
 implementation of the actual functionality provided by these MMIO
 devices would need to be added to the C and OCaml emulators.
 
 If this functionality requires the definition of new interrupt
 sources, their encodings would need to be added to `riscv_types.sail`,
-and their delegation and handling to `riscv_sys.sail`.
+and their delegation and handling added to `riscv_sys.sail`.
 
 Interposing on memory access
 ----------------------------
@@ -53,7 +54,7 @@ physical memory access is implemented in `riscv_mem.sail` with helpers
 in `prelude.sail`.
 
 Virtual memory is implemented in `riscv_vmem.sail`, and defining new
-address translation schemes or will require updating modifying the
+address translation schemes will require updating modifying the
 top-level `translateAddr` function.  Any access control checks on
 virtual addresses and the specifics of the address translation can be
 specified in a separate file.  This functionality can access any newly

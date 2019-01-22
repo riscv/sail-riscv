@@ -9,12 +9,12 @@ The model contains the following Sail modules in the `model` directory:
 
 - `prelude.sail` contains useful Sail library functions.  This file
   should be referred to as needed.  The lowest level memory access
-  primitives are defined in this file, and are typically implemented
+  primitives are defined in this file, and are implemented
   by the various Sail backends.
 
 - `riscv_types.sail` contains some basic RISC-V definitions.  This
   file should be read first, since it provides basic definitions that
-  are pervasively used throughout the specification, such as privilege
+  are used throughout the specification, such as privilege
   levels, registers and register access, interrupt and exception
   definitions and numbering, and types used to define memory accesses.
 
