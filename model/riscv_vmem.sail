@@ -139,6 +139,113 @@ union PTW_Result = {
   PTW_Failure: PTW_Error
 }
 
+val walk39_3 : (vaddr39, AccessType, Privilege, bool, bool, paddr39, nat, bool) -> PTW_Result effect {rmem, escape}
+function walk39_3(vaddr, ac, priv, mxr, do_sum, ptb, level, global) -> PTW_Result = {
+  let va = Mk_SV39_Vaddr(vaddr);
+  let pt_ofs : paddr39 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV39_LEVEL_BITS))[(SV39_LEVEL_BITS - 1) .. 0]),
+                                PTE39_LOG_SIZE);
+  let pte_addr = ptb + pt_ofs;
+  /* FIXME: we assume here that walks only access physical-memory-backed addresses, and not MMIO regions. */
+  match (phys_mem_read(Data, EXTZ(pte_addr), 8, false, false, false)) {
+    MemException(_) => {
+      PTW_Failure(PTW_Access)
+    },
+    MemValue(v) => {
+      let pte = Mk_SV39_PTE(v);
+      let pbits = pte.BITS();
+      let pattr = Mk_PTE_Bits(pbits);
+      let is_global = global | (pattr.G() == true);
+      if isInvalidPTE(pbits) then {
+        PTW_Failure(PTW_Invalid_PTE)
+      } else {
+        if isPTEPtr(pbits) then {
+          if level == 0 then {
+            /* last-level PTE contains a pointer instead of a leaf */
+            PTW_Failure(PTW_Invalid_PTE)
+          } else {
+            /* walk down the pointer to the next level */
+            walk39_3(vaddr, ac, priv, mxr, do_sum, EXTZ(shiftl(pte.PPNi(), PAGESIZE_BITS)), level - 1, is_global)
+          }
+        } else { /* leaf PTE */
+          if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pattr)) then {
+            PTW_Failure(PTW_No_Permission)
+          } else {
+            if level > 0 then { /* superpage */
+              /* fixme hack: to get a mask of appropriate size */
+              let mask = shiftl(pte.PPNi() ^ pte.PPNi() ^ EXTZ(0b1), level * SV39_LEVEL_BITS) - 1;
+              if (pte.PPNi() & mask) != EXTZ(0b0) then {
+                /* misaligned superpage mapping */
+                PTW_Failure(PTW_Misaligned)
+              } else {
+                /* add the appropriate bits of the VPN to the superpage PPN */
+                let ppn = pte.PPNi() | (EXTZ(va.VPNi()) & mask);
+                PTW_Success(append(ppn, va.PgOfs()), pte, pte_addr, level, is_global)
+              }
+            } else {
+              /* normal leaf PTE */
+              PTW_Success(append(pte.PPNi(), va.PgOfs()), pte, pte_addr, level, is_global)
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+val walk39_2 : (vaddr39, AccessType, Privilege, bool, bool, paddr39, nat, bool) -> PTW_Result effect {rmem, escape}
+function walk39_2(vaddr, ac, priv, mxr, do_sum, ptb, level, global) -> PTW_Result = {
+  let va = Mk_SV39_Vaddr(vaddr);
+  let pt_ofs : paddr39 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV39_LEVEL_BITS))[(SV39_LEVEL_BITS - 1) .. 0]),
+                                PTE39_LOG_SIZE);
+  let pte_addr = ptb + pt_ofs;
+  /* FIXME: we assume here that walks only access physical-memory-backed addresses, and not MMIO regions. */
+  match (phys_mem_read(Data, EXTZ(pte_addr), 8, false, false, false)) {
+    MemException(_) => {
+      PTW_Failure(PTW_Access)
+    },
+    MemValue(v) => {
+      let pte = Mk_SV39_PTE(v);
+      let pbits = pte.BITS();
+      let pattr = Mk_PTE_Bits(pbits);
+      let is_global = global | (pattr.G() == true);
+      if isInvalidPTE(pbits) then {
+        PTW_Failure(PTW_Invalid_PTE)
+      } else {
+        if isPTEPtr(pbits) then {
+          if level == 0 then {
+            /* last-level PTE contains a pointer instead of a leaf */
+            PTW_Failure(PTW_Invalid_PTE)
+          } else {
+            /* walk down the pointer to the next level */
+            walk39_3(vaddr, ac, priv, mxr, do_sum, EXTZ(shiftl(pte.PPNi(), PAGESIZE_BITS)), level - 1, is_global)
+          }
+        } else { /* leaf PTE */
+          if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pattr)) then {
+            PTW_Failure(PTW_No_Permission)
+          } else {
+            if level > 0 then { /* superpage */
+              /* fixme hack: to get a mask of appropriate size */
+              let mask = shiftl(pte.PPNi() ^ pte.PPNi() ^ EXTZ(0b1), level * SV39_LEVEL_BITS) - 1;
+              if (pte.PPNi() & mask) != EXTZ(0b0) then {
+                /* misaligned superpage mapping */
+                PTW_Failure(PTW_Misaligned)
+              } else {
+                /* add the appropriate bits of the VPN to the superpage PPN */
+                let ppn = pte.PPNi() | (EXTZ(va.VPNi()) & mask);
+                PTW_Success(append(ppn, va.PgOfs()), pte, pte_addr, level, is_global)
+              }
+            } else {
+              /* normal leaf PTE */
+              PTW_Success(append(pte.PPNi(), va.PgOfs()), pte, pte_addr, level, is_global)
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 val walk39 : (vaddr39, AccessType, Privilege, bool, bool, paddr39, nat, bool) -> PTW_Result effect {rmem, escape}
 function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) -> PTW_Result = {
   let va = Mk_SV39_Vaddr(vaddr);
@@ -176,7 +283,7 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) -> PTW_Result 
             PTW_Failure(PTW_Invalid_PTE)
           } else {
             /* walk down the pointer to the next level */
-            walk39(vaddr, ac, priv, mxr, do_sum, EXTZ(shiftl(pte.PPNi(), PAGESIZE_BITS)), level - 1, is_global)
+            walk39_2(vaddr, ac, priv, mxr, do_sum, EXTZ(shiftl(pte.PPNi(), PAGESIZE_BITS)), level - 1, is_global)
           }
         } else { /* leaf PTE */
           if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pattr)) then {

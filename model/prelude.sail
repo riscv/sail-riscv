@@ -776,7 +776,7 @@ val not_vec = {c: "not_bits", _: "not_vec"} : forall 'n. bits('n) -> bits('n)
 
 overload ~ = {not_bool, not_vec}
 
-val neq_vec = {lem: "neq"} : forall 'n. (bits('n), bits('n)) -> bool
+val neq_vec = {c: "neq_bits", lem: "neq"} : forall 'n. (bits('n), bits('n)) -> bool
 
 function neq_vec (x, y) = not_bool(eq_vec(x, y))
 
@@ -969,35 +969,40 @@ function __RISCV_write (addr, width, data) = {
 val __TraceMemoryWrite : forall 'n 'm.
   (atom('n), bits('m), bits(8 * 'n)) -> unit
 
-val __ReadRAM = { lem: "MEMr", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
+val __ReadRAM = { lem: "MEMr", _ : "fast_read_ram" } : forall 'n, 0 < 'n <= 8.
+  (int('n), bits(64)) -> bits(8 * 'n) effect {rmem}
 
-val __ReadRAM_acquire = { lem: "MEMr_acquire", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
+val __ReadRAM_acquire = { lem: "MEMr_acquire", _ : "fast_read_ram" } : forall 'n, 0 < 'n <= 8.
+  (int('n), bits(64)) -> bits(8 * 'n) effect {rmem}
 
-val __ReadRAM_strong_acquire = { lem: "MEMr_strong_acquire", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
+val __ReadRAM_strong_acquire = { lem: "MEMr_strong_acquire", _ : "fast_read_ram" } : forall 'n, 0 < 'n <= 8.
+  (int('n), bits(64)) -> bits(8 * 'n) effect {rmem}
 
-val __ReadRAM_reserved = { lem: "MEMr_reserved", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
+val __ReadRAM_reserved = { lem: "MEMr_reserved", _ : "fast_read_ram" } : forall 'n, 0 < 'n <= 8.
+  (int('n), bits(64)) -> bits(8 * 'n) effect {rmem}
 
-val __ReadRAM_reserved_acquire = { lem: "MEMr_reserved_acquire", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
+val __ReadRAM_reserved_acquire = { lem: "MEMr_reserved_acquire", _ : "fast_read_ram" } : forall 'n, 0 < 'n <= 8.
+  (int('n), bits(64)) -> bits(8 * 'n) effect {rmem}
 
-val __ReadRAM_reserved_strong_acquire = { lem: "MEMr_reserved_strong_acquire", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
+val __ReadRAM_reserved_strong_acquire = { lem: "MEMr_reserved_strong_acquire", _ : "fast_read_ram" } : forall 'n, 0 < 'n <= 8.
+  (int('n), bits(64)) -> bits(8 * 'n) effect {rmem}
 
-val __RISCV_read : forall 'n, 'n >= 0. (bits(64), atom('n), bool, bool, bool) -> option(bits(8 * 'n)) effect {rmem}
+union ReadOption('n: Int), 0 <= 'n <= 64 = {
+  ReadSome : bits('n),
+  ReadNone : unit
+}
+
+val __RISCV_read : forall 'n, 0 < 'n <= 8. (bits(64), atom('n), bool, bool, bool) -> ReadOption(8 * 'n) effect {rmem}
 function __RISCV_read (addr, width, aq, rl, res) =
   match (aq, rl, res) {
-    (false, false, false) => Some(__ReadRAM(64, width, 0x0000_0000_0000_0000, addr)),
-    (true,  false, false) => Some(__ReadRAM_acquire(64, width, 0x0000_0000_0000_0000, addr)),
-    (true,  true,  false) => Some(__ReadRAM_strong_acquire(64, width, 0x0000_0000_0000_0000, addr)),
-    (false, false, true)  => Some(__ReadRAM_reserved(64, width, 0x0000_0000_0000_0000, addr)),
-    (true,  false, true)  => Some(__ReadRAM_reserved_acquire(64, width, 0x0000_0000_0000_0000, addr)),
-    (true,  true,  true)  => Some(__ReadRAM_reserved_strong_acquire(64, width, 0x0000_0000_0000_0000, addr)),
-    (false, true,  false) => None(),
-    (false, true,  true)  => None()
+    (false, false, false) => ReadSome(__ReadRAM(width, addr)),
+    (true,  false, false) => ReadSome(__ReadRAM_acquire(width, addr)),
+    (true,  true,  false) => ReadSome(__ReadRAM_strong_acquire(width, addr)),
+    (false, false, true)  => ReadSome(__ReadRAM_reserved(width, addr)),
+    (true,  false, true)  => ReadSome(__ReadRAM_reserved_acquire(width, addr)),
+    (true,  true,  true)  => ReadSome(__ReadRAM_reserved_strong_acquire(width, addr)),
+    (false, true,  false) => ReadNone(),
+    (false, true,  true)  => ReadNone()
   }
 
 val __TraceMemoryRead : forall 'n 'm. (atom('n), bits('m), bits(8 * 'n)) -> unit
