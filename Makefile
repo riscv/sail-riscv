@@ -26,7 +26,11 @@ SAIL_DIR=$(shell opam config var sail:share)
 SAIL:=sail
 endif
 SAIL_LIB_DIR:=$(SAIL_DIR)/lib
+export SAIL_LIB_DIR
 SAIL_SRC_DIR:=$(SAIL_DIR)/src
+
+LEM_DIR?=$(shell opam config var lem:share)
+export LEM_DIR
 
 #Coq BBV library hopefully checked out in directory above us
 BBV_DIR?=../bbv
@@ -146,6 +150,14 @@ generated_definitions/isabelle/Riscv_duopod.thy: generated_definitions/isabelle/
 riscv_duopod: generated_definitions/ocaml/riscv_duopod_ocaml generated_definitions/isabelle/Riscv_duopod.thy
 
 riscv_isa: generated_definitions/isabelle/Riscv.thy
+riscv_isa_build: riscv_isa
+ifeq ($(wildcard $(LEM_DIR)/isabelle-lib),)
+	$(error Lem directory not found. Please set the LEM_DIR environment variable)
+endif
+ifeq ($(wildcard $(SAIL_LIB_DIR)/isabelle),)
+	$(error lib directory of Sail not found. Please set the SAIL_LIB_DIR environment variable)
+endif
+	isabelle build -b -d $(LEM_DIR)/isabelle-lib -d $(SAIL_LIB_DIR)/isabelle -d generated_definitions/isabelle Sail-RISC-V
 
 generated_definitions/lem/riscv.lem: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/lem
@@ -162,20 +174,33 @@ generated_definitions/isabelle/Riscv.thy: generated_definitions/isabelle/ROOT ge
 		generated_definitions/lem/riscv.lem
 	sed -i 's/datatype ast/datatype (plugins only: size) ast/' generated_definitions/isabelle/Riscv_types.thy
 
-generated_definitions/hol4/riscvScript.sml: generated_definitions/lem/riscv.lem handwritten_support/riscv_extras.lem
+generated_definitions/hol4/Holmakefile: handwritten_support/Holmakefile
 	mkdir -p generated_definitions/hol4
+	cp handwritten_support/Holmakefile generated_definitions/hol4
+
+generated_definitions/hol4/riscvScript.sml: generated_definitions/hol4/Holmakefile generated_definitions/lem/riscv.lem handwritten_support/riscv_extras.lem
 	lem -hol -outdir generated_definitions/hol4 -lib $(SAIL_LIB_DIR)/hol -i $(SAIL_LIB_DIR)/hol/sail2_prompt_monad.lem -i $(SAIL_LIB_DIR)/hol/sail2_prompt.lem \
 	    -lib $(SAIL_DIR)/src/lem_interp -lib $(SAIL_DIR)/src/gen_lib \
 		handwritten_support/riscv_extras.lem \
 		generated_definitions/lem/riscv_types.lem \
 		generated_definitions/lem/riscv.lem
 
-$(addprefix generated_definitions/hol4/,riscvTheory.uo riscvTheory.ui): generated_definitions/hol4/riscvScript.sml
+$(addprefix generated_definitions/hol4/,riscvTheory.uo riscvTheory.ui): generated_definitions/hol4/Holmakefile generated_definitions/hol4/riscvScript.sml
+ifeq ($(wildcard $(LEM_DIR)/hol-lib),)
+	$(error Lem directory not found. Please set the LEM_DIR environment variable)
+endif
+ifeq ($(wildcard $(SAIL_LIB_DIR)/hol),)
+	$(error lib directory of Sail not found. Please set the SAIL_LIB_DIR environment variable)
+endif
 	(cd generated_definitions/hol4 && Holmake riscvTheory.uo)
 
-COQ_LIBS = -R $(BBV_DIR)/theories bbv -R $(SAIL_LIB_DIR)/coq Sail -R coq '' -R generated_definitions/coq ''
+riscv_hol: generated_definitions/hol4/riscvScript.sml
+riscv_hol_build: generated_definitions/hol4/riscvTheory.uo
+
+COQ_LIBS = -R $(BBV_DIR)/theories bbv -R $(SAIL_LIB_DIR)/coq Sail -R coq '' -R generated_definitions/coq '' -R handwritten_support ''
 
 riscv_coq: $(addprefix generated_definitions/coq/,riscv.v riscv_types.v)
+riscv_coq_build: generated_definitions/coq/riscv.vo
 
 $(addprefix generated_definitions/coq/,riscv.v riscv_types.v): $(SAIL_COQ_SRCS) Makefile
 	mkdir -p generated_definitions/coq
@@ -183,8 +208,16 @@ $(addprefix generated_definitions/coq/,riscv.v riscv_types.v): $(SAIL_COQ_SRCS) 
 $(addprefix generated_definitions/coq/,riscv_duopod.v riscv_duopod_types.v): model/prelude.sail model/riscv_duopod.sail
 	mkdir -p generated_definitions/coq
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq -o riscv_duopod -coq_lib riscv_extras $^
+
 %.vo: %.v
+ifeq ($(wildcard $(BBV_DIR)/theories),)
+	$(error BBV directory not found. Please set the BBV_DIR environment variable)
+endif
+ifeq ($(wildcard $(SAIL_LIB_DIR)/coq),)
+	$(error lib directory of Sail not found. Please set the SAIL_LIB_DIR environment variable)
+endif
 	coqc $(COQ_LIBS) $<
+
 generated_definitions/coq/riscv.vo: generated_definitions/coq/riscv_types.vo handwritten_support/riscv_extras.vo
 generated_definitions/coq/riscv_duopod.vo: generated_definitions/coq/riscv_duopod_types.vo handwritten_support/riscv_extras.vo
 

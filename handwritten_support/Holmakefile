@@ -1,11 +1,13 @@
-LEMDIR=../../lem/hol-lib
+INCLUDES = $(LEM_DIR)/hol-lib $(SAIL_LIB_DIR)/hol
 
-INCLUDES = $(LEMDIR) ../lib/hol
+SCRIPTS = riscv_extrasScript.sml  riscv_typesScript.sml  riscvScript.sml
 
-all: riscvTheory.uo
+THYS = $(patsubst %Script.sml,%Theory.uo,$(SCRIPTS))
+
+all: $(THYS)
 .PHONY: all
 
 ifdef POLY
-BASE_HEAP = ../lib/hol/sail-heap
+BASE_HEAP = $(SAIL_LIB_DIR)/hol/sail-heap
 
 endif
