@@ -82,8 +82,13 @@ your environment pointing to its top-level directory.
 $ make
 ```
 will build the OCaml simulator in `ocaml_emulator/riscv_ocaml_sim`, the C simulator in
-`c_emulator/riscv_sim`, the Isabelle model in `generated_definitions/isabelle/Riscv.thy`, and the Coq
-model in `generated_definitions/coq/riscv.v`.
+`c_emulator/riscv_sim`, the Isabelle model in `generated_definitions/isabelle/Riscv.thy`, the Coq
+model in `generated_definitions/coq/riscv.v`, and the HOL4 model in
+`generated_definitions/hol4/riscvScript.sml`.
+
+The Makefile targets `riscv_isa_build`, `riscv_coq_build`, and
+`riscv_hol_build` invoke the respective prover to process the definitions.  We
+have tested Isabelle 2018, Coq 8.8.1, and HOL4 Kananaskis-12.
 
 Executing test binaries
 -----------------------
