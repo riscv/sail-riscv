@@ -54,9 +54,9 @@ physical memory access is implemented in `riscv_mem.sail` with helpers
 in `prelude.sail`.
 
 Virtual memory is implemented in `riscv_vmem.sail`, and defining new
-address translation schemes will require updating modifying the
+address translation schemes will require modifying the
 top-level `translateAddr` function.  Any access control checks on
-virtual addresses and the specifics of the address translation can be
+virtual addresses and the specifics of the new address translation can be
 specified in a separate file.  This functionality can access any newly
 defined architectural state.
 
@@ -71,7 +71,6 @@ decoders, and execution semantics. `riscv.sail` can be examined for
 examples on how this can done.  These instruction definitions can
 access any newly defined architectural state and perform virtual or
 physical memory accesses as is done in `riscv.sail`.
-
 
 General guidelines
 ------------------
