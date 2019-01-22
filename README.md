@@ -115,7 +115,10 @@ the model should be run as:
 $ ./c_emulator/riscv_sim -t console.log -b spike.dtb bbl > execution-trace.log 2>&1 &
 $ tail -f console.log
 ```
-The `console.log` file contains the console boot messages.
+The `console.log` file contains the console boot messages. For maximum
+performance and benchmarking a model without any execution tracing is
+available on the optimize branch (`git checkout optimize`) of this
+repository. This currently requires the latest Sail built from source.
 
 Booting Linux with the OCaml backend
 ------------------------------------
