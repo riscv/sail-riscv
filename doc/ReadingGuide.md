@@ -15,7 +15,9 @@ The model contains the following Sail modules in the `model` directory:
 - `riscv_sys.sail` describes M-mode and S-mode CSRs, interrupt and
   exception delegation and dispatch, and handling privilege
   transitions.  In addition, this file contains functions to handle
-  the reading and writing of CSRs with WPRI, WLRL and WARL fields.
+  the reading and writing of CSRs with WPRI, WLRL and WARL fields;
+  more details are provided in comments in the file.
+
   Since these functions are intended to capture platform-specific
   functionality, future versions of the model might separate these
   functions out into a separate platform-defined file.  The current
@@ -31,12 +33,14 @@ The model contains the following Sail modules in the `model` directory:
   emulators.  This file also contains the externally selectable
   options for platform behavior, such as the handling of misaligned
   memory accesses, the handling of PTE dirty-bit updates during
-  address translation, etc.
+  address translation, etc.  These platform options can be specified
+  via command line switches in the C and OCaml emulators.
 
 - `riscv_mem.sail` contains the functions that convert accesses to
   physical addresses into accesses to physical memory, or MMIO
   accesses to the devices provided by the platform, or into the
-  appropriate access fault.
+  appropriate access fault.  This file also contains definitions that
+  are used in the weak memory concurrency model.
 
 - `riscv_vmem.sail` describes the S-mode address translation.  It
   contains the definitions and processing of the page-table entries
@@ -61,4 +65,3 @@ The model contains the following Sail modules in the `model` directory:
 
 - `riscv_analysis.sail` is used in the formal operational RVWMO memory
   model.
-
