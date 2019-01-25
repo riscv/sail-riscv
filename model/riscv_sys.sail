@@ -79,6 +79,14 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   else update_C(m, v.C())
 }
 
+/* helpers to check support for various extensions. */
+/* we currently don't model 'E', so always assume 'I'. */
+function haveAtomics() -> bool = misa.A() == true
+function haveRVC()     -> bool = misa.C() == true
+function haveMulDiv()  -> bool = misa.M() == true
+function haveSupMode() -> bool = misa.S() == true
+function haveUsrMode() -> bool = misa.U() == true
+
 bitfield Mstatus : bits(64) = {
   SD   : 63,
 
@@ -146,11 +154,6 @@ function cur_Architecture() -> Architecture = {
 function in32BitMode() -> bool = {
   cur_Architecture() == RV32
 }
-
-function haveAtomics() -> bool = { misa.A() == true }
-function haveRVC()     -> bool = { misa.C() == true }
-function haveMulDiv()  -> bool = { misa.M() == true }
-function haveFP()      -> bool = { misa.F() == true | misa.D() == true }
 
 /* interrupt processing state */
 

@@ -69,8 +69,13 @@ function step(step_no) = {
               },
               Some(ast) => {
                 print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ ast);
-                nextPC = PC + 2;
-                (execute(ast), true)
+		/* check for RVC once here instead of every RVC execute clause. */
+		if haveRVC() then {
+                  nextPC = PC + 2;
+                  (execute(ast), true)
+		} else {
+		  (false, true)
+		}
               }
             }
           },
