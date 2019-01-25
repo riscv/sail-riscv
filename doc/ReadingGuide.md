@@ -53,12 +53,14 @@ The model contains the following Sail modules in the `model` directory:
   and their various permission and status bits, the specification of
   page-table walks, and the selection of the address translation mode.
 
-- `riscv.sail` captures the instruction definitions and their assembly
-  language formats.  Each instruction is represented as a variant
-  clause of the `ast` type, and its execution semantics are
-  represented as a clause of the `execute` function. `mapping` clauses
-  specify the encoding and decoding of each instruction to and from
-  assembly language formats.
+- Files matching `riscv_insts_*.sail` capture the instruction
+  definitions and their assembly language formats.  Each file contains
+  the instructions for an extension, with `riscv_insts_base.sail` containing
+  the base integer instruction set.  Each instruction is represented
+  as a variant clause of the `ast` type, and its execution semantics
+  are represented as a clause of the `execute` function. `mapping`
+  clauses specify the encoding and decoding of each instruction to and
+  from assembly language formats.
 
 - `riscv_step.sail` implements the top-level fetch and execute loop.
   The `fetch` is done in 16-bit granules to handle RVC instructions.

@@ -1,5 +1,6 @@
-SAIL_SEQ_INST  = riscv.sail riscv_jalr_seq.sail
-SAIL_RMEM_INST = riscv.sail riscv_jalr_rmem.sail
+SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail
+SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
+SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
 
 SAIL_SEQ_INST_SRCS  = riscv_insts_begin.sail $(SAIL_SEQ_INST) riscv_insts_end.sail
 SAIL_RMEM_INST_SRCS = riscv_insts_begin.sail $(SAIL_RMEM_INST) riscv_insts_end.sail
@@ -226,7 +227,7 @@ generated_definitions/coq/riscv_duopod.vo: generated_definitions/coq/riscv_duopo
 #include $(SAIL_DIR)/etc/loc.mk
 
 clean:
-	-rm -rf generated_definitions/ocaml/* generated_definitions/c/*
+	-rm -rf generated_definitions/ocaml/* generated_definitions/c/* generated_definitions/latex/*
 	-rm -rf generated_definitions/lem/* generated_definitions/isabelle/* generated_definitions/hol4/* generated_definitions/coq/*
 	-rm -f c_emulator/riscv_sim c_emulator/riscv_rvfi
 	-rm -rf ocaml_emulator/_sbuild ocaml_emulator/_build ocaml_emulator/riscv_ocaml_sim ocaml_emulator/tracecmp
