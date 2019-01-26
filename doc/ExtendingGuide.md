@@ -11,7 +11,9 @@ definitions can be added in a separate file.  If these registers have
 properties of control-and-status registers (CSRs), or depend on
 privilege level (such as hypervisor-mode registers), additional access
 control checks would need to be provided as is done for the standard
-CSRs in `riscv_sys.sail`.
+CSRs in `riscv_sys.sail`.  In addition, the handling of updates to
+`mstatus.XS` and `mstatus.SD` may need to be updated in
+`riscv_sys.sail` to handle any extended register state.
 
 Adding a new privilege level or functionality restricted by privilege
 level will normally be accompanied by defining new exception causes
