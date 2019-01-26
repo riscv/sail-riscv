@@ -966,7 +966,7 @@ function handle_exception(cur_priv : Privilege, ctl : ctl_result,
       mstatus->MIE()  = mstatus.MPIE();
       mstatus->MPIE() = true;
       cur_privilege   = privLevel_of_bits(mstatus.MPP());
-      mstatus->MPP()  = privLevel_to_bits(User);
+      mstatus->MPP()  = privLevel_to_bits(if haveUsrMode() then User else Machine);
 
       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(mstatus.bits()) ^ ")"); // Spike compatible log
       print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
@@ -979,6 +979,7 @@ function handle_exception(cur_priv : Privilege, ctl : ctl_result,
       mstatus->SIE()  = mstatus.SPIE();
       mstatus->SPIE() = true;
       cur_privilege   = if mstatus.SPP() == true then Supervisor else User;
+      /* S-mode implies that U-mode is supported (issue #331 on riscv-isa-manual). */
       mstatus->SPP()  = false;
 
       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(mstatus.bits()) ^ ")"); // Spike compatible log
