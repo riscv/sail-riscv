@@ -898,7 +898,8 @@ $endif
 function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits))
                     -> xlenbits = {
   rvfi_trap();
-  print_platform("handling " ^ (if intr then "int#" else "exc#") ^ BitStr(c) ^ " at priv " ^ del_priv ^ " with tval " ^ BitStr(tval(info)));
+  print_platform("handling " ^ (if intr then "int#" else "exc#")
+                 ^ BitStr(c) ^ " at priv " ^ del_priv ^ " with tval " ^ BitStr(tval(info)));
 
   match (del_priv) {
     Machine => {
@@ -913,7 +914,7 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
 
        cur_privilege   = del_priv;
 
-       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(mstatus.bits()) ^ ")"); // Spike compatible log
+       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(mstatus.bits()) ^ ")");
 
        cancel_reservation();
 
@@ -938,7 +939,7 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
 
        cur_privilege   = del_priv;
 
-       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(mstatus.bits()) ^ ")"); // Spike compatible log
+       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(mstatus.bits()) ^ ")");
 
        cancel_reservation();
 
@@ -968,7 +969,7 @@ function handle_exception(cur_priv : Privilege, ctl : ctl_result,
       cur_privilege   = privLevel_of_bits(mstatus.MPP());
       mstatus->MPP()  = privLevel_to_bits(if haveUsrMode() then User else Machine);
 
-      print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(mstatus.bits()) ^ ")"); // Spike compatible log
+      print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(mstatus.bits()) ^ ")");
       print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
 
       cancel_reservation();
@@ -982,7 +983,7 @@ function handle_exception(cur_priv : Privilege, ctl : ctl_result,
       /* S-mode implies that U-mode is supported (issue #331 on riscv-isa-manual). */
       mstatus->SPP()  = false;
 
-      print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(mstatus.bits()) ^ ")"); // Spike compatible log
+      print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(mstatus.bits()) ^ ")");
       print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
 
       cancel_reservation();
