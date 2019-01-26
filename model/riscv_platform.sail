@@ -267,7 +267,6 @@ function init_platform() -> unit = {
 }
 
 function tick_platform() -> unit = {
-  cancel_reservation();
   htif_tick();
 }
 
@@ -285,6 +284,7 @@ function handle_illegal() -> unit = {
 /* Platform-specific wait-for-interrupt */
 
 function platform_wfi() -> unit = {
+  cancel_reservation();
   /* speed execution by getting the timer to fire at the next instruction,
    * since we currently don't have any other devices raising interrupts.
    */
