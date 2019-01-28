@@ -121,7 +121,11 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
 
   /* We don't have any extension context yet. */
   let m = update_XS(m, extStatus_to_bits(Off));
-  let m = update_FS(m, extStatus_to_bits(Off));
+  /* FS is WARL, and making FS writable can support the M-mode emulation of an FPU
+   * to support code running in S/U-modes.  Spike does this, and for now, we match it.
+   * FIXME: This should be made a platform parameter.
+   */
+  // let m = update_FS(m, extStatus_to_bits(Off));
 
   let m = update_SD(m, extStatus_of_bits(m.FS()) == Dirty
                      | extStatus_of_bits(m.XS()) == Dirty);
@@ -383,13 +387,11 @@ function lower_mstatus(m : Mstatus) -> Sstatus = {
 }
 
 function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
-  // FIXME: This should be parameterized by a platform setting.  For now, match spike.
-  // let m = update_UXL(m, s.UXL());
   let m = update_MXR(m, s.MXR());
   let m = update_SUM(m, s.SUM());
 
-  // FIXME: Should XS and FS check whether X and F|D are supported in misa?
   let m = update_XS(m, s.XS());
+  // See comment for mstatus.FS.
   let m = update_FS(m, s.FS());
   let m = update_SD(m, extStatus_of_bits(m.FS()) == Dirty
                      | extStatus_of_bits(m.XS()) == Dirty);
