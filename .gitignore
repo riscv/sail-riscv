@@ -1,1 +1,6 @@
 /generated_definitions
+
+# global things
+
+_build/
+_sbuild/
