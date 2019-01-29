@@ -32,7 +32,6 @@ SAIL_SRC_DIR:=$(SAIL_DIR)/src
 
 LEM_DIR?=$(shell opam config var lem:share)
 export LEM_DIR
-
 #Coq BBV library hopefully checked out in directory above us
 BBV_DIR?=../bbv
 
@@ -62,9 +61,8 @@ else
 C_FLAGS += -O2
 endif
 
-all: ocaml_emulator/riscv_ocaml_sim c_emulator/riscv_sim riscv_isa riscv_coq riscv_hol
-
-.PHONY: all riscv_coq riscv_isa
+all: ocaml_emulator/riscv_ocaml_sim c_emulator/riscv_sim riscv_isa riscv_coq riscv_hol riscv_rmem
+.PHONY: all
 
 check: $(SAIL_SRCS) model/main.sail Makefile
 	$(SAIL) $(SAIL_FLAGS) $(SAIL_SRCS) model/main.sail
@@ -152,6 +150,7 @@ riscv_duopod: generated_definitions/ocaml/riscv_duopod_ocaml generated_definitio
 
 riscv_isa: generated_definitions/isabelle/Riscv.thy
 riscv_isa_build: riscv_isa
+.PHONY: riscv_isa riscv_isa_build
 ifeq ($(wildcard $(LEM_DIR)/isabelle-lib),)
 	$(error Lem directory not found. Please set the LEM_DIR environment variable)
 endif
@@ -197,11 +196,13 @@ endif
 
 riscv_hol: generated_definitions/hol4/riscvScript.sml
 riscv_hol_build: generated_definitions/hol4/riscvTheory.uo
+.PHONY: riscv_hol riscv_hol_build
 
 COQ_LIBS = -R $(BBV_DIR)/theories bbv -R $(SAIL_LIB_DIR)/coq Sail -R coq '' -R generated_definitions/coq '' -R handwritten_support ''
 
 riscv_coq: $(addprefix generated_definitions/coq/,riscv.v riscv_types.v)
 riscv_coq_build: generated_definitions/coq/riscv.vo
+.PHONY: riscv_coq riscv_coq_build
 
 $(addprefix generated_definitions/coq/,riscv.v riscv_types.v): $(SAIL_COQ_SRCS) Makefile
 	mkdir -p generated_definitions/coq
@@ -222,6 +223,19 @@ endif
 generated_definitions/coq/riscv.vo: generated_definitions/coq/riscv_types.vo handwritten_support/riscv_extras.vo
 generated_definitions/coq/riscv_duopod.vo: generated_definitions/coq/riscv_duopod_types.vo handwritten_support/riscv_extras.vo
 
+
+riscv_rmem: generated_definitions/lem-for-rmem/riscv.lem
+riscv_rmem: generated_definitions/lem-for-rmem/riscv_sequential.lem
+.PHONY: riscv_rmem
+
+generated_definitions/lem-for-rmem/riscv.lem:            SAIL_FLAGS += -lem_lib Riscv_extras
+generated_definitions/lem-for-rmem/riscv_sequential.lem: SAIL_FLAGS += -lem_lib Riscv_extras_sequential -lem_sequential
+generated_definitions/lem-for-rmem/%.lem: $(SAIL_RMEM_SRCS)
+	mkdir -p $(dir $@)
+#	We do not need the isabelle .thy files, but sail always generates them
+	$(SAIL) $(SAIL_FLAGS) -lem -lem_mwords -lem_output_dir $(dir $@) -isa_output_dir $(dir $@) -o $(notdir $(basename $@)) $^
+
+
 # we exclude prelude.sail here, most code there should move to sail lib
 #LOC_FILES:=$(SAIL_SRCS) main.sail
 #include $(SAIL_DIR)/etc/loc.mk
@@ -229,6 +243,7 @@ generated_definitions/coq/riscv_duopod.vo: generated_definitions/coq/riscv_duopo
 clean:
 	-rm -rf generated_definitions/ocaml/* generated_definitions/c/* generated_definitions/latex/*
 	-rm -rf generated_definitions/lem/* generated_definitions/isabelle/* generated_definitions/hol4/* generated_definitions/coq/*
+	-rm -rf generated_definitions/lem-for-rmem/*
 	-rm -f c_emulator/riscv_sim c_emulator/riscv_rvfi
 	-rm -rf ocaml_emulator/_sbuild ocaml_emulator/_build ocaml_emulator/riscv_ocaml_sim ocaml_emulator/tracecmp
 	-rm -f *.gcno *.gcda
