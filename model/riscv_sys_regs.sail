@@ -380,6 +380,7 @@ bitfield Sstatus : bits(64) = {
   SIE  : 1,
   UIE  : 0
 }
+
 /* This is a view, so there is no register defined. */
 function lower_mstatus(m : Mstatus) -> Sstatus = {
   let s = Mk_Sstatus(EXTZ(0b0));

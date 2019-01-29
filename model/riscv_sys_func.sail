@@ -114,11 +114,10 @@ function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let idx   = num_of_ExceptionType(e);
   let super = medeleg.bits()[idx];
   let user  = sedeleg.bits()[idx];
-  let deleg = /* if      misa.N() == true & user  then User
-                 else */
-              if misa.S() == true & super then Supervisor
-              else Machine;
-  /* Ensure there is no transition to a less-privileged mode. */
+  let deleg = if      haveUsrMode() & user  then User
+              else if haveSupMode() & super then Supervisor
+              else                               Machine;
+  /* We cannot transition to a less-privileged mode. */
   if   privLevel_to_bits(deleg) <_u privLevel_to_bits(p)
   then p else deleg
 }
@@ -137,52 +136,91 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   else if ip.UEI() == true then Some(I_U_External)
   else if ip.USI() == true then Some(I_U_Software)
   else if ip.UTI() == true then Some(I_U_Timer)
-  else None()
+  else                          None()
 }
 
-/* Examines current M-mode interrupt state and returns an interrupt to be
- * handled, and the privilege it should be handled at.  Interrupts are
- * dispatched in order of decreasing privilege, while ensuring that the
- * resulting privilege level is not reduced; i.e. delegated interrupts to
- * lower privileges are effectively masked until control returns to them.
- *
- * For now, it assumes 'S' and no 'N' extension, which is the common case.
+/* Process the pending interrupts xip at a privilege according to
+ * the enabled flags xie and the delegation in xideleg. Return
+ * either the set of pending interrupts, or the set of interrupts
+ * delegated to the next lower privilege.
  */
-function curInterrupt(priv : Privilege, pend : Minterrupts, enbl : Minterrupts, delg : Minterrupts)
-                     -> option((InterruptType, Privilege)) = {
-  let en_mip : xlenbits = pend.bits() & enbl.bits();
-  if en_mip == EXTZ(0b0) then None() /* fast path */
-  else {
-    /* check implicit enabling when in lower privileges */
-    let eff_mie = priv != Machine | (priv == Machine & mstatus.MIE() == true);
-    let eff_sie = priv == User | (priv == Supervisor & mstatus.SIE() == true);
-    /* handle delegation */
-    let eff_mip = en_mip & (~ (delg.bits())); /* retained at M-mode */
-    let eff_sip = en_mip & delg.bits();       /* delegated to S-mode */
+union interrupt_set = {
+  Ints_Pending   : xlenbits,
+  Ints_Delegated : xlenbits,
+  Ints_Empty     : unit
+}
+function processPending(xip : Minterrupts, xie : Minterrupts, xideleg : xlenbits,
+                        priv_enabled : bool) -> interrupt_set = {
+  /* interrupts that are enabled but not delegated are pending */
+  let  effective_pend = xip.bits() & xie.bits() & (~ (xideleg));
+  /* the others are delegated */
+  let  effective_delg = xip.bits() & xideleg;
+  /* we have pending interrupts if this privilege is enabled */
+  if      priv_enabled & (effective_pend != EXTZ(0b0))
+  then    Ints_Pending(effective_pend)
+  else if effective_delg != EXTZ(0b0)
+  then    Ints_Delegated(effective_delg)
+  else    Ints_Empty()
+}
 
-    if eff_mie & eff_mip != EXTZ(0b0)
-    then match findPendingInterrupt(eff_mip) {
-           Some(i) => let r = (i, Machine) in Some(r),
-           None()  => { internal_error("non-zero eff_mip=" ^ BitStr(eff_mip) ^ ", but nothing pending") }
-         }
-    else if eff_sie & eff_sip != EXTZ(0b0)
-    then match findPendingInterrupt(eff_sip) {
-           Some(i) => let r = (i, Supervisor) in Some(r),
-           None()  => { internal_error("non-zero eff_sip=" ^ BitStr(eff_sip) ^ ", but nothing pending") }
-         }
-    else {
-      let p = if pend.MTI() == true then "1" else "0";
-      let e = if enbl.MTI() == true then "1" else "0";
-      let d = if delg.MTI() == true then "1" else "0";
-      print_platform(" MTI: pend=" ^ p ^ " enbl=" ^ e ^ " delg=" ^ d);
-      let eff_mip = en_mip & (~ (delg.bits())); /* retained at M-mode */
-      let eff_sip = en_mip & delg.bits();       /* delegated to S-mode */
-      print_platform("mstatus=" ^ BitStr(mstatus.bits())
-                     ^ " mie,sie=" ^ BitStr(mstatus.MIE()) ^ "," ^ BitStr(mstatus.SIE())
-                     ^ " en_mip=" ^ BitStr(en_mip)
-                     ^ " eff_mip=" ^ BitStr(eff_mip)
-                     ^ " eff_sip=" ^ BitStr(eff_sip));
-      None()
+/* Given the current privilege level, iterate over privileges to get a
+ * pending set for an enabled privilege.
+ *
+ * We don't use the lowered views of {xie,xip} here, since the spec
+ * allows for example the M_Timer to be delegated to the U-mode.
+ */
+function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
+  let effective_pending = mip.bits() & mie.bits();
+  if  effective_pending == EXTZ(0b0) then None() /* fast path */
+  else {
+    /* Higher privileges than the current one are implicitly enabled,
+     * while lower privileges are blocked.  An unsupported privilege is
+     * considered blocked.
+     */
+    let mIE = priv != Machine | (priv == Machine & mstatus.MIE() == true);
+    let sIE = haveSupMode() & (priv == User | (priv == Supervisor & mstatus.SIE() == true));
+    let uIE = haveUsrMode() & (priv == User & mstatus.UIE() == true);
+    match processPending(mip, mie, mideleg.bits(), mIE) {
+      Ints_Empty()      => None(),
+      Ints_Pending(p)   => let r = (p, Machine) in Some(r),
+      Ints_Delegated(d) =>
+        if (~ (haveSupMode())) then {
+          let r = (d, User) in Some(r)
+        } else {
+          /* the delegated bits are pending for this privilege */
+          match processPending(Mk_Minterrupts(d), mie, sideleg.bits(), sIE) {
+            Ints_Empty()      => None(),
+            Ints_Pending(p)   => let r = (p, Supervisor) in Some(r),
+            Ints_Delegated(d) => if   uIE
+                                 then let r = (d, User) in Some(r)
+                                 else None()
+          }
+        }
+    }
+  }
+}
+
+/* Examine the current interrupt state and return an interrupt to be *
+ * handled (if any), and the privilege it should be handled at.
+ */
+function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege)) = {
+  /* if we don't have different privilege levels, we don't need to check delegation.
+   * Absence of U-mode implies absence of S-mode.
+   */
+  if (~ (haveUsrMode())) then {
+    assert(priv == Machine);
+    let enabled_pending = mip.bits() & mie.bits();
+    match findPendingInterrupt(enabled_pending) {
+      Some(i) => let r = (i, Machine) in Some(r),
+      None()  => None()
+    }
+  } else {
+    match getPendingSet(priv) {
+      None()      => None(),
+      Some(ip, p) => match findPendingInterrupt(ip) {
+                       None()  => None(),
+                       Some(i) => let r = (i, p) in Some(r)
+                     }
     }
   }
 }
@@ -204,8 +242,8 @@ function tval(excinfo : option(xlenbits)) -> xlenbits = {
 union ctl_result = {
   CTL_TRAP : sync_exception,
   CTL_SRET : unit,
-  CTL_MRET : unit
-/* TODO: CTL_URET */
+  CTL_MRET : unit,
+  CTL_URET : unit
 }
 
 $ifdef RVFI_DII
@@ -225,6 +263,8 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
   print_platform("handling " ^ (if intr then "int#" else "exc#")
                  ^ BitStr(c) ^ " at priv " ^ del_priv ^ " with tval " ^ BitStr(tval(info)));
 
+  cancel_reservation();
+
   match (del_priv) {
     Machine => {
        mcause->IsInterrupt() = intr;
@@ -238,9 +278,7 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
 
        cur_privilege   = del_priv;
 
-       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(mstatus.bits()) ^ ")");
-
-       cancel_reservation();
+       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
        match tvec_addr(mtvec, mcause) {
          Some(epc) => epc,
@@ -248,6 +286,8 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
        }
     },
     Supervisor => {
+       assert (haveSupMode());
+
        scause->IsInterrupt() = intr;
        scause->Cause()       = EXTZ(c);
 
@@ -263,9 +303,7 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
 
        cur_privilege   = del_priv;
 
-       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(mstatus.bits()) ^ ")");
-
-       cancel_reservation();
+       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
        match tvec_addr(stvec, scause) {
          Some(epc) => epc,
@@ -273,7 +311,26 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
        }
 
     },
-    User => internal_error("the N extension is currently unsupported")
+    User => {
+       assert(haveUsrMode());
+
+       ucause->IsInterrupt() = intr;
+       ucause->Cause()       = EXTZ(c);
+
+       mstatus->UPIE() = mstatus.UIE();
+       mstatus->UIE()  = false;
+       utval           = tval(info);
+       uepc            = pc;
+
+       cur_privilege   = del_priv;
+
+       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
+
+       match tvec_addr(utvec, ucause) {
+         Some(epc) => epc,
+         None()    => internal_error("Invalid utvec mode")
+       }
+    }
   };
 }
 
@@ -293,7 +350,7 @@ function handle_exception(cur_priv : Privilege, ctl : ctl_result,
       cur_privilege   = privLevel_of_bits(mstatus.MPP());
       mstatus->MPP()  = privLevel_to_bits(if haveUsrMode() then User else Machine);
 
-      print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(mstatus.bits()) ^ ")");
+      print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
       print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
 
       cancel_reservation();
@@ -307,11 +364,23 @@ function handle_exception(cur_priv : Privilege, ctl : ctl_result,
       /* S-mode implies that U-mode is supported (issue #331 on riscv-isa-manual). */
       mstatus->SPP()  = false;
 
-      print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(mstatus.bits()) ^ ")");
+      print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
       print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
 
       cancel_reservation();
       sepc & pc_alignment_mask()
+    },
+    (_, CTL_URET())  => {
+      let prev_priv   = cur_privilege;
+      mstatus->UIE()  = mstatus.UPIE();
+      mstatus->UPIE() = true;
+      cur_privilege   = User;
+
+      print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
+      print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
+
+      cancel_reservation();
+      uepc & pc_alignment_mask()
     }
   }
 }

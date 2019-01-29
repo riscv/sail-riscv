@@ -603,7 +603,9 @@ function clause execute SRET() = {
     Supervisor => if   (~ (haveSupMode ())) | mstatus.TSR() == true
                   then handle_illegal()
                   else nextPC = handle_exception(cur_privilege, CTL_SRET(), PC),
-    Machine    => nextPC = handle_exception(cur_privilege, CTL_SRET(), PC)
+    Machine    => if   (~ (haveSupMode ()))
+                  then handle_illegal()
+                  else nextPC = handle_exception(cur_privilege, CTL_SRET(), PC)
   };
   false
 }

@@ -47,7 +47,7 @@ val step : int -> bool effect {barr, eamem, escape, exmem, rmem, rreg, wmv, wreg
 function step(step_no) = {
   minstret_written = false;     /* see note for minstret */
   let (retired, stepped) : (bool, bool) =
-    match curInterrupt(cur_privilege, mip, mie, mideleg) {
+    match dispatchInterrupt(cur_privilege) {
       Some(intr, priv) => {
         print_bits("Handling interrupt: ", intr);
         handle_interrupt(intr, priv);
