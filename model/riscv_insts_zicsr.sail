@@ -59,8 +59,12 @@ function readCSR csr : csreg -> xlenbits = {
     /* trigger/debug */
     0x7a0 => ~(tselect),    /* this indicates we don't have any trigger support */
 
-    _     => { print_bits("unhandled read to CSR ", csr);
-               0x0000_0000_0000_0000 }
+    _     =>  /* check extensions */
+              match read_UExt_CSR(csr) {
+                Some(res) => res,
+                None()    => { print_bits("unhandled read to CSR ", csr);
+                               0x0000_0000_0000_0000 }
+              }
   };
   print_reg("CSR " ^ csr ^ " -> " ^ BitStr(res));
   res
@@ -112,7 +116,11 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
   };
   match res {
     Some(v) => print_reg("CSR " ^ csr ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")"),
-    None()  => print_bits("unhandled write to CSR ", csr)
+    None()  => { /* check extensions */
+                 if write_UExt_CSR(csr, value)
+                 then ()
+                 else print_bits("unhandled write to CSR ", csr)
+               }
   }
 }
 
