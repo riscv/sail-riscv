@@ -113,7 +113,10 @@ val cancel_reservation = {ocaml: "Platform.cancel_reservation", c: "cancel_reser
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let idx   = num_of_ExceptionType(e);
   let super = medeleg.bits()[idx];
-  let user  = sedeleg.bits()[idx];
+  /* if S-mode is absent, medeleg delegates to U-mode if 'N' is supported. */
+  let user  = if   haveSupMode()
+              then super & haveNExt() & sedeleg.bits()[idx]
+              else super & haveNExt();
   let deleg = if      haveUsrMode() & user  then User
               else if haveSupMode() & super then Supervisor
               else                               Machine;
@@ -164,12 +167,14 @@ function processPending(xip : Minterrupts, xie : Minterrupts, xideleg : xlenbits
 }
 
 /* Given the current privilege level, iterate over privileges to get a
- * pending set for an enabled privilege.
+ * pending set for an enabled privilege. This is only called for M/U or
+ * M/S/U systems.
  *
  * We don't use the lowered views of {xie,xip} here, since the spec
  * allows for example the M_Timer to be delegated to the U-mode.
  */
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
+  assert(haveUsrMode());
   let effective_pending = mip.bits() & mie.bits();
   if  effective_pending == EXTZ(0b0) then None() /* fast path */
   else {
@@ -179,15 +184,16 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
      */
     let mIE = priv != Machine | (priv == Machine & mstatus.MIE() == true);
     let sIE = haveSupMode() & (priv == User | (priv == Supervisor & mstatus.SIE() == true));
-    let uIE = haveUsrMode() & (priv == User & mstatus.UIE() == true);
+    let uIE = haveNExt() & (priv == User & mstatus.UIE() == true);
     match processPending(mip, mie, mideleg.bits(), mIE) {
       Ints_Empty()      => None(),
       Ints_Pending(p)   => let r = (p, Machine) in Some(r),
       Ints_Delegated(d) =>
         if (~ (haveSupMode())) then {
-          let r = (d, User) in Some(r)
+          if uIE then let r = (d, User) in Some(r)
+          else                             None()
         } else {
-          /* the delegated bits are pending for this privilege */
+          /* the delegated bits are pending for S-mode */
           match processPending(Mk_Minterrupts(d), mie, sideleg.bits(), sIE) {
             Ints_Empty()      => None(),
             Ints_Pending(p)   => let r = (p, Supervisor) in Some(r),
@@ -204,10 +210,10 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
  * handled (if any), and the privilege it should be handled at.
  */
 function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege)) = {
-  /* if we don't have different privilege levels, we don't need to check delegation.
+  /* If we don't have different privilege levels, we don't need to check delegation.
    * Absence of U-mode implies absence of S-mode.
    */
-  if (~ (haveUsrMode())) then {
+  if (~ (haveUsrMode())) | ((~ (haveSupMode())) & (~ (haveNExt())))
     assert(priv == Machine);
     let enabled_pending = mip.bits() & mie.bits();
     match findPendingInterrupt(enabled_pending) {
