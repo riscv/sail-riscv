@@ -11,16 +11,16 @@ definitions can be added in a separate file.  If these registers have
 properties of control-and-status registers (CSRs), or depend on
 privilege level (such as hypervisor-mode registers), additional access
 control checks would need to be provided as is done for the standard
-CSRs in `riscv_sys.sail`.  In addition, the handling of updates to
-`mstatus.XS` and `mstatus.SD` may need to be updated in
-`riscv_sys.sail` to handle any extended register state.
+CSRs in `riscv_sys_regs.sail` and `riscv_sys_control.sail`.  In addition,
+the bits `mstatus.XS` and `mstatus.SD` may need to be updated or
+extended to handle any extended register state.
 
 Adding a new privilege level or functionality restricted by privilege
 level will normally be accompanied by defining new exception causes
 and their encodings.  This will require modifying and extending the
 existing definitions for privilege levels and exceptions in
 `riscv_types.sail`, and modifying the exception handling and privilege
-transition functions in `riscv_sys.sail`.
+transition functions in `riscv_sys_control.sail`.
 
 Adding low-level platform functionality
 ---------------------------------------
@@ -38,10 +38,10 @@ devices would need to be added to the C and OCaml emulators.
 
 If this functionality requires the definition of new interrupt
 sources, their encodings would need to be added to `riscv_types.sail`,
-and their delegation and handling added to `riscv_sys.sail`.
+and their delegation and handling added to `riscv_sys_control.sail`.
 
-Interposing on memory access
-----------------------------
+Modifying memory access
+-----------------------
 
 Physical memory addressing and access is defined in `riscv_mem.sail`.
 Any new types of memory (such as scratchpad, tags, or MMIO device
@@ -80,3 +80,14 @@ General guidelines
 For any new extension, it is helpful to factor it out into the above
 items.  When specifying and implementing the extension, it is expected
 to be easier to implement it in the above listed order.
+
+Example
+-------
+
+As an example, one can examine the implementation of the 'N' extension
+for user-level interrupt handling.  The architectural state to support
+'N' is specified in `riscv_next_regs.sail`, added control
+functionality is in `riscv_next_control.sail`, and added instructions
+are in `riscv_insts_next.sail`.  In addition, privilege transition and
+interrupt delegation logic in `riscv_sys_control.sail` has been
+extended.

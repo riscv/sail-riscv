@@ -40,30 +40,12 @@ sail-riscv
       +---- riscv-tests       // snapshot of tests from the riscv/riscv-tests github repo
 ```
 
-An outline of the specification
--------------------------------
+Documentation
+-------------
 
-The model contains the following Sail modules in the `model` directory:
-
-- `prelude.sail` contains useful Sail library functions
-
-- `riscv_types.sail` contains some basic RISC-V definitions
-
-- `riscv_sys.sail` describes M-mode and S-mode CSRs and exception handling
-
-- `riscv_platform.sail` contains platform-specific functionality
-    (e.g. physical memory map and clock and terminal device interfaces)
-
-- `riscv_mem.sail` contains the interface to physical memory
-
-- `riscv_vmem.sail` describes the S-mode address translation
-
-- `riscv.sail` captures the instruction definitions and their assembly language formats
-
-- `riscv_step.sail` implements the top-level fetch and execute loop
-
-- `riscv_analysis.sail` is used in the formal operational RVWMO memory model
-
+A [reading guide](doc/ReadingGuide.md) to the model is provided in the
+[doc/](doc/) subdirectory, along with a guide on [how to
+extend](doc/ExtendingGuide.md) the model.
 
 Simulators
 ----------

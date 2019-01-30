@@ -18,16 +18,16 @@ The model contains the following Sail modules in the `model` directory:
   levels, registers and register access, interrupt and exception
   definitions and numbering, and types used to define memory accesses.
 
-- `riscv_sys.sail` describes M-mode and S-mode CSRs, interrupt and
-  exception delegation and dispatch, and handling privilege
-  transitions.  In addition, this file contains functions to handle
-  the reading and writing of CSRs with WPRI, WLRL and WARL fields;
-  more details are provided in comments in the file.
+- `riscv_sys_regs.sail` describes the privileged architectural state,
+  viz. M-mode and S-mode CSRs, and contains helpers to interpret their
+  content, such as WLRL and WARL fields.  `riscv_sys_control.sail`
+  describes interrupt and exception delegation and dispatch, and the
+  handling of privilege transitions.
 
-  Since these functions are intended to capture platform-specific
-  functionality, future versions of the model might separate these
-  functions out into a separate platform-defined file.  The current
-  implementation of these functions usually implement the same
+  Since WLRL and WARL fields are intended to capture platform-specific
+  functionality, future versions of the model might separate their
+  handling functions out into a separate platform-defined file.  The
+  current implementation of these functions usually implement the same
   behavior as the Spike emulator.
 
 - `riscv_platform.sail` contains platform-specific functionality for
