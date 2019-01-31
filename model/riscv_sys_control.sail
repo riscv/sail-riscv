@@ -174,7 +174,7 @@ function processPending(xip : Minterrupts, xie : Minterrupts, xideleg : xlenbits
  * allows for example the M_Timer to be delegated to the U-mode.
  */
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
-  assert(haveUsrMode());
+  //assert(haveUsrMode());
   let effective_pending = mip.bits() & mie.bits();
   if  effective_pending == EXTZ(0b0) then None() /* fast path */
   else {
@@ -213,8 +213,8 @@ function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege
   /* If we don't have different privilege levels, we don't need to check delegation.
    * Absence of U-mode implies absence of S-mode.
    */
-  if (~ (haveUsrMode())) | ((~ (haveSupMode())) & (~ (haveNExt())))
-    assert(priv == Machine);
+  if (~ (haveUsrMode())) | ((~ (haveSupMode())) & (~ (haveNExt()))) then {
+    //assert(priv == Machine);
     let enabled_pending = mip.bits() & mie.bits();
     match findPendingInterrupt(enabled_pending) {
       Some(i) => let r = (i, Machine) in Some(r),
@@ -292,7 +292,7 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
        }
     },
     Supervisor => {
-       assert (haveSupMode());
+       //assert (haveSupMode());
 
        scause->IsInterrupt() = intr;
        scause->Cause()       = EXTZ(c);
@@ -318,7 +318,7 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
 
     },
     User => {
-       assert(haveUsrMode());
+       //assert(haveUsrMode());
 
        ucause->IsInterrupt() = intr;
        ucause->Cause()       = EXTZ(c);
