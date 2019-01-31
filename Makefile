@@ -152,7 +152,6 @@ riscv_duopod: generated_definitions/ocaml/riscv_duopod_ocaml generated_definitio
 
 riscv_isa: generated_definitions/isabelle/Riscv.thy
 riscv_isa_build: riscv_isa
-.PHONY: riscv_isa riscv_isa_build
 ifeq ($(wildcard $(LEM_DIR)/isabelle-lib),)
 	$(error Lem directory not found. Please set the LEM_DIR environment variable)
 endif
@@ -160,6 +159,8 @@ ifeq ($(wildcard $(SAIL_LIB_DIR)/isabelle),)
 	$(error lib directory of Sail not found. Please set the SAIL_LIB_DIR environment variable)
 endif
 	isabelle build -b -d $(LEM_DIR)/isabelle-lib -d $(SAIL_LIB_DIR)/isabelle -d generated_definitions/isabelle Sail-RISC-V
+
+.PHONY: riscv_isa riscv_isa_build
 
 generated_definitions/lem/riscv.lem: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/lem
