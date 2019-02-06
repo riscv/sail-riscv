@@ -277,7 +277,7 @@ function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
   match (trapVectorMode_of_bits(m.Mode())) {
     TV_Direct => Some(base),
     TV_Vector => if   c.IsInterrupt() == true
-                 then Some(base + (EXTZ(c.Cause()) << 0b10))
+                 then Some(base + (EXTZ(c.Cause()) << 2))
                  else Some(base),
     TV_Reserved => None()
   }

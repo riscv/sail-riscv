@@ -1,9 +1,10 @@
 default Order dec
 
+$include <smt.sail>
 $include <flow.sail>
-
-type bits ('n : Int) = vector('n, dec, bit)
-union option ('a : Type) = {None : unit, Some : 'a}
+$include <arith.sail>
+$include <vector_dec.sail>
+$include <option.sail>
 
 val spc : unit <-> string
 val opt_spc : unit <-> string
@@ -1040,14 +1041,11 @@ val print_reg      = {ocaml: "Platform.print_reg",   c: "print_reg", _: "print_e
 val print_mem      = {ocaml: "Platform.print_mem_access", c: "print_mem_access", _: "print_endline"} : string -> unit
 val print_platform = {ocaml: "Platform.print_platform", c: "print_platform", _: "print_endline"} : string -> unit
 
-val "sign_extend" : forall 'n 'm, 'm >= 'n. (bits('n), atom('m)) -> bits('m)
-val "zero_extend" : forall 'n 'm, 'm >= 'n. (bits('n), atom('m)) -> bits('m)
-
 val EXTS : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
 val EXTZ : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
 
-function EXTS v = sign_extend(v, sizeof('m))
-function EXTZ v = zero_extend(v, sizeof('m))
+function EXTS v = sail_sign_extend(v, sizeof('m))
+function EXTZ v = sail_zero_extend(v, sizeof('m))
 
 infix 4 <_s
 infix 4 >=_s
@@ -1079,8 +1077,14 @@ function bit_to_bool b = match b {
 infix 7 >>
 infix 7 <<
 
-val operator >> = "shift_bits_right" : forall 'n 'm. (bits('n), bits('m)) -> bits('n)
-val operator << = "shift_bits_left" : forall 'n 'm. (bits('n), bits('m)) -> bits('n)
+val "shift_bits_right" : forall 'n 'm. (bits('n), bits('m)) -> bits('n) effect {undef}
+val "shift_bits_left" : forall 'n 'm. (bits('n), bits('m)) -> bits('n) effect {undef}
+
+val "shiftl" : forall 'm 'n, 'n >= 0. (bits('m), atom('n)) -> bits('m)
+val "shiftr" : forall 'm 'n, 'n >= 0. (bits('m), atom('n)) -> bits('m)
+
+overload operator >> = {shift_bits_right, shiftr}
+overload operator << = {shift_bits_left, shiftl}
 
 val vector64 : int -> bits(64)
 
@@ -1096,6 +1100,31 @@ val vector_update_subrange_inc = {ocaml: "update_subrange", lem: "update_subrang
   (vector('n, inc, bit), atom('m), atom('o), vector('o - ('m - 1), inc, bit)) -> vector('n, inc, bit)
 
 overload vector_update_subrange = {vector_update_subrange_dec, vector_update_subrange_inc}
+
+/* The following needed for CHERI */
+
+val not = {coq:"negb", _:"not"} : bool -> bool
+
+val MAX : forall 'n, 'n >= 0 . atom('n) -> atom(2 ^ 'n - 1) effect pure
+function MAX(n) = pow2(n) - 1
+
+val zeros_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
+function zeros_implicit () = sail_zeros('n)
+overload zeros = {zeros_implicit, sail_zeros}
+
+val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
+function ones_n n = replicate_bits (0b1, n)
+
+val ones_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
+function ones_implicit () = ones_n ('n)
+
+overload ones = {ones_implicit, ones_n}
+
+val modulus = {ocaml: "modulus", lem: "hardware_mod", coq: "euclid_modulo", _ : "tmod_int"} : forall 'n, 'n > 0 .  (int, atom('n)) -> range(0, 'n - 1)
+
+overload operator % = {modulus}
+overload sign_extend = {EXTS, sail_sign_extend}
+overload zero_extend = {EXTZ, sail_zero_extend}
 
 /* Ideally these would be sail builtin */
 

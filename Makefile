@@ -8,7 +8,7 @@ SAIL_RMEM_INST_SRCS = riscv_insts_begin.sail $(SAIL_RMEM_INST) riscv_insts_end.s
 SAIL_SYS_SRCS = riscv_csr_map.sail riscv_sys_regs.sail riscv_next_regs.sail riscv_next_control.sail riscv_sys_control.sail
 
 # non-instruction sources
-SAIL_OTHER_SRCS = prelude.sail riscv_types.sail $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail riscv_vmem.sail
+SAIL_OTHER_SRCS = prelude.sail cheri_types.sail cheri_prelude_128.sail riscv_types.sail $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail riscv_vmem.sail
 SAIL_OTHER_RVFI_SRCS = prelude.sail rvfi_dii.sail riscv_types.sail $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail riscv_vmem.sail
 
 SAIL_SRCS      = $(addprefix model/,$(SAIL_OTHER_SRCS) $(SAIL_SEQ_INST_SRCS)  riscv_step.sail riscv_analysis.sail)

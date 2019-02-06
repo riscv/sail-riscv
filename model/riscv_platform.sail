@@ -213,7 +213,7 @@ function htif_store(addr, width, data) = {
       if cmd.payload()[0] == 0b1
       then {
            htif_done = true;
-           htif_exit_code = (zero_extend(cmd.payload(), xlen) >> 0b01) : xlenbits
+           htif_exit_code = (zero_extend(cmd.payload(), xlen) >> 1) : xlenbits
       }
       else ()
     },

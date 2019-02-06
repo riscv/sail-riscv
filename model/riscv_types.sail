@@ -42,77 +42,109 @@ register instbits : xlenbits
 
 /* register file and accessors */
 
-register Xs : vector(32, dec, xlenbits)
+/* register Xs : vector(32, dec, xlenbits) */
 
-register x1  : xlenbits
-register x2  : xlenbits
-register x3  : xlenbits
-register x4  : xlenbits
-register x5  : xlenbits
-register x6  : xlenbits
-register x7  : xlenbits
-register x8  : xlenbits
-register x9  : xlenbits
-register x10 : xlenbits
-register x11 : xlenbits
-register x12 : xlenbits
-register x13 : xlenbits
-register x14 : xlenbits
-register x15 : xlenbits
-register x16 : xlenbits
-register x17 : xlenbits
-register x18 : xlenbits
-register x19 : xlenbits
-register x20 : xlenbits
-register x21 : xlenbits
-register x22 : xlenbits
-register x23 : xlenbits
-register x24 : xlenbits
-register x25 : xlenbits
-register x26 : xlenbits
-register x27 : xlenbits
-register x28 : xlenbits
-register x29 : xlenbits
-register x30 : xlenbits
-register x31 : xlenbits
+register x1  : Capability
+register x2  : Capability
+register x3  : Capability
+register x4  : Capability
+register x5  : Capability
+register x6  : Capability
+register x7  : Capability
+register x8  : Capability
+register x9  : Capability
+register x10 : Capability
+register x11 : Capability
+register x12 : Capability
+register x13 : Capability
+register x14 : Capability
+register x15 : Capability
+register x16 : Capability
+register x17 : Capability
+register x18 : Capability
+register x19 : Capability
+register x20 : Capability
+register x21 : Capability
+register x22 : Capability
+register x23 : Capability
+register x24 : Capability
+register x25 : Capability
+register x26 : Capability
+register x27 : Capability
+register x28 : Capability
+register x29 : Capability
+register x30 : Capability
+register x31 : Capability
+
+let CapRegs : vector(32, dec, register(Capability)) = [
+  ref x1 , /* something more sensible to put here? */
+  ref x1 ,
+  ref x2 ,
+  ref x3 ,
+  ref x4 ,
+  ref x5 ,
+  ref x6 ,
+  ref x7 ,
+  ref x8 ,
+  ref x9 ,
+  ref x10,
+  ref x11,
+  ref x12,
+  ref x13,
+  ref x14,
+  ref x15,
+  ref x16,
+  ref x17,
+  ref x18,
+  ref x19,
+  ref x20,
+  ref x21,
+  ref x22,
+  ref x23,
+  ref x24,
+  ref x25,
+  ref x26,
+  ref x27,
+  ref x28,
+  ref x29,
+  ref x30,
+  ref x31
+]
+
+/*!
+THIS reads a given capability register or,
+the null capabiility if the argument is zero.
+*/
+val readCapReg : forall 'n, 0 <= 'n < 32 . regno('n) -> Capability effect {rreg}
+function readCapReg(n) =
+  if (n == 0) then
+    null_cap
+  else
+    reg_deref(CapRegs[n])
+
+/*!
+THIS`(cd, cap_val)` writes capability, `cap_val` capability register `cd`. Writes to register zero are ignored.
+ */
+val writeCapReg : forall 'n, 0 <= 'n < 32. (regno('n), Capability) -> unit effect {wreg}
+function writeCapReg(n, cap) =
+  if (n == 0) then
+    ()
+  else
+    (*CapRegs[n]) = cap
+
+val init_regs : unit->unit effect{wreg}
+function init_regs () = {
+  foreach(i from 1 to 31) {
+    writeCapReg(i, null_cap)
+  }
+}
 
 val rX : forall 'n, 0 <= 'n < 32. regno('n) -> xlenbits effect {rreg}
 /*function rX 0 = 0x0000000000000000
 and rX (r if r > 0) = Xs[r]*/
-function rX r = match r {
-  0 => 0x0000000000000000,
-  1 => x1,
-  2 => x2,
-  3 => x3,
-  4 => x4,
-  5 => x5,
-  6 => x6,
-  7 => x7,
-  8 => x8,
-  9 => x9,
-  10 => x10,
-  11 => x11,
-  12 => x12,
-  13 => x13,
-  14 => x14,
-  15 => x15,
-  16 => x16,
-  17 => x17,
-  18 => x18,
-  19 => x19,
-  20 => x20,
-  21 => x21,
-  22 => x22,
-  23 => x23,
-  24 => x24,
-  25 => x25,
-  26 => x26,
-  27 => x27,
-  28 => x28,
-  29 => x29,
-  30 => x30,
-  31 => x31
-}
+function rX r =
+  let cap_val = readCapReg(r) in
+  cap_val.address
 
 $ifdef RVFI_DII
 val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit effect {wreg}
@@ -127,40 +159,7 @@ $endif
 
 val wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit effect {wreg}
 function wX (r, v) = {
-  match r {
-    0 => (),
-    1 => x1 = v,
-    2 => x2 = v,
-    3 => x3 = v,
-    4 => x4 = v,
-    5 => x5 = v,
-    6 => x6 = v,
-    7 => x7 = v,
-    8 => x8 = v,
-    9 => x9 = v,
-    10 => x10 = v,
-    11 => x11 = v,
-    12 => x12 = v,
-    13 => x13 = v,
-    14 => x14 = v,
-    15 => x15 = v,
-    16 => x16 = v,
-    17 => x17 = v,
-    18 => x18 = v,
-    19 => x19 = v,
-    20 => x20 = v,
-    21 => x21 = v,
-    22 => x22 = v,
-    23 => x23 = v,
-    24 => x24 = v,
-    25 => x25 = v,
-    26 => x26 = v,
-    27 => x27 = v,
-    28 => x28 = v,
-    29 => x29 = v,
-    30 => x30 = v,
-    31 => x31 = v
-  };
+  writeCapReg(r, {null_cap with address=v});
   if (r != 0) then {
      rvfi_wX(r,v);
      // Xs[r] = v;

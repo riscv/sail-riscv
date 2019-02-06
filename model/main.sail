@@ -16,6 +16,7 @@ function main () = {
   PC = zero_extend(0x1000, 64);
   print_bits("PC = ", PC);
   try {
+    init_regs();
     init_platform();
     init_sys();
     loop()
