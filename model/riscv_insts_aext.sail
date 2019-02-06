@@ -180,6 +180,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
           DOUBLE => mem_write_ea(addr, 8, aq & rl, rl, true),
           _      => internal_error ("AMO expected WORD or DOUBLE")
         };
+        rs2_val : xlenbits = X(rs2);
         match (eares) {
           MemException(e) => { handle_mem_exception(addr, e); false },
           MemValue(_) => {
@@ -191,7 +192,6 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
             match (rval) {
               MemException(e)  => { handle_mem_exception(addr, e); false },
               MemValue(loaded) => {
-                rs2_val : xlenbits = X(rs2);
                 result  : xlenbits =
                   match op {
                     AMOSWAP => rs2_val,
