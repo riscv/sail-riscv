@@ -1076,11 +1076,11 @@ val print_platform = {ocaml: "Platform.print_platform", c: "print_platform", _: 
 val "sign_extend" : forall 'n 'm, 'm >= 'n. (bits('n), atom('m)) -> bits('m)
 val "zero_extend" : forall 'n 'm, 'm >= 'n. (bits('n), atom('m)) -> bits('m)
 
-val EXTS : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
-val EXTZ : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
+val EXTS : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
+val EXTZ : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
 
-function EXTS v = sign_extend(v, sizeof('m))
-function EXTZ v = zero_extend(v, sizeof('m))
+function EXTS(m, v) = sign_extend(v, m)
+function EXTZ(m, v) = zero_extend(v, m)
 
 infix 4 <_s
 infix 4 >=_s
