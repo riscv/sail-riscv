@@ -8,9 +8,11 @@ SAIL_RMEM_INST_SRCS = riscv_insts_begin.sail $(SAIL_RMEM_INST) riscv_insts_end.s
 SAIL_SYS_SRCS = riscv_csr_map.sail riscv_sys_regs.sail riscv_next_regs.sail riscv_next_control.sail riscv_sys_control.sail
 
 # non-instruction sources
-SAIL_OTHER_SRCS = prelude.sail riscv_types.sail $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail riscv_vmem.sail
-SAIL_OTHER_RVFI_SRCS = prelude.sail rvfi_dii.sail riscv_types.sail $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail riscv_vmem.sail
+PRELUDE = prelude.sail prelude_mapping.sail
+SAIL_OTHER_SRCS = $(PRELUDE) riscv_types.sail $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail riscv_vmem.sail
+SAIL_OTHER_RVFI_SRCS = $(PRELUDE) rvfi_dii.sail riscv_types.sail $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail riscv_vmem.sail
 
+PRELUDE_SRCS   = $(addprefix model/,$(PRELUDE))
 SAIL_SRCS      = $(addprefix model/,$(SAIL_OTHER_SRCS) $(SAIL_SEQ_INST_SRCS)  riscv_step.sail riscv_analysis.sail)
 SAIL_RMEM_SRCS = $(addprefix model/,$(SAIL_OTHER_SRCS) $(SAIL_RMEM_INST_SRCS) riscv_step.sail riscv_analysis.sail)
 SAIL_RVFI_SRCS = $(addprefix model/,$(SAIL_OTHER_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS)  riscv_step.sail riscv_analysis.sail)
@@ -103,7 +105,7 @@ ocaml_emulator/coverage: ocaml_emulator/_sbuild/coverage.native
 gcovr:
 	gcovr -r . --html --html-detail -o index.html
 
-generated_definitions/ocaml/riscv_duopod_ocaml: model/prelude.sail model/riscv_duopod.sail
+generated_definitions/ocaml/riscv_duopod_ocaml: $(PRELUDE_SRCS) model/riscv_duopod.sail
 	mkdir -p generated_definitions/ocaml
 	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml_build_dir generated_definitions/ocaml -o riscv_duopod_ocaml $^
 
@@ -139,7 +141,7 @@ generated_definitions/isabelle/ROOT: handwritten_support/ROOT
 	mkdir -p generated_definitions/isabelle
 	cp handwritten_support/ROOT generated_definitions/isabelle/
 
-generated_definitions/lem/riscv_duopod.lem: $(addprefix model/, prelude.sail riscv_duopod.sail)
+generated_definitions/lem/riscv_duopod.lem: $(PRELUDE_SRCS) model/riscv_duopod.sail
 	mkdir -p generated_definitions/lem
 	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem -isa_output_dir generated_definitions/isabelle -lem_mwords -lem_lib Riscv_extras -o riscv_duopod $^
 generated_definitions/isabelle/Riscv_duopod.thy: generated_definitions/isabelle/ROOT generated_definitions/lem/riscv_duopod.lem handwritten_support/riscv_extras.lem
@@ -210,7 +212,7 @@ riscv_coq_build: generated_definitions/coq/riscv.vo
 $(addprefix generated_definitions/coq/,riscv.v riscv_types.v): $(SAIL_COQ_SRCS) Makefile
 	mkdir -p generated_definitions/coq
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq -o riscv -coq_lib riscv_extras $(SAIL_COQ_SRCS)
-$(addprefix generated_definitions/coq/,riscv_duopod.v riscv_duopod_types.v): model/prelude.sail model/riscv_duopod.sail
+$(addprefix generated_definitions/coq/,riscv_duopod.v riscv_duopod_types.v): $(PRELUDE_SRCS) model/riscv_duopod.sail
 	mkdir -p generated_definitions/coq
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq -o riscv_duopod -coq_lib riscv_extras $^
 
