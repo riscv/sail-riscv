@@ -117,12 +117,12 @@ function clint_load(addr, width) = {
   else if addr == MTIMECMP_BASE & ('n == 8)
   then {
     print_platform("clint[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtimecmp));
-    MemValue(zero_extend(mtimecmp, 64)) /* FIXME: Redundant zero_extend currently required by Lem backend */
+    MemValue(zero_extend(mtimecmp, xlen_val)) /* FIXME: Redundant zero_extend currently required by Lem backend */
   }
   else if addr == MTIME_BASE & ('n == 8)
   then {
     print_platform("clint[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtime));
-    MemValue(zero_extend(mtime, 64))
+    MemValue(zero_extend(mtime, xlen_val))
   }
   else {
     print_platform("clint[" ^ BitStr(addr) ^ "] -> <not-mapped>");
@@ -150,7 +150,7 @@ function clint_store(addr, width, data) = {
     MemValue(true)
   } else if addr == MTIMECMP_BASE & 'n == 8 then {
     print_platform("clint[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtimecmp)");
-    mtimecmp = zero_extend(data, 64); /* FIXME: Redundant zero_extend currently required by Lem backend */
+    mtimecmp = zero_extend(data, xlen_val); /* FIXME: Redundant zero_extend currently required by Lem backend */
     clint_dispatch();
     MemValue(true)
   } else {
@@ -173,7 +173,7 @@ val plat_term_read  = {ocaml: "Platform.term_read",  c: "plat_term_read", lem: "
 
 /* Spike's HTIF device interface, which multiplexes the above MMIO devices. */
 
-bitfield htif_cmd : bits(64) = {
+bitfield htif_cmd : xlenbits = {
   device  : 63 .. 56,
   cmd     : 55 .. 48,
   payload : 47 .. 0
@@ -194,7 +194,7 @@ function htif_load(addr, width) = {
   print_platform("htif[" ^ BitStr(addr) ^ "] -> " ^ BitStr(htif_tohost));
   /* FIXME: For now, only allow the expected access widths. */
   if width == 8
-  then MemValue(zero_extend(htif_tohost, 64))  /* FIXME: Redundant zero_extend currently required by Lem backend */
+  then MemValue(zero_extend(htif_tohost, xlen_val))  /* FIXME: Redundant zero_extend currently required by Lem backend */
   else MemException(E_Load_Access_Fault)
 }
 
@@ -213,7 +213,7 @@ function htif_store(addr, width, data) = {
       if cmd.payload()[0] == 0b1
       then {
            htif_done = true;
-           htif_exit_code = (zero_extend(cmd.payload(), xlen) >> 0b01) : xlenbits
+           htif_exit_code = (zero_extend(cmd.payload(), xlen_val) >> 0b01) : xlenbits
       }
       else ()
     },

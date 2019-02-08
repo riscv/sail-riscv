@@ -1,7 +1,7 @@
 /* Architectural state for the 'N' user-level interrupts standard extension. */
 
 /* ustatus reveals a subset of mstatus */
-bitfield Ustatus : bits(64) = {
+bitfield Ustatus : xlenbits = {
   UPIE : 4,
   UIE  : 0
 }
@@ -28,7 +28,7 @@ function legalize_ustatus(m : Mstatus, v : xlenbits) -> Mstatus = {
   m
 }
 
-bitfield Uinterrupts : bits(64) = {
+bitfield Uinterrupts : xlenbits = {
   UEI : 8,  /* external interrupt */
   UTI : 4,  /* timer interrupt    */
   USI : 0   /* software interrupt */

@@ -22,8 +22,10 @@ function clause execute (MUL(rs2, rs1, rd, high, signed1, signed2)) = {
     let rs2_val = X(rs2);
     let rs1_int : int = if signed1 then signed(rs1_val) else unsigned(rs1_val);
     let rs2_int : int = if signed2 then signed(rs2_val) else unsigned(rs2_val);
-    let result128 = to_bits(128, rs1_int * rs2_int);
-    let result = if high then result128[127..64] else result128[63..0];
+    let result_wide = to_bits(2 * xlen_val, rs1_int * rs2_int);
+    let result = if   high
+                 then result_wide[(2 * xlen_val - 1) .. xlen_val]
+                 else result_wide[(xlen_val - 1) .. 0];
     X(rd) = result;
     true
   } else {
@@ -57,7 +59,7 @@ function clause execute (DIV(rs2, rs1, rd, s)) = {
     let q : int = if rs2_int == 0 then -1 else quot_round_zero(rs1_int, rs2_int);
     /* check for signed overflow */
     let q': int = if s & q > xlen_max_signed then xlen_min_signed else q;
-    X(rd) = to_bits(xlen, q');
+    X(rd) = to_bits(xlen_val, q');
     true
   } else {
     handle_illegal();
@@ -87,7 +89,7 @@ function clause execute (REM(rs2, rs1, rd, s)) = {
     let rs2_int : int = if s then signed(rs2_val) else unsigned(rs2_val);
     let r : int = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
     /* signed overflow case returns zero naturally as required due to -1 divisor */
-    X(rd) = to_bits(xlen, r);
+    X(rd) = to_bits(xlen_val, r);
     true
   } else {
     handle_illegal();

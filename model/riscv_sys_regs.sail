@@ -38,7 +38,7 @@ register cur_inst : xlenbits
 
 /* M-mode registers */
 
-bitfield Misa : bits(64) = {
+bitfield Misa : xlenbits = {
   MXL  : 63 .. 62,
 
   Z    : 25,
@@ -88,7 +88,7 @@ function haveSupMode() -> bool = misa.S() == true
 function haveUsrMode() -> bool = misa.U() == true
 function haveNExt()    -> bool = misa.N() == true
 
-bitfield Mstatus : bits(64) = {
+bitfield Mstatus : xlenbits = {
   SD   : 63,
 
   SXL  : 35 .. 34,
@@ -162,7 +162,7 @@ function in32BitMode() -> bool = {
 
 /* interrupt processing state */
 
-bitfield Minterrupts : bits(64) = {
+bitfield Minterrupts : xlenbits = {
   MEI : 11, /* external interrupts */
   SEI : 9,
   UEI : 8,
@@ -223,7 +223,7 @@ function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
 
 /* exception processing state */
 
-bitfield Medeleg : bits(64) = {
+bitfield Medeleg : xlenbits = {
   SAMO_Page_Fault   : 15,
   Load_Page_Fault   : 13,
   Fetch_Page_Fault  : 12,
@@ -250,7 +250,7 @@ function legalize_medeleg(o : Medeleg, v : xlenbits) -> Medeleg = {
 
 /* registers for trap handling */
 
-bitfield Mtvec : bits(64) = {
+bitfield Mtvec : xlenbits = {
   Base : 63 .. 2,
   Mode :  1 .. 0
 }
@@ -265,7 +265,7 @@ function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
  }
 }
 
-bitfield Mcause : bits(64) = {
+bitfield Mcause : xlenbits = {
   IsInterrupt : 63,
   Cause       : 62 .. 0
 }
@@ -367,7 +367,7 @@ register pmpcfg0 : xlenbits
 /* S-mode registers */
 
 /* sstatus reveals a subset of mstatus */
-bitfield Sstatus : bits(64) = {
+bitfield Sstatus : xlenbits = {
   SD   : 63,
   UXL  : 33 .. 32,
   MXR  : 19,
@@ -420,7 +420,7 @@ function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
   lift_sstatus(m, Mk_Sstatus(v))
 }
 
-bitfield Sedeleg : bits(64) = {
+bitfield Sedeleg : xlenbits = {
   UEnvCall          : 8,
   SAMO_Access_Fault : 7,
   SAMO_Addr_Align   : 6,
@@ -437,7 +437,7 @@ function legalize_sedeleg(s : Sedeleg, v : xlenbits) -> Sedeleg = {
   Mk_Sedeleg(EXTZ(v[8..0]))
 }
 
-bitfield Sinterrupts : bits(64) = {
+bitfield Sinterrupts : xlenbits = {
   SEI : 9,  /* external interrupts */
   UEI : 8,
 
@@ -509,7 +509,7 @@ function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterr
 register sideleg : Sinterrupts
 
 /* s-mode address translation and protection (satp) */
-bitfield Satp64 : bits(64) = {
+bitfield Satp64 : xlenbits = {
   Mode : 63 .. 60,
   Asid : 59 .. 44,
   PPN  : 43 .. 0
