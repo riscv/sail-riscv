@@ -165,16 +165,6 @@ function clause execute (CGetAddr(rd, cb)) =
   true
 }
 /*
-union clause ast = CGetPCC : regbits
-function clause execute (CGetPCC(cd)) =
-{
-  checkCP2usable();
-  let (success, pcc) = setCapOffset(PCC, PC);
-  assert (success, "PCC with offset PC should always be representable");
-  writeCapReg(cd, pcc);
-  true
-}
-
 
 union clause ast = CGetPCCSetOffset : (regbits, regbits)
 function clause execute (CGetPCCSetOffset(cd, rs)) =
@@ -249,7 +239,11 @@ function clause execute (CSpecialRW(cd, cs, idx)) =
     if (cd != 0) then {
       // read special cap
       let special_val : Capability = match idx {
-        0  => PCC,
+        0  => {
+          let (success, pcc) = setCapOffset(PCC, PC);
+          assert (success, "PCC with offset PC should always be representable");
+          pcc
+        },
         1  => DDC,
         4  => UTCC,
         6  => UScratchC,
