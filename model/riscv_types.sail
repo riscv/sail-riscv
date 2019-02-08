@@ -44,6 +44,20 @@ register instbits : xlenbits
 
 /* register Xs : vector(32, dec, xlenbits) */
 
+register PCC : Capability
+register nextPCC : Capability
+register DDC : Capability
+
+register UTCC      : Capability
+register UScratchC : Capability
+register UEPCC     : Capability
+register STCC      : Capability
+register SScratchC : Capability
+register SEPCC     : Capability
+register MTCC      : Capability
+register MScratchC : Capability
+register MEPCC     : Capability
+
 register x1  : Capability
 register x2  : Capability
 register x3  : Capability
@@ -123,6 +137,16 @@ function readCapReg(n) =
     reg_deref(CapRegs[n])
 
 /*!
+As per [readCapReg] but reads DDC instead of null when argument is zero.
+ */
+val readCapRegDDC : forall 'n, 0 <= 'n < 32 . regno('n) -> Capability effect {rreg}
+function readCapRegDDC(n) =
+  if (n == 0) then
+    null_cap /* XXX */
+  else
+    reg_deref(CapRegs[n])
+
+/*!
 THIS`(cd, cap_val)` writes capability, `cap_val` capability register `cd`. Writes to register zero are ignored.
  */
 val writeCapReg : forall 'n, 0 <= 'n < 32. (regno('n), Capability) -> unit effect {wreg}
@@ -134,6 +158,17 @@ function writeCapReg(n, cap) =
 
 val init_regs : unit->unit effect{wreg}
 function init_regs () = {
+  PCC = default_cap;
+  nextPCC = default_cap;
+  UTCC = null_cap;
+  UScratchC = null_cap;
+  UEPCC = null_cap;
+  STCC = null_cap;
+  SScratchC = null_cap;
+  SEPCC = null_cap;
+  MTCC = null_cap;
+  MScratchC = null_cap;
+  MEPCC = null_cap;
   foreach(i from 1 to 31) {
     writeCapReg(i, null_cap)
   }
@@ -166,6 +201,10 @@ function wX (r, v) = {
      print_reg("x" ^ string_of_int(r) ^ " <- " ^ BitStr(v));
   }
 }
+
+/* XXX rename these in cheri_insts */
+overload rGPR = {rX}
+overload wGPR = {wX}
 
 overload X = {rX, wX}
 

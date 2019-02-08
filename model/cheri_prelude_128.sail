@@ -428,71 +428,8 @@ function setCapBounds(cap, base, top) : (Capability, bits(64), bits(65)) -> (boo
   (exact, newCap)
 }
 
-/*
-This version of setCapBounds was transcribed from Bluespec. It uses some approximations to help pass timing that can result in wider bounds than returned by above version.
- */
-/*
-function setCapBounds_hw(cap, base, top) : (Capability, bits(64), bits(65)) -> (bool, Capability) = {
-  /* {cap with base=base; length=(bits(64)) length; offset=0} */
-  base66 = 0b00 @ base;
-  top66  = 0b0  @ top;
-  let length : bits(66) = top66 - base66; // why 66?
-  /* roughly index of highest set bit excluding (MW-1) lower bits */
-  let e = 43 - CountLeadingZeros(length[64..22]);
-  let e0 = e == 0; // called maxZero in bsv  
-  let lenMSB = if e0 then length[21] else bitzero; // sample len MW-2
-  // extract MW + 1 bits of top and base -- we might need extra one if we round up e
-  Bs : bits(23) = zeros();
-  T : bits(23) = zeros();
-  let newBaseBits : bits(24) = mask(base >> e);
-  let newTopBits  : bits(23) = mask(top >> e);
-
-  incE = false;
-  if (e0) then {
-    /* e0 case */
-    Bs = newBaseBits[22..0];
-    T = newTopBits[22..0];
-  } else {
-    // embedded exp cases
-    // Mask of all significant bits of length (msb and below)
-    // NB this differs from smearMSBRight used in bsv when e == 0 but don't think this matters
-    let lmask    : bits(66) = zero_extend(replicate_bits(0b1, e + 22));
-    // mask which when combined with lmask will give just 18 bits of length (note ~)
-    // strangely this ignores 2 bits of length mantissa. why?
-    let lmaskLo2 : bits(66) = ~(zero_extend(replicate_bits(0b1, e + 5)));
-    let lengthMax = (length & lmaskLo2) == (lmask & lmaskLo2);
-    if not (lengthMax) then {
-      Bs = newBaseBits[22..3] @ 0b000;
-      // If top has significant bits we are going to lose then we must round up T by one
-      // Mask of bits of base / top that we will lose for e != 0 (including 3 for exp).
-      lmaskLo : bits(66) = zero_extend(replicate_bits(0b1, e + 3));
-      lostSignificantTop = ((top66 & lmaskLo) != zeros());
-      // We don't actually use this because we do exact bounds check at end
-      // lostSignificantBase = ((base66 & lmaskLo) != zeros()) & not(e0);
-      if (lostSignificantTop) then {
-        // shift by MW - 2 - 3 (HalfExp) putting MSB just above (e + 3)
-        roundedLength = length + (length >> 18);
-        // TODO are bottom e + 3 bits of roundedLength important here?
-        newTopBitsRounded : bits(20) = mask((base66 + roundedLength) >> (e + 3));
-        T = newTopBitsRounded @ 0b000;
-      } else {
-        T = newTopBits[22..3] @ 0b000;
-      }
-    } else {
-      // rounding means we have to increase e by one
-      // may not be strictly necessary if we have not lost significant bits...
-      incE = true;
-      Bs = newBaseBits[23..4] @ 0b000;
-      roundedLength2 = length + (length >> 16);
-      newTopBitsRoundedHigher : bits(20) = mask((base66 + roundedLength2) >> (e + 4));
-      T = newTopBitsRoundedHigher @ 0b000;
-    }
-  };
-  let newCap  = {cap with address=base, E=to_bits(6, if incE then e + 1 else e ), B=Bs, T=T, lenMSB=lenMSB, internal_e=not(e0)};
-  let (newBase, newTop) = getCapBounds(newCap);
-  let exact   = (unsigned(base) == newBase) & (unsigned(top) == newTop);
-  (exact, newCap)
-}
-*/
 function int_to_cap (offset) : bits(64) -> Capability = 
     {null_cap with address = offset}
+
+val checkCP2usable : unit -> unit
+function checkCP2usable () = ()
