@@ -373,7 +373,9 @@ mapping clause assembly = STORE(imm, rs1, rd, size, aq, rl)
 union clause ast = ADDIW : (bits(12), regbits, regbits)
 
 mapping clause encdec = ADDIW(imm, rs1, rd)
+      if xlen_val == 64
   <-> imm @ rs1 @ 0b000 @ rd @ 0b0011011
+      if xlen_val == 64
 
 function clause execute (ADDIW(imm, rs1, rd)) = {
   let result : xlenbits = EXTS(imm) + X(rs1);
@@ -382,14 +384,25 @@ function clause execute (ADDIW(imm, rs1, rd)) = {
 }
 
 mapping clause assembly = ADDIW(imm, rs1, rd)
+      if xlen_val == 64
   <-> "addiw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_12(imm)
+      if xlen_val == 64
 
 /* ****************************************************************** */
 union clause ast = SHIFTW : (bits(5), regbits, regbits, sop)
 
-mapping clause encdec = SHIFTW(shamt, rs1, rd, RISCV_SLLI) <-> 0b0000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0011011
-mapping clause encdec = SHIFTW(shamt, rs1, rd, RISCV_SRLI) <-> 0b0000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
-mapping clause encdec = SHIFTW(shamt, rs1, rd, RISCV_SRAI) <-> 0b0100000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
+mapping clause encdec = SHIFTW(shamt, rs1, rd, RISCV_SLLI)
+      if xlen_val == 64
+  <-> 0b0000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0011011
+      if xlen_val == 64
+mapping clause encdec = SHIFTW(shamt, rs1, rd, RISCV_SRLI)
+      if xlen_val == 64
+  <-> 0b0000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
+      if xlen_val == 64
+mapping clause encdec = SHIFTW(shamt, rs1, rd, RISCV_SRAI)
+      if xlen_val == 64
+  <-> 0b0100000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
+      if xlen_val == 64
 
 function clause execute (SHIFTW(shamt, rs1, rd, op)) = {
   let rs1_val = (X(rs1))[31..0];
@@ -409,16 +422,33 @@ mapping shiftw_mnemonic : sop <-> string = {
 }
 
 mapping clause assembly = SHIFTW(shamt, rs1, rd, op)
+      if xlen_val == 64
   <-> shiftw_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_5(shamt)
+      if xlen_val == 64
 
 /* ****************************************************************** */
 union clause ast = RTYPEW : (regbits, regbits, regbits, ropw)
 
-mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_ADDW) <-> 0b0000000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
-mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SUBW) <-> 0b0100000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
-mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SLLW) <-> 0b0000000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0111011
-mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SRLW) <-> 0b0000000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0111011
-mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SRAW) <-> 0b0100000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0111011
+mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_ADDW)
+      if xlen_val == 64
+  <-> 0b0000000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
+      if xlen_val == 64
+mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SUBW)
+      if xlen_val == 64
+  <-> 0b0100000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
+      if xlen_val == 64
+mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SLLW)
+      if xlen_val == 64
+  <-> 0b0000000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0111011
+      if xlen_val == 64
+mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SRLW)
+      if xlen_val == 64
+  <-> 0b0000000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0111011
+      if xlen_val == 64
+mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SRAW)
+      if xlen_val == 64
+  <-> 0b0100000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0111011
+      if xlen_val == 64
 
 function clause execute (RTYPEW(rs2, rs1, rd, op)) = {
   let rs1_val = (X(rs1))[31..0];
@@ -443,14 +473,25 @@ mapping rtypew_mnemonic : ropw <-> string = {
 }
 
 mapping clause assembly = RTYPEW(rs2, rs1, rd, op)
+      if xlen_val == 64
   <-> rtypew_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+      if xlen_val == 64
 
 /* ****************************************************************** */
 union clause ast = SHIFTIWOP : (bits(5), regbits, regbits, sopw)
 
-mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SLLIW) <-> 0b0000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0011011
-mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRLIW) <-> 0b0000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
-mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRAIW) <-> 0b0100000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
+mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SLLIW)
+      if xlen_val == 64
+  <-> 0b0000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0011011
+      if xlen_val == 64
+mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRLIW)
+      if xlen_val == 64
+  <-> 0b0000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
+      if xlen_val == 64
+mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRAIW)
+      if xlen_val == 64
+  <-> 0b0100000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
+      if xlen_val == 64
 
 function clause execute (SHIFTIWOP(shamt, rs1, rd, op)) = {
   let rs1_val = X(rs1);
@@ -470,7 +511,9 @@ mapping shiftiwop_mnemonic : sopw <-> string = {
 }
 
 mapping clause assembly = SHIFTIWOP(shamt, rs1, rd, op)
+      if xlen_val == 64
   <-> shiftiwop_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ hex_bits_5(shamt)
+      if xlen_val == 64
 
 /* ****************************************************************** */
 union clause ast = FENCE : (bits(4), bits(4))

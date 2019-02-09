@@ -103,7 +103,10 @@ mapping clause assembly = REM(rs2, rs1, rd, s)
 /* ****************************************************************** */
 union clause ast = MULW : (regbits, regbits, regbits)
 
-mapping clause encdec = MULW(rs2, rs1, rd) <-> 0b0000001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
+mapping clause encdec = MULW(rs2, rs1, rd)
+      if xlen_val == 64
+  <-> 0b0000001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
+      if xlen_val == 64
 
 function clause execute (MULW(rs2, rs1, rd)) = {
   if haveMulDiv() then {
@@ -123,13 +126,17 @@ function clause execute (MULW(rs2, rs1, rd)) = {
 }
 
 mapping clause assembly = MULW(rs2, rs1, rd)
+      if xlen_val == 64
   <-> "mulw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+      if xlen_val == 64
 
 /* ****************************************************************** */
 union clause ast = DIVW : (regbits, regbits, regbits, bool)
 
 mapping clause encdec = DIVW(rs2, rs1, rd, s)
+      if xlen_val == 64
   <-> 0b0000001 @ rs2 @ rs1 @ 0b10 @ bool_not_bits(s) @ rd @ 0b0111011
+      if xlen_val == 64
 
 function clause execute (DIVW(rs2, rs1, rd, s)) = {
   if haveMulDiv() then {
@@ -149,13 +156,17 @@ function clause execute (DIVW(rs2, rs1, rd, s)) = {
 }
 
 mapping clause assembly = DIVW(rs2, rs1, rd, s)
+      if xlen_val == 64
   <-> "div" ^ maybe_not_u(s) ^ "w" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+      if xlen_val == 64
 
 /* ****************************************************************** */
 union clause ast = REMW : (regbits, regbits, regbits, bool)
 
 mapping clause encdec = REMW(rs2, rs1, rd, s)
+      if xlen_val == 64
   <-> 0b0000001 @ rs2 @ rs1 @ 0b11 @ bool_not_bits(s) @ rd @ 0b0111011
+      if xlen_val == 64
 
 function clause execute (REMW(rs2, rs1, rd, s)) = {
   if haveMulDiv() then {
@@ -174,4 +185,6 @@ function clause execute (REMW(rs2, rs1, rd, s)) = {
 }
 
 mapping clause assembly = REMW(rs2, rs1, rd, s)
+      if xlen_val == 64
   <-> "rem" ^ maybe_not_u(s) ^ "w" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+      if xlen_val == 64
