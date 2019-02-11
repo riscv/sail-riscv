@@ -871,73 +871,115 @@ function clause execute(CJALR(cd, cb)) =
     true
   };
 }
-/*
-union clause ast = CLoad : (regbits, regbits, regbits, bits(8), bool, WordType)
-function clause execute (CLoad(rd, cb, rt, offset, signext, width)) =
+
+val handle_load_data_via_cap : (regbits, regbits, Capability, uint64, bool, word_width) -> bool effect {escape, rmem, rreg, wmv, wreg}
+function handle_load_data_via_cap(rd, cs, cap_val, vaddr, is_unsigned, width) = {
+  let (base, top) = getCapBounds(cap_val);
+  let vaddrBits = to_bits(xlen, vaddr);
+  let size = word_width_bytes(width);
+  let aq : bool = false;
+  let rl : bool = false;
+  if not(cap_val.tag) then {
+    raise_c2_exception(CapEx_TagViolation, cs);
+  } else if cap_val.sealed then {
+    raise_c2_exception(CapEx_SealViolation, cs);
+  } else if not (cap_val.permit_load) then {
+    raise_c2_exception(CapEx_PermitLoadViolation, cs);
+  } else if (vaddr + size) > top then {
+    raise_c2_exception(CapEx_LengthViolation, cs);
+  } else if vaddr < base then {
+    raise_c2_exception(CapEx_LengthViolation, cs);
+  } else if check_misaligned(vaddrBits, width) then {
+    handle_mem_exception(vaddrBits, E_Load_Addr_Align);
+    false
+  } else match translateAddr(vaddrBits, Read, Data) {
+    TR_Failure(e) => { handle_mem_exception(vaddrBits, e); false },
+    TR_Address(addr) => process_load(rd, vaddrBits, mem_read(addr, size, aq, rl, false), is_unsigned)
+  }
+}
+
+union clause ast = CLoadDDC : (regbits, regbits, bool, word_width)
+function clause execute (CLoadDDC(rd, rs, is_unsigned, width)) =
 {
   checkCP2usable();
-  let cb_val = readCapRegDDC(cb);
-  if not (cb_val.tag) then
-    raise_c2_exception(CapEx_TagViolation, cb)
-  else if cb_val.sealed then
-    raise_c2_exception(CapEx_SealViolation, cb)
-  else if not (cb_val.permit_load) then
-    raise_c2_exception(CapEx_PermitLoadViolation, cb)
-  else
-  {
-    let 'size   = wordWidthBytes(width);
-    let cursor  = getCapCursor(cb_val);
-    let vAddr   = (cursor + unsigned(rGPR(rt)) + size*signed(offset)) % pow2(64);
-    let vAddr64 = to_bits(64, vAddr);
-    if (vAddr + size) > getCapTop(cb_val) then
-      raise_c2_exception(CapEx_LengthViolation, cb)
-    else if vAddr < getCapBase(cb_val) then
-      raise_c2_exception(CapEx_LengthViolation, cb)
-    else if not (isAddressAligned(vAddr64, width)) then
-      SignalExceptionBadAddr(AdEL, vAddr64)
-    else
-    {
-      let pAddr = TLBTranslate(vAddr64, LoadData);
-      memResult : bits(64) = extendLoad(MEMr_wrapper(pAddr, size), signext);
-      wGPR(rd) = memResult;
-      true
+  let ddc_val = DDC;
+  let vaddr = (getCapBase(ddc_val) + unsigned(X(rs))) % pow2(xlen);
+  handle_load_data_via_cap(rd, 0b00000, ddc_val, vaddr, is_unsigned, width)
+}
+
+union clause ast = CLoadCap : (regbits, regbits, bool, word_width)
+function clause execute (CLoadCap(rd, cs, is_unsigned, width)) =
+{
+  checkCP2usable();
+  let cap_val = readCapReg(cs);
+  let vaddr = getCapCursor(cap_val);
+  handle_load_data_via_cap(rd, cs, cap_val, vaddr, is_unsigned, width)
+}
+
+val handle_store_data_via_cap : (regbits, regbits, Capability, uint64, word_width) -> bool effect {eamem, escape, rmem, rreg, wmv, wreg}
+function handle_store_data_via_cap(rs, cs, cap_val, vaddr, width) = {
+  let (base, top) = getCapBounds(cap_val);
+  let vaddrBits = to_bits(xlen, vaddr);
+  let size = word_width_bytes(width);
+  let aq : bool = false;
+  let rl : bool = false;
+  if not(cap_val.tag) then {
+    raise_c2_exception(CapEx_TagViolation, cs);
+  } else if cap_val.sealed then {
+    raise_c2_exception(CapEx_SealViolation, cs);
+  } else if not (cap_val.permit_store) then {
+    raise_c2_exception(CapEx_PermitStoreViolation, cs);
+  } else if (vaddr + size) > top then {
+    raise_c2_exception(CapEx_LengthViolation, cs);
+  } else if vaddr < base then {
+    raise_c2_exception(CapEx_LengthViolation, cs);
+  } else if check_misaligned(vaddrBits, width) then {
+    handle_mem_exception(vaddrBits, E_SAMO_Addr_Align);
+    false
+  } else match translateAddr(vaddrBits, Write, Data) {
+    TR_Failure(e) => { handle_mem_exception(vaddrBits, e); false },
+    TR_Address(addr) => {
+      let eares : MemoryOpResult(unit) = mem_write_ea(addr, size, aq, rl, false);
+      match (eares) {
+        MemException(e) => { handle_mem_exception(addr, e); false },
+        MemValue(_) => {
+          let rs_val = X(rs);
+          let res : MemoryOpResult(bool) = match width {
+            BYTE   => mem_write_value(addr, 1, rs_val[7..0],  aq, rl, false),
+            HALF   => mem_write_value(addr, 2, rs_val[15..0], aq, rl, false),
+            WORD   => mem_write_value(addr, 4, rs_val[31..0], aq, rl, false),
+            DOUBLE => mem_write_value(addr, 8, rs_val,        aq, rl, false)
+          };
+          match (res) {
+            MemValue(true)  => true,
+            MemValue(false) => internal_error("store got false from mem_write_value"),
+            MemException(e) => { handle_mem_exception(addr, e); false }
+          }
+        }
+      }
     }
   }
 }
 
-union clause ast = CLoadLinked : (regbits, regbits, bool, WordType)
-function clause execute (CLoadLinked(rd, cb, signext, width)) =
+union clause ast = CStoreDDC : (regbits, regbits, word_width)
+function clause execute (CLoadDDC(rd, rs, is_unsigned, width)) =
 {
   checkCP2usable();
-  let cb_val = readCapRegDDC(cb);
-  if not (cb_val.tag) then
-    raise_c2_exception(CapEx_TagViolation, cb)
-  else if cb_val.sealed then
-    raise_c2_exception(CapEx_SealViolation, cb)
-  else if not (cb_val.permit_load) then
-    raise_c2_exception(CapEx_PermitLoadViolation, cb)
-  else
-  {
-    let 'size   = wordWidthBytes(width);
-    let vAddr   = getCapCursor(cb_val);
-    let vAddr64 = to_bits(64, vAddr);
-    if (vAddr + size) > getCapTop(cb_val) then
-      raise_c2_exception(CapEx_LengthViolation, cb)
-    else if vAddr < getCapBase(cb_val) then
-      raise_c2_exception(CapEx_LengthViolation, cb)
-    else if not (isAddressAligned(vAddr64, width)) then
-      SignalExceptionBadAddr(AdEL, vAddr64)
-    else
-    {
-      let pAddr = TLBTranslate(vAddr64, LoadData);
-      let memResult : bits(64) = extendLoad(MEMr_reserve_wrapper(pAddr, size), signext);
-      CP0LLBit  = 0b1;
-      CP0LLAddr = pAddr;
-      wGPR(rd) = memResult;
-      true
-    }
-  }
+  let ddc_val = DDC;
+  let vaddr = (getCapBase(ddc_val) + unsigned(X(rs))) % pow2(xlen);
+  handle_store_data_via_cap(rd, 0b00000, ddc_val, vaddr, width)
 }
+
+union clause ast = CStoreCap : (regbits, regbits, word_width)
+function clause execute (CLoadCap(rs, cs, is_unsigned, width)) =
+{
+  checkCP2usable();
+  let cap_val = readCapReg(cs);
+  let vaddr = getCapCursor(cap_val);
+  handle_store_data_via_cap(rs, cs, cap_val, vaddr, width)
+}
+
+/*
 
 union clause ast = CLoadTags : (regbits, regbits)
 function clause execute (CLoadTags(rd, cb)) =
@@ -1301,16 +1343,35 @@ mapping clause encdec = CSpecialRW(cd, cs, idx) <-> 0b0000001 @ idx @ cs @ 0b000
 mapping clause encdec = CIncOffsetImmediate(cd, cb, imm12) <-> imm12 : bits(12) @ cb @ 0b001 @ cd @ 0b1011011
 mapping clause encdec = CSetBoundsImmediate(cd, cb, imm12) <-> imm12 : bits(12) @ cb @ 0b010 @ cd @ 0b1011011
 
+/* Load / store data via DDC with offset rs */
+mapping clause encdec = CLoadDDC(rd, rs, false, BYTE)   <-> 0b0000000 @ 0b00000 @ rs @ 0b000 @ rd @ 0b1011011  /* lbddc */
+mapping clause encdec = CLoadDDC(rd, rs, false, HALF)   <-> 0b0000000 @ 0b00001 @ rs @ 0b000 @ rd @ 0b1011011  /* lhddc */
+mapping clause encdec = CLoadDDC(rd, rs, false, WORD)   <-> 0b0000000 @ 0b00010 @ rs @ 0b000 @ rd @ 0b1011011  /* lwddc */
+mapping clause encdec = CLoadDDC(rd, rs, false, DOUBLE) <-> 0b0000000 @ 0b00011 @ rs @ 0b000 @ rd @ 0b1011011  /* ldddc */
+mapping clause encdec = CLoadDDC(rd, rs, true, BYTE)    <-> 0b0000000 @ 0b00100 @ rs @ 0b000 @ rd @ 0b1011011  /* lbuddc */
+mapping clause encdec = CLoadDDC(rd, rs, true, HALF)    <-> 0b0000000 @ 0b00101 @ rs @ 0b000 @ rd @ 0b1011011  /* lhuddc */
+mapping clause encdec = CLoadDDC(rd, rs, true, WORD)    <-> 0b0000000 @ 0b00110 @ rs @ 0b000 @ rd @ 0b1011011  /* lwuddc */
+mapping clause encdec = CLoadDDC(rd, rs, true, DOUBLE)  <-> 0b0000000 @ 0b00111 @ rs @ 0b000 @ rd @ 0b1011011  /* lduddc */
+mapping clause encdec = CStoreDDC(rd, rs, BYTE)         <-> 0b0000000 @ 0b01000 @ rs @ 0b000 @ rd @ 0b1011011  /* sbddc */
+mapping clause encdec = CStoreDDC(rd, rs, HALF)         <-> 0b0000000 @ 0b01001 @ rs @ 0b000 @ rd @ 0b1011011  /* shddc */
+mapping clause encdec = CStoreDDC(rd, rs, WORD)         <-> 0b0000000 @ 0b01010 @ rs @ 0b000 @ rd @ 0b1011011  /* swddc */
+mapping clause encdec = CStoreDDC(rd, rs, DOUBLE)       <-> 0b0000000 @ 0b01011 @ rs @ 0b000 @ rd @ 0b1011011  /* sdddc */
+
+/* Load / store data via cap, cs */
+mapping clause encdec = CLoadCap(rd, cs, false, BYTE)   <-> 0b0000000 @ 0b10000 @ cs @ 0b000 @ rd @ 0b1011011  /* lbcap */
+mapping clause encdec = CLoadCap(rd, cs, false, HALF)   <-> 0b0000000 @ 0b10001 @ cs @ 0b000 @ rd @ 0b1011011  /* lhcap */
+mapping clause encdec = CLoadCap(rd, cs, false, WORD)   <-> 0b0000000 @ 0b10010 @ cs @ 0b000 @ rd @ 0b1011011  /* lwcap */
+mapping clause encdec = CLoadCap(rd, cs, false, DOUBLE) <-> 0b0000000 @ 0b10011 @ cs @ 0b000 @ rd @ 0b1011011  /* ldcap */
+mapping clause encdec = CLoadCap(rd, cs, true, BYTE)    <-> 0b0000000 @ 0b10100 @ cs @ 0b000 @ rd @ 0b1011011  /* lbucap */
+mapping clause encdec = CLoadCap(rd, cs, true, HALF)    <-> 0b0000000 @ 0b10101 @ cs @ 0b000 @ rd @ 0b1011011  /* lhucap */
+mapping clause encdec = CLoadCap(rd, cs, true, WORD)    <-> 0b0000000 @ 0b10110 @ cs @ 0b000 @ rd @ 0b1011011  /* lwucap */
+mapping clause encdec = CLoadCap(rd, cs, true, DOUBLE)  <-> 0b0000000 @ 0b10111 @ cs @ 0b000 @ rd @ 0b1011011  /* lducap */
+mapping clause encdec = CStoreCap(rd, cs, BYTE)         <-> 0b0000000 @ 0b11000 @ cs @ 0b000 @ rd @ 0b1011011  /* sbcap */
+mapping clause encdec = CStoreCap(rd, cs, HALF)         <-> 0b0000000 @ 0b11001 @ cs @ 0b000 @ rd @ 0b1011011  /* shcap */
+mapping clause encdec = CStoreCap(rd, cs, WORD)         <-> 0b0000000 @ 0b11010 @ cs @ 0b000 @ rd @ 0b1011011  /* swcap */
+mapping clause encdec = CStoreCap(rd, cs, DOUBLE)       <-> 0b0000000 @ 0b11011 @ cs @ 0b000 @ rd @ 0b1011011  /* sdcap */
 
 /*
-
-function clause decode (0b110010 @ rd : regbits @ cb : regbits@ rt : regbits @ offset : bits(8) @ 0b0 @ 0b00) = Some(CLoad(rd, cb, rt, offset, false, B)) /* CLBU */
-function clause decode (0b110010 @ rd : regbits @ cb : regbits@ rt : regbits @ offset : bits(8) @ 0b1 @ 0b00) = Some(CLoad(rd, cb, rt, offset, true,  B)) /* CLB */
-function clause decode (0b110010 @ rd : regbits @ cb : regbits@ rt : regbits @ offset : bits(8) @ 0b0 @ 0b01) = Some(CLoad(rd, cb, rt, offset, false, H)) /* CLHU */
-function clause decode (0b110010 @ rd : regbits @ cb : regbits@ rt : regbits @ offset : bits(8) @ 0b1 @ 0b01) = Some(CLoad(rd, cb, rt, offset, true,  H)) /* CLH */
-function clause decode (0b110010 @ rd : regbits @ cb : regbits@ rt : regbits @ offset : bits(8) @ 0b0 @ 0b10) = Some(CLoad(rd, cb, rt, offset, false, W)) /* CLWU */
-function clause decode (0b110010 @ rd : regbits @ cb : regbits@ rt : regbits @ offset : bits(8) @ 0b1 @ 0b10) = Some(CLoad(rd, cb, rt, offset, true,  W)) /* CLW */
-function clause decode (0b110010 @ rd : regbits @ cb : regbits@ rt : regbits @ offset : bits(8) @ 0b0 @ 0b11) = Some(CLoad(rd, cb, rt, offset, false, D)) /* CLD */
 
 function clause decode (0b010010 @ 0b10000 @ rd : regbits @ cb : regbits @ 0b00000001 @ 0b0 @ 0b00) = Some(CLoadLinked(rd, cb, false, B)) /* CLLBU */
 function clause decode (0b010010 @ 0b10000 @ rd : regbits @ cb : regbits @ 0b00000001 @ 0b1 @ 0b00) = Some(CLoadLinked(rd, cb, true,  B)) /* CLLB  */

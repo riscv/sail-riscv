@@ -91,7 +91,7 @@ register x30 : Capability
 register x31 : Capability
 
 let CapRegs : vector(32, dec, register(Capability)) = [
-  ref x1 , /* something more sensible to put here? */
+  ref DDC,
   ref x1 ,
   ref x2 ,
   ref x3 ,
@@ -141,10 +141,7 @@ As per [readCapReg] but reads DDC instead of null when argument is zero.
  */
 val readCapRegDDC : forall 'n, 0 <= 'n < 32 . regno('n) -> Capability effect {rreg}
 function readCapRegDDC(n) =
-  if (n == 0) then
-    null_cap /* XXX */
-  else
-    reg_deref(CapRegs[n])
+  reg_deref(CapRegs[n]) /* NB CapRegs[0] points to DDC */
 
 /*!
 THIS`(cd, cap_val)` writes capability, `cap_val` capability register `cd`. Writes to register zero are ignored.
@@ -578,6 +575,14 @@ mapping size_bits : word_width <-> bits(2) = {
   HALF   <-> 0b01,
   WORD   <-> 0b10,
   DOUBLE <-> 0b11
+}
+
+val word_width_bytes : word_width -> {'s, 's == 1 | 's == 2 | 's == 4 | 's == 8 . atom('s)}
+function word_width_bytes width = match width {
+  BYTE   => 1,
+  HALF   => 2,
+  WORD   => 4,
+  DOUBLE => 8
 }
 
 mapping size_mnemonic : word_width <-> string = {
