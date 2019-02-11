@@ -1,7 +1,5 @@
 /* Basic type and function definitions used pervasively in the model. */
 
-type xlenbits = bits(xlen)
-
 let xlen_max_unsigned = 2 ^ xlen_val - 1
 let xlen_max_signed = 2 ^ (xlen_val - 1) - 1
 let xlen_min_signed = 0 - 2 ^ (xlen_val - 1)
@@ -79,7 +77,7 @@ val rX : forall 'n, 0 <= 'n < 32. regno('n) -> xlenbits effect {rreg}
 /*function rX 0 = 0x0000000000000000
 and rX (r if r > 0) = Xs[r]*/
 function rX r = match r {
-  0 => 0x0000000000000000,
+  0 => EXTZ(0x0),
   1 => x1,
   2 => x2,
   3 => x3,

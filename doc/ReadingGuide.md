@@ -9,8 +9,11 @@ The model contains the following Sail modules in the `model` directory:
 
 - `prelude.sail` contains useful Sail library functions.  This file
   should be referred to as needed.  The lowest level memory access
-  primitives are defined in this file, and are implemented
+  primitives are defined in `prelude_mem.sail`, and are implemented
   by the various Sail backends.
+
+- `riscv_xlen.sail` contains the `XLEN` definition for the model.  It
+  can be set for either RV32 or RV64.
 
 - `riscv_types.sail` contains some basic RISC-V definitions.  This
   file should be read first, since it provides basic definitions that

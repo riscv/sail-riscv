@@ -146,7 +146,7 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) -> PTW_Result 
                                 PTE39_LOG_SIZE);
   let pte_addr = ptb + pt_ofs;
   /* FIXME: we assume here that walks only access physical-memory-backed addresses, and not MMIO regions. */
-  match (phys_mem_read(Data, EXTZ(pte_addr), 8, false, false, false)) {
+  match (phys_mem_read(Data, EXTZ(pte_addr), xlen_val_bytes, false, false, false)) {
     MemException(_) => {
 /*    print("walk39(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
             ^ " pt_base=" ^ BitStr(ptb)
@@ -313,7 +313,7 @@ function translate39(vAddr, ac, priv, mxr, do_sum, level) = {
               n_ent.pte = update_BITS(ent.pte, pbits.bits());
               writeTLB39(idx, n_ent);
               /* update page table */
-              match checked_mem_write(EXTZ(ent.pteAddr), 8, ent.pte.bits(), false, false, false) {
+              match checked_mem_write(EXTZ(ent.pteAddr), xlen_val_bytes, ent.pte.bits(), false, false, false) {
                 MemValue(_) => (),
                 MemException(e) => internal_error("invalid physical address in TLB")
               };
@@ -339,7 +339,7 @@ function translate39(vAddr, ac, priv, mxr, do_sum, level) = {
                 TR39_Failure(PTW_PTE_Update)
               } else {
                 w_pte : SV39_PTE = update_BITS(pte, pbits.bits());
-                match checked_mem_write(EXTZ(pteAddr), 8, w_pte.bits(), false, false, false) {
+                match checked_mem_write(EXTZ(pteAddr), xlen_val_bytes, w_pte.bits(), false, false, false) {
                   MemValue(_) => {
                     addToTLB39(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
                     TR39_Address(pAddr)

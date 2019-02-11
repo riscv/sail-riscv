@@ -1,6 +1,4 @@
-
-type xlen = atom(64)
-type xlen_t = bits(64)
+// This file depends on the xlen definitions in riscv_xlen.sail.
 
 type regno ('n : Int), 0 <= 'n < 32 = atom('n)
 type regbits = bits(5)
@@ -13,18 +11,18 @@ function regbits_to_regno b = let r as atom(_) = unsigned(b) in r
 
 /* Architectural state */
 
-register PC : xlen_t
-register nextPC : xlen_t
+register PC : xlenbits
+register nextPC : xlenbits
 
-register Xs : vector(32, dec, xlen_t)
+register Xs : vector(32, dec, xlenbits)
 
 /* Getters and setters for X registers (special case for zeros register, x0) */
-val rX : forall 'n, 0 <= 'n < 32. regno('n) -> xlen_t effect {rreg}
+val rX : forall 'n, 0 <= 'n < 32. regno('n) -> xlenbits effect {rreg}
 
-function rX 0 = 0x0000000000000000
+function rX 0 = EXTZ(0x0)
 and rX (r if r > 0) = Xs[r]
 
-val wX : forall 'n, 0 <= 'n < 32. (regno('n), xlen_t) -> unit effect {wreg}
+val wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit effect {wreg}
 
 function wX (r, v) =
   if r != 0 then {
@@ -35,7 +33,7 @@ overload X = {rX, wX}
 
 /* Accessors for memory */
 
-val MEMr : forall 'n, 'n >= 0. (xlen_t, atom('n)) -> bits(8 * 'n) effect {rmem}
+val MEMr : forall 'n, 'n >= 0. (xlenbits, atom('n)) -> bits(8 * 'n) effect {rmem}
 function MEMr (addr, width) =
   match __RISCV_read(addr, width, false, false, false) {
     Some(v) => v,
@@ -61,7 +59,7 @@ function clause decode imm : bits(12) @ rs1 : regbits @ 0b000 @ rd : regbits @ 0
 
 function clause execute (ITYPE (imm, rs1, rd, RISCV_ADDI)) =
   let rs1_val = X(rs1) in
-  let imm_ext : xlen_t = EXTS(imm) in
+  let imm_ext : xlenbits = EXTS(imm) in
   let result = rs1_val + imm_ext in
   X(rd) = result
 
@@ -74,8 +72,8 @@ function clause decode imm : bits(12) @ rs1 : regbits @ 0b011 @ rd : regbits @ 0
   = Some(LOAD(imm, rs1, rd))
 
 function clause execute(LOAD(imm, rs1, rd)) =
-    let addr : xlen_t = X(rs1) + EXTS(imm) in
-    let result : xlen_t = MEMr(addr, 8) in
+    let addr : xlenbits = X(rs1) + EXTS(imm) in
+    let result : xlenbits = MEMr(addr, xlen_val_bytes) in
     X(rd) = result
 
 /* ****************************************************************** */
