@@ -101,9 +101,9 @@ register mtimecmp : xlenbits  // memory-mapped internal clint register.
  * bffc mtime hi
  */
 
-let MSIP_BASE     : xlenbits = 0x0000000000000000
-let MTIMECMP_BASE : xlenbits = 0x0000000000004000
-let MTIME_BASE    : xlenbits = 0x000000000000bff8
+let MSIP_BASE     : xlenbits = EXTZ(0x00000)
+let MTIMECMP_BASE : xlenbits = EXTZ(0x04000)
+let MTIME_BASE    : xlenbits = EXTZ(0x0bff8)
 
 val clint_load : forall 'n, 'n > 0. (xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rreg}
 function clint_load(addr, width) = {
