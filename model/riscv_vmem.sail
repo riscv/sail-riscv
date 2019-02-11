@@ -99,7 +99,7 @@ let PTE39_SIZE = 8
 
 type vaddr39 = bits(39)
 type paddr39 = bits(56)
-type pte39   = xlenbits
+type pte39   = bits(64)
 
 bitfield SV39_Vaddr : vaddr39 = {
   VPNi  : 38 .. 12,

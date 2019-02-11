@@ -39,7 +39,7 @@ register cur_inst : xlenbits
 /* M-mode registers */
 
 bitfield Misa : xlenbits = {
-  MXL  : 63 .. 62,
+  MXL  : xlen - 1 .. xlen - 2,
 
   Z    : 25,
   Y    : 24,
@@ -89,10 +89,10 @@ function haveUsrMode() -> bool = misa.U() == true
 function haveNExt()    -> bool = misa.N() == true
 
 bitfield Mstatus : xlenbits = {
-  SD   : 63,
+  SD   : xlen - 1,
 
-  SXL  : 35 .. 34,
-  UXL  : 33 .. 32,
+  SXL  : 35 .. 34, // FIXME: These don't exist on RV32
+  UXL  : 33 .. 32, // and might need a separate definition.
 
   TSR  : 22,
   TW   : 21,
@@ -251,7 +251,7 @@ function legalize_medeleg(o : Medeleg, v : xlenbits) -> Medeleg = {
 /* registers for trap handling */
 
 bitfield Mtvec : xlenbits = {
-  Base : 63 .. 2,
+  Base : xlen - 1 .. 2,
   Mode :  1 .. 0
 }
 register mtvec : Mtvec  /* Trap Vector */
@@ -266,8 +266,8 @@ function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
 }
 
 bitfield Mcause : xlenbits = {
-  IsInterrupt : 63,
-  Cause       : 62 .. 0
+  IsInterrupt : xlen - 1,
+  Cause       : xlen - 2 .. 0
 }
 register mcause : Mcause
 
@@ -329,8 +329,8 @@ function legalize_scounteren(c : Counteren, v : xlenbits) -> Counteren = {
   c
 }
 
-register mcycle : xlenbits
-register mtime : xlenbits
+register mcycle : bits(64)
+register mtime : bits(64)
 
 /* minstret
  *
@@ -343,7 +343,7 @@ register mtime : xlenbits
  * written to, we track writes to it in a separate model-internal
  * register.
  */
-register minstret : xlenbits
+register minstret : bits(64)
 register minstret_written : bool
 
 function retire_instruction() -> unit = {
@@ -353,7 +353,7 @@ function retire_instruction() -> unit = {
 }
 
 /* informational registers */
-register mvendorid : xlenbits
+register mvendorid : xlenbits  // FIXME: this should be 32-bit
 register mimpid : xlenbits
 register marchid : xlenbits
 /* TODO: this should be readonly, and always 0 for now */
@@ -368,8 +368,8 @@ register pmpcfg0 : xlenbits
 
 /* sstatus reveals a subset of mstatus */
 bitfield Sstatus : xlenbits = {
-  SD   : 63,
-  UXL  : 33 .. 32,
+  SD   : xlen - 1,
+  UXL  : 33 .. 32,  // FIXME: this does not exist on RV32
   MXR  : 19,
   SUM  : 18,
   XS   : 16 .. 15,
@@ -509,7 +509,7 @@ function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterr
 register sideleg : Sinterrupts
 
 /* s-mode address translation and protection (satp) */
-bitfield Satp64 : xlenbits = {
+bitfield Satp64 : bits(64) = {
   Mode : 63 .. 60,
   Asid : 59 .. 44,
   PPN  : 43 .. 0
