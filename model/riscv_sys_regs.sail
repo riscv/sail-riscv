@@ -353,7 +353,7 @@ function retire_instruction() -> unit = {
 }
 
 /* informational registers */
-register mvendorid : xlenbits  // FIXME: this should be 32-bit
+register mvendorid : bits(32)
 register mimpid : xlenbits
 register marchid : xlenbits
 /* TODO: this should be readonly, and always 0 for now */

@@ -17,7 +17,7 @@ function readCSR csr : csreg -> xlenbits = {
   let res : xlenbits =
   match csr {
     /* machine mode */
-    0xF11 => mvendorid,
+    0xF11 => EXTZ(mvendorid),
     0xF12 => marchid,
     0xF13 => mimpid,
     0xF14 => mhartid,
