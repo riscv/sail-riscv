@@ -120,13 +120,13 @@ bitfield Mstatus : xlenbits = {
 register mstatus : Mstatus
 
 function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
-  if   sizeof(xlen) == 32
+  if   xlen == 32
   then arch_to_bits(RV32)
   else m.bits()[35 .. 34]
 }
 
 function set_mstatus_SXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
-  if   sizeof(xlen) == 32
+  if   xlen == 32
   then m
   else {
     let m = vector_update_subrange(m.bits(), 35, 34,  a);
@@ -135,13 +135,13 @@ function set_mstatus_SXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
 }
 
 function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
-  if   sizeof(xlen) == 32
+  if   xlen == 32
   then arch_to_bits(RV32)
   else m.bits()[33 .. 32]
 }
 
 function set_mstatus_UXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
-  if   sizeof(xlen) == 32
+  if   xlen == 32
   then m
   else {
     let m = vector_update_subrange(mstatus.bits(), 33, 32,  a);

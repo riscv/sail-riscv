@@ -73,7 +73,7 @@ function clause decode imm : bits(12) @ rs1 : regbits @ 0b011 @ rd : regbits @ 0
 
 function clause execute(LOAD(imm, rs1, rd)) =
     let addr : xlenbits = X(rs1) + EXTS(imm) in
-    let result : xlenbits = MEMr(addr, xlen_val_bytes) in
+    let result : xlenbits = MEMr(addr, xlen_bytes) in
     X(rd) = result
 
 /* ****************************************************************** */

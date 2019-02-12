@@ -1,8 +1,8 @@
 /* Basic type and function definitions used pervasively in the model. */
 
-let xlen_max_unsigned = 2 ^ xlen_val - 1
-let xlen_max_signed = 2 ^ (xlen_val - 1) - 1
-let xlen_min_signed = 0 - 2 ^ (xlen_val - 1)
+let xlen_max_unsigned = 2 ^ xlen - 1
+let xlen_max_signed = 2 ^ (xlen - 1) - 1
+let xlen_min_signed = 0 - 2 ^ (xlen - 1)
 
 type half = bits(16)
 type word = bits(32)
