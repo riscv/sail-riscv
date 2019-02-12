@@ -63,14 +63,13 @@ else
 C_FLAGS += -O2
 endif
 
+TARGETS = ocaml_emulator/riscv_ocaml_sim c_emulator/riscv_sim riscv_coq riscv_rmem
 # Feature detect if we are on the latest development version of Sail
 # and if so avoid building lem for make all. This is just until the
 # opam version catches up with changes to the monad embedding.
 SAIL_LATEST := $(shell $(SAIL) -emacs 1>&2 2> /dev/null; echo $$?)
-ifeq ($(SAIL_LATEST),0)
-TARGETS = ocaml_emulator/riscv_ocaml_sim c_emulator/riscv_sim riscv_coq riscv_rmem
-else
-TARGETS = ocaml_emulator/riscv_ocaml_sim c_emulator/riscv_sim riscv_isa riscv_coq riscv_hol riscv_rmem
+ifneq ($(SAIL_LATEST),0)
+TARGETS += riscv_isa riscv_hol
 endif
 
 all: $(TARGETS)
