@@ -416,8 +416,8 @@ function init_sys() -> unit = {
   misa->S()   = true; /* supervisor-mode */
 
   /* 64-bit only mode with no extensions */
-  mstatus->SXL()  = misa.MXL();
-  mstatus->UXL()  = misa.MXL();
+  mstatus = set_mstatus_SXL(mstatus, misa.MXL());
+  mstatus = set_mstatus_UXL(mstatus, misa.MXL());
   mstatus->SD()   = false;
 
   mip->bits()     = EXTZ(0b0);

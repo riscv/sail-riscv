@@ -695,7 +695,7 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
   /* TODO: handle PMP/TLB synchronization when executed in M-mode. */
   if   cur_privilege == User
   then { handle_illegal(); false }
-  else match (architecture(mstatus.SXL()), mstatus.TVM()) {
+  else match (architecture(get_mstatus_SXL(mstatus)), mstatus.TVM()) {
     (Some(RV64), true)  => { handle_illegal(); false },
     (Some(RV64), false) => {
       let addr : option(vaddr39) = if rs1 == 0 then None() else Some(X(rs1)[38 .. 0]);

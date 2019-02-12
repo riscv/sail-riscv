@@ -363,7 +363,7 @@ val translationMode : (Privilege) -> SATPMode effect {rreg, escape}
 function translationMode(priv) = {
   if priv == Machine then Sbare
   else {
-    let arch = architecture(mstatus.SXL());
+    let arch = architecture(get_mstatus_SXL(mstatus));
     match arch {
       Some(RV64) => {
         let mbits : satp_mode = Mk_Satp64(satp).Mode();

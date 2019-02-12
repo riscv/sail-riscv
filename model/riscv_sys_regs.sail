@@ -91,8 +91,10 @@ function haveNExt()    -> bool = misa.N() == true
 bitfield Mstatus : xlenbits = {
   SD   : xlen - 1,
 
-  SXL  : 35 .. 34, // FIXME: These don't exist on RV32
-  UXL  : 33 .. 32, // and might need a separate definition.
+  // The SXL and UXL fields don't exist on RV32, so they are modelled
+  // via explicit getters and setters; see below.
+  // SXL  : 35 .. 34,
+  // UXL  : 33 .. 32,
 
   TSR  : 22,
   TW   : 21,
@@ -117,6 +119,36 @@ bitfield Mstatus : xlenbits = {
 }
 register mstatus : Mstatus
 
+function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
+  if   sizeof(xlen) == 32
+  then arch_to_bits(RV32)
+  else m.bits()[35 .. 34]
+}
+
+function set_mstatus_SXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
+  if   sizeof(xlen) == 32
+  then m
+  else {
+    let m = vector_update_subrange(m.bits(), 35, 34,  a);
+    Mk_Mstatus(m)
+  }
+}
+
+function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
+  if   sizeof(xlen) == 32
+  then arch_to_bits(RV32)
+  else m.bits()[33 .. 32]
+}
+
+function set_mstatus_UXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
+  if   sizeof(xlen) == 32
+  then m
+  else {
+    let m = vector_update_subrange(mstatus.bits(), 33, 32,  a);
+    Mk_Mstatus(m)
+  }
+}
+
 function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   let m : Mstatus = Mk_Mstatus(v);
 
@@ -132,8 +164,8 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
                      | extStatus_of_bits(m.XS()) == Dirty);
 
   /* For now, we don't allow SXL and UXL to be changed, for Spike compatibility. */
-  let m = update_SXL(m, o.SXL());
-  let m = update_UXL(m, o.UXL());
+  let m = set_mstatus_SXL(m, get_mstatus_SXL(o));
+  let m = set_mstatus_UXL(m, get_mstatus_UXL(o));
 
   /* Hardwired to zero in the absence of 'N'. */
   let m = update_UPIE(m, false);
@@ -147,8 +179,8 @@ function cur_Architecture() -> Architecture = {
   let a : arch_xlen =
     match (cur_privilege) {
       Machine    => misa.MXL(),
-      Supervisor => mstatus.SXL(),
-      User       => mstatus.UXL()
+      Supervisor => get_mstatus_SXL(mstatus),
+      User       => get_mstatus_UXL(mstatus)
     };
   match architecture(a) {
     Some(a) => a,
@@ -369,7 +401,9 @@ register pmpcfg0 : xlenbits
 /* sstatus reveals a subset of mstatus */
 bitfield Sstatus : xlenbits = {
   SD   : xlen - 1,
-  UXL  : 33 .. 32,  // FIXME: this does not exist on RV32
+  // The UXL field does not exist on RV32, so we define an explicit
+  // getter and setter below.
+  // UXL  : 30 .. 29,
   MXR  : 19,
   SUM  : 18,
   XS   : 16 .. 15,
@@ -381,11 +415,22 @@ bitfield Sstatus : xlenbits = {
   UIE  : 0
 }
 
+function get_sstatus_UXL(s : Sstatus) -> arch_xlen = {
+  let m = Mk_Mstatus(s.bits());
+  get_mstatus_UXL(m)
+}
+
+function set_sstatus_UXL(s : Sstatus, a : arch_xlen) -> Sstatus = {
+  let m = Mk_Mstatus(s.bits());
+  let m = set_mstatus_UXL(m, a);
+  Mk_Sstatus(m.bits())
+}
+
 /* This is a view, so there is no register defined. */
 function lower_mstatus(m : Mstatus) -> Sstatus = {
   let s = Mk_Sstatus(EXTZ(0b0));
   let s = update_SD(s, m.SD());
-  let s = update_UXL(s, m.UXL());
+  let s = set_sstatus_UXL(s, get_mstatus_UXL(m));
   let s = update_MXR(s, m.MXR());
   let s = update_SUM(s, m.SUM());
   let s = update_XS(s, m.XS());
