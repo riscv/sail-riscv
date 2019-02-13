@@ -63,16 +63,17 @@ else
 C_FLAGS += -O2
 endif
 
-TARGETS = ocaml_emulator/riscv_ocaml_sim c_emulator/riscv_sim riscv_coq riscv_rmem
 # Feature detect if we are on the latest development version of Sail
-# and if so avoid building lem for make all. This is just until the
-# opam version catches up with changes to the monad embedding.
+# and use an updated lem file if so. This is just until the opam
+# version catches up with changes to the monad embedding.
 SAIL_LATEST := $(shell $(SAIL) -emacs 1>&2 2> /dev/null; echo $$?)
-ifneq ($(SAIL_LATEST),0)
-TARGETS += riscv_isa riscv_hol
+ifeq ($(SAIL_LATEST),0)
+RISCV_EXTRAS_LEM = new/riscv_extras.lem
+else
+RISCV_EXTRAS_LEM = riscv_extras.lem
 endif
 
-all: $(TARGETS)
+all: ocaml_emulator/riscv_ocaml_sim c_emulator/riscv_sim riscv_isa riscv_coq riscv_hol riscv_rmem
 .PHONY: all
 
 check: $(SAIL_SRCS) model/main.sail Makefile
@@ -151,9 +152,9 @@ generated_definitions/isabelle/ROOT: handwritten_support/ROOT
 generated_definitions/lem/riscv_duopod.lem: $(addprefix model/, prelude.sail riscv_duopod.sail)
 	mkdir -p generated_definitions/lem
 	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem -isa_output_dir generated_definitions/isabelle -lem_mwords -lem_lib Riscv_extras -o riscv_duopod $^
-generated_definitions/isabelle/Riscv_duopod.thy: generated_definitions/isabelle/ROOT generated_definitions/lem/riscv_duopod.lem handwritten_support/riscv_extras.lem
+generated_definitions/isabelle/Riscv_duopod.thy: generated_definitions/isabelle/ROOT generated_definitions/lem/riscv_duopod.lem handwritten_support/$(RISCV_EXTRAS_LEM)
 	lem -isa -outdir generated_definitions/isabelle -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
-		handwritten_support/riscv_extras.lem \
+		handwritten_support/$(RISCV_EXTRAS_LEM) \
 		generated_definitions/lem/riscv_duopod_types.lem \
 		generated_definitions/lem/riscv_duopod.lem
 
@@ -179,9 +180,9 @@ generated_definitions/lem/riscv_sequential.lem: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/lem
 	$(SAIL_DIR)/sail -lem -lem_output_dir generated_definitions/lem -isa_output_dir generated_definitions/isabelle -lem_sequential -o riscv_sequential -lem_mwords -lem_lib Riscv_extras_sequential $(SAIL_SRCS)
 
-generated_definitions/isabelle/Riscv.thy: generated_definitions/isabelle/ROOT generated_definitions/lem/riscv.lem handwritten_support/riscv_extras.lem Makefile
+generated_definitions/isabelle/Riscv.thy: generated_definitions/isabelle/ROOT generated_definitions/lem/riscv.lem handwritten_support/$(RISCV_EXTRAS_LEM) Makefile
 	lem -isa -outdir generated_definitions/isabelle -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
-		handwritten_support/riscv_extras.lem \
+		handwritten_support/$(RISCV_EXTRAS_LEM) \
 		generated_definitions/lem/riscv_types.lem \
 		generated_definitions/lem/riscv.lem
 	sed -i 's/datatype ast/datatype (plugins only: size) ast/' generated_definitions/isabelle/Riscv_types.thy
@@ -190,10 +191,10 @@ generated_definitions/hol4/Holmakefile: handwritten_support/Holmakefile
 	mkdir -p generated_definitions/hol4
 	cp handwritten_support/Holmakefile generated_definitions/hol4
 
-generated_definitions/hol4/riscvScript.sml: generated_definitions/hol4/Holmakefile generated_definitions/lem/riscv.lem handwritten_support/riscv_extras.lem
+generated_definitions/hol4/riscvScript.sml: generated_definitions/hol4/Holmakefile generated_definitions/lem/riscv.lem handwritten_support/$(RISCV_EXTRAS_LEM)
 	lem -hol -outdir generated_definitions/hol4 -lib $(SAIL_LIB_DIR)/hol -i $(SAIL_LIB_DIR)/hol/sail2_prompt_monad.lem -i $(SAIL_LIB_DIR)/hol/sail2_prompt.lem \
 	    -lib $(SAIL_DIR)/src/lem_interp -lib $(SAIL_DIR)/src/gen_lib \
-		handwritten_support/riscv_extras.lem \
+		handwritten_support/$(RISCV_EXTRAS_LEM) \
 		generated_definitions/lem/riscv_types.lem \
 		generated_definitions/lem/riscv.lem
 
