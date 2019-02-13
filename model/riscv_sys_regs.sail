@@ -144,7 +144,7 @@ function set_mstatus_UXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
   if   xlen == 32
   then m
   else {
-    let m = vector_update_subrange(mstatus.bits(), 33, 32,  a);
+    let m = vector_update_subrange(m.bits(), 33, 32,  a);
     Mk_Mstatus(m)
   }
 }
@@ -163,7 +163,7 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   let m = update_SD(m, extStatus_of_bits(m.FS()) == Dirty
                      | extStatus_of_bits(m.XS()) == Dirty);
 
-  /* For now, we don't allow SXL and UXL to be changed, for Spike compatibility. */
+  /* We don't support dynamic changes to SXL and UXL. */
   let m = set_mstatus_SXL(m, get_mstatus_SXL(o));
   let m = set_mstatus_UXL(m, get_mstatus_UXL(o));
 
