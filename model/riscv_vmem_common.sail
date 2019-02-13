@@ -95,16 +95,40 @@ function translationException(a : AccessType, f : PTW_Error) -> ExceptionType = 
   }
 }
 
-/* Sv32 parameters and bitfield layouts */
-
-let SV32_LEVEL_BITS = 9
-let SV32_LEVELS = 2
-let PTE32_LOG_SIZE = 2
-let PTE32_SIZE = 4
+/*
+ * Definitions for RV32, which has a single address translation mode: Sv32.
+ */
 
 type vaddr32 = bits(32)
 type paddr32 = bits(34)
 type pte32   = bits(32)
+
+/* result of address translation */
+union TR32_Result = {
+  TR32_Address : paddr32,
+  TR32_Failure : PTW_Error
+}
+
+/* asid */
+type asid32 = bits(9)
+
+function curAsid32(satp : bits(32)) -> asid32 = {
+  let s = Mk_Satp32(satp);
+  s.Asid()
+}
+
+/* page table base from satp */
+function curPTB32(satp : bits(32)) -> paddr32 = {
+  let s : Satp32 = Mk_Satp32(satp);
+  shiftl(EXTZ(s.PPN()), PAGESIZE_BITS)
+}
+
+/* Sv32 parameters and bitfield layouts */
+
+let SV32_LEVEL_BITS = 9
+let SV32_LEVELS     = 2
+let PTE32_LOG_SIZE  = 2
+let PTE32_SIZE      = 4
 
 bitfield SV32_Vaddr : vaddr32 = {
   VPNi  : 31 .. 12,
@@ -118,80 +142,35 @@ bitfield SV32_Paddr : paddr32 = {
 
 bitfield SV32_PTE : pte32 = {
   PPNi  : 31 .. 10,
-  RSW   : 9 .. 8,
-  BITS  : 7 .. 0
+  RSW   : 9  .. 8,
+  BITS  : 7  .. 0
 }
 
-/* RV32: ASID */
+/*
+ * Definitions for RV64, which has two defined address translation modes: Sv39 and Sv48.
+ */
 
-type asid32 = bits(9)
+/* Sv48 and Sv64 are reserved but not defined.  The size of the VPN
+ * increases by 9 bits through Sv39, Sv48 and Sv57, but not for Sv64.
+ * Also, the 45-bit size of the VPN for Sv57 exceeds the 44-bit size
+ * of the PPN in satp64.  Due to these corner cases, it is unlikely
+ * that definitions can be shared across all four schemes, so separate
+ * definitions might eventually be needed for each translation mode.
+ *
+ * But to keep things simple for now, since Sv39 and Sv48 have the
+ * same PPN size, we share some definitions.
+ */
 
-function curAsid32(satp : bits(32)) -> asid32 = {
-  let s = Mk_Satp32(satp);
-  s.Asid()
+type paddr64 = bits(56)
+type pte64   = bits(64)
+
+/* result of address translation */
+union TR64_Result = {
+  TR64_Address : paddr64,
+  TR64_Failure : PTW_Error
 }
 
-/* RV32: Current page table base from satp */
-function curPTB32(satp : bits(32)) -> paddr32 = {
-  let s : Satp32 = Mk_Satp32(satp);
-  shiftl(EXTZ(s.PPN()), PAGESIZE_BITS)
-}
-
-/* Sv39 parameters and bitfield layouts */
-
-let SV39_LEVEL_BITS = 9
-let SV39_LEVELS = 3
-let PTE39_LOG_SIZE = 3
-let PTE39_SIZE = 8
-
-type vaddr39 = bits(39)
-type paddr39 = bits(56)
-type pte39   = bits(64)
-
-bitfield SV39_Vaddr : vaddr39 = {
-  VPNi  : 38 .. 12,
-  PgOfs : 11 .. 0
-}
-
-bitfield SV39_Paddr : paddr39 = {
-  PPNi  : 55 .. 12,
-  PgOfs : 11 .. 0
-}
-
-bitfield SV39_PTE : pte39 = {
-  PPNi  : 53 .. 10,
-  RSW   : 9 .. 8,
-  BITS  : 7 .. 0
-}
-
-/* Sv48 parameters and bitfield layouts */
-
-let SV48_LEVEL_BITS = 9
-let SV48_LEVELS = 4
-let PTE48_LOG_SIZE = 3
-let PTE48_SIZE = 8
-
-type vaddr48 = bits(48)
-type paddr48 = bits(56)
-type pte48   = bits(64)
-
-bitfield SV48_Vaddr : vaddr48 = {
-  VPNi  : 38 .. 12,
-  PgOfs : 11 .. 0
-}
-
-bitfield SV48_Paddr : paddr48 = {
-  PPNi  : 55 .. 12,
-  PgOfs : 11 .. 0
-}
-
-bitfield SV48_PTE : pte48 = {
-  PPNi  : 53 .. 10,
-  RSW   : 9 .. 8,
-  BITS  : 7 .. 0
-}
-
-/* RV64: ASID */
+/* asid */
 
 type asid64 = bits(16)
 
@@ -200,16 +179,67 @@ function curAsid64(satp : bits(64)) -> asid64 = {
   s.Asid()
 }
 
-/* RV64: Current page table base from satp */
-function curPTB39(satp : bits(64)) -> paddr39 = {
+/* page table base from satp */
+function curPTB64(satp : bits(64)) -> paddr64 = {
   let s = Mk_Satp64(satp);
-  EXTZ(shiftl(s.PPN(), PAGESIZE_BITS))
+  shiftl(EXTZ(s.PPN()), PAGESIZE_BITS)
+}
+
+/* Sv39 parameters and bitfield layouts */
+
+let SV39_LEVEL_BITS = 9
+let SV39_LEVELS     = 3
+let PTE39_LOG_SIZE  = 3
+let PTE39_SIZE      = 8
+
+type vaddr39 = bits(39)
+
+bitfield SV39_Vaddr : vaddr39 = {
+  VPNi  : 38 .. 12,
+  PgOfs : 11 .. 0
+}
+
+bitfield SV39_Paddr : paddr64 = {
+  PPNi  : 55 .. 12,
+  PgOfs : 11 .. 0
+}
+
+bitfield SV39_PTE : pte64 = {
+  PPNi  : 53 .. 10,
+  RSW   : 9  .. 8,
+  BITS  : 7  .. 0
+}
+
+/* Sv48 parameters and bitfield layouts */
+
+let SV48_LEVEL_BITS = 9
+let SV48_LEVELS     = 4
+let PTE48_LOG_SIZE  = 3
+let PTE48_SIZE      = 8
+
+type vaddr48 = bits(48)
+type pte48   = bits(64)
+
+bitfield SV48_Vaddr : vaddr48 = {
+  VPNi  : 38 .. 12,
+  PgOfs : 11 .. 0
+}
+
+bitfield SV48_Paddr : paddr64 = {
+  PPNi  : 55 .. 12,
+  PgOfs : 11 .. 0
+}
+
+bitfield SV48_PTE : pte48 = {
+  PPNi  : 53 .. 10,
+  RSW   : 9  .. 8,
+  BITS  : 7  .. 0
 }
 
 /* Result of a page-table walk. */
 
 union PTW_Result = {
-  PTW_Success: (paddr39, SV39_PTE, paddr39, nat, bool),
+  PTW_Success: (paddr64, SV39_PTE, paddr64, nat, bool),
   PTW_Failure: PTW_Error
 }
 
@@ -219,16 +249,16 @@ struct TLB39_Entry = {
   asid : asid64,
   global : bool,
   vAddr : vaddr39,      /* VPN */
-  pAddr : paddr39,      /* PPN */
+  pAddr : paddr64,      /* PPN */
   vMatchMask : vaddr39, /* matching mask for superpages */
   vAddrMask : vaddr39,  /* selection mask for superpages */
   pte : SV39_PTE,       /* permissions */
-  pteAddr : paddr39,    /* for dirty writeback */
+  pteAddr : paddr64,    /* for dirty writeback */
   age : xlenbits
 }
 
 /* the rreg effect is an artifact of using the cycle counter to provide the age */
-val make_TLB39_Entry : (asid64, bool, vaddr39, paddr39, SV39_PTE, nat, paddr39) -> TLB39_Entry effect {rreg}
+val make_TLB39_Entry : (asid64, bool, vaddr39, paddr64, SV39_PTE, nat, paddr64) -> TLB39_Entry effect {rreg}
 
 function make_TLB39_Entry(asid, global, vAddr, pAddr, pte, level, pteAddr) = {
   let shift : nat = PAGESIZE_BITS + (level * SV39_LEVEL_BITS);
@@ -262,7 +292,7 @@ function lookupTLB39(asid, vaddr) = {
   }
 }
 
-val addToTLB39 : (asid64, vaddr39, paddr39, SV39_PTE, paddr39, nat, bool) -> unit effect {wreg, rreg}
+val addToTLB39 : (asid64, vaddr39, paddr64, SV39_PTE, paddr64, nat, bool) -> unit effect {wreg, rreg}
 function addToTLB39(asid, vAddr, pAddr, pte, pteAddr, level, global) = {
   let ent = make_TLB39_Entry(asid, global, vAddr, pAddr, pte, level, pteAddr);
   tlb39   = Some(ent)
@@ -288,7 +318,3 @@ function flushTLB(asid, addr) = {
   tlb39 = ent
 }
 
-union TR39_Result = {
-  TR39_Address : paddr39,
-  TR39_Failure : PTW_Error
-}

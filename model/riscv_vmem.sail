@@ -5,10 +5,10 @@ register satp : xlenbits
 function legalize_satp(a : Architecture, o : xlenbits, v : xlenbits) -> xlenbits =
   legalize_satp64(a, o, v)
 
-val walk39 : (vaddr39, AccessType, Privilege, bool, bool, paddr39, nat, bool) -> PTW_Result effect {rmem, escape}
+val walk39 : (vaddr39, AccessType, Privilege, bool, bool, paddr64, nat, bool) -> PTW_Result effect {rmem, escape}
 function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) -> PTW_Result = {
   let va = Mk_SV39_Vaddr(vaddr);
-  let pt_ofs : paddr39 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV39_LEVEL_BITS))[(SV39_LEVEL_BITS - 1) .. 0]),
+  let pt_ofs : paddr64 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV39_LEVEL_BITS))[(SV39_LEVEL_BITS - 1) .. 0]),
                                 PTE39_LOG_SIZE);
   let pte_addr = ptb + pt_ofs;
   /* FIXME: we assume here that walks only access physical-memory-backed addresses, and not MMIO regions. */
@@ -77,22 +77,22 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) -> PTW_Result 
   }
 }
 
-val translate39 : (vaddr39, AccessType, Privilege, bool, bool, nat) -> TR39_Result effect {rreg, wreg, wmv, escape, rmem}
+val translate39 : (vaddr39, AccessType, Privilege, bool, bool, nat) -> TR64_Result effect {rreg, wreg, wmv, escape, rmem}
 function translate39(vAddr, ac, priv, mxr, do_sum, level) = {
   let asid = curAsid64(satp);
   match lookupTLB39(asid, vAddr) {
     Some(idx, ent) => {
       let pteBits = Mk_PTE_Bits(ent.pte.BITS());
       if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pteBits))
-      then TR39_Failure(PTW_No_Permission)
+      then TR64_Failure(PTW_No_Permission)
       else {
         match update_PTE_Bits(pteBits, ac) {
-          None() => TR39_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask)),
+          None() => TR64_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask)),
           Some(pbits) => {
             if ~ (plat_enable_dirty_update ())
             then {
               /* pte needs dirty/accessed update but that is not enabled */
-              TR39_Failure(PTW_PTE_Update)
+              TR64_Failure(PTW_PTE_Update)
             } else {
               /* update PTE entry and TLB */
               n_ent : TLB39_Entry = ent;
@@ -103,36 +103,36 @@ function translate39(vAddr, ac, priv, mxr, do_sum, level) = {
                 MemValue(_) => (),
                 MemException(e) => internal_error("invalid physical address in TLB")
               };
-              TR39_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask))
+              TR64_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask))
             }
           }
         }
       }
     },
     None() => {
-      match walk39(vAddr, ac, priv, mxr, do_sum, curPTB39(satp), level, false) {
-        PTW_Failure(f) => TR39_Failure(f),
+      match walk39(vAddr, ac, priv, mxr, do_sum, curPTB64(satp), level, false) {
+        PTW_Failure(f) => TR64_Failure(f),
         PTW_Success(pAddr, pte, pteAddr, level, global) => {
           match update_PTE_Bits(Mk_PTE_Bits(pte.BITS()), ac) {
             None() => {
               addToTLB39(asid, vAddr, pAddr, pte, pteAddr, level, global);
-              TR39_Address(pAddr)
+              TR64_Address(pAddr)
             },
             Some(pbits) =>
               if ~ (plat_enable_dirty_update ())
               then {
                 /* pte needs dirty/accessed update but that is not enabled */
-                TR39_Failure(PTW_PTE_Update)
+                TR64_Failure(PTW_PTE_Update)
               } else {
                 w_pte : SV39_PTE = update_BITS(pte, pbits.bits());
                 match checked_mem_write(EXTZ(pteAddr), xlen_bytes, w_pte.bits(), false, false, false) {
                   MemValue(_) => {
                     addToTLB39(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
-                    TR39_Address(pAddr)
+                    TR64_Address(pAddr)
                   },
                   MemException(e) => {
                     /* pte is not in valid memory */
-                    TR39_Failure(PTW_Access)
+                    TR64_Failure(PTW_Access)
                   }
                 }
               }
@@ -188,8 +188,8 @@ function translateAddr(vAddr, ac, rt) = {
   match mode {
     Sbare => TR_Address(vAddr),
     SV39  => match translate39(vAddr[38 .. 0], ac, effPriv, mxr, do_sum, SV39_LEVELS - 1) {
-               TR39_Address(pa) => TR_Address(EXTZ(pa)),
-               TR39_Failure(f)  => TR_Failure(translationException(ac, f))
+               TR64_Address(pa) => TR_Address(EXTZ(pa)),
+               TR64_Failure(f)  => TR_Failure(translationException(ac, f))
              },
     _     => internal_error("unsupported address translation scheme")
   }
