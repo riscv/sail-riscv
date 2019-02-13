@@ -68,9 +68,9 @@ endif
 # version catches up with changes to the monad embedding.
 SAIL_LATEST := $(shell $(SAIL) -emacs 1>&2 2> /dev/null; echo $$?)
 ifeq ($(SAIL_LATEST),0)
-RISCV_EXTRAS_LEM = new/riscv_extras.lem
-else
 RISCV_EXTRAS_LEM = riscv_extras.lem
+else
+RISCV_EXTRAS_LEM = 0.7.1/riscv_extras.lem
 endif
 
 all: ocaml_emulator/riscv_ocaml_sim c_emulator/riscv_sim riscv_isa riscv_coq riscv_hol riscv_rmem
