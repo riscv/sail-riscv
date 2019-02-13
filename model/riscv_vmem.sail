@@ -1,143 +1,9 @@
-/* Supervisor-mode address translation and page-table walks. */
+/* RV64 Supervisor-mode address translation and page-table walks. */
 
-/* PageSize */
+register satp : xlenbits
 
-let PAGESIZE_BITS = 12
-
-/* PTE attributes, permission checks and updates */
-
-type pteAttribs = bits(8)
-
-bitfield PTE_Bits : pteAttribs = {
-  D : 7,
-  A : 6,
-  G : 5,
-  U : 4,
-  X : 3,
-  W : 2,
-  R : 1,
-  V : 0
-}
-
-function isPTEPtr(p : pteAttribs) -> bool = {
-  let a = Mk_PTE_Bits(p);
-  a.R() == false & a.W() == false & a.X() == false
-}
-
-function isInvalidPTE(p : pteAttribs) -> bool = {
-  let a = Mk_PTE_Bits(p);
-  a.V() == false | (a.W() == true & a.R() == false)
-}
-
-function checkPTEPermission(ac : AccessType, priv : Privilege, mxr : bool, do_sum : bool, p : PTE_Bits) -> bool = {
-  match (ac, priv) {
-    (Read,      User)       => p.U() == true & (p.R() == true | (p.X() == true & mxr)),
-    (Write,     User)       => p.U() == true & p.W() == true,
-    (ReadWrite, User)       => p.U() == true & p.W() == true & (p.R() == true | (p.X() == true & mxr)),
-    (Execute,   User)       => p.U() == true & p.X() == true,
-
-    (Read,      Supervisor) => (p.U() == false | do_sum) & (p.R() == true | (p.X() == true & mxr)),
-    (Write,     Supervisor) => (p.U() == false | do_sum) & p.W() == true,
-    (ReadWrite, Supervisor) => (p.U() == false | do_sum) & p.W() == true & (p.R() == true | (p.X() == true & mxr)),
-    (Execute,   Supervisor) => p.U() == false & p.X() == true,
-
-    (_,         Machine)    => internal_error("m-mode mem perm check")
-  }
-}
-
-function update_PTE_Bits(p : PTE_Bits, a : AccessType) -> option(PTE_Bits) = {
-  let update_d = (a == Write | a == ReadWrite) & p.D() == false; // dirty-bit
-  let update_a = p.A() == false;                                 // accessed-bit
-  if update_d | update_a then {
-    let np = update_A(p, true);
-    let np = if update_d then update_D(np, true) else np;
-    Some(np)
-  } else None()
-}
-
-/* failure modes for address-translation/page-table-walks */
-enum PTW_Error = {
-  PTW_Access,       /* physical memory access error for a PTE */
-  PTW_Invalid_PTE,
-  PTW_No_Permission,
-  PTW_Misaligned,   /* misaligned superpage */
-  PTW_PTE_Update    /* PTE update needed but not enabled */
-}
-val cast ptw_error_to_str : PTW_Error -> string
-function ptw_error_to_str(e) =
-  match (e) {
-    PTW_Access        => "mem-access-error",
-    PTW_Invalid_PTE   => "invalid-pte",
-    PTW_No_Permission => "no-permission",
-    PTW_Misaligned    => "misaligned-superpage",
-    PTW_PTE_Update    => "pte-update-needed"
-  }
-
-/* conversion of these translation/PTW failures into architectural exceptions */
-function translationException(a : AccessType, f : PTW_Error) -> ExceptionType = {
-  let e : ExceptionType =
-  match (a, f) {
-    (ReadWrite, PTW_Access) => E_SAMO_Access_Fault,
-    (ReadWrite, _)          => E_SAMO_Page_Fault,
-    (Read, PTW_Access)      => E_Load_Access_Fault,
-    (Read, _)               => E_Load_Page_Fault,
-    (Write, PTW_Access)     => E_SAMO_Access_Fault,
-    (Write, _)              => E_SAMO_Page_Fault,
-    (Fetch, PTW_Access)     => E_Fetch_Access_Fault,
-    (Fetch, _)              => E_Fetch_Page_Fault
-  } in {
-/*  print("translationException(" ^ a ^ ", " ^ f ^ ") -> " ^ e); */
-    e
-  }
-}
-/* address translation: Sv39 */
-
-let SV39_LEVEL_BITS = 9
-let SV39_LEVELS = 3
-let PTE39_LOG_SIZE = 3
-let PTE39_SIZE = 8
-
-type vaddr39 = bits(39)
-type paddr39 = bits(56)
-type pte39   = bits(64)
-
-bitfield SV39_Vaddr : vaddr39 = {
-  VPNi  : 38 .. 12,
-  PgOfs : 11 .. 0
-}
-
-bitfield SV39_Paddr : paddr39 = {
-  PPNi  : 55 .. 12,
-  PgOfs : 11 .. 0
-}
-
-bitfield SV39_PTE : pte39 = {
-  PPNi  : 53 .. 10,
-  RSW   : 9 .. 8,
-  BITS  : 7 .. 0
-}
-
-/* ASID */
-
-type asid64 = bits(16)
-
-function curAsid64() -> asid64 = {
-  let satp64 = Mk_Satp64(satp);
-  satp64.Asid()
-}
-
-/* Current page table base from satp */
-function curPTB39() -> paddr39 = {
-  let satp64 = Mk_Satp64(satp);
-  EXTZ(shiftl(satp64.PPN(), PAGESIZE_BITS))
-}
-
-/* Page-table walk. */
-
-union PTW_Result = {
-  PTW_Success: (paddr39, SV39_PTE, paddr39, nat, bool),
-  PTW_Failure: PTW_Error
-}
+function legalize_satp(a : Architecture, o : xlenbits, v : xlenbits) -> xlenbits =
+  legalize_satp64(a, o, v)
 
 val walk39 : (vaddr39, AccessType, Privilege, bool, bool, paddr39, nat, bool) -> PTW_Result effect {rmem, escape}
 function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) -> PTW_Result = {
@@ -211,89 +77,9 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) -> PTW_Result 
   }
 }
 
-/* idealized TLB to model fence.vm and also speed up simulation. */
-
-struct TLB39_Entry = {
-  asid : asid64,
-  global : bool,
-  vAddr : vaddr39,      /* VPN */
-  pAddr : paddr39,      /* PPN */
-  vMatchMask : vaddr39, /* matching mask for superpages */
-  vAddrMask : vaddr39,  /* selection mask for superpages */
-  pte : SV39_PTE,       /* permissions */
-  pteAddr : paddr39,    /* for dirty writeback */
-  age : xlenbits
-}
-
-/* the rreg effect is an artifact of using the cycle counter to provide the age */
-val make_TLB39_Entry : (asid64, bool, vaddr39, paddr39, SV39_PTE, nat, paddr39) -> TLB39_Entry effect {rreg}
-
-function make_TLB39_Entry(asid, global, vAddr, pAddr, pte, level, pteAddr) = {
-  let shift : nat = PAGESIZE_BITS + (level * SV39_LEVEL_BITS);
-  /* fixme hack: use a better idiom for masks */
-  let vAddrMask : vaddr39 = shiftl(vAddr ^ vAddr ^ EXTZ(0b1), shift) - 1;
-  let vMatchMask : vaddr39 = ~ (vAddrMask);
-  struct {
-    asid = asid,
-    global = global,
-    pte = pte,
-    pteAddr = pteAddr,
-    vAddrMask = vAddrMask,
-    vMatchMask = vMatchMask,
-    vAddr = vAddr & vMatchMask,
-    pAddr = shiftl(shiftr(pAddr, shift), shift),
-    age = mcycle
-  }
-}
-
-/* TODO: make this a vector or array of entries */
-register tlb39 : option(TLB39_Entry)
-
-val lookupTLB39 : (asid64, vaddr39) -> option((int, TLB39_Entry)) effect {rreg}
-function lookupTLB39(asid, vaddr) = {
-  match tlb39 {
-    None()  => None(),
-    Some(e) => if  (e.global | (e.asid == asid))
-                 & (e.vAddr == (e.vMatchMask & vaddr))
-               then Some((0, e))
-               else None()
-  }
-}
-
-val addToTLB39 : (asid64, vaddr39, paddr39, SV39_PTE, paddr39, nat, bool) -> unit effect {wreg, rreg}
-function addToTLB39(asid, vAddr, pAddr, pte, pteAddr, level, global) = {
-  let ent = make_TLB39_Entry(asid, global, vAddr, pAddr, pte, level, pteAddr);
-  tlb39   = Some(ent)
-}
-
-function writeTLB39(idx : int, ent : TLB39_Entry) -> unit =
-  tlb39 = Some(ent)
-
-val flushTLB : (option(asid64), option(vaddr39)) -> unit effect {rreg, wreg}
-function flushTLB(asid, addr) = {
-  let ent : option(TLB39_Entry) =
-    match (tlb39, asid, addr) {
-      (None(),       _,      _)   => None(),
-      (Some(e), None(), None())   => None(),
-      (Some(e), None(), Some(a))  => if e.vAddr == (e.vMatchMask & a)
-                                     then None() else Some(e),
-      (Some(e), Some(i), None())  => if (e.asid == i) & (~ (e.global))
-                                     then None() else Some(e),
-      (Some(e), Some(i), Some(a)) => if (e.asid == i) & (e.vAddr == (a & e.vMatchMask))
-                                        & (~ (e.global))
-                                     then None() else Some(e)
-    };
-  tlb39 = ent
-}
-
-union TR39_Result = {
-  TR39_Address : paddr39,
-  TR39_Failure : PTW_Error
-}
-
 val translate39 : (vaddr39, AccessType, Privilege, bool, bool, nat) -> TR39_Result effect {rreg, wreg, wmv, escape, rmem}
 function translate39(vAddr, ac, priv, mxr, do_sum, level) = {
-  let asid = curAsid64();
+  let asid = curAsid64(satp);
   match lookupTLB39(asid, vAddr) {
     Some(idx, ent) => {
       let pteBits = Mk_PTE_Bits(ent.pte.BITS());
@@ -324,7 +110,7 @@ function translate39(vAddr, ac, priv, mxr, do_sum, level) = {
       }
     },
     None() => {
-      match walk39(vAddr, ac, priv, mxr, do_sum, curPTB39(), level, false) {
+      match walk39(vAddr, ac, priv, mxr, do_sum, curPTB39(satp), level, false) {
         PTW_Failure(f) => TR39_Failure(f),
         PTW_Success(pAddr, pte, pteAddr, level, global) => {
           match update_PTE_Bits(Mk_PTE_Bits(pte.BITS()), ac) {
@@ -367,10 +153,14 @@ function translationMode(priv) = {
     match arch {
       Some(RV64) => {
         let mbits : satp_mode = Mk_Satp64(satp).Mode();
-        match satpMode_of_bits(RV64, mbits) {
+        match satp64Mode_of_bits(RV64, mbits) {
           Some(m) => m,
           None()  => internal_error("invalid RV64 translation mode in satp")
         }
+      },
+      Some(RV32) => {
+        let s = Mk_Satp32(satp[31..0]);
+        if s.Mode() == false then Sbare else Sv32
       },
       _    => internal_error("unsupported address translation arch")
     }

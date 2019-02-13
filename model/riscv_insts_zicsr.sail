@@ -87,7 +87,7 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     0x343 => { mtval = value; Some(mtval) },
     0x344 => { mip = legalize_mip(mip, value); Some(mip.bits()) },
 
-    0x3A0 => { pmpcfg0 = value; Some(pmpcfg0) }, /* FIXME: legalize */
+    0x3A0 => { pmpcfg0 = value; Some(pmpcfg0) },   /* FIXME: legalize */
     0x3B0 => { pmpaddr0 = value; Some(pmpaddr0) }, /* FIXME: legalize */
 
     /* supervisor mode */
@@ -162,6 +162,3 @@ mapping clause assembly = CSR(csr, rs1, rd, true, op)
   <-> csr_mnemonic(op) ^ "i" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(rs1) ^ sep() ^ csr_name_map(csr)
 mapping clause assembly = CSR(csr, rs1, rd, false, op)
   <-> csr_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ csr_name_map(csr)
-
-
-

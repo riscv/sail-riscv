@@ -414,6 +414,7 @@ bitfield Sstatus : xlenbits = {
   SIE  : 1,
   UIE  : 0
 }
+/* sstatus is a view of mstatus, so there is no register defined. */
 
 function get_sstatus_UXL(s : Sstatus) -> arch_xlen = {
   let m = Mk_Mstatus(s.bits());
@@ -426,7 +427,6 @@ function set_sstatus_UXL(s : Sstatus, a : arch_xlen) -> Sstatus = {
   Mk_Sstatus(m.bits())
 }
 
-/* This is a view, so there is no register defined. */
 function lower_mstatus(m : Mstatus) -> Sstatus = {
   let s = Mk_Sstatus(EXTZ(0b0));
   let s = update_SD(s, m.SD());
@@ -553,30 +553,43 @@ function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterr
 
 register sideleg : Sinterrupts
 
-/* s-mode address translation and protection (satp) */
-bitfield Satp64 : bits(64) = {
-  Mode : 63 .. 60,
-  Asid : 59 .. 44,
-  PPN  : 43 .. 0
-}
-register satp : xlenbits
-
-function legalize_satp(a : Architecture, o : xlenbits, v : xlenbits) -> xlenbits = {
-  let s = Mk_Satp64(v);
-  match satpMode_of_bits(a, s.Mode()) {
-    None()     => o,
-    Some(Sv32) => o,  /* Sv32 is unsupported for now */
-    Some(_)    => s.bits()
-  }
-}
-
-/* other supervisor state */
+/* other non-VM related supervisor state */
 register stvec    : Mtvec
 register sscratch : xlenbits
 register sepc     : xlenbits
 register scause   : Mcause
 register stval    : xlenbits
 
+/*
+ * S-mode address translation and protection (satp) layout.
+ * The actual satp register is defined in an architecture-specific file.
+ */
+
+bitfield Satp64 : bits(64) = {
+  Mode : 63 .. 60,
+  Asid : 59 .. 44,
+  PPN  : 43 .. 0
+}
+
+function legalize_satp64(a : Architecture, o : bits(64), v : bits(64)) -> bits(64) = {
+  let s = Mk_Satp64(v);
+  match satp64Mode_of_bits(a, s.Mode()) {
+    None()     => o,
+    Some(Sv32) => o,  /* Sv32 is unsupported for now */
+    Some(_)    => s.bits()
+  }
+}
+
+bitfield Satp32 : bits(32) = {
+  Mode : 31,
+  Asid : 30 .. 22,
+  PPN  : 21 .. 0
+}
+
+function legalize_satp32(a : Architecture, o : bits(32), v : bits(32)) -> bits(32) = {
+  /* all 32-bit satp modes are valid */
+  v
+}
+
 /* disabled trigger/debug module */
 register tselect : xlenbits
-
