@@ -1041,11 +1041,22 @@ val print_reg      = {ocaml: "Platform.print_reg",   c: "print_reg", _: "print_e
 val print_mem      = {ocaml: "Platform.print_mem_access", c: "print_mem_access", _: "print_endline"} : string -> unit
 val print_platform = {ocaml: "Platform.print_platform", c: "print_platform", _: "print_endline"} : string -> unit
 
+$ifndef FEATURE_IMPLICITS
 val EXTS : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
 val EXTZ : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
 
 function EXTS v = sail_sign_extend(v, sizeof('m))
 function EXTZ v = sail_zero_extend(v, sizeof('m))
+
+$else
+
+val EXTS : forall 'n 'm , 'm >= 'n . (implicit ('m), bits('n)) -> bits('m)
+val EXTZ : forall 'n 'm , 'm >= 'n . (implicit ('m), bits('n)) -> bits('m)
+
+function EXTS (m, v) = sail_sign_extend(v, m)
+function EXTZ (m, v) = sail_zero_extend(v, m)
+
+$endif
 
 infix 4 <_s
 infix 4 >=_s
@@ -1108,6 +1119,8 @@ val not = {coq:"negb", _:"not"} : bool -> bool
 val MAX : forall 'n, 'n >= 0 . atom('n) -> atom(2 ^ 'n - 1) effect pure
 function MAX(n) = pow2(n) - 1
 
+$ifndef FEATURE_IMPLICITS
+
 val zeros_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
 function zeros_implicit () = sail_zeros('n)
 overload zeros = {zeros_implicit, sail_zeros}
@@ -1119,6 +1132,22 @@ val ones_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
 function ones_implicit () = ones_n ('n)
 
 overload ones = {ones_implicit, ones_n}
+
+$else
+
+val zeros_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
+function zeros_implicit (n) = sail_zeros(n)
+overload zeros = {zeros_implicit, sail_zeros}
+
+val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
+function ones_n n = replicate_bits (0b1, n)
+
+val ones_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
+function ones_implicit (n) = ones_n (n)
+
+overload ones = {ones_implicit, ones_n}
+
+$endif
 
 val modulus = {ocaml: "modulus", lem: "hardware_mod", coq: "euclid_modulo", _ : "tmod_int"} : forall 'n, 'n > 0 .  (int, atom('n)) -> range(0, 'n - 1)
 

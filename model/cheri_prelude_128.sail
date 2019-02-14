@@ -380,9 +380,9 @@ function setCapBounds(cap, base, top) : (Capability, bits(64), bits(65)) -> (boo
   /* The non-ie e == 0 case is easy. It is exact so just extract relevant bits. */
   Bbits = truncate(base, 14);
   Tbits = truncate(top, 14);
-  lostSignificantTop = false;
-  lostSignificantBase = false;
-  incE = false;
+  lostSignificantTop : bool = false;
+  lostSignificantBase : bool = false;
+  incE : bool = false;
   
   if ie then {
     /* the internal exponent case is trickier */
