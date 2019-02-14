@@ -7,7 +7,9 @@ SAIL_RMEM_INST_SRCS = riscv_insts_begin.sail $(SAIL_RMEM_INST) riscv_insts_end.s
 
 SAIL_SYS_SRCS = riscv_csr_map.sail riscv_sys_regs.sail riscv_next_regs.sail riscv_next_control.sail riscv_sys_control.sail
 
-SAIL_VM_SRCS = riscv_vmem_common.sail riscv_vmem_tlb.sail riscv_vmem_sv39.sail riscv_vmem.sail
+SAIL_RV32_VM_SRCS = riscv_vmem_sv32.sail riscv_vmem_rv32.sail
+SAIL_RV64_VM_SRCS = riscv_vmem_sv39.sail riscv_vmem_sv48.sail riscv_vmem_rv64.sail
+SAIL_VM_SRCS = riscv_vmem_common.sail riscv_vmem_tlb.sail $(SAIL_RV64_VM_SRCS)
 
 # non-instruction sources
 PRELUDE = prelude.sail prelude_mapping.sail riscv_xlen.sail prelude_mem.sail

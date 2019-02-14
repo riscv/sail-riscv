@@ -435,13 +435,14 @@ function extStatus_of_bits(e) =
 /* supervisor-level address translation modes */
 
 type satp_mode = bits(4)
-enum SATPMode = {Sbare, Sv32, Sv39}
+enum SATPMode = {Sbare, Sv32, Sv39, Sv48}
 
 function satp64Mode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
   match (a, m) {
     (_,    0x0) => Some(Sbare),
     (RV32, 0x1) => Some(Sv32),
     (RV64, 0x8) => Some(Sv39),
+    (RV64, 0x9) => Some(Sv48),
     (_, _)      => None()
   }
 

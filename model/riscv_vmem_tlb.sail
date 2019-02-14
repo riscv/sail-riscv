@@ -13,7 +13,7 @@ struct TLB39_Entry = {
   vAddrMask : vaddr39,  /* selection mask for superpages */
   pte : SV39_PTE,       /* permissions */
   pteAddr : paddr64,    /* for dirty writeback */
-  age : xlenbits
+  age : bits(64)
 }
 
 /* the rreg effect is an artifact of using the cycle counter to provide the age */
