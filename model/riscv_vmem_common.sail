@@ -103,12 +103,6 @@ type vaddr32 = bits(32)
 type paddr32 = bits(34)
 type pte32   = bits(32)
 
-/* result of address translation */
-union TR32_Result = {
-  TR32_Address : paddr32,
-  TR32_Failure : PTW_Error
-}
-
 /* asid */
 type asid32 = bits(9)
 
@@ -163,12 +157,6 @@ bitfield SV32_PTE : pte32 = {
 
 type paddr64 = bits(56)
 type pte64   = bits(64)
-
-/* result of address translation */
-union TR64_Result = {
-  TR64_Address : paddr64,
-  TR64_Failure : PTW_Error
-}
 
 /* asid */
 
@@ -238,9 +226,16 @@ bitfield SV48_PTE : pte48 = {
 
 /* Result of a page-table walk. */
 
-union PTW_Result = {
-  PTW_Success: (paddr64, SV39_PTE, paddr64, nat, bool),
+union PTW_Result('paddr : Type, 'pte : Type) = {
+  PTW_Success: ('paddr, 'pte, 'paddr, nat, bool),
   PTW_Failure: PTW_Error
+}
+
+/* Result of address translation */
+
+union TR_Result('paddr : Type, 'failure : Type) = {
+  TR_Address : 'paddr,
+  TR_Failure : 'failure
 }
 
 /* idealized TLB to model fence.vm and also speed up simulation. */
@@ -317,4 +312,3 @@ function flushTLB(asid, addr) = {
     };
   tlb39 = ent
 }
-
