@@ -280,8 +280,12 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
        mstatus->MIE()  = false;
        mstatus->MPP()  = privLevel_to_bits(cur_privilege);
        mtval           = tval(info);
-       mepc            = pc;
 
+       /* XXX should legalize pc here? */
+       let (representable, mepcc) = setCapOffset(PCC, pc);
+       assert(representable, "mepcc should always be representable");
+       MEPCC           = mepcc;
+       
        cur_privilege   = del_priv;
 
        print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
@@ -305,7 +309,10 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
                            Machine => internal_error("invalid privilege for s-mode trap")
                          };
        stval           = tval(info);
-       sepc            = pc;
+
+       let (representable, sepcc) = setCapOffset(PCC, pc);
+       assert(representable, "sepcc should always be representable");
+       SEPCC           = sepcc;
 
        cur_privilege   = del_priv;
 
@@ -326,7 +333,10 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
        mstatus->UPIE() = mstatus.UIE();
        mstatus->UIE()  = false;
        utval           = tval(info);
-       uepc            = pc;
+
+       let (representable, uepcc) = setCapOffset(PCC, pc);
+       assert(representable, "UEPCC should always be representable");
+       UEPCC           = uepcc;
 
        cur_privilege   = del_priv;
 
@@ -360,7 +370,7 @@ function handle_exception(cur_priv : Privilege, ctl : ctl_result,
       print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
 
       cancel_reservation();
-      mepc & pc_alignment_mask()
+      getCapOffsetBits(MEPCC) & pc_alignment_mask()
     },
     (_, CTL_SRET())  => {
       let prev_priv   = cur_privilege;
@@ -374,7 +384,7 @@ function handle_exception(cur_priv : Privilege, ctl : ctl_result,
       print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
 
       cancel_reservation();
-      sepc & pc_alignment_mask()
+      getCapOffsetBits(SEPCC) & pc_alignment_mask()
     },
     (_, CTL_URET())  => {
       let prev_priv   = cur_privilege;
@@ -386,7 +396,7 @@ function handle_exception(cur_priv : Privilege, ctl : ctl_result,
       print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
 
       cancel_reservation();
-      uepc & pc_alignment_mask()
+      getCapOffsetBits(UEPCC) & pc_alignment_mask()
     }
   }
 }
@@ -426,7 +436,7 @@ function init_sys() -> unit = {
   medeleg->bits() = EXTZ(0b0);
   mtvec->bits()   = EXTZ(0b0);
   mcause->bits()  = EXTZ(0b0);
-  mepc            = EXTZ(0b0);
+/*  mepc            = EXTZ(0b0);*/
   mtval           = EXTZ(0b0);
   mscratch        = EXTZ(0b0);
 

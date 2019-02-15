@@ -29,7 +29,7 @@ function readCSR csr : csreg -> xlenbits = {
     0x305 => mtvec.bits(),
     0x306 => EXTZ(mcounteren.bits()),
     0x340 => mscratch,
-    0x341 => mepc & pc_alignment_mask(),
+    0x341 => getCapOffsetBits(MEPCC) & pc_alignment_mask(),
     0x342 => mcause.bits(),
     0x343 => mtval,
     0x344 => mip.bits(),
@@ -45,7 +45,7 @@ function readCSR csr : csreg -> xlenbits = {
     0x105 => stvec.bits(),
     0x106 => EXTZ(scounteren.bits()),
     0x140 => sscratch,
-    0x141 => sepc & pc_alignment_mask(),
+    0x141 => getCapOffsetBits(SEPCC) & pc_alignment_mask(),
     0x142 => scause.bits(),
     0x143 => stval,
     0x144 => lower_mip(mip, mideleg).bits(),
@@ -82,7 +82,9 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     0x305 => { mtvec = legalize_tvec(mtvec, value); Some(mtvec.bits()) },
     0x306 => { mcounteren = legalize_mcounteren(mcounteren, value); Some(EXTZ(mcounteren.bits())) },
     0x340 => { mscratch = value; Some(mscratch) },
-    0x341 => { mepc = legalize_xepc(value); Some(mepc) },
+    0x341 => { let mepc = legalize_xepc(value);
+               MEPCC = setCapOffsetOrNull(MEPCC, mepc);
+               Some(mepc) },
     0x342 => { mcause->bits() = value; Some(mcause.bits()) },
     0x343 => { mtval = value; Some(mtval) },
     0x344 => { mip = legalize_mip(mip, value); Some(mip.bits()) },
@@ -98,7 +100,9 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     0x105 => { stvec = legalize_tvec(stvec, value); Some(stvec.bits()) },
     0x106 => { scounteren = legalize_scounteren(scounteren, value); Some(EXTZ(scounteren.bits())) },
     0x140 => { sscratch = value; Some(sscratch) },
-    0x141 => { sepc = legalize_xepc(value); Some(sepc) },
+    0x141 => { let sepc = legalize_xepc(value);
+              SEPCC = setCapOffsetOrNull(SEPCC, sepc);
+              Some(sepc) },
     0x142 => { scause->bits() = value; Some(scause.bits()) },
     0x143 => { stval = value; Some(stval) },
     0x144 => { mip = legalize_sip(mip, mideleg, value); Some(mip.bits()) },

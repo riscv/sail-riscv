@@ -247,7 +247,7 @@ function clause execute (CSpecialRW(cd, cs, idx)) =
         1  => DDC,
         4  => UTCC,
         6  => UScratchC,
-        7  => UEPCC,
+        7  => UEPCC, /* XXX should mask offset as per uepc etc? */
         12 => STCC,
         14 => SScratchC,
         15 => SEPCC,
@@ -264,7 +264,7 @@ function clause execute (CSpecialRW(cd, cs, idx)) =
         1  => DDC = cs_val,
         4  => UTCC = cs_val,
         6  => UScratchC = cs_val,
-        7  => UEPCC = cs_val,
+        7  => UEPCC = cs_val, /* XXX should legalize offset as per uepc etc? */
         12 => STCC = cs_val,
         14 => SScratchC = cs_val,
         15 => SEPCC = cs_val,

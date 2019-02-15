@@ -285,7 +285,7 @@ function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
 
 /* Exception PC */
 
-register mepc : xlenbits
+/*register mepc : xlenbits*/
 
 /* Legalize writes to xepc -- just clear bit zero.
    Spec says that mepc[1] is writable even if IALIGN=32 */
@@ -529,10 +529,22 @@ function legalize_satp(a : Architecture, o : xlenbits, v : xlenbits) -> xlenbits
 /* other supervisor state */
 register stvec    : Mtvec
 register sscratch : xlenbits
-register sepc     : xlenbits
+/*register sepc     : xlenbits*/
 register scause   : Mcause
 register stval    : xlenbits
 
 /* disabled trigger/debug module */
 register tselect : xlenbits
 
+/* Capability control csr */
+bitfield ccsr : bits(64) = {
+  cap_idx : 13 ..8,
+  cause   :  7..3, /* cap cause */
+  m       :  2, /* mode */
+  d       :  1, /* dirty  */
+  e       :  0  /* enable */
+}
+
+register mccsr : ccsr
+register sccsr : ccsr
+register uccsr : ccsr

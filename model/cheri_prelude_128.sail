@@ -297,6 +297,10 @@ function getCapOffset(c) : Capability -> uint64 =
     let base = getCapBase(c) in
     (unsigned(c.address) - base) % pow2(64)
 
+function getCapOffsetBits(c) : Capability -> bits(64) = 
+    let base = getCapBase(c) in
+    c.address - to_bits(64, base)
+
 function getCapLength(c) : Capability -> CapLen =
     let ('base, 'top) = getCapBounds(c) in {
         /* For valid capabilties we expect top >= base and hence
@@ -335,10 +339,23 @@ function fastRepCheck(c, i) : (Capability, bits(64)) -> bool=
           false
 */
 
+function int_to_cap (offset) : bits(64) -> Capability = 
+    {null_cap with address = offset}
+
 function capBoundsEqual (c1, c2) : (Capability, Capability) -> bool =
     let (base1, top1) = getCapBounds(c1) in
     let (base2, top2) = getCapBounds(c2) in
     (base1 == base2) & (top1 == top2)
+
+val setCapAddr : (Capability, bits(64)) -> (bool, Capability)
+function setCapAddr(c, addr) =
+    let newCap = { c with address = addr } in
+    let representable = capBoundsEqual(c, newCap) in
+    (representable, newCap)
+
+function setCapAddrOrNull (cap, addr) : (Capability, bits(64)) -> Capability =
+  let (representable, newCap) = setCapAddr(cap, addr) in
+  if representable then newCap else int_to_cap(addr)
 
 function setCapOffset(c, offset) : (Capability, bits(64)) -> (bool, Capability) =
     let base64 : bits(64) = to_bits(64, getCapBase(c)) in
@@ -347,6 +364,10 @@ function setCapOffset(c, offset) : (Capability, bits(64)) -> (bool, Capability) 
     let representable = capBoundsEqual(c, newCap) in
 /*    let representable = fastRepCheck(c, (newAddress - c.address)) in*/
     (representable, newCap)
+
+function setCapOffsetOrNull (cap, offset) : (Capability, bits(64)) -> Capability =
+    let (representable, newCap) = setCapOffset(cap, offset) in
+    if representable then newCap else int_to_cap(newCap.address)
 
 function incCapOffset(c, delta) : (Capability, bits(64)) -> (bool, Capability) =
     let newAddress : bits(64) = c.address + delta in
@@ -427,9 +448,6 @@ function setCapBounds(cap, base, top) : (Capability, bits(64), bits(65)) -> (boo
   let exact = not(lostSignificantBase | lostSignificantTop);
   (exact, newCap)
 }
-
-function int_to_cap (offset) : bits(64) -> Capability = 
-    {null_cap with address = offset}
 
 val checkCP2usable : unit -> unit
 function checkCP2usable () = ()

@@ -78,6 +78,6 @@ function legalize_uie(s : Sinterrupts, d : Sinterrupts, v : xlenbits) -> Sinterr
 
 register utvec    : Mtvec
 register uscratch : xlenbits
-register uepc     : xlenbits
+/*register uepc     : xlenbits*/
 register ucause   : Mcause
 register utval    : xlenbits
