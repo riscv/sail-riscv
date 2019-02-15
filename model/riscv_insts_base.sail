@@ -265,13 +265,13 @@ union clause ast = LOAD : (bits(12), regbits, regbits, bool, word_width, bool, b
 mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if size_bits(size) != 0b11 | not_bool(is_unsigned)
   <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_bits(size) @ rd @ 0b0000011 if size_bits(size) != 0b11 | not_bool(is_unsigned)
 
-val extend_value : forall 'n, 0 < 'n <= 8. (bool, MemoryOpResult(bits(8 * 'n))) -> MemoryOpResult(xlenbits)
+val extend_value : forall 'n, 0 < 'n <= xlen_bytes. (bool, MemoryOpResult(bits(8 * 'n))) -> MemoryOpResult(xlenbits)
 function extend_value(is_unsigned, value) = match (value) {
   MemValue(v)     => MemValue(if is_unsigned then EXTZ(v) else EXTS(v) : xlenbits),
   MemException(e) => MemException(e)
 }
 
-val process_load : forall 'n, 0 < 'n <= 8. (regbits, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> bool effect {escape, rreg, wreg}
+val process_load : forall 'n, 0 < 'n <= xlen_bytes. (regbits, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> bool effect {escape, rreg, wreg}
 function process_load(rd, addr, value, is_unsigned) =
   match extend_value(is_unsigned, value) {
     MemValue(result) => { X(rd) = result; true },
@@ -294,14 +294,14 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   else match translateAddr(vaddr, Read, Data) {
     TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
     TR_Address(addr) =>
-      match width {
-        BYTE   =>
+      match (width, xlen) {
+        (BYTE, _)   =>
 	  process_load(rd, vaddr, mem_read(addr, 1, aq, rl, false), is_unsigned),
-        HALF   =>
+        (HALF, _)   =>
 	  process_load(rd, vaddr, mem_read(addr, 2, aq, rl, false), is_unsigned),
-        WORD   =>
+        (WORD, _)   =>
 	  process_load(rd, vaddr, mem_read(addr, 4, aq, rl, false), is_unsigned),
-        DOUBLE =>
+        (DOUBLE, 64) =>
 	  process_load(rd, vaddr, mem_read(addr, 8, aq, rl, false), is_unsigned)
       }
   }
@@ -354,11 +354,11 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
         MemException(e) => { handle_mem_exception(addr, e); false },
         MemValue(_) => {
           let rs2_val = X(rs2);
-          let res : MemoryOpResult(bool) = match width {
-            BYTE   => mem_write_value(addr, 1, rs2_val[7..0],  aq, rl, false),
-            HALF   => mem_write_value(addr, 2, rs2_val[15..0], aq, rl, false),
-            WORD   => mem_write_value(addr, 4, rs2_val[31..0], aq, rl, false),
-            DOUBLE => mem_write_value(addr, 8, rs2_val,        aq, rl, false)
+          let res : MemoryOpResult(bool) = match (width, xlen) {
+            (BYTE, _)    => mem_write_value(addr, 1, rs2_val[7..0],  aq, rl, false),
+            (HALF, _)    => mem_write_value(addr, 2, rs2_val[15..0], aq, rl, false),
+            (WORD, _)    => mem_write_value(addr, 4, rs2_val[31..0], aq, rl, false),
+            (DOUBLE, 64) => mem_write_value(addr, 8, rs2_val,        aq, rl, false)
           };
           match (res) {
             MemValue(true)     => true,
