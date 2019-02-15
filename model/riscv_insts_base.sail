@@ -179,16 +179,19 @@ mapping encdec_sop : sop <-> bits(3) = {
   RISCV_SRAI <-> 0b101
 }
 
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SLLI) <-> 0b000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) <-> 0b000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) <-> 0b010000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SLLI) <-> 0b000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == false
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) <-> 0b000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == false
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) <-> 0b010000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == false
 
 function clause execute (SHIFTIOP(shamt, rs1, rd, op)) = {
   let rs1_val = X(rs1);
   let result : xlenbits = match op {
     RISCV_SLLI => rs1_val << shamt,
     RISCV_SRLI => rs1_val >> shamt,
-    RISCV_SRAI => shift_right_arith64(rs1_val, shamt)
+    RISCV_SRAI => if   xlen == 32
+                       /* the decoder guard should ensure that shamt[5] = 0 for RV32 */
+                  then shift_right_arith32(rs1_val, shamt[4..0])
+                  else shift_right_arith64(rs1_val, shamt)
   };
   X(rd) = result;
   true
@@ -230,7 +233,9 @@ function clause execute (RTYPE(rs2, rs1, rd, op)) = {
     RISCV_SLL  => rs1_val << (rs2_val[5..0]),
     RISCV_SRL  => rs1_val >> (rs2_val[5..0]),
     RISCV_SUB  => rs1_val - rs2_val,
-    RISCV_SRA  => shift_right_arith64(rs1_val, rs2_val[5..0])
+    RISCV_SRA  => if   xlen == 32
+                  then shift_right_arith32(rs1_val, rs2_val[4..0])
+                  else shift_right_arith64(rs1_val, rs2_val[5..0])
   };
   X(rd) = result;
   true
@@ -692,15 +697,16 @@ mapping clause encdec = SFENCE_VMA(rs1, rs2)
   <-> 0b0001001 @ rs2 @ rs1 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute SFENCE_VMA(rs1, rs2) = {
-  /* TODO: handle PMP/TLB synchronization when executed in M-mode. */
   if   cur_privilege == User
   then { handle_illegal(); false }
   else match (architecture(get_mstatus_SXL(mstatus)), mstatus.TVM()) {
-    (Some(RV64), true)  => { handle_illegal(); false },
-    (Some(RV64), false) => {
+    (Some(_), true)  => { handle_illegal(); false },
+    (Some(_), false) => {
+      /*
       let addr : option(vaddr39) = if rs1 == 0 then None() else Some(X(rs1)[38 .. 0]);
       let asid : option(asid64)  = if rs2 == 0 then None() else Some(X(rs2)[15 .. 0]);
       flushTLB(asid, addr);
+      */
       true
     },
     (_, _) => internal_error("unimplemented sfence architecture")
