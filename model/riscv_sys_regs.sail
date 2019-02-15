@@ -287,10 +287,11 @@ function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
 
 register mepc : xlenbits
 
-// legalizing writes to xepc
-function legalize_xepc(v : xlenbits) -> xlenbits = {
-  v & EXTS(if haveRVC() then 0b110 else 0b100)
-}
+/* Legalize writes to xepc -- just clear bit zero.
+   Spec says that mepc[1] is writable even if IALIGN=32 */
+function legalize_xepc(v : xlenbits) -> xlenbits =
+  [v with 0 = bitzero]
+
 
 // masking for reads to xepc
 function pc_alignment_mask() -> xlenbits =
