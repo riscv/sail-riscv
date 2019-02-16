@@ -32,6 +32,16 @@ function is_CSR_defined (csr : bits(12), p : Privilege) -> bool =
     0x3B0 => false, // (Disabled for Spike compatibility)
 //  0x3B0 => p == Machine, // pmpaddr0
 
+    /* counters */
+    0xB00 => p == Machine, // mcycle
+    0xB02 => p == Machine, // minstret
+
+    0xB80 => p == Machine & (xlen == 32), // mcycleh
+    0xB82 => p == Machine & (xlen == 32), // minstreth
+
+    /* disabled trigger/debug module */
+    0x7a0 => p == Machine,
+
     /* supervisor mode: trap setup */
     0x100 => haveSupMode() & (p == Machine | p == Supervisor), // sstatus
     0x102 => haveSupMode() & (p == Machine | p == Supervisor), // sedeleg
@@ -50,8 +60,14 @@ function is_CSR_defined (csr : bits(12), p : Privilege) -> bool =
     /* supervisor mode: address translation */
     0x180 => haveSupMode() & (p == Machine | p == Supervisor), // satp
 
-    /* disabled trigger/debug module */
-    0x7a0 => p == Machine,
+    /* user mode: counters */
+    0xC00 => p == User,    // cycle
+    0xC01 => p == User,    // time
+    0xC02 => p == User,    // instret
+
+    0xC80 => p == User & (xlen == 32),     // cycleh
+    0xC81 => p == User & (xlen == 32),     // timeh
+    0xC82 => p == User & (xlen == 32),     // instreth
 
     /* check extensions */
     _     => is_UExt_CSR_defined(csr, p)   // 'N' extension

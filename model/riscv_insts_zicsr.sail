@@ -15,56 +15,65 @@ mapping clause encdec = CSR(csr, rs1, rd, is_imm, op)
 
 function readCSR csr : csreg -> xlenbits = {
   let res : xlenbits =
-  match csr {
+  match (csr, xlen) {
     /* machine mode */
-    0xF11 => EXTZ(mvendorid),
-    0xF12 => marchid,
-    0xF13 => mimpid,
-    0xF14 => mhartid,
-    0x300 => mstatus.bits(),
-    0x301 => misa.bits(),
-    0x302 => medeleg.bits(),
-    0x303 => mideleg.bits(),
-    0x304 => mie.bits(),
-    0x305 => mtvec.bits(),
-    0x306 => EXTZ(mcounteren.bits()),
-    0x340 => mscratch,
-    0x341 => mepc & pc_alignment_mask(),
-    0x342 => mcause.bits(),
-    0x343 => mtval,
-    0x344 => mip.bits(),
+    (0xF11,  _) => EXTZ(mvendorid),
+    (0xF12,  _) => marchid,
+    (0xF13,  _) => mimpid,
+    (0xF14,  _) => mhartid,
+    (0x300,  _) => mstatus.bits(),
+    (0x301,  _) => misa.bits(),
+    (0x302,  _) => medeleg.bits(),
+    (0x303,  _) => mideleg.bits(),
+    (0x304,  _) => mie.bits(),
+    (0x305,  _) => mtvec.bits(),
+    (0x306,  _) => EXTZ(mcounteren.bits()),
+    (0x340,  _) => mscratch,
+    (0x341,  _) => mepc & pc_alignment_mask(),
+    (0x342,  _) => mcause.bits(),
+    (0x343,  _) => mtval,
+    (0x344,  _) => mip.bits(),
 
-    0x3A0 => pmpcfg0,
-    0x3B0 => pmpaddr0,
+    (0x3A0,  _) => pmpcfg0,
+    (0x3B0,  _) => pmpaddr0,
 
-    /* supervisor mode */
-    0x100 => lower_mstatus(mstatus).bits(),
-    0x102 => sedeleg.bits(),
-    0x103 => sideleg.bits(),
-    0x104 => lower_mie(mie, mideleg).bits(),
-    0x105 => stvec.bits(),
-    0x106 => EXTZ(scounteren.bits()),
-    0x140 => sscratch,
-    0x141 => sepc & pc_alignment_mask(),
-    0x142 => scause.bits(),
-    0x143 => stval,
-    0x144 => lower_mip(mip, mideleg).bits(),
-    0x180 => satp,
-
-    /* others */
-    0xC00 => mcycle,
-    0xC01 => mtime,
-    0xC02 => minstret,
+    /* machine mode counters */
+    (0xB00,  _) => mcycle[(xlen - 1) .. 0],
+    (0xB02,  _) => minstret[(xlen - 1) .. 0],
+    (0xB80, 32) => mcycle[63 .. 32],
+    (0xB82, 32) => minstret[63 .. 32],
 
     /* trigger/debug */
-    0x7a0 => ~(tselect),    /* this indicates we don't have any trigger support */
+    (0x7a0,  _) => ~(tselect),  /* this indicates we don't have any trigger support */
 
-    _     =>  /* check extensions */
-              match read_UExt_CSR(csr) {
-                Some(res) => res,
-                None()    => { print_bits("unhandled read to CSR ", csr);
-                               0x0000_0000_0000_0000 }
-              }
+    /* supervisor mode */
+    (0x100,  _) => lower_mstatus(mstatus).bits(),
+    (0x102,  _) => sedeleg.bits(),
+    (0x103,  _) => sideleg.bits(),
+    (0x104,  _) => lower_mie(mie, mideleg).bits(),
+    (0x105,  _) => stvec.bits(),
+    (0x106,  _) => EXTZ(scounteren.bits()),
+    (0x140,  _) => sscratch,
+    (0x141,  _) => sepc & pc_alignment_mask(),
+    (0x142,  _) => scause.bits(),
+    (0x143,  _) => stval,
+    (0x144,  _) => lower_mip(mip, mideleg).bits(),
+    (0x180,  _) => satp,
+
+    /* user mode counters */
+    (0xC00,  _) => mcycle[(xlen - 1) .. 0],
+    (0xC01,  _) => mtime[(xlen - 1) .. 0],
+    (0xC02,  _) => minstret[(xlen - 1) .. 0],
+    (0xC80, 32) => mcycle[63 .. 32],
+    (0xC81, 32) => mtime[63 .. 32],
+    (0xC82, 32) => minstret[63 .. 32],
+
+    _           => /* check extensions */
+                   match read_UExt_CSR(csr) {
+                     Some(res) => res,
+                     None()    => { print_bits("unhandled read to CSR ", csr);
+                                    EXTZ(0x0) }
+                   }
   };
   print_reg("CSR " ^ csr ^ " -> " ^ BitStr(res));
   res
@@ -72,52 +81,53 @@ function readCSR csr : csreg -> xlenbits = {
 
 function writeCSR (csr : csreg, value : xlenbits) -> unit = {
   let res : option(xlenbits) =
-  match csr {
+  match (csr, xlen) {
     /* machine mode */
-    0x300 => { mstatus = legalize_mstatus(mstatus, value); Some(mstatus.bits()) },
-    0x301 => { misa = legalize_misa(misa, value); Some(misa.bits()) },
-    0x302 => { medeleg = legalize_medeleg(medeleg, value); Some(medeleg.bits()) },
-    0x303 => { mideleg = legalize_mideleg(mideleg, value); Some(mideleg.bits()) },
-    0x304 => { mie = legalize_mie(mie, value); Some(mie.bits()) },
-    0x305 => { mtvec = legalize_tvec(mtvec, value); Some(mtvec.bits()) },
-    0x306 => { mcounteren = legalize_mcounteren(mcounteren, value); Some(EXTZ(mcounteren.bits())) },
-    0x340 => { mscratch = value; Some(mscratch) },
-    0x341 => { mepc = legalize_xepc(value); Some(mepc) },
-    0x342 => { mcause->bits() = value; Some(mcause.bits()) },
-    0x343 => { mtval = value; Some(mtval) },
-    0x344 => { mip = legalize_mip(mip, value); Some(mip.bits()) },
+    (0x300,  _) => { mstatus = legalize_mstatus(mstatus, value); Some(mstatus.bits()) },
+    (0x301,  _) => { misa = legalize_misa(misa, value); Some(misa.bits()) },
+    (0x302,  _) => { medeleg = legalize_medeleg(medeleg, value); Some(medeleg.bits()) },
+    (0x303,  _) => { mideleg = legalize_mideleg(mideleg, value); Some(mideleg.bits()) },
+    (0x304,  _) => { mie = legalize_mie(mie, value); Some(mie.bits()) },
+    (0x305,  _) => { mtvec = legalize_tvec(mtvec, value); Some(mtvec.bits()) },
+    (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(EXTZ(mcounteren.bits())) },
+    (0x340,  _) => { mscratch = value; Some(mscratch) },
+    (0x341,  _) => { mepc = legalize_xepc(value); Some(mepc) },
+    (0x342,  _) => { mcause->bits() = value; Some(mcause.bits()) },
+    (0x343,  _) => { mtval = value; Some(mtval) },
+    (0x344,  _) => { mip = legalize_mip(mip, value); Some(mip.bits()) },
 
-    0x3A0 => { pmpcfg0 = value; Some(pmpcfg0) },   /* FIXME: legalize */
-    0x3B0 => { pmpaddr0 = value; Some(pmpaddr0) }, /* FIXME: legalize */
+    (0x3A0,  _) => { pmpcfg0 = value; Some(pmpcfg0) },   /* FIXME: legalize */
+    (0x3B0,  _) => { pmpaddr0 = value; Some(pmpaddr0) }, /* FIXME: legalize */
 
-    /* supervisor mode */
-    0x100 => { mstatus = legalize_sstatus(mstatus, value); Some(mstatus.bits()) },
-    0x102 => { sedeleg = legalize_sedeleg(sedeleg, value); Some(sedeleg.bits()) },
-    0x103 => { sideleg->bits() = value; Some(sideleg.bits()) }, /* TODO: does this need legalization? */
-    0x104 => { mie = legalize_sie(mie, mideleg, value); Some(mie.bits()) },
-    0x105 => { stvec = legalize_tvec(stvec, value); Some(stvec.bits()) },
-    0x106 => { scounteren = legalize_scounteren(scounteren, value); Some(EXTZ(scounteren.bits())) },
-    0x140 => { sscratch = value; Some(sscratch) },
-    0x141 => { sepc = legalize_xepc(value); Some(sepc) },
-    0x142 => { scause->bits() = value; Some(scause.bits()) },
-    0x143 => { stval = value; Some(stval) },
-    0x144 => { mip = legalize_sip(mip, mideleg, value); Some(mip.bits()) },
-    0x180 => { satp = legalize_satp(cur_Architecture(), satp, value); Some(satp) },
+    /* machine mode counters */
+    (0xB00,  _) => { mcycle[(xlen - 1) .. 0] = value; Some(value) },
+    (0xB02,  _) => { minstret[(xlen - 1) .. 0] = value; minstret_written = true; Some(value) },
+    (0xB80, 32) => { mcycle[63 .. 32] = value; Some(value) },
+    (0xB82, 32) => { minstret[63 .. 32] = value; minstret_written = true; Some(value) },
 
     /* trigger/debug */
-    0x7a0 => { tselect = value; Some(tselect) },
+    (0x7a0,  _) => { tselect = value; Some(tselect) },
 
-    /* counters */
-    0xC00 => { mcycle = value; Some(mcycle) },
-    /* FIXME: it is not clear whether writable mtime is platform-dependent. */
-    0xC02 => { minstret = value; minstret_written = true; Some(minstret) },
+    /* supervisor mode */
+    (0x100,  _) => { mstatus = legalize_sstatus(mstatus, value); Some(mstatus.bits()) },
+    (0x102,  _) => { sedeleg = legalize_sedeleg(sedeleg, value); Some(sedeleg.bits()) },
+    (0x103,  _) => { sideleg->bits() = value; Some(sideleg.bits()) }, /* TODO: does this need legalization? */
+    (0x104,  _) => { mie = legalize_sie(mie, mideleg, value); Some(mie.bits()) },
+    (0x105,  _) => { stvec = legalize_tvec(stvec, value); Some(stvec.bits()) },
+    (0x106,  _) => { scounteren = legalize_scounteren(scounteren, value); Some(EXTZ(scounteren.bits())) },
+    (0x140,  _) => { sscratch = value; Some(sscratch) },
+    (0x141,  _) => { sepc = legalize_xepc(value); Some(sepc) },
+    (0x142,  _) => { scause->bits() = value; Some(scause.bits()) },
+    (0x143,  _) => { stval = value; Some(stval) },
+    (0x144,  _) => { mip = legalize_sip(mip, mideleg, value); Some(mip.bits()) },
+    (0x180,  _) => { satp = legalize_satp(cur_Architecture(), satp, value); Some(satp) },
 
-    _     => None()
+    _           => None()
   };
   match res {
     Some(v) => print_reg("CSR " ^ csr ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")"),
     None()  => { /* check extensions */
-                 if write_UExt_CSR(csr, value)
+                 if   write_UExt_CSR(csr, value)
                  then ()
                  else print_bits("unhandled write to CSR ", csr)
                }
