@@ -348,10 +348,6 @@ infix 7 <<
 val operator >> = "shift_bits_right" : forall 'n 'm. (bits('n), bits('m)) -> bits('n)
 val operator << = "shift_bits_left" : forall 'n 'm. (bits('n), bits('m)) -> bits('n)
 
-val vector64 : int -> bits(64)
-
-function vector64 n = __raw_GetSlice_int(64, n, 0)
-
 val to_bits : forall 'l, 'l >= 0.(atom('l), int) -> bits('l)
 function to_bits (l, n) = __raw_GetSlice_int(l, n, 0)
 

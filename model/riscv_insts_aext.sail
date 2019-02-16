@@ -200,11 +200,13 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                     AMOAND  => rs2_val & loaded,
                     AMOOR   => rs2_val | loaded,
 
-                    /* Have to convert number to vector here. Check this */
-                    AMOMIN  => vector64(min(signed(rs2_val),   signed(loaded))),
-                    AMOMAX  => vector64(max(signed(rs2_val),   signed(loaded))),
-                    AMOMINU => vector64(min(unsigned(rs2_val), unsigned(loaded))),
-                    AMOMAXU => vector64(max(unsigned(rs2_val), unsigned(loaded)))
+                    /* These operations convert bitvectors to integer values using [un]signed,
+                     * and back using to_bits().
+                     */
+                    AMOMIN  => to_bits(xlen, min(signed(rs2_val),   signed(loaded))),
+                    AMOMAX  => to_bits(xlen, max(signed(rs2_val),   signed(loaded))),
+                    AMOMINU => to_bits(xlen, min(unsigned(rs2_val), unsigned(loaded))),
+                    AMOMAXU => to_bits(xlen, max(unsigned(rs2_val), unsigned(loaded)))
                   };
 
                 let wval : MemoryOpResult(bool) = match (width, xlen) {
