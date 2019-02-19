@@ -15,7 +15,7 @@ mapping clause encdec = CSR(csr, rs1, rd, is_imm, op)
 
 function readCSR csr : csreg -> xlenbits = {
   let res : xlenbits =
-  match (csr, xlen) {
+  match (csr, sizeof(xlen)) {
     /* machine mode */
     (0xF11,  _) => EXTZ(mvendorid),
     (0xF12,  _) => marchid,
@@ -38,8 +38,8 @@ function readCSR csr : csreg -> xlenbits = {
     (0x3B0,  _) => pmpaddr0,
 
     /* machine mode counters */
-    (0xB00,  _) => mcycle[(xlen - 1) .. 0],
-    (0xB02,  _) => minstret[(xlen - 1) .. 0],
+    (0xB00,  _) => mcycle[(sizeof(xlen) - 1) .. 0],
+    (0xB02,  _) => minstret[(sizeof(xlen) - 1) .. 0],
     (0xB80, 32) => mcycle[63 .. 32],
     (0xB82, 32) => minstret[63 .. 32],
 
@@ -61,9 +61,9 @@ function readCSR csr : csreg -> xlenbits = {
     (0x180,  _) => satp,
 
     /* user mode counters */
-    (0xC00,  _) => mcycle[(xlen - 1) .. 0],
-    (0xC01,  _) => mtime[(xlen - 1) .. 0],
-    (0xC02,  _) => minstret[(xlen - 1) .. 0],
+    (0xC00,  _) => mcycle[(sizeof(xlen) - 1) .. 0],
+    (0xC01,  _) => mtime[(sizeof(xlen) - 1) .. 0],
+    (0xC02,  _) => minstret[(sizeof(xlen) - 1) .. 0],
     (0xC80, 32) => mcycle[63 .. 32],
     (0xC81, 32) => mtime[63 .. 32],
     (0xC82, 32) => minstret[63 .. 32],
@@ -81,7 +81,7 @@ function readCSR csr : csreg -> xlenbits = {
 
 function writeCSR (csr : csreg, value : xlenbits) -> unit = {
   let res : option(xlenbits) =
-  match (csr, xlen) {
+  match (csr, sizeof(xlen)) {
     /* machine mode */
     (0x300,  _) => { mstatus = legalize_mstatus(mstatus, value); Some(mstatus.bits()) },
     (0x301,  _) => { misa = legalize_misa(misa, value); Some(misa.bits()) },
@@ -100,8 +100,8 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x3B0,  _) => { pmpaddr0 = value; Some(pmpaddr0) }, /* FIXME: legalize */
 
     /* machine mode counters */
-    (0xB00,  _) => { mcycle[(xlen - 1) .. 0] = value; Some(value) },
-    (0xB02,  _) => { minstret[(xlen - 1) .. 0] = value; minstret_written = true; Some(value) },
+    (0xB00,  _) => { mcycle[(sizeof(xlen) - 1) .. 0] = value; Some(value) },
+    (0xB02,  _) => { minstret[(sizeof(xlen) - 1) .. 0] = value; minstret_written = true; Some(value) },
     (0xB80, 32) => { mcycle[63 .. 32] = value; Some(value) },
     (0xB82, 32) => { minstret[63 .. 32] = value; minstret_written = true; Some(value) },
 

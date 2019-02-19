@@ -23,12 +23,12 @@ val __WriteRAM_conditional_strong_release = {lem: "MEMw_conditional_strong_relea
 val __RISCV_write : forall 'n. (xlenbits, atom('n), bits(8 * 'n), bool, bool, bool) -> bool effect {wmv}
 function __RISCV_write (addr, width, data, aq, rl, con) =
   match (aq, rl, con) {
-    (false, false, false) => __WriteRAM(xlen, width, EXTZ(0x0), addr, data),
-    (false, true,  false) => __WriteRAM_release(xlen, width, EXTZ(0x0), addr, data),
-    (false, false, true)  => __WriteRAM_conditional(xlen, width, EXTZ(0x0), addr, data),
-    (false, true,  true)  => __WriteRAM_conditional_release(xlen, width, EXTZ(0x0), addr, data),
-    (true,  true,  false) => __WriteRAM_strong_release(xlen, width, EXTZ(0x0), addr, data),
-    (true,  true,  true)  => __WriteRAM_conditional_strong_release(xlen, width, EXTZ(0x0), addr, data),
+    (false, false, false) => __WriteRAM(sizeof(xlen), width, EXTZ(0x0), addr, data),
+    (false, true,  false) => __WriteRAM_release(sizeof(xlen), width, EXTZ(0x0), addr, data),
+    (false, false, true)  => __WriteRAM_conditional(sizeof(xlen), width, EXTZ(0x0), addr, data),
+    (false, true,  true)  => __WriteRAM_conditional_release(sizeof(xlen), width, EXTZ(0x0), addr, data),
+    (true,  true,  false) => __WriteRAM_strong_release(sizeof(xlen), width, EXTZ(0x0), addr, data),
+    (true,  true,  true)  => __WriteRAM_conditional_strong_release(sizeof(xlen), width, EXTZ(0x0), addr, data),
     (true,  false, false) => false,
     (true,  false, true)  => false
   }
@@ -57,12 +57,12 @@ val __ReadRAM_reserved_strong_acquire = { lem: "MEMr_reserved_strong_acquire", _
 val __RISCV_read : forall 'n, 'n >= 0. (xlenbits, atom('n), bool, bool, bool) -> option(bits(8 * 'n)) effect {rmem}
 function __RISCV_read (addr, width, aq, rl, res) =
   match (aq, rl, res) {
-    (false, false, false) => Some(__ReadRAM(xlen, width, EXTZ(0x0), addr)),
-    (true,  false, false) => Some(__ReadRAM_acquire(xlen, width, EXTZ(0x0), addr)),
-    (true,  true,  false) => Some(__ReadRAM_strong_acquire(xlen, width, EXTZ(0x0), addr)),
-    (false, false, true)  => Some(__ReadRAM_reserved(xlen, width, EXTZ(0x0), addr)),
-    (true,  false, true)  => Some(__ReadRAM_reserved_acquire(xlen, width, EXTZ(0x0), addr)),
-    (true,  true,  true)  => Some(__ReadRAM_reserved_strong_acquire(xlen, width, EXTZ(0x0), addr)),
+    (false, false, false) => Some(__ReadRAM(sizeof(xlen), width, EXTZ(0x0), addr)),
+    (true,  false, false) => Some(__ReadRAM_acquire(sizeof(xlen), width, EXTZ(0x0), addr)),
+    (true,  true,  false) => Some(__ReadRAM_strong_acquire(sizeof(xlen), width, EXTZ(0x0), addr)),
+    (false, false, true)  => Some(__ReadRAM_reserved(sizeof(xlen), width, EXTZ(0x0), addr)),
+    (true,  false, true)  => Some(__ReadRAM_reserved_acquire(sizeof(xlen), width, EXTZ(0x0), addr)),
+    (true,  true,  true)  => Some(__ReadRAM_reserved_strong_acquire(sizeof(xlen), width, EXTZ(0x0), addr)),
     (false, true,  false) => None(),
     (false, true,  true)  => None()
   }

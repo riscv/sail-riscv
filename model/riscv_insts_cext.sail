@@ -56,9 +56,9 @@ mapping clause assembly = C_LW(uimm, rsc, rdc)
 union clause ast = C_LD : (bits(5), cregbits, cregbits)
 
 mapping clause encdec_compressed = C_LD(ui76 @ ui53, rs1, rd)
-      if xlen == 64
+      if sizeof(xlen) == 64
   <-> 0b011 @ ui53 : bits(3) @ rs1 : cregbits @ ui76 : bits(2) @ rd : cregbits @ 0b00
-      if xlen == 64
+      if sizeof(xlen) == 64
 
 function clause execute (C_LD(uimm, rsc, rdc)) = {
   let imm : bits(12) = EXTZ(uimm @ 0b000);
@@ -68,9 +68,9 @@ function clause execute (C_LD(uimm, rsc, rdc)) = {
 }
 
 mapping clause assembly = C_LD(uimm, rsc, rdc)
-      if xlen == 64
+      if sizeof(xlen) == 64
   <-> "c.ld" ^ spc() ^ creg_name(rdc) ^ sep() ^ creg_name(rsc) ^ sep() ^ hex_bits_8(uimm @ 0b000)
-      if xlen == 64
+      if sizeof(xlen) == 64
 
 /* ****************************************************************** */
 union clause ast = C_SW : (bits(5), cregbits, cregbits)
@@ -92,9 +92,9 @@ mapping clause assembly = C_SW(uimm, rsc1, rsc2)
 union clause ast = C_SD : (bits(5), cregbits, cregbits)
 
 mapping clause encdec_compressed = C_SD(ui76 @ ui53, rs1, rs2)
-      if xlen == 64
+      if sizeof(xlen) == 64
   <-> 0b111 @ ui53 : bits(3) @ rs1 : bits(3) @ ui76 : bits(2) @ rs2 : bits(3) @ 0b00
-      if xlen == 64
+      if sizeof(xlen) == 64
 
 function clause execute (C_SD(uimm, rsc1, rsc2)) = {
   let imm : bits(12) = EXTZ(uimm @ 0b000);
@@ -104,9 +104,9 @@ function clause execute (C_SD(uimm, rsc1, rsc2)) = {
 }
 
 mapping clause assembly = C_SD(uimm, rsc1, rsc2)
-      if xlen == 64
+      if sizeof(xlen) == 64
   <-> "c.sd" ^ spc() ^ creg_name(rsc1) ^ sep() ^ creg_name(rsc2) ^ sep() ^ hex_bits_8(uimm @ 0b000)
-      if xlen == 64
+      if sizeof(xlen) == 64
 
 /* ****************************************************************** */
 union clause ast = C_ADDI : (bits(6), regbits)
@@ -130,25 +130,25 @@ mapping clause assembly = C_ADDI(nzi, rsd)
 union clause ast = C_JAL : (bits(11))
 
 mapping clause encdec_compressed = C_JAL(i11 @ i10 @ i98 @ i7 @ i6 @ i5 @ i4 @ i31)
-      if xlen == 32
+      if sizeof(xlen) == 32
   <-> 0b001 @ i11 : bits(1) @ i4 : bits(1) @ i98 : bits(2) @ i10 : bits(1) @ i6 : bits(1) @ i7 : bits(1) @ i31 : bits(3) @ i5 : bits(1) @ 0b01
-      if xlen == 32
+      if sizeof(xlen) == 32
 
 function clause execute (C_JAL(imm)) =
   execute(RISCV_JAL(EXTS(imm @ 0b0), ra))
 
 mapping clause assembly = C_JAL(imm)
-      if xlen == 32
+      if sizeof(xlen) == 32
   <-> "c.jal" ^ spc() ^ hex_bits_12(imm @ 0b0)
-      if xlen == 32
+      if sizeof(xlen) == 32
 
 /* ****************************************************************** */
 union clause ast = C_ADDIW : (bits(6), regbits)
 
 mapping clause encdec_compressed = C_ADDIW(imm5 @ imm40, rsd)
-      if rsd != zreg & xlen == 64
+      if rsd != zreg & sizeof(xlen) == 64
   <-> 0b001 @ imm5 : bits(1) @ rsd : regbits @ imm40 : bits(5) @ 0b01
-      if rsd != zreg & xlen == 64
+      if rsd != zreg & sizeof(xlen) == 64
 
 function clause execute (C_ADDIW(imm, rsd)) = {
   let imm : bits(32) = EXTS(imm);
@@ -159,9 +159,9 @@ function clause execute (C_ADDIW(imm, rsd)) = {
 }
 
 mapping clause assembly = C_ADDIW(imm, rsd)
-      if xlen == 64
+      if sizeof(xlen) == 64
   <-> "c.addiw" ^ spc() ^ reg_name(rsd) ^ sep() ^ hex_bits_6(imm)
-      if xlen == 64
+      if sizeof(xlen) == 64
 
 /* ****************************************************************** */
 union clause ast = C_LI : (bits(6), regbits)
@@ -332,9 +332,9 @@ union clause ast = C_SUBW : (cregbits, cregbits)
 
 /* TODO: invalid on RV32 */
 mapping clause encdec_compressed = C_SUBW(rsd, rs2)
-      if xlen == 64
+      if sizeof(xlen) == 64
   <-> 0b100 @ 0b1 @ 0b11 @ rsd : cregbits @ 0b00 @ rs2 : cregbits @ 0b01
-      if xlen == 64
+      if sizeof(xlen) == 64
 
 function clause execute (C_SUBW(rsd, rs2)) = {
   let rsd = creg2reg_bits(rsd);
@@ -343,18 +343,18 @@ function clause execute (C_SUBW(rsd, rs2)) = {
 }
 
 mapping clause assembly = C_SUBW(rsd, rs2)
-      if xlen == 64
+      if sizeof(xlen) == 64
   <-> "c.subw" ^ spc() ^ creg_name(rsd) ^ sep() ^ creg_name(rs2)
-      if xlen == 64
+      if sizeof(xlen) == 64
 
 /* ****************************************************************** */
 union clause ast = C_ADDW : (cregbits, cregbits)
 
 /* TODO: invalid on RV32 */
 mapping clause encdec_compressed = C_ADDW(rsd, rs2)
-      if xlen == 64
+      if sizeof(xlen) == 64
   <-> 0b100 @ 0b1 @ 0b11 @ rsd : cregbits @ 0b01 @ rs2 : cregbits @ 0b01
-      if xlen == 64
+      if sizeof(xlen) == 64
 
 function clause execute (C_ADDW(rsd, rs2)) = {
   let rsd = creg2reg_bits(rsd);
@@ -363,9 +363,9 @@ function clause execute (C_ADDW(rsd, rs2)) = {
 }
 
 mapping clause assembly = C_ADDW(rsd, rs2)
-      if xlen == 64
+      if sizeof(xlen) == 64
   <-> "c.addw" ^ spc() ^ creg_name(rsd) ^ sep() ^ creg_name(rs2)
-      if xlen == 64
+      if sizeof(xlen) == 64
 
 /* ****************************************************************** */
 union clause ast = C_J : (bits(11))
@@ -436,9 +436,9 @@ mapping clause assembly = C_LWSP(uimm, rd)
 union clause ast = C_LDSP : (bits(6), regbits)
 
 mapping clause encdec_compressed = C_LDSP(ui86 @ ui5 @ ui43, rd)
-      if rd != zreg & xlen == 64
+      if rd != zreg & sizeof(xlen) == 64
   <-> 0b011 @ ui5 : bits(1) @ rd : regbits @ ui43 : bits(2) @ ui86 : bits(3) @ 0b10
-      if rd != zreg & xlen == 64
+      if rd != zreg & sizeof(xlen) == 64
 
 function clause execute (C_LDSP(uimm, rd)) = {
   let imm : bits(12) = EXTZ(uimm @ 0b000);
@@ -446,9 +446,9 @@ function clause execute (C_LDSP(uimm, rd)) = {
 }
 
 mapping clause assembly = C_LDSP(uimm, rd)
-      if rd != zreg & xlen == 64
+      if rd != zreg & sizeof(xlen) == 64
   <-> "c.ldsp" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_6(uimm)
-      if rd != zreg & xlen == 64
+      if rd != zreg & sizeof(xlen) == 64
 
 /* ****************************************************************** */
 union clause ast = C_SWSP : (bits(6), regbits)
@@ -468,9 +468,9 @@ mapping clause assembly = C_SWSP(uimm, rd)
 union clause ast = C_SDSP : (bits(6), regbits)
 
 mapping clause encdec_compressed = C_SDSP(ui86 @ ui53, rs2)
-      if xlen == 64
+      if sizeof(xlen) == 64
   <-> 0b111 @ ui53 : bits(3) @ ui86 : bits(3) @ rs2 : regbits @ 0b10
-      if xlen == 64
+      if sizeof(xlen) == 64
 
 function clause execute (C_SDSP(uimm, rs2)) = {
   let imm : bits(12) = EXTZ(uimm @ 0b000);
@@ -478,9 +478,9 @@ function clause execute (C_SDSP(uimm, rs2)) = {
 }
 
 mapping clause assembly = C_SDSP(uimm, rs2)
-      if xlen == 64
+      if sizeof(xlen) == 64
   <-> "c.sdsp" ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_6(uimm)
-      if xlen == 64
+      if sizeof(xlen) == 64
 
 /* ****************************************************************** */
 union clause ast = C_JR : (regbits)

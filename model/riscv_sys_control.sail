@@ -36,8 +36,8 @@ function is_CSR_defined (csr : bits(12), p : Privilege) -> bool =
     0xB00 => p == Machine, // mcycle
     0xB02 => p == Machine, // minstret
 
-    0xB80 => p == Machine & (xlen == 32), // mcycleh
-    0xB82 => p == Machine & (xlen == 32), // minstreth
+    0xB80 => p == Machine & (sizeof(xlen) == 32), // mcycleh
+    0xB82 => p == Machine & (sizeof(xlen) == 32), // minstreth
 
     /* disabled trigger/debug module */
     0x7a0 => p == Machine,
@@ -65,9 +65,9 @@ function is_CSR_defined (csr : bits(12), p : Privilege) -> bool =
     0xC01 => p == User,    // time
     0xC02 => p == User,    // instret
 
-    0xC80 => p == User & (xlen == 32),     // cycleh
-    0xC81 => p == User & (xlen == 32),     // timeh
-    0xC82 => p == User & (xlen == 32),     // instreth
+    0xC80 => p == User & (sizeof(xlen) == 32),     // cycleh
+    0xC81 => p == User & (sizeof(xlen) == 32),     // timeh
+    0xC82 => p == User & (sizeof(xlen) == 32),     // instreth
 
     /* check extensions */
     _     => is_UExt_CSR_defined(csr, p)   // 'N' extension
