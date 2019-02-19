@@ -1,3 +1,21 @@
+# Select architecture: RV32 or RV64.
+ARCH = RV64
+.PHONY: ARCH
+ifeq ($(ARCH),32)
+  ARCH = RV32
+  SAIL_XLEN = riscv_xlen32.sail
+else ifeq ($(ARCH),RV32)
+  SAIL_XLEN = riscv_xlen32.sail
+else ifeq ($(ARCH),64)
+  ARCH = RV64
+  SAIL_XLEN = riscv_xlen64.sail
+else ifeq ($(ARCH),RV64)
+  SAIL_XLEN = riscv_xlen64.sail
+else
+  $(error '$(ARCH)' is not a valid architecture, must be one of: RV32, RV64)
+endif
+
+# Instruction sources, depending on target
 SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
 SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
@@ -5,26 +23,43 @@ SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
 SAIL_SEQ_INST_SRCS  = riscv_insts_begin.sail $(SAIL_SEQ_INST) riscv_insts_end.sail
 SAIL_RMEM_INST_SRCS = riscv_insts_begin.sail $(SAIL_RMEM_INST) riscv_insts_end.sail
 
+# System and platform sources
 SAIL_SYS_SRCS = riscv_csr_map.sail riscv_sys_regs.sail riscv_next_regs.sail riscv_next_control.sail riscv_sys_control.sail
 
 SAIL_RV32_VM_SRCS = riscv_vmem_sv32.sail riscv_vmem_rv32.sail
 SAIL_RV64_VM_SRCS = riscv_vmem_sv39.sail riscv_vmem_sv48.sail riscv_vmem_rv64.sail
-SAIL_VM_SRCS = riscv_vmem_common.sail riscv_vmem_tlb.sail $(SAIL_RV64_VM_SRCS)
 
-# non-instruction sources
-PRELUDE = prelude.sail prelude_mapping.sail riscv_xlen.sail prelude_mem.sail
-SAIL_OTHER_SRCS = $(PRELUDE) riscv_types.sail $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS)
-SAIL_OTHER_RVFI_SRCS = $(PRELUDE) rvfi_dii.sail riscv_types.sail $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS)
+SAIL_VM_SRCS = riscv_vmem_common.sail riscv_vmem_tlb.sail
+ifeq ($(ARCH),RV32)
+SAIL_VM_SRCS += $(SAIL_RV32_VM_SRCS)
+else
+SAIL_VM_SRCS += $(SAIL_RV64_VM_SRCS)
+endif
+
+# Non-instruction sources
+PRELUDE = prelude.sail prelude_mapping.sail $(SAIL_XLEN) prelude_mem.sail
+SAIL_ARCH_SRCS = $(PRELUDE) riscv_types.sail $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS)
+SAIL_ARCH_RVFI_SRCS = $(PRELUDE) rvfi_dii.sail riscv_types.sail $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS)
+
+# Control inclusion of 64-bit only riscv_analysis
+ifeq ($(ARCH),RV32)
+SAIL_OTHER_SRCS     = riscv_step.sail
+SAIL_OTHER_COQ_SRCS = riscv_termination.sail
+else
+SAIL_OTHER_SRCS     = riscv_step.sail riscv_analysis.sail
+SAIL_OTHER_COQ_SRCS = riscv_termination.sail riscv_analysis.sail
+endif
+
 
 PRELUDE_SRCS   = $(addprefix model/,$(PRELUDE))
-SAIL_SRCS      = $(addprefix model/,$(SAIL_OTHER_SRCS) $(SAIL_SEQ_INST_SRCS)  riscv_step.sail riscv_analysis.sail)
-SAIL_RMEM_SRCS = $(addprefix model/,$(SAIL_OTHER_SRCS) $(SAIL_RMEM_INST_SRCS) riscv_step.sail riscv_analysis.sail)
-SAIL_RVFI_SRCS = $(addprefix model/,$(SAIL_OTHER_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS)  riscv_step.sail riscv_analysis.sail)
-SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_OTHER_SRCS) $(SAIL_SEQ_INST_SRCS)  riscv_termination.sail riscv_analysis.sail)
+SAIL_SRCS      = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS)  $(SAIL_OTHER_SRCS))
+SAIL_RMEM_SRCS = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_RMEM_INST_SRCS) $(SAIL_OTHER_SRCS))
+SAIL_RVFI_SRCS = $(addprefix model/,$(SAIL_ARCH_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS) $(SAIL_OTHER_SRCS))
+SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS) $(SAIL_OTHER_COQ_SRCS))
 
 PLATFORM_OCAML_SRCS = $(addprefix ocaml_emulator/,platform.ml platform_impl.ml riscv_ocaml_sim.ml)
 
-#Attempt to work with either sail from opam or built from repo in SAIL_DIR
+# Attempt to work with either sail from opam or built from repo in SAIL_DIR
 ifneq ($(SAIL_DIR),)
 # Use sail repo in SAIL_DIR
 SAIL:=$(SAIL_DIR)/sail
@@ -61,6 +96,8 @@ C_FLAGS += -I $(TV_SPIKE_DIR)/src/cpp -DENABLE_SPIKE
 C_LIBS  += -L $(TV_SPIKE_DIR) -ltv_spike -Wl,-rpath=$(TV_SPIKE_DIR)
 C_LIBS  += -L $(RISCV)/lib -lfesvr -lriscv -Wl,-rpath=$(RISCV)/lib
 endif
+
+# SAIL_FLAGS = -dtc_verbose 4
 
 ifneq (,$(COVERAGE))
 C_FLAGS += --coverage -O1
