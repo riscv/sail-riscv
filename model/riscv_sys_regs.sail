@@ -254,7 +254,7 @@ bitfield Mtvec : bits(64) = {
   Base : 63 .. 2,
   Mode :  1 .. 0
 }
-register mtvec : Mtvec  /* Trap Vector */
+/*register mtvec : Mtvec x Trap Vector */
 
 function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
  let v = Mk_Mtvec(v);
@@ -527,7 +527,7 @@ function legalize_satp(a : Architecture, o : xlenbits, v : xlenbits) -> xlenbits
 }
 
 /* other supervisor state */
-register stvec    : Mtvec
+/*register stvec    : Mtvec*/
 register sscratch : xlenbits
 /*register sepc     : xlenbits*/
 register scause   : Mcause

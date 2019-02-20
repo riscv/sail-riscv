@@ -290,7 +290,8 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
 
        print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
-       match tvec_addr(mtvec, mcause) {
+       PCC = MTCC;
+       match tvec_addr(Mk_Mtvec(getCapOffsetBits(MTCC)), mcause) {
          Some(epc) => epc,
          None()    => internal_error("Invalid mtvec mode")
        }
@@ -318,11 +319,11 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
 
        print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
-       match tvec_addr(stvec, scause) {
+       PCC = STCC;
+       match tvec_addr(Mk_Mtvec(getCapOffsetBits(STCC)), scause) {
          Some(epc) => epc,
          None()    => internal_error("Invalid stvec mode")
        }
-
     },
     User => {
        //assert(haveUsrMode());
@@ -342,7 +343,8 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
 
        print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
-       match tvec_addr(utvec, ucause) {
+       PCC = UTCC;
+       match tvec_addr(Mk_Mtvec(getCapOffsetBits(UTCC)), ucause) {
          Some(epc) => epc,
          None()    => internal_error("Invalid utvec mode")
        }
@@ -434,7 +436,7 @@ function init_sys() -> unit = {
   mie->bits()     = EXTZ(0b0);
   mideleg->bits() = EXTZ(0b0);
   medeleg->bits() = EXTZ(0b0);
-  mtvec->bits()   = EXTZ(0b0);
+/*  mtvec->bits()   = EXTZ(0b0);*/
   mcause->bits()  = EXTZ(0b0);
 /*  mepc            = EXTZ(0b0);*/
   mtval           = EXTZ(0b0);

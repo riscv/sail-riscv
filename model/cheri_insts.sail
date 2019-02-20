@@ -262,7 +262,7 @@ function clause execute (CSpecialRW(cd, cs, idx)) =
       // write special cap
       match idx {
         1  => DDC = cs_val,
-        4  => UTCC = cs_val,
+        4  => UTCC = cs_val,   /* XXX should legalize mode? */
         6  => UScratchC = cs_val,
         7  => UEPCC = cs_val, /* XXX should legalize offset as per uepc etc? */
         12 => STCC = cs_val,

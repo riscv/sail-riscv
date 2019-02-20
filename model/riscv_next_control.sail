@@ -18,7 +18,7 @@ function read_UExt_CSR csr : csreg -> option(xlenbits) = {
   match csr {
     0x000 => Some(lower_sstatus(lower_mstatus(mstatus)).bits()),
     0x004 => Some(lower_sie(lower_mie(mie, mideleg), sideleg).bits()),
-    0x005 => Some(utvec.bits()),
+    0x005 => Some(getCapOffsetBits(UTCC)),
     0x040 => Some(uscratch),
     0x041 => Some(getCapOffsetBits(UEPCC) & pc_alignment_mask()),
     0x042 => Some(ucause.bits()),
@@ -36,7 +36,9 @@ function write_UExt_CSR(csr : csreg, value : xlenbits) -> bool = {
     0x004 => { let sie = legalize_uie(lower_mie(mie, mideleg), sideleg, value);
                mie = lift_sie(mie, mideleg, sie);
                Some(mie.bits()) },
-    0x005 => { utvec = legalize_tvec(utvec, value); Some(utvec.bits()) },
+    0x005 => { let utvec = legalize_tvec(Mk_Mtvec(getCapOffsetBits(UTCC)), value);
+               UTCC = setCapOffsetOrNull(UTCC, utvec.bits());
+               Some(utvec.bits()) },
     0x040 => { uscratch = value; Some(uscratch) },
     0x041 => {let uepc = legalize_xepc(value);
               UEPCC = setCapOffsetOrNull(UEPCC, uepc);

@@ -76,7 +76,7 @@ function legalize_uie(s : Sinterrupts, d : Sinterrupts, v : xlenbits) -> Sinterr
   lift_uie(s, d, Mk_Uinterrupts(v))
 }
 
-register utvec    : Mtvec
+/*register utvec    : Mtvec*/
 register uscratch : xlenbits
 /*register uepc     : xlenbits*/
 register ucause   : Mcause

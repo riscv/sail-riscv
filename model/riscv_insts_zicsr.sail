@@ -26,7 +26,7 @@ function readCSR csr : csreg -> xlenbits = {
     0x302 => medeleg.bits(),
     0x303 => mideleg.bits(),
     0x304 => mie.bits(),
-    0x305 => mtvec.bits(),
+    0x305 => getCapOffsetBits(MTCC),
     0x306 => EXTZ(mcounteren.bits()),
     0x340 => mscratch,
     0x341 => getCapOffsetBits(MEPCC) & pc_alignment_mask(),
@@ -42,7 +42,7 @@ function readCSR csr : csreg -> xlenbits = {
     0x102 => sedeleg.bits(),
     0x103 => sideleg.bits(),
     0x104 => lower_mie(mie, mideleg).bits(),
-    0x105 => stvec.bits(),
+    0x105 => getCapOffsetBits(STCC),
     0x106 => EXTZ(scounteren.bits()),
     0x140 => sscratch,
     0x141 => getCapOffsetBits(SEPCC) & pc_alignment_mask(),
@@ -79,7 +79,9 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     0x302 => { medeleg = legalize_medeleg(medeleg, value); Some(medeleg.bits()) },
     0x303 => { mideleg = legalize_mideleg(mideleg, value); Some(mideleg.bits()) },
     0x304 => { mie = legalize_mie(mie, value); Some(mie.bits()) },
-    0x305 => { mtvec = legalize_tvec(mtvec, value); Some(mtvec.bits()) },
+    0x305 => { let mtvec = legalize_tvec(Mk_Mtvec(getCapOffsetBits(MTCC)), value);
+               MTCC = setCapOffsetOrNull(MTCC, mtvec.bits());
+               Some(mtvec.bits()) },
     0x306 => { mcounteren = legalize_mcounteren(mcounteren, value); Some(EXTZ(mcounteren.bits())) },
     0x340 => { mscratch = value; Some(mscratch) },
     0x341 => { let mepc = legalize_xepc(value);
@@ -97,7 +99,9 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     0x102 => { sedeleg = legalize_sedeleg(sedeleg, value); Some(sedeleg.bits()) },
     0x103 => { sideleg->bits() = value; Some(sideleg.bits()) }, /* TODO: does this need legalization? */
     0x104 => { mie = legalize_sie(mie, mideleg, value); Some(mie.bits()) },
-    0x105 => { stvec = legalize_tvec(stvec, value); Some(stvec.bits()) },
+    0x105 => { let stvec = legalize_tvec(Mk_Mtvec(getCapOffsetBits(STCC)), value);
+               STCC = setCapOffsetOrNull(STCC, stvec.bits());
+               Some(stvec.bits()) },
     0x106 => { scounteren = legalize_scounteren(scounteren, value); Some(EXTZ(scounteren.bits())) },
     0x140 => { sscratch = value; Some(sscratch) },
     0x141 => { let sepc = legalize_xepc(value);
