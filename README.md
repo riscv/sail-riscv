@@ -68,6 +68,14 @@ will build the OCaml simulator in `ocaml_emulator/riscv_ocaml_sim`, the C simula
 model in `generated_definitions/coq/riscv.v`, and the HOL4 model in
 `generated_definitions/hol4/riscvScript.sml`.
 
+One can build either the RV32 or the RV64 model by specifying
+`ARCH=RV32` or `ARCH=RV64` on the `make` line.  RV64 is built by
+default, but the RV32 model can be built using:
+
+```
+$ ARCH=RV32 make
+```
+
 The Makefile targets `riscv_isa_build`, `riscv_coq_build`, and
 `riscv_hol_build` invoke the respective prover to process the definitions.  We
 have tested Isabelle 2018, Coq 8.8.1, and HOL4 Kananaskis-12.

@@ -7,13 +7,15 @@ manual](https://github.com/rems-project/sail/blob/sail2/manual.pdf) handy.
 
 The model contains the following Sail modules in the `model` directory:
 
-- `prelude.sail` contains useful Sail library functions.  This file
-  should be referred to as needed.  The lowest level memory access
-  primitives are defined in `prelude_mem.sail`, and are implemented
-  by the various Sail backends.
+- `riscv_xlen32.sail` and `riscv_xlen64.sail` define `xlen` for RV32
+  and RV64.  One of them is chosen during the build using the ARCH
+  variable.
 
-- `riscv_xlen.sail` contains the `XLEN` definition for the model.  It
-  can be set for either RV32 or RV64.
+- `prelude_*.sail` contains useful Sail library functions.  These
+  files should be referred to as needed.  The lowest level memory
+  access primitives are defined in `prelude_mem.sail`, and are
+  implemented by the various Sail backends. `prelude_mem.sail`
+  currently depends on the value of `xlen`.
 
 - `riscv_types.sail` contains some basic RISC-V definitions.  This
   file should be read first, since it provides basic definitions that
@@ -51,10 +53,14 @@ The model contains the following Sail modules in the `model` directory:
   appropriate access fault.  This file also contains definitions that
   are used in the weak memory concurrency model.
 
-- `riscv_vmem.sail` describes the S-mode address translation.  It
-  contains the definitions and processing of the page-table entries
-  and their various permission and status bits, the specification of
-  page-table walks, and the selection of the address translation mode.
+- The `riscv_vmem_*.sail` files describe the S-mode address
+  translation.  `riscv_vmem_common.sail` contains the definitions and
+  processing of the page-table entries and their various permission
+  and status bits.  `riscv_vmem_sv32.sail`, `riscv_vmem_sv39.sail`,
+  and `riscv_vmem_sv48.sail` contain the specifications for the
+  corresponding page-table walks, and `riscv_vmem_rv32.sail` and
+  `riscv_vmem_rv64.sail` describe the top-level address translation
+  for the corresponding architectures.
 
 - Files matching `riscv_insts_*.sail` capture the instruction
   definitions and their assembly language formats.  Each file contains
