@@ -61,6 +61,10 @@ let opt_file_arguments = ref ([] : string list)
 let opt_dump_dts = ref false
 let opt_dump_dtb = ref false
 
+let report_arch () =
+  Printf.printf "RV%d\n" (Big_int.to_int Riscv.zxlen_val);
+  exit 0
+
 let options = Arg.align ([("-dump-dts",
                            Arg.Set opt_dump_dts,
                            " dump the platform device-tree source to stdout");
@@ -79,6 +83,9 @@ let options = Arg.align ([("-dump-dts",
                           ("-ram-size",
                            Arg.Int PI.set_dram_size,
                            " size of physical ram memory to use (in MB)");
+                          ("-report-arch",
+                           Arg.Unit report_arch,
+                           " report model architecture (RV32 or RV64)");
                           ("-with-dtc",
                            Arg.String PI.set_dtc,
                            " full path to dtc to use")

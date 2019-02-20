@@ -79,6 +79,7 @@ static struct option options[] = {
   {"device-tree-blob",            required_argument, 0, 'b'},
   {"terminal-log",                required_argument, 0, 't'},
   {"show-times",                  required_argument, 0, 'p'},
+  {"report-arch",                 no_argument,       0, 'a'},
 #ifdef RVFI_DII
   {"rvfi-dii",                    required_argument, 0, 'r'},
 #endif
@@ -99,6 +100,12 @@ static void print_usage(const char *argv0, int ec)
     opt++;
   }
   exit(ec);
+}
+
+static void report_arch(void)
+{
+  fprintf(stdout, "RV%lu\n", zxlen_val);
+  exit(0);
 }
 
 static void dump_dts(void)
@@ -154,9 +161,12 @@ char *process_args(int argc, char **argv)
   int c, idx = 1;
   uint64_t ram_size = 0;
   while(true) {
-    c = getopt_long(argc, argv, "dmCspz:b:t:v:hr:", options, &idx);
+    c = getopt_long(argc, argv, "admCspz:b:t:v:hr:", options, &idx);
     if (c == -1) break;
     switch (c) {
+    case 'a':
+      report_arch();
+      break;
     case 'd':
       fprintf(stderr, "enabling dirty update.\n");
       rv_enable_dirty_update = true;
@@ -663,11 +673,11 @@ void init_logs()
 
 int main(int argc, char **argv)
 {
+  // Initialize model so that we can check or report its architecture.
+  preinit_sail();
+
   char *file = process_args(argc, argv);
   init_logs();
-
-  // Initialize model so that we can check its architecture.
-  preinit_sail();
 
   if (gettimeofday(&init_start, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
