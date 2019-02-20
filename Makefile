@@ -1,5 +1,5 @@
 # Select architecture: RV32 or RV64.
-ARCH = RV64
+ARCH ?= RV64
 .PHONY: ARCH
 ifeq ($(ARCH),32)
   ARCH = RV32

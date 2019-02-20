@@ -24,6 +24,9 @@
 struct tv_spike_t;
 #endif
 
+const char *RV64ISA = "RV64IMAC";
+const char *RV32ISA = "RV32IMAC";
+
 /* Selected CSRs from riscv-isa-sim/riscv/encoding.h */
 #define CSR_STVEC 0x105
 #define CSR_SEPC 0x141
@@ -216,15 +219,26 @@ char *process_args(int argc, char **argv)
   return argv[optind];
 }
 
+void check_elf(bool is32bit)
+{
+  if (is32bit) {
+    if (zxlen_val != 32) {
+      fprintf(stderr, "32-bit ELF not supported by RV%lu model.\n", zxlen_val);
+      exit(1);
+    }
+  } else {
+    if (zxlen_val != 64) {
+      fprintf(stderr, "64-bit ELF not supported by RV%lu model.\n", zxlen_val);
+      exit(1);
+    }
+  }
+}
 uint64_t load_sail(char *f)
 {
   bool is32bit;
   uint64_t entry;
   load_elf(f, &is32bit, &entry);
-  if (is32bit) {
-    fprintf(stderr, "32-bit RISC-V not yet supported.\n");
-    exit(1);
-  }
+  check_elf(is32bit);
   fprintf(stdout, "ELF Entry @ %lx\n", entry);
   /* locate htif ports */
   if (lookup_sym(f, "tohost", &rv_htif_tohost) < 0) {
@@ -356,9 +370,13 @@ void init_sail_reset_vector(uint64_t entry)
   zPC = rv_rom_base;
 }
 
-void init_sail(uint64_t elf_entry)
+void preinit_sail()
 {
   model_init();
+}
+
+void init_sail(uint64_t elf_entry)
+{
   zinit_platform(UNIT);
   zinit_sys(UNIT);
 #ifdef RVFI_DII
@@ -647,6 +665,9 @@ int main(int argc, char **argv)
 {
   char *file = process_args(argc, argv);
   init_logs();
+
+  // Initialize model so that we can check its architecture.
+  preinit_sail();
 
   if (gettimeofday(&init_start, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));

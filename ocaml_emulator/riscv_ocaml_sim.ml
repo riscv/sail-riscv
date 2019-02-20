@@ -48,11 +48,11 @@
 (*  SUCH DAMAGE.                                                          *)
 (**************************************************************************)
 
-open Elf_loader
 open Sail_lib
 open Riscv
 module PI = Platform_impl
 module P = Platform
+module Elf = Elf_loader
 
 (* OCaml driver for generated RISC-V model. *)
 
@@ -96,6 +96,21 @@ let elf_arg =
       | _ -> (prerr_endline "Please provide an ELF file."; exit 0)
   )
 
+(* ELF architecture checks *)
+let str_of_elf = function
+  | Elf.ELF_Class_64 -> "ELF64"
+  | Elf.ELF_Class_32 -> "ELF32"
+let check_elf () =
+  match (Big_int.to_int Riscv.zxlen_val, Elf.elf_class ()) with
+    | (64, Elf.ELF_Class_64) ->
+          P.print_platform "RV64 model loaded ELF64.\n"
+    | (32, Elf.ELF_Class_32) ->
+          P.print_platform "RV32 model loaded ELF32.\n"
+    | (n,  e) ->
+          (let msg = Printf.sprintf "\nRV%d model cannot execute %s.\n" n (str_of_elf e) in
+           Printf.eprintf "%s" msg;
+           exit 1)
+
 let run pc =
   sail_call
     (fun r ->
@@ -124,6 +139,7 @@ let () =
 
   let init_start = Unix.times () in
   let pc = Platform.init elf_arg in
+  let _  = check_elf () in
   let init_end = Unix.times () in
   let _ = run pc in
   let run_end = Unix.times () in
