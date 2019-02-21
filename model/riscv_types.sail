@@ -327,7 +327,7 @@ enum word_width = {BYTE, HALF, WORD, DOUBLE}
 
 /* architectural interrupt definitions */
 
-type exc_code = bits(4)
+type exc_code = bits(8)
 
 enum InterruptType = {
   I_U_Software,
@@ -344,15 +344,15 @@ enum InterruptType = {
 val cast interruptType_to_bits : InterruptType -> exc_code
 function interruptType_to_bits (i) =
   match (i) {
-    I_U_Software => 0x0,
-    I_S_Software => 0x1,
-    I_M_Software => 0x3,
-    I_U_Timer    => 0x4,
-    I_S_Timer    => 0x5,
-    I_M_Timer    => 0x7,
-    I_U_External => 0x8,
-    I_S_External => 0x9,
-    I_M_External => 0xb
+    I_U_Software => 0x00,
+    I_S_Software => 0x01,
+    I_M_Software => 0x03,
+    I_U_Timer    => 0x04,
+    I_S_Timer    => 0x05,
+    I_M_Timer    => 0x07,
+    I_U_External => 0x08,
+    I_S_External => 0x09,
+    I_M_External => 0x0b
   }
 
 /* architectural exception definitions */
@@ -373,28 +373,30 @@ enum ExceptionType = {
  E_Fetch_Page_Fault,
  E_Load_Page_Fault,
  E_Reserved_14,
- E_SAMO_Page_Fault
+ E_SAMO_Page_Fault,
+ E_CHERI
 }
 
 val cast exceptionType_to_bits : ExceptionType -> exc_code
 function exceptionType_to_bits(e) =
   match (e) {
-    E_Fetch_Addr_Align   => 0x0,
-    E_Fetch_Access_Fault => 0x1,
-    E_Illegal_Instr      => 0x2,
-    E_Breakpoint         => 0x3,
-    E_Load_Addr_Align    => 0x4,
-    E_Load_Access_Fault  => 0x5,
-    E_SAMO_Addr_Align    => 0x6,
-    E_SAMO_Access_Fault  => 0x7,
-    E_U_EnvCall          => 0x8,
-    E_S_EnvCall          => 0x9,
-    E_Reserved_10        => 0xa,
-    E_M_EnvCall          => 0xb,
-    E_Fetch_Page_Fault   => 0xc,
-    E_Load_Page_Fault    => 0xd,
-    E_Reserved_14        => 0xe,
-    E_SAMO_Page_Fault    => 0xf
+    E_Fetch_Addr_Align   => 0x00,
+    E_Fetch_Access_Fault => 0x01,
+    E_Illegal_Instr      => 0x02,
+    E_Breakpoint         => 0x03,
+    E_Load_Addr_Align    => 0x04,
+    E_Load_Access_Fault  => 0x05,
+    E_SAMO_Addr_Align    => 0x06,
+    E_SAMO_Access_Fault  => 0x07,
+    E_U_EnvCall          => 0x08,
+    E_S_EnvCall          => 0x09,
+    E_Reserved_10        => 0x0a,
+    E_M_EnvCall          => 0x0b,
+    E_Fetch_Page_Fault   => 0x0c,
+    E_Load_Page_Fault    => 0x0d,
+    E_Reserved_14        => 0x0e,
+    E_SAMO_Page_Fault    => 0x0f,
+    E_CHERI              => 0x20
   }
 
 val cast exceptionType_to_str : ExceptionType -> string
@@ -415,7 +417,8 @@ function exceptionType_to_str(e) =
     E_Fetch_Page_Fault   => "fetch-page-fault",
     E_Load_Page_Fault    => "load-page-fault",
     E_Reserved_14        => "reserved-1",
-    E_SAMO_Page_Fault    => "store/amo-page-fault"
+    E_SAMO_Page_Fault    => "store/amo-page-fault",
+    E_CHERI              => "CHERI"
   }
 
 /* model-internal exceptions */

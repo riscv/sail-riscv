@@ -233,9 +233,15 @@ function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege
 
 /* privilege transitions due to exceptions and interrupts */
 
+struct cheri_cause = {
+  cap_idx : bits(6),
+  capEx   : CapEx
+}
+
 struct sync_exception = {
   trap    : ExceptionType,
-  excinfo : option(xlenbits)
+  excinfo : option(xlenbits),
+  ccause  : option(cheri_cause)
 }
 
 function tval(excinfo : option(xlenbits)) -> xlenbits = {
@@ -263,7 +269,7 @@ $endif
 
 /* handle exceptional ctl flow by updating nextPC and operating privilege */
 
-function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits))
+function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ccause : option(cheri_cause))
                     -> xlenbits = {
   rvfi_trap();
   print_platform("handling " ^ (if intr then "int#" else "exc#")
@@ -280,6 +286,13 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
        mstatus->MIE()  = false;
        mstatus->MPP()  = privLevel_to_bits(cur_privilege);
        mtval           = tval(info);
+       match (ccause) {
+          Some(c) => {
+            mccsr->cap_idx() = c.cap_idx;
+            mccsr->cause()   = CapExCode(c.capEx);
+          },
+          _ => ()
+       };
 
        /* XXX should legalize pc here? */
        let (representable, mepcc) = setCapOffset(PCC, pc);
@@ -310,7 +323,14 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
                            Machine => internal_error("invalid privilege for s-mode trap")
                          };
        stval           = tval(info);
-
+       match (ccause) {
+          Some(c) => {
+            sccsr->cap_idx() = c.cap_idx;
+            sccsr->cause()   = CapExCode(c.capEx);
+          },
+          _ => ()
+       };
+       
        let (representable, sepcc) = setCapOffset(PCC, pc);
        assert(representable, "sepcc should always be representable");
        SEPCC           = sepcc;
@@ -334,7 +354,14 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
        mstatus->UPIE() = mstatus.UIE();
        mstatus->UIE()  = false;
        utval           = tval(info);
-
+       match (ccause) {
+          Some(c) => {
+            uccsr->cap_idx() = c.cap_idx;
+            uccsr->cause()   = CapExCode(c.capEx);
+          },
+          _ => ()
+       };
+       
        let (representable, uepcc) = setCapOffset(PCC, pc);
        assert(representable, "UEPCC should always be representable");
        UEPCC           = uepcc;
@@ -354,12 +381,12 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
 
 function handle_exception(cur_priv : Privilege, ctl : ctl_result,
                           pc: xlenbits) -> xlenbits = {
-  match (cur_priv, ctl) {
+  match (cur_priv, ctl) { /* XXX cur_priv seems to be redundant here */
     (_, CTL_TRAP(e)) => {
       let del_priv = exception_delegatee(e.trap, cur_priv);
       print_platform("trapping from " ^ cur_priv ^ " to " ^ del_priv
                      ^ " to handle " ^ e.trap);
-      handle_trap(del_priv, false, e.trap, pc, e.excinfo)
+      handle_trap(del_priv, false, e.trap, pc, e.excinfo, e.ccause)
     },
     (_, CTL_MRET())  => {
       let prev_priv   = cur_privilege;
@@ -405,12 +432,13 @@ function handle_exception(cur_priv : Privilege, ctl : ctl_result,
 
 function handle_mem_exception(addr : xlenbits, e : ExceptionType) -> unit = {
   let t : sync_exception = struct { trap    = e,
-                                    excinfo = Some(addr) } in
+                                    excinfo = Some(addr),
+                                    ccause = None()} in
   nextPC = handle_exception(cur_privilege, CTL_TRAP(t), PC)
 }
 
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
-  nextPC = handle_trap(del_priv, true, i, PC, None())
+  nextPC = handle_trap(del_priv, true, i, PC, None(), None())
 
 /* state state initialization */
 

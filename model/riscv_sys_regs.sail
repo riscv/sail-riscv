@@ -224,6 +224,7 @@ function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
 /* exception processing state */
 
 bitfield Medeleg : bits(64) = {
+  CHERI             : 32,
   SAMO_Page_Fault   : 15,
   Load_Page_Fault   : 13,
   Fetch_Page_Fault  : 12,

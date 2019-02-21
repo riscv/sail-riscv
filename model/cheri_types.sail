@@ -80,32 +80,32 @@ enum CapEx = {
   CapEx_PermitSetCIDViolation
 }
 
-function CapExCode(ex) : CapEx -> bits(8)=
+function CapExCode(ex) : CapEx -> bits(5)=
   match ex {
-    CapEx_None                          => 0x00,
-    CapEx_LengthViolation               => 0x01,
-    CapEx_TagViolation                  => 0x02,
-    CapEx_SealViolation                 => 0x03,
-    CapEx_TypeViolation                 => 0x04,
-    CapEx_CallTrap                      => 0x05,
-    CapEx_ReturnTrap                    => 0x06,
-    CapEx_TSSUnderFlow                  => 0x07,
-    CapEx_UserDefViolation              => 0x08,
-    CapEx_TLBNoStoreCap                 => 0x09,
-    CapEx_InexactBounds                 => 0x0a,
-    CapEx_GlobalViolation               => 0x10,
-    CapEx_PermitExecuteViolation        => 0x11,
-    CapEx_PermitLoadViolation           => 0x12,
-    CapEx_PermitStoreViolation          => 0x13,
-    CapEx_PermitLoadCapViolation        => 0x14,
-    CapEx_PermitStoreCapViolation       => 0x15,
-    CapEx_PermitStoreLocalCapViolation  => 0x16,
-    CapEx_PermitSealViolation           => 0x17,
-    CapEx_AccessSystemRegsViolation     => 0x18,
-    CapEx_PermitCCallViolation          => 0x19,
-    CapEx_AccessCCallIDCViolation       => 0x1a,
-    CapEx_PermitUnsealViolation         => 0x1b,
-    CapEx_PermitSetCIDViolation         => 0x1c
+    CapEx_None                          => 0b00000,
+    CapEx_LengthViolation               => 0b00001,
+    CapEx_TagViolation                  => 0b00010,
+    CapEx_SealViolation                 => 0b00011,
+    CapEx_TypeViolation                 => 0b00100,
+    CapEx_CallTrap                      => 0b00101,
+    CapEx_ReturnTrap                    => 0b00110,
+    CapEx_TSSUnderFlow                  => 0b00111,
+    CapEx_UserDefViolation              => 0b01000,
+    CapEx_TLBNoStoreCap                 => 0b01001,
+    CapEx_InexactBounds                 => 0b01010,
+    CapEx_GlobalViolation               => 0b10000,
+    CapEx_PermitExecuteViolation        => 0b10001,
+    CapEx_PermitLoadViolation           => 0b10010,
+    CapEx_PermitStoreViolation          => 0b10011,
+    CapEx_PermitLoadCapViolation        => 0b10100,
+    CapEx_PermitStoreCapViolation       => 0b10101,
+    CapEx_PermitStoreLocalCapViolation  => 0b10110,
+    CapEx_PermitSealViolation           => 0b10111,
+    CapEx_AccessSystemRegsViolation     => 0b11000,
+    CapEx_PermitCCallViolation          => 0b11001,
+    CapEx_AccessCCallIDCViolation       => 0b11010,
+    CapEx_PermitUnsealViolation         => 0b11011,
+    CapEx_PermitSetCIDViolation         => 0b11100
   }
 
 function string_of_capex (ex) : CapEx -> string = 

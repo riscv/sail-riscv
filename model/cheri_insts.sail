@@ -32,37 +32,35 @@
 /*  SUCH DAMAGE.                                                          */
 /*========================================================================*/
 
-val raise_c2_exception8 : (CapEx, bits(8)) -> bool /*effect {escape, rreg, wreg}*/
-function raise_c2_exception8(capEx, regnum) =
+val raise_c2_exception6 : (CapEx, bits(6)) -> bool effect {escape, rreg, wreg}
+function raise_c2_exception6(capEx, regnum) =
   {
-    /*if trace then {
-      prerr(" C2Ex ");
-      prerr(string_of_capex(capEx));
-      prerr(" reg: ");
-      prerr_endline(BitStr(regnum));
-    };*/
-    /*CapCause->ExcCode() = CapExCode(capEx);
-    CapCause->RegNum()  = regnum;
-    let mipsEx = 
-      if ((capEx == CapEx_CallTrap) | (capEx == CapEx_ReturnTrap)) 
-      then C2Trap else C2E in
-    SignalException(mipsEx);*/
+    let cause : cheri_cause = struct {
+        cap_idx = regnum,
+        capEx   = capEx
+    };
+    let t : sync_exception = struct {
+      trap = E_CHERI,
+      excinfo = (None() : option(xlenbits)),
+      ccause = Some(cause)
+    };
+    nextPC = handle_exception(cur_privilege, CTL_TRAP(t), PC);
     false
   }
 
 /*!
-causes the processor to raise a capability exception by writing the given capability exception cause and register number to the CapCause register then signalling an exception using [SignalException] (on CHERI-MIPS this is a C2E exception in most cases, or a special C2Trap for CCall and CReturn). */
-val raise_c2_exception : (CapEx, bits(5)) -> bool /*effect {escape, rreg, wreg}*/
+causes the processor to raise a capability exception by writing the given capability exception cause and register number to the xccsr register then signalling an exception. */
+val raise_c2_exception : (CapEx, bits(5)) -> bool effect {escape, rreg, wreg}
 function raise_c2_exception(capEx, regnum) =
-  let reg8 = 0b000 @ regnum in
-  raise_c2_exception8(capEx, reg8)
-/*!
-is as [raise_c2_exception] except that CapCause.RegNum  is written with the special value 0xff indicating PCC or no register.
- */
-val raise_c2_exception_noreg : (CapEx) -> bool /* effect {escape, rreg, wreg}*/
-function raise_c2_exception_noreg(capEx) =
-  raise_c2_exception8(capEx, 0xff)
+  let reg6 = 0b0 @ regnum in
+  raise_c2_exception6(capEx, reg6)
 
+/*!
+is as [raise_c2_exception] except that CapCause.RegNum  is written with the special value 0x10 indicating PCC register.
+ */
+val raise_c2_exception_pcc : (CapEx) -> bool effect {escape, rreg, wreg}
+function raise_c2_exception_pcc(capEx) =
+  raise_c2_exception6(capEx, 0b100000)
 
 val pcc_access_system_regs : unit -> bool effect {rreg}
 function pcc_access_system_regs () = PCC.access_system_regs
@@ -74,7 +72,7 @@ function execute_branch (pc : xlenbits) = {
   base so branches below base will be negative / very large and
   greater than top. */
   if unsigned(pc) + 4 > len then
-    raise_c2_exception_noreg(CapEx_LengthViolation)
+    raise_c2_exception_pcc(CapEx_LengthViolation)
   else {
     nextPC = pc;
     false
@@ -185,7 +183,7 @@ function clause execute (CGetCause(rd)) =
 {
   checkCP2usable();
   if not (pcc_access_system_regs ()) then
-    raise_c2_exception_noreg(CapEx_AccessSystemRegsViolation)
+    raise_c2_exception_pcc(CapEx_AccessSystemRegsViolation)
   else {
     wGPR(rd) = zero_extend(CapCause.bits());
     true
@@ -197,7 +195,7 @@ function clause execute (CSetCause(rt)) =
 {
   checkCP2usable();
   if not (pcc_access_system_regs ()) then
-    raise_c2_exception_noreg(CapEx_AccessSystemRegsViolation)
+    raise_c2_exception_pcc(CapEx_AccessSystemRegsViolation)
   else
   {
     let rt_val = rGPR(rt);
@@ -839,7 +837,7 @@ function clause execute (CCall(cs, cb, 0b00001)) = /* selector=1 */
 function clause execute (CCall(_, _, 0b11111)) = /* CReturn */
 {
   checkCP2usable();
-  raise_c2_exception_noreg(CapEx_ReturnTrap)
+  raise_c2_exception(CapEx_ReturnTrap, 0b11111)
 }
 
 union clause ast = CJALR : (regbits, regbits)
