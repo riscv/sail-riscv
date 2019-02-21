@@ -1,4 +1,12 @@
-(* FIXME: copyright header *)
+(* architecture *)
+
+type arch =
+  | RV32
+  | RV64
+
+let str_of_arch = function
+  | RV32 -> "RV32"
+  | RV64 -> "RV64"
 
 (* int->byte converters in little-endian order *)
 
@@ -26,12 +34,14 @@ let uint64_to_bytes u = let open Int64 in
 
 let reset_vec_size = 8l;;
 
-let reset_vec_int start_pc = [
+let reset_vec_int arch start_pc = [
   0x297l;                                                 (* auipc  t0, 0x0      *)
   (let open Int32 in
    add 0x28593l (shift_left (mul reset_vec_size 4l) 20)); (* addi   a1, t0, ofs(dtb) *)
   0xf1402573l;                                            (* csrr   a0, mhartid  *)
-  0x0182b283l;                                            (* ld     t0, 24(t0)   *)
+  (match arch with
+     | RV32 -> 0x0182a283l                                (* lw     t0, 24(t0)   *)
+     | RV64 -> 0x0182b283l);                              (* ld     t0, 24(t0)   *)
   0x28067l;                                               (* jr     t0           *)
   0x0l;
   (let open Int64 in to_int32 (logand start_pc 0xffffffffL));
@@ -53,7 +63,7 @@ type mem_region = {
 }
 
 (* dts from spike *)
-let spike_dts isa_spec cpu_hz insns_per_rtc_tick mems =
+let spike_dts isa_spec mmu_spec cpu_hz insns_per_rtc_tick mems =
     "/dts-v1/;\n"
   ^ "\n"
   ^ "/ {\n"
@@ -71,7 +81,7 @@ let spike_dts isa_spec cpu_hz insns_per_rtc_tick mems =
   ^ "      status = \"okay\";\n"
   ^ "      compatible = \"riscv\";\n"
   ^ "      riscv,isa = \"" ^ isa_spec ^ "\";\n"
-  ^ "      mmu-type = \"riscv,sv39\";\n"
+  ^ "      mmu-type = \"riscv," ^ mmu_spec ^ "\";\n"
   ^ "      clock-frequency = <" ^ string_of_int cpu_hz ^ ">;\n"
   ^ "      CPU0_intc: interrupt-controller {\n"
   ^ "        #interrupt-cells = <1>;\n"
@@ -110,7 +120,11 @@ let insns_per_tick = 100;;
 let make_mems () = [{ addr = dram_base;
                       size = !dram_size_ref }];;
 
-let make_dts () = spike_dts "rv64imac" cpu_hz insns_per_tick (make_mems ());;
+let make_dts arch =
+  let isa, mmu = match arch with
+      | RV64 -> "rv64imac", "sv39"
+      | RV32 -> "rv32imac", "sv32" in
+  spike_dts isa mmu cpu_hz insns_per_tick (make_mems ());;
 
 let bytes_to_string bytes =
   String.init (List.length bytes) (fun i -> Char.chr (List.nth bytes i))
@@ -177,8 +191,8 @@ let rec term_read () =
 let show_bytes s =
   output_string stdout s
 
-let dump_dts () = show_bytes (make_dts ())
-let dump_dtb () = show_bytes (bytes_to_string (make_dtb (make_dts ())))
+let dump_dts arch = show_bytes (make_dts arch)
+let dump_dtb arch = show_bytes (bytes_to_string (make_dtb (make_dts arch)))
 
 (*
 let save_string_to_file s fname =

@@ -423,7 +423,7 @@ function init_sys() -> unit = {
 
   mhartid     = EXTZ(0b0);
 
-  misa->MXL() = arch_to_bits(RV64);
+  misa->MXL() = arch_to_bits(if sizeof(xlen) == 32 then RV32 else RV64);
   misa->A()   = true; /* atomics */
   misa->C()   = true; /* RVC */
   misa->I()   = true; /* base integer ISA */
@@ -431,7 +431,6 @@ function init_sys() -> unit = {
   misa->U()   = true; /* user-mode */
   misa->S()   = true; /* supervisor-mode */
 
-  /* 64-bit only mode with no extensions */
   mstatus = set_mstatus_SXL(mstatus, misa.MXL());
   mstatus = set_mstatus_UXL(mstatus, misa.MXL());
   mstatus->SD()   = false;

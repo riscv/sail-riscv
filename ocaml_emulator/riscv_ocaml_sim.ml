@@ -93,30 +93,40 @@ let options = Arg.align ([("-dump-dts",
 
 let usage_msg = "RISC-V platform options:"
 
+(* ELF architecture checks *)
+
+let get_arch () =
+  match Big_int.to_int Riscv.zxlen_val with
+    | 64 -> PI.RV64
+    | 32 -> PI.RV32
+    | n  -> failwith (Printf.sprintf "Unknown model architecture RV%d" n)
+
+let str_of_elf = function
+  | Elf.ELF_Class_64 -> "ELF64"
+  | Elf.ELF_Class_32 -> "ELF32"
+
 let elf_arg =
   Arg.parse options (fun s -> opt_file_arguments := !opt_file_arguments @ [s])
             usage_msg;
-  if !opt_dump_dts then (PI.dump_dts (); exit 0);
-  if !opt_dump_dtb then (PI.dump_dtb (); exit 0);
+  if !opt_dump_dts then (PI.dump_dts (get_arch ()); exit 0);
+  if !opt_dump_dtb then (PI.dump_dtb (get_arch ()); exit 0);
   ( match !opt_file_arguments with
       | f :: _ -> prerr_endline ("Sail/RISC-V: running ELF file " ^ f); f
       | _ -> (prerr_endline "Please provide an ELF file."; exit 0)
   )
 
-(* ELF architecture checks *)
-let str_of_elf = function
-  | Elf.ELF_Class_64 -> "ELF64"
-  | Elf.ELF_Class_32 -> "ELF32"
 let check_elf () =
-  match (Big_int.to_int Riscv.zxlen_val, Elf.elf_class ()) with
-    | (64, Elf.ELF_Class_64) ->
+  match (get_arch (), Elf.elf_class ()) with
+    | (PI.RV64, Elf.ELF_Class_64) ->
           P.print_platform "RV64 model loaded ELF64.\n"
-    | (32, Elf.ELF_Class_32) ->
+    | (PI.RV32, Elf.ELF_Class_32) ->
           P.print_platform "RV32 model loaded ELF32.\n"
-    | (n,  e) ->
-          (let msg = Printf.sprintf "\nRV%d model cannot execute %s.\n" n (str_of_elf e) in
+    | (a,  e) ->
+          (let msg = Printf.sprintf "\n%s model cannot execute %s.\n" (PI.str_of_arch a) (str_of_elf e) in
            Printf.eprintf "%s" msg;
            exit 1)
+
+(* model execution *)
 
 let run pc =
   sail_call
@@ -145,7 +155,7 @@ let () =
   Random.self_init ();
 
   let init_start = Unix.times () in
-  let pc = Platform.init elf_arg in
+  let pc = Platform.init (get_arch ()) elf_arg in
   let _  = check_elf () in
   let init_end = Unix.times () in
   let _ = run pc in

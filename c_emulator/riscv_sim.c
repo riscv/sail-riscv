@@ -108,11 +108,17 @@ static void report_arch(void)
   exit(0);
 }
 
+static bool is_32bit_model(void)
+{
+  return zxlen_val == 32;
+}
+
 static void dump_dts(void)
 {
 #ifdef ENABLE_SPIKE
   size_t dts_len = 0;
-  struct tv_spike_t *s = tv_init("RV64IMAC", rv_ram_size, 0);
+  const char *isa = is_32bit_model() ? RV32ISA : RV64ISA;
+  struct tv_spike_t *s = tv_init(isa, rv_ram_size, 0);
   tv_get_dts(s, NULL, &dts_len);
   if (dts_len > 0) {
     unsigned char *dts = (unsigned char *)malloc(dts_len + 1);
@@ -263,7 +269,8 @@ void init_spike(const char *f, uint64_t entry, uint64_t ram_size)
 {
 #ifdef ENABLE_SPIKE
   bool mismatch = false;
-  s = tv_init("RV64IMAC", ram_size, 1);
+  const char *isa = is_32bit_model() ? RV32ISA : RV64ISA;
+  s = tv_init(isa, ram_size, 1);
   if (tv_is_dirty_enabled(s) != rv_enable_dirty_update) {
     mismatch = true;
     fprintf(stderr, "inconsistent enable-dirty-update setting: spike %s, sail %s\n",
@@ -326,7 +333,7 @@ void init_sail_reset_vector(uint64_t entry)
     0x297,                                      // auipc  t0,0x0
     0x28593 + (RST_VEC_SIZE * 4 << 20),         // addi   a1, t0, &dtb
     0xf1402573,                                 // csrr   a0, mhartid
-    SAIL_XLEN == 32 ?
+    is_32bit_model() ?
       0x0182a283u :                             // lw     t0,24(t0)
       0x0182b283u,                              // ld     t0,24(t0)
     0x28067,                                    // jr     t0

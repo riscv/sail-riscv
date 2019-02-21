@@ -94,9 +94,10 @@ let bits_of_int64 i =
   get_slice_int (Big_int.of_int 64, Big_int.of_int64 i, Big_int.zero)
 
 let rom_size_ref = ref 0
-let make_rom start_pc =
-  let reset_vec = List.concat (List.map P.uint32_to_bytes (P.reset_vec_int start_pc)) in
-  let dtb = P.make_dtb (P.make_dts ()) in
+let make_rom arch start_pc =
+  let reset_vec =
+    List.concat (List.map P.uint32_to_bytes (P.reset_vec_int arch start_pc)) in
+  let dtb = P.make_dtb (P.make_dts arch) in
   let rom = reset_vec @ dtb in
   ( rom_size_ref := List.length rom;
     (*
@@ -155,14 +156,14 @@ let term_read () =
   bits_of_int (int_of_char c)
 
 (* returns starting value for PC, i.e. start of reset vector *)
-let init elf_file =
+let init arch elf_file =
   Elf.load_elf elf_file;
 
   print_platform (Printf.sprintf "\nRegistered htif_tohost at 0x%Lx.\n" (Big_int.to_int64 (Elf.elf_tohost ())));
   print_platform (Printf.sprintf "Registered clint at 0x%Lx (size 0x%Lx).\n%!" P.clint_base P.clint_size);
 
   let start_pc = Elf.Big_int.to_int64 (Elf.elf_entry ()) in
-  let rom = make_rom start_pc in
+  let rom = make_rom arch start_pc in
   let rom_base = Big_int.of_int64 P.rom_base in
   let rec write_rom ofs = function
     | [] -> ()
