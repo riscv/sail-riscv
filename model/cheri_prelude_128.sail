@@ -449,5 +449,27 @@ function setCapBounds(cap, base, top) : (Capability, bits(64), bits(65)) -> (boo
   (exact, newCap)
 }
 
+val capToString : (Capability) -> string effect {escape}
+function capToString (cap) = {
+  let len = getCapLength(cap);
+  let len_str = BitStr(to_bits(68, len));
+  /* Print architectural type which is -1 for unsealed caps */
+  let otype64 : bits(64) = if cap.sealed then zero_extend(cap.otype) else ones();
+  concat_str(" t:",
+  concat_str(if cap.tag then "1" else "0",
+  concat_str(" s:",
+  concat_str(if cap.sealed then "1" else "0",
+  concat_str(" perms:",
+  concat_str(BitStr(0b0 @ getCapPerms(cap)),
+  concat_str(" type:",
+  concat_str(BitStr(otype64),
+  concat_str(" offset:",
+  concat_str(BitStr(to_bits(64, getCapOffset(cap))),
+  concat_str(" base:",
+  concat_str(BitStr(to_bits(64, getCapBase(cap))),
+  concat_str(" length:", len_str)))))))))))))
+}
+
+
 val checkCP2usable : unit -> unit
 function checkCP2usable () = ()
