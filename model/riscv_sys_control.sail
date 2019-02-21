@@ -449,7 +449,8 @@ function init_sys() -> unit = {
 
   minstret           = EXTZ(0b0);
   minstret_written   = false;
-
+  init_regs();
+  
   // log compatibility with spike
   print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(EXTZ(0b0) : xlenbits) ^ ")")
 }
