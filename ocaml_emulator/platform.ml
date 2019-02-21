@@ -58,6 +58,8 @@ let config_enable_dirty_update = ref false
 let config_enable_misaligned_access = ref false
 let config_mtval_has_illegal_inst_bits = ref false
 
+let platform_arch = ref P.RV64
+
 (* logging *)
 
 let config_print_instr       = ref true
@@ -86,12 +88,16 @@ let print_platform s =
   else ()
 
 (* Mapping to Sail externs *)
+let cur_arch_bitwidth () =
+  match !platform_arch with
+    | P.RV64 -> Big_int.of_int 64
+    | P.RV32 -> Big_int.of_int 32
 
-let bits_of_int i =
-  get_slice_int (Big_int.of_int 64, Big_int.of_int i, Big_int.zero)
+let arch_bits_of_int i =
+  get_slice_int (cur_arch_bitwidth (), Big_int.of_int i, Big_int.zero)
 
-let bits_of_int64 i =
-  get_slice_int (Big_int.of_int 64, Big_int.of_int64 i, Big_int.zero)
+let arch_bits_of_int64 i =
+  get_slice_int (cur_arch_bitwidth (), Big_int.of_int64 i, Big_int.zero)
 
 let rom_size_ref = ref 0
 let make_rom arch start_pc =
@@ -113,17 +119,17 @@ let enable_dirty_update () = !config_enable_dirty_update
 let enable_misaligned_access () = !config_enable_misaligned_access
 let mtval_has_illegal_inst_bits () = !config_mtval_has_illegal_inst_bits
 
-let rom_base () = bits_of_int64 P.rom_base
-let rom_size () = bits_of_int   !rom_size_ref
+let rom_base () = arch_bits_of_int64 P.rom_base
+let rom_size () = arch_bits_of_int   !rom_size_ref
 
-let dram_base () = bits_of_int64 P.dram_base
-let dram_size () = bits_of_int64 !P.dram_size_ref
+let dram_base () = arch_bits_of_int64 P.dram_base
+let dram_size () = arch_bits_of_int64 !P.dram_size_ref
 
 let htif_tohost () =
-  bits_of_int64 (Big_int.to_int64 (Elf.elf_tohost ()))
+  arch_bits_of_int64 (Big_int.to_int64 (Elf.elf_tohost ()))
 
-let clint_base () = bits_of_int64 P.clint_base
-let clint_size () = bits_of_int64 P.clint_size
+let clint_base () = arch_bits_of_int64 P.clint_base
+let clint_size () = arch_bits_of_int64 P.clint_size
 
 let insns_per_tick () = Big_int.of_int P.insns_per_tick
 
@@ -153,10 +159,11 @@ let term_write char_bits =
 
 let term_read () =
   let c = P.term_read () in
-  bits_of_int (int_of_char c)
+  arch_bits_of_int (int_of_char c)
 
 (* returns starting value for PC, i.e. start of reset vector *)
 let init arch elf_file =
+  platform_arch := arch;
   Elf.load_elf elf_file;
 
   print_platform (Printf.sprintf "\nRegistered htif_tohost at 0x%Lx.\n" (Big_int.to_int64 (Elf.elf_tohost ())));
@@ -171,5 +178,5 @@ let init arch elf_file =
                  (wram addr h);
                  write_rom (ofs + 1) tl
   in ( write_rom 0 rom;
-       get_slice_int (Big_int.of_int 64, rom_base, Big_int.zero)
+       get_slice_int (cur_arch_bitwidth (), rom_base, Big_int.zero)
      )

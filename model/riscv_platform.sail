@@ -48,17 +48,26 @@ function phys_mem_segments() =
 /* Physical memory map predicates */
 
 function within_phys_mem forall 'n. (addr : xlenbits, width : atom('n)) -> bool = {
-  let ram_base = plat_ram_base ();
-  let rom_base = plat_rom_base ();
-  let ram_size = plat_ram_size ();
-  let rom_size = plat_rom_size ();
+  /* To avoid overflow issues when physical memory extends to the end
+   * of the addressable range, we need to perform address bound checks
+   * with a wider bitwidth.
+   *
+   * But since this is a hot function, we use only 64-bit width even for
+   * 64-bit mode to reduce impact on emulator performance.
+   */
+
+  let ext_addr : bits(64) = EXTZ(addr);
+  let ram_base : bits(64) = EXTZ(plat_ram_base ());
+  let rom_base : bits(64) = EXTZ(plat_rom_base ());
+  let ram_size : bits(64) = EXTZ(plat_ram_size ());
+  let rom_size : bits(64) = EXTZ(plat_rom_size ());
 
   /* todo: iterate over segment list */
-  if (  ram_base <=_u addr
-      & (addr + sizeof('n)) <=_u (ram_base + ram_size))
+  if (  ram_base <=_u ext_addr
+      & (ext_addr + sizeof('n)) <=_u (ram_base + ram_size))
        then true
-  else if (  rom_base <=_u addr
-           & (addr + sizeof('n)) <=_u (rom_base + rom_size))
+  else if (  rom_base <=_u ext_addr
+           & (ext_addr + sizeof('n)) <=_u (rom_base + rom_size))
        then true
   else {
     print_platform("within_phys_mem: " ^ BitStr(addr) ^ " not within phys-mem:");
