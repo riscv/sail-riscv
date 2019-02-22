@@ -22,7 +22,7 @@ function fetch() -> FetchResult = {
      F_CHERI_Err(CapEx_SealViolation, PC)
   else if not(PCC.permit_execute) then
      F_CHERI_Err(CapEx_PermitExecuteViolation, PC)
-  else if abs_pc < pcc_base | abs_pc + 2 >= pcc_top then
+  else if abs_pc < pcc_base | abs_pc + 2 > pcc_top then
      F_CHERI_Err(CapEx_LengthViolation, PC)
   else if (abs_pc_bits[0] != 0b0 | (abs_pc_bits[1] != 0b0 & (~ (haveRVC()))))
     then F_Error(E_Fetch_Addr_Align, PC)
