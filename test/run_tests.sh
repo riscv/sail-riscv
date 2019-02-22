@@ -49,16 +49,20 @@ printf "<testsuites>\n" >> $DIR/tests.xml
 
 cd $RISCVDIR
 
-printf "Building RISCV specification...\n"
+# Do 'make clean' to avoid cross-arch pollution.
 
-if make ocaml_emulator/riscv_ocaml_sim ;
+make clean
+printf "Building 32-bit RISCV specification...\n"
+
+if ARCH=RV32 make ocaml_emulator/riscv_ocaml_sim ;
 then
-    green "Building RISCV specification" "ok"
+    green "Building 32-bit RISCV specification" "ok"
 else
-    red "Building RISCV specification" "fail"
+    red "Building 32-bit RISCV specification" "fail"
 fi
 
-for test in $DIR/riscv-tests/*.elf; do
+for test in $DIR/riscv-tests/rv32*-p-*.elf; do
+    echo Testing $test
     if $RISCVDIR/ocaml_emulator/riscv_ocaml_sim "$test" >"${test/.elf/.out}" 2>&1 && grep -q SUCCESS "${test/.elf/.out}"
     then
        green "$(basename $test)" "ok"
@@ -67,16 +71,37 @@ for test in $DIR/riscv-tests/*.elf; do
     fi
 done
 
-finish_suite "RISCV OCaml tests"
+finish_suite "32-bit RISCV OCaml tests"
+
+make clean
+printf "Building 64-bit RISCV specification...\n"
+
+if make ocaml_emulator/riscv_ocaml_sim ;
+then
+    green "Building 64-bit RISCV specification" "ok"
+else
+    red "Building 64-bit RISCV specification" "fail"
+fi
+
+for test in $DIR/riscv-tests/rv64*.elf; do
+    if $RISCVDIR/ocaml_emulator/riscv_ocaml_sim "$test" >"${test/.elf/.out}" 2>&1 && grep -q SUCCESS "${test/.elf/.out}"
+    then
+       green "$(basename $test)" "ok"
+    else
+       red "$(basename $test)" "fail"
+    fi
+done
+
+finish_suite "64-bit RISCV OCaml tests"
 
 if make c_emulator/riscv_sim;
 then
-    green "Building RISCV specification to C" "ok"
+    green "Building 64-bit RISCV specification to C" "ok"
 else
-    red "Building RISCV specification to C" "fail"
+    red "Building 64-bit RISCV specification to C" "fail"
 fi
 
-for test in $DIR/riscv-tests/*.elf; do
+for test in $DIR/riscv-tests/rv64*.elf; do
     if timeout 5 $RISCVDIR/c_emulator/riscv_sim -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
     then
 	green "$(basename $test)" "ok"
@@ -85,7 +110,7 @@ for test in $DIR/riscv-tests/*.elf; do
     fi
 done
 
-finish_suite "RISCV C tests"
+finish_suite "64-bit RISCV C tests"
 
 printf "</testsuites>\n" >> $DIR/tests.xml
 
