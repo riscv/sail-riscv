@@ -37,7 +37,7 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
             PTW_Failure(PTW_Invalid_PTE)
           } else {
             /* walk down the pointer to the next level */
-            walk48(vaddr, ac, priv, mxr, do_sum, EXTZ(shiftl(pte.PPNi(), PAGESIZE_BITS)), level - 1, is_global)
+            walk48(vaddr, ac, priv, mxr, do_sum, shiftl(EXTZ(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global)
           }
         } else { /* leaf PTE */
           if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pattr)) then {

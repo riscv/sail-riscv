@@ -61,8 +61,7 @@ else
     red "Building 32-bit RISCV specification" "fail"
 fi
 
-for test in $DIR/riscv-tests/rv32*-p-*.elf; do
-    echo Testing $test
+for test in $DIR/riscv-tests/rv32*.elf; do
     if $RISCVDIR/ocaml_emulator/riscv_ocaml_sim "$test" >"${test/.elf/.out}" 2>&1 && grep -q SUCCESS "${test/.elf/.out}"
     then
        green "$(basename $test)" "ok"

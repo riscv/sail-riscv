@@ -119,7 +119,7 @@ function curPTB32(satp : bits(32)) -> paddr32 = {
 
 /* Sv32 parameters and bitfield layouts */
 
-let SV32_LEVEL_BITS = 9
+let SV32_LEVEL_BITS = 10
 let SV32_LEVELS     = 2
 let PTE32_LOG_SIZE  = 2
 let PTE32_SIZE      = 4

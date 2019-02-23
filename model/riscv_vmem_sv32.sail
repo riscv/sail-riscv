@@ -16,9 +16,9 @@ function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
   match (phys_mem_read(Data, to_phys_addr(pte_addr), 4, false, false, false)) {
     MemException(_) => {
 /*    print("walk32(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
-            ^ " pt_base=" ^ BitStr(ptb)
-            ^ " pt_ofs=" ^ BitStr(pt_ofs)
-            ^ " pte_addr=" ^ BitStr(pte_addr)
+            ^ " pt_base=" ^ BitStr(to_phys_addr(ptb))
+            ^ " pt_ofs=" ^ BitStr(to_phys_addr(pt_ofs))
+            ^ " pte_addr=" ^ BitStr(to_phys_addr(pte_addr))
             ^ ": invalid pte address"); */
       PTW_Failure(PTW_Access)
     },
@@ -28,9 +28,9 @@ function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
       let pattr = Mk_PTE_Bits(pbits);
       let is_global = global | (pattr.G() == true);
 /*    print("walk32(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
-            ^ " pt_base=" ^ BitStr(ptb)
-            ^ " pt_ofs=" ^ BitStr(pt_ofs)
-            ^ " pte_addr=" ^ BitStr(pte_addr)
+            ^ " pt_base=" ^ BitStr(to_phys_addr(ptb))
+            ^ " pt_ofs=" ^ BitStr(to_phys_addr(pt_ofs))
+            ^ " pte_addr=" ^ BitStr(to_phys_addr(pte_addr))
             ^ " pte=" ^ BitStr(v)); */
       if isInvalidPTE(pbits) then {
 /*      print("walk32: invalid pte"); */
@@ -43,7 +43,7 @@ function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
             PTW_Failure(PTW_Invalid_PTE)
           } else {
             /* walk down the pointer to the next level */
-            walk32(vaddr, ac, priv, mxr, do_sum, EXTZ(shiftl(pte.PPNi(), PAGESIZE_BITS)), level - 1, is_global)
+            walk32(vaddr, ac, priv, mxr, do_sum, shiftl(EXTZ(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global)
           }
         } else { /* leaf PTE */
           if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pattr)) then {
