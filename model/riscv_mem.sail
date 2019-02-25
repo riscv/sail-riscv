@@ -84,6 +84,28 @@ function mem_read (addr, width, aq, rl, res) = {
  result
 }
 
+val mem_read_cap : (xlenbits, bool, bool, bool) -> MemoryOpResult(Capability) effect {rmem, rmemt, rreg, escape}
+function mem_read_cap (addr, aq, rl, res) = {
+  let result : MemoryOpResult(bits(8 * 'cap_size)) =
+  if ~(is_aligned_addr(addr, cap_size))
+  then MemException(E_Load_Addr_Align)
+  else match (aq, rl, res) {
+    (false, false, false) => checked_mem_read(Data, addr, cap_size, false, false, false),
+    (true,  false, false) => MEMr_acquire(addr, cap_size),
+    (false, false, true)  => MEMr_reserved(addr, cap_size),
+    (true,  false, true)  => MEMr_reserved_acquire(addr, cap_size),
+    (false, true,  false) => throw(Error_not_implemented("load.rl")),
+    (true,  true,  false) => MEMr_strong_acquire(addr, cap_size),
+    (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
+    (true,  true,  true)  => MEMr_reserved_strong_acquire(addr, cap_size)
+  };
+  let tag = MEMr_tag(addr);
+  match result {
+    MemValue(v) => MemValue(memBitsToCapability(tag, v)),
+    MemException(e) => MemException(e) : MemoryOpResult(Capability)
+  }
+}
+
 val MEMea = {lem: "MEMea", coq: "MEMea", _: "memea"} : forall 'n.
   (xlenbits, atom('n)) -> unit effect {eamem}
 val MEMea_release = {lem: "MEMea_release", coq: "MEMea_release", _: "memea"} : forall 'n.
@@ -112,6 +134,14 @@ function mem_write_ea (addr, width, aq, rl, con) = {
     (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
     (true,  true , true)  => MemValue(MEMea_conditional_strong_release(addr, width))
   }
+}
+
+val mem_write_ea_cap : (xlenbits, bool, bool, bool) -> MemoryOpResult(unit) effect {eamem}
+function mem_write_ea_cap(addr, aq, rl, con) = {
+  if ~(is_aligned_addr(addr, cap_size)) then
+     MemException(E_SAMO_Addr_Align)
+  else
+     MemValue(MEMea(addr, cap_size))
 }
 
 // only used for actual memory regions, to avoid MMIO effects
@@ -175,6 +205,27 @@ function mem_write_value (addr, width, value, aq, rl, con) = {
     (true,  true,  false) => MEMval_strong_release(addr, width, value),
     (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
     (true,  true,  true)  => MEMval_conditional_strong_release(addr, width, value)
+  }
+}
+
+/* NOTE: The wreg effect is due to MMIO, the rreg is due to checking mtime. */
+val mem_write_cap : (xlenbits, Capability, bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, rreg, wreg, escape, wmvt}
+
+function mem_write_cap (addr, cap, aq, rl, con) = {
+  let cap_bits = capToMemBits(cap);
+  MEMw_tag(addr, cap.tag);
+  rvfi_write(addr, cap_size, cap_bits);
+  if ~ (is_aligned_addr(addr, cap_size))
+  then MemException(E_SAMO_Addr_Align)
+  else match (aq, rl, con) {
+    (false, false, false) => checked_mem_write(addr, cap_size, cap_bits),
+    (false, true,  false) => MEMval_release(addr, cap_size, cap_bits),
+    (false, false, true)  => MEMval_conditional(addr, cap_size, cap_bits),
+    (false, true,  true)  => MEMval_conditional_release(addr, cap_size, cap_bits),
+    (true,  false, false) => throw(Error_not_implemented("store.aq")),
+    (true,  true,  false) => MEMval_strong_release(addr, cap_size, cap_bits),
+    (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
+    (true,  true,  true)  => MEMval_conditional_strong_release(addr, cap_size, cap_bits)
   }
 }
 

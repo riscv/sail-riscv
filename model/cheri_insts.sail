@@ -231,7 +231,7 @@ function clause execute (CSpecialRW(cd, cs, idx)) =
   } else if (ro & cs != 0) |
      (cur_privilege <_u priv) |
      (needASR & not(pcc_access_system_regs())) then {
-    raise_c2_exception(CapEx_AccessSystemRegsViolation, idx)
+    raise_c2_exception6(CapEx_AccessSystemRegsViolation, 0b1 @ idx)
   } else {
     let cs_val = readCapReg(cs);
     if (cd != 0) then {
@@ -837,7 +837,7 @@ function clause execute (CCall(cs, cb, 0b00001)) = /* selector=1 */
 function clause execute (CCall(_, _, 0b11111)) = /* CReturn */
 {
   checkCP2usable();
-  raise_c2_exception(CapEx_ReturnTrap, 0b11111)
+  raise_c2_exception(CapEx_ReturnTrap, 0b11111) /* XXX what should correct reg number be? */
 }
 
 union clause ast = CJALR : (regbits, regbits)
@@ -870,7 +870,7 @@ function clause execute(CJALR(cd, cb)) =
   };
 }
 
-val handle_load_data_via_cap : (regbits, regbits, Capability, uint64, bool, word_width) -> bool effect {escape, rmem, rreg, wmv, wreg}
+val handle_load_data_via_cap : (regbits, bits(6), Capability, uint64, bool, word_width) -> bool effect {escape, rmem, rreg, wmv, wreg}
 function handle_load_data_via_cap(rd, cs, cap_val, vaddr, is_unsigned, width) = {
   let (base, top) = getCapBounds(cap_val);
   let vaddrBits = to_bits(xlen, vaddr);
@@ -878,15 +878,15 @@ function handle_load_data_via_cap(rd, cs, cap_val, vaddr, is_unsigned, width) = 
   let aq : bool = false;
   let rl : bool = false;
   if not(cap_val.tag) then {
-    raise_c2_exception(CapEx_TagViolation, cs);
+    raise_c2_exception6(CapEx_TagViolation, cs);
   } else if cap_val.sealed then {
-    raise_c2_exception(CapEx_SealViolation, cs);
+    raise_c2_exception6(CapEx_SealViolation, cs);
   } else if not (cap_val.permit_load) then {
-    raise_c2_exception(CapEx_PermitLoadViolation, cs);
+    raise_c2_exception6(CapEx_PermitLoadViolation, cs);
   } else if (vaddr + size) > top then {
-    raise_c2_exception(CapEx_LengthViolation, cs);
+    raise_c2_exception6(CapEx_LengthViolation, cs);
   } else if vaddr < base then {
-    raise_c2_exception(CapEx_LengthViolation, cs);
+    raise_c2_exception6(CapEx_LengthViolation, cs);
   } else if check_misaligned(vaddrBits, width) then {
     handle_mem_exception(vaddrBits, E_Load_Addr_Align);
     false
@@ -902,7 +902,7 @@ function clause execute (CLoadDDC(rd, rs, is_unsigned, width)) =
   checkCP2usable();
   let ddc_val = DDC;
   let vaddr = (getCapBase(ddc_val) + unsigned(X(rs))) % pow2(xlen);
-  handle_load_data_via_cap(rd, 0b00000, ddc_val, vaddr, is_unsigned, width)
+  handle_load_data_via_cap(rd, 0b100001, ddc_val, vaddr, is_unsigned, width)
 }
 
 union clause ast = CLoadCap : (regbits, regbits, bool, word_width)
@@ -911,7 +911,56 @@ function clause execute (CLoadCap(rd, cs, is_unsigned, width)) =
   checkCP2usable();
   let cap_val = readCapReg(cs);
   let vaddr = getCapCursor(cap_val);
-  handle_load_data_via_cap(rd, cs, cap_val, vaddr, is_unsigned, width)
+  handle_load_data_via_cap(rd, 0b0 @ cs, cap_val, vaddr, is_unsigned, width)
+}
+
+val handle_load_cap_via_cap : (regbits, bits(6), Capability, uint64) -> bool effect {escape, rmem, rmemt, rreg, wmv, wreg}
+function handle_load_cap_via_cap(rd, cs, cap_val, vaddr) = {
+  let (base, top) = getCapBounds(cap_val);
+  let vaddrBits = to_bits(xlen, vaddr);
+  let aq : bool = false;
+  let rl : bool = false;
+  if not(cap_val.tag) then {
+    raise_c2_exception6(CapEx_TagViolation, cs);
+  } else if cap_val.sealed then {
+    raise_c2_exception6(CapEx_SealViolation, cs);
+  } else if not (cap_val.permit_load) then {
+    raise_c2_exception6(CapEx_PermitLoadViolation, cs);
+  } else if (vaddr + cap_size) > top then {
+    raise_c2_exception6(CapEx_LengthViolation, cs);
+  } else if vaddr < base then {
+    raise_c2_exception6(CapEx_LengthViolation, cs);
+  } else if not(is_aligned_addr(vaddrBits, cap_size)) then {
+    handle_mem_exception(vaddrBits, E_Load_Addr_Align);
+    false
+  } else match translateAddr(vaddrBits, Read, Data) {
+    TR_Failure(e) => { handle_mem_exception(vaddrBits, e); false },
+    TR_Address(addr) => {
+      let c = mem_read_cap(addr, aq, rl, false);
+      match c {
+        MemValue(v) => {writeCapReg(rd, v); true},
+        MemException(e) => {handle_mem_exception(vaddrBits, e); false }
+      }
+    }
+  }
+}
+
+union clause ast = CLoadCapDDC : (regbits, regbits)
+function clause execute (CLoadCapDDC(rd, rs)) =
+{
+  checkCP2usable();
+  let ddc_val = DDC;
+  let vaddr = (getCapBase(ddc_val) + unsigned(X(rs))) % pow2(xlen);
+  handle_load_cap_via_cap(rd, 0b100001, ddc_val, vaddr)
+}
+
+union clause ast = CLoadCapCap : (regbits, regbits)
+function clause execute (CLoadCapCap(rd, cs)) =
+{
+  checkCP2usable();
+  let cap_val = readCapReg(cs);
+  let vaddr = getCapCursor(cap_val);
+  handle_load_cap_via_cap(rd, 0b0 @ cs, cap_val, vaddr)
 }
 
 val handle_store_data_via_cap : (regbits, regbits, Capability, uint64, word_width) -> bool effect {eamem, escape, rmem, rreg, wmv, wreg}
@@ -960,7 +1009,7 @@ function handle_store_data_via_cap(rs, cs, cap_val, vaddr, width) = {
 }
 
 union clause ast = CStoreDDC : (regbits, regbits, word_width)
-function clause execute (CLoadDDC(rd, rs, is_unsigned, width)) =
+function clause execute (CStoreDDC(rd, rs, width)) =
 {
   checkCP2usable();
   let ddc_val = DDC;
@@ -969,12 +1018,69 @@ function clause execute (CLoadDDC(rd, rs, is_unsigned, width)) =
 }
 
 union clause ast = CStoreCap : (regbits, regbits, word_width)
-function clause execute (CLoadCap(rs, cs, is_unsigned, width)) =
+function clause execute (CStoreCap(rs, cs, width)) =
 {
   checkCP2usable();
   let cap_val = readCapReg(cs);
   let vaddr = getCapCursor(cap_val);
   handle_store_data_via_cap(rs, cs, cap_val, vaddr, width)
+}
+
+val handle_store_cap_via_cap : (regbits, regbits, Capability, uint64) -> bool effect {eamem, escape, rmem, rreg, wmv, wreg, wmvt}
+function handle_store_cap_via_cap(rs, cs, cap_val, vaddr) = {
+  let (base, top) = getCapBounds(cap_val);
+  let vaddrBits = to_bits(xlen, vaddr);
+  let aq : bool = false;
+  let rl : bool = false;
+  if not(cap_val.tag) then {
+    raise_c2_exception(CapEx_TagViolation, cs);
+  } else if cap_val.sealed then {
+    raise_c2_exception(CapEx_SealViolation, cs);
+  } else if not (cap_val.permit_store) then {
+    raise_c2_exception(CapEx_PermitStoreViolation, cs);
+  } else if (vaddr + cap_size) > top then {
+    raise_c2_exception(CapEx_LengthViolation, cs);
+  } else if vaddr < base then {
+    raise_c2_exception(CapEx_LengthViolation, cs);
+  } else if not(is_aligned_addr(vaddrBits, cap_size)) then {
+    handle_mem_exception(vaddrBits, E_SAMO_Addr_Align);
+    false
+  } else match translateAddr(vaddrBits, Write, Data) {
+    TR_Failure(e) => { handle_mem_exception(vaddrBits, e); false },
+    TR_Address(addr) => {
+      let eares : MemoryOpResult(unit) = mem_write_ea_cap(addr, aq, rl, false);
+      match (eares) {
+        MemException(e) => { handle_mem_exception(addr, e); false },
+        MemValue(_) => {
+          let rs_val = readCapReg(rs);
+          let res : MemoryOpResult(bool) = mem_write_cap(addr, rs_val, aq, rl, false);
+          match (res) {
+            MemValue(true)  => true,
+            MemValue(false) => internal_error("store got false from mem_write_value"),
+            MemException(e) => { handle_mem_exception(addr, e); false }
+          }
+        }
+      }
+    }
+  }
+}
+
+union clause ast = CStoreCapDDC : (regbits, regbits)
+function clause execute (CStoreCapDDC(rd, rs)) =
+{
+  checkCP2usable();
+  let ddc_val = DDC;
+  let vaddr = (getCapBase(ddc_val) + unsigned(X(rs))) % pow2(xlen);
+  handle_store_cap_via_cap(rd, 0b00000, ddc_val, vaddr)
+}
+
+union clause ast = CStoreCapCap : (regbits, regbits)
+function clause execute (CStoreCapCap(rs, cs)) =
+{
+  checkCP2usable();
+  let cap_val = readCapReg(cs);
+  let vaddr = getCapCursor(cap_val);
+  handle_store_cap_via_cap(rs, cs, cap_val, vaddr)
 }
 
 /*
@@ -1354,6 +1460,8 @@ mapping clause encdec = CStoreDDC(rd, rs, BYTE)         <-> 0b0000000 @ 0b01000 
 mapping clause encdec = CStoreDDC(rd, rs, HALF)         <-> 0b0000000 @ 0b01001 @ rs @ 0b000 @ rd @ 0b1011011  /* shddc */
 mapping clause encdec = CStoreDDC(rd, rs, WORD)         <-> 0b0000000 @ 0b01010 @ rs @ 0b000 @ rd @ 0b1011011  /* swddc */
 mapping clause encdec = CStoreDDC(rd, rs, DOUBLE)       <-> 0b0000000 @ 0b01011 @ rs @ 0b000 @ rd @ 0b1011011  /* sdddc */
+mapping clause encdec = CStoreCapDDC(rd, rs)            <-> 0b0000000 @ 0b01100 @ rs @ 0b000 @ rd @ 0b1011011  /* sqddc */
+mapping clause encdec = CLoadCapDDC(rd, rs)             <-> 0b0000000 @ 0b01101 @ rs @ 0b000 @ rd @ 0b1011011  /* lqddc */
 
 /* Load / store data via cap, cs */
 mapping clause encdec = CLoadCap(rd, cs, false, BYTE)   <-> 0b0000000 @ 0b10000 @ cs @ 0b000 @ rd @ 0b1011011  /* lbcap */
@@ -1368,6 +1476,8 @@ mapping clause encdec = CStoreCap(rd, cs, BYTE)         <-> 0b0000000 @ 0b11000 
 mapping clause encdec = CStoreCap(rd, cs, HALF)         <-> 0b0000000 @ 0b11001 @ cs @ 0b000 @ rd @ 0b1011011  /* shcap */
 mapping clause encdec = CStoreCap(rd, cs, WORD)         <-> 0b0000000 @ 0b11010 @ cs @ 0b000 @ rd @ 0b1011011  /* swcap */
 mapping clause encdec = CStoreCap(rd, cs, DOUBLE)       <-> 0b0000000 @ 0b11011 @ cs @ 0b000 @ rd @ 0b1011011  /* sdcap */
+mapping clause encdec = CStoreCapCap(rd, cs)            <-> 0b0000000 @ 0b11100 @ cs @ 0b000 @ rd @ 0b1011011  /* sqcap */
+mapping clause encdec = CLoadCapCap(rd, cs)             <-> 0b0000000 @ 0b11101 @ cs @ 0b000 @ rd @ 0b1011011  /* lqcap */
 
 /*
 

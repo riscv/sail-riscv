@@ -1001,6 +1001,9 @@ function __RISCV_read (addr, width, aq, rl, res) =
     (false, true,  true)  => None()
   }
 
+val MEMr_tag = "read_tag_bool"  : bits(64) -> bool effect { rmemt }
+val MEMw_tag = "write_tag_bool" : (bits(64) , bool) -> unit effect { wmvt }
+
 val __TraceMemoryRead : forall 'n 'm. (atom('n), bits('m), bits(8 * 'n)) -> unit
 
 val replicate_bits = "replicate_bits" : forall 'n 'm, 'm >= 0. (bits('n), atom('m)) -> bits('n * 'm)
