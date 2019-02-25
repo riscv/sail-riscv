@@ -50,17 +50,15 @@ printf "<testsuites>\n" >> $DIR/tests.xml
 cd $RISCVDIR
 
 # Do 'make clean' to avoid cross-arch pollution.
-
 make clean
-printf "Building 32-bit RISCV specification...\n"
 
+printf "Building 32-bit RISCV specification...\n"
 if ARCH=RV32 make ocaml_emulator/riscv_ocaml_sim ;
 then
-    green "Building 32-bit RISCV specification" "ok"
+    green "Building 32-bit RISCV OCaml emulator" "ok"
 else
-    red "Building 32-bit RISCV specification" "fail"
+    red "Building 32-bit RISCV OCaml emulator" "fail"
 fi
-
 for test in $DIR/riscv-tests/rv32*.elf; do
     if $RISCVDIR/ocaml_emulator/riscv_ocaml_sim "$test" >"${test/.elf/.out}" 2>&1 && grep -q SUCCESS "${test/.elf/.out}"
     then
@@ -69,19 +67,36 @@ for test in $DIR/riscv-tests/rv32*.elf; do
        red "$(basename $test)" "fail"
     fi
 done
-
 finish_suite "32-bit RISCV OCaml tests"
 
+
+if ARCH=RV32 make c_emulator/riscv_sim;
+then
+    green "Building 32-bit RISCV C emulator" "ok"
+else
+    red "Building 32-bit RISCV C emulator" "fail"
+fi
+for test in $DIR/riscv-tests/rv32*.elf; do
+    if timeout 5 $RISCVDIR/c_emulator/riscv_sim -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
+    then
+	green "$(basename $test)" "ok"
+    else
+	red "$(basename $test)" "fail"
+    fi
+done
+finish_suite "32-bit RISCV C tests"
+
+# Do 'make clean' to avoid cross-arch pollution.
 make clean
+
 printf "Building 64-bit RISCV specification...\n"
 
 if make ocaml_emulator/riscv_ocaml_sim ;
 then
-    green "Building 64-bit RISCV specification" "ok"
+    green "Building 64-bit RISCV OCaml emulator" "ok"
 else
-    red "Building 64-bit RISCV specification" "fail"
+    red "Building 64-bit RISCV OCaml emulator" "fail"
 fi
-
 for test in $DIR/riscv-tests/rv64*.elf; do
     if $RISCVDIR/ocaml_emulator/riscv_ocaml_sim "$test" >"${test/.elf/.out}" 2>&1 && grep -q SUCCESS "${test/.elf/.out}"
     then
@@ -90,16 +105,14 @@ for test in $DIR/riscv-tests/rv64*.elf; do
        red "$(basename $test)" "fail"
     fi
 done
-
 finish_suite "64-bit RISCV OCaml tests"
 
 if make c_emulator/riscv_sim;
 then
-    green "Building 64-bit RISCV specification to C" "ok"
+    green "Building 64-bit RISCV C emulator" "ok"
 else
-    red "Building 64-bit RISCV specification to C" "fail"
+    red "Building 64-bit RISCV C emulator" "fail"
 fi
-
 for test in $DIR/riscv-tests/rv64*.elf; do
     if timeout 5 $RISCVDIR/c_emulator/riscv_sim -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
     then
@@ -108,7 +121,6 @@ for test in $DIR/riscv-tests/rv64*.elf; do
 	red "$(basename $test)" "fail"
     fi
 done
-
 finish_suite "64-bit RISCV C tests"
 
 printf "</testsuites>\n" >> $DIR/tests.xml
