@@ -123,40 +123,40 @@ function clint_load(addr, width) = {
   if addr == MSIP_BASE & ('n == 8 | 'n == 4)
   then {
     print_platform("clint[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mip.MSI()));
-    MemValue(zero_extend(mip.MSI(), sizeof(8 * 'n)))
+    MemValue(sail_zero_extend(mip.MSI(), sizeof(8 * 'n)))
   }
   else if addr == MTIMECMP_BASE & ('n == 4)
   then {
     print_platform("clint<4>[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtimecmp[31..0]));
     /* FIXME: Redundant zero_extend currently required by Lem backend */
-    MemValue(zero_extend(mtimecmp[31..0], 32))
+    MemValue(sail_zero_extend(mtimecmp[31..0], 32))
   }
   else if addr == MTIMECMP_BASE & ('n == 8)
   then {
     print_platform("clint<8>[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtimecmp));
     /* FIXME: Redundant zero_extend currently required by Lem backend */
-    MemValue(zero_extend(mtimecmp, 64))
+    MemValue(sail_zero_extend(mtimecmp, 64))
   }
   else if addr == MTIMECMP_BASE_HI & ('n == 4)
   then {
     print_platform("clint-hi<4>[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtimecmp[63..32]));
     /* FIXME: Redundant zero_extend currently required by Lem backend */
-    MemValue(zero_extend(mtimecmp[63..32], 32))
+    MemValue(sail_zero_extend(mtimecmp[63..32], 32))
   }
   else if addr == MTIME_BASE & ('n == 4)
   then {
     print_platform("clint[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtime));
-    MemValue(zero_extend(mtime[31..0], 32))
+    MemValue(sail_zero_extend(mtime[31..0], 32))
   }
   else if addr == MTIME_BASE & ('n == 8)
   then {
     print_platform("clint[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtime));
-    MemValue(zero_extend(mtime, 64))
+    MemValue(sail_zero_extend(mtime, 64))
   }
   else if addr == MTIME_BASE_HI & ('n == 4)
   then {
     print_platform("clint[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtime));
-    MemValue(zero_extend(mtime[63..32], 32))
+    MemValue(sail_zero_extend(mtime[63..32], 32))
   }
   else {
     print_platform("clint[" ^ BitStr(addr) ^ "] -> <not-mapped>");
@@ -184,17 +184,17 @@ function clint_store(addr, width, data) = {
     MemValue(true)
   } else if addr == MTIMECMP_BASE & 'n == 8 then {
     print_platform("clint<8>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtimecmp)");
-    mtimecmp = zero_extend(data, 64); /* FIXME: Redundant zero_extend currently required by Lem backend */
+    mtimecmp = sail_zero_extend(data, 64); /* FIXME: Redundant zero_extend currently required by Lem backend */
     clint_dispatch();
     MemValue(true)
   } else if addr == MTIMECMP_BASE & 'n == 4 then {
     print_platform("clint<4>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtimecmp)");
-    mtimecmp = vector_update_subrange(mtimecmp, 31, 0, zero_extend(data, 32));  /* FIXME: Redundant zero_extend currently required by Lem backend */
+    mtimecmp = vector_update_subrange(mtimecmp, 31, 0, sail_zero_extend(data, 32));  /* FIXME: Redundant zero_extend currently required by Lem backend */
     clint_dispatch();
     MemValue(true)
   } else if addr == MTIMECMP_BASE_HI & 'n == 4 then {
     print_platform("clint<4>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtimecmp)");
-    mtimecmp = vector_update_subrange(mtimecmp, 63, 32, zero_extend(data, 32)); /* FIXME: Redundant zero_extend currently required by Lem backend */
+    mtimecmp = vector_update_subrange(mtimecmp, 63, 32, sail_zero_extend(data, 32)); /* FIXME: Redundant zero_extend currently required by Lem backend */
     clint_dispatch();
     MemValue(true)
   } else {
@@ -238,11 +238,11 @@ function htif_load(addr, width) = {
   print_platform("htif[" ^ BitStr(addr) ^ "] -> " ^ BitStr(htif_tohost));
   /* FIXME: For now, only allow the expected access widths. */
   if      width == 8 & (addr == plat_htif_tohost())
-  then    MemValue(zero_extend(htif_tohost, 64))         /* FIXME: Redundant zero_extend currently required by Lem backend */
+  then    MemValue(sail_zero_extend(htif_tohost, 64))         /* FIXME: Redundant zero_extend currently required by Lem backend */
   else if width == 4 & addr == plat_htif_tohost()
-  then    MemValue(zero_extend(htif_tohost[31..0], 32))  /* FIXME: Redundant zero_extend currently required by Lem backend */
+  then    MemValue(sail_zero_extend(htif_tohost[31..0], 32))  /* FIXME: Redundant zero_extend currently required by Lem backend */
   else if width == 4 & addr == plat_htif_tohost() + 4
-  then    MemValue(zero_extend(htif_tohost[63..32], 32)) /* FIXME: Redundant zero_extend currently required by Lem backend */
+  then    MemValue(sail_zero_extend(htif_tohost[63..32], 32)) /* FIXME: Redundant zero_extend currently required by Lem backend */
   else    MemException(E_Load_Access_Fault)
 }
 
@@ -267,7 +267,7 @@ function htif_store(addr, width, data) = {
       if cmd.payload()[0] == 0b1
       then {
            htif_done = true;
-           htif_exit_code = (zero_extend(cmd.payload(), 64) >> 0b01)
+           htif_exit_code = (sail_zero_extend(cmd.payload(), 64) >> 0b01)
       }
       else ()
     },
