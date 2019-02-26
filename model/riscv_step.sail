@@ -10,7 +10,7 @@ union FetchResult = {
 function isRVC(h : half) -> bool =
  ~ (h[1 .. 0] == 0b11)
 
-val fetch : unit -> FetchResult effect {escape, rmem, rreg, wmv, wreg}
+val fetch : unit -> FetchResult effect {escape, rmem, rreg, wmv, wmvt, wreg}
 function fetch() -> FetchResult = {
   /* check for legal PC */
   let abs_pc = getCapBase(PCC) + unsigned(PC);
@@ -58,7 +58,7 @@ function fetch() -> FetchResult = {
 }
 
 /* returns whether to increment the step count in the trace */
-val step : int -> bool effect {barr, eamem, escape, exmem, rmem, rreg, wmv, wreg}
+val step : int -> bool effect {barr, eamem, escape, exmem, rmem, rreg, wmv, wmvt, wreg}
 function step(step_no) = {
   minstret_written = false;     /* see note for minstret */
   let (retired, stepped) : (bool, bool) =
@@ -122,7 +122,7 @@ function step(step_no) = {
   stepped
 }
 
-val loop : unit -> unit effect {barr, eamem, escape, exmem, rmem, rreg, wmv, wreg}
+val loop : unit -> unit effect {barr, eamem, escape, exmem, rmem, rreg, wmv, wmvt, wreg}
 function loop () = {
   let insns_per_tick = plat_insns_per_tick();
   i : int = 0;
