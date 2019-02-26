@@ -55,7 +55,7 @@ let clint_base = 0x02000000L;;  (* Spike::CLINT_BASE *)
 let clint_size = 0x000c0000L;;  (* Spike::CLINT_SIZE *)
 let rom_base   = 0x00001000L;;  (* Spike::DEFAULT_RSTVEC *)
 
-let dram_size_ref = ref (Int64.(shift_left 2048L 20))
+let dram_size_ref = ref (Int64.(shift_left 64L 20))
 
 type mem_region = {
     addr : Int64.t;
