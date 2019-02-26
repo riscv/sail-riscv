@@ -113,11 +113,19 @@ val print_reg      = {ocaml: "Platform.print_reg",   c: "print_reg", _: "print_e
 val print_mem      = {ocaml: "Platform.print_mem_access", c: "print_mem_access", _: "print_endline"} : string -> unit
 val print_platform = {ocaml: "Platform.print_platform", c: "print_platform", _: "print_endline"} : string -> unit
 
+$ifndef FEATURE_IMPLICITS
+val EXTS : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
+val EXTZ : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
+
+function EXTS v = sail_sign_extend(v, sizeof('m))
+function EXTZ v = sail_zero_extend(v, sizeof('m))
+$else
 val EXTS : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
 val EXTZ : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
 
 function EXTS(m, v) = sail_sign_extend(v, m)
 function EXTZ(m, v) = sail_zero_extend(v, m)
+$endif
 
 val cast bool_to_bits : bool -> bits(1)
 function bool_to_bits x = if x then 0b1 else 0b0

@@ -1,27 +1,27 @@
 RISCV Sail Model
 
-The Sail architecture models here, comprising all files and
-directories are subject to the BSD two-clause licence
+This Sail RISC-V architecture model here, comprising all files and
+directories, is subject to the BSD two-clause licence
 below.
 
-Copyright (c) 2013-2018
-  Kathyrn Gray
-  Shaked Flur
-  Stephen Kell
-  Gabriel Kerneis
+Copyright (c) 2017-2019
+  Prashanth Mundkur
+  Jon French
+  Brian Campbell
   Robert Norton-Wright
+  Alasdair Armstrong
+  Thomas Bauereiss
+  Shaked Flur
   Christopher Pulte
   Peter Sewell
-  Alasdair Armstrong
-  Brian Campbell
-  Thomas Bauereiss
-  Anthony Fox
-  Jon French
-  Dominic Mulligan
-  Stephen Kell
-  Mark Wassell
 
 All rights reserved.
+
+This software was developed by SRI International and the University of
+Cambridge Computer Laboratory (Department of Computer Science and
+Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and
+under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA
+SSITH research programme.
 
 This software was developed by the above within the Rigorous
 Engineering of Mainstream Systems (REMS) project, partly funded by

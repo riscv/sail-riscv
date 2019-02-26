@@ -52,7 +52,7 @@ let MEMr_reserved_strong_acquire addrsize size hexRAM addr = read_mem Read_RISCV
 val write_ram : forall 'rv 'a 'b 'e. Size 'a, Size 'b =>
   integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
 let write_ram addrsize size hexRAM address value =
-  write_mem_val value
+  write_mem Write_plain address size value
 
 val read_ram : forall 'rv 'a 'b 'e. Size 'a, Size 'b =>
   integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
