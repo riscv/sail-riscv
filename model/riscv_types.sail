@@ -157,13 +157,13 @@ val init_regs : unit->unit effect{wreg}
 function init_regs () = {
   PCC = default_cap;
   nextPCC = default_cap;
-  UTCC = null_cap;
+  UTCC = default_cap;
   UScratchC = null_cap;
   UEPCC = null_cap;
-  STCC = null_cap;
+  STCC = default_cap;
   SScratchC = null_cap;
   SEPCC = null_cap;
-  MTCC = null_cap;
+  MTCC = default_cap;
   MScratchC = null_cap;
   MEPCC = null_cap;
   foreach(i from 1 to 31) {

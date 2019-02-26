@@ -117,6 +117,7 @@ function step(step_no) = {
       }
     };
   PC = nextPC;
+  PCC = nextPCC;
   if retired then retire_instruction();
   stepped
 }

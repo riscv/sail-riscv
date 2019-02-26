@@ -303,7 +303,7 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
 
        print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
-       PCC = MTCC;
+       nextPCC = MTCC;
        match tvec_addr(Mk_Mtvec(getCapOffsetBits(MTCC)), mcause) {
          Some(epc) => epc,
          None()    => internal_error("Invalid mtvec mode")
@@ -339,7 +339,7 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
 
        print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
-       PCC = STCC;
+       nextPCC = STCC;
        match tvec_addr(Mk_Mtvec(getCapOffsetBits(STCC)), scause) {
          Some(epc) => epc,
          None()    => internal_error("Invalid stvec mode")
@@ -370,7 +370,7 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
 
        print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
-       PCC = UTCC;
+       nextPCC = UTCC;
        match tvec_addr(Mk_Mtvec(getCapOffsetBits(UTCC)), ucause) {
          Some(epc) => epc,
          None()    => internal_error("Invalid utvec mode")
