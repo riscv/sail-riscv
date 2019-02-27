@@ -193,7 +193,7 @@ Disassembly of section .text.init:
 800002b0 <mtvec_handler>:
 800002b0:	342022f3          	csrr	t0,mcause
 800002b4:	fc929ce3          	bne	t0,s1,8000028c <fail>
-800002b8:	343022f3          	csrr	t0,mbadaddr
+800002b8:	343022f3          	csrr	t0,mtval
 800002bc:	fc6298e3          	bne	t0,t1,8000028c <fail>
 800002c0:	00028283          	lb	t0,0(t0)
 800002c4:	fc0284e3          	beqz	t0,8000028c <fail>

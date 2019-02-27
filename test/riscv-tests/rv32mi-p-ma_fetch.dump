@@ -179,7 +179,7 @@ Disassembly of section .text.init:
 8000025c:	341025f3          	csrr	a1,mepc
 80000260:	00458593          	addi	a1,a1,4
 80000264:	fab292e3          	bne	t0,a1,80000208 <fail>
-80000268:	34302573          	csrr	a0,mbadaddr
+80000268:	34302573          	csrr	a0,mtval
 8000026c:	00050663          	beqz	a0,80000278 <mtvec_handler+0x50>
 80000270:	ffe50513          	addi	a0,a0,-2
 80000274:	f8551ae3          	bne	a0,t0,80000208 <fail>

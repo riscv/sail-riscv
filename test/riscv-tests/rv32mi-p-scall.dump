@@ -84,8 +84,8 @@ Disassembly of section .text.init:
 80000110:	000022b7          	lui	t0,0x2
 80000114:	80028293          	addi	t0,t0,-2048 # 1800 <_start-0x7fffe800>
 80000118:	3002b073          	csrc	mstatus,t0
-8000011c:	30002373          	csrr	t1,mstatus
-80000120:	0062f2b3          	and	t0,t0,t1
+8000011c:	300023f3          	csrr	t2,mstatus
+80000120:	0072f2b3          	and	t0,t0,t2
 80000124:	00028463          	beqz	t0,8000012c <reset_vector+0xe0>
 80000128:	00b00313          	li	t1,11
 8000012c:	000022b7          	lui	t0,0x2

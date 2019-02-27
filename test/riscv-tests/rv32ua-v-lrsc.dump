@@ -101,7 +101,7 @@ Disassembly of section .text.init:
 8000014c:	08512023          	sw	t0,128(sp)
 80000150:	141022f3          	csrr	t0,sepc
 80000154:	08512223          	sw	t0,132(sp)
-80000158:	143022f3          	csrr	t0,sbadaddr
+80000158:	143022f3          	csrr	t0,stval
 8000015c:	08512423          	sw	t0,136(sp)
 80000160:	142022f3          	csrr	t0,scause
 80000164:	08512623          	sw	t0,140(sp)
@@ -437,8 +437,8 @@ Disassembly of section .text:
 800024bc:	f207ac23          	sw	zero,-200(a5) # 800063f0 <freelist_tail>
 800024c0:	ef5ff06f          	j	800023b4 <handle_fault+0x70>
 800024c4:	04100513          	li	a0,65
-800024c8:	00000597          	auipc	a1,0x0
-800024cc:	7f858593          	addi	a1,a1,2040 # 80002cc0 <pass+0xc>
+800024c8:	00001597          	auipc	a1,0x1
+800024cc:	83c58593          	addi	a1,a1,-1988 # 80002d04 <pass+0xc>
 800024d0:	fffff697          	auipc	a3,0xfffff
 800024d4:	b3068693          	addi	a3,a3,-1232 # 80001000 <tohost>
 800024d8:	fffff617          	auipc	a2,0xfffff
@@ -466,7 +466,7 @@ Disassembly of section .text:
 80002530:	cf9ff0ef          	jal	ra,80002228 <terminate>
 80002534:	04100513          	li	a0,65
 80002538:	00001597          	auipc	a1,0x1
-8000253c:	81458593          	addi	a1,a1,-2028 # 80002d4c <pass+0x98>
+8000253c:	85858593          	addi	a1,a1,-1960 # 80002d90 <pass+0x98>
 80002540:	fffff697          	auipc	a3,0xfffff
 80002544:	ac068693          	addi	a3,a3,-1344 # 80001000 <tohost>
 80002548:	fffff617          	auipc	a2,0xfffff
@@ -492,8 +492,8 @@ Disassembly of section .text:
 80002598:	fa051ce3          	bnez	a0,80002550 <handle_fault+0x20c>
 8000259c:	f91ff06f          	j	8000252c <handle_fault+0x1e8>
 800025a0:	04100513          	li	a0,65
-800025a4:	00000597          	auipc	a1,0x0
-800025a8:	7c058593          	addi	a1,a1,1984 # 80002d64 <pass+0xb0>
+800025a4:	00001597          	auipc	a1,0x1
+800025a8:	80458593          	addi	a1,a1,-2044 # 80002da8 <pass+0xb0>
 800025ac:	fffff697          	auipc	a3,0xfffff
 800025b0:	a5468693          	addi	a3,a3,-1452 # 80001000 <tohost>
 800025b4:	fffff617          	auipc	a2,0xfffff
@@ -520,7 +520,7 @@ Disassembly of section .text:
 80002608:	f25ff06f          	j	8000252c <handle_fault+0x1e8>
 8000260c:	04100793          	li	a5,65
 80002610:	00000597          	auipc	a1,0x0
-80002614:	6f458593          	addi	a1,a1,1780 # 80002d04 <pass+0x50>
+80002614:	73858593          	addi	a1,a1,1848 # 80002d48 <pass+0x50>
 80002618:	fffff697          	auipc	a3,0xfffff
 8000261c:	9e868693          	addi	a3,a3,-1560 # 80001000 <tohost>
 80002620:	fffff617          	auipc	a2,0xfffff
@@ -600,7 +600,7 @@ Disassembly of section .text:
 80002740:	06f70a63          	beq	a4,a5,800027b4 <handle_trap+0x13c>
 80002744:	04100513          	li	a0,65
 80002748:	00000597          	auipc	a1,0x0
-8000274c:	6e458593          	addi	a1,a1,1764 # 80002e2c <pass+0x178>
+8000274c:	72858593          	addi	a1,a1,1832 # 80002e70 <pass+0x178>
 80002750:	fffff697          	auipc	a3,0xfffff
 80002754:	8b068693          	addi	a3,a3,-1872 # 80001000 <tohost>
 80002758:	fffff617          	auipc	a2,0xfffff
@@ -629,7 +629,7 @@ Disassembly of section .text:
 800027b4:	00100513          	li	a0,1
 800027b8:	a71ff0ef          	jal	ra,80002228 <terminate>
 800027bc:	00000597          	auipc	a1,0x0
-800027c0:	64c58593          	addi	a1,a1,1612 # 80002e08 <pass+0x154>
+800027c0:	69058593          	addi	a1,a1,1680 # 80002e4c <pass+0x154>
 800027c4:	04100613          	li	a2,65
 800027c8:	fffff697          	auipc	a3,0xfffff
 800027cc:	83868693          	addi	a3,a3,-1992 # 80001000 <tohost>
@@ -714,7 +714,7 @@ Disassembly of section .text:
 80002908:	f59ff06f          	j	80002860 <handle_trap+0x1e8>
 8000290c:	04100593          	li	a1,65
 80002910:	00000617          	auipc	a2,0x0
-80002914:	54860613          	addi	a2,a2,1352 # 80002e58 <pass+0x1a4>
+80002914:	58c60613          	addi	a2,a2,1420 # 80002e9c <pass+0x1a4>
 80002918:	ffffe697          	auipc	a3,0xffffe
 8000291c:	6e868693          	addi	a3,a3,1768 # 80001000 <tohost>
 80002920:	ffffe517          	auipc	a0,0xffffe
@@ -741,7 +741,7 @@ Disassembly of section .text:
 80002974:	e39ff06f          	j	800027ac <handle_trap+0x134>
 80002978:	04100793          	li	a5,65
 8000297c:	00000617          	auipc	a2,0x0
-80002980:	45860613          	addi	a2,a2,1112 # 80002dd4 <pass+0x120>
+80002980:	49c60613          	addi	a2,a2,1180 # 80002e18 <pass+0x120>
 80002984:	ffffe697          	auipc	a3,0xffffe
 80002988:	67c68693          	addi	a3,a3,1660 # 80001000 <tohost>
 8000298c:	ffffe597          	auipc	a1,0xffffe
@@ -760,7 +760,7 @@ Disassembly of section .text:
 800029c0:	fe1ff06f          	j	800029a0 <handle_trap+0x328>
 800029c4:	04100793          	li	a5,65
 800029c8:	00000617          	auipc	a2,0x0
-800029cc:	3d860613          	addi	a2,a2,984 # 80002da0 <pass+0xec>
+800029cc:	41c60613          	addi	a2,a2,1052 # 80002de4 <pass+0xec>
 800029d0:	ffffe697          	auipc	a3,0xffffe
 800029d4:	63068693          	addi	a3,a3,1584 # 80001000 <tohost>
 800029d8:	ffffe597          	auipc	a1,0xffffe
@@ -909,60 +909,81 @@ Disassembly of section .text:
 80002c00 <test_2>:
 80002c00:	00000517          	auipc	a0,0x0
 80002c04:	40850513          	addi	a0,a0,1032 # 80003008 <foo>
-80002c08:	1805272f          	sc.w	a4,zero,(a0)
-80002c0c:	00100e93          	li	t4,1
-80002c10:	00200193          	li	gp,2
-80002c14:	09d71863          	bne	a4,t4,80002ca4 <fail>
+80002c08:	deadc7b7          	lui	a5,0xdeadc
+80002c0c:	eef78793          	addi	a5,a5,-273 # deadbeef <_end+0x5ead5af7>
+80002c10:	18f5272f          	sc.w	a4,a5,(a0)
+80002c14:	00100e93          	li	t4,1
+80002c18:	00200193          	li	gp,2
+80002c1c:	0dd71663          	bne	a4,t4,80002ce8 <fail>
 
-80002c18 <test_3>:
-80002c18:	00000517          	auipc	a0,0x0
-80002c1c:	3f050513          	addi	a0,a0,1008 # 80003008 <foo>
-80002c20:	40050593          	addi	a1,a0,1024
-80002c24:	1005a5af          	lr.w	a1,(a1)
-80002c28:	18b5272f          	sc.w	a4,a1,(a0)
-80002c2c:	00100e93          	li	t4,1
-80002c30:	00300193          	li	gp,3
-80002c34:	07d71863          	bne	a4,t4,80002ca4 <fail>
-80002c38:	00000517          	auipc	a0,0x0
-80002c3c:	3d050513          	addi	a0,a0,976 # 80003008 <foo>
-80002c40:	40000593          	li	a1,1024
-80002c44:	00160613          	addi	a2,a2,1
-80002c48:	1005272f          	lr.w	a4,(a0)
-80002c4c:	00c70733          	add	a4,a4,a2
-80002c50:	18e5272f          	sc.w	a4,a4,(a0)
-80002c54:	fe071ae3          	bnez	a4,80002c48 <test_3+0x30>
-80002c58:	fff58593          	addi	a1,a1,-1 # 7fffffff <_end+0xffff9c07>
-80002c5c:	fe0596e3          	bnez	a1,80002c48 <test_3+0x30>
-80002c60:	00000517          	auipc	a0,0x0
-80002c64:	3a450513          	addi	a0,a0,932 # 80003004 <barrier>
-80002c68:	00100593          	li	a1,1
-80002c6c:	00b5202f          	amoadd.w	zero,a1,(a0)
-80002c70:	00052583          	lw	a1,0(a0)
-80002c74:	fed5cee3          	blt	a1,a3,80002c70 <test_3+0x58>
-80002c78:	0ff0000f          	fence
+80002c20 <test_3>:
+80002c20:	00000717          	auipc	a4,0x0
+80002c24:	3e872703          	lw	a4,1000(a4) # 80003008 <foo>
+80002c28:	00000e93          	li	t4,0
+80002c2c:	00300193          	li	gp,3
+80002c30:	0bd71c63          	bne	a4,t4,80002ce8 <fail>
 
-80002c7c <test_4>:
-80002c7c:	00000517          	auipc	a0,0x0
-80002c80:	38c52503          	lw	a0,908(a0) # 80003008 <foo>
-80002c84:	00969593          	slli	a1,a3,0x9
-80002c88:	40b50533          	sub	a0,a0,a1
-80002c8c:	fff68693          	addi	a3,a3,-1
-80002c90:	fe06dce3          	bgez	a3,80002c88 <test_4+0xc>
-80002c94:	00000e93          	li	t4,0
-80002c98:	00400193          	li	gp,4
-80002c9c:	01d51463          	bne	a0,t4,80002ca4 <fail>
-80002ca0:	00301a63          	bne	zero,gp,80002cb4 <pass>
+80002c34 <test_4>:
+80002c34:	00000517          	auipc	a0,0x0
+80002c38:	3d450513          	addi	a0,a0,980 # 80003008 <foo>
+80002c3c:	00000597          	auipc	a1,0x0
+80002c40:	7d058593          	addi	a1,a1,2000 # 8000340c <fooTest3>
+80002c44:	1005a5af          	lr.w	a1,(a1)
+80002c48:	18b5272f          	sc.w	a4,a1,(a0)
+80002c4c:	00100e93          	li	t4,1
+80002c50:	00400193          	li	gp,4
+80002c54:	09d71a63          	bne	a4,t4,80002ce8 <fail>
+80002c58:	00000517          	auipc	a0,0x0
+80002c5c:	3b050513          	addi	a0,a0,944 # 80003008 <foo>
+80002c60:	40000593          	li	a1,1024
+80002c64:	00160613          	addi	a2,a2,1
+80002c68:	1005272f          	lr.w	a4,(a0)
+80002c6c:	00c70733          	add	a4,a4,a2
+80002c70:	18e5272f          	sc.w	a4,a4,(a0)
+80002c74:	fe071ae3          	bnez	a4,80002c68 <test_4+0x34>
+80002c78:	fff58593          	addi	a1,a1,-1
+80002c7c:	fe0596e3          	bnez	a1,80002c68 <test_4+0x34>
+80002c80:	00000517          	auipc	a0,0x0
+80002c84:	38450513          	addi	a0,a0,900 # 80003004 <barrier>
+80002c88:	00100593          	li	a1,1
+80002c8c:	00b5202f          	amoadd.w	zero,a1,(a0)
+80002c90:	00052583          	lw	a1,0(a0)
+80002c94:	fed5cee3          	blt	a1,a3,80002c90 <test_4+0x5c>
+80002c98:	0ff0000f          	fence
 
-80002ca4 <fail>:
-80002ca4:	00119513          	slli	a0,gp,0x1
-80002ca8:	00050063          	beqz	a0,80002ca8 <fail+0x4>
-80002cac:	00156513          	ori	a0,a0,1
-80002cb0:	00000073          	ecall
+80002c9c <test_5>:
+80002c9c:	00000517          	auipc	a0,0x0
+80002ca0:	36c52503          	lw	a0,876(a0) # 80003008 <foo>
+80002ca4:	00969593          	slli	a1,a3,0x9
+80002ca8:	40b50533          	sub	a0,a0,a1
+80002cac:	fff68693          	addi	a3,a3,-1
+80002cb0:	fe06dce3          	bgez	a3,80002ca8 <test_5+0xc>
+80002cb4:	00000e93          	li	t4,0
+80002cb8:	00500193          	li	gp,5
+80002cbc:	03d51663          	bne	a0,t4,80002ce8 <fail>
 
-80002cb4 <pass>:
-80002cb4:	00100513          	li	a0,1
-80002cb8:	00000073          	ecall
-80002cbc:	c0001073          	unimp
+80002cc0 <test_6>:
+80002cc0:	00000517          	auipc	a0,0x0
+80002cc4:	34850513          	addi	a0,a0,840 # 80003008 <foo>
+80002cc8:	100525af          	lr.w	a1,(a0)
+80002ccc:	180525af          	sc.w	a1,zero,(a0)
+80002cd0:	fe059ce3          	bnez	a1,80002cc8 <test_6+0x8>
+80002cd4:	180525af          	sc.w	a1,zero,(a0)
+80002cd8:	00100e93          	li	t4,1
+80002cdc:	00600193          	li	gp,6
+80002ce0:	01d59463          	bne	a1,t4,80002ce8 <fail>
+80002ce4:	00301a63          	bne	zero,gp,80002cf8 <pass>
+
+80002ce8 <fail>:
+80002ce8:	00119513          	slli	a0,gp,0x1
+80002cec:	00050063          	beqz	a0,80002cec <fail+0x4>
+80002cf0:	00156513          	ori	a0,a0,1
+80002cf4:	00000073          	ecall
+
+80002cf8 <pass>:
+80002cf8:	00100513          	li	a0,1
+80002cfc:	00000073          	ecall
+80002d00:	c0001073          	unimp
 
 Disassembly of section .data:
 
@@ -977,3 +998,519 @@ Disassembly of section .data:
 80003008 <foo>:
 80003008:	0000                	unimp
 8000300a:	0000                	unimp
+8000300c:	0000                	unimp
+8000300e:	0000                	unimp
+80003010:	0000                	unimp
+80003012:	0000                	unimp
+80003014:	0000                	unimp
+80003016:	0000                	unimp
+80003018:	0000                	unimp
+8000301a:	0000                	unimp
+8000301c:	0000                	unimp
+8000301e:	0000                	unimp
+80003020:	0000                	unimp
+80003022:	0000                	unimp
+80003024:	0000                	unimp
+80003026:	0000                	unimp
+80003028:	0000                	unimp
+8000302a:	0000                	unimp
+8000302c:	0000                	unimp
+8000302e:	0000                	unimp
+80003030:	0000                	unimp
+80003032:	0000                	unimp
+80003034:	0000                	unimp
+80003036:	0000                	unimp
+80003038:	0000                	unimp
+8000303a:	0000                	unimp
+8000303c:	0000                	unimp
+8000303e:	0000                	unimp
+80003040:	0000                	unimp
+80003042:	0000                	unimp
+80003044:	0000                	unimp
+80003046:	0000                	unimp
+80003048:	0000                	unimp
+8000304a:	0000                	unimp
+8000304c:	0000                	unimp
+8000304e:	0000                	unimp
+80003050:	0000                	unimp
+80003052:	0000                	unimp
+80003054:	0000                	unimp
+80003056:	0000                	unimp
+80003058:	0000                	unimp
+8000305a:	0000                	unimp
+8000305c:	0000                	unimp
+8000305e:	0000                	unimp
+80003060:	0000                	unimp
+80003062:	0000                	unimp
+80003064:	0000                	unimp
+80003066:	0000                	unimp
+80003068:	0000                	unimp
+8000306a:	0000                	unimp
+8000306c:	0000                	unimp
+8000306e:	0000                	unimp
+80003070:	0000                	unimp
+80003072:	0000                	unimp
+80003074:	0000                	unimp
+80003076:	0000                	unimp
+80003078:	0000                	unimp
+8000307a:	0000                	unimp
+8000307c:	0000                	unimp
+8000307e:	0000                	unimp
+80003080:	0000                	unimp
+80003082:	0000                	unimp
+80003084:	0000                	unimp
+80003086:	0000                	unimp
+80003088:	0000                	unimp
+8000308a:	0000                	unimp
+8000308c:	0000                	unimp
+8000308e:	0000                	unimp
+80003090:	0000                	unimp
+80003092:	0000                	unimp
+80003094:	0000                	unimp
+80003096:	0000                	unimp
+80003098:	0000                	unimp
+8000309a:	0000                	unimp
+8000309c:	0000                	unimp
+8000309e:	0000                	unimp
+800030a0:	0000                	unimp
+800030a2:	0000                	unimp
+800030a4:	0000                	unimp
+800030a6:	0000                	unimp
+800030a8:	0000                	unimp
+800030aa:	0000                	unimp
+800030ac:	0000                	unimp
+800030ae:	0000                	unimp
+800030b0:	0000                	unimp
+800030b2:	0000                	unimp
+800030b4:	0000                	unimp
+800030b6:	0000                	unimp
+800030b8:	0000                	unimp
+800030ba:	0000                	unimp
+800030bc:	0000                	unimp
+800030be:	0000                	unimp
+800030c0:	0000                	unimp
+800030c2:	0000                	unimp
+800030c4:	0000                	unimp
+800030c6:	0000                	unimp
+800030c8:	0000                	unimp
+800030ca:	0000                	unimp
+800030cc:	0000                	unimp
+800030ce:	0000                	unimp
+800030d0:	0000                	unimp
+800030d2:	0000                	unimp
+800030d4:	0000                	unimp
+800030d6:	0000                	unimp
+800030d8:	0000                	unimp
+800030da:	0000                	unimp
+800030dc:	0000                	unimp
+800030de:	0000                	unimp
+800030e0:	0000                	unimp
+800030e2:	0000                	unimp
+800030e4:	0000                	unimp
+800030e6:	0000                	unimp
+800030e8:	0000                	unimp
+800030ea:	0000                	unimp
+800030ec:	0000                	unimp
+800030ee:	0000                	unimp
+800030f0:	0000                	unimp
+800030f2:	0000                	unimp
+800030f4:	0000                	unimp
+800030f6:	0000                	unimp
+800030f8:	0000                	unimp
+800030fa:	0000                	unimp
+800030fc:	0000                	unimp
+800030fe:	0000                	unimp
+80003100:	0000                	unimp
+80003102:	0000                	unimp
+80003104:	0000                	unimp
+80003106:	0000                	unimp
+80003108:	0000                	unimp
+8000310a:	0000                	unimp
+8000310c:	0000                	unimp
+8000310e:	0000                	unimp
+80003110:	0000                	unimp
+80003112:	0000                	unimp
+80003114:	0000                	unimp
+80003116:	0000                	unimp
+80003118:	0000                	unimp
+8000311a:	0000                	unimp
+8000311c:	0000                	unimp
+8000311e:	0000                	unimp
+80003120:	0000                	unimp
+80003122:	0000                	unimp
+80003124:	0000                	unimp
+80003126:	0000                	unimp
+80003128:	0000                	unimp
+8000312a:	0000                	unimp
+8000312c:	0000                	unimp
+8000312e:	0000                	unimp
+80003130:	0000                	unimp
+80003132:	0000                	unimp
+80003134:	0000                	unimp
+80003136:	0000                	unimp
+80003138:	0000                	unimp
+8000313a:	0000                	unimp
+8000313c:	0000                	unimp
+8000313e:	0000                	unimp
+80003140:	0000                	unimp
+80003142:	0000                	unimp
+80003144:	0000                	unimp
+80003146:	0000                	unimp
+80003148:	0000                	unimp
+8000314a:	0000                	unimp
+8000314c:	0000                	unimp
+8000314e:	0000                	unimp
+80003150:	0000                	unimp
+80003152:	0000                	unimp
+80003154:	0000                	unimp
+80003156:	0000                	unimp
+80003158:	0000                	unimp
+8000315a:	0000                	unimp
+8000315c:	0000                	unimp
+8000315e:	0000                	unimp
+80003160:	0000                	unimp
+80003162:	0000                	unimp
+80003164:	0000                	unimp
+80003166:	0000                	unimp
+80003168:	0000                	unimp
+8000316a:	0000                	unimp
+8000316c:	0000                	unimp
+8000316e:	0000                	unimp
+80003170:	0000                	unimp
+80003172:	0000                	unimp
+80003174:	0000                	unimp
+80003176:	0000                	unimp
+80003178:	0000                	unimp
+8000317a:	0000                	unimp
+8000317c:	0000                	unimp
+8000317e:	0000                	unimp
+80003180:	0000                	unimp
+80003182:	0000                	unimp
+80003184:	0000                	unimp
+80003186:	0000                	unimp
+80003188:	0000                	unimp
+8000318a:	0000                	unimp
+8000318c:	0000                	unimp
+8000318e:	0000                	unimp
+80003190:	0000                	unimp
+80003192:	0000                	unimp
+80003194:	0000                	unimp
+80003196:	0000                	unimp
+80003198:	0000                	unimp
+8000319a:	0000                	unimp
+8000319c:	0000                	unimp
+8000319e:	0000                	unimp
+800031a0:	0000                	unimp
+800031a2:	0000                	unimp
+800031a4:	0000                	unimp
+800031a6:	0000                	unimp
+800031a8:	0000                	unimp
+800031aa:	0000                	unimp
+800031ac:	0000                	unimp
+800031ae:	0000                	unimp
+800031b0:	0000                	unimp
+800031b2:	0000                	unimp
+800031b4:	0000                	unimp
+800031b6:	0000                	unimp
+800031b8:	0000                	unimp
+800031ba:	0000                	unimp
+800031bc:	0000                	unimp
+800031be:	0000                	unimp
+800031c0:	0000                	unimp
+800031c2:	0000                	unimp
+800031c4:	0000                	unimp
+800031c6:	0000                	unimp
+800031c8:	0000                	unimp
+800031ca:	0000                	unimp
+800031cc:	0000                	unimp
+800031ce:	0000                	unimp
+800031d0:	0000                	unimp
+800031d2:	0000                	unimp
+800031d4:	0000                	unimp
+800031d6:	0000                	unimp
+800031d8:	0000                	unimp
+800031da:	0000                	unimp
+800031dc:	0000                	unimp
+800031de:	0000                	unimp
+800031e0:	0000                	unimp
+800031e2:	0000                	unimp
+800031e4:	0000                	unimp
+800031e6:	0000                	unimp
+800031e8:	0000                	unimp
+800031ea:	0000                	unimp
+800031ec:	0000                	unimp
+800031ee:	0000                	unimp
+800031f0:	0000                	unimp
+800031f2:	0000                	unimp
+800031f4:	0000                	unimp
+800031f6:	0000                	unimp
+800031f8:	0000                	unimp
+800031fa:	0000                	unimp
+800031fc:	0000                	unimp
+800031fe:	0000                	unimp
+80003200:	0000                	unimp
+80003202:	0000                	unimp
+80003204:	0000                	unimp
+80003206:	0000                	unimp
+80003208:	0000                	unimp
+8000320a:	0000                	unimp
+8000320c:	0000                	unimp
+8000320e:	0000                	unimp
+80003210:	0000                	unimp
+80003212:	0000                	unimp
+80003214:	0000                	unimp
+80003216:	0000                	unimp
+80003218:	0000                	unimp
+8000321a:	0000                	unimp
+8000321c:	0000                	unimp
+8000321e:	0000                	unimp
+80003220:	0000                	unimp
+80003222:	0000                	unimp
+80003224:	0000                	unimp
+80003226:	0000                	unimp
+80003228:	0000                	unimp
+8000322a:	0000                	unimp
+8000322c:	0000                	unimp
+8000322e:	0000                	unimp
+80003230:	0000                	unimp
+80003232:	0000                	unimp
+80003234:	0000                	unimp
+80003236:	0000                	unimp
+80003238:	0000                	unimp
+8000323a:	0000                	unimp
+8000323c:	0000                	unimp
+8000323e:	0000                	unimp
+80003240:	0000                	unimp
+80003242:	0000                	unimp
+80003244:	0000                	unimp
+80003246:	0000                	unimp
+80003248:	0000                	unimp
+8000324a:	0000                	unimp
+8000324c:	0000                	unimp
+8000324e:	0000                	unimp
+80003250:	0000                	unimp
+80003252:	0000                	unimp
+80003254:	0000                	unimp
+80003256:	0000                	unimp
+80003258:	0000                	unimp
+8000325a:	0000                	unimp
+8000325c:	0000                	unimp
+8000325e:	0000                	unimp
+80003260:	0000                	unimp
+80003262:	0000                	unimp
+80003264:	0000                	unimp
+80003266:	0000                	unimp
+80003268:	0000                	unimp
+8000326a:	0000                	unimp
+8000326c:	0000                	unimp
+8000326e:	0000                	unimp
+80003270:	0000                	unimp
+80003272:	0000                	unimp
+80003274:	0000                	unimp
+80003276:	0000                	unimp
+80003278:	0000                	unimp
+8000327a:	0000                	unimp
+8000327c:	0000                	unimp
+8000327e:	0000                	unimp
+80003280:	0000                	unimp
+80003282:	0000                	unimp
+80003284:	0000                	unimp
+80003286:	0000                	unimp
+80003288:	0000                	unimp
+8000328a:	0000                	unimp
+8000328c:	0000                	unimp
+8000328e:	0000                	unimp
+80003290:	0000                	unimp
+80003292:	0000                	unimp
+80003294:	0000                	unimp
+80003296:	0000                	unimp
+80003298:	0000                	unimp
+8000329a:	0000                	unimp
+8000329c:	0000                	unimp
+8000329e:	0000                	unimp
+800032a0:	0000                	unimp
+800032a2:	0000                	unimp
+800032a4:	0000                	unimp
+800032a6:	0000                	unimp
+800032a8:	0000                	unimp
+800032aa:	0000                	unimp
+800032ac:	0000                	unimp
+800032ae:	0000                	unimp
+800032b0:	0000                	unimp
+800032b2:	0000                	unimp
+800032b4:	0000                	unimp
+800032b6:	0000                	unimp
+800032b8:	0000                	unimp
+800032ba:	0000                	unimp
+800032bc:	0000                	unimp
+800032be:	0000                	unimp
+800032c0:	0000                	unimp
+800032c2:	0000                	unimp
+800032c4:	0000                	unimp
+800032c6:	0000                	unimp
+800032c8:	0000                	unimp
+800032ca:	0000                	unimp
+800032cc:	0000                	unimp
+800032ce:	0000                	unimp
+800032d0:	0000                	unimp
+800032d2:	0000                	unimp
+800032d4:	0000                	unimp
+800032d6:	0000                	unimp
+800032d8:	0000                	unimp
+800032da:	0000                	unimp
+800032dc:	0000                	unimp
+800032de:	0000                	unimp
+800032e0:	0000                	unimp
+800032e2:	0000                	unimp
+800032e4:	0000                	unimp
+800032e6:	0000                	unimp
+800032e8:	0000                	unimp
+800032ea:	0000                	unimp
+800032ec:	0000                	unimp
+800032ee:	0000                	unimp
+800032f0:	0000                	unimp
+800032f2:	0000                	unimp
+800032f4:	0000                	unimp
+800032f6:	0000                	unimp
+800032f8:	0000                	unimp
+800032fa:	0000                	unimp
+800032fc:	0000                	unimp
+800032fe:	0000                	unimp
+80003300:	0000                	unimp
+80003302:	0000                	unimp
+80003304:	0000                	unimp
+80003306:	0000                	unimp
+80003308:	0000                	unimp
+8000330a:	0000                	unimp
+8000330c:	0000                	unimp
+8000330e:	0000                	unimp
+80003310:	0000                	unimp
+80003312:	0000                	unimp
+80003314:	0000                	unimp
+80003316:	0000                	unimp
+80003318:	0000                	unimp
+8000331a:	0000                	unimp
+8000331c:	0000                	unimp
+8000331e:	0000                	unimp
+80003320:	0000                	unimp
+80003322:	0000                	unimp
+80003324:	0000                	unimp
+80003326:	0000                	unimp
+80003328:	0000                	unimp
+8000332a:	0000                	unimp
+8000332c:	0000                	unimp
+8000332e:	0000                	unimp
+80003330:	0000                	unimp
+80003332:	0000                	unimp
+80003334:	0000                	unimp
+80003336:	0000                	unimp
+80003338:	0000                	unimp
+8000333a:	0000                	unimp
+8000333c:	0000                	unimp
+8000333e:	0000                	unimp
+80003340:	0000                	unimp
+80003342:	0000                	unimp
+80003344:	0000                	unimp
+80003346:	0000                	unimp
+80003348:	0000                	unimp
+8000334a:	0000                	unimp
+8000334c:	0000                	unimp
+8000334e:	0000                	unimp
+80003350:	0000                	unimp
+80003352:	0000                	unimp
+80003354:	0000                	unimp
+80003356:	0000                	unimp
+80003358:	0000                	unimp
+8000335a:	0000                	unimp
+8000335c:	0000                	unimp
+8000335e:	0000                	unimp
+80003360:	0000                	unimp
+80003362:	0000                	unimp
+80003364:	0000                	unimp
+80003366:	0000                	unimp
+80003368:	0000                	unimp
+8000336a:	0000                	unimp
+8000336c:	0000                	unimp
+8000336e:	0000                	unimp
+80003370:	0000                	unimp
+80003372:	0000                	unimp
+80003374:	0000                	unimp
+80003376:	0000                	unimp
+80003378:	0000                	unimp
+8000337a:	0000                	unimp
+8000337c:	0000                	unimp
+8000337e:	0000                	unimp
+80003380:	0000                	unimp
+80003382:	0000                	unimp
+80003384:	0000                	unimp
+80003386:	0000                	unimp
+80003388:	0000                	unimp
+8000338a:	0000                	unimp
+8000338c:	0000                	unimp
+8000338e:	0000                	unimp
+80003390:	0000                	unimp
+80003392:	0000                	unimp
+80003394:	0000                	unimp
+80003396:	0000                	unimp
+80003398:	0000                	unimp
+8000339a:	0000                	unimp
+8000339c:	0000                	unimp
+8000339e:	0000                	unimp
+800033a0:	0000                	unimp
+800033a2:	0000                	unimp
+800033a4:	0000                	unimp
+800033a6:	0000                	unimp
+800033a8:	0000                	unimp
+800033aa:	0000                	unimp
+800033ac:	0000                	unimp
+800033ae:	0000                	unimp
+800033b0:	0000                	unimp
+800033b2:	0000                	unimp
+800033b4:	0000                	unimp
+800033b6:	0000                	unimp
+800033b8:	0000                	unimp
+800033ba:	0000                	unimp
+800033bc:	0000                	unimp
+800033be:	0000                	unimp
+800033c0:	0000                	unimp
+800033c2:	0000                	unimp
+800033c4:	0000                	unimp
+800033c6:	0000                	unimp
+800033c8:	0000                	unimp
+800033ca:	0000                	unimp
+800033cc:	0000                	unimp
+800033ce:	0000                	unimp
+800033d0:	0000                	unimp
+800033d2:	0000                	unimp
+800033d4:	0000                	unimp
+800033d6:	0000                	unimp
+800033d8:	0000                	unimp
+800033da:	0000                	unimp
+800033dc:	0000                	unimp
+800033de:	0000                	unimp
+800033e0:	0000                	unimp
+800033e2:	0000                	unimp
+800033e4:	0000                	unimp
+800033e6:	0000                	unimp
+800033e8:	0000                	unimp
+800033ea:	0000                	unimp
+800033ec:	0000                	unimp
+800033ee:	0000                	unimp
+800033f0:	0000                	unimp
+800033f2:	0000                	unimp
+800033f4:	0000                	unimp
+800033f6:	0000                	unimp
+800033f8:	0000                	unimp
+800033fa:	0000                	unimp
+800033fc:	0000                	unimp
+800033fe:	0000                	unimp
+80003400:	0000                	unimp
+80003402:	0000                	unimp
+80003404:	0000                	unimp
+80003406:	0000                	unimp
+80003408:	0000                	unimp
+8000340a:	0000                	unimp
+
+8000340c <fooTest3>:
+8000340c:	0000                	unimp
+8000340e:	0000                	unimp

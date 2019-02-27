@@ -157,7 +157,7 @@ Disassembly of section .text.init:
     80000208:	141025f3          	csrr	a1,sepc
     8000020c:	00458593          	addi	a1,a1,4
     80000210:	fab292e3          	bne	t0,a1,800001b4 <fail>
-    80000214:	14302573          	csrr	a0,sbadaddr
+    80000214:	14302573          	csrr	a0,stval
     80000218:	00050663          	beqz	a0,80000224 <stvec_handler+0x50>
     8000021c:	ffe50513          	addi	a0,a0,-2 # ffe <_start-0x7ffff002>
     80000220:	f8551ae3          	bne	a0,t0,800001b4 <fail>
