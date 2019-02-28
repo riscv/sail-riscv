@@ -143,15 +143,28 @@ val readCapRegDDC : forall 'n, 0 <= 'n < 32 . regno('n) -> Capability effect {rr
 function readCapRegDDC(n) =
   reg_deref(CapRegs[n]) /* NB CapRegs[0] points to DDC */
 
+
+$ifdef RVFI_DII
+val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit effect {wreg}
+function rvfi_wX (r,v) = {
+  rvfi_exec->rvfi_rd_wdata() = v;
+  rvfi_exec->rvfi_rd_addr() = to_bits(8,r);
+}
+$else
+val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit
+function rvfi_wX (r,v) = ()
+$endif
+
 /*!
 THIS`(cd, cap_val)` writes capability, `cap_val` capability register `cd`. Writes to register zero are ignored.
  */
 val writeCapReg : forall 'n, 0 <= 'n < 32. (regno('n), Capability) -> unit effect {wreg}
-function writeCapReg(n, cap) =
-  if (n == 0) then
-    ()
-  else
+function writeCapReg(n, cap) = {
+  if (n != 0) then {
+    rvfi_wX(n,cap.address);
     (*CapRegs[n]) = cap
+  }
+}
 
 val init_regs : unit->unit effect{wreg}
 function init_regs () = {
@@ -167,7 +180,7 @@ function init_regs () = {
   MScratchC = null_cap;
   MEPCC = null_cap;
   foreach(i from 1 to 31) {
-    writeCapReg(i, null_cap)
+    (*CapRegs[i]) = null_cap
   }
 }
 
@@ -178,22 +191,10 @@ function rX r =
   let cap_val = readCapReg(r) in
   cap_val.address
 
-$ifdef RVFI_DII
-val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit effect {wreg}
-function rvfi_wX (r,v) = {
-  rvfi_exec->rvfi_rd_wdata() = v;
-  rvfi_exec->rvfi_rd_addr() = to_bits(8,r);
-}
-$else
-val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit
-function rvfi_wX (r,v) = ()
-$endif
-
 val wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit effect {wreg}
 function wX (r, v) = {
   writeCapReg(r, {null_cap with address=v});
   if (r != 0) then {
-     rvfi_wX(r,v);
      // Xs[r] = v;
      print_reg("x" ^ string_of_int(r) ^ " <- " ^ BitStr(v));
   }
