@@ -10,10 +10,20 @@ let opt_file_arguments = ref ([] : string list)
 
 let opt_dump_dts = ref false
 let opt_dump_dtb = ref false
+let opt_signature_file = ref (None : string option)
+let opt_isa = ref (None : string option)
 
 let report_arch () =
   Printf.printf "RV%d\n" (Big_int.to_int Riscv.zxlen_val);
   exit 0
+
+let set_signature_file s =
+  opt_signature_file := Some s;
+  (* turn off logging *)
+  P.config_print_instr := false;
+  P.config_print_reg := false;
+  P.config_print_mem_access := false;
+  P.config_print_platform := false
 
 let options = Arg.align ([("-dump-dts",
                            Arg.Set opt_dump_dts,
@@ -36,6 +46,12 @@ let options = Arg.align ([("-dump-dts",
                           ("-report-arch",
                            Arg.Unit report_arch,
                            " report model architecture (RV32 or RV64)");
+                          ("-test-signature",
+                           Arg.String set_signature_file,
+                           " file for signature output (requires ELF signature symbols)");
+                          ("-isa",
+                           Arg.String (fun s -> opt_isa := Some s),
+                           " requested isa");
                           ("-with-dtc",
                            Arg.String PI.set_dtc,
                            " full path to dtc to use")
@@ -76,6 +92,46 @@ let check_elf () =
            Printf.eprintf "%s" msg;
            exit 1)
 
+(* post execution handlers *)
+
+let write_bytes fl bytes =
+  let i = ref 0 in
+  while !i < Bytes.length bytes do
+    let s = Printf.sprintf "%02x%02x%02x%02x\n"
+	(int_of_char bytes.[!i+3])
+	(int_of_char bytes.[!i+2])
+	(int_of_char bytes.[!i+1])
+	(int_of_char bytes.[!i]) in
+    output_string fl s;
+    i := !i + 4
+  done
+
+let write_signature f sig_start sig_end =
+  let b = Big_int.to_int sig_start in
+  let len = Big_int.to_int sig_end - b in
+  let sig_bytes = P.get_mem_bytes sig_start len in
+  let sig_file = open_out f in
+  write_bytes sig_file sig_bytes;
+  close_out sig_file
+
+let dump_signature () =
+  match !opt_signature_file with
+  | None -> ()
+  | Some f ->
+      match (Elf.elf_symbol "begin_signature",
+	     Elf.elf_symbol "end_signature") with
+      | Some b, Some e -> write_signature f b e
+      | None, _ -> Printf.eprintf "no begin_signature symbol in ELF"
+      | _, None -> Printf.eprintf "no end_signature symbol in ELF"
+
+let show_times init_s init_e run_e insts =
+  let init_time = init_e.Unix.tms_utime -. init_s.Unix.tms_utime in
+  let exec_time = run_e.Unix.tms_utime -. init_e.Unix.tms_utime in
+  Printf.eprintf "\nInitialization: %g secs\n" init_time;
+  Printf.eprintf "Execution: %g secs\n" exec_time;
+  Printf.eprintf "Instructions retired: %Ld\n" insts;
+  Printf.eprintf "Perf: %g ips\n" ((Int64.to_float insts) /. exec_time)
+
 (* model execution *)
 
 let run pc =
@@ -93,14 +149,6 @@ let run pc =
               prerr_endline "Error: internal error"
     )
 
-let show_times init_s init_e run_e insts =
-  let init_time = init_e.Unix.tms_utime -. init_s.Unix.tms_utime in
-  let exec_time = run_e.Unix.tms_utime -. init_e.Unix.tms_utime in
-  Printf.eprintf "\nInitialization: %g secs\n" init_time;
-  Printf.eprintf "Execution: %g secs\n" exec_time;
-  Printf.eprintf "Instructions retired: %Ld\n" insts;
-  Printf.eprintf "Perf: %g ips\n" ((Int64.to_float insts) /. exec_time)
-
 let () =
   Random.self_init ();
 
@@ -111,4 +159,5 @@ let () =
   let _ = run pc in
   let run_end = Unix.times () in
   let insts = Big_int.to_int64 (uint (!Riscv.zminstret)) in
+  dump_signature ();
   show_times init_start init_end run_end insts

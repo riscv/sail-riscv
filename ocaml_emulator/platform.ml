@@ -111,6 +111,11 @@ let term_read () =
   let c = P.term_read () in
   arch_bits_of_int (int_of_char c)
 
+(* physical memory *)
+
+let get_mem_bytes addr len =
+  read_mem_bytes addr len
+
 (* returns starting value for PC, i.e. start of reset vector *)
 let init arch elf_file =
   platform_arch := arch;
