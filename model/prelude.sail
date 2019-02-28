@@ -719,48 +719,11 @@ val eq_real = {ocaml: "eq_real", lem: "eq"} : (real, real) -> bool
 
 val eq_anything = {ocaml: "(fun (x, y) -> x = y)", lem: "eq", coq: "generic_eq"} : forall ('a : Type). ('a, 'a) -> bool
 
-val bitvector_length = {ocaml: "length", lem: "length", coq: "length_mword"} : forall 'n. bits('n) -> atom('n)
-val vector_length = {ocaml: "length", lem: "length_list", coq: "vec_length"} : forall 'n ('a : Type). vector('n, dec, 'a) -> atom('n)
-val list_length = {ocaml: "length", lem: "length_list", coq: "length_list"} : forall ('a : Type). list('a) -> int
-
-overload length = {bitvector_length, vector_length, list_length}
-
 val "reg_deref" : forall ('a : Type). register('a) -> 'a effect {rreg}
 /* sneaky deref with no effect necessary for bitfield writes */
 val _reg_deref = "reg_deref" : forall ('a : Type). register('a) -> 'a
 
 overload operator == = {eq_vec, eq_string, eq_real, eq_anything}
-
-val vector_subrange = {
-  ocaml: "subrange",
-  lem: "subrange_vec_dec",
-  c: "vector_subrange",
-  coq: "subrange_vec_dec"
-} : forall ('n : Int) ('m : Int) ('o : Int), 0 <= 'o <= 'm < 'n.
-  (bits('n), atom('m), atom('o)) -> bits('m - 'o + 1)
-/*
-val vector_subrange = {ocaml: "subrange", lem: "subrange_vec_dec", coq: "subrange_vec_dec"} : forall ('n : Int) ('m : Int) ('o : Int), 'o <= 'm <= 'n.
-  (bits('n), atom('m), atom('o)) -> bits('m - ('o - 1))
-*/
-
-val bitvector_access = {c: "bitvector_access", ocaml: "access", lem: "access_vec_dec", coq: "access_vec_dec"} : forall ('n : Int) ('m : Int), 0 <= 'm < 'n.
-  (bits('n), atom('m)) -> bit
-
-val any_vector_access = {ocaml: "access", lem: "access_list_dec", coq: "vec_access_dec"} : forall ('n : Int) ('m : Int) ('a : Type), 0 <= 'm < 'n.
-  (vector('n, dec, 'a), atom('m)) -> 'a
-
-overload vector_access = {bitvector_access, any_vector_access}
-
-val bitvector_update = {ocaml: "update", lem: "update_vec_dec", coq: "update_vec_dec"} : forall 'n.
-  (bits('n), int, bit) -> bits('n)
-
-val any_vector_update = {ocaml: "update", lem: "update_list_dec", coq: "vector_update"} : forall 'n ('a : Type).
-  (vector('n, dec, 'a), int, 'a) -> vector('n, dec, 'a)
-
-overload vector_update = {bitvector_update, any_vector_update}
-
-val update_subrange = {ocaml: "update_subrange", lem: "update_subrange_vec_dec", coq: "update_subrange_vec_dec"} : forall 'n 'm 'o.
-  (bits('n), atom('m), atom('o), bits('m - ('o - 1))) -> bits('n)
 
 val vcons = {lem: "cons_vec"} : forall ('n : Int) ('a : Type).
   ('a, vector('n, dec, 'a)) -> vector('n + 1, dec, 'a)

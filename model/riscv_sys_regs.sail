@@ -291,7 +291,9 @@ function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
 /* Legalize writes to xepc -- just clear bit zero.
    Spec says that mepc[1] is writable even if IALIGN=32 */
 function legalize_xepc(v : xlenbits) -> xlenbits =
-  [v with 0 = bitzero]
+  /* [v with 0 = bitzero] XXX we need update_lbits for C backend */
+  v & EXTS(0b10)
+  
 
 
 // masking for reads to xepc

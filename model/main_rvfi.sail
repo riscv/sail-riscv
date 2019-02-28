@@ -29,7 +29,7 @@ val rvfi_step : int -> bool effect {barr, eamem, escape, exmem, rmem, rreg, wmv,
 function rvfi_step(step_no) = {
   minstret_written = false;     /* see note for minstret */
   let (retired, stepped) : (bool, bool) =
-    match curInterrupt(cur_privilege, mip, mie, mideleg) {
+    match dispatchInterrupt(cur_privilege) {
       Some(intr, priv) => {
         print_bits("Handling interrupt: ", intr);
         handle_interrupt(intr, priv);
@@ -75,6 +75,7 @@ function rvfi_step(step_no) = {
       }
     };
   PC = nextPC;
+  PCC = nextPCC;
   rvfi_exec->rvfi_pc_wdata() = PC;
 //print_rvfi_exec();
   if retired then retire_instruction();
