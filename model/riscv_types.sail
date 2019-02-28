@@ -169,6 +169,7 @@ function writeCapReg(n, cap) = {
 val init_regs : unit->unit effect{wreg}
 function init_regs () = {
   PCC = default_cap;
+  DDC = default_cap;
   nextPCC = default_cap;
   UTCC = default_cap;
   UScratchC = null_cap;
