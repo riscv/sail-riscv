@@ -50,7 +50,7 @@ function rvfi_step(step_no) = {
                 (false, true)
               },
               Some(ast) => {
-                print("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") ");
+                print("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ ast);
                 nextPC = PC + 2;
                 (execute(ast), true)
               }
@@ -65,7 +65,7 @@ function rvfi_step(step_no) = {
                 (false, true)
               },
               Some(ast) => {
-                print("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") ");
+                print("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ ast);
                 nextPC = PC + 4;
                 (execute(ast), true)
               }
