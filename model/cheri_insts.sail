@@ -1422,6 +1422,26 @@ mapping clause encdec = CCheckType(cs, cb) <-> 0b1111111 @ 0b01001 @ cb @ 0b000 
 mapping clause encdec = ClearRegs(GPRegs, q, m3 @ m5) <-> 0b1111111 @ 0b01101 @ q : bits(2) @ m3 : bits(3) @ 0b000 @ m5 : regbits @ 0b1011011
 mapping clause encdec = ClearRegs(FPRegs, q, m3 @ m5) <-> 0b1111111 @ 0b10000 @ q : bits(2) @ m3 : bits(3) @ 0b000 @ m5 : regbits @ 0b1011011
 
+mapping clause assembly = CGetPerm(rd, cb)   <-> "CGetPerm"   ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(cb)
+mapping clause assembly = CGetType(rd, cb)   <-> "CGetType"   ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(cb)
+mapping clause assembly = CGetBase(rd, cb)   <-> "CGetBase"   ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(cb)
+mapping clause assembly = CGetLen(rd, cb)    <-> "CGetLen"    ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(cb)
+mapping clause assembly = CGetTag(rd, cb)    <-> "CGetTag"    ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(cb)
+mapping clause assembly = CGetSealed(rd, cb) <-> "CGetSealed" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(cb)
+mapping clause assembly = CGetOffset(rd, cb) <-> "CGetOffset" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(cb)
+mapping clause assembly = CGetAddr(rd, cb)   <-> "CGetAddr"   ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(cb)
+
+mapping clause assembly = CMove(cd, cs)      <-> "CMove"      ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cs)
+mapping clause assembly = CClearTag(cd, cs)  <-> "CClearTag"  ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cs)
+mapping clause assembly = CJALR(0b00000, cb) <-> "CJR"        ^ spc() ^ reg_name(cb)
+mapping clause assembly = CJALR(cd, cb)      <-> "CJALR"      ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cb)
+
+mapping clause assembly = CCheckPerm(cs, rt) <-> "CCheckPerm" ^ spc() ^ reg_name(cs) ^ sep() ^ reg_name(rt)
+mapping clause assembly = CCheckType(cs, cb) <-> "CCheckType" ^ spc() ^ reg_name(cs) ^ sep() ^ reg_name(cb)
+
+mapping clause assembly = ClearRegs(GPRegs, q, m8) <-> "Clearq"   ^ spc() ^ hex_bits_2(q) ^ sep() ^ hex_bits_8(m8)
+mapping clause assembly = ClearRegs(FPRegs, q, m8) <-> "FPClearq" ^ spc() ^ hex_bits_2(q) ^ sep() ^ hex_bits_8(m8)
+
 /* Three arg */
 
 mapping clause encdec = CSeal(cd, cs, ct)      <-> 0b0001011 @ ct @ cs @ 0b000 @ cd @ 0b1011011
@@ -1447,7 +1467,31 @@ mapping clause encdec = CSpecialRW(cd, cs, idx) <-> 0b0000001 @ idx @ cs @ 0b000
 mapping clause encdec = CIncOffsetImmediate(cd, cb, imm12) <-> imm12 : bits(12) @ cb @ 0b001 @ cd @ 0b1011011
 mapping clause encdec = CSetBoundsImmediate(cd, cb, imm12) <-> imm12 : bits(12) @ cb @ 0b010 @ cd @ 0b1011011
 
-/* Load / store data via DDC with offset rs */
+mapping clause assembly = CSeal(cd, cs, ct)      <-> "CSeal"      ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cs) ^ sep() ^ reg_name(ct)
+mapping clause assembly = CUnseal(cd, cs, ct)    <-> "CUnseal"    ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cs) ^ sep() ^ reg_name(ct)
+mapping clause assembly = CAndPerm(cd, cs, rt)   <-> "CAndPerm"   ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cs) ^ sep() ^ reg_name(rt)
+mapping clause assembly = CSetOffset(cd, cs, rt) <-> "CSetOffset" ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cs) ^ sep() ^ reg_name(rt)
+mapping clause assembly = CIncOffset(cd, cs, rt) <-> "CIncOffset" ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cs) ^ sep() ^ reg_name(rt)
+mapping clause assembly = CSetBounds(cd, cs, rt) <-> "CSetBounds" ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cs) ^ sep() ^ reg_name(rt)
+mapping clause assembly = CSetBoundsExact(cd, cs, rt) <-> "CSetBoundsExact" ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cs) ^ sep() ^ reg_name(rt)
+mapping clause assembly = CBuildCap(cd, cb, ct) <-> "CBuildCap"   ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cb) ^ sep() ^ reg_name(ct)
+mapping clause assembly = CCopyType(cd, cb, ct) <-> "CCopyType"   ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cb) ^ sep() ^ reg_name(ct)
+mapping clause assembly = CCSeal(cd, cs, ct)    <-> "CCSeal"      ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cs) ^ sep() ^ reg_name(ct)
+
+mapping clause assembly = CToPtr(rd, cb, cs)    <-> "CToPtr"      ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(cb) ^ sep() ^ reg_name(cs)
+mapping clause assembly = CFromPtr(cd, cb, rs)  <-> "CFromPtr"    ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cb) ^ sep() ^ reg_name(rs)
+mapping clause assembly = CCall(cs, cb, 0b00000) <-> "CCall"      ^ spc() ^ reg_name(cs) ^ sep() ^ reg_name(cb)
+mapping clause assembly = CCall(cs, cb, 0b00001) <-> "CCallFast"  ^ spc() ^ reg_name(cs) ^ sep() ^ reg_name(cb)
+mapping clause assembly = CCall(cs, cb, 0b11111) <-> "CCallReturn" ^ spc() ^ reg_name(cs) ^ sep() ^ reg_name(cb)
+
+mapping clause assembly = CTestSubset(rd, cb, ct) <-> "CTestSubset" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(cb) ^ sep() ^ reg_name(ct)
+mapping clause assembly = CSpecialRW(cd, cs, idx) <-> "CSpecialRW"  ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cs) ^ sep() ^ reg_name(idx)
+
+mapping clause assembly = CIncOffsetImmediate(cd, cb, imm12) <-> "CIncOffsetImmediate" ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cb) ^ sep() ^ hex_bits_12(imm12)
+mapping clause assembly = CSetBoundsImmediate(cd, cb, imm12) <-> "CSetBoundsImmediate" ^ spc() ^ reg_name(cd) ^ sep() ^ reg_name(cb) ^ sep() ^ hex_bits_12(imm12)
+
+/* Loads and stores */
+
 mapping clause encdec = CLoadDDC(rd, rs, false, BYTE)   <-> 0b0000000 @ 0b00000 @ rs @ 0b000 @ rd @ 0b1011011  /* lbddc */
 mapping clause encdec = CLoadDDC(rd, rs, false, HALF)   <-> 0b0000000 @ 0b00001 @ rs @ 0b000 @ rd @ 0b1011011  /* lhddc */
 mapping clause encdec = CLoadDDC(rd, rs, false, WORD)   <-> 0b0000000 @ 0b00010 @ rs @ 0b000 @ rd @ 0b1011011  /* lwddc */
@@ -1478,6 +1522,15 @@ mapping clause encdec = CStoreCap(rd, cs, WORD)         <-> 0b0000000 @ 0b11010 
 mapping clause encdec = CStoreCap(rd, cs, DOUBLE)       <-> 0b0000000 @ 0b11011 @ cs @ 0b000 @ rd @ 0b1011011  /* sdcap */
 mapping clause encdec = CStoreCapCap(rd, cs)            <-> 0b0000000 @ 0b11100 @ cs @ 0b000 @ rd @ 0b1011011  /* sqcap */
 mapping clause encdec = CLoadCapCap(rd, cs)             <-> 0b0000000 @ 0b11101 @ cs @ 0b000 @ rd @ 0b1011011  /* lqcap */
+
+mapping clause assembly = CLoadDDC(rd, rs, u, w) <-> "l" ^ size_mnemonic(w) ^ maybe_u(u) ^ "DDC" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs)
+mapping clause assembly = CLoadCap(rd, cs, u, w) <-> "l" ^ size_mnemonic(w) ^ maybe_u(u) ^ "Cap" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(cs)
+mapping clause assembly = CStoreDDC(rd, rs, w)   <-> "s" ^ size_mnemonic(w) ^ "DDC" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs)
+mapping clause assembly = CStoreCap(rd, rs, w)   <-> "s" ^ size_mnemonic(w) ^ "Cap" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs)
+mapping clause assembly = CStoreCapDDC(rd, rs)   <-> "lqDDC" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs)
+mapping clause assembly = CLoadCapDDC(rd, rs)    <-> "sqDDC" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs)
+mapping clause assembly = CStoreCapCap(rd, rs)   <-> "lqCap" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs)
+mapping clause assembly = CLoadCapCap(rd, rs)    <-> "sqCap" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs)
 
 /*
 
