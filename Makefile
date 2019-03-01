@@ -261,4 +261,5 @@ clean:
 	-rm -rf ocaml_emulator/_sbuild ocaml_emulator/_build ocaml_emulator/riscv_ocaml_sim ocaml_emulator/tracecmp
 	-rm -f *.gcno *.gcda
 	-Holmake cleanAll
+	-rm -f handwritten_support/riscv_extras.vo handwritten_support/riscv_extras.glob handwritten_support/.riscv_extras.aux
 	ocamlbuild -clean
