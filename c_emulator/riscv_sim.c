@@ -61,6 +61,10 @@ static int rvfi_dii_sock;
 unsigned char *spike_dtb = NULL;
 size_t spike_dtb_len = 0;
 
+char *sig_file = NULL;
+uint64_t mem_sig_start = 0;
+uint64_t mem_sig_end = 0;
+
 bool config_print_instr = true;
 bool config_print_reg = true;
 bool config_print_mem_access = true;
@@ -80,6 +84,7 @@ static struct option options[] = {
   {"terminal-log",                required_argument, 0, 't'},
   {"show-times",                  required_argument, 0, 'p'},
   {"report-arch",                 no_argument,       0, 'a'},
+  {"test-signature",              required_argument, 0, 'T'},
 #ifdef RVFI_DII
   {"rvfi-dii",                    required_argument, 0, 'r'},
 #endif
@@ -104,7 +109,7 @@ static void print_usage(const char *argv0, int ec)
 
 static void report_arch(void)
 {
-  fprintf(stdout, "RV%lu\n", zxlen_val);
+  fprintf(stdout, "RV%" PRIu64 "\n", zxlen_val);
   exit(0);
 }
 
@@ -159,7 +164,7 @@ static void read_dtb(const char *path)
   munmap(m, st.st_size);
   close(fd);
 
-  fprintf(stdout, "Read %ld bytes of DTB from %s.\n", dtb_len, path);
+  fprintf(stdout, "Read %" PRIi64 " bytes of DTB from %s.\n", dtb_len, path);
 }
 
 char *process_args(int argc, char **argv)
@@ -167,7 +172,7 @@ char *process_args(int argc, char **argv)
   int c, idx = 1;
   uint64_t ram_size = 0;
   while(true) {
-    c = getopt_long(argc, argv, "admCspz:b:t:v:hr:", options, &idx);
+    c = getopt_long(argc, argv, "admCspz:b:t:v:hr:T:", options, &idx);
     if (c == -1) break;
     switch (c) {
     case 'a':
@@ -186,6 +191,7 @@ char *process_args(int argc, char **argv)
       break;
     case 'i':
       rv_mtval_has_illegal_inst_bits = true;
+      break;
     case 's':
       do_dump_dts = true;
       break;
@@ -195,7 +201,7 @@ char *process_args(int argc, char **argv)
     case 'z':
       ram_size = atol(optarg);
       if (ram_size) {
-        fprintf(stderr, "setting ram-size to %lu MB\n", ram_size);
+        fprintf(stderr, "setting ram-size to %" PRIu64 " MB\n", ram_size);
         rv_ram_size = ram_size << 20;
       }
       break;
@@ -204,6 +210,9 @@ char *process_args(int argc, char **argv)
       break;
     case 't':
       term_log = strdup(optarg);
+      break;
+    case 'T':
+      sig_file = strdup(optarg);
       break;
     case 'h':
       print_usage(argv[0], 0);
@@ -223,7 +232,7 @@ char *process_args(int argc, char **argv)
 #ifdef RVFI_DII
   if (idx > argc || (idx == argc && !rvfi_dii)) print_usage(argv[0], 0);
 #else
-  if (idx >= argc) print_usage(argv[0], 0);
+  if (optind >= argc) print_usage(argv[0], 0);
 #endif
   if (term_log == NULL) term_log = strdup("term.log");
   if (dtb_file) read_dtb(dtb_file);
@@ -239,12 +248,12 @@ void check_elf(bool is32bit)
 {
   if (is32bit) {
     if (zxlen_val != 32) {
-      fprintf(stderr, "32-bit ELF not supported by RV%lu model.\n", zxlen_val);
+      fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n", zxlen_val);
       exit(1);
     }
   } else {
     if (zxlen_val != 64) {
-      fprintf(stderr, "64-bit ELF not supported by RV%lu model.\n", zxlen_val);
+      fprintf(stderr, "64-bit ELF not supported by RV%" PRIu64 " model.\n", zxlen_val);
       exit(1);
     }
   }
@@ -253,15 +262,25 @@ uint64_t load_sail(char *f)
 {
   bool is32bit;
   uint64_t entry;
+  uint64_t begin_sig, end_sig;
   load_elf(f, &is32bit, &entry);
   check_elf(is32bit);
-  fprintf(stdout, "ELF Entry @ %lx\n", entry);
+  fprintf(stdout, "ELF Entry @ 0x%" PRIx64 "\n", entry);
   /* locate htif ports */
   if (lookup_sym(f, "tohost", &rv_htif_tohost) < 0) {
     fprintf(stderr, "Unable to locate htif tohost port.\n");
     exit(1);
   }
-  fprintf(stderr, "tohost located at %0" PRIx64 "\n", rv_htif_tohost);
+  fprintf(stderr, "tohost located at 0x%0" PRIx64 "\n", rv_htif_tohost);
+  /* locate test-signature locations if any */
+  if (!lookup_sym(f, "begin_signature", &begin_sig)) {
+    fprintf(stdout, "begin_signature: 0x%0" PRIx64 "\n", begin_sig);
+    mem_sig_start = begin_sig;
+  }
+  if (!lookup_sym(f, "end_signature", &end_sig)) {
+    fprintf(stdout, "end_signature: 0x%0" PRIx64 "\n", end_sig);
+    mem_sig_end = end_sig;
+  }
   return entry;
 }
 
@@ -285,7 +304,7 @@ void init_spike(const char *f, uint64_t entry, uint64_t ram_size)
   }
   if (tv_ram_size(s) != rv_ram_size) {
     mismatch = true;
-    fprintf(stderr, "inconsistent ram-size setting: spike %lx, sail %lx\n",
+    fprintf(stderr, "inconsistent ram-size setting: spike 0x%" PRIx64 ", sail 0x%" PRIx64 "\n",
             tv_ram_size(s), rv_ram_size);
   }
   if (mismatch) exit(1);
@@ -305,7 +324,7 @@ void init_spike(const char *f, uint64_t entry, uint64_t ram_size)
     spike_dtb = (unsigned char *)malloc(spike_dtb_len + 1);
     spike_dtb[spike_dtb_len] = '\0';
     if (!tv_get_dtb(s, spike_dtb, &spike_dtb_len)) {
-      fprintf(stderr, "Got %ld bytes of dtb at %p\n", spike_dtb_len, spike_dtb);
+      fprintf(stderr, "Got %" PRIu64 " bytes of dtb at %p\n", spike_dtb_len, spike_dtb);
     } else {
       fprintf(stderr, "Error getting DTB from Spike.\n");
       exit(1);
@@ -419,8 +438,34 @@ int init_check(struct tv_spike_t *s)
   return passed;
 }
 
+void write_signature(const char *file)
+{
+  if (mem_sig_start >= mem_sig_end) {
+    fprintf(stderr, "Invalid signature region [0x%0" PRIx64 ",0x%0" PRIx64 "] to %s.\n",
+            mem_sig_start, mem_sig_end, file);
+    return;
+  }
+  FILE *f = fopen(file, "w");
+  if (!f) {
+    fprintf(stderr, "Cannot open file '%s': %s\n", file, strerror(errno));
+    return;
+  }
+  /* write out words in signature area */
+  for (uint64_t addr = mem_sig_start; addr < mem_sig_end; addr += 4) {
+    /* most-significant byte first */
+    for (int i = 3; i >= 0; i--) {
+      uint8_t byte = (uint8_t) read_mem(addr+i);
+      fprintf(f, "%02x", byte);
+    }
+    fprintf(f, "\n");
+  }
+  fclose(f);
+}
+
 void finish(int ec)
 {
+  if (sig_file) write_signature(sig_file);
+
   model_fini();
 #ifdef ENABLE_SPIKE
   tv_free(s);
@@ -619,7 +664,7 @@ void run_sail(void)
 
     if (zhtif_done) {
       if (!spike_done) {
-        fprintf(stdout, "Sail done (exit-code %ld), but not Spike!\n", zhtif_exit_code);
+        fprintf(stdout, "Sail done (exit-code %" PRIi64 "), but not Spike!\n", zhtif_exit_code);
         exit(1);
       }
     } else {
@@ -638,7 +683,7 @@ void run_sail(void)
       if (zhtif_exit_code == 0)
         fprintf(stdout, "SUCCESS\n");
       else
-        fprintf(stdout, "FAILURE: %lu\n", zhtif_exit_code);
+        fprintf(stdout, "FAILURE: %" PRIi64 "\n", zhtif_exit_code);
     }
 
     if (insn_cnt == rv_insns_per_tick) {
