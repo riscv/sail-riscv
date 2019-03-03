@@ -238,12 +238,10 @@ generated_definitions/coq/riscv_duopod.vo: generated_definitions/coq/riscv_duopo
 
 
 riscv_rmem: generated_definitions/lem-for-rmem/riscv.lem
-riscv_rmem: generated_definitions/lem-for-rmem/riscv_sequential.lem
 .PHONY: riscv_rmem
 
-generated_definitions/lem-for-rmem/riscv.lem:            SAIL_FLAGS += -lem_lib Riscv_extras
-generated_definitions/lem-for-rmem/riscv_sequential.lem: SAIL_FLAGS += -lem_lib Riscv_extras_sequential -lem_sequential
-generated_definitions/lem-for-rmem/%.lem: $(SAIL_RMEM_SRCS)
+generated_definitions/lem-for-rmem/riscv.lem: SAIL_FLAGS += -lem_lib Riscv_extras
+generated_definitions/lem-for-rmem/riscv.lem: $(SAIL_RMEM_SRCS)
 	mkdir -p $(dir $@)
 #	We do not need the isabelle .thy files, but sail always generates them
 	$(SAIL) $(SAIL_FLAGS) -lem -lem_mwords -lem_output_dir $(dir $@) -isa_output_dir $(dir $@) -o $(notdir $(basename $@)) $^
