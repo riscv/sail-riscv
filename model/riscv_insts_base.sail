@@ -185,11 +185,15 @@ mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) <-> 0b010000 @ sham
 
 function clause execute (SHIFTIOP(shamt, rs1, rd, op)) = {
   let rs1_val = X(rs1);
+  /* the decoder guard should ensure that shamt[5] = 0 for RV32 */
   let result : xlenbits = match op {
-    RISCV_SLLI => rs1_val << shamt,
-    RISCV_SRLI => rs1_val >> shamt,
+    RISCV_SLLI => if   sizeof(xlen) == 32
+                  then rs1_val << shamt[4..0]
+                  else rs1_val << shamt,
+    RISCV_SRLI => if   sizeof(xlen) == 32
+                  then rs1_val >> shamt[4..0]
+                  else rs1_val >> shamt,
     RISCV_SRAI => if   sizeof(xlen) == 32
-                       /* the decoder guard should ensure that shamt[5] = 0 for RV32 */
                   then shift_right_arith32(rs1_val, shamt[4..0])
                   else shift_right_arith64(rs1_val, shamt)
   };
@@ -230,8 +234,12 @@ function clause execute (RTYPE(rs2, rs1, rd, op)) = {
     RISCV_AND  => rs1_val & rs2_val,
     RISCV_OR   => rs1_val | rs2_val,
     RISCV_XOR  => rs1_val ^ rs2_val,
-    RISCV_SLL  => rs1_val << (rs2_val[5..0]),
-    RISCV_SRL  => rs1_val >> (rs2_val[5..0]),
+    RISCV_SLL  => if   sizeof(xlen) == 32
+                  then rs1_val << (rs2_val[4..0])
+                  else rs1_val << (rs2_val[5..0]),
+    RISCV_SRL  => if   sizeof(xlen) == 32
+                  then rs1_val >> (rs2_val[4..0])
+                  else rs1_val >> (rs2_val[5..0]),
     RISCV_SUB  => rs1_val - rs2_val,
     RISCV_SRA  => if   sizeof(xlen) == 32
                   then shift_right_arith32(rs1_val, rs2_val[4..0])
