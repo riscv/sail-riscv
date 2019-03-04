@@ -508,12 +508,12 @@ mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRAIW)
 
 function clause execute (SHIFTIWOP(shamt, rs1, rd, op)) = {
   let rs1_val = X(rs1);
-  let result : xlenbits = match op {
-    RISCV_SLLIW => EXTS(rs1_val[31..0] << shamt),
-    RISCV_SRLIW => EXTS(rs1_val[31..0] >> shamt),
-    RISCV_SRAIW => EXTS(shift_right_arith32(rs1_val[31..0], shamt))
+  let result : bits(32) = match op {
+    RISCV_SLLIW => rs1_val[31..0] << shamt,
+    RISCV_SRLIW => rs1_val[31..0] >> shamt,
+    RISCV_SRAIW => shift_right_arith32(rs1_val[31..0], shamt)
   };
-  X(rd) = result;
+  X(rd) = EXTS(result);
   true
 }
 
