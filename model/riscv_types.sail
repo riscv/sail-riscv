@@ -91,38 +91,38 @@ register x30 : Capability
 register x31 : Capability
 
 let CapRegs : vector(32, dec, register(Capability)) = [
-  ref DDC,
-  ref x1 ,
-  ref x2 ,
-  ref x3 ,
-  ref x4 ,
-  ref x5 ,
-  ref x6 ,
-  ref x7 ,
-  ref x8 ,
-  ref x9 ,
-  ref x10,
-  ref x11,
-  ref x12,
-  ref x13,
-  ref x14,
-  ref x15,
-  ref x16,
-  ref x17,
-  ref x18,
-  ref x19,
-  ref x20,
-  ref x21,
-  ref x22,
-  ref x23,
-  ref x24,
-  ref x25,
-  ref x26,
-  ref x27,
-  ref x28,
-  ref x29,
+  ref x31,
   ref x30,
-  ref x31
+  ref x29,
+  ref x28,
+  ref x27,
+  ref x26,
+  ref x25,
+  ref x24,
+  ref x23,
+  ref x22,
+  ref x21,
+  ref x20,
+  ref x19,
+  ref x18,
+  ref x17,
+  ref x16,
+  ref x15,
+  ref x14,
+  ref x13,
+  ref x12,
+  ref x11,
+  ref x10,
+  ref x9 ,
+  ref x8 ,
+  ref x7 ,
+  ref x6 ,
+  ref x5 ,
+  ref x4 ,
+  ref x3 ,
+  ref x2 ,
+  ref x1 ,
+  ref DDC
 ]
 
 /*!
@@ -596,3 +596,46 @@ mapping size_mnemonic : word_width <-> string = {
   WORD   <-> "w",
   DOUBLE <-> "d"
 }
+
+union DDC_Result = {
+  DDC_Address : xlenbits,
+  DDC_Failure : CapEx
+}
+
+val translateDDC : (xlenbits, AccessType, word_width) -> DDC_Result effect {rreg, escape}
+function translateDDC (addr, at, width) = {
+  let ddc = DDC;
+  let have_rqd_load_perm : bool = match at {
+    Read       => ddc.permit_load,
+    Write      => true,
+    ReadWrite  => ddc.permit_load,
+    Execute    => false /* DDC should only be for load/store */
+  };
+  let have_rqd_store_perm : bool = match at {
+    Read       => true,
+    Write      => ddc.permit_store,
+    ReadWrite  => ddc.permit_store,
+    Execute    => false /* DDC should only be for load/store */
+  };
+  let newAddr = (getCapCursor(ddc) + unsigned(addr)) % pow2(xlen);
+  let size  = word_width_bytes(width);
+  let (base, top) = getCapBounds(ddc);
+
+  if not(ddc.tag) then
+    DDC_Failure(CapEx_TagViolation)
+  else if ddc.sealed then
+    DDC_Failure(CapEx_SealViolation)
+  else if not(have_rqd_load_perm) then
+    DDC_Failure(CapEx_PermitLoadViolation)
+  else if not(have_rqd_store_perm) then
+    DDC_Failure(CapEx_PermitStoreViolation)
+  else if (newAddr + size) > top then
+    DDC_Failure(CapEx_LengthViolation)
+  else if newAddr < base then
+    DDC_Failure(CapEx_LengthViolation)
+  else
+    DDC_Address(to_bits(64, newAddr))
+}
+
+val raise_c2_exception6 : (CapEx, bits(6)) -> bool effect {escape, rreg, wreg}
+

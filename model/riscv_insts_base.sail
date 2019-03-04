@@ -283,23 +283,29 @@ function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
        }
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
-  let vaddr : xlenbits = X(rs1) + EXTS(imm);
-  if   check_misaligned(vaddr, width)
-  then { handle_mem_exception(vaddr, E_Load_Addr_Align); false }
-  else match translateAddr(vaddr, Read, Data) {
-    TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
-    TR_Address(addr) =>
-      match width {
-        BYTE   =>
-	  process_load(rd, vaddr, mem_read(addr, 1, aq, rl, false), is_unsigned),
-        HALF   =>
-	  process_load(rd, vaddr, mem_read(addr, 2, aq, rl, false), is_unsigned),
-        WORD   =>
-	  process_load(rd, vaddr, mem_read(addr, 4, aq, rl, false), is_unsigned),
-        DOUBLE =>
-	  process_load(rd, vaddr, mem_read(addr, 8, aq, rl, false), is_unsigned)
+  vaddr1 : xlenbits = X(rs1) + EXTS(imm);
+  let ddc_result = translateDDC(vaddr1, Read, width);
+  match ddc_result {
+    DDC_Failure(ex) => raise_c2_exception6(ex, 0b100001),
+    DDC_Address(vaddr) =>
+      if check_misaligned(vaddr, width)
+      then { handle_mem_exception(vaddr, E_Load_Addr_Align); false }
+      else match translateAddr(vaddr, Read, Data) {
+        TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
+        TR_Address(addr) =>
+          match width {
+            BYTE   =>
+              process_load(rd, vaddr, mem_read(addr, 1, aq, rl, false), is_unsigned),
+            HALF   =>
+              process_load(rd, vaddr, mem_read(addr, 2, aq, rl, false), is_unsigned),
+            WORD   =>
+              process_load(rd, vaddr, mem_read(addr, 4, aq, rl, false), is_unsigned),
+            DOUBLE =>
+              process_load(rd, vaddr, mem_read(addr, 8, aq, rl, false), is_unsigned)
       }
   }
+  }
+  
 }
 
 val maybe_aq : bool <-> string
@@ -333,36 +339,41 @@ mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
 function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
-  let vaddr : xlenbits = X(rs1) + EXTS(imm);
-  if   check_misaligned(vaddr, width)
-  then { handle_mem_exception(vaddr, E_SAMO_Addr_Align); false }
-  else match translateAddr(vaddr, Write, Data) {
-    TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
-    TR_Address(addr) => {
-      let eares : MemoryOpResult(unit) = match width {
-        BYTE   => mem_write_ea(addr, 1, aq, rl, false),
-        HALF   => mem_write_ea(addr, 2, aq, rl, false),
-        WORD   => mem_write_ea(addr, 4, aq, rl, false),
-        DOUBLE => mem_write_ea(addr, 8, aq, rl, false)
-      };
-      match (eares) {
-        MemException(e) => { handle_mem_exception(addr, e); false },
-        MemValue(_) => {
-          let rs2_val = X(rs2);
-          let res : MemoryOpResult(bool) = match width {
-            BYTE   => mem_write_value(addr, 1, rs2_val[7..0],  aq, rl, false),
-            HALF   => mem_write_value(addr, 2, rs2_val[15..0], aq, rl, false),
-            WORD   => mem_write_value(addr, 4, rs2_val[31..0], aq, rl, false),
-            DOUBLE => mem_write_value(addr, 8, rs2_val,        aq, rl, false)
+  let vaddr1 : xlenbits = X(rs1) + EXTS(imm);
+  let ddc_result = translateDDC(vaddr1, Write, width);
+  match ddc_result {
+    DDC_Failure(ex) => raise_c2_exception6(ex, 0b100001),
+    DDC_Address(vaddr) =>
+      if   check_misaligned(vaddr, width)
+      then { handle_mem_exception(vaddr, E_SAMO_Addr_Align); false }
+      else match translateAddr(vaddr, Write, Data) {
+        TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
+        TR_Address(addr) => {
+          let eares : MemoryOpResult(unit) = match width {
+            BYTE   => mem_write_ea(addr, 1, aq, rl, false),
+            HALF   => mem_write_ea(addr, 2, aq, rl, false),
+            WORD   => mem_write_ea(addr, 4, aq, rl, false),
+            DOUBLE => mem_write_ea(addr, 8, aq, rl, false)
           };
-          match (res) {
-            MemValue(true)     => true,
-            MemValue(false)    => internal_error("store got false from mem_write_value"),
-            MemException(e) => { handle_mem_exception(addr, e); false }
+          match (eares) {
+            MemException(e) => { handle_mem_exception(addr, e); false },
+            MemValue(_) => {
+              let rs2_val = X(rs2);
+              let res : MemoryOpResult(bool) = match width {
+                BYTE   => mem_write_value(addr, 1, rs2_val[7..0],  aq, rl, false),
+                HALF   => mem_write_value(addr, 2, rs2_val[15..0], aq, rl, false),
+                WORD   => mem_write_value(addr, 4, rs2_val[31..0], aq, rl, false),
+                DOUBLE => mem_write_value(addr, 8, rs2_val,        aq, rl, false)
+              };
+              match (res) {
+                MemValue(true)     => true,
+                MemValue(false)    => internal_error("store got false from mem_write_value"),
+                MemException(e) => { handle_mem_exception(addr, e); false }
+              }
+            }
           }
         }
       }
-    }
   }
 }
 
