@@ -280,12 +280,10 @@ generated_definitions/coq/$(ARCH)/riscv.vo: generated_definitions/coq/$(ARCH)/ri
 generated_definitions/coq/$(ARCH)/riscv_duopod.vo: generated_definitions/coq/$(ARCH)/riscv_duopod_types.vo handwritten_support/riscv_extras.vo
 
 riscv_rmem: generated_definitions/lem-for-rmem/riscv.lem
-riscv_rmem: generated_definitions/lem-for-rmem/riscv_sequential.lem
 .PHONY: riscv_rmem
 
-generated_definitions/lem-for-rmem/riscv.lem:            SAIL_FLAGS += -lem_lib Riscv_extras
-generated_definitions/lem-for-rmem/riscv_sequential.lem: SAIL_FLAGS += -lem_lib Riscv_extras_sequential -lem_sequential
-generated_definitions/lem-for-rmem/%.lem: $(SAIL_RMEM_SRCS)
+generated_definitions/lem-for-rmem/riscv.lem: SAIL_FLAGS += -lem_lib Riscv_extras
+generated_definitions/lem-for-rmem/riscv.lem: $(SAIL_RMEM_SRCS)
 	mkdir -p $(dir $@)
 #	We do not need the isabelle .thy files, but sail always generates them
 	$(SAIL) $(SAIL_FLAGS) -lem -lem_mwords -lem_output_dir $(dir $@) -isa_output_dir $(dir $@) -o $(notdir $(basename $@)) $^
@@ -303,4 +301,5 @@ clean:
 	-rm -rf ocaml_emulator/_sbuild ocaml_emulator/_build ocaml_emulator/riscv_ocaml_sim_RV32 ocaml_emulator/riscv_ocaml_sim_RV64 ocaml_emulator/tracecmp
 	-rm -f *.gcno *.gcda
 	-Holmake cleanAll
+	-rm -f handwritten_support/riscv_extras.vo handwritten_support/riscv_extras.glob handwritten_support/.riscv_extras.aux
 	ocamlbuild -clean
