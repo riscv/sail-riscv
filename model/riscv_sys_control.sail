@@ -29,8 +29,7 @@ function is_CSR_defined (csr : bits(12), p : Privilege) -> bool =
     0x344 => p == Machine, // mip
 
     0x3A0 => p == Machine, // pmpcfg0
-    0x3B0 => false, // (Disabled for Spike compatibility)
-//  0x3B0 => p == Machine, // pmpaddr0
+    0x3B0 => p == Machine, // pmpaddr0
 
     /* counters */
     0xB00 => p == Machine, // mcycle
