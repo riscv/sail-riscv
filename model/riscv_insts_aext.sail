@@ -41,8 +41,8 @@ function process_loadres(rd, addr, value, is_unsigned) =
 
 function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
   if haveAtomics() then {
-    let vaddr : xlenbits = X(rs1);
-    let ddc_result = translateDDC(vaddr, Write, width);
+    let vaddr1 : xlenbits = X(rs1);
+    let ddc_result = translateDDC(vaddr1, Write, width);
     match ddc_result {
       DDC_Failure(ex) => raise_c2_exception6(ex, 0b100001),
       DDC_Address(vaddr) => {
@@ -99,8 +99,8 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
       /* normal non-rmem case
        * rmem: SC is allowed to succeed (but might fail later)
        */
-      vaddr : xlenbits = X(rs1);
-      let ddc_result = translateDDC(vaddr, Write, width);
+      vaddr1 : xlenbits = X(rs1);
+      let ddc_result = translateDDC(vaddr1, Write, width);
       match ddc_result {
         DDC_Failure(ex) => raise_c2_exception6(ex, 0b100001),
         DDC_Address(vaddr) => {
@@ -183,8 +183,8 @@ mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)
    This may need revisiting. */
 function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   if haveAtomics() then {
-    vaddr : xlenbits = X(rs1);
-    let ddc_result = translateDDC(vaddr, Write, width);
+    vaddr1 : xlenbits = X(rs1);
+    let ddc_result = translateDDC(vaddr1, Write, width);
     match ddc_result {
       DDC_Failure(ex) => raise_c2_exception6(ex, 0b100001),
       DDC_Address(vaddr) => {
