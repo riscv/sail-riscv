@@ -50,11 +50,11 @@ function translateAddr(vAddr, ac, rt) = {
 
   match mode {
     Sbare => TR_Address(vAddr),
-    SV39  => match translate39(asid, ptb, vAddr[38 .. 0], ac, effPriv, mxr, do_sum, SV39_LEVELS - 1) {
+    Sv39  => match translate39(asid, ptb, vAddr[38 .. 0], ac, effPriv, mxr, do_sum, SV39_LEVELS - 1) {
                TR_Address(pa) => TR_Address(EXTZ(pa)),
                TR_Failure(f)  => TR_Failure(translationException(ac, f))
              },
-    SV48  => match translate48(asid, ptb, vAddr[47 .. 0], ac, effPriv, mxr, do_sum, SV48_LEVELS - 1) {
+    Sv48  => match translate48(asid, ptb, vAddr[47 .. 0], ac, effPriv, mxr, do_sum, SV48_LEVELS - 1) {
                TR_Address(pa) => TR_Address(EXTZ(pa)),
                TR_Failure(f)  => TR_Failure(translationException(ac, f))
              },
