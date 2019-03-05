@@ -90,14 +90,14 @@ have tested Isabelle 2018, Coq 8.8.1, and HOL4 Kananaskis-12.
 Executing test binaries
 -----------------------
 
-The C and OCaml simulators can be used to execute small test RV64 binaries.
+The C and OCaml simulators can be used to execute small test binaries.
 
 ```
-$ ./ocaml_emulator/riscv_ocaml_sim  <elf-file>
-$ ./c_emulator/riscv_sim <elf-file>
+$ ./ocaml_emulator/riscv_ocaml_sim_<arch>  <elf-file>
+$ ./c_emulator/riscv_sim_<arch> <elf-file>
 ```
 Some information on additional configuration options for each simulator is available
-from `./ocaml_emulator/riscv_ocaml_sim -h` and `./c_emulator/riscv_sim -h`.
+from `./ocaml_emulator/riscv_ocaml_sim_<arch> -h` and `./c_emulator/riscv_sim_<arch> -h`.
 
 Booting Linux with the C backend
 --------------------------------
@@ -109,7 +109,7 @@ a DTB (device-tree blob) file describing the platform (say in the file
 the model should be run as:
 
 ```
-$ ./c_emulator/riscv_sim -t console.log -b spike.dtb bbl > execution-trace.log 2>&1 &
+$ ./c_emulator/riscv_sim_<arch> -t console.log -b spike.dtb bbl > execution-trace.log 2>&1 &
 $ tail -f console.log
 ```
 The `console.log` file contains the console boot messages. For maximum
@@ -123,7 +123,7 @@ Booting Linux with the OCaml backend
 The OCaml model only needs the ELF-version of the BBL, since it can generate its
 own DTB.
 ```
-$ ./ocaml_emulator/riscv_ocaml_sim bbl > execution-trace.log 2> console.log
+$ ./ocaml_emulator/riscv_ocaml_sim_<arch> bbl > execution-trace.log 2> console.log
 ```
 
 Generating input files for Linux boot

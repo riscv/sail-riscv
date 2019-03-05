@@ -188,9 +188,9 @@ latex: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/latex
 	$(SAIL) -latex -latex_prefix sail -o generated_definitions/latex $(SAIL_SRCS)
 
-generated_definitions/isabelle/ROOT: handwritten_support/ROOT
-	mkdir -p generated_definitions/isabelle
-	cp handwritten_support/ROOT generated_definitions/isabelle/
+generated_definitions/isabelle/$(ARCH)/ROOT: handwritten_support/ROOT
+	mkdir -p generated_definitions/isabelle/$(ARCH)
+	cp handwritten_support/ROOT generated_definitions/isabelle/$(ARCH)/
 
 generated_definitions/lem/riscv_duopod.lem: $(PRELUDE_SRCS) model/riscv_duopod.sail
 	mkdir -p generated_definitions/lem
@@ -211,7 +211,7 @@ endif
 ifeq ($(wildcard $(SAIL_LIB_DIR)/isabelle),)
 	$(error lib directory of Sail not found. Please set the SAIL_LIB_DIR environment variable)
 endif
-	isabelle build -b -d $(LEM_DIR)/isabelle-lib -d $(SAIL_LIB_DIR)/isabelle -d generated_definitions/isabelle Sail-RISC-V
+	isabelle build -b -d $(LEM_DIR)/isabelle-lib -d $(SAIL_LIB_DIR)/isabelle -d generated_definitions/isabelle/$(ARCH) Sail-RISC-V
 
 .PHONY: riscv_isa riscv_isa_build
 
@@ -223,7 +223,7 @@ generated_definitions/lem/$(ARCH)/riscv_sequential.lem: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/lem/$(ARCH) generated_definitions/isabelle/$(ARCH)
 	$(SAIL_DIR)/sail -lem -lem_output_dir generated_definitions/lem/$(ARCH) -isa_output_dir generated_definitions/isabelle/$(ARCH) -lem_sequential -o riscv_sequential -lem_mwords -lem_lib Riscv_extras_sequential $(SAIL_SRCS)
 
-generated_definitions/isabelle/$(ARCH)/Riscv.thy: generated_definitions/isabelle/ROOT generated_definitions/lem/$(ARCH)/riscv.lem handwritten_support/$(RISCV_EXTRAS_LEM) Makefile
+generated_definitions/isabelle/$(ARCH)/Riscv.thy: generated_definitions/isabelle/$(ARCH)/ROOT generated_definitions/lem/$(ARCH)/riscv.lem handwritten_support/$(RISCV_EXTRAS_LEM) Makefile
 	lem -isa -outdir generated_definitions/isabelle/$(ARCH) -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
 		handwritten_support/$(RISCV_EXTRAS_LEM) \
 		generated_definitions/lem/$(ARCH)/riscv_types.lem \
