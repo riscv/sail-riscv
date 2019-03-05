@@ -43,7 +43,7 @@ function translateAddr(vAddr, ac, rt) = {
 
   match mode {
     Sbare => TR_Address(vAddr),
-    Sv39  => match translate32(asid, ptb, vAddr, ac, effPriv, mxr, do_sum, SV32_LEVELS - 1) {
+    Sv32  => match translate32(asid, ptb, vAddr, ac, effPriv, mxr, do_sum, SV32_LEVELS - 1) {
                TR_Address(pa) => TR_Address(to_phys_addr(pa)),
                TR_Failure(f)  => TR_Failure(translationException(ac, f))
              },
