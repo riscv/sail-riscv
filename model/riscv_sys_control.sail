@@ -53,6 +53,11 @@ function is_CSR_defined (csr : bits(12), p : Privilege) -> bool =
     /* disabled trigger/debug module */
     0x7a0 => p == Machine,
 
+    /* counters */
+    0xC00 => true,
+    0xC01 => false, // mtime is memory-mapped
+    0xC02 => true,
+
     /* check extensions */
     _     => is_UExt_CSR_defined(csr, p)   // 'N' extension
   }
