@@ -76,9 +76,9 @@ function check_Counteren(csr : csreg, p : Privilege) -> bool =
     (0xC01, Supervisor) => mcounteren.TM() == true,
     (0xC02, Supervisor) => mcounteren.IR() == true,
 
-    (0xC00, User) => scounteren.CY() == true,
-    (0xC01, User) => scounteren.TM() == true,
-    (0xC02, User) => scounteren.IR() == true,
+    (0xC00, User) => mcounteren.CY() == true & scounteren.CY() == true,
+    (0xC01, User) => mcounteren.TM() == true & scounteren.TM() == true,
+    (0xC02, User) => mcounteren.IR() == true & scounteren.IR() == true,
 
     (_, _) => /* no HPM counters for now */
               if   0xC03 <=_u csr & csr <=_u 0xC1F
