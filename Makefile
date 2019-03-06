@@ -80,6 +80,10 @@ generated_definitions/ocaml/riscv.ml: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/ocaml
 	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml-nobuild -ocaml_build_dir generated_definitions/ocaml -o riscv $(SAIL_SRCS)
 
+generated_definitions/ocaml/riscv-ast.ml: $(SAIL_SRCS) Makefile
+	mkdir -p generated_definitions/ocaml
+	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml-nobuild -ocaml_build_dir generated_definitions/ocaml -ocaml_generators ast -o riscv-ast $(SAIL_SRCS)
+
 ocaml_emulator/_sbuild/riscv_ocaml_sim.native: generated_definitions/ocaml/riscv.ml ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) Makefile
 	mkdir -p ocaml_emulator/_sbuild
 	cp ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) generated_definitions/ocaml/*.ml ocaml_emulator/_sbuild
