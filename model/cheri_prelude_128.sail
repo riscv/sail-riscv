@@ -377,7 +377,7 @@ function setCapOffset(c, offset) : (Capability, bits(64)) -> (bool, Capability) 
 
 function setCapOffsetOrNull (cap, offset) : (Capability, bits(64)) -> Capability =
     let (representable, newCap) = setCapOffset(cap, offset) in
-    if representable then newCap else int_to_cap(newCap.address)
+    if representable & not(cap.sealed) then newCap else int_to_cap(newCap.address)
 
 function incCapOffset(c, delta) : (Capability, bits(64)) -> (bool, Capability) =
     let newAddress : bits(64) = c.address + delta in
