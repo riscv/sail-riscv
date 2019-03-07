@@ -5,10 +5,10 @@ This repository contains a model of the RISCV architecture written in
 [Sail](https://www.cl.cam.ac.uk/~pes20/sail/). It used to be contained
 in the [Sail repository](https://github.com/rems-project/sail).
 
-It currently implements enough of RV64IMAC to boot a conventional OS
-with a terminal output device.  Work on a 32-bit model is ongoing.
-The model specifies assembly language formats of the instructions,
-the corresponding encoders and decoders, and the instruction semantics.
+It currently implements enough of RV32IMAC and RV64IMAC to boot a
+conventional OS with a terminal output device.  The model specifies
+assembly language formats of the instructions, the corresponding
+encoders and decoders, and the instruction semantics.
 
 Directory Structure
 -------------------
@@ -106,9 +106,9 @@ $ ./c_emulator/riscv_sim_<arch> <elf-file>
 ```
 
 A suite of RV32 and RV64 test programs derived from the
-[`riscv-tests`](https://github.com/riscv/riscv-tests) in included
-under [test/riscv-tests/](test/riscv-tests/).  The test-suite can be
-run using `test/run_tests.sh`.
+[`riscv-tests`](https://github.com/riscv/riscv-tests) test-suite is
+included under [test/riscv-tests/](test/riscv-tests/).  The test-suite
+can be run using `test/run_tests.sh`.
 
 Some information on additional configuration options for each
 simulator is available from `./ocaml_emulator/riscv_ocaml_sim_<arch>
