@@ -1,6 +1,12 @@
 Booting OS images
 =================
 
+The Sail model implements a very simple platform based on the one
+implemented by the Spike reference simulator.  It implements a console
+output port similar to Spike's HTIF (host-target interface) mechanism,
+and an interrupt controller based on Spike's CLINT (core-local
+interrupt controller).  Console input is not currently supported.
+
 Booting Linux with the C backend
 --------------------------------
 
@@ -28,25 +34,6 @@ own DTB.
 $ ./ocaml_emulator/riscv_ocaml_sim_<arch> bbl > execution-trace.log 2> console.log
 ```
 
-Generating input files for Linux boot
--------------------------------------
-
-One could directly build Linux and the toolchain using
-`https://github.com/sifive/freedom-u-sdk`.  The built `bbl`
-will be available in `./work/riscv-pk/bbl`.  You will need to configure
-a kernel that can be booted on Spike; in particular, it should be
-configured to use the HTIF console.
-
-The DTB can be generated using Spike and the DeviceTree compiler
-`dtc` as:
-
-```
-spike --dump-dts . | dtc > spike.dtb
-```
-
-(The '.' above is to work around a minor Spike bug and may not be
-needed in future Spike versions.)
-
 Caveats for OS boot
 -------------------
 
@@ -71,7 +58,13 @@ be patched to boot them:
 patch -p1 < os-boot/os-boot-patch.diff
 ```
 
-The device-tree can be compiled from its source:
+The device-tree for the 64-bit Sail model is described in `rv64-64mb.dts`.  This file
+can be generated using:
+```
+./ocaml_emulator/riscv_ocaml_sim_RV64 -dump-dts > os-boot/rv64-64mb.dts
+```
+
+The device-tree binary for OS boots can be compiled from that source file:
 ```
 dtc < os-boot/rv64-64mb.dts > os-boot/rv64-64mb.dtb
 ```
