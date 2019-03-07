@@ -123,9 +123,9 @@ simulator is available from `./ocaml_emulator/riscv_ocaml_sim_<arch>
 -h` and `./c_emulator/riscv_sim_<arch> -h`.
 
 Some useful options are: configuring whether misaligned accesses trap
-(--enable-misaligned for C and -enable-misaligned for OCaml), and
-whether page-table walks update PTE bits (--enable-dirty-update for C
-and -enable-dirty-update for OCaml).
+(`--enable-misaligned` for C and `-enable-misaligned` for OCaml), and
+whether page-table walks update PTE bits (`--enable-dirty-update` for C
+and `-enable-dirty-update` for OCaml).
 
 Booting OS images
 -----------------

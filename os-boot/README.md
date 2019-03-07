@@ -75,12 +75,16 @@ The 64-bit Linux image can then be booted as:
 tail -f /tmp/console.log
 ```
 
-The 64-bit seL4 image runs its test-suite, which can take a very long time in a simulator:
-```
-./c_emulator/riscv_sim_RV64 -b os-boot/rv64-64mb.dtb -t /tmp/console.log os-boot/sel4-rv64.bbl > >(gzip -c - > /tmp/exec-trace.log.gz) 2>&1
-```
-
 The 64-bit FreeBSD image requires hardware PTE update support (`-d`):
 ```
 ./c_emulator/riscv_sim_RV64 -d -b os-boot/rv64-64mb.dtb -t /tmp/console.log os-boot/freebsd-rv64.bbl > >(gzip -c - > /tmp/exec-trace.log.gz) 2>&1
 ```
+
+The 64-bit seL4 image runs its test-suite and requires more memory (`-z`):
+```
+dtc < os-boot/rv64-2gb.dts > os-boot/rv64-2gb.dtb
+./c_emulator/riscv_sim_RV64 -z 2048 -b os-boot/rv64-2gb.dtb -t /tmp/console.log os-boot/sel4-rv64.bbl > >(gzip -c - > /tmp/exec-trace.log.gz) 2>&1
+```
+
+Note that the consistency of the `-z` argument and the contents of the
+DTB have to be ensured manually for now.
