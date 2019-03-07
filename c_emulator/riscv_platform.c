@@ -2,6 +2,7 @@
 #include "rts.h"
 #include "riscv_prelude.h"
 #include "riscv_platform_impl.h"
+#include "riscv_sail.h"
 
 /* This file contains the definitions of the C externs of Sail model. */
 
@@ -46,12 +47,21 @@ unit load_reservation(mach_bits addr)
 bool speculate_conditional(unit u)
 { return true; }
 
+static mach_bits check_mask(void)
+{
+  return (zxlen_val == 32) ? 0x00000000FFFFFFFF : -1;
+}
+
 bool match_reservation(mach_bits addr)
-{ /*
-  fprintf(stderr, "reservation(%c): %0" PRIx64 ", key=%0" PRIx64 "\n",
-	  reservation_valid ? 'v' : 'i', reservation, addr);
+{
+  mach_bits mask = check_mask();
+  bool ret = reservation_valid && (reservation & mask) == (addr & mask);
+  /*
+  fprintf(stderr, "reservation(%c): %0" PRIx64 ", key=%0" PRIx64 ": %s\n",
+	  reservation_valid ? 'v' : 'i', reservation, addr, ret ? "ok" : "fail");
   */
-  return reservation_valid && reservation == addr;
+
+  return ret;
 }
 
 unit cancel_reservation(unit u)
