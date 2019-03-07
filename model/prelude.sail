@@ -101,8 +101,6 @@ overload min = {min_nat, min_int}
 
 overload max = {max_nat, max_int}
 
-val replicate_bits = "replicate_bits" : forall 'n 'm, 'm >= 0. (bits('n), atom('m)) -> bits('n * 'm)
-
 val pow2 = "pow2" : forall 'n. atom('n) -> atom(2 ^ 'n)
 
 val print = "print_endline" : string -> unit
