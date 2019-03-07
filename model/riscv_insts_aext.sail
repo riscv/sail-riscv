@@ -109,7 +109,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
       else {
         if match_reservation(vaddr) == false then {
           /* cannot happen in rmem */
-          X(rd) = EXTZ(0b1); true
+          X(rd) = EXTZ(0b1); cancel_reservation(); true
         } else {
           match translateAddr(vaddr, Write, Data) {
             TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
