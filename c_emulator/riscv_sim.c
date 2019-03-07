@@ -74,7 +74,7 @@ struct timeval init_start, init_end, run_end;
 int total_insns = 0;
 
 static struct option options[] = {
-  {"enable-dirty",                no_argument,       0, 'd'},
+  {"enable-dirty-update",         no_argument,       0, 'd'},
   {"enable-misaligned",           no_argument,       0, 'm'},
   {"ram-size",                    required_argument, 0, 'z'},
   {"disable-compressed",          no_argument,       0, 'C'},
