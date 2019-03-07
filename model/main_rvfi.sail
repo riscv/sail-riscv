@@ -4,19 +4,19 @@ val rvfi_fetch : unit -> FetchResult effect {escape, rmem, rreg, wmv, wreg}
 
 function rvfi_fetch() =
   /* check for legal PC */
-  if (PC[0] != 0b0 | (PC[1] != 0b0 & (~ (haveRVC()))))
+  if   (PC[0] != 0b0 | (PC[1] != 0b0 & (~ (haveRVC()))))
   then F_Error(E_Fetch_Addr_Align, PC)
   else {
     let i = rvfi_instruction.rvfi_insn();
     rvfi_exec->rvfi_order() = minstret;
     rvfi_exec->rvfi_pc_rdata() = PC;
-    rvfi_exec->rvfi_insn() = zero_extend(i,64);
+    rvfi_exec->rvfi_insn() = sail_zero_extend(i,64);
     /* TODO: should we write these even if they're not really registers? */
     rvfi_exec->rvfi_rs1_data() = X(i[19 .. 15]);
     rvfi_exec->rvfi_rs2_data() = X(i[24 .. 20]);
-    rvfi_exec->rvfi_rs1_addr() = zero_extend(i[19 .. 15],8);
-    rvfi_exec->rvfi_rs2_addr() = zero_extend(i[24 .. 20],8);
-    if (i[1 .. 0] == 0b11)
+    rvfi_exec->rvfi_rs1_addr() = sail_zero_extend(i[19 .. 15],8);
+    rvfi_exec->rvfi_rs2_addr() = sail_zero_extend(i[24 .. 20],8);
+    if   (i[1 .. 0] == 0b11)
     then F_Base(i)
     else F_RVC(i[15 .. 0])
   }
@@ -29,7 +29,7 @@ val rvfi_step : int -> bool effect {barr, eamem, escape, exmem, rmem, rreg, wmv,
 function rvfi_step(step_no) = {
   minstret_written = false;     /* see note for minstret */
   let (retired, stepped) : (bool, bool) =
-    match curInterrupt(cur_privilege, mip, mie, mideleg) {
+    match dispatchInterrupt(cur_privilege) {
       Some(intr, priv) => {
         print_bits("Handling interrupt: ", intr);
         handle_interrupt(intr, priv);
@@ -51,8 +51,13 @@ function rvfi_step(step_no) = {
               },
               Some(ast) => {
                 print("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ ast);
-                nextPC = PC + 2;
-                (execute(ast), true)
+                /* check for RVC once here instead of every RVC execute clause. */
+                if haveRVC() then {
+                  nextPC = PC + 2;
+                  (execute(ast), true)
+                } else {
+                  (false, true)
+                }
               }
             }
           },
@@ -95,7 +100,7 @@ function main () = {
   rvfi_zero_exec_packet();
   rvfi_halt_exec_packet();
   let _ = rvfi_get_exec_packet();
-  PC = zero_extend(0x1000, 64);
+  PC = sail_zero_extend(0x1000, 64);
   print_bits("PC = ", PC);
   try {
     init_platform();

@@ -34,7 +34,7 @@ function rvfi_read (addr, width, result) = {
   MemValue(v) =>
     if width <= 8
     then {
-      rvfi_exec->rvfi_mem_wdata() = zero_extend(v,64);
+      rvfi_exec->rvfi_mem_wdata() = sail_zero_extend(v,64);
       rvfi_exec->rvfi_mem_wmask() = to_bits(8,width)
     } else (),
   MemException(_) => ()
@@ -116,7 +116,7 @@ val rvfi_write : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> unit e
 function rvfi_write (addr, width, value) = {
   rvfi_exec->rvfi_mem_addr() = addr;
   if width <= 8 then {
-    rvfi_exec->rvfi_mem_wdata() = zero_extend(value,64);
+    rvfi_exec->rvfi_mem_wdata() = sail_zero_extend(value,64);
     rvfi_exec->rvfi_mem_wmask() = to_bits(8,width);
   }
 }

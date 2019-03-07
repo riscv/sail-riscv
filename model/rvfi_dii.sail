@@ -63,7 +63,7 @@ register rvfi_exec : RVFI_DII_Execution_Packet
 val rvfi_zero_exec_packet : unit -> unit effect {wreg}
 
 function rvfi_zero_exec_packet () =
-  rvfi_exec = Mk_RVFI_DII_Execution_Packet(zero_extend(0b0,704))
+  rvfi_exec = Mk_RVFI_DII_Execution_Packet(sail_zero_extend(0b0,704))
 
 val rvfi_halt_exec_packet : unit -> unit effect {wreg}
 
