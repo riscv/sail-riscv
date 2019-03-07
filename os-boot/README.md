@@ -1,3 +1,6 @@
+Booting OS images
+=================
+
 Booting Linux with the C backend
 --------------------------------
 

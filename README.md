@@ -110,6 +110,9 @@ A suite of RV32 and RV64 test programs derived from the
 included under [test/riscv-tests/](test/riscv-tests/).  The test-suite
 can be run using `test/run_tests.sh`.
 
+Configuring platform options
+----------------------------
+
 Some information on additional configuration options for each
 simulator is available from `./ocaml_emulator/riscv_ocaml_sim_<arch>
 -h` and `./c_emulator/riscv_sim_<arch> -h`.
@@ -118,6 +121,9 @@ Some useful options are: configuring whether misaligned accesses trap
 (--enable-misaligned for C and -enable-misaligned for OCaml), and
 whether page-table walks update PTE bits (--enable-dirty-update for C
 and -enable-dirty-update for OCaml).
+
+Booting OS images
+-----------------
 
 For booting operating system images, see the information under the
 [os-boot/](os-boot/) subdirectory.
