@@ -295,7 +295,7 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
        };
 
        /* XXX should legalize pc here? */
-       let (representable, mepcc) = setCapOffset(PCC, pc);
+       let (representable, mepcc) = setCapAddr(PCC, pc);
        assert(representable, "mepcc should always be representable");
        MEPCC           = mepcc;
        
@@ -331,7 +331,7 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
           _ => ()
        };
        
-       let (representable, sepcc) = setCapOffset(PCC, pc);
+       let (representable, sepcc) = setCapAddr(PCC, pc);
        assert(representable, "sepcc should always be representable");
        SEPCC           = sepcc;
 
@@ -362,7 +362,7 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
           _ => ()
        };
        
-       let (representable, uepcc) = setCapOffset(PCC, pc);
+       let (representable, uepcc) = setCapAddr(PCC, pc);
        assert(representable, "UEPCC should always be representable");
        UEPCC           = uepcc;
 
@@ -399,7 +399,7 @@ function handle_exception(cur_priv : Privilege, ctl : ctl_result,
       print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
 
       cancel_reservation();
-      getCapOffsetBits(MEPCC) & pc_alignment_mask()
+      MEPCC.address & pc_alignment_mask()
     },
     (_, CTL_SRET())  => {
       let prev_priv   = cur_privilege;
@@ -413,7 +413,7 @@ function handle_exception(cur_priv : Privilege, ctl : ctl_result,
       print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
 
       cancel_reservation();
-      getCapOffsetBits(SEPCC) & pc_alignment_mask()
+      SEPCC.address & pc_alignment_mask()
     },
     (_, CTL_URET())  => {
       let prev_priv   = cur_privilege;
@@ -425,7 +425,7 @@ function handle_exception(cur_priv : Privilege, ctl : ctl_result,
       print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
 
       cancel_reservation();
-      getCapOffsetBits(UEPCC) & pc_alignment_mask()
+      UEPCC.address & pc_alignment_mask()
     }
   }
 }

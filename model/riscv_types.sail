@@ -7,6 +7,9 @@ let xlen_max_unsigned = 2 ^ xlen - 1
 let xlen_max_signed = 2 ^ (xlen - 1) - 1
 let xlen_min_signed = 0 - 2 ^ (xlen - 1)
 
+/* The minimum number of bytes in an instruction */
+let min_inst_bytes = 2
+
 type half = bits(16)
 type word = bits(32)
 
@@ -181,7 +184,7 @@ function init_regs () = {
   MScratchC = null_cap;
   MEPCC = null_cap;
   foreach(i from 1 to 31) {
-    (*CapRegs[i]) = null_cap
+    (*CapRegs[i]) = default_cap
   }
 }
 

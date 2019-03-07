@@ -15,11 +15,10 @@ mapping clause encdec = UTYPE(imm, rd, op)
 
 function clause execute UTYPE(imm, rd, op) = {
   let off : xlenbits = EXTS(imm @ 0x000);
-  let ret : xlenbits = match op {
-    RISCV_LUI   => off,
-    RISCV_AUIPC => PC + off
+  match op {
+    RISCV_LUI   => X(rd) = off,
+    RISCV_AUIPC => writeCapReg(rd, setCapAddrOrNull(PCC, PC+off))
   };
-  X(rd) = ret;
   true
 }
 
@@ -52,11 +51,14 @@ but this is difficult
 function clause execute (RISCV_JAL(imm, rd)) = {
   let pc : xlenbits = PC;
   let newPC : xlenbits = pc + EXTS(imm);
-  if newPC[1] & (~ (haveRVC())) then {
+  if not(inCapBounds(PCC, newPC, min_inst_bytes)) then {
+    raise_c2_exception6(CapEx_LengthViolation, 0b100000);
+  } else if newPC[1] & (~ (haveRVC())) then {
     handle_mem_exception(newPC, E_Fetch_Addr_Align);
     false
   } else {
-    X(rd) = nextPC;  /* compatible with JAL and C.JAL */
+    /* because PC is absolute but architectural PC is relative to PCC.base we must subtract base here */
+    X(rd) = nextPC - getCapBaseBits(PCC);  /* compatible with JAL and C.JAL */
     nextPC = newPC;
     true
   }
@@ -106,7 +108,9 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
   };
   let newPC = PC + EXTS(imm);
   if taken then {
-    if newPC[1] & (~ (haveRVC())) then {
+    if not(inCapBounds(PCC, newPC, min_inst_bytes)) then {
+      raise_c2_exception6(CapEx_LengthViolation, 0b100000);
+    } else if newPC[1] & (~ (haveRVC())) then {
       handle_mem_exception(newPC, E_Fetch_Addr_Align);
       false;
     } else {

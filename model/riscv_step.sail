@@ -13,7 +13,7 @@ function isRVC(h : half) -> bool =
 val fetch : unit -> FetchResult effect {escape, rmem, rreg, wmv, wmvt, wreg}
 function fetch() -> FetchResult = {
   /* check for legal PC */
-  let abs_pc = getCapBase(PCC) + unsigned(PC);
+  let abs_pc = unsigned(PC);
   let abs_pc_bits = to_bits(xlen, abs_pc);
   let (pcc_base, pcc_top) = getCapBounds(PCC);
   if not(PCC.tag) then

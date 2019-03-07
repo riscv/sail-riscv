@@ -289,6 +289,9 @@ function getCapBase(c) : Capability -> uint64 =
     let (base, _) = getCapBounds(c) in
     base
 
+function getCapBaseBits(c) : Capability -> bits(64) =
+    to_bits(64, getCapBase(c))
+
 function getCapTop (c) : Capability -> CapLen =
     let (_, top) = getCapBounds(c) in
     top
@@ -310,6 +313,13 @@ function getCapLength(c) : Capability -> CapLen =
         assert (not(c.tag) | top >= base);
         (top - base) % pow2(65)
     }
+
+val inCapBounds  : (Capability, bits(64), uint64) -> bool
+function inCapBounds (cap, addr, size) = {
+  let (base, top) = getCapBounds(cap);
+  let a = unsigned(addr);
+  (a >= base) & ((a + size) <= top)
+}
 
 function getCapCursor(cap) : Capability -> uint64 = unsigned(cap.address)
 

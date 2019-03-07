@@ -65,23 +65,9 @@ function raise_c2_exception_pcc(capEx) =
 val pcc_access_system_regs : unit -> bool effect {rreg}
 function pcc_access_system_regs () = PCC.access_system_regs
 
-val execute_branch : xlenbits -> bool effect {escape, rreg, wreg}
-function execute_branch (pc : xlenbits) = {
-  let len = getCapLength(PCC);
-  /* Check the branch is within PCC bounds. Note that PC is offset to
-  base so branches below base will be negative / very large and
-  greater than top. */
-  if unsigned(pc) + 4 > len then
-    raise_c2_exception_pcc(CapEx_LengthViolation)
-  else {
-    nextPC = pc;
-    false
-  }
-}
-
 val execute_branch_pcc : Capability -> unit effect {wreg}
 function execute_branch_pcc(newPCC) = {
-  nextPC = to_bits(64, getCapOffset(newPCC));
+  nextPC = newPCC.address;
   nextPCC = newPCC;
 }
 
@@ -238,7 +224,7 @@ function clause execute (CSpecialRW(cd, cs, idx)) =
       // read special cap
       let special_val : Capability = match idx {
         0  => {
-          let (success, pcc) = setCapOffset(PCC, PC);
+          let (success, pcc) = setCapAddr(PCC, PC);
           assert (success, "PCC with offset PC should always be representable");
           pcc
         },
@@ -828,7 +814,7 @@ function clause execute (CCall(cs, cb, 0b00001)) = /* selector=1 */
   {
     
     C26 = unsealCap(cb_val);
-    nextPC = to_bits(64, getCapOffset(cs_val));
+    nextPC = cs_val.address;
     nextPCC = unsealCap(cs_val);
     true
   }
@@ -856,13 +842,13 @@ function clause execute(CJALR(cd, cb)) =
     raise_c2_exception(CapEx_PermitExecuteViolation, cb)
   else if cb_ptr < cb_base then
     raise_c2_exception(CapEx_LengthViolation, cb)
-  else if (cb_ptr + 4) > cb_top then
+  else if (cb_ptr + min_inst_bytes) > cb_top then
     raise_c2_exception(CapEx_LengthViolation, cb)
-  else if (cb_ptr % 4) != 0 then {
+  else if (cb_ptr % min_inst_bytes) != 0 then {
     handle_mem_exception(to_bits(xlen, cb_ptr),  E_Fetch_Addr_Align);
     false
   } else {
-    let (success, linkCap) = setCapOffset(PCC, PC+8);
+    let (success, linkCap) = setCapAddr(PCC, nextPC); /* Note that nextPC accounts for compressed instrucitons */
     assert(success, "Link cap should always be representable.");
     writeCapReg(cd, linkCap);
     execute_branch_pcc(cb_val);
