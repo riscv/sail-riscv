@@ -59,7 +59,7 @@ Caveats for OS boot
 Sample OS images
 ----------------
 
-This directory contains some sample OS images and support files, built
+This directory contains some sample OS images and support files built
 for the basic platform implemented by the model.  They were built with
 toolchains that emitted illegal instructions, and require the model to
 be patched to boot them:

@@ -77,8 +77,9 @@ will build the 64-bit OCaml simulator in
 `generated_definitions/hol4/RV64/riscvScript.sml`.
 
 One can build either the RV32 or the RV64 model by specifying
-`ARCH=RV32` or `ARCH=RV64` on the `make` line, and using the matching target suffix.  RV64 is built by
-default, but the RV32 model can be built using:
+`ARCH=RV32` or `ARCH=RV64` on the `make` line, and using the matching
+target suffix.  RV64 is built by default, but the RV32 model can be
+built using:
 
 ```
 $ ARCH=RV32 make
@@ -90,8 +91,9 @@ which creates the 32-bit OCaml simulator in
 corresponding `RV32` subdirectories.
 
 The Makefile targets `riscv_isa_build`, `riscv_coq_build`, and
-`riscv_hol_build` invoke the respective prover to process the definitions.  We
-have tested Isabelle 2018, Coq 8.8.1, and HOL4 Kananaskis-12.
+`riscv_hol_build` invoke the respective prover to process the
+definitions.  We have tested Isabelle 2018, Coq 8.8.1, and HOL4
+Kananaskis-12.
 
 Executing test binaries
 -----------------------
@@ -102,8 +104,15 @@ The C and OCaml simulators can be used to execute small test binaries.
 $ ./ocaml_emulator/riscv_ocaml_sim_<arch>  <elf-file>
 $ ./c_emulator/riscv_sim_<arch> <elf-file>
 ```
-Some information on additional configuration options for each simulator is available
-from `./ocaml_emulator/riscv_ocaml_sim_<arch> -h` and `./c_emulator/riscv_sim_<arch> -h`.
+
+A suite of RV32 and RV64 test programs derived from the
+[`riscv-tests`](https://github.com/riscv/riscv-tests) in included
+under [test/riscv-tests/](test/riscv-tests/).  The test-suite can be
+run using `test/run_tests.sh`.
+
+Some information on additional configuration options for each
+simulator is available from `./ocaml_emulator/riscv_ocaml_sim_<arch>
+-h` and `./c_emulator/riscv_sim_<arch> -h`.
 
 Some useful options are: configuring whether misaligned accesses trap
 (--enable-misaligned for C and -enable-misaligned for OCaml), and
