@@ -93,7 +93,10 @@ corresponding `RV32` subdirectories.
 The Makefile targets `riscv_isa_build`, `riscv_coq_build`, and
 `riscv_hol_build` invoke the respective prover to process the
 definitions.  We have tested Isabelle 2018, Coq 8.8.1, and HOL4
-Kananaskis-12.
+Kananaskis-12.  When building these targets, please make sure the
+corresponding prover libraries in the Sail directory
+(`$SAIL_DIR/lib/$prover`) are up-to-date and built, e.g. by running
+`make` in those directories.
 
 Executing test binaries
 -----------------------
