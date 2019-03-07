@@ -110,4 +110,5 @@ Some useful options are: configuring whether misaligned accesses trap
 whether page-table walks update PTE bits (--enable-dirty-update for C
 and -enable-dirty-update for OCaml).
 
-For booting operating system images, see the information under `os-boot`.
+For booting operating system images, see the information under the
+[os-boot/](os-boot/) subdirectory.
