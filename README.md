@@ -36,8 +36,10 @@ sail-riscv
 +---- doc                     // documentation, including a reading-guide
 |
 +---- test                    // test files
-      |
-      +---- riscv-tests       // snapshot of tests from the riscv/riscv-tests github repo
+|     |
+|     +---- riscv-tests       // snapshot of tests from the riscv/riscv-tests github repo
+|
++---- os-boot                 // information and sample files for booting OS images
 ```
 
 Documentation
@@ -63,7 +65,7 @@ Coq, Isabelle and HOL4.
 Building the model
 ------------------
 
-Install Sail via Opam, or build Sail from source and have SAIL_DIR in
+Install Sail via Opam, or build Sail from source and have `SAIL_DIR` in
 your environment pointing to its top-level directory.
 
 ```
