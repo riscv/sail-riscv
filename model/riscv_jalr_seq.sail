@@ -7,7 +7,7 @@ function clause execute (RISCV_JALR(imm, rs1, rd)) = {
    some manner, but for now, we just keep a reordered definition to improve simulator
    performance.
 */
-  /* Because PC is absolute but architectural pcc is relative to PCC.base we must add pcc base */
+  /* Because PC is absolute but architectural pc is relative to PCC.base we must add pcc base */
   let pcc_base = getCapBaseBits(PCC);
   let newPC : xlenbits = (pcc_base + X(rs1) + EXTS(imm))[63..1] @ 0b0;
   if not(inCapBounds(PCC, newPC, min_inst_bytes)) then {
