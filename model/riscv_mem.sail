@@ -148,16 +148,24 @@ function mem_write_ea_cap(addr, aq, rl, con) = {
 function tag_align_addr (addr : xlenbits) -> xlenbits = [addr with 3..0 = 0x0]
 
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_write forall 'n. (addr : xlenbits, width : atom('n), tag : bool, data: bits(8 * 'n)) -> MemoryOpResult(bool) = {
+function phys_mem_write forall 'n, 'n <= 'cap_size . (addr : xlenbits, width : atom('n), tag : bool, data: bits(8 * 'n)) -> MemoryOpResult(bool) = {
   print_mem("mem[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data));
   let tag_addr = tag_align_addr(addr);
   print_mem("tag[" ^ BitStr(tag_addr) ^ "] <- " ^ (if tag then "1" else "0"));
   MEMw_tag(tag_addr, tag);
+
+  /* If the write crosses a cap_size alignment boundary then we need to write the other tag. 
+     Writes greater than cap_size that might span more than two regions are not supported. */
+  let tag_addr2 = tag_align_addr(addr + width - 1);
+  if tag_addr != tag_addr2 then {
+      print_mem("tag[" ^ BitStr(tag_addr2) ^ "] <- " ^ (if tag then "1" else "0"));
+      MEMw_tag(tag_addr2, tag);
+  };
   MemValue(__RISCV_write(addr, width, data))
 }
 
 // dispatches to MMIO regions or physical memory regions depending on physical memory map
-function checked_mem_write forall 'n, 'n > 0. (addr : xlenbits, width : atom('n), tag : bool, data: bits(8 * 'n)) -> MemoryOpResult(bool) =
+function checked_mem_write forall 'n, 'n > 0 & 'n <= 'cap_size . (addr : xlenbits, width : atom('n), tag : bool, data: bits(8 * 'n)) -> MemoryOpResult(bool) =
   if   within_mmio_writable(addr, width)
   then mmio_write(addr, width, data)
   else if within_phys_mem(addr, width)
@@ -181,7 +189,7 @@ function rvfi_write (addr, width, value) = ()
 $endif
 
 /* NOTE: The wreg effect is due to MMIO, the rreg is due to checking mtime. */
-val mem_write_value : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n), bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
+val mem_write_value : forall 'n, 'n > 0 & 'n <= 'cap_size . (xlenbits, atom('n), bits(8 * 'n), bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
 
 function mem_write_value (addr, width, value, aq, rl, con) = {
   rvfi_write(addr, width, value);
