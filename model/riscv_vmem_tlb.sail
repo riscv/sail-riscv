@@ -1,29 +1,26 @@
-/* idealized TLB to model fence.vm and also speed up simulation. */
+/* idealized generic TLB entry to model fence.vm and also speed up simulation. */
 
-/* This could be made generic using polymorphic structs; however,
- * the simulator backends don't support them.
- */
-
-struct TLB39_Entry = {
-  asid : asid64,
+struct TLB_Entry('asidlen: Int, 'valen: Int, 'palen: Int, 'ptelen: Int) = {
+  asid : bits('asidlen),
   global : bool,
-  vAddr : vaddr39,      /* VPN */
-  pAddr : paddr64,      /* PPN */
-  vMatchMask : vaddr39, /* matching mask for superpages */
-  vAddrMask : vaddr39,  /* selection mask for superpages */
-  pte : SV39_PTE,       /* permissions */
-  pteAddr : paddr64,    /* for dirty writeback */
+  vAddr : bits('valen),      /* VPN */
+  pAddr : bits('palen),      /* PPN */
+  vMatchMask : bits('valen), /* matching mask for superpages */
+  vAddrMask  : bits('valen), /* selection mask for superpages */
+  pte : bits('ptelen),       /* PTE */
+  pteAddr : bits('palen),    /* for dirty writeback */
   age : bits(64)
 }
 
-/* the rreg effect is an artifact of using the cycle counter to provide the age */
-val make_TLB39_Entry : (asid64, bool, vaddr39, paddr64, SV39_PTE, nat, paddr64) -> TLB39_Entry effect {rreg}
 
-function make_TLB39_Entry(asid, global, vAddr, pAddr, pte, level, pteAddr) = {
-  let shift : nat = PAGESIZE_BITS + (level * SV39_LEVEL_BITS);
+val make_TLB_Entry : forall 'asidlen 'valen 'palen 'ptelen, 'valen > 0.
+  (bits('asidlen), bool, bits('valen), bits('palen), bits('ptelen), nat, bits('palen), nat)
+  -> TLB_Entry('asidlen, 'valen, 'palen, 'ptelen) effect {rreg}
+function make_TLB_Entry(asid, global, vAddr, pAddr, pte, level, pteAddr, levelBitSize) = {
+  let shift : nat = PAGESIZE_BITS + (level * levelBitSize);
   /* fixme hack: use a better idiom for masks */
-  let vAddrMask : vaddr39 = shiftl(vAddr ^ vAddr ^ EXTZ(0b1), shift) - 1;
-  let vMatchMask : vaddr39 = ~ (vAddrMask);
+  let vAddrMask  : bits('valen) = shiftl(vAddr ^ vAddr ^ EXTZ(0b1), shift) - 1;
+  let vMatchMask : bits('valen) = ~ (vAddrMask);
   struct {
     asid = asid,
     global = global,
@@ -37,42 +34,21 @@ function make_TLB39_Entry(asid, global, vAddr, pAddr, pte, level, pteAddr) = {
   }
 }
 
-/* TODO: make this a vector or array of entries */
-register tlb39 : option(TLB39_Entry)
+val match_TLB_Entry : forall 'asidlen 'valen 'palen 'ptelen.
+  (TLB_Entry('asidlen, 'valen, 'palen, 'ptelen), bits('asidlen), bits('valen))
+  -> bool
+function match_TLB_Entry(ent, asid, vaddr) =
+  (ent.global | (ent.asid == asid)) & (ent.vAddr == (ent.vMatchMask & vaddr))
 
-val lookupTLB39 : (asid64, vaddr39) -> option((int, TLB39_Entry)) effect {rreg}
-function lookupTLB39(asid, vaddr) = {
-  match tlb39 {
-    None()  => None(),
-    Some(e) => if  (e.global | (e.asid == asid))
-                 & (e.vAddr == (e.vMatchMask & vaddr))
-               then Some((0, e))
-               else None()
+val flush_TLB_Entry : forall 'asidlen 'valen 'palen 'ptelen.
+  (TLB_Entry('asidlen, 'valen, 'palen, 'ptelen), option(bits('asidlen)), option(bits('valen)))
+  -> bool
+function flush_TLB_Entry(e, asid, addr) = {
+  match(asid, addr) {
+    ( None(),  None()) => true,
+    ( None(), Some(a)) => e.vAddr == (e.vMatchMask & a),
+    (Some(i),  None()) => (e.asid == i) & (~ (e.global)),
+    (Some(i), Some(a)) => (  (e.asid == i) & (e.vAddr == (a & e.vMatchMask))
+                           & (~ (e.global)))
   }
-}
-
-val addToTLB39 : (asid64, vaddr39, paddr64, SV39_PTE, paddr64, nat, bool) -> unit effect {wreg, rreg}
-function addToTLB39(asid, vAddr, pAddr, pte, pteAddr, level, global) = {
-  let ent = make_TLB39_Entry(asid, global, vAddr, pAddr, pte, level, pteAddr);
-  tlb39   = Some(ent)
-}
-
-function writeTLB39(idx : int, ent : TLB39_Entry) -> unit =
-  tlb39 = Some(ent)
-
-val flushTLB : (option(asid64), option(vaddr39)) -> unit effect {rreg, wreg}
-function flushTLB(asid, addr) = {
-  let ent : option(TLB39_Entry) =
-    match (tlb39, asid, addr) {
-      (None(),       _,      _)   => None(),
-      (Some(e), None(), None())   => None(),
-      (Some(e), None(), Some(a))  => if e.vAddr == (e.vMatchMask & a)
-                                     then None() else Some(e),
-      (Some(e), Some(i), None())  => if (e.asid == i) & (~ (e.global))
-                                     then None() else Some(e),
-      (Some(e), Some(i), Some(a)) => if (e.asid == i) & (e.vAddr == (a & e.vMatchMask))
-                                        & (~ (e.global))
-                                     then None() else Some(e)
-    };
-  tlb39 = ent
 }
