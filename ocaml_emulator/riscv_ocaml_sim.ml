@@ -137,8 +137,7 @@ let show_times init_s init_e run_e insts =
 let run pc =
   sail_call
     (fun r ->
-      try ( zinit_platform (); (* devices *)
-            zinit_sys ();      (* processor *)
+      try ( zinit_model ();
             zPC := pc;
             zloop ()
           )

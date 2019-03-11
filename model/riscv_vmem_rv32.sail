@@ -50,3 +50,12 @@ function translateAddr(vAddr, ac, rt) = {
     _     => internal_error("unsupported address translation scheme")
   }
 }
+
+val flush_TLB : (option(asid32), option(vaddr32)) -> unit effect {rreg, wreg}
+function flush_TLB(asid, addr) -> unit = {
+  ()
+}
+
+function init_vmem () -> unit = {
+  ()
+}

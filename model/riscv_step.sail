@@ -128,3 +128,10 @@ function loop () = {
     }
   }
 }
+
+/* initialize model state */
+function init_model () -> unit = {
+  init_platform (); /* devices */
+  init_sys ();      /* processor */
+  init_vmem ()      /* virtual memory */
+}

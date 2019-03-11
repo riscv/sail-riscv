@@ -12,8 +12,7 @@ struct zMisa zmisa;
 void model_init(void);
 void model_fini(void);
 
-unit zinit_platform(unit);
-unit zinit_sys(unit);
+unit zinit_model(unit);
 bool zstep(sail_int);
 unit ztick_clock(unit);
 unit ztick_platform(unit);

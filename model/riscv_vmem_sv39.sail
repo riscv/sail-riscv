@@ -110,6 +110,7 @@ val translate39 : (asid64, paddr64, vaddr39, AccessType, Privilege, bool, bool, 
 function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
   match lookup_TLB39(asid, vAddr) {
     Some(idx, ent) => {
+/*    print("translate39: TLB39 hit for " ^ BitStr(vAddr)); */
       let  pte = Mk_SV39_PTE(ent.pte);
       let  pteBits = Mk_PTE_Bits(pte.BITS());
       if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pteBits))
@@ -171,4 +172,8 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
       }
     }
   }
+}
+
+function init_vmem_sv39() -> unit = {
+  tlb39 = None()
 }

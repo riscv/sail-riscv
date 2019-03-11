@@ -413,8 +413,7 @@ void preinit_sail()
 
 void init_sail(uint64_t elf_entry)
 {
-  zinit_platform(UNIT);
-  zinit_sys(UNIT);
+  zinit_model(UNIT);
 #ifdef RVFI_DII
   if (rvfi_dii) {
     rv_ram_base = UINT64_C(0x80000000);

@@ -61,3 +61,12 @@ function translateAddr(vAddr, ac, rt) = {
     _     => internal_error("unsupported address translation scheme")
   }
 }
+
+val flush_TLB : (option(asid64), option(vaddr39)) -> unit effect {rreg, wreg}
+function flush_TLB(asid, addr) -> unit = {
+  flush_TLB39(asid, addr)
+}
+
+function init_vmem() -> unit = {
+  init_vmem_sv39()
+}

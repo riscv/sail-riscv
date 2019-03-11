@@ -710,11 +710,16 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
   else match (architecture(get_mstatus_SXL(mstatus)), mstatus.TVM()) {
     (Some(_), true)  => { handle_illegal(); false },
     (Some(_), false) => {
-      /*
-      let addr : option(vaddr39) = if rs1 == 0 then None() else Some(X(rs1)[38 .. 0]);
-      let asid : option(asid64)  = if rs2 == 0 then None() else Some(X(rs2)[15 .. 0]);
-      flushTLB(asid, addr);
-      */
+      if   sizeof(xlen) == 64
+      then {
+        let addr : option(vaddr39) = if rs1 == 0 then None() else Some(X(rs1)[38 .. 0]);
+        let asid : option(asid64)  = if rs2 == 0 then None() else Some(X(rs2)[15 .. 0]);
+        flush_TLB(asid, addr)
+      } else {
+        let addr : option(vaddr32) = if rs1 == 0 then None() else Some(X(rs1)[31 .. 0]);
+        let asid : option(asid32)  = if rs2 == 0 then None() else Some(X(rs2)[8  .. 0]);
+        flush_TLB(asid, addr)
+      };
       true
     },
     (_, _) => internal_error("unimplemented sfence architecture")
