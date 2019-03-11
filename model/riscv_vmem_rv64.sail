@@ -62,11 +62,24 @@ function translateAddr(vAddr, ac, rt) = {
   }
 }
 
-val flush_TLB : (option(asid64), option(vaddr39)) -> unit effect {rreg, wreg}
-function flush_TLB(asid, addr) -> unit = {
-  flush_TLB39(asid, addr)
+val flush_TLB : (option(xlenbits), option(xlenbits)) -> unit effect {rreg, wreg}
+function flush_TLB(asid_xlen, addr_xlen) -> unit = {
+  /* Flush both Sv39 and Sv48 TLBs. */
+  let (addr39, addr48) : (option(vaddr39), option(vaddr48)) =
+    match addr_xlen {
+      None()  => (None(), None()),
+      Some(a) => (Some(a[38 .. 0]), Some(a[47 .. 0]))
+    };
+  let asid : option(asid64) =
+    match asid_xlen {
+      None()  => None(),
+      Some(a) => Some(a[15 .. 0])
+  };
+  flush_TLB39(asid, addr39);
+  flush_TLB48(asid, addr48)
 }
 
 function init_vmem() -> unit = {
-  init_vmem_sv39()
+  init_vmem_sv39();
+  init_vmem_sv48()
 }

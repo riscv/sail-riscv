@@ -51,11 +51,16 @@ function translateAddr(vAddr, ac, rt) = {
   }
 }
 
-val flush_TLB : (option(asid32), option(vaddr32)) -> unit effect {rreg, wreg}
-function flush_TLB(asid, addr) -> unit = {
-  ()
+val flush_TLB : (option(xlenbits), option(xlenbits)) -> unit effect {rreg, wreg}
+function flush_TLB(asid_xlen, addr_xlen) -> unit = {
+  let asid : option(asid32) =
+    match (asid_xlen) {
+      None()  => None(),
+      Some(a) => Some(a[8  .. 0])
+    };
+  flush_TLB32(asid, addr_xlen)
 }
 
 function init_vmem () -> unit = {
-  ()
+  init_vmem_sv32()
 }

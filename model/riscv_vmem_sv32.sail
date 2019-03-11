@@ -78,35 +78,108 @@ function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
   }
 }
 
+/* TLB management: single entry for now */
+
+// ideally we would use the below form:
+// type TLB32_Entry = TLB_Entry(sizeof(asid32), sizeof(vaddr32), sizeof(paddr32), sizeof(pte32))
+type TLB32_Entry = TLB_Entry(9, 32, 34, 32)
+register tlb32 : option(TLB32_Entry)
+
+val lookup_TLB32 : (asid32, vaddr32) -> option((nat, TLB32_Entry)) effect {rreg}
+function lookup_TLB32(asid, vaddr) =
+  match tlb32 {
+    None()  => None(),
+    Some(e) => if match_TLB_Entry(e, asid, vaddr) then Some((0, e)) else None()
+  }
+
+val add_to_TLB32 : (asid32, vaddr32, paddr32, SV32_PTE, paddr32, nat, bool) -> unit effect {wreg, rreg}
+function add_to_TLB32(asid, vAddr, pAddr, pte, pteAddr, level, global) = {
+  let ent : TLB32_Entry = make_TLB_Entry(asid, global, vAddr, pAddr, pte.bits(), level, pteAddr, SV32_LEVEL_BITS);
+  tlb32 = Some(ent)
+}
+
+function write_TLB32(idx : nat, ent : TLB32_Entry) -> unit =
+  tlb32 = Some(ent)
+
+val flush_TLB32 : (option(asid32), option(vaddr32)) -> unit effect {rreg, wreg}
+function flush_TLB32(asid, addr) =
+  match (tlb32) {
+    None()  => (),
+    Some(e) => if   flush_TLB_Entry(e, asid, addr)
+               then tlb32 = None()
+               else ()
+  }
+
+/* address translation */
+
 val translate32 : (asid32, paddr32, vaddr32, AccessType, Privilege, bool, bool, nat) -> TR_Result(paddr32, PTW_Error) effect {rreg, wreg, wmv, escape, rmem}
 function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
-  match walk32(vAddr, ac, priv, mxr, do_sum, ptb, level, false) {
-    PTW_Failure(f) => TR_Failure(f),
-    PTW_Success(pAddr, pte, pteAddr, level, global) => {
-      match update_PTE_Bits(Mk_PTE_Bits(pte.BITS()), ac) {
-        None() => {
-          /* addToTLB32(asid, vAddr, pAddr, pte, pteAddr, level, global); */
-          TR_Address(pAddr)
-        },
-        Some(pbits) =>
-          if ~ (plat_enable_dirty_update ())
-          then {
-            /* pte needs dirty/accessed update but that is not enabled */
-            TR_Failure(PTW_PTE_Update)
-          } else {
-            w_pte : SV32_PTE = update_BITS(pte, pbits.bits());
-            match checked_mem_write(to_phys_addr(pteAddr), 4, w_pte.bits(), false, false, false) {
-              MemValue(_) => {
-                /* addToTLB32(asid, vAddr, pAddr, w_pte, pteAddr, level, global); */
-                TR_Address(pAddr)
-              },
-              MemException(e) => {
-                /* pte is not in valid memory */
-                TR_Failure(PTW_Access)
-              }
+  match lookup_TLB32(asid, vAddr) {
+    Some(idx, ent) => {
+/*    print("translate32: TLB32 hit for " ^ BitStr(vAddr)); */
+      let  pte = Mk_SV32_PTE(ent.pte);
+      let  pteBits = Mk_PTE_Bits(pte.BITS());
+      if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pteBits))
+      then TR_Failure(PTW_No_Permission)
+      else {
+        match update_PTE_Bits(pteBits, ac) {
+          None()      => TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask)),
+          Some(pbits) => {
+            if ~ (plat_enable_dirty_update ())
+            then {
+              /* pte needs dirty/accessed update but that is not enabled */
+              TR_Failure(PTW_PTE_Update)
+            } else {
+              /* update PTE entry and TLB */
+              n_pte = update_BITS(pte, pbits.bits());
+              n_ent : TLB32_Entry = ent;
+              n_ent.pte = n_pte.bits();
+              write_TLB32(idx, n_ent);
+              /* update page table */
+              match checked_mem_write(to_phys_addr(EXTZ(ent.pteAddr)), 4, n_pte.bits(), false, false, false) {
+                MemValue(_)     => (),
+                MemException(e) => internal_error("invalid physical address in TLB")
+              };
+              TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask))
             }
           }
+        }
+      }
+    },
+    None() => {
+      match walk32(vAddr, ac, priv, mxr, do_sum, ptb, level, false) {
+        PTW_Failure(f) => TR_Failure(f),
+        PTW_Success(pAddr, pte, pteAddr, level, global) => {
+          match update_PTE_Bits(Mk_PTE_Bits(pte.BITS()), ac) {
+            None() => {
+              /* addToTLB32(asid, vAddr, pAddr, pte, pteAddr, level, global); */
+              TR_Address(pAddr)
+            },
+            Some(pbits) =>
+              if ~ (plat_enable_dirty_update ())
+              then {
+                /* pte needs dirty/accessed update but that is not enabled */
+                TR_Failure(PTW_PTE_Update)
+              } else {
+                w_pte : SV32_PTE = update_BITS(pte, pbits.bits());
+                match checked_mem_write(to_phys_addr(pteAddr), 4, w_pte.bits(), false, false, false) {
+                  MemValue(_) => {
+                    /* addToTLB32(asid, vAddr, pAddr, w_pte, pteAddr, level, global); */
+                    TR_Address(pAddr)
+                  },
+                  MemException(e) => {
+                    /* pte is not in valid memory */
+                    TR_Failure(PTW_Access)
+                  }
+                }
+              }
+          }
+        }
       }
     }
   }
+}
+
+function init_vmem_sv32() -> unit = {
+  tlb32 = None()
 }

@@ -705,24 +705,16 @@ mapping clause encdec = SFENCE_VMA(rs1, rs2)
   <-> 0b0001001 @ rs2 @ rs1 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute SFENCE_VMA(rs1, rs2) = {
-  if   cur_privilege == User
-  then { handle_illegal(); false }
-  else match (architecture(get_mstatus_SXL(mstatus)), mstatus.TVM()) {
-    (Some(_), true)  => { handle_illegal(); false },
-    (Some(_), false) => {
-      if   sizeof(xlen) == 64
-      then {
-        let addr : option(vaddr39) = if rs1 == 0 then None() else Some(X(rs1)[38 .. 0]);
-        let asid : option(asid64)  = if rs2 == 0 then None() else Some(X(rs2)[15 .. 0]);
-        flush_TLB(asid, addr)
-      } else {
-        let addr : option(vaddr32) = if rs1 == 0 then None() else Some(X(rs1)[31 .. 0]);
-        let asid : option(asid32)  = if rs2 == 0 then None() else Some(X(rs2)[8  .. 0]);
-        flush_TLB(asid, addr)
-      };
-      true
-    },
-    (_, _) => internal_error("unimplemented sfence architecture")
+  let addr : option(xlenbits) = if rs1 == 0 then None() else Some(X(rs1));
+  let asid : option(xlenbits) = if rs2 == 0 then None() else Some(X(rs2));
+  match cur_privilege {
+    User       => { handle_illegal(); false },
+    Supervisor => match (architecture(get_mstatus_SXL(mstatus)), mstatus.TVM()) {
+                    (Some(_), true)  => { handle_illegal(); false },
+                    (Some(_), false) => { flush_TLB(asid, addr); true },
+                    (_, _)           => internal_error("unimplemented sfence architecture")
+                  },
+    Machine    => { flush_TLB(asid, addr); true }
   }
 }
 
