@@ -241,7 +241,7 @@ generated_definitions/hol4/$(ARCH)/riscvScript.sml: generated_definitions/hol4/$
 		generated_definitions/lem/$(ARCH)/riscv_types.lem \
 		generated_definitions/lem/$(ARCH)/riscv.lem
 
-$(addprefix generated_definitions/hol4/$(ARCH),riscvTheory.uo riscvTheory.ui): generated_definitions/hol4/$(ARCH)/Holmakefile generated_definitions/hol4/$(ARCH)/riscvScript.sml
+$(addprefix generated_definitions/hol4/$(ARCH)/,riscvTheory.uo riscvTheory.ui): generated_definitions/hol4/$(ARCH)/Holmakefile generated_definitions/hol4/$(ARCH)/riscvScript.sml
 ifeq ($(wildcard $(LEM_DIR)/hol-lib),)
 	$(error Lem directory not found. Please set the LEM_DIR environment variable)
 endif
