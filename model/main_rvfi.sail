@@ -103,8 +103,7 @@ function main () = {
   PC = sail_zero_extend(0x1000, 64);
   print_bits("PC = ", PC);
   try {
-    init_platform();
-    init_sys();
+    init_model();
     loop()
   } catch {
     Error_not_implemented(s) => print_string("Error: Not implemented: ", s),
