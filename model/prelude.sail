@@ -1036,10 +1036,10 @@ val print_int = "print_int" : (string, int) -> unit
 val print_bits = "print_bits" : forall 'n. (string, bits('n)) -> unit
 val print_string = "print_string" : (string, string) -> unit
 
-val print_instr    = {ocaml: "Platform.print_instr", interpreter: "Platform.print_instr", c: "print_instr", _: "print_endline"} : string -> unit
-val print_reg      = {ocaml: "Platform.print_reg", interpreter: "Platform.print_reg",   c: "print_reg", _: "print_endline"} : string -> unit
-val print_mem      = {ocaml: "Platform.print_mem_access", interpreter: "Platform.print_mem_access", c: "print_mem_access", _: "print_endline"} : string -> unit
-val print_platform = {ocaml: "Platform.print_platform", interpreter: "Platform.print_platform", c: "print_platform", _: "print_endline"} : string -> unit
+val print_instr    = {ocaml: "Platform.print_instr", interpreter: "print_endline", c: "print_instr", _: "print_endline"} : string -> unit
+val print_reg      = {ocaml: "Platform.print_reg", interpreter: "print_endline",   c: "print_reg", _: "print_endline"} : string -> unit
+val print_mem      = {ocaml: "Platform.print_mem_access", interpreter: "print_endline", c: "print_mem_access", _: "print_endline"} : string -> unit
+val print_platform = {ocaml: "Platform.print_platform", interpreter: "print_endline", c: "print_platform", _: "print_endline"} : string -> unit
 
 val "sign_extend" : forall 'n 'm, 'm >= 'n. (bits('n), atom('m)) -> bits('m)
 val "zero_extend" : forall 'n 'm, 'm >= 'n. (bits('n), atom('m)) -> bits('m)
