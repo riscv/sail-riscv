@@ -5,6 +5,8 @@ $include <flow.sail>
 type bits ('n : Int) = vector('n, dec, bit)
 union option ('a : Type) = {None : unit, Some : 'a}
 
+$include <regfp.sail>
+
 val spc : unit <-> string
 val opt_spc : unit <-> string
 val def_spc : unit <-> string
@@ -959,47 +961,8 @@ overload min = {min_nat, min_int}
 
 overload max = {max_nat, max_int}
 
-val __WriteRAM = "write_ram" : forall 'n 'm.
-  (atom('m), atom('n), bits('m), bits('m), bits(8 * 'n)) -> bool effect {wmv}
-
-val __RISCV_write : forall 'n. (bits(64), atom('n), bits(8 * 'n)) -> bool effect {wmv}
-function __RISCV_write (addr, width, data) = {
-  __WriteRAM(64, width, 0x0000_0000_0000_0000, addr, data)
-}
-
 val __TraceMemoryWrite : forall 'n 'm.
   (atom('n), bits('m), bits(8 * 'n)) -> unit
-
-val __ReadRAM = { lem: "MEMr", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
-
-val __ReadRAM_acquire = { lem: "MEMr_acquire", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
-
-val __ReadRAM_strong_acquire = { lem: "MEMr_strong_acquire", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
-
-val __ReadRAM_reserved = { lem: "MEMr_reserved", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
-
-val __ReadRAM_reserved_acquire = { lem: "MEMr_reserved_acquire", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
-
-val __ReadRAM_reserved_strong_acquire = { lem: "MEMr_reserved_strong_acquire", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
-
-val __RISCV_read : forall 'n, 'n >= 0. (bits(64), atom('n), bool, bool, bool) -> option(bits(8 * 'n)) effect {rmem}
-function __RISCV_read (addr, width, aq, rl, res) =
-  match (aq, rl, res) {
-    (false, false, false) => Some(__ReadRAM(64, width, 0x0000_0000_0000_0000, addr)),
-    (true,  false, false) => Some(__ReadRAM_acquire(64, width, 0x0000_0000_0000_0000, addr)),
-    (true,  true,  false) => Some(__ReadRAM_strong_acquire(64, width, 0x0000_0000_0000_0000, addr)),
-    (false, false, true)  => Some(__ReadRAM_reserved(64, width, 0x0000_0000_0000_0000, addr)),
-    (true,  false, true)  => Some(__ReadRAM_reserved_acquire(64, width, 0x0000_0000_0000_0000, addr)),
-    (true,  true,  true)  => Some(__ReadRAM_reserved_strong_acquire(64, width, 0x0000_0000_0000_0000, addr)),
-    (false, true,  false) => None(),
-    (false, true,  true)  => None()
-  }
 
 val __TraceMemoryRead : forall 'n 'm. (atom('n), bits('m), bits(8 * 'n)) -> unit
 
