@@ -39,6 +39,7 @@ unit load_reservation(mach_bits addr)
 {
   reservation = addr;
   reservation_valid = true;
+  /* fprintf(stderr, "reservation <- %0" PRIx64 "\n", reservation); */
   return UNIT;
 }
 
@@ -46,10 +47,15 @@ bool speculate_conditional(unit u)
 { return true; }
 
 bool match_reservation(mach_bits addr)
-{ return reservation_valid && reservation == addr; }
+{ /*
+  fprintf(stderr, "reservation(%c): %0" PRIx64 ", key=%0" PRIx64 "\n",
+	  reservation_valid ? 'v' : 'i', reservation, addr);
+  */
+  return reservation_valid && reservation == addr;
+}
 
 unit cancel_reservation(unit u)
-{
+{ /* fprintf(stderr, "reservation <- none\n"); */
   reservation_valid = false;
   return UNIT;
 }

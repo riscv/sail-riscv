@@ -1,9 +1,10 @@
 default Order dec
 
+$include <smt.sail>
 $include <flow.sail>
-
-type bits ('n : Int) = vector('n, dec, bit)
-union option ('a : Type) = {None : unit, Some : 'a}
+$include <arith.sail>
+$include <vector_dec.sail>
+$include <option.sail>
 
 val spc : unit <-> string
 val opt_spc : unit <-> string
@@ -718,48 +719,11 @@ val eq_real = {ocaml: "eq_real", lem: "eq"} : (real, real) -> bool
 
 val eq_anything = {ocaml: "(fun (x, y) -> x = y)", lem: "eq", coq: "generic_eq"} : forall ('a : Type). ('a, 'a) -> bool
 
-val bitvector_length = {ocaml: "length", lem: "length", coq: "length_mword"} : forall 'n. bits('n) -> atom('n)
-val vector_length = {ocaml: "length", lem: "length_list", coq: "vec_length"} : forall 'n ('a : Type). vector('n, dec, 'a) -> atom('n)
-val list_length = {ocaml: "length", lem: "length_list", coq: "length_list"} : forall ('a : Type). list('a) -> int
-
-overload length = {bitvector_length, vector_length, list_length}
-
 val "reg_deref" : forall ('a : Type). register('a) -> 'a effect {rreg}
 /* sneaky deref with no effect necessary for bitfield writes */
 val _reg_deref = "reg_deref" : forall ('a : Type). register('a) -> 'a
 
 overload operator == = {eq_vec, eq_string, eq_real, eq_anything}
-
-val vector_subrange = {
-  ocaml: "subrange",
-  lem: "subrange_vec_dec",
-  c: "vector_subrange",
-  coq: "subrange_vec_dec"
-} : forall ('n : Int) ('m : Int) ('o : Int), 0 <= 'o <= 'm < 'n.
-  (bits('n), atom('m), atom('o)) -> bits('m - 'o + 1)
-/*
-val vector_subrange = {ocaml: "subrange", lem: "subrange_vec_dec", coq: "subrange_vec_dec"} : forall ('n : Int) ('m : Int) ('o : Int), 'o <= 'm <= 'n.
-  (bits('n), atom('m), atom('o)) -> bits('m - ('o - 1))
-*/
-
-val bitvector_access = {c: "bitvector_access", ocaml: "access", lem: "access_vec_dec", coq: "access_vec_dec"} : forall ('n : Int) ('m : Int), 0 <= 'm < 'n.
-  (bits('n), atom('m)) -> bit
-
-val any_vector_access = {ocaml: "access", lem: "access_list_dec", coq: "vec_access_dec"} : forall ('n : Int) ('m : Int) ('a : Type), 0 <= 'm < 'n.
-  (vector('n, dec, 'a), atom('m)) -> 'a
-
-overload vector_access = {bitvector_access, any_vector_access}
-
-val bitvector_update = {ocaml: "update", lem: "update_vec_dec", coq: "update_vec_dec"} : forall 'n.
-  (bits('n), int, bit) -> bits('n)
-
-val any_vector_update = {ocaml: "update", lem: "update_list_dec", coq: "vector_update"} : forall 'n ('a : Type).
-  (vector('n, dec, 'a), int, 'a) -> vector('n, dec, 'a)
-
-overload vector_update = {bitvector_update, any_vector_update}
-
-val update_subrange = {ocaml: "update_subrange", lem: "update_subrange_vec_dec", coq: "update_subrange_vec_dec"} : forall 'n 'm 'o.
-  (bits('n), atom('m), atom('o), bits('m - ('o - 1))) -> bits('n)
 
 val vcons = {lem: "cons_vec"} : forall ('n : Int) ('a : Type).
   ('a, vector('n, dec, 'a)) -> vector('n + 1, dec, 'a)
@@ -771,8 +735,6 @@ val vector_concat = {ocaml: "append", lem: "append_list"} : forall ('n : Int) ('
   (vector('n, dec, 'a), vector('m, dec, 'a)) -> vector('n + 'm, dec, 'a)
 
 overload append = {bitvector_concat, vector_concat}
-
-val not_bool = {coq: "negb", _: "not"} : bool -> bool
 
 val not_vec = {c: "not_bits", _: "not_vec"} : forall 'n. bits('n) -> bits('n)
 
@@ -899,29 +861,21 @@ overload operator * = {mult_atom, mult_int, mult_real}
 
 val Sqrt = {ocaml: "sqrt_real", lem: "realSqrt"} : real -> real
 
-val gteq_int = {coq: "Z.geb", _: "gteq"} : (int, int) -> bool
-
 val gteq_real = {ocaml: "gteq_real", lem: "gteq"} : (real, real) -> bool
 
-overload operator >= = {gteq_atom, gteq_int, gteq_real}
-
-val lteq_int = {coq: "Z.leb", _: "lteq"} : (int, int) -> bool
+overload operator >= = {gteq_real}
 
 val lteq_real = {ocaml: "lteq_real", lem: "lteq"} : (real, real) -> bool
 
-overload operator <= = {lteq_atom, lteq_int, lteq_real}
-
-val gt_int = {coq: "Z.gtb", _: "gt"} : (int, int) -> bool
+overload operator <= = {lteq_real}
 
 val gt_real = {ocaml: "gt_real", lem: "gt"} : (real, real) -> bool
 
-overload operator > = {gt_atom, gt_int, gt_real}
-
-val lt_int = {coq: "Z.ltb", _: "lt"} : (int, int) -> bool
+overload operator > = {gt_real}
 
 val lt_real = {ocaml: "lt_real", lem: "lt"} : (real, real) -> bool
 
-overload operator < = {lt_atom, lt_int, lt_real}
+overload operator < = {lt_real}
 
 val RoundDown = {ocaml: "round_down", lem: "realFloor"} : real -> int
 
@@ -1033,6 +987,9 @@ function __RISCV_read (addr, width, aq, rl, res) =
     (false, true,  true)  => None()
   }
 
+val MEMr_tag = "read_tag_bool"  : bits(64) -> bool effect { rmemt }
+val MEMw_tag = "write_tag_bool" : (bits(64) , bool) -> unit effect { wmvt }
+
 val __TraceMemoryRead : forall 'n 'm. (atom('n), bits('m), bits(8 * 'n)) -> unit
 
 val replicate_bits = "replicate_bits" : forall 'n 'm, 'm >= 0. (bits('n), atom('m)) -> bits('n * 'm)
@@ -1073,14 +1030,22 @@ val print_reg      = {ocaml: "Platform.print_reg",   c: "print_reg", _: "print_e
 val print_mem      = {ocaml: "Platform.print_mem_access", c: "print_mem_access", _: "print_endline"} : string -> unit
 val print_platform = {ocaml: "Platform.print_platform", c: "print_platform", _: "print_endline"} : string -> unit
 
-val "sign_extend" : forall 'n 'm, 'm >= 'n. (bits('n), atom('m)) -> bits('m)
-val "zero_extend" : forall 'n 'm, 'm >= 'n. (bits('n), atom('m)) -> bits('m)
+$ifndef FEATURE_IMPLICITS
+val EXTS : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
+val EXTZ : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
 
-val EXTS : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
-val EXTZ : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
+function EXTS v = sail_sign_extend(v, sizeof('m))
+function EXTZ v = sail_zero_extend(v, sizeof('m))
 
-function EXTS(m, v) = sign_extend(v, m)
-function EXTZ(m, v) = zero_extend(v, m)
+$else
+
+val EXTS : forall 'n 'm , 'm >= 'n . (implicit ('m), bits('n)) -> bits('m)
+val EXTZ : forall 'n 'm , 'm >= 'n . (implicit ('m), bits('n)) -> bits('m)
+
+function EXTS (m, v) = sail_sign_extend(v, m)
+function EXTZ (m, v) = sail_zero_extend(v, m)
+
+$endif
 
 infix 4 <_s
 infix 4 >=_s
@@ -1112,8 +1077,14 @@ function bit_to_bool b = match b {
 infix 7 >>
 infix 7 <<
 
-val operator >> = "shift_bits_right" : forall 'n 'm. (bits('n), bits('m)) -> bits('n)
-val operator << = "shift_bits_left" : forall 'n 'm. (bits('n), bits('m)) -> bits('n)
+val "shift_bits_right" : forall 'n 'm. (bits('n), bits('m)) -> bits('n)
+val "shift_bits_left" : forall 'n 'm. (bits('n), bits('m)) -> bits('n)
+
+val "shiftl" : forall 'm 'n, 'n >= 0. (bits('m), atom('n)) -> bits('m)
+val "shiftr" : forall 'm 'n, 'n >= 0. (bits('m), atom('n)) -> bits('m)
+
+overload operator >> = {shift_bits_right, shiftr}
+overload operator << = {shift_bits_left, shiftl}
 
 val vector64 : int -> bits(64)
 
@@ -1130,6 +1101,49 @@ val vector_update_subrange_inc = {ocaml: "update_subrange", lem: "update_subrang
 
 overload vector_update_subrange = {vector_update_subrange_dec, vector_update_subrange_inc}
 
+/* The following needed for CHERI */
+
+val not = {coq:"negb", _:"not"} : bool -> bool
+
+val MAX : forall 'n, 'n >= 0 . atom('n) -> atom(2 ^ 'n - 1) effect pure
+function MAX(n) = pow2(n) - 1
+
+$ifndef FEATURE_IMPLICITS
+
+val zeros_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
+function zeros_implicit () = sail_zeros('n)
+overload zeros = {zeros_implicit, sail_zeros}
+
+val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
+function ones_n n = replicate_bits (0b1, n)
+
+val ones_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
+function ones_implicit () = ones_n ('n)
+
+overload ones = {ones_implicit, ones_n}
+
+$else
+
+val zeros_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
+function zeros_implicit (n) = sail_zeros(n)
+overload zeros = {zeros_implicit, sail_zeros}
+
+val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
+function ones_n n = replicate_bits (0b1, n)
+
+val ones_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
+function ones_implicit (n) = ones_n (n)
+
+overload ones = {ones_implicit, ones_n}
+
+$endif
+
+val modulus = {ocaml: "modulus", lem: "hardware_mod", coq: "euclid_modulo", _ : "tmod_int"} : forall 'n, 'n > 0 .  (int, atom('n)) -> range(0, 'n - 1)
+
+overload operator % = {modulus}
+overload sign_extend = {EXTS, sail_sign_extend}
+overload zero_extend = {EXTZ, sail_zero_extend}
+
 /* Ideally these would be sail builtin */
 
 function shift_right_arith64 (v : bits(64), shift : bits(6)) -> bits(64) =
@@ -1139,10 +1153,6 @@ function shift_right_arith64 (v : bits(64), shift : bits(6)) -> bits(64) =
 function shift_right_arith32 (v : bits(32), shift : bits(5)) -> bits(32) =
     let v64 : bits(64) = EXTS(v) in
     (v64 >> shift)[31..0]
-
-/* Special version of zero_extend that the Lem back-end knows will be at a
-   case split on 'm and uses a more generic type for.  (Temporary hack, honest) */
-val zero_extend_type_hack = "zero_extend" : forall 'n 'm, 'm >= 'n. (bits('n), atom('m)) -> bits('m)
 
 
 val n_leading_spaces : string -> nat

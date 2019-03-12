@@ -7,6 +7,9 @@ let xlen_max_unsigned = 2 ^ xlen - 1
 let xlen_max_signed = 2 ^ (xlen - 1) - 1
 let xlen_min_signed = 0 - 2 ^ (xlen - 1)
 
+/* The minimum number of bytes in an instruction */
+let min_inst_bytes = 2
+
 type half = bits(16)
 type word = bits(32)
 
@@ -42,77 +45,107 @@ register instbits : xlenbits
 
 /* register file and accessors */
 
-register Xs : vector(32, dec, xlenbits)
+/* register Xs : vector(32, dec, xlenbits) */
 
-register x1  : xlenbits
-register x2  : xlenbits
-register x3  : xlenbits
-register x4  : xlenbits
-register x5  : xlenbits
-register x6  : xlenbits
-register x7  : xlenbits
-register x8  : xlenbits
-register x9  : xlenbits
-register x10 : xlenbits
-register x11 : xlenbits
-register x12 : xlenbits
-register x13 : xlenbits
-register x14 : xlenbits
-register x15 : xlenbits
-register x16 : xlenbits
-register x17 : xlenbits
-register x18 : xlenbits
-register x19 : xlenbits
-register x20 : xlenbits
-register x21 : xlenbits
-register x22 : xlenbits
-register x23 : xlenbits
-register x24 : xlenbits
-register x25 : xlenbits
-register x26 : xlenbits
-register x27 : xlenbits
-register x28 : xlenbits
-register x29 : xlenbits
-register x30 : xlenbits
-register x31 : xlenbits
+register PCC : Capability
+register nextPCC : Capability
+register DDC : Capability
 
-val rX : forall 'n, 0 <= 'n < 32. regno('n) -> xlenbits effect {rreg}
-/*function rX 0 = 0x0000000000000000
-and rX (r if r > 0) = Xs[r]*/
-function rX r = match r {
-  0 => 0x0000000000000000,
-  1 => x1,
-  2 => x2,
-  3 => x3,
-  4 => x4,
-  5 => x5,
-  6 => x6,
-  7 => x7,
-  8 => x8,
-  9 => x9,
-  10 => x10,
-  11 => x11,
-  12 => x12,
-  13 => x13,
-  14 => x14,
-  15 => x15,
-  16 => x16,
-  17 => x17,
-  18 => x18,
-  19 => x19,
-  20 => x20,
-  21 => x21,
-  22 => x22,
-  23 => x23,
-  24 => x24,
-  25 => x25,
-  26 => x26,
-  27 => x27,
-  28 => x28,
-  29 => x29,
-  30 => x30,
-  31 => x31
-}
+register UTCC      : Capability
+register UScratchC : Capability
+register UEPCC     : Capability
+register STCC      : Capability
+register SScratchC : Capability
+register SEPCC     : Capability
+register MTCC      : Capability
+register MScratchC : Capability
+register MEPCC     : Capability
+
+register x1  : Capability
+register x2  : Capability
+register x3  : Capability
+register x4  : Capability
+register x5  : Capability
+register x6  : Capability
+register x7  : Capability
+register x8  : Capability
+register x9  : Capability
+register x10 : Capability
+register x11 : Capability
+register x12 : Capability
+register x13 : Capability
+register x14 : Capability
+register x15 : Capability
+register x16 : Capability
+register x17 : Capability
+register x18 : Capability
+register x19 : Capability
+register x20 : Capability
+register x21 : Capability
+register x22 : Capability
+register x23 : Capability
+register x24 : Capability
+register x25 : Capability
+register x26 : Capability
+register x27 : Capability
+register x28 : Capability
+register x29 : Capability
+register x30 : Capability
+register x31 : Capability
+
+let CapRegs : vector(32, dec, register(Capability)) = [
+  ref x31,
+  ref x30,
+  ref x29,
+  ref x28,
+  ref x27,
+  ref x26,
+  ref x25,
+  ref x24,
+  ref x23,
+  ref x22,
+  ref x21,
+  ref x20,
+  ref x19,
+  ref x18,
+  ref x17,
+  ref x16,
+  ref x15,
+  ref x14,
+  ref x13,
+  ref x12,
+  ref x11,
+  ref x10,
+  ref x9 ,
+  ref x8 ,
+  ref x7 ,
+  ref x6 ,
+  ref x5 ,
+  ref x4 ,
+  ref x3 ,
+  ref x2 ,
+  ref x1 ,
+  ref DDC
+]
+
+/*!
+THIS reads a given capability register or,
+the null capabiility if the argument is zero.
+*/
+val readCapReg : forall 'n, 0 <= 'n < 32 . regno('n) -> Capability effect {rreg}
+function readCapReg(n) =
+  if (n == 0) then
+    null_cap
+  else
+    reg_deref(CapRegs[n])
+
+/*!
+As per [readCapReg] but reads DDC instead of null when argument is zero.
+ */
+val readCapRegDDC : forall 'n, 0 <= 'n < 32 . regno('n) -> Capability effect {rreg}
+function readCapRegDDC(n) =
+  reg_deref(CapRegs[n]) /* NB CapRegs[0] points to DDC */
+
 
 $ifdef RVFI_DII
 val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit effect {wreg}
@@ -125,48 +158,55 @@ val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit
 function rvfi_wX (r,v) = ()
 $endif
 
+/*!
+THIS`(cd, cap_val)` writes capability, `cap_val` capability register `cd`. Writes to register zero are ignored.
+ */
+val writeCapReg : forall 'n, 0 <= 'n < 32. (regno('n), Capability) -> unit effect {wreg}
+function writeCapReg(n, cap) = {
+  if (n != 0) then {
+    rvfi_wX(n,cap.address);
+    (*CapRegs[n]) = cap
+  }
+}
+
+val init_regs : unit->unit effect{wreg}
+function init_regs () = {
+  PCC = default_cap;
+  DDC = default_cap;
+  nextPCC = default_cap;
+  UTCC = default_cap;
+  UScratchC = null_cap;
+  UEPCC = null_cap;
+  STCC = default_cap;
+  SScratchC = null_cap;
+  SEPCC = null_cap;
+  MTCC = default_cap;
+  MScratchC = null_cap;
+  MEPCC = null_cap;
+  foreach(i from 1 to 31) {
+    (*CapRegs[i]) = default_cap
+  }
+}
+
+val rX : forall 'n, 0 <= 'n < 32. regno('n) -> xlenbits effect {rreg}
+/*function rX 0 = 0x0000000000000000
+and rX (r if r > 0) = Xs[r]*/
+function rX r =
+  let cap_val = readCapReg(r) in
+  cap_val.address
+
 val wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit effect {wreg}
 function wX (r, v) = {
-  match r {
-    0 => (),
-    1 => x1 = v,
-    2 => x2 = v,
-    3 => x3 = v,
-    4 => x4 = v,
-    5 => x5 = v,
-    6 => x6 = v,
-    7 => x7 = v,
-    8 => x8 = v,
-    9 => x9 = v,
-    10 => x10 = v,
-    11 => x11 = v,
-    12 => x12 = v,
-    13 => x13 = v,
-    14 => x14 = v,
-    15 => x15 = v,
-    16 => x16 = v,
-    17 => x17 = v,
-    18 => x18 = v,
-    19 => x19 = v,
-    20 => x20 = v,
-    21 => x21 = v,
-    22 => x22 = v,
-    23 => x23 = v,
-    24 => x24 = v,
-    25 => x25 = v,
-    26 => x26 = v,
-    27 => x27 = v,
-    28 => x28 = v,
-    29 => x29 = v,
-    30 => x30 = v,
-    31 => x31 = v
-  };
+  writeCapReg(r, {null_cap with address=v});
   if (r != 0) then {
-     rvfi_wX(r,v);
      // Xs[r] = v;
      print_reg("x" ^ string_of_int(r) ^ " <- " ^ BitStr(v));
   }
 }
+
+/* XXX rename these in cheri_insts */
+overload rGPR = {rX}
+overload wGPR = {wX}
 
 overload X = {rX, wX}
 
@@ -292,7 +332,7 @@ enum word_width = {BYTE, HALF, WORD, DOUBLE}
 
 /* architectural interrupt definitions */
 
-type exc_code = bits(4)
+type exc_code = bits(8)
 
 enum InterruptType = {
   I_U_Software,
@@ -309,15 +349,15 @@ enum InterruptType = {
 val cast interruptType_to_bits : InterruptType -> exc_code
 function interruptType_to_bits (i) =
   match (i) {
-    I_U_Software => 0x0,
-    I_S_Software => 0x1,
-    I_M_Software => 0x3,
-    I_U_Timer    => 0x4,
-    I_S_Timer    => 0x5,
-    I_M_Timer    => 0x7,
-    I_U_External => 0x8,
-    I_S_External => 0x9,
-    I_M_External => 0xb
+    I_U_Software => 0x00,
+    I_S_Software => 0x01,
+    I_M_Software => 0x03,
+    I_U_Timer    => 0x04,
+    I_S_Timer    => 0x05,
+    I_M_Timer    => 0x07,
+    I_U_External => 0x08,
+    I_S_External => 0x09,
+    I_M_External => 0x0b
   }
 
 /* architectural exception definitions */
@@ -338,28 +378,30 @@ enum ExceptionType = {
  E_Fetch_Page_Fault,
  E_Load_Page_Fault,
  E_Reserved_14,
- E_SAMO_Page_Fault
+ E_SAMO_Page_Fault,
+ E_CHERI
 }
 
 val cast exceptionType_to_bits : ExceptionType -> exc_code
 function exceptionType_to_bits(e) =
   match (e) {
-    E_Fetch_Addr_Align   => 0x0,
-    E_Fetch_Access_Fault => 0x1,
-    E_Illegal_Instr      => 0x2,
-    E_Breakpoint         => 0x3,
-    E_Load_Addr_Align    => 0x4,
-    E_Load_Access_Fault  => 0x5,
-    E_SAMO_Addr_Align    => 0x6,
-    E_SAMO_Access_Fault  => 0x7,
-    E_U_EnvCall          => 0x8,
-    E_S_EnvCall          => 0x9,
-    E_Reserved_10        => 0xa,
-    E_M_EnvCall          => 0xb,
-    E_Fetch_Page_Fault   => 0xc,
-    E_Load_Page_Fault    => 0xd,
-    E_Reserved_14        => 0xe,
-    E_SAMO_Page_Fault    => 0xf
+    E_Fetch_Addr_Align   => 0x00,
+    E_Fetch_Access_Fault => 0x01,
+    E_Illegal_Instr      => 0x02,
+    E_Breakpoint         => 0x03,
+    E_Load_Addr_Align    => 0x04,
+    E_Load_Access_Fault  => 0x05,
+    E_SAMO_Addr_Align    => 0x06,
+    E_SAMO_Access_Fault  => 0x07,
+    E_U_EnvCall          => 0x08,
+    E_S_EnvCall          => 0x09,
+    E_Reserved_10        => 0x0a,
+    E_M_EnvCall          => 0x0b,
+    E_Fetch_Page_Fault   => 0x0c,
+    E_Load_Page_Fault    => 0x0d,
+    E_Reserved_14        => 0x0e,
+    E_SAMO_Page_Fault    => 0x0f,
+    E_CHERI              => 0x20
   }
 
 val cast exceptionType_to_str : ExceptionType -> string
@@ -380,7 +422,8 @@ function exceptionType_to_str(e) =
     E_Fetch_Page_Fault   => "fetch-page-fault",
     E_Load_Page_Fault    => "load-page-fault",
     E_Reserved_14        => "reserved-1",
-    E_SAMO_Page_Fault    => "store/amo-page-fault"
+    E_SAMO_Page_Fault    => "store/amo-page-fault",
+    E_CHERI              => "CHERI"
   }
 
 /* model-internal exceptions */
@@ -542,9 +585,60 @@ mapping size_bits : word_width <-> bits(2) = {
   DOUBLE <-> 0b11
 }
 
+val word_width_bytes : word_width -> {'s, 's == 1 | 's == 2 | 's == 4 | 's == 8 . atom('s)}
+function word_width_bytes width = match width {
+  BYTE   => 1,
+  HALF   => 2,
+  WORD   => 4,
+  DOUBLE => 8
+}
+
 mapping size_mnemonic : word_width <-> string = {
   BYTE   <-> "b",
   HALF   <-> "h",
   WORD   <-> "w",
   DOUBLE <-> "d"
 }
+
+union DDC_Result = {
+  DDC_Address : xlenbits,
+  DDC_Failure : CapEx
+}
+
+val translateDDC : (xlenbits, AccessType, word_width) -> DDC_Result effect {rreg, escape}
+function translateDDC (addr, at, width) = {
+  let ddc = DDC;
+  let have_rqd_load_perm : bool = match at {
+    Read       => ddc.permit_load,
+    Write      => true,
+    ReadWrite  => ddc.permit_load,
+    Execute    => false /* DDC should only be for load/store */
+  };
+  let have_rqd_store_perm : bool = match at {
+    Read       => true,
+    Write      => ddc.permit_store,
+    ReadWrite  => ddc.permit_store,
+    Execute    => false /* DDC should only be for load/store */
+  };
+  let newAddr = (getCapCursor(ddc) + unsigned(addr)) % pow2(xlen);
+  let size  = word_width_bytes(width);
+  let (base, top) = getCapBounds(ddc);
+
+  if not(ddc.tag) then
+    DDC_Failure(CapEx_TagViolation)
+  else if ddc.sealed then
+    DDC_Failure(CapEx_SealViolation)
+  else if not(have_rqd_load_perm) then
+    DDC_Failure(CapEx_PermitLoadViolation)
+  else if not(have_rqd_store_perm) then
+    DDC_Failure(CapEx_PermitStoreViolation)
+  else if (newAddr + size) > top then
+    DDC_Failure(CapEx_LengthViolation)
+  else if newAddr < base then
+    DDC_Failure(CapEx_LengthViolation)
+  else
+    DDC_Address(to_bits(64, newAddr))
+}
+
+val raise_c2_exception6 : (CapEx, bits(6)) -> bool effect {escape, rreg, wreg}
+

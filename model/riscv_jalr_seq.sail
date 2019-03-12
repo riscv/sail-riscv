@@ -7,12 +7,16 @@ function clause execute (RISCV_JALR(imm, rs1, rd)) = {
    some manner, but for now, we just keep a reordered definition to improve simulator
    performance.
 */
-  let newPC : xlenbits = (X(rs1) + EXTS(imm))[63..1] @ 0b0;
-  if newPC[1] & (~ (haveRVC())) then {
+  /* Because PC is absolute but architectural pc is relative to PCC.base we must add pcc base */
+  let pcc_base = getCapBaseBits(PCC);
+  let newPC : xlenbits = (pcc_base + X(rs1) + EXTS(imm))[63..1] @ 0b0;
+  if not(inCapBounds(PCC, newPC, min_inst_bytes)) then {
+    raise_c2_exception6(CapEx_LengthViolation, 0b100000);
+  } else if newPC[1] & (~ (haveRVC())) then {
     handle_mem_exception(newPC, E_Fetch_Addr_Align);
     false;
   } else {
-    X(rd) = nextPC;
+    X(rd) = nextPC - pcc_base;
     nextPC = newPC;
     true
   }

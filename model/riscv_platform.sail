@@ -112,17 +112,17 @@ function clint_load(addr, width) = {
   if addr == MSIP_BASE & ('n == 8 | 'n == 4)
   then {
     print_platform("clint[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mip.MSI()));
-    MemValue(zero_extend_type_hack(mip.MSI(), sizeof(8 * 'n)))
+    MemValue(zero_extend(mip.MSI(), sizeof(8 * 'n)))
   }
   else if addr == MTIMECMP_BASE & ('n == 8)
   then {
     print_platform("clint[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtimecmp));
-    MemValue(zero_extend_type_hack(mtimecmp, 64)) /* FIXME: Redundant zero_extend currently required by Lem backend */
+    MemValue(zero_extend(mtimecmp, 64)) /* FIXME: Redundant zero_extend currently required by Lem backend */
   }
   else if addr == MTIME_BASE & ('n == 8)
   then {
     print_platform("clint[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtime));
-    MemValue(zero_extend_type_hack(mtime, 64))
+    MemValue(zero_extend(mtime, 64))
   }
   else {
     print_platform("clint[" ^ BitStr(addr) ^ "] -> <not-mapped>");
@@ -194,7 +194,7 @@ function htif_load(addr, width) = {
   print_platform("htif[" ^ BitStr(addr) ^ "] -> " ^ BitStr(htif_tohost));
   /* FIXME: For now, only allow the expected access widths. */
   if width == 8
-  then MemValue(zero_extend_type_hack(htif_tohost, 64))  /* FIXME: Redundant zero_extend currently required by Lem backend */
+  then MemValue(zero_extend(htif_tohost, 64))  /* FIXME: Redundant zero_extend currently required by Lem backend */
   else MemException(E_Load_Access_Fault)
 }
 
@@ -213,7 +213,7 @@ function htif_store(addr, width, data) = {
       if cmd.payload()[0] == 0b1
       then {
            htif_done = true;
-           htif_exit_code = (zero_extend(cmd.payload(), xlen) >> 0b01) : xlenbits
+           htif_exit_code = (zero_extend(cmd.payload(), xlen) >> 1) : xlenbits
       }
       else ()
     },
@@ -267,7 +267,6 @@ function init_platform() -> unit = {
 }
 
 function tick_platform() -> unit = {
-  cancel_reservation();
   htif_tick();
 }
 
@@ -278,13 +277,15 @@ function handle_illegal() -> unit = {
              then Some(instbits)
              else None();
   let t : sync_exception = struct { trap    = E_Illegal_Instr,
-                                    excinfo = info };
+                                    excinfo = info,
+                                    ccause = None()};
   nextPC = handle_exception(cur_privilege, CTL_TRAP(t), PC)
 }
 
 /* Platform-specific wait-for-interrupt */
 
 function platform_wfi() -> unit = {
+  cancel_reservation();
   /* speed execution by getting the timer to fire at the next instruction,
    * since we currently don't have any other devices raising interrupts.
    */

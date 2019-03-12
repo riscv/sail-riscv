@@ -65,6 +65,23 @@ function mem_read (addr, width, aq, rl, res) = {
  result
 }
 
+val mem_read_cap : (xlenbits, bool, bool, bool) -> MemoryOpResult(Capability) effect {rmem, rmemt, rreg, escape}
+function mem_read_cap (addr, aq, rl, res) = {
+  let result : MemoryOpResult(bits(8 * 'cap_size)) =
+  if ~(is_aligned_addr(addr, cap_size))
+  then MemException(E_Load_Addr_Align)
+  else match (aq, rl, res) {
+    (false, true,  false) => throw(Error_not_implemented("load.rl")),
+    (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
+    (_, _, _)             => checked_mem_read(Data, addr, cap_size, aq, rl, res)
+  };
+  let tag = MEMr_tag(addr);
+  match result {
+    MemValue(v) => MemValue(memBitsToCapability(tag, v)),
+    MemException(e) => MemException(e) : MemoryOpResult(Capability)
+  }
+}
+
 val MEMea = {lem: "MEMea", coq: "MEMea", _: "memea"} : forall 'n.
   (xlenbits, atom('n)) -> unit effect {eamem}
 val MEMea_release = {lem: "MEMea_release", coq: "MEMea_release", _: "memea"} : forall 'n.
@@ -95,18 +112,40 @@ function mem_write_ea (addr, width, aq, rl, con) = {
   }
 }
 
+val mem_write_ea_cap : (xlenbits, bool, bool, bool) -> MemoryOpResult(unit) effect {eamem}
+function mem_write_ea_cap(addr, aq, rl, con) = {
+  if ~(is_aligned_addr(addr, cap_size)) then
+     MemException(E_SAMO_Addr_Align)
+  else
+     MemValue(MEMea(addr, cap_size))
+}
+
+/* XXX should derive thise form cap_size */
+function tag_align_addr (addr : xlenbits) -> xlenbits = [addr with 3..0 = 0x0]
+
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_write forall 'n. (addr : xlenbits, width : atom('n), data: bits(8 * 'n), aq : bool, rl : bool, con : bool) -> MemoryOpResult(bool) = {
+function phys_mem_write forall 'n, 'n <= 'cap_size. (addr : xlenbits, width : atom('n), tag : bool, data: bits(8 * 'n), aq : bool, rl : bool, con : bool) -> MemoryOpResult(bool) = {
   print_mem("mem[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data));
+  let tag_addr = tag_align_addr(addr);
+  print_mem("tag[" ^ BitStr(tag_addr) ^ "] <- " ^ (if tag then "1" else "0"));
+  MEMw_tag(tag_addr, tag);
+
+  /* If the write crosses a cap_size alignment boundary then we need to write the other tag. 
+     Writes greater than cap_size that might span more than two regions are not supported. */
+  let tag_addr2 = tag_align_addr(addr + width - 1);
+  if tag_addr != tag_addr2 then {
+      print_mem("tag[" ^ BitStr(tag_addr2) ^ "] <- " ^ (if tag then "1" else "0"));
+      MEMw_tag(tag_addr2, tag);
+  };
   MemValue(__RISCV_write(addr, width, data, aq, rl, con))
 }
 
 // dispatches to MMIO regions or physical memory regions depending on physical memory map
-function checked_mem_write forall 'n, 'n > 0. (addr : xlenbits, width : atom('n), data: bits(8 * 'n), aq : bool, rl : bool, con : bool) -> MemoryOpResult(bool) =
+function checked_mem_write forall 'n, 'n > 0 & 'n <= 'cap_size . (addr : xlenbits, width : atom('n), tag : bool, data: bits(8 * 'n), aq : bool, rl : bool, con : bool) -> MemoryOpResult(bool) =
   if   within_mmio_writable(addr, width)
   then mmio_write(addr, width, data)
   else if within_phys_mem(addr, width)
-  then phys_mem_write(addr, width, data, aq, rl, con)
+  then phys_mem_write(addr, width, tag, data, aq, rl, con)
   else MemException(E_SAMO_Access_Fault)
 
 /* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
@@ -126,7 +165,7 @@ function rvfi_write (addr, width, value) = ()
 $endif
 
 /* NOTE: The wreg effect is due to MMIO, the rreg is due to checking mtime. */
-val mem_write_value : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n), bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, rreg, wreg, escape}
+val mem_write_value : forall 'n, 'n > 0 & 'n <= 'cap_size . (xlenbits, atom('n), bits(8 * 'n), bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
 
 function mem_write_value (addr, width, value, aq, rl, con) = {
   rvfi_write(addr, width, value);
@@ -135,8 +174,19 @@ function mem_write_value (addr, width, value, aq, rl, con) = {
   else match (aq, rl, con) {
     (true,  false, false) => throw(Error_not_implemented("store.aq")),
     (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
-    (_, _, _)             => checked_mem_write(addr, width, value, aq, rl, con)
+    (_, _, _)             => checked_mem_write(addr, width, false, value, aq, rl, con)
   }
+}
+
+/* NOTE: The wreg effect is due to MMIO, the rreg is due to checking mtime. */
+val mem_write_cap : (xlenbits, Capability, bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, rreg, wreg, escape, wmvt}
+
+function mem_write_cap (addr, cap, aq, rl, con) = {
+  let cap_bits = capToMemBits(cap);
+  rvfi_write(addr, cap_size, cap_bits);
+  if ~ (is_aligned_addr(addr, cap_size))
+  then MemException(E_SAMO_Addr_Align)
+  else checked_mem_write(addr, cap_size, cap.tag, cap_bits, aq, rl, con)
 }
 
 val MEM_fence_rw_rw = {lem: "MEM_fence_rw_rw", coq: "MEM_fence_rw_rw", _: "skip"} : unit -> unit effect {barr}
