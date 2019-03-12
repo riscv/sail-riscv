@@ -152,7 +152,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
         PTW_Success(pAddr, pte, pteAddr, level, global) => {
           match update_PTE_Bits(Mk_PTE_Bits(pte.BITS()), ac) {
             None() => {
-              /* addToTLB32(asid, vAddr, pAddr, pte, pteAddr, level, global); */
+              add_to_TLB32(asid, vAddr, pAddr, pte, pteAddr, level, global);
               TR_Address(pAddr)
             },
             Some(pbits) =>
@@ -164,7 +164,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
                 w_pte : SV32_PTE = update_BITS(pte, pbits.bits());
                 match checked_mem_write(to_phys_addr(pteAddr), 4, w_pte.bits(), false, false, false) {
                   MemValue(_) => {
-                    /* addToTLB32(asid, vAddr, pAddr, w_pte, pteAddr, level, global); */
+                    add_to_TLB32(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
                     TR_Address(pAddr)
                   },
                   MemException(e) => {

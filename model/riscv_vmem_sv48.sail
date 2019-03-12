@@ -113,7 +113,7 @@ function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
     PTW_Success(pAddr, pte, pteAddr, level, global) => {
       match update_PTE_Bits(Mk_PTE_Bits(pte.BITS()), ac) {
         None() => {
-          /* addToTLB48(asid, vAddr, pAddr, pte, pteAddr, level, global); */
+          add_to_TLB48(asid, vAddr, pAddr, pte, pteAddr, level, global);
           TR_Address(pAddr)
         },
         Some(pbits) =>
@@ -125,7 +125,7 @@ function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
             w_pte : SV48_PTE = update_BITS(pte, pbits.bits());
             match checked_mem_write(EXTZ(pteAddr), 8, w_pte.bits(), false, false, false) {
               MemValue(_) => {
-                /* addToTLB48(asid, vAddr, pAddr, w_pte, pteAddr, level, global); */
+                add_to_TLB48(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
                 TR_Address(pAddr)
               },
               MemException(e) => {
