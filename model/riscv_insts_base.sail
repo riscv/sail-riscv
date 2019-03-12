@@ -201,7 +201,7 @@ mapping shiftiop_mnemonic : sop <-> string = {
 }
 
 mapping clause assembly = SHIFTIOP(shamt, rs1, rd, op)
-  <-> shiftiop_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ hex_bits_6(shamt)
+  <-> shiftiop_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_6(shamt)
 
 /* ****************************************************************** */
 union clause ast = RTYPE : (regbits, regbits, regbits, rop)
@@ -470,7 +470,7 @@ mapping shiftiwop_mnemonic : sopw <-> string = {
 }
 
 mapping clause assembly = SHIFTIWOP(shamt, rs1, rd, op)
-  <-> shiftiwop_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ hex_bits_5(shamt)
+  <-> shiftiwop_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_5(shamt)
 
 /* ****************************************************************** */
 union clause ast = FENCE : (bits(4), bits(4))
