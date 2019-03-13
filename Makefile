@@ -229,6 +229,7 @@ generated_definitions/isabelle/$(ARCH)/Riscv.thy: generated_definitions/isabelle
 		generated_definitions/lem/$(ARCH)/riscv_types.lem \
 		generated_definitions/lem/$(ARCH)/riscv.lem
 	sed -i 's/datatype ast/datatype (plugins only: size) ast/' generated_definitions/isabelle/$(ARCH)/Riscv_types.thy
+	sed -i "s/record( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/record (overloaded) ( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/" generated_definitions/isabelle/$(ARCH)/Riscv_types.thy
 
 generated_definitions/hol4/$(ARCH)/Holmakefile: handwritten_support/Holmakefile
 	mkdir -p generated_definitions/hol4/$(ARCH)
