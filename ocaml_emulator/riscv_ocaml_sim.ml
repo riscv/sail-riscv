@@ -98,10 +98,10 @@ let write_bytes fl bytes =
   let i = ref 0 in
   while !i < Bytes.length bytes do
     let s = Printf.sprintf "%02x%02x%02x%02x\n"
-	(int_of_char bytes.[!i+3])
-	(int_of_char bytes.[!i+2])
-	(int_of_char bytes.[!i+1])
-	(int_of_char bytes.[!i]) in
+	(int_of_char (Bytes.get bytes (!i+3)))
+	(int_of_char (Bytes.get bytes (!i+2)))
+	(int_of_char (Bytes.get bytes (!i+1)))
+	(int_of_char (Bytes.get bytes (!i+0))) in
     output_string fl s;
     i := !i + 4
   done
