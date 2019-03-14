@@ -1,0 +1,42 @@
+diff --git a/model/prelude_mem.sail b/model/prelude_mem.sail
+index 8e483f8..8c68192 100644
+--- a/model/prelude_mem.sail
++++ b/model/prelude_mem.sail
+@@ -29,8 +29,8 @@ function __RISCV_write (addr, width, data, aq, rl, con) =
+     (false, true,  true)  => __WriteRAM_conditional_release(sizeof(xlen), width, EXTZ(0x0), addr, data),
+     (true,  true,  false) => __WriteRAM_strong_release(sizeof(xlen), width, EXTZ(0x0), addr, data),
+     (true,  true,  true)  => __WriteRAM_conditional_strong_release(sizeof(xlen), width, EXTZ(0x0), addr, data),
+-    (true,  false, false) => false,
+-    (true,  false, true)  => false
++    (true,  false, false) => __WriteRAM(sizeof(xlen), width, EXTZ(0x0), addr, data),//false
++    (true,  false, true)  => __WriteRAM(sizeof(xlen), width, EXTZ(0x0), addr, data) //false
+   }
+ 
+ val __TraceMemoryWrite : forall 'n 'm.
+diff --git a/model/riscv_mem.sail b/model/riscv_mem.sail
+index 3549e80..1d77e6b 100644
+--- a/model/riscv_mem.sail
++++ b/model/riscv_mem.sail
+@@ -88,9 +88,9 @@ function mem_write_ea (addr, width, aq, rl, con) = {
+     (false, true,  false) => MemValue(MEMea_release(addr, width)),
+     (false, false, true)  => MemValue(MEMea_conditional(addr, width)),
+     (false, true , true)  => MemValue(MEMea_conditional_release(addr, width)),
+-    (true,  false, false) => throw(Error_not_implemented("store.aq")),
++    (true,  false, false) => MemValue(MEMea(addr, width)),//throw(Error_not_implemented("store.aq")),
+     (true,  true,  false) => MemValue(MEMea_strong_release(addr, width)),
+-    (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
++    (true,  false, true)  => MemValue(MEMea(addr, width)),//throw(Error_not_implemented("sc.aq")),
+     (true,  true , true)  => MemValue(MEMea_conditional_strong_release(addr, width))
+   }
+ }
+@@ -133,8 +133,8 @@ function mem_write_value (addr, width, value, aq, rl, con) = {
+   if (rl | con) & (~ (is_aligned_addr(addr, width)))
+   then MemException(E_SAMO_Addr_Align)
+   else match (aq, rl, con) {
+-    (true,  false, false) => throw(Error_not_implemented("store.aq")),
+-    (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
++    (true,  false, false) => checked_mem_write(addr, width, value, aq, rl, con),//throw(Error_not_implemented("store.aq")),
++    (true,  false, true)  => checked_mem_write(addr, width, value, aq, rl, con),//throw(Error_not_implemented("sc.aq")),
+     (_, _, _)             => checked_mem_write(addr, width, value, aq, rl, con)
+   }
+ }

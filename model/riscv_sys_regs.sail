@@ -38,8 +38,8 @@ register cur_inst : xlenbits
 
 /* M-mode registers */
 
-bitfield Misa : bits(64) = {
-  MXL  : 63 .. 62,
+bitfield Misa : xlenbits = {
+  MXL  : xlen - 1 .. xlen - 2,
 
   Z    : 25,
   Y    : 24,
@@ -88,11 +88,13 @@ function haveSupMode() -> bool = misa.S() == true
 function haveUsrMode() -> bool = misa.U() == true
 function haveNExt()    -> bool = misa.N() == true
 
-bitfield Mstatus : bits(64) = {
-  SD   : 63,
+bitfield Mstatus : xlenbits = {
+  SD   : xlen - 1,
 
-  SXL  : 35 .. 34,
-  UXL  : 33 .. 32,
+  // The SXL and UXL fields don't exist on RV32, so they are modelled
+  // via explicit getters and setters; see below.
+  // SXL  : 35 .. 34,
+  // UXL  : 33 .. 32,
 
   TSR  : 22,
   TW   : 21,
@@ -117,6 +119,36 @@ bitfield Mstatus : bits(64) = {
 }
 register mstatus : Mstatus
 
+function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
+  if   sizeof(xlen) == 32
+  then arch_to_bits(RV32)
+  else m.bits()[35 .. 34]
+}
+
+function set_mstatus_SXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
+  if   sizeof(xlen) == 32
+  then m
+  else {
+    let m = vector_update_subrange(m.bits(), 35, 34,  a);
+    Mk_Mstatus(m)
+  }
+}
+
+function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
+  if   sizeof(xlen) == 32
+  then arch_to_bits(RV32)
+  else m.bits()[33 .. 32]
+}
+
+function set_mstatus_UXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
+  if   sizeof(xlen) == 32
+  then m
+  else {
+    let m = vector_update_subrange(m.bits(), 33, 32,  a);
+    Mk_Mstatus(m)
+  }
+}
+
 function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   let m : Mstatus = Mk_Mstatus(v);
 
@@ -131,9 +163,9 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   let m = update_SD(m, extStatus_of_bits(m.FS()) == Dirty
                      | extStatus_of_bits(m.XS()) == Dirty);
 
-  /* For now, we don't allow SXL and UXL to be changed, for Spike compatibility. */
-  let m = update_SXL(m, o.SXL());
-  let m = update_UXL(m, o.UXL());
+  /* We don't support dynamic changes to SXL and UXL. */
+  let m = set_mstatus_SXL(m, get_mstatus_SXL(o));
+  let m = set_mstatus_UXL(m, get_mstatus_UXL(o));
 
   /* Hardwired to zero in the absence of 'N'. */
   let m = update_UPIE(m, false);
@@ -147,8 +179,8 @@ function cur_Architecture() -> Architecture = {
   let a : arch_xlen =
     match (cur_privilege) {
       Machine    => misa.MXL(),
-      Supervisor => mstatus.SXL(),
-      User       => mstatus.UXL()
+      Supervisor => get_mstatus_SXL(mstatus),
+      User       => get_mstatus_UXL(mstatus)
     };
   match architecture(a) {
     Some(a) => a,
@@ -162,7 +194,7 @@ function in32BitMode() -> bool = {
 
 /* interrupt processing state */
 
-bitfield Minterrupts : bits(64) = {
+bitfield Minterrupts : xlenbits = {
   MEI : 11, /* external interrupts */
   SEI : 9,
   UEI : 8,
@@ -223,7 +255,7 @@ function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
 
 /* exception processing state */
 
-bitfield Medeleg : bits(64) = {
+bitfield Medeleg : xlenbits = {
   SAMO_Page_Fault   : 15,
   Load_Page_Fault   : 13,
   Fetch_Page_Fault  : 12,
@@ -250,9 +282,9 @@ function legalize_medeleg(o : Medeleg, v : xlenbits) -> Medeleg = {
 
 /* registers for trap handling */
 
-bitfield Mtvec : bits(64) = {
-  Base : 63 .. 2,
-  Mode :  1 .. 0
+bitfield Mtvec : xlenbits = {
+  Base : xlen - 1 .. 2,
+  Mode : 1 .. 0
 }
 register mtvec : Mtvec  /* Trap Vector */
 
@@ -265,9 +297,9 @@ function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
  }
 }
 
-bitfield Mcause : bits(64) = {
-  IsInterrupt : 63,
-  Cause       : 62 .. 0
+bitfield Mcause : xlenbits = {
+  IsInterrupt : xlen - 1,
+  Cause       : xlen - 2 .. 0
 }
 register mcause : Mcause
 
@@ -329,8 +361,8 @@ function legalize_scounteren(c : Counteren, v : xlenbits) -> Counteren = {
   c
 }
 
-register mcycle : xlenbits
-register mtime : xlenbits
+register mcycle : bits(64)
+register mtime : bits(64)
 
 /* minstret
  *
@@ -343,7 +375,7 @@ register mtime : xlenbits
  * written to, we track writes to it in a separate model-internal
  * register.
  */
-register minstret : xlenbits
+register minstret : bits(64)
 register minstret_written : bool
 
 function retire_instruction() -> unit = {
@@ -353,7 +385,7 @@ function retire_instruction() -> unit = {
 }
 
 /* informational registers */
-register mvendorid : xlenbits
+register mvendorid : bits(32)
 register mimpid : xlenbits
 register marchid : xlenbits
 /* TODO: this should be readonly, and always 0 for now */
@@ -367,9 +399,11 @@ register pmpcfg0 : xlenbits
 /* S-mode registers */
 
 /* sstatus reveals a subset of mstatus */
-bitfield Sstatus : bits(64) = {
-  SD   : 63,
-  UXL  : 33 .. 32,
+bitfield Sstatus : xlenbits = {
+  SD   : xlen - 1,
+  // The UXL field does not exist on RV32, so we define an explicit
+  // getter and setter below.
+  // UXL  : 30 .. 29,
   MXR  : 19,
   SUM  : 18,
   XS   : 16 .. 15,
@@ -380,12 +414,23 @@ bitfield Sstatus : bits(64) = {
   SIE  : 1,
   UIE  : 0
 }
+/* sstatus is a view of mstatus, so there is no register defined. */
 
-/* This is a view, so there is no register defined. */
+function get_sstatus_UXL(s : Sstatus) -> arch_xlen = {
+  let m = Mk_Mstatus(s.bits());
+  get_mstatus_UXL(m)
+}
+
+function set_sstatus_UXL(s : Sstatus, a : arch_xlen) -> Sstatus = {
+  let m = Mk_Mstatus(s.bits());
+  let m = set_mstatus_UXL(m, a);
+  Mk_Sstatus(m.bits())
+}
+
 function lower_mstatus(m : Mstatus) -> Sstatus = {
   let s = Mk_Sstatus(EXTZ(0b0));
   let s = update_SD(s, m.SD());
-  let s = update_UXL(s, m.UXL());
+  let s = set_sstatus_UXL(s, get_mstatus_UXL(m));
   let s = update_MXR(s, m.MXR());
   let s = update_SUM(s, m.SUM());
   let s = update_XS(s, m.XS());
@@ -420,7 +465,7 @@ function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
   lift_sstatus(m, Mk_Sstatus(v))
 }
 
-bitfield Sedeleg : bits(64) = {
+bitfield Sedeleg : xlenbits = {
   UEnvCall          : 8,
   SAMO_Access_Fault : 7,
   SAMO_Addr_Align   : 6,
@@ -437,7 +482,7 @@ function legalize_sedeleg(s : Sedeleg, v : xlenbits) -> Sedeleg = {
   Mk_Sedeleg(EXTZ(v[8..0]))
 }
 
-bitfield Sinterrupts : bits(64) = {
+bitfield Sinterrupts : xlenbits = {
   SEI : 9,  /* external interrupts */
   UEI : 8,
 
@@ -508,30 +553,43 @@ function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterr
 
 register sideleg : Sinterrupts
 
-/* s-mode address translation and protection (satp) */
-bitfield Satp64 : bits(64) = {
-  Mode : 63 .. 60,
-  Asid : 59 .. 44,
-  PPN  : 43 .. 0
-}
-register satp : xlenbits
-
-function legalize_satp(a : Architecture, o : xlenbits, v : xlenbits) -> xlenbits = {
-  let s = Mk_Satp64(v);
-  match satpMode_of_bits(a, s.Mode()) {
-    None()     => o,
-    Some(Sv32) => o,  /* Sv32 is unsupported for now */
-    Some(_)    => s.bits()
-  }
-}
-
-/* other supervisor state */
+/* other non-VM related supervisor state */
 register stvec    : Mtvec
 register sscratch : xlenbits
 register sepc     : xlenbits
 register scause   : Mcause
 register stval    : xlenbits
 
+/*
+ * S-mode address translation and protection (satp) layout.
+ * The actual satp register is defined in an architecture-specific file.
+ */
+
+bitfield Satp64 : bits(64) = {
+  Mode : 63 .. 60,
+  Asid : 59 .. 44,
+  PPN  : 43 .. 0
+}
+
+function legalize_satp64(a : Architecture, o : bits(64), v : bits(64)) -> bits(64) = {
+  let s = Mk_Satp64(v);
+  match satp64Mode_of_bits(a, s.Mode()) {
+    None()     => o,
+    Some(Sv32) => o,  /* Sv32 is unsupported for now */
+    Some(_)    => s.bits()
+  }
+}
+
+bitfield Satp32 : bits(32) = {
+  Mode : 31,
+  Asid : 30 .. 22,
+  PPN  : 21 .. 0
+}
+
+function legalize_satp32(a : Architecture, o : bits(32), v : bits(32)) -> bits(32) = {
+  /* all 32-bit satp modes are valid */
+  v
+}
+
 /* disabled trigger/debug module */
 register tselect : xlenbits
-

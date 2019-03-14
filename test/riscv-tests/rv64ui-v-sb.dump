@@ -101,7 +101,7 @@ Disassembly of section .text.init:
     8000014c:	10513023          	sd	t0,256(sp)
     80000150:	141022f3          	csrr	t0,sepc
     80000154:	10513423          	sd	t0,264(sp)
-    80000158:	143022f3          	csrr	t0,sbadaddr
+    80000158:	143022f3          	csrr	t0,stval
     8000015c:	10513823          	sd	t0,272(sp)
     80000160:	142022f3          	csrr	t0,scause
     80000164:	10513c23          	sd	t0,280(sp)

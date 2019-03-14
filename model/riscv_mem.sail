@@ -45,7 +45,7 @@ function rvfi_read (addr, width, result) = {
   MemValue(v) =>
     if width <= 8
     then {
-      rvfi_exec->rvfi_mem_wdata() = zero_extend(v,64);
+      rvfi_exec->rvfi_mem_wdata() = sail_zero_extend(v,64);
       rvfi_exec->rvfi_mem_wmask() = to_bits(8,width)
     } else (),
   MemException(_) => ()
@@ -67,7 +67,11 @@ function mem_read (addr, width, aq, rl, res) = {
  let result : MemoryOpResult(bits(8 * 'n)) =
   if (aq | res) & (~ (is_aligned_addr(addr, width)))
   then MemException(E_Load_Addr_Align)
-  else checked_mem_read(Data, addr, width, aq, rl, res);
+  else match (aq, rl, res) {
+    (false, true,  false) => throw(Error_not_implemented("load.rl")),
+    (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
+    (_, _, _)             => checked_mem_read(Data, addr, width, aq, rl, res)
+  };
  rvfi_read(addr, width, result);
  result
 }
@@ -120,7 +124,7 @@ val rvfi_write : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> unit e
 function rvfi_write (addr, width, value) = {
   rvfi_exec->rvfi_mem_addr() = addr;
   if width <= 8 then {
-    rvfi_exec->rvfi_mem_wdata() = zero_extend(value,64);
+    rvfi_exec->rvfi_mem_wdata() = sail_zero_extend(value,64);
     rvfi_exec->rvfi_mem_wmask() = to_bits(8,width);
   }
 }
@@ -136,5 +140,9 @@ function mem_write_value (addr, width, value, aq, rl, con) = {
   rvfi_write(addr, width, value);
   if (rl | con) & (~ (is_aligned_addr(addr, width)))
   then MemException(E_SAMO_Addr_Align)
-  else checked_mem_write(addr, width, value, aq, rl, con)
+  else match (aq, rl, con) {
+    (true,  false, false) => throw(Error_not_implemented("store.aq")),
+    (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
+    (_, _, _)             => checked_mem_write(addr, width, value, aq, rl, con)
+  }
 }

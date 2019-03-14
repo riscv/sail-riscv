@@ -12,8 +12,7 @@ struct zMisa zmisa;
 void model_init(void);
 void model_fini(void);
 
-unit zinit_platform(unit);
-unit zinit_sys(unit);
+unit zinit_model(unit);
 bool zstep(sail_int);
 unit ztick_clock(unit);
 unit ztick_platform(unit);
@@ -28,6 +27,7 @@ unit zrvfi_halt_exec_packet(unit);
 void zrvfi_get_exec_packet(sail_bits *rop, unit);
 #endif
 
+extern mach_bits zxlen_val;
 extern bool zhtif_done;
 extern mach_bits zhtif_exit_code;
 extern bool have_exception;

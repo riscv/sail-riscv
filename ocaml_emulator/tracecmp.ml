@@ -1,5 +1,9 @@
 (* Simple trace comparison checker *)
 
+type arch =
+  | RV32
+  | RV64
+
 type csr_read = {
   csrr : string;
   rdval : int64
@@ -7,13 +11,18 @@ type csr_read = {
 
 type csr_write = {
   csrw : string;
-  wrval : int64;
-  inval : int64
+  wrval : int64
 }
 
 type reg_write = {
   reg : int;
   rval : int64
+}
+
+type mem_op = {
+  vaddr : int64;
+  paddr : int64;
+  mval  : int64
 }
 
 type inst = {
@@ -42,9 +51,19 @@ type line =
   | L_reg_write of reg_write
   | L_csr_read of csr_read
   | L_csr_write of csr_write
+  | L_mem_read of mem_op
+  | L_mem_write of mem_op
   | L_tick of tick
   | L_htif of htif
   | L_ld_res of ld_res
+
+(* architectural support *)
+let sail_arch = ref RV64
+
+let arch_val v =
+  match !sail_arch with
+    | RV64 -> v
+    | RV32 -> Int64.logand v 0xFFFFFFFFL (* only lowest 32-bits *)
 
 let inst_count = ref 0
 
@@ -53,7 +72,8 @@ let inst_count = ref 0
  *)
 
 let parse_csr_read l =
-  try Scanf.sscanf l " CSR %s -> 0x%Lx" (fun csrr rdval -> L_csr_read { csrr; rdval })
+  try Scanf.sscanf l " CSR %s -> 0x%Lx"
+                   (fun csrr rdval -> L_csr_read { csrr; rdval = arch_val rdval })
   with
     | Scanf.Scan_failure _ -> L_none
     | End_of_file -> L_none
@@ -66,14 +86,48 @@ let sprint_csr_read r =
  *)
 
 let parse_csr_write l =
-  try Scanf.sscanf l " CSR %s <- 0x%Lx (input: 0x%Lx)"
-                  (fun csrw wrval inval -> L_csr_write { csrw; wrval; inval })
+  try Scanf.sscanf l " CSR %s <- 0x%Lx "
+                   (fun csrw wrval -> L_csr_write { csrw; wrval = arch_val wrval })
   with
     | Scanf.Scan_failure _ -> L_none
     | End_of_file -> L_none
 
 let sprint_csr_write r =
-  Printf.sprintf "CSR %s <- 0x%Lx (input: 0x%Lx)" r.csrw r.wrval r.inval
+  Printf.sprintf "CSR %s <- 0x%Lx " r.csrw r.wrval
+
+(* mem reads
+   mem[V:0x0000000080001000, P:0x0000000080001000] -> 0x0000000000000000
+ *)
+
+(* exclusion list, to avoid comparing reads to mmio htif port by spike *)
+let mem_addr_excludes = [ 0x80001000L ]
+let parse_mem_read l =
+  try Scanf.sscanf l " mem[V:0x%Lx, P:0x%Lx] -> 0x%Lx"
+                   (fun va pa v ->
+                    if List.mem va mem_addr_excludes || List.mem pa mem_addr_excludes
+                    then L_none
+                    else L_mem_read { vaddr = arch_val va; paddr = arch_val pa; mval = arch_val v })
+  with
+    | Scanf.Scan_failure _ -> L_none
+    | End_of_file -> L_none
+
+let sprint_mem_read r =
+  Printf.sprintf "mem[V:0x%Lx, P:0x%Lx] -> 0x%Lx" r.vaddr r.paddr r.mval
+
+(* mem writes
+   mem[V:0x0000000080001000, P:0x0000000080001000] <- 0x0000000000000000
+ *)
+
+let parse_mem_write l =
+  try Scanf.sscanf l  " mem[V:0x%Lx, P:0x%Lx] <- 0x%Lx"
+                   (fun va pa v ->
+                    L_mem_write { vaddr = arch_val va; paddr = arch_val pa; mval = arch_val v })
+  with
+    | Scanf.Scan_failure _ -> L_none
+    | End_of_file -> L_none
+
+let sprint_mem_write r =
+  Printf.sprintf "mem[V:0x%Lx, P:0x%Lx] -> 0x%Lx" r.vaddr r.paddr r.mval
 
 (* reg writes
    x16 <- 0x0000000000000000
@@ -81,7 +135,7 @@ let sprint_csr_write r =
 
 let parse_reg_write l =
   try Scanf.sscanf l " x%u <- 0x%Lx"
-                  (fun reg rval -> L_reg_write { reg; rval })
+                  (fun reg rval -> L_reg_write { reg; rval = arch_val rval })
   with
     | Scanf.Scan_failure _ -> L_none
     | End_of_file -> L_none
@@ -115,7 +169,7 @@ let parse_spike_inst l =
   try Scanf.sscanf l " [%u] core   0 [%c]: 0x%Lx (0x%lx) %s"
                    (fun count  priv  pc inst _ ->
                     inst_count := count;
-                    L_inst { count; priv; pc; inst })
+                    L_inst { count; priv; pc = arch_val pc; inst })
   with
     | Scanf.Scan_failure _ -> L_none
     | End_of_file -> L_none
@@ -209,6 +263,8 @@ let sprint_line = function
   | L_reg_write r -> Printf.sprintf "<%d> %s" !inst_count (sprint_reg_write r)
   | L_csr_read  r -> Printf.sprintf "<%d> %s" !inst_count (sprint_csr_read r)
   | L_csr_write r -> Printf.sprintf "<%d> %s" !inst_count (sprint_csr_write r)
+  | L_mem_read  m -> Printf.sprintf "<%d> %s" !inst_count (sprint_mem_read m)
+  | L_mem_write m -> Printf.sprintf "<%d> %s" !inst_count (sprint_mem_write m)
   | L_tick t      -> Printf.sprintf "<%d> %s" !inst_count (sprint_tick t)
   | L_htif t      -> Printf.sprintf "<%d> %s" !inst_count (sprint_htif t)
   | L_ld_res r    -> Printf.sprintf "<%d> %s" !inst_count (sprint_ldres r)
@@ -281,6 +337,9 @@ let options =
   Arg.align ([( "-z",
                 Arg.Set uncompress,
                 " uncompress trace files");
+              ( "-rv32",
+                Arg.Unit (fun f -> sail_arch := RV32),
+                " sail architecture");
               ( "-k",
                 Arg.String (fun f -> spike_log := Some f),
                 " spike trace log");

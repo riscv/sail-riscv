@@ -7,7 +7,7 @@ function clause execute (RISCV_JALR(imm, rs1, rd)) = {
    some manner, but for now, we just keep a reordered definition to improve simulator
    performance.
 */
-  let newPC : xlenbits = (X(rs1) + EXTS(imm))[63..1] @ 0b0;
+  let newPC : xlenbits = (X(rs1) + EXTS(imm))[(sizeof(xlen) - 1) .. 1] @ 0b0;
   if newPC[1] & (~ (haveRVC())) then {
     handle_mem_exception(newPC, E_Fetch_Addr_Align);
     false;

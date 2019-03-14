@@ -29,8 +29,17 @@ function is_CSR_defined (csr : bits(12), p : Privilege) -> bool =
     0x344 => p == Machine, // mip
 
     0x3A0 => p == Machine, // pmpcfg0
-    0x3B0 => false, // (Disabled for Spike compatibility)
-//  0x3B0 => p == Machine, // pmpaddr0
+    0x3B0 => p == Machine, // pmpaddr0
+
+    /* counters */
+    0xB00 => p == Machine, // mcycle
+    0xB02 => p == Machine, // minstret
+
+    0xB80 => p == Machine & (sizeof(xlen) == 32), // mcycleh
+    0xB82 => p == Machine & (sizeof(xlen) == 32), // minstreth
+
+    /* disabled trigger/debug module */
+    0x7a0 => p == Machine,
 
     /* supervisor mode: trap setup */
     0x100 => haveSupMode() & (p == Machine | p == Supervisor), // sstatus
@@ -50,8 +59,14 @@ function is_CSR_defined (csr : bits(12), p : Privilege) -> bool =
     /* supervisor mode: address translation */
     0x180 => haveSupMode() & (p == Machine | p == Supervisor), // satp
 
-    /* disabled trigger/debug module */
-    0x7a0 => p == Machine,
+    /* user mode: counters */
+    0xC00 => p == User,    // cycle
+    0xC01 => p == User,    // time
+    0xC02 => p == User,    // instret
+
+    0xC80 => p == User & (sizeof(xlen) == 32),     // cycleh
+    0xC81 => p == User & (sizeof(xlen) == 32),     // timeh
+    0xC82 => p == User & (sizeof(xlen) == 32),     // instreth
 
     /* check extensions */
     _     => is_UExt_CSR_defined(csr, p)   // 'N' extension
@@ -71,9 +86,9 @@ function check_Counteren(csr : csreg, p : Privilege) -> bool =
     (0xC01, Supervisor) => mcounteren.TM() == true,
     (0xC02, Supervisor) => mcounteren.IR() == true,
 
-    (0xC00, User) => scounteren.CY() == true,
-    (0xC01, User) => scounteren.TM() == true,
-    (0xC02, User) => scounteren.IR() == true,
+    (0xC00, User) => mcounteren.CY() == true & ((~ (haveSupMode())) | scounteren.CY() == true),
+    (0xC01, User) => mcounteren.TM() == true & ((~ (haveSupMode())) | scounteren.TM() == true),
+    (0xC02, User) => mcounteren.IR() == true & ((~ (haveSupMode())) | scounteren.IR() == true),
 
     (_, _) => /* no HPM counters for now */
               if   0xC03 <=_u csr & csr <=_u 0xC1F
@@ -405,7 +420,7 @@ function init_sys() -> unit = {
 
   mhartid     = EXTZ(0b0);
 
-  misa->MXL() = arch_to_bits(RV64);
+  misa->MXL() = arch_to_bits(if sizeof(xlen) == 32 then RV32 else RV64);
   misa->A()   = true; /* atomics */
   misa->C()   = true; /* RVC */
   misa->I()   = true; /* base integer ISA */
@@ -413,9 +428,8 @@ function init_sys() -> unit = {
   misa->U()   = true; /* user-mode */
   misa->S()   = true; /* supervisor-mode */
 
-  /* 64-bit only mode with no extensions */
-  mstatus->SXL()  = misa.MXL();
-  mstatus->UXL()  = misa.MXL();
+  mstatus = set_mstatus_SXL(mstatus, misa.MXL());
+  mstatus = set_mstatus_UXL(mstatus, misa.MXL());
   mstatus->SD()   = false;
 
   mip->bits()     = EXTZ(0b0);

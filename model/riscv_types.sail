@@ -1,11 +1,13 @@
 /* Basic type and function definitions used pervasively in the model. */
 
-let xlen = 64
-type xlenbits = bits(64)
+/* this value is only defined for the runtime platform for ELF loading
+ * checks, and not used in the model.
+ */
+let xlen_val = sizeof(xlen)
 
-let xlen_max_unsigned = 2 ^ xlen - 1
-let xlen_max_signed = 2 ^ (xlen - 1) - 1
-let xlen_min_signed = 0 - 2 ^ (xlen - 1)
+let xlen_max_unsigned = 2 ^ sizeof(xlen) - 1
+let xlen_max_signed = 2 ^ (sizeof(xlen) - 1) - 1
+let xlen_min_signed = 0 - 2 ^ (sizeof(xlen) - 1)
 
 type half = bits(16)
 type word = bits(32)
@@ -80,7 +82,7 @@ val rX : forall 'n, 0 <= 'n < 32. regno('n) -> xlenbits effect {rreg}
 /*function rX 0 = 0x0000000000000000
 and rX (r if r > 0) = Xs[r]*/
 function rX r = match r {
-  0 => 0x0000000000000000,
+  0 => EXTZ(0x0),
   1 => x1,
   2 => x2,
   3 => x3,
@@ -438,13 +440,14 @@ function extStatus_of_bits(e) =
 /* supervisor-level address translation modes */
 
 type satp_mode = bits(4)
-enum SATPMode = {Sbare, Sv32, Sv39}
+enum SATPMode = {Sbare, Sv32, Sv39, Sv48}
 
-function satpMode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
+function satp64Mode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
   match (a, m) {
     (_,    0x0) => Some(Sbare),
     (RV32, 0x1) => Some(Sv32),
     (RV64, 0x8) => Some(Sv39),
+    (RV64, 0x9) => Some(Sv48),
     (_, _)      => None()
   }
 

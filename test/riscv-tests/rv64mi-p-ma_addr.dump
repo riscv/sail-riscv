@@ -407,7 +407,7 @@ Disassembly of section .text.init:
 0000000080000608 <mtvec_handler>:
     80000608:	342022f3          	csrr	t0,mcause
     8000060c:	fc929ee3          	bne	t0,s1,800005e8 <fail>
-    80000610:	343022f3          	csrr	t0,mbadaddr
+    80000610:	343022f3          	csrr	t0,mtval
     80000614:	fc629ae3          	bne	t0,t1,800005e8 <fail>
     80000618:	00028283          	lb	t0,0(t0)
     8000061c:	fc0286e3          	beqz	t0,800005e8 <fail>

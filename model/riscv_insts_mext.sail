@@ -22,8 +22,10 @@ function clause execute (MUL(rs2, rs1, rd, high, signed1, signed2)) = {
     let rs2_val = X(rs2);
     let rs1_int : int = if signed1 then signed(rs1_val) else unsigned(rs1_val);
     let rs2_int : int = if signed2 then signed(rs2_val) else unsigned(rs2_val);
-    let result128 = to_bits(128, rs1_int * rs2_int);
-    let result = if high then result128[127..64] else result128[63..0];
+    let result_wide = to_bits(2 * sizeof(xlen), rs1_int * rs2_int);
+    let result = if   high
+                 then result_wide[(2 * sizeof(xlen) - 1) .. sizeof(xlen)]
+                 else result_wide[(sizeof(xlen) - 1) .. 0];
     X(rd) = result;
     true
   } else {
@@ -57,7 +59,7 @@ function clause execute (DIV(rs2, rs1, rd, s)) = {
     let q : int = if rs2_int == 0 then -1 else quot_round_zero(rs1_int, rs2_int);
     /* check for signed overflow */
     let q': int = if s & q > xlen_max_signed then xlen_min_signed else q;
-    X(rd) = to_bits(xlen, q');
+    X(rd) = to_bits(sizeof(xlen), q');
     true
   } else {
     handle_illegal();
@@ -87,7 +89,7 @@ function clause execute (REM(rs2, rs1, rd, s)) = {
     let rs2_int : int = if s then signed(rs2_val) else unsigned(rs2_val);
     let r : int = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
     /* signed overflow case returns zero naturally as required due to -1 divisor */
-    X(rd) = to_bits(xlen, r);
+    X(rd) = to_bits(sizeof(xlen), r);
     true
   } else {
     handle_illegal();
@@ -101,7 +103,10 @@ mapping clause assembly = REM(rs2, rs1, rd, s)
 /* ****************************************************************** */
 union clause ast = MULW : (regbits, regbits, regbits)
 
-mapping clause encdec = MULW(rs2, rs1, rd) <-> 0b0000001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
+mapping clause encdec = MULW(rs2, rs1, rd)
+      if sizeof(xlen) == 64
+  <-> 0b0000001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
+      if sizeof(xlen) == 64
 
 function clause execute (MULW(rs2, rs1, rd)) = {
   if haveMulDiv() then {
@@ -121,13 +126,17 @@ function clause execute (MULW(rs2, rs1, rd)) = {
 }
 
 mapping clause assembly = MULW(rs2, rs1, rd)
+      if sizeof(xlen) == 64
   <-> "mulw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+      if sizeof(xlen) == 64
 
 /* ****************************************************************** */
 union clause ast = DIVW : (regbits, regbits, regbits, bool)
 
 mapping clause encdec = DIVW(rs2, rs1, rd, s)
+      if sizeof(xlen) == 64
   <-> 0b0000001 @ rs2 @ rs1 @ 0b10 @ bool_not_bits(s) @ rd @ 0b0111011
+      if sizeof(xlen) == 64
 
 function clause execute (DIVW(rs2, rs1, rd, s)) = {
   if haveMulDiv() then {
@@ -147,13 +156,17 @@ function clause execute (DIVW(rs2, rs1, rd, s)) = {
 }
 
 mapping clause assembly = DIVW(rs2, rs1, rd, s)
+      if sizeof(xlen) == 64
   <-> "div" ^ maybe_not_u(s) ^ "w" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+      if sizeof(xlen) == 64
 
 /* ****************************************************************** */
 union clause ast = REMW : (regbits, regbits, regbits, bool)
 
 mapping clause encdec = REMW(rs2, rs1, rd, s)
+      if sizeof(xlen) == 64
   <-> 0b0000001 @ rs2 @ rs1 @ 0b11 @ bool_not_bits(s) @ rd @ 0b0111011
+      if sizeof(xlen) == 64
 
 function clause execute (REMW(rs2, rs1, rd, s)) = {
   if haveMulDiv() then {
@@ -172,4 +185,6 @@ function clause execute (REMW(rs2, rs1, rd, s)) = {
 }
 
 mapping clause assembly = REMW(rs2, rs1, rd, s)
+      if sizeof(xlen) == 64
   <-> "rem" ^ maybe_not_u(s) ^ "w" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+      if sizeof(xlen) == 64

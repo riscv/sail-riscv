@@ -32,7 +32,7 @@ mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)
  * call to load_reservation in LR and cancel_reservation in SC.
  */
 
-val process_loadres : forall 'n, 0 < 'n <= 8. (regbits, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> bool effect {escape, rreg, wreg}
+val process_loadres : forall 'n, 0 < 'n <= xlen_bytes. (regbits, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> bool effect {escape, rreg, wreg}
 function process_loadres(rd, addr, value, is_unsigned) =
   match extend_value(is_unsigned, value) {
     MemValue(result) => { load_reservation(addr); X(rd) = result; true },
@@ -53,17 +53,17 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
          DOUBLE => vaddr[2..0] == 0b000
        };
     /* "LR faults like a normal load, even though it's in the AMO major opcode space."
-       - Andrew Waterman, isa-dev, 10 Jul 2018.
+     * - Andrew Waterman, isa-dev, 10 Jul 2018.
      */
     if (~ (aligned))
     then { handle_mem_exception(vaddr, E_Load_Addr_Align); false }
     else match translateAddr(vaddr, Read, Data) {
            TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
            TR_Address(addr) =>
-             match width {
-               WORD   => process_loadres(rd, vaddr, mem_read(addr, 4, aq, rl, true), false),
-               DOUBLE => process_loadres(rd, vaddr, mem_read(addr, 8, aq, rl, true), false),
-               _      => internal_error("LOADRES expected WORD or DOUBLE")
+             match (width, sizeof(xlen)) {
+               (WORD, _)    => process_loadres(rd, vaddr, mem_read(addr, 4, aq, rl, true), false),
+               (DOUBLE, 64) => process_loadres(rd, vaddr, mem_read(addr, 8, aq, rl, true), false),
+               _            => internal_error("LOADRES expected WORD or DOUBLE")
              }
          }
   } else {
@@ -109,24 +109,24 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
       else {
         if match_reservation(vaddr) == false then {
           /* cannot happen in rmem */
-          X(rd) = EXTZ(0b1); true
+          X(rd) = EXTZ(0b1); cancel_reservation(); true
         } else {
           match translateAddr(vaddr, Write, Data) {
             TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
             TR_Address(addr) => {
-              let eares : MemoryOpResult(unit) = match width {
-                WORD   => mem_write_ea(addr, 4, aq, rl, true),
-                DOUBLE => mem_write_ea(addr, 8, aq, rl, true),
-                _      => internal_error("STORECON expected word or double")
+              let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
+                (WORD, _)    => mem_write_ea(addr, 4, aq, rl, true),
+                (DOUBLE, 64) => mem_write_ea(addr, 8, aq, rl, true),
+                _            => internal_error("STORECON expected word or double")
               };
               match (eares) {
                 MemException(e) => { handle_mem_exception(addr, e); false },
                 MemValue(_) => {
                   rs2_val = X(rs2);
-                  let res : MemoryOpResult(bool) = match width {
-                    WORD   => mem_write_value(addr, 4, rs2_val[31..0], aq, rl, true),
-                    DOUBLE => mem_write_value(addr, 8, rs2_val,        aq, rl, true),
-                    _      => internal_error("STORECON expected word or double")
+                  let res : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
+                    (WORD, _)    => mem_write_value(addr, 4, rs2_val[31..0], aq, rl, true),
+                    (DOUBLE, 64) => mem_write_value(addr, 8, rs2_val,        aq, rl, true),
+                    _            => internal_error("STORECON expected word or double")
                   };
                   match (res) {
                     MemValue(true)  => { X(rd) = EXTZ(0b0); cancel_reservation(); true },
@@ -175,19 +175,19 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
     match translateAddr(vaddr, ReadWrite, Data) {
       TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
       TR_Address(addr) => {
-        let eares : MemoryOpResult(unit) = match width {
-          WORD   => mem_write_ea(addr, 4, aq & rl, rl, true),
-          DOUBLE => mem_write_ea(addr, 8, aq & rl, rl, true),
-          _      => internal_error ("AMO expected WORD or DOUBLE")
+        let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
+          (WORD, _)    => mem_write_ea(addr, 4, aq & rl, rl, true),
+          (DOUBLE, 64) => mem_write_ea(addr, 8, aq & rl, rl, true),
+          _            => internal_error ("AMO expected WORD or DOUBLE")
         };
         rs2_val : xlenbits = X(rs2);
         match (eares) {
           MemException(e) => { handle_mem_exception(addr, e); false },
           MemValue(_) => {
-            let rval : MemoryOpResult(xlenbits) = match width {
-              WORD   => extend_value(false, mem_read(addr, 4, aq, aq & rl, true)),
-              DOUBLE => extend_value(false, mem_read(addr, 8, aq, aq & rl, true)),
-              _      => internal_error ("AMO expected WORD or DOUBLE")
+            let rval : MemoryOpResult(xlenbits) = match (width, sizeof(xlen)) {
+              (WORD, _)    => extend_value(false, mem_read(addr, 4, aq, aq & rl, true)),
+              (DOUBLE, 64) => extend_value(false, mem_read(addr, 8, aq, aq & rl, true)),
+              _            => internal_error ("AMO expected WORD or DOUBLE")
             };
             match (rval) {
               MemException(e)  => { handle_mem_exception(addr, e); false },
@@ -200,17 +200,19 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                     AMOAND  => rs2_val & loaded,
                     AMOOR   => rs2_val | loaded,
 
-                    /* Have to convert number to vector here. Check this */
-                    AMOMIN  => vector64(min(signed(rs2_val),   signed(loaded))),
-                    AMOMAX  => vector64(max(signed(rs2_val),   signed(loaded))),
-                    AMOMINU => vector64(min(unsigned(rs2_val), unsigned(loaded))),
-                    AMOMAXU => vector64(max(unsigned(rs2_val), unsigned(loaded)))
+                    /* These operations convert bitvectors to integer values using [un]signed,
+                     * and back using to_bits().
+                     */
+                    AMOMIN  => to_bits(sizeof(xlen), min(signed(rs2_val),   signed(loaded))),
+                    AMOMAX  => to_bits(sizeof(xlen), max(signed(rs2_val),   signed(loaded))),
+                    AMOMINU => to_bits(sizeof(xlen), min(unsigned(rs2_val), unsigned(loaded))),
+                    AMOMAXU => to_bits(sizeof(xlen), max(unsigned(rs2_val), unsigned(loaded)))
                   };
 
-                let wval : MemoryOpResult(bool) = match width {
-                  WORD   => mem_write_value(addr, 4, result[31..0], aq & rl, rl, true),
-                  DOUBLE => mem_write_value(addr, 8, result,        aq & rl, rl, true),
-                  _      => internal_error("AMO expected WORD or DOUBLE")
+                let wval : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
+                  (WORD, _)    => mem_write_value(addr, 4, result[31..0], aq & rl, rl, true),
+                  (DOUBLE, 64) => mem_write_value(addr, 8, result,        aq & rl, rl, true),
+                  _            => internal_error("AMO expected WORD or DOUBLE")
                 };
                 match (wval) {
                   MemValue(true)  => { X(rd) = loaded; true },
