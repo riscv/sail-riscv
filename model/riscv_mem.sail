@@ -8,21 +8,26 @@ function is_aligned_addr forall 'n. (addr : xlenbits, width : atom('n)) -> bool 
   unsigned(addr) % width == 0
 
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_read forall 'n, 'n >= 0. (t : ReadType, addr : xlenbits, width : atom('n), aq : bool, rl: bool, res : bool) -> MemoryOpResult(bits(8 * 'n)) =
+function phys_mem_read forall 'n, 'n >= 0. (t : ReadType, addr : xlenbits, width : atom('n), aq : bool, rl: bool, res : bool) -> MemoryOpResult((bool, bits(8 * 'n))) =
   match (t, __RISCV_read(addr, width, aq, rl, res)) {
     (Instruction, None()) => MemException(E_Fetch_Access_Fault),
     (Data, None())        => MemException(E_Load_Access_Fault),
-    (_, Some(v))          => { print_mem("mem[" ^ t ^ "," ^ BitStr(addr) ^ "] -> " ^ BitStr(v));
-                               MemValue(v) }
+    (_, Some((tag, v)))   => { print_mem("mem[" ^ t ^ "," ^ BitStr(addr) ^ "] -> " ^ BitStr(v));
+                               MemValue((tag, v)) }
   }
 
-function checked_mem_read forall 'n, 'n > 0. (t : ReadType, addr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
+function checked_mem_read forall 'n, 'n > 0. (t : ReadType, addr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult((bool, bits(8 * 'n))) =
   /* treat MMIO regions as not executable for now. TODO: this should actually come from PMP/PMA. */
-  if   t == Data & within_mmio_readable(addr, width)
-  then mmio_read(addr, width)
-  else if within_phys_mem(addr, width)
-  then phys_mem_read(t, addr, width, aq, rl, res)
-  else MemException(E_Load_Access_Fault)
+  if t == Data & within_mmio_readable(addr, width) then {
+    match mmio_read(addr, width) {
+      MemValue(data)  => MemValue((false, data)),
+      MemException(e) => MemException(e)
+    }
+  } else if within_phys_mem(addr, width) then {
+    phys_mem_read(t, addr, width, aq, rl, res)
+  } else {
+    MemException(E_Load_Access_Fault)
+  }
 
 /* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
 
@@ -47,9 +52,9 @@ $endif
 
 /* NOTE: The rreg effect is due to MMIO. */
 $ifdef RVFI_DII
-val mem_read : forall 'n, 'n > 0. (xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {wreg, rmem, rreg, escape}
+val mem_read : forall 'n, 'n > 0. (xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {wreg, rmem, rmemt, rreg, escape}
 $else
-val mem_read : forall 'n, 'n > 0. (xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rreg, escape}
+val mem_read : forall 'n, 'n > 0. (xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rmemt, rreg, escape}
 $endif
 
 function mem_read (addr, width, aq, rl, res) = {
@@ -59,7 +64,11 @@ function mem_read (addr, width, aq, rl, res) = {
   else match (aq, rl, res) {
     (false, true,  false) => throw(Error_not_implemented("load.rl")),
     (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
-    (_, _, _)             => checked_mem_read(Data, addr, width, aq, rl, res)
+    (_, _, _) =>
+      match checked_mem_read(Data, addr, width, aq, rl, res) {
+        MemValue((tag, data)) => MemValue(data),
+        MemException(e)       => MemException(e)
+      }
   };
  rvfi_read(addr, width, result);
  result
@@ -67,7 +76,7 @@ function mem_read (addr, width, aq, rl, res) = {
 
 val mem_read_cap : (xlenbits, bool, bool, bool) -> MemoryOpResult(Capability) effect {rmem, rmemt, rreg, escape}
 function mem_read_cap (addr, aq, rl, res) = {
-  let result : MemoryOpResult(bits(8 * 'cap_size)) =
+  let result : MemoryOpResult((bool, bits(8 * 'cap_size))) =
   if ~(is_aligned_addr(addr, cap_size))
   then MemException(E_Load_Addr_Align)
   else match (aq, rl, res) {
@@ -75,9 +84,8 @@ function mem_read_cap (addr, aq, rl, res) = {
     (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
     (_, _, _)             => checked_mem_read(Data, addr, cap_size, aq, rl, res)
   };
-  let tag = MEMr_tag(addr);
   match result {
-    MemValue(v) => MemValue(memBitsToCapability(tag, v)),
+    MemValue((tag, v)) => MemValue(memBitsToCapability(tag, v)),
     MemException(e) => MemException(e) : MemoryOpResult(Capability)
   }
 }
@@ -120,24 +128,21 @@ function mem_write_ea_cap(addr, aq, rl, con) = {
      MemValue(MEMea(addr, cap_size))
 }
 
-/* XXX should derive thise form cap_size */
-function tag_align_addr (addr : xlenbits) -> xlenbits = [addr with 3..0 = 0x0]
-
 // only used for actual memory regions, to avoid MMIO effects
 function phys_mem_write forall 'n, 'n <= 'cap_size. (addr : xlenbits, width : atom('n), tag : bool, data: bits(8 * 'n), aq : bool, rl : bool, con : bool) -> MemoryOpResult(bool) = {
-  print_mem("mem[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data));
+  /*print_mem("mem[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data));
   let tag_addr = tag_align_addr(addr);
   print_mem("tag[" ^ BitStr(tag_addr) ^ "] <- " ^ (if tag then "1" else "0"));
-  MEMw_tag(tag_addr, tag);
+  MEMw_tag(tag_addr, tag);*/
 
   /* If the write crosses a cap_size alignment boundary then we need to write the other tag. 
      Writes greater than cap_size that might span more than two regions are not supported. */
-  let tag_addr2 = tag_align_addr(addr + width - 1);
+  /*let tag_addr2 = tag_align_addr(addr + width - 1);
   if tag_addr != tag_addr2 then {
       print_mem("tag[" ^ BitStr(tag_addr2) ^ "] <- " ^ (if tag then "1" else "0"));
       MEMw_tag(tag_addr2, tag);
-  };
-  MemValue(__RISCV_write(addr, width, data, aq, rl, con))
+  };*/
+  MemValue(__RISCV_write(addr, width, tag, data, aq, rl, con))
 }
 
 // dispatches to MMIO regions or physical memory regions depending on physical memory map

@@ -139,7 +139,7 @@ union PTW_Result = {
   PTW_Failure: PTW_Error
 }
 
-val walk39 : (vaddr39, AccessType, Privilege, bool, bool, paddr39, nat, bool) -> PTW_Result effect {rmem, escape}
+val walk39 : (vaddr39, AccessType, Privilege, bool, bool, paddr39, nat, bool) -> PTW_Result effect {rmem, rmemt, escape}
 function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) -> PTW_Result = {
   let va = Mk_SV39_Vaddr(vaddr);
   let pt_ofs : paddr39 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV39_LEVEL_BITS))[(SV39_LEVEL_BITS - 1) .. 0]),
@@ -155,7 +155,7 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) -> PTW_Result 
             ^ ": invalid pte address"); */
       PTW_Failure(PTW_Access)
     },
-    MemValue(v) => {
+    MemValue((_, v)) => {
       let pte = Mk_SV39_PTE(v);
       let pbits = pte.BITS();
       let pattr = Mk_PTE_Bits(pbits);
@@ -291,7 +291,7 @@ union TR39_Result = {
   TR39_Failure : PTW_Error
 }
 
-val translate39 : (vaddr39, AccessType, Privilege, bool, bool, nat) -> TR39_Result effect {rreg, wreg, wmv, wmvt, escape, rmem}
+val translate39 : (vaddr39, AccessType, Privilege, bool, bool, nat) -> TR39_Result effect {rreg, wreg, wmv, wmvt, escape, rmem, rmemt}
 function translate39(vAddr, ac, priv, mxr, do_sum, level) = {
   let asid = curAsid64();
   match lookupTLB39(asid, vAddr) {
@@ -384,7 +384,7 @@ union TR_Result = {
 
 /* Top-level address translation dispatcher */
 
-val translateAddr : (xlenbits, AccessType, ReadType) -> TR_Result effect {escape, rmem, rreg, wmv, wmvt, wreg}
+val translateAddr : (xlenbits, AccessType, ReadType) -> TR_Result effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
 function translateAddr(vAddr, ac, rt) = {
   let effPriv : Privilege = match rt {
     Instruction => cur_privilege,

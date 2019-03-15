@@ -10,7 +10,7 @@ union FetchResult = {
 function isRVC(h : half) -> bool =
  ~ (h[1 .. 0] == 0b11)
 
-val fetch : unit -> FetchResult effect {escape, rmem, rreg, wmv, wmvt, wreg}
+val fetch : unit -> FetchResult effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
 function fetch() -> FetchResult = {
   /* check for legal PC */
   let abs_pc = unsigned(PC);
@@ -35,7 +35,7 @@ function fetch() -> FetchResult = {
        */
       match checked_mem_read(Instruction, ppclo, 2, false, false, false) {
         MemException(e) => F_Error(E_Fetch_Access_Fault, PC),
-        MemValue(ilo) => {
+        MemValue((_, ilo)) => {
           if isRVC(ilo) then F_RVC(ilo)
           else if abs_pc + 4 > pcc_top then
             F_CHERI_Err (CapEx_LengthViolation, PC)
@@ -46,7 +46,7 @@ function fetch() -> FetchResult = {
               TR_Address(ppchi) => {
                 match checked_mem_read(Instruction, ppchi, 2, false, false, false) {
                   MemException(e) => F_Error(E_Fetch_Access_Fault, PChi),
-                  MemValue(ihi) => F_Base(append(ihi, ilo))
+                  MemValue((_, ihi)) => F_Base(append(ihi, ilo))
                 }
               }
             }

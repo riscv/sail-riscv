@@ -169,7 +169,7 @@ endif
 
 generated_definitions/lem/riscv.lem: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/lem
-	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem -isa_output_dir generated_definitions/isabelle -o riscv -lem_mwords -lem_lib Riscv_extras $(SAIL_SRCS)
+	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem -isa_output_dir generated_definitions/isabelle -o riscv -lem_mwords -lem_lib Riscv_extras -auto_mono -mono_rewrites $(SAIL_LIB_DIR)/smt.sail $(SAIL_LIB_DIR)/mono_rewrites.sail $(SAIL_SRCS)
 
 generated_definitions/lem/riscv_sequential.lem: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/lem

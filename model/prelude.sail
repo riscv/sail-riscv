@@ -922,73 +922,142 @@ overload min = {min_nat, min_int}
 
 overload max = {max_nat, max_int}
 
-val __WriteRAM = {lem: "MEMw", _: "write_ram"} : forall 'n 'm.
+$ifndef FEATURE_IMPLICITS
+
+val zeros_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
+function zeros_implicit () = sail_zeros('n)
+overload zeros = {zeros_implicit, sail_zeros}
+
+val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
+function ones_n n = replicate_bits (0b1, n)
+
+val ones_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
+function ones_implicit () = ones_n ('n)
+
+overload ones = {ones_implicit, ones_n}
+
+$else
+
+val zeros_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
+function zeros_implicit (n) = sail_zeros(n)
+overload zeros = {zeros_implicit, sail_zeros}
+
+val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
+function ones_n n = replicate_bits (0b1, n)
+
+val ones_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
+function ones_implicit (n) = ones_n (n)
+
+overload ones = {ones_implicit, ones_n}
+
+$endif
+
+val MEMr_tag = "read_tag_bool"  : bits(64) -> bool effect { rmemt }
+val MEMw_tag = "write_tag_bool" : (bits(64) , bool) -> unit effect { wmvt }
+
+/* XXX should derive thise form cap_size */
+val tag_align_addr : forall 'n, 4 <= 'n <= 64. bits('n) -> bits('n)
+function tag_align_addr(addr) = [addr with 3..0 = 0x0]
+
+val __WriteRAM = {_: "write_ram"} : forall 'n 'm.
   (atom('m), atom('n), bits('m), bits('m), bits(8 * 'n)) -> bool effect {wmv}
 
-val __WriteRAM_release = {lem: "MEMw_release", _: "write_ram"} : forall 'n 'm.
-  (atom('m), atom('n), bits('m), bits('m), bits(8 * 'n)) -> bool effect {wmv}
+val __WriteMemT = {lem: "WriteMemT"} : forall 'n 'm, 4 <= 'm <= 64.
+  (bits('m), atom('n), bool, bits(8 * 'n)) -> bool effect {wmv, wmvt}
 
-val __WriteRAM_strong_release = {lem: "MEMw_strong_release", _: "write_ram"} : forall 'n 'm.
-  (atom('m), atom('n), bits('m), bits('m), bits(8 * 'n)) -> bool effect {wmv}
+function __WriteMemT(addr, width, tag, data) = {
+  let tag_addr = sail_zero_extend(tag_align_addr(addr), 64);
+  MEMw_tag(tag_addr, tag);
 
-val __WriteRAM_conditional = {lem: "MEMw_conditional", _: "write_ram"} : forall 'n 'm.
-  (atom('m), atom('n), bits('m), bits('m), bits(8 * 'n)) -> bool effect {wmv}
+  /* If the write crosses a cap_size alignment boundary then we need to write the other tag.
+     Writes greater than cap_size that might span more than two regions are not supported. */
+  let tag_addr2 = sail_zero_extend(tag_align_addr(addr + width - 1), 64);
+  if tag_addr != tag_addr2 then MEMw_tag(tag_addr2, tag);
 
-val __WriteRAM_conditional_release = {lem: "MEMw_conditional_release", _: "write_ram"} : forall 'n 'm.
-  (atom('m), atom('n), bits('m), bits('m), bits(8 * 'n)) -> bool effect {wmv}
+  __WriteRAM('m, width, zeros(), addr, data);
+}
 
-val __WriteRAM_conditional_strong_release = {lem: "MEMw_conditional_strong_release", _: "write_ram"} : forall 'n 'm.
-  (atom('m), atom('n), bits('m), bits('m), bits(8 * 'n)) -> bool effect {wmv}
+val __WriteMemT_release = {lem: "WriteMemT_release"} : forall 'n 'm, 4 <= 'm <= 64.
+  (bits('m), atom('n), bool, bits(8 * 'n)) -> bool effect {wmv, wmvt}
 
-val __RISCV_write : forall 'n. (bits(64), atom('n), bits(8 * 'n), bool, bool, bool) -> bool effect {wmv}
-function __RISCV_write (addr, width, data, aq, rl, con) =
+val __WriteMemT_strong_release = {lem: "WriteMemT_strong_release"} : forall 'n 'm, 4 <= 'm <= 64.
+  (bits('m), atom('n), bool, bits(8 * 'n)) -> bool effect {wmv, wmvt}
+
+val __WriteMemT_conditional = {lem: "WriteMemT_conditional"} : forall 'n 'm, 4 <= 'm <= 64.
+  (bits('m), atom('n), bool, bits(8 * 'n)) -> bool effect {wmv, wmvt}
+
+val __WriteMemT_conditional_release = {lem: "WriteMemT_conditional_release"} : forall 'n 'm, 4 <= 'm <= 64.
+  (bits('m), atom('n), bool, bits(8 * 'n)) -> bool effect {wmv, wmvt}
+
+val __WriteMemT_conditional_strong_release = {lem: "WriteMemT_conditional_strong_release"} : forall 'n 'm, 4 <= 'm <= 64.
+  (bits('m), atom('n), bool, bits(8 * 'n)) -> bool effect {wmv, wmvt}
+
+function __WriteMemT_release(addr, width, tag, data)                    = __WriteMemT(addr, width, tag, data)
+function __WriteMemT_strong_release(addr, width, tag, data)             = __WriteMemT(addr, width, tag, data)
+function __WriteMemT_conditional(addr, width, tag, data)                = __WriteMemT(addr, width, tag, data)
+function __WriteMemT_conditional_release(addr, width, tag, data)        = __WriteMemT(addr, width, tag, data)
+function __WriteMemT_conditional_strong_release(addr, width, tag, data) = __WriteMemT(addr, width, tag, data)
+
+val __RISCV_write : forall 'n 'm, 4 <= 'm <= 64.
+  (bits('m), atom('n), bool, bits(8 * 'n), bool, bool, bool) -> bool effect {wmv, wmvt}
+function __RISCV_write (addr, width, tag, data, aq, rl, con) =
   match (aq, rl, con) {
-    (false, false, false) => __WriteRAM(64, width, 0x0000_0000_0000_0000, addr, data),
-    (false, true,  false) => __WriteRAM_release(64, width, 0x0000_0000_0000_0000, addr, data),
-    (false, false, true)  => __WriteRAM_conditional(64, width, 0x0000_0000_0000_0000, addr, data),
-    (false, true,  true)  => __WriteRAM_conditional_release(64, width, 0x0000_0000_0000_0000, addr, data),
-    (true,  true,  false) => __WriteRAM_strong_release(64, width, 0x0000_0000_0000_0000, addr, data),
-    (true,  true,  true)  => __WriteRAM_conditional_strong_release(64, width, 0x0000_0000_0000_0000, addr, data),
+    (false, false, false) => __WriteMemT(addr, width, tag, data),
+    (false, true,  false) => __WriteMemT_release(addr, width, tag, data),
+    (false, false, true)  => __WriteMemT_conditional(addr, width, tag, data),
+    (false, true,  true)  => __WriteMemT_conditional_release(addr, width, tag, data),
+    (true,  true,  false) => __WriteMemT_strong_release(addr, width, tag, data),
+    (true,  true,  true)  => __WriteMemT_conditional_strong_release(addr, width, tag, data),
     (true,  false, false) => false,
     (true,  false, true)  => false
   }
 
-val __TraceMemoryWrite : forall 'n 'm.
-  (atom('n), bits('m), bits(8 * 'n)) -> unit
-
-val __ReadRAM = { lem: "MEMr", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
+val __ReadRAM = {_ : "read_ram"} : forall 'n 'm, 'n >= 0.
   (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
 
-val __ReadRAM_acquire = { lem: "MEMr_acquire", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
+val __ReadMemT = {lem: "ReadMemT"} : forall 'n 'm, 'n >= 0 & 4 <= 'm <= 64.
+  (bits('m), atom('n)) -> (bool, bits(8 * 'n)) effect {rmem, rmemt}
 
-val __ReadRAM_strong_acquire = { lem: "MEMr_strong_acquire", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
+function __ReadMemT(addr, width) = {
+  let tag = MEMr_tag(sail_zero_extend(addr, 64));
+  let data = __ReadRAM('m, width, zeros(), addr);
+  (tag, data)
+}
 
-val __ReadRAM_reserved = { lem: "MEMr_reserved", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
+val __ReadMemT_acquire = { lem: "ReadMemT_acquire" } : forall 'n 'm, 'n >= 0 & 4 <= 'm <= 64.
+  (bits('m), atom('n)) -> (bool, bits(8 * 'n)) effect {rmem, rmemt}
 
-val __ReadRAM_reserved_acquire = { lem: "MEMr_reserved_acquire", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
+val __ReadMemT_strong_acquire = { lem: "ReadMemT_strong_acquire" } : forall 'n 'm, 'n >= 0 & 4 <= 'm <= 64.
+  (bits('m), atom('n)) -> (bool, bits(8 * 'n)) effect {rmem, rmemt}
 
-val __ReadRAM_reserved_strong_acquire = { lem: "MEMr_reserved_strong_acquire", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
-  (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
+val __ReadMemT_reserved = { lem: "ReadMemT_reserved" } : forall 'n 'm, 'n >= 0 & 4 <= 'm <= 64.
+  (bits('m), atom('n)) -> (bool, bits(8 * 'n)) effect {rmem, rmemt}
 
-val __RISCV_read : forall 'n, 'n >= 0. (bits(64), atom('n), bool, bool, bool) -> option(bits(8 * 'n)) effect {rmem}
-function __RISCV_read (addr, width, aq, rl, res) =
+val __ReadMemT_reserved_acquire = { lem: "ReadMemT_reserved_acquire" } : forall 'n 'm, 'n >= 0 & 4 <= 'm <= 64.
+  (bits('m), atom('n)) -> (bool, bits(8 * 'n)) effect {rmem, rmemt}
+
+val __ReadMemT_reserved_strong_acquire = { lem: "ReadMemT_reserved_strong_acquire" } : forall 'n 'm, 'n >= 0 & 4 <= 'm <= 64.
+  (bits('m), atom('n)) -> (bool, bits(8 * 'n)) effect {rmem, rmemt}
+
+function __ReadMemT_acquire(addr, width)                 = __ReadMemT(addr, width)
+function __ReadMemT_strong_acquire(addr, width)          = __ReadMemT(addr, width)
+function __ReadMemT_reserved(addr, width)                = __ReadMemT(addr, width)
+function __ReadMemT_reserved_acquire(addr, width)        = __ReadMemT(addr, width)
+function __ReadMemT_reserved_strong_acquire(addr, width) = __ReadMemT(addr, width)
+
+val __RISCV_read : forall 'n 'm, 'n >= 0 & 4 <= 'm <= 64.
+  (bits('m), atom('n), bool, bool, bool) -> option((bool, bits(8 * 'n))) effect {rmem, rmemt}
+function __RISCV_read(addr, width, aq, rl, res) =
   match (aq, rl, res) {
-    (false, false, false) => Some(__ReadRAM(64, width, 0x0000_0000_0000_0000, addr)),
-    (true,  false, false) => Some(__ReadRAM_acquire(64, width, 0x0000_0000_0000_0000, addr)),
-    (true,  true,  false) => Some(__ReadRAM_strong_acquire(64, width, 0x0000_0000_0000_0000, addr)),
-    (false, false, true)  => Some(__ReadRAM_reserved(64, width, 0x0000_0000_0000_0000, addr)),
-    (true,  false, true)  => Some(__ReadRAM_reserved_acquire(64, width, 0x0000_0000_0000_0000, addr)),
-    (true,  true,  true)  => Some(__ReadRAM_reserved_strong_acquire(64, width, 0x0000_0000_0000_0000, addr)),
+    (false, false, false) => Some(__ReadMemT_acquire(addr, width)),
+    (true,  false, false) => Some(__ReadMemT_acquire(addr, width)),
+    (true,  true,  false) => Some(__ReadMemT_strong_acquire(addr, width)),
+    (false, false, true)  => Some(__ReadMemT_reserved(addr, width)),
+    (true,  false, true)  => Some(__ReadMemT_reserved_acquire(addr, width)),
+    (true,  true,  true)  => Some(__ReadMemT_reserved_strong_acquire(addr, width)),
     (false, true,  false) => None(),
     (false, true,  true)  => None()
   }
-
-val MEMr_tag = "read_tag_bool"  : bits(64) -> bool effect { rmemt }
-val MEMw_tag = "write_tag_bool" : (bits(64) , bool) -> unit effect { wmvt }
 
 val __TraceMemoryRead : forall 'n 'm. (atom('n), bits('m), bits(8 * 'n)) -> unit
 
@@ -1107,36 +1176,6 @@ val not = {coq:"negb", _:"not"} : bool -> bool
 
 val MAX : forall 'n, 'n >= 0 . atom('n) -> atom(2 ^ 'n - 1) effect pure
 function MAX(n) = pow2(n) - 1
-
-$ifndef FEATURE_IMPLICITS
-
-val zeros_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
-function zeros_implicit () = sail_zeros('n)
-overload zeros = {zeros_implicit, sail_zeros}
-
-val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
-function ones_n n = replicate_bits (0b1, n)
-
-val ones_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
-function ones_implicit () = ones_n ('n)
-
-overload ones = {ones_implicit, ones_n}
-
-$else
-
-val zeros_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
-function zeros_implicit (n) = sail_zeros(n)
-overload zeros = {zeros_implicit, sail_zeros}
-
-val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
-function ones_n n = replicate_bits (0b1, n)
-
-val ones_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
-function ones_implicit (n) = ones_n (n)
-
-overload ones = {ones_implicit, ones_n}
-
-$endif
 
 val modulus = {ocaml: "modulus", lem: "hardware_mod", coq: "euclid_modulo", _ : "tmod_int"} : forall 'n, 'n > 0 .  (int, atom('n)) -> range(0, 'n - 1)
 
