@@ -1,5 +1,6 @@
 default Order dec
 
+$include <smt.sail>
 $include <option.sail>
 $include <arith.sail>
 $include <string.sail>
@@ -83,9 +84,8 @@ overload operator - = {sub_vec, sub_vec_int}
 val quot_round_zero = {ocaml: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int"} : (int, int) -> int
 val rem_round_zero = {ocaml: "rem_round_zero", lem: "hardware_mod", c: "tmod_int"} : (int, int) -> int
 
-val modulus = {lem: "hardware_mod"} : (int, int) -> int
-
-overload operator % = {modulus}
+/* The following should get us euclidean modulus, and is compatible with pre and post 0.9 versions of sail */
+overload operator % = {emod_int, mod}
 
 val min_nat = {ocaml: "min_int", lem: "min", coq: "min_nat", c: "min_int"} : (nat, nat) -> nat
 
