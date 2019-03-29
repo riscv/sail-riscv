@@ -417,18 +417,19 @@ function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
 
 /* state state initialization */
 
+val sys_enable_rvc = {c: "sys_enable_rvc", ocaml: "Platform.enable_rvc", _: "sys_enable_rvc"} : unit -> bool
 function init_sys() -> unit = {
   cur_privilege = Machine;
 
   mhartid     = EXTZ(0b0);
 
   misa->MXL() = arch_to_bits(if sizeof(xlen) == 32 then RV32 else RV64);
-  misa->A()   = true; /* atomics */
-  misa->C()   = true; /* RVC */
-  misa->I()   = true; /* base integer ISA */
-  misa->M()   = true; /* integer multiply/divide */
-  misa->U()   = true; /* user-mode */
-  misa->S()   = true; /* supervisor-mode */
+  misa->A()   = true;               /* atomics */
+  misa->C()   = sys_enable_rvc ();  /* RVC */
+  misa->I()   = true;               /* base integer ISA */
+  misa->M()   = true;               /* integer multiply/divide */
+  misa->U()   = true;               /* user-mode */
+  misa->S()   = true;               /* supervisor-mode */
 
   mstatus = set_mstatus_SXL(mstatus, misa.MXL());
   mstatus = set_mstatus_UXL(mstatus, misa.MXL());

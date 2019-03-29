@@ -4,8 +4,10 @@ module Elf = Elf_loader;;
 
 (* Platform configuration *)
 
-let config_enable_dirty_update = ref false
-let config_enable_misaligned_access = ref false
+let config_enable_rvc                  = ref true
+let config_enable_writable_misa        = ref true
+let config_enable_dirty_update         = ref false
+let config_enable_misaligned_access    = ref false
 let config_mtval_has_illegal_inst_bits = ref false
 
 let platform_arch = ref P.RV64
@@ -65,23 +67,26 @@ let make_rom arch start_pc =
      *)
     rom )
 
-let enable_dirty_update () = !config_enable_dirty_update
-let enable_misaligned_access () = !config_enable_misaligned_access
-let mtval_has_illegal_inst_bits () = !config_mtval_has_illegal_inst_bits
+let enable_writable_misa ()          = !config_enable_writable_misa
+let enable_rvc ()                    = !config_enable_rvc
+let enable_dirty_update ()           = !config_enable_dirty_update
+let enable_misaligned_access ()      = !config_enable_misaligned_access
+let mtval_has_illegal_inst_bits ()   = !config_mtval_has_illegal_inst_bits
 
-let rom_base () = arch_bits_of_int64 P.rom_base
-let rom_size () = arch_bits_of_int   !rom_size_ref
+let rom_base ()   = arch_bits_of_int64 P.rom_base
+let rom_size ()   = arch_bits_of_int   !rom_size_ref
 
-let dram_base () = arch_bits_of_int64 P.dram_base
-let dram_size () = arch_bits_of_int64 !P.dram_size_ref
-
-let htif_tohost () =
-  arch_bits_of_int64 (Big_int.to_int64 (Elf.elf_tohost ()))
+let dram_base ()  = arch_bits_of_int64 P.dram_base
+let dram_size ()  = arch_bits_of_int64 !P.dram_size_ref
 
 let clint_base () = arch_bits_of_int64 P.clint_base
 let clint_size () = arch_bits_of_int64 P.clint_size
 
 let insns_per_tick () = Big_int.of_int P.insns_per_tick
+
+let htif_tohost () =
+  arch_bits_of_int64 (Big_int.to_int64 (Elf.elf_tohost ()))
+
 
 (* load reservation *)
 

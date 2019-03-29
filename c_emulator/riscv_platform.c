@@ -9,6 +9,11 @@
 static mach_bits reservation = 0;
 static bool reservation_valid = false;
 
+bool sys_enable_rvc(unit u)
+{ return rv_enable_rvc; }
+bool sys_enable_writable_misa(unit u)
+{ return rv_enable_writable_misa; }
+
 bool plat_enable_dirty_update(unit u)
 { return rv_enable_dirty_update; }
 
