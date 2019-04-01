@@ -71,6 +71,14 @@ let speculate_conditional_success () = excl_result ()
 let match_reservation _ = true
 let cancel_reservation () = ()
 
+val sys_enable_writable_misa : unit -> bool
+let sys_enable_writable_misa () = true
+declare ocaml target_rep function sys_enable_writable_misa = `Platform.enable_writable_misa`
+
+val sys_enable_rvc : unit -> bool
+let sys_enable_rvc () = true
+declare ocaml target_rep function sys_enable_rvc = `Platform.enable_rvc`
+
 val plat_ram_base : forall 'a. Size 'a => unit -> bitvector 'a
 let plat_ram_base () = wordFromInteger 0
 declare ocaml target_rep function plat_ram_base = `Platform.dram_base`
