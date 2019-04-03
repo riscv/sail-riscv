@@ -147,3 +147,6 @@ let prerr_bits msg bs = prerr_endline (msg ^ (show_bitlist (bits_of bs)))
 
 val print_bits : forall 'a. Size 'a => string -> bitvector 'a -> unit
 let print_bits msg bs = () (* print_endline (msg ^ (show_bitlist (bits_of bs))) *)
+
+val print_dbg : string -> unit
+let print_dbg msg = ()

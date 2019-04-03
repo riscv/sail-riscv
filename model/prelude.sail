@@ -104,10 +104,10 @@ val pow2 = "pow2" : forall 'n. atom('n) -> atom(2 ^ 'n)
 val print = "print_endline" : string -> unit
 val print_string = "print_string" : (string, string) -> unit
 
-val print_instr    = {ocaml: "Platform.print_instr", c: "print_instr", _: "print_endline"} : string -> unit
-val print_reg      = {ocaml: "Platform.print_reg",   c: "print_reg", _: "print_endline"} : string -> unit
-val print_mem      = {ocaml: "Platform.print_mem_access", c: "print_mem_access", _: "print_endline"} : string -> unit
-val print_platform = {ocaml: "Platform.print_platform", c: "print_platform", _: "print_endline"} : string -> unit
+val print_instr    = {ocaml: "Platform.print_instr", c: "print_instr", lem: "print_dbg", _: "print_endline"} : string -> unit
+val print_reg      = {ocaml: "Platform.print_reg",   c: "print_reg", lem: "print_dbg", _: "print_endline"} : string -> unit
+val print_mem      = {ocaml: "Platform.print_mem_access", c: "print_mem_access", lem: "print_dbg", _: "print_endline"} : string -> unit
+val print_platform = {ocaml: "Platform.print_platform", c: "print_platform", lem: "print_dbg", _: "print_endline"} : string -> unit
 
 $ifndef FEATURE_IMPLICITS
 val EXTS : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
