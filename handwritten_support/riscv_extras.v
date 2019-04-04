@@ -134,6 +134,9 @@ Definition putchar {T} (_:T) : unit := tt.
 Require DecimalString.
 Definition string_of_int z := DecimalString.NilZero.string_of_int (Z.to_int z).
 
+Axiom sys_enable_writable_misa : unit -> bool.
+Axiom sys_enable_rvc : unit -> bool.
+
 (* The constraint solver can do this itself, but a Coq bug puts
    anonymous_subproof into the term instead of an actual subproof. *)
 Lemma n_leading_spaces_fact {w__0} :
