@@ -36,31 +36,38 @@ Definition MEMea_conditional_release {rv a e} (addr : mword a) size : monad rv u
 Definition MEMea_conditional_strong_release {rv a e} (addr : mword a) size : monad rv unit e
                                           := write_mem_ea Write_RISCV_conditional_strong_release addr size.
 
-
-(* Some wrappers copied from aarch64_extras *)
-(* TODO: Harmonise into a common library *)
 (*
-Definition get_slice_int_bl len n lo :=
-  (* TODO: Is this the intended behaviour? *)
-  let hi := lo + len - 1 in
-  let bs := bools_of_int (hi + 1) n in
-  subrange_list false bs hi lo
-
-val get_slice_int : forall 'a. Bitvector 'a => integer -> integer -> integer -> 'a
-Definition get_slice_int len n lo := of_bools (get_slice_int_bl len n lo)
+val MEMr                         : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
+val MEMr_acquire                 : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
+val MEMr_strong_acquire          : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
+val MEMr_reserved                : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
+val MEMr_reserved_acquire        : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
+val MEMr_reserved_strong_acquire : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
 *)
-Definition write_ram {rv e} m size (hexRAM : mword m) (addr : mword m) (data : mword (8 * size)) : monad rv bool e :=
-  write_mem_val data.
 
-Definition read_ram {rv e} m size `{ArithFact (size >= 0)} (_ : mword m) (addr : mword m) : monad rv (mword (8 * size)) e :=
- read_mem Read_plain addr size.
+Definition MEMr {rv e} addrsize size (hexRAM addr : mword addrsize)                         `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_plain addr size.
+Definition MEMr_acquire {rv e} addrsize size (hexRAM addr : mword addrsize)                 `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_acquire addr size.
+Definition MEMr_strong_acquire {rv e} addrsize size (hexRAM addr : mword addrsize)          `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_strong_acquire addr size.
+Definition MEMr_reserved {rv e} addrsize size (hexRAM addr : mword addrsize)                `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_reserved addr size.
+Definition MEMr_reserved_acquire {rv e} addrsize size (hexRAM addr : mword addrsize)        `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_reserved_acquire addr size.
+Definition MEMr_reserved_strong_acquire {rv e} addrsize size (hexRAM addr : mword addrsize) `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_reserved_strong_acquire addr size.
+
 (*
-Definition string_of_bits bs := string_of_bv (bits_of bs).
-Definition string_of_int := show
-
-Definition _sign_extend bits len := maybe_failwith (of_bits (exts_bv len bits))
-Definition _zero_extend bits len := maybe_failwith (of_bits (extz_bv len bits))
+val MEMw                            : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
+val MEMw_release                    : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
+val MEMw_strong_release             : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
+val MEMw_conditional                : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
+val MEMw_conditional_release        : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
+val MEMw_conditional_strong_release : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
 *)
+
+Definition MEMw {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size))                            : monad rv bool e := write_mem Write_plain addr size v.
+Definition MEMw_release {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size))                    : monad rv bool e := write_mem Write_RISCV_release addr size v.
+Definition MEMw_strong_release {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size))             : monad rv bool e := write_mem Write_RISCV_strong_release addr size v.
+Definition MEMw_conditional {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size))                : monad rv bool e := write_mem Write_RISCV_conditional addr size v.
+Definition MEMw_conditional_release {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size))        : monad rv bool e := write_mem Write_RISCV_conditional_release addr size v.
+Definition MEMw_conditional_strong_release {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size)) : monad rv bool e := write_mem Write_RISCV_conditional_strong_release addr size v.
+
 Definition shift_bits_left {a b} (v : mword a) (n : mword b) : mword a :=
   shiftl v (int_of_mword false n).
 
