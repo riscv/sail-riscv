@@ -101,6 +101,18 @@ let cancel_reservation () =
   print_platform (Printf.sprintf "reservation <- none\n");
   reservation := "none"
 
+let read_mem (rk, addr, len) =
+  Sail_lib.fast_read_ram (len, addr)
+
+let write_mem_ea _ = ()
+
+let write_mem (wk, addr, len, value) =
+  Sail_lib.write_ram' (len, Sail_lib.uint addr, value); true
+
+let excl_res _ = true
+
+let barrier _ = ()
+
 (* terminal I/O *)
 
 let term_write char_bits =
