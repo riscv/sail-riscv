@@ -45,7 +45,6 @@ const char *RV32ISA = "RV32IMAC";
 #define CSR_MIP 0x344
 
 static bool do_dump_dts = false;
-static bool disable_compressed = false;
 static bool do_show_times = false;
 struct tv_spike_t *s = NULL;
 char *term_log = NULL;
@@ -78,6 +77,7 @@ static struct option options[] = {
   {"enable-misaligned",           no_argument,       0, 'm'},
   {"ram-size",                    required_argument, 0, 'z'},
   {"disable-compressed",          no_argument,       0, 'C'},
+  {"disable-writable-misa",       no_argument,       0, 'I'},
   {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'},
   {"dump-dts",                    no_argument,       0, 's'},
   {"device-tree-blob",            required_argument, 0, 'b'},
@@ -187,7 +187,10 @@ char *process_args(int argc, char **argv)
       rv_enable_misaligned = true;
       break;
     case 'C':
-      disable_compressed = true;
+      rv_enable_rvc = false;
+      break;
+    case 'I':
+      rv_enable_writable_misa = false;
       break;
     case 'i':
       rv_mtval_has_illegal_inst_bits = true;
@@ -424,8 +427,9 @@ void init_sail(uint64_t elf_entry)
   } else
 #endif
   init_sail_reset_vector(elf_entry);
-  if (disable_compressed)
-    z_set_Misa_C(&zmisa, 0);
+
+  // this is probably unnecessary now; remove
+  if (!rv_enable_rvc) z_set_Misa_C(&zmisa, 0);
 }
 
 int init_check(struct tv_spike_t *s)

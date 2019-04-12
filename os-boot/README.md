@@ -7,6 +7,9 @@ output port similar to Spike's HTIF (host-target interface) mechanism,
 and an interrupt controller based on Spike's CLINT (core-local
 interrupt controller).  Console input is not currently supported.
 
+32-bit OS boots require a workaround for the 64-bit HTIF interface,
+which is currently not supported.
+
 Booting Linux with the C backend
 --------------------------------
 

@@ -7,6 +7,8 @@
 
 #define DEFAULT_RSTVEC     0x00001000
 
+extern bool rv_enable_rvc;
+extern bool rv_enable_writable_misa;
 extern bool rv_enable_dirty_update;
 extern bool rv_enable_misaligned;
 extern bool rv_mtval_has_illegal_inst_bits;

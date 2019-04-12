@@ -1,5 +1,6 @@
 default Order dec
 
+$include <smt.sail>
 $include <option.sail>
 $include <arith.sail>
 $include <string.sail>
@@ -84,9 +85,8 @@ overload operator - = {sub_vec, sub_vec_int}
 val quot_round_zero = {ocaml: "quot_round_zero", interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int"} : (int, int) -> int
 val rem_round_zero = {ocaml: "rem_round_zero", interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int"} : (int, int) -> int
 
-val modulus = {lem: "hardware_mod"} : (int, int) -> int
-
-overload operator % = {modulus}
+/* The following should get us euclidean modulus, and is compatible with pre and post 0.9 versions of sail */
+overload operator % = {emod_int, mod}
 
 val min_nat = {ocaml: "min_int", lem: "min", coq: "min_nat", c: "min_int"} : (nat, nat) -> nat
 
@@ -105,10 +105,10 @@ val pow2 = "pow2" : forall 'n. atom('n) -> atom(2 ^ 'n)
 val print = "print_endline" : string -> unit
 val print_string = "print_string" : (string, string) -> unit
 
-val print_instr    = {ocaml: "Platform.print_instr", interpreter: "print_endline", c: "print_instr", _: "print_endline"} : string -> unit
-val print_reg      = {ocaml: "Platform.print_reg", interpreter: "print_endline",   c: "print_reg", _: "print_endline"} : string -> unit
-val print_mem      = {ocaml: "Platform.print_mem_access", interpreter: "print_endline", c: "print_mem_access", _: "print_endline"} : string -> unit
-val print_platform = {ocaml: "Platform.print_platform", interpreter: "print_endline", c: "print_platform", _: "print_endline"} : string -> unit
+val print_instr    = {ocaml: "Platform.print_instr", interpreter: "print_endline", c: "print_instr", lem: "print_dbg", _: "print_endline"} : string -> unit
+val print_reg      = {ocaml: "Platform.print_reg", interpreter: "print_endline", c: "print_reg", lem: "print_dbg", _: "print_endline"} : string -> unit
+val print_mem      = {ocaml: "Platform.print_mem_access", interpreter: "print_endline", c: "print_mem_access", lem: "print_dbg", _: "print_endline"} : string -> unit
+val print_platform = {ocaml: "Platform.print_platform", interpreter: "print_endline", c: "print_platform", lem: "print_dbg", _: "print_endline"} : string -> unit
 
 $ifndef FEATURE_IMPLICITS
 val EXTS : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)

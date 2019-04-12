@@ -70,13 +70,19 @@ bitfield Misa : xlenbits = {
 }
 register misa : Misa
 
+val sys_enable_writable_misa = {c: "sys_enable_writable_misa", ocaml: "Platform.enable_writable_misa", _: "sys_enable_writable_misa"} : unit -> bool
+
+/* We currently only support dynamic changes for the C extension. */
 function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
-  /* Allow modifications to C. */
-  let v = Mk_Misa(v);
-  // Suppress changing C if nextPC would become misaligned.
-  if   v.C() == false & nextPC[1] == true
-  then m
-  else update_C(m, v.C())
+  if   sys_enable_writable_misa ()
+  then { /* Allow modifications to C only for now. */
+         let  v = Mk_Misa(v);
+         /* Suppress changing C if nextPC would become misaligned. */
+         if   v.C() == false & nextPC[1] == true
+         then m
+         else update_C(m, v.C())
+       }
+  else m
 }
 
 /* helpers to check support for various extensions. */
@@ -319,12 +325,15 @@ function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
 
 register mepc : xlenbits
 
-// legalizing writes to xepc
-function legalize_xepc(v : xlenbits) -> xlenbits = {
-  v & EXTS(if haveRVC() then 0b110 else 0b100)
-}
+/* The xepc legalization zeroes xepc[1:0] when misa.C is hardwired to 0.
+ * When misa.C is writable, it zeroes only xepc[0].
+ */
+function legalize_xepc(v : xlenbits) -> xlenbits =
+  if   sys_enable_writable_misa () | misa.C() == true
+  then [v with 0 = bitzero]
+  else v & EXTS(0b100)
 
-// masking for reads to xepc
+/* masking for reads to xepc */
 function pc_alignment_mask() -> xlenbits =
   ~(EXTZ(if misa.C() == true then 0b00 else 0b10))
 
