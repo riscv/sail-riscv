@@ -52,7 +52,7 @@ val plat_clint_size = {ocaml: "Platform.clint_size", interpreter: "Platform.clin
 
 /* Location of HTIF ports */
 val plat_htif_tohost = {ocaml: "Platform.htif_tohost", c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> xlenbits
-function plat_htif_tohost () = to_bits(64, elf_tohost ())
+function plat_htif_tohost () = to_bits(sizeof(xlen), elf_tohost ())
 // todo: fromhost
 
 val phys_mem_segments : unit -> list((xlenbits, xlenbits))
