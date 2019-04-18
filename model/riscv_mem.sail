@@ -10,12 +10,12 @@ function is_aligned_addr forall 'n. (addr : xlenbits, width : atom('n)) -> bool 
 // only used for actual memory regions, to avoid MMIO effects
 function phys_mem_read forall 'n, 'n > 0. (t : ReadType, addr : xlenbits, width : atom('n), aq : bool, rl: bool, res : bool) -> MemoryOpResult(bits(8 * 'n)) = {
   let result = (match (aq, rl, res) {
-    (false, false, false) => Some(__read_mem(Read_plain, addr, width)),
-    (true, false, false)  => Some(__read_mem(Read_RISCV_acquire, addr, width)),
-    (true, true, false)   => Some(__read_mem(Read_RISCV_strong_acquire, addr, width)),
-    (false, false, true)  => Some(__read_mem(Read_RISCV_reserved, addr, width)),
-    (true, false, true)   => Some(__read_mem(Read_RISCV_reserved_acquire, addr, width)),
-    (true, true, true)    => Some(__read_mem(Read_RISCV_reserved_strong_acquire, addr, width)),
+    (false, false, false) => Some(__read_mem(Read_plain, sizeof(xlen), addr, width)),
+    (true, false, false)  => Some(__read_mem(Read_RISCV_acquire, sizeof(xlen), addr, width)),
+    (true, true, false)   => Some(__read_mem(Read_RISCV_strong_acquire, sizeof(xlen), addr, width)),
+    (false, false, true)  => Some(__read_mem(Read_RISCV_reserved, sizeof(xlen), addr, width)),
+    (true, false, true)   => Some(__read_mem(Read_RISCV_reserved_acquire, sizeof(xlen), addr, width)),
+    (true, true, true)    => Some(__read_mem(Read_RISCV_reserved_strong_acquire, sizeof(xlen), addr, width)),
     (false, true, false)  => None(), /* should these be instead throwing error_not_implemented as below? */
     (false, true, true)   => None()
   }) : option(bits(8 * 'n));
@@ -82,28 +82,28 @@ function mem_write_ea (addr, width, aq, rl, con) = {
   if (rl | con) & (~ (is_aligned_addr(addr, width)))
   then MemException(E_SAMO_Addr_Align)
   else match (aq, rl, con) {
-    (false, false, false) => MemValue(__write_mem_ea(Write_plain, addr, width)),
-    (false, true,  false) => MemValue(__write_mem_ea(Write_RISCV_release, addr, width)),
-    (false, false, true)  => MemValue(__write_mem_ea(Write_RISCV_conditional, addr, width)),
-    (false, true , true)  => MemValue(__write_mem_ea(Write_RISCV_conditional_release, addr, width)),
+    (false, false, false) => MemValue(__write_mem_ea(Write_plain, sizeof(xlen), addr, width)),
+    (false, true,  false) => MemValue(__write_mem_ea(Write_RISCV_release, sizeof(xlen), addr, width)),
+    (false, false, true)  => MemValue(__write_mem_ea(Write_RISCV_conditional, sizeof(xlen), addr, width)),
+    (false, true , true)  => MemValue(__write_mem_ea(Write_RISCV_conditional_release, sizeof(xlen), addr, width)),
     (true,  false, false) => throw(Error_not_implemented("store.aq")),
-    (true,  true,  false) => MemValue(__write_mem_ea(Write_RISCV_strong_release, addr, width)),
+    (true,  true,  false) => MemValue(__write_mem_ea(Write_RISCV_strong_release, sizeof(xlen), addr, width)),
     (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
-    (true,  true , true)  => MemValue(__write_mem_ea(Write_RISCV_conditional_strong_release, addr, width))
+    (true,  true , true)  => MemValue(__write_mem_ea(Write_RISCV_conditional_strong_release, sizeof(xlen), addr, width))
   }
 }
 
 // only used for actual memory regions, to avoid MMIO effects
 function phys_mem_write forall 'n, 'n > 0. (addr : xlenbits, width : atom('n), data : bits(8 * 'n), aq : bool, rl : bool, con : bool) -> MemoryOpResult(bool) = {
   let result = (match (aq, rl, con) {
-    (false, false, false) => MemValue(__write_mem(Write_plain, addr, width, data)),
-    (false, true,  false) => MemValue(__write_mem(Write_RISCV_release, addr, width, data)),
-    (false, false, true)  => MemValue(__write_mem(Write_RISCV_conditional, addr, width, data)),
-    (false, true , true)  => MemValue(__write_mem(Write_RISCV_conditional_release, addr, width, data)),
+    (false, false, false) => MemValue(__write_mem(Write_plain, sizeof(xlen), addr, width, data)),
+    (false, true,  false) => MemValue(__write_mem(Write_RISCV_release ,sizeof(xlen), addr, width, data)),
+    (false, false, true)  => MemValue(__write_mem(Write_RISCV_conditional, sizeof(xlen), addr, width, data)),
+    (false, true , true)  => MemValue(__write_mem(Write_RISCV_conditional_release, sizeof(xlen), addr, width, data)),
     (true,  false, false) => throw(Error_not_implemented("store.aq")),
-    (true,  true,  false) => MemValue(__write_mem(Write_RISCV_strong_release, addr, width, data)),
+    (true,  true,  false) => MemValue(__write_mem(Write_RISCV_strong_release, sizeof(xlen), addr, width, data)),
     (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
-    (true,  true , true)  => MemValue(__write_mem(Write_RISCV_conditional_strong_release, addr, width, data))
+    (true,  true , true)  => MemValue(__write_mem(Write_RISCV_conditional_strong_release, sizeof(xlen), addr, width, data))
   }) : MemoryOpResult(bool);
   print_mem("mem[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data));
   result
