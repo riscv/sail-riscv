@@ -1,11 +1,10 @@
 # Select architecture: RV32 or RV64.
 ARCH ?= RV64
-.PHONY: ARCH
 
 ifeq ($(ARCH),32)
-ARCH := RV32
+  override ARCH := RV32
 else ifeq ($(ARCH),64)
-ARCH := RV64
+  override ARCH := RV64
 endif
 
 ifeq ($(ARCH),RV32)
