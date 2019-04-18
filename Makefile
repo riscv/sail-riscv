@@ -1,16 +1,17 @@
 # Select architecture: RV32 or RV64.
 ARCH ?= RV64
 .PHONY: ARCH
+
 ifeq ($(ARCH),32)
-  ARCH = RV32
-  SAIL_XLEN = riscv_xlen32.sail
-else ifeq ($(ARCH),RV32)
-  SAIL_XLEN = riscv_xlen32.sail
+ARCH := RV32
 else ifeq ($(ARCH),64)
-  ARCH = RV64
-  SAIL_XLEN = riscv_xlen64.sail
+ARCH := RV64
+endif
+
+ifeq ($(ARCH),RV32)
+  SAIL_XLEN := riscv_xlen32.sail
 else ifeq ($(ARCH),RV64)
-  SAIL_XLEN = riscv_xlen64.sail
+  SAIL_XLEN := riscv_xlen64.sail
 else
   $(error '$(ARCH)' is not a valid architecture, must be one of: RV32, RV64)
 endif
