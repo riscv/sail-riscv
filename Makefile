@@ -16,15 +16,20 @@ else
 endif
 
 # Instruction sources, depending on target
-SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail
-SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
-SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
+SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail
+SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail
+SAIL_SEQ_INST  = $(SAIL_CHECK_SRCS) $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
+SAIL_RMEM_INST = $(SAIL_CHECK_SRCS) $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
 
 SAIL_SEQ_INST_SRCS  = riscv_insts_begin.sail $(SAIL_SEQ_INST) riscv_insts_end.sail
 SAIL_RMEM_INST_SRCS = riscv_insts_begin.sail $(SAIL_RMEM_INST) riscv_insts_end.sail
 
 # System and platform sources
-SAIL_SYS_SRCS = riscv_csr_map.sail riscv_sys_regs.sail riscv_next_regs.sail riscv_next_control.sail riscv_sys_control.sail
+SAIL_SYS_SRCS =  riscv_csr_map.sail
+SAIL_SYS_SRCS += riscv_next_regs.sail
+SAIL_SYS_SRCS += riscv_sys_exceptions.sail
+SAIL_SYS_SRCS += riscv_next_control.sail
+SAIL_SYS_SRCS += riscv_sys_control.sail
 
 SAIL_RV32_VM_SRCS = riscv_vmem_sv32.sail riscv_vmem_rv32.sail
 SAIL_RV64_VM_SRCS = riscv_vmem_sv39.sail riscv_vmem_sv48.sail riscv_vmem_rv64.sail
@@ -37,16 +42,20 @@ SAIL_VM_SRCS += $(SAIL_RV64_VM_SRCS)
 endif
 
 # Non-instruction sources
-PRELUDE = prelude.sail prelude_mapping.sail $(SAIL_XLEN) prelude_mem.sail
-SAIL_ARCH_SRCS = $(PRELUDE) riscv_types.sail $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS)
-SAIL_ARCH_RVFI_SRCS = $(PRELUDE) rvfi_dii.sail riscv_types.sail $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS)
+PRELUDE = prelude.sail prelude_mapping.sail $(SAIL_XLEN) prelude_mem_metadata.sail prelude_mem.sail
+SAIL_REGS_SRCS = riscv_reg_type.sail riscv_regs.sail riscv_sys_regs.sail riscv_ext_regs.sail
+SAIL_ARCH_SRCS = $(PRELUDE) riscv_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail
+SAIL_ARCH_SRCS += riscv_mem.sail $(SAIL_VM_SRCS)
+SAIL_ARCH_RVFI_SRCS = $(PRELUDE) rvfi_dii.sail riscv_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS)
+SAIL_STEP_SRCS = riscv_step_common.sail riscv_step_ext.sail riscv_fetch.sail riscv_step.sail
+RVFI_STEP_SRCS = riscv_step_common.sail riscv_step_rvfi.sail riscv_fetch_rvfi.sail riscv_step.sail
 
 # Control inclusion of 64-bit only riscv_analysis
 ifeq ($(ARCH),RV32)
-SAIL_OTHER_SRCS     = riscv_step.sail
+SAIL_OTHER_SRCS     = $(SAIL_STEP_SRCS)
 SAIL_OTHER_COQ_SRCS = riscv_termination_common.sail riscv_termination_rv32.sail
 else
-SAIL_OTHER_SRCS     = riscv_step.sail riscv_analysis.sail
+SAIL_OTHER_SRCS     = $(SAIL_STEP_SRCS) riscv_analysis.sail
 SAIL_OTHER_COQ_SRCS = riscv_termination_common.sail riscv_termination_rv64.sail riscv_analysis.sail
 endif
 
@@ -54,7 +63,7 @@ endif
 PRELUDE_SRCS   = $(addprefix model/,$(PRELUDE))
 SAIL_SRCS      = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS)  $(SAIL_OTHER_SRCS))
 SAIL_RMEM_SRCS = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_RMEM_INST_SRCS) $(SAIL_OTHER_SRCS))
-SAIL_RVFI_SRCS = $(addprefix model/,$(SAIL_ARCH_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS) $(SAIL_OTHER_SRCS))
+SAIL_RVFI_SRCS = $(addprefix model/,$(SAIL_ARCH_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS) $(RVFI_STEP_SRCS))
 SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS) $(SAIL_OTHER_COQ_SRCS))
 
 PLATFORM_OCAML_SRCS = $(addprefix ocaml_emulator/,platform.ml platform_impl.ml riscv_ocaml_sim.ml)
@@ -119,6 +128,10 @@ endif
 all: ocaml_emulator/riscv_ocaml_sim_$(ARCH) c_emulator/riscv_sim_$(ARCH) riscv_isa riscv_coq riscv_hol riscv_rmem
 .PHONY: all
 
+# the following ensures empty sail-generated .c files don't hang around and
+# break future builds if sail exits badly
+.DELETE_ON_ERROR: generated_definitions/c/%.c
+
 check: $(SAIL_SRCS) model/main.sail Makefile
 	$(SAIL) $(SAIL_FLAGS) $(SAIL_SRCS) model/main.sail
 
@@ -165,21 +178,22 @@ ocaml_emulator/tracecmp: ocaml_emulator/tracecmp.ml
 
 generated_definitions/c/riscv.c: $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
-	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h $(SAIL_SRCS) model/main.sail 1> $@
+	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h $(SAIL_SRCS) model/main.sail -o $(basename $@)
 
 c_emulator/riscv_c: generated_definitions/c/riscv.c $(C_INCS) $(C_SRCS) Makefile
 	gcc $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c -lgmp -lz -I $(SAIL_LIB_DIR) -o $@
 
 generated_definitions/c/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
-	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail 1> $@
+	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@)
 
 c_emulator/riscv_sim_$(ARCH): generated_definitions/c/riscv_model_$(ARCH).c c_emulator/riscv_sim.c $(C_INCS) $(C_SRCS) Makefile
 	gcc -g $(C_WARNINGS) $(C_FLAGS) $< c_emulator/riscv_sim.c $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
-generated_definitions/c/riscv_rvfi_model.c: $(SAIL_RVFI_SRCS) model/main_rvfi.sail Makefile
+generated_definitions/c/riscv_rvfi_model.c: $(SAIL_RVFI_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
-	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main_rvfi.sail | sed '/^[[:space:]]*$$/d' > $@
+	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main.sail -o $(basename $@)
+	sed -i -e '/^[[:space:]]*$$/d' $@
 
 c_emulator/riscv_rvfi: generated_definitions/c/riscv_rvfi_model.c c_emulator/riscv_sim.c $(C_INCS) $(C_SRCS) Makefile
 	gcc -g $(C_WARNINGS) $(C_FLAGS) $< -DRVFI_DII c_emulator/riscv_sim.c $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
@@ -313,6 +327,7 @@ clean:
 	-rm -f c_emulator/riscv_sim_RV32 c_emulator/riscv_sim_RV64  c_emulator/riscv_rvfi
 	-rm -rf ocaml_emulator/_sbuild ocaml_emulator/_build ocaml_emulator/riscv_ocaml_sim_RV32 ocaml_emulator/riscv_ocaml_sim_RV64 ocaml_emulator/tracecmp
 	-rm -f *.gcno *.gcda
+	-rm -f z3_problems
 	-Holmake cleanAll
 	-rm -f handwritten_support/riscv_extras.vo handwritten_support/riscv_extras.glob handwritten_support/.riscv_extras.aux
 	ocamlbuild -clean

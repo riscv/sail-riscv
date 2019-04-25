@@ -66,38 +66,42 @@ function phys_mem_segments() =
 function within_phys_mem forall 'n. (addr : xlenbits, width : atom('n)) -> bool = {
   /* To avoid overflow issues when physical memory extends to the end
    * of the addressable range, we need to perform address bound checks
-   * with a wider bitwidth.
-   *
-   * But since this is a hot function, we use only 64-bit width even for
-   * 64-bit mode to reduce impact on emulator performance.
+   * on unsigned unbounded integers.
    */
-
-  let ext_addr : bits(64) = EXTZ(addr);
-  let ram_base : bits(64) = EXTZ(plat_ram_base ());
-  let rom_base : bits(64) = EXTZ(plat_rom_base ());
-  let ram_size : bits(64) = EXTZ(plat_ram_size ());
-  let rom_size : bits(64) = EXTZ(plat_rom_size ());
+  let addr_int     = unsigned(addr);
+  let ram_base_int = unsigned(plat_ram_base ());
+  let rom_base_int = unsigned(plat_rom_base ());
+  let ram_size_int = unsigned(plat_ram_size ());
+  let rom_size_int = unsigned(plat_rom_size ());
 
   /* todo: iterate over segment list */
-  if (  ram_base <=_u ext_addr
-      & (ext_addr + sizeof('n)) <=_u (ram_base + ram_size))
-       then true
-  else if (  rom_base <=_u ext_addr
-           & (ext_addr + sizeof('n)) <=_u (rom_base + rom_size))
-       then true
+  if      (  ram_base_int <= addr_int
+           & (addr_int + sizeof('n)) <= (ram_base_int + ram_size_int))
+  then    true
+  else if (  rom_base_int <= addr_int
+           & (addr_int + sizeof('n)) <= (rom_base_int + rom_size_int))
+  then    true
   else {
     print_platform("within_phys_mem: " ^ BitStr(addr) ^ " not within phys-mem:");
-    print_platform("  plat_rom_base: " ^ BitStr(rom_base));
-    print_platform("  plat_rom_size: " ^ BitStr(rom_size));
-    print_platform("  plat_ram_base: " ^ BitStr(ram_base));
-    print_platform("  plat_ram_size: " ^ BitStr(ram_size));
+    print_platform("  plat_rom_base: " ^ BitStr(plat_rom_base ()));
+    print_platform("  plat_rom_size: " ^ BitStr(plat_rom_size ()));
+    print_platform("  plat_ram_base: " ^ BitStr(plat_ram_base ()));
+    print_platform("  plat_ram_size: " ^ BitStr(plat_ram_size ()));
     false
   }
 }
 
-function within_clint forall 'n. (addr : xlenbits, width : atom('n)) -> bool =
-    plat_clint_base() <=_u addr
-  & (addr + sizeof('n)) <=_u (plat_clint_base() + plat_clint_size())
+function within_clint forall 'n. (addr : xlenbits, width : atom('n)) -> bool = {
+  /* To avoid overflow issues when physical memory extends to the end
+   * of the addressable range, we need to perform address bound checks
+   * on unsigned unbounded integers.
+   */
+  let addr_int       = unsigned(addr);
+  let clint_base_int = unsigned(plat_clint_base ());
+  let clint_size_int = unsigned(plat_clint_size ());
+    clint_base_int <= addr_int
+  & (addr_int + sizeof('n)) <= (clint_base_int + clint_size_int)
+}
 
 function within_htif_writable forall 'n. (addr : xlenbits, width : atom('n)) -> bool =
     plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4)
@@ -283,7 +287,7 @@ function htif_store(addr, width, data) = {
       if cmd.payload()[0] == 0b1
       then {
            htif_done = true;
-           htif_exit_code = (sail_zero_extend(cmd.payload(), 64) >> 0b01)
+           htif_exit_code = (sail_zero_extend(cmd.payload(), 64) >> 1)
       }
       else ()
     },
@@ -347,7 +351,8 @@ function handle_illegal() -> unit = {
              then Some(instbits)
              else None();
   let t : sync_exception = struct { trap    = E_Illegal_Instr,
-                                    excinfo = info };
+                                    excinfo = info,
+                                    ext     = None() };
   nextPC = handle_exception(cur_privilege, CTL_TRAP(t), PC)
 }
 

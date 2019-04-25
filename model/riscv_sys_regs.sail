@@ -70,7 +70,10 @@ bitfield Misa : xlenbits = {
 }
 register misa : Misa
 
+/* whether misa is R/W */
 val sys_enable_writable_misa = {c: "sys_enable_writable_misa", ocaml: "Platform.enable_writable_misa", _: "sys_enable_writable_misa"} : unit -> bool
+/* whether misa.c was enabled at boot */
+val sys_enable_rvc = {c: "sys_enable_rvc", ocaml: "Platform.enable_rvc", _: "sys_enable_rvc"} : unit -> bool
 
 /* We currently only support dynamic changes for the C extension. */
 function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
@@ -315,7 +318,7 @@ function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
   match (trapVectorMode_of_bits(m.Mode())) {
     TV_Direct => Some(base),
     TV_Vector => if   c.IsInterrupt() == true
-                 then Some(base + (EXTZ(c.Cause()) << 0b10))
+                 then Some(base + (EXTZ(c.Cause()) << 2))
                  else Some(base),
     TV_Reserved => None()
   }

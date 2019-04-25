@@ -112,7 +112,7 @@ function flush_TLB32(asid, addr) =
 
 /* address translation */
 
-val translate32 : (asid32, paddr32, vaddr32, AccessType, Privilege, bool, bool, nat) -> TR_Result(paddr32, PTW_Error) effect {rreg, wreg, wmv, escape, rmem}
+val translate32 : (asid32, paddr32, vaddr32, AccessType, Privilege, bool, bool, nat) -> TR_Result(paddr32, PTW_Error) effect {rreg, wreg, wmv, wmvt, escape, rmem}
 function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
   match lookup_TLB32(asid, vAddr) {
     Some(idx, ent) => {
@@ -136,7 +136,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
               n_ent.pte = n_pte.bits();
               write_TLB32(idx, n_ent);
               /* update page table */
-              match checked_mem_write(to_phys_addr(EXTZ(ent.pteAddr)), 4, n_pte.bits(), false, false, false) {
+              match checked_mem_write(to_phys_addr(EXTZ(ent.pteAddr)), 4, n_pte.bits(), default_meta, false, false, false) {
                 MemValue(_)     => (),
                 MemException(e) => internal_error("invalid physical address in TLB")
               };
@@ -162,7 +162,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
                 TR_Failure(PTW_PTE_Update)
               } else {
                 w_pte : SV32_PTE = update_BITS(pte, pbits.bits());
-                match checked_mem_write(to_phys_addr(pteAddr), 4, w_pte.bits(), false, false, false) {
+                match checked_mem_write(to_phys_addr(pteAddr), 4, w_pte.bits(), default_meta, false, false, false) {
                   MemValue(_) => {
                     add_to_TLB32(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
                     TR_Address(pAddr)

@@ -106,7 +106,7 @@ function flush_TLB48(asid, addr) =
 
 /* address translation */
 
-val translate48 : (asid64, paddr64, vaddr48, AccessType, Privilege, bool, bool, nat) -> TR_Result(paddr64, PTW_Error) effect {rreg, wreg, wmv, escape, rmem}
+val translate48 : (asid64, paddr64, vaddr48, AccessType, Privilege, bool, bool, nat) -> TR_Result(paddr64, PTW_Error) effect {rreg, wreg, wmv, wmvt, escape, rmem}
 function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
   match walk48(vAddr, ac, priv, mxr, do_sum, ptb, level, false) {
     PTW_Failure(f) => TR_Failure(f),
@@ -123,7 +123,7 @@ function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
             TR_Failure(PTW_PTE_Update)
           } else {
             w_pte : SV48_PTE = update_BITS(pte, pbits.bits());
-            match checked_mem_write(EXTZ(pteAddr), 8, w_pte.bits(), false, false, false) {
+            match checked_mem_write(EXTZ(pteAddr), 8, w_pte.bits(), default_meta, false, false, false) {
               MemValue(_) => {
                 add_to_TLB48(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
                 TR_Address(pAddr)

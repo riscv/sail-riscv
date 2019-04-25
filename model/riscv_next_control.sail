@@ -20,7 +20,7 @@ function read_UExt_CSR csr : csreg -> option(xlenbits) = {
     0x004 => Some(lower_sie(lower_mie(mie, mideleg), sideleg).bits()),
     0x005 => Some(utvec.bits()),
     0x040 => Some(uscratch),
-    0x041 => Some(uepc),
+    0x041 => Some(get_xret_target(User) & pc_alignment_mask()),
     0x042 => Some(ucause.bits()),
     0x043 => Some(utval),
     0x044 => Some(lower_sip(lower_mip(mip, mideleg), sideleg).bits()),
@@ -38,7 +38,7 @@ function write_UExt_CSR(csr : csreg, value : xlenbits) -> bool = {
                Some(mie.bits()) },
     0x005 => { utvec = legalize_tvec(utvec, value); Some(utvec.bits()) },
     0x040 => { uscratch = value; Some(uscratch) },
-    0x041 => { uepc = value; Some(uepc) },
+    0x041 => { Some(set_xret_target(User, value)) },
     0x042 => { ucause->bits() = value; Some(ucause.bits()) },
     0x043 => { utval = value; Some(utval) },
     0x044 => { let sip = legalize_uip(lower_mip(mip, mideleg), sideleg, value);

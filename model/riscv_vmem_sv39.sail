@@ -106,7 +106,7 @@ function flush_TLB39(asid, addr) =
 
 /* address translation */
 
-val translate39 : (asid64, paddr64, vaddr39, AccessType, Privilege, bool, bool, nat) -> TR_Result(paddr64, PTW_Error) effect {rreg, wreg, wmv, escape, rmem}
+val translate39 : (asid64, paddr64, vaddr39, AccessType, Privilege, bool, bool, nat) -> TR_Result(paddr64, PTW_Error) effect {rreg, wreg, wmv, wmvt, escape, rmem}
 function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
   match lookup_TLB39(asid, vAddr) {
     Some(idx, ent) => {
@@ -130,7 +130,7 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
               n_ent.pte = n_pte.bits();
               write_TLB39(idx, n_ent);
               /* update page table */
-              match checked_mem_write(EXTZ(ent.pteAddr), 8, n_pte.bits(), false, false, false) {
+              match checked_mem_write(EXTZ(ent.pteAddr), 8, n_pte.bits(), default_meta, false, false, false) {
                 MemValue(_)     => (),
                 MemException(e) => internal_error("invalid physical address in TLB")
               };
@@ -156,7 +156,7 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
                 TR_Failure(PTW_PTE_Update)
               } else {
                 w_pte : SV39_PTE = update_BITS(pte, pbits.bits());
-                match checked_mem_write(EXTZ(pteAddr), 8, w_pte.bits(), false, false, false) {
+                match checked_mem_write(EXTZ(pteAddr), 8, w_pte.bits(), default_meta, false, false, false) {
                   MemValue(_) => {
                     add_to_TLB39(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
                     TR_Address(pAddr)

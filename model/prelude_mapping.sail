@@ -1,3 +1,5 @@
+/* Some helper functions for the assembler mappings. */
+
 /* Python:
 f = """val hex_bits_{0} : bits({0}) <-> string
 val hex_bits_{0}_forwards = "decimal_string_of_bits" : bits({0}) -> string

@@ -34,8 +34,6 @@ val vector_concat = {ocaml: "append", lem: "append_list"} : forall ('n : Int) ('
 
 overload append = {vector_concat}
 
-val not_vec = {c: "not_bits", _: "not_vec"} : forall 'n. bits('n) -> bits('n)
-
 overload ~ = {not_bool, not_vec}
 
 val neq_vec = {lem: "neq"} : forall 'n. (bits('n), bits('n)) -> bool
@@ -48,16 +46,9 @@ function neq_anything (x, y) = not_bool(x == y)
 
 overload operator != = {neq_vec, neq_anything}
 
-val and_vec = {lem: "and_vec", c: "and_bits", coq: "and_vec", ocaml: "and_vec", interpreter: "and_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
-
 overload operator & = {and_vec}
 
-val or_vec = {lem: "or_vec", c: "or_bits", coq: "or_vec", ocaml: "or_vec", interpreter: "or_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
-
 overload operator | = {or_vec}
-
-val "shiftl" : forall 'm. (bits('m), int) -> bits('m)
-val "shiftr" : forall 'm. (bits('m), int) -> bits('m)
 
 val cast cast_unit_vec : bit -> bits(1)
 
@@ -113,15 +104,40 @@ val print_platform = {ocaml: "Platform.print_platform", interpreter: "print_endl
 $ifndef FEATURE_IMPLICITS
 val EXTS : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
 val EXTZ : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
-
 function EXTS v = sail_sign_extend(v, sizeof('m))
 function EXTZ v = sail_zero_extend(v, sizeof('m))
+
+val zeros_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
+function zeros_implicit () = sail_zeros('n)
+overload zeros = {zeros_implicit, sail_zeros}
+
+val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
+function ones_n n = replicate_bits (0b1, n)
+
+val ones_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
+function ones_implicit () = ones_n ('n)
+
+overload ones = {ones_implicit, ones_n}
+
 $else
 val EXTS : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
 val EXTZ : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
 
 function EXTS(m, v) = sail_sign_extend(v, m)
 function EXTZ(m, v) = sail_zero_extend(v, m)
+
+val zeros_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
+function zeros_implicit (n) = sail_zeros(n)
+overload zeros = {zeros_implicit, sail_zeros}
+
+val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
+function ones_n n = replicate_bits (0b1, n)
+
+val ones_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
+function ones_implicit (n) = ones_n (n)
+
+overload ones = {ones_implicit, ones_n}
+
 $endif
 
 val cast bool_to_bits : bool -> bits(1)
@@ -157,8 +173,14 @@ function operator <=_u (x, y) = unsigned(x) <= unsigned(y)
 infix 7 >>
 infix 7 <<
 
-val operator >> = "shift_bits_right" : forall 'n 'm. (bits('n), bits('m)) -> bits('n)
-val operator << = "shift_bits_left" : forall 'n 'm. (bits('n), bits('m)) -> bits('n)
+val "shift_bits_right" : forall 'n 'm. (bits('n), bits('m)) -> bits('n)
+val "shift_bits_left"  : forall 'n 'm. (bits('n), bits('m)) -> bits('n)
+
+val "shiftl" : forall 'm 'n, 'n >= 0. (bits('m), atom('n)) -> bits('m)
+val "shiftr" : forall 'm 'n, 'n >= 0. (bits('m), atom('n)) -> bits('m)
+
+overload operator >> = {shift_bits_right, shiftr}
+overload operator << = {shift_bits_left, shiftl}
 
 /* Ideally these would be sail builtin */
 

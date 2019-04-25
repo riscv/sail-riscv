@@ -50,15 +50,25 @@ but this is difficult
 */
 
 function clause execute (RISCV_JAL(imm, rd)) = {
-  let pc : xlenbits = PC;
-  let newPC : xlenbits = pc + EXTS(imm);
-  if newPC[1] & (~ (haveRVC())) then {
-    handle_mem_exception(newPC, E_Fetch_Addr_Align);
-    false
-  } else {
-    X(rd) = nextPC;  /* compatible with JAL and C.JAL */
-    nextPC = newPC;
-    true
+  let t : xlenbits = PC + EXTS(imm);
+  /* Extensions get the first checks on the prospective target address. */
+  match ext_control_check_pc(t) {
+    Ext_ControlAddr_Error(e) => {
+      ext_handle_control_check_error(e);
+      false
+    },
+    Ext_ControlAddr_OK(target) => {
+      /* Perform standard alignment check */
+      if   target[1] & (~ (haveRVC()))
+      then {
+        handle_mem_exception(target, E_Fetch_Addr_Align);
+        false
+      } else {
+        X(rd) = get_next_pc();
+        set_next_pc(target);
+        true
+      }
+    }
   }
 }
 
@@ -104,14 +114,23 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
     RISCV_BLTU => rs1_val <_u rs2_val,
     RISCV_BGEU => rs1_val >=_u rs2_val
   };
-  let newPC = PC + EXTS(imm);
+  let t : xlenbits = PC + EXTS(imm);
   if taken then {
-    if newPC[1] & (~ (haveRVC())) then {
-      handle_mem_exception(newPC, E_Fetch_Addr_Align);
-      false;
-    } else {
-      nextPC = newPC;
-      true
+    /* Extensions get the first checks on the prospective target address. */
+    match ext_control_check_pc(t) {
+      Ext_ControlAddr_Error(e) => {
+        ext_handle_control_check_error(e);
+        false
+      },
+      Ext_ControlAddr_OK(target) => {
+        if target[1] & (~ (haveRVC())) then {
+          handle_mem_exception(target, E_Fetch_Addr_Align);
+          false;
+        } else {
+          set_next_pc(target);
+          true
+        }
+      }
     }
   } else true
 }
@@ -296,21 +315,26 @@ function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
        }
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
-  let vaddr : xlenbits = X(rs1) + EXTS(imm);
-  if   check_misaligned(vaddr, width)
-  then { handle_mem_exception(vaddr, E_Load_Addr_Align); false }
-  else match translateAddr(vaddr, Read, Data) {
-    TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
-    TR_Address(addr) =>
-      match (width, sizeof(xlen)) {
-        (BYTE, _)   =>
-	  process_load(rd, vaddr, mem_read(addr, 1, aq, rl, false), is_unsigned),
-        (HALF, _)   =>
-	  process_load(rd, vaddr, mem_read(addr, 2, aq, rl, false), is_unsigned),
-        (WORD, _)   =>
-	  process_load(rd, vaddr, mem_read(addr, 4, aq, rl, false), is_unsigned),
-        (DOUBLE, 64) =>
-	  process_load(rd, vaddr, mem_read(addr, 8, aq, rl, false), is_unsigned)
+  let pre_vaddr : xlenbits = X(rs1) + EXTS(imm);
+  /* Let extensions get the first check on address validity. */
+  match ext_data_check_addr(pre_vaddr, Read, Data, width) {
+    Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); false },
+    Ext_DataAddr_OK(vaddr) =>
+      if   check_misaligned(vaddr, width)
+      then { handle_mem_exception(vaddr, E_Load_Addr_Align); false }
+      else match translateAddr(vaddr, Read, Data) {
+        TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
+        TR_Address(addr) =>
+          match (width, sizeof(xlen)) {
+            (BYTE, _)   =>
+               process_load(rd, vaddr, mem_read(addr, 1, aq, rl, false), is_unsigned),
+            (HALF, _)   =>
+               process_load(rd, vaddr, mem_read(addr, 2, aq, rl, false), is_unsigned),
+            (WORD, _)   =>
+               process_load(rd, vaddr, mem_read(addr, 4, aq, rl, false), is_unsigned),
+            (DOUBLE, 64) =>
+               process_load(rd, vaddr, mem_read(addr, 8, aq, rl, false), is_unsigned)
+          }
       }
   }
 }
@@ -346,36 +370,41 @@ mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
 function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
-  let vaddr : xlenbits = X(rs1) + EXTS(imm);
-  if   check_misaligned(vaddr, width)
-  then { handle_mem_exception(vaddr, E_SAMO_Addr_Align); false }
-  else match translateAddr(vaddr, Write, Data) {
-    TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
-    TR_Address(addr) => {
-      let eares : MemoryOpResult(unit) = match width {
-        BYTE   => mem_write_ea(addr, 1, aq, rl, false),
-        HALF   => mem_write_ea(addr, 2, aq, rl, false),
-        WORD   => mem_write_ea(addr, 4, aq, rl, false),
-        DOUBLE => mem_write_ea(addr, 8, aq, rl, false)
-      };
-      match (eares) {
-        MemException(e) => { handle_mem_exception(addr, e); false },
-        MemValue(_) => {
-          let rs2_val = X(rs2);
-          let res : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
-            (BYTE, _)    => mem_write_value(addr, 1, rs2_val[7..0],  aq, rl, false),
-            (HALF, _)    => mem_write_value(addr, 2, rs2_val[15..0], aq, rl, false),
-            (WORD, _)    => mem_write_value(addr, 4, rs2_val[31..0], aq, rl, false),
-            (DOUBLE, 64) => mem_write_value(addr, 8, rs2_val,        aq, rl, false)
+  let pre_vaddr : xlenbits = X(rs1) + EXTS(imm);
+  /* Let extensions get the first check on address validity. */
+  match ext_data_check_addr(pre_vaddr, Write, Data, width) {
+    Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); false },
+    Ext_DataAddr_OK(vaddr) =>
+      if   check_misaligned(vaddr, width)
+      then { handle_mem_exception(vaddr, E_SAMO_Addr_Align); false }
+      else match translateAddr(vaddr, Write, Data) {
+        TR_Failure(e)    => { handle_mem_exception(vaddr, e); false },
+        TR_Address(addr) => {
+          let eares : MemoryOpResult(unit) = match width {
+            BYTE   => mem_write_ea(addr, 1, aq, rl, false),
+            HALF   => mem_write_ea(addr, 2, aq, rl, false),
+            WORD   => mem_write_ea(addr, 4, aq, rl, false),
+            DOUBLE => mem_write_ea(addr, 8, aq, rl, false)
           };
-          match (res) {
-            MemValue(true)     => true,
-            MemValue(false)    => internal_error("store got false from mem_write_value"),
-            MemException(e) => { handle_mem_exception(addr, e); false }
+          match (eares) {
+            MemException(e) => { handle_mem_exception(addr, e); false },
+            MemValue(_) => {
+              let rs2_val = X(rs2);
+              let res : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
+                (BYTE, _)    => mem_write_value(addr, 1, rs2_val[7..0],  aq, rl, false),
+                (HALF, _)    => mem_write_value(addr, 2, rs2_val[15..0], aq, rl, false),
+                (WORD, _)    => mem_write_value(addr, 4, rs2_val[31..0], aq, rl, false),
+                (DOUBLE, 64) => mem_write_value(addr, 8, rs2_val,        aq, rl, false)
+              };
+              match (res) {
+                MemValue(true)  => true,
+                MemValue(false) => internal_error("store got false from mem_write_value"),
+                MemException(e) => { handle_mem_exception(addr, e); false }
+              }
+            }
           }
         }
       }
-    }
   }
 }
 
@@ -625,7 +654,8 @@ function clause execute ECALL() = {
                       Supervisor => E_S_EnvCall,
                       Machine    => E_M_EnvCall
                     },
-             excinfo = (None() : option(xlenbits)) };
+             excinfo = (None() : option(xlenbits)),
+             ext     = None() };
   nextPC = handle_exception(cur_privilege, CTL_TRAP(t), PC);
   false
 }
