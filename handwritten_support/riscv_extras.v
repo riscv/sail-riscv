@@ -28,13 +28,13 @@ val MEMea_conditional                : forall 'rv 'a 'e. Size 'a => bitvector 'a
 val MEMea_conditional_release        : forall 'rv 'a 'e. Size 'a => bitvector 'a -> integer -> monad 'rv unit 'e
 val MEMea_conditional_strong_release : forall 'rv 'a 'e. Size 'a => bitvector 'a -> integer -> monad 'rv unit 'e
 *)
-Definition MEMea {rv a e} (addr : mword a) size                     : monad rv unit e := write_mem_ea Write_plain addr size.
-Definition MEMea_release {rv a e} (addr : mword a) size             : monad rv unit e := write_mem_ea Write_RISCV_release addr size.
-Definition MEMea_strong_release {rv a e} (addr : mword a) size      : monad rv unit e := write_mem_ea Write_RISCV_strong_release addr size.
-Definition MEMea_conditional {rv a e} (addr : mword a) size         : monad rv unit e := write_mem_ea Write_RISCV_conditional addr size.
-Definition MEMea_conditional_release {rv a e} (addr : mword a) size : monad rv unit e := write_mem_ea Write_RISCV_conditional_release addr size.
-Definition MEMea_conditional_strong_release {rv a e} (addr : mword a) size : monad rv unit e
-                                          := write_mem_ea Write_RISCV_conditional_strong_release addr size.
+Definition MEMea {rv a e} addrsize (addr : mword a) size                     : monad rv unit e := write_mem_ea Write_plain addrsize addr size.
+Definition MEMea_release {rv a e} addrsize (addr : mword a) size             : monad rv unit e := write_mem_ea Write_RISCV_release addrsize addr size.
+Definition MEMea_strong_release {rv a e} addrsize (addr : mword a) size      : monad rv unit e := write_mem_ea Write_RISCV_strong_release addrsize addr size.
+Definition MEMea_conditional {rv a e} addrsize (addr : mword a) size         : monad rv unit e := write_mem_ea Write_RISCV_conditional addrsize addr size.
+Definition MEMea_conditional_release {rv a e} addrsize (addr : mword a) size : monad rv unit e := write_mem_ea Write_RISCV_conditional_release addrsize addr size.
+Definition MEMea_conditional_strong_release {rv a e} addrsize (addr : mword a) size : monad rv unit e
+                                          := write_mem_ea Write_RISCV_conditional_strong_release addrsize addr size.
 
 (*
 val MEMr                         : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
@@ -45,12 +45,12 @@ val MEMr_reserved_acquire        : forall 'rv 'a 'b 'e. Size 'a, Size 'b => inte
 val MEMr_reserved_strong_acquire : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
 *)
 
-Definition MEMr {rv e} addrsize size (hexRAM addr : mword addrsize)                         `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_plain addr size.
-Definition MEMr_acquire {rv e} addrsize size (hexRAM addr : mword addrsize)                 `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_acquire addr size.
-Definition MEMr_strong_acquire {rv e} addrsize size (hexRAM addr : mword addrsize)          `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_strong_acquire addr size.
-Definition MEMr_reserved {rv e} addrsize size (hexRAM addr : mword addrsize)                `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_reserved addr size.
-Definition MEMr_reserved_acquire {rv e} addrsize size (hexRAM addr : mword addrsize)        `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_reserved_acquire addr size.
-Definition MEMr_reserved_strong_acquire {rv e} addrsize size (hexRAM addr : mword addrsize) `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_reserved_strong_acquire addr size.
+Definition MEMr {rv e} addrsize size (hexRAM addr : mword addrsize)                         `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_plain addrsize addr size.
+Definition MEMr_acquire {rv e} addrsize size (hexRAM addr : mword addrsize)                 `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_acquire addrsize addr size.
+Definition MEMr_strong_acquire {rv e} addrsize size (hexRAM addr : mword addrsize)          `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_strong_acquire addrsize addr size.
+Definition MEMr_reserved {rv e} addrsize size (hexRAM addr : mword addrsize)                `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_reserved addrsize addr size.
+Definition MEMr_reserved_acquire {rv e} addrsize size (hexRAM addr : mword addrsize)        `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_reserved_acquire addrsize addr size.
+Definition MEMr_reserved_strong_acquire {rv e} addrsize size (hexRAM addr : mword addrsize) `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_reserved_strong_acquire addrsize addr size.
 
 (*
 val MEMw                            : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
@@ -61,12 +61,12 @@ val MEMw_conditional_release        : forall 'rv 'a 'b 'e. Size 'a, Size 'b => i
 val MEMw_conditional_strong_release : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
 *)
 
-Definition MEMw {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size))                            : monad rv bool e := write_mem Write_plain addr size v.
-Definition MEMw_release {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size))                    : monad rv bool e := write_mem Write_RISCV_release addr size v.
-Definition MEMw_strong_release {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size))             : monad rv bool e := write_mem Write_RISCV_strong_release addr size v.
-Definition MEMw_conditional {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size))                : monad rv bool e := write_mem Write_RISCV_conditional addr size v.
-Definition MEMw_conditional_release {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size))        : monad rv bool e := write_mem Write_RISCV_conditional_release addr size v.
-Definition MEMw_conditional_strong_release {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size)) : monad rv bool e := write_mem Write_RISCV_conditional_strong_release addr size v.
+Definition MEMw {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size))                            : monad rv bool e := write_mem Write_plain addrsize addr size v.
+Definition MEMw_release {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size))                    : monad rv bool e := write_mem Write_RISCV_release addrsize addr size v.
+Definition MEMw_strong_release {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size))             : monad rv bool e := write_mem Write_RISCV_strong_release addrsize addr size v.
+Definition MEMw_conditional {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size))                : monad rv bool e := write_mem Write_RISCV_conditional addrsize addr size v.
+Definition MEMw_conditional_release {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size))        : monad rv bool e := write_mem Write_RISCV_conditional_release addrsize addr size v.
+Definition MEMw_conditional_strong_release {rv e} addrsize size (hexRAM addr : mword addrsize) (v : mword (8 * size)) : monad rv bool e := write_mem Write_RISCV_conditional_strong_release addrsize addr size v.
 
 Definition shift_bits_left {a b} (v : mword a) (n : mword b) : mword a :=
   shiftl v (int_of_mword false n).
