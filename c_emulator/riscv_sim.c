@@ -632,7 +632,7 @@ void run_sail(void)
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
-      stepped = zrvfi_step(sail_step);
+      stepped = zstep(sail_step);
       if (have_exception) goto step_exception;
       flush_logs();
       KILL(sail_int)(&sail_step);
@@ -798,12 +798,12 @@ int main(int argc, char **argv)
 #ifndef RVFI_DII
   } while (0);
 #else
-    model_fini();
     if (rvfi_dii) {
       /* Reset for next test */
       init_sail(entry);
     }
   } while (rvfi_dii);
 #endif
+  model_fini();
   flush_logs();
 }
