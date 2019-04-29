@@ -35,7 +35,7 @@ function step(step_no) = {
             /* check for RVC once here instead of every RVC execute clause. */
             if haveRVC() then {
               nextPC = PC + 2;
-              (execute(ast), true)
+              (execute(ext_post_decode_hook(ast)), true)
              } else {
               handle_illegal();
               (false, true)
@@ -45,7 +45,7 @@ function step(step_no) = {
             let ast = decode(w);
             print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ ast);
             nextPC = PC + 4;
-            (execute(ast), true)
+            (execute(ext_post_decode_hook(ast)), true)
           }
         }
       }

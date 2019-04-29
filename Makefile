@@ -47,8 +47,8 @@ SAIL_REGS_SRCS = riscv_reg_type.sail riscv_regs.sail riscv_sys_regs.sail riscv_e
 SAIL_ARCH_SRCS = $(PRELUDE) riscv_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail
 SAIL_ARCH_SRCS += riscv_mem.sail $(SAIL_VM_SRCS)
 SAIL_ARCH_RVFI_SRCS = $(PRELUDE) rvfi_dii.sail riscv_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS)
-SAIL_STEP_SRCS = riscv_step_common.sail riscv_step_ext.sail riscv_fetch.sail riscv_step.sail
-RVFI_STEP_SRCS = riscv_step_common.sail riscv_step_rvfi.sail riscv_fetch_rvfi.sail riscv_step.sail
+SAIL_STEP_SRCS = riscv_step_common.sail riscv_step_ext.sail riscv_decode_ext.sail riscv_fetch.sail riscv_step.sail
+RVFI_STEP_SRCS = riscv_step_common.sail riscv_step_rvfi.sail riscv_decode_ext.sail riscv_fetch_rvfi.sail riscv_step.sail
 
 # Control inclusion of 64-bit only riscv_analysis
 ifeq ($(ARCH),RV32)

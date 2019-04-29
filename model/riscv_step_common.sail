@@ -8,3 +8,8 @@ union FetchResult = {
   F_RVC       : half,                      /* Compressed ISA */
   F_Error     : (ExceptionType, xlenbits)  /* standard exception and PC */
 }
+
+/*!
+A hook for extensions that want to interpose on decoded instructions.
+ */
+val ext_post_decode_hook : ast -> ast effect {rreg}
