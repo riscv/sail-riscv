@@ -30,40 +30,22 @@ function step(step_no) = {
           },
           /* non-error cases: */
           F_RVC(h) => {
-            match decodeCompressed(h) {
-              None() => {
-                print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") <no-decode>");
-                instbits = EXTZ(h);
-                handle_illegal();
-                (false, true)
-              },
-              Some(ast) => {
-                print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ ast);
-                /* check for RVC once here instead of every RVC execute clause. */
-                if haveRVC() then {
-                  nextPC = PC + 2;
-                  (execute(ast), true)
-                } else {
-                  handle_illegal();
-                  (false, true)
-                }
-              }
-            }
+            let ast = decodeCompressed(h);
+            print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ ast);
+            /* check for RVC once here instead of every RVC execute clause. */
+            if haveRVC() then {
+              nextPC = PC + 2;
+              (execute(ast), true)
+             } else {
+              handle_illegal();
+              (false, true)
+             }
           },
           F_Base(w) => {
-            match decode(w) {
-              None() => {
-                print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") <no-decode>");
-                instbits = EXTZ(w);
-                handle_illegal();
-                (false, true)
-              },
-              Some(ast) => {
-                print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ ast);
-                nextPC = PC + 4;
-                (execute(ast), true)
-              }
-            }
+            let ast = decode(w);
+            print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ ast);
+            nextPC = PC + 4;
+            (execute(ast), true)
           }
         }
       }

@@ -32,8 +32,8 @@ end encdec_compressed
 val cast print_insn : ast -> string
 function print_insn insn = assembly(insn)
 
-val decode : bits(32) -> option(ast) effect pure
-function decode bv = Some(encdec(bv))
+val decode : bits(32) -> ast effect pure
+function decode bv = encdec(bv)
 
-val decodeCompressed : bits(16) -> option(ast) effect pure
-function decodeCompressed bv = Some(encdec_compressed(bv))
+val decodeCompressed : bits(16) -> ast effect pure
+function decodeCompressed bv = encdec_compressed(bv)
