@@ -90,11 +90,11 @@ The model contains the following Sail modules in the `model` directory:
 - `riscv_step.sail` implements the top-level fetch and execute loop.
   The `fetch` is done in 16-bit granules to handle RVC instructions.
   The `step` function performs the instruction fetch, handles any
-  fetch errors, dispatches the execution of each instruction, and
-  checks for any pending interrupts that may need to be handled.  A
-  `loop` function implements the execute loop, and uses the same HTIF
-  (host-target interface) mechanism as the Spike emulator to detect
-  termination of execution.
+  fetch errors, decodes the fetched value, dispatches the execution of
+  the decoded instruction, and checks for any pending interrupts that may
+  need to be handled.  A `loop` function implements the execute loop,
+  and uses the same HTIF (host-target interface) mechanism as the
+  Spike emulator to detect termination of execution.
 
 - `riscv_analysis.sail` is used in the formal operational RVWMO memory
   model.

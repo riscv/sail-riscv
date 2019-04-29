@@ -103,6 +103,13 @@ examples on how this can done.  These instruction definitions can
 access any newly defined architectural state and perform virtual or
 physical memory accesses as is done in `riscv.sail`.
 
+Interposing on instruction decode
+---------------------------------
+
+An extension may wish to check and transform a decoded instruction.
+This is supported via a post-decode extension hook, the default
+implementation of which is provided in `riscv_decode_ext.sail`.
+
 General guidelines
 ------------------
 
