@@ -317,7 +317,7 @@ function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   let pre_vaddr : xlenbits = X(rs1) + EXTS(imm);
   /* Let extensions get the first check on address validity. */
-  match ext_data_check_addr(pre_vaddr, Read, Data, width) {
+  match ext_data_check_addr(rs1, pre_vaddr, Read, Data, width) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); false },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
@@ -372,7 +372,7 @@ mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)
 function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
   let pre_vaddr : xlenbits = X(rs1) + EXTS(imm);
   /* Let extensions get the first check on address validity. */
-  match ext_data_check_addr(pre_vaddr, Write, Data, width) {
+  match ext_data_check_addr(rs1, pre_vaddr, Write, Data, width) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); false },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)

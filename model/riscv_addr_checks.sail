@@ -42,7 +42,7 @@ function ext_handle_control_check_error(err : ext_control_addr_error) -> unit =
 /* default data address checks */
 type ext_data_addr_error = unit
 
-function ext_data_check_addr(addr : xlenbits, acc : AccessType, rt : ReadType, width : word_width)
+function ext_data_check_addr(base : regbits, addr : xlenbits, acc : AccessType, rt : ReadType, width : word_width)
          -> Ext_DataAddr_Check(ext_data_addr_error) =
   Ext_DataAddr_OK(addr)
 

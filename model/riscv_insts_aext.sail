@@ -43,7 +43,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
   if haveAtomics() then {
     let pre_vaddr : xlenbits = X(rs1);
     /* Let extensions get the first check on address validity. */
-    match ext_data_check_addr(pre_vaddr, Read, Data, width) {
+    match ext_data_check_addr(rs1, pre_vaddr, Read, Data, width) {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); false },
       Ext_DataAddr_OK(vaddr) => {
         let aligned : bool =
@@ -101,7 +101,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
        */
       pre_vaddr : xlenbits = X(rs1);
       /* Let extensions get the first check on address validity. */
-      match ext_data_check_addr(pre_vaddr, Read, Data, width) {
+      match ext_data_check_addr(rs1, pre_vaddr, Read, Data, width) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); false },
         Ext_DataAddr_OK(vaddr) => {
           let aligned : bool =
@@ -185,7 +185,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   if haveAtomics() then {
     pre_vaddr : xlenbits = X(rs1);
     /* Let extensions get the first check on address validity. */
-    match ext_data_check_addr(pre_vaddr, Read, Data, width) {
+    match ext_data_check_addr(rs1, pre_vaddr, Read, Data, width) {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); false },
       Ext_DataAddr_OK(vaddr) => {
         match translateAddr(vaddr, ReadWrite, Data) {
