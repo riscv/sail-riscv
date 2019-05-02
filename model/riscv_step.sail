@@ -93,5 +93,6 @@ function init_model () -> unit = {
   init_vmem ();     /* virtual memory */
 
   /* initialize extensions last */
+  ext_init ();
   ext_init_regs ();
 }

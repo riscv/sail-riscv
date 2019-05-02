@@ -230,3 +230,38 @@ mapping creg_name : bits(3) <-> string = {
   0b110 <-> "a4",
   0b111 <-> "a5"
 }
+
+val init_base_regs : unit -> unit effect {wreg}
+function init_base_regs () = {
+  x1  = EXTZ(0b0);
+  x2  = EXTZ(0b0);
+  x3  = EXTZ(0b0);
+  x4  = EXTZ(0b0);
+  x5  = EXTZ(0b0);
+  x6  = EXTZ(0b0);
+  x7  = EXTZ(0b0);
+  x8  = EXTZ(0b0);
+  x9  = EXTZ(0b0);
+  x10 = EXTZ(0b0);
+  x11 = EXTZ(0b0);
+  x12 = EXTZ(0b0);
+  x13 = EXTZ(0b0);
+  x14 = EXTZ(0b0);
+  x15 = EXTZ(0b0);
+  x16 = EXTZ(0b0);
+  x17 = EXTZ(0b0);
+  x18 = EXTZ(0b0);
+  x19 = EXTZ(0b0);
+  x20 = EXTZ(0b0);
+  x21 = EXTZ(0b0);
+  x22 = EXTZ(0b0);
+  x23 = EXTZ(0b0);
+  x24 = EXTZ(0b0);
+  x25 = EXTZ(0b0);
+  x26 = EXTZ(0b0);
+  x27 = EXTZ(0b0);
+  x28 = EXTZ(0b0);
+  x29 = EXTZ(0b0);
+  x30 = EXTZ(0b0);
+  x31 = EXTZ(0b0)
+}
