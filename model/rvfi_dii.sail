@@ -74,6 +74,11 @@ val rvfi_get_exec_packet : unit -> bits(704) effect {rreg}
 
 function rvfi_get_exec_packet() = rvfi_exec.bits()
 
+val rvfi_encode_width_mask : forall 'n, 0 < 'n <= 8. atom('n) -> bits(8)
+
+function rvfi_encode_width_mask(width) =
+  (0xFF >> (8 - width))
+
 val print_rvfi_exec : unit -> unit effect {rreg}
 
 function print_rvfi_exec () = {
