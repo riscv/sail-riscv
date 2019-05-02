@@ -91,8 +91,23 @@ function mem_write_ea (addr, width, aq, rl, con) = {
   }
 }
 
+$ifdef RVFI_DII
+val rvfi_write : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> unit effect {wreg}
+function rvfi_write (addr, width, value) = {
+  rvfi_exec->rvfi_mem_addr() = addr;
+  if width <= 8 then {
+    rvfi_exec->rvfi_mem_wdata() = sail_zero_extend(value,64);
+    rvfi_exec->rvfi_mem_wmask() = to_bits(8,width);
+  }
+}
+$else
+val rvfi_write : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> unit
+function rvfi_write (addr, width, value) = ()
+$endif
+
 // only used for actual memory regions, to avoid MMIO effects
 function phys_mem_write forall 'n, 'n > 0. (addr : xlenbits, width : atom('n), data : bits(8 * 'n), meta : mem_meta, aq : bool, rl : bool, con : bool) -> MemoryOpResult(bool) = {
+  rvfi_write(addr, width, data);
   let result = (match (aq, rl, con) {
     (false, false, false) => MemValue(write_ram(Write_plain, addr, width, data, meta)),
     (false, true,  false) => MemValue(write_ram(Write_RISCV_release, addr, width, data, meta)),
@@ -117,25 +132,10 @@ function checked_mem_write forall 'n, 'n > 0. (addr : xlenbits, width : atom('n)
 
 /* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
 
-$ifdef RVFI_DII
-val rvfi_write : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> unit effect {wreg}
-function rvfi_write (addr, width, value) = {
-  rvfi_exec->rvfi_mem_addr() = addr;
-  if width <= 8 then {
-    rvfi_exec->rvfi_mem_wdata() = sail_zero_extend(value,64);
-    rvfi_exec->rvfi_mem_wmask() = to_bits(8,width);
-  }
-}
-$else
-val rvfi_write : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> unit
-function rvfi_write (addr, width, value) = ()
-$endif
-
 /* Memory write with a default metadata value */
 /* NOTE: The wreg effect is due to MMIO, the rreg is due to checking mtime. */
 val mem_write_value : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n), bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
 function mem_write_value (addr, width, value, aq, rl, con) = {
-  rvfi_write(addr, width, value);
   if (rl | con) & (~ (is_aligned_addr(addr, width)))
   then MemException(E_SAMO_Addr_Align)
   else match (aq, rl, con) {
