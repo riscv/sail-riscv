@@ -39,11 +39,16 @@ function ext_control_check_pc(pc : xlenbits) -> Ext_ControlAddr_Check(ext_contro
 function ext_handle_control_check_error(err : ext_control_addr_error) -> unit =
   ()
 
-/* default data address checks */
+
+/* The default data address function does not perform any checks so
+   just uses unit for error type. */
 type ext_data_addr_error = unit
 
-function ext_data_check_addr(base : regbits, addr : xlenbits, acc : AccessType, rt : ReadType, width : word_width)
+/* Default data addr is just base register + immediate offset (may be zero).
+   Extensions might override and add additional checks. */
+function ext_data_get_addr(base : regbits, offset : xlenbits, acc : AccessType, rt : ReadType, width : word_width)
          -> Ext_DataAddr_Check(ext_data_addr_error) =
+  let addr = X(base) + offset in
   Ext_DataAddr_OK(addr)
 
 function ext_handle_data_check_error(err : ext_data_addr_error) -> unit =

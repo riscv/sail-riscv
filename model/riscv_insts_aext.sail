@@ -41,9 +41,10 @@ function process_loadres(rd, addr, value, is_unsigned) =
 
 function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
   if haveAtomics() then {
-    let pre_vaddr : xlenbits = X(rs1);
-    /* Let extensions get the first check on address validity. */
-    match ext_data_check_addr(rs1, pre_vaddr, Read, Data, width) {
+    /* Get the address, X(rs1) (no offset).
+     * Extensions might perform additional checks on address validity.
+     */
+    match ext_data_get_addr(rs1, zeros(), Read, Data, width) {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); false },
       Ext_DataAddr_OK(vaddr) => {
         let aligned : bool =
@@ -99,9 +100,10 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
       /* normal non-rmem case
        * rmem: SC is allowed to succeed (but might fail later)
        */
-      pre_vaddr : xlenbits = X(rs1);
-      /* Let extensions get the first check on address validity. */
-      match ext_data_check_addr(rs1, pre_vaddr, Read, Data, width) {
+      /* Get the address, X(rs1) (no offset).
+       * Extensions might perform additional checks on address validity.
+       */
+      match ext_data_get_addr(rs1, zeros(), Read, Data, width) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); false },
         Ext_DataAddr_OK(vaddr) => {
           let aligned : bool =
@@ -183,9 +185,10 @@ mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)
    This may need revisiting. */
 function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   if haveAtomics() then {
-    pre_vaddr : xlenbits = X(rs1);
-    /* Let extensions get the first check on address validity. */
-    match ext_data_check_addr(rs1, pre_vaddr, Read, Data, width) {
+    /* Get the address, X(rs1) (no offset).
+     * Some extensions perform additional checks on address validity.
+     */
+    match ext_data_get_addr(rs1, zeros(), Read, Data, width) {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); false },
       Ext_DataAddr_OK(vaddr) => {
         match translateAddr(vaddr, ReadWrite, Data) {
