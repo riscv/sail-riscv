@@ -42,13 +42,11 @@ val rvfi_read : forall 'n, 'n > 0. (xlenbits, atom('n), MemoryOpResult(bits(8 * 
 function rvfi_read (addr, width, result) = {
   rvfi_exec->rvfi_mem_addr() = addr;
   match result {
-  MemValue(v) =>
-    if width <= 8
-    then {
-      rvfi_exec->rvfi_mem_wdata() = sail_zero_extend(v,64);
-      rvfi_exec->rvfi_mem_wmask() = to_bits(8,width)
-    } else (),
-  MemException(_) => ()
+    MemValue(v) => if   width <= 8
+                   then { rvfi_exec->rvfi_mem_rdata() = sail_zero_extend(v,64);
+                          rvfi_exec->rvfi_mem_rmask() = to_bits(8,width) }
+                   else (),
+    MemException(_) => ()
   };
 }
 $else
