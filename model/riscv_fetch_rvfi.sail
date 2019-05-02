@@ -5,12 +5,12 @@ function fetch() -> FetchResult =
   else {
     let i = rvfi_instruction.rvfi_insn();
     rvfi_exec->rvfi_order()    = minstret;
-    rvfi_exec->rvfi_pc_rdata() = PC;
-    rvfi_exec->rvfi_insn()     = sail_zero_extend(i,64);
+    rvfi_exec->rvfi_pc_rdata() = EXTS(PC);
+    rvfi_exec->rvfi_insn()     = EXTS(i);
 
     /* TODO: should we write these even if they're not really registers? */
-    rvfi_exec->rvfi_rs1_data() = X(i[19 .. 15]);
-    rvfi_exec->rvfi_rs2_data() = X(i[24 .. 20]);
+    rvfi_exec->rvfi_rs1_data() = EXTS(X(i[19 .. 15]));
+    rvfi_exec->rvfi_rs2_data() = EXTS(X(i[24 .. 20]));
     rvfi_exec->rvfi_rs1_addr() = sail_zero_extend(i[19 .. 15],8);
     rvfi_exec->rvfi_rs2_addr() = sail_zero_extend(i[24 .. 20],8);
 
