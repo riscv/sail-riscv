@@ -432,6 +432,14 @@ void init_sail(uint64_t elf_entry)
   if (!rv_enable_rvc) z_set_Misa_C(&zmisa, 0);
 }
 
+/* reinitialize to clear state and memory, typically across tests runs */
+void reinit_sail(uint64_t elf_entry)
+{
+  model_fini();
+  model_init();
+  init_sail(elf_entry);
+}
+
 int init_check(struct tv_spike_t *s)
 {
   int passed = 1;
@@ -800,7 +808,7 @@ int main(int argc, char **argv)
 #else
     if (rvfi_dii) {
       /* Reset for next test */
-      init_sail(entry);
+      reinit_sail(entry);
     }
   } while (rvfi_dii);
 #endif
