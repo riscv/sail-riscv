@@ -42,7 +42,7 @@ register x29 : regtype
 register x30 : regtype
 register x31 : regtype
 
-val rX : forall 'n, 0 <= 'n < 32. regno('n) -> xlenbits effect {rreg}
+val rX : forall 'n, 0 <= 'n < 32. regno('n) -> xlenbits effect {rreg, escape}
 /*function rX 0 = 0x0000000000000000
 and rX (r if r > 0) = Xs[r]*/
 function rX r = {
