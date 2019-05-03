@@ -658,7 +658,7 @@ function clause execute ECALL() = {
                     },
              excinfo = (None() : option(xlenbits)),
              ext     = None() };
-  nextPC = handle_exception(cur_privilege, CTL_TRAP(t), PC);
+  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC));
   false
 }
 
@@ -672,7 +672,7 @@ mapping clause encdec = MRET()
 
 function clause execute MRET() = {
   if   cur_privilege == Machine
-  then nextPC = handle_exception(cur_privilege, CTL_MRET(), PC)
+  then set_next_pc(exception_handler(cur_privilege, CTL_MRET(), PC))
   else handle_illegal();
   false
 }
@@ -690,10 +690,10 @@ function clause execute SRET() = {
     User       => handle_illegal(),
     Supervisor => if   (~ (haveSupMode ())) | mstatus.TSR() == true
                   then handle_illegal()
-                  else nextPC = handle_exception(cur_privilege, CTL_SRET(), PC),
+                  else set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC)),
     Machine    => if   (~ (haveSupMode ()))
                   then handle_illegal()
-                  else nextPC = handle_exception(cur_privilege, CTL_SRET(), PC)
+                  else set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC))
   };
   false
 }

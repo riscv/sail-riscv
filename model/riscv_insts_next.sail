@@ -9,7 +9,7 @@ mapping clause encdec = URET()
 function clause execute URET() = {
   if   (~ (haveUsrMode()))
   then handle_illegal()
-  else nextPC = handle_exception(cur_privilege, CTL_URET(), PC);
+  else set_next_pc(exception_handler(cur_privilege, CTL_URET(), PC));
   false
 }
 

@@ -279,8 +279,8 @@ $endif
 
 /* handle exceptional ctl flow by updating nextPC and operating privilege */
 
-function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
-                    -> xlenbits = {
+function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
+                     -> xlenbits = {
   rvfi_trap();
   print_platform("handling " ^ (if intr then "int#" else "exc#")
                  ^ BitStr(c) ^ " at priv " ^ del_priv ^ " with tval " ^ BitStr(tval(info)));
@@ -352,14 +352,14 @@ function handle_trap(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenb
   };
 }
 
-function handle_exception(cur_priv : Privilege, ctl : ctl_result,
-                          pc: xlenbits) -> xlenbits = {
+function exception_handler(cur_priv : Privilege, ctl : ctl_result,
+                           pc: xlenbits) -> xlenbits = {
   match (cur_priv, ctl) {
     (_, CTL_TRAP(e)) => {
       let del_priv = exception_delegatee(e.trap, cur_priv);
       print_platform("trapping from " ^ cur_priv ^ " to " ^ del_priv
                      ^ " to handle " ^ e.trap);
-      handle_trap(del_priv, false, e.trap, pc, e.excinfo, e.ext)
+      trap_handler(del_priv, false, e.trap, pc, e.excinfo, e.ext)
     },
     (_, CTL_MRET())  => {
       let prev_priv   = cur_privilege;
@@ -407,11 +407,11 @@ function handle_mem_exception(addr : xlenbits, e : ExceptionType) -> unit = {
   let t : sync_exception = struct { trap    = e,
                                     excinfo = Some(addr),
                                     ext     = None() } in
-  nextPC = handle_exception(cur_privilege, CTL_TRAP(t), PC)
+  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }
 
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
-  nextPC = handle_trap(del_priv, true, i, PC, None(), None())
+  set_next_pc(trap_handler(del_priv, true, i, PC, None(), None()))
 
 /* state state initialization */
 
