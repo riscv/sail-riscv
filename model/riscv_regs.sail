@@ -43,8 +43,6 @@ register x30 : regtype
 register x31 : regtype
 
 val rX : forall 'n, 0 <= 'n < 32. regno('n) -> xlenbits effect {rreg, escape}
-/*function rX 0 = 0x0000000000000000
-and rX (r if r > 0) = Xs[r]*/
 function rX r = {
   let v : regtype =
     match r {
@@ -136,7 +134,6 @@ function wX (r, in_v) = {
   };
   if (r != 0) then {
      rvfi_wX(r, in_v);
-     // Xs[r] = v;
      print_reg("x" ^ string_of_int(r) ^ " <- " ^ RegStr(v));
   }
 }

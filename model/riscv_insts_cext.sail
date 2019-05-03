@@ -3,7 +3,7 @@
 
 /* These instructions are only legal if misa.C() is true.  Instead of
  * checking this in every execute clause, we currently do the check in one place
- * in the fetch-execute logic.  This may need revisiting for TestRig.
+ * in the fetch-execute logic.
  */
 
 /* ****************************************************************** */
@@ -325,7 +325,6 @@ mapping clause assembly = C_AND(rsd, rs2)
 /* ****************************************************************** */
 union clause ast = C_SUBW : (cregbits, cregbits)
 
-/* TODO: invalid on RV32 */
 mapping clause encdec_compressed = C_SUBW(rsd, rs2)
       if sizeof(xlen) == 64
   <-> 0b100 @ 0b1 @ 0b11 @ rsd : cregbits @ 0b00 @ rs2 : cregbits @ 0b01
@@ -345,7 +344,6 @@ mapping clause assembly = C_SUBW(rsd, rs2)
 /* ****************************************************************** */
 union clause ast = C_ADDW : (cregbits, cregbits)
 
-/* TODO: invalid on RV32 */
 mapping clause encdec_compressed = C_ADDW(rsd, rs2)
       if sizeof(xlen) == 64
   <-> 0b100 @ 0b1 @ 0b11 @ rsd : cregbits @ 0b01 @ rs2 : cregbits @ 0b01
@@ -402,20 +400,26 @@ mapping clause assembly = C_BNEZ(imm, rs)
 union clause ast = C_SLLI : (bits(6), regbits)
 
 /* TODO: On RV32, also need shamt[5] == 0 */
-mapping clause encdec_compressed = C_SLLI(nzui5 @ nzui40, rsd) if nzui5 @ nzui40 != 0b000000 & rsd != zreg
-  <-> 0b000 @ nzui5 : bits(1) @ rsd : regbits @ nzui40 : bits(5) @ 0b10 if nzui5 @ nzui40 != 0b000000 & rsd != zreg
+mapping clause encdec_compressed = C_SLLI(nzui5 @ nzui40, rsd)
+      if nzui5 @ nzui40 != 0b000000 & rsd != zreg
+  <-> 0b000 @ nzui5 : bits(1) @ rsd : regbits @ nzui40 : bits(5) @ 0b10
+      if nzui5 @ nzui40 != 0b000000 & rsd != zreg
 
 function clause execute (C_SLLI(shamt, rsd)) =
   execute(SHIFTIOP(shamt, rsd, rsd, RISCV_SLLI))
 
-mapping clause assembly = C_SLLI(shamt, rsd) if shamt != 0b000000 & rsd != zreg
-  <-> "c.slli" ^ spc() ^ reg_name(rsd) ^ sep() ^ hex_bits_6(shamt) if shamt != 0b000000 & rsd != zreg
+mapping clause assembly = C_SLLI(shamt, rsd)
+      if shamt != 0b000000 & rsd != zreg
+  <-> "c.slli" ^ spc() ^ reg_name(rsd) ^ sep() ^ hex_bits_6(shamt)
+      if shamt != 0b000000 & rsd != zreg
 
 /* ****************************************************************** */
 union clause ast = C_LWSP : (bits(6), regbits)
 
-mapping clause encdec_compressed = C_LWSP(ui76 @ ui5 @ ui42, rd) if rd != zreg
-  <-> 0b010 @ ui5 : bits(1) @ rd : regbits @ ui42 : bits(3) @ ui76 : bits(2) @ 0b10 if rd != zreg
+mapping clause encdec_compressed = C_LWSP(ui76 @ ui5 @ ui42, rd)
+      if rd != zreg
+  <-> 0b010 @ ui5 : bits(1) @ rd : regbits @ ui42 : bits(3) @ ui76 : bits(2) @ 0b10
+      if rd != zreg
 
 function clause execute (C_LWSP(uimm, rd)) = {
   let imm : bits(12) = EXTZ(uimm @ 0b00);

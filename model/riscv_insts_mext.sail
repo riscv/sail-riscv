@@ -2,7 +2,7 @@
 /* This file specifies the instructions in the 'M' extension.         */
 
 /* ****************************************************************** */
-/* FIXME: separate these out into separate ast variants */
+
 union clause ast = MUL : (regbits, regbits, regbits, bool, bool, bool)
 
 mapping encdec_mul_op : (bool, bool, bool) <-> bits(3) = {
