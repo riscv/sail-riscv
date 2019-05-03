@@ -399,11 +399,10 @@ mapping clause assembly = C_BNEZ(imm, rs)
 /* ****************************************************************** */
 union clause ast = C_SLLI : (bits(6), regbits)
 
-/* TODO: On RV32, also need shamt[5] == 0 */
 mapping clause encdec_compressed = C_SLLI(nzui5 @ nzui40, rsd)
-      if nzui5 @ nzui40 != 0b000000 & rsd != zreg
+      if nzui5 @ nzui40 != 0b000000 & rsd != zreg & (sizeof(xlen) == 64 | nzui5 == false)
   <-> 0b000 @ nzui5 : bits(1) @ rsd : regbits @ nzui40 : bits(5) @ 0b10
-      if nzui5 @ nzui40 != 0b000000 & rsd != zreg
+      if nzui5 @ nzui40 != 0b000000 & rsd != zreg & (sizeof(xlen) == 64 | nzui5 == false)
 
 function clause execute (C_SLLI(shamt, rsd)) =
   execute(SHIFTIOP(shamt, rsd, rsd, RISCV_SLLI))
