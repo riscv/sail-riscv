@@ -36,3 +36,21 @@ function set_xret_target(p, value) = {
   };
   target
 }
+
+/* other trap-related CSRs */
+
+function get_mtvec() -> xlenbits =
+  mtvec.bits()
+
+function get_stvec() -> xlenbits =
+  stvec.bits()
+
+function set_mtvec(value : xlenbits) -> xlenbits = {
+  mtvec = legalize_tvec(mtvec, value);
+  mtvec.bits()
+}
+
+function set_stvec(value : xlenbits) -> xlenbits = {
+  stvec = legalize_tvec(stvec, value);
+  stvec.bits()
+}
