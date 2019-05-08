@@ -18,7 +18,7 @@ function read_UExt_CSR csr : csreg -> option(xlenbits) = {
   match csr {
     0x000 => Some(lower_sstatus(lower_mstatus(mstatus)).bits()),
     0x004 => Some(lower_sie(lower_mie(mie, mideleg), sideleg).bits()),
-    0x005 => Some(utvec.bits()),
+    0x005 => Some(get_utvec()),
     0x040 => Some(uscratch),
     0x041 => Some(get_xret_target(User) & pc_alignment_mask()),
     0x042 => Some(ucause.bits()),
@@ -36,7 +36,7 @@ function write_UExt_CSR(csr : csreg, value : xlenbits) -> bool = {
     0x004 => { let sie = legalize_uie(lower_mie(mie, mideleg), sideleg, value);
                mie = lift_sie(mie, mideleg, sie);
                Some(mie.bits()) },
-    0x005 => { utvec = legalize_tvec(utvec, value); Some(utvec.bits()) },
+    0x005 => { Some(set_utvec(value)) },
     0x040 => { uscratch = value; Some(uscratch) },
     0x041 => { Some(set_xret_target(User, value)) },
     0x042 => { ucause->bits() = value; Some(ucause.bits()) },
