@@ -25,13 +25,21 @@ The model contains the following Sail modules in the `model` directory:
   register type is separately defined in `riscv_reg_type.sail` so that
   extensions of the model can redefine it if required.
 
+- `riscv_regs.sail` contains the base register file, where each
+  register is defined as having the `regtype` type defined in
+  `riscv_reg_type.sail`.
+
+- `riscv_pc_access.sail` defines functions to access and modify the
+  program counter.
+
 - `riscv_sys_regs.sail` describes the privileged architectural state,
   viz. M-mode and S-mode CSRs, and contains helpers to interpret their
   content, such as WLRL and WARL fields.  `riscv_sys_control.sail`
   describes interrupt and exception delegation and dispatch, and the
   handling of privilege transitions. `riscv_sys_exceptions.sail`
   defines the handling of the addresses involved in exception
-  handling.
+  handling. `riscv_sync_exception.sail` describes the structure used
+  to capture the architectural information for an exception.
 
   Since WLRL and WARL fields are intended to capture platform-specific
   functionality, future versions of the model might separate their

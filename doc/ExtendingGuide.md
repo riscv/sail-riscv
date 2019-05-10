@@ -33,6 +33,15 @@ existing definitions for privilege levels and exceptions in
 `riscv_types.sail`, and modifying the exception handling and privilege
 transition functions in `riscv_sys_control.sail`.
 
+Modifying exception handling
+----------------------------
+
+An extension that needs to interact closely with exception handling
+may need to capture additional information at the time of an
+exception.  This is supported using the `ext` field in the
+`sync_exception` type in `riscv_sync_exception.sail`, which is where
+the extension can store this information.
+
 Adding low-level platform functionality
 ---------------------------------------
 
@@ -90,6 +99,13 @@ implementation in `riscv_addr_checks.sail`.
 The handling of the memory addresses involved during exception
 handling can be extending using the interface defined in
 `riscv_sys_exceptions.sail`.
+
+Checking and transforming the program counter
+---------------------------------------------
+
+An extension might want to similarly check and transform accesses to
+the program counter.  This is supported by supplying implementations
+of the functions defined in `riscv_pc_access.sail`.
 
 Adding new instructions
 -----------------------
