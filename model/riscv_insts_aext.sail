@@ -21,7 +21,7 @@ function lrsc_width_str(width : word_width) -> string =
   }
 
 /* ****************************************************************** */
-union clause ast = LOADRES : (bool, bool, regbits, word_width, regbits)
+union clause ast = LOADRES : (bool, bool, regidx, word_width, regidx)
 
 mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)
   <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111
@@ -32,7 +32,7 @@ mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)
  * call to load_reservation in LR and cancel_reservation in SC.
  */
 
-val process_loadres : forall 'n, 0 < 'n <= xlen_bytes. (regbits, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> Retired effect {escape, rreg, wreg}
+val process_loadres : forall 'n, 0 < 'n <= xlen_bytes. (regidx, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> Retired effect {escape, rreg, wreg}
 function process_loadres(rd, addr, value, is_unsigned) =
   match extend_value(is_unsigned, value) {
     MemValue(result) => { load_reservation(addr); X(rd) = result; RETIRE_SUCCESS },
@@ -83,7 +83,7 @@ mapping clause assembly = LOADRES(aq, rl, rs1, size, rd)
   <-> "lr." ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 /* ****************************************************************** */
-union clause ast = STORECON : (bool, bool, regbits, regbits, word_width, regbits)
+union clause ast = STORECON : (bool, bool, regidx, regidx, word_width, regidx)
 
 mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)
   <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111
@@ -164,7 +164,7 @@ mapping clause assembly = STORECON(aq, rl, rs2, rs1, size, rd)
   <-> "sc." ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
-union clause ast = AMO : (amoop, bool, bool, regbits, regbits, word_width, regbits)
+union clause ast = AMO : (amoop, bool, bool, regidx, regidx, word_width, regidx)
 
 mapping encdec_amoop : amoop <-> bits(5) = {
   AMOSWAP <-> 0b00001,

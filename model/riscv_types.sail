@@ -14,25 +14,25 @@ type word = bits(32)
 
 /* register identifiers */
 
-type regbits  = bits(5)
-type cregbits = bits(3)    /* identifiers in RVC instructions */
-type csreg    = bits(12)   /* CSR addressing */
+type regidx  = bits(5)
+type cregidx = bits(3)    /* identifiers in RVC instructions */
+type csreg   = bits(12)   /* CSR addressing */
 
 /* register file indexing */
 
 type regno ('n : Int), 0 <= 'n < 32 = atom('n)
 
-val cast regbits_to_regno : bits(5) -> {'n, 0 <= 'n < 32. regno('n)}
-function regbits_to_regno b = let 'r = unsigned(b) in r
+val cast regidx_to_regno : bits(5) -> {'n, 0 <= 'n < 32. regno('n)}
+function regidx_to_regno b = let 'r = unsigned(b) in r
 
 /* mapping RVC register indices into normal indices */
-val creg2reg_bits : cregbits -> regbits
-function creg2reg_bits(creg) = 0b01 @ creg
+val creg2reg_idx : cregidx -> regidx
+function creg2reg_idx(creg) = 0b01 @ creg
 
 /* some architecture and ABI relevant register identifiers */
-let zreg : regbits = 0b00000  /* x0, zero register  */
-let ra   : regbits = 0b00001  /* x1, return address */
-let sp   : regbits = 0b00010  /* x2, stack pointer  */
+let zreg : regidx = 0b00000  /* x0, zero register  */
+let ra   : regidx = 0b00001  /* x1, return address */
+let sp   : regidx = 0b00010  /* x2, stack pointer  */
 
 /* instruction fields */
 

@@ -3,7 +3,7 @@
 
 /* ****************************************************************** */
 
-union clause ast = MUL : (regbits, regbits, regbits, bool, bool, bool)
+union clause ast = MUL : (regidx, regidx, regidx, bool, bool, bool)
 
 mapping encdec_mul_op : (bool, bool, bool) <-> bits(3) = {
   (false, true, true)  <-> 0b000,
@@ -45,7 +45,7 @@ mapping clause assembly = MUL(rs2, rs1, rd, high, signed1, signed2)
   <-> mul_mnemonic(high, signed1, signed2) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
-union clause ast = DIV : (regbits, regbits, regbits, bool)
+union clause ast = DIV : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = DIV(rs2, rs1, rd, s)
   <-> 0b0000001 @ rs2 @ rs1 @ 0b10 @ bool_not_bits(s) @ rd @ 0b0110011
@@ -76,7 +76,7 @@ mapping clause assembly = DIV(rs2, rs1, rd, s)
   <-> "div" ^ maybe_not_u(s) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
-union clause ast = REM : (regbits, regbits, regbits, bool)
+union clause ast = REM : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = REM(rs2, rs1, rd, s)
   <-> 0b0000001 @ rs2 @ rs1 @ 0b11 @ bool_not_bits(s) @ rd @ 0b0110011
@@ -101,7 +101,7 @@ mapping clause assembly = REM(rs2, rs1, rd, s)
   <-> "rem" ^ maybe_not_u(s) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
-union clause ast = MULW : (regbits, regbits, regbits)
+union clause ast = MULW : (regidx, regidx, regidx)
 
 mapping clause encdec = MULW(rs2, rs1, rd)
       if sizeof(xlen) == 64
@@ -131,7 +131,7 @@ mapping clause assembly = MULW(rs2, rs1, rd)
       if sizeof(xlen) == 64
 
 /* ****************************************************************** */
-union clause ast = DIVW : (regbits, regbits, regbits, bool)
+union clause ast = DIVW : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = DIVW(rs2, rs1, rd, s)
       if sizeof(xlen) == 64
@@ -161,7 +161,7 @@ mapping clause assembly = DIVW(rs2, rs1, rd, s)
       if sizeof(xlen) == 64
 
 /* ****************************************************************** */
-union clause ast = REMW : (regbits, regbits, regbits, bool)
+union clause ast = REMW : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = REMW(rs2, rs1, rd, s)
       if sizeof(xlen) == 64

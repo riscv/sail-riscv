@@ -3,7 +3,7 @@
 
 
 /* ****************************************************************** */
-union clause ast = UTYPE : (bits(20), regbits, uop)
+union clause ast = UTYPE : (bits(20), regidx, uop)
 
 mapping encdec_uop : uop <-> bits(7) = {
   RISCV_LUI   <-> 0b0110111,
@@ -32,7 +32,7 @@ mapping clause assembly = UTYPE(imm, rd, op)
   <-> utype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_20(imm)
 
 /* ****************************************************************** */
-union clause ast = RISCV_JAL : (bits(21), regbits)
+union clause ast = RISCV_JAL : (bits(21), regidx)
 
 mapping clause encdec = RISCV_JAL(imm_19 @ imm_7_0 @ imm_8 @ imm_18_13 @ imm_12_9 @ 0b0, rd)
   <-> imm_19 : bits(1) @ imm_18_13 : bits(6) @ imm_12_9 : bits(4) @ imm_8 : bits(1) @ imm_7_0 : bits(8) @ rd @ 0b1101111
@@ -78,7 +78,7 @@ mapping clause assembly = RISCV_JAL(imm, rd)
   <-> "jal" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_21(imm)
 
 /* ****************************************************************** */
-union clause ast = RISCV_JALR : (bits(12), regbits, regbits)
+union clause ast = RISCV_JALR : (bits(12), regidx, regidx)
 
 mapping clause encdec = RISCV_JALR(imm, rs1, rd)
   <-> imm @ rs1 @ 0b000 @ rd @ 0b1100111
@@ -89,7 +89,7 @@ mapping clause assembly = RISCV_JALR(imm, rs1, rd)
 /* see riscv_jalr_seq.sail or riscv_jalr_rmem.sail for the execute clause. */
 
 /* ****************************************************************** */
-union clause ast = BTYPE : (bits(13), regbits, regbits, bop)
+union clause ast = BTYPE : (bits(13), regidx, regidx, bop)
 
 mapping encdec_bop : bop <-> bits(3) = {
   RISCV_BEQ  <-> 0b000,
@@ -148,7 +148,7 @@ mapping clause assembly = BTYPE(imm, rs2, rs1, op)
   <-> btype_mnemonic(op) ^ spc() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_13(imm)
 
 /* ****************************************************************** */
-union clause ast = ITYPE : (bits(12), regbits, regbits, iop)
+union clause ast = ITYPE : (bits(12), regidx, regidx, iop)
 
 mapping encdec_iop : iop <-> bits(3) = {
   RISCV_ADDI  <-> 0b000,
@@ -190,7 +190,7 @@ mapping clause assembly = ITYPE(imm, rs1, rd, op)
   <-> itype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_12(imm)
 
 /* ****************************************************************** */
-union clause ast = SHIFTIOP : (bits(6), regbits, regbits, sop)
+union clause ast = SHIFTIOP : (bits(6), regidx, regidx, sop)
 
 mapping encdec_sop : sop <-> bits(3) = {
   RISCV_SLLI <-> 0b001,
@@ -230,7 +230,7 @@ mapping clause assembly = SHIFTIOP(shamt, rs1, rd, op)
   <-> shiftiop_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_6(shamt)
 
 /* ****************************************************************** */
-union clause ast = RTYPE : (regbits, regbits, regbits, rop)
+union clause ast = RTYPE : (regidx, regidx, regidx, rop)
 
 mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_ADD)  <-> 0b0000000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
 mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SLT)  <-> 0b0000000 @ rs2 @ rs1 @ 0b010 @ rd @ 0b0110011
@@ -285,7 +285,7 @@ mapping clause assembly = RTYPE(rs2, rs1, rd, op)
   <-> rtype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
-union clause ast = LOAD : (bits(12), regbits, regbits, bool, word_width, bool, bool)
+union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width, bool, bool)
 
 /* Load unsigned double is only present in RV128I, not RV64I */
 mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if size_bits(size) != 0b11 | not_bool(is_unsigned)
@@ -297,7 +297,7 @@ function extend_value(is_unsigned, value) = match (value) {
   MemException(e) => MemException(e)
 }
 
-val process_load : forall 'n, 0 < 'n <= xlen_bytes. (regbits, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> Retired effect {escape, rreg, wreg}
+val process_load : forall 'n, 0 < 'n <= xlen_bytes. (regidx, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> Retired effect {escape, rreg, wreg}
 function process_load(rd, addr, value, is_unsigned) =
   match extend_value(is_unsigned, value) {
     MemValue(result) => { X(rd) = result; RETIRE_SUCCESS },
@@ -361,7 +361,7 @@ mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, size, aq, rl)
   <-> "l" ^ size_mnemonic(size) ^ maybe_u(is_unsigned) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 /* ****************************************************************** */
-union clause ast = STORE : (bits(12), regbits, regbits, word_width, bool, bool)
+union clause ast = STORE : (bits(12), regidx, regidx, word_width, bool, bool)
 
 mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)
   <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ imm5 : bits(5) @ 0b0100011
@@ -412,7 +412,7 @@ mapping clause assembly = STORE(imm, rs2, rs1, size, aq, rl)
   <-> "s" ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 /* ****************************************************************** */
-union clause ast = ADDIW : (bits(12), regbits, regbits)
+union clause ast = ADDIW : (bits(12), regidx, regidx)
 
 mapping clause encdec = ADDIW(imm, rs1, rd)
       if sizeof(xlen) == 64
@@ -431,7 +431,7 @@ mapping clause assembly = ADDIW(imm, rs1, rd)
       if sizeof(xlen) == 64
 
 /* ****************************************************************** */
-union clause ast = SHIFTW : (bits(5), regbits, regbits, sop)
+union clause ast = SHIFTW : (bits(5), regidx, regidx, sop)
 
 mapping clause encdec = SHIFTW(shamt, rs1, rd, RISCV_SLLI)
       if sizeof(xlen) == 64
@@ -469,7 +469,7 @@ mapping clause assembly = SHIFTW(shamt, rs1, rd, op)
       if sizeof(xlen) == 64
 
 /* ****************************************************************** */
-union clause ast = RTYPEW : (regbits, regbits, regbits, ropw)
+union clause ast = RTYPEW : (regidx, regidx, regidx, ropw)
 
 mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_ADDW)
       if sizeof(xlen) == 64
@@ -520,7 +520,7 @@ mapping clause assembly = RTYPEW(rs2, rs1, rd, op)
       if sizeof(xlen) == 64
 
 /* ****************************************************************** */
-union clause ast = SHIFTIWOP : (bits(5), regbits, regbits, sopw)
+union clause ast = SHIFTIWOP : (bits(5), regidx, regidx, sopw)
 
 mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SLLIW)
       if sizeof(xlen) == 64
@@ -729,7 +729,7 @@ function clause execute WFI() =
 mapping clause assembly = WFI() <-> "wfi"
 
 /* ****************************************************************** */
-union clause ast = SFENCE_VMA : (regbits, regbits)
+union clause ast = SFENCE_VMA : (regidx, regidx)
 
 mapping clause encdec = SFENCE_VMA(rs1, rs2)
   <-> 0b0001001 @ rs2 @ rs1 @ 0b000 @ 0b00000 @ 0b1110011

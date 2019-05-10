@@ -142,7 +142,7 @@ overload X = {rX, wX}
 
 /* register names */
 
-val cast reg_name_abi : regbits -> string
+val cast reg_name_abi : regidx -> string
 
 function reg_name_abi(r) = {
   match (r) {
