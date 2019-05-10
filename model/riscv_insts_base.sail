@@ -358,7 +358,7 @@ mapping maybe_u = {
 }
 
 mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, size, aq, rl)
-  <-> "l" ^ size_mnemonic(size) ^ maybe_u(is_unsigned) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_12(imm)
+  <-> "l" ^ size_mnemonic(size) ^ maybe_u(is_unsigned) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 /* ****************************************************************** */
 union clause ast = STORE : (bits(12), regbits, regbits, word_width, bool, bool)
@@ -408,8 +408,8 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
   }
 }
 
-mapping clause assembly = STORE(imm, rs1, rd, size, aq, rl)
-  <-> "s" ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_12(imm)
+mapping clause assembly = STORE(imm, rs2, rs1, size, aq, rl)
+  <-> "s" ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 /* ****************************************************************** */
 union clause ast = ADDIW : (bits(12), regbits, regbits)
