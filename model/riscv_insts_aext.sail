@@ -32,11 +32,11 @@ mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)
  * call to load_reservation in LR and cancel_reservation in SC.
  */
 
-val process_loadres : forall 'n, 0 < 'n <= xlen_bytes. (regbits, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> bool effect {escape, rreg, wreg}
+val process_loadres : forall 'n, 0 < 'n <= xlen_bytes. (regbits, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> Retired effect {escape, rreg, wreg}
 function process_loadres(rd, addr, value, is_unsigned) =
   match extend_value(is_unsigned, value) {
-    MemValue(result) => { load_reservation(addr); X(rd) = result; true },
-    MemException(e)  => { handle_mem_exception(addr, e); false }
+    MemValue(result) => { load_reservation(addr); X(rd) = result; RETIRE_SUCCESS },
+    MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
   }
 
 function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
@@ -45,7 +45,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
      * Extensions might perform additional checks on address validity.
      */
     match ext_data_get_addr(rs1, zeros(), Read, Data, width) {
-      Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); false },
+      Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
         let aligned : bool =
            /* BYTE and HALF would only occur due to invalid decodes, but it doesn't hurt
@@ -61,9 +61,9 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
          * - Andrew Waterman, isa-dev, 10 Jul 2018.
          */
         if (~ (aligned))
-        then { handle_mem_exception(vaddr, E_Load_Addr_Align); false }
+        then { handle_mem_exception(vaddr, E_Load_Addr_Align); RETIRE_FAIL }
         else match translateAddr(vaddr, Read, Data) {
-               TR_Failure(e)    => { handle_mem_exception(vaddr, e); false },
+               TR_Failure(e)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                TR_Address(addr) =>
                  match (width, sizeof(xlen)) {
                    (WORD, _)    => process_loadres(rd, vaddr, mem_read(addr, 4, aq, rl, true), false),
@@ -75,7 +75,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
     }
   } else {
     handle_illegal();
-    false
+    RETIRE_FAIL
   }
 }
 
@@ -94,7 +94,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
     /* should only happen in rmem
      * rmem: allow SC to fail very early
      */
-    X(rd) = EXTZ(0b1); true
+    X(rd) = EXTZ(0b1); RETIRE_SUCCESS
   } else {
     if haveAtomics() then {
       /* normal non-rmem case
@@ -104,7 +104,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
        * Extensions might perform additional checks on address validity.
        */
       match ext_data_get_addr(rs1, zeros(), Read, Data, width) {
-        Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); false },
+        Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
         Ext_DataAddr_OK(vaddr) => {
           let aligned : bool =
             /* BYTE and HALF would only occur due to invalid decodes, but it doesn't hurt
@@ -117,14 +117,14 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
               DOUBLE => vaddr[2..0] == 0b000
             };
           if (~ (aligned))
-          then { handle_mem_exception(vaddr, E_SAMO_Addr_Align); false }
+          then { handle_mem_exception(vaddr, E_SAMO_Addr_Align); RETIRE_FAIL }
           else {
             if match_reservation(vaddr) == false then {
               /* cannot happen in rmem */
-              X(rd) = EXTZ(0b1); cancel_reservation(); true
+              X(rd) = EXTZ(0b1); cancel_reservation(); RETIRE_SUCCESS
             } else {
               match translateAddr(vaddr, Write, Data) {
-                TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
+                TR_Failure(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                 TR_Address(addr) => {
                   let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
                     (WORD, _)    => mem_write_ea(addr, 4, aq, rl, true),
@@ -132,7 +132,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
                     _            => internal_error("STORECON expected word or double")
                   };
                   match (eares) {
-                    MemException(e) => { handle_mem_exception(addr, e); false },
+                    MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
                     MemValue(_) => {
                       rs2_val = X(rs2);
                       let res : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
@@ -141,9 +141,9 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
                         _            => internal_error("STORECON expected word or double")
                       };
                       match (res) {
-                        MemValue(true)  => { X(rd) = EXTZ(0b0); cancel_reservation(); true },
-                        MemValue(false) => { X(rd) = EXTZ(0b1); cancel_reservation(); true },
-                        MemException(e) => { handle_mem_exception(addr, e); false }
+                        MemValue(true)  => { X(rd) = EXTZ(0b0); cancel_reservation(); RETIRE_SUCCESS },
+                        MemValue(false) => { X(rd) = EXTZ(0b1); cancel_reservation(); RETIRE_SUCCESS },
+                        MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL }
                       }
                     }
                   }
@@ -155,7 +155,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
       }
     } else {
       handle_illegal();
-      false
+      RETIRE_FAIL
     }
   }
 }
@@ -189,10 +189,10 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
      * Some extensions perform additional checks on address validity.
      */
     match ext_data_get_addr(rs1, zeros(), Read, Data, width) {
-      Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); false },
+      Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
         match translateAddr(vaddr, ReadWrite, Data) {
-          TR_Failure(e) => { handle_mem_exception(vaddr, e); false },
+          TR_Failure(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
           TR_Address(addr) => {
             let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
               (WORD, _)    => mem_write_ea(addr, 4, aq & rl, rl, true),
@@ -201,7 +201,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
             };
             rs2_val : xlenbits = X(rs2);
             match (eares) {
-              MemException(e) => { handle_mem_exception(addr, e); false },
+              MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
               MemValue(_) => {
                 let rval : MemoryOpResult(xlenbits) = match (width, sizeof(xlen)) {
                   (WORD, _)    => extend_value(false, mem_read(addr, 4, aq, aq & rl, true)),
@@ -209,7 +209,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                   _            => internal_error ("AMO expected WORD or DOUBLE")
                 };
                 match (rval) {
-                  MemException(e)  => { handle_mem_exception(addr, e); false },
+                  MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL },
                   MemValue(loaded) => {
                     result  : xlenbits =
                       match op {
@@ -234,9 +234,9 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                       _            => internal_error("AMO expected WORD or DOUBLE")
                     };
                     match (wval) {
-                      MemValue(true)  => { X(rd) = loaded; true },
+                      MemValue(true)  => { X(rd) = loaded; RETIRE_SUCCESS },
                       MemValue(false) => { internal_error("AMO got false from mem_write_value") },
-                      MemException(e) => { handle_mem_exception(addr, e); false }
+                      MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL }
                     }
                   }
                 }
@@ -248,7 +248,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
     }
   } else {
     handle_illegal();
-    false
+    RETIRE_FAIL
   }
 }
 

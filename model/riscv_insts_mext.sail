@@ -27,10 +27,10 @@ function clause execute (MUL(rs2, rs1, rd, high, signed1, signed2)) = {
                  then result_wide[(2 * sizeof(xlen) - 1) .. sizeof(xlen)]
                  else result_wide[(sizeof(xlen) - 1) .. 0];
     X(rd) = result;
-    true
+    RETIRE_SUCCESS
   } else {
     handle_illegal();
-    false
+    RETIRE_FAIL
   }
 }
 
@@ -60,10 +60,10 @@ function clause execute (DIV(rs2, rs1, rd, s)) = {
     /* check for signed overflow */
     let q': int = if s & q > xlen_max_signed then xlen_min_signed else q;
     X(rd) = to_bits(sizeof(xlen), q');
-    true
+    RETIRE_SUCCESS
   } else {
     handle_illegal();
-    false
+    RETIRE_FAIL
   }
 }
 
@@ -90,10 +90,10 @@ function clause execute (REM(rs2, rs1, rd, s)) = {
     let r : int = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
     /* signed overflow case returns zero naturally as required due to -1 divisor */
     X(rd) = to_bits(sizeof(xlen), r);
-    true
+    RETIRE_SUCCESS
   } else {
     handle_illegal();
-    false
+    RETIRE_FAIL
   }
 }
 
@@ -118,10 +118,10 @@ function clause execute (MULW(rs2, rs1, rd)) = {
     let result32 = to_bits(64, rs1_int * rs2_int)[31..0];
     let result : xlenbits = EXTS(result32);
     X(rd) = result;
-    true
+    RETIRE_SUCCESS
   } else {
     handle_illegal();
-    false
+    RETIRE_FAIL
   }
 }
 
@@ -148,10 +148,10 @@ function clause execute (DIVW(rs2, rs1, rd, s)) = {
     /* check for signed overflow */
     let q': int = if s & q > (2 ^ 31 - 1) then  (0 - 2^31) else q;
     X(rd) = EXTS(to_bits(32, q'));
-    true
+    RETIRE_SUCCESS
   } else {
     handle_illegal();
-    false
+    RETIRE_FAIL
   }
 }
 
@@ -177,10 +177,10 @@ function clause execute (REMW(rs2, rs1, rd, s)) = {
     let r : int = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
     /* signed overflow case returns zero naturally as required due to -1 divisor */
     X(rd) = EXTS(to_bits(32, r));
-    true
+    RETIRE_SUCCESS
   } else {
     handle_illegal();
-    false
+    RETIRE_FAIL
   }
 }
 

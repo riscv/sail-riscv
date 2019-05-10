@@ -12,7 +12,7 @@ union clause ast = C_NOP : unit
 mapping clause encdec_compressed = C_NOP()
   <-> 0b000 @ 0b0 @ 0b00000 @ 0b00000 @ 0b01
 
-function clause execute C_NOP() = true
+function clause execute C_NOP() = RETIRE_SUCCESS
 
 mapping clause assembly = C_NOP() <-> "c.nop"
 

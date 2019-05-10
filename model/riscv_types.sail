@@ -89,6 +89,10 @@ function privLevel_to_str (p) =
     Machine    => "M"
   }
 
+/* enum denoting whether an executed instruction retires */
+
+enum Retired = {RETIRE_SUCCESS, RETIRE_FAIL}
+
 /* memory access types */
 
 enum AccessType = {Read, Write, ReadWrite, Execute}

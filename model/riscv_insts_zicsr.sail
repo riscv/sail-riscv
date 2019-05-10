@@ -141,7 +141,7 @@ function clause execute CSR(csr, rs1, rd, is_imm, op) = {
     _      => if is_imm then unsigned(rs1_val) != 0 else unsigned(rs1) != 0
   };
   if ~ (check_CSR(csr, cur_privilege, isWrite))
-  then { handle_illegal(); false }
+  then { handle_illegal(); RETIRE_FAIL }
   else {
     let csr_val = readCSR(csr); /* could have side-effects, so technically shouldn't perform for CSRW[I] with rd == 0 */
     if isWrite then {
@@ -153,7 +153,7 @@ function clause execute CSR(csr, rs1, rd, is_imm, op) = {
       writeCSR(csr, new_val)
     };
     X(rd) = csr_val;
-    true
+    RETIRE_SUCCESS
   }
 }
 

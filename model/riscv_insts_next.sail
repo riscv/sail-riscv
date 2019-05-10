@@ -10,7 +10,7 @@ function clause execute URET() = {
   if   (~ (haveUsrMode()))
   then handle_illegal()
   else set_next_pc(exception_handler(cur_privilege, CTL_URET(), PC));
-  false
+  RETIRE_FAIL
 }
 
 mapping clause assembly = URET() <-> "uret"

@@ -7,12 +7,12 @@ function step(step_no) = {
   ext_pre_step_hook();
 
   minstret_written = false;     /* see note for minstret */
-  let (retired, stepped) : (bool, bool) =
+  let (retired, stepped) : (Retired, bool) =
     match dispatchInterrupt(cur_privilege) {
       Some(intr, priv) => {
         print_bits("Handling interrupt: ", intr);
         handle_interrupt(intr, priv);
-        (false, false)
+        (RETIRE_FAIL, false)
       },
       None() => {
         /* the extension hook interposes on the fetch result */
@@ -21,12 +21,12 @@ function step(step_no) = {
           /* extension error */
           F_Ext_Error(e)   => {
             ext_handle_fetch_check_error(e);
-            (false, false)
+            (RETIRE_FAIL, false)
           },
           /* standard error */
           F_Error(e, addr) => {
             handle_mem_exception(addr, e);
-            (false, false)
+            (RETIRE_FAIL, false)
           },
           /* non-error cases: */
           F_RVC(h) => {
@@ -38,7 +38,7 @@ function step(step_no) = {
               (execute(ext_post_decode_hook(ast)), true)
              } else {
               handle_illegal();
-              (false, true)
+              (RETIRE_FAIL, true)
              }
           },
           F_Base(w) => {
@@ -50,8 +50,14 @@ function step(step_no) = {
         }
       }
     };
+
   tick_pc();
-  if retired then retire_instruction();
+
+  /* update minstret */
+  match retired {
+    RETIRE_SUCCESS => retire_instruction(),
+    RETIRE_FAIL    => ()
+  };
 
   /* for step extensions */
   ext_post_step_hook();
