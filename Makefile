@@ -311,7 +311,7 @@ generated_definitions/for-rmem/riscv.lem: $(SAIL_RMEM_SRCS)
 
 generated_definitions/for-rmem/riscv_toFromInterp2.ml: $(SAIL_RMEM_SRCS)
 	mkdir -p $(dir $@)
-	$(SAIL) $(SAIL_FLAGS) -tofrominterp -tofrominterp_lem -tofrominterp_output_dir $(dir $@) -o riscv $^
+	$(SAIL) $(SAIL_FLAGS) -tofrominterp -tofrominterp_lem -tofrominterp_mwords -tofrominterp_output_dir $(dir $@) -o riscv $^
 
 generated_definitions/for-rmem/riscv.defs: $(SAIL_RMEM_SRCS)
 	mkdir -p $(dir $@)
