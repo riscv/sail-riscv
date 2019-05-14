@@ -11,23 +11,24 @@ The model contains the following Sail modules in the `model` directory:
   and RV64.  One of them is chosen during the build using the ARCH
   variable.
 
-- `prelude_*.sail` contains useful Sail library functions.  These
+- `prelude_*.sail` contain useful Sail library functions.  These
   files should be referred to as needed.  The lowest level memory
   access primitives are defined in `prelude_mem.sail`, and are
   implemented by the various Sail backends. `prelude_mem.sail`
-  currently depends on the value of `xlen`.
+  depends on the value of `xlen`.
 
 - `riscv_types.sail` contains some basic RISC-V definitions.  This
-  file should be read first, since it provides basic definitions that
+  file should be read first, since these definitions
   are used throughout the specification, such as privilege levels,
-  registers and register access, interrupt and exception definitions
-  and numbering, and types used to define memory accesses.  The
+  register indices, interrupt and exception definitions
+  and enumerations, and types used to define memory accesses.  The
   register type is separately defined in `riscv_reg_type.sail` so that
   extensions of the model can redefine it if required.
 
 - `riscv_regs.sail` contains the base register file, where each
   register is defined as having the `regtype` type defined in
-  `riscv_reg_type.sail`.
+  `riscv_reg_type.sail` and indexed by the indices defined in
+  `riscv_types.sail`.
 
 - `riscv_pc_access.sail` defines functions to access and modify the
   program counter.
@@ -89,7 +90,7 @@ The model contains the following Sail modules in the `model` directory:
   as a variant clause of the `ast` type, and its execution semantics
   are represented as a clause of the `execute` function. `mapping`
   clauses specify the encoding and decoding of each instruction to and
-  from assembly language formats.
+  from their binary representations and assembly language formats.
 
 - `riscv_fetch.sail` contains the instruction fetch function.  It
   supports checking and transformation of the fetch address as

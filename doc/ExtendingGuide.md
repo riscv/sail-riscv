@@ -17,14 +17,16 @@ Adding architectural state
 
 Adding registers (such as for floating-point) would involve naming
 them and defining their read and write accessors, as is done for the
-integer registers in `riscv_types.sail`.  For modularity, these new
-definitions can be added in a separate file.  If these registers have
-properties of control-and-status registers (CSRs), or depend on
+integer registers in `riscv_types.sail`, `riscv_reg_type.sail` and
+`riscv_regs.sail`.  For modularity, these new definitions should be
+added in separate files.  If any of these registers are
+control-and-status registers (CSRs), or depend on
 privilege level (such as hypervisor-mode registers), additional access
 control checks would need to be provided as is done for the standard
-CSRs in `riscv_sys_regs.sail` and `riscv_sys_control.sail`.  In addition,
-the bits `mstatus.XS` and `mstatus.SD` may need to be updated or
-extended to handle any extended register state.
+CSRs in `riscv_sys_regs.sail` and `riscv_sys_control.sail`.  Access to
+newly added CSRs can be hooked in `riscv_csr_ext.sail`. In addition,
+the bits `mstatus.XS` and `mstatus.SD` may need to be updated
+or extended to handle any extended register state.
 
 Adding a new privilege level or functionality restricted by privilege
 level will normally be accompanied by defining new exception causes
@@ -40,7 +42,9 @@ An extension that needs to interact closely with exception handling
 may need to capture additional information at the time of an
 exception.  This is supported using the `ext` field in the
 `sync_exception` type in `riscv_sync_exception.sail`, which is where
-the extension can store this information.
+the extension can store this information.  The addresses involved in
+exception handling can be modified by following the interface provided
+in `riscv_sys_exceptions.sail`.
 
 Adding low-level platform functionality
 ---------------------------------------
@@ -71,14 +75,14 @@ supporting functions `checked_mem_read` and `checked_mem_write`.
 The model supports storing and retrieving metadata along with memory
 values at each physical memory address.  The default interface for
 this is defined in `prelude_mem_metadata.sail`.  An extension can
-customize the default implementation there to support its the metadata
+customize the default implementation there to support its metadata
 type.
 
 The actual content of such memory, and its modification, can be
-defined in separate sail files.  This functionality will have access
+defined in separate Sail files.  This functionality will have access
 to any newly defined architectural state.  One can examine how normal
 physical memory access is implemented in `riscv_mem.sail` with helpers
-in `prelude.sail`.
+in `prelude_mem.sail` and `prelude_mem_metadata.sail`.
 
 Virtual memory is implemented in `riscv_vmem.sail`, and defining new
 address translation schemes will require modifying the
@@ -138,8 +142,10 @@ Example
 
 As an example, one can examine the implementation of the 'N' extension
 for user-level interrupt handling.  The architectural state to support
-'N' is specified in `riscv_next_regs.sail`, added control
+'N' is specified in `riscv_next_regs.sail`, added CSR and control
 functionality is in `riscv_next_control.sail`, and added instructions
-are in `riscv_insts_next.sail`.  In addition, privilege transition and
-interrupt delegation logic in `riscv_sys_control.sail` has been
-extended.
+are in `riscv_insts_next.sail`.  Access to the CSRs added by the
+extension are hooked in `riscv_csr_ext.sail`.
+
+In addition, privilege transition and interrupt delegation logic in
+`riscv_sys_control.sail` has been extended.
