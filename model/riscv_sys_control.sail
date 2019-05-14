@@ -6,7 +6,7 @@
 function csrAccess(csr : csreg) -> csrRW = csr[11..10]
 function csrPriv(csr : csreg) -> priv_level = csr[9..8]
 
-function is_CSR_defined (csr : bits(12), p : Privilege) -> bool =
+function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
   match (csr) {
     /* machine mode: informational */
     0xf11 => p == Machine, // mvendorid
@@ -69,7 +69,7 @@ function is_CSR_defined (csr : bits(12), p : Privilege) -> bool =
     0xC82 => p == User & (sizeof(xlen) == 32),     // instreth
 
     /* check extensions */
-    _     => is_UExt_CSR_defined(csr, p)   // 'N' extension
+    _     => ext_is_CSR_defined(csr, p)
   }
 
 val check_CSR_access : (csrRW, priv_level, Privilege, bool) -> bool

@@ -69,7 +69,7 @@ function readCSR csr : csreg -> xlenbits = {
     (0xC82, 32) => minstret[63 .. 32],
 
     _           => /* check extensions */
-                   match read_UExt_CSR(csr) {
+                   match ext_read_CSR(csr) {
                      Some(res) => res,
                      None()    => { print_bits("unhandled read to CSR ", csr);
                                     EXTZ(0x0) }
@@ -127,7 +127,7 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
   match res {
     Some(v) => print_reg("CSR " ^ csr ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")"),
     None()  => { /* check extensions */
-                 if   write_UExt_CSR(csr, value)
+                 if   ext_write_CSR(csr, value)
                  then ()
                  else print_bits("unhandled write to CSR ", csr)
                }

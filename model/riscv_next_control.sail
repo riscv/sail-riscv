@@ -1,6 +1,6 @@
 /* Functional specification for the 'N' user-level interrupts standard extension. */
 
-function is_UExt_CSR_defined(csr : bits(12), p : Privilege) -> bool =
+function is_NExt_CSR_defined(csr : bits(12), p : Privilege) -> bool =
   match (csr) {
     0x000 => haveUsrMode(),                  // ustatus
     0x004 => haveUsrMode(),                  // uie
@@ -13,7 +13,7 @@ function is_UExt_CSR_defined(csr : bits(12), p : Privilege) -> bool =
     _     => false
   }
 
-function read_UExt_CSR csr : csreg -> option(xlenbits) = {
+function read_NExt_CSR csr : csreg -> option(xlenbits) = {
   let res : option(xlenbits) =
   match csr {
     0x000 => Some(lower_sstatus(lower_mstatus(mstatus)).bits()),
@@ -29,7 +29,7 @@ function read_UExt_CSR csr : csreg -> option(xlenbits) = {
   res
 }
 
-function write_UExt_CSR(csr : csreg, value : xlenbits) -> bool = {
+function write_NExt_CSR(csr : csreg, value : xlenbits) -> bool = {
   let res : option(xlenbits) =
   match csr {
     0x000 => { mstatus = legalize_ustatus(mstatus, value); Some(mstatus.bits()) },
