@@ -1,0 +1,33 @@
+opam-version: "1.2"
+name: "sail-riscv"
+version: "0.1"
+maintainer: "Sail Devs <cl-sail-dev@lists.cam.ac.uk>"
+authors: [
+  "Alasdair Armstrong"
+  "Thomas Bauereiss"
+  "Brian Campbell"
+  "Shaked Flur"
+  "Jonathan French"
+  "Prashanth Mundkur"
+  "Robert Norton"
+  "Christopher Pulte"
+  "Peter Sewell"
+]
+homepage: "https://github.com/rems-project/sail-riscv/"
+bug-reports: "https://github.com/rems-project/sail-riscv/issues"
+license: "BSD3"
+dev-repo: "https://github.com/rems-project/sail-riscv.git"
+build: [make "INSTALL_DIR=%{prefix}%" "opam-build"]
+install: [make "INSTALL_DIR=%{prefix}%" "opam-install"]
+remove: [
+  make "INSTALL_DIR=%{prefix}%" "opam-uninstall"
+]
+depends: [
+  "ocamlfind"
+  "ocamlbuild"
+  "sail" {>= "0.9"}
+  "linksem" {>= "0.3"}
+  "conf-gmp"
+  "conf-zlib"
+]
+available: [ocaml-version >= "4.06.1"]

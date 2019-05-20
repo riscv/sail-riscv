@@ -323,6 +323,21 @@ generated_definitions/for-rmem/riscv.defs: $(SAIL_RMEM_SRCS)
 #LOC_FILES:=$(SAIL_SRCS) main.sail
 #include $(SAIL_DIR)/etc/loc.mk
 
+opam-build:
+	make ARCH=64 c_emulator/riscv_sim_RV64
+	make ARCH=32 c_emulator/riscv_sim_RV32
+
+opam-install:
+	if [ -z "$(INSTALL_DIR)" ]; then echo INSTALL_DIR is unset; false; fi
+	mkdir -p $(INSTALL_DIR)/bin
+	cp c_emulator/riscv_sim_RV64 $(INSTALL_DIR)/bin
+	cp c_emulator/riscv_sim_RV32 $(INSTALL_DIR)/bin
+
+opam-uninstall:
+	if [ -z "$(INSTALL_DIR)" ]; then echo INSTALL_DIR is unset; false; fi
+	rm $(INSTALL_DIR)/bin/riscv_sim_RV64
+	rm $(INSTALL_DIR)/bin/riscv_sim_RV32
+
 clean:
 	-rm -rf generated_definitions/ocaml/* generated_definitions/c/* generated_definitions/latex/*
 	-rm -rf generated_definitions/lem/* generated_definitions/isabelle/* generated_definitions/hol4/* generated_definitions/coq/*
