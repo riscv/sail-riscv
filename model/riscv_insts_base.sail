@@ -287,9 +287,10 @@ mapping clause assembly = RTYPE(rs2, rs1, rd, op)
 /* ****************************************************************** */
 union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width, bool, bool)
 
-/* Load unsigned double is only present in RV128I, not RV64I */
-mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if size_bits(size) != 0b11 | not_bool(is_unsigned)
-  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_bits(size) @ rd @ 0b0000011 if size_bits(size) != 0b11 | not_bool(is_unsigned)
+/* unsigned loads are only present for widths strictly less than xlen, 
+   signed loads also present for widths equal to xlen */
+mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not_bool(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
+  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_bits(size) @ rd @ 0b0000011 if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not_bool(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
 
 val extend_value : forall 'n, 0 < 'n <= xlen_bytes. (bool, MemoryOpResult(bits(8 * 'n))) -> MemoryOpResult(xlenbits)
 function extend_value(is_unsigned, value) = match (value) {
@@ -363,8 +364,8 @@ mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, size, aq, rl)
 /* ****************************************************************** */
 union clause ast = STORE : (bits(12), regidx, regidx, word_width, bool, bool)
 
-mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)
-  <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ imm5 : bits(5) @ 0b0100011
+mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)              if word_width_bytes(size) <= sizeof(xlen_bytes)
+  <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ imm5 : bits(5) @ 0b0100011 if word_width_bytes(size) <= sizeof(xlen_bytes)
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
