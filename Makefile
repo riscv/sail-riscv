@@ -234,10 +234,12 @@ endif
 generated_definitions/lem/$(ARCH)/riscv.lem: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/lem/$(ARCH) generated_definitions/isabelle/$(ARCH)
 	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem/$(ARCH) -isa_output_dir generated_definitions/isabelle/$(ARCH) -o riscv -lem_mwords -lem_lib Riscv_extras $(SAIL_SRCS)
+	echo "declare {isabelle} rename field sync_exception_ext = sync_exception_ext_exception" >> generated_definitions/lem/$(ARCH)/riscv_types.lem
 
 generated_definitions/lem/$(ARCH)/riscv_sequential.lem: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/lem/$(ARCH) generated_definitions/isabelle/$(ARCH)
 	$(SAIL_DIR)/sail -lem -lem_output_dir generated_definitions/lem/$(ARCH) -isa_output_dir generated_definitions/isabelle/$(ARCH) -lem_sequential -o riscv_sequential -lem_mwords -lem_lib Riscv_extras_sequential $(SAIL_SRCS)
+	echo "declare {isabelle} rename field sync_exception_ext = sync_exception_ext_exception" >> generated_definitions/lem/$(ARCH)/riscv_types.lem
 
 generated_definitions/isabelle/$(ARCH)/Riscv.thy: generated_definitions/isabelle/$(ARCH)/ROOT generated_definitions/lem/$(ARCH)/riscv.lem handwritten_support/$(RISCV_EXTRAS_LEM) Makefile
 	lem -isa -outdir generated_definitions/isabelle/$(ARCH) -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
@@ -321,6 +323,21 @@ generated_definitions/for-rmem/riscv.defs: $(SAIL_RMEM_SRCS)
 # we exclude prelude.sail here, most code there should move to sail lib
 #LOC_FILES:=$(SAIL_SRCS) main.sail
 #include $(SAIL_DIR)/etc/loc.mk
+
+opam-build:
+	make ARCH=64 c_emulator/riscv_sim_RV64
+	make ARCH=32 c_emulator/riscv_sim_RV32
+
+opam-install:
+	if [ -z "$(INSTALL_DIR)" ]; then echo INSTALL_DIR is unset; false; fi
+	mkdir -p $(INSTALL_DIR)/bin
+	cp c_emulator/riscv_sim_RV64 $(INSTALL_DIR)/bin
+	cp c_emulator/riscv_sim_RV32 $(INSTALL_DIR)/bin
+
+opam-uninstall:
+	if [ -z "$(INSTALL_DIR)" ]; then echo INSTALL_DIR is unset; false; fi
+	rm $(INSTALL_DIR)/bin/riscv_sim_RV64
+	rm $(INSTALL_DIR)/bin/riscv_sim_RV32
 
 clean:
 	-rm -rf generated_definitions/ocaml/* generated_definitions/c/* generated_definitions/latex/*

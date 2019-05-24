@@ -1,0 +1,1 @@
+This package installs a RISC-V emulator (32 and 64 bits) built form the Sail model at https://github.com/rems-project/sail-riscv .
