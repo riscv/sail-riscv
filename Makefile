@@ -77,7 +77,7 @@ SAIL:=$(SAIL_DIR)/sail
 export SAIL_DIR
 else
 # Use sail from opam package
-SAIL_DIR=$(shell opam config var sail:share)
+SAIL_DIR:=$(shell opam config var sail:share)
 SAIL:=sail
 endif
 SAIL_LIB_DIR:=$(SAIL_DIR)/lib
@@ -328,8 +328,8 @@ generated_definitions/for-rmem/riscv.defs: $(SAIL_RMEM_SRCS)
 #include $(SAIL_DIR)/etc/loc.mk
 
 opam-build:
-	make ARCH=64 c_emulator/riscv_sim_RV64
-	make ARCH=32 c_emulator/riscv_sim_RV32
+	$(MAKE) ARCH=64 c_emulator/riscv_sim_RV64
+	$(MAKE) ARCH=32 c_emulator/riscv_sim_RV32
 
 opam-install:
 	if [ -z "$(INSTALL_DIR)" ]; then echo INSTALL_DIR is unset; false; fi
