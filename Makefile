@@ -168,6 +168,9 @@ ocaml_emulator/coverage_$(ARCH): ocaml_emulator/_sbuild/coverage.native
 	mkdir ocaml_emulator/bisect && mv bisect*.out bisect/
 	mkdir ocaml_emulator/coverage_$(ARCH) && bisect-ppx-report -html ocaml_emulator/coverage_$(ARCH)/ -I ocaml_emulator/_sbuild/ bisect/bisect*.out
 
+cloc:
+	cloc --by-file --force-lang C,sail $(SAIL_SRCS)
+
 gcovr:
 	gcovr -r . --html --html-detail -o index.html
 
