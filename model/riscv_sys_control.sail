@@ -366,7 +366,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
 
       cancel_reservation();
-      get_xret_target(Machine) & pc_alignment_mask()
+      prepare_xret_target(Machine) & pc_alignment_mask()
     },
     (_, CTL_SRET())  => {
       let prev_priv   = cur_privilege;
@@ -380,7 +380,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
 
       cancel_reservation();
-      get_xret_target(Supervisor) & pc_alignment_mask()
+      prepare_xret_target(Supervisor) & pc_alignment_mask()
     },
     (_, CTL_URET())  => {
       let prev_priv   = cur_privilege;
@@ -392,7 +392,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
 
       cancel_reservation();
-      get_xret_target(User) & pc_alignment_mask()
+      prepare_xret_target(User) & pc_alignment_mask()
     }
   }
 }
