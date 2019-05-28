@@ -172,7 +172,7 @@ char *process_args(int argc, char **argv)
   int c, idx = 1;
   uint64_t ram_size = 0;
   while(true) {
-    c = getopt_long(argc, argv, "admCspz:b:t:v:hr:T:", options, &idx);
+    c = getopt_long(argc, argv, "admCIispz:b:t:v:hr:T:", options, &idx);
     if (c == -1) break;
     switch (c) {
     case 'a':
@@ -187,18 +187,22 @@ char *process_args(int argc, char **argv)
       rv_enable_misaligned = true;
       break;
     case 'C':
+      fprintf(stderr, "enabling RVC compressed instructions.\n");
       rv_enable_rvc = false;
       break;
     case 'I':
+      fprintf(stderr, "enabling writable misa CSR.\n");
       rv_enable_writable_misa = false;
       break;
     case 'i':
+      fprintf(stderr, "enabling storing illegal instruction bits in mtval.\n");
       rv_mtval_has_illegal_inst_bits = true;
       break;
     case 's':
       do_dump_dts = true;
       break;
     case 'p':
+      fprintf(stderr, "will show execution times on completion.\n");
       do_show_times = true;
       break;
     case 'z':
@@ -206,16 +210,22 @@ char *process_args(int argc, char **argv)
       if (ram_size) {
         fprintf(stderr, "setting ram-size to %" PRIu64 " MB\n", ram_size);
         rv_ram_size = ram_size << 20;
+      } else {
+        fprintf(stderr, "invalid ram-size '%s' provided.\n", optarg);
+        exit(1);
       }
       break;
     case 'b':
       dtb_file = strdup(optarg);
+      fprintf(stderr, "using %s as DTB file.\n", dtb_file);
       break;
     case 't':
       term_log = strdup(optarg);
+      fprintf(stderr, "using %s for terminal output.\n", term_log);
       break;
     case 'T':
       sig_file = strdup(optarg);
+      fprintf(stderr, "using %s for test-signature output.\n", term_log);
       break;
     case 'h':
       print_usage(argv[0], 0);
@@ -224,18 +234,19 @@ char *process_args(int argc, char **argv)
     case 'r':
       rvfi_dii = true;
       rvfi_dii_port = atoi(optarg);
+      fprintf(stderr, "using %d as RVFI port.\n", rvfi_dii_port);
       break;
 #endif
-    default:
-      fprintf(stderr, "Unrecognized optchar %c\n", c);
-      print_usage(argv[0], 1);
     }
   }
   if (do_dump_dts) dump_dts();
 #ifdef RVFI_DII
   if (idx > argc || (idx == argc && !rvfi_dii)) print_usage(argv[0], 0);
 #else
-  if (optind >= argc) print_usage(argv[0], 0);
+  if (optind >= argc) {
+    fprintf(stderr, "No elf file provided.\n");
+    print_usage(argv[0], 0);
+  }
 #endif
   if (term_log == NULL) term_log = strdup("term.log");
   if (dtb_file) read_dtb(dtb_file);
