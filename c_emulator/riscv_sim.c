@@ -79,7 +79,6 @@ static struct option options[] = {
   {"disable-compressed",          no_argument,       0, 'C'},
   {"disable-writable-misa",       no_argument,       0, 'I'},
   {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'},
-  {"dump-dts",                    no_argument,       0, 's'},
   {"device-tree-blob",            required_argument, 0, 'b'},
   {"terminal-log",                required_argument, 0, 't'},
   {"show-times",                  required_argument, 0, 'p'},
