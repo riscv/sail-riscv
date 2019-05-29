@@ -224,7 +224,7 @@ char *process_args(int argc, char **argv)
       break;
     case 'T':
       sig_file = strdup(optarg);
-      fprintf(stderr, "using %s for test-signature output.\n", term_log);
+      fprintf(stderr, "using %s for test-signature output.\n", sig_file);
       break;
     case 'h':
       print_usage(argv[0], 0);
