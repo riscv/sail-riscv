@@ -65,8 +65,10 @@ Coq, Isabelle and HOL4.
 Building the model
 ------------------
 
-Install Sail via Opam, or build Sail from source and have `SAIL_DIR` in
-your environment pointing to its top-level directory.
+Install Sail [via
+Opam](https://github.com/rems-project/sail/wiki/OPAMInstall), or build Sail
+from source and have `SAIL_DIR` in your environment pointing to its
+top-level directory.
 
 ```
 $ make
@@ -103,7 +105,16 @@ corresponding prover libraries in the Sail directory
 Executing test binaries
 -----------------------
 
-The C and OCaml simulators can be used to execute small test binaries.
+The C and OCaml simulators can be used to execute small test binaries.  The
+OCaml simulator depends on the Device Tree Compiler package, which can be
+installed in Ubuntu with:
+
+```
+$ sudo apt-get install device-tree-compiler
+```
+
+Then, you can run test binaries:
+
 
 ```
 $ ./ocaml_emulator/riscv_ocaml_sim_<arch>  <elf-file>
