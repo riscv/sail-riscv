@@ -327,6 +327,13 @@ generated_definitions/for-rmem/riscv.defs: $(SAIL_RMEM_SRCS)
 #LOC_FILES:=$(SAIL_SRCS) main.sail
 #include $(SAIL_DIR)/etc/loc.mk
 
+FORCE:
+
+SHARE_FILES:=$(wildcard model/*.sail) $(wildcard c_emulator/*.c) $(wildcard c_emulator/*.h)
+sail-riscv.install: FORCE
+	echo 'bin: ["c_emulator/riscv_sim_RV64" "c_emulator/riscv_sim_RV32"]' > sail-riscv.install
+	echo 'share: [ $(foreach f,$(SHARE_FILES),"$f" {"$f"}) ]' >> sail-riscv.install
+
 opam-build:
 	$(MAKE) ARCH=64 c_emulator/riscv_sim_RV64
 	$(MAKE) ARCH=32 c_emulator/riscv_sim_RV32
