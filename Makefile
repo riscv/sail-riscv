@@ -94,8 +94,12 @@ C_WARNINGS ?=
 C_INCS = $(addprefix c_emulator/,riscv_prelude.h riscv_platform_impl.h riscv_platform.h)
 C_SRCS = $(addprefix c_emulator/,riscv_prelude.c riscv_platform_impl.c riscv_platform.c riscv_sim.c)
 
-C_FLAGS = -I $(SAIL_LIB_DIR) -I c_emulator
-C_LIBS  = -lgmp -lz
+# portability for MacPorts/MacOS
+C_SYS_INCLUDES = -I /opt/local/include
+C_SYS_LIBDIRS  = -L /opt/local/lib
+
+C_FLAGS = $(C_SYS_INCLUDES) -I $(SAIL_LIB_DIR) -I c_emulator
+C_LIBS  = $(C_SYS_LIBDIRS) -lgmp -lz
 
 # The C simulator can be built to be linked against Spike for tandem-verification.
 # This needs the C bindings to Spike from https://github.com/SRI-CSL/l3riscv
