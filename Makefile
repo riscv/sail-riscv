@@ -77,7 +77,7 @@ SAIL:=$(SAIL_DIR)/sail
 export SAIL_DIR
 else
 # Use sail from opam package
-SAIL_DIR=$(shell opam config var sail:share)
+SAIL_DIR:=$(shell opam config var sail:share)
 SAIL:=sail
 endif
 SAIL_LIB_DIR:=$(SAIL_DIR)/lib
@@ -167,6 +167,9 @@ ocaml_emulator/coverage_$(ARCH): ocaml_emulator/_sbuild/coverage.native
 	./test/run_tests.sh # this will generate bisect*.out files in this directory
 	mkdir ocaml_emulator/bisect && mv bisect*.out bisect/
 	mkdir ocaml_emulator/coverage_$(ARCH) && bisect-ppx-report -html ocaml_emulator/coverage_$(ARCH)/ -I ocaml_emulator/_sbuild/ bisect/bisect*.out
+
+cloc:
+	cloc --by-file --force-lang C,sail $(SAIL_SRCS)
 
 gcovr:
 	gcovr -r . --html --html-detail -o index.html
@@ -325,8 +328,8 @@ generated_definitions/for-rmem/riscv.defs: $(SAIL_RMEM_SRCS)
 #include $(SAIL_DIR)/etc/loc.mk
 
 opam-build:
-	make ARCH=64 c_emulator/riscv_sim_RV64
-	make ARCH=32 c_emulator/riscv_sim_RV32
+	$(MAKE) ARCH=64 c_emulator/riscv_sim_RV64
+	$(MAKE) ARCH=32 c_emulator/riscv_sim_RV32
 
 opam-install:
 	if [ -z "$(INSTALL_DIR)" ]; then echo INSTALL_DIR is unset; false; fi
