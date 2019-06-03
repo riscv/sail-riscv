@@ -186,11 +186,11 @@ char *process_args(int argc, char **argv)
       rv_enable_misaligned = true;
       break;
     case 'C':
-      fprintf(stderr, "enabling RVC compressed instructions.\n");
+      fprintf(stderr, "disabling RVC compressed instructions.\n");
       rv_enable_rvc = false;
       break;
     case 'I':
-      fprintf(stderr, "enabling writable misa CSR.\n");
+      fprintf(stderr, "disabling writable misa CSR.\n");
       rv_enable_writable_misa = false;
       break;
     case 'i':
@@ -224,7 +224,7 @@ char *process_args(int argc, char **argv)
       break;
     case 'T':
       sig_file = strdup(optarg);
-      fprintf(stderr, "using %s for test-signature output.\n", term_log);
+      fprintf(stderr, "using %s for test-signature output.\n", sig_file);
       break;
     case 'h':
       print_usage(argv[0], 0);
