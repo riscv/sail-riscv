@@ -132,3 +132,18 @@ Booting OS images
 
 For booting operating system images, see the information under the
 [os-boot/](os-boot/) subdirectory.
+
+
+Funding
+-------
+
+This software was developed by SRI International and the University of
+Cambridge Computer Laboratory (Department of Computer Science and
+Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and
+under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA
+SSITH research programme.
+
+This software was developed within the Rigorous
+Engineering of Mainstream Systems (REMS) project, partly funded by
+EPSRC grant EP/K008528/1, at the Universities of Cambridge and
+Edinburgh.
