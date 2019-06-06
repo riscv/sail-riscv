@@ -5,7 +5,12 @@ The model is written in the Sail language.  Although specifications in
 Sail are quite readable as pseudocode, it would help to have the [Sail
 manual](https://github.com/rems-project/sail/blob/sail2/manual.pdf) handy.
 
-The model contains the following Sail modules in the `model` directory:
+The Sail modules in the `model` directory have the structure shown
+below.  Arrows indicate a dependency relationship, and _italics_
+indicate fragments that are not strictly part of the specification,
+such as the platform memory map.
+
+<img src="figs/riscvspecdeps.svg">
 
 - `riscv_xlen32.sail` and `riscv_xlen64.sail` define `xlen` for RV32
   and RV64.  One of them is chosen during the build using the ARCH

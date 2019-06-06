@@ -1,0 +1,82 @@
+\documentclass[tikz]{standalone}
+
+\usepackage{tikz}
+\usetikzlibrary{calc,positioning}
+
+\begin{document}
+\begin{tikzpicture}[
+    node distance=5mm,
+    align=center,
+    spec/.style={rectangle, rounded corners=3mm, minimum size=10mm,
+      thick, draw=black},
+    dep/.style={black, very thick}
+  ]
+
+  % layout the axial nodes
+
+  \node (prelude) [spec]                         {\textbf{prelude}\\
+                                                    helpers (\texttt{prelude\_*})\\
+                                                    raw physical memory (\texttt{prelude\_mem})};
+  \node (types)   [spec, above=of prelude]       {\texttt{riscv\_reg\_type, riscv\_types}\\
+                                                    registers, indices,\\
+                                                    exceptions, privilege-levels, \ldots};
+  % compute location for virtmem
+  \coordinate (vmloc) at ($(prelude)!5!(types)$);
+  \node (virtmem) [spec] at (vmloc)              {\textbf{virtual memory}\\
+                                                     PTE formats, TLB (\texttt{riscv\_vmem\_common})\\
+                                                     page table walks (\texttt{riscv\_vmem\_svNN})\\
+                                                     address translation (\texttt{riscv\_vmem\_rvNN})};
+  \node (addrchk) [spec, right=of virtmem]       {\textbf{address checks, transforms}\\
+                                                     \texttt{riscv\_addr\_checks*}};
+  \node (insts)   [spec, above=of virtmem]       {\textbf{instructions}\\
+                                                     decode, execute, assembler (\texttt{riscv\_insts\_*})};
+  \node (fetch)   [spec, above=of insts]         {\texttt{riscv\_step}\\
+                                                     fetch-execute\\
+                                                     interrupt dispatch\\
+                                                     clock tick};
+
+  % locate physmem on the right
+  \coordinate (midpt)    at ($(types.north)!0.5!(virtmem.south)$);
+  \coordinate (pmloc)    at ($(midpt)!1!-90:(virtmem.south)$);
+  \node (physmem) [spec] at (pmloc)              {\textbf{physical memory}\\
+                                                     \textit{platform memory map},\\
+                                                     \textit{MMIO devices} (\texttt{riscv\_platform})\\
+                                                     memory access (\texttt{riscv\_mem})};
+
+  % locate regfile and excepts on the left
+  \coordinate (rfhgt)    at ($(types.north)!0.3!(virtmem.south)$);
+  \coordinate (exhgt)    at ($(types.north)!0.7!(virtmem.south)$);
+  \coordinate (lftax)    at ($(pmloc)!2!(midpt)$);
+  \node (regfile) [spec] at (lftax |- rfhgt)    {\texttt{riscv\_regs, riscv\_sys\_regs}\\
+                                                    PC (+\texttt{riscv\_pc\_access})\\
+                                                    integer (user)\\
+                                                    system regs\\
+                                                    current privilege};
+  \node (excepts) [spec] at (lftax |- exhgt)    {\textbf{privilege transition}\\
+                                                    exceptions, interrupts\\
+                                                    returns\\
+                                                    (\texttt{riscv\_sync\_exception},\\
+                                                    \texttt{riscv\_sys\_control})};
+
+  \draw[<-,dep] (prelude) edge (types);
+
+  \draw[<-,dep] (types)   edge (physmem)
+                          edge (regfile);
+
+  \draw[<-,dep] (regfile) edge                    (excepts)
+                          edge [out=0, in=270]    (virtmem)
+                          edge [out=180, in=180]  (insts)
+                          edge [out=180, in=180]  (fetch);
+
+  \draw[<-,dep] (excepts) edge (virtmem)
+                          edge [out=90, in=180] (insts);
+
+  \draw[<-,dep] (physmem) edge (virtmem);
+
+  \draw[<-,dep] (virtmem) edge (insts);
+  \draw[<-,dep] (addrchk) edge (insts);
+
+  \draw[<-,dep] (insts)   edge (fetch);
+
+\end{tikzpicture}
+\end{document}
