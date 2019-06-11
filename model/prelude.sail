@@ -29,7 +29,7 @@ overload vector_update = {any_vector_update}
 val update_subrange = {ocaml: "update_subrange", interpreter: "update_subrange", lem: "update_subrange_vec_dec", coq: "update_subrange_vec_dec"} : forall 'n 'm 'o.
   (bits('n), atom('m), atom('o), bits('m - ('o - 1))) -> bits('n)
 
-val vector_concat = {ocaml: "append", lem: "append_list"} : forall ('n : Int) ('m : Int) ('a : Type).
+val vector_concat = {ocaml: "append", lem: "append_list", coq: "vec_concat"} : forall ('n : Int) ('m : Int) ('a : Type).
   (vector('n, dec, 'a), vector('m, dec, 'a)) -> vector('n + 'm, dec, 'a)
 
 overload append = {vector_concat}
@@ -73,8 +73,8 @@ val sub_vec_int = {c: "sub_bits_int", _: "sub_vec_int"} : forall 'n. (bits('n), 
 
 overload operator - = {sub_vec, sub_vec_int}
 
-val quot_round_zero = {ocaml: "quot_round_zero", interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int"} : (int, int) -> int
-val rem_round_zero = {ocaml: "rem_round_zero", interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int"} : (int, int) -> int
+val quot_round_zero = {ocaml: "quot_round_zero", interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot"} : (int, int) -> int
+val rem_round_zero = {ocaml: "rem_round_zero", interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", coq: "Z.rem"} : (int, int) -> int
 
 /* The following should get us euclidean modulus, and is compatible with pre and post 0.9 versions of sail */
 overload operator % = {emod_int, mod}
