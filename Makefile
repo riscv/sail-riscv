@@ -276,7 +276,7 @@ riscv_hol: generated_definitions/hol4/$(ARCH)/riscvScript.sml
 riscv_hol_build: generated_definitions/hol4/$(ARCH)/riscvTheory.uo
 .PHONY: riscv_hol riscv_hol_build
 
-COQ_LIBS = -R $(BBV_DIR)/theories bbv -R $(SAIL_LIB_DIR)/coq Sail -R coq '' -R generated_definitions/coq/$(ARCH) '' -R handwritten_support ''
+COQ_LIBS = -R $(BBV_DIR)/theories bbv -R $(SAIL_LIB_DIR)/coq Sail -R generated_definitions/coq/$(ARCH) '' -R handwritten_support ''
 
 riscv_coq: $(addprefix generated_definitions/coq/$(ARCH)/,riscv.v riscv_types.v)
 riscv_coq_build: generated_definitions/coq/$(ARCH)/riscv.vo
