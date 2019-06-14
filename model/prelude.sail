@@ -111,13 +111,10 @@ val zeros_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
 function zeros_implicit () = sail_zeros('n)
 overload zeros = {zeros_implicit, sail_zeros}
 
-val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
-function ones_n n = replicate_bits (0b1, n)
-
 val ones_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
-function ones_implicit () = ones_n ('n)
+function ones_implicit () = sail_ones ('n)
 
-overload ones = {ones_implicit, ones_n}
+overload ones = {ones_implicit, sail_ones}
 
 $else
 val EXTS : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
@@ -130,13 +127,10 @@ val zeros_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
 function zeros_implicit (n) = sail_zeros(n)
 overload zeros = {zeros_implicit, sail_zeros}
 
-val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
-function ones_n n = replicate_bits (0b1, n)
-
 val ones_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
-function ones_implicit (n) = ones_n (n)
+function ones_implicit (n) = sail_ones (n)
 
-overload ones = {ones_implicit, ones_n}
+overload ones = {ones_implicit, sail_ones}
 
 $endif
 
