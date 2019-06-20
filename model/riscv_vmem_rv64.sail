@@ -37,9 +37,7 @@ val translateAddr : (xlenbits, AccessType, ReadType) -> TR_Result(xlenbits, Exce
 function translateAddr(vAddr, ac, rt) = {
   let effPriv : Privilege = match rt {
     Instruction => cur_privilege,
-    Data        => if   mstatus.MPRV() == true
-                   then privLevel_of_bits(mstatus.MPP())
-                   else cur_privilege
+    Data        => effectivePrivilege(mstatus, cur_privilege)
   };
   let mxr    : bool   = mstatus.MXR() == true;
   let do_sum : bool   = mstatus.SUM() == true;
