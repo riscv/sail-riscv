@@ -1,0 +1,159 @@
+/* address ranges */
+
+// TODO: handle PMP grain > 4 (i.e. G > 0).
+
+/* [min, max) of the matching range. */
+type pmp_addr_range = option((xlenbits, xlenbits))
+
+function pmpAddrRange(cfg: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits) -> pmp_addr_range = {
+  match pmpAddrMatchType_of_bits(cfg.A()) {
+    OFF   => None(),
+    TOR   => { Some ((prev_pmpaddr << 2, pmpaddr << 2)) },
+    NA4   => { // TODO: I find the spec unclear for entries marked NA4 and G = 1.
+               // (for G >= 2, it is the same as NAPOT). In particular, it affects
+               // whether pmpaddr[0] is always read as 0.
+               let lo = pmpaddr << 2;
+               Some((lo, lo + 4))
+             },
+    NAPOT => { let mask = pmpaddr ^ (pmpaddr + 1);  // generate 1s in signifying bits
+               let lo   = pmpaddr & (~ (mask));
+               let len  = mask + 1;
+               Some((lo << 2, (lo + len) << 2))
+             }
+  }
+}
+
+/* permission checks */
+
+val pmpCheckRWX: (Pmpcfg_ent, AccessType) -> bool
+function pmpCheckRWX(ent, acc) = {
+  match acc {
+    Read      => ent.R() == true,
+    Write     => ent.W() == true,
+    ReadWrite => ent.R() == true & ent.W() == true,
+    Execute   => ent.X() == true
+  }
+}
+
+// this needs to be called with the effective current privilege.
+val pmpCheckPerms: (Pmpcfg_ent, AccessType, Privilege) -> bool
+function pmpCheckPerms(ent, acc, priv) = {
+  match priv {
+    Machine => if   ent.L() == true
+               then pmpCheckRWX(ent, acc)
+               else true,
+    _       => pmpCheckRWX(ent, acc)
+  }
+}
+
+/* matching logic */
+
+enum pmpAddrMatch = {PMP_NoMatch, PMP_PartialMatch, PMP_Match}
+
+function pmpMatchAddr(addr: xlenbits, width: xlenbits, rng: pmp_addr_range) -> pmpAddrMatch = {
+  match rng {
+    None()         => PMP_NoMatch,
+    Some((lo, hi)) => if   hi <_u lo   /* to handle mis-configuration */
+                      then PMP_NoMatch
+                      else {
+                        if      (addr + width <_u lo) | (hi <_u addr)
+                        then    PMP_NoMatch
+                        else if (lo <=_u addr) & (addr + width <=_u hi)
+                        then    PMP_Match
+                        else    PMP_PartialMatch
+                      }
+  }
+}
+
+enum pmpMatch = {PMP_Success, PMP_Continue, PMP_Fail}
+
+function pmpMatchEntry(addr: xlenbits, width: xlenbits, acc: AccessType, priv: Privilege,
+                       ent: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits) -> pmpMatch = {
+  let rng = pmpAddrRange(ent, pmpaddr, prev_pmpaddr);
+  match pmpMatchAddr(addr, width, rng) {
+    PMP_NoMatch      => PMP_Continue,
+    PMP_PartialMatch => PMP_Fail,
+    PMP_Match        => if   pmpCheckPerms(ent, acc, priv)
+                        then PMP_Success
+                        else PMP_Fail
+  }
+}
+
+/* priority checks */
+
+function pmpCheck(addr: xlenbits, width: xlenbits, acc: AccessType, priv: Privilege,
+                  ent: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits)
+                  -> option(ExceptionType) = {
+  // TODO: add 0th entry and addr
+  let check : bool =
+  match pmpMatchEntry(addr, width, acc, priv, pmpcfg1, pmpaddr1, pmpaddr0) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue =>
+  match pmpMatchEntry(addr, width, acc, priv, pmpcfg2, pmpaddr2, pmpaddr1) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue =>
+  match pmpMatchEntry(addr, width, acc, priv, pmpcfg3, pmpaddr3, pmpaddr2) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue =>
+  match pmpMatchEntry(addr, width, acc, priv, pmpcfg4, pmpaddr4, pmpaddr3) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue =>
+  match pmpMatchEntry(addr, width, acc, priv, pmpcfg5, pmpaddr5, pmpaddr4) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue =>
+  match pmpMatchEntry(addr, width, acc, priv, pmpcfg6, pmpaddr6, pmpaddr5) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue =>
+  match pmpMatchEntry(addr, width, acc, priv, pmpcfg7, pmpaddr7, pmpaddr6) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue =>
+  match pmpMatchEntry(addr, width, acc, priv, pmpcfg8, pmpaddr8, pmpaddr7) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue =>
+  match pmpMatchEntry(addr, width, acc, priv, pmpcfg9, pmpaddr9, pmpaddr8) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue =>
+  match pmpMatchEntry(addr, width, acc, priv, pmpcfg10, pmpaddr10, pmpaddr9) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue =>
+  match pmpMatchEntry(addr, width, acc, priv, pmpcfg11, pmpaddr11, pmpaddr10) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue =>
+  match pmpMatchEntry(addr, width, acc, priv, pmpcfg12, pmpaddr12, pmpaddr11) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue =>
+  match pmpMatchEntry(addr, width, acc, priv, pmpcfg13, pmpaddr13, pmpaddr12) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue =>
+  match pmpMatchEntry(addr, width, acc, priv, pmpcfg14, pmpaddr14, pmpaddr13) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue =>
+  match pmpMatchEntry(addr, width, acc, priv, pmpcfg15, pmpaddr15, pmpaddr14) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue => false
+  }}}}}}}}}}}}}}};
+
+  if   check
+  then None()
+  else match acc {
+    Read      => Some(E_Load_Access_Fault),
+    Write     => Some(E_SAMO_Access_Fault),
+    ReadWrite => Some(E_SAMO_Access_Fault),
+    Execute   => Some(E_Fetch_Access_Fault)
+  }
+}

@@ -408,11 +408,6 @@ register marchid : xlenbits
 /* TODO: this should be readonly, and always 0 for now */
 register mhartid : xlenbits
 
-/* physical memory protection configuration */
-register pmpaddr0 : xlenbits
-register pmpcfg0 : xlenbits
-
-
 /* S-mode registers */
 
 /* sstatus reveals a subset of mstatus */
