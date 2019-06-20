@@ -79,7 +79,7 @@ val rem_round_zero = {ocaml: "rem_round_zero", interpreter: "rem_round_zero", le
 /* The following should get us euclidean modulus, and is compatible with pre and post 0.9 versions of sail */
 overload operator % = {emod_int, mod}
 
-val min_nat = {ocaml: "min_int", lem: "min", coq: "min_nat", c: "min_int"} : (nat, nat) -> nat
+val min_nat = {ocaml: "min_int", interpreter: "min_int", lem: "min", coq: "min_nat", c: "min_int"} : (nat, nat) -> nat
 
 val min_int = {ocaml: "min_int", interpreter: "min_int", lem: "min", coq: "Z.min", c: "min_int"} : (int, int) -> int
 
