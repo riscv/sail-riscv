@@ -67,26 +67,80 @@ register pmpaddr13 : xlenbits
 register pmpaddr14 : xlenbits
 register pmpaddr15 : xlenbits
 
-val pmpReadReg : forall 'n, 0 <= 'n < 16 . (atom('n), PmpAddrMatchType) -> xlenbits
-function pmpReadReg(n, amt) = {
-  let r : xlenbits =
-    match n {
-      0  => pmpaddr0,
-      1  => pmpaddr1,
-      2  => pmpaddr2,
-      3  => pmpaddr3,
-      4  => pmpaddr4,
-      5  => pmpaddr5,
-      6  => pmpaddr6,
-      7  => pmpaddr7,
-      8  => pmpaddr8,
-      9  => pmpaddr9,
-      10 => pmpaddr10,
-      11 => pmpaddr11,
-      12 => pmpaddr12,
-      13 => pmpaddr13,
-      14 => pmpaddr14,
-      15 => pmpaddr15
-    };
-  r
+/* Packing and unpacking pmpcfg regs for xlen-width accesses */
+
+val pmpReadCfgReg_RV32 : forall 'n, 0 <= 'n < 4 & xlen == 32 . (atom('n)) -> xlenbits
+function pmpReadCfgReg_RV32(n) = {
+  match n {
+         // fixme cfg0
+    0 => append(pmpcfg3.bits(),  append(pmpcfg2.bits(),  append(pmpcfg1.bits(),  pmpcfg1.bits()))),
+    1 => append(pmpcfg7.bits(),  append(pmpcfg6.bits(),  append(pmpcfg5.bits(),  pmpcfg4.bits()))),
+    2 => append(pmpcfg11.bits(), append(pmpcfg10.bits(), append(pmpcfg9.bits(),  pmpcfg8.bits()))),
+    3 => append(pmpcfg15.bits(), append(pmpcfg14.bits(), append(pmpcfg13.bits(), pmpcfg12.bits())))
+  }
+}
+
+val pmpReadCfgReg_RV64 : forall 'n, 0 <= 'n < 2 & xlen == 64 . (atom('n)) -> xlenbits
+function pmpReadCfgReg_RV64(n) = {
+  match n {
+         // fixme cfg0
+    0 => append(pmpcfg7.bits(),  append(pmpcfg6.bits(),  append(pmpcfg5.bits(),  append(pmpcfg4.bits(),  append(pmpcfg3.bits(),  append(pmpcfg2.bits(),  append(pmpcfg1.bits(),  pmpcfg1.bits()))))))),
+    1 => append(pmpcfg15.bits(), append(pmpcfg14.bits(), append(pmpcfg13.bits(), append(pmpcfg12.bits(), append(pmpcfg11.bits(), append(pmpcfg10.bits(), append(pmpcfg9.bits(),  pmpcfg8.bits())))))))
+  }
+}
+
+val pmpWriteCfgReg_RV32 : forall 'n, 0 <= 'n < 4 & xlen == 32 . (atom('n), xlenbits) -> unit
+function pmpWriteCfgReg_RV32(n, v) = {
+  match n {
+    0 => { pmpcfg1  = Mk_Pmpcfg_ent(v[7 ..0]);  // fixme
+           pmpcfg1  = Mk_Pmpcfg_ent(v[15..8]);
+           pmpcfg2  = Mk_Pmpcfg_ent(v[23..16]);
+           pmpcfg3  = Mk_Pmpcfg_ent(v[31..24]);
+           ()
+         },
+    1 => { pmpcfg4  = Mk_Pmpcfg_ent(v[7 ..0]);
+           pmpcfg5  = Mk_Pmpcfg_ent(v[15..8]);
+           pmpcfg6  = Mk_Pmpcfg_ent(v[23..16]);
+           pmpcfg7  = Mk_Pmpcfg_ent(v[31..24]);
+           ()
+         },
+    2 => { pmpcfg8  = Mk_Pmpcfg_ent(v[7 ..0]);
+           pmpcfg9  = Mk_Pmpcfg_ent(v[15..8]);
+           pmpcfg10 = Mk_Pmpcfg_ent(v[23..16]);
+           pmpcfg11 = Mk_Pmpcfg_ent(v[31..24]);
+           ()
+         },
+    3 => { pmpcfg12 = Mk_Pmpcfg_ent(v[7 ..0]);
+           pmpcfg13 = Mk_Pmpcfg_ent(v[15..8]);
+           pmpcfg14 = Mk_Pmpcfg_ent(v[23..16]);
+           pmpcfg15 = Mk_Pmpcfg_ent(v[31..24]);
+           ()
+         }
+  }
+}
+
+val pmpWriteCfgReg_RV64 : forall 'n, 0 <= 'n < 2 & xlen == 64 . (atom('n), xlenbits) -> unit
+function pmpWriteCfgReg_RV64(n, v) = {
+  match n {
+    0 => { pmpcfg1  = Mk_Pmpcfg_ent(v[7 ..0]);  // fixme
+           pmpcfg1  = Mk_Pmpcfg_ent(v[15..8]);
+           pmpcfg2  = Mk_Pmpcfg_ent(v[23..16]);
+           pmpcfg3  = Mk_Pmpcfg_ent(v[31..24]);
+           pmpcfg4  = Mk_Pmpcfg_ent(v[39..32]);
+           pmpcfg5  = Mk_Pmpcfg_ent(v[47..40]);
+           pmpcfg6  = Mk_Pmpcfg_ent(v[55..48]);
+           pmpcfg7  = Mk_Pmpcfg_ent(v[63..56]);
+           ()
+         },
+    1 => { pmpcfg8  = Mk_Pmpcfg_ent(v[7 ..0]);
+           pmpcfg9  = Mk_Pmpcfg_ent(v[15..8]);
+           pmpcfg10 = Mk_Pmpcfg_ent(v[23..16]);
+           pmpcfg11 = Mk_Pmpcfg_ent(v[31..24]);
+           pmpcfg12 = Mk_Pmpcfg_ent(v[39..32]);
+           pmpcfg13 = Mk_Pmpcfg_ent(v[47..40]);
+           pmpcfg14 = Mk_Pmpcfg_ent(v[55..48]);
+           pmpcfg15 = Mk_Pmpcfg_ent(v[63..56]);
+           ()
+         }
+  }
 }
