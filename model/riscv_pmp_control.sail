@@ -1,6 +1,7 @@
 /* address ranges */
 
 // TODO: handle PMP grain > 4 (i.e. G > 0).
+// TODO: handle the 34-bit paddr32 on RV32
 
 /* [min, max) of the matching range. */
 type pmp_addr_range = option((xlenbits, xlenbits))
@@ -84,8 +85,11 @@ function pmpMatchEntry(addr: xlenbits, width: xlenbits, acc: AccessType, priv: P
 function pmpCheck(addr: xlenbits, width: xlenbits, acc: AccessType, priv: Privilege,
                   ent: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits)
                   -> option(ExceptionType) = {
-  // TODO: add 0th entry and addr
   let check : bool =
+  match pmpMatchEntry(addr, width, acc, priv, pmp0cfg, pmpaddr0, zeros()) {
+    PMP_Success  => true,
+    PMP_Fail     => false,
+    PMP_Continue =>
   match pmpMatchEntry(addr, width, acc, priv, pmp1cfg, pmpaddr1, pmpaddr0) {
     PMP_Success  => true,
     PMP_Fail     => false,
@@ -146,7 +150,7 @@ function pmpCheck(addr: xlenbits, width: xlenbits, acc: AccessType, priv: Privil
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue => false
-  }}}}}}}}}}}}}}};
+  }}}}}}}}}}}}}}}};
 
   if   check
   then None()

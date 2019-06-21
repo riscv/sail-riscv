@@ -39,14 +39,6 @@ register pmp13cfg : Pmpcfg_ent
 register pmp14cfg : Pmpcfg_ent
 register pmp15cfg : Pmpcfg_ent
 
-bitfield Pmp_addr_64 : bits(64) = {
-  addr : 53 .. 0
-}
-
-bitfield Pmp_addr_32 : bits(32) = {
-  addr : 31 .. 0
-}
-
 /* PMP address configuration */
 
 register pmpaddr0  : xlenbits
@@ -86,54 +78,60 @@ function pmpReadCfgReg_RV64(n) = {
   }
 }
 
-// FIXME: handle locked
-val pmpWriteCfgReg_RV32 : forall 'n, 0 <= 'n < 4 & xlen == 32 . (atom('n), xlenbits) -> unit effect {wreg}
+function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
+  if cfg.L() == true then cfg else Mk_Pmpcfg_ent(v)
+
+val pmpWriteCfgReg_RV32 : forall 'n, 0 <= 'n < 4 & xlen == 32 . (atom('n), xlenbits) -> unit effect {rreg, wreg}
 function pmpWriteCfgReg_RV32(n, v) = {
   match n {
-    0 => { pmp0cfg  = Mk_Pmpcfg_ent(v[7 ..0]);
-           pmp1cfg  = Mk_Pmpcfg_ent(v[15..8]);
-           pmp2cfg  = Mk_Pmpcfg_ent(v[23..16]);
-           pmp3cfg  = Mk_Pmpcfg_ent(v[31..24])
+    0 => { pmp0cfg  = pmpWriteCfg(pmp0cfg,  v[7 ..0]);
+           pmp1cfg  = pmpWriteCfg(pmp1cfg,  v[15..8]);
+           pmp2cfg  = pmpWriteCfg(pmp2cfg,  v[23..16]);
+           pmp3cfg  = pmpWriteCfg(pmp3cfg,  v[31..24]);
          },
-    1 => { pmp4cfg  = Mk_Pmpcfg_ent(v[7 ..0]);
-           pmp5cfg  = Mk_Pmpcfg_ent(v[15..8]);
-           pmp6cfg  = Mk_Pmpcfg_ent(v[23..16]);
-           pmp7cfg  = Mk_Pmpcfg_ent(v[31..24])
+    1 => { pmp4cfg  = pmpWriteCfg(pmp4cfg,  v[7 ..0]);
+           pmp5cfg  = pmpWriteCfg(pmp5cfg,  v[15..8]);
+           pmp6cfg  = pmpWriteCfg(pmp6cfg,  v[23..16]);
+           pmp7cfg  = pmpWriteCfg(pmp7cfg,  v[31..24]);
          },
-    2 => { pmp8cfg8 = Mk_Pmpcfg_ent(v[7 ..0]);
-           pmp9cfg9 = Mk_Pmpcfg_ent(v[15..8]);
-           pmp10cfg = Mk_Pmpcfg_ent(v[23..16]);
-           pmp11cfg = Mk_Pmpcfg_ent(v[31..24])
+    2 => { pmp8cfg8 = pmpWriteCfg(pmp8cfg,  v[7 ..0]);
+           pmp9cfg9 = pmpWriteCfg(pmp9cfg,  v[15..8]);
+           pmp10cfg = pmpWriteCfg(pmp10cfg, v[23..16]);
+           pmp11cfg = pmpWriteCfg(pmp11cfg, v[31..24]);
          },
-    3 => { pmp12cfg = Mk_Pmpcfg_ent(v[7 ..0]);
-           pmp13cfg = Mk_Pmpcfg_ent(v[15..8]);
-           pmp14cfg = Mk_Pmpcfg_ent(v[23..16]);
-           pmp15cfg = Mk_Pmpcfg_ent(v[31..24])
+    3 => { pmp12cfg = pmpWriteCfg(pmp12cfg, v[7 ..0]);
+           pmp13cfg = pmpWriteCfg(pmp13cfg, v[15..8]);
+           pmp14cfg = pmpWriteCfg(pmp14cfg, v[23..16]);
+           pmp15cfg = pmpWriteCfg(pmp15cfg, v[31..24]);
          }
   }
 }
 
-// FIXME: handle locked
-val pmpWriteCfgReg_RV64 : forall 'n, 0 <= 'n < 2 & xlen == 64 . (atom('n), xlenbits) -> unit effect {wreg}
+val pmpWriteCfgReg_RV64 : forall 'n, 0 <= 'n < 2 & xlen == 64 . (atom('n), xlenbits) -> unit effect {rreg, wreg}
 function pmpWriteCfgReg_RV64(n, v) = {
   match n {
-    0 => { pmp0cfg  = Mk_Pmpcfg_ent(v[7 ..0]);
-           pmp1cfg  = Mk_Pmpcfg_ent(v[15..8]);
-           pmp2cfg  = Mk_Pmpcfg_ent(v[23..16]);
-           pmp3cfg  = Mk_Pmpcfg_ent(v[31..24]);
-           pmp4cfg  = Mk_Pmpcfg_ent(v[39..32]);
-           pmp5cfg  = Mk_Pmpcfg_ent(v[47..40]);
-           pmp6cfg  = Mk_Pmpcfg_ent(v[55..48]);
-           pmp7cfg  = Mk_Pmpcfg_ent(v[63..56])
+    0 => { pmp0cfg  = pmpWriteCfg(pmp0cfg,  v[7 ..0]);
+           pmp1cfg  = pmpWriteCfg(pmp1cfg,  v[15..8]);
+           pmp2cfg  = pmpWriteCfg(pmp2cfg,  v[23..16]);
+           pmp3cfg  = pmpWriteCfg(pmp3cfg,  v[31..24]);
+           pmp4cfg  = pmpWriteCfg(pmp4cfg,  v[39..32]);
+           pmp5cfg  = pmpWriteCfg(pmp5cfg,  v[47..40]);
+           pmp6cfg  = pmpWriteCfg(pmp6cfg,  v[55..48]);
+           pmp7cfg  = pmpWriteCfg(pmp7cfg,  v[63..56])
          },
-    1 => { pmp8cfg8 = Mk_Pmpcfg_ent(v[7 ..0]);
-           pmp9cfg9 = Mk_Pmpcfg_ent(v[15..8]);
-           pmp10cfg = Mk_Pmpcfg_ent(v[23..16]);
-           pmp11cfg = Mk_Pmpcfg_ent(v[31..24]);
-           pmp12cfg = Mk_Pmpcfg_ent(v[39..32]);
-           pmp13cfg = Mk_Pmpcfg_ent(v[47..40]);
-           pmp14cfg = Mk_Pmpcfg_ent(v[55..48]);
-           pmp15cfg = Mk_Pmpcfg_ent(v[63..56])
+    1 => { pmp8cfg8 = pmpWriteCfg(pmp8cfg,  v[7 ..0]);
+           pmp9cfg9 = pmpWriteCfg(pmp9cfg,  v[15..8]);
+           pmp10cfg = pmpWriteCfg(pmp10cfg, v[23..16]);
+           pmp11cfg = pmpWriteCfg(pmp11cfg, v[31..24]);
+           pmp12cfg = pmpWriteCfg(pmp12cfg, v[39..32]);
+           pmp13cfg = pmpWriteCfg(pmp13cfg, v[47..40]);
+           pmp14cfg = pmpWriteCfg(pmp14cfg, v[55..48]);
+           pmp15cfg = pmpWriteCfg(pmp15cfg, v[63..56])
          }
   }
 }
+
+function pmpWriteAddr(cfg: Pmpcfg_ent, reg: xlenbits, v: xlenbits) -> xlenbits =
+  if   sizeof(xlen) == 32
+  then { if cfg.L() == true then reg else v }
+  else { if cfg.L() == true then reg else EXTZ(v[53..0]) }
