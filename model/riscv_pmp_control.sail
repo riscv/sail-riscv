@@ -86,63 +86,63 @@ function pmpCheck(addr: xlenbits, width: xlenbits, acc: AccessType, priv: Privil
                   -> option(ExceptionType) = {
   // TODO: add 0th entry and addr
   let check : bool =
-  match pmpMatchEntry(addr, width, acc, priv, pmpcfg1, pmpaddr1, pmpaddr0) {
+  match pmpMatchEntry(addr, width, acc, priv, pmp1cfg, pmpaddr1, pmpaddr0) {
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmpcfg2, pmpaddr2, pmpaddr1) {
+  match pmpMatchEntry(addr, width, acc, priv, pmp2cfg, pmpaddr2, pmpaddr1) {
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmpcfg3, pmpaddr3, pmpaddr2) {
+  match pmpMatchEntry(addr, width, acc, priv, pmp3cfg, pmpaddr3, pmpaddr2) {
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmpcfg4, pmpaddr4, pmpaddr3) {
+  match pmpMatchEntry(addr, width, acc, priv, pmp4cfg, pmpaddr4, pmpaddr3) {
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmpcfg5, pmpaddr5, pmpaddr4) {
+  match pmpMatchEntry(addr, width, acc, priv, pmp5cfg, pmpaddr5, pmpaddr4) {
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmpcfg6, pmpaddr6, pmpaddr5) {
+  match pmpMatchEntry(addr, width, acc, priv, pmp6cfg, pmpaddr6, pmpaddr5) {
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmpcfg7, pmpaddr7, pmpaddr6) {
+  match pmpMatchEntry(addr, width, acc, priv, pmp7cfg, pmpaddr7, pmpaddr6) {
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmpcfg8, pmpaddr8, pmpaddr7) {
+  match pmpMatchEntry(addr, width, acc, priv, pmp8cfg, pmpaddr8, pmpaddr7) {
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmpcfg9, pmpaddr9, pmpaddr8) {
+  match pmpMatchEntry(addr, width, acc, priv, pmp9cfg, pmpaddr9, pmpaddr8) {
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmpcfg10, pmpaddr10, pmpaddr9) {
+  match pmpMatchEntry(addr, width, acc, priv, pmp10cfg, pmpaddr10, pmpaddr9) {
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmpcfg11, pmpaddr11, pmpaddr10) {
+  match pmpMatchEntry(addr, width, acc, priv, pmp11cfg, pmpaddr11, pmpaddr10) {
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmpcfg12, pmpaddr12, pmpaddr11) {
+  match pmpMatchEntry(addr, width, acc, priv, pmp12cfg, pmpaddr12, pmpaddr11) {
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmpcfg13, pmpaddr13, pmpaddr12) {
+  match pmpMatchEntry(addr, width, acc, priv, pmp13cfg, pmpaddr13, pmpaddr12) {
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmpcfg14, pmpaddr14, pmpaddr13) {
+  match pmpMatchEntry(addr, width, acc, priv, pmp14cfg, pmpaddr14, pmpaddr13) {
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmpcfg15, pmpaddr15, pmpaddr14) {
+  match pmpMatchEntry(addr, width, acc, priv, pmp15cfg, pmpaddr15, pmpaddr14) {
     PMP_Success  => true,
     PMP_Fail     => false,
     PMP_Continue => false

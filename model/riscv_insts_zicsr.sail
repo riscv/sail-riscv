@@ -34,8 +34,31 @@ function readCSR csr : csreg -> xlenbits = {
     (0x343,  _) => mtval,
     (0x344,  _) => mip.bits(),
 
-    (0x3A0,  _) => pmpcfg0,
+    (0x3A0,  _) => if   sizeof(xlen) == 32     // pmpcfg0
+                   then pmpReadCfgReg_RV32(0)
+                   else pmpReadCfgReg_RV64(0),
+    (0x3A1, 32) => pmpReadCfgReg_RV32(1),      // pmpcfg1
+    (0x3A2,  _) => if   sizeof(xlen) == 32     // pmpcfg2
+                   then pmpReadCfgReg_RV32(2)
+                   else pmpReadCfgReg_RV64(1), // {0,1} internal indices for RV64
+    (0x3A3, 32) => pmpReadCfgReg_RV32(3),      // pmpcfg3
+
     (0x3B0,  _) => pmpaddr0,
+    (0x3B1,  _) => pmpaddr1,
+    (0x3B2,  _) => pmpaddr2,
+    (0x3B3,  _) => pmpaddr3,
+    (0x3B4,  _) => pmpaddr4,
+    (0x3B5,  _) => pmpaddr5,
+    (0x3B6,  _) => pmpaddr6,
+    (0x3B7,  _) => pmpaddr7,
+    (0x3B8,  _) => pmpaddr8,
+    (0x3B9,  _) => pmpaddr9,
+    (0x3BA,  _) => pmpaddr10,
+    (0x3BB,  _) => pmpaddr11,
+    (0x3BC,  _) => pmpaddr12,
+    (0x3BD,  _) => pmpaddr13,
+    (0x3BE,  _) => pmpaddr14,
+    (0x3BF,  _) => pmpaddr15,
 
     /* machine mode counters */
     (0xB00,  _) => mcycle[(sizeof(xlen) - 1) .. 0],
@@ -96,8 +119,36 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x343,  _) => { mtval = value; Some(mtval) },
     (0x344,  _) => { mip = legalize_mip(mip, value); Some(mip.bits()) },
 
-    (0x3A0,  _) => { pmpcfg0 = value; Some(pmpcfg0) },   /* FIXME: legalize */
-    (0x3B0,  _) => { pmpaddr0 = value; Some(pmpaddr0) }, /* FIXME: legalize */
+    // Note: Some(value) returned below is not the legalized value due to locked entries
+    (0x3A0,  _) => { if   sizeof(xlen) == 32                        // pmpcfg0
+                     then pmpWriteCfgReg_RV32(0, value)
+                     else pmpWriteCfgReg_RV64(0, value);
+                     Some(value)
+                   },
+    (0x3A1, 32) => { pmpWriteCfgReg_RV32(1, value); Some(value) },  // pmpcfg1
+    (0x3A2,  _) => { if   sizeof(xlen) == 32                        // pmpcfg2
+                     then pmpWriteCfgReg_RV32(2, value)
+                     else pmpWriteCfgReg_RV64(1, value);            // {0,1} internal indices for RV64
+                     Some(value)
+                   },
+    (0x3A3, 32) => { pmpWriteCfgReg_RV32(3, value); Some(value) },  // pmpcfg3
+
+    (0x3B0,  _) => { pmpaddr0  = value; Some(pmpaddr0) },
+    (0x3B1,  _) => { pmpaddr1  = value; Some(pmpaddr1) },
+    (0x3B2,  _) => { pmpaddr2  = value; Some(pmpaddr2) },
+    (0x3B3,  _) => { pmpaddr3  = value; Some(pmpaddr3) },
+    (0x3B4,  _) => { pmpaddr4  = value; Some(pmpaddr4) },
+    (0x3B5,  _) => { pmpaddr5  = value; Some(pmpaddr5) },
+    (0x3B6,  _) => { pmpaddr6  = value; Some(pmpaddr6) },
+    (0x3B7,  _) => { pmpaddr7  = value; Some(pmpaddr7) },
+    (0x3B8,  _) => { pmpaddr8  = value; Some(pmpaddr8) },
+    (0x3B9,  _) => { pmpaddr9  = value; Some(pmpaddr9) },
+    (0x3BA,  _) => { pmpaddr10 = value; Some(pmpaddr10) },
+    (0x3BB,  _) => { pmpaddr11 = value; Some(pmpaddr11) },
+    (0x3BC,  _) => { pmpaddr12 = value; Some(pmpaddr12) },
+    (0x3BD,  _) => { pmpaddr13 = value; Some(pmpaddr13) },
+    (0x3BE,  _) => { pmpaddr14 = value; Some(pmpaddr14) },
+    (0x3BF,  _) => { pmpaddr15 = value; Some(pmpaddr15) },
 
     /* machine mode counters */
     (0xB00,  _) => { mcycle[(sizeof(xlen) - 1) .. 0] = value; Some(value) },
