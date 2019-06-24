@@ -328,13 +328,13 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
         TR_Address(addr) =>
           match (width, sizeof(xlen)) {
             (BYTE, _)   =>
-               process_load(rd, vaddr, mem_read(addr, 1, aq, rl, false), is_unsigned),
+               process_load(rd, vaddr, mem_read(Data, addr, 1, aq, rl, false), is_unsigned),
             (HALF, _)   =>
-               process_load(rd, vaddr, mem_read(addr, 2, aq, rl, false), is_unsigned),
+               process_load(rd, vaddr, mem_read(Data, addr, 2, aq, rl, false), is_unsigned),
             (WORD, _)   =>
-               process_load(rd, vaddr, mem_read(addr, 4, aq, rl, false), is_unsigned),
+               process_load(rd, vaddr, mem_read(Data, addr, 4, aq, rl, false), is_unsigned),
             (DOUBLE, 64) =>
-               process_load(rd, vaddr, mem_read(addr, 8, aq, rl, false), is_unsigned)
+               process_load(rd, vaddr, mem_read(Data, addr, 8, aq, rl, false), is_unsigned)
           }
       }
   }

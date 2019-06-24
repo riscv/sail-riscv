@@ -56,19 +56,19 @@ $endif
 
 /* NOTE: The rreg effect is due to MMIO. */
 $ifdef RVFI_DII
-val mem_read : forall 'n, 'n > 0. (xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {wreg, rmem, rreg, escape}
+val mem_read : forall 'n, 'n > 0. (ReadType, xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {wreg, rmem, rreg, escape}
 $else
-val mem_read : forall 'n, 'n > 0. (xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rreg, escape}
+val mem_read : forall 'n, 'n > 0. (ReadType, xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rreg, escape}
 $endif
 
-function mem_read (addr, width, aq, rl, res) = {
+function mem_read (typ, addr, width, aq, rl, res) = {
  let result : MemoryOpResult(bits(8 * 'n)) =
   if (aq | res) & (~ (is_aligned_addr(addr, width)))
   then MemException(E_Load_Addr_Align)
   else match (aq, rl, res) {
     (false, true,  false) => throw(Error_not_implemented("load.rl")),
     (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
-    (_, _, _)             => checked_mem_read(Data, addr, width, aq, rl, res)
+    (_, _, _)             => checked_mem_read(typ, addr, width, aq, rl, res)
   };
  rvfi_read(addr, width, result);
  result
@@ -145,7 +145,10 @@ function mem_write_value (addr, width, value, aq, rl, con) = {
   }
 }
 
-/* Memory write with an explicit metadata value */
+/* Memory write with an explicit metadata value.  Metadata writes are
+ * currently assumed to have the same alignment constraints as their
+ * data.
+ */
 /* NOTE: The wreg effect is due to MMIO, the rreg is due to checking mtime. */
 val mem_write_value_meta : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n), mem_meta, bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
 function mem_write_value_meta (addr, width, value, meta, aq, rl, con) = {

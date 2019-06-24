@@ -66,8 +66,8 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
                TR_Failure(e)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                TR_Address(addr) =>
                  match (width, sizeof(xlen)) {
-                   (WORD, _)    => process_loadres(rd, vaddr, mem_read(addr, 4, aq, rl, true), false),
-                   (DOUBLE, 64) => process_loadres(rd, vaddr, mem_read(addr, 8, aq, rl, true), false),
+                   (WORD, _)    => process_loadres(rd, vaddr, mem_read(Data, addr, 4, aq, rl, true), false),
+                   (DOUBLE, 64) => process_loadres(rd, vaddr, mem_read(Data, addr, 8, aq, rl, true), false),
                    _            => internal_error("LOADRES expected WORD or DOUBLE")
                  }
              }
@@ -204,8 +204,8 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
               MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
               MemValue(_) => {
                 let rval : MemoryOpResult(xlenbits) = match (width, sizeof(xlen)) {
-                  (WORD, _)    => extend_value(false, mem_read(addr, 4, aq, aq & rl, true)),
-                  (DOUBLE, 64) => extend_value(false, mem_read(addr, 8, aq, aq & rl, true)),
+                  (WORD, _)    => extend_value(false, mem_read(Data, addr, 4, aq, aq & rl, true)),
+                  (DOUBLE, 64) => extend_value(false, mem_read(Data, addr, 8, aq, aq & rl, true)),
                   _            => internal_error ("AMO expected WORD or DOUBLE")
                 };
                 match (rval) {
