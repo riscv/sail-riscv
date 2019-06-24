@@ -6,14 +6,13 @@
 
 function to_phys_addr(a : paddr32) -> xlenbits = a[31..0]
 
-val walk32 : (vaddr32, AccessType, Privilege, bool, bool, paddr32, nat, bool) -> PTW_Result(paddr32, SV32_PTE) effect {rmem, escape}
+val walk32 : (vaddr32, AccessType, Privilege, bool, bool, paddr32, nat, bool) -> PTW_Result(paddr32, SV32_PTE) effect {rmem, rreg, escape}
 function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
   let va = Mk_SV32_Vaddr(vaddr);
   let pt_ofs : paddr32 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV32_LEVEL_BITS))[(SV32_LEVEL_BITS - 1) .. 0]),
                                 PTE32_LOG_SIZE);
   let pte_addr = ptb + pt_ofs;
-  /* FIXME: we assume here that walks only access physical-memory-backed addresses, and not MMIO regions. */
-  match (phys_mem_read(Data, to_phys_addr(pte_addr), 4, false, false, false)) {
+  match (checked_mem_read(Data, to_phys_addr(pte_addr), 4, false, false, false)) {
     MemException(_) => {
 /*    print("walk32(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
             ^ " pt_base=" ^ BitStr(to_phys_addr(ptb))

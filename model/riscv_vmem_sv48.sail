@@ -1,13 +1,12 @@
 /* Sv48 address translation for RV64. */
 
-val walk48 : (vaddr48, AccessType, Privilege, bool, bool, paddr64, nat, bool) -> PTW_Result(paddr64, SV48_PTE) effect {rmem, escape}
+val walk48 : (vaddr48, AccessType, Privilege, bool, bool, paddr64, nat, bool) -> PTW_Result(paddr64, SV48_PTE) effect {rmem, rreg, escape}
 function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
   let va = Mk_SV48_Vaddr(vaddr);
   let pt_ofs : paddr64 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV48_LEVEL_BITS))[(SV48_LEVEL_BITS - 1) .. 0]),
                                 PTE48_LOG_SIZE);
   let pte_addr = ptb + pt_ofs;
-  /* FIXME: we assume here that walks only access physical-memory-backed addresses, and not MMIO regions. */
-  match (phys_mem_read(Data, EXTZ(pte_addr), 8, false, false, false)) {
+  match (checked_mem_read(Data, EXTZ(pte_addr), 8, false, false, false)) {
     MemException(_) => {
 /*    print("walk48(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
             ^ " pt_base=" ^ BitStr(ptb)

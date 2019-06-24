@@ -32,13 +32,11 @@ function wX (r, v) =
 overload X = {rX, wX}
 
 /* Accessors for memory */
-
-val MEMr : forall 'n, 'n >= 0. (xlenbits, atom('n)) -> bits(8 * 'n) effect {rmem}
-function MEMr (addr, width) =
-  match __RISCV_read(addr, width, false, false, false) {
-    Some(v) => v,
-    None() => zeros(8 * width)
-  }
+val MEMr = { lem: "MEMr", coq: "MEMr", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
+   (atom('m), atom('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
+val read_mem : forall 'n, 'n >= 0. (xlenbits, atom('n)) -> bits(8 * 'n) effect {rmem}
+function read_mem(addr, width) =
+    MEMr(sizeof(xlen), width, EXTZ(0x0), addr)
 
 /* Instruction decode and execute */
 enum iop = {RISCV_ADDI, RISCV_SLTI, RISCV_SLTIU, RISCV_XORI, RISCV_ORI, RISCV_ANDI}
@@ -73,7 +71,7 @@ function clause decode imm : bits(12) @ rs1 : regbits @ 0b011 @ rd : regbits @ 0
 
 function clause execute(LOAD(imm, rs1, rd)) =
     let addr : xlenbits = X(rs1) + EXTS(imm) in
-    let result : xlenbits = MEMr(addr, xlen_bytes) in
+    let result : xlenbits = read_mem(addr, sizeof(xlen_bytes)) in
     X(rd) = result
 
 /* ****************************************************************** */
