@@ -12,6 +12,16 @@ function pmpAddrMatchType_of_bits(bs) = {
   }
 }
 
+val cast pmpAddrMatchType_to_bits : PmpAddrMatchType -> bits(2)
+function pmpAddrMatchType_to_bits(bs) = {
+  match bs {
+    OFF   => 0b00,
+    TOR   => 0b01,
+    NA4   => 0b10,
+    NAPOT => 0b11
+  }
+}
+
 bitfield Pmpcfg_ent : bits(8) = {
   L : 7,        /* locking */
   A : 4 .. 3,   /* address match type, encoded as above */

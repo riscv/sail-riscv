@@ -82,9 +82,9 @@ function pmpMatchEntry(addr: xlenbits, width: xlenbits, acc: AccessType, priv: P
 
 /* priority checks */
 
-function pmpCheck(addr: xlenbits, width: xlenbits, acc: AccessType, priv: Privilege,
-                  ent: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits)
+function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: atom('n), acc: AccessType, priv: Privilege)
                   -> option(ExceptionType) = {
+  let width : xlenbits = to_bits(sizeof(xlen), width);
   let check : bool =
   match pmpMatchEntry(addr, width, acc, priv, pmp0cfg, pmpaddr0, zeros()) {
     PMP_Success  => true,
@@ -149,7 +149,10 @@ function pmpCheck(addr: xlenbits, width: xlenbits, acc: AccessType, priv: Privil
   match pmpMatchEntry(addr, width, acc, priv, pmp15cfg, pmpaddr15, pmpaddr14) {
     PMP_Success  => true,
     PMP_Fail     => false,
-    PMP_Continue => false
+    PMP_Continue => match priv {
+                      Machine => true,
+                      _       => false
+                    }
   }}}}}}}}}}}}}}}};
 
   if   check
@@ -160,4 +163,23 @@ function pmpCheck(addr: xlenbits, width: xlenbits, acc: AccessType, priv: Privil
     ReadWrite => Some(E_SAMO_Access_Fault),
     Execute   => Some(E_Fetch_Access_Fault)
   }
+}
+
+function init_pmp() -> unit = {
+  pmp0cfg  = update_A(pmp0cfg,  pmpAddrMatchType_to_bits(OFF));
+  pmp1cfg  = update_A(pmp1cfg,  pmpAddrMatchType_to_bits(OFF));
+  pmp2cfg  = update_A(pmp2cfg,  pmpAddrMatchType_to_bits(OFF));
+  pmp3cfg  = update_A(pmp3cfg,  pmpAddrMatchType_to_bits(OFF));
+  pmp4cfg  = update_A(pmp4cfg,  pmpAddrMatchType_to_bits(OFF));
+  pmp5cfg  = update_A(pmp5cfg,  pmpAddrMatchType_to_bits(OFF));
+  pmp6cfg  = update_A(pmp6cfg,  pmpAddrMatchType_to_bits(OFF));
+  pmp7cfg  = update_A(pmp7cfg,  pmpAddrMatchType_to_bits(OFF));
+  pmp8cfg  = update_A(pmp8cfg,  pmpAddrMatchType_to_bits(OFF));
+  pmp9cfg  = update_A(pmp9cfg,  pmpAddrMatchType_to_bits(OFF));
+  pmp10cfg = update_A(pmp10cfg, pmpAddrMatchType_to_bits(OFF));
+  pmp11cfg = update_A(pmp11cfg, pmpAddrMatchType_to_bits(OFF));
+  pmp12cfg = update_A(pmp12cfg, pmpAddrMatchType_to_bits(OFF));
+  pmp13cfg = update_A(pmp13cfg, pmpAddrMatchType_to_bits(OFF));
+  pmp14cfg = update_A(pmp14cfg, pmpAddrMatchType_to_bits(OFF));
+  pmp15cfg = update_A(pmp15cfg, pmpAddrMatchType_to_bits(OFF))
 }

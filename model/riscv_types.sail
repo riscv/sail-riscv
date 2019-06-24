@@ -106,15 +106,6 @@ function accessType_to_str (a) =
     Execute   => "X"
   }
 
-enum ReadType   = {Instruction, Data}
-
-val cast readType_to_str : ReadType -> string
-function readType_to_str (r) =
-  match (r) {
-    Instruction => "I",
-    Data        => "D"
-  }
-
 enum word_width = {BYTE, HALF, WORD, DOUBLE}
 
 /* architectural interrupt definitions */

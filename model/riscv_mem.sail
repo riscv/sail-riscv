@@ -8,7 +8,7 @@ function is_aligned_addr forall 'n. (addr : xlenbits, width : atom('n)) -> bool 
   unsigned(addr) % width == 0
 
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_read forall 'n, 'n > 0. (t : ReadType, addr : xlenbits, width : atom('n), aq : bool, rl: bool, res : bool) -> MemoryOpResult(bits(8 * 'n)) = {
+function phys_mem_read forall 'n, 'n > 0. (t : AccessType, addr : xlenbits, width : atom('n), aq : bool, rl: bool, res : bool) -> MemoryOpResult(bits(8 * 'n)) = {
   let result = (match (aq, rl, res) {
     (false, false, false) => Some(read_ram(Read_plain, addr, width)),
     (true, false, false)  => Some(read_ram(Read_RISCV_acquire, addr, width)),
@@ -20,20 +20,30 @@ function phys_mem_read forall 'n, 'n > 0. (t : ReadType, addr : xlenbits, width 
     (false, true, true)   => None()
   }) : option(bits(8 * 'n));
   match (t, result) {
-    (Instruction, None()) => MemException(E_Fetch_Access_Fault),
-    (Data, None())        => MemException(E_Load_Access_Fault),
-    (_, Some(v))          => { print_mem("mem[" ^ t ^ "," ^ BitStr(addr) ^ "] -> " ^ BitStr(v));
-                               MemValue(v) }
+    (Execute, None()) => MemException(E_Fetch_Access_Fault),
+    (Read,    None()) => MemException(E_Load_Access_Fault),
+    (_,       None()) => MemException(E_SAMO_Access_Fault),
+    (_,      Some(v)) => { print_mem("mem[" ^ t ^ "," ^ BitStr(addr) ^ "] -> " ^ BitStr(v));
+                           MemValue(v) }
   }
 }
 
-function checked_mem_read forall 'n, 'n > 0. (t : ReadType, addr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
-  /* treat MMIO regions as not executable for now. TODO: this should actually come from PMP/PMA. */
-  if   t == Data & within_mmio_readable(addr, width)
+function checked_mem_read forall 'n, 'n > 0. (t : AccessType, addr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
+  if   within_mmio_readable(addr, width)
   then mmio_read(addr, width)
   else if within_phys_mem(addr, width)
   then phys_mem_read(t, addr, width, aq, rl, res)
   else MemException(E_Load_Access_Fault)
+
+function pmp_mem_read forall 'n, 'n > 0. (t : AccessType, addr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
+  if   (~ (plat_enable_pmp ()))
+  then checked_mem_read(t, addr, width, aq, rl, res)
+  else {
+    match pmpCheck(addr, width, t, effectivePrivilege(mstatus, cur_privilege)) {
+      None()  => checked_mem_read(t, addr, width, aq, rl, res),
+      Some(e) => MemException(e)
+    }
+  }
 
 /* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
 
@@ -56,9 +66,9 @@ $endif
 
 /* NOTE: The rreg effect is due to MMIO. */
 $ifdef RVFI_DII
-val mem_read : forall 'n, 'n > 0. (ReadType, xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {wreg, rmem, rreg, escape}
+val mem_read : forall 'n, 'n > 0. (AccessType, xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {wreg, rmem, rreg, escape}
 $else
-val mem_read : forall 'n, 'n > 0. (ReadType, xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rreg, escape}
+val mem_read : forall 'n, 'n > 0. (AccessType, xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rreg, escape}
 $endif
 
 function mem_read (typ, addr, width, aq, rl, res) = {
@@ -68,7 +78,7 @@ function mem_read (typ, addr, width, aq, rl, res) = {
   else match (aq, rl, res) {
     (false, true,  false) => throw(Error_not_implemented("load.rl")),
     (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
-    (_, _, _)             => checked_mem_read(typ, addr, width, aq, rl, res)
+    (_, _, _)             => pmp_mem_read(typ, addr, width, aq, rl, res)
   };
  rvfi_read(addr, width, result);
  result
@@ -130,6 +140,14 @@ function checked_mem_write forall 'n, 'n > 0. (addr : xlenbits, width : atom('n)
   then phys_mem_write(addr, width, data, meta, aq, rl, con)
   else MemException(E_SAMO_Access_Fault)
 
+function pmp_mem_write forall 'n, 'n > 0. (addr : xlenbits, width : atom('n), data: bits(8 * 'n), meta: mem_meta, aq : bool, rl : bool, con : bool) -> MemoryOpResult(bool) =
+  if   (~ (plat_enable_pmp ()))
+  then checked_mem_write(addr, width, data, meta, aq, rl, con)
+  else match pmpCheck(addr, width, Write, effectivePrivilege(mstatus, cur_privilege)) {
+         None()  => checked_mem_write(addr, width, data, meta, aq, rl, con),
+         Some(e) => MemException(e)
+  }
+
 /* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
 
 /* Memory write with a default metadata value */
@@ -141,7 +159,7 @@ function mem_write_value (addr, width, value, aq, rl, con) = {
   else match (aq, rl, con) {
     (true,  false, false) => throw(Error_not_implemented("store.aq")),
     (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
-    (_, _, _)             => checked_mem_write(addr, width, value, default_meta, aq, rl, con)
+    (_, _, _)             => pmp_mem_write(addr, width, value, default_meta, aq, rl, con)
   }
 }
 

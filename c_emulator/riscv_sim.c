@@ -75,6 +75,7 @@ int total_insns = 0;
 static struct option options[] = {
   {"enable-dirty-update",         no_argument,       0, 'd'},
   {"enable-misaligned",           no_argument,       0, 'm'},
+  {"enable-pmp",                  no_argument,       0, 'P'},
   {"ram-size",                    required_argument, 0, 'z'},
   {"disable-compressed",          no_argument,       0, 'C'},
   {"disable-writable-misa",       no_argument,       0, 'I'},
@@ -184,6 +185,10 @@ char *process_args(int argc, char **argv)
     case 'm':
       fprintf(stderr, "enabling misaligned access.\n");
       rv_enable_misaligned = true;
+      break;
+    case 'P':
+      fprintf(stderr, "enabling PMP support.\n");
+      rv_enable_pmp = true;
       break;
     case 'C':
       fprintf(stderr, "disabling RVC compressed instructions.\n");

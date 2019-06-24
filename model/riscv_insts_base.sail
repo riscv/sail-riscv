@@ -287,7 +287,7 @@ mapping clause assembly = RTYPE(rs2, rs1, rd, op)
 /* ****************************************************************** */
 union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width, bool, bool)
 
-/* unsigned loads are only present for widths strictly less than xlen, 
+/* unsigned loads are only present for widths strictly less than xlen,
    signed loads also present for widths equal to xlen */
 mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not_bool(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
   <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_bits(size) @ rd @ 0b0000011 if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not_bool(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
@@ -318,23 +318,23 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   let offset : xlenbits = EXTS(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
-  match ext_data_get_addr(rs1, offset, Read, Data, width) {
+  match ext_data_get_addr(rs1, offset, Read, width) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
       then { handle_mem_exception(vaddr, E_Load_Addr_Align); RETIRE_FAIL }
-      else match translateAddr(vaddr, Read, Data) {
+      else match translateAddr(vaddr, Read) {
         TR_Failure(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr) =>
           match (width, sizeof(xlen)) {
             (BYTE, _)   =>
-               process_load(rd, vaddr, mem_read(Data, addr, 1, aq, rl, false), is_unsigned),
+               process_load(rd, vaddr, mem_read(Read, addr, 1, aq, rl, false), is_unsigned),
             (HALF, _)   =>
-               process_load(rd, vaddr, mem_read(Data, addr, 2, aq, rl, false), is_unsigned),
+               process_load(rd, vaddr, mem_read(Read, addr, 2, aq, rl, false), is_unsigned),
             (WORD, _)   =>
-               process_load(rd, vaddr, mem_read(Data, addr, 4, aq, rl, false), is_unsigned),
+               process_load(rd, vaddr, mem_read(Read, addr, 4, aq, rl, false), is_unsigned),
             (DOUBLE, 64) =>
-               process_load(rd, vaddr, mem_read(Data, addr, 8, aq, rl, false), is_unsigned)
+               process_load(rd, vaddr, mem_read(Read, addr, 8, aq, rl, false), is_unsigned)
           }
       }
   }
@@ -373,12 +373,12 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
   let offset : xlenbits = EXTS(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
-  match ext_data_get_addr(rs1, offset, Write, Data, width) {
+  match ext_data_get_addr(rs1, offset, Write, width) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
       then { handle_mem_exception(vaddr, E_SAMO_Addr_Align); RETIRE_FAIL }
-      else match translateAddr(vaddr, Write, Data) {
+      else match translateAddr(vaddr, Write) {
         TR_Failure(e)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr) => {
           let eares : MemoryOpResult(unit) = match width {

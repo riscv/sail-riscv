@@ -9,6 +9,7 @@ let config_enable_writable_misa        = ref true
 let config_enable_dirty_update         = ref false
 let config_enable_misaligned_access    = ref false
 let config_mtval_has_illegal_inst_bits = ref false
+let config_enable_pmp                  = ref false
 
 let platform_arch = ref P.RV64
 
@@ -72,6 +73,7 @@ let enable_rvc ()                    = !config_enable_rvc
 let enable_dirty_update ()           = !config_enable_dirty_update
 let enable_misaligned_access ()      = !config_enable_misaligned_access
 let mtval_has_illegal_inst_bits ()   = !config_mtval_has_illegal_inst_bits
+let enable_pmp ()                    = !config_enable_pmp
 
 let rom_base ()   = arch_bits_of_int64 P.rom_base
 let rom_size ()   = arch_bits_of_int   !rom_size_ref

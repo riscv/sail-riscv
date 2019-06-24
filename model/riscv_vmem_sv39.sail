@@ -6,7 +6,7 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
   let pt_ofs : paddr64 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV39_LEVEL_BITS))[(SV39_LEVEL_BITS - 1) .. 0]),
                                 PTE39_LOG_SIZE);
   let pte_addr = ptb + pt_ofs;
-  match (mem_read(Data, EXTZ(pte_addr), 8, false, false, false)) {
+  match (mem_read(ac, EXTZ(pte_addr), 8, false, false, false)) {
     MemException(_) => {
 /*    print("walk39(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
             ^ " pt_base=" ^ BitStr(ptb)
