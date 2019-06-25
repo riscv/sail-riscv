@@ -140,11 +140,11 @@ function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, 
 }
 
 /* dispatches to MMIO regions or physical memory regions depending on physical memory map */
-function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, addr : xlenbits, width : atom('n), data: bits(8 * 'n), meta: mem_meta) -> MemoryOpResult(bool) =
-  if   within_mmio_writable(addr, width)
-  then mmio_write(addr, width, data)
-  else if within_phys_mem(addr, width)
-  then phys_mem_write(wk, addr, width, data, meta)
+function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : xlenbits, width : atom('n), data: bits(8 * 'n), meta: mem_meta) -> MemoryOpResult(bool) =
+  if   within_mmio_writable(paddr, width)
+  then mmio_write(paddr, width, data)
+  else if within_phys_mem(paddr, width)
+  then phys_mem_write(wk, paddr, width, data, meta)
   else MemException(E_SAMO_Access_Fault())
 
 /* PMP checks if enabled */
