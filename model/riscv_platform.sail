@@ -358,11 +358,11 @@ function mmio_read forall 'n, 0 < 'n <= max_mem_access . (paddr : xlenbits, widt
   then htif_load(paddr, width)
   else MemException(E_Load_Access_Fault())
 
-function mmio_write forall 'n, 0 <'n <= max_mem_access . (addr : xlenbits, width : atom('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
-  if   within_clint(addr, width)
-  then clint_store(addr, width, data)
-  else if within_htif_writable(addr, width) & 'n <= 8
-  then htif_store(addr, width, data)
+function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : xlenbits, width : atom('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
+  if   within_clint(paddr, width)
+  then clint_store(paddr, width, data)
+  else if within_htif_writable(paddr, width) & 'n <= 8
+  then htif_store(paddr, width, data)
   else MemException(E_SAMO_Access_Fault())
 
 /* Platform initialization and ticking. */
