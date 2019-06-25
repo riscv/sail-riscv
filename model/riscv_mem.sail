@@ -131,11 +131,11 @@ function rvfi_write (addr, width, value) = ()
 $endif
 
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, addr : xlenbits, width : atom('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
-  rvfi_write(addr, width, data);
-  let result = MemValue(write_ram(wk, addr, width, data, meta));
+function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : xlenbits, width : atom('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
+  rvfi_write(paddr, width, data);
+  let result = MemValue(write_ram(wk, paddr, width, data, meta));
   if   get_config_print_mem()
-  then print_mem("mem[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data));
+  then print_mem("mem[" ^ BitStr(paddr) ^ "] <- " ^ BitStr(data));
   result
 }
 
