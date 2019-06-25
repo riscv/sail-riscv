@@ -275,15 +275,15 @@ register htif_exit_code : bits(64)
  */
 
 val htif_load : forall 'n, 'n > 0. (xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rreg}
-function htif_load(addr, width) = {
+function htif_load(paddr, width) = {
   if   get_config_print_platform()
-  then print_platform("htif[" ^ BitStr(addr) ^ "] -> " ^ BitStr(htif_tohost));
+  then print_platform("htif[" ^ BitStr(paddr) ^ "] -> " ^ BitStr(htif_tohost));
   /* FIXME: For now, only allow the expected access widths. */
-  if      width == 8 & (addr == plat_htif_tohost())
+  if      width == 8 & (paddr == plat_htif_tohost())
   then    MemValue(sail_zero_extend(htif_tohost, 64))         /* FIXME: Redundant zero_extend currently required by Lem backend */
-  else if width == 4 & addr == plat_htif_tohost()
+  else if width == 4 & paddr == plat_htif_tohost()
   then    MemValue(sail_zero_extend(htif_tohost[31..0], 32))  /* FIXME: Redundant zero_extend currently required by Lem backend */
-  else if width == 4 & addr == plat_htif_tohost() + 4
+  else if width == 4 & paddr == plat_htif_tohost() + 4
   then    MemValue(sail_zero_extend(htif_tohost[63..32], 32)) /* FIXME: Redundant zero_extend currently required by Lem backend */
   else    MemException(E_Load_Access_Fault())
 }
