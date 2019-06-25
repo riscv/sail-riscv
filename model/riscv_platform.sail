@@ -290,15 +290,15 @@ function htif_load(paddr, width) = {
 
 /* The rreg,wreg effects are an artifact of using 'register' to implement device state. */
 val htif_store: forall 'n, 0 < 'n <= 8. (xlenbits, int('n), bits(8 * 'n)) -> MemoryOpResult(bool) effect {rreg,wreg}
-function htif_store(addr, width, data) = {
+function htif_store(paddr, width, data) = {
   if   get_config_print_platform()
-  then print_platform("htif[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data));
+  then print_platform("htif[" ^ BitStr(paddr) ^ "] <- " ^ BitStr(data));
   /* Store the written value so that we can ack it later. */
   if      width == 8
   then    { htif_tohost = EXTZ(data) }
-  else if width == 4 & addr == plat_htif_tohost()
+  else if width == 4 & paddr == plat_htif_tohost()
   then    { htif_tohost = vector_update_subrange(htif_tohost, 31, 0, data) }
-  else if width == 4 & addr == plat_htif_tohost() + 4
+  else if width == 4 & paddr == plat_htif_tohost() + 4
   then    { htif_tohost = vector_update_subrange(htif_tohost, 63, 32, data) }
   else    { htif_tohost = EXTZ(data) };
 
