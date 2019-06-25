@@ -86,16 +86,16 @@ $else
 val mem_read : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rreg, escape}
 $endif
 
-function mem_read (typ, addr, width, aq, rl, res) = {
+function mem_read (typ, paddr, width, aq, rl, res) = {
  let result : MemoryOpResult(bits(8 * 'n)) =
-  if (aq | res) & (~ (is_aligned_addr(addr, width)))
+  if (aq | res) & (~ (is_aligned_addr(paddr, width)))
   then MemException(E_Load_Addr_Align())
   else match (aq, rl, res) {
     (false, true,  false) => throw(Error_not_implemented("load.rl")),
     (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
-    (_, _, _)             => pmp_mem_read(typ, addr, width, aq, rl, res)
+    (_, _, _)             => pmp_mem_read(typ, paddr, width, aq, rl, res)
   };
- rvfi_read(addr, width, result);
+ rvfi_read(paddr, width, result);
  result
 }
 
