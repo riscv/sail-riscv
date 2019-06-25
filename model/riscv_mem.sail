@@ -183,5 +183,5 @@ function mem_write_value_meta (paddr, width, value, ext_acc, meta, aq, rl, con) 
 
 /* Memory write with a default metadata value. */
 val mem_write_value : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
-function mem_write_value (addr, width, value, aq, rl, con) =
-  mem_write_value_meta(addr, width, value, default_write_acc, default_meta, aq, rl, con)
+function mem_write_value (paddr, width, value, aq, rl, con) =
+  mem_write_value_meta(paddr, width, value, default_write_acc, default_meta, aq, rl, con)
