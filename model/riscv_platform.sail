@@ -351,11 +351,11 @@ $else
 function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool = false
 $endif
 
-function mmio_read forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> MemoryOpResult(bits(8 * 'n)) =
-  if   within_clint(addr, width)
-  then clint_load(addr, width)
-  else if within_htif_readable(addr, width) & (1 <= 'n)
-  then htif_load(addr, width)
+function mmio_read forall 'n, 0 < 'n <= max_mem_access . (paddr : xlenbits, width : atom('n)) -> MemoryOpResult(bits(8 * 'n)) =
+  if   within_clint(paddr, width)
+  then clint_load(paddr, width)
+  else if within_htif_readable(paddr, width) & (1 <= 'n)
+  then htif_load(paddr, width)
   else MemException(E_Load_Access_Fault())
 
 function mmio_write forall 'n, 0 <'n <= max_mem_access . (addr : xlenbits, width : atom('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
