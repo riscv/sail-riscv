@@ -20,14 +20,14 @@ function is_aligned_addr forall 'n. (addr : xlenbits, width : atom('n)) -> bool 
   unsigned(addr) % width == 0
 
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), addr : xlenbits, width : atom('n), aq : bool, rl: bool, res : bool) -> MemoryOpResult(bits(8 * 'n)) = {
+function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n), aq : bool, rl: bool, res : bool) -> MemoryOpResult(bits(8 * 'n)) = {
   let result = (match (aq, rl, res) {
-    (false, false, false) => Some(read_ram(Read_plain, addr, width)),
-    (true, false, false)  => Some(read_ram(Read_RISCV_acquire, addr, width)),
-    (true, true, false)   => Some(read_ram(Read_RISCV_strong_acquire, addr, width)),
-    (false, false, true)  => Some(read_ram(Read_RISCV_reserved, addr, width)),
-    (true, false, true)   => Some(read_ram(Read_RISCV_reserved_acquire, addr, width)),
-    (true, true, true)    => Some(read_ram(Read_RISCV_reserved_strong_acquire, addr, width)),
+    (false, false, false) => Some(read_ram(Read_plain, paddr, width)),
+    (true, false, false)  => Some(read_ram(Read_RISCV_acquire, paddr, width)),
+    (true, true, false)   => Some(read_ram(Read_RISCV_strong_acquire, paddr, width)),
+    (false, false, true)  => Some(read_ram(Read_RISCV_reserved, paddr, width)),
+    (true, false, true)   => Some(read_ram(Read_RISCV_reserved_acquire, paddr, width)),
+    (true, true, true)    => Some(read_ram(Read_RISCV_reserved_strong_acquire, paddr, width)),
     (false, true, false)  => None(), /* should these be instead throwing error_not_implemented as below? */
     (false, true, true)   => None()
   }) : option(bits(8 * 'n));
@@ -36,7 +36,7 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
     (Read(Data), None()) => MemException(E_Load_Access_Fault()),
     (_,          None()) => MemException(E_SAMO_Access_Fault()),
     (_,         Some(v)) => { if   get_config_print_mem()
-                              then print_mem("mem[" ^ to_str(t) ^ "," ^ BitStr(addr) ^ "] -> " ^ BitStr(v));
+                              then print_mem("mem[" ^ to_str(t) ^ "," ^ BitStr(paddr) ^ "] -> " ^ BitStr(v));
                               MemValue(v) }
   }
 }
