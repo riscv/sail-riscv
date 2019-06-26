@@ -164,17 +164,17 @@ function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, pa
  * NOTE: The wreg effect is due to MMIO, the rreg is due to checking mtime.
  */
 val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), ext_access_type, mem_meta, bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
-function mem_write_value_meta (addr, width, value, ext_acc, meta, aq, rl, con) = {
-  rvfi_write(addr, width, value);
-  if (rl | con) & (~ (is_aligned_addr(addr, width)))
+function mem_write_value_meta (paddr, width, value, ext_acc, meta, aq, rl, con) = {
+  rvfi_write(paddr, width, value);
+  if (rl | con) & (~ (is_aligned_addr(paddr, width)))
   then MemException(E_SAMO_Addr_Align())
   else match (aq, rl, con) {
-    (false, false, false) => pmp_mem_write(Write_plain, addr, width, value, ext_acc, meta),
-    (false, true,  false) => pmp_mem_write(Write_RISCV_release, addr, width, value, ext_acc, meta),
-    (false, false, true)  => pmp_mem_write(Write_RISCV_conditional, addr, width, value, ext_acc, meta),
-    (false, true , true)  => pmp_mem_write(Write_RISCV_conditional_release, addr, width, value, ext_acc, meta),
-    (true,  true,  false) => pmp_mem_write(Write_RISCV_strong_release, addr, width, value, ext_acc, meta),
-    (true,  true , true)  => pmp_mem_write(Write_RISCV_conditional_strong_release, addr, width, value, ext_acc, meta),
+    (false, false, false) => pmp_mem_write(Write_plain, paddr, width, value, ext_acc, meta),
+    (false, true,  false) => pmp_mem_write(Write_RISCV_release, paddr, width, value, ext_acc, meta),
+    (false, false, true)  => pmp_mem_write(Write_RISCV_conditional, paddr, width, value, ext_acc, meta),
+    (false, true , true)  => pmp_mem_write(Write_RISCV_conditional_release, paddr, width, value, ext_acc, meta),
+    (true,  true,  false) => pmp_mem_write(Write_RISCV_strong_release, paddr, width, value, ext_acc, meta),
+    (true,  true , true)  => pmp_mem_write(Write_RISCV_conditional_strong_release, paddr, width, value, ext_acc, meta),
     // throw an illegal instruction here?
     (true,  false, false) => throw(Error_not_implemented("store.aq")),
     (true,  false, true)  => throw(Error_not_implemented("sc.aq"))
