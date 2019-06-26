@@ -39,6 +39,11 @@ let print_platform s =
   then print_endline s
   else ()
 
+let get_config_print_instr () = !config_print_instr
+let get_config_print_reg () = !config_print_reg
+let get_config_print_mem () = !config_print_mem_access
+let get_config_print_platform () = !config_print_platform
+
 (* Mapping to Sail externs *)
 let cur_arch_bitwidth () =
   match !platform_arch with

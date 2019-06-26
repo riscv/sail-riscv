@@ -69,6 +69,26 @@ bool config_print_reg = true;
 bool config_print_mem_access = true;
 bool config_print_platform = true;
 
+void set_config_print(char *var, bool val) {
+  if (strcmp("instr", optarg) == 0) {
+    config_print_instr = val;
+  } else if (strcmp("reg", optarg) == 0) {
+    config_print_reg = val;
+  } else if (strcmp("mem", optarg) == 0) {
+    config_print_mem_access = val;
+  } else if (strcmp("platform", optarg) == 0) {
+    config_print_platform = val;
+  } else if (strcmp("all", optarg) == 0) {
+    config_print_instr = val;
+    config_print_mem_access = val;
+    config_print_reg = val;
+    config_print_platform = val;
+  } else {
+    fprintf(stderr, "Unknown trace category: %s (should be instr|reg|mem|platform|all)\n", var);
+    exit(1);
+  }
+}
+
 struct timeval init_start, init_end, run_end;
 int total_insns = 0;
 
@@ -88,6 +108,8 @@ static struct option options[] = {
   {"rvfi-dii",                    required_argument, 0, 'r'},
 #endif
   {"help",                        no_argument,       0, 'h'},
+  {"trace",                       required_argument, 0, 'v'},
+  {"no-trace",                    required_argument, 0, 'V'},
   {0, 0, 0, 0}
 };
 
@@ -171,7 +193,7 @@ char *process_args(int argc, char **argv)
   int c, idx = 1;
   uint64_t ram_size = 0;
   while(true) {
-    c = getopt_long(argc, argv, "admCIispz:b:t:v:hr:T:", options, &idx);
+    c = getopt_long(argc, argv, "admCIispz:b:t:v:hr:T:V:v:", options, &idx);
     if (c == -1) break;
     switch (c) {
     case 'a':
@@ -236,6 +258,12 @@ char *process_args(int argc, char **argv)
       fprintf(stderr, "using %d as RVFI port.\n", rvfi_dii_port);
       break;
 #endif
+    case 'V':
+      set_config_print(optarg, false);
+      break;
+    case 'v':
+      set_config_print(optarg, true);
+      break;
     }
   }
   if (do_dump_dts) dump_dts();
@@ -574,10 +602,12 @@ int compare_states(struct tv_spike_t *s)
 
 void flush_logs(void)
 {
-  fprintf(stderr, "\n");
-  fflush(stderr);
-  fprintf(stdout, "\n");
-  fflush(stdout);
+  if(config_print_instr) {
+    fprintf(stderr, "\n");
+    fflush(stderr);
+    fprintf(stdout, "\n");
+    fflush(stdout);
+  }
 }
 
 #ifdef RVFI_DII
