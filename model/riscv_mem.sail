@@ -50,12 +50,12 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(
   else MemException(E_Load_Access_Fault())
 
 /* PMP checks if enabled */
-function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), addr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
+function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
   if   (~ (plat_enable_pmp ()))
-  then checked_mem_read(t, addr, width, aq, rl, res)
+  then checked_mem_read(t, paddr, width, aq, rl, res)
   else {
-    match pmpCheck(addr, width, t, effectivePrivilege(mstatus, cur_privilege)) {
-      None()  => checked_mem_read(t, addr, width, aq, rl, res),
+    match pmpCheck(paddr, width, t, effectivePrivilege(mstatus, cur_privilege)) {
+      None()  => checked_mem_read(t, paddr, width, aq, rl, res),
       Some(e) => MemException(e)
     }
   }
