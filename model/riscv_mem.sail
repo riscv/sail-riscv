@@ -148,11 +148,11 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kin
   else MemException(E_SAMO_Access_Fault())
 
 /* PMP checks if enabled */
-function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, addr : xlenbits, width : atom('n), data: bits(8 * 'n), ext_acc: ext_access_type, meta: mem_meta) -> MemoryOpResult(bool) =
+function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, paddr : xlenbits, width : atom('n), data: bits(8 * 'n), ext_acc: ext_access_type, meta: mem_meta) -> MemoryOpResult(bool) =
   if   (~ (plat_enable_pmp ()))
-  then checked_mem_write(wk, addr, width, data, meta)
-  else match pmpCheck(addr, width, Write(ext_acc), effectivePrivilege(mstatus, cur_privilege)) {
-         None()  => checked_mem_write(wk, addr, width, data, meta),
+  then checked_mem_write(wk, paddr, width, data, meta)
+  else match pmpCheck(paddr, width, Write(ext_acc), effectivePrivilege(mstatus, cur_privilege)) {
+         None()  => checked_mem_write(wk, paddr, width, data, meta),
          Some(e) => MemException(e)
   }
 
