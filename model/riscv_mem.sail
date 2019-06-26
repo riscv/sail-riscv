@@ -2,6 +2,18 @@
  *
  * This assumes that the platform memory map has been defined, so that accesses
  * to MMIO regions can be dispatched.
+ *
+ * The implementation below supports the reading and writing of memory
+ * metadata in addition to raw memory data.
+ *
+ * The external API for this module is
+ *   {mem_read, mem_write_ea, mem_write_value_meta, mem_write_value}
+ * where mem_write_value is a special case of mem_write_value_meta that uses
+ * a default value of the metadata.
+ *
+ * The internal implementation first performs a PMP check (if PMP is
+ * enabled), and then dispatches to MMIO regions or physical memory as
+ * per the platform memory map.
  */
 
 function is_aligned_addr forall 'n. (addr : xlenbits, width : atom('n)) -> bool =
@@ -28,6 +40,7 @@ function phys_mem_read forall 'n, 'n > 0. (t : AccessType, addr : xlenbits, widt
   }
 }
 
+/* dispatches to MMIO regions or physical memory regions depending on physical memory map */
 function checked_mem_read forall 'n, 'n > 0. (t : AccessType, addr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
   if   within_mmio_readable(addr, width)
   then mmio_read(addr, width)
@@ -35,6 +48,7 @@ function checked_mem_read forall 'n, 'n > 0. (t : AccessType, addr : xlenbits, w
   then phys_mem_read(t, addr, width, aq, rl, res)
   else MemException(E_Load_Access_Fault)
 
+/* PMP checks if enabled */
 function pmp_mem_read forall 'n, 'n > 0. (t : AccessType, addr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
   if   (~ (plat_enable_pmp ()))
   then checked_mem_read(t, addr, width, aq, rl, res)
@@ -116,66 +130,56 @@ function rvfi_write (addr, width, value) = ()
 $endif
 
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_write forall 'n, 'n > 0. (addr : xlenbits, width : atom('n), data : bits(8 * 'n), meta : mem_meta, aq : bool, rl : bool, con : bool) -> MemoryOpResult(bool) = {
+function phys_mem_write forall 'n, 'n > 0. (wk : write_kind, addr : xlenbits, width : atom('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
   rvfi_write(addr, width, data);
-  let result = (match (aq, rl, con) {
-    (false, false, false) => MemValue(write_ram(Write_plain, addr, width, data, meta)),
-    (false, true,  false) => MemValue(write_ram(Write_RISCV_release, addr, width, data, meta)),
-    (false, false, true)  => MemValue(write_ram(Write_RISCV_conditional, addr, width, data, meta)),
-    (false, true , true)  => MemValue(write_ram(Write_RISCV_conditional_release, addr, width, data, meta)),
-    (true,  false, false) => throw(Error_not_implemented("store.aq")),
-    (true,  true,  false) => MemValue(write_ram(Write_RISCV_strong_release, addr, width, data, meta)),
-    (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
-    (true,  true , true)  => MemValue(write_ram(Write_RISCV_conditional_strong_release, addr, width, data, meta))
-  }) : MemoryOpResult(bool);
+  let result = MemValue(write_ram(wk, addr, width, data, meta));
   print_mem("mem[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data));
   result
 }
 
-// dispatches to MMIO regions or physical memory regions depending on physical memory map
-function checked_mem_write forall 'n, 'n > 0. (addr : xlenbits, width : atom('n), data: bits(8 * 'n), meta: mem_meta, aq : bool, rl : bool, con : bool) -> MemoryOpResult(bool) =
+/* dispatches to MMIO regions or physical memory regions depending on physical memory map */
+function checked_mem_write forall 'n, 'n > 0. (wk : write_kind, addr : xlenbits, width : atom('n), data: bits(8 * 'n), meta: mem_meta) -> MemoryOpResult(bool) =
   if   within_mmio_writable(addr, width)
   then mmio_write(addr, width, data)
   else if within_phys_mem(addr, width)
-  then phys_mem_write(addr, width, data, meta, aq, rl, con)
+  then phys_mem_write(wk, addr, width, data, meta)
   else MemException(E_SAMO_Access_Fault)
 
-function pmp_mem_write forall 'n, 'n > 0. (addr : xlenbits, width : atom('n), data: bits(8 * 'n), meta: mem_meta, aq : bool, rl : bool, con : bool) -> MemoryOpResult(bool) =
+/* PMP checks if enabled */
+function pmp_mem_write forall 'n, 'n > 0. (wk: write_kind, addr : xlenbits, width : atom('n), data: bits(8 * 'n), meta: mem_meta) -> MemoryOpResult(bool) =
   if   (~ (plat_enable_pmp ()))
-  then checked_mem_write(addr, width, data, meta, aq, rl, con)
+  then checked_mem_write(wk, addr, width, data, meta)
   else match pmpCheck(addr, width, Write, effectivePrivilege(mstatus, cur_privilege)) {
-         None()  => checked_mem_write(addr, width, data, meta, aq, rl, con),
+         None()  => checked_mem_write(wk, addr, width, data, meta),
          Some(e) => MemException(e)
   }
 
 /* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
 
-/* Memory write with a default metadata value */
-/* NOTE: The wreg effect is due to MMIO, the rreg is due to checking mtime. */
-val mem_write_value : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n), bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
-function mem_write_value (addr, width, value, aq, rl, con) = {
-  if (rl | con) & (~ (is_aligned_addr(addr, width)))
-  then MemException(E_SAMO_Addr_Align)
-  else match (aq, rl, con) {
-    (true,  false, false) => throw(Error_not_implemented("store.aq")),
-    (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
-    (_, _, _)             => pmp_mem_write(addr, width, value, default_meta, aq, rl, con)
-  }
-}
-
 /* Memory write with an explicit metadata value.  Metadata writes are
  * currently assumed to have the same alignment constraints as their
  * data.
+ * NOTE: The wreg effect is due to MMIO, the rreg is due to checking mtime.
  */
-/* NOTE: The wreg effect is due to MMIO, the rreg is due to checking mtime. */
 val mem_write_value_meta : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n), mem_meta, bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
 function mem_write_value_meta (addr, width, value, meta, aq, rl, con) = {
   rvfi_write(addr, width, value);
   if (rl | con) & (~ (is_aligned_addr(addr, width)))
   then MemException(E_SAMO_Addr_Align)
   else match (aq, rl, con) {
+    (false, false, false) => pmp_mem_write(Write_plain, addr, width, value, meta),
+    (false, true,  false) => pmp_mem_write(Write_RISCV_release, addr, width, value, meta),
+    (false, false, true)  => pmp_mem_write(Write_RISCV_conditional, addr, width, value, meta),
+    (false, true , true)  => pmp_mem_write(Write_RISCV_conditional_release, addr, width, value, meta),
+    (true,  true,  false) => pmp_mem_write(Write_RISCV_strong_release, addr, width, value, meta),
+    (true,  true , true)  => pmp_mem_write(Write_RISCV_conditional_strong_release, addr, width, value, meta),
+    // throw an illegal instruction here?
     (true,  false, false) => throw(Error_not_implemented("store.aq")),
-    (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
-    (_, _, _)             => checked_mem_write(addr, width, value, meta, aq, rl, con)
+    (true,  false, true)  => throw(Error_not_implemented("sc.aq"))
   }
 }
+
+/* Memory write with a default metadata value. */
+val mem_write_value : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n), bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
+function mem_write_value (addr, width, value, aq, rl, con) =
+  mem_write_value_meta(addr, width, value, default_meta, aq, rl, con)
