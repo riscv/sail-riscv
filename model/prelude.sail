@@ -79,7 +79,7 @@ val rem_round_zero = {ocaml: "rem_round_zero", interpreter: "rem_round_zero", le
 /* The following should get us euclidean modulus, and is compatible with pre and post 0.9 versions of sail */
 overload operator % = {emod_int, mod}
 
-val min_nat = {ocaml: "min_int", lem: "min", coq: "min_nat", c: "min_int"} : (nat, nat) -> nat
+val min_nat = {ocaml: "min_int", interpreter: "min_int", lem: "min", coq: "min_nat", c: "min_int"} : (nat, nat) -> nat
 
 val min_int = {ocaml: "min_int", interpreter: "min_int", lem: "min", coq: "Z.min", c: "min_int"} : (int, int) -> int
 
@@ -101,6 +101,18 @@ val print_reg      = {ocaml: "Platform.print_reg", interpreter: "print_endline",
 val print_mem      = {ocaml: "Platform.print_mem_access", interpreter: "print_endline", c: "print_mem_access", lem: "print_dbg", _: "print_endline"} : string -> unit
 val print_platform = {ocaml: "Platform.print_platform", interpreter: "print_endline", c: "print_platform", lem: "print_dbg", _: "print_endline"} : string -> unit
 
+val get_config_print_instr = {ocaml: "Platform.get_config_print_instr", c:"get_config_print_instr"} : unit -> bool
+function get_config_print_instr () -> bool = false
+
+val get_config_print_reg = {ocaml: "Platform.get_config_print_reg", c:"get_config_print_reg"} : unit -> bool
+function get_config_print_reg () -> bool = false
+
+val get_config_print_mem = {ocaml: "Platform.get_config_print_mem", c:"get_config_print_mem"} : unit -> bool
+function get_config_print_mem () -> bool = false
+
+val get_config_print_platform = {ocaml: "Platform.get_config_print_platform", c:"get_config_print_platform"} : unit -> bool
+function get_config_print_platform () -> bool = false
+
 $ifndef FEATURE_IMPLICITS
 val EXTS : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
 val EXTZ : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
@@ -111,13 +123,10 @@ val zeros_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
 function zeros_implicit () = sail_zeros('n)
 overload zeros = {zeros_implicit, sail_zeros}
 
-val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
-function ones_n n = replicate_bits (0b1, n)
-
 val ones_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
-function ones_implicit () = ones_n ('n)
+function ones_implicit () = sail_ones ('n)
 
-overload ones = {ones_implicit, ones_n}
+overload ones = {ones_implicit, sail_ones}
 
 $else
 val EXTS : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
@@ -130,13 +139,10 @@ val zeros_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
 function zeros_implicit (n) = sail_zeros(n)
 overload zeros = {zeros_implicit, sail_zeros}
 
-val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
-function ones_n n = replicate_bits (0b1, n)
-
 val ones_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
-function ones_implicit (n) = ones_n (n)
+function ones_implicit (n) = sail_ones (n)
 
-overload ones = {ones_implicit, ones_n}
+overload ones = {ones_implicit, sail_ones}
 
 $endif
 

@@ -31,7 +31,9 @@ function step(step_no) = {
           /* non-error cases: */
           F_RVC(h) => {
             let ast = decodeCompressed(h);
-            print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ ast);
+            if get_config_print_instr() then {
+              print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ ast);
+            };
             /* check for RVC once here instead of every RVC execute clause. */
             if haveRVC() then {
               nextPC = PC + 2;
@@ -43,7 +45,9 @@ function step(step_no) = {
           },
           F_Base(w) => {
             let ast = decode(w);
-            print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ ast);
+            if get_config_print_instr() then {
+              print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ ast);
+            };
             nextPC = PC + 4;
             (execute(ext_post_decode_hook(ast)), true)
           }
