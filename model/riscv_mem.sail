@@ -22,8 +22,10 @@ function phys_mem_read forall 'n, 'n > 0. (t : ReadType, addr : xlenbits, width 
   match (t, result) {
     (Instruction, None()) => MemException(E_Fetch_Access_Fault),
     (Data, None())        => MemException(E_Load_Access_Fault),
-    (_, Some(v))          => { print_mem("mem[" ^ t ^ "," ^ BitStr(addr) ^ "] -> " ^ BitStr(v));
-                               MemValue(v) }
+    (_, Some(v))          => { if get_config_print_mem() then
+                                 print_mem("mem[" ^ t ^ "," ^ BitStr(addr) ^ "] -> " ^ BitStr(v));
+                               MemValue(v)
+                             }
   }
 }
 
@@ -118,7 +120,8 @@ function phys_mem_write forall 'n, 'n > 0. (addr : xlenbits, width : atom('n), d
     (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
     (true,  true , true)  => MemValue(write_ram(Write_RISCV_conditional_strong_release, addr, width, data, meta))
   }) : MemoryOpResult(bool);
-  print_mem("mem[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data));
+  if get_config_print_mem() then
+    print_mem("mem[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data));
   result
 }
 
