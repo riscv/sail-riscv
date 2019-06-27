@@ -42,7 +42,7 @@ function checked_mem_read forall 'n, 'n > 0. (t : ReadType, addr : xlenbits, wid
 $ifdef RVFI_DII
 val rvfi_read : forall 'n, 'n > 0. (xlenbits, atom('n), MemoryOpResult(bits(8 * 'n))) -> unit effect {wreg}
 function rvfi_read (addr, width, result) = {
-  rvfi_exec->rvfi_mem_addr() = EXTS(addr);
+  rvfi_exec->rvfi_mem_addr() = EXTZ(addr);
   match result {
     MemValue(v) => if   width <= 8
                    then { rvfi_exec->rvfi_mem_rdata() = sail_zero_extend(v,64);
@@ -96,7 +96,7 @@ function mem_write_ea (addr, width, aq, rl, con) = {
 $ifdef RVFI_DII
 val rvfi_write : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> unit effect {wreg}
 function rvfi_write (addr, width, value) = {
-  rvfi_exec->rvfi_mem_addr() = EXTS(addr);
+  rvfi_exec->rvfi_mem_addr() = EXTZ(addr);
   if width <= 8 then {
     rvfi_exec->rvfi_mem_wdata() = sail_zero_extend(value,64);
     rvfi_exec->rvfi_mem_wmask() = rvfi_encode_width_mask(width);
