@@ -6,7 +6,7 @@ function ext_pre_step_hook()  -> unit = ()
 
 function ext_post_step_hook() -> unit = {
   /* record the next pc */
-  rvfi_exec->rvfi_pc_wdata() = EXTS(PC)
+  rvfi_exec->rvfi_pc_wdata() = EXTZ(PC)
 }
 
 val ext_init : unit -> unit effect {wreg}
