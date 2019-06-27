@@ -10,7 +10,8 @@ function step(step_no) = {
   let (retired, stepped) : (Retired, bool) =
     match dispatchInterrupt(cur_privilege) {
       Some(intr, priv) => {
-        print_bits("Handling interrupt: ", intr);
+        if get_config_print_instr() then 
+          print_bits("Handling interrupt: ", intr);
         handle_interrupt(intr, priv);
         (RETIRE_FAIL, false)
       },

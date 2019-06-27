@@ -35,7 +35,8 @@ function phys_mem_read forall 'n, 'n > 0. (t : AccessType, addr : xlenbits, widt
     (Execute, None()) => MemException(E_Fetch_Access_Fault),
     (Read,    None()) => MemException(E_Load_Access_Fault),
     (_,       None()) => MemException(E_SAMO_Access_Fault),
-    (_,      Some(v)) => { print_mem("mem[" ^ t ^ "," ^ BitStr(addr) ^ "] -> " ^ BitStr(v));
+    (_,      Some(v)) => { if   get_config_print_mem()
+                           then print_mem("mem[" ^ t ^ "," ^ BitStr(addr) ^ "] -> " ^ BitStr(v));
                            MemValue(v) }
   }
 }
@@ -133,7 +134,8 @@ $endif
 function phys_mem_write forall 'n, 'n > 0. (wk : write_kind, addr : xlenbits, width : atom('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
   rvfi_write(addr, width, data);
   let result = MemValue(write_ram(wk, addr, width, data, meta));
-  print_mem("mem[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data));
+  if   get_config_print_mem()
+  then print_mem("mem[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data));
   result
 }
 
