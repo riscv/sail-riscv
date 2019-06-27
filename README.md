@@ -10,6 +10,10 @@ conventional OS with a terminal output device.  The model specifies
 assembly language formats of the instructions, the corresponding
 encoders and decoders, and the instruction semantics.
 
+This is one of [several formal models](https://github.com/riscv/ISA_Formal_Spec_Public_Review/blob/master/comparison_table.md) compared within the 
+[RISC-V ISA Formal Spec Public Review](https://github.com/riscv/ISA_Formal_Spec_Public_Review).
+
+
 Directory Structure
 -------------------
 
