@@ -57,7 +57,7 @@ function cast_unit_vec b = match b {
   bitone  => 0b1
 }
 
-val string_of_int = {c: "string_of_int", ocaml: "string_of_int", lem: "stringFromInteger", coq: "string_of_int"} : int -> string
+val string_of_int = {c: "string_of_int", ocaml: "string_of_int", interpreter: "string_of_int", lem: "stringFromInteger", coq: "string_of_int"} : int -> string
 
 val BitStr = "string_of_bits" : forall 'n. bits('n) -> string
 
