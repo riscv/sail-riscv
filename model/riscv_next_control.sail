@@ -47,7 +47,7 @@ function write_NExt_CSR(csr : csreg, value : xlenbits) -> bool = {
     _     => None()
   };
   match res {
-    Some(v) => { print_reg("CSR " ^ csr ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")");
+    Some(v) => { print_reg("CSR " ^ to_str(csr) ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")");
                  true },
     None()  => false
   }

@@ -1,6 +1,6 @@
 /* Mapping of csr addresses to their names. */
 
-val cast csr_name : csreg -> string
+val csr_name : csreg -> string
 function csr_name(csr) = {
   match (csr) {
     /* user trap setup */
@@ -75,6 +75,8 @@ function csr_name(csr) = {
     _      => "UNKNOWN"
   }
 }
+
+overload to_str = {csr_name}
 
 mapping csr_name_map : csreg <-> string = {
     /* user trap setup */
