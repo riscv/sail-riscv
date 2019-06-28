@@ -135,14 +135,11 @@ val EXTZ : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
 function EXTS(m, v) = sail_sign_extend(v, m)
 function EXTZ(m, v) = sail_zero_extend(v, m)
 
-val zeros_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
-function zeros_implicit (n) = sail_zeros(n)
-overload zeros = {zeros_implicit, sail_zeros}
+val zeros : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
+function zeros (n) = sail_zeros(n)
 
-val ones_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
-function ones_implicit (n) = sail_ones (n)
-
-overload ones = {ones_implicit, sail_ones}
+val ones : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
+function ones (n) = sail_ones (n)
 
 $endif
 
