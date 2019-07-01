@@ -70,7 +70,12 @@ bool config_print_mem_access = true;
 bool config_print_platform = true;
 
 void set_config_print(char *var, bool val) {
-  if (strcmp("instr", optarg) == 0) {
+  if (optarg == NULL || strcmp("all", optarg) == 0) {
+    config_print_instr = val;
+    config_print_mem_access = val;
+    config_print_reg = val;
+    config_print_platform = val;
+  } else if (strcmp("instr", optarg) == 0) {
     config_print_instr = val;
   } else if (strcmp("reg", optarg) == 0) {
     config_print_reg = val;
@@ -78,13 +83,8 @@ void set_config_print(char *var, bool val) {
     config_print_mem_access = val;
   } else if (strcmp("platform", optarg) == 0) {
     config_print_platform = val;
-  } else if (strcmp("all", optarg) == 0) {
-    config_print_instr = val;
-    config_print_mem_access = val;
-    config_print_reg = val;
-    config_print_platform = val;
   } else {
-    fprintf(stderr, "Unknown trace category: %s (should be instr|reg|mem|platform|all)\n", var);
+    fprintf(stderr, "Unknown trace category: '%s' (should be instr|reg|mem|platform|all)\n", var);
     exit(1);
   }
 }
@@ -109,8 +109,8 @@ static struct option options[] = {
   {"rvfi-dii",                    required_argument, 0, 'r'},
 #endif
   {"help",                        no_argument,       0, 'h'},
-  {"trace",                       required_argument, 0, 'v'},
-  {"no-trace",                    required_argument, 0, 'V'},
+  {"trace",                       optional_argument, 0, 'v'},
+  {"no-trace",                    optional_argument, 0, 'V'},
   {0, 0, 0, 0}
 };
 
@@ -123,7 +123,7 @@ static void print_usage(const char *argv0, int ec)
 #endif
   struct option *opt = options;
   while (opt->name) {
-    fprintf(stdout, "\t -%c\t %s\n", (char)opt->val, opt->name);
+    fprintf(stdout, "\t -%c\t --%s\n", (char)opt->val, opt->name);
     opt++;
   }
   exit(ec);
@@ -194,7 +194,7 @@ char *process_args(int argc, char **argv)
   int c, idx = 1;
   uint64_t ram_size = 0;
   while(true) {
-    c = getopt_long(argc, argv, "admCIispz:b:t:v:hr:T:V:v:", options, &idx);
+    c = getopt_long(argc, argv, "admCIispz:b:t:v:hr:T:V::v::", options, &idx);
     if (c == -1) break;
     switch (c) {
     case 'a':
@@ -268,6 +268,9 @@ char *process_args(int argc, char **argv)
       break;
     case 'v':
       set_config_print(optarg, true);
+      break;
+    case '?':
+      print_usage(argv[0], 1);
       break;
     }
   }
