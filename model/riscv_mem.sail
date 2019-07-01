@@ -36,7 +36,7 @@ function phys_mem_read forall 'n, 'n > 0. (t : AccessType, addr : xlenbits, widt
     (Read,    None()) => MemException(E_Load_Access_Fault),
     (_,       None()) => MemException(E_SAMO_Access_Fault),
     (_,      Some(v)) => { if   get_config_print_mem()
-                           then print_mem("mem[" ^ t ^ "," ^ BitStr(addr) ^ "] -> " ^ BitStr(v));
+                           then print_mem("mem[" ^ to_str(t) ^ "," ^ BitStr(addr) ^ "] -> " ^ BitStr(v));
                            MemValue(v) }
   }
 }

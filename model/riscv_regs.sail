@@ -143,7 +143,7 @@ overload X = {rX, wX}
 
 /* register names */
 
-val cast reg_name_abi : regidx -> string
+val reg_name_abi : regidx -> string
 
 function reg_name_abi(r) = {
   match (r) {
@@ -181,6 +181,8 @@ function reg_name_abi(r) = {
     0b11111 => "t6"
   }
 }
+
+overload to_str = {reg_name_abi}
 
 /* mappings for assembly */
 

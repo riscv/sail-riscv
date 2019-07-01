@@ -81,13 +81,15 @@ function privLevel_of_bits (p) =
     0b11 => Machine
   }
 
-val cast privLevel_to_str : Privilege -> string
+val privLevel_to_str : Privilege -> string
 function privLevel_to_str (p) =
   match (p) {
     User       => "U",
     Supervisor => "S",
     Machine    => "M"
   }
+
+overload to_str = {privLevel_to_str}
 
 /* enum denoting whether an executed instruction retires */
 
@@ -97,7 +99,7 @@ enum Retired = {RETIRE_SUCCESS, RETIRE_FAIL}
 
 enum AccessType = {Read, Write, ReadWrite, Execute}
 
-val cast accessType_to_str : AccessType -> string
+val accessType_to_str : AccessType -> string
 function accessType_to_str (a) =
   match (a) {
     Read      => "R",
@@ -105,6 +107,8 @@ function accessType_to_str (a) =
     ReadWrite => "RW",
     Execute   => "X"
   }
+
+overload to_str = {accessType_to_str}
 
 enum word_width = {BYTE, HALF, WORD, DOUBLE}
 
@@ -186,7 +190,7 @@ function exceptionType_to_bits(e) =
     E_CHERI              => 0x20    /* FIXME: this is reserved for a future standard */
   }
 
-val cast exceptionType_to_str : ExceptionType -> string
+val exceptionType_to_str : ExceptionType -> string
 function exceptionType_to_str(e) =
   match (e) {
     E_Fetch_Addr_Align   => "misaligned-fetch",
@@ -209,6 +213,8 @@ function exceptionType_to_str(e) =
     /* extensions */
     E_CHERI              => "CHERI"
   }
+
+overload to_str = {exceptionType_to_str}
 
 /* model-internal exceptions */
 

@@ -67,7 +67,7 @@ enum PTW_Error = {
   PTW_Misaligned,   /* misaligned superpage */
   PTW_PTE_Update    /* PTE update needed but not enabled */
 }
-val cast ptw_error_to_str : PTW_Error -> string
+val ptw_error_to_str : PTW_Error -> string
 function ptw_error_to_str(e) =
   match (e) {
     PTW_Access        => "mem-access-error",
@@ -76,6 +76,8 @@ function ptw_error_to_str(e) =
     PTW_Misaligned    => "misaligned-superpage",
     PTW_PTE_Update    => "pte-update-needed"
   }
+
+overload to_str = {ptw_error_to_str}
 
 /* conversion of these translation/PTW failures into architectural exceptions */
 function translationException(a : AccessType, f : PTW_Error) -> ExceptionType = {

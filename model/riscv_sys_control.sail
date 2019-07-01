@@ -296,7 +296,8 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
                      -> xlenbits = {
   rvfi_trap();
   print_platform("handling " ^ (if intr then "int#" else "exc#")
-                 ^ BitStr(c) ^ " at priv " ^ del_priv ^ " with tval " ^ BitStr(tval(info)));
+                 ^ BitStr(c) ^ " at priv " ^ to_str(del_priv)
+		 ^ " with tval " ^ BitStr(tval(info)));
 
   cancel_reservation();
 
@@ -370,8 +371,8 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
   match (cur_priv, ctl) {
     (_, CTL_TRAP(e)) => {
       let del_priv = exception_delegatee(e.trap, cur_priv);
-      print_platform("trapping from " ^ cur_priv ^ " to " ^ del_priv
-                     ^ " to handle " ^ e.trap);
+      print_platform("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
+                     ^ " to handle " ^ to_str(e.trap));
       trap_handler(del_priv, false, e.trap, pc, e.excinfo, e.ext)
     },
     (_, CTL_MRET())  => {
@@ -382,7 +383,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus->MPP()  = privLevel_to_bits(if haveUsrMode() then User else Machine);
 
       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
-      print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
+      print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
       cancel_reservation();
       prepare_xret_target(Machine) & pc_alignment_mask()
@@ -396,7 +397,8 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus->SPP()  = false;
 
       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
-      print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
+      print_platform("ret-ing from " ^ to_str(prev_priv)
+                     ^ " to " ^ to_str(cur_privilege));
 
       cancel_reservation();
       prepare_xret_target(Supervisor) & pc_alignment_mask()
@@ -408,7 +410,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       cur_privilege   = User;
 
       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
-      print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
+      print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
       cancel_reservation();
       prepare_xret_target(User) & pc_alignment_mask()
