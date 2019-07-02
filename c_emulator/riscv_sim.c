@@ -288,7 +288,6 @@ char *process_args(int argc, char **argv)
     print_usage(argv[0], 0);
   }
 #endif
-  if (term_log == NULL) term_log = strdup("term.log");
   if (dtb_file) read_dtb(dtb_file);
 
 #ifdef RVFI_DII
@@ -799,7 +798,7 @@ void init_logs()
   }
 #endif
 
-  if ((term_fd = open(term_log, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR)) < 0) {
+  if (term_log != NULL && (term_fd = open(term_log, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR)) < 0) {
     fprintf(stderr, "Cannot create terminal log '%s': %s\n", term_log, strerror(errno));
     exit(1);
   }
