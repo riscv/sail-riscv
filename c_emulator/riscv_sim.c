@@ -91,6 +91,7 @@ void set_config_print(char *var, bool val) {
 
 struct timeval init_start, init_end, run_end;
 int total_insns = 0;
+int insn_limit = 0;
 
 static struct option options[] = {
   {"enable-dirty-update",         no_argument,       0, 'd'},
@@ -111,6 +112,7 @@ static struct option options[] = {
   {"help",                        no_argument,       0, 'h'},
   {"trace",                       optional_argument, 0, 'v'},
   {"no-trace",                    optional_argument, 0, 'V'},
+  {"inst-limit",                  required_argument, 0, 'l'},
   {0, 0, 0, 0}
 };
 
@@ -194,7 +196,7 @@ char *process_args(int argc, char **argv)
   int c, idx = 1;
   uint64_t ram_size = 0;
   while(true) {
-    c = getopt_long(argc, argv, "admCIispz:b:t:v:hr:T:V::v::", options, &idx);
+    c = getopt_long(argc, argv, "admCIispz:b:t:v:hr:T:V::v::l:", options, &idx);
     if (c == -1) break;
     switch (c) {
     case 'a':
@@ -268,6 +270,9 @@ char *process_args(int argc, char **argv)
       break;
     case 'v':
       set_config_print(optarg, true);
+      break;
+    case 'l':
+      insn_limit = atoi(optarg);
       break;
     case '?':
       print_usage(argv[0], 1);
@@ -655,7 +660,13 @@ void run_sail(void)
   bool need_instr = true;
 #endif
 
-  while (!zhtif_done) {
+  struct timeval interval_start;
+  if (gettimeofday(&interval_start, NULL) < 0) {
+    fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
+    exit(1);
+  }
+  
+  while (!zhtif_done && (insn_limit == 0 || total_insns < insn_limit)) {
 #ifdef RVFI_DII
     if (rvfi_dii) {
       if (need_instr) {
@@ -717,6 +728,15 @@ void run_sail(void)
       total_insns++;
     }
 
+    if (do_show_times && (total_insns & 0xfffff) == 0) {
+      uint64_t start_us = 1000000 * ((uint64_t) interval_start.tv_sec)  + ((uint64_t)interval_start.tv_usec);
+      if (gettimeofday(&interval_start, NULL) < 0) {
+        fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
+         exit(1);
+      }
+      uint64_t end_us = 1000000 * ((uint64_t) interval_start.tv_sec)  + ((uint64_t)interval_start.tv_usec);
+      fprintf(stdout, "kips: %" PRIu64 "\n", ((uint64_t)1000) * 0x100000 / (end_us - start_us));
+    }
 #ifdef ENABLE_SPIKE
     { /* run a Spike step */
       tv_step(s);
