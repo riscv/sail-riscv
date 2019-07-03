@@ -69,7 +69,7 @@ function phys_mem_segments() =
 
 /* Physical memory map predicates */
 
-function within_phys_mem forall 'n. (addr : xlenbits, width : atom('n)) -> bool = {
+function within_phys_mem forall 'n, 'n <= max_mem_access. (addr : xlenbits, width : atom('n)) -> bool = {
   /* To avoid overflow issues when physical memory extends to the end
    * of the addressable range, we need to perform address bound checks
    * on unsigned unbounded integers.
@@ -97,7 +97,7 @@ function within_phys_mem forall 'n. (addr : xlenbits, width : atom('n)) -> bool 
   }
 }
 
-function within_clint forall 'n. (addr : xlenbits, width : atom('n)) -> bool = {
+function within_clint forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool = {
   /* To avoid overflow issues when physical memory extends to the end
    * of the addressable range, we need to perform address bound checks
    * on unsigned unbounded integers.
@@ -109,10 +109,10 @@ function within_clint forall 'n. (addr : xlenbits, width : atom('n)) -> bool = {
   & (addr_int + sizeof('n)) <= (clint_base_int + clint_size_int)
 }
 
-function within_htif_writable forall 'n. (addr : xlenbits, width : atom('n)) -> bool =
+function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool =
     plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4)
 
-function within_htif_readable forall 'n. (addr : xlenbits, width : atom('n)) -> bool =
+function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool =
     plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4)
 
 /* CLINT (Core Local Interruptor), based on Spike. */
@@ -319,20 +319,20 @@ function htif_tick() = {
 
 /* Top-level MMIO dispatch */
 
-function within_mmio_readable forall 'n. (addr : xlenbits, width : atom('n)) -> bool =
+function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool =
   within_clint(addr, width) | (within_htif_readable(addr, width) & 1 <= 'n)
 
-function within_mmio_writable forall 'n. (addr : xlenbits, width : atom('n)) -> bool =
+function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool =
   within_clint(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
 
-function mmio_read forall 'n, 'n > 0. (addr : xlenbits, width : atom('n)) -> MemoryOpResult(bits(8 * 'n)) =
+function mmio_read forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> MemoryOpResult(bits(8 * 'n)) =
   if   within_clint(addr, width)
   then clint_load(addr, width)
   else if within_htif_readable(addr, width) & (1 <= 'n)
   then htif_load(addr, width)
   else MemException(E_Load_Access_Fault)
 
-function mmio_write forall 'n, 'n > 0. (addr : xlenbits, width : atom('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
+function mmio_write forall 'n, 0 <'n <= max_mem_access . (addr : xlenbits, width : atom('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
   if   within_clint(addr, width)
   then clint_store(addr, width, data)
   else if within_htif_writable(addr, width) & 'n <= 8

@@ -20,7 +20,7 @@ function is_aligned_addr forall 'n. (addr : xlenbits, width : atom('n)) -> bool 
   unsigned(addr) % width == 0
 
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_read forall 'n, 'n > 0. (t : AccessType, addr : xlenbits, width : atom('n), aq : bool, rl: bool, res : bool) -> MemoryOpResult(bits(8 * 'n)) = {
+function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType, addr : xlenbits, width : atom('n), aq : bool, rl: bool, res : bool) -> MemoryOpResult(bits(8 * 'n)) = {
   let result = (match (aq, rl, res) {
     (false, false, false) => Some(read_ram(Read_plain, addr, width)),
     (true, false, false)  => Some(read_ram(Read_RISCV_acquire, addr, width)),
@@ -42,7 +42,7 @@ function phys_mem_read forall 'n, 'n > 0. (t : AccessType, addr : xlenbits, widt
 }
 
 /* dispatches to MMIO regions or physical memory regions depending on physical memory map */
-function checked_mem_read forall 'n, 'n > 0. (t : AccessType, addr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
+function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType, addr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
   if   within_mmio_readable(addr, width)
   then mmio_read(addr, width)
   else if within_phys_mem(addr, width)
@@ -50,7 +50,7 @@ function checked_mem_read forall 'n, 'n > 0. (t : AccessType, addr : xlenbits, w
   else MemException(E_Load_Access_Fault)
 
 /* PMP checks if enabled */
-function pmp_mem_read forall 'n, 'n > 0. (t : AccessType, addr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
+function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType, addr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
   if   (~ (plat_enable_pmp ()))
   then checked_mem_read(t, addr, width, aq, rl, res)
   else {
@@ -81,9 +81,9 @@ $endif
 
 /* NOTE: The rreg effect is due to MMIO. */
 $ifdef RVFI_DII
-val mem_read : forall 'n, 'n > 0. (AccessType, xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {wreg, rmem, rreg, escape}
+val mem_read : forall 'n, 0 < 'n <= max_mem_access . (AccessType, xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {wreg, rmem, rreg, escape}
 $else
-val mem_read : forall 'n, 'n > 0. (AccessType, xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rreg, escape}
+val mem_read : forall 'n, 0 < 'n <= max_mem_access . (AccessType, xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rreg, escape}
 $endif
 
 function mem_read (typ, addr, width, aq, rl, res) = {
@@ -99,7 +99,7 @@ function mem_read (typ, addr, width, aq, rl, res) = {
  result
 }
 
-val mem_write_ea : forall 'n, 'n > 0. (xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(unit) effect {eamem, escape}
+val mem_write_ea : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(unit) effect {eamem, escape}
 
 function mem_write_ea (addr, width, aq, rl, con) = {
   if (rl | con) & (~ (is_aligned_addr(addr, width)))
@@ -117,7 +117,7 @@ function mem_write_ea (addr, width, aq, rl, con) = {
 }
 
 $ifdef RVFI_DII
-val rvfi_write : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> unit effect {wreg}
+val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n)) -> unit effect {wreg}
 function rvfi_write (addr, width, value) = {
   rvfi_exec->rvfi_mem_addr() = EXTZ(addr);
   if width <= 8 then {
@@ -131,7 +131,7 @@ function rvfi_write (addr, width, value) = ()
 $endif
 
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_write forall 'n, 'n > 0. (wk : write_kind, addr : xlenbits, width : atom('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
+function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, addr : xlenbits, width : atom('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
   rvfi_write(addr, width, data);
   let result = MemValue(write_ram(wk, addr, width, data, meta));
   if   get_config_print_mem()
@@ -140,7 +140,7 @@ function phys_mem_write forall 'n, 'n > 0. (wk : write_kind, addr : xlenbits, wi
 }
 
 /* dispatches to MMIO regions or physical memory regions depending on physical memory map */
-function checked_mem_write forall 'n, 'n > 0. (wk : write_kind, addr : xlenbits, width : atom('n), data: bits(8 * 'n), meta: mem_meta) -> MemoryOpResult(bool) =
+function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, addr : xlenbits, width : atom('n), data: bits(8 * 'n), meta: mem_meta) -> MemoryOpResult(bool) =
   if   within_mmio_writable(addr, width)
   then mmio_write(addr, width, data)
   else if within_phys_mem(addr, width)
@@ -148,7 +148,7 @@ function checked_mem_write forall 'n, 'n > 0. (wk : write_kind, addr : xlenbits,
   else MemException(E_SAMO_Access_Fault)
 
 /* PMP checks if enabled */
-function pmp_mem_write forall 'n, 'n > 0. (wk: write_kind, addr : xlenbits, width : atom('n), data: bits(8 * 'n), meta: mem_meta) -> MemoryOpResult(bool) =
+function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, addr : xlenbits, width : atom('n), data: bits(8 * 'n), meta: mem_meta) -> MemoryOpResult(bool) =
   if   (~ (plat_enable_pmp ()))
   then checked_mem_write(wk, addr, width, data, meta)
   else match pmpCheck(addr, width, Write, effectivePrivilege(mstatus, cur_privilege)) {
@@ -163,7 +163,7 @@ function pmp_mem_write forall 'n, 'n > 0. (wk: write_kind, addr : xlenbits, widt
  * data.
  * NOTE: The wreg effect is due to MMIO, the rreg is due to checking mtime.
  */
-val mem_write_value_meta : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n), mem_meta, bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
+val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), mem_meta, bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
 function mem_write_value_meta (addr, width, value, meta, aq, rl, con) = {
   rvfi_write(addr, width, value);
   if (rl | con) & (~ (is_aligned_addr(addr, width)))
@@ -182,6 +182,6 @@ function mem_write_value_meta (addr, width, value, meta, aq, rl, con) = {
 }
 
 /* Memory write with a default metadata value. */
-val mem_write_value : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n), bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
+val mem_write_value : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
 function mem_write_value (addr, width, value, aq, rl, con) =
   mem_write_value_meta(addr, width, value, default_meta, aq, rl, con)

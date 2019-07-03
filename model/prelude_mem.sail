@@ -10,7 +10,16 @@
  * in prelude_mem_metadata.
  */
 
-val write_ram : forall 'n, 'n > 0. (write_kind, xlenbits, atom('n), bits(8 * 'n), mem_meta) -> bool effect {wmv, wmvt}
+
+/* This is a slightly arbitrary limit on the maximum number of bytes
+   in a memory access.  It helps to generate slightly better C code
+   because it means width argument can be fast native integer. It
+   would be even better if it could be <= 8 bytes so that data can
+   also be a 64-bit int but CHERI needs 128-bit accesses for
+   capabilities and SIMD / vector instructions will also need more. */
+   type max_mem_access : Int = 16
+
+val write_ram : forall 'n, 0 < 'n <= max_mem_access . (write_kind, xlenbits, atom('n), bits(8 * 'n), mem_meta) -> bool effect {wmv, wmvt}
 function write_ram(wk, addr, width, data, meta) = {
   /* Write out metadata only if the value write succeeds.
    * It is assumed for now that this write always succeeds;
@@ -23,12 +32,12 @@ function write_ram(wk, addr, width, data, meta) = {
   ret
 }
 
-val write_ram_ea : forall 'n, 'n > 0 . (write_kind, xlenbits, atom('n)) -> unit effect {eamem}
+val write_ram_ea : forall 'n, 0 < 'n <= max_mem_access . (write_kind, xlenbits, atom('n)) -> unit effect {eamem}
 function write_ram_ea(wk, addr, width) =
   __write_mem_ea(wk, sizeof(xlen), addr, width)
 
 /* FIXME: Make this also return the metadata, which will also require external API changes. */
-val read_ram : forall 'n, 'n > 0.  (read_kind, xlenbits, atom('n)) -> bits(8 * 'n) effect {rmem}
+val read_ram : forall 'n, 0 < 'n <= max_mem_access .  (read_kind, xlenbits, atom('n)) -> bits(8 * 'n) effect {rmem}
 function read_ram(rk, addr, width) =
   __read_mem(rk, sizeof(xlen), addr, width)
 
