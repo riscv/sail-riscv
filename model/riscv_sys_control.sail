@@ -295,9 +295,10 @@ $endif
 function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
                      -> xlenbits = {
   rvfi_trap();
-  print_platform("handling " ^ (if intr then "int#" else "exc#")
-                 ^ BitStr(c) ^ " at priv " ^ to_str(del_priv)
-		 ^ " with tval " ^ BitStr(tval(info)));
+  if   get_config_print_platform()
+  then print_platform("handling " ^ (if intr then "int#" else "exc#")
+                      ^ BitStr(c) ^ " at priv " ^ to_str(del_priv)
+                      ^ " with tval " ^ BitStr(tval(info)));
 
   cancel_reservation();
 
@@ -316,7 +317,8 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        handle_trap_extension(del_priv, pc, ext);
 
-       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
+       if   get_config_print_reg()
+       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
        prepare_trap_vector(del_priv, mcause)
     },
@@ -340,7 +342,8 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        handle_trap_extension(del_priv, pc, ext);
 
-       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
+       if   get_config_print_reg()
+       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
        prepare_trap_vector(del_priv, scause)
     },
@@ -359,7 +362,8 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        handle_trap_extension(del_priv, pc, ext);
 
-       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
+       if   get_config_print_reg()
+       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
        prepare_trap_vector(del_priv, ucause)
     }
@@ -371,8 +375,9 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
   match (cur_priv, ctl) {
     (_, CTL_TRAP(e)) => {
       let del_priv = exception_delegatee(e.trap, cur_priv);
-      print_platform("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
-                     ^ " to handle " ^ to_str(e.trap));
+      if   get_config_print_platform()
+      then print_platform("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
+                          ^ " to handle " ^ to_str(e.trap));
       trap_handler(del_priv, false, e.trap, pc, e.excinfo, e.ext)
     },
     (_, CTL_MRET())  => {
@@ -382,8 +387,10 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       cur_privilege   = privLevel_of_bits(mstatus.MPP());
       mstatus->MPP()  = privLevel_to_bits(if haveUsrMode() then User else Machine);
 
-      print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
-      print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
+      if   get_config_print_reg()
+      then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
+      if   get_config_print_platform()
+      then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
       cancel_reservation();
       prepare_xret_target(Machine) & pc_alignment_mask()
@@ -396,9 +403,11 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       /* S-mode implies that U-mode is supported (issue 331 on riscv-isa-manual). */
       mstatus->SPP()  = false;
 
-      print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
-      print_platform("ret-ing from " ^ to_str(prev_priv)
-                     ^ " to " ^ to_str(cur_privilege));
+      if   get_config_print_reg()
+      then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
+      if   get_config_print_platform()
+      then print_platform("ret-ing from " ^ to_str(prev_priv)
+                          ^ " to " ^ to_str(cur_privilege));
 
       cancel_reservation();
       prepare_xret_target(Supervisor) & pc_alignment_mask()
@@ -409,8 +418,10 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus->UPIE() = true;
       cur_privilege   = User;
 
-      print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
-      print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
+      if   get_config_print_reg()
+      then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
+      if   get_config_print_platform()
+      then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
       cancel_reservation();
       prepare_xret_target(User) & pc_alignment_mask()
@@ -468,7 +479,8 @@ function init_sys() -> unit = {
   init_pmp();
 
   // log compatibility with spike
-  print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(EXTZ(0b0) : xlenbits) ^ ")")
+  if   get_config_print_reg()
+  then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(EXTZ(0b0) : xlenbits) ^ ")")
 }
 
 /* memory access exceptions, defined here for use by the platform model. */

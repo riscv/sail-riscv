@@ -10,8 +10,8 @@ function step(step_no) = {
   let (retired, stepped) : (Retired, bool) =
     match dispatchInterrupt(cur_privilege) {
       Some(intr, priv) => {
-        if get_config_print_instr() then 
-          print_bits("Handling interrupt: ", intr);
+        if   get_config_print_instr()
+        then print_bits("Handling interrupt: ", intr);
         handle_interrupt(intr, priv);
         (RETIRE_FAIL, false)
       },
@@ -32,7 +32,8 @@ function step(step_no) = {
           /* non-error cases: */
           F_RVC(h) => {
             let ast = decodeCompressed(h);
-            if get_config_print_instr() then {
+            if   get_config_print_instr()
+            then {
               print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ to_str(ast));
             };
             /* check for RVC once here instead of every RVC execute clause. */
@@ -46,7 +47,8 @@ function step(step_no) = {
           },
           F_Base(w) => {
             let ast = decode(w);
-            if get_config_print_instr() then {
+            if   get_config_print_instr()
+            then {
               print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ to_str(ast));
             };
             nextPC = PC + 4;

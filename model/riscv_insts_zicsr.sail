@@ -94,7 +94,8 @@ function readCSR csr : csreg -> xlenbits = {
                                     EXTZ(0x0) }
                    }
   };
-  print_reg("CSR " ^ to_str(csr) ^ " -> " ^ BitStr(res));
+  if   get_config_print_reg()
+  then print_reg("CSR " ^ to_str(csr) ^ " -> " ^ BitStr(res));
   res
 }
 
@@ -164,7 +165,8 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     _           => None()
   };
   match res {
-    Some(v) => print_reg("CSR " ^ to_str(csr) ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")"),
+    Some(v) => if   get_config_print_reg()
+               then print_reg("CSR " ^ to_str(csr) ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")"),
     None()  => { /* check extensions */
                  if   ext_write_CSR(csr, value)
                  then ()
