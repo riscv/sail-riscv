@@ -19,5 +19,6 @@ function ext_init() = {
   rvfi_zero_exec_packet();
   rvfi_halt_exec_packet();
   let _ = rvfi_get_exec_packet();
+  ext_rvfi_init();
   ()
 }
