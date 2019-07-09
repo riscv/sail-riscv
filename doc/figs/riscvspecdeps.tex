@@ -28,7 +28,8 @@
                                                     current privilege};
 
   \node (pmp)     [spec, above=of regfile]       {\textbf{PMP}\\
-                                                    \texttt{riscv\_pmp\_regs, riscv\_pmp\_control}};
+                                                    \texttt{riscv\_pmp\_regs, riscv\_pmp\_control}\\
+                                                    physical memory protection};
 
   % compute location for virtmem
   \coordinate (vmloc) at ($(types)!3!(pmp)$);
