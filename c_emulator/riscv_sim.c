@@ -70,18 +70,18 @@ bool config_print_mem_access = true;
 bool config_print_platform = true;
 
 void set_config_print(char *var, bool val) {
-  if (optarg == NULL || strcmp("all", optarg) == 0) {
+  if (var == NULL || strcmp("all", var) == 0) {
     config_print_instr = val;
     config_print_mem_access = val;
     config_print_reg = val;
     config_print_platform = val;
-  } else if (strcmp("instr", optarg) == 0) {
+  } else if (strcmp("instr", var) == 0) {
     config_print_instr = val;
-  } else if (strcmp("reg", optarg) == 0) {
+  } else if (strcmp("reg", var) == 0) {
     config_print_reg = val;
-  } else if (strcmp("mem", optarg) == 0) {
+  } else if (strcmp("mem", var) == 0) {
     config_print_mem_access = val;
-  } else if (strcmp("platform", optarg) == 0) {
+  } else if (strcmp("platform", var) == 0) {
     config_print_platform = val;
   } else {
     fprintf(stderr, "Unknown trace category: '%s' (should be instr|reg|mem|platform|all)\n", var);
@@ -196,7 +196,7 @@ char *process_args(int argc, char **argv)
   int c, idx = 1;
   uint64_t ram_size = 0;
   while(true) {
-    c = getopt_long(argc, argv, "admCIispz:b:t:v:hr:T:V::v::l:", options, &idx);
+    c = getopt_long(argc, argv, "admCIispz:b:t:hr:T:V::v::l:", options, &idx);
     if (c == -1) break;
     switch (c) {
     case 'a':
