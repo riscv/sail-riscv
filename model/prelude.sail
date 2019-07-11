@@ -101,10 +101,16 @@ val print_reg      = {ocaml: "Platform.print_reg", interpreter: "print_endline",
 val print_mem      = {ocaml: "Platform.print_mem_access", interpreter: "print_endline", c: "print_mem_access", lem: "print_dbg", _: "print_endline"} : string -> unit
 val print_platform = {ocaml: "Platform.print_platform", interpreter: "print_endline", c: "print_platform", lem: "print_dbg", _: "print_endline"} : string -> unit
 
-val get_config_print_instr = {ocaml: "Platform.get_config_print_instr", _:"get_config_print_instr"} : unit -> bool
-val get_config_print_reg = {ocaml: "Platform.get_config_print_reg", _:"get_config_print_reg"} : unit -> bool
-val get_config_print_mem = {ocaml: "Platform.get_config_print_mem", _:"get_config_print_mem"} : unit -> bool
-val get_config_print_platform = {ocaml: "Platform.get_config_print_platform", _:"get_config_print_platform"} : unit -> bool
+val get_config_print_instr = {ocaml: "Platform.get_config_print_instr", c:"get_config_print_instr"} : unit -> bool
+val get_config_print_reg = {ocaml: "Platform.get_config_print_reg", c:"get_config_print_reg"} : unit -> bool
+val get_config_print_mem = {ocaml: "Platform.get_config_print_mem", c:"get_config_print_mem"} : unit -> bool
+
+val get_config_print_platform = {ocaml: "Platform.get_config_print_platform", c:"get_config_print_platform"} : unit -> bool
+// defaults for other backends
+function get_config_print_instr () = false
+function get_config_print_reg () = false
+function get_config_print_mem () = false
+function get_config_print_platform () = false
 
 val EXTS : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
 val EXTZ : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)

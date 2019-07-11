@@ -71,18 +71,6 @@ let speculate_conditional_success () = excl_result ()
 let match_reservation _ = true
 let cancel_reservation () = ()
 
-val get_config_print_instr : unit -> bool
-let get_config_print_instr () = true
-
-val get_config_print_reg : unit -> bool
-let get_config_print_reg () = true
-
-val get_config_print_mem : unit -> bool
-let get_config_print_mem () = true
-
-val get_config_print_platform : unit -> bool
-let get_config_print_platform () = true
-
 val sys_enable_writable_misa : unit -> bool
 let sys_enable_writable_misa () = true
 declare ocaml target_rep function sys_enable_writable_misa = `Platform.enable_writable_misa`
