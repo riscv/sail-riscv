@@ -86,7 +86,7 @@ function rX r = {
 $ifdef RVFI_DII
 val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit effect {wreg}
 function rvfi_wX (r,v) = {
-  rvfi_exec->rvfi_rd_wdata() = EXTS(v);
+  rvfi_exec->rvfi_rd_wdata() = EXTZ(v);
   rvfi_exec->rvfi_rd_addr() = to_bits(8,r);
 }
 $else
@@ -134,8 +134,8 @@ function wX (r, in_v) = {
   };
   if (r != 0) then {
      rvfi_wX(r, in_v);
-     if get_config_print_reg() then
-       print_reg("x" ^ string_of_int(r) ^ " <- " ^ RegStr(v));
+     if   get_config_print_reg()
+     then print_reg("x" ^ string_of_int(r) ^ " <- " ^ RegStr(v));
   }
 }
 
