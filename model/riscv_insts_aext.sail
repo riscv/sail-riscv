@@ -44,7 +44,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
     /* Get the address, X(rs1) (no offset).
      * Extensions might perform additional checks on address validity.
      */
-    match ext_data_get_addr(rs1, zeros(), Read, width) {
+    match ext_data_get_addr(rs1, zeros(), Read(Data), width) {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
         let aligned : bool =
@@ -62,12 +62,12 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
          */
         if (~ (aligned))
         then { handle_mem_exception(vaddr, E_Load_Addr_Align); RETIRE_FAIL }
-        else match translateAddr(vaddr, Read) {
+        else match translateAddr(vaddr, Read(Data)) {
                TR_Failure(e)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                TR_Address(addr) =>
                  match (width, sizeof(xlen)) {
-                   (WORD, _)    => process_loadres(rd, vaddr, mem_read(Read, addr, 4, aq, rl, true), false),
-                   (DOUBLE, 64) => process_loadres(rd, vaddr, mem_read(Read, addr, 8, aq, rl, true), false),
+                   (WORD, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 4, aq, rl, true), false),
+                   (DOUBLE, 64) => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, true), false),
                    _            => internal_error("LOADRES expected WORD or DOUBLE")
                  }
              }
@@ -103,7 +103,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
       /* Get the address, X(rs1) (no offset).
        * Extensions might perform additional checks on address validity.
        */
-      match ext_data_get_addr(rs1, zeros(), Write, width) {
+      match ext_data_get_addr(rs1, zeros(), Write(Data), width) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
         Ext_DataAddr_OK(vaddr) => {
           let aligned : bool =
@@ -123,8 +123,8 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
               /* cannot happen in rmem */
               X(rd) = EXTZ(0b1); cancel_reservation(); RETIRE_SUCCESS
             } else {
-              match translateAddr(vaddr, Write) {  /* Write and ReadWrite are equivalent here:
-                                                    * both result in a SAMO exception */
+              match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
+                                                          * both result in a SAMO exception */
                 TR_Failure(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                 TR_Address(addr) => {
                   let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
@@ -189,10 +189,10 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
     /* Get the address, X(rs1) (no offset).
      * Some extensions perform additional checks on address validity.
      */
-    match ext_data_get_addr(rs1, zeros(), ReadWrite, width) {
+    match ext_data_get_addr(rs1, zeros(), ReadWrite(Data), width) {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
-        match translateAddr(vaddr, ReadWrite) {
+        match translateAddr(vaddr, ReadWrite(Data)) {
           TR_Failure(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
           TR_Address(addr) => {
             let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
@@ -205,8 +205,8 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
               MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
               MemValue(_) => {
                 let rval : MemoryOpResult(xlenbits) = match (width, sizeof(xlen)) {
-                  (WORD, _)    => extend_value(false, mem_read(ReadWrite, addr, 4, aq, aq & rl, true)),
-                  (DOUBLE, 64) => extend_value(false, mem_read(ReadWrite, addr, 8, aq, aq & rl, true)),
+                  (WORD, _)    => extend_value(false, mem_read(ReadWrite(Data), addr, 4, aq, aq & rl, true)),
+                  (DOUBLE, 64) => extend_value(false, mem_read(ReadWrite(Data), addr, 8, aq, aq & rl, true)),
                   _            => internal_error ("AMO expected WORD or DOUBLE")
                 };
                 match (rval) {

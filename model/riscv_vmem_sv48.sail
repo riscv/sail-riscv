@@ -1,6 +1,6 @@
 /* Sv48 address translation for RV64. */
 
-val walk48 : (vaddr48, AccessType, Privilege, bool, bool, paddr64, nat, bool) -> PTW_Result(paddr64, SV48_PTE) effect {rmem, rreg, escape}
+val walk48 : (vaddr48, AccessType(ext_access_type), Privilege, bool, bool, paddr64, nat, bool) -> PTW_Result(paddr64, SV48_PTE) effect {rmem, rreg, escape}
 function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
   let va = Mk_SV48_Vaddr(vaddr);
   let pt_ofs : paddr64 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV48_LEVEL_BITS))[(SV48_LEVEL_BITS - 1) .. 0]),
@@ -105,7 +105,7 @@ function flush_TLB48(asid, addr) =
 
 /* address translation */
 
-val translate48 : (asid64, paddr64, vaddr48, AccessType, Privilege, bool, bool, nat) -> TR_Result(paddr64, PTW_Error) effect {rreg, wreg, wmv, wmvt, escape, rmem}
+val translate48 : (asid64, paddr64, vaddr48, AccessType(ext_access_type), Privilege, bool, bool, nat) -> TR_Result(paddr64, PTW_Error) effect {rreg, wreg, wmv, wmvt, escape, rmem}
 function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
   match walk48(vAddr, ac, priv, mxr, do_sum, ptb, level, false) {
     PTW_Failure(f) => TR_Failure(f),

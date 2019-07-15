@@ -26,18 +26,18 @@ function pmpAddrRange(cfg: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits
 
 /* permission checks */
 
-val pmpCheckRWX: (Pmpcfg_ent, AccessType) -> bool
+val pmpCheckRWX: (Pmpcfg_ent, AccessType(ext_access_type)) -> bool
 function pmpCheckRWX(ent, acc) = {
   match acc {
-    Read      => ent.R() == true,
-    Write     => ent.W() == true,
-    ReadWrite => ent.R() == true & ent.W() == true,
-    Execute   => ent.X() == true
+    Read(Data)       => ent.R() == true,
+    Write(Data)      => ent.W() == true,
+    ReadWrite(Data)  => ent.R() == true & ent.W() == true,
+    Execute()        => ent.X() == true
   }
 }
 
 // this needs to be called with the effective current privilege.
-val pmpCheckPerms: (Pmpcfg_ent, AccessType, Privilege) -> bool
+val pmpCheckPerms: (Pmpcfg_ent, AccessType(ext_access_type), Privilege) -> bool
 function pmpCheckPerms(ent, acc, priv) = {
   match priv {
     Machine => if   ent.L() == true
@@ -68,7 +68,7 @@ function pmpMatchAddr(addr: xlenbits, width: xlenbits, rng: pmp_addr_range) -> p
 
 enum pmpMatch = {PMP_Success, PMP_Continue, PMP_Fail}
 
-function pmpMatchEntry(addr: xlenbits, width: xlenbits, acc: AccessType, priv: Privilege,
+function pmpMatchEntry(addr: xlenbits, width: xlenbits, acc: AccessType(ext_access_type), priv: Privilege,
                        ent: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits) -> pmpMatch = {
   let rng = pmpAddrRange(ent, pmpaddr, prev_pmpaddr);
   match pmpMatchAddr(addr, width, rng) {
@@ -82,7 +82,7 @@ function pmpMatchEntry(addr: xlenbits, width: xlenbits, acc: AccessType, priv: P
 
 /* priority checks */
 
-function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: atom('n), acc: AccessType, priv: Privilege)
+function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: atom('n), acc: AccessType(ext_access_type), priv: Privilege)
                   -> option(ExceptionType) = {
   let width : xlenbits = to_bits(sizeof(xlen), width);
   let check : bool =
@@ -158,10 +158,10 @@ function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: atom('n), acc: Acce
   if   check
   then None()
   else match acc {
-    Read      => Some(E_Load_Access_Fault),
-    Write     => Some(E_SAMO_Access_Fault),
-    ReadWrite => Some(E_SAMO_Access_Fault),
-    Execute   => Some(E_Fetch_Access_Fault)
+    Read(Data)      => Some(E_Load_Access_Fault),
+    Write(Data)     => Some(E_SAMO_Access_Fault),
+    ReadWrite(Data) => Some(E_SAMO_Access_Fault),
+    Execute()       => Some(E_Fetch_Access_Fault)
   }
 }
 

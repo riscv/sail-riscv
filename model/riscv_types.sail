@@ -97,18 +97,12 @@ enum Retired = {RETIRE_SUCCESS, RETIRE_FAIL}
 
 /* memory access types */
 
-enum AccessType = {Read, Write, ReadWrite, Execute}
-
-val accessType_to_str : AccessType -> string
-function accessType_to_str (a) =
-  match (a) {
-    Read      => "R",
-    Write     => "W",
-    ReadWrite => "RW",
-    Execute   => "X"
-  }
-
-overload to_str = {accessType_to_str}
+union AccessType ('a : Type) = {
+  Read      : 'a,
+  Write     : 'a,
+  ReadWrite : 'a,
+  Execute   : unit
+}
 
 enum word_width = {BYTE, HALF, WORD, DOUBLE}
 
