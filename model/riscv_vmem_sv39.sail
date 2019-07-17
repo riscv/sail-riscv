@@ -18,6 +18,7 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
     MemValue(v) => {
       let pte = Mk_SV39_PTE(v);
       let pbits = pte.BITS();
+      let ext_pte = pte.Ext();
       let pattr = Mk_PTE_Bits(pbits);
       let is_global = global | (pattr.G() == true);
 /*    print("walk39(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
@@ -25,11 +26,11 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
             ^ " pt_ofs=" ^ BitStr(pt_ofs)
             ^ " pte_addr=" ^ BitStr(pte_addr)
             ^ " pte=" ^ BitStr(v)); */
-      if isInvalidPTE(pbits) then {
+      if isInvalidPTE(pbits, ext_pte) then {
 /*      print("walk39: invalid pte"); */
         PTW_Failure(PTW_Invalid_PTE)
       } else {
-        if isPTEPtr(pbits) then {
+        if isPTEPtr(pbits, ext_pte) then {
           if level == 0 then {
             /* last-level PTE contains a pointer instead of a leaf */
 /*          print("walk39: last-level pte contains a ptr"); */
@@ -39,7 +40,7 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
             walk39(vaddr, ac, priv, mxr, do_sum, shiftl(EXTZ(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global)
           }
         } else { /* leaf PTE */
-          if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pattr)) then {
+          if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pattr, ext_pte)) then {
 /*          print("walk39: pte permission check failure"); */
             PTW_Failure(PTW_No_Permission)
           } else {
@@ -111,13 +112,14 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
     Some(idx, ent) => {
 /*    print("translate39: TLB39 hit for " ^ BitStr(vAddr)); */
       let  pte = Mk_SV39_PTE(ent.pte);
+      let  ext_pte = pte.Ext();
       let  pteBits = Mk_PTE_Bits(pte.BITS());
-      if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pteBits))
+      if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pteBits, ext_pte))
       then TR_Failure(PTW_No_Permission)
       else {
-        match update_PTE_Bits(pteBits, ac) {
+        match update_PTE_Bits(pteBits, ac, ext_pte) {
           None()      => TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask)),
-          Some(pbits) => {
+          Some(pbits, ext) => {
             if ~ (plat_enable_dirty_update ())
             then {
               /* pte needs dirty/accessed update but that is not enabled */
@@ -125,6 +127,7 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
             } else {
               /* update PTE entry and TLB */
               n_pte = update_BITS(pte, pbits.bits());
+	      n_pte = update_Ext(n_pte, ext);
               n_ent : TLB39_Entry = ent;
               n_ent.pte = n_pte.bits();
               write_TLB39(idx, n_ent);
@@ -143,18 +146,19 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
       match walk39(vAddr, ac, priv, mxr, do_sum, ptb, level, false) {
         PTW_Failure(f) => TR_Failure(f),
         PTW_Success(pAddr, pte, pteAddr, level, global) => {
-          match update_PTE_Bits(Mk_PTE_Bits(pte.BITS()), ac) {
+          match update_PTE_Bits(Mk_PTE_Bits(pte.BITS()), ac, pte.Ext()) {
             None() => {
               add_to_TLB39(asid, vAddr, pAddr, pte, pteAddr, level, global);
               TR_Address(pAddr)
             },
-            Some(pbits) =>
+            Some(pbits, ext) =>
               if ~ (plat_enable_dirty_update ())
               then {
                 /* pte needs dirty/accessed update but that is not enabled */
                 TR_Failure(PTW_PTE_Update)
               } else {
                 w_pte : SV39_PTE = update_BITS(pte, pbits.bits());
+		w_pte : SV39_PTE = update_Ext(w_pte, ext);
                 match mem_write_value(EXTZ(pteAddr), 8, w_pte.bits(), false, false, false) {
                   MemValue(_) => {
                     add_to_TLB39(asid, vAddr, pAddr, w_pte, pteAddr, level, global);

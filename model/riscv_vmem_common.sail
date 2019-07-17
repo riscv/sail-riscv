@@ -106,6 +106,7 @@ bitfield SV39_Paddr : paddr64 = {
 }
 
 bitfield SV39_PTE : pte64 = {
+  Ext   : 63 .. 54,
   PPNi  : 53 .. 10,
   RSW   : 9  .. 8,
   BITS  : 7  .. 0
@@ -132,6 +133,7 @@ bitfield SV48_Paddr : paddr64 = {
 }
 
 bitfield SV48_PTE : pte48 = {
+  Ext   : 63 .. 54,
   PPNi  : 53 .. 10,
   RSW   : 9  .. 8,
   BITS  : 7  .. 0

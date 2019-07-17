@@ -1,4 +1,4 @@
-// Specialize the accesstype for memory
+// Extensions for memory Accesstype
 
 type ext_access_type = unit
 
