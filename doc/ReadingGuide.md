@@ -54,7 +54,9 @@ such as the platform memory map.
   behavior as the Spike emulator.
 
 - `riscv_pmp_regs.sail` and `riscv_pmp_control.sail` implement support
-  for physical memory protection (PMP).
+  for physical memory protection (PMP).  `riscv_pmp_regs` handle read
+  and write access to the PMP registers, while `riscv_pmp_control`
+  implements the permission checking and matching priority.
 
 - `riscv_platform.sail` contains platform-specific functionality for
   the model.  It contains the physical memory map, the local interrupt

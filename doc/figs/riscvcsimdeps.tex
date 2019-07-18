@@ -19,8 +19,14 @@
   \node (cmodel)     [cmodel]                        {\textbf{C translation}\\
                                                          \texttt{riscv\_model\_\$ARCH}};
 
+  \node (csim)       [c, above left=of cmodel]       {\textbf{C Simulator}\\
+                                                         \texttt{riscv\_sim}\\
+                                                         command line options\\
+                                                         initialization\\
+                                                         exit code};
 
-  \node (sailmodel)  [sail, above right=of cmodel]   {\textbf{Sail model}\\
+  \coordinate (smloc) at ($(csim)!2!(csim -| cmodel)$);
+  \node (sailmodel)  [sail] at (smloc)               {\textbf{Sail model}\\
                                                          \texttt{*.sail}};
 
   \node (plat)       [c, below right=of cmodel]      {\textbf{C platform interface}\\
@@ -32,12 +38,6 @@
   \node (platimpl)   [c, below=of plat]              {\textbf{C platform implementation}\\
                                                          \texttt{riscv\_platform\_impl}};
 
-  \node (csim)       [c, above left=of cmodel]       {\textbf{C Simulator}\\
-                                                         \texttt{riscv\_sim}\\
-                                                         command line options\\
-                                                         initialization\\
-                                                         exit code};
-
   \coordinate (clib) at ($(cmodel)!1.5!(cmodel |- platimpl)$);
 
   \node (csail)      [csail]  at (clib)              {\textbf{C Sail library}\\
@@ -48,7 +48,8 @@
 
   \draw[->,gen]  (sailmodel) edge                    (cmodel);
 
-  \draw[->,dep]  (cmodel)    edge                    (plat);
+  \draw[->,dep]  (cmodel)    edge                    (plat)
+                             edge                    (csail);
 
   \draw[->,dep]  (plat)      edge                    (platimpl);
 
