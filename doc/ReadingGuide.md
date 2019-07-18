@@ -118,3 +118,32 @@ such as the platform memory map.
 
 Note that the files above are listed in dependency order, i.e. files
 earlier in the order do not depend on later files.
+
+Structure of the C emulator
+----------------------------
+
+The diagram below illustrates how the C emulator is built from the
+Sail model.  The OCaml emulator follows the same approach.
+
+<img src="figs/riscvcsimdeps.svg">
+
+The nodes that are not colored are the handwritten C files for the C
+emulator.
+
+`riscv_sim` is the top level file for the C emulator: it processes
+command line options, initializes the platform model with any ISA
+implementation choices if specified, and loads the ELF program or OS
+image into raw memory, including any ROM firmware such as the Berkeley
+boot loader and DeviceTree binary blobs, and initializes the memory
+map.
+
+The generated C model `riscv_model_$ARCH` is built from the Sail
+sources by the Sail compiler.  It contains calls to the platform
+interface `riscv_platform` for platform-specific information; the
+latter is typically defined as externally specified in the Sail file
+`riscv_platform.sail`.
+
+The Sail system provides a C library for use with its C backend, which
+provides the low-level details of the implementation of raw memory and
+bitvectors (typically optimized to use the native machine word
+representation).
