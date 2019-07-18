@@ -112,15 +112,15 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
       FENCE(pred, succ) => {
              ik =
                match (pred, succ) {
-                 (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => IK_barrier (Barrier_RISCV_rw_rw),
-                 (_ : bits(2) @ 0b10, _ : bits(2) @ 0b11) => IK_barrier (Barrier_RISCV_r_rw),
-                 (_ : bits(2) @ 0b10, _ : bits(2) @ 0b10) => IK_barrier (Barrier_RISCV_r_r),
-                 (_ : bits(2) @ 0b11, _ : bits(2) @ 0b01) => IK_barrier (Barrier_RISCV_rw_w),
-                 (_ : bits(2) @ 0b01, _ : bits(2) @ 0b01) => IK_barrier (Barrier_RISCV_w_w),
-                 (_ : bits(2) @ 0b01, _ : bits(2) @ 0b11) => IK_barrier (Barrier_RISCV_w_rw),
-                 (_ : bits(2) @ 0b11, _ : bits(2) @ 0b10) => IK_barrier (Barrier_RISCV_rw_r),
-                 (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => IK_barrier (Barrier_RISCV_r_w),
-                 (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => IK_barrier (Barrier_RISCV_w_r),
+                 (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => IK_barrier (Barrier_RISCV_rw_rw ()),
+                 (_ : bits(2) @ 0b10, _ : bits(2) @ 0b11) => IK_barrier (Barrier_RISCV_r_rw ()),
+                 (_ : bits(2) @ 0b10, _ : bits(2) @ 0b10) => IK_barrier (Barrier_RISCV_r_r ()),
+                 (_ : bits(2) @ 0b11, _ : bits(2) @ 0b01) => IK_barrier (Barrier_RISCV_rw_w ()),
+                 (_ : bits(2) @ 0b01, _ : bits(2) @ 0b01) => IK_barrier (Barrier_RISCV_w_w ()),
+                 (_ : bits(2) @ 0b01, _ : bits(2) @ 0b11) => IK_barrier (Barrier_RISCV_w_rw ()),
+                 (_ : bits(2) @ 0b11, _ : bits(2) @ 0b10) => IK_barrier (Barrier_RISCV_rw_r ()),
+                 (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => IK_barrier (Barrier_RISCV_r_w ()),
+                 (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => IK_barrier (Barrier_RISCV_w_r ()),
 
 
                  (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => IK_simple (),
@@ -131,12 +131,12 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
       FENCE_TSO(pred, succ) => {
              ik =
                match (pred, succ) {
-                 (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => IK_barrier (Barrier_RISCV_tso),
+                 (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => IK_barrier (Barrier_RISCV_tso ()),
                  _ => internal_error("barrier type not implemented in initial_analysis")
                };
       },
      FENCEI() => {
-              ik = IK_simple (); // for RMEM, should morally be Barrier_RISCV_i
+              ik = IK_simple (); // for RMEM, should morally be (Barrier_RISCV_i ())
      },
      LOADRES(aq, rl, rs1, width, rd) => {
             if (rs1 == 0) then () else iR = RFull(GPRstr[rs1]) :: iR;

@@ -566,15 +566,15 @@ mapping clause encdec = FENCE(pred, succ)
 
 function clause execute (FENCE(pred, succ)) = {
   match (pred, succ) {
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_rw_rw),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_r_rw),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_r_r),
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_rw_w),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_w_w),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_w_rw),
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_rw_r),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_r_w),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_w_r),
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_rw_rw ()),
+    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_r_rw ()),
+    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_r_r ()),
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_rw_w ()),
+    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_w_w ()),
+    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_w_rw ()),
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_rw_r ()),
+    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_r_w ()),
+    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_w_r ()),
 
     (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
 
@@ -619,7 +619,7 @@ mapping clause encdec = FENCE_TSO(pred, succ)
 
 function clause execute (FENCE_TSO(pred, succ)) = {
   match (pred, succ) {
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_tso),
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_tso ()),
     (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
 
     _ => { print("FIXME: unsupported fence");
@@ -638,7 +638,7 @@ mapping clause encdec = FENCEI()
   <-> 0b000000000000 @ 0b00000 @ 0b001 @ 0b00000 @ 0b0001111
 
 /* fence.i is a nop for the memory model */
-function clause execute FENCEI() = { /* __barrier(Barrier_RISCV_i); */ RETIRE_SUCCESS }
+function clause execute FENCEI() = { /* __barrier(Barrier_RISCV_i ()); */ RETIRE_SUCCESS }
 
 mapping clause assembly = FENCEI() <-> "fence.i"
 
