@@ -128,7 +128,7 @@ endif
 # Feature detect if we are on the latest development version of Sail
 # and use an updated lem file if so. This is just until the opam
 # version catches up with changes to the barrier type.
-SAIL_LATEST := $(shell $(SAIL) -has_feature FEATURE_UNION_BARRIERS 1>&2 2> /dev/null; echo $$?)
+SAIL_LATEST := $(shell $(SAIL) -have_feature FEATURE_UNION_BARRIER 1>&2 2> /dev/null; echo $$?)
 ifeq ($(SAIL_LATEST),0)
 RISCV_EXTRAS_LEM = 0.11/riscv_extras.lem
 else
