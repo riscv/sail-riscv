@@ -1,12 +1,11 @@
-FIG=riscvspecdeps
+all: riscvspecdeps.svg riscvcsimdeps.svg
 
-all: $(FIG).svg
-
-$(FIG).pdf: $(FIG).tex
+%.pdf: %.tex
 	pdflatex $<
 
-$(FIG).svg: $(FIG).pdf $(FIG).tex
+%.svg: %.pdf %.tex
 	dvisvgm -Z 1.5 --pdf $<
 
 clean:
-	rm $(FIG).pdf $(FIG).aux $(FIG).log
+	rm riscvspecdeps.pdf riscvspecdeps.aux riscvspecdeps.log
+	rm riscvcsimdeps.pdf riscvcsimdeps.aux riscvcsimdeps.log
