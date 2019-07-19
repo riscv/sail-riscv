@@ -1,5 +1,4 @@
 /* accessors for default architectural addresses, for use from within instructions */
-/* FIXME: see note in cheri_addr_checks.sail */
 
 /*!
   Retrieves the architectural PC value. This is not necessarily the value
