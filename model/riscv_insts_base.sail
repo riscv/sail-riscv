@@ -17,7 +17,7 @@ function clause execute UTYPE(imm, rd, op) = {
   let off : xlenbits = EXTS(imm @ 0x000);
   let ret : xlenbits = match op {
     RISCV_LUI   => off,
-    RISCV_AUIPC => PC + off
+    RISCV_AUIPC => get_arch_pc() + off
   };
   X(rd) = ret;
   RETIRE_SUCCESS
