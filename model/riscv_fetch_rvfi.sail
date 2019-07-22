@@ -5,7 +5,7 @@ function fetch() -> FetchResult =
   else {
     let i = rvfi_instruction.rvfi_insn();
     rvfi_exec->rvfi_order()    = minstret;
-    rvfi_exec->rvfi_pc_rdata() = EXTZ(PC);
+    rvfi_exec->rvfi_pc_rdata() = EXTZ(get_arch_pc());
     rvfi_exec->rvfi_insn()     = EXTZ(i);
 
     /* TODO: should we write these even if they're not really registers? */
