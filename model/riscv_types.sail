@@ -230,7 +230,7 @@ function exceptionType_to_str(e) =
     E_SAMO_Page_Fault()    => "store/amo-page-fault",
 
     /* extensions */
-    E_Extension()          => "extension-exception"
+    E_Extension(e)         => "extension-exception"
   }
 
 overload to_str = {exceptionType_to_str}
