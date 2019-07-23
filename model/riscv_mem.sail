@@ -32,9 +32,9 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
     (false, true, true)   => None()
   }) : option(bits(8 * 'n));
   match (t, result) {
-    (Execute(),  None()) => MemException(E_Fetch_Access_Fault),
-    (Read(Data), None()) => MemException(E_Load_Access_Fault),
-    (_,          None()) => MemException(E_SAMO_Access_Fault),
+    (Execute(),  None()) => MemException(E_Fetch_Access_Fault()),
+    (Read(Data), None()) => MemException(E_Load_Access_Fault()),
+    (_,          None()) => MemException(E_SAMO_Access_Fault()),
     (_,         Some(v)) => { if   get_config_print_mem()
                               then print_mem("mem[" ^ to_str(t) ^ "," ^ BitStr(addr) ^ "] -> " ^ BitStr(v));
                               MemValue(v) }
@@ -47,7 +47,7 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(
   then mmio_read(addr, width)
   else if within_phys_mem(addr, width)
   then phys_mem_read(t, addr, width, aq, rl, res)
-  else MemException(E_Load_Access_Fault)
+  else MemException(E_Load_Access_Fault())
 
 /* PMP checks if enabled */
 function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), addr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
@@ -89,7 +89,7 @@ $endif
 function mem_read (typ, addr, width, aq, rl, res) = {
  let result : MemoryOpResult(bits(8 * 'n)) =
   if (aq | res) & (~ (is_aligned_addr(addr, width)))
-  then MemException(E_Load_Addr_Align)
+  then MemException(E_Load_Addr_Align())
   else match (aq, rl, res) {
     (false, true,  false) => throw(Error_not_implemented("load.rl")),
     (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
@@ -103,7 +103,7 @@ val mem_write_ea : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bo
 
 function mem_write_ea (addr, width, aq, rl, con) = {
   if (rl | con) & (~ (is_aligned_addr(addr, width)))
-  then MemException(E_SAMO_Addr_Align)
+  then MemException(E_SAMO_Addr_Align())
   else match (aq, rl, con) {
     (false, false, false) => MemValue(write_ram_ea(Write_plain, addr, width)),
     (false, true,  false) => MemValue(write_ram_ea(Write_RISCV_release, addr, width)),
@@ -145,7 +145,7 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kin
   then mmio_write(addr, width, data)
   else if within_phys_mem(addr, width)
   then phys_mem_write(wk, addr, width, data, meta)
-  else MemException(E_SAMO_Access_Fault)
+  else MemException(E_SAMO_Access_Fault())
 
 /* PMP checks if enabled */
 function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, addr : xlenbits, width : atom('n), data: bits(8 * 'n), ext_acc: ext_access_type, meta: mem_meta) -> MemoryOpResult(bool) =
@@ -167,7 +167,7 @@ val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom
 function mem_write_value_meta (addr, width, value, ext_acc, meta, aq, rl, con) = {
   rvfi_write(addr, width, value);
   if (rl | con) & (~ (is_aligned_addr(addr, width)))
-  then MemException(E_SAMO_Addr_Align)
+  then MemException(E_SAMO_Addr_Align())
   else match (aq, rl, con) {
     (false, false, false) => pmp_mem_write(Write_plain, addr, width, value, ext_acc, meta),
     (false, true,  false) => pmp_mem_write(Write_RISCV_release, addr, width, value, ext_acc, meta),

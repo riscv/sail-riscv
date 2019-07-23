@@ -61,7 +61,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
          * - Andrew Waterman, isa-dev, 10 Jul 2018.
          */
         if (~ (aligned))
-        then { handle_mem_exception(vaddr, E_Load_Addr_Align); RETIRE_FAIL }
+        then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
         else match translateAddr(vaddr, Read(Data)) {
                TR_Failure(e)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                TR_Address(addr) =>
@@ -117,7 +117,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
               DOUBLE => vaddr[2..0] == 0b000
             };
           if (~ (aligned))
-          then { handle_mem_exception(vaddr, E_SAMO_Addr_Align); RETIRE_FAIL }
+          then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
           else {
             if match_reservation(vaddr) == false then {
               /* cannot happen in rmem */

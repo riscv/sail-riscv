@@ -13,7 +13,7 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
             ^ " pt_ofs=" ^ BitStr(pt_ofs)
             ^ " pte_addr=" ^ BitStr(pte_addr)
             ^ ": invalid pte address"); */
-      PTW_Failure(PTW_Access)
+      PTW_Failure(PTW_Access())
     },
     MemValue(v) => {
       let pte = Mk_SV39_PTE(v);
@@ -28,42 +28,47 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
             ^ " pte=" ^ BitStr(v)); */
       if isInvalidPTE(pbits, ext_pte) then {
 /*      print("walk39: invalid pte"); */
-        PTW_Failure(PTW_Invalid_PTE)
+        PTW_Failure(PTW_Invalid_PTE())
       } else {
         if isPTEPtr(pbits, ext_pte) then {
           if level == 0 then {
             /* last-level PTE contains a pointer instead of a leaf */
 /*          print("walk39: last-level pte contains a ptr"); */
-            PTW_Failure(PTW_Invalid_PTE)
+            PTW_Failure(PTW_Invalid_PTE())
           } else {
             /* walk down the pointer to the next level */
             walk39(vaddr, ac, priv, mxr, do_sum, shiftl(EXTZ(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global)
           }
         } else { /* leaf PTE */
-          if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pattr, ext_pte)) then {
-/*          print("walk39: pte permission check failure"); */
-            PTW_Failure(PTW_No_Permission)
-          } else {
-            if level > 0 then { /* superpage */
-              /* fixme hack: to get a mask of appropriate size */
-              let mask = shiftl(pte.PPNi() ^ pte.PPNi() ^ EXTZ(0b1), level * SV39_LEVEL_BITS) - 1;
-              if (pte.PPNi() & mask) != EXTZ(0b0) then {
-                /* misaligned superpage mapping */
-/*              print("walk39: misaligned superpage mapping"); */
-                PTW_Failure(PTW_Misaligned)
+          match checkPTEPermission(ac, priv, mxr, do_sum, pattr, ext_pte) {
+	    PTE_Check_Failure() => {
+/*            print("walk39: pte permission check failure"); */
+              PTW_Failure(PTW_No_Permission()) },
+            PTE_Check_Ext(e) => {
+/*            print("walk39: pte extension check failure"); */
+              PTW_Failure(PTW_Ext_Error(ext_ptw_error_of_pte_error(e))) },
+            PTE_Check_Success()  => {
+              if level > 0 then { /* superpage */
+                /* fixme hack: to get a mask of appropriate size */
+                let mask = shiftl(pte.PPNi() ^ pte.PPNi() ^ EXTZ(0b1), level * SV39_LEVEL_BITS) - 1;
+                if (pte.PPNi() & mask) != EXTZ(0b0) then {
+                  /* misaligned superpage mapping */
+/*                print("walk39: misaligned superpage mapping"); */
+                  PTW_Failure(PTW_Misaligned())
+                } else {
+                  /* add the appropriate bits of the VPN to the superpage PPN */
+                  let ppn = pte.PPNi() | (EXTZ(va.VPNi()) & mask);
+/*                let res = append(ppn, va.PgOfs());
+                  print("walk39: using superpage: pte.ppn=" ^ BitStr(pte.PPNi())
+                        ^ " ppn=" ^ BitStr(ppn) ^ " res=" ^ BitStr(res)); */
+                  PTW_Success(append(ppn, va.PgOfs()), pte, pte_addr, level, is_global)
+                }
               } else {
-                /* add the appropriate bits of the VPN to the superpage PPN */
-                let ppn = pte.PPNi() | (EXTZ(va.VPNi()) & mask);
-/*              let res = append(ppn, va.PgOfs());
-                print("walk39: using superpage: pte.ppn=" ^ BitStr(pte.PPNi())
-                      ^ " ppn=" ^ BitStr(ppn) ^ " res=" ^ BitStr(res)); */
-                PTW_Success(append(ppn, va.PgOfs()), pte, pte_addr, level, is_global)
+                /* normal leaf PTE */
+/*              let res = append(pte.PPNi(), va.PgOfs());
+                print("walk39: pte.ppn=" ^ BitStr(pte.PPNi()) ^ " ppn=" ^ BitStr(pte.PPNi()) ^ " res=" ^ BitStr(res)); */
+                PTW_Success(append(pte.PPNi(), va.PgOfs()), pte, pte_addr, level, is_global)
               }
-            } else {
-              /* normal leaf PTE */
-/*            let res = append(pte.PPNi(), va.PgOfs());
-              print("walk39: pte.ppn=" ^ BitStr(pte.PPNi()) ^ " ppn=" ^ BitStr(pte.PPNi()) ^ " res=" ^ BitStr(res)); */
-              PTW_Success(append(pte.PPNi(), va.PgOfs()), pte, pte_addr, level, is_global)
             }
           }
         }
@@ -114,29 +119,31 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
       let  pte = Mk_SV39_PTE(ent.pte);
       let  ext_pte = pte.Ext();
       let  pteBits = Mk_PTE_Bits(pte.BITS());
-      if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pteBits, ext_pte))
-      then TR_Failure(PTW_No_Permission)
-      else {
-        match update_PTE_Bits(pteBits, ac, ext_pte) {
-          None()      => TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask)),
-          Some(pbits, ext) => {
-            if ~ (plat_enable_dirty_update ())
-            then {
-              /* pte needs dirty/accessed update but that is not enabled */
-              TR_Failure(PTW_PTE_Update)
-            } else {
-              /* update PTE entry and TLB */
-              n_pte = update_BITS(pte, pbits.bits());
-	      n_pte = update_Ext(n_pte, ext);
-              n_ent : TLB39_Entry = ent;
-              n_ent.pte = n_pte.bits();
-              write_TLB39(idx, n_ent);
-              /* update page table */
-              match mem_write_value(EXTZ(ent.pteAddr), 8, n_pte.bits(), false, false, false) {
-                MemValue(_)     => (),
-                MemException(e) => internal_error("invalid physical address in TLB")
-              };
-              TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask))
+      match checkPTEPermission(ac, priv, mxr, do_sum, pteBits, ext_pte) {
+        PTE_Check_Failure()  => TR_Failure(PTW_No_Permission()),
+        PTE_Check_Ext(e)     => TR_Failure(PTW_Ext_Error(ext_ptw_error_of_pte_error(e))),
+        PTE_Check_Success()  => {
+          match update_PTE_Bits(pteBits, ac, ext_pte) {
+            None()           => TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask)),
+            Some(pbits, ext) => {
+              if ~ (plat_enable_dirty_update ())
+              then {
+                /* pte needs dirty/accessed update but that is not enabled */
+                TR_Failure(PTW_PTE_Update())
+              } else {
+                /* update PTE entry and TLB */
+                n_pte = update_BITS(pte, pbits.bits());
+                n_pte = update_Ext(n_pte, ext);
+                n_ent : TLB39_Entry = ent;
+                n_ent.pte = n_pte.bits();
+                write_TLB39(idx, n_ent);
+                /* update page table */
+                match mem_write_value(EXTZ(ent.pteAddr), 8, n_pte.bits(), false, false, false) {
+                  MemValue(_)     => (),
+                  MemException(e) => internal_error("invalid physical address in TLB")
+                };
+                TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask))
+              }
             }
           }
         }
@@ -155,7 +162,7 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
               if ~ (plat_enable_dirty_update ())
               then {
                 /* pte needs dirty/accessed update but that is not enabled */
-                TR_Failure(PTW_PTE_Update)
+                TR_Failure(PTW_PTE_Update())
               } else {
                 w_pte : SV39_PTE = update_BITS(pte, pbits.bits());
 		w_pte : SV39_PTE = update_Ext(w_pte, ext);
@@ -166,7 +173,7 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
                   },
                   MemException(e) => {
                     /* pte is not in valid memory */
-                    TR_Failure(PTW_Access)
+                    TR_Failure(PTW_Access())
                   }
                 }
               }

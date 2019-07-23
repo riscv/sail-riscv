@@ -18,7 +18,7 @@ function clause execute (RISCV_JALR(imm, rs1, rd)) = {
       let  target = [addr with 0 = bitzero];  /* clear addr[0] */
       if   target[1] & (~ (haveRVC()))
       then {
-        handle_mem_exception(target, E_Fetch_Addr_Align);
+        handle_mem_exception(target, E_Fetch_Addr_Align());
         RETIRE_FAIL
       } else {
         X(rd) = get_next_pc();

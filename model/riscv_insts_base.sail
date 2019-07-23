@@ -61,7 +61,7 @@ function clause execute (RISCV_JAL(imm, rd)) = {
       /* Perform standard alignment check */
       if   target[1] & (~ (haveRVC()))
       then {
-        handle_mem_exception(target, E_Fetch_Addr_Align);
+        handle_mem_exception(target, E_Fetch_Addr_Align());
         RETIRE_FAIL
       } else {
         X(rd) = get_next_pc();
@@ -124,7 +124,7 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
       },
       Ext_ControlAddr_OK(target) => {
         if target[1] & (~ (haveRVC())) then {
-          handle_mem_exception(target, E_Fetch_Addr_Align);
+          handle_mem_exception(target, E_Fetch_Addr_Align());
           RETIRE_FAIL;
         } else {
           set_next_pc(target);
@@ -322,7 +322,7 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_Load_Addr_Align); RETIRE_FAIL }
+      then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr, Read(Data)) {
         TR_Failure(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr) =>
@@ -377,7 +377,7 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_SAMO_Addr_Align); RETIRE_FAIL }
+      then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr, Write(Data)) {
         TR_Failure(e)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr) => {
@@ -695,9 +695,9 @@ mapping clause encdec = ECALL()
 function clause execute ECALL() = {
   let t : sync_exception =
     struct { trap = match (cur_privilege) {
-                      User       => E_U_EnvCall,
-                      Supervisor => E_S_EnvCall,
-                      Machine    => E_M_EnvCall
+                      User       => E_U_EnvCall(),
+                      Supervisor => E_S_EnvCall(),
+                      Machine    => E_M_EnvCall()
                     },
              excinfo = (None() : option(xlenbits)),
              ext     = None() };
@@ -750,7 +750,7 @@ mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute EBREAK() = {
-  handle_mem_exception(PC, E_Breakpoint);
+  handle_mem_exception(PC, E_Breakpoint());
   RETIRE_FAIL
 }
 

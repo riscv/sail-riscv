@@ -13,7 +13,7 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
             ^ " pt_ofs=" ^ BitStr(pt_ofs)
             ^ " pte_addr=" ^ BitStr(pte_addr)
             ^ ": invalid pte address"); */
-      PTW_Failure(PTW_Access)
+      PTW_Failure(PTW_Access())
     },
     MemValue(v) => {
       let pte = Mk_SV48_PTE(v);
@@ -28,42 +28,47 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
             ^ " pte=" ^ BitStr(v)); */
       if isInvalidPTE(pbits, ext_pte) then {
 /*      print("walk48: invalid pte"); */
-        PTW_Failure(PTW_Invalid_PTE)
+        PTW_Failure(PTW_Invalid_PTE())
       } else {
         if isPTEPtr(pbits, ext_pte) then {
           if level == 0 then {
             /* last-level PTE contains a pointer instead of a leaf */
 /*          print("walk48: last-level pte contains a ptr"); */
-            PTW_Failure(PTW_Invalid_PTE)
+            PTW_Failure(PTW_Invalid_PTE())
           } else {
             /* walk down the pointer to the next level */
             walk48(vaddr, ac, priv, mxr, do_sum, shiftl(EXTZ(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global)
           }
         } else { /* leaf PTE */
-          if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pattr, ext_pte)) then {
-/*          print("walk48: pte permission check failure"); */
-            PTW_Failure(PTW_No_Permission)
-          } else {
-            if level > 0 then { /* superpage */
-              /* fixme hack: to get a mask of appropriate size */
-              let mask = shiftl(pte.PPNi() ^ pte.PPNi() ^ EXTZ(0b1), level * SV48_LEVEL_BITS) - 1;
-              if (pte.PPNi() & mask) != EXTZ(0b0) then {
-                /* misaligned superpage mapping */
-/*              print("walk48: misaligned superpage mapping"); */
-                PTW_Failure(PTW_Misaligned)
+          match checkPTEPermission(ac, priv, mxr, do_sum, pattr, ext_pte) {
+            PTE_Check_Failure() => {
+/*            print("walk48: pte permission check failure"); */
+              PTW_Failure(PTW_No_Permission()) },
+            PTE_Check_Ext(e)    => {
+/*            print("walk48: pte extension check failure"); */
+              PTW_Failure(PTW_Ext_Error(ext_ptw_error_of_pte_error(e))) },
+	    PTE_Check_Success() => {
+              if level > 0 then { /* superpage */
+                /* fixme hack: to get a mask of appropriate size */
+                let mask = shiftl(pte.PPNi() ^ pte.PPNi() ^ EXTZ(0b1), level * SV48_LEVEL_BITS) - 1;
+                if (pte.PPNi() & mask) != EXTZ(0b0) then {
+                  /* misaligned superpage mapping */
+/*                print("walk48: misaligned superpage mapping"); */
+                  PTW_Failure(PTW_Misaligned())
+                } else {
+                  /* add the appropriate bits of the VPN to the superpage PPN */
+                  let ppn = pte.PPNi() | (EXTZ(va.VPNi()) & mask);
+/*                let res = append(ppn, va.PgOfs());
+                  print("walk48: using superpage: pte.ppn=" ^ BitStr(pte.PPNi())
+                        ^ " ppn=" ^ BitStr(ppn) ^ " res=" ^ BitStr(res)); */
+                  PTW_Success(append(ppn, va.PgOfs()), pte, pte_addr, level, is_global)
+                }
               } else {
-                /* add the appropriate bits of the VPN to the superpage PPN */
-                let ppn = pte.PPNi() | (EXTZ(va.VPNi()) & mask);
-/*              let res = append(ppn, va.PgOfs());
-                print("walk48: using superpage: pte.ppn=" ^ BitStr(pte.PPNi())
-                      ^ " ppn=" ^ BitStr(ppn) ^ " res=" ^ BitStr(res)); */
-                PTW_Success(append(ppn, va.PgOfs()), pte, pte_addr, level, is_global)
+                /* normal leaf PTE */
+/*              let res = append(pte.PPNi(), va.PgOfs());
+                print("walk48: pte.ppn=" ^ BitStr(pte.PPNi()) ^ " ppn=" ^ BitStr(pte.PPNi()) ^ " res=" ^ BitStr(res)); */
+                PTW_Success(append(pte.PPNi(), va.PgOfs()), pte, pte_addr, level, is_global)
               }
-            } else {
-              /* normal leaf PTE */
-/*            let res = append(pte.PPNi(), va.PgOfs());
-              print("walk48: pte.ppn=" ^ BitStr(pte.PPNi()) ^ " ppn=" ^ BitStr(pte.PPNi()) ^ " res=" ^ BitStr(res)); */
-              PTW_Success(append(pte.PPNi(), va.PgOfs()), pte, pte_addr, level, is_global)
             }
           }
         }
@@ -120,7 +125,7 @@ function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
           if ~ (plat_enable_dirty_update ())
           then {
             /* pte needs dirty/accessed update but that is not enabled */
-            TR_Failure(PTW_PTE_Update)
+            TR_Failure(PTW_PTE_Update())
           } else {
             w_pte : SV48_PTE = update_BITS(pte, pbits.bits());
 	    w_pte : SV48_PTE = update_Ext(w_pte, ext);
@@ -131,7 +136,7 @@ function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
               },
               MemException(e) => {
                 /* pte is not in valid memory */
-                TR_Failure(PTW_Access)
+                TR_Failure(PTW_Access())
               }
             }
           }

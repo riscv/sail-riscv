@@ -13,7 +13,7 @@ function fetch() -> FetchResult =
     Ext_FetchAddr_Error(e)   => F_Ext_Error(e),
     Ext_FetchAddr_OK(use_pc) => {
       if   (use_pc[0] != 0b0 | (use_pc[1] != 0b0 & (~ (haveRVC()))))
-      then F_Error(E_Fetch_Addr_Align, PC)
+      then F_Error(E_Fetch_Addr_Align(), PC)
       else match translateAddr(use_pc, Execute()) {
         TR_Failure(e)     => F_Error(e, PC),
         TR_Address(ppclo) => {
@@ -22,7 +22,7 @@ function fetch() -> FetchResult =
            * exceptions.
            */
           match mem_read(Execute(), ppclo, 2, false, false, false) {
-            MemException(e) => F_Error(E_Fetch_Access_Fault, PC),
+            MemException(e) => F_Error(E_Fetch_Access_Fault(), PC),
             MemValue(ilo)   => {
               if   isRVC(ilo)
               then F_RVC(ilo)
@@ -36,7 +36,7 @@ function fetch() -> FetchResult =
                       TR_Failure(e)     => F_Error(e, PC_hi),
                       TR_Address(ppchi) => {
                         match mem_read(Execute(), ppchi, 2, false, false, false) {
-                          MemException(e) => F_Error(E_Fetch_Access_Fault, PC_hi),
+                          MemException(e) => F_Error(E_Fetch_Access_Fault(), PC_hi),
                           MemValue(ihi)   => F_Base(append(ihi, ilo))
                         }
                       }

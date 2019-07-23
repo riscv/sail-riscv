@@ -158,10 +158,10 @@ function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: atom('n), acc: Acce
   if   check
   then None()
   else match acc {
-    Read(Data)      => Some(E_Load_Access_Fault),
-    Write(Data)     => Some(E_SAMO_Access_Fault),
-    ReadWrite(Data) => Some(E_SAMO_Access_Fault),
-    Execute()       => Some(E_Fetch_Access_Fault)
+    Read(Data)      => Some(E_Load_Access_Fault()),
+    Write(Data)     => Some(E_SAMO_Access_Fault()),
+    ReadWrite(Data) => Some(E_SAMO_Access_Fault()),
+    Execute()       => Some(E_Fetch_Access_Fault())
   }
 }
 

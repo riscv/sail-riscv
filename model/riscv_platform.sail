@@ -194,7 +194,7 @@ function clint_load(addr, width) = {
   else {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] -> <not-mapped>");
-    MemException(E_Load_Access_Fault)
+    MemException(E_Load_Access_Fault())
   }
 }
 
@@ -240,7 +240,7 @@ function clint_store(addr, width, data) = {
   } else {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (<unmapped>)");
-    MemException(E_SAMO_Access_Fault)
+    MemException(E_SAMO_Access_Fault())
   }
 }
 
@@ -285,7 +285,7 @@ function htif_load(addr, width) = {
   then    MemValue(sail_zero_extend(htif_tohost[31..0], 32))  /* FIXME: Redundant zero_extend currently required by Lem backend */
   else if width == 4 & addr == plat_htif_tohost() + 4
   then    MemValue(sail_zero_extend(htif_tohost[63..32], 32)) /* FIXME: Redundant zero_extend currently required by Lem backend */
-  else    MemException(E_Load_Access_Fault)
+  else    MemException(E_Load_Access_Fault())
 }
 
 /* The rreg,wreg effects are an artifact of using 'register' to implement device state. */
@@ -356,14 +356,14 @@ function mmio_read forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width
   then clint_load(addr, width)
   else if within_htif_readable(addr, width) & (1 <= 'n)
   then htif_load(addr, width)
-  else MemException(E_Load_Access_Fault)
+  else MemException(E_Load_Access_Fault())
 
 function mmio_write forall 'n, 0 <'n <= max_mem_access . (addr : xlenbits, width : atom('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
   if   within_clint(addr, width)
   then clint_store(addr, width, data)
   else if within_htif_writable(addr, width) & 'n <= 8
   then htif_store(addr, width, data)
-  else MemException(E_SAMO_Access_Fault)
+  else MemException(E_SAMO_Access_Fault())
 
 /* Platform initialization and ticking. */
 
@@ -383,7 +383,7 @@ function handle_illegal() -> unit = {
   let info = if plat_mtval_has_illegal_inst_bits ()
              then Some(instbits)
              else None();
-  let t : sync_exception = struct { trap    = E_Illegal_Instr,
+  let t : sync_exception = struct { trap    = E_Illegal_Instr(),
                                     excinfo = info,
                                     ext     = None() };
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))

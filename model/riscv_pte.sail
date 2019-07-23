@@ -28,17 +28,26 @@ function isInvalidPTE(p : pteAttribs, ext : extPte) -> bool = {
   a.V() == false | (a.W() == true & a.R() == false)
 }
 
-function checkPTEPermission(ac : AccessType(ext_access_type), priv : Privilege, mxr : bool, do_sum : bool, p : PTE_Bits, ext : extPte) -> bool = {
-  match (ac, priv) {
-    (Read(Data),      User)       => p.U() == true & (p.R() == true | (p.X() == true & mxr)),
-    (Write(Data),     User)       => p.U() == true & p.W() == true,
-    (ReadWrite(Data), User)       => p.U() == true & p.W() == true & (p.R() == true | (p.X() == true & mxr)),
-    (Execute(),       User)       => p.U() == true & p.X() == true,
+union PTE_Check = {
+  PTE_Check_Success : unit,
+  PTE_Check_Failure : unit,
+  PTE_Check_Ext     : ext_pte_error
+}
 
-    (Read(Data),      Supervisor) => (p.U() == false | do_sum) & (p.R() == true | (p.X() == true & mxr)),
-    (Write(Data),     Supervisor) => (p.U() == false | do_sum) & p.W() == true,
-    (ReadWrite(Data), Supervisor) => (p.U() == false | do_sum) & p.W() == true & (p.R() == true | (p.X() == true & mxr)),
-    (Execute(),       Supervisor) => p.U() == false & p.X() == true,
+function to_pte_check(b : bool) -> PTE_Check =
+  if b then PTE_Check_Success() else PTE_Check_Failure(())
+
+function checkPTEPermission(ac : AccessType(ext_access_type), priv : Privilege, mxr : bool, do_sum : bool, p : PTE_Bits, ext : extPte) -> PTE_Check = {
+  match (ac, priv) {
+    (Read(Data),      User)       => to_pte_check(p.U() == true & (p.R() == true | (p.X() == true & mxr))),
+    (Write(Data),     User)       => to_pte_check(p.U() == true & p.W() == true),
+    (ReadWrite(Data), User)       => to_pte_check(p.U() == true & p.W() == true & (p.R() == true | (p.X() == true & mxr))),
+    (Execute(),       User)       => to_pte_check(p.U() == true & p.X() == true),
+
+    (Read(Data),      Supervisor) => to_pte_check((p.U() == false | do_sum) & (p.R() == true | (p.X() == true & mxr))),
+    (Write(Data),     Supervisor) => to_pte_check((p.U() == false | do_sum) & p.W() == true),
+    (ReadWrite(Data), Supervisor) => to_pte_check((p.U() == false | do_sum) & p.W() == true & (p.R() == true | (p.X() == true & mxr))),
+    (Execute(),       Supervisor) => to_pte_check(p.U() == false & p.X() == true),
 
     (_,               Machine)    => internal_error("m-mode mem perm check")
   }
