@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [ ! -d RV64 ]; then
+  echo Run build from the coq directory
+  exit 1
+fi
+
+if [ ! -d ../bbv ]; then
+  echo 'Check out a copy of https://github.com/mit-plv/bbv in the parent directory and build it.'
+  exit 1
+fi
+
+set -ex
+cd lib/sail
+make
+cd ../../RV32
+coqc -R ../../bbv/theories bbv -R ../lib/sail Sail riscv_extras.v
+coqc -R ../../bbv/theories bbv -R ../lib/sail Sail riscv_types.v
+coqc -R ../../bbv/theories bbv -R ../lib/sail Sail riscv.v
+cd ../RV64
+coqc -R ../../bbv/theories bbv -R ../lib/sail Sail riscv_extras.v
+coqc -R ../../bbv/theories bbv -R ../lib/sail Sail riscv_types.v
+coqc -R ../../bbv/theories bbv -R ../lib/sail Sail riscv.v

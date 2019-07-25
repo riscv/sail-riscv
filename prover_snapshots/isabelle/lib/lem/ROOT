@@ -1,0 +1,5 @@
+session LEM = "HOL-Word" +
+  description \<open>
+    HOL + LEM specific theories
+  \<close>
+  theories Lem_pervasives Lem_pervasives_extra
