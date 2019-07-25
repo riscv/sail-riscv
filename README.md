@@ -32,6 +32,8 @@ sail-riscv
 |     +---- hol4
 |     +---- latex
 |
++---- prover_snapshots        // Snapshots of generated theorem prover definitions
+|
 |---- handwritten_support     // Prover support files
 |
 +---- c_emulator              // supporting platform files for C emulator
