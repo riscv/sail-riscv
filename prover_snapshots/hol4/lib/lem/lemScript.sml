@@ -199,7 +199,7 @@ val _ = computeLib.add_persistent_funs ["FMAP_TO_SET_FUPDATE"]
 
 
 val IN_FMAP_TO_SET = store_thm ("IN_FMAP_TO_SET",
-  ``(k, v) IN FMAP_TO_SET m = (FLOOKUP m k = SOME v)``,
+  ``((k, v) IN FMAP_TO_SET m) = (FLOOKUP m k = SOME v)``,
 SIMP_TAC (std_ss++PRED_SET_ss) [FMAP_TO_SET_def, FLOOKUP_DEF] THEN
 METIS_TAC[optionTheory.option_CLAUSES])
 

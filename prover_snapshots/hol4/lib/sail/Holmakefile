@@ -15,11 +15,9 @@ INCLUDES = ../lem
 all: $(THYS)
 .PHONY: all
 
-EXTRA_CLEANS = $(LEM_CLEANS)
-
 ifdef POLY
 HOLHEAP = sail-heap
-EXTRA_CLEANS = $(LEM_CLEANS) $(HOLHEAP) $(HOLHEAP).o
+EXTRA_CLEANS = $(HOLHEAP) $(HOLHEAP).o
 
 BASE_HEAP = ../lem/lemheap
 
