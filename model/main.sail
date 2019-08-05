@@ -1,6 +1,4 @@
-val main : unit -> unit effect {barr, eamem, escape, exmem, rmem, rreg, wmv, wreg}
-
-function main () = {
+function main () : unit -> unit = {
   // initialize extensions
   ext_init ();
 
