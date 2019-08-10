@@ -39,11 +39,14 @@ function translateAddr(vAddr, ac) = {
   let asid = curAsid32(satp);
   let ptb  = curPTB32(satp);
 
+  /* PTW extensions: initialize the PTW extension state */
+  let ext_ptw : ext_ptw = init_ext_ptw;
+
   match mode {
-    Sbare => TR_Address(vAddr),
-    Sv32  => match translate32(asid, ptb, vAddr, ac, effPriv, mxr, do_sum, SV32_LEVELS - 1) {
-               TR_Address(pa) => TR_Address(to_phys_addr(pa)),
-               TR_Failure(f)  => TR_Failure(translationException(ac, f))
+    Sbare => TR_Address(vAddr, ext_ptw),
+    Sv32  => match translate32(asid, ptb, vAddr, ac, effPriv, mxr, do_sum, SV32_LEVELS - 1, ext_ptw) {
+               TR_Address(pa, ext_ptw) => TR_Address(to_phys_addr(pa), ext_ptw),
+               TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
              },
     _     => internal_error("unsupported address translation scheme")
   }

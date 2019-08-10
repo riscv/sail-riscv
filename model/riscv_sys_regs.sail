@@ -182,9 +182,11 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   let m = set_mstatus_UXL(m, get_mstatus_UXL(o));
 
   /* Hardwired to zero in the absence of 'N'. */
-  let m = update_UPIE(m, false);
-  let m = update_UIE(m, false);
-  m
+  if (~ (haveUsrMode())) then {
+    let m = update_UPIE(m, false);
+    let m = update_UIE(m, false);
+    m
+  } else m
 }
 
 /* architecture and extension checks */

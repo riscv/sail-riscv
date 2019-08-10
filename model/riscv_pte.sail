@@ -29,15 +29,18 @@ function isInvalidPTE(p : pteAttribs, ext : extPte) -> bool = {
 }
 
 union PTE_Check = {
-  PTE_Check_Success : unit,
-  PTE_Check_Failure : unit,
-  PTE_Check_Ext     : ext_pte_error
+  PTE_Check_Success : ext_ptw,
+  PTE_Check_Failure : ext_ptw
 }
 
 function to_pte_check(b : bool) -> PTE_Check =
-  if b then PTE_Check_Success() else PTE_Check_Failure(())
+  if b then PTE_Check_Success(()) else PTE_Check_Failure(())
 
-function checkPTEPermission(ac : AccessType(ext_access_type), priv : Privilege, mxr : bool, do_sum : bool, p : PTE_Bits, ext : extPte) -> PTE_Check = {
+/* For extensions: this function gets the extension-available bits of the PTE in extPte,
+ * and the accumulated information of the page-table-walk in ext_ptw.  It should return
+ * the updated ext_ptw in both the success and failure cases.
+ */
+function checkPTEPermission(ac : AccessType(ext_access_type), priv : Privilege, mxr : bool, do_sum : bool, p : PTE_Bits, ext : extPte, ext_ptw : ext_ptw) -> PTE_Check = {
   match (ac, priv) {
     (Read(Data),      User)       => to_pte_check(p.U() == true & (p.R() == true | (p.X() == true & mxr))),
     (Write(Data),     User)       => to_pte_check(p.U() == true & p.W() == true),

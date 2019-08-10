@@ -139,16 +139,21 @@ bitfield SV48_PTE : pte48 = {
   BITS  : 7  .. 0
 }
 
-/* Result of a page-table walk. */
+/* The types below are parameterized by 'paddr and 'pte to support
+ * various architectural widths (e.g. RV32, RV64).  ext_ptw supports
+ * extensions to the default address translation and page-table-walk.
+ */
+
+/* Result of a page-table walk.  */
 
 union PTW_Result('paddr : Type, 'pte : Type) = {
-  PTW_Success: ('paddr, 'pte, 'paddr, nat, bool),
-  PTW_Failure: PTW_Error
+  PTW_Success: ('paddr, 'pte, 'paddr, nat, bool, ext_ptw),
+  PTW_Failure: (PTW_Error, ext_ptw)
 }
 
 /* Result of address translation */
 
 union TR_Result('paddr : Type, 'failure : Type) = {
-  TR_Address : 'paddr,
-  TR_Failure : 'failure
+  TR_Address : ('paddr, ext_ptw),
+  TR_Failure : ('failure, ext_ptw)
 }

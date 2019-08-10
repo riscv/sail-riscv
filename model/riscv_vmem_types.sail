@@ -1,4 +1,4 @@
-// Extensions for memory Accesstype
+// Extensions for memory Accesstype.
 
 type ext_access_type = unit
 

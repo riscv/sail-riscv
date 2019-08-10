@@ -46,15 +46,18 @@ function translateAddr(vAddr, ac) = {
   let asid = curAsid64(satp);
   let ptb  = curPTB64(satp);
 
+  /* PTW extensions: initialize the PTW extension state. */
+  let ext_ptw : ext_ptw = init_ext_ptw;
+
   match mode {
-    Sbare => TR_Address(vAddr),
-    Sv39  => match translate39(asid, ptb, vAddr[38 .. 0], ac, effPriv, mxr, do_sum, SV39_LEVELS - 1) {
-               TR_Address(pa) => TR_Address(EXTZ(pa)),
-               TR_Failure(f)  => TR_Failure(translationException(ac, f))
+    Sbare => TR_Address(vAddr, ext_ptw),
+    Sv39  => match translate39(asid, ptb, vAddr[38 .. 0], ac, effPriv, mxr, do_sum, SV39_LEVELS - 1, ext_ptw) {
+               TR_Address(pa, ext_ptw) => TR_Address(EXTZ(pa), ext_ptw),
+               TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
              },
-    Sv48  => match translate48(asid, ptb, vAddr[47 .. 0], ac, effPriv, mxr, do_sum, SV48_LEVELS - 1) {
-               TR_Address(pa) => TR_Address(EXTZ(pa)),
-               TR_Failure(f)  => TR_Failure(translationException(ac, f))
+    Sv48  => match translate48(asid, ptb, vAddr[47 .. 0], ac, effPriv, mxr, do_sum, SV48_LEVELS - 1, ext_ptw) {
+               TR_Address(pa, ext_ptw) => TR_Address(EXTZ(pa), ext_ptw),
+               TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
              },
     _     => internal_error("unsupported address translation scheme")
   }

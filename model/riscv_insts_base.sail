@@ -324,8 +324,8 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
       if   check_misaligned(vaddr, width)
       then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-        TR_Address(addr) =>
+        TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+        TR_Address(addr, _) =>
           match (width, sizeof(xlen)) {
             (BYTE, _)   =>
                process_load(rd, vaddr, mem_read(Read(Data), addr, 1, aq, rl, false), is_unsigned),
@@ -379,8 +379,8 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
       if   check_misaligned(vaddr, width)
       then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr, Write(Data)) {
-        TR_Failure(e)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-        TR_Address(addr) => {
+        TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+        TR_Address(addr, _) => {
           let eares : MemoryOpResult(unit) = match width {
             BYTE   => mem_write_ea(addr, 1, aq, rl, false),
             HALF   => mem_write_ea(addr, 2, aq, rl, false),
