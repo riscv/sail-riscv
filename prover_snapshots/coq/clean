@@ -8,5 +8,6 @@ fi
 set -ex 
 rm -f RV32/*.{vo,glob} RV32/.*.aux
 rm -f RV64/*.{vo,glob} RV64/.*.aux
+rm -f duopod/*.{vo,glob} RV64/.*.aux
 cd lib/sail
 make clean

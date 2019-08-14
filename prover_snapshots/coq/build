@@ -21,3 +21,7 @@ cd ../RV64
 coqc -R ../../bbv/theories bbv -R ../lib/sail Sail riscv_extras.v
 coqc -R ../../bbv/theories bbv -R ../lib/sail Sail riscv_types.v
 coqc -R ../../bbv/theories bbv -R ../lib/sail Sail riscv.v
+cd ../duopod
+coqc -R ../../bbv/theories bbv -R ../lib/sail Sail riscv_extras.v
+coqc -R ../../bbv/theories bbv -R ../lib/sail Sail riscv_duopod_types.v
+coqc -R ../../bbv/theories bbv -R ../lib/sail Sail riscv_duopod.v

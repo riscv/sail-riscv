@@ -41,9 +41,9 @@ Definition __id (x : Z)  : {_retval : Z & ArithFact (_retval = x)} :=  build_ex(
 Definition concat_str_bits {n : Z} (str : string) (x : mword n) 
 : string :=
    
-   concat_str str (string_of_bits x).
+   String.append str (string_of_bits x).
 
-Definition concat_str_dec (str : string) (x : Z)  : string :=  concat_str str (dec_str x).
+Definition concat_str_dec (str : string) (x : Z)  : string :=  String.append str (dec_str x).
 
 
 
@@ -66,18 +66,18 @@ Definition slice_mask (n : Z) (i : Z) (l : Z) `{ArithFact (n >= 0)}
 Definition read_kind_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 11)} 
 : read_kind :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then Read_plain
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then Read_reserve
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then Read_acquire
-   else if sumbool_of_bool ((Z.eqb p0_ 3)) then Read_exclusive
-   else if sumbool_of_bool ((Z.eqb p0_ 4)) then Read_exclusive_acquire
-   else if sumbool_of_bool ((Z.eqb p0_ 5)) then Read_stream
-   else if sumbool_of_bool ((Z.eqb p0_ 6)) then Read_RISCV_acquire
-   else if sumbool_of_bool ((Z.eqb p0_ 7)) then Read_RISCV_strong_acquire
-   else if sumbool_of_bool ((Z.eqb p0_ 8)) then Read_RISCV_reserved
-   else if sumbool_of_bool ((Z.eqb p0_ 9)) then Read_RISCV_reserved_acquire
-   else if sumbool_of_bool ((Z.eqb p0_ 10)) then Read_RISCV_reserved_strong_acquire
+   let l__203 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__203 0)) then Read_plain
+   else if sumbool_of_bool ((Z.eqb l__203 1)) then Read_reserve
+   else if sumbool_of_bool ((Z.eqb l__203 2)) then Read_acquire
+   else if sumbool_of_bool ((Z.eqb l__203 3)) then Read_exclusive
+   else if sumbool_of_bool ((Z.eqb l__203 4)) then Read_exclusive_acquire
+   else if sumbool_of_bool ((Z.eqb l__203 5)) then Read_stream
+   else if sumbool_of_bool ((Z.eqb l__203 6)) then Read_RISCV_acquire
+   else if sumbool_of_bool ((Z.eqb l__203 7)) then Read_RISCV_strong_acquire
+   else if sumbool_of_bool ((Z.eqb l__203 8)) then Read_RISCV_reserved
+   else if sumbool_of_bool ((Z.eqb l__203 9)) then Read_RISCV_reserved_acquire
+   else if sumbool_of_bool ((Z.eqb l__203 10)) then Read_RISCV_reserved_strong_acquire
    else Read_X86_locked.
 
 Definition num_of_read_kind (arg_ : read_kind) 
@@ -101,17 +101,17 @@ Definition num_of_read_kind (arg_ : read_kind)
 Definition write_kind_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 10)} 
 : write_kind :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then Write_plain
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then Write_conditional
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then Write_release
-   else if sumbool_of_bool ((Z.eqb p0_ 3)) then Write_exclusive
-   else if sumbool_of_bool ((Z.eqb p0_ 4)) then Write_exclusive_release
-   else if sumbool_of_bool ((Z.eqb p0_ 5)) then Write_RISCV_release
-   else if sumbool_of_bool ((Z.eqb p0_ 6)) then Write_RISCV_strong_release
-   else if sumbool_of_bool ((Z.eqb p0_ 7)) then Write_RISCV_conditional
-   else if sumbool_of_bool ((Z.eqb p0_ 8)) then Write_RISCV_conditional_release
-   else if sumbool_of_bool ((Z.eqb p0_ 9)) then Write_RISCV_conditional_strong_release
+   let l__193 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__193 0)) then Write_plain
+   else if sumbool_of_bool ((Z.eqb l__193 1)) then Write_conditional
+   else if sumbool_of_bool ((Z.eqb l__193 2)) then Write_release
+   else if sumbool_of_bool ((Z.eqb l__193 3)) then Write_exclusive
+   else if sumbool_of_bool ((Z.eqb l__193 4)) then Write_exclusive_release
+   else if sumbool_of_bool ((Z.eqb l__193 5)) then Write_RISCV_release
+   else if sumbool_of_bool ((Z.eqb l__193 6)) then Write_RISCV_strong_release
+   else if sumbool_of_bool ((Z.eqb l__193 7)) then Write_RISCV_conditional
+   else if sumbool_of_bool ((Z.eqb l__193 8)) then Write_RISCV_conditional_release
+   else if sumbool_of_bool ((Z.eqb l__193 9)) then Write_RISCV_conditional_strong_release
    else Write_X86_locked.
 
 Definition num_of_write_kind (arg_ : write_kind) 
@@ -131,71 +131,44 @@ Definition num_of_write_kind (arg_ : write_kind)
             | Write_X86_locked => 10
             end).
 
-Definition barrier_kind_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 23)} 
-: barrier_kind :=
+Definition a64_barrier_domain_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 3)} 
+: a64_barrier_domain :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then Barrier_Sync
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then Barrier_LwSync
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then Barrier_Eieio
-   else if sumbool_of_bool ((Z.eqb p0_ 3)) then Barrier_Isync
-   else if sumbool_of_bool ((Z.eqb p0_ 4)) then Barrier_DMB
-   else if sumbool_of_bool ((Z.eqb p0_ 5)) then Barrier_DMB_ST
-   else if sumbool_of_bool ((Z.eqb p0_ 6)) then Barrier_DMB_LD
-   else if sumbool_of_bool ((Z.eqb p0_ 7)) then Barrier_DSB
-   else if sumbool_of_bool ((Z.eqb p0_ 8)) then Barrier_DSB_ST
-   else if sumbool_of_bool ((Z.eqb p0_ 9)) then Barrier_DSB_LD
-   else if sumbool_of_bool ((Z.eqb p0_ 10)) then Barrier_ISB
-   else if sumbool_of_bool ((Z.eqb p0_ 11)) then Barrier_MIPS_SYNC
-   else if sumbool_of_bool ((Z.eqb p0_ 12)) then Barrier_RISCV_rw_rw
-   else if sumbool_of_bool ((Z.eqb p0_ 13)) then Barrier_RISCV_r_rw
-   else if sumbool_of_bool ((Z.eqb p0_ 14)) then Barrier_RISCV_r_r
-   else if sumbool_of_bool ((Z.eqb p0_ 15)) then Barrier_RISCV_rw_w
-   else if sumbool_of_bool ((Z.eqb p0_ 16)) then Barrier_RISCV_w_w
-   else if sumbool_of_bool ((Z.eqb p0_ 17)) then Barrier_RISCV_w_rw
-   else if sumbool_of_bool ((Z.eqb p0_ 18)) then Barrier_RISCV_rw_r
-   else if sumbool_of_bool ((Z.eqb p0_ 19)) then Barrier_RISCV_r_w
-   else if sumbool_of_bool ((Z.eqb p0_ 20)) then Barrier_RISCV_w_r
-   else if sumbool_of_bool ((Z.eqb p0_ 21)) then Barrier_RISCV_tso
-   else if sumbool_of_bool ((Z.eqb p0_ 22)) then Barrier_RISCV_i
-   else Barrier_x86_MFENCE.
+   let l__190 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__190 0)) then A64_FullShare
+   else if sumbool_of_bool ((Z.eqb l__190 1)) then A64_InnerShare
+   else if sumbool_of_bool ((Z.eqb l__190 2)) then A64_OuterShare
+   else A64_NonShare.
 
-Definition num_of_barrier_kind (arg_ : barrier_kind) 
-: {e : Z & ArithFact (0 <= e /\ e <= 23)} :=
+Definition num_of_a64_barrier_domain (arg_ : a64_barrier_domain) 
+: {e : Z & ArithFact (0 <= e /\ e <= 3)} :=
    
    build_ex(match arg_ with
-            | Barrier_Sync => 0
-            | Barrier_LwSync => 1
-            | Barrier_Eieio => 2
-            | Barrier_Isync => 3
-            | Barrier_DMB => 4
-            | Barrier_DMB_ST => 5
-            | Barrier_DMB_LD => 6
-            | Barrier_DSB => 7
-            | Barrier_DSB_ST => 8
-            | Barrier_DSB_LD => 9
-            | Barrier_ISB => 10
-            | Barrier_MIPS_SYNC => 11
-            | Barrier_RISCV_rw_rw => 12
-            | Barrier_RISCV_r_rw => 13
-            | Barrier_RISCV_r_r => 14
-            | Barrier_RISCV_rw_w => 15
-            | Barrier_RISCV_w_w => 16
-            | Barrier_RISCV_w_rw => 17
-            | Barrier_RISCV_rw_r => 18
-            | Barrier_RISCV_r_w => 19
-            | Barrier_RISCV_w_r => 20
-            | Barrier_RISCV_tso => 21
-            | Barrier_RISCV_i => 22
-            | Barrier_x86_MFENCE => 23
+            | A64_FullShare => 0
+            | A64_InnerShare => 1
+            | A64_OuterShare => 2
+            | A64_NonShare => 3
             end).
+
+Definition a64_barrier_type_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 2)} 
+: a64_barrier_type :=
+   
+   let l__188 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__188 0)) then A64_barrier_all
+   else if sumbool_of_bool ((Z.eqb l__188 1)) then A64_barrier_LD
+   else A64_barrier_ST.
+
+Definition num_of_a64_barrier_type (arg_ : a64_barrier_type) 
+: {e : Z & ArithFact (0 <= e /\ e <= 2)} :=
+   
+   build_ex(match arg_ with | A64_barrier_all => 0 | A64_barrier_LD => 1 | A64_barrier_ST => 2 end).
 
 Definition trans_kind_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 2)} 
 : trans_kind :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then Transaction_start
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then Transaction_commit
+   let l__186 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__186 0)) then Transaction_start
+   else if sumbool_of_bool ((Z.eqb l__186 1)) then Transaction_commit
    else Transaction_abort.
 
 Definition num_of_trans_kind (arg_ : trans_kind) 
@@ -210,17 +183,17 @@ Definition num_of_trans_kind (arg_ : trans_kind)
 Definition cache_op_kind_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 10)} 
 : cache_op_kind :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then Cache_op_D_IVAC
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then Cache_op_D_ISW
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then Cache_op_D_CSW
-   else if sumbool_of_bool ((Z.eqb p0_ 3)) then Cache_op_D_CISW
-   else if sumbool_of_bool ((Z.eqb p0_ 4)) then Cache_op_D_ZVA
-   else if sumbool_of_bool ((Z.eqb p0_ 5)) then Cache_op_D_CVAC
-   else if sumbool_of_bool ((Z.eqb p0_ 6)) then Cache_op_D_CVAU
-   else if sumbool_of_bool ((Z.eqb p0_ 7)) then Cache_op_D_CIVAC
-   else if sumbool_of_bool ((Z.eqb p0_ 8)) then Cache_op_I_IALLUIS
-   else if sumbool_of_bool ((Z.eqb p0_ 9)) then Cache_op_I_IALLU
+   let l__176 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__176 0)) then Cache_op_D_IVAC
+   else if sumbool_of_bool ((Z.eqb l__176 1)) then Cache_op_D_ISW
+   else if sumbool_of_bool ((Z.eqb l__176 2)) then Cache_op_D_CSW
+   else if sumbool_of_bool ((Z.eqb l__176 3)) then Cache_op_D_CISW
+   else if sumbool_of_bool ((Z.eqb l__176 4)) then Cache_op_D_ZVA
+   else if sumbool_of_bool ((Z.eqb l__176 5)) then Cache_op_D_CVAC
+   else if sumbool_of_bool ((Z.eqb l__176 6)) then Cache_op_D_CVAU
+   else if sumbool_of_bool ((Z.eqb l__176 7)) then Cache_op_D_CIVAC
+   else if sumbool_of_bool ((Z.eqb l__176 8)) then Cache_op_I_IALLUIS
+   else if sumbool_of_bool ((Z.eqb l__176 9)) then Cache_op_I_IALLU
    else Cache_op_I_IVAU.
 
 Definition num_of_cache_op_kind (arg_ : cache_op_kind) 
@@ -340,7 +313,7 @@ Fixpoint _rec_n_leading_spaces (s : string) (_reclimit : Z)  (_acc : Acc (Zwf 0)
          (projT1
          (build_ex
          (Z.add 1 w__0)
-          : {_atom : Z & ArithFact (exists ex70952_ , _atom = (1 + ex70952_) /\ 0 <= ex70952_)})))
+          : {_atom : Z & ArithFact (exists ex97093_ , _atom = (1 + ex97093_) /\ 0 <= ex97093_)})))
        else returnm (build_ex (0  : Z)))
        : M ({n : Z & ArithFact (n >= 0)}))
     : M ({n : Z & ArithFact (n >= 0)}).
@@ -359,8 +332,8 @@ Definition spc_matches_prefix (s : string)
 : M (option ((unit * {n : Z & ArithFact (n >= 0)}))) :=
    
    (n_leading_spaces s) >>= fun '(existT _ n _) =>
-   let p0_ := n in
-   returnm ((if sumbool_of_bool ((Z.eqb p0_ 0)) then None
+   let l__175 := n in
+   returnm ((if sumbool_of_bool ((Z.eqb l__175 0)) then None
              else Some ((tt, build_ex n)))
     : option ((unit * {n : Z & ArithFact (n >= 0)}))).
 
@@ -395,7 +368,7 @@ Definition hex_bits_1_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_1_matches_prefix s) with
-           | Some ((g__39, existT _ n _)) =>
+           | Some ((g__253, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -427,7 +400,7 @@ Definition hex_bits_2_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_2_matches_prefix s) with
-           | Some ((g__38, existT _ n _)) =>
+           | Some ((g__252, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -459,7 +432,7 @@ Definition hex_bits_3_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_3_matches_prefix s) with
-           | Some ((g__37, existT _ n _)) =>
+           | Some ((g__251, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -491,7 +464,7 @@ Definition hex_bits_4_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_4_matches_prefix s) with
-           | Some ((g__36, existT _ n _)) =>
+           | Some ((g__250, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -523,7 +496,7 @@ Definition hex_bits_5_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_5_matches_prefix s) with
-           | Some ((g__35, existT _ n _)) =>
+           | Some ((g__249, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -555,7 +528,7 @@ Definition hex_bits_6_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_6_matches_prefix s) with
-           | Some ((g__34, existT _ n _)) =>
+           | Some ((g__248, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -587,7 +560,7 @@ Definition hex_bits_7_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_7_matches_prefix s) with
-           | Some ((g__33, existT _ n _)) =>
+           | Some ((g__247, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -619,7 +592,7 @@ Definition hex_bits_8_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_8_matches_prefix s) with
-           | Some ((g__32, existT _ n _)) =>
+           | Some ((g__246, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -651,7 +624,7 @@ Definition hex_bits_9_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_9_matches_prefix s) with
-           | Some ((g__31, existT _ n _)) =>
+           | Some ((g__245, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -683,7 +656,7 @@ Definition hex_bits_10_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_10_matches_prefix s) with
-           | Some ((g__30, existT _ n _)) =>
+           | Some ((g__244, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -715,7 +688,7 @@ Definition hex_bits_11_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_11_matches_prefix s) with
-           | Some ((g__29, existT _ n _)) =>
+           | Some ((g__243, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -747,7 +720,7 @@ Definition hex_bits_12_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_12_matches_prefix s) with
-           | Some ((g__28, existT _ n _)) =>
+           | Some ((g__242, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -779,7 +752,7 @@ Definition hex_bits_13_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_13_matches_prefix s) with
-           | Some ((g__27, existT _ n _)) =>
+           | Some ((g__241, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -811,7 +784,7 @@ Definition hex_bits_14_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_14_matches_prefix s) with
-           | Some ((g__26, existT _ n _)) =>
+           | Some ((g__240, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -843,7 +816,7 @@ Definition hex_bits_15_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_15_matches_prefix s) with
-           | Some ((g__25, existT _ n _)) =>
+           | Some ((g__239, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -875,7 +848,7 @@ Definition hex_bits_16_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_16_matches_prefix s) with
-           | Some ((g__24, existT _ n _)) =>
+           | Some ((g__238, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -907,7 +880,7 @@ Definition hex_bits_17_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_17_matches_prefix s) with
-           | Some ((g__23, existT _ n _)) =>
+           | Some ((g__237, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -939,7 +912,7 @@ Definition hex_bits_18_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_18_matches_prefix s) with
-           | Some ((g__22, existT _ n _)) =>
+           | Some ((g__236, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -971,7 +944,7 @@ Definition hex_bits_19_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_19_matches_prefix s) with
-           | Some ((g__21, existT _ n _)) =>
+           | Some ((g__235, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1003,7 +976,7 @@ Definition hex_bits_20_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_20_matches_prefix s) with
-           | Some ((g__20, existT _ n _)) =>
+           | Some ((g__234, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1035,7 +1008,7 @@ Definition hex_bits_21_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_21_matches_prefix s) with
-           | Some ((g__19, existT _ n _)) =>
+           | Some ((g__233, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1067,7 +1040,7 @@ Definition hex_bits_22_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_22_matches_prefix s) with
-           | Some ((g__18, existT _ n _)) =>
+           | Some ((g__232, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1099,7 +1072,7 @@ Definition hex_bits_23_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_23_matches_prefix s) with
-           | Some ((g__17, existT _ n _)) =>
+           | Some ((g__231, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1131,7 +1104,7 @@ Definition hex_bits_24_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_24_matches_prefix s) with
-           | Some ((g__16, existT _ n _)) =>
+           | Some ((g__230, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1163,7 +1136,7 @@ Definition hex_bits_25_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_25_matches_prefix s) with
-           | Some ((g__15, existT _ n _)) =>
+           | Some ((g__229, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1195,7 +1168,7 @@ Definition hex_bits_26_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_26_matches_prefix s) with
-           | Some ((g__14, existT _ n _)) =>
+           | Some ((g__228, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1227,7 +1200,7 @@ Definition hex_bits_27_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_27_matches_prefix s) with
-           | Some ((g__13, existT _ n _)) =>
+           | Some ((g__227, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1259,7 +1232,7 @@ Definition hex_bits_28_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_28_matches_prefix s) with
-           | Some ((g__12, existT _ n _)) =>
+           | Some ((g__226, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1291,7 +1264,7 @@ Definition hex_bits_29_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_29_matches_prefix s) with
-           | Some ((g__11, existT _ n _)) =>
+           | Some ((g__225, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1323,7 +1296,7 @@ Definition hex_bits_30_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_30_matches_prefix s) with
-           | Some ((g__10, existT _ n _)) =>
+           | Some ((g__224, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1355,7 +1328,7 @@ Definition hex_bits_31_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_31_matches_prefix s) with
-           | Some ((g__9, existT _ n _)) =>
+           | Some ((g__223, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1387,7 +1360,7 @@ Definition hex_bits_32_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_32_matches_prefix s) with
-           | Some ((g__8, existT _ n _)) =>
+           | Some ((g__222, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1419,7 +1392,7 @@ Definition hex_bits_33_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_33_matches_prefix s) with
-           | Some ((g__7, existT _ n _)) =>
+           | Some ((g__221, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1451,7 +1424,7 @@ Definition hex_bits_48_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_48_matches_prefix s) with
-           | Some ((g__6, existT _ n _)) =>
+           | Some ((g__220, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1483,7 +1456,7 @@ Definition hex_bits_64_backwards_matches (s : string)
    match s with
    | s =>
       if ((match (hex_bits_64_matches_prefix s) with
-           | Some ((g__5, existT _ n _)) =>
+           | Some ((g__219, existT _ n _)) =>
               if sumbool_of_bool ((Z.eqb n (projT1 (string_length s)))) then true else false
            | _ => false
            end)) then
@@ -1574,9 +1547,9 @@ Hint Unfold sp : sail.
 Definition Architecture_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 2)} 
 : Architecture :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then RV32
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then RV64
+   let l__173 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__173 0)) then RV32
+   else if sumbool_of_bool ((Z.eqb l__173 1)) then RV64
    else RV128.
 
 Definition num_of_Architecture (arg_ : Architecture) 
@@ -1605,9 +1578,9 @@ Definition arch_to_bits (a : Architecture)
 Definition Privilege_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 2)} 
 : Privilege :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then User
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then Supervisor
+   let l__171 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__171 0)) then User
+   else if sumbool_of_bool ((Z.eqb l__171 1)) then Supervisor
    else Machine.
 
 Definition num_of_Privilege (arg_ : Privilege) 
@@ -1644,8 +1617,8 @@ Definition privLevel_to_str (p : Privilege)
 Definition Retired_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 1)} 
 : Retired :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then RETIRE_SUCCESS
+   let l__170 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__170 0)) then RETIRE_SUCCESS
    else RETIRE_FAIL.
 
 Definition num_of_Retired (arg_ : Retired) 
@@ -1656,10 +1629,10 @@ Definition num_of_Retired (arg_ : Retired)
 Definition AccessType_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 3)} 
 : AccessType :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then Read
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then Write
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then ReadWrite
+   let l__167 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__167 0)) then Read
+   else if sumbool_of_bool ((Z.eqb l__167 1)) then Write
+   else if sumbool_of_bool ((Z.eqb l__167 2)) then ReadWrite
    else Execute.
 
 Definition num_of_AccessType (arg_ : AccessType) 
@@ -1675,10 +1648,10 @@ Definition accessType_to_str (a : AccessType)
 Definition word_width_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 3)} 
 : word_width :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then BYTE
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then HALF
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then WORD
+   let l__164 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__164 0)) then BYTE
+   else if sumbool_of_bool ((Z.eqb l__164 1)) then HALF
+   else if sumbool_of_bool ((Z.eqb l__164 2)) then WORD
    else DOUBLE.
 
 Definition num_of_word_width (arg_ : word_width) 
@@ -1689,15 +1662,15 @@ Definition num_of_word_width (arg_ : word_width)
 Definition InterruptType_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 8)} 
 : InterruptType :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then I_U_Software
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then I_S_Software
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then I_M_Software
-   else if sumbool_of_bool ((Z.eqb p0_ 3)) then I_U_Timer
-   else if sumbool_of_bool ((Z.eqb p0_ 4)) then I_S_Timer
-   else if sumbool_of_bool ((Z.eqb p0_ 5)) then I_M_Timer
-   else if sumbool_of_bool ((Z.eqb p0_ 6)) then I_U_External
-   else if sumbool_of_bool ((Z.eqb p0_ 7)) then I_S_External
+   let l__156 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__156 0)) then I_U_Software
+   else if sumbool_of_bool ((Z.eqb l__156 1)) then I_S_Software
+   else if sumbool_of_bool ((Z.eqb l__156 2)) then I_M_Software
+   else if sumbool_of_bool ((Z.eqb l__156 3)) then I_U_Timer
+   else if sumbool_of_bool ((Z.eqb l__156 4)) then I_S_Timer
+   else if sumbool_of_bool ((Z.eqb l__156 5)) then I_M_Timer
+   else if sumbool_of_bool ((Z.eqb l__156 6)) then I_U_External
+   else if sumbool_of_bool ((Z.eqb l__156 7)) then I_S_External
    else I_M_External.
 
 Definition num_of_InterruptType (arg_ : InterruptType) 
@@ -1733,23 +1706,23 @@ Definition interruptType_to_bits (i : InterruptType)
 Definition ExceptionType_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 16)} 
 : ExceptionType :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then E_Fetch_Addr_Align
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then E_Fetch_Access_Fault
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then E_Illegal_Instr
-   else if sumbool_of_bool ((Z.eqb p0_ 3)) then E_Breakpoint
-   else if sumbool_of_bool ((Z.eqb p0_ 4)) then E_Load_Addr_Align
-   else if sumbool_of_bool ((Z.eqb p0_ 5)) then E_Load_Access_Fault
-   else if sumbool_of_bool ((Z.eqb p0_ 6)) then E_SAMO_Addr_Align
-   else if sumbool_of_bool ((Z.eqb p0_ 7)) then E_SAMO_Access_Fault
-   else if sumbool_of_bool ((Z.eqb p0_ 8)) then E_U_EnvCall
-   else if sumbool_of_bool ((Z.eqb p0_ 9)) then E_S_EnvCall
-   else if sumbool_of_bool ((Z.eqb p0_ 10)) then E_Reserved_10
-   else if sumbool_of_bool ((Z.eqb p0_ 11)) then E_M_EnvCall
-   else if sumbool_of_bool ((Z.eqb p0_ 12)) then E_Fetch_Page_Fault
-   else if sumbool_of_bool ((Z.eqb p0_ 13)) then E_Load_Page_Fault
-   else if sumbool_of_bool ((Z.eqb p0_ 14)) then E_Reserved_14
-   else if sumbool_of_bool ((Z.eqb p0_ 15)) then E_SAMO_Page_Fault
+   let l__140 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__140 0)) then E_Fetch_Addr_Align
+   else if sumbool_of_bool ((Z.eqb l__140 1)) then E_Fetch_Access_Fault
+   else if sumbool_of_bool ((Z.eqb l__140 2)) then E_Illegal_Instr
+   else if sumbool_of_bool ((Z.eqb l__140 3)) then E_Breakpoint
+   else if sumbool_of_bool ((Z.eqb l__140 4)) then E_Load_Addr_Align
+   else if sumbool_of_bool ((Z.eqb l__140 5)) then E_Load_Access_Fault
+   else if sumbool_of_bool ((Z.eqb l__140 6)) then E_SAMO_Addr_Align
+   else if sumbool_of_bool ((Z.eqb l__140 7)) then E_SAMO_Access_Fault
+   else if sumbool_of_bool ((Z.eqb l__140 8)) then E_U_EnvCall
+   else if sumbool_of_bool ((Z.eqb l__140 9)) then E_S_EnvCall
+   else if sumbool_of_bool ((Z.eqb l__140 10)) then E_Reserved_10
+   else if sumbool_of_bool ((Z.eqb l__140 11)) then E_M_EnvCall
+   else if sumbool_of_bool ((Z.eqb l__140 12)) then E_Fetch_Page_Fault
+   else if sumbool_of_bool ((Z.eqb l__140 13)) then E_Load_Page_Fault
+   else if sumbool_of_bool ((Z.eqb l__140 14)) then E_Reserved_14
+   else if sumbool_of_bool ((Z.eqb l__140 15)) then E_SAMO_Page_Fault
    else E_CHERI.
 
 Definition num_of_ExceptionType (arg_ : ExceptionType) 
@@ -1835,9 +1808,9 @@ Definition internal_error {a : Type} (s : string)
 Definition TrapVectorMode_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 2)} 
 : TrapVectorMode :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then TV_Direct
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then TV_Vector
+   let l__138 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__138 0)) then TV_Direct
+   else if sumbool_of_bool ((Z.eqb l__138 1)) then TV_Vector
    else TV_Reserved.
 
 Definition num_of_TrapVectorMode (arg_ : TrapVectorMode) 
@@ -1856,10 +1829,10 @@ Definition trapVectorMode_of_bits (m : mword 2)
 Definition ExtStatus_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 3)} 
 : ExtStatus :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then Off
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then Initial
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then Clean
+   let l__135 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__135 0)) then Off
+   else if sumbool_of_bool ((Z.eqb l__135 1)) then Initial
+   else if sumbool_of_bool ((Z.eqb l__135 2)) then Clean
    else Dirty.
 
 Definition num_of_ExtStatus (arg_ : ExtStatus) 
@@ -1893,10 +1866,10 @@ Definition extStatus_of_bits (e : mword 2)
 Definition SATPMode_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 3)} 
 : SATPMode :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then Sbare
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then Sv32
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then Sv39
+   let l__132 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__132 0)) then Sbare
+   else if sumbool_of_bool ((Z.eqb l__132 1)) then Sv32
+   else if sumbool_of_bool ((Z.eqb l__132 2)) then Sv39
    else Sv48.
 
 Definition num_of_SATPMode (arg_ : SATPMode) 
@@ -1908,10 +1881,10 @@ Definition satp64Mode_of_bits (a : Architecture) (m : mword 4)
 : option SATPMode :=
    
    match (a, m) with
-   | (g__4, b__0) =>
+   | (g__218, b__0) =>
       if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B0]  : mword 4))) then Some (Sbare)
       else
-        match (g__4, b__0) with
+        match (g__218, b__0) with
         | (RV32, b__0) =>
            if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B1]  : mword 4))) then Some (Sv32)
            else match (RV32, b__0) with | (_, _) => None end
@@ -1926,8 +1899,8 @@ Definition satp64Mode_of_bits (a : Architecture) (m : mword 4)
 Definition uop_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 1)} 
 : uop :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then RISCV_LUI
+   let l__131 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__131 0)) then RISCV_LUI
    else RISCV_AUIPC.
 
 Definition num_of_uop (arg_ : uop) 
@@ -1938,12 +1911,12 @@ Definition num_of_uop (arg_ : uop)
 Definition bop_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 5)} 
 : bop :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then RISCV_BEQ
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then RISCV_BNE
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then RISCV_BLT
-   else if sumbool_of_bool ((Z.eqb p0_ 3)) then RISCV_BGE
-   else if sumbool_of_bool ((Z.eqb p0_ 4)) then RISCV_BLTU
+   let l__126 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__126 0)) then RISCV_BEQ
+   else if sumbool_of_bool ((Z.eqb l__126 1)) then RISCV_BNE
+   else if sumbool_of_bool ((Z.eqb l__126 2)) then RISCV_BLT
+   else if sumbool_of_bool ((Z.eqb l__126 3)) then RISCV_BGE
+   else if sumbool_of_bool ((Z.eqb l__126 4)) then RISCV_BLTU
    else RISCV_BGEU.
 
 Definition num_of_bop (arg_ : bop) 
@@ -1961,12 +1934,12 @@ Definition num_of_bop (arg_ : bop)
 Definition iop_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 5)} 
 : iop :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then RISCV_ADDI
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then RISCV_SLTI
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then RISCV_SLTIU
-   else if sumbool_of_bool ((Z.eqb p0_ 3)) then RISCV_XORI
-   else if sumbool_of_bool ((Z.eqb p0_ 4)) then RISCV_ORI
+   let l__121 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__121 0)) then RISCV_ADDI
+   else if sumbool_of_bool ((Z.eqb l__121 1)) then RISCV_SLTI
+   else if sumbool_of_bool ((Z.eqb l__121 2)) then RISCV_SLTIU
+   else if sumbool_of_bool ((Z.eqb l__121 3)) then RISCV_XORI
+   else if sumbool_of_bool ((Z.eqb l__121 4)) then RISCV_ORI
    else RISCV_ANDI.
 
 Definition num_of_iop (arg_ : iop) 
@@ -1984,9 +1957,9 @@ Definition num_of_iop (arg_ : iop)
 Definition sop_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 2)} 
 : sop :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then RISCV_SLLI
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then RISCV_SRLI
+   let l__119 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__119 0)) then RISCV_SLLI
+   else if sumbool_of_bool ((Z.eqb l__119 1)) then RISCV_SRLI
    else RISCV_SRAI.
 
 Definition num_of_sop (arg_ : sop) 
@@ -1997,16 +1970,16 @@ Definition num_of_sop (arg_ : sop)
 Definition rop_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 9)} 
 : rop :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then RISCV_ADD
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then RISCV_SUB
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then RISCV_SLL
-   else if sumbool_of_bool ((Z.eqb p0_ 3)) then RISCV_SLT
-   else if sumbool_of_bool ((Z.eqb p0_ 4)) then RISCV_SLTU
-   else if sumbool_of_bool ((Z.eqb p0_ 5)) then RISCV_XOR
-   else if sumbool_of_bool ((Z.eqb p0_ 6)) then RISCV_SRL
-   else if sumbool_of_bool ((Z.eqb p0_ 7)) then RISCV_SRA
-   else if sumbool_of_bool ((Z.eqb p0_ 8)) then RISCV_OR
+   let l__110 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__110 0)) then RISCV_ADD
+   else if sumbool_of_bool ((Z.eqb l__110 1)) then RISCV_SUB
+   else if sumbool_of_bool ((Z.eqb l__110 2)) then RISCV_SLL
+   else if sumbool_of_bool ((Z.eqb l__110 3)) then RISCV_SLT
+   else if sumbool_of_bool ((Z.eqb l__110 4)) then RISCV_SLTU
+   else if sumbool_of_bool ((Z.eqb l__110 5)) then RISCV_XOR
+   else if sumbool_of_bool ((Z.eqb l__110 6)) then RISCV_SRL
+   else if sumbool_of_bool ((Z.eqb l__110 7)) then RISCV_SRA
+   else if sumbool_of_bool ((Z.eqb l__110 8)) then RISCV_OR
    else RISCV_AND.
 
 Definition num_of_rop (arg_ : rop) 
@@ -2028,11 +2001,11 @@ Definition num_of_rop (arg_ : rop)
 Definition ropw_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 4)} 
 : ropw :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then RISCV_ADDW
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then RISCV_SUBW
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then RISCV_SLLW
-   else if sumbool_of_bool ((Z.eqb p0_ 3)) then RISCV_SRLW
+   let l__106 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__106 0)) then RISCV_ADDW
+   else if sumbool_of_bool ((Z.eqb l__106 1)) then RISCV_SUBW
+   else if sumbool_of_bool ((Z.eqb l__106 2)) then RISCV_SLLW
+   else if sumbool_of_bool ((Z.eqb l__106 3)) then RISCV_SRLW
    else RISCV_SRAW.
 
 Definition num_of_ropw (arg_ : ropw) 
@@ -2049,9 +2022,9 @@ Definition num_of_ropw (arg_ : ropw)
 Definition sopw_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 2)} 
 : sopw :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then RISCV_SLLIW
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then RISCV_SRLIW
+   let l__104 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__104 0)) then RISCV_SLLIW
+   else if sumbool_of_bool ((Z.eqb l__104 1)) then RISCV_SRLIW
    else RISCV_SRAIW.
 
 Definition num_of_sopw (arg_ : sopw) 
@@ -2062,15 +2035,15 @@ Definition num_of_sopw (arg_ : sopw)
 Definition amoop_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 8)} 
 : amoop :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then AMOSWAP
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then AMOADD
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then AMOXOR
-   else if sumbool_of_bool ((Z.eqb p0_ 3)) then AMOAND
-   else if sumbool_of_bool ((Z.eqb p0_ 4)) then AMOOR
-   else if sumbool_of_bool ((Z.eqb p0_ 5)) then AMOMIN
-   else if sumbool_of_bool ((Z.eqb p0_ 6)) then AMOMAX
-   else if sumbool_of_bool ((Z.eqb p0_ 7)) then AMOMINU
+   let l__96 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__96 0)) then AMOSWAP
+   else if sumbool_of_bool ((Z.eqb l__96 1)) then AMOADD
+   else if sumbool_of_bool ((Z.eqb l__96 2)) then AMOXOR
+   else if sumbool_of_bool ((Z.eqb l__96 3)) then AMOAND
+   else if sumbool_of_bool ((Z.eqb l__96 4)) then AMOOR
+   else if sumbool_of_bool ((Z.eqb l__96 5)) then AMOMIN
+   else if sumbool_of_bool ((Z.eqb l__96 6)) then AMOMAX
+   else if sumbool_of_bool ((Z.eqb l__96 7)) then AMOMINU
    else AMOMAXU.
 
 Definition num_of_amoop (arg_ : amoop) 
@@ -2091,9 +2064,9 @@ Definition num_of_amoop (arg_ : amoop)
 Definition csrop_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 2)} 
 : csrop :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then CSRRW
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then CSRRS
+   let l__94 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__94 0)) then CSRRW
+   else if sumbool_of_bool ((Z.eqb l__94 1)) then CSRRS
    else CSRRC.
 
 Definition num_of_csrop (arg_ : csrop) 
@@ -2495,81 +2468,99 @@ Definition regval_into_reg (v : mword 32)  : mword 32 :=  v.
 Definition rX (r : Z) `{ArithFact (0 <= r /\ r < 32)} 
 : M (mword 32) :=
    
-   let p0_ := r in
-   (if sumbool_of_bool ((Z.eqb p0_ 0)) then returnm (zero_reg  : mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 1)) then ((read_reg x1_ref)  : M (mword 32))  : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 2)) then ((read_reg x2_ref)  : M (mword 32))  : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 3)) then ((read_reg x3_ref)  : M (mword 32))  : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 4)) then ((read_reg x4_ref)  : M (mword 32))  : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 5)) then ((read_reg x5_ref)  : M (mword 32))  : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 6)) then ((read_reg x6_ref)  : M (mword 32))  : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 7)) then ((read_reg x7_ref)  : M (mword 32))  : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 8)) then ((read_reg x8_ref)  : M (mword 32))  : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 9)) then ((read_reg x9_ref)  : M (mword 32))  : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 10)) then
+   let l__62 := r in
+   (if sumbool_of_bool ((Z.eqb l__62 0)) then returnm (zero_reg  : mword 32)
+    else if sumbool_of_bool ((Z.eqb l__62 1)) then
+      ((read_reg x1_ref)  : M (mword 32))
+       : M (mword 32)
+    else if sumbool_of_bool ((Z.eqb l__62 2)) then
+      ((read_reg x2_ref)  : M (mword 32))
+       : M (mword 32)
+    else if sumbool_of_bool ((Z.eqb l__62 3)) then
+      ((read_reg x3_ref)  : M (mword 32))
+       : M (mword 32)
+    else if sumbool_of_bool ((Z.eqb l__62 4)) then
+      ((read_reg x4_ref)  : M (mword 32))
+       : M (mword 32)
+    else if sumbool_of_bool ((Z.eqb l__62 5)) then
+      ((read_reg x5_ref)  : M (mword 32))
+       : M (mword 32)
+    else if sumbool_of_bool ((Z.eqb l__62 6)) then
+      ((read_reg x6_ref)  : M (mword 32))
+       : M (mword 32)
+    else if sumbool_of_bool ((Z.eqb l__62 7)) then
+      ((read_reg x7_ref)  : M (mword 32))
+       : M (mword 32)
+    else if sumbool_of_bool ((Z.eqb l__62 8)) then
+      ((read_reg x8_ref)  : M (mword 32))
+       : M (mword 32)
+    else if sumbool_of_bool ((Z.eqb l__62 9)) then
+      ((read_reg x9_ref)  : M (mword 32))
+       : M (mword 32)
+    else if sumbool_of_bool ((Z.eqb l__62 10)) then
       ((read_reg x10_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 11)) then
+    else if sumbool_of_bool ((Z.eqb l__62 11)) then
       ((read_reg x11_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 12)) then
+    else if sumbool_of_bool ((Z.eqb l__62 12)) then
       ((read_reg x12_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 13)) then
+    else if sumbool_of_bool ((Z.eqb l__62 13)) then
       ((read_reg x13_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 14)) then
+    else if sumbool_of_bool ((Z.eqb l__62 14)) then
       ((read_reg x14_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 15)) then
+    else if sumbool_of_bool ((Z.eqb l__62 15)) then
       ((read_reg x15_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 16)) then
+    else if sumbool_of_bool ((Z.eqb l__62 16)) then
       ((read_reg x16_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 17)) then
+    else if sumbool_of_bool ((Z.eqb l__62 17)) then
       ((read_reg x17_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 18)) then
+    else if sumbool_of_bool ((Z.eqb l__62 18)) then
       ((read_reg x18_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 19)) then
+    else if sumbool_of_bool ((Z.eqb l__62 19)) then
       ((read_reg x19_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 20)) then
+    else if sumbool_of_bool ((Z.eqb l__62 20)) then
       ((read_reg x20_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 21)) then
+    else if sumbool_of_bool ((Z.eqb l__62 21)) then
       ((read_reg x21_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 22)) then
+    else if sumbool_of_bool ((Z.eqb l__62 22)) then
       ((read_reg x22_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 23)) then
+    else if sumbool_of_bool ((Z.eqb l__62 23)) then
       ((read_reg x23_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 24)) then
+    else if sumbool_of_bool ((Z.eqb l__62 24)) then
       ((read_reg x24_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 25)) then
+    else if sumbool_of_bool ((Z.eqb l__62 25)) then
       ((read_reg x25_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 26)) then
+    else if sumbool_of_bool ((Z.eqb l__62 26)) then
       ((read_reg x26_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 27)) then
+    else if sumbool_of_bool ((Z.eqb l__62 27)) then
       ((read_reg x27_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 28)) then
+    else if sumbool_of_bool ((Z.eqb l__62 28)) then
       ((read_reg x28_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 29)) then
+    else if sumbool_of_bool ((Z.eqb l__62 29)) then
       ((read_reg x29_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 30)) then
+    else if sumbool_of_bool ((Z.eqb l__62 30)) then
       ((read_reg x30_ref)  : M (mword 32))
        : M (mword 32)
-    else if sumbool_of_bool ((Z.eqb p0_ 31)) then
+    else if sumbool_of_bool ((Z.eqb l__62 31)) then
       ((read_reg x31_ref)  : M (mword 32))
        : M (mword 32)
     else assert_exp' false "invalid register number" >>= fun _ => exit tt) >>= fun v : regtype =>
@@ -2582,45 +2573,46 @@ Definition wX (r : Z) (in_v : mword 32) `{ArithFact (0 <= r /\ r < 32)}
 : M (unit) :=
    
    let v := regval_into_reg in_v in
-   let p0_ := r in
-   (if sumbool_of_bool ((Z.eqb p0_ 0)) then returnm (tt  : unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 1)) then write_reg x1_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 2)) then write_reg x2_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 3)) then write_reg x3_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 4)) then write_reg x4_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 5)) then write_reg x5_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 6)) then write_reg x6_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 7)) then write_reg x7_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 8)) then write_reg x8_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 9)) then write_reg x9_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 10)) then write_reg x10_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 11)) then write_reg x11_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 12)) then write_reg x12_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 13)) then write_reg x13_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 14)) then write_reg x14_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 15)) then write_reg x15_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 16)) then write_reg x16_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 17)) then write_reg x17_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 18)) then write_reg x18_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 19)) then write_reg x19_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 20)) then write_reg x20_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 21)) then write_reg x21_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 22)) then write_reg x22_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 23)) then write_reg x23_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 24)) then write_reg x24_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 25)) then write_reg x25_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 26)) then write_reg x26_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 27)) then write_reg x27_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 28)) then write_reg x28_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 29)) then write_reg x29_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 30)) then write_reg x30_ref v  : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 31)) then write_reg x31_ref v  : M (unit)
+   let l__30 := r in
+   (if sumbool_of_bool ((Z.eqb l__30 0)) then returnm (tt  : unit)
+    else if sumbool_of_bool ((Z.eqb l__30 1)) then write_reg x1_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 2)) then write_reg x2_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 3)) then write_reg x3_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 4)) then write_reg x4_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 5)) then write_reg x5_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 6)) then write_reg x6_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 7)) then write_reg x7_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 8)) then write_reg x8_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 9)) then write_reg x9_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 10)) then write_reg x10_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 11)) then write_reg x11_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 12)) then write_reg x12_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 13)) then write_reg x13_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 14)) then write_reg x14_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 15)) then write_reg x15_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 16)) then write_reg x16_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 17)) then write_reg x17_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 18)) then write_reg x18_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 19)) then write_reg x19_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 20)) then write_reg x20_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 21)) then write_reg x21_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 22)) then write_reg x22_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 23)) then write_reg x23_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 24)) then write_reg x24_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 25)) then write_reg x25_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 26)) then write_reg x26_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 27)) then write_reg x27_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 28)) then write_reg x28_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 29)) then write_reg x29_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 30)) then write_reg x30_ref v  : M (unit)
+    else if sumbool_of_bool ((Z.eqb l__30 31)) then write_reg x31_ref v  : M (unit)
     else assert_exp' false "invalid register number" >>= fun _ => exit tt) >>
    returnm ((if sumbool_of_bool ((projT1 (neq_int r 0))) then
                let '_ := (rvfi_wX r in_v)  : unit in
                if ((get_config_print_reg tt)) then
                  print_endline
-                   (concat_str "x" (concat_str (string_of_int r) (concat_str " <- " (RegStr v))))
+                   (String.append "x"
+                      (String.append (string_of_int r) (String.append " <- " (RegStr v))))
                else tt
              else tt)
     : unit).
@@ -2629,166 +2621,38 @@ Definition reg_name_abi (r : mword 5)
 : M (string) :=
    
    let b__0 := r in
-   (if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                           (projT1
-                            (regidx_to_regno (vec_of_bits [B0;B0;B0;B0;B0]  : mword 5))))) then
-      returnm ("zero"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B0;B0;B1]  : mword 5))))) then
-      returnm ("ra"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B0;B1;B0]  : mword 5))))) then
-      returnm ("sp"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B0;B1;B1]  : mword 5))))) then
-      returnm ("gp"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B1;B0;B0]  : mword 5))))) then
-      returnm ("tp"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B1;B0;B1]  : mword 5))))) then
-      returnm ("t0"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B1;B1;B0]  : mword 5))))) then
-      returnm ("t1"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B1;B1;B1]  : mword 5))))) then
-      returnm ("t2"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B0;B0;B0]  : mword 5))))) then
-      returnm ("fp"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B0;B0;B1]  : mword 5))))) then
-      returnm ("s1"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B0;B1;B0]  : mword 5))))) then
-      returnm ("a0"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B0;B1;B1]  : mword 5))))) then
-      returnm ("a1"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B1;B0;B0]  : mword 5))))) then
-      returnm ("a2"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B1;B0;B1]  : mword 5))))) then
-      returnm ("a3"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B1;B1;B0]  : mword 5))))) then
-      returnm ("a4"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B1;B1;B1]  : mword 5))))) then
-      returnm ("a5"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B0;B0;B0]  : mword 5))))) then
-      returnm ("a6"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B0;B0;B1]  : mword 5))))) then
-      returnm ("a7"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B0;B1;B0]  : mword 5))))) then
-      returnm ("s2"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B0;B1;B1]  : mword 5))))) then
-      returnm ("s3"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B1;B0;B0]  : mword 5))))) then
-      returnm ("s4"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B1;B0;B1]  : mword 5))))) then
-      returnm ("s5"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B1;B1;B0]  : mword 5))))) then
-      returnm ("s6"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B1;B1;B1]  : mword 5))))) then
-      returnm ("s7"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B0;B0;B0]  : mword 5))))) then
-      returnm ("s8"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B0;B0;B1]  : mword 5))))) then
-      returnm ("s9"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B0;B1;B0]  : mword 5))))) then
-      returnm ("s10"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B0;B1;B1]  : mword 5))))) then
-      returnm ("s11"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B1;B0;B0]  : mword 5))))) then
-      returnm ("t3"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B1;B0;B1]  : mword 5))))) then
-      returnm ("t4"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B1;B1;B0]  : mword 5))))) then
-      returnm ("t5"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B1;B1;B1]  : mword 5))))) then
-      returnm ("t6"
-       : string)
+   (if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B0;B0]  : mword 5))) then returnm ("zero"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B0;B1]  : mword 5))) then returnm ("ra"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B1;B0]  : mword 5))) then returnm ("sp"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B1;B1]  : mword 5))) then returnm ("gp"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B0;B0]  : mword 5))) then returnm ("tp"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B0;B1]  : mword 5))) then returnm ("t0"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B1;B0]  : mword 5))) then returnm ("t1"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B1;B1]  : mword 5))) then returnm ("t2"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B0;B0;B0]  : mword 5))) then returnm ("fp"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B0;B0;B1]  : mword 5))) then returnm ("s1"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B0;B1;B0]  : mword 5))) then returnm ("a0"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B0;B1;B1]  : mword 5))) then returnm ("a1"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B1;B0;B0]  : mword 5))) then returnm ("a2"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B1;B0;B1]  : mword 5))) then returnm ("a3"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B1;B1;B0]  : mword 5))) then returnm ("a4"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B1;B1;B1]  : mword 5))) then returnm ("a5"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B0;B0;B0]  : mword 5))) then returnm ("a6"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B0;B0;B1]  : mword 5))) then returnm ("a7"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B0;B1;B0]  : mword 5))) then returnm ("s2"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B0;B1;B1]  : mword 5))) then returnm ("s3"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B1;B0;B0]  : mword 5))) then returnm ("s4"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B1;B0;B1]  : mword 5))) then returnm ("s5"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B1;B1;B0]  : mword 5))) then returnm ("s6"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B1;B1;B1]  : mword 5))) then returnm ("s7"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B0;B0;B0]  : mword 5))) then returnm ("s8"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B0;B0;B1]  : mword 5))) then returnm ("s9"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B0;B1;B0]  : mword 5))) then returnm ("s10"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B0;B1;B1]  : mword 5))) then returnm ("s11"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B1;B0;B0]  : mword 5))) then returnm ("t3"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B1;B0;B1]  : mword 5))) then returnm ("t4"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B1;B1;B0]  : mword 5))) then returnm ("t5"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B1;B1;B1]  : mword 5))) then returnm ("t6"  : string)
     else
       assert_exp' false "Pattern match failure at model/riscv_regs.sail 149:2 - 182:3" >>= fun _ =>
       exit tt)
@@ -2798,166 +2662,38 @@ Definition reg_name_forwards (arg_ : mword 5)
 : M (string) :=
    
    let b__0 := arg_ in
-   (if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                           (projT1
-                            (regidx_to_regno (vec_of_bits [B0;B0;B0;B0;B0]  : mword 5))))) then
-      returnm ("zero"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B0;B0;B1]  : mword 5))))) then
-      returnm ("ra"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B0;B1;B0]  : mword 5))))) then
-      returnm ("sp"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B0;B1;B1]  : mword 5))))) then
-      returnm ("gp"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B1;B0;B0]  : mword 5))))) then
-      returnm ("tp"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B1;B0;B1]  : mword 5))))) then
-      returnm ("t0"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B1;B1;B0]  : mword 5))))) then
-      returnm ("t1"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B1;B1;B1]  : mword 5))))) then
-      returnm ("t2"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B0;B0;B0]  : mword 5))))) then
-      returnm ("fp"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B0;B0;B1]  : mword 5))))) then
-      returnm ("s1"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B0;B1;B0]  : mword 5))))) then
-      returnm ("a0"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B0;B1;B1]  : mword 5))))) then
-      returnm ("a1"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B1;B0;B0]  : mword 5))))) then
-      returnm ("a2"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B1;B0;B1]  : mword 5))))) then
-      returnm ("a3"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B1;B1;B0]  : mword 5))))) then
-      returnm ("a4"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B1;B1;B1]  : mword 5))))) then
-      returnm ("a5"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B0;B0;B0]  : mword 5))))) then
-      returnm ("a6"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B0;B0;B1]  : mword 5))))) then
-      returnm ("a7"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B0;B1;B0]  : mword 5))))) then
-      returnm ("s2"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B0;B1;B1]  : mword 5))))) then
-      returnm ("s3"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B1;B0;B0]  : mword 5))))) then
-      returnm ("s4"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B1;B0;B1]  : mword 5))))) then
-      returnm ("s5"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B1;B1;B0]  : mword 5))))) then
-      returnm ("s6"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B1;B1;B1]  : mword 5))))) then
-      returnm ("s7"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B0;B0;B0]  : mword 5))))) then
-      returnm ("s8"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B0;B0;B1]  : mword 5))))) then
-      returnm ("s9"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B0;B1;B0]  : mword 5))))) then
-      returnm ("s10"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B0;B1;B1]  : mword 5))))) then
-      returnm ("s11"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B1;B0;B0]  : mword 5))))) then
-      returnm ("t3"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B1;B0;B1]  : mword 5))))) then
-      returnm ("t4"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B1;B1;B0]  : mword 5))))) then
-      returnm ("t5"
-       : string)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B1;B1;B1]  : mword 5))))) then
-      returnm ("t6"
-       : string)
+   (if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B0;B0]  : mword 5))) then returnm ("zero"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B0;B1]  : mword 5))) then returnm ("ra"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B1;B0]  : mword 5))) then returnm ("sp"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B1;B1]  : mword 5))) then returnm ("gp"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B0;B0]  : mword 5))) then returnm ("tp"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B0;B1]  : mword 5))) then returnm ("t0"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B1;B0]  : mword 5))) then returnm ("t1"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B1;B1]  : mword 5))) then returnm ("t2"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B0;B0;B0]  : mword 5))) then returnm ("fp"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B0;B0;B1]  : mword 5))) then returnm ("s1"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B0;B1;B0]  : mword 5))) then returnm ("a0"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B0;B1;B1]  : mword 5))) then returnm ("a1"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B1;B0;B0]  : mword 5))) then returnm ("a2"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B1;B0;B1]  : mword 5))) then returnm ("a3"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B1;B1;B0]  : mword 5))) then returnm ("a4"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B1;B1;B1]  : mword 5))) then returnm ("a5"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B0;B0;B0]  : mword 5))) then returnm ("a6"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B0;B0;B1]  : mword 5))) then returnm ("a7"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B0;B1;B0]  : mword 5))) then returnm ("s2"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B0;B1;B1]  : mword 5))) then returnm ("s3"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B1;B0;B0]  : mword 5))) then returnm ("s4"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B1;B0;B1]  : mword 5))) then returnm ("s5"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B1;B1;B0]  : mword 5))) then returnm ("s6"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B1;B1;B1]  : mword 5))) then returnm ("s7"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B0;B0;B0]  : mword 5))) then returnm ("s8"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B0;B0;B1]  : mword 5))) then returnm ("s9"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B0;B1;B0]  : mword 5))) then returnm ("s10"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B0;B1;B1]  : mword 5))) then returnm ("s11"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B1;B0;B0]  : mword 5))) then returnm ("t3"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B1;B0;B1]  : mword 5))) then returnm ("t4"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B1;B1;B0]  : mword 5))) then returnm ("t5"  : string)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B1;B1;B1]  : mword 5))) then returnm ("t6"  : string)
     else assert_exp' false "Pattern match failure at unknown location" >>= fun _ => exit tt)
     : M (string).
 
@@ -3066,134 +2802,38 @@ Definition reg_name_forwards_matches (arg_ : mword 5)
 : bool :=
    
    let b__0 := arg_ in
-   if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                          (projT1
-                           (regidx_to_regno (vec_of_bits [B0;B0;B0;B0;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B0;B0;B0;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B0;B0;B1;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B0;B0;B1;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B0;B1;B0;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B0;B1;B0;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B0;B1;B1;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B0;B1;B1;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B1;B0;B0;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B1;B0;B0;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B1;B0;B1;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B1;B0;B1;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B1;B1;B0;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B1;B1;B0;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B1;B1;B1;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B1;B1;B1;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B0;B0;B0;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B0;B0;B0;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B0;B0;B1;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B0;B0;B1;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B0;B1;B0;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B0;B1;B0;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B0;B1;B1;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B0;B1;B1;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B1;B0;B0;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B1;B0;B0;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B1;B0;B1;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B1;B0;B1;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B1;B1;B0;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B1;B1;B0;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B1;B1;B1;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B1;B1;B1;B1]  : mword 5))))) then
-     true
+   if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B0;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B0;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B1;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B1;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B0;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B0;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B1;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B1;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B1;B0;B0;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B1;B0;B0;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B1;B0;B1;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B1;B0;B1;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B1;B1;B0;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B1;B1;B0;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B1;B1;B1;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B1;B1;B1;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B0;B0;B0;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B0;B0;B0;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B0;B0;B1;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B0;B0;B1;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B0;B1;B0;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B0;B1;B0;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B0;B1;B1;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B0;B1;B1;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B1;B0;B0;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B1;B0;B0;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B1;B0;B1;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B1;B0;B1;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B1;B1;B0;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B1;B1;B0;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B1;B1;B1;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B1;B1;B1;B1]  : mword 5))) then true
    else false.
 
 Definition reg_name_backwards_matches (arg_ : string) 
@@ -7373,10 +7013,10 @@ Definition legalize_satp32 (a : Architecture) (o : mword 32) (v : mword 32)  : m
 Definition PmpAddrMatchType_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 3)} 
 : PmpAddrMatchType :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then OFF
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then TOR
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then NA4
+   let l__27 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__27 0)) then OFF
+   else if sumbool_of_bool ((Z.eqb l__27 1)) then TOR
+   else if sumbool_of_bool ((Z.eqb l__27 2)) then NA4
    else NAPOT.
 
 Definition num_of_PmpAddrMatchType (arg_ : PmpAddrMatchType) 
@@ -7567,8 +7207,8 @@ Definition _update_Pmpcfg_ent_R (v : Pmpcfg_ent) (x : mword 1)
 Definition pmpReadCfgReg (n : Z) `{ArithFact (0 <= n /\ n < 4)} 
 : M (mword 32) :=
    
-   let p0_ := n in
-   (if sumbool_of_bool ((Z.eqb p0_ 0)) then
+   let l__23 := n in
+   (if sumbool_of_bool ((Z.eqb l__23 0)) then
       read_reg pmp3cfg_ref >>= fun w__0 : Pmpcfg_ent =>
       read_reg pmp2cfg_ref >>= fun w__1 : Pmpcfg_ent =>
       read_reg pmp1cfg_ref >>= fun w__2 : Pmpcfg_ent =>
@@ -7577,7 +7217,7 @@ Definition pmpReadCfgReg (n : Z) `{ArithFact (0 <= n /\ n < 4)}
                   (concat_vec (_get_Pmpcfg_ent_bits w__1)
                      (concat_vec (_get_Pmpcfg_ent_bits w__2) (_get_Pmpcfg_ent_bits w__3))))
        : mword (8 + (8 + (8 + 8))))
-    else if sumbool_of_bool ((Z.eqb p0_ 1)) then
+    else if sumbool_of_bool ((Z.eqb l__23 1)) then
       read_reg pmp7cfg_ref >>= fun w__4 : Pmpcfg_ent =>
       read_reg pmp6cfg_ref >>= fun w__5 : Pmpcfg_ent =>
       read_reg pmp5cfg_ref >>= fun w__6 : Pmpcfg_ent =>
@@ -7586,7 +7226,7 @@ Definition pmpReadCfgReg (n : Z) `{ArithFact (0 <= n /\ n < 4)}
                   (concat_vec (_get_Pmpcfg_ent_bits w__5)
                      (concat_vec (_get_Pmpcfg_ent_bits w__6) (_get_Pmpcfg_ent_bits w__7))))
        : mword (8 + (8 + (8 + 8))))
-    else if sumbool_of_bool ((Z.eqb p0_ 2)) then
+    else if sumbool_of_bool ((Z.eqb l__23 2)) then
       read_reg pmp11cfg_ref >>= fun w__8 : Pmpcfg_ent =>
       read_reg pmp10cfg_ref >>= fun w__9 : Pmpcfg_ent =>
       read_reg pmp9cfg_ref >>= fun w__10 : Pmpcfg_ent =>
@@ -7595,7 +7235,7 @@ Definition pmpReadCfgReg (n : Z) `{ArithFact (0 <= n /\ n < 4)}
                   (concat_vec (_get_Pmpcfg_ent_bits w__9)
                      (concat_vec (_get_Pmpcfg_ent_bits w__10) (_get_Pmpcfg_ent_bits w__11))))
        : mword (8 + (8 + (8 + 8))))
-    else if sumbool_of_bool ((Z.eqb p0_ 3)) then
+    else if sumbool_of_bool ((Z.eqb l__23 3)) then
       read_reg pmp15cfg_ref >>= fun w__12 : Pmpcfg_ent =>
       read_reg pmp14cfg_ref >>= fun w__13 : Pmpcfg_ent =>
       read_reg pmp13cfg_ref >>= fun w__14 : Pmpcfg_ent =>
@@ -7618,8 +7258,8 @@ Definition pmpWriteCfg (cfg : Pmpcfg_ent) (v : mword 8)
 Definition pmpWriteCfgReg (n : Z) (v : mword 32) `{ArithFact (0 <= n /\ n < 4)} 
 : M (unit) :=
    
-   let p0_ := n in
-   (if sumbool_of_bool ((Z.eqb p0_ 0)) then
+   let l__19 := n in
+   (if sumbool_of_bool ((Z.eqb l__19 0)) then
       read_reg pmp0cfg_ref >>= fun w__0 : Pmpcfg_ent =>
       write_reg pmp0cfg_ref (pmpWriteCfg w__0 (subrange_vec_dec v 7 0)) >>
       read_reg pmp1cfg_ref >>= fun w__1 : Pmpcfg_ent =>
@@ -7629,7 +7269,7 @@ Definition pmpWriteCfgReg (n : Z) (v : mword 32) `{ArithFact (0 <= n /\ n < 4)}
       read_reg pmp3cfg_ref >>= fun w__3 : Pmpcfg_ent =>
       write_reg pmp3cfg_ref (pmpWriteCfg w__3 (subrange_vec_dec v 31 24))
        : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 1)) then
+    else if sumbool_of_bool ((Z.eqb l__19 1)) then
       read_reg pmp4cfg_ref >>= fun w__4 : Pmpcfg_ent =>
       write_reg pmp4cfg_ref (pmpWriteCfg w__4 (subrange_vec_dec v 7 0)) >>
       read_reg pmp5cfg_ref >>= fun w__5 : Pmpcfg_ent =>
@@ -7639,7 +7279,7 @@ Definition pmpWriteCfgReg (n : Z) (v : mword 32) `{ArithFact (0 <= n /\ n < 4)}
       read_reg pmp7cfg_ref >>= fun w__7 : Pmpcfg_ent =>
       write_reg pmp7cfg_ref (pmpWriteCfg w__7 (subrange_vec_dec v 31 24))
        : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 2)) then
+    else if sumbool_of_bool ((Z.eqb l__19 2)) then
       read_reg pmp8cfg_ref >>= fun w__8 : Pmpcfg_ent =>
       let pmp8cfg8 := pmpWriteCfg w__8 (subrange_vec_dec v 7 0) in
       read_reg pmp9cfg_ref >>= fun w__9 : Pmpcfg_ent =>
@@ -7649,7 +7289,7 @@ Definition pmpWriteCfgReg (n : Z) (v : mword 32) `{ArithFact (0 <= n /\ n < 4)}
       read_reg pmp11cfg_ref >>= fun w__11 : Pmpcfg_ent =>
       write_reg pmp11cfg_ref (pmpWriteCfg w__11 (subrange_vec_dec v 31 24))
        : M (unit)
-    else if sumbool_of_bool ((Z.eqb p0_ 3)) then
+    else if sumbool_of_bool ((Z.eqb l__19 3)) then
       read_reg pmp12cfg_ref >>= fun w__12 : Pmpcfg_ent =>
       write_reg pmp12cfg_ref (pmpWriteCfg w__12 (subrange_vec_dec v 7 0)) >>
       read_reg pmp13cfg_ref >>= fun w__13 : Pmpcfg_ent =>
@@ -7716,9 +7356,9 @@ Definition pmpCheckPerms (ent : Pmpcfg_ent) (acc : AccessType) (priv : Privilege
 Definition pmpAddrMatch_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 2)} 
 : pmpAddrMatch :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then PMP_NoMatch
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then PMP_PartialMatch
+   let l__17 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__17 0)) then PMP_NoMatch
+   else if sumbool_of_bool ((Z.eqb l__17 1)) then PMP_PartialMatch
    else PMP_Match.
 
 Definition num_of_pmpAddrMatch (arg_ : pmpAddrMatch) 
@@ -7741,9 +7381,9 @@ Definition pmpMatchAddr (addr : mword 32) (width : mword 32) (rng : option ((mwo
 Definition pmpMatch_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 2)} 
 : pmpMatch :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then PMP_Success
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then PMP_Continue
+   let l__15 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__15 0)) then PMP_Success
+   else if sumbool_of_bool ((Z.eqb l__15 1)) then PMP_Continue
    else PMP_Fail.
 
 Definition num_of_pmpMatch (arg_ : pmpMatch) 
@@ -10718,11 +10358,12 @@ Definition write_NExt_CSR (csr : mword 12) (value : mword 32)
                 let '_ :=
                   (if ((get_config_print_reg tt)) then
                      print_endline
-                       (concat_str "CSR "
-                          (concat_str (csr_name csr)
-                             (concat_str " <- "
-                                (concat_str (string_of_bits v)
-                                   (concat_str " (input: " (concat_str (string_of_bits value) ")"))))))
+                       (String.append "CSR "
+                          (String.append (csr_name csr)
+                             (String.append " <- "
+                                (String.append (string_of_bits v)
+                                   (String.append " (input: "
+                                      (String.append (string_of_bits value) ")"))))))
                    else tt)
                    : unit in
                 true
@@ -11332,12 +10973,12 @@ Definition trap_handler
    let '_ :=
      (if ((get_config_print_platform tt)) then
         print_endline
-          (concat_str "handling "
-             (concat_str (if sumbool_of_bool (intr) then "int#" else "exc#")
-                (concat_str (string_of_bits c)
-                   (concat_str " at priv "
-                      (concat_str (privLevel_to_str del_priv)
-                         (concat_str " with tval " (string_of_bits (tval info))))))))
+          (String.append "handling "
+             (String.append (if sumbool_of_bool (intr) then "int#" else "exc#")
+                (String.append (string_of_bits c)
+                   (String.append " at priv "
+                      (String.append (privLevel_to_str del_priv)
+                         (String.append " with tval " (string_of_bits (tval info))))))))
       else tt)
       : unit in
    let '_ := (cancel_reservation tt)  : unit in
@@ -11357,7 +10998,7 @@ Definition trap_handler
        (if ((get_config_print_reg tt)) then
           read_reg mstatus_ref >>= fun w__2 : Mstatus =>
           returnm ((print_endline
-                      (concat_str "CSR mstatus <- " (string_of_bits (_get_Mstatus_bits w__2))))
+                      (String.append "CSR mstatus <- " (string_of_bits (_get_Mstatus_bits w__2))))
            : unit)
         else returnm (tt  : unit)) >>
        read_reg mcause_ref >>= fun w__3 : Mcause =>
@@ -11385,7 +11026,7 @@ Definition trap_handler
        (if ((get_config_print_reg tt)) then
           read_reg mstatus_ref >>= fun w__10 : Mstatus =>
           returnm ((print_endline
-                      (concat_str "CSR mstatus <- " (string_of_bits (_get_Mstatus_bits w__10))))
+                      (String.append "CSR mstatus <- " (string_of_bits (_get_Mstatus_bits w__10))))
            : unit)
         else returnm (tt  : unit)) >>
        read_reg scause_ref >>= fun w__11 : Mcause =>
@@ -11406,7 +11047,7 @@ Definition trap_handler
        (if ((get_config_print_reg tt)) then
           read_reg mstatus_ref >>= fun w__15 : Mstatus =>
           returnm ((print_endline
-                      (concat_str "CSR mstatus <- " (string_of_bits (_get_Mstatus_bits w__15))))
+                      (String.append "CSR mstatus <- " (string_of_bits (_get_Mstatus_bits w__15))))
            : unit)
         else returnm (tt  : unit)) >>
        read_reg ucause_ref >>= fun w__16 : Mcause =>
@@ -11424,11 +11065,12 @@ Definition exception_handler (cur_priv : Privilege) (ctl : ctl_result) (pc : mwo
        let '_ :=
          (if ((get_config_print_platform tt)) then
             print_endline
-              (concat_str "trapping from "
-                 (concat_str (privLevel_to_str cur_priv)
-                    (concat_str " to "
-                       (concat_str (privLevel_to_str del_priv)
-                          (concat_str " to handle " (exceptionType_to_str e.(sync_exception_trap)))))))
+              (String.append "trapping from "
+                 (String.append (privLevel_to_str cur_priv)
+                    (String.append " to "
+                       (String.append (privLevel_to_str del_priv)
+                          (String.append " to handle "
+                             (exceptionType_to_str e.(sync_exception_trap)))))))
           else tt)
           : unit in
        (trap_handler del_priv false ((exceptionType_to_bits e.(sync_exception_trap))  : mword 8) pc
@@ -11448,15 +11090,15 @@ Definition exception_handler (cur_priv : Privilege) (ctl : ctl_result) (pc : mwo
        (if ((get_config_print_reg tt)) then
           read_reg mstatus_ref >>= fun w__5 : Mstatus =>
           returnm ((print_endline
-                      (concat_str "CSR mstatus <- " (string_of_bits (_get_Mstatus_bits w__5))))
+                      (String.append "CSR mstatus <- " (string_of_bits (_get_Mstatus_bits w__5))))
            : unit)
         else returnm (tt  : unit)) >>
        (if ((get_config_print_platform tt)) then
           read_reg cur_privilege_ref >>= fun w__6 : Privilege =>
           returnm ((print_endline
-                      (concat_str "ret-ing from "
-                         (concat_str (privLevel_to_str prev_priv)
-                            (concat_str " to " (privLevel_to_str w__6)))))
+                      (String.append "ret-ing from "
+                         (String.append (privLevel_to_str prev_priv)
+                            (String.append " to " (privLevel_to_str w__6)))))
            : unit)
         else returnm (tt  : unit)) >>
        let '_ := (cancel_reservation tt)  : unit in
@@ -11476,15 +11118,15 @@ Definition exception_handler (cur_priv : Privilege) (ctl : ctl_result) (pc : mwo
        (if ((get_config_print_reg tt)) then
           read_reg mstatus_ref >>= fun w__11 : Mstatus =>
           returnm ((print_endline
-                      (concat_str "CSR mstatus <- " (string_of_bits (_get_Mstatus_bits w__11))))
+                      (String.append "CSR mstatus <- " (string_of_bits (_get_Mstatus_bits w__11))))
            : unit)
         else returnm (tt  : unit)) >>
        (if ((get_config_print_platform tt)) then
           read_reg cur_privilege_ref >>= fun w__12 : Privilege =>
           returnm ((print_endline
-                      (concat_str "ret-ing from "
-                         (concat_str (privLevel_to_str prev_priv)
-                            (concat_str " to " (privLevel_to_str w__12)))))
+                      (String.append "ret-ing from "
+                         (String.append (privLevel_to_str prev_priv)
+                            (String.append " to " (privLevel_to_str w__12)))))
            : unit)
         else returnm (tt  : unit)) >>
        let '_ := (cancel_reservation tt)  : unit in
@@ -11501,15 +11143,15 @@ Definition exception_handler (cur_priv : Privilege) (ctl : ctl_result) (pc : mwo
        (if ((get_config_print_reg tt)) then
           read_reg mstatus_ref >>= fun w__16 : Mstatus =>
           returnm ((print_endline
-                      (concat_str "CSR mstatus <- " (string_of_bits (_get_Mstatus_bits w__16))))
+                      (String.append "CSR mstatus <- " (string_of_bits (_get_Mstatus_bits w__16))))
            : unit)
         else returnm (tt  : unit)) >>
        (if ((get_config_print_platform tt)) then
           read_reg cur_privilege_ref >>= fun w__17 : Privilege =>
           returnm ((print_endline
-                      (concat_str "ret-ing from "
-                         (concat_str (privLevel_to_str prev_priv)
-                            (concat_str " to " (privLevel_to_str w__17)))))
+                      (String.append "ret-ing from "
+                         (String.append (privLevel_to_str prev_priv)
+                            (String.append " to " (privLevel_to_str w__17)))))
            : unit)
         else returnm (tt  : unit)) >>
        let '_ := (cancel_reservation tt)  : unit in
@@ -11578,10 +11220,10 @@ Definition init_sys '(tt : unit)
    (if ((get_config_print_reg tt)) then
       read_reg mstatus_ref >>= fun w__4 : Mstatus =>
       returnm ((print_endline
-                  (concat_str "CSR mstatus <- "
-                     (concat_str (string_of_bits (_get_Mstatus_bits w__4))
-                        (concat_str " (input: "
-                           (concat_str
+                  (String.append "CSR mstatus <- "
+                     (String.append (string_of_bits (_get_Mstatus_bits w__4))
+                        (String.append " (input: "
+                           (String.append
                               (string_of_bits ((EXTZ 32 (vec_of_bits [B0]  : mword 1))  : xlenbits))
                               ")")))))
        : unit)
@@ -11638,19 +11280,20 @@ Definition within_phys_mem (addr : mword 32) (width : Z) `{ArithFact (width <= 1
    else
      let '_ :=
        (print_endline
-          (concat_str "within_phys_mem: " (concat_str (string_of_bits addr) " not within phys-mem:")))
+          (String.append "within_phys_mem: "
+             (String.append (string_of_bits addr) " not within phys-mem:")))
         : unit in
      let '_ :=
-       (print_endline (concat_str "  plat_rom_base: " (string_of_bits (plat_rom_base tt))))
+       (print_endline (String.append "  plat_rom_base: " (string_of_bits (plat_rom_base tt))))
         : unit in
      let '_ :=
-       (print_endline (concat_str "  plat_rom_size: " (string_of_bits (plat_rom_size tt))))
+       (print_endline (String.append "  plat_rom_size: " (string_of_bits (plat_rom_size tt))))
         : unit in
      let '_ :=
-       (print_endline (concat_str "  plat_ram_base: " (string_of_bits (plat_ram_base tt))))
+       (print_endline (String.append "  plat_ram_base: " (string_of_bits (plat_ram_base tt))))
         : unit in
      let '_ :=
-       (print_endline (concat_str "  plat_ram_size: " (string_of_bits (plat_ram_size tt))))
+       (print_endline (String.append "  plat_ram_size: " (string_of_bits (plat_ram_size tt))))
         : unit in
      false.
 
@@ -11704,9 +11347,9 @@ Definition clint_load (addr : mword 32) (width : Z) `{ArithFact (width > 0)}
       (if ((get_config_print_platform tt)) then
          read_reg mip_ref >>= fun w__0 : Minterrupts =>
          returnm ((print_endline
-                     (concat_str "clint["
-                        (concat_str (string_of_bits addr)
-                           (concat_str "] -> " (string_of_bits (_get_Minterrupts_MSI w__0))))))
+                     (String.append "clint["
+                        (String.append (string_of_bits addr)
+                           (String.append "] -> " (string_of_bits (_get_Minterrupts_MSI w__0))))))
           : unit)
        else returnm (tt  : unit)) >>
       read_reg mip_ref >>= fun w__1 : Minterrupts =>
@@ -11718,9 +11361,9 @@ Definition clint_load (addr : mword 32) (width : Z) `{ArithFact (width > 0)}
       (if ((get_config_print_platform tt)) then
          ((read_reg mtimecmp_ref)  : M (mword 64)) >>= fun w__2 : mword 64 =>
          returnm ((print_endline
-                     (concat_str "clint<4>["
-                        (concat_str (string_of_bits addr)
-                           (concat_str "] -> " (string_of_bits (subrange_vec_dec w__2 31 0))))))
+                     (String.append "clint<4>["
+                        (String.append (string_of_bits addr)
+                           (String.append "] -> " (string_of_bits (subrange_vec_dec w__2 31 0))))))
           : unit)
        else returnm (tt  : unit)) >>
       ((read_reg mtimecmp_ref)  : M (mword 64)) >>= fun w__3 : mword 64 =>
@@ -11732,8 +11375,9 @@ Definition clint_load (addr : mword 32) (width : Z) `{ArithFact (width > 0)}
       (if ((get_config_print_platform tt)) then
          ((read_reg mtimecmp_ref)  : M (mword 64)) >>= fun w__4 : mword 64 =>
          returnm ((print_endline
-                     (concat_str "clint<8>["
-                        (concat_str (string_of_bits addr) (concat_str "] -> " (string_of_bits w__4)))))
+                     (String.append "clint<8>["
+                        (String.append (string_of_bits addr)
+                           (String.append "] -> " (string_of_bits w__4)))))
           : unit)
        else returnm (tt  : unit)) >>
       ((read_reg mtimecmp_ref)  : M (mword 64)) >>= fun w__5 : mword 64 =>
@@ -11745,9 +11389,9 @@ Definition clint_load (addr : mword 32) (width : Z) `{ArithFact (width > 0)}
       (if ((get_config_print_platform tt)) then
          ((read_reg mtimecmp_ref)  : M (mword 64)) >>= fun w__6 : mword 64 =>
          returnm ((print_endline
-                     (concat_str "clint-hi<4>["
-                        (concat_str (string_of_bits addr)
-                           (concat_str "] -> " (string_of_bits (subrange_vec_dec w__6 63 32))))))
+                     (String.append "clint-hi<4>["
+                        (String.append (string_of_bits addr)
+                           (String.append "] -> " (string_of_bits (subrange_vec_dec w__6 63 32))))))
           : unit)
        else returnm (tt  : unit)) >>
       ((read_reg mtimecmp_ref)  : M (mword 64)) >>= fun w__7 : mword 64 =>
@@ -11758,8 +11402,9 @@ Definition clint_load (addr : mword 32) (width : Z) `{ArithFact (width > 0)}
       (if ((get_config_print_platform tt)) then
          ((read_reg mtime_ref)  : M (mword 64)) >>= fun w__8 : mword 64 =>
          returnm ((print_endline
-                     (concat_str "clint["
-                        (concat_str (string_of_bits addr) (concat_str "] -> " (string_of_bits w__8)))))
+                     (String.append "clint["
+                        (String.append (string_of_bits addr)
+                           (String.append "] -> " (string_of_bits w__8)))))
           : unit)
        else returnm (tt  : unit)) >>
       ((read_reg mtime_ref)  : M (mword 64)) >>= fun w__9 : mword 64 =>
@@ -11770,9 +11415,9 @@ Definition clint_load (addr : mword 32) (width : Z) `{ArithFact (width > 0)}
       (if ((get_config_print_platform tt)) then
          ((read_reg mtime_ref)  : M (mword 64)) >>= fun w__10 : mword 64 =>
          returnm ((print_endline
-                     (concat_str "clint["
-                        (concat_str (string_of_bits addr)
-                           (concat_str "] -> " (string_of_bits w__10)))))
+                     (String.append "clint["
+                        (String.append (string_of_bits addr)
+                           (String.append "] -> " (string_of_bits w__10)))))
           : unit)
        else returnm (tt  : unit)) >>
       ((read_reg mtime_ref)  : M (mword 64)) >>= fun w__11 : mword 64 =>
@@ -11784,9 +11429,9 @@ Definition clint_load (addr : mword 32) (width : Z) `{ArithFact (width > 0)}
       (if ((get_config_print_platform tt)) then
          ((read_reg mtime_ref)  : M (mword 64)) >>= fun w__12 : mword 64 =>
          returnm ((print_endline
-                     (concat_str "clint["
-                        (concat_str (string_of_bits addr)
-                           (concat_str "] -> " (string_of_bits w__12)))))
+                     (String.append "clint["
+                        (String.append (string_of_bits addr)
+                           (String.append "] -> " (string_of_bits w__12)))))
           : unit)
        else returnm (tt  : unit)) >>
       ((read_reg mtime_ref)  : M (mword 64)) >>= fun w__13 : mword 64 =>
@@ -11797,7 +11442,7 @@ Definition clint_load (addr : mword 32) (width : Z) `{ArithFact (width > 0)}
       let '_ :=
         (if ((get_config_print_platform tt)) then
            print_endline
-             (concat_str "clint[" (concat_str (string_of_bits addr) "] -> <not-mapped>"))
+             (String.append "clint[" (String.append (string_of_bits addr) "] -> <not-mapped>"))
          else tt)
          : unit in
       returnm ((MemException
@@ -11810,7 +11455,7 @@ Definition clint_dispatch '(tt : unit)
    
    (if ((get_config_print_platform tt)) then
       ((read_reg mtime_ref)  : M (mword 64)) >>= fun w__0 : mword 64 =>
-      returnm ((print_endline (concat_str "clint::tick mtime <- " (string_of_bits w__0)))
+      returnm ((print_endline (String.append "clint::tick mtime <- " (string_of_bits w__0)))
        : unit)
     else returnm (tt  : unit)) >>
    (_set_Minterrupts_MTI mip_ref ((bool_to_bits false)  : mword 1)) >>
@@ -11819,7 +11464,8 @@ Definition clint_dispatch '(tt : unit)
    (if ((zopz0zIzJ_u w__1 w__2)) then
       (if ((get_config_print_platform tt)) then
          ((read_reg mtime_ref)  : M (mword 64)) >>= fun w__3 : mword 64 =>
-         returnm ((print_endline (concat_str " clint timer pending at mtime " (string_of_bits w__3)))
+         returnm ((print_endline
+                     (String.append " clint timer pending at mtime " (string_of_bits w__3)))
           : unit)
        else returnm (tt  : unit)) >>
       (_set_Minterrupts_MTI mip_ref ((bool_to_bits true)  : mword 1))
@@ -11838,11 +11484,12 @@ Definition clint_store (addr : mword 32) (width : Z) (data : mword (8 * width))
       (if ((get_config_print_platform tt)) then
          (cast_unit_vec (access_vec_dec data 0)) >>= fun w__0 : mword 1 =>
          returnm ((print_endline
-                     (concat_str "clint["
-                        (concat_str (string_of_bits addr)
-                           (concat_str "] <- "
-                              (concat_str (string_of_bits data)
-                                 (concat_str " (mip.MSI <- " (concat_str (string_of_bits w__0) ")")))))))
+                     (String.append "clint["
+                        (String.append (string_of_bits addr)
+                           (String.append "] <- "
+                              (String.append (string_of_bits data)
+                                 (String.append " (mip.MSI <- "
+                                    (String.append (string_of_bits w__0) ")")))))))
           : unit)
        else returnm (tt  : unit)) >>
       (cast_unit_vec (access_vec_dec data 0)) >>= fun w__1 : mword 1 =>
@@ -11855,9 +11502,9 @@ Definition clint_store (addr : mword 32) (width : Z) (data : mword (8 * width))
       let '_ :=
         (if ((get_config_print_platform tt)) then
            print_endline
-             (concat_str "clint<8>["
-                (concat_str (string_of_bits addr)
-                   (concat_str "] <- " (concat_str (string_of_bits data) " (mtimecmp)"))))
+             (String.append "clint<8>["
+                (String.append (string_of_bits addr)
+                   (String.append "] <- " (String.append (string_of_bits data) " (mtimecmp)"))))
          else tt)
          : unit in
       write_reg mtimecmp_ref (zero_extend data 64) >>
@@ -11867,9 +11514,9 @@ Definition clint_store (addr : mword 32) (width : Z) (data : mword (8 * width))
       let '_ :=
         (if ((get_config_print_platform tt)) then
            print_endline
-             (concat_str "clint<4>["
-                (concat_str (string_of_bits addr)
-                   (concat_str "] <- " (concat_str (string_of_bits data) " (mtimecmp)"))))
+             (String.append "clint<4>["
+                (String.append (string_of_bits addr)
+                   (String.append "] <- " (String.append (string_of_bits data) " (mtimecmp)"))))
          else tt)
          : unit in
       ((read_reg mtimecmp_ref)  : M (mword 64)) >>= fun w__2 : mword 64 =>
@@ -11880,9 +11527,9 @@ Definition clint_store (addr : mword 32) (width : Z) (data : mword (8 * width))
       let '_ :=
         (if ((get_config_print_platform tt)) then
            print_endline
-             (concat_str "clint<4>["
-                (concat_str (string_of_bits addr)
-                   (concat_str "] <- " (concat_str (string_of_bits data) " (mtimecmp)"))))
+             (String.append "clint<4>["
+                (String.append (string_of_bits addr)
+                   (String.append "] <- " (String.append (string_of_bits data) " (mtimecmp)"))))
          else tt)
          : unit in
       ((read_reg mtimecmp_ref)  : M (mword 64)) >>= fun w__3 : mword 64 =>
@@ -11892,9 +11539,9 @@ Definition clint_store (addr : mword 32) (width : Z) (data : mword (8 * width))
       let '_ :=
         (if ((get_config_print_platform tt)) then
            print_endline
-             (concat_str "clint["
-                (concat_str (string_of_bits addr)
-                   (concat_str "] <- " (concat_str (string_of_bits data) " (<unmapped>)"))))
+             (String.append "clint["
+                (String.append (string_of_bits addr)
+                   (String.append "] <- " (String.append (string_of_bits data) " (<unmapped>)"))))
          else tt)
          : unit in
       returnm ((MemException
@@ -12024,8 +11671,9 @@ Definition htif_load (addr : mword 32) (width : Z) `{ArithFact (width > 0)}
    (if ((get_config_print_platform tt)) then
       ((read_reg htif_tohost_ref)  : M (mword 64)) >>= fun w__0 : mword 64 =>
       returnm ((print_endline
-                  (concat_str "htif["
-                     (concat_str (string_of_bits addr) (concat_str "] -> " (string_of_bits w__0)))))
+                  (String.append "htif["
+                     (String.append (string_of_bits addr)
+                        (String.append "] -> " (string_of_bits w__0)))))
        : unit)
     else returnm (tt  : unit)) >>
    (if sumbool_of_bool ((andb (Z.eqb width 8) (eq_vec addr (plat_htif_tohost tt)))) then
@@ -12054,8 +11702,8 @@ Definition htif_store (addr : mword 32) (width : Z) (data : mword (8 * width))
    let '_ :=
      (if ((get_config_print_platform tt)) then
         print_endline
-          (concat_str "htif["
-             (concat_str (string_of_bits addr) (concat_str "] <- " (string_of_bits data))))
+          (String.append "htif["
+             (String.append (string_of_bits addr) (String.append "] <- " (string_of_bits data))))
       else tt)
       : unit in
    (if sumbool_of_bool ((Z.eqb width 8)) then write_reg htif_tohost_ref (EXTZ 64 data)  : M (unit)
@@ -12076,7 +11724,7 @@ Definition htif_store (addr : mword 32) (width : Z) (data : mword (8 * width))
       let '_ :=
         (if ((get_config_print_platform tt)) then
            print_endline
-             (concat_str "htif-syscall-proxy cmd: " (string_of_bits (_get_htif_cmd_payload cmd)))
+             (String.append "htif-syscall-proxy cmd: " (string_of_bits (_get_htif_cmd_payload cmd)))
          else tt)
          : unit in
       (cast_unit_vec (access_vec_dec (_get_htif_cmd_payload cmd) 0)) >>= fun w__3 : mword 1 =>
@@ -12091,15 +11739,16 @@ Definition htif_store (addr : mword 32) (width : Z) (data : mword (8 * width))
                   let '_ :=
                     (if ((get_config_print_platform tt)) then
                        print_endline
-                         (concat_str "htif-term cmd: " (string_of_bits (_get_htif_cmd_payload cmd)))
+                         (String.append "htif-term cmd: "
+                            (string_of_bits (_get_htif_cmd_payload cmd)))
                      else tt)
                      : unit in
                   let b__2 := _get_htif_cmd_cmd cmd in
                   if ((eq_vec b__2 (vec_of_bits [B0;B0;B0;B0;B0;B0;B0;B0]  : mword 8))) then tt
                   else if ((eq_vec b__2 (vec_of_bits [B0;B0;B0;B0;B0;B0;B0;B1]  : mword 8))) then
                     plat_term_write (subrange_vec_dec (_get_htif_cmd_payload cmd) 7 0)
-                  else print_endline (concat_str "Unknown term cmd: " (string_of_bits b__2))
-                else print_endline (concat_str "htif-???? cmd: " (string_of_bits data)))
+                  else print_endline (String.append "Unknown term cmd: " (string_of_bits b__2))
+                else print_endline (String.append "htif-???? cmd: " (string_of_bits data)))
        : unit)) >>
    returnm ((MemValue
                (true))
@@ -12110,7 +11759,7 @@ Definition htif_tick '(tt : unit)
    
    (if ((get_config_print_platform tt)) then
       ((read_reg htif_tohost_ref)  : M (mword 64)) >>= fun w__0 : mword 64 =>
-      returnm ((print_endline (concat_str "htif::tick " (string_of_bits w__0)))
+      returnm ((print_endline (String.append "htif::tick " (string_of_bits w__0)))
        : unit)
     else returnm (tt  : unit)) >>
    write_reg htif_tohost_ref (EXTZ 64 (vec_of_bits [B0]  : mword 1))
@@ -12252,11 +11901,11 @@ Definition phys_mem_read
                 let '_ :=
                   (if ((get_config_print_mem tt)) then
                      print_endline
-                       (concat_str "mem["
-                          (concat_str (accessType_to_str t)
-                             (concat_str ","
-                                (concat_str (string_of_bits addr)
-                                   (concat_str "] -> " (string_of_bits v))))))
+                       (String.append "mem["
+                          (String.append (accessType_to_str t)
+                             (String.append ","
+                                (String.append (string_of_bits addr)
+                                   (String.append "] -> " (string_of_bits v))))))
                    else tt)
                    : unit in
                 MemValue
@@ -12385,8 +12034,8 @@ Definition phys_mem_write
    let '_ :=
      (if ((get_config_print_mem tt)) then
         print_endline
-          (concat_str "mem["
-             (concat_str (string_of_bits addr) (concat_str "] <- " (string_of_bits data))))
+          (String.append "mem["
+             (String.append (string_of_bits addr) (String.append "] <- " (string_of_bits data))))
       else tt)
       : unit in
    returnm (result
@@ -12767,11 +12416,11 @@ Definition update_PTE_Bits (p : PTE_Bits) (a : AccessType)
 Definition PTW_Error_of_num (arg_ : Z) `{ArithFact (0 <= arg_ /\ arg_ <= 4)} 
 : PTW_Error :=
    
-   let p0_ := arg_ in
-   if sumbool_of_bool ((Z.eqb p0_ 0)) then PTW_Access
-   else if sumbool_of_bool ((Z.eqb p0_ 1)) then PTW_Invalid_PTE
-   else if sumbool_of_bool ((Z.eqb p0_ 2)) then PTW_No_Permission
-   else if sumbool_of_bool ((Z.eqb p0_ 3)) then PTW_Misaligned
+   let l__11 := arg_ in
+   if sumbool_of_bool ((Z.eqb l__11 0)) then PTW_Access
+   else if sumbool_of_bool ((Z.eqb l__11 1)) then PTW_Invalid_PTE
+   else if sumbool_of_bool ((Z.eqb l__11 2)) then PTW_No_Permission
+   else if sumbool_of_bool ((Z.eqb l__11 3)) then PTW_Misaligned
    else PTW_PTE_Update.
 
 Definition num_of_PTW_Error (arg_ : PTW_Error) 
@@ -16138,49 +15787,17 @@ Definition encdec_amoop_backwards (arg_ : mword 5)
 : M (amoop) :=
    
    let b__0 := arg_ in
-   (if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                           (projT1
-                            (regidx_to_regno (vec_of_bits [B0;B0;B0;B0;B1]  : mword 5))))) then
-      returnm (AMOSWAP
-       : amoop)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B0;B0;B0]  : mword 5))))) then
-      returnm (AMOADD
-       : amoop)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B0;B1;B0;B0]  : mword 5))))) then
-      returnm (AMOXOR
-       : amoop)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B1;B0;B0]  : mword 5))))) then
-      returnm (AMOAND
-       : amoop)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B0;B1;B0;B0;B0]  : mword 5))))) then
-      returnm (AMOOR
-       : amoop)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B0;B0;B0]  : mword 5))))) then
-      returnm (AMOMIN
-       : amoop)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B0;B1;B0;B0]  : mword 5))))) then
-      returnm (AMOMAX
-       : amoop)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B0;B0;B0]  : mword 5))))) then
+   (if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B0;B1]  : mword 5))) then returnm (AMOSWAP  : amoop)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B0;B0]  : mword 5))) then returnm (AMOADD  : amoop)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B0;B0]  : mword 5))) then returnm (AMOXOR  : amoop)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B1;B0;B0]  : mword 5))) then returnm (AMOAND  : amoop)
+    else if ((eq_vec b__0 (vec_of_bits [B0;B1;B0;B0;B0]  : mword 5))) then returnm (AMOOR  : amoop)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B0;B0;B0]  : mword 5))) then returnm (AMOMIN  : amoop)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B0;B1;B0;B0]  : mword 5))) then returnm (AMOMAX  : amoop)
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B0;B0;B0]  : mword 5))) then
       returnm (AMOMINU
        : amoop)
-    else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                                (projT1
-                                 (regidx_to_regno (vec_of_bits [B1;B1;B1;B0;B0]  : mword 5))))) then
+    else if ((eq_vec b__0 (vec_of_bits [B1;B1;B1;B0;B0]  : mword 5))) then
       returnm (AMOMAXU
        : amoop)
     else assert_exp' false "Pattern match failure at unknown location" >>= fun _ => exit tt)
@@ -16205,42 +15822,15 @@ Definition encdec_amoop_backwards_matches (arg_ : mword 5)
 : bool :=
    
    let b__0 := arg_ in
-   if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                          (projT1
-                           (regidx_to_regno (vec_of_bits [B0;B0;B0;B0;B1]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B0;B0;B0;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B0;B1;B0;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B1;B1;B0;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B0;B1;B0;B0;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B0;B0;B0;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B0;B1;B0;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B1;B0;B0;B0]  : mword 5))))) then
-     true
-   else if sumbool_of_bool ((Z.eqb (projT1 (regidx_to_regno b__0))
-                               (projT1
-                                (regidx_to_regno (vec_of_bits [B1;B1;B1;B0;B0]  : mword 5))))) then
-     true
+   if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B0;B1]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B0;B0;B0;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B0;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B1;B1;B0;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B0;B1;B0;B0;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B0;B0;B0;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B0;B1;B0;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B1;B0;B0;B0]  : mword 5))) then true
+   else if ((eq_vec b__0 (vec_of_bits [B1;B1;B1;B0;B0]  : mword 5))) then true
    else false.
 
 Definition amo_mnemonic_forwards (arg_ : amoop) 
@@ -16770,7 +16360,7 @@ Definition readCSR (csr : mword 12)
 : M (mword 32) :=
    
    (match (csr, 32) with
-    | (b__0, g__3) =>
+    | (b__0, g__217) =>
        (if ((eq_vec b__0 (vec_of_bits [B1;B1;B1;B1;B0;B0;B0;B1;B0;B0;B0;B1]  : mword 12))) then
           ((read_reg mvendorid_ref)  : M (mword 32)) >>= fun w__0 : mword 32 =>
           returnm ((EXTZ 32 w__0)
@@ -16831,19 +16421,19 @@ Definition readCSR (csr : mword 12)
         else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B1;B1;B0;B1;B0;B0;B0;B0;B0]  : mword 12))) then
           (pmpReadCfgReg 0)
            : M (mword 32)
-        else if sumbool_of_bool ((andb (Z.eqb g__3 32)
+        else if sumbool_of_bool ((andb
                                     (eq_vec b__0
                                        (vec_of_bits [B0;B0;B1;B1;B1;B0;B1;B0;B0;B0;B0;B1]
-                                         : mword 12)))) then
+                                         : mword 12)) (Z.eqb g__217 32))) then
           (pmpReadCfgReg 1)
            : M (mword 32)
         else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B1;B1;B0;B1;B0;B0;B0;B1;B0]  : mword 12))) then
           (pmpReadCfgReg 2)
            : M (mword 32)
-        else if sumbool_of_bool ((andb (Z.eqb g__3 32)
+        else if sumbool_of_bool ((andb
                                     (eq_vec b__0
                                        (vec_of_bits [B0;B0;B1;B1;B1;B0;B1;B0;B0;B0;B1;B1]
-                                         : mword 12)))) then
+                                         : mword 12)) (Z.eqb g__217 32))) then
           (pmpReadCfgReg 3)
            : M (mword 32)
         else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B1;B1;B0;B1;B1;B0;B0;B0;B0]  : mword 12))) then
@@ -16902,17 +16492,17 @@ Definition readCSR (csr : mword 12)
           ((read_reg minstret_ref)  : M (mword 64)) >>= fun w__38 : mword 64 =>
           returnm ((subrange_vec_dec w__38 (Z.sub 32 1) 0)
            : mword (31 - 0 + 1))
-        else if sumbool_of_bool ((andb (Z.eqb g__3 32)
+        else if sumbool_of_bool ((andb
                                     (eq_vec b__0
                                        (vec_of_bits [B1;B0;B1;B1;B1;B0;B0;B0;B0;B0;B0;B0]
-                                         : mword 12)))) then
+                                         : mword 12)) (Z.eqb g__217 32))) then
           ((read_reg mcycle_ref)  : M (mword 64)) >>= fun w__39 : mword 64 =>
           returnm ((subrange_vec_dec w__39 63 32)
            : mword (63 - 32 + 1))
-        else if sumbool_of_bool ((andb (Z.eqb g__3 32)
+        else if sumbool_of_bool ((andb
                                     (eq_vec b__0
                                        (vec_of_bits [B1;B0;B1;B1;B1;B0;B0;B0;B0;B0;B1;B0]
-                                         : mword 12)))) then
+                                         : mword 12)) (Z.eqb g__217 32))) then
           ((read_reg minstret_ref)  : M (mword 64)) >>= fun w__40 : mword 64 =>
           returnm ((subrange_vec_dec w__40 63 32)
            : mword (63 - 32 + 1))
@@ -16979,24 +16569,24 @@ Definition readCSR (csr : mword 12)
           ((read_reg minstret_ref)  : M (mword 64)) >>= fun w__59 : mword 64 =>
           returnm ((subrange_vec_dec w__59 (Z.sub 32 1) 0)
            : mword (31 - 0 + 1))
-        else if sumbool_of_bool ((andb (Z.eqb g__3 32)
+        else if sumbool_of_bool ((andb
                                     (eq_vec b__0
                                        (vec_of_bits [B1;B1;B0;B0;B1;B0;B0;B0;B0;B0;B0;B0]
-                                         : mword 12)))) then
+                                         : mword 12)) (Z.eqb g__217 32))) then
           ((read_reg mcycle_ref)  : M (mword 64)) >>= fun w__60 : mword 64 =>
           returnm ((subrange_vec_dec w__60 63 32)
            : mword (63 - 32 + 1))
-        else if sumbool_of_bool ((andb (Z.eqb g__3 32)
+        else if sumbool_of_bool ((andb
                                     (eq_vec b__0
                                        (vec_of_bits [B1;B1;B0;B0;B1;B0;B0;B0;B0;B0;B0;B1]
-                                         : mword 12)))) then
+                                         : mword 12)) (Z.eqb g__217 32))) then
           ((read_reg mtime_ref)  : M (mword 64)) >>= fun w__61 : mword 64 =>
           returnm ((subrange_vec_dec w__61 63 32)
            : mword (63 - 32 + 1))
-        else if sumbool_of_bool ((andb (Z.eqb g__3 32)
+        else if sumbool_of_bool ((andb
                                     (eq_vec b__0
                                        (vec_of_bits [B1;B1;B0;B0;B1;B0;B0;B0;B0;B0;B1;B0]
-                                         : mword 12)))) then
+                                         : mword 12)) (Z.eqb g__217 32))) then
           ((read_reg minstret_ref)  : M (mword 64)) >>= fun w__62 : mword 64 =>
           returnm ((subrange_vec_dec w__62 63 32)
            : mword (63 - 32 + 1))
@@ -17014,7 +16604,8 @@ Definition readCSR (csr : mword 12)
    let '_ :=
      (if ((get_config_print_reg tt)) then
         print_endline
-          (concat_str "CSR " (concat_str (csr_name csr) (concat_str " -> " (string_of_bits res))))
+          (String.append "CSR "
+             (String.append (csr_name csr) (String.append " -> " (string_of_bits res))))
       else tt)
       : unit in
    returnm (res
@@ -17024,7 +16615,7 @@ Definition writeCSR (csr : mword 12) (value : mword 32)
 : M (unit) :=
    
    (match (csr, 32) with
-    | (b__0, g__2) =>
+    | (b__0, g__216) =>
        (if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B1;B0;B0;B0;B0;B0;B0;B0;B0]  : mword 12))) then
           read_reg mstatus_ref >>= fun w__0 : Mstatus =>
           (legalize_mstatus w__0 value) >>= fun w__1 : Mstatus =>
@@ -17109,17 +16700,17 @@ Definition writeCSR (csr : mword 12) (value : mword 32)
            : option (mword 32))
         else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B1;B1;B0;B1;B0;B0;B0;B0;B0]  : mword 12))) then
           (pmpWriteCfgReg 0 value) >> returnm ((Some (value))  : option (mword 32))
-        else if sumbool_of_bool ((andb (Z.eqb g__2 32)
+        else if sumbool_of_bool ((andb
                                     (eq_vec b__0
                                        (vec_of_bits [B0;B0;B1;B1;B1;B0;B1;B0;B0;B0;B0;B1]
-                                         : mword 12)))) then
+                                         : mword 12)) (Z.eqb g__216 32))) then
           (pmpWriteCfgReg 1 value) >> returnm ((Some (value))  : option (mword 32))
         else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B1;B1;B0;B1;B0;B0;B0;B1;B0]  : mword 12))) then
           (pmpWriteCfgReg 2 value) >> returnm ((Some (value))  : option (mword 32))
-        else if sumbool_of_bool ((andb (Z.eqb g__2 32)
+        else if sumbool_of_bool ((andb
                                     (eq_vec b__0
                                        (vec_of_bits [B0;B0;B1;B1;B1;B0;B1;B0;B0;B0;B1;B1]
-                                         : mword 12)))) then
+                                         : mword 12)) (Z.eqb g__216 32))) then
           (pmpWriteCfgReg 3 value) >> returnm ((Some (value))  : option (mword 32))
         else if ((eq_vec b__0 (vec_of_bits [B0;B0;B1;B1;B1;B0;B1;B1;B0;B0;B0;B0]  : mword 12))) then
           read_reg pmp0cfg_ref >>= fun w__24 : Pmpcfg_ent =>
@@ -17259,19 +16850,19 @@ Definition writeCSR (csr : mword 12) (value : mword 32)
           ((read_reg minstret_ref)  : M (mword 64)) >>= fun w__73 : mword 64 =>
           write_reg minstret_ref (update_subrange_vec_dec w__73 (Z.sub 32 1) 0 value) >>
           write_reg minstret_written_ref true >> returnm ((Some (value))  : option (mword 32))
-        else if sumbool_of_bool ((andb (Z.eqb g__2 32)
+        else if sumbool_of_bool ((andb
                                     (eq_vec b__0
                                        (vec_of_bits [B1;B0;B1;B1;B1;B0;B0;B0;B0;B0;B0;B0]
-                                         : mword 12)))) then
+                                         : mword 12)) (Z.eqb g__216 32))) then
           ((read_reg mcycle_ref)  : M (mword 64)) >>= fun w__74 : mword 64 =>
           write_reg mcycle_ref (update_subrange_vec_dec w__74 63 32 value) >>
           returnm ((Some
                       (value))
            : option (mword 32))
-        else if sumbool_of_bool ((andb (Z.eqb g__2 32)
+        else if sumbool_of_bool ((andb
                                     (eq_vec b__0
                                        (vec_of_bits [B1;B0;B1;B1;B1;B0;B0;B0;B0;B0;B1;B0]
-                                         : mword 12)))) then
+                                         : mword 12)) (Z.eqb g__216 32))) then
           ((read_reg minstret_ref)  : M (mword 64)) >>= fun w__75 : mword 64 =>
           write_reg minstret_ref (update_subrange_vec_dec w__75 63 32 value) >>
           write_reg minstret_written_ref true >> returnm ((Some (value))  : option (mword 32))
@@ -17371,11 +16962,12 @@ Definition writeCSR (csr : mword 12) (value : mword 32)
     | Some (v) =>
        returnm ((if ((get_config_print_reg tt)) then
                    print_endline
-                     (concat_str "CSR "
-                        (concat_str (csr_name csr)
-                           (concat_str " <- "
-                              (concat_str (string_of_bits v)
-                                 (concat_str " (input: " (concat_str (string_of_bits value) ")"))))))
+                     (String.append "CSR "
+                        (String.append (csr_name csr)
+                           (String.append " <- "
+                              (String.append (string_of_bits v)
+                                 (String.append " (input: "
+                                    (String.append (string_of_bits value) ")"))))))
                  else tt)
         : unit)
     | None =>
@@ -18875,26 +18467,18 @@ Definition encdec_backwards (arg_ : mword 32)
                                   : M (bool)))
                                : M (bool))
                               (returnm ((andb
-                                           (Z.eqb
-                                              (projT1
-                                               (regidx_to_regno (subrange_vec_dec v__7 31 27)))
-                                              (projT1
-                                               (regidx_to_regno
-                                                  (vec_of_bits [B0;B0;B0;B1;B0]  : mword 5))))
-                                           ((andb
-                                               (Z.eqb
-                                                  (projT1
-                                                   (regidx_to_regno (subrange_vec_dec v__7 24 20)))
-                                                  (projT1
-                                                   (regidx_to_regno
-                                                      (vec_of_bits [B0;B0;B0;B0;B0]  : mword 5))))
-                                               (andb
-                                                  (eq_vec (subrange_vec_dec v__7 14 14)
-                                                     (vec_of_bits [B0]  : mword (14 - 14 + 1)))
-                                                  (eq_vec (subrange_vec_dec v__7 6 0)
-                                                     (vec_of_bits [B0;B1;B0;B1;B1;B1;B1]
-                                                       : mword (6 - 0 + 1)))))
-                                            : bool))
+                                           (eq_vec (subrange_vec_dec v__7 31 27)
+                                              (vec_of_bits [B0;B0;B0;B1;B0]  : mword (31 - 27 + 1)))
+                                           (andb
+                                              (eq_vec (subrange_vec_dec v__7 24 20)
+                                                 (vec_of_bits [B0;B0;B0;B0;B0]
+                                                   : mword (24 - 20 + 1)))
+                                              (andb
+                                                 (eq_vec (subrange_vec_dec v__7 14 14)
+                                                    (vec_of_bits [B0]  : mword (14 - 14 + 1)))
+                                                 (eq_vec (subrange_vec_dec v__7 6 0)
+                                                    (vec_of_bits [B0;B1;B0;B1;B1;B1;B1]
+                                                      : mword (6 - 0 + 1))))))
                                 : bool))) >>= fun w__31 : bool =>
                            (if sumbool_of_bool (w__31) then
                               let rs1 : mword 5 := subrange_vec_dec v__7 19 15 in
@@ -18964,12 +18548,9 @@ Definition encdec_backwards (arg_ : mword 32)
                                      : M (bool)))
                                   : M (bool))
                                  (returnm ((andb
-                                              (Z.eqb
-                                                 (projT1
-                                                  (regidx_to_regno (subrange_vec_dec v__7 31 27)))
-                                                 (projT1
-                                                  (regidx_to_regno
-                                                     (vec_of_bits [B0;B0;B0;B1;B1]  : mword 5))))
+                                              (eq_vec (subrange_vec_dec v__7 31 27)
+                                                 (vec_of_bits [B0;B0;B0;B1;B1]
+                                                   : mword (31 - 27 + 1)))
                                               (andb
                                                  (eq_vec (subrange_vec_dec v__7 14 14)
                                                     (vec_of_bits [B0]  : mword (14 - 14 + 1)))
@@ -20218,26 +19799,18 @@ Definition encdec_backwards_matches (arg_ : mword 32)
                                   : M (bool)))
                                : M (bool))
                               (returnm ((andb
-                                           (Z.eqb
-                                              (projT1
-                                               (regidx_to_regno (subrange_vec_dec v__225 31 27)))
-                                              (projT1
-                                               (regidx_to_regno
-                                                  (vec_of_bits [B0;B0;B0;B1;B0]  : mword 5))))
-                                           ((andb
-                                               (Z.eqb
-                                                  (projT1
-                                                   (regidx_to_regno (subrange_vec_dec v__225 24 20)))
-                                                  (projT1
-                                                   (regidx_to_regno
-                                                      (vec_of_bits [B0;B0;B0;B0;B0]  : mword 5))))
-                                               (andb
-                                                  (eq_vec (subrange_vec_dec v__225 14 14)
-                                                     (vec_of_bits [B0]  : mword (14 - 14 + 1)))
-                                                  (eq_vec (subrange_vec_dec v__225 6 0)
-                                                     (vec_of_bits [B0;B1;B0;B1;B1;B1;B1]
-                                                       : mword (6 - 0 + 1)))))
-                                            : bool))
+                                           (eq_vec (subrange_vec_dec v__225 31 27)
+                                              (vec_of_bits [B0;B0;B0;B1;B0]  : mword (31 - 27 + 1)))
+                                           (andb
+                                              (eq_vec (subrange_vec_dec v__225 24 20)
+                                                 (vec_of_bits [B0;B0;B0;B0;B0]
+                                                   : mword (24 - 20 + 1)))
+                                              (andb
+                                                 (eq_vec (subrange_vec_dec v__225 14 14)
+                                                    (vec_of_bits [B0]  : mword (14 - 14 + 1)))
+                                                 (eq_vec (subrange_vec_dec v__225 6 0)
+                                                    (vec_of_bits [B0;B1;B0;B1;B1;B1;B1]
+                                                      : mword (6 - 0 + 1))))))
                                 : bool))) >>= fun w__31 : bool =>
                            (if sumbool_of_bool (w__31) then
                               let _mappingpatterns_8_ : mword 2 := subrange_vec_dec v__225 13 12 in
@@ -20304,12 +19877,9 @@ Definition encdec_backwards_matches (arg_ : mword 32)
                                      : M (bool)))
                                   : M (bool))
                                  (returnm ((andb
-                                              (Z.eqb
-                                                 (projT1
-                                                  (regidx_to_regno (subrange_vec_dec v__225 31 27)))
-                                                 (projT1
-                                                  (regidx_to_regno
-                                                     (vec_of_bits [B0;B0;B0;B1;B1]  : mword 5))))
+                                              (eq_vec (subrange_vec_dec v__225 31 27)
+                                                 (vec_of_bits [B0;B0;B0;B1;B1]
+                                                   : mword (31 - 27 + 1)))
                                               (andb
                                                  (eq_vec (subrange_vec_dec v__225 14 14)
                                                     (vec_of_bits [B0]  : mword (14 - 14 + 1)))
@@ -21390,13 +20960,11 @@ Definition encdec_compressed_backwards (arg_ : mword 16)
                (andb
                   (eq_vec (subrange_vec_dec v__460 15 13)
                      (vec_of_bits [B0;B1;B1]  : mword (15 - 13 + 1)))
-                  ((andb
-                      (Z.eqb (projT1 (regidx_to_regno (subrange_vec_dec v__460 11 7)))
-                         (projT1
-                          (regidx_to_regno (vec_of_bits [B0;B0;B0;B1;B0]  : mword 5))))
-                      (eq_vec (subrange_vec_dec v__460 1 0)
-                         (vec_of_bits [B0;B1]  : mword (1 - 0 + 1))))
-                   : bool)))) then
+                  (andb
+                     (eq_vec (subrange_vec_dec v__460 11 7)
+                        (vec_of_bits [B0;B0;B0;B1;B0]  : mword (11 - 7 + 1)))
+                     (eq_vec (subrange_vec_dec v__460 1 0)
+                        (vec_of_bits [B0;B1]  : mword (1 - 0 + 1))))))) then
      let nzi9 : bits 1 := subrange_vec_dec v__460 12 12 in
      let nzi87 : bits 2 := subrange_vec_dec v__460 4 3 in
      let nzi6 : bits 1 := subrange_vec_dec v__460 5 5 in
@@ -22017,13 +21585,11 @@ Definition encdec_compressed_backwards_matches (arg_ : mword 16)
                (andb
                   (eq_vec (subrange_vec_dec v__618 15 13)
                      (vec_of_bits [B0;B1;B1]  : mword (15 - 13 + 1)))
-                  ((andb
-                      (Z.eqb (projT1 (regidx_to_regno (subrange_vec_dec v__618 11 7)))
-                         (projT1
-                          (regidx_to_regno (vec_of_bits [B0;B0;B0;B1;B0]  : mword 5))))
-                      (eq_vec (subrange_vec_dec v__618 1 0)
-                         (vec_of_bits [B0;B1]  : mword (1 - 0 + 1))))
-                   : bool)))) then
+                  (andb
+                     (eq_vec (subrange_vec_dec v__618 11 7)
+                        (vec_of_bits [B0;B0;B0;B1;B0]  : mword (11 - 7 + 1)))
+                     (eq_vec (subrange_vec_dec v__618 1 0)
+                        (vec_of_bits [B0;B1]  : mword (1 - 0 + 1))))))) then
      true
    else if sumbool_of_bool ((andb
                                (let rd : regidx := subrange_vec_dec v__618 11 7 in
@@ -22569,16 +22135,16 @@ Definition execute_SFENCE_VMA (rs1 : mword 5) (rs2 : mword 5)
     | Supervisor =>
        read_reg mstatus_ref >>= fun w__3 : Mstatus =>
        read_reg mstatus_ref >>= fun w__4 : Mstatus =>
-       let p__1 := (architecture (get_mstatus_SXL w__3), _get_Mstatus_TVM w__4) in
-       (match p__1 with
-        | (Some (g__0), v_0) =>
+       let p__215 := (architecture (get_mstatus_SXL w__3), _get_Mstatus_TVM w__4) in
+       (match p__215 with
+        | (Some (g__214), v_0) =>
            (if ((eq_vec v_0 ((bool_to_bits true)  : mword 1))) then
               (handle_illegal tt) >> returnm (RETIRE_FAIL  : Retired)
             else if ((eq_vec v_0 ((bool_to_bits false)  : mword 1))) then
               (flush_TLB asid addr) >> returnm (RETIRE_SUCCESS  : Retired)
             else
               (match (Some
-                        (g__0), v_0) with
+                        (g__214), v_0) with
                | (_, _) => (internal_error "unimplemented sfence architecture")  : M (Retired)
                end)
                : M (Retired))
@@ -22890,7 +22456,7 @@ Definition execute_FENCE_TSO (pred : mword 4) (succ : mword 4)
        (if ((andb (eq_vec (subrange_vec_dec v__794 1 0) (vec_of_bits [B1;B1]  : mword (1 - 0 + 1)))
                (eq_vec (subrange_vec_dec v__795 1 0) (vec_of_bits [B1;B1]  : mword (1 - 0 + 1)))))
         then
-          (barrier Barrier_RISCV_tso)
+          (barrier (Barrier_RISCV_tso (tt)))
            : M (unit)
         else
           returnm ((if ((andb
@@ -22918,55 +22484,55 @@ Definition execute_FENCE (pred : mword 4) (succ : mword 4)
        (if ((andb (eq_vec (subrange_vec_dec v__754 1 0) (vec_of_bits [B1;B1]  : mword (1 - 0 + 1)))
                (eq_vec (subrange_vec_dec v__755 1 0) (vec_of_bits [B1;B1]  : mword (1 - 0 + 1)))))
         then
-          (barrier Barrier_RISCV_rw_rw)
+          (barrier (Barrier_RISCV_rw_rw (tt)))
            : M (unit)
         else if ((andb
                     (eq_vec (subrange_vec_dec v__754 1 0) (vec_of_bits [B1;B0]  : mword (1 - 0 + 1)))
                     (eq_vec (subrange_vec_dec v__755 1 0) (vec_of_bits [B1;B1]  : mword (1 - 0 + 1)))))
         then
-          (barrier Barrier_RISCV_r_rw)
+          (barrier (Barrier_RISCV_r_rw (tt)))
            : M (unit)
         else if ((andb
                     (eq_vec (subrange_vec_dec v__754 1 0) (vec_of_bits [B1;B0]  : mword (1 - 0 + 1)))
                     (eq_vec (subrange_vec_dec v__755 1 0) (vec_of_bits [B1;B0]  : mword (1 - 0 + 1)))))
         then
-          (barrier Barrier_RISCV_r_r)
+          (barrier (Barrier_RISCV_r_r (tt)))
            : M (unit)
         else if ((andb
                     (eq_vec (subrange_vec_dec v__754 1 0) (vec_of_bits [B1;B1]  : mword (1 - 0 + 1)))
                     (eq_vec (subrange_vec_dec v__755 1 0) (vec_of_bits [B0;B1]  : mword (1 - 0 + 1)))))
         then
-          (barrier Barrier_RISCV_rw_w)
+          (barrier (Barrier_RISCV_rw_w (tt)))
            : M (unit)
         else if ((andb
                     (eq_vec (subrange_vec_dec v__754 1 0) (vec_of_bits [B0;B1]  : mword (1 - 0 + 1)))
                     (eq_vec (subrange_vec_dec v__755 1 0) (vec_of_bits [B0;B1]  : mword (1 - 0 + 1)))))
         then
-          (barrier Barrier_RISCV_w_w)
+          (barrier (Barrier_RISCV_w_w (tt)))
            : M (unit)
         else if ((andb
                     (eq_vec (subrange_vec_dec v__754 1 0) (vec_of_bits [B0;B1]  : mword (1 - 0 + 1)))
                     (eq_vec (subrange_vec_dec v__755 1 0) (vec_of_bits [B1;B1]  : mword (1 - 0 + 1)))))
         then
-          (barrier Barrier_RISCV_w_rw)
+          (barrier (Barrier_RISCV_w_rw (tt)))
            : M (unit)
         else if ((andb
                     (eq_vec (subrange_vec_dec v__754 1 0) (vec_of_bits [B1;B1]  : mword (1 - 0 + 1)))
                     (eq_vec (subrange_vec_dec v__755 1 0) (vec_of_bits [B1;B0]  : mword (1 - 0 + 1)))))
         then
-          (barrier Barrier_RISCV_rw_r)
+          (barrier (Barrier_RISCV_rw_r (tt)))
            : M (unit)
         else if ((andb
                     (eq_vec (subrange_vec_dec v__754 1 0) (vec_of_bits [B1;B0]  : mword (1 - 0 + 1)))
                     (eq_vec (subrange_vec_dec v__755 1 0) (vec_of_bits [B0;B1]  : mword (1 - 0 + 1)))))
         then
-          (barrier Barrier_RISCV_r_w)
+          (barrier (Barrier_RISCV_r_w (tt)))
            : M (unit)
         else if ((andb
                     (eq_vec (subrange_vec_dec v__754 1 0) (vec_of_bits [B0;B1]  : mword (1 - 0 + 1)))
                     (eq_vec (subrange_vec_dec v__755 1 0) (vec_of_bits [B1;B0]  : mword (1 - 0 + 1)))))
         then
-          (barrier Barrier_RISCV_w_r)
+          (barrier (Barrier_RISCV_w_r (tt)))
            : M (unit)
         else
           returnm ((if ((andb

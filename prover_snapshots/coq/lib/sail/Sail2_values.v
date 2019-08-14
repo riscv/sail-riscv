@@ -1704,10 +1704,10 @@ Ltac main_solver :=
  | match goal with |- context [Z.mul] => nia end
  (* If we have a disjunction from a set constraint on a variable we can often
     solve a goal by trying them (admittedly this is quite heavy handed...) *)
- | subst;
+ | subst; drop_Z_exists;
    let aux x :=
     is_var x;
-    intuition (subst;auto)
+    intuition (subst;auto with datatypes)
    in
    match goal with
    | _:(@eq Z _ ?x) \/ (@eq Z _ ?x) \/ _ |- context[?x] => aux x
@@ -2288,9 +2288,9 @@ Definition negate_range {n m} (l : {l : Z & ArithFact (n <= l <= m)})
   : {x : Z & ArithFact ((- m) <= x <= (- n))} :=
   build_ex (- (projT1 l)).
 
-Definition min_atom (a : Z) (b : Z) : {c : Z & ArithFact (c = a \/ c = b /\ c <= a /\ c <= b)} :=
+Definition min_atom (a : Z) (b : Z) : {c : Z & ArithFact ((c = a \/ c = b) /\ c <= a /\ c <= b)} :=
   build_ex (Z.min a b).
-Definition max_atom (a : Z) (b : Z) : {c : Z & ArithFact (c = a \/ c = b /\ c >= a /\ c >= b)} :=
+Definition max_atom (a : Z) (b : Z) : {c : Z & ArithFact ((c = a \/ c = b) /\ c >= a /\ c >= b)} :=
   build_ex (Z.max a b).
 
 

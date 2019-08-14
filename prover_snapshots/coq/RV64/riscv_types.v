@@ -31,6 +31,18 @@ Inductive diafp  :=
   | DIAFP_none : unit -> diafp | DIAFP_concrete : bits 64 -> diafp | DIAFP_reg : regfp -> diafp.
 Arguments diafp : clear implicits.
 
+Inductive a64_barrier_domain := A64_FullShare | A64_InnerShare | A64_OuterShare | A64_NonShare.
+Scheme Equality for a64_barrier_domain.
+Instance Decidable_eq_a64_barrier_domain :
+forall (x y : a64_barrier_domain), Decidable (x = y) :=
+Decidable_eq_from_dec a64_barrier_domain_eq_dec.
+
+Inductive a64_barrier_type := A64_barrier_all | A64_barrier_LD | A64_barrier_ST.
+Scheme Equality for a64_barrier_type.
+Instance Decidable_eq_a64_barrier_type :
+forall (x y : a64_barrier_type), Decidable (x = y) :=
+Decidable_eq_from_dec a64_barrier_type_eq_dec.
+
 Inductive cache_op_kind :=
   Cache_op_D_IVAC
   | Cache_op_D_ISW
@@ -702,9 +714,10 @@ Inductive register_value  :=
   | Regval_Sinterrupts : Sinterrupts -> register_value
   | Regval_TLB_Entry_16_39_56_64 : TLB_Entry 16 39 56 64 -> register_value
   | Regval_TLB_Entry_16_48_56_64 : TLB_Entry 16 48 56 64 -> register_value
-  | Regval_bool : bool -> register_value
-  | Regval_vector_32_dec_bit : mword 32 -> register_value
-  | Regval_vector_64_dec_bit : mword 64 -> register_value.
+  | Regval_bit : bitU -> register_value
+  | Regval_bitvector_32_dec : mword 32 -> register_value
+  | Regval_bitvector_64_dec : mword 64 -> register_value
+  | Regval_bool : bool -> register_value.
 Arguments register_value : clear implicits.
 
 Record regstate  :=
@@ -13241,34 +13254,41 @@ Definition regval_of_TLB_Entry_16_48_56_64 (v : TLB_Entry 16 48 56 64)
    Regval_TLB_Entry_16_48_56_64
      (v).
 
+Definition bit_of_regval (merge_var : register_value) 
+: option bitU :=
+   
+   match merge_var with | Regval_bit (v) => Some (v) | _ => None end.
+
+Definition regval_of_bit (v : bitU)  : register_value :=  Regval_bit (v).
+
+Definition bitvector_32_dec_of_regval (merge_var : register_value) 
+: option (mword 32) :=
+   
+   match merge_var with | Regval_bitvector_32_dec (v) => Some (v) | _ => None end.
+
+Definition regval_of_bitvector_32_dec (v : mword 32) 
+: register_value :=
+   
+   Regval_bitvector_32_dec
+     (v).
+
+Definition bitvector_64_dec_of_regval (merge_var : register_value) 
+: option (mword 64) :=
+   
+   match merge_var with | Regval_bitvector_64_dec (v) => Some (v) | _ => None end.
+
+Definition regval_of_bitvector_64_dec (v : mword 64) 
+: register_value :=
+   
+   Regval_bitvector_64_dec
+     (v).
+
 Definition bool_of_regval (merge_var : register_value) 
 : option bool :=
    
    match merge_var with | Regval_bool (v) => Some (v) | _ => None end.
 
 Definition regval_of_bool (v : bool)  : register_value :=  Regval_bool (v).
-
-Definition vector_32_dec_bit_of_regval (merge_var : register_value) 
-: option (mword 32) :=
-   
-   match merge_var with | Regval_vector_32_dec_bit (v) => Some (v) | _ => None end.
-
-Definition regval_of_vector_32_dec_bit (v : mword 32) 
-: register_value :=
-   
-   Regval_vector_32_dec_bit
-     (v).
-
-Definition vector_64_dec_bit_of_regval (merge_var : register_value) 
-: option (mword 64) :=
-   
-   match merge_var with | Regval_vector_64_dec_bit (v) => Some (v) | _ => None end.
-
-Definition regval_of_vector_64_dec_bit (v : mword 64) 
-: register_value :=
-   
-   Regval_vector_64_dec_bit
-     (v).
 
 
 
@@ -13298,8 +13318,8 @@ Definition satp_ref := {|
   name := "satp";
   read_from := (fun s => s.(satp));
   write_to := (fun v s => ({[ s with satp := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition tlb48_ref := {|
   name := "tlb48";
@@ -13319,8 +13339,8 @@ Definition htif_exit_code_ref := {|
   name := "htif_exit_code";
   read_from := (fun s => s.(htif_exit_code));
   write_to := (fun v s => ({[ s with htif_exit_code := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition htif_done_ref := {|
   name := "htif_done";
@@ -13333,22 +13353,22 @@ Definition htif_tohost_ref := {|
   name := "htif_tohost";
   read_from := (fun s => s.(htif_tohost));
   write_to := (fun v s => ({[ s with htif_tohost := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition mtimecmp_ref := {|
   name := "mtimecmp";
   read_from := (fun s => s.(mtimecmp));
   write_to := (fun v s => ({[ s with mtimecmp := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition utval_ref := {|
   name := "utval";
   read_from := (fun s => s.(utval));
   write_to := (fun v s => ({[ s with utval := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition ucause_ref := {|
   name := "ucause";
@@ -13361,15 +13381,15 @@ Definition uepc_ref := {|
   name := "uepc";
   read_from := (fun s => s.(uepc));
   write_to := (fun v s => ({[ s with uepc := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition uscratch_ref := {|
   name := "uscratch";
   read_from := (fun s => s.(uscratch));
   write_to := (fun v s => ({[ s with uscratch := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition utvec_ref := {|
   name := "utvec";
@@ -13382,113 +13402,113 @@ Definition pmpaddr15_ref := {|
   name := "pmpaddr15";
   read_from := (fun s => s.(pmpaddr15));
   write_to := (fun v s => ({[ s with pmpaddr15 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmpaddr14_ref := {|
   name := "pmpaddr14";
   read_from := (fun s => s.(pmpaddr14));
   write_to := (fun v s => ({[ s with pmpaddr14 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmpaddr13_ref := {|
   name := "pmpaddr13";
   read_from := (fun s => s.(pmpaddr13));
   write_to := (fun v s => ({[ s with pmpaddr13 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmpaddr12_ref := {|
   name := "pmpaddr12";
   read_from := (fun s => s.(pmpaddr12));
   write_to := (fun v s => ({[ s with pmpaddr12 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmpaddr11_ref := {|
   name := "pmpaddr11";
   read_from := (fun s => s.(pmpaddr11));
   write_to := (fun v s => ({[ s with pmpaddr11 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmpaddr10_ref := {|
   name := "pmpaddr10";
   read_from := (fun s => s.(pmpaddr10));
   write_to := (fun v s => ({[ s with pmpaddr10 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmpaddr9_ref := {|
   name := "pmpaddr9";
   read_from := (fun s => s.(pmpaddr9));
   write_to := (fun v s => ({[ s with pmpaddr9 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmpaddr8_ref := {|
   name := "pmpaddr8";
   read_from := (fun s => s.(pmpaddr8));
   write_to := (fun v s => ({[ s with pmpaddr8 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmpaddr7_ref := {|
   name := "pmpaddr7";
   read_from := (fun s => s.(pmpaddr7));
   write_to := (fun v s => ({[ s with pmpaddr7 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmpaddr6_ref := {|
   name := "pmpaddr6";
   read_from := (fun s => s.(pmpaddr6));
   write_to := (fun v s => ({[ s with pmpaddr6 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmpaddr5_ref := {|
   name := "pmpaddr5";
   read_from := (fun s => s.(pmpaddr5));
   write_to := (fun v s => ({[ s with pmpaddr5 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmpaddr4_ref := {|
   name := "pmpaddr4";
   read_from := (fun s => s.(pmpaddr4));
   write_to := (fun v s => ({[ s with pmpaddr4 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmpaddr3_ref := {|
   name := "pmpaddr3";
   read_from := (fun s => s.(pmpaddr3));
   write_to := (fun v s => ({[ s with pmpaddr3 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmpaddr2_ref := {|
   name := "pmpaddr2";
   read_from := (fun s => s.(pmpaddr2));
   write_to := (fun v s => ({[ s with pmpaddr2 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmpaddr1_ref := {|
   name := "pmpaddr1";
   read_from := (fun s => s.(pmpaddr1));
   write_to := (fun v s => ({[ s with pmpaddr1 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmpaddr0_ref := {|
   name := "pmpaddr0";
   read_from := (fun s => s.(pmpaddr0));
   write_to := (fun v s => ({[ s with pmpaddr0 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition pmp15cfg_ref := {|
   name := "pmp15cfg";
@@ -13606,15 +13626,15 @@ Definition tselect_ref := {|
   name := "tselect";
   read_from := (fun s => s.(tselect));
   write_to := (fun v s => ({[ s with tselect := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition stval_ref := {|
   name := "stval";
   read_from := (fun s => s.(stval));
   write_to := (fun v s => ({[ s with stval := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition scause_ref := {|
   name := "scause";
@@ -13627,15 +13647,15 @@ Definition sepc_ref := {|
   name := "sepc";
   read_from := (fun s => s.(sepc));
   write_to := (fun v s => ({[ s with sepc := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition sscratch_ref := {|
   name := "sscratch";
   read_from := (fun s => s.(sscratch));
   write_to := (fun v s => ({[ s with sscratch := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition stvec_ref := {|
   name := "stvec";
@@ -13662,29 +13682,29 @@ Definition mhartid_ref := {|
   name := "mhartid";
   read_from := (fun s => s.(mhartid));
   write_to := (fun v s => ({[ s with mhartid := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition marchid_ref := {|
   name := "marchid";
   read_from := (fun s => s.(marchid));
   write_to := (fun v s => ({[ s with marchid := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition mimpid_ref := {|
   name := "mimpid";
   read_from := (fun s => s.(mimpid));
   write_to := (fun v s => ({[ s with mimpid := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition mvendorid_ref := {|
   name := "mvendorid";
   read_from := (fun s => s.(mvendorid));
   write_to := (fun v s => ({[ s with mvendorid := v ]}));
-  of_regval := (fun v => vector_32_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_32_dec_bit v) |}.
+  of_regval := (fun v => bitvector_32_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_32_dec v) |}.
 
 Definition minstret_written_ref := {|
   name := "minstret_written";
@@ -13697,22 +13717,22 @@ Definition minstret_ref := {|
   name := "minstret";
   read_from := (fun s => s.(minstret));
   write_to := (fun v s => ({[ s with minstret := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition mtime_ref := {|
   name := "mtime";
   read_from := (fun s => s.(mtime));
   write_to := (fun v s => ({[ s with mtime := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition mcycle_ref := {|
   name := "mcycle";
   read_from := (fun s => s.(mcycle));
   write_to := (fun v s => ({[ s with mcycle := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition scounteren_ref := {|
   name := "scounteren";
@@ -13732,22 +13752,22 @@ Definition mscratch_ref := {|
   name := "mscratch";
   read_from := (fun s => s.(mscratch));
   write_to := (fun v s => ({[ s with mscratch := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition mtval_ref := {|
   name := "mtval";
   read_from := (fun s => s.(mtval));
   write_to := (fun v s => ({[ s with mtval := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition mepc_ref := {|
   name := "mepc";
   read_from := (fun s => s.(mepc));
   write_to := (fun v s => ({[ s with mepc := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition mcause_ref := {|
   name := "mcause";
@@ -13809,8 +13829,8 @@ Definition cur_inst_ref := {|
   name := "cur_inst";
   read_from := (fun s => s.(cur_inst));
   write_to := (fun v s => ({[ s with cur_inst := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition cur_privilege_ref := {|
   name := "cur_privilege";
@@ -13823,246 +13843,246 @@ Definition x31_ref := {|
   name := "x31";
   read_from := (fun s => s.(x31));
   write_to := (fun v s => ({[ s with x31 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x30_ref := {|
   name := "x30";
   read_from := (fun s => s.(x30));
   write_to := (fun v s => ({[ s with x30 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x29_ref := {|
   name := "x29";
   read_from := (fun s => s.(x29));
   write_to := (fun v s => ({[ s with x29 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x28_ref := {|
   name := "x28";
   read_from := (fun s => s.(x28));
   write_to := (fun v s => ({[ s with x28 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x27_ref := {|
   name := "x27";
   read_from := (fun s => s.(x27));
   write_to := (fun v s => ({[ s with x27 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x26_ref := {|
   name := "x26";
   read_from := (fun s => s.(x26));
   write_to := (fun v s => ({[ s with x26 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x25_ref := {|
   name := "x25";
   read_from := (fun s => s.(x25));
   write_to := (fun v s => ({[ s with x25 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x24_ref := {|
   name := "x24";
   read_from := (fun s => s.(x24));
   write_to := (fun v s => ({[ s with x24 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x23_ref := {|
   name := "x23";
   read_from := (fun s => s.(x23));
   write_to := (fun v s => ({[ s with x23 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x22_ref := {|
   name := "x22";
   read_from := (fun s => s.(x22));
   write_to := (fun v s => ({[ s with x22 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x21_ref := {|
   name := "x21";
   read_from := (fun s => s.(x21));
   write_to := (fun v s => ({[ s with x21 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x20_ref := {|
   name := "x20";
   read_from := (fun s => s.(x20));
   write_to := (fun v s => ({[ s with x20 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x19_ref := {|
   name := "x19";
   read_from := (fun s => s.(x19));
   write_to := (fun v s => ({[ s with x19 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x18_ref := {|
   name := "x18";
   read_from := (fun s => s.(x18));
   write_to := (fun v s => ({[ s with x18 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x17_ref := {|
   name := "x17";
   read_from := (fun s => s.(x17));
   write_to := (fun v s => ({[ s with x17 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x16_ref := {|
   name := "x16";
   read_from := (fun s => s.(x16));
   write_to := (fun v s => ({[ s with x16 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x15_ref := {|
   name := "x15";
   read_from := (fun s => s.(x15));
   write_to := (fun v s => ({[ s with x15 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x14_ref := {|
   name := "x14";
   read_from := (fun s => s.(x14));
   write_to := (fun v s => ({[ s with x14 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x13_ref := {|
   name := "x13";
   read_from := (fun s => s.(x13));
   write_to := (fun v s => ({[ s with x13 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x12_ref := {|
   name := "x12";
   read_from := (fun s => s.(x12));
   write_to := (fun v s => ({[ s with x12 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x11_ref := {|
   name := "x11";
   read_from := (fun s => s.(x11));
   write_to := (fun v s => ({[ s with x11 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x10_ref := {|
   name := "x10";
   read_from := (fun s => s.(x10));
   write_to := (fun v s => ({[ s with x10 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x9_ref := {|
   name := "x9";
   read_from := (fun s => s.(x9));
   write_to := (fun v s => ({[ s with x9 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x8_ref := {|
   name := "x8";
   read_from := (fun s => s.(x8));
   write_to := (fun v s => ({[ s with x8 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x7_ref := {|
   name := "x7";
   read_from := (fun s => s.(x7));
   write_to := (fun v s => ({[ s with x7 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x6_ref := {|
   name := "x6";
   read_from := (fun s => s.(x6));
   write_to := (fun v s => ({[ s with x6 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x5_ref := {|
   name := "x5";
   read_from := (fun s => s.(x5));
   write_to := (fun v s => ({[ s with x5 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x4_ref := {|
   name := "x4";
   read_from := (fun s => s.(x4));
   write_to := (fun v s => ({[ s with x4 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x3_ref := {|
   name := "x3";
   read_from := (fun s => s.(x3));
   write_to := (fun v s => ({[ s with x3 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x2_ref := {|
   name := "x2";
   read_from := (fun s => s.(x2));
   write_to := (fun v s => ({[ s with x2 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition x1_ref := {|
   name := "x1";
   read_from := (fun s => s.(x1));
   write_to := (fun v s => ({[ s with x1 := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition Xs_ref := {|
   name := "Xs";
   read_from := (fun s => s.(Xs));
   write_to := (fun v s => ({[ s with Xs := v ]}));
-  of_regval := (fun v => vector_of_regval 32 (fun v => vector_64_dec_bit_of_regval v) v);
-  regval_of := (fun v => regval_of_vector (fun v => regval_of_vector_64_dec_bit v) 32 false v) |}.
+  of_regval := (fun v => vector_of_regval 32 (fun v => bitvector_64_dec_of_regval v) v);
+  regval_of := (fun v => regval_of_vector (fun v => regval_of_bitvector_64_dec v) 32 false v) |}.
 
 Definition instbits_ref := {|
   name := "instbits";
   read_from := (fun s => s.(instbits));
   write_to := (fun v s => ({[ s with instbits := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition nextPC_ref := {|
   name := "nextPC";
   read_from := (fun s => s.(nextPC));
   write_to := (fun v s => ({[ s with nextPC := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Definition PC_ref := {|
   name := "PC";
   read_from := (fun s => s.(PC));
   write_to := (fun v s => ({[ s with PC := v ]}));
-  of_regval := (fun v => vector_64_dec_bit_of_regval v);
-  regval_of := (fun v => regval_of_vector_64_dec_bit v) |}.
+  of_regval := (fun v => bitvector_64_dec_of_regval v);
+  regval_of := (fun v => regval_of_bitvector_64_dec v) |}.
 
 Local Open Scope string.
 Definition get_regval (reg_name : string) (s : regstate) : option register_value :=
