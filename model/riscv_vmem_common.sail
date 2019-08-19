@@ -25,36 +25,36 @@ bitfield PTE_Bits : pteAttribs = {
 
 function isPTEPtr(p : pteAttribs) -> bool = {
   let a = Mk_PTE_Bits(p);
-  a.R() == false & a.W() == false & a.X() == false
+  a.R() == 0b0 & a.W() == 0b0 & a.X() == 0b0
 }
 
 function isInvalidPTE(p : pteAttribs) -> bool = {
   let a = Mk_PTE_Bits(p);
-  a.V() == false | (a.W() == true & a.R() == false)
+  a.V() == 0b0 | (a.W() == 0b1 & a.R() == 0b0)
 }
 
 function checkPTEPermission(ac : AccessType, priv : Privilege, mxr : bool, do_sum : bool, p : PTE_Bits) -> bool = {
   match (ac, priv) {
-    (Read,      User)       => p.U() == true & (p.R() == true | (p.X() == true & mxr)),
-    (Write,     User)       => p.U() == true & p.W() == true,
-    (ReadWrite, User)       => p.U() == true & p.W() == true & (p.R() == true | (p.X() == true & mxr)),
-    (Execute,   User)       => p.U() == true & p.X() == true,
+    (Read,      User)       => p.U() == 0b1 & (p.R() == 0b1 | (p.X() == 0b1 & mxr)),
+    (Write,     User)       => p.U() == 0b1 & p.W() == 0b1,
+    (ReadWrite, User)       => p.U() == 0b1 & p.W() == 0b1 & (p.R() == 0b1 | (p.X() == 0b1 & mxr)),
+    (Execute,   User)       => p.U() == 0b1 & p.X() == 0b1,
 
-    (Read,      Supervisor) => (p.U() == false | do_sum) & (p.R() == true | (p.X() == true & mxr)),
-    (Write,     Supervisor) => (p.U() == false | do_sum) & p.W() == true,
-    (ReadWrite, Supervisor) => (p.U() == false | do_sum) & p.W() == true & (p.R() == true | (p.X() == true & mxr)),
-    (Execute,   Supervisor) => p.U() == false & p.X() == true,
+    (Read,      Supervisor) => (p.U() == 0b0 | do_sum) & (p.R() == 0b1 | (p.X() == 0b1 & mxr)),
+    (Write,     Supervisor) => (p.U() == 0b0 | do_sum) & p.W() == 0b1,
+    (ReadWrite, Supervisor) => (p.U() == 0b0 | do_sum) & p.W() == 0b1 & (p.R() == 0b1 | (p.X() == 0b1 & mxr)),
+    (Execute,   Supervisor) => p.U() == 0b0 & p.X() == 0b1,
 
     (_,         Machine)    => internal_error("m-mode mem perm check")
   }
 }
 
 function update_PTE_Bits(p : PTE_Bits, a : AccessType) -> option(PTE_Bits) = {
-  let update_d = (a == Write | a == ReadWrite) & p.D() == false; // dirty-bit
-  let update_a = p.A() == false;                                 // accessed-bit
+  let update_d = (a == Write | a == ReadWrite) & p.D() == 0b0; // dirty-bit
+  let update_a = p.A() == 0b0;                                 // accessed-bit
   if update_d | update_a then {
-    let np = update_A(p, true);
-    let np = if update_d then update_D(np, true) else np;
+    let np = update_A(p, 0b1);
+    let np = if update_d then update_D(np, 0b1) else np;
     Some(np)
   } else None()
 }

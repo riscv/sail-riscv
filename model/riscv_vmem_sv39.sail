@@ -19,7 +19,7 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
       let pte = Mk_SV39_PTE(v);
       let pbits = pte.BITS();
       let pattr = Mk_PTE_Bits(pbits);
-      let is_global = global | (pattr.G() == true);
+      let is_global = global | (pattr.G() == 0b1);
 /*    print("walk39(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
             ^ " pt_base=" ^ BitStr(ptb)
             ^ " pt_ofs=" ^ BitStr(pt_ofs)

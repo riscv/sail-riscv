@@ -22,7 +22,7 @@ type csreg   = bits(12)   /* CSR addressing */
 
 type regno ('n : Int), 0 <= 'n < 32 = atom('n)
 
-val cast regidx_to_regno : bits(5) -> {'n, 0 <= 'n < 32. regno('n)}
+val regidx_to_regno : bits(5) -> {'n, 0 <= 'n < 32. regno('n)}
 function regidx_to_regno b = let 'r = unsigned(b) in r
 
 /* mapping RVC register indices into normal indices */
@@ -65,7 +65,7 @@ function arch_to_bits(a : Architecture) -> arch_xlen =
 type priv_level = bits(2)
 enum Privilege  = {User, Supervisor, Machine}
 
-val cast privLevel_to_bits : Privilege -> priv_level
+val privLevel_to_bits : Privilege -> priv_level
 function privLevel_to_bits (p) =
   match (p) {
     User       => 0b00,
@@ -73,7 +73,7 @@ function privLevel_to_bits (p) =
     Machine    => 0b11
   }
 
-val cast privLevel_of_bits : priv_level -> Privilege
+val privLevel_of_bits : priv_level -> Privilege
 function privLevel_of_bits (p) =
   match (p) {
     0b00 => User,
@@ -128,7 +128,7 @@ enum InterruptType = {
   I_M_External
 }
 
-val cast interruptType_to_bits : InterruptType -> exc_code
+val interruptType_to_bits : InterruptType -> exc_code
 function interruptType_to_bits (i) =
   match (i) {
     I_U_Software => 0x00,
@@ -166,7 +166,7 @@ enum ExceptionType = {
  E_CHERI
 }
 
-val cast exceptionType_to_bits : ExceptionType -> exc_code
+val exceptionType_to_bits : ExceptionType -> exc_code
 function exceptionType_to_bits(e) =
   match (e) {
     E_Fetch_Addr_Align   => 0x00,
@@ -237,7 +237,7 @@ function internal_error(s) = {
 type tv_mode = bits(2)
 enum TrapVectorMode = {TV_Direct, TV_Vector, TV_Reserved}
 
-val cast trapVectorMode_of_bits : tv_mode -> TrapVectorMode
+val trapVectorMode_of_bits : tv_mode -> TrapVectorMode
 function trapVectorMode_of_bits (m) =
   match (m) {
     0b00 => TV_Direct,
@@ -250,7 +250,7 @@ function trapVectorMode_of_bits (m) =
 type ext_status = bits(2)
 enum ExtStatus = {Off, Initial, Clean, Dirty}
 
-val cast extStatus_to_bits : ExtStatus -> ext_status
+val extStatus_to_bits : ExtStatus -> ext_status
 function extStatus_to_bits(e) =
   match (e) {
     Off     => 0b00,
@@ -259,7 +259,7 @@ function extStatus_to_bits(e) =
     Dirty   => 0b11
   }
 
-val cast extStatus_of_bits : ext_status -> ExtStatus
+val extStatus_of_bits : ext_status -> ExtStatus
 function extStatus_of_bits(e) =
   match (e) {
     0b00 => Off,

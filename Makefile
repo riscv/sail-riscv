@@ -77,7 +77,7 @@ PLATFORM_OCAML_SRCS = $(addprefix ocaml_emulator/,platform.ml platform_impl.ml r
 # Attempt to work with either sail from opam or built from repo in SAIL_DIR
 ifneq ($(SAIL_DIR),)
 # Use sail repo in SAIL_DIR
-SAIL:=$(SAIL_DIR)/sail
+SAIL:=$(SAIL_DIR)/sail -dno_cast
 export SAIL_DIR
 else
 # Use sail from opam package

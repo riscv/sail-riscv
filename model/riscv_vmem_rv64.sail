@@ -24,7 +24,7 @@ function translationMode(priv) = {
       },
       Some(RV32) => {
         let s = Mk_Satp32(satp[31..0]);
-        if s.Mode() == false then Sbare else Sv32
+	if s.Mode() == 0b0 then Sbare else Sv32
       },
       _    => internal_error("unsupported address translation arch")
     }
@@ -39,8 +39,8 @@ function translateAddr(vAddr, ac) = {
     Execute => cur_privilege,
     _       => effectivePrivilege(mstatus, cur_privilege)
   };
-  let mxr    : bool   = mstatus.MXR() == true;
-  let do_sum : bool   = mstatus.SUM() == true;
+  let mxr    : bool   = mstatus.MXR() == 0b1;
+  let do_sum : bool   = mstatus.SUM() == 0b1;
   let mode : SATPMode = translationMode(effPriv);
 
   let asid = curAsid64(satp);

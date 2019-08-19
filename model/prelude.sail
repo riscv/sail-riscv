@@ -50,16 +50,17 @@ overload operator & = {and_vec}
 
 overload operator | = {or_vec}
 
-val cast cast_unit_vec : bit -> bits(1)
-
-function cast_unit_vec b = match b {
-  bitzero => 0b0,
-  bitone  => 0b1
-}
-
 val string_of_int = {c: "string_of_int", ocaml: "string_of_int", interpreter: "string_of_int", lem: "stringFromInteger", coq: "string_of_int"} : int -> string
 
-val BitStr = "string_of_bits" : forall 'n. bits('n) -> string
+val "string_of_bits" : forall 'n. bits('n) -> string
+
+function string_of_bit(b: bit) -> string =
+  match b {
+    bitzero => "0b0",
+    bitone => "0b1"
+  }
+
+overload BitStr = {string_of_bits, string_of_bit}
 
 val xor_vec = {c: "xor_bits", _: "xor_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
 
@@ -125,10 +126,10 @@ overload zeros = {zeros_implicit}
 val ones : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
 function ones (n) = sail_ones (n)
 
-val cast bool_to_bits : bool -> bits(1)
+val bool_to_bits : bool -> bits(1)
 function bool_to_bits x = if x then 0b1 else 0b0
 
-val cast bit_to_bool : bit -> bool
+val bit_to_bool : bit -> bool
 function bit_to_bool b = match b {
   bitone  => true,
   bitzero => false
