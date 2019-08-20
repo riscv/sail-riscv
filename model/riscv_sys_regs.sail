@@ -81,7 +81,7 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   then { /* Allow modifications to C only for now. */
          let  v = Mk_Misa(v);
          /* Suppress changing C if nextPC would become misaligned. */
-	 if   v.C() == 0b0 & nextPC[1] == bitone
+         if   v.C() == 0b0 & nextPC[1] == bitone
          then m
          else update_C(m, v.C())
        }

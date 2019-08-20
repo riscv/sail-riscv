@@ -147,7 +147,7 @@ function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let super = bit_to_bool(medeleg.bits()[idx]);
   /* if S-mode is absent, medeleg delegates to U-mode if 'N' is supported. */
   let user  = if   haveSupMode()
-	      then super & haveNExt() & bit_to_bool(sedeleg.bits()[idx])
+              then super & haveNExt() & bit_to_bool(sedeleg.bits()[idx])
               else super & haveNExt();
   let deleg = if      haveUsrMode() & user  then User
               else if haveSupMode() & super then Supervisor
@@ -331,8 +331,8 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        mstatus->SPIE() = mstatus.SIE();
        mstatus->SIE()  = 0b0;
        mstatus->SPP()  = match cur_privilege {
-			   User => 0b0,
-			   Supervisor => 0b1,
+                           User => 0b0,
+                           Supervisor => 0b1,
                            Machine => internal_error("invalid privilege for s-mode trap")
                          };
        stval           = tval(info);

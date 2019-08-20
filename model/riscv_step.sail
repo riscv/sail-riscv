@@ -10,7 +10,7 @@ function step(step_no : int) -> bool = {
     match dispatchInterrupt(cur_privilege) {
       Some(intr, priv) => {
         if   get_config_print_instr()
-	then print_bits("Handling interrupt: ", interruptType_to_bits(intr));
+        then print_bits("Handling interrupt: ", interruptType_to_bits(intr));
         handle_interrupt(intr, priv);
         (RETIRE_FAIL, false)
       },

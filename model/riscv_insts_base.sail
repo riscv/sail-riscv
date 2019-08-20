@@ -123,7 +123,7 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
         RETIRE_FAIL
       },
       Ext_ControlAddr_OK(target) => {
-	if bit_to_bool(target[1]) & (~ (haveRVC())) then {
+        if bit_to_bool(target[1]) & (~ (haveRVC())) then {
           handle_mem_exception(target, E_Fetch_Addr_Align);
           RETIRE_FAIL;
         } else {
@@ -309,9 +309,9 @@ function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
   if   plat_enable_misaligned_access() then false
   else match width {
          BYTE   => false,
-	 HALF   => vaddr[0] == bitone,
-	 WORD   => vaddr[0] == bitone | vaddr[1] == bitone,
-	 DOUBLE => vaddr[0] == bitone | vaddr[1] == bitone | vaddr[2] == bitone
+         HALF   => vaddr[0] == bitone,
+         WORD   => vaddr[0] == bitone | vaddr[1] == bitone,
+         DOUBLE => vaddr[0] == bitone | vaddr[1] == bitone | vaddr[2] == bitone
        }
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
@@ -785,8 +785,8 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
   match cur_privilege {
     User       => { handle_illegal(); RETIRE_FAIL },
     Supervisor => match (architecture(get_mstatus_SXL(mstatus)), mstatus.TVM()) {
-		    (Some(_), 0b1)  => { handle_illegal(); RETIRE_FAIL },
-		    (Some(_), 0b0) => { flush_TLB(asid, addr); RETIRE_SUCCESS },
+                    (Some(_), 0b1)  => { handle_illegal(); RETIRE_FAIL },
+                    (Some(_), 0b0) => { flush_TLB(asid, addr); RETIRE_SUCCESS },
                     (_, _)           => internal_error("unimplemented sfence architecture")
                   },
     Machine    => { flush_TLB(asid, addr); RETIRE_SUCCESS }

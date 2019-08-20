@@ -17,7 +17,7 @@ function translationMode(priv) = {
     match arch {
       Some(RV32) => {
         let s = Mk_Satp32(satp[31..0]);
-	if s.Mode() == 0b0 then Sbare else Sv32
+        if s.Mode() == 0b0 then Sbare else Sv32
       },
       _    => internal_error("unsupported address translation arch")
     }
