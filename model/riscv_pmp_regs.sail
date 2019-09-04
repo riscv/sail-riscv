@@ -2,7 +2,7 @@
 
 enum PmpAddrMatchType = {OFF, TOR, NA4, NAPOT}
 
-val cast pmpAddrMatchType_of_bits : bits(2) -> PmpAddrMatchType
+val pmpAddrMatchType_of_bits : bits(2) -> PmpAddrMatchType
 function pmpAddrMatchType_of_bits(bs) = {
   match bs {
     0b00 => OFF,
@@ -12,7 +12,7 @@ function pmpAddrMatchType_of_bits(bs) = {
   }
 }
 
-val cast pmpAddrMatchType_to_bits : PmpAddrMatchType -> bits(2)
+val pmpAddrMatchType_to_bits : PmpAddrMatchType -> bits(2)
 function pmpAddrMatchType_to_bits(bs) = {
   match bs {
     OFF   => 0b00,
@@ -87,7 +87,7 @@ function pmpReadCfgReg(n) = {
 
 /* Helper to handle locked entries */
 function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
-  if cfg.L() == true then cfg else Mk_Pmpcfg_ent(v)
+  if cfg.L() == 0b1 then cfg else Mk_Pmpcfg_ent(v)
 
 val pmpWriteCfgReg : forall 'n, 0 <= 'n < 4 . (atom('n), xlenbits) -> unit effect {rreg, wreg}
 function pmpWriteCfgReg(n, v) = {
@@ -139,5 +139,5 @@ function pmpWriteCfgReg(n, v) = {
 
 function pmpWriteAddr(cfg: Pmpcfg_ent, reg: xlenbits, v: xlenbits) -> xlenbits =
   if   sizeof(xlen) == 32
-  then { if cfg.L() == true then reg else v }
-  else { if cfg.L() == true then reg else EXTZ(v[53..0]) }
+  then { if cfg.L() == 0b1 then reg else v }
+  else { if cfg.L() == 0b1 then reg else EXTZ(v[53..0]) }

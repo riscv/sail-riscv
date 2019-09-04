@@ -139,7 +139,13 @@ function wX (r, in_v) = {
   }
 }
 
-overload X = {rX, wX}
+function rX_bits(i: bits(5)) -> xlenbits = rX(unsigned(i))
+
+function wX_bits(i: bits(5), data: xlenbits) -> unit = {
+  wX(unsigned(i)) = data
+}
+
+overload X = {rX_bits, wX_bits, rX, wX}
 
 /* register names */
 

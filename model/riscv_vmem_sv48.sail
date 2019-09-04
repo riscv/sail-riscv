@@ -20,7 +20,7 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
       let pbits = pte.BITS();
       let ext_pte = pte.Ext();
       let pattr = Mk_PTE_Bits(pbits);
-      let is_global = global | (pattr.G() == true);
+      let is_global = global | (pattr.G() == 0b1);
 /*    print("walk48(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
             ^ " pt_base=" ^ BitStr(ptb)
             ^ " pt_ofs=" ^ BitStr(pt_ofs)

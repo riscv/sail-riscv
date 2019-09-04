@@ -1,11 +1,12 @@
 $include <regfp.sail>
 
 /* in reverse order because inc vectors don't seem to work (bug) */
-let GPRstr : vector(32, dec, string) = [ "x31", "x30", "x29", "x28", "x27", "x26", "x25", "x24", "x23", "x22", "x21",
+let GPRstrs : vector(32, dec, string) = [ "x31", "x30", "x29", "x28", "x27", "x26", "x25", "x24", "x23", "x22", "x21",
   "x20", "x19", "x18", "x17", "x16", "x15", "x14", "x13", "x12", "x11",
   "x10", "x9", "x8", "x7", "x6", "x5", "x4", "x3", "x2", "x1", "x0"
   ]
 
+function GPRstr(i: bits(5)) -> string = GPRstrs[unsigned(i)]
 
 let CIA_fp = RFull("CIA")
 let NIA_fp = RFull("NIA")
@@ -23,40 +24,40 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
   match instr {
      EBREAK() => (),
      UTYPE(imm, rd, op) => {
-            if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+            if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
      },
      RISCV_JAL(imm, rd) => {
-            if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+            if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
             let offset : bits(64) = EXTS(imm) in
             Nias = [| NIAFP_concrete_address (PC + offset) |];
             ik = IK_branch();
      },
      RISCV_JALR(imm, rs, rd) => {
-            if (rs == 0) then () else iR = RFull(GPRstr[rs]) :: iR;
-            if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+            if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
+            if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
             let offset : bits(64) = EXTS(imm) in
             Nias = [| NIAFP_indirect_address() |];
             ik = IK_branch();
      },
      BTYPE(imm, rs2, rs1, op) => {
-            if (rs2 == 0) then () else iR = RFull(GPRstr[rs2]) :: iR;
-            if (rs1 == 0) then () else iR = RFull(GPRstr[rs1]) :: iR;
+            if (rs2 == 0b00000) then () else iR = RFull(GPRstr(rs2)) :: iR;
+            if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
             ik = IK_branch();
             let offset : bits(64) = EXTS(imm) in
             Nias = [| NIAFP_concrete_address(PC + offset), NIAFP_successor() |];
       },
       ITYPE(imm, rs, rd, op) => {
-            if (rs == 0) then () else iR = RFull(GPRstr[rs]) :: iR;
-            if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+            if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
+            if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
       SHIFTIOP(imm, rs, rd, op) => {
-             if (rs == 0) then () else iR = RFull(GPRstr[rs]) :: iR;
-             if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+             if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
+             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
       RTYPE(rs2, rs1, rd, op) => {
-             if (rs2 == 0) then () else iR = RFull(GPRstr[rs2]) :: iR;
-             if (rs1 == 0) then () else iR = RFull(GPRstr[rs1]) :: iR;
-             if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+             if (rs2 == 0b00000) then () else iR = RFull(GPRstr(rs2)) :: iR;
+             if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
+             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
       CSR(csr, rs1, rd, is_imm, op) => {
                let isWrite : bool = match op {
@@ -65,16 +66,16 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                };
                iR = RFull(csr_name(csr)) :: iR;
                if ~(is_imm) then {
-                  iR = RFull(GPRstr[rs1]) :: iR;
+                  iR = RFull(GPRstr(rs1)) :: iR;
                };
                if isWrite then {
                   oR = RFull(csr_name(csr)) :: oR;
                };
-               oR = RFull(GPRstr[rd]) :: oR;
+               oR = RFull(GPRstr(rd)) :: oR;
       },
       LOAD(imm, rs, rd, unsign, width, aq, rl) => { /* XXX "unsigned" causes name conflict in lem shallow embedding... */
-             if (rs == 0) then () else iR = RFull(GPRstr[rs]) :: iR;
-             if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+             if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
+             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
              aR = iR;
              ik =
                match (aq, rl) {
@@ -86,9 +87,9 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                }
       },
       STORE(imm, rs2, rs1, width, aq, rl) => {
-             if (rs2 == 0) then () else iR = RFull(GPRstr[rs2]) :: iR;
-             if (rs1 == 0) then () else iR = RFull(GPRstr[rs1]) :: iR;
-             if (rs1 == 0) then () else aR = RFull(GPRstr[rs1]) :: aR;
+             if (rs2 == 0b00000) then () else iR = RFull(GPRstr(rs2)) :: iR;
+             if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
+             if (rs1 == 0b00000) then () else aR = RFull(GPRstr(rs1)) :: aR;
              ik =
                match (aq, rl) {
                  (false, false) => IK_mem_write (Write_plain),
@@ -99,17 +100,17 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                }
       },
       ADDIW(imm, rs, rd) => {
-             if (rs == 0) then () else iR = RFull(GPRstr[rs]) :: iR;
-             if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+             if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
+             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
       SHIFTW(imm, rs, rd, op) => {
-             if (rs == 0) then () else iR = RFull(GPRstr[rs]) :: iR;
-             if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+             if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
+             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
       RTYPEW(rs2, rs1, rd, op) => {
-             if (rs2 == 0) then () else iR = RFull(GPRstr[rs2]) :: iR;
-             if (rs1 == 0) then () else iR = RFull(GPRstr[rs1]) :: iR;
-             if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+             if (rs2 == 0b00000) then () else iR = RFull(GPRstr(rs2)) :: iR;
+             if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
+             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
       FENCE(pred, succ) => {
              ik =
@@ -141,8 +142,8 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
               ik = IK_simple (); // for RMEM, should morally be Barrier_RISCV_i
      },
      LOADRES(aq, rl, rs1, width, rd) => {
-            if (rs1 == 0) then () else iR = RFull(GPRstr[rs1]) :: iR;
-            if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+            if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
+            if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
             aR = iR;
             ik = match (aq, rl) {
               (false, false) => IK_mem_read (Read_RISCV_reserved),
@@ -152,10 +153,10 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
             };
      },
      STORECON(aq, rl, rs2, rs1, width, rd) => {
-            if (rs2 == 0) then () else iR = RFull(GPRstr[rs2]) :: iR;
-            if (rs1 == 0) then () else iR = RFull(GPRstr[rs1]) :: iR;
-            if (rs1 == 0) then () else aR = RFull(GPRstr[rs1]) :: aR;
-            if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+            if (rs2 == 0b00000) then () else iR = RFull(GPRstr(rs2)) :: iR;
+            if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
+            if (rs1 == 0b00000) then () else aR = RFull(GPRstr(rs1)) :: aR;
+            if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
              ik = match (aq, rl) {
                (false, false) => IK_mem_write (Write_RISCV_conditional),
                (false, true)  => IK_mem_write (Write_RISCV_conditional_release),
@@ -165,10 +166,10 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
              };
       },
       AMO(op, aq, rl, rs2, rs1, width, rd) => {
-             if (rs2 == 0) then () else iR = RFull(GPRstr[rs2]) :: iR;
-             if (rs1 == 0) then () else iR = RFull(GPRstr[rs1]) :: iR;
-             if (rs1 == 0) then () else aR = RFull(GPRstr[rs1]) :: aR;
-             if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+             if (rs2 == 0b00000) then () else iR = RFull(GPRstr(rs2)) :: iR;
+             if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
+             if (rs1 == 0b00000) then () else aR = RFull(GPRstr(rs1)) :: aR;
+             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
              ik = match (aq, rl) {
                (false, false) => IK_mem_rmw (Read_RISCV_reserved, Write_RISCV_conditional),
                (false, true)  => IK_mem_rmw (Read_RISCV_reserved, Write_RISCV_conditional_release),
@@ -196,40 +197,40 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
   match instr {
      EBREAK() => (),
      UTYPE(imm, rd, op) => {
-            if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+	    if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
      },
      RISCV_JAL(imm, rd) => {
-            if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+	    if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
             let offset : bits(64) = EXTS(imm) in
             Nias = [| NIAFP_concrete_address (PC + offset) |];
             ik = IK_branch();
      },
      RISCV_JALR(imm, rs, rd) => {
-            if (rs == 0) then () else iR = RFull(GPRstr[rs]) :: iR;
-            if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+            if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
+            if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
             let offset : bits(64) = EXTS(imm) in
             Nias = [| NIAFP_indirect_address() |];
             ik = IK_branch();
      },
      BTYPE(imm, rs2, rs1, op) => {
-            if (rs2 == 0) then () else iR = RFull(GPRstr[rs2]) :: iR;
-            if (rs1 == 0) then () else iR = RFull(GPRstr[rs1]) :: iR;
+            if (rs2 == 0b00000) then () else iR = RFull(GPRstr(rs2)) :: iR;
+            if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
             ik = IK_branch();
             let offset : bits(64) = EXTS(imm) in
             Nias = [| NIAFP_concrete_address(PC + offset), NIAFP_successor() |];
       },
       ITYPE(imm, rs, rd, op) => {
-            if (rs == 0) then () else iR = RFull(GPRstr[rs]) :: iR;
-            if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+            if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
+            if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
       SHIFTIOP(imm, rs, rd, op) => {
-             if (rs == 0) then () else iR = RFull(GPRstr[rs]) :: iR;
-             if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+             if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
+             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
       RTYPE(rs2, rs1, rd, op) => {
-             if (rs2 == 0) then () else iR = RFull(GPRstr[rs2]) :: iR;
-             if (rs1 == 0) then () else iR = RFull(GPRstr[rs1]) :: iR;
-             if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+             if (rs2 == 0b00000) then () else iR = RFull(GPRstr(rs2)) :: iR;
+             if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
+             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
       CSR(csr, rs1, rd, is_imm, op) => {
                let isWrite : bool = match op {
@@ -238,16 +239,16 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                };
                iR = RFull(csr_name(csr)) :: iR;
                if ~(is_imm) then {
-                  iR = RFull(GPRstr[rs1]) :: iR;
+                  iR = RFull(GPRstr(rs1)) :: iR;
                };
                if isWrite then {
                   oR = RFull(csr_name(csr)) :: oR;
                };
-               oR = RFull(GPRstr[rd]) :: oR;
+               oR = RFull(GPRstr(rd)) :: oR;
       },
       LOAD(imm, rs, rd, unsign, width, aq, rl) => { /* XXX "unsigned" causes name conflict in lem shallow embedding... */
-             if (rs == 0) then () else iR = RFull(GPRstr[rs]) :: iR;
-             if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+             if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
+             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
              aR = iR;
              ik =
                match (aq, rl) {
@@ -259,9 +260,9 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                }
       },
       STORE(imm, rs2, rs1, width, aq, rl) => {
-             if (rs2 == 0) then () else iR = RFull(GPRstr[rs2]) :: iR;
-             if (rs1 == 0) then () else iR = RFull(GPRstr[rs1]) :: iR;
-             if (rs1 == 0) then () else aR = RFull(GPRstr[rs1]) :: aR;
+             if (rs2 == 0b00000) then () else iR = RFull(GPRstr(rs2)) :: iR;
+             if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
+             if (rs1 == 0b00000) then () else aR = RFull(GPRstr(rs1)) :: aR;
              ik =
                match (aq, rl) {
                  (false, false) => IK_mem_write (Write_plain),
@@ -272,17 +273,17 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                }
       },
       ADDIW(imm, rs, rd) => {
-             if (rs == 0) then () else iR = RFull(GPRstr[rs]) :: iR;
-             if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+             if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
+             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
       SHIFTW(imm, rs, rd, op) => {
-             if (rs == 0) then () else iR = RFull(GPRstr[rs]) :: iR;
-             if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+             if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
+             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
       RTYPEW(rs2, rs1, rd, op) => {
-             if (rs2 == 0) then () else iR = RFull(GPRstr[rs2]) :: iR;
-             if (rs1 == 0) then () else iR = RFull(GPRstr[rs1]) :: iR;
-             if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+             if (rs2 == 0b00000) then () else iR = RFull(GPRstr(rs2)) :: iR;
+             if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
+             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
       FENCE(pred, succ) => {
              ik =
@@ -313,8 +314,8 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
               ik = IK_simple (); // for RMEM, should morally be Barrier_RISCV_i
      },
      LOADRES(aq, rl, rs1, width, rd) => {
-            if (rs1 == 0) then () else iR = RFull(GPRstr[rs1]) :: iR;
-            if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+            if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
+            if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
             aR = iR;
             ik = match (aq, rl) {
               (false, false) => IK_mem_read (Read_RISCV_reserved),
@@ -324,10 +325,10 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
             };
      },
      STORECON(aq, rl, rs2, rs1, width, rd) => {
-            if (rs2 == 0) then () else iR = RFull(GPRstr[rs2]) :: iR;
-            if (rs1 == 0) then () else iR = RFull(GPRstr[rs1]) :: iR;
-            if (rs1 == 0) then () else aR = RFull(GPRstr[rs1]) :: aR;
-            if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+            if (rs2 == 0b00000) then () else iR = RFull(GPRstr(rs2)) :: iR;
+            if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
+            if (rs1 == 0b00000) then () else aR = RFull(GPRstr(rs1)) :: aR;
+            if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
              ik = match (aq, rl) {
                (false, false) => IK_mem_write (Write_RISCV_conditional),
                (false, true)  => IK_mem_write (Write_RISCV_conditional_release),
@@ -337,10 +338,10 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
              };
       },
       AMO(op, aq, rl, rs2, rs1, width, rd) => {
-             if (rs2 == 0) then () else iR = RFull(GPRstr[rs2]) :: iR;
-             if (rs1 == 0) then () else iR = RFull(GPRstr[rs1]) :: iR;
-             if (rs1 == 0) then () else aR = RFull(GPRstr[rs1]) :: aR;
-             if (rd == 0) then () else oR = RFull(GPRstr[rd]) :: oR;
+             if (rs2 == 0b00000) then () else iR = RFull(GPRstr(rs2)) :: iR;
+             if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
+             if (rs1 == 0b00000) then () else aR = RFull(GPRstr(rs1)) :: aR;
+             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
              ik = match (aq, rl) {
                (false, false) => IK_mem_rmw (Read_RISCV_reserved, Write_RISCV_conditional),
                (false, true)  => IK_mem_rmw (Read_RISCV_reserved, Write_RISCV_conditional_release),

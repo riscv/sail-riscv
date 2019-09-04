@@ -53,7 +53,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
             */
            match width {
              BYTE   => true,
-             HALF   => vaddr[0]    == 0b0,
+             HALF   => vaddr[0..0] == 0b0,
              WORD   => vaddr[1..0] == 0b00,
              DOUBLE => vaddr[2..0] == 0b000
            };
@@ -112,7 +112,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
              */
             match width {
               BYTE   => true,
-              HALF   => vaddr[0]    == 0b0,
+              HALF   => vaddr[0..0] == 0b0,
               WORD   => vaddr[1..0] == 0b00,
               DOUBLE => vaddr[2..0] == 0b000
             };

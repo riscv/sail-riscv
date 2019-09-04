@@ -1,0 +1,5 @@
+#!/bin/bash
+
+for d in lib/lem lib/sail RV32 RV64; do
+  (cd $d; Holmake cleanAll)
+done

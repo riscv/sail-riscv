@@ -29,10 +29,10 @@ function pmpAddrRange(cfg: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits
 val pmpCheckRWX: (Pmpcfg_ent, AccessType(ext_access_type)) -> bool
 function pmpCheckRWX(ent, acc) = {
   match acc {
-    Read(Data)       => ent.R() == true,
-    Write(Data)      => ent.W() == true,
-    ReadWrite(Data)  => ent.R() == true & ent.W() == true,
-    Execute()        => ent.X() == true
+    Read(Data)      => ent.R() == 0b1,
+    Write(Data)     => ent.W() == 0b1,
+    ReadWrite(Data) => ent.R() == 0b1 & ent.W() == 0b1,
+    Execute()       => ent.X() == 0b1
   }
 }
 
@@ -40,7 +40,7 @@ function pmpCheckRWX(ent, acc) = {
 val pmpCheckPerms: (Pmpcfg_ent, AccessType(ext_access_type), Privilege) -> bool
 function pmpCheckPerms(ent, acc, priv) = {
   match priv {
-    Machine => if   ent.L() == true
+    Machine => if   ent.L() == 0b1
                then pmpCheckRWX(ent, acc)
                else true,
     _       => pmpCheckRWX(ent, acc)

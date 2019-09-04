@@ -81,7 +81,7 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   then { /* Allow modifications to C only for now. */
          let  v = Mk_Misa(v);
          /* Suppress changing C if nextPC would become misaligned. */
-         if   v.C() == false & nextPC[1] == true
+         if   v.C() == 0b0 & nextPC[1] == bitone
          then m
          else update_C(m, v.C())
        }
@@ -90,12 +90,12 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
 
 /* helpers to check support for various extensions. */
 /* we currently don't model 'E', so always assume 'I'. */
-function haveAtomics() -> bool = misa.A() == true
-function haveRVC()     -> bool = misa.C() == true
-function haveMulDiv()  -> bool = misa.M() == true
-function haveSupMode() -> bool = misa.S() == true
-function haveUsrMode() -> bool = misa.U() == true
-function haveNExt()    -> bool = misa.N() == true
+function haveAtomics() -> bool = misa.A() == 0b1
+function haveRVC()     -> bool = misa.C() == 0b1
+function haveMulDiv()  -> bool = misa.M() == 0b1
+function haveSupMode() -> bool = misa.S() == 0b1
+function haveUsrMode() -> bool = misa.U() == 0b1
+function haveNExt()    -> bool = misa.N() == 0b1
 
 bitfield Mstatus : xlenbits = {
   SD   : xlen - 1,
@@ -129,7 +129,7 @@ bitfield Mstatus : xlenbits = {
 register mstatus : Mstatus
 
 function effectivePrivilege(m : Mstatus, priv : Privilege) -> Privilege =
-  if   m.MPRV() == true
+  if   m.MPRV() == 0b1
   then privLevel_of_bits(mstatus.MPP())
   else cur_privilege
 
@@ -174,8 +174,8 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
    */
   // let m = update_FS(m, extStatus_to_bits(Off));
 
-  let m = update_SD(m, extStatus_of_bits(m.FS()) == Dirty
-                     | extStatus_of_bits(m.XS()) == Dirty);
+  let dirty = extStatus_of_bits(m.FS()) == Dirty | extStatus_of_bits(m.XS()) == Dirty;
+  let m = update_SD(m, bool_to_bits(dirty));
 
   /* We don't support dynamic changes to SXL and UXL. */
   let m = set_mstatus_SXL(m, get_mstatus_SXL(o));
@@ -183,8 +183,8 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
 
   /* Hardwired to zero in the absence of 'N'. */
   if (~ (haveUsrMode())) then {
-    let m = update_UPIE(m, false);
-    let m = update_UIE(m, false);
+    let m = update_UPIE(m, 0b0);
+    let m = update_UIE(m, 0b0);
     m
   } else m
 }
@@ -263,9 +263,9 @@ function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   /* M-mode interrupt delegation bits "should" be hardwired to 0. */
   /* FIXME: needs verification against eventual spec language. */
   let m = Mk_Minterrupts(v);
-  let m = update_MEI(m, false);
-  let m = update_MTI(m, false);
-  let m = update_MSI(m, false);
+  let m = update_MEI(m, 0b0);
+  let m = update_MTI(m, 0b0);
+  let m = update_MSI(m, 0b0);
   m
 }
 
@@ -292,7 +292,7 @@ register medeleg : Medeleg  /* Delegation to S-mode */
 function legalize_medeleg(o : Medeleg, v : xlenbits) -> Medeleg = {
   let m = Mk_Medeleg(v);
   /* M-EnvCalls delegation is not supported */
-  let m = update_MEnvCall(m, false);
+  let m = update_MEnvCall(m, 0b0);
   m
 }
 
@@ -324,7 +324,7 @@ function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
   let base : xlenbits = m.Base() @ 0b00;
   match (trapVectorMode_of_bits(m.Mode())) {
     TV_Direct => Some(base),
-    TV_Vector => if   c.IsInterrupt() == true
+    TV_Vector => if   c.IsInterrupt() == 0b1
                  then Some(base + (EXTZ(c.Cause()) << 2))
                  else Some(base),
     TV_Reserved => None()
@@ -339,13 +339,13 @@ register mepc : xlenbits
  * When misa.C is writable, it zeroes only xepc[0].
  */
 function legalize_xepc(v : xlenbits) -> xlenbits =
-  if   sys_enable_writable_misa () | misa.C() == true
+  if   sys_enable_writable_misa () | misa.C() == 0b1
   then [v with 0 = bitzero]
   else v & EXTS(0b100)
 
 /* masking for reads to xepc */
 function pc_alignment_mask() -> xlenbits =
-  ~(EXTZ(if misa.C() == true then 0b00 else 0b10))
+  ~(EXTZ(if misa.C() == 0b1 then 0b00 else 0b10))
 
 /* auxiliary exception registers */
 
@@ -366,17 +366,17 @@ register scounteren : Counteren
 
 function legalize_mcounteren(c : Counteren, v : xlenbits) -> Counteren = {
   /* no HPM counters yet */
-  let c = update_IR(c, v[2]);
-  let c = update_TM(c, v[1]);
-  let c = update_CY(c, v[0]);
+  let c = update_IR(c, [v[2]]);
+  let c = update_TM(c, [v[1]]);
+  let c = update_CY(c, [v[0]]);
   c
 }
 
 function legalize_scounteren(c : Counteren, v : xlenbits) -> Counteren = {
   /* no HPM counters yet */
-  let c = update_IR(c, v[2]);
-  let c = update_TM(c, v[1]);
-  let c = update_CY(c, v[0]);
+  let c = update_IR(c, [v[2]]);
+  let c = update_TM(c, [v[1]]);
+  let c = update_CY(c, [v[0]]);
   c
 }
 
@@ -464,8 +464,8 @@ function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
   let m = update_XS(m, s.XS());
   // See comment for mstatus.FS.
   let m = update_FS(m, s.FS());
-  let m = update_SD(m, extStatus_of_bits(m.FS()) == Dirty
-                     | extStatus_of_bits(m.XS()) == Dirty);
+  let dirty = extStatus_of_bits(m.FS()) == Dirty | extStatus_of_bits(m.XS()) == Dirty;
+  let m = update_SD(m, bool_to_bits(dirty));
 
   let m = update_SPP(m, s.SPP());
   let m = update_SPIE(m, s.SPIE());
@@ -537,8 +537,8 @@ function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterru
   let m : Minterrupts = o;
   let m = update_SSI(m, s.SSI() & d.SSI());
   if haveNExt() then {
-    let m = if d.UEI() == true then update_UEI(m, s.UEI()) else m;
-    let m = if d.USI() == true then update_USI(m, s.USI()) else m;
+    let m = if d.UEI() == 0b1 then update_UEI(m, s.UEI()) else m;
+    let m = if d.USI() == 0b1 then update_USI(m, s.USI()) else m;
     m
   } else m
 }
@@ -550,13 +550,13 @@ function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterr
 /* Returns the new value of mie from the previous mie (o) and the written sie (s) as delegated by mideleg (d). */
 function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
-  let m = if d.SEI() == true then update_SEI(m, s.SEI()) else m;
-  let m = if d.STI() == true then update_STI(m, s.STI()) else m;
-  let m = if d.SSI() == true then update_SSI(m, s.SSI()) else m;
+  let m = if d.SEI() == 0b1 then update_SEI(m, s.SEI()) else m;
+  let m = if d.STI() == 0b1 then update_STI(m, s.STI()) else m;
+  let m = if d.SSI() == 0b1 then update_SSI(m, s.SSI()) else m;
   if haveNExt() then {
-    let m = if d.UEI() == true then update_UEI(m, s.UEI()) else m;
-    let m = if d.UTI() == true then update_UTI(m, s.UTI()) else m;
-    let m = if d.USI() == true then update_USI(m, s.USI()) else m;
+    let m = if d.UEI() == 0b1 then update_UEI(m, s.UEI()) else m;
+    let m = if d.UTI() == 0b1 then update_UTI(m, s.UTI()) else m;
+    let m = if d.USI() == 0b1 then update_USI(m, s.USI()) else m;
     m
   } else m
 }

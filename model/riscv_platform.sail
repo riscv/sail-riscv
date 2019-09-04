@@ -201,11 +201,11 @@ function clint_load(addr, width) = {
 function clint_dispatch() -> unit = {
   if   get_config_print_platform()
   then print_platform("clint::tick mtime <- " ^ BitStr(mtime));
-  mip->MTI() = false;
+  mip->MTI() = 0b0;
   if mtimecmp <=_u mtime then {
     if   get_config_print_platform()
     then print_platform(" clint timer pending at mtime " ^ BitStr(mtime));
-    mip->MTI() = true
+    mip->MTI() = 0b1
   }
 }
 
@@ -216,7 +216,7 @@ function clint_store(addr, width, data) = {
   if addr == MSIP_BASE & ('n == 8 | 'n == 4) then {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mip.MSI <- " ^ BitStr(data[0]) ^ ")");
-    mip->MSI() = data[0] == 0b1;
+    mip->MSI() = [data[0]];
     clint_dispatch();
     MemValue(true)
   } else if addr == MTIMECMP_BASE & 'n == 8 then {
@@ -308,7 +308,7 @@ function htif_store(addr, width, data) = {
     0x00 => { /* syscall-proxy */
       if   get_config_print_platform()
       then print_platform("htif-syscall-proxy cmd: " ^ BitStr(cmd.payload()));
-      if   cmd.payload()[0] == 0b1
+      if   cmd.payload()[0] == bitone
       then {
            htif_done = true;
            htif_exit_code = (sail_zero_extend(cmd.payload(), 64) >> 1)

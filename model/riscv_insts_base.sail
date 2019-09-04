@@ -59,7 +59,7 @@ function clause execute (RISCV_JAL(imm, rd)) = {
     },
     Ext_ControlAddr_OK(target) => {
       /* Perform standard alignment check */
-      if   target[1] & (~ (haveRVC()))
+      if bit_to_bool(target[1]) & (~ (haveRVC()))
       then {
         handle_mem_exception(target, E_Fetch_Addr_Align());
         RETIRE_FAIL
@@ -123,7 +123,7 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
         RETIRE_FAIL
       },
       Ext_ControlAddr_OK(target) => {
-        if target[1] & (~ (haveRVC())) then {
+        if bit_to_bool(target[1]) & (~ (haveRVC())) then {
           handle_mem_exception(target, E_Fetch_Addr_Align());
           RETIRE_FAIL;
         } else {
@@ -167,8 +167,8 @@ function clause execute (ITYPE (imm, rs1, rd, op)) = {
   let immext : xlenbits = EXTS(imm);
   let result : xlenbits = match op {
     RISCV_ADDI  => rs1_val + immext,
-    RISCV_SLTI  => EXTZ(rs1_val <_s immext),
-    RISCV_SLTIU => EXTZ(rs1_val <_u immext),
+    RISCV_SLTI  => EXTZ(bool_to_bits(rs1_val <_s immext)),
+    RISCV_SLTIU => EXTZ(bool_to_bits(rs1_val <_u immext)),
     RISCV_ANDI  => rs1_val & immext,
     RISCV_ORI   => rs1_val | immext,
     RISCV_XORI  => rs1_val ^ immext
@@ -198,9 +198,9 @@ mapping encdec_sop : sop <-> bits(3) = {
   RISCV_SRAI <-> 0b101
 }
 
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SLLI) <-> 0b000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == false
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) <-> 0b000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == false
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) <-> 0b010000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == false
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SLLI) <-> 0b000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) <-> 0b000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) <-> 0b010000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
 
 function clause execute (SHIFTIOP(shamt, rs1, rd, op)) = {
   let rs1_val = X(rs1);
@@ -248,8 +248,8 @@ function clause execute (RTYPE(rs2, rs1, rd, op)) = {
   let rs2_val = X(rs2);
   let result : xlenbits = match op {
     RISCV_ADD  => rs1_val + rs2_val,
-    RISCV_SLT  => EXTZ(rs1_val <_s rs2_val),
-    RISCV_SLTU => EXTZ(rs1_val <_u rs2_val),
+    RISCV_SLT  => EXTZ(bool_to_bits(rs1_val <_s rs2_val)),
+    RISCV_SLTU => EXTZ(bool_to_bits(rs1_val <_u rs2_val)),
     RISCV_AND  => rs1_val & rs2_val,
     RISCV_OR   => rs1_val | rs2_val,
     RISCV_XOR  => rs1_val ^ rs2_val,
@@ -309,9 +309,9 @@ function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
   if   plat_enable_misaligned_access() then false
   else match width {
          BYTE   => false,
-         HALF   => vaddr[0] == true,
-         WORD   => vaddr[0] == true | vaddr[1] == true,
-         DOUBLE => vaddr[0] == true | vaddr[1] == true | vaddr[2] == true
+         HALF   => vaddr[0] == bitone,
+         WORD   => vaddr[0] == bitone | vaddr[1] == bitone,
+         DOUBLE => vaddr[0] == bitone | vaddr[1] == bitone | vaddr[2] == bitone
        }
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
@@ -731,7 +731,7 @@ mapping clause encdec = SRET()
 function clause execute SRET() = {
   match cur_privilege {
     User       => handle_illegal(),
-    Supervisor => if   (~ (haveSupMode ())) | mstatus.TSR() == true
+    Supervisor => if   (~ (haveSupMode ())) | mstatus.TSR() == 0b1
                   then handle_illegal()
                   else set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC)),
     Machine    => if   (~ (haveSupMode ()))
@@ -765,7 +765,7 @@ mapping clause encdec = WFI()
 function clause execute WFI() =
   match cur_privilege {
     Machine    => { platform_wfi(); RETIRE_SUCCESS },
-    Supervisor => if   mstatus.TW() == true
+    Supervisor => if   mstatus.TW() == 0b1
                   then { handle_illegal(); RETIRE_FAIL }
                   else { platform_wfi(); RETIRE_SUCCESS },
     User       => { handle_illegal(); RETIRE_FAIL }
@@ -780,13 +780,13 @@ mapping clause encdec = SFENCE_VMA(rs1, rs2)
   <-> 0b0001001 @ rs2 @ rs1 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute SFENCE_VMA(rs1, rs2) = {
-  let addr : option(xlenbits) = if rs1 == 0 then None() else Some(X(rs1));
-  let asid : option(xlenbits) = if rs2 == 0 then None() else Some(X(rs2));
+  let addr : option(xlenbits) = if rs1 == 0b00000 then None() else Some(X(rs1));
+  let asid : option(xlenbits) = if rs2 == 0b00000 then None() else Some(X(rs2));
   match cur_privilege {
     User       => { handle_illegal(); RETIRE_FAIL },
     Supervisor => match (architecture(get_mstatus_SXL(mstatus)), mstatus.TVM()) {
-                    (Some(_), true)  => { handle_illegal(); RETIRE_FAIL },
-                    (Some(_), false) => { flush_TLB(asid, addr); RETIRE_SUCCESS },
+                    (Some(_), 0b1)  => { handle_illegal(); RETIRE_FAIL },
+                    (Some(_), 0b0) => { flush_TLB(asid, addr); RETIRE_SUCCESS },
                     (_, _)           => internal_error("unimplemented sfence architecture")
                   },
     Machine    => { flush_TLB(asid, addr); RETIRE_SUCCESS }

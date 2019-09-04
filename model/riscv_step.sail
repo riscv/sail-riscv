@@ -1,8 +1,7 @@
 /* The emulator fetch-execute-interrupt dispatch loop. */
 
 /* returns whether to increment the step count in the trace */
-val step : int -> bool effect {barr, eamem, escape, exmem, rmem, rreg, wmv, wmvt, wreg}
-function step(step_no) = {
+function step(step_no : int) -> bool = {
   /* for step extensions */
   ext_pre_step_hook();
 
@@ -11,7 +10,7 @@ function step(step_no) = {
     match dispatchInterrupt(cur_privilege) {
       Some(intr, priv) => {
         if   get_config_print_instr()
-        then print_bits("Handling interrupt: ", intr);
+        then print_bits("Handling interrupt: ", interruptType_to_bits(intr));
         handle_interrupt(intr, priv);
         (RETIRE_FAIL, false)
       },
@@ -72,8 +71,7 @@ function step(step_no) = {
   stepped
 }
 
-val loop : unit -> unit effect {barr, eamem, escape, exmem, rmem, rreg, wmv, wmvt, wreg}
-function loop () = {
+function loop () : unit -> unit = {
   let insns_per_tick = plat_insns_per_tick();
   i : int = 0;
   step_no : int = 0;
