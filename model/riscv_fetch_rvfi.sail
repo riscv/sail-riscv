@@ -1,7 +1,7 @@
 function fetch() -> FetchResult =
   /* check for legal PC */
-  if   (PC[0] != 0b0 | (PC[1] != 0b0 & (~ (haveRVC()))))
-  then F_Error(E_Fetch_Addr_Align, PC)
+  if   (PC[0] != bitzero | (PC[1] != bitzero & (~ (haveRVC()))))
+  then F_Error(E_Fetch_Addr_Align(), PC)
   else {
     let i = rvfi_instruction.rvfi_insn();
     rvfi_exec->rvfi_order()    = minstret;
