@@ -80,8 +80,8 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   if   sys_enable_writable_misa ()
   then { /* Allow modifications to C only for now. */
          let  v = Mk_Misa(v);
-         /* Suppress changing C if nextPC would become misaligned. */
-         if   v.C() == 0b0 & nextPC[1] == bitone
+         /* Suppress changing C if nextPC would become misaligned or C was disabled at boot. */
+         if   (v.C() == 0b0 & nextPC[1] == bitone) | ~(sys_enable_rvc())
          then m
          else update_C(m, v.C())
        }
@@ -339,7 +339,9 @@ register mepc : xlenbits
  * When misa.C is writable, it zeroes only xepc[0].
  */
 function legalize_xepc(v : xlenbits) -> xlenbits =
-  if   sys_enable_writable_misa () | misa.C() == 0b1
+  /* allow writing xepc[1] only if misa.C is enabled or could be enabled 
+     XXX specification says this legalization should be done on read */
+  if   (sys_enable_writable_misa() & sys_enable_rvc()) | misa.C() == 0b1
   then [v with 0 = bitzero]
   else v & EXTS(0b100)
 
