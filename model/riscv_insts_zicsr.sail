@@ -162,16 +162,12 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x144,  _) => { mip = legalize_sip(mip, mideleg, value); Some(mip.bits()) },
     (0x180,  _) => { satp = legalize_satp(cur_Architecture(), satp, value); Some(satp) },
 
-    _           => None()
+    _           => ext_write_CSR(csr, value)
   };
   match res {
     Some(v) => if   get_config_print_reg()
                then print_reg("CSR " ^ to_str(csr) ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")"),
-    None()  => { /* check extensions */
-                 if   ext_write_CSR(csr, value)
-                 then ()
-                 else print_bits("unhandled write to CSR ", csr)
-               }
+    None()  => print_bits("unhandled write to CSR ", csr)
   }
 }
 
