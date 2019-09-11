@@ -44,7 +44,9 @@ exception.  This is supported using the `ext` field in the
 `sync_exception` type in `riscv_sync_exception.sail`, which is where
 the extension can store this information.  The addresses involved in
 exception handling can be modified by following the interface provided
-in `riscv_sys_exceptions.sail`.
+in `riscv_sys_exceptions.sail`.  New exception codes can be introduced
+using the `E_Extension` variant of the `ExceptionType` in
+`riscv_types`.
 
 Adding low-level platform functionality
 ---------------------------------------
@@ -64,8 +66,8 @@ If this functionality requires the definition of new interrupt
 sources, their encodings would need to be added to `riscv_types.sail`,
 and their delegation and handling added to `riscv_sys_control.sail`.
 
-Modifying memory access
------------------------
+Modifying physical memory access
+--------------------------------
 
 Physical memory addressing and access is defined in `riscv_mem.sail`.
 Any new regions of memory that are accessible via physical addresses
@@ -84,12 +86,23 @@ to any newly defined architectural state.  One can examine how normal
 physical memory access is implemented in `riscv_mem.sail` with helpers
 in `prelude_mem.sail` and `prelude_mem_metadata.sail`.
 
+Extending virtual memory and address translation
+------------------------------------------------
+
 Virtual memory is implemented in `riscv_vmem.sail`, and defining new
-address translation schemes will require modifying the
-top-level `translateAddr` function.  Any access control checks on
-virtual addresses and the specifics of the new address translation can be
-specified in a separate file.  This functionality can access any newly
-defined architectural state.
+address translation schemes will require modifying the top-level
+`translateAddr` function.  New types of memory access can be defined
+using the definitions in `riscv_vmem_types`.  Any access control
+checks on virtual addresses and the specifics of the new address
+translation can be specified in a separate file.  This functionality
+can access any newly defined architectural state.
+
+The RV64 architecture has reserved bits in the PTE that can be
+utilized for research experimentation.  These bits can be accessed and
+modified using the `ext_pte` argument in functions implementing the
+page-table walk.  The information computed by and used during the
+page-table can also be varied using the `ext_ptw` argument, which can
+be defined and used by extensions as needed.
 
 Checking and transforming memory addresses
 ------------------------------------------

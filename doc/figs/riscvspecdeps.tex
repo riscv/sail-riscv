@@ -34,8 +34,8 @@
   % compute location for virtmem
   \coordinate (vmloc) at ($(types)!3!(pmp)$);
   \node (virtmem) [spec] at (vmloc)              {\textbf{virtual memory}\\
-                                                     PTE formats, TLB (\texttt{riscv\_vmem\_common})\\
-                                                     page table walks (\texttt{riscv\_vmem\_svNN})\\
+                                                     PTE formats, TLB (\texttt{riscv\_vmem\_\{types,common\}})\\
+                                                     page table walks (\texttt{riscv\_types\_ext},\texttt{riscv\_vmem\_svNN})\\
                                                      address translation (\texttt{riscv\_vmem\_rvNN})};
 
 

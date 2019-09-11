@@ -77,10 +77,11 @@ such as the platform memory map.
   are used in the weak memory concurrency model.
 
 - The `riscv_vmem_*.sail` files describe the S-mode address
-  translation.  `riscv_vmem_common.sail` contains the definitions and
-  processing of the page-table entries and their various permission
-  and status bits.  `riscv_vmem_sv32.sail`, `riscv_vmem_sv39.sail`,
-  and `riscv_vmem_sv48.sail` contain the specifications for the
+  translation.  `riscv_vmem_types` and `riscv_vmem_common.sail`
+  contain the definitions and processing of the page-table entries and
+  their various permission and status bits.  `riscv_types_ext`,
+  `riscv_vmem_sv32.sail`, `riscv_vmem_sv39.sail`, and
+  `riscv_vmem_sv48.sail` contain the specifications for the
   corresponding page-table walks, and `riscv_vmem_rv32.sail` and
   `riscv_vmem_rv64.sail` describe the top-level address translation
   for the corresponding architectures.
