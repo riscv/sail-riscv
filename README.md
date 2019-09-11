@@ -53,7 +53,9 @@ Documentation
 
 A [reading guide](doc/ReadingGuide.md) to the model is provided in the
 [doc/](doc/) subdirectory, along with a guide on [how to
-extend](doc/ExtendingGuide.md) the model.
+extend](doc/ExtendingGuide.md) the model.  The current status of the
+coverage of the prose RISC-V specification is summarized
+[here](doc/Status.md).
 
 Simulators
 ----------
