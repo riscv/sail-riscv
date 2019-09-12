@@ -1,5 +1,4 @@
-The following is a list of ISA features that are currently captured in
-the Sail specification.
+The Sail specification currently captures the following ISA features:
 
 - The RV32I and RV64I primary base ISAs.
 
@@ -16,8 +15,8 @@ the Sail specification.
 
 - Physical Memory Protection (PMP)
 
-For the status of the RVWMO memory consistency model, please see [the
-RMEM project](https://github.com/rems-project/rmem).
+For the RVWMO memory consistency model, this Sail ISA semantics is integrated with the RVWMO operational model in [the 
+RMEM tool](https://github.com/rems-project/rmem).
 
 The Sail specification is parameterized over the following
 platform-specific options:
@@ -30,8 +29,8 @@ platform-specific options:
 - the contents of the `mtval` register on an illegal instruction
   exception.
 
-The following is a list of ISA features that are specified in the
-prose ISA specification but that are not yet implemented in the Sail
+The following ISA features are specified in the
+prose RISC-V ISA specification but not currently in the Sail
 specification.
 
 - The RV32E and RV64E subsets of the primary base RV32I and RV64I
@@ -48,7 +47,7 @@ specification.
 
 - Specification and implementation of Endianness Control.
 
-- A complete implementation of all hardware performance counters.
+- A complete definition of all hardware performance counters.
   These are used to count platform-specific events, and hence
   platform-dependent.
 
