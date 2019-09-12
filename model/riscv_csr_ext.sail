@@ -1,20 +1,13 @@
-/* Extensions may want to add additional CSR registers to the CSR address map.
- * These functions support access to such registers.
- *
- * The default implementation provides access to the CSRs added by the 'N'
- * extension.
- */
 
-/* returns whether a CSR is defined and accessible at a given address
- * and privilege
- */
-function ext_is_CSR_defined(csr : csreg, p : Privilege) -> bool =
-  is_NExt_CSR_defined(csr, p)   // 'N' extension
+/* numeric fallback XXX apparent sail bug prevents this from compiling for C  */
+//mapping clause csr_name_map = reg <-> "UNKNOWN CSR: " ^ hex_bits_12(reg)
+end csr_name_map
 
-/* returns the value of the CSR if it is defined */
-function ext_read_CSR(csr : csreg) -> option(xlenbits) =
-  read_NExt_CSR(csr)
+function clause ext_is_CSR_defined(_, _) = false
+end ext_is_CSR_defined
 
-/* returns false if the CSR is not defined or if the write is unsuccessful */
-function ext_write_CSR(csr : csreg, value : xlenbits) -> bool =
-  write_NExt_CSR(csr, value)
+function clause ext_read_CSR _ = None()
+end ext_read_CSR
+
+function clause ext_write_CSR (_, _) = None()
+end ext_write_CSR

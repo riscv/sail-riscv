@@ -29,8 +29,10 @@ end assembly
 end encdec
 end encdec_compressed
 
-val cast print_insn : ast -> string
+val print_insn : ast -> string
 function print_insn insn = assembly(insn)
+
+overload to_str = {print_insn}
 
 val decode : bits(32) -> ast effect pure
 function decode bv = encdec(bv)

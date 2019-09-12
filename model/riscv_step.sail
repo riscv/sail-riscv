@@ -1,8 +1,7 @@
 /* The emulator fetch-execute-interrupt dispatch loop. */
 
 /* returns whether to increment the step count in the trace */
-val step : int -> bool effect {barr, eamem, escape, exmem, rmem, rreg, wmv, wmvt, wreg}
-function step(step_no) = {
+function step(step_no : int) -> bool = {
   /* for step extensions */
   ext_pre_step_hook();
 
@@ -10,7 +9,8 @@ function step(step_no) = {
   let (retired, stepped) : (Retired, bool) =
     match dispatchInterrupt(cur_privilege) {
       Some(intr, priv) => {
-        print_bits("Handling interrupt: ", intr);
+        if   get_config_print_instr()
+        then print_bits("Handling interrupt: ", interruptType_to_bits(intr));
         handle_interrupt(intr, priv);
         (RETIRE_FAIL, false)
       },
@@ -31,7 +31,10 @@ function step(step_no) = {
           /* non-error cases: */
           F_RVC(h) => {
             let ast = decodeCompressed(h);
-            print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ ast);
+            if   get_config_print_instr()
+            then {
+              print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ to_str(ast));
+            };
             /* check for RVC once here instead of every RVC execute clause. */
             if haveRVC() then {
               nextPC = PC + 2;
@@ -43,7 +46,10 @@ function step(step_no) = {
           },
           F_Base(w) => {
             let ast = decode(w);
-            print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ cur_privilege ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ ast);
+            if   get_config_print_instr()
+            then {
+              print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ to_str(ast));
+            };
             nextPC = PC + 4;
             (execute(ext_post_decode_hook(ast)), true)
           }
@@ -65,8 +71,7 @@ function step(step_no) = {
   stepped
 }
 
-val loop : unit -> unit effect {barr, eamem, escape, exmem, rmem, rreg, wmv, wmvt, wreg}
-function loop () = {
+function loop () : unit -> unit = {
   let insns_per_tick = plat_insns_per_tick();
   i : int = 0;
   step_no : int = 0;

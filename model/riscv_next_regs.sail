@@ -55,7 +55,7 @@ function lower_sie(s : Sinterrupts, d : Sinterrupts) -> Uinterrupts = {
 /* Returns the new value of sip from the previous sip (o) and the written uip (u) as delegated by sideleg (d). */
 function lift_uip(o : Sinterrupts, d : Sinterrupts, u : Uinterrupts) -> Sinterrupts = {
   let s : Sinterrupts = o;
-  let s = if d.USI() == true then update_USI(s, u.USI()) else s;
+  let s = if d.USI() == 0b1 then update_USI(s, u.USI()) else s;
   s
 }
 
@@ -66,9 +66,9 @@ function legalize_uip(s : Sinterrupts, d : Sinterrupts, v : xlenbits) -> Sinterr
 /* Returns the new value of sie from the previous sie (o) and the written uie (u) as delegated by sideleg (d). */
 function lift_uie(o : Sinterrupts, d : Sinterrupts, u : Uinterrupts) -> Sinterrupts = {
   let s : Sinterrupts = o;
-  let s = if d.UEI() == true then update_UEI(s, u.UEI()) else s;
-  let s = if d.UTI() == true then update_UTI(s, u.UTI()) else s;
-  let s = if d.USI() == true then update_USI(s, u.USI()) else s;
+  let s = if d.UEI() == 0b1 then update_UEI(s, u.UEI()) else s;
+  let s = if d.UTI() == 0b1 then update_UTI(s, u.UTI()) else s;
+  let s = if d.USI() == 0b1 then update_USI(s, u.USI()) else s;
   s
 }
 

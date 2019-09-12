@@ -9,6 +9,7 @@ let config_enable_writable_misa        = ref true
 let config_enable_dirty_update         = ref false
 let config_enable_misaligned_access    = ref false
 let config_mtval_has_illegal_inst_bits = ref false
+let config_enable_pmp                  = ref false
 
 let platform_arch = ref P.RV64
 
@@ -38,6 +39,11 @@ let print_platform s =
   if !config_print_platform
   then print_endline s
   else ()
+
+let get_config_print_instr () = !config_print_instr
+let get_config_print_reg () = !config_print_reg
+let get_config_print_mem () = !config_print_mem_access
+let get_config_print_platform () = !config_print_platform
 
 (* Mapping to Sail externs *)
 let cur_arch_bitwidth () =
@@ -72,6 +78,7 @@ let enable_rvc ()                    = !config_enable_rvc
 let enable_dirty_update ()           = !config_enable_dirty_update
 let enable_misaligned_access ()      = !config_enable_misaligned_access
 let mtval_has_illegal_inst_bits ()   = !config_mtval_has_illegal_inst_bits
+let enable_pmp ()                    = !config_enable_pmp
 
 let rom_base ()   = arch_bits_of_int64 P.rom_base
 let rom_size ()   = arch_bits_of_int   !rom_size_ref

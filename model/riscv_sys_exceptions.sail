@@ -17,7 +17,13 @@ function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
   }
 }
 
-/* used for xRET */
+/* xRET handling involves three functions:
+ *
+ * get_xret_target:     used to read the value of the xret target  (no control flow transfer)
+ * set_xret_target:     used to write a value of the xret target   (no control flow transfer)
+ * prepare_xret_target: used to get the value for control transfer to the xret target
+ */
+
 val get_xret_target : Privilege -> xlenbits effect {rreg}
 function get_xret_target(p) =
   match p {
@@ -36,6 +42,10 @@ function set_xret_target(p, value) = {
   };
   target
 }
+
+val prepare_xret_target : (Privilege) -> xlenbits effect {rreg, wreg}
+function prepare_xret_target(p) =
+  get_xret_target(p)
 
 /* other trap-related CSRs */
 

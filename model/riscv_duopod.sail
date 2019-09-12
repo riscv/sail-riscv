@@ -1,13 +1,9 @@
 // This file depends on the xlen definitions in riscv_xlen.sail.
 
-type regno ('n : Int), 0 <= 'n < 32 = atom('n)
 type regbits = bits(5)
 
 val zeros : forall 'n, 'n >= 0. atom('n) -> bits('n)
 function zeros n = replicate_bits(0b0, n)
-
-val cast regbits_to_regno : bits(5) -> {'n, 0 <= 'n < 32. regno('n)}
-function regbits_to_regno b = let r as atom(_) = unsigned(b) in r
 
 /* Architectural state */
 
@@ -17,28 +13,30 @@ register nextPC : xlenbits
 register Xs : vector(32, dec, xlenbits)
 
 /* Getters and setters for X registers (special case for zeros register, x0) */
-val rX : forall 'n, 0 <= 'n < 32. regno('n) -> xlenbits effect {rreg}
+val rX : regbits -> xlenbits effect {rreg}
 
-function rX 0 = EXTZ(0x0)
-and rX (r if r > 0) = Xs[r]
+function rX(r) =
+  match r {
+    0b00000 => EXTZ(0x0),
+    _ => Xs[unsigned(r)]
+  }
 
-val wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit effect {wreg}
+val wX : (regbits, xlenbits) -> unit effect {wreg}
 
 function wX (r, v) =
-  if r != 0 then {
-     Xs[r] = v;
+  if r != 0b00000 then {
+     Xs[unsigned(r)] = v;
   }
 
 overload X = {rX, wX}
 
 /* Accessors for memory */
+val MEMr = { lem: "MEMr", coq: "MEMr", _ : "read_ram" } : forall 'n 'm, 'n >= 0.
+   (atom('m), int('n), bits('m), bits('m)) -> bits(8 * 'n) effect {rmem}
 
-val MEMr : forall 'n, 'n >= 0. (xlenbits, atom('n)) -> bits(8 * 'n) effect {rmem}
-function MEMr (addr, width) =
-  match __RISCV_read(addr, width, false, false, false) {
-    Some(v) => v,
-    None() => zeros(8 * width)
-  }
+val read_mem : forall 'n, 'n >= 0. (xlenbits, int('n)) -> bits(8 * 'n) effect {rmem}
+function read_mem(addr, width) =
+    MEMr(sizeof(xlen), width, EXTZ(0x0), addr)
 
 /* Instruction decode and execute */
 enum iop = {RISCV_ADDI, RISCV_SLTI, RISCV_SLTIU, RISCV_XORI, RISCV_ORI, RISCV_ANDI}
@@ -73,7 +71,7 @@ function clause decode imm : bits(12) @ rs1 : regbits @ 0b011 @ rd : regbits @ 0
 
 function clause execute(LOAD(imm, rs1, rd)) =
     let addr : xlenbits = X(rs1) + EXTS(imm) in
-    let result : xlenbits = MEMr(addr, xlen_bytes) in
+    let result : xlenbits = read_mem(addr, sizeof(xlen_bytes)) in
     X(rd) = result
 
 /* ****************************************************************** */

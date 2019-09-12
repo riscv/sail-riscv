@@ -13,7 +13,7 @@ val string_take = "string_take" : (string, nat) -> string
 val string_length = "string_length" : string -> nat
 val string_append = {c: "concat_str", _: "string_append"} : (string, string) -> string
 
-val eq_anything = {ocaml: "(fun (x, y) -> x = y)", interpreter: "eq_anything", lem: "eq", coq: "generic_eq"} : forall ('a : Type). ('a, 'a) -> bool
+val eq_anything = {ocaml: "(fun (x, y) -> x = y)", interpreter: "eq_anything", lem: "eq", coq: "generic_eq", c: "eq_anything"} : forall ('a : Type). ('a, 'a) -> bool
 
 overload operator == = {eq_string, eq_anything}
 
@@ -29,7 +29,7 @@ overload vector_update = {any_vector_update}
 val update_subrange = {ocaml: "update_subrange", interpreter: "update_subrange", lem: "update_subrange_vec_dec", coq: "update_subrange_vec_dec"} : forall 'n 'm 'o.
   (bits('n), atom('m), atom('o), bits('m - ('o - 1))) -> bits('n)
 
-val vector_concat = {ocaml: "append", lem: "append_list"} : forall ('n : Int) ('m : Int) ('a : Type).
+val vector_concat = {ocaml: "append", lem: "append_list", coq: "vec_concat"} : forall ('n : Int) ('m : Int) ('a : Type).
   (vector('n, dec, 'a), vector('m, dec, 'a)) -> vector('n + 'm, dec, 'a)
 
 overload append = {vector_concat}
@@ -50,16 +50,17 @@ overload operator & = {and_vec}
 
 overload operator | = {or_vec}
 
-val cast cast_unit_vec : bit -> bits(1)
+val string_of_int = {c: "string_of_int", ocaml: "string_of_int", interpreter: "string_of_int", lem: "stringFromInteger", coq: "string_of_int"} : int -> string
 
-function cast_unit_vec b = match b {
-  bitzero => 0b0,
-  bitone  => 0b1
-}
+val "string_of_bits" : forall 'n. bits('n) -> string
 
-val string_of_int = {c: "string_of_int", ocaml: "string_of_int", lem: "stringFromInteger", coq: "string_of_int"} : int -> string
+function string_of_bit(b: bit) -> string =
+  match b {
+    bitzero => "0b0",
+    bitone => "0b1"
+  }
 
-val BitStr = "string_of_bits" : forall 'n. bits('n) -> string
+overload BitStr = {string_of_bits, string_of_bit}
 
 val xor_vec = {c: "xor_bits", _: "xor_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
 
@@ -73,13 +74,13 @@ val sub_vec_int = {c: "sub_bits_int", _: "sub_vec_int"} : forall 'n. (bits('n), 
 
 overload operator - = {sub_vec, sub_vec_int}
 
-val quot_round_zero = {ocaml: "quot_round_zero", interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int"} : (int, int) -> int
-val rem_round_zero = {ocaml: "rem_round_zero", interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int"} : (int, int) -> int
+val quot_round_zero = {ocaml: "quot_round_zero", interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot"} : (int, int) -> int
+val rem_round_zero = {ocaml: "rem_round_zero", interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", coq: "Z.rem"} : (int, int) -> int
 
 /* The following should get us euclidean modulus, and is compatible with pre and post 0.9 versions of sail */
 overload operator % = {emod_int, mod}
 
-val min_nat = {ocaml: "min_int", lem: "min", coq: "min_nat", c: "min_int"} : (nat, nat) -> nat
+val min_nat = {ocaml: "min_int", interpreter: "min_int", lem: "min", coq: "min_nat", c: "min_int"} : (nat, nat) -> nat
 
 val min_int = {ocaml: "min_int", interpreter: "min_int", lem: "min", coq: "Z.min", c: "min_int"} : (int, int) -> int
 
@@ -101,25 +102,17 @@ val print_reg      = {ocaml: "Platform.print_reg", interpreter: "print_endline",
 val print_mem      = {ocaml: "Platform.print_mem_access", interpreter: "print_endline", c: "print_mem_access", lem: "print_dbg", _: "print_endline"} : string -> unit
 val print_platform = {ocaml: "Platform.print_platform", interpreter: "print_endline", c: "print_platform", lem: "print_dbg", _: "print_endline"} : string -> unit
 
-$ifndef FEATURE_IMPLICITS
-val EXTS : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
-val EXTZ : forall 'n 'm , 'm >= 'n . bits('n) -> bits('m)
-function EXTS v = sail_sign_extend(v, sizeof('m))
-function EXTZ v = sail_zero_extend(v, sizeof('m))
+val get_config_print_instr = {ocaml: "Platform.get_config_print_instr", c:"get_config_print_instr"} : unit -> bool
+val get_config_print_reg = {ocaml: "Platform.get_config_print_reg", c:"get_config_print_reg"} : unit -> bool
+val get_config_print_mem = {ocaml: "Platform.get_config_print_mem", c:"get_config_print_mem"} : unit -> bool
 
-val zeros_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
-function zeros_implicit () = sail_zeros('n)
-overload zeros = {zeros_implicit, sail_zeros}
+val get_config_print_platform = {ocaml: "Platform.get_config_print_platform", c:"get_config_print_platform"} : unit -> bool
+// defaults for other backends
+function get_config_print_instr () = false
+function get_config_print_reg () = false
+function get_config_print_mem () = false
+function get_config_print_platform () = false
 
-val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
-function ones_n n = replicate_bits (0b1, n)
-
-val ones_implicit : forall 'n, 'n >= 0 . unit -> bits('n)
-function ones_implicit () = ones_n ('n)
-
-overload ones = {ones_implicit, ones_n}
-
-$else
 val EXTS : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
 val EXTZ : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
 
@@ -128,22 +121,15 @@ function EXTZ(m, v) = sail_zero_extend(v, m)
 
 val zeros_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
 function zeros_implicit (n) = sail_zeros(n)
-overload zeros = {zeros_implicit, sail_zeros}
+overload zeros = {zeros_implicit}
 
-val ones_n : forall 'n, 'n >= 0 . int('n) -> bits('n)
-function ones_n n = replicate_bits (0b1, n)
+val ones : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
+function ones (n) = sail_ones (n)
 
-val ones_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
-function ones_implicit (n) = ones_n (n)
-
-overload ones = {ones_implicit, ones_n}
-
-$endif
-
-val cast bool_to_bits : bool -> bits(1)
+val bool_to_bits : bool -> bits(1)
 function bool_to_bits x = if x then 0b1 else 0b0
 
-val cast bit_to_bool : bit -> bool
+val bit_to_bool : bit -> bool
 function bit_to_bool b = match b {
   bitone  => true,
   bitzero => false

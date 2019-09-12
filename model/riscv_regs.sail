@@ -86,7 +86,7 @@ function rX r = {
 $ifdef RVFI_DII
 val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit effect {wreg}
 function rvfi_wX (r,v) = {
-  rvfi_exec->rvfi_rd_wdata() = EXTS(v);
+  rvfi_exec->rvfi_rd_wdata() = EXTZ(v);
   rvfi_exec->rvfi_rd_addr() = to_bits(8,r);
 }
 $else
@@ -134,15 +134,22 @@ function wX (r, in_v) = {
   };
   if (r != 0) then {
      rvfi_wX(r, in_v);
-     print_reg("x" ^ string_of_int(r) ^ " <- " ^ RegStr(v));
+     if   get_config_print_reg()
+     then print_reg("x" ^ string_of_int(r) ^ " <- " ^ RegStr(v));
   }
 }
 
-overload X = {rX, wX}
+function rX_bits(i: bits(5)) -> xlenbits = rX(unsigned(i))
+
+function wX_bits(i: bits(5), data: xlenbits) -> unit = {
+  wX(unsigned(i)) = data
+}
+
+overload X = {rX_bits, wX_bits, rX, wX}
 
 /* register names */
 
-val cast reg_name_abi : regidx -> string
+val reg_name_abi : regidx -> string
 
 function reg_name_abi(r) = {
   match (r) {
@@ -180,6 +187,8 @@ function reg_name_abi(r) = {
     0b11111 => "t6"
   }
 }
+
+overload to_str = {reg_name_abi}
 
 /* mappings for assembly */
 

@@ -1,0 +1,4 @@
+session "Sail-RV32" = "Sail" +
+  options [document = false]
+  theories
+    "Riscv_lemmas"

@@ -9,17 +9,17 @@ Import List.ListNotations.
 
 Axiom real : Type.
 
-Definition MEM_fence_rw_rw {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_rw_rw.
-Definition MEM_fence_r_rw  {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_r_rw.
-Definition MEM_fence_r_r   {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_r_r.
-Definition MEM_fence_rw_w  {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_rw_w.
-Definition MEM_fence_w_w   {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_w_w.
-Definition MEM_fence_w_rw  {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_w_rw.
-Definition MEM_fence_rw_r  {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_rw_r.
-Definition MEM_fence_r_w   {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_r_w.
-Definition MEM_fence_w_r   {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_w_r.
-Definition MEM_fence_tso   {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_tso.
-Definition MEM_fence_i     {rv e} (_:unit) : monad rv unit e := barrier Barrier_RISCV_i.
+Definition MEM_fence_rw_rw {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_rw_rw tt).
+Definition MEM_fence_r_rw  {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_r_rw tt).
+Definition MEM_fence_r_r   {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_r_r tt).
+Definition MEM_fence_rw_w  {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_rw_w tt).
+Definition MEM_fence_w_w   {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_w_w tt).
+Definition MEM_fence_w_rw  {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_w_rw tt).
+Definition MEM_fence_rw_r  {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_rw_r tt).
+Definition MEM_fence_r_w   {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_r_w tt).
+Definition MEM_fence_w_r   {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_w_r tt).
+Definition MEM_fence_tso   {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_tso tt).
+Definition MEM_fence_i     {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_i tt).
 (*
 val MEMea                            : forall 'rv 'a 'e. Size 'a => bitvector 'a -> integer -> monad 'rv unit 'e
 val MEMea_release                    : forall 'rv 'a 'e. Size 'a => bitvector 'a -> integer -> monad 'rv unit 'e

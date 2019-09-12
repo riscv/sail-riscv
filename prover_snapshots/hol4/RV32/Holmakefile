@@ -1,0 +1,13 @@
+INCLUDES = ../lib/lem ../lib/sail
+
+SCRIPTS = riscv_extrasScript.sml  riscv_typesScript.sml  riscvScript.sml
+
+THYS = $(patsubst %Script.sml,%Theory.uo,$(SCRIPTS))
+
+all: $(THYS)
+.PHONY: all
+
+ifdef POLY
+BASE_HEAP = ../lib/sail/sail-heap
+
+endif

@@ -6,70 +6,73 @@
 
 function to_phys_addr(a : paddr32) -> xlenbits = a[31..0]
 
-val walk32 : (vaddr32, AccessType, Privilege, bool, bool, paddr32, nat, bool) -> PTW_Result(paddr32, SV32_PTE) effect {rmem, escape}
-function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global) = {
+val walk32 : (vaddr32, AccessType(ext_access_type), Privilege, bool, bool, paddr32, nat, bool, ext_ptw) -> PTW_Result(paddr32, SV32_PTE) effect {rmem, rreg, escape}
+function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let va = Mk_SV32_Vaddr(vaddr);
   let pt_ofs : paddr32 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV32_LEVEL_BITS))[(SV32_LEVEL_BITS - 1) .. 0]),
                                 PTE32_LOG_SIZE);
   let pte_addr = ptb + pt_ofs;
-  /* FIXME: we assume here that walks only access physical-memory-backed addresses, and not MMIO regions. */
-  match (phys_mem_read(Data, to_phys_addr(pte_addr), 4, false, false, false)) {
+  match (mem_read(ac, to_phys_addr(pte_addr), 4, false, false, false)) {
     MemException(_) => {
 /*    print("walk32(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
             ^ " pt_base=" ^ BitStr(to_phys_addr(ptb))
             ^ " pt_ofs=" ^ BitStr(to_phys_addr(pt_ofs))
             ^ " pte_addr=" ^ BitStr(to_phys_addr(pte_addr))
             ^ ": invalid pte address"); */
-      PTW_Failure(PTW_Access)
+      PTW_Failure(PTW_Access(), ext_ptw)
     },
     MemValue(v) => {
       let pte = Mk_SV32_PTE(v);
       let pbits = pte.BITS();
+      let ext_pte : extPte = zeros(); // no reserved bits for extensions
       let pattr = Mk_PTE_Bits(pbits);
-      let is_global = global | (pattr.G() == true);
+      let is_global = global | (pattr.G() == 0b1);
 /*    print("walk32(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
             ^ " pt_base=" ^ BitStr(to_phys_addr(ptb))
             ^ " pt_ofs=" ^ BitStr(to_phys_addr(pt_ofs))
             ^ " pte_addr=" ^ BitStr(to_phys_addr(pte_addr))
             ^ " pte=" ^ BitStr(v)); */
-      if isInvalidPTE(pbits) then {
+      if isInvalidPTE(pbits, ext_pte) then {
 /*      print("walk32: invalid pte"); */
-        PTW_Failure(PTW_Invalid_PTE)
+        PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
       } else {
-        if isPTEPtr(pbits) then {
+        if isPTEPtr(pbits, ext_pte) then {
           if level == 0 then {
             /* last-level PTE contains a pointer instead of a leaf */
 /*          print("walk32: last-level pte contains a ptr"); */
-            PTW_Failure(PTW_Invalid_PTE)
+            PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
           } else {
             /* walk down the pointer to the next level */
-            walk32(vaddr, ac, priv, mxr, do_sum, shiftl(EXTZ(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global)
+            walk32(vaddr, ac, priv, mxr, do_sum, shiftl(EXTZ(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global, ext_ptw)
           }
         } else { /* leaf PTE */
-          if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pattr)) then {
-/*          print("walk32: pte permission check failure"); */
-            PTW_Failure(PTW_No_Permission)
-          } else {
-            if level > 0 then { /* superpage */
-              /* fixme hack: to get a mask of appropriate size */
-              let mask = shiftl(pte.PPNi() ^ pte.PPNi() ^ EXTZ(0b1), level * SV32_LEVEL_BITS) - 1;
-              if (pte.PPNi() & mask) != EXTZ(0b0) then {
-                /* misaligned superpage mapping */
-/*              print("walk32: misaligned superpage mapping"); */
-                PTW_Failure(PTW_Misaligned)
+          match checkPTEPermission(ac, priv, mxr, do_sum, pattr, ext_pte, ext_ptw) {
+            PTE_Check_Failure(ext_ptw) => {
+/*            print("walk32: pte permission check failure"); */
+              PTW_Failure(PTW_No_Permission(), ext_ptw)
+            },
+            PTE_Check_Success(ext_ptw) => {
+              if level > 0 then { /* superpage */
+                /* fixme hack: to get a mask of appropriate size */
+                let mask = shiftl(pte.PPNi() ^ pte.PPNi() ^ EXTZ(0b1), level * SV32_LEVEL_BITS) - 1;
+                if (pte.PPNi() & mask) != EXTZ(0b0) then {
+                  /* misaligned superpage mapping */
+/*                print("walk32: misaligned superpage mapping"); */
+                  PTW_Failure(PTW_Misaligned(), ext_ptw)
+                } else {
+                  /* add the appropriate bits of the VPN to the superpage PPN */
+                  let ppn = pte.PPNi() | (EXTZ(va.VPNi()) & mask);
+/*                let res = append(ppn, va.PgOfs());
+                  print("walk32: using superpage: pte.ppn=" ^ BitStr(pte.PPNi())
+                        ^ " ppn=" ^ BitStr(ppn) ^ " res=" ^ BitStr(res)); */
+                  PTW_Success(append(ppn, va.PgOfs()), pte, pte_addr, level, is_global, ext_ptw)
+                }
               } else {
-                /* add the appropriate bits of the VPN to the superpage PPN */
-                let ppn = pte.PPNi() | (EXTZ(va.VPNi()) & mask);
-/*              let res = append(ppn, va.PgOfs());
-                print("walk32: using superpage: pte.ppn=" ^ BitStr(pte.PPNi())
-                      ^ " ppn=" ^ BitStr(ppn) ^ " res=" ^ BitStr(res)); */
-                PTW_Success(append(ppn, va.PgOfs()), pte, pte_addr, level, is_global)
+                /* normal leaf PTE */
+/*              let res = append(pte.PPNi(), va.PgOfs());
+                print("walk32: pte.ppn=" ^ BitStr(pte.PPNi()) ^ " ppn=" ^ BitStr(pte.PPNi()) ^ " res=" ^ BitStr(res)); */
+                PTW_Success(append(pte.PPNi(), va.PgOfs()), pte, pte_addr, level, is_global, ext_ptw)
               }
-            } else {
-              /* normal leaf PTE */
-/*            let res = append(pte.PPNi(), va.PgOfs());
-              print("walk32: pte.ppn=" ^ BitStr(pte.PPNi()) ^ " ppn=" ^ BitStr(pte.PPNi()) ^ " res=" ^ BitStr(res)); */
-              PTW_Success(append(pte.PPNi(), va.PgOfs()), pte, pte_addr, level, is_global)
             }
           }
         }
@@ -112,64 +115,68 @@ function flush_TLB32(asid, addr) =
 
 /* address translation */
 
-val translate32 : (asid32, paddr32, vaddr32, AccessType, Privilege, bool, bool, nat) -> TR_Result(paddr32, PTW_Error) effect {rreg, wreg, wmv, wmvt, escape, rmem}
-function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level) = {
+val translate32 : (asid32, paddr32, vaddr32, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr32, PTW_Error) effect {rreg, wreg, wmv, wmvt, escape, rmem}
+function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = {
   match lookup_TLB32(asid, vAddr) {
     Some(idx, ent) => {
 /*    print("translate32: TLB32 hit for " ^ BitStr(vAddr)); */
       let  pte = Mk_SV32_PTE(ent.pte);
+      let  ext_pte : extPte = zeros(); // no reserved bits for extensions
       let  pteBits = Mk_PTE_Bits(pte.BITS());
-      if ~ (checkPTEPermission(ac, priv, mxr, do_sum, pteBits))
-      then TR_Failure(PTW_No_Permission)
-      else {
-        match update_PTE_Bits(pteBits, ac) {
-          None()      => TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask)),
-          Some(pbits) => {
-            if ~ (plat_enable_dirty_update ())
-            then {
-              /* pte needs dirty/accessed update but that is not enabled */
-              TR_Failure(PTW_PTE_Update)
-            } else {
-              /* update PTE entry and TLB */
-              n_pte = update_BITS(pte, pbits.bits());
-              n_ent : TLB32_Entry = ent;
-              n_ent.pte = n_pte.bits();
-              write_TLB32(idx, n_ent);
-              /* update page table */
-              match checked_mem_write(to_phys_addr(EXTZ(ent.pteAddr)), 4, n_pte.bits(), default_meta, false, false, false) {
-                MemValue(_)     => (),
-                MemException(e) => internal_error("invalid physical address in TLB")
-              };
-              TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask))
+      match checkPTEPermission(ac, priv, mxr, do_sum, pteBits, ext_pte, ext_ptw) {
+        PTE_Check_Failure(ext_ptw) => { TR_Failure(PTW_No_Permission(), ext_ptw) },
+        PTE_Check_Success(ext_ptw) => {
+          match update_PTE_Bits(pteBits, ac, ext_pte) {
+            None()           => TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask), ext_ptw),
+            Some(pbits, ext) => {
+              if ~ (plat_enable_dirty_update ())
+              then {
+                /* pte needs dirty/accessed update but that is not enabled */
+                TR_Failure(PTW_PTE_Update(), ext_ptw)
+              } else {
+                /* update PTE entry and TLB */
+                n_pte = update_BITS(pte, pbits.bits());
+                /* ext is unused since there are no reserved bits for extensions */
+                n_ent : TLB32_Entry = ent;
+                n_ent.pte = n_pte.bits();
+                write_TLB32(idx, n_ent);
+                /* update page table */
+                match mem_write_value(to_phys_addr(EXTZ(ent.pteAddr)), 4, n_pte.bits(), false, false, false) {
+                  MemValue(_)     => (),
+                  MemException(e) => internal_error("invalid physical address in TLB")
+                };
+                TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask), ext_ptw)
+              }
             }
           }
         }
       }
     },
     None() => {
-      match walk32(vAddr, ac, priv, mxr, do_sum, ptb, level, false) {
-        PTW_Failure(f) => TR_Failure(f),
-        PTW_Success(pAddr, pte, pteAddr, level, global) => {
-          match update_PTE_Bits(Mk_PTE_Bits(pte.BITS()), ac) {
+      match walk32(vAddr, ac, priv, mxr, do_sum, ptb, level, false, ext_ptw) {
+        PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),
+        PTW_Success(pAddr, pte, pteAddr, level, global, ext_ptw) => {
+          match update_PTE_Bits(Mk_PTE_Bits(pte.BITS()), ac, zeros()) {
             None() => {
               add_to_TLB32(asid, vAddr, pAddr, pte, pteAddr, level, global);
-              TR_Address(pAddr)
+              TR_Address(pAddr, ext_ptw)
             },
-            Some(pbits) =>
+            Some(pbits, ext) =>
               if ~ (plat_enable_dirty_update ())
               then {
                 /* pte needs dirty/accessed update but that is not enabled */
-                TR_Failure(PTW_PTE_Update)
+                TR_Failure(PTW_PTE_Update(), ext_ptw)
               } else {
                 w_pte : SV32_PTE = update_BITS(pte, pbits.bits());
-                match checked_mem_write(to_phys_addr(pteAddr), 4, w_pte.bits(), default_meta, false, false, false) {
+                /* ext is unused since there are no reserved bits for extensions */
+                match mem_write_value(to_phys_addr(pteAddr), 4, w_pte.bits(), false, false, false) {
                   MemValue(_) => {
                     add_to_TLB32(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
-                    TR_Address(pAddr)
+                    TR_Address(pAddr, ext_ptw)
                   },
                   MemException(e) => {
                     /* pte is not in valid memory */
-                    TR_Failure(PTW_Access)
+                    TR_Failure(PTW_Access(), ext_ptw)
                   }
                 }
               }

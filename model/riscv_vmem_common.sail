@@ -8,93 +8,6 @@
 
 let PAGESIZE_BITS = 12
 
-/* PTE attributes, permission checks and updates */
-
-type pteAttribs = bits(8)
-
-bitfield PTE_Bits : pteAttribs = {
-  D : 7,
-  A : 6,
-  G : 5,
-  U : 4,
-  X : 3,
-  W : 2,
-  R : 1,
-  V : 0
-}
-
-function isPTEPtr(p : pteAttribs) -> bool = {
-  let a = Mk_PTE_Bits(p);
-  a.R() == false & a.W() == false & a.X() == false
-}
-
-function isInvalidPTE(p : pteAttribs) -> bool = {
-  let a = Mk_PTE_Bits(p);
-  a.V() == false | (a.W() == true & a.R() == false)
-}
-
-function checkPTEPermission(ac : AccessType, priv : Privilege, mxr : bool, do_sum : bool, p : PTE_Bits) -> bool = {
-  match (ac, priv) {
-    (Read,      User)       => p.U() == true & (p.R() == true | (p.X() == true & mxr)),
-    (Write,     User)       => p.U() == true & p.W() == true,
-    (ReadWrite, User)       => p.U() == true & p.W() == true & (p.R() == true | (p.X() == true & mxr)),
-    (Execute,   User)       => p.U() == true & p.X() == true,
-
-    (Read,      Supervisor) => (p.U() == false | do_sum) & (p.R() == true | (p.X() == true & mxr)),
-    (Write,     Supervisor) => (p.U() == false | do_sum) & p.W() == true,
-    (ReadWrite, Supervisor) => (p.U() == false | do_sum) & p.W() == true & (p.R() == true | (p.X() == true & mxr)),
-    (Execute,   Supervisor) => p.U() == false & p.X() == true,
-
-    (_,         Machine)    => internal_error("m-mode mem perm check")
-  }
-}
-
-function update_PTE_Bits(p : PTE_Bits, a : AccessType) -> option(PTE_Bits) = {
-  let update_d = (a == Write | a == ReadWrite) & p.D() == false; // dirty-bit
-  let update_a = p.A() == false;                                 // accessed-bit
-  if update_d | update_a then {
-    let np = update_A(p, true);
-    let np = if update_d then update_D(np, true) else np;
-    Some(np)
-  } else None()
-}
-
-/* failure modes for address-translation/page-table-walks */
-enum PTW_Error = {
-  PTW_Access,       /* physical memory access error for a PTE */
-  PTW_Invalid_PTE,
-  PTW_No_Permission,
-  PTW_Misaligned,   /* misaligned superpage */
-  PTW_PTE_Update    /* PTE update needed but not enabled */
-}
-val cast ptw_error_to_str : PTW_Error -> string
-function ptw_error_to_str(e) =
-  match (e) {
-    PTW_Access        => "mem-access-error",
-    PTW_Invalid_PTE   => "invalid-pte",
-    PTW_No_Permission => "no-permission",
-    PTW_Misaligned    => "misaligned-superpage",
-    PTW_PTE_Update    => "pte-update-needed"
-  }
-
-/* conversion of these translation/PTW failures into architectural exceptions */
-function translationException(a : AccessType, f : PTW_Error) -> ExceptionType = {
-  let e : ExceptionType =
-  match (a, f) {
-    (ReadWrite, PTW_Access) => E_SAMO_Access_Fault,
-    (ReadWrite, _)          => E_SAMO_Page_Fault,
-    (Read, PTW_Access)      => E_Load_Access_Fault,
-    (Read, _)               => E_Load_Page_Fault,
-    (Write, PTW_Access)     => E_SAMO_Access_Fault,
-    (Write, _)              => E_SAMO_Page_Fault,
-    (Fetch, PTW_Access)     => E_Fetch_Access_Fault,
-    (Fetch, _)              => E_Fetch_Page_Fault
-  } in {
-/*  print("translationException(" ^ a ^ ", " ^ f ^ ") -> " ^ e); */
-    e
-  }
-}
-
 /*
  * Definitions for RV32, which has a single address translation mode: Sv32.
  */
@@ -193,6 +106,7 @@ bitfield SV39_Paddr : paddr64 = {
 }
 
 bitfield SV39_PTE : pte64 = {
+  Ext   : 63 .. 54,
   PPNi  : 53 .. 10,
   RSW   : 9  .. 8,
   BITS  : 7  .. 0
@@ -219,21 +133,27 @@ bitfield SV48_Paddr : paddr64 = {
 }
 
 bitfield SV48_PTE : pte48 = {
+  Ext   : 63 .. 54,
   PPNi  : 53 .. 10,
   RSW   : 9  .. 8,
   BITS  : 7  .. 0
 }
 
-/* Result of a page-table walk. */
+/* The types below are parameterized by 'paddr and 'pte to support
+ * various architectural widths (e.g. RV32, RV64).  ext_ptw supports
+ * extensions to the default address translation and page-table-walk.
+ */
+
+/* Result of a page-table walk.  */
 
 union PTW_Result('paddr : Type, 'pte : Type) = {
-  PTW_Success: ('paddr, 'pte, 'paddr, nat, bool),
-  PTW_Failure: PTW_Error
+  PTW_Success: ('paddr, 'pte, 'paddr, nat, bool, ext_ptw),
+  PTW_Failure: (PTW_Error, ext_ptw)
 }
 
 /* Result of address translation */
 
 union TR_Result('paddr : Type, 'failure : Type) = {
-  TR_Address : 'paddr,
-  TR_Failure : 'failure
+  TR_Address : ('paddr, ext_ptw),
+  TR_Failure : ('failure, ext_ptw)
 }

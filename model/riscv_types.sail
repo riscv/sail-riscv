@@ -22,7 +22,7 @@ type csreg   = bits(12)   /* CSR addressing */
 
 type regno ('n : Int), 0 <= 'n < 32 = atom('n)
 
-val cast regidx_to_regno : bits(5) -> {'n, 0 <= 'n < 32. regno('n)}
+val regidx_to_regno : bits(5) -> {'n, 0 <= 'n < 32. regno('n)}
 function regidx_to_regno b = let 'r = unsigned(b) in r
 
 /* mapping RVC register indices into normal indices */
@@ -65,7 +65,7 @@ function arch_to_bits(a : Architecture) -> arch_xlen =
 type priv_level = bits(2)
 enum Privilege  = {User, Supervisor, Machine}
 
-val cast privLevel_to_bits : Privilege -> priv_level
+val privLevel_to_bits : Privilege -> priv_level
 function privLevel_to_bits (p) =
   match (p) {
     User       => 0b00,
@@ -73,7 +73,7 @@ function privLevel_to_bits (p) =
     Machine    => 0b11
   }
 
-val cast privLevel_of_bits : priv_level -> Privilege
+val privLevel_of_bits : priv_level -> Privilege
 function privLevel_of_bits (p) =
   match (p) {
     0b00 => User,
@@ -81,7 +81,7 @@ function privLevel_of_bits (p) =
     0b11 => Machine
   }
 
-val cast privLevel_to_str : Privilege -> string
+val privLevel_to_str : Privilege -> string
 function privLevel_to_str (p) =
   match (p) {
     User       => "U",
@@ -89,31 +89,20 @@ function privLevel_to_str (p) =
     Machine    => "M"
   }
 
+overload to_str = {privLevel_to_str}
+
 /* enum denoting whether an executed instruction retires */
 
 enum Retired = {RETIRE_SUCCESS, RETIRE_FAIL}
 
 /* memory access types */
 
-enum AccessType = {Read, Write, ReadWrite, Execute}
-
-val cast accessType_to_str : AccessType -> string
-function accessType_to_str (a) =
-  match (a) {
-    Read      => "R",
-    Write     => "W",
-    ReadWrite => "RW",
-    Execute   => "X"
-  }
-
-enum ReadType   = {Instruction, Data}
-
-val cast readType_to_str : ReadType -> string
-function readType_to_str (r) =
-  match (r) {
-    Instruction => "I",
-    Data        => "D"
-  }
+union AccessType ('a : Type) = {
+  Read      : 'a,
+  Write     : 'a,
+  ReadWrite : 'a,
+  Execute   : unit
+}
 
 enum word_width = {BYTE, HALF, WORD, DOUBLE}
 
@@ -133,7 +122,7 @@ enum InterruptType = {
   I_M_External
 }
 
-val cast interruptType_to_bits : InterruptType -> exc_code
+val interruptType_to_bits : InterruptType -> exc_code
 function interruptType_to_bits (i) =
   match (i) {
     I_U_Software => 0x00,
@@ -149,75 +138,102 @@ function interruptType_to_bits (i) =
 
 /* architectural exception definitions */
 
-enum ExceptionType = {
- E_Fetch_Addr_Align,
- E_Fetch_Access_Fault,
- E_Illegal_Instr,
- E_Breakpoint,
- E_Load_Addr_Align,
- E_Load_Access_Fault,
- E_SAMO_Addr_Align,
- E_SAMO_Access_Fault,
- E_U_EnvCall,
- E_S_EnvCall,
- E_Reserved_10,
- E_M_EnvCall,
- E_Fetch_Page_Fault,
- E_Load_Page_Fault,
- E_Reserved_14,
- E_SAMO_Page_Fault,
+union ExceptionType = {
+ E_Fetch_Addr_Align   : unit,
+ E_Fetch_Access_Fault : unit,
+ E_Illegal_Instr      : unit,
+ E_Breakpoint         : unit,
+ E_Load_Addr_Align    : unit,
+ E_Load_Access_Fault  : unit,
+ E_SAMO_Addr_Align    : unit,
+ E_SAMO_Access_Fault  : unit,
+ E_U_EnvCall          : unit,
+ E_S_EnvCall          : unit,
+ E_Reserved_10        : unit,
+ E_M_EnvCall          : unit,
+ E_Fetch_Page_Fault   : unit,
+ E_Load_Page_Fault    : unit,
+ E_Reserved_14        : unit,
+ E_SAMO_Page_Fault    : unit,
 
  /* extensions */
- E_CHERI
+ E_Extension          : ext_exc_type
 }
 
-val cast exceptionType_to_bits : ExceptionType -> exc_code
+val exceptionType_to_bits : ExceptionType -> exc_code
 function exceptionType_to_bits(e) =
   match (e) {
-    E_Fetch_Addr_Align   => 0x00,
-    E_Fetch_Access_Fault => 0x01,
-    E_Illegal_Instr      => 0x02,
-    E_Breakpoint         => 0x03,
-    E_Load_Addr_Align    => 0x04,
-    E_Load_Access_Fault  => 0x05,
-    E_SAMO_Addr_Align    => 0x06,
-    E_SAMO_Access_Fault  => 0x07,
-    E_U_EnvCall          => 0x08,
-    E_S_EnvCall          => 0x09,
-    E_Reserved_10        => 0x0a,
-    E_M_EnvCall          => 0x0b,
-    E_Fetch_Page_Fault   => 0x0c,
-    E_Load_Page_Fault    => 0x0d,
-    E_Reserved_14        => 0x0e,
-    E_SAMO_Page_Fault    => 0x0f,
+    E_Fetch_Addr_Align()   => 0x00,
+    E_Fetch_Access_Fault() => 0x01,
+    E_Illegal_Instr()      => 0x02,
+    E_Breakpoint()         => 0x03,
+    E_Load_Addr_Align()    => 0x04,
+    E_Load_Access_Fault()  => 0x05,
+    E_SAMO_Addr_Align()    => 0x06,
+    E_SAMO_Access_Fault()  => 0x07,
+    E_U_EnvCall()          => 0x08,
+    E_S_EnvCall()          => 0x09,
+    E_Reserved_10()        => 0x0a,
+    E_M_EnvCall()          => 0x0b,
+    E_Fetch_Page_Fault()   => 0x0c,
+    E_Load_Page_Fault()    => 0x0d,
+    E_Reserved_14()        => 0x0e,
+    E_SAMO_Page_Fault()    => 0x0f,
 
     /* extensions */
-    E_CHERI              => 0x20    /* FIXME: this is reserved for a future standard */
+    E_Extension(e)         => 0x18    /* First code for a custom extension */
   }
 
-val cast exceptionType_to_str : ExceptionType -> string
+val num_of_ExceptionType : ExceptionType -> {'n, (0 <= 'n < xlen). int('n)}
+function num_of_ExceptionType(e) =
+  match (e) {
+    E_Fetch_Addr_Align()   => 0,
+    E_Fetch_Access_Fault() => 1,
+    E_Illegal_Instr()      => 2,
+    E_Breakpoint()         => 3,
+    E_Load_Addr_Align()    => 4,
+    E_Load_Access_Fault()  => 5,
+    E_SAMO_Addr_Align()    => 6,
+    E_SAMO_Access_Fault()  => 7,
+    E_U_EnvCall()          => 8,
+    E_S_EnvCall()          => 9,
+    E_Reserved_10()        => 10,
+    E_M_EnvCall()          => 11,
+    E_Fetch_Page_Fault()   => 12,
+    E_Load_Page_Fault()    => 13,
+    E_Reserved_14()        => 14,
+    E_SAMO_Page_Fault()    => 15,
+
+    /* extensions */
+    E_Extension(e)         => 24    /* First code for a custom extension */
+
+  }
+
+val exceptionType_to_str : ExceptionType -> string
 function exceptionType_to_str(e) =
   match (e) {
-    E_Fetch_Addr_Align   => "misaligned-fetch",
-    E_Fetch_Access_Fault => "fetch-access-fault",
-    E_Illegal_Instr      => "illegal-instruction",
-    E_Breakpoint         => "breakpoint",
-    E_Load_Addr_Align    => "misaligned-load",
-    E_Load_Access_Fault  => "load-access-fault",
-    E_SAMO_Addr_Align    => "misaliged-store/amo",
-    E_SAMO_Access_Fault  => "store/amo-access-fault",
-    E_U_EnvCall          => "u-call",
-    E_S_EnvCall          => "s-call",
-    E_Reserved_10        => "reserved-0",
-    E_M_EnvCall          => "m-call",
-    E_Fetch_Page_Fault   => "fetch-page-fault",
-    E_Load_Page_Fault    => "load-page-fault",
-    E_Reserved_14        => "reserved-1",
-    E_SAMO_Page_Fault    => "store/amo-page-fault",
+    E_Fetch_Addr_Align()   => "misaligned-fetch",
+    E_Fetch_Access_Fault() => "fetch-access-fault",
+    E_Illegal_Instr()      => "illegal-instruction",
+    E_Breakpoint()         => "breakpoint",
+    E_Load_Addr_Align()    => "misaligned-load",
+    E_Load_Access_Fault()  => "load-access-fault",
+    E_SAMO_Addr_Align()    => "misaliged-store/amo",
+    E_SAMO_Access_Fault()  => "store/amo-access-fault",
+    E_U_EnvCall()          => "u-call",
+    E_S_EnvCall()          => "s-call",
+    E_Reserved_10()        => "reserved-0",
+    E_M_EnvCall()          => "m-call",
+    E_Fetch_Page_Fault()   => "fetch-page-fault",
+    E_Load_Page_Fault()    => "load-page-fault",
+    E_Reserved_14()        => "reserved-1",
+    E_SAMO_Page_Fault()    => "store/amo-page-fault",
 
     /* extensions */
-    E_CHERI              => "CHERI"
+    E_Extension(e)         => "extension-exception"
   }
+
+overload to_str = {exceptionType_to_str}
 
 /* model-internal exceptions */
 
@@ -240,7 +256,7 @@ function internal_error(s) = {
 type tv_mode = bits(2)
 enum TrapVectorMode = {TV_Direct, TV_Vector, TV_Reserved}
 
-val cast trapVectorMode_of_bits : tv_mode -> TrapVectorMode
+val trapVectorMode_of_bits : tv_mode -> TrapVectorMode
 function trapVectorMode_of_bits (m) =
   match (m) {
     0b00 => TV_Direct,
@@ -253,7 +269,7 @@ function trapVectorMode_of_bits (m) =
 type ext_status = bits(2)
 enum ExtStatus = {Off, Initial, Clean, Dirty}
 
-val cast extStatus_to_bits : ExtStatus -> ext_status
+val extStatus_to_bits : ExtStatus -> ext_status
 function extStatus_to_bits(e) =
   match (e) {
     Off     => 0b00,
@@ -262,7 +278,7 @@ function extStatus_to_bits(e) =
     Dirty   => 0b11
   }
 
-val cast extStatus_of_bits : ext_status -> ExtStatus
+val extStatus_of_bits : ext_status -> ExtStatus
 function extStatus_of_bits(e) =
   match (e) {
     0b00 => Off,

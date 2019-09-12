@@ -24,14 +24,14 @@ def test_perf(d, test_pat, test_type):
             total_insts += insts
             total_msecs += msecs
 
-    Kips = total_insts/total_msecs
+    Kips = total_insts/total_msecs if total_msecs != 0 else float("nan")
     print("Average {0} performance: {1} Kips".format(test_type, Kips))
 
 def get_test_pat(iset, emode):
     return "rv64{0}-{1}-*.cout".format(iset, emode)
 
 if __name__ == '__main__':
-    test_dir = os.path.join(os.path.dirname(__file__), "tests")
+    test_dir = os.path.join(os.path.dirname(__file__), "riscv-tests")
     for mode in ["p", "v"]:
         test_perf(test_dir, get_test_pat("ui", mode), "ui-{0}".format(mode))
         test_perf(test_dir, get_test_pat("um", mode), "um-{0}".format(mode))

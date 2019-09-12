@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ ! -d RV64 ]; then
+  echo Run clean from the coq directory
+  exit 1
+fi
+
+set -ex 
+rm -f RV32/*.{vo,glob} RV32/.*.aux
+rm -f RV64/*.{vo,glob} RV64/.*.aux
+rm -f duopod/*.{vo,glob} RV64/.*.aux
+cd lib/sail
+make clean

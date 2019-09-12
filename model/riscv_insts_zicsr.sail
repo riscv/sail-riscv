@@ -34,8 +34,27 @@ function readCSR csr : csreg -> xlenbits = {
     (0x343,  _) => mtval,
     (0x344,  _) => mip.bits(),
 
-    (0x3A0,  _) => pmpcfg0,
+    (0x3A0,  _) => pmpReadCfgReg(0),           // pmpcfg0
+    (0x3A1, 32) => pmpReadCfgReg(1),           // pmpcfg1
+    (0x3A2,  _) => pmpReadCfgReg(2),           // pmpcfg2
+    (0x3A3, 32) => pmpReadCfgReg(3),           // pmpcfg3
+
     (0x3B0,  _) => pmpaddr0,
+    (0x3B1,  _) => pmpaddr1,
+    (0x3B2,  _) => pmpaddr2,
+    (0x3B3,  _) => pmpaddr3,
+    (0x3B4,  _) => pmpaddr4,
+    (0x3B5,  _) => pmpaddr5,
+    (0x3B6,  _) => pmpaddr6,
+    (0x3B7,  _) => pmpaddr7,
+    (0x3B8,  _) => pmpaddr8,
+    (0x3B9,  _) => pmpaddr9,
+    (0x3BA,  _) => pmpaddr10,
+    (0x3BB,  _) => pmpaddr11,
+    (0x3BC,  _) => pmpaddr12,
+    (0x3BD,  _) => pmpaddr13,
+    (0x3BE,  _) => pmpaddr14,
+    (0x3BF,  _) => pmpaddr15,
 
     /* machine mode counters */
     (0xB00,  _) => mcycle[(sizeof(xlen) - 1) .. 0],
@@ -75,7 +94,8 @@ function readCSR csr : csreg -> xlenbits = {
                                     EXTZ(0x0) }
                    }
   };
-  print_reg("CSR " ^ csr ^ " -> " ^ BitStr(res));
+  if   get_config_print_reg()
+  then print_reg("CSR " ^ to_str(csr) ^ " -> " ^ BitStr(res));
   res
 }
 
@@ -96,8 +116,28 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x343,  _) => { mtval = value; Some(mtval) },
     (0x344,  _) => { mip = legalize_mip(mip, value); Some(mip.bits()) },
 
-    (0x3A0,  _) => { pmpcfg0 = value; Some(pmpcfg0) },   /* FIXME: legalize */
-    (0x3B0,  _) => { pmpaddr0 = value; Some(pmpaddr0) }, /* FIXME: legalize */
+    // Note: Some(value) returned below is not the legalized value due to locked entries
+    (0x3A0,  _) => { pmpWriteCfgReg(0, value); Some(value) },  // pmpcfg0
+    (0x3A1, 32) => { pmpWriteCfgReg(1, value); Some(value) },  // pmpcfg1
+    (0x3A2,  _) => { pmpWriteCfgReg(2, value); Some(value) },  // pmpcfg2
+    (0x3A3, 32) => { pmpWriteCfgReg(3, value); Some(value) },  // pmpcfg3
+
+    (0x3B0,  _) => { pmpaddr0  = pmpWriteAddr(pmp0cfg,  pmpaddr0,  value); Some(pmpaddr0) },
+    (0x3B1,  _) => { pmpaddr1  = pmpWriteAddr(pmp1cfg,  pmpaddr1,  value); Some(pmpaddr1) },
+    (0x3B2,  _) => { pmpaddr2  = pmpWriteAddr(pmp2cfg,  pmpaddr2,  value); Some(pmpaddr2) },
+    (0x3B3,  _) => { pmpaddr3  = pmpWriteAddr(pmp3cfg,  pmpaddr3,  value); Some(pmpaddr3) },
+    (0x3B4,  _) => { pmpaddr4  = pmpWriteAddr(pmp4cfg,  pmpaddr4,  value); Some(pmpaddr4) },
+    (0x3B5,  _) => { pmpaddr5  = pmpWriteAddr(pmp5cfg,  pmpaddr5,  value); Some(pmpaddr5) },
+    (0x3B6,  _) => { pmpaddr6  = pmpWriteAddr(pmp6cfg,  pmpaddr6,  value); Some(pmpaddr6) },
+    (0x3B7,  _) => { pmpaddr7  = pmpWriteAddr(pmp7cfg,  pmpaddr7,  value); Some(pmpaddr7) },
+    (0x3B8,  _) => { pmpaddr8  = pmpWriteAddr(pmp8cfg,  pmpaddr8,  value); Some(pmpaddr8) },
+    (0x3B9,  _) => { pmpaddr9  = pmpWriteAddr(pmp9cfg,  pmpaddr9,  value); Some(pmpaddr9) },
+    (0x3BA,  _) => { pmpaddr10 = pmpWriteAddr(pmp10cfg, pmpaddr10, value); Some(pmpaddr10) },
+    (0x3BB,  _) => { pmpaddr11 = pmpWriteAddr(pmp11cfg, pmpaddr11, value); Some(pmpaddr11) },
+    (0x3BC,  _) => { pmpaddr12 = pmpWriteAddr(pmp12cfg, pmpaddr12, value); Some(pmpaddr12) },
+    (0x3BD,  _) => { pmpaddr13 = pmpWriteAddr(pmp13cfg, pmpaddr13, value); Some(pmpaddr13) },
+    (0x3BE,  _) => { pmpaddr14 = pmpWriteAddr(pmp14cfg, pmpaddr14, value); Some(pmpaddr14) },
+    (0x3BF,  _) => { pmpaddr15 = pmpWriteAddr(pmp15cfg, pmpaddr15, value); Some(pmpaddr15) },
 
     /* machine mode counters */
     (0xB00,  _) => { mcycle[(sizeof(xlen) - 1) .. 0] = value; Some(value) },
@@ -122,15 +162,12 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x144,  _) => { mip = legalize_sip(mip, mideleg, value); Some(mip.bits()) },
     (0x180,  _) => { satp = legalize_satp(cur_Architecture(), satp, value); Some(satp) },
 
-    _           => None()
+    _           => ext_write_CSR(csr, value)
   };
   match res {
-    Some(v) => print_reg("CSR " ^ csr ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")"),
-    None()  => { /* check extensions */
-                 if   ext_write_CSR(csr, value)
-                 then ()
-                 else print_bits("unhandled write to CSR ", csr)
-               }
+    Some(v) => if   get_config_print_reg()
+               then print_reg("CSR " ^ to_str(csr) ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")"),
+    None()  => print_bits("unhandled write to CSR ", csr)
   }
 }
 

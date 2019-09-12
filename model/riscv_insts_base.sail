@@ -17,7 +17,7 @@ function clause execute UTYPE(imm, rd, op) = {
   let off : xlenbits = EXTS(imm @ 0x000);
   let ret : xlenbits = match op {
     RISCV_LUI   => off,
-    RISCV_AUIPC => PC + off
+    RISCV_AUIPC => get_arch_pc() + off
   };
   X(rd) = ret;
   RETIRE_SUCCESS
@@ -59,9 +59,9 @@ function clause execute (RISCV_JAL(imm, rd)) = {
     },
     Ext_ControlAddr_OK(target) => {
       /* Perform standard alignment check */
-      if   target[1] & (~ (haveRVC()))
+      if bit_to_bool(target[1]) & (~ (haveRVC()))
       then {
-        handle_mem_exception(target, E_Fetch_Addr_Align);
+        handle_mem_exception(target, E_Fetch_Addr_Align());
         RETIRE_FAIL
       } else {
         X(rd) = get_next_pc();
@@ -123,8 +123,8 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
         RETIRE_FAIL
       },
       Ext_ControlAddr_OK(target) => {
-        if target[1] & (~ (haveRVC())) then {
-          handle_mem_exception(target, E_Fetch_Addr_Align);
+        if bit_to_bool(target[1]) & (~ (haveRVC())) then {
+          handle_mem_exception(target, E_Fetch_Addr_Align());
           RETIRE_FAIL;
         } else {
           set_next_pc(target);
@@ -167,8 +167,8 @@ function clause execute (ITYPE (imm, rs1, rd, op)) = {
   let immext : xlenbits = EXTS(imm);
   let result : xlenbits = match op {
     RISCV_ADDI  => rs1_val + immext,
-    RISCV_SLTI  => EXTZ(rs1_val <_s immext),
-    RISCV_SLTIU => EXTZ(rs1_val <_u immext),
+    RISCV_SLTI  => EXTZ(bool_to_bits(rs1_val <_s immext)),
+    RISCV_SLTIU => EXTZ(bool_to_bits(rs1_val <_u immext)),
     RISCV_ANDI  => rs1_val & immext,
     RISCV_ORI   => rs1_val | immext,
     RISCV_XORI  => rs1_val ^ immext
@@ -198,9 +198,9 @@ mapping encdec_sop : sop <-> bits(3) = {
   RISCV_SRAI <-> 0b101
 }
 
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SLLI) <-> 0b000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == false
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) <-> 0b000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == false
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) <-> 0b010000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == false
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SLLI) <-> 0b000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) <-> 0b000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) <-> 0b010000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
 
 function clause execute (SHIFTIOP(shamt, rs1, rd, op)) = {
   let rs1_val = X(rs1);
@@ -248,8 +248,8 @@ function clause execute (RTYPE(rs2, rs1, rd, op)) = {
   let rs2_val = X(rs2);
   let result : xlenbits = match op {
     RISCV_ADD  => rs1_val + rs2_val,
-    RISCV_SLT  => EXTZ(rs1_val <_s rs2_val),
-    RISCV_SLTU => EXTZ(rs1_val <_u rs2_val),
+    RISCV_SLT  => EXTZ(bool_to_bits(rs1_val <_s rs2_val)),
+    RISCV_SLTU => EXTZ(bool_to_bits(rs1_val <_u rs2_val)),
     RISCV_AND  => rs1_val & rs2_val,
     RISCV_OR   => rs1_val | rs2_val,
     RISCV_XOR  => rs1_val ^ rs2_val,
@@ -287,7 +287,7 @@ mapping clause assembly = RTYPE(rs2, rs1, rd, op)
 /* ****************************************************************** */
 union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width, bool, bool)
 
-/* unsigned loads are only present for widths strictly less than xlen, 
+/* unsigned loads are only present for widths strictly less than xlen,
    signed loads also present for widths equal to xlen */
 mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not_bool(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
   <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_bits(size) @ rd @ 0b0000011 if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not_bool(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
@@ -309,32 +309,32 @@ function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
   if   plat_enable_misaligned_access() then false
   else match width {
          BYTE   => false,
-         HALF   => vaddr[0] == true,
-         WORD   => vaddr[0] == true | vaddr[1] == true,
-         DOUBLE => vaddr[0] == true | vaddr[1] == true | vaddr[2] == true
+         HALF   => vaddr[0] == bitone,
+         WORD   => vaddr[0] == bitone | vaddr[1] == bitone,
+         DOUBLE => vaddr[0] == bitone | vaddr[1] == bitone | vaddr[2] == bitone
        }
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   let offset : xlenbits = EXTS(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
-  match ext_data_get_addr(rs1, offset, Read, Data, width) {
+  match ext_data_get_addr(rs1, offset, Read(Data), width) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_Load_Addr_Align); RETIRE_FAIL }
-      else match translateAddr(vaddr, Read, Data) {
-        TR_Failure(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-        TR_Address(addr) =>
+      then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
+      else match translateAddr(vaddr, Read(Data)) {
+        TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+        TR_Address(addr, _) =>
           match (width, sizeof(xlen)) {
             (BYTE, _)   =>
-               process_load(rd, vaddr, mem_read(addr, 1, aq, rl, false), is_unsigned),
+               process_load(rd, vaddr, mem_read(Read(Data), addr, 1, aq, rl, false), is_unsigned),
             (HALF, _)   =>
-               process_load(rd, vaddr, mem_read(addr, 2, aq, rl, false), is_unsigned),
+               process_load(rd, vaddr, mem_read(Read(Data), addr, 2, aq, rl, false), is_unsigned),
             (WORD, _)   =>
-               process_load(rd, vaddr, mem_read(addr, 4, aq, rl, false), is_unsigned),
+               process_load(rd, vaddr, mem_read(Read(Data), addr, 4, aq, rl, false), is_unsigned),
             (DOUBLE, 64) =>
-               process_load(rd, vaddr, mem_read(addr, 8, aq, rl, false), is_unsigned)
+               process_load(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, false), is_unsigned)
           }
       }
   }
@@ -373,14 +373,14 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
   let offset : xlenbits = EXTS(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
-  match ext_data_get_addr(rs1, offset, Write, Data, width) {
+  match ext_data_get_addr(rs1, offset, Write(Data), width) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_SAMO_Addr_Align); RETIRE_FAIL }
-      else match translateAddr(vaddr, Write, Data) {
-        TR_Failure(e)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-        TR_Address(addr) => {
+      then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
+      else match translateAddr(vaddr, Write(Data)) {
+        TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+        TR_Address(addr, _) => {
           let eares : MemoryOpResult(unit) = match width {
             BYTE   => mem_write_ea(addr, 1, aq, rl, false),
             HALF   => mem_write_ea(addr, 2, aq, rl, false),
@@ -564,6 +564,31 @@ union clause ast = FENCE : (bits(4), bits(4))
 mapping clause encdec = FENCE(pred, succ)
   <-> 0b0000 @ pred @ succ @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
 
+/* For future versions of Sail where barriers can be parameterised */
+$ifdef FEATURE_UNION_BARRIER
+
+function clause execute (FENCE(pred, succ)) = {
+  match (pred, succ) {
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_rw_rw()),
+    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_r_rw()),
+    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_r_r()),
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_rw_w()),
+    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_w_w()),
+    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_w_rw()),
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_rw_r()),
+    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_r_w()),
+    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_w_r()),
+
+    (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
+
+    _ => { print("FIXME: unsupported fence");
+           () }
+  };
+  RETIRE_SUCCESS
+}
+
+$else
+
 function clause execute (FENCE(pred, succ)) = {
   match (pred, succ) {
     (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_rw_rw),
@@ -583,6 +608,8 @@ function clause execute (FENCE(pred, succ)) = {
   };
   RETIRE_SUCCESS
 }
+
+$endif
 
 mapping bit_maybe_r : bits(1) <-> string = {
   0b1 <-> "r",
@@ -617,6 +644,21 @@ union clause ast = FENCE_TSO : (bits(4), bits(4))
 mapping clause encdec = FENCE_TSO(pred, succ)
   <-> 0b1000 @ pred @ succ @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
 
+$ifdef FEATURE_UNION_BARRIER
+
+function clause execute (FENCE_TSO(pred, succ)) = {
+  match (pred, succ) {
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_tso()),
+    (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
+
+    _ => { print("FIXME: unsupported fence");
+           () }
+  };
+  RETIRE_SUCCESS
+}
+
+$else
+
 function clause execute (FENCE_TSO(pred, succ)) = {
   match (pred, succ) {
     (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_tso),
@@ -627,6 +669,8 @@ function clause execute (FENCE_TSO(pred, succ)) = {
   };
   RETIRE_SUCCESS
 }
+
+$endif
 
 mapping clause assembly = FENCE_TSO(pred, succ)
   <-> "fence.tso" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ)
@@ -651,9 +695,9 @@ mapping clause encdec = ECALL()
 function clause execute ECALL() = {
   let t : sync_exception =
     struct { trap = match (cur_privilege) {
-                      User       => E_U_EnvCall,
-                      Supervisor => E_S_EnvCall,
-                      Machine    => E_M_EnvCall
+                      User       => E_U_EnvCall(),
+                      Supervisor => E_S_EnvCall(),
+                      Machine    => E_M_EnvCall()
                     },
              excinfo = (None() : option(xlenbits)),
              ext     = None() };
@@ -687,7 +731,7 @@ mapping clause encdec = SRET()
 function clause execute SRET() = {
   match cur_privilege {
     User       => handle_illegal(),
-    Supervisor => if   (~ (haveSupMode ())) | mstatus.TSR() == true
+    Supervisor => if   (~ (haveSupMode ())) | mstatus.TSR() == 0b1
                   then handle_illegal()
                   else set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC)),
     Machine    => if   (~ (haveSupMode ()))
@@ -706,7 +750,7 @@ mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute EBREAK() = {
-  handle_mem_exception(PC, E_Breakpoint);
+  handle_mem_exception(PC, E_Breakpoint());
   RETIRE_FAIL
 }
 
@@ -721,7 +765,7 @@ mapping clause encdec = WFI()
 function clause execute WFI() =
   match cur_privilege {
     Machine    => { platform_wfi(); RETIRE_SUCCESS },
-    Supervisor => if   mstatus.TW() == true
+    Supervisor => if   mstatus.TW() == 0b1
                   then { handle_illegal(); RETIRE_FAIL }
                   else { platform_wfi(); RETIRE_SUCCESS },
     User       => { handle_illegal(); RETIRE_FAIL }
@@ -736,13 +780,13 @@ mapping clause encdec = SFENCE_VMA(rs1, rs2)
   <-> 0b0001001 @ rs2 @ rs1 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute SFENCE_VMA(rs1, rs2) = {
-  let addr : option(xlenbits) = if rs1 == 0 then None() else Some(X(rs1));
-  let asid : option(xlenbits) = if rs2 == 0 then None() else Some(X(rs2));
+  let addr : option(xlenbits) = if rs1 == 0b00000 then None() else Some(X(rs1));
+  let asid : option(xlenbits) = if rs2 == 0b00000 then None() else Some(X(rs2));
   match cur_privilege {
     User       => { handle_illegal(); RETIRE_FAIL },
     Supervisor => match (architecture(get_mstatus_SXL(mstatus)), mstatus.TVM()) {
-                    (Some(_), true)  => { handle_illegal(); RETIRE_FAIL },
-                    (Some(_), false) => { flush_TLB(asid, addr); RETIRE_SUCCESS },
+                    (Some(_), 0b1)  => { handle_illegal(); RETIRE_FAIL },
+                    (Some(_), 0b0) => { flush_TLB(asid, addr); RETIRE_SUCCESS },
                     (_, _)           => internal_error("unimplemented sfence architecture")
                   },
     Machine    => { flush_TLB(asid, addr); RETIRE_SUCCESS }

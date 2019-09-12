@@ -10,6 +10,10 @@ conventional OS with a terminal output device.  The model specifies
 assembly language formats of the instructions, the corresponding
 encoders and decoders, and the instruction semantics.
 
+This is one of [several formal models](https://github.com/riscv/ISA_Formal_Spec_Public_Review/blob/master/comparison_table.md) compared within the 
+[RISC-V ISA Formal Spec Public Review](https://github.com/riscv/ISA_Formal_Spec_Public_Review).
+
+
 Directory Structure
 -------------------
 
@@ -27,6 +31,8 @@ sail-riscv
 |     +---- coq
 |     +---- hol4
 |     +---- latex
+|
++---- prover_snapshots        // Snapshots of generated theorem prover definitions
 |
 |---- handwritten_support     // Prover support files
 |
@@ -47,7 +53,9 @@ Documentation
 
 A [reading guide](doc/ReadingGuide.md) to the model is provided in the
 [doc/](doc/) subdirectory, along with a guide on [how to
-extend](doc/ExtendingGuide.md) the model.
+extend](doc/ExtendingGuide.md) the model.  The current status of the
+coverage of the prose RISC-V specification is summarized
+[here](doc/Status.md).
 
 Simulators
 ----------
@@ -65,8 +73,10 @@ Coq, Isabelle and HOL4.
 Building the model
 ------------------
 
-Install Sail via Opam, or build Sail from source and have `SAIL_DIR` in
-your environment pointing to its top-level directory.
+Install Sail [via
+Opam](https://github.com/rems-project/sail/wiki/OPAMInstall), or build Sail
+from source and have `SAIL_DIR` in your environment pointing to its
+top-level directory.
 
 ```
 $ make
@@ -103,7 +113,16 @@ corresponding prover libraries in the Sail directory
 Executing test binaries
 -----------------------
 
-The C and OCaml simulators can be used to execute small test binaries.
+The C and OCaml simulators can be used to execute small test binaries.  The
+OCaml simulator depends on the Device Tree Compiler package, which can be
+installed in Ubuntu with:
+
+```
+$ sudo apt-get install device-tree-compiler
+```
+
+Then, you can run test binaries:
+
 
 ```
 $ ./ocaml_emulator/riscv_ocaml_sim_<arch>  <elf-file>
@@ -142,7 +161,6 @@ Cambridge Computer Laboratory (Department of Computer Science and
 Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and
 under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA
 SSITH research programme.
-
 This software was developed within the Rigorous
 Engineering of Mainstream Systems (REMS) project, partly funded by
 EPSRC grant EP/K008528/1, at the Universities of Cambridge and

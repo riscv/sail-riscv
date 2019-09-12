@@ -1,54 +1,32 @@
 /* Functional specification for the 'N' user-level interrupts standard extension. */
 
-function is_NExt_CSR_defined(csr : bits(12), p : Privilege) -> bool =
-  match (csr) {
-    0x000 => haveUsrMode(),                  // ustatus
-    0x004 => haveUsrMode(),                  // uie
-    0x005 => haveUsrMode(),                  // utvec
-    0x040 => haveUsrMode(),                  // uscratch
-    0x041 => haveUsrMode(),                  // uepc
-    0x042 => haveUsrMode(),                  // ucause
-    0x043 => haveUsrMode(),                  // utval
-    0x044 => haveUsrMode(),                  // uip
-    _     => false
-  }
+function clause ext_is_CSR_defined(0x000, _) = haveUsrMode() // ustatus
+function clause ext_is_CSR_defined(0x004, _) = haveUsrMode() // uie
+function clause ext_is_CSR_defined(0x005, _) = haveUsrMode() // utvec
+function clause ext_is_CSR_defined(0x040, _) = haveUsrMode() // uscratch
+function clause ext_is_CSR_defined(0x041, _) = haveUsrMode() // uepc
+function clause ext_is_CSR_defined(0x042, _) = haveUsrMode() // ucause
+function clause ext_is_CSR_defined(0x043, _) = haveUsrMode() // utval
+function clause ext_is_CSR_defined(0x044, _) = haveUsrMode() // uip
 
-function read_NExt_CSR csr : csreg -> option(xlenbits) = {
-  let res : option(xlenbits) =
-  match csr {
-    0x000 => Some(lower_sstatus(lower_mstatus(mstatus)).bits()),
-    0x004 => Some(lower_sie(lower_mie(mie, mideleg), sideleg).bits()),
-    0x005 => Some(get_utvec()),
-    0x040 => Some(uscratch),
-    0x041 => Some(get_xret_target(User) & pc_alignment_mask()),
-    0x042 => Some(ucause.bits()),
-    0x043 => Some(utval),
-    0x044 => Some(lower_sip(lower_mip(mip, mideleg), sideleg).bits()),
-    _     => None()
-  };
-  res
-}
+function clause ext_read_CSR(0x000) = Some(lower_sstatus(lower_mstatus(mstatus)).bits())
+function clause ext_read_CSR(0x004) = Some(lower_sie(lower_mie(mie, mideleg), sideleg).bits())
+function clause ext_read_CSR(0x005) = Some(get_utvec())
+function clause ext_read_CSR(0x040) = Some(uscratch)
+function clause ext_read_CSR(0x041) = Some(get_xret_target(User) & pc_alignment_mask())
+function clause ext_read_CSR(0x042) = Some(ucause.bits())
+function clause ext_read_CSR(0x043) = Some(utval)
+function clause ext_read_CSR(0x044) = Some(lower_sip(lower_mip(mip, mideleg), sideleg).bits())
 
-function write_NExt_CSR(csr : csreg, value : xlenbits) -> bool = {
-  let res : option(xlenbits) =
-  match csr {
-    0x000 => { mstatus = legalize_ustatus(mstatus, value); Some(mstatus.bits()) },
-    0x004 => { let sie = legalize_uie(lower_mie(mie, mideleg), sideleg, value);
-               mie = lift_sie(mie, mideleg, sie);
-               Some(mie.bits()) },
-    0x005 => { Some(set_utvec(value)) },
-    0x040 => { uscratch = value; Some(uscratch) },
-    0x041 => { Some(set_xret_target(User, value)) },
-    0x042 => { ucause->bits() = value; Some(ucause.bits()) },
-    0x043 => { utval = value; Some(utval) },
-    0x044 => { let sip = legalize_uip(lower_mip(mip, mideleg), sideleg, value);
-               mip = lift_sip(mip, mideleg, sip);
-               Some(mip.bits()) },
-    _     => None()
-  };
-  match res {
-    Some(v) => { print_reg("CSR " ^ csr ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")");
-                 true },
-    None()  => false
-  }
-}
+function clause ext_write_CSR(0x000, value) = { mstatus = legalize_ustatus(mstatus, value); Some(mstatus.bits()) }
+function clause ext_write_CSR(0x004, value) = { let sie = legalize_uie(lower_mie(mie, mideleg), sideleg, value);
+                                                 mie = lift_sie(mie, mideleg, sie);
+                                                 Some(mie.bits()) }
+function clause ext_write_CSR(0x005, value) = { Some(set_utvec(value)) }
+function clause ext_write_CSR(0x040, value) = { uscratch = value; Some(uscratch) }
+function clause ext_write_CSR(0x041, value) = { Some(set_xret_target(User, value)) }
+function clause ext_write_CSR(0x042, value) = { ucause->bits() = value; Some(ucause.bits()) }
+function clause ext_write_CSR(0x043, value) = { utval = value; Some(utval) }
+function clause ext_write_CSR(0x044, value) = { let sip = legalize_uip(lower_mip(mip, mideleg), sideleg, value);
+                                                 mip = lift_sip(mip, mideleg, sip);
+                                                 Some(mip.bits()) }

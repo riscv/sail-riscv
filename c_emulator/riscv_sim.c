@@ -69,17 +69,38 @@ bool config_print_reg = true;
 bool config_print_mem_access = true;
 bool config_print_platform = true;
 
+void set_config_print(char *var, bool val) {
+  if (var == NULL || strcmp("all", var) == 0) {
+    config_print_instr = val;
+    config_print_mem_access = val;
+    config_print_reg = val;
+    config_print_platform = val;
+  } else if (strcmp("instr", var) == 0) {
+    config_print_instr = val;
+  } else if (strcmp("reg", var) == 0) {
+    config_print_reg = val;
+  } else if (strcmp("mem", var) == 0) {
+    config_print_mem_access = val;
+  } else if (strcmp("platform", var) == 0) {
+    config_print_platform = val;
+  } else {
+    fprintf(stderr, "Unknown trace category: '%s' (should be instr|reg|mem|platform|all)\n", var);
+    exit(1);
+  }
+}
+
 struct timeval init_start, init_end, run_end;
 int total_insns = 0;
+int insn_limit = 0;
 
 static struct option options[] = {
   {"enable-dirty-update",         no_argument,       0, 'd'},
   {"enable-misaligned",           no_argument,       0, 'm'},
+  {"enable-pmp",                  no_argument,       0, 'P'},
   {"ram-size",                    required_argument, 0, 'z'},
   {"disable-compressed",          no_argument,       0, 'C'},
   {"disable-writable-misa",       no_argument,       0, 'I'},
   {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'},
-  {"dump-dts",                    no_argument,       0, 's'},
   {"device-tree-blob",            required_argument, 0, 'b'},
   {"terminal-log",                required_argument, 0, 't'},
   {"show-times",                  required_argument, 0, 'p'},
@@ -89,6 +110,9 @@ static struct option options[] = {
   {"rvfi-dii",                    required_argument, 0, 'r'},
 #endif
   {"help",                        no_argument,       0, 'h'},
+  {"trace",                       optional_argument, 0, 'v'},
+  {"no-trace",                    optional_argument, 0, 'V'},
+  {"inst-limit",                  required_argument, 0, 'l'},
   {0, 0, 0, 0}
 };
 
@@ -101,7 +125,7 @@ static void print_usage(const char *argv0, int ec)
 #endif
   struct option *opt = options;
   while (opt->name) {
-    fprintf(stdout, "\t -%c\t %s\n", (char)opt->val, opt->name);
+    fprintf(stdout, "\t -%c\t --%s\n", (char)opt->val, opt->name);
     opt++;
   }
   exit(ec);
@@ -172,7 +196,7 @@ char *process_args(int argc, char **argv)
   int c, idx = 1;
   uint64_t ram_size = 0;
   while(true) {
-    c = getopt_long(argc, argv, "admCspz:b:t:v:hr:T:", options, &idx);
+    c = getopt_long(argc, argv, "admCIispz:b:t:hr:T:V::v::l:", options, &idx);
     if (c == -1) break;
     switch (c) {
     case 'a':
@@ -186,19 +210,27 @@ char *process_args(int argc, char **argv)
       fprintf(stderr, "enabling misaligned access.\n");
       rv_enable_misaligned = true;
       break;
+    case 'P':
+      fprintf(stderr, "enabling PMP support.\n");
+      rv_enable_pmp = true;
+      break;
     case 'C':
+      fprintf(stderr, "disabling RVC compressed instructions.\n");
       rv_enable_rvc = false;
       break;
     case 'I':
+      fprintf(stderr, "disabling writable misa CSR.\n");
       rv_enable_writable_misa = false;
       break;
     case 'i':
+      fprintf(stderr, "enabling storing illegal instruction bits in mtval.\n");
       rv_mtval_has_illegal_inst_bits = true;
       break;
     case 's':
       do_dump_dts = true;
       break;
     case 'p':
+      fprintf(stderr, "will show execution times on completion.\n");
       do_show_times = true;
       break;
     case 'z':
@@ -206,16 +238,22 @@ char *process_args(int argc, char **argv)
       if (ram_size) {
         fprintf(stderr, "setting ram-size to %" PRIu64 " MB\n", ram_size);
         rv_ram_size = ram_size << 20;
+      } else {
+        fprintf(stderr, "invalid ram-size '%s' provided.\n", optarg);
+        exit(1);
       }
       break;
     case 'b':
       dtb_file = strdup(optarg);
+      fprintf(stderr, "using %s as DTB file.\n", dtb_file);
       break;
     case 't':
       term_log = strdup(optarg);
+      fprintf(stderr, "using %s for terminal output.\n", term_log);
       break;
     case 'T':
       sig_file = strdup(optarg);
+      fprintf(stderr, "using %s for test-signature output.\n", sig_file);
       break;
     case 'h':
       print_usage(argv[0], 0);
@@ -224,20 +262,32 @@ char *process_args(int argc, char **argv)
     case 'r':
       rvfi_dii = true;
       rvfi_dii_port = atoi(optarg);
+      fprintf(stderr, "using %d as RVFI port.\n", rvfi_dii_port);
       break;
 #endif
-    default:
-      fprintf(stderr, "Unrecognized optchar %c\n", c);
+    case 'V':
+      set_config_print(optarg, false);
+      break;
+    case 'v':
+      set_config_print(optarg, true);
+      break;
+    case 'l':
+      insn_limit = atoi(optarg);
+      break;
+    case '?':
       print_usage(argv[0], 1);
+      break;
     }
   }
   if (do_dump_dts) dump_dts();
 #ifdef RVFI_DII
   if (idx > argc || (idx == argc && !rvfi_dii)) print_usage(argv[0], 0);
 #else
-  if (optind >= argc) print_usage(argv[0], 0);
+  if (optind >= argc) {
+    fprintf(stderr, "No elf file provided.\n");
+    print_usage(argv[0], 0);
+  }
 #endif
-  if (term_log == NULL) term_log = strdup("term.log");
   if (dtb_file) read_dtb(dtb_file);
 
 #ifdef RVFI_DII
@@ -419,10 +469,14 @@ void init_sail(uint64_t elf_entry)
   zinit_model(UNIT);
 #ifdef RVFI_DII
   if (rvfi_dii) {
+    zext_rvfi_init(UNIT);
     rv_ram_base = UINT64_C(0x80000000);
     rv_ram_size = UINT64_C(0x10000);
     rv_rom_base = UINT64_C(0);
     rv_rom_size = UINT64_C(0);
+    rv_clint_base = UINT64_C(0);
+    rv_clint_size = UINT64_C(0);
+    rv_htif_tohost = UINT64_C(0);
     zPC = elf_entry;
   } else
 #endif
@@ -564,10 +618,12 @@ int compare_states(struct tv_spike_t *s)
 
 void flush_logs(void)
 {
-  fprintf(stderr, "\n");
-  fflush(stderr);
-  fprintf(stdout, "\n");
-  fflush(stdout);
+  if(config_print_instr) {
+    fprintf(stderr, "\n");
+    fflush(stderr);
+    fprintf(stdout, "\n");
+    fflush(stdout);
+  }
 }
 
 #ifdef RVFI_DII
@@ -604,7 +660,13 @@ void run_sail(void)
   bool need_instr = true;
 #endif
 
-  while (!zhtif_done) {
+  struct timeval interval_start;
+  if (gettimeofday(&interval_start, NULL) < 0) {
+    fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
+    exit(1);
+  }
+  
+  while (!zhtif_done && (insn_limit == 0 || total_insns < insn_limit)) {
 #ifdef RVFI_DII
     if (rvfi_dii) {
       if (need_instr) {
@@ -666,6 +728,15 @@ void run_sail(void)
       total_insns++;
     }
 
+    if (do_show_times && (total_insns & 0xfffff) == 0) {
+      uint64_t start_us = 1000000 * ((uint64_t) interval_start.tv_sec)  + ((uint64_t)interval_start.tv_usec);
+      if (gettimeofday(&interval_start, NULL) < 0) {
+        fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
+         exit(1);
+      }
+      uint64_t end_us = 1000000 * ((uint64_t) interval_start.tv_sec)  + ((uint64_t)interval_start.tv_usec);
+      fprintf(stdout, "kips: %" PRIu64 "\n", ((uint64_t)1000) * 0x100000 / (end_us - start_us));
+    }
 #ifdef ENABLE_SPIKE
     { /* run a Spike step */
       tv_step(s);
@@ -728,7 +799,7 @@ void init_logs()
   }
 #endif
 
-  if ((term_fd = open(term_log, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR)) < 0) {
+  if (term_log != NULL && (term_fd = open(term_log, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR)) < 0) {
     fprintf(stderr, "Cannot create terminal log '%s': %s\n", term_log, strerror(errno));
     exit(1);
   }

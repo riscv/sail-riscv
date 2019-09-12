@@ -30,3 +30,23 @@ unit print_platform(sail_string s)
   if (config_print_platform) printf("%s\n", s);
   return UNIT;
 }
+
+bool get_config_print_instr(unit u)
+{
+  return (config_print_instr) ? true : false;
+}
+
+bool get_config_print_reg(unit u)
+{
+  return (config_print_reg) ? true : false;
+}
+
+bool get_config_print_mem(unit u)
+{
+  return (config_print_mem_access) ? true : false;
+}
+
+bool get_config_print_platform(unit u)
+{
+  return (config_print_platform) ? true : false;
+}

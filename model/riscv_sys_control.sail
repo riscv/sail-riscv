@@ -28,8 +28,27 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x343 => p == Machine, // mtval
     0x344 => p == Machine, // mip
 
-    0x3A0 => p == Machine, // pmpcfg0
+    0x3A0 => p == Machine,                        // pmpcfg0
+    0x3A1 => p == Machine & (sizeof(xlen) == 32), // pmpcfg1
+    0x3A2 => p == Machine,                        // pmpcfg2
+    0x3A3 => p == Machine & (sizeof(xlen) == 32), // pmpcfg3
+
     0x3B0 => p == Machine, // pmpaddr0
+    0x3B1 => p == Machine, // pmpaddr1
+    0x3B2 => p == Machine, // pmpaddr2
+    0x3B3 => p == Machine, // pmpaddr3
+    0x3B4 => p == Machine, // pmpaddr4
+    0x3B5 => p == Machine, // pmpaddr5
+    0x3B6 => p == Machine, // pmpaddr6
+    0x3B7 => p == Machine, // pmpaddr7
+    0x3B8 => p == Machine, // pmpaddr8
+    0x3B9 => p == Machine, // pmpaddr9
+    0x3BA => p == Machine, // pmpaddrA
+    0x3BB => p == Machine, // pmpaddrB
+    0x3BC => p == Machine, // pmpaddrC
+    0x3BD => p == Machine, // pmpaddrD
+    0x3BE => p == Machine, // pmpaddrE
+    0x3BF => p == Machine, // pmpaddrF
 
     /* counters */
     0xB00 => p == Machine, // mcycle
@@ -78,17 +97,17 @@ function check_CSR_access(csrrw, csrpr, p, isWrite) =
   & (privLevel_to_bits(p) >=_u csrpr)      /* privilege */
 
 function check_TVM_SATP(csr : csreg, p : Privilege) -> bool =
-  ~ (csr == 0x180 & p == Supervisor & mstatus.TVM() == true)
+  ~ (csr == 0x180 & p == Supervisor & mstatus.TVM() == 0b1)
 
 function check_Counteren(csr : csreg, p : Privilege) -> bool =
   match(csr, p) {
-    (0xC00, Supervisor) => mcounteren.CY() == true,
-    (0xC01, Supervisor) => mcounteren.TM() == true,
-    (0xC02, Supervisor) => mcounteren.IR() == true,
+    (0xC00, Supervisor) => mcounteren.CY() == 0b1,
+    (0xC01, Supervisor) => mcounteren.TM() == 0b1,
+    (0xC02, Supervisor) => mcounteren.IR() == 0b1,
 
-    (0xC00, User) => mcounteren.CY() == true & ((~ (haveSupMode())) | scounteren.CY() == true),
-    (0xC01, User) => mcounteren.TM() == true & ((~ (haveSupMode())) | scounteren.TM() == true),
-    (0xC02, User) => mcounteren.IR() == true & ((~ (haveSupMode())) | scounteren.IR() == true),
+    (0xC00, User) => mcounteren.CY() == 0b1 & ((~ (haveSupMode())) | scounteren.CY() == 0b1),
+    (0xC01, User) => mcounteren.TM() == 0b1 & ((~ (haveSupMode())) | scounteren.TM() == 0b1),
+    (0xC02, User) => mcounteren.IR() == 0b1 & ((~ (haveSupMode())) | scounteren.IR() == 0b1),
 
     (_, _) => /* no HPM counters for now */
               if   0xC03 <=_u csr & csr <=_u 0xC1F
@@ -125,10 +144,10 @@ val cancel_reservation = {ocaml: "Platform.cancel_reservation", interpreter: "Pl
  */
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let idx   = num_of_ExceptionType(e);
-  let super = medeleg.bits()[idx];
+  let super = bit_to_bool(medeleg.bits()[idx]);
   /* if S-mode is absent, medeleg delegates to U-mode if 'N' is supported. */
   let user  = if   haveSupMode()
-              then super & haveNExt() & sedeleg.bits()[idx]
+              then super & haveNExt() & bit_to_bool(sedeleg.bits()[idx])
               else super & haveNExt();
   let deleg = if      haveUsrMode() & user  then User
               else if haveSupMode() & super then Supervisor
@@ -143,16 +162,16 @@ function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
  */
 function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   let ip = Mk_Minterrupts(ip);
-  if      ip.MEI() == true then Some(I_M_External)
-  else if ip.MSI() == true then Some(I_M_Software)
-  else if ip.MTI() == true then Some(I_M_Timer)
-  else if ip.SEI() == true then Some(I_S_External)
-  else if ip.SSI() == true then Some(I_S_Software)
-  else if ip.STI() == true then Some(I_S_Timer)
-  else if ip.UEI() == true then Some(I_U_External)
-  else if ip.USI() == true then Some(I_U_Software)
-  else if ip.UTI() == true then Some(I_U_Timer)
-  else                          None()
+  if      ip.MEI() == 0b1 then Some(I_M_External)
+  else if ip.MSI() == 0b1 then Some(I_M_Software)
+  else if ip.MTI() == 0b1 then Some(I_M_Timer)
+  else if ip.SEI() == 0b1 then Some(I_S_External)
+  else if ip.SSI() == 0b1 then Some(I_S_Software)
+  else if ip.STI() == 0b1 then Some(I_S_Timer)
+  else if ip.UEI() == 0b1 then Some(I_U_External)
+  else if ip.USI() == 0b1 then Some(I_U_Software)
+  else if ip.UTI() == 0b1 then Some(I_U_Timer)
+  else                         None()
 }
 
 /* Process the pending interrupts xip at a privilege according to
@@ -195,9 +214,9 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
      * while lower privileges are blocked.  An unsupported privilege is
      * considered blocked.
      */
-    let mIE = priv != Machine | (priv == Machine & mstatus.MIE() == true);
-    let sIE = haveSupMode() & (priv == User | (priv == Supervisor & mstatus.SIE() == true));
-    let uIE = haveNExt() & (priv == User & mstatus.UIE() == true);
+    let mIE = priv != Machine | (priv == Machine & mstatus.MIE() == 0b1);
+    let sIE = haveSupMode() & (priv == User | (priv == Supervisor & mstatus.SIE() == 0b1));
+    let uIE = haveNExt() & (priv == User & mstatus.UIE() == 0b1);
     match processPending(mip, mie, mideleg.bits(), mIE) {
       Ints_Empty()      => None(),
       Ints_Pending(p)   => let r = (p, Machine) in Some(r),
@@ -276,18 +295,20 @@ $endif
 function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
                      -> xlenbits = {
   rvfi_trap();
-  print_platform("handling " ^ (if intr then "int#" else "exc#")
-                 ^ BitStr(c) ^ " at priv " ^ del_priv ^ " with tval " ^ BitStr(tval(info)));
+  if   get_config_print_platform()
+  then print_platform("handling " ^ (if intr then "int#" else "exc#")
+                      ^ BitStr(c) ^ " at priv " ^ to_str(del_priv)
+                      ^ " with tval " ^ BitStr(tval(info)));
 
   cancel_reservation();
 
   match (del_priv) {
     Machine => {
-       mcause->IsInterrupt() = intr;
+       mcause->IsInterrupt() = bool_to_bits(intr);
        mcause->Cause()       = EXTZ(c);
 
        mstatus->MPIE() = mstatus.MIE();
-       mstatus->MIE()  = false;
+       mstatus->MIE()  = 0b0;
        mstatus->MPP()  = privLevel_to_bits(cur_privilege);
        mtval           = tval(info);
        mepc            = pc;
@@ -296,21 +317,22 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        handle_trap_extension(del_priv, pc, ext);
 
-       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
+       if   get_config_print_reg()
+       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
        prepare_trap_vector(del_priv, mcause)
     },
     Supervisor => {
        assert (haveSupMode(), "no supervisor mode present for delegation");
 
-       scause->IsInterrupt() = intr;
+       scause->IsInterrupt() = bool_to_bits(intr);
        scause->Cause()       = EXTZ(c);
 
        mstatus->SPIE() = mstatus.SIE();
-       mstatus->SIE()  = false;
-       mstatus->SPP()  = match (cur_privilege) {
-                           User => false,
-                           Supervisor => true,
+       mstatus->SIE()  = 0b0;
+       mstatus->SPP()  = match cur_privilege {
+                           User => 0b0,
+                           Supervisor => 0b1,
                            Machine => internal_error("invalid privilege for s-mode trap")
                          };
        stval           = tval(info);
@@ -320,18 +342,19 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        handle_trap_extension(del_priv, pc, ext);
 
-       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
+       if   get_config_print_reg()
+       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
        prepare_trap_vector(del_priv, scause)
     },
     User => {
        assert(haveUsrMode(), "no user mode present for delegation");
 
-       ucause->IsInterrupt() = intr;
+       ucause->IsInterrupt() = bool_to_bits(intr);
        ucause->Cause()       = EXTZ(c);
 
        mstatus->UPIE() = mstatus.UIE();
-       mstatus->UIE()  = false;
+       mstatus->UIE()  = 0b0;
        utval           = tval(info);
        uepc            = pc;
 
@@ -339,7 +362,8 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        handle_trap_extension(del_priv, pc, ext);
 
-       print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
+       if   get_config_print_reg()
+       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
        prepare_trap_vector(del_priv, ucause)
     }
@@ -351,48 +375,56 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
   match (cur_priv, ctl) {
     (_, CTL_TRAP(e)) => {
       let del_priv = exception_delegatee(e.trap, cur_priv);
-      print_platform("trapping from " ^ cur_priv ^ " to " ^ del_priv
-                     ^ " to handle " ^ e.trap);
-      trap_handler(del_priv, false, e.trap, pc, e.excinfo, e.ext)
+      if   get_config_print_platform()
+      then print_platform("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
+                          ^ " to handle " ^ to_str(e.trap));
+      trap_handler(del_priv, false, exceptionType_to_bits(e.trap), pc, e.excinfo, e.ext)
     },
     (_, CTL_MRET())  => {
       let prev_priv   = cur_privilege;
       mstatus->MIE()  = mstatus.MPIE();
-      mstatus->MPIE() = true;
+      mstatus->MPIE() = 0b1;
       cur_privilege   = privLevel_of_bits(mstatus.MPP());
       mstatus->MPP()  = privLevel_to_bits(if haveUsrMode() then User else Machine);
 
-      print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
-      print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
+      if   get_config_print_reg()
+      then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
+      if   get_config_print_platform()
+      then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
       cancel_reservation();
-      get_xret_target(Machine) & pc_alignment_mask()
+      prepare_xret_target(Machine) & pc_alignment_mask()
     },
     (_, CTL_SRET())  => {
       let prev_priv   = cur_privilege;
       mstatus->SIE()  = mstatus.SPIE();
-      mstatus->SPIE() = true;
-      cur_privilege   = if mstatus.SPP() == true then Supervisor else User;
+      mstatus->SPIE() = 0b1;
+      cur_privilege   = if mstatus.SPP() == 0b1 then Supervisor else User;
       /* S-mode implies that U-mode is supported (issue 331 on riscv-isa-manual). */
-      mstatus->SPP()  = false;
+      mstatus->SPP()  = 0b0;
 
-      print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
-      print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
+      if   get_config_print_reg()
+      then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
+      if   get_config_print_platform()
+      then print_platform("ret-ing from " ^ to_str(prev_priv)
+                          ^ " to " ^ to_str(cur_privilege));
 
       cancel_reservation();
-      get_xret_target(Supervisor) & pc_alignment_mask()
+      prepare_xret_target(Supervisor) & pc_alignment_mask()
     },
     (_, CTL_URET())  => {
       let prev_priv   = cur_privilege;
       mstatus->UIE()  = mstatus.UPIE();
-      mstatus->UPIE() = true;
+      mstatus->UPIE() = 0b1;
       cur_privilege   = User;
 
-      print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
-      print_platform("ret-ing from " ^ prev_priv ^ " to " ^ cur_privilege);
+      if   get_config_print_reg()
+      then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
+      if   get_config_print_platform()
+      then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
       cancel_reservation();
-      get_xret_target(User) & pc_alignment_mask()
+      prepare_xret_target(User) & pc_alignment_mask()
     }
   }
 }
@@ -405,7 +437,7 @@ function handle_mem_exception(addr : xlenbits, e : ExceptionType) -> unit = {
 }
 
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
-  set_next_pc(trap_handler(del_priv, true, i, PC, None(), None()))
+  set_next_pc(trap_handler(del_priv, true, interruptType_to_bits(i), PC, None(), None()))
 
 /* state state initialization */
 
@@ -415,16 +447,16 @@ function init_sys() -> unit = {
   mhartid     = EXTZ(0b0);
 
   misa->MXL() = arch_to_bits(if sizeof(xlen) == 32 then RV32 else RV64);
-  misa->A()   = true;               /* atomics */
-  misa->C()   = sys_enable_rvc ();  /* RVC */
-  misa->I()   = true;               /* base integer ISA */
-  misa->M()   = true;               /* integer multiply/divide */
-  misa->U()   = true;               /* user-mode */
-  misa->S()   = true;               /* supervisor-mode */
+  misa->A()   = 0b1;                            /* atomics */
+  misa->C()   = bool_to_bits(sys_enable_rvc()); /* RVC */
+  misa->I()   = 0b1;                            /* base integer ISA */
+  misa->M()   = 0b1;                            /* integer multiply/divide */
+  misa->U()   = 0b1;                            /* user-mode */
+  misa->S()   = 0b1;                            /* supervisor-mode */
 
   mstatus = set_mstatus_SXL(mstatus, misa.MXL());
   mstatus = set_mstatus_UXL(mstatus, misa.MXL());
-  mstatus->SD()   = false;
+  mstatus->SD()   = 0b0;
 
   mip->bits()     = EXTZ(0b0);
   mie->bits()     = EXTZ(0b0);
@@ -444,8 +476,11 @@ function init_sys() -> unit = {
   minstret           = EXTZ(0b0);
   minstret_written   = false;
 
+  init_pmp();
+
   // log compatibility with spike
-  print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(EXTZ(0b0) : xlenbits) ^ ")")
+  if   get_config_print_reg()
+  then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(EXTZ(0b0) : xlenbits) ^ ")")
 }
 
 /* memory access exceptions, defined here for use by the platform model. */
