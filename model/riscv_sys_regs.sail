@@ -96,6 +96,8 @@ function haveMulDiv()  -> bool = misa.M() == 0b1
 function haveSupMode() -> bool = misa.S() == 0b1
 function haveUsrMode() -> bool = misa.U() == 0b1
 function haveNExt()    -> bool = misa.N() == 0b1
+function haveFExt()    -> bool = misa.F() == 0b1    /* Single-precision floating point */
+function haveDExt()    -> bool = misa.D() == 0b1    /* Double-precision floating point */
 
 bitfield Mstatus : xlenbits = {
   SD   : xlen - 1,
