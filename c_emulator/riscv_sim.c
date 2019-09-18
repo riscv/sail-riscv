@@ -196,7 +196,25 @@ char *process_args(int argc, char **argv)
   int c, idx = 1;
   uint64_t ram_size = 0;
   while(true) {
-    c = getopt_long(argc, argv, "admCIispz:b:t:hr:T:V::v::l:", options, &idx);
+    c = getopt_long(argc, argv,
+                    "a"
+                    "d"
+                    "m"
+                    "C"
+                    "I"
+                    "i"
+                    "s"
+                    "p"
+                    "z:"
+                    "b:"
+                    "t:"
+                    "h"
+                    "r:"
+                    "T:"
+                    "V::"
+                    "v::"
+                    "l:"
+                         , options, &idx);
     if (c == -1) break;
     switch (c) {
     case 'a':
