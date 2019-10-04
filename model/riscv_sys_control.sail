@@ -489,3 +489,15 @@ union MemoryOpResult ('a : Type) = {
   MemValue     : 'a,
   MemException : ExceptionType
 }
+
+val MemoryOpResult_add_meta : forall ('t : Type). (MemoryOpResult('t), mem_meta) -> MemoryOpResult(('t, mem_meta))
+function MemoryOpResult_add_meta(r, m) = match r {
+  MemValue(v)     => MemValue(v, m),
+  MemException(e) => MemException(e)
+}
+
+val MemoryOpResult_drop_meta : forall ('t : Type). MemoryOpResult(('t, mem_meta)) -> MemoryOpResult('t)
+function MemoryOpResult_drop_meta(r) = match r {
+  MemValue(v, m)  => MemValue(v),
+  MemException(e) => MemException(e)
+}
