@@ -17,6 +17,7 @@
 #include "riscv_platform.h"
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
+#include "gdb_remote/gdb_rsp.h"
 
 #ifdef ENABLE_SPIKE
 #include "tv_spike_intf.h"
@@ -56,6 +57,8 @@ static bool rvfi_dii = false;
 static int rvfi_dii_port;
 static int rvfi_dii_sock;
 #endif
+
+int gdb_port = -1;
 
 unsigned char *spike_dtb = NULL;
 size_t spike_dtb_len = 0;
@@ -113,6 +116,7 @@ static struct option options[] = {
   {"trace",                       optional_argument, 0, 'v'},
   {"no-trace",                    optional_argument, 0, 'V'},
   {"inst-limit",                  required_argument, 0, 'l'},
+  {"gdb-port",                    required_argument, 0, 'g'},
   {0, 0, 0, 0}
 };
 
@@ -214,6 +218,7 @@ char *process_args(int argc, char **argv)
                     "V::"
                     "v::"
                     "l:"
+                    "g:"
                          , options, &idx);
     if (c == -1) break;
     switch (c) {
@@ -292,6 +297,9 @@ char *process_args(int argc, char **argv)
     case 'l':
       insn_limit = atoi(optarg);
       break;
+    case 'g':
+      gdb_port = atoi(optarg);
+      break;
     case '?':
       print_usage(argv[0], 1);
       break;
@@ -340,7 +348,9 @@ uint64_t load_sail(char *f)
   /* locate htif ports */
   if (lookup_sym(f, "tohost", &rv_htif_tohost) < 0) {
     fprintf(stderr, "Unable to locate htif tohost port.\n");
-    exit(1);
+
+    if (gdb_port < 0)
+      exit(1);
   }
   fprintf(stderr, "tohost located at 0x%0" PRIx64 "\n", rv_htif_tohost);
   /* locate test-signature locations if any */
@@ -888,6 +898,13 @@ int main(int argc, char **argv)
   if (gettimeofday(&init_end, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
     exit(1);
+  }
+
+  if (gdb_port > 0) {
+    if (gdb_server_init(gdb_port, 2) < 0)
+      exit(1);
+    gdb_server_run();
+    exit(0);
   }
 
   do {
