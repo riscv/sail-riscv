@@ -292,8 +292,8 @@ $(addprefix generated_definitions/coq/$(ARCH)/,riscv_duopod.v riscv_duopod_types
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq/$(ARCH) -o riscv_duopod -coq_lib riscv_extras -coq_lib mem_metadata $^
 
 %.vo: %.v
-ifeq ($(wildcard $(BBV_LIB_DIR)),)
-	$(error BBV directory not found. Please set the BBV_LIB_DIR environment variable)
+ifeq ($(wildcard $(BBV_DIR)/theories),)
+	$(error BBV directory not found. Please set the BBV_DIR environment variable)
 endif
 ifeq ($(wildcard $(SAIL_LIB_DIR)/coq),)
 	$(error lib directory of Sail not found. Please set the SAIL_LIB_DIR environment variable)
