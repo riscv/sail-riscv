@@ -426,7 +426,7 @@ void tick_spike()
 #endif
 }
 
-void init_sail_reset_vector(uint64_t entry)
+void init_sail_reset_vector(uint64_t entry, bool with_gdb)
 {
 #define RST_VEC_SIZE 8
   uint32_t reset_vec[RST_VEC_SIZE] = {
@@ -483,8 +483,8 @@ void init_sail_reset_vector(uint64_t entry)
 
   /* set rom size */
   rv_rom_size = rom_end - rv_rom_base;
-  /* boot at reset vector */
-  zPC = rv_rom_base;
+  /* boot at reset vector (but with gdb, start at ELF entry)*/
+  zPC = with_gdb ? entry : rv_rom_base;
 }
 
 void preinit_sail()
@@ -492,7 +492,7 @@ void preinit_sail()
   model_init();
 }
 
-void init_sail(uint64_t elf_entry)
+void init_sail(uint64_t elf_entry, bool with_gdb)
 {
   zinit_model(UNIT);
 #ifdef RVFI_DII
@@ -508,7 +508,7 @@ void init_sail(uint64_t elf_entry)
     zPC = elf_entry;
   } else
 #endif
-  init_sail_reset_vector(elf_entry);
+  init_sail_reset_vector(elf_entry, with_gdb);
 
   // this is probably unnecessary now; remove
   if (!rv_enable_rvc) z_set_Misa_C(&zmisa, 0);
@@ -519,7 +519,7 @@ void reinit_sail(uint64_t elf_entry)
 {
   model_fini();
   model_init();
-  init_sail(elf_entry);
+  init_sail(elf_entry, false);
 }
 
 int init_check(struct tv_spike_t *s)
@@ -891,7 +891,7 @@ int main(int argc, char **argv)
    * until we roll our own.
    */
   init_spike(file, entry, rv_ram_size);
-  init_sail(entry);
+  init_sail(entry, (gdb_port > 0));
 
   if (!init_check(s)) finish(1);
 
