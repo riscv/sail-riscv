@@ -28,13 +28,13 @@ struct proto_state {
 typedef enum {
   M_RUN_START,
   M_RUN_RUNNING,
-  M_RUN_SINGLE_STEP,
   M_RUN_BREAKPOINT,
   M_RUN_HALT
 } model_run_state_t;
 
 struct model_state {
   model_run_state_t run_state;
+  mach_int step_no;
 };
 
 struct rsp_conn {
@@ -78,6 +78,7 @@ int gdb_server_init(int port, int log_fd) {
   conn.log_fd = log_fd;
   conn.proto.send_acks = 1;  // start out sending acks
   conn.model.run_state = M_RUN_START;
+  conn.model.step_no = 0;
   return 0;
 }
 
@@ -368,6 +369,28 @@ static void handle_regs_read(struct rsp_conn *conn, struct rsp_buf *req, struct 
   send_reg(conn, resp, zPC);
 }
 
+static void handle_step(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
+  if (match_req_cmd(req, "s#")) {
+    // step at current address
+    sail_int sail_step;
+    bool stepped;
+    CREATE(sail_int)(&sail_step);
+    CONVERT_OF(sail_int, mach_int)(&sail_step, conn->model.step_no);
+    stepped = zstep(sail_step);
+    KILL(sail_int)(&sail_step);
+    if (have_exception) {
+      dprintf(conn->log_fd, "internal Sail exception, exiting!\n");
+      conn_exit(conn, 1);
+    }
+    if (stepped) conn->model.step_no++;
+    /* stopping after a single step is equivalent to the interrupted signal code: SIGTRAP -> 5 */
+    append_rsp_buf_msg(conn, resp, "S");
+    append_rsp_buf_hex_byte(conn, resp, 5);
+    return;
+  }
+  make_error_resp(conn, resp, 1);
+}
+
 static void dispatch_req(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
   prepare_resp(conn, resp);
   switch (req->cmd_buf[0]) {
@@ -391,6 +414,9 @@ static void dispatch_req(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_
     dprintf(conn->log_fd, "GDB disconnecting, exiting.\n");
     /* wait for another connection? */
     conn_exit(conn, 0);
+    break;
+  case 's':
+    handle_step(conn, req, resp);
     break;
   default:
     dprintf(conn->log_fd, "Unsupported cmd %c\n", req->cmd_buf[0]);

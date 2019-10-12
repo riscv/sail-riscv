@@ -731,9 +731,9 @@ void run_sail(void)
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
       stepped = zstep(sail_step);
+      KILL(sail_int)(&sail_step);
       if (have_exception) goto step_exception;
       flush_logs();
-      KILL(sail_int)(&sail_step);
       if (stepped) {
         need_instr = true;
         rvfi_send_trace();
@@ -746,9 +746,9 @@ void run_sail(void)
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
       stepped = zstep(sail_step);
+      KILL(sail_int)(&sail_step);
       if (have_exception) goto step_exception;
       flush_logs();
-      KILL(sail_int)(&sail_step);
     }
     if (stepped) {
       step_no++;
