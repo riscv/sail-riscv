@@ -101,6 +101,7 @@ static struct option options[] = {
   {"enable-misaligned",           no_argument,       0, 'm'},
   {"enable-pmp",                  no_argument,       0, 'P'},
   {"ram-size",                    required_argument, 0, 'z'},
+  {"ram-base",                    required_argument, 0, 'B'},
   {"disable-compressed",          no_argument,       0, 'C'},
   {"disable-writable-misa",       no_argument,       0, 'I'},
   {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'},
@@ -198,7 +199,7 @@ static void read_dtb(const char *path)
 char *process_args(int argc, char **argv)
 {
   int c, idx = 1;
-  uint64_t ram_size = 0;
+  uint64_t ram_size = 0, ram_base = 0;
   while(true) {
     c = getopt_long(argc, argv,
                     "a"
@@ -210,6 +211,7 @@ char *process_args(int argc, char **argv)
                     "s"
                     "p"
                     "z:"
+                    "B:"
                     "b:"
                     "t:"
                     "h"
@@ -257,7 +259,7 @@ char *process_args(int argc, char **argv)
       do_show_times = true;
       break;
     case 'z':
-      ram_size = atol(optarg);
+      ram_size = strtoull(optarg, NULL, 0);
       if (ram_size) {
         fprintf(stderr, "setting ram-size to %" PRIu64 " MB\n", ram_size);
         rv_ram_size = ram_size << 20;
@@ -266,6 +268,17 @@ char *process_args(int argc, char **argv)
         exit(1);
       }
       break;
+    case 'B':
+      ram_base = strtoull(optarg, NULL, 0);
+      if (ram_base) {
+        fprintf(stderr, "setting ram-base to 0x%" PRIx64 "\n", ram_base);
+        rv_ram_base = ram_base;
+      } else {
+        fprintf(stderr, "invalid ram-base '%s' provided.\n", optarg);
+        exit(1);
+      }
+      break;
+
     case 'b':
       dtb_file = strdup(optarg);
       fprintf(stderr, "using %s as DTB file.\n", dtb_file);
