@@ -454,6 +454,27 @@ static void handle_write_mem(struct rsp_conn *conn, struct rsp_buf *req, struct 
   append_rsp_buf_msg(conn, resp, "OK");
 }
 
+static void handle_cont(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
+  if (match_req_cmd(req, "s#")) { // todo: handle pc argument
+    // continue at current address
+    while (!zhtif_done) { // fixme: we may not have a legal zhtif!
+      sail_int sail_step;
+      bool stepped;
+      CREATE(sail_int)(&sail_step);
+      CONVERT_OF(sail_int, mach_int)(&sail_step, conn->model.step_no);
+      stepped = zstep(sail_step);
+      KILL(sail_int)(&sail_step);
+      if (have_exception) {
+        dprintf(conn->log_fd, "internal Sail exception, exiting!\n");
+        conn_exit(conn, 1);
+      }
+      if (stepped) conn->model.step_no++;
+      // todo: handle breakpoints/watchpoints
+    }
+  }
+  make_error_resp(conn, resp, 1);
+}
+
 static void dispatch_req(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
   prepare_resp(conn, resp);
   switch (req->cmd_buf[0]) {
@@ -486,6 +507,9 @@ static void dispatch_req(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_
     break;
   case 'M':
     handle_write_mem(conn, req, resp);
+    break;
+  case 'c':
+    handle_cont(conn, req, resp);
     break;
   default:
     dprintf(conn->log_fd, "Unsupported cmd %c\n", req->cmd_buf[0]);
