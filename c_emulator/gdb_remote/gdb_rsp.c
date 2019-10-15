@@ -391,6 +391,69 @@ static void handle_step(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_b
   make_error_resp(conn, resp, 1);
 }
 
+static int extract_hex_integer(struct rsp_conn *conn, struct rsp_buf *req, int *start_ofs, char terminator, uint64_t *val) {
+  *val = 0;
+  int i = *start_ofs;
+  while (true) {
+    if (i >= req->bufsz) return -1;
+    if (req->cmd_buf[i] == terminator) break;
+    *val <<= 4;
+    *val |= int_of_hex(req->cmd_buf[i]) & 0xf;
+    i++;
+  }
+  *start_ofs = i;
+  return 0;
+}
+
+static void handle_read_mem(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
+  // extract addr,length
+  int ofs = 1; // past 'm'
+  uint64_t addr = 0, len = 0;
+  if (extract_hex_integer(conn, req, &ofs, ',', &addr) < 0) {
+    dprintf(conn->log_fd, "internal error: no 'm' packet terminator ',' found\n");
+    exit(1);
+  }
+  ofs++;
+  if (extract_hex_integer(conn, req, &ofs, '#', &len) < 0) {
+    dprintf(conn->log_fd, "internal error: no 'm' packet terminator '#' found\n");
+    exit(1);
+  }
+  ofs++;
+  // trust gdb for legal addr/len?
+  for (uint64_t i = 0; i < len; i++) {
+    unsigned char byte = (unsigned char) read_mem(addr+i);
+    append_rsp_buf_hex_byte(conn, resp, byte);
+  }
+}
+
+static void handle_write_mem(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
+  // extract addr,length
+  int ofs = 1; // past 'M'
+  uint64_t addr = 0, len = 0;
+  if (extract_hex_integer(conn, req, &ofs, ',', &addr) < 0) {
+    dprintf(conn->log_fd, "internal error: no 'M' packet terminator ',' found\n");
+    exit(1);
+  }
+  ofs++;
+  if (extract_hex_integer(conn, req, &ofs, ':', &len) < 0) {
+    dprintf(conn->log_fd, "internal error: no 'M' packet terminator ':' found\n");
+    exit(1);
+  }
+  ofs++;
+  // trust gdb for legal addr/len?
+  for (uint64_t i = 0; i < len; i++) {
+    if (ofs >= req->bufsz) {
+      dprintf(conn->log_fd, "not enough payload in 'M' packet!\n");
+      exit(1);
+    }
+    uint64_t byte = int_of_hex(req->cmd_buf[ofs++]);
+    byte <<= 4;
+    byte += int_of_hex(req->cmd_buf[ofs++]);
+    write_mem(addr++, byte);
+  }
+  append_rsp_buf_msg(conn, resp, "OK");
+}
+
 static void dispatch_req(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
   prepare_resp(conn, resp);
   switch (req->cmd_buf[0]) {
@@ -417,6 +480,12 @@ static void dispatch_req(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_
     break;
   case 's':
     handle_step(conn, req, resp);
+    break;
+  case 'm':
+    handle_read_mem(conn, req, resp);
+    break;
+  case 'M':
+    handle_write_mem(conn, req, resp);
     break;
   default:
     dprintf(conn->log_fd, "Unsupported cmd %c\n", req->cmd_buf[0]);
