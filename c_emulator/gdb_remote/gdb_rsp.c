@@ -117,6 +117,45 @@ void push_hex_byte(char *buf, uint8_t byte) {
 }
 
 
+// big-endian
+static int extract_hex_integer_be(struct rsp_conn *conn, struct rsp_buf *req, int *start_ofs, char terminator, uint64_t *val) {
+  *val = 0;
+  int i = *start_ofs;
+  while (true) {
+    if (i >= req->bufsz) return -1;
+    if (req->cmd_buf[i] == terminator) break;
+    *val <<= 4;
+    *val |= int_of_hex(req->cmd_buf[i]) & 0xf;
+    i++;
+  }
+  *start_ofs = i;
+  return 0;
+}
+
+static int extract_hex_integer_le(struct rsp_conn *conn, struct rsp_buf *req, int *start_ofs, char terminator, uint64_t *val) {
+  *val = 0;
+  int i = *start_ofs;
+  int shft = 0;
+  while (true) {
+    uint8_t byte;
+    if (i >= req->bufsz) return -1;
+    if (req->cmd_buf[i] == terminator) break;
+
+    byte = int_of_hex(req->cmd_buf[i++]);
+    byte <<= 4;
+
+    if (i >= req->bufsz) return -1;
+    if (req->cmd_buf[i] == terminator) return -1; // unexpected terminator in middle of byte
+
+    byte |= int_of_hex(req->cmd_buf[i++]) & 0xf;
+
+    *val |= byte << shft;
+    shft +=8;
+  }
+  *start_ofs = i;
+  return 0;
+}
+
 // buffer utils
 
 static void grow_rsp_buf(struct rsp_conn *conn, struct rsp_buf *b) {
@@ -369,6 +408,75 @@ static void handle_regs_read(struct rsp_conn *conn, struct rsp_buf *req, struct 
   send_reg(conn, resp, zPC);
 }
 
+static void handle_reg_write(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
+  // extract regno,regval
+  int ofs = 1; // past 'P'
+  uint64_t regno = 0, regval = 0;
+  if (extract_hex_integer_be(conn, req, &ofs, '=', &regno) < 0) {
+    dprintf(conn->log_fd, "internal error: no 'P' packet terminator '=' found\n");
+    exit(1);
+  }
+  ofs++;
+  if (extract_hex_integer_le(conn, req, &ofs, '#', &regval) < 0) {
+    dprintf(conn->log_fd, "internal error: no 'P' packet terminator '#' found\n");
+    exit(1);
+  }
+  dprintf(conn->log_fd, "setting reg %ld to 0x%016" PRIx64 "\n", regno, regval);
+
+  switch (regno) {
+  case 0:
+    dprintf(conn->log_fd, "ignoring attempt to write $zero\n");
+    break;
+
+#define case_set_reg(reg)                       \
+  case reg:                                     \
+    zx ## reg = regval;                         \
+    break
+
+  case_set_reg(1);
+  case_set_reg(2);
+  case_set_reg(3);
+  case_set_reg(4);
+  case_set_reg(5);
+  case_set_reg(6);
+  case_set_reg(7);
+  case_set_reg(8);
+  case_set_reg(9);
+  case_set_reg(10);
+  case_set_reg(11);
+  case_set_reg(12);
+  case_set_reg(13);
+  case_set_reg(14);
+  case_set_reg(15);
+  case_set_reg(16);
+  case_set_reg(17);
+  case_set_reg(18);
+  case_set_reg(19);
+  case_set_reg(20);
+  case_set_reg(21);
+  case_set_reg(22);
+  case_set_reg(23);
+  case_set_reg(24);
+  case_set_reg(25);
+  case_set_reg(26);
+  case_set_reg(27);
+  case_set_reg(28);
+  case_set_reg(29);
+  case_set_reg(30);
+  case_set_reg(31);
+
+#undef case_set_reg
+
+  case 32:
+    zPC = regval;
+    break;
+  default:
+    dprintf(conn->log_fd, "unrecognized register number %ld\n", regno);
+    exit(1);
+  }
+  append_rsp_buf_msg(conn, resp, "OK");
+}
+
 static void handle_step(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
   if (match_req_cmd(req, "s#")) {
     // step at current address
@@ -391,30 +499,16 @@ static void handle_step(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_b
   make_error_resp(conn, resp, 1);
 }
 
-static int extract_hex_integer(struct rsp_conn *conn, struct rsp_buf *req, int *start_ofs, char terminator, uint64_t *val) {
-  *val = 0;
-  int i = *start_ofs;
-  while (true) {
-    if (i >= req->bufsz) return -1;
-    if (req->cmd_buf[i] == terminator) break;
-    *val <<= 4;
-    *val |= int_of_hex(req->cmd_buf[i]) & 0xf;
-    i++;
-  }
-  *start_ofs = i;
-  return 0;
-}
-
 static void handle_read_mem(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
   // extract addr,length
   int ofs = 1; // past 'm'
   uint64_t addr = 0, len = 0;
-  if (extract_hex_integer(conn, req, &ofs, ',', &addr) < 0) {
+  if (extract_hex_integer_be(conn, req, &ofs, ',', &addr) < 0) {
     dprintf(conn->log_fd, "internal error: no 'm' packet terminator ',' found\n");
     exit(1);
   }
   ofs++;
-  if (extract_hex_integer(conn, req, &ofs, '#', &len) < 0) {
+  if (extract_hex_integer_be(conn, req, &ofs, '#', &len) < 0) {
     dprintf(conn->log_fd, "internal error: no 'm' packet terminator '#' found\n");
     exit(1);
   }
@@ -430,12 +524,12 @@ static void handle_write_mem(struct rsp_conn *conn, struct rsp_buf *req, struct 
   // extract addr,length
   int ofs = 1; // past 'M'
   uint64_t addr = 0, len = 0;
-  if (extract_hex_integer(conn, req, &ofs, ',', &addr) < 0) {
+  if (extract_hex_integer_be(conn, req, &ofs, ',', &addr) < 0) {
     dprintf(conn->log_fd, "internal error: no 'M' packet terminator ',' found\n");
     exit(1);
   }
   ofs++;
-  if (extract_hex_integer(conn, req, &ofs, ':', &len) < 0) {
+  if (extract_hex_integer_be(conn, req, &ofs, ':', &len) < 0) {
     dprintf(conn->log_fd, "internal error: no 'M' packet terminator ':' found\n");
     exit(1);
   }
@@ -487,6 +581,9 @@ static void dispatch_req(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_
     break;
   case 'g':
     handle_regs_read(conn, req, resp);
+    break;
+  case 'P':
+    handle_reg_write(conn, req, resp);
     break;
   case 'H':
     handle_set_context(conn, req, resp);
