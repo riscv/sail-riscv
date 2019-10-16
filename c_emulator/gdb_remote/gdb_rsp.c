@@ -32,9 +32,19 @@ typedef enum {
   M_RUN_HALT
 } model_run_state_t;
 
+struct sw_breakpoint {
+  int active;     // 0 -> inactive
+  int kind;       // either 2 (c.ebreak) or 4 (ebreak)
+  uint64_t addr;  // pc
+  uint64_t mem_bytes[4]; // saved copy of #type original bytes
+};
+
+#define MAX_BREAKPOINTS 64
+
 struct model_state {
   model_run_state_t run_state;
   mach_int step_no;
+  struct sw_breakpoint breakpoints[MAX_BREAKPOINTS];
 };
 
 struct rsp_conn {
@@ -46,6 +56,12 @@ struct rsp_conn {
 };
 
 static struct rsp_conn conn;
+
+void static init_gdb_model(struct model_state *model) {
+  memset(model, 0, sizeof(*model));
+  model->run_state = M_RUN_START;
+  model->step_no = 0;
+}
 
 int gdb_server_init(int port, int log_fd) {
   int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -77,8 +93,7 @@ int gdb_server_init(int port, int log_fd) {
   conn.listen_fd = sock;
   conn.log_fd = log_fd;
   conn.proto.send_acks = 1;  // start out sending acks
-  conn.model.run_state = M_RUN_START;
-  conn.model.step_no = 0;
+  init_gdb_model(&conn.model);
   return 0;
 }
 
@@ -116,8 +131,7 @@ void push_hex_byte(char *buf, uint8_t byte) {
   buf[1] = hex_of_int(byte & 0xf);
 }
 
-
-// big-endian
+// big-endian hex
 static int extract_hex_integer_be(struct rsp_conn *conn, struct rsp_buf *req, int *start_ofs, char terminator, uint64_t *val) {
   *val = 0;
   int i = *start_ofs;
@@ -132,6 +146,7 @@ static int extract_hex_integer_be(struct rsp_conn *conn, struct rsp_buf *req, in
   return 0;
 }
 
+// little-endian hex
 static int extract_hex_integer_le(struct rsp_conn *conn, struct rsp_buf *req, int *start_ofs, char terminator, uint64_t *val) {
   *val = 0;
   int i = *start_ofs;
@@ -153,6 +168,62 @@ static int extract_hex_integer_le(struct rsp_conn *conn, struct rsp_buf *req, in
     shft +=8;
   }
   *start_ofs = i;
+  return 0;
+}
+
+// breakpoint utils
+static int insert_breakpoint(struct rsp_conn *conn, uint64_t addr, uint64_t kind) {
+  assert(kind == 2 || kind == 4);
+  for (int i = 0; i < MAX_BREAKPOINTS; i++) {
+    struct sw_breakpoint *bpt = &conn->model.breakpoints[i];
+    if (!bpt->active) {
+      bpt->addr = addr;
+      bpt->kind = (int)kind;
+      bpt->active = 1;
+      for (int j = 0; j < kind; j++) {
+        bpt->mem_bytes[j] = read_mem(addr + j);
+      }
+      if (kind == 2) {
+        // store C.EBREAK: 0x90.02
+        write_mem(addr,   (uint64_t) 0x02);
+        write_mem(addr+1, (uint64_t) 0x90);
+      } else {
+        // store EBREAK: 0x00.10.00.73
+        write_mem(addr,   (uint64_t) 0x73);
+        write_mem(addr+1, (uint64_t) 0x00);
+        write_mem(addr+2, (uint64_t) 0x10);
+        write_mem(addr+3, (uint64_t) 0x00);
+      }
+      bpt->active = 1;
+      return 0;
+    }
+  }
+  return -1;
+}
+
+static int remove_breakpoint(struct rsp_conn *conn, uint64_t addr, uint64_t kind) {
+  for (int i = 0; i < MAX_BREAKPOINTS; i++) {
+    struct sw_breakpoint *bpt = &conn->model.breakpoints[i];
+    if (!bpt->active || bpt->addr != addr) continue;
+    if (!bpt->kind != kind) {
+      dprintf(conn->log_fd, "mismatched breakpoint kind: have %d, was given %ld!\n",
+              bpt->kind, kind);
+      return -1;
+    }
+    for (int j = 0; j < bpt->kind; j++) {
+      write_mem(addr + j, bpt->mem_bytes[j]);
+    }
+    bpt->active = 0;
+    return 0;
+  }
+  return -1;
+}
+
+static int match_breakpoint(struct rsp_conn *conn, uint64_t addr) {
+  for (int i = 0; i < MAX_BREAKPOINTS; i++) {
+    struct sw_breakpoint *bpt = &conn->model.breakpoints[i];
+    if (bpt->active && bpt->addr == addr) return 1;
+  }
   return 0;
 }
 
@@ -266,6 +337,9 @@ static void prepare_resp(struct rsp_conn *conn, struct rsp_buf *r) {
 }
 static void make_empty_resp(struct rsp_conn *conn, struct rsp_buf *r) {
 }
+static void make_ok_resp(struct rsp_conn *conn, struct rsp_buf *r) {
+  append_rsp_buf_msg(conn, r, "OK");
+}
 static void make_error_resp(struct rsp_conn *conn, struct rsp_buf *r, unsigned char err) {
   while (r->bufofs + 3 > r->bufsz) {
     grow_rsp_buf(conn, r);
@@ -286,7 +360,7 @@ static void handle_query(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_
     return;
   }
   if (match_req_cmd(req, "QStartNoAckMode")) {
-    append_rsp_buf_msg(conn, resp, "OK");
+    make_ok_resp(conn, resp);
     conn->proto.send_acks = 0;
     return;
   }
@@ -316,7 +390,7 @@ static void handle_query(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_
     return;
   }
   if (match_req_cmd(req, "qSymbol::")) {
-    append_rsp_buf_msg(conn, resp, "OK");
+    make_ok_resp(conn, resp);
     return;
   }
   make_empty_resp(conn, resp);
@@ -333,7 +407,7 @@ static void handle_set_context(struct rsp_conn *conn, struct rsp_buf *req, struc
   if (match_req_cmd(req, "H")) {
     // we do not support thread-specific operations
     if (req->cmd_buf[2] == '0' || (req->cmd_buf[2] == '-' && req->cmd_buf[3] == '1')) {
-      append_rsp_buf_msg(conn, resp, "OK");
+      make_ok_resp(conn, resp);
       return;
     }
   }
@@ -474,7 +548,7 @@ static void handle_reg_write(struct rsp_conn *conn, struct rsp_buf *req, struct 
     dprintf(conn->log_fd, "unrecognized register number %ld\n", regno);
     exit(1);
   }
-  append_rsp_buf_msg(conn, resp, "OK");
+  make_ok_resp(conn, resp);
 }
 
 static void handle_step(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
@@ -545,7 +619,7 @@ static void handle_write_mem(struct rsp_conn *conn, struct rsp_buf *req, struct 
     byte += int_of_hex(req->cmd_buf[ofs++]);
     write_mem(addr++, byte);
   }
-  append_rsp_buf_msg(conn, resp, "OK");
+  make_ok_resp(conn, resp);
 }
 
 static void handle_cont(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
@@ -563,10 +637,76 @@ static void handle_cont(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_b
         conn_exit(conn, 1);
       }
       if (stepped) conn->model.step_no++;
-      // todo: handle breakpoints/watchpoints
+
+      if (match_breakpoint(conn, zPC)) {
+        // should we use model.run_state / handle_stop_reply?
+        /* this is equivalent to the interrupted signal code: SIGTRAP -> 5 */
+        append_rsp_buf_msg(conn, resp, "S");
+        append_rsp_buf_hex_byte(conn, resp, 5);
+        return;
+      }
     }
   }
   make_error_resp(conn, resp, 1);
+}
+
+static void handle_sw_breakpoint(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
+  if (match_req_cmd(req, "Z0,") || match_req_cmd(req, "z0,")) { // software breakpoint
+    // extract address and kind
+    uint64_t addr = 0, kind = 0;
+    int ofs = 3; // past Z0,
+    if (extract_hex_integer_be(conn, req, &ofs, ',', &addr) < 0) {
+      dprintf(conn->log_fd, "internal error: no '{Zz}0' packet terminator ',' found\n");
+      exit(1);
+    }
+
+    ofs++;
+    switch (req->cmd_buf[ofs]) {
+    case '2':
+      kind = 2;
+      break;
+    case '4':
+      kind = 4;
+      break;
+    default:
+      dprintf(conn->log_fd, "error: unexpected '{Zz}0' kind found\n");
+      make_error_resp(conn, resp, 1);
+      return;
+    }
+
+    ofs++;
+    switch (req->cmd_buf[ofs]) {
+    case '#':
+      // expected case, no byte-coded condition triggers
+      break;
+    case ';':
+    default:
+      dprintf(conn->log_fd, "conditional triggers for breakpoints not supported\n");
+      make_empty_resp(conn, resp);
+      return;
+    }
+
+    if (req->cmd_buf[1] == 'Z') {
+      dprintf(conn->log_fd, "setting breakpoint at addr=0x%016" PRIx64 " of kind %ld\n",
+              addr, kind);
+      if (insert_breakpoint(conn, addr, kind) < 0) {
+        dprintf(conn->log_fd, "out of breakpoint slots!\n");
+        make_error_resp(conn, resp, 1);
+        return;
+      }
+    } else {
+      dprintf(conn->log_fd, "removing breakpoint at addr=0x%016" PRIx64 " of kind %ld\n",
+              addr, kind);
+      if (remove_breakpoint(conn, addr, kind) < 0) {
+        make_error_resp(conn, resp, 1);
+        return;
+      }
+    }
+
+    make_ok_resp(conn, resp);
+    return;
+  }
+  make_empty_resp(conn, resp);
 }
 
 static void dispatch_req(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
@@ -607,6 +747,13 @@ static void dispatch_req(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_
     break;
   case 'c':
     handle_cont(conn, req, resp);
+    break;
+  case 'Z':
+    handle_sw_breakpoint(conn, req, resp);
+    break;
+  case 'X':
+    // force use of 'M': send an empty response
+    make_empty_resp(conn, resp);
     break;
   default:
     dprintf(conn->log_fd, "Unsupported cmd %c\n", req->cmd_buf[0]);
