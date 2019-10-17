@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,7 +85,6 @@ int gdb_server_init(int port, int log_fd) {
     dprintf(log_fd, "Unable to bind to port %d: %s\n", port, strerror(errno));
     return -1;
   }
-  // todo: mark non-blocking
   if (listen(sock, 2) < 0) {
     dprintf(log_fd, "Unable to listen on socket: %s\n", strerror(errno));
     return -1;
@@ -272,6 +272,9 @@ static void append_rsp_buf_hex_byte(struct rsp_conn *conn, struct rsp_buf *b, un
 static struct rsp_buf req  = { NULL, 0, 0 };
 static struct rsp_buf resp = { NULL, 0, 0 };
 
+static int expect_interrupt_req = 0;
+static int interrupt_reqs = 0; // interrupts are supposed to be queued
+
 static int read_req(struct rsp_conn *conn, struct rsp_buf *req) {
   static char buf[BUFSZ+1];
 
@@ -284,7 +287,8 @@ static int read_req(struct rsp_conn *conn, struct rsp_buf *req) {
   while (1) {
   do_read:
     nbytes = read(conn->conn_fd, buf, BUFSZ);
-    if (nbytes <= 0) {
+    if (nbytes < 0) {
+      if (!saw_start && errno == EAGAIN) return 0;
       dprintf(conn->log_fd, "[dbg] Error reading socket: %s\n", strerror(errno));
       conn_exit(conn, 1);
     }
@@ -294,10 +298,16 @@ static int read_req(struct rsp_conn *conn, struct rsp_buf *req) {
     }
     dprintf(conn->log_fd, "\n");
 
+    if (!saw_start && nbytes == 0) return 0;
+
     int ofs = 0;
     if (!saw_start) {
       /* wait for the '$' */
       while (buf[ofs] != '$') {
+        if (expect_interrupt_req && (buf[ofs] == 0x3)) { // 0x3 == ^c
+          interrupt_reqs++;
+          return 1;
+        }
         ofs++;
         if (ofs == nbytes) {
           goto do_read;
@@ -322,6 +332,7 @@ static int read_req(struct rsp_conn *conn, struct rsp_buf *req) {
       break;
     }
   }
+  return 1;
 }
 
 static int match_req_cmd(struct rsp_buf *req, const char *cmd) {
@@ -688,6 +699,9 @@ static void handle_write_mem(struct rsp_conn *conn, struct rsp_buf *req, struct 
 
 static void handle_cont(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
   if (match_req_cmd(req, "c#")) { // todo: handle pc argument
+    // allow interrupt requests
+    expect_interrupt_req = 1;
+    int step_cnt = 0;
     // continue at current address
     while (!zhtif_done) { // fixme: we may not have a legal zhtif!
       sail_int sail_step;
@@ -707,9 +721,28 @@ static void handle_cont(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_b
         /* this is equivalent to the interrupted signal code: SIGTRAP -> 5 */
         append_rsp_buf_msg(conn, resp, "S");
         append_rsp_buf_hex_byte(conn, resp, 5);
-        return;
+        break;
+      }
+      step_cnt++;
+      if (step_cnt == 50) {
+        step_cnt = 0;
+        if (read_req(conn, req)) {
+          if (interrupt_reqs > 0) {
+            --interrupt_reqs;
+            dprintf(conn->log_fd, "interrupted, breaking\n");
+          } else {
+            dprintf(conn->log_fd, "got another request during cont, breaking\n");
+          }
+          // send a stop-reply as above
+          append_rsp_buf_msg(conn, resp, "S");
+          append_rsp_buf_hex_byte(conn, resp, 5);
+          break;
+        }
       }
     }
+    // disable interrupt requests
+    expect_interrupt_req = 0;
+    return;
   }
   make_error_resp(conn, resp, 1);
 }
@@ -865,7 +898,9 @@ static void send_resp(struct rsp_conn *conn, struct rsp_buf *r) {
 
 static void gdb_server_dispatch(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
   while (1) {
-    read_req(conn, req);
+    while (!read_req(conn, req))  // should move to a select loop :p
+      ;
+
     dispatch_req(conn, req, resp);
 
     resp_set_checksum(conn, resp);
@@ -881,6 +916,11 @@ void gdb_server_run(void) {
     dprintf(conn.log_fd, "[dbg] error accepting connection: %s\n", strerror(errno));
     exit(1);
   }
+  if (fcntl(conn.conn_fd, F_SETFL, O_NONBLOCK) < 0) {
+    dprintf(conn.log_fd, "[dbg] error making connection non-blocking: %s\n", strerror(errno));
+    exit(1);
+  }
+
   grow_rsp_buf(&conn, &req);
   grow_rsp_buf(&conn, &resp);
   gdb_server_dispatch(&conn, &req, &resp);
