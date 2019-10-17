@@ -205,7 +205,7 @@ static int remove_breakpoint(struct rsp_conn *conn, uint64_t addr, uint64_t kind
   for (int i = 0; i < MAX_BREAKPOINTS; i++) {
     struct sw_breakpoint *bpt = &conn->model.breakpoints[i];
     if (!bpt->active || bpt->addr != addr) continue;
-    if (!bpt->kind != kind) {
+    if (bpt->kind != kind) {
       dprintf(conn->log_fd, "mismatched breakpoint kind: have %d, was given %ld!\n",
               bpt->kind, kind);
       return -1;
@@ -437,7 +437,7 @@ static void handle_stop_reply(struct rsp_conn *conn, struct rsp_buf *req, struct
   }
 }
 
-static void send_reg(struct rsp_conn *conn, struct rsp_buf *r, mach_bits reg) {
+static void send_reg_val(struct rsp_conn *conn, struct rsp_buf *r, mach_bits reg) {
   int nbytes = (zxlen_val == 32) ? 4 : 8;  // only RV32 or RV64 for now
   for (int i = 0; i < nbytes; i++) {
     unsigned char c = (unsigned char) (reg & 0xff);
@@ -447,39 +447,103 @@ static void send_reg(struct rsp_conn *conn, struct rsp_buf *r, mach_bits reg) {
 }
 
 static void handle_regs_read(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
-  send_reg(conn, resp, zx1);
-  send_reg(conn, resp, zx2);
-  send_reg(conn, resp, zx3);
-  send_reg(conn, resp, zx4);
-  send_reg(conn, resp, zx5);
-  send_reg(conn, resp, zx6);
-  send_reg(conn, resp, zx7);
-  send_reg(conn, resp, zx8);
-  send_reg(conn, resp, zx9);
-  send_reg(conn, resp, zx10);
-  send_reg(conn, resp, zx11);
-  send_reg(conn, resp, zx12);
-  send_reg(conn, resp, zx13);
-  send_reg(conn, resp, zx14);
-  send_reg(conn, resp, zx15);
-  send_reg(conn, resp, zx16);
-  send_reg(conn, resp, zx17);
-  send_reg(conn, resp, zx18);
-  send_reg(conn, resp, zx19);
-  send_reg(conn, resp, zx20);
-  send_reg(conn, resp, zx20);
-  send_reg(conn, resp, zx21);
-  send_reg(conn, resp, zx22);
-  send_reg(conn, resp, zx23);
-  send_reg(conn, resp, zx24);
-  send_reg(conn, resp, zx25);
-  send_reg(conn, resp, zx26);
-  send_reg(conn, resp, zx27);
-  send_reg(conn, resp, zx28);
-  send_reg(conn, resp, zx29);
-  send_reg(conn, resp, zx30);
-  send_reg(conn, resp, zx31);
-  send_reg(conn, resp, zPC);
+  send_reg_val(conn, resp, zx1);
+  send_reg_val(conn, resp, zx2);
+  send_reg_val(conn, resp, zx3);
+  send_reg_val(conn, resp, zx4);
+  send_reg_val(conn, resp, zx5);
+  send_reg_val(conn, resp, zx6);
+  send_reg_val(conn, resp, zx7);
+  send_reg_val(conn, resp, zx8);
+  send_reg_val(conn, resp, zx9);
+  send_reg_val(conn, resp, zx10);
+  send_reg_val(conn, resp, zx11);
+  send_reg_val(conn, resp, zx12);
+  send_reg_val(conn, resp, zx13);
+  send_reg_val(conn, resp, zx14);
+  send_reg_val(conn, resp, zx15);
+  send_reg_val(conn, resp, zx16);
+  send_reg_val(conn, resp, zx17);
+  send_reg_val(conn, resp, zx18);
+  send_reg_val(conn, resp, zx19);
+  send_reg_val(conn, resp, zx20);
+  send_reg_val(conn, resp, zx21);
+  send_reg_val(conn, resp, zx22);
+  send_reg_val(conn, resp, zx23);
+  send_reg_val(conn, resp, zx24);
+  send_reg_val(conn, resp, zx25);
+  send_reg_val(conn, resp, zx26);
+  send_reg_val(conn, resp, zx27);
+  send_reg_val(conn, resp, zx28);
+  send_reg_val(conn, resp, zx29);
+  send_reg_val(conn, resp, zx30);
+  send_reg_val(conn, resp, zx31);
+  send_reg_val(conn, resp, zPC);
+}
+
+static void handle_reg_read(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
+  // extract regno,regval
+  int ofs = 1; // past 'p'
+  uint64_t regno = 0, regval = 0;
+  if (extract_hex_integer_be(conn, req, &ofs, '#', &regno) < 0) {
+    dprintf(conn->log_fd, "internal error: no 'p' packet terminator '#' found\n");
+    exit(1);
+  }
+
+  switch (regno) {
+
+  case 0:
+    regval = 0;
+    break;
+
+#define case_reg(reg)                           \
+    case reg:                                   \
+      regval = zx ## reg;                       \
+      break
+
+  case_reg(1);
+  case_reg(2);
+  case_reg(3);
+  case_reg(4);
+  case_reg(5);
+  case_reg(6);
+  case_reg(7);
+  case_reg(8);
+  case_reg(9);
+  case_reg(10);
+  case_reg(11);
+  case_reg(12);
+  case_reg(13);
+  case_reg(14);
+  case_reg(15);
+  case_reg(16);
+  case_reg(17);
+  case_reg(18);
+  case_reg(19);
+  case_reg(20);
+  case_reg(21);
+  case_reg(22);
+  case_reg(23);
+  case_reg(24);
+  case_reg(25);
+  case_reg(26);
+  case_reg(27);
+  case_reg(28);
+  case_reg(29);
+  case_reg(30);
+  case_reg(31);
+
+#undef case_reg
+
+  case 32:
+    regval = zPC;
+    break;
+  default:
+    dprintf(conn->log_fd, "unrecognized register number %ld\n", regno);
+    exit(1);
+  }
+  dprintf(conn->log_fd, "read reg %ld as 0x%016" PRIx64 "\n", regno, regval);
+  send_reg_val(conn, resp, regval);
 }
 
 static void handle_reg_write(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
@@ -502,44 +566,44 @@ static void handle_reg_write(struct rsp_conn *conn, struct rsp_buf *req, struct 
     dprintf(conn->log_fd, "ignoring attempt to write $zero\n");
     break;
 
-#define case_set_reg(reg)                       \
-  case reg:                                     \
-    zx ## reg = regval;                         \
-    break
+#define case_reg(reg)                           \
+    case reg:                                   \
+      zx ## reg = regval;                       \
+      break
 
-  case_set_reg(1);
-  case_set_reg(2);
-  case_set_reg(3);
-  case_set_reg(4);
-  case_set_reg(5);
-  case_set_reg(6);
-  case_set_reg(7);
-  case_set_reg(8);
-  case_set_reg(9);
-  case_set_reg(10);
-  case_set_reg(11);
-  case_set_reg(12);
-  case_set_reg(13);
-  case_set_reg(14);
-  case_set_reg(15);
-  case_set_reg(16);
-  case_set_reg(17);
-  case_set_reg(18);
-  case_set_reg(19);
-  case_set_reg(20);
-  case_set_reg(21);
-  case_set_reg(22);
-  case_set_reg(23);
-  case_set_reg(24);
-  case_set_reg(25);
-  case_set_reg(26);
-  case_set_reg(27);
-  case_set_reg(28);
-  case_set_reg(29);
-  case_set_reg(30);
-  case_set_reg(31);
+  case_reg(1);
+  case_reg(2);
+  case_reg(3);
+  case_reg(4);
+  case_reg(5);
+  case_reg(6);
+  case_reg(7);
+  case_reg(8);
+  case_reg(9);
+  case_reg(10);
+  case_reg(11);
+  case_reg(12);
+  case_reg(13);
+  case_reg(14);
+  case_reg(15);
+  case_reg(16);
+  case_reg(17);
+  case_reg(18);
+  case_reg(19);
+  case_reg(20);
+  case_reg(21);
+  case_reg(22);
+  case_reg(23);
+  case_reg(24);
+  case_reg(25);
+  case_reg(26);
+  case_reg(27);
+  case_reg(28);
+  case_reg(29);
+  case_reg(30);
+  case_reg(31);
 
-#undef case_set_reg
+#undef case_reg
 
   case 32:
     zPC = regval;
@@ -623,7 +687,7 @@ static void handle_write_mem(struct rsp_conn *conn, struct rsp_buf *req, struct 
 }
 
 static void handle_cont(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
-  if (match_req_cmd(req, "s#")) { // todo: handle pc argument
+  if (match_req_cmd(req, "c#")) { // todo: handle pc argument
     // continue at current address
     while (!zhtif_done) { // fixme: we may not have a legal zhtif!
       sail_int sail_step;
@@ -686,7 +750,7 @@ static void handle_sw_breakpoint(struct rsp_conn *conn, struct rsp_buf *req, str
       return;
     }
 
-    if (req->cmd_buf[1] == 'Z') {
+    if (req->cmd_buf[0] == 'Z') {
       dprintf(conn->log_fd, "setting breakpoint at addr=0x%016" PRIx64 " of kind %ld\n",
               addr, kind);
       if (insert_breakpoint(conn, addr, kind) < 0) {
@@ -722,6 +786,9 @@ static void dispatch_req(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_
   case 'g':
     handle_regs_read(conn, req, resp);
     break;
+  case 'p':
+    handle_reg_read(conn, req, resp);
+    break;
   case 'P':
     handle_reg_write(conn, req, resp);
     break;
@@ -749,6 +816,7 @@ static void dispatch_req(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_
     handle_cont(conn, req, resp);
     break;
   case 'Z':
+  case 'z':
     handle_sw_breakpoint(conn, req, resp);
     break;
   case 'X':
