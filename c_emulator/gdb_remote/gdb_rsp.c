@@ -37,7 +37,6 @@ struct sw_breakpoint {
   int active;     // 0 -> inactive
   int kind;       // either 2 (c.ebreak) or 4 (ebreak)
   uint64_t addr;  // pc
-  uint64_t mem_bytes[4]; // saved copy of #type original bytes
 };
 
 #define MAX_BREAKPOINTS 64
@@ -180,21 +179,6 @@ static int insert_breakpoint(struct rsp_conn *conn, uint64_t addr, uint64_t kind
       bpt->addr = addr;
       bpt->kind = (int)kind;
       bpt->active = 1;
-      for (int j = 0; j < kind; j++) {
-        bpt->mem_bytes[j] = read_mem(addr + j);
-      }
-      if (kind == 2) {
-        // store C.EBREAK: 0x90.02
-        write_mem(addr,   (uint64_t) 0x02);
-        write_mem(addr+1, (uint64_t) 0x90);
-      } else {
-        // store EBREAK: 0x00.10.00.73
-        write_mem(addr,   (uint64_t) 0x73);
-        write_mem(addr+1, (uint64_t) 0x00);
-        write_mem(addr+2, (uint64_t) 0x10);
-        write_mem(addr+3, (uint64_t) 0x00);
-      }
-      bpt->active = 1;
       return 0;
     }
   }
@@ -209,9 +193,6 @@ static int remove_breakpoint(struct rsp_conn *conn, uint64_t addr, uint64_t kind
       dprintf(conn->log_fd, "mismatched breakpoint kind: have %d, was given %ld!\n",
               bpt->kind, kind);
       return -1;
-    }
-    for (int j = 0; j < bpt->kind; j++) {
-      write_mem(addr + j, bpt->mem_bytes[j]);
     }
     bpt->active = 0;
     return 0;
