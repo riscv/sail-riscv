@@ -16,7 +16,7 @@ else
 endif
 
 # Instruction sources, depending on target
-SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail
+SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_misa_ext.sail
 SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
 SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
@@ -76,10 +76,12 @@ SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS) $(SA
 
 PLATFORM_OCAML_SRCS = $(addprefix ocaml_emulator/,platform.ml platform_impl.ml riscv_ocaml_sim.ml)
 
+SAIL_FLAGS += -dno_cast
+
 # Attempt to work with either sail from opam or built from repo in SAIL_DIR
 ifneq ($(SAIL_DIR),)
 # Use sail repo in SAIL_DIR
-SAIL:=$(SAIL_DIR)/sail -dno_cast
+SAIL:=$(SAIL_DIR)/sail
 export SAIL_DIR
 else
 # Use sail from opam package

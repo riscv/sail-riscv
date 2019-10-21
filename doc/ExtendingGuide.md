@@ -124,6 +124,12 @@ An extension might want to similarly check and transform accesses to
 the program counter.  This is supported by supplying implementations
 of the functions defined in `riscv_pc_access.sail`.
 
+In addition, dynamically enabling and disabling the RVC extension has
+an effect on legal PC alignment; in particular, attempts to disable
+RVC are ignored if the PC becomes unaligned in the base architecture.
+Extensions can also veto these attempts by appropriately defining
+`ext_veto_disable_C`.
+
 Adding new instructions
 -----------------------
 

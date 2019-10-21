@@ -275,30 +275,30 @@ register htif_exit_code : bits(64)
  */
 
 val htif_load : forall 'n, 'n > 0. (xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rreg}
-function htif_load(addr, width) = {
+function htif_load(paddr, width) = {
   if   get_config_print_platform()
-  then print_platform("htif[" ^ BitStr(addr) ^ "] -> " ^ BitStr(htif_tohost));
+  then print_platform("htif[" ^ BitStr(paddr) ^ "] -> " ^ BitStr(htif_tohost));
   /* FIXME: For now, only allow the expected access widths. */
-  if      width == 8 & (addr == plat_htif_tohost())
+  if      width == 8 & (paddr == plat_htif_tohost())
   then    MemValue(sail_zero_extend(htif_tohost, 64))         /* FIXME: Redundant zero_extend currently required by Lem backend */
-  else if width == 4 & addr == plat_htif_tohost()
+  else if width == 4 & paddr == plat_htif_tohost()
   then    MemValue(sail_zero_extend(htif_tohost[31..0], 32))  /* FIXME: Redundant zero_extend currently required by Lem backend */
-  else if width == 4 & addr == plat_htif_tohost() + 4
+  else if width == 4 & paddr == plat_htif_tohost() + 4
   then    MemValue(sail_zero_extend(htif_tohost[63..32], 32)) /* FIXME: Redundant zero_extend currently required by Lem backend */
   else    MemException(E_Load_Access_Fault())
 }
 
 /* The rreg,wreg effects are an artifact of using 'register' to implement device state. */
 val htif_store: forall 'n, 0 < 'n <= 8. (xlenbits, int('n), bits(8 * 'n)) -> MemoryOpResult(bool) effect {rreg,wreg}
-function htif_store(addr, width, data) = {
+function htif_store(paddr, width, data) = {
   if   get_config_print_platform()
-  then print_platform("htif[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data));
+  then print_platform("htif[" ^ BitStr(paddr) ^ "] <- " ^ BitStr(data));
   /* Store the written value so that we can ack it later. */
   if      width == 8
   then    { htif_tohost = EXTZ(data) }
-  else if width == 4 & addr == plat_htif_tohost()
+  else if width == 4 & paddr == plat_htif_tohost()
   then    { htif_tohost = vector_update_subrange(htif_tohost, 31, 0, data) }
-  else if width == 4 & addr == plat_htif_tohost() + 4
+  else if width == 4 & paddr == plat_htif_tohost() + 4
   then    { htif_tohost = vector_update_subrange(htif_tohost, 63, 32, data) }
   else    { htif_tohost = EXTZ(data) };
 
@@ -351,18 +351,18 @@ $else
 function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool = false
 $endif
 
-function mmio_read forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> MemoryOpResult(bits(8 * 'n)) =
-  if   within_clint(addr, width)
-  then clint_load(addr, width)
-  else if within_htif_readable(addr, width) & (1 <= 'n)
-  then htif_load(addr, width)
+function mmio_read forall 'n, 0 < 'n <= max_mem_access . (paddr : xlenbits, width : atom('n)) -> MemoryOpResult(bits(8 * 'n)) =
+  if   within_clint(paddr, width)
+  then clint_load(paddr, width)
+  else if within_htif_readable(paddr, width) & (1 <= 'n)
+  then htif_load(paddr, width)
   else MemException(E_Load_Access_Fault())
 
-function mmio_write forall 'n, 0 <'n <= max_mem_access . (addr : xlenbits, width : atom('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
-  if   within_clint(addr, width)
-  then clint_store(addr, width, data)
-  else if within_htif_writable(addr, width) & 'n <= 8
-  then htif_store(addr, width, data)
+function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : xlenbits, width : atom('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
+  if   within_clint(paddr, width)
+  then clint_store(paddr, width, data)
+  else if within_htif_writable(paddr, width) & 'n <= 8
+  then htif_store(paddr, width, data)
   else MemException(E_SAMO_Access_Fault())
 
 /* Platform initialization and ticking. */

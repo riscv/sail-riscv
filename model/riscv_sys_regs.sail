@@ -75,13 +75,18 @@ val sys_enable_writable_misa = {c: "sys_enable_writable_misa", ocaml: "Platform.
 /* whether misa.c was enabled at boot */
 val sys_enable_rvc = {c: "sys_enable_rvc", ocaml: "Platform.enable_rvc", _: "sys_enable_rvc"} : unit -> bool
 
+/* This function allows an extension to veto a write to Misa
+   if it would violate an alignment restriction on
+   unsetting C. If it returns true the write will have no effect. */
+val ext_veto_disable_C : unit -> bool effect {rreg}
+
 /* We currently only support dynamic changes for the C extension. */
 function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   if   sys_enable_writable_misa ()
   then { /* Allow modifications to C only for now. */
          let  v = Mk_Misa(v);
-         /* Suppress changing C if nextPC would become misaligned or C was disabled at boot. */
-         if   (v.C() == 0b0 & nextPC[1] == bitone) | ~(sys_enable_rvc())
+         /* Suppress changing C if nextPC would become misaligned or an extension vetoes or C was disabled at boot (i.e. not supported). */
+         if   (v.C() == 0b0 & (nextPC[1] == bitone | ext_veto_disable_C())) | ~(sys_enable_rvc())
          then m
          else update_C(m, v.C())
        }
