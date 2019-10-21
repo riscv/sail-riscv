@@ -17,7 +17,8 @@ endif
 
 # Instruction sources, depending on target
 SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_misa_ext.sail
-SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail
+SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail riscv_insts_fdext.sail
+
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
 SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
 
@@ -50,10 +51,15 @@ SAIL_REGS_SRCS = riscv_reg_type.sail riscv_regs.sail riscv_pc_access.sail riscv_
 SAIL_REGS_SRCS += riscv_pmp_regs.sail riscv_pmp_control.sail
 SAIL_REGS_SRCS += riscv_ext_regs.sail $(SAIL_CHECK_SRCS)
 
+SAIL_FD_SRCS  = riscv_flen_D.sail
+SAIL_FD_SRCS += riscv_freg_type.sail
+SAIL_FD_SRCS += riscv_fdext_regs.sail
+
 SAIL_ARCH_SRCS = $(PRELUDE)
 SAIL_ARCH_SRCS += riscv_types_ext.sail riscv_types.sail
 SAIL_ARCH_SRCS += riscv_vmem_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail
 SAIL_ARCH_SRCS += riscv_mem.sail $(SAIL_VM_SRCS)
+SAIL_ARCH_SRCS += $(SAIL_FD_SRCS)
 SAIL_ARCH_RVFI_SRCS = $(PRELUDE) rvfi_dii.sail riscv_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS)
 SAIL_STEP_SRCS = riscv_step_common.sail riscv_step_ext.sail riscv_decode_ext.sail riscv_fetch.sail riscv_step.sail
 RVFI_STEP_SRCS = riscv_step_common.sail riscv_step_rvfi.sail riscv_decode_ext.sail riscv_fetch_rvfi.sail riscv_step.sail
@@ -138,6 +144,12 @@ RISCV_EXTRAS_LEM = 0.11/riscv_extras.lem
 else
 RISCV_EXTRAS_LEM = riscv_extras.lem
 endif
+
+.PHONY: test
+test:
+	touch model/riscv_insts_base.sail
+	make  ocaml_emulator/riscv_ocaml_sim_$(ARCH)
+	./ocaml_emulator/riscv_ocaml_sim_RV64 test/riscv-tests/rv64ui-p-add.elf
 
 all: ocaml_emulator/riscv_ocaml_sim_$(ARCH) c_emulator/riscv_sim_$(ARCH) riscv_isa riscv_coq riscv_hol riscv_rmem
 .PHONY: all

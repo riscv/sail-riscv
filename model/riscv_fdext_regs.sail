@@ -121,7 +121,13 @@ function wF (r, in_v) = {
       print_reg("f" ^ string_of_int(r) ^ " <- " ^ FRegStr(v));
 }
 
-overload F = {rF, wF}
+function rF_bits(i: bits(5)) -> xlenbits = rF(unsigned(i))
+
+function wF_bits(i: bits(5), data: xlenbits) -> unit = {
+  wF(unsigned(i)) = data
+}
+
+overload F = {rF_bits, wF_bits, rF, wF}
 
 /* register names */
 
