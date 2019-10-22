@@ -299,12 +299,11 @@ static void send_reg_val(struct rsp_conn *conn, struct rsp_buf *r, mach_bits reg
 
 static void handle_regs_read(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
   mach_bits regval;
-  for (uint64_t i = 0; i < 32; i++) {
+  struct sail_arch *arch = conn->arch;
+  for (uint64_t i = 0; i <= arch->nregs; i++) {
     regval = conn->arch->get_reg(conn, conn->arch, i);
     send_reg_val(conn, resp, regval);
   }
-  regval = conn->arch->get_pc(conn, conn->arch);
-  send_reg_val(conn, resp, regval);
 }
 
 static void handle_reg_read(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
@@ -316,8 +315,7 @@ static void handle_reg_read(struct rsp_conn *conn, struct rsp_buf *req, struct r
     exit(1);
   }
 
-  uint64_t regval = (regno == 32) ?
-    conn->arch->get_pc(conn, conn->arch) : conn->arch->get_reg(conn, conn->arch, regno);
+  uint64_t regval = conn->arch->get_reg(conn, conn->arch, regno);
   dprintf(conn->log_fd, "read reg %ld as 0x%016" PRIx64 "\n", regno, regval);
   send_reg_val(conn, resp, regval);
 }
@@ -337,11 +335,7 @@ static void handle_reg_write(struct rsp_conn *conn, struct rsp_buf *req, struct 
   }
 
   dprintf(conn->log_fd, "setting reg %ld to 0x%016" PRIx64 "\n", regno, regval);
-
-  if (regno == 32)
-    conn->arch->set_pc(conn, conn->arch, regval);
-  else
-    conn->arch->set_reg(conn, conn->arch, regno, regval);
+  conn->arch->set_reg(conn, conn->arch, regno, regval);
 
   make_ok_resp(conn, resp);
 }
@@ -415,7 +409,7 @@ static void handle_cont(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_b
     struct sail_arch *arch = conn->arch;
     // continue at current address
     while (!arch->is_done(conn, arch)) {
-      if (!arch->step(conn, arch)) {
+      if (arch->step(conn, arch)) {
         dprintf(conn->log_fd, "unable to step model, exiting.\n");
         conn_exit(conn, 1);
       }

@@ -73,7 +73,7 @@ typedef enum {
 
 struct sail_arch {
   archlen_t archlen;
-  uint64_t  nregs;
+  uint64_t  nregs;    // inclusive bound, and typically includes the PC register
   mach_bits (*get_reg)(struct rsp_conn *conn, struct sail_arch *arch, uint64_t regno);
   mach_bits (*get_pc)(struct rsp_conn *conn, struct sail_arch *arch);
   void (*set_reg) (struct rsp_conn *conn, struct sail_arch *arch, uint64_t regno, mach_bits regval);

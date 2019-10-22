@@ -47,6 +47,9 @@ mach_bits riscv_get_reg(struct rsp_conn *conn, struct sail_arch *arch, uint64_t 
 
 #undef case_reg
 
+  case 32:
+    return zPC;
+
   default:
     dprintf(conn->log_fd, "unrecognized register number %ld\n", regno);
     conn_exit(conn, 1);
@@ -98,6 +101,10 @@ void riscv_set_reg(struct rsp_conn *conn, struct sail_arch *arch, uint64_t regno
   case_reg(31);
 
 #undef case_reg
+
+  case 32:
+    zPC = regval;
+    break;
 
   default:
     dprintf(conn->log_fd, "unrecognized register number %ld\n", regno);
