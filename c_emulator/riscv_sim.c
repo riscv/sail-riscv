@@ -17,6 +17,7 @@
 #include "riscv_platform.h"
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
+#include "gdb_remote/gdb_arch.h"
 #include "gdb_remote/gdb_rsp.h"
 
 #ifdef ENABLE_SPIKE
@@ -914,9 +915,18 @@ int main(int argc, char **argv)
   }
 
   if (gdb_port > 0) {
-    if (gdb_server_init(gdb_port, 2) < 0)
+    struct rsp_conn *conn = gdb_server_init(gdb_port, 2);
+    if (conn == NULL) {
+      fprintf(stderr, "Cannot initialize gdb server, exiting.\n");
       exit(1);
-    gdb_server_run();
+    }
+    struct sail_arch *arch = get_gdb_riscv_arch();
+    if (arch == NULL) {
+      fprintf(stderr, "Cannot initialize sail interface, exiting.\n");
+      exit(1);
+    }
+    gdb_server_set_arch(conn, arch);
+    gdb_server_run(conn);
     exit(0);
   }
 

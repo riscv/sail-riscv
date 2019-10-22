@@ -13,66 +13,25 @@
 #include "elf.h"
 #include "sail.h"
 #include "rts.h"
-#include "riscv_platform.h"
-#include "riscv_platform_impl.h"
-#include "riscv_sail.h"
+#include "gdb_utils.h"
+#include "gdb_arch.h"
 
 // to develop and debug the protocol, set the debug flag on gdb:
 //
 // (gdb) set debug remote 1
 // (gdb) target remote localhost:<port>
 
-struct proto_state {
-  int send_acks;
-};
-
-typedef enum {
-  M_RUN_START,
-  M_RUN_RUNNING,
-  M_RUN_BREAKPOINT,
-  M_RUN_HALT
-} model_run_state_t;
-
-struct sw_breakpoint {
-  int active;     // 0 -> inactive
-  int kind;       // either 2 (c.ebreak) or 4 (ebreak)
-  uint64_t addr;  // pc
-};
-
-#define MAX_BREAKPOINTS 64
-
-struct model_state {
-  model_run_state_t run_state;
-  mach_int step_no;
-  struct sw_breakpoint breakpoints[MAX_BREAKPOINTS];
-};
-
-struct rsp_conn {
-  int listen_fd;
-  int conn_fd;
-  int log_fd;
-  struct proto_state proto;
-  struct model_state model;
-};
-
-static struct rsp_conn conn;
-
-void static init_gdb_model(struct model_state *model) {
-  memset(model, 0, sizeof(*model));
-  model->run_state = M_RUN_START;
-  model->step_no = 0;
-}
-
-int gdb_server_init(int port, int log_fd) {
+struct rsp_conn *gdb_server_init(int port, int log_fd) {
   int sock = socket(AF_INET, SOCK_STREAM, 0);
   int opt = 1;
   if (sock < 0) {
     dprintf(log_fd, "Unable to open socket for port %d: %s\n", port, strerror(errno));
-    return -1;
+    return NULL;
   }
   if (setsockopt(sock, SOL_SOCKET, (SO_REUSEPORT | SO_REUSEADDR), (char *)&opt, sizeof(opt)) < 0) {
     dprintf(log_fd, "Cannot set reuse option on socket: %s\n", strerror(errno));
-    return -1;
+    close(sock);
+    return NULL;
   }
 
   struct sockaddr_in saddr;
@@ -82,92 +41,29 @@ int gdb_server_init(int port, int log_fd) {
   saddr.sin_port = htons(port);
   if (bind(sock, (struct sockaddr*)&saddr, sizeof(saddr)) < 0) {
     dprintf(log_fd, "Unable to bind to port %d: %s\n", port, strerror(errno));
-    return -1;
+    close(sock);
+    return NULL;
   }
   if (listen(sock, 2) < 0) {
     dprintf(log_fd, "Unable to listen on socket: %s\n", strerror(errno));
-    return -1;
+    close(sock);
+    return NULL;
+  }
+  struct rsp_conn *conn = (struct rsp_conn *)malloc(sizeof(*conn));
+  if (conn == NULL) {
+    close(sock);
+    return NULL;
   }
   dprintf(log_fd, "listening on port %d\n", port);
-  conn.listen_fd = sock;
-  conn.log_fd = log_fd;
-  conn.proto.send_acks = 1;  // start out sending acks
-  init_gdb_model(&conn.model);
-  return 0;
+  conn->listen_fd = sock;
+  conn->log_fd = log_fd;
+  conn->proto.send_acks = 1;  // start out sending acks
+  init_gdb_model(&conn->model);
+  return conn;
 }
 
-void conn_exit(struct rsp_conn *conn, int code) {
-  close(conn->conn_fd);
-  close(conn->listen_fd);
-  close(conn->log_fd);
-  exit(code);
-}
-
-#define BUFSZ 2048
-struct rsp_buf {
-  char *cmd_buf;
-  int bufofs;
-  int bufsz;
-};
-
-// hex utils
-
-int int_of_hex(char c) {
-  if      ('0' <= c && c <= '9') { return c - '0'; }
-  else if ('a' <= c && c <= 'f') { return c - 'a' + 10; }
-  else if ('A' <= c && c <= 'F') { return c - 'A' + 10; }
-  else                           { return 0; }
-}
-
-char hex_of_int(unsigned val) {
-  assert(val < 16);
-  if (val < 10) { return val + '0'; }
-  else          { return val - 10 + 'a'; }
-}
-
-void push_hex_byte(char *buf, uint8_t byte) {
-  buf[0] = hex_of_int(byte >> 4);
-  buf[1] = hex_of_int(byte & 0xf);
-}
-
-// big-endian hex
-static int extract_hex_integer_be(struct rsp_conn *conn, struct rsp_buf *req, int *start_ofs, char terminator, uint64_t *val) {
-  *val = 0;
-  int i = *start_ofs;
-  while (true) {
-    if (i >= req->bufsz) return -1;
-    if (req->cmd_buf[i] == terminator) break;
-    *val <<= 4;
-    *val |= int_of_hex(req->cmd_buf[i]) & 0xf;
-    i++;
-  }
-  *start_ofs = i;
-  return 0;
-}
-
-// little-endian hex
-static int extract_hex_integer_le(struct rsp_conn *conn, struct rsp_buf *req, int *start_ofs, char terminator, uint64_t *val) {
-  *val = 0;
-  int i = *start_ofs;
-  int shft = 0;
-  while (true) {
-    uint8_t byte;
-    if (i >= req->bufsz) return -1;
-    if (req->cmd_buf[i] == terminator) break;
-
-    byte = int_of_hex(req->cmd_buf[i++]);
-    byte <<= 4;
-
-    if (i >= req->bufsz) return -1;
-    if (req->cmd_buf[i] == terminator) return -1; // unexpected terminator in middle of byte
-
-    byte |= int_of_hex(req->cmd_buf[i++]) & 0xf;
-
-    *val |= byte << shft;
-    shft +=8;
-  }
-  *start_ofs = i;
-  return 0;
+void gdb_server_set_arch(struct rsp_conn *conn, struct sail_arch *arch) {
+  conn->arch = arch;
 }
 
 // breakpoint utils
@@ -208,47 +104,7 @@ static int match_breakpoint(struct rsp_conn *conn, uint64_t addr) {
   return 0;
 }
 
-// buffer utils
-
-static void grow_rsp_buf(struct rsp_conn *conn, struct rsp_buf *b) {
-  if (b->cmd_buf == NULL) {
-    if ((b->cmd_buf = (char *)malloc(BUFSZ*sizeof(char) + 1)) == NULL) {
-      dprintf(conn->log_fd, "[dbg] unable to init cmd_buf\n");
-      conn_exit(conn, 1);
-    }
-    b->bufofs = 0;
-    b->bufsz = BUFSZ;
-    return;
-  }
-
-  b->cmd_buf = (char *)realloc(b->cmd_buf, 2*b->bufsz + 1);
-  if (b->cmd_buf == NULL) {
-    dprintf(conn->log_fd, "[dbg] cannot realloc to %d bytes, quitting!\n", 2*b->bufsz + 1);
-    conn_exit(conn, 1);
-  }
-  b->bufsz *= 2;
-}
-
-static void append_rsp_buf_bytes(struct rsp_conn *conn, struct rsp_buf *b, const char *msg, int mlen) {
-  while (b->bufofs + mlen >= b->bufsz) {
-    grow_rsp_buf(conn, b);
-  }
-  memcpy(b->cmd_buf + b->bufofs, msg, mlen);
-  b->bufofs += mlen;
-  b->cmd_buf[b->bufofs] = 0;
-}
-
-static void append_rsp_buf_msg(struct rsp_conn *conn, struct rsp_buf *b, const char *msg) {
-  append_rsp_buf_bytes(conn, b, msg, strlen(msg));
-}
-
-static void append_rsp_buf_hex_byte(struct rsp_conn *conn, struct rsp_buf *b, unsigned char byte) {
-  while (b->bufofs + 2 >= b->bufsz) {
-    grow_rsp_buf(conn, b);
-  }
-  push_hex_byte(b->cmd_buf + b->bufofs, byte);
-  b->bufofs += 2;
-}
+// request and response handling
 
 static struct rsp_buf req  = { NULL, 0, 0 };
 static struct rsp_buf resp = { NULL, 0, 0 };
@@ -422,7 +278,9 @@ static void handle_stop_reply(struct rsp_conn *conn, struct rsp_buf *req, struct
       append_rsp_buf_hex_byte(conn, resp, 5);
     }
     break;
+  case M_RUN_RUNNING:
   default:
+    // We shouldn't be getting this if we are running.
     dprintf(conn->log_fd, "Unhandled stop reply for state %d\n", conn->model.run_state);
     conn_exit(conn, 1);
     break;
@@ -430,7 +288,8 @@ static void handle_stop_reply(struct rsp_conn *conn, struct rsp_buf *req, struct
 }
 
 static void send_reg_val(struct rsp_conn *conn, struct rsp_buf *r, mach_bits reg) {
-  int nbytes = (zxlen_val == 32) ? 4 : 8;  // only RV32 or RV64 for now
+  struct sail_arch *arch = conn->arch;
+  int nbytes = (arch->archlen == ARCH32) ? 4 : 8;  // only RV32 or RV64 for now
   for (int i = 0; i < nbytes; i++) {
     unsigned char c = (unsigned char) (reg & 0xff);
     append_rsp_buf_hex_byte(conn, r, c);
@@ -439,101 +298,26 @@ static void send_reg_val(struct rsp_conn *conn, struct rsp_buf *r, mach_bits reg
 }
 
 static void handle_regs_read(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
-  send_reg_val(conn, resp, zx1);
-  send_reg_val(conn, resp, zx2);
-  send_reg_val(conn, resp, zx3);
-  send_reg_val(conn, resp, zx4);
-  send_reg_val(conn, resp, zx5);
-  send_reg_val(conn, resp, zx6);
-  send_reg_val(conn, resp, zx7);
-  send_reg_val(conn, resp, zx8);
-  send_reg_val(conn, resp, zx9);
-  send_reg_val(conn, resp, zx10);
-  send_reg_val(conn, resp, zx11);
-  send_reg_val(conn, resp, zx12);
-  send_reg_val(conn, resp, zx13);
-  send_reg_val(conn, resp, zx14);
-  send_reg_val(conn, resp, zx15);
-  send_reg_val(conn, resp, zx16);
-  send_reg_val(conn, resp, zx17);
-  send_reg_val(conn, resp, zx18);
-  send_reg_val(conn, resp, zx19);
-  send_reg_val(conn, resp, zx20);
-  send_reg_val(conn, resp, zx21);
-  send_reg_val(conn, resp, zx22);
-  send_reg_val(conn, resp, zx23);
-  send_reg_val(conn, resp, zx24);
-  send_reg_val(conn, resp, zx25);
-  send_reg_val(conn, resp, zx26);
-  send_reg_val(conn, resp, zx27);
-  send_reg_val(conn, resp, zx28);
-  send_reg_val(conn, resp, zx29);
-  send_reg_val(conn, resp, zx30);
-  send_reg_val(conn, resp, zx31);
-  send_reg_val(conn, resp, zPC);
+  mach_bits regval;
+  for (uint64_t i = 0; i < 32; i++) {
+    regval = conn->arch->get_reg(conn, conn->arch, i);
+    send_reg_val(conn, resp, regval);
+  }
+  regval = conn->arch->get_pc(conn, conn->arch);
+  send_reg_val(conn, resp, regval);
 }
 
 static void handle_reg_read(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
   // extract regno,regval
   int ofs = 1; // past 'p'
-  uint64_t regno = 0, regval = 0;
+  uint64_t regno = 0;
   if (extract_hex_integer_be(conn, req, &ofs, '#', &regno) < 0) {
     dprintf(conn->log_fd, "internal error: no 'p' packet terminator '#' found\n");
     exit(1);
   }
 
-  switch (regno) {
-
-  case 0:
-    regval = 0;
-    break;
-
-#define case_reg(reg)                           \
-    case reg:                                   \
-      regval = zx ## reg;                       \
-      break
-
-  case_reg(1);
-  case_reg(2);
-  case_reg(3);
-  case_reg(4);
-  case_reg(5);
-  case_reg(6);
-  case_reg(7);
-  case_reg(8);
-  case_reg(9);
-  case_reg(10);
-  case_reg(11);
-  case_reg(12);
-  case_reg(13);
-  case_reg(14);
-  case_reg(15);
-  case_reg(16);
-  case_reg(17);
-  case_reg(18);
-  case_reg(19);
-  case_reg(20);
-  case_reg(21);
-  case_reg(22);
-  case_reg(23);
-  case_reg(24);
-  case_reg(25);
-  case_reg(26);
-  case_reg(27);
-  case_reg(28);
-  case_reg(29);
-  case_reg(30);
-  case_reg(31);
-
-#undef case_reg
-
-  case 32:
-    regval = zPC;
-    break;
-  default:
-    dprintf(conn->log_fd, "unrecognized register number %ld\n", regno);
-    exit(1);
-  }
+  uint64_t regval = (regno == 32) ?
+    conn->arch->get_pc(conn, conn->arch) : conn->arch->get_reg(conn, conn->arch, regno);
   dprintf(conn->log_fd, "read reg %ld as 0x%016" PRIx64 "\n", regno, regval);
   send_reg_val(conn, resp, regval);
 }
@@ -551,76 +335,20 @@ static void handle_reg_write(struct rsp_conn *conn, struct rsp_buf *req, struct 
     dprintf(conn->log_fd, "internal error: no 'P' packet terminator '#' found\n");
     exit(1);
   }
+
   dprintf(conn->log_fd, "setting reg %ld to 0x%016" PRIx64 "\n", regno, regval);
 
-  switch (regno) {
-  case 0:
-    dprintf(conn->log_fd, "ignoring attempt to write $zero\n");
-    break;
+  if (regno == 32)
+    conn->arch->set_pc(conn, conn->arch, regval);
+  else
+    conn->arch->set_reg(conn, conn->arch, regno, regval);
 
-#define case_reg(reg)                           \
-    case reg:                                   \
-      zx ## reg = regval;                       \
-      break
-
-  case_reg(1);
-  case_reg(2);
-  case_reg(3);
-  case_reg(4);
-  case_reg(5);
-  case_reg(6);
-  case_reg(7);
-  case_reg(8);
-  case_reg(9);
-  case_reg(10);
-  case_reg(11);
-  case_reg(12);
-  case_reg(13);
-  case_reg(14);
-  case_reg(15);
-  case_reg(16);
-  case_reg(17);
-  case_reg(18);
-  case_reg(19);
-  case_reg(20);
-  case_reg(21);
-  case_reg(22);
-  case_reg(23);
-  case_reg(24);
-  case_reg(25);
-  case_reg(26);
-  case_reg(27);
-  case_reg(28);
-  case_reg(29);
-  case_reg(30);
-  case_reg(31);
-
-#undef case_reg
-
-  case 32:
-    zPC = regval;
-    break;
-  default:
-    dprintf(conn->log_fd, "unrecognized register number %ld\n", regno);
-    exit(1);
-  }
   make_ok_resp(conn, resp);
 }
 
 static void handle_step(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
   if (match_req_cmd(req, "s#")) {
-    // step at current address
-    sail_int sail_step;
-    bool stepped;
-    CREATE(sail_int)(&sail_step);
-    CONVERT_OF(sail_int, mach_int)(&sail_step, conn->model.step_no);
-    stepped = zstep(sail_step);
-    KILL(sail_int)(&sail_step);
-    if (have_exception) {
-      dprintf(conn->log_fd, "internal Sail exception, exiting!\n");
-      conn_exit(conn, 1);
-    }
-    if (stepped) conn->model.step_no++;
+    conn->arch->step(conn, conn->arch);
     /* stopping after a single step is equivalent to the interrupted signal code: SIGTRAP -> 5 */
     append_rsp_buf_msg(conn, resp, "S");
     append_rsp_buf_hex_byte(conn, resp, 5);
@@ -683,25 +411,19 @@ static void handle_cont(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_b
     // allow interrupt requests
     expect_interrupt_req = 1;
     int step_cnt = 0;
+    conn->model.run_state = M_RUN_RUNNING;
+    struct sail_arch *arch = conn->arch;
     // continue at current address
-    while (!zhtif_done) { // fixme: we may not have a legal zhtif!
-      sail_int sail_step;
-      bool stepped;
-      CREATE(sail_int)(&sail_step);
-      CONVERT_OF(sail_int, mach_int)(&sail_step, conn->model.step_no);
-      stepped = zstep(sail_step);
-      KILL(sail_int)(&sail_step);
-      if (have_exception) {
-        dprintf(conn->log_fd, "internal Sail exception, exiting!\n");
+    while (!arch->is_done(conn, arch)) {
+      if (!arch->step(conn, arch)) {
+        dprintf(conn->log_fd, "unable to step model, exiting.\n");
         conn_exit(conn, 1);
       }
-      if (stepped) conn->model.step_no++;
 
-      if (match_breakpoint(conn, zPC)) {
-        // should we use model.run_state / handle_stop_reply?
-        /* this is equivalent to the interrupted signal code: SIGTRAP -> 5 */
-        append_rsp_buf_msg(conn, resp, "S");
-        append_rsp_buf_hex_byte(conn, resp, 5);
+      mach_bits pc = arch->get_pc(conn, arch);
+      if (match_breakpoint(conn, pc)) {
+        conn->model.run_state = M_RUN_BREAKPOINT;
+        handle_stop_reply(conn, req, resp);
         break;
       }
       step_cnt++;
@@ -714,9 +436,9 @@ static void handle_cont(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_b
           } else {
             dprintf(conn->log_fd, "got another request during cont, breaking\n");
           }
+          conn->model.run_state = M_RUN_BREAKPOINT;
           // send a stop-reply as above
-          append_rsp_buf_msg(conn, resp, "S");
-          append_rsp_buf_hex_byte(conn, resp, 5);
+          handle_stop_reply(conn, req, resp);
           break;
         }
       }
@@ -892,17 +614,17 @@ static void gdb_server_dispatch(struct rsp_conn *conn, struct rsp_buf *req, stru
   }
 }
 
-void gdb_server_run(void) {
-  if ((conn.conn_fd = accept(conn.listen_fd, (struct sockaddr *)NULL, NULL)) < 0) {
-    dprintf(conn.log_fd, "[dbg] error accepting connection: %s\n", strerror(errno));
+void gdb_server_run(struct rsp_conn *conn) {
+  if ((conn->conn_fd = accept(conn->listen_fd, (struct sockaddr *)NULL, NULL)) < 0) {
+    dprintf(conn->log_fd, "[dbg] error accepting connection: %s\n", strerror(errno));
     exit(1);
   }
-  if (fcntl(conn.conn_fd, F_SETFL, O_NONBLOCK) < 0) {
-    dprintf(conn.log_fd, "[dbg] error making connection non-blocking: %s\n", strerror(errno));
+  if (fcntl(conn->conn_fd, F_SETFL, O_NONBLOCK) < 0) {
+    dprintf(conn->log_fd, "[dbg] error making connection non-blocking: %s\n", strerror(errno));
     exit(1);
   }
 
-  grow_rsp_buf(&conn, &req);
-  grow_rsp_buf(&conn, &resp);
-  gdb_server_dispatch(&conn, &req, &resp);
+  grow_rsp_buf(conn, &req);
+  grow_rsp_buf(conn, &resp);
+  gdb_server_dispatch(conn, &req, &resp);
 }
