@@ -11,7 +11,7 @@
 
 enum rounding_mode = {RM_RNE, RM_RTZ, RM_RDN, RM_RUP, RM_RMM, RM_DYN}
 
-mapping rounding_mode_bits : rounding_mode <-> bits(3) = {
+mapping encdec_rounding_mode : rounding_mode <-> bits(3) = {
   RM_RNE <-> 0b000,
   RM_RTZ <-> 0b001,
   RM_RDN <-> 0b010,
@@ -28,6 +28,56 @@ mapping frm_mnemonic : rounding_mode <-> string = {
   RM_RMM <-> "rmm",
   RM_DYN <-> "dyn"
 }
+
+val       select_instr_or_fcsr_rm : rounding_mode -> rounding_mode effect {rreg}
+function  select_instr_or_fcsr_rm   instr_rm =
+  if (instr_rm == RM_DYN)
+  then {
+      let fcsr = readCSR (csr_name_map ("frm"));
+      encdec_rounding_mode (fcsr [7..5])
+  }
+  else instr_rm
+
+/* **************************************************************** */
+/* Negation of floating point values                                */
+
+val      negate_S : bits(32) -> bits(32)
+function negate_S (x32) = {
+    let sign     = x32[31];
+    let new_sign = if (sign == bitzero) then 0b1 else 0b0;
+    new_sign @ (x32 [30..0])
+}
+
+val      negate_D : bits(64) -> bits(64)
+function negate_D (x64) = {
+    let sign     = x64[63];
+    let new_sign = if (sign == bitzero) then 0b1 else 0b0;
+    new_sign @ (x64 [62..0])
+}
+
+/* **************************************************************** */
+/* NaN boxing/unboxing.                                             */
+/* When 32-bit floats (single-precision) are stored in 64-bit regs  */
+/* they must be 'NaN boxed' (upper 32b all ones).                   */
+/* When 32-bit floats (single-precision) are read from 64-bit regs  */
+/* they must be 'NaN unboxed'.                                      */
+
+function canonicalNaN32() -> bits(32) = 0x_7fc0_0000
+function canonicalNaN64() -> bits(64) = 0x_7ff8_0000_0000_0000
+
+val      nan_box : bits(32) -> flenbits
+function nan_box   val_32b =
+  if (sizeof(flen) == 32)
+  then val_32b
+  else 0x_FFFF_FFFF @ val_32b
+
+val      nan_unbox : flenbits -> bits(32)
+function nan_unbox   regval =
+  if (sizeof(flen) == 32)
+  then regval
+  else if regval [63..32] == 0x_FFFF_FFFF
+       then regval [31..0]
+       else canonicalNaN32()
 
 /* **************************************************************** */
 /* Help-functions for 'encdec()' to restrict to certain             */
@@ -175,161 +225,228 @@ mapping clause assembly = STORE_FP(imm, rs2, rs1, width)
 
 /* AST */
 
-enum f_madd_op = {FMADD_S, FMSUB_S, FNMSUB_S, FNMADD_S,
-                  FMADD_D, FMSUB_D, FNMSUB_D, FNMADD_D}
+enum f_madd_op_S = {FMADD_S, FMSUB_S, FNMSUB_S, FNMADD_S}
 
-union clause ast = F_MADD_TYPE : (regidx, regidx, regidx, rounding_mode, regidx, f_madd_op)
+union clause ast = F_MADD_TYPE_S : (regidx, regidx, regidx, rounding_mode, regidx, f_madd_op_S)
+
+enum f_madd_op_D = {FMADD_D, FMSUB_D, FNMSUB_D, FNMADD_D}
+
+union clause ast = F_MADD_TYPE_D : (regidx, regidx, regidx, rounding_mode, regidx, f_madd_op_D)
 
 /* AST <-> Binary encoding ================================ */
 
 /* F instructions */
 
 mapping clause encdec =
-    F_MADD_TYPE(rs3, rs2, rs1, rm, rd, FMADD_S)                         if is_RV32F_or_RV64F()
-<-> rs3 @ 0b00 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b100_0011  if is_RV32F_or_RV64F()
+    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FMADD_S)                         if is_RV32F_or_RV64F()
+<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_MADD_TYPE(rs3, rs2, rs1, rm, rd, FMSUB_S)                         if is_RV32F_or_RV64F()
-<-> rs3 @ 0b00 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b100_0111  if is_RV32F_or_RV64F()
+    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FMSUB_S)                         if is_RV32F_or_RV64F()
+<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0111  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_MADD_TYPE(rs3, rs2, rs1, rm, rd, FNMSUB_S)                        if is_RV32F_or_RV64F()
-<-> rs3 @ 0b00 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b100_1011  if is_RV32F_or_RV64F()
+    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FNMSUB_S)                        if is_RV32F_or_RV64F()
+<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_MADD_TYPE(rs3, rs2, rs1, rm, rd, FNMADD_S)                        if is_RV32F_or_RV64F()
-<-> rs3 @ 0b00 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b100_1111  if is_RV32F_or_RV64F()
+    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FNMADD_S)                        if is_RV32F_or_RV64F()
+<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1111  if is_RV32F_or_RV64F()
 
 /* D instructions */
 
 mapping clause encdec =
-    F_MADD_TYPE(rs3, rs2, rs1, rm, rd, FMADD_D)                         if is_RV32D_or_RV64D()
-<-> rs3 @ 0b01 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b100_0011  if is_RV32D_or_RV64D()
+    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FMADD_D)                         if is_RV32D_or_RV64D()
+<-> rs3 @ 0b01 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0011  if is_RV32D_or_RV64D()
 
 mapping clause encdec =
-    F_MADD_TYPE(rs3, rs2, rs1, rm, rd, FMSUB_D)                         if is_RV32D_or_RV64D()
-<-> rs3 @ 0b01 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b100_0111  if is_RV32D_or_RV64D()
+    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FMSUB_D)                         if is_RV32D_or_RV64D()
+<-> rs3 @ 0b01 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0111  if is_RV32D_or_RV64D()
 
 mapping clause encdec =
-    F_MADD_TYPE(rs3, rs2, rs1, rm, rd, FNMSUB_D)   if is_RV32D_or_RV64D()
-<-> rs3 @ 0b01 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b100_1011  if is_RV32D_or_RV64D()
+    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FNMSUB_D)                        if is_RV32D_or_RV64D()
+<-> rs3 @ 0b01 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1011  if is_RV32D_or_RV64D()
 
 mapping clause encdec =
-    F_MADD_TYPE(rs3, rs2, rs1, rm, rd, FNMADD_D)   if is_RV32D_or_RV64D()
-<-> rs3 @ 0b01 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b100_1111  if is_RV32D_or_RV64D()
+    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FNMADD_D)                        if is_RV32D_or_RV64D()
+<-> rs3 @ 0b01 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1111  if is_RV32D_or_RV64D()
 
 /* Execution semantics ================================ */
 
-function clause execute (F_MADD_TYPE(rs3, rs2, rs1, rm, rd, op)) = {
-  /* TODO */
-  handle_illegal();
-  RETIRE_FAIL
+function clause execute (F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)) = {
+  let rs1_val_32b = nan_unbox (F(rs1));
+  let rs2_val_32b = nan_unbox (F(rs2));
+  let rs3_val_32b = nan_unbox (F(rs3));
+  let rm1_3b      = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  let (fflags, rd_val_32b) : (bits(5), bits(32)) =
+    match op {
+      FMADD_S  => external_fmuladd_S (rm1_3b, rs1_val_32b, rs2_val_32b, rs3_val_32b),
+      FMSUB_S  => external_fmuladd_S (rm1_3b, rs1_val_32b, rs2_val_32b, negate_S (rs3_val_32b)),
+      FNMSUB_S => external_fmuladd_S (rm1_3b, negate_S (rs1_val_32b), rs2_val_32b, rs3_val_32b),
+      FNMADD_S => external_fmuladd_S (rm1_3b, negate_S (rs1_val_32b), rs2_val_32b, negate_S (rs3_val_32b))
+    };
+  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  F(rd) = nan_box (rd_val_32b);
+  RETIRE_SUCCESS
+}
+
+function clause execute (F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)) = {
+  let rs1_val_64b = F(rs1);
+  let rs2_val_64b = F(rs2);
+  let rs3_val_64b = F(rs3);
+  let rm1_3b      = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  let (fflags, rd_val_64b) : (bits(5), bits(64)) =
+    match op {
+      FMADD_D  => external_fmuladd_D (rm1_3b, rs1_val_64b, rs2_val_64b, rs3_val_64b),
+      FMSUB_D  => external_fmuladd_D (rm1_3b, rs1_val_64b, rs2_val_64b, negate_D (rs3_val_64b)),
+      FNMSUB_D => external_fmuladd_D (rm1_3b, negate_D (rs1_val_64b), rs2_val_64b, rs3_val_64b),
+      FNMADD_D => external_fmuladd_D (rm1_3b, negate_D (rs1_val_64b), rs2_val_64b, negate_D (rs3_val_64b))
+    };
+  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  F(rd) = rd_val_64b;
+  RETIRE_SUCCESS
 }
 
 /* AST -> Assembly notation ================================ */
 
-mapping f_madd_type_mnemonic : f_madd_op <-> string = {
+mapping f_madd_type_mnemonic_S : f_madd_op_S <-> string = {
     FMADD_S  <-> "fmadd.s",
     FMSUB_S  <-> "fmsub.s",
     FNMSUB_S <-> "fnmsub.s",
-    FNMADD_S <-> "fnmadd.s",
-
-    FMADD_D  <-> "fmadd.d",
-    FMSUB_D  <-> "fmsub.d",
-    FNMSUB_D <-> "fnmsub.d",
-    FNMADD_D <-> "fnmadd.d"
+    FNMADD_S <-> "fnmadd.s"
 }
 
-mapping clause assembly = F_MADD_TYPE(rs3, rs2, rs1, rm, rd, op)
-                      <-> f_madd_type_mnemonic(op)
+mapping clause assembly = F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)
+                      <-> f_madd_type_mnemonic_S(op)
 		          ^ spc() ^ reg_name(rd)
 			  ^ sep() ^ reg_name(rs1)
 			  ^ sep() ^ reg_name(rs2)
 			  ^ sep() ^ reg_name(rs3)
 			  ^ sep() ^ frm_mnemonic(rm)
 
+mapping f_madd_type_mnemonic_D : f_madd_op_D <-> string = {
+    FMADD_D  <-> "fmadd.d",
+    FMSUB_D  <-> "fmsub.d",
+    FNMSUB_D <-> "fnmsub.d",
+    FNMADD_D <-> "fnmadd.d"
+}
 
+mapping clause assembly = F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)
+                      <-> f_madd_type_mnemonic_D(op)
+		          ^ spc() ^ reg_name(rd)
+			  ^ sep() ^ reg_name(rs1)
+			  ^ sep() ^ reg_name(rs2)
+			  ^ sep() ^ reg_name(rs3)
+			  ^ sep() ^ frm_mnemonic(rm)
 
 /* ****************************************************************** */
 /* Binary ops with rounding mode */
 
 /* AST */
 
-enum f_bin_rm_op = {FADD_S, FSUB_S, FMUL_S, FDIV_S,
-                    FADD_D, FSUB_D, FMUL_D, FDIV_D}
+enum f_bin_rm_op_S = {FADD_S, FSUB_S, FMUL_S, FDIV_S}
 
-union clause ast = F_BIN_RM_TYPE : (regidx, regidx, rounding_mode, regidx, f_bin_rm_op)
+union clause ast = F_BIN_RM_TYPE_S : (regidx, regidx, rounding_mode, regidx, f_bin_rm_op_S)
+
+enum f_bin_rm_op_D = {FADD_D, FSUB_D, FMUL_D, FDIV_D}
+
+union clause ast = F_BIN_RM_TYPE_D : (regidx, regidx, rounding_mode, regidx, f_bin_rm_op_D)
 
 /* AST <-> Binary encoding ================================ */
 
 /* F instructions */
 
 mapping clause encdec =
-    F_BIN_RM_TYPE(rs2, rs1, rm, rd, FADD_S)                             if is_RV32F_or_RV64F()
-<-> 0b000_0000 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
+    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FADD_S)                             if is_RV32F_or_RV64F()
+<-> 0b000_0000 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_BIN_RM_TYPE(rs2, rs1, rm, rd, FSUB_S)                             if is_RV32F_or_RV64F()
-<-> 0b000_0100 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
+    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FSUB_S)                             if is_RV32F_or_RV64F()
+<-> 0b000_0100 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_BIN_RM_TYPE(rs2, rs1, rm, rd, FMUL_S)                             if is_RV32F_or_RV64F()
-<-> 0b000_1000 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
+    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FMUL_S)                             if is_RV32F_or_RV64F()
+<-> 0b000_1000 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_BIN_RM_TYPE(rs2, rs1, rm, rd, FDIV_S)                             if is_RV32F_or_RV64F()
-<-> 0b000_1100 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
+    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FDIV_S)                             if is_RV32F_or_RV64F()
+<-> 0b000_1100 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 /* D instructions */
 
 mapping clause encdec =
-    F_BIN_RM_TYPE(rs2, rs1, rm, rd, FADD_D)                             if is_RV32D_or_RV64D()
-<-> 0b000_0001 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FADD_D)                             if is_RV32D_or_RV64D()
+<-> 0b000_0001 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
 
 mapping clause encdec =
-    F_BIN_RM_TYPE(rs2, rs1, rm, rd, FSUB_D)                             if is_RV32D_or_RV64D()
-<-> 0b000_0101 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FSUB_D)                             if is_RV32D_or_RV64D()
+<-> 0b000_0101 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
 
 mapping clause encdec =
-    F_BIN_RM_TYPE(rs2, rs1, rm, rd, FMUL_D)                             if is_RV32D_or_RV64D()
-<-> 0b000_1001 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FMUL_D)                             if is_RV32D_or_RV64D()
+<-> 0b000_1001 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
 
 mapping clause encdec =
-    F_BIN_RM_TYPE(rs2, rs1, rm, rd, FDIV_D)                             if is_RV32D_or_RV64D()
-<-> 0b000_1101 @ rs2 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FDIV_D)                             if is_RV32D_or_RV64D()
+<-> 0b000_1101 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
 
 /* Execution semantics ================================ */
 
-function clause execute (F_BIN_RM_TYPE(rs2, rs1, rm, rd, op)) = {
-  /* TODO */
-  handle_illegal();
-  RETIRE_FAIL
-
-  /* fill in primitive op using soft-float
-  let rs1_val = F(rs1);
-  let rs2_val = F(rs2);
-  let result : xlenbits = match op {
-    FADD_S  => prim_fadd_s (rs1_val, rs2_val),
-    FSUB_S  => prim_fsub_s (rs1_val, rs2_val),
-    FMUL_S  => prim_fmul_s (rs1_val, rs2_val),
-    FDIV_S  => prim_fdiv_s (rs1_val, rs2_val)
+function clause execute (F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)) = {
+  let rs1_val_32b = nan_unbox (F(rs1));
+  let rs2_val_32b = nan_unbox (F(rs2));
+  let rm1_3b      = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  let (fflags, rd_val_32b) : (bits(5), bits(32)) = match op {
+    FADD_S  => external_fadd_S (rm1_3b, rs1_val_32b, rs2_val_32b),
+    FSUB_S  => external_fsub_S (rm1_3b, rs1_val_32b, rs2_val_32b),
+    FMUL_S  => external_fmul_S (rm1_3b, rs1_val_32b, rs2_val_32b),
+    FDIV_S  => external_fdiv_S (rm1_3b, rs1_val_32b, rs2_val_32b)
   };
-  F(rd) = result;
+  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  F(rd) = nan_box (rd_val_32b);
   RETIRE_SUCCESS
-  */
+}
+
+function clause execute (F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op)) = {
+  let rs1_val_64b = F(rs1);
+  let rs2_val_64b = F(rs2);
+  let rm1_3b      = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  let (fflags, rd_val_64b) : (bits(5), bits(64)) = match op {
+    FADD_D  => external_fadd_D (rm1_3b, rs1_val_64b, rs2_val_64b),
+    FSUB_D  => external_fsub_D (rm1_3b, rs1_val_64b, rs2_val_64b),
+    FMUL_D  => external_fmul_D (rm1_3b, rs1_val_64b, rs2_val_64b),
+    FDIV_D  => external_fdiv_D (rm1_3b, rs1_val_64b, rs2_val_64b)
+  };
+  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  F(rd) = rd_val_64b;
+  RETIRE_SUCCESS
 }
 
 /* AST -> Assembly notation ================================ */
 
-mapping f_bin_rm_type_mnemonic : f_bin_rm_op <-> string = {
+mapping f_bin_rm_type_mnemonic_S : f_bin_rm_op_S <-> string = {
   FADD_S  <-> "fadd.s",
   FSUB_S  <-> "fsub.s",
   FMUL_S  <-> "fmul.s",
   FDIV_S  <-> "fdiv.s"
 }
 
-mapping clause assembly = F_BIN_RM_TYPE(rs2, rs1, rm, rd, op)
-                      <-> f_bin_rm_type_mnemonic(op)
+mapping clause assembly = F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)
+                      <-> f_bin_rm_type_mnemonic_S(op)
+		          ^ spc() ^ reg_name(rd)
+			  ^ sep() ^ reg_name(rs1)
+			  ^ sep() ^ reg_name(rs2)
+			  ^ sep() ^ frm_mnemonic(rm)
+
+mapping f_bin_rm_type_mnemonic_D : f_bin_rm_op_D <-> string = {
+  FADD_D  <-> "fadd.d",
+  FSUB_D  <-> "fsub.d",
+  FMUL_D  <-> "fmul.d",
+  FDIV_D  <-> "fdiv.d"
+}
+
+mapping clause assembly = F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op)
+                      <-> f_bin_rm_type_mnemonic_D(op)
 		          ^ spc() ^ reg_name(rd)
 			  ^ sep() ^ reg_name(rs1)
 			  ^ sep() ^ reg_name(rs2)
@@ -352,82 +469,82 @@ union clause ast = F_UN_RM_TYPE : (regidx, rounding_mode, regidx, f_un_rm_op)
 /* F instructions */
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FSQRT_S)                                      if is_RV32F_or_RV64F()
-<-> 0b010_1100 @ 0b00000 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
+    F_UN_RM_TYPE(rs1, rm, rd, FSQRT_S)                                        if is_RV32F_or_RV64F()
+<-> 0b010_1100 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_W_S)                                     if is_RV32F_or_RV64F()
-<-> 0b110_0000 @ 0b00000 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_W_S)                                       if is_RV32F_or_RV64F()
+<-> 0b110_0000 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_WU_S)                                    if is_RV32F_or_RV64F()
-<-> 0b110_0000 @ 0b00001 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_WU_S)                                      if is_RV32F_or_RV64F()
+<-> 0b110_0000 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_S_W)                                     if is_RV32F_or_RV64F()
-<-> 0b110_1000 @ 0b00000 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_S_W)                                       if is_RV32F_or_RV64F()
+<-> 0b110_1000 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_S_WU)                                    if is_RV32F_or_RV64F()
-<-> 0b110_1000 @ 0b00001 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_S_WU)                                      if is_RV32F_or_RV64F()
+<-> 0b110_1000 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 /* D instructions */
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FSQRT_D)                                      if is_RV32D_or_RV64D()
-<-> 0b010_1101 @ 0b00000 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_UN_RM_TYPE(rs1, rm, rd, FSQRT_D)                                        if is_RV32D_or_RV64D()
+<-> 0b010_1101 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_W_D)                                     if is_RV32D_or_RV64D()
-<-> 0b110_0001 @ 0b00000 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_W_D)                                       if is_RV32D_or_RV64D()
+<-> 0b110_0001 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_WU_D)                                    if is_RV32D_or_RV64D()
-<-> 0b110_0001 @ 0b00001 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_WU_D)                                      if is_RV32D_or_RV64D()
+<-> 0b110_0001 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_D_W)                                     if is_RV32D_or_RV64D()
-<-> 0b110_1001 @ 0b00000 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_D_W)                                       if is_RV32D_or_RV64D()
+<-> 0b110_1001 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_D_WU)                                    if is_RV32D_or_RV64D()
-<-> 0b110_1001 @ 0b00001 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_D_WU)                                      if is_RV32D_or_RV64D()
+<-> 0b110_1001 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
 
 /* F instructions, RV64 only */
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_L_S)                                     if is_RV64F()
-<-> 0b110_0000 @ 0b00010 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV64F()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_L_S)                                       if is_RV64F()
+<-> 0b110_0000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV64F()
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_LU_S)                                    if is_RV64F()
-<-> 0b110_0000 @ 0b00011 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV64F()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_LU_S)                                      if is_RV64F()
+<-> 0b110_0000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV64F()
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_S_L)                                     if is_RV64F()
-<-> 0b110_1000 @ 0b00010 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV64F()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_S_L)                                       if is_RV64F()
+<-> 0b110_1000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV64F()
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_S_LU)                                    if is_RV64F()
-<-> 0b110_1000 @ 0b00011 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV64F()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_S_LU)                                      if is_RV64F()
+<-> 0b110_1000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV64F()
 
 /* D instructions, RV64 only */
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_L_D)                                     if is_RV64D()
-<-> 0b110_0001 @ 0b00010 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV64D()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_L_D)                                       if is_RV64D()
+<-> 0b110_0001 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV64D()
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_LU_D)                                    if is_RV64D()
-<-> 0b110_0001 @ 0b00011 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV64D()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_LU_D)                                      if is_RV64D()
+<-> 0b110_0001 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV64D()
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_D_L)                                     if is_RV64D()
-<-> 0b110_1001 @ 0b00010 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV64D()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_D_L)                                       if is_RV64D()
+<-> 0b110_1001 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV64D()
 
 mapping clause encdec =
-    F_UN_RM_TYPE(rs1, rm, rd, FCVT_D_LU)                                    if is_RV64D()
-<-> 0b110_1001 @ 0b00011 @ rs1 @ rounding_mode_bits (rm) @ rd @ 0b101_0011  if is_RV64D()
+    F_UN_RM_TYPE(rs1, rm, rd, FCVT_D_LU)                                      if is_RV64D()
+<-> 0b110_1001 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV64D()
 
 /* Execution semantics ================================ */
 
