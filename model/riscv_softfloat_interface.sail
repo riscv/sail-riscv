@@ -22,50 +22,106 @@ type bits_fflags = bits(5)    /* Accrued exceptions: NV,DZ,OF,UF,NX */
 type bits_S      = bits(32)   /* Single-precision float value */
 type bits_D      = bits(64)   /* Double-precision float value */
 
+type bits_W      = bits(32)   /* Signed integer */
+type bits_WU     = bits(32)   /* Unsigned integer */
+
+type bits_L      = bits(64)   /* Signed integer */
+type bits_LU     = bits(64)   /* Unsigned integer */
+
 /* **************************************************************** */
 /* ADD/SUB/MUL/DIV                                                  */
 
-/* ---- cf. SoftFloat.hs:f32Add() */
-val      external_fadd_S : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
-function external_fadd_S (rm, v1, v2) = (0b_00000, 0x_0000_0000)
+val      external_f32Add : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
+function external_f32Add (rm, v1, v2) = (0b_00000, 0x_0000_0000)
 
-/* ---- cf. SoftFloat.hs:f32Sub() */
-val      external_fsub_S : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
-function external_fsub_S (rm, v1, v2) = (0b_00000, 0x_0000_0000)
+val      external_f32Sub : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
+function external_f32Sub (rm, v1, v2) = (0b_00000, 0x_0000_0000)
 
-/* ---- cf. SoftFloat.hs:f32Mul() */
-val      external_fmul_S : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
-function external_fmul_S (rm, v1, v2) = (0b_00000, 0x_0000_0000)
+val      external_f32Mul : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
+function external_f32Mul (rm, v1, v2) = (0b_00000, 0x_0000_0000)
 
-/* ---- cf. SoftFloat.hs:f32Div() */
-val      external_fdiv_S : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
-function external_fdiv_S (rm, v1, v2) = (0b_00000, 0x_0000_0000)
+val      external_f32Div : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
+function external_f32Div (rm, v1, v2) = (0b_00000, 0x_0000_0000)
 
-/* ---- cf. SoftFloat.hs:f64Add() */
-val      external_fadd_D : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
-function external_fadd_D (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
+val      external_f64Add : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
+function external_f64Add (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
 
-/* ---- cf. SoftFloat.hs:f64Sub() */
-val      external_fsub_D : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
-function external_fsub_D (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
+val      external_f64Sub : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
+function external_f64Sub (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
 
-/* ---- cf. SoftFloat.hs:f64Mul() */
-val      external_fmul_D : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
-function external_fmul_D (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
+val      external_f64Mul : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
+function external_f64Mul (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
 
-/* ---- cf. SoftFloat.hs:f64Div() */
-val      external_fdiv_D : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
-function external_fdiv_D (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
+val      external_f64Div : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
+function external_f64Div (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
 
 /* **************************************************************** */
 /* MULTIPLY-ADD                                                     */
 
-/* ---- cf. SoftFloat.hs:f64MulAdd() */
-val      external_fmuladd_S : (bits_rm, bits_S, bits_S, bits_S) -> (bits_fflags, bits_S)
-function external_fmuladd_S (rm, v1, v2, v3) = (0b_00000, 0x_0000_0000)
+val      external_f32MulAdd : (bits_rm, bits_S, bits_S, bits_S) -> (bits_fflags, bits_S)
+function external_f32MulAdd (rm, v1, v2, v3) = (0b_00000, 0x_0000_0000)
 
-/* ---- cf. SoftFloat.hs:f64MulAdd() */
-val      external_fmuladd_D : (bits_rm, bits_D, bits_D, bits_D) -> (bits_fflags, bits_D)
-function external_fmuladd_D (rm, v1, v2, v3) = (0b_00000, 0x_0000_0000_0000_0000)
+val      external_f64MulAdd : (bits_rm, bits_D, bits_D, bits_D) -> (bits_fflags, bits_D)
+function external_f64MulAdd (rm, v1, v2, v3) = (0b_00000, 0x_0000_0000_0000_0000)
+
+/* **************************************************************** */
+/* SQUARE ROOT                                                      */
+
+val      external_f32Sqrt : (bits_rm, bits_S) -> (bits_fflags, bits_S)
+function external_f32Sqrt (rm, v) = (0b_00000, 0x_0000_0000)
+
+val      external_f64Sqrt : (bits_rm, bits_D) -> (bits_fflags, bits_D)
+function external_f64Sqrt (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+
+/* **************************************************************** */
+/* CONVERSIONS                                                      */
+
+val      external_f32ToI32 : (bits_rm, bits_S) -> (bits_fflags, bits_W)
+function external_f32ToI32 (rm, v) = (0b_00000, 0x_0000_0000)
+
+val      external_f32ToUi32 : (bits_rm, bits_S) -> (bits_fflags, bits_WU)
+function external_f32ToUi32 (rm, v) = (0b_00000, 0x_0000_0000)
+
+val      external_i32ToF32 : (bits_rm, bits_W) -> (bits_fflags, bits_S)
+function external_i32ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
+
+val      external_ui32ToF32 : (bits_rm, bits_WU) -> (bits_fflags, bits_S)
+function external_ui32ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
+
+val      external_f32ToI64 : (bits_rm, bits_S) -> (bits_fflags, bits_L)
+function external_f32ToI64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+
+val      external_f32ToUi64 : (bits_rm, bits_S) -> (bits_fflags, bits_LU)
+function external_f32ToUi64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+
+val      external_i64ToF32 : (bits_rm, bits_L) -> (bits_fflags, bits_S)
+function external_i64ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
+
+val      external_ui64ToF32 : (bits_rm, bits_LU) -> (bits_fflags, bits_S)
+function external_ui64ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
+
+val      external_f64ToI32 : (bits_rm, bits_D) -> (bits_fflags, bits_W)
+function external_f64ToI32 (rm, v) = (0b_00000, 0x_0000_0000)
+
+val      external_f64ToUi32 : (bits_rm, bits_D) -> (bits_fflags, bits_WU)
+function external_f64ToUi32 (rm, v) = (0b_00000, 0x_0000_0000)
+
+val      external_i32ToF64 : (bits_rm, bits_W) -> (bits_fflags, bits_D)
+function external_i32ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+
+val      external_ui32ToF64 : (bits_rm, bits_WU) -> (bits_fflags, bits_D)
+function external_ui32ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+
+val      external_f64ToI64 : (bits_rm, bits_D) -> (bits_fflags, bits_L)
+function external_f64ToI64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+
+val      external_f64ToUi64 : (bits_rm, bits_D) -> (bits_fflags, bits_LU)
+function external_f64ToUi64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+
+val      external_i64ToF64 : (bits_rm, bits_L) -> (bits_fflags, bits_D)
+function external_i64ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+
+val      external_ui64ToF64 : (bits_rm, bits_LU) -> (bits_fflags, bits_D)
+function external_ui64ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
 
 /* **************************************************************** */
