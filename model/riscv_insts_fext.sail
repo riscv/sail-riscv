@@ -45,8 +45,8 @@ val       select_instr_or_fcsr_rm : rounding_mode -> rounding_mode effect {rreg}
 function  select_instr_or_fcsr_rm   instr_rm =
   if (instr_rm == RM_DYN)
   then {
-      let fcsr = readCSR (csr_name_map ("frm"));
-      encdec_rounding_mode (fcsr [7..5])
+      let fcsr_val = readCSR (csr_name_map ("frm"));
+      encdec_rounding_mode (fcsr_val [7..5])
   }
   else instr_rm
 
