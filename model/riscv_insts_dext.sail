@@ -151,26 +151,21 @@ function flt_D   (v1,       v2,        is_quiet) = {
   let v1IsNaN  = f_is_QNaN_D(v1) | f_is_SNaN_D(v1);
   let v2IsNaN  = f_is_QNaN_D(v2) | f_is_SNaN_D(v2);
 
-  /* TODO: SAIL bug? Inlining these below raises type errors */
-  let m1_lt_m2 = unsigned (m1) < unsigned (m2);
-  let e1_lt_e2 = unsigned (e1) < unsigned (e2);
-  let m1_gt_m2 = unsigned (m1) > unsigned (m2);
-  let e1_gt_e2 = unsigned (e1) > unsigned (e2);
-
-  let result = if (s1 == 0b0) & (s2 == 0b0) then
-                 if (e1 == e2) then
-                   m1_lt_m2
-                 else
-                   e1_lt_e2
-               else if (s1 == 0b0) & (s2 == 0b1) then
-                 false
-               else if (s1 == 0b1) & (s2 == 0b0) then
-                 true
-               else
-                 if (e1 == e2) then
-                   m1_gt_m2
-                 else
-                   e1_gt_e2;
+  let result : bool =
+    if (s1 == 0b0) & (s2 == 0b0) then
+      if (e1 == e2) then
+         unsigned (m1) < unsigned (m2)
+      else
+         unsigned (e1) < unsigned (e2)
+    else if (s1 == 0b0) & (s2 == 0b1) then
+      false
+    else if (s1 == 0b1) & (s2 == 0b0) then
+      true
+    else
+      if (e1 == e2) then
+        unsigned (m1) > unsigned (m2)
+      else
+        unsigned (e1) > unsigned (e2);
 
   let fflags = if is_quiet then
                  if (f_is_SNaN_D(v1) | f_is_SNaN_D(v2)) then
@@ -197,26 +192,21 @@ function fle_D   (v1,       v2,        is_quiet) = {
   let v1Is0    = f_is_neg_zero_D(v1) | f_is_pos_zero_D(v1);
   let v2Is0    = f_is_neg_zero_D(v2) | f_is_pos_zero_D(v2);
 
-  /* TODO: SAIL bug? Inlining these below raises type errors */
-  let m1_le_m2 = unsigned (m1) <=  unsigned (m2);
-  let e1_lt_e2 = unsigned (e1)  <  unsigned (e2);
-  let m1_ge_m2 = unsigned (m1) >=  unsigned (m2);
-  let e1_gt_e2 = unsigned (e1)  >  unsigned (e2);
-
-  let result = if (s1 == 0b0) & (s2 == 0b0) then
-                 if (e1 == e2) then
-                   m1_le_m2
-                 else
-                   e1_lt_e2
-               else if (s1 == 0b0) & (s2 == 0b1) then
-                 (v1Is0 & v2Is0)                         /* Equal in this case (+0=-0) */
-               else if (s1 == 0b1) & (s2 == 0b0) then
-                 true
-               else
-                 if (e1 == e2) then
-                   m1_ge_m2
-                 else
-                   e1_gt_e2;
+  let result : bool =
+    if (s1 == 0b0) & (s2 == 0b0) then
+      if (e1 == e2) then
+        unsigned (m1) <=  unsigned (m2)
+      else
+        unsigned (e1)  <  unsigned (e2)
+    else if (s1 == 0b0) & (s2 == 0b1) then
+      (v1Is0 & v2Is0)                         /* Equal in this case (+0=-0) */
+    else if (s1 == 0b1) & (s2 == 0b0) then
+      true
+    else
+      if (e1 == e2) then
+        unsigned (m1) >=  unsigned (m2)
+      else
+        unsigned (e1)  >  unsigned (e2);
 
   let fflags = if is_quiet then
                  if (f_is_SNaN_D(v1) | f_is_SNaN_D(v2)) then
