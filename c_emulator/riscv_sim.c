@@ -687,35 +687,33 @@ void run_sail(void)
   while (!zhtif_done && (insn_limit == 0 || total_insns < insn_limit)) {
 #ifdef RVFI_DII
     if (rvfi_dii) {
-      if (need_instr) {
-        mach_bits instr_bits;
-        int res = read(rvfi_dii_sock, &instr_bits, sizeof(instr_bits));
-        if (res == 0) {
-          rvfi_dii = false;
-          return;
-        }
-        if (res < sizeof(instr_bits)) {
-          fprintf(stderr, "Reading RVFI DII command failed: insufficient input");
-          exit(1);
-        }
-        if (res == -1) {
-          fprintf(stderr, "Reading RVFI DII command failed: %s", strerror(errno));
-          exit(1);
-        }
-        zrvfi_set_instr_packet(instr_bits);
-        zrvfi_zzero_exec_packet(UNIT);
-        mach_bits cmd = zrvfi_get_cmd(UNIT);
-        switch (cmd) {
-        case 0: /* EndOfTrace */
-          zrvfi_halt_exec_packet(UNIT);
-          rvfi_send_trace();
-          return;
-        case 1: /* Instruction */
-          break;
-        default:
-          fprintf(stderr, "Unknown RVFI-DII command: %d\n", (int)cmd);
-          exit(1);
-        }
+      mach_bits instr_bits;
+      int res = read(rvfi_dii_sock, &instr_bits, sizeof(instr_bits));
+      if (res == 0) {
+        rvfi_dii = false;
+        return;
+      }
+      if (res < sizeof(instr_bits)) {
+        fprintf(stderr, "Reading RVFI DII command failed: insufficient input");
+        exit(1);
+      }
+      if (res == -1) {
+        fprintf(stderr, "Reading RVFI DII command failed: %s", strerror(errno));
+        exit(1);
+      }
+      zrvfi_set_instr_packet(instr_bits);
+      zrvfi_zzero_exec_packet(UNIT);
+      mach_bits cmd = zrvfi_get_cmd(UNIT);
+      switch (cmd) {
+      case 0: /* EndOfTrace */
+        zrvfi_halt_exec_packet(UNIT);
+        rvfi_send_trace();
+        return;
+      case 1: /* Instruction */
+        break;
+      default:
+        fprintf(stderr, "Unknown RVFI-DII command: %d\n", (int)cmd);
+        exit(1);
       }
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
@@ -724,12 +722,8 @@ void run_sail(void)
       if (have_exception) goto step_exception;
       flush_logs();
       KILL(sail_int)(&sail_step);
-      if (stepped) {
-        need_instr = true;
-        rvfi_send_trace();
-      } else
-        need_instr = false;
-    } else
+      rvfi_send_trace();
+    } else /* if (!rvfi_dii) */
 #endif
     { /* run a Sail step */
       sail_int sail_step;
