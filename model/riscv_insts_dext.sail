@@ -136,9 +136,9 @@ function feq_quiet_D   (v1,       v2) = {
   let result = ((v1 == v2) | (v1Is0 & v2Is0));
 
   let fflags = if (f_is_SNaN_D(v1) | f_is_SNaN_D(v2)) then
-	         nvFlag()
-	       else
-		 zeros();
+                 nvFlag()
+               else
+                 zeros();
 
   (result, fflags)
 }
@@ -161,7 +161,7 @@ function flt_D   (v1,       v2,        is_quiet) = {
                  if (e1 == e2) then
                    m1_lt_m2
                  else
-		   e1_lt_e2
+                   e1_lt_e2
                else if (s1 == 0b0) & (s2 == 0b1) then
                  false
                else if (s1 == 0b1) & (s2 == 0b0) then
@@ -170,18 +170,18 @@ function flt_D   (v1,       v2,        is_quiet) = {
                  if (e1 == e2) then
                    m1_gt_m2
                  else
-		   e1_gt_e2;
+                   e1_gt_e2;
 
-  let fflags = if is_quiet then 
+  let fflags = if is_quiet then
                  if (f_is_SNaN_D(v1) | f_is_SNaN_D(v2)) then
-		   nvFlag()
-		 else
-		   zeros()
+                   nvFlag()
+                 else
+                   zeros()
                else
                  if (v1IsNaN | v2IsNaN) then
-		   nvFlag()
-		 else
-		   zeros();
+                   nvFlag()
+                 else
+                   zeros();
 
   (result, fflags)
 }
@@ -207,7 +207,7 @@ function fle_D   (v1,       v2,        is_quiet) = {
                  if (e1 == e2) then
                    m1_le_m2
                  else
-		   e1_lt_e2
+                   e1_lt_e2
                else if (s1 == 0b0) & (s2 == 0b1) then
                  (v1Is0 & v2Is0)                         /* Equal in this case (+0=-0) */
                else if (s1 == 0b1) & (s2 == 0b0) then
@@ -216,18 +216,18 @@ function fle_D   (v1,       v2,        is_quiet) = {
                  if (e1 == e2) then
                    m1_ge_m2
                  else
-		   e1_gt_e2;
+                   e1_gt_e2;
 
-  let fflags = if is_quiet then 
+  let fflags = if is_quiet then
                  if (f_is_SNaN_D(v1) | f_is_SNaN_D(v2)) then
-		   nvFlag()
-		 else
-		   zeros()
+                   nvFlag()
+                 else
+                   zeros()
                else
                  if (v1IsNaN | v2IsNaN) then
-		   nvFlag()
-		 else
-		   zeros();
+                   nvFlag()
+                 else
+                   zeros();
 
   (result, fflags)
 }
@@ -297,11 +297,11 @@ mapping f_madd_type_mnemonic_D : f_madd_op_D <-> string = {
 
 mapping clause assembly = F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)
                       <-> f_madd_type_mnemonic_D(op)
-		          ^ spc() ^ reg_name(rd)
-			  ^ sep() ^ reg_name(rs1)
-			  ^ sep() ^ reg_name(rs2)
-			  ^ sep() ^ reg_name(rs3)
-			  ^ sep() ^ frm_mnemonic(rm)
+                          ^ spc() ^ reg_name(rd)
+                          ^ sep() ^ reg_name(rs1)
+                          ^ sep() ^ reg_name(rs2)
+                          ^ sep() ^ reg_name(rs3)
+                          ^ sep() ^ frm_mnemonic(rm)
 
 /* ****************************************************************** */
 /* Binary ops with rounding mode */
@@ -358,10 +358,10 @@ mapping f_bin_rm_type_mnemonic_D : f_bin_rm_op_D <-> string = {
 
 mapping clause assembly = F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op)
                       <-> f_bin_rm_type_mnemonic_D(op)
-		          ^ spc() ^ reg_name(rd)
-			  ^ sep() ^ reg_name(rs1)
-			  ^ sep() ^ reg_name(rs2)
-			  ^ sep() ^ frm_mnemonic(rm)
+                          ^ spc() ^ reg_name(rd)
+                          ^ sep() ^ reg_name(rs1)
+                          ^ sep() ^ reg_name(rs2)
+                          ^ sep() ^ frm_mnemonic(rm)
 
 /* ****************************************************************** */
 /* Unary with rounding mode */
@@ -531,9 +531,9 @@ mapping f_un_rm_type_mnemonic_D : f_un_rm_op_D <-> string = {
 
 mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, op)
                       <-> f_un_rm_type_mnemonic_D(op)
-		          ^ spc() ^ reg_name(rd)
-			  ^ sep() ^ reg_name(rs1)
-			  ^ sep() ^ frm_mnemonic(rm)
+                          ^ spc() ^ reg_name(rd)
+                          ^ sep() ^ reg_name(rs1)
+                          ^ sep() ^ frm_mnemonic(rm)
 
 /* ****************************************************************** */
 /* Binary, no rounding mode */
@@ -617,9 +617,9 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMIN_D)) = {
 
   let rd_val_D  = if      (f_is_SNaN_D(rs1_val_D) & f_is_SNaN_D(rs2_val_D))         then canonical_NaN_D()
                   else if f_is_SNaN_D(rs1_val_D)                                    then rs2_val_D
-		  else if f_is_SNaN_D(rs2_val_D)                                    then rs1_val_D
-		  else if (f_is_QNaN_D(rs1_val_D) & f_is_QNaN_D(rs2_val_D))         then canonical_NaN_D()
-		  else if f_is_QNaN_D(rs1_val_D)                                    then rs2_val_D
+                  else if f_is_SNaN_D(rs2_val_D)                                    then rs1_val_D
+                  else if (f_is_QNaN_D(rs1_val_D) & f_is_QNaN_D(rs2_val_D))         then canonical_NaN_D()
+                  else if f_is_QNaN_D(rs1_val_D)                                    then rs2_val_D
                   else if f_is_QNaN_D(rs2_val_D)                                    then rs1_val_D
                   else if (f_is_neg_zero_D(rs1_val_D) & f_is_pos_zero_D(rs2_val_D)) then rs1_val_D
                   else if (f_is_neg_zero_D(rs2_val_D) & f_is_pos_zero_D(rs1_val_D)) then rs2_val_D
@@ -640,9 +640,9 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMAX_D)) = {
 
   let rd_val_D  = if      (f_is_SNaN_D(rs1_val_D) & f_is_SNaN_D(rs2_val_D))         then canonical_NaN_D()
                   else if f_is_SNaN_D(rs1_val_D)                                    then rs2_val_D
-		  else if f_is_SNaN_D(rs2_val_D)                                    then rs1_val_D
-		  else if (f_is_QNaN_D(rs1_val_D) & f_is_QNaN_D(rs2_val_D))         then canonical_NaN_D()
-		  else if f_is_QNaN_D(rs1_val_D)                                    then rs2_val_D
+                  else if f_is_SNaN_D(rs2_val_D)                                    then rs1_val_D
+                  else if (f_is_QNaN_D(rs1_val_D) & f_is_QNaN_D(rs2_val_D))         then canonical_NaN_D()
+                  else if f_is_QNaN_D(rs1_val_D)                                    then rs2_val_D
                   else if f_is_QNaN_D(rs2_val_D)                                    then rs1_val_D
                   else if (f_is_neg_zero_D(rs1_val_D) & f_is_pos_zero_D(rs2_val_D)) then rs2_val_D
                   else if (f_is_neg_zero_D(rs2_val_D) & f_is_pos_zero_D(rs1_val_D)) then rs1_val_D
@@ -722,9 +722,9 @@ mapping f_bin_type_mnemonic_D : f_bin_op_D <-> string = {
 
 mapping clause assembly = F_BIN_TYPE_D(rs2, rs1, rd, op)
                       <-> f_bin_type_mnemonic_D(op)
-		          ^ spc() ^ reg_name(rd)
-			  ^ sep() ^ reg_name(rs1)
-			  ^ sep() ^ reg_name(rs2)
+                          ^ spc() ^ reg_name(rd)
+                          ^ sep() ^ reg_name(rs1)
+                          ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
 /* Unary, no rounding mode */
@@ -793,7 +793,7 @@ mapping f_un_type_mnemonic_D : f_un_op_D <-> string = {
 
 mapping clause assembly = F_UN_TYPE_D(rs1, rd, op)
                       <-> f_un_type_mnemonic_D(op)
-		          ^ spc() ^ reg_name(rd)
-			  ^ sep() ^ reg_name(rs1)
+                          ^ spc() ^ reg_name(rd)
+                          ^ sep() ^ reg_name(rs1)
 
 /* ****************************************************************** */
