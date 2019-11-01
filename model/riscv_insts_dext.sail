@@ -235,8 +235,6 @@ function fle_D   (v1,       v2,        is_quiet) = {
 
 /* AST */
 
-enum f_madd_op_D = {FMADD_D, FMSUB_D, FNMSUB_D, FNMADD_D}
-
 union clause ast = F_MADD_TYPE_D : (regidx, regidx, regidx, rounding_mode, regidx, f_madd_op_D)
 
 /* AST <-> Binary encoding ================================ */
@@ -298,8 +296,6 @@ mapping clause assembly = F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)
 
 /* AST */
 
-enum f_bin_rm_op_D = {FADD_D, FSUB_D, FMUL_D, FDIV_D}
-
 union clause ast = F_BIN_RM_TYPE_D : (regidx, regidx, rounding_mode, regidx, f_bin_rm_op_D)
 
 /* AST <-> Binary encoding ================================ */
@@ -357,9 +353,6 @@ mapping clause assembly = F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op)
 /* Unary with rounding mode */
 
 /* AST */
-
-enum f_un_rm_op_D = {FSQRT_D, FCVT_W_D, FCVT_WU_D, FCVT_D_W, FCVT_D_WU,    // RV32 and RV64
-                     FCVT_L_D, FCVT_LU_D, FCVT_D_L, FCVT_D_LU}             // RV64 only
 
 union clause ast = F_UN_RM_TYPE_D : (regidx, rounding_mode, regidx, f_un_rm_op_D)
 
@@ -529,8 +522,6 @@ mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, op)
 /* Binary, no rounding mode */
 
 /* AST */
-
-enum f_bin_op_D = {FSGNJ_D, FSGNJN_D, FSGNJX_D, FMIN_D, FMAX_D, FEQ_D, FLT_D, FLE_D}
 
 union clause ast = F_BIN_TYPE_D : (regidx, regidx, regidx, f_bin_op_D)
 
@@ -718,9 +709,6 @@ mapping clause assembly = F_BIN_TYPE_D(rs2, rs1, rd, op)
 
 /* ****************************************************************** */
 /* Unary, no rounding mode */
-
-enum f_un_op_D = {FCLASS_D,            /* RV32 and RV64 */
-                  FMV_X_D, FMV_D_X}    /* RV64 only */
 
 union clause ast = F_UN_TYPE_D : (regidx, regidx, f_un_op_D)
 

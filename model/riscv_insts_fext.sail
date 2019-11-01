@@ -15,13 +15,6 @@
 /* improvements, and version updates.                               */
 
 /* **************************************************************** */
-/* Rounding Mode
-    Rounding modes occur as a 3-bit field in F,D instructions,
-    and also as a 3-bit 'frm' field in the 'fcsr' CSR.
-    RISC-V uses the following IEEE-defined rounding modes.
-*/
-
-enum rounding_mode = {RM_RNE, RM_RTZ, RM_RDN, RM_RUP, RM_RMM, RM_DYN}
 
 mapping encdec_rounding_mode : rounding_mode <-> bits(3) = {
   RM_RNE <-> 0b000,
@@ -428,8 +421,6 @@ mapping clause assembly = STORE_FP(imm, rs2, rs1, width)
 
 /* AST */
 
-enum f_madd_op_S = {FMADD_S, FMSUB_S, FNMSUB_S, FNMADD_S}
-
 union clause ast = F_MADD_TYPE_S : (regidx, regidx, regidx, rounding_mode, regidx, f_madd_op_S)
 
 /* AST <-> Binary encoding ================================ */
@@ -491,8 +482,6 @@ mapping clause assembly = F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)
 
 /* AST */
 
-enum f_bin_rm_op_S = {FADD_S, FSUB_S, FMUL_S, FDIV_S}
-
 union clause ast = F_BIN_RM_TYPE_S : (regidx, regidx, rounding_mode, regidx, f_bin_rm_op_S)
 
 /* AST <-> Binary encoding ================================ */
@@ -550,9 +539,6 @@ mapping clause assembly = F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)
 /* Unary with rounding mode */
 
 /* AST */
-
-enum f_un_rm_op_S = {FSQRT_S, FCVT_W_S, FCVT_WU_S, FCVT_S_W, FCVT_S_WU,    // RV32 and RV64
-                     FCVT_L_S, FCVT_LU_S, FCVT_S_L, FCVT_S_LU}             // RV64 only
 
 union clause ast = F_UN_RM_TYPE_S : (regidx, rounding_mode, regidx, f_un_rm_op_S)
 
@@ -722,8 +708,6 @@ mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, op)
 /* Binary, no rounding mode */
 
 /* AST */
-
-enum f_bin_op_S = {FSGNJ_S, FSGNJN_S, FSGNJX_S, FMIN_S, FMAX_S, FEQ_S, FLT_S, FLE_S}
 
 union clause ast = F_BIN_TYPE_S : (regidx, regidx, regidx, f_bin_op_S)
 
@@ -911,8 +895,6 @@ mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, op)
 
 /* ****************************************************************** */
 /* Unary, no rounding mode */
-
-enum f_un_op_S = {FCLASS_S, FMV_X_W, FMV_W_X}    /* RV32 and RV64 */
 
 union clause ast = F_UN_TYPE_S : (regidx, regidx, f_un_op_S)
 
