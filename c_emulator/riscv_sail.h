@@ -49,6 +49,8 @@ extern mach_bits zmstatus;
 extern mach_bits zmepc, zmtval;
 extern mach_bits zsepc, zstval;
 
+extern mach_bits zfloat_result, zfloat_fflags;
+
 struct zMcause {mach_bits zMcause_chunk_0;};
 struct zMcause zmcause, zscause;
 
