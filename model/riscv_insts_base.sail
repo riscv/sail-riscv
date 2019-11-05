@@ -714,9 +714,11 @@ mapping clause encdec = MRET()
   <-> 0b0011000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute MRET() = {
-  if   cur_privilege == Machine
-  then set_next_pc(exception_handler(cur_privilege, CTL_MRET(), PC))
-  else handle_illegal();
+  if   cur_privilege != Machine
+  then handle_illegal()
+  else if ~(ext_check_xret_priv (Machine))
+  then ext_fail_xret_priv ()
+  else set_next_pc(exception_handler(cur_privilege, CTL_MRET(), PC));
   RETIRE_FAIL
 }
 
@@ -729,15 +731,16 @@ mapping clause encdec = SRET()
   <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute SRET() = {
-  match cur_privilege {
-    User       => handle_illegal(),
-    Supervisor => if   (~ (haveSupMode ())) | mstatus.TSR() == 0b1
-                  then handle_illegal()
-                  else set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC)),
-    Machine    => if   (~ (haveSupMode ()))
-                  then handle_illegal()
-                  else set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC))
+  let sret_illegal : bool = match cur_privilege {
+    User       => true,
+    Supervisor => ~ (haveSupMode ()) | mstatus.TSR() == 0b1,
+    Machine    => ~ (haveSupMode ())
   };
+  if   sret_illegal
+  then handle_illegal()
+  else if ~(ext_check_xret_priv (Supervisor))
+  then ext_fail_xret_priv ()
+  else set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC));
   RETIRE_FAIL
 }
 
