@@ -131,52 +131,116 @@ function riscv_f64Sqrt (rm, v) = {
 /* **************************************************************** */
 /* CONVERSIONS                                                      */
 
+val     extern_f32ToI32 = {c: "softfloat_f32toi32"} : (bits_rm, bits_S) -> unit
 val      riscv_f32ToI32 : (bits_rm, bits_S) -> (bits_fflags, bits_W)
-function riscv_f32ToI32 (rm, v) = (0b_00000, 0x_0000_0000)
+function riscv_f32ToI32 (rm, v) = {
+  extern_f32ToI32(rm, v);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
 
+val     extern_f32ToUi32 = {c: "softfloat_f32toui32"} : (bits_rm, bits_S) -> unit
 val      riscv_f32ToUi32 : (bits_rm, bits_S) -> (bits_fflags, bits_WU)
-function riscv_f32ToUi32 (rm, v) = (0b_00000, 0x_0000_0000)
+function riscv_f32ToUi32 (rm, v) = {
+  extern_f32ToUi32(rm, v);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
 
+val     extern_i32ToF32 = {c: "softfloat_i32tof32"} : (bits_rm, bits_W) -> unit
 val      riscv_i32ToF32 : (bits_rm, bits_W) -> (bits_fflags, bits_S)
-function riscv_i32ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
+function riscv_i32ToF32 (rm, v) = {
+  extern_i32ToF32(rm, v);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
 
+val     extern_ui32ToF32 = {c: "softfloat_ui32tof32"} : (bits_rm, bits_WU) -> unit
 val      riscv_ui32ToF32 : (bits_rm, bits_WU) -> (bits_fflags, bits_S)
-function riscv_ui32ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
+function riscv_ui32ToF32 (rm, v) = {
+  extern_ui32ToF32(rm, v);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
 
+val     extern_f32ToI64 = {c: "softfloat_f32toi64"} : (bits_rm, bits_S) -> unit
 val      riscv_f32ToI64 : (bits_rm, bits_S) -> (bits_fflags, bits_L)
-function riscv_f32ToI64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+function riscv_f32ToI64 (rm, v) = {
+  extern_f32ToI64(rm, v);
+  (float_fflags[4 .. 0], float_result)
+}
 
+val     extern_f32ToUi64 = {c: "softfloat_f32toui64"} : (bits_rm, bits_S) -> unit
 val      riscv_f32ToUi64 : (bits_rm, bits_S) -> (bits_fflags, bits_LU)
-function riscv_f32ToUi64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+function riscv_f32ToUi64 (rm, v) = {
+  extern_f32ToUi64(rm, v);
+  (float_fflags[4 .. 0], float_result)
+}
 
+val     extern_i64ToF32 = {c: "softfloat_i64tof32"} : (bits_rm, bits_L) -> unit
 val      riscv_i64ToF32 : (bits_rm, bits_L) -> (bits_fflags, bits_S)
-function riscv_i64ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
+function riscv_i64ToF32 (rm, v) = {
+  extern_i64ToF32(rm, v);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
 
+val     extern_ui64ToF32 = {c: "softfloat_ui64tof32"} : (bits_rm, bits_L) -> unit
 val      riscv_ui64ToF32 : (bits_rm, bits_LU) -> (bits_fflags, bits_S)
-function riscv_ui64ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
+function riscv_ui64ToF32 (rm, v) = {
+  extern_ui64ToF32(rm, v);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
 
+val     extern_f64ToI32 = {c: "softfloat_f64toi32"} : (bits_rm, bits_D) -> unit
 val      riscv_f64ToI32 : (bits_rm, bits_D) -> (bits_fflags, bits_W)
-function riscv_f64ToI32 (rm, v) = (0b_00000, 0x_0000_0000)
+function riscv_f64ToI32 (rm, v) = {
+  extern_f64ToI32(rm, v);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
 
+val     extern_f64ToUi32 = {c: "softfloat_f64toui32"} : (bits_rm, bits_D) -> unit
 val      riscv_f64ToUi32 : (bits_rm, bits_D) -> (bits_fflags, bits_WU)
-function riscv_f64ToUi32 (rm, v) = (0b_00000, 0x_0000_0000)
+function riscv_f64ToUi32 (rm, v) = {
+  extern_f64ToUi32(rm, v);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
 
+val     extern_i32ToF64 = {c: "softfloat_i32tof64"} : (bits_rm, bits_W) -> unit
 val      riscv_i32ToF64 : (bits_rm, bits_W) -> (bits_fflags, bits_D)
-function riscv_i32ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+function riscv_i32ToF64 (rm, v) = {
+  extern_i32ToF64(rm, v);
+  (float_fflags[4 .. 0], float_result)
+}
 
+val     extern_ui32ToF64 = {c: "softfloat_ui32tof64"} : (bits_rm, bits_WU) -> unit
 val      riscv_ui32ToF64 : (bits_rm, bits_WU) -> (bits_fflags, bits_D)
-function riscv_ui32ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+function riscv_ui32ToF64 (rm, v) = {
+  extern_ui32ToF64(rm, v);
+  (float_fflags[4 .. 0], float_result)
+}
 
+val     extern_f64ToI64 = {c: "softfloat_f64toi64"} : (bits_rm, bits_D) -> unit
 val      riscv_f64ToI64 : (bits_rm, bits_D) -> (bits_fflags, bits_L)
-function riscv_f64ToI64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+function riscv_f64ToI64 (rm, v) = {
+  extern_f64ToI64(rm, v);
+  (float_fflags[4 .. 0], float_result)
+}
 
+val     extern_f64ToUi64 = {c: "softfloat_f64toui64"} : (bits_rm, bits_D) -> unit
 val      riscv_f64ToUi64 : (bits_rm, bits_D) -> (bits_fflags, bits_LU)
-function riscv_f64ToUi64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+function riscv_f64ToUi64 (rm, v) = {
+  extern_f64ToUi64(rm, v);
+  (float_fflags[4 .. 0], float_result)
+}
 
+val     extern_i64ToF64 = {c: "softfloat_i64tof64"} : (bits_rm, bits_L) -> unit
 val      riscv_i64ToF64 : (bits_rm, bits_L) -> (bits_fflags, bits_D)
-function riscv_i64ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+function riscv_i64ToF64 (rm, v) = {
+  extern_i64ToF64(rm, v);
+  (float_fflags[4 .. 0], float_result)
+}
 
+val     extern_ui64ToF64 = {c: "softfloat_ui64tof64"} : (bits_rm, bits_LU) -> unit
 val      riscv_ui64ToF64 : (bits_rm, bits_LU) -> (bits_fflags, bits_D)
-function riscv_ui64ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+function riscv_ui64ToF64 (rm, v) = {
+  extern_ui64ToF64(rm, v);
+  (float_fflags[4 .. 0], float_result)
+}
 
 /* **************************************************************** */

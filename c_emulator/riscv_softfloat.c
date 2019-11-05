@@ -4,6 +4,11 @@
 #include "riscv_softfloat.h"
 #include "softfloat.h"
 
+static uint_fast8_t uint8_of_rm(mach_bits rm) {
+  // TODO.
+  return 0;
+}
+
 #define SOFTFLOAT_PRELUDE(rm)                           \
   softfloat_exceptionFlags = 0;                         \
   softfloat_roundingMode = (uint_fast8_t) rm
@@ -162,6 +167,205 @@ unit softfloat_f64sqrt(mach_bits rm, mach_bits v) {
   float64_t a, res;
   a.v = v;
   res = f64_sqrt(a);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+// The boolean 'true' argument in the conversion calls below selects
+// 'exact' conversion, which sets the Inexact exception flag if
+// needed.
+unit softfloat_f32toi32(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t a, res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res.v = f32_to_i32(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f32toui32(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t a, res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res.v = f32_to_ui32(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f32toi64(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t a;
+  float64_t res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res.v = f32_to_i64(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f32toui64(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t a;
+  float64_t res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res.v = f32_to_ui64(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f64toi32(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float64_t a;
+  float32_t res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res.v = f64_to_i32(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f64toui32(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float64_t a;
+  float32_t res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res.v = f64_to_ui32(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f64toi64(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float64_t a, res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res.v = f64_to_i64(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f64toui64(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float64_t a, res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res.v = f64_to_ui64(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_i32tof32(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t res;
+  res = i32_to_f32((int32_t)v);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_ui32tof32(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t res;
+  res = ui32_to_f32((uint32_t)v);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_i64tof32(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t res;
+  res = i64_to_f32(v);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_ui64tof32(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t res;
+  res = ui64_to_f32(v);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_i32tof64(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float64_t res;
+  res = i32_to_f64((int32_t)v);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_ui32tof64(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float64_t res;
+  res = ui32_to_f64((uint32_t)v);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_i64tof64(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float64_t res;
+  res = i64_to_f64(v);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_ui64tof64(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float64_t res;
+  res = ui64_to_f64(v);
 
   SOFTFLOAT_POSTLUDE(res);
 
