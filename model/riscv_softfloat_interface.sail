@@ -31,97 +31,97 @@ type bits_LU     = bits(64)   /* Unsigned integer */
 /* **************************************************************** */
 /* ADD/SUB/MUL/DIV                                                  */
 
-val      external_f32Add : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
-function external_f32Add (rm, v1, v2) = (0b_00000, 0x_0000_0000)
+val      riscv_f32Add : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
+function riscv_f32Add (rm, v1, v2) = (0b_00000, 0x_0000_0000)
 
-val      external_f32Sub : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
-function external_f32Sub (rm, v1, v2) = (0b_00000, 0x_0000_0000)
+val      riscv_f32Sub : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
+function riscv_f32Sub (rm, v1, v2) = (0b_00000, 0x_0000_0000)
 
-val      external_f32Mul : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
-function external_f32Mul (rm, v1, v2) = (0b_00000, 0x_0000_0000)
+val      riscv_f32Mul : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
+function riscv_f32Mul (rm, v1, v2) = (0b_00000, 0x_0000_0000)
 
-val      external_f32Div : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
-function external_f32Div (rm, v1, v2) = (0b_00000, 0x_0000_0000)
+val      riscv_f32Div : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
+function riscv_f32Div (rm, v1, v2) = (0b_00000, 0x_0000_0000)
 
-val      external_f64Add : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
-function external_f64Add (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
+val      riscv_f64Add : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
+function riscv_f64Add (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
 
-val      external_f64Sub : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
-function external_f64Sub (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
+val      riscv_f64Sub : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
+function riscv_f64Sub (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
 
-val      external_f64Mul : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
-function external_f64Mul (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
+val      riscv_f64Mul : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
+function riscv_f64Mul (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
 
-val      external_f64Div : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
-function external_f64Div (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
+val      riscv_f64Div : (bits_rm, bits_D, bits_D) -> (bits_fflags, bits_D)
+function riscv_f64Div (rm, v1, v2) = (0b_00000, 0x_0000_0000_0000_0000)
 
 /* **************************************************************** */
 /* MULTIPLY-ADD                                                     */
 
-val      external_f32MulAdd : (bits_rm, bits_S, bits_S, bits_S) -> (bits_fflags, bits_S)
-function external_f32MulAdd (rm, v1, v2, v3) = (0b_00000, 0x_0000_0000)
+val      riscv_f32MulAdd : (bits_rm, bits_S, bits_S, bits_S) -> (bits_fflags, bits_S)
+function riscv_f32MulAdd (rm, v1, v2, v3) = (0b_00000, 0x_0000_0000)
 
-val      external_f64MulAdd : (bits_rm, bits_D, bits_D, bits_D) -> (bits_fflags, bits_D)
-function external_f64MulAdd (rm, v1, v2, v3) = (0b_00000, 0x_0000_0000_0000_0000)
+val      riscv_f64MulAdd : (bits_rm, bits_D, bits_D, bits_D) -> (bits_fflags, bits_D)
+function riscv_f64MulAdd (rm, v1, v2, v3) = (0b_00000, 0x_0000_0000_0000_0000)
 
 /* **************************************************************** */
 /* SQUARE ROOT                                                      */
 
-val      external_f32Sqrt : (bits_rm, bits_S) -> (bits_fflags, bits_S)
-function external_f32Sqrt (rm, v) = (0b_00000, 0x_0000_0000)
+val      riscv_f32Sqrt : (bits_rm, bits_S) -> (bits_fflags, bits_S)
+function riscv_f32Sqrt (rm, v) = (0b_00000, 0x_0000_0000)
 
-val      external_f64Sqrt : (bits_rm, bits_D) -> (bits_fflags, bits_D)
-function external_f64Sqrt (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+val      riscv_f64Sqrt : (bits_rm, bits_D) -> (bits_fflags, bits_D)
+function riscv_f64Sqrt (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
 
 /* **************************************************************** */
 /* CONVERSIONS                                                      */
 
-val      external_f32ToI32 : (bits_rm, bits_S) -> (bits_fflags, bits_W)
-function external_f32ToI32 (rm, v) = (0b_00000, 0x_0000_0000)
+val      riscv_f32ToI32 : (bits_rm, bits_S) -> (bits_fflags, bits_W)
+function riscv_f32ToI32 (rm, v) = (0b_00000, 0x_0000_0000)
 
-val      external_f32ToUi32 : (bits_rm, bits_S) -> (bits_fflags, bits_WU)
-function external_f32ToUi32 (rm, v) = (0b_00000, 0x_0000_0000)
+val      riscv_f32ToUi32 : (bits_rm, bits_S) -> (bits_fflags, bits_WU)
+function riscv_f32ToUi32 (rm, v) = (0b_00000, 0x_0000_0000)
 
-val      external_i32ToF32 : (bits_rm, bits_W) -> (bits_fflags, bits_S)
-function external_i32ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
+val      riscv_i32ToF32 : (bits_rm, bits_W) -> (bits_fflags, bits_S)
+function riscv_i32ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
 
-val      external_ui32ToF32 : (bits_rm, bits_WU) -> (bits_fflags, bits_S)
-function external_ui32ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
+val      riscv_ui32ToF32 : (bits_rm, bits_WU) -> (bits_fflags, bits_S)
+function riscv_ui32ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
 
-val      external_f32ToI64 : (bits_rm, bits_S) -> (bits_fflags, bits_L)
-function external_f32ToI64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+val      riscv_f32ToI64 : (bits_rm, bits_S) -> (bits_fflags, bits_L)
+function riscv_f32ToI64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
 
-val      external_f32ToUi64 : (bits_rm, bits_S) -> (bits_fflags, bits_LU)
-function external_f32ToUi64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+val      riscv_f32ToUi64 : (bits_rm, bits_S) -> (bits_fflags, bits_LU)
+function riscv_f32ToUi64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
 
-val      external_i64ToF32 : (bits_rm, bits_L) -> (bits_fflags, bits_S)
-function external_i64ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
+val      riscv_i64ToF32 : (bits_rm, bits_L) -> (bits_fflags, bits_S)
+function riscv_i64ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
 
-val      external_ui64ToF32 : (bits_rm, bits_LU) -> (bits_fflags, bits_S)
-function external_ui64ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
+val      riscv_ui64ToF32 : (bits_rm, bits_LU) -> (bits_fflags, bits_S)
+function riscv_ui64ToF32 (rm, v) = (0b_00000, 0x_0000_0000)
 
-val      external_f64ToI32 : (bits_rm, bits_D) -> (bits_fflags, bits_W)
-function external_f64ToI32 (rm, v) = (0b_00000, 0x_0000_0000)
+val      riscv_f64ToI32 : (bits_rm, bits_D) -> (bits_fflags, bits_W)
+function riscv_f64ToI32 (rm, v) = (0b_00000, 0x_0000_0000)
 
-val      external_f64ToUi32 : (bits_rm, bits_D) -> (bits_fflags, bits_WU)
-function external_f64ToUi32 (rm, v) = (0b_00000, 0x_0000_0000)
+val      riscv_f64ToUi32 : (bits_rm, bits_D) -> (bits_fflags, bits_WU)
+function riscv_f64ToUi32 (rm, v) = (0b_00000, 0x_0000_0000)
 
-val      external_i32ToF64 : (bits_rm, bits_W) -> (bits_fflags, bits_D)
-function external_i32ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+val      riscv_i32ToF64 : (bits_rm, bits_W) -> (bits_fflags, bits_D)
+function riscv_i32ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
 
-val      external_ui32ToF64 : (bits_rm, bits_WU) -> (bits_fflags, bits_D)
-function external_ui32ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+val      riscv_ui32ToF64 : (bits_rm, bits_WU) -> (bits_fflags, bits_D)
+function riscv_ui32ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
 
-val      external_f64ToI64 : (bits_rm, bits_D) -> (bits_fflags, bits_L)
-function external_f64ToI64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+val      riscv_f64ToI64 : (bits_rm, bits_D) -> (bits_fflags, bits_L)
+function riscv_f64ToI64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
 
-val      external_f64ToUi64 : (bits_rm, bits_D) -> (bits_fflags, bits_LU)
-function external_f64ToUi64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+val      riscv_f64ToUi64 : (bits_rm, bits_D) -> (bits_fflags, bits_LU)
+function riscv_f64ToUi64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
 
-val      external_i64ToF64 : (bits_rm, bits_L) -> (bits_fflags, bits_D)
-function external_i64ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+val      riscv_i64ToF64 : (bits_rm, bits_L) -> (bits_fflags, bits_D)
+function riscv_i64ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
 
-val      external_ui64ToF64 : (bits_rm, bits_LU) -> (bits_fflags, bits_D)
-function external_ui64ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
+val      riscv_ui64ToF64 : (bits_rm, bits_LU) -> (bits_fflags, bits_D)
+function riscv_ui64ToF64 (rm, v) = (0b_00000, 0x_0000_0000_0000_0000)
 
 /* **************************************************************** */

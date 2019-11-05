@@ -450,10 +450,10 @@ function clause execute (F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)) = {
   let rm_3b       = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
   let (fflags, rd_val_32b) : (bits(5), bits(32)) =
     match op {
-      FMADD_S  => external_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, rs3_val_32b),
-      FMSUB_S  => external_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, negate_S (rs3_val_32b)),
-      FNMSUB_S => external_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, rs3_val_32b),
-      FNMADD_S => external_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, negate_S (rs3_val_32b))
+      FMADD_S  => riscv_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, rs3_val_32b),
+      FMSUB_S  => riscv_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, negate_S (rs3_val_32b)),
+      FNMSUB_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, rs3_val_32b),
+      FNMADD_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, negate_S (rs3_val_32b))
     };
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
   F(rd) = nan_box (rd_val_32b);
@@ -509,10 +509,10 @@ function clause execute (F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)) = {
   let rs2_val_32b = nan_unbox (F(rs2));
   let rm_3b       = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
   let (fflags, rd_val_32b) : (bits(5), bits(32)) = match op {
-    FADD_S  => external_f32Add (rm_3b, rs1_val_32b, rs2_val_32b),
-    FSUB_S  => external_f32Sub (rm_3b, rs1_val_32b, rs2_val_32b),
-    FMUL_S  => external_f32Mul (rm_3b, rs1_val_32b, rs2_val_32b),
-    FDIV_S  => external_f32Div (rm_3b, rs1_val_32b, rs2_val_32b)
+    FADD_S  => riscv_f32Add (rm_3b, rs1_val_32b, rs2_val_32b),
+    FSUB_S  => riscv_f32Sub (rm_3b, rs1_val_32b, rs2_val_32b),
+    FMUL_S  => riscv_f32Mul (rm_3b, rs1_val_32b, rs2_val_32b),
+    FDIV_S  => riscv_f32Div (rm_3b, rs1_val_32b, rs2_val_32b)
   };
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
   F(rd) = nan_box (rd_val_32b);
@@ -588,7 +588,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-  let (fflags, rd_val_S) = external_f32Sqrt   (rm_3b, rs1_val_S);
+  let (fflags, rd_val_S) = riscv_f32Sqrt   (rm_3b, rs1_val_S);
 
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
   F(rd) = nan_box (rd_val_S);
@@ -599,7 +599,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-  let (fflags, rd_val_W) = external_f32ToI32 (rm_3b, rs1_val_S);
+  let (fflags, rd_val_W) = riscv_f32ToI32 (rm_3b, rs1_val_S);
 
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
   X(rd) = EXTS (rd_val_W);
@@ -610,7 +610,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-  let (fflags, rd_val_WU) = external_f32ToUi32 (rm_3b, rs1_val_S);
+  let (fflags, rd_val_WU) = riscv_f32ToUi32 (rm_3b, rs1_val_S);
 
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
   X(rd) = EXTZ (rd_val_WU);
@@ -621,7 +621,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_W)) = {
   let rs1_val_W = X(rs1) [31..0];
   let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-  let (fflags, rd_val_S) = external_i32ToF32 (rm_3b, rs1_val_W);
+  let (fflags, rd_val_S) = riscv_i32ToF32 (rm_3b, rs1_val_W);
 
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
   F(rd) = nan_box (rd_val_S);
@@ -632,7 +632,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
   let rs1_val_WU = X(rs1) [31..0];
   let rm_3b      = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-  let (fflags, rd_val_S) = external_ui32ToF32 (rm_3b, rs1_val_WU);
+  let (fflags, rd_val_S) = riscv_ui32ToF32 (rm_3b, rs1_val_WU);
 
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
   F(rd) = nan_box (rd_val_S);
@@ -643,7 +643,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-  let (fflags, rd_val_L) = external_f32ToI64 (rm_3b, rs1_val_S);
+  let (fflags, rd_val_L) = riscv_f32ToI64 (rm_3b, rs1_val_S);
 
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
   X(rd) = rd_val_L;
@@ -654,7 +654,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-  let (fflags, rd_val_LU) = external_f32ToUi64 (rm_3b, rs1_val_S);
+  let (fflags, rd_val_LU) = riscv_f32ToUi64 (rm_3b, rs1_val_S);
 
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
   X(rd) = rd_val_LU;
@@ -665,7 +665,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
   let rs1_val_L = X(rs1);
   let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-  let (fflags, rd_val_S) = external_i64ToF32 (rm_3b, rs1_val_L);
+  let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
 
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
   F(rd) = nan_box (rd_val_S);
@@ -676,7 +676,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
   let rs1_val_LU = X(rs1);
   let rm_3b      = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-  let (fflags, rd_val_S) = external_ui64ToF32 (rm_3b, rs1_val_LU);
+  let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
 
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
   F(rd) = nan_box (rd_val_S);
