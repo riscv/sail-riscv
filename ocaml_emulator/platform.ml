@@ -75,6 +75,7 @@ let make_rom arch start_pc =
 
 let enable_writable_misa ()          = !config_enable_writable_misa
 let enable_rvc ()                    = !config_enable_rvc
+let enable_fdext ()                  = false
 let enable_dirty_update ()           = !config_enable_dirty_update
 let enable_misaligned_access ()      = !config_enable_misaligned_access
 let mtval_has_illegal_inst_bits ()   = !config_mtval_has_illegal_inst_bits
@@ -124,6 +125,12 @@ let write_mem (wk, addrsize, addr, len, value) =
 let excl_res _ = true
 
 let barrier _ = ()
+
+(* dummy stubs for floating point *)
+
+let fdext_stub2 _ _     = ()
+let fdext_stub3 _ _ _   = ()
+let fdext_stub4 _ _ _ _ = ()
 
 (* terminal I/O *)
 

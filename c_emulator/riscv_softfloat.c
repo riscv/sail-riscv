@@ -6,7 +6,7 @@
 
 static uint_fast8_t uint8_of_rm(mach_bits rm) {
   // TODO.
-  return 0;
+  return (uint_fast8_t)rm;
 }
 
 #define SOFTFLOAT_PRELUDE(rm)                           \

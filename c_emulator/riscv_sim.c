@@ -100,6 +100,7 @@ static struct option options[] = {
   {"ram-size",                    required_argument, 0, 'z'},
   {"disable-compressed",          no_argument,       0, 'C'},
   {"disable-writable-misa",       no_argument,       0, 'I'},
+  {"disable-fdext",               no_argument,       0, 'F'},
   {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'},
   {"device-tree-blob",            required_argument, 0, 'b'},
   {"terminal-log",                required_argument, 0, 't'},
@@ -214,6 +215,7 @@ char *process_args(int argc, char **argv)
                     "V::"
                     "v::"
                     "l:"
+                    "F:"
                          , options, &idx);
     if (c == -1) break;
     switch (c) {
@@ -239,6 +241,10 @@ char *process_args(int argc, char **argv)
     case 'I':
       fprintf(stderr, "disabling writable misa CSR.\n");
       rv_enable_writable_misa = false;
+      break;
+    case 'F':
+      fprintf(stderr, "disabling floating point (F and D extensions).\n");
+      rv_enable_fdext = false;
       break;
     case 'i':
       fprintf(stderr, "enabling storing illegal instruction bits in mtval.\n");
