@@ -15,6 +15,9 @@ else
   $(error '$(ARCH)' is not a valid architecture, must be one of: RV32, RV64)
 endif
 
+# For now, F and D extensions cannot be separated, and are only available in RV64.
+SAIL_FLEN := riscv_flen_D.sail
+
 # Instruction sources, depending on target
 SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_misa_ext.sail
 SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail
@@ -32,6 +35,7 @@ SAIL_SYS_SRCS += riscv_next_regs.sail
 SAIL_SYS_SRCS += riscv_sys_exceptions.sail  # default basic helpers for exception handling
 SAIL_SYS_SRCS += riscv_sync_exception.sail  # define the exception structure used in the model
 SAIL_SYS_SRCS += riscv_next_control.sail    # helpers for the 'N' extension
+SAIL_SYS_SRCS += riscv_fdext_regs.sail riscv_fdext_control.sail
 SAIL_SYS_SRCS += riscv_csr_ext.sail         # access to CSR extensions
 SAIL_SYS_SRCS += riscv_sys_control.sail     # general exception handling
 
@@ -46,15 +50,11 @@ SAIL_VM_SRCS += $(SAIL_RV64_VM_SRCS)
 endif
 
 # Non-instruction sources
-PRELUDE = prelude.sail prelude_mapping.sail $(SAIL_XLEN) prelude_mem_metadata.sail prelude_mem.sail
+PRELUDE = prelude.sail prelude_mapping.sail $(SAIL_XLEN) $(SAIL_FLEN) prelude_mem_metadata.sail prelude_mem.sail
 
-SAIL_REGS_SRCS = riscv_reg_type.sail riscv_regs.sail riscv_pc_access.sail riscv_sys_regs.sail
+SAIL_REGS_SRCS = riscv_reg_type.sail riscv_freg_type.sail riscv_regs.sail riscv_pc_access.sail riscv_sys_regs.sail
 SAIL_REGS_SRCS += riscv_pmp_regs.sail riscv_pmp_control.sail
 SAIL_REGS_SRCS += riscv_ext_regs.sail $(SAIL_CHECK_SRCS)
-
-SAIL_FD_SRCS  = riscv_flen_D.sail
-SAIL_FD_SRCS += riscv_freg_type.sail
-SAIL_FD_SRCS += riscv_fdext_regs.sail
 
 SAIL_ARCH_SRCS = $(PRELUDE)
 SAIL_ARCH_SRCS += riscv_types_ext.sail riscv_types.sail
@@ -152,11 +152,7 @@ else
 RISCV_EXTRAS_LEM = riscv_extras.lem
 endif
 
-.PHONY: test
-test:
-	touch model/riscv_insts_base.sail
-	make  ocaml_emulator/riscv_ocaml_sim_$(ARCH)
-	./ocaml_emulator/riscv_ocaml_sim_RV64 test/riscv-tests/rv64ui-p-add.elf
+.PHONY:
 
 all: ocaml_emulator/riscv_ocaml_sim_$(ARCH) c_emulator/riscv_sim_$(ARCH) riscv_isa riscv_coq riscv_hol riscv_rmem
 .PHONY: all
