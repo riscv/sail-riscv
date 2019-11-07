@@ -342,7 +342,7 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
 
 mapping clause assembly = LOAD_FP(imm, rs1, rd, width)
                       <-> "fl" ^ size_mnemonic(width)
-                          ^ spc() ^ reg_name(rd)
+                          ^ spc() ^ freg_name(rd)
                           ^ sep() ^ hex_bits_12(imm)
                           ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
@@ -412,7 +412,7 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
 
 mapping clause assembly = STORE_FP(imm, rs2, rs1, width)
                       <-> "fs" ^ size_mnemonic(width)
-                          ^ spc() ^ reg_name(rs2)
+                          ^ spc() ^ freg_name(rs2)
                           ^ sep() ^ hex_bits_12(imm)
                           ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
@@ -471,10 +471,10 @@ mapping f_madd_type_mnemonic_S : f_madd_op_S <-> string = {
 
 mapping clause assembly = F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)
                       <-> f_madd_type_mnemonic_S(op)
-                          ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ reg_name(rs1)
-                          ^ sep() ^ reg_name(rs2)
-                          ^ sep() ^ reg_name(rs3)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
+                          ^ sep() ^ freg_name(rs3)
                           ^ sep() ^ frm_mnemonic(rm)
 
 /* ****************************************************************** */
@@ -530,9 +530,9 @@ mapping f_bin_rm_type_mnemonic_S : f_bin_rm_op_S <-> string = {
 
 mapping clause assembly = F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)
                       <-> f_bin_rm_type_mnemonic_S(op)
-                          ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ reg_name(rs1)
-                          ^ sep() ^ reg_name(rs2)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
                           ^ sep() ^ frm_mnemonic(rm)
 
 /* ****************************************************************** */
@@ -700,7 +700,7 @@ mapping f_un_rm_type_mnemonic_S : f_un_rm_op_S <-> string = {
 
 mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, op)
                       <-> f_un_rm_type_mnemonic_S(op)
-                          ^ spc() ^ reg_name(rd)
+                          ^ spc() ^ freg_name(rd)
                           ^ sep() ^ reg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
 
@@ -890,8 +890,8 @@ mapping f_bin_type_mnemonic_S : f_bin_op_S <-> string = {
 mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, op)
                       <-> f_bin_type_mnemonic_S(op)
                           ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ reg_name(rs1)
-                          ^ sep() ^ reg_name(rs2)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
 
 /* ****************************************************************** */
 /* Unary, no rounding mode */
@@ -957,7 +957,7 @@ mapping f_un_type_mnemonic_S : f_un_op_S <-> string = {
 
 mapping clause assembly = F_UN_TYPE_S(rs1, rd, op)
                       <-> f_un_type_mnemonic_S(op)
-                          ^ spc() ^ reg_name(rd)
+                          ^ spc() ^ freg_name(rd)
                           ^ sep() ^ reg_name(rs1)
 
 /* ****************************************************************** */
