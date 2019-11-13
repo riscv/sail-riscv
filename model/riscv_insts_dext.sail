@@ -644,7 +644,7 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
   let rd_val : xlenbits =
       if      (f_is_SNaN_D(rs1_val_D) | f_is_SNaN_D(rs2_val_D)) then zeros()
       else if (f_is_QNaN_D(rs1_val_D) | f_is_QNaN_D(rs2_val_D)) then zeros()
-      else if rs1_eq_rs2                                        then ones()
+      else if rs1_eq_rs2                                        then EXTZ(0b1)
       else                                                           zeros();
 
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
@@ -662,7 +662,7 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)) = {
   let rd_val : xlenbits =
       if      (f_is_SNaN_D(rs1_val_D) | f_is_SNaN_D(rs2_val_D)) then zeros()
       else if (f_is_QNaN_D(rs1_val_D) | f_is_QNaN_D(rs2_val_D)) then zeros()
-      else if rs1_lt_rs2                                        then ones()
+      else if rs1_lt_rs2                                        then EXTZ(0b1)
       else                                                           zeros();
 
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
@@ -680,7 +680,7 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)) = {
   let rd_val : xlenbits =
       if      (f_is_SNaN_D(rs1_val_D) | f_is_SNaN_D(rs2_val_D)) then zeros()
       else if (f_is_QNaN_D(rs1_val_D) | f_is_QNaN_D(rs2_val_D)) then zeros()
-      else if rs1_le_rs2                                        then ones()
+      else if rs1_le_rs2                                        then EXTZ(0b1)
       else                                                           zeros();
 
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
