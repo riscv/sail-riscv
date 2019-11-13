@@ -2,4 +2,4 @@
 
 type flen       : Int = 32
 type flen_bytes : Int = 4
-type flenbits         = bits(xlen)
+type flenbits         = bits(flen)
