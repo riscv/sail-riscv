@@ -963,9 +963,19 @@ mapping f_un_type_mnemonic_S : f_un_op_S <-> string = {
     FMV_W_X  <-> "fmv.w.x"
 }
 
-mapping clause assembly = F_UN_TYPE_S(rs1, rd, op)
-                      <-> f_un_type_mnemonic_S(op)
+mapping clause assembly = F_UN_TYPE_S(rs1, rd, FMV_X_W)
+                      <-> f_un_type_mnemonic_S(FMV_X_W)
+                          ^ spc() ^ reg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+
+mapping clause assembly = F_UN_TYPE_S(rs1, rd, FMV_W_X)
+                      <-> f_un_type_mnemonic_S(FMV_W_X)
                           ^ spc() ^ freg_name(rd)
                           ^ sep() ^ reg_name(rs1)
+
+mapping clause assembly = F_UN_TYPE_S(rs1, rd, FCLASS_S)
+                      <-> f_un_type_mnemonic_S(FCLASS_S)
+                          ^ spc() ^ reg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
 
 /* ****************************************************************** */
