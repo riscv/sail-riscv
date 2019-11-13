@@ -303,14 +303,22 @@ mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if is_RV32D_or_RV64
 
 /* Execution semantics ================================ */
 
-val process_fload : forall 'n, 0 < 'n <= xlen_bytes.
-                      (regidx, xlenbits, MemoryOpResult(bits(8 * 'n)), bool)
+val process_fload64 : (regidx, xlenbits, MemoryOpResult(bits(64)))
                       -> Retired effect {escape, rreg, wreg}
-function process_fload(rd, addr, value, is_unsigned) =
-  match extend_value(is_unsigned, value) {
+function process_fload64(rd, addr, value) =
+  match value {
     MemValue(result) => { F(rd) = result; RETIRE_SUCCESS },
     MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
   }
+
+val process_fload32 : (regidx, xlenbits, MemoryOpResult(bits(32)))
+                      -> Retired effect {escape, rreg, wreg}
+function process_fload32(rd, addr, value) =
+  match value {
+    MemValue(result) => { F(rd) = nan_box(result); RETIRE_SUCCESS },
+    MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
+  }
+
 
 function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
   let offset : xlenbits = EXTS(imm);
@@ -324,14 +332,14 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
       else match translateAddr(vaddr, Read(Data)) {
         TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) => {
-          let (aq, rl, res, is_unsigned) = (false, false, false, false);
+          let (aq, rl, res) = (false, false, false);
           match (width, sizeof(xlen)) {
             (BYTE, _)   => { handle_illegal(); RETIRE_FAIL },
             (HALF, _)   => { handle_illegal(); RETIRE_FAIL },
             (WORD, _)   =>
-               process_fload(rd, vaddr, mem_read(Read(Data), addr, 4, aq, rl, res), is_unsigned),
+               process_fload32(rd, vaddr, mem_read(Read(Data), addr, 4, aq, rl, res)),
             (DOUBLE, 64) =>
-               process_fload(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, res), is_unsigned)
+               process_fload64(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, res))
           }
         }
       }
