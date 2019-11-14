@@ -512,8 +512,56 @@ mapping f_un_rm_type_mnemonic_D : f_un_rm_op_D <-> string = {
     FCVT_D_L  <-> "fcvt.d.lu"
 }
 
-mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, op)
-                      <-> f_un_rm_type_mnemonic_D(op)
+mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, FSQRT_D)
+                      <-> f_un_rm_type_mnemonic_D(FSQRT_D)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ frm_mnemonic(rm)
+
+mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_W_D)
+                      <-> f_un_rm_type_mnemonic_D(FCVT_W_D)
+                          ^ spc() ^ reg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ frm_mnemonic(rm)
+
+mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_WU_D)
+                      <-> f_un_rm_type_mnemonic_D(FCVT_WU_D)
+                          ^ spc() ^ reg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ frm_mnemonic(rm)
+
+mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_W)
+                      <-> f_un_rm_type_mnemonic_D(FCVT_D_W)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ reg_name(rs1)
+                          ^ sep() ^ frm_mnemonic(rm)
+
+mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_WU)
+                      <-> f_un_rm_type_mnemonic_D(FCVT_D_WU)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ reg_name(rs1)
+                          ^ sep() ^ frm_mnemonic(rm)
+
+mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)
+                      <-> f_un_rm_type_mnemonic_D(FCVT_L_D)
+                          ^ spc() ^ reg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ frm_mnemonic(rm)
+
+mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_LU_D)
+                      <-> f_un_rm_type_mnemonic_D(FCVT_LU_D)
+                          ^ spc() ^ reg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ frm_mnemonic(rm)
+
+mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_L)
+                      <-> f_un_rm_type_mnemonic_D(FCVT_D_L)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ reg_name(rs1)
+                          ^ sep() ^ frm_mnemonic(rm)
+
+mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_LU)
+                      <-> f_un_rm_type_mnemonic_D(FCVT_D_LU)
                           ^ spc() ^ freg_name(rd)
                           ^ sep() ^ reg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
@@ -701,8 +749,50 @@ mapping f_bin_type_mnemonic_D : f_bin_op_D <-> string = {
     FLE_D    <-> "fle.d"
 }
 
-mapping clause assembly = F_BIN_TYPE_D(rs2, rs1, rd, op)
-                      <-> f_bin_type_mnemonic_D(op)
+mapping clause assembly = F_BIN_TYPE_D(rs2, rs1, rd, FSGNJ_D)
+                      <-> f_bin_type_mnemonic_D(FSGNJ_D)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
+
+mapping clause assembly = F_BIN_TYPE_D(rs2, rs1, rd, FSGNJN_D)
+                      <-> f_bin_type_mnemonic_D(FSGNJN_D)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
+
+mapping clause assembly = F_BIN_TYPE_D(rs2, rs1, rd, FSGNJX_D)
+                      <-> f_bin_type_mnemonic_D(FSGNJX_D)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
+
+mapping clause assembly = F_BIN_TYPE_D(rs2, rs1, rd, FMIN_D)
+                      <-> f_bin_type_mnemonic_D(FMIN_D)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
+
+mapping clause assembly = F_BIN_TYPE_D(rs2, rs1, rd, FMAX_D)
+                      <-> f_bin_type_mnemonic_D(FMAX_D)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
+
+mapping clause assembly = F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)
+                      <-> f_bin_type_mnemonic_D(FEQ_D)
+                          ^ spc() ^ reg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
+
+mapping clause assembly = F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)
+                      <-> f_bin_type_mnemonic_D(FLT_D)
+                          ^ spc() ^ reg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
+
+mapping clause assembly = F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)
+                      <-> f_bin_type_mnemonic_D(FLE_D)
                           ^ spc() ^ reg_name(rd)
                           ^ sep() ^ freg_name(rs1)
                           ^ sep() ^ freg_name(rs2)
