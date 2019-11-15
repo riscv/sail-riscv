@@ -621,7 +621,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)) = {
   let (fflags, rd_val_WU) = riscv_f32ToUi32 (rm_3b, rs1_val_S);
 
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
-  X(rd) = EXTZ (rd_val_WU);
+  X(rd) = EXTS (rd_val_WU);
   RETIRE_SUCCESS
 }
 

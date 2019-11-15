@@ -427,7 +427,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_WU_D)) = {
   let (fflags, rd_val_WU) = riscv_f64ToUi32 (rm_3b, rs1_val_D);
 
   writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
-  X(rd) = EXTZ (rd_val_WU);
+  X(rd) = EXTS (rd_val_WU);
   RETIRE_SUCCESS
 }
 
@@ -509,7 +509,7 @@ mapping f_un_rm_type_mnemonic_D : f_un_rm_op_D <-> string = {
     FCVT_L_D  <-> "fcvt.l.d",
     FCVT_LU_D <-> "fcvt.lu.d",
     FCVT_D_L  <-> "fcvt.d.l",
-    FCVT_D_L  <-> "fcvt.d.lu"
+    FCVT_D_LU <-> "fcvt.d.lu"
 }
 
 mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, FSQRT_D)
