@@ -115,9 +115,10 @@ C_SYS_LIBDIRS  = -L /opt/local/lib
 
 SOFTFLOAT_DIR    = c_emulator/SoftFloat-3e
 SOFTFLOAT_INCDIR = $(SOFTFLOAT_DIR)/source/include
-SOFTFLOAT_LIBDIR = $(SOFTFLOAT_DIR)/build/Linux-x86_64-GCC
+SOFTFLOAT_LIBDIR = $(SOFTFLOAT_DIR)/build/Linux-RISCV-GCC
 SOFTFLOAT_FLAGS  = -I $(SOFTFLOAT_INCDIR)
 SOFTFLOAT_LIBS   = $(SOFTFLOAT_LIBDIR)/softfloat.a
+SOFTFLOAT_SPECIALIZE_TYPE = RISCV
 
 C_FLAGS = $(C_SYS_INCLUDES) -I $(SAIL_LIB_DIR) -I c_emulator $(SOFTFLOAT_FLAGS)
 C_LIBS  = $(C_SYS_LIBDIRS) -lgmp -lz $(SOFTFLOAT_LIBS)
@@ -216,7 +217,7 @@ generated_definitions/c/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Make
 	$(SAIL) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@)
 
 $(SOFTFLOAT_LIBS):
-	make -C $(SOFTFLOAT_LIBDIR)
+	make SPECIALIZE_TYPE=$(SOFTFLOAT_SPECIALIZE_TYPE) -C $(SOFTFLOAT_LIBDIR)
 
 c_emulator/riscv_sim_$(ARCH): generated_definitions/c/riscv_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile
 	gcc -g $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
