@@ -9,6 +9,8 @@ let xlen_max_unsigned = 2 ^ sizeof(xlen) - 1
 let xlen_max_signed = 2 ^ (sizeof(xlen) - 1) - 1
 let xlen_min_signed = 0 - 2 ^ (sizeof(xlen) - 1)
 
+function to_xbits(n) : int -> bits(xlen) = to_bits(sizeof(xlen), n)
+
 type half = bits(16)
 type word = bits(32)
 

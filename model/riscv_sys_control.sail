@@ -447,23 +447,36 @@ function init_sys() -> unit = {
   mhartid     = EXTZ(0b0);
 
   misa->MXL() = arch_to_bits(if sizeof(xlen) == 32 then RV32 else RV64);
-  misa->A()   = 0b1;                            /* atomics */
-  misa->C()   = bool_to_bits(sys_enable_rvc()); /* RVC */
-  misa->I()   = 0b1;                            /* base integer ISA */
-  misa->M()   = 0b1;                            /* integer multiply/divide */
-  misa->U()   = 0b1;                            /* user-mode */
-  misa->S()   = 0b1;                            /* supervisor-mode */
+  misa->A()   = bool_to_bits(isa_config.ISA.A); /* atomics */
+  misa->C()   = bool_to_bits(isa_config.ISA.C & sys_enable_rvc()); /* RVC */
+  misa->I()   = bool_to_bits(isa_config.ISA.I); /* base integer ISA */
+  misa->M()   = bool_to_bits(isa_config.ISA.M); /* integer multiply/divide */
+  misa->U()   = bool_to_bits(isa_config.ISA.U); /* user-mode */
+  misa->S()   = bool_to_bits(isa_config.ISA.S); /* supervisor-mode */
 
+  mvendorid = to_bits(32, isa_config.mvendorid.id);
+  marchid   = to_xbits(isa_config.marchid.id);
+  mimpid    = to_xbits(isa_config.mimpid.id);
+  mhartid   = to_xbits(isa_config.mhartid);
+  
   mstatus = set_mstatus_SXL(mstatus, misa.MXL());
   mstatus = set_mstatus_UXL(mstatus, misa.MXL());
   mstatus->SD()   = 0b0;
 
-  mip->bits()     = EXTZ(0b0);
-  mie->bits()     = EXTZ(0b0);
-  mideleg->bits() = EXTZ(0b0);
-  medeleg->bits() = EXTZ(0b0);
-  mtvec->bits()   = EXTZ(0b0);
-  mcause->bits()  = EXTZ(0b0);
+  mip->bits()     = to_xbits(isa_config.mip.default_val);
+  mie->bits()     = to_xbits(isa_config.mie.default_val);
+  mideleg->bits() = to_xbits(isa_config.mideleg.default_val);
+  medeleg->bits() = to_xbits(isa_config.medeleg.default_val);
+  /* Neither spec nor config currently specify an initial value for mtvec so we arbitrarly
+     use minimum of range here. */
+  mtvec->Base()   = to_bits(sizeof(xlen) - 2, WARL_range_min(isa_config.mtvec.base.rangelist));
+  mtvec->Mode()   = to_bits(2, WARL_range_min(isa_config.mtvec.mode.rangelist));
+  stvec->Base()   = to_bits(sizeof(xlen) - 2, WARL_range_min(isa_config.stvec.base.rangelist));
+  stvec->Mode()   = to_bits(2, WARL_range_min(isa_config.stvec.mode.rangelist));
+  /* XXX utvec not included in riscv-config, use mtvec config for now */
+  utvec->Base()   = to_bits(sizeof(xlen) - 2, WARL_range_min(isa_config.mtvec.base.rangelist));
+  utvec->Mode()   = to_bits(2, WARL_range_min(isa_config.mtvec.mode.rangelist));
+  
   mepc            = EXTZ(0b0);
   mtval           = EXTZ(0b0);
   mscratch        = EXTZ(0b0);

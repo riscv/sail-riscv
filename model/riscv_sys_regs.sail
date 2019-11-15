@@ -35,6 +35,74 @@ register cur_inst : xlenbits
  * implement the simplest legalize_ alternatives.
  */
 
+val is_value_in_range : (nat, list(WARL_range_entry)) -> bool
+function is_value_in_range (value, warl_range) = match(warl_range) {
+  [||]    => false,
+  v :: vs => match (v) {
+    WARL_range_value(v)       => value == v | is_value_in_range(value, vs),
+    WARL_range_interval(l, u) => ((l <= value) & (value <= u)) | is_value_in_range(value, vs)
+  }
+}
+
+/* XXX The following functions assume:
+1) WARL range list is non-empty
+2) Range intervals (l, u) have l < u
+It might also be useful if:
+3) entries are non-overlapping
+4) entries are in ascending order
+Neither riscv-config or riscv_config2sail enforce any of these currently.
+*/
+val WARL_range_max : (list(WARL_range_entry)) -> nat effect {escape}
+function WARL_range_max (warl_range) = match(warl_range) {
+  [||] => throw Error_not_implemented("Empty WARL range"),
+  v :: [||]  =>
+    match (v) {
+      WARL_range_value(v)       => v,
+      WARL_range_interval(l, u) => u
+    },
+  v :: vs    =>
+    let tail_max : nat = WARL_range_max(vs) in
+    match (v) {
+      WARL_range_value(v)       => if v > tail_max then v else tail_max,
+      WARL_range_interval(l, u) => if u > tail_max then u else tail_max
+    }
+}
+
+val WARL_range_min : (list(WARL_range_entry)) -> nat effect {escape}
+function WARL_range_min (warl_range) = match(warl_range) {
+  [||] => throw Error_not_implemented("Empty WARL range"),
+  v :: [||]  =>
+    match (v) {
+      WARL_range_value(v)       => v,
+      WARL_range_interval(l, u) => l
+    },
+  v :: vs    =>
+    let tail_min : nat = WARL_range_min(vs) in
+    match (v) {
+      WARL_range_value(v)       => if v < tail_min then v else tail_min,
+      WARL_range_interval(l, u) => if u < tail_min then u else tail_min
+    }
+}
+
+/*!
+THIS(current_val, written_val, legal_range) legalizes a WARL field according to 
+given legal_rtange of values and legalising mode. 
+ */
+val legalize_warl_range : forall 'n, 'n > 0 . (bits('n), bits('n), WARL_range) -> bits('n) effect {escape}
+function legalize_warl_range(current_val, written_val, legal_range) = {
+  if (is_value_in_range(unsigned(written_val), legal_range.rangelist))
+  then written_val
+  else match(legal_range.mode) {
+    WARL_Unchanged => current_val,
+    WARL_Largest   => to_bits('n, WARL_range_max(legal_range.rangelist)),
+    WARL_Smallest  => to_bits('n, WARL_range_min(legal_range.rangelist)),
+    WARL_Nextup    => throw Error_not_implemented("WARL_Nextup"), /* XXX TODO */
+    WARL_Nextdown  => throw Error_not_implemented("WARL_Nextdown"),
+    WARL_Nearup    => throw Error_not_implemented("WARL_Nearup"),
+    WARL_Neardown  => throw Error_not_implemented("WARL_Neardown"),
+    WARL_Addr      => throw Error_not_implemented("WARL_Addr")
+  }
+}
 
 /* M-mode registers */
 
@@ -309,13 +377,11 @@ bitfield Mtvec : xlenbits = {
 }
 register mtvec : Mtvec  /* Trap Vector */
 
-function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
- let v = Mk_Mtvec(v);
- match (trapVectorMode_of_bits(v.Mode())) {
-   TV_Direct => v,
-   TV_Vector => v,
-   _         => update_Mode(v, o.Mode())
- }
+function legalize_tvec(config : tvec_config, o : Mtvec, v : xlenbits) -> Mtvec = {
+ let v1 : Mtvec = Mk_Mtvec(v);
+ let v2 = update_Mode(v1, legalize_warl_range(o.Mode(), v1.Mode(), config.mode));
+ let v3 = update_Base(v2, legalize_warl_range(o.Base(), v1.Base(), config.base));
+ v3
 }
 
 bitfield Mcause : xlenbits = {

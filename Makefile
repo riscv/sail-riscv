@@ -15,6 +15,15 @@ else
   $(error '$(ARCH)' is not a valid architecture, must be one of: RV32, RV64)
 endif
 
+
+CONFIG_PLATFORM=config/platform.yaml
+CONFIG_ISA=config/isa.yaml
+GENERATED_CONFIG_DIR=generated_definitions/config
+RV_CONFIG=riscv-config
+RV_CONFIG2SAIL=rv_conf2sail
+RV_CONFIG_SAIL=$(GENERATED_CONFIG_DIR)/riscv_config.sail
+RV_CONFIG_TYPES:=$(shell opam config var riscv_config2sail:share)/riscv_config_types.sail
+
 # Instruction sources, depending on target
 SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_misa_ext.sail
 SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail
@@ -67,12 +76,13 @@ SAIL_OTHER_SRCS     = $(SAIL_STEP_SRCS) riscv_analysis.sail
 SAIL_OTHER_COQ_SRCS = riscv_termination_common.sail riscv_termination_rv64.sail riscv_analysis.sail
 endif
 
+RV_CONFIG_SRCS =  $(RV_CONFIG_TYPES) $(RV_CONFIG_SAIL)
 
-PRELUDE_SRCS   = $(addprefix model/,$(PRELUDE))
-SAIL_SRCS      = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS)  $(SAIL_OTHER_SRCS))
-SAIL_RMEM_SRCS = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_RMEM_INST_SRCS) $(SAIL_OTHER_SRCS))
-SAIL_RVFI_SRCS = $(addprefix model/,$(SAIL_ARCH_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS) $(RVFI_STEP_SRCS))
-SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS) $(SAIL_OTHER_COQ_SRCS))
+PRELUDE_SRCS   = $(RV_CONFIG_SRCS) $(addprefix model/,$(PRELUDE))
+SAIL_SRCS      = $(RV_CONFIG_SRCS) $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS)  $(SAIL_OTHER_SRCS))
+SAIL_RMEM_SRCS = $(RV_CONFIG_SRCS) $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_RMEM_INST_SRCS) $(SAIL_OTHER_SRCS))
+SAIL_RVFI_SRCS = $(RV_CONFIG_SRCS) $(addprefix model/,$(SAIL_ARCH_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS) $(RVFI_STEP_SRCS))
+SAIL_COQ_SRCS  = $(RV_CONFIG_SRCS) $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS) $(SAIL_OTHER_COQ_SRCS))
 
 PLATFORM_OCAML_SRCS = $(addprefix ocaml_emulator/,platform.ml platform_impl.ml riscv_ocaml_sim.ml)
 
@@ -121,10 +131,10 @@ C_LIBS  += -L $(RISCV)/lib -lfesvr -lriscv -Wl,-rpath=$(RISCV)/lib
 endif
 
 # SAIL_FLAGS = -dtc_verbose 4
+SAIL_FLAGS += -O -Oconstant_fold
 
 ifneq (,$(COVERAGE))
 C_FLAGS += --coverage -O1
-SAIL_FLAGS += -Oconstant_fold
 else
 C_FLAGS += -O3 -flto
 endif
@@ -198,7 +208,7 @@ ocaml_emulator/tracecmp: ocaml_emulator/tracecmp.ml
 
 generated_definitions/c/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
-	$(SAIL) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@)
+	$(SAIL) $(SAIL_FLAGS) -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@)
 
 # convenience target
 .PHONY: csim
@@ -209,9 +219,14 @@ rvfi: c_emulator/riscv_rvfi
 c_emulator/riscv_sim_$(ARCH): generated_definitions/c/riscv_model_$(ARCH).c $(C_INCS) $(C_SRCS) Makefile
 	gcc -g $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
+$(RV_CONFIG_SAIL): $(CONFIG_ISA) $(CONFIG_PLATFORM)
+	mkdir -p $(GENERATED_CONFIG_DIR)
+	$(RV_CONFIG) --isa_spec $(CONFIG_ISA) --platform_spec $(CONFIG_PLATFORM) --work_dir $(GENERATED_CONFIG_DIR)
+	$(RV_CONFIG2SAIL) -i $(GENERATED_CONFIG_DIR)/isa_checked.yaml -p $(GENERATED_CONFIG_DIR)/platform_checked.yaml -o $@
+
 generated_definitions/c/riscv_rvfi_model.c: $(SAIL_RVFI_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
-	$(SAIL) $(SAIL_FLAGS) -O -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main.sail -o $(basename $@)
+	$(SAIL) $(SAIL_FLAGS) -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main.sail -o $(basename $@)
 	sed -i -e '/^[[:space:]]*$$/d' $@
 
 c_emulator/riscv_rvfi: generated_definitions/c/riscv_rvfi_model.c $(C_INCS) $(C_SRCS) Makefile

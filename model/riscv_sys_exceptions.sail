@@ -64,16 +64,17 @@ function get_utvec() -> xlenbits =
   utvec.bits()
   
 function set_mtvec(value : xlenbits) -> xlenbits = {
-  mtvec = legalize_tvec(mtvec, value);
+  mtvec = legalize_tvec(isa_config.mtvec, mtvec, value);
   mtvec.bits()
 }
 
 function set_stvec(value : xlenbits) -> xlenbits = {
-  stvec = legalize_tvec(stvec, value);
+  stvec = legalize_tvec(isa_config.stvec, stvec, value);
   stvec.bits()
 }
 
 function set_utvec(value : xlenbits) -> xlenbits = {
-  utvec = legalize_tvec(utvec, value);
+  /* XXX riscv-config missing utvec so reuse mtvec */
+  utvec = legalize_tvec(isa_config.mtvec, utvec, value);
   utvec.bits()
 }
