@@ -243,4 +243,18 @@ function riscv_ui64ToF64 (rm, v) = {
   (float_fflags[4 .. 0], float_result)
 }
 
+val     extern_f32ToF64 = {c: "softfloat_f32tof64", ocaml: "Platform.fdext_stub2"} : (bits_rm, bits_S) -> unit
+val      riscv_f32ToF64 : (bits_rm, bits_S) -> (bits_fflags, bits_D) effect {rreg}
+function riscv_f32ToF64 (rm, v) = {
+  extern_f32ToF64(rm, v);
+  (float_fflags[4 .. 0], float_result)
+}
+
+val     extern_f64ToF32 = {c: "softfloat_f64tof32", ocaml: "Platform.fdext_stub2"} : (bits_rm, bits_D) -> unit
+val      riscv_f64ToF32 : (bits_rm, bits_D) -> (bits_fflags, bits_S) effect {rreg}
+function riscv_f64ToF32 (rm, v) = {
+  extern_f64ToF32(rm, v);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
+
 /* **************************************************************** */

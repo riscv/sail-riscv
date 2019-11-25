@@ -43,6 +43,7 @@ enum f_madd_op_D = {FMADD_D, FMSUB_D, FNMSUB_D, FNMADD_D}
 enum f_bin_rm_op_D = {FADD_D, FSUB_D, FMUL_D, FDIV_D}
 
 enum f_un_rm_op_D = {FSQRT_D, FCVT_W_D, FCVT_WU_D, FCVT_D_W, FCVT_D_WU,    // RV32 and RV64
+                     FCVT_S_D, FCVT_D_S,
                      FCVT_L_D, FCVT_LU_D, FCVT_D_L, FCVT_D_LU}             // RV64 only
 
 enum f_bin_op_D = {FSGNJ_D, FSGNJN_D, FSGNJX_D, FMIN_D, FMAX_D, FEQ_D, FLT_D, FLE_D}

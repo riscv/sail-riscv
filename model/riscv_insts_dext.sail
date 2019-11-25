@@ -378,6 +378,14 @@ mapping clause encdec =
     F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_WU)                                    if is_RV32D_or_RV64D()
 <-> 0b110_1001 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
 
+mapping clause encdec =
+    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_S_D)                                     if is_RV32D_or_RV64D()
+<-> 0b010_0000 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+
+mapping clause encdec =
+    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_S)                                     if is_RV32D_or_RV64D()
+<-> 0b010_0001 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+
 /* D instructions, RV64 only */
 
 mapping clause encdec =
@@ -453,6 +461,28 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_WU)) = {
   RETIRE_SUCCESS
 }
 
+function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_S_D)) = {
+  let rs1_val_D = F(rs1);
+  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+
+  let (fflags, rd_val_S) = riscv_f64ToF32 (rm_3b, rs1_val_D);
+
+  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  F(rd) = nan_box (rd_val_S);
+  RETIRE_SUCCESS
+}
+
+function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_S)) = {
+  let rs1_val_S = nan_unbox (F(rs1));
+  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+
+  let (fflags, rd_val_D) = riscv_f32ToF64 (rm_3b, rs1_val_S);
+
+  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  F(rd) = rd_val_D;
+  RETIRE_SUCCESS
+}
+
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)) = {
   let rs1_val_D = F(rs1);
   let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
@@ -509,7 +539,10 @@ mapping f_un_rm_type_mnemonic_D : f_un_rm_op_D <-> string = {
     FCVT_L_D  <-> "fcvt.l.d",
     FCVT_LU_D <-> "fcvt.lu.d",
     FCVT_D_L  <-> "fcvt.d.l",
-    FCVT_D_LU <-> "fcvt.d.lu"
+    FCVT_D_LU <-> "fcvt.d.lu",
+
+    FCVT_S_D  <-> "fcvt.s.d",
+    FCVT_D_S  <-> "fcvt.d.s"
 }
 
 mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, FSQRT_D)
@@ -564,6 +597,18 @@ mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_LU)
                       <-> f_un_rm_type_mnemonic_D(FCVT_D_LU)
                           ^ spc() ^ freg_name(rd)
                           ^ sep() ^ reg_name(rs1)
+                          ^ sep() ^ frm_mnemonic(rm)
+
+mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_S_D)
+                      <-> f_un_rm_type_mnemonic_D(FCVT_S_D)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ frm_mnemonic(rm)
+
+mapping clause assembly = F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_S)
+                      <-> f_un_rm_type_mnemonic_D(FCVT_D_S)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
 
 /* ****************************************************************** */

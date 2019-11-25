@@ -371,3 +371,29 @@ unit softfloat_ui64tof64(mach_bits rm, mach_bits v) {
 
   return UNIT;
 }
+
+unit softfloat_f32tof64(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t a;
+  float64_t res;
+  a.v = v;
+  res = f32_to_f64(a);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f64tof32(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float64_t a;
+  float32_t res;
+  a.v = v;
+  res = f64_to_f32(a);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
