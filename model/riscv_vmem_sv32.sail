@@ -6,7 +6,7 @@
 
 function to_phys_addr(a : paddr32) -> xlenbits = a[31..0]
 
-val walk32 : (vaddr32, AccessType(ext_access_type), Privilege, bool, bool, paddr32, nat, bool, ext_ptw) -> PTW_Result(paddr32, SV32_PTE) effect {rmem, rreg, escape}
+val walk32 : (vaddr32, AccessType(ext_access_type), Privilege, bool, bool, paddr32, nat, bool, ext_ptw) -> PTW_Result(paddr32, SV32_PTE) effect {rmem, rmemt, rreg, escape}
 function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let va = Mk_SV32_Vaddr(vaddr);
   let pt_ofs : paddr32 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV32_LEVEL_BITS))[(SV32_LEVEL_BITS - 1) .. 0]),
@@ -115,7 +115,7 @@ function flush_TLB32(asid, addr) =
 
 /* address translation */
 
-val translate32 : (asid32, paddr32, vaddr32, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr32, PTW_Error) effect {rreg, wreg, wmv, wmvt, escape, rmem}
+val translate32 : (asid32, paddr32, vaddr32, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr32, PTW_Error) effect {rreg, wreg, wmv, wmvt, escape, rmem, rmemt}
 function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = {
   match lookup_TLB32(asid, vAddr) {
     Some(idx, ent) => {
