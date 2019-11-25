@@ -104,7 +104,7 @@ val      f_is_SNaN_D : bits(64) -> bool
 function f_is_SNaN_D   x64 = {
   let (sign, exp, mant) = fsplit_D (x64);
   (  (exp == ones())
-   & (mant [22] == bitzero)
+   & (mant [51] == bitzero)
    & (mant != zeros()))
 }
 
@@ -112,7 +112,7 @@ val      f_is_QNaN_D : bits(64) -> bool
 function f_is_QNaN_D   x64 = {
   let (sign, exp, mant) = fsplit_D (x64);
   (  (exp == ones())
-   & (mant [22] == bitone))
+   & (mant [51] == bitone))
 }
 
 /* **************************************************************** */
