@@ -103,8 +103,7 @@ function haveMulDiv()  -> bool = misa.M() == 0b1
 function haveSupMode() -> bool = misa.S() == 0b1
 function haveUsrMode() -> bool = misa.U() == 0b1
 function haveNExt()    -> bool = misa.N() == 0b1
-function haveFExt()    -> bool = misa.F() == 0b1    /* Single-precision floating point */
-function haveDExt()    -> bool = misa.D() == 0b1    /* Double-precision floating point */
+/* see below for F and D extension tests */
 
 bitfield Mstatus : xlenbits = {
   SD   : xlen - 1,
@@ -181,7 +180,6 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
    * to support code running in S/U-modes.  Spike does this, and for now, we match it.
    * FIXME: This should be made a platform parameter.
    */
-  // let m = update_FS(m, extStatus_to_bits(Off));
 
   let dirty = extStatus_of_bits(m.FS()) == Dirty | extStatus_of_bits(m.XS()) == Dirty;
   let m = update_SD(m, bool_to_bits(dirty));
@@ -216,6 +214,10 @@ function cur_Architecture() -> Architecture = {
 function in32BitMode() -> bool = {
   cur_Architecture() == RV32
 }
+
+/* F and D extensions have to enabled both via misa.{FD} as well as mstatus.FS */
+function haveFExt()    -> bool = (misa.F() == 0b1) & (mstatus.FS() != 0b00)
+function haveDExt()    -> bool = (misa.D() == 0b1) & (mstatus.FS() != 0b00)
 
 /* interrupt processing state */
 

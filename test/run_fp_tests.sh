@@ -58,7 +58,7 @@ then
 else
     red "Building 64-bit RISCV C emulator" "fail"
 fi
-for test in $DIR/riscv-tests/rv64u{f,d}*.elf rv64mi-p-csr.elf; do
+for test in $DIR/riscv-tests/rv64u{f,d}*.elf $DIR/riscv-tests/rv64mi-p-csr.elf; do
     if timeout 5 $RISCVDIR/c_emulator/riscv_sim_RV64 -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
     then
 	green "C-64 $(basename $test)" "ok"
