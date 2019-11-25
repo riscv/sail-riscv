@@ -31,13 +31,13 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
         PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
       } else {
         if isPTEPtr(pbits, ext_pte) then {
-          if level == 0 then {
+          if level > 0 then {
+            /* walk down the pointer to the next level */
+            walk48(vaddr, ac, priv, mxr, do_sum, shiftl(EXTZ(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global, ext_ptw)
+          } else {
             /* last-level PTE contains a pointer instead of a leaf */
 /*          print("walk48: last-level pte contains a ptr"); */
             PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
-          } else {
-            /* walk down the pointer to the next level */
-            walk48(vaddr, ac, priv, mxr, do_sum, shiftl(EXTZ(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global, ext_ptw)
           }
         } else { /* leaf PTE */
           match checkPTEPermission(ac, priv, mxr, do_sum, pattr, ext_pte, ext_ptw) {
