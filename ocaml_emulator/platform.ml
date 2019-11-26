@@ -126,12 +126,6 @@ let excl_res _ = true
 
 let barrier _ = ()
 
-(* dummy stubs for floating point *)
-
-let fdext_stub2 _ _     = ()
-let fdext_stub3 _ _ _   = ()
-let fdext_stub4 _ _ _ _ = ()
-
 (* terminal I/O *)
 
 let term_write char_bits =
