@@ -129,9 +129,9 @@ function wF (r, in_v) = {
       print_reg("f" ^ string_of_int(r) ^ " <- " ^ FRegStr(v));
 }
 
-function rF_bits(i: bits(5)) -> xlenbits = rF(unsigned(i))
+function rF_bits(i: bits(5)) -> flenbits = rF(unsigned(i))
 
-function wF_bits(i: bits(5), data: xlenbits) -> unit = {
+function wF_bits(i: bits(5), data: flenbits) -> unit = {
   wF(unsigned(i)) = data
 }
 

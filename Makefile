@@ -7,21 +7,24 @@ else ifeq ($(ARCH),64)
   override ARCH := RV64
 endif
 
+# Currently, we only have F with RV32, and both F and D with RV64.
 ifeq ($(ARCH),RV32)
   SAIL_XLEN := riscv_xlen32.sail
+  SAIL_FLEN := riscv_flen_F.sail
 else ifeq ($(ARCH),RV64)
   SAIL_XLEN := riscv_xlen64.sail
+  SAIL_FLEN := riscv_flen_D.sail
 else
   $(error '$(ARCH)' is not a valid architecture, must be one of: RV32, RV64)
 endif
 
-# For now, F and D extensions cannot be separated, and are only available in RV64.
-SAIL_FLEN := riscv_flen_D.sail
-
 # Instruction sources, depending on target
 SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_misa_ext.sail
 SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail
-SAIL_DEFAULT_INST += riscv_softfloat_interface.sail  riscv_insts_fext.sail  riscv_insts_dext.sail
+SAIL_DEFAULT_INST += riscv_softfloat_interface.sail  riscv_insts_fext.sail
+ifeq ($(ARCH),RV64)
+SAIL_DEFAULT_INST +=riscv_insts_dext.sail
+endif
 
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
 SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail

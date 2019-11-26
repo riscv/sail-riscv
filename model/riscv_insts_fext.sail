@@ -306,9 +306,14 @@ mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if is_RV32D_or_RV64
 val process_fload64 : (regidx, xlenbits, MemoryOpResult(bits(64)))
                       -> Retired effect {escape, rreg, wreg}
 function process_fload64(rd, addr, value) =
-  match value {
-    MemValue(result) => { F(rd) = result; RETIRE_SUCCESS },
-    MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
+  if   sizeof(flen) == 64
+  then match value {
+         MemValue(result) => { F(rd) = result; RETIRE_SUCCESS },
+         MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
+       }
+  else {
+    /* should not get here */
+    RETIRE_FAIL
   }
 
 val process_fload32 : (regidx, xlenbits, MemoryOpResult(bits(32)))
@@ -648,47 +653,71 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
-  let rs1_val_S = nan_unbox (F(rs1));
-  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  if   sizeof(flen) == 64
+  then {
+    let rs1_val_S = nan_unbox (F(rs1));
+    let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-  let (fflags, rd_val_L) = riscv_f32ToI64 (rm_3b, rs1_val_S);
+    let (fflags, rd_val_L) = riscv_f32ToI64 (rm_3b, rs1_val_S);
 
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
-  X(rd) = rd_val_L;
-  RETIRE_SUCCESS
+    writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+    X(rd) = rd_val_L;
+    RETIRE_SUCCESS
+  } else {
+    /* this would not decode on RV32 */
+    RETIRE_FAIL
+  }
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
-  let rs1_val_S = nan_unbox (F(rs1));
-  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  if   sizeof(flen) == 64
+  then {
+    let rs1_val_S = nan_unbox (F(rs1));
+    let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-  let (fflags, rd_val_LU) = riscv_f32ToUi64 (rm_3b, rs1_val_S);
+    let (fflags, rd_val_LU) = riscv_f32ToUi64 (rm_3b, rs1_val_S);
 
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
-  X(rd) = rd_val_LU;
-  RETIRE_SUCCESS
+    writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+    X(rd) = rd_val_LU;
+    RETIRE_SUCCESS
+  } else {
+    /* this would not decode on RV32 */
+    RETIRE_FAIL
+  }
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
-  let rs1_val_L = X(rs1);
-  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  if   sizeof(flen) == 64
+  then {
+    let rs1_val_L = X(rs1);
+    let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-  let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
+    let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
 
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
-  F(rd) = nan_box (rd_val_S);
-  RETIRE_SUCCESS
+    writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+    F(rd) = nan_box (rd_val_S);
+    RETIRE_SUCCESS
+  } else {
+    /* this would not decode on RV32 */
+    RETIRE_FAIL
+  }
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
-  let rs1_val_LU = X(rs1);
-  let rm_3b      = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  if   sizeof(flen) == 64
+  then {
+    let rs1_val_LU = X(rs1);
+    let rm_3b      = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-  let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
+    let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
 
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
-  F(rd) = nan_box (rd_val_S);
-  RETIRE_SUCCESS
+    writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+    F(rd) = nan_box (rd_val_S);
+    RETIRE_SUCCESS
+  } else {
+    /* this would not decode on RV32 */
+    RETIRE_FAIL
+  }
 }
 
 /* AST -> Assembly notation ================================ */
