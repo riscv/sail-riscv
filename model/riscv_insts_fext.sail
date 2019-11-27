@@ -1060,10 +1060,8 @@ function clause execute (F_UN_TYPE_S(rs1, rd, FCLASS_S)) = {
 }
 
 function clause execute (F_UN_TYPE_S(rs1, rd, FMV_X_W)) = {
-  let rs1_val_S            = nan_unbox (F(rs1));
-  let (s, e, m)            = fsplit_S (rs1_val_S);
-  let rd_val_64 : bits(64) = (EXTS (s) : bits(32)) @ rs1_val_S;
-  let rd_val_X  : xlenbits = rd_val_64 [sizeof(xlen - 1)..0];
+  let rs1_val_S            = F(rs1)[31..0];
+  let rd_val_X  : xlenbits = EXTS(rs1_val_S);
   X(rd) = rd_val_X;
   RETIRE_SUCCESS
 }
