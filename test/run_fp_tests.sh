@@ -68,4 +68,21 @@ for test in $DIR/riscv-tests/rv64u{f,d}*.elf $DIR/riscv-tests/rv64mi-p-csr.elf; 
 done
 finish_suite "64-bit RISCV C tests"
 
+
+if ARCH=RV32 make c_emulator/riscv_sim_RV32;
+then
+    green "Building 32-bit RISCV C emulator" "ok"
+else
+    red "Building 32-bit RISCV C emulator" "fail"
+fi
+for test in $DIR/riscv-tests/rv32uf*.elf $DIR/riscv-tests/rv32mi-p-csr.elf; do
+    if timeout 5 $RISCVDIR/c_emulator/riscv_sim_RV32 -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
+    then
+	green "C-32 $(basename $test)" "ok"
+    else
+	red "C-32 $(basename $test)" "fail"
+    fi
+done
+finish_suite "32-bit RISCV C tests"
+
 printf "</testsuites>\n" >> $DIR/tests.xml
