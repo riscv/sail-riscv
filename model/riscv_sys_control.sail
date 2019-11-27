@@ -460,7 +460,7 @@ function init_sys() -> unit = {
   misa->F()   = bool_to_bits(sys_enable_fdext());      /* single-precision */
   misa->D()   = if   sizeof(xlen) == 64
                 then bool_to_bits(sys_enable_fdext())  /* double-precision */
-		else 0b0;
+                else 0b0;
 
   mstatus = set_mstatus_SXL(mstatus, misa.MXL());
   mstatus = set_mstatus_UXL(mstatus, misa.MXL());
