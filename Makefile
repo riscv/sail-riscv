@@ -296,7 +296,7 @@ $(addprefix generated_definitions/coq/$(ARCH)/,riscv_duopod.v riscv_duopod_types
 
 %.vo: %.v
 ifeq ($(wildcard $(BBV_DIR)/theories),)
-       $(error BBV directory not found. Please set the BBV_DIR environment variable)
+	$(error BBV directory not found. Please set the BBV_DIR environment variable)
 endif
 ifeq ($(wildcard $(SAIL_LIB_DIR)/coq),)
 	$(error lib directory of Sail not found. Please set the SAIL_LIB_DIR environment variable)
