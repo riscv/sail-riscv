@@ -86,7 +86,7 @@ function WARL_range_min (warl_range) = match(warl_range) {
 
 /*!
 THIS(current_val, written_val, legal_range) legalizes a WARL field according to 
-given legal_rtange of values and legalising mode. 
+given legal_range of values and legalising mode. 
  */
 val legalize_warl_range : forall 'n, 'n > 0 . (bits('n), bits('n), WARL_range) -> bits('n) effect {escape}
 function legalize_warl_range(current_val, written_val, legal_range) = {
@@ -103,6 +103,26 @@ function legalize_warl_range(current_val, written_val, legal_range) = {
     WARL_Addr      => throw Error_not_implemented("WARL_Addr")
   }
 }
+
+/*!
+THIS(value, mask) legalizes the given value according to the given WARL_bitmask.
+The value is logically ANDed with mask.mask to clear non-writable bits then ORed
+with mask.default to set any hardwired-to-one bits.
+ */
+val legalize_warl_bitmask : forall 'n, 'n > 0 . (bits('n), WARL_bitmask) -> bits('n)
+function legalize_warl_bitmask (value, mask) =
+  (value & to_bits('n, mask.mask)) | to_bits('n, mask.default_val)
+
+/*!
+THIS(current_val, written_val, legal_range) legalizes a WARL field according to 
+given WARL_range or WARL_bitmask.
+ */
+val legalize_warl_either : forall 'n, 'n > 0 . (bits('n), bits('n), WARL_either) -> bits('n) effect {escape}
+function legalize_warl_either(current_val, written_val, warl_either) =
+  match (warl_either) {
+    WARL_range(r) => legalize_warl_range(current_val, written_val, r),
+    WARL_bitmask(b) => legalize_warl_bitmask(written_val, b)
+  }
 
 /* M-mode registers */
 
@@ -151,12 +171,16 @@ val ext_veto_disable_C : unit -> bool effect {rreg}
 /* We currently only support dynamic changes for the C extension. */
 function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   if   sys_enable_writable_misa ()
-  then { /* Allow modifications to C only for now. */
-         let  v = Mk_Misa(v);
-         /* Suppress changing C if nextPC would become misaligned or an extension vetoes or C was disabled at boot (i.e. not supported). */
-         if   (v.C() == 0b0 & (nextPC[1] == bitone | ext_veto_disable_C())) | ~(sys_enable_rvc())
+  then {
+         l = [v with 25..0 = legalize_warl_bitmask(v[25..0], isa_config.misa.Extensions)];
+         lm = Mk_Misa(l);
+         /* D depends on F so disable D if F is off */
+         if lm.D() == 0b1 & lm.F() == 0b0 then
+           lm = update_D(lm, 0b0);
+         /* Suppress changing misa at all if nextPC would become misaligned or an extension vetoes or C was disabled at boot (i.e. not supported). */
+         if (lm.C() == 0b0 & (nextPC[1] == bitone | ext_veto_disable_C())) | ~(sys_enable_rvc())
          then m
-         else update_C(m, v.C())
+         else lm
        }
   else m
 }
@@ -250,7 +274,7 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   let dirty = extStatus_of_bits(m.FS()) == Dirty | extStatus_of_bits(m.XS()) == Dirty;
   let m = update_SD(m, bool_to_bits(dirty));
 
-  /* We don't support dynamic changes to SXL and UXL. */
+  /* TODO We don't support dynamic changes to SXL and UXL. */
   let m = set_mstatus_SXL(m, get_mstatus_SXL(o));
   let m = set_mstatus_UXL(m, get_mstatus_UXL(o));
 
@@ -301,9 +325,10 @@ register mie     : Minterrupts /* Enabled */
 register mideleg : Minterrupts /* Delegation to S-mode */
 
 function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
+  let l = legalize_warl_bitmask(v, isa_config.mip);
   /* The only writable bits are the S-mode bits, and with the 'N'
    * extension, the U-mode bits. */
-  let v = Mk_Minterrupts(v);
+  let v = Mk_Minterrupts(l);
   let m = update_SEI(o, v.SEI());
   let m = update_STI(m, v.STI());
   let m = update_SSI(m, v.SSI());
@@ -316,7 +341,8 @@ function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
 }
 
 function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
-  let v = Mk_Minterrupts(v);
+  let l = legalize_warl_bitmask(v, isa_config.mie);
+  let v = Mk_Minterrupts(l);
   let m = update_MEI(o, v.MEI());
   let m = update_MTI(m, v.MTI());
   let m = update_MSI(m, v.MSI());
@@ -333,9 +359,10 @@ function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
 }
 
 function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
+  let l = legalize_warl_bitmask(v, isa_config.mideleg);
   /* M-mode interrupt delegation bits "should" be hardwired to 0. */
   /* FIXME: needs verification against eventual spec language. */
-  let m = Mk_Minterrupts(v);
+  let m = Mk_Minterrupts(l);
   let m = update_MEI(m, 0b0);
   let m = update_MTI(m, 0b0);
   let m = update_MSI(m, 0b0);
@@ -363,7 +390,8 @@ bitfield Medeleg : xlenbits = {
 register medeleg : Medeleg  /* Delegation to S-mode */
 
 function legalize_medeleg(o : Medeleg, v : xlenbits) -> Medeleg = {
-  let m = Mk_Medeleg(v);
+  let l = legalize_warl_bitmask(v, isa_config.medeleg);
+  let m = Mk_Medeleg(l);
   /* M-EnvCalls delegation is not supported */
   let m = update_MEnvCall(m, 0b0);
   m
@@ -438,18 +466,20 @@ register mcounteren : Counteren
 register scounteren : Counteren
 
 function legalize_mcounteren(c : Counteren, v : xlenbits) -> Counteren = {
+  let l = legalize_warl_bitmask(v, isa_config.mcounteren.mask);
   /* no HPM counters yet */
-  let c = update_IR(c, [v[2]]);
-  let c = update_TM(c, [v[1]]);
-  let c = update_CY(c, [v[0]]);
+  let c = update_IR(c, [l[2]]);
+  let c = update_TM(c, [l[1]]);
+  let c = update_CY(c, [l[0]]);
   c
 }
 
 function legalize_scounteren(c : Counteren, v : xlenbits) -> Counteren = {
+  let l = legalize_warl_bitmask(v, isa_config.scounteren.mask);
   /* no HPM counters yet */
-  let c = update_IR(c, [v[2]]);
-  let c = update_TM(c, [v[1]]);
-  let c = update_CY(c, [v[0]]);
+  let c = update_IR(c, [l[2]]);
+  let c = update_TM(c, [l[1]]);
+  let c = update_CY(c, [l[0]]);
   c
 }
 
@@ -617,7 +647,8 @@ function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterru
 }
 
 function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
-  lift_sip(m, d, Mk_Sinterrupts(v))
+  let l = legalize_warl_bitmask(v, isa_config.sip);
+  lift_sip(m, d, Mk_Sinterrupts(l))
 }
 
 /* Returns the new value of mie from the previous mie (o) and the written sie (s) as delegated by mideleg (d). */
@@ -635,7 +666,8 @@ function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterru
 }
 
 function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
-  lift_sie(m, d, Mk_Sinterrupts(v))
+  let l = legalize_warl_bitmask(v, isa_config.sie);
+  lift_sie(m, d, Mk_Sinterrupts(l))
 }
 
 register sideleg : Sinterrupts
@@ -659,7 +691,11 @@ bitfield Satp64 : bits(64) = {
 }
 
 function legalize_satp64(a : Architecture, o : bits(64), v : bits(64)) -> bits(64) = {
-  let s = Mk_Satp64(v);
+  let os = Mk_Satp64(o);
+  s = Mk_Satp64(v);
+  s = update_Mode(s, legalize_warl_range(os.Mode(), s.Mode(), isa_config.satp.mode));
+  s = update_Asid(s, legalize_warl_either(os.Asid(), s.Asid(), isa_config.satp.asid));
+  s = update_PPN(s,  legalize_warl_either(os.PPN(), s.PPN(), isa_config.satp.ppn));
   match satp64Mode_of_bits(a, s.Mode()) {
     None()     => o,
     Some(Sv32) => o,  /* Sv32 is unsupported for now */
