@@ -1,6 +1,6 @@
 /* Sv48 address translation for RV64. */
 
-val walk48 : (vaddr48, AccessType(ext_access_type), Privilege, bool, bool, paddr64, nat, bool, ext_ptw) -> PTW_Result(paddr64, SV48_PTE) effect {rmem, rreg, escape}
+val walk48 : (vaddr48, AccessType(ext_access_type), Privilege, bool, bool, paddr64, nat, bool, ext_ptw) -> PTW_Result(paddr64, SV48_PTE) effect {rmem, rmemt, rreg, escape}
 function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let va = Mk_SV48_Vaddr(vaddr);
   let pt_ofs : paddr64 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV48_LEVEL_BITS))[(SV48_LEVEL_BITS - 1) .. 0]),
@@ -31,13 +31,13 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
         PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
       } else {
         if isPTEPtr(pbits, ext_pte) then {
-          if level == 0 then {
+          if level > 0 then {
+            /* walk down the pointer to the next level */
+            walk48(vaddr, ac, priv, mxr, do_sum, shiftl(EXTZ(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global, ext_ptw)
+          } else {
             /* last-level PTE contains a pointer instead of a leaf */
 /*          print("walk48: last-level pte contains a ptr"); */
             PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
-          } else {
-            /* walk down the pointer to the next level */
-            walk48(vaddr, ac, priv, mxr, do_sum, shiftl(EXTZ(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global, ext_ptw)
           }
         } else { /* leaf PTE */
           match checkPTEPermission(ac, priv, mxr, do_sum, pattr, ext_pte, ext_ptw) {
@@ -109,7 +109,7 @@ function flush_TLB48(asid, addr) =
 
 /* address translation */
 
-val translate48 : (asid64, paddr64, vaddr48, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr64, PTW_Error) effect {rreg, wreg, wmv, wmvt, escape, rmem}
+val translate48 : (asid64, paddr64, vaddr48, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr64, PTW_Error) effect {rreg, wreg, wmv, wmvt, escape, rmem, rmemt}
 function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = {
   match walk48(vAddr, ac, priv, mxr, do_sum, ptb, level, false, ext_ptw) {
     PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),
