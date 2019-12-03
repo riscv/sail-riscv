@@ -192,7 +192,7 @@ gcovr:
 
 generated_definitions/ocaml/riscv_duopod_ocaml: $(PRELUDE_SRCS) model/riscv_duopod.sail
 	mkdir -p generated_definitions/ocaml
-	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml_build_dir generated_definitions/ocaml -o riscv_duopod_ocaml $^
+	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml_build_dir generated_definitions/ocaml -o riscv_duopod_ocaml model/riscv_duopod.sail
 
 ocaml_emulator/tracecmp: ocaml_emulator/tracecmp.ml
 	ocamlfind ocamlopt -annot -linkpkg -package unix $^ -o $@
@@ -200,6 +200,12 @@ ocaml_emulator/tracecmp: ocaml_emulator/tracecmp.ml
 generated_definitions/c/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
 	$(SAIL) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@)
+
+# convenience target
+.PHONY: csim
+csim: c_emulator/riscv_sim_$(ARCH)
+.PHONY: rvfi
+rvfi: c_emulator/riscv_rvfi
 
 c_emulator/riscv_sim_$(ARCH): generated_definitions/c/riscv_model_$(ARCH).c $(C_INCS) $(C_SRCS) Makefile
 	gcc -g $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
@@ -222,8 +228,9 @@ generated_definitions/isabelle/$(ARCH)/ROOT: handwritten_support/ROOT
 
 generated_definitions/lem/riscv_duopod.lem: $(PRELUDE_SRCS) model/riscv_duopod.sail
 	mkdir -p generated_definitions/lem
-	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem -isa_output_dir generated_definitions/isabelle -lem_mwords -lem_lib Riscv_extras -lem_lib Mem_metadata -o riscv_duopod $^
-generated_definitions/isabelle/Riscv_duopod.thy: generated_definitions/isabelle/ROOT generated_definitions/lem/riscv_duopod.lem $(RISCV_EXTRAS_LEM)
+	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem -isa_output_dir generated_definitions/isabelle -lem_mwords -lem_lib Riscv_extras -lem_lib Mem_metadata -o riscv_duopod model/riscv_duopod.sail
+
+generated_definitions/isabelle/Riscv_duopod.thy: generated_definitions/isabelle/RV64/ROOT generated_definitions/lem/riscv_duopod.lem $(RISCV_EXTRAS_LEM)
 	lem -isa -outdir generated_definitions/isabelle -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
 		$(RISCV_EXTRAS_LEM) \
 		generated_definitions/lem/riscv_duopod_types.lem \
