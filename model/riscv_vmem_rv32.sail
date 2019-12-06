@@ -26,7 +26,7 @@ function translationMode(priv) = {
 
 /* Top-level address translation dispatcher */
 
-val translateAddr : (xlenbits, AccessType(ext_access_type)) -> TR_Result(xlenbits, ExceptionType) effect {escape, rmem, rreg, wmv, wmvt, wreg}
+val translateAddr : (xlenbits, AccessType(ext_access_type)) -> TR_Result(xlenbits, ExceptionType) effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
 function translateAddr(vAddr, ac) = {
   let effPriv : Privilege = match ac {
     Execute() => cur_privilege,
