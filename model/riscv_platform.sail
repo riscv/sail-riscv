@@ -142,8 +142,8 @@ let MTIMECMP_BASE_HI : xlenbits = EXTZ(0x04004)
 let MTIME_BASE       : xlenbits = EXTZ(0x0bff8)
 let MTIME_BASE_HI    : xlenbits = EXTZ(0x0bffc)
 
-val clint_load : forall 'n, 'n > 0. (xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rreg}
-function clint_load(addr, width) = {
+val clint_load : forall 'n, 'n > 0. (AccessType(ext_access_type), xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rreg}
+function clint_load(t, addr, width) = {
   let addr = addr - plat_clint_base ();
   /* FIXME: For now, only allow exact aligned access. */
   if addr == MSIP_BASE & ('n == 8 | 'n == 4)
@@ -194,7 +194,11 @@ function clint_load(addr, width) = {
   else {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] -> <not-mapped>");
-    MemException(E_Load_Access_Fault())
+    match t {
+      Execute()  => MemException(E_Fetch_Access_Fault()),
+      Read(Data) => MemException(E_Load_Access_Fault()),
+      _          => MemException(E_SAMO_Access_Fault())
+    }
   }
 }
 
@@ -274,8 +278,8 @@ register htif_exit_code : bits(64)
  * dispatched the address.
  */
 
-val htif_load : forall 'n, 'n > 0. (xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rreg}
-function htif_load(paddr, width) = {
+val htif_load : forall 'n, 'n > 0. (AccessType(ext_access_type), xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rreg}
+function htif_load(t, paddr, width) = {
   if   get_config_print_platform()
   then print_platform("htif[" ^ BitStr(paddr) ^ "] -> " ^ BitStr(htif_tohost));
   /* FIXME: For now, only allow the expected access widths. */
@@ -285,7 +289,11 @@ function htif_load(paddr, width) = {
   then    MemValue(sail_zero_extend(htif_tohost[31..0], 32))  /* FIXME: Redundant zero_extend currently required by Lem backend */
   else if width == 4 & paddr == plat_htif_tohost() + 4
   then    MemValue(sail_zero_extend(htif_tohost[63..32], 32)) /* FIXME: Redundant zero_extend currently required by Lem backend */
-  else    MemException(E_Load_Access_Fault())
+  else match t {
+    Execute()  => MemException(E_Fetch_Access_Fault()),
+    Read(Data) => MemException(E_Load_Access_Fault()),
+    _          => MemException(E_SAMO_Access_Fault())
+  }
 }
 
 /* The rreg,wreg effects are an artifact of using 'register' to implement device state. */
@@ -351,12 +359,16 @@ $else
 function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool = false
 $endif
 
-function mmio_read forall 'n, 0 < 'n <= max_mem_access . (paddr : xlenbits, width : atom('n)) -> MemoryOpResult(bits(8 * 'n)) =
+function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n)) -> MemoryOpResult(bits(8 * 'n)) =
   if   within_clint(paddr, width)
-  then clint_load(paddr, width)
+  then clint_load(t, paddr, width)
   else if within_htif_readable(paddr, width) & (1 <= 'n)
-  then htif_load(paddr, width)
-  else MemException(E_Load_Access_Fault())
+  then htif_load(t, paddr, width)
+  else match t {
+    Execute()  => MemException(E_Fetch_Access_Fault()),
+    Read(Data) => MemException(E_Load_Access_Fault()),
+    _          => MemException(E_SAMO_Access_Fault())
+  }
 
 function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : xlenbits, width : atom('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
   if   within_clint(paddr, width)

@@ -50,10 +50,14 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
 /* dispatches to MMIO regions or physical memory regions depending on physical memory map */
 function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
   if   within_mmio_readable(paddr, width)
-  then MemoryOpResult_add_meta(mmio_read(paddr, width), default_meta)
+  then MemoryOpResult_add_meta(mmio_read(t, paddr, width), default_meta)
   else if within_phys_mem(paddr, width)
   then phys_mem_read(t, paddr, width, aq, rl, res, meta)
-  else MemException(E_Load_Access_Fault())
+  else match t {
+    Execute()  => MemException(E_Fetch_Access_Fault()),
+    Read(Data) => MemException(E_Load_Access_Fault()),
+    _          => MemException(E_SAMO_Access_Fault())
+  }
 
 /* PMP checks if enabled */
 function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
