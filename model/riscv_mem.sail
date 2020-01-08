@@ -7,7 +7,7 @@
  * metadata in addition to raw memory data.
  *
  * The external API for this module is
- *   {mem_read, mem_write_ea, mem_write_value_meta, mem_write_value}
+ *   {mem_read, mem_read_meta, mem_write_ea, mem_write_value_meta, mem_write_value}
  * where mem_write_value is a special case of mem_write_value_meta that uses
  * a default value of the metadata.
  *
@@ -19,43 +19,53 @@
 function is_aligned_addr forall 'n. (addr : xlenbits, width : atom('n)) -> bool =
   unsigned(addr) % width == 0
 
-// only used for actual memory regions, to avoid MMIO effects
-function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n), aq : bool, rl: bool, res : bool) -> MemoryOpResult(bits(8 * 'n)) = {
-  let result = (match (aq, rl, res) {
-    (false, false, false) => Some(read_ram(Read_plain, paddr, width)),
-    (true, false, false)  => Some(read_ram(Read_RISCV_acquire, paddr, width)),
-    (true, true, false)   => Some(read_ram(Read_RISCV_strong_acquire, paddr, width)),
-    (false, false, true)  => Some(read_ram(Read_RISCV_reserved, paddr, width)),
-    (true, false, true)   => Some(read_ram(Read_RISCV_reserved_acquire, paddr, width)),
-    (true, true, true)    => Some(read_ram(Read_RISCV_reserved_strong_acquire, paddr, width)),
+function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> option(read_kind) =
+  match (aq, rl, res) {
+    (false, false, false) => Some(Read_plain),
+    (true, false, false)  => Some(Read_RISCV_acquire),
+    (true, true, false)   => Some(Read_RISCV_strong_acquire),
+    (false, false, true)  => Some(Read_RISCV_reserved),
+    (true, false, true)   => Some(Read_RISCV_reserved_acquire),
+    (true, true, true)    => Some(Read_RISCV_reserved_strong_acquire),
     (false, true, false)  => None(), /* should these be instead throwing error_not_implemented as below? */
     (false, true, true)   => None()
-  }) : option(bits(8 * 'n));
+  }
+
+// only used for actual memory regions, to avoid MMIO effects
+function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n), aq : bool, rl: bool, res : bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
+  let result = (match read_kind_of_flags(aq, rl, res) {
+    Some(rk) => Some(read_ram(rk, paddr, width, meta)),
+    None()   => None()
+  }) : option((bits(8 * 'n), mem_meta));
   match (t, result) {
     (Execute(),  None()) => MemException(E_Fetch_Access_Fault()),
     (Read(Data), None()) => MemException(E_Load_Access_Fault()),
     (_,          None()) => MemException(E_SAMO_Access_Fault()),
-    (_,         Some(v)) => { if   get_config_print_mem()
+    (_,      Some(v, m)) => { if   get_config_print_mem()
                               then print_mem("mem[" ^ to_str(t) ^ "," ^ BitStr(paddr) ^ "] -> " ^ BitStr(v));
-                              MemValue(v) }
+                              MemValue(v, m) }
   }
 }
 
 /* dispatches to MMIO regions or physical memory regions depending on physical memory map */
-function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
+function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
   if   within_mmio_readable(paddr, width)
-  then mmio_read(paddr, width)
+  then MemoryOpResult_add_meta(mmio_read(t, paddr, width), default_meta)
   else if within_phys_mem(paddr, width)
-  then phys_mem_read(t, paddr, width, aq, rl, res)
-  else MemException(E_Load_Access_Fault())
+  then phys_mem_read(t, paddr, width, aq, rl, res, meta)
+  else match t {
+    Execute()  => MemException(E_Fetch_Access_Fault()),
+    Read(Data) => MemException(E_Load_Access_Fault()),
+    _          => MemException(E_SAMO_Access_Fault())
+  }
 
 /* PMP checks if enabled */
-function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool) -> MemoryOpResult(bits(8 * 'n)) =
+function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
   if   (~ (plat_enable_pmp ()))
-  then checked_mem_read(t, paddr, width, aq, rl, res)
+  then checked_mem_read(t, paddr, width, aq, rl, res, meta)
   else {
     match pmpCheck(paddr, width, t, effectivePrivilege(mstatus, cur_privilege)) {
-      None()  => checked_mem_read(t, paddr, width, aq, rl, res),
+      None()  => checked_mem_read(t, paddr, width, aq, rl, res, meta),
       Some(e) => MemException(e)
     }
   }
@@ -81,9 +91,11 @@ $endif
 
 /* NOTE: The rreg effect is due to MMIO. */
 $ifdef RVFI_DII
-val mem_read : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {wreg, rmem, rreg, escape}
+val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n))             effect {wreg, rmem, rmemt, rreg, escape}
+val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) effect {wreg, rmem, rmemt, rreg, escape}
 $else
-val mem_read : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n)) effect {rmem, rreg, escape}
+val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n))             effect {rmem, rmemt, rreg, escape}
+val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) effect {rmem, rmemt, rreg, escape}
 $endif
 
 function mem_read (typ, paddr, width, aq, rl, res) = {
@@ -93,9 +105,22 @@ function mem_read (typ, paddr, width, aq, rl, res) = {
   else match (aq, rl, res) {
     (false, true,  false) => throw(Error_not_implemented("load.rl")),
     (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
-    (_, _, _)             => pmp_mem_read(typ, paddr, width, aq, rl, res)
+    (_, _, _)             => MemoryOpResult_drop_meta(pmp_mem_read(typ, paddr, width, aq, rl, res, false))
   };
  rvfi_read(paddr, width, result);
+ result
+}
+
+function mem_read_meta (typ, addr, width, aq, rl, res) = {
+ let result : MemoryOpResult((bits(8 * 'n), mem_meta)) =
+  if (aq | res) & (~ (is_aligned_addr(addr, width)))
+  then MemException(E_Load_Addr_Align())
+  else match (aq, rl, res) {
+    (false, true,  false) => throw(Error_not_implemented("load.rl")),
+    (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
+    (_, _, _)             => pmp_mem_read(typ, addr, width, aq, rl, res, true)
+  };
+ rvfi_read(addr, width, MemoryOpResult_drop_meta(result));
  result
 }
 

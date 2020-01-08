@@ -4,7 +4,7 @@
 
 function isRVC(h : half) -> bool = ~ (h[1 .. 0] == 0b11)
 
-val fetch : unit -> FetchResult effect {escape, rmem, rreg, wmv, wmvt, wreg}
+val fetch : unit -> FetchResult effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
 function fetch() -> FetchResult =
   /* fetch PC check for extensions: extensions return a transformed PC to fetch,
    * but any exceptions use the untransformed PC.
@@ -22,7 +22,7 @@ function fetch() -> FetchResult =
            * exceptions.
            */
           match mem_read(Execute(), ppclo, 2, false, false, false) {
-            MemException(e) => F_Error(E_Fetch_Access_Fault(), PC),
+            MemException(e) => F_Error(e, PC),
             MemValue(ilo)   => {
               if   isRVC(ilo)
               then F_RVC(ilo)
@@ -36,7 +36,7 @@ function fetch() -> FetchResult =
                       TR_Failure(e, _)     => F_Error(e, PC_hi),
                       TR_Address(ppchi, _) => {
                         match mem_read(Execute(), ppchi, 2, false, false, false) {
-                          MemException(e) => F_Error(E_Fetch_Access_Fault(), PC_hi),
+                          MemException(e) => F_Error(e, PC_hi),
                           MemValue(ihi)   => F_Base(append(ihi, ilo))
                         }
                       }
