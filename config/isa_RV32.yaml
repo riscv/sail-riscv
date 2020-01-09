@@ -1,12 +1,12 @@
 User_Spec_Version: "2.3"
-ISA: "RV64IMACSUZicsr_Zifencei"
+ISA: "RV32IMACSUZicsr_Zifencei"
 Privilege_Spec_Version: "1.11"
 misa:
   implemented: True
   MXL:
     range:
-      # only 64-bit supported
-      rangelist: [[2]]
+      # only 32-bit supported
+      rangelist: [[1]]
       mode: "Unchanged"
   Extensions:
     bitmask:
@@ -23,7 +23,7 @@ marchid:
 mimpid:
   implemented: True
   id: 0x987562
-mhartid: 0x669994
+mhartid: 0x0
 mstatus:
   XS:
     is_hardwired: False
@@ -38,45 +38,45 @@ mstatus:
       rangelist: [[0,1],[3]]
       mode: "Nextdown"
   SXL:
-    # is_hardwired: True
-    # hardwired_field: "MXL"
+    #is_hardwired: True
+    #hardwired_field: "MXL"
     range:
-      rangelist: [[1,2]]
+      rangelist: [[1]]
   UXL:
     #is_hardwired: True
-    # hardwired_field: "MXL"
+    #hardwired_field: "MXL"
     range:
       rangelist: [[1]]
 mtvec:
   BASE:
     range:
-      rangelist: [[0x00,0x3fffffffffffffff]]
+      rangelist: [[0x00,0x3fffffff]]
       mode: Addr
   MODE:
     range:
       rangelist: [[0,1]]
 mideleg:
   bitmask:
-    mask: 0xFFF0FFFFFFFFFFFF
+    mask: 0xFFFFFFFF
     default: 0x00 
 medeleg:
   bitmask:
-    mask: 0xFFFFFFFFFFFFF7FF
+    mask: 0xFFFFF7FF
     default: 0x00
 mip:
   bitmask:
-    mask: 0xF7AFFFFFFFFFFFFF
+    mask: 0xFFFFFFFF
     default: 0x00
 mie:
   bitmask:
-    mask: 0xF7AFFFFFFFFFFFFF
+    mask: 0xFFFFFFFF
     default: 0x00
 mepc:
   # bitmask:
   #   mask: 0xFFFFFFFFFFFFFFFE
   #   default: 0x00
   range:
-    rangelist: [[0x00,0xFFFFFFFFFFFFFFFF]]
+    rangelist: [[0x00,0xFFFFFFFF]]
 mcountinhibit:
   bitmask:
     mask: 0x1F
@@ -98,7 +98,7 @@ mhpmcounter5:
 satp:
   MODE:
     range:
-      rangelist: [[0],[8]]
+      rangelist: [[0,1]]
       mode: "Unchanged"
   ASID:
     bitmask:
@@ -109,7 +109,7 @@ satp:
     #   mode: "Unchanged"
   PPN:
     bitmask:
-      mask: 0xFFFFFFFFFFF
+      mask: 0x3FFFFF
       default: 0x00
     # range:
     #   rangelist: [[0,0xFFFFFFFFFFF]]
@@ -119,14 +119,14 @@ sepc:
   #   mask: 0xFFFFFFFFFFFFFFFE
   #   default: 0x00
   range:
-    rangelist: [[0x00,0xFFFFFFFFFFFFFFFF]]
+    rangelist: [[0x00,0xFFFFFFFF]]
 sip:
   bitmask:
-    mask: 0xF7AFFFFFFFFFFFFF
+    mask: 0xFFFFFFFF
     default: 0x00
 sie:
   bitmask:
-    mask: 0xF7AFFFFFFFFFFFFF
+    mask: 0xFFFFFFFF
     default: 0x00
 scounteren:
   bitmask:

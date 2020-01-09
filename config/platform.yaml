@@ -1,12 +1,12 @@
 nmi:
-  address: 0x3000
+  address: 0x0
 reset:
-  address: 0x4000
+  address: 0x0
 mtime:
-  address: 0x5000
+  address: 0xbff8
   implemented: True
 mtimecmp:
-  address: 0x5008
+  address: 0x4000
   implemented: True
 mcause:
   values: [16,17,18,19,20,21]
@@ -14,21 +14,3 @@ mcause:
 scause:
   values: [16,17,18,19,20,21]
   implemented: True
-mhpmevent3:
-  bitmask:
-    mask: 0xFC
-    default: 0x00
-  # readonly: True
-  # hardwired: '0'
-mhpmevent4:
-  range:
-    rangelist: [[256,0xFFFFFFFFFFFFFF00]]
-    mode: Unchanged
-  # readonly: True
-  # hardwired: '0' 
-mhpmevent5:
-  range:
-    rangelist: [[0],[2]]
-    mode: "Unchanged"
-  # readonly: True
-  # hardwired: '0'   

@@ -1,0 +1,146 @@
+User_Spec_Version: "2.3"
+ISA: "RV64IMACSUZicsr_Zifencei"
+Privilege_Spec_Version: "1.11"
+misa:
+  implemented: True
+  MXL:
+    range:
+      # only 64-bit supported
+      rangelist: [[2]]
+      mode: "Unchanged"
+  Extensions:
+    bitmask:
+      # Only C is writable currently
+      mask: 0x4
+      # Zy xwvU tSrq ponM lkjI hgfe dcbA
+      default: 0x2141101
+mvendorid:
+  implemented: True
+  id: 0x565656
+marchid:
+  implemented: True
+  id: 0x569895
+mimpid:
+  implemented: True
+  id: 0x987562
+mhartid: 0x0
+mstatus:
+  XS:
+    is_hardwired: False
+  SD:
+    is_hardwired: False
+  FS:
+    range:
+      rangelist: [[0,3]]
+      mode: "Unchanged"
+  MPP:
+    range:
+      rangelist: [[0,1],[3]]
+      mode: "Nextdown"
+  SXL:
+    # dynamic xlen is not supported
+    #is_hardwired: True
+    #hardwired_field: "MXL"
+    range:
+      rangelist: [[2]]
+  UXL:
+    # dynamic xlen is not supported
+    #is_hardwired: True
+    #hardwired_field: "MXL"
+    range:
+      rangelist: [[2]]
+mtvec:
+  BASE:
+    range:
+      rangelist: [[0x00,0x3fffffffffffffff]]
+      mode: Unchanged
+  MODE:
+    range:
+      rangelist: [[0,1]]
+stvec:
+  BASE:
+    range:
+      rangelist: [[0x00,0x3fffffffffffffff]]
+      mode: Unchanged
+  MODE:
+    range:
+      rangelist: [[0,1]]
+mideleg:
+  bitmask:
+    mask: 0xFFF0FFFFFFFFFFFF
+    default: 0x00 
+medeleg:
+  bitmask:
+    mask: 0xFFFFFFFFFFFFF7FF
+    default: 0x00
+mip:
+  bitmask:
+    mask: 0xF7AFFFFFFFFFFFFF
+    default: 0x00
+mie:
+  bitmask:
+    mask: 0xF7AFFFFFFFFFFFFF
+    default: 0x00
+mepc:
+  # bitmask:
+  #   mask: 0xFFFFFFFFFFFFFFFE
+  #   default: 0x00
+  range:
+    rangelist: [[0x00,0xFFFFFFFFFFFFFFFF]]
+mcountinhibit:
+  bitmask:
+    mask: 0x1F
+    default: 0x00
+  # is_hardwired: True
+  # hardwired_val: 0
+mcounteren:
+    bitmask:
+      mask: 0x1F
+      default: 0x00
+  # is_hardwired: True
+  # hardwired_val: 0
+mhpmcounter3:
+  is_hardwired: False
+mhpmcounter4:
+  is_hardwired: False
+mhpmcounter5:
+  is_hardwired: False
+satp:
+  MODE:
+    range:
+      rangelist: [[0],[8]]
+      mode: "Unchanged"
+  ASID:
+    bitmask:
+      mask: 0x1FF
+      default: 0x00
+    # range:
+    #   rangelist: [[0,0x1FF]]
+    #   mode: "Unchanged"
+  PPN:
+    bitmask:
+      mask: 0xFFFFFFFFFFF
+      default: 0x00
+    # range:
+    #   rangelist: [[0,0xFFFFFFFFFFF]]
+    #   mode: "Unchanged"
+sepc:
+  # bitmask:
+  #   mask: 0xFFFFFFFFFFFFFFFE
+  #   default: 0x00
+  range:
+    rangelist: [[0x00,0xFFFFFFFFFFFFFFFF]]
+sip:
+  bitmask:
+    mask: 0xF7AFFFFFFFFFFFFF
+    default: 0x00
+sie:
+  bitmask:
+    mask: 0xF7AFFFFFFFFFFFFF
+    default: 0x00
+scounteren:
+  bitmask:
+    mask: 0x1F
+    default: 0x00
+  # is_hardwired: True
+  # hardwired_val: 0
