@@ -215,7 +215,7 @@ generated_definitions/c/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Make
 .PHONY: csim
 csim: c_emulator/riscv_sim_$(ARCH)
 .PHONY: rvfi
-rvfi: c_emulator/riscv_rvfi
+rvfi: c_emulator/riscv_rvfi_$(ARCH)
 
 c_emulator/riscv_sim_$(ARCH): generated_definitions/c/riscv_model_$(ARCH).c $(C_INCS) $(C_SRCS) Makefile
 	gcc -g $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
@@ -225,12 +225,12 @@ $(RV_CONFIG_SAIL): $(CONFIG_ISA) $(CONFIG_PLATFORM)
 	$(RV_CONFIG) --isa_spec $(CONFIG_ISA) --platform_spec $(CONFIG_PLATFORM) --work_dir $(GENERATED_CONFIG_DIR)
 	$(RV_CONFIG2SAIL) -i $(GENERATED_CONFIG_DIR)/isa_$(ARCH)_checked.yaml -p $(GENERATED_CONFIG_DIR)/platform_checked.yaml -o $@
 
-generated_definitions/c/riscv_rvfi_model.c: $(SAIL_RVFI_SRCS) model/main.sail Makefile
+generated_definitions/c/riscv_rvfi_model_$(ARCH).c: $(SAIL_RVFI_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
 	$(SAIL) $(SAIL_FLAGS) -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main.sail -o $(basename $@)
 	sed -i -e '/^[[:space:]]*$$/d' $@
 
-c_emulator/riscv_rvfi: generated_definitions/c/riscv_rvfi_model.c $(C_INCS) $(C_SRCS) Makefile
+c_emulator/riscv_rvfi_$(ARCH): generated_definitions/c/riscv_rvfi_model_$(ARCH).c $(C_INCS) $(C_SRCS) Makefile
 	gcc -g $(C_WARNINGS) $(C_FLAGS) $< -DRVFI_DII $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
 latex: $(SAIL_SRCS) Makefile
@@ -380,7 +380,7 @@ clean:
 	-rm -rf generated_definitions/ocaml/* generated_definitions/c/* generated_definitions/latex/*
 	-rm -rf generated_definitions/lem/* generated_definitions/isabelle/* generated_definitions/hol4/* generated_definitions/coq/*
 	-rm -rf generated_definitions/for-rmem/*
-	-rm -f c_emulator/riscv_sim_RV32 c_emulator/riscv_sim_RV64  c_emulator/riscv_rvfi
+	-rm -f c_emulator/riscv_sim_RV32 c_emulator/riscv_sim_RV64  c_emulator/riscv_rvfi_RV32 c_emulator/riscv_rvfi_RV64
 	-rm -rf ocaml_emulator/_sbuild ocaml_emulator/_build ocaml_emulator/riscv_ocaml_sim_RV32 ocaml_emulator/riscv_ocaml_sim_RV64 ocaml_emulator/tracecmp
 	-rm -f *.gcno *.gcda
 	-rm -f z3_problems

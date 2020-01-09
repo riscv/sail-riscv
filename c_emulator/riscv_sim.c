@@ -193,7 +193,7 @@ static void read_dtb(const char *path)
 
 char *process_args(int argc, char **argv)
 {
-  int c, idx = 1;
+  int c;
   uint64_t ram_size = 0;
   while(true) {
     c = getopt_long(argc, argv,
@@ -214,7 +214,7 @@ char *process_args(int argc, char **argv)
                     "V::"
                     "v::"
                     "l:"
-                         , options, &idx);
+                         , options, NULL);
     if (c == -1) break;
     switch (c) {
     case 'a':
@@ -299,7 +299,7 @@ char *process_args(int argc, char **argv)
   }
   if (do_dump_dts) dump_dts();
 #ifdef RVFI_DII
-  if (idx > argc || (idx == argc && !rvfi_dii)) print_usage(argv[0], 0);
+  if (optind > argc || (optind == argc && !rvfi_dii)) print_usage(argv[0], 0);
 #else
   if (optind >= argc) {
     fprintf(stderr, "No elf file provided.\n");
