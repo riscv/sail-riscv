@@ -1,0 +1,3 @@
+(install
+  (files riscv_config_types.sail)
+  (section share))

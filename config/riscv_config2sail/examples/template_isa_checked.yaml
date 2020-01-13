@@ -1,0 +1,314 @@
+User_Spec_Version: '2.3'
+ISA: RV64IMFADCSUZicsr_Zifencei
+Privilege_Spec_Version: '1.11'
+misa:
+  implemented: true
+  MXL:
+    range:
+      rangelist:
+      - - 1
+        - 2
+      mode: Unchanged
+  Extensions:
+    bitmask:
+      mask: 0x214102D
+      default: 0x100
+mvendorid:
+  implemented: true
+  id: 0x565656
+marchid:
+  implemented: true
+  id: 0x569895
+mimpid:
+  implemented: true
+  id: 0x987562
+mhartid: 0x669994
+mstatus:
+  XS:
+    is_hardwired: false
+    hardwired_val: 0
+  SD:
+    is_hardwired: false
+    hardwired_val: 0
+  FS:
+    range:
+      rangelist:
+      - - 0
+        - 3
+      mode: Unchanged
+  MPP:
+    range:
+      rangelist:
+      - - 0
+        - 1
+      - - 3
+      mode: Nextdown
+  SXL:
+    range:
+      rangelist:
+      - - 1
+        - 2
+      mode: Unchanged
+    is_hardwired: false
+    hardwired_field: MXL
+    implemented: true
+  UXL:
+    range:
+      rangelist:
+      - - 1
+      mode: Unchanged
+    is_hardwired: false
+    hardwired_field: MXL
+    implemented: true
+  TSR:
+    is_hardwired: false
+  TW:
+    is_hardwired: false
+  TVM:
+    is_hardwired: false
+  MXR:
+    is_hardwired: false
+  SUM:
+    is_hardwired: false
+  SPP:
+    is_hardwired: false
+  MPRV:
+    is_hardwired: false
+  SPIE:
+    is_hardwired: false
+  UPIE:
+    is_hardwired: false
+  SIE:
+    is_hardwired: false
+  UIE:
+    is_hardwired: false
+mtvec:
+  BASE:
+    range:
+      rangelist:
+      - - 0x1000
+        - 0x2000
+      mode: Addr
+  MODE:
+    range:
+      rangelist:
+      - - 1
+      mode: Unchanged
+mideleg:
+  bitmask:
+    mask: 0xFFF0FFFFFFFFFFFF
+    default: 0x00
+  implemented: true
+medeleg:
+  bitmask:
+    mask: 0xFFFFFFFFFFFFF7FF
+    default: 0x00
+  implemented: true
+mip:
+  bitmask:
+    mask: 0xF7AFFFFFFFFFFFFF
+    default: 0x00
+  implemented: true
+mie:
+  bitmask:
+    mask: 0xF7AFFFFFFFFFFFFF
+    default: 0x00
+  implemented: true
+mepc:
+  range:
+    rangelist:
+    - - 0x00
+      - 0xFFFFFFFFFFFFFFFF
+    mode: Unchanged
+  implemented: true
+mcountinhibit:
+  bitmask:
+    mask: 0x1F
+    default: 0x00
+  implemented: true
+mcounteren:
+  bitmask:
+    mask: 0x1F
+    default: 0x00
+  is_hardwired: false
+  hardwired_val: 0
+  implemented: true
+mhpmcounter3:
+  is_hardwired: false
+  hardwired_val: 0
+  implemented: true
+mhpmcounter4:
+  is_hardwired: false
+  hardwired_val: 0
+  implemented: true
+mhpmcounter5:
+  is_hardwired: false
+  hardwired_val: 0
+  implemented: true
+satp:
+  MODE:
+    range:
+      rangelist:
+      - - 0
+      - - 8
+      mode: Unchanged
+  ASID:
+    bitmask:
+      mask: 0x1FF
+      default: 0x00
+  PPN:
+    bitmask:
+      mask: 0xFFFFFFFFFFF
+      default: 0x00
+  implemented: true
+sepc:
+  range:
+    rangelist:
+    - - 0x00
+      - 0xFFFFFFFFFFFFFFFF
+    mode: Unchanged
+  implemented: true
+sip:
+  bitmask:
+    mask: 0xF7AFFFFFFFFFFFFF
+    default: 0x00
+  implemented: true
+sie:
+  bitmask:
+    mask: 0xF7AFFFFFFFFFFFFF
+    default: 0x00
+  implemented: true
+scounteren:
+  bitmask:
+    mask: 0x1F
+    default: 0x00
+  is_hardwired: false
+  hardwired_val: 0
+  implemented: true
+hw_data_misaligned_support: false
+mcycle:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+minstret:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter6:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter7:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter8:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter9:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter10:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter11:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter12:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter13:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter14:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter15:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter16:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter17:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter18:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter19:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter20:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter21:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter22:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter23:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter24:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter25:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter26:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter27:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter28:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter29:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter30:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmcounter31:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+xlen: 64
+stvec:
+  BASE:
+    range:
+      rangelist:
+      - - 0
+        - 1073741823
+      mode: Unchanged
+  MODE:
+    range:
+      rangelist:
+      - - 0
+      mode: Unchanged
+  implemented: true

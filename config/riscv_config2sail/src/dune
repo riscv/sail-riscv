@@ -1,0 +1,5 @@
+(executable
+  (name riscv_config2sail)
+  (libraries yaml bos)
+  (public_name rv_conf2sail))
+

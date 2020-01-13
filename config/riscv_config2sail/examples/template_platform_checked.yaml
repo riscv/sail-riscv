@@ -1,0 +1,149 @@
+nmi:
+  address: 0x3000
+reset:
+  address: 0x4000
+mtime:
+  address: 0x5000
+  implemented: true
+mtimecmp:
+  address: 0x5008
+  implemented: true
+mcause:
+  values: [16, 17, 18, 19, 20, 21]
+  implemented: true
+scause:
+  values: [16, 17, 18, 19, 20, 21]
+  implemented: true
+mhpmevent3:
+  bitmask:
+    mask: 0xFC
+    default: 0x00
+  is_hardwired: false
+  hardwired_val: 0
+  implemented: true
+mhpmevent4:
+  range:
+    rangelist:
+    - - 256
+      - 0xFFFFFFFFFFFFFF00
+    mode: Unchanged
+  is_hardwired: false
+  hardwired_val: 0
+  implemented: true
+mhpmevent5:
+  range:
+    rangelist:
+    - - 0
+    - - 2
+    mode: Unchanged
+  is_hardwired: false
+  hardwired_val: 0
+  implemented: true
+mtval:
+  implemented: false
+mhpmevent6:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent7:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent8:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent9:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent10:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent11:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent12:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent13:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent14:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent15:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent16:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent17:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent18:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent19:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent20:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent21:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent22:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent23:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent24:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent25:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent26:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent27:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent28:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent29:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent30:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+mhpmevent31:
+  is_hardwired: true
+  hardwired_val: 0
+  implemented: true
+stval:
+  implemented: false

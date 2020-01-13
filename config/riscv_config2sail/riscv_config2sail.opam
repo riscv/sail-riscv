@@ -1,0 +1,23 @@
+opam-version: "2.0"
+name: "riscv_config2sail"
+version: "0.1"
+synopsis: "A program for translating riscv-config yaml to Sail"
+description: "This program takes the validated yaml produced by riscv-config and translates it into Sail code that constructs a value of a type representing the riscv configuration."
+maintainer: "Sail Devs <cl-sail-dev@lists.cam.ac.uk>"
+authors: [
+  "Robert Norton-Wright"
+]
+homepage: "https://github.com/rems-project/riscv_config2sail/"
+bug-reports: "https://github.com/rems-project/riscv_config2sail/issues"
+license: "BSD3"
+dev-repo: "git+ssh://git@github.com:rems-project/riscv_config2sail.git"
+build: [
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name "-j" jobs]
+]
+
+depends: [
+  "yaml"
+  "bos"
+  "dune"
+]
