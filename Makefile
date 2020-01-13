@@ -18,11 +18,11 @@ endif
 
 CONFIG_ISA=config/isa_$(ARCH).yaml
 CONFIG_PLATFORM=config/platform.yaml
-GENERATED_CONFIG_DIR=generated_definitions/config
+GENERATED_CONFIG_DIR=generated_definitions/config/$(ARCH)
 RV_CONFIG=riscv-config
 RV_CONFIG2SAIL_DIR=config/riscv_config2sail
 RV_CONFIG2SAIL=$(RV_CONFIG2SAIL_DIR)/riscv_config2sail
-RV_CONFIG_SAIL=$(GENERATED_CONFIG_DIR)/riscv_config_$(ARCH).sail
+RV_CONFIG_SAIL=$(GENERATED_CONFIG_DIR)/riscv_config.sail
 RV_CONFIG_TYPES:=$(RV_CONFIG2SAIL_DIR)/sail/riscv_config_types.sail
 
 $(RV_CONFIG2SAIL):
@@ -224,10 +224,12 @@ rvfi: c_emulator/riscv_rvfi_$(ARCH)
 c_emulator/riscv_sim_$(ARCH): generated_definitions/c/riscv_model_$(ARCH).c $(C_INCS) $(C_SRCS) Makefile
 	gcc -g $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
-$(RV_CONFIG_SAIL): $(RV_CONFIG2SAIL)
-$(RV_CONFIG_SAIL): $(CONFIG_ISA) $(CONFIG_PLATFORM)
-	mkdir -p $(GENERATED_CONFIG_DIR)
+$(GENERATED_CONFIG_DIR)/isa_$(ARCH)_checked.yaml: $(CONFIG_ISA) $(CONFIG_PLATFORM)
 	$(RV_CONFIG) --isa_spec $(CONFIG_ISA) --platform_spec $(CONFIG_PLATFORM) --work_dir $(GENERATED_CONFIG_DIR)
+
+$(RV_CONFIG_SAIL): $(RV_CONFIG2SAIL)
+$(RV_CONFIG_SAIL): $(GENERATED_CONFIG_DIR)/isa_$(ARCH)_checked.yaml
+	mkdir -p $(GENERATED_CONFIG_DIR)
 	$(RV_CONFIG2SAIL) -i $(GENERATED_CONFIG_DIR)/isa_$(ARCH)_checked.yaml -p $(GENERATED_CONFIG_DIR)/platform_checked.yaml -o $@
 
 generated_definitions/c/riscv_rvfi_model_$(ARCH).c: $(SAIL_RVFI_SRCS) model/main.sail Makefile
