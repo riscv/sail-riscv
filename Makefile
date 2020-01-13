@@ -20,9 +20,13 @@ CONFIG_ISA=config/isa_$(ARCH).yaml
 CONFIG_PLATFORM=config/platform.yaml
 GENERATED_CONFIG_DIR=generated_definitions/config
 RV_CONFIG=riscv-config
-RV_CONFIG2SAIL=rv_conf2sail
+RV_CONFIG2SAIL_DIR=config/riscv_config2sail
+RV_CONFIG2SAIL=$(RV_CONFIG2SAIL_DIR)/riscv_config2sail
 RV_CONFIG_SAIL=$(GENERATED_CONFIG_DIR)/riscv_config_$(ARCH).sail
-RV_CONFIG_TYPES:=$(shell opam config var riscv_config2sail:share)/riscv_config_types.sail
+RV_CONFIG_TYPES:=$(RV_CONFIG2SAIL_DIR)/sail/riscv_config_types.sail
+
+$(RV_CONFIG2SAIL):
+	make -C $(RV_CONFIG2SAIL_DIR)
 
 # Instruction sources, depending on target
 SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_misa_ext.sail
@@ -220,6 +224,7 @@ rvfi: c_emulator/riscv_rvfi_$(ARCH)
 c_emulator/riscv_sim_$(ARCH): generated_definitions/c/riscv_model_$(ARCH).c $(C_INCS) $(C_SRCS) Makefile
 	gcc -g $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
+$(RV_CONFIG_SAIL): $(RV_CONFIG2SAIL)
 $(RV_CONFIG_SAIL): $(CONFIG_ISA) $(CONFIG_PLATFORM)
 	mkdir -p $(GENERATED_CONFIG_DIR)
 	$(RV_CONFIG) --isa_spec $(CONFIG_ISA) --platform_spec $(CONFIG_PLATFORM) --work_dir $(GENERATED_CONFIG_DIR)
@@ -388,3 +393,5 @@ clean:
 	-rm -f handwritten_support/riscv_extras.vo handwritten_support/riscv_extras.glob handwritten_support/.riscv_extras.aux
 	-rm -f handwritten_support/mem_metadata.vo handwritten_support/mem_metadata.glob handwritten_support/.mem_metadata.aux
 	ocamlbuild -clean
+	make -C $(RV_CONFIG2SAIL_DIR) clean
+
