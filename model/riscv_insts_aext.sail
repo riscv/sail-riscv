@@ -198,21 +198,30 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
             let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
               (WORD, _)    => mem_write_ea(addr, 4, aq & rl, rl, true),
               (DOUBLE, 64) => mem_write_ea(addr, 8, aq & rl, rl, true),
-              _            => internal_error ("AMO expected WORD or DOUBLE")
+              _            => internal_error("AMO expected WORD or DOUBLE")
             };
-            rs2_val : xlenbits = X(rs2);
+            let is_unsigned : bool = match op {
+              AMOMINU => true,
+              AMOMAXU => true,
+              _       => false
+            };
+            let rs2_val : xlenbits = match width {
+              WORD   => if is_unsigned then EXTZ(X(rs2)[31..0]) else EXTS(X(rs2)[31..0]),
+              DOUBLE => X(rs2),
+              _      => internal_error("AMO expected WORD or DOUBLE")
+            };
             match (eares) {
               MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
               MemValue(_) => {
-                let rval : MemoryOpResult(xlenbits) = match (width, sizeof(xlen)) {
-                  (WORD, _)    => extend_value(false, mem_read(ReadWrite(Data), addr, 4, aq, aq & rl, true)),
-                  (DOUBLE, 64) => extend_value(false, mem_read(ReadWrite(Data), addr, 8, aq, aq & rl, true)),
-                  _            => internal_error ("AMO expected WORD or DOUBLE")
+                let mval : MemoryOpResult(xlenbits) = match (width, sizeof(xlen)) {
+                  (WORD, _)    => extend_value(is_unsigned, mem_read(ReadWrite(Data), addr, 4, aq, aq & rl, true)),
+                  (DOUBLE, 64) => extend_value(is_unsigned, mem_read(ReadWrite(Data), addr, 8, aq, aq & rl, true)),
+                  _            => internal_error("AMO expected WORD or DOUBLE")
                 };
-                match (rval) {
+                match (mval) {
                   MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL },
                   MemValue(loaded) => {
-                    result  : xlenbits =
+                    let result : xlenbits =
                       match op {
                         AMOSWAP => rs2_val,
                         AMOADD  => rs2_val + loaded,
@@ -228,14 +237,18 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                         AMOMINU => to_bits(sizeof(xlen), min(unsigned(rs2_val), unsigned(loaded))),
                         AMOMAXU => to_bits(sizeof(xlen), max(unsigned(rs2_val), unsigned(loaded)))
                       };
-
+                    let rval : xlenbits = match width {
+                      WORD   => EXTS(loaded[31..0]),
+                      DOUBLE => loaded,
+                      _      => internal_error("AMO expected WORD or DOUBLE")
+                    };
                     let wval : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
                       (WORD, _)    => mem_write_value(addr, 4, result[31..0], aq & rl, rl, true),
                       (DOUBLE, 64) => mem_write_value(addr, 8, result,        aq & rl, rl, true),
                       _            => internal_error("AMO expected WORD or DOUBLE")
                     };
                     match (wval) {
-                      MemValue(true)  => { X(rd) = loaded; RETIRE_SUCCESS },
+                      MemValue(true)  => { X(rd) = rval; RETIRE_SUCCESS },
                       MemValue(false) => { internal_error("AMO got false from mem_write_value") },
                       MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL }
                     }
