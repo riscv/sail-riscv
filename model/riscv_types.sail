@@ -108,8 +108,6 @@ enum word_width = {BYTE, HALF, WORD, DOUBLE}
 
 /* architectural interrupt definitions */
 
-type exc_code = bits(8)
-
 enum InterruptType = {
   I_U_Software,
   I_S_Software,
@@ -181,7 +179,7 @@ function exceptionType_to_bits(e) =
     E_SAMO_Page_Fault()    => 0x0f,
 
     /* extensions */
-    E_Extension(e)         => 0x18    /* First code for a custom extension */
+    E_Extension(e)         => ext_exc_type_to_bits(e)
   }
 
 val num_of_ExceptionType : ExceptionType -> {'n, (0 <= 'n < xlen). int('n)}
@@ -205,7 +203,7 @@ function num_of_ExceptionType(e) =
     E_SAMO_Page_Fault()    => 15,
 
     /* extensions */
-    E_Extension(e)         => 24    /* First code for a custom extension */
+    E_Extension(e)         => num_of_ext_exc_type(e)
 
   }
 
@@ -230,7 +228,7 @@ function exceptionType_to_str(e) =
     E_SAMO_Page_Fault()    => "store/amo-page-fault",
 
     /* extensions */
-    E_Extension(e)         => "extension-exception"
+    E_Extension(e)         => ext_exc_type_to_str(e)
   }
 
 overload to_str = {exceptionType_to_str}
