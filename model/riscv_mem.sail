@@ -80,7 +80,8 @@ function rvfi_read (addr, width, result) = {
     MemValue(v) => if   width <= 8
                    then { rvfi_exec->rvfi_mem_rdata() = sail_zero_extend(v,64);
                           rvfi_exec->rvfi_mem_rmask() = rvfi_encode_width_mask(width) }
-                   else (),
+                   else { rvfi_exec->rvfi_mem_rdata() = v[63..0];
+                          rvfi_exec->rvfi_mem_rmask() = 0xFF},
     MemException(_) => ()
   };
 }
@@ -138,6 +139,9 @@ function rvfi_write (addr, width, value) = {
   if width <= 8 then {
     rvfi_exec->rvfi_mem_wdata() = sail_zero_extend(value,64);
     rvfi_exec->rvfi_mem_wmask() = rvfi_encode_width_mask(width);
+  } else {
+    rvfi_exec->rvfi_mem_wdata() = value[63..0];
+    rvfi_exec->rvfi_mem_wmask() = 0xFF;
   }
 }
 $else
