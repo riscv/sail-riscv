@@ -12,7 +12,7 @@ scattered function execute
 val assembly : ast <-> string
 scattered mapping assembly
 
-val encdec : ast <-> bits(32)
+val encdec : ast <-> bits(32) effect {rreg}
 scattered mapping encdec
 
 val encdec_compressed : ast <-> bits(16)
