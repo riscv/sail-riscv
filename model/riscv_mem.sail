@@ -80,7 +80,8 @@ function rvfi_read (addr, width, result) = {
     MemValue(v) => if   width <= 8
                    then { rvfi_exec->rvfi_mem_rdata() = sail_zero_extend(v,64);
                           rvfi_exec->rvfi_mem_rmask() = rvfi_encode_width_mask(width) }
-                   else (),
+                   else { rvfi_exec->rvfi_mem_rdata() = v[63..0];
+                          rvfi_exec->rvfi_mem_rmask() = 0xFF},
     MemException(_) => ()
   };
 }
@@ -91,38 +92,28 @@ $endif
 
 /* NOTE: The rreg effect is due to MMIO. */
 $ifdef RVFI_DII
-val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n))             effect {wreg, rmem, rmemt, rreg, escape}
-val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) effect {wreg, rmem, rmemt, rreg, escape}
+val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))             effect {wreg, rmem, rmemt, rreg, escape}
+val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) effect {wreg, rmem, rmemt, rreg, escape}
 $else
-val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n))             effect {rmem, rmemt, rreg, escape}
-val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) effect {rmem, rmemt, rreg, escape}
+val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))             effect {rmem, rmemt, rreg, escape}
+val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) effect {rmem, rmemt, rreg, escape}
 $endif
 
-function mem_read (typ, paddr, width, aq, rl, res) = {
- let result : MemoryOpResult(bits(8 * 'n)) =
-  if (aq | res) & (~ (is_aligned_addr(paddr, width)))
-  then MemException(E_Load_Addr_Align())
-  else match (aq, rl, res) {
-    (false, true,  false) => throw(Error_not_implemented("load.rl")),
-    (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
-    (_, _, _)             => MemoryOpResult_drop_meta(pmp_mem_read(typ, paddr, width, aq, rl, res, false))
-  };
- rvfi_read(paddr, width, result);
- result
+function mem_read_meta (typ, paddr, width, aq, rl, res, meta) = {
+  let result : MemoryOpResult((bits(8 * 'n), mem_meta)) =
+    if (aq | res) & (~ (is_aligned_addr(paddr, width)))
+    then MemException(E_Load_Addr_Align())
+    else match (aq, rl, res) {
+      (false, true,  false) => throw(Error_not_implemented("load.rl")),
+      (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
+      (_, _, _)             => pmp_mem_read(typ, paddr, width, aq, rl, res, meta)
+    };
+  rvfi_read(paddr, width, MemoryOpResult_drop_meta(result));
+  result
 }
 
-function mem_read_meta (typ, addr, width, aq, rl, res) = {
- let result : MemoryOpResult((bits(8 * 'n), mem_meta)) =
-  if (aq | res) & (~ (is_aligned_addr(addr, width)))
-  then MemException(E_Load_Addr_Align())
-  else match (aq, rl, res) {
-    (false, true,  false) => throw(Error_not_implemented("load.rl")),
-    (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
-    (_, _, _)             => pmp_mem_read(typ, addr, width, aq, rl, res, true)
-  };
- rvfi_read(addr, width, MemoryOpResult_drop_meta(result));
- result
-}
+function mem_read (typ, paddr, width, aq, rl, res) =
+  MemoryOpResult_drop_meta(mem_read_meta(typ, paddr, width, aq, rl, res, false))
 
 val mem_write_ea : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(unit) effect {eamem, escape}
 
@@ -148,6 +139,9 @@ function rvfi_write (addr, width, value) = {
   if width <= 8 then {
     rvfi_exec->rvfi_mem_wdata() = sail_zero_extend(value,64);
     rvfi_exec->rvfi_mem_wmask() = rvfi_encode_width_mask(width);
+  } else {
+    rvfi_exec->rvfi_mem_wdata() = value[63..0];
+    rvfi_exec->rvfi_mem_wmask() = 0xFF;
   }
 }
 $else

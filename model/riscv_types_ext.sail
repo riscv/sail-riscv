@@ -20,3 +20,15 @@ type ext_exc_type = unit /* No exception extensions */
 /* Default translation of PTW errors into exception annotations */
 function ext_translate_exception(e : ext_ptw_error) -> ext_exc_type =
   e
+
+/* Default conversion of extension exceptions to bits */
+val ext_exc_type_to_bits : ext_exc_type -> exc_code
+function ext_exc_type_to_bits(e) = 0x18 /* First code for a custom extension */
+
+/* Default conversion of extension exceptions to integers */
+val num_of_ext_exc_type : ext_exc_type -> {'n, (0 <= 'n < xlen). int('n)}
+function num_of_ext_exc_type(e) = 24 /* First code for a custom extension */
+
+/* Default conversion of extension exceptions to strings */
+val ext_exc_type_to_str : ext_exc_type -> string
+function ext_exc_type_to_str(e) = "extension-exception"
