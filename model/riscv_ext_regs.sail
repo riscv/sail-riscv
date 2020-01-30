@@ -10,7 +10,7 @@ This function is called after above when running rvfi and allows the model
 to be initialised differently (e.g. CHERI cap regs are initialised
 to omnipotent instead of null).
  */
-val ext_rvfi_init : unit -> unit effect {wreg}
+val ext_rvfi_init : unit -> unit effect {rreg, wreg}
 function ext_rvfi_init () = {
   x1 = x1 // to avoid hook being optimized out
 }
