@@ -343,7 +343,7 @@ riscv_rmem: generated_definitions/for-rmem/riscv_toFromInterp2.ml
 riscv_rmem: generated_definitions/for-rmem/riscv.defs
 .PHONY: riscv_rmem
 
-generated_definitions/for-rmem/riscv.lem: SAIL_FLAGS += -lem_lib Riscv_extras -lem_lib Mem_metadata
+generated_definitions/for-rmem/riscv.lem: SAIL_FLAGS += -lem_lib Riscv_extras -lem_lib Riscv_extras_fdext -lem_lib Mem_metadata
 generated_definitions/for-rmem/riscv.lem: $(SAIL_RMEM_SRCS)
 	mkdir -p $(dir $@)
 #	We do not need the isabelle .thy files, but sail always generates them
