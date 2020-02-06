@@ -123,6 +123,8 @@ function wF (r, in_v) = {
     _  => assert(false, "invalid floating point register number")
   };
 
+  mstatus->FS() = extStatus_to_bits(Dirty);
+
   if   get_config_print_reg()
   then
       /* TODO: will only print bits; should we print in floating point format? */
@@ -216,8 +218,8 @@ mapping freg_name = {
     0b11111 <-> "ft11"
 }
 
-val init_base_fregs : unit -> unit effect {wreg}
-function init_base_fregs () = {
+val init_fdext_regs : unit -> unit effect {wreg}
+function init_fdext_regs () = {
   f0  = zero_freg;
   f1  = zero_freg;
   f2  = zero_freg;
@@ -258,10 +260,31 @@ function init_base_fregs () = {
 /*     frm       address 0x002    same as fcrs [7..5]               */
 /*     fcsr      address 0x003                                      */
 
-register fcsr : bits (8)
+
+bitfield Fcsr : bits(32) = {
+  FRM    : 7 .. 5,
+  FFLAGS : 4 .. 0,
+}
+
+register fcsr : Fcsr
 
 val write_fcsr : (bits(3), bits(5)) -> option(xlenbits) effect {rreg, wreg}
 function write_fcsr (frm, fflags) = {
-  fcsr = frm @ fflags;    /* Note: frm can be an illegal value, 101, 110, 111 */
-  Some (EXTZ (fcsr))
+  fcsr->FRM()    = frm;      /* Note: frm can be an illegal value, 101, 110, 111 */
+  fcsr->FFLAGS() = fflags;
+
+  mstatus->FS()  = extStatus_to_bits(Dirty);
+  Some (EXTZ (fcsr.bits()))
+}
+
+val write_fflags : (bits(5)) -> unit effect {rreg, wreg}
+function write_fflags(fflags) = {
+  fcsr->FFLAGS() = fflags;
+  mstatus->FS()  = extStatus_to_bits(Dirty)
+}
+
+val write_frm : (bits(3)) -> unit effect {rreg, wreg}
+function write_frm(frm) = {
+  fcsr->FRM()    = frm;
+  mstatus->FS()  = extStatus_to_bits(Dirty)
 }

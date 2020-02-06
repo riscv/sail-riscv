@@ -36,11 +36,8 @@ mapping frm_mnemonic : rounding_mode <-> string = {
 
 val       select_instr_or_fcsr_rm : rounding_mode -> rounding_mode effect {rreg}
 function  select_instr_or_fcsr_rm   instr_rm =
-  if (instr_rm == RM_DYN)
-  then {
-      let fcsr_val = readCSR (csr_name_map ("frm"));
-      encdec_rounding_mode (fcsr_val [7..5])
-  }
+  if   (instr_rm == RM_DYN)
+  then encdec_rounding_mode (fcsr.FRM())
   else instr_rm
 
 /* **************************************************************** */
@@ -468,7 +465,7 @@ function clause execute (F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)) = {
       FNMSUB_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, rs3_val_32b),
       FNMADD_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, negate_S (rs3_val_32b))
     };
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  write_fflags(fflags);
   F(rd) = nan_box (rd_val_32b);
   RETIRE_SUCCESS
 }
@@ -527,7 +524,7 @@ function clause execute (F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)) = {
     FMUL_S  => riscv_f32Mul (rm_3b, rs1_val_32b, rs2_val_32b),
     FDIV_S  => riscv_f32Div (rm_3b, rs1_val_32b, rs2_val_32b)
   };
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  write_fflags(fflags);
   F(rd) = nan_box (rd_val_32b);
   RETIRE_SUCCESS
 }
@@ -603,7 +600,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)) = {
 
   let (fflags, rd_val_S) = riscv_f32Sqrt   (rm_3b, rs1_val_S);
 
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  write_fflags(fflags);
   F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
@@ -614,7 +611,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)) = {
 
   let (fflags, rd_val_W) = riscv_f32ToI32 (rm_3b, rs1_val_S);
 
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  write_fflags(fflags);
   X(rd) = EXTS (rd_val_W);
   RETIRE_SUCCESS
 }
@@ -625,7 +622,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)) = {
 
   let (fflags, rd_val_WU) = riscv_f32ToUi32 (rm_3b, rs1_val_S);
 
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  write_fflags(fflags);
   X(rd) = EXTS (rd_val_WU);
   RETIRE_SUCCESS
 }
@@ -636,7 +633,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_W)) = {
 
   let (fflags, rd_val_S) = riscv_i32ToF32 (rm_3b, rs1_val_W);
 
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  write_fflags(fflags);
   F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
@@ -647,7 +644,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
 
   let (fflags, rd_val_S) = riscv_ui32ToF32 (rm_3b, rs1_val_WU);
 
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  write_fflags(fflags);
   F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
@@ -660,7 +657,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
 
     let (fflags, rd_val_L) = riscv_f32ToI64 (rm_3b, rs1_val_S);
 
-    writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+    write_fflags(fflags);
     X(rd) = rd_val_L;
     RETIRE_SUCCESS
   } else {
@@ -677,7 +674,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
 
     let (fflags, rd_val_LU) = riscv_f32ToUi64 (rm_3b, rs1_val_S);
 
-    writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+    write_fflags(fflags);
     X(rd) = rd_val_LU;
     RETIRE_SUCCESS
   } else {
@@ -694,7 +691,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
 
     let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
 
-    writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+    write_fflags(fflags);
     F(rd) = nan_box (rd_val_S);
     RETIRE_SUCCESS
   } else {
@@ -711,7 +708,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
 
     let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
 
-    writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+    write_fflags(fflags);
     F(rd) = nan_box (rd_val_S);
     RETIRE_SUCCESS
   } else {
@@ -832,7 +829,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)) = {
   let (s2, e2, m2) = fsplit_S (rs2_val_S);
   let rd_val_S     = fmake_S (s2, e1, m1);
   let fflags       = 0b_00000;
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  write_fflags(fflags);
   F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
@@ -844,7 +841,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)) = {
   let (s2, e2, m2) = fsplit_S (rs2_val_S);
   let rd_val_S     = fmake_S (0b1 ^ s2, e1, m1);
   let fflags       = 0b_00000;
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  write_fflags(fflags);
   F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
@@ -856,7 +853,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)) = {
   let (s2, e2, m2) = fsplit_S (rs2_val_S);
   let rd_val_S     = fmake_S (s1 ^ s2, e1, m1);
   let fflags       = 0b_00000;
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  write_fflags(fflags);
   F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
@@ -879,7 +876,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)) = {
                   else if rs1_lt_rs2                                                then rs1_val_S
                   else /* (not rs1_lt_rs2) */                                            rs2_val_S;
 
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  write_fflags(fflags);
   F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
@@ -902,7 +899,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)) = {
                   else if rs2_lt_rs1                                                then rs1_val_S
                   else /* (not rs2_lt_rs1) */                                            rs2_val_S;
 
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  write_fflags(fflags);
   F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
@@ -919,7 +916,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
       else if rs1_eq_rs2                                        then EXTZ(0b1)
       else                                                           zeros();
 
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  write_fflags(fflags);
   X(rd) = rd_val;
   RETIRE_SUCCESS
 }
@@ -937,7 +934,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)) = {
       else if rs1_lt_rs2                                        then EXTZ(0b1)
       else                                                           zeros();
 
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  write_fflags(fflags);
   X(rd) = rd_val;
   RETIRE_SUCCESS
 }
@@ -955,7 +952,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)) = {
       else if rs1_le_rs2                                        then EXTZ(0b1)
       else                                                           zeros();
 
-  writeCSR (csr_name_map ("fflags"), EXTZ (fflags));
+  write_fflags(fflags);
   X(rd) = rd_val;
   RETIRE_SUCCESS
 }
