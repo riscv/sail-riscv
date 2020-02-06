@@ -43,6 +43,11 @@ register f29 : fregtype
 register f30 : fregtype
 register f31 : fregtype
 
+function dirty_fd_context() -> unit = {
+  mstatus->FS() = extStatus_to_bits(Dirty);
+  mstatus->SD() = 0b1
+}
+
 val rF : forall 'n, 0 <= 'n < 32. regno('n) -> flenbits effect {rreg, escape}
 function rF r = {
   let v : fregtype =
@@ -123,7 +128,7 @@ function wF (r, in_v) = {
     _  => assert(false, "invalid floating point register number")
   };
 
-  mstatus->FS() = extStatus_to_bits(Dirty);
+  dirty_fd_context();
 
   if   get_config_print_reg()
   then
@@ -272,19 +277,18 @@ val write_fcsr : (bits(3), bits(5)) -> option(xlenbits) effect {rreg, wreg}
 function write_fcsr (frm, fflags) = {
   fcsr->FRM()    = frm;      /* Note: frm can be an illegal value, 101, 110, 111 */
   fcsr->FFLAGS() = fflags;
-
-  mstatus->FS()  = extStatus_to_bits(Dirty);
+  dirty_fd_context();
   Some (EXTZ (fcsr.bits()))
 }
 
 val write_fflags : (bits(5)) -> unit effect {rreg, wreg}
 function write_fflags(fflags) = {
   fcsr->FFLAGS() = fflags;
-  mstatus->FS()  = extStatus_to_bits(Dirty)
+  dirty_fd_context();
 }
 
 val write_frm : (bits(3)) -> unit effect {rreg, wreg}
 function write_frm(frm) = {
   fcsr->FRM()    = frm;
-  mstatus->FS()  = extStatus_to_bits(Dirty)
+  dirty_fd_context();
 }
