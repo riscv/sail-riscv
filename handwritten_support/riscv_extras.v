@@ -45,12 +45,12 @@ val MEMr_reserved_acquire        : forall 'rv 'a 'b 'e. Size 'a, Size 'b => inte
 val MEMr_reserved_strong_acquire : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
 *)
 
-Definition MEMr {rv e} addrsize size (hexRAM addr : mword addrsize)                         `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_plain addrsize addr size.
-Definition MEMr_acquire {rv e} addrsize size (hexRAM addr : mword addrsize)                 `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_acquire addrsize addr size.
-Definition MEMr_strong_acquire {rv e} addrsize size (hexRAM addr : mword addrsize)          `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_strong_acquire addrsize addr size.
-Definition MEMr_reserved {rv e} addrsize size (hexRAM addr : mword addrsize)                `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_reserved addrsize addr size.
-Definition MEMr_reserved_acquire {rv e} addrsize size (hexRAM addr : mword addrsize)        `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_reserved_acquire addrsize addr size.
-Definition MEMr_reserved_strong_acquire {rv e} addrsize size (hexRAM addr : mword addrsize) `{ArithFact (size >= 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_reserved_strong_acquire addrsize addr size.
+Definition MEMr {rv e} addrsize size (hexRAM addr : mword addrsize)                         `{ArithFact (size >=? 0)} : monad rv (mword (8 * size)) e := read_mem Read_plain addrsize addr size.
+Definition MEMr_acquire {rv e} addrsize size (hexRAM addr : mword addrsize)                 `{ArithFact (size >=? 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_acquire addrsize addr size.
+Definition MEMr_strong_acquire {rv e} addrsize size (hexRAM addr : mword addrsize)          `{ArithFact (size >=? 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_strong_acquire addrsize addr size.
+Definition MEMr_reserved {rv e} addrsize size (hexRAM addr : mword addrsize)                `{ArithFact (size >=? 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_reserved addrsize addr size.
+Definition MEMr_reserved_acquire {rv e} addrsize size (hexRAM addr : mword addrsize)        `{ArithFact (size >=? 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_reserved_acquire addrsize addr size.
+Definition MEMr_reserved_strong_acquire {rv e} addrsize size (hexRAM addr : mword addrsize) `{ArithFact (size >=? 0)} : monad rv (mword (8 * size)) e := read_mem Read_RISCV_reserved_strong_acquire addrsize addr size.
 
 (*
 val MEMw                            : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
@@ -87,14 +87,14 @@ Definition undefined_string {rv e} (_:unit) : monad rv string e := returnm ""%st
 Definition undefined_unit {rv e} (_:unit) : monad rv unit e := returnm tt.
 Definition undefined_int {rv e} (_:unit) : monad rv Z e := returnm (0:ii).
 (*val undefined_vector : forall 'rv 'a 'e. integer -> 'a -> monad 'rv (list 'a) 'e*)
-Definition undefined_vector {rv a e} len (u : a) `{ArithFact (len >= 0)} : monad rv (vec a len) e := returnm (vec_init u len).
+Definition undefined_vector {rv a e} len (u : a) `{ArithFact (len >=? 0)} : monad rv (vec a len) e := returnm (vec_init u len).
 (*val undefined_bitvector : forall 'rv 'a 'e. Bitvector 'a => integer -> monad 'rv 'a 'e*)
-Definition undefined_bitvector {rv e} len `{ArithFact (len >= 0)} : monad rv (mword len) e := returnm (mword_of_int 0).
+Definition undefined_bitvector {rv e} len `{ArithFact (len >=? 0)} : monad rv (mword len) e := returnm (mword_of_int 0).
 (*val undefined_bits : forall 'rv 'a 'e. Bitvector 'a => integer -> monad 'rv 'a 'e*)
 Definition undefined_bits {rv e} := @undefined_bitvector rv e.
 Definition undefined_bit {rv e} (_:unit) : monad rv bitU e := returnm BU.
 (*Definition undefined_real {rv e} (_:unit) : monad rv real e := returnm (realFromFrac 0 1).*)
-Definition undefined_range {rv e} i j `{ArithFact (i <= j)} : monad rv {z : Z & ArithFact (i <= z /\ z <= j)} e := returnm (build_ex i).
+Definition undefined_range {rv e} i j `{ArithFact (i <=? j)} : monad rv {z : Z & ArithFact (i <=? z <=? j)} e := returnm (build_ex i).
 Definition undefined_atom {rv e} i : monad rv Z e := returnm i.
 Definition undefined_nat {rv e} (_:unit) : monad rv Z e := returnm (0:ii).
 
@@ -119,10 +119,12 @@ Definition eq_bit (x : bitU) (y : bitU) : bool :=
   end.
 
 Require Import Zeuclid.
-Definition euclid_modulo (m n : Z) `{ArithFact (n > 0)} : {z : Z & ArithFact (0 <= z <= n-1)}.
+Definition euclid_modulo (m n : Z) `{ArithFact (n >? 0)} : {z : Z & ArithFact (0 <=? z <=? n-1)}.
 apply existT with (x := ZEuclid.modulo m n).
 constructor.
 destruct H.
+unbool_comparisons.
+unbool_comparisons_goal.
 assert (Z.abs n = n). { rewrite Z.abs_eq; auto with zarith. }
 rewrite <- H at 3.
 lapply (ZEuclid.mod_always_pos m n); omega.
@@ -143,6 +145,7 @@ Definition string_of_int z := DecimalString.NilZero.string_of_int (Z.to_int z).
 
 Axiom sys_enable_writable_misa : unit -> bool.
 Axiom sys_enable_rvc : unit -> bool.
+Axiom sys_enable_fdext : unit -> bool.
 
 (* The constraint solver can do this itself, but a Coq bug puts
    anonymous_subproof into the term instead of an actual subproof. *)

@@ -1,4 +1,6 @@
-// This file depends on the xlen definitions in riscv_xlen.sail.
+
+$include "prelude.sail"
+$include "riscv_xlen64.sail"
 
 type regbits = bits(5)
 
@@ -23,7 +25,7 @@ function rX(r) =
 
 val wX : (regbits, xlenbits) -> unit effect {wreg}
 
-function wX (r, v) =
+function wX(r, v) =
   if r != 0b00000 then {
      Xs[unsigned(r)] = v;
   }

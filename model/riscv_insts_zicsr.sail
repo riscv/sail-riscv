@@ -122,22 +122,22 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x3A2,  _) => { pmpWriteCfgReg(2, value); Some(value) },  // pmpcfg2
     (0x3A3, 32) => { pmpWriteCfgReg(3, value); Some(value) },  // pmpcfg3
 
-    (0x3B0,  _) => { pmpaddr0  = pmpWriteAddr(pmp0cfg,  pmpaddr0,  value); Some(pmpaddr0) },
-    (0x3B1,  _) => { pmpaddr1  = pmpWriteAddr(pmp1cfg,  pmpaddr1,  value); Some(pmpaddr1) },
-    (0x3B2,  _) => { pmpaddr2  = pmpWriteAddr(pmp2cfg,  pmpaddr2,  value); Some(pmpaddr2) },
-    (0x3B3,  _) => { pmpaddr3  = pmpWriteAddr(pmp3cfg,  pmpaddr3,  value); Some(pmpaddr3) },
-    (0x3B4,  _) => { pmpaddr4  = pmpWriteAddr(pmp4cfg,  pmpaddr4,  value); Some(pmpaddr4) },
-    (0x3B5,  _) => { pmpaddr5  = pmpWriteAddr(pmp5cfg,  pmpaddr5,  value); Some(pmpaddr5) },
-    (0x3B6,  _) => { pmpaddr6  = pmpWriteAddr(pmp6cfg,  pmpaddr6,  value); Some(pmpaddr6) },
-    (0x3B7,  _) => { pmpaddr7  = pmpWriteAddr(pmp7cfg,  pmpaddr7,  value); Some(pmpaddr7) },
-    (0x3B8,  _) => { pmpaddr8  = pmpWriteAddr(pmp8cfg,  pmpaddr8,  value); Some(pmpaddr8) },
-    (0x3B9,  _) => { pmpaddr9  = pmpWriteAddr(pmp9cfg,  pmpaddr9,  value); Some(pmpaddr9) },
-    (0x3BA,  _) => { pmpaddr10 = pmpWriteAddr(pmp10cfg, pmpaddr10, value); Some(pmpaddr10) },
-    (0x3BB,  _) => { pmpaddr11 = pmpWriteAddr(pmp11cfg, pmpaddr11, value); Some(pmpaddr11) },
-    (0x3BC,  _) => { pmpaddr12 = pmpWriteAddr(pmp12cfg, pmpaddr12, value); Some(pmpaddr12) },
-    (0x3BD,  _) => { pmpaddr13 = pmpWriteAddr(pmp13cfg, pmpaddr13, value); Some(pmpaddr13) },
-    (0x3BE,  _) => { pmpaddr14 = pmpWriteAddr(pmp14cfg, pmpaddr14, value); Some(pmpaddr14) },
-    (0x3BF,  _) => { pmpaddr15 = pmpWriteAddr(pmp15cfg, pmpaddr15, value); Some(pmpaddr15) },
+    (0x3B0,  _) => { pmpaddr0  = pmpWriteAddr(pmpLocked(pmp0cfg),  pmpTORLocked(pmp1cfg),  pmpaddr0,  value); Some(pmpaddr0) },
+    (0x3B1,  _) => { pmpaddr1  = pmpWriteAddr(pmpLocked(pmp1cfg),  pmpTORLocked(pmp2cfg),  pmpaddr1,  value); Some(pmpaddr1) },
+    (0x3B2,  _) => { pmpaddr2  = pmpWriteAddr(pmpLocked(pmp2cfg),  pmpTORLocked(pmp3cfg),  pmpaddr2,  value); Some(pmpaddr2) },
+    (0x3B3,  _) => { pmpaddr3  = pmpWriteAddr(pmpLocked(pmp3cfg),  pmpTORLocked(pmp4cfg),  pmpaddr3,  value); Some(pmpaddr3) },
+    (0x3B4,  _) => { pmpaddr4  = pmpWriteAddr(pmpLocked(pmp4cfg),  pmpTORLocked(pmp5cfg),  pmpaddr4,  value); Some(pmpaddr4) },
+    (0x3B5,  _) => { pmpaddr5  = pmpWriteAddr(pmpLocked(pmp5cfg),  pmpTORLocked(pmp6cfg),  pmpaddr5,  value); Some(pmpaddr5) },
+    (0x3B6,  _) => { pmpaddr6  = pmpWriteAddr(pmpLocked(pmp6cfg),  pmpTORLocked(pmp7cfg),  pmpaddr6,  value); Some(pmpaddr6) },
+    (0x3B7,  _) => { pmpaddr7  = pmpWriteAddr(pmpLocked(pmp7cfg),  pmpTORLocked(pmp8cfg),  pmpaddr7,  value); Some(pmpaddr7) },
+    (0x3B8,  _) => { pmpaddr8  = pmpWriteAddr(pmpLocked(pmp8cfg),  pmpTORLocked(pmp9cfg),  pmpaddr8,  value); Some(pmpaddr8) },
+    (0x3B9,  _) => { pmpaddr9  = pmpWriteAddr(pmpLocked(pmp9cfg),  pmpTORLocked(pmp10cfg), pmpaddr9,  value); Some(pmpaddr9) },
+    (0x3BA,  _) => { pmpaddr10 = pmpWriteAddr(pmpLocked(pmp10cfg), pmpTORLocked(pmp11cfg), pmpaddr10, value); Some(pmpaddr10) },
+    (0x3BB,  _) => { pmpaddr11 = pmpWriteAddr(pmpLocked(pmp11cfg), pmpTORLocked(pmp12cfg), pmpaddr11, value); Some(pmpaddr11) },
+    (0x3BC,  _) => { pmpaddr12 = pmpWriteAddr(pmpLocked(pmp12cfg), pmpTORLocked(pmp13cfg), pmpaddr12, value); Some(pmpaddr12) },
+    (0x3BD,  _) => { pmpaddr13 = pmpWriteAddr(pmpLocked(pmp13cfg), pmpTORLocked(pmp14cfg), pmpaddr13, value); Some(pmpaddr13) },
+    (0x3BE,  _) => { pmpaddr14 = pmpWriteAddr(pmpLocked(pmp14cfg), pmpTORLocked(pmp15cfg), pmpaddr14, value); Some(pmpaddr14) },
+    (0x3BF,  _) => { pmpaddr15 = pmpWriteAddr(pmpLocked(pmp15cfg), false,                  pmpaddr15, value); Some(pmpaddr15) },
 
     /* machine mode counters */
     (0xB00,  _) => { mcycle[(sizeof(xlen) - 1) .. 0] = value; Some(value) },
@@ -179,6 +179,8 @@ function clause execute CSR(csr, rs1, rd, is_imm, op) = {
   };
   if ~ (check_CSR(csr, cur_privilege, isWrite))
   then { handle_illegal(); RETIRE_FAIL }
+  else if ~ (ext_check_CSR(csr, cur_privilege, isWrite))
+  then { ext_check_CSR_fail(); RETIRE_FAIL }
   else {
     let csr_val = readCSR(csr); /* could have side-effects, so technically shouldn't perform for CSRW[I] with rd == 0 */
     if isWrite then {
@@ -206,6 +208,6 @@ mapping csr_mnemonic : csrop <-> string = {
 }
 
 mapping clause assembly = CSR(csr, rs1, rd, true, op)
-  <-> csr_mnemonic(op) ^ "i" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(rs1) ^ sep() ^ csr_name_map(csr)
+  <-> csr_mnemonic(op) ^ "i" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(rs1) ^ sep() ^ hex_bits_12(csr)
 mapping clause assembly = CSR(csr, rs1, rd, false, op)
-  <-> csr_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ csr_name_map(csr)
+  <-> csr_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_12(csr)

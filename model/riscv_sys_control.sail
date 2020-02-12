@@ -454,6 +454,14 @@ function init_sys() -> unit = {
   misa->U()   = 0b1;                            /* user-mode */
   misa->S()   = 0b1;                            /* supervisor-mode */
 
+  /* On RV64, we currently support either both F and D, or neither.
+   * On RV32, we currently only support F.
+   */
+  misa->F()   = bool_to_bits(sys_enable_fdext());      /* single-precision */
+  misa->D()   = if   sizeof(xlen) == 64
+                then bool_to_bits(sys_enable_fdext())  /* double-precision */
+                else 0b0;
+
   mstatus = set_mstatus_SXL(mstatus, misa.MXL());
   mstatus = set_mstatus_UXL(mstatus, misa.MXL());
   mstatus->SD()   = 0b0;
@@ -488,4 +496,16 @@ function init_sys() -> unit = {
 union MemoryOpResult ('a : Type) = {
   MemValue     : 'a,
   MemException : ExceptionType
+}
+
+val MemoryOpResult_add_meta : forall ('t : Type). (MemoryOpResult('t), mem_meta) -> MemoryOpResult(('t, mem_meta))
+function MemoryOpResult_add_meta(r, m) = match r {
+  MemValue(v)     => MemValue(v, m),
+  MemException(e) => MemException(e)
+}
+
+val MemoryOpResult_drop_meta : forall ('t : Type). MemoryOpResult(('t, mem_meta)) -> MemoryOpResult('t)
+function MemoryOpResult_drop_meta(r) = match r {
+  MemValue(v, m)  => MemValue(v),
+  MemException(e) => MemException(e)
 }

@@ -105,6 +105,7 @@ static struct option options[] = {
   {"ram-base",                    required_argument, 0, 'B'},
   {"disable-compressed",          no_argument,       0, 'C'},
   {"disable-writable-misa",       no_argument,       0, 'I'},
+  {"disable-fdext",               no_argument,       0, 'F'},
   {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'},
   {"device-tree-blob",            required_argument, 0, 'b'},
   {"terminal-log",                required_argument, 0, 't'},
@@ -222,6 +223,7 @@ char *process_args(int argc, char **argv)
                     "v::"
                     "l:"
                     "g:"
+                    "F:"
                          , options, &idx);
     if (c == -1) break;
     switch (c) {
@@ -247,6 +249,10 @@ char *process_args(int argc, char **argv)
     case 'I':
       fprintf(stderr, "disabling writable misa CSR.\n");
       rv_enable_writable_misa = false;
+      break;
+    case 'F':
+      fprintf(stderr, "disabling floating point (F and D extensions).\n");
+      rv_enable_fdext = false;
       break;
     case 'i':
       fprintf(stderr, "enabling storing illegal instruction bits in mtval.\n");
@@ -321,7 +327,7 @@ char *process_args(int argc, char **argv)
   }
   if (do_dump_dts) dump_dts();
 #ifdef RVFI_DII
-  if (idx > argc || (idx == argc && !rvfi_dii)) print_usage(argv[0], 0);
+  if (optind > argc || (optind == argc && !rvfi_dii)) print_usage(argv[0], 0);
 #else
   if (optind >= argc) {
     fprintf(stderr, "No elf file provided.\n");
@@ -707,39 +713,37 @@ void run_sail(void)
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
     exit(1);
   }
-  
+
   while (!zhtif_done && (insn_limit == 0 || total_insns < insn_limit)) {
 #ifdef RVFI_DII
     if (rvfi_dii) {
-      if (need_instr) {
-        mach_bits instr_bits;
-        int res = read(rvfi_dii_sock, &instr_bits, sizeof(instr_bits));
-        if (res == 0) {
-          rvfi_dii = false;
-          return;
-        }
-        if (res < sizeof(instr_bits)) {
-          fprintf(stderr, "Reading RVFI DII command failed: insufficient input");
-          exit(1);
-        }
-        if (res == -1) {
-          fprintf(stderr, "Reading RVFI DII command failed: %s", strerror(errno));
-          exit(1);
-        }
-        zrvfi_set_instr_packet(instr_bits);
-        zrvfi_zzero_exec_packet(UNIT);
-        mach_bits cmd = zrvfi_get_cmd(UNIT);
-        switch (cmd) {
-        case 0: /* EndOfTrace */
-          zrvfi_halt_exec_packet(UNIT);
-          rvfi_send_trace();
-          return;
-        case 1: /* Instruction */
-          break;
-        default:
-          fprintf(stderr, "Unknown RVFI-DII command: %d\n", (int)cmd);
-          exit(1);
-        }
+      mach_bits instr_bits;
+      int res = read(rvfi_dii_sock, &instr_bits, sizeof(instr_bits));
+      if (res == 0) {
+        rvfi_dii = false;
+        return;
+      }
+      if (res < sizeof(instr_bits)) {
+        fprintf(stderr, "Reading RVFI DII command failed: insufficient input");
+        exit(1);
+      }
+      if (res == -1) {
+        fprintf(stderr, "Reading RVFI DII command failed: %s", strerror(errno));
+        exit(1);
+      }
+      zrvfi_set_instr_packet(instr_bits);
+      zrvfi_zzero_exec_packet(UNIT);
+      mach_bits cmd = zrvfi_get_cmd(UNIT);
+      switch (cmd) {
+      case 0: /* EndOfTrace */
+        zrvfi_halt_exec_packet(UNIT);
+        rvfi_send_trace();
+        return;
+      case 1: /* Instruction */
+        break;
+      default:
+        fprintf(stderr, "Unknown RVFI-DII command: %d\n", (int)cmd);
+        exit(1);
       }
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
@@ -748,12 +752,9 @@ void run_sail(void)
       KILL(sail_int)(&sail_step);
       if (have_exception) goto step_exception;
       flush_logs();
-      if (stepped) {
-        need_instr = true;
-        rvfi_send_trace();
-      } else
-        need_instr = false;
-    } else
+      KILL(sail_int)(&sail_step);
+      rvfi_send_trace();
+    } else /* if (!rvfi_dii) */
 #endif
     { /* run a Sail step */
       sail_int sail_step;

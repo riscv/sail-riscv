@@ -40,7 +40,7 @@ function pmpCheckRWX(ent, acc) = {
 val pmpCheckPerms: (Pmpcfg_ent, AccessType(ext_access_type), Privilege) -> bool
 function pmpCheckPerms(ent, acc, priv) = {
   match priv {
-    Machine => if   ent.L() == 0b1
+    Machine => if   pmpLocked(ent)
                then pmpCheckRWX(ent, acc)
                else true,
     _       => pmpCheckRWX(ent, acc)
