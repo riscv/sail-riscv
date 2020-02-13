@@ -273,12 +273,11 @@ bitfield Fcsr : bits(32) = {
 
 register fcsr : Fcsr
 
-val write_fcsr : (bits(3), bits(5)) -> option(xlenbits) effect {rreg, wreg}
+val write_fcsr : (bits(3), bits(5)) -> unit effect {rreg, wreg}
 function write_fcsr (frm, fflags) = {
   fcsr->FRM()    = frm;      /* Note: frm can be an illegal value, 101, 110, 111 */
   fcsr->FFLAGS() = fflags;
   dirty_fd_context();
-  Some (EXTZ (fcsr.bits()))
 }
 
 val write_fflags : (bits(5)) -> unit effect {rreg, wreg}
