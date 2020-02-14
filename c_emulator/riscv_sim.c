@@ -495,7 +495,7 @@ void init_sail(uint64_t elf_entry)
   if (rvfi_dii) {
     zext_rvfi_init(UNIT);
     rv_ram_base = UINT64_C(0x80000000);
-    rv_ram_size = UINT64_C(0x10000);
+    rv_ram_size = UINT64_C(0x800000);
     rv_rom_base = UINT64_C(0);
     rv_rom_size = UINT64_C(0);
     rv_clint_base = UINT64_C(0);
