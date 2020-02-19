@@ -93,7 +93,6 @@ mapping clause csr_name_map = 0x7a2  <-> "tdata2"
 mapping clause csr_name_map = 0x7a3  <-> "tdata3"
 
 val csr_name : csreg -> string
-function csr_name(csr) = csr_name_map(csr)
 overload to_str = {csr_name}
 
 /* Extensions may want to add additional CSR registers to the CSR address map.

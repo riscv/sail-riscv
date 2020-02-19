@@ -1,7 +1,11 @@
 
-/* numeric fallback XXX apparent sail bug prevents this from compiling for C  */
-//mapping clause csr_name_map = reg <-> "UNKNOWN CSR: " ^ hex_bits_12(reg)
+mapping clause csr_name_map = reg <-> hex_bits_12(reg)
 end csr_name_map
+
+/* XXX due to an apparent Sail bug the definition of this function must appear
+   after the last csr_name_map clause and not by the val spec as it was 
+   previously. */
+function csr_name(csr) = csr_name_map(csr)
 
 function clause ext_is_CSR_defined(_, _) = false
 end ext_is_CSR_defined

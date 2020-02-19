@@ -454,11 +454,19 @@ function init_sys() -> unit = {
   misa->U()   = bool_to_bits(isa_config.ISA.U); /* user-mode */
   misa->S()   = bool_to_bits(isa_config.ISA.S); /* supervisor-mode */
 
+/* On RV64, we currently support either both F and D, or neither.
+   * On RV32, we currently only support F.
+   */
+  misa->F()   = bool_to_bits(isa_config.ISA.F & sys_enable_fdext()); /* single-precision */
+  misa->D()   = if   sizeof(xlen) == 64
+                then bool_to_bits(isa_config.ISA.D & sys_enable_fdext())  /* double-precision */
+                else 0b0;
+
   mvendorid = to_bits(32, isa_config.mvendorid.id);
   marchid   = to_xbits(isa_config.marchid.id);
   mimpid    = to_xbits(isa_config.mimpid.id);
   mhartid   = to_xbits(isa_config.mhartid);
-  
+
   mstatus = set_mstatus_SXL(mstatus, misa.MXL());
   mstatus = set_mstatus_UXL(mstatus, misa.MXL());
   mstatus->SD()   = 0b0;

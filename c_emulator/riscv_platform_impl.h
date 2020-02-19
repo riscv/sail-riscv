@@ -9,6 +9,7 @@
 
 extern bool rv_enable_pmp;
 extern bool rv_enable_rvc;
+extern bool rv_enable_fdext;
 extern bool rv_enable_writable_misa;
 extern bool rv_enable_dirty_update;
 extern bool rv_enable_misaligned;

@@ -162,6 +162,8 @@ register misa : Misa
 val sys_enable_writable_misa = {c: "sys_enable_writable_misa", ocaml: "Platform.enable_writable_misa", _: "sys_enable_writable_misa"} : unit -> bool
 /* whether misa.c was enabled at boot */
 val sys_enable_rvc = {c: "sys_enable_rvc", ocaml: "Platform.enable_rvc", _: "sys_enable_rvc"} : unit -> bool
+/* whether misa.{f,d} were enabled at boot */
+val sys_enable_fdext = {c: "sys_enable_fdext", ocaml: "Platform.enable_fdext", _: "sys_enable_fdext"} : unit -> bool
 
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
@@ -193,6 +195,7 @@ function haveMulDiv()  -> bool = misa.M() == 0b1
 function haveSupMode() -> bool = misa.S() == 0b1
 function haveUsrMode() -> bool = misa.U() == 0b1
 function haveNExt()    -> bool = misa.N() == 0b1
+/* see below for F and D extension tests */
 
 bitfield Mstatus : xlenbits = {
   SD   : xlen - 1,
@@ -269,7 +272,6 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
    * to support code running in S/U-modes.  Spike does this, and for now, we match it.
    * FIXME: This should be made a platform parameter.
    */
-  // let m = update_FS(m, extStatus_to_bits(Off));
 
   let dirty = extStatus_of_bits(m.FS()) == Dirty | extStatus_of_bits(m.XS()) == Dirty;
   let m = update_SD(m, bool_to_bits(dirty));
@@ -304,6 +306,10 @@ function cur_Architecture() -> Architecture = {
 function in32BitMode() -> bool = {
   cur_Architecture() == RV32
 }
+
+/* F and D extensions have to enabled both via misa.{FD} as well as mstatus.FS */
+function haveFExt()    -> bool = (misa.F() == 0b1) & (mstatus.FS() != 0b00)
+function haveDExt()    -> bool = (misa.D() == 0b1) & (mstatus.FS() != 0b00)
 
 /* interrupt processing state */
 

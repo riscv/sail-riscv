@@ -85,9 +85,15 @@ function pmpReadCfgReg(n) = {
        }
 }
 
-/* Helper to handle locked entries */
+/* Helpers to handle locked entries */
+function pmpLocked(cfg: Pmpcfg_ent) -> bool =
+   cfg.L() == 0b1
+
+function pmpTORLocked(cfg: Pmpcfg_ent) -> bool =
+   (cfg.L() == 0b1) & (pmpAddrMatchType_of_bits(cfg.A()) == TOR)
+
 function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
-  if cfg.L() == 0b1 then cfg else Mk_Pmpcfg_ent(v)
+  if pmpLocked(cfg) then cfg else Mk_Pmpcfg_ent(v)
 
 val pmpWriteCfgReg : forall 'n, 0 <= 'n < 4 . (atom('n), xlenbits) -> unit effect {rreg, wreg}
 function pmpWriteCfgReg(n, v) = {
@@ -137,7 +143,7 @@ function pmpWriteCfgReg(n, v) = {
        }
 }
 
-function pmpWriteAddr(cfg: Pmpcfg_ent, reg: xlenbits, v: xlenbits) -> xlenbits =
+function pmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbits) -> xlenbits =
   if   sizeof(xlen) == 32
-  then { if cfg.L() == 0b1 then reg else v }
-  else { if cfg.L() == 0b1 then reg else EXTZ(v[53..0]) }
+  then { if (locked | tor_locked) then reg else v }
+  else { if (locked | tor_locked) then reg else EXTZ(v[53..0]) }
