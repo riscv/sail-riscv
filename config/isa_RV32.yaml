@@ -1,5 +1,5 @@
 User_Spec_Version: "2.3"
-ISA: "RV32IMACSUZicsr_Zifencei"
+ISA: "RV32IMFACSUZicsr_Zifencei"
 Privilege_Spec_Version: "1.11"
 misa:
   implemented: True
@@ -12,8 +12,8 @@ misa:
     bitmask:
       # Only C is writable currently
       mask: 0x4
-      # Zy xwvU tSrq ponM lkjI hgfe dcbA
-      default: 0x2141101
+      # Zy xwvU tSrq ponM lkjI hgFe dcbA
+      default: 0x2141121
 mvendorid:
   implemented: True
   id: 0x565656

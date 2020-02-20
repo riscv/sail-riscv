@@ -1,5 +1,5 @@
 User_Spec_Version: '2.3'
-ISA: RV64IMACSUZicsr_Zifencei
+ISA: RV64IMFDACSUZicsr_Zifencei
 Privilege_Spec_Version: '1.11'
 misa:
   implemented: true
@@ -11,7 +11,7 @@ misa:
   Extensions:
     bitmask:
       mask: 0x4
-      default: 0x2141101
+      default: 0x2141129
 mvendorid:
   implemented: true
   id: 0x565656
