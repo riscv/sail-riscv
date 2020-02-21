@@ -226,6 +226,8 @@ $(SOFTFLOAT_LIBS):
 # convenience target
 .PHONY: csim
 csim: c_emulator/riscv_sim_$(ARCH)
+.PHONY: osim
+osim: ocaml_emulator/riscv_ocaml_sim_$(ARCH)
 .PHONY: rvfi
 rvfi: c_emulator/riscv_rvfi_$(ARCH)
 
