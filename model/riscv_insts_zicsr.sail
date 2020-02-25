@@ -208,6 +208,6 @@ mapping csr_mnemonic : csrop <-> string = {
 }
 
 mapping clause assembly = CSR(csr, rs1, rd, true, op)
-  <-> csr_mnemonic(op) ^ "i" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(rs1) ^ sep() ^ csr_name_map(csr)
+  <-> csr_mnemonic(op) ^ "i" ^ spc() ^ reg_name(rd)  ^ sep() ^ csr_name_map(csr) ^ sep() ^ hex_bits_5(rs1)
 mapping clause assembly = CSR(csr, rs1, rd, false, op)
-  <-> csr_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ csr_name_map(csr)
+  <-> csr_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ csr_name_map(csr) ^ sep() ^ reg_name(rs1)
