@@ -80,17 +80,15 @@ val rem_round_zero = {ocaml: "rem_round_zero", interpreter: "rem_round_zero", le
 /* The following should get us euclidean modulus, and is compatible with pre and post 0.9 versions of sail */
 overload operator % = {emod_int, mod}
 
-val min_nat = {ocaml: "min_int", interpreter: "min_int", lem: "min", coq: "min_nat", c: "min_int"} : (nat, nat) -> nat
+val min_int = {ocaml: "min_int", interpreter: "min_int", lem: "min", coq: "min_atom", c: "min_int"} : forall 'x 'y.
+  (int('x), int('y)) -> {'z, ('x <= 'y & 'z == 'x) | ('x > 'y & 'z == 'y). int('z)}
 
-val min_int = {ocaml: "min_int", interpreter: "min_int", lem: "min", coq: "Z.min", c: "min_int"} : (int, int) -> int
+val max_int = {ocaml: "max_int", interpreter: "max_int", lem: "max", coq: "max_atom", c: "max_int"} : forall 'x 'y.
+  (int('x), int('y)) -> {'z, ('x >= 'y & 'z == 'x) | ('x < 'y & 'z == 'y). int('z)}
 
-val max_nat = {ocaml: "max_int", interpreter: "max_int", lem: "max", coq: "max_nat", c: "max_int"} : (nat, nat) -> nat
+overload min = {min_int}
 
-val max_int = {ocaml: "max_int", interpreter: "max_int", lem: "max", coq: "Z.max", c: "max_int"} : (int, int) -> int
-
-overload min = {min_nat, min_int}
-
-overload max = {max_nat, max_int}
+overload max = {max_int}
 
 val pow2 = "pow2" : forall 'n. atom('n) -> atom(2 ^ 'n)
 
