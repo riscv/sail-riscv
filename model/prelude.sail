@@ -34,7 +34,11 @@ val vector_concat = {ocaml: "append", lem: "append_list", coq: "vec_concat"} : f
 
 overload append = {vector_concat}
 
-overload ~ = {not_bool, not_vec}
+val not_bit : bit -> bit
+
+function not_bit(b) = if b == bitone then bitzero else bitone
+
+overload ~ = {not_bool, not_vec, not_bit}
 
 val neq_vec = {lem: "neq"} : forall 'n. (bits('n), bits('n)) -> bool
 
