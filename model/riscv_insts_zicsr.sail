@@ -117,10 +117,10 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x344,  _) => { mip = legalize_mip(mip, value); Some(mip.bits()) },
 
     // Note: Some(value) returned below is not the legalized value due to locked entries
-    (0x3A0,  _) => { pmpWriteCfgReg(0, value); Some(value) },  // pmpcfg0
-    (0x3A1, 32) => { pmpWriteCfgReg(1, value); Some(value) },  // pmpcfg1
-    (0x3A2,  _) => { pmpWriteCfgReg(2, value); Some(value) },  // pmpcfg2
-    (0x3A3, 32) => { pmpWriteCfgReg(3, value); Some(value) },  // pmpcfg3
+    (0x3A0,  _) => { pmpWriteCfgReg(0, value); Some(pmpReadCfgReg(0)) },  // pmpcfg0
+    (0x3A1, 32) => { pmpWriteCfgReg(1, value); Some(pmpReadCfgReg(1)) },  // pmpcfg1
+    (0x3A2,  _) => { pmpWriteCfgReg(2, value); Some(pmpReadCfgReg(2)) },  // pmpcfg2
+    (0x3A3, 32) => { pmpWriteCfgReg(3, value); Some(pmpReadCfgReg(3)) },  // pmpcfg3
 
     (0x3B0,  _) => { pmpaddr0  = pmpWriteAddr(pmpLocked(pmp0cfg),  pmpTORLocked(pmp1cfg),  pmpaddr0,  value); Some(pmpaddr0) },
     (0x3B1,  _) => { pmpaddr1  = pmpWriteAddr(pmpLocked(pmp1cfg),  pmpTORLocked(pmp2cfg),  pmpaddr1,  value); Some(pmpaddr1) },
