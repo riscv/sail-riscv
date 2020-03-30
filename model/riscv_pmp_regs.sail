@@ -109,8 +109,8 @@ function pmpWriteCfgReg(n, v) = {
                 pmp6cfg  = pmpWriteCfg(pmp6cfg,  v[23..16]);
                 pmp7cfg  = pmpWriteCfg(pmp7cfg,  v[31..24]);
               },
-         2 => { pmp8cfg8 = pmpWriteCfg(pmp8cfg,  v[7 ..0]);
-                pmp9cfg9 = pmpWriteCfg(pmp9cfg,  v[15..8]);
+         2 => { pmp8cfg  = pmpWriteCfg(pmp8cfg,  v[7 ..0]);
+                pmp9cfg  = pmpWriteCfg(pmp9cfg,  v[15..8]);
                 pmp10cfg = pmpWriteCfg(pmp10cfg, v[23..16]);
                 pmp11cfg = pmpWriteCfg(pmp11cfg, v[31..24]);
               },
@@ -131,8 +131,8 @@ function pmpWriteCfgReg(n, v) = {
                 pmp6cfg  = pmpWriteCfg(pmp6cfg,  v[55..48]);
                 pmp7cfg  = pmpWriteCfg(pmp7cfg,  v[63..56])
               },
-         2 => { pmp8cfg8 = pmpWriteCfg(pmp8cfg,  v[7 ..0]);
-                pmp9cfg9 = pmpWriteCfg(pmp9cfg,  v[15..8]);
+         2 => { pmp8cfg  = pmpWriteCfg(pmp8cfg,  v[7 ..0]);
+                pmp9cfg  = pmpWriteCfg(pmp9cfg,  v[15..8]);
                 pmp10cfg = pmpWriteCfg(pmp10cfg, v[23..16]);
                 pmp11cfg = pmpWriteCfg(pmp11cfg, v[31..24]);
                 pmp12cfg = pmpWriteCfg(pmp12cfg, v[39..32]);
