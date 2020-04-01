@@ -93,7 +93,7 @@ function pmpTORLocked(cfg: Pmpcfg_ent) -> bool =
    (cfg.L() == 0b1) & (pmpAddrMatchType_of_bits(cfg.A()) == TOR)
 
 function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
-  if pmpLocked(cfg) then cfg else Mk_Pmpcfg_ent(v & 0x9f)
+  if pmpLocked(cfg) then cfg else Mk_Pmpcfg_ent(v & 0x9f)  // 0x9f masks reserved bits.
 
 val pmpWriteCfgReg : forall 'n, 0 <= 'n < 4 . (atom('n), xlenbits) -> unit effect {rreg, wreg}
 function pmpWriteCfgReg(n, v) = {
