@@ -753,7 +753,7 @@ mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute EBREAK() = {
-  handle_mem_exception(PC, E_Breakpoint());
+  handle_exception(E_Breakpoint());
   RETIRE_FAIL
 }
 

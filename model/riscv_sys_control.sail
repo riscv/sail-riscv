@@ -436,6 +436,13 @@ function handle_mem_exception(addr : xlenbits, e : ExceptionType) -> unit = {
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }
 
+function handle_exception(e: ExceptionType) -> unit = {
+  let t : sync_exception = struct { trap    = e,
+                                    excinfo = None(),
+                                    ext     = None() } in
+  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
+}
+
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
   set_next_pc(trap_handler(del_priv, true, interruptType_to_bits(i), PC, None(), None()))
 
