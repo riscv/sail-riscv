@@ -13,9 +13,9 @@ static uint_fast8_t uint8_of_rm(mach_bits rm) {
   softfloat_exceptionFlags = 0;                         \
   softfloat_roundingMode = (uint_fast8_t) rm
 
-#define SOFTFLOAT_POSTLUDE(res)                         \
-  zfloat_result = res.v;                                \
-  zfloat_fflags = (mach_bits) softfloat_exceptionFlags
+#define SOFTFLOAT_POSTLUDE(res)                             \
+  zfloat_result = res.v;                                    \
+  zfloat_fflags |= (mach_bits) softfloat_exceptionFlags     \
 
 unit softfloat_f32add(mach_bits rm, mach_bits v1, mach_bits v2) {
   SOFTFLOAT_PRELUDE(rm);

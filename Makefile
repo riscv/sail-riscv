@@ -21,7 +21,7 @@ endif
 # Instruction sources, depending on target
 SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_misa_ext.sail
 SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail
-SAIL_DEFAULT_INST += riscv_softfloat_interface.sail  riscv_insts_fext.sail
+SAIL_DEFAULT_INST += riscv_insts_fext.sail
 ifeq ($(ARCH),RV64)
 SAIL_DEFAULT_INST +=riscv_insts_dext.sail
 endif
@@ -38,7 +38,7 @@ SAIL_SYS_SRCS += riscv_next_regs.sail
 SAIL_SYS_SRCS += riscv_sys_exceptions.sail  # default basic helpers for exception handling
 SAIL_SYS_SRCS += riscv_sync_exception.sail  # define the exception structure used in the model
 SAIL_SYS_SRCS += riscv_next_control.sail    # helpers for the 'N' extension
-SAIL_SYS_SRCS += riscv_fdext_regs.sail riscv_fdext_control.sail
+SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdext_control.sail
 SAIL_SYS_SRCS += riscv_csr_ext.sail         # access to CSR extensions
 SAIL_SYS_SRCS += riscv_sys_control.sail     # general exception handling
 
