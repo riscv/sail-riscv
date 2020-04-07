@@ -135,10 +135,9 @@ function feq_quiet_D   (v1,       v2) = {
 
   let result = ((v1 == v2) | (v1Is0 & v2Is0));
 
-  let fflags = if (f_is_SNaN_D(v1) | f_is_SNaN_D(v2)) then
-                 nvFlag()
-               else
-                 zeros();
+  let fflags = if   (f_is_SNaN_D(v1) | f_is_SNaN_D(v2))
+               then nvFlag()
+               else zeros();
 
   (result, fflags)
 }
@@ -153,30 +152,26 @@ function flt_D   (v1,       v2,        is_quiet) = {
 
   let result : bool =
     if (s1 == 0b0) & (s2 == 0b0) then
-      if (e1 == e2) then
-         unsigned (m1) < unsigned (m2)
-      else
-         unsigned (e1) < unsigned (e2)
+      if   (e1 == e2)
+      then unsigned (m1) < unsigned (m2)
+      else unsigned (e1) < unsigned (e2)
     else if (s1 == 0b0) & (s2 == 0b1) then
       false
     else if (s1 == 0b1) & (s2 == 0b0) then
       true
     else
-      if (e1 == e2) then
-        unsigned (m1) > unsigned (m2)
-      else
-        unsigned (e1) > unsigned (e2);
+      if   (e1 == e2)
+      then unsigned (m1) > unsigned (m2)
+      else unsigned (e1) > unsigned (e2);
 
   let fflags = if is_quiet then
-                 if (f_is_SNaN_D(v1) | f_is_SNaN_D(v2)) then
-                   nvFlag()
-                 else
-                   zeros()
+                 if   (f_is_SNaN_D(v1) | f_is_SNaN_D(v2))
+                 then nvFlag()
+                 else zeros()
                else
-                 if (v1IsNaN | v2IsNaN) then
-                   nvFlag()
-                 else
-                   zeros();
+                 if   (v1IsNaN | v2IsNaN)
+                 then nvFlag()
+                 else zeros();
 
   (result, fflags)
 }
@@ -194,30 +189,26 @@ function fle_D   (v1,       v2,        is_quiet) = {
 
   let result : bool =
     if (s1 == 0b0) & (s2 == 0b0) then
-      if (e1 == e2) then
-        unsigned (m1) <=  unsigned (m2)
-      else
-        unsigned (e1)  <  unsigned (e2)
+      if   (e1 == e2)
+      then unsigned (m1) <=  unsigned (m2)
+      else unsigned (e1)  <  unsigned (e2)
     else if (s1 == 0b0) & (s2 == 0b1) then
       (v1Is0 & v2Is0)                         /* Equal in this case (+0=-0) */
     else if (s1 == 0b1) & (s2 == 0b0) then
       true
     else
-      if (e1 == e2) then
-        unsigned (m1) >=  unsigned (m2)
-      else
-        unsigned (e1)  >  unsigned (e2);
+      if   (e1 == e2)
+      then unsigned (m1) >=  unsigned (m2)
+      else unsigned (e1)  >  unsigned (e2);
 
   let fflags = if is_quiet then
-                 if (f_is_SNaN_D(v1) | f_is_SNaN_D(v2)) then
-                   nvFlag()
-                 else
-                   zeros()
+                 if   (f_is_SNaN_D(v1) | f_is_SNaN_D(v2))
+                 then nvFlag()
+                 else zeros()
                else
-                 if (v1IsNaN | v2IsNaN) then
-                   nvFlag()
-                 else
-                   zeros();
+                 if   (v1IsNaN | v2IsNaN)
+                 then nvFlag()
+                 else zeros();
 
   (result, fflags)
 }
@@ -652,8 +643,7 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJ_D)) = {
   let (s1, e1, m1) = fsplit_D (rs1_val_D);
   let (s2, e2, m2) = fsplit_D (rs2_val_D);
   let rd_val_D     = fmake_D (s2, e1, m1);
-  let fflags       = 0b_00000;
-  write_fflags(fflags);
+
   F(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
@@ -664,8 +654,7 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJN_D)) = {
   let (s1, e1, m1) = fsplit_D (rs1_val_D);
   let (s2, e2, m2) = fsplit_D (rs2_val_D);
   let rd_val_D     = fmake_D (0b1 ^ s2, e1, m1);
-  let fflags       = 0b_00000;
-  write_fflags(fflags);
+
   F(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
@@ -676,8 +665,7 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJX_D)) = {
   let (s1, e1, m1) = fsplit_D (rs1_val_D);
   let (s2, e2, m2) = fsplit_D (rs2_val_D);
   let rd_val_D     = fmake_D (s1 ^ s2, e1, m1);
-  let fflags       = 0b_00000;
-  write_fflags(fflags);
+
   F(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
@@ -700,7 +688,7 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMIN_D)) = {
                   else if rs1_lt_rs2                                                then rs1_val_D
                   else /* (not rs1_lt_rs2) */                                            rs2_val_D;
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   F(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
@@ -723,7 +711,7 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMAX_D)) = {
                   else if rs2_lt_rs1                                                then rs1_val_D
                   else /* (not rs2_lt_rs1) */                                            rs2_val_D;
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   F(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
@@ -740,7 +728,7 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
       else if rs1_eq_rs2                                        then EXTZ(0b1)
       else                                                           zeros();
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = rd_val;
   RETIRE_SUCCESS
 }
@@ -758,7 +746,7 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)) = {
       else if rs1_lt_rs2                                        then EXTZ(0b1)
       else                                                           zeros();
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = rd_val;
   RETIRE_SUCCESS
 }
@@ -776,7 +764,7 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)) = {
       else if rs1_le_rs2                                        then EXTZ(0b1)
       else                                                           zeros();
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = rd_val;
   RETIRE_SUCCESS
 }
