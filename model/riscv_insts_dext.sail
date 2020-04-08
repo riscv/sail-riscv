@@ -720,15 +720,10 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
   let rs1_val_D = F(rs1);
   let rs2_val_D = F(rs2);
 
-  let (rs1_eq_rs2, fflags) = feq_quiet_D (rs1_val_D, rs2_val_D);
+  let (fflags, rd_val) : (bits_fflags, bits_LU) =
+      riscv_f64Eq (rs1_val_D, rs2_val_D);
 
-  let rd_val : xlenbits =
-      if      (f_is_SNaN_D(rs1_val_D) | f_is_SNaN_D(rs2_val_D)) then zeros()
-      else if (f_is_QNaN_D(rs1_val_D) | f_is_QNaN_D(rs2_val_D)) then zeros()
-      else if rs1_eq_rs2                                        then EXTZ(0b1)
-      else                                                           zeros();
-
-  accrue_fflags(fflags);
+  write_fflags(fflags);
   X(rd) = rd_val;
   RETIRE_SUCCESS
 }
@@ -737,16 +732,10 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)) = {
   let rs1_val_D = F(rs1);
   let rs2_val_D = F(rs2);
 
-  let is_quiet  = false;
-  let (rs1_lt_rs2, fflags) = flt_D (rs1_val_D, rs2_val_D, is_quiet);
+  let (fflags, rd_val) : (bits_fflags, bits_LU) =
+      riscv_f64Lt (rs1_val_D, rs2_val_D);
 
-  let rd_val : xlenbits =
-      if      (f_is_SNaN_D(rs1_val_D) | f_is_SNaN_D(rs2_val_D)) then zeros()
-      else if (f_is_QNaN_D(rs1_val_D) | f_is_QNaN_D(rs2_val_D)) then zeros()
-      else if rs1_lt_rs2                                        then EXTZ(0b1)
-      else                                                           zeros();
-
-  accrue_fflags(fflags);
+  write_fflags(fflags);
   X(rd) = rd_val;
   RETIRE_SUCCESS
 }
@@ -755,16 +744,10 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)) = {
   let rs1_val_D = F(rs1);
   let rs2_val_D = F(rs2);
 
-  let is_quiet  = false;
-  let (rs1_le_rs2, fflags) = fle_D (rs1_val_D, rs2_val_D, is_quiet);
+  let (fflags, rd_val) : (bits_fflags, bits_LU) =
+      riscv_f64Le (rs1_val_D, rs2_val_D);
 
-  let rd_val : xlenbits =
-      if      (f_is_SNaN_D(rs1_val_D) | f_is_SNaN_D(rs2_val_D)) then zeros()
-      else if (f_is_QNaN_D(rs1_val_D) | f_is_QNaN_D(rs2_val_D)) then zeros()
-      else if rs1_le_rs2                                        then EXTZ(0b1)
-      else                                                           zeros();
-
-  accrue_fflags(fflags);
+  write_fflags(fflags);
   X(rd) = rd_val;
   RETIRE_SUCCESS
 }

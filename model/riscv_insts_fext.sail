@@ -896,16 +896,11 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rs2_val_S = nan_unbox (F(rs2));
 
-  let (rs1_eq_rs2, fflags) = feq_quiet_S (rs1_val_S, rs2_val_S);
+  let (fflags, rd_val) : (bits_fflags, bits_WU) =
+      riscv_f32Eq (rs1_val_S, rs2_val_S);
 
-  let rd_val : xlenbits =
-      if      (f_is_SNaN_S(rs1_val_S) | f_is_SNaN_S(rs2_val_S)) then zeros()
-      else if (f_is_QNaN_S(rs1_val_S) | f_is_QNaN_S(rs2_val_S)) then zeros()
-      else if rs1_eq_rs2                                        then EXTZ(0b1)
-      else                                                           zeros();
-
-  accrue_fflags(fflags);
-  X(rd) = rd_val;
+  write_fflags(fflags);
+  X(rd) = EXTZ(rd_val);
   RETIRE_SUCCESS
 }
 
@@ -913,17 +908,11 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rs2_val_S = nan_unbox (F(rs2));
 
-  let is_quiet  = false;
-  let (rs1_lt_rs2, fflags) = flt_S (rs1_val_S, rs2_val_S, is_quiet);
+  let (fflags, rd_val) : (bits_fflags, bits_WU) =
+      riscv_f32Lt (rs1_val_S, rs2_val_S);
 
-  let rd_val : xlenbits =
-      if      (f_is_SNaN_S(rs1_val_S) | f_is_SNaN_S(rs2_val_S)) then zeros()
-      else if (f_is_QNaN_S(rs1_val_S) | f_is_QNaN_S(rs2_val_S)) then zeros()
-      else if rs1_lt_rs2                                        then EXTZ(0b1)
-      else                                                           zeros();
-
-  accrue_fflags(fflags);
-  X(rd) = rd_val;
+  write_fflags(fflags);
+  X(rd) = EXTZ(rd_val);
   RETIRE_SUCCESS
 }
 
@@ -931,17 +920,11 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rs2_val_S = nan_unbox (F(rs2));
 
-  let is_quiet  = false;
-  let (rs1_le_rs2, fflags) = fle_S (rs1_val_S, rs2_val_S, is_quiet);
+  let (fflags, rd_val) : (bits_fflags, bits_WU) =
+      riscv_f32Le (rs1_val_S, rs2_val_S);
 
-  let rd_val : xlenbits =
-      if      (f_is_SNaN_S(rs1_val_S) | f_is_SNaN_S(rs2_val_S)) then zeros()
-      else if (f_is_QNaN_S(rs1_val_S) | f_is_QNaN_S(rs2_val_S)) then zeros()
-      else if rs1_le_rs2                                        then EXTZ(0b1)
-      else                                                           zeros();
-
-  accrue_fflags(fflags);
-  X(rd) = rd_val;
+  write_fflags(fflags);
+  X(rd) = EXTZ(rd_val);
   RETIRE_SUCCESS
 }
 

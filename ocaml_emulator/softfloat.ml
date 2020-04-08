@@ -89,3 +89,20 @@ let f32_to_f64 rm v =
 let f64_to_f32 rm v =
   ()
 
+let f32_lt v1 v2 =
+  ()
+
+let f32_le v1 v2 =
+  ()
+
+let f32_eq v1 v2 =
+  ()
+
+let f64_lt v1 v2 =
+  ()
+
+let f64_le v1 v2 =
+  ()
+
+let f64_eq v1 v2 =
+  ()
