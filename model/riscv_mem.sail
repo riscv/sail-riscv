@@ -171,7 +171,8 @@ function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, pa
   if   (~ (plat_enable_pmp ()))
   then checked_mem_write(wk, paddr, width, data, meta)
   else {
-    match pmpCheck(paddr, width, Write(ext_acc), effectivePrivilege(mstatus, cur_privilege)) {
+    let typ : AccessType(ext_access_type) = Write(ext_acc);
+    match pmpCheck(paddr, width, typ, effectivePrivilege(mstatus, cur_privilege)) {
       None()  => checked_mem_write(wk, paddr, width, data, meta),
       Some(e) => MemException(e)
     }
