@@ -170,9 +170,11 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kin
 function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, paddr : xlenbits, width : atom('n), data: bits(8 * 'n), ext_acc: ext_access_type, meta: mem_meta) -> MemoryOpResult(bool) =
   if   (~ (plat_enable_pmp ()))
   then checked_mem_write(wk, paddr, width, data, meta)
-  else match pmpCheck(paddr, width, Write(ext_acc), effectivePrivilege(mstatus, cur_privilege)) {
-         None()  => checked_mem_write(wk, paddr, width, data, meta),
-         Some(e) => MemException(e)
+  else {
+    match pmpCheck(paddr, width, Write(ext_acc), effectivePrivilege(mstatus, cur_privilege)) {
+      None()  => checked_mem_write(wk, paddr, width, data, meta),
+      Some(e) => MemException(e)
+    }
   }
 
 /* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
