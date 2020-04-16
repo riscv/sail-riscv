@@ -64,7 +64,7 @@ function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_
   if   (~ (plat_enable_pmp ()))
   then checked_mem_read(t, paddr, width, aq, rl, res, meta)
   else {
-    match pmpCheck(paddr, width, t, effectivePrivilege(mstatus, cur_privilege)) {
+    match pmpCheck(paddr, width, t, effectivePrivilege(t, mstatus, cur_privilege)) {
       None()  => checked_mem_read(t, paddr, width, aq, rl, res, meta),
       Some(e) => MemException(e)
     }
@@ -172,7 +172,7 @@ function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, pa
   then checked_mem_write(wk, paddr, width, data, meta)
   else {
     let typ : AccessType(ext_access_type) = Write(ext_acc);
-    match pmpCheck(paddr, width, typ, effectivePrivilege(mstatus, cur_privilege)) {
+    match pmpCheck(paddr, width, typ, effectivePrivilege(typ, mstatus, cur_privilege)) {
       None()  => checked_mem_write(wk, paddr, width, data, meta),
       Some(e) => MemException(e)
     }

@@ -136,7 +136,7 @@ bitfield Mstatus : xlenbits = {
 }
 register mstatus : Mstatus
 
-function effectivePrivilege(m : Mstatus, priv : Privilege) -> Privilege =
+function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
   if   m.MPRV() == 0b1
   then privLevel_of_bits(mstatus.MPP())
   else cur_privilege
