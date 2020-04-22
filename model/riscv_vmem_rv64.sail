@@ -35,10 +35,7 @@ function translationMode(priv) = {
 
 val translateAddr : (xlenbits, AccessType(ext_access_type)) -> TR_Result(xlenbits, ExceptionType) effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
 function translateAddr(vAddr, ac) = {
-  let effPriv : Privilege = match ac {
-    Execute() => cur_privilege,
-    _         => effectivePrivilege(mstatus, cur_privilege)
-  };
+  let effPriv : Privilege = effectivePrivilege(ac, mstatus, cur_privilege);
   let mxr    : bool   = mstatus.MXR() == 0b1;
   let do_sum : bool   = mstatus.SUM() == 0b1;
   let mode : SATPMode = translationMode(effPriv);
