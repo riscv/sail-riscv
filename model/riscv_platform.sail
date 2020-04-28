@@ -250,7 +250,9 @@ function clint_store(addr, width, data) = {
 
 val tick_clock : unit -> unit effect {rreg, wreg}
 function tick_clock() = {
-  mcycle = mcycle + 1;
+  if   mcountinhibit.CY() == 0b0
+  then mcycle = mcycle + 1;
+
   mtime  = mtime  + 1;
   clint_dispatch()
 }

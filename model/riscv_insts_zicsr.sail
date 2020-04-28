@@ -28,6 +28,8 @@ function readCSR csr : csreg -> xlenbits = {
     (0x304,  _) => mie.bits(),
     (0x305,  _) => get_mtvec(),
     (0x306,  _) => EXTZ(mcounteren.bits()),
+    (0x320,  _) => EXTZ(mcountinhibit.bits()),
+
     (0x340,  _) => mscratch,
     (0x341,  _) => get_xret_target(Machine) & pc_alignment_mask(),
     (0x342,  _) => mcause.bits(),
@@ -110,6 +112,7 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x304,  _) => { mie = legalize_mie(mie, value); Some(mie.bits()) },
     (0x305,  _) => { Some(set_mtvec(value)) },
     (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(EXTZ(mcounteren.bits())) },
+    (0x320,  _) => { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Some(EXTZ(mcountinhibit.bits())) },
     (0x340,  _) => { mscratch = value; Some(mscratch) },
     (0x341,  _) => { Some(set_xret_target(Machine, value)) },
     (0x342,  _) => { mcause->bits() = value; Some(mcause.bits()) },

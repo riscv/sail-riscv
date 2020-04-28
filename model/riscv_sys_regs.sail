@@ -398,6 +398,19 @@ function legalize_scounteren(c : Counteren, v : xlenbits) -> Counteren = {
   c
 }
 
+bitfield Counterin : bits(32) = {
+  /* no HPM counters yet */
+  IR : 2,
+  CY : 0
+}
+register mcountinhibit : Counterin
+
+function legalize_mcountinhibit(c : Counterin, v : xlenbits) -> Counterin = {
+  let c = update_IR(c, [v[2]]);
+  let c = update_CY(c, [v[0]]);
+  c
+}
+
 register mcycle : bits(64)
 register mtime : bits(64)
 
