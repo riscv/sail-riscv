@@ -48,6 +48,10 @@ specification.
 
 - Specification and implementation of Endianness Control.
 
+- Support for changing XLEN or base ISA control using the {M,S,U}XL
+  fields of `mstatus`.  The model only supports
+  `MXLEN`=`SXLEN`=`ULEN`.
+
 - A complete definition of all hardware performance counters.
   These are used to count platform-specific events, and hence
   platform-dependent.
