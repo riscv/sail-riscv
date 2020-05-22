@@ -1,13 +1,13 @@
 /* Functional specification for the 'N' user-level interrupts standard extension. */
 
-function clause ext_is_CSR_defined(0x000, _) = haveUsrMode() // ustatus
-function clause ext_is_CSR_defined(0x004, _) = haveUsrMode() // uie
-function clause ext_is_CSR_defined(0x005, _) = haveUsrMode() // utvec
-function clause ext_is_CSR_defined(0x040, _) = haveUsrMode() // uscratch
-function clause ext_is_CSR_defined(0x041, _) = haveUsrMode() // uepc
-function clause ext_is_CSR_defined(0x042, _) = haveUsrMode() // ucause
-function clause ext_is_CSR_defined(0x043, _) = haveUsrMode() // utval
-function clause ext_is_CSR_defined(0x044, _) = haveUsrMode() // uip
+function clause ext_is_CSR_defined(0x000, _) = haveUsrMode() & haveNExt() // ustatus
+function clause ext_is_CSR_defined(0x004, _) = haveUsrMode() & haveNExt() // uie
+function clause ext_is_CSR_defined(0x005, _) = haveUsrMode() & haveNExt() // utvec
+function clause ext_is_CSR_defined(0x040, _) = haveUsrMode() & haveNExt() // uscratch
+function clause ext_is_CSR_defined(0x041, _) = haveUsrMode() & haveNExt() // uepc
+function clause ext_is_CSR_defined(0x042, _) = haveUsrMode() & haveNExt() // ucause
+function clause ext_is_CSR_defined(0x043, _) = haveUsrMode() & haveNExt() // utval
+function clause ext_is_CSR_defined(0x044, _) = haveUsrMode() & haveNExt() // uip
 
 function clause ext_read_CSR(0x000) = Some(lower_sstatus(lower_mstatus(mstatus)).bits())
 function clause ext_read_CSR(0x004) = Some(lower_sie(lower_mie(mie, mideleg), sideleg).bits())
