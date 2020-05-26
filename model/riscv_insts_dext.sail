@@ -156,9 +156,6 @@ function flt_D   (v1,       v2,        is_quiet) = {
   let (s1, e1, m1) = fsplit_D (v1);
   let (s2, e2, m2) = fsplit_D (v2);
 
-  let v1IsNaN  = f_is_NaN_D(v1);
-  let v2IsNaN  = f_is_NaN_D(v2);
-
   let result : bool =
     if (s1 == 0b0) & (s2 == 0b0) then
       if   (e1 == e2)
@@ -178,7 +175,7 @@ function flt_D   (v1,       v2,        is_quiet) = {
                  then nvFlag()
                  else zeros()
                else
-                 if   (v1IsNaN | v2IsNaN)
+                 if   (f_is_NaN_D(v1) | f_is_NaN_D(v2))
                  then nvFlag()
                  else zeros();
 
@@ -189,9 +186,6 @@ val      fle_D : (bits(64), bits (64), bool) -> (bool, bits(5))
 function fle_D   (v1,       v2,        is_quiet) = {
   let (s1, e1, m1) = fsplit_D (v1);
   let (s2, e2, m2) = fsplit_D (v2);
-
-  let v1IsNaN  = f_is_NaN_D(v1);
-  let v2IsNaN  = f_is_NaN_D(v2);
 
   let v1Is0    = f_is_neg_zero_D(v1) | f_is_pos_zero_D(v1);
   let v2Is0    = f_is_neg_zero_D(v2) | f_is_pos_zero_D(v2);
@@ -215,7 +209,7 @@ function fle_D   (v1,       v2,        is_quiet) = {
                  then nvFlag()
                  else zeros()
                else
-                 if   (v1IsNaN | v2IsNaN)
+                 if   (f_is_NaN_D(v1) | f_is_NaN_D(v2))
                  then nvFlag()
                  else zeros();
 
