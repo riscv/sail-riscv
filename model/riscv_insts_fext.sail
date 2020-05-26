@@ -144,6 +144,14 @@ function f_is_QNaN_S   x32 = {
    & (mant [22] == bitone))
 }
 
+/* Either QNaN or SNan */
+val      f_is_NaN_S : bits(32) -> bool
+function f_is_NaN_S   x32 = {
+  let (sign, exp, mant) = fsplit_S (x32);
+  (  (exp == ones())
+   & (mant != zeros()))
+}
+
 /* **************************************************************** */
 /* Help functions used in the semantic functions                    */
 
@@ -176,8 +184,8 @@ function flt_S   (v1,       v2,        is_quiet) = {
   let (s1, e1, m1) = fsplit_S (v1);
   let (s2, e2, m2) = fsplit_S (v2);
 
-  let v1IsNaN  = f_is_QNaN_S(v1) | f_is_SNaN_S(v1);
-  let v2IsNaN  = f_is_QNaN_S(v2) | f_is_SNaN_S(v2);
+  let v1IsNaN  = f_is_NaN_S(v1);
+  let v2IsNaN  = f_is_NaN_S(v2);
 
   let result : bool =
     if (s1 == 0b0) & (s2 == 0b0) then
@@ -210,8 +218,8 @@ function fle_S   (v1,       v2,        is_quiet) = {
   let (s1, e1, m1) = fsplit_S (v1);
   let (s2, e2, m2) = fsplit_S (v2);
 
-  let v1IsNaN  = f_is_QNaN_S(v1) | f_is_SNaN_S(v1);
-  let v2IsNaN  = f_is_QNaN_S(v2) | f_is_SNaN_S(v2);
+  let v1IsNaN  = f_is_NaN_S(v1);
+  let v2IsNaN  = f_is_NaN_S(v2);
 
   let v1Is0    = f_is_neg_zero_S(v1) | f_is_pos_zero_S(v1);
   let v2Is0    = f_is_neg_zero_S(v2) | f_is_pos_zero_S(v2);
