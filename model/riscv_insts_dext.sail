@@ -681,10 +681,8 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMIN_D)) = {
   let (rs1_lt_rs2, fflags) = fle_D (rs1_val_D, rs2_val_D, is_quiet);
 
   let rd_val_D  = if      (f_is_NaN_D(rs1_val_D) & f_is_NaN_D(rs2_val_D))           then canonical_NaN_D()
-                  else if f_is_SNaN_D(rs1_val_D)                                    then rs2_val_D
-                  else if f_is_SNaN_D(rs2_val_D)                                    then rs1_val_D
-                  else if f_is_QNaN_D(rs1_val_D)                                    then rs2_val_D
-                  else if f_is_QNaN_D(rs2_val_D)                                    then rs1_val_D
+                  else if f_is_NaN_D(rs1_val_D)                                     then rs2_val_D
+                  else if f_is_NaN_D(rs2_val_D)                                     then rs1_val_D
                   else if (f_is_neg_zero_D(rs1_val_D) & f_is_pos_zero_D(rs2_val_D)) then rs1_val_D
                   else if (f_is_neg_zero_D(rs2_val_D) & f_is_pos_zero_D(rs1_val_D)) then rs2_val_D
                   else if rs1_lt_rs2                                                then rs1_val_D
@@ -703,10 +701,8 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMAX_D)) = {
   let (rs2_lt_rs1, fflags) = fle_D (rs2_val_D, rs1_val_D, is_quiet);
 
   let rd_val_D  = if      (f_is_NaN_D(rs1_val_D) & f_is_NaN_D(rs2_val_D))           then canonical_NaN_D()
-                  else if f_is_SNaN_D(rs1_val_D)                                    then rs2_val_D
-                  else if f_is_SNaN_D(rs2_val_D)                                    then rs1_val_D
-                  else if f_is_QNaN_D(rs1_val_D)                                    then rs2_val_D
-                  else if f_is_QNaN_D(rs2_val_D)                                    then rs1_val_D
+                  else if f_is_NaN_D(rs1_val_D)                                     then rs2_val_D
+                  else if f_is_NaN_D(rs2_val_D)                                     then rs1_val_D
                   else if (f_is_neg_zero_D(rs1_val_D) & f_is_pos_zero_D(rs2_val_D)) then rs2_val_D
                   else if (f_is_neg_zero_D(rs2_val_D) & f_is_pos_zero_D(rs1_val_D)) then rs1_val_D
                   else if rs2_lt_rs1                                                then rs1_val_D
