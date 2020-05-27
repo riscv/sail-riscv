@@ -388,7 +388,7 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
             DOUBLE => mem_write_ea(paddr, 8, aq, rl, false)
           };
           match (eares) {
-            MemException(e) => { handle_mem_exception(paddr, e); RETIRE_FAIL },
+            MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
             MemValue(_) => {
               let rs2_val = X(rs2);
               let res : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
@@ -400,7 +400,7 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
               match (res) {
                 MemValue(true)  => RETIRE_SUCCESS,
                 MemValue(false) => internal_error("store got false from mem_write_value"),
-                MemException(e) => { handle_mem_exception(paddr, e); RETIRE_FAIL }
+                MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
               }
             }
           }
