@@ -299,10 +299,10 @@ function extend_value(is_unsigned, value) = match (value) {
 }
 
 val process_load : forall 'n, 0 < 'n <= xlen_bytes. (regidx, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> Retired effect {escape, rreg, wreg}
-function process_load(rd, addr, value, is_unsigned) =
+function process_load(rd, vaddr, value, is_unsigned) =
   match extend_value(is_unsigned, value) {
     MemValue(result) => { X(rd) = result; RETIRE_SUCCESS },
-    MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
+    MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
   }
 
 function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
