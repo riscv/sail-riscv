@@ -15,5 +15,5 @@ scattered mapping assembly
 val encdec : ast <-> bits(32) effect {rreg}
 scattered mapping encdec
 
-val encdec_compressed : ast <-> bits(16)
+val encdec_compressed : ast <-> bits(16) effect {rreg}
 scattered mapping encdec_compressed
