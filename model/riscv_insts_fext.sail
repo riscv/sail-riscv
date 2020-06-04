@@ -319,12 +319,12 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
   let offset : xlenbits = EXTS(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
-  match ext_data_get_addr(rs1, offset, Read(Data), width) {
+  match ext_data_get_addr(rs1, offset, Read(RData), width) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
       then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
-      else match translateAddr(vaddr, Read(Data)) {
+      else match translateAddr(vaddr, Read(RData)) {
         TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) => {
           let (aq, rl, res) = (false, false, false);
@@ -332,9 +332,9 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
             (BYTE, _)   => { handle_illegal(); RETIRE_FAIL },
             (HALF, _)   => { handle_illegal(); RETIRE_FAIL },
             (WORD, _)   =>
-               process_fload32(rd, vaddr, mem_read(Read(Data), addr, 4, aq, rl, res)),
+               process_fload32(rd, vaddr, mem_read(Read(RData), addr, 4, aq, rl, res)),
             (DOUBLE, 64) =>
-               process_fload64(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, res))
+               process_fload64(rd, vaddr, mem_read(Read(RData), addr, 8, aq, rl, res))
           }
         }
       }
@@ -380,12 +380,12 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
   let (aq, rl, con) = (false, false, false);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
-  match ext_data_get_addr(rs1, offset, Write(Data), width) {
+  match ext_data_get_addr(rs1, offset, Write(WData), width) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
       then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
-      else match translateAddr(vaddr, Write(Data)) {
+      else match translateAddr(vaddr, Write(WData)) {
         TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) => {
           let eares : MemoryOpResult(unit) = match width {

@@ -32,7 +32,10 @@ function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> option(read_ki
   }
 
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n), aq : bool, rl: bool, res : bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
+function phys_mem_read forall 'n, 0 < 'n <= max_mem_access .
+         (t : AccessType(ext_access_type_r,ext_access_type_w),
+          paddr : xlenbits, width : atom('n), aq : bool, rl: bool, res : bool, meta : bool)
+         -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
   let result = (match read_kind_of_flags(aq, rl, res) {
     Some(rk) => Some(read_ram(rk, paddr, width, meta)),
     None()   => None()
@@ -48,7 +51,10 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
 }
 
 /* dispatches to MMIO regions or physical memory regions depending on physical memory map */
-function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
+function checked_mem_read forall 'n, 0 < 'n <= max_mem_access .
+         (t : AccessType(ext_access_type_r,ext_access_type_w),
+          paddr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool, meta : bool)
+         -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
   if   within_mmio_readable(paddr, width)
   then MemoryOpResult_add_meta(mmio_read(t, paddr, width), default_meta)
   else if within_phys_mem(paddr, width)
@@ -60,7 +66,10 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(
   }
 
 /* PMP checks if enabled */
-function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
+function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access .
+         (t : AccessType(ext_access_type_r,ext_access_type_w),
+          paddr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool, meta : bool)
+         -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
   if   (~ (plat_enable_pmp ()))
   then checked_mem_read(t, paddr, width, aq, rl, res, meta)
   else {
@@ -92,11 +101,32 @@ $endif
 
 /* NOTE: The rreg effect is due to MMIO. */
 $ifdef RVFI_DII
-val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))             effect {wreg, rmem, rmemt, rreg, escape}
-val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) effect {wreg, rmem, rmemt, rreg, escape}
+
+val mem_read      : forall 'n, 0 < 'n <= max_mem_access .
+                    (AccessType(ext_access_type_r,ext_access_type_w),
+                     xlenbits, atom('n), bool, bool, bool)
+                    -> MemoryOpResult(bits(8 * 'n))
+                    effect {wreg, rmem, rmemt, rreg, escape}
+
+val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access .
+                    (AccessType(ext_access_type_r,ext_access_type_w),
+                     xlenbits, atom('n), bool, bool, bool, bool)
+                    -> MemoryOpResult((bits(8 * 'n), mem_meta))
+                    effect {wreg, rmem, rmemt, rreg, escape}
 $else
-val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))             effect {rmem, rmemt, rreg, escape}
-val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) effect {rmem, rmemt, rreg, escape}
+
+val mem_read      : forall 'n, 0 < 'n <= max_mem_access .
+                    (AccessType(ext_access_type_r,ext_access_type_w),
+                     xlenbits, atom('n), bool, bool, bool)
+                    -> MemoryOpResult(bits(8 * 'n))
+                    effect {rmem, rmemt, rreg, escape}
+
+val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access .
+                    (AccessType(ext_access_type_r,ext_access_type_w),
+                     xlenbits, atom('n), bool, bool, bool, bool)
+                    -> MemoryOpResult((bits(8 * 'n), mem_meta))
+                    effect {rmem, rmemt, rreg, escape}
+
 $endif
 
 function mem_read_meta (typ, paddr, width, aq, rl, res, meta) = {
@@ -167,11 +197,11 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kin
   else MemException(E_SAMO_Access_Fault())
 
 /* PMP checks if enabled */
-function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, paddr : xlenbits, width : atom('n), data: bits(8 * 'n), ext_acc: ext_access_type, meta: mem_meta) -> MemoryOpResult(bool) =
+function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, paddr : xlenbits, width : atom('n), data: bits(8 * 'n), ext_acc: ext_access_type_w, meta: mem_meta) -> MemoryOpResult(bool) =
   if   (~ (plat_enable_pmp ()))
   then checked_mem_write(wk, paddr, width, data, meta)
   else {
-    let typ : AccessType(ext_access_type) = Write(ext_acc);
+    let typ : AccessType(ext_access_type_r,ext_access_type_w) = Write(ext_acc);
     match pmpCheck(paddr, width, typ, effectivePrivilege(typ, mstatus, cur_privilege)) {
       None()  => checked_mem_write(wk, paddr, width, data, meta),
       Some(e) => MemException(e)
@@ -185,7 +215,7 @@ function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, pa
  * data.
  * NOTE: The wreg effect is due to MMIO, the rreg is due to checking mtime.
  */
-val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), ext_access_type, mem_meta, bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
+val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), ext_access_type_w, mem_meta, bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
 function mem_write_value_meta (paddr, width, value, ext_acc, meta, aq, rl, con) = {
   rvfi_write(paddr, width, value);
   if (rl | con) & (~ (is_aligned_addr(paddr, width)))

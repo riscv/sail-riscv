@@ -300,10 +300,10 @@ enum Retired = {RETIRE_SUCCESS, RETIRE_FAIL}
 
 /* memory access types */
 
-union AccessType ('a : Type) = {
-  Read      : 'a,
-  Write     : 'a,
-  ReadWrite : 'a,
+union AccessType ('r : Type, 'w : Type) = {
+  Read      : 'r,
+  Write     : 'w,
+  ReadWrite : ('r, 'w),
   Execute   : unit
 }
 
@@ -354,24 +354,7 @@ function word_width_bytes width = match width {
   WORD   => 4,
   DOUBLE => 8
 }
-// Extensions for memory Accesstype.
 
-type ext_access_type = unit
-
-let Data  : ext_access_type = ()
-
-let default_write_acc : ext_access_type = Data
-
-val accessType_to_str : AccessType(ext_access_type) -> string
-function accessType_to_str (a) =
-  match (a) {
-    Read(Data)      => "R",
-    Write(Data)     => "W",
-    ReadWrite(Data) => "RW",
-    Execute()       => "X"
-  }
-
-overload to_str = {accessType_to_str}
 /* default register type */
 type regtype = xlenbits
 
@@ -654,7 +637,9 @@ type ext_data_addr_error = unit
 
 /* Default data addr is just base register + immediate offset (may be zero).
    Extensions might override and add additional checks. */
-function ext_data_get_addr(base : regidx, offset : xlenbits, acc : AccessType(ext_access_type), width : word_width)
+function ext_data_get_addr(base : regidx, offset : xlenbits,
+                           acc : AccessType(ext_access_type_r, ext_access_type_w),
+                           width : word_width)
          -> Ext_DataAddr_Check(ext_data_addr_error) =
   let addr = X(base) + offset in
   Ext_DataAddr_OK(addr)
@@ -749,7 +734,10 @@ function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> option(read_ki
   }
 
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n), aq : bool, rl: bool, res : bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
+function phys_mem_read forall 'n, 0 < 'n <= max_mem_access .
+         (t : AccessType(ext_access_type_r, ext_access_type_w),
+          paddr : xlenbits, width : atom('n), aq : bool, rl: bool, res : bool, meta : bool)
+         -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
   let result = (match read_kind_of_flags(aq, rl, res) {
     Some(rk) => Some(read_ram(rk, paddr, width, meta)),
     None()   => None()
@@ -762,7 +750,11 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
   }
 }
 
-val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(bits(8 * 'n))             effect {rmem, rmemt, rreg, escape}
+val mem_read      : forall 'n, 0 < 'n <= max_mem_access .
+                    (AccessType(ext_access_type_r, ext_access_type_w),
+                     xlenbits, atom('n), bool, bool, bool)
+                    -> MemoryOpResult(bits(8 * 'n))
+                    effect {rmem, rmemt, rreg, escape}
 
 function mem_read (typ, paddr, width, aq, rl, res) = {
  let result : MemoryOpResult(bits(8 * 'n)) =
@@ -837,7 +829,9 @@ union TR_Result('paddr : Type, 'failure : Type) = {
   TR_Failure : ('failure, ext_ptw)
 }
 
-val translateAddr : (xlenbits, AccessType(ext_access_type)) -> TR_Result(xlenbits, ExceptionType) effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
+val translateAddr : (xlenbits, AccessType(ext_access_type_r,ext_access_type_w))
+                    -> TR_Result(xlenbits, ExceptionType)
+                    effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
 function translateAddr(vAddr, ac) = {
   TR_Address(vAddr, ());
 }

@@ -40,7 +40,10 @@ function to_pte_check(b : bool) -> PTE_Check =
  * and the accumulated information of the page-table-walk in ext_ptw.  It should return
  * the updated ext_ptw in both the success and failure cases.
  */
-function checkPTEPermission(ac : AccessType(ext_access_type), priv : Privilege, mxr : bool, do_sum : bool, p : PTE_Bits, ext : extPte, ext_ptw : ext_ptw) -> PTE_Check = {
+function checkPTEPermission(ac : AccessType(ext_access_type_r,ext_access_type_w),
+                            priv : Privilege, mxr : bool, do_sum : bool, p : PTE_Bits,
+                            ext : extPte, ext_ptw : ext_ptw)
+                           -> PTE_Check = {
   match (ac, priv) {
     (Read(Data),      User)       => to_pte_check(p.U() == 0b1 & (p.R() == 0b1 | (p.X() == 0b1 & mxr))),
     (Write(Data),     User)       => to_pte_check(p.U() == 0b1 & p.W() == 0b1),
@@ -56,9 +59,22 @@ function checkPTEPermission(ac : AccessType(ext_access_type), priv : Privilege, 
   }
 }
 
-function update_PTE_Bits(p : PTE_Bits, a : AccessType(ext_access_type), ext : extPte) -> option((PTE_Bits, extPte)) = {
-  let update_d = (a == Write(Data) | a == ReadWrite(Data)) & p.D() == 0b0; // dirty-bit
-  let update_a = p.A() == 0b0;                                             // accessed-bit
+function update_PTE_Bits(p : PTE_Bits,
+                         a : AccessType(ext_access_type_r,ext_access_type_w),
+                         ext : extPte)
+                        -> option((PTE_Bits, extPte)) = {
+
+  // dirty bit
+  let update_d = p.D() == 0b0 & (match a {
+                                  Execute()      => false,
+                                  Read(_)        => false,
+                                  Write(_)     => true,
+                                  ReadWrite(_) => true
+                                });
+
+  // accessed bit
+  let update_a = p.A() == 0b0;
+
   if update_d | update_a then {
     let np = update_A(p, 0b1);
     let np = if update_d then update_D(np, 0b1) else np;

@@ -97,10 +97,10 @@ enum Retired = {RETIRE_SUCCESS, RETIRE_FAIL}
 
 /* memory access types */
 
-union AccessType ('a : Type) = {
-  Read      : 'a,
-  Write     : 'a,
-  ReadWrite : 'a,
+union AccessType ('r : Type, 'w : Type) = {
+  Read      : 'r,
+  Write     : 'w,
+  ReadWrite : ('r, 'w),
   Execute   : unit
 }
 

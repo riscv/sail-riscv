@@ -26,7 +26,7 @@ function pmpAddrRange(cfg: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits
 
 /* permission checks */
 
-val pmpCheckRWX: (Pmpcfg_ent, AccessType(ext_access_type)) -> bool
+val pmpCheckRWX: (Pmpcfg_ent, AccessType(ext_access_type_r,ext_access_type_w)) -> bool
 function pmpCheckRWX(ent, acc) = {
   match acc {
     Read(Data)      => ent.R() == 0b1,
@@ -37,7 +37,7 @@ function pmpCheckRWX(ent, acc) = {
 }
 
 // this needs to be called with the effective current privilege.
-val pmpCheckPerms: (Pmpcfg_ent, AccessType(ext_access_type), Privilege) -> bool
+val pmpCheckPerms: (Pmpcfg_ent, AccessType(ext_access_type_r,ext_access_type_w), Privilege) -> bool
 function pmpCheckPerms(ent, acc, priv) = {
   match priv {
     Machine => if   pmpLocked(ent)
@@ -68,8 +68,11 @@ function pmpMatchAddr(addr: xlenbits, width: xlenbits, rng: pmp_addr_range) -> p
 
 enum pmpMatch = {PMP_Success, PMP_Continue, PMP_Fail}
 
-function pmpMatchEntry(addr: xlenbits, width: xlenbits, acc: AccessType(ext_access_type), priv: Privilege,
-                       ent: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits) -> pmpMatch = {
+function pmpMatchEntry(addr: xlenbits, width: xlenbits,
+                       acc: AccessType(ext_access_type_r,ext_access_type_w),
+                       priv: Privilege, ent: Pmpcfg_ent, pmpaddr: xlenbits,
+                       prev_pmpaddr: xlenbits)
+                      -> pmpMatch = {
   let rng = pmpAddrRange(ent, pmpaddr, prev_pmpaddr);
   match pmpMatchAddr(addr, width, rng) {
     PMP_NoMatch      => PMP_Continue,
@@ -82,8 +85,10 @@ function pmpMatchEntry(addr: xlenbits, width: xlenbits, acc: AccessType(ext_acce
 
 /* priority checks */
 
-function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: atom('n), acc: AccessType(ext_access_type), priv: Privilege)
-                  -> option(ExceptionType) = {
+function pmpCheck forall 'n, 'n > 0.
+         (addr: xlenbits, width: atom('n),
+          acc: AccessType(ext_access_type_r,ext_access_type_w), priv: Privilege)
+         -> option(ExceptionType) = {
   let width : xlenbits = to_bits(sizeof(xlen), width);
   let check : bool =
   match pmpMatchEntry(addr, width, acc, priv, pmp0cfg, pmpaddr0, zeros()) {

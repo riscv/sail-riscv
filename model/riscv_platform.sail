@@ -142,7 +142,11 @@ let MTIMECMP_BASE_HI : xlenbits = EXTZ(0x04004)
 let MTIME_BASE       : xlenbits = EXTZ(0x0bff8)
 let MTIME_BASE_HI    : xlenbits = EXTZ(0x0bffc)
 
-val clint_load : forall 'n, 'n > 0. (AccessType(ext_access_type), xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rreg}
+val clint_load : forall 'n, 'n > 0.
+                 (AccessType(ext_access_type_r,ext_access_type_w),
+                  xlenbits, int('n))
+                 -> MemoryOpResult(bits(8 * 'n))
+                 effect {rreg}
 function clint_load(t, addr, width) = {
   let addr = addr - plat_clint_base ();
   /* FIXME: For now, only allow exact aligned access. */
@@ -280,7 +284,11 @@ register htif_exit_code : bits(64)
  * dispatched the address.
  */
 
-val htif_load : forall 'n, 'n > 0. (AccessType(ext_access_type), xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rreg}
+val htif_load : forall 'n, 'n > 0.
+                (AccessType(ext_access_type_r,ext_access_type_w),
+                 xlenbits, int('n))
+                -> MemoryOpResult(bits(8 * 'n))
+                effect {rreg}
 function htif_load(t, paddr, width) = {
   if   get_config_print_platform()
   then print_platform("htif[" ^ BitStr(paddr) ^ "] -> " ^ BitStr(htif_tohost));
@@ -361,7 +369,10 @@ $else
 function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool = false
 $endif
 
-function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n)) -> MemoryOpResult(bits(8 * 'n)) =
+function mmio_read forall 'n, 0 < 'n <= max_mem_access .
+         (t : AccessType(ext_access_type_r,ext_access_type_w),
+          paddr : xlenbits, width : atom('n))
+         -> MemoryOpResult(bits(8 * 'n)) =
   if   within_clint(paddr, width)
   then clint_load(t, paddr, width)
   else if within_htif_readable(paddr, width) & (1 <= 'n)
