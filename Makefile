@@ -344,6 +344,8 @@ generated_definitions/coq/$(ARCH)/riscv_duopod.vo: generated_definitions/coq/$(A
 echo_rmem_srcs:
 	echo $(SAIL_RMEM_SRCS)
 
+RMEM_FILES = generated_definitions/for-rmem/riscv.lem generated_definitions/for-rmem/riscv_types.lem generated_definitions/for-rmem/riscv_toFromInterp2.ml generated_definitions/for-rmem/riscv.defs
+
 riscv_rmem: generated_definitions/for-rmem/riscv.lem
 riscv_rmem: generated_definitions/for-rmem/riscv_toFromInterp2.ml
 riscv_rmem: generated_definitions/for-rmem/riscv.defs
@@ -369,7 +371,7 @@ generated_definitions/for-rmem/riscv.defs: $(SAIL_RMEM_SRCS)
 
 FORCE:
 
-SHARE_FILES:=$(wildcard model/*.sail) $(wildcard c_emulator/*.c) $(wildcard c_emulator/*.h)
+SHARE_FILES:=$(wildcard model/*.sail) $(wildcard c_emulator/*.c) $(wildcard c_emulator/*.h) $(wildcard handwritten_support/*.lem) $(wildcard handwritten_support/hgen/*.hgen) $(wildcard handwritten_support/0.11/*.lem) $(RMEM_FILES)
 sail-riscv.install: FORCE
 	echo 'bin: ["c_emulator/riscv_sim_RV64" "c_emulator/riscv_sim_RV32"]' > sail-riscv.install
 	echo 'share: [ $(foreach f,$(SHARE_FILES),"$f" {"$f"}) ]' >> sail-riscv.install
@@ -377,6 +379,7 @@ sail-riscv.install: FORCE
 opam-build:
 	$(MAKE) ARCH=64 c_emulator/riscv_sim_RV64
 	$(MAKE) ARCH=32 c_emulator/riscv_sim_RV32
+	$(MAKE) riscv_rmem
 
 opam-install:
 	if [ -z "$(INSTALL_DIR)" ]; then echo INSTALL_DIR is unset; false; fi
