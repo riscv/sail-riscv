@@ -29,10 +29,10 @@ function pmpAddrRange(cfg: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits
 val pmpCheckRWX: (Pmpcfg_ent, AccessType(ext_access_type)) -> bool
 function pmpCheckRWX(ent, acc) = {
   match acc {
-    Read(Data)      => ent.R() == 0b1,
-    Write(Data)     => ent.W() == 0b1,
-    ReadWrite(Data) => ent.R() == 0b1 & ent.W() == 0b1,
-    Execute()       => ent.X() == 0b1
+    Read(_)      => ent.R() == 0b1,
+    Write(_)     => ent.W() == 0b1,
+    ReadWrite(_) => ent.R() == 0b1 & ent.W() == 0b1,
+    Execute()    => ent.X() == 0b1
   }
 }
 
@@ -158,10 +158,10 @@ function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: atom('n), acc: Acce
   if   check
   then None()
   else match acc {
-    Read(Data)      => Some(E_Load_Access_Fault()),
-    Write(Data)     => Some(E_SAMO_Access_Fault()),
-    ReadWrite(Data) => Some(E_SAMO_Access_Fault()),
-    Execute()       => Some(E_Fetch_Access_Fault())
+    Read(_)      => Some(E_Load_Access_Fault()),
+    Write(_)     => Some(E_SAMO_Access_Fault()),
+    ReadWrite(_) => Some(E_SAMO_Access_Fault()),
+    Execute()    => Some(E_Fetch_Access_Fault())
   }
 }
 
