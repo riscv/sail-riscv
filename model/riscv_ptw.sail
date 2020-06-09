@@ -1,6 +1,7 @@
 /* failure modes for address-translation/page-table-walks */
 
 union PTW_Error = {
+  PTW_Invalid_Addr  : unit,          /* invalid source address */
   PTW_Access        : unit,          /* physical memory access error for a PTE */
   PTW_Invalid_PTE   : unit,
   PTW_No_Permission : unit,
@@ -12,6 +13,7 @@ union PTW_Error = {
 val ptw_error_to_str : PTW_Error -> string
 function ptw_error_to_str(e) =
   match (e) {
+    PTW_Invalid_Addr()   => "invalid-source-addr",
     PTW_Access()         => "mem-access-error",
     PTW_Invalid_PTE()    => "invalid-pte",
     PTW_No_Permission()  => "no-permission",
