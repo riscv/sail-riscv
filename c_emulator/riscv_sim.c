@@ -14,6 +14,7 @@
 #include "elf.h"
 #include "sail.h"
 #include "rts.h"
+#include "sail_coverage.h"
 #include "riscv_platform.h"
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
@@ -551,6 +552,15 @@ void write_signature(const char *file)
   fclose(f);
 }
 
+void close_logs(void) {
+#ifdef SAILCOV
+  if (sail_coverage_exit() != 0) {
+    fprintf(stderr, "Could not write coverage information!\n");
+    exit(EXIT_FAILURE);
+  }
+#endif
+}
+
 void finish(int ec)
 {
   if (sig_file) write_signature(sig_file);
@@ -572,6 +582,7 @@ void finish(int ec)
     fprintf(stderr, "Instructions:     %d\n", total_insns);
     fprintf(stderr, "Perf:             %.3f Kips\n", Kips);
   }
+  close_logs();
   exit(ec);
 }
 
@@ -903,4 +914,5 @@ int main(int argc, char **argv)
 #endif
   model_fini();
   flush_logs();
+  close_logs();
 }
