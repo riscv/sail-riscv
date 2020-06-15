@@ -4,8 +4,6 @@ Require Import List.
 Import List.ListNotations.
 Open Scope Z.
 
-Axiom real : Type.
-
 Definition MEM_fence_rw_rw {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_rw_rw tt).
 Definition MEM_fence_r_rw  {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_r_rw tt).
 Definition MEM_fence_r_r   {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_r_r tt).
