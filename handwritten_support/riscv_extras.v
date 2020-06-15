@@ -1,11 +1,8 @@
-Require Import Sail2_instr_kinds.
-Require Import Sail2_values.
-Require Import Sail2_operators_mwords.
-Require Import Sail2_prompt_monad.
-Require Import Sail2_prompt.
+Require Import Sail.Base.
 Require Import String.
 Require Import List.
 Import List.ListNotations.
+Open Scope Z.
 
 Axiom real : Type.
 
