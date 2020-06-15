@@ -93,6 +93,7 @@ ifneq ($(SAIL_DIR),)
 # Use sail repo in SAIL_DIR
 SAIL:=$(SAIL_DIR)/sail
 export SAIL_DIR
+EXPLICIT_COQ_SAIL=yes
 else
 # Use sail from opam package
 SAIL_DIR:=$(shell opam config var sail:share)
@@ -104,8 +105,6 @@ SAIL_SRC_DIR:=$(SAIL_DIR)/src
 
 LEM_DIR?=$(shell opam config var lem:share)
 export LEM_DIR
-#Coq BBV library hopefully checked out in directory above us
-BBV_DIR?=../bbv
 
 C_WARNINGS ?=
 #-Wall -Wextra -Wno-unused-label -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-function
@@ -322,7 +321,27 @@ riscv_hol: generated_definitions/hol4/$(ARCH)/riscvScript.sml
 riscv_hol_build: generated_definitions/hol4/$(ARCH)/riscvTheory.uo
 .PHONY: riscv_hol riscv_hol_build
 
-COQ_LIBS = -R $(BBV_DIR)/theories bbv -R $(SAIL_LIB_DIR)/coq Sail -R generated_definitions/coq/$(ARCH) '' -R handwritten_support ''
+ifdef BBV_DIR
+  EXPLICIT_COQ_BBV = yes
+else
+  EXPLICIT_COQ_BBV = $(shell if opam config var coq-bbv:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
+  ifeq ($(EXPLICIT_COQ_BBV),yes)
+    #Coq BBV library hopefully checked out in directory above us
+    BBV_DIR = ../bbv
+  endif
+endif
+
+ifndef EXPLICIT_COQ_SAIL
+  EXPLICIT_COQ_SAIL = $(shell if opam config var coq-sail:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
+endif
+
+COQ_LIBS = -R generated_definitions/coq/$(ARCH) '' -R handwritten_support ''
+ifeq ($(EXPLICIT_COQ_BBV),yes)
+  COQ_LIBS += -Q $(BBV_DIR)/src/bbv bbv
+endif
+ifeq ($(EXPLICIT_COQ_SAIL),yes)
+  COQ_LIBS += -Q $(SAIL_LIB_DIR)/coq Sail
+endif
 
 riscv_coq: $(addprefix generated_definitions/coq/$(ARCH)/,riscv.v riscv_types.v)
 riscv_coq_build: generated_definitions/coq/$(ARCH)/riscv.vo
@@ -336,11 +355,15 @@ $(addprefix generated_definitions/coq/$(ARCH)/,riscv_duopod.v riscv_duopod_types
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq/$(ARCH) -o riscv_duopod -coq_lib riscv_extras -coq_lib mem_metadata $^
 
 %.vo: %.v
-ifeq ($(wildcard $(BBV_DIR)/theories),)
+ifeq ($(EXPLICIT_COQ_BBV),yes)
+  ifeq ($(wildcard $(BBV_DIR)/src),)
 	$(error BBV directory not found. Please set the BBV_DIR environment variable)
+  endif
 endif
-ifeq ($(wildcard $(SAIL_LIB_DIR)/coq),)
+ifeq ($(EXPLICIT_COQ_SAIL),yes)
+  ifeq ($(wildcard $(SAIL_LIB_DIR)/coq),)
 	$(error lib directory of Sail not found. Please set the SAIL_LIB_DIR environment variable)
+  endif
 endif
 	coqc $(COQ_LIBS) $<
 
