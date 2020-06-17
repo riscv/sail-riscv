@@ -7,6 +7,17 @@ type pteAttribs = bits(8)
  */
 type extPte = bits(10)
 
+/*
+ * On SV32, there are no reserved bits available to extensions.  Therefore, by
+ * default, we initialize the PTE extension field with all zeros.  However,
+ * extensions may wish, on SV39/48/56, to put flags in the reserved region of
+ * those PTEs.  To avoid the need for "inhibit" bits in extensions (i.e., so
+ * that extensions can use the more common and more RISC-V flavored "enable"
+ * disposition), we allow extensions to use any constant value by overriding
+ * this default_sv32_ext_pte value.
+ */
+let default_sv32_ext_pte : extPte = zeros()
+
 bitfield PTE_Bits : pteAttribs = {
   D : 7,
   A : 6,

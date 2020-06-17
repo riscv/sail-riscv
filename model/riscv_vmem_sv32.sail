@@ -24,7 +24,7 @@ function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
     MemValue(v) => {
       let pte = Mk_SV32_PTE(v);
       let pbits = pte.BITS();
-      let ext_pte : extPte = zeros(); // no reserved bits for extensions
+      let ext_pte : extPte = default_sv32_ext_pte;
       let pattr = Mk_PTE_Bits(pbits);
       let is_global = global | (pattr.G() == 0b1);
 /*    print("walk32(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
