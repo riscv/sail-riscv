@@ -146,8 +146,9 @@ C_FLAGS += -O3 -flto
 endif
 
 ifneq (,$(SAILCOV))
+ALL_BRANCHES = generated_definitions/c/all_branches
 C_FLAGS += -DSAILCOV
-SAIL_FLAGS += -c_coverage -c_include sail_coverage.h
+SAIL_FLAGS += -c_coverage $(ALL_BRANCHES) -c_include sail_coverage.h
 C_LIBS += $(SAIL_LIB_DIR)/coverage/libsail_coverage.a -lpthread -ldl
 endif
 
@@ -223,7 +224,7 @@ ocaml_emulator/tracecmp: ocaml_emulator/tracecmp.ml
 
 generated_definitions/c/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
-	$(SAIL) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@) > generated_definitions/c/all_branches
+	$(SAIL) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@)
 
 generated_definitions/c2/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c2
