@@ -34,9 +34,9 @@ $(RV_CONFIG2SAIL):
 # Instruction sources, depending on target
 SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_misa_ext.sail
 SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail
-SAIL_DEFAULT_INST += riscv_softfloat_interface.sail  riscv_insts_fext.sail
+SAIL_DEFAULT_INST += riscv_insts_fext.sail riscv_insts_cfext.sail
 ifeq ($(ARCH),RV64)
-SAIL_DEFAULT_INST +=riscv_insts_dext.sail
+SAIL_DEFAULT_INST += riscv_insts_dext.sail riscv_insts_cdext.sail
 endif
 
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
@@ -51,7 +51,7 @@ SAIL_SYS_SRCS += riscv_next_regs.sail
 SAIL_SYS_SRCS += riscv_sys_exceptions.sail  # default basic helpers for exception handling
 SAIL_SYS_SRCS += riscv_sync_exception.sail  # define the exception structure used in the model
 SAIL_SYS_SRCS += riscv_next_control.sail    # helpers for the 'N' extension
-SAIL_SYS_SRCS += riscv_fdext_regs.sail riscv_fdext_control.sail
+SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdext_control.sail
 SAIL_SYS_SRCS += riscv_csr_ext.sail         # access to CSR extensions
 SAIL_SYS_SRCS += riscv_sys_control.sail     # general exception handling
 
@@ -107,6 +107,7 @@ ifneq ($(SAIL_DIR),)
 # Use sail repo in SAIL_DIR
 SAIL:=$(SAIL_DIR)/sail
 export SAIL_DIR
+EXPLICIT_COQ_SAIL=yes
 else
 # Use sail from opam package
 SAIL_DIR:=$(shell opam config var sail:share)
@@ -118,8 +119,6 @@ SAIL_SRC_DIR:=$(SAIL_DIR)/src
 
 LEM_DIR?=$(shell opam config var lem:share)
 export LEM_DIR
-#Coq BBV library hopefully checked out in directory above us
-BBV_DIR?=../bbv
 
 C_WARNINGS ?=
 #-Wall -Wextra -Wno-unused-label -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-function
@@ -137,7 +136,7 @@ SOFTFLOAT_FLAGS  = -I $(SOFTFLOAT_INCDIR)
 SOFTFLOAT_LIBS   = $(SOFTFLOAT_LIBDIR)/softfloat.a
 SOFTFLOAT_SPECIALIZE_TYPE = RISCV
 
-C_FLAGS = $(C_SYS_INCLUDES) -I $(SAIL_LIB_DIR) -I c_emulator $(SOFTFLOAT_FLAGS)
+C_FLAGS = $(C_SYS_INCLUDES) -I $(SAIL_LIB_DIR) -I c_emulator $(SOFTFLOAT_FLAGS) -fcommon
 C_LIBS  = $(C_SYS_LIBDIRS) -lgmp -lz $(SOFTFLOAT_LIBS)
 
 # The C simulator can be built to be linked against Spike for tandem-verification.
@@ -158,6 +157,13 @@ ifneq (,$(COVERAGE))
 C_FLAGS += --coverage -O1
 else
 C_FLAGS += -O3 -flto
+endif
+
+ifneq (,$(SAILCOV))
+ALL_BRANCHES = generated_definitions/c/all_branches
+C_FLAGS += -DSAILCOV
+SAIL_FLAGS += -c_coverage $(ALL_BRANCHES) -c_include sail_coverage.h
+C_LIBS += $(SAIL_LIB_DIR)/coverage/libsail_coverage.a -lpthread -ldl
 endif
 
 RISCV_EXTRAS_LEM_FILES = riscv_extras.lem mem_metadata.lem riscv_extras_fdext.lem
@@ -234,12 +240,18 @@ generated_definitions/c/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Make
 	mkdir -p generated_definitions/c
 	$(SAIL) $(SAIL_FLAGS) -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@)
 
+generated_definitions/c2/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile
+	mkdir -p generated_definitions/c2
+	$(SAIL) $(SAIL_FLAGS) -no_warn -memo_z3 -config c_emulator/config.json -c2 $(SAIL_SRCS) -o $(basename $@)
+
 $(SOFTFLOAT_LIBS):
 	$(MAKE) SPECIALIZE_TYPE=$(SOFTFLOAT_SPECIALIZE_TYPE) -C $(SOFTFLOAT_LIBDIR)
 
 # convenience target
 .PHONY: csim
 csim: c_emulator/riscv_sim_$(ARCH)
+.PHONY: osim
+osim: ocaml_emulator/riscv_ocaml_sim_$(ARCH)
 .PHONY: rvfi
 rvfi: c_emulator/riscv_rvfi_$(ARCH)
 
@@ -332,7 +344,27 @@ riscv_hol: generated_definitions/hol4/$(ARCH)/riscvScript.sml
 riscv_hol_build: generated_definitions/hol4/$(ARCH)/riscvTheory.uo
 .PHONY: riscv_hol riscv_hol_build
 
-COQ_LIBS = -R $(BBV_DIR)/theories bbv -R $(SAIL_LIB_DIR)/coq Sail -R generated_definitions/coq/$(ARCH) '' -R handwritten_support ''
+ifdef BBV_DIR
+  EXPLICIT_COQ_BBV = yes
+else
+  EXPLICIT_COQ_BBV = $(shell if opam config var coq-bbv:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
+  ifeq ($(EXPLICIT_COQ_BBV),yes)
+    #Coq BBV library hopefully checked out in directory above us
+    BBV_DIR = ../bbv
+  endif
+endif
+
+ifndef EXPLICIT_COQ_SAIL
+  EXPLICIT_COQ_SAIL = $(shell if opam config var coq-sail:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
+endif
+
+COQ_LIBS = -R generated_definitions/coq/$(ARCH) '' -R handwritten_support ''
+ifeq ($(EXPLICIT_COQ_BBV),yes)
+  COQ_LIBS += -Q $(BBV_DIR)/src/bbv bbv
+endif
+ifeq ($(EXPLICIT_COQ_SAIL),yes)
+  COQ_LIBS += -Q $(SAIL_LIB_DIR)/coq Sail
+endif
 
 riscv_coq: $(addprefix generated_definitions/coq/$(ARCH)/,riscv.v riscv_types.v)
 riscv_coq_build: generated_definitions/coq/$(ARCH)/riscv.vo
@@ -346,11 +378,15 @@ $(addprefix generated_definitions/coq/$(ARCH)/,riscv_duopod.v riscv_duopod_types
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq/$(ARCH) -o riscv_duopod -coq_lib riscv_extras -coq_lib mem_metadata $^
 
 %.vo: %.v
-ifeq ($(wildcard $(BBV_DIR)/theories),)
+ifeq ($(EXPLICIT_COQ_BBV),yes)
+  ifeq ($(wildcard $(BBV_DIR)/src),)
 	$(error BBV directory not found. Please set the BBV_DIR environment variable)
+  endif
 endif
-ifeq ($(wildcard $(SAIL_LIB_DIR)/coq),)
+ifeq ($(EXPLICIT_COQ_SAIL),yes)
+  ifeq ($(wildcard $(SAIL_LIB_DIR)/coq),)
 	$(error lib directory of Sail not found. Please set the SAIL_LIB_DIR environment variable)
+  endif
 endif
 	coqc $(COQ_LIBS) $<
 
@@ -359,6 +395,8 @@ generated_definitions/coq/$(ARCH)/riscv_duopod.vo: generated_definitions/coq/$(A
 
 echo_rmem_srcs:
 	echo $(SAIL_RMEM_SRCS)
+
+RMEM_FILES = generated_definitions/for-rmem/riscv.lem generated_definitions/for-rmem/riscv_types.lem generated_definitions/for-rmem/riscv_toFromInterp2.ml generated_definitions/for-rmem/riscv.defs
 
 riscv_rmem: generated_definitions/for-rmem/riscv.lem
 riscv_rmem: generated_definitions/for-rmem/riscv_toFromInterp2.ml
@@ -385,7 +423,7 @@ generated_definitions/for-rmem/riscv.defs: $(SAIL_RMEM_SRCS)
 
 FORCE:
 
-SHARE_FILES:=$(wildcard model/*.sail) $(wildcard c_emulator/*.c) $(wildcard c_emulator/*.h)
+SHARE_FILES:=$(wildcard model/*.sail) $(wildcard c_emulator/*.c) $(wildcard c_emulator/*.h) $(wildcard handwritten_support/*.lem) $(wildcard handwritten_support/hgen/*.hgen) $(wildcard handwritten_support/0.11/*.lem) $(RMEM_FILES)
 sail-riscv.install: FORCE
 	echo 'bin: ["c_emulator/riscv_sim_RV64" "c_emulator/riscv_sim_RV32"]' > sail-riscv.install
 	echo 'share: [ $(foreach f,$(SHARE_FILES),"$f" {"$f"}) ]' >> sail-riscv.install
@@ -393,6 +431,7 @@ sail-riscv.install: FORCE
 opam-build:
 	$(MAKE) ARCH=64 c_emulator/riscv_sim_RV64
 	$(MAKE) ARCH=32 c_emulator/riscv_sim_RV32
+	$(MAKE) riscv_rmem
 
 opam-install:
 	if [ -z "$(INSTALL_DIR)" ]; then echo INSTALL_DIR is unset; false; fi

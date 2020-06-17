@@ -244,7 +244,11 @@ val hex_bits_12 : bits(12) <-> string
 val hex_bits_12_forwards = "decimal_string_of_bits" : bits(12) -> string
 val hex_bits_12_forwards_matches : bits(12) -> bool
 function hex_bits_12_forwards_matches bv = true
-val "hex_bits_12_matches_prefix" : string -> option((bits(12), nat))
+// XXX TODO the following builtin does not exist (at least for C backend) so I have
+// substituted a dummy one that always returns None. This means that assembly_backwards
+// (i.e. string -> ast) might not work but we don't actually use that for anything.
+//val "hex_bits_12_matches_prefix" : string -> option((bits(12), nat))
+function hex_bits_12_matches_prefix (s : string) -> option((bits(12), nat)) = None()
 val hex_bits_12_backwards_matches : string -> bool
 function hex_bits_12_backwards_matches s = match s {
   s if match hex_bits_12_matches_prefix(s) {

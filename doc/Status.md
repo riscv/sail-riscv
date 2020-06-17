@@ -5,6 +5,10 @@ The Sail specification currently captures the following ISA features:
 - The M (multiply/divide), A (atomic), and C (compressed) Standard
   Extensions.
 
+- The F (single-precision) and D (double-precision) Floating-Point
+  Standard Extensions.  This is only executable in the C emulator,
+  which uses the SoftFloat C library.
+
 - The Zicsr Control and Status Register Standard Extension.
 
 - The N Standard Extension for User-Level Interrupts.
@@ -38,14 +42,15 @@ specification.
 
 - The RV128 primary base ISA.
 
-- The F (single-precision) and D (double-precision) Floating-Point
-  Standard Extensions.
-
 - An explicit and complete definition of the HINT instructions.  As
   currently implemented, some of them are implicitly implemented as
   NOPs.
 
 - Specification and implementation of Endianness Control.
+
+- Support for changing XLEN or base ISA control using the {M,S,U}XL
+  fields of `mstatus`.  The model only supports
+  `MXLEN`=`SXLEN`=`ULEN`.
 
 - A complete definition of all hardware performance counters.
   These are used to count platform-specific events, and hence

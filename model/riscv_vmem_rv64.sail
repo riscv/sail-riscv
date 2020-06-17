@@ -7,6 +7,20 @@ register satp : xlenbits
 function legalize_satp(a : Architecture, o : xlenbits, v : xlenbits) -> xlenbits =
   legalize_satp64(a, o, v)
 
+/* Define valid source addresses for translation */
+
+function isValidSv39Addr(vAddr : xlenbits) -> bool = {
+  vAddr[63 .. 39] == (if   vAddr[38] == bitone
+                      then ones()
+                      else zeros())
+}
+
+function isValidSv48Addr(vAddr : xlenbits) -> bool = {
+  vAddr[63 .. 48] == (if   vAddr[47] == bitone
+                      then ones()
+                      else zeros())
+}
+
 /* Compute the address translation mode. */
 
 val translationMode : (Privilege) -> SATPMode effect {rreg, escape}
@@ -35,10 +49,7 @@ function translationMode(priv) = {
 
 val translateAddr : (xlenbits, AccessType(ext_access_type)) -> TR_Result(xlenbits, ExceptionType) effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
 function translateAddr(vAddr, ac) = {
-  let effPriv : Privilege = match ac {
-    Execute() => cur_privilege,
-    _         => effectivePrivilege(mstatus, cur_privilege)
-  };
+  let effPriv : Privilege = effectivePrivilege(ac, mstatus, cur_privilege);
   let mxr    : bool   = mstatus.MXR() == 0b1;
   let do_sum : bool   = mstatus.SUM() == 0b1;
   let mode : SATPMode = translationMode(effPriv);
@@ -51,13 +62,19 @@ function translateAddr(vAddr, ac) = {
 
   match mode {
     Sbare => TR_Address(vAddr, ext_ptw),
-    Sv39  => match translate39(asid, ptb, vAddr[38 .. 0], ac, effPriv, mxr, do_sum, SV39_LEVELS - 1, ext_ptw) {
-               TR_Address(pa, ext_ptw) => TR_Address(EXTZ(pa), ext_ptw),
-               TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
+    Sv39  => { if   isValidSv39Addr(vAddr)
+               then match translate39(asid, ptb, vAddr[38 .. 0], ac, effPriv, mxr, do_sum, SV39_LEVELS - 1, ext_ptw) {
+                      TR_Address(pa, ext_ptw) => TR_Address(EXTZ(pa), ext_ptw),
+                      TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
+                    }
+               else TR_Failure(translationException(ac, PTW_Invalid_Addr()), ext_ptw)
              },
-    Sv48  => match translate48(asid, ptb, vAddr[47 .. 0], ac, effPriv, mxr, do_sum, SV48_LEVELS - 1, ext_ptw) {
-               TR_Address(pa, ext_ptw) => TR_Address(EXTZ(pa), ext_ptw),
-               TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
+    Sv48  => { if   isValidSv48Addr(vAddr)
+               then match translate48(asid, ptb, vAddr[47 .. 0], ac, effPriv, mxr, do_sum, SV48_LEVELS - 1, ext_ptw) {
+                      TR_Address(pa, ext_ptw) => TR_Address(EXTZ(pa), ext_ptw),
+                      TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
+                    }
+               else TR_Failure(translationException(ac, PTW_Invalid_Addr()), ext_ptw)
              },
     _     => internal_error("unsupported address translation scheme")
   }

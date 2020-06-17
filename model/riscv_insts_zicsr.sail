@@ -28,6 +28,8 @@ function readCSR csr : csreg -> xlenbits = {
     (0x304,  _) => mie.bits(),
     (0x305,  _) => get_mtvec(),
     (0x306,  _) => EXTZ(mcounteren.bits()),
+    (0x320,  _) => EXTZ(mcountinhibit.bits()),
+
     (0x340,  _) => mscratch,
     (0x341,  _) => get_xret_target(Machine) & pc_alignment_mask(),
     (0x342,  _) => mcause.bits(),
@@ -110,6 +112,7 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x304,  _) => { mie = legalize_mie(mie, value); Some(mie.bits()) },
     (0x305,  _) => { Some(set_mtvec(value)) },
     (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(EXTZ(mcounteren.bits())) },
+    (0x320,  _) => { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Some(EXTZ(mcountinhibit.bits())) },
     (0x340,  _) => { mscratch = value; Some(mscratch) },
     (0x341,  _) => { Some(set_xret_target(Machine, value)) },
     (0x342,  _) => { mcause->bits() = value; Some(mcause.bits()) },
@@ -117,10 +120,10 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x344,  _) => { mip = legalize_mip(mip, value); Some(mip.bits()) },
 
     // Note: Some(value) returned below is not the legalized value due to locked entries
-    (0x3A0,  _) => { pmpWriteCfgReg(0, value); Some(value) },  // pmpcfg0
-    (0x3A1, 32) => { pmpWriteCfgReg(1, value); Some(value) },  // pmpcfg1
-    (0x3A2,  _) => { pmpWriteCfgReg(2, value); Some(value) },  // pmpcfg2
-    (0x3A3, 32) => { pmpWriteCfgReg(3, value); Some(value) },  // pmpcfg3
+    (0x3A0,  _) => { pmpWriteCfgReg(0, value); Some(pmpReadCfgReg(0)) },  // pmpcfg0
+    (0x3A1, 32) => { pmpWriteCfgReg(1, value); Some(pmpReadCfgReg(1)) },  // pmpcfg1
+    (0x3A2,  _) => { pmpWriteCfgReg(2, value); Some(pmpReadCfgReg(2)) },  // pmpcfg2
+    (0x3A3, 32) => { pmpWriteCfgReg(3, value); Some(pmpReadCfgReg(3)) },  // pmpcfg3
 
     (0x3B0,  _) => { pmpaddr0  = pmpWriteAddr(pmpLocked(pmp0cfg),  pmpTORLocked(pmp1cfg),  pmpaddr0,  value); Some(pmpaddr0) },
     (0x3B1,  _) => { pmpaddr1  = pmpWriteAddr(pmpLocked(pmp1cfg),  pmpTORLocked(pmp2cfg),  pmpaddr1,  value); Some(pmpaddr1) },
@@ -208,6 +211,6 @@ mapping csr_mnemonic : csrop <-> string = {
 }
 
 mapping clause assembly = CSR(csr, rs1, rd, true, op)
-  <-> csr_mnemonic(op) ^ "i" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(rs1) ^ sep() ^ hex_bits_12(csr)
+  <-> csr_mnemonic(op) ^ "i" ^ spc() ^ reg_name(rd)  ^ sep() ^ csr_name_map(csr) ^ sep() ^ hex_bits_5(rs1)
 mapping clause assembly = CSR(csr, rs1, rd, false, op)
-  <-> csr_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_12(csr)
+  <-> csr_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ csr_name_map(csr) ^ sep() ^ reg_name(rs1)

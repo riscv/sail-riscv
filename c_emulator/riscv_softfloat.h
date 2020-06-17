@@ -38,3 +38,10 @@ unit softfloat_ui64tof64(mach_bits rm, mach_bits v);
 
 unit softfloat_f32tof64(mach_bits rm, mach_bits v);
 unit softfloat_f64tof32(mach_bits rm, mach_bits v);
+
+unit softfloat_f32lt(mach_bits v1, mach_bits v2);
+unit softfloat_f32le(mach_bits v1, mach_bits v2);
+unit softfloat_f32eq(mach_bits v1, mach_bits v2);
+unit softfloat_f64lt(mach_bits v1, mach_bits v2);
+unit softfloat_f64le(mach_bits v1, mach_bits v2);
+unit softfloat_f64eq(mach_bits v1, mach_bits v2);

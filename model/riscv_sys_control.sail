@@ -386,6 +386,8 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus->MPIE() = 0b1;
       cur_privilege   = privLevel_of_bits(mstatus.MPP());
       mstatus->MPP()  = privLevel_to_bits(if haveUsrMode() then User else Machine);
+      if   cur_privilege != Machine
+      then mstatus->MPRV() = 0b0;
 
       if   get_config_print_reg()
       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
@@ -400,8 +402,9 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus->SIE()  = mstatus.SPIE();
       mstatus->SPIE() = 0b1;
       cur_privilege   = if mstatus.SPP() == 0b1 then Supervisor else User;
-      /* S-mode implies that U-mode is supported (issue 331 on riscv-isa-manual). */
       mstatus->SPP()  = 0b0;
+      if   cur_privilege != Machine
+      then mstatus->MPRV() = 0b0;
 
       if   get_config_print_reg()
       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
@@ -432,6 +435,13 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
 function handle_mem_exception(addr : xlenbits, e : ExceptionType) -> unit = {
   let t : sync_exception = struct { trap    = e,
                                     excinfo = Some(addr),
+                                    ext     = None() } in
+  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
+}
+
+function handle_exception(e: ExceptionType) -> unit = {
+  let t : sync_exception = struct { trap    = e,
+                                    excinfo = None(),
                                     ext     = None() } in
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }

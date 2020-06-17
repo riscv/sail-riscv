@@ -35,6 +35,12 @@ type bits_LU     = bits(64)   /* Unsigned integer */
 register float_result : bits(64)
 register float_fflags : bits(64)
 
+/* updater to keep the flags in sync with fcsr.fflags */
+val update_softfloat_fflags : bits(5) -> unit effect {wreg}
+function update_softfloat_fflags(flags) = {
+  float_fflags = sail_zero_extend(flags, 64);
+}
+
 /* **************************************************************** */
 /* ADD/SUB/MUL/DIV                                                  */
 
@@ -257,4 +263,48 @@ function riscv_f64ToF32 (rm, v) = {
   (float_fflags[4 .. 0], float_result[31 .. 0])
 }
 
+/* **************************************************************** */
+/* COMPARISONS                                                      */
+
+val     extern_f32Lt = {c: "softfloat_f32lt", ocaml: "Softfloat.f32_lt", lem: "softfloat_f32_lt"} : (bits_S, bits_S) -> unit
+val      riscv_f32Lt : (bits_S, bits_S) -> (bits_fflags, bits_WU) effect {rreg}
+function riscv_f32Lt (v1, v2) = {
+  extern_f32Lt(v1, v2);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
+
+val     extern_f32Le = {c: "softfloat_f32le", ocaml: "Softfloat.f32_le", lem: "softfloat_f32_le"} : (bits_S, bits_S) -> unit
+val      riscv_f32Le : (bits_S, bits_S) -> (bits_fflags, bits_WU) effect {rreg}
+function riscv_f32Le (v1, v2) = {
+  extern_f32Le(v1, v2);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
+
+val     extern_f32Eq = {c: "softfloat_f32eq", ocaml: "Softfloat.f32_eq", lem: "softfloat_f32_eq"} : (bits_S, bits_S) -> unit
+val      riscv_f32Eq : (bits_S, bits_S) -> (bits_fflags, bits_WU) effect {rreg}
+function riscv_f32Eq (v1, v2) = {
+  extern_f32Eq(v1, v2);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
+
+val     extern_f64Lt = {c: "softfloat_f64lt", ocaml: "Softfloat.f64_lt", lem: "softfloat_f64_lt"} : (bits_D, bits_D) -> unit
+val      riscv_f64Lt : (bits_D, bits_D) -> (bits_fflags, bits_LU) effect {rreg}
+function riscv_f64Lt (v1, v2) = {
+  extern_f64Lt(v1, v2);
+  (float_fflags[4 .. 0], float_result)
+}
+
+val     extern_f64Le = {c: "softfloat_f64le", ocaml: "Softfloat.f64_le", lem: "softfloat_f64_le"} : (bits_D, bits_D) -> unit
+val      riscv_f64Le : (bits_D, bits_D) -> (bits_fflags, bits_LU) effect {rreg}
+function riscv_f64Le (v1, v2) = {
+  extern_f64Le(v1, v2);
+  (float_fflags[4 .. 0], float_result)
+}
+
+val     extern_f64Eq = {c: "softfloat_f64eq", ocaml: "Softfloat.f64_eq", lem: "softfloat_f64_eq"} : (bits_D, bits_D) -> unit
+val      riscv_f64Eq : (bits_D, bits_D) -> (bits_fflags, bits_LU) effect {rreg}
+function riscv_f64Eq (v1, v2) = {
+  extern_f64Eq(v1, v2);
+  (float_fflags[4 .. 0], float_result)
+}
 /* **************************************************************** */

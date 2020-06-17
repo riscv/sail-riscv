@@ -273,21 +273,30 @@ bitfield Fcsr : bits(32) = {
 
 register fcsr : Fcsr
 
-val write_fcsr : (bits(3), bits(5)) -> unit effect {rreg, wreg}
-function write_fcsr (frm, fflags) = {
+val ext_write_fcsr : (bits(3), bits(5)) -> unit effect {rreg, wreg}
+function ext_write_fcsr (frm, fflags) = {
   fcsr->FRM()    = frm;      /* Note: frm can be an illegal value, 101, 110, 111 */
   fcsr->FFLAGS() = fflags;
+  update_softfloat_fflags(fflags);
   dirty_fd_context();
 }
 
+/* called for softfloat paths (softfloat flags are consistent) */
 val write_fflags : (bits(5)) -> unit effect {rreg, wreg}
 function write_fflags(fflags) = {
+  if   fcsr.FFLAGS() != fflags
+  then dirty_fd_context();
   fcsr->FFLAGS() = fflags;
-  dirty_fd_context();
 }
 
-val write_frm : (bits(3)) -> unit effect {rreg, wreg}
-function write_frm(frm) = {
-  fcsr->FRM()    = frm;
-  dirty_fd_context();
+/* called for non-softfloat paths (softfloat flags need updating) */
+val accrue_fflags : (bits(5)) -> unit effect {rreg, wreg}
+function accrue_fflags(flags) = {
+  let f = fcsr.FFLAGS() | flags;
+  if  fcsr.FFLAGS() != f
+  then {
+    fcsr->FFLAGS() = f;
+    update_softfloat_fflags(f);
+    dirty_fd_context();
+  }
 }

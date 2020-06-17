@@ -228,8 +228,8 @@ bitfield Mstatus : xlenbits = {
 }
 register mstatus : Mstatus
 
-function effectivePrivilege(m : Mstatus, priv : Privilege) -> Privilege =
-  if   m.MPRV() == 0b1
+function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
+  if   t != Execute() & m.MPRV() == 0b1
   then privLevel_of_bits(mstatus.MPP())
   else cur_privilege
 
@@ -280,10 +280,15 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   let m = set_mstatus_SXL(m, get_mstatus_SXL(o));
   let m = set_mstatus_UXL(m, get_mstatus_UXL(o));
 
-  /* Hardwired to zero in the absence of 'N'. */
+  /* Hardwired to zero in the absence of 'U' or 'N'. */
+  let m = if (~ (haveNExt())) then {
+             let m = update_UPIE(m, 0b0);
+             let m = update_UIE(m, 0b0);
+             m
+          } else m;
+
   if (~ (haveUsrMode())) then {
-    let m = update_UPIE(m, 0b0);
-    let m = update_UIE(m, 0b0);
+    let m = update_MPRV(m, 0b0);
     m
   } else m
 }
@@ -338,7 +343,7 @@ function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   let m = update_SEI(o, v.SEI());
   let m = update_STI(m, v.STI());
   let m = update_SSI(m, v.SSI());
-  if haveUsrMode() then {
+  if haveUsrMode() & haveNExt() then {
     let m = update_UEI(m, v.UEI());
     let m = update_UTI(m, v.UTI());
     let m = update_USI(m, v.USI());
@@ -356,7 +361,7 @@ function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   let m = update_STI(m, v.STI());
   let m = update_SSI(m, v.SSI());
   /* The U-mode bits will be modified if we have the 'N' extension. */
-  if haveUsrMode() then {
+  if haveUsrMode() & haveNExt() then {
     let m = update_UEI(m, v.UEI());
     let m = update_UTI(m, v.UTI());
     let m = update_USI(m, v.USI());
@@ -486,6 +491,19 @@ function legalize_scounteren(c : Counteren, v : xlenbits) -> Counteren = {
   let c = update_IR(c, [l[2]]);
   let c = update_TM(c, [l[1]]);
   let c = update_CY(c, [l[0]]);
+  c
+}
+
+bitfield Counterin : bits(32) = {
+  /* no HPM counters yet */
+  IR : 2,
+  CY : 0
+}
+register mcountinhibit : Counterin
+
+function legalize_mcountinhibit(c : Counterin, v : xlenbits) -> Counterin = {
+  let c = update_IR(c, [v[2]]);
+  let c = update_CY(c, [v[0]]);
   c
 }
 

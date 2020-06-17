@@ -19,8 +19,8 @@ extend](doc/ExtendingGuide.md) the model.
 
 Latex definitions can be generated from the model that are suitable
 for inclusion in reference documentation.  Drafts of the RISC-V
-[unprivileged](https://github.com/rems-project/riscv-isa-manual/blob/sail/release/riscv-spec-sail-draft-alpha2.pdf)
-and [privileged](https://github.com/rems-project/riscv-isa-manual/blob/sail/release/riscv-privileged-sail-draft-alpha2.pdf)
+[unprivileged](https://github.com/rems-project/riscv-isa-manual/blob/sail/release/riscv-spec-sail-draft.pdf)
+and [privileged](https://github.com/rems-project/riscv-isa-manual/blob/sail/release/riscv-privileged-sail-draft.pdf)
 specifications that include the Sail formal definitions are available
 in the sail branch of this [risc-v-isa-manual repository](https://github.com/rems-project/riscv-isa-manual/tree/sail).
 

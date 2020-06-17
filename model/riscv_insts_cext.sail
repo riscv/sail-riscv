@@ -554,5 +554,3 @@ mapping clause assembly = C_ADD(rsd, rs2)
       if rsd != zreg & rs2 != zreg
   <-> "c.add" ^ spc() ^ reg_name(rsd) ^ sep() ^ reg_name(rs2)
       if rsd != zreg & rs2 != zreg
-
-

@@ -1,6 +1,7 @@
 /* Mapping of csr addresses to their names. */
 
 val csr_name_map : csreg <-> string
+
 scattered mapping csr_name_map
 
 /* user trap setup */

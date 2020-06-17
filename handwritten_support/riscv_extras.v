@@ -1,13 +1,8 @@
-Require Import Sail2_instr_kinds.
-Require Import Sail2_values.
-Require Import Sail2_operators_mwords.
-Require Import Sail2_prompt_monad.
-Require Import Sail2_prompt.
+Require Import Sail.Base.
 Require Import String.
 Require Import List.
 Import List.ListNotations.
-
-Axiom real : Type.
+Open Scope Z.
 
 Definition MEM_fence_rw_rw {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_rw_rw tt).
 Definition MEM_fence_r_rw  {rv e} (_:unit) : monad rv unit e := barrier (Barrier_RISCV_r_rw tt).

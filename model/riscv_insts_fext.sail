@@ -144,6 +144,14 @@ function f_is_QNaN_S   x32 = {
    & (mant [22] == bitone))
 }
 
+/* Either QNaN or SNan */
+val      f_is_NaN_S : bits(32) -> bool
+function f_is_NaN_S   x32 = {
+  let (sign, exp, mant) = fsplit_S (x32);
+  (  (exp == ones())
+   & (mant != zeros()))
+}
+
 /* **************************************************************** */
 /* Help functions used in the semantic functions                    */
 
@@ -164,10 +172,9 @@ function feq_quiet_S   (v1,       v2) = {
 
   let result = ((v1 == v2) | (v1Is0 & v2Is0));
 
-  let fflags = if (f_is_SNaN_S(v1) | f_is_SNaN_S(v2)) then
-                 nvFlag()
-               else
-                 zeros();
+  let fflags = if   (f_is_SNaN_S(v1) | f_is_SNaN_S(v2))
+               then nvFlag()
+               else zeros();
 
   (result, fflags)
 }
@@ -177,35 +184,28 @@ function flt_S   (v1,       v2,        is_quiet) = {
   let (s1, e1, m1) = fsplit_S (v1);
   let (s2, e2, m2) = fsplit_S (v2);
 
-  let v1IsNaN  = f_is_QNaN_S(v1) | f_is_SNaN_S(v1);
-  let v2IsNaN  = f_is_QNaN_S(v2) | f_is_SNaN_S(v2);
-
   let result : bool =
     if (s1 == 0b0) & (s2 == 0b0) then
-      if (e1 == e2) then
-        unsigned (m1) < unsigned (m2)
-      else
-        unsigned (e1) < unsigned (e2)
-    else if (s1 == 0b0) & (s2 == 0b1) then
-        false
-    else if (s1 == 0b1) & (s2 == 0b0) then
-        true
+      if   (e1 == e2)
+      then unsigned (m1) < unsigned (m2)
+      else unsigned (e1) < unsigned (e2)
+    else if (s1 == 0b0) & (s2 == 0b1)
+    then false
+    else if (s1 == 0b1) & (s2 == 0b0)
+    then true
     else
-        if (e1 == e2) then
-          unsigned (m1) > unsigned (m2)
-        else
-          unsigned (e1) > unsigned (e2);
+        if   (e1 == e2)
+        then unsigned (m1) > unsigned (m2)
+        else unsigned (e1) > unsigned (e2);
 
   let fflags = if is_quiet then
-                 if (f_is_SNaN_S(v1) | f_is_SNaN_S(v2)) then
-                   nvFlag()
-                 else
-                   zeros()
+                 if   (f_is_SNaN_S(v1) | f_is_SNaN_S(v2))
+                 then nvFlag()
+                 else zeros()
                else
-                 if (v1IsNaN | v2IsNaN) then
-                   nvFlag()
-                 else
-                   zeros();
+                 if   (f_is_NaN_S(v1) | f_is_NaN_S(v2))
+                 then nvFlag()
+                 else zeros();
 
   (result, fflags)
 }
@@ -215,38 +215,31 @@ function fle_S   (v1,       v2,        is_quiet) = {
   let (s1, e1, m1) = fsplit_S (v1);
   let (s2, e2, m2) = fsplit_S (v2);
 
-  let v1IsNaN  = f_is_QNaN_S(v1) | f_is_SNaN_S(v1);
-  let v2IsNaN  = f_is_QNaN_S(v2) | f_is_SNaN_S(v2);
-
   let v1Is0    = f_is_neg_zero_S(v1) | f_is_pos_zero_S(v1);
   let v2Is0    = f_is_neg_zero_S(v2) | f_is_pos_zero_S(v2);
 
   let result : bool =
     if (s1 == 0b0) & (s2 == 0b0) then
-      if (e1 == e2) then
-        unsigned (m1) <=  unsigned (m2)
-      else
-        unsigned (e1)  <  unsigned (e2)
-    else if (s1 == 0b0) & (s2 == 0b1) then
-      (v1Is0 & v2Is0)                         /* Equal in this case (+0=-0) */
-    else if (s1 == 0b1) & (s2 == 0b0) then
-      true
+      if   (e1 == e2)
+      then unsigned (m1) <=  unsigned (m2)
+      else unsigned (e1)  <  unsigned (e2)
+    else if (s1 == 0b0) & (s2 == 0b1)
+    then (v1Is0 & v2Is0)                         /* Equal in this case (+0=-0) */
+    else if (s1 == 0b1) & (s2 == 0b0)
+    then true
     else
-      if (e1 == e2) then
-        unsigned (m1) >=  unsigned (m2)
-      else
-        unsigned (e1)  >  unsigned (e2);
+      if   (e1 == e2)
+      then unsigned (m1) >=  unsigned (m2)
+      else unsigned (e1)  >  unsigned (e2);
 
   let fflags = if is_quiet then
-                 if (f_is_SNaN_S(v1) | f_is_SNaN_S(v2)) then
-                   nvFlag()
-                 else
-                   zeros()
+                 if   (f_is_SNaN_S(v1) | f_is_SNaN_S(v2))
+                 then nvFlag()
+                 else zeros()
                else
-                 if (v1IsNaN | v2IsNaN) then
-                   nvFlag()
-                 else
-                   zeros();
+                 if   (f_is_NaN_S(v1) | f_is_NaN_S(v2))
+                 then nvFlag()
+                 else zeros();
 
   (result, fflags)
 }
@@ -828,8 +821,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)) = {
   let (s1, e1, m1) = fsplit_S (rs1_val_S);
   let (s2, e2, m2) = fsplit_S (rs2_val_S);
   let rd_val_S     = fmake_S (s2, e1, m1);
-  let fflags       = 0b_00000;
-  write_fflags(fflags);
+
   F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
@@ -840,8 +832,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)) = {
   let (s1, e1, m1) = fsplit_S (rs1_val_S);
   let (s2, e2, m2) = fsplit_S (rs2_val_S);
   let rd_val_S     = fmake_S (0b1 ^ s2, e1, m1);
-  let fflags       = 0b_00000;
-  write_fflags(fflags);
+
   F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
@@ -852,8 +843,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)) = {
   let (s1, e1, m1) = fsplit_S (rs1_val_S);
   let (s2, e2, m2) = fsplit_S (rs2_val_S);
   let rd_val_S     = fmake_S (s1 ^ s2, e1, m1);
-  let fflags       = 0b_00000;
-  write_fflags(fflags);
+
   F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
@@ -865,18 +855,15 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)) = {
   let is_quiet  = true;
   let (rs1_lt_rs2, fflags) = fle_S (rs1_val_S, rs2_val_S, is_quiet);
 
-  let rd_val_S  = if      (f_is_SNaN_S(rs1_val_S) & f_is_SNaN_S(rs2_val_S))         then canonical_NaN_S()
-                  else if f_is_SNaN_S(rs1_val_S)                                    then rs2_val_S
-                  else if f_is_SNaN_S(rs2_val_S)                                    then rs1_val_S
-                  else if (f_is_QNaN_S(rs1_val_S) & f_is_QNaN_S(rs2_val_S))         then canonical_NaN_S()
-                  else if f_is_QNaN_S(rs1_val_S)                                    then rs2_val_S
-                  else if f_is_QNaN_S(rs2_val_S)                                    then rs1_val_S
+  let rd_val_S  = if      (f_is_NaN_S(rs1_val_S) & f_is_NaN_S(rs2_val_S))           then canonical_NaN_S()
+                  else if f_is_NaN_S(rs1_val_S)                                     then rs2_val_S
+                  else if f_is_NaN_S(rs2_val_S)                                     then rs1_val_S
                   else if (f_is_neg_zero_S(rs1_val_S) & f_is_pos_zero_S(rs2_val_S)) then rs1_val_S
                   else if (f_is_neg_zero_S(rs2_val_S) & f_is_pos_zero_S(rs1_val_S)) then rs2_val_S
                   else if rs1_lt_rs2                                                then rs1_val_S
                   else /* (not rs1_lt_rs2) */                                            rs2_val_S;
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
@@ -888,18 +875,15 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)) = {
   let is_quiet  = true;
   let (rs2_lt_rs1, fflags) = fle_S (rs2_val_S, rs1_val_S, is_quiet);
 
-  let rd_val_S  = if      (f_is_SNaN_S(rs1_val_S) & f_is_SNaN_S(rs2_val_S))         then canonical_NaN_S()
-                  else if f_is_SNaN_S(rs1_val_S)                                    then rs2_val_S
-                  else if f_is_SNaN_S(rs2_val_S)                                    then rs1_val_S
-                  else if (f_is_QNaN_S(rs1_val_S) & f_is_QNaN_S(rs2_val_S))         then canonical_NaN_S()
-                  else if f_is_QNaN_S(rs1_val_S)                                    then rs2_val_S
-                  else if f_is_QNaN_S(rs2_val_S)                                    then rs1_val_S
+  let rd_val_S  = if      (f_is_NaN_S(rs1_val_S) & f_is_NaN_S(rs2_val_S))           then canonical_NaN_S()
+                  else if f_is_NaN_S(rs1_val_S)                                     then rs2_val_S
+                  else if f_is_NaN_S(rs2_val_S)                                     then rs1_val_S
                   else if (f_is_neg_zero_S(rs1_val_S) & f_is_pos_zero_S(rs2_val_S)) then rs2_val_S
                   else if (f_is_neg_zero_S(rs2_val_S) & f_is_pos_zero_S(rs1_val_S)) then rs1_val_S
                   else if rs2_lt_rs1                                                then rs1_val_S
                   else /* (not rs2_lt_rs1) */                                            rs2_val_S;
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
@@ -908,16 +892,11 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rs2_val_S = nan_unbox (F(rs2));
 
-  let (rs1_eq_rs2, fflags) = feq_quiet_S (rs1_val_S, rs2_val_S);
-
-  let rd_val : xlenbits =
-      if      (f_is_SNaN_S(rs1_val_S) | f_is_SNaN_S(rs2_val_S)) then zeros()
-      else if (f_is_QNaN_S(rs1_val_S) | f_is_QNaN_S(rs2_val_S)) then zeros()
-      else if rs1_eq_rs2                                        then EXTZ(0b1)
-      else                                                           zeros();
+  let (fflags, rd_val) : (bits_fflags, bits_WU) =
+      riscv_f32Eq (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = rd_val;
+  X(rd) = EXTZ(rd_val);
   RETIRE_SUCCESS
 }
 
@@ -925,17 +904,11 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rs2_val_S = nan_unbox (F(rs2));
 
-  let is_quiet  = false;
-  let (rs1_lt_rs2, fflags) = flt_S (rs1_val_S, rs2_val_S, is_quiet);
-
-  let rd_val : xlenbits =
-      if      (f_is_SNaN_S(rs1_val_S) | f_is_SNaN_S(rs2_val_S)) then zeros()
-      else if (f_is_QNaN_S(rs1_val_S) | f_is_QNaN_S(rs2_val_S)) then zeros()
-      else if rs1_lt_rs2                                        then EXTZ(0b1)
-      else                                                           zeros();
+  let (fflags, rd_val) : (bits_fflags, bits_WU) =
+      riscv_f32Lt (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = rd_val;
+  X(rd) = EXTZ(rd_val);
   RETIRE_SUCCESS
 }
 
@@ -943,17 +916,11 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rs2_val_S = nan_unbox (F(rs2));
 
-  let is_quiet  = false;
-  let (rs1_le_rs2, fflags) = fle_S (rs1_val_S, rs2_val_S, is_quiet);
-
-  let rd_val : xlenbits =
-      if      (f_is_SNaN_S(rs1_val_S) | f_is_SNaN_S(rs2_val_S)) then zeros()
-      else if (f_is_QNaN_S(rs1_val_S) | f_is_QNaN_S(rs2_val_S)) then zeros()
-      else if rs1_le_rs2                                        then EXTZ(0b1)
-      else                                                           zeros();
+  let (fflags, rd_val) : (bits_fflags, bits_WU) =
+      riscv_f32Le (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = rd_val;
+  X(rd) = EXTZ(rd_val);
   RETIRE_SUCCESS
 }
 
