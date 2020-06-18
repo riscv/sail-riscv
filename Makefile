@@ -336,7 +336,7 @@ ifndef EXPLICIT_COQ_SAIL
   EXPLICIT_COQ_SAIL = $(shell if opam config var coq-sail:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
 endif
 
-COQ_LIBS = -R generated_definitions/coq/$(ARCH) '' -R handwritten_support ''
+COQ_LIBS = -R generated_definitions/coq/$(ARCH) '' -R generated_definitions/coq '' -R handwritten_support ''
 ifeq ($(EXPLICIT_COQ_BBV),yes)
   COQ_LIBS += -Q $(BBV_DIR)/src/bbv bbv
 endif
@@ -351,9 +351,9 @@ riscv_coq_build: generated_definitions/coq/$(ARCH)/riscv.vo
 $(addprefix generated_definitions/coq/$(ARCH)/,riscv.v riscv_types.v): $(SAIL_COQ_SRCS) Makefile
 	mkdir -p generated_definitions/coq/$(ARCH)
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq/$(ARCH) -o riscv -coq_lib riscv_extras -coq_lib mem_metadata $(SAIL_COQ_SRCS)
-$(addprefix generated_definitions/coq/$(ARCH)/,riscv_duopod.v riscv_duopod_types.v): $(PRELUDE_SRCS) model/riscv_duopod.sail model/riscv_termination_duo.sail
-	mkdir -p generated_definitions/coq/$(ARCH)
-	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq/$(ARCH) -o riscv_duopod -coq_lib riscv_extras -coq_lib mem_metadata $^
+$(addprefix generated_definitions/coq/,riscv_duopod.v riscv_duopod_types.v): $(PRELUDE_SRCS) model/riscv_duopod.sail model/riscv_termination_duo.sail
+	mkdir -p generated_definitions/coq/
+	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq -o riscv_duopod -coq_lib riscv_extras -coq_lib mem_metadata model/riscv_duopod.sail model/riscv_termination_duo.sail
 
 %.vo: %.v
 ifeq ($(EXPLICIT_COQ_BBV),yes)
@@ -369,7 +369,7 @@ endif
 	coqc $(COQ_LIBS) $<
 
 generated_definitions/coq/$(ARCH)/riscv.vo: generated_definitions/coq/$(ARCH)/riscv_types.vo handwritten_support/riscv_extras.vo handwritten_support/mem_metadata.vo
-generated_definitions/coq/$(ARCH)/riscv_duopod.vo: generated_definitions/coq/$(ARCH)/riscv_duopod_types.vo handwritten_support/riscv_extras.vo handwritten_support/mem_metadata.vo
+generated_definitions/coq/riscv_duopod.vo: generated_definitions/coq/riscv_duopod_types.vo handwritten_support/riscv_extras.vo handwritten_support/mem_metadata.vo
 
 echo_rmem_srcs:
 	echo $(SAIL_RMEM_SRCS)
