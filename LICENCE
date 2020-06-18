@@ -4,8 +4,9 @@ This Sail RISC-V architecture model here, comprising all files and
 directories, is subject to the BSD two-clause licence
 below.
 
-Copyright (c) 2017-2019
+Copyright (c) 2017-2020
   Prashanth Mundkur
+  Rishiyur Nikhil
   Jon French
   Brian Campbell
   Robert Norton-Wright

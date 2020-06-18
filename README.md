@@ -68,10 +68,9 @@ Coq, Isabelle and HOL4.
 Building the model
 ------------------
 
-Install Sail [via
-Opam](https://github.com/rems-project/sail/wiki/OPAMInstall), or build Sail
-from source and have `SAIL_DIR` in your environment pointing to its
-top-level directory.
+Install [Sail](https://github.com/rems-project/sail/), either via opam
+or by or building Sail from source and setting `SAIL_DIR` in your
+environment pointing to its top-level directory.
 
 ```
 $ make
