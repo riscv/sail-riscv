@@ -43,7 +43,7 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
           match checkPTEPermission(ac, priv, mxr, do_sum, pattr, ext_pte, ext_ptw) {
             PTE_Check_Failure(ext_ptw) => {
 /*            print("walk48: pte permission check failure"); */
-              PTW_Failure(PTW_No_Permission(), ext_ptw)
+              PTW_Failure(ext_get_ptw_error(ext_ptw), ext_ptw)
             },
 	    PTE_Check_Success(ext_ptw) => {
               if level > 0 then { /* superpage */

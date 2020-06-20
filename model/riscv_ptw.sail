@@ -24,6 +24,9 @@ function ptw_error_to_str(e) =
 
 overload to_str = {ptw_error_to_str}
 
+function ext_get_ptw_error(ext_ptw : ext_ptw) -> PTW_Error =
+  PTW_No_Permission()
+
 /* conversion of these translation/PTW failures into architectural exceptions */
 function translationException(a : AccessType(ext_access_type), f : PTW_Error) -> ExceptionType = {
   let e : ExceptionType =
