@@ -14,7 +14,9 @@
 #include "elf.h"
 #include "sail.h"
 #include "rts.h"
+#ifdef SAILCOV
 #include "sail_coverage.h"
+#endif
 #include "riscv_platform.h"
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
