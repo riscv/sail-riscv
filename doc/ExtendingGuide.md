@@ -102,7 +102,11 @@ utilized for research experimentation.  These bits can be accessed and
 modified using the `ext_pte` argument in functions implementing the
 page-table walk.  The information computed by and used during the
 page-table can also be varied using the `ext_ptw` argument, which can
-be defined and used by extensions as needed.
+be defined and used by extensions as needed.  Extensions can override
+the definitions of `checkPTEPermission` and `ext_get_ptw_error` to
+generate and process this custom information, and
+`ext_translate_exception` to convert any custom errors into
+extension-specific exceptions.
 
 Checking and transforming memory addresses
 ------------------------------------------

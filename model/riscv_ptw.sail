@@ -24,6 +24,10 @@ function ptw_error_to_str(e) =
 
 overload to_str = {ptw_error_to_str}
 
+/* hook for extensions to customize errors reported by page-table
+ * walks during address translation; it typically works in conjunction
+ * with any customization to checkPTEPermission().
+ */
 function ext_get_ptw_error(ext_ptw : ext_ptw) -> PTW_Error =
   PTW_No_Permission()
 
