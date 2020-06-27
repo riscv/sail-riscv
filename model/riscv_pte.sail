@@ -30,11 +30,11 @@ function isInvalidPTE(p : pteAttribs, ext : extPte) -> bool = {
 
 union PTE_Check = {
   PTE_Check_Success : ext_ptw,
-  PTE_Check_Failure : ext_ptw
+  PTE_Check_Failure : (ext_ptw, ext_ptw_fail)
 }
 
 function to_pte_check(b : bool) -> PTE_Check =
-  if b then PTE_Check_Success(()) else PTE_Check_Failure(())
+  if b then PTE_Check_Success(()) else PTE_Check_Failure((), ())
 
 /* For extensions: this function gets the extension-available bits of the PTE in extPte,
  * and the accumulated information of the page-table-walk in ext_ptw.  It should return
