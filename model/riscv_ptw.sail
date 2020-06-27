@@ -28,7 +28,7 @@ overload to_str = {ptw_error_to_str}
  * walks during address translation; it typically works in conjunction
  * with any customization to checkPTEPermission().
  */
-function ext_get_ptw_error(ext_ptw : ext_ptw) -> PTW_Error =
+function ext_get_ptw_error(eptwf : ext_ptw_fail) -> PTW_Error =
   PTW_No_Permission()
 
 /* conversion of these translation/PTW failures into architectural exceptions */
