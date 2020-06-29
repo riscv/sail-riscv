@@ -35,15 +35,15 @@ function ext_get_ptw_error(ext_ptw : ext_ptw) -> PTW_Error =
 function translationException(a : AccessType(ext_access_type), f : PTW_Error) -> ExceptionType = {
   let e : ExceptionType =
   match (a, f) {
-    (_, PTW_Ext_Error(e))           => E_Extension(ext_translate_exception(e)),
-    (ReadWrite(Data), PTW_Access()) => E_SAMO_Access_Fault(),
-    (ReadWrite(Data), _)            => E_SAMO_Page_Fault(),
-    (Read(Data), PTW_Access())      => E_Load_Access_Fault(),
-    (Read(Data), _)                 => E_Load_Page_Fault(),
-    (Write(Data), PTW_Access())     => E_SAMO_Access_Fault(),
-    (Write(Data), _)                => E_SAMO_Page_Fault(),
-    (Execute(), PTW_Access())       => E_Fetch_Access_Fault(),
-    (Execute(), _)                  => E_Fetch_Page_Fault()
+    (_, PTW_Ext_Error(e))        => E_Extension(ext_translate_exception(e)),
+    (ReadWrite(_), PTW_Access()) => E_SAMO_Access_Fault(),
+    (ReadWrite(_), _)            => E_SAMO_Page_Fault(),
+    (Read(_), PTW_Access())      => E_Load_Access_Fault(),
+    (Read(_), _)                 => E_Load_Page_Fault(),
+    (Write(_), PTW_Access())     => E_SAMO_Access_Fault(),
+    (Write(_), _)                => E_SAMO_Page_Fault(),
+    (Execute(), PTW_Access())    => E_Fetch_Access_Fault(),
+    (Execute(), _)               => E_Fetch_Page_Fault()
   } in {
 /*  print_mem("translationException(" ^ a ^ ", " ^ f ^ ") -> " ^ e); */
     e
