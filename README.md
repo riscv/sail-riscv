@@ -1,12 +1,10 @@
 RISCV Sail Model
 ================
 
-This repository contains a model of the RISCV architecture written in
-[Sail](https://www.cl.cam.ac.uk/~pes20/sail/). It used to be contained
-in the [Sail repository](https://github.com/rems-project/sail).
+This repository contains a formal specification of the RISC-V architecture, written in
+[Sail](https://www.cl.cam.ac.uk/~pes20/sail/) ([repo](https://github.com/rems-project/sail)).   It has been adopted by the RISC-V Foundation.
 
-It currently defines enough of RV32IMAC and RV64IMAC to boot a
-conventional OS with a terminal output device.  The model specifies
+The model specifies
 assembly language formats of the instructions, the corresponding
 encoders and decoders, and the instruction semantics.
 The current status of its
@@ -26,6 +24,40 @@ in the sail branch of this [risc-v-isa-manual repository](https://github.com/rem
 
 This is one of [several formal models](https://github.com/riscv/ISA_Formal_Spec_Public_Review/blob/master/comparison_table.md) compared within the 
 [RISC-V ISA Formal Spec Public Review](https://github.com/riscv/ISA_Formal_Spec_Public_Review).
+
+
+Sail
+----
+
+[Sail](https://www.cl.cam.ac.uk/~pes20/sail/) ([repo](https://github.com/rems-project/sail)) is a language for describing the instruction-set architecture
+(ISA) semantics of processors. Sail aims to provide a
+engineer-friendly, vendor-pseudocode-like language for describing
+instruction semantics. It is essentially a first-order imperative
+language, but with lightweight dependent typing for numeric types and
+bitvector lengths, which are automatically checked using Z3. 
+<p>
+
+Given a Sail definition, the tool will type-check it and generate
+LaTeX snippets to use in documentation, executable emulators (in C and OCaml), theorem-prover definitions for
+Isabelle, HOL4, and Coq, and definitions to integrate with our 
+<a href="http://www.cl.cam.ac.uk/users/pes20/rmem">RMEM</a>
+and
+<a href="isla-axiomatic.cl.cam.ac.uk/">isla-axiomatic</a> tools for
+concurrency semantics.  
+<p>
+
+  <img width="850" src="https://www.cl.cam.ac.uk/~pes20/sail/overview-sail.png">
+<p>
+
+Sail is being used for multiple ISA descriptions, including
+essentially complete versions of the sequential behaviour of ARMv8-A
+(automatically derived from the authoritative ARM-internal
+specification, and released under a BSD Clear licence with ARM's
+permission), RISC-V, MIPS, CHERI-RISC-V, and CHERI-MIPS; all these are complete
+enough to boot various operating systems.  There are also Sail models
+for smaller fragments of IBM POWER and x86.
+
+
 
 
 Directory Structure
@@ -52,15 +84,111 @@ sail-riscv
 - os-boot                 // information and sample files for booting OS images
 ```
 
-Simulators
+Sequential execution
 ----------
+
+The model builds OCaml and C emulators that can execute RISC-V ELF
+files, and both emulators provide platform support sufficient to boot
+Linux, FreeBSD and seL4.  The OCaml emulator can generate its own
+platform device-tree description, while the C emulator currently
+requires a consistent description to be manually provided.  The C
+emulator can be linked against the Spike emulator for execution with
+per-instruction tandem-verification.
+
+The C emulator, for the Linux boot, currently runs at approximately
+300 KIPS on an Intel i7-7700 (when detailed per-instruction tracing
+is disabled), and there are many opportunities for future optimisation
+(our Sail MIPS model runs at approximately 1 MIPS). This enables us to
+boot Linux in about 4 minutes, and FreeBSD in about 2 minutes. Memory
+usage for the C emulator when booting Linux is approximately 140MB.
 
 The files in the OCaml and C emulator directories implement ELF loading and the
 platform devices, define the physical memory map, and use command-line
 options to select implementation-specific ISA choices.
 
+
+Use for specification coverage measurement in testing
+-----------------------------------------------------
+
+The Sail-generated C emulator can measure specification branch
+coverage of any executed tests, displaying the results as per-file
+tables and as html-annotated versions of the model source.
+
+
+Use as test oracle in tandem verification
+-----------------------------------------
+
+For tandem verification of random instruction streams we support the
+protocols used in [TestRIG](https://github.com/CTSRD-CHERI/TestRIG) to
+directly inject instructions into the C emulator and produce trace
+information in RVFI format.  This has been used for cross testing
+against spike and the [RVBS](https://github.com/CTSRD-CHERI/RVBS)
+specification written in Bluespec SystemVerilog.
+
+The C emulator can also be directly linked to Spike, which provides
+tandem-verification on ELF binaries (including OS boots).  This is
+often useful in debugging OS boot issues in the model when the boot is
+known working on Spike.  It is also useful to detect platform-specific
+implementation choices in Spike that are not mandated by the ISA
+specification.
+
+
+Use in test generation
+----------------------
+
+Our OCaml backend can produce QuickCheck-style random generators for
+types in Sail specifications, which we have used to produce random
+instructions sequences for testing.  The generation of individual
+types can be overridden by the developer to, for example, remove
+implementation-specific instructions or introduce register biasing.
+
+
+Concurrent execution
+--------------------
+
+The ISA model is integrated with the operational model of the RISC-V
+relaxed memory model, RVWMO (as described in an appendix of the [RISC-V
+user-level specification](https://github.com/riscv/riscv-isa-manual/releases/tag/draft-20181227-c6741cb)), which is one of the reference models used
+in the development of the RISC-V concurrency architecture; this is
+part of our [RMEM](http://www.cl.cam.ac.uk/users/pes20/rmem) tool.
+It is also integrated with the RISC-V axiomatic concurrency model
+ as part of our [isla-axiomatic](https://isla-axiomatic.cl.cam.ac.uk/) tool.
+
+Concurrent testing
+------------------
+
+As part of our concurrency architecture work, we have produced and
+released a library of approximately 7000 [litmus
+tests](https://github.com/litmus-tests/litmus-tests-riscv).  The
+operational and axiomatic RISC-V concurrency models are in sync for
+these tests, and they moreover agree with the corresponding ARM
+architected behaviour for the tests in common.
+
+We have also run these tests on RISC-V hardware, on a SiFive RISC-V
+FU540 multicore proto board (Freedom Unleashed), kindly on loan from
+Imperas. To date, we see only sequentially consistent behaviour there.
+
+
 Provers
 -------
+
+With Sail we aim to support the generation of idiomatic theorem prover
+definitions across multiple tools. At present we support Isabelle,
+HOL4 and Coq, and provide snapshots of the generated theorem prover
+definitions.
+
+Our theorem-prover translation can target multiple monads for
+different purposes. The first is a state monad with nondeterminism and
+exceptions, suitable for reasoning in a sequential setting, assuming
+that effectful expressions are executed without interruptions and with
+exclusive access to the state.
+
+For reasoning about concurrency, where instructions execute
+out-of-order, speculatively, and non-atomically, we provide a free
+monad over an effect datatype of memory actions. This monad is also
+used as part of our aforementioned concurrency support via the RMEM
+tool.
+
 
 The files under `handwritten_support` provide library definitions for
 Coq, Isabelle and HOL4.
@@ -69,7 +197,7 @@ Building the model
 ------------------
 
 Install [Sail](https://github.com/rems-project/sail/), either via opam
-or by or building Sail from source and setting `SAIL_DIR` in your
+or by building Sail from source and setting `SAIL_DIR` in your
 environment pointing to its top-level directory.
 
 ```
@@ -145,6 +273,98 @@ Booting OS images
 
 For booting operating system images, see the information under the
 [os-boot/](os-boot/) subdirectory.
+
+
+Example instructions
+--------------------
+
+These are verbatim excerpts from the main model file, [riscv.sail](https://github.com/rems-project/sail-riscv/blob/master/model/riscv.sail), with a few comments added.
+
+### ITYPE (or ADDI)
+~~~~~
+/* the assembly abstract syntax tree (AST) clause for the ITYPE instructions */
+
+union clause ast = ITYPE : (bits(12), regbits, regbits, iop)
+
+/* the encode/decode mapping between AST elements and 32-bit words */
+
+mapping encdec_iop : iop <-> bits(3) = {
+  RISCV_ADDI  <-> 0b000,
+  RISCV_SLTI  <-> 0b010,
+  RISCV_SLTIU <-> 0b011,
+  RISCV_ANDI  <-> 0b111,
+  RISCV_ORI   <-> 0b110,
+  RISCV_XORI  <-> 0b100
+}
+
+mapping clause encdec = ITYPE(imm, rs1, rd, op) <-> imm @ rs1 @ encdec_iop(op) @ rd @ 0b0010011
+
+/* the execution semantics for the ITYPE instructions */
+
+function clause execute (ITYPE (imm, rs1, rd, op)) = {
+  let rs1_val = X(rs1);
+  let immext : xlenbits = EXTS(imm);
+  let result : xlenbits = match op {
+    RISCV_ADDI  => rs1_val + immext,
+    RISCV_SLTI  => EXTZ(rs1_val <_s immext),
+    RISCV_SLTIU => EXTZ(rs1_val <_u immext),
+    RISCV_ANDI  => rs1_val & immext,
+    RISCV_ORI   => rs1_val | immext,
+    RISCV_XORI  => rs1_val ^ immext
+  };
+  X(rd) = result;
+  true
+}
+
+/* the assembly/disassembly mapping between AST elements and strings */
+
+mapping itype_mnemonic : iop <-> string = {
+  RISCV_ADDI  <-> "addi",
+  RISCV_SLTI  <-> "slti",
+  RISCV_SLTIU <-> "sltiu",
+  RISCV_XORI  <-> "xori",
+  RISCV_ORI   <-> "ori",
+  RISCV_ANDI  <-> "andi"
+}
+
+mapping clause assembly = ITYPE(imm, rs1, rd, op)
+                      <-> itype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_12(imm)
+~~~~~~
+
+### SRET 
+
+~~~~~
+union clause ast = SRET : unit
+
+mapping clause encdec = SRET() <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
+
+function clause execute SRET() = {
+  match cur_privilege {
+    User       => handle_illegal(),
+    Supervisor => if   mstatus.TSR() == true
+                  then handle_illegal()
+                  else nextPC = handle_exception(cur_privilege, CTL_SRET(), PC),
+    Machine    => nextPC = handle_exception(cur_privilege, CTL_SRET(), PC)
+  };
+  false
+}
+
+mapping clause assembly = SRET() <-> "sret"
+~~~~~
+
+
+Authors
+-------
+
+ Prashanth Mundkur, SRI International;
+ Rishiyur Nikhil (Bluespec Inc.); 
+ Jon French, University of Cambridge;
+ Brian Campbell, University of Edinburgh;
+ Robert Norton, University of Cambridge;
+ Alasdair Armstrong, University of Cambridge;
+ Thomas Bauereiss, University of Cambridge;
+ Shaked Flur, University of Cambridge;
+ Peter Sewell, University of Cambridge
 
 
 Funding
