@@ -195,7 +195,7 @@ part of our [RMEM](http://www.cl.cam.ac.uk/users/pes20/rmem) tool.
 It is also integrated with the RISC-V axiomatic concurrency model
  as part of our [isla-axiomatic](https://isla-axiomatic.cl.cam.ac.uk/) tool.
 
-## Concurrent testing
+### Concurrent testing
 
 
 As part of our concurrency architecture work, we have produced and
@@ -352,6 +352,12 @@ For booting operating system images, see the information under the
 [os-boot/](os-boot/) subdirectory.
 
 
+Licence
+-------
+
+The model is made available under the BSD two-clause licence in LICENCE.
+
+
 Authors
 -------
 
@@ -363,20 +369,24 @@ Authors
  Alasdair Armstrong, University of Cambridge;
  Thomas Bauereiss, University of Cambridge;
  Shaked Flur, University of Cambridge;
+ Christopher Pulte, University of Cambridge
  Peter Sewell, University of Cambridge
 
 
 Funding
 -------
 
+This software was developed by the above within the Rigorous
+Engineering of Mainstream Systems (REMS) project, partly funded by
+EPSRC grant EP/K008528/1, at the Universities of Cambridge and
+Edinburgh.
+
 This software was developed by SRI International and the University of
 Cambridge Computer Laboratory (Department of Computer Science and
 Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and
 under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA
 SSITH research programme.
-This software was developed within the Rigorous
-Engineering of Mainstream Systems (REMS) project, partly funded by
-EPSRC grant EP/K008528/1, at the Universities of Cambridge and
-Edinburgh.
+
 This project has received funding from the European Research Council
-(ERC) under the European Union’s Horizon 2020 research and innovation programme (grant agreement No 789108).
+(ERC) under the European Union’s Horizon 2020 research and innovation
+programme (grant agreement No 789108).
