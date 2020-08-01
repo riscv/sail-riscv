@@ -22,7 +22,7 @@ and [privileged](https://github.com/rems-project/riscv-isa-manual/blob/sail/rele
 specifications that include the Sail formal definitions are available
 in the sail branch of this [risc-v-isa-manual repository](https://github.com/rems-project/riscv-isa-manual/tree/sail).
 
-This is one of [several formal models](https://github.com/riscv/ISA_Formal_Spec_Public_Review/blob/master/comparison_table.md) compared within the 
+This is one of [several formal models](https://github.com/riscv/ISA_Formal_Spec_Public_Review/blob/master/comparison_table.md) that were compared within the 
 [RISC-V ISA Formal Spec Public Review](https://github.com/riscv/ISA_Formal_Spec_Public_Review).
 
 
@@ -278,7 +278,7 @@ Getting started
 
 Install [Sail](https://github.com/rems-project/sail/), either via opam
 or by building Sail from source and setting `SAIL_DIR` in your
-environment pointing to its top-level directory.
+environment pointing to its top-level directory.  Then:
 
 ```
 $ make
@@ -347,6 +347,9 @@ whether page-table walks update PTE bits (`--enable-dirty-update` for C
 and `-enable-dirty-update` for OCaml).
 
 ### Booting OS images
+
+For booting operating system images, see the information under the
+[os-boot/](os-boot/) subdirectory.
 
 
 Authors
