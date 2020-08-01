@@ -46,7 +46,7 @@ and
 concurrency semantics.  
 <p>
 
-  <img width="850" src="https://www.cl.cam.ac.uk/~pes20/sail/overview-sail.png">
+  <img width="850" src="https://www.cl.cam.ac.uk/~pes20/sail/overview-sail.png?">
 <p>
 
 Sail is being used for multiple ISA descriptions, including
