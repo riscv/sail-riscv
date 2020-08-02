@@ -62,7 +62,7 @@ for smaller fragments of IBM POWER and x86.
 Example instruction specifications
 ----------------------------------
 
-These are verbatim excerpts from the main model file, [riscv.sail](https://github.com/rems-project/sail-riscv/blob/master/model/riscv.sail), with a few comments added.
+These are verbatim excerpts from the model file containing the base instructions, [riscv_insts_base.sail](https://github.com/rems-project/sail-riscv/blob/master/model/riscv_insts_base.sail), with a few comments added.
 
 ### ITYPE (or ADDI)
 ~~~~~
