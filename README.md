@@ -346,6 +346,10 @@ Some useful options are: configuring whether misaligned accesses trap
 whether page-table walks update PTE bits (`--enable-dirty-update` for C
 and `-enable-dirty-update` for OCaml).
 
+### Experimental integration with riscv-config
+
+There is also (as yet unmerged) support for [integration with riscv-config](https://github.com/rems-project/sail-riscv/pull/43) to allow configuring the compiled model according to a riscv-config yaml specification.
+
 ### Booting OS images
 
 For booting operating system images, see the information under the
