@@ -16,11 +16,11 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     /* machine mode: trap setup */
     0x300 => p == Machine, // mstatus
     0x301 => p == Machine, // misa
-    0x302 => p == Machine, // medeleg
-    0x303 => p == Machine, // mideleg
+    0x302 => p == Machine & (haveSupMode() | haveNExt()), // medeleg
+    0x303 => p == Machine & (haveSupMode() | haveNExt()), // mideleg
     0x304 => p == Machine, // mie
     0x305 => p == Machine, // mtvec
-    0x306 => p == Machine, // mcounteren
+    0x306 => p == Machine & haveUsrMode(), // mcounteren
     /* machine mode: trap handling */
     0x340 => p == Machine, // mscratch
     0x341 => p == Machine, // mepc
@@ -62,8 +62,8 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
 
     /* supervisor mode: trap setup */
     0x100 => haveSupMode() & (p == Machine | p == Supervisor), // sstatus
-    0x102 => haveSupMode() & (p == Machine | p == Supervisor), // sedeleg
-    0x103 => haveSupMode() & (p == Machine | p == Supervisor), // sideleg
+    0x102 => haveSupMode() & haveNExt() & (p == Machine | p == Supervisor), // sedeleg
+    0x103 => haveSupMode() & haveNExt() & (p == Machine | p == Supervisor), // sideleg
     0x104 => haveSupMode() & (p == Machine | p == Supervisor), // sie
     0x105 => haveSupMode() & (p == Machine | p == Supervisor), // stvec
     0x106 => haveSupMode() & (p == Machine | p == Supervisor), // scounteren
@@ -79,13 +79,13 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x180 => haveSupMode() & (p == Machine | p == Supervisor), // satp
 
     /* user mode: counters */
-    0xC00 => p == User,    // cycle
-    0xC01 => p == User,    // time
-    0xC02 => p == User,    // instret
+    0xC00 => haveUsrMode(),    // cycle
+    0xC01 => haveUsrMode(),    // time
+    0xC02 => haveUsrMode(),    // instret
 
-    0xC80 => p == User & (sizeof(xlen) == 32),     // cycleh
-    0xC81 => p == User & (sizeof(xlen) == 32),     // timeh
-    0xC82 => p == User & (sizeof(xlen) == 32),     // instreth
+    0xC80 => haveUsrMode() & (sizeof(xlen) == 32),     // cycleh
+    0xC81 => haveUsrMode() & (sizeof(xlen) == 32),     // timeh
+    0xC82 => haveUsrMode() & (sizeof(xlen) == 32),     // instreth
 
     /* check extensions */
     _     => ext_is_CSR_defined(csr, p)
