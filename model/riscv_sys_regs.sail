@@ -436,7 +436,8 @@ register minstret_written : bool
 function retire_instruction() -> unit = {
   if   minstret_written == true
   then minstret_written = false
-  else minstret = minstret + 1
+  else if mcountinhibit.IR() == 0b0
+       then minstret = minstret + 1
 }
 
 /* informational registers */
