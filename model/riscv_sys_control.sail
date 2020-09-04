@@ -21,6 +21,7 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x304 => p == Machine, // mie
     0x305 => p == Machine, // mtvec
     0x306 => p == Machine & haveUsrMode(), // mcounteren
+    0x310 => p == Machine & (sizeof(xlen) == 32), // mstatush
     0x320 => p == Machine, // mcountinhibit
     /* machine mode: trap handling */
     0x340 => p == Machine, // mscratch
@@ -476,6 +477,12 @@ function init_sys() -> unit = {
   mstatus = set_mstatus_SXL(mstatus, misa.MXL());
   mstatus = set_mstatus_UXL(mstatus, misa.MXL());
   mstatus->SD()   = 0b0;
+
+  /* set to little-endian mode */
+  if sizeof(xlen) == 64 then {
+    mstatus = Mk_Mstatus([mstatus.bits() with 37 .. 36 = 0b00])
+  };
+  mstatush->bits() = EXTZ(0b0);
 
   mip->bits()     = EXTZ(0b0);
   mie->bits()     = EXTZ(0b0);
