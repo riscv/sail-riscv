@@ -110,8 +110,20 @@ function haveUsrMode() -> bool = misa.U() == 0b1
 function haveNExt()    -> bool = misa.N() == 0b1
 /* see below for F and D extension tests */
 
+bitfield Mstatush : bits(32) = {
+  MBE  : 5,
+  SBE  : 4
+}
+register mstatush : Mstatush
+
 bitfield Mstatus : xlenbits = {
   SD   : xlen - 1,
+
+  // The MBE and SBE fields are in mstatus in RV64 and absent in RV32.
+  // On RV32, they are in mstatush, which doesn't exist in RV64.  For now,
+  // they are handled in an ad-hoc way.
+  // MBE  : 37
+  // SBE  : 36
 
   // The SXL and UXL fields don't exist on RV32, so they are modelled
   // via explicit getters and setters; see below.
@@ -192,6 +204,11 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   /* We don't support dynamic changes to SXL and UXL. */
   let m = set_mstatus_SXL(m, get_mstatus_SXL(o));
   let m = set_mstatus_UXL(m, get_mstatus_UXL(o));
+
+  /* We don't currently support changing MBE and SBE. */
+  let m = if sizeof(xlen) == 64 then {
+             Mk_Mstatus([m.bits() with 37 .. 36 = 0b00])
+          } else m;
 
   /* Hardwired to zero in the absence of 'U' or 'N'. */
   let m = if (~ (haveNExt())) then {
