@@ -42,10 +42,6 @@ specification.
 
 - The RV128 primary base ISA.
 
-- An explicit and complete definition of the HINT instructions.  As
-  currently implemented, some of them are implicitly implemented as
-  NOPs.
-
 - Specification and implementation of Endianness Control.
 
 - Support for changing XLEN or base ISA control using the {M,S,U}XL
