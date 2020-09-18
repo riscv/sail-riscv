@@ -579,7 +579,8 @@ function clause execute (FENCE(pred, succ)) = {
     (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_r_w()),
     (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_w_r()),
 
-    (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
+    (_ : bits(4)       , _ : bits(2) @ 0b00) => (),
+    (_ : bits(2) @ 0b00, _ : bits(4)       ) => (),
 
     _ => { print("FIXME: unsupported fence");
            () }
@@ -601,7 +602,8 @@ function clause execute (FENCE(pred, succ)) = {
     (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_r_w),
     (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_w_r),
 
-    (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
+    (_ : bits(4)       , _ : bits(2) @ 0b00) => (),
+    (_ : bits(2) @ 0b00, _ : bits(4)       ) => (),
 
     _ => { print("FIXME: unsupported fence");
            () }
