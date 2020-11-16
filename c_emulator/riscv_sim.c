@@ -193,7 +193,7 @@ static void read_dtb(const char *path)
   munmap(m, st.st_size);
   close(fd);
 
-  fprintf(stdout, "Read %" PRIi64 " bytes of DTB from %s.\n", dtb_len, path);
+  fprintf(stdout, "Read %zd bytes of DTB from %s.\n", dtb_len, path);
 }
 
 char *process_args(int argc, char **argv)
@@ -671,10 +671,12 @@ void flush_logs(void)
 }
 
 #ifdef RVFI_DII
-void rvfi_send_trace(void) {
+
+typedef void (packet_reader_fn)(sail_bits *rop, unit);
+static void get_and_send_rvfi_packet_maxlen(packet_reader_fn *reader, size_t maxbytes) {
   sail_bits packet;
   CREATE(lbits)(&packet);
-  zrvfi_get_exec_packet(&packet, UNIT);
+  reader(&packet, UNIT);
   if (packet.len % 8 != 0) {
     fprintf(stderr, "RVFI-DII trace packet not byte aligned: %d\n", (int)packet.len);
     exit(1);
@@ -683,11 +685,28 @@ void rvfi_send_trace(void) {
   /* mpz_export might not write all of the null bytes */
   memset(bytes, 0, sizeof(bytes));
   mpz_export(bytes, NULL, -1, 1, 0, 0, *(packet.bits));
-  if (write(rvfi_dii_sock, bytes, packet.len / 8) == -1) {
-    fprintf(stderr, "Writing RVFI DII trace failed: %s", strerror(errno));
+  size_t send_size = maxbytes < packet.len / 8 ? maxbytes : packet.len / 8;
+  if (write(rvfi_dii_sock, bytes, send_size) == -1) {
+    fprintf(stderr, "Writing RVFI DII trace failed: %s\n", strerror(errno));
     exit(1);
   }
   KILL(lbits)(&packet);
+}
+
+static void get_and_send_rvfi_packet(packet_reader_fn *reader) {
+  get_and_send_rvfi_packet_maxlen(reader, SIZE_MAX);
+}
+
+void rvfi_send_trace(unsigned version) {
+  if (version == 1) {
+    get_and_send_rvfi_packet(zrvfi_get_exec_packet_v1);
+  } else if (version == 2) {
+    mach_bits trace_size = zrvfi_get_v2_trace_sizze(UNIT);
+    get_and_send_rvfi_packet_maxlen(zrvfi_get_exec_packet_v2, trace_size);
+  } else {
+    fprintf(stderr, "Sending v%d packets not implemented yet!\n", version);
+    abort();
+  }
 }
 #endif
 
@@ -712,6 +731,7 @@ void run_sail(void)
 
   while (!zhtif_done && (insn_limit == 0 || total_insns < insn_limit)) {
 #ifdef RVFI_DII
+    unsigned trace_version = 1;
     if (rvfi_dii) {
       mach_bits instr_bits;
       int res = read(rvfi_dii_sock, &instr_bits, sizeof(instr_bits));
@@ -731,12 +751,37 @@ void run_sail(void)
       zrvfi_zzero_exec_packet(UNIT);
       mach_bits cmd = zrvfi_get_cmd(UNIT);
       switch (cmd) {
-      case 0: /* EndOfTrace */
-        zrvfi_halt_exec_packet(UNIT);
-        rvfi_send_trace();
-        return;
+      case 0: { /* EndOfTrace */
+        mach_bits insn = zrvfi_get_insn(UNIT);
+        if (insn == (('V' << 24) | ('E' << 16) | ('R' << 8) | 'S')) {
+          /*
+           * Reset with insn set to 'VERS' is a version negotiation request
+           * and not a actual reset request. Respond with a message say that
+           * we support version 2.
+           */
+          get_and_send_rvfi_packet(&zrvfi_get_v2_support_packet);
+          continue;
+        } else {
+          zrvfi_halt_exec_packet(UNIT);
+          rvfi_send_trace(trace_version);
+          return;
+        }
+      }
       case 1: /* Instruction */
         break;
+      case 'v': { /* Set wire format version */
+        mach_bits insn = zrvfi_get_insn(UNIT);
+        if (insn == 1) {
+          fprintf(stderr, "Requested trace in legacy format!\n");
+        } else if (insn == 2) {
+          fprintf(stderr, "Requested trace in legacy format!\n");
+        } else {
+          fprintf(stderr, "Requested trace in unsupported format %d!\n", (int)insn);
+          exit(1);
+        }
+        trace_version = insn; // From now on send traces in the requested format
+        continue;
+      }
       default:
         fprintf(stderr, "Unknown RVFI-DII command: %d\n", (int)cmd);
         exit(1);
@@ -748,7 +793,7 @@ void run_sail(void)
       if (have_exception) goto step_exception;
       flush_logs();
       KILL(sail_int)(&sail_step);
-      rvfi_send_trace();
+      rvfi_send_trace(trace_version);
     } else /* if (!rvfi_dii) */
 #endif
     { /* run a Sail step */

@@ -75,13 +75,16 @@ function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_
 $ifdef RVFI_DII
 val rvfi_read : forall 'n, 'n > 0. (xlenbits, atom('n), MemoryOpResult(bits(8 * 'n))) -> unit effect {wreg}
 function rvfi_read (addr, width, result) = {
-  rvfi_exec->rvfi_mem_addr() = EXTZ(addr);
+  rvfi_mem_data->rvfi_mem_addr() = EXTZ(addr);
+  rvfi_mem_data_present = true;
   match result {
+    /* TODO: report tag bit for capability writes and extend mask by one bit. */
     MemValue(v) => if   width <= 8
-                   then { rvfi_exec->rvfi_mem_rdata() = sail_zero_extend(v,64);
-                          rvfi_exec->rvfi_mem_rmask() = rvfi_encode_width_mask(width) }
-                   else { rvfi_exec->rvfi_mem_rdata() = v[63..0];
-                          rvfi_exec->rvfi_mem_rmask() = 0xFF},
+                   then { rvfi_mem_data->rvfi_mem_rdata() = sail_zero_extend(v,64);
+                          rvfi_mem_data->rvfi_mem_rmask() = rvfi_encode_width_mask(width) }
+                   else { rvfi_mem_data->rvfi_mem_rdata() = v[63..0]; /* report low bits only */
+                          assert(width == 16, "Should only be used for capabilities");
+                          rvfi_mem_data->rvfi_mem_rmask() = rvfi_encode_width_mask(16)},
     MemException(_) => ()
   };
 }
@@ -135,13 +138,16 @@ function mem_write_ea (addr, width, aq, rl, con) = {
 $ifdef RVFI_DII
 val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n)) -> unit effect {wreg}
 function rvfi_write (addr, width, value) = {
-  rvfi_exec->rvfi_mem_addr() = EXTZ(addr);
+  rvfi_mem_data->rvfi_mem_addr() = EXTZ(addr);
+  rvfi_mem_data_present = true;
   if width <= 8 then {
-    rvfi_exec->rvfi_mem_wdata() = sail_zero_extend(value,64);
-    rvfi_exec->rvfi_mem_wmask() = rvfi_encode_width_mask(width);
+    rvfi_mem_data->rvfi_mem_wdata() = sail_zero_extend(value,64);
+    rvfi_mem_data->rvfi_mem_wmask() = rvfi_encode_width_mask(width);
   } else {
-    rvfi_exec->rvfi_mem_wdata() = value[63..0];
-    rvfi_exec->rvfi_mem_wmask() = 0xFF;
+    /* TODO: report tag bit for capability writes and extend mask by one bit. */
+    rvfi_mem_data->rvfi_mem_wdata() = value[63..0];
+    assert(width == 16, "Should only be used for capabilities");
+    rvfi_mem_data->rvfi_mem_wmask() = rvfi_encode_width_mask(width);
   }
 }
 $else
