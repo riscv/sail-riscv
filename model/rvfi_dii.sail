@@ -33,8 +33,8 @@ val print_instr_packet : bits(64) -> unit
 
 function print_instr_packet(bs) = {
   let p = Mk_RVFI_DII_Instruction_Packet(bs);
-  print_bits("command", p.rvfi_cmd());
-  print_bits("instruction", p.rvfi_insn())
+  print_bits("command ", p.rvfi_cmd());
+  print_bits("instruction ", p.rvfi_insn())
 }
 
 bitfield RVFI_DII_Execution_Packet_V1 : bits(704) = {
@@ -255,7 +255,7 @@ val rvfi_get_exec_packet_v2 : unit -> bits(448 + 256 + 256) effect {rreg}
 
 function rvfi_get_exec_packet_v2 () = {
   // TODO: add the other data
-  // TODO: find a way to return a variable-legnth bitvector
+  // TODO: find a way to return a variable-length bitvector
   let packet = Mk_RVFI_DII_Execution_PacketV2(EXTZ(0b0));
   let packet = update_trace_version(packet, EXTZ(0x2));
   let packet = update_basic_data(packet, rvfi_inst_data.bits());
