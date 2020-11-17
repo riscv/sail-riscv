@@ -33,6 +33,10 @@ void zrvfi_get_exec_packet_v1(sail_bits *rop, unit);
 void zrvfi_get_exec_packet_v2(sail_bits *rop, unit);
 mach_bits zrvfi_get_v2_trace_sizze(unit);
 void zrvfi_get_v2_support_packet(sail_bits *rop, unit);
+
+// Debugging prints
+unit zprint_rvfi_exec(unit);
+unit zprint_instr_packet(uint64_t);
 #endif
 
 extern mach_bits zxlen_val;

@@ -71,6 +71,7 @@ bool config_print_instr = true;
 bool config_print_reg = true;
 bool config_print_mem_access = true;
 bool config_print_platform = true;
+bool config_print_rvfi = false;
 
 void set_config_print(char *var, bool val) {
   if (var == NULL || strcmp("all", var) == 0) {
@@ -78,12 +79,15 @@ void set_config_print(char *var, bool val) {
     config_print_mem_access = val;
     config_print_reg = val;
     config_print_platform = val;
+    config_print_rvfi = val;
   } else if (strcmp("instr", var) == 0) {
     config_print_instr = val;
   } else if (strcmp("reg", var) == 0) {
     config_print_reg = val;
   } else if (strcmp("mem", var) == 0) {
     config_print_mem_access = val;
+  } else if (strcmp("rvfi", var) == 0) {
+    config_print_rvfi = val;
   } else if (strcmp("platform", var) == 0) {
     config_print_platform = val;
   } else {
@@ -674,21 +678,29 @@ void flush_logs(void)
 
 typedef void (packet_reader_fn)(sail_bits *rop, unit);
 static void get_and_send_rvfi_packet_maxlen(packet_reader_fn *reader, size_t maxbytes) {
-  sail_bits packet;
+  lbits packet;
   CREATE(lbits)(&packet);
   reader(&packet, UNIT);
   if (packet.len % 8 != 0) {
     fprintf(stderr, "RVFI-DII trace packet not byte aligned: %d\n", (int)packet.len);
     exit(1);
   }
+  if (config_print_rvfi) {
+    print_bits("packet = ", packet);
+    fprintf(stderr, "Sending packet with length %zd (limit=%zd)... ", packet.len / 8, maxbytes);
+  }
   unsigned char bytes[packet.len / 8];
   /* mpz_export might not write all of the null bytes */
   memset(bytes, 0, sizeof(bytes));
   mpz_export(bytes, NULL, -1, 1, 0, 0, *(packet.bits));
   size_t send_size = maxbytes < packet.len / 8 ? maxbytes : packet.len / 8;
-  if (write(rvfi_dii_sock, bytes, send_size) == -1) {
+  /* Ensure that we can send a full packet */
+  if (write(rvfi_dii_sock, bytes, send_size) != send_size) {
     fprintf(stderr, "Writing RVFI DII trace failed: %s\n", strerror(errno));
     exit(1);
+  }
+  if (config_print_rvfi) {
+    fprintf(stderr, "Wrote %zd byte response to socket.\n", send_size);
   }
   KILL(lbits)(&packet);
 }
@@ -698,6 +710,10 @@ static void get_and_send_rvfi_packet(packet_reader_fn *reader) {
 }
 
 void rvfi_send_trace(unsigned version) {
+  if (config_print_rvfi) {
+    fprintf(stderr, "Sending v%d trace response...\n", version);
+    zprint_rvfi_exec(UNIT);
+  }
   if (version == 1) {
     get_and_send_rvfi_packet(zrvfi_get_exec_packet_v1);
   } else if (version == 2) {
@@ -734,17 +750,27 @@ void run_sail(void)
     unsigned trace_version = 1;
     if (rvfi_dii) {
       mach_bits instr_bits;
+      if (config_print_rvfi) {
+        fprintf(stderr, "Waiting for cmd packet... ");
+      }
       int res = read(rvfi_dii_sock, &instr_bits, sizeof(instr_bits));
+      if (config_print_rvfi) {
+        fprintf(stderr, "Read cmd packet: %016jx\n", (intmax_t)instr_bits);
+        zprint_instr_packet(instr_bits);
+      }
       if (res == 0) {
+        if (config_print_rvfi) {
+          fprintf(stderr, "Got EOF, exiting... ");
+        }
         rvfi_dii = false;
         return;
       }
-      if (res < sizeof(instr_bits)) {
-        fprintf(stderr, "Reading RVFI DII command failed: insufficient input");
-        exit(1);
-      }
       if (res == -1) {
         fprintf(stderr, "Reading RVFI DII command failed: %s", strerror(errno));
+        exit(1);
+      }
+      if (res < sizeof(instr_bits)) {
+        fprintf(stderr, "Reading RVFI DII command failed: insufficient input");
         exit(1);
       }
       zrvfi_set_instr_packet(instr_bits);
@@ -752,6 +778,9 @@ void run_sail(void)
       mach_bits cmd = zrvfi_get_cmd(UNIT);
       switch (cmd) {
       case 0: { /* EndOfTrace */
+        if (config_print_rvfi) {
+          fprintf(stderr, "Got EndOfTrace packet.\n");
+        }
         mach_bits insn = zrvfi_get_insn(UNIT);
         if (insn == (('V' << 24) | ('E' << 16) | ('R' << 8) | 'S')) {
           /*
@@ -759,6 +788,9 @@ void run_sail(void)
            * and not a actual reset request. Respond with a message say that
            * we support version 2.
            */
+          if (config_print_rvfi) {
+            fprintf(stderr, "EndOfTrace was actually a version negotiation packet.\n");
+          }
           get_and_send_rvfi_packet(&zrvfi_get_v2_support_packet);
           continue;
         } else {
@@ -771,12 +803,15 @@ void run_sail(void)
         break;
       case 'v': { /* Set wire format version */
         mach_bits insn = zrvfi_get_insn(UNIT);
+        if (config_print_rvfi) {
+          fprintf(stderr, "Got request for v%jd trace format!\n", (intmax_t)insn);
+        }
         if (insn == 1) {
           fprintf(stderr, "Requested trace in legacy format!\n");
         } else if (insn == 2) {
           fprintf(stderr, "Requested trace in legacy format!\n");
         } else {
-          fprintf(stderr, "Requested trace in unsupported format %d!\n", (int)insn);
+          fprintf(stderr, "Requested trace in unsupported format %jd!\n", (intmax_t)insn);
           exit(1);
         }
         trace_version = insn; // From now on send traces in the requested format
