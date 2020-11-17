@@ -219,6 +219,7 @@ function rvfi_get_exec_packet_v1 () = {
   let v1_packet = Mk_RVFI_DII_Execution_Packet_V1(EXTZ(0b0));
   // Convert the v2 packet to a v1 packet
   let v1_packet = update_rvfi_intr(v1_packet, rvfi_inst_data.rvfi_intr());
+  let v1_packet = update_rvfi_halt(v1_packet, rvfi_inst_data.rvfi_halt());
   let v1_packet = update_rvfi_trap(v1_packet, rvfi_inst_data.rvfi_trap());
   let v1_packet = update_rvfi_insn(v1_packet, rvfi_inst_data.rvfi_insn());
   let v1_packet = update_rvfi_order(v1_packet, rvfi_inst_data.rvfi_order());
