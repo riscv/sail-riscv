@@ -935,6 +935,20 @@ int main(int argc, char **argv)
       return 1;
     }
     close(listen_sock);
+    // Ensure that the socket is blocking
+    int fd_flags = fcntl(rvfi_dii_sock, F_GETFL);
+    if (fd_flags == -1) {
+      fprintf(stderr, "Failed to get file descriptor flags for socket!\n");
+      return 1;
+    }
+    if (config_print_rvfi) {
+      fprintf(stderr, "RVFI socket fd flags=%d, nonblocking=%d\n", fd_flags,
+              (fd_flags & O_NONBLOCK) != 0);
+    }
+    if (fd_flags & O_NONBLOCK) {
+      fprintf(stderr, "Socket was non-blocking, this will not work!\n");
+      return 1;
+    }
     printf("Connected\n");
   } else
     entry = load_sail(file);
