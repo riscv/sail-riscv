@@ -907,12 +907,12 @@ int main(int argc, char **argv)
     entry = 0x80000000;
     int listen_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (listen_sock == -1) {
-      fprintf(stderr, "Unable to create socket: %s", strerror(errno));
+      fprintf(stderr, "Unable to create socket: %s\n", strerror(errno));
       return 1;
     }
-    int opt = 1;
-    if (setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
-      fprintf(stderr, "Unable to set reuseaddr on socket: %s", strerror(errno));
+    int reuseaddr = 1;
+    if (setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(reuseaddr)) == -1) {
+      fprintf(stderr, "Unable to set reuseaddr on socket: %s\n", strerror(errno));
       return 1;
     }
     struct sockaddr_in addr = {
@@ -921,17 +921,22 @@ int main(int argc, char **argv)
       .sin_port = htons(rvfi_dii_port)
     };
     if (bind(listen_sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-      fprintf(stderr, "Unable to set bind socket: %s", strerror(errno));
+      fprintf(stderr, "Unable to set bind socket: %s\n", strerror(errno));
       return 1;
     }
     if (listen(listen_sock, 1) == -1) {
-      fprintf(stderr, "Unable to listen on socket: %s", strerror(errno));
+      fprintf(stderr, "Unable to listen on socket: %s\n", strerror(errno));
       return 1;
     }
-    printf("Waiting for connection\n");
+    socklen_t addrlen = sizeof(addr);
+    if (getsockname(listen_sock, (struct sockaddr *) &addr, &addrlen) == -1) {
+        fprintf(stderr, "Unable to getsockname() on socket: %s\n", strerror(errno));
+      return 1;
+    }
+    printf("Waiting for connection on port %d.\n", ntohs(addr.sin_port));
     rvfi_dii_sock = accept(listen_sock, NULL, NULL);
     if (rvfi_dii_sock == -1) {
-      fprintf(stderr, "Unable to accept connection on socket: %s", strerror(errno));
+      fprintf(stderr, "Unable to accept connection on socket: %s\n", strerror(errno));
       return 1;
     }
     close(listen_sock);
