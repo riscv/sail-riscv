@@ -589,7 +589,7 @@ function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
 /* Returns the new value of mip from the previous mip (o) and the written sip (s) as delegated by mideleg (d). */
 function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
-  let m = update_SSI(m, s.SSI() & d.SSI());
+  let m = if d.SSI() == 0b1 then update_SSI(m, s.SSI()) else m;
   if haveNExt() then {
     let m = if d.UEI() == 0b1 then update_UEI(m, s.UEI()) else m;
     let m = if d.USI() == 0b1 then update_USI(m, s.USI()) else m;
