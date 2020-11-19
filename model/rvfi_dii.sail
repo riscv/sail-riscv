@@ -119,64 +119,68 @@ bitfield RVFI_DII_Execution_Packet_PC : bits(128) = {
   rvfi_pc_wdata  : 127 ..  64,
 }
 
-bitfield RVFI_DII_Execution_Packet_Ext_Integer : bits(256) = {
+bitfield RVFI_DII_Execution_Packet_Ext_Integer : bits(320) = {
+  magic : 63 .. 0, // must be "int-data"
   /// rvfi_rd_wdata is the value of the x register addressed by rd after
   /// execution of this instruction. This output must be zero when rd is zero.
-  rvfi_rd_wdata  : 63 .. 0,
+  rvfi_rd_wdata  : 127 ..  64,
   /// rvfi_rs1_rdata/rvfi_rs2_rdata is the value of the x register addressed
   /// by rs1/rs2 before execution of this instruction. This output must be
   /// zero when rs1/rs2 is zero.
-  rvfi_rs1_rdata  : 127 ..  64,
-  rvfi_rs2_rdata  : 191 .. 128,
+  rvfi_rs1_rdata  : 191 .. 128,
+  rvfi_rs2_rdata  : 255 .. 192,
   /// rvfi_rd_addr is the decoded rd register address for the retired
   /// instruction. For an instruction that writes no rd register, this output
   /// must always be zero.
-  rvfi_rd_addr      : 199 .. 192,
+  rvfi_rd_addr      : 263 .. 256,
   /// rvfi_rs1_addr and rvfi_rs2_addr are the decoded rs1 and rs1 register
   /// addresses for the retired instruction. For an instruction that reads no
   /// rs1/rs2 register, this output can have an arbitrary value. However, if
   /// this output is nonzero then rvfi_rs1_rdata must carry the value stored
   /// in that register in the pre-state.
-  rvfi_rs1_addr  : 207 .. 200,
-  rvfi_rs2_addr  : 215 .. 208,
-  padding  : 255 .. 216,
+  rvfi_rs1_addr  : 271 .. 264,
+  rvfi_rs2_addr  : 279 .. 272,
+  padding  : 319 .. 280,
 }
 
-bitfield RVFI_DII_Execution_Packet_Ext_MemAccess : bits(256) = {
-  //// For memory operations (rvfi_mem_rmask and/or rvfi_mem_wmask are
-  ///non-zero), rvfi_mem_addr holds the accessed memory location.
-  rvfi_mem_addr  : 63 .. 0,
+bitfield RVFI_DII_Execution_Packet_Ext_MemAccess : bits(704) = {
+  magic : 63 .. 0, // must be "mem-data"
   /// rvfi_mem_rdata is the pre-state data read from rvfi_mem_addr.
   /// rvfi_mem_rmask specifies which bytes are valid.
-  rvfi_mem_rdata  : 127 ..  64,
+  /// CHERI-extension: widened to 32 bytes to allow reporting 129 bits
+  rvfi_mem_rdata : 319 ..  64,
   /// rvfi_mem_wdata is the post-state data written to rvfi_mem_addr.
   /// rvfi_mem_wmask specifies which bytes are valid.
-  rvfi_mem_wdata  : 191 .. 128,
-  // Note: we extend rmask+wmask to 32 bits to allow reporting the mask for
-  // CHERI/RV128 accesses here, even though the actual data needs to be
-  // returned in a separate struct.
+  /// CHERI-extension: widened to 32 bytes to allow reporting 129 bits
+  rvfi_mem_wdata : 575 .. 320,
   /// rvfi_mem_rmask is a bitmask that specifies which bytes in rvfi_mem_rdata
   /// contain valid read data from rvfi_mem_addr.
-  rvfi_mem_rmask      : 223 .. 192,
+  /// CHERI-extension: we extend rmask+wmask to 32 bits to allow reporting the
+  /// mask for CHERI/RV128 accesses here.
+  rvfi_mem_rmask      : 607 .. 576,
   /// rvfi_mem_wmask is a bitmask that specifies which bytes in rvfi_mem_wdata
   /// contain valid data that is written to rvfi_mem_addr.
-  rvfi_mem_wmask      : 255 .. 224,
+  /// CHERI-extension: widened to 32 bits
+  rvfi_mem_wmask      : 639 .. 608,
+  /// For memory operations (rvfi_mem_rmask and/or rvfi_mem_wmask are
+  /// non-zero), rvfi_mem_addr holds the accessed memory location.
+  rvfi_mem_addr : 703 .. 640,
 }
 
-bitfield RVFI_DII_Execution_PacketV2 : bits(448) = {
-  trace_version : 31 .. 0, // must be set to 2
-  trace_size : 63 .. 32, // total size of the trace packet + extensions
-  basic_data : 255 .. 64, // RVFI_DII_Execution_Packet_InstMetaData
-  pc_data : 383 .. 256, // RVFI_DII_Execution_Packet_PC
-  // available_fields : 447 .. 383,
-  integer_data_available: 384, // Followed by RVFI_DII_Execution_Packet_Ext_Integer if set
-  memory_access_data_available: 385, // Followed by RVFI_DII_Execution_Packet_Ext_MemAccess if set
-  floating_point_data_available: 386, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_FP if set
-  csr_read_write_data_available: 387, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_CSR if set
-  cheri_data_available: 388, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_CHERI if set
-  cheri_scr_read_write_data_available: 389, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_CHERI_SCR if set
-  trap_data_available: 389, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_Trap if set
-  unused_data_available_fields : 447 .. 390, // To be used for additional RVFI_DII_Execution_Packet_Ext_* structs
+bitfield RVFI_DII_Execution_PacketV2 : bits(512) = {
+  magic : 63 .. 0,         // must be set to 'trace-v2'
+  trace_size : 127 .. 64,  // total size of the trace packet + extensions
+  basic_data : 319 .. 128, // RVFI_DII_Execution_Packet_InstMetaData
+  pc_data : 447 .. 320,    // RVFI_DII_Execution_Packet_PC
+  // available_fields : 511 .. 448,
+  integer_data_available: 448, // Followed by RVFI_DII_Execution_Packet_Ext_Integer if set
+  memory_access_data_available: 449, // Followed by R VFI_DII_Execution_Packet_Ext_MemAccess if set
+  floating_point_data_available: 450, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_FP if set
+  csr_read_write_data_available: 451, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_CSR if set
+  cheri_data_available: 452, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_CHERI if set
+  cheri_scr_read_write_data_available: 453, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_CHERI_SCR if set
+  trap_data_available: 454, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_Trap if set
+  unused_data_available_fields : 511 .. 455, // To be used for additional RVFI_DII_Execution_Packet_Ext_* structs
 }
 
 register rvfi_inst_data : RVFI_DII_Execution_Packet_InstMetaData
@@ -192,9 +196,13 @@ val rvfi_zero_exec_packet : unit -> unit effect {wreg}
 function rvfi_zero_exec_packet () = {
   rvfi_inst_data = Mk_RVFI_DII_Execution_Packet_InstMetaData(EXTZ(0b0));
   rvfi_pc_data = Mk_RVFI_DII_Execution_Packet_PC(EXTZ(0b0));
-  rvfi_int_data = Mk_RVFI_DII_Execution_Packet_Ext_Integer(EXTZ(0b0));
+  rvfi_int_data = Mk_RVFI_DII_Execution_Packet_Ext_Integer(EXTZ(0x0));
+  // magic = "int-data" -> 0x617461642d746e69 (big-endian)
+  rvfi_int_data = update_magic(rvfi_int_data, 0x617461642d746e69);
   rvfi_int_data_present = false;
-  rvfi_mem_data = Mk_RVFI_DII_Execution_Packet_Ext_MemAccess(EXTZ(0b0));
+  rvfi_mem_data = Mk_RVFI_DII_Execution_Packet_Ext_MemAccess(EXTZ(0x0));
+  // magic = "mem-data" -> 0x617461642d6d656d (big-endian)
+  rvfi_mem_data = update_magic(rvfi_mem_data, 0x617461642d6d656d);
   rvfi_mem_data_present = false;
 }
 
@@ -207,8 +215,10 @@ val rvfi_get_v2_support_packet : unit -> bits(704)
 
 function rvfi_get_v2_support_packet () = {
   let rvfi_exec = Mk_RVFI_DII_Execution_Packet_V1(EXTZ(0b0));
-  // Returning 0x3 in halt instead of 0x1 means that we support the version 2
-  // wire format.
+  // Returning 0x3 (using the unused high bits) in halt instead of 0x1 means
+  // that we support the version 2 wire format. This is required to keep
+  // backwards compatibility with old implementations that do not support
+  // the new trace format.
   let rvfi_exec = update_rvfi_halt(rvfi_exec, 0x03);
   return rvfi_exec.bits();
 }
@@ -236,29 +246,29 @@ function rvfi_get_exec_packet_v1 () = {
 
   let v1_packet = update_rvfi_mem_wmask(v1_packet, truncate(rvfi_mem_data.rvfi_mem_wmask(), 8));
   let v1_packet = update_rvfi_mem_rmask(v1_packet, truncate(rvfi_mem_data.rvfi_mem_rmask(), 8));
-  let v1_packet = update_rvfi_mem_wdata(v1_packet, rvfi_mem_data.rvfi_mem_wdata());
-  let v1_packet = update_rvfi_mem_rdata(v1_packet, rvfi_mem_data.rvfi_mem_rdata());
+  let v1_packet = update_rvfi_mem_wdata(v1_packet, truncate(rvfi_mem_data.rvfi_mem_wdata(), 64));
+  let v1_packet = update_rvfi_mem_rdata(v1_packet, truncate(rvfi_mem_data.rvfi_mem_rdata(), 64));
   let v1_packet = update_rvfi_mem_addr(v1_packet, rvfi_mem_data.rvfi_mem_addr());
 
   return v1_packet.bits();
 }
 
-val rvfi_get_v2_trace_size : unit -> bits(32) effect {rreg}
+val rvfi_get_v2_trace_size : unit -> bits(64) effect {rreg}
 
 function rvfi_get_v2_trace_size () = {
-  let trace_size = 448;
-  let trace_size = if (rvfi_int_data_present) then trace_size + 256 else trace_size;
-  let trace_size = if (rvfi_mem_data_present) then trace_size + 256 else trace_size;
-  return to_bits(32, trace_size);
+  let trace_size : bits(64) = to_bits(64, 512);
+  let trace_size = if (rvfi_int_data_present) then trace_size + 320 else trace_size;
+  let trace_size = if (rvfi_mem_data_present) then trace_size + 704 else trace_size;
+  return trace_size >> 3; // we have to return bytes not bits
 }
 
-val rvfi_get_exec_packet_v2 : unit -> bits(448 + 256 + 256) effect {rreg}
+val rvfi_get_exec_packet_v2 : unit -> bits(512 + 320 + 704) effect {rreg}
 
 function rvfi_get_exec_packet_v2 () = {
   // TODO: add the other data
   // TODO: find a way to return a variable-length bitvector
   let packet = Mk_RVFI_DII_Execution_PacketV2(EXTZ(0b0));
-  let packet = update_trace_version(packet, EXTZ(0x2));
+  let packet = update_magic(packet, 0x32762d6563617274); // ASCII "trace-v2" (BE)
   let packet = update_basic_data(packet, rvfi_inst_data.bits());
   let packet = update_pc_data(packet, rvfi_pc_data.bits());
   let packet = update_integer_data_available(packet, bool_to_bits(rvfi_int_data_present));
@@ -267,7 +277,7 @@ function rvfi_get_exec_packet_v2 () = {
   // we always return a max-size packet from this function, and the C emulator
   // ensures that only trace_size bits are sent over the socket.
   let packet = update_trace_size(packet, rvfi_get_v2_trace_size());
-  return packet.bits() @ rvfi_int_data.bits() @ rvfi_mem_data.bits();
+  return rvfi_mem_data.bits() @ rvfi_int_data.bits() @ packet.bits();
 }
 
 val rvfi_encode_width_mask : forall 'n, 0 < 'n <= 32. atom('n) -> bits(32)

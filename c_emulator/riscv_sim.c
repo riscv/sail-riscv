@@ -56,6 +56,8 @@ unsigned char *dtb = NULL;
 size_t dtb_len = 0;
 #ifdef RVFI_DII
 static bool rvfi_dii = false;
+/* Needs to be global to avoid the needed for a set-version packet on each trace */
+static unsigned rvfi_trace_version = 1;
 static int rvfi_dii_port;
 static int rvfi_dii_sock;
 #endif
@@ -724,6 +726,7 @@ void rvfi_send_trace(unsigned version) {
     abort();
   }
 }
+
 #endif
 
 void run_sail(void)
@@ -747,7 +750,6 @@ void run_sail(void)
 
   while (!zhtif_done && (insn_limit == 0 || total_insns < insn_limit)) {
 #ifdef RVFI_DII
-    unsigned trace_version = 1;
     if (rvfi_dii) {
       mach_bits instr_bits;
       if (config_print_rvfi) {
@@ -795,7 +797,7 @@ void run_sail(void)
           continue;
         } else {
           zrvfi_halt_exec_packet(UNIT);
-          rvfi_send_trace(trace_version);
+          rvfi_send_trace(rvfi_trace_version);
           return;
         }
       }
@@ -809,16 +811,24 @@ void run_sail(void)
         if (insn == 1) {
           fprintf(stderr, "Requested trace in legacy format!\n");
         } else if (insn == 2) {
-          fprintf(stderr, "Requested trace in legacy format!\n");
+          fprintf(stderr, "Requested trace in v2 format!\n");
         } else {
           fprintf(stderr, "Requested trace in unsupported format %jd!\n", (intmax_t)insn);
           exit(1);
         }
-        trace_version = insn; // From now on send traces in the requested format
+        rvfi_trace_version = insn; // From now on send traces in the requested format
+        struct {
+          char msg[8];
+          uint64_t version;
+        } version_response = { "version=", rvfi_trace_version };
+        if (write(rvfi_dii_sock, &version_response, sizeof(version_response)) != sizeof(version_response)) {
+          fprintf(stderr, "Sending version response failed: %s\n", strerror(errno));
+          exit(1);
+        }
         continue;
       }
       default:
-        fprintf(stderr, "Unknown RVFI-DII command: %d\n", (int)cmd);
+        fprintf(stderr, "Unknown RVFI-DII command: %#02x\n", (int)cmd);
         exit(1);
       }
       sail_int sail_step;
@@ -828,7 +838,7 @@ void run_sail(void)
       if (have_exception) goto step_exception;
       flush_logs();
       KILL(sail_int)(&sail_step);
-      rvfi_send_trace(trace_version);
+      rvfi_send_trace(rvfi_trace_version);
     } else /* if (!rvfi_dii) */
 #endif
     { /* run a Sail step */
