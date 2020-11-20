@@ -244,9 +244,23 @@ rvfi: c_emulator/riscv_rvfi_$(ARCH)
 c_emulator/riscv_sim_$(ARCH): generated_definitions/c/riscv_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile
 	gcc -g $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
+# Note: We have to add -c_preserve since the functions might be optimized out otherwise
+rvfi_preserve_fns=-c_preserve rvfi_set_instr_packet \
+  -c_preserve rvfi_get_cmd \
+  -c_preserve rvfi_get_insn \
+  -c_preserve rvfi_get_v2_trace_size \
+  -c_preserve rvfi_get_v2_support_packet \
+  -c_preserve rvfi_get_exec_packet_v1 \
+  -c_preserve rvfi_get_exec_packet_v2 \
+  -c_preserve rvfi_zero_exec_packet \
+  -c_preserve rvfi_halt_exec_packet \
+  -c_preserve print_rvfi_exec \
+  -c_preserve print_instr_packet \
+  -c_preserve print_rvfi_exec
+
 generated_definitions/c/riscv_rvfi_model_$(ARCH).c: $(SAIL_RVFI_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
-	$(SAIL) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main.sail -o $(basename $@)
+	$(SAIL) $(rvfi_preserve_fns) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main.sail -o $(basename $@)
 	sed -i -e '/^[[:space:]]*$$/d' $@
 
 c_emulator/riscv_rvfi_$(ARCH): generated_definitions/c/riscv_rvfi_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile
