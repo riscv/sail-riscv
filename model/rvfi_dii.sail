@@ -206,13 +206,14 @@ function rvfi_zero_exec_packet () = {
   rvfi_mem_data_present = false;
 }
 
+// FIXME: most of these will no longer be necessary once we use the c2 sail backend.
+
 val rvfi_halt_exec_packet : unit -> unit effect {wreg}
 
 function rvfi_halt_exec_packet () =
   rvfi_inst_data->rvfi_halt() = 0x01
 
 val rvfi_get_v2_support_packet : unit -> bits(704)
-
 function rvfi_get_v2_support_packet () = {
   let rvfi_exec = Mk_RVFI_DII_Execution_Packet_V1(EXTZ(0b0));
   // Returning 0x3 (using the unused high bits) in halt instead of 0x1 means
@@ -224,7 +225,6 @@ function rvfi_get_v2_support_packet () = {
 }
 
 val rvfi_get_exec_packet_v1 : unit -> bits(704) effect {rreg}
-
 function rvfi_get_exec_packet_v1 () = {
   let v1_packet = Mk_RVFI_DII_Execution_Packet_V1(EXTZ(0b0));
   // Convert the v2 packet to a v1 packet
@@ -254,7 +254,6 @@ function rvfi_get_exec_packet_v1 () = {
 }
 
 val rvfi_get_v2_trace_size : unit -> bits(64) effect {rreg}
-
 function rvfi_get_v2_trace_size () = {
   let trace_size : bits(64) = to_bits(64, 512);
   let trace_size = if (rvfi_int_data_present) then trace_size + 320 else trace_size;
@@ -262,8 +261,7 @@ function rvfi_get_v2_trace_size () = {
   return trace_size >> 3; // we have to return bytes not bits
 }
 
-val rvfi_get_exec_packet_v2 : unit -> bits(512 + 320 + 704) effect {rreg}
-
+val rvfi_get_exec_packet_v2 : unit -> bits(512) effect {rreg}
 function rvfi_get_exec_packet_v2 () = {
   // TODO: add the other data
   // TODO: find a way to return a variable-length bitvector
@@ -277,7 +275,19 @@ function rvfi_get_exec_packet_v2 () = {
   // we always return a max-size packet from this function, and the C emulator
   // ensures that only trace_size bits are sent over the socket.
   let packet = update_trace_size(packet, rvfi_get_v2_trace_size());
-  return rvfi_mem_data.bits() @ rvfi_int_data.bits() @ packet.bits();
+  return packet.bits();
+}
+
+val rvfi_get_int_data : unit -> bits(320) effect {rreg}
+function rvfi_get_int_data () = {
+  assert(rvfi_int_data_present, "reading uninitialized data");
+  return rvfi_int_data.bits();
+}
+
+val rvfi_get_mem_data : unit -> bits(704) effect {rreg}
+function rvfi_get_mem_data () = {
+  assert(rvfi_mem_data_present, "reading uninitialized data");
+  return rvfi_mem_data.bits();
 }
 
 val rvfi_encode_width_mask : forall 'n, 0 < 'n <= 32. atom('n) -> bits(32)

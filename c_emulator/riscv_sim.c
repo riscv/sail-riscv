@@ -678,8 +678,8 @@ void flush_logs(void)
 
 #ifdef RVFI_DII
 
-typedef void (packet_reader_fn)(sail_bits *rop, unit);
-static void get_and_send_rvfi_packet_maxlen(packet_reader_fn *reader, size_t maxbytes) {
+typedef void (packet_reader_fn)(lbits *rop, unit);
+static void get_and_send_rvfi_packet(packet_reader_fn *reader) {
   lbits packet;
   CREATE(lbits)(&packet);
   reader(&packet, UNIT);
@@ -687,15 +687,15 @@ static void get_and_send_rvfi_packet_maxlen(packet_reader_fn *reader, size_t max
     fprintf(stderr, "RVFI-DII trace packet not byte aligned: %d\n", (int)packet.len);
     exit(1);
   }
+  const size_t send_size = packet.len / 8;
   if (config_print_rvfi) {
     print_bits("packet = ", packet);
-    fprintf(stderr, "Sending packet with length %zd (limit=%zd)... ", packet.len / 8, maxbytes);
+    fprintf(stderr, "Sending packet with length %zd... ", send_size);
   }
-  unsigned char bytes[packet.len / 8];
+  unsigned char bytes[send_size];
   /* mpz_export might not write all of the null bytes */
   memset(bytes, 0, sizeof(bytes));
   mpz_export(bytes, NULL, -1, 1, 0, 0, *(packet.bits));
-  size_t send_size = maxbytes < packet.len / 8 ? maxbytes : packet.len / 8;
   /* Ensure that we can send a full packet */
   if (write(rvfi_dii_sock, bytes, send_size) != send_size) {
     fprintf(stderr, "Writing RVFI DII trace failed: %s\n", strerror(errno));
@@ -707,10 +707,6 @@ static void get_and_send_rvfi_packet_maxlen(packet_reader_fn *reader, size_t max
   KILL(lbits)(&packet);
 }
 
-static void get_and_send_rvfi_packet(packet_reader_fn *reader) {
-  get_and_send_rvfi_packet_maxlen(reader, SIZE_MAX);
-}
-
 void rvfi_send_trace(unsigned version) {
   if (config_print_rvfi) {
     fprintf(stderr, "Sending v%d trace response...\n", version);
@@ -720,7 +716,11 @@ void rvfi_send_trace(unsigned version) {
     get_and_send_rvfi_packet(zrvfi_get_exec_packet_v1);
   } else if (version == 2) {
     mach_bits trace_size = zrvfi_get_v2_trace_sizze(UNIT);
-    get_and_send_rvfi_packet_maxlen(zrvfi_get_exec_packet_v2, trace_size);
+    get_and_send_rvfi_packet(zrvfi_get_exec_packet_v2);
+    if (zrvfi_int_data_present)
+      get_and_send_rvfi_packet(zrvfi_get_int_data);
+    if (zrvfi_mem_data_present)
+      get_and_send_rvfi_packet(zrvfi_get_mem_data);
   } else {
     fprintf(stderr, "Sending v%d packets not implemented yet!\n", version);
     abort();
