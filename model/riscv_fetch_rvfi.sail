@@ -2,6 +2,7 @@ function fetch() -> FetchResult = {
   rvfi_inst_data->rvfi_order()    = minstret;
   rvfi_pc_data->rvfi_pc_rdata() = EXTZ(get_arch_pc());
   rvfi_inst_data->rvfi_mode() = EXTZ(privLevel_to_bits(cur_privilege));
+  rvfi_inst_data->rvfi_ixl() = EXTZ(misa.MXL());
 
   /* First allow extensions to check pc */
   match ext_fetch_check_pc(PC, PC) {
