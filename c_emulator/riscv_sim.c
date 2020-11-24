@@ -710,7 +710,6 @@ static void get_and_send_rvfi_packet(packet_reader_fn *reader) {
 void rvfi_send_trace(unsigned version) {
   if (config_print_rvfi) {
     fprintf(stderr, "Sending v%d trace response...\n", version);
-    zprint_rvfi_exec(UNIT);
   }
   if (version == 1) {
     get_and_send_rvfi_packet(zrvfi_get_exec_packet_v1);
