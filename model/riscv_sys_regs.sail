@@ -189,7 +189,12 @@ function set_mstatus_UXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
 }
 
 function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
-  let m : Mstatus = Mk_Mstatus(v);
+  /*
+   * Populate all defined fields using the bits of v, stripping anything
+   * that does not have a matching bitfield entry. All bits above 32 are handled
+   * explicitly later.
+   */
+  let m : Mstatus = Mk_Mstatus(EXTZ(v[22 .. 11] @ 0b00 @ v[8 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
 
   /* We don't have any extension context yet. */
   let m = update_XS(m, extStatus_to_bits(Off));
