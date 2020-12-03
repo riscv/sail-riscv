@@ -29,6 +29,11 @@ bitfield PTE_Bits : pteAttribs = {
   V : 0
 }
 
+bitfield PTE_Ext : extPte = {
+  C : 9,
+  N : 8
+}
+
 function isPTEPtr(p : pteAttribs, ext : extPte) -> bool = {
   let a = Mk_PTE_Bits(p);
   a.R() == 0b0 & a.W() == 0b0 & a.X() == 0b0

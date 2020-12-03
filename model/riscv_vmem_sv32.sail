@@ -62,16 +62,17 @@ function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
                 } else {
                   /* add the appropriate bits of the VPN to the superpage PPN */
                   let ppn = pte.PPNi() | (EXTZ(va.VPNi()) & mask);
+                  let shift : nat = PAGESIZE_BITS + (level * SV32_LEVEL_BITS);
 /*                let res = append(ppn, va.PgOfs());
                   print("walk32: using superpage: pte.ppn=" ^ BitStr(pte.PPNi())
                         ^ " ppn=" ^ BitStr(ppn) ^ " res=" ^ BitStr(res)); */
-                  PTW_Success(append(ppn, va.PgOfs()), pte, pte_addr, level, is_global, ext_ptw)
+                  PTW_Success(append(ppn, va.PgOfs()), pte, pte_addr, level, is_global, ext_ptw, shift)
                 }
               } else {
                 /* normal leaf PTE */
 /*              let res = append(pte.PPNi(), va.PgOfs());
                 print("walk32: pte.ppn=" ^ BitStr(pte.PPNi()) ^ " ppn=" ^ BitStr(pte.PPNi()) ^ " res=" ^ BitStr(res)); */
-                PTW_Success(append(pte.PPNi(), va.PgOfs()), pte, pte_addr, level, is_global, ext_ptw)
+                PTW_Success(append(pte.PPNi(), va.PgOfs()), pte, pte_addr, level, is_global, ext_ptw, PAGESIZE_BITS)
               }
             }
           }
@@ -95,9 +96,9 @@ function lookup_TLB32(asid, vaddr) =
     Some(e) => if match_TLB_Entry(e, asid, vaddr) then Some((0, e)) else None()
   }
 
-val add_to_TLB32 : (asid32, vaddr32, paddr32, SV32_PTE, paddr32, nat, bool) -> unit effect {wreg, rreg}
-function add_to_TLB32(asid, vAddr, pAddr, pte, pteAddr, level, global) = {
-  let ent : TLB32_Entry = make_TLB_Entry(asid, global, vAddr, pAddr, pte.bits(), level, pteAddr, SV32_LEVEL_BITS);
+val add_to_TLB32 : (asid32, vaddr32, paddr32, SV32_PTE, paddr32, nat, bool, nat) -> unit effect {wreg, rreg}
+function add_to_TLB32(asid, vAddr, pAddr, pte, pteAddr, level, global, shift) = {
+  let ent : TLB32_Entry = make_TLB_Entry(asid, global, vAddr, pAddr, pte.bits(), level, pteAddr, shift);
   tlb32 = Some(ent)
 }
 
@@ -155,10 +156,10 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
     None() => {
       match walk32(vAddr, ac, priv, mxr, do_sum, ptb, level, false, ext_ptw) {
         PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),
-        PTW_Success(pAddr, pte, pteAddr, level, global, ext_ptw) => {
+        PTW_Success(pAddr, pte, pteAddr, level, global, ext_ptw, shift) => {
           match update_PTE_Bits(Mk_PTE_Bits(pte.BITS()), ac, zeros()) {
             None() => {
-              add_to_TLB32(asid, vAddr, pAddr, pte, pteAddr, level, global);
+              add_to_TLB32(asid, vAddr, pAddr, pte, pteAddr, level, global, shift);
               TR_Address(pAddr, ext_ptw)
             },
             Some(pbits, ext) =>
@@ -171,7 +172,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
                 /* ext is unused since there are no reserved bits for extensions */
                 match mem_write_value(to_phys_addr(pteAddr), 4, w_pte.bits(), false, false, false) {
                   MemValue(_) => {
-                    add_to_TLB32(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
+                    add_to_TLB32(asid, vAddr, pAddr, w_pte, pteAddr, level, global, shift);
                     TR_Address(pAddr, ext_ptw)
                   },
                   MemException(e) => {

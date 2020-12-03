@@ -16,8 +16,7 @@ struct TLB_Entry('asidlen: Int, 'valen: Int, 'palen: Int, 'ptelen: Int) = {
 val make_TLB_Entry : forall 'asidlen 'valen 'palen 'ptelen, 'valen > 0.
   (bits('asidlen), bool, bits('valen), bits('palen), bits('ptelen), nat, bits('palen), nat)
   -> TLB_Entry('asidlen, 'valen, 'palen, 'ptelen) effect {rreg}
-function make_TLB_Entry(asid, global, vAddr, pAddr, pte, level, pteAddr, levelBitSize) = {
-  let shift : nat = PAGESIZE_BITS + (level * levelBitSize);
+function make_TLB_Entry(asid, global, vAddr, pAddr, pte, level, pteAddr, shift) = {
   /* fixme hack: use a better idiom for masks */
   let vAddrMask  : bits('valen) = shiftl(vAddr ^ vAddr ^ EXTZ(0b1), shift) - 1;
   let vMatchMask : bits('valen) = ~ (vAddrMask);

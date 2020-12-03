@@ -147,7 +147,7 @@ bitfield SV48_PTE : pte48 = {
 /* Result of a page-table walk.  */
 
 union PTW_Result('paddr : Type, 'pte : Type) = {
-  PTW_Success: ('paddr, 'pte, 'paddr, nat, bool, ext_ptw),
+  PTW_Success: ('paddr, 'pte, 'paddr, nat, bool, ext_ptw, nat),
   PTW_Failure: (PTW_Error, ext_ptw)
 }
 

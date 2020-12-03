@@ -1,5 +1,18 @@
 /* Sv48 address translation for RV64. */
 
+val napot_bits48 : (bits(44), nat) -> nat
+function napot_bits48 (v, n) = {
+  let mask = shiftl(v ^ v ^ EXTZ(0b1), n + 1) - 1;
+  let pattern = shiftl(v ^ v ^ EXTZ(0b1), n);
+  if n > 8 then {
+    0
+  } else if (v & mask) == pattern then {
+    n + 1
+  } else {
+    napot_bits39(v, n + 1)
+  }
+}
+
 val walk48 : (vaddr48, AccessType(ext_access_type), Privilege, bool, bool, paddr64, nat, bool, ext_ptw) -> PTW_Result(paddr64, SV48_PTE) effect {rmem, rmemt, rreg, escape}
 function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let va = Mk_SV48_Vaddr(vaddr);
@@ -56,16 +69,30 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
                 } else {
                   /* add the appropriate bits of the VPN to the superpage PPN */
                   let ppn = pte.PPNi() | (EXTZ(va.VPNi()) & mask);
+                  let shift : nat = PAGESIZE_BITS + (level * SV48_LEVEL_BITS);
 /*                let res = append(ppn, va.PgOfs());
                   print("walk48: using superpage: pte.ppn=" ^ BitStr(pte.PPNi())
                         ^ " ppn=" ^ BitStr(ppn) ^ " res=" ^ BitStr(res)); */
-                  PTW_Success(append(ppn, va.PgOfs()), pte, pte_addr, level, is_global, ext_ptw)
+                  PTW_Success(append(ppn, va.PgOfs()), pte, pte_addr, level, is_global, ext_ptw, shift)
+                }
+              } else if Mk_PTE_Ext(ext_pte).N() == 0b1 then {
+                let shift = napot_bits48(pte.PPNi(), 0);
+                if shift == 4 then {
+                  let Zsn_ppn_part = (pte.PPNi() >> shift) << shift;
+                  let Zsn_mask_vpn_bits = shiftl(va.VPNi() ^ va.VPNi() ^ EXTZ(0b1), shift) - 1;
+                  let napot_vpn_part = Zsn_mask_vpn_bits & va.VPNi();
+                  let napot_ppn = Zsn_ppn_part | EXTZ(napot_vpn_part);
+/*                let res = append(napot_ppn, va.PgOfs());
+                  print("walk48: NAPOT: pte.ppn=" ^ BitStr(pte.PPNi()) ^ " ppn=" ^ BitStr(pte.PPNi()) ^ " res=" ^ BitStr(res)); */
+                  PTW_Success(append(pte.PPNi(), va.PgOfs()), pte, pte_addr, level, is_global, ext_ptw, PAGESIZE_BITS + shift)
+                } else {
+                  PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
                 }
               } else {
                 /* normal leaf PTE */
 /*              let res = append(pte.PPNi(), va.PgOfs());
                 print("walk48: pte.ppn=" ^ BitStr(pte.PPNi()) ^ " ppn=" ^ BitStr(pte.PPNi()) ^ " res=" ^ BitStr(res)); */
-                PTW_Success(append(pte.PPNi(), va.PgOfs()), pte, pte_addr, level, is_global, ext_ptw)
+                PTW_Success(append(pte.PPNi(), va.PgOfs()), pte, pte_addr, level, is_global, ext_ptw, PAGESIZE_BITS)
               }
             }
           }
@@ -89,9 +116,9 @@ function lookup_TLB48(asid, vaddr) =
     Some(e) => if match_TLB_Entry(e, asid, vaddr) then Some((0, e)) else None()
   }
 
-val add_to_TLB48 : (asid64, vaddr48, paddr64, SV48_PTE, paddr64, nat, bool) -> unit effect {wreg, rreg}
-function add_to_TLB48(asid, vAddr, pAddr, pte, pteAddr, level, global) = {
-  let ent : TLB48_Entry = make_TLB_Entry(asid, global, vAddr, pAddr, pte.bits(), level, pteAddr, SV48_LEVEL_BITS);
+val add_to_TLB48 : (asid64, vaddr48, paddr64, SV48_PTE, paddr64, nat, bool, nat) -> unit effect {wreg, rreg}
+function add_to_TLB48(asid, vAddr, pAddr, pte, pteAddr, level, global, shift) = {
+  let ent : TLB48_Entry = make_TLB_Entry(asid, global, vAddr, pAddr, pte.bits(), level, pteAddr, shift);
   tlb48 = Some(ent)
 }
 
@@ -113,10 +140,10 @@ val translate48 : (asid64, paddr64, vaddr48, AccessType(ext_access_type), Privil
 function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = {
   match walk48(vAddr, ac, priv, mxr, do_sum, ptb, level, false, ext_ptw) {
     PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),
-    PTW_Success(pAddr, pte, pteAddr, level, global, ext_ptw) => {
+    PTW_Success(pAddr, pte, pteAddr, level, global, ext_ptw, shift) => {
       match update_PTE_Bits(Mk_PTE_Bits(pte.BITS()), ac, pte.Ext()) {
         None() => {
-          add_to_TLB48(asid, vAddr, pAddr, pte, pteAddr, level, global);
+          add_to_TLB48(asid, vAddr, pAddr, pte, pteAddr, level, global, shift);
           TR_Address(pAddr, ext_ptw)
         },
         Some(pbits, ext) =>
@@ -129,7 +156,7 @@ function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
 	    w_pte : SV48_PTE = update_Ext(w_pte, ext);
             match mem_write_value(EXTZ(pteAddr), 8, w_pte.bits(), false, false, false) {
               MemValue(_) => {
-                add_to_TLB48(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
+                add_to_TLB48(asid, vAddr, pAddr, w_pte, pteAddr, level, global, shift);
                 TR_Address(pAddr, ext_ptw)
               },
               MemException(e) => {
