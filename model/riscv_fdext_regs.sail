@@ -8,8 +8,6 @@
 /* **************************************************************** */
 /* Floating point register file                                     */
 
-register fs : vector(32, dec, fregtype)
-
 register f0  : fregtype
 register f1  : fregtype
 register f2  : fregtype
