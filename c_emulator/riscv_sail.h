@@ -7,7 +7,7 @@ typedef int unit;
 typedef uint64_t mach_bits;
 
 struct zMisa {mach_bits zMisa_chunk_0;};
-struct zMisa zmisa;
+extern struct zMisa zmisa;
 
 void model_init(void);
 void model_fini(void);
@@ -55,6 +55,37 @@ extern mach_bits zsepc, zstval;
 extern mach_bits zfloat_result, zfloat_fflags;
 
 struct zMcause {mach_bits zMcause_chunk_0;};
-struct zMcause zmcause, zscause;
+extern struct zMcause zmcause, zscause;
 
 extern mach_bits zminstret;
+
+// HPM Counters
+
+struct zCounterin {uint64_t zCounterin_chunk_0;};
+extern struct zCounterin zmcountinhibit;
+uint64_t z_get_Counterin_bits(struct zCounterin);
+
+// mhpmcounters
+typedef struct {
+  size_t len;
+  uint64_t *data;
+} zz5vecz8z5bv64z9;
+
+extern zz5vecz8z5bv64z9 zmhpmcounters;
+
+// mhpmevents
+#if   ARCH == RV32
+
+typedef struct {
+  size_t len;
+  uint64_t *data;
+} zz5vecz8z5bv32z9;
+extern zz5vecz8z5bv32z9 zmhpmevents;
+
+#elif ARCH == RV64
+
+extern zz5vecz8z5bv64z9 zmhpmevents;
+
+#else
+#error "Unknown architecture"
+#endif

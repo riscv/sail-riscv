@@ -20,6 +20,7 @@
 #include "riscv_platform.h"
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
+#include "riscv_hpmevents_impl.h"
 
 #ifdef ENABLE_SPIKE
 #include "tv_spike_intf.h"
@@ -516,6 +517,9 @@ void init_sail(uint64_t elf_entry)
 #endif
   init_sail_reset_vector(elf_entry);
 
+  // Register platform HPM events.
+  init_platform_events(platform_events);
+
   // this is probably unnecessary now; remove
   if (!rv_enable_rvc) z_set_Misa_C(&zmisa, 0);
 }
@@ -526,6 +530,7 @@ void reinit_sail(uint64_t elf_entry)
   model_fini();
   model_init();
   init_sail(elf_entry);
+  reset_platform_events();
 }
 
 int init_check(struct tv_spike_t *s)
@@ -759,6 +764,10 @@ void run_sail(void)
       if (have_exception) goto step_exception;
       flush_logs();
       KILL(sail_int)(&sail_step);
+    }
+    { /* perform event processing */
+      signal_platform_events();
+      process_hpm_events();
     }
     if (stepped) {
       step_no++;
