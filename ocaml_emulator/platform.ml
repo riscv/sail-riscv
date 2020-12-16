@@ -143,6 +143,11 @@ let term_read () =
 let get_mem_bytes addr len =
   read_mem_bytes addr len
 
+(* event handlers *)
+
+let write_mhpmevent _ =
+  ()
+
 (* returns starting value for PC, i.e. start of reset vector *)
 let init arch elf_file =
   platform_arch := arch;

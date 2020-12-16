@@ -463,8 +463,10 @@ register mhpmcounters : vector(29, dec, bits(64))
  */
 register minstret : bits(64)
 register minstret_written : bool
+register inst_retired : bool
 
 function retire_instruction() -> unit = {
+  inst_retired = true;
   if   minstret_written == true
   then minstret_written = false
   else if mcountinhibit.IR() == 0b0

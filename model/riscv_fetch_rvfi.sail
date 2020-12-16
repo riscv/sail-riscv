@@ -13,6 +13,8 @@ function fetch() -> FetchResult = {
         TR_Failure(e, _) => F_Error(e, PC),
         TR_Address(_, _) => {
           let i = rvfi_instruction.rvfi_insn();
+          /* initialize instruction for event processing */
+          instruction = i;
           rvfi_exec->rvfi_insn()     = EXTZ(i);
           /* TODO: should we write these even if they're not really registers? */
           rvfi_exec->rvfi_rs1_data() = EXTZ(X(i[19 .. 15]));

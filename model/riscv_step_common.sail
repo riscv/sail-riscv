@@ -8,3 +8,6 @@ union FetchResult = {
   F_RVC       : half,                      /* Compressed ISA */
   F_Error     : (ExceptionType, xlenbits)  /* standard exception and PC */
 }
+
+/* register for model-external event processing code */
+register instruction : bits(32)

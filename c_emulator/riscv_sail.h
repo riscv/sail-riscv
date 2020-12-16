@@ -89,3 +89,7 @@ extern zz5vecz8z5bv64z9 zmhpmevents;
 #else
 #error "Unknown architecture"
 #endif
+
+// info for event processing in the simulator
+extern uint64_t zinstruction;
+extern bool zinst_retired;
