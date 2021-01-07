@@ -5,6 +5,7 @@ module Elf = Elf_loader;;
 (* Platform configuration *)
 
 let config_enable_rvc                  = ref true
+let config_enable_next                 = ref false
 let config_enable_writable_misa        = ref true
 let config_enable_dirty_update         = ref false
 let config_enable_misaligned_access    = ref false
@@ -75,6 +76,7 @@ let make_rom arch start_pc =
 
 let enable_writable_misa ()          = !config_enable_writable_misa
 let enable_rvc ()                    = !config_enable_rvc
+let enable_next ()                   = !config_enable_next
 let enable_fdext ()                  = false
 let enable_dirty_update ()           = !config_enable_dirty_update
 let enable_misaligned_access ()      = !config_enable_misaligned_access

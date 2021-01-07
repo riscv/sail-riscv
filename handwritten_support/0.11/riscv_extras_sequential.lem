@@ -75,6 +75,10 @@ val sys_enable_rvc : unit -> bool
 let sys_enable_rvc () = true
 declare ocaml target_rep function sys_enable_rvc = `Platform.enable_rvc`
 
+val sys_enable_next : unit -> bool
+let sys_enable_next () = true
+declare ocaml target_rep function sys_enable_next = `Platform.enable_next`
+
 val plat_ram_base : forall 'a. Size 'a => unit -> bitvector 'a
 let plat_ram_base () = wordFromInteger 0
 declare ocaml target_rep function plat_ram_base = `Platform.dram_base`

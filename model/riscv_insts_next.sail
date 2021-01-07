@@ -7,7 +7,7 @@ mapping clause encdec = URET()
   <-> 0b0000000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute URET() = {
-  if   (~ (haveUsrMode()))
+  if   (~ (haveUsrMode()) | ~(sys_enable_next()))
   then handle_illegal()
   else if ~ (ext_check_xret_priv (User))
   then ext_fail_xret_priv ()
