@@ -12,6 +12,9 @@ static bool reservation_valid = false;
 bool sys_enable_rvc(unit u)
 { return rv_enable_rvc; }
 
+bool sys_enable_next(unit u)
+{ return rv_enable_next; }
+
 bool sys_enable_fdext(unit u)
 { return rv_enable_fdext; }
 

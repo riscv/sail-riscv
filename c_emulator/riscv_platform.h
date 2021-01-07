@@ -2,6 +2,7 @@
 #include "sail.h"
 
 bool sys_enable_rvc(unit);
+bool sys_enable_next(unit);
 bool sys_enable_fdext(unit);
 bool sys_enable_writable_misa(unit);
 
