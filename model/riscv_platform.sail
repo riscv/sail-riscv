@@ -56,6 +56,19 @@ val plat_rom_size   = {ocaml: "Platform.rom_size", interpreter: "Platform.rom_si
 val plat_clint_base = {ocaml: "Platform.clint_base", interpreter: "Platform.clint_base", c: "plat_clint_base", lem: "plat_clint_base"} : unit -> xlenbits
 val plat_clint_size = {ocaml: "Platform.clint_size", interpreter: "Platform.clint_size", c: "plat_clint_size", lem: "plat_clint_size"} : unit -> xlenbits
 
+/*
+ * Entropy Source - Platform access to random bits.
+ * WARNING: This function currently lacks a proper side-effect annotation.
+ *          If you are using theorem prover tool flows, you
+ *          may need to modify or stub out this function for now.
+ */
+val plat_get_16_random_bits = {
+    ocaml: "Platform.get_16_random_bits",
+    interpreter: "Platform.get_16_random_bits",
+    c: "plat_get_16_random_bits",
+    lem: "plat_get_16_random_bits"
+} : unit -> xlenbits
+
 /* Location of HTIF ports */
 val plat_htif_tohost = {ocaml: "Platform.htif_tohost", c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> xlenbits
 function plat_htif_tohost () = to_bits(sizeof(xlen), elf_tohost ())

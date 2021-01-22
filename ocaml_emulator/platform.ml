@@ -97,6 +97,11 @@ let insns_per_tick () = Big_int.of_int P.insns_per_tick
 let htif_tohost () =
   arch_bits_of_int64 (Big_int.to_int64 (Elf.elf_tohost ()))
 
+(* Entropy Source - get random bits *)
+
+(* This function can be changed to support deterministic sequences of
+   pseudo-random bytes. This is useful for testing. *)
+let get_16_random_bits () = arch_bits_of_int (Random.int 0xFFFF)
 
 (* load reservation *)
 
