@@ -21,6 +21,8 @@ void signal_platform_events() {
   // zinstruction, which contains the executed instruction in the
   // lower bits, and signal them using riscv_signal_event(), e.g:
   //   riscv_signal_event(E_event_enum)
+  // where E_event_num is an event id defined in
+  // platform/platform_events.enums
 
   uint64_t inst = zinstruction;
 }

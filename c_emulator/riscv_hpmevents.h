@@ -6,8 +6,8 @@
 
 typedef enum {
     E_not_defined = 0,
-#ifdef   EVENT_DEF_FILE
-#include EVENT_DEF_FILE
+#ifdef   EVENT_ENUMS
+#include EVENT_ENUMS
 #endif
     E_last,
 } model_event_id;
