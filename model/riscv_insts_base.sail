@@ -720,7 +720,10 @@ function clause execute MRET() = {
   then { handle_illegal(); RETIRE_FAIL }
   else if ~(ext_check_xret_priv (Machine))
   then { ext_fail_xret_priv(); RETIRE_FAIL }
-  else { set_next_pc(exception_handler(cur_privilege, CTL_MRET(), PC)); RETIRE_SUCCESS }
+  else {
+    set_next_pc(exception_handler(cur_privilege, CTL_MRET(), PC));
+    RETIRE_SUCCESS
+  }
 }
 
 mapping clause assembly = MRET() <-> "mret"
@@ -741,7 +744,10 @@ function clause execute SRET() = {
   then { handle_illegal(); RETIRE_FAIL }
   else if ~(ext_check_xret_priv (Supervisor))
   then { ext_fail_xret_priv(); RETIRE_FAIL }
-  else { set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC)); RETIRE_SUCCESS }
+  else {
+    set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC));
+    RETIRE_SUCCESS
+  }
 }
 
 mapping clause assembly = SRET() <-> "sret"
