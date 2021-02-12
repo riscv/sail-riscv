@@ -535,7 +535,7 @@ function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
 }
 
 function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
-  lift_sstatus(m, Mk_Sstatus(v))
+  legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(v)).bits())
 }
 
 bitfield Sedeleg : xlenbits = {
