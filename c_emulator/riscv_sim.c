@@ -683,6 +683,7 @@ static void get_and_send_rvfi_packet(packet_reader_fn *reader) {
   lbits packet;
   CREATE(lbits)(&packet);
   reader(&packet, UNIT);
+  /* Note: packet.len is the size in bits, not bytes. */
   if (packet.len % 8 != 0) {
     fprintf(stderr, "RVFI-DII trace packet not byte aligned: %d\n", (int)packet.len);
     exit(1);
@@ -691,6 +692,10 @@ static void get_and_send_rvfi_packet(packet_reader_fn *reader) {
   if (config_print_rvfi) {
     print_bits("packet = ", packet);
     fprintf(stderr, "Sending packet with length %zd... ", send_size);
+  }
+  if (send_size > 4096) {
+    fprintf(stderr, "Unexpected large packet size (> 4KB): %zd\n", send_size);
+    exit(1);
   }
   unsigned char bytes[send_size];
   /* mpz_export might not write all of the null bytes */
