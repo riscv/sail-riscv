@@ -95,6 +95,9 @@ void set_config_print(char *var, bool val) {
 struct timeval init_start, init_end, run_end;
 int total_insns = 0;
 int insn_limit = 0;
+#ifdef SAILCOV
+char *sailcov_file = NULL;
+#endif
 
 static struct option options[] = {
   {"enable-dirty-update",         no_argument,       0, 'd'},
@@ -118,6 +121,9 @@ static struct option options[] = {
   {"trace",                       optional_argument, 0, 'v'},
   {"no-trace",                    optional_argument, 0, 'V'},
   {"inst-limit",                  required_argument, 0, 'l'},
+#ifdef SAILCOV
+  {"sailcov-file",                required_argument, 0, 'c'},
+#endif
   {0, 0, 0, 0}
 };
 
@@ -222,6 +228,7 @@ char *process_args(int argc, char **argv)
                     "V::"
                     "v::"
                     "l:"
+                    "c:"
                          , options, NULL);
     if (c == -1) break;
     switch (c) {
@@ -308,6 +315,11 @@ char *process_args(int argc, char **argv)
     case 'l':
       insn_limit = atoi(optarg);
       break;
+#ifdef SAILCOV
+    case 'c':
+      sailcov_file = strdup(optarg);
+      break;
+#endif
     case '?':
       print_usage(argv[0], 1);
       break;
@@ -841,6 +853,12 @@ void init_logs()
     fprintf(stderr, "Cannot create terminal log '%s': %s\n", term_log, strerror(errno));
     exit(1);
   }
+
+#ifdef SAILCOV
+  if (sailcov_file != NULL) {
+    sail_set_coverage_file(sailcov_file);
+  }
+#endif
 }
 
 int main(int argc, char **argv)
