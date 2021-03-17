@@ -224,11 +224,15 @@ char *process_args(int argc, char **argv)
                     "t:"
                     "T:"
                     "h"
+#ifdef RVFI_DII
                     "r:"
+#endif
                     "V::"
                     "v::"
                     "l:"
+#ifdef SAILCOV
                     "c:"
+#endif
                          , options, NULL);
     if (c == -1) break;
     switch (c) {
