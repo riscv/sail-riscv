@@ -193,7 +193,7 @@ static void read_dtb(const char *path)
   munmap(m, st.st_size);
   close(fd);
 
-  fprintf(stdout, "Read %" PRIi64 " bytes of DTB from %s.\n", dtb_len, path);
+  fprintf(stdout, "Read %zd bytes of DTB from %s.\n", dtb_len, path);
 }
 
 char *process_args(int argc, char **argv)
