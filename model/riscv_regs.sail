@@ -8,8 +8,6 @@ register instbits : xlenbits
 
 /* register file and accessors */
 
-register Xs : vector(32, dec, regtype)
-
 register x1  : regtype
 register x2  : regtype
 register x3  : regtype

@@ -14,7 +14,9 @@
 #include "elf.h"
 #include "sail.h"
 #include "rts.h"
+#ifdef SAILCOV
 #include "sail_coverage.h"
+#endif
 #include "riscv_platform.h"
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
@@ -98,6 +100,7 @@ static struct option options[] = {
   {"enable-dirty-update",         no_argument,       0, 'd'},
   {"enable-misaligned",           no_argument,       0, 'm'},
   {"enable-pmp",                  no_argument,       0, 'P'},
+  {"enable-next",                 no_argument,       0, 'N'},
   {"ram-size",                    required_argument, 0, 'z'},
   {"disable-compressed",          no_argument,       0, 'C'},
   {"disable-writable-misa",       no_argument,       0, 'I'},
@@ -202,21 +205,23 @@ char *process_args(int argc, char **argv)
                     "a"
                     "d"
                     "m"
+                    "P"
                     "C"
+                    "N"
                     "I"
+                    "F"
                     "i"
                     "s"
                     "p"
                     "z:"
                     "b:"
                     "t:"
+                    "T:"
                     "h"
                     "r:"
-                    "T:"
                     "V::"
                     "v::"
                     "l:"
-                    "F:"
                          , options, NULL);
     if (c == -1) break;
     switch (c) {
@@ -238,6 +243,10 @@ char *process_args(int argc, char **argv)
     case 'C':
       fprintf(stderr, "disabling RVC compressed instructions.\n");
       rv_enable_rvc = false;
+      break;
+    case 'N':
+      fprintf(stderr, "enabling N extension.\n");
+      rv_enable_next = true;
       break;
     case 'I':
       fprintf(stderr, "disabling writable misa CSR.\n");

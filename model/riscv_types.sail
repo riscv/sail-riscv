@@ -102,7 +102,7 @@ enum Retired = {RETIRE_SUCCESS, RETIRE_FAIL}
 union AccessType ('a : Type) = {
   Read      : 'a,
   Write     : 'a,
-  ReadWrite : 'a,
+  ReadWrite : ('a, 'a),
   Execute   : unit
 }
 

@@ -79,6 +79,10 @@ val sys_enable_rvc : unit -> bool
 let sys_enable_rvc () = true
 declare ocaml target_rep function sys_enable_rvc = `Platform.enable_rvc`
 
+val sys_enable_next : unit -> bool
+let sys_enable_next () = true
+declare ocaml target_rep function sys_enable_next = `Platform.enable_next`
+
 val sys_enable_fdext : unit -> bool
 let sys_enable_fdext () = true
 declare ocaml target_rep function sys_enable_fdext = `Platform.enable_fdext`

@@ -164,6 +164,8 @@ val sys_enable_writable_misa = {c: "sys_enable_writable_misa", ocaml: "Platform.
 val sys_enable_rvc = {c: "sys_enable_rvc", ocaml: "Platform.enable_rvc", _: "sys_enable_rvc"} : unit -> bool
 /* whether misa.{f,d} were enabled at boot */
 val sys_enable_fdext = {c: "sys_enable_fdext", ocaml: "Platform.enable_fdext", _: "sys_enable_fdext"} : unit -> bool
+/* whether the N extension was enabled at boot */
+val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "sys_enable_next"} : unit -> bool
 
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
@@ -197,8 +199,20 @@ function haveUsrMode() -> bool = misa.U() == 0b1
 function haveNExt()    -> bool = misa.N() == 0b1
 /* see below for F and D extension tests */
 
+bitfield Mstatush : bits(32) = {
+  MBE  : 5,
+  SBE  : 4
+}
+register mstatush : Mstatush
+
 bitfield Mstatus : xlenbits = {
   SD   : xlen - 1,
+
+  // The MBE and SBE fields are in mstatus in RV64 and absent in RV32.
+  // On RV32, they are in mstatush, which doesn't exist in RV64.  For now,
+  // they are handled in an ad-hoc way.
+  // MBE  : 37
+  // SBE  : 36
 
   // The SXL and UXL fields don't exist on RV32, so they are modelled
   // via explicit getters and setters; see below.
@@ -264,7 +278,12 @@ function set_mstatus_UXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
 }
 
 function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
-  let m : Mstatus = Mk_Mstatus(v);
+  /*
+   * Populate all defined fields using the bits of v, stripping anything
+   * that does not have a matching bitfield entry. All bits above 32 are handled
+   * explicitly later.
+   */
+  let m : Mstatus = Mk_Mstatus(EXTZ(v[22 .. 11] @ 0b00 @ v[8 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
 
   /* We don't have any extension context yet. */
   let m = update_XS(m, extStatus_to_bits(Off));
@@ -279,6 +298,11 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   /* TODO We don't support dynamic changes to SXL and UXL. */
   let m = set_mstatus_SXL(m, get_mstatus_SXL(o));
   let m = set_mstatus_UXL(m, get_mstatus_UXL(o));
+
+  /* We don't currently support changing MBE and SBE. */
+  let m = if sizeof(xlen) == 64 then {
+             Mk_Mstatus([m.bits() with 37 .. 36 = 0b00])
+          } else m;
 
   /* Hardwired to zero in the absence of 'U' or 'N'. */
   let m = if (~ (haveNExt())) then {
@@ -527,7 +551,8 @@ register minstret_written : bool
 function retire_instruction() -> unit = {
   if   minstret_written == true
   then minstret_written = false
-  else minstret = minstret + 1
+  else if mcountinhibit.IR() == 0b0
+       then minstret = minstret + 1
 }
 
 /* informational registers */
@@ -603,7 +628,7 @@ function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
 }
 
 function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
-  lift_sstatus(m, Mk_Sstatus(v))
+  legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(v)).bits())
 }
 
 bitfield Sedeleg : xlenbits = {
@@ -662,7 +687,7 @@ function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
 /* Returns the new value of mip from the previous mip (o) and the written sip (s) as delegated by mideleg (d). */
 function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
-  let m = update_SSI(m, s.SSI() & d.SSI());
+  let m = if d.SSI() == 0b1 then update_SSI(m, s.SSI()) else m;
   if haveNExt() then {
     let m = if d.UEI() == 0b1 then update_UEI(m, s.UEI()) else m;
     let m = if d.USI() == 0b1 then update_USI(m, s.USI()) else m;

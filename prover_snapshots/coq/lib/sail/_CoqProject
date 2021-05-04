@@ -1,2 +1,1 @@
--R . Sail
--R ../../../bbv/theories bbv
+-Q . Sail

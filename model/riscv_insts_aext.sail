@@ -189,10 +189,10 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
     /* Get the address, X(rs1) (no offset).
      * Some extensions perform additional checks on address validity.
      */
-    match ext_data_get_addr(rs1, zeros(), ReadWrite(Data), width) {
+    match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width) {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
-        match translateAddr(vaddr, ReadWrite(Data)) {
+        match translateAddr(vaddr, ReadWrite(Data, Data)) {
           TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
           TR_Address(addr, _) => {
             let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
@@ -214,8 +214,8 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
               MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
               MemValue(_) => {
                 let mval : MemoryOpResult(xlenbits) = match (width, sizeof(xlen)) {
-                  (WORD, _)    => extend_value(is_unsigned, mem_read(ReadWrite(Data), addr, 4, aq, aq & rl, true)),
-                  (DOUBLE, 64) => extend_value(is_unsigned, mem_read(ReadWrite(Data), addr, 8, aq, aq & rl, true)),
+                  (WORD, _)    => extend_value(is_unsigned, mem_read(ReadWrite(Data, Data), addr, 4, aq, aq & rl, true)),
+                  (DOUBLE, 64) => extend_value(is_unsigned, mem_read(ReadWrite(Data, Data), addr, 8, aq, aq & rl, true)),
                   _            => internal_error("AMO expected WORD or DOUBLE")
                 };
                 match (mval) {

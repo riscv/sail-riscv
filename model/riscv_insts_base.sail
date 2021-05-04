@@ -579,7 +579,8 @@ function clause execute (FENCE(pred, succ)) = {
     (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_r_w()),
     (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_w_r()),
 
-    (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
+    (_ : bits(4)       , _ : bits(2) @ 0b00) => (),
+    (_ : bits(2) @ 0b00, _ : bits(4)       ) => (),
 
     _ => { print("FIXME: unsupported fence");
            () }
@@ -601,7 +602,8 @@ function clause execute (FENCE(pred, succ)) = {
     (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_r_w),
     (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_w_r),
 
-    (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
+    (_ : bits(4)       , _ : bits(2) @ 0b00) => (),
+    (_ : bits(2) @ 0b00, _ : bits(4)       ) => (),
 
     _ => { print("FIXME: unsupported fence");
            () }
@@ -715,11 +717,13 @@ mapping clause encdec = MRET()
 
 function clause execute MRET() = {
   if   cur_privilege != Machine
-  then handle_illegal()
+  then { handle_illegal(); RETIRE_FAIL }
   else if ~(ext_check_xret_priv (Machine))
-  then ext_fail_xret_priv ()
-  else set_next_pc(exception_handler(cur_privilege, CTL_MRET(), PC));
-  RETIRE_FAIL
+  then { ext_fail_xret_priv(); RETIRE_FAIL }
+  else {
+    set_next_pc(exception_handler(cur_privilege, CTL_MRET(), PC));
+    RETIRE_SUCCESS
+  }
 }
 
 mapping clause assembly = MRET() <-> "mret"
@@ -737,11 +741,13 @@ function clause execute SRET() = {
     Machine    => ~ (haveSupMode ())
   };
   if   sret_illegal
-  then handle_illegal()
+  then { handle_illegal(); RETIRE_FAIL }
   else if ~(ext_check_xret_priv (Supervisor))
-  then ext_fail_xret_priv ()
-  else set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC));
-  RETIRE_FAIL
+  then { ext_fail_xret_priv(); RETIRE_FAIL }
+  else {
+    set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC));
+    RETIRE_SUCCESS
+  }
 }
 
 mapping clause assembly = SRET() <-> "sret"
@@ -753,7 +759,7 @@ mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute EBREAK() = {
-  handle_exception(E_Breakpoint());
+  handle_mem_exception(PC, E_Breakpoint());
   RETIRE_FAIL
 }
 
