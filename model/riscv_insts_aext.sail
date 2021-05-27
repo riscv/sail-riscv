@@ -79,10 +79,10 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
                TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                TR_Address(addr, _) =>
                  match (width, sizeof(xlen)) {
-                   (BYTE, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 1, aq, rl, true), false),
-                   (HALF, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 2, aq, rl, true), false),
-                   (WORD, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 4, aq, rl, true), false),
-                   (DOUBLE, 64) => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, true), false),
+                   (BYTE, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 1, aq, aq & rl, true), false),
+                   (HALF, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 2, aq, aq & rl, true), false),
+                   (WORD, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 4, aq, aq & rl, true), false),
+                   (DOUBLE, 64) => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 8, aq, aq & rl, true), false),
                    _            => internal_error("Unexpected AMO width")
                  }
              }
@@ -143,10 +143,10 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
                 TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                 TR_Address(addr, _) => {
                   let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
-                    (BYTE, _)    => mem_write_ea(addr, 1, aq, rl, true),
-                    (HALF, _)    => mem_write_ea(addr, 2, aq, rl, true),
-                    (WORD, _)    => mem_write_ea(addr, 4, aq, rl, true),
-                    (DOUBLE, 64) => mem_write_ea(addr, 8, aq, rl, true),
+                    (BYTE, _)    => mem_write_ea(addr, 1, aq & rl, rl, true),
+                    (HALF, _)    => mem_write_ea(addr, 2, aq & rl, rl, true),
+                    (WORD, _)    => mem_write_ea(addr, 4, aq & rl, rl, true),
+                    (DOUBLE, 64) => mem_write_ea(addr, 8, aq & rl, rl, true),
                     _            => internal_error("STORECON expected word or double")
                   };
                   match (eares) {
@@ -154,10 +154,10 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
                     MemValue(_) => {
                       rs2_val = X(rs2);
                       let res : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
-                        (BYTE, _)    => mem_write_value(addr, 1, rs2_val[7..0], aq, rl, true),
-                        (HALF, _)    => mem_write_value(addr, 2, rs2_val[15..0], aq, rl, true),
-                        (WORD, _)    => mem_write_value(addr, 4, rs2_val[31..0], aq, rl, true),
-                        (DOUBLE, 64) => mem_write_value(addr, 8, rs2_val,        aq, rl, true),
+                        (BYTE, _)    => mem_write_value(addr, 1, rs2_val[7..0], aq & rl, rl, true),
+                        (HALF, _)    => mem_write_value(addr, 2, rs2_val[15..0], aq & rl, rl, true),
+                        (WORD, _)    => mem_write_value(addr, 4, rs2_val[31..0], aq & rl, rl, true),
+                        (DOUBLE, 64) => mem_write_value(addr, 8, rs2_val,        aq & rl, rl, true),
                         _            => internal_error("STORECON expected word or double")
                       };
                       match (res) {
