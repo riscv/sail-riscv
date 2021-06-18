@@ -20,11 +20,24 @@ function lrsc_width_str(width : word_width) -> string =
     DOUBLE => ".d"
   }
 
+/**
+ * RISC-V only appears to define LR / SC / AMOs for word and double, although
+ * there seem to be encodings reserved for other widths.
+ */
+function amo_width_valid(size : word_width) -> bool = {
+  match(size) {
+    WORD   => true,
+    DOUBLE => sizeof(xlen) >= 64,
+    _      => false
+  }
+}
+
 /* ****************************************************************** */
 union clause ast = LOADRES : (bool, bool, regidx, word_width, regidx)
 
-mapping clause encdec = LOADRES(aq, rl, rs1, size, rd) if word_width_bytes(size) <= sizeof(xlen_bytes)
-  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111 if word_width_bytes(size) <= sizeof(xlen_bytes)
+mapping clause encdec = LOADRES(aq, rl, rs1, size, rd) if amo_width_valid(size)
+  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111 if amo_width_valid(size)
+
 
 /* We could set load-reservations on physical or virtual addresses.
  * For now we set them on virtual addresses, since it makes the
@@ -66,9 +79,11 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
                TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                TR_Address(addr, _) =>
                  match (width, sizeof(xlen)) {
-                   (WORD, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 4, aq, rl, true), false),
-                   (DOUBLE, 64) => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, true), false),
-                   _            => internal_error("LOADRES expected WORD or DOUBLE")
+                   (BYTE, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 1, aq, aq & rl, true), false),
+                   (HALF, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 2, aq, aq & rl, true), false),
+                   (WORD, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 4, aq, aq & rl, true), false),
+                   (DOUBLE, 64) => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 8, aq, aq & rl, true), false),
+                   _            => internal_error("Unexpected AMO width")
                  }
              }
       }
@@ -85,8 +100,8 @@ mapping clause assembly = LOADRES(aq, rl, rs1, size, rd)
 /* ****************************************************************** */
 union clause ast = STORECON : (bool, bool, regidx, regidx, word_width, regidx)
 
-mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd) if word_width_bytes(size) <= sizeof(xlen_bytes)
-  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111 if word_width_bytes(size) <= sizeof(xlen_bytes)
+mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd) if amo_width_valid(size)
+  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111 if amo_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful. This may need revisiting. */
 function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
@@ -128,8 +143,10 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
                 TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                 TR_Address(addr, _) => {
                   let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
-                    (WORD, _)    => mem_write_ea(addr, 4, aq, rl, true),
-                    (DOUBLE, 64) => mem_write_ea(addr, 8, aq, rl, true),
+                    (BYTE, _)    => mem_write_ea(addr, 1, aq & rl, rl, true),
+                    (HALF, _)    => mem_write_ea(addr, 2, aq & rl, rl, true),
+                    (WORD, _)    => mem_write_ea(addr, 4, aq & rl, rl, true),
+                    (DOUBLE, 64) => mem_write_ea(addr, 8, aq & rl, rl, true),
                     _            => internal_error("STORECON expected word or double")
                   };
                   match (eares) {
@@ -137,8 +154,10 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
                     MemValue(_) => {
                       rs2_val = X(rs2);
                       let res : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
-                        (WORD, _)    => mem_write_value(addr, 4, rs2_val[31..0], aq, rl, true),
-                        (DOUBLE, 64) => mem_write_value(addr, 8, rs2_val,        aq, rl, true),
+                        (BYTE, _)    => mem_write_value(addr, 1, rs2_val[7..0], aq & rl, rl, true),
+                        (HALF, _)    => mem_write_value(addr, 2, rs2_val[15..0], aq & rl, rl, true),
+                        (WORD, _)    => mem_write_value(addr, 4, rs2_val[31..0], aq & rl, rl, true),
+                        (DOUBLE, 64) => mem_write_value(addr, 8, rs2_val,        aq & rl, rl, true),
                         _            => internal_error("STORECON expected word or double")
                       };
                       match (res) {
@@ -179,8 +198,8 @@ mapping encdec_amoop : amoop <-> bits(5) = {
   AMOMAXU <-> 0b11100
 }
 
-mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd) if word_width_bytes(size) <= sizeof(xlen_bytes)
-  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111 if word_width_bytes(size) <= sizeof(xlen_bytes)
+mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd) if amo_width_valid(size)
+  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111 if amo_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
@@ -196,9 +215,11 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
           TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
           TR_Address(addr, _) => {
             let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
+              (BYTE, _)    => mem_write_ea(addr, 1, aq & rl, rl, true),
+              (HALF, _)    => mem_write_ea(addr, 2, aq & rl, rl, true),
               (WORD, _)    => mem_write_ea(addr, 4, aq & rl, rl, true),
               (DOUBLE, 64) => mem_write_ea(addr, 8, aq & rl, rl, true),
-              _            => internal_error("AMO expected WORD or DOUBLE")
+              _            => internal_error("Unexpected AMO width")
             };
             let is_unsigned : bool = match op {
               AMOMINU => true,
@@ -206,17 +227,20 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
               _       => false
             };
             let rs2_val : xlenbits = match width {
+              BYTE   => if is_unsigned then EXTZ(X(rs2)[7..0])  else EXTS(X(rs2)[7..0]),
+              HALF   => if is_unsigned then EXTZ(X(rs2)[15..0]) else EXTS(X(rs2)[15..0]),
               WORD   => if is_unsigned then EXTZ(X(rs2)[31..0]) else EXTS(X(rs2)[31..0]),
-              DOUBLE => X(rs2),
-              _      => internal_error("AMO expected WORD or DOUBLE")
+              DOUBLE => X(rs2)
             };
             match (eares) {
               MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
               MemValue(_) => {
                 let mval : MemoryOpResult(xlenbits) = match (width, sizeof(xlen)) {
+                  (BYTE, _)    => extend_value(is_unsigned, mem_read(ReadWrite(Data, Data), addr, 1, aq, aq & rl, true)),
+                  (HALF, _)    => extend_value(is_unsigned, mem_read(ReadWrite(Data, Data), addr, 2, aq, aq & rl, true)),
                   (WORD, _)    => extend_value(is_unsigned, mem_read(ReadWrite(Data, Data), addr, 4, aq, aq & rl, true)),
                   (DOUBLE, 64) => extend_value(is_unsigned, mem_read(ReadWrite(Data, Data), addr, 8, aq, aq & rl, true)),
-                  _            => internal_error("AMO expected WORD or DOUBLE")
+                  _            => internal_error("Unexpected AMO width")
                 };
                 match (mval) {
                   MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL },
@@ -238,14 +262,17 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                         AMOMAXU => to_bits(sizeof(xlen), max(unsigned(rs2_val), unsigned(loaded)))
                       };
                     let rval : xlenbits = match width {
+                      BYTE   => EXTS(loaded[7..0]),
+                      HALF   => EXTS(loaded[15..0]),
                       WORD   => EXTS(loaded[31..0]),
-                      DOUBLE => loaded,
-                      _      => internal_error("AMO expected WORD or DOUBLE")
+                      DOUBLE => loaded
                     };
                     let wval : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
+                      (BYTE, _)    => mem_write_value(addr, 1, result[7..0],  aq & rl, rl, true),
+                      (HALF, _)    => mem_write_value(addr, 2, result[15..0], aq & rl, rl, true),
                       (WORD, _)    => mem_write_value(addr, 4, result[31..0], aq & rl, rl, true),
                       (DOUBLE, 64) => mem_write_value(addr, 8, result,        aq & rl, rl, true),
-                      _            => internal_error("AMO expected WORD or DOUBLE")
+                      _            => internal_error("Unexpected AMO width")
                     };
                     match (wval) {
                       MemValue(true)  => { X(rd) = rval; RETIRE_SUCCESS },
