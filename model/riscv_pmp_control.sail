@@ -57,7 +57,7 @@ function pmpMatchAddr(addr: xlenbits, width: xlenbits, rng: pmp_addr_range) -> p
     Some((lo, hi)) => if   hi <_u lo   /* to handle mis-configuration */
                       then PMP_NoMatch
                       else {
-                        if      (addr + width <_u lo) | (hi <_u addr)
+                        if      (addr + width <=_u lo) | (hi <=_u addr)
                         then    PMP_NoMatch
                         else if (lo <=_u addr) & (addr + width <=_u hi)
                         then    PMP_Match
