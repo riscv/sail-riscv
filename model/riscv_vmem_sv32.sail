@@ -12,7 +12,7 @@ function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let pt_ofs : paddr32 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV32_LEVEL_BITS))[(SV32_LEVEL_BITS - 1) .. 0]),
                                 PTE32_LOG_SIZE);
   let pte_addr = ptb + pt_ofs;
-  match (mem_read(ac, to_phys_addr(pte_addr), 4, false, false, false)) {
+  match (mem_read(Read(Data), to_phys_addr(pte_addr), 4, false, false, false)) {
     MemException(_) => {
 /*    print("walk32(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
             ^ " pt_base=" ^ BitStr(to_phys_addr(ptb))
