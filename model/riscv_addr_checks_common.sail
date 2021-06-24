@@ -21,23 +21,7 @@ union Ext_DataAddr_Check ('a : Type) = {
   Ext_DataAddr_Error : 'a
 }
 
-union Ext_PhysAddr_Check = {
-  Ext_PhysAddr_OK : unit,
-  Ext_PhysAddr_Error : ExceptionType
+union Ext_PhysAddr_Check ('a : Type) = {
+  Ext_PhysAddr_OK : xlenbits,
+  Ext_PhysAddr_Error : 'a
 }
-
-/*!
- * Validate a read from physical memory.
- * THIS(access_type, paddr, size, aquire, release, reserved, read_meta) should
- * return Some(exception) to abort the read or None to allow it to proceed. The
- * check is performed after PMP checks and does not apply to MMIO memory.
- */
-val ext_check_phys_mem_read : forall 'n, 0 < 'n <= max_mem_access . (AccessType (ext_access_type), xlenbits, atom('n), bool, bool, bool, bool) -> Ext_PhysAddr_Check
-
-/*!
- * Validate a write to physical memory.
- * THIS(write_kind, paddr, size, data, metadata) should return Some(exception)
- * to abort the write or None to allow it to proceed. The check is performed 
- * after PMP checks and does not apply to MMIO memory.
- */
-val ext_check_phys_mem_write : forall 'n, 0 < 'n <= max_mem_access . (write_kind, xlenbits, atom('n), bits(8 * 'n), mem_meta) -> Ext_PhysAddr_Check

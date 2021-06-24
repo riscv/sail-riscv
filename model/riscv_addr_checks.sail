@@ -54,9 +54,30 @@ function ext_data_get_addr(base : regidx, offset : xlenbits, acc : AccessType(ex
 function ext_handle_data_check_error(err : ext_data_addr_error) -> unit =
   ()
 
+
+type ext_phys_addr_error = ExceptionType
+/*!
+ * Validate a read from physical memory.
+ * THIS(access_type, paddr, size, aquire, release, reserved, read_meta) should
+ * return Some(exception) to abort the read or None to allow it to proceed. The
+ * check is performed after PMP checks and does not apply to MMIO memory.
+ */
+val ext_check_phys_mem_read : forall 'n, 0 < 'n <= max_mem_access . (AccessType (ext_access_type), xlenbits, atom('n), bool, bool, bool, bool) -> Ext_PhysAddr_Check (ext_phys_addr_error)
+
+/*!
+ * Validate a write to physical memory.
+ * THIS(write_kind, paddr, size, data, metadata) should return Some(exception)
+ * to abort the write or None to allow it to proceed. The check is performed 
+ * after PMP checks and does not apply to MMIO memory.
+ */
+val ext_check_phys_mem_write : forall 'n, 0 < 'n <= max_mem_access . (write_kind, xlenbits, atom('n), bits(8 * 'n), mem_meta) -> Ext_PhysAddr_Check (ext_phys_addr_error)
+
 /* Default implementations of these hooks permit all accesses.  */
 function ext_check_phys_mem_read (access_type, paddr, size, aquire, release, reserved, read_meta) =
-  Ext_PhysAddr_OK ()
+  Ext_PhysAddr_OK (paddr)
 
 function ext_check_phys_mem_write(write_kind, paddr, size, data, metadata) =
-  Ext_PhysAddr_OK ()
+  Ext_PhysAddr_OK (paddr)
+
+function ext_handle_phys_check_error(err : ext_phys_addr_error) -> ExceptionType =
+  err

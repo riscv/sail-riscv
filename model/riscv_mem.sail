@@ -53,8 +53,8 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(
   then MemoryOpResult_add_meta(mmio_read(t, paddr, width), default_meta)
   else if within_phys_mem(paddr, width)
   then match ext_check_phys_mem_read(t, paddr, width, aq, rl, res, meta) {
-    Ext_PhysAddr_OK()     => phys_mem_read(t, paddr, width, aq, rl, res, meta),
-    Ext_PhysAddr_Error(e) => MemException(e)
+    Ext_PhysAddr_OK(pa)   => phys_mem_read(t, pa, width, aq, rl, res, meta),
+    Ext_PhysAddr_Error(e) => MemException(ext_handle_phys_check_error(e))
   } else match t {
     Execute()  => MemException(E_Fetch_Access_Fault()),
     Read(Data) => MemException(E_Load_Access_Fault()),
@@ -166,8 +166,8 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kin
   then mmio_write(paddr, width, data)
   else if within_phys_mem(paddr, width)
   then match ext_check_phys_mem_write (wk, paddr, width, data, meta) {
-    Ext_PhysAddr_OK() => phys_mem_write(wk, paddr, width, data, meta),
-    Ext_PhysAddr_Error(e)  => MemException(e)
+    Ext_PhysAddr_OK(pa) => phys_mem_write(wk, pa, width, data, meta),
+    Ext_PhysAddr_Error(e)  => MemException(ext_handle_phys_check_error(e))
   }  
   else MemException(E_SAMO_Access_Fault())
 
