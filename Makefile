@@ -111,10 +111,6 @@ C_WARNINGS ?=
 C_INCS = $(addprefix c_emulator/,riscv_prelude.h riscv_platform_impl.h riscv_platform.h riscv_softfloat.h)
 C_SRCS = $(addprefix c_emulator/,riscv_prelude.c riscv_platform_impl.c riscv_platform.c riscv_softfloat.c riscv_sim.c)
 
-# portability for MacPorts/MacOS
-C_SYS_INCLUDES = -I /opt/local/include
-C_SYS_LIBDIRS  = -L /opt/local/lib
-
 SOFTFLOAT_DIR    = c_emulator/SoftFloat-3e
 SOFTFLOAT_INCDIR = $(SOFTFLOAT_DIR)/source/include
 SOFTFLOAT_LIBDIR = $(SOFTFLOAT_DIR)/build/Linux-RISCV-GCC
@@ -122,8 +118,13 @@ SOFTFLOAT_FLAGS  = -I $(SOFTFLOAT_INCDIR)
 SOFTFLOAT_LIBS   = $(SOFTFLOAT_LIBDIR)/softfloat.a
 SOFTFLOAT_SPECIALIZE_TYPE = RISCV
 
-C_FLAGS = $(C_SYS_INCLUDES) -I $(SAIL_LIB_DIR) -I c_emulator $(SOFTFLOAT_FLAGS) -fcommon
-C_LIBS  = $(C_SYS_LIBDIRS) -lgmp -lz $(SOFTFLOAT_LIBS)
+GMP_FLAGS = $(shell pkg-config --cflags gmp)
+GMP_LIBS = $(shell pkg-config --libs gmp || echo -lgmp)
+ZLIB_FLAGS = $(shell pkg-config --cflags zlib)
+ZLIB_LIBS = $(shell pkg-config --libs zlib)
+
+C_FLAGS = -I $(SAIL_LIB_DIR) -I c_emulator $(GMP_FLAGS) $(ZLIB_FLAGS) $(SOFTFLOAT_FLAGS) -fcommon
+C_LIBS  = $(GMP_LIBS) $(ZLIB_LIBS) $(SOFTFLOAT_LIBS)
 
 # The C simulator can be built to be linked against Spike for tandem-verification.
 # This needs the C bindings to Spike from https://github.com/SRI-CSL/l3riscv
