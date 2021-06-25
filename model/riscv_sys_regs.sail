@@ -157,8 +157,8 @@ register mstatus : Mstatus
 
 function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
   if   t != Execute() & m.MPRV() == 0b1
-  then privLevel_of_bits(mstatus.MPP())
-  else cur_privilege
+  then privLevel_of_bits(m.MPP())
+  else priv
 
 function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
   if   sizeof(xlen) == 32
