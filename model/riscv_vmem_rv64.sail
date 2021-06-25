@@ -47,9 +47,8 @@ function translationMode(priv) = {
 
 /* Top-level address translation dispatcher */
 
-val translateAddr : (xlenbits, AccessType(ext_access_type)) -> TR_Result(xlenbits, ExceptionType) effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
-function translateAddr(vAddr, ac) = {
-  let effPriv : Privilege = effectivePrivilege(ac, mstatus, cur_privilege);
+val translateAddr_priv : (xlenbits, AccessType(ext_access_type), Privilege) -> TR_Result(xlenbits, ExceptionType) effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
+function translateAddr_priv(vAddr, ac, effPriv) = {
   let mxr    : bool   = mstatus.MXR() == 0b1;
   let do_sum : bool   = mstatus.SUM() == 0b1;
   let mode : SATPMode = translationMode(effPriv);
@@ -79,6 +78,10 @@ function translateAddr(vAddr, ac) = {
     _     => internal_error("unsupported address translation scheme")
   }
 }
+
+val translateAddr : (xlenbits, AccessType(ext_access_type)) -> TR_Result(xlenbits, ExceptionType) effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
+function translateAddr(vAddr, ac) =
+  translateAddr_priv(vAddr, ac, effectivePrivilege(ac, mstatus, cur_privilege))
 
 val flush_TLB : (option(xlenbits), option(xlenbits)) -> unit effect {rreg, wreg}
 function flush_TLB(asid_xlen, addr_xlen) -> unit = {
