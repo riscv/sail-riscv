@@ -254,6 +254,8 @@ rvfi_preserve_fns=-c_preserve rvfi_set_instr_packet \
   -c_preserve rvfi_get_v2_support_packet \
   -c_preserve rvfi_get_exec_packet_v1 \
   -c_preserve rvfi_get_exec_packet_v2 \
+  -c_preserve rvfi_get_mem_data \
+  -c_preserve rvfi_get_int_data \
   -c_preserve rvfi_zero_exec_packet \
   -c_preserve rvfi_halt_exec_packet \
   -c_preserve print_rvfi_exec \
