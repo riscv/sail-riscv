@@ -5,3 +5,4 @@
 _build/
 _sbuild/
 *.o
+*.a
