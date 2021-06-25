@@ -6,10 +6,21 @@
  * The implementation below supports the reading and writing of memory
  * metadata in addition to raw memory data.
  *
- * The external API for this module is
- *   {mem_read, mem_read_meta, mem_write_ea, mem_write_value_meta, mem_write_value}
- * where mem_write_value is a special case of mem_write_value_meta that uses
- * a default value of the metadata.
+ * The external API for this module is composed of three central functions
+ *
+ *   mem_read_priv_meta
+ *   mem_write_ea
+ *   mem_write_value_priv_meta
+ *
+ * and some special cases which partially apply these functions:
+ *
+ *   mem_read_priv - strips metadata from reads
+ *   mem_read_meta - uses effectivePrivilege
+ *   mem_read      - both of the above partial applications
+ *
+ *   mem_write_value_meta - uses effectivePrivilege
+ *   mem_write_value_priv - uses a default value for metadata
+ *   mem_write_value      - both of the above partial applications
  *
  * The internal implementation first performs a PMP check (if PMP is
  * enabled), and then dispatches to MMIO regions or physical memory as
@@ -60,11 +71,11 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(
   }
 
 /* PMP checks if enabled */
-function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
+function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), p : Privilege, paddr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
   if   (~ (plat_enable_pmp ()))
   then checked_mem_read(t, paddr, width, aq, rl, res, meta)
   else {
-    match pmpCheck(paddr, width, t, effectivePrivilege(t, mstatus, cur_privilege)) {
+    match pmpCheck(paddr, width, t, p) {
       None()  => checked_mem_read(t, paddr, width, aq, rl, res, meta),
       Some(e) => MemException(e)
     }
@@ -94,27 +105,40 @@ $endif
 /* NOTE: The rreg effect is due to MMIO. */
 $ifdef RVFI_DII
 val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))             effect {wreg, rmem, rmemt, rreg, escape}
+val mem_read_priv : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), Privilege, xlenbits, atom('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))             effect {wreg, rmem, rmemt, rreg, escape}
 val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) effect {wreg, rmem, rmemt, rreg, escape}
+val mem_read_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), Privilege, xlenbits, atom('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) effect {wreg, rmem, rmemt, rreg, escape}
 $else
 val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))             effect {rmem, rmemt, rreg, escape}
+val mem_read_priv : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), Privilege, xlenbits, atom('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))             effect {rmem, rmemt, rreg, escape}
 val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), xlenbits, atom('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) effect {rmem, rmemt, rreg, escape}
+val mem_read_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), Privilege, xlenbits, atom('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) effect {rmem, rmemt, rreg, escape}
 $endif
 
-function mem_read_meta (typ, paddr, width, aq, rl, res, meta) = {
+/* The most generic memory read operation */
+function mem_read_priv_meta (typ, priv, paddr, width, aq, rl, res, meta) = {
   let result : MemoryOpResult((bits(8 * 'n), mem_meta)) =
     if (aq | res) & (~ (is_aligned_addr(paddr, width)))
     then MemException(E_Load_Addr_Align())
     else match (aq, rl, res) {
       (false, true,  false) => throw(Error_not_implemented("load.rl")),
       (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
-      (_, _, _)             => pmp_mem_read(typ, paddr, width, aq, rl, res, meta)
+      (_, _, _)             => pmp_mem_read(typ, priv, paddr, width, aq, rl, res, meta)
     };
   rvfi_read(paddr, width, result);
   result
 }
 
-function mem_read (typ, paddr, width, aq, rl, res) =
-  MemoryOpResult_drop_meta(mem_read_meta(typ, paddr, width, aq, rl, res, false))
+function mem_read_meta (typ, paddr, width, aq, rl, res, meta) =
+  mem_read_priv_meta(typ, effectivePrivilege(typ, mstatus, cur_privilege), paddr, width, aq, rl, res, meta)
+
+/* Specialized mem_read_meta that drops the metadata */
+function mem_read_priv (typ, priv, paddr, width, aq, rl, res) =
+  MemoryOpResult_drop_meta(mem_read_priv_meta(typ, priv, paddr, width, aq, rl, res, false))
+
+/* Specialized mem_read_priv that operates at the default effective privilege */
+function mem_read (typ, paddr, width, aq, rel, res) =
+  mem_read_priv(typ, effectivePrivilege(typ, mstatus, cur_privilege), paddr, width, aq, rel, res)
 
 val mem_write_ea : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(unit) effect {eamem, escape}
 
@@ -169,12 +193,11 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kin
   else MemException(E_SAMO_Access_Fault())
 
 /* PMP checks if enabled */
-function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, paddr : xlenbits, width : atom('n), data: bits(8 * 'n), ext_acc: ext_access_type, meta: mem_meta) -> MemoryOpResult(bool) =
+function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, paddr : xlenbits, width : atom('n), data: bits(8 * 'n), typ: AccessType(ext_access_type), priv: Privilege, meta: mem_meta) -> MemoryOpResult(bool) =
   if   (~ (plat_enable_pmp ()))
   then checked_mem_write(wk, paddr, width, data, meta)
   else {
-    let typ : AccessType(ext_access_type) = Write(ext_acc);
-    match pmpCheck(paddr, width, typ, effectivePrivilege(typ, mstatus, cur_privilege)) {
+    match pmpCheck(paddr, width, typ, priv) {
       None()  => checked_mem_write(wk, paddr, width, data, meta),
       Some(e) => MemException(e)
     }
@@ -187,25 +210,42 @@ function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, pa
  * data.
  * NOTE: The wreg effect is due to MMIO, the rreg is due to checking mtime.
  */
-val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), ext_access_type, mem_meta, bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
-function mem_write_value_meta (paddr, width, value, ext_acc, meta, aq, rl, con) = {
+val mem_write_value_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), AccessType(ext_access_type), Privilege, mem_meta, bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
+function mem_write_value_priv_meta (paddr, width, value, typ, priv, meta, aq, rl, con) = {
   rvfi_write(paddr, width, value, meta);
   if (rl | con) & (~ (is_aligned_addr(paddr, width)))
   then MemException(E_SAMO_Addr_Align())
-  else match (aq, rl, con) {
-    (false, false, false) => pmp_mem_write(Write_plain, paddr, width, value, ext_acc, meta),
-    (false, true,  false) => pmp_mem_write(Write_RISCV_release, paddr, width, value, ext_acc, meta),
-    (false, false, true)  => pmp_mem_write(Write_RISCV_conditional, paddr, width, value, ext_acc, meta),
-    (false, true , true)  => pmp_mem_write(Write_RISCV_conditional_release, paddr, width, value, ext_acc, meta),
-    (true,  true,  false) => pmp_mem_write(Write_RISCV_strong_release, paddr, width, value, ext_acc, meta),
-    (true,  true , true)  => pmp_mem_write(Write_RISCV_conditional_strong_release, paddr, width, value, ext_acc, meta),
-    // throw an illegal instruction here?
-    (true,  false, false) => throw(Error_not_implemented("store.aq")),
-    (true,  false, true)  => throw(Error_not_implemented("sc.aq"))
+  else {
+    let wk : write_kind = match (aq, rl, con) {
+      (false, false, false) => Write_plain,
+      (false, true,  false) => Write_RISCV_release,
+      (false, false, true)  => Write_RISCV_conditional,
+      (false, true , true)  => Write_RISCV_conditional_release,
+      (true,  true,  false) => Write_RISCV_strong_release,
+      (true,  true , true)  => Write_RISCV_conditional_strong_release,
+      // throw an illegal instruction here?
+      (true,  false, false) => throw(Error_not_implemented("store.aq")),
+      (true,  false, true)  => throw(Error_not_implemented("sc.aq"))
+    };
+    pmp_mem_write(wk, paddr, width, value, typ, priv, meta);
   }
 }
 
-/* Memory write with a default metadata value. */
+/* Memory write with explicit Privilege, implicit AccessType and metadata */
+val mem_write_value_priv : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), Privilege, bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
+function mem_write_value_priv (paddr, width, value, priv, aq, rl, con) =
+  mem_write_value_priv_meta(paddr, width, value, Write(default_write_acc), priv, default_meta, aq, rl, con)
+
+/* Memory write with explicit metadata and AccessType, implicit and Privilege */
+val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), ext_access_type, mem_meta, bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
+function mem_write_value_meta (paddr, width, value, ext_acc, meta, aq, rl, con) = {
+  let typ = Write(ext_acc);
+  let ep = effectivePrivilege(typ, mstatus, cur_privilege);
+  mem_write_value_priv_meta(paddr, width, value, typ, ep, meta, aq, rl, con)
+}
+
+/* Memory write with default AccessType, Privilege, and metadata */
 val mem_write_value : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
-function mem_write_value (paddr, width, value, aq, rl, con) =
+function mem_write_value (paddr, width, value, aq, rl, con) = {
   mem_write_value_meta(paddr, width, value, default_write_acc, default_meta, aq, rl, con)
+}
