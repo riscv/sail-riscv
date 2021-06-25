@@ -6,7 +6,7 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let pt_ofs : paddr64 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV48_LEVEL_BITS))[(SV48_LEVEL_BITS - 1) .. 0]),
                                 PTE48_LOG_SIZE);
   let pte_addr = ptb + pt_ofs;
-  match (mem_read(Read(Data), EXTZ(pte_addr), 8, false, false, false)) {
+  match (mem_read_priv(Read(Data), Supervisor, EXTZ(pte_addr), 8, false, false, false)) {
     MemException(_) => {
 /*    print("walk48(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
             ^ " pt_base=" ^ BitStr(ptb)
@@ -127,7 +127,7 @@ function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
           } else {
             w_pte : SV48_PTE = update_BITS(pte, pbits.bits());
 	    w_pte : SV48_PTE = update_Ext(w_pte, ext);
-            match mem_write_value(EXTZ(pteAddr), 8, w_pte.bits(), false, false, false) {
+            match mem_write_value_priv(EXTZ(pteAddr), 8, w_pte.bits(), Supervisor, false, false, false) {
               MemValue(_) => {
                 add_to_TLB48(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
                 TR_Address(pAddr, ext_ptw)

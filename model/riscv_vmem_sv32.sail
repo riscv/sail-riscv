@@ -12,7 +12,7 @@ function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let pt_ofs : paddr32 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV32_LEVEL_BITS))[(SV32_LEVEL_BITS - 1) .. 0]),
                                 PTE32_LOG_SIZE);
   let pte_addr = ptb + pt_ofs;
-  match (mem_read(Read(Data), to_phys_addr(pte_addr), 4, false, false, false)) {
+  match (mem_read_priv(Read(Data), Supervisor, to_phys_addr(pte_addr), 4, false, false, false)) {
     MemException(_) => {
 /*    print("walk32(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
             ^ " pt_base=" ^ BitStr(to_phys_addr(ptb))
@@ -141,7 +141,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
                 n_ent.pte = n_pte.bits();
                 write_TLB32(idx, n_ent);
                 /* update page table */
-                match mem_write_value(to_phys_addr(EXTZ(ent.pteAddr)), 4, n_pte.bits(), false, false, false) {
+                match mem_write_value_priv(to_phys_addr(EXTZ(ent.pteAddr)), 4, n_pte.bits(), Supervisor, false, false, false) {
                   MemValue(_)     => (),
                   MemException(e) => internal_error("invalid physical address in TLB")
                 };
@@ -169,7 +169,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
               } else {
                 w_pte : SV32_PTE = update_BITS(pte, pbits.bits());
                 /* ext is unused since there are no reserved bits for extensions */
-                match mem_write_value(to_phys_addr(pteAddr), 4, w_pte.bits(), false, false, false) {
+                match mem_write_value_priv(to_phys_addr(pteAddr), 4, w_pte.bits(), Supervisor, false, false, false) {
                   MemValue(_) => {
                     add_to_TLB32(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
                     TR_Address(pAddr, ext_ptw)
