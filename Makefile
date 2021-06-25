@@ -119,6 +119,7 @@ SOFTFLOAT_LIBS   = $(SOFTFLOAT_LIBDIR)/softfloat.a
 SOFTFLOAT_SPECIALIZE_TYPE = RISCV
 
 GMP_FLAGS = $(shell pkg-config --cflags gmp)
+# N.B. GMP does not have pkg-config metadata on Ubuntu 18.04 so default to -lgmp
 GMP_LIBS = $(shell pkg-config --libs gmp || echo -lgmp)
 ZLIB_FLAGS = $(shell pkg-config --cflags zlib)
 ZLIB_LIBS = $(shell pkg-config --libs zlib)
