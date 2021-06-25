@@ -6,7 +6,7 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let pt_ofs : paddr64 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV39_LEVEL_BITS))[(SV39_LEVEL_BITS - 1) .. 0]),
                                 PTE39_LOG_SIZE);
   let pte_addr = ptb + pt_ofs;
-  match (mem_read(Read(Data), EXTZ(pte_addr), 8, false, false, false)) {
+  match (mem_read_priv(Read(Data), Supervisor, EXTZ(pte_addr), 8, false, false, false)) {
     MemException(_) => {
 /*    print("walk39(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
             ^ " pt_base=" ^ BitStr(ptb)
@@ -135,7 +135,7 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
                 n_ent.pte = n_pte.bits();
                 write_TLB39(idx, n_ent);
                 /* update page table */
-                match mem_write_value(EXTZ(ent.pteAddr), 8, n_pte.bits(), false, false, false) {
+                match mem_write_value_priv(EXTZ(ent.pteAddr), 8, n_pte.bits(), Supervisor, false, false, false) {
                   MemValue(_)     => (),
                   MemException(e) => internal_error("invalid physical address in TLB")
                 };
@@ -163,7 +163,7 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
               } else {
                 w_pte : SV39_PTE = update_BITS(pte, pbits.bits());
 		w_pte : SV39_PTE = update_Ext(w_pte, ext);
-                match mem_write_value(EXTZ(pteAddr), 8, w_pte.bits(), false, false, false) {
+                match mem_write_value_priv(EXTZ(pteAddr), 8, w_pte.bits(), Supervisor, false, false, false) {
                   MemValue(_) => {
                     add_to_TLB39(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
                     TR_Address(pAddr, ext_ptw)
