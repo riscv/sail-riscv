@@ -56,6 +56,8 @@ unsigned char *dtb = NULL;
 size_t dtb_len = 0;
 #ifdef RVFI_DII
 static bool rvfi_dii = false;
+/* Needs to be global to avoid the needed for a set-version packet on each trace */
+static unsigned rvfi_trace_version = 1;
 static int rvfi_dii_port;
 static int rvfi_dii_sock;
 #endif
@@ -71,6 +73,7 @@ bool config_print_instr = true;
 bool config_print_reg = true;
 bool config_print_mem_access = true;
 bool config_print_platform = true;
+bool config_print_rvfi = false;
 
 void set_config_print(char *var, bool val) {
   if (var == NULL || strcmp("all", var) == 0) {
@@ -78,12 +81,15 @@ void set_config_print(char *var, bool val) {
     config_print_mem_access = val;
     config_print_reg = val;
     config_print_platform = val;
+    config_print_rvfi = val;
   } else if (strcmp("instr", var) == 0) {
     config_print_instr = val;
   } else if (strcmp("reg", var) == 0) {
     config_print_reg = val;
   } else if (strcmp("mem", var) == 0) {
     config_print_mem_access = val;
+  } else if (strcmp("rvfi", var) == 0) {
+    config_print_rvfi = val;
   } else if (strcmp("platform", var) == 0) {
     config_print_platform = val;
   } else {
@@ -193,7 +199,7 @@ static void read_dtb(const char *path)
   munmap(m, st.st_size);
   close(fd);
 
-  fprintf(stdout, "Read %" PRIi64 " bytes of DTB from %s.\n", dtb_len, path);
+  fprintf(stdout, "Read %zd bytes of DTB from %s.\n", dtb_len, path);
 }
 
 char *process_args(int argc, char **argv)
@@ -671,24 +677,60 @@ void flush_logs(void)
 }
 
 #ifdef RVFI_DII
-void rvfi_send_trace(void) {
-  sail_bits packet;
+
+typedef void (packet_reader_fn)(lbits *rop, unit);
+static void get_and_send_rvfi_packet(packet_reader_fn *reader) {
+  lbits packet;
   CREATE(lbits)(&packet);
-  zrvfi_get_exec_packet(&packet, UNIT);
+  reader(&packet, UNIT);
+  /* Note: packet.len is the size in bits, not bytes. */
   if (packet.len % 8 != 0) {
     fprintf(stderr, "RVFI-DII trace packet not byte aligned: %d\n", (int)packet.len);
     exit(1);
   }
-  unsigned char bytes[packet.len / 8];
+  const size_t send_size = packet.len / 8;
+  if (config_print_rvfi) {
+    print_bits("packet = ", packet);
+    fprintf(stderr, "Sending packet with length %zd... ", send_size);
+  }
+  if (send_size > 4096) {
+    fprintf(stderr, "Unexpected large packet size (> 4KB): %zd\n", send_size);
+    exit(1);
+  }
+  unsigned char bytes[send_size];
   /* mpz_export might not write all of the null bytes */
   memset(bytes, 0, sizeof(bytes));
   mpz_export(bytes, NULL, -1, 1, 0, 0, *(packet.bits));
-  if (write(rvfi_dii_sock, bytes, packet.len / 8) == -1) {
-    fprintf(stderr, "Writing RVFI DII trace failed: %s", strerror(errno));
+  /* Ensure that we can send a full packet */
+  if (write(rvfi_dii_sock, bytes, send_size) != send_size) {
+    fprintf(stderr, "Writing RVFI DII trace failed: %s\n", strerror(errno));
     exit(1);
+  }
+  if (config_print_rvfi) {
+    fprintf(stderr, "Wrote %zd byte response to socket.\n", send_size);
   }
   KILL(lbits)(&packet);
 }
+
+void rvfi_send_trace(unsigned version) {
+  if (config_print_rvfi) {
+    fprintf(stderr, "Sending v%d trace response...\n", version);
+  }
+  if (version == 1) {
+    get_and_send_rvfi_packet(zrvfi_get_exec_packet_v1);
+  } else if (version == 2) {
+    mach_bits trace_size = zrvfi_get_v2_trace_sizze(UNIT);
+    get_and_send_rvfi_packet(zrvfi_get_exec_packet_v2);
+    if (zrvfi_int_data_present)
+      get_and_send_rvfi_packet(zrvfi_get_int_data);
+    if (zrvfi_mem_data_present)
+      get_and_send_rvfi_packet(zrvfi_get_mem_data);
+  } else {
+    fprintf(stderr, "Sending v%d packets not implemented yet!\n", version);
+    abort();
+  }
+}
+
 #endif
 
 void run_sail(void)
@@ -714,31 +756,83 @@ void run_sail(void)
 #ifdef RVFI_DII
     if (rvfi_dii) {
       mach_bits instr_bits;
+      if (config_print_rvfi) {
+        fprintf(stderr, "Waiting for cmd packet... ");
+      }
       int res = read(rvfi_dii_sock, &instr_bits, sizeof(instr_bits));
+      if (config_print_rvfi) {
+        fprintf(stderr, "Read cmd packet: %016jx\n", (intmax_t)instr_bits);
+        zprint_instr_packet(instr_bits);
+      }
       if (res == 0) {
+        if (config_print_rvfi) {
+          fprintf(stderr, "Got EOF, exiting... ");
+        }
         rvfi_dii = false;
         return;
       }
-      if (res < sizeof(instr_bits)) {
-        fprintf(stderr, "Reading RVFI DII command failed: insufficient input");
-        exit(1);
-      }
       if (res == -1) {
         fprintf(stderr, "Reading RVFI DII command failed: %s", strerror(errno));
+        exit(1);
+      }
+      if (res < sizeof(instr_bits)) {
+        fprintf(stderr, "Reading RVFI DII command failed: insufficient input");
         exit(1);
       }
       zrvfi_set_instr_packet(instr_bits);
       zrvfi_zzero_exec_packet(UNIT);
       mach_bits cmd = zrvfi_get_cmd(UNIT);
       switch (cmd) {
-      case 0: /* EndOfTrace */
-        zrvfi_halt_exec_packet(UNIT);
-        rvfi_send_trace();
-        return;
+      case 0: { /* EndOfTrace */
+        if (config_print_rvfi) {
+          fprintf(stderr, "Got EndOfTrace packet.\n");
+        }
+        mach_bits insn = zrvfi_get_insn(UNIT);
+        if (insn == (('V' << 24) | ('E' << 16) | ('R' << 8) | 'S')) {
+          /*
+           * Reset with insn set to 'VERS' is a version negotiation request
+           * and not a actual reset request. Respond with a message say that
+           * we support version 2.
+           */
+          if (config_print_rvfi) {
+            fprintf(stderr, "EndOfTrace was actually a version negotiation packet.\n");
+          }
+          get_and_send_rvfi_packet(&zrvfi_get_v2_support_packet);
+          continue;
+        } else {
+          zrvfi_halt_exec_packet(UNIT);
+          rvfi_send_trace(rvfi_trace_version);
+          return;
+        }
+      }
       case 1: /* Instruction */
         break;
+      case 'v': { /* Set wire format version */
+        mach_bits insn = zrvfi_get_insn(UNIT);
+        if (config_print_rvfi) {
+          fprintf(stderr, "Got request for v%jd trace format!\n", (intmax_t)insn);
+        }
+        if (insn == 1) {
+          fprintf(stderr, "Requested trace in legacy format!\n");
+        } else if (insn == 2) {
+          fprintf(stderr, "Requested trace in v2 format!\n");
+        } else {
+          fprintf(stderr, "Requested trace in unsupported format %jd!\n", (intmax_t)insn);
+          exit(1);
+        }
+        rvfi_trace_version = insn; // From now on send traces in the requested format
+        struct {
+          char msg[8];
+          uint64_t version;
+        } version_response = { "version=", rvfi_trace_version };
+        if (write(rvfi_dii_sock, &version_response, sizeof(version_response)) != sizeof(version_response)) {
+          fprintf(stderr, "Sending version response failed: %s\n", strerror(errno));
+          exit(1);
+        }
+        continue;
+      }
       default:
-        fprintf(stderr, "Unknown RVFI-DII command: %d\n", (int)cmd);
+        fprintf(stderr, "Unknown RVFI-DII command: %#02x\n", (int)cmd);
         exit(1);
       }
       sail_int sail_step;
@@ -748,7 +842,7 @@ void run_sail(void)
       if (have_exception) goto step_exception;
       flush_logs();
       KILL(sail_int)(&sail_step);
-      rvfi_send_trace();
+      rvfi_send_trace(rvfi_trace_version);
     } else /* if (!rvfi_dii) */
 #endif
     { /* run a Sail step */
@@ -862,12 +956,12 @@ int main(int argc, char **argv)
     entry = 0x80000000;
     int listen_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (listen_sock == -1) {
-      fprintf(stderr, "Unable to create socket: %s", strerror(errno));
+      fprintf(stderr, "Unable to create socket: %s\n", strerror(errno));
       return 1;
     }
-    int opt = 1;
-    if (setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
-      fprintf(stderr, "Unable to set reuseaddr on socket: %s", strerror(errno));
+    int reuseaddr = 1;
+    if (setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(reuseaddr)) == -1) {
+      fprintf(stderr, "Unable to set reuseaddr on socket: %s\n", strerror(errno));
       return 1;
     }
     struct sockaddr_in addr = {
@@ -876,20 +970,39 @@ int main(int argc, char **argv)
       .sin_port = htons(rvfi_dii_port)
     };
     if (bind(listen_sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-      fprintf(stderr, "Unable to set bind socket: %s", strerror(errno));
+      fprintf(stderr, "Unable to set bind socket: %s\n", strerror(errno));
       return 1;
     }
     if (listen(listen_sock, 1) == -1) {
-      fprintf(stderr, "Unable to listen on socket: %s", strerror(errno));
+      fprintf(stderr, "Unable to listen on socket: %s\n", strerror(errno));
       return 1;
     }
-    printf("Waiting for connection\n");
+    socklen_t addrlen = sizeof(addr);
+    if (getsockname(listen_sock, (struct sockaddr *) &addr, &addrlen) == -1) {
+        fprintf(stderr, "Unable to getsockname() on socket: %s\n", strerror(errno));
+      return 1;
+    }
+    printf("Waiting for connection on port %d.\n", ntohs(addr.sin_port));
     rvfi_dii_sock = accept(listen_sock, NULL, NULL);
     if (rvfi_dii_sock == -1) {
-      fprintf(stderr, "Unable to accept connection on socket: %s", strerror(errno));
+      fprintf(stderr, "Unable to accept connection on socket: %s\n", strerror(errno));
       return 1;
     }
     close(listen_sock);
+    // Ensure that the socket is blocking
+    int fd_flags = fcntl(rvfi_dii_sock, F_GETFL);
+    if (fd_flags == -1) {
+      fprintf(stderr, "Failed to get file descriptor flags for socket!\n");
+      return 1;
+    }
+    if (config_print_rvfi) {
+      fprintf(stderr, "RVFI socket fd flags=%d, nonblocking=%d\n", fd_flags,
+              (fd_flags & O_NONBLOCK) != 0);
+    }
+    if (fd_flags & O_NONBLOCK) {
+      fprintf(stderr, "Socket was non-blocking, this will not work!\n");
+      return 1;
+    }
     printf("Connected\n");
   } else
     entry = load_sail(file);

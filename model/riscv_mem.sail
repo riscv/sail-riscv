@@ -73,15 +73,16 @@ function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_
 /* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
 
 $ifdef RVFI_DII
-val rvfi_read : forall 'n, 'n > 0. (xlenbits, atom('n), MemoryOpResult(bits(8 * 'n))) -> unit effect {wreg}
+val rvfi_read : forall 'n, 'n > 0. (xlenbits, atom('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit effect {wreg}
 function rvfi_read (addr, width, result) = {
-  rvfi_exec->rvfi_mem_addr() = EXTZ(addr);
+  rvfi_mem_data->rvfi_mem_addr() = EXTZ(addr);
+  rvfi_mem_data_present = true;
   match result {
-    MemValue(v) => if   width <= 8
-                   then { rvfi_exec->rvfi_mem_rdata() = sail_zero_extend(v,64);
-                          rvfi_exec->rvfi_mem_rmask() = rvfi_encode_width_mask(width) }
-                   else { rvfi_exec->rvfi_mem_rdata() = v[63..0];
-                          rvfi_exec->rvfi_mem_rmask() = 0xFF},
+    /* TODO: report tag bit for capability writes and extend mask by one bit. */
+    MemValue(v, _) => if width <= 16
+                       then { rvfi_mem_data->rvfi_mem_rdata() = sail_zero_extend(v, 256);
+                              rvfi_mem_data->rvfi_mem_rmask() = rvfi_encode_width_mask(width) }
+                       else { internal_error("Expected at most 16 bytes here!") },
     MemException(_) => ()
   };
 }
@@ -108,7 +109,7 @@ function mem_read_meta (typ, paddr, width, aq, rl, res, meta) = {
       (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
       (_, _, _)             => pmp_mem_read(typ, paddr, width, aq, rl, res, meta)
     };
-  rvfi_read(paddr, width, MemoryOpResult_drop_meta(result));
+  rvfi_read(paddr, width, result);
   result
 }
 
@@ -133,15 +134,16 @@ function mem_write_ea (addr, width, aq, rl, con) = {
 }
 
 $ifdef RVFI_DII
-val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n)) -> unit effect {wreg}
-function rvfi_write (addr, width, value) = {
-  rvfi_exec->rvfi_mem_addr() = EXTZ(addr);
-  if width <= 8 then {
-    rvfi_exec->rvfi_mem_wdata() = sail_zero_extend(value,64);
-    rvfi_exec->rvfi_mem_wmask() = rvfi_encode_width_mask(width);
+val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), mem_meta) -> unit effect {wreg}
+function rvfi_write (addr, width, value, meta) = {
+  rvfi_mem_data->rvfi_mem_addr() = EXTZ(addr);
+  rvfi_mem_data_present = true;
+  /* TODO: report tag bit for capability writes and extend mask by one bit. */
+  if width <= 16 then {
+    rvfi_mem_data->rvfi_mem_wdata() = sail_zero_extend(value,256);
+    rvfi_mem_data->rvfi_mem_wmask() = rvfi_encode_width_mask(width);
   } else {
-    rvfi_exec->rvfi_mem_wdata() = value[63..0];
-    rvfi_exec->rvfi_mem_wmask() = 0xFF;
+    internal_error("Expected at most 16 bytes here!");
   }
 }
 $else
@@ -151,7 +153,7 @@ $endif
 
 // only used for actual memory regions, to avoid MMIO effects
 function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : xlenbits, width : atom('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
-  rvfi_write(paddr, width, data);
+  rvfi_write(paddr, width, data, meta);
   let result = MemValue(write_ram(wk, paddr, width, data, meta));
   if   get_config_print_mem()
   then print_mem("mem[" ^ BitStr(paddr) ^ "] <- " ^ BitStr(data));
@@ -187,7 +189,7 @@ function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, pa
  */
 val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), ext_access_type, mem_meta, bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
 function mem_write_value_meta (paddr, width, value, ext_acc, meta, aq, rl, con) = {
-  rvfi_write(paddr, width, value);
+  rvfi_write(paddr, width, value, meta);
   if (rl | con) & (~ (is_aligned_addr(paddr, width)))
   then MemException(E_SAMO_Addr_Align())
   else match (aq, rl, con) {

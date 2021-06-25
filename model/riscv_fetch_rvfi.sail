@@ -1,6 +1,8 @@
 function fetch() -> FetchResult = {
-  rvfi_exec->rvfi_order()    = minstret;
-  rvfi_exec->rvfi_pc_rdata() = EXTZ(get_arch_pc());
+  rvfi_inst_data->rvfi_order()    = minstret;
+  rvfi_pc_data->rvfi_pc_rdata() = EXTZ(get_arch_pc());
+  rvfi_inst_data->rvfi_mode() = EXTZ(privLevel_to_bits(cur_privilege));
+  rvfi_inst_data->rvfi_ixl() = EXTZ(misa.MXL());
 
   /* First allow extensions to check pc */
   match ext_fetch_check_pc(PC, PC) {
@@ -13,12 +15,7 @@ function fetch() -> FetchResult = {
         TR_Failure(e, _) => F_Error(e, PC),
         TR_Address(_, _) => {
           let i = rvfi_instruction.rvfi_insn();
-          rvfi_exec->rvfi_insn()     = EXTZ(i);
-          /* TODO: should we write these even if they're not really registers? */
-          rvfi_exec->rvfi_rs1_data() = EXTZ(X(i[19 .. 15]));
-          rvfi_exec->rvfi_rs2_data() = EXTZ(X(i[24 .. 20]));
-          rvfi_exec->rvfi_rs1_addr() = sail_zero_extend(i[19 .. 15],8);
-          rvfi_exec->rvfi_rs2_addr() = sail_zero_extend(i[24 .. 20],8);
+          rvfi_inst_data->rvfi_insn()   = EXTZ(i);
           if   (i[1 .. 0] != 0b11)
           then F_RVC(i[15 .. 0])
           else {
