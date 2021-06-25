@@ -87,8 +87,8 @@ function rvfi_read (addr, width, result) = {
   };
 }
 $else
-val rvfi_read : forall 'n, 'n > 0. (xlenbits, atom('n), MemoryOpResult(bits(8 * 'n))) -> unit
-function rvfi_read (addr, width, value) = ()
+val rvfi_read : forall 'n, 'n > 0. (xlenbits, atom('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit
+function rvfi_read (addr, width, result) = ()
 $endif
 
 /* NOTE: The rreg effect is due to MMIO. */
@@ -147,8 +147,8 @@ function rvfi_write (addr, width, value, meta) = {
   }
 }
 $else
-val rvfi_write : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n)) -> unit
-function rvfi_write (addr, width, value) = ()
+val rvfi_write : forall 'n, 'n > 0. (xlenbits, atom('n), bits(8 * 'n), mem_meta) -> unit
+function rvfi_write (addr, width, value, meta) = ()
 $endif
 
 // only used for actual memory regions, to avoid MMIO effects
