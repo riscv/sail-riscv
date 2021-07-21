@@ -80,14 +80,18 @@ function crypto_aes64(rd, rs1, rs2, enc, mix) = {
 }
 
 function clause execute (AES64KS1I(rnum, rs1, rd)) = {
-  let tmp1 : bits(32) = X(rs1)[63..32];
-  let rc   : bits(32) = aes_rnum_to_rcon(rnum); /* round number -> round constant */
-  let tmp2 : bits(32) = if (rnum ==0xA) then tmp1 else ror32(tmp1, 8);
-  let tmp3 : bits(32) = aes_sbox_fwd(tmp2[31..24]) @ aes_sbox_fwd(tmp2[23..16]) @
-                        aes_sbox_fwd(tmp2[15.. 8]) @ aes_sbox_fwd(tmp2[ 7.. 0]) ;
-  let result : bits(64) = (tmp3 ^ rc) @ (tmp3 ^ rc);
-  X(rd) = EXTZ(result);
-  RETIRE_SUCCESS
+  if(EXTZ(rnum) > 10) then {
+    handle_illegal()
+  } else {
+    let tmp1 : bits(32) = X(rs1)[63..32];
+    let rc   : bits(32) = aes_rnum_to_rcon(rnum); /* round number -> round constant */
+    let tmp2 : bits(32) = if (rnum ==0xA) then tmp1 else ror32(tmp1, 8);
+    let tmp3 : bits(32) = aes_sbox_fwd(tmp2[31..24]) @ aes_sbox_fwd(tmp2[23..16]) @
+                          aes_sbox_fwd(tmp2[15.. 8]) @ aes_sbox_fwd(tmp2[ 7.. 0]) ;
+    let result : bits(64) = (tmp3 ^ rc) @ (tmp3 ^ rc);
+    X(rd) = EXTZ(result);
+    RETIRE_SUCCESS
+  }
 }
 
 function clause execute (AES64KS2(rs2, rs1, rd)) = {
