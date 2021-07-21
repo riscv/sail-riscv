@@ -80,8 +80,8 @@ function crypto_aes64(rd, rs1, rs2, enc, mix) = {
 }
 
 function clause execute (AES64KS1I(rnum, rs1, rd)) = {
-  if(EXTZ(rnum) > 10) then {
-    handle_illegal()
+  if(unsigned(rnum) > 10) then {
+    handle_illegal();  RETIRE_SUCCESS
   } else {
     let tmp1 : bits(32) = X(rs1)[63..32];
     let rc   : bits(32) = aes_rnum_to_rcon(rnum); /* round number -> round constant */
