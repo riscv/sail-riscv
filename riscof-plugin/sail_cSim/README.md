@@ -14,9 +14,30 @@ building C based executable of the model. You can build both the RV32 and RV64 v
 Once built, please add `$SAIL_RISCV/c_emulator` and `$SAIL_RISCV/ocaml_emulator` to your $PATH, 
 where $SAIL_RISCV is the path to the cloned repository.
 
+## Plugin Files
+
+Description of all files present in this plugin:
+
+``` 
+  env                 # contains the model_test.h and the link.ld files currently found in 
+                      # the riscv-arch-test/riscv-target/sail-riscv-c directory  of the
+                      # the riscv-arch-test repository.
+  riscof_sail_cSim.py # plugin file for spike. MUST be prefixed with "riscof_"
+  sail_isa.yaml       # ISA YAML configuration file - new file. Only required if using sail as DUT
+  sail_platform.yaml  # PLATFORM YAML configuration file - new file. Only required if using sail as DUT
+  __init__.py         # used expose the plugin path. - new file
+  README.md           # This file
+```
+
 ## Using SAIL RISC-V as a reference model in RISCOF
 
-You will need to edit the `config.ini` file required by RISCOF with the following 
+RISCOF requires a `config.ini` file to detect various parameters of the run like - name and path 
+of the dut and reference plugins, the isa spec files, etc. A template of this this file can be generated
+automatically using the `riscof setup` command . Please see the
+[Config.ini Syntax](https://riscof.readthedocs.io/en/stable/inputs.html#config-ini-syntax))
+guide for mode details on the syntax of this file and how to modify/build custom plugins.
+
+You will need to edit the reference plugin sections of the `config.ini` file with the following 
 
 
 ```
@@ -61,15 +82,15 @@ The sail_cSim plugin (`riscof_sail_cSim.py` file) present here has the following
   the plugin defaults to using `riscv[64/32]-unknown-elf-gcc` compiler. If you are using an
   alternate toolchain or executable, you will need to edit this function.
 
-- build: This function will simply deduce the values of the a few compile arguments and check if the
-  required tooling available in the system.
+- build: This function will simply generate the values of the a few compile arguments and check if the
+  required tooling is available on the system.
 
 - runTests: This function will first create a Makefile, where each target of the Makefile
   corresponds to compiling a specific test and then running it on the sail C-emulator. If this plugin is being
   used to collect coverage of a test via isac, then this function will also append the isac commands
   for each test in the corresponding Makefile target.
 
-  Note, that the march values for the compiler for each test can be different and are deduced from
+  Note, that the march values for the compiler for each test can be different and are generated from
   the test-list provided to this function.
 
   Once the Makefile is created, this function will execute the makefile targets in parallel
