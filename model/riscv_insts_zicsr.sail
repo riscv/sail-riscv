@@ -158,6 +158,9 @@ function readCSR csr : csreg -> xlenbits = {
     (0xC81, 32) => mtime[63 .. 32],
     (0xC82, 32) => minstret[63 .. 32],
 
+    /* user mode: Zkr */
+    (0x015,  _) => read_seed_csr(),
+
     _           => /* check extensions */
                    match ext_read_CSR(csr) {
                      Some(res) => res,
@@ -234,6 +237,9 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x143,  _) => { stval = value; Some(stval) },
     (0x144,  _) => { mip = legalize_sip(mip, mideleg, value); Some(mip.bits()) },
     (0x180,  _) => { satp = legalize_satp(cur_Architecture(), satp, value); Some(satp) },
+
+    /* user mode: seed (entropy source). writes are ignored */
+    (0x015,  _) => write_seed_csr(),
 
     _           => ext_write_CSR(csr, value)
   };

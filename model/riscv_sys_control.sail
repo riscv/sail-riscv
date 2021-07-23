@@ -157,6 +157,9 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0xC81 => haveUsrMode() & (sizeof(xlen) == 32),     // timeh
     0xC82 => haveUsrMode() & (sizeof(xlen) == 32),     // instreth
 
+    /* user mode: Zkr */
+    0x015 => haveZkr(),
+
     /* check extensions */
     _     => ext_is_CSR_defined(csr, p)
   }
@@ -185,11 +188,33 @@ function check_Counteren(csr : csreg, p : Privilege) -> bool =
               else true
   }
 
+
+/* Seed may only be accessed if we are doing a write, and access has been
+ * allowed in the current priv mode
+ */
+function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
+  if ~(csr == 0x015) then {
+    true
+  }
+  else if ~(isWrite) then {
+    /* Read-only access to the seed CSR is not allowed */
+    false
+  } else {
+    match (p) {
+      Machine => true,
+      Supervisor => false, /* TODO: base this on mseccfg */
+      User => false, /* TODO: base this on mseccfg */
+      _ => false
+    }
+  }
+}
+
 function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
     is_CSR_defined(csr, p)
   & check_CSR_access(csrAccess(csr), csrPriv(csr), p, isWrite)
   & check_TVM_SATP(csr, p)
   & check_Counteren(csr, p)
+  & check_seed_CSR(csr, p, isWrite)
 
 /* Reservation handling for LR/SC.
  *
