@@ -4,6 +4,6 @@ Install a copy of <https://github.com/mit-plv/bbv> (e.g., by installing the
 Then run `./build`.
 
 The models were built with
-* `sail` commit `f0f778ef`
-* `sail-riscv` commit `0b8bf69`
-and checked against bbv version 1.1 and coq 8.9.1.
+* `sail` commit `f69ac352`
+* `sail-riscv` commit `c6c1e38`
+and checked against bbv version 1.2 and coq 8.13.1.
