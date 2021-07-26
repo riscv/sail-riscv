@@ -6,7 +6,7 @@ Require Import bbv.Word.
 Require bbv.BinNotation.
 Require Import Arith.
 Require Import ZArith.
-Require Import Omega.
+Require Import Lia.
 Require Import Eqdep_dec.
 Local Open Scope Z.
 
@@ -106,14 +106,14 @@ intros.
 unwrap_ArithFacts.
 unbool_comparisons.
 split.
-+ apply Z2Nat.inj_le; omega.
-+ apply Z2Nat.inj_lt; omega.
++ apply Z2Nat.inj_le; lia.
++ apply Z2Nat.inj_lt; lia.
 Qed.
 Lemma subrange_lemma1 {n m o} : (o <= m < n -> n = m + 1 + (n - (m + 1)))%nat.
-intros. omega.
+intros. lia.
 Qed.
 Lemma subrange_lemma2 {n m o} : (o <= m < n -> m+1 = o+(m-o+1))%nat.
-omega.
+lia.
 Qed.
 Lemma subrange_lemma3 {m o} `{ArithFact (0 <=? o)} `{ArithFact (o <=? m)} :
   Z.of_nat (Z.to_nat m - Z.to_nat o + 1)%nat = m - o + 1.
@@ -121,9 +121,8 @@ unwrap_ArithFacts.
 unbool_comparisons.
 rewrite Nat2Z.inj_add.
 rewrite Nat2Z.inj_sub.
-repeat rewrite Z2Nat.id; try omega.
-reflexivity.
-apply Z2Nat.inj_le; omega.
+repeat rewrite Z2Nat.id; lia.
+apply Z2Nat.inj_le; lia.
 Qed.
 
 Definition subrange_vec_dec {n} (v : mword n) m o `{ArithFact (0 <=? o)} `{ArithFact (o <=? m <? n)} : mword (m - o + 1) :=
@@ -159,10 +158,10 @@ rewrite <- subrange_lemma3.
 rewrite !Nat2Z.inj_add.
 rewrite !Nat2Z.inj_sub.
 rewrite Nat2Z.inj_add.
-repeat rewrite Z2Nat.id; try omega.
+repeat rewrite Z2Nat.id; lia.
 rewrite Nat.add_1_r.
-apply Z2Nat.inj_lt; omega.
-apply Z2Nat.inj_le; omega.
+apply Z2Nat.inj_lt; lia.
+apply Z2Nat.inj_le; lia.
 Qed.
 
 Definition update_subrange_vec_dec {n} (v : mword n) m o `{ArithFact (0 <=? o)} `{ArithFact (o <=? m <? n)} (w : mword (m - o + 1)) : mword n.
@@ -186,8 +185,8 @@ Defined.
 Definition update_subrange_vec_inc {n} (v : mword n) m o `{ArithFact (0 <=? m)} `{ArithFact (m <=? o <? n)} (w : mword (o - m + 1)) : mword n := update_subrange_vec_dec v (n-1-m) (n-1-o) (autocast w).
 
 Lemma mword_nonneg {a} : mword a -> a >= 0.
-destruct a;
-auto using Z.le_ge, Zle_0_pos with zarith.
+destruct a.
+1,2: auto using Z.le_ge, Zle_0_pos with zarith.
 destruct 1.
 Qed.
 
@@ -197,7 +196,7 @@ refine (cast_to_mword (Word.zext (get_word v) (Z.to_nat (b - a))) _).
 unwrap_ArithFacts.
 unbool_comparisons.
 assert (a >= 0). { apply mword_nonneg. assumption. }
-rewrite <- Z2Nat.inj_add; try omega.
+rewrite <- Z2Nat.inj_add; [ | lia | lia ].
 rewrite Zplus_minus.
 apply Z2Nat.id.
 auto with zarith.
@@ -209,7 +208,7 @@ refine (cast_to_mword (Word.sext (get_word v) (Z.to_nat (b - a))) _).
 unwrap_ArithFacts.
 unbool_comparisons.
 assert (a >= 0). { apply mword_nonneg. assumption. }
-rewrite <- Z2Nat.inj_add; try omega.
+rewrite <- Z2Nat.inj_add; [ | lia | lia ].
 rewrite Zplus_minus.
 apply Z2Nat.id.
 auto with zarith.
@@ -230,32 +229,32 @@ Defined.
 Lemma truncate_eq {m n} : m >= 0 -> m <= n -> (Z.to_nat n = Z.to_nat m + (Z.to_nat n - Z.to_nat m))%nat.
 intros.
 assert ((Z.to_nat m <= Z.to_nat n)%nat).
-{ apply Z2Nat.inj_le; omega. }
-omega.
+{ apply Z2Nat.inj_le; lia. }
+lia.
 Qed.
 Lemma truncateLSB_eq {m n} : m >= 0 -> m <= n -> (Z.to_nat n = (Z.to_nat n - Z.to_nat m) + Z.to_nat m)%nat.
 intros.
 assert ((Z.to_nat m <= Z.to_nat n)%nat).
-{ apply Z2Nat.inj_le; omega. }
-omega.
+{ apply Z2Nat.inj_le; lia. }
+lia.
 Qed.
 
 Definition vector_truncate {n} (v : mword n) (m : Z) `{ArithFact (m >=? 0)} `{ArithFact (m <=? n)} : mword m.
 refine (cast_to_mword (Word.split1 _ _ (cast_word (get_word v) (_ : Z.to_nat n = Z.to_nat m + (Z.to_nat n - Z.to_nat m))%nat)) (_ : Z.of_nat (Z.to_nat m) = m)).
 abstract (unwrap_ArithFacts; unbool_comparisons; apply truncate_eq; auto with zarith).
-abstract (unwrap_ArithFacts; unbool_comparisons; apply Z2Nat.id; omega).
+abstract (unwrap_ArithFacts; unbool_comparisons; apply Z2Nat.id; lia).
 Defined.
 
 Definition vector_truncateLSB {n} (v : mword n) (m : Z) `{ArithFact (m >=? 0)} `{ArithFact (m <=? n)} : mword m.
 refine (cast_to_mword (Word.split2 _ _ (cast_word (get_word v) (_ : Z.to_nat n = (Z.to_nat n - Z.to_nat m) + Z.to_nat m)%nat)) (_ : Z.of_nat (Z.to_nat m) = m)).
 abstract (unwrap_ArithFacts; unbool_comparisons; apply truncateLSB_eq; auto with zarith).
-abstract (unwrap_ArithFacts; unbool_comparisons; apply Z2Nat.id; omega).
+abstract (unwrap_ArithFacts; unbool_comparisons; apply Z2Nat.id; lia).
 Defined.
 
 Lemma concat_eq {a b} : a >= 0 -> b >= 0 -> Z.of_nat (Z.to_nat b + Z.to_nat a)%nat = a + b.
 intros.
 rewrite Nat2Z.inj_add.
-rewrite Z2Nat.id; auto with zarith.
+rewrite Z2Nat.id. 2: solve [ auto with zarith ].
 rewrite Z2Nat.id; auto with zarith.
 Qed.
 
@@ -303,9 +302,9 @@ constructor.
   assert (2 ^ a - 1 = Z.of_N (2 ^ (Z.to_N a) - 1)). {
     rewrite N2Z.inj_sub.
     * rewrite N2Z.inj_pow.
-      rewrite Z2N.id; auto.
-      destruct a; auto with zarith. destruct x.
-    * apply N.le_trans with (m := (2^0)%N); auto using N.le_refl.
+      rewrite Z2N.id. solve [ auto ].
+      destruct a. 1,2: auto with zarith. destruct x.
+    * apply N.le_trans with (m := (2^0)%N). solve [ auto using N.le_refl ].
       apply N.pow_le_mono_r.
       inversion 1.
       apply N.le_0_l.
@@ -346,8 +345,8 @@ rewrite eq.
 rewrite Nat2Z.id.
 intro w.
 destruct (Word.wordToZ_size' w) as [LO HI].
-replace 1 with (Z.of_nat 1); auto.
-rewrite <- Nat2Z.inj_sub; auto with arith.
+replace 1 with (Z.of_nat 1). 2: solve [ auto ].
+rewrite <- Nat2Z.inj_sub. 2: solve [ auto with arith ].
 simpl.
 rewrite <- minus_n_O.
 rewrite Zpow_pow2.
@@ -489,8 +488,8 @@ end.
 Lemma replicate_ok {n a} `{ArithFact (n >=? 0)} `{ArithFact (a >=? 0)} :
    Z.of_nat (Z.to_nat n * Z.to_nat a) = a * n.
 destruct H. destruct H0. unbool_comparisons.
-rewrite <- Z2Nat.id; auto with zarith.
-rewrite Z2Nat.inj_mul; auto with zarith.
+rewrite <- Z2Nat.id. 2: solve [ auto with zarith ].
+rewrite Z2Nat.inj_mul. 2,3: solve [ auto with zarith ].
 rewrite Nat.mul_comm. reflexivity.
 Qed.
 Definition replicate_bits {a} (w : mword a) (n : Z) `{ArithFact (n >=? 0)} : mword (a * n) :=
@@ -529,7 +528,7 @@ destruct n.
   compute. intuition.
 * simpl in *. destruct (weq v w).
   + subst. rewrite weqb_eq; tauto.
-  + rewrite weqb_ne; auto. intuition.
+  + rewrite weqb_ne; auto. split; congruence.
 * destruct v.
 Qed.
 
@@ -567,7 +566,7 @@ Program Fixpoint reverse_endianness_word {n} (bits : word n) : word n :=
   | _ => bits
   end.
 Next Obligation.
-omega.
+lia.
 Qed.
 
 Definition reverse_endianness {n} (bits : mword n) := with_word (P := id) reverse_endianness_word bits.
@@ -604,11 +603,11 @@ unfold slice.
 destruct (sumbool_of_bool _).
 * exfalso.
   unbool_comparisons.
-  omega.
+  lia.
 * destruct (sumbool_of_bool _).
   + exfalso.
     unbool_comparisons.  
-    omega.
+    lia.
   + repeat replace_ArithFact_proof.
     reflexivity.
 Qed.

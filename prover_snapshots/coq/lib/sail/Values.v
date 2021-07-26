@@ -213,7 +213,8 @@ Lemma ZEuclid_div_pos : forall x y, 0 < y -> 0 <= x -> 0 <= ZEuclid.div x y.
 intros.
 unfold ZEuclid.div.
 change 0 with (0 * 0).
-apply Zmult_le_compat; auto with zarith.
+apply Zmult_le_compat.
+3,4: auto with zarith.
 * apply Z.sgn_nonneg. auto with zarith.
 * apply Z_div_pos; auto. apply Z.lt_gt. apply Z.abs_pos. auto with zarith.
 Qed.
@@ -231,19 +232,14 @@ Qed.
 Lemma ZEuclid_div_ge : forall x y, y > 0 -> x >= 0 -> x - ZEuclid.div x y >= 0.
 intros.
 unfold ZEuclid.div.
-rewrite Z.sgn_pos; auto with zarith.
+rewrite Z.sgn_pos. 2: solve [ auto with zarith ].
 rewrite Z.mul_1_l.
 apply Z.le_ge.
 apply Zle_minus_le_0.
 apply Z.div_le_upper_bound.
 * apply Z.abs_pos. auto with zarith.
 * rewrite Z.mul_comm.
-  assert (0 < Z.abs y). {
-    apply Z.abs_pos.
-    omega.
-  }
-  revert H1.
-  generalize (Z.abs y). intros. nia.
+  nia.
 Qed.
 
 Lemma ZEuclid_div_mod0 : forall x y, y <> 0 ->
@@ -841,7 +837,7 @@ refine
   end).
 exfalso. inversion H.
 exfalso. inversion H.
-simpl in H. omega.
+simpl in H. lia.
 Defined.
 
 Lemma nth_in_range_is_nth : forall A n (l : list A) d (H : n < length l),
@@ -863,17 +859,6 @@ rewrite Nat2Z.id in bounded.
 assumption.
 Qed.
 
-(*
-Lemma nth_top_aux {A} {n} {xs : list A} : Z.to_nat n < length xs -> let top := ((length_list xs) - 1)%Z in Z.to_nat (top - n)%Z < length xs.
-unfold length_list.
-generalize (length xs).
-intro n0.
-rewrite <- (Nat2Z.id n0).
-intro H.
-apply Z2Nat.inj_lt.
-* omega. 
-*)
-
 Close Scope nat.
 
 (*val access_list_inc : forall a. list a -> Z -> a*)
@@ -890,8 +875,8 @@ Definition access_list_dec {A} (xs : list A) n `{H1:ArithFact (0 <=? n)} `{H2:Ar
 refine (
   let top := (length_list xs) - 1 in
   @access_list_inc A xs (top - n) _ _).
-abstract (constructor; apply use_ArithFact, Z.leb_le in H1; apply use_ArithFact, Z.ltb_lt in H2; apply Z.leb_le; omega).
-abstract (constructor; apply use_ArithFact, Z.leb_le in H1; apply use_ArithFact, Z.ltb_lt in H2; apply Z.ltb_lt; omega).
+abstract (constructor; apply use_ArithFact, Z.leb_le in H1; apply use_ArithFact, Z.ltb_lt in H2; apply Z.leb_le; lia).
+abstract (constructor; apply use_ArithFact, Z.leb_le in H1; apply use_ArithFact, Z.ltb_lt in H2; apply Z.ltb_lt; lia).
 Defined.
 
 (*val access_list : forall a. bool -> list a -> Z -> a*)
@@ -1152,9 +1137,9 @@ Qed.
 Lemma ArithFact_mword (a : Z) (w : mword a) : ArithFact (a >=? 0).
 constructor.
 destruct a.
-auto with zarith.
-auto using Z.le_ge, Zle_0_pos.
-destruct w.
+* auto with zarith.
+* auto using Z.le_ge, Zle_0_pos.
+* destruct w.
 Qed.
 (* Remove constructor from ArithFact(P)s and if they're used elsewhere
    in the context create a copy that rewrites will work on. *)
@@ -1514,10 +1499,6 @@ Ltac clean_up_props :=
   | H1:?P, H2:?R <-> ?Q |- _ => constr_eq P Q; apply (iff_known_r H1) in H2
   | H:context[_ \/ False] |- _ => rewrite or_False_r in H
   | H:context[False \/ _] |- _ => rewrite or_False_l in H
- (* omega doesn't cope well with extra "True"s in the goal.
-    Check that they actually appear because setoid_rewrite can fill in evars. *)
-  | |- context[True /\ _] => setoid_rewrite True_left
-  | |- context[_ /\ True] => setoid_rewrite True_right
   end;
   remove_unnecessary_casesplit.
 
@@ -1526,7 +1507,7 @@ Ltac prepare_for_solver :=
  generalize_embedded_proofs;
  clear_irrelevant_defns;
  clear_non_Z_bool_defns;
- autounfold with sail in * |- *; (* You can add Hint Unfold ... : sail to let omega see through fns *)
+ autounfold with sail in * |- *; (* You can add Hint Unfold ... : sail to let lia see through fns *)
  split_cases;
  extract_properties;
  repeat match goal with w:mword ?n |- _ => apply ArithFact_mword in w end;
@@ -1612,7 +1593,7 @@ destruct x; compute; split; congruence.
 Qed.
 
 Lemma b2z_tf x : 0 <= Z.b2z x <= 1.
-destruct x; simpl; omega.
+destruct x; simpl; lia.
 Qed.
 
 Lemma b2z_andb a b :
@@ -1685,7 +1666,7 @@ Ltac guess_ex_solver :=
   | |- @ex bool _ => exists true; guess_ex_solver
   | |- @ex bool _ => exists false; guess_ex_solver
   | x : ?ty |- @ex ?ty _ => exists x; guess_ex_solver
-  | _ => solve [tauto | eauto 3 with zarith sail | solve_bool_with_Z | omega]
+  | _ => solve [tauto | eauto 3 with zarith sail | solve_bool_with_Z | lia]
   end.
 
 (* A straightforward solver for simple problems like
@@ -1814,7 +1795,7 @@ Ltac ex_iff_solve :=
   match goal with
   | |- @ex _ _ => eexists; ex_iff_solve
   (* Range constraints are attached to the right *)
-  | |- _ /\ _ => split; [ex_iff_solve | omega]
+  | |- _ /\ _ => split; [ex_iff_solve | lia]
   | |- _ <-> _ => conjuncts_iff_solve || (symmetry; conjuncts_iff_solve)
   end.
 
@@ -1896,7 +1877,7 @@ in
    remaining evar with left over.  TODO: apply to goals without an evar clause *)
 match goal with
   | |- @ex _ _ => eexists; clause_matching_bool_solver
-  | |- _ = _ /\ _ <= _ <= _ => split; [clause_matching_bool_solver | omega]
+  | |- _ = _ /\ _ <= _ <= _ => split; [clause_matching_bool_solver | lia]
   | |- ?l = ?r =>
   let rec clause l r :=
       match l with
@@ -1920,7 +1901,7 @@ Ltac main_solver :=
  solve
  [ apply ArithFact_mword; assumption
  | z_comparisons
- | omega with Z
+ | lia
    (* Try sail hints before dropping the existential *)
  | subst; eauto 3 with zarith sail
    (* The datatypes hints give us some list handling, esp In *)
@@ -1998,7 +1979,7 @@ Ltac main_solver :=
 Ltac simple_omega :=
   repeat match goal with
   H := projT1 _ |- _ => clearbody H
-  end; omega.
+  end; lia.
 
 Ltac solve_unknown :=
   match goal with
@@ -2205,9 +2186,9 @@ Hint Unfold neq_atom : sail.
 Lemma ReasonableSize_witness (a : Z) (w : mword a) : ReasonableSize a.
 constructor.
 destruct a.
-auto with zarith.
-auto using Z.le_ge, Zle_0_pos.
-destruct w.
+* auto with zarith.
+* auto using Z.le_ge, Zle_0_pos.
+* destruct w.
 Qed.
 
 Hint Extern 0 (ReasonableSize ?A) => (unwrap_ArithFacts; solve [apply ReasonableSize_witness; assumption | constructor; auto with zarith]) : typeclass_instances.
@@ -2547,21 +2528,30 @@ Fixpoint foreach_Z' {Vars} from to step n (vars : Vars) (body : Z -> Vars -> Var
 Definition foreach_Z {Vars} from to step vars body :=
   foreach_Z' (Vars := Vars) from to step (S (Z.abs_nat (from - to))) vars body.
 
-Fixpoint foreach_Z_up' {Vars} (from to step off : Z) (n:nat) `{ArithFact (0 <? step)} `{ArithFact (0 <=? off)} (vars : Vars) (body : forall (z : Z) `(ArithFact ((from <=? z <=? to))), Vars -> Vars) {struct n} : Vars :=
+(* Define these in proof mode to avoid anomalies related to abstract.
+   (See https://github.com/coq/coq/issues/10959) *)
+
+Fixpoint foreach_Z_up' {Vars} (from to step off : Z) (n:nat) `{ArithFact (0 <? step)} `{ArithFact (0 <=? off)} (vars : Vars) (body : forall (z : Z) `(ArithFact ((from <=? z <=? to))), Vars -> Vars) {struct n} : Vars.
+refine (
   if sumbool_of_bool (from + off <=? to) then
     match n with
     | O => vars
-    | S n => let vars := body (from + off) _ vars in foreach_Z_up' from to step (off + step) n vars body
+    | S n => let vars := body (from + off) _ vars in foreach_Z_up' _ from to step (off + step) n _ _ vars body
     end
-  else vars.
+  else vars
+).
+Defined.
 
-Fixpoint foreach_Z_down' {Vars} from to step off n `{ArithFact (0 <? step)} `{ArithFact (off <=? 0)} (vars : Vars) (body : forall (z : Z) `(ArithFact ((to <=? z <=? from))), Vars -> Vars) {struct n} : Vars :=
+Fixpoint foreach_Z_down' {Vars} from to step off (n:nat) `{ArithFact (0 <? step)} `{ArithFact (off <=? 0)} (vars : Vars) (body : forall (z : Z) `(ArithFact ((to <=? z <=? from))), Vars -> Vars) {struct n} : Vars.
+refine (
   if sumbool_of_bool (to <=? from + off) then
     match n with
     | O => vars
-    | S n => let vars := body (from + off) _ vars in foreach_Z_down' from to step (off - step) n vars body
+    | S n => let vars := body (from + off) _ vars in foreach_Z_down' _ from to step (off - step) n _ _ vars body
     end
-  else vars.
+  else vars
+).
+Defined.
 
 Definition foreach_Z_up {Vars} from to step vars body `{ArithFact (0 <? step)} :=
     foreach_Z_up' (Vars := Vars) from to step 0 (S (Z.abs_nat (from - to))) vars body.
@@ -2739,10 +2729,10 @@ assert ((0 <= Z.to_nat m < Datatypes.length l)%nat).
     apply Z2Nat.inj_lt; auto with zarith.
 }
 rewrite app_length.
-rewrite firstn_length_le; only 2:omega.
+rewrite firstn_length_le; only 2:lia.
 cbn -[skipn].
 rewrite skipn_length;
-omega.
+lia.
 Qed.
 
 Program Definition vec_update_dec {T n} (v : vec T n) m t `{ArithFact (0 <=? m <? n)} : vec T n := existT _ (update_list_dec (projT1 v) m t) _.
@@ -2754,7 +2744,7 @@ rewrite update_list_inc_length.
 + destruct H as [H].
   unbool_comparisons.
   destruct v. simpl (projT1 _). rewrite e.
-  omega.
+  lia.
 Qed.
 
 Program Definition vec_update_inc {T n} (v : vec T n) m t `{ArithFact (0 <=? m <? n)} : vec T n := existT _ (update_list_inc (projT1 v) m t) _.
@@ -2765,7 +2755,7 @@ rewrite update_list_inc_length.
 + destruct H.
   unbool_comparisons.
   destruct v. simpl (projT1 _). rewrite e.
-  omega.
+  auto.
 Qed.
 
 Program Definition vec_map {S T} (f : S -> T) {n} (v : vec S n) : vec T n := existT _ (List.map f (projT1 v)) _.
@@ -2840,7 +2830,7 @@ refine (existT _ (shl_int x y) _).
 destruct HE as [HE].
 destruct HR as [HR].
 unbool_comparisons.
-assert (y = 0 \/ y = 1 \/ y = 2 \/ y = 3) by omega.
+assert (y = 0 \/ y = 1 \/ y = 2 \/ y = 3) by lia.
 constructor.
 intuition (subst; compute; auto).
 Defined.
@@ -2850,7 +2840,7 @@ refine (existT _ (shl_int x y) _).
 destruct HE as [HE].
 destruct HR as [HR].
 unbool_comparisons.
-assert (y = 0 \/ y = 1 \/ y = 2 \/ y = 3) by omega.
+assert (y = 0 \/ y = 1 \/ y = 2 \/ y = 3) by lia.
 constructor.
 intuition (subst; compute; auto).
 Defined.
@@ -2890,7 +2880,7 @@ Lemma shl_8_ge_0 {n} : shl_int 8 n >= 0.
 unfold shl_int.
 apply Z.le_ge.  
 apply <- Z.shiftl_nonneg.
-omega.
+lia.
 Qed.
 Hint Resolve shl_8_ge_0 : sail.
 
@@ -2899,6 +2889,6 @@ Hint Resolve shl_8_ge_0 : sail.
 
 Lemma sail_lt_ge (x y : Z) :
   x < y <-> y >= x +1.
-omega.
+lia.
 Qed.
 Hint Resolve sail_lt_ge : sail.

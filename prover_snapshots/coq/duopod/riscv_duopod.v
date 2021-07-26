@@ -25,6 +25,12 @@ Definition neq_bool (x : bool) (y : bool) : bool := negb (Bool.eqb x y).
 
 Definition __id (x : Z) : {_retval : Z & ArithFact (_retval =? x)} := build_ex (x).
 
+Definition _shl_int_general (m : Z) (n : Z) : Z :=
+   if sumbool_of_bool (Z.geb n 0) then shl_int m n else shr_int m (Z.opp n).
+
+Definition _shr_int_general (m : Z) (n : Z) : Z :=
+   if sumbool_of_bool (Z.geb n 0) then shr_int m n else shl_int m (Z.opp n).
+
 Definition fdiv_int (n : Z) (m : Z) : Z :=
    if sumbool_of_bool (andb (Z.ltb n 0) (Z.gtb m 0)) then Z.sub (Z.quot (Z.add n 1) m) 1
    else if sumbool_of_bool (andb (Z.gtb n 0) (Z.ltb m 0)) then Z.sub (Z.quot (Z.sub n 1) m) 1

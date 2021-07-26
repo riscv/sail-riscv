@@ -450,6 +450,6 @@ clean:
 	-rm -f *.gcno *.gcda
 	-rm -f z3_problems
 	-Holmake cleanAll
-	-rm -f handwritten_support/riscv_extras.vo handwritten_support/riscv_extras.glob handwritten_support/.riscv_extras.aux
-	-rm -f handwritten_support/mem_metadata.vo handwritten_support/mem_metadata.glob handwritten_support/.mem_metadata.aux
+	-rm -f handwritten_support/riscv_extras.vo handwritten_support/riscv_extras.vos handwritten_support/riscv_extras.vok handwritten_support/riscv_extras.glob handwritten_support/.riscv_extras.aux
+	-rm -f handwritten_support/mem_metadata.vo handwritten_support/mem_metadata.vos handwritten_support/mem_metadata.vok handwritten_support/mem_metadata.glob handwritten_support/.mem_metadata.aux
 	ocamlbuild -clean
