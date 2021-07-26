@@ -82,6 +82,11 @@ val _ = Define `
  ((zeros0:int ->(bitU)list) len=  (repeat [B0] len))`;
 
 
+(*val ones : integer -> list bitU*)
+val _ = Define `
+ ((ones:int ->(bitU)list) len=  (repeat [B1] len))`;
+
+
 (*val vector_truncate : list bitU -> integer -> list bitU*)
 val _ = Define `
  ((vector_truncate0:(bitU)list -> int ->(bitU)list) bs len=  (extz_bv 

@@ -34,26 +34,6 @@ val _ = Define `
 
 (*val neq : forall 'a. Eq 'a => 'a -> 'a -> bool*)
 
-(*let add_int l r = integerAdd l r
-let add_signed l r = integerAdd l r
-let sub_int l r = integerMinus l r
-let mult_int l r = integerMult l r
-let div_int l r = integerDiv l r
-let div_nat l r = natDiv l r
-let power_int_nat l r = integerPow l r
-let power_int_int l r = integerPow l (nat_of_int r)
-let negate_int i = integerNegate i
-let min_int l r = integerMin l r
-let max_int l r = integerMax l r
-
-let add_real l r = realAdd l r
-let sub_real l r = realMinus l r
-let mult_real l r = realMult l r
-let div_real l r = realDiv l r
-let negate_real r = realNegate r
-let abs_real r = realAbs r
-let power_real b e = realPowInteger b e*)
-
 (*val print_endline : string -> unit*)
 val _ = Define `
  ((print_endline:string -> unit) _=  () )`;
@@ -556,6 +536,29 @@ val _ = Define `
          )))`;
 
 
+val _ = Define `
+ ((nibble_of_char:char ->(bitU#bitU#bitU#bitU)option)= 
+  (\x .  (case x of
+               #"0" => SOME (B0, B0, B0, B0)
+           | #"1" => SOME (B0, B0, B0, B1)
+           | #"2" => SOME (B0, B0, B1, B0)
+           | #"3" => SOME (B0, B0, B1, B1)
+           | #"4" => SOME (B0, B1, B0, B0)
+           | #"5" => SOME (B0, B1, B0, B1)
+           | #"6" => SOME (B0, B1, B1, B0)
+           | #"7" => SOME (B0, B1, B1, B1)
+           | #"8" => SOME (B1, B0, B0, B0)
+           | #"9" => SOME (B1, B0, B0, B1)
+           | #"A" => SOME (B1, B0, B1, B0)
+           | #"B" => SOME (B1, B0, B1, B1)
+           | #"C" => SOME (B1, B1, B0, B0)
+           | #"D" => SOME (B1, B1, B0, B1)
+           | #"E" => SOME (B1, B1, B1, B0)
+           | #"F" => SOME (B1, B1, B1, B1)
+           | _ => NONE
+         )))`;
+
+
  val _ = Define `
  ((hexstring_of_bits:(bitU)list ->((char)list)option) bs=  ((case bs of
     b1 :: b2 :: b3 :: b4 :: bs =>
@@ -571,11 +574,73 @@ val _ = Define `
 
 
 val _ = Define `
- ((show_bitlist:(bitU)list -> string) bs=
+ ((show_bitlist_prefix:char ->(bitU)list -> string) c bs=
    ((case hexstring_of_bits bs of
-    SOME s => IMPLODE (#"0" :: (#"x" :: s))
-  | NONE => IMPLODE (#"0" :: (#"b" :: MAP bitU_char bs))
+    SOME s => IMPLODE (c :: (#"x" :: s))
+  | NONE => IMPLODE (c :: (#"b" :: MAP bitU_char bs))
   )))`;
+
+
+val _ = Define `
+ ((show_bitlist:(bitU)list -> string) bs=  (show_bitlist_prefix #"0" bs))`;
+
+
+(*val hex_char : natural -> char*)
+
+val _ = Define `
+ ((hex_char:num -> char) n= 
+  (
+  if(n = ( 0: num)) then #"0" else
+    (
+    if(n = ( 1: num)) then #"1" else
+      (
+      if(n = ( 2: num)) then #"2" else
+        (
+        if(n = ( 3: num)) then #"3" else
+          (
+          if(n = ( 4: num)) then #"4" else
+            (
+            if(n = ( 5: num)) then #"5" else
+              (
+              if(n = ( 6: num)) then #"6" else
+                (
+                if(n = ( 7: num)) then #"7" else
+                  (
+                  if(n = ( 8: num)) then #"8" else
+                    (
+                    if(n = ( 9: num)) then #"9" else
+                      (
+                      if(n = ( 10: num)) then #"A" else
+                        (
+                        if(n = ( 11: num)) then #"B" else
+                          (
+                          if(n = ( 12: num)) then #"C" else
+                            (
+                            if(n = ( 13: num)) then #"D" else
+                              (
+                              if(n = ( 14: num)) then #"E" else
+                                (
+                                if(n = ( 15: num)) then #"F" else
+                                  (failwith
+                                     "hex_char: not a hexadecimal digit"))))))))))))))))))`;
+
+
+(*val hex_str_aux : natural -> list char -> list char*)
+
+ val hex_str_aux_defn = Hol_defn "hex_str_aux" `
+ ((hex_str_aux:num ->(char)list ->(char)list) n acc=
+   (if n =( 0:num) then acc else
+  hex_str_aux (n DIV( 16:num)) (hex_char (n MOD( 16:num)) :: acc)))`;
+
+val _ = Lib.with_flag (computeLib.auto_import_definitions, false) Defn.save_defn hex_str_aux_defn;
+
+(*val hex_str : integer -> string*)
+
+val _ = Define `
+ ((hex_str:int -> string) i=
+   (if i <( 0 : int) then failwith "hex_str: negative" else
+  if i =( 0 : int) then "0x0" else 
+  STRCAT"0x" (IMPLODE (hex_str_aux (Num (ABS (ABS i))) []))))`;
 
 
 (*val subrange_list_inc : forall 'a. list 'a -> integer -> integer -> list 'a*)

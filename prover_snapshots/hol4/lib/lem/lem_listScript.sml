@@ -336,13 +336,13 @@ val _ = Define `
 (* genlist                   *)
 (* ------------------------- *)
 
-(* [genlist f n] generates the list [f 0; f 1; ... (f (n-1))] *)
+(* [genlist f n] generates the list [f 1; ... (f (n-1))] *)
 (*val genlist : forall 'a. (nat -> 'a) -> nat -> list 'a*)
 
 
-(*let rec genlist f n=
-   match n with
-    | 0 -> []
+(*let rec genlist f (n : nat)=
+   match (n : nat) with
+    | (0:nat) -> []
     | n' + 1 -> snoc (f n') (genlist f n')
   end*)
 
