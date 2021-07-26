@@ -55,15 +55,23 @@ begin
 \<comment> \<open>\<open> folding functions for non-empty lists,
     which don`t take the base case \<close>\<close>
 \<comment> \<open>\<open>val foldl1 : forall 'a. ('a -> 'a -> 'a) -> list 'a -> 'a\<close>\<close>
-fun foldl1  :: "('a \<Rightarrow> 'a \<Rightarrow> 'a)\<Rightarrow> 'a list \<Rightarrow> 'a "  where 
-     " foldl1 f (x # xs) = ( List.foldl f x xs )"
-|" foldl1 f ([]) = ( failwith (''List_extra.foldl1 of empty list''))"
+fun foldl1  :: \<open>('a \<Rightarrow> 'a \<Rightarrow> 'a)\<Rightarrow> 'a list \<Rightarrow> 'a \<close>  where 
+     \<open> foldl1 f (x # xs) = ( List.foldl f x xs )\<close> 
+  for  f  :: " 'a \<Rightarrow> 'a \<Rightarrow> 'a " 
+  and  xs  :: " 'a list " 
+  and  x  :: " 'a "
+|\<open> foldl1 f ([]) = ( failwith (''List_extra.foldl1 of empty list''))\<close> 
+  for  f  :: " 'a \<Rightarrow> 'a \<Rightarrow> 'a "
 
 
 \<comment> \<open>\<open>val foldr1 : forall 'a. ('a -> 'a -> 'a) -> list 'a -> 'a\<close>\<close>
-fun foldr1  :: "('a \<Rightarrow> 'a \<Rightarrow> 'a)\<Rightarrow> 'a list \<Rightarrow> 'a "  where 
-     " foldr1 f (x # xs) = ( List.foldr f xs x )"
-|" foldr1 f ([]) = ( failwith (''List_extra.foldr1 of empty list''))"
+fun foldr1  :: \<open>('a \<Rightarrow> 'a \<Rightarrow> 'a)\<Rightarrow> 'a list \<Rightarrow> 'a \<close>  where 
+     \<open> foldr1 f (x # xs) = ( List.foldr f xs x )\<close> 
+  for  f  :: " 'a \<Rightarrow> 'a \<Rightarrow> 'a " 
+  and  xs  :: " 'a list " 
+  and  x  :: " 'a "
+|\<open> foldr1 f ([]) = ( failwith (''List_extra.foldr1 of empty list''))\<close> 
+  for  f  :: " 'a \<Rightarrow> 'a \<Rightarrow> 'a "
 
 
   
@@ -80,11 +88,13 @@ fun foldr1  :: "('a \<Rightarrow> 'a \<Rightarrow> 'a)\<Rightarrow> 'a list \<Ri
 \<comment> \<open>\<open> Find_non_pure             \<close>\<close>
 \<comment> \<open>\<open> ------------------------- \<close>\<close>
 \<comment> \<open>\<open>val findNonPure : forall 'a. ('a -> bool) -> list 'a -> 'a\<close>\<close> 
-definition findNonPure  :: "('a \<Rightarrow> bool)\<Rightarrow> 'a list \<Rightarrow> 'a "  where 
-     " findNonPure P l = ( (case  (List.find P l) of 
+definition findNonPure  :: \<open>('a \<Rightarrow> bool)\<Rightarrow> 'a list \<Rightarrow> 'a \<close>  where 
+     \<open> findNonPure P l = ( (case  (List.find P l) of 
     Some e      => e
   | None     => failwith (''List_extra.findNonPure'')
-))"
+))\<close> 
+  for  P  :: " 'a \<Rightarrow> bool " 
+  and  l  :: " 'a list "
 
 
 
@@ -93,24 +103,28 @@ definition findNonPure  :: "('a \<Rightarrow> bool)\<Rightarrow> 'a list \<Right
 \<comment> \<open>\<open> ------------------------- \<close>\<close>
 
 \<comment> \<open>\<open>val zipSameLength : forall 'a 'b. list 'a -> list 'b -> list ('a * 'b)\<close>\<close> 
-fun  zipSameLength  :: " 'a list \<Rightarrow> 'b list \<Rightarrow>('a*'b)list "  where 
-     " zipSameLength l1 l2 = ( (case  (l1, l2) of
+fun  zipSameLength  :: \<open> 'a list \<Rightarrow> 'b list \<Rightarrow>('a*'b)list \<close>  where 
+     \<open> zipSameLength l1 l2 = ( (case  (l1, l2) of
     (x # xs, y # ys) => (x, y) # zipSameLength xs ys
   | ([], []) => []
   | _ => failwith (''List_extra.zipSameLength of different length lists'')
 
-))"
+))\<close> 
+  for  l1  :: " 'a list " 
+  and  l2  :: " 'b list "
 
 
 \<comment> \<open>\<open>val     unfoldr: forall 'a 'b. ('a -> maybe ('b * 'a)) -> 'a -> list 'b\<close>\<close>
-function (sequential,domintros)  unfoldr  :: "('a \<Rightarrow>('b*'a)option)\<Rightarrow> 'a \<Rightarrow> 'b list "  where 
-     " unfoldr f x = (
+function (sequential,domintros)  unfoldr  :: \<open>('a \<Rightarrow>('b*'a)option)\<Rightarrow> 'a \<Rightarrow> 'b list \<close>  where 
+     \<open> unfoldr f x = (
   (case  f x of
       Some (y, x') =>
         y # unfoldr f x'
     | None =>
         []
-  ))" 
+  ))\<close> 
+  for  f  :: " 'a \<Rightarrow>('b*'a)option " 
+  and  x  :: " 'a " 
 by pat_completeness auto
 
 

@@ -25,8 +25,8 @@ begin
 \<comment> \<open>\<open> ------------------------------------ \<close>\<close>
 
 \<comment> \<open>\<open>val fail : forall 'a. 'a\<close>\<close>
-definition fail  :: " 'a "  where 
-     " fail = ( failwith (''fail''))"
+definition fail  :: \<open> 'a \<close>  where 
+     \<open> fail = ( failwith (''fail''))\<close>
 
 
 \<comment> \<open>\<open> ------------------------------------- \<close>\<close>
@@ -34,12 +34,14 @@ definition fail  :: " 'a "  where
 \<comment> \<open>\<open> ------------------------------------- \<close>\<close>
 
 \<comment> \<open>\<open>val ensure : bool -> string -> unit\<close>\<close>
-definition ensure  :: " bool \<Rightarrow> string \<Rightarrow> unit "  where 
-     " ensure test msg = (
+definition ensure  :: \<open> bool \<Rightarrow> string \<Rightarrow> unit \<close>  where 
+     \<open> ensure test msg = (
   if test then
     () 
   else
-    failwith msg )"
+    failwith msg )\<close> 
+  for  test  :: " bool " 
+  and  msg  :: " string "
 
 
 end

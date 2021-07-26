@@ -34,61 +34,83 @@ datatype bitSequence = BitSeq "
 
 \<comment> \<open>\<open>val boolListFrombitSeq : nat -> bitSequence -> list bool\<close>\<close>
 
-fun  boolListFrombitSeqAux  :: " nat \<Rightarrow> 'a \<Rightarrow> 'a list \<Rightarrow> 'a list "  where 
-     " boolListFrombitSeqAux n s bl = (
+fun  boolListFrombitSeqAux  :: \<open> nat \<Rightarrow> 'a \<Rightarrow> 'a list \<Rightarrow> 'a list \<close>  where 
+     \<open> boolListFrombitSeqAux n s bl = (
   if n =( 0 :: nat) then [] else
   (case  bl of
       []       => List.replicate n s
     | b # bl' => b # (boolListFrombitSeqAux (n-( 1 :: nat)) s bl')
-  ))"
+  ))\<close> 
+  for  n  :: " nat " 
+  and  s  :: " 'a " 
+  and  bl  :: " 'a list "
 
 
-fun boolListFrombitSeq  :: " nat \<Rightarrow> bitSequence \<Rightarrow>(bool)list "  where 
-     " boolListFrombitSeq n (BitSeq _ s bl) = ( boolListFrombitSeqAux n s bl )"
+fun boolListFrombitSeq  :: \<open> nat \<Rightarrow> bitSequence \<Rightarrow>(bool)list \<close>  where 
+     \<open> boolListFrombitSeq n (BitSeq _ s bl) = ( boolListFrombitSeqAux n s bl )\<close> 
+  for  n  :: " nat " 
+  and  bl  :: "(bool)list " 
+  and  s  :: " bool "
 
 
 
 \<comment> \<open>\<open>val bitSeqFromBoolList : list bool -> maybe bitSequence\<close>\<close>
-definition bitSeqFromBoolList  :: "(bool)list \<Rightarrow>(bitSequence)option "  where 
-     " bitSeqFromBoolList bl = (
+definition bitSeqFromBoolList  :: \<open>(bool)list \<Rightarrow>(bitSequence)option \<close>  where 
+     \<open> bitSeqFromBoolList bl = (
   (case  dest_init bl of
       None => None
     | Some (bl', s) => Some (BitSeq (Some (List.length bl)) s bl')
-  ))"
+  ))\<close> 
+  for  bl  :: "(bool)list "
 
 
 
 \<comment> \<open>\<open> cleans up the representation of a bitSequence without changing its semantics \<close>\<close>
 \<comment> \<open>\<open>val cleanBitSeq : bitSequence -> bitSequence\<close>\<close>
-fun cleanBitSeq  :: " bitSequence \<Rightarrow> bitSequence "  where 
-     " cleanBitSeq (BitSeq len s bl) = ( (case  len of
+fun cleanBitSeq  :: \<open> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> cleanBitSeq (BitSeq len s bl) = ( (case  len of
     None => (BitSeq len s (List.rev (dropWhile ((\<longleftrightarrow>) s) (List.rev bl))))
   | Some n  => (BitSeq len s (List.rev (dropWhile ((\<longleftrightarrow>) s) (List.rev (List.take (n-( 1 :: nat)) bl)))))
-))"
+))\<close> 
+  for  bl  :: "(bool)list " 
+  and  len  :: "(nat)option " 
+  and  s  :: " bool "
 
 
 
 \<comment> \<open>\<open>val bitSeqTestBit : bitSequence -> nat -> maybe bool\<close>\<close>
-fun bitSeqTestBit  :: " bitSequence \<Rightarrow> nat \<Rightarrow>(bool)option "  where 
-     " bitSeqTestBit (BitSeq None s bl) pos = ( if pos < List.length bl then index bl pos else Some s )"
-|" bitSeqTestBit (BitSeq(Some l) s bl) pos = ( if (pos \<ge> l) then None else
+fun bitSeqTestBit  :: \<open> bitSequence \<Rightarrow> nat \<Rightarrow>(bool)option \<close>  where 
+     \<open> bitSeqTestBit (BitSeq None s bl) pos = ( if pos < List.length bl then index bl pos else Some s )\<close> 
+  for  bl  :: "(bool)list " 
+  and  s  :: " bool " 
+  and  pos  :: " nat "
+|\<open> bitSeqTestBit (BitSeq(Some l) s bl) pos = ( if (pos \<ge> l) then None else
                 if ((pos = (l -( 1 :: nat))) \<or> (pos \<ge> List.length bl)) then Some s else
-                index bl pos )"
+                index bl pos )\<close> 
+  for  bl  :: "(bool)list " 
+  and  s  :: " bool " 
+  and  l  :: " nat " 
+  and  pos  :: " nat "
 
 
 \<comment> \<open>\<open>val bitSeqSetBit : bitSequence -> nat -> bool -> bitSequence\<close>\<close>
-fun bitSeqSetBit  :: " bitSequence \<Rightarrow> nat \<Rightarrow> bool \<Rightarrow> bitSequence "  where 
-     " bitSeqSetBit (BitSeq len s bl) pos v = (
+fun bitSeqSetBit  :: \<open> bitSequence \<Rightarrow> nat \<Rightarrow> bool \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqSetBit (BitSeq len s bl) pos v = (
   (let bl' = (if (pos < List.length bl) then bl else bl @ List.replicate pos s) in
   (let bl'' = (List.list_update bl' pos v) in
   (let bs' = (BitSeq len s bl'') in
-  cleanBitSeq bs'))))"
+  cleanBitSeq bs'))))\<close> 
+  for  bl  :: "(bool)list " 
+  and  len  :: "(nat)option " 
+  and  s  :: " bool " 
+  and  pos  :: " nat " 
+  and  v  :: " bool "
 
 
 
 \<comment> \<open>\<open>val resizeBitSeq : maybe nat -> bitSequence -> bitSequence\<close>\<close>
-definition resizeBitSeq  :: "(nat)option \<Rightarrow> bitSequence \<Rightarrow> bitSequence "  where 
-     " resizeBitSeq new_len bs = ( 
+definition resizeBitSeq  :: \<open>(nat)option \<Rightarrow> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> resizeBitSeq new_len bs = ( 
   (case  cleanBitSeq bs of
       (BitSeq len s bl) =>
   (let shorten_opt = ((case  (new_len, len) of
@@ -106,26 +128,51 @@ definition resizeBitSeq  :: "(nat)option \<Rightarrow> bitSequence \<Rightarrow>
                    | Some (bl'', s') => cleanBitSeq (BitSeq new_len s' bl'')
                  )))
   ))
-  ) )"
+  ) )\<close> 
+  for  new_len  :: "(nat)option " 
+  and  bs  :: " bitSequence "
  
 
 \<comment> \<open>\<open>val bitSeqNot : bitSequence -> bitSequence\<close>\<close>
-fun bitSeqNot  :: " bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqNot (BitSeq len s bl) = ( BitSeq len (\<not> s) (List.map (\<lambda> x. \<not> x) bl))"
+fun bitSeqNot  :: \<open> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqNot (BitSeq len s bl) = ( BitSeq len (\<not> s) (List.map ((\<lambda> x. \<not> x)) bl))\<close> 
+  for  bl  :: "(bool)list " 
+  and  len  :: "(nat)option " 
+  and  s  :: " bool "
 
 
 \<comment> \<open>\<open>val bitSeqBinop : (bool -> bool -> bool) -> bitSequence -> bitSequence -> bitSequence\<close>\<close>
 
 \<comment> \<open>\<open>val bitSeqBinopAux : (bool -> bool -> bool) -> bool -> list bool -> bool -> list bool -> list bool\<close>\<close>
-fun  bitSeqBinopAux  :: "(bool \<Rightarrow> bool \<Rightarrow> bool)\<Rightarrow> bool \<Rightarrow>(bool)list \<Rightarrow> bool \<Rightarrow>(bool)list \<Rightarrow>(bool)list "  where 
-     " bitSeqBinopAux binop s1 ([]) s2 ([]) = ( [])"
-|" bitSeqBinopAux binop s1 (b1 # bl1') s2 ([]) = ( (binop b1 s2) # bitSeqBinopAux binop s1 bl1' s2 [])"
-|" bitSeqBinopAux binop s1 ([]) s2 (b2 # bl2') = ( (binop s1 b2) # bitSeqBinopAux binop s1 []   s2 bl2' )"
-|" bitSeqBinopAux binop s1 (b1 # bl1') s2 (b2 # bl2') = ( (binop b1 b2) # bitSeqBinopAux binop s1 bl1' s2 bl2' )"
+fun  bitSeqBinopAux  :: \<open>(bool \<Rightarrow> bool \<Rightarrow> bool)\<Rightarrow> bool \<Rightarrow>(bool)list \<Rightarrow> bool \<Rightarrow>(bool)list \<Rightarrow>(bool)list \<close>  where 
+     \<open> bitSeqBinopAux binop s1 ([]) s2 ([]) = ( [])\<close> 
+  for  binop  :: " bool \<Rightarrow> bool \<Rightarrow> bool " 
+  and  s1  :: " bool " 
+  and  s2  :: " bool "
+|\<open> bitSeqBinopAux binop s1 (b1 # bl1') s2 ([]) = ( (binop b1 s2) # bitSeqBinopAux binop s1 bl1' s2 [])\<close> 
+  for  binop  :: " bool \<Rightarrow> bool \<Rightarrow> bool " 
+  and  s1  :: " bool " 
+  and  bl1'  :: "(bool)list " 
+  and  b1  :: " bool " 
+  and  s2  :: " bool "
+|\<open> bitSeqBinopAux binop s1 ([]) s2 (b2 # bl2') = ( (binop s1 b2) # bitSeqBinopAux binop s1 []   s2 bl2' )\<close> 
+  for  binop  :: " bool \<Rightarrow> bool \<Rightarrow> bool " 
+  and  s1  :: " bool " 
+  and  s2  :: " bool " 
+  and  bl2'  :: "(bool)list " 
+  and  b2  :: " bool "
+|\<open> bitSeqBinopAux binop s1 (b1 # bl1') s2 (b2 # bl2') = ( (binop b1 b2) # bitSeqBinopAux binop s1 bl1' s2 bl2' )\<close> 
+  for  binop  :: " bool \<Rightarrow> bool \<Rightarrow> bool " 
+  and  s1  :: " bool " 
+  and  bl1'  :: "(bool)list " 
+  and  b1  :: " bool " 
+  and  s2  :: " bool " 
+  and  bl2'  :: "(bool)list " 
+  and  b2  :: " bool "
 
 
-definition bitSeqBinop  :: "(bool \<Rightarrow> bool \<Rightarrow> bool)\<Rightarrow> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqBinop binop bs1 bs2 = ( ( 
+definition bitSeqBinop  :: \<open>(bool \<Rightarrow> bool \<Rightarrow> bool)\<Rightarrow> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqBinop binop bs1 bs2 = ( ( 
   (case  cleanBitSeq bs1 of
       (BitSeq len1 s1 bl1) =>
   (case  cleanBitSeq bs2 of
@@ -139,36 +186,45 @@ definition bitSeqBinop  :: "(bool \<Rightarrow> bool \<Rightarrow> bool)\<Righta
   cleanBitSeq (BitSeq len s bl))))
   )
   )
-))"
+))\<close> 
+  for  binop  :: " bool \<Rightarrow> bool \<Rightarrow> bool " 
+  and  bs1  :: " bitSequence " 
+  and  bs2  :: " bitSequence "
 
 
-definition bitSeqAnd  :: " bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqAnd = ( bitSeqBinop (\<and>))"
+definition bitSeqAnd  :: \<open> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqAnd = ( bitSeqBinop (\<and>))\<close>
 
-definition bitSeqOr  :: " bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqOr = ( bitSeqBinop (\<or>))"
+definition bitSeqOr  :: \<open> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqOr = ( bitSeqBinop (\<or>))\<close>
 
-definition bitSeqXor  :: " bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqXor = ( bitSeqBinop (\<lambda> b1 b2. \<not> (b1 \<longleftrightarrow> b2)))"
+definition bitSeqXor  :: \<open> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqXor = ( bitSeqBinop ((\<lambda> b1 b2. \<not> (b1 \<longleftrightarrow> b2))))\<close>
 
 
 \<comment> \<open>\<open>val bitSeqShiftLeft : bitSequence -> nat -> bitSequence\<close>\<close>
-fun bitSeqShiftLeft  :: " bitSequence \<Rightarrow> nat \<Rightarrow> bitSequence "  where 
-     " bitSeqShiftLeft (BitSeq len s bl) n = ( cleanBitSeq (BitSeq len s (List.replicate n False @ bl)))"
+fun bitSeqShiftLeft  :: \<open> bitSequence \<Rightarrow> nat \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqShiftLeft (BitSeq len s bl) n = ( cleanBitSeq (BitSeq len s (List.replicate n False @ bl)))\<close> 
+  for  bl  :: "(bool)list " 
+  and  len  :: "(nat)option " 
+  and  s  :: " bool " 
+  and  n  :: " nat "
 
 
 \<comment> \<open>\<open>val bitSeqArithmeticShiftRight : bitSequence -> nat -> bitSequence\<close>\<close>
-definition bitSeqArithmeticShiftRight  :: " bitSequence \<Rightarrow> nat \<Rightarrow> bitSequence "  where 
-     " bitSeqArithmeticShiftRight bs n = ( 
+definition bitSeqArithmeticShiftRight  :: \<open> bitSequence \<Rightarrow> nat \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqArithmeticShiftRight bs n = ( 
   (case  cleanBitSeq bs of
       (BitSeq len s bl) =>
   cleanBitSeq (BitSeq len s (List.drop n bl))
-  ) )"
+  ) )\<close> 
+  for  bs  :: " bitSequence " 
+  and  n  :: " nat "
 
 
 \<comment> \<open>\<open>val bitSeqLogicalShiftRight : bitSequence -> nat -> bitSequence\<close>\<close>
-definition bitSeqLogicalShiftRight  :: " bitSequence \<Rightarrow> nat \<Rightarrow> bitSequence "  where 
-     " bitSeqLogicalShiftRight bs n = ( 
+definition bitSeqLogicalShiftRight  :: \<open> bitSequence \<Rightarrow> nat \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqLogicalShiftRight bs n = ( 
   if (n =( 0 :: nat)) then cleanBitSeq bs else  
   (case  cleanBitSeq bs of
       (BitSeq len s bl) =>
@@ -177,7 +233,9 @@ definition bitSeqLogicalShiftRight  :: " bitSequence \<Rightarrow> nat \<Rightar
     | Some l => cleanBitSeq
                   (BitSeq len False ((List.drop n bl) @ List.replicate l s))
   )
-  ) )"
+  ) )\<close> 
+  for  bs  :: " bitSequence " 
+  and  n  :: " nat "
 
 
 
@@ -186,71 +244,86 @@ definition bitSeqLogicalShiftRight  :: " bitSequence \<Rightarrow> nat \<Rightar
    It uses two's complement encoding. \<close>\<close>
 \<comment> \<open>\<open>val integerFromBoolList : (bool * list bool) -> integer\<close>\<close>
 
-fun  integerFromBoolListAux  :: " int \<Rightarrow>(bool)list \<Rightarrow> int "  where 
-     " integerFromBoolListAux (acc1 :: int) (([]) :: bool list) = ( acc1 )"
-|" integerFromBoolListAux (acc1 :: int) ((True # bl') :: bool list) = ( integerFromBoolListAux ((acc1 *( 2 :: int)) +( 1 :: int)) bl' )"
-|" integerFromBoolListAux (acc1 :: int) ((False # bl') :: bool list) = ( integerFromBoolListAux (acc1 *( 2 :: int)) bl' )"
+fun  integerFromBoolListAux  :: \<open> int \<Rightarrow>(bool)list \<Rightarrow> int \<close>  where 
+     \<open> integerFromBoolListAux (acc1 :: int) (([]) :: bool list) = ( acc1 )\<close> 
+  for  acc1  :: " int "
+|\<open> integerFromBoolListAux (acc1 :: int) ((True # bl') :: bool list) = ( integerFromBoolListAux ((acc1 *( 2 :: int)) +( 1 :: int)) bl' )\<close> 
+  for  acc1  :: " int " 
+  and  bl'  :: "(bool)list "
+|\<open> integerFromBoolListAux (acc1 :: int) ((False # bl') :: bool list) = ( integerFromBoolListAux (acc1 *( 2 :: int)) bl' )\<close> 
+  for  acc1  :: " int " 
+  and  bl'  :: "(bool)list "
 
 
-fun integerFromBoolList  :: " bool*(bool)list \<Rightarrow> int "  where 
-     " integerFromBoolList (sign, bl) = ( 
+fun integerFromBoolList  :: \<open> bool*(bool)list \<Rightarrow> int \<close>  where 
+     \<open> integerFromBoolList (sign, bl) = ( 
    if sign then 
-     - (integerFromBoolListAux(( 0 :: int)) (List.rev (List.map (\<lambda> x. \<not> x) bl)) +( 1 :: int))
-   else integerFromBoolListAux(( 0 :: int)) (List.rev bl))"
+     - (integerFromBoolListAux(( 0 :: int)) (List.rev (List.map ((\<lambda> x. \<not> x)) bl)) +( 1 :: int))
+   else integerFromBoolListAux(( 0 :: int)) (List.rev bl))\<close> 
+  for  sign  :: " bool " 
+  and  bl  :: "(bool)list "
 
 
 \<comment> \<open>\<open> [boolListFromInteger i] creates a sign bit and a list of booleans from an integer. The len_opt tells it when to stop.\<close>\<close>
 \<comment> \<open>\<open>val boolListFromInteger :    integer -> bool * list bool\<close>\<close>
 
-fun  boolListFromNatural  :: "(bool)list \<Rightarrow> nat \<Rightarrow>(bool)list "  where 
-     " boolListFromNatural acc1 (remainder :: nat) = (
+fun  boolListFromNatural  :: \<open>(bool)list \<Rightarrow> nat \<Rightarrow>(bool)list \<close>  where 
+     \<open> boolListFromNatural acc1 (remainder :: nat) = (
  if (remainder >( 0 :: nat)) then 
    (boolListFromNatural (((remainder mod( 2 :: nat)) =( 1 :: nat)) # acc1) 
       (remainder div( 2 :: nat)))
  else
-   List.rev acc1 )"
+   List.rev acc1 )\<close> 
+  for  acc1  :: "(bool)list " 
+  and  remainder  :: " nat "
 
 
-definition boolListFromInteger  :: " int \<Rightarrow> bool*(bool)list "  where 
-     " boolListFromInteger (i :: int) = ( 
+definition boolListFromInteger  :: \<open> int \<Rightarrow> bool*(bool)list \<close>  where 
+     \<open> boolListFromInteger (i :: int) = ( 
   if (i <( 0 :: int)) then
-    (True, List.map (\<lambda> x. \<not> x) (boolListFromNatural [] (nat (abs (- (i +( 1 :: int)))))))
+    (True, List.map ((\<lambda> x. \<not> x)) (boolListFromNatural [] (nat (abs (- (i +( 1 :: int)))))))
   else
-    (False, boolListFromNatural [] (nat (abs i))))"
+    (False, boolListFromNatural [] (nat (abs i))))\<close> 
+  for  i  :: " int "
 
 
 
 \<comment> \<open>\<open> [bitSeqFromInteger len_opt i] encodes [i] as a bitsequence with [len_opt] bits. If there are not enough
    bits, truncation happens \<close>\<close>
 \<comment> \<open>\<open>val bitSeqFromInteger : maybe nat -> integer -> bitSequence\<close>\<close>
-definition bitSeqFromInteger  :: "(nat)option \<Rightarrow> int \<Rightarrow> bitSequence "  where 
-     " bitSeqFromInteger len_opt i = (
+definition bitSeqFromInteger  :: \<open>(nat)option \<Rightarrow> int \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqFromInteger len_opt i = (
   (let (s, bl) = (boolListFromInteger i) in
-  resizeBitSeq len_opt (BitSeq None s bl)))"
+  resizeBitSeq len_opt (BitSeq None s bl)))\<close> 
+  for  len_opt  :: "(nat)option " 
+  and  i  :: " int "
 
 
 
 \<comment> \<open>\<open>val integerFromBitSeq : bitSequence -> integer\<close>\<close>
-definition integerFromBitSeq  :: " bitSequence \<Rightarrow> int "  where 
-     " integerFromBitSeq bs = ( 
-  (case  cleanBitSeq bs of (BitSeq len s bl) => integerFromBoolList (s, bl) ) )"
+definition integerFromBitSeq  :: \<open> bitSequence \<Rightarrow> int \<close>  where 
+     \<open> integerFromBitSeq bs = ( 
+  (case  cleanBitSeq bs of (BitSeq len s bl) => integerFromBoolList (s, bl) ) )\<close> 
+  for  bs  :: " bitSequence "
 
 
 
 \<comment> \<open>\<open> Now we can via translation to integers map arithmetic operations to bitSequences \<close>\<close>
 
 \<comment> \<open>\<open>val bitSeqArithUnaryOp : (integer -> integer) -> bitSequence -> bitSequence\<close>\<close>
-definition bitSeqArithUnaryOp  :: "(int \<Rightarrow> int)\<Rightarrow> bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqArithUnaryOp uop bs = ( 
+definition bitSeqArithUnaryOp  :: \<open>(int \<Rightarrow> int)\<Rightarrow> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqArithUnaryOp uop bs = ( 
   (case  bs of
       (BitSeq len _ _) =>
   bitSeqFromInteger len (uop (integerFromBitSeq bs))
-  ) )"
+  ) )\<close> 
+  for  uop  :: " int \<Rightarrow> int " 
+  and  bs  :: " bitSequence "
 
 
 \<comment> \<open>\<open>val bitSeqArithBinOp : (integer -> integer -> integer) -> bitSequence -> bitSequence -> bitSequence\<close>\<close>
-definition bitSeqArithBinOp  :: "(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqArithBinOp binop bs1 bs2 = ( 
+definition bitSeqArithBinOp  :: \<open>(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqArithBinOp binop bs1 bs2 = ( 
   (case  bs1 of
       (BitSeq len1 _ _) =>
   (case  bs2 of
@@ -262,12 +335,18 @@ definition bitSeqArithBinOp  :: "(int \<Rightarrow> int \<Rightarrow> int)\<Righ
   bitSeqFromInteger len
     (binop (integerFromBitSeq bs1) (integerFromBitSeq bs2)))
   )
-  ) )"
+  ) )\<close> 
+  for  binop  :: " int \<Rightarrow> int \<Rightarrow> int " 
+  and  bs1  :: " bitSequence " 
+  and  bs2  :: " bitSequence "
 
 
 \<comment> \<open>\<open>val bitSeqArithBinTest : forall 'a. (integer -> integer -> 'a) -> bitSequence -> bitSequence -> 'a\<close>\<close>
-definition bitSeqArithBinTest  :: "(int \<Rightarrow> int \<Rightarrow> 'a)\<Rightarrow> bitSequence \<Rightarrow> bitSequence \<Rightarrow> 'a "  where 
-     " bitSeqArithBinTest binop bs1 bs2 = ( binop (integerFromBitSeq bs1) (integerFromBitSeq bs2))"
+definition bitSeqArithBinTest  :: \<open>(int \<Rightarrow> int \<Rightarrow> 'a)\<Rightarrow> bitSequence \<Rightarrow> bitSequence \<Rightarrow> 'a \<close>  where 
+     \<open> bitSeqArithBinTest binop bs1 bs2 = ( binop (integerFromBitSeq bs1) (integerFromBitSeq bs2))\<close> 
+  for  binop  :: " int \<Rightarrow> int \<Rightarrow> 'a " 
+  and  bs1  :: " bitSequence " 
+  and  bs2  :: " bitSequence "
 
 
 
@@ -276,32 +355,42 @@ definition bitSeqArithBinTest  :: "(int \<Rightarrow> int \<Rightarrow> 'a)\<Rig
 \<comment> \<open>\<open>val bitSeqFromNumeral : numeral -> bitSequence\<close>\<close>
 
 \<comment> \<open>\<open>val bitSeqLess : bitSequence -> bitSequence -> bool\<close>\<close>
-definition bitSeqLess  :: " bitSequence \<Rightarrow> bitSequence \<Rightarrow> bool "  where 
-     " bitSeqLess bs1 bs2 = ( bitSeqArithBinTest (<) bs1 bs2 )"
+definition bitSeqLess  :: \<open> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bool \<close>  where 
+     \<open> bitSeqLess bs1 bs2 = ( bitSeqArithBinTest (<) bs1 bs2 )\<close> 
+  for  bs1  :: " bitSequence " 
+  and  bs2  :: " bitSequence "
 
 
 \<comment> \<open>\<open>val bitSeqLessEqual : bitSequence -> bitSequence -> bool\<close>\<close>
-definition bitSeqLessEqual  :: " bitSequence \<Rightarrow> bitSequence \<Rightarrow> bool "  where 
-     " bitSeqLessEqual bs1 bs2 = ( bitSeqArithBinTest (\<le>) bs1 bs2 )"
+definition bitSeqLessEqual  :: \<open> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bool \<close>  where 
+     \<open> bitSeqLessEqual bs1 bs2 = ( bitSeqArithBinTest (\<le>) bs1 bs2 )\<close> 
+  for  bs1  :: " bitSequence " 
+  and  bs2  :: " bitSequence "
 
 
 \<comment> \<open>\<open>val bitSeqGreater : bitSequence -> bitSequence -> bool\<close>\<close>
-definition bitSeqGreater  :: " bitSequence \<Rightarrow> bitSequence \<Rightarrow> bool "  where 
-     " bitSeqGreater bs1 bs2 = ( bitSeqArithBinTest (>) bs1 bs2 )"
+definition bitSeqGreater  :: \<open> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bool \<close>  where 
+     \<open> bitSeqGreater bs1 bs2 = ( bitSeqArithBinTest (>) bs1 bs2 )\<close> 
+  for  bs1  :: " bitSequence " 
+  and  bs2  :: " bitSequence "
 
 
 \<comment> \<open>\<open>val bitSeqGreaterEqual : bitSequence -> bitSequence -> bool\<close>\<close>
-definition bitSeqGreaterEqual  :: " bitSequence \<Rightarrow> bitSequence \<Rightarrow> bool "  where 
-     " bitSeqGreaterEqual bs1 bs2 = ( bitSeqArithBinTest (\<ge>) bs1 bs2 )"
+definition bitSeqGreaterEqual  :: \<open> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bool \<close>  where 
+     \<open> bitSeqGreaterEqual bs1 bs2 = ( bitSeqArithBinTest (\<ge>) bs1 bs2 )\<close> 
+  for  bs1  :: " bitSequence " 
+  and  bs2  :: " bitSequence "
 
 
 \<comment> \<open>\<open>val bitSeqCompare : bitSequence -> bitSequence -> ordering\<close>\<close>
-definition bitSeqCompare  :: " bitSequence \<Rightarrow> bitSequence \<Rightarrow> ordering "  where 
-     " bitSeqCompare bs1 bs2 = ( bitSeqArithBinTest (genericCompare (<) (=)) bs1 bs2 )"
+definition bitSeqCompare  :: \<open> bitSequence \<Rightarrow> bitSequence \<Rightarrow> ordering \<close>  where 
+     \<open> bitSeqCompare bs1 bs2 = ( bitSeqArithBinTest (genericCompare (<) (=)) bs1 bs2 )\<close> 
+  for  bs1  :: " bitSequence " 
+  and  bs2  :: " bitSequence "
 
 
-definition instance_Basic_classes_Ord_Word_bitSequence_dict  :: "(bitSequence)Ord_class "  where 
-     " instance_Basic_classes_Ord_Word_bitSequence_dict = ((|
+definition instance_Basic_classes_Ord_Word_bitSequence_dict  :: \<open>(bitSequence)Ord_class \<close>  where 
+     \<open> instance_Basic_classes_Ord_Word_bitSequence_dict = ((|
 
   compare_method = bitSeqCompare,
 
@@ -311,133 +400,152 @@ definition instance_Basic_classes_Ord_Word_bitSequence_dict  :: "(bitSequence)Or
 
   isGreater_method = bitSeqGreater,
 
-  isGreaterEqual_method = bitSeqGreaterEqual |) )"
+  isGreaterEqual_method = bitSeqGreaterEqual |) )\<close>
 
 
 \<comment> \<open>\<open> arithmetic negation, don't mix up with bitwise negation \<close>\<close>
 \<comment> \<open>\<open>val bitSeqNegate : bitSequence -> bitSequence\<close>\<close> 
-definition bitSeqNegate  :: " bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqNegate bs = ( bitSeqArithUnaryOp (\<lambda> i. - i) bs )"
+definition bitSeqNegate  :: \<open> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqNegate bs = ( bitSeqArithUnaryOp ((\<lambda> i. - i)) bs )\<close> 
+  for  bs  :: " bitSequence "
 
 
-definition instance_Num_NumNegate_Word_bitSequence_dict  :: "(bitSequence)NumNegate_class "  where 
-     " instance_Num_NumNegate_Word_bitSequence_dict = ((|
+definition instance_Num_NumNegate_Word_bitSequence_dict  :: \<open>(bitSequence)NumNegate_class \<close>  where 
+     \<open> instance_Num_NumNegate_Word_bitSequence_dict = ((|
 
-  numNegate_method = bitSeqNegate |) )"
+  numNegate_method = bitSeqNegate |) )\<close>
 
 
 
 \<comment> \<open>\<open>val bitSeqAdd : bitSequence -> bitSequence -> bitSequence\<close>\<close>
-definition bitSeqAdd  :: " bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqAdd bs1 bs2 = ( bitSeqArithBinOp (+) bs1 bs2 )"
+definition bitSeqAdd  :: \<open> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqAdd bs1 bs2 = ( bitSeqArithBinOp (+) bs1 bs2 )\<close> 
+  for  bs1  :: " bitSequence " 
+  and  bs2  :: " bitSequence "
 
 
-definition instance_Num_NumAdd_Word_bitSequence_dict  :: "(bitSequence)NumAdd_class "  where 
-     " instance_Num_NumAdd_Word_bitSequence_dict = ((|
+definition instance_Num_NumAdd_Word_bitSequence_dict  :: \<open>(bitSequence)NumAdd_class \<close>  where 
+     \<open> instance_Num_NumAdd_Word_bitSequence_dict = ((|
 
-  numAdd_method = bitSeqAdd |) )"
+  numAdd_method = bitSeqAdd |) )\<close>
 
 
 \<comment> \<open>\<open>val bitSeqMinus : bitSequence -> bitSequence -> bitSequence\<close>\<close>
-definition bitSeqMinus  :: " bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqMinus bs1 bs2 = ( bitSeqArithBinOp (-) bs1 bs2 )"
+definition bitSeqMinus  :: \<open> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqMinus bs1 bs2 = ( bitSeqArithBinOp (-) bs1 bs2 )\<close> 
+  for  bs1  :: " bitSequence " 
+  and  bs2  :: " bitSequence "
 
 
-definition instance_Num_NumMinus_Word_bitSequence_dict  :: "(bitSequence)NumMinus_class "  where 
-     " instance_Num_NumMinus_Word_bitSequence_dict = ((|
+definition instance_Num_NumMinus_Word_bitSequence_dict  :: \<open>(bitSequence)NumMinus_class \<close>  where 
+     \<open> instance_Num_NumMinus_Word_bitSequence_dict = ((|
 
-  numMinus_method = bitSeqMinus |) )"
+  numMinus_method = bitSeqMinus |) )\<close>
 
 
 \<comment> \<open>\<open>val bitSeqSucc : bitSequence -> bitSequence\<close>\<close>
-definition bitSeqSucc  :: " bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqSucc bs = ( bitSeqArithUnaryOp (\<lambda> n. n +( 1 :: int)) bs )"
+definition bitSeqSucc  :: \<open> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqSucc bs = ( bitSeqArithUnaryOp ((\<lambda> n. n +( 1 :: int))) bs )\<close> 
+  for  bs  :: " bitSequence "
 
 
-definition instance_Num_NumSucc_Word_bitSequence_dict  :: "(bitSequence)NumSucc_class "  where 
-     " instance_Num_NumSucc_Word_bitSequence_dict = ((|
+definition instance_Num_NumSucc_Word_bitSequence_dict  :: \<open>(bitSequence)NumSucc_class \<close>  where 
+     \<open> instance_Num_NumSucc_Word_bitSequence_dict = ((|
 
-  succ_method = bitSeqSucc |) )"
+  succ_method = bitSeqSucc |) )\<close>
 
 
 \<comment> \<open>\<open>val bitSeqPred : bitSequence -> bitSequence\<close>\<close>
-definition bitSeqPred  :: " bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqPred bs = ( bitSeqArithUnaryOp (\<lambda> n. n -( 1 :: int)) bs )"
+definition bitSeqPred  :: \<open> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqPred bs = ( bitSeqArithUnaryOp ((\<lambda> n. n -( 1 :: int))) bs )\<close> 
+  for  bs  :: " bitSequence "
 
 
-definition instance_Num_NumPred_Word_bitSequence_dict  :: "(bitSequence)NumPred_class "  where 
-     " instance_Num_NumPred_Word_bitSequence_dict = ((|
+definition instance_Num_NumPred_Word_bitSequence_dict  :: \<open>(bitSequence)NumPred_class \<close>  where 
+     \<open> instance_Num_NumPred_Word_bitSequence_dict = ((|
 
-  pred_method = bitSeqPred |) )"
+  pred_method = bitSeqPred |) )\<close>
 
 
 \<comment> \<open>\<open>val bitSeqMult : bitSequence -> bitSequence -> bitSequence\<close>\<close>
-definition bitSeqMult  :: " bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqMult bs1 bs2 = ( bitSeqArithBinOp ( * ) bs1 bs2 )"
+definition bitSeqMult  :: \<open> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqMult bs1 bs2 = ( bitSeqArithBinOp (*) bs1 bs2 )\<close> 
+  for  bs1  :: " bitSequence " 
+  and  bs2  :: " bitSequence "
 
 
-definition instance_Num_NumMult_Word_bitSequence_dict  :: "(bitSequence)NumMult_class "  where 
-     " instance_Num_NumMult_Word_bitSequence_dict = ((|
+definition instance_Num_NumMult_Word_bitSequence_dict  :: \<open>(bitSequence)NumMult_class \<close>  where 
+     \<open> instance_Num_NumMult_Word_bitSequence_dict = ((|
 
-  numMult_method = bitSeqMult |) )"
+  numMult_method = bitSeqMult |) )\<close>
 
 
 
 \<comment> \<open>\<open>val bitSeqPow : bitSequence -> nat -> bitSequence\<close>\<close>
-definition bitSeqPow  :: " bitSequence \<Rightarrow> nat \<Rightarrow> bitSequence "  where 
-     " bitSeqPow bs n = ( bitSeqArithUnaryOp (\<lambda> i .  i ^ n) bs )"
+definition bitSeqPow  :: \<open> bitSequence \<Rightarrow> nat \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqPow bs n = ( bitSeqArithUnaryOp ((\<lambda> i .  i ^ n)) bs )\<close> 
+  for  bs  :: " bitSequence " 
+  and  n  :: " nat "
 
 
-definition instance_Num_NumPow_Word_bitSequence_dict  :: "(bitSequence)NumPow_class "  where 
-     " instance_Num_NumPow_Word_bitSequence_dict = ((|
+definition instance_Num_NumPow_Word_bitSequence_dict  :: \<open>(bitSequence)NumPow_class \<close>  where 
+     \<open> instance_Num_NumPow_Word_bitSequence_dict = ((|
 
-  numPow_method = bitSeqPow |) )"
+  numPow_method = bitSeqPow |) )\<close>
 
 
 \<comment> \<open>\<open>val bitSeqDiv : bitSequence -> bitSequence -> bitSequence\<close>\<close>
-definition bitSeqDiv  :: " bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqDiv bs1 bs2 = ( bitSeqArithBinOp (div) bs1 bs2 )"
+definition bitSeqDiv  :: \<open> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqDiv bs1 bs2 = ( bitSeqArithBinOp (div) bs1 bs2 )\<close> 
+  for  bs1  :: " bitSequence " 
+  and  bs2  :: " bitSequence "
 
 
-definition instance_Num_NumIntegerDivision_Word_bitSequence_dict  :: "(bitSequence)NumIntegerDivision_class "  where 
-     " instance_Num_NumIntegerDivision_Word_bitSequence_dict = ((|
+definition instance_Num_NumIntegerDivision_Word_bitSequence_dict  :: \<open>(bitSequence)NumIntegerDivision_class \<close>  where 
+     \<open> instance_Num_NumIntegerDivision_Word_bitSequence_dict = ((|
 
-  div_method = bitSeqDiv |) )"
+  div_method = bitSeqDiv |) )\<close>
 
 
-definition instance_Num_NumDivision_Word_bitSequence_dict  :: "(bitSequence)NumDivision_class "  where 
-     " instance_Num_NumDivision_Word_bitSequence_dict = ((|
+definition instance_Num_NumDivision_Word_bitSequence_dict  :: \<open>(bitSequence)NumDivision_class \<close>  where 
+     \<open> instance_Num_NumDivision_Word_bitSequence_dict = ((|
 
-  numDivision_method = bitSeqDiv |) )"
+  numDivision_method = bitSeqDiv |) )\<close>
 
 
 \<comment> \<open>\<open>val bitSeqMod : bitSequence -> bitSequence -> bitSequence\<close>\<close>
-definition bitSeqMod  :: " bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqMod bs1 bs2 = ( bitSeqArithBinOp (mod) bs1 bs2 )"
+definition bitSeqMod  :: \<open> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqMod bs1 bs2 = ( bitSeqArithBinOp (mod) bs1 bs2 )\<close> 
+  for  bs1  :: " bitSequence " 
+  and  bs2  :: " bitSequence "
 
 
-definition instance_Num_NumRemainder_Word_bitSequence_dict  :: "(bitSequence)NumRemainder_class "  where 
-     " instance_Num_NumRemainder_Word_bitSequence_dict = ((|
+definition instance_Num_NumRemainder_Word_bitSequence_dict  :: \<open>(bitSequence)NumRemainder_class \<close>  where 
+     \<open> instance_Num_NumRemainder_Word_bitSequence_dict = ((|
 
-  mod_method = bitSeqMod |) )"
+  mod_method = bitSeqMod |) )\<close>
 
 
 \<comment> \<open>\<open>val bitSeqMin : bitSequence -> bitSequence -> bitSequence\<close>\<close>
-definition bitSeqMin  :: " bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqMin bs1 bs2 = ( bitSeqArithBinOp min bs1 bs2 )"
+definition bitSeqMin  :: \<open> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqMin bs1 bs2 = ( bitSeqArithBinOp min bs1 bs2 )\<close> 
+  for  bs1  :: " bitSequence " 
+  and  bs2  :: " bitSequence "
 
 
 \<comment> \<open>\<open>val bitSeqMax : bitSequence -> bitSequence -> bitSequence\<close>\<close>
-definition bitSeqMax  :: " bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence "  where 
-     " bitSeqMax bs1 bs2 = ( bitSeqArithBinOp max bs1 bs2 )"
+definition bitSeqMax  :: \<open> bitSequence \<Rightarrow> bitSequence \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqMax bs1 bs2 = ( bitSeqArithBinOp max bs1 bs2 )\<close> 
+  for  bs1  :: " bitSequence " 
+  and  bs2  :: " bitSequence "
 
 
-definition instance_Basic_classes_OrdMaxMin_Word_bitSequence_dict  :: "(bitSequence)OrdMaxMin_class "  where 
-     " instance_Basic_classes_OrdMaxMin_Word_bitSequence_dict = ((|
+definition instance_Basic_classes_OrdMaxMin_Word_bitSequence_dict  :: \<open>(bitSequence)OrdMaxMin_class \<close>  where 
+     \<open> instance_Basic_classes_OrdMaxMin_Word_bitSequence_dict = ((|
 
   max_method = bitSeqMax,
 
-  min_method = bitSeqMin |) )"
+  min_method = bitSeqMin |) )\<close>
 
 
 
@@ -494,46 +602,46 @@ record 'a WordAsr_class=
 \<comment> \<open>\<open> bitSequence             \<close>\<close>
 \<comment> \<open>\<open> ----------------------- \<close>\<close>
 
-definition instance_Word_WordNot_Word_bitSequence_dict  :: "(bitSequence)WordNot_class "  where 
-     " instance_Word_WordNot_Word_bitSequence_dict = ((|
+definition instance_Word_WordNot_Word_bitSequence_dict  :: \<open>(bitSequence)WordNot_class \<close>  where 
+     \<open> instance_Word_WordNot_Word_bitSequence_dict = ((|
 
-  lnot_method = bitSeqNot |) )"
-
-
-definition instance_Word_WordAnd_Word_bitSequence_dict  :: "(bitSequence)WordAnd_class "  where 
-     " instance_Word_WordAnd_Word_bitSequence_dict = ((|
-
-  land_method = bitSeqAnd |) )"
+  lnot_method = bitSeqNot |) )\<close>
 
 
-definition instance_Word_WordOr_Word_bitSequence_dict  :: "(bitSequence)WordOr_class "  where 
-     " instance_Word_WordOr_Word_bitSequence_dict = ((|
+definition instance_Word_WordAnd_Word_bitSequence_dict  :: \<open>(bitSequence)WordAnd_class \<close>  where 
+     \<open> instance_Word_WordAnd_Word_bitSequence_dict = ((|
 
-  lor_method = bitSeqOr |) )"
-
-
-definition instance_Word_WordXor_Word_bitSequence_dict  :: "(bitSequence)WordXor_class "  where 
-     " instance_Word_WordXor_Word_bitSequence_dict = ((|
-
-  lxor_method = bitSeqXor |) )"
+  land_method = bitSeqAnd |) )\<close>
 
 
-definition instance_Word_WordLsl_Word_bitSequence_dict  :: "(bitSequence)WordLsl_class "  where 
-     " instance_Word_WordLsl_Word_bitSequence_dict = ((|
+definition instance_Word_WordOr_Word_bitSequence_dict  :: \<open>(bitSequence)WordOr_class \<close>  where 
+     \<open> instance_Word_WordOr_Word_bitSequence_dict = ((|
 
-  lsl_method = bitSeqShiftLeft |) )"
-
-
-definition instance_Word_WordLsr_Word_bitSequence_dict  :: "(bitSequence)WordLsr_class "  where 
-     " instance_Word_WordLsr_Word_bitSequence_dict = ((|
-
-  lsr_method = bitSeqLogicalShiftRight |) )"
+  lor_method = bitSeqOr |) )\<close>
 
 
-definition instance_Word_WordAsr_Word_bitSequence_dict  :: "(bitSequence)WordAsr_class "  where 
-     " instance_Word_WordAsr_Word_bitSequence_dict = ((|
+definition instance_Word_WordXor_Word_bitSequence_dict  :: \<open>(bitSequence)WordXor_class \<close>  where 
+     \<open> instance_Word_WordXor_Word_bitSequence_dict = ((|
 
-  asr_method = bitSeqArithmeticShiftRight |) )"
+  lxor_method = bitSeqXor |) )\<close>
+
+
+definition instance_Word_WordLsl_Word_bitSequence_dict  :: \<open>(bitSequence)WordLsl_class \<close>  where 
+     \<open> instance_Word_WordLsl_Word_bitSequence_dict = ((|
+
+  lsl_method = bitSeqShiftLeft |) )\<close>
+
+
+definition instance_Word_WordLsr_Word_bitSequence_dict  :: \<open>(bitSequence)WordLsr_class \<close>  where 
+     \<open> instance_Word_WordLsr_Word_bitSequence_dict = ((|
+
+  lsr_method = bitSeqLogicalShiftRight |) )\<close>
+
+
+definition instance_Word_WordAsr_Word_bitSequence_dict  :: \<open>(bitSequence)WordAsr_class \<close>  where 
+     \<open> instance_Word_WordAsr_Word_bitSequence_dict = ((|
+
+  asr_method = bitSeqArithmeticShiftRight |) )\<close>
 
 
 
@@ -543,60 +651,60 @@ definition instance_Word_WordAsr_Word_bitSequence_dict  :: "(bitSequence)WordAsr
 
 \<comment> \<open>\<open>val int32Lnot : int32 -> int32\<close>\<close> \<comment> \<open>\<open> XXX: fix \<close>\<close>
 
-definition instance_Word_WordNot_Num_int32_dict  :: "( 32 word)WordNot_class "  where 
-     " instance_Word_WordNot_Num_int32_dict = ((|
+definition instance_Word_WordNot_Num_int32_dict  :: \<open>( 32 word)WordNot_class \<close>  where 
+     \<open> instance_Word_WordNot_Num_int32_dict = ((|
 
-  lnot_method = (\<lambda> w. (NOT w))|) )"
+  lnot_method = ((\<lambda> w. (NOT w)))|) )\<close>
 
 
 
 \<comment> \<open>\<open>val int32Lor  : int32 -> int32 -> int32\<close>\<close> \<comment> \<open>\<open> XXX: fix \<close>\<close>
 
-definition instance_Word_WordOr_Num_int32_dict  :: "( 32 word)WordOr_class "  where 
-     " instance_Word_WordOr_Num_int32_dict = ((|
+definition instance_Word_WordOr_Num_int32_dict  :: \<open>( 32 word)WordOr_class \<close>  where 
+     \<open> instance_Word_WordOr_Num_int32_dict = ((|
 
-  lor_method = (OR)|) )"
+  lor_method = (OR)|) )\<close>
 
 
 \<comment> \<open>\<open>val int32Lxor : int32 -> int32 -> int32\<close>\<close> \<comment> \<open>\<open> XXX: fix \<close>\<close>
 
-definition instance_Word_WordXor_Num_int32_dict  :: "( 32 word)WordXor_class "  where 
-     " instance_Word_WordXor_Num_int32_dict = ((|
+definition instance_Word_WordXor_Num_int32_dict  :: \<open>( 32 word)WordXor_class \<close>  where 
+     \<open> instance_Word_WordXor_Num_int32_dict = ((|
 
-  lxor_method = (XOR)|) )"
+  lxor_method = (XOR)|) )\<close>
 
 
 \<comment> \<open>\<open>val int32Land : int32 -> int32 -> int32\<close>\<close> \<comment> \<open>\<open> XXX: fix \<close>\<close>
 
-definition instance_Word_WordAnd_Num_int32_dict  :: "( 32 word)WordAnd_class "  where 
-     " instance_Word_WordAnd_Num_int32_dict = ((|
+definition instance_Word_WordAnd_Num_int32_dict  :: \<open>( 32 word)WordAnd_class \<close>  where 
+     \<open> instance_Word_WordAnd_Num_int32_dict = ((|
 
-  land_method = (AND)|) )"
+  land_method = (AND)|) )\<close>
 
 
 \<comment> \<open>\<open>val int32Lsl  : int32 -> nat -> int32\<close>\<close> \<comment> \<open>\<open> XXX: fix \<close>\<close>
 
-definition instance_Word_WordLsl_Num_int32_dict  :: "( 32 word)WordLsl_class "  where 
-     " instance_Word_WordLsl_Num_int32_dict = ((|
+definition instance_Word_WordLsl_Num_int32_dict  :: \<open>( 32 word)WordLsl_class \<close>  where 
+     \<open> instance_Word_WordLsl_Num_int32_dict = ((|
 
-  lsl_method = (<<)|) )"
+  lsl_method = (<<)|) )\<close>
 
 
 \<comment> \<open>\<open>val int32Lsr  : int32 -> nat -> int32\<close>\<close> \<comment> \<open>\<open> XXX: fix \<close>\<close>
 
-definition instance_Word_WordLsr_Num_int32_dict  :: "( 32 word)WordLsr_class "  where 
-     " instance_Word_WordLsr_Num_int32_dict = ((|
+definition instance_Word_WordLsr_Num_int32_dict  :: \<open>( 32 word)WordLsr_class \<close>  where 
+     \<open> instance_Word_WordLsr_Num_int32_dict = ((|
 
-  lsr_method = (>>)|) )"
+  lsr_method = (>>)|) )\<close>
 
 
 
 \<comment> \<open>\<open>val int32Asr  : int32 -> nat -> int32\<close>\<close> \<comment> \<open>\<open> XXX: fix \<close>\<close>
 
-definition instance_Word_WordAsr_Num_int32_dict  :: "( 32 word)WordAsr_class "  where 
-     " instance_Word_WordAsr_Num_int32_dict = ((|
+definition instance_Word_WordAsr_Num_int32_dict  :: \<open>( 32 word)WordAsr_class \<close>  where 
+     \<open> instance_Word_WordAsr_Num_int32_dict = ((|
 
-  asr_method = (>>>)|) )"
+  asr_method = (>>>)|) )\<close>
 
 
 
@@ -606,58 +714,58 @@ definition instance_Word_WordAsr_Num_int32_dict  :: "( 32 word)WordAsr_class "  
 
 \<comment> \<open>\<open>val int64Lnot : int64 -> int64\<close>\<close> \<comment> \<open>\<open> XXX: fix \<close>\<close>
 
-definition instance_Word_WordNot_Num_int64_dict  :: "( 64 word)WordNot_class "  where 
-     " instance_Word_WordNot_Num_int64_dict = ((|
+definition instance_Word_WordNot_Num_int64_dict  :: \<open>( 64 word)WordNot_class \<close>  where 
+     \<open> instance_Word_WordNot_Num_int64_dict = ((|
 
-  lnot_method = (\<lambda> w. (NOT w))|) )"
+  lnot_method = ((\<lambda> w. (NOT w)))|) )\<close>
 
 
 \<comment> \<open>\<open>val int64Lor  : int64 -> int64 -> int64\<close>\<close> \<comment> \<open>\<open> XXX: fix \<close>\<close>
 
-definition instance_Word_WordOr_Num_int64_dict  :: "( 64 word)WordOr_class "  where 
-     " instance_Word_WordOr_Num_int64_dict = ((|
+definition instance_Word_WordOr_Num_int64_dict  :: \<open>( 64 word)WordOr_class \<close>  where 
+     \<open> instance_Word_WordOr_Num_int64_dict = ((|
 
-  lor_method = (OR)|) )"
+  lor_method = (OR)|) )\<close>
 
 
 \<comment> \<open>\<open>val int64Lxor : int64 -> int64 -> int64\<close>\<close> \<comment> \<open>\<open> XXX: fix \<close>\<close>
 
-definition instance_Word_WordXor_Num_int64_dict  :: "( 64 word)WordXor_class "  where 
-     " instance_Word_WordXor_Num_int64_dict = ((|
+definition instance_Word_WordXor_Num_int64_dict  :: \<open>( 64 word)WordXor_class \<close>  where 
+     \<open> instance_Word_WordXor_Num_int64_dict = ((|
 
-  lxor_method = (XOR)|) )"
+  lxor_method = (XOR)|) )\<close>
 
 
 \<comment> \<open>\<open>val int64Land : int64 -> int64 -> int64\<close>\<close> \<comment> \<open>\<open> XXX: fix \<close>\<close>
 
-definition instance_Word_WordAnd_Num_int64_dict  :: "( 64 word)WordAnd_class "  where 
-     " instance_Word_WordAnd_Num_int64_dict = ((|
+definition instance_Word_WordAnd_Num_int64_dict  :: \<open>( 64 word)WordAnd_class \<close>  where 
+     \<open> instance_Word_WordAnd_Num_int64_dict = ((|
 
-  land_method = (AND)|) )"
+  land_method = (AND)|) )\<close>
 
 
 \<comment> \<open>\<open>val int64Lsl  : int64 -> nat -> int64\<close>\<close> \<comment> \<open>\<open> XXX: fix \<close>\<close>
 
-definition instance_Word_WordLsl_Num_int64_dict  :: "( 64 word)WordLsl_class "  where 
-     " instance_Word_WordLsl_Num_int64_dict = ((|
+definition instance_Word_WordLsl_Num_int64_dict  :: \<open>( 64 word)WordLsl_class \<close>  where 
+     \<open> instance_Word_WordLsl_Num_int64_dict = ((|
 
-  lsl_method = (<<)|) )"
+  lsl_method = (<<)|) )\<close>
 
 
 \<comment> \<open>\<open>val int64Lsr  : int64 -> nat -> int64\<close>\<close> \<comment> \<open>\<open> XXX: fix \<close>\<close>
 
-definition instance_Word_WordLsr_Num_int64_dict  :: "( 64 word)WordLsr_class "  where 
-     " instance_Word_WordLsr_Num_int64_dict = ((|
+definition instance_Word_WordLsr_Num_int64_dict  :: \<open>( 64 word)WordLsr_class \<close>  where 
+     \<open> instance_Word_WordLsr_Num_int64_dict = ((|
 
-  lsr_method = (>>)|) )"
+  lsr_method = (>>)|) )\<close>
 
 
 \<comment> \<open>\<open>val int64Asr  : int64 -> nat -> int64\<close>\<close> \<comment> \<open>\<open> XXX: fix \<close>\<close>
 
-definition instance_Word_WordAsr_Num_int64_dict  :: "( 64 word)WordAsr_class "  where 
-     " instance_Word_WordAsr_Num_int64_dict = ((|
+definition instance_Word_WordAsr_Num_int64_dict  :: \<open>( 64 word)WordAsr_class \<close>  where 
+     \<open> instance_Word_WordAsr_Num_int64_dict = ((|
 
-  asr_method = (>>>)|) )"
+  asr_method = (>>>)|) )\<close>
 
 
 
@@ -666,38 +774,65 @@ definition instance_Word_WordAsr_Num_int64_dict  :: "( 64 word)WordAsr_class "  
 \<comment> \<open>\<open> ----------------------- \<close>\<close>
 
 \<comment> \<open>\<open>val defaultLnot : forall 'a. (bitSequence -> 'a) -> ('a -> bitSequence) -> 'a -> 'a\<close>\<close> 
-definition defaultLnot  :: "(bitSequence \<Rightarrow> 'a)\<Rightarrow>('a \<Rightarrow> bitSequence)\<Rightarrow> 'a \<Rightarrow> 'a "  where 
-     " defaultLnot fromBitSeq toBitSeq x = ( fromBitSeq (bitSeqNegate (toBitSeq x)))"
+definition defaultLnot  :: \<open>(bitSequence \<Rightarrow> 'a)\<Rightarrow>('a \<Rightarrow> bitSequence)\<Rightarrow> 'a \<Rightarrow> 'a \<close>  where 
+     \<open> defaultLnot fromBitSeq toBitSeq x = ( fromBitSeq (bitSeqNegate (toBitSeq x)))\<close> 
+  for  fromBitSeq  :: " bitSequence \<Rightarrow> 'a " 
+  and  toBitSeq  :: " 'a \<Rightarrow> bitSequence " 
+  and  x  :: " 'a "
 
 
 \<comment> \<open>\<open>val defaultLand : forall 'a. (bitSequence -> 'a) -> ('a -> bitSequence) -> 'a -> 'a -> 'a\<close>\<close>
-definition defaultLand  :: "(bitSequence \<Rightarrow> 'a)\<Rightarrow>('a \<Rightarrow> bitSequence)\<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'a "  where 
-     " defaultLand fromBitSeq toBitSeq x1 x2 = ( fromBitSeq (bitSeqAnd (toBitSeq x1) (toBitSeq x2)))"
+definition defaultLand  :: \<open>(bitSequence \<Rightarrow> 'a)\<Rightarrow>('a \<Rightarrow> bitSequence)\<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'a \<close>  where 
+     \<open> defaultLand fromBitSeq toBitSeq x1 x2 = ( fromBitSeq (bitSeqAnd (toBitSeq x1) (toBitSeq x2)))\<close> 
+  for  fromBitSeq  :: " bitSequence \<Rightarrow> 'a " 
+  and  toBitSeq  :: " 'a \<Rightarrow> bitSequence " 
+  and  x1  :: " 'a " 
+  and  x2  :: " 'a "
 
 
 \<comment> \<open>\<open>val defaultLor : forall 'a. (bitSequence -> 'a) -> ('a -> bitSequence) -> 'a -> 'a -> 'a\<close>\<close>
-definition defaultLor  :: "(bitSequence \<Rightarrow> 'a)\<Rightarrow>('a \<Rightarrow> bitSequence)\<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'a "  where 
-     " defaultLor fromBitSeq toBitSeq x1 x2 = ( fromBitSeq (bitSeqOr (toBitSeq x1) (toBitSeq x2)))"
+definition defaultLor  :: \<open>(bitSequence \<Rightarrow> 'a)\<Rightarrow>('a \<Rightarrow> bitSequence)\<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'a \<close>  where 
+     \<open> defaultLor fromBitSeq toBitSeq x1 x2 = ( fromBitSeq (bitSeqOr (toBitSeq x1) (toBitSeq x2)))\<close> 
+  for  fromBitSeq  :: " bitSequence \<Rightarrow> 'a " 
+  and  toBitSeq  :: " 'a \<Rightarrow> bitSequence " 
+  and  x1  :: " 'a " 
+  and  x2  :: " 'a "
 
 
 \<comment> \<open>\<open>val defaultLxor : forall 'a. (bitSequence -> 'a) -> ('a -> bitSequence) -> 'a -> 'a -> 'a\<close>\<close>
-definition defaultLxor  :: "(bitSequence \<Rightarrow> 'a)\<Rightarrow>('a \<Rightarrow> bitSequence)\<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'a "  where 
-     " defaultLxor fromBitSeq toBitSeq x1 x2 = ( fromBitSeq (bitSeqXor (toBitSeq x1) (toBitSeq x2)))"
+definition defaultLxor  :: \<open>(bitSequence \<Rightarrow> 'a)\<Rightarrow>('a \<Rightarrow> bitSequence)\<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'a \<close>  where 
+     \<open> defaultLxor fromBitSeq toBitSeq x1 x2 = ( fromBitSeq (bitSeqXor (toBitSeq x1) (toBitSeq x2)))\<close> 
+  for  fromBitSeq  :: " bitSequence \<Rightarrow> 'a " 
+  and  toBitSeq  :: " 'a \<Rightarrow> bitSequence " 
+  and  x1  :: " 'a " 
+  and  x2  :: " 'a "
 
 
 \<comment> \<open>\<open>val defaultLsl : forall 'a. (bitSequence -> 'a) -> ('a -> bitSequence) -> 'a -> nat -> 'a\<close>\<close>
-definition defaultLsl  :: "(bitSequence \<Rightarrow> 'a)\<Rightarrow>('a \<Rightarrow> bitSequence)\<Rightarrow> 'a \<Rightarrow> nat \<Rightarrow> 'a "  where 
-     " defaultLsl fromBitSeq toBitSeq x n = ( fromBitSeq (bitSeqShiftLeft (toBitSeq x) n))"
+definition defaultLsl  :: \<open>(bitSequence \<Rightarrow> 'a)\<Rightarrow>('a \<Rightarrow> bitSequence)\<Rightarrow> 'a \<Rightarrow> nat \<Rightarrow> 'a \<close>  where 
+     \<open> defaultLsl fromBitSeq toBitSeq x n = ( fromBitSeq (bitSeqShiftLeft (toBitSeq x) n))\<close> 
+  for  fromBitSeq  :: " bitSequence \<Rightarrow> 'a " 
+  and  toBitSeq  :: " 'a \<Rightarrow> bitSequence " 
+  and  x  :: " 'a " 
+  and  n  :: " nat "
 
 
 \<comment> \<open>\<open>val defaultLsr : forall 'a. (bitSequence -> 'a) -> ('a -> bitSequence) -> 'a -> nat -> 'a\<close>\<close>
-definition defaultLsr  :: "(bitSequence \<Rightarrow> 'a)\<Rightarrow>('a \<Rightarrow> bitSequence)\<Rightarrow> 'a \<Rightarrow> nat \<Rightarrow> 'a "  where 
-     " defaultLsr fromBitSeq toBitSeq x n = ( fromBitSeq (bitSeqLogicalShiftRight (toBitSeq x) n))"
+definition defaultLsr  :: \<open>(bitSequence \<Rightarrow> 'a)\<Rightarrow>('a \<Rightarrow> bitSequence)\<Rightarrow> 'a \<Rightarrow> nat \<Rightarrow> 'a \<close>  where 
+     \<open> defaultLsr fromBitSeq toBitSeq x n = ( fromBitSeq (bitSeqLogicalShiftRight (toBitSeq x) n))\<close> 
+  for  fromBitSeq  :: " bitSequence \<Rightarrow> 'a " 
+  and  toBitSeq  :: " 'a \<Rightarrow> bitSequence " 
+  and  x  :: " 'a " 
+  and  n  :: " nat "
 
 
 \<comment> \<open>\<open>val defaultAsr : forall 'a. (bitSequence -> 'a) -> ('a -> bitSequence) -> 'a -> nat -> 'a\<close>\<close>
-definition defaultAsr  :: "(bitSequence \<Rightarrow> 'a)\<Rightarrow>('a \<Rightarrow> bitSequence)\<Rightarrow> 'a \<Rightarrow> nat \<Rightarrow> 'a "  where 
-     " defaultAsr fromBitSeq toBitSeq x n = ( fromBitSeq (bitSeqArithmeticShiftRight (toBitSeq x) n))"
+definition defaultAsr  :: \<open>(bitSequence \<Rightarrow> 'a)\<Rightarrow>('a \<Rightarrow> bitSequence)\<Rightarrow> 'a \<Rightarrow> nat \<Rightarrow> 'a \<close>  where 
+     \<open> defaultAsr fromBitSeq toBitSeq x n = ( fromBitSeq (bitSeqArithmeticShiftRight (toBitSeq x) n))\<close> 
+  for  fromBitSeq  :: " bitSequence \<Rightarrow> 'a " 
+  and  toBitSeq  :: " 'a \<Rightarrow> bitSequence " 
+  and  x  :: " 'a " 
+  and  n  :: " nat "
 
 
 \<comment> \<open>\<open> ----------------------- \<close>\<close>
@@ -705,76 +840,87 @@ definition defaultAsr  :: "(bitSequence \<Rightarrow> 'a)\<Rightarrow>('a \<Righ
 \<comment> \<open>\<open> ----------------------- \<close>\<close>
 
 \<comment> \<open>\<open>val integerLnot : integer -> integer\<close>\<close>
-definition integerLnot  :: " int \<Rightarrow> int "  where 
-     " integerLnot i = ( - (i +( 1 :: int)))"
+definition integerLnot  :: \<open> int \<Rightarrow> int \<close>  where 
+     \<open> integerLnot i = ( - (i +( 1 :: int)))\<close> 
+  for  i  :: " int "
 
 
-definition instance_Word_WordNot_Num_integer_dict  :: "(int)WordNot_class "  where 
-     " instance_Word_WordNot_Num_integer_dict = ((|
+definition instance_Word_WordNot_Num_integer_dict  :: \<open>(int)WordNot_class \<close>  where 
+     \<open> instance_Word_WordNot_Num_integer_dict = ((|
 
-  lnot_method = integerLnot |) )"
+  lnot_method = integerLnot |) )\<close>
 
 
 
 \<comment> \<open>\<open>val integerLor  : integer -> integer -> integer\<close>\<close>
-definition integerLor  :: " int \<Rightarrow> int \<Rightarrow> int "  where 
-     " integerLor i1 i2 = ( defaultLor integerFromBitSeq (bitSeqFromInteger None) i1 i2 )"
+definition integerLor  :: \<open> int \<Rightarrow> int \<Rightarrow> int \<close>  where 
+     \<open> integerLor i1 i2 = ( defaultLor integerFromBitSeq (bitSeqFromInteger None) i1 i2 )\<close> 
+  for  i1  :: " int " 
+  and  i2  :: " int "
 
 
-definition instance_Word_WordOr_Num_integer_dict  :: "(int)WordOr_class "  where 
-     " instance_Word_WordOr_Num_integer_dict = ((|
+definition instance_Word_WordOr_Num_integer_dict  :: \<open>(int)WordOr_class \<close>  where 
+     \<open> instance_Word_WordOr_Num_integer_dict = ((|
 
-  lor_method = integerLor |) )"
+  lor_method = integerLor |) )\<close>
 
 
 \<comment> \<open>\<open>val integerLxor : integer -> integer -> integer\<close>\<close>
-definition integerLxor  :: " int \<Rightarrow> int \<Rightarrow> int "  where 
-     " integerLxor i1 i2 = ( defaultLxor integerFromBitSeq (bitSeqFromInteger None) i1 i2 )"
+definition integerLxor  :: \<open> int \<Rightarrow> int \<Rightarrow> int \<close>  where 
+     \<open> integerLxor i1 i2 = ( defaultLxor integerFromBitSeq (bitSeqFromInteger None) i1 i2 )\<close> 
+  for  i1  :: " int " 
+  and  i2  :: " int "
 
 
-definition instance_Word_WordXor_Num_integer_dict  :: "(int)WordXor_class "  where 
-     " instance_Word_WordXor_Num_integer_dict = ((|
+definition instance_Word_WordXor_Num_integer_dict  :: \<open>(int)WordXor_class \<close>  where 
+     \<open> instance_Word_WordXor_Num_integer_dict = ((|
 
-  lxor_method = integerLxor |) )"
+  lxor_method = integerLxor |) )\<close>
 
 
 \<comment> \<open>\<open>val integerLand : integer -> integer -> integer\<close>\<close>
-definition integerLand  :: " int \<Rightarrow> int \<Rightarrow> int "  where 
-     " integerLand i1 i2 = ( defaultLand integerFromBitSeq (bitSeqFromInteger None) i1 i2 )"
+definition integerLand  :: \<open> int \<Rightarrow> int \<Rightarrow> int \<close>  where 
+     \<open> integerLand i1 i2 = ( defaultLand integerFromBitSeq (bitSeqFromInteger None) i1 i2 )\<close> 
+  for  i1  :: " int " 
+  and  i2  :: " int "
 
 
-definition instance_Word_WordAnd_Num_integer_dict  :: "(int)WordAnd_class "  where 
-     " instance_Word_WordAnd_Num_integer_dict = ((|
+definition instance_Word_WordAnd_Num_integer_dict  :: \<open>(int)WordAnd_class \<close>  where 
+     \<open> instance_Word_WordAnd_Num_integer_dict = ((|
 
-  land_method = integerLand |) )"
+  land_method = integerLand |) )\<close>
 
 
 \<comment> \<open>\<open>val integerLsl  : integer -> nat -> integer\<close>\<close>
-definition integerLsl  :: " int \<Rightarrow> nat \<Rightarrow> int "  where 
-     " integerLsl i n = ( defaultLsl integerFromBitSeq (bitSeqFromInteger None) i n )"
+definition integerLsl  :: \<open> int \<Rightarrow> nat \<Rightarrow> int \<close>  where 
+     \<open> integerLsl i n = ( defaultLsl integerFromBitSeq (bitSeqFromInteger None) i n )\<close> 
+  for  i  :: " int " 
+  and  n  :: " nat "
 
 
-definition instance_Word_WordLsl_Num_integer_dict  :: "(int)WordLsl_class "  where 
-     " instance_Word_WordLsl_Num_integer_dict = ((|
+definition instance_Word_WordLsl_Num_integer_dict  :: \<open>(int)WordLsl_class \<close>  where 
+     \<open> instance_Word_WordLsl_Num_integer_dict = ((|
 
-  lsl_method = integerLsl |) )"
+  lsl_method = integerLsl |) )\<close>
 
 
 \<comment> \<open>\<open>val integerAsr  : integer -> nat -> integer\<close>\<close>
-definition integerAsr  :: " int \<Rightarrow> nat \<Rightarrow> int "  where 
-     " integerAsr i n = ( defaultAsr integerFromBitSeq (bitSeqFromInteger None) i n )"
+definition integerAsr  :: \<open> int \<Rightarrow> nat \<Rightarrow> int \<close>  where 
+     \<open> integerAsr i n = ( defaultAsr integerFromBitSeq (bitSeqFromInteger None) i n )\<close> 
+  for  i  :: " int " 
+  and  n  :: " nat "
 
 
-definition instance_Word_WordLsr_Num_integer_dict  :: "(int)WordLsr_class "  where 
-     " instance_Word_WordLsr_Num_integer_dict = ((|
+definition instance_Word_WordLsr_Num_integer_dict  :: \<open>(int)WordLsr_class \<close>  where 
+     \<open> instance_Word_WordLsr_Num_integer_dict = ((|
 
-  lsr_method = integerAsr |) )"
+  lsr_method = integerAsr |) )\<close>
 
 
-definition instance_Word_WordAsr_Num_integer_dict  :: "(int)WordAsr_class "  where 
-     " instance_Word_WordAsr_Num_integer_dict = ((|
+definition instance_Word_WordAsr_Num_integer_dict  :: \<open>(int)WordAsr_class \<close>  where 
+     \<open> instance_Word_WordAsr_Num_integer_dict = ((|
 
-  asr_method = integerAsr |) )"
+  asr_method = integerAsr |) )\<close>
 
 
 
@@ -788,81 +934,94 @@ definition instance_Word_WordAsr_Num_integer_dict  :: "(int)WordAsr_class "  whe
    bitwidth of int \<close>\<close>
 
 \<comment> \<open>\<open>val intFromBitSeq : bitSequence -> int\<close>\<close>
-definition intFromBitSeq  :: " bitSequence \<Rightarrow> int "  where 
-     " intFromBitSeq bs = (  (integerFromBitSeq (resizeBitSeq (Some(( 31 :: nat))) bs)))"
+definition intFromBitSeq  :: \<open> bitSequence \<Rightarrow> int \<close>  where 
+     \<open> intFromBitSeq bs = (  (integerFromBitSeq (resizeBitSeq (Some(( 31 :: nat))) bs)))\<close> 
+  for  bs  :: " bitSequence "
 
 
 
 \<comment> \<open>\<open>val bitSeqFromInt : int -> bitSequence\<close>\<close> 
-definition bitSeqFromInt  :: " int \<Rightarrow> bitSequence "  where 
-     " bitSeqFromInt i = ( bitSeqFromInteger (Some(( 31 :: nat))) ( i))"
+definition bitSeqFromInt  :: \<open> int \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqFromInt i = ( bitSeqFromInteger (Some(( 31 :: nat))) ( i))\<close> 
+  for  i  :: " int "
 
 
 
 \<comment> \<open>\<open>val intLnot : int -> int\<close>\<close>
-definition intLnot  :: " int \<Rightarrow> int "  where 
-     " intLnot i = ( - (i +( 1 :: int)))"
+definition intLnot  :: \<open> int \<Rightarrow> int \<close>  where 
+     \<open> intLnot i = ( - (i +( 1 :: int)))\<close> 
+  for  i  :: " int "
 
 
-definition instance_Word_WordNot_Num_int_dict  :: "(int)WordNot_class "  where 
-     " instance_Word_WordNot_Num_int_dict = ((|
+definition instance_Word_WordNot_Num_int_dict  :: \<open>(int)WordNot_class \<close>  where 
+     \<open> instance_Word_WordNot_Num_int_dict = ((|
 
-  lnot_method = intLnot |) )"
+  lnot_method = intLnot |) )\<close>
 
 
 \<comment> \<open>\<open>val intLor  : int -> int -> int\<close>\<close>
-definition intLor  :: " int \<Rightarrow> int \<Rightarrow> int "  where 
-     " intLor i1 i2 = ( defaultLor intFromBitSeq bitSeqFromInt i1 i2 )"
+definition intLor  :: \<open> int \<Rightarrow> int \<Rightarrow> int \<close>  where 
+     \<open> intLor i1 i2 = ( defaultLor intFromBitSeq bitSeqFromInt i1 i2 )\<close> 
+  for  i1  :: " int " 
+  and  i2  :: " int "
 
 
-definition instance_Word_WordOr_Num_int_dict  :: "(int)WordOr_class "  where 
-     " instance_Word_WordOr_Num_int_dict = ((|
+definition instance_Word_WordOr_Num_int_dict  :: \<open>(int)WordOr_class \<close>  where 
+     \<open> instance_Word_WordOr_Num_int_dict = ((|
 
-  lor_method = intLor |) )"
+  lor_method = intLor |) )\<close>
 
 
 \<comment> \<open>\<open>val intLxor : int -> int -> int\<close>\<close>
-definition intLxor  :: " int \<Rightarrow> int \<Rightarrow> int "  where 
-     " intLxor i1 i2 = ( defaultLxor intFromBitSeq bitSeqFromInt i1 i2 )"
+definition intLxor  :: \<open> int \<Rightarrow> int \<Rightarrow> int \<close>  where 
+     \<open> intLxor i1 i2 = ( defaultLxor intFromBitSeq bitSeqFromInt i1 i2 )\<close> 
+  for  i1  :: " int " 
+  and  i2  :: " int "
 
 
-definition instance_Word_WordXor_Num_int_dict  :: "(int)WordXor_class "  where 
-     " instance_Word_WordXor_Num_int_dict = ((|
+definition instance_Word_WordXor_Num_int_dict  :: \<open>(int)WordXor_class \<close>  where 
+     \<open> instance_Word_WordXor_Num_int_dict = ((|
 
-  lxor_method = intLxor |) )"
+  lxor_method = intLxor |) )\<close>
 
 
 \<comment> \<open>\<open>val intLand : int -> int -> int\<close>\<close>
-definition intLand  :: " int \<Rightarrow> int \<Rightarrow> int "  where 
-     " intLand i1 i2 = ( defaultLand intFromBitSeq bitSeqFromInt i1 i2 )"
+definition intLand  :: \<open> int \<Rightarrow> int \<Rightarrow> int \<close>  where 
+     \<open> intLand i1 i2 = ( defaultLand intFromBitSeq bitSeqFromInt i1 i2 )\<close> 
+  for  i1  :: " int " 
+  and  i2  :: " int "
 
 
-definition instance_Word_WordAnd_Num_int_dict  :: "(int)WordAnd_class "  where 
-     " instance_Word_WordAnd_Num_int_dict = ((|
+definition instance_Word_WordAnd_Num_int_dict  :: \<open>(int)WordAnd_class \<close>  where 
+     \<open> instance_Word_WordAnd_Num_int_dict = ((|
 
-  land_method = intLand |) )"
+  land_method = intLand |) )\<close>
 
 
 \<comment> \<open>\<open>val intLsl  : int -> nat -> int\<close>\<close>
-definition intLsl  :: " int \<Rightarrow> nat \<Rightarrow> int "  where 
-     " intLsl i n = ( defaultLsl intFromBitSeq bitSeqFromInt i n )"
+definition intLsl  :: \<open> int \<Rightarrow> nat \<Rightarrow> int \<close>  where 
+     \<open> intLsl i n = ( defaultLsl intFromBitSeq bitSeqFromInt i n )\<close> 
+  for  i  :: " int " 
+  and  n  :: " nat "
 
 
-definition instance_Word_WordLsl_Num_int_dict  :: "(int)WordLsl_class "  where 
-     " instance_Word_WordLsl_Num_int_dict = ((|
+definition instance_Word_WordLsl_Num_int_dict  :: \<open>(int)WordLsl_class \<close>  where 
+     \<open> instance_Word_WordLsl_Num_int_dict = ((|
 
-  lsl_method = intLsl |) )"
+  lsl_method = intLsl |) )\<close>
 
 
 \<comment> \<open>\<open>val intAsr  : int -> nat -> int\<close>\<close>
-definition intAsr  :: " int \<Rightarrow> nat \<Rightarrow> int "  where 
-     " intAsr i n = ( defaultAsr intFromBitSeq bitSeqFromInt i n )"
+definition intAsr  :: \<open> int \<Rightarrow> nat \<Rightarrow> int \<close>  where 
+     \<open> intAsr i n = ( defaultAsr intFromBitSeq bitSeqFromInt i n )\<close> 
+  for  i  :: " int " 
+  and  n  :: " nat "
 
 
-definition instance_Word_WordAsr_Num_int_dict  :: "(int)WordAsr_class "  where 
-     " instance_Word_WordAsr_Num_int_dict = ((|
+definition instance_Word_WordAsr_Num_int_dict  :: \<open>(int)WordAsr_class \<close>  where 
+     \<open> instance_Word_WordAsr_Num_int_dict = ((|
 
-  asr_method = intAsr |) )"
+  asr_method = intAsr |) )\<close>
 
 
 
@@ -874,74 +1033,87 @@ definition instance_Word_WordAsr_Num_int_dict  :: "(int)WordAsr_class "  where
 \<comment> \<open>\<open> some operations work also on positive numbers \<close>\<close>
 
 \<comment> \<open>\<open>val naturalFromBitSeq : bitSequence -> natural\<close>\<close>
-definition naturalFromBitSeq  :: " bitSequence \<Rightarrow> nat "  where 
-     " naturalFromBitSeq bs = ( nat (abs (integerFromBitSeq bs)))"
+definition naturalFromBitSeq  :: \<open> bitSequence \<Rightarrow> nat \<close>  where 
+     \<open> naturalFromBitSeq bs = ( nat (abs (integerFromBitSeq bs)))\<close> 
+  for  bs  :: " bitSequence "
 
 
 \<comment> \<open>\<open>val bitSeqFromNatural : maybe nat -> natural -> bitSequence\<close>\<close>
-definition bitSeqFromNatural  :: "(nat)option \<Rightarrow> nat \<Rightarrow> bitSequence "  where 
-     " bitSeqFromNatural len n = ( bitSeqFromInteger len (int n))"
+definition bitSeqFromNatural  :: \<open>(nat)option \<Rightarrow> nat \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqFromNatural len n = ( bitSeqFromInteger len (int n))\<close> 
+  for  len  :: "(nat)option " 
+  and  n  :: " nat "
 
 
 \<comment> \<open>\<open>val naturalLor  : natural -> natural -> natural\<close>\<close>
-definition naturalLor  :: " nat \<Rightarrow> nat \<Rightarrow> nat "  where 
-     " naturalLor i1 i2 = ( defaultLor naturalFromBitSeq (bitSeqFromNatural None) i1 i2 )"
+definition naturalLor  :: \<open> nat \<Rightarrow> nat \<Rightarrow> nat \<close>  where 
+     \<open> naturalLor i1 i2 = ( defaultLor naturalFromBitSeq (bitSeqFromNatural None) i1 i2 )\<close> 
+  for  i1  :: " nat " 
+  and  i2  :: " nat "
 
 
-definition instance_Word_WordOr_Num_natural_dict  :: "(nat)WordOr_class "  where 
-     " instance_Word_WordOr_Num_natural_dict = ((|
+definition instance_Word_WordOr_Num_natural_dict  :: \<open>(nat)WordOr_class \<close>  where 
+     \<open> instance_Word_WordOr_Num_natural_dict = ((|
 
-  lor_method = naturalLor |) )"
+  lor_method = naturalLor |) )\<close>
 
 
 \<comment> \<open>\<open>val naturalLxor : natural -> natural -> natural\<close>\<close>
-definition naturalLxor  :: " nat \<Rightarrow> nat \<Rightarrow> nat "  where 
-     " naturalLxor i1 i2 = ( defaultLxor naturalFromBitSeq (bitSeqFromNatural None) i1 i2 )"
+definition naturalLxor  :: \<open> nat \<Rightarrow> nat \<Rightarrow> nat \<close>  where 
+     \<open> naturalLxor i1 i2 = ( defaultLxor naturalFromBitSeq (bitSeqFromNatural None) i1 i2 )\<close> 
+  for  i1  :: " nat " 
+  and  i2  :: " nat "
 
 
-definition instance_Word_WordXor_Num_natural_dict  :: "(nat)WordXor_class "  where 
-     " instance_Word_WordXor_Num_natural_dict = ((|
+definition instance_Word_WordXor_Num_natural_dict  :: \<open>(nat)WordXor_class \<close>  where 
+     \<open> instance_Word_WordXor_Num_natural_dict = ((|
 
-  lxor_method = naturalLxor |) )"
+  lxor_method = naturalLxor |) )\<close>
 
 
 \<comment> \<open>\<open>val naturalLand : natural -> natural -> natural\<close>\<close>
-definition naturalLand  :: " nat \<Rightarrow> nat \<Rightarrow> nat "  where 
-     " naturalLand i1 i2 = ( defaultLand naturalFromBitSeq (bitSeqFromNatural None) i1 i2 )"
+definition naturalLand  :: \<open> nat \<Rightarrow> nat \<Rightarrow> nat \<close>  where 
+     \<open> naturalLand i1 i2 = ( defaultLand naturalFromBitSeq (bitSeqFromNatural None) i1 i2 )\<close> 
+  for  i1  :: " nat " 
+  and  i2  :: " nat "
 
 
-definition instance_Word_WordAnd_Num_natural_dict  :: "(nat)WordAnd_class "  where 
-     " instance_Word_WordAnd_Num_natural_dict = ((|
+definition instance_Word_WordAnd_Num_natural_dict  :: \<open>(nat)WordAnd_class \<close>  where 
+     \<open> instance_Word_WordAnd_Num_natural_dict = ((|
 
-  land_method = naturalLand |) )"
+  land_method = naturalLand |) )\<close>
 
 
 \<comment> \<open>\<open>val naturalLsl  : natural -> nat -> natural\<close>\<close>
-definition naturalLsl  :: " nat \<Rightarrow> nat \<Rightarrow> nat "  where 
-     " naturalLsl i n = ( defaultLsl naturalFromBitSeq (bitSeqFromNatural None) i n )"
+definition naturalLsl  :: \<open> nat \<Rightarrow> nat \<Rightarrow> nat \<close>  where 
+     \<open> naturalLsl i n = ( defaultLsl naturalFromBitSeq (bitSeqFromNatural None) i n )\<close> 
+  for  i  :: " nat " 
+  and  n  :: " nat "
 
 
-definition instance_Word_WordLsl_Num_natural_dict  :: "(nat)WordLsl_class "  where 
-     " instance_Word_WordLsl_Num_natural_dict = ((|
+definition instance_Word_WordLsl_Num_natural_dict  :: \<open>(nat)WordLsl_class \<close>  where 
+     \<open> instance_Word_WordLsl_Num_natural_dict = ((|
 
-  lsl_method = naturalLsl |) )"
+  lsl_method = naturalLsl |) )\<close>
 
 
 \<comment> \<open>\<open>val naturalAsr  : natural -> nat -> natural\<close>\<close>
-definition naturalAsr  :: " nat \<Rightarrow> nat \<Rightarrow> nat "  where 
-     " naturalAsr i n = ( defaultAsr naturalFromBitSeq (bitSeqFromNatural None) i n )"
+definition naturalAsr  :: \<open> nat \<Rightarrow> nat \<Rightarrow> nat \<close>  where 
+     \<open> naturalAsr i n = ( defaultAsr naturalFromBitSeq (bitSeqFromNatural None) i n )\<close> 
+  for  i  :: " nat " 
+  and  n  :: " nat "
 
 
-definition instance_Word_WordLsr_Num_natural_dict  :: "(nat)WordLsr_class "  where 
-     " instance_Word_WordLsr_Num_natural_dict = ((|
+definition instance_Word_WordLsr_Num_natural_dict  :: \<open>(nat)WordLsr_class \<close>  where 
+     \<open> instance_Word_WordLsr_Num_natural_dict = ((|
 
-  lsr_method = naturalAsr |) )"
+  lsr_method = naturalAsr |) )\<close>
 
 
-definition instance_Word_WordAsr_Num_natural_dict  :: "(nat)WordAsr_class "  where 
-     " instance_Word_WordAsr_Num_natural_dict = ((|
+definition instance_Word_WordAsr_Num_natural_dict  :: \<open>(nat)WordAsr_class \<close>  where 
+     \<open> instance_Word_WordAsr_Num_natural_dict = ((|
 
-  asr_method = naturalAsr |) )"
+  asr_method = naturalAsr |) )\<close>
 
 
 
@@ -955,70 +1127,82 @@ definition instance_Word_WordAsr_Num_natural_dict  :: "(nat)WordAsr_class "  whe
    bitwidth of nat \<close>\<close>
 
 \<comment> \<open>\<open>val natFromBitSeq : bitSequence -> nat\<close>\<close>
-definition natFromBitSeq  :: " bitSequence \<Rightarrow> nat "  where 
-     " natFromBitSeq bs = (  (naturalFromBitSeq (resizeBitSeq (Some(( 31 :: nat))) bs)))"
+definition natFromBitSeq  :: \<open> bitSequence \<Rightarrow> nat \<close>  where 
+     \<open> natFromBitSeq bs = (  (naturalFromBitSeq (resizeBitSeq (Some(( 31 :: nat))) bs)))\<close> 
+  for  bs  :: " bitSequence "
 
 
 
 \<comment> \<open>\<open>val bitSeqFromNat : nat -> bitSequence\<close>\<close> 
-definition bitSeqFromNat  :: " nat \<Rightarrow> bitSequence "  where 
-     " bitSeqFromNat i = ( bitSeqFromNatural (Some(( 31 :: nat))) ( i))"
+definition bitSeqFromNat  :: \<open> nat \<Rightarrow> bitSequence \<close>  where 
+     \<open> bitSeqFromNat i = ( bitSeqFromNatural (Some(( 31 :: nat))) ( i))\<close> 
+  for  i  :: " nat "
 
 
 
 \<comment> \<open>\<open>val natLor  : nat -> nat -> nat\<close>\<close>
-definition natLor  :: " nat \<Rightarrow> nat \<Rightarrow> nat "  where 
-     " natLor i1 i2 = ( defaultLor natFromBitSeq bitSeqFromNat i1 i2 )"
+definition natLor  :: \<open> nat \<Rightarrow> nat \<Rightarrow> nat \<close>  where 
+     \<open> natLor i1 i2 = ( defaultLor natFromBitSeq bitSeqFromNat i1 i2 )\<close> 
+  for  i1  :: " nat " 
+  and  i2  :: " nat "
 
 
-definition instance_Word_WordOr_nat_dict  :: "(nat)WordOr_class "  where 
-     " instance_Word_WordOr_nat_dict = ((|
+definition instance_Word_WordOr_nat_dict  :: \<open>(nat)WordOr_class \<close>  where 
+     \<open> instance_Word_WordOr_nat_dict = ((|
 
-  lor_method = natLor |) )"
+  lor_method = natLor |) )\<close>
 
 
 \<comment> \<open>\<open>val natLxor : nat -> nat -> nat\<close>\<close>
-definition natLxor  :: " nat \<Rightarrow> nat \<Rightarrow> nat "  where 
-     " natLxor i1 i2 = ( defaultLxor natFromBitSeq bitSeqFromNat i1 i2 )"
+definition natLxor  :: \<open> nat \<Rightarrow> nat \<Rightarrow> nat \<close>  where 
+     \<open> natLxor i1 i2 = ( defaultLxor natFromBitSeq bitSeqFromNat i1 i2 )\<close> 
+  for  i1  :: " nat " 
+  and  i2  :: " nat "
 
 
-definition instance_Word_WordXor_nat_dict  :: "(nat)WordXor_class "  where 
-     " instance_Word_WordXor_nat_dict = ((|
+definition instance_Word_WordXor_nat_dict  :: \<open>(nat)WordXor_class \<close>  where 
+     \<open> instance_Word_WordXor_nat_dict = ((|
 
-  lxor_method = natLxor |) )"
+  lxor_method = natLxor |) )\<close>
 
 
 \<comment> \<open>\<open>val natLand : nat -> nat -> nat\<close>\<close>
-definition natLand  :: " nat \<Rightarrow> nat \<Rightarrow> nat "  where 
-     " natLand i1 i2 = ( defaultLand natFromBitSeq bitSeqFromNat i1 i2 )"
+definition natLand  :: \<open> nat \<Rightarrow> nat \<Rightarrow> nat \<close>  where 
+     \<open> natLand i1 i2 = ( defaultLand natFromBitSeq bitSeqFromNat i1 i2 )\<close> 
+  for  i1  :: " nat " 
+  and  i2  :: " nat "
 
 
-definition instance_Word_WordAnd_nat_dict  :: "(nat)WordAnd_class "  where 
-     " instance_Word_WordAnd_nat_dict = ((|
+definition instance_Word_WordAnd_nat_dict  :: \<open>(nat)WordAnd_class \<close>  where 
+     \<open> instance_Word_WordAnd_nat_dict = ((|
 
-  land_method = natLand |) )"
+  land_method = natLand |) )\<close>
 
 
 \<comment> \<open>\<open>val natLsl  : nat -> nat -> nat\<close>\<close>
-definition natLsl  :: " nat \<Rightarrow> nat \<Rightarrow> nat "  where 
-     " natLsl i n = ( defaultLsl natFromBitSeq bitSeqFromNat i n )"
+definition natLsl  :: \<open> nat \<Rightarrow> nat \<Rightarrow> nat \<close>  where 
+     \<open> natLsl i n = ( defaultLsl natFromBitSeq bitSeqFromNat i n )\<close> 
+  for  i  :: " nat " 
+  and  n  :: " nat "
 
 
-definition instance_Word_WordLsl_nat_dict  :: "(nat)WordLsl_class "  where 
-     " instance_Word_WordLsl_nat_dict = ((|
+definition instance_Word_WordLsl_nat_dict  :: \<open>(nat)WordLsl_class \<close>  where 
+     \<open> instance_Word_WordLsl_nat_dict = ((|
 
-  lsl_method = natLsl |) )"
+  lsl_method = natLsl |) )\<close>
 
 
 \<comment> \<open>\<open>val natAsr  : nat -> nat -> nat\<close>\<close>
-definition natAsr  :: " nat \<Rightarrow> nat \<Rightarrow> nat "  where 
-     " natAsr i n = ( defaultAsr natFromBitSeq bitSeqFromNat i n )"
+definition natAsr  :: \<open> nat \<Rightarrow> nat \<Rightarrow> nat \<close>  where 
+     \<open> natAsr i n = ( defaultAsr natFromBitSeq bitSeqFromNat i n )\<close> 
+  for  i  :: " nat " 
+  and  n  :: " nat "
 
 
-definition instance_Word_WordAsr_nat_dict  :: "(nat)WordAsr_class "  where 
-     " instance_Word_WordAsr_nat_dict = ((|
+definition instance_Word_WordAsr_nat_dict  :: \<open>(nat)WordAsr_class \<close>  where 
+     \<open> instance_Word_WordAsr_nat_dict = ((|
 
-  asr_method = natAsr |) )"
+  asr_method = natAsr |) )\<close>
 
 
 end

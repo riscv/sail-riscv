@@ -17,136 +17,173 @@ begin
 \<comment> \<open>\<open>open import {isabelle} `Sail2_state_monad_lemmas`\<close>\<close>
 
 \<comment> \<open>\<open>val iterS_aux : forall 'rv 'a 'e. integer -> (integer -> 'a -> monadS 'rv unit 'e) -> list 'a -> monadS 'rv unit 'e\<close>\<close>
-fun  iterS_aux  :: " int \<Rightarrow>(int \<Rightarrow> 'a \<Rightarrow> 'rv sequential_state \<Rightarrow>(((unit),'e)result*'rv sequential_state)set)\<Rightarrow> 'a list \<Rightarrow>('rv,(unit),'e)monadS "  where 
-     " iterS_aux i f (x # xs) = ( seqS (f i x) (iterS_aux (i +( 1 :: int)) f xs))"
-|" iterS_aux i f ([]) = ( returnS ()  )"
+fun  iterS_aux  :: \<open> int \<Rightarrow>(int \<Rightarrow> 'a \<Rightarrow> 'rv sequential_state \<Rightarrow>(((unit),'e)result*'rv sequential_state)set)\<Rightarrow> 'a list \<Rightarrow>('rv,(unit),'e)monadS \<close>  where 
+     \<open> iterS_aux i f (x # xs) = ( seqS (f i x) (iterS_aux (i +( 1 :: int)) f xs))\<close> 
+  for  i  :: " int " 
+  and  f  :: " int \<Rightarrow> 'a \<Rightarrow> 'rv sequential_state \<Rightarrow>(((unit),'e)result*'rv sequential_state)set " 
+  and  xs  :: " 'a list " 
+  and  x  :: " 'a "
+|\<open> iterS_aux i f ([]) = ( returnS ()  )\<close> 
+  for  i  :: " int " 
+  and  f  :: " int \<Rightarrow> 'a \<Rightarrow> 'rv sequential_state \<Rightarrow>(((unit),'e)result*'rv sequential_state)set "
 
 
 \<comment> \<open>\<open>val iteriS : forall 'rv 'a 'e. (integer -> 'a -> monadS 'rv unit 'e) -> list 'a -> monadS 'rv unit 'e\<close>\<close>
-definition iteriS  :: "(int \<Rightarrow> 'a \<Rightarrow>('rv,(unit),'e)monadS)\<Rightarrow> 'a list \<Rightarrow> 'rv sequential_state \<Rightarrow>(((unit),'e)result*'rv sequential_state)set "  where 
-     " iteriS f xs = ( iterS_aux(( 0 :: int)) f xs )"
+definition iteriS  :: \<open>(int \<Rightarrow> 'a \<Rightarrow>('rv,(unit),'e)monadS)\<Rightarrow> 'a list \<Rightarrow> 'rv sequential_state \<Rightarrow>(((unit),'e)result*'rv sequential_state)set \<close>  where 
+     \<open> iteriS f xs = ( iterS_aux(( 0 :: int)) f xs )\<close> 
+  for  f  :: " int \<Rightarrow> 'a \<Rightarrow>('rv,(unit),'e)monadS " 
+  and  xs  :: " 'a list "
 
 
 \<comment> \<open>\<open>val iterS : forall 'rv 'a 'e. ('a -> monadS 'rv unit 'e) -> list 'a -> monadS 'rv unit 'e\<close>\<close>
-definition iterS  :: "('a \<Rightarrow> 'rv sequential_state \<Rightarrow>(((unit),'e)result*'rv sequential_state)set)\<Rightarrow> 'a list \<Rightarrow> 'rv sequential_state \<Rightarrow>(((unit),'e)result*'rv sequential_state)set "  where 
-     " iterS f xs = ( iteriS ( \<lambda>x .  
-  (case  x of _ => \<lambda> x .  f x )) xs )"
+definition iterS  :: \<open>('a \<Rightarrow> 'rv sequential_state \<Rightarrow>(((unit),'e)result*'rv sequential_state)set)\<Rightarrow> 'a list \<Rightarrow> 'rv sequential_state \<Rightarrow>(((unit),'e)result*'rv sequential_state)set \<close>  where 
+     \<open> iterS f xs = ( iteriS ( (\<lambda>x .  
+  (case  x of _ => (\<lambda> x .  f x) ))) xs )\<close> 
+  for  f  :: " 'a \<Rightarrow> 'rv sequential_state \<Rightarrow>(((unit),'e)result*'rv sequential_state)set " 
+  and  xs  :: " 'a list "
 
 
 \<comment> \<open>\<open>val foreachS : forall 'a 'rv 'vars 'e.
   list 'a -> 'vars -> ('a -> 'vars -> monadS 'rv 'vars 'e) -> monadS 'rv 'vars 'e\<close>\<close>
-fun  foreachS  :: " 'a list \<Rightarrow> 'vars \<Rightarrow>('a \<Rightarrow> 'vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set)\<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set "  where 
-     " foreachS ([]) vars body = ( returnS vars )"
-|" foreachS (x # xs) vars body = ( bindS
-     (body x vars) (\<lambda> vars . 
-     foreachS xs vars body))"
+fun  foreachS  :: \<open> 'a list \<Rightarrow> 'vars \<Rightarrow>('a \<Rightarrow> 'vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set)\<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set \<close>  where 
+     \<open> foreachS ([]) vars body = ( returnS vars )\<close> 
+  for  vars  :: " 'vars " 
+  and  body  :: " 'a \<Rightarrow> 'vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set "
+|\<open> foreachS (x # xs) vars body = ( bindS
+     (body x vars) ((\<lambda> vars . 
+     foreachS xs vars body)))\<close> 
+  for  xs  :: " 'a list " 
+  and  x  :: " 'a " 
+  and  vars  :: " 'vars " 
+  and  body  :: " 'a \<Rightarrow> 'vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set "
 
 
 \<comment> \<open>\<open>val genlistS : forall 'a 'rv 'e. (nat -> monadS 'rv 'a 'e) -> nat -> monadS 'rv (list 'a) 'e\<close>\<close>
-definition genlistS  :: "(nat \<Rightarrow> 'rv sequential_state \<Rightarrow>(('a,'e)result*'rv sequential_state)set)\<Rightarrow> nat \<Rightarrow> 'rv sequential_state \<Rightarrow>((('a list),'e)result*'rv sequential_state)set "  where 
-     " genlistS f n = (
-  (let indices = (genlist (\<lambda> n .  n) n) in
-  foreachS indices [] (\<lambda> n xs .  ( bindS(f n) (\<lambda> x .  returnS (xs @ [x]))))))"
+definition genlistS  :: \<open>(nat \<Rightarrow> 'rv sequential_state \<Rightarrow>(('a,'e)result*'rv sequential_state)set)\<Rightarrow> nat \<Rightarrow> 'rv sequential_state \<Rightarrow>((('a list),'e)result*'rv sequential_state)set \<close>  where 
+     \<open> genlistS f n = (
+  (let indices = (genlist ((\<lambda> n .  n)) n) in
+  foreachS indices [] ((\<lambda> n xs .  ( bindS(f n) ((\<lambda> x .  returnS (xs @ [x]))))))))\<close> 
+  for  f  :: " nat \<Rightarrow> 'rv sequential_state \<Rightarrow>(('a,'e)result*'rv sequential_state)set " 
+  and  n  :: " nat "
 
 
 \<comment> \<open>\<open>val and_boolS : forall 'rv 'e. monadS 'rv bool 'e -> monadS 'rv bool 'e -> monadS 'rv bool 'e\<close>\<close>
-definition and_boolS  :: "('rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set)\<Rightarrow>('rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set)\<Rightarrow>('rv,(bool),'e)monadS "  where 
-     " and_boolS l r = ( bindS l (\<lambda> l .  if l then r else returnS False))"
+definition and_boolS  :: \<open>('rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set)\<Rightarrow>('rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set)\<Rightarrow>('rv,(bool),'e)monadS \<close>  where 
+     \<open> and_boolS l r = ( bindS l ((\<lambda> l .  if l then r else returnS False)))\<close> 
+  for  l  :: " 'rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set " 
+  and  r  :: " 'rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set "
 
 
 \<comment> \<open>\<open>val or_boolS : forall 'rv 'e. monadS 'rv bool 'e -> monadS 'rv bool 'e -> monadS 'rv bool 'e\<close>\<close>
-definition or_boolS  :: "('rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set)\<Rightarrow>('rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set)\<Rightarrow>('rv,(bool),'e)monadS "  where 
-     " or_boolS l r = ( bindS l (\<lambda> l .  if l then returnS True else r))"
+definition or_boolS  :: \<open>('rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set)\<Rightarrow>('rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set)\<Rightarrow>('rv,(bool),'e)monadS \<close>  where 
+     \<open> or_boolS l r = ( bindS l ((\<lambda> l .  if l then returnS True else r)))\<close> 
+  for  l  :: " 'rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set " 
+  and  r  :: " 'rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set "
 
 
 \<comment> \<open>\<open>val bool_of_bitU_fail : forall 'rv 'e. bitU -> monadS 'rv bool 'e\<close>\<close>
-definition bool_of_bitU_fail  :: " bitU \<Rightarrow> 'rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set "  where 
-     " bool_of_bitU_fail = ( \<lambda>x .  
+definition bool_of_bitU_fail  :: \<open> bitU \<Rightarrow> 'rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set \<close>  where 
+     \<open> bool_of_bitU_fail = ( (\<lambda>x .  
   (case  x of
         B0 => returnS False
     | B1 => returnS True
     | BU => failS (''bool_of_bitU'')
-  ) )"
+  )))\<close>
 
 
 \<comment> \<open>\<open>val bool_of_bitU_nondetS : forall 'rv 'e. bitU -> monadS 'rv bool 'e\<close>\<close>
-definition bool_of_bitU_nondetS  :: " bitU \<Rightarrow> 'rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set "  where 
-     " bool_of_bitU_nondetS = ( \<lambda>x .  
+definition bool_of_bitU_nondetS  :: \<open> bitU \<Rightarrow> 'rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set \<close>  where 
+     \<open> bool_of_bitU_nondetS = ( (\<lambda>x .  
   (case  x of
         B0 => returnS False
     | B1 => returnS True
     | BU => undefined_boolS () 
-  ) )"
+  )))\<close>
 
 
 \<comment> \<open>\<open>val bools_of_bits_nondetS : forall 'rv 'e. list bitU -> monadS 'rv (list bool) 'e\<close>\<close>
-definition bools_of_bits_nondetS  :: "(bitU)list \<Rightarrow> 'rv sequential_state \<Rightarrow>((((bool)list),'e)result*'rv sequential_state)set "  where 
-     " bools_of_bits_nondetS bits = (
+definition bools_of_bits_nondetS  :: \<open>(bitU)list \<Rightarrow> 'rv sequential_state \<Rightarrow>((((bool)list),'e)result*'rv sequential_state)set \<close>  where 
+     \<open> bools_of_bits_nondetS bits = (
   foreachS bits []
-    (\<lambda> b bools .  bindS
-      (bool_of_bitU_nondetS b) (\<lambda> b . 
-      returnS (bools @ [b]))))"
+    ((\<lambda> b bools .  bindS
+      (bool_of_bitU_nondetS b) ((\<lambda> b . 
+      returnS (bools @ [b]))))))\<close> 
+  for  bits  :: "(bitU)list "
 
 
 \<comment> \<open>\<open>val of_bits_nondetS : forall 'rv 'a 'e. Bitvector 'a => list bitU -> monadS 'rv 'a 'e\<close>\<close>
-definition of_bits_nondetS  :: " 'a Bitvector_class \<Rightarrow>(bitU)list \<Rightarrow>('rv,'a,'e)monadS "  where 
-     " of_bits_nondetS dict_Sail2_values_Bitvector_a bits = ( bindS
-  (bools_of_bits_nondetS bits) (\<lambda> bs . 
-  returnS ((of_bools_method   dict_Sail2_values_Bitvector_a) bs)))"
+definition of_bits_nondetS  :: \<open> 'a Bitvector_class \<Rightarrow>(bitU)list \<Rightarrow>('rv,'a,'e)monadS \<close>  where 
+     \<open> of_bits_nondetS dict_Sail2_values_Bitvector_a bits = ( bindS
+  (bools_of_bits_nondetS bits) ((\<lambda> bs . 
+  returnS ((of_bools_method   dict_Sail2_values_Bitvector_a) bs))))\<close> 
+  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
+  and  bits  :: "(bitU)list "
 
 
 \<comment> \<open>\<open>val of_bits_failS : forall 'rv 'a 'e. Bitvector 'a => list bitU -> monadS 'rv 'a 'e\<close>\<close>
-definition of_bits_failS  :: " 'a Bitvector_class \<Rightarrow>(bitU)list \<Rightarrow> 'rv sequential_state \<Rightarrow>(('a,'e)result*'rv sequential_state)set "  where 
-     " of_bits_failS dict_Sail2_values_Bitvector_a bits = ( maybe_failS (''of_bits'') (
-  (of_bits_method   dict_Sail2_values_Bitvector_a) bits))"
+definition of_bits_failS  :: \<open> 'a Bitvector_class \<Rightarrow>(bitU)list \<Rightarrow> 'rv sequential_state \<Rightarrow>(('a,'e)result*'rv sequential_state)set \<close>  where 
+     \<open> of_bits_failS dict_Sail2_values_Bitvector_a bits = ( maybe_failS (''of_bits'') (
+  (of_bits_method   dict_Sail2_values_Bitvector_a) bits))\<close> 
+  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
+  and  bits  :: "(bitU)list "
 
 
 \<comment> \<open>\<open>val mword_nondetS : forall 'rv 'a 'e. Size 'a => unit -> monadS 'rv (mword 'a) 'e\<close>\<close>
-definition mword_nondetS  :: " unit \<Rightarrow>('rv,(('a::len)Word.word),'e)monadS "  where 
-     " mword_nondetS _ = ( bindS
-  (bools_of_bits_nondetS (repeat [BU] (int (len_of (TYPE(_) :: 'a itself))))) (\<lambda> bs . 
-  returnS (Word.of_bl bs)))"
+definition mword_nondetS  :: \<open> unit \<Rightarrow>('rv,(('a::len)Word.word),'e)monadS \<close>  where 
+     \<open> mword_nondetS _ = ( bindS
+  (bools_of_bits_nondetS (repeat [BU] (int (len_of (TYPE(_) :: 'a itself))))) ((\<lambda> bs . 
+  returnS (Word.of_bl bs))))\<close>
 
 
 
 \<comment> \<open>\<open>val whileS : forall 'rv 'vars 'e. 'vars -> ('vars -> monadS 'rv bool 'e) ->
                 ('vars -> monadS 'rv 'vars 'e) -> monadS 'rv 'vars 'e\<close>\<close>
-function (sequential,domintros)  whileS  :: " 'vars \<Rightarrow>('vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set)\<Rightarrow>('vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set)\<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set "  where 
-     " whileS vars cond body s = (
-  ( bindS(cond vars) (\<lambda> cond_val s' . 
+function (sequential,domintros)  whileS  :: \<open> 'vars \<Rightarrow>('vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set)\<Rightarrow>('vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set)\<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set \<close>  where 
+     \<open> whileS vars cond body s = (
+  ( bindS(cond vars) ((\<lambda> cond_val s' . 
   if cond_val then
-    ( bindS(body vars) (\<lambda> vars s'' .  whileS vars cond body s'')) s'
-  else returnS vars s')) s )" 
+    ( bindS(body vars) ((\<lambda> vars s'' .  whileS vars cond body s''))) s'
+  else returnS vars s'))) s )\<close> 
+  for  vars  :: " 'vars " 
+  and  cond  :: " 'vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set " 
+  and  body  :: " 'vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set " 
+  and  s  :: " 'rv sequential_state " 
 by pat_completeness auto
 
 
 \<comment> \<open>\<open>val untilS : forall 'rv 'vars 'e. 'vars -> ('vars -> monadS 'rv bool 'e) ->
                 ('vars -> monadS 'rv 'vars 'e) -> monadS 'rv 'vars 'e\<close>\<close>
-function (sequential,domintros)  untilS  :: " 'vars \<Rightarrow>('vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set)\<Rightarrow>('vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set)\<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set "  where 
-     " untilS vars cond body s = (
-  ( bindS(body vars) (\<lambda> vars s' . 
-  ( bindS(cond vars) (\<lambda> cond_val s'' . 
-  if cond_val then returnS vars s'' else untilS vars cond body s'')) s')) s )" 
+function (sequential,domintros)  untilS  :: \<open> 'vars \<Rightarrow>('vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set)\<Rightarrow>('vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set)\<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set \<close>  where 
+     \<open> untilS vars cond body s = (
+  ( bindS(body vars) ((\<lambda> vars s' . 
+  ( bindS(cond vars) ((\<lambda> cond_val s'' . 
+  if cond_val then returnS vars s'' else untilS vars cond body s''))) s'))) s )\<close> 
+  for  vars  :: " 'vars " 
+  and  cond  :: " 'vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(((bool),'e)result*'rv sequential_state)set " 
+  and  body  :: " 'vars \<Rightarrow> 'rv sequential_state \<Rightarrow>(('vars,'e)result*'rv sequential_state)set " 
+  and  s  :: " 'rv sequential_state " 
 by pat_completeness auto
 
 
 \<comment> \<open>\<open>val choose_boolsS : forall 'rv 'e. nat -> monadS 'rv (list bool) 'e\<close>\<close>
-definition choose_boolsS  :: " nat \<Rightarrow> 'rv sequential_state \<Rightarrow>((((bool)list),'e)result*'rv sequential_state)set "  where 
-     " choose_boolsS n = ( genlistS ( \<lambda>x .  
-  (case  x of _ => choose_boolS ()  )) n )"
+definition choose_boolsS  :: \<open> nat \<Rightarrow> 'rv sequential_state \<Rightarrow>((((bool)list),'e)result*'rv sequential_state)set \<close>  where 
+     \<open> choose_boolsS n = ( genlistS ( (\<lambda>x .  
+  (case  x of _ => choose_boolS ()  ))) n )\<close> 
+  for  n  :: " nat "
 
 
 \<comment> \<open>\<open> TODO: Replace by chooseS and prove equivalence to prompt monad version \<close>\<close>
 \<comment> \<open>\<open>val internal_pickS : forall 'rv 'a 'e. list 'a -> monadS 'rv 'a 'e\<close>\<close>
-definition internal_pickS  :: " 'a list \<Rightarrow>('rv,'a,'e)monadS "  where 
-     " internal_pickS xs = ( bindS
+definition internal_pickS  :: \<open> 'a list \<Rightarrow>('rv,'a,'e)monadS \<close>  where 
+     \<open> internal_pickS xs = ( bindS
   (
   \<comment> \<open>\<open> Use sufficiently many nondeterministically chosen bits and convert into an
-     index into the list \<close>\<close>choose_boolsS (List.length xs)) (\<lambda> bs . 
+     index into the list \<close>\<close>choose_boolsS (List.length xs)) ((\<lambda> bs . 
   (let idx = (( (nat_of_bools bs)) mod List.length xs) in
   (case  index xs idx of
       Some x => returnS x
     | None => failS (''choose internal_pick'')
-  ))))"
+  )))))\<close> 
+  for  xs  :: " 'a list "
 
 end

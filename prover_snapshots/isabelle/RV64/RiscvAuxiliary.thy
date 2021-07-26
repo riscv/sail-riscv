@@ -12,6 +12,8 @@ imports
   "Sail.Sail2_prompt"
   "Sail.Sail2_string"
   "Riscv_types"
+  "Mem_metadata"
+  "Riscv_extras_fdext"
   "Riscv_extras"
   "Riscv"
 

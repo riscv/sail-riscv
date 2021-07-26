@@ -61,12 +61,16 @@ begin
 \<comment> \<open>\<open> currying / uncurrying \<close>\<close>
 
 \<comment> \<open>\<open>val curry : forall 'a 'b 'c. (('a * 'b) -> 'c) -> 'a -> 'b -> 'c\<close>\<close>
-definition curry  :: "('a*'b \<Rightarrow> 'c)\<Rightarrow> 'a \<Rightarrow> 'b \<Rightarrow> 'c "  where 
-     " curry f = ( (\<lambda> a b .  f (a, b)))"
+definition curry  :: \<open>('a*'b \<Rightarrow> 'c)\<Rightarrow> 'a \<Rightarrow> 'b \<Rightarrow> 'c \<close>  where 
+     \<open> curry f = ( ((\<lambda> a b .  f (a, b))))\<close> 
+  for  f  :: " 'a*'b \<Rightarrow> 'c "
 
 
 \<comment> \<open>\<open>val uncurry : forall 'a 'b 'c. ('a -> 'b -> 'c) -> ('a * 'b -> 'c)\<close>\<close>
-fun uncurry  :: "('a \<Rightarrow> 'b \<Rightarrow> 'c)\<Rightarrow> 'a*'b \<Rightarrow> 'c "  where 
-     " uncurry f (a,b) = ( f a b )"
+fun uncurry  :: \<open>('a \<Rightarrow> 'b \<Rightarrow> 'c)\<Rightarrow> 'a*'b \<Rightarrow> 'c \<close>  where 
+     \<open> uncurry f (a,b) = ( f a b )\<close> 
+  for  f  :: " 'a \<Rightarrow> 'b \<Rightarrow> 'c " 
+  and  a  :: " 'a " 
+  and  b  :: " 'b "
 
 end

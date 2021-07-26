@@ -30,14 +30,20 @@ begin
 \<comment> \<open>\<open>val isPermutation : forall 'a. Eq 'a => list 'a -> list 'a -> bool\<close>\<close>
 \<comment> \<open>\<open>val isPermutationBy : forall 'a. ('a -> 'a -> bool) -> list 'a -> list 'a -> bool\<close>\<close>
 
-fun  isPermutationBy  :: "('a \<Rightarrow> 'a \<Rightarrow> bool)\<Rightarrow> 'a list \<Rightarrow> 'a list \<Rightarrow> bool "  where 
-     " isPermutationBy eq ([]) l2 = ( (l2 = []))"
-|" isPermutationBy eq (x # xs) l2 = ( (
+fun  isPermutationBy  :: \<open>('a \<Rightarrow> 'a \<Rightarrow> bool)\<Rightarrow> 'a list \<Rightarrow> 'a list \<Rightarrow> bool \<close>  where 
+     \<open> isPermutationBy eq ([]) l2 = ( (l2 = []))\<close> 
+  for  eq  :: " 'a \<Rightarrow> 'a \<Rightarrow> bool " 
+  and  l2  :: " 'a list "
+|\<open> isPermutationBy eq (x # xs) l2 = ( (
       (case  delete_first (eq x) l2 of
           None => False
         | Some ys => isPermutationBy eq xs ys
       )
-    ))"
+    ))\<close> 
+  for  eq  :: " 'a \<Rightarrow> 'a \<Rightarrow> bool " 
+  and  xs  :: " 'a list " 
+  and  x  :: " 'a " 
+  and  l2  :: " 'a list "
 
 
 
@@ -97,13 +103,16 @@ end\<close>\<close>
 \<comment> \<open>\<open>val sortByOrd: forall 'a. ('a -> 'a -> ordering) -> list 'a -> list 'a\<close>\<close>
 
 \<comment> \<open>\<open>val predicate_of_ord : forall 'a. ('a -> 'a -> ordering) -> 'a -> 'a -> bool\<close>\<close>
-definition predicate_of_ord  :: "('a \<Rightarrow> 'a \<Rightarrow> ordering)\<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> bool "  where 
-     " predicate_of_ord f x y = (
+definition predicate_of_ord  :: \<open>('a \<Rightarrow> 'a \<Rightarrow> ordering)\<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> bool \<close>  where 
+     \<open> predicate_of_ord f x y = (
   (case  f x y of
       LT => True
     | EQ => True
     | GT => False
-  ))"
+  ))\<close> 
+  for  f  :: " 'a \<Rightarrow> 'a \<Rightarrow> ordering " 
+  and  x  :: " 'a " 
+  and  y  :: " 'a "
 
 
 

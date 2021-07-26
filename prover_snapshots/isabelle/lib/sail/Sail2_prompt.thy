@@ -22,140 +22,178 @@ begin
 \<comment> \<open>\<open>val >> : forall 'rv 'b 'e. monad 'rv unit 'e -> monad 'rv 'b 'e -> monad 'rv 'b 'e\<close>\<close>
 
 \<comment> \<open>\<open>val iter_aux : forall 'rv 'a 'e. integer -> (integer -> 'a -> monad 'rv unit 'e) -> list 'a -> monad 'rv unit 'e\<close>\<close>
-fun  iter_aux  :: " int \<Rightarrow>(int \<Rightarrow> 'a \<Rightarrow>('rv,(unit),'e)monad)\<Rightarrow> 'a list \<Rightarrow>('rv,(unit),'e)monad "  where 
-     " iter_aux i f (x # xs) = ( f i x \<then> iter_aux (i +( 1 :: int)) f xs )"
-|" iter_aux i f ([]) = ( return ()  )"
+fun  iter_aux  :: \<open> int \<Rightarrow>(int \<Rightarrow> 'a \<Rightarrow>('rv,(unit),'e)monad)\<Rightarrow> 'a list \<Rightarrow>('rv,(unit),'e)monad \<close>  where 
+     \<open> iter_aux i f (x # xs) = ( f i x \<then> iter_aux (i +( 1 :: int)) f xs )\<close> 
+  for  i  :: " int " 
+  and  f  :: " int \<Rightarrow> 'a \<Rightarrow>('rv,(unit),'e)monad " 
+  and  xs  :: " 'a list " 
+  and  x  :: " 'a "
+|\<open> iter_aux i f ([]) = ( return ()  )\<close> 
+  for  i  :: " int " 
+  and  f  :: " int \<Rightarrow> 'a \<Rightarrow>('rv,(unit),'e)monad "
 
 
 \<comment> \<open>\<open>val iteri : forall 'rv 'a 'e. (integer -> 'a -> monad 'rv unit 'e) -> list 'a -> monad 'rv unit 'e\<close>\<close>
-definition iteri  :: "(int \<Rightarrow> 'a \<Rightarrow>('rv,(unit),'e)monad)\<Rightarrow> 'a list \<Rightarrow>('rv,(unit),'e)monad "  where 
-     " iteri f xs = ( iter_aux(( 0 :: int)) f xs )"
+definition iteri  :: \<open>(int \<Rightarrow> 'a \<Rightarrow>('rv,(unit),'e)monad)\<Rightarrow> 'a list \<Rightarrow>('rv,(unit),'e)monad \<close>  where 
+     \<open> iteri f xs = ( iter_aux(( 0 :: int)) f xs )\<close> 
+  for  f  :: " int \<Rightarrow> 'a \<Rightarrow>('rv,(unit),'e)monad " 
+  and  xs  :: " 'a list "
 
 
 \<comment> \<open>\<open>val iter : forall 'rv 'a 'e. ('a -> monad 'rv unit 'e) -> list 'a -> monad 'rv unit 'e\<close>\<close>
-definition iter  :: "('a \<Rightarrow>('rv,(unit),'e)monad)\<Rightarrow> 'a list \<Rightarrow>('rv,(unit),'e)monad "  where 
-     " iter f xs = ( iteri ( \<lambda>x .  
-  (case  x of _ => \<lambda> x .  f x )) xs )"
+definition iter  :: \<open>('a \<Rightarrow>('rv,(unit),'e)monad)\<Rightarrow> 'a list \<Rightarrow>('rv,(unit),'e)monad \<close>  where 
+     \<open> iter f xs = ( iteri ( (\<lambda>x .  
+  (case  x of _ => (\<lambda> x .  f x) ))) xs )\<close> 
+  for  f  :: " 'a \<Rightarrow>('rv,(unit),'e)monad " 
+  and  xs  :: " 'a list "
 
 
 \<comment> \<open>\<open>val foreachM : forall 'a 'rv 'vars 'e.
   list 'a -> 'vars -> ('a -> 'vars -> monad 'rv 'vars 'e) -> monad 'rv 'vars 'e\<close>\<close>
-fun  foreachM  :: " 'a list \<Rightarrow> 'vars \<Rightarrow>('a \<Rightarrow> 'vars \<Rightarrow>('rv,'vars,'e)monad)\<Rightarrow>('rv,'vars,'e)monad "  where 
-     " foreachM ([]) vars body = ( return vars )"
-|" foreachM (x # xs) vars body = (
-  body x vars \<bind> (\<lambda> vars . 
-  foreachM xs vars body))"
+fun  foreachM  :: \<open> 'a list \<Rightarrow> 'vars \<Rightarrow>('a \<Rightarrow> 'vars \<Rightarrow>('rv,'vars,'e)monad)\<Rightarrow>('rv,'vars,'e)monad \<close>  where 
+     \<open> foreachM ([]) vars body = ( return vars )\<close> 
+  for  vars  :: " 'vars " 
+  and  body  :: " 'a \<Rightarrow> 'vars \<Rightarrow>('rv,'vars,'e)monad "
+|\<open> foreachM (x # xs) vars body = (
+  body x vars \<bind> ((\<lambda> vars . 
+  foreachM xs vars body)))\<close> 
+  for  xs  :: " 'a list " 
+  and  x  :: " 'a " 
+  and  vars  :: " 'vars " 
+  and  body  :: " 'a \<Rightarrow> 'vars \<Rightarrow>('rv,'vars,'e)monad "
 
 
 \<comment> \<open>\<open>val genlistM : forall 'a 'rv 'e. (nat -> monad 'rv 'a 'e) -> nat -> monad 'rv (list 'a) 'e\<close>\<close>
-definition genlistM  :: "(nat \<Rightarrow>('rv,'a,'e)monad)\<Rightarrow> nat \<Rightarrow>('rv,('a list),'e)monad "  where 
-     " genlistM f n = (
-  (let indices = (genlist (\<lambda> n .  n) n) in
-  foreachM indices [] (\<lambda> n xs .  (f n \<bind> (\<lambda> x .  return (xs @ [x]))))))"
+definition genlistM  :: \<open>(nat \<Rightarrow>('rv,'a,'e)monad)\<Rightarrow> nat \<Rightarrow>('rv,('a list),'e)monad \<close>  where 
+     \<open> genlistM f n = (
+  (let indices = (genlist ((\<lambda> n .  n)) n) in
+  foreachM indices [] ((\<lambda> n xs .  (f n \<bind> ((\<lambda> x .  return (xs @ [x]))))))))\<close> 
+  for  f  :: " nat \<Rightarrow>('rv,'a,'e)monad " 
+  and  n  :: " nat "
 
 
 \<comment> \<open>\<open>val and_boolM : forall 'rv 'e. monad 'rv bool 'e -> monad 'rv bool 'e -> monad 'rv bool 'e\<close>\<close>
-definition and_boolM  :: "('rv,(bool),'e)monad \<Rightarrow>('rv,(bool),'e)monad \<Rightarrow>('rv,(bool),'e)monad "  where 
-     " and_boolM l r = ( l \<bind> (\<lambda> l .  if l then r else return False))"
+definition and_boolM  :: \<open>('rv,(bool),'e)monad \<Rightarrow>('rv,(bool),'e)monad \<Rightarrow>('rv,(bool),'e)monad \<close>  where 
+     \<open> and_boolM l r = ( l \<bind> ((\<lambda> l .  if l then r else return False)))\<close> 
+  for  l  :: "('rv,(bool),'e)monad " 
+  and  r  :: "('rv,(bool),'e)monad "
 
 
 \<comment> \<open>\<open>val or_boolM : forall 'rv 'e. monad 'rv bool 'e -> monad 'rv bool 'e -> monad 'rv bool 'e\<close>\<close>
-definition or_boolM  :: "('rv,(bool),'e)monad \<Rightarrow>('rv,(bool),'e)monad \<Rightarrow>('rv,(bool),'e)monad "  where 
-     " or_boolM l r = ( l \<bind> (\<lambda> l .  if l then return True else r))"
+definition or_boolM  :: \<open>('rv,(bool),'e)monad \<Rightarrow>('rv,(bool),'e)monad \<Rightarrow>('rv,(bool),'e)monad \<close>  where 
+     \<open> or_boolM l r = ( l \<bind> ((\<lambda> l .  if l then return True else r)))\<close> 
+  for  l  :: "('rv,(bool),'e)monad " 
+  and  r  :: "('rv,(bool),'e)monad "
 
 
 \<comment> \<open>\<open>val bool_of_bitU_fail : forall 'rv 'e. bitU -> monad 'rv bool 'e\<close>\<close>
-definition bool_of_bitU_fail  :: " bitU \<Rightarrow>('rv,(bool),'e)monad "  where 
-     " bool_of_bitU_fail = ( \<lambda>x .  
+definition bool_of_bitU_fail  :: \<open> bitU \<Rightarrow>('rv,(bool),'e)monad \<close>  where 
+     \<open> bool_of_bitU_fail = ( (\<lambda>x .  
   (case  x of
         B0 => return False
     | B1 => return True
     | BU => Fail (''bool_of_bitU'')
-  ) )"
+  )))\<close>
 
 
 \<comment> \<open>\<open>val bool_of_bitU_nondet : forall 'rv 'e. bitU -> monad 'rv bool 'e\<close>\<close>
-definition bool_of_bitU_nondet  :: " bitU \<Rightarrow>('rv,(bool),'e)monad "  where 
-     " bool_of_bitU_nondet = ( \<lambda>x .  
+definition bool_of_bitU_nondet  :: \<open> bitU \<Rightarrow>('rv,(bool),'e)monad \<close>  where 
+     \<open> bool_of_bitU_nondet = ( (\<lambda>x .  
   (case  x of
         B0 => return False
     | B1 => return True
     | BU => choose_bool (''bool_of_bitU'')
-  ) )"
+  )))\<close>
 
 
 \<comment> \<open>\<open>val bools_of_bits_nondet : forall 'rv 'e. list bitU -> monad 'rv (list bool) 'e\<close>\<close>
-definition bools_of_bits_nondet  :: "(bitU)list \<Rightarrow>('rv,((bool)list),'e)monad "  where 
-     " bools_of_bits_nondet bits = (
+definition bools_of_bits_nondet  :: \<open>(bitU)list \<Rightarrow>('rv,((bool)list),'e)monad \<close>  where 
+     \<open> bools_of_bits_nondet bits = (
   foreachM bits []
-    (\<lambda> b bools . 
-      bool_of_bitU_nondet b \<bind> (\<lambda> b . 
-      return (bools @ [b]))))"
+    ((\<lambda> b bools . 
+      bool_of_bitU_nondet b \<bind> ((\<lambda> b . 
+      return (bools @ [b]))))))\<close> 
+  for  bits  :: "(bitU)list "
 
 
 \<comment> \<open>\<open>val of_bits_nondet : forall 'rv 'a 'e. Bitvector 'a => list bitU -> monad 'rv 'a 'e\<close>\<close>
-definition of_bits_nondet  :: " 'a Bitvector_class \<Rightarrow>(bitU)list \<Rightarrow>('rv,'a,'e)monad "  where 
-     " of_bits_nondet dict_Sail2_values_Bitvector_a bits = (
-  bools_of_bits_nondet bits \<bind> (\<lambda> bs . 
-  return ((of_bools_method   dict_Sail2_values_Bitvector_a) bs)))"
+definition of_bits_nondet  :: \<open> 'a Bitvector_class \<Rightarrow>(bitU)list \<Rightarrow>('rv,'a,'e)monad \<close>  where 
+     \<open> of_bits_nondet dict_Sail2_values_Bitvector_a bits = (
+  bools_of_bits_nondet bits \<bind> ((\<lambda> bs . 
+  return ((of_bools_method   dict_Sail2_values_Bitvector_a) bs))))\<close> 
+  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
+  and  bits  :: "(bitU)list "
 
 
 \<comment> \<open>\<open>val of_bits_fail : forall 'rv 'a 'e. Bitvector 'a => list bitU -> monad 'rv 'a 'e\<close>\<close>
-definition of_bits_fail  :: " 'a Bitvector_class \<Rightarrow>(bitU)list \<Rightarrow>('rv,'a,'e)monad "  where 
-     " of_bits_fail dict_Sail2_values_Bitvector_a bits = ( maybe_fail (''of_bits'') (
-  (of_bits_method   dict_Sail2_values_Bitvector_a) bits))"
+definition of_bits_fail  :: \<open> 'a Bitvector_class \<Rightarrow>(bitU)list \<Rightarrow>('rv,'a,'e)monad \<close>  where 
+     \<open> of_bits_fail dict_Sail2_values_Bitvector_a bits = ( maybe_fail (''of_bits'') (
+  (of_bits_method   dict_Sail2_values_Bitvector_a) bits))\<close> 
+  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
+  and  bits  :: "(bitU)list "
 
 
 \<comment> \<open>\<open>val mword_nondet : forall 'rv 'a 'e. Size 'a => unit -> monad 'rv (mword 'a) 'e\<close>\<close>
-definition mword_nondet  :: " unit \<Rightarrow>('rv,(('a::len)Word.word),'e)monad "  where 
-     " mword_nondet _ = (
-  bools_of_bits_nondet (repeat [BU] (int (len_of (TYPE(_) :: 'a itself)))) \<bind> (\<lambda> bs . 
-  return (Word.of_bl bs)))"
+definition mword_nondet  :: \<open> unit \<Rightarrow>('rv,(('a::len)Word.word),'e)monad \<close>  where 
+     \<open> mword_nondet _ = (
+  bools_of_bits_nondet (repeat [BU] (int (len_of (TYPE(_) :: 'a itself)))) \<bind> ((\<lambda> bs . 
+  return (Word.of_bl bs))))\<close>
 
 
 \<comment> \<open>\<open>val whileM : forall 'rv 'vars 'e. 'vars -> ('vars -> monad 'rv bool 'e) ->
                 ('vars -> monad 'rv 'vars 'e) -> monad 'rv 'vars 'e\<close>\<close>
-function (sequential,domintros)  whileM  :: " 'vars \<Rightarrow>('vars \<Rightarrow>('rv,(bool),'e)monad)\<Rightarrow>('vars \<Rightarrow>('rv,'vars,'e)monad)\<Rightarrow>('rv,'vars,'e)monad "  where 
-     " whileM vars cond body = (
-  cond vars \<bind> (\<lambda> cond_val . 
+function (sequential,domintros)  whileM  :: \<open> 'vars \<Rightarrow>('vars \<Rightarrow>('rv,(bool),'e)monad)\<Rightarrow>('vars \<Rightarrow>('rv,'vars,'e)monad)\<Rightarrow>('rv,'vars,'e)monad \<close>  where 
+     \<open> whileM vars cond body = (
+  cond vars \<bind> ((\<lambda> cond_val . 
   if cond_val then
-    body vars \<bind> (\<lambda> vars .  whileM vars cond body)
-  else return vars))" 
+    body vars \<bind> ((\<lambda> vars .  whileM vars cond body))
+  else return vars)))\<close> 
+  for  vars  :: " 'vars " 
+  and  cond  :: " 'vars \<Rightarrow>('rv,(bool),'e)monad " 
+  and  body  :: " 'vars \<Rightarrow>('rv,'vars,'e)monad " 
 by pat_completeness auto
 
 
 \<comment> \<open>\<open>val untilM : forall 'rv 'vars 'e. 'vars -> ('vars -> monad 'rv bool 'e) ->
                 ('vars -> monad 'rv 'vars 'e) -> monad 'rv 'vars 'e\<close>\<close>
-function (sequential,domintros)  untilM  :: " 'vars \<Rightarrow>('vars \<Rightarrow>('rv,(bool),'e)monad)\<Rightarrow>('vars \<Rightarrow>('rv,'vars,'e)monad)\<Rightarrow>('rv,'vars,'e)monad "  where 
-     " untilM vars cond body = (
-  body vars \<bind> (\<lambda> vars . 
-  cond vars \<bind> (\<lambda> cond_val . 
-  if cond_val then return vars else untilM vars cond body)))" 
+function (sequential,domintros)  untilM  :: \<open> 'vars \<Rightarrow>('vars \<Rightarrow>('rv,(bool),'e)monad)\<Rightarrow>('vars \<Rightarrow>('rv,'vars,'e)monad)\<Rightarrow>('rv,'vars,'e)monad \<close>  where 
+     \<open> untilM vars cond body = (
+  body vars \<bind> ((\<lambda> vars . 
+  cond vars \<bind> ((\<lambda> cond_val . 
+  if cond_val then return vars else untilM vars cond body)))))\<close> 
+  for  vars  :: " 'vars " 
+  and  cond  :: " 'vars \<Rightarrow>('rv,(bool),'e)monad " 
+  and  body  :: " 'vars \<Rightarrow>('rv,'vars,'e)monad " 
 by pat_completeness auto
 
 
 \<comment> \<open>\<open>val choose_bools : forall 'rv 'e. string -> nat -> monad 'rv (list bool) 'e\<close>\<close>
-definition choose_bools  :: " string \<Rightarrow> nat \<Rightarrow>('rv,((bool)list),'e)monad "  where 
-     " choose_bools descr n = ( genlistM ( \<lambda>x .  
-  (case  x of _ => choose_bool descr )) n )"
+definition choose_bools  :: \<open> string \<Rightarrow> nat \<Rightarrow>('rv,((bool)list),'e)monad \<close>  where 
+     \<open> choose_bools descr n = ( genlistM ( (\<lambda>x .  
+  (case  x of _ => choose_bool descr ))) n )\<close> 
+  for  descr  :: " string " 
+  and  n  :: " nat "
 
 
 \<comment> \<open>\<open>val choose : forall 'rv 'a 'e. string -> list 'a -> monad 'rv 'a 'e\<close>\<close>
-definition chooseM  :: " string \<Rightarrow> 'a list \<Rightarrow>('rv,'a,'e)monad "  where 
-     " chooseM descr xs = (
+definition chooseM  :: \<open> string \<Rightarrow> 'a list \<Rightarrow>('rv,'a,'e)monad \<close>  where 
+     \<open> chooseM descr xs = (
   \<comment> \<open>\<open> Use sufficiently many nondeterministically chosen bits and convert into an
      index into the list \<close>\<close>
-  choose_bools descr (List.length xs) \<bind> (\<lambda> bs . 
+  choose_bools descr (List.length xs) \<bind> ((\<lambda> bs . 
   (let idx = (( (nat_of_bools bs)) mod List.length xs) in
   (case  index xs idx of
       Some x => return x
     | None => Fail ((''choose '') @ descr)
-  ))))"
+  )))))\<close> 
+  for  descr  :: " string " 
+  and  xs  :: " 'a list "
 
 
 \<comment> \<open>\<open>val internal_pick : forall 'rv 'a 'e. list 'a -> monad 'rv 'a 'e\<close>\<close>
-definition internal_pick  :: " 'a list \<Rightarrow>('rv,'a,'e)monad "  where 
-     " internal_pick xs = ( chooseM (''internal_pick'') xs )"
+definition internal_pick  :: \<open> 'a list \<Rightarrow>('rv,'a,'e)monad \<close>  where 
+     \<open> internal_pick xs = ( chooseM (''internal_pick'') xs )\<close> 
+  for  xs  :: " 'a list "
 
 
 \<comment> \<open>\<open>let write_two_regs r1 r2 vec =

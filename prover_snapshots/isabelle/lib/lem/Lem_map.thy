@@ -152,8 +152,11 @@ end\<close>\<close>
 \<comment> \<open>\<open>val size  : forall 'k 'v. MapKeyType 'k, SetType 'k => map 'k 'v -> nat\<close>\<close>
 
 \<comment> \<open>\<open> instance of SetType \<close>\<close>
-definition map_setElemCompare  :: "(('d*'c)set \<Rightarrow>('b*'a)set \<Rightarrow> 'e)\<Rightarrow>('d,'c)Map.map \<Rightarrow>('b,'a)Map.map \<Rightarrow> 'e "  where 
-     " map_setElemCompare cmp x y = (
-  cmp (map_to_set x) (map_to_set y))"
+definition map_setElemCompare  :: \<open>(('d*'c)set \<Rightarrow>('b*'a)set \<Rightarrow> 'e)\<Rightarrow>('d,'c)Map.map \<Rightarrow>('b,'a)Map.map \<Rightarrow> 'e \<close>  where 
+     \<open> map_setElemCompare cmp x y = (
+  cmp (map_to_set x) (map_to_set y))\<close> 
+  for  cmp  :: "('d*'c)set \<Rightarrow>('b*'a)set \<Rightarrow> 'e " 
+  and  x  :: "('d,'c)Map.map " 
+  and  y  :: "('b,'a)Map.map "
 
 end

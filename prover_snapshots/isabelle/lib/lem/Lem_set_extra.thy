@@ -52,15 +52,17 @@ begin
  * is the obvious choice).
  \<close>\<close>
 \<comment> \<open>\<open>val chooseAndSplit : forall 'a. SetType 'a, Ord 'a => set 'a -> maybe (set 'a * 'a * set 'a)\<close>\<close>
-definition chooseAndSplit  :: " 'a Ord_class \<Rightarrow> 'a set \<Rightarrow>('a set*'a*'a set)option "  where 
-     " chooseAndSplit dict_Basic_classes_Ord_a s = (
+definition chooseAndSplit  :: \<open> 'a Ord_class \<Rightarrow> 'a set \<Rightarrow>('a set*'a*'a set)option \<close>  where 
+     \<open> chooseAndSplit dict_Basic_classes_Ord_a s = (
   if s = {} then
     None
   else
     (let element  = (set_choose s) in
     (let (lt, gt) = (Lem_set.split 
   dict_Basic_classes_Ord_a element s) in
-      Some (lt, element, gt))))"
+      Some (lt, element, gt))))\<close> 
+  for  dict_Basic_classes_Ord_a  :: " 'a Ord_class " 
+  and  s  :: " 'a set "
 
 
 \<comment> \<open>\<open> ----------------------------\<close>\<close>
@@ -95,17 +97,21 @@ definition chooseAndSplit  :: " 'a Ord_class \<Rightarrow> 'a set \<Rightarrow>(
 \<comment> \<open>\<open> ----------------------- \<close>\<close>
 
 \<comment> \<open>\<open>val setCompareBy: forall 'a. ('a -> 'a -> ordering) -> set 'a -> set 'a -> ordering\<close>\<close>
-definition setCompareBy  :: "('a \<Rightarrow> 'a \<Rightarrow> ordering)\<Rightarrow> 'a set \<Rightarrow> 'a set \<Rightarrow> ordering "  where 
-     " setCompareBy cmp ss ts = (
-  (let ss' = (ordered_list_of_set (\<lambda> x y .  cmp x y = LT) ss) in
-  (let ts' = (ordered_list_of_set (\<lambda> x y .  cmp x y = LT) ts) in
-    lexicographicCompareBy cmp ss' ts')))"
+definition setCompareBy  :: \<open>('a \<Rightarrow> 'a \<Rightarrow> ordering)\<Rightarrow> 'a set \<Rightarrow> 'a set \<Rightarrow> ordering \<close>  where 
+     \<open> setCompareBy cmp ss ts = (
+  (let ss' = (ordered_list_of_set ((\<lambda> x y .  cmp x y = LT)) ss) in
+  (let ts' = (ordered_list_of_set ((\<lambda> x y .  cmp x y = LT)) ts) in
+    lexicographicCompareBy cmp ss' ts')))\<close> 
+  for  cmp  :: " 'a \<Rightarrow> 'a \<Rightarrow> ordering " 
+  and  ss  :: " 'a set " 
+  and  ts  :: " 'a set "
 
 
 \<comment> \<open>\<open>val setCompare : forall 'a. SetType 'a, Ord 'a => set 'a -> set 'a -> ordering\<close>\<close>
-definition setCompare  :: " 'a Ord_class \<Rightarrow> 'a set \<Rightarrow> 'a set \<Rightarrow> ordering "  where 
-     " setCompare dict_Basic_classes_Ord_a = ( setCompareBy 
-  (compare_method   dict_Basic_classes_Ord_a) )"
+definition setCompare  :: \<open> 'a Ord_class \<Rightarrow> 'a set \<Rightarrow> 'a set \<Rightarrow> ordering \<close>  where 
+     \<open> setCompare dict_Basic_classes_Ord_a = ( setCompareBy 
+  (compare_method   dict_Basic_classes_Ord_a) )\<close> 
+  for  dict_Basic_classes_Ord_a  :: " 'a Ord_class "
 
 
 \<comment> \<open>\<open> ----------------------------\<close>\<close>

@@ -5,6 +5,8 @@ theory "Lem_num_extra"
 imports
   Main
   "Lem_num"
+  "Lem_basic_classes"
+  "Lem_assert_extra"
   "Lem_string"
 
 begin 
@@ -15,12 +17,51 @@ begin
 \<comment> \<open>\<open>                                                      \<close>\<close>
 \<comment> \<open>\<open> **************************************************** \<close>\<close>
 
+\<comment> \<open>\<open>open import Basic_classes\<close>\<close>
 \<comment> \<open>\<open>open import Num\<close>\<close>
 \<comment> \<open>\<open>open import String\<close>\<close>
+\<comment> \<open>\<open>open import Assert_extra\<close>\<close>
+
+\<comment> \<open>\<open>open import {hol} `ASCIInumbersTheory`\<close>\<close>
 
 \<comment> \<open>\<open>val naturalOfString : string -> natural\<close>\<close>
 
 \<comment> \<open>\<open>val integerOfString : string -> integer\<close>\<close>
+
+\<comment> \<open>\<open>val integerOfChar : char -> integer\<close>\<close>
+
+definition integerOfChar  :: \<open> char \<Rightarrow> int \<close>  where 
+     \<open> integerOfChar = ( (\<lambda>x .  
+  (case  x of
+        (CHR ''0'') =>( 0 :: int)
+    | (CHR ''1'') =>( 1 :: int)
+    | (CHR ''2'') =>( 2 :: int)
+    | (CHR ''3'') =>( 3 :: int)
+    | (CHR ''4'') =>( 4 :: int)
+    | (CHR ''5'') =>( 5 :: int)
+    | (CHR ''6'') =>( 6 :: int)
+    | (CHR ''7'') =>( 7 :: int)
+    | (CHR ''8'') =>( 8 :: int)
+    | (CHR ''9'') =>( 9 :: int)
+    | _ => failwith (''integerOfChar: unexpected character'')
+  )))\<close>
+
+
+\<comment> \<open>\<open>val integerOfStringHelper : list char -> integer\<close>\<close>
+
+fun  integerOfStringHelper  :: \<open>(char)list \<Rightarrow> int \<close>  where 
+     \<open> integerOfStringHelper (d # ds) = ( integerOfChar d + (( 10 :: int) * integerOfStringHelper ds))\<close> 
+  for  ds  :: "(char)list " 
+  and  d  :: " char "
+|\<open> integerOfStringHelper ([]) = (( 0 :: int))\<close>
+
+
+definition integerOfString  :: \<open> string \<Rightarrow> int \<close>  where 
+     \<open> integerOfString s = ( (case   s of
+    (CHR ''-'') # ds => - (integerOfStringHelper (List.rev ds))
+  | ds => integerOfStringHelper (List.rev ds)
+))\<close> 
+  for  s  :: " string "
 
 
 \<comment> \<open>\<open> Truncation integer division (round toward zero) \<close>\<close>

@@ -35,8 +35,10 @@ begin
 
 
 \<comment> \<open>\<open>val fromSet : forall 'k 'v. MapKeyType 'k => ('k -> 'v) -> set 'k -> map 'k 'v\<close>\<close>
-definition fromSet  :: "('k \<Rightarrow> 'v)\<Rightarrow> 'k set \<Rightarrow>('k,'v)Map.map "  where 
-     " fromSet f s = ( Finite_Set.fold (\<lambda> k m .  map_update k (f k) m) Map.empty s )"
+definition fromSet  :: \<open>('k \<Rightarrow> 'v)\<Rightarrow> 'k set \<Rightarrow>('k,'v)Map.map \<close>  where 
+     \<open> fromSet f s = ( Finite_Set.fold ((\<lambda> k m .  map_update k (f k) m)) Map.empty s )\<close> 
+  for  f  :: " 'k \<Rightarrow> 'v " 
+  and  s  :: " 'k set "
 
 
 \<comment> \<open>\<open>
@@ -49,9 +51,12 @@ assert fromSet_1: (fromSet succ {(2:nat); 3; 4}) = Map.fromList [(2,3); (3, 4); 
 \<comment> \<open>\<open> -------------------------------------------------------------------------- \<close>\<close>
 
 \<comment> \<open>\<open>val fold : forall 'k 'v 'r. MapKeyType 'k, SetType 'k, SetType 'v => ('k -> 'v -> 'r -> 'r) -> map 'k 'v -> 'r -> 'r\<close>\<close>
-definition fold  :: "('k \<Rightarrow> 'v \<Rightarrow> 'r \<Rightarrow> 'r)\<Rightarrow>('k,'v)Map.map \<Rightarrow> 'r \<Rightarrow> 'r "  where 
-     " fold f m v = ( Finite_Set.fold ( \<lambda>x .  
-  (case  x of (k, v) => \<lambda> r .  f k v r )) v (map_to_set m))"
+definition fold  :: \<open>('k \<Rightarrow> 'v \<Rightarrow> 'r \<Rightarrow> 'r)\<Rightarrow>('k,'v)Map.map \<Rightarrow> 'r \<Rightarrow> 'r \<close>  where 
+     \<open> fold f m v = ( Finite_Set.fold ( (\<lambda>x .  
+  (case  x of (k, v) => (\<lambda> r .  f k v r) ))) v (map_to_set m))\<close> 
+  for  f  :: " 'k \<Rightarrow> 'v \<Rightarrow> 'r \<Rightarrow> 'r " 
+  and  m  :: "('k,'v)Map.map " 
+  and  v  :: " 'r "
 
 
 \<comment> \<open>\<open>
@@ -67,16 +72,18 @@ assert fold_2: (fold (fun k v a -> (a+v)) (Map.fromList [((2:nat),(3:nat)); (3, 
 \<comment> \<open>\<open> TODO: this function is in map_extra rather than map just for implementation reasons \<close>\<close>
 \<comment> \<open>\<open>val mapMaybe : forall 'a 'b 'c. MapKeyType 'a => ('a -> 'b -> maybe 'c) -> map 'a 'b -> map 'a 'c\<close>\<close>
 \<comment> \<open>\<open> OLD: TODO: mapMaybe depends on toList that is not defined for hol and isabelle \<close>\<close>
-definition option_map  :: "('a \<Rightarrow> 'b \<Rightarrow> 'c option)\<Rightarrow>('a,'b)Map.map \<Rightarrow>('a,'c)Map.map "  where 
-     " option_map f m = (
+definition option_map  :: \<open>('a \<Rightarrow> 'b \<Rightarrow> 'c option)\<Rightarrow>('a,'b)Map.map \<Rightarrow>('a,'c)Map.map \<close>  where 
+     \<open> option_map f m = (
   List.foldl
-    (\<lambda> m' .  \<lambda>x .  
+    ((\<lambda> m' .  (\<lambda>x .  
   (case  x of
       (k, v) =>
   (case  f k v of   None => m' | Some v' => map_update k v' m' )
-  ))
+  ))))
     Map.empty
-    (list_of_set (LemExtraDefs.map_to_set m)))"
+    (list_of_set (LemExtraDefs.map_to_set m)))\<close> 
+  for  f  :: " 'a \<Rightarrow> 'b \<Rightarrow> 'c option " 
+  and  m  :: "('a,'b)Map.map "
 
 
 end

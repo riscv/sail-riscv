@@ -70,72 +70,185 @@ datatype 'regval event =
 type_synonym 'regval trace =" ( 'regval event) list "
 
 \<comment> \<open>\<open>val return : forall 'rv 'a 'e. 'a -> monad 'rv 'a 'e\<close>\<close>
-definition return  :: " 'a \<Rightarrow>('rv,'a,'e)monad "  where 
-     " return a = ( Done a )"
+definition return  :: \<open> 'a \<Rightarrow>('rv,'a,'e)monad \<close>  where 
+     \<open> return a = ( Done a )\<close> 
+  for  a  :: " 'a "
 
 
 \<comment> \<open>\<open>val bind : forall 'rv 'a 'b 'e. monad 'rv 'a 'e -> ('a -> monad 'rv 'b 'e) -> monad 'rv 'b 'e\<close>\<close>
-function (sequential,domintros)  bind  :: "('rv,'a,'e)monad \<Rightarrow>('a \<Rightarrow>('rv,'b,'e)monad)\<Rightarrow>('rv,'b,'e)monad "  where 
-     " bind (Done a) f = ( f a )"
-|" bind (Read_mem rk a sz k) f = (       Read_mem rk a sz       (\<lambda> v .  bind (k v) f))"
-|" bind (Read_memt rk a sz k) f = (      Read_memt rk a sz      (\<lambda> v .  bind (k v) f))"
-|" bind (Write_mem wk a sz v k) f = (    Write_mem wk a sz v    (\<lambda> v .  bind (k v) f))"
-|" bind (Write_memt wk a sz v t k) f = ( Write_memt wk a sz v t (\<lambda> v .  bind (k v) f))"
-|" bind (Read_reg descr k) f = (         Read_reg descr         (\<lambda> v .  bind (k v) f))"
-|" bind (Excl_res k) f = (               Excl_res               (\<lambda> v .  bind (k v) f))"
-|" bind (Choose descr k) f = (           Choose descr           (\<lambda> v .  bind (k v) f))"
-|" bind (Write_ea wk a sz k) f = (       Write_ea wk a sz       (bind k f))"
-|" bind (Footprint k) f = (              Footprint              (bind k f))"
-|" bind (Barrier bk k) f = (             Barrier bk             (bind k f))"
-|" bind (Write_reg r v k) f = (          Write_reg r v          (bind k f))"
-|" bind (Print msg k) f = (              Print msg              (bind k f))"
-|" bind (Fail descr) f = (               Fail descr )"
-|" bind (Exception e) f = (              Exception e )" 
+function (sequential,domintros)  bind  :: \<open>('rv,'a,'e)monad \<Rightarrow>('a \<Rightarrow>('rv,'b,'e)monad)\<Rightarrow>('rv,'b,'e)monad \<close>  where 
+     \<open> bind (Done a) f = ( f a )\<close> 
+  for  a  :: " 'a " 
+  and  f  :: " 'a \<Rightarrow>('rv,'b,'e)monad "
+|\<open> bind (Read_mem rk a sz k) f = (       Read_mem rk a sz       ((\<lambda> v .  bind (k v) f)))\<close> 
+  for  rk  :: " read_kind " 
+  and  sz  :: " nat " 
+  and  k  :: "(memory_byte)list \<Rightarrow>('rv,'a,'e)monad " 
+  and  a  :: " nat " 
+  and  f  :: " 'a \<Rightarrow>('rv,'b,'e)monad "
+|\<open> bind (Read_memt rk a sz k) f = (      Read_memt rk a sz      ((\<lambda> v .  bind (k v) f)))\<close> 
+  for  rk  :: " read_kind " 
+  and  sz  :: " nat " 
+  and  k  :: "(memory_byte)list*bitU \<Rightarrow>('rv,'a,'e)monad " 
+  and  a  :: " nat " 
+  and  f  :: " 'a \<Rightarrow>('rv,'b,'e)monad "
+|\<open> bind (Write_mem wk a sz v k) f = (    Write_mem wk a sz v    ((\<lambda> v .  bind (k v) f)))\<close> 
+  for  wk  :: " write_kind " 
+  and  sz  :: " nat " 
+  and  k  :: " bool \<Rightarrow>('rv,'a,'e)monad " 
+  and  v  :: "(memory_byte)list " 
+  and  a  :: " nat " 
+  and  f  :: " 'a \<Rightarrow>('rv,'b,'e)monad "
+|\<open> bind (Write_memt wk a sz v t k) f = ( Write_memt wk a sz v t ((\<lambda> v .  bind (k v) f)))\<close> 
+  for  wk  :: " write_kind " 
+  and  sz  :: " nat " 
+  and  k  :: " bool \<Rightarrow>('rv,'a,'e)monad " 
+  and  t  :: " bitU " 
+  and  v  :: "(memory_byte)list " 
+  and  a  :: " nat " 
+  and  f  :: " 'a \<Rightarrow>('rv,'b,'e)monad "
+|\<open> bind (Read_reg descr k) f = (         Read_reg descr         ((\<lambda> v .  bind (k v) f)))\<close> 
+  for  descr  :: " string " 
+  and  k  :: " 'rv \<Rightarrow>('rv,'a,'e)monad " 
+  and  f  :: " 'a \<Rightarrow>('rv,'b,'e)monad "
+|\<open> bind (Excl_res k) f = (               Excl_res               ((\<lambda> v .  bind (k v) f)))\<close> 
+  for  k  :: " bool \<Rightarrow>('rv,'a,'e)monad " 
+  and  f  :: " 'a \<Rightarrow>('rv,'b,'e)monad "
+|\<open> bind (Choose descr k) f = (           Choose descr           ((\<lambda> v .  bind (k v) f)))\<close> 
+  for  descr  :: " string " 
+  and  k  :: " bool \<Rightarrow>('rv,'a,'e)monad " 
+  and  f  :: " 'a \<Rightarrow>('rv,'b,'e)monad "
+|\<open> bind (Write_ea wk a sz k) f = (       Write_ea wk a sz       (bind k f))\<close> 
+  for  wk  :: " write_kind " 
+  and  sz  :: " nat " 
+  and  k  :: "('rv,'a,'e)monad " 
+  and  a  :: " nat " 
+  and  f  :: " 'a \<Rightarrow>('rv,'b,'e)monad "
+|\<open> bind (Footprint k) f = (              Footprint              (bind k f))\<close> 
+  for  k  :: "('rv,'a,'e)monad " 
+  and  f  :: " 'a \<Rightarrow>('rv,'b,'e)monad "
+|\<open> bind (Barrier bk k) f = (             Barrier bk             (bind k f))\<close> 
+  for  bk  :: " barrier_kind " 
+  and  k  :: "('rv,'a,'e)monad " 
+  and  f  :: " 'a \<Rightarrow>('rv,'b,'e)monad "
+|\<open> bind (Write_reg r v k) f = (          Write_reg r v          (bind k f))\<close> 
+  for  k  :: "('rv,'a,'e)monad " 
+  and  v  :: " 'rv " 
+  and  r  :: " string " 
+  and  f  :: " 'a \<Rightarrow>('rv,'b,'e)monad "
+|\<open> bind (Print msg k) f = (              Print msg              (bind k f))\<close> 
+  for  k  :: "('rv,'a,'e)monad " 
+  and  msg  :: " string " 
+  and  f  :: " 'a \<Rightarrow>('rv,'b,'e)monad "
+|\<open> bind (Fail descr) f = (               Fail descr )\<close> 
+  for  descr  :: " string " 
+  and  f  :: " 'a \<Rightarrow>('rv,'b,'e)monad "
+|\<open> bind (Exception e) f = (              Exception e )\<close> 
+  for  e  :: " 'e " 
+  and  f  :: " 'a \<Rightarrow>('rv,'b,'e)monad " 
 by pat_completeness auto
 
 
 \<comment> \<open>\<open>val exit : forall 'rv 'a 'e. unit -> monad 'rv 'a 'e\<close>\<close>
-definition exit0  :: " unit \<Rightarrow>('rv,'a,'e)monad "  where 
-     " exit0 _ = ( Fail (''exit''))"
+definition exit0  :: \<open> unit \<Rightarrow>('rv,'a,'e)monad \<close>  where 
+     \<open> exit0 _ = ( Fail (''exit''))\<close>
 
 
 \<comment> \<open>\<open>val choose_bool : forall 'rv 'e. string -> monad 'rv bool 'e\<close>\<close>
-definition choose_bool  :: " string \<Rightarrow>('rv,(bool),'e)monad "  where 
-     " choose_bool descr = ( Choose descr return )"
+definition choose_bool  :: \<open> string \<Rightarrow>('rv,(bool),'e)monad \<close>  where 
+     \<open> choose_bool descr = ( Choose descr return )\<close> 
+  for  descr  :: " string "
 
 
 \<comment> \<open>\<open>val undefined_bool : forall 'rv 'e. unit -> monad 'rv bool 'e\<close>\<close>
-definition undefined_bool  :: " unit \<Rightarrow>('rv,(bool),'e)monad "  where 
-     " undefined_bool _ = ( choose_bool (''undefined_bool''))"
+definition undefined_bool  :: \<open> unit \<Rightarrow>('rv,(bool),'e)monad \<close>  where 
+     \<open> undefined_bool _ = ( choose_bool (''undefined_bool''))\<close>
 
 
 \<comment> \<open>\<open>val assert_exp : forall 'rv 'e. bool -> string -> monad 'rv unit 'e\<close>\<close>
-definition assert_exp  :: " bool \<Rightarrow> string \<Rightarrow>('rv,(unit),'e)monad "  where 
-     " assert_exp exp1 msg = ( if exp1 then Done ()  else Fail msg )"
+definition assert_exp  :: \<open> bool \<Rightarrow> string \<Rightarrow>('rv,(unit),'e)monad \<close>  where 
+     \<open> assert_exp exp1 msg = ( if exp1 then Done ()  else Fail msg )\<close> 
+  for  exp1  :: " bool " 
+  and  msg  :: " string "
 
 
 \<comment> \<open>\<open>val throw : forall 'rv 'a 'e. 'e -> monad 'rv 'a 'e\<close>\<close>
-definition throw  :: " 'e \<Rightarrow>('rv,'a,'e)monad "  where 
-     " throw e = ( Exception e )"
+definition throw  :: \<open> 'e \<Rightarrow>('rv,'a,'e)monad \<close>  where 
+     \<open> throw e = ( Exception e )\<close> 
+  for  e  :: " 'e "
 
 
 \<comment> \<open>\<open>val try_catch : forall 'rv 'a 'e1 'e2. monad 'rv 'a 'e1 -> ('e1 -> monad 'rv 'a 'e2) -> monad 'rv 'a 'e2\<close>\<close>
-function (sequential,domintros)  try_catch  :: "('rv,'a,'e1)monad \<Rightarrow>('e1 \<Rightarrow>('rv,'a,'e2)monad)\<Rightarrow>('rv,'a,'e2)monad "  where 
-     " try_catch (Done a) h = ( Done a )"
-|" try_catch (Read_mem rk a sz k) h = (       Read_mem rk a sz       (\<lambda> v .  try_catch (k v) h))"
-|" try_catch (Read_memt rk a sz k) h = (      Read_memt rk a sz      (\<lambda> v .  try_catch (k v) h))"
-|" try_catch (Write_mem wk a sz v k) h = (    Write_mem wk a sz v    (\<lambda> v .  try_catch (k v) h))"
-|" try_catch (Write_memt wk a sz v t k) h = ( Write_memt wk a sz v t (\<lambda> v .  try_catch (k v) h))"
-|" try_catch (Read_reg descr k) h = (         Read_reg descr         (\<lambda> v .  try_catch (k v) h))"
-|" try_catch (Excl_res k) h = (               Excl_res               (\<lambda> v .  try_catch (k v) h))"
-|" try_catch (Choose descr k) h = (           Choose descr           (\<lambda> v .  try_catch (k v) h))"
-|" try_catch (Write_ea wk a sz k) h = (       Write_ea wk a sz       (try_catch k h))"
-|" try_catch (Footprint k) h = (              Footprint              (try_catch k h))"
-|" try_catch (Barrier bk k) h = (             Barrier bk             (try_catch k h))"
-|" try_catch (Write_reg r v k) h = (          Write_reg r v          (try_catch k h))"
-|" try_catch (Print msg k) h = (              Print msg              (try_catch k h))"
-|" try_catch (Fail descr) h = (               Fail descr )"
-|" try_catch (Exception e) h = (              h e )" 
+function (sequential,domintros)  try_catch  :: \<open>('rv,'a,'e1)monad \<Rightarrow>('e1 \<Rightarrow>('rv,'a,'e2)monad)\<Rightarrow>('rv,'a,'e2)monad \<close>  where 
+     \<open> try_catch (Done a) h = ( Done a )\<close> 
+  for  a  :: " 'a " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,'e2)monad "
+|\<open> try_catch (Read_mem rk a sz k) h = (       Read_mem rk a sz       ((\<lambda> v .  try_catch (k v) h)))\<close> 
+  for  rk  :: " read_kind " 
+  and  sz  :: " nat " 
+  and  k  :: "(memory_byte)list \<Rightarrow>('rv,'a,'e1)monad " 
+  and  a  :: " nat " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,'e2)monad "
+|\<open> try_catch (Read_memt rk a sz k) h = (      Read_memt rk a sz      ((\<lambda> v .  try_catch (k v) h)))\<close> 
+  for  rk  :: " read_kind " 
+  and  sz  :: " nat " 
+  and  k  :: "(memory_byte)list*bitU \<Rightarrow>('rv,'a,'e1)monad " 
+  and  a  :: " nat " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,'e2)monad "
+|\<open> try_catch (Write_mem wk a sz v k) h = (    Write_mem wk a sz v    ((\<lambda> v .  try_catch (k v) h)))\<close> 
+  for  wk  :: " write_kind " 
+  and  sz  :: " nat " 
+  and  k  :: " bool \<Rightarrow>('rv,'a,'e1)monad " 
+  and  v  :: "(memory_byte)list " 
+  and  a  :: " nat " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,'e2)monad "
+|\<open> try_catch (Write_memt wk a sz v t k) h = ( Write_memt wk a sz v t ((\<lambda> v .  try_catch (k v) h)))\<close> 
+  for  wk  :: " write_kind " 
+  and  sz  :: " nat " 
+  and  k  :: " bool \<Rightarrow>('rv,'a,'e1)monad " 
+  and  t  :: " bitU " 
+  and  v  :: "(memory_byte)list " 
+  and  a  :: " nat " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,'e2)monad "
+|\<open> try_catch (Read_reg descr k) h = (         Read_reg descr         ((\<lambda> v .  try_catch (k v) h)))\<close> 
+  for  descr  :: " string " 
+  and  k  :: " 'rv \<Rightarrow>('rv,'a,'e1)monad " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,'e2)monad "
+|\<open> try_catch (Excl_res k) h = (               Excl_res               ((\<lambda> v .  try_catch (k v) h)))\<close> 
+  for  k  :: " bool \<Rightarrow>('rv,'a,'e1)monad " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,'e2)monad "
+|\<open> try_catch (Choose descr k) h = (           Choose descr           ((\<lambda> v .  try_catch (k v) h)))\<close> 
+  for  descr  :: " string " 
+  and  k  :: " bool \<Rightarrow>('rv,'a,'e1)monad " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,'e2)monad "
+|\<open> try_catch (Write_ea wk a sz k) h = (       Write_ea wk a sz       (try_catch k h))\<close> 
+  for  wk  :: " write_kind " 
+  and  sz  :: " nat " 
+  and  k  :: "('rv,'a,'e1)monad " 
+  and  a  :: " nat " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,'e2)monad "
+|\<open> try_catch (Footprint k) h = (              Footprint              (try_catch k h))\<close> 
+  for  k  :: "('rv,'a,'e1)monad " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,'e2)monad "
+|\<open> try_catch (Barrier bk k) h = (             Barrier bk             (try_catch k h))\<close> 
+  for  bk  :: " barrier_kind " 
+  and  k  :: "('rv,'a,'e1)monad " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,'e2)monad "
+|\<open> try_catch (Write_reg r v k) h = (          Write_reg r v          (try_catch k h))\<close> 
+  for  k  :: "('rv,'a,'e1)monad " 
+  and  v  :: " 'rv " 
+  and  r  :: " string " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,'e2)monad "
+|\<open> try_catch (Print msg k) h = (              Print msg              (try_catch k h))\<close> 
+  for  k  :: "('rv,'a,'e1)monad " 
+  and  msg  :: " string " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,'e2)monad "
+|\<open> try_catch (Fail descr) h = (               Fail descr )\<close> 
+  for  descr  :: " string " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,'e2)monad "
+|\<open> try_catch (Exception e) h = (              h e )\<close> 
+  for  e  :: " 'e1 " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,'e2)monad " 
 by pat_completeness auto
 
 
@@ -145,154 +258,183 @@ by pat_completeness auto
 type_synonym( 'rv, 'a, 'r, 'e) monadR =" ('rv, 'a, ( ('r, 'e)sum)) monad "
 
 \<comment> \<open>\<open>val early_return : forall 'rv 'a 'r 'e. 'r -> monadR 'rv 'a 'r 'e\<close>\<close>
-definition early_return  :: " 'r \<Rightarrow>('rv,'a,(('r,'e)sum))monad "  where 
-     " early_return r = ( throw (Inl r))"
+definition early_return  :: \<open> 'r \<Rightarrow>('rv,'a,(('r,'e)sum))monad \<close>  where 
+     \<open> early_return r = ( throw (Inl r))\<close> 
+  for  r  :: " 'r "
 
 
 \<comment> \<open>\<open>val catch_early_return : forall 'rv 'a 'e. monadR 'rv 'a 'a 'e -> monad 'rv 'a 'e\<close>\<close>
-definition catch_early_return  :: "('rv,'a,(('a,'e)sum))monad \<Rightarrow>('rv,'a,'e)monad "  where 
-     " catch_early_return m = (
+definition catch_early_return  :: \<open>('rv,'a,(('a,'e)sum))monad \<Rightarrow>('rv,'a,'e)monad \<close>  where 
+     \<open> catch_early_return m = (
   try_catch m
-    (\<lambda>x .  (case  x of   Inl a => return a | Inr e => throw e )))"
+    ((\<lambda>x .  (case  x of   Inl a => return a | Inr e => throw e ))))\<close> 
+  for  m  :: "('rv,'a,(('a,'e)sum))monad "
 
 
 \<comment> \<open>\<open> Lift to monad with early return by wrapping exceptions \<close>\<close>
 \<comment> \<open>\<open>val liftR : forall 'rv 'a 'r 'e. monad 'rv 'a 'e -> monadR 'rv 'a 'r 'e\<close>\<close>
-definition liftR  :: "('rv,'a,'e)monad \<Rightarrow>('rv,'a,(('r,'e)sum))monad "  where 
-     " liftR m = ( try_catch m (\<lambda> e .  throw (Inr e)))"
+definition liftR  :: \<open>('rv,'a,'e)monad \<Rightarrow>('rv,'a,(('r,'e)sum))monad \<close>  where 
+     \<open> liftR m = ( try_catch m ((\<lambda> e .  throw (Inr e))))\<close> 
+  for  m  :: "('rv,'a,'e)monad "
 
 
 \<comment> \<open>\<open> Catch exceptions in the presence of early returns \<close>\<close>
 \<comment> \<open>\<open>val try_catchR : forall 'rv 'a 'r 'e1 'e2. monadR 'rv 'a 'r 'e1 -> ('e1 -> monadR 'rv 'a 'r 'e2) ->  monadR 'rv 'a 'r 'e2\<close>\<close>
-definition try_catchR  :: "('rv,'a,(('r,'e1)sum))monad \<Rightarrow>('e1 \<Rightarrow>('rv,'a,(('r,'e2)sum))monad)\<Rightarrow>('rv,'a,(('r,'e2)sum))monad "  where 
-     " try_catchR m h = (
+definition try_catchR  :: \<open>('rv,'a,(('r,'e1)sum))monad \<Rightarrow>('e1 \<Rightarrow>('rv,'a,(('r,'e2)sum))monad)\<Rightarrow>('rv,'a,(('r,'e2)sum))monad \<close>  where 
+     \<open> try_catchR m h = (
   try_catch m
-    (\<lambda>x .  (case  x of   Inl r => throw (Inl r) | Inr e => h e )))"
+    ((\<lambda>x .  (case  x of   Inl r => throw (Inl r) | Inr e => h e ))))\<close> 
+  for  m  :: "('rv,'a,(('r,'e1)sum))monad " 
+  and  h  :: " 'e1 \<Rightarrow>('rv,'a,(('r,'e2)sum))monad "
 
 
 \<comment> \<open>\<open>val maybe_fail : forall 'rv 'a 'e. string -> maybe 'a -> monad 'rv 'a 'e\<close>\<close>
-definition maybe_fail  :: " string \<Rightarrow> 'a option \<Rightarrow>('rv,'a,'e)monad "  where 
-     " maybe_fail msg = ( \<lambda>x .  
-  (case  x of   Some a => return a | None => Fail msg ) )"
+definition maybe_fail  :: \<open> string \<Rightarrow> 'a option \<Rightarrow>('rv,'a,'e)monad \<close>  where 
+     \<open> maybe_fail msg = ( (\<lambda>x .  
+  (case  x of   Some a => return a | None => Fail msg )))\<close> 
+  for  msg  :: " string "
 
 
 \<comment> \<open>\<open>val read_memt_bytes : forall 'rv 'a 'b 'e. Bitvector 'a, Bitvector 'b => read_kind -> 'a -> integer -> monad 'rv (list memory_byte * bitU) 'e\<close>\<close>
-definition read_memt_bytes  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> read_kind \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>('rv,((memory_byte)list*bitU),'e)monad "  where 
-     " read_memt_bytes dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b rk addr sz = (
+definition read_memt_bytes  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> read_kind \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>('rv,((memory_byte)list*bitU),'e)monad \<close>  where 
+     \<open> read_memt_bytes dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b rk addr sz = (
   bind
     (maybe_fail (''nat_of_bv'') (nat_of_bv 
   dict_Sail2_values_Bitvector_a addr))
-    (\<lambda> addr .  Read_memt rk addr (nat_of_int sz) return))"
+    ((\<lambda> addr .  Read_memt rk addr (nat_of_int sz) return)))\<close> 
+  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
+  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class " 
+  and  rk  :: " read_kind " 
+  and  addr  :: " 'a " 
+  and  sz  :: " int "
 
 
 \<comment> \<open>\<open>val read_memt : forall 'rv 'a 'b 'e. Bitvector 'a, Bitvector 'b => read_kind -> 'a -> integer -> monad 'rv ('b * bitU) 'e\<close>\<close>
-definition read_memt  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> read_kind \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>('rv,('b*bitU),'e)monad "  where 
-     " read_memt dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b rk addr sz = (
+definition read_memt  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> read_kind \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>('rv,('b*bitU),'e)monad \<close>  where 
+     \<open> read_memt dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b rk addr sz = (
   bind
     (read_memt_bytes dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_a rk addr sz)
-    ( \<lambda>x .  (case  x of
+    ( (\<lambda>x .  (case  x of
      (bytes, tag) =>
  (case (of_bits_method   dict_Sail2_values_Bitvector_b)
          (bits_of_mem_bytes bytes) of
        Some v => return (v, tag)
    | None => Fail (''bits_of_mem_bytes'')
  )
- )))"
+ ))))\<close> 
+  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
+  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class " 
+  and  rk  :: " read_kind " 
+  and  addr  :: " 'a " 
+  and  sz  :: " int "
 
 
 \<comment> \<open>\<open>val read_mem_bytes : forall 'rv 'a 'b 'e. Bitvector 'a, Bitvector 'b => read_kind -> 'a -> integer -> monad 'rv (list memory_byte) 'e\<close>\<close>
-definition read_mem_bytes  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> read_kind \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>('rv,((memory_byte)list),'e)monad "  where 
-     " read_mem_bytes dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b rk addr sz = (
+definition read_mem_bytes  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> read_kind \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>('rv,((memory_byte)list),'e)monad \<close>  where 
+     \<open> read_mem_bytes dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b rk addr sz = (
   bind
     (maybe_fail (''nat_of_bv'') (nat_of_bv 
   dict_Sail2_values_Bitvector_a addr))
-    (\<lambda> addr .  Read_mem rk addr (nat_of_int sz) return))"
+    ((\<lambda> addr .  Read_mem rk addr (nat_of_int sz) return)))\<close> 
+  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
+  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class " 
+  and  rk  :: " read_kind " 
+  and  addr  :: " 'a " 
+  and  sz  :: " int "
 
 
 \<comment> \<open>\<open>val read_mem : forall 'rv 'a 'b 'e 'addrsize. Bitvector 'a, Bitvector 'b => read_kind -> 'addrsize -> 'a -> integer -> monad 'rv 'b 'e\<close>\<close>
-definition read_mem  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> read_kind \<Rightarrow> 'addrsize \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>('rv,'b,'e)monad "  where 
-     " read_mem dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b rk addr_sz addr sz = (
+definition read_mem  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> read_kind \<Rightarrow> 'addrsize \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>('rv,'b,'e)monad \<close>  where 
+     \<open> read_mem dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b rk addr_sz addr sz = (
   bind
     (read_mem_bytes dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_a rk addr sz)
-    (\<lambda> bytes . 
+    ((\<lambda> bytes . 
        (case  (of_bits_method   dict_Sail2_values_Bitvector_b) (bits_of_mem_bytes bytes) of
            Some v => return v
          | None => Fail (''bits_of_mem_bytes'')
-       )))"
+       ))))\<close> 
+  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
+  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class " 
+  and  rk  :: " read_kind " 
+  and  addr_sz  :: " 'addrsize " 
+  and  addr  :: " 'a " 
+  and  sz  :: " int "
 
 
 \<comment> \<open>\<open>val excl_result : forall 'rv 'e. unit -> monad 'rv bool 'e\<close>\<close>
-definition excl_result  :: " unit \<Rightarrow>('rv,(bool),'e)monad "  where 
-     " excl_result _ = ( 
-  (let k = (\<lambda> successful .  (return successful)) in Excl_res k) )"
+definition excl_result  :: \<open> unit \<Rightarrow>('rv,(bool),'e)monad \<close>  where 
+     \<open> excl_result _ = ( 
+  (let k = ((\<lambda> successful .  (return successful))) in Excl_res k) )\<close>
 
 
 \<comment> \<open>\<open>val write_mem_ea : forall 'rv 'a 'e 'addrsize. Bitvector 'a => write_kind -> 'addrsize -> 'a -> integer -> monad 'rv unit 'e\<close>\<close>
-definition write_mem_ea  :: " 'a Bitvector_class \<Rightarrow> write_kind \<Rightarrow> 'addrsize \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>('rv,(unit),'e)monad "  where 
-     " write_mem_ea dict_Sail2_values_Bitvector_a wk addr_size addr sz = (
+definition write_mem_ea  :: \<open> 'a Bitvector_class \<Rightarrow> write_kind \<Rightarrow> 'addrsize \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>('rv,(unit),'e)monad \<close>  where 
+     \<open> write_mem_ea dict_Sail2_values_Bitvector_a wk addr_size addr sz = (
   bind
     (maybe_fail (''nat_of_bv'') (nat_of_bv 
   dict_Sail2_values_Bitvector_a addr))
-    (\<lambda> addr .  Write_ea wk addr (nat_of_int sz) (Done () )))"
+    ((\<lambda> addr .  Write_ea wk addr (nat_of_int sz) (Done () ))))\<close> 
+  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
+  and  wk  :: " write_kind " 
+  and  addr_size  :: " 'addrsize " 
+  and  addr  :: " 'a " 
+  and  sz  :: " int "
 
 
 \<comment> \<open>\<open>val write_mem : forall 'rv 'a 'b 'e 'addrsize. Bitvector 'a, Bitvector 'b =>
   write_kind -> 'addrsize -> 'a -> integer -> 'b -> monad 'rv bool 'e\<close>\<close>
-definition write_mem  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> write_kind \<Rightarrow> 'addrsize \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> 'b \<Rightarrow>('rv,(bool),'e)monad "  where 
-     " write_mem dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b wk addr_size addr sz v = (
+definition write_mem  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> write_kind \<Rightarrow> 'addrsize \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> 'b \<Rightarrow>('rv,(bool),'e)monad \<close>  where 
+     \<open> write_mem dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b wk addr_size addr sz v = (
   (case  (mem_bytes_of_bits 
   dict_Sail2_values_Bitvector_b v, nat_of_bv dict_Sail2_values_Bitvector_a addr) of
       (Some v, Some addr) =>
        Write_mem wk addr (nat_of_int sz) v return
     | _ => Fail (''write_mem'')
-  ))"
+  ))\<close> 
+  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
+  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class " 
+  and  wk  :: " write_kind " 
+  and  addr_size  :: " 'addrsize " 
+  and  addr  :: " 'a " 
+  and  sz  :: " int " 
+  and  v  :: " 'b "
 
 
 \<comment> \<open>\<open>val write_memt : forall 'rv 'a 'b 'e. Bitvector 'a, Bitvector 'b =>
   write_kind -> 'a -> integer -> 'b -> bitU -> monad 'rv bool 'e\<close>\<close>
-definition write_memt  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> write_kind \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> 'b \<Rightarrow> bitU \<Rightarrow>('rv,(bool),'e)monad "  where 
-     " write_memt dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b wk addr sz v tag = (
+definition write_memt  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> write_kind \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> 'b \<Rightarrow> bitU \<Rightarrow>('rv,(bool),'e)monad \<close>  where 
+     \<open> write_memt dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b wk addr sz v tag = (
   (case  (mem_bytes_of_bits 
   dict_Sail2_values_Bitvector_b v, nat_of_bv dict_Sail2_values_Bitvector_a addr) of
       (Some v, Some addr) =>
        Write_memt wk addr (nat_of_int sz) v tag return
     | _ => Fail (''write_mem'')
-  ))"
+  ))\<close> 
+  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
+  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class " 
+  and  wk  :: " write_kind " 
+  and  addr  :: " 'a " 
+  and  sz  :: " int " 
+  and  v  :: " 'b " 
+  and  tag  :: " bitU "
 
 
 \<comment> \<open>\<open>val read_reg : forall 's 'rv 'a 'e. register_ref 's 'rv 'a -> monad 'rv 'a 'e\<close>\<close>
-definition read_reg  :: "('s,'rv,'a)register_ref \<Rightarrow>('rv,'a,'e)monad "  where 
-     " read_reg reg = ( 
-  (let k = (\<lambda> v . 
+definition read_reg  :: \<open>('s,'rv,'a)register_ref \<Rightarrow>('rv,'a,'e)monad \<close>  where 
+     \<open> read_reg reg = ( 
+  (let k = ((\<lambda> v . 
             (case (of_regval   reg) v of
                   Some v => Done v
               | None => Fail (''read_reg: unrecognised value'')
-            )) in Read_reg (name   reg) k) )"
-
-
-\<comment> \<open>\<open> TODO
-val read_reg_range : forall 's 'r 'rv 'a 'e. Bitvector 'a => register_ref 's 'rv 'r -> integer -> integer -> monad 'rv 'a 'e
-let read_reg_range reg i j =
-  read_reg_aux of_bits (external_reg_slice reg (nat_of_int i,nat_of_int j))
-
-let read_reg_bit reg i =
-  read_reg_aux (fun v -> v) (external_reg_slice reg (nat_of_int i,nat_of_int i)) >>= fun v ->
-  return (extract_only_element v)
-
-let read_reg_field reg regfield =
-  read_reg_aux (external_reg_field_whole reg regfield)
-
-let read_reg_bitfield reg regfield =
-  read_reg_aux (external_reg_field_whole reg regfield) >>= fun v ->
-  return (extract_only_element v)\<close>\<close>
-
-definition reg_deref  :: "('d,'c,'b)register_ref \<Rightarrow>('c,'b,'a)monad "  where 
-     " reg_deref = ( read_reg )"
+            ))) in Read_reg (name   reg) k) )\<close> 
+  for  reg  :: "('s,'rv,'a)register_ref "
 
 
 \<comment> \<open>\<open>val write_reg : forall 's 'rv 'a 'e. register_ref 's 'rv 'a -> 'a -> monad 'rv unit 'e\<close>\<close>
-definition write_reg  :: "('s,'rv,'a)register_ref \<Rightarrow> 'a \<Rightarrow>('rv,(unit),'e)monad "  where 
-     " write_reg reg v = ( Write_reg(name   reg) ((regval_of   reg) v) (Done () ))"
+definition write_reg  :: \<open>('s,'rv,'a)register_ref \<Rightarrow> 'a \<Rightarrow>('rv,(unit),'e)monad \<close>  where 
+     \<open> write_reg reg v = ( Write_reg(name   reg) ((regval_of   reg) v) (Done () ))\<close> 
+  for  reg  :: "('s,'rv,'a)register_ref " 
+  and  v  :: " 'a "
 
 
 \<comment> \<open>\<open> TODO
@@ -316,20 +458,21 @@ let write_reg_field_pos reg regfield i v =
 let write_reg_field_bit = write_reg_field_pos\<close>\<close>
 
 \<comment> \<open>\<open>val barrier : forall 'rv 'e. barrier_kind -> monad 'rv unit 'e\<close>\<close>
-definition barrier  :: " barrier_kind \<Rightarrow>('rv,(unit),'e)monad "  where 
-     " barrier bk = ( Barrier bk (Done () ))"
+definition barrier  :: \<open> barrier_kind \<Rightarrow>('rv,(unit),'e)monad \<close>  where 
+     \<open> barrier bk = ( Barrier bk (Done () ))\<close> 
+  for  bk  :: " barrier_kind "
 
 
 \<comment> \<open>\<open>val footprint : forall 'rv 'e. unit -> monad 'rv unit 'e\<close>\<close>
-definition footprint  :: " unit \<Rightarrow>('rv,(unit),'e)monad "  where 
-     " footprint _ = ( Footprint (Done () ))"
+definition footprint  :: \<open> unit \<Rightarrow>('rv,(unit),'e)monad \<close>  where 
+     \<open> footprint _ = ( Footprint (Done () ))\<close>
 
 
 \<comment> \<open>\<open> Event traces \<close>\<close>
 
 \<comment> \<open>\<open>val emitEvent : forall 'regval 'a 'e. Eq 'regval => monad 'regval 'a 'e -> event 'regval -> maybe (monad 'regval 'a 'e)\<close>\<close>
-definition emitEvent  :: "('regval,'a,'e)monad \<Rightarrow> 'regval event \<Rightarrow>(('regval,'a,'e)monad)option "  where 
-     " emitEvent m e = ( (case  (e, m) of
+definition emitEvent  :: \<open>('regval,'a,'e)monad \<Rightarrow> 'regval event \<Rightarrow>(('regval,'a,'e)monad)option \<close>  where 
+     \<open> emitEvent m e = ( (case  (e, m) of
     (E_read_mem rk a sz v, Read_mem rk' a' sz' k) =>
      if (rk' = rk) \<and> ((a' = a) \<and> (sz' = sz)) then Some (k v) else None
   | (E_read_memt rk a sz vt, Read_memt rk' a' sz' k) =>
@@ -352,48 +495,60 @@ definition emitEvent  :: "('regval,'a,'e)monad \<Rightarrow> 'regval event \<Rig
   | (E_choose descr v, Choose descr' k) => if descr' = descr then Some (k v) else None
   | (E_footprint, Footprint k) => Some k
   | _ => None
-))"
+))\<close> 
+  for  m  :: "('regval,'a,'e)monad " 
+  and  e  :: " 'regval event "
 
 
 \<comment> \<open>\<open>val runTrace : forall 'regval 'a 'e. Eq 'regval => trace 'regval -> monad 'regval 'a 'e -> maybe (monad 'regval 'a 'e)\<close>\<close>
-fun  runTrace  :: "('regval event)list \<Rightarrow>('regval,'a,'e)monad \<Rightarrow>(('regval,'a,'e)monad)option "  where 
-     " runTrace ([]) m = ( Some m )"
-|" runTrace (e # t') m = ( Option.bind (emitEvent m e) (runTrace t'))"
+fun  runTrace  :: \<open>('regval event)list \<Rightarrow>('regval,'a,'e)monad \<Rightarrow>(('regval,'a,'e)monad)option \<close>  where 
+     \<open> runTrace ([]) m = ( Some m )\<close> 
+  for  m  :: "('regval,'a,'e)monad "
+|\<open> runTrace (e # t') m = ( Option.bind (emitEvent m e) (runTrace t'))\<close> 
+  for  t'  :: "('regval event)list " 
+  and  e  :: " 'regval event " 
+  and  m  :: "('regval,'a,'e)monad "
 
 
 \<comment> \<open>\<open>val final : forall 'regval 'a 'e. monad 'regval 'a 'e -> bool\<close>\<close>
-definition final  :: "('regval,'a,'e)monad \<Rightarrow> bool "  where 
-     " final = ( \<lambda>x .  
+definition final  :: \<open>('regval,'a,'e)monad \<Rightarrow> bool \<close>  where 
+     \<open> final = ( (\<lambda>x .  
   (case  x of
         Done _ => True
     | Fail _ => True
     | Exception _ => True
     | _ => False
-  ) )"
+  )))\<close>
 
 
 \<comment> \<open>\<open>val hasTrace : forall 'regval 'a 'e. Eq 'regval => trace 'regval -> monad 'regval 'a 'e -> bool\<close>\<close>
-definition hasTrace  :: "('regval event)list \<Rightarrow>('regval,'a,'e)monad \<Rightarrow> bool "  where 
-     " hasTrace t m = ( (case  runTrace t m of
+definition hasTrace  :: \<open>('regval event)list \<Rightarrow>('regval,'a,'e)monad \<Rightarrow> bool \<close>  where 
+     \<open> hasTrace t m = ( (case  runTrace t m of
     Some m => final m
   | None => False
-))"
+))\<close> 
+  for  t  :: "('regval event)list " 
+  and  m  :: "('regval,'a,'e)monad "
 
 
 \<comment> \<open>\<open>val hasException : forall 'regval 'a 'e. Eq 'regval => trace 'regval -> monad 'regval 'a 'e -> bool\<close>\<close>
-definition hasException  :: "('regval event)list \<Rightarrow>('regval,'a,'e)monad \<Rightarrow> bool "  where 
-     " hasException t m = ( (case  runTrace t m of
+definition hasException  :: \<open>('regval event)list \<Rightarrow>('regval,'a,'e)monad \<Rightarrow> bool \<close>  where 
+     \<open> hasException t m = ( (case  runTrace t m of
     Some (Exception _) => True
   | _ => False
-))"
+))\<close> 
+  for  t  :: "('regval event)list " 
+  and  m  :: "('regval,'a,'e)monad "
 
 
 \<comment> \<open>\<open>val hasFailure : forall 'regval 'a 'e. Eq 'regval => trace 'regval -> monad 'regval 'a 'e -> bool\<close>\<close>
-definition hasFailure  :: "('regval event)list \<Rightarrow>('regval,'a,'e)monad \<Rightarrow> bool "  where 
-     " hasFailure t m = ( (case  runTrace t m of
+definition hasFailure  :: \<open>('regval event)list \<Rightarrow>('regval,'a,'e)monad \<Rightarrow> bool \<close>  where 
+     \<open> hasFailure t m = ( (case  runTrace t m of
     Some (Fail _) => True
   | _ => False
-))"
+))\<close> 
+  for  t  :: "('regval event)list " 
+  and  m  :: "('regval,'a,'e)monad "
 
 
 \<comment> \<open>\<open> Define a type synonym that also takes the register state as a type parameter,

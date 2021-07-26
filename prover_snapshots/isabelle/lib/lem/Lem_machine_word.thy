@@ -37,8 +37,9 @@ end\<close>\<close>
 \<comment> \<open>\<open>val the_value : forall 'a. itself 'a\<close>\<close>
 
 \<comment> \<open>\<open>val size_itself : forall 'a. Size 'a => itself 'a -> nat\<close>\<close>
-definition size_itself  :: "('a::len)itself \<Rightarrow> nat "  where 
-     " size_itself x = ( (len_of (TYPE(_) :: 'a itself)))"
+definition size_itself  :: \<open>('a::len)itself \<Rightarrow> nat \<close>  where 
+     \<open> size_itself x = ( (len_of (TYPE(_) :: 'a itself)))\<close> 
+  for  x  :: "('a::len)itself "
 
 
 \<comment> \<open>\<open>*****************************************************************\<close>\<close>
@@ -336,14 +337,15 @@ definition size_itself  :: "('a::len)itself \<Rightarrow> nat "  where
 \<comment> \<open>\<open>val wordToHex : forall 'a. mword 'a -> string\<close>\<close>
 \<comment> \<open>\<open> Building libraries fails if we don't provide implementations for the
    type class. \<close>\<close>
-definition wordToHex  :: "('a::len)Word.word \<Rightarrow> string "  where 
-     " wordToHex w = ( (''wordToHex not yet implemented''))"
+definition wordToHex  :: \<open>('a::len)Word.word \<Rightarrow> string \<close>  where 
+     \<open> wordToHex w = ( (''wordToHex not yet implemented''))\<close> 
+  for  w  :: "('a::len)Word.word "
 
 
-definition instance_Show_Show_Machine_word_mword_dict  :: "(('a::len)Word.word)Show_class "  where 
-     " instance_Show_Show_Machine_word_mword_dict = ((|
+definition instance_Show_Show_Machine_word_mword_dict  :: \<open>(('a::len)Word.word)Show_class \<close>  where 
+     \<open> instance_Show_Show_Machine_word_mword_dict = ((|
 
-  show_method = wordToHex |) )"
+  show_method = wordToHex |) )\<close>
 
 
 \<comment> \<open>\<open>val wordFromBitlist : forall 'a. Size 'a => list bool -> mword 'a\<close>\<close>
@@ -352,8 +354,8 @@ definition instance_Show_Show_Machine_word_mword_dict  :: "(('a::len)Word.word)S
 
 
 \<comment> \<open>\<open>val size_test_fn : forall 'a. Size 'a => mword 'a -> nat\<close>\<close>
-definition size_test_fn  :: "('a::len)Word.word \<Rightarrow> nat "  where 
-     " size_test_fn _ = ( (len_of (TYPE(_) :: 'a itself)))"
+definition size_test_fn  :: \<open>('a::len)Word.word \<Rightarrow> nat \<close>  where 
+     \<open> size_test_fn _ = ( (len_of (TYPE(_) :: 'a itself)))\<close>
 
 
 \<comment> \<open>\<open>****************************************************************\<close>\<close>
@@ -438,13 +440,15 @@ definition size_test_fn  :: "('a::len)Word.word \<Rightarrow> nat "  where
 \<comment> \<open>\<open>val unsignedDivide : forall 'a. mword 'a -> mword 'a -> mword 'a\<close>\<close>
 \<comment> \<open>\<open>val signedDivide : forall 'a. mword 'a -> mword 'a -> mword 'a\<close>\<close>
 
-definition signedDivide  :: "('a::len)Word.word \<Rightarrow>('a::len)Word.word \<Rightarrow>('a::len)Word.word "  where 
-     " signedDivide x y = (
+definition signedDivide  :: \<open>('a::len)Word.word \<Rightarrow>('a::len)Word.word \<Rightarrow>('a::len)Word.word \<close>  where 
+     \<open> signedDivide x y = (
     if Bits.msb x then
         if Bits.msb y then (- x) div (- y)
         else - ((- x) div y)
     else if Bits.msb y then - (x div (- y))
-        else x div y )"
+        else x div y )\<close> 
+  for  x  :: "('a::len)Word.word " 
+  and  y  :: "('a::len)Word.word "
 
 
 \<comment> \<open>\<open>val modulo : forall 'a. mword 'a -> mword 'a -> mword 'a\<close>\<close>

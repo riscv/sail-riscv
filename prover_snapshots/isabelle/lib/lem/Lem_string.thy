@@ -63,13 +63,17 @@ begin
 \<comment> \<open>\<open>val cons_string : char -> string -> string\<close>\<close>
 
 \<comment> \<open>\<open>val concat : string -> list string -> string\<close>\<close>
-function (sequential,domintros)  concat  :: " string \<Rightarrow>(string)list \<Rightarrow> string "  where 
-     " concat sep ([]) = ( (''''))"
-|" concat sep (s # ss') = (
+function (sequential,domintros)  concat  :: \<open> string \<Rightarrow>(string)list \<Rightarrow> string \<close>  where 
+     \<open> concat sep ([]) = ( (''''))\<close> 
+  for  sep  :: " string "
+|\<open> concat sep (s # ss') = (
       (case  ss' of
         [] => s
       | _ => s @ (sep @ concat sep ss')
-      ))" 
+      ))\<close> 
+  for  sep  :: " string " 
+  and  ss'  :: "(string)list " 
+  and  s  :: " string " 
 by pat_completeness auto
 
 end
