@@ -367,7 +367,7 @@ Authors
 -------
 
  Prashanth Mundkur, SRI International;
- Rishiyur Nikhil (Bluespec Inc.); 
+ Rishiyur S. Nikhil (Bluespec Inc.); 
  Jon French, University of Cambridge;
  Brian Campbell, University of Edinburgh;
  Robert Norton, University of Cambridge;
@@ -376,7 +376,7 @@ Authors
  Shaked Flur, University of Cambridge;
  Christopher Pulte, University of Cambridge
  Peter Sewell, University of Cambridge
-
+ Scott Johnson, Aril Computer Corp.
 
 Funding
 -------
