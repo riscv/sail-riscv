@@ -370,12 +370,17 @@ Authors
  Rishiyur S. Nikhil (Bluespec Inc.); 
  Jon French, University of Cambridge;
  Brian Campbell, University of Edinburgh;
- Robert Norton, University of Cambridge;
+ Robert Norton-Wright, University of Cambridge and Microsoft;
  Alasdair Armstrong, University of Cambridge;
  Thomas Bauereiss, University of Cambridge;
  Shaked Flur, University of Cambridge;
- Christopher Pulte, University of Cambridge
- Peter Sewell, University of Cambridge
+ Christopher Pulte, University of Cambridge;
+ Peter Sewell, University of Cambridge;
+ Alexander Richardson, University of Cambridge;
+ Hesham Almatary, University of Cambridge;
+ Jessica Clarke, University of Cambridge;
+ Nathaniel Wesley Filardo, Microsoft;
+ Peter Rugg, University of Cambridge;
  Scott Johnson, Aril Computer Corp.
 
 Funding
