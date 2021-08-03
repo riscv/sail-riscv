@@ -277,9 +277,7 @@ Getting started
 
 ### Building the model
 
-Install [Sail](https://github.com/rems-project/sail/), either via opam
-or by building Sail from source and setting `SAIL_DIR` in your
-environment pointing to its top-level directory.  Then:
+Install [Sail](https://github.com/rems-project/sail/) [using opam](https://github.com/rems-project/sail/blob/sail2/INSTALL.md) then:
 
 ```
 $ make
@@ -356,7 +354,10 @@ There is also (as yet unmerged) support for [integration with riscv-config](http
 For booting operating system images, see the information under the
 [os-boot/](os-boot/) subdirectory.
 
+### Using development versions of Sail
 
+Rarely, the version of Sail packaged in opam may not meet your needs. This could happen if you need a bug fix or new feature not yet in the released Sail version, or you are actively working on Sail. In this case you can tell the `sail-riscv` `Makefile` to use a local copy of Sail by setting `SAIL_DIR` to the root of a checkout of the Sail repo when you invoke `make`. Alternatively, you can use `opam pin` to install Sail from a local checkout of the Sail repo as described in the Sail installation instructions.
+                        
 Licence
 -------
 
