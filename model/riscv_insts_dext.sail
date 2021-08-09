@@ -323,17 +323,22 @@ function clause execute (F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)) = {
   let rs1_val_64b = F(rs1);
   let rs2_val_64b = F(rs2);
   let rs3_val_64b = F(rs3);
-  let rm_3b       = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
-  let (fflags, rd_val_64b) : (bits(5), bits(64)) =
-    match op {
-      FMADD_D  => riscv_f64MulAdd (rm_3b, rs1_val_64b, rs2_val_64b, rs3_val_64b),
-      FMSUB_D  => riscv_f64MulAdd (rm_3b, rs1_val_64b, rs2_val_64b, negate_D (rs3_val_64b)),
-      FNMSUB_D => riscv_f64MulAdd (rm_3b, negate_D (rs1_val_64b), rs2_val_64b, rs3_val_64b),
-      FNMADD_D => riscv_f64MulAdd (rm_3b, negate_D (rs1_val_64b), rs2_val_64b, negate_D (rs3_val_64b))
-    };
-  write_fflags(fflags);
-  F(rd) = rd_val_64b;
-  RETIRE_SUCCESS
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_64b) : (bits(5), bits(64)) =
+        match op {
+          FMADD_D  => riscv_f64MulAdd (rm_3b, rs1_val_64b, rs2_val_64b, rs3_val_64b),
+          FMSUB_D  => riscv_f64MulAdd (rm_3b, rs1_val_64b, rs2_val_64b, negate_D (rs3_val_64b)),
+          FNMSUB_D => riscv_f64MulAdd (rm_3b, negate_D (rs1_val_64b), rs2_val_64b, rs3_val_64b),
+          FNMADD_D => riscv_f64MulAdd (rm_3b, negate_D (rs1_val_64b), rs2_val_64b, negate_D (rs3_val_64b))
+        };
+      write_fflags(fflags);
+      F(rd) = rd_val_64b;
+      RETIRE_SUCCESS
+    }
+  }
 }
 
 /* AST -> Assembly notation ================================ */
@@ -383,16 +388,21 @@ mapping clause encdec =
 function clause execute (F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op)) = {
   let rs1_val_64b = F(rs1);
   let rs2_val_64b = F(rs2);
-  let rm_3b       = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
-  let (fflags, rd_val_64b) : (bits(5), bits(64)) = match op {
-    FADD_D  => riscv_f64Add (rm_3b, rs1_val_64b, rs2_val_64b),
-    FSUB_D  => riscv_f64Sub (rm_3b, rs1_val_64b, rs2_val_64b),
-    FMUL_D  => riscv_f64Mul (rm_3b, rs1_val_64b, rs2_val_64b),
-    FDIV_D  => riscv_f64Div (rm_3b, rs1_val_64b, rs2_val_64b)
-  };
-  write_fflags(fflags);
-  F(rd) = rd_val_64b;
-  RETIRE_SUCCESS
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_64b) : (bits(5), bits(64)) = match op {
+        FADD_D  => riscv_f64Add (rm_3b, rs1_val_64b, rs2_val_64b),
+        FSUB_D  => riscv_f64Sub (rm_3b, rs1_val_64b, rs2_val_64b),
+        FMUL_D  => riscv_f64Mul (rm_3b, rs1_val_64b, rs2_val_64b),
+        FDIV_D  => riscv_f64Div (rm_3b, rs1_val_64b, rs2_val_64b)
+      };
+      write_fflags(fflags);
+      F(rd) = rd_val_64b;
+      RETIRE_SUCCESS
+    }
+  }
 }
 
 /* AST -> Assembly notation ================================ */
@@ -470,123 +480,167 @@ mapping clause encdec =
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FSQRT_D)) = {
   let rs1_val_D = F(rs1);
-  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_D) = riscv_f64Sqrt   (rm_3b, rs1_val_D);
 
-  let (fflags, rd_val_D) = riscv_f64Sqrt   (rm_3b, rs1_val_D);
-
-  write_fflags(fflags);
-  F(rd) = rd_val_D;
-  RETIRE_SUCCESS
+      write_fflags(fflags);
+      F(rd) = rd_val_D;
+      RETIRE_SUCCESS
+    }
+  }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_W_D)) = {
   let rs1_val_D = F(rs1);
-  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_W) = riscv_f64ToI32 (rm_3b, rs1_val_D);
 
-  let (fflags, rd_val_W) = riscv_f64ToI32 (rm_3b, rs1_val_D);
-
-  write_fflags(fflags);
-  X(rd) = EXTS (rd_val_W);
-  RETIRE_SUCCESS
+      write_fflags(fflags);
+      X(rd) = EXTS (rd_val_W);
+      RETIRE_SUCCESS
+    }
+  }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_WU_D)) = {
   let rs1_val_D = F(rs1);
-  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_WU) = riscv_f64ToUi32 (rm_3b, rs1_val_D);
 
-  let (fflags, rd_val_WU) = riscv_f64ToUi32 (rm_3b, rs1_val_D);
-
-  write_fflags(fflags);
-  X(rd) = EXTS (rd_val_WU);
-  RETIRE_SUCCESS
+      write_fflags(fflags);
+      X(rd) = EXTS (rd_val_WU);
+      RETIRE_SUCCESS
+    }
+  }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_W)) = {
   let rs1_val_W = X(rs1) [31..0];
-  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_D) = riscv_i32ToF64 (rm_3b, rs1_val_W);
 
-  let (fflags, rd_val_D) = riscv_i32ToF64 (rm_3b, rs1_val_W);
-
-  write_fflags(fflags);
-  F(rd) = rd_val_D;
-  RETIRE_SUCCESS
+      write_fflags(fflags);
+      F(rd) = rd_val_D;
+      RETIRE_SUCCESS
+    }
+  }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_WU)) = {
   let rs1_val_WU = X(rs1) [31..0];
-  let rm_3b      = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_D) = riscv_ui32ToF64 (rm_3b, rs1_val_WU);
 
-  let (fflags, rd_val_D) = riscv_ui32ToF64 (rm_3b, rs1_val_WU);
-
-  write_fflags(fflags);
-  F(rd) = rd_val_D;
-  RETIRE_SUCCESS
+      write_fflags(fflags);
+      F(rd) = rd_val_D;
+      RETIRE_SUCCESS
+    }
+  }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_S_D)) = {
   let rs1_val_D = F(rs1);
-  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_S) = riscv_f64ToF32 (rm_3b, rs1_val_D);
 
-  let (fflags, rd_val_S) = riscv_f64ToF32 (rm_3b, rs1_val_D);
-
-  write_fflags(fflags);
-  F(rd) = nan_box (rd_val_S);
-  RETIRE_SUCCESS
+      write_fflags(fflags);
+      F(rd) = nan_box (rd_val_S);
+      RETIRE_SUCCESS
+    }
+  }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
-  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_D) = riscv_f32ToF64 (rm_3b, rs1_val_S);
 
-  let (fflags, rd_val_D) = riscv_f32ToF64 (rm_3b, rs1_val_S);
-
-  write_fflags(fflags);
-  F(rd) = rd_val_D;
-  RETIRE_SUCCESS
+      write_fflags(fflags);
+      F(rd) = rd_val_D;
+      RETIRE_SUCCESS
+    }
+  }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)) = {
   let rs1_val_D = F(rs1);
-  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_L) = riscv_f64ToI64 (rm_3b, rs1_val_D);
 
-  let (fflags, rd_val_L) = riscv_f64ToI64 (rm_3b, rs1_val_D);
-
-  write_fflags(fflags);
-  X(rd) = rd_val_L;
-  RETIRE_SUCCESS
+      write_fflags(fflags);
+      X(rd) = rd_val_L;
+      RETIRE_SUCCESS
+    }
+  }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_LU_D)) = {
   let rs1_val_D = F(rs1);
-  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_LU) = riscv_f64ToUi64 (rm_3b, rs1_val_D);
 
-  let (fflags, rd_val_LU) = riscv_f64ToUi64 (rm_3b, rs1_val_D);
-
-  write_fflags(fflags);
-  X(rd) = rd_val_LU;
-  RETIRE_SUCCESS
+      write_fflags(fflags);
+      X(rd) = rd_val_LU;
+      RETIRE_SUCCESS
+    }
+  }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_L)) = {
   let rs1_val_L = X(rs1);
-  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_D) = riscv_i64ToF64 (rm_3b, rs1_val_L);
 
-  let (fflags, rd_val_D) = riscv_i64ToF64 (rm_3b, rs1_val_L);
-
-  write_fflags(fflags);
-  F(rd) = rd_val_D;
-  RETIRE_SUCCESS
+      write_fflags(fflags);
+      F(rd) = rd_val_D;
+      RETIRE_SUCCESS
+    }
+  }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_LU)) = {
   let rs1_val_LU = X(rs1);
-  let rm_3b      = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_D) = riscv_ui64ToF64 (rm_3b, rs1_val_LU);
 
-  let (fflags, rd_val_D) = riscv_ui64ToF64 (rm_3b, rs1_val_LU);
-
-  write_fflags(fflags);
-  F(rd) = rd_val_D;
-  RETIRE_SUCCESS
+      write_fflags(fflags);
+      F(rd) = rd_val_D;
+      RETIRE_SUCCESS
+    }
+  }
 }
 
 /* AST -> Assembly notation ================================ */
