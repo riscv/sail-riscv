@@ -191,7 +191,7 @@ type vaddr48 = bits(48)
 type pte48   = bits(64)
 
 bitfield SV48_Vaddr : vaddr48 = {
-  VPNi  : 38 .. 12,
+  VPNi  : 47 .. 12,
   PgOfs : 11 .. 0
 }
 
