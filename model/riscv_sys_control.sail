@@ -456,6 +456,8 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus->MIE()  = mstatus.MPIE();
       mstatus->MPIE() = 0b1;
       cur_privilege   = privLevel_of_bits(mstatus.MPP());
+      if cur_privilege != Machine
+      then mstatus->MPRV() = 0b0;
       mstatus->MPP()  = privLevel_to_bits(if haveUsrMode() then User else Machine);
       if   cur_privilege != Machine
       then mstatus->MPRV() = 0b0;
@@ -473,6 +475,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus->SIE()  = mstatus.SPIE();
       mstatus->SPIE() = 0b1;
       cur_privilege   = if mstatus.SPP() == 0b1 then Supervisor else User;
+      mstatus->MPRV() = 0b0;
       mstatus->SPP()  = 0b0;
       if   cur_privilege != Machine
       then mstatus->MPRV() = 0b0;
