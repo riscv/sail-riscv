@@ -839,11 +839,11 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
   let rs1_val_D = F(rs1);
   let rs2_val_D = F(rs2);
 
-  let (fflags, rd_val) : (bits_fflags, bits_LU) =
+  let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Eq (rs1_val_D, rs2_val_D);
 
   write_fflags(fflags);
-  X(rd) = rd_val;
+  X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -851,11 +851,11 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)) = {
   let rs1_val_D = F(rs1);
   let rs2_val_D = F(rs2);
 
-  let (fflags, rd_val) : (bits_fflags, bits_LU) =
+  let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Lt (rs1_val_D, rs2_val_D);
 
   write_fflags(fflags);
-  X(rd) = rd_val;
+  X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -863,11 +863,11 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)) = {
   let rs1_val_D = F(rs1);
   let rs2_val_D = F(rs2);
 
-  let (fflags, rd_val) : (bits_fflags, bits_LU) =
+  let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Le (rs1_val_D, rs2_val_D);
 
   write_fflags(fflags);
-  X(rd) = rd_val;
+  X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 

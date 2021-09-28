@@ -1013,11 +1013,11 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rs2_val_S = nan_unbox (F(rs2));
 
-  let (fflags, rd_val) : (bits_fflags, bits_WU) =
+  let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Eq (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(rd_val);
+  X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -1025,11 +1025,11 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rs2_val_S = nan_unbox (F(rs2));
 
-  let (fflags, rd_val) : (bits_fflags, bits_WU) =
+  let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Lt (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(rd_val);
+  X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -1037,11 +1037,11 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rs2_val_S = nan_unbox (F(rs2));
 
-  let (fflags, rd_val) : (bits_fflags, bits_WU) =
+  let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Le (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(rd_val);
+  X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
