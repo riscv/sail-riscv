@@ -60,13 +60,12 @@ else
     red "Building 32-bit RISCV OCaml emulator" "fail"
 fi
 for test in $DIR/riscv-tests/rv32*.elf; do
-    # skip D tests on RV32
-    pat="rv32ud-.+elf"
+    # skip F/D tests on OCaml for now
+    pat='rv32ud-.+elf'
     if [[ $(basename $test) =~ $pat ]];
     then continue
     fi
-    # skip F tests on RV32 OCaml for now
-    pat="rv32uf-.+elf"
+    pat='rv32uf-.+elf'
     if [[ $(basename $test) =~ $pat ]];
     then continue
     fi
@@ -87,11 +86,6 @@ else
     red "Building 32-bit RISCV C emulator" "fail"
 fi
 for test in $DIR/riscv-tests/rv32*.elf; do
-    # skip D tests on C RV32
-    pat='rv32ud-.+elf'
-    if [[ $(basename $test) =~ $pat ]];
-    then continue
-    fi
     if timeout 5 $RISCVDIR/c_emulator/riscv_sim_RV32 -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
     then
 	green "C-32 $(basename $test)" "ok"
