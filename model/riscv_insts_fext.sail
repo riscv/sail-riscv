@@ -748,86 +748,66 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
-  if   sizeof(flen) == 64
-  then {
-    let rs1_val_S = nan_unbox (F(rs1));
-    match (select_instr_or_fcsr_rm (rm)) {
-      None() => { handle_illegal(); RETIRE_FAIL },
-      Some(rm') => {
-        let rm_3b = encdec_rounding_mode(rm');
-        let (fflags, rd_val_L) = riscv_f32ToI64 (rm_3b, rs1_val_S);
+  assert(sizeof(xlen) >= 64);
+  let rs1_val_S = nan_unbox (F(rs1));
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_L) = riscv_f32ToI64 (rm_3b, rs1_val_S);
 
-        write_fflags(fflags);
-        X(rd) = rd_val_L;
-        RETIRE_SUCCESS
-      }
+      write_fflags(fflags);
+      X(rd) = EXTS(rd_val_L);
+      RETIRE_SUCCESS
     }
-  } else {
-    /* this would not decode on RV32 */
-    RETIRE_FAIL
   }
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
-  if   sizeof(flen) == 64
-  then {
-    let rs1_val_S = nan_unbox (F(rs1));
-    match (select_instr_or_fcsr_rm (rm)) {
-      None() => { handle_illegal(); RETIRE_FAIL },
-      Some(rm') => {
-        let rm_3b = encdec_rounding_mode(rm');
-        let (fflags, rd_val_LU) = riscv_f32ToUi64 (rm_3b, rs1_val_S);
+  assert(sizeof(xlen) >= 64);
+  let rs1_val_S = nan_unbox (F(rs1));
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_LU) = riscv_f32ToUi64 (rm_3b, rs1_val_S);
 
-        write_fflags(fflags);
-        X(rd) = rd_val_LU;
-        RETIRE_SUCCESS
-      }
+      write_fflags(fflags);
+      X(rd) = EXTS(rd_val_LU);
+      RETIRE_SUCCESS
     }
-  } else {
-    /* this would not decode on RV32 */
-    RETIRE_FAIL
   }
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
-  if   sizeof(flen) == 64
-  then {
-    let rs1_val_L = X(rs1);
-    match (select_instr_or_fcsr_rm (rm)) {
-      None() => { handle_illegal(); RETIRE_FAIL },
-      Some(rm') => {
-        let rm_3b = encdec_rounding_mode(rm');
-        let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
+  assert(sizeof(xlen) >= 64);
+  let rs1_val_L = X(rs1)[63..0];
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
 
-        write_fflags(fflags);
-        F(rd) = nan_box (rd_val_S);
-        RETIRE_SUCCESS
-      }
+      write_fflags(fflags);
+      F(rd) = nan_box (rd_val_S);
+      RETIRE_SUCCESS
     }
-  } else {
-    /* this would not decode on RV32 */
-    RETIRE_FAIL
   }
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
-  if   sizeof(flen) == 64
-  then {
-    let rs1_val_LU = X(rs1);
-    match (select_instr_or_fcsr_rm (rm)) {
-      None() => { handle_illegal(); RETIRE_FAIL },
-      Some(rm') => {
-        let rm_3b = encdec_rounding_mode(rm');
-        let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
+  assert(sizeof(xlen) >= 64);
+  let rs1_val_LU = X(rs1)[63..0];
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
 
-        write_fflags(fflags);
-        F(rd) = nan_box (rd_val_S);
-        RETIRE_SUCCESS
-      }
+      write_fflags(fflags);
+      F(rd) = nan_box (rd_val_S);
+      RETIRE_SUCCESS
     }
-  } else {
-    /* this would not decode on RV32 */
-    RETIRE_FAIL
   }
 }
 
