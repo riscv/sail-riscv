@@ -237,7 +237,7 @@ union clause ast = AES64ES   : (regidx, regidx, regidx)
 union clause ast = AES64DSM  : (regidx, regidx, regidx)
 union clause ast = AES64DS   : (regidx, regidx, regidx)
 
-mapping clause encdec = AES64KS1I (rcon, rs1, rd) if (haveZkne() | haveZknd()) & sizeof(xlen) == 64
+mapping clause encdec = AES64KS1I (rcon, rs1, rd) if (haveZkne() | haveZknd()) & (sizeof(xlen) == 64) & (rcon <_u 0xB)
   <-> 0b00 @ 0b11000 @ 0b1 @ rcon @ rs1 @ 0b001 @ rd @ 0b0010011
 
 mapping clause encdec = AES64IM (rs1, rd) if haveZknd() & sizeof(xlen) == 64
