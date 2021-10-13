@@ -281,11 +281,11 @@ mapping clause assembly = AES64DS (rs2, rs1, rd)
 
 function clause execute (AES64KS1I(rcon, rs1, rd)) = {
   assert(sizeof(xlen) == 64);
-  let tmp1 : bits(32) = X(rs1)[63..32];
-  let rc   : bits(32) = aes_decode_rcon(rcon);
-  let tmp2 : bits(32) = if (rcon == 0xA) then tmp1 else (tmp1 >>> 8);
-  let tmp3 : bits(32) = aes_subword_fwd(tmp2);
-  X(rd)    = (tmp3 ^ rc) @ (tmp3 ^ rc);
+  let rs1_hi  : bits(32) = X(rs1)[63..32];
+  let rc      : bits(32) = aes_decode_rcon(rcon);
+  let rotated : bits(32) = if (rcon == 0xA) then rs1_hi else (rs1_hi >>> 8);
+  let post_sb : bits(32) = aes_subword_fwd(rotated);
+  X(rd) = (post_sb ^ rc) @ (post_sb ^ rc);
   RETIRE_SUCCESS
 }
 
