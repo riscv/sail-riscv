@@ -13,10 +13,7 @@
 /* Auxiliary function for performing GF multiplicaiton */
 val xt2 : bits(8) -> bits(8)
 function xt2(x) = {
-  (x << 1) ^ ( match (bit_to_bool(x[7]) ) {
-    false => 0x00,
-    true => 0x1B
-  })
+  (x << 1) ^ (if bit_to_bool(x[7]) then 0x1b else 0x00)
 }
 
 val xt3 : bits(8) -> bits(8)
@@ -170,7 +167,7 @@ val sbox_lookup : (bits(8), list(bits(8))) -> bits(8)
 function sbox_lookup(x, table) = {
   match (x, table) {
     (0x00, t0::tn) => t0,
-    ( y  , t0::tn) => sbox_lookup(x - 0x01, tn)
+    (   y, t0::tn) => sbox_lookup(x - 0x01, tn)
   }
 }
 

@@ -60,7 +60,7 @@ function clause execute (SM4ED (bs, rs2, rs1, rd)) = {
                              (x               << 18) ^ ((x & 0x0000003F) << 26) ^
                              ((x & 0x000000C0) << 10);
   let z     : bits(32) = (y <<< shamt);
-  let result: bits(32) = z ^ X(rs1)[31..0];
+  let result : bits(32) = z ^ X(rs1)[31..0];
   X(rd)                = EXTS(result);
   RETIRE_SUCCESS
 }
@@ -72,7 +72,7 @@ function clause execute (SM4KS (bs, rs2, rs1, rd)) = {
   let y     : bits(32) = x ^ ((x & 0x00000007) << 29) ^ ((x & 0x000000FE) <<  7) ^
                              ((x & 0x00000001) << 23) ^ ((x & 0x000000F8) << 13) ;
   let z     : bits(32) = (y <<< shamt);
-  let result: bits(32) = z ^ X(rs1)[31..0];
+  let result : bits(32) = z ^ X(rs1)[31..0];
   X(rd) = EXTS(result);
   RETIRE_SUCCESS
 }

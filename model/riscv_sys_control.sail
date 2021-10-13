@@ -195,8 +195,7 @@ function check_Counteren(csr : csreg, p : Privilege) -> bool =
 function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
   if ~(csr == 0x015) then {
     true
-  }
-  else if ~(isWrite) then {
+  } else if ~(isWrite) then {
     /* Read-only access to the seed CSR is not allowed */
     false
   } else {

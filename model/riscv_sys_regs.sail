@@ -187,14 +187,8 @@ function haveZkr()    -> bool = true
 function haveZksh()   -> bool = true
 function haveZksed()  -> bool = true
 function haveZknh()   -> bool = true
-function haveZknh32() -> bool = haveZknh() & sizeof(xlen) == 32
-function haveZknh64() -> bool = haveZknh() & sizeof(xlen) == 64
 function haveZkne()   -> bool = true
-function haveZkne32() -> bool = haveZkne() & sizeof(xlen) == 32
-function haveZkne64() -> bool = haveZkne() & sizeof(xlen) == 64
 function haveZknd()   -> bool = true
-function haveZknd32() -> bool = haveZknd() & sizeof(xlen) == 32
-function haveZknd64() -> bool = haveZknd() & sizeof(xlen) == 64
 
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
@@ -753,7 +747,6 @@ function legalize_satp32(a : Architecture, o : bits(32), v : bits(32)) -> bits(3
 /* disabled trigger/debug module */
 register tselect : xlenbits
 
-
 /*
  * The seed CSR (entropy source)
  * ------------------------------------------------------------
@@ -783,28 +776,14 @@ mapping opst_code : seed_opst <-> bits(2) = {
  * NOTE: This would be better placed in riscv_platform.sail, but that file
  *       appears _after_ this one in the compile order meaning the valspec
  *       for this function is unavailable when it's first encountered in
- *       get_random_bits. Hence it appears here.
+ *       read_seed_csr. Hence it appears here.
  */
-val plat_get_16_random_bits = {
+val get_16_random_bits = {
     ocaml: "Platform.get_16_random_bits",
     interpreter: "Platform.get_16_random_bits",
     c: "plat_get_16_random_bits",
     lem: "plat_get_16_random_bits"
-} : unit -> xlenbits
-
-/* 
- * function representing an entropy samping.  This is a wrapper around a
- * platform provided function for getting entropy bits.  See
- * riscv_platform.sail for plat_get_16_random_bits definition.
- *
- * WARNING: This function currently lacks a proper side-effect annotation.
- *          If you are using theorem prover tool flows, you
- *          may need to modify or stub out this function for now.
- */
-val get_random_bits : unit -> bits(16)
-function get_random_bits() = {
-  plat_get_16_random_bits()[15..0]
-}
+} : unit -> bits(16)
 
 /* Entropy source spec requires an Illegal opcode exception be raised if the
  * seed register is read without also being written. This function is only
@@ -814,7 +793,7 @@ function get_random_bits() = {
 function read_seed_csr() -> xlenbits = {
   let reserved_bits : bits(6) = 0b000000;
   let custom_bits : bits(8) = 0x00;
-  let seed : bits(16) = get_random_bits();
+  let seed : bits(16) = get_16_random_bits();
   EXTZ(opst_code(ES16) @ reserved_bits @ custom_bits @ seed)
 }
 
