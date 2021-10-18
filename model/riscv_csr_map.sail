@@ -86,6 +86,8 @@ mapping clause csr_name_map = 0x044  <-> "uip"
 mapping clause csr_name_map = 0x001  <-> "fflags"
 mapping clause csr_name_map = 0x002  <-> "frm"
 mapping clause csr_name_map = 0x003  <-> "fcsr"
+/* user entropy source */
+mapping clause csr_name_map = 0x015  <-> "seed"
 /* counter/timers */
 mapping clause csr_name_map = 0xC00  <-> "cycle"
 mapping clause csr_name_map = 0xC01  <-> "time"

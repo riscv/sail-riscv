@@ -248,6 +248,28 @@ function shift_right_arith32 (v : bits(32), shift : bits(5)) -> bits(32) =
     let v64 : bits(64) = EXTS(v) in
     (v64 >> shift)[31..0]
 
+infix 7 >>>
+infix 7 <<<
+
+val rotate_bits_right : forall 'n 'm, 'm >= 0. (bits('n), bits('m)) -> bits('n)
+function rotate_bits_right (v, n) =
+    (v >> n) | (v << (to_bits(length(n), length(v)) - n))
+
+val rotate_bits_left : forall 'n 'm, 'm >= 0. (bits('n), bits('m)) -> bits('n)
+function rotate_bits_left (v, n) =
+    (v << n) | (v >> (to_bits(length(n), length(v)) - n))
+
+val rotater : forall 'm 'n, 'm >= 'n >= 0. (bits('m), atom('n)) -> bits('m)
+function rotater (v, n) =
+    (v >> n) | (v << (length(v) - n))
+
+val rotatel : forall 'm 'n, 'm >= 'n >= 0. (bits('m), atom('n)) -> bits('m)
+function rotatel (v, n) =
+    (v << n) | (v >> (length(v) - n))
+
+overload operator >>> = {rotate_bits_right, rotater}
+overload operator <<< = {rotate_bits_left, rotatel}
+
 /* helpers for mappings */
 
 val spc : unit <-> string
