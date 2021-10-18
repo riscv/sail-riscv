@@ -190,6 +190,12 @@ function haveZknh()   -> bool = true
 function haveZkne()   -> bool = true
 function haveZknd()   -> bool = true
 
+/* BitManip extension support. */
+function haveZba()  -> bool = true
+function haveZbb()  -> bool = true
+function haveZbc()  -> bool = true
+function haveZbs()  -> bool = true
+
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
   SBE  : 4
