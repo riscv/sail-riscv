@@ -559,11 +559,9 @@ function init_sys() -> unit = {
   misa->U()   = 0b1;                            /* user-mode */
   misa->S()   = 0b1;                            /* supervisor-mode */
 
-  /* On RV64, we currently support either both F and D, or neither.
-   * On RV32, we currently only support F.
-   */
+  /* We currently support both F and D */
   misa->F()   = bool_to_bits(sys_enable_fdext());      /* single-precision */
-  misa->D()   = if   sizeof(xlen) == 64
+  misa->D()   = if   sizeof(flen) >= 64
                 then bool_to_bits(sys_enable_fdext())  /* double-precision */
                 else 0b0;
 

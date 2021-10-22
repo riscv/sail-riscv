@@ -75,7 +75,7 @@ then
 else
     red "Building 32-bit RISCV C emulator" "fail"
 fi
-for test in $DIR/riscv-tests/rv32uf*.elf $DIR/riscv-tests/rv32mi-p-csr.elf; do
+for test in $DIR/riscv-tests/rv32u{f,d}*.elf $DIR/riscv-tests/rv32mi-p-csr.elf; do
     if timeout 5 $RISCVDIR/c_emulator/riscv_sim_RV32 -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
     then
 	green "C-32 $(basename $test)" "ok"

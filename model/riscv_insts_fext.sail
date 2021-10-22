@@ -403,7 +403,7 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
         TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) => {
           let (aq, rl, res) = (false, false, false);
-          match (width, sizeof(xlen)) {
+          match (width, sizeof(flen)) {
             (BYTE, _)   => { handle_illegal(); RETIRE_FAIL },
             (HALF, _)   => { handle_illegal(); RETIRE_FAIL },
             (WORD, _)   =>
@@ -473,7 +473,7 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
             MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
             MemValue(_) => {
               let rs2_val = F(rs2);
-              match (width, sizeof(xlen)) {
+              match (width, sizeof(flen)) {
                 (BYTE, _)    => { handle_illegal(); RETIRE_FAIL },
                 (HALF, _)    => { handle_illegal(); RETIRE_FAIL },
                 (WORD, _)    => process_fstore (vaddr, mem_write_value(addr, 4, rs2_val[31..0], aq, rl, con)),
@@ -748,86 +748,66 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
-  if   sizeof(flen) == 64
-  then {
-    let rs1_val_S = nan_unbox (F(rs1));
-    match (select_instr_or_fcsr_rm (rm)) {
-      None() => { handle_illegal(); RETIRE_FAIL },
-      Some(rm') => {
-        let rm_3b = encdec_rounding_mode(rm');
-        let (fflags, rd_val_L) = riscv_f32ToI64 (rm_3b, rs1_val_S);
+  assert(sizeof(xlen) >= 64);
+  let rs1_val_S = nan_unbox (F(rs1));
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_L) = riscv_f32ToI64 (rm_3b, rs1_val_S);
 
-        write_fflags(fflags);
-        X(rd) = rd_val_L;
-        RETIRE_SUCCESS
-      }
+      write_fflags(fflags);
+      X(rd) = EXTS(rd_val_L);
+      RETIRE_SUCCESS
     }
-  } else {
-    /* this would not decode on RV32 */
-    RETIRE_FAIL
   }
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
-  if   sizeof(flen) == 64
-  then {
-    let rs1_val_S = nan_unbox (F(rs1));
-    match (select_instr_or_fcsr_rm (rm)) {
-      None() => { handle_illegal(); RETIRE_FAIL },
-      Some(rm') => {
-        let rm_3b = encdec_rounding_mode(rm');
-        let (fflags, rd_val_LU) = riscv_f32ToUi64 (rm_3b, rs1_val_S);
+  assert(sizeof(xlen) >= 64);
+  let rs1_val_S = nan_unbox (F(rs1));
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_LU) = riscv_f32ToUi64 (rm_3b, rs1_val_S);
 
-        write_fflags(fflags);
-        X(rd) = rd_val_LU;
-        RETIRE_SUCCESS
-      }
+      write_fflags(fflags);
+      X(rd) = EXTS(rd_val_LU);
+      RETIRE_SUCCESS
     }
-  } else {
-    /* this would not decode on RV32 */
-    RETIRE_FAIL
   }
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
-  if   sizeof(flen) == 64
-  then {
-    let rs1_val_L = X(rs1);
-    match (select_instr_or_fcsr_rm (rm)) {
-      None() => { handle_illegal(); RETIRE_FAIL },
-      Some(rm') => {
-        let rm_3b = encdec_rounding_mode(rm');
-        let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
+  assert(sizeof(xlen) >= 64);
+  let rs1_val_L = X(rs1)[63..0];
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
 
-        write_fflags(fflags);
-        F(rd) = nan_box (rd_val_S);
-        RETIRE_SUCCESS
-      }
+      write_fflags(fflags);
+      F(rd) = nan_box (rd_val_S);
+      RETIRE_SUCCESS
     }
-  } else {
-    /* this would not decode on RV32 */
-    RETIRE_FAIL
   }
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
-  if   sizeof(flen) == 64
-  then {
-    let rs1_val_LU = X(rs1);
-    match (select_instr_or_fcsr_rm (rm)) {
-      None() => { handle_illegal(); RETIRE_FAIL },
-      Some(rm') => {
-        let rm_3b = encdec_rounding_mode(rm');
-        let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
+  assert(sizeof(xlen) >= 64);
+  let rs1_val_LU = X(rs1)[63..0];
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
 
-        write_fflags(fflags);
-        F(rd) = nan_box (rd_val_S);
-        RETIRE_SUCCESS
-      }
+      write_fflags(fflags);
+      F(rd) = nan_box (rd_val_S);
+      RETIRE_SUCCESS
     }
-  } else {
-    /* this would not decode on RV32 */
-    RETIRE_FAIL
   }
 }
 
@@ -1013,11 +993,11 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rs2_val_S = nan_unbox (F(rs2));
 
-  let (fflags, rd_val) : (bits_fflags, bits_WU) =
+  let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Eq (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(rd_val);
+  X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -1025,11 +1005,11 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rs2_val_S = nan_unbox (F(rs2));
 
-  let (fflags, rd_val) : (bits_fflags, bits_WU) =
+  let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Lt (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(rd_val);
+  X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -1037,11 +1017,11 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)) = {
   let rs1_val_S = nan_unbox (F(rs1));
   let rs2_val_S = nan_unbox (F(rs2));
 
-  let (fflags, rd_val) : (bits_fflags, bits_WU) =
+  let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Le (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(rd_val);
+  X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 

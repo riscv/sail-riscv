@@ -584,6 +584,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_S)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)) = {
+  assert(sizeof(xlen) >= 64);
   let rs1_val_D = F(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -592,13 +593,14 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)) = {
       let (fflags, rd_val_L) = riscv_f64ToI64 (rm_3b, rs1_val_D);
 
       write_fflags(fflags);
-      X(rd) = rd_val_L;
+      X(rd) = EXTS(rd_val_L);
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_LU_D)) = {
+  assert(sizeof(xlen) >= 64);
   let rs1_val_D = F(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -607,14 +609,15 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_LU_D)) = {
       let (fflags, rd_val_LU) = riscv_f64ToUi64 (rm_3b, rs1_val_D);
 
       write_fflags(fflags);
-      X(rd) = rd_val_LU;
+      X(rd) = EXTS(rd_val_LU);
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_L)) = {
-  let rs1_val_L = X(rs1);
+  assert(sizeof(xlen) >= 64);
+  let rs1_val_L = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -629,7 +632,8 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_L)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_LU)) = {
-  let rs1_val_LU = X(rs1);
+  assert(sizeof(xlen) >= 64);
+  let rs1_val_LU = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -839,11 +843,11 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
   let rs1_val_D = F(rs1);
   let rs2_val_D = F(rs2);
 
-  let (fflags, rd_val) : (bits_fflags, bits_LU) =
+  let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Eq (rs1_val_D, rs2_val_D);
 
   write_fflags(fflags);
-  X(rd) = rd_val;
+  X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -851,11 +855,11 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)) = {
   let rs1_val_D = F(rs1);
   let rs2_val_D = F(rs2);
 
-  let (fflags, rd_val) : (bits_fflags, bits_LU) =
+  let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Lt (rs1_val_D, rs2_val_D);
 
   write_fflags(fflags);
-  X(rd) = rd_val;
+  X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -863,11 +867,11 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)) = {
   let rs1_val_D = F(rs1);
   let rs2_val_D = F(rs2);
 
-  let (fflags, rd_val) : (bits_fflags, bits_LU) =
+  let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Le (rs1_val_D, rs2_val_D);
 
   write_fflags(fflags);
-  X(rd) = rd_val;
+  X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -973,16 +977,18 @@ function clause execute (F_UN_TYPE_D(rs1, rd, FCLASS_D)) = {
 }
 
 function clause execute (F_UN_TYPE_D(rs1, rd, FMV_X_D)) = {
-  let rs1_val_D = F(rs1);
-  let rd_val_X  = rs1_val_D;
-  X(rd)         = rd_val_X;
+  assert(sizeof(xlen) >= 64);
+  let rs1_val_D            = F(rs1)[63..0];
+  let rd_val_X  : xlenbits = EXTS(rs1_val_D);
+  X(rd) = rd_val_X;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_UN_TYPE_D(rs1, rd, FMV_D_X)) = {
-  let rs1_val_X = X(rs1);
-  let rd_val_D  = rs1_val_X;
-  F(rd)         = rd_val_D;
+  assert(sizeof(xlen) >= 64);
+  let rs1_val_X            = X(rs1);
+  let rd_val_D             = rs1_val_X [63..0];
+  F(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
 
