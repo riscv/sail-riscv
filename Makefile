@@ -152,7 +152,7 @@ ifneq (,$(SAILCOV))
 ALL_BRANCHES = generated_definitions/c/all_branches
 C_FLAGS += -DSAILCOV
 SAIL_FLAGS += -c_coverage $(ALL_BRANCHES) -c_include sail_coverage.h
-C_LIBS += $(SAIL_LIB_DIR)/coverage/libsail_coverage.a -lpthread -ldl
+C_LIBS += $(SAIL_LIB_DIR)/coverage/libsail_coverage.a -lm -lpthread -ldl
 endif
 
 RISCV_EXTRAS_LEM_FILES = riscv_extras.lem mem_metadata.lem riscv_extras_fdext.lem
