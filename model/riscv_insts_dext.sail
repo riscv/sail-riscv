@@ -98,10 +98,6 @@ function fsplit_D   x64 = (x64[63..63], x64[62..52], x64[51..0])
 val      fmake_D  : (bits(1), bits(11), bits(52)) -> bits(64)
 function fmake_D (sign, exp, mant) = sign @ exp @ mant
 
-/* ---- Canonical NaNs */
-
-function canonical_NaN_D() -> bits(64) = 0x_7ff8_0000_0000_0000
-
 /* ---- Structure tests */
 
 val      f_is_neg_inf_D : bits(64) -> bool

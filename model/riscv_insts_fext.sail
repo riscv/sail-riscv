@@ -134,10 +134,6 @@ function fsplit_S   x32 = (x32[31..31], x32[30..23], x32[22..0])
 val      fmake_S  : (bits(1), bits(8), bits(23)) -> bits(32)
 function fmake_S (sign, exp, mant) = sign @ exp @ mant
 
-/* ---- Canonical NaNs */
-
-function canonical_NaN_S() -> bits(32) = 0x_7fc0_0000
-
 /* ---- Structure tests */
 
 val      f_is_neg_inf_S : bits(32) -> bool
@@ -318,27 +314,6 @@ function fle_S   (v1,       v2,        is_quiet) = {
 
   (result, fflags)
 }
-
-/* **************************************************************** */
-/* NaN boxing/unboxing.                                             */
-/* When 32-bit floats (single-precision) are stored in 64-bit regs  */
-/* they must be 'NaN boxed' (upper 32b all ones).                   */
-/* When 32-bit floats (single-precision) are read from 64-bit regs  */
-/* they must be 'NaN unboxed'.                                      */
-
-val      nan_box : bits(32) -> flenbits
-function nan_box   val_32b =
-  if (sizeof(flen) == 32)
-  then val_32b
-  else 0x_FFFF_FFFF @ val_32b
-
-val      nan_unbox : flenbits -> bits(32)
-function nan_unbox   regval =
-  if (sizeof(flen) == 32)
-  then regval
-  else if regval [63..32] == 0x_FFFF_FFFF
-       then regval [31..0]
-       else canonical_NaN_S()
 
 /* **************************************************************** */
 /* Help-functions for 'encdec()' to restrict to certain             */

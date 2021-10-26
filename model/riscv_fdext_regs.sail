@@ -74,6 +74,31 @@
 /* Original version written by Rishiyur S. Nikhil, Sept-Oct 2019    */
 
 /* **************************************************************** */
+/* NaN boxing/unboxing.                                             */
+/* When 32-bit floats (single-precision) are stored in 64-bit regs  */
+/* they must be 'NaN boxed' (upper 32b all ones).                   */
+/* When 32-bit floats (single-precision) are read from 64-bit regs  */
+/* they must be 'NaN unboxed'.                                      */
+
+function canonical_NaN_S() -> bits(32) = 0x_7fc0_0000
+function canonical_NaN_D() -> bits(64) = 0x_7ff8_0000_0000_0000
+
+val      nan_box : bits(32) -> flenbits
+function nan_box   val_32b =
+  if (sizeof(flen) == 32)
+  then val_32b
+  else 0x_FFFF_FFFF @ val_32b
+
+val      nan_unbox : flenbits -> bits(32)
+function nan_unbox   regval =
+  if (sizeof(flen) == 32)
+  then regval
+  else if regval [63..32] == 0x_FFFF_FFFF
+       then regval [31..0]
+       else canonical_NaN_S()
+
+
+/* **************************************************************** */
 /* Floating point register file                                     */
 
 register f0  : fregtype
