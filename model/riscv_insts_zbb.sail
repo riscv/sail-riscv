@@ -5,7 +5,7 @@
 /* ****************************************************************** */
 union clause ast = RISCV_RORIW : (bits(5), regidx, regidx)
 
-mapping clause encdec = RISCV_RORIW(shamt, rs1, rd) if haveZbc() & sizeof(xlen) == 64
+mapping clause encdec = RISCV_RORIW(shamt, rs1, rd) if haveZbb() & sizeof(xlen) == 64
   <-> 0b0110000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
 
 mapping clause assembly = RISCV_RORIW(shamt, rs1, rd)
@@ -21,7 +21,7 @@ function clause execute (RISCV_RORIW(shamt, rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_RORI : (bits(6), regidx, regidx)
 
-mapping clause encdec = RISCV_RORI(shamt, rs1, rd) if haveZbc() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
+mapping clause encdec = RISCV_RORI(shamt, rs1, rd) if haveZbb() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
   <-> 0b011000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011
 
 mapping clause assembly = RISCV_RORI(shamt, rs1, rd)
@@ -39,10 +39,10 @@ function clause execute (RISCV_RORI(shamt, rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = ZBB_RTYPEW : (regidx, regidx, regidx, bropw)
 
-mapping clause encdec = ZBB_RTYPEW(rs2, rs1, rd, RISCV_ROLW) if haveZbc() & sizeof(xlen) == 64
+mapping clause encdec = ZBB_RTYPEW(rs2, rs1, rd, RISCV_ROLW) if haveZbb() & sizeof(xlen) == 64
   <-> 0b0110000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0111011
 
-mapping clause encdec = ZBB_RTYPEW(rs2, rs1, rd, RISCV_RORW) if haveZbc() & sizeof(xlen) == 64
+mapping clause encdec = ZBB_RTYPEW(rs2, rs1, rd, RISCV_RORW) if haveZbb() & sizeof(xlen) == 64
   <-> 0b0110000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0111011
 
 mapping zbb_rtypew_mnemonic : bropw <-> string = {
@@ -67,31 +67,31 @@ function clause execute (ZBB_RTYPEW(rs2, rs1, rd, op)) = {
 /* ****************************************************************** */
 union clause ast = ZBB_RTYPE : (regidx, regidx, regidx, brop)
 
-mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_ANDN) if haveZbc()
+mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_ANDN) if haveZbb()
   <-> 0b0100000 @ rs2 @ rs1 @ 0b111 @ rd @ 0b0110011
 
-mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_ORN) if haveZbc()
+mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_ORN) if haveZbb()
   <-> 0b0100000 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0110011
 
-mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_XNOR) if haveZbc()
+mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_XNOR) if haveZbb()
   <-> 0b0100000 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0110011
 
-mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_MAX) if haveZbc()
+mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_MAX) if haveZbb()
   <-> 0b0000101 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0110011
 
-mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_MAXU) if haveZbc()
+mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_MAXU) if haveZbb()
   <-> 0b0000101 @ rs2 @ rs1 @ 0b111 @ rd @ 0b0110011
 
-mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_MIN) if haveZbc()
+mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_MIN) if haveZbb()
   <-> 0b0000101 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0110011
 
-mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_MINU) if haveZbc()
+mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_MINU) if haveZbb()
   <-> 0b0000101 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011
 
-mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_ROL) if haveZbc()
+mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_ROL) if haveZbb()
   <-> 0b0110000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011
 
-mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_ROR) if haveZbc()
+mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_ROR) if haveZbb()
   <-> 0b0110000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011
 
 mapping zbb_rtype_mnemonic : brop <-> string = {
@@ -142,16 +142,16 @@ function clause execute (ZBB_RTYPE(rs2, rs1, rd, op)) = {
 /* ****************************************************************** */
 union clause ast = ZBB_EXTOP : (regidx, regidx, extop)
 
-mapping clause encdec = ZBB_EXTOP(rs1, rd, RISCV_SEXTB) if haveZbc()
+mapping clause encdec = ZBB_EXTOP(rs1, rd, RISCV_SEXTB) if haveZbb()
   <-> 0b0110000 @ 0b00100 @ rs1 @ 0b001 @ rd @ 0b0010011
 
-mapping clause encdec = ZBB_EXTOP(rs1, rd, RISCV_SEXTH) if haveZbc()
+mapping clause encdec = ZBB_EXTOP(rs1, rd, RISCV_SEXTH) if haveZbb()
   <-> 0b0110000 @ 0b00101 @ rs1 @ 0b001 @ rd @ 0b0010011
 
-mapping clause encdec = ZBB_EXTOP(rs1, rd, RISCV_ZEXTH) if haveZbc() & sizeof(xlen) == 32
+mapping clause encdec = ZBB_EXTOP(rs1, rd, RISCV_ZEXTH) if haveZbb() & sizeof(xlen) == 32
   <-> 0b0000100 @ 0b00000 @ rs1 @ 0b100 @ rd @ 0b0110011
 
-mapping clause encdec = ZBB_EXTOP(rs1, rd, RISCV_ZEXTH) if haveZbc() & sizeof(xlen) == 64
+mapping clause encdec = ZBB_EXTOP(rs1, rd, RISCV_ZEXTH) if haveZbb() & sizeof(xlen) == 64
   <-> 0b0000100 @ 0b00000 @ rs1 @ 0b100 @ rd @ 0b0111011
 
 mapping zbb_extop_mnemonic : extop <-> string = {
@@ -177,10 +177,10 @@ function clause execute (ZBB_EXTOP(rs1, rd, op)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_REV8 : (regidx, regidx)     
 
-mapping clause encdec = RISCV_REV8(rs1, rd) if haveZbc() & sizeof(xlen) == 32
+mapping clause encdec = RISCV_REV8(rs1, rd) if haveZbb() & sizeof(xlen) == 32
   <-> 0b011010011000 @ rs1 @ 0b101 @ rd @ 0b0010011
 
-mapping clause encdec = RISCV_REV8(rs1, rd) if haveZbc() & sizeof(xlen) == 64
+mapping clause encdec = RISCV_REV8(rs1, rd) if haveZbb() & sizeof(xlen) == 64
   <-> 0b011010111000 @ rs1 @ 0b101 @ rd @ 0b0010011
 
 mapping clause assembly = RISCV_REV8(rs1, rd)
@@ -203,7 +203,7 @@ function clause execute (RISCV_REV8(rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_ORCB : (regidx, regidx)
 
-mapping clause encdec = RISCV_ORCB(rs1, rd) if haveZbc()
+mapping clause encdec = RISCV_ORCB(rs1, rd) if haveZbb()
   <-> 0b001010000111 @ rs1 @ 0b101 @ rd @ 0b0010011
 
 mapping clause assembly = RISCV_ORCB(rs1, rd)
@@ -235,7 +235,7 @@ function clause execute (RISCV_ORCB(rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_CPOP : (regidx, regidx)
 
-mapping clause encdec = RISCV_CPOP(rs1, rd) if haveZbc()
+mapping clause encdec = RISCV_CPOP(rs1, rd) if haveZbb()
   <-> 0b011000000010 @ rs1 @ 0b001 @ rd @ 0b0010011
 
 mapping clause assembly = RISCV_CPOP(rs1, rd)
@@ -256,7 +256,7 @@ function clause execute (RISCV_CPOP(rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_CPOPW : (regidx, regidx)
 
-mapping clause encdec = RISCV_CPOPW(rs1, rd) if haveZbc() & sizeof(xlen) == 64
+mapping clause encdec = RISCV_CPOPW(rs1, rd) if haveZbb() & sizeof(xlen) == 64
   <-> 0b011000000010 @ rs1 @ 0b001 @ rd @ 0b0011011
 
 mapping clause assembly = RISCV_CPOPW(rs1, rd)
@@ -277,7 +277,7 @@ function clause execute (RISCV_CPOPW(rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_CLZ : (regidx, regidx)
 
-mapping clause encdec = RISCV_CLZ(rs1, rd) if haveZbc()
+mapping clause encdec = RISCV_CLZ(rs1, rd) if haveZbb()
   <-> 0b011000000000 @ rs1 @ 0b001 @ rd @ 0b0010011
 
 mapping clause assembly = RISCV_CLZ(rs1, rd)
@@ -300,7 +300,7 @@ function clause execute (RISCV_CLZ(rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_CLZW : (regidx, regidx)
 
-mapping clause encdec = RISCV_CLZW(rs1, rd) if haveZbc() & sizeof(xlen) == 64
+mapping clause encdec = RISCV_CLZW(rs1, rd) if haveZbb() & sizeof(xlen) == 64
   <-> 0b011000000000 @ rs1 @ 0b001 @ rd @ 0b0011011
 
 mapping clause assembly = RISCV_CLZW(rs1, rd)
@@ -323,7 +323,7 @@ function clause execute (RISCV_CLZW(rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_CTZ : (regidx, regidx)
 
-mapping clause encdec = RISCV_CTZ(rs1, rd) if haveZbc()
+mapping clause encdec = RISCV_CTZ(rs1, rd) if haveZbb()
   <-> 0b011000000001 @ rs1 @ 0b001 @ rd @ 0b0010011
 
 mapping clause assembly = RISCV_CTZ(rs1, rd)
@@ -345,7 +345,7 @@ function clause execute (RISCV_CTZ(rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_CTZW : (regidx, regidx)
 
-mapping clause encdec = RISCV_CTZW(rs1, rd) if haveZbc() & sizeof(xlen) == 64
+mapping clause encdec = RISCV_CTZW(rs1, rd) if haveZbb() & sizeof(xlen) == 64
   <-> 0b011000000001 @ rs1 @ 0b001 @ rd @ 0b0011011
 
 mapping clause assembly = RISCV_CTZW(rs1, rd)
