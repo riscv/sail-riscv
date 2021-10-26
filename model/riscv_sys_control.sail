@@ -560,8 +560,8 @@ function init_sys() -> unit = {
   misa->S()   = 0b1;                            /* supervisor-mode */
 
   /* We currently support both F and D */
-  misa->F()   = bool_to_bits(sys_enable_fdext());      /* single-precision */
-  misa->D()   = if   sizeof(flen) >= 64
+  misa->F()   = bool_to_bits(sys_enable_fdext() & sys_enable_zfinx() == false);      /* single-precision */
+  misa->D()   = if   sizeof(flen) >= 64 & sys_enable_zfinx() == false
                 then bool_to_bits(sys_enable_fdext())  /* double-precision */
                 else 0b0;
 
