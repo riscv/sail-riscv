@@ -127,6 +127,7 @@ static struct option options[] = {
   {"trace",                       optional_argument, 0, 'v'},
   {"no-trace",                    optional_argument, 0, 'V'},
   {"inst-limit",                  required_argument, 0, 'l'},
+  {"enable-zfinx",                no_argument,       0, 'x'},
 #ifdef SAILCOV
   {"sailcov-file",                required_argument, 0, 'c'},
 #endif
@@ -236,6 +237,7 @@ char *process_args(int argc, char **argv)
                     "V::"
                     "v::"
                     "l:"
+                    "x"
 #ifdef SAILCOV
                     "c:"
 #endif
@@ -324,6 +326,10 @@ char *process_args(int argc, char **argv)
       break;
     case 'l':
       insn_limit = atoi(optarg);
+      break;
+    case 'x':
+      fprintf(stderr, "enabling Zfinx support.\n");
+      rv_enable_zfinx = true;
       break;
 #ifdef SAILCOV
     case 'c':
