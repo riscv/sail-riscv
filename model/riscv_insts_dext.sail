@@ -944,11 +944,11 @@ mapping clause encdec = F_UN_TYPE_D(rs1, rd, FCLASS_D)                        if
 
 /* D instructions, RV64 only */
 
-mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_X_D)                         if is_RV64D()
-                    <-> 0b111_0001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if is_RV64D()
+mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_X_D)                         if is_RV64D() & sys_enable_zfinx() == false
+                    <-> 0b111_0001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if is_RV64D() & sys_enable_zfinx() == false
 
-mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_D_X)                         if is_RV64D()
-                    <-> 0b111_1001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if is_RV64D()
+mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_D_X)                         if is_RV64D()  & sys_enable_zfinx() == false
+                    <-> 0b111_1001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if is_RV64D()  & sys_enable_zfinx() == false
 
 /* Execution semantics ================================ */
 

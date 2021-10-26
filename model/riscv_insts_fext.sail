@@ -335,11 +335,11 @@ union clause ast = LOAD_FP : (bits(12), regidx, regidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)          if is_RV32F_or_RV64F()
-                    <-> imm @ rs1 @ 0b010 @ rd @ 0b000_0111  if is_RV32F_or_RV64F()
+mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)          if is_RV32F_or_RV64F() & sys_enable_zfinx() == false
+                    <-> imm @ rs1 @ 0b010 @ rd @ 0b000_0111  if is_RV32F_or_RV64F() & sys_enable_zfinx() == false
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if is_RV32D_or_RV64D()
-                    <-> imm @ rs1 @ 0b011 @ rd @ 0b000_0111  if is_RV32D_or_RV64D()
+mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if is_RV32D_or_RV64D() & sys_enable_zfinx() == false
+                    <-> imm @ rs1 @ 0b011 @ rd @ 0b000_0111  if is_RV32D_or_RV64D() & sys_enable_zfinx() == false
 
 /* Execution semantics ================================ */
 
@@ -1071,11 +1071,11 @@ union clause ast = F_UN_TYPE_S : (regidx, regidx, f_un_op_S)
 mapping clause encdec = F_UN_TYPE_S(rs1, rd, FCLASS_S)                        if haveFExt()
                     <-> 0b111_0000 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveFExt()
 
-mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_X_W)                         if haveFExt()
-                    <-> 0b111_0000 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveFExt()
+mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_X_W)                         if haveFExt()  & sys_enable_zfinx() == false
+                    <-> 0b111_0000 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveFExt()  & sys_enable_zfinx() == false
 
-mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_W_X)                         if haveFExt()
-                    <-> 0b111_1000 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveFExt()
+mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_W_X)                         if haveFExt()  & sys_enable_zfinx() == false
+                    <-> 0b111_1000 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveFExt()  & sys_enable_zfinx() == false
 
 /* Execution semantics ================================ */
 
