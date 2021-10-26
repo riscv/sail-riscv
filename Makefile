@@ -7,7 +7,6 @@ else ifeq ($(ARCH),64)
   override ARCH := RV64
 endif
 
-# Currently, we only have F with RV32, and both F and D with RV64.
 ifeq ($(ARCH),RV32)
   SAIL_XLEN := riscv_xlen32.sail
 else ifeq ($(ARCH),RV64)
