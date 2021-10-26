@@ -314,6 +314,12 @@ mapping freg_name = {
     0b11111 <-> "ft11"
 }
 
+val reg_or_freg_name : bits(5) <-> string
+mapping reg_or_freg_name = {
+  reg if (sys_enable_zfinx() == true) <-> reg_name(reg)  if (sys_enable_zfinx() == true),
+  reg if (sys_enable_zfinx() == false) <-> freg_name(reg) if (sys_enable_zfinx() == false)
+}
+
 val init_fdext_regs : unit -> unit effect {wreg}
 function init_fdext_regs () = {
   f0  = zero_freg;
