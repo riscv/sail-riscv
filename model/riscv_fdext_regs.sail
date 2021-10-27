@@ -251,25 +251,25 @@ val handle_illegal : unit -> unit effect {escape, rreg, wreg}
 
 val rX_or_rF_32 : (bool, bits(5)) -> (Retired,bits(32)) effect {escape, rreg}
 function rX_or_rF_32(zfinx_en, i) = {
-  let rval = if (zfinx_en) then  nan_unbox(zfinx_en,rX(unsigned(i))) else nan_unbox(zfinx_en,rF(unsigned(i)));
-  (RETIRE_SUCCESS,rval)
+  let rval = if (zfinx_en) then nan_unbox(zfinx_en,rX(unsigned(i))) else nan_unbox(zfinx_en,rF(unsigned(i)));
+  (RETIRE_SUCCESS, rval)
 }
 
 val rX_or_rF_64 : (bool, bits(5)) -> (Retired,bits(64)) effect {escape, rreg, wreg}
 function rX_or_rF_64(zfinx_en, i) = {
-  if (zfinx_en & sizeof (xlen) == 32) then {
+  if zfinx_en & sizeof (xlen) == 32 then {
     if (i == 0b00000) then
-      (RETIRE_SUCCESS,sail_zeros(64))
-    else if (i[0] == bitzero) then (RETIRE_SUCCESS,rX(unsigned(i+1)) @ rX(unsigned(i)))
+      (RETIRE_SUCCESS, sail_zeros(64))
+    else if (i[0] == bitzero) then (RETIRE_SUCCESS, rX(unsigned(i+1)) @ rX(unsigned(i)))
     else { handle_illegal(); (RETIRE_FAIL,sail_zeros(64)) }
   }
-  else if (zfinx_en & sizeof (xlen) == 64) then
-    (RETIRE_SUCCESS,rX(unsigned(i)))
-  else if (zfinx_en == false & sizeof (flen) == 64) then
-    (RETIRE_SUCCESS,rF(unsigned(i)))
+  else if zfinx_en & sizeof (xlen) == 64 then
+    (RETIRE_SUCCESS, rX(unsigned(i)))
+  else if zfinx_en == false & sizeof (flen) == 64 then
+    (RETIRE_SUCCESS, rF(unsigned(i)))
   else {
     assert(false);
-    (RETIRE_FAIL,sail_zeros(64))
+    (RETIRE_FAIL, sail_zeros(64))
   }
 }
 
@@ -284,9 +284,9 @@ function wX_or_wF_64(zfinx_en: bool, i: bits(5), data: bits(64)) = {
     }
     else { handle_illegal(); RETIRE_FAIL }
   }
-  else if (zfinx_en & sizeof (xlen) == 64) then
+  else if zfinx_en & sizeof (xlen) == 64 then
     { wX(unsigned(i)) = data; RETIRE_SUCCESS }
-  else if (zfinx_en == false & sizeof (flen) == 64) then
+  else if zfinx_en == false & sizeof (flen) == 64 then
     { wF(unsigned(i)) = data; RETIRE_SUCCESS }
   else { 
     assert(false);
@@ -446,13 +446,13 @@ function ext_write_fcsr (frm, fflags) = {
   fcsr->FRM()    = frm;      /* Note: frm can be an illegal value, 101, 110, 111 */
   fcsr->FFLAGS() = fflags;
   update_softfloat_fflags(fflags);
-  if sys_enable_zfinx()==false then dirty_fd_context();
+  if ~ (sys_enable_zfinx()) then dirty_fd_context();
 }
 
 /* called for softfloat paths (softfloat flags are consistent) */
 val write_fflags : (bits(5)) -> unit effect {rreg, wreg}
 function write_fflags(fflags) = {
-  if   fcsr.FFLAGS() != fflags & sys_enable_zfinx() == false
+  if   fcsr.FFLAGS() != fflags & ~ (sys_enable_zfinx())
   then dirty_fd_context();
   fcsr->FFLAGS() = fflags;
 }
@@ -465,6 +465,6 @@ function accrue_fflags(flags) = {
   then {
     fcsr->FFLAGS() = f;
     update_softfloat_fflags(f);
-    if (sys_enable_zfinx()==false)  then dirty_fd_context();
+    if ~ (sys_enable_zfinx()) then dirty_fd_context();
   }
 }
