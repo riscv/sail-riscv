@@ -446,13 +446,13 @@ function ext_write_fcsr (frm, fflags) = {
   fcsr->FRM()    = frm;      /* Note: frm can be an illegal value, 101, 110, 111 */
   fcsr->FFLAGS() = fflags;
   update_softfloat_fflags(fflags);
-  if (sys_enable_zfinx()==false)  then dirty_fd_context();
+  if sys_enable_zfinx()==false then dirty_fd_context();
 }
 
 /* called for softfloat paths (softfloat flags are consistent) */
 val write_fflags : (bits(5)) -> unit effect {rreg, wreg}
 function write_fflags(fflags) = {
-  if   (fcsr.FFLAGS() != fflags & sys_enable_zfinx() == false)
+  if   fcsr.FFLAGS() != fflags & sys_enable_zfinx() == false
   then dirty_fd_context();
   fcsr->FFLAGS() = fflags;
 }
