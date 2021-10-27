@@ -522,7 +522,6 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_WU_D)) = {
       None() => { handle_illegal(); RETIRE_FAIL },
       Some(rm') => {
         let rm_3b = encdec_rounding_mode(rm');
-
         let (fflags, rd_val_WU) = riscv_f64ToUi32 (rm_3b, rs1_val_D);
 
         write_fflags(fflags);
@@ -597,15 +596,15 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)) = {
   let (ret,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
   if ret == RETIRE_FAIL then RETIRE_FAIL else {
     match (select_instr_or_fcsr_rm (rm)) {
-        None() => { handle_illegal(); RETIRE_FAIL },
-        Some(rm') => {
+      None() => { handle_illegal(); RETIRE_FAIL },
+      Some(rm') => {
         let rm_3b = encdec_rounding_mode(rm');
         let (fflags, rd_val_L) = riscv_f64ToI64 (rm_3b, rs1_val_D);
 
         write_fflags(fflags);
         X(rd) = EXTS(rd_val_L);
         RETIRE_SUCCESS
-        }
+      }
     }
   }
 }
@@ -618,12 +617,12 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_LU_D)) = {
     match (select_instr_or_fcsr_rm (rm)) {
       None() => { handle_illegal(); RETIRE_FAIL },
       Some(rm') => {
-          let rm_3b = encdec_rounding_mode(rm');
-          let (fflags, rd_val_LU) = riscv_f64ToUi64 (rm_3b, rs1_val_D);
+        let rm_3b = encdec_rounding_mode(rm');
+        let (fflags, rd_val_LU) = riscv_f64ToUi64 (rm_3b, rs1_val_D);
 
-      write_fflags(fflags);
-      X(rd) = rd_val_LU;
-      RETIRE_SUCCESS
+        write_fflags(fflags);
+        X(rd) = rd_val_LU;
+        RETIRE_SUCCESS
       }
     }
   }
@@ -638,8 +637,8 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_L)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_i64ToF64 (rm_3b, rs1_val_L);
 
-        write_fflags(fflags);
-        X_or_F_D(sys_enable_zfinx(),rd,rd_val_D)
+      write_fflags(fflags);
+      X_or_F_D(sys_enable_zfinx(),rd,rd_val_D)
     }
   }
 }
@@ -868,7 +867,7 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
         riscv_f64Eq (rs1_val_D, rs2_val_D);
 
     write_fflags(fflags);
-      X(rd) = EXTZ(bool_to_bits(rd_val));
+    X(rd) = EXTZ(bool_to_bits(rd_val));
     RETIRE_SUCCESS
   }
 }
