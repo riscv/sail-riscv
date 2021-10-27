@@ -265,7 +265,7 @@ function rX_or_rF_64(zfinx_en, i) = {
   }
   else if zfinx_en & sizeof (xlen) == 64 then
     (RETIRE_SUCCESS, rX(unsigned(i)))
-  else if zfinx_en == false & sizeof (flen) == 64 then
+  else if ~(zfinx_en) & sizeof (flen) == 64 then
     (RETIRE_SUCCESS, rF(unsigned(i)))
   else {
     assert(false);
@@ -286,7 +286,7 @@ function wX_or_wF_64(zfinx_en: bool, i: bits(5), data: bits(64)) = {
   }
   else if zfinx_en & sizeof (xlen) == 64 then
     { wX(unsigned(i)) = data; RETIRE_SUCCESS }
-  else if zfinx_en == false & sizeof (flen) == 64 then
+  else if ~(zfinx_en) & sizeof (flen) == 64 then
     { wF(unsigned(i)) = data; RETIRE_SUCCESS }
   else {
     assert(false);

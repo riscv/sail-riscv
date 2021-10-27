@@ -320,7 +320,7 @@ function clause execute (F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)) = {
   let (ret_2, rs2_val_64b) = X_or_F_D(sys_enable_zfinx(), rs2);
   let (ret_3, rs3_val_64b) = X_or_F_D(sys_enable_zfinx(), rs3);
 
-  if (ret_1 == RETIRE_FAIL | ret_2 == RETIRE_FAIL | ret_3 == RETIRE_FAIL) then  RETIRE_FAIL
+  if (ret_1 == RETIRE_FAIL | ret_2 == RETIRE_FAIL | ret_3 == RETIRE_FAIL) then RETIRE_FAIL
   else {
     match (select_instr_or_fcsr_rm (rm)) {
       None() => { handle_illegal(); RETIRE_FAIL },
