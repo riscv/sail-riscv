@@ -360,7 +360,7 @@ val process_fload32 : (regidx, xlenbits, MemoryOpResult(bits(32)))
                       -> Retired effect {escape, rreg, wreg}
 function process_fload32(rd, addr, value) =
   match value {
-    MemValue(result) => { F(rd) = nan_box(false,result); RETIRE_SUCCESS },
+    MemValue(result) => { F(rd) = nan_box(false, result); RETIRE_SUCCESS },
     MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
   }
 
@@ -512,7 +512,7 @@ function clause execute (F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)) = {
           FNMADD_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, negate_S (rs3_val_32b))
         };
       write_fflags(fflags);
-      X_or_F_S(sys_enable_zfinx(),rd,rd_val_32b)
+      X_or_F_S(sys_enable_zfinx(), rd, rd_val_32b)
     }
   }
 }
@@ -575,7 +575,7 @@ function clause execute (F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)) = {
         FDIV_S  => riscv_f32Div (rm_3b, rs1_val_32b, rs2_val_32b)
       };
       write_fflags(fflags);
-      X_or_F_S(sys_enable_zfinx(),rd,rd_val_32b)
+      X_or_F_S(sys_enable_zfinx(), rd, rd_val_32b)
     }
   }
 }
@@ -654,7 +654,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)) = {
       let (fflags, rd_val_S) = riscv_f32Sqrt   (rm_3b, rs1_val_S);
 
       write_fflags(fflags);
-      X_or_F_S(sys_enable_zfinx(),rd,rd_val_S)
+      X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
     }
   }
 }
@@ -698,7 +698,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_W)) = {
       let (fflags, rd_val_S) = riscv_i32ToF32 (rm_3b, rs1_val_W);
 
       write_fflags(fflags);
-      X_or_F_S(sys_enable_zfinx(),rd,rd_val_S)
+      X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
     }
   }
 }
@@ -712,7 +712,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
       let (fflags, rd_val_S) = riscv_ui32ToF32 (rm_3b, rs1_val_WU);
 
       write_fflags(fflags);
-      X_or_F_S(sys_enable_zfinx(),rd,rd_val_S)
+      X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
     }
   }
 }
@@ -759,7 +759,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
       let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
 
       write_fflags(fflags);
-      X_or_F_S(sys_enable_zfinx(),rd,rd_val_S)
+      X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
     }
   }
 }
@@ -774,7 +774,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
       let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
 
       write_fflags(fflags);
-      X_or_F_S(sys_enable_zfinx(),rd,rd_val_S)
+      X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
     }
   }
 }
@@ -891,7 +891,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)) = {
   let (s2, e2, m2)   = fsplit_S (rs2_val_S);
   let rd_val_S       = fmake_S (s2, e1, m1);
 
-  X_or_F_S(sys_enable_zfinx(),rd,rd_val_S)
+  X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)) = {
@@ -901,7 +901,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)) = {
   let (s2, e2, m2)   = fsplit_S (rs2_val_S);
   let rd_val_S       = fmake_S (0b1 ^ s2, e1, m1);
 
-  X_or_F_S(sys_enable_zfinx(),rd,rd_val_S)
+  X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)) = {
@@ -911,7 +911,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)) = {
   let (s2, e2, m2)   = fsplit_S (rs2_val_S);
   let rd_val_S       = fmake_S (s1 ^ s2, e1, m1);
 
-  X_or_F_S(sys_enable_zfinx(),rd,rd_val_S)
+  X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
 
 }
 
@@ -931,7 +931,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)) = {
                   else /* (not rs1_lt_rs2) */                                            rs2_val_S;
 
   accrue_fflags(fflags);
-  X_or_F_S(sys_enable_zfinx(),rd,rd_val_S)
+  X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)) = {
@@ -950,7 +950,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)) = {
                   else /* (not rs2_lt_rs1) */                                            rs2_val_S;
 
   accrue_fflags(fflags);
-  X_or_F_S(sys_enable_zfinx(),rd,rd_val_S)
+  X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
@@ -1098,7 +1098,7 @@ function clause execute (F_UN_TYPE_S(rs1, rd, FMV_X_W)) = {
 function clause execute (F_UN_TYPE_S(rs1, rd, FMV_W_X)) = {
   let rs1_val_X            = X(rs1);
   let rd_val_S             = rs1_val_X [31..0];
-  F(rd) = nan_box (false,rd_val_S);
+  F(rd) = nan_box(false, rd_val_S);
   RETIRE_SUCCESS
 }
 

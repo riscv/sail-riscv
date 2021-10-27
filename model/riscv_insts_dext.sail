@@ -334,7 +334,7 @@ function clause execute (F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)) = {
             FNMADD_D => riscv_f64MulAdd (rm_3b, negate_D (rs1_val_64b), rs2_val_64b, negate_D (rs3_val_64b))
           };
         write_fflags(fflags);
-        X_or_F_D(sys_enable_zfinx(),rd,rd_val_64b)
+        X_or_F_D(sys_enable_zfinx(), rd, rd_val_64b)
       }
     }
   }
@@ -400,7 +400,7 @@ function clause execute (F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op)) = {
           FDIV_D  => riscv_f64Div (rm_3b, rs1_val_64b, rs2_val_64b)
         };
         write_fflags(fflags);
-        X_or_F_D(sys_enable_zfinx(),rd,rd_val_64b)
+        X_or_F_D(sys_enable_zfinx(), rd, rd_val_64b)
       }
     }
   }
@@ -489,7 +489,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FSQRT_D)) = {
         let rm_3b = encdec_rounding_mode(rm');
         let (fflags, rd_val_D) = riscv_f64Sqrt   (rm_3b, rs1_val_D);
 
-        write_fflags(fflags);     
+        write_fflags(fflags);
         X_or_F_D(sys_enable_zfinx(), rd, rd_val_D)
       }
     }
@@ -571,7 +571,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_S_D)) = {
         let (fflags, rd_val_S) = riscv_f64ToF32 (rm_3b, rs1_val_D);
 
         write_fflags(fflags);
-        X_or_F_S(sys_enable_zfinx(),rd,rd_val_S)
+        X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
       }
     }
   }
@@ -778,8 +778,8 @@ mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)                 if is_
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJ_D)) = {
-  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
-  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
+  let (ret1, rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2, rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
   else {
     let (s1, e1, m1) = fsplit_D (rs1_val_D);
@@ -791,8 +791,8 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJ_D)) = {
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJN_D)) = {
-  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
-  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
+  let (ret1, rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2, rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
   else {
     let (s1, e1, m1) = fsplit_D (rs1_val_D);
@@ -804,8 +804,8 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJN_D)) = {
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJX_D)) = {
-  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
-  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
+  let (ret1, rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2, rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
   else {
     let (s1, e1, m1) = fsplit_D (rs1_val_D);
@@ -817,8 +817,8 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJX_D)) = {
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMIN_D)) = {
-  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
-  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
+  let (ret1, rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2, rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
   else {
     let is_quiet  = true;
@@ -838,8 +838,8 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMIN_D)) = {
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMAX_D)) = {
-  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
-  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
+  let (ret1, rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2, rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
   else {
     let is_quiet  = true;
@@ -859,10 +859,10 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMAX_D)) = {
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
-  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
-  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
+  let (ret1, rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2, rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
-  else { 
+  else {
     let (fflags, rd_val) : (bits_fflags, bool) =
         riscv_f64Eq (rs1_val_D, rs2_val_D);
 
@@ -873,10 +873,10 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)) = {
-  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
-  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
+  let (ret1, rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2, rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
-  else { 
+  else {
     let (fflags, rd_val) : (bits_fflags, bool) =
         riscv_f64Lt (rs1_val_D, rs2_val_D);
 
@@ -887,8 +887,8 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)) = {
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)) = {
-  let (ret1 : Retired,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
-  let (ret2 : Retired,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
+  let (ret1, rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2, rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
   else {
     let (fflags, rd_val) : (bits_fflags, bool) =
@@ -982,8 +982,8 @@ mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_D_X)                         if
 /* Execution semantics ================================ */
 
 function clause execute (F_UN_TYPE_D(rs1, rd, FCLASS_D)) = {
-  let (ret : Retired,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
-  if (ret == RETIRE_FAIL) then RETIRE_FAIL 
+  let (ret, rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  if (ret == RETIRE_FAIL) then RETIRE_FAIL
   else {
     let rd_val_10b : bits (10) =
       if      f_is_neg_inf_D     (rs1_val_D) then 0b_00_0000_0001
