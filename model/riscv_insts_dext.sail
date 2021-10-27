@@ -316,9 +316,9 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)) = {
-  let (ret_1,rs1_val_64b) = X_or_F_D(sys_enable_zfinx(),rs1);
-  let (ret_2,rs2_val_64b) = X_or_F_D(sys_enable_zfinx(),rs2);
-  let (ret_3,rs3_val_64b) = X_or_F_D(sys_enable_zfinx(),rs3);
+  let (ret_1, rs1_val_64b) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret_2, rs2_val_64b) = X_or_F_D(sys_enable_zfinx(), rs2);
+  let (ret_3, rs3_val_64b) = X_or_F_D(sys_enable_zfinx(), rs3);
 
   if (ret_1 == RETIRE_FAIL | ret_2 == RETIRE_FAIL | ret_3 == RETIRE_FAIL) then  RETIRE_FAIL
   else {
@@ -385,8 +385,8 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op)) = {
-  let (ret_1,rs1_val_64b) = X_or_F_D(sys_enable_zfinx(),rs1);
-  let (ret_2,rs2_val_64b) = X_or_F_D(sys_enable_zfinx(),rs2);
+  let (ret_1, rs1_val_64b) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret_2, rs2_val_64b) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret_1 == RETIRE_FAIL | ret_2 == RETIRE_FAIL) then RETIRE_FAIL
   else {
     match (select_instr_or_fcsr_rm (rm)) {
@@ -480,7 +480,7 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FSQRT_D)) = {
-  let (ret,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
+  let (ret, rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
   if (ret == RETIRE_FAIL) then RETIRE_FAIL
   else {
     match (select_instr_or_fcsr_rm (rm)) {
@@ -490,14 +490,14 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FSQRT_D)) = {
         let (fflags, rd_val_D) = riscv_f64Sqrt   (rm_3b, rs1_val_D);
 
         write_fflags(fflags);     
-        X_or_F_D(sys_enable_zfinx(),rd,rd_val_D)
+        X_or_F_D(sys_enable_zfinx(), rd, rd_val_D)
       }
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_W_D)) = {
-  let (ret,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
+  let (ret, rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
   if (ret == RETIRE_FAIL) then RETIRE_FAIL
   else {
     match (select_instr_or_fcsr_rm (rm)) {
@@ -515,7 +515,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_W_D)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_WU_D)) = {
-  let (ret,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
+  let (ret, rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
   if (ret == RETIRE_FAIL) then RETIRE_FAIL
   else {
     match (select_instr_or_fcsr_rm (rm)) {
@@ -541,7 +541,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_W)) = {
       let (fflags, rd_val_D) = riscv_i32ToF64 (rm_3b, rs1_val_W);
 
       write_fflags(fflags);
-      X_or_F_D(sys_enable_zfinx(),rd,rd_val_D)
+      X_or_F_D(sys_enable_zfinx(), rd, rd_val_D)
     }
   }
 }
@@ -555,13 +555,13 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_WU)) = {
       let (fflags, rd_val_D) = riscv_ui32ToF64 (rm_3b, rs1_val_WU);
 
       write_fflags(fflags);
-      X_or_F_D(sys_enable_zfinx(),rd,rd_val_D)
+      X_or_F_D(sys_enable_zfinx(), rd, rd_val_D)
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_S_D)) = {
-  let (ret,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
+  let (ret, rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
   if (ret == RETIRE_FAIL) then RETIRE_FAIL
   else {
     match (select_instr_or_fcsr_rm (rm)) {
@@ -578,7 +578,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_S_D)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_S)) = {
-  let (_,rs1_val_S) = X_or_F_S(sys_enable_zfinx(),rs1);
+  let (_, rs1_val_S) = X_or_F_S(sys_enable_zfinx(), rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -586,14 +586,14 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_S)) = {
       let (fflags, rd_val_D) = riscv_f32ToF64 (rm_3b, rs1_val_S);
 
       write_fflags(fflags);
-      X_or_F_D(sys_enable_zfinx(),rd,rd_val_D)
+      X_or_F_D(sys_enable_zfinx(), rd, rd_val_D)
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)) = {
   assert(sizeof(xlen) >= 64);
-  let (ret,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
+  let (ret, rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
   if ret == RETIRE_FAIL then RETIRE_FAIL else {
     match (select_instr_or_fcsr_rm (rm)) {
       None() => { handle_illegal(); RETIRE_FAIL },
@@ -611,7 +611,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)) = {
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_LU_D)) = {
   assert(sizeof(xlen) >= 64);
-  let (ret,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
+  let (ret, rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
   if (ret == RETIRE_FAIL) then RETIRE_FAIL
   else {
     match (select_instr_or_fcsr_rm (rm)) {
@@ -638,7 +638,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_L)) = {
       let (fflags, rd_val_D) = riscv_i64ToF64 (rm_3b, rs1_val_L);
 
       write_fflags(fflags);
-      X_or_F_D(sys_enable_zfinx(),rd,rd_val_D)
+      X_or_F_D(sys_enable_zfinx(), rd, rd_val_D)
     }
   }
 }
@@ -653,7 +653,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_LU)) = {
       let (fflags, rd_val_D) = riscv_ui64ToF64 (rm_3b, rs1_val_LU);
 
       write_fflags(fflags);
-      X_or_F_D(sys_enable_zfinx(),rd,rd_val_D)
+      X_or_F_D(sys_enable_zfinx(), rd, rd_val_D)
     }
   }
 }
@@ -778,47 +778,47 @@ mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)                 if is_
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJ_D)) = {
-  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
-  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(),rs2);
+  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
   else {
     let (s1, e1, m1) = fsplit_D (rs1_val_D);
     let (s2, e2, m2) = fsplit_D (rs2_val_D);
     let rd_val_D     = fmake_D (s2, e1, m1);
 
-    X_or_F_D(sys_enable_zfinx(),rd,rd_val_D)
+    X_or_F_D(sys_enable_zfinx(), rd, rd_val_D)
   }
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJN_D)) = {
-  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
-  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(),rs2);
+  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
   else {
     let (s1, e1, m1) = fsplit_D (rs1_val_D);
     let (s2, e2, m2) = fsplit_D (rs2_val_D);
     let rd_val_D     = fmake_D (0b1 ^ s2, e1, m1);
 
-    X_or_F_D(sys_enable_zfinx(),rd,rd_val_D)
+    X_or_F_D(sys_enable_zfinx(), rd, rd_val_D)
   }
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJX_D)) = {
-  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
-  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(),rs2);
+  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
   else {
     let (s1, e1, m1) = fsplit_D (rs1_val_D);
     let (s2, e2, m2) = fsplit_D (rs2_val_D);
     let rd_val_D     = fmake_D (s1 ^ s2, e1, m1);
 
-    X_or_F_D(sys_enable_zfinx(),rd,rd_val_D)
+    X_or_F_D(sys_enable_zfinx(), rd, rd_val_D)
   }
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMIN_D)) = {
-  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
-  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(),rs2);
+  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
   else {
     let is_quiet  = true;
@@ -833,13 +833,13 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMIN_D)) = {
                     else /* (not rs1_lt_rs2) */                                            rs2_val_D;
 
     accrue_fflags(fflags);
-    X_or_F_D(sys_enable_zfinx(),rd,rd_val_D)
+    X_or_F_D(sys_enable_zfinx(), rd, rd_val_D)
   }
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMAX_D)) = {
-  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
-  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(),rs2);
+  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
   else {
     let is_quiet  = true;
@@ -854,13 +854,13 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMAX_D)) = {
                     else /* (not rs2_lt_rs1) */                                            rs2_val_D;
 
     accrue_fflags(fflags);
-    X_or_F_D(sys_enable_zfinx(),rd,rd_val_D)
+    X_or_F_D(sys_enable_zfinx(), rd, rd_val_D)
   }
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
-  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
-  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(),rs2);
+  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
   else { 
     let (fflags, rd_val) : (bits_fflags, bool) =
@@ -873,8 +873,8 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)) = {
-  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
-  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(),rs2);
+  let (ret1,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
   else { 
     let (fflags, rd_val) : (bits_fflags, bool) =
@@ -887,8 +887,8 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)) = {
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)) = {
-  let (ret1 : Retired,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
-  let (ret2 : Retired,rs2_val_D) = X_or_F_D(sys_enable_zfinx(),rs2);
+  let (ret1 : Retired,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
+  let (ret2 : Retired,rs2_val_D) = X_or_F_D(sys_enable_zfinx(), rs2);
   if (ret1 == RETIRE_FAIL | ret2 == RETIRE_FAIL) then RETIRE_FAIL
   else {
     let (fflags, rd_val) : (bits_fflags, bool) =
@@ -982,7 +982,7 @@ mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_D_X)                         if
 /* Execution semantics ================================ */
 
 function clause execute (F_UN_TYPE_D(rs1, rd, FCLASS_D)) = {
-  let (ret : Retired,rs1_val_D) = X_or_F_D(sys_enable_zfinx(),rs1);
+  let (ret : Retired,rs1_val_D) = X_or_F_D(sys_enable_zfinx(), rs1);
   if (ret == RETIRE_FAIL) then RETIRE_FAIL 
   else {
     let rd_val_10b : bits (10) =

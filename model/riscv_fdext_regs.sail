@@ -83,25 +83,25 @@
 function canonical_NaN_S() -> bits(32) = 0x_7fc0_0000
 function canonical_NaN_D() -> bits(64) = 0x_7ff8_0000_0000_0000
 
-val nan_unbox_do :  (bool,bits(64)) -> bits(32)
-function nan_unbox_do(zfinx_en,regval) =
-  if (zfinx_en)  
-    then  regval [31..0]
+val nan_unbox_do : (bool, bits(64)) -> bits(32)
+function nan_unbox_do (zfinx_en, regval) =
+  if zfinx_en
+    then regval [31..0]
   else if regval [63..32] == 0x_FFFF_FFFF
     then regval [31..0]
   else canonical_NaN_S()
 
-val nan_unbox_pass : (bool,bits(32)) -> bits(32)
-function nan_unbox_pass(zfinx_en,regval) =
+val nan_unbox_pass : (bool, bits(32)) -> bits(32)
+function nan_unbox_pass (zfinx_en, regval) =
   regval
 
-val nan_box_do :  (bool,bits(32)) -> bits(64)
-function nan_box_do  (zfinx_en,regval) =
+val nan_box_do : (bool, bits(32)) -> bits(64)
+function nan_box_do (zfinx_en, regval) =
   0x_FFFF_FFFF @ regval
 
 
-val nan_box_pass : (bool,bits(32)) -> bits(32)
-function nan_box_pass(zfinx_en,regval) =
+val nan_box_pass : (bool, bits(32)) -> bits(32)
+function nan_box_pass (zfinx_en, regval) =
   regval
 
 overload nan_unbox = { nan_unbox_do, nan_unbox_pass }
@@ -249,19 +249,19 @@ val handle_illegal : unit -> unit effect {escape, rreg, wreg}
 
 /* ---- Register Read/ Writes */
 
-val rX_or_rF_32 : (bool, bits(5)) -> (Retired,bits(32)) effect {escape, rreg}
+val rX_or_rF_32 : (bool, bits(5)) -> (Retired, bits(32)) effect {escape, rreg}
 function rX_or_rF_32(zfinx_en, i) = {
-  let rval = if (zfinx_en) then nan_unbox(zfinx_en,rX(unsigned(i))) else nan_unbox(zfinx_en,rF(unsigned(i)));
+  let rval = if zfinx_en then nan_unbox(zfinx_en, rX(unsigned(i))) else nan_unbox(zfinx_en, rF(unsigned(i)));
   (RETIRE_SUCCESS, rval)
 }
 
-val rX_or_rF_64 : (bool, bits(5)) -> (Retired,bits(64)) effect {escape, rreg, wreg}
+val rX_or_rF_64 : (bool, bits(5)) -> (Retired, bits(64)) effect {escape, rreg, wreg}
 function rX_or_rF_64(zfinx_en, i) = {
   if zfinx_en & sizeof (xlen) == 32 then {
-    if (i == 0b00000) then
+    if i == 0b00000 then
       (RETIRE_SUCCESS, sail_zeros(64))
-    else if (i[0] == bitzero) then (RETIRE_SUCCESS, rX(unsigned(i+1)) @ rX(unsigned(i)))
-    else { handle_illegal(); (RETIRE_FAIL,sail_zeros(64)) }
+    else if i[0] == bitzero then (RETIRE_SUCCESS, rX(unsigned(i+1)) @ rX(unsigned(i)))
+    else { handle_illegal(); (RETIRE_FAIL, sail_zeros(64)) }
   }
   else if zfinx_en & sizeof (xlen) == 64 then
     (RETIRE_SUCCESS, rX(unsigned(i)))
@@ -276,8 +276,8 @@ function rX_or_rF_64(zfinx_en, i) = {
 val wX_or_wF_64 : (bool, bits(5), bits(64)) -> Retired effect {escape, rreg, wreg}
 function wX_or_wF_64(zfinx_en: bool, i: bits(5), data: bits(64)) = {
   if zfinx_en & sizeof(xlen) == 32 then {
-    if (i == 0b00000) then RETIRE_SUCCESS
-    else if (i[0] == bitzero) then {
+    if i == 0b00000 then RETIRE_SUCCESS
+    else if i[0] == bitzero then {
       wX(unsigned(i)) = data[31..0];
       wX(unsigned(i+1)) = data[63..32];
       RETIRE_SUCCESS
@@ -288,7 +288,7 @@ function wX_or_wF_64(zfinx_en: bool, i: bits(5), data: bits(64)) = {
     { wX(unsigned(i)) = data; RETIRE_SUCCESS }
   else if zfinx_en == false & sizeof (flen) == 64 then
     { wF(unsigned(i)) = data; RETIRE_SUCCESS }
-  else { 
+  else {
     assert(false);
     RETIRE_FAIL
   }
@@ -297,9 +297,9 @@ function wX_or_wF_64(zfinx_en: bool, i: bits(5), data: bits(64)) = {
 val wX_or_wF_32 : (bool, bits(5), bits(32)) -> Retired effect {escape, wreg}
 function wX_or_wF_32(zfinx_en: bool, i: bits(5), data : bits(32)) = {
   if zfinx_en then
-    { wX(unsigned(i)) = nan_box(zfinx_en,data); RETIRE_SUCCESS }
+    { wX(unsigned(i)) = nan_box(zfinx_en, data); RETIRE_SUCCESS }
   else {
-    { wF(unsigned(i)) = nan_box(zfinx_en,data); RETIRE_SUCCESS }
+    { wF(unsigned(i)) = nan_box(zfinx_en, data); RETIRE_SUCCESS }
   }
 }
 
