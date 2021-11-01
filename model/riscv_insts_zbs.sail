@@ -2,16 +2,16 @@
 union clause ast = ZBS_IOP : (bits(6), regidx, regidx, biop)
 
 mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BCLRI) if haveZbs() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
-  <-> 0b010010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b010010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZbs() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
 
 mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BEXTI) if haveZbs() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
-  <-> 0b010010 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011
+  <-> 0b010010 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if haveZbs() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
 
 mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BINVI) if haveZbs() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
-  <-> 0b011010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b011010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZbs() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
 
 mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BSETI) if haveZbs() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
-  <-> 0b001010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b001010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZbs() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
 
 mapping zbs_iop_mnemonic : biop <-> string = {
   RISCV_BCLRI <-> "bclri",
@@ -25,19 +25,14 @@ mapping clause assembly = ZBS_IOP(shamt, rs1, rd, op)
 
 function clause execute (ZBS_IOP(shamt, rs1, rd, op)) = {
   let rs1_val = X(rs1);
+  let mask : xlenbits = if sizeof(xlen) == 32
+                        then EXTZ(0b1) << shamt[4..0]
+                        else EXTZ(0b1) << shamt;
   let result : xlenbits = match op {
-    RISCV_BCLRI => if sizeof(xlen) == 32
-                     then rs1_val & ( ~ (EXTZ(0b1) << shamt[4..0]))
-                     else rs1_val & ( ~ (EXTZ(0b1) << shamt[5..0])),
-    RISCV_BEXTI => if sizeof(xlen) == 32
-                     then (rs1_val >> shamt[4..0]) & EXTZ(0x1)
-                     else (rs1_val >> shamt[5..0]) & EXTZ(0x1),
-    RISCV_BINVI => if sizeof(xlen) == 32
-                     then rs1_val ^ (EXTZ(0b1) << shamt[4..0])
-                     else rs1_val ^ (EXTZ(0b1) << shamt[5..0]),
-    RISCV_BSETI => if sizeof(xlen) == 32
-                     then rs1_val | (EXTZ(0b1) << shamt[4..0])
-                     else rs1_val | (EXTZ(0b1) << shamt[5..0])
+    RISCV_BCLRI => rs1_val & ~(mask),
+    RISCV_BEXTI => EXTZ(bool_to_bits((rs1_val & mask) != zeros())),
+    RISCV_BINVI => rs1_val ^ mask,
+    RISCV_BSETI => rs1_val | mask
   };
   X(rd) = result;
   RETIRE_SUCCESS
@@ -47,16 +42,16 @@ function clause execute (ZBS_IOP(shamt, rs1, rd, op)) = {
 union clause ast = ZBS_RTYPE : (regidx, regidx, regidx, brop)
 
 mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BCLR) if haveZbs()
-  <-> 0b0100100 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011
+  <-> 0b0100100 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011 if haveZbs()
 
 mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BEXT) if haveZbs()
-  <-> 0b0100100 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011
+  <-> 0b0100100 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011 if haveZbs()
 
 mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BINV) if haveZbs()
-  <-> 0b0110100 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011
+  <-> 0b0110100 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011 if haveZbs()
 
 mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BSET) if haveZbs()
-  <-> 0b0010100 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011
+  <-> 0b0010100 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011 if haveZbs()
 
 mapping zbs_rtype_mnemonic : brop <-> string = {
   RISCV_BCLR    <-> "bclr",
@@ -71,19 +66,14 @@ mapping clause assembly = ZBS_RTYPE(rs2, rs1, rd, op)
 function clause execute (ZBS_RTYPE(rs2, rs1, rd, op)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
+  let mask : xlenbits = if sizeof(xlen) == 32
+                        then EXTZ(0b1) << rs2_val[4..0]
+                        else EXTZ(0b1) << rs2_val[5..0];
   let result : xlenbits = match op {
-    RISCV_BCLR => if sizeof(xlen) == 32
-                    then rs1_val & ( ~ (EXTZ(0b1) << rs2_val[4..0]))
-                    else rs1_val & ( ~ (EXTZ(0b1) << rs2_val[5..0])),
-    RISCV_BEXT => if sizeof(xlen) == 32
-                    then (rs1_val >> rs2_val[4..0]) & EXTZ(0x1)
-                    else (rs1_val >> rs2_val[5..0]) & EXTZ(0x1),
-    RISCV_BINV => if sizeof(xlen) == 32
-                    then rs1_val ^ (EXTZ(0b1) << rs2_val[4..0])
-                    else rs1_val ^ (EXTZ(0b1) << rs2_val[5..0]),
-    RISCV_BSET => if sizeof(xlen) == 32
-                    then rs1_val | (EXTZ(0b1) << rs2_val[4..0])
-                    else rs1_val | (EXTZ(0b1) << rs2_val[5..0])
+    RISCV_BCLR => rs1_val & ~(mask),
+    RISCV_BEXT => EXTZ(bool_to_bits((rs1_val & mask) != zeros())),
+    RISCV_BINV => rs1_val ^ mask,
+    RISCV_BSET => rs1_val | mask
   };
   X(rd) = result;
   RETIRE_SUCCESS
