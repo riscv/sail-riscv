@@ -390,17 +390,22 @@ enum amoop = {AMOSWAP, AMOADD, AMOXOR, AMOAND, AMOOR,
               AMOMIN, AMOMAX, AMOMINU, AMOMAXU}   /* AMO ops */
 enum csrop = {CSRRW, CSRRS, CSRRC}                /* CSR ops */
 
-enum brop = {RISCV_SH1ADD, RISCV_SH2ADD, RISCV_SH3ADD, RISCV_BCLR,
-             RISCV_BEXT, RISCV_BINV, RISCV_BSET, RISCV_ANDN, RISCV_ORN,
-             RISCV_XNOR, RISCV_MAX, RISCV_MAXU, RISCV_MIN,
-             RISCV_MINU, RISCV_ROL, RISCV_ROR}
+enum brop_zba = {RISCV_SH1ADD, RISCV_SH2ADD, RISCV_SH3ADD}
 
-enum bropw = {RISCV_ADDUW, RISCV_SH1ADDUW, RISCV_SH2ADDUW,
-              RISCV_SH3ADDUW, RISCV_ROLW, RISCV_RORW}
+enum brop_zbb = {RISCV_ANDN, RISCV_ORN, RISCV_XNOR, RISCV_MAX,
+                 RISCV_MAXU, RISCV_MIN, RISCV_MINU, RISCV_ROL,
+                 RISCV_ROR}
 
-enum biop = {RISCV_BCLRI, RISCV_BEXTI, RISCV_BINVI, RISCV_BSETI}
+enum brop_zbs = {RISCV_BCLR, RISCV_BEXT, RISCV_BINV, RISCV_BSET}
 
-enum extop = {RISCV_SEXTB, RISCV_SEXTH, RISCV_ZEXTH}
+enum bropw_zba = {RISCV_ADDUW, RISCV_SH1ADDUW, RISCV_SH2ADDUW,
+                  RISCV_SH3ADDUW}
+
+enum bropw_zbb = {RISCV_ROLW, RISCV_RORW}
+
+enum biop_zbs = {RISCV_BCLRI, RISCV_BEXTI, RISCV_BINVI, RISCV_BSETI}
+
+enum extop_zbb = {RISCV_SEXTB, RISCV_SEXTH, RISCV_ZEXTH}
 
 val sep : unit <-> string
 mapping sep : unit <-> string = {
