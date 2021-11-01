@@ -1,5 +1,5 @@
 /* ****************************************************************** */
-union clause ast = ZBS_IOP : (bits(6), regidx, regidx, biop)
+union clause ast = ZBS_IOP : (bits(6), regidx, regidx, biop_zbs)
 
 mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BCLRI) if haveZbs() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
   <-> 0b010010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZbs() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
@@ -13,7 +13,7 @@ mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BINVI) if haveZbs() & (siz
 mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BSETI) if haveZbs() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
   <-> 0b001010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZbs() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
 
-mapping zbs_iop_mnemonic : biop <-> string = {
+mapping zbs_iop_mnemonic : biop_zbs <-> string = {
   RISCV_BCLRI <-> "bclri",
   RISCV_BEXTI <-> "bexti",
   RISCV_BINVI <-> "binvi",
@@ -39,7 +39,7 @@ function clause execute (ZBS_IOP(shamt, rs1, rd, op)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBS_RTYPE : (regidx, regidx, regidx, brop)
+union clause ast = ZBS_RTYPE : (regidx, regidx, regidx, brop_zbs)
 
 mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BCLR) if haveZbs()
   <-> 0b0100100 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011 if haveZbs()
@@ -53,7 +53,7 @@ mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BINV) if haveZbs()
 mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BSET) if haveZbs()
   <-> 0b0010100 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011 if haveZbs()
 
-mapping zbs_rtype_mnemonic : brop <-> string = {
+mapping zbs_rtype_mnemonic : brop_zbs <-> string = {
   RISCV_BCLR    <-> "bclr",
   RISCV_BEXT    <-> "bext",
   RISCV_BINV    <-> "binv",

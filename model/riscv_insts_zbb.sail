@@ -33,7 +33,7 @@ function clause execute (RISCV_RORI(shamt, rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBB_RTYPEW : (regidx, regidx, regidx, bropw)
+union clause ast = ZBB_RTYPEW : (regidx, regidx, regidx, bropw_zbb)
 
 mapping clause encdec = ZBB_RTYPEW(rs2, rs1, rd, RISCV_ROLW) if haveZbb() & sizeof(xlen) == 64
   <-> 0b0110000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0111011 if haveZbb() & sizeof(xlen) == 64
@@ -41,7 +41,7 @@ mapping clause encdec = ZBB_RTYPEW(rs2, rs1, rd, RISCV_ROLW) if haveZbb() & size
 mapping clause encdec = ZBB_RTYPEW(rs2, rs1, rd, RISCV_RORW) if haveZbb() & sizeof(xlen) == 64
   <-> 0b0110000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0111011 if haveZbb() & sizeof(xlen) == 64
 
-mapping zbb_rtypew_mnemonic : bropw <-> string = {
+mapping zbb_rtypew_mnemonic : bropw_zbb <-> string = {
   RISCV_ROLW <-> "rolw",
   RISCV_RORW <-> "rorw"
 }
@@ -61,7 +61,7 @@ function clause execute (ZBB_RTYPEW(rs2, rs1, rd, op)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBB_RTYPE : (regidx, regidx, regidx, brop)
+union clause ast = ZBB_RTYPE : (regidx, regidx, regidx, brop_zbb)
 
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_ANDN) if haveZbb()
   <-> 0b0100000 @ rs2 @ rs1 @ 0b111 @ rd @ 0b0110011 if haveZbb()
@@ -90,7 +90,7 @@ mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_ROL) if haveZbb()
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_ROR) if haveZbb()
   <-> 0b0110000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011 if haveZbb()
 
-mapping zbb_rtype_mnemonic : brop <-> string = {
+mapping zbb_rtype_mnemonic : brop_zbb <-> string = {
   RISCV_ANDN <-> "andn",
   RISCV_ORN  <-> "orn",
   RISCV_XNOR <-> "xnor",
@@ -136,7 +136,7 @@ function clause execute (ZBB_RTYPE(rs2, rs1, rd, op)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBB_EXTOP : (regidx, regidx, extop)
+union clause ast = ZBB_EXTOP : (regidx, regidx, extop_zbb)
 
 mapping clause encdec = ZBB_EXTOP(rs1, rd, RISCV_SEXTB) if haveZbb()
   <-> 0b0110000 @ 0b00100 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZbb()
@@ -150,7 +150,7 @@ mapping clause encdec = ZBB_EXTOP(rs1, rd, RISCV_ZEXTH) if haveZbb() & sizeof(xl
 mapping clause encdec = ZBB_EXTOP(rs1, rd, RISCV_ZEXTH) if haveZbb() & sizeof(xlen) == 64
   <-> 0b0000100 @ 0b00000 @ rs1 @ 0b100 @ rd @ 0b0111011 if haveZbb() & sizeof(xlen) == 64
 
-mapping zbb_extop_mnemonic : extop <-> string = {
+mapping zbb_extop_mnemonic : extop_zbb <-> string = {
   RISCV_SEXTB <-> "sext.b",
   RISCV_SEXTH <-> "sext.h",
   RISCV_ZEXTH <-> "zext.h"
