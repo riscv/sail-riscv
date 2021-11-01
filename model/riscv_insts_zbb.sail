@@ -189,12 +189,9 @@ mapping clause assembly = RISCV_REV8(rs1, rd)
 function clause execute (RISCV_REV8(rs1, rd)) = {
   let rs1_val = X(rs1);
   let result : xlenbits = match sizeof(xlen) {
-    32 => ((rs1_val & 0xff000000) >> 24) | ((rs1_val & 0x00ff0000) >>  8) |
-          ((rs1_val & 0x0000ff00) <<  8) | ((rs1_val & 0x000000ff) << 24),
-    64 => ((rs1_val & 0xff00000000000000) >> 56) | ((rs1_val & 0x00ff000000000000) >> 40) |
-          ((rs1_val & 0x0000ff0000000000) >> 24) | ((rs1_val & 0x000000ff00000000) >>  8) |
-          ((rs1_val & 0x00000000ff000000) <<  8) | ((rs1_val & 0x0000000000ff0000) << 24) |
-          ((rs1_val & 0x000000000000ff00) << 40) | ((rs1_val & 0x00000000000000ff) << 56)
+    32 => rs1_val[7..0] @ rs1_val[15..8] @ rs1_val[23..16] @ rs1_val[31..24],
+    64 => rs1_val[7..0] @ rs1_val[15..8] @ rs1_val[23..16] @ rs1_val[31..24] @
+          rs1_val[39..32] @ rs1_val[47..40] @ rs1_val[55..48] @ rs1_val[63..56]
   };
   X(rd) = result;
   RETIRE_SUCCESS
