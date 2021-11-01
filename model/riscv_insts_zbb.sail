@@ -2,14 +2,14 @@
 union clause ast = RISCV_RORIW : (bits(5), regidx, regidx)
 
 mapping clause encdec = RISCV_RORIW(shamt, rs1, rd) if haveZbb() & sizeof(xlen) == 64
-  <-> 0b0110000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
+  <-> 0b0110000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011 if haveZbb() & sizeof(xlen) == 64
 
 mapping clause assembly = RISCV_RORIW(shamt, rs1, rd)
   <-> "roriw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_5(shamt)
 
 function clause execute (RISCV_RORIW(shamt, rs1, rd)) = {
-  let rs1_val = X(rs1);
-  let result : xlenbits = EXTS((rs1_val[31..0] >> shamt) | (rs1_val[31..0] << (0x20 - EXTZ(shamt))));
+  let rs1_val = (X(rs1))[31..0];
+  let result : xlenbits = EXTS((rs1_val >> shamt) | (rs1_val << (0x20 - EXTZ(shamt))));
   X(rd) = result;
   RETIRE_SUCCESS
 }
@@ -18,7 +18,7 @@ function clause execute (RISCV_RORIW(shamt, rs1, rd)) = {
 union clause ast = RISCV_RORI : (bits(6), regidx, regidx)
 
 mapping clause encdec = RISCV_RORI(shamt, rs1, rd) if haveZbb() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
-  <-> 0b011000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011
+  <-> 0b011000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if haveZbb() & (sizeof(xlen) == 64 | shamt[5] == bitzero)
 
 mapping clause assembly = RISCV_RORI(shamt, rs1, rd)
   <-> "rori" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_6(shamt)
@@ -36,10 +36,10 @@ function clause execute (RISCV_RORI(shamt, rs1, rd)) = {
 union clause ast = ZBB_RTYPEW : (regidx, regidx, regidx, bropw)
 
 mapping clause encdec = ZBB_RTYPEW(rs2, rs1, rd, RISCV_ROLW) if haveZbb() & sizeof(xlen) == 64
-  <-> 0b0110000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0111011
+  <-> 0b0110000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0111011 if haveZbb() & sizeof(xlen) == 64
 
 mapping clause encdec = ZBB_RTYPEW(rs2, rs1, rd, RISCV_RORW) if haveZbb() & sizeof(xlen) == 64
-  <-> 0b0110000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0111011
+  <-> 0b0110000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0111011 if haveZbb() & sizeof(xlen) == 64
 
 mapping zbb_rtypew_mnemonic : bropw <-> string = {
   RISCV_ROLW <-> "rolw",
@@ -50,11 +50,11 @@ mapping clause assembly = ZBB_RTYPEW(rs2, rs1, rd, op)
   <-> zbb_rtypew_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 function clause execute (ZBB_RTYPEW(rs2, rs1, rd, op)) = {
-  let rs1_val = X(rs1);
-  let rs2_val = X(rs2);
+  let rs1_val = (X(rs1))[31..0];
+  let shamt = (X(rs2))[4..0];
   let result : xlenbits = match op {
-    RISCV_ROLW => EXTS((rs1_val[31..0] << rs2_val[4..0]) | (rs1_val[31..0] >> (0x20 - EXTZ(rs2_val[4..0])))),
-    RISCV_RORW => EXTS((rs1_val[31..0] >> rs2_val[4..0]) | (rs1_val[31..0] << (0x20 - EXTZ(rs2_val[4..0]))))
+    RISCV_ROLW => EXTS((rs1_val << shamt) | (rs1_val >> (0x20 - EXTZ(shamt)))),
+    RISCV_RORW => EXTS((rs1_val >> shamt) | (rs1_val << (0x20 - EXTZ(shamt))))
   };
   X(rd) = EXTS(result);
   RETIRE_SUCCESS
@@ -64,31 +64,31 @@ function clause execute (ZBB_RTYPEW(rs2, rs1, rd, op)) = {
 union clause ast = ZBB_RTYPE : (regidx, regidx, regidx, brop)
 
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_ANDN) if haveZbb()
-  <-> 0b0100000 @ rs2 @ rs1 @ 0b111 @ rd @ 0b0110011
+  <-> 0b0100000 @ rs2 @ rs1 @ 0b111 @ rd @ 0b0110011 if haveZbb()
 
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_ORN) if haveZbb()
-  <-> 0b0100000 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0110011
+  <-> 0b0100000 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0110011 if haveZbb()
 
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_XNOR) if haveZbb()
-  <-> 0b0100000 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0110011
+  <-> 0b0100000 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0110011 if haveZbb()
 
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_MAX) if haveZbb()
-  <-> 0b0000101 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0110011
+  <-> 0b0000101 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0110011 if haveZbb()
 
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_MAXU) if haveZbb()
-  <-> 0b0000101 @ rs2 @ rs1 @ 0b111 @ rd @ 0b0110011
+  <-> 0b0000101 @ rs2 @ rs1 @ 0b111 @ rd @ 0b0110011 if haveZbb()
 
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_MIN) if haveZbb()
-  <-> 0b0000101 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0110011
+  <-> 0b0000101 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0110011 if haveZbb()
 
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_MINU) if haveZbb()
-  <-> 0b0000101 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011
+  <-> 0b0000101 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011 if haveZbb()
 
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_ROL) if haveZbb()
-  <-> 0b0110000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011
+  <-> 0b0110000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011 if haveZbb()
 
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, RISCV_ROR) if haveZbb()
-  <-> 0b0110000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011
+  <-> 0b0110000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011 if haveZbb()
 
 mapping zbb_rtype_mnemonic : brop <-> string = {
   RISCV_ANDN <-> "andn",
@@ -109,9 +109,9 @@ function clause execute (ZBB_RTYPE(rs2, rs1, rd, op)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   let result : xlenbits = match op {
-    RISCV_ANDN => rs1_val & ( ~ (rs2_val)),
-    RISCV_ORN  => rs1_val | ( ~ (rs2_val)),
-    RISCV_XNOR => ~ (rs1_val ^ rs2_val),
+    RISCV_ANDN => rs1_val & ~(rs2_val),
+    RISCV_ORN  => rs1_val | ~(rs2_val),
+    RISCV_XNOR => ~(rs1_val ^ rs2_val),
     RISCV_MAX  => if (rs1_val <_s rs2_val)
                     then rs2_val
                     else rs1_val,
@@ -139,16 +139,16 @@ function clause execute (ZBB_RTYPE(rs2, rs1, rd, op)) = {
 union clause ast = ZBB_EXTOP : (regidx, regidx, extop)
 
 mapping clause encdec = ZBB_EXTOP(rs1, rd, RISCV_SEXTB) if haveZbb()
-  <-> 0b0110000 @ 0b00100 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b0110000 @ 0b00100 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZbb()
 
 mapping clause encdec = ZBB_EXTOP(rs1, rd, RISCV_SEXTH) if haveZbb()
-  <-> 0b0110000 @ 0b00101 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b0110000 @ 0b00101 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZbb()
 
 mapping clause encdec = ZBB_EXTOP(rs1, rd, RISCV_ZEXTH) if haveZbb() & sizeof(xlen) == 32
-  <-> 0b0000100 @ 0b00000 @ rs1 @ 0b100 @ rd @ 0b0110011
+  <-> 0b0000100 @ 0b00000 @ rs1 @ 0b100 @ rd @ 0b0110011 if haveZbb() & sizeof(xlen) == 32
 
 mapping clause encdec = ZBB_EXTOP(rs1, rd, RISCV_ZEXTH) if haveZbb() & sizeof(xlen) == 64
-  <-> 0b0000100 @ 0b00000 @ rs1 @ 0b100 @ rd @ 0b0111011
+  <-> 0b0000100 @ 0b00000 @ rs1 @ 0b100 @ rd @ 0b0111011 if haveZbb() & sizeof(xlen) == 64
 
 mapping zbb_extop_mnemonic : extop <-> string = {
   RISCV_SEXTB <-> "sext.b",
@@ -174,10 +174,10 @@ function clause execute (ZBB_EXTOP(rs1, rd, op)) = {
 union clause ast = RISCV_REV8 : (regidx, regidx)     
 
 mapping clause encdec = RISCV_REV8(rs1, rd) if haveZbb() & sizeof(xlen) == 32
-  <-> 0b011010011000 @ rs1 @ 0b101 @ rd @ 0b0010011
+  <-> 0b011010011000 @ rs1 @ 0b101 @ rd @ 0b0010011 if haveZbb() & sizeof(xlen) == 32
 
 mapping clause encdec = RISCV_REV8(rs1, rd) if haveZbb() & sizeof(xlen) == 64
-  <-> 0b011010111000 @ rs1 @ 0b101 @ rd @ 0b0010011
+  <-> 0b011010111000 @ rs1 @ 0b101 @ rd @ 0b0010011 if haveZbb() & sizeof(xlen) == 64
 
 mapping clause assembly = RISCV_REV8(rs1, rd)
   <-> "rev8" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
@@ -197,14 +197,14 @@ function clause execute (RISCV_REV8(rs1, rd)) = {
 union clause ast = RISCV_ORCB : (regidx, regidx)
 
 mapping clause encdec = RISCV_ORCB(rs1, rd) if haveZbb()
-  <-> 0b001010000111 @ rs1 @ 0b101 @ rd @ 0b0010011
+  <-> 0b001010000111 @ rs1 @ 0b101 @ rd @ 0b0010011 if haveZbb()
 
 mapping clause assembly = RISCV_ORCB(rs1, rd)
   <-> "orc.b" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (RISCV_ORCB(rs1, rd)) = {
   rs1_val = X(rs1);
-  result : xlenbits = EXTZ(0x0);
+  result : xlenbits = zeros();
   foreach (i from 0 to (xlen_val - 8) by 8) {
     result[7..0] = match sizeof(xlen) {
       32 => if (rs1_val[31..24] == 0x00)
@@ -229,18 +229,16 @@ function clause execute (RISCV_ORCB(rs1, rd)) = {
 union clause ast = RISCV_CPOP : (regidx, regidx)
 
 mapping clause encdec = RISCV_CPOP(rs1, rd) if haveZbb()
-  <-> 0b011000000010 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b011000000010 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZbb()
 
 mapping clause assembly = RISCV_CPOP(rs1, rd)
   <-> "cpop" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (RISCV_CPOP(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : xlenbits = EXTZ(0x0);
-  foreach (i from 0 to (xlen_val - 1) by 1) {
-    result = if (rs1_val[i] == bitone)
-               then result + EXTZ(0b1)
-               else result;
+  result : xlenbits = zeros();
+  foreach (i from 0 to (xlen_val - 1)) {
+    if rs1_val[i] == bitone then result = result + EXTZ(0b1);
   };
   X(rd) = result;
   RETIRE_SUCCESS
@@ -250,18 +248,16 @@ function clause execute (RISCV_CPOP(rs1, rd)) = {
 union clause ast = RISCV_CPOPW : (regidx, regidx)
 
 mapping clause encdec = RISCV_CPOPW(rs1, rd) if haveZbb() & sizeof(xlen) == 64
-  <-> 0b011000000010 @ rs1 @ 0b001 @ rd @ 0b0011011
+  <-> 0b011000000010 @ rs1 @ 0b001 @ rd @ 0b0011011 if haveZbb() & sizeof(xlen) == 64
 
 mapping clause assembly = RISCV_CPOPW(rs1, rd)
   <-> "cpopw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (RISCV_CPOPW(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : xlenbits = EXTZ(0x0);
-  foreach (i from 0 to 31 by 1) {
-    result = if (rs1_val[i] == bitone)
-               then result + EXTZ(0b1)
-               else result;
+  result : xlenbits = zeros();
+  foreach (i from 0 to 31) {
+    if rs1_val[i] == bitone then result = result + EXTZ(0b1);
   };
   X(rd) = result;
   RETIRE_SUCCESS
@@ -271,22 +267,20 @@ function clause execute (RISCV_CPOPW(rs1, rd)) = {
 union clause ast = RISCV_CLZ : (regidx, regidx)
 
 mapping clause encdec = RISCV_CLZ(rs1, rd) if haveZbb()
-  <-> 0b011000000000 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b011000000000 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZbb()
 
 mapping clause assembly = RISCV_CLZ(rs1, rd)
   <-> "clz" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (RISCV_CLZ(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : xlenbits = EXTZ(0x0);
-  done : bits(1) = 0b0;
-  msb : xlenbits = (EXTZ(0b1) << (xlen_val - 1));
-  foreach (i from 0 to (xlen_val - 1) by 1) {
-    if (((rs1_val << i) & msb) != msb) & (done == 0b0)
-      then result = result + EXTZ(0b1)
-      else done = 0b1;
-  };
-  X(rd) = result;
+  result : nat = 0;
+  done : bool = false;
+  foreach (i from (sizeof(xlen) - 1) downto 0)
+    if ~(done) then if rs1_val[i] == bitzero
+                    then result = result + 1
+                    else done = true;
+  X(rd) = to_bits(sizeof(xlen), result);
   RETIRE_SUCCESS
 }
 
@@ -294,22 +288,20 @@ function clause execute (RISCV_CLZ(rs1, rd)) = {
 union clause ast = RISCV_CLZW : (regidx, regidx)
 
 mapping clause encdec = RISCV_CLZW(rs1, rd) if haveZbb() & sizeof(xlen) == 64
-  <-> 0b011000000000 @ rs1 @ 0b001 @ rd @ 0b0011011
+  <-> 0b011000000000 @ rs1 @ 0b001 @ rd @ 0b0011011 if haveZbb() & sizeof(xlen) == 64
 
 mapping clause assembly = RISCV_CLZW(rs1, rd)
   <-> "clzw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (RISCV_CLZW(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : xlenbits = EXTZ(0x0);
-  done : bits(1) = 0b0;
-  msb : bits(32) = (EXTZ(0b1) << 31);
-  foreach (i from 0 to 31 by 1) {
-    if (((rs1_val[31..0] << i) & msb) != msb) & (done == 0b0)
-      then result = result + EXTZ(0b1)
-      else done = 0b1;
-  };
-  X(rd) = result;
+  result : nat = 0;
+  done : bool = false;
+  foreach (i from 31 downto 0)
+    if ~(done) then if rs1_val[i] == bitzero
+                    then result = result + 1
+                    else done = true;
+  X(rd) = to_bits(sizeof(xlen), result);
   RETIRE_SUCCESS
 }
 
@@ -317,21 +309,20 @@ function clause execute (RISCV_CLZW(rs1, rd)) = {
 union clause ast = RISCV_CTZ : (regidx, regidx)
 
 mapping clause encdec = RISCV_CTZ(rs1, rd) if haveZbb()
-  <-> 0b011000000001 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b011000000001 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZbb()
 
 mapping clause assembly = RISCV_CTZ(rs1, rd)
   <-> "ctz" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (RISCV_CTZ(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : xlenbits = EXTZ(0x0);
-  done : bits(1) = 0b0;
-  foreach (i from 0 to (xlen_val - 1) by 1) {
-    if ((rs1_val >> i)[0] != bitone) & (done == 0b0)
-      then result = result + EXTZ(0b1)
-      else done = 0b1;
-  };
-  X(rd) = result;
+  result : nat = 0;
+  done : bool = false;
+  foreach (i from 0 to (sizeof(xlen) - 1))
+    if ~(done) then if rs1_val[i] == bitzero
+                    then result = result + 1
+                    else done = true;
+  X(rd) = to_bits(sizeof(xlen), result);
   RETIRE_SUCCESS
 }
 
@@ -339,20 +330,19 @@ function clause execute (RISCV_CTZ(rs1, rd)) = {
 union clause ast = RISCV_CTZW : (regidx, regidx)
 
 mapping clause encdec = RISCV_CTZW(rs1, rd) if haveZbb() & sizeof(xlen) == 64
-  <-> 0b011000000001 @ rs1 @ 0b001 @ rd @ 0b0011011
+  <-> 0b011000000001 @ rs1 @ 0b001 @ rd @ 0b0011011 if haveZbb() & sizeof(xlen) == 64
 
 mapping clause assembly = RISCV_CTZW(rs1, rd)
   <-> "ctzw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (RISCV_CTZW(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : xlenbits = EXTZ(0x0);
-  done : bits(1) = 0b0;
-  foreach (i from 0 to 31 by 1) {
-    if ((rs1_val[31..0] >> i)[0] != bitone) & (done == 0b0)
-      then result = result + EXTZ(0b1)
-      else done = 0b1;
-  };
-  X(rd) = result;
+  result : nat = 0;
+  done : bool = false;
+  foreach (i from 0 to 31)
+    if ~(done) then if rs1_val[i] == bitzero
+                    then result = result + 1
+                    else done = true;
+  X(rd) = to_bits(sizeof(xlen), result);
   RETIRE_SUCCESS
 }
