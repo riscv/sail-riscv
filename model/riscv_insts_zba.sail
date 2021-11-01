@@ -15,7 +15,7 @@ function clause execute (RISCV_SLLIUW(shamt, rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBA_RTYPEUW : (regidx, regidx, regidx, bropw)
+union clause ast = ZBA_RTYPEUW : (regidx, regidx, regidx, bropw_zba)
 
 mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, RISCV_ADDUW) if haveZba() & sizeof(xlen) == 64
   <-> 0b0000100 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011 if haveZba() & sizeof(xlen) == 64
@@ -29,7 +29,7 @@ mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, RISCV_SH2ADDUW) if haveZba() &
 mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, RISCV_SH3ADDUW) if haveZba() & sizeof(xlen) == 64
   <-> 0b0010000 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0111011 if haveZba() & sizeof(xlen) == 64
 
-mapping zba_rtypeuw_mnemonic : bropw <-> string = {
+mapping zba_rtypeuw_mnemonic : bropw_zba <-> string = {
   RISCV_ADDUW    <-> "add.uw",
   RISCV_SH1ADDUW <-> "sh1add.uw",
   RISCV_SH2ADDUW <-> "sh2add.uw",
@@ -54,7 +54,7 @@ function clause execute (ZBA_RTYPEUW(rs2, rs1, rd, op)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBA_RTYPE : (regidx, regidx, regidx, brop)
+union clause ast = ZBA_RTYPE : (regidx, regidx, regidx, brop_zba)
 
 mapping clause encdec = ZBA_RTYPE(rs2, rs1, rd, RISCV_SH1ADD) if haveZba()
   <-> 0b0010000 @ rs2 @ rs1 @ 0b010 @ rd @ 0b0110011 if haveZba()
@@ -63,7 +63,7 @@ mapping clause encdec = ZBA_RTYPE(rs2, rs1, rd, RISCV_SH2ADD) if haveZba()
 mapping clause encdec = ZBA_RTYPE(rs2, rs1, rd, RISCV_SH3ADD) if haveZba()
   <-> 0b0010000 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0110011 if haveZba()
 
-mapping zba_rtype_mnemonic : brop <-> string = {
+mapping zba_rtype_mnemonic : brop_zba <-> string = {
   RISCV_SH1ADD <-> "sh1add",
   RISCV_SH2ADD <-> "sh2add",
   RISCV_SH3ADD <-> "sh3add"
