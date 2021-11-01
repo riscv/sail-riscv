@@ -1,8 +1,4 @@
 /* ****************************************************************** */
-/* This file specifies the instructions in the BitManip Zba extension */
-
-
-/* ****************************************************************** */
 union clause ast = RISCV_SLLIUW : (bits(6), regidx, regidx)
 
 mapping clause encdec = RISCV_SLLIUW(shamt, rs1, rd) if haveZba() & sizeof(xlen) == 64

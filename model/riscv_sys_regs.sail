@@ -180,6 +180,12 @@ function haveUsrMode() -> bool = misa.U() == 0b1
 function haveNExt()    -> bool = misa.N() == 0b1
 /* see below for F and D extension tests */
 
+/* BitManip extension support. */
+function haveZba()  -> bool = true
+function haveZbb()  -> bool = true
+function haveZbc()  -> bool = true
+function haveZbs()  -> bool = true
+
 /* Cryptography extension support. Note these will need updating once */
 /* Sail can be dynamically configured with different extension support */
 /* and have dynamic changes of XLEN via S/UXL */
@@ -189,12 +195,6 @@ function haveZksed()  -> bool = true
 function haveZknh()   -> bool = true
 function haveZkne()   -> bool = true
 function haveZknd()   -> bool = true
-
-/* BitManip extension support. */
-function haveZba()  -> bool = true
-function haveZbb()  -> bool = true
-function haveZbc()  -> bool = true
-function haveZbs()  -> bool = true
 
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
