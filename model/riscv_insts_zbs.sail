@@ -1,8 +1,4 @@
 /* ****************************************************************** */
-/* This file specifies the instructions in the BitManip Zbs extension */
-
-
-/* ****************************************************************** */
 union clause ast = ZBS_IOP : (bits(6), regidx, regidx, biop)
 
 mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BCLRI) if haveZbs() & (sizeof(xlen) == 64 | shamt[5] == bitzero)

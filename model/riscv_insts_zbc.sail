@@ -1,7 +1,4 @@
 /* ****************************************************************** */
-/* This file specifies the instructions in the BitManip Zbc extension */
-  
-/* ****************************************************************** */
 union clause ast = RISCV_CLMUL : (regidx, regidx, regidx)
 
 mapping clause encdec = RISCV_CLMUL(rs2, rs1, rd) if haveZbc()

@@ -1,8 +1,4 @@
 /* ****************************************************************** */
-/* This file specifies the instructions in the BitManip Zbb extension */
-
-
-/* ****************************************************************** */
 union clause ast = RISCV_RORIW : (bits(5), regidx, regidx)
 
 mapping clause encdec = RISCV_RORIW(shamt, rs1, rd) if haveZbb() & sizeof(xlen) == 64
