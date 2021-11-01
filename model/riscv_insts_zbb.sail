@@ -9,7 +9,7 @@ mapping clause assembly = RISCV_RORIW(shamt, rs1, rd)
 
 function clause execute (RISCV_RORIW(shamt, rs1, rd)) = {
   let rs1_val = (X(rs1))[31..0];
-  let result : xlenbits = EXTS((rs1_val >> shamt) | (rs1_val << (0x20 - EXTZ(shamt))));
+  let result : xlenbits = EXTS(rs1_val >>> shamt);
   X(rd) = result;
   RETIRE_SUCCESS
 }
@@ -26,8 +26,8 @@ mapping clause assembly = RISCV_RORI(shamt, rs1, rd)
 function clause execute (RISCV_RORI(shamt, rs1, rd)) = {
   let rs1_val = X(rs1);
   let result : xlenbits = if sizeof(xlen) == 32
-                            then (rs1_val >> shamt[4..0]) | (rs1_val << (0x20 - EXTZ(shamt[4..0])))
-                            else (rs1_val >> shamt[5..0]) | (rs1_val << (0x40 - EXTZ(shamt[5..0])));
+                            then rs1_val >>> shamt[4..0]
+                            else rs1_val >>> shamt;
   X(rd) = result;
   RETIRE_SUCCESS
 }
@@ -53,8 +53,8 @@ function clause execute (ZBB_RTYPEW(rs2, rs1, rd, op)) = {
   let rs1_val = (X(rs1))[31..0];
   let shamt = (X(rs2))[4..0];
   let result : xlenbits = match op {
-    RISCV_ROLW => EXTS((rs1_val << shamt) | (rs1_val >> (0x20 - EXTZ(shamt)))),
-    RISCV_RORW => EXTS((rs1_val >> shamt) | (rs1_val << (0x20 - EXTZ(shamt))))
+    RISCV_ROLW => rs1_val <<< shamt,
+    RISCV_RORW => rs1_val >>> shamt
   };
   X(rd) = EXTS(result);
   RETIRE_SUCCESS
@@ -125,11 +125,11 @@ function clause execute (ZBB_RTYPE(rs2, rs1, rd, op)) = {
                     then rs1_val
                     else rs2_val,
     RISCV_ROL  => if sizeof(xlen) == 32
-                    then (rs1_val << rs2_val[4..0]) | (rs1_val >> (0x20 - EXTZ(rs2_val[4..0])))
-                    else (rs1_val << rs2_val[5..0]) | (rs1_val >> (0x40 - EXTZ(rs2_val[5..0]))),
+                  then rs1_val <<< rs2_val[4..0]
+                  else rs1_val <<< rs2_val[5..0],
     RISCV_ROR  => if sizeof(xlen) == 32
-                    then (rs1_val >> rs2_val[4..0]) | (rs1_val << (0x20 - EXTZ(rs2_val[4..0])))
-                    else (rs1_val >> rs2_val[5..0]) | (rs1_val << (0x40 - EXTZ(rs2_val[5..0])))
+                  then rs1_val >>> rs2_val[4..0]
+                  else rs1_val >>> rs2_val[5..0]
   };
   X(rd) = result;
   RETIRE_SUCCESS
