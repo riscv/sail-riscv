@@ -52,7 +52,7 @@ mapping clause assembly = ZBB_RTYPEW(rs2, rs1, rd, op)
 function clause execute (ZBB_RTYPEW(rs2, rs1, rd, op)) = {
   let rs1_val = (X(rs1))[31..0];
   let shamt = (X(rs2))[4..0];
-  let result : xlenbits = match op {
+  let result : bits(32) = match op {
     RISCV_ROLW => rs1_val <<< shamt,
     RISCV_RORW => rs1_val >>> shamt
   };
@@ -112,18 +112,10 @@ function clause execute (ZBB_RTYPE(rs2, rs1, rd, op)) = {
     RISCV_ANDN => rs1_val & ~(rs2_val),
     RISCV_ORN  => rs1_val | ~(rs2_val),
     RISCV_XNOR => ~(rs1_val ^ rs2_val),
-    RISCV_MAX  => if (rs1_val <_s rs2_val)
-                    then rs2_val
-                    else rs1_val,
-    RISCV_MAXU => if (rs1_val <_u rs2_val)
-                    then rs2_val
-                    else rs1_val,
-    RISCV_MIN  => if (rs1_val <_s rs2_val)
-                    then rs1_val
-                    else rs2_val,
-    RISCV_MINU => if (rs1_val <_u rs2_val)
-                    then rs1_val
-                    else rs2_val,
+    RISCV_MAX  => to_bits(sizeof(xlen), max(signed(rs1_val),   signed(rs2_val))),
+    RISCV_MAXU => to_bits(sizeof(xlen), max(unsigned(rs1_val), unsigned(rs2_val))),
+    RISCV_MIN  => to_bits(sizeof(xlen), min(signed(rs1_val),   signed(rs2_val))),
+    RISCV_MINU => to_bits(sizeof(xlen), min(unsigned(rs1_val), unsigned(rs2_val))),
     RISCV_ROL  => if sizeof(xlen) == 32
                   then rs1_val <<< rs2_val[4..0]
                   else rs1_val <<< rs2_val[5..0],
@@ -184,11 +176,9 @@ mapping clause assembly = RISCV_REV8(rs1, rd)
 
 function clause execute (RISCV_REV8(rs1, rd)) = {
   let rs1_val = X(rs1);
-  let result : xlenbits = match sizeof(xlen) {
-    32 => rs1_val[7..0] @ rs1_val[15..8] @ rs1_val[23..16] @ rs1_val[31..24],
-    64 => rs1_val[7..0] @ rs1_val[15..8] @ rs1_val[23..16] @ rs1_val[31..24] @
-          rs1_val[39..32] @ rs1_val[47..40] @ rs1_val[55..48] @ rs1_val[63..56]
-  };
+  result : xlenbits = zeros();
+  foreach (i from 0 to (sizeof(xlen) - 8) by 8)
+    result[(i + 7) .. i] = rs1_val[(sizeof(xlen) - i - 1) .. (sizeof(xlen) - i - 8)];
   X(rd) = result;
   RETIRE_SUCCESS
 }
@@ -203,24 +193,12 @@ mapping clause assembly = RISCV_ORCB(rs1, rd)
   <-> "orc.b" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (RISCV_ORCB(rs1, rd)) = {
-  rs1_val = X(rs1);
+  let rs1_val = X(rs1);
   result : xlenbits = zeros();
-  foreach (i from 0 to (xlen_val - 8) by 8) {
-    result[7..0] = match sizeof(xlen) {
-      32 => if (rs1_val[31..24] == 0x00)
-              then 0x00
-              else 0xFF,
-      64 => if (rs1_val[63..56] == 0x00)
-              then 0x00
-              else 0xFF
-    };
-    result = if (i < (xlen_val - 8))
-               then result << 8
-               else result;
-    rs1_val = if (i < (xlen_val - 8))
-                then rs1_val << 8
-                else rs1_val;
-  };
+  foreach (i from 0 to (sizeof(xlen) - 8) by 8)
+    result[(i + 7) .. i] = if rs1_val[(i + 7) .. i] == zeros()
+                           then 0x00
+                           else 0xFF;
   X(rd) = result;
   RETIRE_SUCCESS
 }
@@ -236,11 +214,10 @@ mapping clause assembly = RISCV_CPOP(rs1, rd)
 
 function clause execute (RISCV_CPOP(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : xlenbits = zeros();
-  foreach (i from 0 to (xlen_val - 1)) {
-    if rs1_val[i] == bitone then result = result + EXTZ(0b1);
-  };
-  X(rd) = result;
+  result : nat = 0;
+  foreach (i from 0 to (xlen_val - 1))
+    if rs1_val[i] == bitone then result = result + 1;
+  X(rd) = to_bits(sizeof(xlen), result);
   RETIRE_SUCCESS
 }
 
@@ -255,11 +232,10 @@ mapping clause assembly = RISCV_CPOPW(rs1, rd)
 
 function clause execute (RISCV_CPOPW(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : xlenbits = zeros();
-  foreach (i from 0 to 31) {
-    if rs1_val[i] == bitone then result = result + EXTZ(0b1);
-  };
-  X(rd) = result;
+  result : nat = 0;
+  foreach (i from 0 to 31)
+    if rs1_val[i] == bitone then result = result + 1;
+  X(rd) = to_bits(sizeof(xlen), result);
   RETIRE_SUCCESS
 }
 
