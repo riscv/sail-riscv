@@ -190,37 +190,37 @@ mapping clause assembly = SHA512SUM1R (rs2, rs1, rd)
 
 function clause execute (SHA512SIG0H(rs2, rs1, rd)) = {
   X(rd) = EXTS((X(rs1) >>  1) ^ (X(rs1) >>  7) ^ (X(rs1) >>  8) ^
-               (X(rs2) << 31)                  ^ (X(rs2) << 24) );
+               (X(rs2) << 31)                  ^ (X(rs2) << 24));
   RETIRE_SUCCESS
 }
 
 function clause execute (SHA512SIG0L(rs2, rs1, rd)) = {
   X(rd) = EXTS((X(rs1) >>  1) ^ (X(rs1) >>  7) ^ (X(rs1) >>  8) ^
-               (X(rs2) << 31) ^ (X(rs2) << 25) ^ (X(rs2) << 24) );
+               (X(rs2) << 31) ^ (X(rs2) << 25) ^ (X(rs2) << 24));
   RETIRE_SUCCESS
 }
 
 function clause execute (SHA512SIG1H(rs2, rs1, rd)) = {
   X(rd) = EXTS((X(rs1) <<  3) ^ (X(rs1) >>  6) ^ (X(rs1) >> 19) ^
-               (X(rs2) >> 29)                  ^ (X(rs2) << 13) );
+               (X(rs2) >> 29)                  ^ (X(rs2) << 13));
   RETIRE_SUCCESS
 }
 
 function clause execute (SHA512SIG1L(rs2, rs1, rd)) = {
   X(rd) = EXTS((X(rs1) <<  3) ^ (X(rs1) >>  6) ^ (X(rs1) >> 19) ^
-               (X(rs2) >> 29) ^ (X(rs2) << 26) ^ (X(rs2) << 13) );
+               (X(rs2) >> 29) ^ (X(rs2) << 26) ^ (X(rs2) << 13));
   RETIRE_SUCCESS
 }
 
 function clause execute (SHA512SUM0R(rs2, rs1, rd)) = {
   X(rd) = EXTS((X(rs1) << 25) ^ (X(rs1) << 30) ^ (X(rs1) >> 28) ^
-               (X(rs2) >>  7) ^ (X(rs2) >>  2) ^ (X(rs2) <<  4) );
+               (X(rs2) >>  7) ^ (X(rs2) >>  2) ^ (X(rs2) <<  4));
   RETIRE_SUCCESS
 }
 
 function clause execute (SHA512SUM1R(rs2, rs1, rd)) = {
   X(rd) = EXTS((X(rs1) << 23) ^ (X(rs1) >> 14) ^ (X(rs1) >> 18) ^
-               (X(rs2) >>  9) ^ (X(rs2) << 18) ^ (X(rs2) << 14) );
+               (X(rs2) >>  9) ^ (X(rs2) << 18) ^ (X(rs2) << 14));
   RETIRE_SUCCESS
 }
 
