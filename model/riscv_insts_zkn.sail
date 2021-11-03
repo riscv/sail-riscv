@@ -237,8 +237,8 @@ union clause ast = AES64ES   : (regidx, regidx, regidx)
 union clause ast = AES64DSM  : (regidx, regidx, regidx)
 union clause ast = AES64DS   : (regidx, regidx, regidx)
 
-mapping clause encdec = AES64KS1I (rcon, rs1, rd) if (haveZkne() | haveZknd()) & (sizeof(xlen) == 64) & (rcon <_u 0xB)
-  <-> 0b00 @ 0b11000 @ 0b1 @ rcon @ rs1 @ 0b001 @ rd @ 0b0010011
+mapping clause encdec = AES64KS1I (rnum, rs1, rd) if (haveZkne() | haveZknd()) & (sizeof(xlen) == 64) & (rnum <_u 0xB)
+  <-> 0b00 @ 0b11000 @ 0b1 @ rnum @ rs1 @ 0b001 @ rd @ 0b0010011
 
 mapping clause encdec = AES64IM (rs1, rd) if haveZknd() & sizeof(xlen) == 64
   <-> 0b00 @ 0b11000 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b0010011
@@ -279,13 +279,16 @@ mapping clause assembly = AES64DSM (rs2, rs1, rd)
 mapping clause assembly = AES64DS (rs2, rs1, rd)
   <-> "aes64ds" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute (AES64KS1I(rcon, rs1, rd)) = {
+/* Note: The decoding for this instruction ensures that `rnum` is always in
+   the range 0x0..0xA. See the encdec clause for AES64KS1I.
+   The rum == 0xA case is used specifically for the AES-256 KeySchedule */
+function clause execute (AES64KS1I(rnum, rs1, rd)) = {
   assert(sizeof(xlen) == 64);
-  let rs1_hi  : bits(32) = X(rs1)[63..32];
-  let rc      : bits(32) = aes_decode_rcon(rcon);
-  let rotated : bits(32) = if (rcon == 0xA) then rs1_hi else (rs1_hi >>> 8);
-  let post_sb : bits(32) = aes_subword_fwd(rotated);
-  X(rd) = (post_sb ^ rc) @ (post_sb ^ rc);
+  let prev     : bits(32) = X(rs1)[63..32];
+  let subwords : bits(32) = aes_subword_fwd(prev);
+  let result   : bits(32) = if (rnum == 0xA) then subwords
+                            else (subwords >>> 8) ^ aes_decode_rcon(rnum);
+  X(rd) = result @ result;
   RETIRE_SUCCESS
 }
 

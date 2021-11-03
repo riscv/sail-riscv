@@ -68,8 +68,15 @@ function aes_mixcolumn_inv(x) = {
   b3 @ b2 @ b1 @ b0 /* Return value */
 }
 
-val aes_decode_rcon : bits(4) -> bits(32)
+/* Turn a round number into a round constant for AES. Note that the
+   AES64KS1I instruction is defined such that the r argument is always
+   in the range 0x0..0xA. Values of rnum outside the range 0x0..0xA
+   do not decode to the AES64KS1I instruction. The 0xA case is used
+   specifically for the AES-256 KeySchedule, and this function is never
+   called in that case. */
+val aes_decode_rcon : bits(4) -> bits(32) effect {escape}
 function aes_decode_rcon(r) = {
+  assert(r <_u 0xA);
   match r {
     0x0 => 0x00000001,
     0x1 => 0x00000002,
@@ -80,13 +87,7 @@ function aes_decode_rcon(r) = {
     0x6 => 0x00000040,
     0x7 => 0x00000080,
     0x8 => 0x0000001b,
-    0x9 => 0x00000036,
-    0xA => 0x00000000,
-    0xB => 0x00000000,
-    0xC => 0x00000000,
-    0xD => 0x00000000,
-    0xE => 0x00000000,
-    0xF => 0x00000000
+    0x9 => 0x00000036
   }
 }
 
