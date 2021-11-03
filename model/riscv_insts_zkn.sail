@@ -152,22 +152,22 @@ union clause ast = SHA512SIG1H : (regidx, regidx, regidx)
 union clause ast = SHA512SUM0R : (regidx, regidx, regidx)
 union clause ast = SHA512SUM1R : (regidx, regidx, regidx)
 
-mapping clause encdec = SHA512SUM0R (rs2, rs1, rd) if haveZknh() & sizeof(xlen)==32
+mapping clause encdec = SHA512SUM0R (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
   <-> 0b01 @ 0b01000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
 
-mapping clause encdec = SHA512SUM1R (rs2, rs1, rd) if haveZknh() & sizeof(xlen)==32
+mapping clause encdec = SHA512SUM1R (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
   <-> 0b01 @ 0b01001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
 
-mapping clause encdec = SHA512SIG0L (rs2, rs1, rd) if haveZknh() & sizeof(xlen)==32
+mapping clause encdec = SHA512SIG0L (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
   <-> 0b01 @ 0b01010 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
 
-mapping clause encdec = SHA512SIG0H (rs2, rs1, rd) if haveZknh() & sizeof(xlen)==32
+mapping clause encdec = SHA512SIG0H (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
   <-> 0b01 @ 0b01110 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
 
-mapping clause encdec = SHA512SIG1L (rs2, rs1, rd) if haveZknh() & sizeof(xlen)==32
+mapping clause encdec = SHA512SIG1L (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
   <-> 0b01 @ 0b01011 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
 
-mapping clause encdec = SHA512SIG1H (rs2, rs1, rd) if haveZknh() & sizeof(xlen)==32
+mapping clause encdec = SHA512SIG1H (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
   <-> 0b01 @ 0b01111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
 
 mapping clause assembly = SHA512SIG0L (rs2, rs1, rd)
@@ -349,16 +349,16 @@ union clause ast = SHA512SIG1 : (regidx, regidx)
 union clause ast = SHA512SUM0 : (regidx, regidx)
 union clause ast = SHA512SUM1 : (regidx, regidx)
 
-mapping clause encdec = SHA512SUM0 (rs1, rd) if haveZknh() & sizeof(xlen)==64
+mapping clause encdec = SHA512SUM0 (rs1, rd) if haveZknh() & sizeof(xlen) == 64
   <-> 0b00 @ 0b01000 @ 0b00100 @ rs1 @ 0b001 @ rd @ 0b0010011
 
-mapping clause encdec = SHA512SUM1 (rs1, rd) if haveZknh() & sizeof(xlen)==64
+mapping clause encdec = SHA512SUM1 (rs1, rd) if haveZknh() & sizeof(xlen) == 64
   <-> 0b00 @ 0b01000 @ 0b00101 @ rs1 @ 0b001 @ rd @ 0b0010011
 
-mapping clause encdec = SHA512SIG0 (rs1, rd) if haveZknh() & sizeof(xlen)==64
+mapping clause encdec = SHA512SIG0 (rs1, rd) if haveZknh() & sizeof(xlen) == 64
   <-> 0b00 @ 0b01000 @ 0b00110 @ rs1 @ 0b001 @ rd @ 0b0010011
 
-mapping clause encdec = SHA512SIG1 (rs1, rd) if haveZknh() & sizeof(xlen)==64
+mapping clause encdec = SHA512SIG1 (rs1, rd) if haveZknh() & sizeof(xlen) == 64
   <-> 0b00 @ 0b01000 @ 0b00111 @ rs1 @ 0b001 @ rd @ 0b0010011
 
 mapping clause assembly = SHA512SIG0 (rs1, rd)
