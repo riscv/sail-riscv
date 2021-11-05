@@ -186,6 +186,9 @@ function haveZbb()  -> bool = true
 function haveZbc()  -> bool = true
 function haveZbs()  -> bool = true
 
+/* BitManip Cryptography extension support. */
+function haveZbkb() -> bool = true
+
 /* Cryptography extension support. Note these will need updating once */
 /* Sail can be dynamically configured with different extension support */
 /* and have dynamic changes of XLEN via S/UXL */
