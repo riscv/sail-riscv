@@ -12,7 +12,10 @@ function clause execute (RISCV_XPERM8(rs2, rs1, rd)) = {
   let rs2_val = X(rs2);
   result : xlenbits = zeros();
   foreach (i from 0 to (sizeof(xlen) - 8) by 8) {
-    result[i+7..i] = (rs1_val >> (rs2_val[i+7..i] @ 0b000)[7..0])[7..0];
+    let index = unsigned(rs2_val[i+7..i]);
+    result[i+7..i] = if 8*index < sizeof(xlen)
+                     then rs1_val[8*index+7..8*index]
+                     else zeros()
   };
   X(rd) = result;
   RETIRE_SUCCESS
@@ -32,7 +35,10 @@ function clause execute (RISCV_XPERM4(rs2, rs1, rd)) = {
   let rs2_val = X(rs2);
   result : xlenbits = zeros();
   foreach (i from 0 to (sizeof(xlen) - 4) by 4) {
-    result[i+3..i] = (rs1_val >> (rs2_val[i+3..i] @ 0b00)[3..0])[3..0];
+    let index = unsigned(rs2_val[i+3..i]);
+    result[i+3..i] = if 8*index < sizeof(xlen)
+                     then rs1_val[8*index+3..8*index]
+                     else zeros()
   };
   X(rd) = result;
   RETIRE_SUCCESS
