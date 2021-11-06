@@ -186,11 +186,9 @@ function haveZbb()  -> bool = true
 function haveZbc()  -> bool = true
 function haveZbs()  -> bool = true
 
-/* BitManip Cryptography extensions support. */
+/* Scalar Cryptography extensions support. */
 function haveZbkb() -> bool = true
 function haveZbkc() -> bool = true
-
-/* Cryptography Crossbar permutation instructions support. */
 function haveZbkx() -> bool = true
 
 /* Cryptography extension support. Note these will need updating once */
