@@ -99,7 +99,7 @@ function clause execute (RISCV_BREV8(rs1, rd)) = {
   let rs1_val = X(rs1);
   result : xlenbits = zeros();
   foreach (i from 0 to (sizeof(xlen) - 8) by 8)
-    result[i+7..i] = reverse(rs1_val[i+7..i]);
+    result[i+7..i] = reverse(rs1_val[i+7..i], 0b111);
   X(rd) = result;
   RETIRE_SUCCESS
 }
