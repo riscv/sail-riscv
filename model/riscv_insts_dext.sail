@@ -298,20 +298,20 @@ union clause ast = F_MADD_TYPE_D : (regidx, regidx, regidx, rounding_mode, regid
 /* AST <-> Binary encoding ================================ */
 
 mapping clause encdec =
-    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FMADD_D)                         if is_RV32D_or_RV64D()
-<-> rs3 @ 0b01 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0011  if is_RV32D_or_RV64D()
+    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FMADD_D)                         if supports_RV32D_or_RV64D([rs3, rs2, rs1, rd])
+<-> rs3 @ 0b01 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0011  if supports_RV32D_or_RV64D([rs3, rs2, rs1, rd])
 
 mapping clause encdec =
-    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FMSUB_D)                         if is_RV32D_or_RV64D()
-<-> rs3 @ 0b01 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0111  if is_RV32D_or_RV64D()
+    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FMSUB_D)                         if supports_RV32D_or_RV64D([rs3, rs2, rs1, rd])
+<-> rs3 @ 0b01 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0111  if supports_RV32D_or_RV64D([rs3, rs2, rs1, rd])
 
 mapping clause encdec =
-    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FNMSUB_D)                        if is_RV32D_or_RV64D()
-<-> rs3 @ 0b01 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1011  if is_RV32D_or_RV64D()
+    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FNMSUB_D)                        if supports_RV32D_or_RV64D([rs3, rs2, rs1, rd])
+<-> rs3 @ 0b01 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1011  if supports_RV32D_or_RV64D([rs3, rs2, rs1, rd])
 
 mapping clause encdec =
-    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FNMADD_D)                        if is_RV32D_or_RV64D()
-<-> rs3 @ 0b01 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1111  if is_RV32D_or_RV64D()
+    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FNMADD_D)                        if supports_RV32D_or_RV64D([rs3, rs2, rs1, rd])
+<-> rs3 @ 0b01 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1111  if supports_RV32D_or_RV64D([rs3, rs2, rs1, rd])
 
 /* Execution semantics ================================ */
 
@@ -365,20 +365,20 @@ union clause ast = F_BIN_RM_TYPE_D : (regidx, regidx, rounding_mode, regidx, f_b
 /* AST <-> Binary encoding ================================ */
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FADD_D)                             if is_RV32D_or_RV64D()
-<-> 0b000_0001 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FADD_D)                             if supports_RV32D_or_RV64D([rs2, rs1, rd])
+<-> 0b000_0001 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs2, rs1, rd])
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FSUB_D)                             if is_RV32D_or_RV64D()
-<-> 0b000_0101 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FSUB_D)                             if supports_RV32D_or_RV64D([rs2, rs1, rd])
+<-> 0b000_0101 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs2, rs1, rd])
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FMUL_D)                             if is_RV32D_or_RV64D()
-<-> 0b000_1001 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FMUL_D)                             if supports_RV32D_or_RV64D([rs2, rs1, rd])
+<-> 0b000_1001 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs2, rs1, rd])
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FDIV_D)                             if is_RV32D_or_RV64D()
-<-> 0b000_1101 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FDIV_D)                             if supports_RV32D_or_RV64D([rs2, rs1, rd])
+<-> 0b000_1101 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs2, rs1, rd])
 
 /* Execution semantics ================================ */
 
@@ -428,32 +428,32 @@ union clause ast = F_UN_RM_TYPE_D : (regidx, rounding_mode, regidx, f_un_rm_op_D
 /* AST <-> Binary encoding ================================ */
 
 mapping clause encdec =
-    F_UN_RM_TYPE_D(rs1, rm, rd, FSQRT_D)                                      if is_RV32D_or_RV64D()
-<-> 0b010_1101 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_UN_RM_TYPE_D(rs1, rm, rd, FSQRT_D)                                      if supports_RV32D_or_RV64D([rs1, rd])
+<-> 0b010_1101 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs1, rd])
 
 mapping clause encdec =
-    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_W_D)                                     if is_RV32D_or_RV64D()
-<-> 0b110_0001 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_W_D)                                     if supports_RV32D_or_RV64D([rs1])
+<-> 0b110_0001 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs1])
 
 mapping clause encdec =
-    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_WU_D)                                    if is_RV32D_or_RV64D()
-<-> 0b110_0001 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_WU_D)                                    if supports_RV32D_or_RV64D([rs1])
+<-> 0b110_0001 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs1])
 
 mapping clause encdec =
-    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_W)                                     if is_RV32D_or_RV64D()
-<-> 0b110_1001 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_W)                                     if supports_RV32D_or_RV64D([rd])
+<-> 0b110_1001 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rd])
 
 mapping clause encdec =
-    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_WU)                                    if is_RV32D_or_RV64D()
-<-> 0b110_1001 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_WU)                                    if supports_RV32D_or_RV64D([rd])
+<-> 0b110_1001 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rd])
 
 mapping clause encdec =
-    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_S_D)                                     if is_RV32D_or_RV64D()
-<-> 0b010_0000 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_S_D)                                     if supports_RV32D_or_RV64D([rs1])
+<-> 0b010_0000 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs1])
 
 mapping clause encdec =
-    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_S)                                     if is_RV32D_or_RV64D()
-<-> 0b010_0001 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_S)                                     if supports_RV32D_or_RV64D([rd])
+<-> 0b010_0001 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rd])
 
 /* D instructions, RV64 only */
 
@@ -492,7 +492,6 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FSQRT_D)) = {
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_W_D)) = {
   let rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
-
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -508,7 +507,6 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_W_D)) = {
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_WU_D)) = {
   let rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
-  
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -553,18 +551,17 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_WU)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_S_D)) = {
-  rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
-
+  let rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-      None() => { handle_illegal(); RETIRE_FAIL },
-      Some(rm') => {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_f64ToF32 (rm_3b, rs1_val_D);
 
       write_fflags(fflags);
       X_or_F_S(sys_enable_zfinx(), rd, rd_val_S);
       RETIRE_SUCCESS
-      }
+    }
   }
 }
 
@@ -586,7 +583,6 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_S)) = {
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)) = {
   assert(sizeof(xlen) >= 64);
   rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
-
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -602,7 +598,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)) = {
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_LU_D)) = {
   assert(sizeof(xlen) >= 64);
-  rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
+  let rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -641,8 +637,8 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_LU)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_ui64ToF64 (rm_3b, rs1_val_LU);
 
-      X_or_F_D(sys_enable_zfinx(), rd, rd_val_D);
       write_fflags(fflags);
+      X_or_F_D(sys_enable_zfinx(), rd, rd_val_D);
       RETIRE_SUCCESS
     }
   }
@@ -741,35 +737,35 @@ union clause ast = F_BIN_TYPE_D : (regidx, regidx, regidx, f_bin_op_D)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FSGNJ_D)               if is_RV32D_or_RV64D()
-                    <-> 0b001_0001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FSGNJ_D)               if supports_RV32D_or_RV64D([rs2, rs1, rd])
+                    <-> 0b001_0001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs2, rs1, rd])
 
-mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FSGNJN_D)              if is_RV32D_or_RV64D()
-                    <-> 0b001_0001 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FSGNJN_D)              if supports_RV32D_or_RV64D([rs2, rs1, rd])
+                    <-> 0b001_0001 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs2, rs1, rd])
 
-mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FSGNJX_D)              if is_RV32D_or_RV64D()
-                    <-> 0b001_0001 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FSGNJX_D)              if supports_RV32D_or_RV64D([rs2, rs1, rd])
+                    <-> 0b001_0001 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs2, rs1, rd])
 
-mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FMIN_D)                if is_RV32D_or_RV64D()
-                    <-> 0b001_0101 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FMIN_D)                if supports_RV32D_or_RV64D([rs2, rs1, rd])
+                    <-> 0b001_0101 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs2, rs1, rd])
 
-mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FMAX_D)                if is_RV32D_or_RV64D()
-                    <-> 0b001_0101 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FMAX_D)                if supports_RV32D_or_RV64D([rs2, rs1, rd])
+                    <-> 0b001_0101 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs2, rs1, rd])
 
-mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)                 if is_RV32D_or_RV64D()
-                    <-> 0b101_0001 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)                 if supports_RV32D_or_RV64D([rs2, rs1])
+                    <-> 0b101_0001 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs2, rs1])
 
-mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)                 if is_RV32D_or_RV64D()
-                    <-> 0b101_0001 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)                 if supports_RV32D_or_RV64D([rs2, rs1])
+                    <-> 0b101_0001 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs2, rs1])
 
-mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)                 if is_RV32D_or_RV64D()
-                    <-> 0b101_0001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if is_RV32D_or_RV64D()
+mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)                 if supports_RV32D_or_RV64D([rs2, rs1])
+                    <-> 0b101_0001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs2, rs1])
 
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJ_D)) = {
-  let rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
-  let rs2_val_D = X_or_F_D(sys_enable_zfinx(), rs2);
+  let rs1_val_D    = X_or_F_D(sys_enable_zfinx(), rs1);
+  let rs2_val_D    = X_or_F_D(sys_enable_zfinx(), rs2);
 
   let (s1, e1, m1) = fsplit_D (rs1_val_D);
   let (s2, e2, m2) = fsplit_D (rs2_val_D);
@@ -777,38 +773,34 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJ_D)) = {
 
   X_or_F_D(sys_enable_zfinx(), rd, rd_val_D);
   RETIRE_SUCCESS
-  
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJN_D)) = {
-  let rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
-  let rs2_val_D = X_or_F_D(sys_enable_zfinx(), rs2);
+  let rs1_val_D    = X_or_F_D(sys_enable_zfinx(), rs1);
+  let rs2_val_D    = X_or_F_D(sys_enable_zfinx(), rs2);
   let (s1, e1, m1) = fsplit_D (rs1_val_D);
   let (s2, e2, m2) = fsplit_D (rs2_val_D);
   let rd_val_D     = fmake_D (0b1 ^ s2, e1, m1);
 
   X_or_F_D(sys_enable_zfinx(), rd, rd_val_D);
   RETIRE_SUCCESS
-
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJX_D)) = {
-  rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
-  rs2_val_D = X_or_F_D(sys_enable_zfinx(), rs2);
-  
+  let rs1_val_D    = X_or_F_D(sys_enable_zfinx(), rs1);
+  let rs2_val_D    = X_or_F_D(sys_enable_zfinx(), rs2);
   let (s1, e1, m1) = fsplit_D (rs1_val_D);
   let (s2, e2, m2) = fsplit_D (rs2_val_D);
   let rd_val_D     = fmake_D (s1 ^ s2, e1, m1);
 
   X_or_F_D(sys_enable_zfinx(), rd, rd_val_D);
   RETIRE_SUCCESS
-
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMIN_D)) = {
-  rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
-  rs2_val_D = X_or_F_D(sys_enable_zfinx(), rs2);
-  
+  let rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
+  let rs2_val_D = X_or_F_D(sys_enable_zfinx(), rs2);
+
   let is_quiet  = true;
   let (rs1_lt_rs2, fflags) = fle_D (rs1_val_D, rs2_val_D, is_quiet);
 
@@ -826,8 +818,9 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMIN_D)) = {
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMAX_D)) = {
-  rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
-  rs2_val_D = X_or_F_D(sys_enable_zfinx(), rs2);
+  let rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
+  let rs2_val_D = X_or_F_D(sys_enable_zfinx(), rs2);
+
   let is_quiet  = true;
   let (rs2_lt_rs1, fflags) = fle_D (rs2_val_D, rs1_val_D, is_quiet);
 
@@ -845,9 +838,9 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMAX_D)) = {
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
-  rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
-  rs2_val_D = X_or_F_D(sys_enable_zfinx(), rs2);
-  
+  let rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
+  let rs2_val_D = X_or_F_D(sys_enable_zfinx(), rs2);
+
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Eq (rs1_val_D, rs2_val_D);
 
@@ -859,7 +852,7 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)) = {
   let rs1_val_D = X_or_F_D(sys_enable_zfinx(), rs1);
   let rs2_val_D = X_or_F_D(sys_enable_zfinx(), rs2);
-  
+
   let (fflags, rd_val) : (bits_fflags, bool) =
     riscv_f64Lt (rs1_val_D, rs2_val_D);
 
@@ -878,7 +871,6 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)) = {
   write_fflags(fflags);
   X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
-
 }
 
 /* AST -> Assembly notation ================================ */
@@ -949,16 +941,16 @@ union clause ast = F_UN_TYPE_D : (regidx, regidx, f_un_op_D)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = F_UN_TYPE_D(rs1, rd, FCLASS_D)                        if haveDExt()
-                    <-> 0b111_0001 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveDExt()
+mapping clause encdec = F_UN_TYPE_D(rs1, rd, FCLASS_D)                        if supports_RV32D_or_RV64D([rs1])
+                    <-> 0b111_0001 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b101_0011  if supports_RV32D_or_RV64D([rs1])
 
 /* D instructions, RV64 only */
 
-mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_X_D)                         if is_RV64D() & sys_enable_zfinx() == false
-                    <-> 0b111_0001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if is_RV64D() & sys_enable_zfinx() == false
+mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_X_D)                         if is_RV64D() & ~ (sys_enable_zfinx())
+                    <-> 0b111_0001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if is_RV64D() & ~ (sys_enable_zfinx())
 
-mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_D_X)                         if is_RV64D()  & sys_enable_zfinx() == false
-                    <-> 0b111_1001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if is_RV64D()  & sys_enable_zfinx() == false
+mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_D_X)                         if is_RV64D() & ~ (sys_enable_zfinx())
+                    <-> 0b111_1001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if is_RV64D() & ~ (sys_enable_zfinx())
 
 /* Execution semantics ================================ */
 
@@ -980,7 +972,6 @@ function clause execute (F_UN_TYPE_D(rs1, rd, FCLASS_D)) = {
 
   X(rd) = EXTZ (rd_val_10b);
   RETIRE_SUCCESS
-
 }
 
 function clause execute (F_UN_TYPE_D(rs1, rd, FMV_X_D)) = {

@@ -251,50 +251,47 @@ val rX_or_F_32 : (bool, bits(5)) -> bits(32) effect {escape, rreg}
 function rX_or_F_32(zfinx_en, i) = {
   if zfinx_en then
     nan_unbox(zfinx_en, rX(unsigned(i)))
-  else nan_unbox(zfinx_en, rF(unsigned(i)))
+  else
+    nan_unbox(zfinx_en, rF(unsigned(i)))
 }
 
 val rX_or_F_64 : (bool, bits(5)) -> bits(64) effect {escape, rreg}
 function rX_or_F_64(zfinx_en, i) = {
+  assert (zfinx_en | sizeof(flen) == 64);
   if zfinx_en & sizeof (xlen) == 32 then {
+    assert (i[0] == bitzero);
     if i == 0b00000 then
       sail_zeros(64)
-    else if i[0] == bitzero then rX(unsigned(i+1)) @ rX(unsigned(i))
-    else { assert(false); sail_zeros(64) }
+    else rX(unsigned(i+1)) @ rX(unsigned(i))
   }
-  else if zfinx_en & sizeof (xlen) == 64 then
+  else if zfinx_en & sizeof(xlen) == 64 then
     rX(unsigned(i))
-  else if ~(zfinx_en) & sizeof (flen) == 64 then
+  else
     rF(unsigned(i))
-  else {
-    assert(false); sail_zeros(64)
-  }
 }
 
 val wX_or_F_64 : (bool, bits(5), bits(64)) -> unit effect {escape, wreg}
 function wX_or_F_64(zfinx_en: bool, i: bits(5), data: bits(64)) = {
+  assert (zfinx_en | sizeof(flen) == 64);
   if zfinx_en & sizeof(xlen) == 32 then {
-    if i == 0b00000 then ()
-    else if i[0] == bitzero then {
+    assert (i[0] == bitzero);
+    if i != 0b00000 then {
       wX(unsigned(i)) = data[31..0];
       wX(unsigned(i+1)) = data[63..32];
     }
-    else assert(false);
   }
   else if zfinx_en & sizeof (xlen) == 64 then
-    { wX(unsigned(i)) = data; }
-  else if ~(zfinx_en) & sizeof (flen) == 64 then
-    { wF(unsigned(i)) = data; }
-  else assert(false);
+    wX(unsigned(i)) = data
+  else if ~ (zfinx_en) & sizeof (flen) == 64 then
+    wF(unsigned(i)) = data
 }
 
 val wX_or_F_32 : (bool, bits(5), bits(32)) -> unit effect {escape, wreg}
 function wX_or_F_32(zfinx_en: bool, i: bits(5), data : bits(32)) = {
   if zfinx_en then
-    { wX(unsigned(i)) = nan_box(zfinx_en, data); }
-  else {
-    wF(unsigned(i)) = nan_box(zfinx_en, data);
-  }
+    wX(unsigned(i)) = nan_box(zfinx_en, data)
+  else
+    wF(unsigned(i)) = nan_box(zfinx_en, data)
 }
 
 overload X_or_F_S = { rX_or_F_32, wX_or_F_32 }
@@ -381,7 +378,7 @@ mapping freg_name = {
 
 val reg_or_freg_name : bits(5) <-> string
 mapping reg_or_freg_name = {
-  reg if sys_enable_zfinx() <-> reg_name(reg) if sys_enable_zfinx(),
+  reg if sys_enable_zfinx()     <-> reg_name(reg)  if sys_enable_zfinx(),
   reg if ~ (sys_enable_zfinx()) <-> freg_name(reg) if ~ (sys_enable_zfinx())
 }
 

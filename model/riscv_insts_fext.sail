@@ -323,9 +323,19 @@ function is_RV32F_or_RV64F () -> bool = (haveFExt() & (sizeof(xlen) == 32 | size
 function is_RV64F          () -> bool = (haveFExt() & sizeof(xlen) == 64)
 
 function is_RV32D_or_RV64D () -> bool = (haveDExt() & (sizeof(xlen) == 32 | sizeof(xlen) == 64))
-function is_RV32D          () -> bool = (haveDExt() & sizeof(xlen) == 32)
 function is_RV64D          () -> bool = (haveDExt() & sizeof(xlen) == 64)
 
+val supports_RV32D_or_RV64D : forall 'n, 'n > 0. (implicit('n), vector('n, dec, bits(5))) -> bool effect {rreg}
+function supports_RV32D_or_RV64D (reg_vec_len, registers) = {
+  if ~ (sys_enable_zfinx()) then is_RV32D_or_RV64D()
+  else if sys_enable_zfinx() & is_RV64D() then true
+  else {
+    foreach (x from 0 to (reg_vec_len - 1) ) {
+      if (registers[x][0] == bitone) then return false
+    };
+    true
+  }
+}
 /* ****************************************************************** */
 /* Floating-point loads                                               */
 
@@ -410,11 +420,11 @@ union clause ast = STORE_FP : (bits(12), regidx, regidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)                             if is_RV32F_or_RV64F()
-                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b010 @ imm5 : bits(5) @ 0b010_0111  if is_RV32F_or_RV64F()
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)                             if is_RV32F_or_RV64F() & ~ (sys_enable_zfinx())
+                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b010 @ imm5 : bits(5) @ 0b010_0111  if is_RV32F_or_RV64F() & ~ (sys_enable_zfinx())
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)                           if is_RV32D_or_RV64D()
-                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b011 @ imm5 : bits(5) @ 0b010_0111  if is_RV32D_or_RV64D()
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)                           if is_RV32D_or_RV64D() & ~ (sys_enable_zfinx())
+                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b011 @ imm5 : bits(5) @ 0b010_0111  if is_RV32D_or_RV64D() & ~ (sys_enable_zfinx())
 
 /* Execution semantics ================================ */
 
@@ -893,37 +903,36 @@ mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)                 if is_
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)) = {
-  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
-  let rs2_val_S = X_or_F_S(sys_enable_zfinx(), rs2);
-  let (s1, e1, m1)   = fsplit_S (rs1_val_S);
-  let (s2, e2, m2)   = fsplit_S (rs2_val_S);
-  let rd_val_S       = fmake_S (s2, e1, m1);
+  let rs1_val_S    = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs2_val_S    = X_or_F_S(sys_enable_zfinx(), rs2);
+  let (s1, e1, m1) = fsplit_S (rs1_val_S);
+  let (s2, e2, m2) = fsplit_S (rs2_val_S);
+  let rd_val_S     = fmake_S (s2, e1, m1);
 
   X_or_F_S(sys_enable_zfinx(), rd, rd_val_S);
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)) = {
-  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
-  let rs2_val_S = X_or_F_S(sys_enable_zfinx(), rs2);
-  let (s1, e1, m1)   = fsplit_S (rs1_val_S);
-  let (s2, e2, m2)   = fsplit_S (rs2_val_S);
-  let rd_val_S       = fmake_S (0b1 ^ s2, e1, m1);
+  let rs1_val_S    = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs2_val_S    = X_or_F_S(sys_enable_zfinx(), rs2);
+  let (s1, e1, m1) = fsplit_S (rs1_val_S);
+  let (s2, e2, m2) = fsplit_S (rs2_val_S);
+  let rd_val_S     = fmake_S (0b1 ^ s2, e1, m1);
 
   X_or_F_S(sys_enable_zfinx(), rd, rd_val_S);
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)) = {
-  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
-  let rs2_val_S = X_or_F_S(sys_enable_zfinx(), rs2);
-  let (s1, e1, m1)   = fsplit_S (rs1_val_S);
-  let (s2, e2, m2)   = fsplit_S (rs2_val_S);
-  let rd_val_S       = fmake_S (s1 ^ s2, e1, m1);
+  let rs1_val_S    = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs2_val_S    = X_or_F_S(sys_enable_zfinx(), rs2);
+  let (s1, e1, m1) = fsplit_S (rs1_val_S);
+  let (s2, e2, m2) = fsplit_S (rs2_val_S);
+  let rd_val_S     = fmake_S (s1 ^ s2, e1, m1);
 
   X_or_F_S(sys_enable_zfinx(), rd, rd_val_S);
   RETIRE_SUCCESS
-
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)) = {
