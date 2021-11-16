@@ -323,6 +323,7 @@ function is_RV32F_or_RV64F () -> bool = (haveFExt() & (sizeof(xlen) == 32 | size
 function is_RV64F          () -> bool = (haveFExt() & sizeof(xlen) == 64)
 
 function is_RV32D_or_RV64D () -> bool = (haveDExt() & (sizeof(xlen) == 32 | sizeof(xlen) == 64))
+function is_RV32D          () -> bool = (haveDExt() & sizeof(xlen) == 32)
 function is_RV64D          () -> bool = (haveDExt() & sizeof(xlen) == 64)
 
 /* ****************************************************************** */
@@ -497,9 +498,9 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)) = {
-  let (_, rs1_val_32b) = X_or_F_S(sys_enable_zfinx(), rs1);
-  let (_, rs2_val_32b) = X_or_F_S(sys_enable_zfinx(), rs2);
-  let (_, rs3_val_32b) = X_or_F_S(sys_enable_zfinx(), rs3);
+  let rs1_val_32b = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs2_val_32b = X_or_F_S(sys_enable_zfinx(), rs2);
+  let rs3_val_32b = X_or_F_S(sys_enable_zfinx(), rs3);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -512,7 +513,8 @@ function clause execute (F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)) = {
           FNMADD_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, negate_S (rs3_val_32b))
         };
       write_fflags(fflags);
-      X_or_F_S(sys_enable_zfinx(), rd, rd_val_32b)
+      X_or_F_S(sys_enable_zfinx(), rd, rd_val_32b);
+      RETIRE_SUCCESS
     }
   }
 }
@@ -562,8 +564,8 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)) = {
-  let (_, rs1_val_32b) = X_or_F_S(sys_enable_zfinx(), rs1);
-  let (_, rs2_val_32b) = X_or_F_S(sys_enable_zfinx(), rs2);
+  let rs1_val_32b = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs2_val_32b = X_or_F_S(sys_enable_zfinx(), rs2);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -575,7 +577,8 @@ function clause execute (F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)) = {
         FDIV_S  => riscv_f32Div (rm_3b, rs1_val_32b, rs2_val_32b)
       };
       write_fflags(fflags);
-      X_or_F_S(sys_enable_zfinx(), rd, rd_val_32b)
+      X_or_F_S(sys_enable_zfinx(), rd, rd_val_32b);
+      RETIRE_SUCCESS
     }
   }
 }
@@ -646,7 +649,7 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)) = {
-  let (_, rs1_val_S) = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -654,13 +657,14 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)) = {
       let (fflags, rd_val_S) = riscv_f32Sqrt   (rm_3b, rs1_val_S);
 
       write_fflags(fflags);
-      X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
+      X_or_F_S(sys_enable_zfinx(), rd, rd_val_S);
+      RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)) = {
-  let (_, rs1_val_S) = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -675,7 +679,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)) = {
-  let (_, rs1_val_S) = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -698,7 +702,8 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_W)) = {
       let (fflags, rd_val_S) = riscv_i32ToF32 (rm_3b, rs1_val_W);
 
       write_fflags(fflags);
-      X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
+      X_or_F_S(sys_enable_zfinx(), rd, rd_val_S);
+      RETIRE_SUCCESS
     }
   }
 }
@@ -712,14 +717,15 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
       let (fflags, rd_val_S) = riscv_ui32ToF32 (rm_3b, rs1_val_WU);
 
       write_fflags(fflags);
-      X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
+      X_or_F_S(sys_enable_zfinx(), rd, rd_val_S);
+      RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
   assert(sizeof(xlen) >= 64);
-  let (_, rs1_val_S) = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -735,7 +741,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
   assert(sizeof(xlen) >= 64);
-  let (_, rs1_val_S) = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -759,7 +765,8 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
       let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
 
       write_fflags(fflags);
-      X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
+      X_or_F_S(sys_enable_zfinx(), rd, rd_val_S);
+      RETIRE_SUCCESS
     }
   }
 }
@@ -774,7 +781,8 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
       let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
 
       write_fflags(fflags);
-      X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
+      X_or_F_S(sys_enable_zfinx(), rd, rd_val_S);
+      RETIRE_SUCCESS
     }
   }
 }
@@ -885,39 +893,42 @@ mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)                 if is_
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)) = {
-  let (_, rs1_val_S) = X_or_F_S(sys_enable_zfinx(), rs1);
-  let (_, rs2_val_S) = X_or_F_S(sys_enable_zfinx(), rs2);
+  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs2_val_S = X_or_F_S(sys_enable_zfinx(), rs2);
   let (s1, e1, m1)   = fsplit_S (rs1_val_S);
   let (s2, e2, m2)   = fsplit_S (rs2_val_S);
   let rd_val_S       = fmake_S (s2, e1, m1);
 
-  X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
+  X_or_F_S(sys_enable_zfinx(), rd, rd_val_S);
+  RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)) = {
-  let (_, rs1_val_S) = X_or_F_S(sys_enable_zfinx(), rs1);
-  let (_, rs2_val_S) = X_or_F_S(sys_enable_zfinx(), rs2);
+  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs2_val_S = X_or_F_S(sys_enable_zfinx(), rs2);
   let (s1, e1, m1)   = fsplit_S (rs1_val_S);
   let (s2, e2, m2)   = fsplit_S (rs2_val_S);
   let rd_val_S       = fmake_S (0b1 ^ s2, e1, m1);
 
-  X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
+  X_or_F_S(sys_enable_zfinx(), rd, rd_val_S);
+  RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)) = {
-  let (_, rs1_val_S) = X_or_F_S(sys_enable_zfinx(), rs1);
-  let (_, rs2_val_S) = X_or_F_S(sys_enable_zfinx(), rs2);
+  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs2_val_S = X_or_F_S(sys_enable_zfinx(), rs2);
   let (s1, e1, m1)   = fsplit_S (rs1_val_S);
   let (s2, e2, m2)   = fsplit_S (rs2_val_S);
   let rd_val_S       = fmake_S (s1 ^ s2, e1, m1);
 
-  X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
+  X_or_F_S(sys_enable_zfinx(), rd, rd_val_S);
+  RETIRE_SUCCESS
 
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)) = {
-  let (_, rs1_val_S) = X_or_F_S(sys_enable_zfinx(), rs1);
-  let (_, rs2_val_S) = X_or_F_S(sys_enable_zfinx(), rs2);
+  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs2_val_S = X_or_F_S(sys_enable_zfinx(), rs2);
 
   let is_quiet  = true;
   let (rs1_lt_rs2, fflags) = fle_S (rs1_val_S, rs2_val_S, is_quiet);
@@ -931,12 +942,13 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)) = {
                   else /* (not rs1_lt_rs2) */                                            rs2_val_S;
 
   accrue_fflags(fflags);
-  X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
+  X_or_F_S(sys_enable_zfinx(), rd, rd_val_S);
+  RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)) = {
-  let (_, rs1_val_S) = X_or_F_S(sys_enable_zfinx(), rs1);
-  let (_, rs2_val_S) = X_or_F_S(sys_enable_zfinx(), rs2);
+  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs2_val_S = X_or_F_S(sys_enable_zfinx(), rs2);
 
   let is_quiet  = true;
   let (rs2_lt_rs1, fflags) = fle_S (rs2_val_S, rs1_val_S, is_quiet);
@@ -950,12 +962,13 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)) = {
                   else /* (not rs2_lt_rs1) */                                            rs2_val_S;
 
   accrue_fflags(fflags);
-  X_or_F_S(sys_enable_zfinx(), rd, rd_val_S)
+  X_or_F_S(sys_enable_zfinx(), rd, rd_val_S);
+  RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
-  let (_, rs1_val_S) = X_or_F_S(sys_enable_zfinx(), rs1);
-  let (_, rs2_val_S) = X_or_F_S(sys_enable_zfinx(), rs2);
+  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs2_val_S = X_or_F_S(sys_enable_zfinx(), rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Eq (rs1_val_S, rs2_val_S);
@@ -966,8 +979,8 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)) = {
-  let (_, rs1_val_S) = X_or_F_S(sys_enable_zfinx(), rs1);
-  let (_, rs2_val_S) = X_or_F_S(sys_enable_zfinx(), rs2);
+  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs2_val_S = X_or_F_S(sys_enable_zfinx(), rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Lt (rs1_val_S, rs2_val_S);
@@ -978,8 +991,8 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)) = {
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)) = {
-  let (_, rs1_val_S) = X_or_F_S(sys_enable_zfinx(), rs1);
-  let (_, rs2_val_S) = X_or_F_S(sys_enable_zfinx(), rs2);
+  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs2_val_S = X_or_F_S(sys_enable_zfinx(), rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Le (rs1_val_S, rs2_val_S);
@@ -1069,7 +1082,7 @@ mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_W_X)                         if
 /* Execution semantics ================================ */
 
 function clause execute (F_UN_TYPE_S(rs1, rd, FCLASS_S)) = {
-  let (_, rs1_val_S) = X_or_F_S(sys_enable_zfinx(), rs1);
+  let rs1_val_S = X_or_F_S(sys_enable_zfinx(), rs1);
 
   let rd_val_10b : bits (10) =
     if      f_is_neg_inf_S     (rs1_val_S) then 0b_00_0000_0001
