@@ -74,41 +74,6 @@
 /* Original version written by Rishiyur S. Nikhil, Sept-Oct 2019    */
 
 /* **************************************************************** */
-/* NaN boxing/unboxing.                                             */
-/* When 32-bit floats (single-precision) are stored in 64-bit regs  */
-/* they must be 'NaN boxed' (upper 32b all ones).                   */
-/* When 32-bit floats (single-precision) are read from 64-bit regs  */
-/* they must be 'NaN unboxed'.                                      */
-
-function canonical_NaN_S() -> bits(32) = 0x_7fc0_0000
-function canonical_NaN_D() -> bits(64) = 0x_7ff8_0000_0000_0000
-
-val nan_unbox_do : (bool, bits(64)) -> bits(32)
-function nan_unbox_do (zfinx_en, regval) =
-  if zfinx_en
-    then regval [31..0]
-  else if regval [63..32] == 0x_FFFF_FFFF
-    then regval [31..0]
-  else canonical_NaN_S()
-
-val nan_unbox_pass : (bool, bits(32)) -> bits(32)
-function nan_unbox_pass (zfinx_en, regval) =
-  regval
-
-val nan_box_do : (bool, bits(32)) -> bits(64)
-function nan_box_do (zfinx_en, regval) =
-  0x_FFFF_FFFF @ regval
-
-
-val nan_box_pass : (bool, bits(32)) -> bits(32)
-function nan_box_pass (zfinx_en, regval) =
-  regval
-
-overload nan_unbox = { nan_unbox_do, nan_unbox_pass }
-overload nan_box = { nan_box_do, nan_box_pass }
-
-
-/* **************************************************************** */
 /* Floating point register file                                     */
 
 register f0  : fregtype
@@ -245,58 +210,6 @@ function wF_bits(i: bits(5), data: flenbits) -> unit = {
 
 overload F = {rF_bits, wF_bits, rF, wF}
 
-/* ---- Register Read/ Writes */
-
-val rX_or_F_32 : (bool, bits(5)) -> bits(32) effect {escape, rreg}
-function rX_or_F_32(zfinx_en, i) = {
-  if zfinx_en then
-    nan_unbox(zfinx_en, rX(unsigned(i)))
-  else
-    nan_unbox(zfinx_en, rF(unsigned(i)))
-}
-
-val rX_or_F_64 : (bool, bits(5)) -> bits(64) effect {escape, rreg}
-function rX_or_F_64(zfinx_en, i) = {
-  assert (zfinx_en | sizeof(flen) == 64);
-  if zfinx_en & sizeof (xlen) == 32 then {
-    assert (i[0] == bitzero);
-    if i == 0b00000 then
-      sail_zeros(64)
-    else rX(unsigned(i+1)) @ rX(unsigned(i))
-  }
-  else if zfinx_en & sizeof(xlen) == 64 then
-    rX(unsigned(i))
-  else
-    rF(unsigned(i))
-}
-
-val wX_or_F_64 : (bool, bits(5), bits(64)) -> unit effect {escape, wreg}
-function wX_or_F_64(zfinx_en: bool, i: bits(5), data: bits(64)) = {
-  assert (zfinx_en | sizeof(flen) == 64);
-  if zfinx_en & sizeof(xlen) == 32 then {
-    assert (i[0] == bitzero);
-    if i != 0b00000 then {
-      wX(unsigned(i)) = data[31..0];
-      wX(unsigned(i+1)) = data[63..32];
-    }
-  }
-  else if zfinx_en & sizeof (xlen) == 64 then
-    wX(unsigned(i)) = data
-  else if ~ (zfinx_en) & sizeof (flen) == 64 then
-    wF(unsigned(i)) = data
-}
-
-val wX_or_F_32 : (bool, bits(5), bits(32)) -> unit effect {escape, wreg}
-function wX_or_F_32(zfinx_en: bool, i: bits(5), data : bits(32)) = {
-  if zfinx_en then
-    wX(unsigned(i)) = nan_box(zfinx_en, data)
-  else
-    wF(unsigned(i)) = nan_box(zfinx_en, data)
-}
-
-overload X_or_F_S = { rX_or_F_32, wX_or_F_32 }
-overload X_or_F_D = { rX_or_F_64, wX_or_F_64 }
-
 /* register names */
 
 val freg_name_abi : regidx <-> string
@@ -376,12 +289,6 @@ mapping freg_name = {
     0b11111 <-> "ft11"
 }
 
-val reg_or_freg_name : bits(5) <-> string
-mapping reg_or_freg_name = {
-  reg if sys_enable_zfinx()     <-> reg_name(reg)  if sys_enable_zfinx(),
-  reg if ~ (sys_enable_zfinx()) <-> freg_name(reg) if ~ (sys_enable_zfinx())
-}
-
 val init_fdext_regs : unit -> unit effect {wreg}
 function init_fdext_regs () = {
   f0  = zero_freg;
@@ -437,13 +344,13 @@ function ext_write_fcsr (frm, fflags) = {
   fcsr->FRM()    = frm;      /* Note: frm can be an illegal value, 101, 110, 111 */
   fcsr->FFLAGS() = fflags;
   update_softfloat_fflags(fflags);
-  if ~ (sys_enable_zfinx()) then dirty_fd_context();
+  dirty_fd_context();
 }
 
 /* called for softfloat paths (softfloat flags are consistent) */
 val write_fflags : (bits(5)) -> unit effect {rreg, wreg}
 function write_fflags(fflags) = {
-  if   fcsr.FFLAGS() != fflags & ~ (sys_enable_zfinx())
+  if   fcsr.FFLAGS() != fflags
   then dirty_fd_context();
   fcsr->FFLAGS() = fflags;
 }
@@ -456,6 +363,6 @@ function accrue_fflags(flags) = {
   then {
     fcsr->FFLAGS() = f;
     update_softfloat_fflags(f);
-    if ~ (sys_enable_zfinx()) then dirty_fd_context();
+    dirty_fd_context();
   }
 }
