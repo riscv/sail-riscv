@@ -7,23 +7,49 @@ else ifeq ($(ARCH),64)
   override ARCH := RV64
 endif
 
+# Currently, we only have F with RV32, and both F and D with RV64.
 ifeq ($(ARCH),RV32)
   SAIL_XLEN := riscv_xlen32.sail
+  SAIL_FLEN := riscv_flen_F.sail
 else ifeq ($(ARCH),RV64)
   SAIL_XLEN := riscv_xlen64.sail
+  SAIL_FLEN := riscv_flen_D.sail
 else
   $(error '$(ARCH)' is not a valid architecture, must be one of: RV32, RV64)
 endif
-
-SAIL_FLEN := riscv_flen_D.sail
 
 # Instruction sources, depending on target
 SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_misa_ext.sail
 SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail riscv_insts_hints.sail
 SAIL_DEFAULT_INST += riscv_insts_fext.sail riscv_insts_cfext.sail
+ifeq ($(ARCH),RV64)
 SAIL_DEFAULT_INST += riscv_insts_dext.sail riscv_insts_cdext.sail
-SAIL_DEFAULT_INST += riscv_insts_zkn.sail
-SAIL_DEFAULT_INST += riscv_insts_zks.sail
+endif
+
+SAIL_DEFAULT_INST += riscv_insts_pext_prelude.sail riscv_insts_pext_ov.sail \
+riscv_insts_pext_add.sail riscv_insts_pext_sub.sail \
+riscv_insts_pext_cr.sail riscv_insts_pext_mul.sail \
+riscv_insts_pext_shift.sail \
+riscv_insts_pext_misc.sail riscv_insts_pext_unpack.sail \
+riscv_insts_pext_pack.sail riscv_insts_pext_msb_add_mul.sail \
+riscv_insts_pext_kmda.sail riscv_insts_pext_muladdsub.sail \
+riscv_insts_pext_32_mul_64_add.sail \
+riscv_insts_pext_q15.sail riscv_insts_pext_q31_sat.sail \
+riscv_insts_pext_32_compute.sail \
+riscv_insts_pext_compare.sail
+
+ifeq ($(ARCH),RV64)
+SAIL_DEFAULT_INST += riscv_insts_pext_misc32.sail \
+riscv_insts_pext_muladdsub32.sail \
+riscv_insts_pext_pack32.sail \
+riscv_insts_pext_shift32.sail \
+riscv_insts_pext_q15_64.sail
+SAIL_DEFAULT_INST += riscv_insts_pext_tmp_function_64.sail
+else
+SAIL_DEFAULT_INST += riscv_insts_pext_tmp_function_32.sail
+endif
+
+#SAIL_DEFAULT_INST += riscv_insts_pext_tmp_function.sail
 
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
 SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
@@ -62,8 +88,7 @@ SAIL_ARCH_SRCS = $(PRELUDE)
 SAIL_ARCH_SRCS += riscv_types_common.sail riscv_types_ext.sail riscv_types.sail
 SAIL_ARCH_SRCS += riscv_vmem_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail
 SAIL_ARCH_SRCS += riscv_mem.sail $(SAIL_VM_SRCS)
-SAIL_ARCH_RVFI_SRCS = $(PRELUDE) rvfi_dii.sail riscv_types_common.sail riscv_types_ext.sail riscv_types.sail riscv_vmem_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS) riscv_types_kext.sail
-SAIL_ARCH_SRCS += riscv_types_kext.sail    # Shared/common code for the cryptography extension.
+SAIL_ARCH_RVFI_SRCS = $(PRELUDE) rvfi_dii.sail riscv_types_common.sail riscv_types_ext.sail riscv_types.sail riscv_vmem_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS)
 
 SAIL_STEP_SRCS = riscv_step_common.sail riscv_step_ext.sail riscv_decode_ext.sail riscv_fetch.sail riscv_step.sail
 RVFI_STEP_SRCS = riscv_step_common.sail riscv_step_rvfi.sail riscv_decode_ext.sail riscv_fetch_rvfi.sail riscv_step.sail
@@ -151,7 +176,7 @@ ifneq (,$(SAILCOV))
 ALL_BRANCHES = generated_definitions/c/all_branches
 C_FLAGS += -DSAILCOV
 SAIL_FLAGS += -c_coverage $(ALL_BRANCHES) -c_include sail_coverage.h
-C_LIBS += $(SAIL_LIB_DIR)/coverage/libsail_coverage.a -lm -lpthread -ldl
+C_LIBS += $(SAIL_LIB_DIR)/coverage/libsail_coverage.a -lpthread -ldl
 endif
 
 RISCV_EXTRAS_LEM_FILES = riscv_extras.lem mem_metadata.lem riscv_extras_fdext.lem

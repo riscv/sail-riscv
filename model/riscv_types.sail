@@ -1,71 +1,3 @@
-/*=======================================================================================*/
-/*  RISCV Sail Model                                                                     */
-/*                                                                                       */
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except for the snapshots of the Lem and Sail libraries                   */
-/*  in the prover_snapshots directory (which include copies of their                     */
-/*  licences), is subject to the BSD two-clause licence below.                           */
-/*                                                                                       */
-/*  Copyright (c) 2017-2021                                                              */
-/*    Prashanth Mundkur                                                                  */
-/*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
-/*    Jon French                                                                         */
-/*    Brian Campbell                                                                     */
-/*    Robert Norton-Wright                                                               */
-/*    Alasdair Armstrong                                                                 */
-/*    Thomas Bauereiss                                                                   */
-/*    Shaked Flur                                                                        */
-/*    Christopher Pulte                                                                  */
-/*    Peter Sewell                                                                       */
-/*    Alexander Richardson                                                               */
-/*    Hesham Almatary                                                                    */
-/*    Jessica Clarke                                                                     */
-/*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
-/*    Peter Rugg                                                                         */
-/*    Aril Computer Corp., for contributions by Scott Johnson                            */
-/*                                                                                       */
-/*  All rights reserved.                                                                 */
-/*                                                                                       */
-/*  This software was developed by the above within the Rigorous                         */
-/*  Engineering of Mainstream Systems (REMS) project, partly funded by                   */
-/*  EPSRC grant EP/K008528/1, at the Universities of Cambridge and                       */
-/*  Edinburgh.                                                                           */
-/*                                                                                       */
-/*  This software was developed by SRI International and the University of               */
-/*  Cambridge Computer Laboratory (Department of Computer Science and                    */
-/*  Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and                 */
-/*  under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA                 */
-/*  SSITH research programme.                                                            */
-/*                                                                                       */
-/*  This project has received funding from the European Research Council                 */
-/*  (ERC) under the European Union’s Horizon 2020 research and innovation                */
-/*  programme (grant agreement 789108, ELVER).                                           */
-/*                                                                                       */
-/*                                                                                       */
-/*  Redistribution and use in source and binary forms, with or without                   */
-/*  modification, are permitted provided that the following conditions                   */
-/*  are met:                                                                             */
-/*  1. Redistributions of source code must retain the above copyright                    */
-/*     notice, this list of conditions and the following disclaimer.                     */
-/*  2. Redistributions in binary form must reproduce the above copyright                 */
-/*     notice, this list of conditions and the following disclaimer in                   */
-/*     the documentation and/or other materials provided with the                        */
-/*     distribution.                                                                     */
-/*                                                                                       */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''                   */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED                    */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                      */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR                  */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                         */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                     */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF                     */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND                  */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,                   */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT                   */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF                   */
-/*  SUCH DAMAGE.                                                                         */
-/*=======================================================================================*/
-
 /* Basic type and function definitions used pervasively in the model. */
 
 /* this value is only defined for the runtime platform for ELF loading
@@ -426,3 +358,13 @@ function word_width_bytes width = match width {
   WORD   => 4,
   DOUBLE => 8
 }
+
+
+
+enum p_inst_rs2_rs1_rd_op = {ADD8, ADD16, ADD64, AVE, BITREV, CMPEQ8, CMPEQ16, CRAS16, CRSA16, KADD8, KADD16, KADD64, KADDH, KADDW, KCRAS16, KCRSA16, KDMBB, KDMBT, KDMTT, KDMABB, KDMABT, KDMATT, KHM8, KHMX8, KHM16, KHMX16, KHMBB, KHMBT, KHMTT, KMABB, KMABT, KMATT, KMADA, KMAXDA, KMADS, KMADRS, KMAXDS, KMAR64, KMDA, KMXDA, KMMAC, KMMAC_U, KMMAWB, KMMAWB_U, KMMAWB2, KMMAWB2_U, KMMAWT, KMMAWT_U, KMMAWT2, KMMAWT2_U, KMMSB, KMMSB_U, KMMWB2, KMMWB2_U, KMMWT2, KMMWT2_U, KMSDA, KMSXDA, KMSR64, KSLLW, KSLL8, KSLL16, KSLRA8, KSLRA8_U, KSLRA16, KSLRA16_U, KSLRAW, KSLRAW_U, KSTAS16, KSTSA16, KSUB8, KSUB16, KSUB64, KSUBH, KSUBW, KWMMUL, KWMMUL_U, MADDR32, MAXW, MINW, MSUBR32, MULR64, MULSR64, PBSAD, PBSADA, PKBB16, PKBT16, PKTT16, PKTB16, RADD8, RADD16, RADD64, RADDW, RCRAS16, RCRSA16, RSTAS16, RSTSA16, RSUB8, RSUB16, RSUB64, RSUBW, SCMPLE8, SCMPLE16, SCMPLT8, SCMPLT16, SLL8, SLL16, SMAL, SMALBB, SMALBT, SMALTT, SMALDA, SMALXDA, SMALDS, SMALDRS, SMALXDS, SMAR64, SMAQA, SMAQA_SU, SMAX8, SMAX16, SMBB16, SMBT16, SMTT16, SMDS, SMDRS, SMXDS, SMIN8, SMIN16, SMMUL, SMMUL_U, SMMWB, SMMWB_U, SMMWT, SMMWT_U, SMSLDA, SMSLXDA, SMSR64, SMUL8, SMULX8, SMUL16, SMULX16, SRA_U, SRA8, SRA8_U, SRA16, SRA16_U, SRL8, SRL8_U, SRL16, SRL16_U, STAS16, STSA16, SUB8, SUB16, SUB64, UCMPLE8, UCMPLE16, UCMPLT8, UCMPLT16, UKADD8, UKADD16, UKADD64, UKADDH, UKADDW, UKCRAS16, UKCRSA16, UKMAR64, UKMSR64, UKSTAS16, UKSTSA16, UKSUB8, UKSUB16, UKSUB64, UKSUBH, UKSUBW, UMAR64, UMAQA, UMAX8, UMAX16, UMIN8, UMIN16, UMSR64, UMUL8, UMULX8, UMUL16, UMULX16, URADD8, URADD16, URADD64, URADDW, URCRAS16, URCRSA16, URSTAS16, URSTSA16, URSUB8, URSUB16, URSUB64, URSUBW, WEXT, ADD32, CRAS32, CRSA32, KADD32, KCRAS32, KCRSA32, KDMBB16, KDMBT16, KDMTT16, KDMABB16, KDMABT16, KDMATT16, KHMBB16, KHMBT16, KHMTT16, KMABB32, KMABT32, KMATT32, KMAXDA32, KMDA32, KMXDA32, KMADS32, KMADRS32, KMAXDS32, KMSDA32, KMSXDA32, KSLL32, KSLRA32, KSLRA32_U, KSTAS32, KSTSA32, KSUB32, PKBB32, PKBT32, PKTT32, PKTB32, RADD32, RCRAS32, RCRSA32, RSTAS32, RSTSA32, RSUB32, SLL32, SMAX32, SMBT32, SMTT32, SMDS32, SMDRS32, SMXDS32, SMIN32, SRA32, SRA32_U, SRL32, SRL32_U, STAS32, STSA32, SUB32, UKADD32, UKCRAS32, UKCRSA32, UKSTAS32, UKSTSA32, UKSUB32, UMAX32, UMIN32, URADD32, URCRAS32, URCRSA32, URSTAS32, URSTSA32, URSUB32}
+enum p_inst_imm6_rs1_rd_op = {BITREVI, SRAI_U}
+enum p_inst_rs3_rs2_rs1_rd_op = {BPICK}
+enum p_inst_rs1_rd_op = {CLRS8, CLRS16, CLRS32, CLO8, CLO16, CLO32, CLZ8, CLZ16, CLZ32, KABS8, KABS16, KABSW, SUNPKD810, SUNPKD820, SUNPKD830, SUNPKD831, SUNPKD832, SWAP8, ZUNPKD810, ZUNPKD820, ZUNPKD830, ZUNPKD831, ZUNPKD832, KABS32}
+enum p_inst_imm3_rs1_rd_op = {INSB, KSLLI8, SCLIP8, SLLI8, SRAI8, SRAI8_U, SRLI8, SRLI8_U, UCLIP8}
+enum p_inst_imm5_rs1_rd_op = {KSLLIW, SCLIP32, UCLIP32, WEXTI, KSLLI32, SLLI32, SRAI32, SRAI32_U, SRAIW_U, SRLI32, SRLI32_U}
+enum p_inst_imm4_rs1_rd_op = {KSLLI16, SCLIP16, SLLI16, SRAI16, SRAI16_U, SRLI16, SRLI16_U, UCLIP16}
