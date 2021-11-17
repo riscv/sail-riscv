@@ -18,9 +18,6 @@ bool sys_enable_next(unit u)
 bool sys_enable_fdext(unit u)
 { return rv_enable_fdext; }
 
-bool sys_enable_zfinx(unit u)
-{ return rv_enable_zfinx; }
-
 bool sys_enable_writable_misa(unit u)
 { return rv_enable_writable_misa; }
 

@@ -4,7 +4,6 @@
 bool sys_enable_rvc(unit);
 bool sys_enable_next(unit);
 bool sys_enable_fdext(unit);
-bool sys_enable_zfinx(unit);
 bool sys_enable_writable_misa(unit);
 
 bool plat_enable_dirty_update(unit);
