@@ -74,6 +74,34 @@
 /* Original version written by Rishiyur S. Nikhil, Sept-Oct 2019    */
 
 /* **************************************************************** */
+/* NaN boxing/unboxing.                                             */
+/* When 32-bit floats (single-precision) are stored in 64-bit regs  */
+/* they must be 'NaN boxed' (upper 32b all ones).                   */
+/* When 32-bit floats (single-precision) are read from 64-bit regs  */
+/* they must be 'NaN unboxed'.                                      */
+
+function canonical_NaN_S() -> bits(32) = 0x_7fc0_0000
+function canonical_NaN_D() -> bits(64) = 0x_7ff8_0000_0000_0000
+
+val nan_box : bits(32) -> flenbits effect {escape}
+function nan_box val_32b = {
+  assert(sys_enable_fdext());
+  if (sizeof(flen) == 32)
+  then val_32b
+  else 0x_FFFF_FFFF @ val_32b
+}
+
+val nan_unbox : flenbits -> bits(32) effect {escape}
+function nan_unbox regval = {
+  assert(sys_enable_fdext());
+  if (sizeof(flen) == 32)
+  then regval
+  else if regval [63..32] == 0x_FFFF_FFFF
+       then regval [31..0]
+       else canonical_NaN_S()
+}
+
+/* **************************************************************** */
 /* Floating point register file                                     */
 
 register f0  : fregtype
@@ -110,12 +138,19 @@ register f30 : fregtype
 register f31 : fregtype
 
 function dirty_fd_context() -> unit = {
+  assert(sys_enable_fdext());
   mstatus->FS() = extStatus_to_bits(Dirty);
   mstatus->SD() = 0b1
 }
 
+function dirty_fd_context_if_present() -> unit = {
+  assert(sys_enable_fdext() != sys_enable_zfinx());
+  if sys_enable_fdext() then dirty_fd_context()
+}
+
 val rF : forall 'n, 0 <= 'n < 32. regno('n) -> flenbits effect {rreg, escape}
 function rF r = {
+  assert(sys_enable_fdext());
   let v : fregtype =
     match r {
       0 => f0,
@@ -157,6 +192,7 @@ function rF r = {
 
 val wF : forall 'n, 0 <= 'n < 32. (regno('n), flenbits) -> unit effect {wreg, escape}
 function wF (r, in_v) = {
+  assert(sys_enable_fdext());
   let v = fregval_into_freg(in_v);
   match r {
     0  => f0 = v,
@@ -209,6 +245,58 @@ function wF_bits(i: bits(5), data: flenbits) -> unit = {
 }
 
 overload F = {rF_bits, wF_bits, rF, wF}
+
+val rF_or_X_S : bits(5) -> bits(32) effect {escape, rreg}
+function rF_or_X_S(i) = {
+  assert(sizeof(flen) >= 32);
+  assert(sys_enable_fdext() != sys_enable_zfinx());
+  if   sys_enable_fdext()
+  then nan_unbox(F(i))
+  else X(i)[31..0]
+}
+
+val rF_or_X_D : bits(5) -> bits(64) effect {escape, rreg}
+function rF_or_X_D(i) = {
+  assert(sizeof(flen) >= 64);
+  assert(sys_enable_fdext() != sys_enable_zfinx());
+  if   sys_enable_fdext()
+  then F(unsigned(i))
+  else if sizeof(xlen) >= 64
+  then X(i)[63..0]
+  else {
+    assert(i[0] == bitzero);
+    if i == zeros() then zeros() else X(i + 1) @ X(i)
+  }
+}
+
+val wF_or_X_S : (bits(5), bits(32)) -> unit effect {escape, wreg}
+function wF_or_X_S(i, data) = {
+  assert(sizeof(flen) >= 32);
+  assert(sys_enable_fdext() != sys_enable_zfinx());
+  if   sys_enable_fdext()
+  then F(i) = nan_box(data)
+  else X(i) = EXTS(data)
+}
+
+val wF_or_X_D : (bits(5), bits(64)) -> unit effect {escape, wreg}
+function wF_or_X_D(i, data) = {
+  assert (sizeof(flen) >= 64);
+  assert(sys_enable_fdext() != sys_enable_zfinx());
+  if   sys_enable_fdext()
+  then F(i) = data
+  else if sizeof(xlen) >= 64
+  then X(i) = EXTS(data)
+  else {
+    assert (i[0] == bitzero);
+    if i != zeros() then {
+      X(i)     = data[31..0];
+      X(i + 1) = data[63..32];
+    }
+  }
+}
+
+overload F_or_X_S = { rF_or_X_S, wF_or_X_S }
+overload F_or_X_D = { rF_or_X_D, wF_or_X_D }
 
 /* register names */
 
@@ -289,6 +377,12 @@ mapping freg_name = {
     0b11111 <-> "ft11"
 }
 
+val freg_or_reg_name : bits(5) <-> string
+mapping freg_or_reg_name = {
+  reg if sys_enable_fdext() <-> freg_name(reg) if sys_enable_fdext(),
+  reg if sys_enable_zfinx() <-> reg_name(reg)  if sys_enable_zfinx()
+}
+
 val init_fdext_regs : unit -> unit effect {wreg}
 function init_fdext_regs () = {
   f0  = zero_freg;
@@ -339,30 +433,30 @@ bitfield Fcsr : bits(32) = {
 
 register fcsr : Fcsr
 
-val ext_write_fcsr : (bits(3), bits(5)) -> unit effect {rreg, wreg}
+val ext_write_fcsr : (bits(3), bits(5)) -> unit effect {rreg, wreg, escape}
 function ext_write_fcsr (frm, fflags) = {
   fcsr->FRM()    = frm;      /* Note: frm can be an illegal value, 101, 110, 111 */
   fcsr->FFLAGS() = fflags;
   update_softfloat_fflags(fflags);
-  dirty_fd_context();
+  dirty_fd_context_if_present();
 }
 
 /* called for softfloat paths (softfloat flags are consistent) */
-val write_fflags : (bits(5)) -> unit effect {rreg, wreg}
+val write_fflags : (bits(5)) -> unit effect {rreg, wreg, escape}
 function write_fflags(fflags) = {
   if   fcsr.FFLAGS() != fflags
-  then dirty_fd_context();
+  then dirty_fd_context_if_present();
   fcsr->FFLAGS() = fflags;
 }
 
 /* called for non-softfloat paths (softfloat flags need updating) */
-val accrue_fflags : (bits(5)) -> unit effect {rreg, wreg}
+val accrue_fflags : (bits(5)) -> unit effect {rreg, wreg, escape}
 function accrue_fflags(flags) = {
   let f = fcsr.FFLAGS() | flags;
   if  fcsr.FFLAGS() != f
   then {
     fcsr->FFLAGS() = f;
     update_softfloat_fflags(f);
-    dirty_fd_context();
+    dirty_fd_context_if_present();
   }
 }

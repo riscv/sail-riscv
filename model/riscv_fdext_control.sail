@@ -77,9 +77,9 @@
 
 /* val clause ext_is_CSR_defined : (csreg, Privilege) -> bool effect {rreg} */
 
-function clause ext_is_CSR_defined (0x001, _) = haveFExt() | haveDExt()
-function clause ext_is_CSR_defined (0x002, _) = haveFExt() | haveDExt()
-function clause ext_is_CSR_defined (0x003, _) = haveFExt() | haveDExt()
+function clause ext_is_CSR_defined (0x001, _) = haveFExt() | haveZfinx()
+function clause ext_is_CSR_defined (0x002, _) = haveFExt() | haveZfinx()
+function clause ext_is_CSR_defined (0x003, _) = haveFExt() | haveZfinx()
 
 function clause ext_read_CSR (0x001) = Some (EXTZ (fcsr.FFLAGS()))
 function clause ext_read_CSR (0x002) = Some (EXTZ (fcsr.FRM()))

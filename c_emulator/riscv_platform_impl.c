@@ -4,6 +4,7 @@
 
 /* Settings of the platform implementation, with common defaults. */
 bool rv_enable_pmp                  = false;
+bool rv_enable_zfinx                = false;
 bool rv_enable_rvc                  = true;
 bool rv_enable_next                 = false;
 bool rv_enable_writable_misa        = true;
