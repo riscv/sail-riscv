@@ -76,8 +76,9 @@
 
 /* **************************************************************** */
 /* IMPORTANT!                                                       */
-/* The files 'riscv_insts_fext.sail' and 'riscv_insts_dext.sail'    */
-/* define the F and D extensions, respectively.                     */
+/* The files 'riscv_insts_fext.sail', 'riscv_insts_dext.sail' and   */
+/* 'riscv_insts_zfh.sail' define the F, D and Zfh extensions,       */
+/* respectively.                                                    */
 /* The texts follow each other very closely; please try to maintain */
 /* this correspondence as the files are maintained for bug-fixes,   */
 /* improvements, and version updates.                               */

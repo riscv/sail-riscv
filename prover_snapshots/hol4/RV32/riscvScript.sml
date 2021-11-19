@@ -10325,6 +10325,50 @@ val _ = Define `
     (sail2_state_monad$write_regS float_fflags_ref ((zero_extend flags (( 64 : int):ii)  :  64 words$word))))`;
 
 
+(*val riscv_f16Add : mword ty3 -> mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)*)
+
+val _ = Define `
+ ((riscv_f16Add:(3)words$word ->(16)words$word ->(16)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(16)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v1 v2=
+    (let (_ : unit) = (softfloat_f16_add rm v1 v2) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 15 : int):ii) (( 0 : int):ii)  :  16 words$word))))))`;
+
+
+(*val riscv_f16Sub : mword ty3 -> mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)*)
+
+val _ = Define `
+ ((riscv_f16Sub:(3)words$word ->(16)words$word ->(16)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(16)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v1 v2=
+    (let (_ : unit) = (softfloat_f16_sub rm v1 v2) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 15 : int):ii) (( 0 : int):ii)  :  16 words$word))))))`;
+
+
+(*val riscv_f16Mul : mword ty3 -> mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)*)
+
+val _ = Define `
+ ((riscv_f16Mul:(3)words$word ->(16)words$word ->(16)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(16)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v1 v2=
+    (let (_ : unit) = (softfloat_f16_mul rm v1 v2) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 15 : int):ii) (( 0 : int):ii)  :  16 words$word))))))`;
+
+
+(*val riscv_f16Div : mword ty3 -> mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)*)
+
+val _ = Define `
+ ((riscv_f16Div:(3)words$word ->(16)words$word ->(16)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(16)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v1 v2=
+    (let (_ : unit) = (softfloat_f16_div rm v1 v2) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 15 : int):ii) (( 0 : int):ii)  :  16 words$word))))))`;
+
+
 (*val riscv_f32Add : mword ty3 -> mword ty32 -> mword ty32 -> M (mword ty5 * mword ty32)*)
 
 val _ = Define `
@@ -10409,6 +10453,17 @@ val _ = Define `
    sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word), w__1)))))`;
 
 
+(*val riscv_f16MulAdd : mword ty3 -> mword ty16 -> mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)*)
+
+val _ = Define `
+ ((riscv_f16MulAdd:(3)words$word ->(16)words$word ->(16)words$word ->(16)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(16)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v1 v2 v3=
+    (let (_ : unit) = (softfloat_f16_muladd rm v1 v2 v3) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 15 : int):ii) (( 0 : int):ii)  :  16 words$word))))))`;
+
+
 (*val riscv_f32MulAdd : mword ty3 -> mword ty32 -> mword ty32 -> mword ty32 -> M (mword ty5 * mword ty32)*)
 
 val _ = Define `
@@ -10430,6 +10485,17 @@ val _ = Define `
    sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word), w__1)))))`;
 
 
+(*val riscv_f16Sqrt : mword ty3 -> mword ty16 -> M (mword ty5 * mword ty16)*)
+
+val _ = Define `
+ ((riscv_f16Sqrt:(3)words$word ->(16)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(16)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v=
+    (let (_ : unit) = (softfloat_f16_sqrt rm v) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 15 : int):ii) (( 0 : int):ii)  :  16 words$word))))))`;
+
+
 (*val riscv_f32Sqrt : mword ty3 -> mword ty32 -> M (mword ty5 * mword ty32)*)
 
 val _ = Define `
@@ -10449,6 +10515,92 @@ val _ = Define `
    (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
    (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
    sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word), w__1)))))`;
+
+
+(*val riscv_f16ToI32 : mword ty3 -> mword ty16 -> M (mword ty5 * mword ty32)*)
+
+val _ = Define `
+ ((riscv_f16ToI32:(3)words$word ->(16)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(32)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v=
+    (let (_ : unit) = (softfloat_f16_to_i32 rm v) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 31 : int):ii) (( 0 : int):ii)  :  32 words$word))))))`;
+
+
+(*val riscv_f16ToUi32 : mword ty3 -> mword ty16 -> M (mword ty5 * mword ty32)*)
+
+val _ = Define `
+ ((riscv_f16ToUi32:(3)words$word ->(16)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(32)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v=
+    (let (_ : unit) = (softfloat_f16_to_ui32 rm v) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 31 : int):ii) (( 0 : int):ii)  :  32 words$word))))))`;
+
+
+(*val riscv_i32ToF16 : mword ty3 -> mword ty32 -> M (mword ty5 * mword ty16)*)
+
+val _ = Define `
+ ((riscv_i32ToF16:(3)words$word ->(32)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(32)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v=
+    (let (_ : unit) = (softfloat_i32_to_f16 rm v) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 15 : int):ii) (( 0 : int):ii)  :  16 words$word))))))`;
+
+
+(*val riscv_ui32ToF16 : mword ty3 -> mword ty32 -> M (mword ty5 * mword ty16)*)
+
+val _ = Define `
+ ((riscv_ui32ToF16:(3)words$word ->(32)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(32)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v=
+    (let (_ : unit) = (softfloat_ui32_to_f16 rm v) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 15 : int):ii) (( 0 : int):ii)  :  16 words$word))))))`;
+
+
+(*val riscv_f16ToI64 : mword ty3 -> mword ty16 -> M (mword ty5 * mword ty64)*)
+
+val _ = Define `
+ ((riscv_f16ToI64:(3)words$word ->(16)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(64)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v=
+    (let (_ : unit) = (softfloat_f16_to_i64 rm v) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word), w__1)))))`;
+
+
+(*val riscv_f16ToUi64 : mword ty3 -> mword ty16 -> M (mword ty5 * mword ty64)*)
+
+val _ = Define `
+ ((riscv_f16ToUi64:(3)words$word ->(16)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(64)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v=
+    (let (_ : unit) = (softfloat_f16_to_ui64 rm v) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word), w__1)))))`;
+
+
+(*val riscv_i64ToF16 : mword ty3 -> mword ty64 -> M (mword ty5 * mword ty16)*)
+
+val _ = Define `
+ ((riscv_i64ToF16:(3)words$word ->(64)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(32)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v=
+    (let (_ : unit) = (softfloat_i64_to_f16 rm v) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 15 : int):ii) (( 0 : int):ii)  :  16 words$word))))))`;
+
+
+(*val riscv_ui64ToF16 : mword ty3 -> mword ty64 -> M (mword ty5 * mword ty16)*)
+
+val _ = Define `
+ ((riscv_ui64ToF16:(3)words$word ->(64)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(32)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v=
+    (let (_ : unit) = (softfloat_ui64_to_f16 rm v) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 15 : int):ii) (( 0 : int):ii)  :  16 words$word))))))`;
 
 
 (*val riscv_f32ToI32 : mword ty3 -> mword ty32 -> M (mword ty5 * mword ty32)*)
@@ -10619,6 +10771,27 @@ val _ = Define `
    sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word), w__1)))))`;
 
 
+(*val riscv_f16ToF32 : mword ty3 -> mword ty16 -> M (mword ty5 * mword ty32)*)
+
+val _ = Define `
+ ((riscv_f16ToF32:(3)words$word ->(16)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(32)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v=
+    (let (_ : unit) = (softfloat_f16_to_f32 rm v) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 31 : int):ii) (( 0 : int):ii)  :  32 words$word))))))`;
+
+
+(*val riscv_f16ToF64 : mword ty3 -> mword ty16 -> M (mword ty5 * mword ty64)*)
+
+val _ = Define `
+ ((riscv_f16ToF64:(3)words$word ->(16)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(64)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v=
+    (let (_ : unit) = (softfloat_f16_to_f64 rm v) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word), w__1)))))`;
+
+
 (*val riscv_f32ToF64 : mword ty3 -> mword ty32 -> M (mword ty5 * mword ty64)*)
 
 val _ = Define `
@@ -10627,6 +10800,28 @@ val _ = Define `
    (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
    (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
    sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word), w__1)))))`;
+
+
+(*val riscv_f32ToF16 : mword ty3 -> mword ty32 -> M (mword ty5 * mword ty16)*)
+
+val _ = Define `
+ ((riscv_f32ToF16:(3)words$word ->(32)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(16)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v=
+    (let (_ : unit) = (softfloat_f32_to_f16 rm v) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 15 : int):ii) (( 0 : int):ii)  :  16 words$word))))))`;
+
+
+(*val riscv_f64ToF16 : mword ty3 -> mword ty64 -> M (mword ty5 * mword ty16)*)
+
+val _ = Define `
+ ((riscv_f64ToF16:(3)words$word ->(64)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(16)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) rm v=
+    (let (_ : unit) = (softfloat_f64_to_f16 rm v) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 15 : int):ii) (( 0 : int):ii)  :  16 words$word))))))`;
 
 
 (*val riscv_f64ToF32 : mword ty3 -> mword ty64 -> M (mword ty5 * mword ty32)*)
@@ -10638,6 +10833,39 @@ val _ = Define `
    (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
    sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
            (subrange_vec_dec w__1 (( 31 : int):ii) (( 0 : int):ii)  :  32 words$word))))))`;
+
+
+(*val riscv_f16Lt : mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)*)
+
+val _ = Define `
+ ((riscv_f16Lt:(16)words$word ->(16)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(16)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) v1 v2=
+    (let (_ : unit) = (softfloat_f16_lt v1 v2) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 15 : int):ii) (( 0 : int):ii)  :  16 words$word))))))`;
+
+
+(*val riscv_f16Le : mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)*)
+
+val _ = Define `
+ ((riscv_f16Le:(16)words$word ->(16)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(16)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) v1 v2=
+    (let (_ : unit) = (softfloat_f16_le v1 v2) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 15 : int):ii) (( 0 : int):ii)  :  16 words$word))))))`;
+
+
+(*val riscv_f16Eq : mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)*)
+
+val _ = Define `
+ ((riscv_f16Eq:(16)words$word ->(16)words$word ->(regstate)sail2_state_monad$sequential_state ->((((5)words$word#(16)words$word),(exception))sail2_state_monad$result#(regstate)sail2_state_monad$sequential_state)set) v1 v2=
+    (let (_ : unit) = (softfloat_f16_eq v1 v2) in sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_fflags_ref  : ( 64 words$word) M) (\ (w__0 :  64 words$word) .  sail2_state_monad$bindS
+   (sail2_state_monad$read_regS float_result_ref  : ( 64 words$word) M) (\ (w__1 :  64 words$word) . 
+   sail2_state_monad$returnS ((subrange_vec_dec w__0 (( 4 : int):ii) (( 0 : int):ii)  :  5 words$word),
+           (subrange_vec_dec w__1 (( 15 : int):ii) (( 0 : int):ii)  :  16 words$word))))))`;
 
 
 (*val riscv_f32Lt : mword ty32 -> mword ty32 -> M (mword ty5 * mword ty32)*)
