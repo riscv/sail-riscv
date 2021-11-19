@@ -117,25 +117,6 @@ register pmp13cfg : Pmpcfg_ent
 register pmp14cfg : Pmpcfg_ent
 register pmp15cfg : Pmpcfg_ent
 
-/* PMP address configuration */
-
-register pmpaddr0  : xlenbits
-register pmpaddr1  : xlenbits
-register pmpaddr2  : xlenbits
-register pmpaddr3  : xlenbits
-register pmpaddr4  : xlenbits
-register pmpaddr5  : xlenbits
-register pmpaddr6  : xlenbits
-register pmpaddr7  : xlenbits
-register pmpaddr8  : xlenbits
-register pmpaddr9  : xlenbits
-register pmpaddr10 : xlenbits
-register pmpaddr11 : xlenbits
-register pmpaddr12 : xlenbits
-register pmpaddr13 : xlenbits
-register pmpaddr14 : xlenbits
-register pmpaddr15 : xlenbits
-
 /* Packing and unpacking pmpcfg regs for xlen-width accesses */
 
 val pmpReadCfgReg : forall 'n, 0 <= 'n < 4 . (atom('n)) -> xlenbits effect {rreg}
@@ -157,14 +138,10 @@ function pmpReadCfgReg(n) = {
 function pmpLocked(cfg: Pmpcfg_ent) -> bool =
    cfg.L() == 0b1
 
-function pmpTORLocked(cfg: Pmpcfg_ent) -> bool =
-   (cfg.L() == 0b1) & (pmpAddrMatchType_of_bits(cfg.A()) == TOR)
-
 function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
-  if pmpLocked(cfg) then cfg
-  else Mk_Pmpcfg_ent(v & 0x9f)  // Bits 5 and 6 are zero.
+  Mk_Pmpcfg_ent(legalize_pmpcfg0_PMP0CFG(cfg.bits(), v))  // Bits 5 and 6 are zero.
 
-val pmpWriteCfgReg : forall 'n, 0 <= 'n < 4 . (atom('n), xlenbits) -> unit effect {rreg, wreg}
+val pmpWriteCfgReg : forall 'n, 0 <= 'n < 4 . (atom('n), xlenbits) -> unit effect {escape, rreg, wreg}
 function pmpWriteCfgReg(n, v) = {
   if   sizeof(xlen) == 32
   then match n {
@@ -211,8 +188,3 @@ function pmpWriteCfgReg(n, v) = {
               }
        }
 }
-
-function pmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbits) -> xlenbits =
-  if   sizeof(xlen) == 32
-  then { if (locked | tor_locked) then reg else v }
-  else { if (locked | tor_locked) then reg else EXTZ(v[53..0]) }

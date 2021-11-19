@@ -109,7 +109,7 @@ val      select_instr_or_fcsr_rm : rounding_mode -> option(rounding_mode) effect
 function select_instr_or_fcsr_rm instr_rm =
   if (instr_rm == RM_DYN)
   then {
-    let fcsr_rm = fcsr.FRM();
+    let fcsr_rm = frm;
     if (valid_rounding_mode(fcsr_rm) & fcsr_rm != encdec_rounding_mode(RM_DYN))
       then Some(encdec_rounding_mode(fcsr_rm)) else None()
   }
@@ -243,11 +243,11 @@ function feq_quiet_S   (v1,       v2) = {
 
   let result = ((v1 == v2) | (v1Is0 & v2Is0));
 
-  let fflags = if   (f_is_SNaN_S(v1) | f_is_SNaN_S(v2))
+  let f_flags = if   (f_is_SNaN_S(v1) | f_is_SNaN_S(v2))
                then nvFlag()
                else zeros();
 
-  (result, fflags)
+  (result, f_flags)
 }
 
 val      flt_S : (bits(32), bits (32), bool) -> (bool, bits(5))
@@ -269,7 +269,7 @@ function flt_S   (v1,       v2,        is_quiet) = {
         then unsigned (m1) > unsigned (m2)
         else unsigned (e1) > unsigned (e2);
 
-  let fflags = if is_quiet then
+  let f_flags = if is_quiet then
                  if   (f_is_SNaN_S(v1) | f_is_SNaN_S(v2))
                  then nvFlag()
                  else zeros()
@@ -278,7 +278,7 @@ function flt_S   (v1,       v2,        is_quiet) = {
                  then nvFlag()
                  else zeros();
 
-  (result, fflags)
+  (result, f_flags)
 }
 
 val      fle_S : (bits(32), bits (32), bool) -> (bool, bits(5))
@@ -303,7 +303,7 @@ function fle_S   (v1,       v2,        is_quiet) = {
       then unsigned (m1) >=  unsigned (m2)
       else unsigned (e1)  >  unsigned (e2);
 
-  let fflags = if is_quiet then
+  let f_flags = if is_quiet then
                  if   (f_is_SNaN_S(v1) | f_is_SNaN_S(v2))
                  then nvFlag()
                  else zeros()
@@ -312,7 +312,7 @@ function fle_S   (v1,       v2,        is_quiet) = {
                  then nvFlag()
                  else zeros();
 
-  (result, fflags)
+  (result, f_flags)
 }
 
 /* **************************************************************** */
@@ -499,14 +499,14 @@ function clause execute (F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)) = {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_32b) : (bits(5), bits(32)) =
+      let (f_flags, rd_val_32b) : (bits(5), bits(32)) =
         match op {
           FMADD_S  => riscv_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, rs3_val_32b),
           FMSUB_S  => riscv_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, negate_S (rs3_val_32b)),
           FNMSUB_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, rs3_val_32b),
           FNMADD_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, negate_S (rs3_val_32b))
         };
-      write_fflags(fflags);
+      write_fflags(f_flags);
       F_or_X_S(rd) = rd_val_32b;
       RETIRE_SUCCESS
     }
@@ -564,13 +564,13 @@ function clause execute (F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)) = {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_32b) : (bits(5), bits(32)) = match op {
+      let (f_flags, rd_val_32b) : (bits(5), bits(32)) = match op {
         FADD_S  => riscv_f32Add (rm_3b, rs1_val_32b, rs2_val_32b),
         FSUB_S  => riscv_f32Sub (rm_3b, rs1_val_32b, rs2_val_32b),
         FMUL_S  => riscv_f32Mul (rm_3b, rs1_val_32b, rs2_val_32b),
         FDIV_S  => riscv_f32Div (rm_3b, rs1_val_32b, rs2_val_32b)
       };
-      write_fflags(fflags);
+      write_fflags(f_flags);
       F_or_X_S(rd) = rd_val_32b;
       RETIRE_SUCCESS
     }
@@ -648,9 +648,9 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)) = {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_S) = riscv_f32Sqrt   (rm_3b, rs1_val_S);
+      let (f_flags, rd_val_S) = riscv_f32Sqrt   (rm_3b, rs1_val_S);
 
-      write_fflags(fflags);
+      write_fflags(f_flags);
       F_or_X_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
@@ -663,9 +663,9 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)) = {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_W) = riscv_f32ToI32 (rm_3b, rs1_val_S);
+      let (f_flags, rd_val_W) = riscv_f32ToI32 (rm_3b, rs1_val_S);
 
-      write_fflags(fflags);
+      write_fflags(f_flags);
       X(rd) = EXTS (rd_val_W);
       RETIRE_SUCCESS
     }
@@ -678,9 +678,9 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)) = {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_WU) = riscv_f32ToUi32 (rm_3b, rs1_val_S);
+      let (f_flags, rd_val_WU) = riscv_f32ToUi32 (rm_3b, rs1_val_S);
 
-      write_fflags(fflags);
+      write_fflags(f_flags);
       X(rd) = EXTS (rd_val_WU);
       RETIRE_SUCCESS
     }
@@ -693,9 +693,9 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_W)) = {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_S) = riscv_i32ToF32 (rm_3b, rs1_val_W);
+      let (f_flags, rd_val_S) = riscv_i32ToF32 (rm_3b, rs1_val_W);
 
-      write_fflags(fflags);
+      write_fflags(f_flags);
       F_or_X_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
@@ -708,9 +708,9 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_S) = riscv_ui32ToF32 (rm_3b, rs1_val_WU);
+      let (f_flags, rd_val_S) = riscv_ui32ToF32 (rm_3b, rs1_val_WU);
 
-      write_fflags(fflags);
+      write_fflags(f_flags);
       F_or_X_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
@@ -724,9 +724,9 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_L) = riscv_f32ToI64 (rm_3b, rs1_val_S);
+      let (f_flags, rd_val_L) = riscv_f32ToI64 (rm_3b, rs1_val_S);
 
-      write_fflags(fflags);
+      write_fflags(f_flags);
       X(rd) = EXTS(rd_val_L);
       RETIRE_SUCCESS
     }
@@ -740,9 +740,9 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_LU) = riscv_f32ToUi64 (rm_3b, rs1_val_S);
+      let (f_flags, rd_val_LU) = riscv_f32ToUi64 (rm_3b, rs1_val_S);
 
-      write_fflags(fflags);
+      write_fflags(f_flags);
       X(rd) = EXTS(rd_val_LU);
       RETIRE_SUCCESS
     }
@@ -756,9 +756,9 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
+      let (f_flags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
 
-      write_fflags(fflags);
+      write_fflags(f_flags);
       F_or_X_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
@@ -772,9 +772,9 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
+      let (f_flags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
 
-      write_fflags(fflags);
+      write_fflags(f_flags);
       F_or_X_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
@@ -924,7 +924,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)) = {
   let rs2_val_S = F_or_X_S(rs2);
 
   let is_quiet  = true;
-  let (rs1_lt_rs2, fflags) = fle_S (rs1_val_S, rs2_val_S, is_quiet);
+  let (rs1_lt_rs2, f_flags) = fle_S (rs1_val_S, rs2_val_S, is_quiet);
 
   let rd_val_S  = if      (f_is_NaN_S(rs1_val_S) & f_is_NaN_S(rs2_val_S))           then canonical_NaN_S()
                   else if f_is_NaN_S(rs1_val_S)                                     then rs2_val_S
@@ -934,7 +934,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)) = {
                   else if rs1_lt_rs2                                                then rs1_val_S
                   else /* (not rs1_lt_rs2) */                                            rs2_val_S;
 
-  accrue_fflags(fflags);
+  accrue_fflags(f_flags);
   F_or_X_S(rd) = rd_val_S;
   RETIRE_SUCCESS
 }
@@ -944,7 +944,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)) = {
   let rs2_val_S = F_or_X_S(rs2);
 
   let is_quiet  = true;
-  let (rs2_lt_rs1, fflags) = fle_S (rs2_val_S, rs1_val_S, is_quiet);
+  let (rs2_lt_rs1, f_flags) = fle_S (rs2_val_S, rs1_val_S, is_quiet);
 
   let rd_val_S  = if      (f_is_NaN_S(rs1_val_S) & f_is_NaN_S(rs2_val_S))           then canonical_NaN_S()
                   else if f_is_NaN_S(rs1_val_S)                                     then rs2_val_S
@@ -954,7 +954,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)) = {
                   else if rs2_lt_rs1                                                then rs1_val_S
                   else /* (not rs2_lt_rs1) */                                            rs2_val_S;
 
-  accrue_fflags(fflags);
+  accrue_fflags(f_flags);
   F_or_X_S(rd) = rd_val_S;
   RETIRE_SUCCESS
 }
@@ -963,10 +963,10 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   let rs2_val_S = F_or_X_S(rs2);
 
-  let (fflags, rd_val) : (bits_fflags, bool) =
+  let (f_flags, rd_val) : (bits_fflags, bool) =
       riscv_f32Eq (rs1_val_S, rs2_val_S);
 
-  write_fflags(fflags);
+  write_fflags(f_flags);
   X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -975,10 +975,10 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   let rs2_val_S = F_or_X_S(rs2);
 
-  let (fflags, rd_val) : (bits_fflags, bool) =
+  let (f_flags, rd_val) : (bits_fflags, bool) =
       riscv_f32Lt (rs1_val_S, rs2_val_S);
 
-  write_fflags(fflags);
+  write_fflags(f_flags);
   X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -987,10 +987,10 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   let rs2_val_S = F_or_X_S(rs2);
 
-  let (fflags, rd_val) : (bits_fflags, bool) =
+  let (f_flags, rd_val) : (bits_fflags, bool) =
       riscv_f32Le (rs1_val_S, rs2_val_S);
 
-  write_fflags(fflags);
+  write_fflags(f_flags);
   X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }

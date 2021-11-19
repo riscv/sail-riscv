@@ -78,11 +78,11 @@ function ext_fail_xret_priv () : unit -> unit = ()
 function handle_trap_extension(p : Privilege, pc : xlenbits, u : option(unit)) -> unit = ()
 
 /* used for traps and ECALL */
-function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
-  let tvec : Mtvec = match p {
-                       Machine    => mtvec,
-                       Supervisor => stvec,
-                       User       => utvec
+function prepare_trap_vector(p : Privilege, cause : xlenbits) -> xlenbits = {
+  let tvec : xlenbits = match p {
+                       Machine    => mtvec.bits(),
+                       Supervisor => stvec.bits(),
+                       User       => utvec.bits()
                      };
   match tvec_addr(tvec, cause) {
     Some(epc) => epc,
@@ -132,16 +132,16 @@ function get_utvec() -> xlenbits =
   utvec.bits()
   
 function set_mtvec(value : xlenbits) -> xlenbits = {
-  mtvec = legalize_tvec(mtvec, value);
+  mtvec = legalize_mtvec(mtvec, value);
   mtvec.bits()
 }
 
 function set_stvec(value : xlenbits) -> xlenbits = {
-  stvec = legalize_tvec(stvec, value);
+  stvec = legalize_stvec(stvec, value);
   stvec.bits()
 }
 
 function set_utvec(value : xlenbits) -> xlenbits = {
-  utvec = legalize_tvec(utvec, value);
+  utvec = legalize_utvec(utvec, value);
   utvec.bits()
 }

@@ -70,11 +70,6 @@
 
 /* Define the architectural satp and its legalizer. */
 
-register satp : xlenbits
-
-function legalize_satp(a : Architecture, o : xlenbits, v : xlenbits) -> xlenbits =
-  legalize_satp32(a, o, v)
-
 /* Compute the address translation mode. */
 
 val translationMode : (Privilege) -> SATPMode effect {rreg, escape}
@@ -84,12 +79,17 @@ function translationMode(priv) = {
     let arch = architecture(get_mstatus_SXL(mstatus));
     match arch {
       Some(RV32) => {
-        let s = Mk_Satp32(satp[31..0]);
-        if s.Mode() == 0b0 then Sbare else Sv32
+        let s = satp;
+        if s.MODE() == 0b0 then Sbare else Sv32
       },
       _    => internal_error("unsupported address translation arch")
     }
   }
+}
+
+/* page table base from satp */
+function curPTB32(s : Satp) -> paddr32 = {
+  shiftl(EXTZ(s.PPN()), PAGESIZE_BITS)
 }
 
 /* Top-level address translation dispatcher */
@@ -100,7 +100,7 @@ function translateAddr_priv(vAddr, ac, effPriv) = {
   let do_sum : bool   = mstatus.SUM() == 0b1;
   let mode : SATPMode = translationMode(effPriv);
 
-  let asid = curAsid32(satp);
+  let asid = satp.ASID();
   let ptb  = curPTB32(satp);
 
   /* PTW extensions: initialize the PTW extension state */

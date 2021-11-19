@@ -70,99 +70,17 @@
 
 
 /* CSR access control */
+function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
+  match (csr) {
+    /* disabled trigger/debug module */
+    0x7a0 => p == Machine,
+        /* user mode: Zkr */
+    0x015 => haveZkr(),
+    _     => is_csr_defined(csr, p)
+  }
 
 function csrAccess(csr : csreg) -> csrRW = csr[11..10]
 function csrPriv(csr : csreg) -> priv_level = csr[9..8]
-
-function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
-  match (csr) {
-    /* machine mode: informational */
-    0xf11 => p == Machine, // mvendorid
-    0xf12 => p == Machine, // marchdid
-    0xf13 => p == Machine, // mimpid
-    0xf14 => p == Machine, // mhartid
-    /* machine mode: trap setup */
-    0x300 => p == Machine, // mstatus
-    0x301 => p == Machine, // misa
-    0x302 => p == Machine & (haveSupMode() | haveNExt()), // medeleg
-    0x303 => p == Machine & (haveSupMode() | haveNExt()), // mideleg
-    0x304 => p == Machine, // mie
-    0x305 => p == Machine, // mtvec
-    0x306 => p == Machine & haveUsrMode(), // mcounteren
-    0x310 => p == Machine & (sizeof(xlen) == 32), // mstatush
-    0x320 => p == Machine, // mcountinhibit
-    /* machine mode: trap handling */
-    0x340 => p == Machine, // mscratch
-    0x341 => p == Machine, // mepc
-    0x342 => p == Machine, // mcause
-    0x343 => p == Machine, // mtval
-    0x344 => p == Machine, // mip
-
-    0x3A0 => p == Machine,                        // pmpcfg0
-    0x3A1 => p == Machine & (sizeof(xlen) == 32), // pmpcfg1
-    0x3A2 => p == Machine,                        // pmpcfg2
-    0x3A3 => p == Machine & (sizeof(xlen) == 32), // pmpcfg3
-
-    0x3B0 => p == Machine, // pmpaddr0
-    0x3B1 => p == Machine, // pmpaddr1
-    0x3B2 => p == Machine, // pmpaddr2
-    0x3B3 => p == Machine, // pmpaddr3
-    0x3B4 => p == Machine, // pmpaddr4
-    0x3B5 => p == Machine, // pmpaddr5
-    0x3B6 => p == Machine, // pmpaddr6
-    0x3B7 => p == Machine, // pmpaddr7
-    0x3B8 => p == Machine, // pmpaddr8
-    0x3B9 => p == Machine, // pmpaddr9
-    0x3BA => p == Machine, // pmpaddrA
-    0x3BB => p == Machine, // pmpaddrB
-    0x3BC => p == Machine, // pmpaddrC
-    0x3BD => p == Machine, // pmpaddrD
-    0x3BE => p == Machine, // pmpaddrE
-    0x3BF => p == Machine, // pmpaddrF
-
-    /* counters */
-    0xB00 => p == Machine, // mcycle
-    0xB02 => p == Machine, // minstret
-
-    0xB80 => p == Machine & (sizeof(xlen) == 32), // mcycleh
-    0xB82 => p == Machine & (sizeof(xlen) == 32), // minstreth
-
-    /* disabled trigger/debug module */
-    0x7a0 => p == Machine,
-
-    /* supervisor mode: trap setup */
-    0x100 => haveSupMode() & (p == Machine | p == Supervisor), // sstatus
-    0x102 => haveSupMode() & haveNExt() & (p == Machine | p == Supervisor), // sedeleg
-    0x103 => haveSupMode() & haveNExt() & (p == Machine | p == Supervisor), // sideleg
-    0x104 => haveSupMode() & (p == Machine | p == Supervisor), // sie
-    0x105 => haveSupMode() & (p == Machine | p == Supervisor), // stvec
-    0x106 => haveSupMode() & (p == Machine | p == Supervisor), // scounteren
-
-    /* supervisor mode: trap handling */
-    0x140 => haveSupMode() & (p == Machine | p == Supervisor), // sscratch
-    0x141 => haveSupMode() & (p == Machine | p == Supervisor), // sepc
-    0x142 => haveSupMode() & (p == Machine | p == Supervisor), // scause
-    0x143 => haveSupMode() & (p == Machine | p == Supervisor), // stval
-    0x144 => haveSupMode() & (p == Machine | p == Supervisor), // sip
-
-    /* supervisor mode: address translation */
-    0x180 => haveSupMode() & (p == Machine | p == Supervisor), // satp
-
-    /* user mode: counters */
-    0xC00 => haveUsrMode(),    // cycle
-    0xC01 => haveUsrMode(),    // time
-    0xC02 => haveUsrMode(),    // instret
-
-    0xC80 => haveUsrMode() & (sizeof(xlen) == 32),     // cycleh
-    0xC81 => haveUsrMode() & (sizeof(xlen) == 32),     // timeh
-    0xC82 => haveUsrMode() & (sizeof(xlen) == 32),     // instreth
-
-    /* user mode: Zkr */
-    0x015 => haveZkr(),
-
-    /* check extensions */
-    _     => ext_is_CSR_defined(csr, p)
-  }
 
 val check_CSR_access : (csrRW, priv_level, Privilege, bool) -> bool
 function check_CSR_access(csrrw, csrpr, p, isWrite) =
@@ -174,13 +92,13 @@ function check_TVM_SATP(csr : csreg, p : Privilege) -> bool =
 
 function check_Counteren(csr : csreg, p : Privilege) -> bool =
   match(csr, p) {
-    (0xC00, Supervisor) => mcounteren.CY() == 0b1,
-    (0xC01, Supervisor) => mcounteren.TM() == 0b1,
-    (0xC02, Supervisor) => mcounteren.IR() == 0b1,
+    (0xC00, Supervisor) => mcounteren[0] == bitone,
+    (0xC01, Supervisor) => mcounteren[1] == bitone,
+    (0xC02, Supervisor) => mcounteren[2] == bitone,
 
-    (0xC00, User) => mcounteren.CY() == 0b1 & ((~ (haveSupMode())) | scounteren.CY() == 0b1),
-    (0xC01, User) => mcounteren.TM() == 0b1 & ((~ (haveSupMode())) | scounteren.TM() == 0b1),
-    (0xC02, User) => mcounteren.IR() == 0b1 & ((~ (haveSupMode())) | scounteren.IR() == 0b1),
+    (0xC00, User) => mcounteren[0] == bitone & ((~ (haveSupMode())) | scounteren[0] == bitone),
+    (0xC01, User) => mcounteren[1] == bitone & ((~ (haveSupMode())) | scounteren[1] == bitone),
+    (0xC02, User) => mcounteren[2] == bitone & ((~ (haveSupMode())) | scounteren[2] == bitone),
 
     (_, _) => /* no HPM counters for now */
               if   0xC03 <=_u csr & csr <=_u 0xC1F
@@ -238,10 +156,10 @@ val cancel_reservation = {ocaml: "Platform.cancel_reservation", interpreter: "Pl
  */
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let idx   = num_of_ExceptionType(e);
-  let super = bit_to_bool(medeleg.bits()[idx]);
+  let super = bit_to_bool(medeleg[idx]);
   /* if S-mode is absent, medeleg delegates to U-mode if 'N' is supported. */
   let user  = if   haveSupMode()
-              then super & haveNExt() & bit_to_bool(sedeleg.bits()[idx])
+              then super & haveNExt() & bit_to_bool(sedeleg[idx])
               else super & haveNExt();
   let deleg = if      haveUsrMode() & user  then User
               else if haveSupMode() & super then Supervisor
@@ -255,16 +173,16 @@ function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
  * privilege, in the order: external, software, timers.
  */
 function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
-  let ip = Mk_Minterrupts(ip);
-  if      ip.MEI() == 0b1 then Some(I_M_External)
-  else if ip.MSI() == 0b1 then Some(I_M_Software)
-  else if ip.MTI() == 0b1 then Some(I_M_Timer)
-  else if ip.SEI() == 0b1 then Some(I_S_External)
-  else if ip.SSI() == 0b1 then Some(I_S_Software)
-  else if ip.STI() == 0b1 then Some(I_S_Timer)
-  else if ip.UEI() == 0b1 then Some(I_U_External)
-  else if ip.USI() == 0b1 then Some(I_U_Software)
-  else if ip.UTI() == 0b1 then Some(I_U_Timer)
+  let ip = Mk_Mip(ip);
+  if      ip.MEIP() == 0b1 then Some(I_M_External)
+  else if ip.MSIP() == 0b1 then Some(I_M_Software)
+  else if ip.MTIP() == 0b1 then Some(I_M_Timer)
+  else if ip.SEIP() == 0b1 then Some(I_S_External)
+  else if ip.SSIP() == 0b1 then Some(I_S_Software)
+  else if ip.STIP() == 0b1 then Some(I_S_Timer)
+  else if ip.UEIP() == 0b1 then Some(I_U_External)
+  else if ip.USIP() == 0b1 then Some(I_U_Software)
+  else if ip.UTIP() == 0b1 then Some(I_U_Timer)
   else                         None()
 }
 
@@ -278,12 +196,12 @@ union interrupt_set = {
   Ints_Delegated : xlenbits,
   Ints_Empty     : unit
 }
-function processPending(xip : Minterrupts, xie : Minterrupts, xideleg : xlenbits,
+function processPending(xip : xlenbits, xie : xlenbits, xideleg : xlenbits,
                         priv_enabled : bool) -> interrupt_set = {
   /* interrupts that are enabled but not delegated are pending */
-  let  effective_pend = xip.bits() & xie.bits() & (~ (xideleg));
+  let  effective_pend = xip & xie & (~ (xideleg));
   /* the others are delegated */
-  let  effective_delg = xip.bits() & xideleg;
+  let  effective_delg = xip & xideleg;
   /* we have pending interrupts if this privilege is enabled */
   if      priv_enabled & (effective_pend != EXTZ(0b0))
   then    Ints_Pending(effective_pend)
@@ -311,7 +229,7 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
     let mIE = priv != Machine | (priv == Machine & mstatus.MIE() == 0b1);
     let sIE = haveSupMode() & (priv == User | (priv == Supervisor & mstatus.SIE() == 0b1));
     let uIE = haveNExt() & (priv == User & mstatus.UIE() == 0b1);
-    match processPending(mip, mie, mideleg.bits(), mIE) {
+    match processPending(mip.bits(), mie.bits(), mideleg, mIE) {
       Ints_Empty()      => None(),
       Ints_Pending(p)   => let r = (p, Machine) in Some(r),
       Ints_Delegated(d) =>
@@ -320,7 +238,7 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
           else                             None()
         } else {
           /* the delegated bits are pending for S-mode */
-          match processPending(Mk_Minterrupts(d), mie, sideleg.bits(), sIE) {
+          match processPending(d, mie.bits(), sideleg, sIE) {
             Ints_Empty()      => None(),
             Ints_Pending(p)   => let r = (p, Supervisor) in Some(r),
             Ints_Delegated(d) => if   uIE
@@ -399,8 +317,8 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
   match (del_priv) {
     Machine => {
-       mcause->IsInterrupt() = bool_to_bits(intr);
-       mcause->Cause()       = EXTZ(c);
+       mcause->INTERRUPT() = bool_to_bits(intr);
+       mcause->EXCEPTION_CODE()       = EXTZ(c);
 
        mstatus->MPIE() = mstatus.MIE();
        mstatus->MIE()  = 0b0;
@@ -415,13 +333,13 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        if   get_config_print_reg()
        then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
-       prepare_trap_vector(del_priv, mcause)
+       prepare_trap_vector(del_priv, mcause.bits())
     },
     Supervisor => {
        assert (haveSupMode(), "no supervisor mode present for delegation");
 
-       scause->IsInterrupt() = bool_to_bits(intr);
-       scause->Cause()       = EXTZ(c);
+       scause->INTERRUPT() = bool_to_bits(intr);
+       scause->EXCEPTION_CODE()       = EXTZ(c);
 
        mstatus->SPIE() = mstatus.SIE();
        mstatus->SIE()  = 0b0;
@@ -440,13 +358,13 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        if   get_config_print_reg()
        then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
-       prepare_trap_vector(del_priv, scause)
+       prepare_trap_vector(del_priv, scause.bits())
     },
     User => {
        assert(haveUsrMode(), "no user mode present for delegation");
 
-       ucause->IsInterrupt() = bool_to_bits(intr);
-       ucause->Cause()       = EXTZ(c);
+       ucause->INTERRUPT() = bool_to_bits(intr);
+       ucause->EXCEPTION_CODE()       = EXTZ(c);
 
        mstatus->UPIE() = mstatus.UIE();
        mstatus->UIE()  = 0b0;
@@ -460,7 +378,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        if   get_config_print_reg()
        then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
 
-       prepare_trap_vector(del_priv, ucause)
+       prepare_trap_vector(del_priv, ucause.bits())
     }
   };
 }
@@ -548,53 +466,10 @@ function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
 
 function init_sys() -> unit = {
   cur_privilege = Machine;
-
-  mhartid     = EXTZ(0b0);
-
-  misa->MXL() = arch_to_bits(if sizeof(xlen) == 32 then RV32 else RV64);
-  misa->A()   = 0b1;                            /* atomics */
-  misa->C()   = bool_to_bits(sys_enable_rvc()); /* RVC */
-  misa->I()   = 0b1;                            /* base integer ISA */
-  misa->M()   = 0b1;                            /* integer multiply/divide */
-  misa->U()   = 0b1;                            /* user-mode */
-  misa->S()   = 0b1;                            /* supervisor-mode */
-
-  if   sys_enable_fdext() & sys_enable_zfinx()
-  then internal_error("F and Zfinx cannot both be enabled!");
-
-  /* We currently support both F and D */
-  misa->F()   = bool_to_bits(sys_enable_fdext());      /* single-precision */
-  misa->D()   = if   sizeof(flen) >= 64
-                then bool_to_bits(sys_enable_fdext())  /* double-precision */
-                else 0b0;
-
+  reset_regs();
   mstatus = set_mstatus_SXL(mstatus, misa.MXL());
   mstatus = set_mstatus_UXL(mstatus, misa.MXL());
   mstatus->SD()   = 0b0;
-
-  /* set to little-endian mode */
-  if sizeof(xlen) == 64 then {
-    mstatus = Mk_Mstatus([mstatus.bits() with 37 .. 36 = 0b00])
-  };
-  mstatush->bits() = EXTZ(0b0);
-
-  mip->bits()     = EXTZ(0b0);
-  mie->bits()     = EXTZ(0b0);
-  mideleg->bits() = EXTZ(0b0);
-  medeleg->bits() = EXTZ(0b0);
-  mtvec->bits()   = EXTZ(0b0);
-  mcause->bits()  = EXTZ(0b0);
-  mepc            = EXTZ(0b0);
-  mtval           = EXTZ(0b0);
-  mscratch        = EXTZ(0b0);
-
-  mcycle          = EXTZ(0b0);
-  mtime           = EXTZ(0b0);
-
-  mcounteren->bits() = EXTZ(0b0);
-
-  minstret           = EXTZ(0b0);
-  minstret_written   = false;
 
   init_pmp();
 

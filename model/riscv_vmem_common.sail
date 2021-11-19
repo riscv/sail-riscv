@@ -83,20 +83,7 @@ let PAGESIZE_BITS = 12
 type vaddr32 = bits(32)
 type paddr32 = bits(34)
 type pte32   = bits(32)
-
-/* asid */
 type asid32 = bits(9)
-
-function curAsid32(satp : bits(32)) -> asid32 = {
-  let s = Mk_Satp32(satp);
-  s.Asid()
-}
-
-/* page table base from satp */
-function curPTB32(satp : bits(32)) -> paddr32 = {
-  let s : Satp32 = Mk_Satp32(satp);
-  shiftl(EXTZ(s.PPN()), PAGESIZE_BITS)
-}
 
 /* Sv32 parameters and bitfield layouts */
 
@@ -138,21 +125,7 @@ bitfield SV32_PTE : pte32 = {
 
 type paddr64 = bits(56)
 type pte64   = bits(64)
-
-/* asid */
-
 type asid64 = bits(16)
-
-function curAsid64(satp : bits(64)) -> asid64 = {
-  let s = Mk_Satp64(satp);
-  s.Asid()
-}
-
-/* page table base from satp */
-function curPTB64(satp : bits(64)) -> paddr64 = {
-  let s = Mk_Satp64(satp);
-  shiftl(EXTZ(s.PPN()), PAGESIZE_BITS)
-}
 
 /* Sv39 parameters and bitfield layouts */
 

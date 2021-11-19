@@ -425,37 +425,32 @@ function init_fdext_regs () = {
 /*     frm       address 0x002    same as fcrs [7..5]               */
 /*     fcsr      address 0x003                                      */
 
-
-bitfield Fcsr : bits(32) = {
-  FRM    : 7 .. 5,
-  FFLAGS : 4 .. 0,
-}
-
-register fcsr : Fcsr
-
 val ext_write_fcsr : (bits(3), bits(5)) -> unit effect {rreg, wreg, escape}
-function ext_write_fcsr (frm, fflags) = {
-  fcsr->FRM()    = frm;      /* Note: frm can be an illegal value, 101, 110, 111 */
-  fcsr->FFLAGS() = fflags;
+function ext_write_fcsr (rm, flags) = {
+  frm    = legalize_frm(frm, EXTZ(rm));      /* Note: frm can be an illegal value, 101, 110, 111 */
+  fflags = legalize_fflags(fflags, EXTZ(flags));
+  fcsr = legalize_fcsr(fcsr, EXTZ(frm @ flags));
   update_softfloat_fflags(fflags);
   dirty_fd_context_if_present();
 }
 
 /* called for softfloat paths (softfloat flags are consistent) */
 val write_fflags : (bits(5)) -> unit effect {rreg, wreg, escape}
-function write_fflags(fflags) = {
-  if   fcsr.FFLAGS() != fflags
-  then dirty_fd_context_if_present();
-  fcsr->FFLAGS() = fflags;
+function write_fflags(flags) = {
+  if   fflags != flags
+  then dirty_fd_context();
+  fflags = legalize_fflags(fflags, EXTZ(flags));
+  fcsr = legalize_fcsr(fcsr, EXTZ(frm @ flags));
 }
 
 /* called for non-softfloat paths (softfloat flags need updating) */
 val accrue_fflags : (bits(5)) -> unit effect {rreg, wreg, escape}
 function accrue_fflags(flags) = {
-  let f = fcsr.FFLAGS() | flags;
-  if  fcsr.FFLAGS() != f
+  let f = fflags | flags;
+  if  fflags != f
   then {
-    fcsr->FFLAGS() = f;
+    fflags = legalize_fflags(fflags, EXTZ(f));
+    fcsr = legalize_fcsr(fcsr, EXTZ(frm @ flags));
     update_softfloat_fflags(f);
     dirty_fd_context_if_present();
   }

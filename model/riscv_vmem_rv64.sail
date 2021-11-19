@@ -68,13 +68,6 @@
 
 /* RV64 Supervisor-mode address translation and page-table walks. */
 
-/* Define the architectural satp and its legalizer. */
-
-register satp : xlenbits
-
-function legalize_satp(a : Architecture, o : xlenbits, v : xlenbits) -> xlenbits =
-  legalize_satp64(a, o, v)
-
 /* Define valid source addresses for translation */
 
 function isValidSv39Addr(vAddr : xlenbits) -> bool = {
@@ -95,22 +88,23 @@ val translationMode : (Privilege) -> SATPMode effect {rreg, escape}
 function translationMode(priv) = {
   if priv == Machine then Sbare
   else {
-    let arch = architecture(get_mstatus_SXL(mstatus));
+    let arch = architecture(mstatus.SXL());
     match arch {
       Some(RV64) => {
-        let mbits : satp_mode = Mk_Satp64(satp).Mode();
+        let mbits : satp_mode = satp.MODE();
         match satp64Mode_of_bits(RV64, mbits) {
           Some(m) => m,
           None()  => internal_error("invalid RV64 translation mode in satp")
         }
       },
-      Some(RV32) => {
-        let s = Mk_Satp32(satp[31..0]);
-        if s.Mode() == 0b0 then Sbare else Sv32
-      },
       _    => internal_error("unsupported address translation arch")
     }
   }
+}
+
+/* page table base from satp */
+function curPTB64(s : Satp) -> paddr64 = {
+  shiftl(EXTZ(s.PPN()), PAGESIZE_BITS)
 }
 
 /* Top-level address translation dispatcher */
@@ -121,7 +115,7 @@ function translateAddr_priv(vAddr, ac, effPriv) = {
   let do_sum : bool   = mstatus.SUM() == 0b1;
   let mode : SATPMode = translationMode(effPriv);
 
-  let asid = curAsid64(satp);
+  let asid = satp.ASID();
   let ptb  = curPTB64(satp);
 
   /* PTW extensions: initialize the PTW extension state. */

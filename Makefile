@@ -9,13 +9,23 @@ endif
 
 ifeq ($(ARCH),RV32)
   SAIL_XLEN := riscv_xlen32.sail
+  ARCH_LEN = 32
 else ifeq ($(ARCH),RV64)
   SAIL_XLEN := riscv_xlen64.sail
+  ARCH_LEN = 64
 else
   $(error '$(ARCH)' is not a valid architecture, must be one of: RV32, RV64)
 endif
 
 SAIL_FLEN := riscv_flen_D.sail
+CONFIG_ISA=riscv-config/rv$(ARCH_LEN)i_isa.yaml
+CONFIG_PLATFORM=riscv-config/rv$(ARCH_LEN)i_platform.yaml
+GENERATED_CONFIG_DIR=generated_definitions/riscv-config/$(ARCH)
+RV_CONFIG=riscv-config
+PYTHON=python3
+RV_CONFIG2SAIL=$(PWD)/config2sail.py
+RV_CONFIG_DEFINE=$(GENERATED_CONFIG_DIR)/riscv$(ARCH_LEN)_regs_define.sail
+RV_CONFIG_SRCS=$(RV_CONFIG_DEFINE) $(GENERATED_CONFIG_DIR)/riscv$(ARCH_LEN)_regs_legalize.sail
 
 # Instruction sources, depending on target
 SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_misa_ext.sail
@@ -32,13 +42,9 @@ SAIL_SEQ_INST_SRCS  = riscv_insts_begin.sail $(SAIL_SEQ_INST) riscv_insts_end.sa
 SAIL_RMEM_INST_SRCS = riscv_insts_begin.sail $(SAIL_RMEM_INST) riscv_insts_end.sail
 
 # System and platform sources
-SAIL_SYS_SRCS =  riscv_csr_map.sail
-SAIL_SYS_SRCS += riscv_next_regs.sail
 SAIL_SYS_SRCS += riscv_sys_exceptions.sail  # default basic helpers for exception handling
 SAIL_SYS_SRCS += riscv_sync_exception.sail  # define the exception structure used in the model
-SAIL_SYS_SRCS += riscv_next_control.sail    # helpers for the 'N' extension
-SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdext_control.sail
-SAIL_SYS_SRCS += riscv_csr_ext.sail         # access to CSR extensions
+SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail
 SAIL_SYS_SRCS += riscv_sys_control.sail     # general exception handling
 
 SAIL_RV32_VM_SRCS = riscv_vmem_sv32.sail riscv_vmem_rv32.sail
@@ -54,15 +60,17 @@ endif
 # Non-instruction sources
 PRELUDE = prelude.sail prelude_mapping.sail $(SAIL_XLEN) $(SAIL_FLEN) prelude_mem_metadata.sail prelude_mem.sail
 
-SAIL_REGS_SRCS = riscv_reg_type.sail riscv_freg_type.sail riscv_regs.sail riscv_pc_access.sail riscv_sys_regs.sail
+SAIL_REGS_TYPE = riscv_reg_type.sail riscv_freg_type.sail 
+SAIL_REGS_SRCS = riscv_regs.sail riscv_pc_access.sail riscv_sys_regs.sail
 SAIL_REGS_SRCS += riscv_pmp_regs.sail riscv_pmp_control.sail
 SAIL_REGS_SRCS += riscv_ext_regs.sail $(SAIL_CHECK_SRCS)
 
-SAIL_ARCH_SRCS = $(PRELUDE)
-SAIL_ARCH_SRCS += riscv_types_common.sail riscv_types_ext.sail riscv_types.sail
-SAIL_ARCH_SRCS += riscv_vmem_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail
+SAIL_ARCH_TYPES = $(PRELUDE)
+SAIL_ARCH_TYPES += riscv_types_common.sail riscv_types_ext.sail riscv_types.sail
+SAIL_ARCH_TYPES += riscv_vmem_types.sail $(SAIL_REGS_TYPE)
+SAIL_ARCH_SRCS = $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail
 SAIL_ARCH_SRCS += riscv_mem.sail $(SAIL_VM_SRCS)
-SAIL_ARCH_RVFI_SRCS = $(PRELUDE) rvfi_dii.sail riscv_types_common.sail riscv_types_ext.sail riscv_types.sail riscv_vmem_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS) riscv_types_kext.sail
+SAIL_ARCH_RVFI_SRCS = rvfi_dii.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS) riscv_types_kext.sail
 SAIL_ARCH_SRCS += riscv_types_kext.sail    # Shared/common code for the cryptography extension.
 
 SAIL_STEP_SRCS = riscv_step_common.sail riscv_step_ext.sail riscv_decode_ext.sail riscv_fetch.sail riscv_step.sail
@@ -79,10 +87,10 @@ endif
 
 
 PRELUDE_SRCS   = $(addprefix model/,$(PRELUDE))
-SAIL_SRCS      = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS)  $(SAIL_OTHER_SRCS))
-SAIL_RMEM_SRCS = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_RMEM_INST_SRCS) $(SAIL_OTHER_SRCS))
-SAIL_RVFI_SRCS = $(addprefix model/,$(SAIL_ARCH_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS) $(RVFI_STEP_SRCS))
-SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS) $(SAIL_OTHER_COQ_SRCS))
+SAIL_SRCS      = $(addprefix model/,$(SAIL_ARCH_TYPES)) $(RV_CONFIG_SRCS) $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS)  $(SAIL_OTHER_SRCS))
+SAIL_RMEM_SRCS = $(addprefix model/,$(SAIL_ARCH_TYPES)) $(RV_CONFIG_SRCS) $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_RMEM_INST_SRCS) $(SAIL_OTHER_SRCS))
+SAIL_RVFI_SRCS = $(addprefix model/,$(SAIL_ARCH_TYPES)) $(RV_CONFIG_SRCS) $(addprefix model/,$(SAIL_ARCH_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS) $(RVFI_STEP_SRCS))
+SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_ARCH_TYPES)) $(RV_CONFIG_SRCS) $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS) $(SAIL_OTHER_COQ_SRCS))
 
 PLATFORM_OCAML_SRCS = $(addprefix ocaml_emulator/,platform.ml platform_impl.ml softfloat.ml riscv_ocaml_sim.ml)
 
@@ -231,6 +239,13 @@ generated_definitions/c/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Make
 generated_definitions/c2/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c2
 	$(SAIL) $(SAIL_FLAGS) -no_warn -memo_z3 -config c_emulator/config.json -c2 $(SAIL_SRCS) -o $(basename $@)
+
+$(GENERATED_CONFIG_DIR)/rv$(ARCH_LEN)_isa_checked.yaml: $(CONFIG_ISA) $(CONFIG_PLATFORM)
+	mkdir -p $(GENERATED_CONFIG_DIR)
+	$(RV_CONFIG) --isa_spec $(CONFIG_ISA) --platform_spec $(CONFIG_PLATFORM) --work_dir $(GENERATED_CONFIG_DIR)
+
+$(RV_CONFIG_DEFINE): $(GENERATED_CONFIG_DIR)/rv$(ARCH_LEN)_isa_checked.yaml
+	$(PYTHON) $(RV_CONFIG2SAIL) -a $(ARCH_LEN) -i $(GENERATED_CONFIG_DIR)/rv$(ARCH_LEN)i_isa_checked.yaml -p $(GENERATED_CONFIG_DIR)/rv$(ARCH_LEN)i_platform_checked.yaml
 
 $(SOFTFLOAT_LIBS):
 	$(MAKE) SPECIALIZE_TYPE=$(SOFTFLOAT_SPECIALIZE_TYPE) -C $(SOFTFLOAT_LIBDIR)
@@ -448,6 +463,7 @@ clean:
 	-rm -rf generated_definitions/ocaml/* generated_definitions/c/* generated_definitions/latex/*
 	-rm -rf generated_definitions/lem/* generated_definitions/isabelle/* generated_definitions/hol4/* generated_definitions/coq/*
 	-rm -rf generated_definitions/for-rmem/*
+	-rm -rf generated_definitions/riscv-config/*
 	-$(MAKE) -C $(SOFTFLOAT_LIBDIR) clean
 	-rm -f c_emulator/riscv_sim_RV32 c_emulator/riscv_sim_RV64  c_emulator/riscv_rvfi_RV32 c_emulator/riscv_rvfi_RV64
 	-rm -rf ocaml_emulator/_sbuild ocaml_emulator/_build ocaml_emulator/riscv_ocaml_sim_RV32 ocaml_emulator/riscv_ocaml_sim_RV64 ocaml_emulator/tracecmp
