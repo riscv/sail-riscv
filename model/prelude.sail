@@ -270,32 +270,15 @@ function rotatel (v, n) =
 overload operator >>> = {rotate_bits_right, rotater}
 overload operator <<< = {rotate_bits_left, rotatel}
 
-function xor_int (a :int, b:int) -> int = {
-  ys : nat = 0;
-  ys = unsigned(xor_vec(to_bits(64,a), to_bits(64,b)));
-  ys
-}
-
-val reverse_bits_bytes_words : forall 'm 'n, 'm >= 'n >= 0. (bits('m), bits('n)) -> bits('m)
-
-/*
-  param : bits(5) = 0b11111, it reversed all bits in a word.
-  param : bits(6) = 0b111111, it reversed all bits in a double word.
-  param : bits(3) = 0b111, it swapped all bits in each byte.
-  param : bits(5) = 0b11000, it swapped all bytes in a word.
-  param : bits(6) = 0b110000, it swapped all bytes in a double word.
-*/
-
-function reverse_bits_bytes_words (xs, param) = {
-  ys = zeros(length(xs));
-  foreach (i from 0 to (length(xs) - 1)) {
-    let index = unsigned((to_bits(length(param), xor_int(i, unsigned(param)))));
-    ys[i] = (xs >> index)[0];
+function reverse_bits_in_byte (xs : bits(8)) -> bits(8) = {
+  ys : bits(8) = zeros();
+  foreach (i from 0 to 7) {
+    ys[i] = xs[7-i];
   };
   ys
 }
 
-overload reverse = {reverse_bits_bytes_words}
+overload reverse = {reverse_bits_in_byte}
 
 /* helpers for mappings */
 
