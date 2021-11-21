@@ -69,7 +69,7 @@ for test in $DIR/riscv-tests/rv32*.elf; do
     if [[ $(basename $test) =~ $pat ]];
     then continue
     fi
-    if $RISCVDIR/ocaml_emulator/riscv_ocaml_sim_RV32 "$test" >"${test/.elf/.out}" 2>&1 && grep -q SUCCESS "${test/.elf/.out}" */
+    if $RISCVDIR/ocaml_emulator/riscv_ocaml_sim_RV32 "$test" >"${test/.elf/.out}" 2>&1 && grep -q SUCCESS "${test/.elf/.out}"
     then
        green "OCaml-32 $(basename $test)" "ok"
     else
