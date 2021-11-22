@@ -42,7 +42,7 @@ Yu-Wen Shao, National Tsing-Hua University(Taiwan);
 Charlie Su, National Tsing-Hua University(Taiwan);
 Chia-Hui Su, National Tsing-Hua University(Taiwan);
 Bow-Yaw Wang, Academia Sinica(Taiwan);
-Ti-Han Wu, National Tsing-Hua University(Taiwan);
+Ti-Han Wu, National Tsing-Hua University(Taiwan).
 
 Directory Structure
 -------------------
