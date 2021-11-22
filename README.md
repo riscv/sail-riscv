@@ -29,7 +29,7 @@ This is one of [several formal models](https://github.com/riscv/ISA_Formal_Spec_
 Sail Model for RISC-V Pack Extension
 ================
 
-This branch add all 209 instructions in [RISC-V Pack-extension](https://github.com/riscv/riscv-p-spec/blob/master/P-ext-proposal.adoc).  
+This branch add all instructions in [RISC-V Pack-extension](https://github.com/riscv/riscv-p-spec/blob/master/P-ext-proposal.adoc). The code is from the cooperation of Programming Language Department of Computer Science, National Tsing-Hua University(Taiwan), Academia Sinica(Taiwan) and Andes Technology Corporation(Taiwan).
 
 
 
@@ -159,42 +159,3 @@ Licence
 -------
 
 The model is made available under the BSD two-clause licence in LICENCE.
-
-
-Authors
--------
-
- Prashanth Mundkur, SRI International;
- Rishiyur S. Nikhil (Bluespec Inc.); 
- Jon French, University of Cambridge;
- Brian Campbell, University of Edinburgh;
- Robert Norton-Wright, University of Cambridge and Microsoft;
- Alasdair Armstrong, University of Cambridge;
- Thomas Bauereiss, University of Cambridge;
- Shaked Flur, University of Cambridge;
- Christopher Pulte, University of Cambridge;
- Peter Sewell, University of Cambridge;
- Alexander Richardson, University of Cambridge;
- Hesham Almatary, University of Cambridge;
- Jessica Clarke, University of Cambridge;
- Nathaniel Wesley Filardo, Microsoft;
- Peter Rugg, University of Cambridge;
- Scott Johnson, Aril Computer Corp.
-
-Funding
--------
-
-This software was developed by the above within the Rigorous
-Engineering of Mainstream Systems (REMS) project, partly funded by
-EPSRC grant EP/K008528/1, at the Universities of Cambridge and
-Edinburgh.
-
-This software was developed by SRI International and the University of
-Cambridge Computer Laboratory (Department of Computer Science and
-Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and
-under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA
-SSITH research programme.
-
-This project has received funding from the European Research Council
-(ERC) under the European Union’s Horizon 2020 research and innovation
-programme (grant agreement 789108, ELVER).
