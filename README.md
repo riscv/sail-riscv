@@ -26,7 +26,10 @@ The process to perform this inclusion is explained [here](https://github.com/rem
 This is one of [several formal models](https://github.com/riscv/ISA_Formal_Spec_Public_Review/blob/master/comparison_table.md) that were compared within the 
 [RISC-V ISA Formal Spec Public Review](https://github.com/riscv/ISA_Formal_Spec_Public_Review).
 
+Sail Model for RISC-V Pack Extension
+================
 
+This branch add all 209 instructions in [RISC-V Pack-extension](https://github.com/riscv/riscv-p-spec/blob/master/P-ext-proposal.adoc).  
 
 
 
