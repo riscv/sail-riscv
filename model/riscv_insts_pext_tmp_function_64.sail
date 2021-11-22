@@ -1,3 +1,7 @@
+/* Programming Langauge Lab, Department of Computer Science, National Tsing-Hua University, Taiwan */
+/* Academia Sinica, Taiwan*/
+/* Andes Technology Corporation, Taiwan*/
+
 /* riscv_insts_pext_define.sail */
 
 mapping p_inst_rs2_rs1_rd_mapping : p_inst_rs2_rs1_rd_op <-> string = {
