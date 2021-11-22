@@ -7,20 +7,20 @@
 /* *****************************************************************/
 
 
-val shift_right_arith : forall 'n, 'n == 8 | 'n == 9 | 'n == 16 | 'n == 17 | 'n == 32 | 'n == 33 | 'n == 65.
+val shift_right_arith : forall 'n, 'n == 8 | 'n == 9 | 'n == 16 | 'n == 17 | 'n == 32 | 'n == 33 | 'n == 64.
   (bits ('n), byte) -> bits ('n)
 function shift_right_arith (v, m) =
   let extv : bits(xlen + 65) = EXTS (v) in
   slice (extv >> m, 0, 'n)
 
-val shift_right_arith_u : forall 'n, 'n == 8 | 'n == 16 | 'n == 32.
+val shift_right_arith_u : forall 'n, 'n == 8 | 'n == 16 | 'n == 32 | 'n == 64.
   (bits ('n), byte) -> bits ('n)
 function shift_right_arith_u (v, m) =
   if m == 0x00 then v
-  else let res : bits(65) = add_bits(EXTS(shift_right_arith(v @ 0b0, m)), EXTZ(0b1)) in 
+  else let res : bits(65) = add_bits(EXTS(shift_right_arith(v, m - 0x01)), EXTZ(0b1)) in
   slice(res >> 1, 0, 'n)
 
-val shift_right_logic : forall 'n, 'n == 8 | 'n == 9 | 'n == 16 | 'n == 17 | 'n == 32 | 'n == 33 | 'n == 64 | 'n == 65.
+val shift_right_logic : forall 'n, 'n == 8 | 'n == 9 | 'n == 16 | 'n == 17 | 'n == 32 | 'n == 33 | 'n == 64.
   (bits ('n), byte) -> bits ('n)
 function shift_right_logic (v, m) =
   let extv : bits(xlen + 65) = EXTZ (v) in
@@ -30,7 +30,7 @@ val shift_right_logic_u : forall 'n, 'n == 8 | 'n == 16 | 'n == 32.
   (bits ('n), byte) -> bits ('n)
 function shift_right_logic_u (v, m) =
   if m == 0x00 then v
-  else let res : bits(65) = add_bits(EXTZ(shift_right_logic(v @ 0b0, m)), EXTZ(0b1)) in slice(res >> 1, 0, 'n)
+  else let res : bits(65) = add_bits(EXTZ(shift_right_logic(v, m - 0x01)), EXTZ(0b1)) in slice(res >> 1, 0, 'n)
 
 val shift_left_logic : forall 'n, 'n == 8 | 'n == 9 | 'n == 16 | 'n == 17 | 'n == 32 | 'n == 33.
   (bits ('n), byte) -> bits ('n)

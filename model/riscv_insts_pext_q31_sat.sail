@@ -6,31 +6,12 @@
 /* ********************* auxiliary functions ***********************/
 /* *****************************************************************/
 
-val kdm : forall 'n, 'n == 16.
-  (bits('n), bits('n)) -> bits(2 * 'n) effect {rreg,wreg}
+val kdm :
+  (bits(16), bits(16)) -> bits(32) effect {rreg,wreg}
 function kdm (v1, v2) =
-  let lb : bits('n) = not_vec(EXTS(sail_ones ('n) >> 1)) in
-  if v1 == lb & v2 == lb then { pext_write_OV (0b1); ones (2 * 'n) >> 1 }
-  else { to_bits (2 * 'n - 1, signed(v1) * signed(v2)) @ 0b0 }
-
-val kslraw :
-  (bits (32), byte) -> bits (32) effect {rreg,wreg}
-function kslraw (v, m) =
-  let rev : byte = if m <_s 0x00 then not_vec (m) + 0x01 else m in
-  let sa : byte = if rev == 0x20 then 0x1F else rev in
-  if m <_s 0x00 then shift_right_arith(v, sa)
-  else kshift_left_logic(v, sa)
-
-val kslraw_u :
-  (bits (32), byte) -> bits (32) effect {rreg,wreg}
-function kslraw_u (v, m) =
-  let rev : byte = if m <_s 0x00 then not_vec (m) + 0x01 else m in
-  let sa : byte = if rev == 0x20 then 0x1F else rev in
-  if m <_s 0x00
-  then
-  let res33 : bits(33) = add_bits(EXTS(shift_right_arith(v, sa - 0x01)), EXTS(0x1)) in
-  res33[32..1]
-  else kshift_left_logic(v, sa)
+  let lb : bits(16) = not_vec(EXTS(sail_ones (16) >> 1)) in
+  if v1 == lb & v2 == lb then { pext_write_OV (0b1); ones (32) >> 1 }
+  else { to_bits (31, signed(v1) * signed(v2)) @ 0b0 }
 
 val kdmaw :
   (bits(16), bits(16), bits(32)) -> bits(32) effect {rreg,wreg}
@@ -120,8 +101,8 @@ val PEXT_KSLRAW : (regidx, regidx, regidx) -> bool effect {escape,rreg,wreg}
 function PEXT_KSLRAW (rs2, rs1, rd) = {
   let sa : byte = EXTS(X(rs2)[5..0]);
   if sizeof(xlen) == 32
-  then X(rd) = kslraw(rW(rs1, 0), sa)
-  else X(rd) = EXTS(kslraw(rW(rs1, 0), sa));
+  then X(rd) = kslra(rW(rs1, 0), sa)
+  else X(rd) = EXTS(kslra(rW(rs1, 0), sa));
   true
 }
 
@@ -131,8 +112,8 @@ val PEXT_KSLRAW_U : (regidx, regidx, regidx) -> bool effect {escape,rreg,wreg}
 function PEXT_KSLRAW_U (rs2, rs1, rd) = {
   let sa : byte = EXTS(X(rs2)[5..0]);
   if sizeof(xlen) == 32
-  then X(rd) = kslraw_u(rW(rs1, 0), sa)
-  else X(rd) = EXTS(kslraw_u(rW(rs1, 0), sa));
+  then X(rd) = kslra_u(rW(rs1, 0), sa)
+  else X(rd) = EXTS(kslra_u(rW(rs1, 0), sa));
   true
 }
 

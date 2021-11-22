@@ -21,8 +21,6 @@ val mulb :
 function mulb (v1, v2) =
   to_bits (64, unsigned(v1) * unsigned(v2))[31..0]
 
-
-
 /* *****************************************************************/
 
 val PEXT_RADDW: (regidx, regidx, regidx) -> bool effect {escape,rreg,wreg}

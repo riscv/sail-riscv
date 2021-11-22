@@ -570,16 +570,10 @@ val PEXT_SRA_U : (regidx, regidx, regidx) -> bool effect {escape,rreg,wreg}
 function PEXT_SRA_U(rs2, rs1, rd) = {
   let result : xlenbits =
     if sizeof(xlen) == 32
-    then
-    let sa : byte = 0b000 @ X(rs2)[4..0] in
-    if  (sa == 0x00)
-    then  X(rs1)
-    else  (add_bits(shift_right_arith (rW(rs1, 0) @ 0b0, sa), 0b0 @ 0x00000001))[32..1]
-    else
-    let sa : byte = 0b00 @ X(rs2)[5..0] in
-    if  (sa == 0x00)
-    then  X(rs1)
-    else  (add_bits(shift_right_arith (rD(rs1) @ 0b0, sa), 0b0 @ 0x0000000000000001))[64..1];
+    then { let sa : byte = 0b000 @ X(rs2)[4..0] in
+           shift_right_arith_u (rW(rs1, 0), sa)}
+    else { let sa : byte = 0b00 @ X(rs2)[5..0] in
+           shift_right_arith_u (rD(rs1), sa)};
   X(rd) = result;
   true
 }
@@ -588,17 +582,12 @@ function PEXT_SRA_U(rs2, rs1, rd) = {
 
 val PEXT_SRAI_U : (bits(6), regidx, regidx) -> bool effect {escape,rreg,wreg}
 function PEXT_SRAI_U (imm6, rs1, rd) = {
-  let sa : byte = EXTZ(imm6);
   let result : xlenbits =
     if sizeof(xlen) == 32
-    then
-    if  (sa == 0x00)
-    then  X(rs1)
-    else  (add_bits(shift_right_arith (rW(rs1, 0) @ 0b0, sa), 0b0 @ 0x00000001))[32..1]
-    else
-    if  (sa == 0x00)
-    then  X(rs1)
-    else  (add_bits(shift_right_arith (rD(rs1) @ 0b0, sa), 0b0 @ 0x0000000000000001))[64..1];
+    then { let sa : byte = 0b000 @ imm6[4..0] in
+           shift_right_arith_u (rW(rs1, 0), sa)}
+    else { let sa : byte = 0b00 @ imm6[5..0] in
+           shift_right_arith_u (rD(rs1), sa)};
   X(rd) = result;
   true
 }

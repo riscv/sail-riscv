@@ -6,6 +6,7 @@
 /* ********************* auxiliary functions ***********************/
 /* *****************************************************************/
 
+/* *****************************************************************/
 val PEXT_SRA32 : (regidx, regidx, regidx) -> bool effect {escape,rreg,wreg}
 function PEXT_SRA32(rs2, rs1, rd) = {
   let sa : byte = EXTZ(X(rs2)[4..0]) in

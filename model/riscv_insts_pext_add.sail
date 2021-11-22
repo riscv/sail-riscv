@@ -73,7 +73,7 @@ function PEXT_ADD16 (rs2, rs1, rd) = {
 val PEXT_ADD32 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_ADD32 (rs2, rs1, rd) = {
-  if ~ (haveZpsfoperand ()) | sizeof (xlen) == 32 then {
+  if (~ (haveZpsfoperand ()) | sizeof (xlen) == 32) then {
     false
   } else {
     let result : xlenbits =
@@ -122,7 +122,7 @@ function PEXT_KADD16 (rs2, rs1, rd) = {
 val PEXT_KADD32 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_KADD32 (rs2, rs1, rd) = {
-  if ~ (haveZpsfoperand ()) | sizeof (xlen) == 32 then {
+  if (~ (haveZpsfoperand ()) | sizeof (xlen) == 32) then {
     false
   } else {
     let result : xlenbits =
@@ -173,7 +173,7 @@ function PEXT_RADD16 (rs2, rs1, rd) = {
 val PEXT_RADD32 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_RADD32 (rs2, rs1, rd) = {
-  if ~ (haveZpsfoperand ()) | sizeof (xlen) == 32 then {
+  if (~ (haveZpsfoperand ()) | sizeof (xlen) == 32 ) then {
     false
   } else {
     let result : xlenbits =
@@ -223,7 +223,7 @@ function PEXT_UKADD16 (rs2, rs1, rd) = {
 val PEXT_UKADD32 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_UKADD32 (rs2, rs1, rd) = {
-  if ~ (haveZpsfoperand ()) | sizeof (xlen) == 32 then {
+  if (~ (haveZpsfoperand ()) | sizeof (xlen) == 32 ) then {
     false
   } else {
     let result : xlenbits =
@@ -273,7 +273,7 @@ function PEXT_URADD16 (rs2, rs1, rd) = {
 val PEXT_URADD32 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_URADD32 (rs2, rs1, rd) = {
-  if ~ (haveZpsfoperand ()) | sizeof (xlen) == 32 then {
+  if (~ (haveZpsfoperand ()) | sizeof (xlen) == 32 ) then {
     false
   } else {
     let result : xlenbits =

@@ -1,3 +1,7 @@
+/* *****************************************************************/
+/* This file specifies the instruction added by the 'P' extension. */
+/* *****************************************************************/
+
 union clause ast = PEXT_ADD : (regidx, regidx, regidx, word_width)
 mapping clause encdec = PEXT_ADD (rs2, rs1, rd, BYTE) <->
   0b0100100 @ rs2 @ rs1 @ 0b000 @ rd @ PEXT_SIG

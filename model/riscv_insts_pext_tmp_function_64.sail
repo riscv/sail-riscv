@@ -1,7 +1,3 @@
-/* riscv_pext_tmp_function.sail */
-
-
-
 /* riscv_insts_pext_define.sail */
 
 mapping p_inst_rs2_rs1_rd_mapping : p_inst_rs2_rs1_rd_op <-> string = {

@@ -10,9 +10,9 @@ val kmada : forall 'n, 'n == 16 | 'n == 32.
   (bits(2 * 'n), bits ('n), bits ('n), bits ('n), bits ('n)) -> bits (2 * 'n)
   effect {rreg,wreg}
 function kmada (rd, rs11, rs21, rs10, rs20) =
-  let lb : bits(2 * 'n + 2) = not_vec(EXTS(sail_ones (2 * 'n) >> 1)) in
-  let ub : bits(2 * 'n + 2) = EXTS(sail_ones (2 * 'n) >> 1) in
-  let res : bits(2 * 'n + 2) = EXTS(rd) + EXTS(smul(rs11, rs21)) + EXTS(smul(rs10, rs20)) in
+  let lb : bits(66) = not_vec(EXTS(sail_ones (2 * 'n) >> 1)) in
+  let ub : bits(66) = EXTS(sail_ones (2 * 'n) >> 1) in
+  let res : bits(66) = EXTS(rd) + EXTS(smul(rs11, rs21)) + EXTS(smul(rs10, rs20)) in
   if res <_s lb then { pext_write_OV (0b1); slice (lb, 0, 2 * 'n) }
   else if ub <_s res then { pext_write_OV (0b1); slice (ub, 0, 2 * 'n) }
   else { slice (res, 0, 2 * 'n) }
@@ -21,9 +21,9 @@ val kmads : forall 'n, 'n == 16 | 'n == 32.
   (bits(2 * 'n), bits ('n), bits ('n), bits ('n), bits ('n)) -> bits (2 * 'n)
   effect {rreg,wreg}
 function kmads (rd, rs11, rs21, rs10, rs20) =
-  let lb : bits(2 * 'n + 2) = not_vec(EXTS(sail_ones (2 * 'n) >> 1)) in
-  let ub : bits(2 * 'n + 2) = EXTS(sail_ones (2 * 'n) >> 1) in
-  let res : bits(2 * 'n + 2) = EXTS(rd) + EXTS(smul(rs11, rs21)) - EXTS(smul(rs10, rs20)) in
+  let lb : bits(66) = not_vec(EXTS(sail_ones (2 * 'n) >> 1)) in
+  let ub : bits(66) = EXTS(sail_ones (2 * 'n) >> 1) in
+  let res : bits(66) = EXTS(rd) + EXTS(smul(rs11, rs21)) - EXTS(smul(rs10, rs20)) in
   if res <_s lb then { pext_write_OV (0b1); slice (lb, 0, 2 * 'n) }
   else if ub <_s res then { pext_write_OV (0b1); slice (ub, 0, 2 * 'n) }
   else { slice (res, 0, 2 * 'n) }
@@ -32,9 +32,9 @@ val kmsda : forall 'n, 'n == 16 | 'n == 32.
   (bits(2 * 'n), bits ('n), bits ('n), bits ('n), bits ('n)) -> bits (2 * 'n)
   effect {rreg,wreg}
 function kmsda (rd, rs11, rs21, rs10, rs20) =
-  let lb : bits(2 * 'n + 2) = not_vec(EXTS(sail_ones (2 * 'n) >> 1)) in
-  let ub : bits(2 * 'n + 2) = EXTS(sail_ones (2 * 'n) >> 1) in
-  let res : bits(2 * 'n + 2) = EXTS(rd) - EXTS(smul(rs11, rs21)) - EXTS(smul(rs10, rs20)) in
+  let lb : bits(66) = not_vec(EXTS(sail_ones (2 * 'n) >> 1)) in
+  let ub : bits(66) = EXTS(sail_ones (2 * 'n) >> 1) in
+  let res : bits(66) = EXTS(rd) - EXTS(smul(rs11, rs21)) - EXTS(smul(rs10, rs20)) in
   if res <_s lb then { pext_write_OV (0b1); slice (lb, 0, 2 * 'n) }
   else if ub <_s res then { pext_write_OV (0b1); slice (ub, 0, 2 * 'n) }
   else { slice (res, 0, 2 * 'n) }
