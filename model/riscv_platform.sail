@@ -196,11 +196,11 @@ register mtimecmp : bits(64)  // memory-mapped internal clint register.
  *
  * 0000 msip hart 0         -- memory-mapped software interrupt
  * 0004 msip hart 1
- * 4000 mtimecmp hart 0 lo  -- memory-mapped mtimer thresholds
+ * 4000 mtimecmp hart 0 lo  -- memory-mapped timer thresholds
  * 4004 mtimecmp hart 0 hi
  * 4008 mtimecmp hart 1 lo
  * 400c mtimecmp hart 1 hi
- * bff8 mtime lo            -- memory-mapped clockmtimer value
+ * bff8 mtime lo            -- memory-mapped clocktimer value
  * bffc mtime hi
  */
 
@@ -276,7 +276,7 @@ function clint_dispatch() -> unit = {
   mip->MTIP() = 0b0;
   if mtimecmp <=_u mtime then {
     if   get_config_print_platform()
-    then print_platform(" clint mtimer pending at mtime " ^ BitStr(mtime));
+    then print_platform(" clint timer pending at mtime " ^ BitStr(mtime));
     mip->MTIP() = 0b1
   }
 }
@@ -342,11 +342,11 @@ register htif_tohost : bits(64)
 register htif_done   : bool
 register htif_exit_code : bits(64)
 
-/* Applications somemtimes write the lower 32-bit payload bytes without
+/* Applications sometimes write the lower 32-bit payload bytes without
    writing the control bytes; this is seen in the riscv-tests suite.
    However, processing the payload bytes too early could miss a
    subsequent write to the control bytes.  As a workaround, if the
-   payload is written a few mtimes with the same value, without an
+   payload is written a few times with the same value, without an
    intervening write to the control bytes, we process the whole htif
    command anyway.  */
 
@@ -512,7 +512,7 @@ function handle_illegal() -> unit = {
 
 function platform_wfi() -> unit = {
   cancel_reservation();
-  /* speed execution by getting the mtimer to fire at the next instruction,
+  /* speed execution by getting the timer to fire at the next instruction,
    * since we currently don't have any other devices raising interrupts.
    */
   if mtime <_u mtimecmp then {
