@@ -34,14 +34,14 @@ This branch add all instructions in [RISC-V Pack-extension](https://github.com/r
 Sail Model for RISC-V Pack Extension Authors
 ===============
 Chuanhua Chang, Andes Technology Corporation;  
-Chun-Ping Chung, National Tsing-Hua University(Taiwan); 
-Yu-Tse Huang, National Tsing-Hua University(Taiwan);
-Chao-Lin Lee, National Tsing-Hua University(Taiwan);
-Jenq-Kuen Lee, National Tsing-Hua University(Taiwan);
-Yu-Wen Shao, National Tsing-Hua University(Taiwan);
-Charlie Su, Andes Technology Corporation;
-Chia-Hui Su, National Tsing-Hua University(Taiwan);
-Bow-Yaw Wang, Academia Sinica(Taiwan);
+Chun-Ping Chung, National Tsing-Hua University(Taiwan);   
+Yu-Tse Huang, National Tsing-Hua University(Taiwan);  
+Chao-Lin Lee, National Tsing-Hua University(Taiwan);  
+Jenq-Kuen Lee, National Tsing-Hua University(Taiwan);  
+Yu-Wen Shao, National Tsing-Hua University(Taiwan);  
+Charlie Su, Andes Technology Corporation;  
+Chia-Hui Su, National Tsing-Hua University(Taiwan);  
+Bow-Yaw Wang, Academia Sinica(Taiwan);  
 Ti-Han Wu, National Tsing-Hua University(Taiwan).
 
 Directory Structure
