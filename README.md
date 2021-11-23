@@ -33,7 +33,7 @@ This branch add all instructions in [RISC-V Pack-extension](https://github.com/r
 
 Sail Model for RISC-V Pack Extension Authors
 ===============
-Chuanhua Chang, Andes Technology Corporation\n; 
+Chuanhua Chang, Andes Technology Corporation 
 Chun-Ping Chung, National Tsing-Hua University(Taiwan); 
 Yu-Tse Huang, National Tsing-Hua University(Taiwan);
 Chao-Lin Lee, National Tsing-Hua University(Taiwan);
