@@ -29,11 +29,11 @@ This is one of [several formal models](https://github.com/riscv/ISA_Formal_Spec_
 Sail Model for RISC-V Pack Extension
 ================
 
-This branch add all instructions in [RISC-V Pack-extension](https://github.com/riscv/riscv-p-spec/blob/master/P-ext-proposal.adoc). The code is from the cooperation of Programming Language Department of Computer Science, National Tsing-Hua University(Taiwan), Academia Sinica(Taiwan) and Andes Technology Corporation.
+This branch add all instructions in [RISC-V Pack-extension](https://github.com/riscv/riscv-p-spec/blob/master/P-ext-proposal.adoc). The code is contributed  by  a team including Programming Language Lab (NTHU CS), Academia Sinica(Taiwan), and Andes Technology Corporation.
 
 Sail Model for RISC-V Pack Extension Authors
 ===============
-Chuanhua Chang, Andes Technology Corporation 
+Chuanhua Chang, Andes Technology Corporation;  
 Chun-Ping Chung, National Tsing-Hua University(Taiwan); 
 Yu-Tse Huang, National Tsing-Hua University(Taiwan);
 Chao-Lin Lee, National Tsing-Hua University(Taiwan);
