@@ -26,12 +26,12 @@ The process to perform this inclusion is explained [here](https://github.com/rem
 This is one of [several formal models](https://github.com/riscv/ISA_Formal_Spec_Public_Review/blob/master/comparison_table.md) that were compared within the 
 [RISC-V ISA Formal Spec Public Review](https://github.com/riscv/ISA_Formal_Spec_Public_Review).
 
-Sail Model for RISC-V Packed Extension
+Sail Model for RISC-V P Extension
 ================
 
-This branch add all instructions in [RISC-V Packed-extension](https://github.com/riscv/riscv-p-spec/blob/master/P-ext-proposal.adoc). The code is contributed  by  a team including Programming Language Lab (NTHU CS), Academia Sinica(Taiwan), and Andes Technology Corporation.
+This branch add all instructions in [RISC-V P extension](https://github.com/riscv/riscv-p-spec/blob/master/P-ext-proposal.adoc). The code is contributed  by  a team including Programming Language Lab (NTHU CS), Academia Sinica(Taiwan), and Andes Technology Corporation.
 
-Sail Model for RISC-V Packed Extension Authors
+Sail Model for RISC-V P Extension Authors
 ===============
 Chuanhua Chang, Andes Technology Corporation;  
 Chun-Ping Chung, National Tsing-Hua University(Taiwan);   
@@ -60,24 +60,20 @@ sail-riscv
 |     |+---- riscv_insts_pext_define.sail
 |     |+---- riscv_insts_pext_kmda.sail
 |     |+---- riscv_insts_pext_misc.sail
-|     |+---- riscv_insts_pext_misc32.sail
 |     |+---- riscv_insts_pext_msb_add_mul.sail
 |     |+---- riscv_insts_pext_mul.sail
 |     |+---- riscv_insts_pext_muladdsub.sail
-|     |+---- riscv_insts_pext_muladdsub32.sail
 |     |+---- riscv_insts_pext_pext_ov.sail
 |     |+---- riscv_insts_pext_pack.sail
-|     |+---- riscv_insts_pext_pack32.sail
 |     |+---- riscv_insts_pext_prelude.sail
-|     |+---- riscv_insts_pext_q15_64.sail
 |     |+---- riscv_insts_pext_q15.sail
 |     |+---- riscv_insts_pext_q32_sat.sail
 |     |+---- riscv_insts_pext_shift.sail
-|     |+---- riscv_insts_pext_shift32.sail
 |     |+---- riscv_insts_pext_sub.sail
+|     |+---- riscv_insts_pext_unpack.sail
+|     |+---- riscv_insts_pext_64only.sail
 |     |+---- riscv_insts_pext_tmp_function_32.sail
 |     |+---- riscv_insts_pext_tmp_function_64.sail
-|     |+---- riscv_insts_pext_unpack.sail
 ```
 
 Getting started
