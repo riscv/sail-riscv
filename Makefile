@@ -43,7 +43,8 @@ SAIL_DEFAULT_INST += riscv_insts_pext_misc32.sail \
 riscv_insts_pext_muladdsub32.sail \
 riscv_insts_pext_pack32.sail \
 riscv_insts_pext_shift32.sail \
-riscv_insts_pext_q15_64.sail
+riscv_insts_pext_q15_64.sail \
+riscv_insts_pext_add32.sail
 SAIL_DEFAULT_INST += riscv_insts_pext_tmp_function_64.sail
 else
 SAIL_DEFAULT_INST += riscv_insts_pext_tmp_function_32.sail
