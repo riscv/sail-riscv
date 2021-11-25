@@ -10,41 +10,77 @@
 /* ********************* auxiliary functions ***********************/
 /* *****************************************************************/
 
-val rsub : forall 'n, 'n == 8 | 'n == 16 | 'n == 32 | 'n == 64.
+val rsub : forall 'n, 'n == 8 | 'n == 16 | 'n == 32.
   (bits('n), bits('n)) -> bits('n)
 function rsub (v1, v2) =
-  let v1ext : bits(xlen+32) = EXTS(v1) in
-  let v2ext : bits(xlen+32) = EXTS(v2) in
+  let v1ext : bits(64) = EXTS(v1) in
+  let v2ext : bits(64) = EXTS(v2) in
   slice ((v1ext - v2ext) >> 1, 0, 'n)
 
-val ursub : forall 'n, 'n == 8 | 'n == 16 | 'n == 32 | 'n == 64.
+val rsub64 :
+  (bits(64), bits(64)) -> bits(64)
+function rsub64 (v1, v2) =
+  let v1ext : bits(65) = EXTS(v1) in
+  let v2ext : bits(65) = EXTS(v2) in
+  slice ((v1ext - v2ext) >> 1, 0, 64)
+
+val ursub : forall 'n, 'n == 8 | 'n == 16 | 'n == 32.
   (bits('n), bits('n)) -> bits('n)
 function ursub (v1, v2) =
-  let v1ext : bits(xlen+32) = EXTZ(v1) in
-  let v2ext : bits(xlen+32) = EXTZ(v2) in
+  let v1ext : bits(64) = EXTZ(v1) in
+  let v2ext : bits(64) = EXTZ(v2) in
   slice ((v1ext - v2ext) >> 1, 0, 'n)
 
-val ksub : forall 'n, 'n == 8 | 'n == 16 | 'n == 32 | 'n == 64.
+val ursub64 :
+  (bits(64), bits(64)) -> bits(64)
+function ursub64 (v1, v2) =
+  let v1ext : bits(65) = EXTZ(v1) in
+  let v2ext : bits(65) = EXTZ(v2) in
+  slice ((v1ext - v2ext) >> 1, 0, 64)
+
+val ksub : forall 'n, 'n == 8 | 'n == 16 | 'n == 32.
   (bits('n), bits('n)) -> bits('n) effect {rreg,wreg}
 function ksub (v1, v2) =
-  let ub : bits(xlen+32) = EXTS(sail_ones ('n) >> 1) in
-  let lb : bits(xlen+32) = not_vec (ub) in
-  let v1ext : bits(xlen+32) = EXTS(v1) in
-  let v2ext : bits(xlen+32) = EXTS(v2) in
+  let ub : bits(64) = EXTS(sail_ones ('n) >> 1) in
+  let lb : bits(64) = not_vec (ub) in
+  let v1ext : bits(64) = EXTS(v1) in
+  let v2ext : bits(64) = EXTS(v2) in
   let diffext = v1ext - v2ext in
   if diffext <_s lb then { pext_write_OV (0b1); not_vec (ones ('n) >> 1) }
   else if ub <_s diffext then { pext_write_OV (0b1); ones ('n) >> 1 }
   else { slice (diffext, 0, 'n) }
 
-val uksub : forall 'n, 'n == 8 | 'n == 16 | 'n == 32 | 'n == 64.
+val ksub64 :
+  (bits(64), bits(64)) -> bits(64) effect {rreg,wreg}
+function ksub64 (v1, v2) =
+  let ub : bits(65) = EXTS(sail_ones (64) >> 1) in
+  let lb : bits(65) = not_vec (ub) in
+  let v1ext : bits(65) = EXTS(v1) in
+  let v2ext : bits(65) = EXTS(v2) in
+  let diffext = v1ext - v2ext in
+  if diffext <_s lb then { pext_write_OV (0b1); not_vec (ones (64) >> 1) }
+  else if ub <_s diffext then { pext_write_OV (0b1); ones (64) >> 1 }
+  else { slice (diffext, 0, 64) }
+
+val uksub : forall 'n, 'n == 8 | 'n == 16 | 'n == 32.
   (bits('n), bits('n)) -> bits('n) effect {rreg,wreg}
 function uksub (v1, v2) =
-  let ub : bits(xlen+32) = EXTZ(sail_ones ('n)) in
-  let v1ext : bits(xlen+32) = EXTZ(v1) in
-  let v2ext : bits(xlen+32) = EXTZ(v2) in
+  let ub : bits(64) = EXTZ(sail_ones ('n)) in
+  let v1ext : bits(64) = EXTZ(v1) in
+  let v2ext : bits(64) = EXTZ(v2) in
   let diffext = v1ext - v2ext in
   if ub <_u diffext then { pext_write_OV (0b1); zeros('n) }
   else { slice (diffext, 0, 'n) }
+
+val uksub64 :
+  (bits(64), bits(64)) -> bits(64) effect {rreg,wreg}
+function uksub64 (v1, v2) =
+  let ub : bits(65) = EXTZ(sail_ones (64)) in
+  let v1ext : bits(65) = EXTZ(v1) in
+  let v2ext : bits(65) = EXTZ(v2) in
+  let diffext = v1ext - v2ext in
+  if ub <_u diffext then { pext_write_OV (0b1); zeros(64) }
+  else { slice (diffext, 0, 64) }
 
 /* *****************************************************************/
 
@@ -75,23 +111,10 @@ function PEXT_KSUB16 (rs2, rs1, rd) = {
   true
 }
 
-val PEXT_KSUB32 : (regidx, regidx, regidx) -> bool
-  effect {escape, rreg, wreg}
-function PEXT_KSUB32 (rs2, rs1, rd) = {
-  if ~ (haveZpsfoperand ()) | sizeof (xlen) == 32 then {
-    false
-  } else {
-    let result : xlenbits =
-      ksub (rW(rs1, 1), rW(rs2, 1)) @ ksub (rW(rs1, 0), rW(rs2, 0));
-    X(rd) = result;
-    true
-  }
-}
-
 val PEXT_KSUB64 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_KSUB64 (rs2, rs1, rd) = {
-  let result : bits(64) = ksub (rD (rs1), rD (rs2));
+  let result : bits(64) = ksub64 (rD (rs1), rD (rs2));
   set_rD (rd, result);
   true
 }
@@ -125,23 +148,10 @@ function PEXT_RSUB16 (rs2, rs1, rd) = {
   true
 }
 
-val PEXT_RSUB32 : (regidx, regidx, regidx) -> bool
-  effect {escape, rreg, wreg}
-function PEXT_RSUB32 (rs2, rs1, rd) = {
-  if ~ (haveZpsfoperand ()) | sizeof (xlen) == 32 then {
-    false
-  } else {
-    let result : xlenbits =
-      rsub (rW(rs1, 1), rW(rs2, 1)) @ rsub (rW(rs1, 0), rW(rs2, 0));
-    X(rd) = result;
-    true
-  }
-}
-
 val PEXT_RSUB64 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_RSUB64 (rs2, rs1, rd) = {
-  let result : bits(64) = rsub (rD (rs1), rD (rs2));
+  let result : bits(64) = rsub64 (rD (rs1), rD (rs2));
   set_rD (rd, result);
   true
 }
@@ -173,19 +183,6 @@ function PEXT_SUB16 (rs2, rs1, rd) = {
          (rH(rs1, 1) - rH(rs2, 1)) @ (rH(rs1, 0) - rH(rs2, 0));
   X (rd) = result;
   true
-}
-
-val PEXT_SUB32 : (regidx, regidx, regidx) -> bool
-  effect {escape, rreg, wreg}
-function PEXT_SUB32 (rs2, rs1, rd) = {
-  if ~ (haveZpsfoperand ()) | sizeof (xlen) == 32 then {
-    false
-  } else {
-    let result : xlenbits =
-      (rW(rs1, 1) - rW(rs2, 1)) @ (rW(rs1, 0) - rW(rs2, 0));
-    X(rd) = result;
-    true
-  }
 }
 
 val PEXT_SUB64 : (regidx, regidx, regidx) -> bool
@@ -225,23 +222,10 @@ function PEXT_UKSUB16 (rs2, rs1, rd) = {
   true
 }
 
-val PEXT_UKSUB32 : (regidx, regidx, regidx) -> bool
-  effect {escape, rreg, wreg}
-function PEXT_UKSUB32 (rs2, rs1, rd) = {
-  if ~ (haveZpsfoperand ()) | sizeof (xlen) == 32 then {
-    false
-  } else {
-    let result : xlenbits =
-      uksub (rW(rs1, 1), rW(rs2, 1)) @ uksub (rW(rs1, 0), rW(rs2, 0));
-    X(rd) = result;
-    true
-  }
-}
-
 val PEXT_UKSUB64 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_UKSUB64 (rs2, rs1, rd) = {
-  let result : bits(64) = uksub (rD (rs1), rD (rs2));
+  let result : bits(64) = uksub64 (rD (rs1), rD (rs2));
   set_rD (rd, result);
   true
 }
@@ -275,23 +259,11 @@ function PEXT_URSUB16 (rs2, rs1, rd) = {
   true
 }
 
-val PEXT_URSUB32 : (regidx, regidx, regidx) -> bool
-  effect {escape, rreg, wreg}
-function PEXT_URSUB32 (rs2, rs1, rd) = {
-  if ~ (haveZpsfoperand ()) | sizeof (xlen) == 32 then {
-    false
-  } else {
-    let result : xlenbits =
-      ursub (rW(rs1, 1), rW(rs2, 1)) @ ursub (rW(rs1, 0), rW(rs2, 0));
-    X(rd) = result;
-    true
-  }
-}
 
 val PEXT_URSUB64 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_URSUB64 (rs2, rs1, rd) = {
-  let result : bits(64) = ursub (rD (rs1), rD (rs2));
+  let result : bits(64) = ursub64 (rD (rs1), rD (rs2));
   set_rD (rd, result);
   true
 }
