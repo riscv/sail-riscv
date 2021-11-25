@@ -26,12 +26,12 @@ The process to perform this inclusion is explained [here](https://github.com/rem
 This is one of [several formal models](https://github.com/riscv/ISA_Formal_Spec_Public_Review/blob/master/comparison_table.md) that were compared within the 
 [RISC-V ISA Formal Spec Public Review](https://github.com/riscv/ISA_Formal_Spec_Public_Review).
 
-Sail Model for RISC-V Pack Extension
+Sail Model for RISC-V Packed Extension
 ================
 
-This branch add all instructions in [RISC-V Pack-extension](https://github.com/riscv/riscv-p-spec/blob/master/P-ext-proposal.adoc). The code is contributed  by  a team including Programming Language Lab (NTHU CS), Academia Sinica(Taiwan), and Andes Technology Corporation.
+This branch add all instructions in [RISC-V Packed-extension](https://github.com/riscv/riscv-p-spec/blob/master/P-ext-proposal.adoc). The code is contributed  by  a team including Programming Language Lab (NTHU CS), Academia Sinica(Taiwan), and Andes Technology Corporation.
 
-Sail Model for RISC-V Pack Extension Authors
+Sail Model for RISC-V Packed Extension Authors
 ===============
 Chuanhua Chang, Andes Technology Corporation;  
 Chun-Ping Chung, National Tsing-Hua University(Taiwan);   
