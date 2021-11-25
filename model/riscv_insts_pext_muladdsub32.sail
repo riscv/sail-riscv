@@ -54,7 +54,7 @@ function PEXT_SMXDS32(rs2, rs1, rd) = {
 
 val PEXT_KMABB32 : (regidx, regidx, regidx) -> bool effect {escape,rreg,wreg}
 function PEXT_KMABB32(rs2, rs1, rd) = {
-  X(rd) = kadd (smul (rW(rs1, 0), rW(rs2, 0)), rD(rd));
+  X(rd) = kadd64 (smul (rW(rs1, 0), rW(rs2, 0)), rD(rd));
   true
 }
 
@@ -62,7 +62,7 @@ function PEXT_KMABB32(rs2, rs1, rd) = {
 
 val PEXT_KMABT32 : (regidx, regidx, regidx) -> bool effect {escape,rreg,wreg}
 function PEXT_KMABT32(rs2, rs1, rd) = {
-  X(rd) = kadd (smul (rW(rs1, 0), rW(rs2, 1)), rD(rd));
+  X(rd) = kadd64 (smul (rW(rs1, 0), rW(rs2, 1)), rD(rd));
   true
 }
 
@@ -70,7 +70,7 @@ function PEXT_KMABT32(rs2, rs1, rd) = {
 
 val PEXT_KMATT32 : (regidx, regidx, regidx) -> bool effect {escape,rreg,wreg}
 function PEXT_KMATT32(rs2, rs1, rd) = {
-  X(rd) = kadd (smul (rW(rs1, 1), rW(rs2, 1)), rD(rd));
+  X(rd) = kadd64 (smul (rW(rs1, 1), rW(rs2, 1)), rD(rd));
   true
 }
 

@@ -1,6 +1,6 @@
 /* Programming Langauge Lab, Department of Computer Science, National Tsing-Hua University, Taiwan */
 /* Academia Sinica, Taiwan*/
-/* Andes Technology Corporation, Taiwan*/
+/* Andes Technology Corporation*/
 
 /* *****************************************************************/
 /* This file specifies the instruction added by the 'P' extension. */
@@ -10,41 +10,77 @@
 /* ********************* auxiliary functions ***********************/
 /* *****************************************************************/
 
-val radd : forall 'n, 'n == 8 | 'n == 16 | 'n == 32 | 'n == 64.
+val radd : forall 'n, 'n == 8 | 'n == 16 | 'n == 32.
   (bits('n), bits('n)) -> bits('n)
 function radd (v1, v2) =
-  let v1ext : bits(xlen+32) = EXTS(v1) in
-  let v2ext : bits(xlen+32) = EXTS(v2) in
+  let v1ext : bits(64) = EXTS(v1) in
+  let v2ext : bits(64) = EXTS(v2) in
   slice ((v1ext + v2ext) >> 1, 0, 'n)
 
-val uradd : forall 'n, 'n == 8 | 'n == 16 | 'n == 32 | 'n == 64.
+val radd64 :
+  (bits(64), bits(64)) -> bits(64)
+function radd64 (v1, v2) =
+  let v1ext : bits(65) = EXTS(v1) in
+  let v2ext : bits(65) = EXTS(v2) in
+  slice (add_bits(v1ext, v2ext) >> 1, 0, 64)  
+
+val uradd : forall 'n, 'n == 8 | 'n == 16 | 'n == 32.
   (bits('n), bits('n)) -> bits('n)
 function uradd (v1, v2) =
-  let v1ext : bits(xlen+32) = EXTZ(v1) in
-  let v2ext : bits(xlen+32) = EXTZ(v2) in
+  let v1ext : bits(64) = EXTZ(v1) in
+  let v2ext : bits(64) = EXTZ(v2) in
   slice ((v1ext + v2ext) >> 1, 0, 'n)
 
-val kadd : forall 'n, 'n == 8 | 'n == 16 | 'n == 32 | 'n == 64.
+val uradd64 :
+  (bits(64), bits(64)) -> bits(64)
+function uradd64 (v1, v2) =
+  let v1ext : bits(65) = EXTZ(v1) in
+  let v2ext : bits(65) = EXTZ(v2) in
+  slice ((v1ext + v2ext) >> 1, 0, 64)
+
+val kadd : forall 'n, 'n == 8 | 'n == 16 | 'n == 32.
   (bits('n), bits('n)) -> bits('n) effect {rreg,wreg}
 function kadd (v1, v2) =
-  let ub : bits(xlen+32) = EXTS(sail_ones ('n) >> 1) in
-  let lb : bits(xlen+32) = not_vec (ub) in
-  let v1ext : bits(xlen+32) = EXTS(v1) in
-  let v2ext : bits(xlen+32) = EXTS(v2) in
+  let ub : bits(64) = EXTS(sail_ones ('n) >> 1) in
+  let lb : bits(64) = not_vec (ub) in
+  let v1ext : bits(64) = EXTS(v1) in
+  let v2ext : bits(64) = EXTS(v2) in
   let sumext = v1ext + v2ext in
   if sumext <_s lb then { pext_write_OV (0b1); not_vec (ones ('n) >> 1) }
   else if ub <_s sumext then { pext_write_OV (0b1); ones ('n) >> 1 }
   else { slice (sumext, 0, 'n) }
 
-val ukadd : forall 'n, 'n == 8 | 'n == 16 | 'n == 32 | 'n == 64.
+val kadd64 :
+  (bits(64), bits(64)) -> bits(64) effect {rreg,wreg}
+function kadd64 (v1, v2) =
+  let ub : bits(65) = EXTS(sail_ones (64) >> 1) in
+  let lb : bits(65) = not_vec (ub) in
+  let v1ext : bits(65) = EXTS(v1) in
+  let v2ext : bits(65) = EXTS(v2) in
+  let sumext = v1ext + v2ext in
+  if sumext <_s lb then { pext_write_OV (0b1); not_vec (ones (64) >> 1) }
+  else if ub <_s sumext then { pext_write_OV (0b1); ones (64) >> 1 }
+  else { slice (sumext, 0, 64) }
+
+val ukadd : forall 'n, 'n == 8 | 'n == 16 | 'n == 32.
   (bits('n), bits('n)) -> bits('n) effect {rreg,wreg}
 function ukadd (v1, v2) =
-  let ub : bits(xlen+32) = EXTZ(sail_ones ('n)) in
-  let v1ext : bits(xlen+32) = EXTZ(v1) in
-  let v2ext : bits(xlen+32) = EXTZ(v2) in
+  let ub : bits(64) = EXTZ(sail_ones ('n)) in
+  let v1ext : bits(64) = EXTZ(v1) in
+  let v2ext : bits(64) = EXTZ(v2) in
   let sumext = v1ext + v2ext in
   if ub <_u sumext then { pext_write_OV (0b1); ones('n) }
   else { slice (sumext, 0, 'n) }
+
+val ukadd64 :
+  (bits(64), bits(64)) -> bits(64) effect {rreg,wreg}
+function ukadd64 (v1, v2) =
+  let ub : bits(64) = EXTZ(sail_ones (64)) in
+  let v1ext : bits(64) = EXTZ(v1) in
+  let v2ext : bits(64) = EXTZ(v2) in
+  let sumext = v1ext + v2ext in
+  if ub <_u sumext then { pext_write_OV (0b1); ones(64) }
+  else { slice (sumext, 0, 64) }
 
 /* *****************************************************************/
 
@@ -74,18 +110,6 @@ function PEXT_ADD16 (rs2, rs1, rd) = {
   true
 }
 
-val PEXT_ADD32 : (regidx, regidx, regidx) -> bool
-  effect {escape, rreg, wreg}
-function PEXT_ADD32 (rs2, rs1, rd) = {
-  if (~ (haveZpsfoperand ()) | sizeof (xlen) == 32) then {
-    false
-  } else {
-    let result : xlenbits =
-      (rW(rs1, 1) + rW(rs2, 1)) @ (rW(rs1, 0) + rW(rs2, 0));
-    X(rd) = result;
-    true
-  }
-}
 val PEXT_ADD64 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_ADD64 (rs2, rs1, rd) = {
@@ -123,24 +147,10 @@ function PEXT_KADD16 (rs2, rs1, rd) = {
   true
 }
 
-val PEXT_KADD32 : (regidx, regidx, regidx) -> bool
-  effect {escape, rreg, wreg}
-function PEXT_KADD32 (rs2, rs1, rd) = {
-  if (~ (haveZpsfoperand ()) | sizeof (xlen) == 32) then {
-    false
-  } else {
-    let result : xlenbits =
-      kadd (rW(rs1, 1), rW(rs2, 1)) @ kadd (rW(rs1, 0), rW(rs2, 0));
-    X(rd) = result;
-    true
-  }
-}
-
-
 val PEXT_KADD64 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_KADD64 (rs2, rs1, rd) = {
-  let result : bits(64) = kadd (rD (rs1), rD (rs2));
+  let result : bits(64) = kadd64 (rD (rs1), rD (rs2));
   set_rD (rd, result);
   true
 }
@@ -174,23 +184,10 @@ function PEXT_RADD16 (rs2, rs1, rd) = {
   true
 }
 
-val PEXT_RADD32 : (regidx, regidx, regidx) -> bool
-  effect {escape, rreg, wreg}
-function PEXT_RADD32 (rs2, rs1, rd) = {
-  if (~ (haveZpsfoperand ()) | sizeof (xlen) == 32 ) then {
-    false
-  } else {
-    let result : xlenbits =
-      radd (rW(rs1, 1), rW(rs2, 1)) @ radd (rW(rs1, 0), rW(rs2, 0));
-    X(rd) = result;
-    true
-  }
-}
-
 val PEXT_RADD64 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_RADD64 (rs2, rs1, rd) = {
-  let result : bits(64) = radd (rD (rs1) , rD (rs2));
+  let result : bits(64) = radd64 (rD (rs1) , rD (rs2));
   set_rD (rd, result);
   true
 }
@@ -240,7 +237,7 @@ function PEXT_UKADD32 (rs2, rs1, rd) = {
 val PEXT_UKADD64 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_UKADD64 (rs2, rs1, rd) = {
-  let result : bits(64) = ukadd (rD (rs1), rD (rs2));
+  let result : bits(64) = ukadd64 (rD (rs1), rD (rs2));
   set_rD (rd, result);
   true
 }
@@ -290,7 +287,7 @@ function PEXT_URADD32 (rs2, rs1, rd) = {
 val PEXT_URADD64 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_URADD64 (rs2, rs1, rd) = {
-  let result : bits(64) = uradd (rD (rs1), rD (rs2));
+  let result : bits(64) = uradd64 (rD (rs1), rD (rs2));
   set_rD (rd, result);
   true
 }

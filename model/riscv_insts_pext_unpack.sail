@@ -1,6 +1,6 @@
 /* Programming Langauge Lab, Department of Computer Science, National Tsing-Hua University, Taiwan */
 /* Academia Sinica, Taiwan*/
-/* Andes Technology Corporation, Taiwan*/
+/* Andes Technology Corporation*/
 
 /* *****************************************************************/
 /* This file specifies the instruction added by the 'P' extension. */
@@ -11,14 +11,14 @@
 /* *****************************************************************/
 
 
-val exts16 : forall 'n, 'n == 8.
-  (bits ('n)) -> bits (16)
+val exts16 :
+  (bits (8)) -> bits (16)
 function exts16 (v) =
   let result : bits(16) = EXTS (v) in
   slice(result, 0, 16)
 
-val extz16 : forall 'n, 'n == 8.
-  (bits ('n)) -> bits (16)
+val extz16 :
+  (bits (8)) -> bits (16)
 function extz16 (v) =
   let result : bits(16) = EXTZ (v) in
   slice(result, 0, 16)
