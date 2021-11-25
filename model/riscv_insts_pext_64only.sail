@@ -10,6 +10,12 @@
 /* ********************* auxiliary functions ***********************/
 /* *****************************************************************/
 
+val sshmexts :
+  (bits(16), bits(16)) -> bits(32) effect {rreg, wreg}
+function sshmexts (v1, v2) =
+  EXTS(sshm (v1, v2))
+
+/* *****************************************************************/
 val PEXT_ADD32 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_ADD32 (rs2, rs1, rd) = {
@@ -18,6 +24,8 @@ function PEXT_ADD32 (rs2, rs1, rd) = {
   X(rd) = result;
   true
 }
+
+/* *****************************************************************/
 
 val PEXT_KADD32 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
@@ -28,6 +36,8 @@ function PEXT_KADD32 (rs2, rs1, rd) = {
   true
 }
 
+/* *****************************************************************/
+
 val PEXT_UKADD32 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_UKADD32 (rs2, rs1, rd) = {
@@ -36,6 +46,8 @@ function PEXT_UKADD32 (rs2, rs1, rd) = {
   X(rd) = result;
   true
 }
+
+/* *****************************************************************/
 
 val PEXT_RADD32 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
@@ -46,6 +58,8 @@ function PEXT_RADD32 (rs2, rs1, rd) = {
   true
 }
 
+/* *****************************************************************/
+
 val PEXT_URADD32 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_URADD32 (rs2, rs1, rd) = {
@@ -54,6 +68,8 @@ function PEXT_URADD32 (rs2, rs1, rd) = {
   X(rd) = result;
   true
 }
+
+/* *****************************************************************/
 
 val PEXT_KSUB32 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
@@ -64,6 +80,7 @@ function PEXT_KSUB32 (rs2, rs1, rd) = {
   true
 }
 
+/* *****************************************************************/
 
 val PEXT_RSUB32 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
@@ -74,6 +91,8 @@ function PEXT_RSUB32 (rs2, rs1, rd) = {
   true
 }
 
+/* *****************************************************************/
+
 val PEXT_SUB32 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
 function PEXT_SUB32 (rs2, rs1, rd) = {
@@ -82,6 +101,8 @@ function PEXT_SUB32 (rs2, rs1, rd) = {
   X(rd) = result;
   true
 }
+
+/* *****************************************************************/
 
 val PEXT_UKSUB32 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
@@ -92,6 +113,7 @@ function PEXT_UKSUB32 (rs2, rs1, rd) = {
   true
 }
 
+/* *****************************************************************/
 
 val PEXT_URSUB32 : (regidx, regidx, regidx) -> bool
   effect {escape, rreg, wreg}
@@ -312,6 +334,7 @@ function PEXT_PKTB32 (rs2, rs1, rd) = {
 }
 
 /* *****************************************************************/
+
 val PEXT_SRA32 : (regidx, regidx, regidx) -> bool effect {escape,rreg,wreg}
 function PEXT_SRA32(rs2, rs1, rd) = {
   let sa : byte = EXTZ(X(rs2)[4..0]) in
@@ -450,13 +473,6 @@ function PEXT_SRAIW_U (imm5, rs1, rd) = {
 
 /* *****************************************************************/
 
-val sshmexts :
-  (bits(16), bits(16)) -> bits(32) effect {rreg, wreg}
-function sshmexts (v1, v2) =
-  EXTS(sshm (v1, v2))
-
-/* *****************************************************************/
-
 val PEXT_KHMBB16: (regidx, regidx, regidx) -> bool effect {escape,rreg,wreg}
 function PEXT_KHMBB16 (rs2, rs1, rd) = {
   X(rd) = sshmexts(rH(rs1, 2), rH(rs2, 2)) @ sshmexts(rH(rs1, 0), rH(rs2, 0));
@@ -526,5 +542,3 @@ function PEXT_KDMATT16 (rs2, rs1, rd) = {
   X(rd) = kdmaw(rH(rs1, 3), rH(rs2, 3), rW(rd, 1)) @ kdmaw(rH(rs1, 1), rH(rs2, 1), rW(rd, 0));
   true
 }
-
-/* *****************************************************************/

@@ -1,6 +1,6 @@
 /* Programming Langauge Lab, Department of Computer Science, National Tsing-Hua University, Taiwan */
 /* Academia Sinica, Taiwan*/
-/* Andes Technology Corporation, Taiwan*/
+/* Andes Technology Corporation*/
 
 /* *****************************************************************/
 /* This file specifies the instruction subed by the 'P' extension. */

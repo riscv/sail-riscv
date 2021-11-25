@@ -11,6 +11,7 @@
 /* *****************************************************************/
 
 /* *****************************************************************/
+
 val PEXT_CRAS16 : (regidx, regidx, regidx) -> bool effect {escape, rreg, wreg}
 function PEXT_CRAS16(rs2, rs1, rd) = {
   let result : xlenbits =
@@ -34,6 +35,7 @@ function PEXT_RCRAS16(rs2, rs1, rd) = {
   X(rd) = result;
   true
 }
+
 /* *****************************************************************/
 
 val PEXT_URCRAS16 : (regidx, regidx, regidx) -> bool effect {escape, rreg, wreg}
@@ -48,8 +50,8 @@ function PEXT_URCRAS16(rs2, rs1, rd) = {
   true
 }
 
-
 /* *****************************************************************/
+
 val PEXT_KCRAS16 : (regidx, regidx, regidx) -> bool effect {escape, rreg, wreg}
 function PEXT_KCRAS16(rs2, rs1, rd) = {
   let result : xlenbits =
@@ -64,6 +66,7 @@ function PEXT_KCRAS16(rs2, rs1, rd) = {
 }
 
 /* *****************************************************************/
+
 val PEXT_UKCRAS16 : (regidx, regidx, regidx) -> bool effect {escape, rreg, wreg}
 function PEXT_UKCRAS16(rs2, rs1, rd) = {
   let result : xlenbits =
@@ -78,6 +81,7 @@ function PEXT_UKCRAS16(rs2, rs1, rd) = {
 }
 
 /* *****************************************************************/
+
 val PEXT_CRSA16 : (regidx, regidx, regidx) -> bool effect {escape, rreg, wreg}
 function PEXT_CRSA16(rs2, rs1, rd) = {
   let result : xlenbits =
@@ -90,6 +94,7 @@ function PEXT_CRSA16(rs2, rs1, rd) = {
 }
 
 /* *****************************************************************/
+
 val PEXT_RCRSA16 : (regidx, regidx, regidx) -> bool effect {escape, rreg, wreg}
 function PEXT_RCRSA16(rs2, rs1, rd) = {
   let result : xlenbits =
@@ -101,7 +106,9 @@ function PEXT_RCRSA16(rs2, rs1, rd) = {
   X(rd) = result;
   true
 }
+
 /* *****************************************************************/
+
 val PEXT_URCRSA16 : (regidx, regidx, regidx) -> bool effect {escape, rreg, wreg}
 function PEXT_URCRSA16(rs2, rs1, rd) = {
   let result : xlenbits =
@@ -115,6 +122,7 @@ function PEXT_URCRSA16(rs2, rs1, rd) = {
 }
 
 /* *****************************************************************/
+
 val PEXT_KCRSA16 : (regidx, regidx, regidx) -> bool effect {escape, rreg, wreg}
 function PEXT_KCRSA16(rs2, rs1, rd) = {
   let result : xlenbits =
@@ -144,6 +152,7 @@ function PEXT_UKCRSA16(rs2, rs1, rd) = {
 }
 
 /* STAS *****************************************************************/
+
 val PEXT_STAS16 : (regidx, regidx, regidx) -> bool effect {escape, rreg, wreg}
 function PEXT_STAS16(rs2, rs1, rd) = {
   let result : xlenbits =
@@ -156,7 +165,9 @@ function PEXT_STAS16(rs2, rs1, rd) = {
   X(rd) = result;
   true
 }
+
 /* *****************************************************************/
+
 val PEXT_RSTAS16 : (regidx, regidx, regidx) -> bool effect {escape, rreg, wreg}
 function PEXT_RSTAS16(rs2, rs1, rd) = {
   let result : xlenbits =
@@ -171,6 +182,7 @@ function PEXT_RSTAS16(rs2, rs1, rd) = {
 }
 
 /* *****************************************************************/
+
 val PEXT_URSTAS16 : (regidx, regidx, regidx) -> bool effect {escape, rreg, wreg}
 function PEXT_URSTAS16(rs2, rs1, rd) = {
   let result : xlenbits =
@@ -185,6 +197,7 @@ function PEXT_URSTAS16(rs2, rs1, rd) = {
 }
 
 /* *****************************************************************/
+
 val PEXT_KSTAS16 : (regidx, regidx, regidx) -> bool effect {escape, rreg, wreg}
 function PEXT_KSTAS16(rs2, rs1, rd) = {
   let result : xlenbits =
@@ -197,8 +210,6 @@ function PEXT_KSTAS16(rs2, rs1, rd) = {
   X(rd) = result;
   true
 }
-
-
 
 /* *****************************************************************/
 
@@ -263,6 +274,7 @@ function PEXT_URSTSA16(rs2, rs1, rd) = {
 
 
 /* *****************************************************************/
+
 val PEXT_KSTSA16 : (regidx, regidx, regidx) -> bool effect {escape, rreg, wreg}
 function PEXT_KSTSA16(rs2, rs1, rd) = {
   let result : xlenbits =
@@ -277,6 +289,7 @@ function PEXT_KSTSA16(rs2, rs1, rd) = {
 }
 
 /* *****************************************************************/
+
 val PEXT_UKSTSA16 : (regidx, regidx, regidx) -> bool effect {escape, rreg, wreg}
 function PEXT_UKSTSA16(rs2, rs1, rd) = {
   let result : xlenbits =
@@ -404,6 +417,7 @@ function PEXT_RCRSA32 (rs2, rs1, rd) = {
   true
   }
 }
+
 /************************/
 
 val PEXT_URCRSA32 : (regidx, regidx, regidx) -> bool
