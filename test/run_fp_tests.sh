@@ -14,6 +14,8 @@ rm -f $DIR/tests.xml
 
 pass=0
 fail=0
+all_pass=0
+all_fail=0
 XML=""
 
 function green {
@@ -39,6 +41,8 @@ function finish_suite {
     XML="  <testsuite name=\"$1\" tests=\"$(( pass + fail ))\" failures=\"${fail}\" timestamp=\"$(date)\">\n$XML  </testsuite>\n"
     printf "$XML" >> $DIR/tests.xml
     XML=""
+    (( all_pass += pass )) || :
+    (( all_fail += fail )) || :
     pass=0
     fail=0
 }
@@ -86,3 +90,10 @@ done
 finish_suite "32-bit RISCV C tests"
 
 printf "</testsuites>\n" >> $DIR/tests.xml
+
+printf "Passed ${all_pass} out of $(( all_pass + all_fail ))\n\n"
+
+if [ $all_fail -gt 0 ]
+then
+    exit 1
+fi
