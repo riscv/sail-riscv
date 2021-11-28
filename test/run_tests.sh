@@ -141,4 +141,26 @@ for test in $DIR/riscv-tests/rv64*.elf; do
 done
 finish_suite "64-bit RISCV C tests"
 
+# Do 'make clean' to avoid cross-arch pollution.
+make clean
+
+if ARCH=RV32 make c_emulator/riscv_rvfi_RV32;
+then
+    green "Building 32-bit RISCV RVFI C emulator" "ok"
+else
+    red "Building 32-bit RISCV RVFI C emulator" "fail"
+fi
+finish_suite "32-bit RISCV RVFI C tests"
+
+# Do 'make clean' to avoid cross-arch pollution.
+make clean
+
+if ARCH=RV64 make c_emulator/riscv_rvfi_RV64;
+then
+    green "Building 64-bit RISCV RVFI C emulator" "ok"
+else
+    red "Building 64-bit RISCV RVFI C emulator" "fail"
+fi
+finish_suite "64-bit RISCV RVFI C tests"
+
 printf "</testsuites>\n" >> $DIR/tests.xml
