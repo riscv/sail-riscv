@@ -6,6 +6,7 @@ import getopt
 import sys
 
 
+# function for yaml loading
 def load_yaml(foo):
     yaml = YAML(typ='rt')
     yaml.default_flow_style = False
@@ -24,6 +25,7 @@ def load_yaml(foo):
         raise SystemExit
 
 
+# common sail code for warl field handling
 warl_type_and_func = '''
 enum WARL_range_mode = {
   WARL_Unchanged,
@@ -335,16 +337,19 @@ def getMask(x):
     return x[0]
 
 
+# function for parsing legal values of specific field in range or value list
+# generate sail code for value list of field
 def parse_values(value_str, field_mask, lsb, not_in):
     parse_str = ''
-    if ":" in value_str:  # range is specified
+    if ":" in value_str:  # value str is a range
         [base, bound] = value_str.split(':')
-        if 'x' in base:
+        if 'x' in base:  # Hexadecimal value
             base = int(base, 16)
         base = int(base) << lsb
         if 'x' in bound:
             bound = int(bound, 16)
         bound = int(bound) << lsb
+        # check th
         if base > field_mask | bound > field_mask:
             print(reg + ' [base: bound] is illegal\n')
             raise SystemExit
@@ -361,7 +366,7 @@ def parse_values(value_str, field_mask, lsb, not_in):
             parse_str += \
                 'WARL_range_interval(unsigned(0x%x), unsigned(0x%x)), ' \
                 % (base, bound)
-    else:
+    else:  # value_str is value list
         l_vals = value_str.split(',')
         values = []
         last = 0
@@ -376,6 +381,7 @@ def parse_values(value_str, field_mask, lsb, not_in):
 
         values.sort()
 
+        # for illegal value list, select the legal range between illegal values
         for i in values:
             if not_in:
                 if i != last:
@@ -385,6 +391,7 @@ def parse_values(value_str, field_mask, lsb, not_in):
             else:
                 parse_str += 'WARL_range_value(unsigned(0x%x)), ' % i
 
+        # add the final legal range for 'not in'
         if not_in:
             if last <= field_mask:
                 parse_str += 'WARL_range_interval(' + \
@@ -392,6 +399,7 @@ def parse_values(value_str, field_mask, lsb, not_in):
     return parse_str[:-2]
 
 
+# function for parsing the legal ranges for legal str
 def parse_field_range(legal_str):
     warl_range_temp = '''
     struct {{
@@ -417,13 +425,13 @@ def parse_field_range(legal_str):
         bitmask = True if 'bitmask' in csr_op else False
         field_mask = (1 << (int(msb) + 1)) - (1 << int(lsb))
         parse_str = ''
-        if not bitmask:  # if its not a bitmask
+        if not bitmask:  # range or value list
             parse_str = parse_values(csr_vals, field_mask, int(lsb),
                                      'not' in csr_op)
             range_list.append([field_mask, warl_range_temp.format(
                'unsigned(0x%x)' % field_mask,
                'unsigned(0x%x)' % (1 << int(lsb)), parse_str)])
-        else:
+        else:  # bitmask
             [mask, fixed] = csr_vals.split(',')
             if 'x' in mask:
                 mask = 'unsigned(' + mask.strip() + ')'
@@ -443,6 +451,7 @@ def parse_field_range(legal_str):
     return range_field[: -2]
 
 
+# function for generating sail code for field without dependencies
 def legalize_without_dependencies(reg, field, field_yaml):
     global func_str
     legalize_field = '''
@@ -465,7 +474,8 @@ function legalize_{0}_{1}(o: {2}, v: {2}) -> {2} = {{
 
     range_list = parse_field_range(warl['legal'][0])
 
-    if 'bitmask' not in warl['legal'][0]:
+    # generate sail code for legalize functions for csr field
+    if 'bitmask' not in warl['legal'][0]:  # wr_illegal string without bitmask
         legalize_field_strs += warl_range_temp.format(range_list) + '\n'
         legalize_field_strs += '  if (~ (is_value_in_rangelist(v,' + \
             'warl_range_list))) then {\n'
@@ -489,7 +499,7 @@ function legalize_{0}_{1}(o: {2}, v: {2}) -> {2} = {{
                     ' WARL_range_list(warl_range_list), WARL_' + \
                     mode.title() + ');'
         legalize_field_strs += '\n  };\n'
-    else:
+    else:  # WARL_Unchanged is selected for bitmask legal string
         legalize_field_strs += \
             'm = legalize_warl_either(o , m, WARL_bitmask(' + range_list + \
             '), WARL_Unchanged);\n'
@@ -500,15 +510,19 @@ function legalize_{0}_{1}(o: {2}, v: {2}) -> {2} = {{
         legalize_field_strs)
 
 
+# function for searching the dependency_field
 def search_dependency_field(csr, field, depend_fields):
     leaf_dependencies = []
+    # collect all the legal dependency fields
     for d in depend_fields:
         leaf_dependencies.append(d.split('::')[-1])
+    # check whether current field is legal dependancy field
     if field not in leaf_dependencies:
         print('cannot find dpendency field ' + field + ' in ' +
               str(leaf_dependencies) + '\n')
         raise SystemExit
     field_val = depend_fields[leaf_dependencies.index(field)]
+    # get the value (code) of dependency field
     if '::' in field_val:
         csr_name = field_val.split('::')[0].strip()
         field_name = field_val.split('::')[-1].strip()
@@ -517,6 +531,7 @@ def search_dependency_field(csr, field, depend_fields):
         return field_val + '->bits()'
 
 
+# function for parsing the dependency string
 def parse_dependency(csr, dep_str, depend_fields):
     cond_str = ''
     exp = re.compile(r'(?P<csr>.*?)\[(?P<csr_ind>.*?)\]\s*(?P<csr_op>.*?)' +
@@ -555,6 +570,7 @@ def parse_dependency(csr, dep_str, depend_fields):
     return cond_str[:-4]
 
 
+# function for generating sail code for field with dependencies
 def legalize_with_dependencies(reg, field, field_yaml):
     global func_str
     legalize_field = '''
@@ -571,6 +587,7 @@ function legalize_{0}_{1}(o: {2}, v: {2}) -> {2} = {{
 
     warl = field_yaml['type']['warl']
 
+    # parsing the legal string
     for legal_str in warl['legal']:
         if '->' in legal_str:
             dep_str = legal_str.split('->')[0]
@@ -593,6 +610,7 @@ function legalize_{0}_{1}(o: {2}, v: {2}) -> {2} = {{
             legalize_field_strs += '    m = legalize_warl_either(o , m, ' + \
                 'WARL_bitmask(' + range_list + '), WARL_Unchanged);\n  };\n\n'
 
+    # parsing the wr_illegal string
     for illegal_str in warl['wr_illegal']:
         if '->' in illegal_str:
             dep_str = illegal_str.split('->')[0]
@@ -631,24 +649,26 @@ function legalize_{0}_{1}(o: {2}, v: {2}) -> {2} = {{
         legalize_field_strs)
 
 
-def parse_warl_value(reg, field, field_yaml):
+# function for parsing warl field
+def parse_warl_field(reg, field, field_yaml):
     warl = field_yaml['type']['warl']
     dependencies = warl['dependency_fields']
-    if dependencies == []:
+    if dependencies == []:  # field without dependencies
         legalize_without_dependencies(reg, field, field_yaml)
-    else:
+    else:  # field with dependencies
         legalize_with_dependencies(reg, field, field_yaml)
 
 
+# function for field parsing
 def parse_field(reg, field_name, field_yaml, len, real_len):
     global parsed_warl_fields
     global parsed_regs
     assign_str = ''
     get_str = ''
-    if field_yaml['shadow'] is not None:
-        if field_yaml['shadow_type'] == 'rw':
+    if field_yaml['shadow'] is not None:  # shadow field
+        if field_yaml['shadow_type'] == 'rw':  # rw shadow field
             shadow = field_yaml['shadow'].lower()
-            if '.' in shadow:
+            if '.' in shadow:  # shadow field is a field
                 shadow_reg = shadow.split('.')[0]
                 shadow_field = shadow.split('.')[1]
                 if shadow_reg not in parsed_regs:
@@ -668,32 +688,32 @@ def parse_field(reg, field_name, field_yaml, len, real_len):
                         % (shadow_reg, shadow_field.upper(), shadow_reg,
                            int(field_yaml['msb']), int(field_yaml['lsb']))
                 shadow = shadow_reg + '.' + shadow_field.upper() + '()'
-            else:
+            else:  # shadow field is a total reg
                 assign_str += '  %s = legalize_%s(%s, EXTZ(v[%d .. %d]));\n' \
                     % (shadow, shadow, shadow, int(field_yaml['msb']),
                        int(field_yaml['lsb']))
 
-            if field_name == 'total':
-                if len != real_len:
+            if field_name == 'total':  # total reg as a field
+                if len != real_len:  # field doesn't begin from bit 0
                     assign_str += '  let m = %s @ 0b' % (shadow, len - 1,
                                                          len - real_len) + \
                         ('0' * (len - real_len)) + ';\n'
                     get_str = '  let m = %s @ 0b' % (shadow, len - 1,
                                                      len - real_len) + \
                         ('0' * (len - real_len)) + ';\n'
-                else:
+                else:  # field begins from bit 0
                     get_str += '  let m = %s;\n' % shadow
-            else:
+            else:  # for normal field
                 get_str += '  let m = update_' + field_name.upper() + \
                     '(m, %s);\n' % shadow
             assign_str += get_str
-        else:
+        else:  # read only shadow field
             if field_name == 'total':
                 assign_str += '  let m = o;\n'
             else:
                 assign_str += '  let m = update_' + field_name.upper() + \
                     '(m, o.' + field_name.upper() + '());\n'
-    elif 'ro_constant' in field_yaml['type']:
+    elif 'ro_constant' in field_yaml['type']:  # ro_constant field
         ro_constant = field_yaml['type']['ro_constant']
         if 'x' in str(ro_constant):
             ro_constant = 'unsigned(' + ro_constant + ')'
@@ -708,15 +728,15 @@ def parse_field(reg, field_name, field_yaml, len, real_len):
         else:
             assign_str = '  let m = update_' + field_name.upper() + \
                 '(m , to_bits(%d, %s));\n' % (len, str(ro_constant))
-    elif 'ro_variable' in field_yaml['type']:
+    elif 'ro_variable' in field_yaml['type']:  # ro_variable field
         if field_name == 'total':
             assign_str = '  let m = o;\n'
         else:
             assign_str = '  let m = update_' + field_name.upper() + \
                '(m, o.' + field_name.upper() + '());\n'
-    elif 'warl' in field_yaml['type']:
-        parse_warl_value(reg, field_name, field_yaml)
-        if field_name == 'total':
+    elif 'warl' in field_yaml['type']:  # warl field
+        parse_warl_field(reg, field_name, field_yaml)
+        if field_name == 'total':  # total reg as a field
             parsed_warl_fields.append(reg.lower())
             if len != real_len:
                 assign_str += '  let m = legalize_' + reg.lower() + '_' +  \
@@ -727,13 +747,13 @@ def parse_field(reg, field_name, field_yaml, len, real_len):
                 assign_str += '  let m = legalize_' + reg.lower() + '_' + \
                     field_name.upper() + '(o[%d .. %d] , v[%d .. %d]);\n' \
                     % (len - 1, len - real_len, len - 1, len - real_len)
-        else:
+        else:  # normal field
             parsed_warl_fields.append(reg.lower() + '.' + field_name.lower())
             assign_str = '  let m = update_' + field_name.upper() + \
                 '(m, legalize_' + reg.lower() + '_' + field_name.upper() + \
                 '(o.' + field_name.upper() + '()' + ', m.' + \
                 field_name.upper() + '()));\n'
-    else:
+    else:  # other type field
         if field_name == 'total':
             if len != real_len:
                 assign_str = '  let m = v[%d .. %d] @ 0b' \
@@ -744,6 +764,7 @@ def parse_field(reg, field_name, field_yaml, len, real_len):
     return (get_str, assign_str)
 
 
+# function for total csr reg parsing
 def parse_reg(reg, xlen, isa_yaml):
     global func_str
     global regs_str
@@ -785,14 +806,17 @@ function get_{0}(o: {1}) -> {1} = {{
         for field in reversed(isa_yaml[reg]['rv' + xlen]):
             if field in isa_yaml[reg]['rv' + xlen]['fields']:
                 if isa_yaml[reg]['rv' + xlen][field]['implemented']:
+                    # compute length of field
                     len = int(isa_yaml[reg]['rv' + xlen][field]['msb']) - \
                         int(isa_yaml[reg]['rv' + xlen][field]['lsb']) + 1
+                    # parse field
                     (get_str, assign_str) = parse_field(
                         reg, field, isa_yaml[reg]['rv' + xlen][field], len,
                         len)
-                    if get_str != '':
+                    if get_str != '':  # shadow field
                         fields_str += '/* shadow field of %s*/\n' \
                             % isa_yaml[reg]['rv' + xlen][field]['shadow']
+                    # generate field range string according field length
                     if isa_yaml[reg]['rv' + xlen][field]['msb'] != \
                        isa_yaml[reg]['rv' + xlen][field]['lsb']:
                         fields_str += field.upper() + ': ' + \
@@ -806,40 +830,53 @@ function get_{0}(o: {1}) -> {1} = {{
                             ',\n'
                     assign_field_strs += assign_str
                     get_shadow_fields += get_str
+        # generate sail code for reg structure
         regs_str += reg_subfield_struct.format(reg.title(), fields_str[:-2],
                                                reg.lower())
+        # generate sail code for csr reset function
         reset_str += '  %s->bits() = EXTZ(0x%x);\n' \
             % (reg, isa_yaml[reg]['reset-val'])
+        # generate sail code for csr legalize function
         func_str += legalize_func.format(reg.lower(), reg.title(),
                                          assign_field_strs)
-        if get_shadow_fields != '':
+        if get_shadow_fields != '':  # shadow field
+            # generate sail code for csr legalize function
             func_str += get_func.format(reg.lower(), reg.title(),
                                         get_shadow_fields)
+            # generate sail code for csr read function
             read_str += \
                 '  0x%03x => { let m = get_%s(%s); Some(m.bits()) },\n' \
                 % (isa_yaml[reg]["address"], reg, reg)
-        else:
+        else:  # normal field
+            # generate sail code for csr read function
             read_str += '  0x%03x => Some(%s.bits()),\n' \
                % (isa_yaml[reg]['address'], reg)
+        # generate sail code for csr write function
         write_str += \
             '  0x%03x => { %s = legalize_%s(%s, value); Some(%s' \
             % (isa_yaml[reg]["address"], reg, reg, reg, reg) + \
             '.bits()) },\n'
     else:  # parse reg without subfield
+        # compute the real length of csr without subfield
         real_len = int(isa_yaml[reg]['rv' + xlen]['msb']) - \
             int(isa_yaml[reg]['rv' + xlen]['lsb']) + 1
+        # compute the length (from bit 0) of csr without subfield
         len = int(isa_yaml[reg]['rv' + xlen]['msb']) + 1
         regs_str += reg_without_subfield_struct.format(reg.title(), len, reg)
+        # extend the length to mutiple of four
         if (int(isa_yaml[reg]['rv' + xlen]['msb']) % 4 != 0):
             reset_str += '  %s = to_bits(%d, unsigned(0x%x));\n' \
                 % (reg, len, isa_yaml[reg]['reset-val'])
         else:
             reset_str += \
                 '  %s = EXTZ(0x%x);\n' % (reg, isa_yaml[reg]['reset-val'])
+        # parse field
         (get_str, assign_str) = parse_field(
             reg, 'total', isa_yaml[reg]['rv' + xlen], len, real_len)
         assign_field_strs += assign_str
         get_shadow_fields += get_str
+
+        # generate sail code for csr legalize/read/write function
         func_str += legalize_func_without_subfield.format(
             reg.lower(), 'bits(%d)' % len, assign_field_strs)
         if get_shadow_fields != '':
@@ -869,10 +906,8 @@ function get_{0}(o: {1}) -> {1} = {{
     return
 
 
-arch = '64'
+arch = ''
 generate_dir = 'generated_definitions/riscv-config'
-isa_yaml = generate_dir + '/RV64/rv64i_isa_checked.yaml'
-platform_yaml = generate_dir + '/RV64/rv64i_platform_checked.yaml'
 try:
     opts, args = getopt.getopt(sys.argv[1:], "a:i:p:",
                                ["arch= ", "isa_yaml=", "platform_yaml="])
@@ -887,19 +922,23 @@ except getopt.GetoptError:
     print('[getopt.GetoptError]')
     sys.exit()
 
-if arch in ['32', '64']:
+if arch not in ['32', '64']:
+    print('please specify the arch: 32 or 64!')
+    sys.exit()
+else:
     isa_yaml = load_yaml(isa_yaml)['hart0']
     plat_yaml = load_yaml(platform_yaml)
     xlen = str(max(isa_yaml['supported_xlen']))
     parsed_warl_fields = []
     parsed_regs = []
-    regs_str = ''
-    func_str = warl_type_and_func
-    reset_str = ''
-    read_str = ''
-    write_str = ''
-    define_str = ''
-    map_str = ''
+    regs_str = ''  # sail code for csr structue
+    func_str = warl_type_and_func  # sail code for csr legalize function
+    reset_str = ''  # sail code for reset function of csrs
+    read_str = ''   # sail code for read function of csrs
+    write_str = ''  # sail code for write function of csrs
+    define_str = ''  # sail code for defined function of csrs
+    map_str = ''  # sail code for map function of csrs and their names
+
     reset_func = '''
 function reset_regs() -> unit = {{
 {0}
@@ -952,13 +991,17 @@ end csr_name_map
 function csr_name(csr) = csr_name_map(csr)
 
 '''
+    # isa_yaml -> {regs}
+    # reg   -> {fields}
+    # field  ->  {shadow, warl, ro_constant, ...}
+    # warl_field  ->  {with dependency, without dependency}
     for reg in isa_yaml:
         if reg not in ['custom_exceptions', 'custom_interrupts', 'ISA',
                        'supported_xlen', 'pmp_granularity',
                        'User_Spec_Version', 'physical_addr_sz',
                        'Privilege_Spec_Version',
                        'hw_data_misaligned_support']:
-            if isa_yaml[reg]['rv' + xlen]['accessible']:
+            if isa_yaml[reg]['rv' + xlen]['accessible']:  # accessible csr
                 if reg not in ['mcycle', 'mcycleh', 'time', 'timeh',
                                'minstret', 'minstreth', 'cycle', 'cycleh',
                                'instret', 'instreth']:

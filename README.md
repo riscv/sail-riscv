@@ -277,6 +277,12 @@ Getting started
 
 ### Building the model
 
+install [riscv-config](https://github.com/riscv-software-src/riscv-config):
+
+```
+pip3 install riscv-config
+```
+
 Install [Sail](https://github.com/rems-project/sail/) [using opam](https://github.com/rems-project/sail/blob/sail2/INSTALL.md) then:
 
 ```
