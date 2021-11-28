@@ -26,8 +26,8 @@ mapping clause assembly = RISCV_RORI(shamt, rs1, rd)
 function clause execute (RISCV_RORI(shamt, rs1, rd)) = {
   let rs1_val = X(rs1);
   let result : xlenbits = if sizeof(xlen) == 32
-                            then rs1_val >>> shamt[4..0]
-                            else rs1_val >>> shamt;
+                          then rs1_val >>> shamt[4..0]
+                          else rs1_val >>> shamt;
   X(rd) = result;
   RETIRE_SUCCESS
 }
