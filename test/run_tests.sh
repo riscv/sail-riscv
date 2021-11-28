@@ -16,31 +16,31 @@ pass=0
 fail=0
 all_pass=0
 all_fail=0
-XML=""
+SUITE_XML=""
+SUITES_XML=""
 
 function green {
     (( pass += 1 ))
     printf "$1: ${GREEN}$2${NC}\n"
-    XML+="    <testcase name=\"$1\"/>\n"
+    SUITE_XML+="    <testcase name=\"$1\"/>\n"
 }
 
 function yellow {
     (( fail += 1 ))
     printf "$1: ${YELLOW}$2${NC}\n"
-    XML+="    <testcase name=\"$1\">\n      <error message=\"$2\">$2</error>\n    </testcase>\n"
+    SUITE_XML+="    <testcase name=\"$1\">\n      <error message=\"$2\">$2</error>\n    </testcase>\n"
 }
 
 function red {
     (( fail += 1 ))
     printf "$1: ${RED}$2${NC}\n"
-    XML+="    <testcase name=\"$1\">\n      <error message=\"$2\">$2</error>\n    </testcase>\n"
+    SUITE_XML+="    <testcase name=\"$1\">\n      <error message=\"$2\">$2</error>\n    </testcase>\n"
 }
 
 function finish_suite {
     printf "$1: Passed ${pass} out of $(( pass + fail ))\n\n"
-    XML="  <testsuite name=\"$1\" tests=\"$(( pass + fail ))\" failures=\"${fail}\" timestamp=\"$(date)\">\n$XML  </testsuite>\n"
-    printf "$XML" >> $DIR/tests.xml
-    XML=""
+    SUITES_XML+="  <testsuite name=\"$1\" tests=\"$(( pass + fail ))\" failures=\"${fail}\" timestamp=\"$(date)\">\n$SUITE_XML  </testsuite>\n"
+    SUITE_XML=""
     (( all_pass += pass )) || :
     (( all_fail += fail )) || :
     pass=0
@@ -48,8 +48,6 @@ function finish_suite {
 }
 
 SAILLIBDIR="$DIR/../../lib/"
-
-printf "<testsuites>\n" >> $DIR/tests.xml
 
 cd $RISCVDIR
 
@@ -167,9 +165,9 @@ else
 fi
 finish_suite "64-bit RISCV RVFI C tests"
 
-printf "</testsuites>\n" >> $DIR/tests.xml
-
 printf "Passed ${all_pass} out of $(( all_pass + all_fail ))\n\n"
+XML="<testsuites tests=\"$(( all_pass + all_fail ))\" failures=\"${all_fail}\">\n$SUITES_XML</testsuites>\n"
+printf "$XML" > $DIR/tests.xml
 
 if [ $all_fail -gt 0 ]
 then
