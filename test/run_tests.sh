@@ -28,13 +28,13 @@ function green {
 function yellow {
     (( fail += 1 ))
     printf "$1: ${YELLOW}$2${NC}\n"
-    SUITE_XML+="    <testcase name=\"$1\">\n      <error message=\"$2\">$2</error>\n    </testcase>\n"
+    SUITE_XML+="    <testcase name=\"$1\">\n      <failure message=\"$2\">$2</failure>\n    </testcase>\n"
 }
 
 function red {
     (( fail += 1 ))
     printf "$1: ${RED}$2${NC}\n"
-    SUITE_XML+="    <testcase name=\"$1\">\n      <error message=\"$2\">$2</error>\n    </testcase>\n"
+    SUITE_XML+="    <testcase name=\"$1\">\n      <failure message=\"$2\">$2</failure>\n    </testcase>\n"
 }
 
 function finish_suite {
