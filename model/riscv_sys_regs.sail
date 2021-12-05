@@ -182,6 +182,12 @@ function haveUsrMode() -> bool = misa.U() == 0b1
 function haveNExt()    -> bool = misa.N() == 0b1
 /* see below for F and D (and Z*inx counterparts) extension tests */
 
+/* BitManip extension support. */
+function haveZba()  -> bool = true
+function haveZbb()  -> bool = true
+function haveZbc()  -> bool = true
+function haveZbs()  -> bool = true
+
 /* Cryptography extension support. Note these will need updating once */
 /* Sail can be dynamically configured with different extension support */
 /* and have dynamic changes of XLEN via S/UXL */
