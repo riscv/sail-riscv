@@ -189,7 +189,12 @@ function haveZbc()  -> bool = true
 function haveZbs()  -> bool = true
 
 /* Zfh (half-precision) extension */
-function haveZfh()    -> bool = true
+function haveZfh()  -> bool = true
+
+/* Scalar Cryptography extensions support. */
+function haveZbkb() -> bool = true
+function haveZbkc() -> bool = true
+function haveZbkx() -> bool = true
 
 /* Cryptography extension support. Note these will need updating once */
 /* Sail can be dynamically configured with different extension support */
