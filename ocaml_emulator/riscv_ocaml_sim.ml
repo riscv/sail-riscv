@@ -11,6 +11,7 @@ let opt_file_arguments = ref ([] : string list)
 let opt_dump_dts = ref false
 let opt_dump_dtb = ref false
 let opt_signature_file = ref (None : string option)
+let signature_granularity_ref = ref 4
 let opt_isa = ref (None : string option)
 
 let report_arch () =
@@ -24,6 +25,9 @@ let set_signature_file s =
   P.config_print_reg := false;
   P.config_print_mem_access := false;
   P.config_print_platform := false
+
+let set_signature_granularity sg =
+  signature_granularity_ref := sg
 
 let options = Arg.align ([("-dump-dts",
                            Arg.Set opt_dump_dts,
@@ -61,6 +65,9 @@ let options = Arg.align ([("-dump-dts",
                           ("-test-signature",
                            Arg.String set_signature_file,
                            " file for signature output (requires ELF signature symbols)");
+                          ("-signature-granularity",
+                           Arg.Int set_signature_granularity,
+                           " test signature granularity (in bytes)");
                           ("-isa",
                            Arg.String (fun s -> opt_isa := Some s),
                            " requested isa");
@@ -109,13 +116,13 @@ let check_elf () =
 let write_bytes fl bytes =
   let i = ref 0 in
   while !i < Bytes.length bytes do
-    let s = Printf.sprintf "%02x%02x%02x%02x\n"
-	(int_of_char (Bytes.get bytes (!i+3)))
-	(int_of_char (Bytes.get bytes (!i+2)))
-	(int_of_char (Bytes.get bytes (!i+1)))
-	(int_of_char (Bytes.get bytes (!i+0))) in
-    output_string fl s;
-    i := !i + 4
+    for j = !signature_granularity_ref - 1 downto 0 do
+      let s = Printf.sprintf "%02x"
+          (int_of_char (Bytes.get bytes (!i + j))) in
+      output_string fl s;
+    done;
+    output_string fl "\n";
+    i := !i + !signature_granularity_ref;
   done
 
 let write_signature f sig_start sig_end =
