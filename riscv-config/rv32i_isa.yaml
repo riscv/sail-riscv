@@ -1849,23 +1849,21 @@ hart0: &hart0
         rv64:
             accessible: false
         reset-val: 0
-  fflags:
+  fcsr:
         rv32:
             accessible: true
-            type:
+            fflags:
+              implemented: true
+              type:
                 warl:
                     dependency_fields: []
                     legal:
                       - fflags[5:0] in [0x00:0x3F]
                     wr_illegal:
                       - unchanged
-        rv64:
-            accessible: false
-        reset-val: 0
-  frm:
-        rv32:
-            accessible: true
-            type:
+            frm:
+              implemented: true
+              type:
                 warl:
                     dependency_fields: []
                     legal:
@@ -1875,16 +1873,15 @@ hart0: &hart0
         rv64:
             accessible: false
         reset-val: 0
-  fcsr:
+  fflags:
         rv32:
             accessible: true
-            type:
-                warl:
-                    dependency_fields: []
-                    legal:
-                      - fcsr[31:0] in [0x00000000:0xFFFFFFFF]
-                    wr_illegal:
-                      - unchanged
+        rv64:
+            accessible: false
+        reset-val: 0
+  frm:
+        rv32:
+            accessible: true
         rv64:
             accessible: false
         reset-val: 0

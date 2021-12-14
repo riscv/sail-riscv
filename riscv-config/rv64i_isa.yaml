@@ -425,44 +425,41 @@ hart0:
                     wr_illegal:
                       - Unchanged
         reset-val: 0
+    fcsr:
+        rv32:
+            accessible: false
+        rv64:
+            accessible: true
+            fflags:
+              implemented: true
+              type:
+                warl:
+                    dependency_fields: []
+                    legal:
+                      - fflags[5:0] in [0x00:0x3F]
+                    wr_illegal:
+                      - unchanged
+            frm:
+              implemented: true
+              type:
+                warl:
+                    dependency_fields: []
+                    legal:
+                      - frm[3:0] in [0x0:0xF]
+                    wr_illegal:
+                      - unchanged
+        reset-val: 0
     fflags:
         rv32:
             accessible: false
         rv64:
             accessible: true
-            type:
-                warl:
-                    dependency_fields: []
-                    legal:
-                      - fflags[4:0] in [0x00:0x1F]
-                    wr_illegal:
-                      - Unchanged
         reset-val: 0
     frm:
         rv32:
             accessible: false
         rv64:
             accessible: true
-            type:
-                warl:
-                    dependency_fields: []
-                    legal:
-                      - frm[2:0] in [0x0:0x7]
-                    wr_illegal:
-                      - Unchanged
-        reset-val: 0
-    fcsr:
-        rv32:
-            accessible: false
-        rv64:
-            accessible: true
-            type:
-                warl:
-                    dependency_fields: []
-                    legal:
-                      - fcsr[7:0] in [0x00:0xFF]
-                    wr_illegal:
-                      - Unchanged
         reset-val: 0
     time:
         rv32:

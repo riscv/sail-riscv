@@ -135,7 +135,7 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
 
     0x001 => { ext_write_fcsr(frm, value [4 .. 0]); Some(EXTZ(fflags)) },
     0x002 => { ext_write_fcsr(value [2 .. 0], fflags); Some(EXTZ(frm)) },
-    0x003 => { ext_write_fcsr(value [7 .. 5], value [4 .. 0]); Some(EXTZ(fcsr))},
+    0x003 => { ext_write_fcsr(value [7 .. 5], value [4 .. 0]); Some(EXTZ(fcsr.bits()))},
     /* trigger/debug */
     0x7a0 => { tselect = value; Some(tselect) },
 
