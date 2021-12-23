@@ -65,8 +65,6 @@ subsection \<open>General\<close>
 
 consts failwith :: " 'a \<Rightarrow> 'b"
 
-declare [[code abort: failwith]]
-
 subsection \<open>Lists\<close>
 
 fun index :: " 'a list \<Rightarrow> nat \<Rightarrow> 'a option "  where

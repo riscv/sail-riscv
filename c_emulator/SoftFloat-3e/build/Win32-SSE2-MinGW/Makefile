@@ -193,6 +193,7 @@ OBJS_OTHERS = \
   f16_le_quiet$(OBJ) \
   f16_lt_quiet$(OBJ) \
   f16_isSignalingNaN$(OBJ) \
+  f16_classify$(OBJ) \
   f32_to_ui32$(OBJ) \
   f32_to_ui64$(OBJ) \
   f32_to_i32$(OBJ) \
@@ -220,6 +221,7 @@ OBJS_OTHERS = \
   f32_le_quiet$(OBJ) \
   f32_lt_quiet$(OBJ) \
   f32_isSignalingNaN$(OBJ) \
+  f32_classify$(OBJ) \
   f64_to_ui32$(OBJ) \
   f64_to_ui64$(OBJ) \
   f64_to_i32$(OBJ) \
@@ -247,6 +249,7 @@ OBJS_OTHERS = \
   f64_le_quiet$(OBJ) \
   f64_lt_quiet$(OBJ) \
   f64_isSignalingNaN$(OBJ) \
+  f64_classify$(OBJ) \
   extF80M_to_ui32$(OBJ) \
   extF80M_to_ui64$(OBJ) \
   extF80M_to_i32$(OBJ) \
@@ -299,12 +302,20 @@ OBJS_OTHERS = \
   f128M_le_quiet$(OBJ) \
   f128M_lt_quiet$(OBJ) \
 
-OBJS_ALL = $(OBJS_PRIMITIVES) $(OBJS_SPECIALIZE) $(OBJS_OTHERS)
+OBJS_RECIPROCAL = \
+  f16_rsqrte7$(OBJ) \
+  f16_recip7$(OBJ) \
+  f32_rsqrte7$(OBJ) \
+  f32_recip7$(OBJ) \
+  f64_rsqrte7$(OBJ) \
+  f64_recip7$(OBJ) \
+
+OBJS_ALL = $(OBJS_PRIMITIVES) $(OBJS_SPECIALIZE) $(OBJS_OTHERS) $(OBJS_RECIPROCAL)
 
 $(OBJS_ALL): \
   $(OTHER_HEADERS) platform.h $(SOURCE_DIR)/include/primitiveTypes.h \
   $(SOURCE_DIR)/include/primitives.h
-$(OBJS_SPECIALIZE) $(OBJS_OTHERS): \
+$(OBJS_SPECIALIZE) $(OBJS_OTHERS) $(OBJS_RECIPROCAL): \
   $(SOURCE_DIR)/include/softfloat_types.h $(SOURCE_DIR)/include/internals.h \
   $(SOURCE_DIR)/$(SPECIALIZE_TYPE)/specialize.h \
   $(SOURCE_DIR)/include/softfloat.h
@@ -314,6 +325,9 @@ $(OBJS_PRIMITIVES) $(OBJS_OTHERS): %$(OBJ): $(SOURCE_DIR)/%.c
 
 $(OBJS_SPECIALIZE): %$(OBJ): $(SOURCE_DIR)/$(SPECIALIZE_TYPE)/%.c
 	$(COMPILE_C) $(SOURCE_DIR)/$(SPECIALIZE_TYPE)/$*.c
+
+$(OBJS_RECIPROCAL): %$(OBJ): $(SOURCE_DIR)/fall_reciprocal.c
+	$(COMPILE_C) $(SOURCE_DIR)/fall_reciprocal.c
 
 softfloat$(LIB): $(OBJS_ALL)
 	$(DELETE) $@

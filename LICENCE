@@ -1,13 +1,12 @@
 RISCV Sail Model
 
 This Sail RISC-V architecture model, comprising all files and
-directories except for the snapshots of the Lem and Sail libraries
-in the prover_snapshots directory (which include copies of their
-licences), is subject to the BSD two-clause licence below.
+directories, is subject to the BSD two-clause licence
+below.
 
-Copyright (c) 2017-2021
+Copyright (c) 2017-2020
   Prashanth Mundkur
-  Rishiyur S. Nikhil and Bluespec, Inc.
+  Rishiyur Nikhil
   Jon French
   Brian Campbell
   Robert Norton-Wright
@@ -16,12 +15,6 @@ Copyright (c) 2017-2021
   Shaked Flur
   Christopher Pulte
   Peter Sewell
-  Alexander Richardson 
-  Hesham Almatary 
-  Jessica Clarke
-  Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo
-  Peter Rugg
-  Aril Computer Corp., for contributions by Scott Johnson
 
 All rights reserved.
 
@@ -38,7 +31,7 @@ SSITH research programme.
 
 This project has received funding from the European Research Council
 (ERC) under the European Union’s Horizon 2020 research and innovation
-programme (grant agreement 789108, ELVER).
+programme (grant agreement No 789108).
 
 
 Redistribution and use in source and binary forms, with or without

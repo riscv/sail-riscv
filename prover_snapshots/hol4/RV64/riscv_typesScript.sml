@@ -65,31 +65,11 @@ val _ = Hol_datatype `
 
 
 
-
-
-
-
 val _ = type_abbrev( "xlenbits"  , ``: 64 bits``);
-
-
-
-
-
-val _ = type_abbrev( "flenbits"  , ``: 64 bits``);
 
 val _ = type_abbrev( "mem_meta"  , ``: unit``);
 
 
-
-val _ = type_abbrev( "exc_code"  , ``: 8 bits``);
-
-val _ = type_abbrev( "ext_ptw"  , ``: unit``);
-
-val _ = type_abbrev( "ext_ptw_fail"  , ``: unit``);
-
-val _ = type_abbrev( "ext_ptw_error"  , ``: unit``);
-
-val _ = type_abbrev( "ext_exc_type"  , ``: unit``);
 
 val _ = type_abbrev( "half"  , ``: 16 bits``);
 
@@ -112,7 +92,7 @@ val _ = type_abbrev( "imm20"  , ``: 20 bits``);
 val _ = type_abbrev( "amo"  , ``: 1 bits``);
 
 val _ = Hol_datatype `
- Architecture =   RV32 | RV64 | RV128`;
+ Architecture = RV32 | RV64 | RV128`;
 
 
 
@@ -122,147 +102,38 @@ val _ = type_abbrev( "arch_xlen"  , ``: 2 bits``);
 val _ = type_abbrev( "priv_level"  , ``: 2 bits``);
 
 val _ = Hol_datatype `
- Privilege =   User | Supervisor | Machine`;
+ Privilege = User | Supervisor | Machine`;
 
 
 
 
 val _ = Hol_datatype `
- AccessType =   Read of ('a) | Write of ('a) | ReadWrite of (('a # 'a)) | Execute of (unit)`;
+ amoop = AMOSWAP | AMOADD | AMOXOR | AMOAND | AMOOR | AMOMIN | AMOMAX | AMOMINU | AMOMAXU`;
 
 
 
 
 val _ = Hol_datatype `
- ExceptionType  =
-    E_Fetch_Addr_Align of (unit)
-  | E_Fetch_Access_Fault of (unit)
-  | E_Illegal_Instr of (unit)
-  | E_Breakpoint of (unit)
-  | E_Load_Addr_Align of (unit)
-  | E_Load_Access_Fault of (unit)
-  | E_SAMO_Addr_Align of (unit)
-  | E_SAMO_Access_Fault of (unit)
-  | E_U_EnvCall of (unit)
-  | E_S_EnvCall of (unit)
-  | E_Reserved_10 of (unit)
-  | E_M_EnvCall of (unit)
-  | E_Fetch_Page_Fault of (unit)
-  | E_Load_Page_Fault of (unit)
-  | E_Reserved_14 of (unit)
-  | E_SAMO_Page_Fault of (unit)
-  | E_Extension of (ext_exc_type)`;
+ bop = RISCV_BEQ | RISCV_BNE | RISCV_BLT | RISCV_BGE | RISCV_BLTU | RISCV_BGEU`;
 
 
 
 
 val _ = Hol_datatype `
- amoop =   AMOSWAP | AMOADD | AMOXOR | AMOAND | AMOOR | AMOMIN | AMOMAX | AMOMINU | AMOMAXU`;
+ csrop = CSRRW | CSRRS | CSRRC`;
 
 
 
 
 val _ = Hol_datatype `
- bop =   RISCV_BEQ | RISCV_BNE | RISCV_BLT | RISCV_BGE | RISCV_BLTU | RISCV_BGEU`;
-
-
-
-
-val _ = Hol_datatype `
- csrop =   CSRRW | CSRRS | CSRRC`;
-
-
-
-
-val _ = Hol_datatype `
- f_bin_op_D =   FSGNJ_D | FSGNJN_D | FSGNJX_D | FMIN_D | FMAX_D | FEQ_D | FLT_D | FLE_D`;
-
-
-
-
-val _ = Hol_datatype `
- f_bin_op_S =   FSGNJ_S | FSGNJN_S | FSGNJX_S | FMIN_S | FMAX_S | FEQ_S | FLT_S | FLE_S`;
-
-
-
-
-val _ = Hol_datatype `
- f_bin_rm_op_D =   FADD_D | FSUB_D | FMUL_D | FDIV_D`;
-
-
-
-
-val _ = Hol_datatype `
- f_bin_rm_op_S =   FADD_S | FSUB_S | FMUL_S | FDIV_S`;
-
-
-
-
-val _ = Hol_datatype `
- f_madd_op_D =   FMADD_D | FMSUB_D | FNMSUB_D | FNMADD_D`;
-
-
-
-
-val _ = Hol_datatype `
- f_madd_op_S =   FMADD_S | FMSUB_S | FNMSUB_S | FNMADD_S`;
-
-
-
-
-val _ = Hol_datatype `
- f_un_op_D =   FCLASS_D | FMV_X_D | FMV_D_X`;
-
-
-
-
-val _ = Hol_datatype `
- f_un_op_S =   FCLASS_S | FMV_X_W | FMV_W_X`;
-
-
-
-
-val _ = Hol_datatype `
- f_un_rm_op_D =
-    FSQRT_D
-  | FCVT_W_D
-  | FCVT_WU_D
-  | FCVT_D_W
-  | FCVT_D_WU
-  | FCVT_S_D
-  | FCVT_D_S
-  | FCVT_L_D
-  | FCVT_LU_D
-  | FCVT_D_L
-  | FCVT_D_LU`;
-
-
-
-
-val _ = Hol_datatype `
- f_un_rm_op_S =
-    FSQRT_S
-  | FCVT_W_S
-  | FCVT_WU_S
-  | FCVT_S_W
-  | FCVT_S_WU
-  | FCVT_L_S
-  | FCVT_LU_S
-  | FCVT_S_L
-  | FCVT_S_LU`;
-
-
-
-
-val _ = Hol_datatype `
- iop =   RISCV_ADDI | RISCV_SLTI | RISCV_SLTIU | RISCV_XORI | RISCV_ORI | RISCV_ANDI`;
+ iop = RISCV_ADDI | RISCV_SLTI | RISCV_SLTIU | RISCV_XORI | RISCV_ORI | RISCV_ANDI`;
 
 
 
 
 val _ = Hol_datatype `
  rop =
-    RISCV_ADD
+  RISCV_ADD
   | RISCV_SUB
   | RISCV_SLL
   | RISCV_SLT
@@ -277,37 +148,31 @@ val _ = Hol_datatype `
 
 
 val _ = Hol_datatype `
- ropw =   RISCV_ADDW | RISCV_SUBW | RISCV_SLLW | RISCV_SRLW | RISCV_SRAW`;
+ ropw = RISCV_ADDW | RISCV_SUBW | RISCV_SLLW | RISCV_SRLW | RISCV_SRAW`;
 
 
 
 
 val _ = Hol_datatype `
- rounding_mode =   RM_RNE | RM_RTZ | RM_RDN | RM_RUP | RM_RMM | RM_DYN`;
+ sop = RISCV_SLLI | RISCV_SRLI | RISCV_SRAI`;
 
 
 
 
 val _ = Hol_datatype `
- sop =   RISCV_SLLI | RISCV_SRLI | RISCV_SRAI`;
+ sopw = RISCV_SLLIW | RISCV_SRLIW | RISCV_SRAIW`;
 
 
 
 
 val _ = Hol_datatype `
- sopw =   RISCV_SLLIW | RISCV_SRLIW | RISCV_SRAIW`;
+ uop = RISCV_LUI | RISCV_AUIPC`;
 
 
 
 
 val _ = Hol_datatype `
- uop =   RISCV_LUI | RISCV_AUIPC`;
-
-
-
-
-val _ = Hol_datatype `
- word_width =   BYTE | HALF | WORD | DOUBLE`;
+ word_width = BYTE | HALF | WORD | DOUBLE`;
 
 
 
@@ -381,37 +246,6 @@ val _ = Hol_datatype `
   | REMW of ((regidx # regidx # regidx # bool))
   | CSR of (( 12 bits # regidx # regidx # bool # csrop))
   | URET of (unit)
-  | C_NOP_HINT of ( 6 bits)
-  | C_ADDI_HINT of (regidx)
-  | C_LI_HINT of ( 6 bits)
-  | C_LUI_HINT of ( 6 bits)
-  | C_MV_HINT of (regidx)
-  | C_ADD_HINT of (regidx)
-  | C_SLLI_HINT of (( 6 bits # regidx))
-  | C_SRLI_HINT of (cregidx)
-  | C_SRAI_HINT of (cregidx)
-  | FENCE_RESERVED of (( 4 bits # 4 bits # 4 bits # regidx # regidx))
-  | FENCEI_RESERVED of (( 12 bits # regidx # regidx))
-  | LOAD_FP of (( 12 bits # regidx # regidx # word_width))
-  | STORE_FP of (( 12 bits # regidx # regidx # word_width))
-  | F_MADD_TYPE_S of ((regidx # regidx # regidx # rounding_mode # regidx # f_madd_op_S))
-  | F_BIN_RM_TYPE_S of ((regidx # regidx # rounding_mode # regidx # f_bin_rm_op_S))
-  | F_UN_RM_TYPE_S of ((regidx # rounding_mode # regidx # f_un_rm_op_S))
-  | F_BIN_TYPE_S of ((regidx # regidx # regidx # f_bin_op_S))
-  | F_UN_TYPE_S of ((regidx # regidx # f_un_op_S))
-  | C_FLWSP of (( 6 bits # regidx))
-  | C_FSWSP of (( 6 bits # regidx))
-  | C_FLW of (( 5 bits # cregidx # cregidx))
-  | C_FSW of (( 5 bits # cregidx # cregidx))
-  | F_MADD_TYPE_D of ((regidx # regidx # regidx # rounding_mode # regidx # f_madd_op_D))
-  | F_BIN_RM_TYPE_D of ((regidx # regidx # rounding_mode # regidx # f_bin_rm_op_D))
-  | F_UN_RM_TYPE_D of ((regidx # rounding_mode # regidx # f_un_rm_op_D))
-  | F_BIN_TYPE_D of ((regidx # regidx # regidx # f_bin_op_D))
-  | F_UN_TYPE_D of ((regidx # regidx # f_un_op_D))
-  | C_FLDSP of (( 6 bits # regidx))
-  | C_FSDSP of (( 6 bits # regidx))
-  | C_FLD of (( 5 bits # cregidx # cregidx))
-  | C_FSD of (( 5 bits # cregidx # cregidx))
   | ILLEGAL of (word)
   | C_ILLEGAL of (half)`;
 
@@ -419,27 +253,22 @@ val _ = Hol_datatype `
 
 
 val _ = Hol_datatype `
- PTW_Error  =
-    PTW_Invalid_Addr of (unit)
-  | PTW_Access of (unit)
-  | PTW_Invalid_PTE of (unit)
-  | PTW_No_Permission of (unit)
-  | PTW_Misaligned of (unit)
-  | PTW_PTE_Update of (unit)
-  | PTW_Ext_Error of (ext_ptw_error)`;
+ Retired = RETIRE_SUCCESS | RETIRE_FAIL`;
 
 
 
 
 val _ = Hol_datatype `
- Retired =   RETIRE_SUCCESS | RETIRE_FAIL`;
+ AccessType = Read | Write | ReadWrite | Execute`;
 
 
 
+
+val _ = type_abbrev( "exc_code"  , ``: 8 bits``);
 
 val _ = Hol_datatype `
  InterruptType =
-    I_U_Software
+  I_U_Software
   | I_S_Software
   | I_M_Software
   | I_U_Timer
@@ -453,6 +282,29 @@ val _ = Hol_datatype `
 
 
 val _ = Hol_datatype `
+ ExceptionType =
+  E_Fetch_Addr_Align
+  | E_Fetch_Access_Fault
+  | E_Illegal_Instr
+  | E_Breakpoint
+  | E_Load_Addr_Align
+  | E_Load_Access_Fault
+  | E_SAMO_Addr_Align
+  | E_SAMO_Access_Fault
+  | E_U_EnvCall
+  | E_S_EnvCall
+  | E_Reserved_10
+  | E_M_EnvCall
+  | E_Fetch_Page_Fault
+  | E_Load_Page_Fault
+  | E_Reserved_14
+  | E_SAMO_Page_Fault
+  | E_CHERI`;
+
+
+
+
+val _ = Hol_datatype `
  exception  =   Error_not_implemented of (string) | Error_internal_error of (unit)`;
 
 
@@ -461,7 +313,7 @@ val _ = Hol_datatype `
 val _ = type_abbrev( "tv_mode"  , ``: 2 bits``);
 
 val _ = Hol_datatype `
- TrapVectorMode =   TV_Direct | TV_Vector | TV_Reserved`;
+ TrapVectorMode = TV_Direct | TV_Vector | TV_Reserved`;
 
 
 
@@ -469,7 +321,7 @@ val _ = Hol_datatype `
 val _ = type_abbrev( "ext_status"  , ``: 2 bits``);
 
 val _ = Hol_datatype `
- ExtStatus =   Off | Initial | Clean | Dirty`;
+ ExtStatus = Off | Initial | Clean | Dirty`;
 
 
 
@@ -477,18 +329,14 @@ val _ = Hol_datatype `
 val _ = type_abbrev( "satp_mode"  , ``: 4 bits``);
 
 val _ = Hol_datatype `
- SATPMode =   Sbare | Sv32 | Sv39 | Sv48`;
+ SATPMode = Sbare | Sv32 | Sv39 | Sv48`;
 
 
 
 
 val _ = type_abbrev( "csrRW"  , ``: 2 bits``);
 
-val _ = type_abbrev( "ext_access_type"  , ``: unit``);
-
 val _ = type_abbrev( "regtype"  , ``: xlenbits``);
-
-val _ = type_abbrev( "fregtype"  , ``: flenbits``);
 
 val _ = Hol_datatype `
  Misa  = <| Misa_Misa_chunk_0 :  64 words$word  |>`;
@@ -496,47 +344,7 @@ val _ = Hol_datatype `
 
 
 val _ = Hol_datatype `
- Counteren  = <| Counteren_Counteren_chunk_0 :  32 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- Counterin  = <| Counterin_Counterin_chunk_0 :  32 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- Fcsr  = <| Fcsr_Fcsr_chunk_0 :  32 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- Mcause  = <| Mcause_Mcause_chunk_0 :  64 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- Medeleg  = <| Medeleg_Medeleg_chunk_0 :  64 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- Minterrupts  = <| Minterrupts_Minterrupts_chunk_0 :  64 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- Mstatus  = <| Mstatus_Mstatus_chunk_0 :  64 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- Mstatush  = <| Mstatush_Mstatush_chunk_0 :  32 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- Mtvec  = <| Mtvec_Mtvec_chunk_0 :  64 words$word  |>`;
+ SV48_PTE  = <| SV48_PTE_SV48_PTE_chunk_0 :  64 words$word  |>`;
 
 
 
@@ -551,67 +359,7 @@ val _ = Hol_datatype `
 
 
 val _ = Hol_datatype `
- SV32_PTE  = <| SV32_PTE_SV32_PTE_chunk_0 :  32 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- SV32_Paddr  = <| SV32_Paddr_SV32_Paddr_chunk_0 :  34 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- SV32_Vaddr  = <| SV32_Vaddr_SV32_Vaddr_chunk_0 :  32 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- SV39_PTE  = <| SV39_PTE_SV39_PTE_chunk_0 :  64 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- SV39_Paddr  = <| SV39_Paddr_SV39_Paddr_chunk_0 :  56 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- SV39_Vaddr  = <| SV39_Vaddr_SV39_Vaddr_chunk_0 :  39 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- SV48_PTE  = <| SV48_PTE_SV48_PTE_chunk_0 :  64 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- SV48_Paddr  = <| SV48_Paddr_SV48_Paddr_chunk_0 :  56 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- SV48_Vaddr  = <| SV48_Vaddr_SV48_Vaddr_chunk_0 :  48 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- Satp32  = <| Satp32_Satp32_chunk_0 :  32 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- Satp64  = <| Satp64_Satp64_chunk_0 :  64 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- Sedeleg  = <| Sedeleg_Sedeleg_chunk_0 :  64 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
- Sinterrupts  = <| Sinterrupts_Sinterrupts_chunk_0 :  64 words$word  |>`;
+ Mstatus  = <| Mstatus_Mstatus_chunk_0 :  64 words$word  |>`;
 
 
 
@@ -621,22 +369,62 @@ val _ = Hol_datatype `
 
 
 val _ = Hol_datatype `
- Uinterrupts  = <| Uinterrupts_Uinterrupts_chunk_0 :  64 words$word  |>`;
-
-
-
-val _ = Hol_datatype `
  Ustatus  = <| Ustatus_Ustatus_chunk_0 :  64 words$word  |>`;
 
 
 
 val _ = Hol_datatype `
- htif_cmd  = <| htif_cmd_htif_cmd_chunk_0 :  64 words$word  |>`;
+ Minterrupts  = <| Minterrupts_Minterrupts_chunk_0 :  64 words$word  |>`;
 
 
 
 val _ = Hol_datatype `
- PmpAddrMatchType =   OFF | TOR | NA4 | NAPOT`;
+ Sinterrupts  = <| Sinterrupts_Sinterrupts_chunk_0 :  64 words$word  |>`;
+
+
+
+val _ = Hol_datatype `
+ Uinterrupts  = <| Uinterrupts_Uinterrupts_chunk_0 :  64 words$word  |>`;
+
+
+
+val _ = Hol_datatype `
+ Medeleg  = <| Medeleg_Medeleg_chunk_0 :  64 words$word  |>`;
+
+
+
+val _ = Hol_datatype `
+ Sedeleg  = <| Sedeleg_Sedeleg_chunk_0 :  64 words$word  |>`;
+
+
+
+val _ = Hol_datatype `
+ Mtvec  = <| Mtvec_Mtvec_chunk_0 :  64 words$word  |>`;
+
+
+
+val _ = Hol_datatype `
+ Satp32  = <| Satp32_Satp32_chunk_0 :  32 words$word  |>`;
+
+
+
+val _ = Hol_datatype `
+ Mcause  = <| Mcause_Mcause_chunk_0 :  64 words$word  |>`;
+
+
+
+val _ = Hol_datatype `
+ Counteren  = <| Counteren_Counteren_chunk_0 :  32 words$word  |>`;
+
+
+
+val _ = Hol_datatype `
+ Satp64  = <| Satp64_Satp64_chunk_0 :  64 words$word  |>`;
+
+
+
+val _ = Hol_datatype `
+ PmpAddrMatchType = OFF | TOR | NA4 | NAPOT`;
 
 
 
@@ -644,13 +432,13 @@ val _ = Hol_datatype `
 val _ = type_abbrev( "pmp_addr_range"  , ``:  ((xlenbits # xlenbits))option``);
 
 val _ = Hol_datatype `
- pmpAddrMatch =   PMP_NoMatch | PMP_PartialMatch | PMP_Match`;
+ pmpAddrMatch = PMP_NoMatch | PMP_PartialMatch | PMP_Match`;
 
 
 
 
 val _ = Hol_datatype `
- pmpMatch =   PMP_Success | PMP_Continue | PMP_Fail`;
+ pmpMatch = PMP_Success | PMP_Continue | PMP_Fail`;
 
 
 
@@ -673,12 +461,6 @@ val _ = Hol_datatype `
 
 
 
-val _ = Hol_datatype `
- Ext_PhysAddr_Check  =   Ext_PhysAddr_OK of (unit) | Ext_PhysAddr_Error of (ExceptionType)`;
-
-
-
-
 val _ = type_abbrev( "ext_fetch_addr_error"  , ``: unit``);
 
 val _ = type_abbrev( "ext_control_addr_error"  , ``: unit``);
@@ -694,22 +476,6 @@ val _ = Hol_datatype `
      sync_exception_ext :  ext_exception option  |>`;
 
 
-
-val _ = type_abbrev( "bits_rm"  , ``: 3 bits``);
-
-val _ = type_abbrev( "bits_fflags"  , ``: 5 bits``);
-
-val _ = type_abbrev( "bits_S"  , ``: 32 bits``);
-
-val _ = type_abbrev( "bits_D"  , ``: 64 bits``);
-
-val _ = type_abbrev( "bits_W"  , ``: 32 bits``);
-
-val _ = type_abbrev( "bits_WU"  , ``: 32 bits``);
-
-val _ = type_abbrev( "bits_L"  , ``: 64 bits``);
-
-val _ = type_abbrev( "bits_LU"  , ``: 64 bits``);
 
 val _ = Hol_datatype `
  interrupt_set  =
@@ -731,12 +497,15 @@ val _ = Hol_datatype `
 
 
 
+val _ = Hol_datatype `
+ htif_cmd  = <| htif_cmd_htif_cmd_chunk_0 :  64 words$word  |>`;
+
+
+
 val _ = type_abbrev( "pteAttribs"  , ``: 8 bits``);
 
-val _ = type_abbrev( "extPte"  , ``: 10 bits``);
-
 val _ = Hol_datatype `
- PTE_Check  =   PTE_Check_Success of (ext_ptw) | PTE_Check_Failure of ((ext_ptw # ext_ptw_fail))`;
+ PTW_Error = PTW_Access | PTW_Invalid_PTE | PTW_No_Permission | PTW_Misaligned | PTW_PTE_Update`;
 
 
 
@@ -749,6 +518,31 @@ val _ = type_abbrev( "pte32"  , ``: 32 bits``);
 
 val _ = type_abbrev( "asid32"  , ``: 9 bits``);
 
+val _ = Hol_datatype `
+ SV32_Vaddr  = <| SV32_Vaddr_SV32_Vaddr_chunk_0 :  32 words$word  |>`;
+
+
+
+val _ = Hol_datatype `
+ SV48_Vaddr  = <| SV48_Vaddr_SV48_Vaddr_chunk_0 :  48 words$word  |>`;
+
+
+
+val _ = Hol_datatype `
+ SV48_Paddr  = <| SV48_Paddr_SV48_Paddr_chunk_0 :  56 words$word  |>`;
+
+
+
+val _ = Hol_datatype `
+ SV32_Paddr  = <| SV32_Paddr_SV32_Paddr_chunk_0 :  34 words$word  |>`;
+
+
+
+val _ = Hol_datatype `
+ SV32_PTE  = <| SV32_PTE_SV32_PTE_chunk_0 :  32 words$word  |>`;
+
+
+
 val _ = type_abbrev( "paddr64"  , ``: 56 bits``);
 
 val _ = type_abbrev( "pte64"  , ``: 64 bits``);
@@ -757,21 +551,34 @@ val _ = type_abbrev( "asid64"  , ``: 16 bits``);
 
 val _ = type_abbrev( "vaddr39"  , ``: 39 bits``);
 
+val _ = Hol_datatype `
+ SV39_Vaddr  = <| SV39_Vaddr_SV39_Vaddr_chunk_0 :  39 words$word  |>`;
+
+
+
+val _ = Hol_datatype `
+ SV39_Paddr  = <| SV39_Paddr_SV39_Paddr_chunk_0 :  56 words$word  |>`;
+
+
+
+val _ = Hol_datatype `
+ SV39_PTE  = <| SV39_PTE_SV39_PTE_chunk_0 :  64 words$word  |>`;
+
+
+
 val _ = type_abbrev( "vaddr48"  , ``: 48 bits``);
 
 val _ = type_abbrev( "pte48"  , ``: 64 bits``);
 
 val _ = Hol_datatype `
  PTW_Result =
-    PTW_Success of (('paddr # 'pte # 'paddr # ii # bool # ext_ptw))
-  | PTW_Failure of ((PTW_Error # ext_ptw))`;
+    PTW_Success of (('paddr # 'pte # 'paddr # ii # bool)) | PTW_Failure of (PTW_Error)`;
 
 
 
 
 val _ = Hol_datatype `
- TR_Result =
-    TR_Address of (('a_paddr # ext_ptw)) | TR_Failure of (('b_failure # ext_ptw))`;
+ TR_Result =   TR_Address of ('a_paddr) | TR_Failure of ('b_failure)`;
 
 
 
@@ -806,18 +613,15 @@ val _ = Hol_datatype `
 
 val _ = Hol_datatype `
  register_value  =
-    Regval_vector of ( register_value list)
+    Regval_vector of ((ii # bool # register_value list))
   | Regval_list of ( register_value list)
   | Regval_option of ( register_value option)
   | Regval_Counteren of (Counteren)
-  | Regval_Counterin of (Counterin)
-  | Regval_Fcsr of (Fcsr)
   | Regval_Mcause of (Mcause)
   | Regval_Medeleg of (Medeleg)
   | Regval_Minterrupts of (Minterrupts)
   | Regval_Misa of (Misa)
   | Regval_Mstatus of (Mstatus)
-  | Regval_Mstatush of (Mstatush)
   | Regval_Mtvec of (Mtvec)
   | Regval_Pmpcfg_ent of (Pmpcfg_ent)
   | Regval_Privilege of (Privilege)
@@ -825,38 +629,125 @@ val _ = Hol_datatype `
   | Regval_Sinterrupts of (Sinterrupts)
   | Regval_TLB_Entry_16_39_56_64 of ( (16, 39, 56, 64)TLB_Entry)
   | Regval_TLB_Entry_16_48_56_64 of ( (16, 48, 56, 64)TLB_Entry)
-  | Regval_bit of (bitU)
-  | Regval_bitvector_32_dec of ( 32 words$word)
-  | Regval_bitvector_4_dec of ( 4 words$word)
-  | Regval_bitvector_64_dec of ( 64 words$word)
-  | Regval_bool of (bool)`;
+  | Regval_bool of (bool)
+  | Regval_vector_32_dec_bit of ( 32 words$word)
+  | Regval_vector_64_dec_bit of ( 64 words$word)`;
 
 
 
 
 val _ = Hol_datatype `
  regstate  =
-  <| Counteren_reg : string -> Counteren;
-     Counterin_reg : string -> Counterin;
-     Fcsr_reg : string -> Fcsr;
-     Mcause_reg : string -> Mcause;
-     Medeleg_reg : string -> Medeleg;
-     Minterrupts_reg : string -> Minterrupts;
-     Misa_reg : string -> Misa;
-     Mstatus_reg : string -> Mstatus;
-     Mstatush_reg : string -> Mstatush;
-     Mtvec_reg : string -> Mtvec;
-     Pmpcfg_ent_reg : string -> Pmpcfg_ent;
-     Privilege_reg : string -> Privilege;
-     Sedeleg_reg : string -> Sedeleg;
-     Sinterrupts_reg : string -> Sinterrupts;
-     bit_reg : string -> bitU;
-     bitvector_32_dec_reg : string ->  32 words$word;
-     bitvector_4_dec_reg : string ->  4 words$word;
-     bitvector_64_dec_reg : string ->  64 words$word;
-     bool_reg : string -> bool;
-     option_TLB_Entry_16_39_56_64_reg : string ->  ( (16, 39, 56, 64)TLB_Entry)option;
-     option_TLB_Entry_16_48_56_64_reg : string ->  ( (16, 48, 56, 64)TLB_Entry)option  |>`;
+  <| satp :  64 words$word;
+     tlb48 :  ( (16, 48, 56, 64)TLB_Entry)option;
+     tlb39 :  ( (16, 39, 56, 64)TLB_Entry)option;
+     htif_exit_code :  64 words$word;
+     htif_done : bool;
+     htif_tohost :  64 words$word;
+     mtimecmp :  64 words$word;
+     utval :  64 words$word;
+     ucause : Mcause;
+     uepc :  64 words$word;
+     uscratch :  64 words$word;
+     utvec : Mtvec;
+     pmpaddr15 :  64 words$word;
+     pmpaddr14 :  64 words$word;
+     pmpaddr13 :  64 words$word;
+     pmpaddr12 :  64 words$word;
+     pmpaddr11 :  64 words$word;
+     pmpaddr10 :  64 words$word;
+     pmpaddr9 :  64 words$word;
+     pmpaddr8 :  64 words$word;
+     pmpaddr7 :  64 words$word;
+     pmpaddr6 :  64 words$word;
+     pmpaddr5 :  64 words$word;
+     pmpaddr4 :  64 words$word;
+     pmpaddr3 :  64 words$word;
+     pmpaddr2 :  64 words$word;
+     pmpaddr1 :  64 words$word;
+     pmpaddr0 :  64 words$word;
+     pmp15cfg : Pmpcfg_ent;
+     pmp14cfg : Pmpcfg_ent;
+     pmp13cfg : Pmpcfg_ent;
+     pmp12cfg : Pmpcfg_ent;
+     pmp11cfg : Pmpcfg_ent;
+     pmp10cfg : Pmpcfg_ent;
+     pmp9cfg : Pmpcfg_ent;
+     pmp8cfg : Pmpcfg_ent;
+     pmp7cfg : Pmpcfg_ent;
+     pmp6cfg : Pmpcfg_ent;
+     pmp5cfg : Pmpcfg_ent;
+     pmp4cfg : Pmpcfg_ent;
+     pmp3cfg : Pmpcfg_ent;
+     pmp2cfg : Pmpcfg_ent;
+     pmp1cfg : Pmpcfg_ent;
+     pmp0cfg : Pmpcfg_ent;
+     tselect :  64 words$word;
+     stval :  64 words$word;
+     scause : Mcause;
+     sepc :  64 words$word;
+     sscratch :  64 words$word;
+     stvec : Mtvec;
+     sideleg : Sinterrupts;
+     sedeleg : Sedeleg;
+     mhartid :  64 words$word;
+     marchid :  64 words$word;
+     mimpid :  64 words$word;
+     mvendorid :  32 words$word;
+     minstret_written : bool;
+     minstret :  64 words$word;
+     mtime :  64 words$word;
+     mcycle :  64 words$word;
+     scounteren : Counteren;
+     mcounteren : Counteren;
+     mscratch :  64 words$word;
+     mtval :  64 words$word;
+     mepc :  64 words$word;
+     mcause : Mcause;
+     mtvec : Mtvec;
+     medeleg : Medeleg;
+     mideleg : Minterrupts;
+     mie : Minterrupts;
+     mip : Minterrupts;
+     mstatus : Mstatus;
+     misa : Misa;
+     cur_inst :  64 words$word;
+     cur_privilege : Privilege;
+     x31 :  64 words$word;
+     x30 :  64 words$word;
+     x29 :  64 words$word;
+     x28 :  64 words$word;
+     x27 :  64 words$word;
+     x26 :  64 words$word;
+     x25 :  64 words$word;
+     x24 :  64 words$word;
+     x23 :  64 words$word;
+     x22 :  64 words$word;
+     x21 :  64 words$word;
+     x20 :  64 words$word;
+     x19 :  64 words$word;
+     x18 :  64 words$word;
+     x17 :  64 words$word;
+     x16 :  64 words$word;
+     x15 :  64 words$word;
+     x14 :  64 words$word;
+     x13 :  64 words$word;
+     x12 :  64 words$word;
+     x11 :  64 words$word;
+     x10 :  64 words$word;
+     x9 :  64 words$word;
+     x8 :  64 words$word;
+     x7 :  64 words$word;
+     x6 :  64 words$word;
+     x5 :  64 words$word;
+     x4 :  64 words$word;
+     x3 :  64 words$word;
+     x2 :  64 words$word;
+     x1 :  64 words$word;
+     Xs : ( 64 words$word) list;
+     instbits :  64 words$word;
+     nextPC :  64 words$word;
+     PC :  64 words$word  |>`;
 
 
 
@@ -873,31 +764,6 @@ val _ = Define `
 
 val _ = Define `
  ((regval_of_Counteren:Counteren -> register_value) v=  (Regval_Counteren v))`;
-
-
-(*val Counterin_of_regval : register_value -> maybe Counterin*)
-
-val _ = Define `
- ((Counterin_of_regval:register_value ->(Counterin)option) merge_var=
-    ((case merge_var of   Regval_Counterin (v) => SOME v | _ => NONE )))`;
-
-
-(*val regval_of_Counterin : Counterin -> register_value*)
-
-val _ = Define `
- ((regval_of_Counterin:Counterin -> register_value) v=  (Regval_Counterin v))`;
-
-
-(*val Fcsr_of_regval : register_value -> maybe Fcsr*)
-
-val _ = Define `
- ((Fcsr_of_regval:register_value ->(Fcsr)option) merge_var=  ((case merge_var of   Regval_Fcsr (v) => SOME v | _ => NONE )))`;
-
-
-(*val regval_of_Fcsr : Fcsr -> register_value*)
-
-val _ = Define `
- ((regval_of_Fcsr:Fcsr -> register_value) v=  (Regval_Fcsr v))`;
 
 
 (*val Mcause_of_regval : register_value -> maybe Mcause*)
@@ -962,19 +828,6 @@ val _ = Define `
 
 val _ = Define `
  ((regval_of_Mstatus:Mstatus -> register_value) v=  (Regval_Mstatus v))`;
-
-
-(*val Mstatush_of_regval : register_value -> maybe Mstatush*)
-
-val _ = Define `
- ((Mstatush_of_regval:register_value ->(Mstatush)option) merge_var=
-    ((case merge_var of   Regval_Mstatush (v) => SOME v | _ => NONE )))`;
-
-
-(*val regval_of_Mstatush : Mstatush -> register_value*)
-
-val _ = Define `
- ((regval_of_Mstatush:Mstatush -> register_value) v=  (Regval_Mstatush v))`;
 
 
 (*val Mtvec_of_regval : register_value -> maybe Mtvec*)
@@ -1067,57 +920,6 @@ val _ = Define `
  ((regval_of_TLB_Entry_16_48_56_64:((16),(48),(56),(64))TLB_Entry -> register_value) v=  (Regval_TLB_Entry_16_48_56_64 v))`;
 
 
-(*val bit_of_regval : register_value -> maybe bitU*)
-
-val _ = Define `
- ((bit_of_regval:register_value ->(bitU)option) merge_var=  ((case merge_var of   Regval_bit (v) => SOME v | _ => NONE )))`;
-
-
-(*val regval_of_bit : bitU -> register_value*)
-
-val _ = Define `
- ((regval_of_bit:bitU -> register_value) v=  (Regval_bit v))`;
-
-
-(*val bitvector_32_dec_of_regval : register_value -> maybe (mword ty32)*)
-
-val _ = Define `
- ((bitvector_32_dec_of_regval:register_value ->((32)words$word)option) merge_var=
-    ((case merge_var of   Regval_bitvector_32_dec (v) => SOME v | _ => NONE )))`;
-
-
-(*val regval_of_bitvector_32_dec : mword ty32 -> register_value*)
-
-val _ = Define `
- ((regval_of_bitvector_32_dec:(32)words$word -> register_value) v=  (Regval_bitvector_32_dec v))`;
-
-
-(*val bitvector_4_dec_of_regval : register_value -> maybe (mword ty4)*)
-
-val _ = Define `
- ((bitvector_4_dec_of_regval:register_value ->((4)words$word)option) merge_var=
-    ((case merge_var of   Regval_bitvector_4_dec (v) => SOME v | _ => NONE )))`;
-
-
-(*val regval_of_bitvector_4_dec : mword ty4 -> register_value*)
-
-val _ = Define `
- ((regval_of_bitvector_4_dec:(4)words$word -> register_value) v=  (Regval_bitvector_4_dec v))`;
-
-
-(*val bitvector_64_dec_of_regval : register_value -> maybe (mword ty64)*)
-
-val _ = Define `
- ((bitvector_64_dec_of_regval:register_value ->((64)words$word)option) merge_var=
-    ((case merge_var of   Regval_bitvector_64_dec (v) => SOME v | _ => NONE )))`;
-
-
-(*val regval_of_bitvector_64_dec : mword ty64 -> register_value*)
-
-val _ = Define `
- ((regval_of_bitvector_64_dec:(64)words$word -> register_value) v=  (Regval_bitvector_64_dec v))`;
-
-
 (*val bool_of_regval : register_value -> maybe bool*)
 
 val _ = Define `
@@ -1130,20 +932,46 @@ val _ = Define `
  ((regval_of_bool:bool -> register_value) v=  (Regval_bool v))`;
 
 
+(*val vector_32_dec_bit_of_regval : register_value -> maybe (mword ty32)*)
+
+val _ = Define `
+ ((vector_32_dec_bit_of_regval:register_value ->((32)words$word)option) merge_var=
+    ((case merge_var of   Regval_vector_32_dec_bit (v) => SOME v | _ => NONE )))`;
+
+
+(*val regval_of_vector_32_dec_bit : mword ty32 -> register_value*)
+
+val _ = Define `
+ ((regval_of_vector_32_dec_bit:(32)words$word -> register_value) v=  (Regval_vector_32_dec_bit v))`;
+
+
+(*val vector_64_dec_bit_of_regval : register_value -> maybe (mword ty64)*)
+
+val _ = Define `
+ ((vector_64_dec_bit_of_regval:register_value ->((64)words$word)option) merge_var=
+    ((case merge_var of   Regval_vector_64_dec_bit (v) => SOME v | _ => NONE )))`;
+
+
+(*val regval_of_vector_64_dec_bit : mword ty64 -> register_value*)
+
+val _ = Define `
+ ((regval_of_vector_64_dec_bit:(64)words$word -> register_value) v=  (Regval_vector_64_dec_bit v))`;
+
+
 
 
 (*val vector_of_regval : forall 'a. (register_value -> maybe 'a) -> register_value -> maybe (list 'a)*)
 val _ = Define `
  ((vector_of_regval:(register_value -> 'a option) -> register_value ->('a list)option) of_regval1= 
   (\x .  (case x of
-               Regval_vector v => just_list (MAP of_regval1 v)
+               Regval_vector (_, _, v) => just_list (MAP of_regval1 v)
            | _ => NONE
          )))`;
 
 
-(*val regval_of_vector : forall 'a. ('a -> register_value) -> list 'a -> register_value*)
+(*val regval_of_vector : forall 'a. ('a -> register_value) -> integer -> bool -> list 'a -> register_value*)
 val _ = Define `
- ((regval_of_vector:('a -> register_value) -> 'a list -> register_value) regval_of1 xs=  (Regval_vector (MAP regval_of1 xs)))`;
+ ((regval_of_vector:('a -> register_value) -> int -> bool -> 'a list -> register_value) regval_of1 size1 is_inc xs=  (Regval_vector (size1, is_inc, MAP regval_of1 xs)))`;
 
 
 (*val list_of_regval : forall 'a. (register_value -> maybe 'a) -> register_value -> maybe (list 'a)*)
@@ -1178,19 +1006,17 @@ val _ = Define `
 val _ = Define `
  ((satp_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "satp";
-  read_from := (\ s .  s.bitvector_64_dec_reg "satp");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "satp" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.satp);
+  write_to := (\ v s .  (( s with<| satp := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((tlb48_ref:((regstate),(register_value),((((16),(48),(56),(64))TLB_Entry)option))register_ref)=  (<|
   name := "tlb48";
-  read_from := (\ s .  s.option_TLB_Entry_16_48_56_64_reg "tlb48");
-  write_to := (\ v s .  (( s with<| option_TLB_Entry_16_48_56_64_reg :=
-  (\ reg .  if reg = "tlb48" then v else s.option_TLB_Entry_16_48_56_64_reg reg) |>)));
+  read_from := (\ s .  s.tlb48);
+  write_to := (\ v s .  (( s with<| tlb48 := v |>)));
   of_regval := (\ v .  option_of_regval (\ v .  TLB_Entry_16_48_56_64_of_regval v) v);
   regval_of := (\ v .  regval_of_option (\ v .  regval_of_TLB_Entry_16_48_56_64 v) v) |>))`;
 
@@ -1198,49 +1024,26 @@ val _ = Define `
 val _ = Define `
  ((tlb39_ref:((regstate),(register_value),((((16),(39),(56),(64))TLB_Entry)option))register_ref)=  (<|
   name := "tlb39";
-  read_from := (\ s .  s.option_TLB_Entry_16_39_56_64_reg "tlb39");
-  write_to := (\ v s .  (( s with<| option_TLB_Entry_16_39_56_64_reg :=
-  (\ reg .  if reg = "tlb39" then v else s.option_TLB_Entry_16_39_56_64_reg reg) |>)));
+  read_from := (\ s .  s.tlb39);
+  write_to := (\ v s .  (( s with<| tlb39 := v |>)));
   of_regval := (\ v .  option_of_regval (\ v .  TLB_Entry_16_39_56_64_of_regval v) v);
   regval_of := (\ v .  regval_of_option (\ v .  regval_of_TLB_Entry_16_39_56_64 v) v) |>))`;
 
 
 val _ = Define `
- ((htif_payload_writes_ref:((regstate),(register_value),((4)words$word))register_ref)=  (<|
-  name := "htif_payload_writes";
-  read_from := (\ s .  s.bitvector_4_dec_reg "htif_payload_writes");
-  write_to := (\ v s .  (( s with<| bitvector_4_dec_reg :=
-  (\ reg .  if reg = "htif_payload_writes" then v else s.bitvector_4_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_4_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_4_dec v) |>))`;
-
-
-val _ = Define `
- ((htif_cmd_write_ref:((regstate),(register_value),(bitU))register_ref)=  (<|
-  name := "htif_cmd_write";
-  read_from := (\ s .  s.bit_reg "htif_cmd_write");
-  write_to := (\ v s .  (( s with<| bit_reg :=
-  (\ reg .  if reg = "htif_cmd_write" then v else s.bit_reg reg) |>)));
-  of_regval := (\ v .  bit_of_regval v);
-  regval_of := (\ v .  regval_of_bit v) |>))`;
-
-
-val _ = Define `
  ((htif_exit_code_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "htif_exit_code";
-  read_from := (\ s .  s.bitvector_64_dec_reg "htif_exit_code");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "htif_exit_code" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.htif_exit_code);
+  write_to := (\ v s .  (( s with<| htif_exit_code := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((htif_done_ref:((regstate),(register_value),(bool))register_ref)=  (<|
   name := "htif_done";
-  read_from := (\ s .  s.bool_reg "htif_done");
-  write_to := (\ v s .  (( s with<| bool_reg :=
-  (\ reg .  if reg = "htif_done" then v else s.bool_reg reg) |>)));
+  read_from := (\ s .  s.htif_done);
+  write_to := (\ v s .  (( s with<| htif_done := v |>)));
   of_regval := (\ v .  bool_of_regval v);
   regval_of := (\ v .  regval_of_bool v) |>))`;
 
@@ -1248,389 +1051,35 @@ val _ = Define `
 val _ = Define `
  ((htif_tohost_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "htif_tohost";
-  read_from := (\ s .  s.bitvector_64_dec_reg "htif_tohost");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "htif_tohost" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.htif_tohost);
+  write_to := (\ v s .  (( s with<| htif_tohost := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((mtimecmp_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "mtimecmp";
-  read_from := (\ s .  s.bitvector_64_dec_reg "mtimecmp");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "mtimecmp" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((fcsr_ref:((regstate),(register_value),(Fcsr))register_ref)=  (<|
-  name := "fcsr";
-  read_from := (\ s .  s.Fcsr_reg "fcsr");
-  write_to := (\ v s .  (( s with<| Fcsr_reg :=
-  (\ reg .  if reg = "fcsr" then v else s.Fcsr_reg reg) |>)));
-  of_regval := (\ v .  Fcsr_of_regval v);
-  regval_of := (\ v .  regval_of_Fcsr v) |>))`;
-
-
-val _ = Define `
- ((f31_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f31";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f31");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f31" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f30_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f30";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f30");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f30" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f29_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f29";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f29");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f29" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f28_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f28";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f28");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f28" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f27_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f27";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f27");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f27" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f26_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f26";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f26");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f26" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f25_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f25";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f25");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f25" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f24_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f24";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f24");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f24" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f23_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f23";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f23");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f23" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f22_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f22";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f22");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f22" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f21_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f21";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f21");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f21" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f20_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f20";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f20");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f20" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f19_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f19";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f19");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f19" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f18_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f18";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f18");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f18" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f17_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f17";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f17");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f17" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f16_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f16";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f16");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f16" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f15_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f15";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f15");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f15" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f14_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f14";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f14");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f14" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f13_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f13";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f13");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f13" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f12_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f12";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f12");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f12" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f11_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f11";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f11");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f11" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f10_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f10";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f10");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f10" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f9_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f9";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f9");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f9" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f8_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f8";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f8");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f8" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f7_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f7";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f7");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f7" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f6_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f6";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f6");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f6" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f5_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f5";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f5");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f5" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f4_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f4";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f4");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f4" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f3_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f3";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f3");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f3" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f2_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f2";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f2");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f2" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f1_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f1";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f1");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f1" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((f0_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "f0";
-  read_from := (\ s .  s.bitvector_64_dec_reg "f0");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "f0" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((float_fflags_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "float_fflags";
-  read_from := (\ s .  s.bitvector_64_dec_reg "float_fflags");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "float_fflags" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((float_result_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
-  name := "float_result";
-  read_from := (\ s .  s.bitvector_64_dec_reg "float_result");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "float_result" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.mtimecmp);
+  write_to := (\ v s .  (( s with<| mtimecmp := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((utval_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "utval";
-  read_from := (\ s .  s.bitvector_64_dec_reg "utval");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "utval" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.utval);
+  write_to := (\ v s .  (( s with<| utval := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((ucause_ref:((regstate),(register_value),(Mcause))register_ref)=  (<|
   name := "ucause";
-  read_from := (\ s .  s.Mcause_reg "ucause");
-  write_to := (\ v s .  (( s with<| Mcause_reg :=
-  (\ reg .  if reg = "ucause" then v else s.Mcause_reg reg) |>)));
+  read_from := (\ s .  s.ucause);
+  write_to := (\ v s .  (( s with<| ucause := v |>)));
   of_regval := (\ v .  Mcause_of_regval v);
   regval_of := (\ v .  regval_of_Mcause v) |>))`;
 
@@ -1638,29 +1087,26 @@ val _ = Define `
 val _ = Define `
  ((uepc_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "uepc";
-  read_from := (\ s .  s.bitvector_64_dec_reg "uepc");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "uepc" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.uepc);
+  write_to := (\ v s .  (( s with<| uepc := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((uscratch_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "uscratch";
-  read_from := (\ s .  s.bitvector_64_dec_reg "uscratch");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "uscratch" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.uscratch);
+  write_to := (\ v s .  (( s with<| uscratch := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((utvec_ref:((regstate),(register_value),(Mtvec))register_ref)=  (<|
   name := "utvec";
-  read_from := (\ s .  s.Mtvec_reg "utvec");
-  write_to := (\ v s .  (( s with<| Mtvec_reg :=
-  (\ reg .  if reg = "utvec" then v else s.Mtvec_reg reg) |>)));
+  read_from := (\ s .  s.utvec);
+  write_to := (\ v s .  (( s with<| utvec := v |>)));
   of_regval := (\ v .  Mtvec_of_regval v);
   regval_of := (\ v .  regval_of_Mtvec v) |>))`;
 
@@ -1668,169 +1114,152 @@ val _ = Define `
 val _ = Define `
  ((pmpaddr15_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr15";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr15");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr15" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr15);
+  write_to := (\ v s .  (( s with<| pmpaddr15 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmpaddr14_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr14";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr14");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr14" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr14);
+  write_to := (\ v s .  (( s with<| pmpaddr14 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmpaddr13_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr13";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr13");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr13" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr13);
+  write_to := (\ v s .  (( s with<| pmpaddr13 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmpaddr12_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr12";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr12");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr12" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr12);
+  write_to := (\ v s .  (( s with<| pmpaddr12 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmpaddr11_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr11";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr11");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr11" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr11);
+  write_to := (\ v s .  (( s with<| pmpaddr11 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmpaddr10_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr10";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr10");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr10" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr10);
+  write_to := (\ v s .  (( s with<| pmpaddr10 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmpaddr9_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr9";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr9");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr9" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr9);
+  write_to := (\ v s .  (( s with<| pmpaddr9 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmpaddr8_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr8";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr8");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr8" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr8);
+  write_to := (\ v s .  (( s with<| pmpaddr8 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmpaddr7_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr7";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr7");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr7" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr7);
+  write_to := (\ v s .  (( s with<| pmpaddr7 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmpaddr6_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr6";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr6");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr6" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr6);
+  write_to := (\ v s .  (( s with<| pmpaddr6 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmpaddr5_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr5";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr5");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr5" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr5);
+  write_to := (\ v s .  (( s with<| pmpaddr5 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmpaddr4_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr4";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr4");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr4" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr4);
+  write_to := (\ v s .  (( s with<| pmpaddr4 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmpaddr3_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr3";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr3");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr3" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr3);
+  write_to := (\ v s .  (( s with<| pmpaddr3 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmpaddr2_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr2";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr2");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr2" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr2);
+  write_to := (\ v s .  (( s with<| pmpaddr2 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmpaddr1_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr1";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr1");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr1" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr1);
+  write_to := (\ v s .  (( s with<| pmpaddr1 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmpaddr0_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "pmpaddr0";
-  read_from := (\ s .  s.bitvector_64_dec_reg "pmpaddr0");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "pmpaddr0" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.pmpaddr0);
+  write_to := (\ v s .  (( s with<| pmpaddr0 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((pmp15cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp15cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp15cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp15cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp15cfg);
+  write_to := (\ v s .  (( s with<| pmp15cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1838,9 +1267,8 @@ val _ = Define `
 val _ = Define `
  ((pmp14cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp14cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp14cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp14cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp14cfg);
+  write_to := (\ v s .  (( s with<| pmp14cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1848,9 +1276,8 @@ val _ = Define `
 val _ = Define `
  ((pmp13cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp13cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp13cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp13cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp13cfg);
+  write_to := (\ v s .  (( s with<| pmp13cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1858,9 +1285,8 @@ val _ = Define `
 val _ = Define `
  ((pmp12cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp12cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp12cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp12cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp12cfg);
+  write_to := (\ v s .  (( s with<| pmp12cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1868,9 +1294,8 @@ val _ = Define `
 val _ = Define `
  ((pmp11cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp11cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp11cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp11cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp11cfg);
+  write_to := (\ v s .  (( s with<| pmp11cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1878,9 +1303,8 @@ val _ = Define `
 val _ = Define `
  ((pmp10cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp10cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp10cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp10cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp10cfg);
+  write_to := (\ v s .  (( s with<| pmp10cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1888,9 +1312,8 @@ val _ = Define `
 val _ = Define `
  ((pmp9cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp9cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp9cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp9cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp9cfg);
+  write_to := (\ v s .  (( s with<| pmp9cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1898,9 +1321,8 @@ val _ = Define `
 val _ = Define `
  ((pmp8cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp8cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp8cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp8cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp8cfg);
+  write_to := (\ v s .  (( s with<| pmp8cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1908,9 +1330,8 @@ val _ = Define `
 val _ = Define `
  ((pmp7cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp7cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp7cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp7cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp7cfg);
+  write_to := (\ v s .  (( s with<| pmp7cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1918,9 +1339,8 @@ val _ = Define `
 val _ = Define `
  ((pmp6cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp6cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp6cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp6cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp6cfg);
+  write_to := (\ v s .  (( s with<| pmp6cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1928,9 +1348,8 @@ val _ = Define `
 val _ = Define `
  ((pmp5cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp5cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp5cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp5cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp5cfg);
+  write_to := (\ v s .  (( s with<| pmp5cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1938,9 +1357,8 @@ val _ = Define `
 val _ = Define `
  ((pmp4cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp4cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp4cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp4cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp4cfg);
+  write_to := (\ v s .  (( s with<| pmp4cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1948,9 +1366,8 @@ val _ = Define `
 val _ = Define `
  ((pmp3cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp3cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp3cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp3cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp3cfg);
+  write_to := (\ v s .  (( s with<| pmp3cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1958,9 +1375,8 @@ val _ = Define `
 val _ = Define `
  ((pmp2cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp2cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp2cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp2cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp2cfg);
+  write_to := (\ v s .  (( s with<| pmp2cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1968,9 +1384,8 @@ val _ = Define `
 val _ = Define `
  ((pmp1cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp1cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp1cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp1cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp1cfg);
+  write_to := (\ v s .  (( s with<| pmp1cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1978,9 +1393,8 @@ val _ = Define `
 val _ = Define `
  ((pmp0cfg_ref:((regstate),(register_value),(Pmpcfg_ent))register_ref)=  (<|
   name := "pmp0cfg";
-  read_from := (\ s .  s.Pmpcfg_ent_reg "pmp0cfg");
-  write_to := (\ v s .  (( s with<| Pmpcfg_ent_reg :=
-  (\ reg .  if reg = "pmp0cfg" then v else s.Pmpcfg_ent_reg reg) |>)));
+  read_from := (\ s .  s.pmp0cfg);
+  write_to := (\ v s .  (( s with<| pmp0cfg := v |>)));
   of_regval := (\ v .  Pmpcfg_ent_of_regval v);
   regval_of := (\ v .  regval_of_Pmpcfg_ent v) |>))`;
 
@@ -1988,29 +1402,26 @@ val _ = Define `
 val _ = Define `
  ((tselect_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "tselect";
-  read_from := (\ s .  s.bitvector_64_dec_reg "tselect");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "tselect" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.tselect);
+  write_to := (\ v s .  (( s with<| tselect := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((stval_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "stval";
-  read_from := (\ s .  s.bitvector_64_dec_reg "stval");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "stval" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.stval);
+  write_to := (\ v s .  (( s with<| stval := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((scause_ref:((regstate),(register_value),(Mcause))register_ref)=  (<|
   name := "scause";
-  read_from := (\ s .  s.Mcause_reg "scause");
-  write_to := (\ v s .  (( s with<| Mcause_reg :=
-  (\ reg .  if reg = "scause" then v else s.Mcause_reg reg) |>)));
+  read_from := (\ s .  s.scause);
+  write_to := (\ v s .  (( s with<| scause := v |>)));
   of_regval := (\ v .  Mcause_of_regval v);
   regval_of := (\ v .  regval_of_Mcause v) |>))`;
 
@@ -2018,29 +1429,26 @@ val _ = Define `
 val _ = Define `
  ((sepc_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "sepc";
-  read_from := (\ s .  s.bitvector_64_dec_reg "sepc");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "sepc" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.sepc);
+  write_to := (\ v s .  (( s with<| sepc := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((sscratch_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "sscratch";
-  read_from := (\ s .  s.bitvector_64_dec_reg "sscratch");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "sscratch" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.sscratch);
+  write_to := (\ v s .  (( s with<| sscratch := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((stvec_ref:((regstate),(register_value),(Mtvec))register_ref)=  (<|
   name := "stvec";
-  read_from := (\ s .  s.Mtvec_reg "stvec");
-  write_to := (\ v s .  (( s with<| Mtvec_reg :=
-  (\ reg .  if reg = "stvec" then v else s.Mtvec_reg reg) |>)));
+  read_from := (\ s .  s.stvec);
+  write_to := (\ v s .  (( s with<| stvec := v |>)));
   of_regval := (\ v .  Mtvec_of_regval v);
   regval_of := (\ v .  regval_of_Mtvec v) |>))`;
 
@@ -2048,9 +1456,8 @@ val _ = Define `
 val _ = Define `
  ((sideleg_ref:((regstate),(register_value),(Sinterrupts))register_ref)=  (<|
   name := "sideleg";
-  read_from := (\ s .  s.Sinterrupts_reg "sideleg");
-  write_to := (\ v s .  (( s with<| Sinterrupts_reg :=
-  (\ reg .  if reg = "sideleg" then v else s.Sinterrupts_reg reg) |>)));
+  read_from := (\ s .  s.sideleg);
+  write_to := (\ v s .  (( s with<| sideleg := v |>)));
   of_regval := (\ v .  Sinterrupts_of_regval v);
   regval_of := (\ v .  regval_of_Sinterrupts v) |>))`;
 
@@ -2058,9 +1465,8 @@ val _ = Define `
 val _ = Define `
  ((sedeleg_ref:((regstate),(register_value),(Sedeleg))register_ref)=  (<|
   name := "sedeleg";
-  read_from := (\ s .  s.Sedeleg_reg "sedeleg");
-  write_to := (\ v s .  (( s with<| Sedeleg_reg :=
-  (\ reg .  if reg = "sedeleg" then v else s.Sedeleg_reg reg) |>)));
+  read_from := (\ s .  s.sedeleg);
+  write_to := (\ v s .  (( s with<| sedeleg := v |>)));
   of_regval := (\ v .  Sedeleg_of_regval v);
   regval_of := (\ v .  regval_of_Sedeleg v) |>))`;
 
@@ -2068,49 +1474,44 @@ val _ = Define `
 val _ = Define `
  ((mhartid_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "mhartid";
-  read_from := (\ s .  s.bitvector_64_dec_reg "mhartid");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "mhartid" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.mhartid);
+  write_to := (\ v s .  (( s with<| mhartid := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((marchid_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "marchid";
-  read_from := (\ s .  s.bitvector_64_dec_reg "marchid");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "marchid" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.marchid);
+  write_to := (\ v s .  (( s with<| marchid := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((mimpid_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "mimpid";
-  read_from := (\ s .  s.bitvector_64_dec_reg "mimpid");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "mimpid" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.mimpid);
+  write_to := (\ v s .  (( s with<| mimpid := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((mvendorid_ref:((regstate),(register_value),((32)words$word))register_ref)=  (<|
   name := "mvendorid";
-  read_from := (\ s .  s.bitvector_32_dec_reg "mvendorid");
-  write_to := (\ v s .  (( s with<| bitvector_32_dec_reg :=
-  (\ reg .  if reg = "mvendorid" then v else s.bitvector_32_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_32_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_32_dec v) |>))`;
+  read_from := (\ s .  s.mvendorid);
+  write_to := (\ v s .  (( s with<| mvendorid := v |>)));
+  of_regval := (\ v .  vector_32_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_32_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((minstret_written_ref:((regstate),(register_value),(bool))register_ref)=  (<|
   name := "minstret_written";
-  read_from := (\ s .  s.bool_reg "minstret_written");
-  write_to := (\ v s .  (( s with<| bool_reg :=
-  (\ reg .  if reg = "minstret_written" then v else s.bool_reg reg) |>)));
+  read_from := (\ s .  s.minstret_written);
+  write_to := (\ v s .  (( s with<| minstret_written := v |>)));
   of_regval := (\ v .  bool_of_regval v);
   regval_of := (\ v .  regval_of_bool v) |>))`;
 
@@ -2118,49 +1519,35 @@ val _ = Define `
 val _ = Define `
  ((minstret_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "minstret";
-  read_from := (\ s .  s.bitvector_64_dec_reg "minstret");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "minstret" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.minstret);
+  write_to := (\ v s .  (( s with<| minstret := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((mtime_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "mtime";
-  read_from := (\ s .  s.bitvector_64_dec_reg "mtime");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "mtime" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.mtime);
+  write_to := (\ v s .  (( s with<| mtime := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((mcycle_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "mcycle";
-  read_from := (\ s .  s.bitvector_64_dec_reg "mcycle");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "mcycle" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
-
-
-val _ = Define `
- ((mcountinhibit_ref:((regstate),(register_value),(Counterin))register_ref)=  (<|
-  name := "mcountinhibit";
-  read_from := (\ s .  s.Counterin_reg "mcountinhibit");
-  write_to := (\ v s .  (( s with<| Counterin_reg :=
-  (\ reg .  if reg = "mcountinhibit" then v else s.Counterin_reg reg) |>)));
-  of_regval := (\ v .  Counterin_of_regval v);
-  regval_of := (\ v .  regval_of_Counterin v) |>))`;
+  read_from := (\ s .  s.mcycle);
+  write_to := (\ v s .  (( s with<| mcycle := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((scounteren_ref:((regstate),(register_value),(Counteren))register_ref)=  (<|
   name := "scounteren";
-  read_from := (\ s .  s.Counteren_reg "scounteren");
-  write_to := (\ v s .  (( s with<| Counteren_reg :=
-  (\ reg .  if reg = "scounteren" then v else s.Counteren_reg reg) |>)));
+  read_from := (\ s .  s.scounteren);
+  write_to := (\ v s .  (( s with<| scounteren := v |>)));
   of_regval := (\ v .  Counteren_of_regval v);
   regval_of := (\ v .  regval_of_Counteren v) |>))`;
 
@@ -2168,9 +1555,8 @@ val _ = Define `
 val _ = Define `
  ((mcounteren_ref:((regstate),(register_value),(Counteren))register_ref)=  (<|
   name := "mcounteren";
-  read_from := (\ s .  s.Counteren_reg "mcounteren");
-  write_to := (\ v s .  (( s with<| Counteren_reg :=
-  (\ reg .  if reg = "mcounteren" then v else s.Counteren_reg reg) |>)));
+  read_from := (\ s .  s.mcounteren);
+  write_to := (\ v s .  (( s with<| mcounteren := v |>)));
   of_regval := (\ v .  Counteren_of_regval v);
   regval_of := (\ v .  regval_of_Counteren v) |>))`;
 
@@ -2178,39 +1564,35 @@ val _ = Define `
 val _ = Define `
  ((mscratch_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "mscratch";
-  read_from := (\ s .  s.bitvector_64_dec_reg "mscratch");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "mscratch" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.mscratch);
+  write_to := (\ v s .  (( s with<| mscratch := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((mtval_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "mtval";
-  read_from := (\ s .  s.bitvector_64_dec_reg "mtval");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "mtval" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.mtval);
+  write_to := (\ v s .  (( s with<| mtval := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((mepc_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "mepc";
-  read_from := (\ s .  s.bitvector_64_dec_reg "mepc");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "mepc" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.mepc);
+  write_to := (\ v s .  (( s with<| mepc := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((mcause_ref:((regstate),(register_value),(Mcause))register_ref)=  (<|
   name := "mcause";
-  read_from := (\ s .  s.Mcause_reg "mcause");
-  write_to := (\ v s .  (( s with<| Mcause_reg :=
-  (\ reg .  if reg = "mcause" then v else s.Mcause_reg reg) |>)));
+  read_from := (\ s .  s.mcause);
+  write_to := (\ v s .  (( s with<| mcause := v |>)));
   of_regval := (\ v .  Mcause_of_regval v);
   regval_of := (\ v .  regval_of_Mcause v) |>))`;
 
@@ -2218,9 +1600,8 @@ val _ = Define `
 val _ = Define `
  ((mtvec_ref:((regstate),(register_value),(Mtvec))register_ref)=  (<|
   name := "mtvec";
-  read_from := (\ s .  s.Mtvec_reg "mtvec");
-  write_to := (\ v s .  (( s with<| Mtvec_reg :=
-  (\ reg .  if reg = "mtvec" then v else s.Mtvec_reg reg) |>)));
+  read_from := (\ s .  s.mtvec);
+  write_to := (\ v s .  (( s with<| mtvec := v |>)));
   of_regval := (\ v .  Mtvec_of_regval v);
   regval_of := (\ v .  regval_of_Mtvec v) |>))`;
 
@@ -2228,9 +1609,8 @@ val _ = Define `
 val _ = Define `
  ((medeleg_ref:((regstate),(register_value),(Medeleg))register_ref)=  (<|
   name := "medeleg";
-  read_from := (\ s .  s.Medeleg_reg "medeleg");
-  write_to := (\ v s .  (( s with<| Medeleg_reg :=
-  (\ reg .  if reg = "medeleg" then v else s.Medeleg_reg reg) |>)));
+  read_from := (\ s .  s.medeleg);
+  write_to := (\ v s .  (( s with<| medeleg := v |>)));
   of_regval := (\ v .  Medeleg_of_regval v);
   regval_of := (\ v .  regval_of_Medeleg v) |>))`;
 
@@ -2238,9 +1618,8 @@ val _ = Define `
 val _ = Define `
  ((mideleg_ref:((regstate),(register_value),(Minterrupts))register_ref)=  (<|
   name := "mideleg";
-  read_from := (\ s .  s.Minterrupts_reg "mideleg");
-  write_to := (\ v s .  (( s with<| Minterrupts_reg :=
-  (\ reg .  if reg = "mideleg" then v else s.Minterrupts_reg reg) |>)));
+  read_from := (\ s .  s.mideleg);
+  write_to := (\ v s .  (( s with<| mideleg := v |>)));
   of_regval := (\ v .  Minterrupts_of_regval v);
   regval_of := (\ v .  regval_of_Minterrupts v) |>))`;
 
@@ -2248,9 +1627,8 @@ val _ = Define `
 val _ = Define `
  ((mie_ref:((regstate),(register_value),(Minterrupts))register_ref)=  (<|
   name := "mie";
-  read_from := (\ s .  s.Minterrupts_reg "mie");
-  write_to := (\ v s .  (( s with<| Minterrupts_reg :=
-  (\ reg .  if reg = "mie" then v else s.Minterrupts_reg reg) |>)));
+  read_from := (\ s .  s.mie);
+  write_to := (\ v s .  (( s with<| mie := v |>)));
   of_regval := (\ v .  Minterrupts_of_regval v);
   regval_of := (\ v .  regval_of_Minterrupts v) |>))`;
 
@@ -2258,9 +1636,8 @@ val _ = Define `
 val _ = Define `
  ((mip_ref:((regstate),(register_value),(Minterrupts))register_ref)=  (<|
   name := "mip";
-  read_from := (\ s .  s.Minterrupts_reg "mip");
-  write_to := (\ v s .  (( s with<| Minterrupts_reg :=
-  (\ reg .  if reg = "mip" then v else s.Minterrupts_reg reg) |>)));
+  read_from := (\ s .  s.mip);
+  write_to := (\ v s .  (( s with<| mip := v |>)));
   of_regval := (\ v .  Minterrupts_of_regval v);
   regval_of := (\ v .  regval_of_Minterrupts v) |>))`;
 
@@ -2268,29 +1645,17 @@ val _ = Define `
 val _ = Define `
  ((mstatus_ref:((regstate),(register_value),(Mstatus))register_ref)=  (<|
   name := "mstatus";
-  read_from := (\ s .  s.Mstatus_reg "mstatus");
-  write_to := (\ v s .  (( s with<| Mstatus_reg :=
-  (\ reg .  if reg = "mstatus" then v else s.Mstatus_reg reg) |>)));
+  read_from := (\ s .  s.mstatus);
+  write_to := (\ v s .  (( s with<| mstatus := v |>)));
   of_regval := (\ v .  Mstatus_of_regval v);
   regval_of := (\ v .  regval_of_Mstatus v) |>))`;
 
 
 val _ = Define `
- ((mstatush_ref:((regstate),(register_value),(Mstatush))register_ref)=  (<|
-  name := "mstatush";
-  read_from := (\ s .  s.Mstatush_reg "mstatush");
-  write_to := (\ v s .  (( s with<| Mstatush_reg :=
-  (\ reg .  if reg = "mstatush" then v else s.Mstatush_reg reg) |>)));
-  of_regval := (\ v .  Mstatush_of_regval v);
-  regval_of := (\ v .  regval_of_Mstatush v) |>))`;
-
-
-val _ = Define `
  ((misa_ref:((regstate),(register_value),(Misa))register_ref)=  (<|
   name := "misa";
-  read_from := (\ s .  s.Misa_reg "misa");
-  write_to := (\ v s .  (( s with<| Misa_reg :=
-  (\ reg .  if reg = "misa" then v else s.Misa_reg reg) |>)));
+  read_from := (\ s .  s.misa);
+  write_to := (\ v s .  (( s with<| misa := v |>)));
   of_regval := (\ v .  Misa_of_regval v);
   regval_of := (\ v .  regval_of_Misa v) |>))`;
 
@@ -2298,19 +1663,17 @@ val _ = Define `
 val _ = Define `
  ((cur_inst_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "cur_inst";
-  read_from := (\ s .  s.bitvector_64_dec_reg "cur_inst");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "cur_inst" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.cur_inst);
+  write_to := (\ v s .  (( s with<| cur_inst := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((cur_privilege_ref:((regstate),(register_value),(Privilege))register_ref)=  (<|
   name := "cur_privilege";
-  read_from := (\ s .  s.Privilege_reg "cur_privilege");
-  write_to := (\ v s .  (( s with<| Privilege_reg :=
-  (\ reg .  if reg = "cur_privilege" then v else s.Privilege_reg reg) |>)));
+  read_from := (\ s .  s.cur_privilege);
+  write_to := (\ v s .  (( s with<| cur_privilege := v |>)));
   of_regval := (\ v .  Privilege_of_regval v);
   regval_of := (\ v .  regval_of_Privilege v) |>))`;
 
@@ -2318,341 +1681,316 @@ val _ = Define `
 val _ = Define `
  ((x31_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x31";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x31");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x31" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x31);
+  write_to := (\ v s .  (( s with<| x31 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x30_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x30";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x30");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x30" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x30);
+  write_to := (\ v s .  (( s with<| x30 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x29_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x29";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x29");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x29" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x29);
+  write_to := (\ v s .  (( s with<| x29 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x28_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x28";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x28");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x28" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x28);
+  write_to := (\ v s .  (( s with<| x28 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x27_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x27";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x27");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x27" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x27);
+  write_to := (\ v s .  (( s with<| x27 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x26_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x26";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x26");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x26" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x26);
+  write_to := (\ v s .  (( s with<| x26 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x25_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x25";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x25");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x25" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x25);
+  write_to := (\ v s .  (( s with<| x25 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x24_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x24";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x24");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x24" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x24);
+  write_to := (\ v s .  (( s with<| x24 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x23_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x23";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x23");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x23" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x23);
+  write_to := (\ v s .  (( s with<| x23 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x22_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x22";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x22");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x22" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x22);
+  write_to := (\ v s .  (( s with<| x22 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x21_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x21";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x21");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x21" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x21);
+  write_to := (\ v s .  (( s with<| x21 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x20_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x20";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x20");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x20" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x20);
+  write_to := (\ v s .  (( s with<| x20 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x19_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x19";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x19");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x19" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x19);
+  write_to := (\ v s .  (( s with<| x19 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x18_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x18";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x18");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x18" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x18);
+  write_to := (\ v s .  (( s with<| x18 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x17_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x17";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x17");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x17" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x17);
+  write_to := (\ v s .  (( s with<| x17 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x16_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x16";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x16");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x16" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x16);
+  write_to := (\ v s .  (( s with<| x16 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x15_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x15";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x15");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x15" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x15);
+  write_to := (\ v s .  (( s with<| x15 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x14_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x14";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x14");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x14" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x14);
+  write_to := (\ v s .  (( s with<| x14 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x13_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x13";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x13");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x13" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x13);
+  write_to := (\ v s .  (( s with<| x13 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x12_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x12";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x12");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x12" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x12);
+  write_to := (\ v s .  (( s with<| x12 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x11_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x11";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x11");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x11" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x11);
+  write_to := (\ v s .  (( s with<| x11 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x10_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x10";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x10");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x10" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x10);
+  write_to := (\ v s .  (( s with<| x10 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x9_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x9";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x9");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x9" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x9);
+  write_to := (\ v s .  (( s with<| x9 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x8_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x8";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x8");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x8" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x8);
+  write_to := (\ v s .  (( s with<| x8 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x7_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x7";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x7");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x7" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x7);
+  write_to := (\ v s .  (( s with<| x7 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x6_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x6";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x6");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x6" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x6);
+  write_to := (\ v s .  (( s with<| x6 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x5_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x5";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x5");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x5" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x5);
+  write_to := (\ v s .  (( s with<| x5 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x4_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x4";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x4");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x4" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x4);
+  write_to := (\ v s .  (( s with<| x4 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x3_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x3";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x3");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x3" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x3);
+  write_to := (\ v s .  (( s with<| x3 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x2_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x2";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x2");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x2" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x2);
+  write_to := (\ v s .  (( s with<| x2 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((x1_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "x1";
-  read_from := (\ s .  s.bitvector_64_dec_reg "x1");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "x1" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.x1);
+  write_to := (\ v s .  (( s with<| x1 := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
+
+
+val _ = Define `
+ ((Xs_ref:((regstate),(register_value),(((64)words$word)list))register_ref)=  (<|
+  name := "Xs";
+  read_from := (\ s .  s.Xs);
+  write_to := (\ v s .  (( s with<| Xs := v |>)));
+  of_regval := (\ v .  vector_of_regval (\ v .  vector_64_dec_bit_of_regval v) v);
+  regval_of := (\ v .  regval_of_vector (\ v .  regval_of_vector_64_dec_bit v)(( 32 : int)) F v) |>))`;
 
 
 val _ = Define `
  ((instbits_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "instbits";
-  read_from := (\ s .  s.bitvector_64_dec_reg "instbits");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "instbits" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.instbits);
+  write_to := (\ v s .  (( s with<| instbits := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((nextPC_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "nextPC";
-  read_from := (\ s .  s.bitvector_64_dec_reg "nextPC");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "nextPC" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.nextPC);
+  write_to := (\ v s .  (( s with<| nextPC := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 val _ = Define `
  ((PC_ref:((regstate),(register_value),((64)words$word))register_ref)=  (<|
   name := "PC";
-  read_from := (\ s .  s.bitvector_64_dec_reg "PC");
-  write_to := (\ v s .  (( s with<| bitvector_64_dec_reg :=
-  (\ reg .  if reg = "PC" then v else s.bitvector_64_dec_reg reg) |>)));
-  of_regval := (\ v .  bitvector_64_dec_of_regval v);
-  regval_of := (\ v .  regval_of_bitvector_64_dec v) |>))`;
+  read_from := (\ s .  s.PC);
+  write_to := (\ v s .  (( s with<| PC := v |>)));
+  of_regval := (\ v .  vector_64_dec_bit_of_regval v);
+  regval_of := (\ v .  regval_of_vector_64_dec_bit v) |>))`;
 
 
 (*val get_regval : string -> regstate -> maybe register_value*)
@@ -2661,47 +1999,10 @@ val _ = Define `
    (if reg_name = "satp" then SOME (satp_ref.regval_of (satp_ref.read_from s)) else
   if reg_name = "tlb48" then SOME (tlb48_ref.regval_of (tlb48_ref.read_from s)) else
   if reg_name = "tlb39" then SOME (tlb39_ref.regval_of (tlb39_ref.read_from s)) else
-  if reg_name = "htif_payload_writes" then SOME (htif_payload_writes_ref.regval_of (htif_payload_writes_ref.read_from s)) else
-  if reg_name = "htif_cmd_write" then SOME (htif_cmd_write_ref.regval_of (htif_cmd_write_ref.read_from s)) else
   if reg_name = "htif_exit_code" then SOME (htif_exit_code_ref.regval_of (htif_exit_code_ref.read_from s)) else
   if reg_name = "htif_done" then SOME (htif_done_ref.regval_of (htif_done_ref.read_from s)) else
   if reg_name = "htif_tohost" then SOME (htif_tohost_ref.regval_of (htif_tohost_ref.read_from s)) else
   if reg_name = "mtimecmp" then SOME (mtimecmp_ref.regval_of (mtimecmp_ref.read_from s)) else
-  if reg_name = "fcsr" then SOME (fcsr_ref.regval_of (fcsr_ref.read_from s)) else
-  if reg_name = "f31" then SOME (f31_ref.regval_of (f31_ref.read_from s)) else
-  if reg_name = "f30" then SOME (f30_ref.regval_of (f30_ref.read_from s)) else
-  if reg_name = "f29" then SOME (f29_ref.regval_of (f29_ref.read_from s)) else
-  if reg_name = "f28" then SOME (f28_ref.regval_of (f28_ref.read_from s)) else
-  if reg_name = "f27" then SOME (f27_ref.regval_of (f27_ref.read_from s)) else
-  if reg_name = "f26" then SOME (f26_ref.regval_of (f26_ref.read_from s)) else
-  if reg_name = "f25" then SOME (f25_ref.regval_of (f25_ref.read_from s)) else
-  if reg_name = "f24" then SOME (f24_ref.regval_of (f24_ref.read_from s)) else
-  if reg_name = "f23" then SOME (f23_ref.regval_of (f23_ref.read_from s)) else
-  if reg_name = "f22" then SOME (f22_ref.regval_of (f22_ref.read_from s)) else
-  if reg_name = "f21" then SOME (f21_ref.regval_of (f21_ref.read_from s)) else
-  if reg_name = "f20" then SOME (f20_ref.regval_of (f20_ref.read_from s)) else
-  if reg_name = "f19" then SOME (f19_ref.regval_of (f19_ref.read_from s)) else
-  if reg_name = "f18" then SOME (f18_ref.regval_of (f18_ref.read_from s)) else
-  if reg_name = "f17" then SOME (f17_ref.regval_of (f17_ref.read_from s)) else
-  if reg_name = "f16" then SOME (f16_ref.regval_of (f16_ref.read_from s)) else
-  if reg_name = "f15" then SOME (f15_ref.regval_of (f15_ref.read_from s)) else
-  if reg_name = "f14" then SOME (f14_ref.regval_of (f14_ref.read_from s)) else
-  if reg_name = "f13" then SOME (f13_ref.regval_of (f13_ref.read_from s)) else
-  if reg_name = "f12" then SOME (f12_ref.regval_of (f12_ref.read_from s)) else
-  if reg_name = "f11" then SOME (f11_ref.regval_of (f11_ref.read_from s)) else
-  if reg_name = "f10" then SOME (f10_ref.regval_of (f10_ref.read_from s)) else
-  if reg_name = "f9" then SOME (f9_ref.regval_of (f9_ref.read_from s)) else
-  if reg_name = "f8" then SOME (f8_ref.regval_of (f8_ref.read_from s)) else
-  if reg_name = "f7" then SOME (f7_ref.regval_of (f7_ref.read_from s)) else
-  if reg_name = "f6" then SOME (f6_ref.regval_of (f6_ref.read_from s)) else
-  if reg_name = "f5" then SOME (f5_ref.regval_of (f5_ref.read_from s)) else
-  if reg_name = "f4" then SOME (f4_ref.regval_of (f4_ref.read_from s)) else
-  if reg_name = "f3" then SOME (f3_ref.regval_of (f3_ref.read_from s)) else
-  if reg_name = "f2" then SOME (f2_ref.regval_of (f2_ref.read_from s)) else
-  if reg_name = "f1" then SOME (f1_ref.regval_of (f1_ref.read_from s)) else
-  if reg_name = "f0" then SOME (f0_ref.regval_of (f0_ref.read_from s)) else
-  if reg_name = "float_fflags" then SOME (float_fflags_ref.regval_of (float_fflags_ref.read_from s)) else
-  if reg_name = "float_result" then SOME (float_result_ref.regval_of (float_result_ref.read_from s)) else
   if reg_name = "utval" then SOME (utval_ref.regval_of (utval_ref.read_from s)) else
   if reg_name = "ucause" then SOME (ucause_ref.regval_of (ucause_ref.read_from s)) else
   if reg_name = "uepc" then SOME (uepc_ref.regval_of (uepc_ref.read_from s)) else
@@ -2755,7 +2056,6 @@ val _ = Define `
   if reg_name = "minstret" then SOME (minstret_ref.regval_of (minstret_ref.read_from s)) else
   if reg_name = "mtime" then SOME (mtime_ref.regval_of (mtime_ref.read_from s)) else
   if reg_name = "mcycle" then SOME (mcycle_ref.regval_of (mcycle_ref.read_from s)) else
-  if reg_name = "mcountinhibit" then SOME (mcountinhibit_ref.regval_of (mcountinhibit_ref.read_from s)) else
   if reg_name = "scounteren" then SOME (scounteren_ref.regval_of (scounteren_ref.read_from s)) else
   if reg_name = "mcounteren" then SOME (mcounteren_ref.regval_of (mcounteren_ref.read_from s)) else
   if reg_name = "mscratch" then SOME (mscratch_ref.regval_of (mscratch_ref.read_from s)) else
@@ -2768,7 +2068,6 @@ val _ = Define `
   if reg_name = "mie" then SOME (mie_ref.regval_of (mie_ref.read_from s)) else
   if reg_name = "mip" then SOME (mip_ref.regval_of (mip_ref.read_from s)) else
   if reg_name = "mstatus" then SOME (mstatus_ref.regval_of (mstatus_ref.read_from s)) else
-  if reg_name = "mstatush" then SOME (mstatush_ref.regval_of (mstatush_ref.read_from s)) else
   if reg_name = "misa" then SOME (misa_ref.regval_of (misa_ref.read_from s)) else
   if reg_name = "cur_inst" then SOME (cur_inst_ref.regval_of (cur_inst_ref.read_from s)) else
   if reg_name = "cur_privilege" then SOME (cur_privilege_ref.regval_of (cur_privilege_ref.read_from s)) else
@@ -2803,6 +2102,7 @@ val _ = Define `
   if reg_name = "x3" then SOME (x3_ref.regval_of (x3_ref.read_from s)) else
   if reg_name = "x2" then SOME (x2_ref.regval_of (x2_ref.read_from s)) else
   if reg_name = "x1" then SOME (x1_ref.regval_of (x1_ref.read_from s)) else
+  if reg_name = "Xs" then SOME (Xs_ref.regval_of (Xs_ref.read_from s)) else
   if reg_name = "instbits" then SOME (instbits_ref.regval_of (instbits_ref.read_from s)) else
   if reg_name = "nextPC" then SOME (nextPC_ref.regval_of (nextPC_ref.read_from s)) else
   if reg_name = "PC" then SOME (PC_ref.regval_of (PC_ref.read_from s)) else
@@ -2815,47 +2115,10 @@ val _ = Define `
    (if reg_name = "satp" then OPTION_MAP (\ v .  satp_ref.write_to v s) (satp_ref.of_regval v) else
   if reg_name = "tlb48" then OPTION_MAP (\ v .  tlb48_ref.write_to v s) (tlb48_ref.of_regval v) else
   if reg_name = "tlb39" then OPTION_MAP (\ v .  tlb39_ref.write_to v s) (tlb39_ref.of_regval v) else
-  if reg_name = "htif_payload_writes" then OPTION_MAP (\ v .  htif_payload_writes_ref.write_to v s) (htif_payload_writes_ref.of_regval v) else
-  if reg_name = "htif_cmd_write" then OPTION_MAP (\ v .  htif_cmd_write_ref.write_to v s) (htif_cmd_write_ref.of_regval v) else
   if reg_name = "htif_exit_code" then OPTION_MAP (\ v .  htif_exit_code_ref.write_to v s) (htif_exit_code_ref.of_regval v) else
   if reg_name = "htif_done" then OPTION_MAP (\ v .  htif_done_ref.write_to v s) (htif_done_ref.of_regval v) else
   if reg_name = "htif_tohost" then OPTION_MAP (\ v .  htif_tohost_ref.write_to v s) (htif_tohost_ref.of_regval v) else
   if reg_name = "mtimecmp" then OPTION_MAP (\ v .  mtimecmp_ref.write_to v s) (mtimecmp_ref.of_regval v) else
-  if reg_name = "fcsr" then OPTION_MAP (\ v .  fcsr_ref.write_to v s) (fcsr_ref.of_regval v) else
-  if reg_name = "f31" then OPTION_MAP (\ v .  f31_ref.write_to v s) (f31_ref.of_regval v) else
-  if reg_name = "f30" then OPTION_MAP (\ v .  f30_ref.write_to v s) (f30_ref.of_regval v) else
-  if reg_name = "f29" then OPTION_MAP (\ v .  f29_ref.write_to v s) (f29_ref.of_regval v) else
-  if reg_name = "f28" then OPTION_MAP (\ v .  f28_ref.write_to v s) (f28_ref.of_regval v) else
-  if reg_name = "f27" then OPTION_MAP (\ v .  f27_ref.write_to v s) (f27_ref.of_regval v) else
-  if reg_name = "f26" then OPTION_MAP (\ v .  f26_ref.write_to v s) (f26_ref.of_regval v) else
-  if reg_name = "f25" then OPTION_MAP (\ v .  f25_ref.write_to v s) (f25_ref.of_regval v) else
-  if reg_name = "f24" then OPTION_MAP (\ v .  f24_ref.write_to v s) (f24_ref.of_regval v) else
-  if reg_name = "f23" then OPTION_MAP (\ v .  f23_ref.write_to v s) (f23_ref.of_regval v) else
-  if reg_name = "f22" then OPTION_MAP (\ v .  f22_ref.write_to v s) (f22_ref.of_regval v) else
-  if reg_name = "f21" then OPTION_MAP (\ v .  f21_ref.write_to v s) (f21_ref.of_regval v) else
-  if reg_name = "f20" then OPTION_MAP (\ v .  f20_ref.write_to v s) (f20_ref.of_regval v) else
-  if reg_name = "f19" then OPTION_MAP (\ v .  f19_ref.write_to v s) (f19_ref.of_regval v) else
-  if reg_name = "f18" then OPTION_MAP (\ v .  f18_ref.write_to v s) (f18_ref.of_regval v) else
-  if reg_name = "f17" then OPTION_MAP (\ v .  f17_ref.write_to v s) (f17_ref.of_regval v) else
-  if reg_name = "f16" then OPTION_MAP (\ v .  f16_ref.write_to v s) (f16_ref.of_regval v) else
-  if reg_name = "f15" then OPTION_MAP (\ v .  f15_ref.write_to v s) (f15_ref.of_regval v) else
-  if reg_name = "f14" then OPTION_MAP (\ v .  f14_ref.write_to v s) (f14_ref.of_regval v) else
-  if reg_name = "f13" then OPTION_MAP (\ v .  f13_ref.write_to v s) (f13_ref.of_regval v) else
-  if reg_name = "f12" then OPTION_MAP (\ v .  f12_ref.write_to v s) (f12_ref.of_regval v) else
-  if reg_name = "f11" then OPTION_MAP (\ v .  f11_ref.write_to v s) (f11_ref.of_regval v) else
-  if reg_name = "f10" then OPTION_MAP (\ v .  f10_ref.write_to v s) (f10_ref.of_regval v) else
-  if reg_name = "f9" then OPTION_MAP (\ v .  f9_ref.write_to v s) (f9_ref.of_regval v) else
-  if reg_name = "f8" then OPTION_MAP (\ v .  f8_ref.write_to v s) (f8_ref.of_regval v) else
-  if reg_name = "f7" then OPTION_MAP (\ v .  f7_ref.write_to v s) (f7_ref.of_regval v) else
-  if reg_name = "f6" then OPTION_MAP (\ v .  f6_ref.write_to v s) (f6_ref.of_regval v) else
-  if reg_name = "f5" then OPTION_MAP (\ v .  f5_ref.write_to v s) (f5_ref.of_regval v) else
-  if reg_name = "f4" then OPTION_MAP (\ v .  f4_ref.write_to v s) (f4_ref.of_regval v) else
-  if reg_name = "f3" then OPTION_MAP (\ v .  f3_ref.write_to v s) (f3_ref.of_regval v) else
-  if reg_name = "f2" then OPTION_MAP (\ v .  f2_ref.write_to v s) (f2_ref.of_regval v) else
-  if reg_name = "f1" then OPTION_MAP (\ v .  f1_ref.write_to v s) (f1_ref.of_regval v) else
-  if reg_name = "f0" then OPTION_MAP (\ v .  f0_ref.write_to v s) (f0_ref.of_regval v) else
-  if reg_name = "float_fflags" then OPTION_MAP (\ v .  float_fflags_ref.write_to v s) (float_fflags_ref.of_regval v) else
-  if reg_name = "float_result" then OPTION_MAP (\ v .  float_result_ref.write_to v s) (float_result_ref.of_regval v) else
   if reg_name = "utval" then OPTION_MAP (\ v .  utval_ref.write_to v s) (utval_ref.of_regval v) else
   if reg_name = "ucause" then OPTION_MAP (\ v .  ucause_ref.write_to v s) (ucause_ref.of_regval v) else
   if reg_name = "uepc" then OPTION_MAP (\ v .  uepc_ref.write_to v s) (uepc_ref.of_regval v) else
@@ -2909,7 +2172,6 @@ val _ = Define `
   if reg_name = "minstret" then OPTION_MAP (\ v .  minstret_ref.write_to v s) (minstret_ref.of_regval v) else
   if reg_name = "mtime" then OPTION_MAP (\ v .  mtime_ref.write_to v s) (mtime_ref.of_regval v) else
   if reg_name = "mcycle" then OPTION_MAP (\ v .  mcycle_ref.write_to v s) (mcycle_ref.of_regval v) else
-  if reg_name = "mcountinhibit" then OPTION_MAP (\ v .  mcountinhibit_ref.write_to v s) (mcountinhibit_ref.of_regval v) else
   if reg_name = "scounteren" then OPTION_MAP (\ v .  scounteren_ref.write_to v s) (scounteren_ref.of_regval v) else
   if reg_name = "mcounteren" then OPTION_MAP (\ v .  mcounteren_ref.write_to v s) (mcounteren_ref.of_regval v) else
   if reg_name = "mscratch" then OPTION_MAP (\ v .  mscratch_ref.write_to v s) (mscratch_ref.of_regval v) else
@@ -2922,7 +2184,6 @@ val _ = Define `
   if reg_name = "mie" then OPTION_MAP (\ v .  mie_ref.write_to v s) (mie_ref.of_regval v) else
   if reg_name = "mip" then OPTION_MAP (\ v .  mip_ref.write_to v s) (mip_ref.of_regval v) else
   if reg_name = "mstatus" then OPTION_MAP (\ v .  mstatus_ref.write_to v s) (mstatus_ref.of_regval v) else
-  if reg_name = "mstatush" then OPTION_MAP (\ v .  mstatush_ref.write_to v s) (mstatush_ref.of_regval v) else
   if reg_name = "misa" then OPTION_MAP (\ v .  misa_ref.write_to v s) (misa_ref.of_regval v) else
   if reg_name = "cur_inst" then OPTION_MAP (\ v .  cur_inst_ref.write_to v s) (cur_inst_ref.of_regval v) else
   if reg_name = "cur_privilege" then OPTION_MAP (\ v .  cur_privilege_ref.write_to v s) (cur_privilege_ref.of_regval v) else
@@ -2957,6 +2218,7 @@ val _ = Define `
   if reg_name = "x3" then OPTION_MAP (\ v .  x3_ref.write_to v s) (x3_ref.of_regval v) else
   if reg_name = "x2" then OPTION_MAP (\ v .  x2_ref.write_to v s) (x2_ref.of_regval v) else
   if reg_name = "x1" then OPTION_MAP (\ v .  x1_ref.write_to v s) (x1_ref.of_regval v) else
+  if reg_name = "Xs" then OPTION_MAP (\ v .  Xs_ref.write_to v s) (Xs_ref.of_regval v) else
   if reg_name = "instbits" then OPTION_MAP (\ v .  instbits_ref.write_to v s) (instbits_ref.of_regval v) else
   if reg_name = "nextPC" then OPTION_MAP (\ v .  nextPC_ref.write_to v s) (nextPC_ref.of_regval v) else
   if reg_name = "PC" then OPTION_MAP (\ v .  PC_ref.write_to v s) (PC_ref.of_regval v) else

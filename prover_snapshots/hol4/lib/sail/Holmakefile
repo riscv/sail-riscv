@@ -1,5 +1,3 @@
-# Ensure LEM_DIR is set before running Holmake, e.g., by using the accompanying Makefile
-
 LEM_SCRIPTS = sail2_instr_kindsScript.sml sail2_valuesScript.sml sail2_operatorsScript.sml \
   sail2_operators_mwordsScript.sml sail2_operators_bitlistsScript.sml \
   sail2_state_monadScript.sml sail2_stateScript.sml sail2_promptScript.sml sail2_prompt_monadScript.sml \

@@ -6,8 +6,6 @@ files are included.
 
 A recent checkout of HOL4 from the repository at
 <https://github.com/HOL-Theorem-Prover/HOL/> is required.  This snapshot was
-successfully built with commit `0c88037d2`, for example.
-
-It was generated using sail commit `f69ac352` on revision `c6c1e38`
-with the extra option `SAIL_FLAGS+=-grouped_regstate` to make the main
-state record small enough for HOL's datatype support.
+successfully built with commit `86a5bc67f`, for example.  Some older versions
+will fail with a Holdep error due to a lexer bug in HOL that has now been
+fixed.

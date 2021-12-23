@@ -87,10 +87,6 @@ val sys_enable_fdext : unit -> bool
 let sys_enable_fdext () = true
 declare ocaml target_rep function sys_enable_fdext = `Platform.enable_fdext`
 
-val sys_enable_zfinx : unit -> bool
-let sys_enable_zfinx () = false
-declare ocaml target_rep function sys_enable_zfinx = `Platform.enable_zfinx`
-
 val plat_ram_base : forall 'a. Size 'a => unit -> bitvector 'a
 let plat_ram_base () = wordFromInteger 0
 declare ocaml target_rep function plat_ram_base = `Platform.dram_base`
@@ -146,10 +142,6 @@ declare ocaml target_rep function plat_term_write = `Platform.term_write`
 val plat_term_read : forall 'a. Size 'a => unit -> bitvector 'a
 let plat_term_read () = wordFromInteger 0
 declare ocaml target_rep function plat_term_read = `Platform.term_read`
-
-val plat_get_16_random_bits : forall 'a. Size 'a => unit -> bitvector 'a
-let plat_get_16_random_bits () = wordFromInteger 0
-declare ocaml target_rep function plat_get_16_random_bits = `Platform.get_16_random_bits`
 
 val shift_bits_right : forall 'a 'b. Size 'a, Size 'b => bitvector 'a -> bitvector 'b -> bitvector 'a
 let shift_bits_right v m = shiftr v (uint m)

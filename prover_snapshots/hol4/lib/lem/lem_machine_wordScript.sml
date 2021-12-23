@@ -429,7 +429,5 @@ val _ = Define `
 (*val signedDivide : forall 'a. mword 'a -> mword 'a -> mword 'a*)
 
 (*val modulo : forall 'a. mword 'a -> mword 'a -> mword 'a*)
-
-(*val wordFromNumeral : forall 'a. Size 'a => numeral -> mword 'a*)
 val _ = export_theory()
 

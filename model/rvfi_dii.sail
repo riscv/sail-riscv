@@ -1,71 +1,3 @@
-/*=======================================================================================*/
-/*  RISCV Sail Model                                                                     */
-/*                                                                                       */
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except for the snapshots of the Lem and Sail libraries                   */
-/*  in the prover_snapshots directory (which include copies of their                     */
-/*  licences), is subject to the BSD two-clause licence below.                           */
-/*                                                                                       */
-/*  Copyright (c) 2017-2021                                                              */
-/*    Prashanth Mundkur                                                                  */
-/*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
-/*    Jon French                                                                         */
-/*    Brian Campbell                                                                     */
-/*    Robert Norton-Wright                                                               */
-/*    Alasdair Armstrong                                                                 */
-/*    Thomas Bauereiss                                                                   */
-/*    Shaked Flur                                                                        */
-/*    Christopher Pulte                                                                  */
-/*    Peter Sewell                                                                       */
-/*    Alexander Richardson                                                               */
-/*    Hesham Almatary                                                                    */
-/*    Jessica Clarke                                                                     */
-/*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
-/*    Peter Rugg                                                                         */
-/*    Aril Computer Corp., for contributions by Scott Johnson                            */
-/*                                                                                       */
-/*  All rights reserved.                                                                 */
-/*                                                                                       */
-/*  This software was developed by the above within the Rigorous                         */
-/*  Engineering of Mainstream Systems (REMS) project, partly funded by                   */
-/*  EPSRC grant EP/K008528/1, at the Universities of Cambridge and                       */
-/*  Edinburgh.                                                                           */
-/*                                                                                       */
-/*  This software was developed by SRI International and the University of               */
-/*  Cambridge Computer Laboratory (Department of Computer Science and                    */
-/*  Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and                 */
-/*  under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA                 */
-/*  SSITH research programme.                                                            */
-/*                                                                                       */
-/*  This project has received funding from the European Research Council                 */
-/*  (ERC) under the European Union’s Horizon 2020 research and innovation                */
-/*  programme (grant agreement 789108, ELVER).                                           */
-/*                                                                                       */
-/*                                                                                       */
-/*  Redistribution and use in source and binary forms, with or without                   */
-/*  modification, are permitted provided that the following conditions                   */
-/*  are met:                                                                             */
-/*  1. Redistributions of source code must retain the above copyright                    */
-/*     notice, this list of conditions and the following disclaimer.                     */
-/*  2. Redistributions in binary form must reproduce the above copyright                 */
-/*     notice, this list of conditions and the following disclaimer in                   */
-/*     the documentation and/or other materials provided with the                        */
-/*     distribution.                                                                     */
-/*                                                                                       */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''                   */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED                    */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                      */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR                  */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                         */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                     */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF                     */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND                  */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,                   */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT                   */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF                   */
-/*  SUCH DAMAGE.                                                                         */
-/*=======================================================================================*/
-
 // "RISC-V Formal Interface - Direct Instruction Injection" support
 // For use with https://github.com/CTSRD-CHERI/TestRIG
 
@@ -93,19 +25,15 @@ val rvfi_get_cmd : unit -> bits(8) effect {rreg}
 
 function rvfi_get_cmd () = rvfi_instruction.rvfi_cmd()
 
-val rvfi_get_insn : unit -> bits(32) effect {rreg}
-
-function rvfi_get_insn () = rvfi_instruction.rvfi_insn()
-
 val print_instr_packet : bits(64) -> unit
 
 function print_instr_packet(bs) = {
   let p = Mk_RVFI_DII_Instruction_Packet(bs);
-  print_bits("command ", p.rvfi_cmd());
-  print_bits("instruction ", p.rvfi_insn())
+  print_bits("command", p.rvfi_cmd());
+  print_bits("instruction", p.rvfi_insn())
 }
 
-bitfield RVFI_DII_Execution_Packet_V1 : bits(704) = {
+bitfield RVFI_DII_Execution_Packet : bits(704) = {
    rvfi_intr      : 703 .. 696, // [87] Trap handler:            Set for first instruction in trap handler.
    rvfi_halt      : 695 .. 688, // [86] Halt indicator:          Marks the last instruction retired 
                                 //                                      before halting execution.
@@ -130,258 +58,46 @@ bitfield RVFI_DII_Execution_Packet_V1 : bits(704) = {
    rvfi_order     :  63 ..   0, // [00 - 07] Instruction number:      INSTRET value after completion.
 }
 
-bitfield RVFI_DII_Execution_Packet_InstMetaData : bits(192) = {
-  /// The rvfi_order field must be set to the instruction index. No indices
-  /// must be used twice and there must be no gaps. Instructions may be
-  /// retired in a reordered fashion, as long as causality is preserved
-  /// (register and memory write operations must be retired before the read
-  /// operations that depend on them).
-  rvfi_order  : 63 .. 0,
-  /// rvfi_insn is the instruction word for the retired instruction. In case
-  /// of an instruction with fewer than ILEN bits, the upper bits of this
-  /// output must be all zero. For compressed instructions the compressed
-  /// instruction word must be output on this port. For fused instructions the
-  /// complete fused instruction sequence must be output.
-  rvfi_insn  : 127 ..  64,
-  /// rvfi_trap must be set for an instruction that cannot be decoded as a
-  /// legal instruction, such as 0x00000000.
-  /// In addition, rvfi_trap must be set for a misaligned memory read or
-  /// write in PMAs that don't allow misaligned access, or other memory
-  /// access violations. rvfi_trap must also be set for a jump instruction
-  /// that jumps to a misaligned instruction.
-  rvfi_trap  : 135 ..  128,
-  /// The signal rvfi_halt must be set when the instruction is the last
-  /// instruction that the core retires before halting execution. It should not
-  /// be set for an instruction that triggers a trap condition if the CPU
-  /// reacts to the trap by executing a trap handler. This signal enables
-  /// verification of liveness properties.
-  rvfi_halt  : 143 ..  136,
-  /// rvfi_intr must be set for the first instruction that is part of a trap
-  /// handler, i.e. an instruction that has a rvfi_pc_rdata that does not
-  /// match the rvfi_pc_wdata of the previous instruction.
-  rvfi_intr  : 151 ..  144,
-  /// rvfi_mode must be set to the current privilege level, using the following
-  /// encoding: 0=U-Mode, 1=S-Mode, 2=Reserved, 3=M-Mode
-  rvfi_mode  : 159 ..  152,
-  /// rvfi_ixl must be set to the value of MXL/SXL/UXL in the current privilege level,
-  /// using the following encoding: 1=32, 2=64
-  rvfi_ixl  : 167 ..  160,
+register rvfi_exec : RVFI_DII_Execution_Packet
 
-  /// When the core retires an instruction, it asserts the rvfi_valid signal
-  /// and uses the signals described below to output the details of the
-  /// retired instruction. The signals below are only valid during such a
-  /// cycle and can be driven to arbitrary values in a cycle in which
-  /// rvfi_valid is not asserted.
-  rvfi_valid  : 175 ..  168,
-  // Note: since we only send these packets in the valid state, we could
-  // omit the valid signal, but we need 3 bytes of padding after ixl anyway
-  // so we might as well include it
-  padding  : 191 ..  176,
-}
-
-bitfield RVFI_DII_Execution_Packet_PC : bits(128) = {
-  /// This is the program counter (pc) before (rvfi_pc_rdata) and after
-  /// (rvfi_pc_wdata) execution of this instruction. I.e. this is the address
-  /// of the retired instruction and the address of the next instruction.
-  rvfi_pc_rdata  : 63 .. 0,
-  rvfi_pc_wdata  : 127 ..  64,
-}
-
-bitfield RVFI_DII_Execution_Packet_Ext_Integer : bits(320) = {
-  magic : 63 .. 0, // must be "int-data"
-  /// rvfi_rd_wdata is the value of the x register addressed by rd after
-  /// execution of this instruction. This output must be zero when rd is zero.
-  rvfi_rd_wdata  : 127 ..  64,
-  /// rvfi_rs1_rdata/rvfi_rs2_rdata is the value of the x register addressed
-  /// by rs1/rs2 before execution of this instruction. This output must be
-  /// zero when rs1/rs2 is zero.
-  rvfi_rs1_rdata  : 191 .. 128,
-  rvfi_rs2_rdata  : 255 .. 192,
-  /// rvfi_rd_addr is the decoded rd register address for the retired
-  /// instruction. For an instruction that writes no rd register, this output
-  /// must always be zero.
-  rvfi_rd_addr      : 263 .. 256,
-  /// rvfi_rs1_addr and rvfi_rs2_addr are the decoded rs1 and rs1 register
-  /// addresses for the retired instruction. For an instruction that reads no
-  /// rs1/rs2 register, this output can have an arbitrary value. However, if
-  /// this output is nonzero then rvfi_rs1_rdata must carry the value stored
-  /// in that register in the pre-state.
-  rvfi_rs1_addr  : 271 .. 264,
-  rvfi_rs2_addr  : 279 .. 272,
-  padding  : 319 .. 280,
-}
-
-bitfield RVFI_DII_Execution_Packet_Ext_MemAccess : bits(704) = {
-  magic : 63 .. 0, // must be "mem-data"
-  /// rvfi_mem_rdata is the pre-state data read from rvfi_mem_addr.
-  /// rvfi_mem_rmask specifies which bytes are valid.
-  /// CHERI-extension: widened to 32 bytes to allow reporting 129 bits
-  rvfi_mem_rdata : 319 ..  64,
-  /// rvfi_mem_wdata is the post-state data written to rvfi_mem_addr.
-  /// rvfi_mem_wmask specifies which bytes are valid.
-  /// CHERI-extension: widened to 32 bytes to allow reporting 129 bits
-  rvfi_mem_wdata : 575 .. 320,
-  /// rvfi_mem_rmask is a bitmask that specifies which bytes in rvfi_mem_rdata
-  /// contain valid read data from rvfi_mem_addr.
-  /// CHERI-extension: we extend rmask+wmask to 32 bits to allow reporting the
-  /// mask for CHERI/RV128 accesses here.
-  rvfi_mem_rmask      : 607 .. 576,
-  /// rvfi_mem_wmask is a bitmask that specifies which bytes in rvfi_mem_wdata
-  /// contain valid data that is written to rvfi_mem_addr.
-  /// CHERI-extension: widened to 32 bits
-  rvfi_mem_wmask      : 639 .. 608,
-  /// For memory operations (rvfi_mem_rmask and/or rvfi_mem_wmask are
-  /// non-zero), rvfi_mem_addr holds the accessed memory location.
-  rvfi_mem_addr : 703 .. 640,
-}
-
-bitfield RVFI_DII_Execution_PacketV2 : bits(512) = {
-  magic : 63 .. 0,         // must be set to 'trace-v2'
-  trace_size : 127 .. 64,  // total size of the trace packet + extensions
-  basic_data : 319 .. 128, // RVFI_DII_Execution_Packet_InstMetaData
-  pc_data : 447 .. 320,    // RVFI_DII_Execution_Packet_PC
-  // available_fields : 511 .. 448,
-  integer_data_available: 448, // Followed by RVFI_DII_Execution_Packet_Ext_Integer if set
-  memory_access_data_available: 449, // Followed by R VFI_DII_Execution_Packet_Ext_MemAccess if set
-  floating_point_data_available: 450, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_FP if set
-  csr_read_write_data_available: 451, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_CSR if set
-  cheri_data_available: 452, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_CHERI if set
-  cheri_scr_read_write_data_available: 453, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_CHERI_SCR if set
-  trap_data_available: 454, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_Trap if set
-  unused_data_available_fields : 511 .. 455, // To be used for additional RVFI_DII_Execution_Packet_Ext_* structs
-}
-
-register rvfi_inst_data : RVFI_DII_Execution_Packet_InstMetaData
-register rvfi_pc_data : RVFI_DII_Execution_Packet_PC
-register rvfi_int_data : RVFI_DII_Execution_Packet_Ext_Integer
-register rvfi_int_data_present : bool
-register rvfi_mem_data : RVFI_DII_Execution_Packet_Ext_MemAccess
-register rvfi_mem_data_present : bool
-
-// Reset the trace
 val rvfi_zero_exec_packet : unit -> unit effect {wreg}
 
-function rvfi_zero_exec_packet () = {
-  rvfi_inst_data = Mk_RVFI_DII_Execution_Packet_InstMetaData(EXTZ(0b0));
-  rvfi_pc_data = Mk_RVFI_DII_Execution_Packet_PC(EXTZ(0b0));
-  rvfi_int_data = Mk_RVFI_DII_Execution_Packet_Ext_Integer(EXTZ(0x0));
-  // magic = "int-data" -> 0x617461642d746e69 (big-endian)
-  rvfi_int_data = update_magic(rvfi_int_data, 0x617461642d746e69);
-  rvfi_int_data_present = false;
-  rvfi_mem_data = Mk_RVFI_DII_Execution_Packet_Ext_MemAccess(EXTZ(0x0));
-  // magic = "mem-data" -> 0x617461642d6d656d (big-endian)
-  rvfi_mem_data = update_magic(rvfi_mem_data, 0x617461642d6d656d);
-  rvfi_mem_data_present = false;
-}
-
-// FIXME: most of these will no longer be necessary once we use the c2 sail backend.
+function rvfi_zero_exec_packet () =
+  rvfi_exec = Mk_RVFI_DII_Execution_Packet(sail_zero_extend(0b0,704))
 
 val rvfi_halt_exec_packet : unit -> unit effect {wreg}
 
 function rvfi_halt_exec_packet () =
-  rvfi_inst_data->rvfi_halt() = 0x01
+  rvfi_exec->rvfi_halt() = 0x01
 
-val rvfi_get_v2_support_packet : unit -> bits(704)
-function rvfi_get_v2_support_packet () = {
-  let rvfi_exec = Mk_RVFI_DII_Execution_Packet_V1(EXTZ(0b0));
-  // Returning 0x3 (using the unused high bits) in halt instead of 0x1 means
-  // that we support the version 2 wire format. This is required to keep
-  // backwards compatibility with old implementations that do not support
-  // the new trace format.
-  let rvfi_exec = update_rvfi_halt(rvfi_exec, 0x03);
-  return rvfi_exec.bits();
-}
+val rvfi_get_exec_packet : unit -> bits(704) effect {rreg}
 
-val rvfi_get_exec_packet_v1 : unit -> bits(704) effect {rreg}
-function rvfi_get_exec_packet_v1 () = {
-  let v1_packet = Mk_RVFI_DII_Execution_Packet_V1(EXTZ(0b0));
-  // Convert the v2 packet to a v1 packet
-  let v1_packet = update_rvfi_intr(v1_packet, rvfi_inst_data.rvfi_intr());
-  let v1_packet = update_rvfi_halt(v1_packet, rvfi_inst_data.rvfi_halt());
-  let v1_packet = update_rvfi_trap(v1_packet, rvfi_inst_data.rvfi_trap());
-  let v1_packet = update_rvfi_insn(v1_packet, rvfi_inst_data.rvfi_insn());
-  let v1_packet = update_rvfi_order(v1_packet, rvfi_inst_data.rvfi_order());
+function rvfi_get_exec_packet() = rvfi_exec.bits()
 
-  let v1_packet = update_rvfi_pc_wdata(v1_packet, rvfi_pc_data.rvfi_pc_wdata());
-  let v1_packet = update_rvfi_pc_rdata(v1_packet, rvfi_pc_data.rvfi_pc_rdata());
-
-  let v1_packet = update_rvfi_rd_addr(v1_packet, rvfi_int_data.rvfi_rd_addr());
-  let v1_packet = update_rvfi_rs2_addr(v1_packet, rvfi_int_data.rvfi_rs2_addr());
-  let v1_packet = update_rvfi_rs1_addr(v1_packet, rvfi_int_data.rvfi_rs1_addr());
-  let v1_packet = update_rvfi_rd_wdata(v1_packet, rvfi_int_data.rvfi_rd_wdata());
-  let v1_packet = update_rvfi_rs2_data(v1_packet, rvfi_int_data.rvfi_rs2_rdata());
-  let v1_packet = update_rvfi_rs1_data(v1_packet, rvfi_int_data.rvfi_rs1_rdata());
-
-  let v1_packet = update_rvfi_mem_wmask(v1_packet, truncate(rvfi_mem_data.rvfi_mem_wmask(), 8));
-  let v1_packet = update_rvfi_mem_rmask(v1_packet, truncate(rvfi_mem_data.rvfi_mem_rmask(), 8));
-  let v1_packet = update_rvfi_mem_wdata(v1_packet, truncate(rvfi_mem_data.rvfi_mem_wdata(), 64));
-  let v1_packet = update_rvfi_mem_rdata(v1_packet, truncate(rvfi_mem_data.rvfi_mem_rdata(), 64));
-  let v1_packet = update_rvfi_mem_addr(v1_packet, rvfi_mem_data.rvfi_mem_addr());
-
-  return v1_packet.bits();
-}
-
-val rvfi_get_v2_trace_size : unit -> bits(64) effect {rreg}
-function rvfi_get_v2_trace_size () = {
-  let trace_size : bits(64) = to_bits(64, 512);
-  let trace_size = if (rvfi_int_data_present) then trace_size + 320 else trace_size;
-  let trace_size = if (rvfi_mem_data_present) then trace_size + 704 else trace_size;
-  return trace_size >> 3; // we have to return bytes not bits
-}
-
-val rvfi_get_exec_packet_v2 : unit -> bits(512) effect {rreg}
-function rvfi_get_exec_packet_v2 () = {
-  // TODO: add the other data
-  // TODO: find a way to return a variable-length bitvector
-  let packet = Mk_RVFI_DII_Execution_PacketV2(EXTZ(0b0));
-  let packet = update_magic(packet, 0x32762d6563617274); // ASCII "trace-v2" (BE)
-  let packet = update_basic_data(packet, rvfi_inst_data.bits());
-  let packet = update_pc_data(packet, rvfi_pc_data.bits());
-  let packet = update_integer_data_available(packet, bool_to_bits(rvfi_int_data_present));
-  let packet = update_memory_access_data_available(packet, bool_to_bits(rvfi_mem_data_present));
-  // To simplify the implementation (so that we can return a fixed-size vector)
-  // we always return a max-size packet from this function, and the C emulator
-  // ensures that only trace_size bits are sent over the socket.
-  let packet = update_trace_size(packet, rvfi_get_v2_trace_size());
-  return packet.bits();
-}
-
-val rvfi_get_int_data : unit -> bits(320) effect {rreg}
-function rvfi_get_int_data () = {
-  assert(rvfi_int_data_present, "reading uninitialized data");
-  return rvfi_int_data.bits();
-}
-
-val rvfi_get_mem_data : unit -> bits(704) effect {rreg}
-function rvfi_get_mem_data () = {
-  assert(rvfi_mem_data_present, "reading uninitialized data");
-  return rvfi_mem_data.bits();
-}
-
-val rvfi_encode_width_mask : forall 'n, 0 < 'n <= 32. atom('n) -> bits(32)
+val rvfi_encode_width_mask : forall 'n, 0 < 'n <= 8. atom('n) -> bits(8)
 
 function rvfi_encode_width_mask(width) =
-  (0xFFFFFFFF >> (32 - width))
+  (0xFF >> (8 - width))
 
 val print_rvfi_exec : unit -> unit effect {rreg}
 
 function print_rvfi_exec () = {
-  print_bits("rvfi_intr     : ", rvfi_inst_data.rvfi_intr());
-  print_bits("rvfi_halt     : ", rvfi_inst_data.rvfi_halt());
-  print_bits("rvfi_trap     : ", rvfi_inst_data.rvfi_trap());
-  print_bits("rvfi_rd_addr  : ", rvfi_int_data.rvfi_rd_addr());
-  print_bits("rvfi_rs2_addr : ", rvfi_int_data.rvfi_rs2_addr());
-  print_bits("rvfi_rs1_addr : ", rvfi_int_data.rvfi_rs1_addr());
-  print_bits("rvfi_mem_wmask: ", rvfi_mem_data.rvfi_mem_wmask());
-  print_bits("rvfi_mem_rmask: ", rvfi_mem_data.rvfi_mem_rmask());
-  print_bits("rvfi_mem_wdata: ", rvfi_mem_data.rvfi_mem_wdata());
-  print_bits("rvfi_mem_rdata: ", rvfi_mem_data.rvfi_mem_rdata());
-  print_bits("rvfi_mem_addr : ", rvfi_mem_data.rvfi_mem_addr());
-  print_bits("rvfi_rd_wdata : ", rvfi_int_data.rvfi_rd_wdata());
-  print_bits("rvfi_rs2_data : ", rvfi_int_data.rvfi_rs2_rdata());
-  print_bits("rvfi_rs1_data : ", rvfi_int_data.rvfi_rs1_rdata());
-  print_bits("rvfi_insn     : ", rvfi_inst_data.rvfi_insn());
-  print_bits("rvfi_pc_wdata : ", rvfi_pc_data.rvfi_pc_wdata());
-  print_bits("rvfi_pc_rdata : ", rvfi_pc_data.rvfi_pc_rdata());
-  print_bits("rvfi_order    : ", rvfi_inst_data.rvfi_order());
+  print_bits("rvfi_intr     : ", rvfi_exec.rvfi_intr());
+  print_bits("rvfi_halt     : ", rvfi_exec.rvfi_halt());
+  print_bits("rvfi_trap     : ", rvfi_exec.rvfi_trap());
+  print_bits("rvfi_rd_addr  : ", rvfi_exec.rvfi_rd_addr());
+  print_bits("rvfi_rs2_addr : ", rvfi_exec.rvfi_rs2_addr());
+  print_bits("rvfi_rs1_addr : ", rvfi_exec.rvfi_rs1_addr());
+  print_bits("rvfi_mem_wmask: ", rvfi_exec.rvfi_mem_wmask());
+  print_bits("rvfi_mem_rmask: ", rvfi_exec.rvfi_mem_rmask());
+  print_bits("rvfi_mem_wdata: ", rvfi_exec.rvfi_mem_wdata());
+  print_bits("rvfi_mem_rdata: ", rvfi_exec.rvfi_mem_rdata());
+  print_bits("rvfi_mem_addr : ", rvfi_exec.rvfi_mem_addr());
+  print_bits("rvfi_rd_wdata : ", rvfi_exec.rvfi_rd_wdata());
+  print_bits("rvfi_rs2_data : ", rvfi_exec.rvfi_rs2_data());
+  print_bits("rvfi_rs1_data : ", rvfi_exec.rvfi_rs1_data());
+  print_bits("rvfi_insn     : ", rvfi_exec.rvfi_insn());
+  print_bits("rvfi_pc_wdata : ", rvfi_exec.rvfi_pc_wdata());
+  print_bits("rvfi_pc_rdata : ", rvfi_exec.rvfi_pc_rdata());
+  print_bits("rvfi_order    : ", rvfi_exec.rvfi_order());
 }

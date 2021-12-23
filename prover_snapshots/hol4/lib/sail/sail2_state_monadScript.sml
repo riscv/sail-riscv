@@ -226,9 +226,10 @@ val _ = Define `
    (let addrs = (GENLIST (\ n .  addr + n) sz) in
   let a_v = (lem_list$list_combine addrs v) in  
   let write_byte = (\mem p .  (case (mem ,p ) of
-                                  ( mem , (addr, v) ) =>mem |+ (addr, v)
+                                  ( mem , (addr, v) ) => mem  |+ ( addr ,  
+                                                        v )
                               )) in
-  let write_tag = (\ mem addr . mem |+ (addr, tag)) in
+  let write_tag = (\ mem addr .  mem  |+ ( addr ,  tag )) in
   ( s with<| memstate := (FOLDL write_byte s.memstate a_v);
   tagstate := (FOLDL write_tag s.tagstate addrs) |>)))`;
 

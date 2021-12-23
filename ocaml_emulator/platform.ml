@@ -11,6 +11,7 @@ let config_enable_dirty_update         = ref false
 let config_enable_misaligned_access    = ref false
 let config_mtval_has_illegal_inst_bits = ref false
 let config_enable_pmp                  = ref false
+let config_enable_rvv                  = ref true
 
 let platform_arch = ref P.RV64
 
@@ -78,11 +79,11 @@ let enable_writable_misa ()          = !config_enable_writable_misa
 let enable_rvc ()                    = !config_enable_rvc
 let enable_next ()                   = !config_enable_next
 let enable_fdext ()                  = false
+let enable_rvv ()                    = !config_enable_rvv
 let enable_dirty_update ()           = !config_enable_dirty_update
 let enable_misaligned_access ()      = !config_enable_misaligned_access
 let mtval_has_illegal_inst_bits ()   = !config_mtval_has_illegal_inst_bits
 let enable_pmp ()                    = !config_enable_pmp
-let enable_zfinx ()                  = false
 
 let rom_base ()   = arch_bits_of_int64 P.rom_base
 let rom_size ()   = arch_bits_of_int   !rom_size_ref
@@ -98,11 +99,6 @@ let insns_per_tick () = Big_int.of_int P.insns_per_tick
 let htif_tohost () =
   arch_bits_of_int64 (Big_int.to_int64 (Elf.elf_tohost ()))
 
-(* Entropy Source - get random bits *)
-
-(* This function can be changed to support deterministic sequences of
-   pseudo-random bytes. This is useful for testing. *)
-let get_16_random_bits () = arch_bits_of_int (Random.int 0xFFFF)
 
 (* load reservation *)
 

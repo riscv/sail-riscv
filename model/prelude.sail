@@ -1,71 +1,3 @@
-/*=======================================================================================*/
-/*  RISCV Sail Model                                                                     */
-/*                                                                                       */
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except for the snapshots of the Lem and Sail libraries                   */
-/*  in the prover_snapshots directory (which include copies of their                     */
-/*  licences), is subject to the BSD two-clause licence below.                           */
-/*                                                                                       */
-/*  Copyright (c) 2017-2021                                                              */
-/*    Prashanth Mundkur                                                                  */
-/*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
-/*    Jon French                                                                         */
-/*    Brian Campbell                                                                     */
-/*    Robert Norton-Wright                                                               */
-/*    Alasdair Armstrong                                                                 */
-/*    Thomas Bauereiss                                                                   */
-/*    Shaked Flur                                                                        */
-/*    Christopher Pulte                                                                  */
-/*    Peter Sewell                                                                       */
-/*    Alexander Richardson                                                               */
-/*    Hesham Almatary                                                                    */
-/*    Jessica Clarke                                                                     */
-/*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
-/*    Peter Rugg                                                                         */
-/*    Aril Computer Corp., for contributions by Scott Johnson                            */
-/*                                                                                       */
-/*  All rights reserved.                                                                 */
-/*                                                                                       */
-/*  This software was developed by the above within the Rigorous                         */
-/*  Engineering of Mainstream Systems (REMS) project, partly funded by                   */
-/*  EPSRC grant EP/K008528/1, at the Universities of Cambridge and                       */
-/*  Edinburgh.                                                                           */
-/*                                                                                       */
-/*  This software was developed by SRI International and the University of               */
-/*  Cambridge Computer Laboratory (Department of Computer Science and                    */
-/*  Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and                 */
-/*  under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA                 */
-/*  SSITH research programme.                                                            */
-/*                                                                                       */
-/*  This project has received funding from the European Research Council                 */
-/*  (ERC) under the European Union’s Horizon 2020 research and innovation                */
-/*  programme (grant agreement 789108, ELVER).                                           */
-/*                                                                                       */
-/*                                                                                       */
-/*  Redistribution and use in source and binary forms, with or without                   */
-/*  modification, are permitted provided that the following conditions                   */
-/*  are met:                                                                             */
-/*  1. Redistributions of source code must retain the above copyright                    */
-/*     notice, this list of conditions and the following disclaimer.                     */
-/*  2. Redistributions in binary form must reproduce the above copyright                 */
-/*     notice, this list of conditions and the following disclaimer in                   */
-/*     the documentation and/or other materials provided with the                        */
-/*     distribution.                                                                     */
-/*                                                                                       */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''                   */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED                    */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                      */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR                  */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                         */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                     */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF                     */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND                  */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,                   */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT                   */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF                   */
-/*  SUCH DAMAGE.                                                                         */
-/*=======================================================================================*/
-
 default Order dec
 
 $include <smt.sail>
@@ -74,6 +6,7 @@ $include <arith.sail>
 $include <string.sail>
 $include <vector_dec.sail>
 $include <regfp.sail>
+$include <real.sail>
 
 val string_startswith = "string_startswith" : (string, string) -> bool
 val string_drop = "string_drop" : (string, nat) -> string
@@ -100,7 +33,7 @@ val update_subrange = {ocaml: "update_subrange", interpreter: "update_subrange",
 val vector_concat = {ocaml: "append", lem: "append_list", coq: "vec_concat"} : forall ('n : Int) ('m : Int) ('a : Type).
   (vector('n, dec, 'a), vector('m, dec, 'a)) -> vector('n + 'm, dec, 'a)
 
-overload append = {vector_concat}
+overload append = {vector_concat, bitvector_concat}
 
 val not_bit : bit -> bit
 
@@ -118,9 +51,9 @@ function neq_anything (x, y) = not_bool(x == y)
 
 overload operator != = {neq_vec, neq_anything}
 
-overload operator & = {and_vec}
+overload operator & = {and_vec, and_bool}
 
-overload operator | = {or_vec}
+overload operator | = {or_vec, or_bool}
 
 val string_of_int = {c: "string_of_int", ocaml: "string_of_int", interpreter: "string_of_int", lem: "stringFromInteger", coq: "string_of_int"} : int -> string
 
@@ -138,7 +71,19 @@ val xor_vec = {c: "xor_bits", _: "xor_vec"} : forall 'n. (bits('n), bits('n)) ->
 
 val int_power = {ocaml: "int_power", interpreter: "int_power", lem: "pow", coq: "pow", c: "pow_int"} : (int, int) -> int
 
-overload operator ^ = {xor_vec, int_power, concat_str}
+val real_power = {ocaml: "real_power", interpreter: "real_power", lem: "realPowInteger", c: "real_power"} : (real, int) -> real
+
+val xor_bool : (bool, bool) -> bool
+function xor_bool(b1, b2) = {
+  match (b1, b2) {
+    (false, false) => false,
+    (false, true)  => true,
+    (true, false)  => true,
+    (true, true)   => false
+  }
+}
+
+overload operator ^ = {xor_vec, int_power, concat_str, real_power, xor_bool}
 
 val sub_vec = {c: "sub_bits", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
 
@@ -205,6 +150,12 @@ function bit_to_bool b = match b {
   bitzero => false
 }
 
+val bool_to_bit : bool -> bit
+function bool_to_bit b = match b {
+  true  => bitone,
+  false => bitzero
+}
+
 val to_bits : forall 'l, 'l >= 0.(atom('l), int) -> bits('l)
 function to_bits (l, n) = get_slice_int(l, n, 0)
 
@@ -247,28 +198,6 @@ function shift_right_arith64 (v : bits(64), shift : bits(6)) -> bits(64) =
 function shift_right_arith32 (v : bits(32), shift : bits(5)) -> bits(32) =
     let v64 : bits(64) = EXTS(v) in
     (v64 >> shift)[31..0]
-
-infix 7 >>>
-infix 7 <<<
-
-val rotate_bits_right : forall 'n 'm, 'm >= 0. (bits('n), bits('m)) -> bits('n)
-function rotate_bits_right (v, n) =
-    (v >> n) | (v << (to_bits(length(n), length(v)) - n))
-
-val rotate_bits_left : forall 'n 'm, 'm >= 0. (bits('n), bits('m)) -> bits('n)
-function rotate_bits_left (v, n) =
-    (v << n) | (v >> (to_bits(length(n), length(v)) - n))
-
-val rotater : forall 'm 'n, 'm >= 'n >= 0. (bits('m), atom('n)) -> bits('m)
-function rotater (v, n) =
-    (v >> n) | (v << (length(v) - n))
-
-val rotatel : forall 'm 'n, 'm >= 'n >= 0. (bits('m), atom('n)) -> bits('m)
-function rotatel (v, n) =
-    (v << n) | (v >> (length(v) - n))
-
-overload operator >>> = {rotate_bits_right, rotater}
-overload operator <<< = {rotate_bits_left, rotatel}
 
 /* helpers for mappings */
 
@@ -316,3 +245,14 @@ val def_spc_backwards : string -> unit
 function def_spc_backwards s = ()
 val def_spc_matches_prefix : string -> option((unit, nat))
 function def_spc_matches_prefix s = opt_spc_matches_prefix(s)
+
+val div_int : (int, int) -> int
+function div_int(x, y) = {
+  floor(div_real(to_real(x), to_real(y)))
+}
+
+val "print_real" : (string, real) -> unit
+val "print_int" : (string, int) -> unit
+
+overload operator / = {div_int, div_real}
+overload operator * = {mult_atom, mult_int, mult_real}

@@ -21,40 +21,38 @@ begin
 \<comment> \<open>\<open>open import String Maybe Num Basic_classes Set Relation Show\<close>\<close> 
 \<comment> \<open>\<open>import Set_extra String_extra\<close>\<close>
 
-definition instance_Show_Show_nat_dict  :: \<open>(nat)Show_class \<close>  where 
-     \<open> instance_Show_Show_nat_dict = ((|
+definition instance_Show_Show_nat_dict  :: "(nat)Show_class "  where 
+     " instance_Show_Show_nat_dict = ((|
 
-  show_method = Lem_string_extra.stringFromNat |) )\<close>
-
-
-definition instance_Show_Show_Num_natural_dict  :: \<open>(nat)Show_class \<close>  where 
-     \<open> instance_Show_Show_Num_natural_dict = ((|
-
-  show_method = Lem_string_extra.stringFromNatural |) )\<close>
+  show_method = Lem_string_extra.stringFromNat |) )"
 
 
-definition instance_Show_Show_Num_int_dict  :: \<open>(int)Show_class \<close>  where 
-     \<open> instance_Show_Show_Num_int_dict = ((|
+definition instance_Show_Show_Num_natural_dict  :: "(nat)Show_class "  where 
+     " instance_Show_Show_Num_natural_dict = ((|
 
-  show_method = Lem_string_extra.stringFromInt |) )\<close>
-
-
-definition instance_Show_Show_Num_integer_dict  :: \<open>(int)Show_class \<close>  where 
-     \<open> instance_Show_Show_Num_integer_dict = ((|
-
-  show_method = Lem_string_extra.stringFromInteger |) )\<close>
+  show_method = Lem_string_extra.stringFromNatural |) )"
 
 
-definition stringFromSet  :: \<open>('a \<Rightarrow> string)\<Rightarrow> 'a set \<Rightarrow> string \<close>  where 
-     \<open> stringFromSet showX xs = (
-  (''{'') @ (Lem_show.stringFromListAux showX (list_of_set xs) @ (''}'')))\<close> 
-  for  showX  :: " 'a \<Rightarrow> string " 
-  and  xs  :: " 'a set "
+definition instance_Show_Show_Num_int_dict  :: "(int)Show_class "  where 
+     " instance_Show_Show_Num_int_dict = ((|
+
+  show_method = Lem_string_extra.stringFromInt |) )"
+
+
+definition instance_Show_Show_Num_integer_dict  :: "(int)Show_class "  where 
+     " instance_Show_Show_Num_integer_dict = ((|
+
+  show_method = Lem_string_extra.stringFromInteger |) )"
+
+
+definition stringFromSet  :: "('a \<Rightarrow> string)\<Rightarrow> 'a set \<Rightarrow> string "  where 
+     " stringFromSet showX xs = (
+  (''{'') @ (Lem_show.stringFromListAux showX (list_of_set xs) @ (''}'')))"
 
 
 \<comment> \<open>\<open> Abbreviates the representation if the relation is transitive. \<close>\<close>
-definition stringFromRelation  :: \<open>('a*'a \<Rightarrow> string)\<Rightarrow>('a*'a)set \<Rightarrow> string \<close>  where 
-     \<open> stringFromRelation showX rel = (
+definition stringFromRelation  :: "('a*'a \<Rightarrow> string)\<Rightarrow>('a*'a)set \<Rightarrow> string "  where 
+     " stringFromRelation showX rel = (
   if trans rel then
     (let pruned_rel = (LemExtraDefs.without_trans_edges rel) in
     if ((\<forall> e \<in> rel.  (e \<in> pruned_rel))) then
@@ -64,16 +62,13 @@ definition stringFromRelation  :: \<open>('a*'a \<Rightarrow> string)\<Rightarro
     else
       (''trancl of '') @ stringFromSet showX pruned_rel)
   else
-    stringFromSet showX rel )\<close> 
-  for  showX  :: " 'a*'a \<Rightarrow> string " 
-  and  rel  :: "('a*'a)set "
+    stringFromSet showX rel )"
 
 
-definition instance_Show_Show_set_dict  :: \<open> 'a Show_class \<Rightarrow>('a set)Show_class \<close>  where 
-     \<open> instance_Show_Show_set_dict dict_Show_Show_a = ((|
+definition instance_Show_Show_set_dict  :: " 'a Show_class \<Rightarrow>('a set)Show_class "  where 
+     " instance_Show_Show_set_dict dict_Show_Show_a = ((|
 
-  show_method = ((\<lambda> xs. stringFromSet 
-  (show_method   dict_Show_Show_a) xs))|) )\<close> 
-  for  dict_Show_Show_a  :: " 'a Show_class "
+  show_method = (\<lambda> xs. stringFromSet 
+  (show_method   dict_Show_Show_a) xs)|) )"
 
 end
