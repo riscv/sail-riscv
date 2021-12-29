@@ -18,8 +18,8 @@ bool sys_enable_next(unit u)
 bool sys_enable_fdext(unit u)
 { return rv_enable_fdext; }
 
-bool sys_enable_zfinx(unit u)
-{ return rv_enable_zfinx; }
+bool sys_enable_rvv(unit u)
+{ return rv_enable_rvv; }
 
 bool sys_enable_writable_misa(unit u)
 { return rv_enable_writable_misa; }
@@ -47,10 +47,6 @@ mach_bits plat_rom_base(unit u)
 
 mach_bits plat_rom_size(unit u)
 { return rv_rom_size; }
-
-// Provides entropy for the scalar cryptography extension.
-mach_bits plat_get_16_random_bits()
-{ return rv_16_random_bits(); }
 
 mach_bits plat_clint_base(unit u)
 { return rv_clint_base; }

@@ -24,47 +24,37 @@ begin
 \<comment> \<open>\<open>open import Sail2_values\<close>\<close>
 
 \<comment> \<open>\<open>val string_sub : string -> ii -> ii -> string\<close>\<close>
-definition string_sub  :: \<open> string \<Rightarrow> int \<Rightarrow> int \<Rightarrow> string \<close>  where 
-     \<open> string_sub str start len = (
-  (List.take (nat (abs ( len))) (List.drop (nat (abs ( start))) ( str))))\<close> 
-  for  str  :: " string " 
-  and  start  :: " int " 
-  and  len  :: " int "
+definition string_sub  :: " string \<Rightarrow> int \<Rightarrow> int \<Rightarrow> string "  where 
+     " string_sub str start len = (
+  (List.take (nat (abs ( len))) (List.drop (nat (abs ( start))) ( str))))"
 
 
 \<comment> \<open>\<open>val string_startswith : string -> string -> bool\<close>\<close>
-definition string_startswith  :: \<open> string \<Rightarrow> string \<Rightarrow> bool \<close>  where 
-     \<open> string_startswith str1 str2 = (
+definition string_startswith  :: " string \<Rightarrow> string \<Rightarrow> bool "  where 
+     " string_startswith str1 str2 = (
   (let prefix = (string_sub str1(( 0 :: int)) (int (List.length str2))) in
-  (prefix = str2)))\<close> 
-  for  str1  :: " string " 
-  and  str2  :: " string "
+  (prefix = str2)))"
 
 
 \<comment> \<open>\<open>val string_drop : string -> ii -> string\<close>\<close>
-definition string_drop  :: \<open> string \<Rightarrow> int \<Rightarrow> string \<close>  where 
-     \<open> string_drop str n = (
-  (List.drop (nat (abs ( n))) ( str)))\<close> 
-  for  str  :: " string " 
-  and  n  :: " int "
+definition string_drop  :: " string \<Rightarrow> int \<Rightarrow> string "  where 
+     " string_drop str n = (
+  (List.drop (nat (abs ( n))) ( str)))"
 
 
 \<comment> \<open>\<open>val string_take : string -> ii -> string\<close>\<close>
-definition string_take  :: \<open> string \<Rightarrow> int \<Rightarrow> string \<close>  where 
-     \<open> string_take str n = (
-  (List.take (nat (abs ( n))) ( str)))\<close> 
-  for  str  :: " string " 
-  and  n  :: " int "
+definition string_take  :: " string \<Rightarrow> int \<Rightarrow> string "  where 
+     " string_take str n = (
+  (List.take (nat (abs ( n))) ( str)))"
 
 
 \<comment> \<open>\<open>val string_length : string -> ii\<close>\<close>
-definition string_length  :: \<open> string \<Rightarrow> int \<close>  where 
-     \<open> string_length s = ( int (List.length s))\<close> 
-  for  s  :: " string "
+definition string_length  :: " string \<Rightarrow> int "  where 
+     " string_length s = ( int (List.length s))"
 
 
-definition string_append  :: \<open> string \<Rightarrow> string \<Rightarrow> string \<close>  where 
-     \<open> string_append = ( (@))\<close>
+definition string_append  :: " string \<Rightarrow> string \<Rightarrow> string "  where 
+     " string_append = ( (@))"
 
 
 \<comment> \<open>\<open>**********************************************
@@ -72,34 +62,33 @@ definition string_append  :: \<open> string \<Rightarrow> string \<Rightarrow> s
  **********************************************\<close>\<close>
 
 \<comment> \<open>\<open>val maybeIntegerOfString : string -> maybe integer\<close>\<close>
-definition maybeIntegerOfString  :: \<open> string \<Rightarrow>(int)option \<close>  where 
-     \<open> maybeIntegerOfString _ = ( None )\<close>
+definition maybeIntegerOfString  :: " string \<Rightarrow>(int)option "  where 
+     " maybeIntegerOfString _ = ( None )"
 
 
 \<comment> \<open>\<open>**********************************************
  * end stuff that should be in Lem Num_extra   *
  **********************************************\<close>\<close>
 
-function (sequential,domintros)  maybe_int_of_prefix  :: \<open> string \<Rightarrow>(int*int)option \<close>  where 
-     \<open> maybe_int_of_prefix s = ( 
+function (sequential,domintros)  maybe_int_of_prefix  :: " string \<Rightarrow>(int*int)option "  where 
+     " maybe_int_of_prefix s = ( 
   if(s = ('''')) then None else
     ((let len = (string_length s) in
      (case  maybeIntegerOfString s of
            Some n => Some (n, len)
        | None => maybe_int_of_prefix
                    (string_sub s (( 0 :: int)) (len - ( 1 :: int)))
-     ))) )\<close> 
-  for  s  :: " string " 
+     ))) )" 
 by pat_completeness auto
 
 
-definition maybe_int_of_string  :: \<open> string \<Rightarrow>(int)option \<close>  where 
-     \<open> maybe_int_of_string = ( maybeIntegerOfString )\<close>
+definition maybe_int_of_string  :: " string \<Rightarrow>(int)option "  where 
+     " maybe_int_of_string = ( maybeIntegerOfString )"
 
 
 \<comment> \<open>\<open>val n_leading_spaces : string -> ii\<close>\<close>
-function (sequential,domintros)  n_leading_spaces  :: \<open> string \<Rightarrow> int \<close>  where 
-     \<open> n_leading_spaces s = (
+function (sequential,domintros)  n_leading_spaces  :: " string \<Rightarrow> int "  where 
+     " n_leading_spaces s = (
   (let len = (string_length s) in
   if len =( 0 :: int) then( 0 :: int) else
     if len =( 1 :: int) then  
@@ -109,26 +98,23 @@ function (sequential,domintros)  n_leading_spaces  :: \<open> string \<Rightarro
               is currently broken, so use an if-expression \<close>\<close>
            if nth s(( 0 :: nat)) = (CHR '' '')
            then( 1 :: int) + (n_leading_spaces (string_sub s(( 1 :: int)) (len -( 1 :: int))))
-           else( 0 :: int)))\<close> 
-  for  s  :: " string " 
+           else( 0 :: int)))" 
 by pat_completeness auto
 
   \<comment> \<open>\<open> end \<close>\<close>
 
-definition opt_spc_matches_prefix  :: \<open> string \<Rightarrow>(unit*int)option \<close>  where 
-     \<open> opt_spc_matches_prefix s = (
-  Some (() , n_leading_spaces s))\<close> 
-  for  s  :: " string "
+definition opt_spc_matches_prefix  :: " string \<Rightarrow>(unit*int)option "  where 
+     " opt_spc_matches_prefix s = (
+  Some (() , n_leading_spaces s))"
 
 
-definition spc_matches_prefix  :: \<open> string \<Rightarrow>(unit*int)option \<close>  where 
-     \<open> spc_matches_prefix s = (
+definition spc_matches_prefix  :: " string \<Rightarrow>(unit*int)option "  where 
+     " spc_matches_prefix s = (
   (let n = (n_leading_spaces s) in
   \<comment> \<open>\<open> match n with \<close>\<close>
 \<comment> \<open>\<open> | 0 -> Nothing \<close>\<close>
   if n =( 0 :: int) then None else
-  \<comment> \<open>\<open> | n -> \<close>\<close> Some (() , n)))\<close> 
-  for  s  :: " string "
+  \<comment> \<open>\<open> | n -> \<close>\<close> Some (() , n)))"
 
   \<comment> \<open>\<open> end \<close>\<close>
 
@@ -147,8 +133,8 @@ f = """let hex_bits_{0}_matches_prefix s =
 for i in list(range(1, 34)) + [48, 64]:
   print(f.format(i))
 \<close>\<close>
-definition hex_bits_1_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_1_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_1_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_1_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -156,13 +142,11 @@ definition hex_bits_1_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 1 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_2_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_2_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_2_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_2_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -170,13 +154,11 @@ definition hex_bits_2_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 2 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_3_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_3_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_3_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_3_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -184,13 +166,11 @@ definition hex_bits_3_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 3 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_4_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_4_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_4_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_4_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -198,13 +178,11 @@ definition hex_bits_4_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 4 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_5_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_5_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_5_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_5_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -212,13 +190,11 @@ definition hex_bits_5_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 5 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_6_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_6_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_6_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_6_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -226,13 +202,11 @@ definition hex_bits_6_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 6 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_7_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_7_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_7_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_7_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -240,13 +214,11 @@ definition hex_bits_7_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 7 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_8_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_8_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_8_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_8_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -254,13 +226,11 @@ definition hex_bits_8_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 8 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_9_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_9_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_9_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_9_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -268,13 +238,11 @@ definition hex_bits_9_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 9 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_10_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_10_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_10_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_10_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -282,13 +250,11 @@ definition hex_bits_10_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 10 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_11_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_11_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_11_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_11_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -296,13 +262,11 @@ definition hex_bits_11_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 11 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_12_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_12_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_12_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_12_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -310,13 +274,11 @@ definition hex_bits_12_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 12 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_13_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_13_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_13_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_13_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -324,13 +286,11 @@ definition hex_bits_13_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 13 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_14_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_14_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_14_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_14_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -338,13 +298,11 @@ definition hex_bits_14_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 14 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_15_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_15_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_15_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_15_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -352,13 +310,11 @@ definition hex_bits_15_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 15 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_16_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_16_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_16_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_16_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -366,13 +322,11 @@ definition hex_bits_16_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 16 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_17_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_17_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_17_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_17_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -380,13 +334,11 @@ definition hex_bits_17_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 17 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_18_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_18_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_18_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_18_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -394,13 +346,11 @@ definition hex_bits_18_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 18 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_19_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_19_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_19_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_19_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -408,13 +358,11 @@ definition hex_bits_19_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 19 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_20_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_20_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_20_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_20_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -422,13 +370,11 @@ definition hex_bits_20_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 20 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_21_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_21_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_21_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_21_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -436,13 +382,11 @@ definition hex_bits_21_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 21 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_22_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_22_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_22_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_22_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -450,13 +394,11 @@ definition hex_bits_22_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 22 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_23_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_23_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_23_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_23_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -464,13 +406,11 @@ definition hex_bits_23_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 23 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_24_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_24_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_24_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_24_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -478,13 +418,11 @@ definition hex_bits_24_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 24 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_25_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_25_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_25_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_25_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -492,13 +430,11 @@ definition hex_bits_25_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 25 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_26_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_26_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_26_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_26_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -506,13 +442,11 @@ definition hex_bits_26_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 26 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_27_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_27_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_27_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_27_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -520,13 +454,11 @@ definition hex_bits_27_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 27 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_28_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_28_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_28_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_28_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -534,13 +466,11 @@ definition hex_bits_28_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 28 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_29_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_29_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_29_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_29_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -548,13 +478,11 @@ definition hex_bits_29_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 29 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_30_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_30_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_30_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_30_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -562,13 +490,11 @@ definition hex_bits_30_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 30 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_31_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_31_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_31_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_31_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -576,13 +502,11 @@ definition hex_bits_31_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 31 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_32_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_32_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_32_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_32_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -590,13 +514,11 @@ definition hex_bits_32_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 32 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_33_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_33_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_33_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_33_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -604,13 +526,11 @@ definition hex_bits_33_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 33 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_48_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_48_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_48_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_48_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -618,13 +538,11 @@ definition hex_bits_48_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 48 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 
-definition hex_bits_64_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option \<close>  where 
-     \<open> hex_bits_64_matches_prefix dict_Sail2_values_Bitvector_a s = (
+definition hex_bits_64_matches_prefix  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow>('a*int)option "  where 
+     " hex_bits_64_matches_prefix dict_Sail2_values_Bitvector_a s = (
   (case  maybe_int_of_prefix s of
     None => None
   | Some (n, len) =>
@@ -632,8 +550,6 @@ definition hex_bits_64_matches_prefix  :: \<open> 'a Bitvector_class \<Rightarro
       Some (((of_int_method   dict_Sail2_values_Bitvector_a)(( 64 :: int)) n, len))
     else
       None
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  s  :: " string "
+  ))"
 
 end

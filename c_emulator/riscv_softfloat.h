@@ -10,11 +10,22 @@ unit softfloat_f64sub(mach_bits rm, mach_bits v1, mach_bits v2);
 unit softfloat_f64mul(mach_bits rm, mach_bits v1, mach_bits v2);
 unit softfloat_f64div(mach_bits rm, mach_bits v1, mach_bits v2);
 
+unit softfloat_f16div(mach_bits rm, mach_bits v1, mach_bits v2);
+
 unit softfloat_f32muladd(mach_bits rm, mach_bits v1, mach_bits v2, mach_bits v3);
 unit softfloat_f64muladd(mach_bits rm, mach_bits v1, mach_bits v2, mach_bits v3);
 
+unit softfloat_f16sqrt(mach_bits rm, mach_bits v);
 unit softfloat_f32sqrt(mach_bits rm, mach_bits v);
 unit softfloat_f64sqrt(mach_bits rm, mach_bits v);
+
+unit softfloat_f16rsqrte7(mach_bits rm, mach_bits v);
+unit softfloat_f32rsqrte7(mach_bits rm, mach_bits v);
+unit softfloat_f64rsqrte7(mach_bits rm, mach_bits v);
+
+unit softfloat_f16recip7(mach_bits rm, mach_bits v);
+unit softfloat_f32recip7(mach_bits rm, mach_bits v);
+unit softfloat_f64recip7(mach_bits rm, mach_bits v);
 
 unit softfloat_f32toi32(mach_bits rm, mach_bits v);
 unit softfloat_f32toui32(mach_bits rm, mach_bits v);
@@ -38,6 +49,13 @@ unit softfloat_ui64tof64(mach_bits rm, mach_bits v);
 
 unit softfloat_f32tof64(mach_bits rm, mach_bits v);
 unit softfloat_f64tof32(mach_bits rm, mach_bits v);
+
+unit softfloat_f16toi32(mach_bits rm, mach_bits v);
+unit softfloat_f16toui32(mach_bits rm, mach_bits v);
+unit softfloat_i32tof16(mach_bits rm, mach_bits v);
+unit softfloat_ui32tof16(mach_bits rm, mach_bits v);
+unit softfloat_f16tof32(mach_bits rm, mach_bits v);
+unit softfloat_f32tof16(mach_bits rm, mach_bits v);
 
 unit softfloat_f32lt(mach_bits v1, mach_bits v2);
 unit softfloat_f32le(mach_bits v1, mach_bits v2);

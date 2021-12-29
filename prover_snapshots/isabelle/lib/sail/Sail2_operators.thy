@@ -17,111 +17,76 @@ begin
 \<comment> \<open>\<open>** Bit vector operations \<close>\<close>
 
 \<comment> \<open>\<open>val concat_bv : forall 'a 'b. Bitvector 'a, Bitvector 'b => 'a -> 'b -> list bitU\<close>\<close>
-definition concat_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'a \<Rightarrow> 'b \<Rightarrow>(bitU)list \<close>  where 
-     \<open> concat_bv dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b l r = ( (
-  (bits_of_method   dict_Sail2_values_Bitvector_a) l @(bits_of_method   dict_Sail2_values_Bitvector_b) r))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class " 
-  and  l  :: " 'a " 
-  and  r  :: " 'b "
+definition concat_bv  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'a \<Rightarrow> 'b \<Rightarrow>(bitU)list "  where 
+     " concat_bv dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b l r = ( (
+  (bits_of_method   dict_Sail2_values_Bitvector_a) l @(bits_of_method   dict_Sail2_values_Bitvector_b) r))"
 
 
 \<comment> \<open>\<open>val cons_bv : forall 'a. Bitvector 'a => bitU -> 'a -> list bitU\<close>\<close>
-definition cons_bv  :: \<open> 'a Bitvector_class \<Rightarrow> bitU \<Rightarrow> 'a \<Rightarrow>(bitU)list \<close>  where 
-     \<open> cons_bv dict_Sail2_values_Bitvector_a b v = ( b # 
-  (bits_of_method   dict_Sail2_values_Bitvector_a) v )\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  b  :: " bitU " 
-  and  v  :: " 'a "
+definition cons_bv  :: " 'a Bitvector_class \<Rightarrow> bitU \<Rightarrow> 'a \<Rightarrow>(bitU)list "  where 
+     " cons_bv dict_Sail2_values_Bitvector_a b v = ( b # 
+  (bits_of_method   dict_Sail2_values_Bitvector_a) v )"
 
 
 \<comment> \<open>\<open>val cast_unit_bv : bitU -> list bitU\<close>\<close>
-definition cast_unit_bv  :: \<open> bitU \<Rightarrow>(bitU)list \<close>  where 
-     \<open> cast_unit_bv b = ( [b])\<close> 
-  for  b  :: " bitU "
+definition cast_unit_bv  :: " bitU \<Rightarrow>(bitU)list "  where 
+     " cast_unit_bv b = ( [b])"
 
 
 \<comment> \<open>\<open>val bv_of_bit : integer -> bitU -> list bitU\<close>\<close>
-definition bv_of_bit  :: \<open> int \<Rightarrow> bitU \<Rightarrow>(bitU)list \<close>  where 
-     \<open> bv_of_bit len b = ( extz_bits len [b])\<close> 
-  for  len  :: " int " 
-  and  b  :: " bitU "
+definition bv_of_bit  :: " int \<Rightarrow> bitU \<Rightarrow>(bitU)list "  where 
+     " bv_of_bit len b = ( extz_bits len [b])"
 
 
-definition most_significant  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> bitU \<close>  where 
-     \<open> most_significant dict_Sail2_values_Bitvector_a v = ( (case  
+definition most_significant  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> bitU "  where 
+     " most_significant dict_Sail2_values_Bitvector_a v = ( (case  
   (bits_of_method   dict_Sail2_values_Bitvector_a) v of
     b # _ => b
   | _ => B0 \<comment> \<open>\<open> Treat empty bitvector as all zeros \<close>\<close>
-  ))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  v  :: " 'a "
+  ))"
 
 
-definition get_max_representable_in  :: \<open> bool \<Rightarrow> int \<Rightarrow> int \<close>  where 
-     \<open> get_max_representable_in sign (n :: int) = (
+definition get_max_representable_in  :: " bool \<Rightarrow> int \<Rightarrow> int "  where 
+     " get_max_representable_in sign (n :: int) = (
   if (n =( 64 :: int)) then (case  sign of   True => max_64 | False => max_64u )
   else if (n=( 32 :: int)) then (case  sign of   True => max_32 | False => max_32u )
   else if (n=( 8 :: int)) then max_8
   else if (n=( 5 :: int)) then max_5
   else (case  sign of   True => (( 2 :: int))^ ((nat (abs ( n))) -( 1 :: nat))
                        | False => (( 2 :: int))^ (nat (abs ( n)))
-       ))\<close> 
-  for  sign  :: " bool " 
-  and  n  :: " int "
+       ))"
 
 
-definition get_min_representable_in  :: \<open> 'a \<Rightarrow> int \<Rightarrow> int \<close>  where 
-     \<open> get_min_representable_in _ (n :: int) = (
+definition get_min_representable_in  :: " 'a \<Rightarrow> int \<Rightarrow> int "  where 
+     " get_min_representable_in _ (n :: int) = (
   if n =( 64 :: int) then min_64
   else if n =( 32 :: int) then min_32
   else if n =( 8 :: int) then min_8
   else if n =( 5 :: int) then min_5
-  else( 0 :: int) - ((( 2 :: int))^ (nat (abs ( n)))))\<close> 
-  for  n  :: " int "
+  else( 0 :: int) - ((( 2 :: int))^ (nat (abs ( n)))))"
 
 
 \<comment> \<open>\<open>val arith_op_bv_int : forall 'a 'b. Bitvector 'a =>
   (integer -> integer -> integer) -> bool -> 'a -> integer -> 'a\<close>\<close>
-definition arith_op_bv_int  :: \<open> 'a Bitvector_class \<Rightarrow>(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bool \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> 'a \<close>  where 
-     \<open> arith_op_bv_int dict_Sail2_values_Bitvector_a op1 sign l r = (
-  (let r' = ((of_int_method   dict_Sail2_values_Bitvector_a) ((length_method   dict_Sail2_values_Bitvector_a) l) r) in (arith_op_bv_method   dict_Sail2_values_Bitvector_a) op1 sign l r'))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  op1  :: " int \<Rightarrow> int \<Rightarrow> int " 
-  and  sign  :: " bool " 
-  and  l  :: " 'a " 
-  and  r  :: " int "
+definition arith_op_bv_int  :: " 'a Bitvector_class \<Rightarrow>(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bool \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> 'a "  where 
+     " arith_op_bv_int dict_Sail2_values_Bitvector_a op1 sign l r = (
+  (let r' = ((of_int_method   dict_Sail2_values_Bitvector_a) ((length_method   dict_Sail2_values_Bitvector_a) l) r) in (arith_op_bv_method   dict_Sail2_values_Bitvector_a) op1 sign l r'))"
 
 
 \<comment> \<open>\<open>val arith_op_int_bv : forall 'a 'b. Bitvector 'a =>
   (integer -> integer -> integer) -> bool -> integer -> 'a -> 'a\<close>\<close>
-definition arith_op_int_bv  :: \<open> 'a Bitvector_class \<Rightarrow>(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bool \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> 'a \<close>  where 
-     \<open> arith_op_int_bv dict_Sail2_values_Bitvector_a op1 sign l r = (
-  (let l' = ((of_int_method   dict_Sail2_values_Bitvector_a) ((length_method   dict_Sail2_values_Bitvector_a) r) l) in (arith_op_bv_method   dict_Sail2_values_Bitvector_a) op1 sign l' r))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  op1  :: " int \<Rightarrow> int \<Rightarrow> int " 
-  and  sign  :: " bool " 
-  and  l  :: " int " 
-  and  r  :: " 'a "
+definition arith_op_int_bv  :: " 'a Bitvector_class \<Rightarrow>(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bool \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> 'a "  where 
+     " arith_op_int_bv dict_Sail2_values_Bitvector_a op1 sign l r = (
+  (let l' = ((of_int_method   dict_Sail2_values_Bitvector_a) ((length_method   dict_Sail2_values_Bitvector_a) r) l) in (arith_op_bv_method   dict_Sail2_values_Bitvector_a) op1 sign l' r))"
 
 
-definition arith_op_bv_bool  :: \<open> 'a Bitvector_class \<Rightarrow>(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bool \<Rightarrow> 'a \<Rightarrow> bool \<Rightarrow> 'a \<close>  where 
-     \<open> arith_op_bv_bool dict_Sail2_values_Bitvector_a op1 sign l r = ( arith_op_bv_int 
-  dict_Sail2_values_Bitvector_a op1 sign l (if r then( 1 :: int) else( 0 :: int)))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  op1  :: " int \<Rightarrow> int \<Rightarrow> int " 
-  and  sign  :: " bool " 
-  and  l  :: " 'a " 
-  and  r  :: " bool "
+definition arith_op_bv_bool  :: " 'a Bitvector_class \<Rightarrow>(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bool \<Rightarrow> 'a \<Rightarrow> bool \<Rightarrow> 'a "  where 
+     " arith_op_bv_bool dict_Sail2_values_Bitvector_a op1 sign l r = ( arith_op_bv_int 
+  dict_Sail2_values_Bitvector_a op1 sign l (if r then( 1 :: int) else( 0 :: int)))"
 
-definition arith_op_bv_bit  :: \<open> 'a Bitvector_class \<Rightarrow>(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bool \<Rightarrow> 'a \<Rightarrow> bitU \<Rightarrow> 'a option \<close>  where 
-     \<open> arith_op_bv_bit dict_Sail2_values_Bitvector_a op1 sign l r = ( map_option (arith_op_bv_bool 
-  dict_Sail2_values_Bitvector_a op1 sign l) (bool_of_bitU r))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  op1  :: " int \<Rightarrow> int \<Rightarrow> int " 
-  and  sign  :: " bool " 
-  and  l  :: " 'a " 
-  and  r  :: " bitU "
+definition arith_op_bv_bit  :: " 'a Bitvector_class \<Rightarrow>(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bool \<Rightarrow> 'a \<Rightarrow> bitU \<Rightarrow> 'a option "  where 
+     " arith_op_bv_bit dict_Sail2_values_Bitvector_a op1 sign l r = ( map_option (arith_op_bv_bool 
+  dict_Sail2_values_Bitvector_a op1 sign l) (bool_of_bitU r))"
 
 
 \<comment> \<open>\<open> TODO (or just omit and define it per spec if needed)
@@ -185,20 +150,20 @@ let subs_overflow_bv_bit = arith_op_overflow_bv_bit integerMinus true 1\<close>\
 
 datatype shift = LL_shift | RR_shift | RR_shift_arith | LL_rot | RR_rot
 
-definition invert_shift  :: \<open> shift \<Rightarrow> shift \<close>  where 
-     \<open> invert_shift = ( (\<lambda>x .  
+definition invert_shift  :: " shift \<Rightarrow> shift "  where 
+     " invert_shift = ( \<lambda>x .  
   (case  x of
         LL_shift => RR_shift
     | RR_shift => LL_shift
     | RR_shift_arith => LL_shift
     | LL_rot => RR_rot
     | RR_rot => LL_rot
-  )))\<close>
+  ) )"
 
 
 \<comment> \<open>\<open>val shift_op_bv : forall 'a. Bitvector 'a => shift -> 'a -> integer -> list bitU\<close>\<close>
-definition shift_op_bv  :: \<open> 'a Bitvector_class \<Rightarrow> shift \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list \<close>  where 
-     \<open> shift_op_bv dict_Sail2_values_Bitvector_a op1 v n = (
+definition shift_op_bv  :: " 'a Bitvector_class \<Rightarrow> shift \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list "  where 
+     " shift_op_bv dict_Sail2_values_Bitvector_a op1 v n = (
   (let v = ((bits_of_method   dict_Sail2_values_Bitvector_a) v) in
   if n =( 0 :: int) then v else
   (let (op1, n) = (if n >( 0 :: int) then (op1, n) else (invert_shift op1, - n)) in
@@ -215,220 +180,147 @@ definition shift_op_bv  :: \<open> 'a Bitvector_class \<Rightarrow> shift \<Righ
      subrange_list True v n (int (List.length v) -( 1 :: int)) @ subrange_list True v(( 0 :: int)) (n -( 1 :: int))
   | RR_rot =>
      subrange_list False v(( 0 :: int)) (n -( 1 :: int)) @ subrange_list False v n (int (List.length v) -( 1 :: int))
-  ))))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  op1  :: " shift " 
-  and  v  :: " 'a " 
-  and  n  :: " int "
+  ))))"
 
 
-definition shiftl_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list \<close>  where 
-     \<open> shiftl_bv dict_Sail2_values_Bitvector_a = ( shift_op_bv 
-  dict_Sail2_values_Bitvector_a LL_shift )\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class "
+definition shiftl_bv  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list "  where 
+     " shiftl_bv dict_Sail2_values_Bitvector_a = ( shift_op_bv 
+  dict_Sail2_values_Bitvector_a LL_shift )"
  \<comment> \<open>\<open>"<<"\<close>\<close>
-definition shiftr_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list \<close>  where 
-     \<open> shiftr_bv dict_Sail2_values_Bitvector_a = ( shift_op_bv 
-  dict_Sail2_values_Bitvector_a RR_shift )\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class "
+definition shiftr_bv  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list "  where 
+     " shiftr_bv dict_Sail2_values_Bitvector_a = ( shift_op_bv 
+  dict_Sail2_values_Bitvector_a RR_shift )"
  \<comment> \<open>\<open>">>"\<close>\<close>
-definition arith_shiftr_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list \<close>  where 
-     \<open> arith_shiftr_bv dict_Sail2_values_Bitvector_a = ( shift_op_bv 
-  dict_Sail2_values_Bitvector_a RR_shift_arith )\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class "
+definition arith_shiftr_bv  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list "  where 
+     " arith_shiftr_bv dict_Sail2_values_Bitvector_a = ( shift_op_bv 
+  dict_Sail2_values_Bitvector_a RR_shift_arith )"
 
-definition rotl_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list \<close>  where 
-     \<open> rotl_bv dict_Sail2_values_Bitvector_a = ( shift_op_bv 
-  dict_Sail2_values_Bitvector_a LL_rot )\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class "
+definition rotl_bv  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list "  where 
+     " rotl_bv dict_Sail2_values_Bitvector_a = ( shift_op_bv 
+  dict_Sail2_values_Bitvector_a LL_rot )"
  \<comment> \<open>\<open>"<<<"\<close>\<close>
-definition rotr_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list \<close>  where 
-     \<open> rotr_bv dict_Sail2_values_Bitvector_a = ( shift_op_bv 
-  dict_Sail2_values_Bitvector_a LL_rot )\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class "
+definition rotr_bv  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list "  where 
+     " rotr_bv dict_Sail2_values_Bitvector_a = ( shift_op_bv 
+  dict_Sail2_values_Bitvector_a LL_rot )"
  \<comment> \<open>\<open>">>>"\<close>\<close>
 
-definition shiftl_mword  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> shiftl_mword w n = ( w << (nat_of_int n))\<close> 
-  for  w  :: "('a::len)Word.word " 
-  and  n  :: " int "
+definition shiftl_mword  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word "  where 
+     " shiftl_mword w n = ( w << (nat_of_int n))"
 
-definition shiftr_mword  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> shiftr_mword w n = ( w >> (nat_of_int n))\<close> 
-  for  w  :: "('a::len)Word.word " 
-  and  n  :: " int "
+definition shiftr_mword  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word "  where 
+     " shiftr_mword w n = ( w >> (nat_of_int n))"
 
-definition arith_shiftr_mword  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> arith_shiftr_mword w n = ( w >>> (nat_of_int n))\<close> 
-  for  w  :: "('a::len)Word.word " 
-  and  n  :: " int "
+definition arith_shiftr_mword  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word "  where 
+     " arith_shiftr_mword w n = ( w >>> (nat_of_int n))"
 
-definition rotl_mword  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> rotl_mword w n = ( Word.word_rotl (nat_of_int n) w )\<close> 
-  for  w  :: "('a::len)Word.word " 
-  and  n  :: " int "
+definition rotl_mword  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word "  where 
+     " rotl_mword w n = ( Word.word_rotl (nat_of_int n) w )"
 
-definition rotr_mword  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> rotr_mword w n = ( Word.word_rotr (nat_of_int n) w )\<close> 
-  for  w  :: "('a::len)Word.word " 
-  and  n  :: " int "
+definition rotr_mword  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word "  where 
+     " rotr_mword w n = ( Word.word_rotr (nat_of_int n) w )"
 
 
-fun  arith_op_no0  :: \<open>(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> int \<Rightarrow> int \<Rightarrow>(int)option \<close>  where 
-     \<open> arith_op_no0 (op1 :: int \<Rightarrow> int \<Rightarrow> int) l r = (
+fun  arith_op_no0  :: "(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> int \<Rightarrow> int \<Rightarrow>(int)option "  where 
+     " arith_op_no0 (op1 :: int \<Rightarrow> int \<Rightarrow> int) l r = (
   if r =( 0 :: int)
   then None
-  else Some (op1 l r))\<close> 
-  for  op1  :: " int \<Rightarrow> int \<Rightarrow> int " 
-  and  l  :: " int " 
-  and  r  :: " int "
+  else Some (op1 l r))"
 
 
 \<comment> \<open>\<open>val arith_op_bv_no0 : forall 'a 'b. Bitvector 'a, Bitvector 'b =>
   (integer -> integer -> integer) -> bool -> integer -> 'a -> 'a -> maybe 'b\<close>\<close>
-definition arith_op_bv_no0  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow>(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bool \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'b option \<close>  where 
-     \<open> arith_op_bv_no0 dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b op1 sign size1 l r = (
+definition arith_op_bv_no0  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow>(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bool \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'b option "  where 
+     " arith_op_bv_no0 dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b op1 sign size1 l r = (
   Option.bind (int_of_bv 
-  dict_Sail2_values_Bitvector_a sign l) ((\<lambda> l' . 
+  dict_Sail2_values_Bitvector_a sign l) (\<lambda> l' . 
   Option.bind (int_of_bv 
-  dict_Sail2_values_Bitvector_a sign r) ((\<lambda> r' . 
+  dict_Sail2_values_Bitvector_a sign r) (\<lambda> r' . 
   if r' =( 0 :: int) then None else Some (
-  (of_int_method   dict_Sail2_values_Bitvector_b) ((length_method   dict_Sail2_values_Bitvector_a) l * size1) (op1 l' r')))))))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class " 
-  and  op1  :: " int \<Rightarrow> int \<Rightarrow> int " 
-  and  sign  :: " bool " 
-  and  size1  :: " int " 
-  and  l  :: " 'a " 
-  and  r  :: " 'a "
+  (of_int_method   dict_Sail2_values_Bitvector_b) ((length_method   dict_Sail2_values_Bitvector_a) l * size1) (op1 l' r')))))"
 
 
-definition mod_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'b \<Rightarrow> 'b \<Rightarrow> 'a option \<close>  where 
-     \<open> mod_bv dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b = ( arith_op_bv_no0 
-  dict_Sail2_values_Bitvector_b dict_Sail2_values_Bitvector_a tmod_int False(( 1 :: int)))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class "
+definition mod_bv  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'b \<Rightarrow> 'b \<Rightarrow> 'a option "  where 
+     " mod_bv dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b = ( arith_op_bv_no0 
+  dict_Sail2_values_Bitvector_b dict_Sail2_values_Bitvector_a hardware_mod False(( 1 :: int)))"
 
-definition quot_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'b \<Rightarrow> 'b \<Rightarrow> 'a option \<close>  where 
-     \<open> quot_bv dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b = ( arith_op_bv_no0 
-  dict_Sail2_values_Bitvector_b dict_Sail2_values_Bitvector_a tdiv_int False(( 1 :: int)))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class "
+definition quot_bv  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'b \<Rightarrow> 'b \<Rightarrow> 'a option "  where 
+     " quot_bv dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b = ( arith_op_bv_no0 
+  dict_Sail2_values_Bitvector_b dict_Sail2_values_Bitvector_a hardware_quot False(( 1 :: int)))"
 
-definition quots_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'b \<Rightarrow> 'b \<Rightarrow> 'a option \<close>  where 
-     \<open> quots_bv dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b = ( arith_op_bv_no0 
-  dict_Sail2_values_Bitvector_b dict_Sail2_values_Bitvector_a tdiv_int True(( 1 :: int)))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class "
+definition quots_bv  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'b \<Rightarrow> 'b \<Rightarrow> 'a option "  where 
+     " quots_bv dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b = ( arith_op_bv_no0 
+  dict_Sail2_values_Bitvector_b dict_Sail2_values_Bitvector_a hardware_quot True(( 1 :: int)))"
 
 
-definition mod_mword  :: \<open>('a::len)Word.word \<Rightarrow>('a::len)Word.word \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> mod_mword = ( (mod))\<close>
+definition mod_mword  :: "('a::len)Word.word \<Rightarrow>('a::len)Word.word \<Rightarrow>('a::len)Word.word "  where 
+     " mod_mword = ( (mod))"
 
-definition quot_mword  :: \<open>('a::len)Word.word \<Rightarrow>('a::len)Word.word \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> quot_mword = ( (div))\<close>
+definition quot_mword  :: "('a::len)Word.word \<Rightarrow>('a::len)Word.word \<Rightarrow>('a::len)Word.word "  where 
+     " quot_mword = ( (div))"
 
-definition quots_mword  :: \<open>('a::len)Word.word \<Rightarrow>('a::len)Word.word \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> quots_mword = ( Lem_machine_word.signedDivide )\<close>
-
-
-definition arith_op_bv_int_no0  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow>(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bool \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> 'b option \<close>  where 
-     \<open> arith_op_bv_int_no0 dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b op1 sign size1 l r = (
-  arith_op_bv_no0 dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b op1 sign size1 l ((of_int_method   dict_Sail2_values_Bitvector_a) ((length_method   dict_Sail2_values_Bitvector_a) l) r))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class " 
-  and  op1  :: " int \<Rightarrow> int \<Rightarrow> int " 
-  and  sign  :: " bool " 
-  and  size1  :: " int " 
-  and  l  :: " 'a " 
-  and  r  :: " int "
+definition quots_mword  :: "('a::len)Word.word \<Rightarrow>('a::len)Word.word \<Rightarrow>('a::len)Word.word "  where 
+     " quots_mword = ( Lem_machine_word.signedDivide )"
 
 
-definition quot_bv_int  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'b \<Rightarrow> int \<Rightarrow> 'a option \<close>  where 
-     \<open> quot_bv_int dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b = ( arith_op_bv_int_no0 
-  dict_Sail2_values_Bitvector_b dict_Sail2_values_Bitvector_a tdiv_int False(( 1 :: int)))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class "
-
-definition mod_bv_int  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'b \<Rightarrow> int \<Rightarrow> 'a option \<close>  where 
-     \<open> mod_bv_int dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b = ( arith_op_bv_int_no0 
-  dict_Sail2_values_Bitvector_b dict_Sail2_values_Bitvector_a tmod_int False(( 1 :: int)))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class "
+definition arith_op_bv_int_no0  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow>(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bool \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> 'b option "  where 
+     " arith_op_bv_int_no0 dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b op1 sign size1 l r = (
+  arith_op_bv_no0 dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b op1 sign size1 l ((of_int_method   dict_Sail2_values_Bitvector_a) ((length_method   dict_Sail2_values_Bitvector_a) l) r))"
 
 
-definition mod_mword_int  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> mod_mword_int l r = ( l mod (Word.word_of_int r))\<close> 
-  for  l  :: "('a::len)Word.word " 
-  and  r  :: " int "
+definition quot_bv_int  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'b \<Rightarrow> int \<Rightarrow> 'a option "  where 
+     " quot_bv_int dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b = ( arith_op_bv_int_no0 
+  dict_Sail2_values_Bitvector_b dict_Sail2_values_Bitvector_a hardware_quot False(( 1 :: int)))"
 
-definition quot_mword_int  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> quot_mword_int l r = ( l div (Word.word_of_int r))\<close> 
-  for  l  :: "('a::len)Word.word " 
-  and  r  :: " int "
-
-definition quots_mword_int  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> quots_mword_int l r = ( Lem_machine_word.signedDivide l (Word.word_of_int r))\<close> 
-  for  l  :: "('a::len)Word.word " 
-  and  r  :: " int "
+definition mod_bv_int  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'b \<Rightarrow> int \<Rightarrow> 'a option "  where 
+     " mod_bv_int dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b = ( arith_op_bv_int_no0 
+  dict_Sail2_values_Bitvector_b dict_Sail2_values_Bitvector_a hardware_mod False(( 1 :: int)))"
 
 
-definition replicate_bits_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list \<close>  where 
-     \<open> replicate_bits_bv dict_Sail2_values_Bitvector_a v count1 = ( repeat (
-  (bits_of_method   dict_Sail2_values_Bitvector_a) v) count1 )\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  v  :: " 'a " 
-  and  count1  :: " int "
+definition mod_mword_int  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word "  where 
+     " mod_mword_int l r = ( l mod (Word.word_of_int r))"
 
-definition duplicate_bit_bv  :: \<open> 'a BitU_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list \<close>  where 
-     \<open> duplicate_bit_bv dict_Sail2_values_BitU_a bit len = ( replicate_bits_bv 
-  (instance_Sail2_values_Bitvector_list_dict dict_Sail2_values_BitU_a) [bit] len )\<close> 
-  for  dict_Sail2_values_BitU_a  :: " 'a BitU_class " 
-  and  bit  :: " 'a " 
-  and  len  :: " int "
+definition quot_mword_int  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word "  where 
+     " quot_mword_int l r = ( l div (Word.word_of_int r))"
+
+definition quots_mword_int  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow>('a::len)Word.word "  where 
+     " quots_mword_int l r = ( Lem_machine_word.signedDivide l (Word.word_of_int r))"
+
+
+definition replicate_bits_bv  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list "  where 
+     " replicate_bits_bv dict_Sail2_values_Bitvector_a v count1 = ( repeat (
+  (bits_of_method   dict_Sail2_values_Bitvector_a) v) count1 )"
+
+definition duplicate_bit_bv  :: " 'a BitU_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow>(bitU)list "  where 
+     " duplicate_bit_bv dict_Sail2_values_BitU_a bit len = ( replicate_bits_bv 
+  (instance_Sail2_values_Bitvector_list_dict dict_Sail2_values_BitU_a) [bit] len )"
 
 
 \<comment> \<open>\<open>val eq_bv : forall 'a. Bitvector 'a => 'a -> 'a -> bool\<close>\<close>
-definition eq_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> bool \<close>  where 
-     \<open> eq_bv dict_Sail2_values_Bitvector_a l r = ( (
-  (bits_of_method   dict_Sail2_values_Bitvector_a) l =(bits_of_method   dict_Sail2_values_Bitvector_a) r))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  l  :: " 'a " 
-  and  r  :: " 'a "
+definition eq_bv  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> bool "  where 
+     " eq_bv dict_Sail2_values_Bitvector_a l r = ( (
+  (bits_of_method   dict_Sail2_values_Bitvector_a) l =(bits_of_method   dict_Sail2_values_Bitvector_a) r))"
 
 
 \<comment> \<open>\<open>val neq_bv : forall 'a. Bitvector 'a => 'a -> 'a -> bool\<close>\<close>
-definition neq_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> bool \<close>  where 
-     \<open> neq_bv dict_Sail2_values_Bitvector_a l r = ( \<not> (eq_bv 
-  dict_Sail2_values_Bitvector_a l r))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  l  :: " 'a " 
-  and  r  :: " 'a "
+definition neq_bv  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> bool "  where 
+     " neq_bv dict_Sail2_values_Bitvector_a l r = ( \<not> (eq_bv 
+  dict_Sail2_values_Bitvector_a l r))"
 
 
 \<comment> \<open>\<open>val get_slice_int_bv : forall 'a. Bitvector 'a => integer -> integer -> integer -> 'a\<close>\<close>
-definition get_slice_int_bv  :: \<open> 'a Bitvector_class \<Rightarrow> int \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a \<close>  where 
-     \<open> get_slice_int_bv dict_Sail2_values_Bitvector_a len n lo = (
+definition get_slice_int_bv  :: " 'a Bitvector_class \<Rightarrow> int \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a "  where 
+     " get_slice_int_bv dict_Sail2_values_Bitvector_a len n lo = (
   (let hi = ((lo + len) -( 1 :: int)) in
   (let bs = (bools_of_int (hi +( 1 :: int)) n) in 
-  (of_bools_method   dict_Sail2_values_Bitvector_a) (subrange_list False bs hi lo))))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  len  :: " int " 
-  and  n  :: " int " 
-  and  lo  :: " int "
+  (of_bools_method   dict_Sail2_values_Bitvector_a) (subrange_list False bs hi lo))))"
 
 
 \<comment> \<open>\<open>val set_slice_int_bv : forall 'a. Bitvector 'a => integer -> integer -> integer -> 'a -> integer\<close>\<close>
-definition set_slice_int_bv  :: \<open> 'a Bitvector_class \<Rightarrow> int \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> int \<close>  where 
-     \<open> set_slice_int_bv dict_Sail2_values_Bitvector_a len n lo v = (
+definition set_slice_int_bv  :: " 'a Bitvector_class \<Rightarrow> int \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> int "  where 
+     " set_slice_int_bv dict_Sail2_values_Bitvector_a len n lo v = (
   (let hi = ((lo + len) -( 1 :: int)) in
   (let bs = (bits_of_int (hi +( 1 :: int)) n) in
   maybe_failwith (signed_of_bits (update_subrange_list False bs hi lo (
-  (bits_of_method   dict_Sail2_values_Bitvector_a) v))))))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  len  :: " int " 
-  and  n  :: " int " 
-  and  lo  :: " int " 
-  and  v  :: " 'a "
+  (bits_of_method   dict_Sail2_values_Bitvector_a) v))))))"
 
 end

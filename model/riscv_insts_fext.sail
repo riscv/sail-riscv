@@ -1,71 +1,3 @@
-/*=======================================================================================*/
-/*  RISCV Sail Model                                                                     */
-/*                                                                                       */
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except for the snapshots of the Lem and Sail libraries                   */
-/*  in the prover_snapshots directory (which include copies of their                     */
-/*  licences), is subject to the BSD two-clause licence below.                           */
-/*                                                                                       */
-/*  Copyright (c) 2017-2021                                                              */
-/*    Prashanth Mundkur                                                                  */
-/*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
-/*    Jon French                                                                         */
-/*    Brian Campbell                                                                     */
-/*    Robert Norton-Wright                                                               */
-/*    Alasdair Armstrong                                                                 */
-/*    Thomas Bauereiss                                                                   */
-/*    Shaked Flur                                                                        */
-/*    Christopher Pulte                                                                  */
-/*    Peter Sewell                                                                       */
-/*    Alexander Richardson                                                               */
-/*    Hesham Almatary                                                                    */
-/*    Jessica Clarke                                                                     */
-/*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
-/*    Peter Rugg                                                                         */
-/*    Aril Computer Corp., for contributions by Scott Johnson                            */
-/*                                                                                       */
-/*  All rights reserved.                                                                 */
-/*                                                                                       */
-/*  This software was developed by the above within the Rigorous                         */
-/*  Engineering of Mainstream Systems (REMS) project, partly funded by                   */
-/*  EPSRC grant EP/K008528/1, at the Universities of Cambridge and                       */
-/*  Edinburgh.                                                                           */
-/*                                                                                       */
-/*  This software was developed by SRI International and the University of               */
-/*  Cambridge Computer Laboratory (Department of Computer Science and                    */
-/*  Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and                 */
-/*  under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA                 */
-/*  SSITH research programme.                                                            */
-/*                                                                                       */
-/*  This project has received funding from the European Research Council                 */
-/*  (ERC) under the European Union’s Horizon 2020 research and innovation                */
-/*  programme (grant agreement 789108, ELVER).                                           */
-/*                                                                                       */
-/*                                                                                       */
-/*  Redistribution and use in source and binary forms, with or without                   */
-/*  modification, are permitted provided that the following conditions                   */
-/*  are met:                                                                             */
-/*  1. Redistributions of source code must retain the above copyright                    */
-/*     notice, this list of conditions and the following disclaimer.                     */
-/*  2. Redistributions in binary form must reproduce the above copyright                 */
-/*     notice, this list of conditions and the following disclaimer in                   */
-/*     the documentation and/or other materials provided with the                        */
-/*     distribution.                                                                     */
-/*                                                                                       */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''                   */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED                    */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                      */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR                  */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                         */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                     */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF                     */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND                  */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,                   */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT                   */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF                   */
-/*  SUCH DAMAGE.                                                                         */
-/*=======================================================================================*/
-
 /* **************************************************************** */
 /* This file specifies the instructions in the F extension          */
 /* (single precision floating point).                               */
@@ -102,18 +34,11 @@ mapping frm_mnemonic : rounding_mode <-> string = {
   RM_DYN <-> "dyn"
 }
 
-val      valid_rounding_mode : bits(3) -> bool
-function valid_rounding_mode rm = (rm != 0b101 & rm != 0b110)
-
-val      select_instr_or_fcsr_rm : rounding_mode -> option(rounding_mode) effect {rreg}
-function select_instr_or_fcsr_rm instr_rm =
-  if (instr_rm == RM_DYN)
-  then {
-    let fcsr_rm = fcsr.FRM();
-    if (valid_rounding_mode(fcsr_rm) & fcsr_rm != encdec_rounding_mode(RM_DYN))
-      then Some(encdec_rounding_mode(fcsr_rm)) else None()
-  }
-  else Some(instr_rm)
+val       select_instr_or_fcsr_rm : rounding_mode -> rounding_mode effect {rreg}
+function  select_instr_or_fcsr_rm   instr_rm =
+  if   (instr_rm == RM_DYN)
+  then encdec_rounding_mode (fcsr.FRM())
+  else instr_rm
 
 /* **************************************************************** */
 /* Floating point accrued exception flags                           */
@@ -133,6 +58,10 @@ function fsplit_S   x32 = (x32[31..31], x32[30..23], x32[22..0])
 
 val      fmake_S  : (bits(1), bits(8), bits(23)) -> bits(32)
 function fmake_S (sign, exp, mant) = sign @ exp @ mant
+
+/* ---- Canonical NaNs */
+
+function canonical_NaN_S() -> bits(32) = 0x_7fc0_0000
 
 /* ---- Structure tests */
 
@@ -316,9 +245,35 @@ function fle_S   (v1,       v2,        is_quiet) = {
 }
 
 /* **************************************************************** */
-/* Helper functions for 'encdec()'                                  */
+/* NaN boxing/unboxing.                                             */
+/* When 32-bit floats (single-precision) are stored in 64-bit regs  */
+/* they must be 'NaN boxed' (upper 32b all ones).                   */
+/* When 32-bit floats (single-precision) are read from 64-bit regs  */
+/* they must be 'NaN unboxed'.                                      */
 
-function haveSingleFPU() -> bool = haveFExt() | haveZfinx()
+val      nan_box : bits(32) -> flenbits
+function nan_box   val_32b =
+  if (sizeof(flen) == 32)
+  then val_32b
+  else 0x_FFFF_FFFF @ val_32b
+
+val      nan_unbox : flenbits -> bits(32)
+function nan_unbox   regval =
+  if (sizeof(flen) == 32)
+  then regval
+  else if regval [63..32] == 0x_FFFF_FFFF
+       then regval [31..0]
+       else canonical_NaN_S()
+
+/* **************************************************************** */
+/* Help-functions for 'encdec()' to restrict to certain             */
+/* combinations of {F,D} x {RV32,RV64}                              */
+
+function is_RV32F_or_RV64F () -> bool = (haveFExt() & (sizeof(xlen) == 32 | sizeof(xlen) == 64))
+function is_RV64F          () -> bool = (haveFExt() & sizeof(xlen) == 64)
+
+function is_RV32D_or_RV64D () -> bool = (haveDExt() & (sizeof(xlen) == 32 | sizeof(xlen) == 64))
+function is_RV64D          () -> bool = (haveDExt() & sizeof(xlen) == 64)
 
 /* ****************************************************************** */
 /* Floating-point loads                                               */
@@ -330,11 +285,11 @@ union clause ast = LOAD_FP : (bits(12), regidx, regidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)          if haveFExt()
-                    <-> imm @ rs1 @ 0b010 @ rd @ 0b000_0111  if haveFExt()
+mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)          if is_RV32F_or_RV64F()
+                    <-> imm @ rs1 @ 0b010 @ rd @ 0b000_0111  if is_RV32F_or_RV64F()
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if haveDExt()
-                    <-> imm @ rs1 @ 0b011 @ rd @ 0b000_0111  if haveDExt()
+mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if is_RV32D_or_RV64D()
+                    <-> imm @ rs1 @ 0b011 @ rd @ 0b000_0111  if is_RV32D_or_RV64D()
 
 /* Execution semantics ================================ */
 
@@ -373,7 +328,7 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
         TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) => {
           let (aq, rl, res) = (false, false, false);
-          match (width, sizeof(flen)) {
+          match (width, sizeof(xlen)) {
             (BYTE, _)   => { handle_illegal(); RETIRE_FAIL },
             (HALF, _)   => { handle_illegal(); RETIRE_FAIL },
             (WORD, _)   =>
@@ -390,7 +345,7 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
 
 mapping clause assembly = LOAD_FP(imm, rs1, rd, width)
                       <-> "fl" ^ size_mnemonic(width)
-                          ^ spc() ^ freg_or_reg_name(rd)
+                          ^ spc() ^ freg_name(rd)
                           ^ sep() ^ hex_bits_12(imm)
                           ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
@@ -404,11 +359,11 @@ union clause ast = STORE_FP : (bits(12), regidx, regidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)                             if haveFExt()
-                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b010 @ imm5 : bits(5) @ 0b010_0111  if haveFExt()
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)                             if is_RV32F_or_RV64F()
+                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b010 @ imm5 : bits(5) @ 0b010_0111  if is_RV32F_or_RV64F()
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)                           if haveDExt()
-                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b011 @ imm5 : bits(5) @ 0b010_0111  if haveDExt()
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)                           if is_RV32D_or_RV64D()
+                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b011 @ imm5 : bits(5) @ 0b010_0111  if is_RV32D_or_RV64D()
 
 /* Execution semantics ================================ */
 
@@ -443,7 +398,7 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
             MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
             MemValue(_) => {
               let rs2_val = F(rs2);
-              match (width, sizeof(flen)) {
+              match (width, sizeof(xlen)) {
                 (BYTE, _)    => { handle_illegal(); RETIRE_FAIL },
                 (HALF, _)    => { handle_illegal(); RETIRE_FAIL },
                 (WORD, _)    => process_fstore (vaddr, mem_write_value(addr, 4, rs2_val[31..0], aq, rl, con)),
@@ -474,43 +429,38 @@ union clause ast = F_MADD_TYPE_S : (regidx, regidx, regidx, rounding_mode, regid
 /* AST <-> Binary encoding ================================ */
 
 mapping clause encdec =
-    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FMADD_S)                         if haveSingleFPU()
-<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0011  if haveSingleFPU()
+    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FMADD_S)                         if is_RV32F_or_RV64F()
+<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FMSUB_S)                         if haveSingleFPU()
-<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0111  if haveSingleFPU()
+    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FMSUB_S)                         if is_RV32F_or_RV64F()
+<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0111  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FNMSUB_S)                        if haveSingleFPU()
-<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1011  if haveSingleFPU()
+    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FNMSUB_S)                        if is_RV32F_or_RV64F()
+<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FNMADD_S)                        if haveSingleFPU()
-<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1111  if haveSingleFPU()
+    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FNMADD_S)                        if is_RV32F_or_RV64F()
+<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1111  if is_RV32F_or_RV64F()
 
 /* Execution semantics ================================ */
 
 function clause execute (F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)) = {
-  let rs1_val_32b = F_or_X_S(rs1);
-  let rs2_val_32b = F_or_X_S(rs2);
-  let rs3_val_32b = F_or_X_S(rs3);
-  match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
-    Some(rm') => {
-      let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_32b) : (bits(5), bits(32)) =
-        match op {
-          FMADD_S  => riscv_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, rs3_val_32b),
-          FMSUB_S  => riscv_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, negate_S (rs3_val_32b)),
-          FNMSUB_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, rs3_val_32b),
-          FNMADD_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, negate_S (rs3_val_32b))
-        };
-      write_fflags(fflags);
-      F_or_X_S(rd) = rd_val_32b;
-      RETIRE_SUCCESS
-    }
-  }
+  let rs1_val_32b = nan_unbox (F(rs1));
+  let rs2_val_32b = nan_unbox (F(rs2));
+  let rs3_val_32b = nan_unbox (F(rs3));
+  let rm_3b       = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  let (fflags, rd_val_32b) : (bits(5), bits(32)) =
+    match op {
+      FMADD_S  => riscv_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, rs3_val_32b),
+      FMSUB_S  => riscv_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, negate_S (rs3_val_32b)),
+      FNMSUB_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, rs3_val_32b),
+      FNMADD_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, negate_S (rs3_val_32b))
+    };
+  write_fflags(fflags);
+  F(rd) = nan_box (rd_val_32b);
+  RETIRE_SUCCESS
 }
 
 /* AST -> Assembly notation ================================ */
@@ -524,10 +474,10 @@ mapping f_madd_type_mnemonic_S : f_madd_op_S <-> string = {
 
 mapping clause assembly = F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)
                       <-> f_madd_type_mnemonic_S(op)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
-                          ^ sep() ^ freg_or_reg_name(rs3)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
+                          ^ sep() ^ freg_name(rs3)
                           ^ sep() ^ frm_mnemonic(rm)
 
 /* ****************************************************************** */
@@ -540,41 +490,36 @@ union clause ast = F_BIN_RM_TYPE_S : (regidx, regidx, rounding_mode, regidx, f_b
 /* AST <-> Binary encoding ================================ */
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FADD_S)                             if haveSingleFPU()
-<-> 0b000_0000 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FADD_S)                             if is_RV32F_or_RV64F()
+<-> 0b000_0000 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FSUB_S)                             if haveSingleFPU()
-<-> 0b000_0100 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FSUB_S)                             if is_RV32F_or_RV64F()
+<-> 0b000_0100 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FMUL_S)                             if haveSingleFPU()
-<-> 0b000_1000 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FMUL_S)                             if is_RV32F_or_RV64F()
+<-> 0b000_1000 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FDIV_S)                             if haveSingleFPU()
-<-> 0b000_1100 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FDIV_S)                             if is_RV32F_or_RV64F()
+<-> 0b000_1100 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)) = {
-  let rs1_val_32b = F_or_X_S(rs1);
-  let rs2_val_32b = F_or_X_S(rs2);
-  match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
-    Some(rm') => {
-      let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_32b) : (bits(5), bits(32)) = match op {
-        FADD_S  => riscv_f32Add (rm_3b, rs1_val_32b, rs2_val_32b),
-        FSUB_S  => riscv_f32Sub (rm_3b, rs1_val_32b, rs2_val_32b),
-        FMUL_S  => riscv_f32Mul (rm_3b, rs1_val_32b, rs2_val_32b),
-        FDIV_S  => riscv_f32Div (rm_3b, rs1_val_32b, rs2_val_32b)
-      };
-      write_fflags(fflags);
-      F_or_X_S(rd) = rd_val_32b;
-      RETIRE_SUCCESS
-    }
-  }
+  let rs1_val_32b = nan_unbox (F(rs1));
+  let rs2_val_32b = nan_unbox (F(rs2));
+  let rm_3b       = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
+  let (fflags, rd_val_32b) : (bits(5), bits(32)) = match op {
+    FADD_S  => riscv_f32Add (rm_3b, rs1_val_32b, rs2_val_32b),
+    FSUB_S  => riscv_f32Sub (rm_3b, rs1_val_32b, rs2_val_32b),
+    FMUL_S  => riscv_f32Mul (rm_3b, rs1_val_32b, rs2_val_32b),
+    FDIV_S  => riscv_f32Div (rm_3b, rs1_val_32b, rs2_val_32b)
+  };
+  write_fflags(fflags);
+  F(rd) = nan_box (rd_val_32b);
+  RETIRE_SUCCESS
 }
 
 /* AST -> Assembly notation ================================ */
@@ -588,9 +533,9 @@ mapping f_bin_rm_type_mnemonic_S : f_bin_rm_op_S <-> string = {
 
 mapping clause assembly = F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)
                       <-> f_bin_rm_type_mnemonic_S(op)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
                           ^ sep() ^ frm_mnemonic(rm)
 
 /* ****************************************************************** */
@@ -603,181 +548,165 @@ union clause ast = F_UN_RM_TYPE_S : (regidx, rounding_mode, regidx, f_un_rm_op_S
 /* AST <-> Binary encoding ================================ */
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)                                      if haveSingleFPU()
-<-> 0b010_1100 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)                                      if is_RV32F_or_RV64F()
+<-> 0b010_1100 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)                                     if haveSingleFPU()
-<-> 0b110_0000 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)                                     if is_RV32F_or_RV64F()
+<-> 0b110_0000 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)                                    if haveSingleFPU()
-<-> 0b110_0000 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)                                    if is_RV32F_or_RV64F()
+<-> 0b110_0000 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_W)                                     if haveSingleFPU()
-<-> 0b110_1000 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_W)                                     if is_RV32F_or_RV64F()
+<-> 0b110_1000 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)                                    if haveSingleFPU()
-<-> 0b110_1000 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)                                    if is_RV32F_or_RV64F()
+<-> 0b110_1000 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 /* F instructions, RV64 only */
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)                                     if haveSingleFPU() & sizeof(xlen) >= 64
-<-> 0b110_0000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)                                     if is_RV64F()
+<-> 0b110_0000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV64F()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)                                    if haveSingleFPU() & sizeof(xlen) >= 64
-<-> 0b110_0000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)                                    if is_RV64F()
+<-> 0b110_0000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV64F()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)                                     if haveSingleFPU() & sizeof(xlen) >= 64
-<-> 0b110_1000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)                                     if is_RV64F()
+<-> 0b110_1000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV64F()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)                                    if haveSingleFPU() & sizeof(xlen) >= 64
-<-> 0b110_1000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)                                    if is_RV64F()
+<-> 0b110_1000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if is_RV64F()
 
 /* Execution semantics ================================ */
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
-  match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
-    Some(rm') => {
-      let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_S) = riscv_f32Sqrt   (rm_3b, rs1_val_S);
+  let rs1_val_S = nan_unbox (F(rs1));
+  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-      write_fflags(fflags);
-      F_or_X_S(rd) = rd_val_S;
-      RETIRE_SUCCESS
-    }
-  }
+  let (fflags, rd_val_S) = riscv_f32Sqrt   (rm_3b, rs1_val_S);
+
+  write_fflags(fflags);
+  F(rd) = nan_box (rd_val_S);
+  RETIRE_SUCCESS
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
-  match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
-    Some(rm') => {
-      let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_W) = riscv_f32ToI32 (rm_3b, rs1_val_S);
+  let rs1_val_S = nan_unbox (F(rs1));
+  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-      write_fflags(fflags);
-      X(rd) = EXTS (rd_val_W);
-      RETIRE_SUCCESS
-    }
-  }
+  let (fflags, rd_val_W) = riscv_f32ToI32 (rm_3b, rs1_val_S);
+
+  write_fflags(fflags);
+  X(rd) = EXTS (rd_val_W);
+  RETIRE_SUCCESS
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
-  match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
-    Some(rm') => {
-      let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_WU) = riscv_f32ToUi32 (rm_3b, rs1_val_S);
+  let rs1_val_S = nan_unbox (F(rs1));
+  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-      write_fflags(fflags);
-      X(rd) = EXTS (rd_val_WU);
-      RETIRE_SUCCESS
-    }
-  }
+  let (fflags, rd_val_WU) = riscv_f32ToUi32 (rm_3b, rs1_val_S);
+
+  write_fflags(fflags);
+  X(rd) = EXTS (rd_val_WU);
+  RETIRE_SUCCESS
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_W)) = {
   let rs1_val_W = X(rs1) [31..0];
-  match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
-    Some(rm') => {
-      let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_S) = riscv_i32ToF32 (rm_3b, rs1_val_W);
+  let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-      write_fflags(fflags);
-      F_or_X_S(rd) = rd_val_S;
-      RETIRE_SUCCESS
-    }
-  }
+  let (fflags, rd_val_S) = riscv_i32ToF32 (rm_3b, rs1_val_W);
+
+  write_fflags(fflags);
+  F(rd) = nan_box (rd_val_S);
+  RETIRE_SUCCESS
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
   let rs1_val_WU = X(rs1) [31..0];
-  match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
-    Some(rm') => {
-      let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_S) = riscv_ui32ToF32 (rm_3b, rs1_val_WU);
+  let rm_3b      = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-      write_fflags(fflags);
-      F_or_X_S(rd) = rd_val_S;
-      RETIRE_SUCCESS
-    }
-  }
+  let (fflags, rd_val_S) = riscv_ui32ToF32 (rm_3b, rs1_val_WU);
+
+  write_fflags(fflags);
+  F(rd) = nan_box (rd_val_S);
+  RETIRE_SUCCESS
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
-  assert(sizeof(xlen) >= 64);
-  let rs1_val_S = F_or_X_S(rs1);
-  match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
-    Some(rm') => {
-      let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_L) = riscv_f32ToI64 (rm_3b, rs1_val_S);
+  if   sizeof(flen) == 64
+  then {
+    let rs1_val_S = nan_unbox (F(rs1));
+    let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-      write_fflags(fflags);
-      X(rd) = EXTS(rd_val_L);
-      RETIRE_SUCCESS
-    }
+    let (fflags, rd_val_L) = riscv_f32ToI64 (rm_3b, rs1_val_S);
+
+    write_fflags(fflags);
+    X(rd) = rd_val_L;
+    RETIRE_SUCCESS
+  } else {
+    /* this would not decode on RV32 */
+    RETIRE_FAIL
   }
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
-  assert(sizeof(xlen) >= 64);
-  let rs1_val_S = F_or_X_S(rs1);
-  match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
-    Some(rm') => {
-      let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_LU) = riscv_f32ToUi64 (rm_3b, rs1_val_S);
+  if   sizeof(flen) == 64
+  then {
+    let rs1_val_S = nan_unbox (F(rs1));
+    let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-      write_fflags(fflags);
-      X(rd) = EXTS(rd_val_LU);
-      RETIRE_SUCCESS
-    }
+    let (fflags, rd_val_LU) = riscv_f32ToUi64 (rm_3b, rs1_val_S);
+
+    write_fflags(fflags);
+    X(rd) = rd_val_LU;
+    RETIRE_SUCCESS
+  } else {
+    /* this would not decode on RV32 */
+    RETIRE_FAIL
   }
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
-  assert(sizeof(xlen) >= 64);
-  let rs1_val_L = X(rs1)[63..0];
-  match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
-    Some(rm') => {
-      let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
+  if   sizeof(flen) == 64
+  then {
+    let rs1_val_L = X(rs1);
+    let rm_3b     = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-      write_fflags(fflags);
-      F_or_X_S(rd) = rd_val_S;
-      RETIRE_SUCCESS
-    }
+    let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
+
+    write_fflags(fflags);
+    F(rd) = nan_box (rd_val_S);
+    RETIRE_SUCCESS
+  } else {
+    /* this would not decode on RV32 */
+    RETIRE_FAIL
   }
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
-  assert(sizeof(xlen) >= 64);
-  let rs1_val_LU = X(rs1)[63..0];
-  match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
-    Some(rm') => {
-      let rm_3b = encdec_rounding_mode(rm');
-      let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
+  if   sizeof(flen) == 64
+  then {
+    let rs1_val_LU = X(rs1);
+    let rm_3b      = encdec_rounding_mode (select_instr_or_fcsr_rm  (rm));
 
-      write_fflags(fflags);
-      F_or_X_S(rd) = rd_val_S;
-      RETIRE_SUCCESS
-    }
+    let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
+
+    write_fflags(fflags);
+    F(rd) = nan_box (rd_val_S);
+    RETIRE_SUCCESS
+  } else {
+    /* this would not decode on RV32 */
+    RETIRE_FAIL
   }
 }
 
@@ -798,55 +727,55 @@ mapping f_un_rm_type_mnemonic_S : f_un_rm_op_S <-> string = {
 
 mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)
                       <-> f_un_rm_type_mnemonic_S(FSQRT_S)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
 
 mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)
                       <-> f_un_rm_type_mnemonic_S(FCVT_W_S)
                           ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
+                          ^ sep() ^ freg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
 
 mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)
                       <-> f_un_rm_type_mnemonic_S(FCVT_WU_S)
                           ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
+                          ^ sep() ^ freg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
 
 mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_W)
                       <-> f_un_rm_type_mnemonic_S(FCVT_S_W)
-                          ^ spc() ^ freg_or_reg_name(rd)
+                          ^ spc() ^ freg_name(rd)
                           ^ sep() ^ reg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
 
 mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)
                       <-> f_un_rm_type_mnemonic_S(FCVT_S_WU)
-                          ^ spc() ^ freg_or_reg_name(rd)
+                          ^ spc() ^ freg_name(rd)
                           ^ sep() ^ reg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
 
 mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)
                       <-> f_un_rm_type_mnemonic_S(FCVT_L_S)
                           ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
+                          ^ sep() ^ freg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
 
 mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)
                       <-> f_un_rm_type_mnemonic_S(FCVT_LU_S)
                           ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
+                          ^ sep() ^ freg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
 
 mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)
                       <-> f_un_rm_type_mnemonic_S(FCVT_S_L)
-                          ^ spc() ^ freg_or_reg_name(rd)
+                          ^ spc() ^ freg_name(rd)
                           ^ sep() ^ reg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
 
 mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)
                       <-> f_un_rm_type_mnemonic_S(FCVT_S_LU)
-                          ^ spc() ^ freg_or_reg_name(rd)
+                          ^ spc() ^ freg_name(rd)
                           ^ sep() ^ reg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
 
@@ -860,68 +789,68 @@ union clause ast = F_BIN_TYPE_S : (regidx, regidx, regidx, f_bin_op_S)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)               if haveSingleFPU()
-                    <-> 0b001_0000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)               if is_RV32F_or_RV64F()
+                    <-> 0b001_0000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)              if haveSingleFPU()
-                    <-> 0b001_0000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)              if is_RV32F_or_RV64F()
+                    <-> 0b001_0000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)              if haveSingleFPU()
-                    <-> 0b001_0000 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)              if is_RV32F_or_RV64F()
+                    <-> 0b001_0000 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)                if haveSingleFPU()
-                    <-> 0b001_0100 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)                if is_RV32F_or_RV64F()
+                    <-> 0b001_0100 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)                if haveSingleFPU()
-                    <-> 0b001_0100 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)                if is_RV32F_or_RV64F()
+                    <-> 0b001_0100 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)                 if haveSingleFPU()
-                    <-> 0b101_0000 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)                 if is_RV32F_or_RV64F()
+                    <-> 0b101_0000 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)                 if haveSingleFPU()
-                    <-> 0b101_0000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)                 if is_RV32F_or_RV64F()
+                    <-> 0b101_0000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)                 if haveSingleFPU()
-                    <-> 0b101_0000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)                 if is_RV32F_or_RV64F()
+                    <-> 0b101_0000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if is_RV32F_or_RV64F()
 
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)) = {
-  let rs1_val_S    = F_or_X_S(rs1);
-  let rs2_val_S    = F_or_X_S(rs2);
+  let rs1_val_S    = nan_unbox (F(rs1));
+  let rs2_val_S    = nan_unbox (F(rs2));
   let (s1, e1, m1) = fsplit_S (rs1_val_S);
   let (s2, e2, m2) = fsplit_S (rs2_val_S);
   let rd_val_S     = fmake_S (s2, e1, m1);
 
-  F_or_X_S(rd) = rd_val_S;
+  F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)) = {
-  let rs1_val_S    = F_or_X_S(rs1);
-  let rs2_val_S    = F_or_X_S(rs2);
+  let rs1_val_S    = nan_unbox (F(rs1));
+  let rs2_val_S    = nan_unbox (F(rs2));
   let (s1, e1, m1) = fsplit_S (rs1_val_S);
   let (s2, e2, m2) = fsplit_S (rs2_val_S);
   let rd_val_S     = fmake_S (0b1 ^ s2, e1, m1);
 
-  F_or_X_S(rd) = rd_val_S;
+  F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)) = {
-  let rs1_val_S    = F_or_X_S(rs1);
-  let rs2_val_S    = F_or_X_S(rs2);
+  let rs1_val_S    = nan_unbox (F(rs1));
+  let rs2_val_S    = nan_unbox (F(rs2));
   let (s1, e1, m1) = fsplit_S (rs1_val_S);
   let (s2, e2, m2) = fsplit_S (rs2_val_S);
   let rd_val_S     = fmake_S (s1 ^ s2, e1, m1);
 
-  F_or_X_S(rd) = rd_val_S;
+  F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
-  let rs2_val_S = F_or_X_S(rs2);
+  let rs1_val_S = nan_unbox (F(rs1));
+  let rs2_val_S = nan_unbox (F(rs2));
 
   let is_quiet  = true;
   let (rs1_lt_rs2, fflags) = fle_S (rs1_val_S, rs2_val_S, is_quiet);
@@ -935,13 +864,13 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)) = {
                   else /* (not rs1_lt_rs2) */                                            rs2_val_S;
 
   accrue_fflags(fflags);
-  F_or_X_S(rd) = rd_val_S;
+  F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
-  let rs2_val_S = F_or_X_S(rs2);
+  let rs1_val_S = nan_unbox (F(rs1));
+  let rs2_val_S = nan_unbox (F(rs2));
 
   let is_quiet  = true;
   let (rs2_lt_rs1, fflags) = fle_S (rs2_val_S, rs1_val_S, is_quiet);
@@ -955,43 +884,43 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)) = {
                   else /* (not rs2_lt_rs1) */                                            rs2_val_S;
 
   accrue_fflags(fflags);
-  F_or_X_S(rd) = rd_val_S;
+  F(rd) = nan_box (rd_val_S);
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
-  let rs2_val_S = F_or_X_S(rs2);
+  let rs1_val_S = nan_unbox (F(rs1));
+  let rs2_val_S = nan_unbox (F(rs2));
 
-  let (fflags, rd_val) : (bits_fflags, bool) =
+  let (fflags, rd_val) : (bits_fflags, bits_WU) =
       riscv_f32Eq (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(bool_to_bits(rd_val));
+  X(rd) = EXTZ(rd_val);
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
-  let rs2_val_S = F_or_X_S(rs2);
+  let rs1_val_S = nan_unbox (F(rs1));
+  let rs2_val_S = nan_unbox (F(rs2));
 
-  let (fflags, rd_val) : (bits_fflags, bool) =
+  let (fflags, rd_val) : (bits_fflags, bits_WU) =
       riscv_f32Lt (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(bool_to_bits(rd_val));
+  X(rd) = EXTZ(rd_val);
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
-  let rs2_val_S = F_or_X_S(rs2);
+  let rs1_val_S = nan_unbox (F(rs1));
+  let rs2_val_S = nan_unbox (F(rs2));
 
-  let (fflags, rd_val) : (bits_fflags, bool) =
+  let (fflags, rd_val) : (bits_fflags, bits_WU) =
       riscv_f32Le (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(bool_to_bits(rd_val));
+  X(rd) = EXTZ(rd_val);
   RETIRE_SUCCESS
 }
 
@@ -1010,51 +939,51 @@ mapping f_bin_type_mnemonic_S : f_bin_op_S <-> string = {
 
 mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)
                       <-> f_bin_type_mnemonic_S(FSGNJ_S)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
 
 mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)
                       <-> f_bin_type_mnemonic_S(FSGNJN_S)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
 
 mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)
                       <-> f_bin_type_mnemonic_S(FSGNJX_S)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
 
 mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)
                       <-> f_bin_type_mnemonic_S(FMIN_S)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
 
 mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)
                       <-> f_bin_type_mnemonic_S(FMAX_S)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
+                          ^ spc() ^ freg_name(rd)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
 
 mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)
                       <-> f_bin_type_mnemonic_S(FEQ_S)
                           ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
 
 mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)
                       <-> f_bin_type_mnemonic_S(FLT_S)
                           ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
 
 mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)
                       <-> f_bin_type_mnemonic_S(FLE_S)
                           ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
+                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_name(rs2)
 
 /* ****************************************************************** */
 /* Unary, no rounding mode */
@@ -1063,8 +992,8 @@ union clause ast = F_UN_TYPE_S : (regidx, regidx, f_un_op_S)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = F_UN_TYPE_S(rs1, rd, FCLASS_S)                        if haveSingleFPU()
-                    <-> 0b111_0000 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_UN_TYPE_S(rs1, rd, FCLASS_S)                        if haveFExt()
+                    <-> 0b111_0000 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveFExt()
 
 mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_X_W)                         if haveFExt()
                     <-> 0b111_0000 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveFExt()
@@ -1075,7 +1004,7 @@ mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_W_X)                         if
 /* Execution semantics ================================ */
 
 function clause execute (F_UN_TYPE_S(rs1, rd, FCLASS_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
+  let rs1_val_S = nan_unbox (F(rs1));
 
   let rd_val_10b : bits (10) =
     if      f_is_neg_inf_S     (rs1_val_S) then 0b_00_0000_0001
@@ -1129,6 +1058,6 @@ mapping clause assembly = F_UN_TYPE_S(rs1, rd, FMV_W_X)
 mapping clause assembly = F_UN_TYPE_S(rs1, rd, FCLASS_S)
                       <-> f_un_type_mnemonic_S(FCLASS_S)
                           ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
+                          ^ sep() ^ freg_name(rs1)
 
 /* ****************************************************************** */

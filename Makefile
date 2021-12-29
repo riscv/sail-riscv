@@ -7,28 +7,27 @@ else ifeq ($(ARCH),64)
   override ARCH := RV64
 endif
 
+# Currently, we only have F with RV32, and both F and D with RV64.
 ifeq ($(ARCH),RV32)
   SAIL_XLEN := riscv_xlen32.sail
+  SAIL_FLEN := riscv_flen_F.sail
 else ifeq ($(ARCH),RV64)
   SAIL_XLEN := riscv_xlen64.sail
+  SAIL_FLEN := riscv_flen_D.sail
 else
   $(error '$(ARCH)' is not a valid architecture, must be one of: RV32, RV64)
 endif
 
-SAIL_FLEN := riscv_flen_D.sail
+SAIL_VLEN = riscv_vlen.sail
 
 # Instruction sources, depending on target
 SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_misa_ext.sail
 SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail riscv_insts_hints.sail
 SAIL_DEFAULT_INST += riscv_insts_fext.sail riscv_insts_cfext.sail
+ifeq ($(ARCH),RV64)
 SAIL_DEFAULT_INST += riscv_insts_dext.sail riscv_insts_cdext.sail
-
-SAIL_DEFAULT_INST += riscv_insts_zba.sail
-SAIL_DEFAULT_INST += riscv_insts_zbb.sail
-SAIL_DEFAULT_INST += riscv_insts_zbc.sail
-SAIL_DEFAULT_INST += riscv_insts_zbs.sail
-SAIL_DEFAULT_INST += riscv_insts_zkn.sail
-SAIL_DEFAULT_INST += riscv_insts_zks.sail
+endif
+SAIL_DEFAULT_INST += riscv_insts_vext_total.sail
 
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
 SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
@@ -38,6 +37,7 @@ SAIL_RMEM_INST_SRCS = riscv_insts_begin.sail $(SAIL_RMEM_INST) riscv_insts_end.s
 
 # System and platform sources
 SAIL_SYS_SRCS =  riscv_csr_map.sail
+SAIL_SYS_SRCS +=  riscv_vext_control.sail
 SAIL_SYS_SRCS += riscv_next_regs.sail
 SAIL_SYS_SRCS += riscv_sys_exceptions.sail  # default basic helpers for exception handling
 SAIL_SYS_SRCS += riscv_sync_exception.sail  # define the exception structure used in the model
@@ -57,9 +57,10 @@ SAIL_VM_SRCS += $(SAIL_RV64_VM_SRCS)
 endif
 
 # Non-instruction sources
-PRELUDE = prelude.sail prelude_mapping.sail $(SAIL_XLEN) $(SAIL_FLEN) prelude_mem_metadata.sail prelude_mem.sail
+PRELUDE = prelude.sail prelude_mapping.sail $(SAIL_XLEN) $(SAIL_FLEN) $(SAIL_VLEN) prelude_mem_metadata.sail prelude_mem.sail
 
 SAIL_REGS_SRCS = riscv_reg_type.sail riscv_freg_type.sail riscv_regs.sail riscv_pc_access.sail riscv_sys_regs.sail
+SAIL_REGS_SRCS += riscv_reg_type_vector.sail riscv_regs_vector.sail 
 SAIL_REGS_SRCS += riscv_pmp_regs.sail riscv_pmp_control.sail
 SAIL_REGS_SRCS += riscv_ext_regs.sail $(SAIL_CHECK_SRCS)
 
@@ -67,8 +68,8 @@ SAIL_ARCH_SRCS = $(PRELUDE)
 SAIL_ARCH_SRCS += riscv_types_common.sail riscv_types_ext.sail riscv_types.sail
 SAIL_ARCH_SRCS += riscv_vmem_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail
 SAIL_ARCH_SRCS += riscv_mem.sail $(SAIL_VM_SRCS)
-SAIL_ARCH_RVFI_SRCS = $(PRELUDE) rvfi_dii.sail riscv_types_common.sail riscv_types_ext.sail riscv_types.sail riscv_vmem_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS) riscv_types_kext.sail
-SAIL_ARCH_SRCS += riscv_types_kext.sail    # Shared/common code for the cryptography extension.
+SAIL_ARCH_SRCS += riscv_types_vector.sail
+SAIL_ARCH_RVFI_SRCS = $(PRELUDE) rvfi_dii.sail riscv_types_common.sail riscv_types_ext.sail riscv_types.sail riscv_vmem_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS)
 
 SAIL_STEP_SRCS = riscv_step_common.sail riscv_step_ext.sail riscv_decode_ext.sail riscv_fetch.sail riscv_step.sail
 RVFI_STEP_SRCS = riscv_step_common.sail riscv_step_rvfi.sail riscv_decode_ext.sail riscv_fetch_rvfi.sail riscv_step.sail
@@ -116,6 +117,10 @@ C_WARNINGS ?=
 C_INCS = $(addprefix c_emulator/,riscv_prelude.h riscv_platform_impl.h riscv_platform.h riscv_softfloat.h)
 C_SRCS = $(addprefix c_emulator/,riscv_prelude.c riscv_platform_impl.c riscv_platform.c riscv_softfloat.c riscv_sim.c)
 
+# portability for MacPorts/MacOS
+C_SYS_INCLUDES = -I /opt/local/include
+C_SYS_LIBDIRS  = -L /opt/local/lib
+
 SOFTFLOAT_DIR    = c_emulator/SoftFloat-3e
 SOFTFLOAT_INCDIR = $(SOFTFLOAT_DIR)/source/include
 SOFTFLOAT_LIBDIR = $(SOFTFLOAT_DIR)/build/Linux-RISCV-GCC
@@ -123,14 +128,8 @@ SOFTFLOAT_FLAGS  = -I $(SOFTFLOAT_INCDIR)
 SOFTFLOAT_LIBS   = $(SOFTFLOAT_LIBDIR)/softfloat.a
 SOFTFLOAT_SPECIALIZE_TYPE = RISCV
 
-GMP_FLAGS = $(shell pkg-config --cflags gmp)
-# N.B. GMP does not have pkg-config metadata on Ubuntu 18.04 so default to -lgmp
-GMP_LIBS = $(shell pkg-config --libs gmp || echo -lgmp)
-ZLIB_FLAGS = $(shell pkg-config --cflags zlib)
-ZLIB_LIBS = $(shell pkg-config --libs zlib)
-
-C_FLAGS = -I $(SAIL_LIB_DIR) -I c_emulator $(GMP_FLAGS) $(ZLIB_FLAGS) $(SOFTFLOAT_FLAGS) -fcommon
-C_LIBS  = $(GMP_LIBS) $(ZLIB_LIBS) $(SOFTFLOAT_LIBS)
+C_FLAGS = $(C_SYS_INCLUDES) -I $(SAIL_LIB_DIR) -I c_emulator $(SOFTFLOAT_FLAGS) -fcommon
+C_LIBS  = $(C_SYS_LIBDIRS) -lgmp -lz $(SOFTFLOAT_LIBS)
 
 # The C simulator can be built to be linked against Spike for tandem-verification.
 # This needs the C bindings to Spike from https://github.com/SRI-CSL/l3riscv
@@ -156,7 +155,7 @@ ifneq (,$(SAILCOV))
 ALL_BRANCHES = generated_definitions/c/all_branches
 C_FLAGS += -DSAILCOV
 SAIL_FLAGS += -c_coverage $(ALL_BRANCHES) -c_include sail_coverage.h
-C_LIBS += $(SAIL_LIB_DIR)/coverage/libsail_coverage.a -lm -lpthread -ldl
+C_LIBS += $(SAIL_LIB_DIR)/coverage/libsail_coverage.a -lpthread -ldl
 endif
 
 RISCV_EXTRAS_LEM_FILES = riscv_extras.lem mem_metadata.lem riscv_extras_fdext.lem
@@ -191,7 +190,14 @@ riscv.smt_model: $(SAIL_SRCS)
 cgen: $(SAIL_SRCS) model/main.sail
 	$(SAIL) -cgen $(SAIL_FLAGS) $(SAIL_SRCS) model/main.sail
 
-generated_definitions/ocaml/$(ARCH)/riscv.ml: $(SAIL_SRCS) Makefile
+riscv_vlen: FORCE
+ifdef VLEN
+  ifdef ELEN
+	python gen_vlen.py $(VLEN) $(ELEN)
+  endif
+endif
+
+generated_definitions/ocaml/$(ARCH)/riscv.ml: riscv_vlen $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/ocaml/$(ARCH)
 	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml-nobuild -ocaml_build_dir generated_definitions/ocaml/$(ARCH) -o riscv $(SAIL_SRCS)
 
@@ -229,7 +235,7 @@ generated_definitions/ocaml/riscv_duopod_ocaml: $(PRELUDE_SRCS) model/riscv_duop
 ocaml_emulator/tracecmp: ocaml_emulator/tracecmp.ml
 	ocamlfind ocamlopt -annot -linkpkg -package unix $^ -o $@
 
-generated_definitions/c/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile
+generated_definitions/c/riscv_model_$(ARCH).c: riscv_vlen $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
 	$(SAIL) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@)
 
@@ -249,27 +255,11 @@ osim: ocaml_emulator/riscv_ocaml_sim_$(ARCH)
 rvfi: c_emulator/riscv_rvfi_$(ARCH)
 
 c_emulator/riscv_sim_$(ARCH): generated_definitions/c/riscv_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile
-	gcc -g $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
-
-# Note: We have to add -c_preserve since the functions might be optimized out otherwise
-rvfi_preserve_fns=-c_preserve rvfi_set_instr_packet \
-  -c_preserve rvfi_get_cmd \
-  -c_preserve rvfi_get_insn \
-  -c_preserve rvfi_get_v2_trace_size \
-  -c_preserve rvfi_get_v2_support_packet \
-  -c_preserve rvfi_get_exec_packet_v1 \
-  -c_preserve rvfi_get_exec_packet_v2 \
-  -c_preserve rvfi_get_mem_data \
-  -c_preserve rvfi_get_int_data \
-  -c_preserve rvfi_zero_exec_packet \
-  -c_preserve rvfi_halt_exec_packet \
-  -c_preserve print_rvfi_exec \
-  -c_preserve print_instr_packet \
-  -c_preserve print_rvfi_exec
+	time gcc -g $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
 generated_definitions/c/riscv_rvfi_model_$(ARCH).c: $(SAIL_RVFI_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
-	$(SAIL) $(rvfi_preserve_fns) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main.sail -o $(basename $@)
+	$(SAIL) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main.sail -o $(basename $@)
 	sed -i -e '/^[[:space:]]*$$/d' $@
 
 c_emulator/riscv_rvfi_$(ARCH): generated_definitions/c/riscv_rvfi_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile
@@ -444,10 +434,6 @@ opam-uninstall:
 	if [ -z "$(INSTALL_DIR)" ]; then echo INSTALL_DIR is unset; false; fi
 	rm $(INSTALL_DIR)/bin/riscv_sim_RV64
 	rm $(INSTALL_DIR)/bin/riscv_sim_RV32
-apply_header:
-	headache -c etc/headache_config -h LICENCE `ls model/*.sail`
-	headache -c etc/headache_config -h LICENCE `ls handwritten_support/*.lem`
-	headache -c etc/headache_config -h LICENCE `ls handwritten_support/*.v`
 
 clean:
 	-rm -rf generated_definitions/ocaml/* generated_definitions/c/* generated_definitions/latex/*
@@ -459,6 +445,6 @@ clean:
 	-rm -f *.gcno *.gcda
 	-rm -f z3_problems
 	-Holmake cleanAll
-	-rm -f handwritten_support/riscv_extras.vo handwritten_support/riscv_extras.vos handwritten_support/riscv_extras.vok handwritten_support/riscv_extras.glob handwritten_support/.riscv_extras.aux
-	-rm -f handwritten_support/mem_metadata.vo handwritten_support/mem_metadata.vos handwritten_support/mem_metadata.vok handwritten_support/mem_metadata.glob handwritten_support/.mem_metadata.aux
+	-rm -f handwritten_support/riscv_extras.vo handwritten_support/riscv_extras.glob handwritten_support/.riscv_extras.aux
+	-rm -f handwritten_support/mem_metadata.vo handwritten_support/mem_metadata.glob handwritten_support/.mem_metadata.aux
 	ocamlbuild -clean

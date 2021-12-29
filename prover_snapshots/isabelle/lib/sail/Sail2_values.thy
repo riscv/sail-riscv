@@ -18,251 +18,229 @@ type_synonym ii =" int "
 type_synonym nn =" nat "
 
 \<comment> \<open>\<open>val nat_of_int : integer -> nat\<close>\<close>
-definition nat_of_int  :: \<open> int \<Rightarrow> nat \<close>  where 
-     \<open> nat_of_int i = ( if i <( 0 :: int) then( 0 :: nat) else nat (abs ( i)))\<close> 
-  for  i  :: " int "
+definition nat_of_int  :: " int \<Rightarrow> nat "  where 
+     " nat_of_int i = ( if i <( 0 :: int) then( 0 :: nat) else nat (abs ( i)))"
 
 
 \<comment> \<open>\<open>val pow : integer -> integer -> integer\<close>\<close>
-definition pow  :: \<open> int \<Rightarrow> int \<Rightarrow> int \<close>  where 
-     \<open> pow m n = ( m ^ (nat_of_int n))\<close> 
-  for  m  :: " int " 
-  and  n  :: " int "
+definition pow  :: " int \<Rightarrow> int \<Rightarrow> int "  where 
+     " pow m n = ( m ^ (nat_of_int n))"
 
 
-definition pow2  :: \<open> int \<Rightarrow> int \<close>  where 
-     \<open> pow2 n = ( pow(( 2 :: int)) n )\<close> 
-  for  n  :: " int "
+definition pow2  :: " int \<Rightarrow> int "  where 
+     " pow2 n = ( pow(( 2 :: int)) n )"
 
 
 \<comment> \<open>\<open>val eq : forall 'a. Eq 'a => 'a -> 'a -> bool\<close>\<close>
 
 \<comment> \<open>\<open>val neq : forall 'a. Eq 'a => 'a -> 'a -> bool\<close>\<close>
 
+\<comment> \<open>\<open>let add_int l r = integerAdd l r
+let add_signed l r = integerAdd l r
+let sub_int l r = integerMinus l r
+let mult_int l r = integerMult l r
+let div_int l r = integerDiv l r
+let div_nat l r = natDiv l r
+let power_int_nat l r = integerPow l r
+let power_int_int l r = integerPow l (nat_of_int r)
+let negate_int i = integerNegate i
+let min_int l r = integerMin l r
+let max_int l r = integerMax l r
+
+let add_real l r = realAdd l r
+let sub_real l r = realMinus l r
+let mult_real l r = realMult l r
+let div_real l r = realDiv l r
+let negate_real r = realNegate r
+let abs_real r = realAbs r
+let power_real b e = realPowInteger b e\<close>\<close>
+
 \<comment> \<open>\<open>val print_endline : string -> unit\<close>\<close>
-definition print_endline  :: \<open> string \<Rightarrow> unit \<close>  where 
-     \<open> print_endline _ = ( ()  )\<close>
+definition print_endline  :: " string \<Rightarrow> unit "  where 
+     " print_endline _ = ( ()  )"
 
 
 \<comment> \<open>\<open>val print : string -> unit\<close>\<close>
-definition print  :: \<open> string \<Rightarrow> unit \<close>  where 
-     \<open> print _ = ( ()  )\<close>
+definition print  :: " string \<Rightarrow> unit "  where 
+     " print _ = ( ()  )"
 
 
 \<comment> \<open>\<open>val prerr_endline : string -> unit\<close>\<close>
-definition prerr_endline  :: \<open> string \<Rightarrow> unit \<close>  where 
-     \<open> prerr_endline _ = ( ()  )\<close>
+definition prerr_endline  :: " string \<Rightarrow> unit "  where 
+     " prerr_endline _ = ( ()  )"
 
 
-definition prerr  :: \<open> string \<Rightarrow> unit \<close>  where 
-     \<open> prerr x = ( prerr_endline x )\<close> 
-  for  x  :: " string "
+definition prerr  :: " string \<Rightarrow> unit "  where 
+     " prerr x = ( prerr_endline x )"
 
 
 \<comment> \<open>\<open>val print_int : string -> integer -> unit\<close>\<close>
-definition print_int  :: \<open> string \<Rightarrow> int \<Rightarrow> unit \<close>  where 
-     \<open> print_int msg i = ( print_endline (msg @ (stringFromInteger i)))\<close> 
-  for  msg  :: " string " 
-  and  i  :: " int "
+definition print_int  :: " string \<Rightarrow> int \<Rightarrow> unit "  where 
+     " print_int msg i = ( print_endline (msg @ (stringFromInteger i)))"
 
 
 \<comment> \<open>\<open>val prerr_int : string -> integer -> unit\<close>\<close>
-definition prerr_int  :: \<open> string \<Rightarrow> int \<Rightarrow> unit \<close>  where 
-     \<open> prerr_int msg i = ( prerr_endline (msg @ (stringFromInteger i)))\<close> 
-  for  msg  :: " string " 
-  and  i  :: " int "
+definition prerr_int  :: " string \<Rightarrow> int \<Rightarrow> unit "  where 
+     " prerr_int msg i = ( prerr_endline (msg @ (stringFromInteger i)))"
 
 
 \<comment> \<open>\<open>val putchar : integer -> unit\<close>\<close>
-definition putchar  :: \<open> int \<Rightarrow> unit \<close>  where 
-     \<open> putchar _ = ( ()  )\<close>
+definition putchar  :: " int \<Rightarrow> unit "  where 
+     " putchar _ = ( ()  )"
 
 
 \<comment> \<open>\<open>val shr_int : ii -> ii -> ii\<close>\<close>
-function (sequential,domintros)  shr_int  :: \<open> int \<Rightarrow> int \<Rightarrow> int \<close>  where 
-     \<open> shr_int x s = ( if s >( 0 :: int) then shr_int (x div( 2 :: int)) (s -( 1 :: int)) else x )\<close> 
-  for  x  :: " int " 
-  and  s  :: " int " 
+function (sequential,domintros)  shr_int  :: " int \<Rightarrow> int \<Rightarrow> int "  where 
+     " shr_int x s = ( if s >( 0 :: int) then shr_int (x div( 2 :: int)) (s -( 1 :: int)) else x )" 
 by pat_completeness auto
 
 
 \<comment> \<open>\<open>val shl_int : integer -> integer -> integer\<close>\<close>
-function (sequential,domintros)  shl_int  :: \<open> int \<Rightarrow> int \<Rightarrow> int \<close>  where 
-     \<open> shl_int i shift = ( if shift >( 0 :: int) then( 2 :: int) * shl_int i (shift -( 1 :: int)) else i )\<close> 
-  for  i  :: " int " 
-  and  shift  :: " int " 
+function (sequential,domintros)  shl_int  :: " int \<Rightarrow> int \<Rightarrow> int "  where 
+     " shl_int i shift = ( if shift >( 0 :: int) then( 2 :: int) * shl_int i (shift -( 1 :: int)) else i )" 
 by pat_completeness auto
 
-definition take_list  :: \<open> int \<Rightarrow> 'a list \<Rightarrow> 'a list \<close>  where 
-     \<open> take_list n xs = ( List.take (nat_of_int n) xs )\<close> 
-  for  n  :: " int " 
-  and  xs  :: " 'a list "
+definition take_list  :: " int \<Rightarrow> 'a list \<Rightarrow> 'a list "  where 
+     " take_list n xs = ( List.take (nat_of_int n) xs )"
 
-definition drop_list  :: \<open> int \<Rightarrow> 'a list \<Rightarrow> 'a list \<close>  where 
-     \<open> drop_list n xs = ( List.drop (nat_of_int n) xs )\<close> 
-  for  n  :: " int " 
-  and  xs  :: " 'a list "
+definition drop_list  :: " int \<Rightarrow> 'a list \<Rightarrow> 'a list "  where 
+     " drop_list n xs = ( List.drop (nat_of_int n) xs )"
 
 
 \<comment> \<open>\<open>val repeat : forall 'a. list 'a -> integer -> list 'a\<close>\<close>
-fun  repeat  :: \<open> 'a list \<Rightarrow> int \<Rightarrow> 'a list \<close>  where 
-     \<open> repeat xs n = (
+fun  repeat  :: " 'a list \<Rightarrow> int \<Rightarrow> 'a list "  where 
+     " repeat xs n = (
   if n \<le>( 0 :: int) then []
-  else xs @ repeat xs (n-( 1 :: int)))\<close> 
-  for  xs  :: " 'a list " 
-  and  n  :: " int "
+  else xs @ repeat xs (n-( 1 :: int)))"
 
 
-definition duplicate_to_list  :: \<open> 'a \<Rightarrow> int \<Rightarrow> 'a list \<close>  where 
-     \<open> duplicate_to_list bit length1 = ( repeat [bit] length1 )\<close> 
-  for  bit  :: " 'a " 
-  and  length1  :: " int "
+definition duplicate_to_list  :: " 'a \<Rightarrow> int \<Rightarrow> 'a list "  where 
+     " duplicate_to_list bit length1 = ( repeat [bit] length1 )"
 
 
-fun  replace  :: \<open> 'a list \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> 'a list \<close>  where 
-     \<open> replace ([]) (n :: int) b' = ( [])\<close> 
-  for  n  :: " int " 
-  and  b'  :: " 'a "
-|\<open> replace (b # bs) (n :: int) b' = (
+fun  replace  :: " 'a list \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> 'a list "  where 
+     " replace ([]) (n :: int) b' = ( [])"
+|" replace (b # bs) (n :: int) b' = (
      if n =( 0 :: int) then b' # bs
-              else b # replace bs (n -( 1 :: int)) b' )\<close> 
-  for  bs  :: " 'a list " 
-  and  b  :: " 'a " 
-  and  n  :: " int " 
-  and  b'  :: " 'a "
+              else b # replace bs (n -( 1 :: int)) b' )"
 
 
-definition upper  :: \<open> 'a \<Rightarrow> 'a \<close>  where 
-     \<open> upper n = ( n )\<close> 
-  for  n  :: " 'a "
+definition upper  :: " 'a \<Rightarrow> 'a "  where 
+     " upper n = ( n )"
 
 
 \<comment> \<open>\<open> Modulus operation corresponding to quot below -- result
    has sign of dividend. \<close>\<close>
-definition tmod_int  :: \<open> int \<Rightarrow> int \<Rightarrow> int \<close>  where 
-     \<open> tmod_int (a:: int) (b::int) = (
+definition hardware_mod  :: " int \<Rightarrow> int \<Rightarrow> int "  where 
+     " hardware_mod (a:: int) (b::int) = (
   (let m = ((abs a) mod (abs b)) in
-  if a <( 0 :: int) then - m else m))\<close> 
-  for  a  :: " int " 
-  and  b  :: " int "
-
-
-definition hardware_mod  :: \<open> int \<Rightarrow> int \<Rightarrow> int \<close>  where 
-     \<open> hardware_mod = ( tmod_int )\<close>
+  if a <( 0 :: int) then - m else m))"
 
 
 \<comment> \<open>\<open> There are different possible answers for integer divide regarding
 rounding behaviour on negative operands. Positive operands always
 round down so derive the one we want (trucation towards zero) from
 that \<close>\<close>
-definition tdiv_int  :: \<open> int \<Rightarrow> int \<Rightarrow> int \<close>  where 
-     \<open> tdiv_int (a::int) (b::int) = (
+definition hardware_quot  :: " int \<Rightarrow> int \<Rightarrow> int "  where 
+     " hardware_quot (a::int) (b::int) = (
   (let q = ((abs a) div (abs b)) in
   if ((a<( 0 :: int)) \<longleftrightarrow> (b<( 0 :: int))) then
     q  \<comment> \<open>\<open> same sign -- result positive \<close>\<close>
   else
-    - q))\<close> 
-  for  a  :: " int " 
-  and  b  :: " int "
+    - q))"
  \<comment> \<open>\<open> different sign -- result negative \<close>\<close>
 
-definition hardware_quot  :: \<open> int \<Rightarrow> int \<Rightarrow> int \<close>  where 
-     \<open> hardware_quot = ( tdiv_int )\<close>
+definition max_64u  :: " int "  where 
+     " max_64u = ( ((( 2 :: int))^(( 64 :: nat))) -( 1 :: int))"
 
+definition max_64  :: " int "   where 
+     " max_64  = ( ((( 2 :: int))^(( 63 :: nat))) -( 1 :: int))"
 
-definition max_64u  :: \<open> int \<close>  where 
-     \<open> max_64u = ( ((( 2 :: int))^(( 64 :: nat))) -( 1 :: int))\<close>
+definition min_64  :: " int "   where 
+     " min_64  = (( 0 :: int) - ((( 2 :: int))^(( 63 :: nat))))"
 
-definition max_64  :: \<open> int \<close>   where 
-     \<open> max_64  = ( ((( 2 :: int))^(( 63 :: nat))) -( 1 :: int))\<close>
+definition max_32u  :: " int "  where 
+     " max_32u = ( (( 4294967295 :: int) :: int))"
 
-definition min_64  :: \<open> int \<close>   where 
-     \<open> min_64  = (( 0 :: int) - ((( 2 :: int))^(( 63 :: nat))))\<close>
+definition max_32  :: " int "   where 
+     " max_32  = ( (( 2147483647 :: int) :: int))"
 
-definition max_32u  :: \<open> int \<close>  where 
-     \<open> max_32u = ( (( 4294967295 :: int) :: int))\<close>
+definition min_32  :: " int "   where 
+     " min_32  = ( (( 0 :: int) -( 2147483648 :: int) :: int))"
 
-definition max_32  :: \<open> int \<close>   where 
-     \<open> max_32  = ( (( 2147483647 :: int) :: int))\<close>
+definition max_8  :: " int "    where 
+     " max_8   = ( (( 127 :: int) :: int))"
 
-definition min_32  :: \<open> int \<close>   where 
-     \<open> min_32  = ( (( 0 :: int) -( 2147483648 :: int) :: int))\<close>
+definition min_8  :: " int "    where 
+     " min_8   = ( (( 0 :: int) -( 128 :: int) :: int))"
 
-definition max_8  :: \<open> int \<close>    where 
-     \<open> max_8   = ( (( 127 :: int) :: int))\<close>
+definition max_5  :: " int "    where 
+     " max_5   = ( (( 31 :: int) :: int))"
 
-definition min_8  :: \<open> int \<close>    where 
-     \<open> min_8   = ( (( 0 :: int) -( 128 :: int) :: int))\<close>
-
-definition max_5  :: \<open> int \<close>    where 
-     \<open> max_5   = ( (( 31 :: int) :: int))\<close>
-
-definition min_5  :: \<open> int \<close>    where 
-     \<open> min_5   = ( (( 0 :: int) -( 32 :: int) :: int))\<close>
+definition min_5  :: " int "    where 
+     " min_5   = ( (( 0 :: int) -( 32 :: int) :: int))"
 
 
 \<comment> \<open>\<open> just_list takes a list of maybes and returns Just xs if all elements have
    a value, and Nothing if one of the elements is Nothing. \<close>\<close>
 \<comment> \<open>\<open>val just_list : forall 'a. list (maybe 'a) -> maybe (list 'a)\<close>\<close>
-fun  just_list  :: \<open>('a option)list \<Rightarrow>('a list)option \<close>  where 
-     \<open> just_list ([]) = ( Some [])\<close>
-|\<open> just_list (x # xs) = (
+fun  just_list  :: "('a option)list \<Rightarrow>('a list)option "  where 
+     " just_list ([]) = ( Some [])"
+|" just_list (x # xs) = (
     (case  (x, just_list xs) of
         (Some x, Some xs) => Some (x # xs)
       | (_, _) => None
-    ))\<close> 
-  for  xs  :: "('a option)list " 
-  and  x  :: " 'a option "
+    ))"
 
 
 \<comment> \<open>\<open>val maybe_failwith : forall 'a. maybe 'a -> 'a\<close>\<close>
-definition maybe_failwith  :: \<open> 'a option \<Rightarrow> 'a \<close>  where 
-     \<open> maybe_failwith = ( (\<lambda>x .  
-  (case  x of   Some a => a | None => failwith (''maybe_failwith'') )))\<close>
+definition maybe_failwith  :: " 'a option \<Rightarrow> 'a "  where 
+     " maybe_failwith = ( \<lambda>x .  
+  (case  x of   Some a => a | None => failwith (''maybe_failwith'') ) )"
 
 
 \<comment> \<open>\<open>** Bits \<close>\<close>
 datatype bitU = B0 | B1 | BU
 
-definition showBitU  :: \<open> bitU \<Rightarrow> string \<close>  where 
-     \<open> showBitU = ( (\<lambda>x .  
-  (case  x of   B0 => (''O'') | B1 => (''I'') | BU => (''U'') )))\<close>
+definition showBitU  :: " bitU \<Rightarrow> string "  where 
+     " showBitU = ( \<lambda>x .  
+  (case  x of   B0 => (''O'') | B1 => (''I'') | BU => (''U'') ) )"
 
 
-definition bitU_char  :: \<open> bitU \<Rightarrow> char \<close>  where 
-     \<open> bitU_char = ( (\<lambda>x .  
-  (case  x of   B0 => (CHR ''0'') | B1 => (CHR ''1'') | BU => (CHR ''?'') )))\<close>
+definition bitU_char  :: " bitU \<Rightarrow> char "  where 
+     " bitU_char = ( \<lambda>x .  
+  (case  x of   B0 => (CHR ''0'') | B1 => (CHR ''1'') | BU => (CHR ''?'') ) )"
 
 
-definition instance_Show_Show_Sail2_values_bitU_dict  :: \<open>(bitU)Show_class \<close>  where 
-     \<open> instance_Show_Show_Sail2_values_bitU_dict = ((|
+definition instance_Show_Show_Sail2_values_bitU_dict  :: "(bitU)Show_class "  where 
+     " instance_Show_Show_Sail2_values_bitU_dict = ((|
 
-  show_method = showBitU |) )\<close>
+  show_method = showBitU |) )"
 
 
 \<comment> \<open>\<open>val compare_bitU : bitU -> bitU -> ordering\<close>\<close>
-fun compare_bitU  :: \<open> bitU \<Rightarrow> bitU \<Rightarrow> ordering \<close>  where 
-     \<open> compare_bitU BU BU = ( EQ )\<close>
-|\<open> compare_bitU B0 B0 = ( EQ )\<close>
-|\<open> compare_bitU B1 B1 = ( EQ )\<close>
-|\<open> compare_bitU BU _ = ( LT )\<close>
-|\<open> compare_bitU _ BU = ( GT )\<close>
-|\<open> compare_bitU B0 _ = ( LT )\<close>
-|\<open> compare_bitU _ _ = ( GT )\<close>
+fun compare_bitU  :: " bitU \<Rightarrow> bitU \<Rightarrow> ordering "  where 
+     " compare_bitU BU BU = ( EQ )"
+|" compare_bitU B0 B0 = ( EQ )"
+|" compare_bitU B1 B1 = ( EQ )"
+|" compare_bitU BU _ = ( LT )"
+|" compare_bitU _ BU = ( GT )"
+|" compare_bitU B0 _ = ( LT )"
+|" compare_bitU _ _ = ( GT )"
 
 
-definition instance_Basic_classes_Ord_Sail2_values_bitU_dict  :: \<open>(bitU)Ord_class \<close>  where 
-     \<open> instance_Basic_classes_Ord_Sail2_values_bitU_dict = ((|
+definition instance_Basic_classes_Ord_Sail2_values_bitU_dict  :: "(bitU)Ord_class "  where 
+     " instance_Basic_classes_Ord_Sail2_values_bitU_dict = ((|
 
   compare_method = compare_bitU,
 
-  isLess_method = ((\<lambda>  l r. (compare_bitU l r) = LT)),
+  isLess_method = (\<lambda>  l r. (compare_bitU l r) = LT),
 
-  isLessEqual_method = ((\<lambda> l r. (compare_bitU l r) \<noteq> GT)),
+  isLessEqual_method = (\<lambda> l r. (compare_bitU l r) \<noteq> GT),
 
-  isGreater_method = ((\<lambda>  l r. (compare_bitU l r) = GT)),
+  isGreater_method = (\<lambda>  l r. (compare_bitU l r) = GT),
 
-  isGreaterEqual_method = ((\<lambda> l r. (compare_bitU l r) \<noteq> LT))|) )\<close>
+  isGreaterEqual_method = (\<lambda> l r. (compare_bitU l r) \<noteq> LT)|) )"
 
 
 record 'a BitU_class=
@@ -273,22 +251,21 @@ record 'a BitU_class=
 
 
 
-definition instance_Sail2_values_BitU_Sail2_values_bitU_dict  :: \<open>(bitU)BitU_class \<close>  where 
-     \<open> instance_Sail2_values_BitU_Sail2_values_bitU_dict = ((|
+definition instance_Sail2_values_BitU_Sail2_values_bitU_dict  :: "(bitU)BitU_class "  where 
+     " instance_Sail2_values_BitU_Sail2_values_bitU_dict = ((|
 
-  to_bitU_method = ((\<lambda> b. b)),
+  to_bitU_method = (\<lambda> b. b),
 
-  of_bitU_method = ((\<lambda> b. b))|) )\<close>
-
-
-definition bool_of_bitU  :: \<open> bitU \<Rightarrow>(bool)option \<close>  where 
-     \<open> bool_of_bitU = ( (\<lambda>x .  
-  (case  x of   B0 => Some False | B1 => Some True | BU => None )))\<close>
+  of_bitU_method = (\<lambda> b. b)|) )"
 
 
-definition bitU_of_bool  :: \<open> bool \<Rightarrow> bitU \<close>  where 
-     \<open> bitU_of_bool b = ( if b then B1 else B0 )\<close> 
-  for  b  :: " bool "
+definition bool_of_bitU  :: " bitU \<Rightarrow>(bool)option "  where 
+     " bool_of_bitU = ( \<lambda>x .  
+  (case  x of   B0 => Some False | B1 => Some True | BU => None ) )"
+
+
+definition bitU_of_bool  :: " bool \<Rightarrow> bitU "  where 
+     " bitU_of_bool b = ( if b then B1 else B0 )"
 
 
 \<comment> \<open>\<open>instance (BitU bool)
@@ -296,45 +273,44 @@ definition bitU_of_bool  :: \<open> bool \<Rightarrow> bitU \<close>  where
   let of_bitU = bool_of_bitU
 end\<close>\<close>
 
-definition cast_bit_bool  :: \<open> bitU \<Rightarrow>(bool)option \<close>  where 
-     \<open> cast_bit_bool = ( bool_of_bitU )\<close>
+definition cast_bit_bool  :: " bitU \<Rightarrow>(bool)option "  where 
+     " cast_bit_bool = ( bool_of_bitU )"
 
 
-definition not_bit  :: \<open> bitU \<Rightarrow> bitU \<close>  where 
-     \<open> not_bit = ( (\<lambda>x .  
-  (case  x of   B1 => B0 | B0 => B1 | BU => BU )))\<close>
+definition not_bit  :: " bitU \<Rightarrow> bitU "  where 
+     " not_bit = ( \<lambda>x .  
+  (case  x of   B1 => B0 | B0 => B1 | BU => BU ) )"
 
 
 \<comment> \<open>\<open>val is_one : integer -> bitU\<close>\<close>
-definition is_one  :: \<open> int \<Rightarrow> bitU \<close>  where 
-     \<open> is_one i = (
-  if i =( 1 :: int) then B1 else B0 )\<close> 
-  for  i  :: " int "
+definition is_one  :: " int \<Rightarrow> bitU "  where 
+     " is_one i = (
+  if i =( 1 :: int) then B1 else B0 )"
 
 
 \<comment> \<open>\<open>val and_bit : bitU -> bitU -> bitU\<close>\<close>
-fun and_bit  :: \<open> bitU \<Rightarrow> bitU \<Rightarrow> bitU \<close>  where 
-     \<open> and_bit B0 _ = ( B0 )\<close>
-|\<open> and_bit _ B0 = ( B0 )\<close>
-|\<open> and_bit B1 B1 = ( B1 )\<close>
-|\<open> and_bit _ _ = ( BU )\<close>
+fun and_bit  :: " bitU \<Rightarrow> bitU \<Rightarrow> bitU "  where 
+     " and_bit B0 _ = ( B0 )"
+|" and_bit _ B0 = ( B0 )"
+|" and_bit B1 B1 = ( B1 )"
+|" and_bit _ _ = ( BU )"
 
 
 \<comment> \<open>\<open>val or_bit : bitU -> bitU -> bitU\<close>\<close>
-fun or_bit  :: \<open> bitU \<Rightarrow> bitU \<Rightarrow> bitU \<close>  where 
-     \<open> or_bit B1 _ = ( B1 )\<close>
-|\<open> or_bit _ B1 = ( B1 )\<close>
-|\<open> or_bit B0 B0 = ( B0 )\<close>
-|\<open> or_bit _ _ = ( BU )\<close>
+fun or_bit  :: " bitU \<Rightarrow> bitU \<Rightarrow> bitU "  where 
+     " or_bit B1 _ = ( B1 )"
+|" or_bit _ B1 = ( B1 )"
+|" or_bit B0 B0 = ( B0 )"
+|" or_bit _ _ = ( BU )"
 
 
 \<comment> \<open>\<open>val xor_bit : bitU -> bitU -> bitU\<close>\<close>
-fun xor_bit  :: \<open> bitU \<Rightarrow> bitU \<Rightarrow> bitU \<close>  where 
-     \<open> xor_bit B0 B0 = ( B0 )\<close>
-|\<open> xor_bit B0 B1 = ( B1 )\<close>
-|\<open> xor_bit B1 B0 = ( B1 )\<close>
-|\<open> xor_bit B1 B1 = ( B0 )\<close>
-|\<open> xor_bit _ _ = ( BU )\<close>
+fun xor_bit  :: " bitU \<Rightarrow> bitU \<Rightarrow> bitU "  where 
+     " xor_bit B0 B0 = ( B0 )"
+|" xor_bit B0 B1 = ( B1 )"
+|" xor_bit B1 B0 = ( B1 )"
+|" xor_bit B1 B1 = ( B0 )"
+|" xor_bit _ _ = ( BU )"
 
 
 \<comment> \<open>\<open>val &. : bitU -> bitU -> bitU\<close>\<close>
@@ -347,106 +323,78 @@ fun xor_bit  :: \<open> bitU \<Rightarrow> bitU \<Rightarrow> bitU \<close>  whe
 \<comment> \<open>\<open>** Bool lists **\<close>\<close>
 
 \<comment> \<open>\<open>val bools_of_nat_aux : integer -> natural -> list bool -> list bool\<close>\<close>
-fun  bools_of_nat_aux  :: \<open> int \<Rightarrow> nat \<Rightarrow>(bool)list \<Rightarrow>(bool)list \<close>  where 
-     \<open> bools_of_nat_aux len x acc1 = (
+fun  bools_of_nat_aux  :: " int \<Rightarrow> nat \<Rightarrow>(bool)list \<Rightarrow>(bool)list "  where 
+     " bools_of_nat_aux len x acc1 = (
   if len \<le>( 0 :: int) then acc1
-  else bools_of_nat_aux (len -( 1 :: int)) (x div( 2 :: nat)) ((if (x mod( 2 :: nat)) =( 1 :: nat) then True else False) # acc1))\<close> 
-  for  len  :: " int " 
-  and  x  :: " nat " 
-  and  acc1  :: "(bool)list "
+  else bools_of_nat_aux (len -( 1 :: int)) (x div( 2 :: nat)) ((if (x mod( 2 :: nat)) =( 1 :: nat) then True else False) # acc1))"
 
-definition bools_of_nat  :: \<open> int \<Rightarrow> nat \<Rightarrow>(bool)list \<close>  where 
-     \<open> bools_of_nat len n = ( bools_of_nat_aux len n [])\<close> 
-  for  len  :: " int " 
-  and  n  :: " nat "
+definition bools_of_nat  :: " int \<Rightarrow> nat \<Rightarrow>(bool)list "  where 
+     " bools_of_nat len n = ( bools_of_nat_aux len n [])"
  \<comment> \<open>\<open>List.reverse (bools_of_nat_aux n)\<close>\<close>
 
 \<comment> \<open>\<open>val nat_of_bools_aux : natural -> list bool -> natural\<close>\<close>
-fun  nat_of_bools_aux  :: \<open> nat \<Rightarrow>(bool)list \<Rightarrow> nat \<close>  where 
-     \<open> nat_of_bools_aux acc1 ([]) = ( acc1 )\<close> 
-  for  acc1  :: " nat "
-|\<open> nat_of_bools_aux acc1 (True # bs) = ( nat_of_bools_aux ((( 2 :: nat) * acc1) +( 1 :: nat)) bs )\<close> 
-  for  acc1  :: " nat " 
-  and  bs  :: "(bool)list "
-|\<open> nat_of_bools_aux acc1 (False # bs) = ( nat_of_bools_aux (( 2 :: nat) * acc1) bs )\<close> 
-  for  acc1  :: " nat " 
-  and  bs  :: "(bool)list "
+fun  nat_of_bools_aux  :: " nat \<Rightarrow>(bool)list \<Rightarrow> nat "  where 
+     " nat_of_bools_aux acc1 ([]) = ( acc1 )"
+|" nat_of_bools_aux acc1 (True # bs) = ( nat_of_bools_aux ((( 2 :: nat) * acc1) +( 1 :: nat)) bs )"
+|" nat_of_bools_aux acc1 (False # bs) = ( nat_of_bools_aux (( 2 :: nat) * acc1) bs )"
 
-definition nat_of_bools  :: \<open>(bool)list \<Rightarrow> nat \<close>  where 
-     \<open> nat_of_bools bs = ( nat_of_bools_aux(( 0 :: nat)) bs )\<close> 
-  for  bs  :: "(bool)list "
+definition nat_of_bools  :: "(bool)list \<Rightarrow> nat "  where 
+     " nat_of_bools bs = ( nat_of_bools_aux(( 0 :: nat)) bs )"
 
 
 \<comment> \<open>\<open>val unsigned_of_bools : list bool -> integer\<close>\<close>
-definition unsigned_of_bools  :: \<open>(bool)list \<Rightarrow> int \<close>  where 
-     \<open> unsigned_of_bools bs = ( int (nat_of_bools bs))\<close> 
-  for  bs  :: "(bool)list "
+definition unsigned_of_bools  :: "(bool)list \<Rightarrow> int "  where 
+     " unsigned_of_bools bs = ( int (nat_of_bools bs))"
 
 
 \<comment> \<open>\<open>val signed_of_bools : list bool -> integer\<close>\<close>
-definition signed_of_bools  :: \<open>(bool)list \<Rightarrow> int \<close>  where 
-     \<open> signed_of_bools bs = (
+definition signed_of_bools  :: "(bool)list \<Rightarrow> int "  where 
+     " signed_of_bools bs = (
   (case  bs of
-      True # _  =>( 0 :: int) - (( 1 :: int) + (unsigned_of_bools (List.map ((\<lambda> x. \<not> x)) bs)))
+      True # _  =>( 0 :: int) - (( 1 :: int) + (unsigned_of_bools (List.map (\<lambda> x. \<not> x) bs)))
     | False # _ => unsigned_of_bools bs
     | [] =>( 0 :: int) \<comment> \<open>\<open> Treat empty list as all zeros \<close>\<close>
-  ))\<close> 
-  for  bs  :: "(bool)list "
+  ))"
 
 
 \<comment> \<open>\<open>val int_of_bools : bool -> list bool -> integer\<close>\<close>
-definition int_of_bools  :: \<open> bool \<Rightarrow>(bool)list \<Rightarrow> int \<close>  where 
-     \<open> int_of_bools sign bs = ( if sign then signed_of_bools bs else unsigned_of_bools bs )\<close> 
-  for  sign  :: " bool " 
-  and  bs  :: "(bool)list "
+definition int_of_bools  :: " bool \<Rightarrow>(bool)list \<Rightarrow> int "  where 
+     " int_of_bools sign bs = ( if sign then signed_of_bools bs else unsigned_of_bools bs )"
 
 
 \<comment> \<open>\<open>val pad_list : forall 'a. 'a -> list 'a -> integer -> list 'a\<close>\<close>
-fun  pad_list  :: \<open> 'a \<Rightarrow> 'a list \<Rightarrow> int \<Rightarrow> 'a list \<close>  where 
-     \<open> pad_list x xs n = (
-  if n \<le>( 0 :: int) then xs else pad_list x (x # xs) (n -( 1 :: int)))\<close> 
-  for  x  :: " 'a " 
-  and  xs  :: " 'a list " 
-  and  n  :: " int "
+fun  pad_list  :: " 'a \<Rightarrow> 'a list \<Rightarrow> int \<Rightarrow> 'a list "  where 
+     " pad_list x xs n = (
+  if n \<le>( 0 :: int) then xs else pad_list x (x # xs) (n -( 1 :: int)))"
 
 
-definition ext_list  :: \<open> 'a \<Rightarrow> int \<Rightarrow> 'a list \<Rightarrow> 'a list \<close>  where 
-     \<open> ext_list pad len xs = (
+definition ext_list  :: " 'a \<Rightarrow> int \<Rightarrow> 'a list \<Rightarrow> 'a list "  where 
+     " ext_list pad len xs = (
   (let longer = (len - (int (List.length xs))) in
   if longer <( 0 :: int) then List.drop (nat_of_int (abs (longer))) xs
-  else pad_list pad xs longer))\<close> 
-  for  pad  :: " 'a " 
-  and  len  :: " int " 
-  and  xs  :: " 'a list "
+  else pad_list pad xs longer))"
 
 
-definition extz_bools  :: \<open> int \<Rightarrow>(bool)list \<Rightarrow>(bool)list \<close>  where 
-     \<open> extz_bools len bs = ( ext_list False len bs )\<close> 
-  for  len  :: " int " 
-  and  bs  :: "(bool)list "
+definition extz_bools  :: " int \<Rightarrow>(bool)list \<Rightarrow>(bool)list "  where 
+     " extz_bools len bs = ( ext_list False len bs )"
 
-definition exts_bools  :: \<open> int \<Rightarrow>(bool)list \<Rightarrow>(bool)list \<close>  where 
-     \<open> exts_bools len bs = (
+definition exts_bools  :: " int \<Rightarrow>(bool)list \<Rightarrow>(bool)list "  where 
+     " exts_bools len bs = (
   (case  bs of
       True # _ => ext_list True len bs
     | _ => ext_list False len bs
-  ))\<close> 
-  for  len  :: " int " 
-  and  bs  :: "(bool)list "
+  ))"
 
 
-fun  add_one_bool_ignore_overflow_aux  :: \<open>(bool)list \<Rightarrow>(bool)list \<close>  where 
-     \<open> add_one_bool_ignore_overflow_aux ([]) = ( [])\<close>
-|\<open> add_one_bool_ignore_overflow_aux (False # bits) = ( True # bits )\<close> 
-  for  bits  :: "(bool)list "
-|\<open> add_one_bool_ignore_overflow_aux (True # bits) = ( False # add_one_bool_ignore_overflow_aux bits )\<close> 
-  for  bits  :: "(bool)list "
+fun  add_one_bool_ignore_overflow_aux  :: "(bool)list \<Rightarrow>(bool)list "  where 
+     " add_one_bool_ignore_overflow_aux ([]) = ( [])"
+|" add_one_bool_ignore_overflow_aux (False # bits) = ( True # bits )"
+|" add_one_bool_ignore_overflow_aux (True # bits) = ( False # add_one_bool_ignore_overflow_aux bits )"
 
 
-definition add_one_bool_ignore_overflow  :: \<open>(bool)list \<Rightarrow>(bool)list \<close>  where 
-     \<open> add_one_bool_ignore_overflow bits = (
-  List.rev (add_one_bool_ignore_overflow_aux (List.rev bits)))\<close> 
-  for  bits  :: "(bool)list "
+definition add_one_bool_ignore_overflow  :: "(bool)list \<Rightarrow>(bool)list "  where 
+     " add_one_bool_ignore_overflow bits = (
+  List.rev (add_one_bool_ignore_overflow_aux (List.rev bits)))"
 
 
 \<comment> \<open>\<open>let bool_list_of_int n =
@@ -454,135 +402,108 @@ definition add_one_bool_ignore_overflow  :: \<open>(bool)list \<Rightarrow>(bool
   if n >= (0 : integer) then bs_abs
   else add_one_bool_ignore_overflow (List.map not bs_abs)
 let bools_of_int len n = exts_bools len (bool_list_of_int n)\<close>\<close>
-definition bools_of_int  :: \<open> int \<Rightarrow> int \<Rightarrow>(bool)list \<close>  where 
-     \<open> bools_of_int len n = (
+definition bools_of_int  :: " int \<Rightarrow> int \<Rightarrow>(bool)list "  where 
+     " bools_of_int len n = (
   (let bs_abs = (bools_of_nat len (nat (abs (abs n)))) in
   if n \<ge> (( 0 :: int) :: int) then bs_abs
-  else add_one_bool_ignore_overflow (List.map ((\<lambda> x. \<not> x)) bs_abs)))\<close> 
-  for  len  :: " int " 
-  and  n  :: " int "
+  else add_one_bool_ignore_overflow (List.map (\<lambda> x. \<not> x) bs_abs)))"
 
 
 \<comment> \<open>\<open>** Bit lists **\<close>\<close>
 
 \<comment> \<open>\<open>val has_undefined_bits : list bitU -> bool\<close>\<close>
-definition has_undefined_bits  :: \<open>(bitU)list \<Rightarrow> bool \<close>  where 
-     \<open> has_undefined_bits bs = ( ((\<exists> x \<in> (set bs).  ((\<lambda>x .  
-  (case  x of BU => True | _ => False ))) x)))\<close> 
-  for  bs  :: "(bitU)list "
+definition has_undefined_bits  :: "(bitU)list \<Rightarrow> bool "  where 
+     " has_undefined_bits bs = ( ((\<exists> x \<in> (set bs).  (\<lambda>x .  
+  (case  x of BU => True | _ => False )) x)))"
 
 
-definition bits_of_nat  :: \<open> int \<Rightarrow> nat \<Rightarrow>(bitU)list \<close>  where 
-     \<open> bits_of_nat len n = ( List.map bitU_of_bool (bools_of_nat len n))\<close> 
-  for  len  :: " int " 
-  and  n  :: " nat "
+definition bits_of_nat  :: " int \<Rightarrow> nat \<Rightarrow>(bitU)list "  where 
+     " bits_of_nat len n = ( List.map bitU_of_bool (bools_of_nat len n))"
 
 
-definition nat_of_bits  :: \<open>(bitU)list \<Rightarrow>(nat)option \<close>  where 
-     \<open> nat_of_bits bits = (
+definition nat_of_bits  :: "(bitU)list \<Rightarrow>(nat)option "  where 
+     " nat_of_bits bits = (
   (case  (just_list (List.map bool_of_bitU bits)) of
       Some bs => Some (nat_of_bools bs)
     | None => None
-  ))\<close> 
-  for  bits  :: "(bitU)list "
+  ))"
 
 
-definition not_bits  :: \<open>(bitU)list \<Rightarrow>(bitU)list \<close>  where 
-     \<open> not_bits = ( List.map not_bit )\<close>
+definition not_bits  :: "(bitU)list \<Rightarrow>(bitU)list "  where 
+     " not_bits = ( List.map not_bit )"
 
 
 \<comment> \<open>\<open>val binop_list : forall 'a. ('a -> 'a -> 'a) -> list 'a -> list 'a -> list 'a\<close>\<close>
-definition binop_list  :: \<open>('a \<Rightarrow> 'a \<Rightarrow> 'a)\<Rightarrow> 'a list \<Rightarrow> 'a list \<Rightarrow> 'a list \<close>  where 
-     \<open> binop_list op1 xs ys = (
-  List.foldr ( (\<lambda>x .  
-  (case  x of (x, y) => (\<lambda> acc1 .  op1 x y # acc1) ))) (List.zip xs ys) [])\<close> 
-  for  op1  :: " 'a \<Rightarrow> 'a \<Rightarrow> 'a " 
-  and  xs  :: " 'a list " 
-  and  ys  :: " 'a list "
+definition binop_list  :: "('a \<Rightarrow> 'a \<Rightarrow> 'a)\<Rightarrow> 'a list \<Rightarrow> 'a list \<Rightarrow> 'a list "  where 
+     " binop_list op1 xs ys = (
+  List.foldr ( \<lambda>x .  
+  (case  x of (x, y) => \<lambda> acc1 .  op1 x y # acc1 )) (List.zip xs ys) [])"
 
 
-definition unsigned_of_bits  :: \<open>(bitU)list \<Rightarrow>(int)option \<close>  where 
-     \<open> unsigned_of_bits bits = (
+definition unsigned_of_bits  :: "(bitU)list \<Rightarrow>(int)option "  where 
+     " unsigned_of_bits bits = (
   (case  (just_list (List.map bool_of_bitU bits)) of
       Some bs => Some (unsigned_of_bools bs)
     | None => None
-  ))\<close> 
-  for  bits  :: "(bitU)list "
+  ))"
 
 
-definition signed_of_bits  :: \<open>(bitU)list \<Rightarrow>(int)option \<close>  where 
-     \<open> signed_of_bits bits = (
+definition signed_of_bits  :: "(bitU)list \<Rightarrow>(int)option "  where 
+     " signed_of_bits bits = (
   (case  (just_list (List.map bool_of_bitU bits)) of
       Some bs => Some (signed_of_bools bs)
     | None => None
-  ))\<close> 
-  for  bits  :: "(bitU)list "
+  ))"
 
 
 \<comment> \<open>\<open>val int_of_bits : bool -> list bitU -> maybe integer\<close>\<close>
-definition int_of_bits  :: \<open> bool \<Rightarrow>(bitU)list \<Rightarrow>(int)option \<close>  where 
-     \<open> int_of_bits sign bs = ( if sign then signed_of_bits bs else unsigned_of_bits bs )\<close> 
-  for  sign  :: " bool " 
-  and  bs  :: "(bitU)list "
+definition int_of_bits  :: " bool \<Rightarrow>(bitU)list \<Rightarrow>(int)option "  where 
+     " int_of_bits sign bs = ( if sign then signed_of_bits bs else unsigned_of_bits bs )"
 
 
-definition extz_bits  :: \<open> int \<Rightarrow>(bitU)list \<Rightarrow>(bitU)list \<close>  where 
-     \<open> extz_bits len bits = ( ext_list B0 len bits )\<close> 
-  for  len  :: " int " 
-  and  bits  :: "(bitU)list "
+definition extz_bits  :: " int \<Rightarrow>(bitU)list \<Rightarrow>(bitU)list "  where 
+     " extz_bits len bits = ( ext_list B0 len bits )"
 
-definition exts_bits  :: \<open> int \<Rightarrow>(bitU)list \<Rightarrow>(bitU)list \<close>  where 
-     \<open> exts_bits len bits = (
+definition exts_bits  :: " int \<Rightarrow>(bitU)list \<Rightarrow>(bitU)list "  where 
+     " exts_bits len bits = (
   (case  bits of
     BU # _ => ext_list BU len bits
   | B1 # _ => ext_list B1 len bits
   | _ => ext_list B0 len bits
-  ))\<close> 
-  for  len  :: " int " 
-  and  bits  :: "(bitU)list "
+  ))"
 
 
-fun  add_one_bit_ignore_overflow_aux  :: \<open>(bitU)list \<Rightarrow>(bitU)list \<close>  where 
-     \<open> add_one_bit_ignore_overflow_aux ([]) = ( [])\<close>
-|\<open> add_one_bit_ignore_overflow_aux (B0 # bits) = ( B1 # bits )\<close> 
-  for  bits  :: "(bitU)list "
-|\<open> add_one_bit_ignore_overflow_aux (B1 # bits) = ( B0 # add_one_bit_ignore_overflow_aux bits )\<close> 
-  for  bits  :: "(bitU)list "
-|\<open> add_one_bit_ignore_overflow_aux (BU # bits) = ( BU # List.map ( (\<lambda>x .  
-  (case  x of _ => BU ))) bits )\<close> 
-  for  bits  :: "(bitU)list "
+fun  add_one_bit_ignore_overflow_aux  :: "(bitU)list \<Rightarrow>(bitU)list "  where 
+     " add_one_bit_ignore_overflow_aux ([]) = ( [])"
+|" add_one_bit_ignore_overflow_aux (B0 # bits) = ( B1 # bits )"
+|" add_one_bit_ignore_overflow_aux (B1 # bits) = ( B0 # add_one_bit_ignore_overflow_aux bits )"
+|" add_one_bit_ignore_overflow_aux (BU # bits) = ( BU # List.map ( \<lambda>x .  
+  (case  x of _ => BU )) bits )"
 
 
-definition add_one_bit_ignore_overflow  :: \<open>(bitU)list \<Rightarrow>(bitU)list \<close>  where 
-     \<open> add_one_bit_ignore_overflow bits = (
-  List.rev (add_one_bit_ignore_overflow_aux (List.rev bits)))\<close> 
-  for  bits  :: "(bitU)list "
+definition add_one_bit_ignore_overflow  :: "(bitU)list \<Rightarrow>(bitU)list "  where 
+     " add_one_bit_ignore_overflow bits = (
+  List.rev (add_one_bit_ignore_overflow_aux (List.rev bits)))"
 
 
 \<comment> \<open>\<open>let bit_list_of_int n = List.map bitU_of_bool (bool_list_of_int n)
 let bits_of_int len n = exts_bits len (bit_list_of_int n)\<close>\<close>
-definition bits_of_int  :: \<open> int \<Rightarrow> int \<Rightarrow>(bitU)list \<close>  where 
-     \<open> bits_of_int len n = ( List.map bitU_of_bool (bools_of_int len n))\<close> 
-  for  len  :: " int " 
-  and  n  :: " int "
+definition bits_of_int  :: " int \<Rightarrow> int \<Rightarrow>(bitU)list "  where 
+     " bits_of_int len n = ( List.map bitU_of_bool (bools_of_int len n))"
 
 
 \<comment> \<open>\<open>val arith_op_bits :
   (integer -> integer -> integer) -> bool -> list bitU -> list bitU -> list bitU\<close>\<close>
-definition arith_op_bits  :: \<open>(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bool \<Rightarrow>(bitU)list \<Rightarrow>(bitU)list \<Rightarrow>(bitU)list \<close>  where 
-     \<open> arith_op_bits op1 sign l r = (
+definition arith_op_bits  :: "(int \<Rightarrow> int \<Rightarrow> int)\<Rightarrow> bool \<Rightarrow>(bitU)list \<Rightarrow>(bitU)list \<Rightarrow>(bitU)list "  where 
+     " arith_op_bits op1 sign l r = (
   (case  (int_of_bits sign l, int_of_bits sign r) of
       (Some li, Some ri) => bits_of_int (int (List.length l)) (op1 li ri)
     | (_, _) => repeat [BU] (int (List.length l))
-  ))\<close> 
-  for  op1  :: " int \<Rightarrow> int \<Rightarrow> int " 
-  and  sign  :: " bool " 
-  and  l  :: "(bitU)list " 
-  and  r  :: "(bitU)list "
+  ))"
 
 
-definition char_of_nibble  :: \<open> bitU*bitU*bitU*bitU \<Rightarrow>(char)option \<close>  where 
-     \<open> char_of_nibble = ( (\<lambda>x .  
+definition char_of_nibble  :: " bitU*bitU*bitU*bitU \<Rightarrow>(char)option "  where 
+     " char_of_nibble = ( \<lambda>x .  
   (case  x of
         (B0, B0, B0, B0) => Some (CHR ''0'')
     | (B0, B0, B0, B1) => Some (CHR ''1'')
@@ -601,244 +522,109 @@ definition char_of_nibble  :: \<open> bitU*bitU*bitU*bitU \<Rightarrow>(char)opt
     | (B1, B1, B1, B0) => Some (CHR ''E'')
     | (B1, B1, B1, B1) => Some (CHR ''F'')
     | _ => None
-  )))\<close>
+  ) )"
 
 
-definition nibble_of_char  :: \<open> char \<Rightarrow>(bitU*bitU*bitU*bitU)option \<close>  where 
-     \<open> nibble_of_char = ( (\<lambda>x .  
-  (case  x of
-        (CHR ''0'') => Some (B0, B0, B0, B0)
-    | (CHR ''1'') => Some (B0, B0, B0, B1)
-    | (CHR ''2'') => Some (B0, B0, B1, B0)
-    | (CHR ''3'') => Some (B0, B0, B1, B1)
-    | (CHR ''4'') => Some (B0, B1, B0, B0)
-    | (CHR ''5'') => Some (B0, B1, B0, B1)
-    | (CHR ''6'') => Some (B0, B1, B1, B0)
-    | (CHR ''7'') => Some (B0, B1, B1, B1)
-    | (CHR ''8'') => Some (B1, B0, B0, B0)
-    | (CHR ''9'') => Some (B1, B0, B0, B1)
-    | (CHR ''A'') => Some (B1, B0, B1, B0)
-    | (CHR ''B'') => Some (B1, B0, B1, B1)
-    | (CHR ''C'') => Some (B1, B1, B0, B0)
-    | (CHR ''D'') => Some (B1, B1, B0, B1)
-    | (CHR ''E'') => Some (B1, B1, B1, B0)
-    | (CHR ''F'') => Some (B1, B1, B1, B1)
-    | _ => None
-  )))\<close>
-
-
-fun  hexstring_of_bits  :: \<open>(bitU)list \<Rightarrow>((char)list)option \<close>  where 
-     \<open> hexstring_of_bits (b1 # b2 # b3 # b4 # bs) = (
+fun  hexstring_of_bits  :: "(bitU)list \<Rightarrow>((char)list)option "  where 
+     " hexstring_of_bits (b1 # b2 # b3 # b4 # bs) = (
      (let n = (char_of_nibble (b1, b2, b3, b4)) in
      (let s = (hexstring_of_bits bs) in
      (case  (n, s) of
        (Some n, Some s) => Some (n # s)
      | _ => None
-     ))))\<close> 
-  for  b4  :: " bitU " 
-  and  b3  :: " bitU " 
-  and  bs  :: "(bitU)list " 
-  and  b1  :: " bitU " 
-  and  b2  :: " bitU "
-|\<open> hexstring_of_bits ([]) = ( Some [])\<close>
-|\<open> hexstring_of_bits _ = ( None )\<close>
+     ))))"
+|" hexstring_of_bits ([]) = ( Some [])"
+|" hexstring_of_bits _ = ( None )"
 
 
-definition show_bitlist_prefix  :: \<open> char \<Rightarrow>(bitU)list \<Rightarrow> string \<close>  where 
-     \<open> show_bitlist_prefix c bs = (
+definition show_bitlist  :: "(bitU)list \<Rightarrow> string "  where 
+     " show_bitlist bs = (
   (case  hexstring_of_bits bs of
-    Some s => (c # ((CHR ''x'') # s))
-  | None => (c # ((CHR ''b'') # List.map bitU_char bs))
-  ))\<close> 
-  for  c  :: " char " 
-  and  bs  :: "(bitU)list "
-
-
-definition show_bitlist  :: \<open>(bitU)list \<Rightarrow> string \<close>  where 
-     \<open> show_bitlist bs = ( show_bitlist_prefix (CHR ''0'') bs )\<close> 
-  for  bs  :: "(bitU)list "
-
-
-\<comment> \<open>\<open>val hex_char : natural -> char\<close>\<close>
-
-definition hex_char  :: \<open> nat \<Rightarrow> char \<close>  where 
-     \<open> hex_char n = ( 
-  if(n = ( 0 :: nat)) then (CHR ''0'') else
-    (
-    if(n = ( 1 :: nat)) then (CHR ''1'') else
-      (
-      if(n = ( 2 :: nat)) then (CHR ''2'') else
-        (
-        if(n = ( 3 :: nat)) then (CHR ''3'') else
-          (
-          if(n = ( 4 :: nat)) then (CHR ''4'') else
-            (
-            if(n = ( 5 :: nat)) then (CHR ''5'') else
-              (
-              if(n = ( 6 :: nat)) then (CHR ''6'') else
-                (
-                if(n = ( 7 :: nat)) then (CHR ''7'') else
-                  (
-                  if(n = ( 8 :: nat)) then (CHR ''8'') else
-                    (
-                    if(n = ( 9 :: nat)) then (CHR ''9'') else
-                      (
-                      if(n = ( 10 :: nat)) then (CHR ''A'') else
-                        (
-                        if(n = ( 11 :: nat)) then (CHR ''B'') else
-                          (
-                          if(n = ( 12 :: nat)) then (CHR ''C'') else
-                            (
-                            if(n = ( 13 :: nat)) then (CHR ''D'') else
-                              (
-                              if(n = ( 14 :: nat)) then (CHR ''E'') else
-                                (
-                                if(n = ( 15 :: nat)) then (CHR ''F'') else
-                                  (failwith
-                                     (''hex_char: not a hexadecimal digit''))))))))))))))))) )\<close> 
-  for  n  :: " nat "
-
-
-\<comment> \<open>\<open>val hex_str_aux : natural -> list char -> list char\<close>\<close>
-
-fun  hex_str_aux  :: \<open> nat \<Rightarrow>(char)list \<Rightarrow>(char)list \<close>  where 
-     \<open> hex_str_aux n acc1 = (
-  if n =( 0 :: nat) then acc1 else
-  hex_str_aux (n div( 16 :: nat)) (hex_char (n mod( 16 :: nat)) # acc1))\<close> 
-  for  n  :: " nat " 
-  and  acc1  :: "(char)list "
-
-
-\<comment> \<open>\<open>val hex_str : integer -> string\<close>\<close>
-
-definition hex_str  :: \<open> int \<Rightarrow> string \<close>  where 
-     \<open> hex_str i = (
-  if i <( 0 :: int) then failwith (''hex_str: negative'') else
-  if i =( 0 :: int) then (''0x0'') else
-  (''0x'') @ (hex_str_aux (nat (abs (abs i))) []))\<close> 
-  for  i  :: " int "
+    Some s => ((CHR ''0'') # ((CHR ''x'') # s))
+  | None => ((CHR ''0'') # ((CHR ''b'') # List.map bitU_char bs))
+  ))"
 
 
 \<comment> \<open>\<open>val subrange_list_inc : forall 'a. list 'a -> integer -> integer -> list 'a\<close>\<close>
-definition subrange_list_inc  :: \<open> 'a list \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a list \<close>  where 
-     \<open> subrange_list_inc xs i j = (
+definition subrange_list_inc  :: " 'a list \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a list "  where 
+     " subrange_list_inc xs i j = (
   (let (toJ,suffix0) = (split_at (nat_of_int (j +( 1 :: int))) xs) in
   (let (prefix0,fromItoJ) = (split_at (nat_of_int i) toJ) in
-  fromItoJ)))\<close> 
-  for  xs  :: " 'a list " 
-  and  i  :: " int " 
-  and  j  :: " int "
+  fromItoJ)))"
 
 
 \<comment> \<open>\<open>val subrange_list_dec : forall 'a. list 'a -> integer -> integer -> list 'a\<close>\<close>
-definition subrange_list_dec  :: \<open> 'a list \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a list \<close>  where 
-     \<open> subrange_list_dec xs i j = (
+definition subrange_list_dec  :: " 'a list \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a list "  where 
+     " subrange_list_dec xs i j = (
   (let top1 = ((int (List.length xs)) -( 1 :: int)) in
-  subrange_list_inc xs (top1 - i) (top1 - j)))\<close> 
-  for  xs  :: " 'a list " 
-  and  i  :: " int " 
-  and  j  :: " int "
+  subrange_list_inc xs (top1 - i) (top1 - j)))"
 
 
 \<comment> \<open>\<open>val subrange_list : forall 'a. bool -> list 'a -> integer -> integer -> list 'a\<close>\<close>
-definition subrange_list  :: \<open> bool \<Rightarrow> 'a list \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a list \<close>  where 
-     \<open> subrange_list is_inc xs i j = ( if is_inc then subrange_list_inc xs i j else subrange_list_dec xs i j )\<close> 
-  for  is_inc  :: " bool " 
-  and  xs  :: " 'a list " 
-  and  i  :: " int " 
-  and  j  :: " int "
+definition subrange_list  :: " bool \<Rightarrow> 'a list \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a list "  where 
+     " subrange_list is_inc xs i j = ( if is_inc then subrange_list_inc xs i j else subrange_list_dec xs i j )"
 
 
 \<comment> \<open>\<open>val update_subrange_list_inc : forall 'a. list 'a -> integer -> integer -> list 'a -> list 'a\<close>\<close>
-definition update_subrange_list_inc  :: \<open> 'a list \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a list \<Rightarrow> 'a list \<close>  where 
-     \<open> update_subrange_list_inc xs i j xs' = (
+definition update_subrange_list_inc  :: " 'a list \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a list \<Rightarrow> 'a list "  where 
+     " update_subrange_list_inc xs i j xs' = (
   (let (toJ,suffix) = (split_at (nat_of_int (j +( 1 :: int))) xs) in
   (let (prefix,fromItoJ0) = (split_at (nat_of_int i) toJ) in
-  (prefix @ xs') @ suffix)))\<close> 
-  for  xs  :: " 'a list " 
-  and  i  :: " int " 
-  and  j  :: " int " 
-  and  xs'  :: " 'a list "
+  (prefix @ xs') @ suffix)))"
 
 
 \<comment> \<open>\<open>val update_subrange_list_dec : forall 'a. list 'a -> integer -> integer -> list 'a -> list 'a\<close>\<close>
-definition update_subrange_list_dec  :: \<open> 'a list \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a list \<Rightarrow> 'a list \<close>  where 
-     \<open> update_subrange_list_dec xs i j xs' = (
+definition update_subrange_list_dec  :: " 'a list \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a list \<Rightarrow> 'a list "  where 
+     " update_subrange_list_dec xs i j xs' = (
   (let top1 = ((int (List.length xs)) -( 1 :: int)) in
-  update_subrange_list_inc xs (top1 - i) (top1 - j) xs'))\<close> 
-  for  xs  :: " 'a list " 
-  and  i  :: " int " 
-  and  j  :: " int " 
-  and  xs'  :: " 'a list "
+  update_subrange_list_inc xs (top1 - i) (top1 - j) xs'))"
 
 
 \<comment> \<open>\<open>val update_subrange_list : forall 'a. bool -> list 'a -> integer -> integer -> list 'a -> list 'a\<close>\<close>
-definition update_subrange_list  :: \<open> bool \<Rightarrow> 'a list \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a list \<Rightarrow> 'a list \<close>  where 
-     \<open> update_subrange_list is_inc xs i j xs' = (
-  if is_inc then update_subrange_list_inc xs i j xs' else update_subrange_list_dec xs i j xs' )\<close> 
-  for  is_inc  :: " bool " 
-  and  xs  :: " 'a list " 
-  and  i  :: " int " 
-  and  j  :: " int " 
-  and  xs'  :: " 'a list "
+definition update_subrange_list  :: " bool \<Rightarrow> 'a list \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a list \<Rightarrow> 'a list "  where 
+     " update_subrange_list is_inc xs i j xs' = (
+  if is_inc then update_subrange_list_inc xs i j xs' else update_subrange_list_dec xs i j xs' )"
 
 
 \<comment> \<open>\<open>val access_list_inc : forall 'a. list 'a -> integer -> 'a\<close>\<close>
-definition access_list_inc  :: \<open> 'a list \<Rightarrow> int \<Rightarrow> 'a \<close>  where 
-     \<open> access_list_inc xs n = ( List.nth xs (nat_of_int n))\<close> 
-  for  xs  :: " 'a list " 
-  and  n  :: " int "
+definition access_list_inc  :: " 'a list \<Rightarrow> int \<Rightarrow> 'a "  where 
+     " access_list_inc xs n = ( List.nth xs (nat_of_int n))"
 
 
 \<comment> \<open>\<open>val access_list_dec : forall 'a. list 'a -> integer -> 'a\<close>\<close>
-definition access_list_dec  :: \<open> 'a list \<Rightarrow> int \<Rightarrow> 'a \<close>  where 
-     \<open> access_list_dec xs n = (
+definition access_list_dec  :: " 'a list \<Rightarrow> int \<Rightarrow> 'a "  where 
+     " access_list_dec xs n = (
   (let top1 = ((int (List.length xs)) -( 1 :: int)) in
-  access_list_inc xs (top1 - n)))\<close> 
-  for  xs  :: " 'a list " 
-  and  n  :: " int "
+  access_list_inc xs (top1 - n)))"
 
 
 \<comment> \<open>\<open>val access_list : forall 'a. bool -> list 'a -> integer -> 'a\<close>\<close>
-definition access_list  :: \<open> bool \<Rightarrow> 'a list \<Rightarrow> int \<Rightarrow> 'a \<close>  where 
-     \<open> access_list is_inc xs n = (
-  if is_inc then access_list_inc xs n else access_list_dec xs n )\<close> 
-  for  is_inc  :: " bool " 
-  and  xs  :: " 'a list " 
-  and  n  :: " int "
+definition access_list  :: " bool \<Rightarrow> 'a list \<Rightarrow> int \<Rightarrow> 'a "  where 
+     " access_list is_inc xs n = (
+  if is_inc then access_list_inc xs n else access_list_dec xs n )"
 
 
 \<comment> \<open>\<open>val update_list_inc : forall 'a. list 'a -> integer -> 'a -> list 'a\<close>\<close>
-definition update_list_inc  :: \<open> 'a list \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> 'a list \<close>  where 
-     \<open> update_list_inc xs n x = ( List.list_update xs (nat_of_int n) x )\<close> 
-  for  xs  :: " 'a list " 
-  and  n  :: " int " 
-  and  x  :: " 'a "
+definition update_list_inc  :: " 'a list \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> 'a list "  where 
+     " update_list_inc xs n x = ( List.list_update xs (nat_of_int n) x )"
 
 
 \<comment> \<open>\<open>val update_list_dec : forall 'a. list 'a -> integer -> 'a -> list 'a\<close>\<close>
-definition update_list_dec  :: \<open> 'a list \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> 'a list \<close>  where 
-     \<open> update_list_dec xs n x = (
+definition update_list_dec  :: " 'a list \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> 'a list "  where 
+     " update_list_dec xs n x = (
   (let top1 = ((int (List.length xs)) -( 1 :: int)) in
-  update_list_inc xs (top1 - n) x))\<close> 
-  for  xs  :: " 'a list " 
-  and  n  :: " int " 
-  and  x  :: " 'a "
+  update_list_inc xs (top1 - n) x))"
 
 
 \<comment> \<open>\<open>val update_list : forall 'a. bool -> list 'a -> integer -> 'a -> list 'a\<close>\<close>
-definition update_list  :: \<open> bool \<Rightarrow> 'a list \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> 'a list \<close>  where 
-     \<open> update_list is_inc xs n x = (
-  if is_inc then update_list_inc xs n x else update_list_dec xs n x )\<close> 
-  for  is_inc  :: " bool " 
-  and  xs  :: " 'a list " 
-  and  n  :: " int " 
-  and  x  :: " 'a "
+definition update_list  :: " bool \<Rightarrow> 'a list \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow> 'a list "  where 
+     " update_list is_inc xs n x = (
+  if is_inc then update_list_inc xs n x else update_list_dec xs n x )"
 
 
-definition extract_only_bit  :: \<open>(bitU)list \<Rightarrow> bitU \<close>  where 
-     \<open> extract_only_bit = ( (\<lambda>x .  
-  (case  x of   [] => BU | [e] => e | _ => BU )))\<close>
+definition extract_only_bit  :: "(bitU)list \<Rightarrow> bitU "  where 
+     " extract_only_bit = ( \<lambda>x .  
+  (case  x of   [] => BU | [e] => e | _ => BU ) )"
 
 
 \<comment> \<open>\<open>** Machine words \<close>\<close>
@@ -846,139 +632,94 @@ definition extract_only_bit  :: \<open>(bitU)list \<Rightarrow> bitU \<close>  w
 \<comment> \<open>\<open>val length_mword : forall 'a. mword 'a -> integer\<close>\<close>
 
 \<comment> \<open>\<open>val slice_mword_dec : forall 'a 'b. mword 'a -> integer -> integer -> mword 'b\<close>\<close>
-definition slice_mword_dec  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow> int \<Rightarrow>('b::len)Word.word \<close>  where 
-     \<open> slice_mword_dec w i j = ( Word.slice (nat_of_int i) w )\<close> 
-  for  w  :: "('a::len)Word.word " 
-  and  i  :: " int " 
-  and  j  :: " int "
+definition slice_mword_dec  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow> int \<Rightarrow>('b::len)Word.word "  where 
+     " slice_mword_dec w i j = ( Word.slice (nat_of_int i) w )"
 
 
 \<comment> \<open>\<open>val slice_mword_inc : forall 'a 'b. mword 'a -> integer -> integer -> mword 'b\<close>\<close>
-definition slice_mword_inc  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow> int \<Rightarrow>('b::len)Word.word \<close>  where 
-     \<open> slice_mword_inc w i j = (
+definition slice_mword_inc  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow> int \<Rightarrow>('b::len)Word.word "  where 
+     " slice_mword_inc w i j = (
   (let top1 = ((int (size w)) -( 1 :: int)) in
-  slice_mword_dec w (top1 - i) (top1 - j)))\<close> 
-  for  w  :: "('a::len)Word.word " 
-  and  i  :: " int " 
-  and  j  :: " int "
+  slice_mword_dec w (top1 - i) (top1 - j)))"
 
 
 \<comment> \<open>\<open>val slice_mword : forall 'a 'b. bool -> mword 'a -> integer -> integer -> mword 'b\<close>\<close>
-definition slice_mword  :: \<open> bool \<Rightarrow>('a::len)Word.word \<Rightarrow> int \<Rightarrow> int \<Rightarrow>('b::len)Word.word \<close>  where 
-     \<open> slice_mword is_inc w i j = ( if is_inc then slice_mword_inc w i j else slice_mword_dec w i j )\<close> 
-  for  is_inc  :: " bool " 
-  and  w  :: "('a::len)Word.word " 
-  and  i  :: " int " 
-  and  j  :: " int "
+definition slice_mword  :: " bool \<Rightarrow>('a::len)Word.word \<Rightarrow> int \<Rightarrow> int \<Rightarrow>('b::len)Word.word "  where 
+     " slice_mword is_inc w i j = ( if is_inc then slice_mword_inc w i j else slice_mword_dec w i j )"
 
 
 \<comment> \<open>\<open>val update_slice_mword_dec : forall 'a 'b. mword 'a -> integer -> integer -> mword 'b -> mword 'a\<close>\<close>
-definition update_slice_mword_dec  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow> int \<Rightarrow>('b::len)Word.word \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> update_slice_mword_dec w i j w' = ( Lem.word_update w (nat_of_int i) (nat_of_int j) w' )\<close> 
-  for  w  :: "('a::len)Word.word " 
-  and  i  :: " int " 
-  and  j  :: " int " 
-  and  w'  :: "('b::len)Word.word "
+definition update_slice_mword_dec  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow> int \<Rightarrow>('b::len)Word.word \<Rightarrow>('a::len)Word.word "  where 
+     " update_slice_mword_dec w i j w' = ( Lem.word_update w (nat_of_int i) (nat_of_int j) w' )"
 
 
 \<comment> \<open>\<open>val update_slice_mword_inc : forall 'a 'b. mword 'a -> integer -> integer -> mword 'b -> mword 'a\<close>\<close>
-definition update_slice_mword_inc  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow> int \<Rightarrow>('b::len)Word.word \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> update_slice_mword_inc w i j w' = (
+definition update_slice_mword_inc  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow> int \<Rightarrow>('b::len)Word.word \<Rightarrow>('a::len)Word.word "  where 
+     " update_slice_mword_inc w i j w' = (
   (let top1 = ((int (size w)) -( 1 :: int)) in
-  update_slice_mword_dec w (top1 - i) (top1 - j) w'))\<close> 
-  for  w  :: "('a::len)Word.word " 
-  and  i  :: " int " 
-  and  j  :: " int " 
-  and  w'  :: "('b::len)Word.word "
+  update_slice_mword_dec w (top1 - i) (top1 - j) w'))"
 
 
 \<comment> \<open>\<open>val update_slice_mword : forall 'a 'b. bool -> mword 'a -> integer -> integer -> mword 'b -> mword 'a\<close>\<close>
-definition update_slice_mword  :: \<open> bool \<Rightarrow>('a::len)Word.word \<Rightarrow> int \<Rightarrow> int \<Rightarrow>('b::len)Word.word \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> update_slice_mword is_inc w i j w' = (
-  if is_inc then update_slice_mword_inc w i j w' else update_slice_mword_dec w i j w' )\<close> 
-  for  is_inc  :: " bool " 
-  and  w  :: "('a::len)Word.word " 
-  and  i  :: " int " 
-  and  j  :: " int " 
-  and  w'  :: "('b::len)Word.word "
+definition update_slice_mword  :: " bool \<Rightarrow>('a::len)Word.word \<Rightarrow> int \<Rightarrow> int \<Rightarrow>('b::len)Word.word \<Rightarrow>('a::len)Word.word "  where 
+     " update_slice_mword is_inc w i j w' = (
+  if is_inc then update_slice_mword_inc w i j w' else update_slice_mword_dec w i j w' )"
 
 
 \<comment> \<open>\<open>val access_mword_dec : forall 'a. mword 'a -> integer -> bitU\<close>\<close>
-definition access_mword_dec  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow> bitU \<close>  where 
-     \<open> access_mword_dec w n = ( bitU_of_bool (Bits.test_bit w (nat_of_int n)))\<close> 
-  for  w  :: "('a::len)Word.word " 
-  and  n  :: " int "
+definition access_mword_dec  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow> bitU "  where 
+     " access_mword_dec w n = ( bitU_of_bool (Bits.test_bit w (nat_of_int n)))"
 
 
 \<comment> \<open>\<open>val access_mword_inc : forall 'a. mword 'a -> integer -> bitU\<close>\<close>
-definition access_mword_inc  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow> bitU \<close>  where 
-     \<open> access_mword_inc w n = (
+definition access_mword_inc  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow> bitU "  where 
+     " access_mword_inc w n = (
   (let top1 = ((int (size w)) -( 1 :: int)) in
-  access_mword_dec w (top1 - n)))\<close> 
-  for  w  :: "('a::len)Word.word " 
-  and  n  :: " int "
+  access_mword_dec w (top1 - n)))"
 
 
 \<comment> \<open>\<open>val access_mword : forall 'a. bool -> mword 'a -> integer -> bitU\<close>\<close>
-definition access_mword  :: \<open> bool \<Rightarrow>('a::len)Word.word \<Rightarrow> int \<Rightarrow> bitU \<close>  where 
-     \<open> access_mword is_inc w n = (
-  if is_inc then access_mword_inc w n else access_mword_dec w n )\<close> 
-  for  is_inc  :: " bool " 
-  and  w  :: "('a::len)Word.word " 
-  and  n  :: " int "
+definition access_mword  :: " bool \<Rightarrow>('a::len)Word.word \<Rightarrow> int \<Rightarrow> bitU "  where 
+     " access_mword is_inc w n = (
+  if is_inc then access_mword_inc w n else access_mword_dec w n )"
 
 
 \<comment> \<open>\<open>val update_mword_bool_dec : forall 'a. mword 'a -> integer -> bool -> mword 'a\<close>\<close>
-definition update_mword_bool_dec  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow> bool \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> update_mword_bool_dec w n b = ( Bits.set_bit w (nat_of_int n) b )\<close> 
-  for  w  :: "('a::len)Word.word " 
-  and  n  :: " int " 
-  and  b  :: " bool "
+definition update_mword_bool_dec  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow> bool \<Rightarrow>('a::len)Word.word "  where 
+     " update_mword_bool_dec w n b = ( Bits.set_bit w (nat_of_int n) b )"
 
-definition update_mword_dec  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow> bitU \<Rightarrow>(('a::len)Word.word)option \<close>  where 
-     \<open> update_mword_dec w n b = ( map_option (update_mword_bool_dec w n) (bool_of_bitU b))\<close> 
-  for  w  :: "('a::len)Word.word " 
-  and  n  :: " int " 
-  and  b  :: " bitU "
+definition update_mword_dec  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow> bitU \<Rightarrow>(('a::len)Word.word)option "  where 
+     " update_mword_dec w n b = ( map_option (update_mword_bool_dec w n) (bool_of_bitU b))"
 
 
 \<comment> \<open>\<open>val update_mword_bool_inc : forall 'a. mword 'a -> integer -> bool -> mword 'a\<close>\<close>
-definition update_mword_bool_inc  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow> bool \<Rightarrow>('a::len)Word.word \<close>  where 
-     \<open> update_mword_bool_inc w n b = (
+definition update_mword_bool_inc  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow> bool \<Rightarrow>('a::len)Word.word "  where 
+     " update_mword_bool_inc w n b = (
   (let top1 = ((int (size w)) -( 1 :: int)) in
-  update_mword_bool_dec w (top1 - n) b))\<close> 
-  for  w  :: "('a::len)Word.word " 
-  and  n  :: " int " 
-  and  b  :: " bool "
+  update_mword_bool_dec w (top1 - n) b))"
 
-definition update_mword_inc  :: \<open>('a::len)Word.word \<Rightarrow> int \<Rightarrow> bitU \<Rightarrow>(('a::len)Word.word)option \<close>  where 
-     \<open> update_mword_inc w n b = ( map_option (update_mword_bool_inc w n) (bool_of_bitU b))\<close> 
-  for  w  :: "('a::len)Word.word " 
-  and  n  :: " int " 
-  and  b  :: " bitU "
+definition update_mword_inc  :: "('a::len)Word.word \<Rightarrow> int \<Rightarrow> bitU \<Rightarrow>(('a::len)Word.word)option "  where 
+     " update_mword_inc w n b = ( map_option (update_mword_bool_inc w n) (bool_of_bitU b))"
 
 
 \<comment> \<open>\<open>val int_of_mword : forall 'a. bool -> mword 'a -> integer\<close>\<close>
-definition int_of_mword  :: \<open> bool \<Rightarrow>('a::len)Word.word \<Rightarrow> int \<close>  where 
-     \<open> int_of_mword sign w = (
-  if sign then Word.sint w else Word.uint w )\<close> 
-  for  sign  :: " bool " 
-  and  w  :: "('a::len)Word.word "
+definition int_of_mword  :: " bool \<Rightarrow>('a::len)Word.word \<Rightarrow> int "  where 
+     " int_of_mword sign w = (
+  if sign then Word.sint w else Word.uint w )"
 
 
 \<comment> \<open>\<open> Translating between a type level number (itself 'n) and an integer \<close>\<close>
 
-definition size_itself_int  :: \<open>('a::len)itself \<Rightarrow> int \<close>  where 
-     \<open> size_itself_int x = ( int (size_itself x))\<close> 
-  for  x  :: "('a::len)itself "
+definition size_itself_int  :: "('a::len)itself \<Rightarrow> int "  where 
+     " size_itself_int x = ( int (size_itself x))"
 
 
 \<comment> \<open>\<open> NB: the corresponding sail type is forall 'n. atom('n) -> itself('n),
    the actual integer is ignored. \<close>\<close>
 
 \<comment> \<open>\<open>val make_the_value : forall 'n. integer -> itself 'n\<close>\<close>
-definition make_the_value  :: \<open> int \<Rightarrow>('n::len)itself \<close>  where 
-     \<open> make_the_value _ = ( TYPE(_) )\<close>
+definition make_the_value  :: " int \<Rightarrow>('n::len)itself "  where 
+     " make_the_value _ = ( TYPE(_) )"
 
 
 \<comment> \<open>\<open>** Bitvectors \<close>\<close>
@@ -1010,231 +751,158 @@ record 'a Bitvector_class=
 
 
 \<comment> \<open>\<open>val of_bits_failwith : forall 'a. Bitvector 'a => list bitU -> 'a\<close>\<close>
-definition of_bits_failwith  :: \<open> 'a Bitvector_class \<Rightarrow>(bitU)list \<Rightarrow> 'a \<close>  where 
-     \<open> of_bits_failwith dict_Sail2_values_Bitvector_a bits = ( maybe_failwith (
-  (of_bits_method   dict_Sail2_values_Bitvector_a) bits))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  bits  :: "(bitU)list "
+definition of_bits_failwith  :: " 'a Bitvector_class \<Rightarrow>(bitU)list \<Rightarrow> 'a "  where 
+     " of_bits_failwith dict_Sail2_values_Bitvector_a bits = ( maybe_failwith (
+  (of_bits_method   dict_Sail2_values_Bitvector_a) bits))"
 
 
-definition int_of_bv  :: \<open> 'a Bitvector_class \<Rightarrow> bool \<Rightarrow> 'a \<Rightarrow>(int)option \<close>  where 
-     \<open> int_of_bv dict_Sail2_values_Bitvector_a sign = ( if sign then 
-  (signed_method   dict_Sail2_values_Bitvector_a) else (unsigned_method   dict_Sail2_values_Bitvector_a) )\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  sign  :: " bool "
+definition int_of_bv  :: " 'a Bitvector_class \<Rightarrow> bool \<Rightarrow> 'a \<Rightarrow>(int)option "  where 
+     " int_of_bv dict_Sail2_values_Bitvector_a sign = ( if sign then 
+  (signed_method   dict_Sail2_values_Bitvector_a) else (unsigned_method   dict_Sail2_values_Bitvector_a) )"
 
 
-definition instance_Sail2_values_Bitvector_list_dict  :: \<open> 'a BitU_class \<Rightarrow>('a list)Bitvector_class \<close>  where 
-     \<open> instance_Sail2_values_Bitvector_list_dict dict_Sail2_values_BitU_a = ((|
+definition instance_Sail2_values_Bitvector_list_dict  :: " 'a BitU_class \<Rightarrow>('a list)Bitvector_class "  where 
+     " instance_Sail2_values_Bitvector_list_dict dict_Sail2_values_BitU_a = ((|
 
-  bits_of_method = ((\<lambda> v. List.map 
+  bits_of_method = (\<lambda> v. List.map 
+  (to_bitU_method   dict_Sail2_values_BitU_a) v),
+
+  of_bits_method = (\<lambda> v. Some (List.map 
+  (of_bitU_method   dict_Sail2_values_BitU_a) v)),
+
+  of_bools_method = (\<lambda> v. List.map 
+  (of_bitU_method   dict_Sail2_values_BitU_a) (List.map bitU_of_bool v)),
+
+  length_method = (\<lambda> xs. int (List.length xs)),
+
+  of_int_method = (\<lambda> len n. List.map 
+  (of_bitU_method   dict_Sail2_values_BitU_a) (bits_of_int len n)),
+
+  unsigned_method = (\<lambda> v. unsigned_of_bits (List.map 
   (to_bitU_method   dict_Sail2_values_BitU_a) v)),
 
-  of_bits_method = ((\<lambda> v. Some (List.map 
-  (of_bitU_method   dict_Sail2_values_BitU_a) v))),
+  signed_method = (\<lambda> v. signed_of_bits (List.map 
+  (to_bitU_method   dict_Sail2_values_BitU_a) v)),
 
-  of_bools_method = ((\<lambda> v. List.map 
-  (of_bitU_method   dict_Sail2_values_BitU_a) (List.map bitU_of_bool v))),
-
-  length_method = ((\<lambda> xs. int (List.length xs))),
-
-  of_int_method = ((\<lambda> len n. List.map 
-  (of_bitU_method   dict_Sail2_values_BitU_a) (bits_of_int len n))),
-
-  unsigned_method = ((\<lambda> v. unsigned_of_bits (List.map 
-  (to_bitU_method   dict_Sail2_values_BitU_a) v))),
-
-  signed_method = ((\<lambda> v. signed_of_bits (List.map 
-  (to_bitU_method   dict_Sail2_values_BitU_a) v))),
-
-  arith_op_bv_method = ((\<lambda> op1 sign l r. List.map 
+  arith_op_bv_method = (\<lambda> op1 sign l r. List.map 
   (of_bitU_method   dict_Sail2_values_BitU_a) (arith_op_bits op1 sign (List.map 
-  (to_bitU_method   dict_Sail2_values_BitU_a) l) (List.map (to_bitU_method   dict_Sail2_values_BitU_a) r))))|) )\<close> 
-  for  dict_Sail2_values_BitU_a  :: " 'a BitU_class "
+  (to_bitU_method   dict_Sail2_values_BitU_a) l) (List.map (to_bitU_method   dict_Sail2_values_BitU_a) r)))|) )"
 
 
-definition instance_Sail2_values_Bitvector_Machine_word_mword_dict  :: \<open>(('a::len)Word.word)Bitvector_class \<close>  where 
-     \<open> instance_Sail2_values_Bitvector_Machine_word_mword_dict = ((|
+definition instance_Sail2_values_Bitvector_Machine_word_mword_dict  :: "(('a::len)Word.word)Bitvector_class "  where 
+     " instance_Sail2_values_Bitvector_Machine_word_mword_dict = ((|
 
-  bits_of_method = ((\<lambda> v. List.map bitU_of_bool (Word.to_bl v))),
+  bits_of_method = (\<lambda> v. List.map bitU_of_bool (Word.to_bl v)),
 
-  of_bits_method = ((\<lambda> v. map_option Word.of_bl (just_list (List.map bool_of_bitU v)))),
+  of_bits_method = (\<lambda> v. map_option Word.of_bl (just_list (List.map bool_of_bitU v))),
 
-  of_bools_method = ((\<lambda> v. Word.of_bl v)),
+  of_bools_method = (\<lambda> v. Word.of_bl v),
 
-  length_method = ((\<lambda> v. int (size v))),
+  length_method = (\<lambda> v. int (size v)),
 
-  of_int_method = ( (\<lambda>x .  
-  (case  x of _ => (\<lambda> n .  Word.word_of_int n) ))),
+  of_int_method = ( \<lambda>x .  
+  (case  x of _ => \<lambda> n .  Word.word_of_int n )),
 
-  unsigned_method = ((\<lambda> v. Some (Word.uint v))),
+  unsigned_method = (\<lambda> v. Some (Word.uint v)),
 
-  signed_method = ((\<lambda> v. Some (Word.sint v))),
+  signed_method = (\<lambda> v. Some (Word.sint v)),
 
-  arith_op_bv_method = ((\<lambda> op1 sign l r. Word.word_of_int (op1 (int_of_mword sign l) (int_of_mword sign r))))|) )\<close>
-
-
-definition access_bv_inc  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> bitU \<close>  where 
-     \<open> access_bv_inc dict_Sail2_values_Bitvector_a v n = ( access_list True  (
-  (bits_of_method   dict_Sail2_values_Bitvector_a) v) n )\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  v  :: " 'a " 
-  and  n  :: " int "
-
-definition access_bv_dec  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> bitU \<close>  where 
-     \<open> access_bv_dec dict_Sail2_values_Bitvector_a v n = ( access_list False (
-  (bits_of_method   dict_Sail2_values_Bitvector_a) v) n )\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  v  :: " 'a " 
-  and  n  :: " int "
+  arith_op_bv_method = (\<lambda> op1 sign l r. Word.word_of_int (op1 (int_of_mword sign l) (int_of_mword sign r)))|) )"
 
 
-definition update_bv_inc  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> bitU \<Rightarrow>(bitU)list \<close>  where 
-     \<open> update_bv_inc dict_Sail2_values_Bitvector_a v n b = ( update_list True  (
-  (bits_of_method   dict_Sail2_values_Bitvector_a) v) n b )\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  v  :: " 'a " 
-  and  n  :: " int " 
-  and  b  :: " bitU "
+definition access_bv_inc  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> bitU "  where 
+     " access_bv_inc dict_Sail2_values_Bitvector_a v n = ( access_list True  (
+  (bits_of_method   dict_Sail2_values_Bitvector_a) v) n )"
 
-definition update_bv_dec  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> bitU \<Rightarrow>(bitU)list \<close>  where 
-     \<open> update_bv_dec dict_Sail2_values_Bitvector_a v n b = ( update_list False (
-  (bits_of_method   dict_Sail2_values_Bitvector_a) v) n b )\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  v  :: " 'a " 
-  and  n  :: " int " 
-  and  b  :: " bitU "
+definition access_bv_dec  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> bitU "  where 
+     " access_bv_dec dict_Sail2_values_Bitvector_a v n = ( access_list False (
+  (bits_of_method   dict_Sail2_values_Bitvector_a) v) n )"
 
 
-definition subrange_bv_inc  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> int \<Rightarrow>(bitU)list \<close>  where 
-     \<open> subrange_bv_inc dict_Sail2_values_Bitvector_a v i j = ( subrange_list True  (
-  (bits_of_method   dict_Sail2_values_Bitvector_a) v) i j )\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  v  :: " 'a " 
-  and  i  :: " int " 
-  and  j  :: " int "
+definition update_bv_inc  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> bitU \<Rightarrow>(bitU)list "  where 
+     " update_bv_inc dict_Sail2_values_Bitvector_a v n b = ( update_list True  (
+  (bits_of_method   dict_Sail2_values_Bitvector_a) v) n b )"
 
-definition subrange_bv_dec  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> int \<Rightarrow>(bitU)list \<close>  where 
-     \<open> subrange_bv_dec dict_Sail2_values_Bitvector_a v i j = ( subrange_list False (
-  (bits_of_method   dict_Sail2_values_Bitvector_a) v) i j )\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  v  :: " 'a " 
-  and  i  :: " int " 
-  and  j  :: " int "
+definition update_bv_dec  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> bitU \<Rightarrow>(bitU)list "  where 
+     " update_bv_dec dict_Sail2_values_Bitvector_a v n b = ( update_list False (
+  (bits_of_method   dict_Sail2_values_Bitvector_a) v) n b )"
 
 
-definition update_subrange_bv_inc  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'b \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow>(bitU)list \<close>  where 
-     \<open> update_subrange_bv_inc dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b v i j v' = ( update_subrange_list True  (
-  (bits_of_method   dict_Sail2_values_Bitvector_b) v) i j ((bits_of_method   dict_Sail2_values_Bitvector_a) v'))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class " 
-  and  v  :: " 'b " 
-  and  i  :: " int " 
-  and  j  :: " int " 
-  and  v'  :: " 'a "
+definition subrange_bv_inc  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> int \<Rightarrow>(bitU)list "  where 
+     " subrange_bv_inc dict_Sail2_values_Bitvector_a v i j = ( subrange_list True  (
+  (bits_of_method   dict_Sail2_values_Bitvector_a) v) i j )"
 
-definition update_subrange_bv_dec  :: \<open> 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'b \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow>(bitU)list \<close>  where 
-     \<open> update_subrange_bv_dec dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b v i j v' = ( update_subrange_list False (
-  (bits_of_method   dict_Sail2_values_Bitvector_b) v) i j ((bits_of_method   dict_Sail2_values_Bitvector_a) v'))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  dict_Sail2_values_Bitvector_b  :: " 'b Bitvector_class " 
-  and  v  :: " 'b " 
-  and  i  :: " int " 
-  and  j  :: " int " 
-  and  v'  :: " 'a "
+definition subrange_bv_dec  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<Rightarrow> int \<Rightarrow>(bitU)list "  where 
+     " subrange_bv_dec dict_Sail2_values_Bitvector_a v i j = ( subrange_list False (
+  (bits_of_method   dict_Sail2_values_Bitvector_a) v) i j )"
+
+
+definition update_subrange_bv_inc  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'b \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow>(bitU)list "  where 
+     " update_subrange_bv_inc dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b v i j v' = ( update_subrange_list True  (
+  (bits_of_method   dict_Sail2_values_Bitvector_b) v) i j ((bits_of_method   dict_Sail2_values_Bitvector_a) v'))"
+
+definition update_subrange_bv_dec  :: " 'a Bitvector_class \<Rightarrow> 'b Bitvector_class \<Rightarrow> 'b \<Rightarrow> int \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow>(bitU)list "  where 
+     " update_subrange_bv_dec dict_Sail2_values_Bitvector_a dict_Sail2_values_Bitvector_b v i j v' = ( update_subrange_list False (
+  (bits_of_method   dict_Sail2_values_Bitvector_b) v) i j ((bits_of_method   dict_Sail2_values_Bitvector_a) v'))"
 
 
 \<comment> \<open>\<open>val extz_bv : forall 'a. Bitvector 'a => integer -> 'a -> list bitU\<close>\<close>
-definition extz_bv  :: \<open> 'a Bitvector_class \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow>(bitU)list \<close>  where 
-     \<open> extz_bv dict_Sail2_values_Bitvector_a n v = ( extz_bits n (
-  (bits_of_method   dict_Sail2_values_Bitvector_a) v))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  n  :: " int " 
-  and  v  :: " 'a "
+definition extz_bv  :: " 'a Bitvector_class \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow>(bitU)list "  where 
+     " extz_bv dict_Sail2_values_Bitvector_a n v = ( extz_bits n (
+  (bits_of_method   dict_Sail2_values_Bitvector_a) v))"
 
 
 \<comment> \<open>\<open>val exts_bv : forall 'a. Bitvector 'a => integer -> 'a -> list bitU\<close>\<close>
-definition exts_bv  :: \<open> 'a Bitvector_class \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow>(bitU)list \<close>  where 
-     \<open> exts_bv dict_Sail2_values_Bitvector_a n v = ( exts_bits n (
-  (bits_of_method   dict_Sail2_values_Bitvector_a) v))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  n  :: " int " 
-  and  v  :: " 'a "
+definition exts_bv  :: " 'a Bitvector_class \<Rightarrow> int \<Rightarrow> 'a \<Rightarrow>(bitU)list "  where 
+     " exts_bv dict_Sail2_values_Bitvector_a n v = ( exts_bits n (
+  (bits_of_method   dict_Sail2_values_Bitvector_a) v))"
 
 
 \<comment> \<open>\<open>val nat_of_bv : forall 'a. Bitvector 'a => 'a -> maybe nat\<close>\<close>
-definition nat_of_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow>(nat)option \<close>  where 
-     \<open> nat_of_bv dict_Sail2_values_Bitvector_a v = ( map_option nat_of_int (
-  (unsigned_method   dict_Sail2_values_Bitvector_a) v))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  v  :: " 'a "
+definition nat_of_bv  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow>(nat)option "  where 
+     " nat_of_bv dict_Sail2_values_Bitvector_a v = ( map_option nat_of_int (
+  (unsigned_method   dict_Sail2_values_Bitvector_a) v))"
 
 
 \<comment> \<open>\<open>val string_of_bv : forall 'a. Bitvector 'a => 'a -> string\<close>\<close>
-definition string_of_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> string \<close>  where 
-     \<open> string_of_bv dict_Sail2_values_Bitvector_a v = ( show_bitlist (
-  (bits_of_method   dict_Sail2_values_Bitvector_a) v))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  v  :: " 'a "
+definition string_of_bv  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> string "  where 
+     " string_of_bv dict_Sail2_values_Bitvector_a v = ( show_bitlist (
+  (bits_of_method   dict_Sail2_values_Bitvector_a) v))"
 
 
 \<comment> \<open>\<open>val print_bits : forall 'a. Bitvector 'a => string -> 'a -> unit\<close>\<close>
-definition print_bits  :: \<open> 'a Bitvector_class \<Rightarrow> string \<Rightarrow> 'a \<Rightarrow> unit \<close>  where 
-     \<open> print_bits dict_Sail2_values_Bitvector_a str v = ( print_endline (str @ string_of_bv 
-  dict_Sail2_values_Bitvector_a v))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  str  :: " string " 
-  and  v  :: " 'a "
+definition print_bits  :: " 'a Bitvector_class \<Rightarrow> string \<Rightarrow> 'a \<Rightarrow> unit "  where 
+     " print_bits dict_Sail2_values_Bitvector_a str v = ( print_endline (str @ string_of_bv 
+  dict_Sail2_values_Bitvector_a v))"
 
 
 \<comment> \<open>\<open>val dec_str : integer -> string\<close>\<close>
-definition dec_str  :: \<open> int \<Rightarrow> string \<close>  where 
-     \<open> dec_str bv = ( Lem_string_extra.stringFromInteger bv )\<close> 
-  for  bv  :: " int "
+definition dec_str  :: " int \<Rightarrow> string "  where 
+     " dec_str bv = ( Lem_string_extra.stringFromInteger bv )"
 
 
 \<comment> \<open>\<open>val concat_str : string -> string -> string\<close>\<close>
-definition concat_str  :: \<open> string \<Rightarrow> string \<Rightarrow> string \<close>  where 
-     \<open> concat_str str1 str2 = ( str1 @ str2 )\<close> 
-  for  str1  :: " string " 
-  and  str2  :: " string "
+definition concat_str  :: " string \<Rightarrow> string \<Rightarrow> string "  where 
+     " concat_str str1 str2 = ( str1 @ str2 )"
 
 
 \<comment> \<open>\<open>val int_of_bit : bitU -> integer\<close>\<close>
-fun int_of_bit  :: \<open> bitU \<Rightarrow> int \<close>  where 
-     \<open> int_of_bit B0 = (( 0 :: int))\<close>
-|\<open> int_of_bit B1 = (( 1 :: int))\<close>
-|\<open> int_of_bit _ = ( failwith (''int_of_bit saw unknown''))\<close>
-
-
-\<comment> \<open>\<open>val count_leading_zero_bits : list bitU -> integer\<close>\<close>
-function (sequential,domintros)  count_leading_zero_bits  :: \<open>(bitU)list \<Rightarrow> int \<close>  where 
-     \<open> count_leading_zero_bits (B0 # v') = ( count_leading_zero_bits v' +( 1 :: int))\<close> 
-  for  v'  :: "(bitU)list "
-|\<open> count_leading_zero_bits _ = (( 0 :: int))\<close> 
-by pat_completeness auto
-
-
-\<comment> \<open>\<open>val count_leading_zeros_bv : forall 'a. Bitvector 'a => 'a -> integer\<close>\<close>
-definition count_leading_zeros_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> int \<close>  where 
-     \<open> count_leading_zeros_bv dict_Sail2_values_Bitvector_a v = ( count_leading_zero_bits (
-  (bits_of_method   dict_Sail2_values_Bitvector_a) v))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  v  :: " 'a "
+fun int_of_bit  :: " bitU \<Rightarrow> int "  where 
+     " int_of_bit B0 = (( 0 :: int))"
+|" int_of_bit B1 = (( 1 :: int))"
+|" int_of_bit _ = ( failwith (''int_of_bit saw unknown''))"
 
 
 \<comment> \<open>\<open>val decimal_string_of_bv : forall 'a. Bitvector 'a => 'a -> string\<close>\<close>
-definition decimal_string_of_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> string \<close>  where 
-     \<open> decimal_string_of_bv dict_Sail2_values_Bitvector_a bv = (
+definition decimal_string_of_bv  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow> string "  where 
+     " decimal_string_of_bv dict_Sail2_values_Bitvector_a bv = (
   (let place_values =
     (Lem_list.mapi
-      ((\<lambda> i b .  (int_of_bit b) * (( 2 :: int) ^ i)))
+      (\<lambda> i b .  (int_of_bit b) * (( 2 :: int) ^ i))
       (List.rev ((bits_of_method   dict_Sail2_values_Bitvector_a) bv)))
   in
   (let sum1 = (List.foldl (+)(( 0 :: int)) place_values) in
-  Lem_string_extra.stringFromInteger sum1)))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  bv  :: " 'a "
+  Lem_string_extra.stringFromInteger sum1)))"
 
 
 \<comment> \<open>\<open>** Bytes and addresses \<close>\<close>
@@ -1242,45 +910,30 @@ definition decimal_string_of_bv  :: \<open> 'a Bitvector_class \<Rightarrow> 'a 
 type_synonym memory_byte =" bitU list "
 
 \<comment> \<open>\<open>val byte_chunks : forall 'a. list 'a -> maybe (list (list 'a))\<close>\<close>
-fun  byte_chunks  :: \<open> 'a list \<Rightarrow>(('a list)list)option \<close>  where 
-     \<open> byte_chunks ([]) = ( Some [])\<close>
-|\<open> byte_chunks (a # b # c # d # e # f # g # h # rest) = (
-     Option.bind (byte_chunks rest) ((\<lambda> rest .  Some ([a,b,c,d,e,f,g,h] # rest))))\<close> 
-  for  rest  :: " 'a list " 
-  and  h  :: " 'a " 
-  and  d  :: " 'a " 
-  and  e  :: " 'a " 
-  and  c  :: " 'a " 
-  and  a  :: " 'a " 
-  and  f  :: " 'a " 
-  and  g  :: " 'a " 
-  and  b  :: " 'a "
-|\<open> byte_chunks _ = ( None )\<close>
+fun  byte_chunks  :: " 'a list \<Rightarrow>(('a list)list)option "  where 
+     " byte_chunks ([]) = ( Some [])"
+|" byte_chunks (a # b # c # d # e # f # g # h # rest) = (
+     Option.bind (byte_chunks rest) (\<lambda> rest .  Some ([a,b,c,d,e,f,g,h] # rest)))"
+|" byte_chunks _ = ( None )"
 
 
 \<comment> \<open>\<open>val bytes_of_bits : forall 'a. Bitvector 'a => 'a -> maybe (list memory_byte)\<close>\<close>
-definition bytes_of_bits  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow>(((bitU)list)list)option \<close>  where 
-     \<open> bytes_of_bits dict_Sail2_values_Bitvector_a bs = ( byte_chunks (
-  (bits_of_method   dict_Sail2_values_Bitvector_a) bs))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  bs  :: " 'a "
+definition bytes_of_bits  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow>(((bitU)list)list)option "  where 
+     " bytes_of_bits dict_Sail2_values_Bitvector_a bs = ( byte_chunks (
+  (bits_of_method   dict_Sail2_values_Bitvector_a) bs))"
 
 
 \<comment> \<open>\<open>val bits_of_bytes : list memory_byte -> list bitU\<close>\<close>
-definition bits_of_bytes  :: \<open>((bitU)list)list \<Rightarrow>(bitU)list \<close>  where 
-     \<open> bits_of_bytes bs = ( List.concat (List.map ((\<lambda> v. List.map ((\<lambda> b. b)) v)) bs))\<close> 
-  for  bs  :: "((bitU)list)list "
+definition bits_of_bytes  :: "((bitU)list)list \<Rightarrow>(bitU)list "  where 
+     " bits_of_bytes bs = ( List.concat (List.map (\<lambda> v. List.map (\<lambda> b. b) v) bs))"
 
 
-definition mem_bytes_of_bits  :: \<open> 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow>(((bitU)list)list)option \<close>  where 
-     \<open> mem_bytes_of_bits dict_Sail2_values_Bitvector_a bs = ( map_option List.rev (bytes_of_bits 
-  dict_Sail2_values_Bitvector_a bs))\<close> 
-  for  dict_Sail2_values_Bitvector_a  :: " 'a Bitvector_class " 
-  and  bs  :: " 'a "
+definition mem_bytes_of_bits  :: " 'a Bitvector_class \<Rightarrow> 'a \<Rightarrow>(((bitU)list)list)option "  where 
+     " mem_bytes_of_bits dict_Sail2_values_Bitvector_a bs = ( map_option List.rev (bytes_of_bits 
+  dict_Sail2_values_Bitvector_a bs))"
 
-definition bits_of_mem_bytes  :: \<open>((bitU)list)list \<Rightarrow>(bitU)list \<close>  where 
-     \<open> bits_of_mem_bytes bs = ( bits_of_bytes (List.rev bs))\<close> 
-  for  bs  :: "((bitU)list)list "
+definition bits_of_mem_bytes  :: "((bitU)list)list \<Rightarrow>(bitU)list "  where 
+     " bits_of_mem_bytes bs = ( bits_of_bytes (List.rev bs))"
 
 
 \<comment> \<open>\<open>val bitv_of_byte_lifteds : list Sail_impl_base.byte_lifted -> list bitU
@@ -1326,11 +979,10 @@ let address_of_bitv v =
   let bytes = bytes_of_bitv v in
   address_of_byte_list bytes\<close>\<close>
 
-function (sequential,domintros)  reverse_endianness_list  :: \<open> 'a list \<Rightarrow> 'a list \<close>  where 
-     \<open> reverse_endianness_list bits = (
+function (sequential,domintros)  reverse_endianness_list  :: " 'a list \<Rightarrow> 'a list "  where 
+     " reverse_endianness_list bits = (
   if List.length bits \<le>( 8 :: nat) then bits else
-    reverse_endianness_list (drop_list(( 8 :: int)) bits) @ take_list(( 8 :: int)) bits )\<close> 
-  for  bits  :: " 'a list " 
+    reverse_endianness_list (drop_list(( 8 :: int)) bits) @ take_list(( 8 :: int)) bits )" 
 by pat_completeness auto
 
 
@@ -1506,47 +1158,32 @@ let internal_mem_value bytes =
 
 \<comment> \<open>\<open>val foreach : forall 'a 'vars.
   (list 'a) -> 'vars -> ('a -> 'vars -> 'vars) -> 'vars\<close>\<close>
-fun  foreach  :: \<open> 'a list \<Rightarrow> 'vars \<Rightarrow>('a \<Rightarrow> 'vars \<Rightarrow> 'vars)\<Rightarrow> 'vars \<close>  where 
-     \<open> foreach ([]) vars body = ( vars )\<close> 
-  for  vars  :: " 'vars " 
-  and  body  :: " 'a \<Rightarrow> 'vars \<Rightarrow> 'vars "
-|\<open> foreach (x # xs) vars body = ( foreach xs (body x vars) body )\<close> 
-  for  xs  :: " 'a list " 
-  and  x  :: " 'a " 
-  and  vars  :: " 'vars " 
-  and  body  :: " 'a \<Rightarrow> 'vars \<Rightarrow> 'vars "
+fun  foreach  :: " 'a list \<Rightarrow> 'vars \<Rightarrow>('a \<Rightarrow> 'vars \<Rightarrow> 'vars)\<Rightarrow> 'vars "  where 
+     " foreach ([]) vars body = ( vars )"
+|" foreach (x # xs) vars body = ( foreach xs (body x vars) body )"
 
 
 \<comment> \<open>\<open>val index_list : integer -> integer -> integer -> list integer\<close>\<close>
-function (sequential,domintros)  index_list  :: \<open> int \<Rightarrow> int \<Rightarrow> int \<Rightarrow>(int)list \<close>  where 
-     \<open> index_list from1 to1 step = (
+function (sequential,domintros)  index_list  :: " int \<Rightarrow> int \<Rightarrow> int \<Rightarrow>(int)list "  where 
+     " index_list from1 to1 step = (
   if ((step >( 0 :: int)) \<and> (from1 \<le> to1)) \<or> ((step <( 0 :: int)) \<and> (to1 \<le> from1)) then
     from1 # index_list (from1 + step) to1 step
-  else [])\<close> 
-  for  from1  :: " int " 
-  and  to1  :: " int " 
-  and  step  :: " int " 
+  else [])" 
 by pat_completeness auto
 
 
 \<comment> \<open>\<open>val while : forall 'vars. 'vars -> ('vars -> bool) -> ('vars -> 'vars) -> 'vars\<close>\<close>
-function (sequential,domintros)  while  :: \<open> 'vars \<Rightarrow>('vars \<Rightarrow> bool)\<Rightarrow>('vars \<Rightarrow> 'vars)\<Rightarrow> 'vars \<close>  where 
-     \<open> while vars cond body = (
-  if cond vars then while (body vars) cond body else vars )\<close> 
-  for  vars  :: " 'vars " 
-  and  cond  :: " 'vars \<Rightarrow> bool " 
-  and  body  :: " 'vars \<Rightarrow> 'vars " 
+function (sequential,domintros)  while  :: " 'vars \<Rightarrow>('vars \<Rightarrow> bool)\<Rightarrow>('vars \<Rightarrow> 'vars)\<Rightarrow> 'vars "  where 
+     " while vars cond body = (
+  if cond vars then while (body vars) cond body else vars )" 
 by pat_completeness auto
 
 
 \<comment> \<open>\<open>val until : forall 'vars. 'vars -> ('vars -> bool) -> ('vars -> 'vars) -> 'vars\<close>\<close>
-function (sequential,domintros)  until  :: \<open> 'vars \<Rightarrow>('vars \<Rightarrow> bool)\<Rightarrow>('vars \<Rightarrow> 'vars)\<Rightarrow> 'vars \<close>  where 
-     \<open> until vars cond body = (
+function (sequential,domintros)  until  :: " 'vars \<Rightarrow>('vars \<Rightarrow> bool)\<Rightarrow>('vars \<Rightarrow> 'vars)\<Rightarrow> 'vars "  where 
+     " until vars cond body = (
   (let vars = (body vars) in
-  if cond vars then vars else until (body vars) cond body))\<close> 
-  for  vars  :: " 'vars " 
-  and  cond  :: " 'vars \<Rightarrow> bool " 
-  and  body  :: " 'vars \<Rightarrow> 'vars " 
+  if cond vars then vars else until (body vars) cond body))" 
 by pat_completeness auto
 
 
@@ -1557,40 +1194,30 @@ record 'a ToNatural_class=
  toNatural_method ::" 'a \<Rightarrow> nat " 
 
 \<comment> \<open>\<open> eta-expanded for Isabelle output, otherwise it breaks \<close>\<close>
-definition instance_Sail2_values_ToNatural_Num_integer_dict  :: \<open>(int)ToNatural_class \<close>  where 
-     \<open> instance_Sail2_values_ToNatural_Num_integer_dict = ((|
+definition instance_Sail2_values_ToNatural_Num_integer_dict  :: "(int)ToNatural_class "  where 
+     " instance_Sail2_values_ToNatural_Num_integer_dict = ((|
 
-  toNatural_method = ((\<lambda> n .  nat (abs n)))|) )\<close>
+  toNatural_method = (\<lambda> n .  nat (abs n))|) )"
 
-definition instance_Sail2_values_ToNatural_Num_int_dict  :: \<open>(int)ToNatural_class \<close>  where 
-     \<open> instance_Sail2_values_ToNatural_Num_int_dict = ((|
+definition instance_Sail2_values_ToNatural_Num_int_dict  :: "(int)ToNatural_class "  where 
+     " instance_Sail2_values_ToNatural_Num_int_dict = ((|
 
-  toNatural_method = ((\<lambda> n .   (nat (abs n))))|) )\<close>
+  toNatural_method = (\<lambda> n .   (nat (abs n)))|) )"
 
-definition instance_Sail2_values_ToNatural_nat_dict  :: \<open>(nat)ToNatural_class \<close>  where 
-     \<open> instance_Sail2_values_ToNatural_nat_dict = ((|
+definition instance_Sail2_values_ToNatural_nat_dict  :: "(nat)ToNatural_class "  where 
+     " instance_Sail2_values_ToNatural_nat_dict = ((|
 
-  toNatural_method = ((\<lambda> n .   n))|) )\<close>
+  toNatural_method = (\<lambda> n .   n)|) )"
 
-definition instance_Sail2_values_ToNatural_Num_natural_dict  :: \<open>(nat)ToNatural_class \<close>  where 
-     \<open> instance_Sail2_values_ToNatural_Num_natural_dict = ((|
+definition instance_Sail2_values_ToNatural_Num_natural_dict  :: "(nat)ToNatural_class "  where 
+     " instance_Sail2_values_ToNatural_Num_natural_dict = ((|
 
-  toNatural_method = ((\<lambda> n .  n))|) )\<close>
+  toNatural_method = (\<lambda> n .  n)|) )"
 
 
-fun toNaturalFiveTup  :: \<open> 'a ToNatural_class \<Rightarrow> 'b ToNatural_class \<Rightarrow> 'c ToNatural_class \<Rightarrow> 'd ToNatural_class \<Rightarrow> 'e ToNatural_class \<Rightarrow> 'd*'c*'b*'a*'e \<Rightarrow> nat*nat*nat*nat*nat \<close>  where 
-     \<open> toNaturalFiveTup dict_Sail2_values_ToNatural_a dict_Sail2_values_ToNatural_b dict_Sail2_values_ToNatural_c dict_Sail2_values_ToNatural_d dict_Sail2_values_ToNatural_e (n1,n2,n3,n4,n5) = (
-  ((toNatural_method   dict_Sail2_values_ToNatural_d) n1,(toNatural_method   dict_Sail2_values_ToNatural_c) n2,(toNatural_method   dict_Sail2_values_ToNatural_b) n3,(toNatural_method   dict_Sail2_values_ToNatural_a) n4,(toNatural_method   dict_Sail2_values_ToNatural_e) n5))\<close> 
-  for  dict_Sail2_values_ToNatural_a  :: " 'a ToNatural_class " 
-  and  dict_Sail2_values_ToNatural_b  :: " 'b ToNatural_class " 
-  and  dict_Sail2_values_ToNatural_c  :: " 'c ToNatural_class " 
-  and  dict_Sail2_values_ToNatural_d  :: " 'd ToNatural_class " 
-  and  dict_Sail2_values_ToNatural_e  :: " 'e ToNatural_class " 
-  and  n5  :: " 'e " 
-  and  n4  :: " 'a " 
-  and  n3  :: " 'b " 
-  and  n1  :: " 'd " 
-  and  n2  :: " 'c "
+fun toNaturalFiveTup  :: " 'a ToNatural_class \<Rightarrow> 'b ToNatural_class \<Rightarrow> 'c ToNatural_class \<Rightarrow> 'd ToNatural_class \<Rightarrow> 'e ToNatural_class \<Rightarrow> 'd*'c*'b*'a*'e \<Rightarrow> nat*nat*nat*nat*nat "  where 
+     " toNaturalFiveTup dict_Sail2_values_ToNatural_a dict_Sail2_values_ToNatural_b dict_Sail2_values_ToNatural_c dict_Sail2_values_ToNatural_d dict_Sail2_values_ToNatural_e (n1,n2,n3,n4,n5) = (
+  ((toNatural_method   dict_Sail2_values_ToNatural_d) n1,(toNatural_method   dict_Sail2_values_ToNatural_c) n2,(toNatural_method   dict_Sail2_values_ToNatural_b) n3,(toNatural_method   dict_Sail2_values_ToNatural_a) n4,(toNatural_method   dict_Sail2_values_ToNatural_e) n5))"
 
 
 \<comment> \<open>\<open> Let the following types be generated by Sail per spec, using either bitlists

@@ -1,71 +1,3 @@
-/*=======================================================================================*/
-/*  RISCV Sail Model                                                                     */
-/*                                                                                       */
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except for the snapshots of the Lem and Sail libraries                   */
-/*  in the prover_snapshots directory (which include copies of their                     */
-/*  licences), is subject to the BSD two-clause licence below.                           */
-/*                                                                                       */
-/*  Copyright (c) 2017-2021                                                              */
-/*    Prashanth Mundkur                                                                  */
-/*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
-/*    Jon French                                                                         */
-/*    Brian Campbell                                                                     */
-/*    Robert Norton-Wright                                                               */
-/*    Alasdair Armstrong                                                                 */
-/*    Thomas Bauereiss                                                                   */
-/*    Shaked Flur                                                                        */
-/*    Christopher Pulte                                                                  */
-/*    Peter Sewell                                                                       */
-/*    Alexander Richardson                                                               */
-/*    Hesham Almatary                                                                    */
-/*    Jessica Clarke                                                                     */
-/*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
-/*    Peter Rugg                                                                         */
-/*    Aril Computer Corp., for contributions by Scott Johnson                            */
-/*                                                                                       */
-/*  All rights reserved.                                                                 */
-/*                                                                                       */
-/*  This software was developed by the above within the Rigorous                         */
-/*  Engineering of Mainstream Systems (REMS) project, partly funded by                   */
-/*  EPSRC grant EP/K008528/1, at the Universities of Cambridge and                       */
-/*  Edinburgh.                                                                           */
-/*                                                                                       */
-/*  This software was developed by SRI International and the University of               */
-/*  Cambridge Computer Laboratory (Department of Computer Science and                    */
-/*  Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and                 */
-/*  under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA                 */
-/*  SSITH research programme.                                                            */
-/*                                                                                       */
-/*  This project has received funding from the European Research Council                 */
-/*  (ERC) under the European Union’s Horizon 2020 research and innovation                */
-/*  programme (grant agreement 789108, ELVER).                                           */
-/*                                                                                       */
-/*                                                                                       */
-/*  Redistribution and use in source and binary forms, with or without                   */
-/*  modification, are permitted provided that the following conditions                   */
-/*  are met:                                                                             */
-/*  1. Redistributions of source code must retain the above copyright                    */
-/*     notice, this list of conditions and the following disclaimer.                     */
-/*  2. Redistributions in binary form must reproduce the above copyright                 */
-/*     notice, this list of conditions and the following disclaimer in                   */
-/*     the documentation and/or other materials provided with the                        */
-/*     distribution.                                                                     */
-/*                                                                                       */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''                   */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED                    */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                      */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR                  */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                         */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                     */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF                     */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND                  */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,                   */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT                   */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF                   */
-/*  SUCH DAMAGE.                                                                         */
-/*=======================================================================================*/
-
 /* **************************************************************** */
 /* This file lists all the external Berkeley softfloat functions    */
 /* invoked from the SAIL spec for RISC-V F and D extensions         */
@@ -87,6 +19,7 @@
 
 type bits_rm     = bits(3)    /* Rounding mode */
 type bits_fflags = bits(5)    /* Accrued exceptions: NV,DZ,OF,UF,NX */
+type bits_H      = bits(16)   /* Half-precision float value */
 type bits_S      = bits(32)   /* Single-precision float value */
 type bits_D      = bits(64)   /* Double-precision float value */
 
@@ -168,6 +101,13 @@ function riscv_f64Div (rm, v1, v2) = {
   (float_fflags[4 .. 0], float_result)
 }
 
+val     extern_f16Div = {c: "softfloat_f16div", ocaml: "Softfloat.f16_div", lem: "softfloat_f16_div"} : (bits_rm, bits_H, bits_H) -> unit
+val      riscv_f16Div : (bits_rm, bits_H, bits_H) -> (bits_fflags, bits_H) effect {rreg}
+function riscv_f16Div (rm, v1, v2) = {
+  extern_f16Div(rm, v1, v2);
+  (float_fflags[4 .. 0], float_result[15 .. 0])
+}
+
 /* **************************************************************** */
 /* MULTIPLY-ADD                                                     */
 
@@ -188,6 +128,13 @@ function riscv_f64MulAdd (rm, v1, v2, v3) = {
 /* **************************************************************** */
 /* SQUARE ROOT                                                      */
 
+val     extern_f16Sqrt = {c: "softfloat_f16sqrt", ocaml: "Softfloat.f16_sqrt", lem: "softfloat_f16_sqrt"} : (bits_rm, bits_H) -> unit
+val      riscv_f16Sqrt : (bits_rm, bits_H) -> (bits_fflags, bits_H) effect {rreg}
+function riscv_f16Sqrt (rm, v) = {
+  extern_f16Sqrt(rm, v);
+  (float_fflags[4 .. 0], float_result[15 .. 0])
+}
+
 val     extern_f32Sqrt = {c: "softfloat_f32sqrt", ocaml: "Softfloat.f32_sqrt", lem: "softfloat_f32_sqrt"} : (bits_rm, bits_S) -> unit
 val      riscv_f32Sqrt : (bits_rm, bits_S) -> (bits_fflags, bits_S) effect {rreg}
 function riscv_f32Sqrt (rm, v) = {
@@ -199,6 +146,54 @@ val     extern_f64Sqrt = {c: "softfloat_f64sqrt", ocaml: "Softfloat.f64_sqrt", l
 val      riscv_f64Sqrt : (bits_rm, bits_D) -> (bits_fflags, bits_D) effect {rreg}
 function riscv_f64Sqrt (rm, v) = {
   extern_f64Sqrt(rm, v);
+  (float_fflags[4 .. 0], float_result)
+}
+
+/* **************************************************************** */
+/* RECIPROCAL SQUARE ROOT ESTIMATE                                                     */
+
+val     extern_f16Rsqrte7 = {c: "softfloat_f16rsqrte7", ocaml: "Softfloat.f16_rsqrte7", lem: "softfloat_f16_rsqrte7"} : (bits_rm, bits_H) -> unit
+val      riscv_f16Rsqrte7 : (bits_rm, bits_H) -> (bits_fflags, bits_H) effect {rreg}
+function riscv_f16Rsqrte7 (rm, v) = {
+  extern_f16Rsqrte7(rm, v);
+  (float_fflags[4 .. 0], float_result[15 .. 0])
+}
+
+val     extern_f32Rsqrte7 = {c: "softfloat_f32rsqrte7", ocaml: "Softfloat.f32_rsqrte7", lem: "softfloat_f32_rsqrte7"} : (bits_rm, bits_S) -> unit
+val      riscv_f32Rsqrte7 : (bits_rm, bits_S) -> (bits_fflags, bits_S) effect {rreg}
+function riscv_f32Rsqrte7 (rm, v) = {
+  extern_f32Rsqrte7(rm, v);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
+
+val     extern_f64Rsqrte7 = {c: "softfloat_f64rsqrte7", ocaml: "Softfloat.f64_rsqrte7", lem: "softfloat_f64_rsqrte7"} : (bits_rm, bits_D) -> unit
+val      riscv_f64Rsqrte7 : (bits_rm, bits_D) -> (bits_fflags, bits_D) effect {rreg}
+function riscv_f64Rsqrte7 (rm, v) = {
+  extern_f64Rsqrte7(rm, v);
+  (float_fflags[4 .. 0], float_result)
+}
+
+/* **************************************************************** */
+/* RECIPROCAL ESTIMATE                                                      */
+
+val     extern_f16Recip7 = {c: "softfloat_f16recip7", ocaml: "Softfloat.f16_recip7", lem: "softfloat_f16_recip7"} : (bits_rm, bits_H) -> unit
+val      riscv_f16Recip7 : (bits_rm, bits_H) -> (bits_fflags, bits_H) effect {rreg}
+function riscv_f16Recip7 (rm, v) = {
+  extern_f16Recip7(rm, v);
+  (float_fflags[4 .. 0], float_result[15 .. 0])
+}
+
+val     extern_f32Recip7 = {c: "softfloat_f32recip7", ocaml: "Softfloat.f32_recip7", lem: "softfloat_f32_recip7"} : (bits_rm, bits_S) -> unit
+val      riscv_f32Recip7 : (bits_rm, bits_S) -> (bits_fflags, bits_S) effect {rreg}
+function riscv_f32Recip7 (rm, v) = {
+  extern_f32Recip7(rm, v);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
+
+val     extern_f64Recip7 = {c: "softfloat_f64recip7", ocaml: "Softfloat.f64_recip7", lem: "softfloat_f64_recip7"} : (bits_rm, bits_D) -> unit
+val      riscv_f64Recip7 : (bits_rm, bits_D) -> (bits_fflags, bits_D) effect {rreg}
+function riscv_f64Recip7 (rm, v) = {
+  extern_f64Recip7(rm, v);
   (float_fflags[4 .. 0], float_result)
 }
 
@@ -331,48 +326,90 @@ function riscv_f64ToF32 (rm, v) = {
   (float_fflags[4 .. 0], float_result[31 .. 0])
 }
 
+val     extern_f16ToI32 = {c: "softfloat_f16toi32", ocaml: "Softfloat.f16_to_i32", lem: "softfloat_f16_to_i32"} : (bits_rm, bits_H) -> unit
+val      riscv_f16ToI32 : (bits_rm, bits_H) -> (bits_fflags, bits_W) effect {rreg}
+function riscv_f16ToI32 (rm, v) = {
+  extern_f16ToI32(rm, v);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
+
+val     extern_f16ToUi32 = {c: "softfloat_f16toui32", ocaml: "Softfloat.f16_to_ui32", lem: "softfloat_f16_to_ui32"} : (bits_rm, bits_H) -> unit
+val      riscv_f16ToUi32 : (bits_rm, bits_H) -> (bits_fflags, bits_WU) effect {rreg}
+function riscv_f16ToUi32 (rm, v) = {
+  extern_f16ToUi32(rm, v);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
+
+val     extern_i32ToF16 = {c: "softfloat_i32tof16", ocaml: "Softfloat.i32_to_f16", lem: "softfloat_i32_to_f16"} : (bits_rm, bits_W) -> unit
+val      riscv_i32ToF16 : (bits_rm, bits_W) -> (bits_fflags, bits_H) effect {rreg}
+function riscv_i32ToF16 (rm, v) = {
+  extern_i32ToF16(rm, v);
+  (float_fflags[4 .. 0], float_result[15 .. 0])
+}
+
+val     extern_ui32ToF16 = {c: "softfloat_ui32tof16", ocaml: "Softfloat.ui32_to_f16", lem: "softfloat_ui32_to_f16"} : (bits_rm, bits_WU) -> unit
+val      riscv_ui32ToF16 : (bits_rm, bits_WU) -> (bits_fflags, bits_H) effect {rreg}
+function riscv_ui32ToF16 (rm, v) = {
+  extern_ui32ToF16(rm, v);
+  (float_fflags[4 .. 0], float_result[15 .. 0])
+}
+
+val     extern_f16ToF32 = {c: "softfloat_f16tof32", ocaml: "Softfloat.f16_to_f32", lem: "softfloat_f16_to_f32"} : (bits_rm, bits_H) -> unit
+val      riscv_f16ToF32 : (bits_rm, bits_H) -> (bits_fflags, bits_S) effect {rreg}
+function riscv_f16ToF32 (rm, v) = {
+  extern_f16ToF32(rm, v);
+  (float_fflags[4 .. 0], float_result[31 .. 0])
+}
+
+val     extern_f32ToF16 = {c: "softfloat_f32tof16", ocaml: "Softfloat.f32_to_f16", lem: "softfloat_f32_to_f16"} : (bits_rm, bits_S) -> unit
+val      riscv_f32ToF16 : (bits_rm, bits_S) -> (bits_fflags, bits_H) effect {rreg}
+function riscv_f32ToF16 (rm, v) = {
+  extern_f32ToF16(rm, v);
+  (float_fflags[4 .. 0], float_result[15 .. 0])
+}
+
 /* **************************************************************** */
 /* COMPARISONS                                                      */
 
 val     extern_f32Lt = {c: "softfloat_f32lt", ocaml: "Softfloat.f32_lt", lem: "softfloat_f32_lt"} : (bits_S, bits_S) -> unit
-val      riscv_f32Lt : (bits_S, bits_S) -> (bits_fflags, bool) effect {rreg}
+val      riscv_f32Lt : (bits_S, bits_S) -> (bits_fflags, bits_WU) effect {rreg}
 function riscv_f32Lt (v1, v2) = {
   extern_f32Lt(v1, v2);
-  (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
+  (float_fflags[4 .. 0], float_result[31 .. 0])
 }
 
 val     extern_f32Le = {c: "softfloat_f32le", ocaml: "Softfloat.f32_le", lem: "softfloat_f32_le"} : (bits_S, bits_S) -> unit
-val      riscv_f32Le : (bits_S, bits_S) -> (bits_fflags, bool) effect {rreg}
+val      riscv_f32Le : (bits_S, bits_S) -> (bits_fflags, bits_WU) effect {rreg}
 function riscv_f32Le (v1, v2) = {
   extern_f32Le(v1, v2);
-  (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
+  (float_fflags[4 .. 0], float_result[31 .. 0])
 }
 
 val     extern_f32Eq = {c: "softfloat_f32eq", ocaml: "Softfloat.f32_eq", lem: "softfloat_f32_eq"} : (bits_S, bits_S) -> unit
-val      riscv_f32Eq : (bits_S, bits_S) -> (bits_fflags, bool) effect {rreg}
+val      riscv_f32Eq : (bits_S, bits_S) -> (bits_fflags, bits_WU) effect {rreg}
 function riscv_f32Eq (v1, v2) = {
   extern_f32Eq(v1, v2);
-  (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
+  (float_fflags[4 .. 0], float_result[31 .. 0])
 }
 
 val     extern_f64Lt = {c: "softfloat_f64lt", ocaml: "Softfloat.f64_lt", lem: "softfloat_f64_lt"} : (bits_D, bits_D) -> unit
-val      riscv_f64Lt : (bits_D, bits_D) -> (bits_fflags, bool) effect {rreg}
+val      riscv_f64Lt : (bits_D, bits_D) -> (bits_fflags, bits_LU) effect {rreg}
 function riscv_f64Lt (v1, v2) = {
   extern_f64Lt(v1, v2);
-  (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
+  (float_fflags[4 .. 0], float_result)
 }
 
 val     extern_f64Le = {c: "softfloat_f64le", ocaml: "Softfloat.f64_le", lem: "softfloat_f64_le"} : (bits_D, bits_D) -> unit
-val      riscv_f64Le : (bits_D, bits_D) -> (bits_fflags, bool) effect {rreg}
+val      riscv_f64Le : (bits_D, bits_D) -> (bits_fflags, bits_LU) effect {rreg}
 function riscv_f64Le (v1, v2) = {
   extern_f64Le(v1, v2);
-  (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
+  (float_fflags[4 .. 0], float_result)
 }
 
 val     extern_f64Eq = {c: "softfloat_f64eq", ocaml: "Softfloat.f64_eq", lem: "softfloat_f64_eq"} : (bits_D, bits_D) -> unit
-val      riscv_f64Eq : (bits_D, bits_D) -> (bits_fflags, bool) effect {rreg}
+val      riscv_f64Eq : (bits_D, bits_D) -> (bits_fflags, bits_LU) effect {rreg}
 function riscv_f64Eq (v1, v2) = {
   extern_f64Eq(v1, v2);
-  (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
+  (float_fflags[4 .. 0], float_result)
 }
 /* **************************************************************** */

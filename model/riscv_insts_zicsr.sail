@@ -1,71 +1,3 @@
-/*=======================================================================================*/
-/*  RISCV Sail Model                                                                     */
-/*                                                                                       */
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except for the snapshots of the Lem and Sail libraries                   */
-/*  in the prover_snapshots directory (which include copies of their                     */
-/*  licences), is subject to the BSD two-clause licence below.                           */
-/*                                                                                       */
-/*  Copyright (c) 2017-2021                                                              */
-/*    Prashanth Mundkur                                                                  */
-/*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
-/*    Jon French                                                                         */
-/*    Brian Campbell                                                                     */
-/*    Robert Norton-Wright                                                               */
-/*    Alasdair Armstrong                                                                 */
-/*    Thomas Bauereiss                                                                   */
-/*    Shaked Flur                                                                        */
-/*    Christopher Pulte                                                                  */
-/*    Peter Sewell                                                                       */
-/*    Alexander Richardson                                                               */
-/*    Hesham Almatary                                                                    */
-/*    Jessica Clarke                                                                     */
-/*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
-/*    Peter Rugg                                                                         */
-/*    Aril Computer Corp., for contributions by Scott Johnson                            */
-/*                                                                                       */
-/*  All rights reserved.                                                                 */
-/*                                                                                       */
-/*  This software was developed by the above within the Rigorous                         */
-/*  Engineering of Mainstream Systems (REMS) project, partly funded by                   */
-/*  EPSRC grant EP/K008528/1, at the Universities of Cambridge and                       */
-/*  Edinburgh.                                                                           */
-/*                                                                                       */
-/*  This software was developed by SRI International and the University of               */
-/*  Cambridge Computer Laboratory (Department of Computer Science and                    */
-/*  Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and                 */
-/*  under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA                 */
-/*  SSITH research programme.                                                            */
-/*                                                                                       */
-/*  This project has received funding from the European Research Council                 */
-/*  (ERC) under the European Union’s Horizon 2020 research and innovation                */
-/*  programme (grant agreement 789108, ELVER).                                           */
-/*                                                                                       */
-/*                                                                                       */
-/*  Redistribution and use in source and binary forms, with or without                   */
-/*  modification, are permitted provided that the following conditions                   */
-/*  are met:                                                                             */
-/*  1. Redistributions of source code must retain the above copyright                    */
-/*     notice, this list of conditions and the following disclaimer.                     */
-/*  2. Redistributions in binary form must reproduce the above copyright                 */
-/*     notice, this list of conditions and the following disclaimer in                   */
-/*     the documentation and/or other materials provided with the                        */
-/*     distribution.                                                                     */
-/*                                                                                       */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''                   */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED                    */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                      */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR                  */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                         */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                     */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF                     */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND                  */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,                   */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT                   */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF                   */
-/*  SUCH DAMAGE.                                                                         */
-/*=======================================================================================*/
-
 /* ****************************************************************** */
 /* This file specifies the instructions in the 'Zicsr' extension.     */
 
@@ -133,6 +65,15 @@ function readCSR csr : csreg -> xlenbits = {
     (0xB80, 32) => mcycle[63 .. 32],
     (0xB82, 32) => minstret[63 .. 32],
 
+    /* vector csr*/
+    (0x008, _) => EXTZ(vstart),
+    (0x009, _) => EXTZ(vxsat),
+    (0x00A, _) => EXTS(vxrm),
+    (0x00F, _) => EXTZ(vcsr.bits()),
+    (0xC20, _) => EXTS(vl),
+    (0xC21, _) => EXTZ(vtype.bits()),/*what's the meaning of .bits?????*/
+    (0xC22, _) => EXTS(vlenb),
+
     /* trigger/debug */
     (0x7a0,  _) => ~(tselect),  /* this indicates we don't have any trigger support */
 
@@ -157,9 +98,6 @@ function readCSR csr : csreg -> xlenbits = {
     (0xC80, 32) => mcycle[63 .. 32],
     (0xC81, 32) => mtime[63 .. 32],
     (0xC82, 32) => minstret[63 .. 32],
-
-    /* user mode: Zkr */
-    (0x015,  _) => read_seed_csr(),
 
     _           => /* check extensions */
                    match ext_read_CSR(csr) {
@@ -238,9 +176,14 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x144,  _) => { mip = legalize_sip(mip, mideleg, value); Some(mip.bits()) },
     (0x180,  _) => { satp = legalize_satp(cur_Architecture(), satp, value); Some(satp) },
 
-    /* user mode: seed (entropy source). writes are ignored */
-    (0x015,  _) => write_seed_csr(),
-
+    /* vector csr ???待定 */
+    (0x008, _) => { vstart = value[(sizeof(vstart_int) - 1) .. 0]; Some(EXTZ(vstart)) },
+    (0x009, _) => { vxsat = value[0 .. 0]; Some(EXTZ(vxsat)) },
+    (0x00A, _) => { vxrm = value[1 .. 0]; Some(EXTS(vxrm)) },
+    //(0x00F, _) => { vcsr->bits() = value[2 ..0];  Some(EXTZ(vcsr.bits())) },
+    (0xC20, _) => { vl = value[(sizeof(xlen) - 1) .. 0]; Some(EXTS(vl)) },
+    (0xC21, _) => { vtype->bits() = value[(sizeof(xlen) - 1) .. 0]; Some(EXTZ(vtype.bits())) },
+    (0xC22, _) => { vlenb = value[(sizeof(xlen) - 1) .. 0]; Some(EXTS(vlenb)) },
     _           => ext_write_CSR(csr, value)
   };
   match res {

@@ -1,7 +1,6 @@
 Require Import Sail.Values.
 Require Import Sail.Prompt_monad.
 Require Export ZArith.Zwf.
-Require Import Lia.
 Require Import List.
 Import ListNotations.
 Local Open Scope Z.
@@ -170,7 +169,7 @@ refine (Acc_inv _acc _).
 destruct H.
 unbool_comparisons.
 red.
-lia.
+omega.
 Defined.
 
 (* A version of well-foundedness of measures with a guard to ensure that
