@@ -36,8 +36,10 @@ function PEXT_SMUL8(rs2, rs1, rd) = {
   let rd1 = rd0 + 1 in
   if sizeof(xlen) == 32
   then {
-    X(rd1) = smul (rB(rs1, 3), rB(rs2, 3)) @ smul (rB(rs1, 2), rB(rs2, 2));
-    X(rd0) = smul (rB(rs1, 1), rB(rs2, 1)) @ smul (rB(rs1, 0), rB(rs2, 0)); }
+    let rd1_result = smul (rB(rs1, 3), rB(rs2, 3)) @ smul (rB(rs1, 2), rB(rs2, 2));
+    let rd0_result = smul (rB(rs1, 1), rB(rs2, 1)) @ smul (rB(rs1, 0), rB(rs2, 0));
+    X(rd1) = rd1_result;
+    X(rd0) = rd0_result; }
   else
     X(rd)  = smul (rB(rs1, 3), rB(rs2, 3)) @ smul (rB(rs1, 2), rB(rs2, 2)) @
              smul (rB(rs1, 1), rB(rs2, 1)) @ smul (rB(rs1, 0), rB(rs2, 0));
@@ -52,8 +54,10 @@ function PEXT_SMULX8(rs2, rs1, rd) = {
   let rd1 = rd0 + 1 in
   if sizeof(xlen) == 32
   then {
-    X(rd1) = smul (rB(rs1, 3), rB(rs2, 2)) @ smul (rB(rs1, 2), rB(rs2, 3));
-    X(rd0) = smul (rB(rs1, 1), rB(rs2, 0)) @ smul (rB(rs1, 0), rB(rs2, 1)); }
+    let rd1_result = smul (rB(rs1, 3), rB(rs2, 2)) @ smul (rB(rs1, 2), rB(rs2, 3));
+    let rd0_result = smul (rB(rs1, 1), rB(rs2, 0)) @ smul (rB(rs1, 0), rB(rs2, 1));
+    X(rd1) = rd1_result;
+    X(rd0) = rd0_result; }
   else
     X(rd)  = smul (rB(rs1, 3), rB(rs2, 2)) @ smul (rB(rs1, 2), rB(rs2, 3)) @
              smul (rB(rs1, 1), rB(rs2, 0)) @ smul (rB(rs1, 0), rB(rs2, 1));
@@ -68,8 +72,10 @@ function PEXT_UMUL8(rs2, rs1, rd) = {
   let rd1 = rd0 + 1 in
   if sizeof(xlen) == 32
   then {
-    X(rd1) = umul (rB(rs1, 3), rB(rs2, 3)) @ umul (rB(rs1, 2), rB(rs2, 2));
-    X(rd0) = umul (rB(rs1, 1), rB(rs2, 1)) @ umul (rB(rs1, 0), rB(rs2, 0)); }
+    let rd1_result = umul (rB(rs1, 3), rB(rs2, 3)) @ umul (rB(rs1, 2), rB(rs2, 2));
+    let rd0_result = umul (rB(rs1, 1), rB(rs2, 1)) @ umul (rB(rs1, 0), rB(rs2, 0));
+    X(rd1) = rd1_result;
+    X(rd0) = rd0_result;  }
   else
     X(rd)  = umul (rB(rs1, 3), rB(rs2, 3)) @ umul (rB(rs1, 2), rB(rs2, 2)) @
              umul (rB(rs1, 1), rB(rs2, 1)) @ umul (rB(rs1, 0), rB(rs2, 0));
@@ -84,8 +90,10 @@ function PEXT_UMULX8(rs2, rs1, rd) = {
   let rd1 = rd0 + 1 in
   if sizeof(xlen) == 32
   then {
-    X(rd1) = umul (rB(rs1, 3), rB(rs2, 2)) @ umul (rB(rs1, 2), rB(rs2, 3));
-    X(rd0) = umul (rB(rs1, 1), rB(rs2, 0)) @ umul (rB(rs1, 0), rB(rs2, 1)); }
+    let rd1_result = umul (rB(rs1, 3), rB(rs2, 2)) @ umul (rB(rs1, 2), rB(rs2, 3));
+    let rd0_result = umul (rB(rs1, 1), rB(rs2, 0)) @ umul (rB(rs1, 0), rB(rs2, 1));
+    X(rd1) = rd1_result;
+    X(rd0) = rd0_result;  }
   else
     X(rd) = umul (rB(rs1, 3), rB(rs2, 2)) @ umul (rB(rs1, 2), rB(rs2, 3)) @
             umul (rB(rs1, 1), rB(rs2, 0)) @ umul (rB(rs1, 0), rB(rs2, 1));
@@ -132,8 +140,10 @@ function PEXT_SMUL16(rs2, rs1, rd) = {
   let rd1 = rd0 + 1 in
   if sizeof(xlen) == 32
   then {
-    X(rd1) = smul (rH(rs1, 1), rH(rs2, 1));
-    X(rd0) = smul (rH(rs1, 0), rH(rs2, 0)); }
+    let rd1_result = smul (rH(rs1, 1), rH(rs2, 1));
+    let rd0_result = smul (rH(rs1, 0), rH(rs2, 0));
+    X(rd1) = rd1_result;
+    X(rd0) = rd0_result; }
   else
     X(rd)  = smul (rH(rs1, 1), rH(rs2, 1)) @ smul (rH(rs1, 0), rH(rs2, 0));
   true
@@ -147,8 +157,10 @@ function PEXT_SMULX16(rs2, rs1, rd) = {
   let rd1 = rd0 + 1 in
   if sizeof(xlen) == 32
   then {
-    X(rd1) = smul (rH(rs1, 1), rH(rs2, 0));
-    X(rd0) = smul (rH(rs1, 0), rH(rs2, 1)); }
+    let rd1_result = smul (rH(rs1, 1), rH(rs2, 0));
+    let rd0_result = smul (rH(rs1, 0), rH(rs2, 1));
+    X(rd1) = rd1_result;
+    X(rd0) = rd0_result; }
   else
     X(rd)  = smul (rH(rs1, 1), rH(rs2, 0)) @ smul (rH(rs1, 0), rH(rs2, 1));
   true
@@ -162,8 +174,10 @@ function PEXT_UMUL16(rs2, rs1, rd) = {
   let rd1 = rd0 + 1 in
   if sizeof(xlen) == 32
   then {
-    X(rd1) = umul (rH(rs1, 1), rH(rs2, 1));
-    X(rd0) = umul (rH(rs1, 0), rH(rs2, 0)); }
+    let rd1_result = umul (rH(rs1, 1), rH(rs2, 1));
+    let rd0_result = umul (rH(rs1, 0), rH(rs2, 0));
+    X(rd1) = rd1_result;
+    X(rd0) = rd0_result; }
   else
     X(rd)  = umul (rH(rs1, 1), rH(rs2, 1)) @ umul (rH(rs1, 0), rH(rs2, 0));
   true
@@ -177,8 +191,10 @@ function PEXT_UMULX16(rs2, rs1, rd) = {
   let rd1 = rd0 + 1 in
   if sizeof(xlen) == 32
   then {
-    X(rd1) = umul (rH(rs1, 1), rH(rs2, 0));
-    X(rd0) = umul (rH(rs1, 0), rH(rs2, 1)); }
+    let rd1_result = umul (rH(rs1, 1), rH(rs2, 0));
+    let rd0_result = umul (rH(rs1, 0), rH(rs2, 1));
+    X(rd1) = rd1_result;
+    X(rd0) = rd0_result; }
   else
     X(rd)  = umul (rH(rs1, 1), rH(rs2, 0)) @ umul (rH(rs1, 0), rH(rs2, 1));
   true
