@@ -75,9 +75,9 @@ function ukadd (v1, v2) =
 val ukadd64 :
   (bits(64), bits(64)) -> bits(64) effect {rreg,wreg}
 function ukadd64 (v1, v2) =
-  let ub : bits(64) = EXTZ(sail_ones (64)) in
-  let v1ext : bits(64) = EXTZ(v1) in
-  let v2ext : bits(64) = EXTZ(v2) in
+  let ub : bits(65) = EXTZ(sail_ones (64)) in
+  let v1ext : bits(65) = EXTZ(v1) in
+  let v2ext : bits(65) = EXTZ(v2) in
   let sumext = v1ext + v2ext in
   if ub <_u sumext then { pext_write_OV (0b1); ones(64) }
   else { slice (sumext, 0, 64) }
