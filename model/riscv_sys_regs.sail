@@ -144,6 +144,8 @@ val sys_enable_writable_misa = {c: "sys_enable_writable_misa", ocaml: "Platform.
 val sys_enable_rvc = {c: "sys_enable_rvc", ocaml: "Platform.enable_rvc", _: "sys_enable_rvc"} : unit -> bool
 /* whether misa.{f,d} were enabled at boot */
 val sys_enable_fdext = {c: "sys_enable_fdext", ocaml: "Platform.enable_fdext", _: "sys_enable_fdext"} : unit -> bool
+/* whether zfinx was enabled at boot */
+val sys_enable_zfinx = {c: "sys_enable_zfinx", ocaml: "Platform.enable_zfinx", _: "sys_enable_zfinx"} : unit -> bool
 /* whether the N extension was enabled at boot */
 val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "sys_enable_next"} : unit -> bool
 
@@ -178,7 +180,13 @@ function haveMulDiv()  -> bool = misa.M() == 0b1
 function haveSupMode() -> bool = misa.S() == 0b1
 function haveUsrMode() -> bool = misa.U() == 0b1
 function haveNExt()    -> bool = misa.N() == 0b1
-/* see below for F and D extension tests */
+/* see below for F and D (and Z*inx counterparts) extension tests */
+
+/* BitManip extension support. */
+function haveZba()  -> bool = true
+function haveZbb()  -> bool = true
+function haveZbc()  -> bool = true
+function haveZbs()  -> bool = true
 
 /* Cryptography extension support. Note these will need updating once */
 /* Sail can be dynamically configured with different extension support */
@@ -278,11 +286,13 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
 
   /* We don't have any extension context yet. */
   let m = update_XS(m, extStatus_to_bits(Off));
+
   /* FS is WARL, and making FS writable can support the M-mode emulation of an FPU
-   * to support code running in S/U-modes.  Spike does this, and for now, we match it.
+   * to support code running in S/U-modes.  Spike does this, and for now, we match it,
+   * but only if Zfinx isn't enabled.
    * FIXME: This should be made a platform parameter.
    */
-
+  let m = if sys_enable_zfinx() then update_FS(m, extStatus_to_bits(Off)) else m;
   let dirty = extStatus_of_bits(m.FS()) == Dirty | extStatus_of_bits(m.XS()) == Dirty;
   let m = update_SD(m, bool_to_bits(dirty));
 
@@ -330,6 +340,10 @@ function in32BitMode() -> bool = {
 /* F and D extensions have to enabled both via misa.{FD} as well as mstatus.FS */
 function haveFExt()    -> bool = (misa.F() == 0b1) & (mstatus.FS() != 0b00)
 function haveDExt()    -> bool = (misa.D() == 0b1) & (mstatus.FS() != 0b00)
+
+/* Zfinx and Zdinx extensions (TODO: gate FCSR access on [mhs]stateen0 bit 1 when implemented) */
+function haveZfinx()   -> bool = sys_enable_zfinx()
+function haveZdinx()   -> bool = sys_enable_zfinx() & sizeof(flen) >= 64
 
 /* interrupt processing state */
 

@@ -186,5 +186,5 @@ val ext_read_CSR : csreg -> option(xlenbits) effect {rreg}
 scattered function ext_read_CSR
 
 /* returns new value (after legalisation) if the CSR is defined */
-val ext_write_CSR : (csreg, xlenbits) -> option(xlenbits) effect {rreg, wreg}
+val ext_write_CSR : (csreg, xlenbits) -> option(xlenbits) effect {rreg, wreg, escape}
 scattered function ext_write_CSR
