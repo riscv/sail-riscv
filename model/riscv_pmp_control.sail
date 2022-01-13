@@ -122,7 +122,7 @@ enum pmpAddrMatch = {PMP_NoMatch, PMP_PartialMatch, PMP_Match}
 function pmpMatchAddr(addr: xlenbits, width: xlenbits, rng: pmp_addr_range) -> pmpAddrMatch = {
   match rng {
     None()         => PMP_NoMatch,
-    Some((lo, hi)) => if   hi <_u lo   /* to handle mis-configuration */
+    Some((lo, hi)) => if   hi <=_u lo   /* to handle mis-configuration */
                       then PMP_NoMatch
                       else {
                         if      (addr + width <=_u lo) | (hi <=_u addr)
