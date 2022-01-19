@@ -198,6 +198,8 @@ function haveZknh()   -> bool = true
 function haveZkne()   -> bool = true
 function haveZknd()   -> bool = true
 
+function haveZmmul()  -> bool = true
+
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
   SBE  : 4
