@@ -424,7 +424,7 @@ generated_definitions/for-rmem/riscv.defs: $(SAIL_RMEM_SRCS)
 
 FORCE:
 
-SHARE_FILES:=$(wildcard model/*.sail) $(wildcard c_emulator/*.c) $(wildcard c_emulator/*.h) $(wildcard handwritten_support/*.lem) $(wildcard handwritten_support/hgen/*.hgen) $(wildcard handwritten_support/0.11/*.lem) $(RMEM_FILES)
+SHARE_FILES:=$(sort $(wildcard model/*.sail)) $(sort $(wildcard c_emulator/*.c)) $(sort $(wildcard c_emulator/*.h)) $(sort $(wildcard handwritten_support/*.lem)) $(sort $(wildcard handwritten_support/hgen/*.hgen)) $(sort $(wildcard handwritten_support/0.11/*.lem)) $(RMEM_FILES)
 sail-riscv.install: FORCE
 	echo 'bin: ["c_emulator/riscv_sim_RV64" "c_emulator/riscv_sim_RV32"]' > sail-riscv.install
 	echo 'share: [ $(foreach f,$(SHARE_FILES),"$f" {"$f"}) ]' >> sail-riscv.install
