@@ -10514,6 +10514,62 @@ definition update_softfloat_fflags  :: \<open>(5)Word.word \<Rightarrow>((regist
   for  flags  :: "(5)Word.word "
 
 
+\<comment> \<open>\<open>val riscv_f16Add : mword ty3 -> mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)\<close>\<close>
+
+definition riscv_f16Add  :: \<open>(3)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>((register_value),((5)Word.word*(16)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f16Add rm v1 v2 = (
+   (let (_ :: unit) = (softfloat_f16_add rm v1 v2) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 15 :: int)::ii) (( 0 :: int)::ii)  ::  16 Word.word))))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v1  :: "(16)Word.word " 
+  and  v2  :: "(16)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_f16Sub : mword ty3 -> mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)\<close>\<close>
+
+definition riscv_f16Sub  :: \<open>(3)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>((register_value),((5)Word.word*(16)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f16Sub rm v1 v2 = (
+   (let (_ :: unit) = (softfloat_f16_sub rm v1 v2) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 15 :: int)::ii) (( 0 :: int)::ii)  ::  16 Word.word))))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v1  :: "(16)Word.word " 
+  and  v2  :: "(16)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_f16Mul : mword ty3 -> mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)\<close>\<close>
+
+definition riscv_f16Mul  :: \<open>(3)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>((register_value),((5)Word.word*(16)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f16Mul rm v1 v2 = (
+   (let (_ :: unit) = (softfloat_f16_mul rm v1 v2) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 15 :: int)::ii) (( 0 :: int)::ii)  ::  16 Word.word))))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v1  :: "(16)Word.word " 
+  and  v2  :: "(16)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_f16Div : mword ty3 -> mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)\<close>\<close>
+
+definition riscv_f16Div  :: \<open>(3)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>((register_value),((5)Word.word*(16)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f16Div rm v1 v2 = (
+   (let (_ :: unit) = (softfloat_f16_div rm v1 v2) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 15 :: int)::ii) (( 0 :: int)::ii)  ::  16 Word.word))))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v1  :: "(16)Word.word " 
+  and  v2  :: "(16)Word.word "
+
+
 \<comment> \<open>\<open>val riscv_f32Add : mword ty3 -> mword ty32 -> mword ty32 -> M (mword ty5 * mword ty32)\<close>\<close>
 
 definition riscv_f32Add  :: \<open>(3)Word.word \<Rightarrow>(32)Word.word \<Rightarrow>(32)Word.word \<Rightarrow>((register_value),((5)Word.word*(32)Word.word),(exception))monad \<close>  where 
@@ -10622,6 +10678,21 @@ definition riscv_f64Div  :: \<open>(3)Word.word \<Rightarrow>(64)Word.word \<Rig
   and  v2  :: "(64)Word.word "
 
 
+\<comment> \<open>\<open>val riscv_f16MulAdd : mword ty3 -> mword ty16 -> mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)\<close>\<close>
+
+definition riscv_f16MulAdd  :: \<open>(3)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>((register_value),((5)Word.word*(16)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f16MulAdd rm v1 v2 v3 = (
+   (let (_ :: unit) = (softfloat_f16_muladd rm v1 v2 v3) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 15 :: int)::ii) (( 0 :: int)::ii)  ::  16 Word.word))))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v1  :: "(16)Word.word " 
+  and  v2  :: "(16)Word.word " 
+  and  v3  :: "(16)Word.word "
+
+
 \<comment> \<open>\<open>val riscv_f32MulAdd : mword ty3 -> mword ty32 -> mword ty32 -> mword ty32 -> M (mword ty5 * mword ty32)\<close>\<close>
 
 definition riscv_f32MulAdd  :: \<open>(3)Word.word \<Rightarrow>(32)Word.word \<Rightarrow>(32)Word.word \<Rightarrow>(32)Word.word \<Rightarrow>((register_value),((5)Word.word*(32)Word.word),(exception))monad \<close>  where 
@@ -10651,6 +10722,19 @@ definition riscv_f64MulAdd  :: \<open>(3)Word.word \<Rightarrow>(64)Word.word \<
   and  v3  :: "(64)Word.word "
 
 
+\<comment> \<open>\<open>val riscv_f16Sqrt : mword ty3 -> mword ty16 -> M (mword ty5 * mword ty16)\<close>\<close>
+
+definition riscv_f16Sqrt  :: \<open>(3)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>((register_value),((5)Word.word*(16)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f16Sqrt rm v = (
+   (let (_ :: unit) = (softfloat_f16_sqrt rm v) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 15 :: int)::ii) (( 0 :: int)::ii)  ::  16 Word.word))))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v  :: "(16)Word.word "
+
+
 \<comment> \<open>\<open>val riscv_f32Sqrt : mword ty3 -> mword ty32 -> M (mword ty5 * mword ty32)\<close>\<close>
 
 definition riscv_f32Sqrt  :: \<open>(3)Word.word \<Rightarrow>(32)Word.word \<Rightarrow>((register_value),((5)Word.word*(32)Word.word),(exception))monad \<close>  where 
@@ -10672,6 +10756,108 @@ definition riscv_f64Sqrt  :: \<open>(3)Word.word \<Rightarrow>(64)Word.word \<Ri
    (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
    (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
    return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word), w__1)))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v  :: "(64)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_f16ToI32 : mword ty3 -> mword ty16 -> M (mword ty5 * mword ty32)\<close>\<close>
+
+definition riscv_f16ToI32  :: \<open>(3)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>((register_value),((5)Word.word*(32)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f16ToI32 rm v = (
+   (let (_ :: unit) = (softfloat_f16_to_i32 rm v) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 31 :: int)::ii) (( 0 :: int)::ii)  ::  32 Word.word))))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v  :: "(16)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_f16ToUi32 : mword ty3 -> mword ty16 -> M (mword ty5 * mword ty32)\<close>\<close>
+
+definition riscv_f16ToUi32  :: \<open>(3)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>((register_value),((5)Word.word*(32)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f16ToUi32 rm v = (
+   (let (_ :: unit) = (softfloat_f16_to_ui32 rm v) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 31 :: int)::ii) (( 0 :: int)::ii)  ::  32 Word.word))))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v  :: "(16)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_i32ToF16 : mword ty3 -> mword ty32 -> M (mword ty5 * mword ty16)\<close>\<close>
+
+definition riscv_i32ToF16  :: \<open>(3)Word.word \<Rightarrow>(32)Word.word \<Rightarrow>((register_value),((5)Word.word*(16)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_i32ToF16 rm v = (
+   (let (_ :: unit) = (softfloat_i32_to_f16 rm v) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 15 :: int)::ii) (( 0 :: int)::ii)  ::  16 Word.word))))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v  :: "(32)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_ui32ToF16 : mword ty3 -> mword ty32 -> M (mword ty5 * mword ty16)\<close>\<close>
+
+definition riscv_ui32ToF16  :: \<open>(3)Word.word \<Rightarrow>(32)Word.word \<Rightarrow>((register_value),((5)Word.word*(16)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_ui32ToF16 rm v = (
+   (let (_ :: unit) = (softfloat_ui32_to_f16 rm v) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 15 :: int)::ii) (( 0 :: int)::ii)  ::  16 Word.word))))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v  :: "(32)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_f16ToI64 : mword ty3 -> mword ty16 -> M (mword ty5 * mword ty64)\<close>\<close>
+
+definition riscv_f16ToI64  :: \<open>(3)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>((register_value),((5)Word.word*(64)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f16ToI64 rm v = (
+   (let (_ :: unit) = (softfloat_f16_to_i64 rm v) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word), w__1)))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v  :: "(16)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_f16ToUi64 : mword ty3 -> mword ty16 -> M (mword ty5 * mword ty64)\<close>\<close>
+
+definition riscv_f16ToUi64  :: \<open>(3)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>((register_value),((5)Word.word*(64)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f16ToUi64 rm v = (
+   (let (_ :: unit) = (softfloat_f16_to_ui64 rm v) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word), w__1)))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v  :: "(16)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_i64ToF16 : mword ty3 -> mword ty64 -> M (mword ty5 * mword ty16)\<close>\<close>
+
+definition riscv_i64ToF16  :: \<open>(3)Word.word \<Rightarrow>(64)Word.word \<Rightarrow>((register_value),((5)Word.word*(16)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_i64ToF16 rm v = (
+   (let (_ :: unit) = (softfloat_i64_to_f16 rm v) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 15 :: int)::ii) (( 0 :: int)::ii)  ::  16 Word.word))))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v  :: "(64)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_ui64ToF16 : mword ty3 -> mword ty64 -> M (mword ty5 * mword ty16)\<close>\<close>
+
+definition riscv_ui64ToF16  :: \<open>(3)Word.word \<Rightarrow>(64)Word.word \<Rightarrow>((register_value),((5)Word.word*(16)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_ui64ToF16 rm v = (
+   (let (_ :: unit) = (softfloat_ui64_to_f16 rm v) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 15 :: int)::ii) (( 0 :: int)::ii)  ::  16 Word.word))))))))\<close> 
   for  rm  :: "(3)Word.word " 
   and  v  :: "(64)Word.word "
 
@@ -10876,6 +11062,31 @@ definition riscv_ui64ToF64  :: \<open>(3)Word.word \<Rightarrow>(64)Word.word \<
   and  v  :: "(64)Word.word "
 
 
+\<comment> \<open>\<open>val riscv_f16ToF32 : mword ty3 -> mword ty16 -> M (mword ty5 * mword ty32)\<close>\<close>
+
+definition riscv_f16ToF32  :: \<open>(3)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>((register_value),((5)Word.word*(32)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f16ToF32 rm v = (
+   (let (_ :: unit) = (softfloat_f16_to_f32 rm v) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 31 :: int)::ii) (( 0 :: int)::ii)  ::  32 Word.word))))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v  :: "(16)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_f16ToF64 : mword ty3 -> mword ty16 -> M (mword ty5 * mword ty64)\<close>\<close>
+
+definition riscv_f16ToF64  :: \<open>(3)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>((register_value),((5)Word.word*(64)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f16ToF64 rm v = (
+   (let (_ :: unit) = (softfloat_f16_to_f64 rm v) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word), w__1)))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v  :: "(16)Word.word "
+
+
 \<comment> \<open>\<open>val riscv_f32ToF64 : mword ty3 -> mword ty32 -> M (mword ty5 * mword ty64)\<close>\<close>
 
 definition riscv_f32ToF64  :: \<open>(3)Word.word \<Rightarrow>(32)Word.word \<Rightarrow>((register_value),((5)Word.word*(64)Word.word),(exception))monad \<close>  where 
@@ -10886,6 +11097,32 @@ definition riscv_f32ToF64  :: \<open>(3)Word.word \<Rightarrow>(32)Word.word \<R
    return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word), w__1)))))))\<close> 
   for  rm  :: "(3)Word.word " 
   and  v  :: "(32)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_f32ToF16 : mword ty3 -> mword ty32 -> M (mword ty5 * mword ty16)\<close>\<close>
+
+definition riscv_f32ToF16  :: \<open>(3)Word.word \<Rightarrow>(32)Word.word \<Rightarrow>((register_value),((5)Word.word*(16)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f32ToF16 rm v = (
+   (let (_ :: unit) = (softfloat_f32_to_f16 rm v) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 15 :: int)::ii) (( 0 :: int)::ii)  ::  16 Word.word))))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v  :: "(32)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_f64ToF16 : mword ty3 -> mword ty64 -> M (mword ty5 * mword ty16)\<close>\<close>
+
+definition riscv_f64ToF16  :: \<open>(3)Word.word \<Rightarrow>(64)Word.word \<Rightarrow>((register_value),((5)Word.word*(16)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f64ToF16 rm v = (
+   (let (_ :: unit) = (softfloat_f64_to_f16 rm v) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 15 :: int)::ii) (( 0 :: int)::ii)  ::  16 Word.word))))))))\<close> 
+  for  rm  :: "(3)Word.word " 
+  and  v  :: "(64)Word.word "
 
 
 \<comment> \<open>\<open>val riscv_f64ToF32 : mword ty3 -> mword ty64 -> M (mword ty5 * mword ty32)\<close>\<close>
@@ -10899,6 +11136,45 @@ definition riscv_f64ToF32  :: \<open>(3)Word.word \<Rightarrow>(64)Word.word \<R
            (subrange_vec_dec w__1 (( 31 :: int)::ii) (( 0 :: int)::ii)  ::  32 Word.word))))))))\<close> 
   for  rm  :: "(3)Word.word " 
   and  v  :: "(64)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_f16Lt : mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)\<close>\<close>
+
+definition riscv_f16Lt  :: \<open>(16)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>((register_value),((5)Word.word*(16)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f16Lt v1 v2 = (
+   (let (_ :: unit) = (softfloat_f16_lt v1 v2) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 15 :: int)::ii) (( 0 :: int)::ii)  ::  16 Word.word))))))))\<close> 
+  for  v1  :: "(16)Word.word " 
+  and  v2  :: "(16)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_f16Le : mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)\<close>\<close>
+
+definition riscv_f16Le  :: \<open>(16)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>((register_value),((5)Word.word*(16)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f16Le v1 v2 = (
+   (let (_ :: unit) = (softfloat_f16_le v1 v2) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 15 :: int)::ii) (( 0 :: int)::ii)  ::  16 Word.word))))))))\<close> 
+  for  v1  :: "(16)Word.word " 
+  and  v2  :: "(16)Word.word "
+
+
+\<comment> \<open>\<open>val riscv_f16Eq : mword ty16 -> mword ty16 -> M (mword ty5 * mword ty16)\<close>\<close>
+
+definition riscv_f16Eq  :: \<open>(16)Word.word \<Rightarrow>(16)Word.word \<Rightarrow>((register_value),((5)Word.word*(16)Word.word),(exception))monad \<close>  where 
+     \<open> riscv_f16Eq v1 v2 = (
+   (let (_ :: unit) = (softfloat_f16_eq v1 v2) in
+   (read_reg float_fflags_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__0 ::  64 Word.word) . 
+   (read_reg float_result_ref  :: ( 64 Word.word) M) \<bind> ((\<lambda> (w__1 ::  64 Word.word) . 
+   return ((subrange_vec_dec w__0 (( 4 :: int)::ii) (( 0 :: int)::ii)  ::  5 Word.word),
+           (subrange_vec_dec w__1 (( 15 :: int)::ii) (( 0 :: int)::ii)  ::  16 Word.word))))))))\<close> 
+  for  v1  :: "(16)Word.word " 
+  and  v2  :: "(16)Word.word "
 
 
 \<comment> \<open>\<open>val riscv_f32Lt : mword ty32 -> mword ty32 -> M (mword ty5 * mword ty32)\<close>\<close>

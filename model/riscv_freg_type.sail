@@ -93,6 +93,18 @@ function fregval_into_freg(v) = v
     RISC-V uses the following IEEE-defined rounding modes.
 */
 
+enum f_madd_op_H = {FMADD_H, FMSUB_H, FNMSUB_H, FNMADD_H}
+
+enum f_bin_rm_op_H = {FADD_H, FSUB_H, FMUL_H, FDIV_H}
+
+enum f_un_rm_op_H = {FSQRT_H, FCVT_W_H, FCVT_WU_H, FCVT_H_W, FCVT_H_WU,    // RV32 and RV64
+                     FCVT_H_S, FCVT_H_D, FCVT_S_H, FCVT_D_H,
+                     FCVT_L_H, FCVT_LU_H, FCVT_H_L, FCVT_H_LU}             // RV64 only
+
+enum f_un_op_H = {FCLASS_H, FMV_X_H, FMV_H_X}    /* RV32 and RV64 */
+
+enum f_bin_op_H = {FSGNJ_H, FSGNJN_H, FSGNJX_H, FMIN_H, FMAX_H, FEQ_H, FLT_H, FLE_H}
+
 enum rounding_mode = {RM_RNE, RM_RTZ, RM_RDN, RM_RUP, RM_RMM, RM_DYN}
 
 enum f_madd_op_S = {FMADD_S, FMSUB_S, FNMSUB_S, FNMADD_S}

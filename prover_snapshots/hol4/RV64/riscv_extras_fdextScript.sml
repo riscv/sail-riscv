@@ -20,6 +20,25 @@ val _ = type_abbrev((*  'a *) "bitvector0" , ``:  'a words$word``);
 
 (* stub functions emulating the C softfloat interface *)
 
+(*val softfloat_f16_add : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f16_add:'rm words$word -> 's words$word -> 's words$word -> unit) _ _ _=  () )`;
+
+
+(*val softfloat_f16_sub : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f16_sub:'rm words$word -> 's words$word -> 's words$word -> unit) _ _ _=  () )`;
+
+
+(*val softfloat_f16_mul : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f16_mul:'rm words$word -> 's words$word -> 's words$word -> unit) _ _ _=  () )`;
+
+
+(*val softfloat_f16_div : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f16_div:'rm words$word -> 's words$word -> 's words$word -> unit) _ _ _=  () )`;
+
 (*val softfloat_f32_add : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> bitvector 's -> unit*)
 val _ = Define `
  ((softfloat_f32_add:'rm words$word -> 's words$word -> 's words$word -> unit) _ _ _=  () )`;
@@ -61,6 +80,11 @@ val _ = Define `
 
 
 
+(*val softfloat_f16_muladd : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> bitvector 's -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f16_muladd:'rm words$word -> 's words$word -> 's words$word -> 's words$word -> unit) _ _ _ _=  () )`;
+
+
 (*val softfloat_f32_muladd : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> bitvector 's -> bitvector 's -> unit*)
 val _ = Define `
  ((softfloat_f32_muladd:'rm words$word -> 's words$word -> 's words$word -> 's words$word -> unit) _ _ _ _=  () )`;
@@ -72,6 +96,11 @@ val _ = Define `
 
 
 
+(*val softfloat_f16_sqrt : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f16_sqrt:'rm words$word -> 's words$word -> unit) _ _=  () )`;
+
+
 (*val softfloat_f32_sqrt : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
 val _ = Define `
  ((softfloat_f32_sqrt:'rm words$word -> 's words$word -> unit) _ _=  () )`;
@@ -80,6 +109,47 @@ val _ = Define `
 (*val softfloat_f64_sqrt : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
 val _ = Define `
  ((softfloat_f64_sqrt:'rm words$word -> 's words$word -> unit) _ _=  () )`;
+
+
+
+(*val softfloat_f16_to_i32: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f16_to_i32:'rm words$word -> 's words$word -> unit) _ _=  () )`;
+
+
+(*val softfloat_f16_to_ui32: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f16_to_ui32:'rm words$word -> 's words$word -> unit) _ _=  () )`;
+
+
+(*val softfloat_i32_to_f16: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_i32_to_f16:'rm words$word -> 's words$word -> unit) _ _=  () )`;
+
+
+(*val softfloat_ui32_to_f16: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_ui32_to_f16:'rm words$word -> 's words$word -> unit) _ _=  () )`;
+
+
+(*val softfloat_f16_to_i64: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f16_to_i64:'rm words$word -> 's words$word -> unit) _ _=  () )`;
+
+
+(*val softfloat_f16_to_ui64: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f16_to_ui64:'rm words$word -> 's words$word -> unit) _ _=  () )`;
+
+
+(*val softfloat_i64_to_f16: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_i64_to_f16:'rm words$word -> 's words$word -> unit) _ _=  () )`;
+
+
+(*val softfloat_ui64_to_f16: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_ui64_to_f16:'rm words$word -> 's words$word -> unit) _ _=  () )`;
 
 
 
@@ -165,15 +235,49 @@ val _ = Define `
 
 
 
+(*val softfloat_f16_to_f32: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f16_to_f32:'rm words$word -> 's words$word -> unit) _ _=  () )`;
+
+
+(*val softfloat_f16_to_f64: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f16_to_f64:'rm words$word -> 's words$word -> unit) _ _=  () )`;
+
+
 (*val softfloat_f32_to_f64: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
 val _ = Define `
  ((softfloat_f32_to_f64:'rm words$word -> 's words$word -> unit) _ _=  () )`;
+
+
+(*val softfloat_f32_to_f16: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f32_to_f16:'rm words$word -> 's words$word -> unit) _ _=  () )`;
+
+
+(*val softfloat_f64_to_f16: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f64_to_f16:'rm words$word -> 's words$word -> unit) _ _=  () )`;
 
 
 (*val softfloat_f64_to_f32: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit*)
 val _ = Define `
  ((softfloat_f64_to_f32:'rm words$word -> 's words$word -> unit) _ _=  () )`;
 
+
+(*val softfloat_f16_lt : forall 's. Size 's => bitvector 's -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f16_lt:'s words$word -> 's words$word -> unit) _ _=  () )`;
+
+
+(*val softfloat_f16_le : forall 's. Size 's => bitvector 's -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f16_le:'s words$word -> 's words$word -> unit) _ _=  () )`;
+
+
+(*val softfloat_f16_eq : forall 's. Size 's => bitvector 's -> bitvector 's -> unit*)
+val _ = Define `
+ ((softfloat_f16_eq:'s words$word -> 's words$word -> unit) _ _=  () )`;
 
 
 (*val softfloat_f32_lt : forall 's. Size 's => bitvector 's -> bitvector 's -> unit*)

@@ -188,6 +188,9 @@ function haveZbb()  -> bool = true
 function haveZbc()  -> bool = true
 function haveZbs()  -> bool = true
 
+/* Zfh (half-precision) extension */
+function haveZfh()    -> bool = true
+
 /* Cryptography extension support. Note these will need updating once */
 /* Sail can be dynamically configured with different extension support */
 /* and have dynamic changes of XLEN via S/UXL */
