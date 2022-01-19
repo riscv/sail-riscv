@@ -68,6 +68,7 @@ size_t spike_dtb_len = 0;
 char *sig_file = NULL;
 uint64_t mem_sig_start = 0;
 uint64_t mem_sig_end = 0;
+int signature_granularity = 4;
 
 bool config_print_instr = true;
 bool config_print_reg = true;
@@ -120,6 +121,7 @@ static struct option options[] = {
   {"show-times",                  required_argument, 0, 'p'},
   {"report-arch",                 no_argument,       0, 'a'},
   {"test-signature",              required_argument, 0, 'T'},
+  {"signature-granularity",       required_argument, 0, 'g'},
 #ifdef RVFI_DII
   {"rvfi-dii",                    required_argument, 0, 'r'},
 #endif
@@ -230,6 +232,7 @@ char *process_args(int argc, char **argv)
                     "b:"
                     "t:"
                     "T:"
+                    "g"
                     "h"
 #ifdef RVFI_DII
                     "r:"
@@ -307,6 +310,10 @@ char *process_args(int argc, char **argv)
     case 'T':
       sig_file = strdup(optarg);
       fprintf(stderr, "using %s for test-signature output.\n", sig_file);
+      break;
+    case 'g':
+      signature_granularity = atoi(optarg);
+      fprintf(stderr, "setting signature-granularity to %d bytes\n", signature_granularity);
       break;
     case 'h':
       print_usage(argv[0], 0);
@@ -578,10 +585,10 @@ void write_signature(const char *file)
     fprintf(stderr, "Cannot open file '%s': %s\n", file, strerror(errno));
     return;
   }
-  /* write out words in signature area */
-  for (uint64_t addr = mem_sig_start; addr < mem_sig_end; addr += 4) {
+  /* write out words depending on signature granularity in signature area */
+  for (uint64_t addr = mem_sig_start; addr < mem_sig_end; addr += signature_granularity) {
     /* most-significant byte first */
-    for (int i = 3; i >= 0; i--) {
+    for (int i = signature_granularity - 1; i >= 0; i--) {
       uint8_t byte = (uint8_t) read_mem(addr+i);
       fprintf(f, "%02x", byte);
     }
