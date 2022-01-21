@@ -259,7 +259,7 @@ register rvfi_mem_data : RVFI_DII_Execution_Packet_Ext_MemAccess
 register rvfi_mem_data_present : bool
 
 // Reset the trace
-val rvfi_zero_exec_packet : unit -> unit effect {wreg}
+val rvfi_zero_exec_packet : unit -> unit effect {rreg, wreg}
 
 function rvfi_zero_exec_packet () = {
   rvfi_inst_data = Mk_RVFI_DII_Execution_Packet_InstMetaData(EXTZ(0b0));
@@ -346,13 +346,13 @@ function rvfi_get_exec_packet_v2 () = {
   return packet.bits();
 }
 
-val rvfi_get_int_data : unit -> bits(320) effect {rreg}
+val rvfi_get_int_data : unit -> bits(320) effect {escape, rreg}
 function rvfi_get_int_data () = {
   assert(rvfi_int_data_present, "reading uninitialized data");
   return rvfi_int_data.bits();
 }
 
-val rvfi_get_mem_data : unit -> bits(704) effect {rreg}
+val rvfi_get_mem_data : unit -> bits(704) effect {escape, rreg}
 function rvfi_get_mem_data () = {
   assert(rvfi_mem_data_present, "reading uninitialized data");
   return rvfi_mem_data.bits();

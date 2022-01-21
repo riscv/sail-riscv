@@ -154,7 +154,7 @@ function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_
 /* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
 
 $ifdef RVFI_DII
-val rvfi_read : forall 'n, 'n > 0. (xlenbits, atom('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit effect {wreg}
+val rvfi_read : forall 'n, 'n > 0. (xlenbits, atom('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit effect {escape, wreg}
 function rvfi_read (addr, width, result) = {
   rvfi_mem_data->rvfi_mem_addr() = EXTZ(addr);
   rvfi_mem_data_present = true;
@@ -228,7 +228,7 @@ function mem_write_ea (addr, width, aq, rl, con) = {
 }
 
 $ifdef RVFI_DII
-val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), mem_meta) -> unit effect {wreg}
+val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), mem_meta) -> unit effect {escape, wreg}
 function rvfi_write (addr, width, value, meta) = {
   rvfi_mem_data->rvfi_mem_addr() = EXTZ(addr);
   rvfi_mem_data_present = true;

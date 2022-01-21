@@ -68,7 +68,11 @@
 
 /* Sv39 address translation for RV64. */
 
+$ifdef RVFI_DII
+val walk39 : (vaddr39, AccessType(ext_access_type), Privilege, bool, bool, paddr64, nat, bool, ext_ptw) -> PTW_Result(paddr64, SV39_PTE) effect {rmem, rmemt, rreg, wreg, escape}
+$else
 val walk39 : (vaddr39, AccessType(ext_access_type), Privilege, bool, bool, paddr64, nat, bool, ext_ptw) -> PTW_Result(paddr64, SV39_PTE) effect {rmem, rmemt, rreg, escape}
+$endif
 function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let va = Mk_SV39_Vaddr(vaddr);
   let pt_ofs : paddr64 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV39_LEVEL_BITS))[(SV39_LEVEL_BITS - 1) .. 0]),
