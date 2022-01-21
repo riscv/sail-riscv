@@ -1,8 +1,8 @@
 /* ****************************************************************** */
 union clause ast = RISCV_CLMUL : (regidx, regidx, regidx)
 
-mapping clause encdec = RISCV_CLMUL(rs2, rs1, rd) if haveZbc()
-  <-> 0b0000101 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011 if haveZbc()
+mapping clause encdec = RISCV_CLMUL(rs2, rs1, rd) if haveZbc() | haveZbkc()
+  <-> 0b0000101 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011 if haveZbc() | haveZbkc()
 
 mapping clause assembly = RISCV_CLMUL(rs2, rs1, rd)
   <-> "clmul" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
@@ -20,8 +20,8 @@ function clause execute (RISCV_CLMUL(rs2, rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_CLMULH : (regidx, regidx, regidx)
 
-mapping clause encdec = RISCV_CLMULH(rs2, rs1, rd) if haveZbc()
-  <-> 0b0000101 @ rs2 @ rs1 @ 0b011 @ rd @ 0b0110011 if haveZbc()
+mapping clause encdec = RISCV_CLMULH(rs2, rs1, rd) if haveZbc() | haveZbkc()
+  <-> 0b0000101 @ rs2 @ rs1 @ 0b011 @ rd @ 0b0110011 if haveZbc() | haveZbkc()
 
 mapping clause assembly = RISCV_CLMULH(rs2, rs1, rd)
   <-> "clmulh" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
