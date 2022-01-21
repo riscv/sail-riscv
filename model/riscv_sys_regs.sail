@@ -157,18 +157,20 @@ val ext_veto_disable_C : unit -> bool effect {rreg}
 /* We currently only support dynamic changes for the C extension. */
 function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   if   sys_enable_writable_misa ()
-  then { /* Handle modifications to C. */
-         let  v = Mk_Misa(v);
-         /* Suppress changing C if nextPC would become misaligned or an extension vetoes or C was disabled at boot (i.e. not supported). */
-         let m =
-           if   (v.C() == 0b0 & (nextPC[1] == bitone | ext_veto_disable_C())) | ~(sys_enable_rvc())
-           then m
-           else update_C(m, v.C());
-         /* Handle updates for F/D. */
-         if   ~(sys_enable_fdext()) | (v.D() == 0b1 & v.F() == 0b0)
-         then m
-         else update_D(update_F(m, v.F()), v.D())
-       }
+  then {
+    let v = Mk_Misa(v);
+    /* Suppress disabling C & keep misa unchanged if nextPC would become misaligned or an extension vetoes */
+    if   v.C() == 0b0 & (nextPC[1] == bitone | ext_veto_disable_C())
+    then m
+    else {
+      /* Suppress updates to C if C is read-only */
+      let m = if ~(sys_enable_rvc()) then m else update_C(m, v.C());
+      /* Suppress updates to F/D if they are read-only or would become an illegal combination */
+      if   ~(sys_enable_fdext()) | (v.D() == 0b1 & v.F() == 0b0)
+      then m
+      else update_D(update_F(m, v.F()), v.D())
+    }
+  }
   else m
 }
 
