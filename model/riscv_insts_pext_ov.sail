@@ -30,7 +30,7 @@ function pext_write_OV (b) =
     vxsat->OV() = b
 
 val pext_read_OV : unit -> xlenbits effect {rreg}
-function pext_read_OV () =
+function pext_read_OV() =
   if haveVExt () then
     /* TODO: use vxsat from RVV */
     EXTZ (vxsat.OV ())
@@ -39,7 +39,7 @@ function pext_read_OV () =
 
 mapping clause csr_name_map = 0x009 <-> "vxsat"
 
-function clause ext_is_CSR_defined(0x009, _) = havePExt()
+function clause ext_is_CSR_defined(0x009, _) = true/*havePExt()*/
 
 function clause ext_read_CSR(0x009) = Some(pext_read_OV ())
 
@@ -47,7 +47,7 @@ function clause ext_write_CSR(0x009, value) = {
   pext_write_OV (0b0); Some(vxsat.bits())
 }
 
-
+/*
 union clause ast = PEXT_OV : (regidx, p_ov_op)
 
 mapping encdec_p_ov_op : p_ov_op <-> bits(8) = {
@@ -80,3 +80,4 @@ mapping p_ov_mnemonic : p_ov_op <-> string = {
 
 mapping clause assembly = PEXT_OV(rd, op)
   <-> p_ov_mnemonic(op) ^ reg_name(rd)
+  */
