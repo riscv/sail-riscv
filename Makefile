@@ -26,7 +26,7 @@ ifeq ($(ARCH),RV64)
 SAIL_DEFAULT_INST += riscv_insts_dext.sail riscv_insts_cdext.sail
 endif
 
-SAIL_DEFAULT_INST += riscv_insts_pext_prelude.sail riscv_insts_pext_ov.sail \
+SAIL_DEFAULT_INST += riscv_insts_pext_prelude.sail \
 riscv_insts_pext_add.sail riscv_insts_pext_sub.sail \
 riscv_insts_pext_cr.sail riscv_insts_pext_mul.sail \
 riscv_insts_pext_shift.sail \
@@ -39,11 +39,8 @@ riscv_insts_pext_32_compute.sail \
 riscv_insts_pext_compare.sail
 
 ifeq ($(ARCH),RV64)
-SAIL_DEFAULT_INST += riscv_insts_pext_misc32.sail \
-riscv_insts_pext_muladdsub32.sail \
-riscv_insts_pext_pack32.sail \
-riscv_insts_pext_shift32.sail \
-riscv_insts_pext_q15_64.sail
+SAIL_DEFAULT_INST += riscv_insts_pext_64only.sail
+
 SAIL_DEFAULT_INST += riscv_insts_pext_tmp_function_64.sail
 else
 SAIL_DEFAULT_INST += riscv_insts_pext_tmp_function_32.sail
@@ -70,7 +67,7 @@ SAIL_SYS_SRCS += riscv_next_regs.sail
 SAIL_SYS_SRCS += riscv_sys_exceptions.sail  # default basic helpers for exception handling
 SAIL_SYS_SRCS += riscv_sync_exception.sail  # define the exception structure used in the model
 SAIL_SYS_SRCS += riscv_next_control.sail    # helpers for the 'N' extension
-SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdext_control.sail
+SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdext_control.sail riscv_insts_pext_ov.sail
 SAIL_SYS_SRCS += riscv_csr_ext.sail         # access to CSR extensions
 SAIL_SYS_SRCS += riscv_sys_control.sail     # general exception handling
 
