@@ -13,8 +13,6 @@ bitfield Vxsat : xlenbits = {
 
 register vxsat : Vxsat
 
-function havePExt()    -> bool = misa.P() == 0b1
-function haveVExt()    -> bool = misa.V() == 0b1
 
 /* TODO: P sub-extensions */
 function haveZpsfoperand() -> bool = true
@@ -39,7 +37,7 @@ function pext_read_OV() =
 
 mapping clause csr_name_map = 0x009 <-> "vxsat"
 
-function clause ext_is_CSR_defined(0x009, _) = true/*havePExt()*/
+function clause ext_is_CSR_defined(0x009, _) = havePExt()
 
 function clause ext_read_CSR(0x009) = Some(pext_read_OV ())
 

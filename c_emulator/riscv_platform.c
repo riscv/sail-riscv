@@ -18,6 +18,9 @@ bool sys_enable_next(unit u)
 bool sys_enable_fdext(unit u)
 { return rv_enable_fdext; }
 
+bool sys_enable_pext(unit u)
+{ return rv_enable_pext; }
+
 bool sys_enable_zfinx(unit u)
 { return rv_enable_zfinx; }
 
