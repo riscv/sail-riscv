@@ -26,6 +26,26 @@ type_synonym 'a bitvector0 =" ( 'a::len)Word.word "
 
 \<comment> \<open>\<open> stub functions emulating the C softfloat interface \<close>\<close>
 
+\<comment> \<open>\<open>val softfloat_f16_add : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f16_add  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f16_add _ _ _ = ( ()  )\<close>
+
+
+\<comment> \<open>\<open>val softfloat_f16_sub : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f16_sub  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f16_sub _ _ _ = ( ()  )\<close>
+
+
+\<comment> \<open>\<open>val softfloat_f16_mul : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f16_mul  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f16_mul _ _ _ = ( ()  )\<close>
+
+
+\<comment> \<open>\<open>val softfloat_f16_div : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f16_div  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f16_div _ _ _ = ( ()  )\<close>
+
+
 \<comment> \<open>\<open>val softfloat_f32_add : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> bitvector 's -> unit\<close>\<close>
 definition softfloat_f32_add  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
      \<open> softfloat_f32_add _ _ _ = ( ()  )\<close>
@@ -67,6 +87,11 @@ definition softfloat_f64_div  :: \<open>('rm::len)Word.word \<Rightarrow>('s::le
 
 
 
+\<comment> \<open>\<open>val softfloat_f16_muladd : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> bitvector 's -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f16_muladd  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f16_muladd _ _ _ _ = ( ()  )\<close>
+
+
 \<comment> \<open>\<open>val softfloat_f32_muladd : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> bitvector 's -> bitvector 's -> unit\<close>\<close>
 definition softfloat_f32_muladd  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
      \<open> softfloat_f32_muladd _ _ _ _ = ( ()  )\<close>
@@ -78,6 +103,11 @@ definition softfloat_f64_muladd  :: \<open>('rm::len)Word.word \<Rightarrow>('s:
 
 
 
+\<comment> \<open>\<open>val softfloat_f16_sqrt : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f16_sqrt  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f16_sqrt _ _ = ( ()  )\<close>
+
+
 \<comment> \<open>\<open>val softfloat_f32_sqrt : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
 definition softfloat_f32_sqrt  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
      \<open> softfloat_f32_sqrt _ _ = ( ()  )\<close>
@@ -86,6 +116,47 @@ definition softfloat_f32_sqrt  :: \<open>('rm::len)Word.word \<Rightarrow>('s::l
 \<comment> \<open>\<open>val softfloat_f64_sqrt : forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
 definition softfloat_f64_sqrt  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
      \<open> softfloat_f64_sqrt _ _ = ( ()  )\<close>
+
+
+
+\<comment> \<open>\<open>val softfloat_f16_to_i32: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f16_to_i32  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f16_to_i32 _ _ = ( ()  )\<close>
+
+
+\<comment> \<open>\<open>val softfloat_f16_to_ui32: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f16_to_ui32  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f16_to_ui32 _ _ = ( ()  )\<close>
+
+
+\<comment> \<open>\<open>val softfloat_i32_to_f16: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
+definition softfloat_i32_to_f16  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_i32_to_f16 _ _ = ( ()  )\<close>
+
+
+\<comment> \<open>\<open>val softfloat_ui32_to_f16: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
+definition softfloat_ui32_to_f16  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_ui32_to_f16 _ _ = ( ()  )\<close>
+
+
+\<comment> \<open>\<open>val softfloat_f16_to_i64: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f16_to_i64  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f16_to_i64 _ _ = ( ()  )\<close>
+
+
+\<comment> \<open>\<open>val softfloat_f16_to_ui64: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f16_to_ui64  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f16_to_ui64 _ _ = ( ()  )\<close>
+
+
+\<comment> \<open>\<open>val softfloat_i64_to_f16: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
+definition softfloat_i64_to_f16  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_i64_to_f16 _ _ = ( ()  )\<close>
+
+
+\<comment> \<open>\<open>val softfloat_ui64_to_f16: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
+definition softfloat_ui64_to_f16  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_ui64_to_f16 _ _ = ( ()  )\<close>
 
 
 
@@ -171,15 +242,50 @@ definition softfloat_ui64_to_f64  :: \<open>('rm::len)Word.word \<Rightarrow>('s
 
 
 
+\<comment> \<open>\<open>val softfloat_f16_to_f32: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f16_to_f32  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f16_to_f32 _ _ = ( ()  )\<close>
+
+
+\<comment> \<open>\<open>val softfloat_f16_to_f64: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f16_to_f64  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f16_to_f64 _ _ = ( ()  )\<close>
+
+
 \<comment> \<open>\<open>val softfloat_f32_to_f64: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
 definition softfloat_f32_to_f64  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
      \<open> softfloat_f32_to_f64 _ _ = ( ()  )\<close>
+
+
+\<comment> \<open>\<open>val softfloat_f32_to_f16: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f32_to_f16  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f32_to_f16 _ _ = ( ()  )\<close>
+
+
+\<comment> \<open>\<open>val softfloat_f64_to_f16: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f64_to_f16  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f64_to_f16 _ _ = ( ()  )\<close>
 
 
 \<comment> \<open>\<open>val softfloat_f64_to_f32: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit\<close>\<close>
 definition softfloat_f64_to_f32  :: \<open>('rm::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
      \<open> softfloat_f64_to_f32 _ _ = ( ()  )\<close>
 
+
+
+\<comment> \<open>\<open>val softfloat_f16_lt : forall 's. Size 's => bitvector 's -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f16_lt  :: \<open>('s::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f16_lt _ _ = ( ()  )\<close>
+
+
+\<comment> \<open>\<open>val softfloat_f16_le : forall 's. Size 's => bitvector 's -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f16_le  :: \<open>('s::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f16_le _ _ = ( ()  )\<close>
+
+
+\<comment> \<open>\<open>val softfloat_f16_eq : forall 's. Size 's => bitvector 's -> bitvector 's -> unit\<close>\<close>
+definition softfloat_f16_eq  :: \<open>('s::len)Word.word \<Rightarrow>('s::len)Word.word \<Rightarrow> unit \<close>  where 
+     \<open> softfloat_f16_eq _ _ = ( ()  )\<close>
 
 
 \<comment> \<open>\<open>val softfloat_f32_lt : forall 's. Size 's => bitvector 's -> bitvector 's -> unit\<close>\<close>

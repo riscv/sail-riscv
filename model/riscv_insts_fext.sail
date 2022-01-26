@@ -76,8 +76,9 @@
 
 /* **************************************************************** */
 /* IMPORTANT!                                                       */
-/* The files 'riscv_insts_fext.sail' and 'riscv_insts_dext.sail'    */
-/* define the F and D extensions, respectively.                     */
+/* The files 'riscv_insts_fext.sail', 'riscv_insts_dext.sail' and   */
+/* 'riscv_insts_zfh.sail' define the F, D and Zfh extensions,       */
+/* respectively.                                                    */
 /* The texts follow each other very closely; please try to maintain */
 /* this correspondence as the files are maintained for bug-fixes,   */
 /* improvements, and version updates.                               */
@@ -324,11 +325,14 @@ function haveSingleFPU() -> bool = haveFExt() | haveZfinx()
 /* Floating-point loads                                               */
 
 /* AST */
-/* FLW and FLD; W/D is encoded in 'word_width' */
+/* FLH, FLW and FLD; H/W/D is encoded in 'word_width' */
 
 union clause ast = LOAD_FP : (bits(12), regidx, regidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
+
+mapping clause encdec = LOAD_FP(imm, rs1, rd, HALF)          if haveZfh()
+                    <-> imm @ rs1 @ 0b001 @ rd @ 0b000_0111  if haveZfh()
 
 mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)          if haveFExt()
                     <-> imm @ rs1 @ 0b010 @ rd @ 0b000_0111  if haveFExt()
@@ -359,6 +363,13 @@ function process_fload32(rd, addr, value) =
     MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
   }
 
+val process_fload16 : (regidx, xlenbits, MemoryOpResult(bits(16)))
+                      -> Retired effect {escape, rreg, wreg}
+function process_fload16(rd, addr, value) =
+  match value {
+    MemValue(result) => { F(rd) = nan_box(result); RETIRE_SUCCESS },
+    MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
+  }
 
 function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
   let offset : xlenbits = EXTS(imm);
@@ -375,7 +386,8 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
           let (aq, rl, res) = (false, false, false);
           match (width, sizeof(flen)) {
             (BYTE, _)   => { handle_illegal(); RETIRE_FAIL },
-            (HALF, _)   => { handle_illegal(); RETIRE_FAIL },
+            (HALF, _)   => 
+               process_fload16(rd, vaddr, mem_read(Read(Data), addr, 2, aq, rl, res)),
             (WORD, _)   =>
                process_fload32(rd, vaddr, mem_read(Read(Data), addr, 4, aq, rl, res)),
             (DOUBLE, 64) =>
@@ -398,11 +410,14 @@ mapping clause assembly = LOAD_FP(imm, rs1, rd, width)
 /* Floating-point stores                                              */
 
 /* AST */
-/* FLW and FLD; W/D is encoded in 'width' */
+/* FSH, FSW and FSD; H/W/D is encoded in 'word_width' */
 
 union clause ast = STORE_FP : (bits(12), regidx, regidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
+
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, HALF)                             if haveZfh()
+                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b001 @ imm5 : bits(5) @ 0b010_0111  if haveZfh()
 
 mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)                             if haveFExt()
                     <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b010 @ imm5 : bits(5) @ 0b010_0111  if haveFExt()
@@ -435,7 +450,7 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
         TR_Address(addr, _) => {
           let eares : MemoryOpResult(unit) = match width {
             BYTE   => MemValue () /* bogus placeholder for illegal size */,
-            HALF   => MemValue () /* bogus placeholder for illegal size */,
+            HALF   => mem_write_ea(addr, 2, aq, rl, false),
             WORD   => mem_write_ea(addr, 4, aq, rl, false),
             DOUBLE => mem_write_ea(addr, 8, aq, rl, false)
           };
@@ -445,7 +460,7 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
               let rs2_val = F(rs2);
               match (width, sizeof(flen)) {
                 (BYTE, _)    => { handle_illegal(); RETIRE_FAIL },
-                (HALF, _)    => { handle_illegal(); RETIRE_FAIL },
+                (HALF, _)    => process_fstore (vaddr, mem_write_value(addr, 2, rs2_val[15..0], aq, rl, con)),
                 (WORD, _)    => process_fstore (vaddr, mem_write_value(addr, 4, rs2_val[31..0], aq, rl, con)),
                 (DOUBLE, 64) => process_fstore (vaddr, mem_write_value(addr, 8, rs2_val,        aq, rl, con))
               };

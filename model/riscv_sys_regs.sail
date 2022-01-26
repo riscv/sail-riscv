@@ -192,6 +192,14 @@ function haveZbb()  -> bool = true
 function haveZbc()  -> bool = true
 function haveZbs()  -> bool = true
 
+/* Zfh (half-precision) extension */
+function haveZfh()  -> bool = true
+
+/* Scalar Cryptography extensions support. */
+function haveZbkb() -> bool = true
+function haveZbkc() -> bool = true
+function haveZbkx() -> bool = true
+
 /* Cryptography extension support. Note these will need updating once */
 /* Sail can be dynamically configured with different extension support */
 /* and have dynamic changes of XLEN via S/UXL */
@@ -201,6 +209,8 @@ function haveZksed()  -> bool = true
 function haveZknh()   -> bool = true
 function haveZkne()   -> bool = true
 function haveZknd()   -> bool = true
+
+function haveZmmul()  -> bool = true
 
 bitfield Mstatush : bits(32) = {
   MBE  : 5,

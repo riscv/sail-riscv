@@ -328,6 +328,8 @@ enum brop_zbb = {RISCV_ANDN, RISCV_ORN, RISCV_XNOR, RISCV_MAX,
                  RISCV_MAXU, RISCV_MIN, RISCV_MINU, RISCV_ROL,
                  RISCV_ROR}
 
+enum brop_zbkb = {RISCV_PACK, RISCV_PACKH}
+
 enum brop_zbs = {RISCV_BCLR, RISCV_BEXT, RISCV_BINV, RISCV_BSET}
 
 enum bropw_zba = {RISCV_ADDUW, RISCV_SH1ADDUW, RISCV_SH2ADDUW,

@@ -52,8 +52,14 @@ SAIL_DEFAULT_INST += riscv_insts_zba.sail
 SAIL_DEFAULT_INST += riscv_insts_zbb.sail
 SAIL_DEFAULT_INST += riscv_insts_zbc.sail
 SAIL_DEFAULT_INST += riscv_insts_zbs.sail
+
+SAIL_DEFAULT_INST += riscv_insts_zfh.sail
+
 SAIL_DEFAULT_INST += riscv_insts_zkn.sail
 SAIL_DEFAULT_INST += riscv_insts_zks.sail
+
+SAIL_DEFAULT_INST += riscv_insts_zbkb.sail
+SAIL_DEFAULT_INST += riscv_insts_zbkx.sail
 
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
 SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
@@ -449,7 +455,7 @@ generated_definitions/for-rmem/riscv.defs: $(SAIL_RMEM_SRCS)
 
 FORCE:
 
-SHARE_FILES:=$(wildcard model/*.sail) $(wildcard c_emulator/*.c) $(wildcard c_emulator/*.h) $(wildcard handwritten_support/*.lem) $(wildcard handwritten_support/hgen/*.hgen) $(wildcard handwritten_support/0.11/*.lem) $(RMEM_FILES)
+SHARE_FILES:=$(sort $(wildcard model/*.sail)) $(sort $(wildcard c_emulator/*.c)) $(sort $(wildcard c_emulator/*.h)) $(sort $(wildcard handwritten_support/*.lem)) $(sort $(wildcard handwritten_support/hgen/*.hgen)) $(sort $(wildcard handwritten_support/0.11/*.lem)) $(RMEM_FILES)
 sail-riscv.install: FORCE
 	echo 'bin: ["c_emulator/riscv_sim_RV64" "c_emulator/riscv_sim_RV32"]' > sail-riscv.install
 	echo 'share: [ $(foreach f,$(SHARE_FILES),"$f" {"$f"}) ]' >> sail-riscv.install
