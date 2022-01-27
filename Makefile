@@ -7,16 +7,15 @@ else ifeq ($(ARCH),64)
   override ARCH := RV64
 endif
 
-# Currently, we only have F with RV32, and both F and D with RV64.
 ifeq ($(ARCH),RV32)
   SAIL_XLEN := riscv_xlen32.sail
-  SAIL_FLEN := riscv_flen_F.sail
 else ifeq ($(ARCH),RV64)
   SAIL_XLEN := riscv_xlen64.sail
-  SAIL_FLEN := riscv_flen_D.sail
 else
   $(error '$(ARCH)' is not a valid architecture, must be one of: RV32, RV64)
 endif
+
+SAIL_FLEN := riscv_flen_D.sail
 
 # Instruction sources, depending on target
 SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_misa_ext.sail
@@ -46,7 +45,6 @@ else
 SAIL_DEFAULT_INST += riscv_insts_pext_tmp_function_32.sail
 endif
 
-#SAIL_DEFAULT_INST += riscv_insts_pext_tmp_function.sail
 
 SAIL_DEFAULT_INST += riscv_insts_zba.sail
 SAIL_DEFAULT_INST += riscv_insts_zbb.sail
@@ -187,7 +185,7 @@ ifneq (,$(SAILCOV))
 ALL_BRANCHES = generated_definitions/c/all_branches
 C_FLAGS += -DSAILCOV
 SAIL_FLAGS += -c_coverage $(ALL_BRANCHES) -c_include sail_coverage.h
-C_LIBS += $(SAIL_LIB_DIR)/coverage/libsail_coverage.a -lpthread -ldl
+C_LIBS += $(SAIL_LIB_DIR)/coverage/libsail_coverage.a -lm -lpthread -ldl
 endif
 
 RISCV_EXTRAS_LEM_FILES = riscv_extras.lem mem_metadata.lem riscv_extras_fdext.lem
