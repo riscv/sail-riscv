@@ -247,6 +247,9 @@ definition sys_enable_rvc  :: \<open> unit \<Rightarrow> bool \<close>  where
 definition sys_enable_next  :: \<open> unit \<Rightarrow> bool \<close>  where 
      \<open> sys_enable_next _ = ( True )\<close>
 
+\<comment> \<open>\<open>val sys_enable_pext : unit -> bool\<close>\<close>
+definition sys_enable_pext  :: \<open> unit \<Rightarrow> bool \<close>  where 
+     \<open> sys_enable_pext _ = ( True )\<close>
 
 \<comment> \<open>\<open>val sys_enable_fdext : unit -> bool\<close>\<close>
 definition sys_enable_fdext  :: \<open> unit \<Rightarrow> bool \<close>  where 

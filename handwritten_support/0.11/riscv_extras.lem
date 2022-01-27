@@ -83,6 +83,10 @@ val sys_enable_next : unit -> bool
 let sys_enable_next () = true
 declare ocaml target_rep function sys_enable_next = `Platform.enable_next`
 
+val sys_enable_pext : unit -> bool
+let sys_enable_pext () = true
+declare ocaml target_rep function sys_enable_pext = `Platform.enable_pext`
+
 val sys_enable_fdext : unit -> bool
 let sys_enable_fdext () = true
 declare ocaml target_rep function sys_enable_fdext = `Platform.enable_fdext`

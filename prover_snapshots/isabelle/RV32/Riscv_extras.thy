@@ -252,6 +252,9 @@ definition sys_enable_next  :: \<open> unit \<Rightarrow> bool \<close>  where
 definition sys_enable_fdext  :: \<open> unit \<Rightarrow> bool \<close>  where 
      \<open> sys_enable_fdext _ = ( True )\<close>
 
+\<comment> \<open>\<open>val sys_enable_pext : unit -> bool\<close>\<close>
+definition sys_enable_pext  :: \<open> unit \<Rightarrow> bool \<close>  where 
+     \<open> sys_enable_pext _ = ( True )\<close>
 
 \<comment> \<open>\<open>val plat_ram_base : forall 'a. Size 'a => unit -> bitvector 'a\<close>\<close>
 definition plat_ram_base  :: \<open> unit \<Rightarrow>('a::len)Word.word \<close>  where 
