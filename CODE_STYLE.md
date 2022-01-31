@@ -48,6 +48,8 @@ Formatting
 * When modifying existing code that does not conform to this style, prefer
   matching the existing style
 
+* Files should have suitable copyright headers.
+
 Implementation
 --------------
 
