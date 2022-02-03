@@ -20,3 +20,10 @@ Unnecessary code churn should be avoided unless as part of a pull request aimed
 at improving code quality, such as fixing repeated code style violations or
 renaming a function whose meaning is unclear.
 Such pull requests should not also introduce significant new functionality.
+
+It is desirable in a pull request to explain how the code presented
+has been verified and how the verification has been made
+reproducible. Ideally the pull request is accompanied by some form of
+automated verification that is presented in a way that the reviewers
+of the pull request can run. It is desirable that the pull request
+explains how it relates to the existing RISC-V architectural tests.
