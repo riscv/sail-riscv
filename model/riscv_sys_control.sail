@@ -558,6 +558,7 @@ function init_sys() -> unit = {
   misa->M()   = 0b1;                            /* integer multiply/divide */
   misa->U()   = 0b1;                            /* user-mode */
   misa->S()   = 0b1;                            /* supervisor-mode */
+  misa->V()   = bool_to_bits(sys_enable_rvv()); /* RVV */
 
   if   sys_enable_fdext() & sys_enable_zfinx()
   then internal_error("F and Zfinx cannot both be enabled!");
@@ -595,6 +596,22 @@ function init_sys() -> unit = {
 
   minstret           = EXTZ(0b0);
   minstret_written   = false;
+
+  /* initialize vector csrs default value  ??? 待定，the present value is 0*/
+  vstart             = sail_zero_extend(0b0,sizeof(vstart_int));
+  vxsat              = 0b0;
+  vxrm               = 0b00;
+  vcsr->vxrm()       = vxrm;
+  vcsr->vxsat()      = vxsat;
+  vl                 = sail_zero_extend(0b10000,sizeof(xlen)); //default value = 16
+  vtype->vill()        = 0b0;
+  vtype->reserved()    = sail_zero_extend(0b0,(((sizeof(xlen) - 2) - 8) + 1));
+  vtype->vma()         = 0b0;
+  vtype->vta()         = 0b0;
+  vtype->vsew()        = 0b000;
+  vtype->vlmul()       = 0b000;
+  /*vtype->width()     = 0b010;*/
+  vlenb              = sail_zero_extend(0b0,sizeof(xlen)) ; 
 
   init_pmp();
 

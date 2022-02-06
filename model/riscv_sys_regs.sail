@@ -148,6 +148,7 @@ val sys_enable_fdext = {c: "sys_enable_fdext", ocaml: "Platform.enable_fdext", _
 val sys_enable_zfinx = {c: "sys_enable_zfinx", ocaml: "Platform.enable_zfinx", _: "sys_enable_zfinx"} : unit -> bool
 /* whether the N extension was enabled at boot */
 val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "sys_enable_next"} : unit -> bool
+val sys_enable_rvv = {c: "sys_enable_rvv", ocaml: "Platform.enable_rvv", _: "sys_enable_rvv"} : unit -> bool
 
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
@@ -207,6 +208,8 @@ function haveZkne()   -> bool = true
 function haveZknd()   -> bool = true
 
 function haveZmmul()  -> bool = true
+function haveRVV()     -> bool = misa.V() == 0b1
+/* see below for F and D extension tests */
 
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
@@ -823,3 +826,69 @@ function read_seed_csr() -> xlenbits = {
 
 /* Writes to the seed CSR are ignored */
 function write_seed_csr () -> option(xlenbits) = None()
+/* vector csrs */
+register vstart : vstartbits
+register vxsat : bits(1) /*The vxsat CSR holds a single read-write bit that indicates if a fixed-point instruction has had to saturate an output value to fit into a destination format. */
+register vxrm : bits(2)
+
+
+register vl   : xlenbits
+
+bitfield Vtype : xlenbits = {
+  vill    : xlen - 1,
+  reserved: xlen - 2 .. 8,
+  vma     : 7,
+  vta     : 6,
+  vsew    : 5 .. 3,
+  vlmul   : 2 .. 0
+}
+register vtype : Vtype
+
+
+val get_vtype_vsew : unit -> int effect {rreg}/*vsew sets the dynamic selected element width (SEW)*/
+function get_vtype_vsew() = {
+  match vtype.vsew() {
+    0b000 => 8,
+    0b001 => 16,
+    0b010 => 32,
+    0b011 => 64,
+    0b100 => 128,
+    0b101 => 256,
+    0b110 => 512,
+    0b111 => 1024
+  }
+}
+
+val get_vtype_LMUL : unit -> real effect {rreg}/* to get LMUL the default number of vregister that are combined to form a vector register group*/
+function get_vtype_LMUL() = {
+  match vtype.vlmul() {
+    0b101 => 0.125, /*1/8*/
+    0b110 => 0.25, /*1/4*/
+    0b111 => 0.5, /*1/2*/
+    0b000 => 1.0,
+    0b001 => 2.0,
+    0b010 => 4.0,
+    0b011 => 8.0
+  }
+}
+
+enum agtype = { UNDISTURBED, AGNOSTIC }
+
+val get_vtype_vma : unit -> agtype effect {rreg}
+function get_vtype_vma() = {
+  match vtype.vma() {
+    0b0 => UNDISTURBED,
+    0b1 => AGNOSTIC
+  }
+}
+
+val get_vtype_vta : unit -> agtype effect {rreg}
+function get_vtype_vta() = {
+  match vtype.vta() {
+    0b0 => UNDISTURBED,
+    0b1 => AGNOSTIC
+  }
+}
+
+register vlenb : xlenbits /* adjustable The XLEN-bit-wide read-only CSR vlenb holds the value VLEN/8, i.e., the vector register length in bytes.*/
+

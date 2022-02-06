@@ -74,6 +74,7 @@ $include <arith.sail>
 $include <string.sail>
 $include <vector_dec.sail>
 $include <regfp.sail>
+$include <real.sail>
 
 val string_startswith = "string_startswith" : (string, string) -> bool
 val string_drop = "string_drop" : (string, nat) -> string
@@ -100,7 +101,7 @@ val update_subrange = {ocaml: "update_subrange", interpreter: "update_subrange",
 val vector_concat = {ocaml: "append", lem: "append_list", coq: "vec_concat"} : forall ('n : Int) ('m : Int) ('a : Type).
   (vector('n, dec, 'a), vector('m, dec, 'a)) -> vector('n + 'm, dec, 'a)
 
-overload append = {vector_concat}
+overload append = {vector_concat, bitvector_concat}
 
 val not_bit : bit -> bit
 
@@ -118,9 +119,9 @@ function neq_anything (x, y) = not_bool(x == y)
 
 overload operator != = {neq_vec, neq_anything}
 
-overload operator & = {and_vec}
+overload operator & = {and_vec, and_bool}
 
-overload operator | = {or_vec}
+overload operator | = {or_vec, or_bool}
 
 val string_of_int = {c: "string_of_int", ocaml: "string_of_int", interpreter: "string_of_int", lem: "stringFromInteger", coq: "string_of_int"} : int -> string
 
@@ -138,7 +139,19 @@ val xor_vec = {c: "xor_bits", _: "xor_vec"} : forall 'n. (bits('n), bits('n)) ->
 
 val int_power = {ocaml: "int_power", interpreter: "int_power", lem: "pow", coq: "pow", c: "pow_int"} : (int, int) -> int
 
-overload operator ^ = {xor_vec, int_power, concat_str}
+val real_power = {ocaml: "real_power", interpreter: "real_power", lem: "realPowInteger", c: "real_power"} : (real, int) -> real
+
+val xor_bool : (bool, bool) -> bool
+function xor_bool(b1, b2) = {
+  match (b1, b2) {
+    (false, false) => false,
+    (false, true)  => true,
+    (true, false)  => true,
+    (true, true)   => false
+  }
+}
+
+overload operator ^ = {xor_vec, int_power, concat_str, real_power, xor_bool}
 
 val sub_vec = {c: "sub_bits", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
 
@@ -203,6 +216,12 @@ val bit_to_bool : bit -> bool
 function bit_to_bool b = match b {
   bitone  => true,
   bitzero => false
+}
+
+val bool_to_bit : bool -> bit
+function bool_to_bit b = match b {
+  true  => bitone,
+  false => bitzero
 }
 
 val to_bits : forall 'l, 'l >= 0.(atom('l), int) -> bits('l)
@@ -325,3 +344,14 @@ val def_spc_backwards : string -> unit
 function def_spc_backwards s = ()
 val def_spc_matches_prefix : string -> option((unit, nat))
 function def_spc_matches_prefix s = opt_spc_matches_prefix(s)
+
+val div_int : (int, int) -> int
+function div_int(x, y) = {
+  floor(div_real(to_real(x), to_real(y)))
+}
+
+val "print_real" : (string, real) -> unit
+val "print_int" : (string, int) -> unit
+
+overload operator / = {div_int, div_real}
+overload operator * = {mult_atom, mult_int, mult_real}

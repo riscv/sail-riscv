@@ -251,6 +251,78 @@ unit softfloat_f64sqrt(mach_bits rm, mach_bits v) {
   return UNIT;
 }
 
+unit softfloat_f16rsqrte7(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float16_t a, res;
+  a.v = v;
+  res = f16_rsqrte7(a);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f32rsqrte7(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t a, res;
+  a.v = v;
+  res = f32_rsqrte7(a);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f64rsqrte7(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float64_t a, res;
+  a.v = v;
+  res = f64_rsqrte7(a);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f16recip7(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float16_t a, res;
+  a.v = v;
+  res = f16_recip7(a);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f32recip7(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t a, res;
+  a.v = v;
+  res = f32_recip7(a);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f64recip7(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float64_t a, res;
+  a.v = v;
+  res = f64_recip7(a);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
 // The boolean 'true' argument in the conversion calls below selects
 // 'exact' conversion, which sets the Inexact exception flag if
 // needed.

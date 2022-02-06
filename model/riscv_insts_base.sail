@@ -98,7 +98,7 @@ mapping utype_mnemonic : uop <-> string = {
 
 mapping clause assembly = UTYPE(imm, rd, op)
   <-> utype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_20(imm)
-
+/* mapping clause assembly: where an instruction in assembly is converted into a function call.*/
 /* ****************************************************************** */
 union clause ast = RISCV_JAL : (bits(21), regidx)
 
