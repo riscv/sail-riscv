@@ -2987,7 +2987,7 @@ function process_vlseg (nf, vm, vd, load_width_bytes, rs1, emul, num_elem) = {
                   match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
                     MemValue(result) => {
                         total[i] = result;
-                        ii = i + 1;
+                        //ii = i + 1;
                     },
                     MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL; print("fail3") }
                   }
