@@ -1,6 +1,6 @@
 Extending the model
 ===================
-ZHUYIFEI
+
 Changing the register representation
 ------------------------------------
 
