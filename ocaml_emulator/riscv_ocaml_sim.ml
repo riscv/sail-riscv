@@ -56,6 +56,9 @@ let options = Arg.align ([("-dump-dts",
                           ("-disable-writable-misa-c",
                            Arg.Clear P.config_enable_writable_misa,
                            " leave misa hardwired to its initial value");
+                          ("-ram-base",
+                           Arg.String PI.set_dram_base,
+                           " base of physical ram memory");
                           ("-ram-size",
                            Arg.Int PI.set_dram_size,
                            " size of physical ram memory to use (in MB)");

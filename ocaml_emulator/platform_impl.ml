@@ -50,11 +50,11 @@ let reset_vec_int arch start_pc = [
 
 (* address map *)
 
-let dram_base  = 0x80000000L;;  (* Spike::DRAM_BASE *)
 let clint_base = 0x02000000L;;  (* Spike::CLINT_BASE *)
 let clint_size = 0x000c0000L;;  (* Spike::CLINT_SIZE *)
 let rom_base   = 0x00001000L;;  (* Spike::DEFAULT_RSTVEC *)
 
+let dram_base_ref  = ref (Int64.of_int (int_of_string "0x80000000"))
 let dram_size_ref = ref (Int64.(shift_left 64L 20))
 
 type mem_region = {
@@ -117,7 +117,7 @@ let spike_dts isa_spec mmu_spec cpu_hz insns_per_rtc_tick mems =
 let cpu_hz = 1000000000;;
 let insns_per_tick = 100;;
 
-let make_mems () = [{ addr = dram_base;
+let make_mems () = [{ addr = !dram_base_ref;
                       size = !dram_size_ref }];;
 
 let make_dts arch =
@@ -140,6 +140,9 @@ let set_dtc path =
   with Unix.Unix_error (e, _, _) ->
     ( Printf.eprintf "Error accessing %s: %s\n%!" path (Unix.error_message e);
       exit 1)
+
+let set_dram_base mb =
+  dram_base_ref := Int64.of_int (int_of_string mb)
 
 let set_dram_size mb =
   dram_size_ref := Int64.(shift_left (Int64.of_int mb) 20)

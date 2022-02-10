@@ -111,6 +111,7 @@ static struct option options[] = {
   {"enable-misaligned",           no_argument,       0, 'm'},
   {"enable-pmp",                  no_argument,       0, 'P'},
   {"enable-next",                 no_argument,       0, 'N'},
+  {"ram-base",                    required_argument, 0, 'B'},
   {"ram-size",                    required_argument, 0, 'z'},
   {"disable-compressed",          no_argument,       0, 'C'},
   {"disable-writable-misa",       no_argument,       0, 'I'},
@@ -288,6 +289,10 @@ char *process_args(int argc, char **argv)
     case 'p':
       fprintf(stderr, "will show execution times on completion.\n");
       do_show_times = true;
+      break;
+    case 'B':
+      rv_ram_base = strtol(optarg, NULL, 16);
+      fprintf(stderr, "setting ram-base to 0x%0" PRIx64 "\n", rv_ram_base);
       break;
     case 'z':
       ram_size = atol(optarg);
