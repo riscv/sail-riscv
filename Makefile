@@ -73,6 +73,7 @@ SAIL_REGS_SRCS = riscv_reg_type.sail riscv_freg_type.sail riscv_regs.sail riscv_
 SAIL_REGS_SRCS += riscv_reg_type_vector.sail riscv_regs_vector.sail 
 SAIL_REGS_SRCS += riscv_pmp_regs.sail riscv_pmp_control.sail
 SAIL_REGS_SRCS += riscv_ext_regs.sail $(SAIL_CHECK_SRCS)
+SAIL_REGS_SRCS += riscv_types_vector.sail
 
 SAIL_ARCH_SRCS = $(PRELUDE)
 SAIL_ARCH_SRCS += riscv_types_common.sail riscv_types_ext.sail riscv_types.sail
@@ -80,7 +81,7 @@ SAIL_ARCH_SRCS += riscv_vmem_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv
 SAIL_ARCH_SRCS += riscv_mem.sail $(SAIL_VM_SRCS)
 SAIL_ARCH_RVFI_SRCS = $(PRELUDE) rvfi_dii.sail riscv_types_common.sail riscv_types_ext.sail riscv_types.sail riscv_vmem_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS) riscv_types_kext.sail
 SAIL_ARCH_SRCS += riscv_types_kext.sail    # Shared/common code for the cryptography extension.
-SAIL_ARCH_SRCS += riscv_types_vector.sail
+#SAIL_ARCH_SRCS += riscv_types_vector.sail
 
 SAIL_STEP_SRCS = riscv_step_common.sail riscv_step_ext.sail riscv_decode_ext.sail riscv_fetch.sail riscv_step.sail
 RVFI_STEP_SRCS = riscv_step_common.sail riscv_step_rvfi.sail riscv_decode_ext.sail riscv_fetch_rvfi.sail riscv_step.sail
@@ -261,7 +262,7 @@ $(SOFTFLOAT_LIBS):
 
 # convenience target
 .PHONY: csim
-csim: c_emulator/riscv_sim_$(ARCH)
+csim: c_emulator/riscv_sim_$(ARCH) 
 .PHONY: osim
 osim: ocaml_emulator/riscv_ocaml_sim_$(ARCH)
 .PHONY: rvfi

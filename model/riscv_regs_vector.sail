@@ -146,7 +146,7 @@ function rV r = {
     v
 }
 
-/*I don't know whether do we need this. What's that means???*/
+/*I don't know whether do we need this. What's that means???
 $ifdef RVFI_DII
 val rvfi_wV : forall 'n, 0 <= 'n < 32. (regno('n), vregtype) -> unit effect {wreg}
 function rvfi_wV (r,v) = {
@@ -156,7 +156,7 @@ function rvfi_wV (r,v) = {
 $else
 val rvfi_wV : forall 'n, 0 <= 'n < 32. (regno('n), vregtype) -> unit
 function rvfi_wV (r,v) = ()
-$endif
+$endif*/
 
 val wV : forall 'n, 0 <= 'n < 32. (regno('n), vregtype) -> unit effect {rreg, wreg, escape}
 function wV (r, in_v) = {
@@ -198,7 +198,7 @@ function wV (r, in_v) = {
   };
 
 /*????*待定*/
-  rvfi_wV(r, in_v);
+  //rvfi_wV(r, in_v);
   if   get_config_print_reg()
   then {
     print_reg("v" ^ string_of_int(r) ^ " <- " ^ VRegStr(v));
@@ -323,7 +323,7 @@ function write_single_vreg(n, m, vrid, v) = {
 }
 
 /* Reads multiple vregs into a single element */
-val read_mult_vreg : forall 'n 'm, 'n >= 0 & 'm >= vlen. (int('n), int('m), regidx) -> bits('m)
+val read_mult_vreg : forall 'n 'm, 'n >= 0 & 'm >= vlen. (int('n), int('m), regidx) -> bits('m) effect {escape, rreg}
 function read_mult_vreg(num_vreg, num_bits, vrid) = {
   var result : bits('m) = zeros(num_bits);
 
@@ -338,7 +338,7 @@ function read_mult_vreg(num_vreg, num_bits, vrid) = {
   result
 }
 
-val write_mult_vreg : forall 'n 'm, 'n >= 0 & 'm >= vlen. (int('n), int('m), regidx, bits('m)) -> unit
+val write_mult_vreg : forall 'n 'm, 'n >= 0 & 'm >= vlen. (int('n), int('m), regidx, bits('m)) -> unit effect {escape, rreg, wreg}
 function write_mult_vreg(num_vreg, num_bits, vrid, bv) = {
   foreach (i from (num_vreg - 1) downto 0) {
     let vrid_lmul : regidx   = vrid + to_bits(5, i);
@@ -408,7 +408,7 @@ function read_vreg(num_elem, vsew_bits, lmul, vrid) = {
 }
 
 /* =after read_vreg then do slice */
-val read_single_element : forall 'm 'x, 8 <= 'm <= 64. (int('m), int('x), real, regidx) -> bits('m)  effect {escape, rreg, wreg}
+val read_single_element : forall 'm 'x, 8 <= 'm <= 64. (int('m), int('x), real, regidx) -> bits('m)  effect {escape, rreg, undef}
 function read_single_element(elem_width_bits, index, emul, vrid) = {
   real_vrid : regidx = vrid;
   real_index : int = index;

@@ -10,7 +10,7 @@ function test_build () {
     fi
 }
 
-test_build make ARCH=RV32 ocaml_emulator/riscv_ocaml_sim_RV32 -j24
+test_build make ARCH=RV32 ocaml_emulator/riscv_ocaml_sim_RV32 -j24 
 test_build make ARCH=RV64 ocaml_emulator/riscv_ocaml_sim_RV64 -j24
 
 test_build make ARCH=RV32 c_emulator/riscv_sim_RV32 -j24
