@@ -276,7 +276,7 @@ rvfi_preserve_fns=-c_preserve rvfi_set_instr_packet \
 generated_definitions/c/riscv_rvfi_model_$(ARCH).c: $(SAIL_RVFI_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
 	$(SAIL) $(rvfi_preserve_fns) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main.sail -o $(basename $@)
-	sed -i -e '/^[[:space:]]*$$/d' $@
+	sed -i '' -e '/^[[:space:]]*$$/d' $@
 
 c_emulator/riscv_rvfi_$(ARCH): generated_definitions/c/riscv_rvfi_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile
 	gcc -g $(C_WARNINGS) $(C_FLAGS) $< -DRVFI_DII $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
@@ -323,9 +323,9 @@ generated_definitions/isabelle/$(ARCH)/Riscv.thy: generated_definitions/isabelle
 		$(RISCV_EXTRAS_LEM) \
 		generated_definitions/lem/$(ARCH)/riscv_types.lem \
 		generated_definitions/lem/$(ARCH)/riscv.lem
-	sed -i 's/datatype ast/datatype (plugins only: size) ast/' generated_definitions/isabelle/$(ARCH)/Riscv_types.thy
-	sed -i "s/record( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/record (overloaded) ( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/" generated_definitions/isabelle/$(ARCH)/Riscv_types.thy
-	sed -i "s/by pat_completeness auto/by pat_completeness (auto intro!: let_cong bind_cong MemoryOpResult.case_cong)/" generated_definitions/isabelle/$(ARCH)/Riscv.thy
+	sed -i '' 's/datatype ast/datatype (plugins only: size) ast/' generated_definitions/isabelle/$(ARCH)/Riscv_types.thy
+	sed -i '' "s/record( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/record (overloaded) ( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/" generated_definitions/isabelle/$(ARCH)/Riscv_types.thy
+	sed -i '' "s/by pat_completeness auto/by pat_completeness (auto intro!: let_cong bind_cong MemoryOpResult.case_cong)/" generated_definitions/isabelle/$(ARCH)/Riscv.thy
 
 generated_definitions/hol4/$(ARCH)/Holmakefile: handwritten_support/Holmakefile
 	mkdir -p generated_definitions/hol4/$(ARCH)

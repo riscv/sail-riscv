@@ -129,7 +129,7 @@ let make_dts arch =
 let bytes_to_string bytes =
   String.init (List.length bytes) (fun i -> Char.chr (List.nth bytes i))
 
-let dtc_path = ref "/usr/bin/dtc"
+let dtc_path = ref "/usr/local/bin/dtc"
 
 let set_dtc path =
   try let st = Unix.stat path in
