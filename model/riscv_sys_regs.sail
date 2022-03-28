@@ -347,9 +347,10 @@ function in32BitMode() -> bool = {
   cur_Architecture() == RV32
 }
 
-/* F and D extensions have to enabled both via misa.{FD} as well as mstatus.FS */
+/* F, D and Q extensions have to enabled both via misa.{FDQ} as well as mstatus.FS */
 function haveFExt()    -> bool = (misa.F() == 0b1) & (mstatus.FS() != 0b00)
 function haveDExt()    -> bool = (misa.D() == 0b1) & (mstatus.FS() != 0b00)
+function haveQExt()    -> bool = (misa.Q() == 0b1) & (mstatus.FS() != 0b00)
 
 /* Zfinx and Zdinx extensions (TODO: gate FCSR access on [mhs]stateen0 bit 1 when implemented) */
 function haveZfinx()   -> bool = sys_enable_zfinx()
