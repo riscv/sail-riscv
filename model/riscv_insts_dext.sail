@@ -1002,7 +1002,7 @@ function clause execute (F_UN_TYPE_D(rs1, rd, FMV_D_X)) = {
   assert(sizeof(xlen) >= 64);
   let rs1_val_X            = X(rs1);
   let rd_val_D             = rs1_val_X [63..0];
-  F(rd) = rd_val_D;
+  F_or_X_D(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
 

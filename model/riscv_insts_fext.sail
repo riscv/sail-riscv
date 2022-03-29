@@ -355,6 +355,19 @@ function process_fload64(rd, addr, value) =
     RETIRE_FAIL
   }
 
+val process_fload128 : (regidx, xlenbits, MemoryOpResult(bits(64)))
+                      -> Retired effect {escape, rreg, wreg}
+function process_fload128(rd, addr, value) =
+  if   sizeof(flen) == 128
+  then match value {
+         MemValue(result) => { F(rd) = nan_box(result); RETIRE_SUCCESS },
+         MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
+       }
+  else {
+    /* should not get here */
+    RETIRE_FAIL
+  }
+
 val process_fload32 : (regidx, xlenbits, MemoryOpResult(bits(32)))
                       -> Retired effect {escape, rreg, wreg}
 function process_fload32(rd, addr, value) =
@@ -391,7 +404,9 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
             (WORD, _)   =>
                process_fload32(rd, vaddr, mem_read(Read(Data), addr, 4, aq, rl, res)),
             (DOUBLE, 64) =>
-               process_fload64(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, res))
+               process_fload64(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, res)),
+            (DOUBLE, 128) =>
+               process_fload128(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, res))
           }
         }
       }
@@ -459,10 +474,11 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
             MemValue(_) => {
               let rs2_val = F(rs2);
               match (width, sizeof(flen)) {
-                (BYTE, _)    => { handle_illegal(); RETIRE_FAIL },
-                (HALF, _)    => process_fstore (vaddr, mem_write_value(addr, 2, rs2_val[15..0], aq, rl, con)),
-                (WORD, _)    => process_fstore (vaddr, mem_write_value(addr, 4, rs2_val[31..0], aq, rl, con)),
-                (DOUBLE, 64) => process_fstore (vaddr, mem_write_value(addr, 8, rs2_val,        aq, rl, con))
+                (BYTE, _)     => { handle_illegal(); RETIRE_FAIL },
+                (HALF, _)     => process_fstore (vaddr, mem_write_value(addr, 2, rs2_val[15..0], aq, rl, con)),
+                (WORD, _)     => process_fstore (vaddr, mem_write_value(addr, 4, rs2_val[31..0], aq, rl, con)),
+                (DOUBLE, 64)  => process_fstore (vaddr, mem_write_value(addr, 8, rs2_val,        aq, rl, con)),
+                (DOUBLE, 128) => process_fstore (vaddr, mem_write_value(addr, 8, rs2_val[63..0], aq, rl, con))
               };
             }
           }

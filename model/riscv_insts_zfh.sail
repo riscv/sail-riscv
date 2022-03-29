@@ -651,7 +651,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_S)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_D)) = {
-  let rs1_val_D = F(rs1);
+  let rs1_val_D = nan_unbox_D(F(rs1));
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -690,7 +690,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_D_H)) = {
       let (fflags, rd_val_D) = riscv_f16ToF64 (rm_3b, rs1_val_H);
 
       write_fflags(fflags);
-      F(rd) = rd_val_D;
+      F(rd) = nan_box_D(rd_val_D);
       RETIRE_SUCCESS
     }
   }
