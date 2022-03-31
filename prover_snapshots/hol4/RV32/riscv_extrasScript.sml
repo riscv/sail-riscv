@@ -173,6 +173,9 @@ val _ = Define `
 val _ = Define `
  ((sys_enable_next:unit -> bool) () =  T)`;
 
+(*val sys_enable_pext : unit -> bool*)
+val _ = Define `
+ ((sys_enable_pext:unit -> bool) () =  T)`;
 
 (*val sys_enable_fdext : unit -> bool*)
 val _ = Define `
