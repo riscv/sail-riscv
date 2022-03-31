@@ -22,7 +22,10 @@ SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_mis
 SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail riscv_insts_hints.sail
 SAIL_DEFAULT_INST += riscv_insts_fext.sail riscv_insts_cfext.sail
 SAIL_DEFAULT_INST += riscv_insts_dext.sail riscv_insts_cdext.sail
-
+SAIL_DEFAULT_INST += riscv_insts_pext_prelude.sail riscv_insts_pext_SIMD.sail riscv_insts_pext_partial_SIMD.sail riscv_insts_pext_non_SIMD.sail riscv_insts_pext_64bits_computation.sail
+ifeq ($(ARCH),RV64)
+SAIL_DEFAULT_INST += riscv_insts_pext_RV64_only.sail
+endif
 SAIL_DEFAULT_INST += riscv_insts_zba.sail
 SAIL_DEFAULT_INST += riscv_insts_zbb.sail
 SAIL_DEFAULT_INST += riscv_insts_zbc.sail
@@ -48,7 +51,7 @@ SAIL_SYS_SRCS += riscv_next_regs.sail
 SAIL_SYS_SRCS += riscv_sys_exceptions.sail  # default basic helpers for exception handling
 SAIL_SYS_SRCS += riscv_sync_exception.sail  # define the exception structure used in the model
 SAIL_SYS_SRCS += riscv_next_control.sail    # helpers for the 'N' extension
-SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdext_control.sail
+SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdext_control.sail riscv_pext_regs.sail riscv_pext_control.sail
 SAIL_SYS_SRCS += riscv_csr_ext.sail         # access to CSR extensions
 SAIL_SYS_SRCS += riscv_sys_control.sail     # general exception handling
 
