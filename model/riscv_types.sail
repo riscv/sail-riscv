@@ -172,7 +172,7 @@ union AccessType ('a : Type) = {
   Execute   : unit
 }
 
-enum word_width = {BYTE, HALF, WORD, DOUBLE}
+enum word_width = {BYTE, HALF, WORD, DOUBLE, QUAD}
 
 /* architectural interrupt definitions */
 
@@ -424,24 +424,39 @@ mapping bool_not_bits : bool <-> bits(1) = {
   false  <-> 0b1
 }
 
-mapping size_bits : word_width <-> bits(2) = {
-  BYTE   <-> 0b00,
-  HALF   <-> 0b01,
-  WORD   <-> 0b10,
-  DOUBLE <-> 0b11
+val size_bits : word_width <-> bits(2) 
+
+function size_bits_forwards width = match width {
+  BYTE   => 0b00,
+  HALF   => 0b01,
+  WORD   => 0b10,
+  DOUBLE => 0b11
 }
+
+function size_bits_backwards size = match size {
+  0b00 => BYTE,
+  0b01 => HALF,
+  0b10 => WORD,
+  0b11 => DOUBLE
+}
+
+function size_bits_forwards_matches width = width != QUAD
+
+function size_bits_backwards_matches size = true
 
 mapping size_mnemonic : word_width <-> string = {
   BYTE   <-> "b",
   HALF   <-> "h",
   WORD   <-> "w",
-  DOUBLE <-> "d"
+  DOUBLE <-> "d",
+  QUAD   <-> "q"
 }
 
-val word_width_bytes : word_width -> {'s, 's == 1 | 's == 2 | 's == 4 | 's == 8 . atom('s)}
+val word_width_bytes : word_width -> {'s, 's == 1 | 's == 2 | 's == 4 | 's == 8 | 's == 16. atom('s)}
 function word_width_bytes width = match width {
   BYTE   => 1,
   HALF   => 2,
   WORD   => 4,
-  DOUBLE => 8
+  DOUBLE => 8,
+  QUAD   => 16
 }
