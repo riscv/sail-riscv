@@ -44,6 +44,12 @@ let f32_muladd rm v1 v2 v3 =
 let f64_muladd rm v1 v2 v3 =
   ()
 
+let f128_muladd1 rm v1 v2 v3 v4 v5 v6 =
+  ()
+
+let f128_muladd2 rm v1 v2 v3 v4 v5 v6 =
+  ()
+
 let f16_sqrt rm v =
   ()
 

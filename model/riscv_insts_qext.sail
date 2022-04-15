@@ -166,6 +166,56 @@ mapping clause assembly = LOAD_FP_Q(imm, rs1, rd)
                           ^ sep() ^ hex_bits_12(imm)
                           ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
+union clause ast = F_MADD_TYPE_Q : (regidx, regidx, regidx, rounding_mode, regidx, f_madd_op_Q)
+
+mapping clause encdec = 
+    F_MADD_TYPE_Q(rs3, rs2, rs1, rm, rd, FMADD_Q)                      if haveQExt()
+<-> rs3 @ 0b10 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0011 if haveQExt()
+
+function clause execute (F_MADD_TYPE_Q(rs3, rs2, rs1, rm, rd, op)) = {
+  let rs1_val_128b = F(rs1);
+  let rs2_val_128b = F(rs2);
+  let rs3_val_128b = F(rs3);
+
+  let rs1_u = rs1_val_128b[127..64];
+  let rs1_l = rs1_val_128b[63..0];
+  let rs2_u = rs2_val_128b[127..64];
+  let rs2_l = rs2_val_128b[63..0];
+  let rs3_u = rs3_val_128b[127..64];
+  let rs3_l = rs3_val_128b[63..0];
+
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_128b) : (bits(5), bits(128)) =
+        match op {
+          FMADD_Q  => {
+            let (fflags, rd_val_64b1) = riscv_f128MulAdd1 (rm_3b, rs1_u, rs1_l, rs2_u, rs2_l, rs3_u, rs3_l);
+            let (_, rd_val_64b2) = riscv_f128MulAdd2 (rm_3b, rs1_u, rs1_l, rs2_u, rs2_l, rs3_u, rs3_l);
+            (fflags, rd_val_64b1 @ rd_val_64b2)
+          }
+        };
+      write_fflags(fflags);
+      F(rd) = rd_val_128b;
+      RETIRE_SUCCESS
+    }
+  }
+}
+
+mapping f_madd_type_mnemonic_Q : f_madd_op_Q <-> string = {
+    FMADD_Q  <-> "fmadd.q"
+}
+
+mapping clause assembly = F_MADD_TYPE_Q(rs3, rs2, rs1, rm, rd, op)
+                      <-> f_madd_type_mnemonic_Q(op)
+                          ^ spc() ^ freg_or_reg_name(rd)
+                          ^ sep() ^ freg_or_reg_name(rs1)
+                          ^ sep() ^ freg_or_reg_name(rs2)
+                          ^ sep() ^ freg_or_reg_name(rs3)
+                          ^ sep() ^ frm_mnemonic(rm)
+
+
 /* ****************************************************************** */
 /* Floating-point stores                                              */
 

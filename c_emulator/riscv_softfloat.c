@@ -215,6 +215,45 @@ unit softfloat_f64muladd(mach_bits rm, mach_bits v1, mach_bits v2, mach_bits v3)
   return UNIT;
 }
 
+unit softfloat_f128muladd1(mach_bits rm, mach_bits v1, mach_bits v2, mach_bits v3, mach_bits v4, mach_bits v5, mach_bits v6) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float128_t a, b, c, res;
+  a.v[0] = v1;
+  a.v[1] = v2;
+  b.v[0] = v3;
+  b.v[1] = v4;
+  c.v[0] = v5;
+  c.v[1] = v6;
+  res = f128_mulAdd(a, b, c);
+  float64_t fk_res;
+  fk_res.v = res.v[0];
+
+  SOFTFLOAT_POSTLUDE(fk_res);
+
+  return UNIT;
+}
+
+unit softfloat_f128muladd2(mach_bits rm, mach_bits v1, mach_bits v2, mach_bits v3, mach_bits v4, mach_bits v5, mach_bits v6) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float128_t a, b, c, res;
+  a.v[0] = v1;
+  a.v[1] = v2;
+  b.v[0] = v3;
+  b.v[1] = v4;
+  c.v[0] = v5;
+  c.v[1] = v6;
+  res = f128_mulAdd(a, b, c);
+  float64_t fk_res;
+  fk_res.v = res.v[1];
+
+  SOFTFLOAT_POSTLUDE(fk_res);
+
+  return UNIT;
+}
+
+
 unit softfloat_f16sqrt(mach_bits rm, mach_bits v) {
   SOFTFLOAT_PRELUDE(rm);
 

@@ -90,6 +90,7 @@ type bits_fflags = bits(5)    /* Accrued exceptions: NV,DZ,OF,UF,NX */
 type bits_H      = bits(16)   /* Half-precision float value */      
 type bits_S      = bits(32)   /* Single-precision float value */
 type bits_D      = bits(64)   /* Double-precision float value */
+type bits_Q      = bits(128)  /* Quad-precision float value */
 
 type bits_W      = bits(32)   /* Signed integer */
 type bits_WU     = bits(32)   /* Unsigned integer */
@@ -218,6 +219,20 @@ val     extern_f64MulAdd = {c: "softfloat_f64muladd", ocaml: "Softfloat.f64_mula
 val      riscv_f64MulAdd : (bits_rm, bits_D, bits_D, bits_D) -> (bits_fflags, bits_D) effect {rreg}
 function riscv_f64MulAdd (rm, v1, v2, v3) = {
   extern_f64MulAdd(rm, v1, v2, v3);
+  (float_fflags[4 .. 0], float_result)
+}
+
+val     extern_f128MulAdd1 = {c: "softfloat_f128muladd1", ocaml: "Softfloat.f128_muladd1"} : (bits_rm, bits_D, bits_D, bits_D, bits_D, bits_D, bits_D) -> unit
+val      riscv_f128MulAdd1 : (bits_rm, bits_D, bits_D, bits_D, bits_D, bits_D, bits_D) -> (bits_fflags, bits_D) effect {rreg}
+function riscv_f128MulAdd1 (rm, v1, v2, v3, v4, v5, v6) = {
+  extern_f128MulAdd1(rm, v1, v2, v3, v4, v5, v6);
+  (float_fflags[4 .. 0], float_result)
+}
+
+val     extern_f128MulAdd2 = {c: "softfloat_f128muladd2", ocaml: "Softfloat.f128_muladd2"} : (bits_rm, bits_D, bits_D, bits_D, bits_D, bits_D, bits_D) -> unit
+val      riscv_f128MulAdd2 : (bits_rm, bits_D, bits_D, bits_D, bits_D, bits_D, bits_D) -> (bits_fflags, bits_D) effect {rreg}
+function riscv_f128MulAdd2 (rm, v1, v2, v3, v4, v5, v6) = {
+  extern_f128MulAdd2(rm, v1, v2, v3, v4, v5, v6);
   (float_fflags[4 .. 0], float_result)
 }
 

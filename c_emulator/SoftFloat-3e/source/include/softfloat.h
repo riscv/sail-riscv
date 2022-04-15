@@ -337,6 +337,7 @@ bool f128_le_quiet( float128_t, float128_t );
 bool f128_lt_quiet( float128_t, float128_t );
 bool f128_isSignalingNaN( float128_t );
 #endif
+float128_t f128_mulAdd( float128_t, float128_t, float128_t );
 uint_fast32_t f128M_to_ui32( const float128_t *, uint_fast8_t, bool );
 uint_fast64_t f128M_to_ui64( const float128_t *, uint_fast8_t, bool );
 int_fast32_t f128M_to_i32( const float128_t *, uint_fast8_t, bool );
