@@ -379,7 +379,8 @@ function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
          BYTE   => false,
          HALF   => vaddr[0] == bitone,
          WORD   => vaddr[0] == bitone | vaddr[1] == bitone,
-         DOUBLE => vaddr[0] == bitone | vaddr[1] == bitone | vaddr[2] == bitone
+         DOUBLE => vaddr[0] == bitone | vaddr[1] == bitone | vaddr[2] == bitone,
+         QUAD   => vaddr[0] == bitone | vaddr[1] == bitone | vaddr[2] == bitone | vaddr[3] == bitone
        }
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {

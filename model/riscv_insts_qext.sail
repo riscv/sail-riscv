@@ -108,64 +108,7 @@ function fmake_S (sign, exp, mant) = sign @ exp @ mant
 /* not sure about the bits repr, thus extract here TODO : check the repr */
 let Q_word_width_repr = 0b100
 
-/* AST */
-/* FLH, FLW and FLD; H/W/D is encoded in 'word_width' */
-
-union clause ast = LOAD_FP_Q : (bits(12), regidx, regidx)
-
 /* AST <-> Binary encoding ================================ */
-
-mapping clause encdec = LOAD_FP_Q(imm, rs1, rd)                          if haveQExt()
-                    <-> imm @ rs1 @ Q_word_width_repr @ rd @ 0b000_0111  if haveQExt()
-
-/* Execution semantics ==================================== */
-
-val      read_mem_quad_helper : (xlenbits, regidx) -> option(bits(64)) effect  {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
-function read_mem_quad_helper(offset : xlenbits, rs1 : regidx) = {
-  match ext_data_get_addr(rs1, offset, Read(Data), DOUBLE) {
-    Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); None() },
-    Ext_DataAddr_OK(vaddr) =>
-      if   check_misaligned(vaddr, DOUBLE)
-      then { handle_mem_exception(vaddr, E_Load_Addr_Align()); None() }
-      else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, _) => { handle_mem_exception(vaddr, e); None() },
-        TR_Address(addr, _) => {
-          let (aq, rl, res) = (false, false, false);
-          match mem_read(Read(Data), addr, 8, aq, rl, res) {
-            MemValue(result) => { Some(result) },
-            MemException(e) => { handle_mem_exception(addr, e); None() }
-          }
-        }
-      }
-  } 
-}
-
-function clause execute(LOAD_FP_Q(imm, rs1, rd)) = {
-  /* because ext_data_get_addr requires a word width as input, and Quad is not defined
-     currently implement this in two memory reads */
-  /* the problem is that in error handling, it might report offset read error or 
-     offset + 8 read error, I don't know if this is the expected behavior */
-  let offset1 : xlenbits = EXTS(imm);
-  let offset2 : xlenbits = offset1 + 8;
-  match read_mem_quad_helper(offset1, rs1) {
-    None()        => { RETIRE_FAIL },
-    Some(result1) => { 
-      match read_mem_quad_helper(offset2, rs1) {
-        None()        => { RETIRE_FAIL },
-        Some(result2) => { F(rd) = result1 @ result2; RETIRE_SUCCESS }
-      }
-    }
-  }
-}
-
-/* AST -> Assembly notation ================================ */
-
-mapping clause assembly = LOAD_FP_Q(imm, rs1, rd)
-                      <-> "flq"
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ hex_bits_12(imm)
-                          ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
-
 union clause ast = F_MADD_TYPE_Q : (regidx, regidx, regidx, rounding_mode, regidx, f_madd_op_Q)
 
 mapping clause encdec = 
