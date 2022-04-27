@@ -35,6 +35,18 @@ let f64_mul rm v1 v2 =
 let f64_div rm v1 v2 =
   ()
 
+let f128_add rm v1 v2 =
+  ()
+
+let f128_sub rm v1 v2 =
+  ()
+
+let f128_mul rm v1 v2 =
+  ()
+
+let f128_div rm v1 v2 =
+  ()
+
 let f16_muladd rm v1 v2 v3 =
   ()
 
@@ -44,11 +56,9 @@ let f32_muladd rm v1 v2 v3 =
 let f64_muladd rm v1 v2 v3 =
   ()
 
-let f128_muladd1 rm v1 v2 v3 v4 v5 v6 =
+let f128_muladd rm v1 v2 v3 =
   ()
 
-let f128_muladd2 rm v1 v2 v3 v4 v5 v6 =
-  ()
 
 let f16_sqrt rm v =
   ()
