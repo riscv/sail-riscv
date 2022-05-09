@@ -365,7 +365,7 @@ ifndef EXPLICIT_COQ_SAIL
   EXPLICIT_COQ_SAIL = $(shell if opam config var coq-sail:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
 endif
 
-COQ_LIBS = -R generated_definitions/coq/$(ARCH) '' -R generated_definitions/coq '' -R handwritten_support ''
+COQ_LIBS = -R generated_definitions/coq Riscv -R generated_definitions/coq/$(ARCH) $(ARCH) -R handwritten_support Riscv_common
 ifeq ($(EXPLICIT_COQ_BBV),yes)
   COQ_LIBS += -Q $(BBV_DIR)/src/bbv bbv
 endif
