@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "riscv_softfloat.h": "c",
+        "softfloat.h": "c",
+        "softfloat_types.h": "c",
+        "riscv_sail.h": "c",
+        "internals.h": "c",
+        "gmp.h": "c"
+    }
+}

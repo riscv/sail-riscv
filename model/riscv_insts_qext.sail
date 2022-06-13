@@ -195,6 +195,90 @@ function negate_Q (x128) = {
   fmake_Q (new_sign, exp, mant)
 }
 
+val      feq_quiet_Q : (bits(128), bits (128)) -> (bool, bits(5))
+function feq_quiet_Q   (v1,       v2) = {
+  let (s1, e1, m1) = fsplit_Q (v1);
+  let (s2, e2, m2) = fsplit_Q (v2);
+
+  let v1Is0    = f_is_neg_zero_Q(v1) | f_is_pos_zero_Q(v1);
+  let v2Is0    = f_is_neg_zero_Q(v2) | f_is_pos_zero_Q(v2);
+
+  let result = ((v1 == v2) | (v1Is0 & v2Is0));
+
+  let fflags = if   (f_is_SNaN_Q(v1) | f_is_SNaN_Q(v2))
+               then nvFlag()
+               else zeros();
+
+  (result, fflags)
+}
+
+val      flt_Q : (bits(128), bits (128), bool) -> (bool, bits(5))
+function flt_Q   (v1,       v2,        is_quiet) = {
+  let (s1, e1, m1) = fsplit_Q (v1);
+  let (s2, e2, m2) = fsplit_Q (v2);
+
+  let result : bool =
+    if (s1 == 0b0) & (s2 == 0b0) then
+      if   (e1 == e2)
+      then unsigned (m1) < unsigned (m2)
+      else unsigned (e1) < unsigned (e2)
+    else if (s1 == 0b0) & (s2 == 0b1) then
+      false
+    else if (s1 == 0b1) & (s2 == 0b0) then
+      true
+    else
+      if   (e1 == e2)
+      then unsigned (m1) > unsigned (m2)
+      else unsigned (e1) > unsigned (e2);
+
+  let fflags = if is_quiet then
+                 if   (f_is_SNaN_Q(v1) | f_is_SNaN_Q(v2))
+                 then nvFlag()
+                 else zeros()
+               else
+                 if   (f_is_NaN_Q(v1) | f_is_NaN_Q(v2))
+                 then nvFlag()
+                 else zeros();
+
+  (result, fflags)
+}
+
+val      fle_Q : (bits(128), bits (128), bool) -> (bool, bits(5))
+function fle_Q   (v1,       v2,        is_quiet) = {
+  let (s1, e1, m1) = fsplit_Q (v1);
+  let (s2, e2, m2) = fsplit_Q (v2);
+
+  let v1Is0    = f_is_neg_zero_Q(v1) | f_is_pos_zero_Q(v1);
+  let v2Is0    = f_is_neg_zero_Q(v2) | f_is_pos_zero_Q(v2);
+
+  let result : bool =
+    if (s1 == 0b0) & (s2 == 0b0) then
+      if   (e1 == e2)
+      then unsigned (m1) <=  unsigned (m2)
+      else unsigned (e1)  <  unsigned (e2)
+    else if (s1 == 0b0) & (s2 == 0b1) then
+      (v1Is0 & v2Is0)                         /* Equal in this case (+0=-0) */
+    else if (s1 == 0b1) & (s2 == 0b0) then
+      true
+    else
+      if   (e1 == e2)
+      then unsigned (m1) >=  unsigned (m2)
+      else unsigned (e1)  >  unsigned (e2);
+
+  let fflags = if is_quiet then
+                 if   (f_is_SNaN_Q(v1) | f_is_SNaN_Q(v2))
+                 then nvFlag()
+                 else zeros()
+               else
+                 if   (f_is_NaN_Q(v1) | f_is_NaN_Q(v2))
+                 then nvFlag()
+                 else zeros();
+
+  (result, fflags)
+}
+
+
+
 /* not sure about the bits repr, thus extract here TODO : check the repr */
 let Q_word_width_repr = 0b100
 
@@ -778,6 +862,47 @@ function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FLE_Q)) = {
   RETIRE_SUCCESS
 }
 
+
+function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FMIN_Q)) = {
+  let rs1_val_Q = F(rs1);
+  let rs2_val_Q = F(rs2);
+
+  let is_quiet  = true;
+  let (rs1_lt_rs2, fflags) = fle_Q (rs1_val_Q, rs2_val_Q, is_quiet);
+
+  let rd_val_Q  = if      (f_is_NaN_Q(rs1_val_Q) & f_is_NaN_Q(rs2_val_Q))           then canonical_NaN_Q()
+                  else if f_is_NaN_Q(rs1_val_Q)                                     then rs2_val_Q
+                  else if f_is_NaN_Q(rs2_val_Q)                                     then rs1_val_Q
+                  else if (f_is_neg_zero_Q(rs1_val_Q) & f_is_pos_zero_Q(rs2_val_Q)) then rs1_val_Q
+                  else if (f_is_neg_zero_Q(rs2_val_Q) & f_is_pos_zero_Q(rs1_val_Q)) then rs2_val_Q
+                  else if rs1_lt_rs2                                                then rs1_val_Q
+                  else /* (not rs1_lt_rs2) */                                            rs2_val_Q;
+
+  accrue_fflags(fflags);
+  F(rd) = rd_val_Q;
+  RETIRE_SUCCESS
+}
+
+function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FMAX_Q)) = {
+  let rs1_val_Q = F(rs1);
+  let rs2_val_Q = F(rs2);
+
+  let is_quiet  = true;
+  let (rs2_lt_rs1, fflags) = fle_Q (rs2_val_Q, rs1_val_Q, is_quiet);
+
+  let rd_val_Q  = if      (f_is_NaN_Q(rs1_val_Q) & f_is_NaN_Q(rs2_val_Q))           then canonical_NaN_Q()
+                  else if f_is_NaN_Q(rs1_val_Q)                                     then rs2_val_Q
+                  else if f_is_NaN_Q(rs2_val_Q)                                     then rs1_val_Q
+                  else if (f_is_neg_zero_Q(rs1_val_Q) & f_is_pos_zero_Q(rs2_val_Q)) then rs2_val_Q
+                  else if (f_is_neg_zero_Q(rs2_val_Q) & f_is_pos_zero_Q(rs1_val_Q)) then rs1_val_Q
+                  else if rs2_lt_rs1                                                then rs1_val_Q
+                  else /* (not rs2_lt_rs1) */                                            rs2_val_Q;
+
+  accrue_fflags(fflags);
+  F(rd) = rd_val_Q;
+  RETIRE_SUCCESS
+}
+
 mapping f_bin_type_mnemonic_Q : f_bin_op_Q <-> string = {
     FSGNJ_Q  <-> "fsgnj.q",
     FSGNJN_Q <-> "fsgnjn.q",
@@ -825,3 +950,46 @@ mapping clause assembly = F_BIN_TYPE_Q(rs2, rs1, rd, FLE_Q)
                           ^ spc() ^ reg_name(rd)
                           ^ sep() ^ freg_or_reg_name(rs1)
                           ^ sep() ^ freg_or_reg_name(rs2)
+
+
+/* ****************************************************************** */
+/* Unary, no rounding mode */
+
+union clause ast = F_UN_TYPE_Q : (regidx, regidx, f_un_op_Q)
+
+/* AST <-> Binary encoding ================================ */
+
+mapping clause encdec = F_UN_TYPE_Q(rs1, rd, FCLASS_Q)                        
+                    <-> 0b111_0011 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b101_0011
+
+
+function clause execute (F_UN_TYPE_Q(rs1, rd, FCLASS_Q)) = {
+  let rs1_val_Q = F(rs1);
+
+  let rd_val_10b : bits (10) =
+    if      f_is_neg_inf_Q     (rs1_val_Q) then 0b_00_0000_0001
+    else if f_is_neg_norm_Q    (rs1_val_Q) then 0b_00_0000_0010
+    else if f_is_neg_subnorm_Q (rs1_val_Q) then 0b_00_0000_0100
+    else if f_is_neg_zero_Q    (rs1_val_Q) then 0b_00_0000_1000
+    else if f_is_pos_zero_Q    (rs1_val_Q) then 0b_00_0001_0000
+    else if f_is_pos_subnorm_Q (rs1_val_Q) then 0b_00_0010_0000
+    else if f_is_pos_norm_Q    (rs1_val_Q) then 0b_00_0100_0000
+    else if f_is_pos_inf_Q     (rs1_val_Q) then 0b_00_1000_0000
+    else if f_is_SNaN_Q        (rs1_val_Q) then 0b_01_0000_0000
+    else if f_is_QNaN_Q        (rs1_val_Q) then 0b_10_0000_0000
+    else zeros();
+
+  X(rd) = EXTZ (rd_val_10b);
+  RETIRE_SUCCESS
+}
+
+
+mapping f_un_type_mnemonic_Q : f_un_op_Q <-> string = {
+    FCLASS_Q <-> "fclass.d"
+ }
+
+
+mapping clause assembly = F_UN_TYPE_Q(rs1, rd, FCLASS_Q)
+                      <-> f_un_type_mnemonic_Q(FCLASS_Q)
+                          ^ spc() ^ reg_name(rd)
+                          ^ sep() ^ freg_or_reg_name(rs1)

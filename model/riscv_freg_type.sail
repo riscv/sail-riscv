@@ -140,3 +140,5 @@ enum f_bin_op_Q = {FSGNJ_Q, FSGNJN_Q, FSGNJX_Q, FMIN_Q, FMAX_Q, FEQ_Q, FLT_Q, FL
 
 enum f_un_op_D = {FCLASS_D,            /* RV32 and RV64 */
                   FMV_X_D, FMV_D_X}    /* RV64 only */
+
+enum f_un_op_Q = {FCLASS_Q}

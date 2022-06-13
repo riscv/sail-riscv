@@ -87,6 +87,7 @@
 function canonical_NaN_H() -> bits(16) = 0x_7e00
 function canonical_NaN_S() -> bits(32) = 0x_7fc0_0000
 function canonical_NaN_D() -> bits(64) = 0x_7ff8_0000_0000_0000
+function canonical_NaN_Q() -> bits(128) = 0x_7fff_0000_0000_0000_0000_0000_0000_0000
 
 val      nan_box_H : bits(16) -> flenbits
 function nan_box_H   val_16b = 

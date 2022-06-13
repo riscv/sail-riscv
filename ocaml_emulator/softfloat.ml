@@ -69,6 +69,9 @@ let f32_sqrt rm v =
 let f64_sqrt rm v =
   ()
 
+let f128_sqrt rm v = 
+  ()
+
 let f16_to_i32 rm v =
   ()
 
@@ -159,6 +162,43 @@ let f64_to_f16 rm v =
 let f64_to_f32 rm v =
   ()
 
+let f128_to_i32 rm v =
+  ()
+
+let f128_to_ui32 rm v =
+  ()
+
+let i32_to_f128 rm v =
+  ()
+
+let ui32_to_f128 rm v =
+  ()
+
+let f32_to_f128 rm v =
+  ()
+
+let f128_to_f32 rm v =
+  ()
+
+let f128_to_f64 rm v =
+  ()
+
+let f64_to_f128 rm v =
+  ()
+
+let f128_to_i64 rm v =
+  ()
+
+let i64_to_f128 rm v =
+  ()
+
+let f128_to_ui64 rm v =
+  ()
+
+let ui64_to_f128 rm v =
+  ()
+  
+
 let f16_lt v1 v2 =
   ()
 
@@ -184,4 +224,13 @@ let f64_le v1 v2 =
   ()
 
 let f64_eq v1 v2 =
+  ()
+
+let f128_lt v1 v2 =
+  ()
+
+let f128_le v1 v2 =
+  ()
+
+let f128_eq v1 v2 =
   ()

@@ -1,0 +1,403 @@
+rm -rf generated_definitions/ocaml/* generated_definitions/c/* generated_definitions/latex/*
+rm -rf generated_definitions/lem/* generated_definitions/isabelle/* generated_definitions/hol4/* generated_definitions/coq/*
+rm -rf generated_definitions/for-rmem/*
+/Library/Developer/CommandLineTools/usr/bin/make -C c_emulator/SoftFloat-3e/build/Linux-RISCV-GCC clean
+rm -f s_eq128.o s_le128.o s_lt128.o s_shortShiftLeft128.o s_shortShiftRight128.o s_shortShiftRightJam64.o s_shortShiftRightJam64Extra.o s_shortShiftRightJam128.o s_shortShiftRightJam128Extra.o s_shiftRightJam32.o s_shiftRightJam64.o s_shiftRightJam64Extra.o s_shiftRightJam128.o s_shiftRightJam128Extra.o s_shiftRightJam256M.o s_countLeadingZeros8.o s_countLeadingZeros16.o s_countLeadingZeros32.o s_countLeadingZeros64.o s_add128.o s_add256M.o s_sub128.o s_sub256M.o s_mul64ByShifted32To128.o s_mul64To128.o s_mul128By32.o s_mul128To256M.o s_approxRecip_1Ks.o s_approxRecip32_1.o s_approxRecipSqrt_1Ks.o s_approxRecipSqrt32_1.o  softfloat_raiseFlags.o s_propagateNaNF16UI.o s_f32UIToCommonNaN.o s_commonNaNToF32UI.o s_propagateNaNF32UI.o s_f64UIToCommonNaN.o s_commonNaNToF64UI.o s_propagateNaNF64UI.o s_propagateNaNF128UI.o s_roundToUI32.o s_roundToUI64.o s_roundToI32.o s_roundToI64.o s_normSubnormalF16Sig.o s_roundPackToF16.o s_normRoundPackToF16.o s_addMagsF16.o s_subMagsF16.o s_mulAddF16.o s_normSubnormalF32Sig.o s_roundPackToF32.o s_normRoundPackToF32.o s_addMagsF32.o s_subMagsF32.o s_mulAddF32.o s_normSubnormalF64Sig.o s_roundPackToF64.o s_normRoundPackToF64.o s_addMagsF64.o s_subMagsF64.o s_mulAddF64.o s_normSubnormalExtF80Sig.o s_roundPackToExtF80.o s_normRoundPackToExtF80.o s_addMagsExtF80.o s_subMagsExtF80.o s_normSubnormalF128Sig.o s_roundPackToF128.o s_normRoundPackToF128.o s_addMagsF128.o s_subMagsF128.o s_mulAddF128.o softfloat_state.o ui32_to_f16.o ui32_to_f32.o ui32_to_f64.o ui32_to_extF80.o ui32_to_extF80M.o ui32_to_f128.o ui32_to_f128M.o ui64_to_f16.o ui64_to_f32.o ui64_to_f64.o ui64_to_extF80.o ui64_to_extF80M.o ui64_to_f128.o ui64_to_f128M.o i32_to_f16.o i32_to_f32.o i32_to_f64.o i32_to_extF80.o i32_to_extF80M.o i32_to_f128.o i32_to_f128M.o i64_to_f16.o i64_to_f32.o i64_to_f64.o i64_to_extF80.o i64_to_extF80M.o i64_to_f128.o i64_to_f128M.o f16_to_ui32.o f16_to_ui64.o f16_to_i32.o f16_to_i64.o f16_to_ui32_r_minMag.o f16_to_ui64_r_minMag.o f16_to_i32_r_minMag.o f16_to_i64_r_minMag.o f16_to_f32.o f16_to_f64.o f16_to_extF80.o f16_to_extF80M.o f16_to_f128.o f16_to_f128M.o f16_roundToInt.o f16_add.o f16_sub.o f16_mul.o f16_mulAdd.o f16_div.o f16_rem.o f16_sqrt.o f16_eq.o f16_le.o f16_lt.o f16_eq_signaling.o f16_le_quiet.o f16_lt_quiet.o f16_isSignalingNaN.o f32_to_ui32.o f32_to_ui64.o f32_to_i32.o f32_to_i64.o f32_to_ui32_r_minMag.o f32_to_ui64_r_minMag.o f32_to_i32_r_minMag.o f32_to_i64_r_minMag.o f32_to_f16.o f32_to_f64.o f32_to_extF80.o f32_to_extF80M.o f32_to_f128.o f32_to_f128M.o f32_roundToInt.o f32_add.o f32_sub.o f32_mul.o f32_mulAdd.o f32_div.o f32_rem.o f32_sqrt.o f32_eq.o f32_le.o f32_lt.o f32_eq_signaling.o f32_le_quiet.o f32_lt_quiet.o f32_isSignalingNaN.o f64_to_ui32.o f64_to_ui64.o f64_to_i32.o f64_to_i64.o f64_to_ui32_r_minMag.o f64_to_ui64_r_minMag.o f64_to_i32_r_minMag.o f64_to_i64_r_minMag.o f64_to_f16.o f64_to_f32.o f64_to_extF80.o f64_to_extF80M.o f64_to_f128.o f64_to_f128M.o f64_roundToInt.o f64_add.o f64_sub.o f64_mul.o f64_mulAdd.o f64_div.o f64_rem.o f64_sqrt.o f64_eq.o f64_le.o f64_lt.o f64_eq_signaling.o f64_le_quiet.o f64_lt_quiet.o f64_isSignalingNaN.o extF80_to_ui32.o extF80_to_ui64.o extF80_to_i32.o extF80_to_i64.o extF80_to_ui32_r_minMag.o extF80_to_ui64_r_minMag.o extF80_to_i32_r_minMag.o extF80_to_i64_r_minMag.o extF80_to_f16.o extF80_to_f32.o extF80_to_f64.o extF80_to_f128.o extF80_roundToInt.o extF80_add.o extF80_sub.o extF80_mul.o extF80_div.o extF80_rem.o extF80_sqrt.o extF80_eq.o extF80_le.o extF80_lt.o extF80_eq_signaling.o extF80_le_quiet.o extF80_lt_quiet.o extF80_isSignalingNaN.o extF80M_to_ui32.o extF80M_to_ui64.o extF80M_to_i32.o extF80M_to_i64.o extF80M_to_ui32_r_minMag.o extF80M_to_ui64_r_minMag.o extF80M_to_i32_r_minMag.o extF80M_to_i64_r_minMag.o extF80M_to_f16.o extF80M_to_f32.o extF80M_to_f64.o extF80M_to_f128M.o extF80M_roundToInt.o extF80M_add.o extF80M_sub.o extF80M_mul.o extF80M_div.o extF80M_rem.o extF80M_sqrt.o extF80M_eq.o extF80M_le.o extF80M_lt.o extF80M_eq_signaling.o extF80M_le_quiet.o extF80M_lt_quiet.o f128_to_ui32.o f128_to_ui64.o f128_to_i32.o f128_to_i64.o f128_to_ui32_r_minMag.o f128_to_ui64_r_minMag.o f128_to_i32_r_minMag.o f128_to_i64_r_minMag.o f128_to_f16.o f128_to_f32.o f128_to_extF80.o f128_to_f64.o f128_roundToInt.o f128_add.o f128_sub.o f128_mul.o f128_mulAdd.o f128_div.o f128_rem.o f128_sqrt.o f128_eq.o f128_le.o f128_lt.o f128_eq_signaling.o f128_le_quiet.o f128_lt_quiet.o f128_isSignalingNaN.o f128M_to_ui32.o f128M_to_ui64.o f128M_to_i32.o f128M_to_i64.o f128M_to_ui32_r_minMag.o f128M_to_ui64_r_minMag.o f128M_to_i32_r_minMag.o f128M_to_i64_r_minMag.o f128M_to_f16.o f128M_to_f32.o f128M_to_extF80M.o f128M_to_f64.o f128M_roundToInt.o f128M_add.o f128M_sub.o f128M_mul.o f128M_mulAdd.o f128M_div.o f128M_rem.o f128M_sqrt.o f128M_eq.o f128M_le.o f128M_lt.o f128M_eq_signaling.o f128M_le_quiet.o f128M_lt_quiet.o  softfloat.a
+rm -f c_emulator/riscv_sim_RV32 c_emulator/riscv_sim_RV64  c_emulator/riscv_rvfi_RV32 c_emulator/riscv_rvfi_RV64
+rm -rf ocaml_emulator/_sbuild ocaml_emulator/_build ocaml_emulator/riscv_ocaml_sim_RV32 ocaml_emulator/riscv_ocaml_sim_RV64 ocaml_emulator/tracecmp
+rm -f *.gcno *.gcda
+rm -f z3_problems
+Holmake cleanAll
+rm -f handwritten_support/riscv_extras.vo handwritten_support/riscv_extras.vos handwritten_support/riscv_extras.vok handwritten_support/riscv_extras.glob handwritten_support/.riscv_extras.aux
+rm -f handwritten_support/mem_metadata.vo handwritten_support/mem_metadata.vos handwritten_support/mem_metadata.vok handwritten_support/mem_metadata.glob handwritten_support/.mem_metadata.aux
+ocamlbuild -clean
+mkdir -p generated_definitions/c
+sail -dno_cast -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main model/prelude.sail model/prelude_mapping.sail model/riscv_xlen64.sail model/riscv_flen_Q.sail model/prelude_mem_metadata.sail model/prelude_mem.sail model/riscv_types_common.sail model/riscv_types_ext.sail model/riscv_types.sail model/riscv_vmem_types.sail model/riscv_reg_type.sail model/riscv_freg_type.sail model/riscv_regs.sail model/riscv_pc_access.sail model/riscv_sys_regs.sail model/riscv_pmp_regs.sail model/riscv_pmp_control.sail model/riscv_ext_regs.sail model/riscv_addr_checks_common.sail model/riscv_addr_checks.sail model/riscv_misa_ext.sail model/riscv_csr_map.sail model/riscv_next_regs.sail model/riscv_sys_exceptions.sail model/riscv_sync_exception.sail model/riscv_next_control.sail model/riscv_softfloat_interface.sail model/riscv_fdext_regs.sail model/riscv_fdext_control.sail model/riscv_csr_ext.sail model/riscv_sys_control.sail model/riscv_platform.sail model/riscv_mem.sail model/riscv_pte.sail model/riscv_ptw.sail model/riscv_vmem_common.sail model/riscv_vmem_tlb.sail model/riscv_vmem_sv39.sail model/riscv_vmem_sv48.sail model/riscv_vmem_rv64.sail model/riscv_types_kext.sail model/riscv_insts_begin.sail model/riscv_insts_base.sail model/riscv_insts_aext.sail model/riscv_insts_cext.sail model/riscv_insts_mext.sail model/riscv_insts_zicsr.sail model/riscv_insts_next.sail model/riscv_insts_hints.sail model/riscv_insts_fext.sail model/riscv_insts_cfext.sail model/riscv_insts_dext.sail model/riscv_insts_cdext.sail model/riscv_insts_qext.sail model/riscv_insts_zba.sail model/riscv_insts_zbb.sail model/riscv_insts_zbc.sail model/riscv_insts_zbs.sail model/riscv_insts_zfh.sail model/riscv_insts_zkn.sail model/riscv_insts_zks.sail model/riscv_insts_zbkb.sail model/riscv_insts_zbkx.sail model/riscv_jalr_seq.sail model/riscv_insts_end.sail model/riscv_step_common.sail model/riscv_step_ext.sail model/riscv_decode_ext.sail model/riscv_fetch.sail model/riscv_step.sail model/riscv_analysis.sail model/main.sail -o generated_definitions/c/riscv_model_RV64
+/Library/Developer/CommandLineTools/usr/bin/make SPECIALIZE_TYPE=RISCV -C c_emulator/SoftFloat-3e/build/Linux-RISCV-GCC
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_eq128.o ../../source/s_eq128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_le128.o ../../source/s_le128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_lt128.o ../../source/s_lt128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_shortShiftLeft128.o ../../source/s_shortShiftLeft128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_shortShiftRight128.o ../../source/s_shortShiftRight128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_shortShiftRightJam64.o ../../source/s_shortShiftRightJam64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_shortShiftRightJam64Extra.o ../../source/s_shortShiftRightJam64Extra.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_shortShiftRightJam128.o ../../source/s_shortShiftRightJam128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_shortShiftRightJam128Extra.o ../../source/s_shortShiftRightJam128Extra.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_shiftRightJam32.o ../../source/s_shiftRightJam32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_shiftRightJam64.o ../../source/s_shiftRightJam64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_shiftRightJam64Extra.o ../../source/s_shiftRightJam64Extra.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_shiftRightJam128.o ../../source/s_shiftRightJam128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_shiftRightJam128Extra.o ../../source/s_shiftRightJam128Extra.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_shiftRightJam256M.o ../../source/s_shiftRightJam256M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_countLeadingZeros8.o ../../source/s_countLeadingZeros8.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_countLeadingZeros16.o ../../source/s_countLeadingZeros16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_countLeadingZeros32.o ../../source/s_countLeadingZeros32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_countLeadingZeros64.o ../../source/s_countLeadingZeros64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_add128.o ../../source/s_add128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_add256M.o ../../source/s_add256M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_sub128.o ../../source/s_sub128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_sub256M.o ../../source/s_sub256M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_mul64ByShifted32To128.o ../../source/s_mul64ByShifted32To128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_mul64To128.o ../../source/s_mul64To128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_mul128By32.o ../../source/s_mul128By32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_mul128To256M.o ../../source/s_mul128To256M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_approxRecip_1Ks.o ../../source/s_approxRecip_1Ks.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_approxRecip32_1.o ../../source/s_approxRecip32_1.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_approxRecipSqrt_1Ks.o ../../source/s_approxRecipSqrt_1Ks.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_approxRecipSqrt32_1.o ../../source/s_approxRecipSqrt32_1.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o softfloat_raiseFlags.o ../../source/RISCV/softfloat_raiseFlags.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_propagateNaNF16UI.o ../../source/RISCV/s_propagateNaNF16UI.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_f32UIToCommonNaN.o ../../source/RISCV/s_f32UIToCommonNaN.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_commonNaNToF32UI.o ../../source/RISCV/s_commonNaNToF32UI.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_propagateNaNF32UI.o ../../source/RISCV/s_propagateNaNF32UI.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_f64UIToCommonNaN.o ../../source/RISCV/s_f64UIToCommonNaN.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_commonNaNToF64UI.o ../../source/RISCV/s_commonNaNToF64UI.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_propagateNaNF64UI.o ../../source/RISCV/s_propagateNaNF64UI.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_propagateNaNF128UI.o ../../source/RISCV/s_propagateNaNF128UI.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_roundToUI32.o ../../source/s_roundToUI32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_roundToUI64.o ../../source/s_roundToUI64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_roundToI32.o ../../source/s_roundToI32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_roundToI64.o ../../source/s_roundToI64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_normSubnormalF16Sig.o ../../source/s_normSubnormalF16Sig.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_roundPackToF16.o ../../source/s_roundPackToF16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_normRoundPackToF16.o ../../source/s_normRoundPackToF16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_addMagsF16.o ../../source/s_addMagsF16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_subMagsF16.o ../../source/s_subMagsF16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_mulAddF16.o ../../source/s_mulAddF16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_normSubnormalF32Sig.o ../../source/s_normSubnormalF32Sig.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_roundPackToF32.o ../../source/s_roundPackToF32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_normRoundPackToF32.o ../../source/s_normRoundPackToF32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_addMagsF32.o ../../source/s_addMagsF32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_subMagsF32.o ../../source/s_subMagsF32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_mulAddF32.o ../../source/s_mulAddF32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_normSubnormalF64Sig.o ../../source/s_normSubnormalF64Sig.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_roundPackToF64.o ../../source/s_roundPackToF64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_normRoundPackToF64.o ../../source/s_normRoundPackToF64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_addMagsF64.o ../../source/s_addMagsF64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_subMagsF64.o ../../source/s_subMagsF64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_mulAddF64.o ../../source/s_mulAddF64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_normSubnormalExtF80Sig.o ../../source/s_normSubnormalExtF80Sig.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_roundPackToExtF80.o ../../source/s_roundPackToExtF80.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_normRoundPackToExtF80.o ../../source/s_normRoundPackToExtF80.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_addMagsExtF80.o ../../source/s_addMagsExtF80.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_subMagsExtF80.o ../../source/s_subMagsExtF80.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_normSubnormalF128Sig.o ../../source/s_normSubnormalF128Sig.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_roundPackToF128.o ../../source/s_roundPackToF128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_normRoundPackToF128.o ../../source/s_normRoundPackToF128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_addMagsF128.o ../../source/s_addMagsF128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_subMagsF128.o ../../source/s_subMagsF128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o s_mulAddF128.o ../../source/s_mulAddF128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o softfloat_state.o ../../source/softfloat_state.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o ui32_to_f16.o ../../source/ui32_to_f16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o ui32_to_f32.o ../../source/ui32_to_f32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o ui32_to_f64.o ../../source/ui32_to_f64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o ui32_to_extF80.o ../../source/ui32_to_extF80.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o ui32_to_extF80M.o ../../source/ui32_to_extF80M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o ui32_to_f128.o ../../source/ui32_to_f128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o ui32_to_f128M.o ../../source/ui32_to_f128M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o ui64_to_f16.o ../../source/ui64_to_f16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o ui64_to_f32.o ../../source/ui64_to_f32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o ui64_to_f64.o ../../source/ui64_to_f64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o ui64_to_extF80.o ../../source/ui64_to_extF80.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o ui64_to_extF80M.o ../../source/ui64_to_extF80M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o ui64_to_f128.o ../../source/ui64_to_f128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o ui64_to_f128M.o ../../source/ui64_to_f128M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o i32_to_f16.o ../../source/i32_to_f16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o i32_to_f32.o ../../source/i32_to_f32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o i32_to_f64.o ../../source/i32_to_f64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o i32_to_extF80.o ../../source/i32_to_extF80.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o i32_to_extF80M.o ../../source/i32_to_extF80M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o i32_to_f128.o ../../source/i32_to_f128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o i32_to_f128M.o ../../source/i32_to_f128M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o i64_to_f16.o ../../source/i64_to_f16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o i64_to_f32.o ../../source/i64_to_f32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o i64_to_f64.o ../../source/i64_to_f64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o i64_to_extF80.o ../../source/i64_to_extF80.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o i64_to_extF80M.o ../../source/i64_to_extF80M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o i64_to_f128.o ../../source/i64_to_f128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o i64_to_f128M.o ../../source/i64_to_f128M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_to_ui32.o ../../source/f16_to_ui32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_to_ui64.o ../../source/f16_to_ui64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_to_i32.o ../../source/f16_to_i32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_to_i64.o ../../source/f16_to_i64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_to_ui32_r_minMag.o ../../source/f16_to_ui32_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_to_ui64_r_minMag.o ../../source/f16_to_ui64_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_to_i32_r_minMag.o ../../source/f16_to_i32_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_to_i64_r_minMag.o ../../source/f16_to_i64_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_to_f32.o ../../source/f16_to_f32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_to_f64.o ../../source/f16_to_f64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_to_extF80.o ../../source/f16_to_extF80.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_to_extF80M.o ../../source/f16_to_extF80M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_to_f128.o ../../source/f16_to_f128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_to_f128M.o ../../source/f16_to_f128M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_roundToInt.o ../../source/f16_roundToInt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_add.o ../../source/f16_add.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_sub.o ../../source/f16_sub.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_mul.o ../../source/f16_mul.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_mulAdd.o ../../source/f16_mulAdd.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_div.o ../../source/f16_div.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_rem.o ../../source/f16_rem.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_sqrt.o ../../source/f16_sqrt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_eq.o ../../source/f16_eq.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_le.o ../../source/f16_le.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_lt.o ../../source/f16_lt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_eq_signaling.o ../../source/f16_eq_signaling.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_le_quiet.o ../../source/f16_le_quiet.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_lt_quiet.o ../../source/f16_lt_quiet.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f16_isSignalingNaN.o ../../source/f16_isSignalingNaN.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_to_ui32.o ../../source/f32_to_ui32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_to_ui64.o ../../source/f32_to_ui64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_to_i32.o ../../source/f32_to_i32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_to_i64.o ../../source/f32_to_i64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_to_ui32_r_minMag.o ../../source/f32_to_ui32_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_to_ui64_r_minMag.o ../../source/f32_to_ui64_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_to_i32_r_minMag.o ../../source/f32_to_i32_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_to_i64_r_minMag.o ../../source/f32_to_i64_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_to_f16.o ../../source/f32_to_f16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_to_f64.o ../../source/f32_to_f64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_to_extF80.o ../../source/f32_to_extF80.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_to_extF80M.o ../../source/f32_to_extF80M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_to_f128.o ../../source/f32_to_f128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_to_f128M.o ../../source/f32_to_f128M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_roundToInt.o ../../source/f32_roundToInt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_add.o ../../source/f32_add.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_sub.o ../../source/f32_sub.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_mul.o ../../source/f32_mul.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_mulAdd.o ../../source/f32_mulAdd.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_div.o ../../source/f32_div.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_rem.o ../../source/f32_rem.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_sqrt.o ../../source/f32_sqrt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_eq.o ../../source/f32_eq.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_le.o ../../source/f32_le.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_lt.o ../../source/f32_lt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_eq_signaling.o ../../source/f32_eq_signaling.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_le_quiet.o ../../source/f32_le_quiet.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_lt_quiet.o ../../source/f32_lt_quiet.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f32_isSignalingNaN.o ../../source/f32_isSignalingNaN.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_to_ui32.o ../../source/f64_to_ui32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_to_ui64.o ../../source/f64_to_ui64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_to_i32.o ../../source/f64_to_i32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_to_i64.o ../../source/f64_to_i64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_to_ui32_r_minMag.o ../../source/f64_to_ui32_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_to_ui64_r_minMag.o ../../source/f64_to_ui64_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_to_i32_r_minMag.o ../../source/f64_to_i32_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_to_i64_r_minMag.o ../../source/f64_to_i64_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_to_f16.o ../../source/f64_to_f16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_to_f32.o ../../source/f64_to_f32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_to_extF80.o ../../source/f64_to_extF80.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_to_extF80M.o ../../source/f64_to_extF80M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_to_f128.o ../../source/f64_to_f128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_to_f128M.o ../../source/f64_to_f128M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_roundToInt.o ../../source/f64_roundToInt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_add.o ../../source/f64_add.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_sub.o ../../source/f64_sub.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_mul.o ../../source/f64_mul.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_mulAdd.o ../../source/f64_mulAdd.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_div.o ../../source/f64_div.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_rem.o ../../source/f64_rem.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_sqrt.o ../../source/f64_sqrt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_eq.o ../../source/f64_eq.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_le.o ../../source/f64_le.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_lt.o ../../source/f64_lt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_eq_signaling.o ../../source/f64_eq_signaling.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_le_quiet.o ../../source/f64_le_quiet.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_lt_quiet.o ../../source/f64_lt_quiet.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f64_isSignalingNaN.o ../../source/f64_isSignalingNaN.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_to_ui32.o ../../source/extF80_to_ui32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_to_ui64.o ../../source/extF80_to_ui64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_to_i32.o ../../source/extF80_to_i32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_to_i64.o ../../source/extF80_to_i64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_to_ui32_r_minMag.o ../../source/extF80_to_ui32_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_to_ui64_r_minMag.o ../../source/extF80_to_ui64_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_to_i32_r_minMag.o ../../source/extF80_to_i32_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_to_i64_r_minMag.o ../../source/extF80_to_i64_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_to_f16.o ../../source/extF80_to_f16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_to_f32.o ../../source/extF80_to_f32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_to_f64.o ../../source/extF80_to_f64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_to_f128.o ../../source/extF80_to_f128.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_roundToInt.o ../../source/extF80_roundToInt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_add.o ../../source/extF80_add.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_sub.o ../../source/extF80_sub.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_mul.o ../../source/extF80_mul.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_div.o ../../source/extF80_div.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_rem.o ../../source/extF80_rem.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_sqrt.o ../../source/extF80_sqrt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_eq.o ../../source/extF80_eq.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_le.o ../../source/extF80_le.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_lt.o ../../source/extF80_lt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_eq_signaling.o ../../source/extF80_eq_signaling.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_le_quiet.o ../../source/extF80_le_quiet.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_lt_quiet.o ../../source/extF80_lt_quiet.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80_isSignalingNaN.o ../../source/extF80_isSignalingNaN.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_to_ui32.o ../../source/extF80M_to_ui32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_to_ui64.o ../../source/extF80M_to_ui64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_to_i32.o ../../source/extF80M_to_i32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_to_i64.o ../../source/extF80M_to_i64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_to_ui32_r_minMag.o ../../source/extF80M_to_ui32_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_to_ui64_r_minMag.o ../../source/extF80M_to_ui64_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_to_i32_r_minMag.o ../../source/extF80M_to_i32_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_to_i64_r_minMag.o ../../source/extF80M_to_i64_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_to_f16.o ../../source/extF80M_to_f16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_to_f32.o ../../source/extF80M_to_f32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_to_f64.o ../../source/extF80M_to_f64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_to_f128M.o ../../source/extF80M_to_f128M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_roundToInt.o ../../source/extF80M_roundToInt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_add.o ../../source/extF80M_add.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_sub.o ../../source/extF80M_sub.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_mul.o ../../source/extF80M_mul.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_div.o ../../source/extF80M_div.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_rem.o ../../source/extF80M_rem.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_sqrt.o ../../source/extF80M_sqrt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_eq.o ../../source/extF80M_eq.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_le.o ../../source/extF80M_le.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_lt.o ../../source/extF80M_lt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_eq_signaling.o ../../source/extF80M_eq_signaling.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_le_quiet.o ../../source/extF80M_le_quiet.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o extF80M_lt_quiet.o ../../source/extF80M_lt_quiet.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_to_ui32.o ../../source/f128_to_ui32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_to_ui64.o ../../source/f128_to_ui64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_to_i32.o ../../source/f128_to_i32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_to_i64.o ../../source/f128_to_i64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_to_ui32_r_minMag.o ../../source/f128_to_ui32_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_to_ui64_r_minMag.o ../../source/f128_to_ui64_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_to_i32_r_minMag.o ../../source/f128_to_i32_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_to_i64_r_minMag.o ../../source/f128_to_i64_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_to_f16.o ../../source/f128_to_f16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_to_f32.o ../../source/f128_to_f32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_to_extF80.o ../../source/f128_to_extF80.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_to_f64.o ../../source/f128_to_f64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_roundToInt.o ../../source/f128_roundToInt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_add.o ../../source/f128_add.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_sub.o ../../source/f128_sub.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_mul.o ../../source/f128_mul.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_mulAdd.o ../../source/f128_mulAdd.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_div.o ../../source/f128_div.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_rem.o ../../source/f128_rem.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_sqrt.o ../../source/f128_sqrt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_eq.o ../../source/f128_eq.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_le.o ../../source/f128_le.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_lt.o ../../source/f128_lt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_eq_signaling.o ../../source/f128_eq_signaling.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_le_quiet.o ../../source/f128_le_quiet.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_lt_quiet.o ../../source/f128_lt_quiet.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128_isSignalingNaN.o ../../source/f128_isSignalingNaN.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_to_ui32.o ../../source/f128M_to_ui32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_to_ui64.o ../../source/f128M_to_ui64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_to_i32.o ../../source/f128M_to_i32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_to_i64.o ../../source/f128M_to_i64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_to_ui32_r_minMag.o ../../source/f128M_to_ui32_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_to_ui64_r_minMag.o ../../source/f128M_to_ui64_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_to_i32_r_minMag.o ../../source/f128M_to_i32_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_to_i64_r_minMag.o ../../source/f128M_to_i64_r_minMag.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_to_f16.o ../../source/f128M_to_f16.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_to_f32.o ../../source/f128M_to_f32.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_to_extF80M.o ../../source/f128M_to_extF80M.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_to_f64.o ../../source/f128M_to_f64.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_roundToInt.o ../../source/f128M_roundToInt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_add.o ../../source/f128M_add.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_sub.o ../../source/f128M_sub.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_mul.o ../../source/f128M_mul.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_mulAdd.o ../../source/f128M_mulAdd.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_div.o ../../source/f128M_div.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_rem.o ../../source/f128M_rem.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_sqrt.o ../../source/f128M_sqrt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_eq.o ../../source/f128M_eq.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_le.o ../../source/f128M_le.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_lt.o ../../source/f128M_lt.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_eq_signaling.o ../../source/f128M_eq_signaling.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_le_quiet.o ../../source/f128M_le_quiet.c
+gcc -c -Werror-implicit-function-declaration  -I. -I../../source/RISCV -I../../source/include -O2 -o f128M_lt_quiet.o ../../source/f128M_lt_quiet.c
+rm -f softfloat.a
+ar crs softfloat.a s_eq128.o s_le128.o s_lt128.o s_shortShiftLeft128.o s_shortShiftRight128.o s_shortShiftRightJam64.o s_shortShiftRightJam64Extra.o s_shortShiftRightJam128.o s_shortShiftRightJam128Extra.o s_shiftRightJam32.o s_shiftRightJam64.o s_shiftRightJam64Extra.o s_shiftRightJam128.o s_shiftRightJam128Extra.o s_shiftRightJam256M.o s_countLeadingZeros8.o s_countLeadingZeros16.o s_countLeadingZeros32.o s_countLeadingZeros64.o s_add128.o s_add256M.o s_sub128.o s_sub256M.o s_mul64ByShifted32To128.o s_mul64To128.o s_mul128By32.o s_mul128To256M.o s_approxRecip_1Ks.o s_approxRecip32_1.o s_approxRecipSqrt_1Ks.o s_approxRecipSqrt32_1.o softfloat_raiseFlags.o s_propagateNaNF16UI.o s_f32UIToCommonNaN.o s_commonNaNToF32UI.o s_propagateNaNF32UI.o s_f64UIToCommonNaN.o s_commonNaNToF64UI.o s_propagateNaNF64UI.o s_propagateNaNF128UI.o s_roundToUI32.o s_roundToUI64.o s_roundToI32.o s_roundToI64.o s_normSubnormalF16Sig.o s_roundPackToF16.o s_normRoundPackToF16.o s_addMagsF16.o s_subMagsF16.o s_mulAddF16.o s_normSubnormalF32Sig.o s_roundPackToF32.o s_normRoundPackToF32.o s_addMagsF32.o s_subMagsF32.o s_mulAddF32.o s_normSubnormalF64Sig.o s_roundPackToF64.o s_normRoundPackToF64.o s_addMagsF64.o s_subMagsF64.o s_mulAddF64.o s_normSubnormalExtF80Sig.o s_roundPackToExtF80.o s_normRoundPackToExtF80.o s_addMagsExtF80.o s_subMagsExtF80.o s_normSubnormalF128Sig.o s_roundPackToF128.o s_normRoundPackToF128.o s_addMagsF128.o s_subMagsF128.o s_mulAddF128.o softfloat_state.o ui32_to_f16.o ui32_to_f32.o ui32_to_f64.o ui32_to_extF80.o ui32_to_extF80M.o ui32_to_f128.o ui32_to_f128M.o ui64_to_f16.o ui64_to_f32.o ui64_to_f64.o ui64_to_extF80.o ui64_to_extF80M.o ui64_to_f128.o ui64_to_f128M.o i32_to_f16.o i32_to_f32.o i32_to_f64.o i32_to_extF80.o i32_to_extF80M.o i32_to_f128.o i32_to_f128M.o i64_to_f16.o i64_to_f32.o i64_to_f64.o i64_to_extF80.o i64_to_extF80M.o i64_to_f128.o i64_to_f128M.o f16_to_ui32.o f16_to_ui64.o f16_to_i32.o f16_to_i64.o f16_to_ui32_r_minMag.o f16_to_ui64_r_minMag.o f16_to_i32_r_minMag.o f16_to_i64_r_minMag.o f16_to_f32.o f16_to_f64.o f16_to_extF80.o f16_to_extF80M.o f16_to_f128.o f16_to_f128M.o f16_roundToInt.o f16_add.o f16_sub.o f16_mul.o f16_mulAdd.o f16_div.o f16_rem.o f16_sqrt.o f16_eq.o f16_le.o f16_lt.o f16_eq_signaling.o f16_le_quiet.o f16_lt_quiet.o f16_isSignalingNaN.o f32_to_ui32.o f32_to_ui64.o f32_to_i32.o f32_to_i64.o f32_to_ui32_r_minMag.o f32_to_ui64_r_minMag.o f32_to_i32_r_minMag.o f32_to_i64_r_minMag.o f32_to_f16.o f32_to_f64.o f32_to_extF80.o f32_to_extF80M.o f32_to_f128.o f32_to_f128M.o f32_roundToInt.o f32_add.o f32_sub.o f32_mul.o f32_mulAdd.o f32_div.o f32_rem.o f32_sqrt.o f32_eq.o f32_le.o f32_lt.o f32_eq_signaling.o f32_le_quiet.o f32_lt_quiet.o f32_isSignalingNaN.o f64_to_ui32.o f64_to_ui64.o f64_to_i32.o f64_to_i64.o f64_to_ui32_r_minMag.o f64_to_ui64_r_minMag.o f64_to_i32_r_minMag.o f64_to_i64_r_minMag.o f64_to_f16.o f64_to_f32.o f64_to_extF80.o f64_to_extF80M.o f64_to_f128.o f64_to_f128M.o f64_roundToInt.o f64_add.o f64_sub.o f64_mul.o f64_mulAdd.o f64_div.o f64_rem.o f64_sqrt.o f64_eq.o f64_le.o f64_lt.o f64_eq_signaling.o f64_le_quiet.o f64_lt_quiet.o f64_isSignalingNaN.o extF80_to_ui32.o extF80_to_ui64.o extF80_to_i32.o extF80_to_i64.o extF80_to_ui32_r_minMag.o extF80_to_ui64_r_minMag.o extF80_to_i32_r_minMag.o extF80_to_i64_r_minMag.o extF80_to_f16.o extF80_to_f32.o extF80_to_f64.o extF80_to_f128.o extF80_roundToInt.o extF80_add.o extF80_sub.o extF80_mul.o extF80_div.o extF80_rem.o extF80_sqrt.o extF80_eq.o extF80_le.o extF80_lt.o extF80_eq_signaling.o extF80_le_quiet.o extF80_lt_quiet.o extF80_isSignalingNaN.o extF80M_to_ui32.o extF80M_to_ui64.o extF80M_to_i32.o extF80M_to_i64.o extF80M_to_ui32_r_minMag.o extF80M_to_ui64_r_minMag.o extF80M_to_i32_r_minMag.o extF80M_to_i64_r_minMag.o extF80M_to_f16.o extF80M_to_f32.o extF80M_to_f64.o extF80M_to_f128M.o extF80M_roundToInt.o extF80M_add.o extF80M_sub.o extF80M_mul.o extF80M_div.o extF80M_rem.o extF80M_sqrt.o extF80M_eq.o extF80M_le.o extF80M_lt.o extF80M_eq_signaling.o extF80M_le_quiet.o extF80M_lt_quiet.o f128_to_ui32.o f128_to_ui64.o f128_to_i32.o f128_to_i64.o f128_to_ui32_r_minMag.o f128_to_ui64_r_minMag.o f128_to_i32_r_minMag.o f128_to_i64_r_minMag.o f128_to_f16.o f128_to_f32.o f128_to_extF80.o f128_to_f64.o f128_roundToInt.o f128_add.o f128_sub.o f128_mul.o f128_mulAdd.o f128_div.o f128_rem.o f128_sqrt.o f128_eq.o f128_le.o f128_lt.o f128_eq_signaling.o f128_le_quiet.o f128_lt_quiet.o f128_isSignalingNaN.o f128M_to_ui32.o f128M_to_ui64.o f128M_to_i32.o f128M_to_i64.o f128M_to_ui32_r_minMag.o f128M_to_ui64_r_minMag.o f128M_to_i32_r_minMag.o f128M_to_i64_r_minMag.o f128M_to_f16.o f128M_to_f32.o f128M_to_extF80M.o f128M_to_f64.o f128M_roundToInt.o f128M_add.o f128M_sub.o f128M_mul.o f128M_mulAdd.o f128M_div.o f128M_rem.o f128M_sqrt.o f128M_eq.o f128M_le.o f128M_lt.o f128M_eq_signaling.o f128M_le_quiet.o f128M_lt_quiet.o
+gcc -g  -I /Users/anothertony/.opam/default/share/sail/lib -I c_emulator -I/usr/local/Cellar/gmp/6.2.1_1/include  -I c_emulator/SoftFloat-3e/source/include -fcommon -O3 -flto generated_definitions/c/riscv_model_RV64.c c_emulator/riscv_prelude.c c_emulator/riscv_platform_impl.c c_emulator/riscv_platform.c c_emulator/riscv_softfloat.c c_emulator/riscv_sim.c /Users/anothertony/.opam/default/share/sail/lib/*.c -L/usr/local/Cellar/gmp/6.2.1_1/lib -lgmp -lz c_emulator/SoftFloat-3e/build/Linux-RISCV-GCC/softfloat.a -o c_emulator/riscv_sim_RV64
+Building 64-bit RISCV C emulator: [0;92mok[0m
+C-64 rv64uf-p-fadd.elf: [0;92mok[0m
+C-64 rv64uf-p-fclass.elf: [0;92mok[0m
+C-64 rv64uf-p-fcmp.elf: [0;92mok[0m
+C-64 rv64uf-p-fcvt.elf: [0;92mok[0m
+C-64 rv64uf-p-fcvt_w.elf: [0;92mok[0m
+C-64 rv64uf-p-fdiv.elf: [0;92mok[0m
+C-64 rv64uf-p-fmadd.elf: [0;92mok[0m
+C-64 rv64uf-p-fmin.elf: [0;92mok[0m
+C-64 rv64uf-p-ldst.elf: [0;92mok[0m
+C-64 rv64uf-p-move.elf: [0;92mok[0m
+C-64 rv64uf-p-recoding.elf: [0;92mok[0m
+C-64 rv64uf-v-fadd.elf: [0;92mok[0m
+C-64 rv64uf-v-fclass.elf: [0;92mok[0m
+C-64 rv64uf-v-fcmp.elf: [0;92mok[0m
+C-64 rv64uf-v-fcvt.elf: [0;92mok[0m
+C-64 rv64uf-v-fcvt_w.elf: [0;92mok[0m
+C-64 rv64uf-v-fdiv.elf: [0;92mok[0m
+C-64 rv64uf-v-fmadd.elf: [0;92mok[0m
+C-64 rv64uf-v-fmin.elf: [0;92mok[0m
+C-64 rv64uf-v-ldst.elf: [0;92mok[0m
+C-64 rv64uf-v-move.elf: [0;92mok[0m
+C-64 rv64uf-v-recoding.elf: [0;92mok[0m
+C-64 rv64ud-p-fadd.elf: [0;92mok[0m
+C-64 rv64ud-p-fclass.elf: [0;92mok[0m
+C-64 rv64ud-p-fcmp.elf: [0;92mok[0m
+C-64 rv64ud-p-fcvt.elf: [0;92mok[0m
+C-64 rv64ud-p-fcvt_w.elf: [0;92mok[0m
+C-64 rv64ud-p-fdiv.elf: [0;92mok[0m
+C-64 rv64ud-p-fmadd.elf: [0;92mok[0m
+C-64 rv64ud-p-fmin.elf: [0;92mok[0m
+C-64 rv64ud-p-ldst.elf: [0;92mok[0m
+C-64 rv64ud-p-move.elf: [0;92mok[0m
+C-64 rv64ud-p-recoding.elf: [0;92mok[0m
+C-64 rv64ud-p-structural.elf: [0;92mok[0m
+C-64 rv64ud-v-fadd.elf: [0;92mok[0m
+C-64 rv64ud-v-fclass.elf: [0;92mok[0m
+C-64 rv64ud-v-fcmp.elf: [0;92mok[0m
+C-64 rv64ud-v-fcvt.elf: [0;92mok[0m
+C-64 rv64ud-v-fcvt_w.elf: [0;92mok[0m
+C-64 rv64ud-v-fdiv.elf: [0;92mok[0m
+C-64 rv64ud-v-fmadd.elf: [0;92mok[0m
+C-64 rv64ud-v-fmin.elf: [0;92mok[0m
+C-64 rv64ud-v-ldst.elf: [0;92mok[0m
+C-64 rv64ud-v-move.elf: [0;92mok[0m
+C-64 rv64ud-v-recoding.elf: [0;92mok[0m
+C-64 rv64ud-v-structural.elf: [0;92mok[0m
+C-64 rv64mi-p-csr.elf: [0;92mok[0m
+64-bit RISCV C tests: Passed 48 out of 48
+
+mkdir -p generated_definitions/c
+sail -dno_cast -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main model/prelude.sail model/prelude_mapping.sail model/riscv_xlen32.sail model/riscv_flen_Q.sail model/prelude_mem_metadata.sail model/prelude_mem.sail model/riscv_types_common.sail model/riscv_types_ext.sail model/riscv_types.sail model/riscv_vmem_types.sail model/riscv_reg_type.sail model/riscv_freg_type.sail model/riscv_regs.sail model/riscv_pc_access.sail model/riscv_sys_regs.sail model/riscv_pmp_regs.sail model/riscv_pmp_control.sail model/riscv_ext_regs.sail model/riscv_addr_checks_common.sail model/riscv_addr_checks.sail model/riscv_misa_ext.sail model/riscv_csr_map.sail model/riscv_next_regs.sail model/riscv_sys_exceptions.sail model/riscv_sync_exception.sail model/riscv_next_control.sail model/riscv_softfloat_interface.sail model/riscv_fdext_regs.sail model/riscv_fdext_control.sail model/riscv_csr_ext.sail model/riscv_sys_control.sail model/riscv_platform.sail model/riscv_mem.sail model/riscv_pte.sail model/riscv_ptw.sail model/riscv_vmem_common.sail model/riscv_vmem_tlb.sail model/riscv_vmem_sv32.sail model/riscv_vmem_rv32.sail model/riscv_types_kext.sail model/riscv_insts_begin.sail model/riscv_insts_base.sail model/riscv_insts_aext.sail model/riscv_insts_cext.sail model/riscv_insts_mext.sail model/riscv_insts_zicsr.sail model/riscv_insts_next.sail model/riscv_insts_hints.sail model/riscv_insts_fext.sail model/riscv_insts_cfext.sail model/riscv_insts_dext.sail model/riscv_insts_cdext.sail model/riscv_insts_qext.sail model/riscv_insts_zba.sail model/riscv_insts_zbb.sail model/riscv_insts_zbc.sail model/riscv_insts_zbs.sail model/riscv_insts_zfh.sail model/riscv_insts_zkn.sail model/riscv_insts_zks.sail model/riscv_insts_zbkb.sail model/riscv_insts_zbkx.sail model/riscv_jalr_seq.sail model/riscv_insts_end.sail model/riscv_step_common.sail model/riscv_step_ext.sail model/riscv_decode_ext.sail model/riscv_fetch.sail model/riscv_step.sail model/main.sail -o generated_definitions/c/riscv_model_RV32
+gcc -g  -I /Users/anothertony/.opam/default/share/sail/lib -I c_emulator -I/usr/local/Cellar/gmp/6.2.1_1/include  -I c_emulator/SoftFloat-3e/source/include -fcommon -O3 -flto generated_definitions/c/riscv_model_RV32.c c_emulator/riscv_prelude.c c_emulator/riscv_platform_impl.c c_emulator/riscv_platform.c c_emulator/riscv_softfloat.c c_emulator/riscv_sim.c /Users/anothertony/.opam/default/share/sail/lib/*.c -L/usr/local/Cellar/gmp/6.2.1_1/lib -lgmp -lz c_emulator/SoftFloat-3e/build/Linux-RISCV-GCC/softfloat.a -o c_emulator/riscv_sim_RV32
+Building 32-bit RISCV C emulator: [0;92mok[0m
+C-32 rv32uf-p-fadd.elf: [0;92mok[0m
+C-32 rv32uf-p-fclass.elf: [0;92mok[0m
+C-32 rv32uf-p-fcmp.elf: [0;92mok[0m
+C-32 rv32uf-p-fcvt.elf: [0;92mok[0m
+C-32 rv32uf-p-fcvt_w.elf: [0;92mok[0m
+C-32 rv32uf-p-fdiv.elf: [0;92mok[0m
+C-32 rv32uf-p-fmadd.elf: [0;92mok[0m
+C-32 rv32uf-p-fmin.elf: [0;92mok[0m
+C-32 rv32uf-v-fadd.elf: [0;92mok[0m
+C-32 rv32uf-v-fclass.elf: [0;92mok[0m
+C-32 rv32uf-v-fcmp.elf: [0;92mok[0m
+C-32 rv32uf-v-fcvt.elf: [0;92mok[0m
+C-32 rv32uf-v-fcvt_w.elf: [0;92mok[0m
+C-32 rv32uf-v-fdiv.elf: [0;92mok[0m
+C-32 rv32uf-v-fmadd.elf: [0;92mok[0m
+C-32 rv32uf-v-fmin.elf: [0;92mok[0m
+C-32 rv32ud-p-fadd.elf: [0;92mok[0m
+C-32 rv32ud-p-fclass.elf: [0;92mok[0m
+C-32 rv32ud-p-fcmp.elf: [0;92mok[0m
+C-32 rv32ud-p-fcvt.elf: [0;92mok[0m
+C-32 rv32ud-p-fcvt_w.elf: [0;92mok[0m
+C-32 rv32ud-p-fdiv.elf: [0;92mok[0m
+C-32 rv32ud-p-fmadd.elf: [0;92mok[0m
+C-32 rv32ud-p-fmin.elf: [0;92mok[0m
+C-32 rv32ud-v-fadd.elf: [0;92mok[0m
+C-32 rv32ud-v-fclass.elf: [0;92mok[0m
+C-32 rv32ud-v-fcmp.elf: [0;92mok[0m
+C-32 rv32ud-v-fcvt.elf: [0;92mok[0m
+C-32 rv32ud-v-fcvt_w.elf: [0;92mok[0m
+C-32 rv32ud-v-fdiv.elf: [0;92mok[0m
+C-32 rv32ud-v-fmadd.elf: [0;92mok[0m
+C-32 rv32ud-v-fmin.elf: [0;92mok[0m
+C-32 rv32mi-p-csr.elf: [0;92mok[0m
+32-bit RISCV C tests: Passed 34 out of 34
+
+Passed 82 out of 82
+
