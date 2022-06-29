@@ -102,6 +102,18 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x3A1 => p == Machine & (sizeof(xlen) == 32), // pmpcfg1
     0x3A2 => p == Machine,                        // pmpcfg2
     0x3A3 => p == Machine & (sizeof(xlen) == 32), // pmpcfg3
+    0x3A4 => p == Machine,                        // pmpcfg4
+    0x3A5 => p == Machine & (sizeof(xlen) == 32), // pmpcfg5
+    0x3A6 => p == Machine,                        // pmpcfg6
+    0x3A7 => p == Machine & (sizeof(xlen) == 32), // pmpcfg7
+    0x3A8 => p == Machine,                        // pmpcfg8
+    0x3A9 => p == Machine & (sizeof(xlen) == 32), // pmpcfg9
+    0x3AA => p == Machine,                        // pmpcfg10
+    0x3AB => p == Machine & (sizeof(xlen) == 32), // pmpcfg11
+    0x3AC => p == Machine,                        // pmpcfg12
+    0x3AD => p == Machine & (sizeof(xlen) == 32), // pmpcfg13
+    0x3AE => p == Machine,                        // pmpcfg14
+    0x3AF => p == Machine & (sizeof(xlen) == 32), // pmpcfg15
 
     0x3B0 => p == Machine, // pmpaddr0
     0x3B1 => p == Machine, // pmpaddr1
@@ -113,12 +125,60 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x3B7 => p == Machine, // pmpaddr7
     0x3B8 => p == Machine, // pmpaddr8
     0x3B9 => p == Machine, // pmpaddr9
-    0x3BA => p == Machine, // pmpaddrA
-    0x3BB => p == Machine, // pmpaddrB
-    0x3BC => p == Machine, // pmpaddrC
-    0x3BD => p == Machine, // pmpaddrD
-    0x3BE => p == Machine, // pmpaddrE
-    0x3BF => p == Machine, // pmpaddrF
+    0x3BA => p == Machine, // pmpaddr10
+    0x3BB => p == Machine, // pmpaddr11
+    0x3BC => p == Machine, // pmpaddr12
+    0x3BD => p == Machine, // pmpaddr13
+    0x3BE => p == Machine, // pmpaddr14
+    0x3BF => p == Machine, // pmpaddr15
+    0x3C0 => p == Machine, // pmpaddr16
+    0x3C1 => p == Machine, // pmpaddr17
+    0x3C2 => p == Machine, // pmpaddr18
+    0x3C3 => p == Machine, // pmpaddr19
+    0x3C4 => p == Machine, // pmpaddr20
+    0x3C5 => p == Machine, // pmpaddr21
+    0x3C6 => p == Machine, // pmpaddr22
+    0x3C7 => p == Machine, // pmpaddr23
+    0x3C8 => p == Machine, // pmpaddr24
+    0x3C9 => p == Machine, // pmpaddr25
+    0x3CA => p == Machine, // pmpaddr26
+    0x3CB => p == Machine, // pmpaddr27
+    0x3CC => p == Machine, // pmpaddr28
+    0x3CD => p == Machine, // pmpaddr29
+    0x3CE => p == Machine, // pmpaddr30
+    0x3CF => p == Machine, // pmpaddr31
+    0x3D0 => p == Machine, // pmpaddr32
+    0x3D1 => p == Machine, // pmpaddr33
+    0x3D2 => p == Machine, // pmpaddr34
+    0x3D3 => p == Machine, // pmpaddr35
+    0x3D4 => p == Machine, // pmpaddr36
+    0x3D5 => p == Machine, // pmpaddr37
+    0x3D6 => p == Machine, // pmpaddr38
+    0x3D7 => p == Machine, // pmpaddr39
+    0x3D8 => p == Machine, // pmpaddr40
+    0x3D9 => p == Machine, // pmpaddr41
+    0x3DA => p == Machine, // pmpaddr42
+    0x3DB => p == Machine, // pmpaddr43
+    0x3DC => p == Machine, // pmpaddr44
+    0x3DD => p == Machine, // pmpaddr45
+    0x3DE => p == Machine, // pmpaddr46
+    0x3DF => p == Machine, // pmpaddr47
+    0x3E0 => p == Machine, // pmpaddr48
+    0x3E1 => p == Machine, // pmpaddr49
+    0x3E2 => p == Machine, // pmpaddr50
+    0x3E3 => p == Machine, // pmpaddr51
+    0x3E4 => p == Machine, // pmpaddr52
+    0x3E5 => p == Machine, // pmpaddr53
+    0x3E6 => p == Machine, // pmpaddr54
+    0x3E7 => p == Machine, // pmpaddr55
+    0x3E8 => p == Machine, // pmpaddr56
+    0x3E9 => p == Machine, // pmpaddr57
+    0x3EA => p == Machine, // pmpaddr58
+    0x3EB => p == Machine, // pmpaddr59
+    0x3EC => p == Machine, // pmpaddr60
+    0x3ED => p == Machine, // pmpaddr61
+    0x3EE => p == Machine, // pmpaddr62
+    0x3EF => p == Machine, // pmpaddr63
 
     /* counters */
     0xB00 => p == Machine, // mcycle

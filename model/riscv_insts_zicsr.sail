@@ -109,6 +109,18 @@ function readCSR csr : csreg -> xlenbits = {
     (0x3A1, 32) => pmpReadCfgReg(1),           // pmpcfg1
     (0x3A2,  _) => pmpReadCfgReg(2),           // pmpcfg2
     (0x3A3, 32) => pmpReadCfgReg(3),           // pmpcfg3
+    (0x3A4,  _) => pmpReadCfgReg(4),           // pmpcfg4
+    (0x3A5, 32) => pmpReadCfgReg(5),           // pmpcfg5
+    (0x3A6,  _) => pmpReadCfgReg(6),           // pmpcfg6
+    (0x3A7, 32) => pmpReadCfgReg(7),           // pmpcfg7
+    (0x3A8,  _) => pmpReadCfgReg(8),           // pmpcfg8
+    (0x3A9, 32) => pmpReadCfgReg(9),           // pmpcfg9
+    (0x3AA,  _) => pmpReadCfgReg(10),          // pmpcfg10
+    (0x3AB, 32) => pmpReadCfgReg(11),          // pmpcfg11
+    (0x3AC,  _) => pmpReadCfgReg(12),          // pmpcfg12
+    (0x3AD, 32) => pmpReadCfgReg(13),          // pmpcfg13
+    (0x3AE,  _) => pmpReadCfgReg(14),          // pmpcfg14
+    (0x3AF, 32) => pmpReadCfgReg(15),          // pmpcfg15
 
     (0x3B0,  _) => pmpaddr0,
     (0x3B1,  _) => pmpaddr1,
@@ -126,6 +138,54 @@ function readCSR csr : csreg -> xlenbits = {
     (0x3BD,  _) => pmpaddr13,
     (0x3BE,  _) => pmpaddr14,
     (0x3BF,  _) => pmpaddr15,
+    (0x3C0,  _) => pmpaddr16,
+    (0x3C1,  _) => pmpaddr17,
+    (0x3C2,  _) => pmpaddr18,
+    (0x3C3,  _) => pmpaddr19,
+    (0x3C4,  _) => pmpaddr20,
+    (0x3C5,  _) => pmpaddr21,
+    (0x3C6,  _) => pmpaddr22,
+    (0x3C7,  _) => pmpaddr23,
+    (0x3C8,  _) => pmpaddr24,
+    (0x3C9,  _) => pmpaddr25,
+    (0x3CA,  _) => pmpaddr26,
+    (0x3CB,  _) => pmpaddr27,
+    (0x3CC,  _) => pmpaddr28,
+    (0x3CD,  _) => pmpaddr29,
+    (0x3CE,  _) => pmpaddr30,
+    (0x3CF,  _) => pmpaddr31,
+    (0x3D0,  _) => pmpaddr32,
+    (0x3D1,  _) => pmpaddr33,
+    (0x3D2,  _) => pmpaddr34,
+    (0x3D3,  _) => pmpaddr35,
+    (0x3D4,  _) => pmpaddr36,
+    (0x3D5,  _) => pmpaddr37,
+    (0x3D6,  _) => pmpaddr38,
+    (0x3D7,  _) => pmpaddr39,
+    (0x3D8,  _) => pmpaddr40,
+    (0x3D9,  _) => pmpaddr41,
+    (0x3DA,  _) => pmpaddr42,
+    (0x3DB,  _) => pmpaddr43,
+    (0x3DC,  _) => pmpaddr44,
+    (0x3DD,  _) => pmpaddr45,
+    (0x3DE,  _) => pmpaddr46,
+    (0x3DF,  _) => pmpaddr47,
+    (0x3E0,  _) => pmpaddr48,
+    (0x3E1,  _) => pmpaddr49,
+    (0x3E2,  _) => pmpaddr50,
+    (0x3E3,  _) => pmpaddr51,
+    (0x3E4,  _) => pmpaddr52,
+    (0x3E5,  _) => pmpaddr53,
+    (0x3E6,  _) => pmpaddr54,
+    (0x3E7,  _) => pmpaddr55,
+    (0x3E8,  _) => pmpaddr56,
+    (0x3E9,  _) => pmpaddr57,
+    (0x3EA,  _) => pmpaddr58,
+    (0x3EB,  _) => pmpaddr59,
+    (0x3EC,  _) => pmpaddr60,
+    (0x3ED,  _) => pmpaddr61,
+    (0x3EE,  _) => pmpaddr62,
+    (0x3EF,  _) => pmpaddr63,
 
     /* machine mode counters */
     (0xB00,  _) => mcycle[(sizeof(xlen) - 1) .. 0],
@@ -193,10 +253,22 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x344,  _) => { mip = legalize_mip(mip, value); Some(mip.bits()) },
 
     // Note: Some(value) returned below is not the legalized value due to locked entries
-    (0x3A0,  _) => { pmpWriteCfgReg(0, value); Some(pmpReadCfgReg(0)) },  // pmpcfg0
-    (0x3A1, 32) => { pmpWriteCfgReg(1, value); Some(pmpReadCfgReg(1)) },  // pmpcfg1
-    (0x3A2,  _) => { pmpWriteCfgReg(2, value); Some(pmpReadCfgReg(2)) },  // pmpcfg2
-    (0x3A3, 32) => { pmpWriteCfgReg(3, value); Some(pmpReadCfgReg(3)) },  // pmpcfg3
+    (0x3A0,  _) => { pmpWriteCfgReg(0,  value); Some(pmpReadCfgReg(0)) },   // pmpcfg0
+    (0x3A1, 32) => { pmpWriteCfgReg(1,  value); Some(pmpReadCfgReg(1)) },   // pmpcfg1
+    (0x3A2,  _) => { pmpWriteCfgReg(2,  value); Some(pmpReadCfgReg(2)) },   // pmpcfg2
+    (0x3A3, 32) => { pmpWriteCfgReg(3,  value); Some(pmpReadCfgReg(3)) },   // pmpcfg3
+    (0x3A4,  _) => { pmpWriteCfgReg(4,  value); Some(pmpReadCfgReg(4)) },   // pmpcfg4
+    (0x3A5, 32) => { pmpWriteCfgReg(5,  value); Some(pmpReadCfgReg(5)) },   // pmpcfg5
+    (0x3A6,  _) => { pmpWriteCfgReg(6,  value); Some(pmpReadCfgReg(6)) },   // pmpcfg6
+    (0x3A7, 32) => { pmpWriteCfgReg(7,  value); Some(pmpReadCfgReg(7)) },   // pmpcfg7
+    (0x3A8,  _) => { pmpWriteCfgReg(8,  value); Some(pmpReadCfgReg(8)) },   // pmpcfg8
+    (0x3A9, 32) => { pmpWriteCfgReg(9,  value); Some(pmpReadCfgReg(9)) },   // pmpcfg9
+    (0x3AA,  _) => { pmpWriteCfgReg(10, value); Some(pmpReadCfgReg(10)) },  // pmpcfg10
+    (0x3AB, 32) => { pmpWriteCfgReg(11, value); Some(pmpReadCfgReg(11)) },  // pmpcfg11
+    (0x3AC,  _) => { pmpWriteCfgReg(12, value); Some(pmpReadCfgReg(12)) },  // pmpcfg12
+    (0x3AD, 32) => { pmpWriteCfgReg(13, value); Some(pmpReadCfgReg(13)) },  // pmpcfg13
+    (0x3AE,  _) => { pmpWriteCfgReg(14, value); Some(pmpReadCfgReg(14)) },  // pmpcfg14
+    (0x3AF, 32) => { pmpWriteCfgReg(15, value); Some(pmpReadCfgReg(15)) },  // pmpcfg15
 
     (0x3B0,  _) => { pmpaddr0  = pmpWriteAddr(pmpLocked(pmp0cfg),  pmpTORLocked(pmp1cfg),  pmpaddr0,  value); Some(pmpaddr0) },
     (0x3B1,  _) => { pmpaddr1  = pmpWriteAddr(pmpLocked(pmp1cfg),  pmpTORLocked(pmp2cfg),  pmpaddr1,  value); Some(pmpaddr1) },
@@ -213,7 +285,55 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x3BC,  _) => { pmpaddr12 = pmpWriteAddr(pmpLocked(pmp12cfg), pmpTORLocked(pmp13cfg), pmpaddr12, value); Some(pmpaddr12) },
     (0x3BD,  _) => { pmpaddr13 = pmpWriteAddr(pmpLocked(pmp13cfg), pmpTORLocked(pmp14cfg), pmpaddr13, value); Some(pmpaddr13) },
     (0x3BE,  _) => { pmpaddr14 = pmpWriteAddr(pmpLocked(pmp14cfg), pmpTORLocked(pmp15cfg), pmpaddr14, value); Some(pmpaddr14) },
-    (0x3BF,  _) => { pmpaddr15 = pmpWriteAddr(pmpLocked(pmp15cfg), false,                  pmpaddr15, value); Some(pmpaddr15) },
+    (0x3BF,  _) => { pmpaddr15 = pmpWriteAddr(pmpLocked(pmp15cfg), pmpTORLocked(pmp16cfg), pmpaddr15, value); Some(pmpaddr15) },
+    (0x3C0,  _) => { pmpaddr16 = pmpWriteAddr(pmpLocked(pmp16cfg), pmpTORLocked(pmp17cfg), pmpaddr16, value); Some(pmpaddr16) },
+    (0x3C1,  _) => { pmpaddr17 = pmpWriteAddr(pmpLocked(pmp17cfg), pmpTORLocked(pmp18cfg), pmpaddr17, value); Some(pmpaddr17) },
+    (0x3C2,  _) => { pmpaddr18 = pmpWriteAddr(pmpLocked(pmp18cfg), pmpTORLocked(pmp19cfg), pmpaddr18, value); Some(pmpaddr18) },
+    (0x3C3,  _) => { pmpaddr19 = pmpWriteAddr(pmpLocked(pmp19cfg), pmpTORLocked(pmp20cfg), pmpaddr19, value); Some(pmpaddr19) },
+    (0x3C4,  _) => { pmpaddr20 = pmpWriteAddr(pmpLocked(pmp20cfg), pmpTORLocked(pmp21cfg), pmpaddr20, value); Some(pmpaddr20) },
+    (0x3C5,  _) => { pmpaddr21 = pmpWriteAddr(pmpLocked(pmp21cfg), pmpTORLocked(pmp22cfg), pmpaddr21, value); Some(pmpaddr21) },
+    (0x3C6,  _) => { pmpaddr22 = pmpWriteAddr(pmpLocked(pmp22cfg), pmpTORLocked(pmp23cfg), pmpaddr22, value); Some(pmpaddr22) },
+    (0x3C7,  _) => { pmpaddr23 = pmpWriteAddr(pmpLocked(pmp23cfg), pmpTORLocked(pmp24cfg), pmpaddr23, value); Some(pmpaddr23) },
+    (0x3C8,  _) => { pmpaddr24 = pmpWriteAddr(pmpLocked(pmp24cfg), pmpTORLocked(pmp25cfg), pmpaddr24, value); Some(pmpaddr24) },
+    (0x3C9,  _) => { pmpaddr25 = pmpWriteAddr(pmpLocked(pmp25cfg), pmpTORLocked(pmp26cfg), pmpaddr25, value); Some(pmpaddr25) },
+    (0x3CA,  _) => { pmpaddr26 = pmpWriteAddr(pmpLocked(pmp26cfg), pmpTORLocked(pmp27cfg), pmpaddr26, value); Some(pmpaddr26) },
+    (0x3CB,  _) => { pmpaddr27 = pmpWriteAddr(pmpLocked(pmp27cfg), pmpTORLocked(pmp28cfg), pmpaddr27, value); Some(pmpaddr27) },
+    (0x3CC,  _) => { pmpaddr28 = pmpWriteAddr(pmpLocked(pmp28cfg), pmpTORLocked(pmp29cfg), pmpaddr28, value); Some(pmpaddr28) },
+    (0x3CD,  _) => { pmpaddr29 = pmpWriteAddr(pmpLocked(pmp29cfg), pmpTORLocked(pmp30cfg), pmpaddr29, value); Some(pmpaddr29) },
+    (0x3CE,  _) => { pmpaddr30 = pmpWriteAddr(pmpLocked(pmp30cfg), pmpTORLocked(pmp31cfg), pmpaddr30, value); Some(pmpaddr30) },
+    (0x3CF,  _) => { pmpaddr31 = pmpWriteAddr(pmpLocked(pmp31cfg), pmpTORLocked(pmp32cfg), pmpaddr31, value); Some(pmpaddr31) },
+    (0x3D0,  _) => { pmpaddr32 = pmpWriteAddr(pmpLocked(pmp32cfg), pmpTORLocked(pmp33cfg), pmpaddr32, value); Some(pmpaddr32) },
+    (0x3D1,  _) => { pmpaddr33 = pmpWriteAddr(pmpLocked(pmp33cfg), pmpTORLocked(pmp34cfg), pmpaddr33, value); Some(pmpaddr33) },
+    (0x3D2,  _) => { pmpaddr34 = pmpWriteAddr(pmpLocked(pmp34cfg), pmpTORLocked(pmp35cfg), pmpaddr34, value); Some(pmpaddr34) },
+    (0x3D3,  _) => { pmpaddr35 = pmpWriteAddr(pmpLocked(pmp35cfg), pmpTORLocked(pmp36cfg), pmpaddr35, value); Some(pmpaddr35) },
+    (0x3D4,  _) => { pmpaddr36 = pmpWriteAddr(pmpLocked(pmp36cfg), pmpTORLocked(pmp37cfg), pmpaddr36, value); Some(pmpaddr36) },
+    (0x3D5,  _) => { pmpaddr37 = pmpWriteAddr(pmpLocked(pmp37cfg), pmpTORLocked(pmp38cfg), pmpaddr37, value); Some(pmpaddr37) },
+    (0x3D6,  _) => { pmpaddr38 = pmpWriteAddr(pmpLocked(pmp38cfg), pmpTORLocked(pmp39cfg), pmpaddr38, value); Some(pmpaddr38) },
+    (0x3D7,  _) => { pmpaddr39 = pmpWriteAddr(pmpLocked(pmp39cfg), pmpTORLocked(pmp40cfg), pmpaddr39, value); Some(pmpaddr39) },
+    (0x3D8,  _) => { pmpaddr40 = pmpWriteAddr(pmpLocked(pmp40cfg), pmpTORLocked(pmp41cfg), pmpaddr40, value); Some(pmpaddr40) },
+    (0x3D9,  _) => { pmpaddr41 = pmpWriteAddr(pmpLocked(pmp41cfg), pmpTORLocked(pmp42cfg), pmpaddr41, value); Some(pmpaddr41) },
+    (0x3DA,  _) => { pmpaddr42 = pmpWriteAddr(pmpLocked(pmp42cfg), pmpTORLocked(pmp43cfg), pmpaddr42, value); Some(pmpaddr42) },
+    (0x3DB,  _) => { pmpaddr43 = pmpWriteAddr(pmpLocked(pmp43cfg), pmpTORLocked(pmp44cfg), pmpaddr43, value); Some(pmpaddr43) },
+    (0x3DC,  _) => { pmpaddr44 = pmpWriteAddr(pmpLocked(pmp44cfg), pmpTORLocked(pmp45cfg), pmpaddr44, value); Some(pmpaddr44) },
+    (0x3DD,  _) => { pmpaddr45 = pmpWriteAddr(pmpLocked(pmp45cfg), pmpTORLocked(pmp46cfg), pmpaddr45, value); Some(pmpaddr45) },
+    (0x3DE,  _) => { pmpaddr46 = pmpWriteAddr(pmpLocked(pmp46cfg), pmpTORLocked(pmp47cfg), pmpaddr46, value); Some(pmpaddr46) },
+    (0x3DF,  _) => { pmpaddr47 = pmpWriteAddr(pmpLocked(pmp47cfg), pmpTORLocked(pmp48cfg), pmpaddr47, value); Some(pmpaddr47) },
+    (0x3E0,  _) => { pmpaddr48 = pmpWriteAddr(pmpLocked(pmp48cfg), pmpTORLocked(pmp49cfg), pmpaddr48, value); Some(pmpaddr48) },
+    (0x3E1,  _) => { pmpaddr49 = pmpWriteAddr(pmpLocked(pmp49cfg), pmpTORLocked(pmp50cfg), pmpaddr49, value); Some(pmpaddr49) },
+    (0x3E2,  _) => { pmpaddr50 = pmpWriteAddr(pmpLocked(pmp50cfg), pmpTORLocked(pmp51cfg), pmpaddr50, value); Some(pmpaddr50) },
+    (0x3E3,  _) => { pmpaddr51 = pmpWriteAddr(pmpLocked(pmp51cfg), pmpTORLocked(pmp52cfg), pmpaddr51, value); Some(pmpaddr51) },
+    (0x3E4,  _) => { pmpaddr52 = pmpWriteAddr(pmpLocked(pmp52cfg), pmpTORLocked(pmp53cfg), pmpaddr52, value); Some(pmpaddr52) },
+    (0x3E5,  _) => { pmpaddr53 = pmpWriteAddr(pmpLocked(pmp53cfg), pmpTORLocked(pmp54cfg), pmpaddr53, value); Some(pmpaddr53) },
+    (0x3E6,  _) => { pmpaddr54 = pmpWriteAddr(pmpLocked(pmp54cfg), pmpTORLocked(pmp55cfg), pmpaddr54, value); Some(pmpaddr54) },
+    (0x3E7,  _) => { pmpaddr55 = pmpWriteAddr(pmpLocked(pmp55cfg), pmpTORLocked(pmp56cfg), pmpaddr55, value); Some(pmpaddr55) },
+    (0x3E8,  _) => { pmpaddr56 = pmpWriteAddr(pmpLocked(pmp56cfg), pmpTORLocked(pmp57cfg), pmpaddr56, value); Some(pmpaddr56) },
+    (0x3E9,  _) => { pmpaddr57 = pmpWriteAddr(pmpLocked(pmp57cfg), pmpTORLocked(pmp58cfg), pmpaddr57, value); Some(pmpaddr57) },
+    (0x3EA,  _) => { pmpaddr58 = pmpWriteAddr(pmpLocked(pmp58cfg), pmpTORLocked(pmp59cfg), pmpaddr58, value); Some(pmpaddr58) },
+    (0x3EB,  _) => { pmpaddr59 = pmpWriteAddr(pmpLocked(pmp59cfg), pmpTORLocked(pmp60cfg), pmpaddr59, value); Some(pmpaddr59) },
+    (0x3EC,  _) => { pmpaddr60 = pmpWriteAddr(pmpLocked(pmp60cfg), pmpTORLocked(pmp61cfg), pmpaddr60, value); Some(pmpaddr60) },
+    (0x3ED,  _) => { pmpaddr61 = pmpWriteAddr(pmpLocked(pmp61cfg), pmpTORLocked(pmp62cfg), pmpaddr61, value); Some(pmpaddr61) },
+    (0x3EE,  _) => { pmpaddr62 = pmpWriteAddr(pmpLocked(pmp62cfg), pmpTORLocked(pmp63cfg), pmpaddr62, value); Some(pmpaddr62) },
+    (0x3EF,  _) => { pmpaddr63 = pmpWriteAddr(pmpLocked(pmp63cfg), false,                  pmpaddr63, value); Some(pmpaddr63) },
 
     /* machine mode counters */
     (0xB00,  _) => { mcycle[(sizeof(xlen) - 1) .. 0] = value; Some(value) },
