@@ -270,6 +270,15 @@ function wF_bits(i: bits(5), data: flenbits) -> unit = {
 
 overload F = {rF_bits, wF_bits, rF, wF}
 
+val rF_or_X_H : bits(5) -> bits(16) effect {escape, rreg}
+function rF_or_X_H(i) = {
+  assert(sizeof(flen) >= 16);
+  assert(sys_enable_fdext() != sys_enable_zfinx());
+  if   sys_enable_fdext()
+  then nan_unbox(F(i))
+  else X(i)[15..0]
+}
+
 val rF_or_X_S : bits(5) -> bits(32) effect {escape, rreg}
 function rF_or_X_S(i) = {
   assert(sizeof(flen) >= 32);
@@ -291,6 +300,15 @@ function rF_or_X_D(i) = {
     assert(i[0] == bitzero);
     if i == zeros() then zeros() else X(i + 1) @ X(i)
   }
+}
+
+val wF_or_X_H : (bits(5), bits(16)) -> unit effect {escape, wreg}
+function wF_or_X_H(i, data) = {
+  assert(sizeof(flen) >= 16);
+  assert(sys_enable_fdext() != sys_enable_zfinx());
+  if   sys_enable_fdext()
+  then F(i) = nan_box(data)
+  else X(i) = EXTS(data)
 }
 
 val wF_or_X_S : (bits(5), bits(32)) -> unit effect {escape, wreg}
@@ -319,6 +337,7 @@ function wF_or_X_D(i, data) = {
   }
 }
 
+overload F_or_X_H = { rF_or_X_H, wF_or_X_H }
 overload F_or_X_S = { rF_or_X_S, wF_or_X_S }
 overload F_or_X_D = { rF_or_X_D, wF_or_X_D }
 
