@@ -74,6 +74,7 @@ $include <arith.sail>
 $include <string.sail>
 $include <vector_dec.sail>
 $include <regfp.sail>
+$include "rv_cfg_func_sigs.sail"
 
 val string_startswith = "string_startswith" : (string, string) -> bool
 val string_drop = "string_drop" : (string, nat) -> string
@@ -325,3 +326,7 @@ val def_spc_backwards : string -> unit
 function def_spc_backwards s = ()
 val def_spc_matches_prefix : string -> option((unit, nat))
 function def_spc_matches_prefix s = opt_spc_matches_prefix(s)
+
+
+
+

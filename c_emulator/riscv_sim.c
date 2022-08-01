@@ -1,3 +1,4 @@
+// vim: set tabstop=2 shiftwidth=2 expandtab
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +11,13 @@
 #include <sys/socket.h>
 #include <netinet/ip.h>
 #include <fcntl.h>
+#include <libfyaml.h>
+
+//This macro must be defined before including pcre2.h. For a program that uses
+//only one code unit width, it makes it possible to use generic function names
+//such as pcre2_compile().
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 
 #include "elf.h"
 #include "sail.h"
@@ -21,14 +29,13 @@
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
 
+#include "rv_cfg_func.h"
+
 #ifdef ENABLE_SPIKE
 #include "tv_spike_intf.h"
 #else
 struct tv_spike_t;
 #endif
-
-const char *RV64ISA = "RV64IMAC";
-const char *RV32ISA = "RV32IMAC";
 
 /* Selected CSRs from riscv-isa-sim/riscv/encoding.h */
 #define CSR_STVEC 0x105
@@ -107,15 +114,7 @@ char *sailcov_file = NULL;
 #endif
 
 static struct option options[] = {
-  {"enable-dirty-update",         no_argument,       0, 'd'},
-  {"enable-misaligned",           no_argument,       0, 'm'},
-  {"enable-pmp",                  no_argument,       0, 'P'},
-  {"enable-next",                 no_argument,       0, 'N'},
-  {"ram-size",                    required_argument, 0, 'z'},
-  {"disable-compressed",          no_argument,       0, 'C'},
-  {"disable-writable-misa",       no_argument,       0, 'I'},
-  {"disable-fdext",               no_argument,       0, 'F'},
-  {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'},
+//  {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'},
   {"device-tree-blob",            required_argument, 0, 'b'},
   {"terminal-log",                required_argument, 0, 't'},
   {"show-times",                  required_argument, 0, 'p'},
@@ -129,7 +128,8 @@ static struct option options[] = {
   {"trace",                       optional_argument, 0, 'v'},
   {"no-trace",                    optional_argument, 0, 'V'},
   {"inst-limit",                  required_argument, 0, 'l'},
-  {"enable-zfinx",                no_argument,       0, 'x'},
+  {"platform-config",             required_argument, 0, 'y'},
+  {"isa-config",                  required_argument, 0, 'u'},
 #ifdef SAILCOV
   {"sailcov-file",                required_argument, 0, 'c'},
 #endif
@@ -218,86 +218,55 @@ char *process_args(int argc, char **argv)
   while(true) {
     c = getopt_long(argc, argv,
                     "a"
-                    "d"
-                    "m"
-                    "P"
-                    "C"
-                    "N"
                     "I"
-                    "F"
-                    "i"
+//                    "i"
                     "s"
                     "p"
-                    "z:"
                     "b:"
                     "t:"
                     "T:"
                     "g"
                     "h"
+                    "y:"
+                    "u:"
 #ifdef RVFI_DII
                     "r:"
 #endif
                     "V::"
                     "v::"
                     "l:"
-                    "x"
 #ifdef SAILCOV
                     "c:"
 #endif
                          , options, NULL);
     if (c == -1) break;
     switch (c) {
+    case 'y': 
+      if ( rv_cfg_c_build_from_file(RV_CFG_PLATFORM, optarg) == 0 ) {
+        fprintf(stderr, "unable to build fast-yaml document from %s\n", optarg);
+        exit(1);
+      }
+      break;
+      
+    case 'u': 
+      if ( rv_cfg_c_build_from_file(RV_CFG_ISA, optarg) == 0 ) {
+        fprintf(stderr, "unable to build fast-yaml document from %s\n", optarg);
+        exit(1);
+      }
+      break;
     case 'a':
       report_arch();
       break;
-    case 'd':
-      fprintf(stderr, "enabling dirty update.\n");
-      rv_enable_dirty_update = true;
-      break;
-    case 'm':
-      fprintf(stderr, "enabling misaligned access.\n");
-      rv_enable_misaligned = true;
-      break;
-    case 'P':
-      fprintf(stderr, "enabling PMP support.\n");
-      rv_enable_pmp = true;
-      break;
-    case 'C':
-      fprintf(stderr, "disabling RVC compressed instructions.\n");
-      rv_enable_rvc = false;
-      break;
-    case 'N':
-      fprintf(stderr, "enabling N extension.\n");
-      rv_enable_next = true;
-      break;
-    case 'I':
-      fprintf(stderr, "disabling writable misa CSR.\n");
-      rv_enable_writable_misa = false;
-      break;
-    case 'F':
-      fprintf(stderr, "disabling floating point (F and D extensions).\n");
-      rv_enable_fdext = false;
-      break;
-    case 'i':
-      fprintf(stderr, "enabling storing illegal instruction bits in mtval.\n");
-      rv_mtval_has_illegal_inst_bits = true;
-      break;
+//    case 'i':
+//      fprintf(stderr, "enabling storing illegal instruction bits in mtval.\n");
+//      rv_mtval_has_illegal_inst_bits = true;
+//      break;
     case 's':
       do_dump_dts = true;
       break;
     case 'p':
       fprintf(stderr, "will show execution times on completion.\n");
       do_show_times = true;
-      break;
-    case 'z':
-      ram_size = atol(optarg);
-      if (ram_size) {
-        fprintf(stderr, "setting ram-size to %" PRIu64 " MB\n", ram_size);
-        rv_ram_size = ram_size << 20;
-      } else {
-        fprintf(stderr, "invalid ram-size '%s' provided.\n", optarg);
-        exit(1);
-      }
       break;
     case 'b':
       dtb_file = strdup(optarg);
@@ -333,11 +302,6 @@ char *process_args(int argc, char **argv)
       break;
     case 'l':
       insn_limit = atoi(optarg);
-      break;
-    case 'x':
-      fprintf(stderr, "enabling Zfinx support.\n");
-      rv_enable_zfinx = true;
-      rv_enable_fdext = false;
       break;
 #ifdef SAILCOV
     case 'c':
@@ -470,29 +434,34 @@ void tick_spike()
 
 void init_sail_reset_vector(uint64_t entry)
 {
+// TODO: This code is commented out because we don't want the
+//  the Sail model setting up and executing any code.  BUT....
+//  the question is:  will the Sail model load the .elf file
+//  into the appropriate place in memory?
+
 #define RST_VEC_SIZE 8
-  uint32_t reset_vec[RST_VEC_SIZE] = {
-    0x297,                                      // auipc  t0,0x0
-    0x28593 + (RST_VEC_SIZE * 4 << 20),         // addi   a1, t0, &dtb
-    0xf1402573,                                 // csrr   a0, mhartid
-    is_32bit_model() ?
-      0x0182a283u :                             // lw     t0,24(t0)
-      0x0182b283u,                              // ld     t0,24(t0)
-    0x28067,                                    // jr     t0
-    0,
-    (uint32_t) (entry & 0xffffffff),
-    (uint32_t) (entry >> 32)
-  };
+//  uint32_t reset_vec[RST_VEC_SIZE] = {
+//    0x297,                                      // auipc  t0,0x0
+//    0x28593 + (RST_VEC_SIZE * 4 << 20),         // addi   a1, t0, &dtb
+//    0xf1402573,                                 // csrr   a0, mhartid
+//    is_32bit_model() ?
+//      0x0182a283u :                             // lw     t0,24(t0)
+//      0x0182b283u,                              // ld     t0,24(t0)
+//    0x28067,                                    // jr     t0
+//    0,
+//    (uint32_t) (entry & 0xffffffff),
+//    (uint32_t) (entry >> 32)
+//  };
 
   rv_rom_base = DEFAULT_RSTVEC;
   uint64_t addr = rv_rom_base;
-  for (int i = 0; i < sizeof(reset_vec); i++)
-    write_mem(addr++, (uint64_t)((char *)reset_vec)[i]);
-
-  if (dtb && dtb_len) {
-    for (size_t i = 0; i < dtb_len; i++)
-      write_mem(addr++, dtb[i]);
-  }
+//  for (int i = 0; i < sizeof(reset_vec); i++)
+//    write_mem(addr++, (uint64_t)((char *)reset_vec)[i]);
+//
+//  if (dtb && dtb_len) {
+//    for (size_t i = 0; i < dtb_len; i++)
+//      write_mem(addr++, dtb[i]);
+//  }
 
 #ifdef ENABLE_SPIKE
   if (dtb && dtb_len) {
@@ -526,7 +495,7 @@ void init_sail_reset_vector(uint64_t entry)
   /* set rom size */
   rv_rom_size = rom_end - rv_rom_base;
   /* boot at reset vector */
-  zPC = rv_rom_base;
+  zPC = rv_reset_address;
 }
 
 void preinit_sail()
@@ -975,10 +944,16 @@ void init_logs()
 
 int main(int argc, char **argv)
 {
+  rv_cfg_c_init();
+  char *file = process_args(argc, argv);
+  // Initialize the RISC-V Configuration elements. 
+  //  Must be done after command line arguments are processed in
+  //  order to get RISCV-Config filenames.
+  rv_cfg_c_configure();
+
   // Initialize model so that we can check or report its architecture.
   preinit_sail();
 
-  char *file = process_args(argc, argv);
   init_logs();
 
   if (gettimeofday(&init_start, NULL) < 0) {

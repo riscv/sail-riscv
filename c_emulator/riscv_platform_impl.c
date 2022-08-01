@@ -3,6 +3,10 @@
 #include <stdio.h>
 
 /* Settings of the platform implementation, with common defaults. */
+char     *RV64ISA                   = "";
+char     *RV32ISA                   = "";
+char     *RV128ISA                  = "";
+
 bool rv_enable_pmp                  = false;
 bool rv_enable_zfinx                = false;
 bool rv_enable_rvc                  = true;
@@ -13,6 +17,8 @@ bool rv_enable_fdext                = true;
 bool rv_enable_dirty_update         = false;
 bool rv_enable_misaligned           = false;
 bool rv_mtval_has_illegal_inst_bits = false;
+
+uint64_t rv_reset_address = UINT64_C(0x0);
 
 uint64_t rv_ram_base = UINT64_C(0x80000000);
 uint64_t rv_ram_size = UINT64_C(0x4000000);

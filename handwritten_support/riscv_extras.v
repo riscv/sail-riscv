@@ -69,6 +69,7 @@
 Require Import Sail.Base.
 Require Import String.
 Require Import List.
+Require Import Lia.
 Import List.ListNotations.
 Open Scope Z.
 
@@ -190,7 +191,7 @@ unbool_comparisons.
 unbool_comparisons_goal.
 assert (Z.abs n = n). { rewrite Z.abs_eq; auto with zarith. }
 rewrite <- H at 3.
-lapply (ZEuclid.mod_always_pos m n); omega.
+lapply (ZEuclid.mod_always_pos m n); lia.
 Qed.
 
 (* Override the more general version *)
@@ -210,6 +211,7 @@ Axiom sys_enable_writable_misa : unit -> bool.
 Axiom sys_enable_rvc : unit -> bool.
 Axiom sys_enable_fdext : unit -> bool.
 Axiom sys_enable_next : unit -> bool.
+Axiom sys_enable_zfinx : unit -> bool.
 
 (* The constraint solver can do this itself, but a Coq bug puts
    anonymous_subproof into the term instead of an actual subproof. *)
@@ -217,6 +219,6 @@ Lemma n_leading_spaces_fact {w__0} :
   w__0 >= 0 -> exists ex17629_ : Z, 1 + w__0 = 1 + ex17629_ /\ 0 <= ex17629_.
 intro.
 exists w__0.
-omega.
+lia.
 Qed.
 Hint Resolve n_leading_spaces_fact : sail.
