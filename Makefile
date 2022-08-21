@@ -178,7 +178,7 @@ endif
 
 .PHONY:
 
-all: ocaml_emulator/riscv_ocaml_sim_$(ARCH) c_emulator/riscv_sim_$(ARCH) riscv_isa riscv_coq riscv_hol riscv_rmem
+all: c_emulator/riscv_sim_$(ARCH)
 .PHONY: all
 
 # the following ensures empty sail-generated .c files don't hang around and
