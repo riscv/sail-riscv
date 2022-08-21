@@ -18,6 +18,7 @@ let platform_arch = ref P.RV64
 
 let config_print_instr       = ref true
 let config_print_reg         = ref true
+let config_print_cache_access = ref true
 let config_print_mem_access  = ref true
 let config_print_platform    = ref true
 
@@ -28,6 +29,11 @@ let print_instr s =
 
 let print_reg s =
   if !config_print_reg
+  then print_endline s
+  else ()
+
+let print_cache_access s =
+  if !config_print_cache_access
   then print_endline s
   else ()
 
@@ -44,6 +50,7 @@ let print_platform s =
 let get_config_print_instr () = !config_print_instr
 let get_config_print_reg () = !config_print_reg
 let get_config_print_mem () = !config_print_mem_access
+let get_config_print_cache () = !config_print_cache_access
 let get_config_print_platform () = !config_print_platform
 
 (* Mapping to Sail externs *)

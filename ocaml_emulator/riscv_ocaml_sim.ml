@@ -23,6 +23,7 @@ let set_signature_file s =
   (* turn off logging *)
   P.config_print_instr := false;
   P.config_print_reg := false;
+  P.config_print_cache_access := false;
   P.config_print_mem_access := false;
   P.config_print_platform := false
 

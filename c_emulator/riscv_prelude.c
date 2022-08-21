@@ -19,6 +19,12 @@ unit print_reg(sail_string s)
   return UNIT;
 }
 
+unit print_cache_access(sail_string s)
+{
+  if (config_print_cache_access) printf("%s\n", s);
+  return UNIT;
+}
+
 unit print_mem_access(sail_string s)
 {
   if (config_print_mem_access) printf("%s\n", s);
@@ -39,6 +45,11 @@ bool get_config_print_instr(unit u)
 bool get_config_print_reg(unit u)
 {
   return (config_print_reg) ? true : false;
+}
+
+bool get_config_print_cache(unit u)
+{
+  return (config_print_cache_access) ? true : false;
 }
 
 bool get_config_print_mem(unit u)
