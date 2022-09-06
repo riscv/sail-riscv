@@ -14,38 +14,40 @@ rm -f $DIR/tests.xml
 
 pass=0
 fail=0
-XML=""
+all_pass=0
+all_fail=0
+SUITE_XML=""
+SUITES_XML=""
 
 function green {
     (( pass += 1 ))
     printf "$1: ${GREEN}$2${NC}\n"
-    XML+="    <testcase name=\"$1\"/>\n"
+    SUITE_XML+="    <testcase name=\"$1\"/>\n"
 }
 
 function yellow {
     (( fail += 1 ))
     printf "$1: ${YELLOW}$2${NC}\n"
-    XML+="    <testcase name=\"$1\">\n      <error message=\"$2\">$2</error>\n    </testcase>\n"
+    SUITE_XML+="    <testcase name=\"$1\">\n      <failure message=\"$2\">$2</failure>\n    </testcase>\n"
 }
 
 function red {
     (( fail += 1 ))
     printf "$1: ${RED}$2${NC}\n"
-    XML+="    <testcase name=\"$1\">\n      <error message=\"$2\">$2</error>\n    </testcase>\n"
+    SUITE_XML+="    <testcase name=\"$1\">\n      <failure message=\"$2\">$2</failure>\n    </testcase>\n"
 }
 
 function finish_suite {
     printf "$1: Passed ${pass} out of $(( pass + fail ))\n\n"
-    XML="  <testsuite name=\"$1\" tests=\"$(( pass + fail ))\" failures=\"${fail}\" timestamp=\"$(date)\">\n$XML  </testsuite>\n"
-    printf "$XML" >> $DIR/tests.xml
-    XML=""
+    SUITES_XML+="  <testsuite name=\"$1\" tests=\"$(( pass + fail ))\" failures=\"${fail}\" timestamp=\"$(date)\">\n$SUITE_XML  </testsuite>\n"
+    SUITE_XML=""
+    (( all_pass += pass )) || :
+    (( all_fail += fail )) || :
     pass=0
     fail=0
 }
 
 SAILLIBDIR="$DIR/../../lib/"
-
-printf "<testsuites>\n" >> $DIR/tests.xml
 
 cd $RISCVDIR
 
@@ -141,4 +143,33 @@ for test in $DIR/riscv-tests/rv64*.elf; do
 done
 finish_suite "64-bit RISCV C tests"
 
-printf "</testsuites>\n" >> $DIR/tests.xml
+# Do 'make clean' to avoid cross-arch pollution.
+make clean
+
+if ARCH=RV32 make c_emulator/riscv_rvfi_RV32;
+then
+    green "Building 32-bit RISCV RVFI C emulator" "ok"
+else
+    red "Building 32-bit RISCV RVFI C emulator" "fail"
+fi
+finish_suite "32-bit RISCV RVFI C tests"
+
+# Do 'make clean' to avoid cross-arch pollution.
+make clean
+
+if ARCH=RV64 make c_emulator/riscv_rvfi_RV64;
+then
+    green "Building 64-bit RISCV RVFI C emulator" "ok"
+else
+    red "Building 64-bit RISCV RVFI C emulator" "fail"
+fi
+finish_suite "64-bit RISCV RVFI C tests"
+
+printf "Passed ${all_pass} out of $(( all_pass + all_fail ))\n\n"
+XML="<testsuites tests=\"$(( all_pass + all_fail ))\" failures=\"${all_fail}\">\n$SUITES_XML</testsuites>\n"
+printf "$XML" > $DIR/tests.xml
+
+if [ $all_fail -gt 0 ]
+then
+    exit 1
+fi

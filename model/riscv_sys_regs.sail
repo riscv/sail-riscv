@@ -354,7 +354,8 @@ function in32BitMode() -> bool = {
 function haveFExt()    -> bool = (misa.F() == 0b1) & (mstatus.FS() != 0b00)
 function haveDExt()    -> bool = (misa.D() == 0b1) & (mstatus.FS() != 0b00)
 
-/* Zfinx and Zdinx extensions (TODO: gate FCSR access on [mhs]stateen0 bit 1 when implemented) */
+/* Zhinx, Zfinx and Zdinx extensions (TODO: gate FCSR access on [mhs]stateen0 bit 1 when implemented) */
+function haveZhinx()   -> bool = sys_enable_zfinx()
 function haveZfinx()   -> bool = sys_enable_zfinx()
 function haveZdinx()   -> bool = sys_enable_zfinx() & sizeof(flen) >= 64
 
