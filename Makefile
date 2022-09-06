@@ -37,7 +37,14 @@ SAIL_DEFAULT_INST += riscv_insts_zks.sail
 SAIL_DEFAULT_INST += riscv_insts_zbkb.sail
 SAIL_DEFAULT_INST += riscv_insts_zbkx.sail
 
-SAIL_DEFAULT_INST += riscv_insts_vext_total.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_utils.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_arith.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_fp.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_mask.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_mem.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_red.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_vm.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_vset.sail
 
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
 SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
@@ -142,7 +149,7 @@ GMP_LIBS = $(shell pkg-config --libs gmp || echo -lgmp)
 ZLIB_FLAGS = $(shell pkg-config --cflags zlib)
 ZLIB_LIBS = $(shell pkg-config --libs zlib)
 
-C_FLAGS = -I $(SAIL_LIB_DIR) -I c_emulator $(GMP_FLAGS) $(ZLIB_FLAGS) $(SOFTFLOAT_FLAGS) -fcommon
+C_FLAGS = -I $(SAIL_LIB_DIR) -I c_emulator $(GMP_FLAGS) $(ZLIB_FLAGS) $(SOFTFLOAT_FLAGS)
 C_LIBS  = $(GMP_LIBS) $(ZLIB_LIBS) $(SOFTFLOAT_LIBS)
 
 # The C simulator can be built to be linked against Spike for tandem-verification.
@@ -379,7 +386,7 @@ ifndef EXPLICIT_COQ_SAIL
   EXPLICIT_COQ_SAIL = $(shell if opam config var coq-sail:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
 endif
 
-COQ_LIBS = -R generated_definitions/coq/$(ARCH) '' -R generated_definitions/coq '' -R handwritten_support ''
+COQ_LIBS = -R generated_definitions/coq Riscv -R generated_definitions/coq/$(ARCH) $(ARCH) -R handwritten_support Riscv_common
 ifeq ($(EXPLICIT_COQ_BBV),yes)
   COQ_LIBS += -Q $(BBV_DIR)/src/bbv bbv
 endif
