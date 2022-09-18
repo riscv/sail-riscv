@@ -62,15 +62,12 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
      | mask_helper == undefined */ 
   then {
     status = RETIRE_FAIL;
-    print("status=fail")
   };
 
   if status == RETIRE_SUCCESS then {
     (result, mask_helper) = init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val);
 
     foreach (i from 0 to (num_elem - 1)) {
-      //print("vs1_val[i]=" ^ BitStr(vs1_val[i]));
-      //print("vs2_val[i]=" ^ BitStr(vs2_val[i]));
       if mask_helper[i] == true then {
         result[i] = match funct6 {
           VV_VADD         => vs2_val[i] + vs1_val[i],
@@ -145,8 +142,6 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
                                } else zeros()                   
                              }
         };
-        //print_int("mask_helper_true", i);
-        //print("result[i]=" ^ BitStr(result[i]))
       }
     };
     
@@ -227,7 +222,6 @@ function clause execute(WVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   if vm_val == undefined  
   then {
     status = RETIRE_FAIL;
-    //print("status=fail")
   };
 
   if status == RETIRE_SUCCESS then {
@@ -236,8 +230,6 @@ function clause execute(WVVTYPE(funct6, vm, vs2, vs1, vd)) = {
     
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then {
-        //print_int("vs1=", signed(vs1_val[i]));
-        //print_int("vs1=", signed(vs2_val[i]));
         result[i] = match funct6 {
           WVV_VADD         => to_bits(double_vsew, signed(vs2_val[i]) + signed(vs1_val[i])),
           WVV_VSUB         => to_bits(double_vsew, signed(vs2_val[i]) - signed(vs1_val[i])),
@@ -800,14 +792,14 @@ function clause execute(VXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let vsew_bits  : int = get_vtype_vsew();
   let lmul       : real = get_vtype_LMUL();
   let num_elem   : int = get_num_elem(lmul, vsew_bits);
-  //print_int("num_elem=", num_elem);
+
   assert(8 <= vsew_bits & vsew_bits <= 64);
   assert(0 <= num_elem & num_elem <= sizeof(vlen));
   let 'n = num_elem;
   let 'm = vsew_bits;
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
   let rs1_val                             = get_scalar(rs1, vsew_bits);
-  //print("rs1_val=" ^ BitStr(rs1_val));
+
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vd);
   result      : vector('n, dec, bits('m)) = undefined;
@@ -818,15 +810,12 @@ function clause execute(VXTYPE(funct6, vm, vs2, rs1, vd)) = {
      vd_val     == undefined   */
   then {
     status = RETIRE_FAIL;
-    print("status=fail")
   };
 
   if status == RETIRE_SUCCESS then {
-    //print("status=success");
     (result, mask_helper) = init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val);
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then {
-        //print("vs2_val[i]=" ^ BitStr(vs2_val[i]));
         result[i] = match funct6 {
           VX_VADD         => vs2_val[i] + rs1_val,
           VX_VSUB         => vs2_val[i] - rs1_val,
@@ -886,7 +875,6 @@ function clause execute(VXTYPE(funct6, vm, vs2, rs1, vd)) = {
   
     write_vreg(num_elem, vsew_bits, lmul, vd, result);
     writeCSR(csr_name_map("vstart"), EXTZ(0b0)); //All instruction are designed to reset the vstart CSR to zero at the end of execution
-    //print_int("vstart=", unsigned(readCSR(csr_name_map("vstart"))))
   };
   
   if status == RETIRE_FAIL then handle_illegal();
@@ -964,7 +952,6 @@ function clause execute(WVXTYPE(funct6, vm, vs2, rs1, vd)) = {
      vd_val      == undefined |
      mask_helper == undefined */ then {
     status = RETIRE_FAIL;
-    //print("status=fail")
   };
 
   if status == RETIRE_SUCCESS then {
@@ -972,9 +959,7 @@ function clause execute(WVXTYPE(funct6, vm, vs2, rs1, vd)) = {
     (result, mask_helper) = init_masked_result(num_elem, double_vsew, double_lmul, vd_val, vm_val);
 
     foreach (i from 0 to (num_elem - 1)) {
-      if mask_helper[i] == true then {
-        //print_int("vs2=", signed(vs2_val[i]));
-        //print_int("rs1=", signed(rs1_val));        
+      if mask_helper[i] == true then {       
         result[i] = match funct6 {
           WVX_VADD         => to_bits(double_vsew, signed(vs2_val[i]) + signed(rs1_val)),
           WVX_VSUB         => to_bits(double_vsew, signed(vs2_val[i]) - signed(rs1_val)),
@@ -1303,7 +1288,6 @@ function clause execute(VITYPE(funct6, vm, vs2, simm, vd)) = {
   
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then {
-        //print("vs2_val[i]=" ^ BitStr(vs2_val[i]));
         result[i] = match funct6 {
           VI_VADD         => vs2_val[i] + imm_val,
           VI_VRSUB        => imm_val - vs2_val[i],
@@ -1758,15 +1742,12 @@ function clause execute(MVVTYPE(funct6, vm, vs2, vs1, vd)) = {
      vd_val     == undefined   */
   then {
     status = RETIRE_FAIL;
-    print("status=fail")
   };
 
   if status == RETIRE_SUCCESS then {
     (result, mask_helper) = init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val);
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then{
-        //print("vs1_val[i]=" ^ BitStr(vs1_val[i]));
-        //print("vs2_val[i]=" ^ BitStr(vs2_val[i]));
         result[i] = match funct6 {
           MVV_VAADDU         => {
                                   result_add = EXTZ('m + 1, vs2_val[i]) + EXTZ('m + 1, vs1_val[i]);
@@ -1815,7 +1796,6 @@ function clause execute(MVVTYPE(funct6, vm, vs2, vs1, vd)) = {
                               to_bits(vsew_bits, r)
                             }
         }
-        //print_int("result[i]=", signed(result[i]))
       }
     }
   };
@@ -1882,15 +1862,12 @@ function clause execute(MVVMATYPE(funct6, vm, vs2, vs1, vd_or_rd)) = {
      vd_val     == undefined   */
   then {
     status = RETIRE_FAIL;
-    print("status=fail")
   };
 
   if status == RETIRE_SUCCESS then {
     (result, mask_helper) = init_masked_result(num_elem, vsew_bits, lmul, vd_or_rd_val, vm_val);
     foreach (i from 0 to (num_elem - 1)){
       if mask_helper[i] == true then{
-        //print("vs1_val[i]=" ^ BitStr(vs1_val[i]));
-        //print("vs2_val[i]=" ^ BitStr(vs2_val[i]));
         result[i] = match funct6 {
         MVV_VMACC          => slice(to_bits(sizeof(vlen) , signed(vs1_val[i]) * signed(vs2_val[i]) ), 0, vsew_bits) + vd_or_rd_val[i],
         MVV_VNMSAC         => vd_or_rd_val[i] - slice(to_bits(sizeof(vlen) , signed(vs1_val[i]) * signed(vs2_val[i]) ), 0, vsew_bits),
@@ -2227,15 +2204,12 @@ function clause execute(WMVXTYPE(funct6, vm, vs2, rs1, vd_or_rd)) = {
   if vm_val == undefined  
   then {
     status = RETIRE_FAIL;
-    //print("status=fail")
   };
 
   if status == RETIRE_SUCCESS then {
     (result, mask_helper) = init_masked_result(num_elem, double_vsew, double_lmul, vd_or_rd_val, vm_val);
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then {
-        //print_int("vs1=", signed(vs1_val[i]));
-        //print_int("vs1=", signed(vs2_val[i]));
         result[i] = match funct6 {
           WMVX_VWMACCU      => (to_bits( double_vsew, unsigned(rs1_val) * unsigned(vs2_val[i]) )) + vd_or_rd_val[i],
           WMVX_VWMACC       => (to_bits( double_vsew, signed(rs1_val) * signed(vs2_val[i]) )) + vd_or_rd_val[i], 
@@ -2357,8 +2331,6 @@ function clause execute(VMVXS(vs2, rd)) = {
   if sizeof(xlen) < vsew_bits then X(rd) = slice(vs2_val[0], 0, sizeof(xlen))
   else if sizeof(xlen) > vsew_bits then X(rd) = sail_sign_extend(vs2_val[0], sizeof(xlen))
   else X(rd) = vs2_val[0];
-  //print("vs2_val[0]=" ^ BitStr(vs2_val[0]));
-  //print("rd_val=" ^ BitStr(X(rd)));
   writeCSR(csr_name_map("vstart"), EXTZ(0b0));
 
   RETIRE_SUCCESS

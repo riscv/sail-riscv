@@ -115,14 +115,11 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
   status = assert_vstart(0);
 
   if status == RETIRE_SUCCESS then {
-    //print("status is success!");
     (mask_result, mask_helper) = init_masked_result_cmp(num_elem, vsew_bits, lmul, vs2_val, vm_val);
 
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then {
-        //print("masked");
         if vs2_val[i] == true then {
-          //print("vs2[i]=1");
           result = result + 1;
         }
       }
