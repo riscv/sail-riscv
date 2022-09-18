@@ -201,20 +201,10 @@ function clause execute(FWVVTYPE(funct6, vm, vs2, vs1, vd)) = {
     
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then {
-        result_real : real = undefined;
         result[i] = match funct6 {
-          FWVV_VADD    => {
-                            (fptype, sign, result_real) = fpreal_add(fp_to_real(vs2_val[i]), fp_to_real(vs1_val[i]));
-                            real_to_fp(result_real)
-                          },
-          FWVV_VSUB    => {
-                            (fptype, sign, result_real) = fpreal_sub(fp_to_real(vs2_val[i]), fp_to_real(vs1_val[i]));
-                            real_to_fp(result_real)
-                          },
-          FWVV_VMUL    => {
-                            (fptype, sign, result_real) = fpreal_mul(fp_to_real(vs2_val[i]), fp_to_real(vs1_val[i]));
-                            real_to_fp(result_real)
-                          }
+          FWVV_VADD    => fp_add(rm_3b, fp_widen(vs2_val[i]), fp_widen(vs1_val[i])),
+          FWVV_VSUB    => fp_sub(rm_3b, fp_widen(vs2_val[i]), fp_widen(vs1_val[i])),
+          FWVV_VMUL    => fp_mul(rm_3b, fp_widen(vs2_val[i]), fp_widen(vs1_val[i]))
         };
       };
     };
@@ -275,24 +265,11 @@ function clause execute(FWVVMATYPE(funct6, vm, vs1, vs2, vd)) = {
     
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then {
-        result_real : real = undefined;
         result[i] = match funct6 {
-          FWVV_VMACC    => {
-                             (fptype, sign, result_real) = fpreal_muladd(fp_to_real(vs1_val[i]), fp_to_real(vs2_val[i]), fp_to_real(vd_val[i]));
-                             real_to_fp(result_real)
-                           },
-          FWVV_VNMACC   => {
-                             (fptype, sign, result_real) = fpreal_nmulsub(fp_to_real(vs1_val[i]), fp_to_real(vs2_val[i]), fp_to_real(vd_val[i]));
-                             real_to_fp(result_real)
-                           },
-          FWVV_VMSAC    => {
-                             (fptype, sign, result_real) = fpreal_mulsub(fp_to_real(vs1_val[i]), fp_to_real(vs2_val[i]), fp_to_real(vd_val[i]));
-                             real_to_fp(result_real)
-                           },
-          FWVV_VNMSAC   => {
-                             (fptype, sign, result_real) = fpreal_nmuladd(fp_to_real(vs1_val[i]), fp_to_real(vs2_val[i]), fp_to_real(vd_val[i]));
-                             real_to_fp(result_real)
-                           }
+          FWVV_VMACC   => fp_muladd(rm_3b, fp_widen(vs1_val[i]), fp_widen(vs2_val[i]), vd_val[i]),
+          FWVV_VNMACC  => fp_nmulsub(rm_3b, fp_widen(vs1_val[i]), fp_widen(vs2_val[i]), vd_val[i]),
+          FWVV_VMSAC   => fp_mulsub(rm_3b, fp_widen(vs1_val[i]), fp_widen(vs2_val[i]), vd_val[i]),
+          FWVV_VNMSAC  => fp_nmuladd(rm_3b, fp_widen(vs1_val[i]), fp_widen(vs2_val[i]), vd_val[i])
         };
       };
     };
@@ -352,16 +329,9 @@ function clause execute(FWVTYPE(funct6, vm, vs2, vs1, vd)) = {
     
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then {
-        result_real : real = undefined;
         result[i] = match funct6 {
-          FWV_VADD     => {
-                            (fptype, sign, result_real) = fpreal_add(fp_to_real(vs2_val[i]), fp_to_real(vs1_val[i]));
-                            real_to_fp(result_real)
-                          },
-          FWV_VSUB     => {
-                            (fptype, sign, result_real) = fpreal_sub(fp_to_real(vs2_val[i]), fp_to_real(vs1_val[i]));
-                            real_to_fp(result_real)
-                          }
+          FWV_VADD     => fp_add(rm_3b, vs2_val[i], fp_widen(vs1_val[i])),
+          FWV_VSUB     => fp_sub(rm_3b, vs2_val[i], fp_widen(vs1_val[i]))
         };
       };
     };
@@ -1053,20 +1023,10 @@ function clause execute(FWVFTYPE(funct6, vm, vs2, rs1, vd)) = {
     
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then {
-        result_real : real = undefined;
         result[i] = match funct6 {
-          FWVF_VADD    => {
-                            (fptype, sign, result_real) = fpreal_add(fp_to_real(vs2_val[i]), fp_to_real(rs1_val));
-                            real_to_fp(result_real)
-                          },
-          FWVF_VSUB    => {
-                            (fptype, sign, result_real) = fpreal_sub(fp_to_real(vs2_val[i]), fp_to_real(rs1_val));
-                            real_to_fp(result_real)
-                          },
-          FWVF_VMUL    => {
-                             (fptype, sign, result_real) = fpreal_mul(fp_to_real(vs2_val[i]), fp_to_real(rs1_val));
-                             real_to_fp(result_real)
-                          }
+          FWVF_VADD    => fp_add(rm_3b, fp_widen(vs2_val[i]), fp_widen(rs1_val)),
+          FWVF_VSUB    => fp_sub(rm_3b, fp_widen(vs2_val[i]), fp_widen(rs1_val)),
+          FWVF_VMUL    => fp_mul(rm_3b, fp_widen(vs2_val[i]), fp_widen(rs1_val))
         };
       };
     };
@@ -1127,24 +1087,11 @@ function clause execute(FWVFMATYPE(funct6, vm, rs1, vs2, vd)) = {
     
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then {
-        result_real : real = undefined;
         result[i] = match funct6 {
-          FWVF_VMACC    => {
-                             (fptype, sign, result_real) = fpreal_muladd(fp_to_real(rs1_val), fp_to_real(vs2_val[i]), fp_to_real(vd_val[i]));
-                             real_to_fp(result_real)
-                           },
-          FWVF_VNMACC   => {
-                             (fptype, sign, result_real) = fpreal_nmulsub(fp_to_real(rs1_val), fp_to_real(vs2_val[i]), fp_to_real(vd_val[i]));
-                             real_to_fp(result_real)
-                           },
-          FWVF_VMSAC    => {
-                             (fptype, sign, result_real) = fpreal_mulsub(fp_to_real(rs1_val), fp_to_real(vs2_val[i]), fp_to_real(vd_val[i]));
-                             real_to_fp(result_real)
-                           },
-          FWVF_VNMSAC   => {
-                             (fptype, sign, result_real) = fpreal_nmuladd(fp_to_real(rs1_val), fp_to_real(vs2_val[i]), fp_to_real(vd_val[i]));
-                             real_to_fp(result_real)
-                           }
+          FWVF_VMACC   => fp_muladd(rm_3b, fp_widen(rs1_val), fp_widen(vs2_val[i]), vd_val[i]),
+          FWVF_VNMACC  => fp_nmulsub(rm_3b, fp_widen(rs1_val), fp_widen(vs2_val[i]), vd_val[i]),
+          FWVF_VMSAC   => fp_mulsub(rm_3b, fp_widen(rs1_val), fp_widen(vs2_val[i]), vd_val[i]),
+          FWVF_VNMSAC  => fp_nmuladd(rm_3b, fp_widen(rs1_val), fp_widen(vs2_val[i]), vd_val[i])
         };
       };
     };
@@ -1203,16 +1150,9 @@ function clause execute(FWFTYPE(funct6, vm, vs2, rs1, vd)) = {
     
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then {
-        result_real : real = undefined;
         result[i] = match funct6 {
-          FWF_VADD     => {
-                            (fptype, sign, result_real) = fpreal_add(fp_to_real(vs2_val[i]), fp_to_real(rs1_val));
-                            real_to_fp(result_real)
-                          },
-          FWF_VSUB     => {
-                            (fptype, sign, result_real) = fpreal_sub(fp_to_real(vs2_val[i]), fp_to_real(rs1_val));
-                            real_to_fp(result_real)
-                          }
+          FWF_VADD     => fp_add(rm_3b, vs2_val[i], fp_widen(rs1_val)),
+          FWF_VSUB     => fp_sub(rm_3b, vs2_val[i], fp_widen(rs1_val))
         };
       };
     };

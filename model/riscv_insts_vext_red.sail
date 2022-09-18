@@ -192,31 +192,34 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem, vsew_bits, lmul
 val process_rfvv_widen: forall 'n 'm, (8 <= 'm <= 64 & 0 <= 'n <= vlen). 
 (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), real) -> Retired effect {escape, rreg, undef, wreg}
 function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem, vsew_bits, lmul) = {
-  let double_vsew : int  = vsew_bits * 2;
-  let double_lmul : real = lmul * 2.0;
-  let 'double_vsew = double_vsew;
-  let vs2_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vs2);
-  let vm_val   : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
-  assert ( vsew_bits == 16 | vsew_bits == 32 | vsew_bits == 64 );
-  // assert ( 'double_vsew == 16 | 'double_vsew == 32 |'double_vsew == 64 |'double_vsew == 128 );
-  assert ( 'double_vsew == 16 | 'double_vsew == 32 |'double_vsew == 64 );
-  let vd_val   : vector('n, dec, bits('double_vsew)) = read_vreg(num_elem, double_vsew, double_lmul, vd); // only to generate mask_helper
-  result       : vector('n, dec, bits('double_vsew)) = undefined;
-  mask_helper  : vector('n, dec, bool)               = undefined;
-  (result, mask_helper) = init_masked_result(num_elem, double_vsew, double_lmul, vd_val, vm_val);
+  let rm_3b   = fcsr.FRM();
+  if rm_3b == 0b101 | rm_3b == 0b110 | rm_3b == 0b111 then {
+    handle_illegal();
+    RETIRE_FAIL
+  } else {
+    let double_vsew : int  = vsew_bits * 2;
+    let double_lmul : real = lmul * 2.0;
+    let 'double_vsew = double_vsew;
+    assert ( vsew_bits == 16 | vsew_bits == 32);
 
-  vs1_0 : bits('double_vsew) = read_single_element(double_vsew, 0, double_lmul, vs1);
-  foreach (i from 0 to (num_elem - 1)) {
-    if mask_helper[i] == true then {
-      result_real : real = undefined;
-      /* Currently Ordered/Unordered sum do the same operations */
-      (fptype, sign, result_real) = fpreal_add(fp_to_real(vs2_val[i]), fp_to_real(vs1_0));
-      vs1_0 = real_to_fp(result_real)
-    }
-  };
-  
-  write_single_element(double_vsew, 0, double_lmul, vd, vs1_0);
-  RETIRE_SUCCESS
+    let vs2_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vs2);
+    let vm_val   : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+    let vd_val   : vector('n, dec, bits('m * 2)) = read_vreg(num_elem, 'm * 2, double_lmul, vd); // only to generate mask_helper
+    result       : vector('n, dec, bits('m * 2)) = undefined;
+    mask_helper  : vector('n, dec, bool)         = undefined;
+    (result, mask_helper) = init_masked_result(num_elem, 'm * 2, double_lmul, vd_val, vm_val);
+
+    vs1_0 : bits('m * 2) = read_single_element('m * 2, 0, double_lmul, vs1);
+    foreach (i from 0 to (num_elem - 1)) {
+      if mask_helper[i] == true then {
+        /* Currently Ordered/Unordered sum do the same operations */
+        vs1_0 = fp_add(rm_3b, vs1_0, fp_widen(vs2_val[i]));
+      }
+    };
+    
+    write_single_element('m * 2, 0, double_lmul, vd, vs1_0);
+    RETIRE_SUCCESS
+  }
 }
 
 function clause execute(RFVVTYPE(funct6, vm, vs2, vs1, vd)) = {

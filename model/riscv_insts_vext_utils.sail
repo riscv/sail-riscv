@@ -2349,3 +2349,15 @@ function fp_class(op) = {
   EXTZ(class_10b);
 }
 
+val fp_widen : forall 'm, ('m in {16, 32} & 'm <= flen). bits('m) -> bits('m * 2)
+function fp_widen(nval) = {
+  let rm_3b = fcsr.FRM();
+  fflags : bits_fflags  = undefined;
+  wval   : bits('m * 2) = undefined;
+  (fflags, wval) = match 'm {
+    16 => riscv_f16ToF32(rm_3b, nval),
+    32 => riscv_f32ToF64(rm_3b, nval)
+  };
+  accrue_fflags(fflags);
+  wval
+}
