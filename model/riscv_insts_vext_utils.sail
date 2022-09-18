@@ -280,6 +280,30 @@ function init_masked_result_cmp(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
   (result, mask_helper)
 }
 
+/* Misc number functions */
+
+val negate_int : int -> int
+function negate_int(value) = {
+  let negated : int = 0 - value;
+  negated
+}
+
+val negate_real : real -> real
+function negate_real(value) = {
+  let negated : real = 0.0 - value;
+  negated
+}
+
+val is_zeros : forall 'n, 'n >= 0. bits('n) -> bool
+function is_zeros(bitval) = {
+  bitval == zeros('n)
+}
+
+val is_ones : forall 'n, 'n >= 0. bits('n) -> bool
+function is_ones(bitval) = {
+  bitval == ones('n)
+}
+
 /* Floating point canonical NaN for 16-bit, 32-bit, 64-bit and 128-bit types */
 val canonical_NaN : forall 'm, 'm in {16, 32, 64, 128}. int('m) -> bits('m)
 function canonical_NaN('m) = {
@@ -306,6 +330,48 @@ function nan_unbox_new(regval, 'm) = {
   else if slice(regval, 'm, sizeof(flen) - 'm) == ones()
   then slice(regval, 0, 'm)
   else canonical_NaN('m)
+}
+
+/* Check if the floating point number is a signaling NaN */
+val      f_is_SNaN : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). bits('m) -> bool
+function f_is_SNaN   xf = {
+  match 'm {
+    16   => is_ones(xf[14..10]) & is_zeros(xf[9..9]) & ~(is_zeros(xf[8..0])),
+    32   => is_ones(xf[30..23]) & is_zeros(xf[22..22]) & ~(is_zeros(xf[21..0])),
+    64   => is_ones(xf[62..52]) & is_zeros(xf[51..51]) & ~(is_zeros(xf[50..0])),
+    128  => is_ones(xf[126..112]) & is_zeros(xf[111..111]) & ~(is_zeros(xf[110..0]))
+  }
+}
+
+/* Either QNaN or SNan */
+val      f_is_NaN : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). bits('m) -> bool
+function f_is_NaN   xf = {
+  match 'm {
+    16   => is_ones(xf[14..10]) & ~(is_zeros(xf[9..0])),
+    32   => is_ones(xf[30..23]) & ~(is_zeros(xf[22..0])),
+    64   => is_ones(xf[62..52]) & ~(is_zeros(xf[51..0])),
+    128  => is_ones(xf[126..112]) & ~(is_zeros(xf[111..0]))
+  }
+}
+
+val      f_is_neg_zero : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). bits('m) -> bool
+function f_is_neg_zero   xf = {
+  match 'm {
+    16   => is_ones(xf[15..15]) & is_zeros(xf[14..0]),
+    32   => is_ones(xf[31..31]) & is_zeros(xf[30..0]),
+    64   => is_ones(xf[63..63]) & is_zeros(xf[62..0]),
+    128  => is_ones(xf[127..127]) & is_zeros(xf[126..0])
+  }
+}
+
+val      f_is_pos_zero : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). bits('m) -> bool
+function f_is_pos_zero   xf = {
+  match 'm {
+    16   => is_zeros(xf),
+    32   => is_zeros(xf),
+    64   => is_zeros(xf),
+    128  => is_zeros(xf)
+  }
 }
 
 /* Scalar register shaping for floating point operations */
@@ -396,33 +462,33 @@ function signed_saturation(len, elem) = {
   elem_sat
 }
 
-/* Misc number functions */
-
-val negate_int : int -> int
-function negate_int(value) = {
-  let negated : int = 0 - value;
-  negated
-}
-
-val negate_real : real -> real
-function negate_real(value) = {
-  let negated : real = 0.0 - value;
-  negated
-}
-
-val is_zeros : forall 'n, 'n >= 0. bits('n) -> bool
-function is_zeros(bitval) = {
-  bitval == zeros('n)
-}
-
-val is_ones : forall 'n, 'n >= 0. bits('n) -> bool
-function is_ones(bitval) = {
-  bitval == ones('n)
-}
-
 /* Get the floating point rounding mode from csr fcsr */
 val get_fp_rounding_mode : unit -> rounding_mode effect {rreg}
 function get_fp_rounding_mode() = encdec_rounding_mode(fcsr.FRM())
+
+/* Split sign and the remain of floating point number */
+val      fsplitsign : forall 'n, 'n in {16, 32, 64}. bits('n) -> (bits(1), bits('n - 1))
+function fsplitsign   (xf) = {
+  match 'n{
+    16 => (xf[15..15], xf[14..0]),
+    32 => (xf[31..31], xf[30..0]),
+    64 => (xf[63..63], xf[62..0])
+  }
+
+}
+
+/* Make a floating point number by sign and the remains bits */
+val      fmakesign : forall 'n, 'n in {16, 32, 64}. (bits(1), bits('n - 1)) -> bits('n)
+function fmakesign (sign, remain) = sign @ remain
+
+/* Negate a floating point number */
+val negate_fp : forall 'n, 'n in {16, 32, 64}. bits('n) -> bits('n) 
+function negate_fp (xf) = {
+  let (sign, remain) = fsplitsign(xf);
+  let new_sign = if (sign == 0b0) then 0b1 else 0b0;
+  fmakesign (new_sign, remain)
+}
+
 
 /*
  * Floating point functions
@@ -902,7 +968,7 @@ function fp_process_nan4(type1, type2, op1, op2) = {
   };
   (done, result)
 }
-
+/*
 val fp_add : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_add(op1, op2) = {
   sign1  : bits(1)  = undefined;
@@ -947,6 +1013,19 @@ function fp_add(op1, op2) = {
   };
 
   result
+}
+*/
+val fp_add: forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
+function fp_add(rm_3b, op1, op2) = {
+  fflags : bits_fflags = undefined;
+  result_val : bits('n) = undefined;
+  (fflags, result_val) = match 'n {
+    16  => riscv_f16Add(rm_3b, op1, op2),
+    32  => riscv_f32Add(rm_3b, op1, op2),
+    64  => riscv_f64Add(rm_3b, op1, op2)
+  };
+  write_fflags(fflags);
+  result_val
 }
 
 val fpreal_add : ((FPType, bits(1), real), (FPType, bits(1), real)) -> (FPType, bits(1), real) effect {escape, rreg, undef, wreg}
@@ -1007,7 +1086,7 @@ function fpreal_add((type1, sign1, val1), (type2, sign2, val2)) = {
 
   (resulttype, resultsign, resultval)
 }
-
+/*
 val fp_sub : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_sub(op1, op2) = {
   sign1  : bits(1)  = undefined;
@@ -1052,6 +1131,20 @@ function fp_sub(op1, op2) = {
   };
 
   result
+}
+*/
+
+val fp_sub: forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
+function fp_sub(rm_3b, op1, op2) = {
+  fflags : bits_fflags = undefined;
+  result_val : bits('n) = undefined;
+  (fflags, result_val) = match 'n {
+    16  => riscv_f16Sub(rm_3b, op1, op2),
+    32  => riscv_f32Sub(rm_3b, op1, op2),
+    64  => riscv_f64Sub(rm_3b, op1, op2)
+  };
+  write_fflags(fflags);
+  result_val
 }
 
 val fpreal_sub : ((FPType, bits(1), real), (FPType, bits(1), real)) -> (FPType, bits(1), real) effect {escape, rreg, undef, wreg}
@@ -1112,7 +1205,7 @@ function fpreal_sub((type1, sign1, val1), (type2, sign2, val2)) = {
 
   (resulttype, resultsign, resultval)
 }
-
+/*
 val fp_min : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_min(op1, op2) = {
   sign1  : bits(1)  = undefined;
@@ -1148,7 +1241,36 @@ function fp_min(op1, op2) = {
   
   result
 }
+*/
+val fp_min : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
+function fp_min(op1, op2) = {
+  fflags     : bits_fflags = undefined;
+  temp_flags : bits_fflags = undefined;
+  op1_lt_op2 : bool = undefined;
+  result_val : bits('n) = undefined;
 
+  (temp_flags, op1_lt_op2) = match 'n {
+    16  => riscv_f16Lt(op1, op2),
+    32  => riscv_f32Lt(op1, op2),
+    64  => riscv_f64Lt(op1, op2)
+  };
+
+  result_val  = if (f_is_NaN(op1) & f_is_NaN(op2)) then canonical_NaN('n)
+                else if f_is_NaN(op1) then op2
+                else if f_is_NaN(op2) then op1
+                else if (f_is_neg_zero(op1) & f_is_pos_zero(op2)) then op1
+                else if (f_is_neg_zero(op2) & f_is_pos_zero(op1)) then op2
+                else if op1_lt_op2 then op1
+                else op2;
+  if f_is_SNaN(op1) then print("op1\n");
+  if f_is_SNaN(op2) then print("op2\n");
+  fflags = if (f_is_SNaN(op1) | f_is_SNaN(op2)) then nvFlag() else zeros();
+  write_fflags(fflags);
+  result_val
+}
+
+
+/*
 val fp_max : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_max(op1, op2) = {
   sign1  : bits(1)  = undefined;
@@ -1184,7 +1306,36 @@ function fp_max(op1, op2) = {
   
   result
 }
+*/
+val fp_max : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
+function fp_max(op1, op2) = {
+  fflags     : bits_fflags = undefined;
+  temp_flags : bits_fflags = undefined;
+  op1_lt_op2 : bool = undefined;
+  result_val : bits('n) = undefined;
 
+  (temp_flags, op1_lt_op2) = match 'n {
+    16  => riscv_f16Lt(op1, op2),
+    32  => riscv_f32Lt(op1, op2),
+    64  => riscv_f64Lt(op1, op2)
+  };
+
+  result_val  = if (f_is_NaN(op1) & f_is_NaN(op2)) then canonical_NaN('n)
+                else if f_is_NaN(op1) then op2
+                else if f_is_NaN(op2) then op1
+                else if (f_is_neg_zero(op1) & f_is_pos_zero(op2)) then op2
+                else if (f_is_neg_zero(op2) & f_is_pos_zero(op1)) then op1
+                else if op1_lt_op2 then op2
+                else op1;
+  if f_is_SNaN(op1) then print("op1\n");
+  if f_is_SNaN(op2) then print("op2\n");
+  fflags = if (f_is_SNaN(op1) | f_is_SNaN(op2)) then nvFlag() else zeros();
+  write_fflags(fflags);
+  result_val
+}
+
+
+/*
 val fp_eq : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
 function fp_eq(op1, op2) = {
   sign1  : bits(1)  = undefined;
@@ -1216,7 +1367,22 @@ function fp_eq(op1, op2) = {
 
   result
 }
+*/
+val fp_eq : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
+function fp_eq(op1, op2) = {
+  fflags     : bits_fflags = undefined;
+  result_val : bool = undefined;
 
+  (fflags,result_val) = match 'n {
+    16  => riscv_f16Eq(op1, op2),
+    32  => riscv_f32Eq(op1, op2),
+    64  => riscv_f64Eq(op1, op2)
+  };
+  write_fflags(fflags);
+  result_val
+}
+
+/*
 val fp_gt : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
 function fp_gt(op1, op2) = {
   sign1  : bits(1)  = undefined;
@@ -1255,7 +1421,24 @@ function fp_gt(op1, op2) = {
 
   result
 }
+*/
+val fp_gt : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
+function fp_gt(op1, op2) = {
+  fflags     : bits_fflags = undefined;
+  temp_val   : bool = undefined;
+  result_val : bool = undefined;
 
+  (fflags, temp_val) = match 'n {
+    16  => riscv_f16Le(op1, op2),
+    32  => riscv_f32Le(op1, op2),
+    64  => riscv_f64Le(op1, op2)
+  };
+  result_val = (if fflags == 0b10000 then false else ~(temp_val));
+  write_fflags(fflags);
+  result_val
+}
+
+/*
 val fp_ge : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
 function fp_ge(op1, op2) = {
   sign1  : bits(1)  = undefined;
@@ -1294,7 +1477,24 @@ function fp_ge(op1, op2) = {
 
   result
 }
+*/
+val fp_ge : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
+function fp_ge(op1, op2) = {
+  fflags     : bits_fflags = undefined;
+  temp_val   : bool = undefined;
+  result_val : bool = undefined;
 
+  (fflags, temp_val) = match 'n {
+    16  => riscv_f16Lt(op1, op2),
+    32  => riscv_f32Lt(op1, op2),
+    64  => riscv_f64Lt(op1, op2)
+  };
+  result_val = (if fflags == 0b10000 then false else ~(temp_val));
+  write_fflags(fflags);
+  result_val
+}
+
+/*
 val fp_lt : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
 function fp_lt(op1, op2) = {
   sign1  : bits(1)  = undefined;
@@ -1333,7 +1533,22 @@ function fp_lt(op1, op2) = {
 
   result
 }
+*/
+val fp_lt : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
+function fp_lt(op1, op2) = {
+  fflags     : bits_fflags = undefined;
+  result_val : bool = undefined;
 
+  (fflags,result_val) = match 'n {
+    16  => riscv_f16Lt(op1, op2),
+    32  => riscv_f32Lt(op1, op2),
+    64  => riscv_f64Lt(op1, op2)
+  };
+  write_fflags(fflags);
+  result_val
+}
+
+/*
 val fp_le : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
 function fp_le(op1, op2) = {
   sign1  : bits(1)  = undefined;
@@ -1372,7 +1587,22 @@ function fp_le(op1, op2) = {
 
   result
 }
+*/
+val fp_le : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
+function fp_le(op1, op2) = {
+  fflags     : bits_fflags = undefined;
+  result_val : bool = undefined;
 
+  (fflags,result_val) = match 'n {
+    16  => riscv_f16Le(op1, op2),
+    32  => riscv_f32Le(op1, op2),
+    64  => riscv_f64Le(op1, op2)
+  };
+  write_fflags(fflags);
+  result_val
+}
+
+/*
 val fp_mul : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_mul(op1, op2) = {
   sign1  : bits(1)  = undefined;
@@ -1409,6 +1639,20 @@ function fp_mul(op1, op2) = {
 
   result
 }
+*/
+val fp_mul : forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
+function fp_mul(rm_3b, op1, op2) = {
+  fflags : bits_fflags = undefined;
+  result_val : bits('n) = undefined;
+  (fflags, result_val) = match 'n {
+    16  => riscv_f16Mul(rm_3b, op1, op2),
+    32  => riscv_f32Mul(rm_3b, op1, op2),
+    64  => riscv_f64Mul(rm_3b, op1, op2)
+  };
+  write_fflags(fflags);
+  result_val
+}
+
 
 val fpreal_mul : ((FPType, bits(1), real), (FPType, bits(1), real)) -> (FPType, bits(1), real) effect {escape, rreg, undef, wreg}
 function fpreal_mul((type1, sign1, val1), (type2, sign2, val2)) = {
@@ -1477,6 +1721,7 @@ function fp_div(rm_3b, op1, op2) = {
   result_val
 }
 
+/*
 val fp_muladd : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_muladd(op1, op2, opadd) = {
   sign1  : bits(1)  = undefined;
@@ -1535,6 +1780,20 @@ function fp_muladd(op1, op2, opadd) = {
   };
   
   result
+}
+*/
+
+val fp_muladd : forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
+function fp_muladd(rm_3b, op1, op2, opadd) = {
+  fflags : bits_fflags = undefined;
+  result_val : bits('n) = undefined;
+  (fflags, result_val) = match 'n {
+    16  => riscv_f16MulAdd(rm_3b, op1, op2, opadd),
+    32  => riscv_f32MulAdd(rm_3b, op1, op2, opadd),
+    64  => riscv_f64MulAdd(rm_3b, op1, op2, opadd)
+  };
+  write_fflags(fflags);
+  result_val
 }
 
 val fpreal_muladd : ((FPType, bits(1), real), (FPType, bits(1), real), (FPType, bits(1), real)) -> (FPType, bits(1), real) effect {escape, rreg, undef, wreg}
@@ -1607,7 +1866,22 @@ function fpreal_muladd((type1, sign1, val1), (type2, sign2, val2), (typea, signa
   (resulttype, resultsign, resultval)
 }
 
+val fp_nmuladd : forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
+function fp_nmuladd(rm_3b, op1, op2, opadd) = {
+  fflags : bits_fflags = undefined;
+  result_val : bits('n) = undefined;
+  let op1 = negate_fp(op1);
+  (fflags, result_val) = match 'n {
+    16  => riscv_f16MulAdd(rm_3b, op1, op2, opadd),
+    32  => riscv_f32MulAdd(rm_3b, op1, op2, opadd),
+    64  => riscv_f64MulAdd(rm_3b, op1, op2, opadd)
+  };
+  write_fflags(fflags);
+  result_val
+}
 
+
+/*
 val fp_nmuladd : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_nmuladd(op1, op2, opadd) = {
   sign1  : bits(1)  = undefined;
@@ -1667,7 +1941,7 @@ function fp_nmuladd(op1, op2, opadd) = {
   
   result
 }
-
+*/
 val fpreal_nmuladd : ((FPType, bits(1), real), (FPType, bits(1), real), (FPType, bits(1), real)) -> (FPType, bits(1), real) effect {escape, rreg, undef, wreg}
 function fpreal_nmuladd((type1, sign1, val1), (type2, sign2, val2), (typea, signa, vala)) = {
   resultval  : real    = undefined;
@@ -1737,7 +2011,7 @@ function fpreal_nmuladd((type1, sign1, val1), (type2, sign2, val2), (typea, sign
   
   (resulttype, resultsign, resultval)
 }
-
+/*
 val fp_mulsub : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_mulsub(op1, op2, opa) = {
   sign1  : bits(1)  = undefined;
@@ -1797,7 +2071,21 @@ function fp_mulsub(op1, op2, opa) = {
   
   result
 }
+*/
 
+val fp_mulsub : forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
+function fp_mulsub(rm_3b, op1, op2, opsub) = {
+  fflags : bits_fflags = undefined;
+  result_val : bits('n) = undefined;
+  let opsub = negate_fp(opsub);
+  (fflags, result_val) = match 'n {
+    16  => riscv_f16MulAdd(rm_3b, op1, op2, opsub),
+    32  => riscv_f32MulAdd(rm_3b, op1, op2, opsub),
+    64  => riscv_f64MulAdd(rm_3b, op1, op2, opsub)
+  };
+  write_fflags(fflags);
+  result_val
+}
 val fpreal_mulsub : ((FPType, bits(1), real), (FPType, bits(1), real), (FPType, bits(1), real)) -> (FPType, bits(1), real) effect {escape, rreg, undef, wreg}
 function fpreal_mulsub((type1, sign1, val1), (type2, sign2, val2), (typea, signa, vala)) = {
   resultval  : real    = undefined;
@@ -1868,6 +2156,7 @@ function fpreal_mulsub((type1, sign1, val1), (type2, sign2, val2), (typea, signa
   (resulttype, resultsign, resultval)
 }
 
+/*
 val fp_nmulsub : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_nmulsub(op1, op2, opa) = {
   sign1  : bits(1)  = undefined;
@@ -1926,7 +2215,21 @@ function fp_nmulsub(op1, op2, opa) = {
   };
   result
 }
-
+*/
+val fp_nmulsub : forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
+function fp_nmulsub(rm_3b, op1, op2, opsub) = {
+  fflags : bits_fflags = undefined;
+  result_val : bits('n) = undefined;
+  let opsub = negate_fp(opsub);
+  let op1 = negate_fp(op1);
+  (fflags, result_val) = match 'n {
+    16  => riscv_f16MulAdd(rm_3b, op1, op2, opsub),
+    32  => riscv_f32MulAdd(rm_3b, op1, op2, opsub),
+    64  => riscv_f64MulAdd(rm_3b, op1, op2, opsub)
+  };
+  write_fflags(fflags);
+  result_val
+}
 val fpreal_nmulsub : ((FPType, bits(1), real), (FPType, bits(1), real), (FPType, bits(1), real)) -> (FPType, bits(1), real) effect {escape, rreg, undef, wreg}
 function fpreal_nmulsub((type1, sign1, val1), (type2, sign2, val2), (typea, signa, vala)) = {
   resultval  : real    = undefined;

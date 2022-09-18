@@ -50,11 +50,11 @@ function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then {
         result[i] = match funct6 {
-          FVV_VADD     => fp_add(vs2_val[i], vs1_val[i]),
-          FVV_VSUB     => fp_sub(vs2_val[i], vs1_val[i]),
+          FVV_VADD     => fp_add(rm_3b, vs2_val[i], vs1_val[i]),
+          FVV_VSUB     => fp_sub(rm_3b, vs2_val[i], vs1_val[i]),
           FVV_VMIN     => fp_min(vs2_val[i], vs1_val[i]),
           FVV_VMAX     => fp_max(vs2_val[i], vs1_val[i]),
-          FVV_VMUL     => fp_mul(vs2_val[i], vs1_val[i]),
+          FVV_VMUL     => fp_mul(rm_3b, vs2_val[i], vs1_val[i]),
           FVV_VDIV     => fp_div(rm_3b, vs2_val[i], vs1_val[i]),
           FVV_VSGNJ    => vs1_val[i][('m - 1)..('m - 1)] @ vs2_val[i][('m - 2)..0],
           FVV_VSGNJN   => (0b1 ^ vs1_val[i][('m - 1)..('m - 1)]) @ vs2_val[i][('m - 2)..0],
@@ -130,14 +130,14 @@ function clause execute(FVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then {
         result[i] = match funct6 {
-          FVV_VMACC    => fp_muladd(vs1_val[i], vs2_val[i], vd_val[i]),
-          FVV_VNMACC   => fp_nmulsub(vs1_val[i], vs2_val[i], vd_val[i]),
-          FVV_VMSAC    => fp_mulsub(vs1_val[i], vs2_val[i], vd_val[i]),
-          FVV_VNMSAC   => fp_nmuladd(vs1_val[i], vs2_val[i], vd_val[i]),
-          FVV_VMADD    => fp_muladd(vs1_val[i], vd_val[i], vs2_val[i]),
-          FVV_VNMADD   => fp_nmulsub(vs1_val[i], vd_val[i], vs2_val[i]),
-          FVV_VMSUB    => fp_mulsub(vs1_val[i], vd_val[i], vs2_val[i]),
-          FVV_VNMSUB   => fp_nmuladd(vs1_val[i], vd_val[i], vs2_val[i])
+          FVV_VMACC    => fp_muladd(rm_3b, vs1_val[i], vs2_val[i], vd_val[i]),
+          FVV_VNMACC   => fp_nmulsub(rm_3b, vs1_val[i], vs2_val[i], vd_val[i]),
+          FVV_VMSAC    => fp_mulsub(rm_3b, vs1_val[i], vs2_val[i], vd_val[i]),
+          FVV_VNMSAC   => fp_nmuladd(rm_3b, vs1_val[i], vs2_val[i], vd_val[i]),
+          FVV_VMADD    => fp_muladd(rm_3b, vs1_val[i], vd_val[i], vs2_val[i]),
+          FVV_VNMADD   => fp_nmulsub(rm_3b, vs1_val[i], vd_val[i], vs2_val[i]),
+          FVV_VMSUB    => fp_mulsub(rm_3b, vs1_val[i], vd_val[i], vs2_val[i]),
+          FVV_VNMSUB   => fp_nmuladd(rm_3b, vs1_val[i], vd_val[i], vs2_val[i])
         }; 
       };
     };
@@ -885,12 +885,12 @@ function clause execute(FVFTYPE(funct6, vm, vs2, rs1, vd)) = {
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then {
         result[i] = match funct6 {
-          VF_VADD          => fp_add(vs2_val[i], rs1_val),
-          VF_VSUB          => fp_sub(vs2_val[i], rs1_val),
-          VF_VRSUB         => fp_sub(rs1_val, vs2_val[i]),
+          VF_VADD          => fp_add(rm_3b, vs2_val[i], rs1_val),
+          VF_VSUB          => fp_sub(rm_3b, vs2_val[i], rs1_val),
+          VF_VRSUB         => fp_sub(rm_3b, rs1_val, vs2_val[i]),
           VF_VMIN          => fp_min(vs2_val[i], rs1_val),
           VF_VMAX          => fp_max(vs2_val[i], rs1_val),
-          VF_VMUL          => fp_mul(vs2_val[i], rs1_val),
+          VF_VMUL          => fp_mul(rm_3b, vs2_val[i], rs1_val),
           VF_VDIV          => fp_div(rm_3b, vs2_val[i], rs1_val),
           VF_VRDIV         => fp_div(rm_3b, rs1_val, vs2_val[i]),
           VF_VSGNJ         => rs1_val[('m - 1)..('m - 1)] @ vs2_val[i][('m - 2)..0],
@@ -981,14 +981,14 @@ function clause execute(FVFMATYPE(funct6, vm, vs2, rs1, vd)) = {
     foreach (i from 0 to (num_elem - 1)) {
       if mask_helper[i] == true then {
         result[i] = match funct6 {
-          VF_VMACC    => fp_muladd(rs1_val, vs2_val[i], vd_val[i]),
-          VF_VNMACC   => fp_nmulsub(rs1_val, vs2_val[i], vd_val[i]),
-          VF_VMSAC    => fp_mulsub(rs1_val, vs2_val[i], vd_val[i]),
-          VF_VNMSAC   => fp_nmuladd(rs1_val, vs2_val[i], vd_val[i]),
-          VF_VMADD    => fp_muladd(rs1_val, vd_val[i], vs2_val[i]),
-          VF_VNMADD   => fp_nmulsub(rs1_val, vd_val[i], vs2_val[i]),
-          VF_VMSUB    => fp_mulsub(rs1_val, vd_val[i], vs2_val[i]),
-          VF_VNMSUB   => fp_nmuladd(rs1_val, vd_val[i], vs2_val[i])
+          VF_VMACC    => fp_muladd(rm_3b, rs1_val, vs2_val[i], vd_val[i]),
+          VF_VNMACC   => fp_nmulsub(rm_3b, rs1_val, vs2_val[i], vd_val[i]),
+          VF_VMSAC    => fp_mulsub(rm_3b, rs1_val, vs2_val[i], vd_val[i]),
+          VF_VNMSAC   => fp_nmuladd(rm_3b, rs1_val, vs2_val[i], vd_val[i]),
+          VF_VMADD    => fp_muladd(rm_3b, rs1_val, vd_val[i], vs2_val[i]),
+          VF_VNMADD   => fp_nmulsub(rm_3b, rs1_val, vd_val[i], vs2_val[i]),
+          VF_VMSUB    => fp_mulsub(rm_3b, rs1_val, vd_val[i], vs2_val[i]),
+          VF_VNMSUB   => fp_nmuladd(rm_3b, rs1_val, vd_val[i], vs2_val[i])
         };
       };
     };

@@ -158,28 +158,34 @@ mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd)
 val process_rfvv_single: forall 'n 'm, (8 <= 'm <= 64 & 0 <= 'n <= vlen). 
 (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), real) -> Retired effect {escape, rreg, undef, wreg}
 function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem, vsew_bits, lmul) = {
-  let vs2_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vs2);
-  let vm_val   : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
-  let vd_val   : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vd); // only to generate mask_helper
-  result       : vector('n, dec, bits('m))     = undefined;
-  mask_helper  : vector('n, dec, bool)     = undefined;
-  (result, mask_helper) = init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val);
+  let rm_3b   = fcsr.FRM();
+  if rm_3b == 0b101 | rm_3b == 0b110 | rm_3b == 0b111 then {
+    handle_illegal();
+    RETIRE_FAIL
+  } else{
+    let vs2_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vs2);
+    let vm_val   : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+    let vd_val   : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vd); // only to generate mask_helper
+    result       : vector('n, dec, bits('m))     = undefined;
+    mask_helper  : vector('n, dec, bool)     = undefined;
+    (result, mask_helper) = init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val);
 
-  vs1_0 : bits('m) = read_single_element(vsew_bits, 0, lmul, vs1);
-  assert(vsew_bits == 16 | vsew_bits == 32 | vsew_bits == 64 | vsew_bits == 128);
-  foreach (i from 0 to (num_elem - 1)) {
-    if mask_helper[i] == true then {
-      vs1_0 = match funct6 {
-        FVV_VFREDOSUM   => fp_add(vs1_0, vs2_val[i]),
-        FVV_VFREDUSUM   => fp_add(vs1_0, vs2_val[i]),
-        FVV_VFREDMAX    => fp_max(vs1_0, vs2_val[i]),
-        FVV_VFREDMIN    => fp_min(vs1_0, vs2_val[i])
-      };
-    }
-  };
-  
-  write_single_element(vsew_bits, 0, lmul, vd, vs1_0);
-  RETIRE_SUCCESS
+    vs1_0 : bits('m) = read_single_element(vsew_bits, 0, lmul, vs1);
+    assert(vsew_bits == 16 | vsew_bits == 32 | vsew_bits == 64 | vsew_bits == 128);
+    foreach (i from 0 to (num_elem - 1)) {
+      if mask_helper[i] == true then {
+        vs1_0 = match funct6 {
+          FVV_VFREDOSUM   => fp_add(rm_3b, vs1_0, vs2_val[i]),
+          FVV_VFREDUSUM   => fp_add(rm_3b, vs1_0, vs2_val[i]),
+          FVV_VFREDMAX    => fp_max(vs1_0, vs2_val[i]),
+          FVV_VFREDMIN    => fp_min(vs1_0, vs2_val[i])
+        };
+      }
+    };
+
+    write_single_element(vsew_bits, 0, lmul, vd, vs1_0);
+    RETIRE_SUCCESS
+  }
 }
 
 
