@@ -1280,7 +1280,6 @@ function clause execute(VITYPE(funct6, vm, vs2, simm, vd)) = {
      vd_val      == undefined |
      mask_helper == undefined */then {
     status = RETIRE_FAIL;
-    print("status=fail")
   };
 
   if status == RETIRE_SUCCESS then {
@@ -2063,7 +2062,6 @@ function clause execute(MVXMATYPE(funct6, vm, vs2, rs1, vd_or_rd)) = {
      vd_val     == undefined   */
   then {
     status = RETIRE_FAIL;
-    print("status=fail")
   };
 
   if status == RETIRE_SUCCESS then {

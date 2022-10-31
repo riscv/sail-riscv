@@ -109,24 +109,19 @@ function process_vle (vm, vd, load_width_bytes, rs1, emul, num_elem) = {
   (total, mask_helper) = init_masked_result(num_elem, load_width_bytes * 8, emul, vd_val, vm_val);
   
   foreach (i from 0 to (num_elem - 1)) {
-    //print("lala");
     if mask_helper[i] == true then{
       let elem_offset = i * load_width_bytes ; // int
-      //print_int("elem_offset=",elem_offset);
       match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Read(Data), width_type) {
-        Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e) ; status = RETIRE_FAIL; print("fail0") },
+        Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e) ; status = RETIRE_FAIL },
         Ext_DataAddr_OK(vaddr)  => 
           if vcheck_misaligned(vaddr, width_type) then /* vaddr is the address,  when it is true, it's misaligned */
-            { handle_mem_exception(vaddr, E_Load_Addr_Align()); status = RETIRE_FAIL; print("fail1") }
+            { handle_mem_exception(vaddr, E_Load_Addr_Align()); status = RETIRE_FAIL }
           else match translateAddr(vaddr, Read(Data)) {
-            TR_Failure(e, _) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL; print("fail2"); print("vaddr="^BitStr(vaddr)) },
+            TR_Failure(e, _) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL },
             TR_Address(paddr, _) => {
               match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
-                MemValue(result) => {
-                    //print("ok");
-		                total[i] = result; 
-                  },
-                MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL; print("fail3") }
+                MemValue(result) => total[i] = result,
+                MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL }
               }
             }
           }
@@ -264,26 +259,19 @@ function process_vlse (vm, vd, load_width_bytes, rs1, rs2, emul, num_elem) = {
   foreach (i from 0 to (num_elem - 1)) {
     let elem_offset = i * rs2_val;
     if mask_helper[i] == true then {
-      //print("true");
       match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Read(Data), width_type) {
-        Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e) ; status = RETIRE_FAIL /*; print("fail0"）*/},
+        Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e) ; status = RETIRE_FAIL },
         Ext_DataAddr_OK(vaddr)  => 
           if vcheck_misaligned(vaddr, width_type) then /* vaddr is the address,  when it is true, it's misaligned */
-            { handle_mem_exception(vaddr, E_Load_Addr_Align()); status = RETIRE_FAIL /*; print("fail1")*/ }
+            { handle_mem_exception(vaddr, E_Load_Addr_Align()); status = RETIRE_FAIL }
           else match translateAddr(vaddr, Read(Data)) {
-            TR_Failure(e, _) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL/*; print("fail2")*/ },
+            TR_Failure(e, _) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL },
             TR_Address(paddr, _) => {
-              //print("paddr1="^BitStr(paddr));
               match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
-                MemValue(result) => {
-		                total[i] = result; 
-                    //print("result="^BitStr(result));
-                    //print("paddr2="^BitStr(paddr));
-                    //print("vaddr="^BitStr(vaddr));
-                  },
-                MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL /*; print("fail3")*/ }
+                MemValue(result) => total[i] = result,
+                MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL }
               }
-           }
+            }
           }
       }
     }
@@ -297,15 +285,10 @@ function process_vlse (vm, vd, load_width_bytes, rs1, rs2, emul, num_elem) = {
 function clause execute(VLSETYPE(vm, rs2, rs1, width, vd)) = {
   let load_width_bytes  : int = vlewidth_bytesnumber(width);
   let veew_bits : int = load_width_bytes * 8;
-  //print_int("veew_bits=",veew_bits );
   let vsew_bits : int = get_vtype_vsew();
-  //print_int("vsew_bits=",vsew_bits );
   let lmul : real = get_vtype_LMUL();
-  //print_real("lmul=",lmul );
   let emul : real = ( to_real(veew_bits) / to_real(vsew_bits) ) * lmul;
-  //print_real("emul=",emul );
   let num_elem : int  = get_num_elem(emul, veew_bits);
-  //print_int("num_elem=",num_elem  );
 
   assert ( (0 < load_width_bytes) & (load_width_bytes <= 8) );
   assert ( (0 <= num_elem) & (num_elem <= sizeof(vlen)) );
@@ -727,13 +710,8 @@ function process_vlseg (nf, vm, vd, load_width_bytes, rs1, emul, num_elem) = {
   status : Retired  = RETIRE_SUCCESS;
   vd_a = vd;
   vd_t = vd;
-  //print_int("nf_int=",nf);
-  //print("vd="^BitStr(vd));
 
   foreach(a from 0 to (nf - 1)) {
-    //print_int("nftemp=", a);
-    //print_real("emul=", emul);
-    //print("vd_t="^BitStr(vd_t));
     if vd_t == vd_a & a != 0 then vd_t = vd_t + 1; // emul < 1
     let vd_t_val : vector('n, dec, bits('b * 8)) = read_vreg(num_elem, load_width_bytes * 8, emul, vd_t);
     total : vector('n, dec, bits('b * 8)) = undefined;
@@ -743,21 +721,17 @@ function process_vlseg (nf, vm, vd, load_width_bytes, rs1, emul, num_elem) = {
     foreach (i from 0 to (num_elem - 1)) {
       if (mask_helper[i] == true) then {
         let elem_offset = load_width_bytes * (a + i * nf); //int
-        //print_int("elem_offset=", elem_offset);
         match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Read(Data), width_type) {
-          Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e) ; status = RETIRE_FAIL; print("fail0") },
+          Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e) ; status = RETIRE_FAIL },
           Ext_DataAddr_OK(vaddr)  => 
               if vcheck_misaligned(vaddr, width_type) then /* vaddr is the address,  when it is true, it's misaligned */
-                { handle_mem_exception(vaddr, E_Load_Addr_Align()); status = RETIRE_FAIL; print("fail1") }
+                { handle_mem_exception(vaddr, E_Load_Addr_Align()); status = RETIRE_FAIL }
               else match translateAddr(vaddr, Read(Data)) {
-                TR_Failure(e, _) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL; print("fail2") },
+                TR_Failure(e, _) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL },
                 TR_Address(paddr, _) => {
                   match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
-                    MemValue(result) => {
-                        total[i] = result;
-                        //ii = i + 1;
-                    },
-                    MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL; print("fail3") }
+                    MemValue(result) => total[i] = result,
+                    MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL }
                   }
                 }
               }
@@ -778,15 +752,10 @@ function process_vlseg (nf, vm, vd, load_width_bytes, rs1, emul, num_elem) = {
 function clause execute(VLSEGTYPE(nf, vm, rs1, width, vd)) = {
   let load_width_bytes  : int = vlewidth_bytesnumber(width);
   let veew_bits : int = load_width_bytes * 8;
-  //print_int("veew_bits=",veew_bits );
   let vsew_bits : int = get_vtype_vsew();
-  //print_int("vsew_bits=",vsew_bits );
   let lmul : real = get_vtype_LMUL();
-  //print_real("lmul=",lmul );
   let emul : real = ( to_real(veew_bits) / to_real(vsew_bits) ) * lmul;
-  //print_real("emul=",emul );
   let num_elem : int  = get_num_elem(emul, veew_bits);// # of element of each register group
-  //print_int("num_elem=",num_elem  );//16
   let nf_int = nfields_int(nf);
 
   assert ( (0 < load_width_bytes) & (load_width_bytes <= 8) );

@@ -18,7 +18,6 @@ function vcheck_vsew_lmul(vsew_bits, lmul) = {
      vsew_bits > 64  |
      lmul      < 0.125 |
      lmul      > 8.0 then {
-    print("status=fail,invalid double vsew!");
     RETIRE_FAIL
   }
   else {
@@ -58,8 +57,6 @@ val get_start_element : unit -> int effect {escape, rreg, wreg}
 function get_start_element() = {
   start_element     : int = unsigned(vstart);
   vsew_bits : int = get_vtype_vsew();
-  //print("start_element0=" ^ BitStr(to_bits(sizeof(xlen),start_element)));
-  //print("element_width0=" ^ BitStr(to_bits(sizeof(xlen),vsew_bits)));
   /* The use of vstart values greater than the largest element
        index for the current SEW setting is reserved.
      It is recommended that implementations trap if vstart is out of bounds.
@@ -68,9 +65,7 @@ function get_start_element() = {
   if start_element > ((8 * sizeof(vlen) / vsew_bits) - 1) then {
     //handle_illegal()
     start_element = -1;
-    print("illegal start_element or luml")
   };
-  //print("end get");
   start_element
 }
 
@@ -97,8 +92,6 @@ function init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
   let mask_ag       : agtype                    = get_vtype_vma();
   mask_helper       : vector('n, dec, bool)     = undefined;
   result            : vector('n, dec, bits('m)) = undefined;
-  //print_int("start_element",start_element);
-  //print_int("end_element",end_element);
 
   if start_element < 0 then {
     /* start element is not valid */
@@ -110,7 +103,6 @@ function init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
     var real_num_elem : int = undefined;
     if lmul >= 1.0 then {
       real_num_elem = num_elem;
-      //print("init_masked_result: lmul >= 1.0")
     }
     else {
       real_num_elem = floor(lmul * to_real(num_elem))
@@ -127,12 +119,10 @@ function init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
         /* Tail elements defined by vl */
         if tail_ag == UNDISTURBED then {
           result[i] = vd_val[i];
-          //print("undisturbed")
         }
         else if tail_ag == AGNOSTIC then {
           //result[i] = sail_sign_extend(0b1, vsew_bits)
           result[i] = vd_val[i];
-          //print("agnositc")
         };
         mask_helper[i] = false
       }
@@ -140,12 +130,10 @@ function init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
         /* Tail elements defined by lmul < 1 */
         if tail_ag == UNDISTURBED then {
           result[i] = vd_val[i];
-          //print("undisturbed0")
         }
         else if tail_ag == AGNOSTIC then {
           //result[i] = sail_sign_extend(0b1, vsew_bits)
           result[i] = vd_val[i];
-          //print("agnostic0")
         };
         mask_helper[i] = false
       }
@@ -164,10 +152,8 @@ function init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
       else {
         /* Active body elements */
         mask_helper[i] = true;
-        //print_int("i=",i)
       }
-    };
-    //print("end loop")
+    };    
   };
 
   (result, mask_helper)
@@ -500,9 +486,7 @@ function negate_fp (xf) = {
  * fpinf            - get a fp bitvector of pos/neg infinity
  * fpexception      - write a floating-point exception flag to fcsr
  * real_to_fp       - converts a real number to a fp bitvector
- * fp_process_nan*  - checks not-a-number status
  * fp_*             - do operations between fp bitvectors
- * fpreal_*         - do operations between real numbers
  *
  */
 val fp_to_real : forall 'n, 'n in {16, 32, 64, 128}. bits('n) -> (FPType, bits(1), real) effect {undef}
@@ -863,112 +847,6 @@ function real_to_fp(numbits, realval) = {
   result
 }
 
-val fp_process_nan : forall 'n, 'n in {16, 32, 64, 128}. (FPType, bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
-function fp_process_nan(type1, op1) = {
-  topfrac : int      = undefined;
-  result  : bits('n) = undefined;
-  topfrac = match ('n, get_vector_datatype()) {
-    (16, FP_VDATATYPE) => 9,
-    (32, FP_VDATATYPE) => 22,
-    (64, FP_VDATATYPE) => 51,
-    (128, FP_VDATATYPE) => 111
-  };
-  let topfrac = topfrac;
-  assert(0 <= topfrac & topfrac < 'n);
-  result = op1;
-  if type1 == FPSNAN then {
-    result[topfrac] = bitone;
-    fpexception(nvFlag())
-  };
-  result
-}
-
-val fp_process_nan2 : forall 'n, 'n in {16, 32, 64, 128}. (FPType, FPType, bits('n), bits('n)) -> (bool, bits('n)) effect {escape, rreg, undef, wreg}
-function fp_process_nan2(type1, type2, op1, op2) = {
-  done   : bool     = undefined;
-  result : bits('n) = undefined;
-  if type1 == FPSNAN | type1 == FPQNAN then {
-    done   = true;
-    result = fp_process_nan(type1, op1)
-  }
-  else if type2 == FPSNAN | type2 == FPQNAN then {
-    done   = true;
-    result = fp_process_nan(type2, op2)
-  }
-  else {
-    done   = false;
-    result = zeros('n)
-  };
-  (done, result)
-}
-
-val fp_process_nan_cmp : forall 'n, 'n in {16, 32, 64, 128}. (FPType, FPType, bits('n), bits('n)) -> (bool, bool) effect {escape, rreg, undef, wreg}
-function fp_process_nan_cmp(type1, type2, op1, op2) = {
-  done   : bool = undefined;
-  result : bool = undefined;
-  if type1 == FPSNAN | type1 == FPQNAN then {
-    done   = true;
-    result = false
-  }
-  else if type2 == FPSNAN | type2 == FPQNAN then {
-    done   = true;
-    result = false
-  }
-  else {
-    done   = false;
-    result = true
-  };
-
-  if type1 == FPSNAN | type2 == FPSNAN then {
-    fpexception(nvFlag())
-  };
-
-  (done, result)
-}
-
-val fp_process_nan3 : forall 'n, 'n in {16, 32, 64, 128}. (FPType, FPType, FPType, bits('n), bits('n), bits('n)) -> (bool, bits('n)) effect {escape, rreg, undef, wreg}
-function fp_process_nan3(type1, type2, type3, op1, op2, op3) = {
-  done   : bool     = undefined;
-  result : bits('n) = undefined;
-  if type1 == FPSNAN | type1 == FPQNAN then {
-    done   = true;
-    result = fp_process_nan(type1, op1)
-  }
-  else if type2 == FPSNAN | type2 == FPQNAN then {
-    done   = true;
-    result = fp_process_nan(type2, op2)
-  }
-  else if type3 == FPSNAN | type3 == FPQNAN then {
-    done   = true;
-    result = fp_process_nan(type3, op3)
-  }
-  else {
-    done   = false;
-    result = zeros('n)
-  };
-  (done, result)
-}
-
-/* This function is the special NaN processing for floating point max and min. It returns the other operand if one operand is NaN. */
-val fp_process_nan4 : forall 'n, 'n in {16, 32, 64, 128}. (FPType, FPType, bits('n), bits('n)) -> (bool, bits('n)) effect {escape, rreg, undef, wreg}
-function fp_process_nan4(type1, type2, op1, op2) = {
-  done   : bool     = undefined;
-  result : bits('n) = undefined;
-  if type1 == FPSNAN | type1 == FPQNAN then {
-    done   = true;
-    result = op2
-  }
-  else if type2 == FPSNAN | type2 == FPQNAN then {
-    done   = true;
-    result = op1
-  }
-  else {
-    done   = false;
-    result = zeros('n)
-  };
-  (done, result)
-}
-
 val fp_add: forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_add(rm_3b, op1, op2) = {
   fflags : bits_fflags = undefined;
@@ -980,65 +858,6 @@ function fp_add(rm_3b, op1, op2) = {
   };
   write_fflags(fflags);
   result_val
-}
-
-val fpreal_add : ((FPType, bits(1), real), (FPType, bits(1), real)) -> (FPType, bits(1), real) effect {escape, rreg, undef, wreg}
-function fpreal_add((type1, sign1, val1), (type2, sign2, val2)) = {
-  resultval  : real    = undefined;
-  resulttype : FPType  = undefined;
-  resultsign : bits(1) = undefined;
-  if type1 == FPSNAN | type1 == FPQNAN then {
-    resulttype = type1;
-    resultsign = sign1;
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else if type2 == FPSNAN | type2 == FPQNAN then {
-    resulttype = type2;
-    resultsign = sign2;
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else {
-    inf1  : bool = type1 == FPINF;
-    inf2  : bool = type2 == FPINF;
-    zero1 : bool = type1 == FPZERO;
-    zero2 : bool = type2 == FPZERO;
-    if (inf1 & inf2) & sign1 == ~(sign2) then {
-      resultval  = 0.0;
-      resulttype = FPQNAN;
-      resultsign = 0b0;
-      fpexception(nvFlag())
-    }
-    else if inf1 & sign1 == 0b0 | inf2 & sign2 == 0b0 then {
-      resultval  = 0.0;
-      resulttype = FPINF;
-      resultsign = 0b0
-    }
-    else if inf1 & sign1 == 0b1 | inf2 & sign2 == 0b1 then {
-      resultval  = 0.0;
-      resulttype = FPINF;
-      resultsign = 0b1
-    }
-    else if (zero1 & zero2) & sign1 == sign2 then {
-      resultval  = 0.0;
-      resulttype = FPZERO;
-      resultsign = sign1
-    }
-    else {
-      resultval = val1 + val2;
-      if resultval == 0.0 then {
-        resulttype = FPZERO;
-	      resultsign = 0b0
-      }
-      else {
-        resulttype = FPNONZERO;
-	      if resultval >= 0.0 then resultsign = 0b0 else resultsign = 0b1
-      }
-    }
-  };
-
-  (resulttype, resultsign, resultval)
 }
 
 val fp_sub: forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
@@ -1054,107 +873,10 @@ function fp_sub(rm_3b, op1, op2) = {
   result_val
 }
 
-val fpreal_sub : ((FPType, bits(1), real), (FPType, bits(1), real)) -> (FPType, bits(1), real) effect {escape, rreg, undef, wreg}
-function fpreal_sub((type1, sign1, val1), (type2, sign2, val2)) = {
-  resultval  : real    = undefined;
-  resulttype : FPType  = undefined;
-  resultsign : bits(1) = undefined;
-  if type1 == FPSNAN | type1 == FPQNAN then {
-    resulttype = type1;
-    resultsign = sign1;
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else if type2 == FPSNAN | type2 == FPQNAN then {
-    resulttype = type2;
-    resultsign = ~(sign2);
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else {
-    inf1  : bool = type1 == FPINF;
-    inf2  : bool = type2 == FPINF;
-    zero1 : bool = type1 == FPZERO;
-    zero2 : bool = type2 == FPZERO;
-    if (inf1 & inf2) & sign1 == sign2 then {
-      resultval  = 0.0;
-      resulttype = FPQNAN;
-      resultsign = 0b0;
-      fpexception(nvFlag())
-    }
-    else if inf1 & sign1 == 0b0 | inf2 & sign2 == 0b1 then {
-      resultval  = 0.0;
-      resulttype = FPINF;
-      resultsign = 0b0
-    }
-    else if inf1 & sign1 == 0b1 | inf2 & sign2 == 0b0 then {
-      resultval  = 0.0;
-      resulttype = FPINF;
-      resultsign = 0b1
-    }
-    else if (zero1 & zero2) & sign1 == ~(sign2) then {
-      resultval  = 0.0;
-      resulttype = FPZERO;
-      resultsign = sign1
-    }
-    else {
-      resultval = val1 - val2;
-      if resultval == 0.0 then {
-        resulttype = FPZERO;
-	      resultsign = 0b0
-      }
-      else {
-        resulttype = FPNONZERO;
-	      if resultval >= 0.0 then resultsign = 0b0 else resultsign = 0b1
-      }
-    }
-  };
-
-  (resulttype, resultsign, resultval)
-}
-/*
-val fp_min : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
-function fp_min(op1, op2) = {
-  sign1  : bits(1)  = undefined;
-  sign2  : bits(1)  = undefined;
-  type1  : FPType   = undefined;
-  type2  : FPType   = undefined;
-  val1   : real     = undefined;
-  val2   : real     = undefined;
-  result : bits('n) = undefined;
-  done   : bool     = undefined;
-  (type1, sign1, val1) = fp_to_real(op1);
-  (type2, sign2, val2) = fp_to_real(op2);
-  (done, result) = fp_process_nan4(type1, type2, op1, op2);
-  
-  if ~(done) then {
-    mtype  : FPType  = undefined;
-    msign  : bits(1) = undefined;
-    mval   : real    = undefined;
-    if val1 < val2 then (mtype, msign, mval) = (type1, sign1, val1)
-    else (mtype, msign, mval) = (type2, sign2, val2);
-
-    if mtype == FPINF then {
-      result = fpinf(msign)
-    }
-    else if mtype == FPZERO then {
-      msign  = sign1 | sign2;
-      result = fpzero(msign)
-    }
-    else {
-      result = real_to_fp(mval)
-    }
-  };
-  
-  result
-}
-*/
 val fp_min : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_min(op1, op2) = {
-  fflags     : bits_fflags = undefined;
   temp_flags : bits_fflags = undefined;
   op1_lt_op2 : bool = undefined;
-  result_val : bits('n) = undefined;
 
   (temp_flags, op1_lt_op2) = match 'n {
     16  => riscv_f16Lt(op1, op2),
@@ -1162,64 +884,25 @@ function fp_min(op1, op2) = {
     64  => riscv_f64Lt(op1, op2)
   };
 
-  result_val  = if (f_is_NaN(op1) & f_is_NaN(op2)) then canonical_NaN('n)
+  let result_val  = if (f_is_NaN(op1) & f_is_NaN(op2)) then canonical_NaN('n)
                 else if f_is_NaN(op1) then op2
                 else if f_is_NaN(op2) then op1
                 else if (f_is_neg_zero(op1) & f_is_pos_zero(op2)) then op1
                 else if (f_is_neg_zero(op2) & f_is_pos_zero(op1)) then op2
                 else if op1_lt_op2 then op1
                 else op2;
-  if f_is_SNaN(op1) then print("op1\n");
-  if f_is_SNaN(op2) then print("op2\n");
-  fflags = if (f_is_SNaN(op1) | f_is_SNaN(op2)) then nvFlag() else zeros();
-  write_fflags(fflags);
+
+  let fflags = if (f_is_SNaN(op1) | f_is_SNaN(op2)) then nvFlag() else zeros();
+  accrue_fflags(fflags);
+  update_softfloat_fflags(fflags); /* to avoid inconsistency about NaN operands */
+
   result_val
 }
 
-
-/*
-val fp_max : forall 'n, 'n in {16, 32, 64, 128}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
-function fp_max(op1, op2) = {
-  sign1  : bits(1)  = undefined;
-  sign2  : bits(1)  = undefined;
-  type1  : FPType   = undefined;
-  type2  : FPType   = undefined;
-  val1   : real     = undefined;
-  val2   : real     = undefined;
-  result : bits('n) = undefined;
-  done   : bool     = undefined;
-  (type1, sign1, val1) = fp_to_real(op1);
-  (type2, sign2, val2) = fp_to_real(op2);
-  (done, result) = fp_process_nan4(type1, type2, op1, op2);
-  
-  if ~(done) then {
-    mtype  : FPType  = undefined;
-    msign  : bits(1) = undefined;
-    mval   : real    = undefined;
-    if val1 > val2 then (mtype, msign, mval) = (type1, sign1, val1)
-    else (mtype, msign, mval) = (type2, sign2, val2);
-
-    if mtype == FPINF then {
-      result = fpinf(msign)
-    }
-    else if mtype == FPZERO then {
-      msign  = sign1 | sign2;
-      result = fpzero(msign)
-    }
-    else {
-      result = real_to_fp(mval)
-    }
-  };
-  
-  result
-}
-*/
 val fp_max : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_max(op1, op2) = {
-  fflags     : bits_fflags = undefined;
   temp_flags : bits_fflags = undefined;
   op1_lt_op2 : bool = undefined;
-  result_val : bits('n) = undefined;
 
   (temp_flags, op1_lt_op2) = match 'n {
     16  => riscv_f16Lt(op1, op2),
@@ -1227,17 +910,18 @@ function fp_max(op1, op2) = {
     64  => riscv_f64Lt(op1, op2)
   };
 
-  result_val  = if (f_is_NaN(op1) & f_is_NaN(op2)) then canonical_NaN('n)
+  let result_val  = if (f_is_NaN(op1) & f_is_NaN(op2)) then canonical_NaN('n)
                 else if f_is_NaN(op1) then op2
                 else if f_is_NaN(op2) then op1
                 else if (f_is_neg_zero(op1) & f_is_pos_zero(op2)) then op2
                 else if (f_is_neg_zero(op2) & f_is_pos_zero(op1)) then op1
                 else if op1_lt_op2 then op2
                 else op1;
-  if f_is_SNaN(op1) then print("op1\n");
-  if f_is_SNaN(op2) then print("op2\n");
-  fflags = if (f_is_SNaN(op1) | f_is_SNaN(op2)) then nvFlag() else zeros();
-  write_fflags(fflags);
+
+  let fflags = if (f_is_SNaN(op1) | f_is_SNaN(op2)) then nvFlag() else zeros();
+  accrue_fflags(fflags);
+  update_softfloat_fflags(fflags); /* to avoid inconsistency about NaN operands */
+
   result_val
 }
 
@@ -1245,8 +929,7 @@ val fp_eq : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {
 function fp_eq(op1, op2) = {
   fflags     : bits_fflags = undefined;
   result_val : bool = undefined;
-
-  (fflags,result_val) = match 'n {
+  (fflags, result_val) = match 'n {
     16  => riscv_f16Eq(op1, op2),
     32  => riscv_f32Eq(op1, op2),
     64  => riscv_f64Eq(op1, op2)
@@ -1259,14 +942,12 @@ val fp_gt : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {
 function fp_gt(op1, op2) = {
   fflags     : bits_fflags = undefined;
   temp_val   : bool = undefined;
-  result_val : bool = undefined;
-
   (fflags, temp_val) = match 'n {
     16  => riscv_f16Le(op1, op2),
     32  => riscv_f32Le(op1, op2),
     64  => riscv_f64Le(op1, op2)
   };
-  result_val = (if fflags == 0b10000 then false else ~(temp_val));
+  let result_val = (if fflags == 0b10000 then false else ~(temp_val));
   write_fflags(fflags);
   result_val
 }
@@ -1275,14 +956,12 @@ val fp_ge : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {
 function fp_ge(op1, op2) = {
   fflags     : bits_fflags = undefined;
   temp_val   : bool = undefined;
-  result_val : bool = undefined;
-
   (fflags, temp_val) = match 'n {
     16  => riscv_f16Lt(op1, op2),
     32  => riscv_f32Lt(op1, op2),
     64  => riscv_f64Lt(op1, op2)
   };
-  result_val = (if fflags == 0b10000 then false else ~(temp_val));
+  let result_val = (if fflags == 0b10000 then false else ~(temp_val));
   write_fflags(fflags);
   result_val
 }
@@ -1291,8 +970,7 @@ val fp_lt : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {
 function fp_lt(op1, op2) = {
   fflags     : bits_fflags = undefined;
   result_val : bool = undefined;
-
-  (fflags,result_val) = match 'n {
+  (fflags, result_val) = match 'n {
     16  => riscv_f16Lt(op1, op2),
     32  => riscv_f32Lt(op1, op2),
     64  => riscv_f64Lt(op1, op2)
@@ -1305,8 +983,7 @@ val fp_le : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {
 function fp_le(op1, op2) = {
   fflags     : bits_fflags = undefined;
   result_val : bool = undefined;
-
-  (fflags,result_val) = match 'n {
+  (fflags, result_val) = match 'n {
     16  => riscv_f16Le(op1, op2),
     32  => riscv_f32Le(op1, op2),
     64  => riscv_f64Le(op1, op2)
@@ -1326,60 +1003,6 @@ function fp_mul(rm_3b, op1, op2) = {
   };
   write_fflags(fflags);
   result_val
-}
-
-val fpreal_mul : ((FPType, bits(1), real), (FPType, bits(1), real)) -> (FPType, bits(1), real) effect {escape, rreg, undef, wreg}
-function fpreal_mul((type1, sign1, val1), (type2, sign2, val2)) = {
-  resultval  : real    = undefined;
-  resulttype : FPType  = undefined;
-  resultsign : bits(1) = undefined;
-  if type1 == FPSNAN | type1 == FPQNAN then {
-    resulttype = type1;
-    resultsign = sign1;
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else if type2 == FPSNAN | type2 == FPQNAN then {
-    resulttype = type2;
-    resultsign = sign2;
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else {
-    inf1  : bool = type1 == FPINF;
-    inf2  : bool = type2 == FPINF;
-    zero1 : bool = type1 == FPZERO;
-    zero2 : bool = type2 == FPZERO;
-    if inf1 & zero2 | zero1 & inf2 then {
-      resultval  = 0.0;
-      resulttype = FPQNAN;
-      resultsign = 0b0;
-      fpexception(nvFlag())
-    }
-    else if inf1 | inf2 then {
-      resultval  = 0.0;
-      resulttype = FPINF;
-      resultsign = sign1 ^ sign2
-    }
-    else if zero1 | zero2 then {
-      resultval  = 0.0;
-      resulttype = FPZERO;
-      resultsign = sign1 ^ sign2
-    }
-    else {
-      resultval = val1 * val2;
-      if resultval == 0.0 then {
-        resulttype = FPZERO;
-	      resultsign = 0b0
-      }
-      else {
-        resulttype = FPNONZERO;
-	      if resultval >= 0.0 then resultsign = 0b0 else resultsign = 0b1
-      }
-    }
-  };
-
-  (resulttype, resultsign, resultval)
 }
 
 val fp_div : forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
@@ -1408,76 +1031,6 @@ function fp_muladd(rm_3b, op1, op2, opadd) = {
   result_val
 }
 
-val fpreal_muladd : ((FPType, bits(1), real), (FPType, bits(1), real), (FPType, bits(1), real)) -> (FPType, bits(1), real) effect {escape, rreg, undef, wreg}
-function fpreal_muladd((type1, sign1, val1), (type2, sign2, val2), (typea, signa, vala)) = {
-  resultval  : real    = undefined;
-  resulttype : FPType  = undefined;
-  resultsign : bits(1) = undefined;
-  if type1 == FPSNAN | type1 == FPQNAN then {
-    resulttype = type1;
-    resultsign = sign1;
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else if type2 == FPSNAN | type2 == FPQNAN then {
-    resulttype = type2;
-    resultsign = sign2;
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else if typea == FPSNAN | typea == FPQNAN then {
-    resulttype = typea;
-    resultsign = signa;
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else {
-    let inf1  : bool = type1 == FPINF;
-    let inf2  : bool = type2 == FPINF;
-    let infa  : bool = typea == FPINF;
-    let zero1 : bool = type1 == FPZERO;
-    let zero2 : bool = type2 == FPZERO;
-    let zeroa : bool = typea == FPZERO;
-    signp : bits(1) = sign1 ^ sign2;
-    infp  : bool    = inf1 | inf2;
-    zerop : bool    = zero1 | zero2;
-    if (inf1 & zero2 | zero1 & inf2) | (infa & infp) & signa != signp then {
-      resultval  = 0.0;
-      resulttype = FPQNAN;
-      resultsign = 0b0;
-      fpexception(nvFlag())
-    }
-    else if infa & signa == 0b0 | infp & signp == 0b0 then {
-      resultval  = 0.0;
-      resulttype = FPINF;
-      resultsign = 0b0
-    }
-    else if infa & signa == 0b1 | infp & signp == 0b1 then {
-      resultval  = 0.0;
-      resulttype = FPINF;
-      resultsign = 0b1
-    }
-    else if (zeroa & zerop) & signa == signp then {
-      resultval  = 0.0;
-      resulttype = FPZERO;
-      resultsign = signa
-    }
-    else {
-      resultval = (val1 * val2) + vala;
-      if resultval == 0.0 then {
-        resulttype = FPZERO;
-        resultsign = 0b0
-      }
-      else {
-        resulttype = FPNONZERO;
-        if resultval >= 0.0 then resultsign = 0b0 else resultsign = 0b1
-      }
-    }
-  };
-  
-  (resulttype, resultsign, resultval)
-}
-
 val fp_nmuladd : forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_nmuladd(rm_3b, op1, op2, opadd) = {
   fflags : bits_fflags = undefined;
@@ -1490,76 +1043,6 @@ function fp_nmuladd(rm_3b, op1, op2, opadd) = {
   };
   write_fflags(fflags);
   result_val
-}
-
-val fpreal_nmuladd : ((FPType, bits(1), real), (FPType, bits(1), real), (FPType, bits(1), real)) -> (FPType, bits(1), real) effect {escape, rreg, undef, wreg}
-function fpreal_nmuladd((type1, sign1, val1), (type2, sign2, val2), (typea, signa, vala)) = {
-  resultval  : real    = undefined;
-  resulttype : FPType  = undefined;
-  resultsign : bits(1) = undefined;
-  if type1 == FPSNAN | type1 == FPQNAN then {
-    resulttype = type1;
-    resultsign = ~(sign1);
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else if type2 == FPSNAN | type2 == FPQNAN then {
-    resulttype = type2;
-    resultsign = ~(sign2);
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else if typea == FPSNAN | typea == FPQNAN then {
-    resulttype = typea;
-    resultsign = signa;
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else {
-    let inf1  : bool = type1 == FPINF;
-    let inf2  : bool = type2 == FPINF;
-    let infa  : bool = typea == FPINF;
-    let zero1 : bool = type1 == FPZERO;
-    let zero2 : bool = type2 == FPZERO;
-    let zeroa : bool = typea == FPZERO;
-    signp : bits(1) = ~(sign1 ^ sign2);
-    infp  : bool    = inf1 | inf2;
-    zerop : bool    = zero1 | zero2;
-    if (inf1 & zero2 | zero1 & inf2) | (infa & infp) & signa != signp then {
-      resultval  = 0.0;
-      resulttype = FPQNAN;
-      resultsign = 0b0;
-      fpexception(nvFlag())
-    }
-    else if infa & signa == 0b0 | infp & signp == 0b0 then {
-      resultval  = 0.0;
-      resulttype = FPINF;
-      resultsign = 0b0
-    }
-    else if infa & signa == 0b1 | infp & signp == 0b1 then {
-      resultval  = 0.0;
-      resulttype = FPINF;
-      resultsign = 0b1
-    }
-    else if (zeroa & zerop) & signa == signp then {
-      resultval  = 0.0;
-      resulttype = FPZERO;
-      resultsign = signa
-    }
-    else {
-      resultval = negate_real(val1 * val2) + vala;
-      if resultval == 0.0 then {
-        resulttype = FPZERO;
-        resultsign = 0b0
-      }
-      else {
-        resulttype = FPNONZERO;
-        if resultval >= 0.0 then resultsign = 0b0 else resultsign = 0b1
-      }
-    }
-  };
-  
-  (resulttype, resultsign, resultval)
 }
 
 val fp_mulsub : forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
@@ -1575,75 +1058,6 @@ function fp_mulsub(rm_3b, op1, op2, opsub) = {
   write_fflags(fflags);
   result_val
 }
-val fpreal_mulsub : ((FPType, bits(1), real), (FPType, bits(1), real), (FPType, bits(1), real)) -> (FPType, bits(1), real) effect {escape, rreg, undef, wreg}
-function fpreal_mulsub((type1, sign1, val1), (type2, sign2, val2), (typea, signa, vala)) = {
-  resultval  : real    = undefined;
-  resulttype : FPType  = undefined;
-  resultsign : bits(1) = undefined;
-  if type1 == FPSNAN | type1 == FPQNAN then {
-    resulttype = type1;
-    resultsign = sign1;
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else if type2 == FPSNAN | type2 == FPQNAN then {
-    resulttype = type2;
-    resultsign = sign2;
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else if typea == FPSNAN | typea == FPQNAN then {
-    resulttype = typea;
-    resultsign = ~(signa);
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else {
-    let inf1  : bool = type1 == FPINF;
-    let inf2  : bool = type2 == FPINF;
-    let infa  : bool = typea == FPINF;
-    let zero1 : bool = type1 == FPZERO;
-    let zero2 : bool = type2 == FPZERO;
-    let zeroa : bool = typea == FPZERO;
-    signp : bits(1) = sign1 ^ sign2;
-    infp  : bool    = inf1 | inf2;
-    zerop : bool    = zero1 | zero2;
-    if (inf1 & zero2 | zero1 & inf2) | (infa & infp) & signa != signp then {
-      resultval  = 0.0;
-      resulttype = FPQNAN;
-      resultsign = 0b0;
-      fpexception(nvFlag())
-    }
-    else if infa & signa == 0b1 | infp & signp == 0b0 then {
-      resultval  = 0.0;
-      resulttype = FPINF;
-      resultsign = 0b0
-    }
-    else if infa & signa == 0b0 | infp & signp == 0b1 then {
-      resultval  = 0.0;
-      resulttype = FPINF;
-      resultsign = 0b1
-    }
-    else if (zeroa & zerop) & ~(signa) == signp then {
-      resultval  = 0.0;
-      resulttype = FPZERO;
-      resultsign = signp
-    }
-    else {
-      resultval = (val1 * val2) - vala;
-      if resultval == 0.0 then {
-        resulttype = FPZERO;
-        resultsign = 0b0
-      }
-      else {
-        resulttype = FPNONZERO;
-        if resultval >= 0.0 then resultsign = 0b0 else resultsign = 0b1
-      }
-    }
-  };
-  
-  (resulttype, resultsign, resultval)
-}
 
 val fp_nmulsub : forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_nmulsub(rm_3b, op1, op2, opsub) = {
@@ -1658,75 +1072,6 @@ function fp_nmulsub(rm_3b, op1, op2, opsub) = {
   };
   write_fflags(fflags);
   result_val
-}
-val fpreal_nmulsub : ((FPType, bits(1), real), (FPType, bits(1), real), (FPType, bits(1), real)) -> (FPType, bits(1), real) effect {escape, rreg, undef, wreg}
-function fpreal_nmulsub((type1, sign1, val1), (type2, sign2, val2), (typea, signa, vala)) = {
-  resultval  : real    = undefined;
-  resulttype : FPType  = undefined;
-  resultsign : bits(1) = undefined;
-  if type1 == FPSNAN | type1 == FPQNAN then {
-    resulttype = type1;
-    resultsign = ~(sign1);
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else if type2 == FPSNAN | type2 == FPQNAN then {
-    resulttype = type2;
-    resultsign = ~(sign2);
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else if typea == FPSNAN | typea == FPQNAN then {
-    resulttype = typea;
-    resultsign = ~(signa);
-    resultval  = 0.0;
-    fpexception(nvFlag())
-  }
-  else {
-    let inf1  : bool = type1 == FPINF;
-    let inf2  : bool = type2 == FPINF;
-    let infa  : bool = typea == FPINF;
-    let zero1 : bool = type1 == FPZERO;
-    let zero2 : bool = type2 == FPZERO;
-    let zeroa : bool = typea == FPZERO;
-    signp : bits(1) = ~(sign1 ^ sign2);
-    infp  : bool    = inf1 | inf2;
-    zerop : bool    = zero1 | zero2;
-    if (inf1 & zero2 | zero1 & inf2) | (infa & infp) & signa != signp then {
-      resultval  = 0.0;
-      resulttype = FPQNAN;
-      resultsign = 0b0;
-      fpexception(nvFlag())
-    }
-    else if infa & signa == 0b1 | infp & signp == 0b0 then {
-      resultval  = 0.0;
-      resulttype = FPINF;
-      resultsign = 0b0
-    }
-    else if infa & signa == 0b0 | infp & signp == 0b1 then {
-      resultval  = 0.0;
-      resulttype = FPINF;
-      resultsign = 0b1
-    }
-    else if (zeroa & zerop) & ~(signa) == signp then {
-      resultval  = 0.0;
-      resulttype = FPZERO;
-      resultsign = signp
-    }
-    else {
-      resultval = negate_real(val1 * val2) - vala;
-      if resultval == 0.0 then {
-        resulttype = FPZERO;
-        resultsign = 0b0
-      }
-      else {
-        resulttype = FPNONZERO;
-        if resultval >= 0.0 then resultsign = 0b0 else resultsign = 0b1
-      }
-    }
-  };
-  
-  (resulttype, resultsign, resultval)
 }
 
 val fp_class : forall 'n, 'n in {16, 32, 64, 128}. bits('n) -> bits('n) effect {undef}
