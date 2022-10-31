@@ -336,23 +336,22 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
  * handled (if any), and the privilege it should be handled at.
  */
 function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege)) = {
-  /* If we don't have different privilege levels, we don't need to check delegation.
-   * Absence of U-mode implies absence of S-mode.
-   */
-  if (~ (haveUsrMode())) | ((~ (haveSupMode())) & (~ (haveNExt()))) then {
-    assert(priv == Machine, "invalid current privilege");
-    let enabled_pending = mip.bits() & mie.bits();
-    match findPendingInterrupt(enabled_pending) {
-      Some(i) => let r = (i, Machine) in Some(r),
-      None()  => None()
-    }
-  } else {
+  if (haveSupMode() | haveNExt()) then {
     match getPendingSet(priv) {
       None()      => None(),
       Some(ip, p) => match findPendingInterrupt(ip) {
                        None()  => None(),
                        Some(i) => let r = (i, p) in Some(r)
                      }
+    }
+  } else {
+    /* If we don't have different privilege levels, we don't need to check
+     * delegation.
+     */
+    let enabled_pending = mip.bits() & mie.bits();
+    match (mstatus.MIE(), findPendingInterrupt(enabled_pending)) {
+      (0b1, Some(i)) => let r = (i, Machine) in Some(r),
+      (_, _)         => None()
     }
   }
 }
