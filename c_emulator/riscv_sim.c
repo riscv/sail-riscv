@@ -75,6 +75,13 @@ bool config_print_reg = true;
 bool config_print_mem_access = true;
 bool config_print_platform = true;
 bool config_print_rvfi = false;
+int config_use_boot_rom = 
+#ifdef NO_BOOT_ROM
+false
+#else
+true
+#endif
+;
 
 void set_config_print(char *var, bool val) {
   if (var == NULL || strcmp("all", var) == 0) {
@@ -130,6 +137,8 @@ static struct option options[] = {
   {"no-trace",                    optional_argument, 0, 'V'},
   {"inst-limit",                  required_argument, 0, 'l'},
   {"enable-zfinx",                no_argument,       0, 'x'},
+  {"boot-rom",                    no_argument, &config_use_boot_rom, true},
+  {"no-boot-rom",                 no_argument, &config_use_boot_rom, false},
 #ifdef SAILCOV
   {"sailcov-file",                required_argument, 0, 'c'},
 #endif
@@ -145,7 +154,10 @@ static void print_usage(const char *argv0, int ec)
 #endif
   struct option *opt = options;
   while (opt->name) {
-    fprintf(stdout, "\t -%c\t --%s\n", (char)opt->val, opt->name);
+    if (opt->flag == NULL)
+      fprintf(stdout, "\t -%c\t --%s\n", (char)opt->val, opt->name);
+    else
+      fprintf(stdout, "\t\t --%s\n", opt->name);
     opt++;
   }
   exit(ec);
@@ -550,7 +562,11 @@ void init_sail(uint64_t elf_entry)
     zPC = elf_entry;
   } else
 #endif
-  init_sail_reset_vector(elf_entry);
+  if (config_use_boot_rom) {
+    init_sail_reset_vector(elf_entry);
+  } else {
+    zPC = elf_entry;
+  }
 
   // this is probably unnecessary now; remove
   if (!rv_enable_rvc) z_set_Misa_C(&zmisa, 0);
