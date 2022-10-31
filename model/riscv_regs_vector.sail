@@ -146,18 +146,6 @@ function rV r = {
     v
 }
 
-/*I don't know whether do we need this. What's that means???
-$ifdef RVFI_DII
-val rvfi_wV : forall 'n, 0 <= 'n < 32. (regno('n), vregtype) -> unit effect {wreg}
-function rvfi_wV (r,v) = {
-  rvfi_exec->rvfi_rd_wdata() = EXTZ(v);
-  rvfi_exec->rvfi_rd_addr() = to_bits(8,r);
-}
-$else
-val rvfi_wV : forall 'n, 0 <= 'n < 32. (regno('n), vregtype) -> unit
-function rvfi_wV (r,v) = ()
-$endif*/
-
 val wV : forall 'n, 0 <= 'n < 32. (regno('n), vregtype) -> unit effect {rreg, wreg, escape}
 function wV (r, in_v) = {
   let v = in_v;
@@ -197,12 +185,9 @@ function wV (r, in_v) = {
     _ => assert(false, "invalid vector register number")
   };
 
-/*????*待定*/
-  //rvfi_wV(r, in_v);
   if   get_config_print_reg()
   then {
     print_reg("v" ^ string_of_int(r) ^ " <- " ^ VRegStr(v));
-    /*if 0 <= r & r < 8 then print_sar(r);*/
   }
 }
 
@@ -382,23 +367,16 @@ function read_vreg(num_elem, vsew_bits, lmul, vrid) = {
       }
     }
     else {
-      //print("lmul>=1");
       foreach (i_lmul from 0 to (lmul_int - 1)) {
         let r_start_i : int = i_lmul * num_elem_single;
         let r_end_i   : int = r_start_i + num_elem_single - 1;
-        //print_int("r_start_i=", r_start_i);
-        //print_int("r_end_i=", r_end_i);
-        //print_real("adjusted_luml=", adjusted_lmul);
         let vrid_lmul     : regidx = vrid + to_bits(5, i_lmul);
         let single_result : vector('num_elem_single, dec, bits('m)) = read_single_vreg(num_elem_single, vsew_bits, vrid_lmul);
-        //print("finish read_single");
         foreach (r_i from r_start_i to r_end_i) {
           let s_i : int = r_i - r_start_i;
           assert(0 <= r_i & r_i < num_elem);
           assert(0 <= s_i & s_i < num_elem_single);
           result[r_i] = single_result[s_i];
-          //print("single_result=" ^ BitStr(single_result[s_i]));
-          //print("result=" ^ BitStr(result[r_i]));
         }
       }
     }
@@ -475,90 +453,6 @@ function get_num_elem(lmul, vsew_bits) = {
   num_elem
 }
 
-/* This is an alternate read_vreg that does all register reads in one function
-val read_vreg : forall 'n 'm, 'm >= 8. (int('n), int('m), real, regidx) -> vector('n, dec, bits('m)) effect {escape, rreg, undef}
-function read_vreg(num_elem, vsew_bits, lmul, vrid) = {
-  // num_elem should already have lmul taken into account
-  // num_elem = (vlen / vsew_bits) * lmul
-  
-  assert(sizeof(vlen) >= ('m));
-  var result : vector('n, dec, bits('m)) = undefined;
-
-  if (lmul >= 1.0) then {
-    let num_elem_single : int = floor(to_real(num_elem) / lmul);
-    let lmul_int        : int = floor(lmul);
-
-    foreach (i_lmul from 0 to (lmul_int - 1)) {
-      let vrid_lmul : regidx   = vrid + to_bits(5, i_lmul);
-      let bv        : vregtype = V(vrid_lmul);
-
-      let r_start_i : int = i_lmul * num_elem_single;
-      let r_end_i   : int = r_start_i + num_elem_single - 1;
-      foreach (r_i from r_start_i to r_end_i) {
-        assert(0 <= r_i & r_i < num_elem);
-        let s_start_i : int = r_i - r_start_i;
-	result[r_i] = result[r_i] | slice(bv, s_start_i, vsew_bits)
-      }
-    };
-  }
-  else {
-    let bv : vregtype = V(vrid);
-    foreach (i from 0 to (num_elem - 1)) {
-      let start_i : int = i * vsew_bits;
-      result[i] = result[i] | slice(bv, start_i, vsew_bits)
-    }
-  };
-
-  result
-}
-*/
-
-/* This is an alternate write_vreg that does all register reads/writes in one function
-val write_vreg : forall 'n 'm, 'm >= 8. (int('n), int('m), real, regidx, vector('n, dec, bits('m))) -> unit effect {escape, rreg, wreg, undef}
-function write_vreg(num_elem, vsew_bits, lmul, vrid, vec) = {
-  assert(sizeof(vlen) >= ('m));
-
-  if (lmul >= 1.0) then {
-    let num_elem_single : int = floor(to_real(num_elem) / lmul);
-    let lmul_int        : int = floor(lmul);
-
-    foreach (i_lmul from 0 to (lmul_int - 1)) {
-      var result    : vregtype = zeros(sizeof(vlen));
-      let vrid_lmul : regidx   = vrid + to_bits(5, i_lmul);
-
-      let r_start_i : int = i_lmul * num_elem_single;
-      let r_end_i   : int = r_start_i + num_elem_single - 1;
-      foreach (r_i from r_end_i downto r_start_i) {
-        assert(0 <= r_i & r_i < num_elem);
-	result = result << vsew_bits;
-	result = result | sail_zero_extend(vec[r_i], sizeof(vlen))
-      };
-
-      V(vrid_lmul) = result
-    }
-  }
-  else {
-    let num_elem_single  : int = floor(to_real(num_elem) / lmul);
-    let 'num_elem_single : int = num_elem_single;
-    let old_vec : vector('num_elem_single, dec, bits('m)) = read_vreg(num_elem_single, vsew_bits, 1.0, vrid);
-    var result  : vregtype = zeros(sizeof(vlen));
-    
-    foreach (i from (num_elem_single - 1) downto 0) {
-      result = result << vsew_bits;
-      
-      if (i < num_elem) then {
-	result = result | sail_zero_extend(vec[i], sizeof(vlen))
-      }
-      else {
-	result = result | sail_zero_extend(old_vec[i], sizeof(vlen))
-      }
-    };
-
-    V(vrid) = result
-  }
-}
-*/
-
 /* n = vreg number of elements, m = vreg width in bits (# of an element's bits)*/
 /* n should have LMUL taken into account: num_elem = lmul * vlen/vsew */
 val read_vmask : forall 'n, 0 <= 'n <= vlen. (int('n), bits(1), regidx) -> vector('n, dec, bool) effect {escape, rreg, undef}
@@ -569,7 +463,6 @@ function read_vmask(n, vm, vrid) = {
   foreach (i from 0 to (n - 1)) {
     if vm == 0b1 then {
       result[i] = true
-      //print("no mask")
     }
     else {
       result[i] = bit_to_bool(vreg_val[i])
