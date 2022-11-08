@@ -6,3 +6,5 @@ _build/
 _sbuild/
 *.o
 *.a
+c_emulator/riscv_sim_*
+z3_problems

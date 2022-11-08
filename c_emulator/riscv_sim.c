@@ -115,6 +115,7 @@ static struct option options[] = {
   {"disable-compressed",          no_argument,       0, 'C'},
   {"disable-writable-misa",       no_argument,       0, 'I'},
   {"disable-fdext",               no_argument,       0, 'F'},
+  {"disable-vector",              no_argument,       0, 'W'},
   {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'},
   {"device-tree-blob",            required_argument, 0, 'b'},
   {"terminal-log",                required_argument, 0, 't'},
@@ -225,6 +226,7 @@ char *process_args(int argc, char **argv)
                     "N"
                     "I"
                     "F"
+                    "W"
                     "i"
                     "s"
                     "p"
@@ -277,6 +279,10 @@ char *process_args(int argc, char **argv)
     case 'F':
       fprintf(stderr, "disabling floating point (F and D extensions).\n");
       rv_enable_fdext = false;
+      break;
+    case 'W':
+      fprintf(stderr, "disabling RVV vector instructions.\n");
+      rv_enable_rvv = false;
       break;
     case 'i':
       fprintf(stderr, "enabling storing illegal instruction bits in mtval.\n");
