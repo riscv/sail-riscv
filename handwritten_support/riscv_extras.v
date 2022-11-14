@@ -149,20 +149,6 @@ match vs with
 | (h::_) => returnm h
 | _ => Fail "empty list in internal_pick"
 end.
-Definition undefined_string {rv e} (_:unit) : monad rv string e := returnm ""%string.
-Definition undefined_unit {rv e} (_:unit) : monad rv unit e := returnm tt.
-Definition undefined_int {rv e} (_:unit) : monad rv Z e := returnm (0:ii).
-(*val undefined_vector : forall 'rv 'a 'e. integer -> 'a -> monad 'rv (list 'a) 'e*)
-Definition undefined_vector {rv a e} len (u : a) `{ArithFact (len >=? 0)} : monad rv (vec a len) e := returnm (vec_init u len).
-(*val undefined_bitvector : forall 'rv 'a 'e. Bitvector 'a => integer -> monad 'rv 'a 'e*)
-Definition undefined_bitvector {rv e} len `{ArithFact (len >=? 0)} : monad rv (mword len) e := returnm (mword_of_int 0).
-(*val undefined_bits : forall 'rv 'a 'e. Bitvector 'a => integer -> monad 'rv 'a 'e*)
-Definition undefined_bits {rv e} := @undefined_bitvector rv e.
-Definition undefined_bit {rv e} (_:unit) : monad rv bitU e := returnm BU.
-(*Definition undefined_real {rv e} (_:unit) : monad rv real e := returnm (realFromFrac 0 1).*)
-Definition undefined_range {rv e} i j `{ArithFact (i <=? j)} : monad rv {z : Z & ArithFact (i <=? z <=? j)} e := returnm (build_ex i).
-Definition undefined_atom {rv e} i : monad rv Z e := returnm i.
-Definition undefined_nat {rv e} (_:unit) : monad rv Z e := returnm (0:ii).
 
 Definition skip {rv e} (_:unit) : monad rv unit e := returnm tt.
 
