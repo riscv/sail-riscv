@@ -380,6 +380,17 @@ endif
 
 generated_definitions/coq/$(ARCH)/riscv.vo: generated_definitions/coq/$(ARCH)/riscv_types.vo handwritten_support/riscv_extras.vo handwritten_support/mem_metadata.vo
 
+riscv_coq_install:
+	if [ ! -f generated_definitions/coq/RV64/riscv.v ]; then echo RV64 has not been built; false; fi
+	if [ ! -f generated_definitions/coq/RV32/riscv.v ]; then echo RV32 has not been built; false; fi
+	install -d `coqc -where`/user-contrib/Riscv_common
+	install -d `coqc -where`/user-contrib/RV64
+	install -d `coqc -where`/user-contrib/RV32
+	install handwritten_support/*.v* `coqc -where`/user-contrib/Riscv_common
+	install generated_definitions/coq/RV64/* `coqc -where`/user-contrib/RV64
+	install generated_definitions/coq/RV32/* `coqc -where`/user-contrib/RV32
+.PHONY: riscv_coq_install
+
 echo_rmem_srcs:
 	echo $(SAIL_RMEM_SRCS)
 
