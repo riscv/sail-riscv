@@ -10,7 +10,7 @@ mapping maybe_vmask : string <-> bits(1) = {
   sep() ^ "v0.t"  <-> 0b0
 }
 
-/* Check for valid vew and lmul values */
+/* Check for valid vsew and lmul values */
 val vcheck_vsew_lmul : (int, real) -> Retired
 function vcheck_vsew_lmul(vsew_bits, lmul) = {
   if  vsew_bits < 8     |
