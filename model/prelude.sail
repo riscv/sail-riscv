@@ -101,7 +101,7 @@ val update_subrange = {ocaml: "update_subrange", interpreter: "update_subrange",
 val vector_concat = {ocaml: "append", lem: "append_list", coq: "vec_concat"} : forall ('n : Int) ('m : Int) ('a : Type).
   (vector('n, dec, 'a), vector('m, dec, 'a)) -> vector('n + 'm, dec, 'a)
 
-overload append = {vector_concat, bitvector_concat}
+overload append = {vector_concat}
 
 val not_bit : bit -> bit
 
@@ -119,9 +119,9 @@ function neq_anything (x, y) = not_bool(x == y)
 
 overload operator != = {neq_vec, neq_anything}
 
-overload operator & = {and_vec, and_bool}
+overload operator & = {and_vec}
 
-overload operator | = {or_vec, or_bool}
+overload operator | = {or_vec}
 
 val string_of_int = {c: "string_of_int", ocaml: "string_of_int", interpreter: "string_of_int", lem: "stringFromInteger", coq: "string_of_int"} : int -> string
 
@@ -139,8 +139,6 @@ val xor_vec = {c: "xor_bits", _: "xor_vec"} : forall 'n. (bits('n), bits('n)) ->
 
 val int_power = {ocaml: "int_power", interpreter: "int_power", lem: "pow", coq: "pow", c: "pow_int"} : (int, int) -> int
 
-val real_power = {ocaml: "real_power", interpreter: "real_power", lem: "realPowInteger", c: "real_power"} : (real, int) -> real
-
 val xor_bool : (bool, bool) -> bool
 function xor_bool(b1, b2) = {
   match (b1, b2) {
@@ -151,7 +149,7 @@ function xor_bool(b1, b2) = {
   }
 }
 
-overload operator ^ = {xor_vec, int_power, concat_str, real_power, xor_bool}
+overload operator ^ = {xor_vec, int_power, concat_str, xor_bool}
 
 val sub_vec = {c: "sub_bits", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
 

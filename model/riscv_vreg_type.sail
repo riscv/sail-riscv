@@ -8,21 +8,6 @@ type vregtype = vreglenbits
 val VRegStr : vregtype -> string
 function VRegStr(r) = BitStr(r)
 
-/* floating point types */
-
-enum FPType = {
-  FPNONZERO,
-  FPZERO,
-  FPINF,
-  FPQNAN,
-  FPSNAN
-}
-
-enum VDATATYPE    = { FP_VDATATYPE }
-
-val get_vector_datatype : unit -> VDATATYPE
-function get_vector_datatype() = FP_VDATATYPE
-
 /* vector instruction types */
 
 enum vsetop       = { VSETVLI, VSETVL }

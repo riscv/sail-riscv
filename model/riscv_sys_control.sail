@@ -598,19 +598,19 @@ function init_sys() -> unit = {
   minstret_written   = false;
 
   /* initialize vector csrs */
-  vstart             = sail_zero_extend(0b0, 9);
+  vstart             = EXTZ(0b0);
   vxsat              = 0b0;
   vxrm               = 0b00;
   vcsr->vxrm()       = vxrm;
   vcsr->vxsat()      = vxsat;
-  vl                 = sail_zero_extend(0b10000, sizeof(xlen)); /* the default value is 16 */
+  vl                 = EXTZ(0b10000); /* the default value is 16 */
   vtype->vill()      = 0b0;
-  vtype->reserved()  = sail_zero_extend(0b0, (((sizeof(xlen) - 2) - 8) + 1));
+  vtype->reserved()  = EXTZ(0b0);
   vtype->vma()       = 0b0;
   vtype->vta()       = 0b0;
   vtype->vsew()      = 0b000;
   vtype->vlmul()     = 0b000;
-  vlenb              = sail_zero_extend(0b0, sizeof(xlen)) ; 
+  vlenb              = EXTZ(0b0) ; 
 
   init_pmp();
 
