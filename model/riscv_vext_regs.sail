@@ -149,9 +149,11 @@ function wV (r, in_v) = {
     _ => assert(false, "invalid vector register number")
   };
 
+  let  vlen : int = get_vlen();
+  assert(0 < vlen & vlen <= sizeof(vlenmax));
   if   get_config_print_reg()
   then {
-    print_reg("v" ^ string_of_int(r) ^ " <- " ^ VRegStr(v));
+    print_reg("v" ^ string_of_int(r) ^ " <- " ^ BitStr(v[vlen - 1 .. 0]));
   }
 }
 
@@ -214,8 +216,9 @@ function ext_write_vcsr (vxrm_val, vxsat_val) = {
 }
 
 /* num_elem means max(VLMAX,VLEN/SEW)) according to Section 5.4 of RVV spec */
-val get_num_elem : (real, int) -> int effect {undef}
+val get_num_elem : (real, int) -> int effect {rreg, undef}
 function get_num_elem(lmul, vsew_bits) = {
+  let vlen     : int = get_vlen();
   var num_elem : int = undefined;
   if lmul >= 1.0 then {
     num_elem = floor(lmul) * vlen / vsew_bits;
@@ -259,6 +262,8 @@ function write_single_vreg(num_elem, sew, vrid, v) = {
 /* Reads multiple vregs into a single element */
 val read_mult_vreg : forall 'n 'm, 'n >= 0. (int('n), int('m), regidx) -> bits('m) effect {escape, rreg}
 function read_mult_vreg(num_vreg, num_bits, vrid) = {
+  let vlen : int = get_vlen();
+  assert(0 < vlen & vlen <= sizeof(vlenmax));
   assert('m >= vlen);
   var result : bits('m) = zeros(num_bits);
 
@@ -276,6 +281,8 @@ function read_mult_vreg(num_vreg, num_bits, vrid) = {
 /* Writes a single element into multiple vregs */
 val write_mult_vreg : forall 'n 'm, 'n >= 0. (int('n), int('m), regidx, bits('m)) -> unit effect {escape, rreg, wreg}
 function write_mult_vreg(num_vreg, num_bits, vrid, bv) = {
+  let vlen : int = get_vlen();
+  assert(0 < vlen & vlen <= sizeof(vlenmax));
   assert('m >= vlen);
   foreach (i from (num_vreg - 1) downto 0) {
     let vrid_lmul : regidx   = vrid + to_bits(5, i);
@@ -287,8 +294,9 @@ function write_mult_vreg(num_vreg, num_bits, vrid, bv) = {
 /* The general vreg reading operation with num_elem as max(VLMAX,VLEN/SEW)) */
 val read_vreg : forall 'n 'm, 8 <= 'm <= 64. (int('n), int('m), real, regidx) -> vector('n, dec, bits('m)) effect {escape, rreg, undef}
 function read_vreg(num_elem, vsew_bits, lmul, vrid) = {
-  var result : vector('n, dec, bits('m)) = undefined;
-  let lmul_int    : int = if lmul < 1.0 then 1 else floor(lmul);
+  var result   : vector('n, dec, bits('m)) = undefined;
+  let vlen     : int = get_vlen();
+  let lmul_int : int = if lmul < 1.0 then 1 else floor(lmul);
 
   /* Check for valid vrid */
   if lmul > 1.0 & (unsigned(vrid) + floor(lmul)) > 31 then {
@@ -336,8 +344,9 @@ function read_vreg(num_elem, vsew_bits, lmul, vrid) = {
 /* Single element reading operation */
 val read_single_element : forall 'm 'x, 8 <= 'm <= 128. (int('m), int('x), real, regidx) -> bits('m)  effect {escape, rreg, undef}
 function read_single_element(elem_width_bits, index, emul, vrid) = {
-  real_vrid : regidx = vrid;
+  real_vrid  : regidx = vrid;
   real_index : int = index;
+  let vlen   : int = get_vlen();
   let 'elem_per_reg : int = vlen / elem_width_bits;
   if emul > 1.0 then {
     real_vrid = vrid + to_bits(5, index / 'elem_per_reg);
@@ -353,7 +362,8 @@ function read_single_element(elem_width_bits, index, emul, vrid) = {
 /* The general vreg writing operation with num_elem as max(VLMAX,VLEN/SEW)) */
 val write_vreg : forall 'n 'm, 8 <= 'm <= 128. (int('n), int('m), real, regidx, vector('n, dec, bits('m))) -> unit effect {escape, rreg, undef, wreg} 
 function write_vreg(num_elem, vsew_bits, lmul, vrid, vec) = {
-  let lmul_int    : int = if lmul < 1.0 then 1 else floor(lmul);
+  let vlen     : int = get_vlen();
+  let lmul_int : int = if lmul < 1.0 then 1 else floor(lmul);
 
   if vsew_bits > vlen then {
     /* Multiple vregs per element */
@@ -385,8 +395,9 @@ function write_vreg(num_elem, vsew_bits, lmul, vrid, vec) = {
 /* Single element writing operation */
 val write_single_element : forall 'm 'x, 8 <= 'm <= 128. (int('m), int('x), real, regidx, bits('m)) -> unit  effect {escape, rreg, undef, wreg}
 function write_single_element(elem_width_bits, index, emul, vrid, value) = {
-  real_vrid : regidx = vrid;
+  real_vrid  : regidx = vrid;
   real_index : int = index;
+  let vlen   : int = get_vlen();
   let 'elem_per_reg : int = vlen / elem_width_bits;
   if emul > 1.0 then {
     real_vrid = vrid + to_bits(5, index / 'elem_per_reg);
@@ -408,7 +419,9 @@ function write_single_element(elem_width_bits, index, emul, vrid, value) = {
 /* Mask register reading operation with num_elem as max(VLMAX,VLEN/SEW)) */
 val read_vmask : forall 'n, 'n >= 0. (int('n), bits(1), regidx) -> vector('n, dec, bool) effect {escape, rreg, undef}
 function read_vmask(num_elem, vm, vrid) = {
+  let vlen : int = get_vlen();
   assert('n <= vlen);
+  assert(0 < num_elem & num_elem <= sizeof(vlenmax));
   let vreg_val : vregtype = V(vrid);
   var result   : vector('n, dec, bool) = undefined;
 
@@ -427,7 +440,9 @@ function read_vmask(num_elem, vm, vrid) = {
 /* This is a special version of read_vmask for carry/borrow instructions, where vm=1 means no carry */
 val read_vmask_carry : forall 'n, 'n >= 0. (int('n), bits(1), regidx) -> vector('n, dec, bool) effect {escape, rreg, undef}
 function read_vmask_carry(num_elem, vm, vrid) = {
+  let vlen : int = get_vlen();
   assert('n <= vlen);
+  assert(0 < num_elem & num_elem <= sizeof(vlenmax));
   let vreg_val : vregtype = V(vrid);
   var result   : vector('n, dec, bool) = undefined;
 
@@ -446,7 +461,10 @@ function read_vmask_carry(num_elem, vm, vrid) = {
 /* Mask register writing operation with num_elem as max(VLMAX,VLEN/SEW)) */
 val write_vmask : forall 'n, 'n >= 0. (int('n), regidx, vector('n, dec, bool)) -> unit effect {escape, rreg, undef, wreg}
 function write_vmask(num_elem, vrid, v) = {
+  let vlen : int = get_vlen();
   assert('n <= vlen);
+  assert(0 < vlen & vlen <= sizeof(vlenmax));
+  assert(0 < num_elem & num_elem <= sizeof(vlenmax));
   let vreg_val : vregtype = V(vrid);
   var result   : vregtype = undefined;
 

@@ -55,6 +55,7 @@ function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
   SEW_new  : int  = undefined;
   LMUL_new : real = undefined;
 
+  let vlen      : int  = get_vlen();
   let LMUL_ori  : real = get_vtype_LMUL();
   let SEW_ori   : int  = get_vtype_vsew();
   let ratio_ori : real = to_real(SEW_ori) / LMUL_ori;
@@ -66,7 +67,7 @@ function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
     writeCSR(csr_name_map("vtype"), vtype_val);
     let LMUL_new  : real = get_vtype_LMUL();
     let SEW_new   : int = get_vtype_vsew();
-    VLMAX = floor(LMUL_new * to_real(vlen) / to_real(SEW_new)) /* VLMAX = LUML * VLEN / SEW */
+    VLMAX = floor(LMUL_new) * vlen / SEW_new /* VLMAX = LUML * VLEN / SEW */
   };
 
   /****** vsetvl part *******/
@@ -77,7 +78,7 @@ function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
     writeCSR(csr_name_map("vtype"), rs2_val);
     let LMUL_new : real = get_vtype_LMUL();
     let SEW_new  : int = get_vtype_vsew();
-    VLMAX = floor(LMUL_new * to_real(vlen) / to_real(SEW_new)) /* VLMAX = LUML * VLEN / SEW */
+    VLMAX = floor(LMUL_new) * vlen / SEW_new /* VLMAX = LUML * VLEN / SEW */
   };
 
   /* set vl according to VLMAX and AVL */
@@ -128,6 +129,7 @@ function clause execute VSETI_TYPE(ma, ta, sew, lmul, uimm, rd) = {
   AVL   : int = undefined;
   VLMAX : int = undefined; 
 
+  let vlen      : int  = get_vlen();
   let LMUL_ori  : real = get_vtype_LMUL();
   let SEW_ori   : int  = get_vtype_vsew();
   let ratio_ori : real = to_real(SEW_ori) / LMUL_ori;
@@ -138,7 +140,7 @@ function clause execute VSETI_TYPE(ma, ta, sew, lmul, uimm, rd) = {
   writeCSR(csr_name_map("vtype"), vtype_val);
   let LMUL_new  : real = get_vtype_LMUL();
   let SEW_new   : int = get_vtype_vsew();
-  VLMAX = floor(LMUL_new * to_real(vlen) / to_real(SEW_new)); /* VLMAX = LUML * VLEN / SEW */
+  VLMAX = floor(LMUL_new) * vlen / SEW_new; /* VLMAX = LUML * VLEN / SEW */
   
   /****** vsetivli part *******/
   AVL = unsigned(sail_zero_extend(uimm, sizeof(xlen))); /* AVL is encoded as 5-bit zero-extended imm in the rs1 field */

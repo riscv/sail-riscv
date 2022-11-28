@@ -4,12 +4,7 @@ type vreglenbits = bits(vreglen)
 /* default vector register type */
 type vregtype = vreglenbits
 
-/* default vector register printer */
-val VRegStr : vregtype -> string
-function VRegStr(r) = BitStr(r)
-
 /* vector instruction types */
-
 enum vsetop       = { VSETVLI, VSETVL }
 
 enum vvfunct6     = { VV_VADD, VV_VSUB, VV_VMINU, VV_VMIN, VV_VMAXU, VV_VMAX, VV_VAND, VV_VOR, VV_VXOR, 

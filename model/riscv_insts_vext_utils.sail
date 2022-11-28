@@ -61,7 +61,7 @@ function get_start_element() = {
     It is recommended that implementations trap if vstart is out of bounds.
     It is not required to trap, as a possible future use of upper vstart bits
     is to store imprecise trap information. */
-  if start_element > ((8 * vlen / vsew_bits) - 1) then {
+  if start_element > ((8 * get_vlen() / vsew_bits) - 1) then {
     //handle_illegal()
     start_element = -1;
   };
@@ -689,7 +689,7 @@ function fp_nmulsub(rm_3b, op1, op2, opsub) = {
   result_val
 }
 
-val fp_widen : forall 'm, ('m in {16, 32} & 'm <= flen). bits('m) -> bits('m * 2)
+val fp_widen : forall 'm, ('m in {16, 32} & 'm <= flen). bits('m) -> bits('m * 2) effect {escape, rreg, undef, wreg}
 function fp_widen(nval) = {
   let rm_3b = fcsr.FRM();
   fflags : bits_fflags  = undefined;
