@@ -7,4 +7,5 @@ _sbuild/
 *.o
 *.a
 c_emulator/riscv_sim_*
+ocaml_emulator/riscv_ocaml_sim_*
 z3_problems

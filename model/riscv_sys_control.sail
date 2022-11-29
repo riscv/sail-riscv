@@ -610,7 +610,7 @@ function init_sys() -> unit = {
   vtype->vta()       = 0b0;
   vtype->vsew()      = 0b000;
   vtype->vlmul()     = 0b000;
-  vlenb              = EXTZ(0b0) ; 
+  vlenb              = EXTZ(0b0); 
 
   init_pmp();
 

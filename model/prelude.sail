@@ -353,3 +353,19 @@ val "print_int" : (string, int) -> unit
 
 overload operator / = {div_int, div_real}
 overload operator * = {mult_atom, mult_int, mult_real}
+
+/* helper for vector extension where the element width is between 8 and 1024 */
+val log2 : forall 'n, 8 <= 'n <= 1024. int('n) -> int
+function log2(n) = {
+  let result : int = match n {
+    8    => 3,
+    16   => 4,
+    32   => 5,
+    64   => 6,
+    128  => 7,
+    256  => 8,
+    512  => 9,
+    1024 => 10
+  };
+  result
+}

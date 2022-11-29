@@ -255,9 +255,9 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x009, _) => { vxsat = value[0 .. 0]; Some(EXTZ(vxsat)) },
     (0x00A, _) => { vxrm = value[1 .. 0]; Some(EXTZ(vxrm)) },
     (0x00F, _) => { vcsr->bits() = value[2 ..0];  Some(EXTZ(vcsr.bits())) },
-    (0xC20, _) => { vl = value[(sizeof(xlen) - 1) .. 0]; Some(vl) },
-    (0xC21, _) => { vtype->bits() = value[(sizeof(xlen) - 1) .. 0]; Some(vtype.bits()) },
-    (0xC22, _) => { vlenb = value[(sizeof(xlen) - 1) .. 0]; Some(vlenb) },
+    (0xC20, _) => { vl = value; Some(vl) },
+    (0xC21, _) => { vtype->bits() = value; Some(vtype.bits()) },
+    (0xC22, _) => { vlenb = value; Some(vlenb) },
 
     _           => ext_write_CSR(csr, value)
   };

@@ -222,8 +222,7 @@ function get_num_elem(lmul, vsew_bits) = {
   var num_elem : int = undefined;
   if lmul >= 1.0 then {
     num_elem = floor(lmul) * vlen / vsew_bits;
-  }
-  else {
+  } else {
     /* Ignore lmul < 1 so that the entire vreg is read, allowing all masking to
      * be handled in init_masked_result */
     num_elem = vlen / vsew_bits;
@@ -302,16 +301,13 @@ function read_vreg(num_elem, vsew_bits, lmul, vrid) = {
   if lmul > 1.0 & (unsigned(vrid) + floor(lmul)) > 31 then {
     /* vrid would read past largest vreg (v31) */
     result = undefined
-  }
-  else if lmul > 1.0 & (unsigned(vrid) % floor(lmul) != 0) then {
+  } else if lmul > 1.0 & (unsigned(vrid) % floor(lmul) != 0) then {
     /* vrid must be a multiple of lmul */
     result = undefined
-  }
-  else if (vsew_bits > vlen) & (vsew_bits % vlen != 0) then {
+  } else if (vsew_bits > vlen) & (vsew_bits % vlen != 0) then {
     /* vsew_bits must be a multiple of vlen */
     result = undefined
-  }
-  else {
+  } else {
     if vsew_bits > vlen then {
       /* Multiple vregs per element */
       let 'num_reg_per_elem : int = vsew_bits / vlen;
@@ -320,8 +316,7 @@ function read_vreg(num_elem, vsew_bits, lmul, vrid) = {
         let vrid_lmul : regidx = vrid + to_bits(5, i * 'num_reg_per_elem);
         result[i] = read_mult_vreg('num_reg_per_elem, vsew_bits, vrid_lmul)
       }
-    }
-    else {
+    } else {
       let 'num_elem_single  : int = vlen / vsew_bits;
       foreach (i_lmul from 0 to (lmul_int - 1)) {
         let r_start_i : int = i_lmul * 'num_elem_single;
@@ -373,8 +368,7 @@ function write_vreg(num_elem, vsew_bits, lmul, vrid, vec) = {
       let vrid_lmul : regidx = vrid + to_bits(5, i * 'num_reg_per_elem);
       write_mult_vreg('num_reg_per_elem, vsew_bits, vrid_lmul, vec[i])
     }
-  }
-  else {
+  } else {
     let 'num_elem_single  : int = vlen / vsew_bits;
     foreach (i_lmul from 0 to (lmul_int - 1)) {
       var single_vec  : vector('num_elem_single, dec, bits('m)) = undefined;
@@ -409,7 +403,7 @@ function write_single_element(elem_width_bits, index, emul, vrid, value) = {
     r = r << elem_width_bits;
     if i == real_index then {
       r = r | sail_zero_extend(value, length(r));
-    }else {
+    } else {
       r = r | sail_zero_extend(vrid_val[i], length(r));
     }
   };
@@ -428,8 +422,7 @@ function read_vmask(num_elem, vm, vrid) = {
   foreach (i from 0 to (num_elem - 1)) {
     if vm == 0b1 then {
       result[i] = true
-    }
-    else {
+    } else {
       result[i] = bit_to_bool(vreg_val[i])
     }
   };
@@ -449,8 +442,7 @@ function read_vmask_carry(num_elem, vm, vrid) = {
   foreach (i from 0 to (num_elem - 1)) {
     if vm == 0b1 then {
       result[i] = false
-    }
-    else {
+    } else {
       result[i] = bit_to_bool(vreg_val[i])
     }
   };
@@ -473,7 +465,6 @@ function write_vmask(num_elem, vrid, v) = {
   };
   foreach (i from num_elem to (vlen - 1)) {
     /* Mask tail is always agnostic */
-    //result[i] = bitone
     result[i] = vreg_val[i]
   };
 

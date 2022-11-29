@@ -11,28 +11,18 @@ mapping maybe_vmask : string <-> bits(1) = {
 }
 
 /* Check for valid vsew and lmul values */
-val vcheck_vsew_lmul : (int, real) -> Retired
+val vcheck_vsew_lmul : (int, real) -> bool
 function vcheck_vsew_lmul(vsew_bits, lmul) = {
   if  vsew_bits < 8     |
       vsew_bits > 64    |
       lmul      < 0.125 |
-      lmul      > 8.0 then {
-    RETIRE_FAIL
-  }
-  else {
-    RETIRE_SUCCESS
-  }
+      lmul      > 8.0 then false else true
 }
 
 /* Check for vstart value */
-val assert_vstart : int -> Retired effect {rreg}
+val assert_vstart : int -> bool effect {rreg}
 function assert_vstart(i) = {
-  if unsigned(readCSR(csr_name_map("vstart"))) != i then {
-    RETIRE_FAIL
-  }
-  else {
-    RETIRE_SUCCESS
-  }
+  if unsigned(vstart) != i then false else true
 }
 
 /* Scalar register shaping */
@@ -41,12 +31,10 @@ function get_scalar(rs1, vsew_bits) = {
   if sizeof(xlen) > vsew_bits then {
     /* Least significant SEW bits */
     slice(X(rs1), 0, vsew_bits)
-  }
-  else if sizeof(xlen) < vsew_bits then {
+  } else if sizeof(xlen) < vsew_bits then {
     /* Sign extend to SEW */
     sail_sign_extend(X(rs1), vsew_bits)
-  }
-  else {
+  } else {
     X(rs1)
   }
 }
@@ -54,15 +42,14 @@ function get_scalar(rs1, vsew_bits) = {
 /* Get the starting element index from csr vtype */
 val get_start_element : unit -> int effect {escape, rreg, wreg}
 function get_start_element() = {
-  start_element     : int = unsigned(vstart);
-  vsew_bits : int = get_vtype_vsew();
+  start_element : int = unsigned(vstart);
+  vsew_bits     : int = get_vtype_vsew();
   /* The use of vstart values greater than the largest element
     index for the current SEW setting is reserved.
     It is recommended that implementations trap if vstart is out of bounds.
     It is not required to trap, as a possible future use of upper vstart bits
     is to store imprecise trap information. */
   if start_element > ((8 * get_vlen() / vsew_bits) - 1) then {
-    //handle_illegal()
     start_element = -1;
   };
   start_element
@@ -96,16 +83,9 @@ function init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
     /* start element is not valid */
     result      = undefined;
     mask_helper = undefined;
-  }
-  else {
+  } else {
     /* Determine the actual number of elements when lmul < 1 */
-    var real_num_elem : int = undefined;
-    if lmul >= 1.0 then {
-      real_num_elem = num_elem;
-    }
-    else {
-      real_num_elem = floor(lmul * to_real(num_elem))
-    };
+    let real_num_elem = if lmul >= 1.0 then num_elem else floor(lmul * to_real(num_elem));
     assert(num_elem >= real_num_elem);
 
     foreach (i from 0 to (num_elem - 1)) {
@@ -113,42 +93,31 @@ function init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
         /* Prestart elements defined by vstart */
         result[i] = vd_val[i];
         mask_helper[i] = false
-      }
-      else if i > end_element then {
+      } else if i > end_element then {
         /* Tail elements defined by vl */
         if tail_ag == UNDISTURBED then {
           result[i] = vd_val[i];
-        }
-        else if tail_ag == AGNOSTIC then {
-          //result[i] = sail_sign_extend(0b1, vsew_bits)
+        } else if tail_ag == AGNOSTIC then {
           result[i] = vd_val[i];
         };
         mask_helper[i] = false
-      }
-      else if i >= real_num_elem then {
+      } else if i >= real_num_elem then {
         /* Tail elements defined by lmul < 1 */
         if tail_ag == UNDISTURBED then {
           result[i] = vd_val[i];
-        }
-        else if tail_ag == AGNOSTIC then {
-          //result[i] = sail_sign_extend(0b1, vsew_bits)
+        } else if tail_ag == AGNOSTIC then {
           result[i] = vd_val[i];
         };
         mask_helper[i] = false
-      }
-
-      else if vm_val[i] == false then {
+      } else if vm_val[i] == false then {
         /* Inactive body elements defined by vm */
         if mask_ag == UNDISTURBED then {
           result[i] = vd_val[i]
-        }
-        else if mask_ag == AGNOSTIC then {
-          //result[i] = sail_sign_extend(0b1, vsew_bits)
+        } else if mask_ag == AGNOSTIC then {
           result[i] = vd_val[i]
         };
         mask_helper[i] = false
-      }
-      else {
+      } else {
         /* Active body elements */
         mask_helper[i] = true;
       }
@@ -168,13 +137,7 @@ function init_masked_result_carry(num_elem, vsew_bits, lmul, vd_val) = {
   result            : vector('n, dec, bool) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
-  var real_num_elem : int = undefined;
-  if lmul >= 1.0 then {
-    real_num_elem = num_elem
-  }
-  else {
-    real_num_elem = floor(lmul * to_real(num_elem))
-  };
+  let real_num_elem = if lmul >= 1.0 then num_elem else floor(lmul * to_real(num_elem));
   assert(num_elem >= real_num_elem);
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -182,22 +145,17 @@ function init_masked_result_carry(num_elem, vsew_bits, lmul, vd_val) = {
       /* Prestart elements defined by vstart */
       result[i] = vd_val[i];
       mask_helper[i] = false
-    }
-    else if i > end_element then {
+    } else if i > end_element then {
       /* Tail elements defined by vl */
       /* Mask tail is always agnostic */
-      //result[i] = bitone
       result[i] = vd_val[i];
       mask_helper[i] = false
-    }
-    else if i >= real_num_elem then {
+    } else if i >= real_num_elem then {
       /* Tail elements defined by lmul < 1 */
       /* Mask tail is always agnostic */
-      //result[i] = bitone
       result[i] = vd_val[i];
       mask_helper[i] = false
-    }
-    else {
+    } else {
       /* Active body elements */
       mask_helper[i] = true
     }
@@ -216,13 +174,7 @@ function init_masked_result_cmp(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
   result            : vector('n, dec, bool)     = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
-  var real_num_elem : int = undefined;
-  if lmul >= 1.0 then {
-    real_num_elem = num_elem
-  }
-  else {
-    real_num_elem = floor(lmul * to_real(num_elem))
-  };
+  let real_num_elem = if lmul >= 1.0 then num_elem else floor(lmul * to_real(num_elem));
   assert(num_elem >= real_num_elem);
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -230,33 +182,25 @@ function init_masked_result_cmp(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
       /* Prestart elements defined by vstart */
       result[i] = vd_val[i];
       mask_helper[i] = false
-    }
-    else if i > end_element then {
+    } else if i > end_element then {
       /* Tail elements defined by vl */
       /* Mask tail is always agnostic */
-      //result[i] = bitone
       result[i] = vd_val[i];
       mask_helper[i] = false
-    }
-    else if i >= real_num_elem then {
+    } else if i >= real_num_elem then {
       /* Tail elements defined by lmul < 1 */
       /* Mask tail is always agnostic */
-      //result[i] = bitone
       result[i] = vd_val[i];
       mask_helper[i] = false
-    }
-    else if vm_val[i] == false then {
+    } else if vm_val[i] == false then {
       /* Inactive body elements defined by vm */
       if mask_ag == UNDISTURBED then {
         result[i] = vd_val[i]
-      }
-      else if mask_ag == AGNOSTIC then {
-        //result[i] = bitone
+      } else if mask_ag == AGNOSTIC then {
 	      result[i] = vd_val[i]
       };
       mask_helper[i] = false
-    }
-    else {
+    } else {
       /* Active body elements */
       mask_helper[i] = true
     }
@@ -352,25 +296,9 @@ function get_scalar_fp(rs1, vsew_bits) = {
   if sizeof(xlen) >= vsew_bits then {
     /* Least significant SEW bits */
     nan_unbox_new(F(rs1), vsew_bits)
-  }
-  else {
+  } else {
     canonical_NaN(vsew_bits)
   }
-}
-
-val log2 : forall 'n, 8 <= 'n <= 1024. int('n) -> int
-function log2(n) = {
-  let result : int = match n {
-    8    => 3,
-    16   => 4,
-    32   => 5,
-    64   => 6,
-    128  => 7,
-    256  => 8,
-    512  => 9,
-    1024 => 10
-  };
-  result
 }
 
 /* Shift amounts */
@@ -387,13 +315,13 @@ function get_fixed_rounding_incr(vec_elem, shift_amount) = {
   rounding_incr : bits(1) = undefined;
   if shift_amount == 0 then rounding_incr = 0b0
   else {
-    let rounding_mode = readCSR(csr_name_map("vxrm"));
+    let rounding_mode = vxrm[1 .. 0];
     rounding_incr = match rounding_mode {
-      _ : bits(xlen - 2) @ 0b00 => slice(vec_elem, shift_amount - 1, 1),
-      _ : bits(xlen - 2) @ 0b01 => bool_to_bits(
+      0b00 => slice(vec_elem, shift_amount - 1, 1),
+      0b01 => bool_to_bits(
         (slice(vec_elem, shift_amount - 1, 1) == 0b1) & (slice(vec_elem, 0, shift_amount - 1) != zeros() | slice(vec_elem, shift_amount, 1) == 0b1)),
-      _ : bits(xlen - 2) @ 0b10 => 0b0,
-      _ : bits(xlen - 2) @ 0b11 => bool_to_bits(
+      0b10 => 0b0,
+      0b11 => bool_to_bits(
         ~(slice(vec_elem, shift_amount, 1) == 0b1) & (slice(vec_elem, 0, shift_amount) != zeros()))
     }; 
   };
@@ -407,8 +335,7 @@ function unsigned_saturation(len, elem) = {
   if unsigned(elem) > unsigned(ones('m)) then {
     elem_sat = EXTZ('m, ones('m));
     writeCSR(csr_name_map("vxsat"), EXTZ(0b1))
-  }
-  else {
+  } else {
     elem_sat = slice(elem, 0, 'm);
     writeCSR(csr_name_map("vxsat"), EXTZ(0b0))
   };
@@ -422,12 +349,10 @@ function signed_saturation(len, elem) = {
   if signed(elem) > signed( EXTZ('m, ones('m - 1)) ) then {
     elem_sat = EXTZ('m, ones('m - 1));
     writeCSR(csr_name_map("vxsat"), EXTZ(0b1))
-  }
-  else if signed(elem) < signed( EXTZ('m, 0b1) << ('m - 1) ) then {
+  } else if signed(elem) < signed( EXTZ('m, 0b1) << ('m - 1) ) then {
     elem_sat = to_bits('m, signed( EXTZ('m, 0b1) << ('m - 1) ) );
     writeCSR(csr_name_map("vxsat"), EXTZ(0b1))
-  }
-  else {
+  } else {
     elem_sat = slice(elem, 0, 'm);
     writeCSR(csr_name_map("vxsat"), EXTZ(0b0))
   };
@@ -464,9 +389,7 @@ function negate_fp (xf) = {
 /* Floating point functions */
 val fp_add: forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_add(rm_3b, op1, op2) = {
-  fflags : bits_fflags = undefined;
-  result_val : bits('n) = undefined;
-  (fflags, result_val) = match 'n {
+  let (fflags, result_val) : (bits_fflags, bits('n)) = match 'n {
     16  => riscv_f16Add(rm_3b, op1, op2),
     32  => riscv_f32Add(rm_3b, op1, op2),
     64  => riscv_f64Add(rm_3b, op1, op2)
@@ -477,9 +400,7 @@ function fp_add(rm_3b, op1, op2) = {
 
 val fp_sub: forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_sub(rm_3b, op1, op2) = {
-  fflags : bits_fflags = undefined;
-  result_val : bits('n) = undefined;
-  (fflags, result_val) = match 'n {
+  let (fflags, result_val) : (bits_fflags, bits('n)) = match 'n {
     16  => riscv_f16Sub(rm_3b, op1, op2),
     32  => riscv_f32Sub(rm_3b, op1, op2),
     64  => riscv_f64Sub(rm_3b, op1, op2)
@@ -490,22 +411,19 @@ function fp_sub(rm_3b, op1, op2) = {
 
 val fp_min : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_min(op1, op2) = {
-  temp_flags : bits_fflags = undefined;
-  op1_lt_op2 : bool = undefined;
-
-  (temp_flags, op1_lt_op2) = match 'n {
+  let (temp_flags, op1_lt_op2) : (bits_fflags, bool) = match 'n {
     16  => riscv_f16Lt(op1, op2),
     32  => riscv_f32Lt(op1, op2),
     64  => riscv_f64Lt(op1, op2)
   };
 
   let result_val  = if (f_is_NaN(op1) & f_is_NaN(op2)) then canonical_NaN('n)
-                else if f_is_NaN(op1) then op2
-                else if f_is_NaN(op2) then op1
-                else if (f_is_neg_zero(op1) & f_is_pos_zero(op2)) then op1
-                else if (f_is_neg_zero(op2) & f_is_pos_zero(op1)) then op2
-                else if op1_lt_op2 then op1
-                else op2;
+                    else if f_is_NaN(op1) then op2
+                    else if f_is_NaN(op2) then op1
+                    else if (f_is_neg_zero(op1) & f_is_pos_zero(op2)) then op1
+                    else if (f_is_neg_zero(op2) & f_is_pos_zero(op1)) then op2
+                    else if op1_lt_op2 then op1
+                    else op2;
 
   let fflags = if (f_is_SNaN(op1) | f_is_SNaN(op2)) then nvFlag() else zeros();
   accrue_fflags(fflags);
@@ -516,22 +434,19 @@ function fp_min(op1, op2) = {
 
 val fp_max : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_max(op1, op2) = {
-  temp_flags : bits_fflags = undefined;
-  op1_lt_op2 : bool = undefined;
-
-  (temp_flags, op1_lt_op2) = match 'n {
+  let (temp_flags, op1_lt_op2) : (bits_fflags, bool) = match 'n {
     16  => riscv_f16Lt(op1, op2),
     32  => riscv_f32Lt(op1, op2),
     64  => riscv_f64Lt(op1, op2)
   };
 
   let result_val  = if (f_is_NaN(op1) & f_is_NaN(op2)) then canonical_NaN('n)
-                else if f_is_NaN(op1) then op2
-                else if f_is_NaN(op2) then op1
-                else if (f_is_neg_zero(op1) & f_is_pos_zero(op2)) then op2
-                else if (f_is_neg_zero(op2) & f_is_pos_zero(op1)) then op1
-                else if op1_lt_op2 then op2
-                else op1;
+                    else if f_is_NaN(op1) then op2
+                    else if f_is_NaN(op2) then op1
+                    else if (f_is_neg_zero(op1) & f_is_pos_zero(op2)) then op2
+                    else if (f_is_neg_zero(op2) & f_is_pos_zero(op1)) then op1
+                    else if op1_lt_op2 then op2
+                    else op1;
 
   let fflags = if (f_is_SNaN(op1) | f_is_SNaN(op2)) then nvFlag() else zeros();
   accrue_fflags(fflags);
@@ -542,9 +457,7 @@ function fp_max(op1, op2) = {
 
 val fp_eq : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
 function fp_eq(op1, op2) = {
-  fflags     : bits_fflags = undefined;
-  result_val : bool = undefined;
-  (fflags, result_val) = match 'n {
+  let (fflags, result_val) : (bits_fflags, bool) = match 'n {
     16  => riscv_f16Eq(op1, op2),
     32  => riscv_f32Eq(op1, op2),
     64  => riscv_f64Eq(op1, op2)
@@ -555,9 +468,7 @@ function fp_eq(op1, op2) = {
 
 val fp_gt : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
 function fp_gt(op1, op2) = {
-  fflags     : bits_fflags = undefined;
-  temp_val   : bool = undefined;
-  (fflags, temp_val) = match 'n {
+  let (fflags, temp_val) : (bits_fflags, bool) = match 'n {
     16  => riscv_f16Le(op1, op2),
     32  => riscv_f32Le(op1, op2),
     64  => riscv_f64Le(op1, op2)
@@ -569,9 +480,7 @@ function fp_gt(op1, op2) = {
 
 val fp_ge : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
 function fp_ge(op1, op2) = {
-  fflags     : bits_fflags = undefined;
-  temp_val   : bool = undefined;
-  (fflags, temp_val) = match 'n {
+  let (fflags, temp_val) : (bits_fflags, bool) = match 'n {
     16  => riscv_f16Lt(op1, op2),
     32  => riscv_f32Lt(op1, op2),
     64  => riscv_f64Lt(op1, op2)
@@ -583,9 +492,7 @@ function fp_ge(op1, op2) = {
 
 val fp_lt : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
 function fp_lt(op1, op2) = {
-  fflags     : bits_fflags = undefined;
-  result_val : bool = undefined;
-  (fflags, result_val) = match 'n {
+  let (fflags, result_val) : (bits_fflags, bool) = match 'n {
     16  => riscv_f16Lt(op1, op2),
     32  => riscv_f32Lt(op1, op2),
     64  => riscv_f64Lt(op1, op2)
@@ -596,9 +503,7 @@ function fp_lt(op1, op2) = {
 
 val fp_le : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
 function fp_le(op1, op2) = {
-  fflags     : bits_fflags = undefined;
-  result_val : bool = undefined;
-  (fflags, result_val) = match 'n {
+  let (fflags, result_val) : (bits_fflags, bool) = match 'n {
     16  => riscv_f16Le(op1, op2),
     32  => riscv_f32Le(op1, op2),
     64  => riscv_f64Le(op1, op2)
@@ -609,9 +514,7 @@ function fp_le(op1, op2) = {
 
 val fp_mul : forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_mul(rm_3b, op1, op2) = {
-  fflags : bits_fflags = undefined;
-  result_val : bits('n) = undefined;
-  (fflags, result_val) = match 'n {
+  let (fflags, result_val) : (bits_fflags, bits('n)) = match 'n {
     16  => riscv_f16Mul(rm_3b, op1, op2),
     32  => riscv_f32Mul(rm_3b, op1, op2),
     64  => riscv_f64Mul(rm_3b, op1, op2)
@@ -622,9 +525,7 @@ function fp_mul(rm_3b, op1, op2) = {
 
 val fp_div : forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_div(rm_3b, op1, op2) = {
-  fflags : bits_fflags = undefined;
-  result_val : bits('n) = undefined;
-  (fflags, result_val) = match 'n {
+  let (fflags, result_val) : (bits_fflags, bits('n)) = match 'n {
     16  => riscv_f16Div(rm_3b, op1, op2),
     32  => riscv_f32Div(rm_3b, op1, op2),
     64  => riscv_f64Div(rm_3b, op1, op2)
@@ -635,9 +536,7 @@ function fp_div(rm_3b, op1, op2) = {
 
 val fp_muladd : forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_muladd(rm_3b, op1, op2, opadd) = {
-  fflags : bits_fflags = undefined;
-  result_val : bits('n) = undefined;
-  (fflags, result_val) = match 'n {
+  let (fflags, result_val) : (bits_fflags, bits('n)) = match 'n {
     16  => riscv_f16MulAdd(rm_3b, op1, op2, opadd),
     32  => riscv_f32MulAdd(rm_3b, op1, op2, opadd),
     64  => riscv_f64MulAdd(rm_3b, op1, op2, opadd)
@@ -648,10 +547,8 @@ function fp_muladd(rm_3b, op1, op2, opadd) = {
 
 val fp_nmuladd : forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_nmuladd(rm_3b, op1, op2, opadd) = {
-  fflags : bits_fflags = undefined;
-  result_val : bits('n) = undefined;
   let op1 = negate_fp(op1);
-  (fflags, result_val) = match 'n {
+  let (fflags, result_val) : (bits_fflags, bits('n)) = match 'n {
     16  => riscv_f16MulAdd(rm_3b, op1, op2, opadd),
     32  => riscv_f32MulAdd(rm_3b, op1, op2, opadd),
     64  => riscv_f64MulAdd(rm_3b, op1, op2, opadd)
@@ -662,10 +559,8 @@ function fp_nmuladd(rm_3b, op1, op2, opadd) = {
 
 val fp_mulsub : forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_mulsub(rm_3b, op1, op2, opsub) = {
-  fflags : bits_fflags = undefined;
-  result_val : bits('n) = undefined;
   let opsub = negate_fp(opsub);
-  (fflags, result_val) = match 'n {
+  let (fflags, result_val) : (bits_fflags, bits('n)) = match 'n {
     16  => riscv_f16MulAdd(rm_3b, op1, op2, opsub),
     32  => riscv_f32MulAdd(rm_3b, op1, op2, opsub),
     64  => riscv_f64MulAdd(rm_3b, op1, op2, opsub)
@@ -676,11 +571,9 @@ function fp_mulsub(rm_3b, op1, op2, opsub) = {
 
 val fp_nmulsub : forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
 function fp_nmulsub(rm_3b, op1, op2, opsub) = {
-  fflags : bits_fflags = undefined;
-  result_val : bits('n) = undefined;
   let opsub = negate_fp(opsub);
   let op1 = negate_fp(op1);
-  (fflags, result_val) = match 'n {
+  let (fflags, result_val) : (bits_fflags, bits('n)) = match 'n {
     16  => riscv_f16MulAdd(rm_3b, op1, op2, opsub),
     32  => riscv_f32MulAdd(rm_3b, op1, op2, opsub),
     64  => riscv_f64MulAdd(rm_3b, op1, op2, opsub)
@@ -692,9 +585,7 @@ function fp_nmulsub(rm_3b, op1, op2, opsub) = {
 val fp_widen : forall 'm, ('m in {16, 32} & 'm <= flen). bits('m) -> bits('m * 2) effect {escape, rreg, undef, wreg}
 function fp_widen(nval) = {
   let rm_3b = fcsr.FRM();
-  fflags : bits_fflags  = undefined;
-  wval   : bits('m * 2) = undefined;
-  (fflags, wval) = match 'm {
+  let (fflags, wval) : (bits_fflags, bits('m * 2)) = match 'm {
     16 => riscv_f16ToF32(rm_3b, nval),
     32 => riscv_f32ToF64(rm_3b, nval)
   };
