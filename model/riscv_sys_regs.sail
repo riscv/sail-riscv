@@ -845,23 +845,20 @@ bitfield Vtype  : xlenbits = {
 }
 register vtype : Vtype
 
-/* vsew sets the dynamic selected element width (SEW) */
-val get_vtype_vsew : unit -> int effect {rreg}
+/* the dynamic selected element width (SEW) */
+val get_vtype_vsew : unit -> int effect {escape, rreg}
 function get_vtype_vsew() = {
   match vtype.vsew() {
     0b000 => 8,
     0b001 => 16,
     0b010 => 32,
     0b011 => 64,
-    0b100 => 128,
-    0b101 => 256,
-    0b110 => 512,
-    0b111 => 1024
+    _     => {assert(false, "invalid vsew field in vtype"); 0}
   }
 }
 
-/* to get the default number of vregister that are combined to form a vector register group (LMUL) */
-val get_vtype_LMUL : unit -> real effect {rreg}
+/* the vector register group multiplier (LMUL) */
+val get_vtype_LMUL : unit -> real effect {escape, rreg}
 function get_vtype_LMUL() = {
   match vtype.vlmul() {
     0b101 => 0.125, /* 1/8 */
@@ -870,7 +867,8 @@ function get_vtype_LMUL() = {
     0b000 => 1.0,
     0b001 => 2.0,
     0b010 => 4.0,
-    0b011 => 8.0
+    0b011 => 8.0,
+    _     => {assert(false, "invalid vlmul field in vtype"); 0.0}
   }
 }
 

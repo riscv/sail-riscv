@@ -248,11 +248,11 @@ function read_single_vreg(num_elem, sew, vrid) = {
 /* Writes multiple elements into a single vreg */
 val write_single_vreg : forall 'n 'm, 8 <= 'm <= 128. (int('n), int('m), regidx, vector('n, dec, bits('m))) -> unit effect {escape, rreg, wreg}
 function write_single_vreg(num_elem, sew, vrid, v) = {
-  r : vregtype = zeros(sizeof(vreglen));
+  r : vregtype = zeros();
 
   foreach (i from (num_elem - 1) downto 0) {
     r = r << sew;
-    r = r | sail_zero_extend(v[i], length(r));
+    r = r | EXTZ(v[i]);
   };
 
   V(vrid) = r
@@ -398,13 +398,13 @@ function write_single_element(elem_width_bits, index, emul, vrid, value) = {
     real_index = index % 'elem_per_reg;
   };
   let vrid_val : vector('elem_per_reg, dec, bits('m)) = read_single_vreg('elem_per_reg, elem_width_bits, real_vrid);
-  r : vregtype = zeros(sizeof(vreglen));
+  r : vregtype = zeros();
   foreach (i from ('elem_per_reg - 1) downto 0) {
     r = r << elem_width_bits;
     if i == real_index then {
-      r = r | sail_zero_extend(value, length(r));
+      r = r | EXTZ(value);
     } else {
-      r = r | sail_zero_extend(vrid_val[i], length(r));
+      r = r | EXTZ(vrid_val[i]);
     }
   };
   V(real_vrid) = r;

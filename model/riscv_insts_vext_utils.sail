@@ -13,16 +13,16 @@ mapping maybe_vmask : string <-> bits(1) = {
 /* Check for valid vsew and lmul values */
 val vcheck_vsew_lmul : (int, real) -> bool
 function vcheck_vsew_lmul(vsew_bits, lmul) = {
-  if  vsew_bits < 8     |
-      vsew_bits > 64    |
-      lmul      < 0.125 |
-      lmul      > 8.0 then false else true
+  if  vsew_bits >= 8     &
+      vsew_bits <= 64    &
+      lmul      >= 0.125 &
+      lmul      <= 8.0   then true else false
 }
 
 /* Check for vstart value */
 val assert_vstart : int -> bool effect {rreg}
 function assert_vstart(i) = {
-  if unsigned(vstart) != i then false else true
+  if unsigned(vstart) == i then true else false
 }
 
 /* Scalar register shaping */
@@ -207,17 +207,6 @@ function init_masked_result_cmp(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
   (result, mask_helper)
 }
 
-/* Misc number functions */
-val is_zeros : forall 'n, 'n >= 0. bits('n) -> bool
-function is_zeros(bitval) = {
-  bitval == zeros('n)
-}
-
-val is_ones : forall 'n, 'n >= 0. bits('n) -> bool
-function is_ones(bitval) = {
-  bitval == ones('n)
-}
-
 /* Floating point canonical NaN for 16-bit, 32-bit, 64-bit and 128-bit types */
 val canonical_NaN : forall 'm, 'm in {16, 32, 64, 128}. int('m) -> bits('m)
 function canonical_NaN('m) = {
@@ -250,10 +239,10 @@ function nan_unbox_new(regval, 'm) = {
 val      f_is_SNaN : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). bits('m) -> bool
 function f_is_SNaN   xf = {
   match 'm {
-    16   => is_ones(xf[14..10]) & is_zeros(xf[9..9]) & ~(is_zeros(xf[8..0])),
-    32   => is_ones(xf[30..23]) & is_zeros(xf[22..22]) & ~(is_zeros(xf[21..0])),
-    64   => is_ones(xf[62..52]) & is_zeros(xf[51..51]) & ~(is_zeros(xf[50..0])),
-    128  => is_ones(xf[126..112]) & is_zeros(xf[111..111]) & ~(is_zeros(xf[110..0]))
+    16   => (xf[14..10] == ones()) & (xf[9..9] == zeros()) & (xf[8..0] != zeros()),
+    32   => (xf[30..23] == ones()) & (xf[22..22] == zeros()) & (xf[21..0] != zeros()),
+    64   => (xf[62..52] == ones()) & (xf[51..51] == zeros()) & (xf[50..0] != zeros()),
+    128  => (xf[126..112] == ones()) & (xf[111..111] == zeros()) & (xf[110..0] != zeros())
   }
 }
 
@@ -261,37 +250,37 @@ function f_is_SNaN   xf = {
 val      f_is_NaN : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). bits('m) -> bool
 function f_is_NaN   xf = {
   match 'm {
-    16   => is_ones(xf[14..10]) & ~(is_zeros(xf[9..0])),
-    32   => is_ones(xf[30..23]) & ~(is_zeros(xf[22..0])),
-    64   => is_ones(xf[62..52]) & ~(is_zeros(xf[51..0])),
-    128  => is_ones(xf[126..112]) & ~(is_zeros(xf[111..0]))
+    16   => (xf[14..10] == ones()) & (xf[9..0] != zeros()),
+    32   => (xf[30..23] == ones()) & (xf[22..0] != zeros()),
+    64   => (xf[62..52] == ones()) & (xf[51..0] != zeros()),
+    128  => (xf[126..112] == ones()) & (xf[111..0] != zeros())
   }
 }
 
 val      f_is_neg_zero : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). bits('m) -> bool
 function f_is_neg_zero   xf = {
   match 'm {
-    16   => is_ones(xf[15..15]) & is_zeros(xf[14..0]),
-    32   => is_ones(xf[31..31]) & is_zeros(xf[30..0]),
-    64   => is_ones(xf[63..63]) & is_zeros(xf[62..0]),
-    128  => is_ones(xf[127..127]) & is_zeros(xf[126..0])
+    16   => (xf[15..15] == ones()) & (xf[14..0] == zeros()),
+    32   => (xf[31..31] == ones()) & (xf[30..0] == zeros()),
+    64   => (xf[63..63] == ones()) & (xf[62..0] == zeros()),
+    128  => (xf[127..127] == ones()) & (xf[126..0] == zeros())
   }
 }
 
 val      f_is_pos_zero : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). bits('m) -> bool
 function f_is_pos_zero   xf = {
   match 'm {
-    16   => is_zeros(xf),
-    32   => is_zeros(xf),
-    64   => is_zeros(xf),
-    128  => is_zeros(xf)
+    16   => (xf == zeros()),
+    32   => (xf == zeros()),
+    64   => (xf == zeros()),
+    128  => (xf == zeros())
   }
 }
 
 /* Scalar register shaping for floating point operations */
 val get_scalar_fp : forall 'n, 'n in {16, 32, 64, 128}. (regidx, int('n)) -> bits('n) effect {escape, rreg}
 function get_scalar_fp(rs1, vsew_bits) = {
-  if sizeof(xlen) >= vsew_bits then {
+  if sizeof(flen) > vsew_bits then {
     /* Least significant SEW bits */
     nan_unbox_new(F(rs1), vsew_bits)
   } else {
@@ -300,7 +289,7 @@ function get_scalar_fp(rs1, vsew_bits) = {
 }
 
 /* Shift amounts */
-val get_shift_amount : forall 'n 'm, 0 <= 'n & 8 <= 'm <= 1024. (bits('n), int('m)) -> int effect {escape}
+val get_shift_amount : forall 'n 'm, 0 <= 'n & 'm in {8, 16, 32, 64}. (bits('n), int('m)) -> int effect {escape}
 function get_shift_amount(bit_val, vsew_bits) = {
   let lowlog2bits : int = log2(vsew_bits);
   assert(0 <= lowlog2bits & lowlog2bits < vsew_bits);
@@ -310,51 +299,45 @@ function get_shift_amount(bit_val, vsew_bits) = {
 /* Fixed point rounding increment */
 val get_fixed_rounding_incr : forall ('m 'n : Int), ('m > 0 & 'n >= 0). (bits('m), int('n)) -> bits(1) effect {rreg, undef}
 function get_fixed_rounding_incr(vec_elem, shift_amount) = {
-  rounding_incr : bits(1) = undefined;
-  if shift_amount == 0 then rounding_incr = 0b0
+  if shift_amount == 0 then 0b0
   else {
     let rounding_mode = vxrm[1 .. 0];
-    rounding_incr = match rounding_mode {
+    match rounding_mode {
       0b00 => slice(vec_elem, shift_amount - 1, 1),
       0b01 => bool_to_bits(
         (slice(vec_elem, shift_amount - 1, 1) == 0b1) & (slice(vec_elem, 0, shift_amount - 1) != zeros() | slice(vec_elem, shift_amount, 1) == 0b1)),
       0b10 => 0b0,
       0b11 => bool_to_bits(
         ~(slice(vec_elem, shift_amount, 1) == 0b1) & (slice(vec_elem, 0, shift_amount) != zeros()))
-    }; 
-  };
-  rounding_incr
+    } 
+  }
 }
 
 /* Fixed point unsigned saturation */
 val unsigned_saturation : forall ('m 'n: Int), ('n >= 'm > 0). (int('m), bits('n)) -> bits('m) effect {escape, rreg, undef, wreg}
 function unsigned_saturation(len, elem) = {
-  elem_sat : bits('m) = undefined;
   if unsigned(elem) > unsigned(ones('m)) then {
-    elem_sat = EXTZ('m, ones('m));
-    writeCSR(csr_name_map("vxsat"), EXTZ(0b1))
+    vxsat = 0b1;
+    EXTZ('m, ones('m))
   } else {
-    elem_sat = slice(elem, 0, 'm);
-    writeCSR(csr_name_map("vxsat"), EXTZ(0b0))
-  };
-  elem_sat
+    vxsat = 0b0;
+    elem['m - 1 .. 0]
+  }
 }
 
 /* Fixed point signed saturation */
 val signed_saturation : forall ('m 'n: Int), ('n >= 'm > 0). (int('m), bits('n)) -> bits('m) effect {escape, rreg, undef, wreg}
 function signed_saturation(len, elem) = {
-  elem_sat : bits('m) = undefined;
-  if signed(elem) > signed( EXTZ('m, ones('m - 1)) ) then {
-    elem_sat = EXTZ('m, ones('m - 1));
-    writeCSR(csr_name_map("vxsat"), EXTZ(0b1))
-  } else if signed(elem) < signed( EXTZ('m, 0b1) << ('m - 1) ) then {
-    elem_sat = to_bits('m, signed( EXTZ('m, 0b1) << ('m - 1) ) );
-    writeCSR(csr_name_map("vxsat"), EXTZ(0b1))
+  if signed(elem) > signed(EXTZ('m, ones('m - 1))) then {
+    vxsat = 0b1;
+    EXTZ('m, ones('m - 1))
+  } else if signed(elem) < signed(EXTZ('m, 0b1) << ('m - 1)) then {
+    vxsat = 0b1;
+    to_bits('m, signed(EXTZ('m, 0b1) << ('m - 1)))
   } else {
-    elem_sat = slice(elem, 0, 'm);
-    writeCSR(csr_name_map("vxsat"), EXTZ(0b0))
+    vxsat = 0b0;
+    elem['m - 1 .. 0]
   };
-  elem_sat
 }
 
 /* Get the floating point rounding mode from csr fcsr */
@@ -364,7 +347,7 @@ function get_fp_rounding_mode() = encdec_rounding_mode(fcsr.FRM())
 /* Split sign and the remain of floating point number */
 val      fsplitsign : forall 'n, 'n in {16, 32, 64}. bits('n) -> (bits(1), bits('n - 1))
 function fsplitsign   (xf) = {
-  match 'n{
+  match 'n {
     16 => (xf[15..15], xf[14..0]),
     32 => (xf[31..31], xf[30..0]),
     64 => (xf[63..63], xf[62..0])
@@ -404,52 +387,6 @@ function fp_sub(rm_3b, op1, op2) = {
     64  => riscv_f64Sub(rm_3b, op1, op2)
   };
   write_fflags(fflags);
-  result_val
-}
-
-val fp_min : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
-function fp_min(op1, op2) = {
-  let (temp_flags, op1_lt_op2) : (bits_fflags, bool) = match 'n {
-    16  => riscv_f16Lt(op1, op2),
-    32  => riscv_f32Lt(op1, op2),
-    64  => riscv_f64Lt(op1, op2)
-  };
-
-  let result_val  = if (f_is_NaN(op1) & f_is_NaN(op2)) then canonical_NaN('n)
-                    else if f_is_NaN(op1) then op2
-                    else if f_is_NaN(op2) then op1
-                    else if (f_is_neg_zero(op1) & f_is_pos_zero(op2)) then op1
-                    else if (f_is_neg_zero(op2) & f_is_pos_zero(op1)) then op2
-                    else if op1_lt_op2 then op1
-                    else op2;
-
-  let fflags = if (f_is_SNaN(op1) | f_is_SNaN(op2)) then nvFlag() else zeros();
-  accrue_fflags(fflags);
-  update_softfloat_fflags(fflags); /* to avoid inconsistency about NaN operands */
-
-  result_val
-}
-
-val fp_max : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
-function fp_max(op1, op2) = {
-  let (temp_flags, op1_lt_op2) : (bits_fflags, bool) = match 'n {
-    16  => riscv_f16Lt(op1, op2),
-    32  => riscv_f32Lt(op1, op2),
-    64  => riscv_f64Lt(op1, op2)
-  };
-
-  let result_val  = if (f_is_NaN(op1) & f_is_NaN(op2)) then canonical_NaN('n)
-                    else if f_is_NaN(op1) then op2
-                    else if f_is_NaN(op2) then op1
-                    else if (f_is_neg_zero(op1) & f_is_pos_zero(op2)) then op2
-                    else if (f_is_neg_zero(op2) & f_is_pos_zero(op1)) then op1
-                    else if op1_lt_op2 then op2
-                    else op1;
-
-  let fflags = if (f_is_SNaN(op1) | f_is_SNaN(op2)) then nvFlag() else zeros();
-  accrue_fflags(fflags);
-  update_softfloat_fflags(fflags); /* to avoid inconsistency about NaN operands */
-
   result_val
 }
 

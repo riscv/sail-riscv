@@ -50,11 +50,6 @@ mapping clause encdec = VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd)
   <-> encdec_vsetop(op) @ ma @ ta @ sew @ lmul @ rs1 @ 0b111 @ rd @ 0b1010111
 
 function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
-  AVL      : int  = undefined;
-  VLMAX    : int  = undefined;
-  SEW_new  : int  = undefined;
-  LMUL_new : real = undefined;
-
   let vlen      : int  = get_vlen();
   let LMUL_ori  : real = get_vtype_LMUL();
   let SEW_ori   : int  = get_vtype_vsew();
@@ -65,48 +60,46 @@ function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
     VSETVLI => {
       let vtype_reserved = zeros(sizeof(xlen) - 9);
       let vtype_val : xlenbits = 0b0 @ vtype_reserved @ ma @ ta @ sew @ lmul;
-      writeCSR(csr_name_map("vtype"), vtype_val);
-      let LMUL_new  : real = get_vtype_LMUL();
-      let SEW_new   : int = get_vtype_vsew();
-      VLMAX = floor(LMUL_new) * vlen / SEW_new /* VLMAX = LUML * VLEN / SEW */
+      writeCSR(0xC21, vtype_val)
     },
     VSETVL  => {
       let sew_append_lmul : bits(6) = (sail_zero_extend(sew, 6) << 3) | (sail_zero_extend(lmul, 6));
-      let rs2 : regidx = slice(sew_append_lmul, 0 , 5);
+      let rs2 : regidx = slice(sew_append_lmul, 0, 5);
       let rs2_val = X(rs2);
-      writeCSR(csr_name_map("vtype"), rs2_val);
-      let LMUL_new : real = get_vtype_LMUL();
-      let SEW_new  : int = get_vtype_vsew();
-      VLMAX = floor(LMUL_new) * vlen / SEW_new /* VLMAX = LUML * VLEN / SEW */
+      writeCSR(0xC21, rs2_val)
     }
   };
+  let LMUL_new : real = get_vtype_LMUL();
+  let SEW_new  : int = get_vtype_vsew();
+  let VLMAX = floor(LMUL_new) * vlen / SEW_new;
 
   /* set vl according to VLMAX and AVL */
   if (rs1 != 0b00000) then { /* normal stripmining */
     let rs1_val = X(rs1);
-    AVL = unsigned(rs1_val);
+    let AVL = unsigned(rs1_val);
     X(rd) = rs1_val;
     if (AVL <= VLMAX) then {
-      writeCSR(csr_name_map("vl"), to_bits(sizeof(xlen), AVL))
+      writeCSR(0xC20, to_bits(sizeof(xlen), AVL))
     } else if (AVL < 2 * VLMAX) then { /* ceil(AVL / 2) ≤ vl ≤ VLMAX */
-      writeCSR(csr_name_map("vl"), to_bits(sizeof(xlen), ceil(to_real(AVL) / 2.0)))
+      writeCSR(0xC20, to_bits(sizeof(xlen), ceil(to_real(AVL) / 2.0)))
     } else {
-      writeCSR(csr_name_map("vl"), to_bits(sizeof(xlen), VLMAX));
+      writeCSR(0xC20, to_bits(sizeof(xlen), VLMAX));
     };
   } else if (rd != 0b00000) then { /* set vl to VLMAX */
-    AVL = unsigned(ones(sizeof(xlen)));
+    let AVL = unsigned(ones(sizeof(xlen)));
     X(rd) = to_bits(sizeof(xlen), VLMAX);
-    writeCSR(csr_name_map("vl"), to_bits(sizeof(xlen), VLMAX));
-  } else {
-    let ratio_new : real = to_real(SEW_new) / LMUL_new;
-    if (ratio_new != ratio_ori) then { /* keep existing vl */
-      writeCSR(csr_name_map("vtype"), 0b1 @ zeros(sizeof(xlen) - 1))
-    } else { 
-      AVL = unsigned(vl) 
+    writeCSR(0xC20, to_bits(sizeof(xlen), VLMAX));
+  } else { /* keep existing vl */
+    let AVL = unsigned(vl);
+    let ratio_new : real = to_real(SEW_new) / LMUL_new; 
+    if (ratio_new != ratio_ori) then { 
+      writeCSR(0xC21, 0b1 @ zeros(sizeof(xlen) - 1)) /* set vtype.vill */
     }
   };
 
-  writeCSR(csr_name_map("vstart"), EXTZ(0b0));
+  /* reset vstart to 0 */
+  vstart = EXTZ(0b0);
+
   RETIRE_SUCCESS
 }
 
@@ -126,9 +119,6 @@ mapping clause encdec = VSETI_TYPE(ma, ta, sew, lmul, uimm, rd)
   <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ rd @ 0b1010111
 
 function clause execute VSETI_TYPE(ma, ta, sew, lmul, uimm, rd) = {
-  AVL   : int = undefined;
-  VLMAX : int = undefined; 
-
   let vlen      : int  = get_vlen();
   let LMUL_ori  : real = get_vtype_LMUL();
   let SEW_ori   : int  = get_vtype_vsew();
@@ -137,26 +127,28 @@ function clause execute VSETI_TYPE(ma, ta, sew, lmul, uimm, rd) = {
   /* set vtype and calculate VLMAX */
   let vtype_reserved = zeros(sizeof(xlen) - 9);
   let vtype_val : xlenbits = 0b0 @ vtype_reserved @ ma @ ta @ sew @ lmul;
-  writeCSR(csr_name_map("vtype"), vtype_val);
+  writeCSR(0xC21, vtype_val);
 
-  let LMUL_new  : real = get_vtype_LMUL();
-  let SEW_new   : int = get_vtype_vsew();
-  VLMAX = floor(LMUL_new) * vlen / SEW_new; /* VLMAX = LUML * VLEN / SEW */
-  AVL = unsigned(sail_zero_extend(uimm, sizeof(xlen))); /* AVL is encoded as 5-bit zero-extended imm in the rs1 field */
+  let LMUL_new : real = get_vtype_LMUL();
+  let SEW_new  : int = get_vtype_vsew();
+  let VLMAX    : int = floor(LMUL_new) * vlen / SEW_new;
+  let AVL      : int = unsigned(sail_zero_extend(uimm, sizeof(xlen))); /* AVL is encoded as 5-bit zero-extended imm in the rs1 field */
 
   /* set vl according to VLMAX and AVL */
   if (AVL <= VLMAX) then {
-    writeCSR(csr_name_map("vl"), to_bits(sizeof(xlen), AVL));
+    writeCSR(0xC20, to_bits(sizeof(xlen), AVL));
     X(rd) = to_bits(sizeof(xlen), AVL)
   } else if (AVL < 2 * VLMAX) then { /* ceil(AVL / 2) ≤ vl ≤ VLMAX */
-    writeCSR(csr_name_map("vl"), to_bits(sizeof(xlen), ceil(to_real(AVL) / 2.0)));
+    writeCSR(0xC20, to_bits(sizeof(xlen), ceil(to_real(AVL) / 2.0)));
     X(rd) = to_bits(sizeof(xlen), ceil(to_real(AVL) / 2.0))
   } else {
-    writeCSR(csr_name_map("vl"), to_bits(sizeof(xlen), VLMAX));
+    writeCSR(0xC20, to_bits(sizeof(xlen), VLMAX));
     X(rd) = to_bits(sizeof(xlen), VLMAX)
   };
 
-  writeCSR(csr_name_map("vstart"), EXTZ(0b0));
+  /* reset vstart to 0 */
+  vstart = EXTZ(0b0);
+
   RETIRE_SUCCESS
 }
 
