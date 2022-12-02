@@ -42,17 +42,15 @@ function get_scalar(rs1, vsew_bits) = {
 /* Get the starting element index from csr vtype */
 val get_start_element : unit -> int effect {escape, rreg, wreg}
 function get_start_element() = {
-  start_element : int = unsigned(vstart);
-  vsew_bits     : int = get_vtype_vsew();
+  let start_element = unsigned(vstart);
+  let vsew_bits     = get_vtype_vsew();
   /* The use of vstart values greater than the largest element
     index for the current SEW setting is reserved.
     It is recommended that implementations trap if vstart is out of bounds.
     It is not required to trap, as a possible future use of upper vstart bits
     is to store imprecise trap information. */
-  if start_element > ((8 * get_vlen() / vsew_bits) - 1) then {
-    start_element = -1;
-  };
-  start_element
+  if start_element > ((8 * get_vlen() / vsew_bits) - 1) then -1
+  else start_element
 }
 
 /* Get the ending element index from csr vl */
