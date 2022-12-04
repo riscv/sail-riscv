@@ -58,47 +58,44 @@ function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
   /* set vtype and calculate VLMAX */
   match op {
     VSETVLI => {
-      let vtype_reserved = zeros(sizeof(xlen) - 9);
-      let vtype_val : xlenbits = 0b0 @ vtype_reserved @ ma @ ta @ sew @ lmul;
-      writeCSR(0xC21, vtype_val)
+      vtype->bits() = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul
     },
     VSETVL  => {
-      let sew_append_lmul : bits(6) = (sail_zero_extend(sew, 6) << 3) | (sail_zero_extend(lmul, 6));
-      let rs2 : regidx = slice(sew_append_lmul, 0, 5);
-      let rs2_val = X(rs2);
-      writeCSR(0xC21, rs2_val)
+      let rs2 : regidx = sew[1 .. 0] @ lmul;
+      vtype->bits() = X(rs2)
     }
   };
+  print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
   let LMUL_new : real = get_vtype_LMUL();
-  let SEW_new  : int = get_vtype_vsew();
+  let SEW_new  : int  = get_vtype_vsew();
   let VLMAX = floor(LMUL_new) * vlen / SEW_new;
 
   /* set vl according to VLMAX and AVL */
   if (rs1 != 0b00000) then { /* normal stripmining */
     let rs1_val = X(rs1);
     let AVL = unsigned(rs1_val);
-    X(rd) = rs1_val;
-    if (AVL <= VLMAX) then {
-      writeCSR(0xC20, to_bits(sizeof(xlen), AVL))
-    } else if (AVL < 2 * VLMAX) then { /* ceil(AVL / 2) ≤ vl ≤ VLMAX */
-      writeCSR(0xC20, to_bits(sizeof(xlen), ceil(to_real(AVL) / 2.0)))
-    } else {
-      writeCSR(0xC20, to_bits(sizeof(xlen), VLMAX));
-    };
+    vl = if AVL <= VLMAX then to_bits(sizeof(xlen), AVL)
+         else if AVL < 2 * VLMAX then to_bits(sizeof(xlen), (AVL + 1) / 2) /* ceil(AVL / 2) ≤ vl ≤ VLMAX */
+         else to_bits(sizeof(xlen), VLMAX);
+    X(rd) = vl;
+    print_reg("CSR vl <- " ^ BitStr(vl))
   } else if (rd != 0b00000) then { /* set vl to VLMAX */
     let AVL = unsigned(ones(sizeof(xlen)));
-    X(rd) = to_bits(sizeof(xlen), VLMAX);
-    writeCSR(0xC20, to_bits(sizeof(xlen), VLMAX));
+    vl = to_bits(sizeof(xlen), VLMAX);
+    X(rd) = vl;
+    print_reg("CSR vl <- " ^ BitStr(vl))
   } else { /* keep existing vl */
     let AVL = unsigned(vl);
     let ratio_new : real = to_real(SEW_new) / LMUL_new; 
     if (ratio_new != ratio_ori) then { 
-      writeCSR(0xC21, 0b1 @ zeros(sizeof(xlen) - 1)) /* set vtype.vill */
+      vtype->bits() = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
+      print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
     }
   };
 
   /* reset vstart to 0 */
   vstart = EXTZ(0b0);
+  print_reg("CSR vstart <- " ^ BitStr(vstart));
 
   RETIRE_SUCCESS
 }
@@ -125,29 +122,24 @@ function clause execute VSETI_TYPE(ma, ta, sew, lmul, uimm, rd) = {
   let ratio_ori : real = to_real(SEW_ori) / LMUL_ori;
 
   /* set vtype and calculate VLMAX */
-  let vtype_reserved = zeros(sizeof(xlen) - 9);
-  let vtype_val : xlenbits = 0b0 @ vtype_reserved @ ma @ ta @ sew @ lmul;
-  writeCSR(0xC21, vtype_val);
+  vtype->bits() = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul;
+  print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
 
   let LMUL_new : real = get_vtype_LMUL();
   let SEW_new  : int = get_vtype_vsew();
   let VLMAX    : int = floor(LMUL_new) * vlen / SEW_new;
-  let AVL      : int = unsigned(sail_zero_extend(uimm, sizeof(xlen))); /* AVL is encoded as 5-bit zero-extended imm in the rs1 field */
+  let AVL      : int = unsigned(uimm); /* AVL is encoded as 5-bit zero-extended imm in the rs1 field */
 
   /* set vl according to VLMAX and AVL */
-  if (AVL <= VLMAX) then {
-    writeCSR(0xC20, to_bits(sizeof(xlen), AVL));
-    X(rd) = to_bits(sizeof(xlen), AVL)
-  } else if (AVL < 2 * VLMAX) then { /* ceil(AVL / 2) ≤ vl ≤ VLMAX */
-    writeCSR(0xC20, to_bits(sizeof(xlen), ceil(to_real(AVL) / 2.0)));
-    X(rd) = to_bits(sizeof(xlen), ceil(to_real(AVL) / 2.0))
-  } else {
-    writeCSR(0xC20, to_bits(sizeof(xlen), VLMAX));
-    X(rd) = to_bits(sizeof(xlen), VLMAX)
-  };
+  vl = if AVL <= VLMAX then to_bits(sizeof(xlen), AVL)
+       else if AVL < 2 * VLMAX then to_bits(sizeof(xlen), (AVL + 1) / 2) /* ceil(AVL / 2) ≤ vl ≤ VLMAX */
+       else to_bits(sizeof(xlen), VLMAX);
+  X(rd) = vl;
+  print_reg("CSR vl <- " ^ BitStr(vl));
 
   /* reset vstart to 0 */
   vstart = EXTZ(0b0);
+  print_reg("CSR vstart <- " ^ BitStr(vstart));
 
   RETIRE_SUCCESS
 }

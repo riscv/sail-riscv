@@ -13,16 +13,14 @@ mapping maybe_vmask : string <-> bits(1) = {
 /* Check for valid vsew and lmul values */
 val vcheck_vsew_lmul : (int, real) -> bool
 function vcheck_vsew_lmul(vsew_bits, lmul) = {
-  if  vsew_bits >= 8     &
-      vsew_bits <= 64    &
-      lmul      >= 0.125 &
-      lmul      <= 8.0   then true else false
+  vsew_bits >= 8     & vsew_bits <= 64 &
+  lmul      >= 0.125 & lmul      <= 8.0;
 }
 
 /* Check for vstart value */
 val assert_vstart : int -> bool effect {rreg}
 function assert_vstart(i) = {
-  if unsigned(vstart) == i then true else false
+  unsigned(vstart) == i;
 }
 
 /* Scalar register shaping */
@@ -30,10 +28,10 @@ val get_scalar : forall 'n, 'n >= 8. (regidx, int('n)) -> bits('n) effect {escap
 function get_scalar(rs1, vsew_bits) = {
   if sizeof(xlen) > vsew_bits then {
     /* Least significant SEW bits */
-    slice(X(rs1), 0, vsew_bits)
+    X(rs1)[vsew_bits - 1 .. 0]
   } else if sizeof(xlen) < vsew_bits then {
     /* Sign extend to SEW */
-    sail_sign_extend(X(rs1), vsew_bits)
+    EXTS(vsew_bits, X(rs1))
   } else {
     X(rs1)
   }
@@ -219,19 +217,16 @@ function canonical_NaN('m) = {
 }
 
 /* Floating point NaN boxing / unboxing that support 16-bit to 128-bit types */
-val nan_box_new : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). bits('m) -> flenbits
-function nan_box_new   unboxed = {
-  if sizeof(flen) == 'm
-  then unboxed
-  else sail_ones(sizeof(flen) - 'm) @ unboxed 
+val NaN_box : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). bits('m) -> flenbits
+function NaN_box   unboxed = {
+  if sizeof(flen) == 'm then unboxed
+  else ones(sizeof(flen) - 'm) @ unboxed 
 }
 
-val nan_unbox_new : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). (flenbits, int('m)) -> bits('m)
-function nan_unbox_new(regval, 'm) = {
-  if sizeof(flen) == 'm
-  then regval
-  else if slice(regval, 'm, sizeof(flen) - 'm) == ones()
-  then slice(regval, 0, 'm)
+val NaN_unbox : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). (flenbits, int('m)) -> bits('m)
+function NaN_unbox(regval, 'm) = {
+  if sizeof(flen) == 'm then regval
+  else if regval[sizeof(flen) - 1 .. 'm] == ones() then regval['m - 1 .. 0]
   else canonical_NaN('m)
 }
 
@@ -282,7 +277,7 @@ val get_scalar_fp : forall 'n, 'n in {16, 32, 64, 128}. (regidx, int('n)) -> bit
 function get_scalar_fp(rs1, vsew_bits) = {
   if sizeof(flen) > vsew_bits then {
     /* Least significant SEW bits */
-    nan_unbox_new(F(rs1), vsew_bits)
+    NaN_unbox(F(rs1), vsew_bits)
   } else {
     canonical_NaN(vsew_bits)
   }
@@ -292,8 +287,8 @@ function get_scalar_fp(rs1, vsew_bits) = {
 val get_shift_amount : forall 'n 'm, 0 <= 'n & 'm in {8, 16, 32, 64}. (bits('n), int('m)) -> int effect {escape}
 function get_shift_amount(bit_val, vsew_bits) = {
   let lowlog2bits : int = log2(vsew_bits);
-  assert(0 <= lowlog2bits & lowlog2bits < vsew_bits);
-  unsigned(slice(bit_val, 0, lowlog2bits));
+  assert(0 < lowlog2bits & lowlog2bits < 'n);
+  unsigned(bit_val[lowlog2bits - 1 .. 0]);
 }
 
 /* Fixed point rounding increment */
