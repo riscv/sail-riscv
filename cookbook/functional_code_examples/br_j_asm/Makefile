@@ -32,13 +32,13 @@
 # --------------------------------------------------------------------------------------------
 # USER MUST SET THESE TO A PROPER SETTING
 
-#XLEN			:= 64
+XLEN			:= 64
+#XLEN			:= 32
 #TOOL_OPT		:= elf
-XLEN			:= 32
 TOOL_OPT		:= linux-gnu
 #RISCV			:= /apps/vlsi/tools/riscv/gnu_toolchain/102020/standard/riscv64-unknown-elf
-#RISCV			:= /opt/riscv
-RISCV			:= /opt/riscv${XLEN}
+RISCV			:= /opt/riscv32
+#RISCV			:= /opt/riscv${XLEN}
 #CONFIG_BASE		:= 0x70080
 CONFIG_BASE		:= 0x80000000
 MARCH          	:= -march=rv32imc -mabi=ilp32
@@ -96,6 +96,8 @@ OBJS		:= ${ASM_OBJS} ${C_OBJS}
 
 OUT_FILE		:= ./sim.out
 
+RUN_FLAGS	:= -u rv32i_isa.yaml -y rv32i_platform.yaml
+
 $(info =================================================================)
 $(info Make variable settings....)
 $(info     RISCV:     ${RISCV})
@@ -143,7 +145,7 @@ clean:
 
 
 run: ${TARGET}
-	${RUN_TOOL} ${TARGET} 2>&1 | tee ${OUT_FILE}
+	${RUN_TOOL} ${RUN_FLAGS} ${TARGET} 2>&1 | tee ${OUT_FILE}
 
 clean_all: clean
 
