@@ -87,7 +87,8 @@ function aes_decode_rcon(r) = {
     0x6 => 0x00000040,
     0x7 => 0x00000080,
     0x8 => 0x0000001b,
-    0x9 => 0x00000036
+    0x9 => 0x00000036,
+    _   => internal_error(__FILE__, __LINE__, "Unexpected AES r") /* unreachable -- required to silence Sail warning */
   }
 }
 

@@ -428,7 +428,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        mstatus->SPP()  = match cur_privilege {
                            User => 0b0,
                            Supervisor => 0b1,
-                           Machine => internal_error("invalid privilege for s-mode trap")
+                           Machine => internal_error(__FILE__, __LINE__, "invalid privilege for s-mode trap")
                          };
        stval           = tval(info);
        sepc            = pc;
@@ -560,7 +560,7 @@ function init_sys() -> unit = {
   misa->S()   = 0b1;                            /* supervisor-mode */
 
   if   sys_enable_fdext() & sys_enable_zfinx()
-  then internal_error("F and Zfinx cannot both be enabled!");
+  then internal_error(__FILE__, __LINE__, "F and Zfinx cannot both be enabled!");
 
   /* We currently support both F and D */
   misa->F()   = bool_to_bits(sys_enable_fdext());      /* single-precision */

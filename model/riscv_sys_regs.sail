@@ -339,7 +339,7 @@ function cur_Architecture() -> Architecture = {
     };
   match architecture(a) {
     Some(a) => a,
-    None()  => internal_error("Invalid current architecture")
+    None()  => internal_error(__FILE__, __LINE__, "Invalid current architecture")
   }
 }
 
