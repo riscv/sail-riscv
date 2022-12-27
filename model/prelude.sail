@@ -74,6 +74,7 @@ $include <arith.sail>
 $include <string.sail>
 $include <vector_dec.sail>
 $include <regfp.sail>
+$include <real.sail>
 
 val string_startswith = "string_startswith" : (string, string) -> bool
 val string_drop = "string_drop" : (string, nat) -> string
@@ -140,7 +141,17 @@ val xor_vec = {c: "xor_bits", _: "xor_vec"} : forall 'n. (bits('n), bits('n)) ->
 
 val int_power = {ocaml: "int_power", interpreter: "int_power", lem: "pow", coq: "pow", c: "pow_int"} : (int, int) -> int
 
-overload operator ^ = {xor_vec, int_power, concat_str}
+val xor_bool : (bool, bool) -> bool
+function xor_bool(b1, b2) = {
+  match (b1, b2) {
+    (false, false) => false,
+    (false, true)  => true,
+    (true, false)  => true,
+    (true, true)   => false
+  }
+}
+
+overload operator ^ = {xor_vec, int_power, concat_str, xor_bool}
 
 val sub_vec = {c: "sub_bits", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
 
@@ -205,6 +216,12 @@ val bit_to_bool : bit -> bool
 function bit_to_bool b = match b {
   bitone  => true,
   bitzero => false
+}
+
+val bool_to_bit : bool -> bit
+function bool_to_bit b = match b {
+  true  => bitone,
+  false => bitzero
 }
 
 val to_bits : forall 'l, 'l >= 0.(atom('l), int) -> bits('l)
@@ -327,3 +344,26 @@ val def_spc_backwards : string -> unit
 function def_spc_backwards s = ()
 val def_spc_matches_prefix : string -> option((unit, nat))
 function def_spc_matches_prefix s = opt_spc_matches_prefix(s)
+
+val div_int : (int, int) -> int
+function div_int(x, y) = {
+  floor(div_real(to_real(x), to_real(y)))
+}
+
+val "print_real" : (string, real) -> unit
+val "print_int" : (string, int) -> unit
+
+overload operator / = {div_int, div_real}
+overload operator * = {mult_atom, mult_int, mult_real}
+
+/* helper for vector extension where the element width is between 8 and 64 */
+val log2 : forall 'n, 'n in {8, 16, 32, 64}. int('n) -> int
+function log2(n) = {
+  let result : int = match n {
+    8    => 3,
+    16   => 4,
+    32   => 5,
+    64   => 6
+  };
+  result
+}
