@@ -306,6 +306,7 @@ function riscv_ui64ToF16 (rm, v) = {
   (float_fflags[4 .. 0], float_result[15 .. 0])
 }
 
+
 val     extern_f32ToI32 = {c: "softfloat_f32toi32", ocaml: "Softfloat.f32_to_i32", lem: "softfloat_f32_to_i32"} : (bits_rm, bits_S) -> unit
 val      riscv_f32ToI32 : (bits_rm, bits_S) -> (bits_fflags, bits_W)
 function riscv_f32ToI32 (rm, v) = {
