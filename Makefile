@@ -16,6 +16,7 @@ else
 endif
 
 SAIL_FLEN := riscv_flen_D.sail
+SAIL_VLEN := riscv_vlen.sail
 
 # Instruction sources, depending on target
 SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_misa_ext.sail
@@ -41,6 +42,15 @@ SAIL_DEFAULT_INST += riscv_insts_zbkx.sail
 
 SAIL_DEFAULT_INST += riscv_insts_zicond.sail
 
+SAIL_DEFAULT_INST += riscv_insts_vext_utils.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_vset.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_arith.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_fp.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_mem.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_mask.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_vm.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_red.sail
+
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
 SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
 
@@ -49,6 +59,7 @@ SAIL_RMEM_INST_SRCS = riscv_insts_begin.sail $(SAIL_RMEM_INST) riscv_insts_end.s
 
 # System and platform sources
 SAIL_SYS_SRCS =  riscv_csr_map.sail
+SAIL_SYS_SRCS += riscv_vext_control.sail    # helpers for the 'V' extension
 SAIL_SYS_SRCS += riscv_next_regs.sail
 SAIL_SYS_SRCS += riscv_sys_exceptions.sail  # default basic helpers for exception handling
 SAIL_SYS_SRCS += riscv_sync_exception.sail  # define the exception structure used in the model
@@ -68,11 +79,12 @@ SAIL_VM_SRCS += $(SAIL_RV64_VM_SRCS)
 endif
 
 # Non-instruction sources
-PRELUDE = prelude.sail prelude_mapping.sail $(SAIL_XLEN) $(SAIL_FLEN) prelude_mem_metadata.sail prelude_mem.sail
+PRELUDE = prelude.sail prelude_mapping.sail $(SAIL_XLEN) $(SAIL_FLEN) $(SAIL_VLEN) prelude_mem_metadata.sail prelude_mem.sail
 
 SAIL_REGS_SRCS = riscv_reg_type.sail riscv_freg_type.sail riscv_regs.sail riscv_pc_access.sail riscv_sys_regs.sail
 SAIL_REGS_SRCS += riscv_pmp_regs.sail riscv_pmp_control.sail
 SAIL_REGS_SRCS += riscv_ext_regs.sail $(SAIL_CHECK_SRCS)
+SAIL_REGS_SRCS += riscv_vreg_type.sail riscv_vext_regs.sail
 
 SAIL_ARCH_SRCS = $(PRELUDE)
 SAIL_ARCH_SRCS += riscv_types_common.sail riscv_types_ext.sail riscv_types.sail

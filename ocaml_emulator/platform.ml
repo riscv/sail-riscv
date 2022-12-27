@@ -12,6 +12,7 @@ let config_enable_misaligned_access    = ref false
 let config_mtval_has_illegal_inst_bits = ref false
 let config_enable_pmp                  = ref false
 let config_enable_writable_fiom        = ref true
+let config_enable_vext                 = ref true
 
 let platform_arch = ref P.RV64
 
@@ -79,6 +80,7 @@ let enable_writable_misa ()          = !config_enable_writable_misa
 let enable_rvc ()                    = !config_enable_rvc
 let enable_next ()                   = !config_enable_next
 let enable_fdext ()                  = false
+let enable_vext ()                   = !config_enable_vext
 let enable_dirty_update ()           = !config_enable_dirty_update
 let enable_misaligned_access ()      = !config_enable_misaligned_access
 let mtval_has_illegal_inst_bits ()   = !config_mtval_has_illegal_inst_bits

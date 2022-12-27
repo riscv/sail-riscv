@@ -153,6 +153,8 @@ val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
 val sys_enable_writable_fiom = {c: "sys_enable_writable_fiom", ocaml: "Platform.enable_writable_fiom", _: "sys_enable_writable_fiom"} : unit -> bool
+/* whether misa.v was enabled at boot */
+val sys_enable_vext = {c: "sys_enable_vext", ocaml: "Platform.enable_vext", _: "sys_enable_vext"} : unit -> bool
 
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
@@ -244,6 +246,7 @@ bitfield Mstatus : xlenbits = {
   FS   : 14 .. 13,
 
   MPP  : 12 .. 11,
+  VS   : 10 .. 9,
   SPP  : 8,
 
   MPIE : 7,
@@ -297,7 +300,7 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
    * that does not have a matching bitfield entry. All bits above 32 are handled
    * explicitly later.
    */
-  let m : Mstatus = Mk_Mstatus(zero_extend(v[22 .. 11] @ 0b00 @ v[8 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
+  let m : Mstatus = Mk_Mstatus(zero_extend(v[22 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
 
   /* We don't have any extension context yet. */
   let m = update_XS(m, extStatus_to_bits(Off));
@@ -308,7 +311,8 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
    * FIXME: This should be made a platform parameter.
    */
   let m = if sys_enable_zfinx() then update_FS(m, extStatus_to_bits(Off)) else m;
-  let dirty = extStatus_of_bits(m.FS()) == Dirty | extStatus_of_bits(m.XS()) == Dirty;
+  let dirty = extStatus_of_bits(m.FS()) == Dirty | extStatus_of_bits(m.XS()) == Dirty |
+              extStatus_of_bits(m.VS()) == Dirty;
   let m = update_SD(m, bool_to_bits(dirty));
 
   /* We don't support dynamic changes to SXL and UXL. */
@@ -357,6 +361,8 @@ function haveFExt()    -> bool = (misa.F() == 0b1) & (mstatus.FS() != 0b00)
 function haveDExt()    -> bool = (misa.D() == 0b1) & (mstatus.FS() != 0b00)
 /* Zfh (half-precision) extension depends on misa.F and mstatus.FS */
 function haveZfh()     -> bool = (misa.F() == 0b1) & (mstatus.FS() != 0b00)
+/* V extension has to enable both via misa.V as well as mstatus.VS */
+function haveVExt()    -> bool = (misa.V() == 0b1) & (mstatus.VS() != 0b00)
 
 /* Zhinx, Zfinx and Zdinx extensions (TODO: gate FCSR access on [mhs]stateen0 bit 1 when implemented) */
 function haveZhinx()   -> bool = sys_enable_zfinx()
@@ -592,6 +598,7 @@ bitfield Sstatus : xlenbits = {
   SUM  : 18,
   XS   : 16 .. 15,
   FS   : 14 .. 13,
+  VS   : 10 .. 9,
   SPP  : 8,
   SPIE : 5,
   UPIE : 4,
@@ -619,6 +626,7 @@ function lower_mstatus(m : Mstatus) -> Sstatus = {
   let s = update_SUM(s, m.SUM());
   let s = update_XS(s, m.XS());
   let s = update_FS(s, m.FS());
+  let s = update_VS(s, m.VS());
   let s = update_SPP(s, m.SPP());
   let s = update_SPIE(s, m.SPIE());
   let s = update_UPIE(s, m.UPIE());
@@ -634,7 +642,9 @@ function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
   let m = update_XS(m, s.XS());
   // See comment for mstatus.FS.
   let m = update_FS(m, s.FS());
-  let dirty = extStatus_of_bits(m.FS()) == Dirty | extStatus_of_bits(m.XS()) == Dirty;
+  let m = update_VS(m, s.VS());
+  let dirty = extStatus_of_bits(m.FS()) == Dirty | extStatus_of_bits(m.XS()) == Dirty |
+              extStatus_of_bits(m.VS()) == Dirty;
   let m = update_SD(m, bool_to_bits(dirty));
 
   let m = update_SPP(m, s.SPP());
@@ -872,3 +882,85 @@ function is_fiom_active() -> bool = {
     User => (menvcfg.FIOM() | senvcfg.FIOM()) == 0b1,
   }
 }
+/* vector csrs */
+register vstart : bits(16) /* use the largest possible length of vstart */
+register vxsat  : bits(1)
+register vxrm   : bits(2)
+register vl     : xlenbits
+register vlenb  : xlenbits
+
+bitfield Vtype  : xlenbits = {
+  vill      : xlen - 1,
+  reserved  : xlen - 2 .. 8,
+  vma       : 7,
+  vta       : 6,
+  vsew      : 5 .. 3,
+  vlmul     : 2 .. 0
+}
+register vtype : Vtype
+
+/* the dynamic selected element width (SEW) */
+/* this returns the power of 2 for SEW */
+val get_sew_pow : unit -> {|3, 4, 5, 6|} effect {escape, rreg}
+function get_sew_pow() = {
+  let SEW_pow : {|3, 4, 5, 6|} = match vtype.vsew() {
+    0b000 => 3,
+    0b001 => 4,
+    0b010 => 5,
+    0b011 => 6,
+    _     => {assert(false, "invalid vsew field in vtype"); 0}
+  };
+  SEW_pow
+}
+/* this returns the actual value of SEW */
+val get_sew : unit -> {|8, 16, 32, 64|} effect {escape, rreg}
+function get_sew() = {
+  match get_sew_pow() {
+    3 => 8,
+    4 => 16,
+    5 => 32,
+    6 => 64
+  }
+}
+/* this returns the value of SEW in bytes */
+val get_sew_bytes : unit -> {|1, 2, 4, 8|} effect {escape, rreg}
+function get_sew_bytes() = {
+  match get_sew_pow() {
+    3 => 1,
+    4 => 2,
+    5 => 4,
+    6 => 8
+  }
+}
+
+/* the vector register group multiplier (LMUL) */
+/* this returns the power of 2 for LMUL */
+val get_lmul_pow : unit -> {|-3, -2, -1, 0, 1, 2, 3|} effect {escape, rreg}
+function get_lmul_pow() = {
+  match vtype.vlmul() {
+    0b101 => -3,
+    0b110 => -2,
+    0b111 => -1,
+    0b000 => 0,
+    0b001 => 1,
+    0b010 => 2,
+    0b011 => 3,
+    _     => {assert(false, "invalid vlmul field in vtype"); 0}
+  }
+}
+
+enum agtype = { UNDISTURBED, AGNOSTIC }
+
+val decode_agtype : bits(1) -> agtype
+function decode_agtype(ag) = {
+  match ag {
+    0b0 => UNDISTURBED,
+    0b1 => AGNOSTIC
+  }
+}
+
+val get_vtype_vma : unit -> agtype effect {rreg}
+function get_vtype_vma() = decode_agtype(vtype.vma())
+
+val get_vtype_vta : unit -> agtype effect {rreg}
+function get_vtype_vta() = decode_agtype(vtype.vta())

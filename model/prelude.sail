@@ -198,8 +198,11 @@ overload zeros = {zeros_implicit}
 val ones : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
 function ones (n) = sail_ones (n)
 
+val bool_to_bit : bool -> bit
+function bool_to_bit x = if x then bitone else bitzero
+
 val bool_to_bits : bool -> bits(1)
-function bool_to_bits x = if x then 0b1 else 0b0
+function bool_to_bits x = [bool_to_bit(x)]
 
 val bit_to_bool : bit -> bool
 function bit_to_bool b = match b {
@@ -327,3 +330,24 @@ val def_spc_backwards : string -> unit
 function def_spc_backwards s = ()
 val def_spc_matches_prefix : string -> option((unit, nat))
 function def_spc_matches_prefix s = opt_spc_matches_prefix(s)
+
+overload operator / = {quot_round_zero}
+overload operator * = {mult_atom, mult_int}
+
+/* helper for vector extension
+ * 1. EEW between 8 and 64
+ * 2. EMUL in vmv<nr>r.v instructions between 1 and 8
+ */
+val log2 : forall 'n, 'n in {1, 2, 4, 8, 16, 32, 64}. int('n) -> int
+function log2(n) = {
+  let result : int = match n {
+    1    => 0,
+    2    => 1,
+    4    => 2,
+    8    => 3,
+    16   => 4,
+    32   => 5,
+    64   => 6
+  };
+  result
+}

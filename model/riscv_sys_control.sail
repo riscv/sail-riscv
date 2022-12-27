@@ -556,12 +556,13 @@ function init_sys() -> unit = {
   mhartid     = zero_extend(0b0);
 
   misa->MXL() = arch_to_bits(if sizeof(xlen) == 32 then RV32 else RV64);
-  misa->A()   = 0b1;                            /* atomics */
-  misa->C()   = bool_to_bits(sys_enable_rvc()); /* RVC */
-  misa->I()   = 0b1;                            /* base integer ISA */
-  misa->M()   = 0b1;                            /* integer multiply/divide */
-  misa->U()   = 0b1;                            /* user-mode */
-  misa->S()   = 0b1;                            /* supervisor-mode */
+  misa->A()   = 0b1;                             /* atomics */
+  misa->C()   = bool_to_bits(sys_enable_rvc());  /* RVC */
+  misa->I()   = 0b1;                             /* base integer ISA */
+  misa->M()   = 0b1;                             /* integer multiply/divide */
+  misa->U()   = 0b1;                             /* user-mode */
+  misa->S()   = 0b1;                             /* supervisor-mode */
+  misa->V()   = bool_to_bits(sys_enable_vext()); /* vector extension */
 
   if   sys_enable_fdext() & sys_enable_zfinx()
   then internal_error(__FILE__, __LINE__, "F and Zfinx cannot both be enabled!");
@@ -602,6 +603,25 @@ function init_sys() -> unit = {
 
   menvcfg->bits() = zero_extend(0b0);
   senvcfg->bits() = zero_extend(0b0);
+  /* initialize vector csrs */
+  elen               = 0b1; /* ELEN=64 as the common case */
+  vlen               = 0b0100; /* VLEN=512 as a default value */
+  vlenb              = to_bits(sizeof(xlen), 2 ^ (get_vlen_pow() - 3)); /* vlenb holds the constant value VLEN/8 */
+  /* VLEN value needs to be manually changed currently.
+   * See riscv_vlen.sail for details.
+   */
+  vstart             = zero_extend(0b0);
+  vxsat              = 0b0;
+  vxrm               = 0b00;
+  vcsr->vxrm()       = vxrm;
+  vcsr->vxsat()      = vxsat;
+  vl                 = zero_extend(0b0);
+  vtype->vill()      = 0b1;
+  vtype->reserved()  = zero_extend(0b0);
+  vtype->vma()       = 0b0;
+  vtype->vta()       = 0b0;
+  vtype->vsew()      = 0b000;
+  vtype->vlmul()     = 0b000;
 
   init_pmp();
 
