@@ -227,7 +227,7 @@ function get_num_elem(lmul, vsew_bits) = {
      * be handled in init_masked_result */
     num_elem = vlen / vsew_bits;
   };
-  
+
   num_elem
 }
 
@@ -295,17 +295,13 @@ val read_vreg : forall 'n 'm, 8 <= 'm <= 64. (int('n), int('m), real, regidx) ->
 function read_vreg(num_elem, vsew_bits, lmul, vrid) = {
   var result   : vector('n, dec, bits('m)) = undefined;
   let vlen     : int = get_vlen();
-  let lmul_int : int = if lmul < 1.0 then 1 else floor(lmul);
 
   /* Check for valid vrid */
-  if lmul > 1.0 & (unsigned(vrid) + floor(lmul)) > 31 then {
+  if lmul > 1.0 & (unsigned(vrid) + floor(lmul)) > 32 then {
     /* vrid would read past largest vreg (v31) */
     result = undefined
   } else if lmul > 1.0 & (unsigned(vrid) % floor(lmul) != 0) then {
     /* vrid must be a multiple of lmul */
-    result = undefined
-  } else if (vsew_bits > vlen) & (vsew_bits % vlen != 0) then {
-    /* vsew_bits must be a multiple of vlen */
     result = undefined
   } else {
     if vsew_bits > vlen then {
@@ -317,17 +313,21 @@ function read_vreg(num_elem, vsew_bits, lmul, vrid) = {
         result[i] = read_mult_vreg('num_reg_per_elem, vsew_bits, vrid_lmul)
       }
     } else {
-      let 'num_elem_single  : int = vlen / vsew_bits;
-      foreach (i_lmul from 0 to (lmul_int - 1)) {
-        let r_start_i : int = i_lmul * 'num_elem_single;
-        let r_end_i   : int = r_start_i + 'num_elem_single - 1;
-        let vrid_lmul     : regidx = vrid + to_bits(5, i_lmul);
-        let single_result : vector('num_elem_single, dec, bits('m)) = read_single_vreg('num_elem_single, vsew_bits, vrid_lmul);
-        foreach (r_i from r_start_i to r_end_i) {
-          let s_i : int = r_i - r_start_i;
-          assert(0 <= r_i & r_i < num_elem);
-          assert(0 <= s_i & s_i < 'num_elem_single);
-          result[r_i] = single_result[s_i];
+      if lmul < 1.0 then { 
+        result = read_single_vreg('n, vsew_bits, vrid);
+      } else {
+        let 'num_elem_single  : int = vlen / vsew_bits;
+        foreach (i_lmul from 0 to (floor(lmul) - 1)) {
+          let r_start_i : int = i_lmul * 'num_elem_single;
+          let r_end_i   : int = r_start_i + 'num_elem_single - 1;
+          let vrid_lmul     : regidx = vrid + to_bits(5, i_lmul);
+          let single_result : vector('num_elem_single, dec, bits('m)) = read_single_vreg('num_elem_single, vsew_bits, vrid_lmul);
+          foreach (r_i from r_start_i to r_end_i) {
+            let s_i : int = r_i - r_start_i;
+            assert(0 <= r_i & r_i < num_elem);
+            assert(0 <= s_i & s_i < 'num_elem_single);
+            result[r_i] = single_result[s_i];
+          }
         }
       }
     }
@@ -371,10 +371,10 @@ function write_vreg(num_elem, vsew_bits, lmul, vrid, vec) = {
   } else {
     let 'num_elem_single  : int = vlen / vsew_bits;
     foreach (i_lmul from 0 to (lmul_int - 1)) {
-      var single_vec  : vector('num_elem_single, dec, bits('m)) = undefined;
-      let vrid_lmul   : regidx = vrid + to_bits(5, i_lmul);
-      let r_start_i   : int = i_lmul * 'num_elem_single;
-      let r_end_i     : int = r_start_i + 'num_elem_single - 1;
+      var single_vec : vector('num_elem_single, dec, bits('m)) = undefined;
+      let vrid_lmul  : regidx = vrid + to_bits(5, i_lmul);
+      let r_start_i  : int = i_lmul * 'num_elem_single;
+      let r_end_i    : int = r_start_i + 'num_elem_single - 1;
       foreach (r_i from r_start_i to r_end_i) {
         let s_i : int = r_i - r_start_i;
         assert(0 <= r_i & r_i < num_elem);

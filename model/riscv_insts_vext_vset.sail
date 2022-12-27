@@ -68,7 +68,7 @@ function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
   print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
   let LMUL_new : real = get_vtype_LMUL();
   let SEW_new  : int  = get_vtype_vsew();
-  let VLMAX = floor(LMUL_new) * vlen / SEW_new;
+  let VLMAX = floor(LMUL_new * to_real(vlen) / to_real(SEW_new));
 
   /* set vl according to VLMAX and AVL */
   if (rs1 != 0b00000) then { /* normal stripmining */
@@ -127,7 +127,7 @@ function clause execute VSETI_TYPE(ma, ta, sew, lmul, uimm, rd) = {
 
   let LMUL_new : real = get_vtype_LMUL();
   let SEW_new  : int = get_vtype_vsew();
-  let VLMAX    : int = floor(LMUL_new) * vlen / SEW_new;
+  let VLMAX    : int = floor(LMUL_new * to_real(vlen) / to_real(SEW_new));
   let AVL      : int = unsigned(uimm); /* AVL is encoded as 5-bit zero-extended imm in the rs1 field */
 
   /* set vl according to VLMAX and AVL */
