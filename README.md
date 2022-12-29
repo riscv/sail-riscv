@@ -1,3 +1,7 @@
+Notification
+================
+This repo will not be updated since the vector extension part is quite long（riscv_inst_vext_total.sail）. We are trying to slice this part into several shorter versions. Here is our new repo: https://github.com/XinlaiWan/sail-riscv.git
+
 RISCV Sail Model
 ================
 
