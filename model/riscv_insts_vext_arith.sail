@@ -38,23 +38,24 @@ mapping clause encdec = VVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_vvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111
 
 function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
-  let vsew_bits : int  = get_vtype_vsew();
-  let lmul      : real = get_vtype_LMUL();
-  let num_elem  : int  = get_num_elem(lmul, vsew_bits);
+  let SEW_pow  : int = get_sew_pow();
+  let SEW      : int = int_power(2, SEW_pow);
+  let LMUL_pow : int = get_lmul_pow();
+  let VLEN_pow : int = get_vlen_pow();
+  let num_elem : int = get_num_elem(LMUL_pow, SEW);
 
-  assert(vsew_bits == 8 | vsew_bits == 16 | vsew_bits == 32 | vsew_bits == 64);
-  assert(0 <= num_elem & num_elem <= get_vlen());
+  assert(SEW == 8 | SEW == 16 | SEW == 32 | SEW == 64);
   let 'n = num_elem;
-  let 'm = vsew_bits;
+  let 'm = SEW;
 
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
-  let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vs1);
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vs2);
-  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vd);
+  let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
   mask_helper : vector('n, dec, bool)     = undefined;
 
-  (result, mask_helper) = init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val);
+  (result, mask_helper) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask_helper[i] == true then {
@@ -64,13 +65,13 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
         VV_VAND          => vs2_val[i] & vs1_val[i],
         VV_VOR           => vs2_val[i] | vs1_val[i],
         VV_VXOR          => vs2_val[i] ^ vs1_val[i],
-        VV_VSADDU        => unsigned_saturation('m, EXTZ('m + 1, vs2_val[i]) + EXTZ('m + 1, vs1_val[i]) ),
-        VV_VSADD         => signed_saturation('m, EXTS('m + 1, vs2_val[i]) + EXTS('m + 1, vs1_val[i]) ),
+        VV_VSADDU        => unsigned_saturation('m, EXTZ('m + 1, vs2_val[i]) + EXTZ('m + 1, vs1_val[i])),
+        VV_VSADD         => signed_saturation('m, EXTS('m + 1, vs2_val[i]) + EXTS('m + 1, vs1_val[i])),
         VV_VSSUBU        => {
                               if unsigned(vs2_val[i]) < unsigned(vs1_val[i]) then zeros()
-                              else unsigned_saturation('m, EXTZ('m + 1, vs2_val[i]) - EXTZ('m + 1, vs1_val[i]) )
+                              else unsigned_saturation('m, EXTZ('m + 1, vs2_val[i]) - EXTZ('m + 1, vs1_val[i]))
                             },
-        VV_VSSUB         => signed_saturation('m, EXTS('m + 1, vs2_val[i]) - EXTS('m + 1, vs1_val[i]) ),
+        VV_VSSUB         => signed_saturation('m, EXTS('m + 1, vs2_val[i]) - EXTS('m + 1, vs1_val[i])),
         VV_VSMUL         => {
                               result_mul = to_bits('m * 2, signed(vs2_val[i]) * signed(vs1_val[i]));
                               rounding_incr = get_fixed_rounding_incr(result_mul, 'm - 1);
@@ -78,43 +79,43 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
                               signed_saturation('m, result_wide['m..0])
                             },
         VV_VSLL          => {
-                              let shift_amount = get_shift_amount(vs1_val[i], vsew_bits);
+                              let shift_amount = get_shift_amount(vs1_val[i], SEW);
                               assert(shift_amount >= 0);
                               vs2_val[i] << shift_amount
                             },
         VV_VSRL          => {
-                              let shift_amount = get_shift_amount(vs1_val[i], vsew_bits);
+                              let shift_amount = get_shift_amount(vs1_val[i], SEW);
                               assert(shift_amount >= 0);
                               vs2_val[i] >> shift_amount
                             },
         VV_VSRA          => {
-                              let shift_amount = get_shift_amount(vs1_val[i], vsew_bits);
+                              let shift_amount = get_shift_amount(vs1_val[i], SEW);
                               assert(shift_amount >= 0);
                               let v_double : bits('m * 2) = EXTS(vs2_val[i]);
-                              slice(v_double >> shift_amount, 0, vsew_bits)
+                              slice(v_double >> shift_amount, 0, SEW)
                             },
         VV_VSSRL         => {
-                              let shift_amount = get_shift_amount(vs1_val[i], vsew_bits);
+                              let shift_amount = get_shift_amount(vs1_val[i], SEW);
                               assert(shift_amount >= 0);
                               let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
                               (vs2_val[i] >> shift_amount) + EXTZ('m, rounding_incr)
                             },
         VV_VSSRA         => {
-                              let shift_amount = get_shift_amount(vs1_val[i], vsew_bits);
+                              let shift_amount = get_shift_amount(vs1_val[i], SEW);
                               assert(shift_amount >= 0);
                               let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
                               let v_double : bits('m * 2) = EXTS(vs2_val[i]);
-                              slice(v_double >> shift_amount, 0, vsew_bits) + EXTZ('m, rounding_incr)
+                              slice(v_double >> shift_amount, 0, SEW) + EXTZ('m, rounding_incr)
                             },
-        VV_VMINU         => to_bits(vsew_bits, min(unsigned(vs2_val[i]), unsigned(vs1_val[i]))),
-        VV_VMIN          => to_bits(vsew_bits, min(signed(vs2_val[i]), signed(vs1_val[i]))),
-        VV_VMAXU         => to_bits(vsew_bits, max(unsigned(vs2_val[i]), unsigned(vs1_val[i]))),
-        VV_VMAX          => to_bits(vsew_bits, max(signed(vs2_val[i]), signed(vs1_val[i]))),
+        VV_VMINU         => to_bits(SEW, min(unsigned(vs2_val[i]), unsigned(vs1_val[i]))),
+        VV_VMIN          => to_bits(SEW, min(signed(vs2_val[i]), signed(vs1_val[i]))),
+        VV_VMAXU         => to_bits(SEW, max(unsigned(vs2_val[i]), unsigned(vs1_val[i]))),
+        VV_VMAX          => to_bits(SEW, max(signed(vs2_val[i]), signed(vs1_val[i]))),
         VV_VRGATHER      => {
                               assert(vs1 != vd & vs2 != vd);
                               let idx = unsigned(vs1_val[i]);
-                              vlmax = floor(lmul * (to_real(get_vlen()) / to_real(vsew_bits)));
-                              if idx < vlmax then {
+                              VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
+                              if idx < VLMAX then {
                                 assert(idx < 'n); 
                                 vs2_val[idx]
                               } else zeros() 
@@ -122,10 +123,10 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
         VV_VRGATHEREI16  => {
                               assert(vs1 != vd & vs2 != vd);
                               /* vrgatherei16.vv uses SEW/LMUL for the data in vs2 but EEW=16 and EMUL = (16/SEW)*LMUL for the indices in vs1 */
-                              let vs1_new : vector('n, dec, bits(16)) = read_vreg(num_elem, 16, (lmul * 16.0 / to_real(vsew_bits)), vs1);
+                              let vs1_new : vector('n, dec, bits(16)) = read_vreg(num_elem, 16, 4 + LMUL_pow - SEW_pow, vs1);
                               let idx = unsigned(vs1_new[i]);
-                              vlmax = floor(lmul * (to_real(get_vlen()) / to_real(vsew_bits)));
-                              if idx < vlmax then {
+                              VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
+                              if idx < VLMAX then {
                                 assert(idx < 'n); 
                                 vs2_val[idx]
                               } else zeros()                   
@@ -134,7 +135,7 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
     }
   };
 
-  write_vreg(num_elem, vsew_bits, lmul, vd, result);
+  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   vstart = EXTZ(0b0);
   RETIRE_SUCCESS
 }
@@ -182,23 +183,24 @@ mapping clause encdec = VXSG(funct6, vm, vs2, rs1, vd)
   <-> encdec_vxsgfunct6(funct6) @ vm @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111
 
 function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
-  let vsew_bits : int  = get_vtype_vsew();
-  let lmul      : real = get_vtype_LMUL();
-  let num_elem  : int  = get_num_elem(lmul, vsew_bits);
+  let SEW_pow  : int = get_sew_pow();
+  let SEW      : int = int_power(2, SEW_pow);
+  let LMUL_pow : int = get_lmul_pow();
+  let VLEN_pow : int = get_vlen_pow();
+  let num_elem : int = get_num_elem(LMUL_pow, SEW);
 
-  assert(8 <= vsew_bits & vsew_bits <= 64);
-  assert(0 <= num_elem & num_elem <= get_vlen());
+  assert(8 <= SEW & SEW <= 64);
   let 'n = num_elem;
-  let 'm = vsew_bits;
+  let 'm = SEW;
 
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
   let rs1_val : int                       = unsigned(X(rs1));
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vs2);
-  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vd);
+  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
   mask_helper : vector('n, dec, bool)     = undefined;
 
-  (result, mask_helper) = init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val);
+  (result, mask_helper) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask_helper[i] == true then {
@@ -210,8 +212,8 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
                           },
         VX_VSLIDEDOWN  => {
                             assert(i + rs1_val >= 0);
-                            vlmax = floor(lmul * to_real(get_vlen()) / to_real(vsew_bits));
-                            if i + rs1_val < vlmax then {
+                            VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
+                            if i + rs1_val < VLMAX then {
                               assert(i + rs1_val < 'n); 
                               vs2_val[i + rs1_val]
                             } else zeros()
@@ -219,8 +221,8 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
         VX_VRGATHER    => {
                             assert(vs2 != vd);
                             assert(rs1_val >= 0);
-                            vlmax = floor(lmul * to_real(get_vlen()) / to_real(vsew_bits));
-                            if rs1_val < vlmax then {
+                            VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
+                            if rs1_val < VLMAX then {
                               assert(rs1_val < 'n); 
                               vs2_val[rs1_val]
                             } else zeros() 
@@ -229,7 +231,7 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
     }
   };
 
-  write_vreg(num_elem, vsew_bits, lmul, vd, result);
+  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   vstart = EXTZ(0b0);
   RETIRE_SUCCESS
 } 
@@ -259,23 +261,24 @@ mapping clause encdec = VISG(funct6, vm, vs2, simm, vd)
   <-> encdec_visgfunct6(funct6) @ vm @ vs2 @ simm @ 0b011 @ vd @ 0b1010111
 
 function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
-  let vsew_bits : int  = get_vtype_vsew();
-  let lmul      : real = get_vtype_LMUL();
-  let num_elem  : int  = get_num_elem(lmul, vsew_bits);
+  let SEW_pow  : int = get_sew_pow();
+  let SEW      : int = int_power(2, SEW_pow);
+  let LMUL_pow : int = get_lmul_pow();
+  let VLEN_pow : int = get_vlen_pow();
+  let num_elem : int = get_num_elem(LMUL_pow, SEW);
 
-  assert(8 <= vsew_bits & vsew_bits <= 64);
-  assert(0 <= num_elem & num_elem <= get_vlen());
+  assert(8 <= SEW & SEW <= 64);
   let 'n = num_elem;
-  let 'm = vsew_bits;
+  let 'm = SEW;
 
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
   let imm_val : int                       = unsigned(EXTZ(sizeof(xlen), simm));
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vs2);
-  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vd);
+  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
   mask_helper : vector('n, dec, bool)     = undefined;
 
-  (result, mask_helper) = init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val);
+  (result, mask_helper) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask_helper[i] == true then {
@@ -287,8 +290,8 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
                           },
         VI_VSLIDEDOWN  => {
                             assert(i + imm_val >= 0);
-                            vlmax = floor(lmul * to_real(get_vlen()) / to_real(vsew_bits));
-                            if i + imm_val < vlmax then {
+                            VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
+                            if i + imm_val < VLMAX then {
                               assert(i + imm_val < 'n); 
                               vs2_val[i + imm_val]
                             } else zeros()
@@ -296,8 +299,8 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
         VI_VRGATHER    => {
                             assert(vs2 != vd);
                             assert(imm_val >= 0);
-                            vlmax = floor(lmul * to_real(get_vlen()) / to_real(vsew_bits));
-                            if imm_val < vlmax then {
+                            VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
+                            if imm_val < VLMAX then {
                               assert(imm_val < 'n); 
                               vs2_val[imm_val]
                             } else zeros() 
@@ -306,7 +309,7 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
     }
   };
 
-  write_vreg(num_elem, vsew_bits, lmul, vd, result);
+  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   vstart = EXTZ(0b0);
   RETIRE_SUCCESS
 } 
@@ -329,18 +332,19 @@ mapping clause encdec = VMVRTYPE(vs2, simm, vd)
   <-> 0b100111 @ 0b1 @ vs2 @ simm @ 0b011 @ vd @ 0b1010111
 
 function clause execute(VMVRTYPE(vs2, simm, vd)) = {
-  let vsew_bits : int = get_vtype_vsew();
-  let imm_val   : int = unsigned(EXTZ(sizeof(xlen), simm));
-  let lmul      : int = imm_val + 1;
+  let SEW     : int = int_power(2, get_sew_pow());
+  let imm_val : int = unsigned(EXTZ(sizeof(xlen), simm));
+  let EMUL    : int = imm_val + 1;
 
-  assert(8 <= vsew_bits & vsew_bits <= 64);
-  assert(lmul == 1 | lmul == 2 | lmul == 4 | lmul == 8);
-  let num_elem  : int = get_num_elem(to_real(lmul), vsew_bits);
+  assert(8 <= SEW & SEW <= 64);
+  assert(EMUL == 1 | EMUL == 2 | EMUL == 4 | EMUL == 8);
+  let EMUL_pow : int = log2(EMUL);
+  let num_elem : int = get_num_elem(EMUL_pow, SEW);
   let 'n = num_elem;
-  let 'm = vsew_bits;
+  let 'm = SEW;
 
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, to_real(lmul), vs2);
-  write_vreg(num_elem, vsew_bits, to_real(lmul), vd, vs2_val);
+  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, EMUL_pow, vs2);
+  write_vreg(num_elem, SEW, EMUL_pow, vd, vs2_val);
   vstart = EXTZ(0b0);
 
   RETIRE_SUCCESS
@@ -365,17 +369,17 @@ mapping clause encdec = VMVXS(vs2, rd)
   <-> 0b010000 @ 0b1 @ vs2 @ 0b00000 @ 0b010 @ rd @ 0b1010111
 
 function clause execute(VMVXS(vs2, rd)) = {
-  let vsew_bits : int = get_vtype_vsew();
-  let num_elem  : int = get_num_elem(1.0, vsew_bits);
+  let SEW      : int = int_power(2, get_sew_pow());
+  let num_elem : int = get_num_elem(0, SEW);
 
-  assert(8 <= vsew_bits & vsew_bits <= 64);
-  assert(0 < num_elem & num_elem <= get_vlen());
+  assert(8 <= SEW & SEW <= 64);
+  assert(num_elem > 0);
   let 'n = num_elem;
-  let 'm = vsew_bits;
+  let 'm = SEW;
 
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, 1.0, vs2);
-  if sizeof(xlen) < vsew_bits then X(rd) = slice(vs2_val[0], 0, sizeof(xlen))
-  else if sizeof(xlen) > vsew_bits then X(rd) = sail_sign_extend(vs2_val[0], sizeof(xlen))
+  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, 0, vs2);
+  if sizeof(xlen) < SEW then X(rd) = slice(vs2_val[0], 0, sizeof(xlen))
+  else if sizeof(xlen) > SEW then X(rd) = EXTS(vs2_val[0])
   else X(rd) = vs2_val[0];
   vstart = EXTZ(0b0);
 
@@ -394,21 +398,21 @@ mapping clause encdec = VMVSX(rs1, vd)
   <-> 0b010000 @ 0b1 @ 0b00000 @ rs1 @ 0b110 @ vd @ 0b1010111
 
 function clause execute(VMVSX(rs1, vd)) = {
-  let vsew_bits : int  = get_vtype_vsew();
-  let num_elem  : int  = get_num_elem(1.0, vsew_bits);
+  let SEW      : int = int_power(2, get_sew_pow());
+  let num_elem : int = get_num_elem(0, SEW);
 
-  assert(8 <= vsew_bits & vsew_bits <= 64);
-  assert(0 < num_elem & num_elem <= get_vlen());
+  assert(8 <= SEW & SEW <= 64);
+  assert(num_elem > 0);
   let 'n = num_elem;
-  let 'm = vsew_bits;
+  let 'm = SEW;
 
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, vreg_name("v0"));
   let rs1_val = get_scalar(rs1, 'm);
-  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, 1.0, vd);
+  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, 0, vd);
   result      : vector('n, dec, bits('m)) = undefined;
   mask_helper : vector('n, dec, bool)     = undefined;
 
-  (result, mask_helper) = init_masked_result(num_elem, vsew_bits, 1.0, vd_val, vm_val);
+  (result, mask_helper) = init_masked_result(num_elem, SEW, 0, vd_val, vm_val);
 
   /* one body element */
   if mask_helper[0] == true then result[0] = rs1_val;
@@ -422,7 +426,7 @@ function clause execute(VMVSX(rs1, vd)) = {
     foreach (i from 1 to (num_elem - 1)) result[i] = vd_val[i]
   };
 
-  write_vreg(num_elem, vsew_bits, 1.0, vd, result);
+  write_vreg(num_elem, SEW, 0, vd, result);
   vstart = EXTZ(0b0);
 
   RETIRE_SUCCESS
@@ -440,29 +444,28 @@ mapping clause encdec = MOVETYPEV (vs1, vd)
   <-> 0b010111 @ 0b1 @ 0b00000 @ vs1 @ 0b000 @ vd @ 0b1010111
 
 function clause execute(MOVETYPEV(vs1, vd)) = {
-  let vsew_bits : int  = get_vtype_vsew();
-  let lmul      : real = get_vtype_LMUL();
-  let num_elem  : int  = get_num_elem(lmul, vsew_bits);
+  let SEW      : int = int_power(2, get_sew_pow());
+  let LMUL_pow : int = get_lmul_pow();
+  let num_elem : int = get_num_elem(LMUL_pow, SEW);
 
-  assert(8 <= vsew_bits & vsew_bits <= 64);
-  assert(0 <= num_elem & num_elem <= get_vlen());
+  assert(8 <= SEW & SEW <= 64);
   let 'n = num_elem;
-  let 'm = vsew_bits;
+  let 'm = SEW;
 
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, vreg_name("v0"));
-  let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vs1);
-  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vd);
+  let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
   mask_helper : vector('n, dec, bool)     = undefined;
 
-  (result, mask_helper) = init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val);
+  (result, mask_helper) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   foreach (i from 0 to (num_elem - 1)){
     if mask_helper[i] == true then{
       result[i] = vs1_val[i]
     }
   };
 
-  write_vreg(num_elem, vsew_bits, lmul, vd, result);
+  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   vstart = EXTZ(0b0);
 
   RETIRE_SUCCESS
@@ -480,29 +483,28 @@ mapping clause encdec = MOVETYPEX (rs1, vd)
   <-> 0b010111 @ 0b1 @ 0b00000 @ rs1 @ 0b100 @ vd @ 0b1010111
 
 function clause execute(MOVETYPEX(rs1, vd)) = {
-  let vsew_bits : int  = get_vtype_vsew();
-  let lmul      : real = get_vtype_LMUL();
-  let num_elem  : int  = get_num_elem(lmul, vsew_bits);
+  let SEW      : int = int_power(2, get_sew_pow());
+  let LMUL_pow : int = get_lmul_pow();
+  let num_elem : int = get_num_elem(LMUL_pow, SEW);
 
-  assert(8 <= vsew_bits & vsew_bits <= 64);
-  assert(0 <= num_elem & num_elem <= get_vlen());
+  assert(8 <= SEW & SEW <= 64);
   let 'n = num_elem;
-  let 'm = vsew_bits;
+  let 'm = SEW;
 
-  let rs1_val = get_scalar(rs1, vsew_bits);
+  let rs1_val = get_scalar(rs1, 'm);
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, vreg_name("v0"));
-  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vd);
+  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
   mask_helper : vector('n, dec, bool)     = undefined;
 
-  (result, mask_helper) = init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val);
+  (result, mask_helper) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   foreach (i from 0 to (num_elem - 1)){
     if mask_helper[i] == true then{
       result[i] = rs1_val
     }
   };
 
-  write_vreg(num_elem, vsew_bits, lmul, vd, result);
+  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   vstart = EXTZ(0b0);
 
   RETIRE_SUCCESS
@@ -520,29 +522,28 @@ mapping clause encdec = MOVETYPEI (vd, simm)
   <-> 0b010111 @ 0b1 @ 0b00000 @ simm @ 0b011 @ vd @ 0b1010111
 
 function clause execute(MOVETYPEI(vd, simm)) = {
-  let vsew_bits : int = get_vtype_vsew();
-  let lmul      : real = get_vtype_LMUL();
-  let num_elem  : int = get_num_elem(lmul, vsew_bits);
+  let SEW      : int = int_power(2, get_sew_pow());
+  let LMUL_pow : int = get_lmul_pow();
+  let num_elem : int = get_num_elem(LMUL_pow, SEW);
 
-  assert(8 <= vsew_bits & vsew_bits <= 64);
-  assert(0 <= num_elem & num_elem <= get_vlen());
+  assert(8 <= SEW & SEW <= 64);
   let 'n = num_elem;
-  let 'm = vsew_bits;
+  let 'm = SEW;
 
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, vreg_name("v0"));
-  let imm_val = sail_sign_extend(simm, vsew_bits);
-  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, vsew_bits, lmul, vd);
+  let imm_val = sail_sign_extend(simm, SEW);
+  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
   mask_helper : vector('n, dec, bool)     = undefined;
 
-  (result, mask_helper) = init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val);
+  (result, mask_helper) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   foreach (i from 0 to (num_elem - 1)){
     if mask_helper[i] == true then{
       result[i] = imm_val
     }
   };
 
-  write_vreg(num_elem, vsew_bits, lmul, vd, result);
+  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   vstart = EXTZ(0b0);
 
   RETIRE_SUCCESS

@@ -10,12 +10,6 @@ mapping maybe_vmask : string <-> bits(1) = {
   sep() ^ "v0.t"  <-> 0b0
 }
 
-/* Check for valid vsew and lmul values */
-val vcheck_vsew_lmul : (int, real) -> bool
-function vcheck_vsew_lmul(vsew_bits, lmul) = {
-  vsew_bits >= 8     & vsew_bits <= 64 &
-  lmul      >= 0.125 & lmul      <= 8.0;
-}
 
 /* Check for vstart value */
 val assert_vstart : int -> bool effect {rreg}
@@ -40,14 +34,15 @@ function get_scalar(rs1, vsew_bits) = {
 /* Get the starting element index from csr vtype */
 val get_start_element : unit -> int effect {escape, rreg, wreg}
 function get_start_element() = {
-  let start_element = unsigned(vstart);
-  let vsew_bits     = get_vtype_vsew();
+  let start_element  = unsigned(vstart);
+  let VLEN_pow : int = get_vlen_pow();
+  let SEW_pow  : int = get_sew_pow();
   /* The use of vstart values greater than the largest element
     index for the current SEW setting is reserved.
     It is recommended that implementations trap if vstart is out of bounds.
     It is not required to trap, as a possible future use of upper vstart bits
     is to store imprecise trap information. */
-  if start_element > ((8 * get_vlen() / vsew_bits) - 1) then -1
+  if start_element > (2 ^ (3 + VLEN_pow - SEW_pow) - 1) then -1
   else start_element
 }
 
@@ -66,8 +61,8 @@ function get_end_element() = {
  *   vector2 is a "mask" vector that is true for an element if the corresponding element
  *     in the result vector should be updated by the calling instruction
  */
-val init_masked_result : forall 'n 'm, 8 <= 'm <= 128. (int('n), int('m), real, vector('n, dec, bits('m)), vector('n, dec, bool)) -> (vector('n, dec, bits('m)), vector('n, dec, bool)) effect {escape, rreg, undef, wreg}
-function init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
+val init_masked_result : forall 'n 'm 'p, 8 <= 'm <= 64. (int('n), int('m), int('p), vector('n, dec, bits('m)), vector('n, dec, bool)) -> (vector('n, dec, bits('m)), vector('n, dec, bool)) effect {escape, rreg, undef, wreg}
+function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   let start_element : int                       = get_start_element();
   let end_element   : int                       = get_end_element();
   let tail_ag       : agtype                    = get_vtype_vta();
@@ -81,7 +76,7 @@ function init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
     mask_helper = undefined;
   } else {
     /* Determine the actual number of elements when lmul < 1 */
-    let real_num_elem = if lmul >= 1.0 then num_elem else floor(lmul * to_real(num_elem));
+    let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow);
     assert(num_elem >= real_num_elem);
 
     foreach (i from 0 to (num_elem - 1)) {
@@ -125,15 +120,15 @@ function init_masked_result(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
 
 /* Mask handling for carry functions that use masks as input/output */
 /* Only prestart and tail elements are masked in a mask value */
-val init_masked_result_carry : forall 'n 'm, 8 <= 'm <= 128. (int('n), int('m), real, vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool)) effect {escape, rreg, undef, wreg}
-function init_masked_result_carry(num_elem, vsew_bits, lmul, vd_val) = {
+val init_masked_result_carry : forall 'n 'm 'p, 8 <= 'm <= 64. (int('n), int('m), int('p), vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool)) effect {escape, rreg, undef, wreg}
+function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
   let start_element : int                   = get_start_element();
   let end_element   : int                   = get_end_element();
   mask_helper       : vector('n, dec, bool) = undefined;
   result            : vector('n, dec, bool) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
-  let real_num_elem = if lmul >= 1.0 then num_elem else floor(lmul * to_real(num_elem));
+  let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow);
   assert(num_elem >= real_num_elem);
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -161,8 +156,8 @@ function init_masked_result_carry(num_elem, vsew_bits, lmul, vd_val) = {
 }
 
 /* Mask handling for cmp functions that use masks as output */
-val init_masked_result_cmp : forall 'n 'm, 8 <= 'm <= 128. (int('n), int('m), real, vector('n, dec, bool), vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool)) effect {escape, rreg, undef, wreg}
-function init_masked_result_cmp(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
+val init_masked_result_cmp : forall 'n 'm 'p, 8 <= 'm <= 64. (int('n), int('m), int('p), vector('n, dec, bool), vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool)) effect {escape, rreg, undef, wreg}
+function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   let start_element : int                       = get_start_element();
   let end_element   : int                       = get_end_element();
   let mask_ag       : agtype                    = get_vtype_vma();
@@ -170,7 +165,7 @@ function init_masked_result_cmp(num_elem, vsew_bits, lmul, vd_val, vm_val) = {
   result            : vector('n, dec, bool)     = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
-  let real_num_elem = if lmul >= 1.0 then num_elem else floor(lmul * to_real(num_elem));
+  let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow);
   assert(num_elem >= real_num_elem);
 
   foreach (i from 0 to (num_elem - 1)) {
