@@ -36,8 +36,8 @@ function clause execute (RISCV_XPERM4(rs2, rs1, rd)) = {
   result : xlenbits = zeros();
   foreach (i from 0 to (sizeof(xlen) - 4) by 4) {
     let index = unsigned(rs2_val[i+3..i]);
-    result[i+3..i] = if 8*index < sizeof(xlen)
-                     then rs1_val[8*index+3..8*index]
+    result[i+3..i] = if 4*index < sizeof(xlen)
+                     then rs1_val[4*index+3..4*index]
                      else zeros()
   };
   X(rd) = result;
