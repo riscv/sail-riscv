@@ -40,7 +40,7 @@ function clause execute (ZBKB_PACKW(rs2, rs1, rd)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   let result : bits(32) = rs2_val[15..0] @ rs1_val[15..0];
-  X(rd) = EXTZ(result);
+  X(rd) = EXTS(result);
   RETIRE_SUCCESS
 }
 
