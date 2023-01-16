@@ -92,6 +92,7 @@ function process_vle (vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask_helper[i] == true then{
+      vstart = to_bits(16, i);
       let elem_offset = i * load_width_bytes;
       match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Read(Data), width_type) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); status = RETIRE_FAIL },
@@ -163,6 +164,7 @@ function process_vse (vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) = {
   foreach (i from 0 to (num_elem - 1)) {
     let elem_offset = i * load_width_bytes;
     if mask_helper[i] == true then {
+      vstart = to_bits(16, i);
       match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Write(Data), width_type) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); status = RETIRE_FAIL },
         Ext_DataAddr_OK(vaddr) =>
@@ -241,6 +243,7 @@ function process_vlse (vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) =
   foreach (i from 0 to (num_elem - 1)) {
     let elem_offset = i * rs2_val;
     if mask_helper[i] == true then {
+      vstart = to_bits(16, i);
       match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Read(Data), width_type) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); status = RETIRE_FAIL },
         Ext_DataAddr_OK(vaddr) => 
@@ -312,6 +315,7 @@ function process_vsse (vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) 
   foreach (i from 0 to (num_elem - 1)) {
     let elem_offset = i * rs2_val;
     if mask_helper[i] == true then {
+      vstart = to_bits(16, i);
       match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Write(Data), width_type) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); status = RETIRE_FAIL },
         Ext_DataAddr_OK(vaddr) =>
@@ -378,7 +382,6 @@ mapping clause encdec = VLUXEITYPE(vm, vs2, rs1, width, vd)
 val process_vlxei : forall 'ib 'db 'ip 'dp 'n, (0 < 'ib & 'ib <= 8) & (0 < 'db & 'db <= 8) & ('n >= 0). (bits(1), regidx, int('ib), int('db), int('ip), int('dp), regidx, regidx, int('n), int) -> Retired effect {escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
 function process_vlxei (vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
   let width_type : word_width = bytes_wordwidth(EEW_data_bytes);
-  let start_element : int = get_start_element();
   let vm_val : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
   let vd_val : vector('n, dec, bits('db * 8)) = read_vreg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, vd);
   let vs2_val : vector('n, dec, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
@@ -390,6 +393,7 @@ function process_vlxei (vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow,
   /* Currently mop = 1(unordered) or 3(ordered) do the same operations */
   foreach (i from 0 to (num_elem - 1)) {
     if mask_helper[i] == true then {
+      vstart = to_bits(16, i);
       let elem_offset = signed(vs2_val[i]);
       match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Read(Data), width_type) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); status = RETIRE_FAIL },
@@ -471,7 +475,6 @@ mapping clause encdec = VSUXEITYPE(vm, vs2, rs1, width, vs3)
 val process_vsxei : forall 'ib 'db 'ip 'dp 'n, (0 < 'ib & 'ib <= 8) & (0 < 'db & 'db <= 8) & ('n >= 0). (bits(1), regidx, int('ib), int('db), int('ip), int('dp), regidx, regidx, int('n), int) -> Retired effect {eamem, escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
 function process_vsxei (vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
   let width_type : word_width = bytes_wordwidth(EEW_data_bytes);
-  let start_element : int = get_start_element();
   let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
   let vs3_val : vector('n, dec, bits('db * 8)) = read_vreg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, vs3);
   let vs2_val : vector('n, dec, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
@@ -483,6 +486,7 @@ function process_vsxei (vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow
   /* Currently mop = 1(unordered) or 3(ordered) do the same operations */
   foreach (i from 0 to (num_elem - 1)) {
     if mask_helper[i] == true then {
+      vstart = to_bits(16, i);
       let elem_offset = signed(vs2_val[i]);
       match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Write(Data), width_type) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); status = RETIRE_FAIL },
@@ -694,6 +698,7 @@ function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) =
 
     foreach (i from 0 to (num_elem - 1)) {
       if (mask_helper[i] == true) then {
+        vstart = to_bits(16, i);
         let elem_offset = load_width_bytes * (a + i * nf);
         match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Read(Data), width_type) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); status = RETIRE_FAIL },
@@ -829,6 +834,7 @@ function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) 
 
   foreach (i from start_element to (num_elem - 1)) {
     if vm_val[i] == true then {
+      vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
         match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Write(Data), width_type) {
@@ -855,7 +861,7 @@ function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) 
               }
             }
         }
-      };
+      }
     }
   };
 
@@ -905,6 +911,7 @@ function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_e
   status : Retired = RETIRE_SUCCESS;
   foreach (i from 0 to (num_elem - 1)) {
     if mask_helper[i] == true then {
+      vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
         match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Read(Data), width_type) {
@@ -972,6 +979,7 @@ function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_
   status : Retired = RETIRE_SUCCESS;
   foreach (i from 0 to (num_elem - 1)) {
     if mask_helper[i] == true then {
+      vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
         match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Write(Data), width_type) {
@@ -1038,7 +1046,6 @@ val process_vlxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & (0 < 'ib
 function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
   let EMUL_data_reg : int = if EMUL_data_pow <= 0 then 1 else int_power(2, EMUL_data_pow);
   let width_type : word_width = bytes_wordwidth(EEW_data_bytes);
-  let start_element : int = get_start_element();
   let vm_val : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
   let vd_val : vector('n, dec, bits('db * 8)) = read_vreg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, vd);
   let vs2_val : vector('n, dec, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
@@ -1050,6 +1057,7 @@ function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index
   /* Currently mop = 1(unordered) or 3(ordered) do the same operations */
   foreach (i from 0 to (num_elem - 1)) {
     if mask_helper[i] == true then {
+      vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = signed(vs2_val[i]) + j * EEW_data_bytes;
         match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Read(Data), width_type) {
@@ -1137,7 +1145,6 @@ val process_vsxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & (0 < 'ib
 function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
   let EMUL_data_reg : int = if EMUL_data_pow <= 0 then 1 else int_power(2, EMUL_data_pow);
   let width_type : word_width = bytes_wordwidth(EEW_data_bytes);
-  let start_element : int = get_start_element();
   let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
   let vs3_val : vector('n, dec, bits('db * 8)) = read_vreg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, vs3);
   let vs2_val : vector('n, dec, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
@@ -1149,6 +1156,7 @@ function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_inde
   /* Currently mop = 1(unordered) or 3(ordered) do the same operations */
   foreach (i from 0 to (num_elem - 1)) {
     if mask_helper[i] == true then {
+      vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = signed(vs2_val[i]) + j * EEW_data_bytes;
         match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Write(Data), width_type) {
@@ -1231,10 +1239,10 @@ function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
 }
 
 mapping clause assembly = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
-  <-> "vsuoseg" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vsoxseg" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(vs2) ^ sep() ^ maybe_vmask(vm)
 
 
-/* ****VLOAD***************VLRETYPE(Vector Load Unit-Steided Whole Register, vm=1, mop=0, lumop=01000)*************************** */
+/* ****VLOAD***************VLRETYPE(Vector Load Unit-Strided Whole Register, vm=1, mop=0, lumop=01000)*************************** */
 
 union clause ast = VLRETYPE : (bits(3), regidx, vlewidth, regidx)
 
@@ -1255,6 +1263,7 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
 
   if elem_to_align > 0 then {
     foreach (i from elem_to_align to (elem_per_reg - 1)) {
+      vstart = to_bits(16, start_element);
       let elem_offset : int = start_element * load_width_bytes;
       match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Read(Data), width_type) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); status = RETIRE_FAIL },
@@ -1280,6 +1289,7 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
   foreach (j from cur_field to (nf - 1)) {
     total = undefined;
     foreach (i from 0 to (elem_per_reg - 1)) {
+      vstart = to_bits(16, start_element);
       let elem_offset = start_element * load_width_bytes;
       match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Read(Data), width_type) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); status = RETIRE_FAIL },
@@ -1344,6 +1354,7 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
 
   if elem_to_align > 0 then {
     foreach (i from elem_to_align to (elem_per_reg - 1)) {
+      vstart = to_bits(16, start_element);
       let elem_offset : int = start_element * load_width_bytes;
       match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Write(Data), width_type) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); status = RETIRE_FAIL },
@@ -1377,6 +1388,7 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
   foreach (j from cur_field to (nf - 1)) {
     let vs_val : vector('n, dec, bits('b * 8)) = read_vreg(elem_per_reg, load_width_bytes * 8, 0, vs3 + to_bits(5, j));
     foreach (i from 0 to (elem_per_reg - 1)) {
+      vstart = to_bits(16, start_element);
       let elem_offset = start_element * load_width_bytes;
       match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Write(Data), width_type) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); status = RETIRE_FAIL },
@@ -1454,6 +1466,7 @@ function process_vm(vd_or_vs3, rs1, EMUL_pow, num_elem, op) = {
       if i < start_element then {
         total[i] = vd_or_vs3_val[i]
       } else {
+        vstart = to_bits(16, i);
         match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Read(Data), width_type) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); status = RETIRE_FAIL },
           Ext_DataAddr_OK(vaddr) => 
@@ -1473,6 +1486,7 @@ function process_vm(vd_or_vs3, rs1, EMUL_pow, num_elem, op) = {
       if status == RETIRE_SUCCESS then write_vreg(num_elem, 8, EMUL_pow, vd_or_vs3, total)
     } else if op == VSM then { /* store */
       if i > start_element then {
+        vstart = to_bits(16, i);
         match ext_data_get_addr(rs1, to_bits(sizeof(xlen), elem_offset), Write(Data), width_type) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); status = RETIRE_FAIL },
           Ext_DataAddr_OK(vaddr) =>
