@@ -73,36 +73,31 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
                             },
         VV_VSSUB         => signed_saturation('m, EXTS('m + 1, vs2_val[i]) - EXTS('m + 1, vs1_val[i])),
         VV_VSMUL         => {
-                              result_mul = to_bits('m * 2, signed(vs2_val[i]) * signed(vs1_val[i]));
-                              rounding_incr = get_fixed_rounding_incr(result_mul, 'm - 1);
-                              result_wide = (result_mul >> ('m - 1)) + EXTZ('m * 2, rounding_incr);
+                              let result_mul = to_bits('m * 2, signed(vs2_val[i]) * signed(vs1_val[i]));
+                              let rounding_incr = get_fixed_rounding_incr(result_mul, 'm - 1);
+                              let result_wide = (result_mul >> ('m - 1)) + EXTZ('m * 2, rounding_incr);
                               signed_saturation('m, result_wide['m..0])
                             },
         VV_VSLL          => {
                               let shift_amount = get_shift_amount(vs1_val[i], SEW);
-                              assert(shift_amount >= 0);
                               vs2_val[i] << shift_amount
                             },
         VV_VSRL          => {
                               let shift_amount = get_shift_amount(vs1_val[i], SEW);
-                              assert(shift_amount >= 0);
                               vs2_val[i] >> shift_amount
                             },
         VV_VSRA          => {
                               let shift_amount = get_shift_amount(vs1_val[i], SEW);
-                              assert(shift_amount >= 0);
                               let v_double : bits('m * 2) = EXTS(vs2_val[i]);
                               slice(v_double >> shift_amount, 0, SEW)
                             },
         VV_VSSRL         => {
                               let shift_amount = get_shift_amount(vs1_val[i], SEW);
-                              assert(shift_amount >= 0);
                               let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
                               (vs2_val[i] >> shift_amount) + EXTZ('m, rounding_incr)
                             },
         VV_VSSRA         => {
                               let shift_amount = get_shift_amount(vs1_val[i], SEW);
-                              assert(shift_amount >= 0);
                               let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
                               let v_double : bits('m * 2) = EXTS(vs2_val[i]);
                               slice(v_double >> shift_amount, 0, SEW) + EXTZ('m, rounding_incr)
@@ -114,22 +109,18 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
         VV_VRGATHER      => {
                               assert(vs1 != vd & vs2 != vd);
                               let idx = unsigned(vs1_val[i]);
-                              VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
-                              if idx < VLMAX then {
-                                assert(idx < 'n); 
-                                vs2_val[idx]
-                              } else zeros() 
+                              let VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
+                              assert(VLMAX <= 'n);
+                              if idx < VLMAX then vs2_val[idx] else zeros() 
                             },
         VV_VRGATHEREI16  => {
                               assert(vs1 != vd & vs2 != vd);
                               /* vrgatherei16.vv uses SEW/LMUL for the data in vs2 but EEW=16 and EMUL = (16/SEW)*LMUL for the indices in vs1 */
                               let vs1_new : vector('n, dec, bits(16)) = read_vreg(num_elem, 16, 4 + LMUL_pow - SEW_pow, vs1);
                               let idx = unsigned(vs1_new[i]);
-                              VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
-                              if idx < VLMAX then {
-                                assert(idx < 'n); 
-                                vs2_val[idx]
-                              } else zeros()                   
+                              let VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
+                              assert(VLMAX <= 'n);
+                              if idx < VLMAX then vs2_val[idx] else zeros()                   
                             }
       }
     }
@@ -194,7 +185,7 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
   let 'm = SEW;
 
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
-  let rs1_val : int                       = unsigned(X(rs1));
+  let rs1_val : nat                       = unsigned(X(rs1));
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
@@ -207,25 +198,18 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
       result[i] = match funct6 {
         VX_VSLIDEUP    => {
                             assert(vs2 != vd);
-                            assert(i - rs1_val < 'n);
                             if i >= rs1_val then vs2_val[i - rs1_val] else vd_val[i]
                           },
         VX_VSLIDEDOWN  => {
-                            assert(i + rs1_val >= 0);
-                            VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
-                            if i + rs1_val < VLMAX then {
-                              assert(i + rs1_val < 'n); 
-                              vs2_val[i + rs1_val]
-                            } else zeros()
+                            let VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
+                            assert(VLMAX > 0 & VLMAX <= 'n);
+                            if i + rs1_val < VLMAX then vs2_val[i + rs1_val] else zeros()
                           },
         VX_VRGATHER    => {
                             assert(vs2 != vd);
-                            assert(rs1_val >= 0);
-                            VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
-                            if rs1_val < VLMAX then {
-                              assert(rs1_val < 'n); 
-                              vs2_val[rs1_val]
-                            } else zeros() 
+                            let VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
+                            assert(VLMAX > 0 & VLMAX <= 'n);
+                            if rs1_val < VLMAX then vs2_val[rs1_val] else zeros() 
                           }
       }
     }
@@ -272,7 +256,7 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
   let 'm = SEW;
 
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
-  let imm_val : int                       = unsigned(EXTZ(sizeof(xlen), simm));
+  let imm_val : nat                       = unsigned(EXTZ(sizeof(xlen), simm));
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
@@ -285,25 +269,18 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
       result[i] = match funct6 {
         VI_VSLIDEUP    => {
                             assert(vs2 != vd);
-                            assert(i - imm_val < 'n);
                             if i >= imm_val then vs2_val[i - imm_val] else vd_val[i]
                           },
         VI_VSLIDEDOWN  => {
-                            assert(i + imm_val >= 0);
-                            VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
-                            if i + imm_val < VLMAX then {
-                              assert(i + imm_val < 'n); 
-                              vs2_val[i + imm_val]
-                            } else zeros()
+                            let VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
+                            assert(VLMAX > 0 & VLMAX <= 'n);
+                            if i + imm_val < VLMAX then vs2_val[i + imm_val] else zeros()
                           },
         VI_VRGATHER    => {
                             assert(vs2 != vd);
-                            assert(imm_val >= 0);
-                            VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
-                            if imm_val < VLMAX then {
-                              assert(imm_val < 'n); 
-                              vs2_val[imm_val]
-                            } else zeros() 
+                            let VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
+                            assert(VLMAX > 0 & VLMAX <= 'n);
+                            if imm_val < VLMAX then vs2_val[imm_val] else zeros() 
                           }
       }
     }

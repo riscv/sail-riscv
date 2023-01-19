@@ -279,7 +279,7 @@ function get_scalar_fp(rs1, vsew_bits) = {
 }
 
 /* Shift amounts */
-val get_shift_amount : forall 'n 'm, 0 <= 'n & 'm in {8, 16, 32, 64}. (bits('n), int('m)) -> int effect {escape}
+val get_shift_amount : forall 'n 'm, 0 <= 'n & 'm in {8, 16, 32, 64}. (bits('n), int('m)) -> nat effect {escape}
 function get_shift_amount(bit_val, vsew_bits) = {
   let lowlog2bits : int = log2(vsew_bits);
   assert(0 < lowlog2bits & lowlog2bits < 'n);
