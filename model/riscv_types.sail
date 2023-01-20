@@ -6,7 +6,7 @@
 /*  in the prover_snapshots directory (which include copies of their                     */
 /*  licences), is subject to the BSD two-clause licence below.                           */
 /*                                                                                       */
-/*  Copyright (c) 2017-2021                                                              */
+/*  Copyright (c) 2017-2023                                                              */
 /*    Prashanth Mundkur                                                                  */
 /*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
 /*    Jon French                                                                         */
@@ -23,6 +23,7 @@
 /*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
 /*    Peter Rugg                                                                         */
 /*    Aril Computer Corp., for contributions by Scott Johnson                            */
+/*    VRULL GmbH, for contributions by Philipp Tomsich                                   */
 /*                                                                                       */
 /*  All rights reserved.                                                                 */
 /*                                                                                       */
@@ -414,6 +415,8 @@ enum bropw_zbb = {RISCV_ROLW, RISCV_RORW}
 enum biop_zbs = {RISCV_BCLRI, RISCV_BEXTI, RISCV_BINVI, RISCV_BSETI}
 
 enum extop_zbb = {RISCV_SEXTB, RISCV_SEXTH, RISCV_ZEXTH}
+
+enum zicondop = {RISCV_CZERO_EQZ, RISCV_CZERO_NEZ}
 
 val sep : unit <-> string
 mapping sep : unit <-> string = {
