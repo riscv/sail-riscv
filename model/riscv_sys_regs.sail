@@ -6,7 +6,7 @@
 /*  in the prover_snapshots directory (which include copies of their                     */
 /*  licences), is subject to the BSD two-clause licence below.                           */
 /*                                                                                       */
-/*  Copyright (c) 2017-2021                                                              */
+/*  Copyright (c) 2017-2023                                                              */
 /*    Prashanth Mundkur                                                                  */
 /*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
 /*    Jon French                                                                         */
@@ -23,6 +23,7 @@
 /*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
 /*    Peter Rugg                                                                         */
 /*    Aril Computer Corp., for contributions by Scott Johnson                            */
+/*    VRULL GmbH                                                                         */
 /*                                                                                       */
 /*  All rights reserved.                                                                 */
 /*                                                                                       */
@@ -207,6 +208,9 @@ function haveZkne()   -> bool = true
 function haveZknd()   -> bool = true
 
 function haveZmmul()  -> bool = true
+
+/* ZiCond extension support */
+function haveZicond() -> bool = true
 
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
