@@ -373,6 +373,7 @@ type csrRW = bits(2)  /* read/write */
 
 /* instruction opcode grouping */
 enum uop = {RISCV_LUI, RISCV_AUIPC}               /* upper immediate ops */
+enum xop = {RISCV_X_XMPL}                         /* custom extensions */
 enum bop = {RISCV_BEQ, RISCV_BNE, RISCV_BLT,
             RISCV_BGE, RISCV_BLTU, RISCV_BGEU}    /* branch ops */
 enum iop = {RISCV_ADDI, RISCV_SLTI, RISCV_SLTIU,

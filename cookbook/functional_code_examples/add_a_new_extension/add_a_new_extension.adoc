@@ -1,0 +1,41 @@
+[#add-a-new-extension]
+== Add A New Extension Example
+
+The main purpose of this cookbook,  is to explain how someone can add
+an extension (and a CSR) to the RISC-V Sail model. This example attempts
+to add a very simple instruction a very simple CSR to the model.  One
+instruction will be added into the custom opcode space.  And that
+instruction will be used to manipulate the new CSR,  which can then
+be accessed by the existing CSR instructions.
+
+See unpriv spec, chapter 26, "Extending RISC-V"
+
+See unpriv spec, chapter 24, "RV32/64G Instruction Set Listings"
+
+See unpriv spec, chapter 27, "ISA Extension Naming Convention", especially
+setion 27.10, "Non-Standard Extension Names".
+
+See priv spec, chapter 2, "CSR Listings", Table 2.1
+
+
+
+
+
+Example
+
+Single instruction:  xmple
+CSR: xmple_csr
+
+* Takes an unsigned immediate and puts the value into the xmple_csr
+* The xmpl_csr can be read by the normal CSR instructions.
+* xmple_csr cannot be written with any form of the CSR instructions; 
+it should generate an exception.
+
+Files:
+
+* riscv_insts_xample.sail : the implmentation of the instruction and the CSR.
+* Makefile : must add riscv_insts_xample.sail to the list of source files
+* test.s :  for testing the new instruction features
+
+
+

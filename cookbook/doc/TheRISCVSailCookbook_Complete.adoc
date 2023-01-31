@@ -6,6 +6,7 @@
 The RISCV Sail Golden Model: A Cookbook for the RISCV ISA
 ==============================================
 William C. McSpadden <bill@riscv.org>; Martin Berger <contact@martinfriedrichberger.net>
+
 :toc:
 :toc-placement: preamble
 :toclevels: 2

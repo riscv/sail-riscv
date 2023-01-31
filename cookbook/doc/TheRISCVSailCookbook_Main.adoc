@@ -100,6 +100,8 @@ TBD
 [#platform-configuration]
 == Platform Configuration example (Bill)
 
+include::../functional_code_examples/add_a_new_extension/add_a_new_extension.adoc[]
+
 == FAQs (Frequently Asked Questions)
 
 Following are a set of FAQs that were generated via set of questions to the Sail developers.
