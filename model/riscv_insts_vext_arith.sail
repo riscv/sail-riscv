@@ -1,13 +1,11 @@
 /* ******************************************************************************* */
 /* This file implements part of the vector extension.                              */
-/* Chapter 11: vector integer arithmetic instructions                              */
-/* Chapter 12: vector fixed-point arithmetic instructions                          */
-/* Chapter 16: vector permutation instructions                                     */
-
+/* Chapter 11: Vector Integer Arithmetic Instructions                              */
+/* Chapter 12: Vector Fixed-Point Arithmetic Instructions                          */
+/* Chapter 16: Vector Permutation Instructions                                     */
 /* ******************************************************************************* */
 
-/* **************************OPIVV(VVTYPE)**************************************** */
-
+/* ******************************* OPIVV (VVTYPE) ******************************** */
 union clause ast = VVTYPE : (vvfunct6, bits(1), regidx, regidx, regidx)
 
 mapping encdec_vvfunct6 : vvfunct6 <-> bits(6) = {
@@ -38,13 +36,12 @@ mapping clause encdec = VVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_vvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111
 
 function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
-  let SEW_pow  : int = get_sew_pow();
-  let SEW      : int = int_power(2, SEW_pow);
-  let LMUL_pow : int = get_lmul_pow();
-  let VLEN_pow : int = get_vlen_pow();
-  let num_elem : int = get_num_elem(LMUL_pow, SEW);
+  let SEW_pow  = get_sew_pow();
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let VLEN_pow = get_vlen_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  assert(SEW == 8 | SEW == 16 | SEW == 32 | SEW == 64);
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -53,12 +50,12 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
-  mask_helper : vector('n, dec, bool)     = undefined;
+  mask        : vector('n, dec, bool)     = undefined;
 
-  (result, mask_helper) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask_helper[i] == true then {
+    if mask[i] then {
       result[i] = match funct6 {
         VV_VADD          => vs2_val[i] + vs1_val[i],
         VV_VSUB          => vs2_val[i] - vs1_val[i],
@@ -158,10 +155,8 @@ mapping vvtype_mnemonic : vvfunct6 <-> string = {
 mapping clause assembly = VVTYPE(funct6, vm, vs2, vs1, vd)
   <-> vvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
-
-/* *******************************OPIVX(Vector Slide & Gather Instructions)******************************** */
-/* Slide and gather instructions extend rs1 / imm to XLEN bits (not SEW bits as others do) */
-
+/* ***************** OPIVX (Vector Slide & Gather Instructions) ****************** */
+/* Slide and gather instructions extend rs1/imm to XLEN intead of SEW bits */
 union clause ast = VXSG : (vxsgfunct6, bits(1), regidx, regidx, regidx)
 
 mapping encdec_vxsgfunct6 : vxsgfunct6 <-> bits(6) = {
@@ -174,13 +169,12 @@ mapping clause encdec = VXSG(funct6, vm, vs2, rs1, vd)
   <-> encdec_vxsgfunct6(funct6) @ vm @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111
 
 function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
-  let SEW_pow  : int = get_sew_pow();
-  let SEW      : int = int_power(2, SEW_pow);
-  let LMUL_pow : int = get_lmul_pow();
-  let VLEN_pow : int = get_vlen_pow();
-  let num_elem : int = get_num_elem(LMUL_pow, SEW);
+  let SEW_pow  = get_sew_pow();
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let VLEN_pow = get_vlen_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  assert(8 <= SEW & SEW <= 64);
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -189,12 +183,12 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
-  mask_helper : vector('n, dec, bool)     = undefined;
+  mask        : vector('n, dec, bool)     = undefined;
 
-  (result, mask_helper) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask_helper[i] == true then {
+    if mask[i] then {
       result[i] = match funct6 {
         VX_VSLIDEUP    => {
                             assert(vs2 != vd);
@@ -229,10 +223,8 @@ mapping vxsg_mnemonic : vxsgfunct6 <-> string = {
 mapping clause assembly = VXSG(funct6, vm, vs2, rs1, vd)
   <-> vxsg_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
 
-
-/* *******************************OPIVI(Vector Slide & Gather Instructions)******************************** */
-/* Slide and gather instructions extend rs1 / imm to XLEN bits (not SEW bits as others do) */
-
+/* ***************** OPIVI (Vector Slide & Gather Instructions) ****************** */
+/* Slide and gather instructions extend rs1/imm to XLEN intead of SEW bits */
 union clause ast = VISG : (visgfunct6, bits(1), regidx, bits(5), regidx)
 
 mapping encdec_visgfunct6 : visgfunct6 <-> bits(6) = {
@@ -245,13 +237,12 @@ mapping clause encdec = VISG(funct6, vm, vs2, simm, vd)
   <-> encdec_visgfunct6(funct6) @ vm @ vs2 @ simm @ 0b011 @ vd @ 0b1010111
 
 function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
-  let SEW_pow  : int = get_sew_pow();
-  let SEW      : int = int_power(2, SEW_pow);
-  let LMUL_pow : int = get_lmul_pow();
-  let VLEN_pow : int = get_vlen_pow();
-  let num_elem : int = get_num_elem(LMUL_pow, SEW);
+  let SEW_pow  = get_sew_pow();
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let VLEN_pow = get_vlen_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  assert(8 <= SEW & SEW <= 64);
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -260,12 +251,12 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
-  mask_helper : vector('n, dec, bool)     = undefined;
+  mask        : vector('n, dec, bool)     = undefined;
 
-  (result, mask_helper) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask_helper[i] == true then {
+    if mask[i] then {
       result[i] = match funct6 {
         VI_VSLIDEUP    => {
                             assert(vs2 != vd);
@@ -300,23 +291,20 @@ mapping visg_mnemonic : visgfunct6 <-> string = {
 mapping clause assembly = VISG(funct6, vm, vs2, simm, vd)
   <-> visg_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(simm) ^ maybe_vmask(vm)
 
-
-/* ******************************Whole Vector Register Move(OPIVI)******************************** */
-
+/* ********************* Whole Vector Register Move (OPIVI) ********************** */
 union clause ast = VMVRTYPE : (regidx, bits(5), regidx)
 
 mapping clause encdec = VMVRTYPE(vs2, simm, vd)
   <-> 0b100111 @ 0b1 @ vs2 @ simm @ 0b011 @ vd @ 0b1010111
 
 function clause execute(VMVRTYPE(vs2, simm, vd)) = {
-  let SEW     : int = int_power(2, get_sew_pow());
-  let imm_val : int = unsigned(EXTZ(sizeof(xlen), simm));
-  let EMUL    : int = imm_val + 1;
+  let SEW     = get_sew();
+  let imm_val = unsigned(EXTZ(sizeof(xlen), simm));
+  let EMUL    = imm_val + 1;
 
-  assert(8 <= SEW & SEW <= 64);
   assert(EMUL == 1 | EMUL == 2 | EMUL == 4 | EMUL == 8);
-  let EMUL_pow : int = log2(EMUL);
-  let num_elem : int = get_num_elem(EMUL_pow, SEW);
+  let EMUL_pow = log2(EMUL);
+  let num_elem = get_num_elem(EMUL_pow, SEW);
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -337,19 +325,16 @@ mapping simm_string : bits(5) <-> string = {
 mapping clause assembly = VMVRTYPE(vs2, simm, vd)
   <-> "vmv" ^ simm_string(simm) ^ "r.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2)
 
-
-/* *******************************OPMVV(VWXUNARY0)******************************** */
-
+/* ****************************** OPMVV (VWXUNARY0) ****************************** */
 union clause ast = VMVXS : (regidx, regidx)
 
 mapping clause encdec = VMVXS(vs2, rd)
   <-> 0b010000 @ 0b1 @ vs2 @ 0b00000 @ 0b010 @ rd @ 0b1010111
 
 function clause execute(VMVXS(vs2, rd)) = {
-  let SEW      : int = int_power(2, get_sew_pow());
-  let num_elem : int = get_num_elem(0, SEW);
+  let SEW      = get_sew();
+  let num_elem = get_num_elem(0, SEW);
 
-  assert(8 <= SEW & SEW <= 64);
   assert(num_elem > 0);
   let 'n = num_elem;
   let 'm = SEW;
@@ -366,40 +351,36 @@ function clause execute(VMVXS(vs2, rd)) = {
 mapping clause assembly = VMVXS(vs2, rd)
   <-> "vmv.x.s" ^ spc() ^ reg_name(rd) ^ sep() ^ vreg_name(vs2)
 
-
-/* *******************************OPMVX(VRXUNARY0)******************************** */
-
+/* ****************************** OPMVX (VRXUNARY0) ****************************** */
 union clause ast = VMVSX : (regidx, regidx)
 
 mapping clause encdec = VMVSX(rs1, vd)
   <-> 0b010000 @ 0b1 @ 0b00000 @ rs1 @ 0b110 @ vd @ 0b1010111
 
 function clause execute(VMVSX(rs1, vd)) = {
-  let SEW      : int = int_power(2, get_sew_pow());
-  let num_elem : int = get_num_elem(0, SEW);
+  let SEW      = get_sew();
+  let num_elem = get_num_elem(0, SEW);
 
-  assert(8 <= SEW & SEW <= 64);
   assert(num_elem > 0);
   let 'n = num_elem;
   let 'm = SEW;
 
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, vreg_name("v0"));
-  let rs1_val = get_scalar(rs1, 'm);
+  let rs1_val : bits('m)                  = get_scalar(rs1, 'm);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, 0, vd);
   result      : vector('n, dec, bits('m)) = undefined;
-  mask_helper : vector('n, dec, bool)     = undefined;
+  mask        : vector('n, dec, bool)     = undefined;
 
-  (result, mask_helper) = init_masked_result(num_elem, SEW, 0, vd_val, vm_val);
+  (result, mask) = init_masked_result(num_elem, SEW, 0, vd_val, vm_val);
 
   /* one body element */
-  if mask_helper[0] == true then result[0] = rs1_val;
+  if mask[0] == true then result[0] = rs1_val;
 
   /* others treated as tail elements */
   let tail_ag : agtype = get_vtype_vta();
   if tail_ag == UNDISTURBED then {
     foreach (i from 1 to (num_elem - 1)) result[i] = vd_val[i]
-  }
-  else if tail_ag == AGNOSTIC then {
+  } else if tail_ag == AGNOSTIC then {
     foreach (i from 1 to (num_elem - 1)) result[i] = vd_val[i]
   };
 
@@ -412,20 +393,17 @@ function clause execute(VMVSX(rs1, vd)) = {
 mapping clause assembly = VMVSX(rs1, vd)
   <-> "vmv.s.x" ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1)
 
-
-/* **************************Integer move instruction(OPIVV)*************************************** */
-
+/* ********************** Integer Move Instruction (OPIVV) *********************** */
 union clause ast = MOVETYPEV : (regidx, regidx)
 
 mapping clause encdec = MOVETYPEV (vs1, vd)
   <-> 0b010111 @ 0b1 @ 0b00000 @ vs1 @ 0b000 @ vd @ 0b1010111
 
 function clause execute(MOVETYPEV(vs1, vd)) = {
-  let SEW      : int = int_power(2, get_sew_pow());
-  let LMUL_pow : int = get_lmul_pow();
-  let num_elem : int = get_num_elem(LMUL_pow, SEW);
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  assert(8 <= SEW & SEW <= 64);
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -433,13 +411,11 @@ function clause execute(MOVETYPEV(vs1, vd)) = {
   let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
-  mask_helper : vector('n, dec, bool)     = undefined;
+  mask        : vector('n, dec, bool)     = undefined;
 
-  (result, mask_helper) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
-  foreach (i from 0 to (num_elem - 1)){
-    if mask_helper[i] == true then{
-      result[i] = vs1_val[i]
-    }
+  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  foreach (i from 0 to (num_elem - 1)) {
+    if mask[i] then result[i] = vs1_val[i]
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -449,36 +425,31 @@ function clause execute(MOVETYPEV(vs1, vd)) = {
 }
 
 mapping clause assembly = MOVETYPEV(vs1, vd)
-<-> "vmv.v.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs1)
+  <-> "vmv.v.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs1)
 
-
-/* **************************Integer move instruction(OPIVX)*************************************** */
-
+/* ********************** Integer Move Instruction (OPIVX) *********************** */
 union clause ast = MOVETYPEX : (regidx, regidx)
 
 mapping clause encdec = MOVETYPEX (rs1, vd)
   <-> 0b010111 @ 0b1 @ 0b00000 @ rs1 @ 0b100 @ vd @ 0b1010111
 
 function clause execute(MOVETYPEX(rs1, vd)) = {
-  let SEW      : int = int_power(2, get_sew_pow());
-  let LMUL_pow : int = get_lmul_pow();
-  let num_elem : int = get_num_elem(LMUL_pow, SEW);
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  assert(8 <= SEW & SEW <= 64);
   let 'n = num_elem;
   let 'm = SEW;
 
-  let rs1_val = get_scalar(rs1, 'm);
+  let rs1_val : bits('m)                  = get_scalar(rs1, 'm);
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, vreg_name("v0"));
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
-  mask_helper : vector('n, dec, bool)     = undefined;
+  mask        : vector('n, dec, bool)     = undefined;
 
-  (result, mask_helper) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
-  foreach (i from 0 to (num_elem - 1)){
-    if mask_helper[i] == true then{
-      result[i] = rs1_val
-    }
+  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  foreach (i from 0 to (num_elem - 1)) {
+    if mask[i] then result[i] = rs1_val
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -488,36 +459,31 @@ function clause execute(MOVETYPEX(rs1, vd)) = {
 }
 
 mapping clause assembly = MOVETYPEX(rs1, vd)
-<-> "vmv.v.x" ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1)   
+  <-> "vmv.v.x" ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1)
 
-
-/* **************************Integer move instruction(OPIVI)*************************************** */
-
+/* ********************** Integer Move Instruction (OPIVI) *********************** */
 union clause ast = MOVETYPEI : (regidx, bits(5))
 
 mapping clause encdec = MOVETYPEI (vd, simm)
   <-> 0b010111 @ 0b1 @ 0b00000 @ simm @ 0b011 @ vd @ 0b1010111
 
 function clause execute(MOVETYPEI(vd, simm)) = {
-  let SEW      : int = int_power(2, get_sew_pow());
-  let LMUL_pow : int = get_lmul_pow();
-  let num_elem : int = get_num_elem(LMUL_pow, SEW);
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  assert(8 <= SEW & SEW <= 64);
   let 'n = num_elem;
   let 'm = SEW;
 
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, vreg_name("v0"));
-  let imm_val = sail_sign_extend(simm, SEW);
+  let imm_val : bits('m)                  = EXTS(simm);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
-  mask_helper : vector('n, dec, bool)     = undefined;
+  mask        : vector('n, dec, bool)     = undefined;
 
-  (result, mask_helper) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
-  foreach (i from 0 to (num_elem - 1)){
-    if mask_helper[i] == true then{
-      result[i] = imm_val
-    }
+  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  foreach (i from 0 to (num_elem - 1)) {
+    if mask[i] then result[i] = imm_val
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -527,5 +493,4 @@ function clause execute(MOVETYPEI(vd, simm)) = {
 }
 
 mapping clause assembly = MOVETYPEI(vd, simm)
-<-> "vmv.v.i" ^ spc() ^ vreg_name(vd) ^ sep() ^ hex_bits_5(simm)
-
+  <-> "vmv.v.i" ^ spc() ^ vreg_name(vd) ^ sep() ^ hex_bits_5(simm)

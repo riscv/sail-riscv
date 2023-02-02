@@ -1,15 +1,12 @@
 /* ************************************************************************** */
 /* This file implements functions used by vector instructions.                */
-
 /* ************************************************************************** */
-
 
 /* Vector mask mapping */
 mapping maybe_vmask : string <-> bits(1) = {
   ""              <-> 0b1, /* unmasked by default */
   sep() ^ "v0.t"  <-> 0b0
 }
-
 
 /* Check for vstart value */
 val assert_vstart : int -> bool effect {rreg}
@@ -32,24 +29,24 @@ function get_scalar(rs1, vsew_bits) = {
 }
 
 /* Get the starting element index from csr vtype */
-val get_start_element : unit -> int effect {escape, rreg, wreg}
+val get_start_element : unit -> nat effect {escape, rreg, wreg}
 function get_start_element() = {
-  let start_element  = unsigned(vstart);
-  let VLEN_pow : int = get_vlen_pow();
-  let SEW_pow  : int = get_sew_pow();
+  let start_element = unsigned(vstart);
+  let VLEN_pow = get_vlen_pow();
+  let SEW_pow = get_sew_pow();
   /* The use of vstart values greater than the largest element
     index for the current SEW setting is reserved.
     It is recommended that implementations trap if vstart is out of bounds.
     It is not required to trap, as a possible future use of upper vstart bits
     is to store imprecise trap information. */
-  if start_element > (2 ^ (3 + VLEN_pow - SEW_pow) - 1) then -1
-  else start_element
+  if start_element > (2 ^ (3 + VLEN_pow - SEW_pow) - 1) then handle_illegal();
+  start_element
 }
 
 /* Get the ending element index from csr vl */
 val get_end_element : unit -> int effect {escape, rreg, wreg}
 function get_end_element() = {
-  let end_element : int = unsigned(vl) - 1;
+  let end_element = unsigned(vl) - 1;
   end_element
 }
 
@@ -63,69 +60,63 @@ function get_end_element() = {
  */
 val init_masked_result : forall 'n 'm 'p, 8 <= 'm <= 64. (int('n), int('m), int('p), vector('n, dec, bits('m)), vector('n, dec, bool)) -> (vector('n, dec, bits('m)), vector('n, dec, bool)) effect {escape, rreg, undef, wreg}
 function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
-  let start_element : int                       = get_start_element();
-  let end_element   : int                       = get_end_element();
-  let tail_ag       : agtype                    = get_vtype_vta();
-  let mask_ag       : agtype                    = get_vtype_vma();
-  mask_helper       : vector('n, dec, bool)     = undefined;
-  result            : vector('n, dec, bits('m)) = undefined;
+  let start_element = get_start_element();
+  let end_element   = get_end_element();
+  let tail_ag : agtype = get_vtype_vta();
+  let mask_ag : agtype = get_vtype_vma();
+  mask : vector('n, dec, bool) = undefined;
+  result : vector('n, dec, bits('m)) = undefined;
 
-  if start_element < 0 then {
-    /* start element is not valid */
-    result      = undefined;
-    mask_helper = undefined;
-  } else {
-    /* Determine the actual number of elements when lmul < 1 */
-    let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow);
-    assert(num_elem >= real_num_elem);
+  /* Determine the actual number of elements when lmul < 1 */
+  let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow);
+  assert(num_elem >= real_num_elem);
 
-    foreach (i from 0 to (num_elem - 1)) {
-      if i < start_element then {
-        /* Prestart elements defined by vstart */
+  foreach (i from 0 to (num_elem - 1)) {
+    if i < start_element then {
+      /* Prestart elements defined by vstart */
+      result[i] = vd_val[i];
+      mask[i] = false
+    } else if i > end_element then {
+      /* Tail elements defined by vl */
+      if tail_ag == UNDISTURBED then {
         result[i] = vd_val[i];
-        mask_helper[i] = false
-      } else if i > end_element then {
-        /* Tail elements defined by vl */
-        if tail_ag == UNDISTURBED then {
-          result[i] = vd_val[i];
-        } else if tail_ag == AGNOSTIC then {
-          result[i] = vd_val[i];
-        };
-        mask_helper[i] = false
-      } else if i >= real_num_elem then {
-        /* Tail elements defined by lmul < 1 */
-        if tail_ag == UNDISTURBED then {
-          result[i] = vd_val[i];
-        } else if tail_ag == AGNOSTIC then {
-          result[i] = vd_val[i];
-        };
-        mask_helper[i] = false
-      } else if vm_val[i] == false then {
-        /* Inactive body elements defined by vm */
-        if mask_ag == UNDISTURBED then {
-          result[i] = vd_val[i]
-        } else if mask_ag == AGNOSTIC then {
-          result[i] = vd_val[i]
-        };
-        mask_helper[i] = false
-      } else {
-        /* Active body elements */
-        mask_helper[i] = true;
-      }
-    };    
+      } else if tail_ag == AGNOSTIC then {
+        result[i] = vd_val[i];
+      };
+      mask[i] = false
+    } else if i >= real_num_elem then {
+      /* Tail elements defined by lmul < 1 */
+      if tail_ag == UNDISTURBED then {
+        result[i] = vd_val[i];
+      } else if tail_ag == AGNOSTIC then {
+        result[i] = vd_val[i];
+      };
+      mask[i] = false
+    } else if vm_val[i] == false then {
+      /* Inactive body elements defined by vm */
+      if mask_ag == UNDISTURBED then {
+        result[i] = vd_val[i]
+      } else if mask_ag == AGNOSTIC then {
+        result[i] = vd_val[i]
+      };
+      mask[i] = false
+    } else {
+      /* Active body elements */
+      mask[i] = true;
+    }
   };
 
-  (result, mask_helper)
+  (result, mask)
 }
 
 /* Mask handling for carry functions that use masks as input/output */
 /* Only prestart and tail elements are masked in a mask value */
 val init_masked_result_carry : forall 'n 'm 'p, 8 <= 'm <= 64. (int('n), int('m), int('p), vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool)) effect {escape, rreg, undef, wreg}
 function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
-  let start_element : int                   = get_start_element();
-  let end_element   : int                   = get_end_element();
-  mask_helper       : vector('n, dec, bool) = undefined;
-  result            : vector('n, dec, bool) = undefined;
+  let start_element = get_start_element();
+  let end_element   = get_end_element();
+  mask : vector('n, dec, bool) = undefined;
+  result : vector('n, dec, bool) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow);
@@ -135,34 +126,34 @@ function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
     if i < start_element then {
       /* Prestart elements defined by vstart */
       result[i] = vd_val[i];
-      mask_helper[i] = false
+      mask[i] = false
     } else if i > end_element then {
       /* Tail elements defined by vl */
       /* Mask tail is always agnostic */
       result[i] = vd_val[i];
-      mask_helper[i] = false
+      mask[i] = false
     } else if i >= real_num_elem then {
       /* Tail elements defined by lmul < 1 */
       /* Mask tail is always agnostic */
       result[i] = vd_val[i];
-      mask_helper[i] = false
+      mask[i] = false
     } else {
       /* Active body elements */
-      mask_helper[i] = true
+      mask[i] = true
     }
   };
 
-  (result, mask_helper)
+  (result, mask)
 }
 
 /* Mask handling for cmp functions that use masks as output */
 val init_masked_result_cmp : forall 'n 'm 'p, 8 <= 'm <= 64. (int('n), int('m), int('p), vector('n, dec, bool), vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool)) effect {escape, rreg, undef, wreg}
 function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
-  let start_element : int                       = get_start_element();
-  let end_element   : int                       = get_end_element();
-  let mask_ag       : agtype                    = get_vtype_vma();
-  mask_helper       : vector('n, dec, bool)     = undefined;
-  result            : vector('n, dec, bool)     = undefined;
+  let start_element = get_start_element();
+  let end_element   = get_end_element();
+  let mask_ag : agtype = get_vtype_vma();
+  mask : vector('n, dec, bool) = undefined;
+  result : vector('n, dec, bool) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow);
@@ -172,17 +163,17 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
     if i < start_element then {
       /* Prestart elements defined by vstart */
       result[i] = vd_val[i];
-      mask_helper[i] = false
+      mask[i] = false
     } else if i > end_element then {
       /* Tail elements defined by vl */
       /* Mask tail is always agnostic */
       result[i] = vd_val[i];
-      mask_helper[i] = false
+      mask[i] = false
     } else if i >= real_num_elem then {
       /* Tail elements defined by lmul < 1 */
       /* Mask tail is always agnostic */
       result[i] = vd_val[i];
-      mask_helper[i] = false
+      mask[i] = false
     } else if vm_val[i] == false then {
       /* Inactive body elements defined by vm */
       if mask_ag == UNDISTURBED then {
@@ -190,14 +181,14 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
       } else if mask_ag == AGNOSTIC then {
 	      result[i] = vd_val[i]
       };
-      mask_helper[i] = false
+      mask[i] = false
     } else {
       /* Active body elements */
-      mask_helper[i] = true
+      mask[i] = true
     }
   };
 
-  (result, mask_helper)
+  (result, mask)
 }
 
 /* Floating point canonical NaN for 16-bit, 32-bit, 64-bit and 128-bit types */
@@ -281,7 +272,7 @@ function get_scalar_fp(rs1, vsew_bits) = {
 /* Shift amounts */
 val get_shift_amount : forall 'n 'm, 0 <= 'n & 'm in {8, 16, 32, 64}. (bits('n), int('m)) -> nat effect {escape}
 function get_shift_amount(bit_val, vsew_bits) = {
-  let lowlog2bits : int = log2(vsew_bits);
+  let lowlog2bits = log2(vsew_bits);
   assert(0 < lowlog2bits & lowlog2bits < 'n);
   unsigned(bit_val[lowlog2bits - 1 .. 0]);
 }
@@ -355,7 +346,6 @@ function negate_fp (xf) = {
   let new_sign = if (sign == 0b0) then 0b1 else 0b0;
   fmakesign (new_sign, remain)
 }
-
 
 /* Floating point functions */
 val fp_add: forall 'n, 'n in {16, 32, 64}. (bits(3), bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}

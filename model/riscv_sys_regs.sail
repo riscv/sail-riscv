@@ -846,8 +846,8 @@ bitfield Vtype  : xlenbits = {
 register vtype : Vtype
 
 /* the dynamic selected element width (SEW) */
-/* the return value is the power of 2 */
-val get_sew_pow : unit -> int effect {rreg}
+/* this returns the power of 2 for SEW */
+val get_sew_pow : unit -> {|3, 4, 5, 6|} effect {escape, rreg}
 function get_sew_pow() = {
   match vtype.vsew() {
     0b000 => 3,
@@ -857,10 +857,30 @@ function get_sew_pow() = {
     _     => {assert(false, "invalid vsew field in vtype"); 0}
   }
 }
+/* this returns the actual value of SEW */
+val get_sew : unit -> {|8, 16, 32, 64|} effect {escape, rreg}
+function get_sew() = {
+  match get_sew_pow() {
+    3 => 8,
+    4 => 16,
+    5 => 32,
+    6 => 64
+  }
+}
+/* this returns the value of SEW in bytes */
+val get_sew_bytes : unit -> {|1, 2, 4, 8|} effect {escape, rreg}
+function get_sew_bytes() = {
+  match get_sew_pow() {
+    3 => 1,
+    4 => 2,
+    5 => 4,
+    6 => 8
+  }
+}
 
 /* the vector register group multiplier (LMUL) */
-/* the return value is the power of 2 */
-val get_lmul_pow : unit -> int effect {rreg}
+/* this returns the power of 2 for LMUL */
+val get_lmul_pow : unit -> {|-3, -2, -1, 0, 1, 2, 3|} effect {escape, rreg}
 function get_lmul_pow() = {
   match vtype.vlmul() {
     0b101 => -3,

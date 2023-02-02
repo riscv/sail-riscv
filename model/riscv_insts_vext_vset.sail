@@ -1,7 +1,6 @@
 /* ************************************************************************ */
 /* This file implements part of the vector extension.                       */
 /* Chapter 6: configuration setting instructions                            */
-
 /* ************************************************************************ */
 
 mapping sew_flag : string <-> bits(3) = {
@@ -50,10 +49,10 @@ mapping clause encdec = VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd)
   <-> encdec_vsetop(op) @ ma @ ta @ sew @ lmul @ rs1 @ 0b111 @ rd @ 0b1010111
 
 function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
-  let VLEN_pow      : int  = get_vlen_pow();
-  let LMUL_pow_ori  : int  = get_lmul_pow();
-  let SEW_pow_ori   : int  = get_sew_pow(); 
-  let ratio_pow_ori : int  = SEW_pow_ori - LMUL_pow_ori;
+  let VLEN_pow      = get_vlen_pow();
+  let LMUL_pow_ori  = get_lmul_pow();
+  let SEW_pow_ori   = get_sew_pow(); 
+  let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
 
   /* set vtype and calculate VLMAX */
   match op {
@@ -66,9 +65,9 @@ function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
     }
   };
   print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
-  let LMUL_pow_new : int = get_lmul_pow();
-  let SEW_pow_new  : int = get_sew_pow();
-  let VLMAX        : int = int_power(2, VLEN_pow + LMUL_pow_new - SEW_pow_new);
+  let LMUL_pow_new = get_lmul_pow();
+  let SEW_pow_new  = get_sew_pow();
+  let VLMAX        = int_power(2, VLEN_pow + LMUL_pow_new - SEW_pow_new);
 
   /* set vl according to VLMAX and AVL */
   if (rs1 != 0b00000) then { /* normal stripmining */
@@ -86,7 +85,7 @@ function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
     print_reg("CSR vl <- " ^ BitStr(vl))
   } else { /* keep existing vl */
     let AVL = unsigned(vl);
-    let ratio_pow_new : int = SEW_pow_new - LMUL_pow_new;
+    let ratio_pow_new = SEW_pow_new - LMUL_pow_new;
     if (ratio_pow_new != ratio_pow_ori) then { 
       vtype->bits() = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
       print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
@@ -116,19 +115,19 @@ mapping clause encdec = VSETI_TYPE(ma, ta, sew, lmul, uimm, rd)
   <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ rd @ 0b1010111
 
 function clause execute VSETI_TYPE(ma, ta, sew, lmul, uimm, rd) = {
-  let VLEN_pow      : int  = get_vlen_pow();
-  let LMUL_pow_ori  : int  = get_lmul_pow();
-  let SEW_pow_ori   : int  = get_sew_pow(); 
-  let ratio_pow_ori : int  = SEW_pow_ori - LMUL_pow_ori;
+  let VLEN_pow      = get_vlen_pow();
+  let LMUL_pow_ori  = get_lmul_pow();
+  let SEW_pow_ori   = get_sew_pow(); 
+  let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
 
   /* set vtype and calculate VLMAX */
   vtype->bits() = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul;
   print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
 
-  let LMUL_pow_new : int = get_lmul_pow();
-  let SEW_pow_new  : int = get_sew_pow();
-  let VLMAX        : int = int_power(2, VLEN_pow + LMUL_pow_new - SEW_pow_new);
-  let AVL          : int = unsigned(uimm); /* AVL is encoded as 5-bit zero-extended imm in the rs1 field */
+  let LMUL_pow_new = get_lmul_pow();
+  let SEW_pow_new  = get_sew_pow();
+  let VLMAX        = int_power(2, VLEN_pow + LMUL_pow_new - SEW_pow_new);
+  let AVL          = unsigned(uimm); /* AVL is encoded as 5-bit zero-extended imm in the rs1 field */
 
   /* set vl according to VLMAX and AVL */
   vl = if AVL <= VLMAX then to_bits(sizeof(xlen), AVL)

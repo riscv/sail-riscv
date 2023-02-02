@@ -152,9 +152,7 @@ function wV (r, in_v) = {
   let VLEN = int_power(2, get_vlen_pow());
   assert(0 < VLEN & VLEN <= sizeof(vlenmax));
   if   get_config_print_reg()
-  then {
-    print_reg("v" ^ string_of_int(r) ^ " <- " ^ BitStr(v[VLEN - 1 .. 0]));
-  }
+  then print_reg("v" ^ string_of_int(r) ^ " <- " ^ BitStr(v[VLEN - 1 .. 0]));
 }
 
 function rV_bits(i: bits(5)) -> vregtype = rV(unsigned(i))
@@ -204,25 +202,27 @@ function init_vregs () = {
 
 /* Vector CSR */   
 bitfield Vcsr : bits(3) = {
-  vxrm    : 2 .. 1,
-  vxsat   : 0
+  vxrm  : 2 .. 1,
+  vxsat : 0
 }
 register vcsr : Vcsr
 
 val ext_write_vcsr : (bits(2), bits(1)) -> unit effect {rreg, wreg}
 function ext_write_vcsr (vxrm_val, vxsat_val) = {
-  vcsr->vxrm()    = vxrm_val;      /* Note: frm can be an illegal value, 101, 110, 111 */
-  vcsr->vxsat()   = vxsat_val;
+  vcsr->vxrm()  = vxrm_val; /* Note: frm can be an illegal value, 101, 110, 111 */
+  vcsr->vxsat() = vxsat_val;
 }
 
 /* num_elem means max(VLMAX,VLEN/SEW)) according to Section 5.4 of RVV spec */
-val get_num_elem : (int, int) -> int effect {rreg, undef}
+val get_num_elem : (int, int) -> nat effect {escape, rreg}
 function get_num_elem(LMUL_pow, SEW) = {
-  let VLEN         : int = int_power(2, get_vlen_pow());
-  let LMUL_pow_reg : int = if LMUL_pow < 0 then 0 else LMUL_pow;
+  let VLEN = int_power(2, get_vlen_pow());
+  let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
   /* Ignore lmul < 1 so that the entire vreg is read, allowing all masking to
    * be handled in init_masked_result */
-  int_power(2, LMUL_pow_reg) * VLEN / SEW
+  let num_elem = int_power(2, LMUL_pow_reg) * VLEN / SEW;
+  assert(num_elem > 0);
+  num_elem
 }
 
 /* Reads a single vreg into multiple elements */
@@ -233,7 +233,7 @@ function read_single_vreg(num_elem, SEW, vrid) = {
 
   assert(8 <= SEW & SEW <= 64);
   foreach (i from 0 to (num_elem - 1)) {
-    let start_index : int = i * SEW;
+    let start_index = i * SEW;
     result[i] = slice(bv, start_index, SEW);
   };
 
@@ -289,9 +289,9 @@ function write_mult_vreg(num_vreg, SEW, vrid, bv) = {
 /* The general vreg reading operation with num_elem as max(VLMAX,VLEN/SEW)) */
 val read_vreg : forall 'n 'm 'p. (int('n), int('m), int('p), regidx) -> vector('n, dec, bits('m)) effect {escape, rreg, undef}
 function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
-  var result       : vector('n, dec, bits('m)) = undefined;
-  let VLEN         : int = int_power(2, get_vlen_pow());
-  let LMUL_pow_reg : int = if LMUL_pow < 0 then 0 else LMUL_pow;
+  var result : vector('n, dec, bits('m)) = undefined;
+  let VLEN = int_power(2, get_vlen_pow());
+  let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
 
   /* Check for valid vrid */
   if unsigned(vrid) + 2 ^ LMUL_pow_reg > 32 then {
@@ -336,7 +336,7 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
 /* Single element reading operation */
 val read_single_element : forall 'm 'x 'p, 8 <= 'm <= 128. (int('m), int('x), int('p), regidx) -> bits('m) effect {escape, rreg, undef}
 function read_single_element(EEW, index, EMUL_pow, vrid) = {
-  let VLEN : int = int_power(2, get_vlen_pow());
+  let VLEN = int_power(2, get_vlen_pow());
   assert(VLEN >= EEW);
   let 'elem_per_reg : int = VLEN / EEW;
   let real_vrid  : regidx = if EMUL_pow > 0 then vrid + to_bits(5, index / 'elem_per_reg) else vrid;
@@ -349,8 +349,8 @@ function read_single_element(EEW, index, EMUL_pow, vrid) = {
 /* The general vreg writing operation with num_elem as max(VLMAX,VLEN/SEW)) */
 val write_vreg : forall 'n 'm 'p. (int('n), int('m), int('p), regidx, vector('n, dec, bits('m))) -> unit effect {escape, rreg, undef, wreg} 
 function write_vreg(num_elem, SEW, LMUL_pow, vrid, vec) = {
-  let VLEN         : int = int_power(2, get_vlen_pow());
-  let LMUL_pow_reg : int = if LMUL_pow < 0 then 0 else LMUL_pow;
+  let VLEN = int_power(2, get_vlen_pow());
+  let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
 
   if SEW > VLEN then {
     /* Multiple vregs per element */
@@ -381,7 +381,7 @@ function write_vreg(num_elem, SEW, LMUL_pow, vrid, vec) = {
 /* Single element writing operation */
 val write_single_element : forall 'm 'x 'p, 8 <= 'm <= 128. (int('m), int('x), int('p), regidx, bits('m)) -> unit effect {escape, rreg, undef, wreg}
 function write_single_element(EEW, index, EMUL_pow, vrid, value) = {
-  let VLEN : int = int_power(2, get_vlen_pow());
+  let VLEN = int_power(2, get_vlen_pow());
   let 'elem_per_reg : int = VLEN / EEW;
   let real_vrid  : regidx = if EMUL_pow > 0 then vrid + to_bits(5, index / 'elem_per_reg) else vrid;
   let real_index : int    = if EMUL_pow > 0 then index % 'elem_per_reg else index;
@@ -402,8 +402,8 @@ function write_single_element(EEW, index, EMUL_pow, vrid, value) = {
 /* Mask register reading operation with num_elem as max(VLMAX,VLEN/SEW)) */
 val read_vmask : forall 'n. (int('n), bits(1), regidx) -> vector('n, dec, bool) effect {escape, rreg, undef}
 function read_vmask(num_elem, vm, vrid) = {
-  let VLEN : int = int_power(2, get_vlen_pow());
-  assert(0 < num_elem & num_elem <= sizeof(vlenmax));
+  let VLEN = int_power(2, get_vlen_pow());
+  assert(num_elem <= sizeof(vlenmax));
   let vreg_val : vregtype = V(vrid);
   var result   : vector('n, dec, bool) = undefined;
 
@@ -421,7 +421,7 @@ function read_vmask(num_elem, vm, vrid) = {
 /* This is a special version of read_vmask for carry/borrow instructions, where vm=1 means no carry */
 val read_vmask_carry : forall 'n. (int('n), bits(1), regidx) -> vector('n, dec, bool) effect {escape, rreg, undef}
 function read_vmask_carry(num_elem, vm, vrid) = {
-  let VLEN : int = int_power(2, get_vlen_pow());
+  let VLEN = int_power(2, get_vlen_pow());
   assert(0 < num_elem & num_elem <= sizeof(vlenmax));
   let vreg_val : vregtype = V(vrid);
   var result   : vector('n, dec, bool) = undefined;
@@ -440,7 +440,7 @@ function read_vmask_carry(num_elem, vm, vrid) = {
 /* Mask register writing operation with num_elem as max(VLMAX,VLEN/SEW)) */
 val write_vmask : forall 'n. (int('n), regidx, vector('n, dec, bool)) -> unit effect {escape, rreg, undef, wreg}
 function write_vmask(num_elem, vrid, v) = {
-  let VLEN : int = int_power(2, get_vlen_pow());
+  let VLEN = int_power(2, get_vlen_pow());
   assert(0 < VLEN & VLEN <= sizeof(vlenmax));
   assert(0 < num_elem & num_elem <= VLEN);
   let vreg_val : vregtype = V(vrid);
