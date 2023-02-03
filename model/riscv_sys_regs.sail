@@ -188,9 +188,6 @@ function haveZbb()  -> bool = true
 function haveZbc()  -> bool = true
 function haveZbs()  -> bool = true
 
-/* Zfh (half-precision) extension */
-function haveZfh()  -> bool = true
-
 /* Scalar Cryptography extensions support. */
 function haveZbkb() -> bool = true
 function haveZbkc() -> bool = true
@@ -350,6 +347,8 @@ function in32BitMode() -> bool = {
 /* F and D extensions have to enabled both via misa.{FD} as well as mstatus.FS */
 function haveFExt()    -> bool = (misa.F() == 0b1) & (mstatus.FS() != 0b00)
 function haveDExt()    -> bool = (misa.D() == 0b1) & (mstatus.FS() != 0b00)
+/* Zfh (half-precision) extension depends on misa.F and mstatus.FS */
+function haveZfh()     -> bool = (misa.F() == 0b1) & (mstatus.FS() != 0b00)
 
 /* Zhinx, Zfinx and Zdinx extensions (TODO: gate FCSR access on [mhs]stateen0 bit 1 when implemented) */
 function haveZhinx()   -> bool = sys_enable_zfinx()
