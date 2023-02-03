@@ -253,7 +253,7 @@ function clause execute (RISCV_CLZ(rs1, rd)) = {
   result : nat = 0;
   done : bool = false;
   foreach (i from (sizeof(xlen) - 1) downto 0)
-    if ~(done) then if rs1_val[i] == bitzero
+    if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1
                     else done = true;
   X(rd) = to_bits(sizeof(xlen), result);
@@ -274,7 +274,7 @@ function clause execute (RISCV_CLZW(rs1, rd)) = {
   result : nat = 0;
   done : bool = false;
   foreach (i from 31 downto 0)
-    if ~(done) then if rs1_val[i] == bitzero
+    if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1
                     else done = true;
   X(rd) = to_bits(sizeof(xlen), result);
@@ -295,7 +295,7 @@ function clause execute (RISCV_CTZ(rs1, rd)) = {
   result : nat = 0;
   done : bool = false;
   foreach (i from 0 to (sizeof(xlen) - 1))
-    if ~(done) then if rs1_val[i] == bitzero
+    if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1
                     else done = true;
   X(rd) = to_bits(sizeof(xlen), result);
@@ -316,7 +316,7 @@ function clause execute (RISCV_CTZW(rs1, rd)) = {
   result : nat = 0;
   done : bool = false;
   foreach (i from 0 to 31)
-    if ~(done) then if rs1_val[i] == bitzero
+    if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1
                     else done = true;
   X(rd) = to_bits(sizeof(xlen), result);

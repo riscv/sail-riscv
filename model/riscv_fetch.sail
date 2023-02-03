@@ -70,7 +70,7 @@
  * to check PC validity *before* standard fetch processing checks.
  */
 
-function isRVC(h : half) -> bool = ~ (h[1 .. 0] == 0b11)
+function isRVC(h : half) -> bool = not(h[1 .. 0] == 0b11)
 
 val fetch : unit -> FetchResult effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
 function fetch() -> FetchResult =
@@ -80,7 +80,7 @@ function fetch() -> FetchResult =
   match ext_fetch_check_pc(PC, PC) {
     Ext_FetchAddr_Error(e)   => F_Ext_Error(e),
     Ext_FetchAddr_OK(use_pc) => {
-      if   (use_pc[0] != bitzero | (use_pc[1] != bitzero & (~ (haveRVC()))))
+      if   (use_pc[0] != bitzero | (use_pc[1] != bitzero & not(haveRVC())))
       then F_Error(E_Fetch_Addr_Align(), PC)
       else match translateAddr(use_pc, Execute()) {
         TR_Failure(e, _)     => F_Error(e, PC),
