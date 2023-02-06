@@ -43,6 +43,8 @@ Files:
 * (new) test.s :  for testing the new instruction features
 * (exists) riscv_types.sail : need to add new instruction to the proper instruction opcode grouping.
 * (exists) riscv_insts_zicsr.sail : need to add new CSR functionality.
+* (exists) riscv_csr_map.sail : need to add new CSR name to the mapping
+* (exists) riscv_sys_control.sail : need to add the new CSR name to the list found in is_CSR_defined().
 
 
 

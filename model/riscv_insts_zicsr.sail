@@ -140,6 +140,8 @@ function readCSR csr : csreg -> xlenbits = {
 //    (0xFC0, _)  => xmpl_csr,  // error: Xmpl_csr is not a subtype of bitvector(32, dec)
 //    (0xFC0, 32)  => xmpl_csr, // error: Xmpl_csr is not a subtype of bitvector(32, dec)
     (0xFC0, _)  => xmpl_csr,  // error: Xmpl_csr is not a subtype of bitvector(32, dec)
+//    (0xFC0, _)  => xmpl_csr.bits(),  //  error (long error message which i couldn't interpret
+    (0xFC1, _)  => xmpl_csr_2.bits(),
 
     /* supervisor mode */
     (0x100,  _) => lower_mstatus(mstatus).bits(),

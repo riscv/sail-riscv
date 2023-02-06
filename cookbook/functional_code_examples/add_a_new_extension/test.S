@@ -105,7 +105,8 @@
 # define REGBYTES 4
 #endif
 
-
+#define XMPL_CSR    (0xfc0)
+#define XMPL_CSR_2  (0xfc1)
 
 // --------------------------------------------------------
 // Following power-on reset, we start executing at _start.
@@ -174,6 +175,7 @@ reset_vector:
 //  The test!
 
   X_XMPL(X2, 0x0dead)
+  csrr  x3, XMPL_CSR_2
 
 
 
