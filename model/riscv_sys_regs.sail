@@ -23,7 +23,7 @@
 /*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
 /*    Peter Rugg                                                                         */
 /*    Aril Computer Corp., for contributions by Scott Johnson                            */
-/*    VRULL GmbH                                                                         */
+/*    VRULL GmbH, for contributions by Philipp Tomsich                                   */
 /*                                                                                       */
 /*  All rights reserved.                                                                 */
 /*                                                                                       */
@@ -209,7 +209,7 @@ function haveZknd()   -> bool = true
 
 function haveZmmul()  -> bool = true
 
-/* ZiCond extension support */
+/* Zicond extension support */
 function haveZicond() -> bool = true
 
 bitfield Mstatush : bits(32) = {
