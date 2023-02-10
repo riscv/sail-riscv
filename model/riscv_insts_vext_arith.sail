@@ -32,8 +32,8 @@ mapping encdec_vvfunct6 : vvfunct6 <-> bits(6) = {
   VV_VSSRA         <-> 0b101011
 }
 
-mapping clause encdec = VVTYPE(funct6, vm, vs2, vs1, vd)
-  <-> encdec_vvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111
+mapping clause encdec = VVTYPE(funct6, vm, vs2, vs1, vd) if haveRVV()
+  <-> encdec_vvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111 if haveRVV()
 
 function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW_pow  = get_sew_pow();
@@ -165,8 +165,8 @@ mapping encdec_vxsgfunct6 : vxsgfunct6 <-> bits(6) = {
   VX_VRGATHER     <-> 0b001100
 }
 
-mapping clause encdec = VXSG(funct6, vm, vs2, rs1, vd)
-  <-> encdec_vxsgfunct6(funct6) @ vm @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111
+mapping clause encdec = VXSG(funct6, vm, vs2, rs1, vd) if haveRVV()
+  <-> encdec_vxsgfunct6(funct6) @ vm @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111 if haveRVV()
 
 function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
   let SEW_pow  = get_sew_pow();
@@ -233,8 +233,8 @@ mapping encdec_visgfunct6 : visgfunct6 <-> bits(6) = {
   VI_VRGATHER     <-> 0b001100
 }
 
-mapping clause encdec = VISG(funct6, vm, vs2, simm, vd)
-  <-> encdec_visgfunct6(funct6) @ vm @ vs2 @ simm @ 0b011 @ vd @ 0b1010111
+mapping clause encdec = VISG(funct6, vm, vs2, simm, vd) if haveRVV()
+  <-> encdec_visgfunct6(funct6) @ vm @ vs2 @ simm @ 0b011 @ vd @ 0b1010111 if haveRVV()
 
 function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
   let SEW_pow  = get_sew_pow();
@@ -294,8 +294,8 @@ mapping clause assembly = VISG(funct6, vm, vs2, simm, vd)
 /* ********************* Whole Vector Register Move (OPIVI) ********************** */
 union clause ast = VMVRTYPE : (regidx, bits(5), regidx)
 
-mapping clause encdec = VMVRTYPE(vs2, simm, vd)
-  <-> 0b100111 @ 0b1 @ vs2 @ simm @ 0b011 @ vd @ 0b1010111
+mapping clause encdec = VMVRTYPE(vs2, simm, vd) if haveRVV()
+  <-> 0b100111 @ 0b1 @ vs2 @ simm @ 0b011 @ vd @ 0b1010111 if haveRVV()
 
 function clause execute(VMVRTYPE(vs2, simm, vd)) = {
   let SEW     = get_sew();
@@ -328,8 +328,8 @@ mapping clause assembly = VMVRTYPE(vs2, simm, vd)
 /* ****************************** OPMVV (VWXUNARY0) ****************************** */
 union clause ast = VMVXS : (regidx, regidx)
 
-mapping clause encdec = VMVXS(vs2, rd)
-  <-> 0b010000 @ 0b1 @ vs2 @ 0b00000 @ 0b010 @ rd @ 0b1010111
+mapping clause encdec = VMVXS(vs2, rd) if haveRVV()
+  <-> 0b010000 @ 0b1 @ vs2 @ 0b00000 @ 0b010 @ rd @ 0b1010111 if haveRVV()
 
 function clause execute(VMVXS(vs2, rd)) = {
   let SEW      = get_sew();
@@ -340,9 +340,9 @@ function clause execute(VMVXS(vs2, rd)) = {
   let 'm = SEW;
 
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, 0, vs2);
-  if sizeof(xlen) < SEW then X(rd) = slice(vs2_val[0], 0, sizeof(xlen))
-  else if sizeof(xlen) > SEW then X(rd) = EXTS(vs2_val[0])
-  else X(rd) = vs2_val[0];
+  X(rd) = if sizeof(xlen) < SEW then slice(vs2_val[0], 0, sizeof(xlen))
+          else if sizeof(xlen) > SEW then EXTS(vs2_val[0])
+          else vs2_val[0];
   vstart = EXTZ(0b0);
 
   RETIRE_SUCCESS
@@ -354,8 +354,8 @@ mapping clause assembly = VMVXS(vs2, rd)
 /* ****************************** OPMVX (VRXUNARY0) ****************************** */
 union clause ast = VMVSX : (regidx, regidx)
 
-mapping clause encdec = VMVSX(rs1, vd)
-  <-> 0b010000 @ 0b1 @ 0b00000 @ rs1 @ 0b110 @ vd @ 0b1010111
+mapping clause encdec = VMVSX(rs1, vd) if haveRVV()
+  <-> 0b010000 @ 0b1 @ 0b00000 @ rs1 @ 0b110 @ vd @ 0b1010111 if haveRVV()
 
 function clause execute(VMVSX(rs1, vd)) = {
   let SEW      = get_sew();
@@ -381,7 +381,7 @@ function clause execute(VMVSX(rs1, vd)) = {
   if tail_ag == UNDISTURBED then {
     foreach (i from 1 to (num_elem - 1)) result[i] = vd_val[i]
   } else if tail_ag == AGNOSTIC then {
-    foreach (i from 1 to (num_elem - 1)) result[i] = vd_val[i]
+    foreach (i from 1 to (num_elem - 1)) result[i] = vd_val[i] /* TODO: configuration support */
   };
 
   write_vreg(num_elem, SEW, 0, vd, result);
@@ -396,8 +396,8 @@ mapping clause assembly = VMVSX(rs1, vd)
 /* ********************** Integer Move Instruction (OPIVV) *********************** */
 union clause ast = MOVETYPEV : (regidx, regidx)
 
-mapping clause encdec = MOVETYPEV (vs1, vd)
-  <-> 0b010111 @ 0b1 @ 0b00000 @ vs1 @ 0b000 @ vd @ 0b1010111
+mapping clause encdec = MOVETYPEV (vs1, vd) if haveRVV()
+  <-> 0b010111 @ 0b1 @ 0b00000 @ vs1 @ 0b000 @ vd @ 0b1010111 if haveRVV()
 
 function clause execute(MOVETYPEV(vs1, vd)) = {
   let SEW      = get_sew();
@@ -430,8 +430,8 @@ mapping clause assembly = MOVETYPEV(vs1, vd)
 /* ********************** Integer Move Instruction (OPIVX) *********************** */
 union clause ast = MOVETYPEX : (regidx, regidx)
 
-mapping clause encdec = MOVETYPEX (rs1, vd)
-  <-> 0b010111 @ 0b1 @ 0b00000 @ rs1 @ 0b100 @ vd @ 0b1010111
+mapping clause encdec = MOVETYPEX (rs1, vd) if haveRVV()
+  <-> 0b010111 @ 0b1 @ 0b00000 @ rs1 @ 0b100 @ vd @ 0b1010111 if haveRVV()
 
 function clause execute(MOVETYPEX(rs1, vd)) = {
   let SEW      = get_sew();
@@ -464,8 +464,8 @@ mapping clause assembly = MOVETYPEX(rs1, vd)
 /* ********************** Integer Move Instruction (OPIVI) *********************** */
 union clause ast = MOVETYPEI : (regidx, bits(5))
 
-mapping clause encdec = MOVETYPEI (vd, simm)
-  <-> 0b010111 @ 0b1 @ 0b00000 @ simm @ 0b011 @ vd @ 0b1010111
+mapping clause encdec = MOVETYPEI (vd, simm) if haveRVV()
+  <-> 0b010111 @ 0b1 @ 0b00000 @ simm @ 0b011 @ vd @ 0b1010111 if haveRVV()
 
 function clause execute(MOVETYPEI(vd, simm)) = {
   let SEW      = get_sew();

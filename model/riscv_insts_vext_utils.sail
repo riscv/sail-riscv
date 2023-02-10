@@ -81,7 +81,7 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
       if tail_ag == UNDISTURBED then {
         result[i] = vd_val[i];
       } else if tail_ag == AGNOSTIC then {
-        result[i] = vd_val[i];
+        result[i] = vd_val[i]; /* TODO: configuration support */
       };
       mask[i] = false
     } else if i >= real_num_elem then {
@@ -89,7 +89,7 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
       if tail_ag == UNDISTURBED then {
         result[i] = vd_val[i];
       } else if tail_ag == AGNOSTIC then {
-        result[i] = vd_val[i];
+        result[i] = vd_val[i]; /* TODO: configuration support */
       };
       mask[i] = false
     } else if vm_val[i] == false then {
@@ -97,7 +97,7 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
       if mask_ag == UNDISTURBED then {
         result[i] = vd_val[i]
       } else if mask_ag == AGNOSTIC then {
-        result[i] = vd_val[i]
+        result[i] = vd_val[i] /* TODO: configuration support */
       };
       mask[i] = false
     } else {
@@ -130,12 +130,12 @@ function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
     } else if i > end_element then {
       /* Tail elements defined by vl */
       /* Mask tail is always agnostic */
-      result[i] = vd_val[i];
+      result[i] = vd_val[i]; /* TODO: configuration support */
       mask[i] = false
     } else if i >= real_num_elem then {
       /* Tail elements defined by lmul < 1 */
       /* Mask tail is always agnostic */
-      result[i] = vd_val[i];
+      result[i] = vd_val[i]; /* TODO: configuration support */
       mask[i] = false
     } else {
       /* Active body elements */
@@ -167,19 +167,19 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
     } else if i > end_element then {
       /* Tail elements defined by vl */
       /* Mask tail is always agnostic */
-      result[i] = vd_val[i];
+      result[i] = vd_val[i]; /* TODO: configuration support */
       mask[i] = false
     } else if i >= real_num_elem then {
       /* Tail elements defined by lmul < 1 */
       /* Mask tail is always agnostic */
-      result[i] = vd_val[i];
+      result[i] = vd_val[i]; /* TODO: configuration support */
       mask[i] = false
     } else if vm_val[i] == false then {
       /* Inactive body elements defined by vm */
       if mask_ag == UNDISTURBED then {
         result[i] = vd_val[i]
       } else if mask_ag == AGNOSTIC then {
-	      result[i] = vd_val[i]
+	      result[i] = vd_val[i] /* TODO: configuration support */
       };
       mask[i] = false
     } else {

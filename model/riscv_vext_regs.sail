@@ -451,7 +451,7 @@ function write_vmask(num_elem, vrid, v) = {
   };
   foreach (i from num_elem to (VLEN - 1)) {
     /* Mask tail is always agnostic */
-    result[i] = vreg_val[i]
+    result[i] = vreg_val[i] /* TODO: configuration support */
   };
 
   V(vrid) = result

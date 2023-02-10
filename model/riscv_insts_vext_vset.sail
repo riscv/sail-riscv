@@ -1,6 +1,6 @@
 /* ************************************************************************ */
 /* This file implements part of the vector extension.                       */
-/* Chapter 6: configuration setting instructions                            */
+/* Chapter 6: Configuration-Setting Instructions                            */
 /* ************************************************************************ */
 
 mapping sew_flag : string <-> bits(3) = {
@@ -45,8 +45,8 @@ mapping encdec_vsetop : vsetop <-> bits(4) ={
   VSETVL  <-> 0b1000
 }
 
-mapping clause encdec = VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd)  
-  <-> encdec_vsetop(op) @ ma @ ta @ sew @ lmul @ rs1 @ 0b111 @ rd @ 0b1010111
+mapping clause encdec = VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) if haveRVV() 
+  <-> encdec_vsetop(op) @ ma @ ta @ sew @ lmul @ rs1 @ 0b111 @ rd @ 0b1010111 if haveRVV()
 
 function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
   let VLEN_pow      = get_vlen_pow();
@@ -111,8 +111,8 @@ mapping clause assembly = VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd)
 /* ******************** vsetivli *********************** */
 union clause ast = VSETI_TYPE : ( bits(1), bits(1), bits(3), bits(3), regidx, regidx)
 
-mapping clause encdec = VSETI_TYPE(ma, ta, sew, lmul, uimm, rd)  
-  <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ rd @ 0b1010111
+mapping clause encdec = VSETI_TYPE(ma, ta, sew, lmul, uimm, rd) if haveRVV() 
+  <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ rd @ 0b1010111 if haveRVV()
 
 function clause execute VSETI_TYPE(ma, ta, sew, lmul, uimm, rd) = {
   let VLEN_pow      = get_vlen_pow();
