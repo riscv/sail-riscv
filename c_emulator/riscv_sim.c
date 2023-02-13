@@ -123,6 +123,10 @@ static struct option options[] = {
   {"report-arch",                 no_argument,       0, 'a'},
   {"test-signature",              required_argument, 0, 'T'},
   {"signature-granularity",       required_argument, 0, 'g'},
+  {"enable-experimental-extensions", no_argument,    0, 'X'}, // follows naming convention of LLVM
+  {"enable-Smepmp",               no_argument,       &rv_enable_Smepmp, 0 },
+  {"enable-Zicond",               no_argument,       &rv_enable_Zicond, 0 },
+
 #ifdef RVFI_DII
   {"rvfi-dii",                    required_argument, 0, 'r'},
 #endif
@@ -217,6 +221,9 @@ char *process_args(int argc, char **argv)
   int c;
   uint64_t ram_size = 0;
   while(true) {
+    int this_option_optind = optind ? optind : 1;
+    int option_index = 0;
+
     c = getopt_long(argc, argv,
                     "a"
                     "d"
@@ -242,12 +249,21 @@ char *process_args(int argc, char **argv)
                     "v::"
                     "l:"
                     "x"
+                    "X"
 #ifdef SAILCOV
                     "c:"
 #endif
-                         , options, NULL);
+                         , options, &option_index);
     if (c == -1) break;
     switch (c) {
+    case 0:     // Not the character '0', but the NULL value.
+      printf ("option %s", options[option_index].name);
+      if (optarg) {
+        printf (" with arg %s", optarg);
+      }
+      printf ("\n");
+      break;
+
     case 'a':
       report_arch();
       break;
@@ -339,6 +355,10 @@ char *process_args(int argc, char **argv)
       fprintf(stderr, "enabling Zfinx support.\n");
       rv_enable_zfinx = true;
       rv_enable_fdext = false;
+      break;
+    case 'X':
+      fprintf(stderr, "enabling experimental support.\n");
+      rv_enable_experimental = true;
       break;
 #ifdef SAILCOV
     case 'c':

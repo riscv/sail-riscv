@@ -17,6 +17,11 @@ extern bool rv_enable_dirty_update;
 extern bool rv_enable_misaligned;
 extern bool rv_mtval_has_illegal_inst_bits;
 
+extern bool rv_enable_Smepmp;
+extern bool rv_enable_Zicond;
+
+extern bool rv_enable_experimental_extensions;
+
 extern uint64_t rv_ram_base;
 extern uint64_t rv_ram_size;
 
@@ -34,3 +39,11 @@ extern uint64_t rv_insns_per_tick;
 
 extern int term_fd;
 void plat_term_write_impl(char c);
+
+// for command line options and getopt()
+extern char *optarg;
+extern int optind, opterr, optopt;
+
+
+
+

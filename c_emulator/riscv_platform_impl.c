@@ -14,6 +14,11 @@ bool rv_enable_dirty_update         = false;
 bool rv_enable_misaligned           = false;
 bool rv_mtval_has_illegal_inst_bits = false;
 
+bool rv_enable_Smepmp               = false;
+bool rv_enable_Zicond               = false;
+
+bool rv_enable_experimental_extensions = false;
+
 uint64_t rv_ram_base = UINT64_C(0x80000000);
 uint64_t rv_ram_size = UINT64_C(0x4000000);
 
