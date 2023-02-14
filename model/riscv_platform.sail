@@ -116,23 +116,6 @@ val plat_mtval_has_illegal_inst_bits = {ocaml: "Platform.mtval_has_illegal_inst_
                                         c: "plat_mtval_has_illegal_inst_bits",
                                         lem: "plat_mtval_has_illegal_inst_bits"} : unit -> bool
 
-/* whether the Smepmp extension is supported */
-val plat_enable_smepmp = {
-                            c: "plat_enable_smepmp"
-                         } : unit -> bool
-
-/* whether the Smepmp extension is supported */
-val plat_enable_zicond = {
-                            c: "plat_enable_zicond"
-                         } : unit -> bool
-
-/* whether the model supports extensions/CSRs/functionality that is considered "experimental"   */
-/*      this is meant to support testing of extensions that are in development but have not     */
-/*      been ratified. */
-val plat_enable_experimental_extensions =   {
-                                                c: "plat_enable_expermimental_extensions"
-                                            } : unit -> bool
-
 /* ROM holding reset vector and device-tree DTB */
 val plat_rom_base   = {ocaml: "Platform.rom_base", interpreter: "Platform.rom_base", c: "plat_rom_base", lem: "plat_rom_base"} : unit -> xlenbits
 val plat_rom_size   = {ocaml: "Platform.rom_size", interpreter: "Platform.rom_size", c: "plat_rom_size", lem: "plat_rom_size"} : unit -> xlenbits
