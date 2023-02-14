@@ -831,9 +831,7 @@ function write_seed_csr () -> option(xlenbits) = None()
 //bitfield Xmpl_csr : xlenbits = { 
 bitfield Xmpl_csr : bitvector(32, dec) = {
   Rsrvd               : (xlen - 1) .. (xlen - 7),
-  LegallyAllowedBits  : (xlen - 8) .. 0
-//  Rsrvd               : 31 .. 25,
-//  LegallyAllowedBits  : 24 .. 0
+  FieldWARL           : (xlen - 8) .. 0
 }
 
 //register xmpl_csr : Xmpl_csr
@@ -851,7 +849,7 @@ function legalize_xmpl_csr(o : Xmpl_csr, v : bitvector(32, dec)) -> bitvector(32
 
 bitfield Xmpl_csr_2 : xlenbits = {
   Rsrvd               : (xlen - 1) .. (xlen - 7),
-  LegallyAllowedBits  : (xlen - 8) .. 0
+  FieldWARL           : (xlen - 8) .. 0
 }
 register xmpl_csr_2 : Xmpl_csr_2
 

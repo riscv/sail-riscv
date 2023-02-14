@@ -72,6 +72,7 @@ $include "rv_cfg_func_sigs.sail"
 
 /* returns whether to increment the step count in the trace */
 function step(step_no : int) -> bool = {
+  print(__FILE__); print(__LOC__); print("entering step() function...\n");
   /* for step extensions */
   ext_pre_step_hook();
 
@@ -145,6 +146,7 @@ function loop () : unit -> unit = {
   let insns_per_tick = plat_insns_per_tick();
   i : int = 0;
   step_no : int = 0;
+  print(__FILE__); print(__LOC__); print("entering loop() function...\n");
   while (~ (htif_done)) do {
     let stepped = step(step_no);
     if stepped then step_no = step_no + 1;

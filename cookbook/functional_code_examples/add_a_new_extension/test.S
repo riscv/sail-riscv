@@ -177,6 +177,10 @@ reset_vector:
   X_XMPL(X2, 0x0dead)
   csrr  x3, XMPL_CSR_2
 
+//  li    x4, 0x76543210
+//  csrw  XMPL_CSR_2, x4    // Q: What happens to a write to a read-only csr?
+//                          // A: illegal_instruction trap
+
 
 
 
