@@ -22,10 +22,10 @@ bool sys_enable_zfinx(unit u)
 { return rv_enable_zfinx; }
 
 bool sys_enable_smepmp(unit u)
-{ return rv_enable_Smepmp; }
+{ return ( (rv_enable_Smepmp == 0) ? false : true); }
 
 bool sys_enable_zicond(unit u)
-{ return rv_enable_Zicond; }
+{ return ( (rv_enable_Zicond == 0) ? false : true); }
 
 bool sys_enable_experimental_extensions(unit u)
 { return rv_enable_experimental_extensions; }

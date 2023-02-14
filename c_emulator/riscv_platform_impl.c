@@ -14,8 +14,8 @@ bool rv_enable_dirty_update         = false;
 bool rv_enable_misaligned           = false;
 bool rv_mtval_has_illegal_inst_bits = false;
 
-bool rv_enable_Smepmp               = false;
-bool rv_enable_Zicond               = false;
+int  rv_enable_Smepmp               = 0;
+int  rv_enable_Zicond               = 0;
 
 bool rv_enable_experimental_extensions = false;
 

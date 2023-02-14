@@ -263,7 +263,6 @@ char *process_args(int argc, char **argv)
       }
       printf ("\n");
       break;
-
     case 'a':
       report_arch();
       break;
@@ -358,7 +357,7 @@ char *process_args(int argc, char **argv)
       break;
     case 'X':
       fprintf(stderr, "enabling experimental support.\n");
-      rv_enable_experimental = true;
+      rv_enable_experimental_extensions = true;
       break;
 #ifdef SAILCOV
     case 'c':

@@ -149,6 +149,8 @@ val sys_enable_zfinx = {c: "sys_enable_zfinx", ocaml: "Platform.enable_zfinx", _
 /* whether the N extension was enabled at boot */
 val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "sys_enable_next"} : unit -> bool
 /* whether the Smepmp extension was enabled at boot */
+val sys_enable_experimental_extensions = {c: "sys_enable_experimental_extensions"} : unit -> bool
+/* whether the Smepmp extension was enabled at boot */
 val sys_enable_smepmp = {c: "sys_enable_smepmp"} : unit -> bool
 /* whether the Zicond extension was enabled at boot */
 val sys_enable_zicond = {c: "sys_enable_zicond"} : unit -> bool
