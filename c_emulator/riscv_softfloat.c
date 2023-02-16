@@ -641,6 +641,19 @@ unit softfloat_f16lt(mach_bits v1, mach_bits v2) {
   return UNIT;
 }
 
+unit softfloat_f16lt_quiet(mach_bits v1, mach_bits v2) {
+  SOFTFLOAT_PRELUDE(0);
+
+  float16_t a, b, res;
+  a.v = v1;
+  b.v = v2;
+  res.v = f16_lt_quiet(a, b);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
 unit softfloat_f16le(mach_bits v1, mach_bits v2) {
   SOFTFLOAT_PRELUDE(0);
 
@@ -648,6 +661,19 @@ unit softfloat_f16le(mach_bits v1, mach_bits v2) {
   a.v = v1;
   b.v = v2;
   res.v = f16_le(a, b);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f16le_quiet(mach_bits v1, mach_bits v2) {
+  SOFTFLOAT_PRELUDE(0);
+
+  float16_t a, b, res;
+  a.v = v1;
+  b.v = v2;
+  res.v = f16_le_quiet(a, b);
 
   SOFTFLOAT_POSTLUDE(res);
 
@@ -680,6 +706,19 @@ unit softfloat_f32lt(mach_bits v1, mach_bits v2) {
   return UNIT;
 }
 
+unit softfloat_f32lt_quiet(mach_bits v1, mach_bits v2) {
+  SOFTFLOAT_PRELUDE(0);
+
+  float32_t a, b, res;
+  a.v = v1;
+  b.v = v2;
+  res.v = f32_lt_quiet(a, b);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
 unit softfloat_f32le(mach_bits v1, mach_bits v2) {
   SOFTFLOAT_PRELUDE(0);
 
@@ -687,6 +726,20 @@ unit softfloat_f32le(mach_bits v1, mach_bits v2) {
   a.v = v1;
   b.v = v2;
   res.v = f32_le(a, b);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+
+unit softfloat_f32le_quiet(mach_bits v1, mach_bits v2) {
+  SOFTFLOAT_PRELUDE(0);
+
+  float32_t a, b, res;
+  a.v = v1;
+  b.v = v2;
+  res.v = f32_le_quiet(a, b);
 
   SOFTFLOAT_POSTLUDE(res);
 
@@ -719,6 +772,19 @@ unit softfloat_f64lt(mach_bits v1, mach_bits v2) {
   return UNIT;
 }
 
+unit softfloat_f64lt_quiet(mach_bits v1, mach_bits v2) {
+  SOFTFLOAT_PRELUDE(0);
+
+  float64_t a, b, res;
+  a.v = v1;
+  b.v = v2;
+  res.v = f64_lt_quiet(a, b);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
 unit softfloat_f64le(mach_bits v1, mach_bits v2) {
   SOFTFLOAT_PRELUDE(0);
 
@@ -732,6 +798,19 @@ unit softfloat_f64le(mach_bits v1, mach_bits v2) {
   return UNIT;
 }
 
+unit softfloat_f64le_quiet(mach_bits v1, mach_bits v2) {
+  SOFTFLOAT_PRELUDE(0);
+
+  float64_t a, b, res;
+  a.v = v1;
+  b.v = v2;
+  res.v = f64_le_quiet(a, b);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
 unit softfloat_f64eq(mach_bits v1, mach_bits v2) {
   SOFTFLOAT_PRELUDE(0);
 
@@ -739,6 +818,45 @@ unit softfloat_f64eq(mach_bits v1, mach_bits v2) {
   a.v = v1;
   b.v = v2;
   res.v = f64_eq(a, b);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f16roundToInt(mach_bits rm, mach_bits v, bool exact) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float16_t a, res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res = f16_roundToInt(a, rm8, exact);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f32roundToInt(mach_bits rm, mach_bits v, bool exact) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t a, res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res = f32_roundToInt(a, rm8, exact);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f64roundToInt(mach_bits rm, mach_bits v, bool exact) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float64_t a, res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res = f64_roundToInt(a, rm8, exact);
 
   SOFTFLOAT_POSTLUDE(res);
 

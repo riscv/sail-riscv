@@ -270,12 +270,58 @@ function wF_bits(i: bits(5), data: flenbits) -> unit = {
 
 overload F = {rF_bits, wF_bits, rF, wF}
 
+val rF_H : bits(5) -> bits(16) effect {escape, rreg}
+function rF_H(i) = {
+  assert(sizeof(flen) >= 16);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  nan_unbox(F(i))
+}
+
+val wF_H : (bits(5), bits(16)) -> unit effect {escape, wreg}
+function wF_H(i, data) = {
+  assert(sizeof(flen) >= 16);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  F(i) = nan_box(data)
+}
+
+val rF_S : bits(5) -> bits(32) effect {escape, rreg}
+function rF_S(i) = {
+  assert(sizeof(flen) >= 32);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  nan_unbox(F(i))
+}
+
+val wF_S : (bits(5), bits(32)) -> unit effect {escape, wreg}
+function wF_S(i, data) = {
+  assert(sizeof(flen) >= 32);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  F(i) = nan_box(data)
+}
+
+val rF_D : bits(5) -> bits(64) effect {escape, rreg}
+function rF_D(i) = {
+  assert(sizeof(flen) >= 64);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  F(i)
+}
+
+val wF_D : (bits(5), bits(64)) -> unit effect {escape, wreg}
+function wF_D(i, data) = {
+  assert(sizeof(flen) >= 64);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  F(i) = data
+}
+
+overload F_H = { rF_H, wF_H }
+overload F_S = { rF_S, wF_S }
+overload F_D = { rF_D, wF_D }
+
 val rF_or_X_H : bits(5) -> bits(16) effect {escape, rreg}
 function rF_or_X_H(i) = {
   assert(sizeof(flen) >= 16);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
-  then nan_unbox(F(i))
+  then F_H(i)
   else X(i)[15..0]
 }
 
@@ -284,7 +330,7 @@ function rF_or_X_S(i) = {
   assert(sizeof(flen) >= 32);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
-  then nan_unbox(F(i))
+  then F_S(i)
   else X(i)[31..0]
 }
 
@@ -293,7 +339,7 @@ function rF_or_X_D(i) = {
   assert(sizeof(flen) >= 64);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
-  then F(unsigned(i))
+  then F_D(i)
   else if sizeof(xlen) >= 64
   then X(i)[63..0]
   else {
@@ -307,7 +353,7 @@ function wF_or_X_H(i, data) = {
   assert(sizeof(flen) >= 16);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
-  then F(i) = nan_box(data)
+  then F_H(i) = data
   else X(i) = EXTS(data)
 }
 
@@ -316,7 +362,7 @@ function wF_or_X_S(i, data) = {
   assert(sizeof(flen) >= 32);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
-  then F(i) = nan_box(data)
+  then F_S(i) = data
   else X(i) = EXTS(data)
 }
 
@@ -325,7 +371,7 @@ function wF_or_X_D(i, data) = {
   assert (sizeof(flen) >= 64);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
-  then F(i) = data
+  then F_D(i) = data
   else if sizeof(xlen) >= 64
   then X(i) = EXTS(data)
   else {
