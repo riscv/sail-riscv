@@ -44,3 +44,63 @@ function clause execute (RISCV_FLI_S(constantidx, rd)) = {
   F(rd) = nan_box(bits);
   RETIRE_SUCCESS
 }
+
+/* FMINM.S */
+
+union clause ast = RISCV_FMINM_S : (regidx, regidx, regidx)
+
+mapping clause encdec = RISCV_FMINM_S(rs2, rs1, rd)     if (haveFExt() & haveZfa())
+  <-> 0b001_0100 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if (haveFExt() & haveZfa())
+
+mapping clause assembly = RISCV_FMINM_S(rs2, rs1, rd)
+  <-> "fminm.s" ^ spc() ^ freg_name(rd)
+                ^ spc() ^ freg_name(rs1)
+                ^ spc() ^ freg_name(rs2)
+
+function clause execute (RISCV_FMINM_S(rs2, rs1, rd)) = {
+  let rs1_val_S = nan_unbox_S(F(rs1));
+  let rs2_val_S = nan_unbox_S(F(rs2));
+
+  let is_quiet  = true;
+  let (rs1_lt_rs2, fflags) = fle_S (rs1_val_S, rs2_val_S, is_quiet);
+
+  let rd_val_S  = if      (f_is_NaN_S(rs1_val_S) | f_is_NaN_S(rs2_val_S))           then canonical_NaN_S()
+                  else if (f_is_neg_zero_S(rs1_val_S) & f_is_pos_zero_S(rs2_val_S)) then rs1_val_S
+                  else if (f_is_neg_zero_S(rs2_val_S) & f_is_pos_zero_S(rs1_val_S)) then rs2_val_S
+                  else if rs1_lt_rs2                                                then rs1_val_S
+                  else /* (not rs1_lt_rs2) */                                            rs2_val_S;
+
+  accrue_fflags(fflags);
+  F(rd) = nan_box(rd_val_S);
+  RETIRE_SUCCESS
+}
+
+/* FMAXM.S */
+
+union clause ast = RISCV_FMAXM_S : (regidx, regidx, regidx)
+
+mapping clause encdec = RISCV_FMAXM_S(rs2, rs1, rd)     if (haveFExt() & haveZfa())
+  <-> 0b001_0100 @ rs2 @ rs1 @ 0b011 @ rd @ 0b101_0011  if (haveFExt() & haveZfa())
+
+mapping clause assembly = RISCV_FMAXM_S(rs2, rs1, rd)
+  <-> "fmaxm.s" ^ spc() ^ freg_name(rd)
+                ^ spc() ^ freg_name(rs1)
+                ^ spc() ^ freg_name(rs2)
+
+function clause execute (RISCV_FMAXM_S(rs2, rs1, rd)) = {
+  let rs1_val_S = nan_unbox_S(F(rs1));
+  let rs2_val_S = nan_unbox_S(F(rs2));
+
+  let is_quiet  = true;
+  let (rs2_lt_rs1, fflags) = fle_S (rs2_val_S, rs1_val_S, is_quiet);
+
+  let rd_val_S  = if      (f_is_NaN_S(rs1_val_S) | f_is_NaN_S(rs2_val_S))           then canonical_NaN_S()
+                  else if (f_is_neg_zero_S(rs1_val_S) & f_is_pos_zero_S(rs2_val_S)) then rs2_val_S
+                  else if (f_is_neg_zero_S(rs2_val_S) & f_is_pos_zero_S(rs1_val_S)) then rs1_val_S
+                  else if rs2_lt_rs1                                                then rs1_val_S
+                  else /* (not rs2_lt_rs1) */                                            rs2_val_S;
+
+  accrue_fflags(fflags);
+  F(rd) = nan_box(rd_val_S);
+  RETIRE_SUCCESS
+}
