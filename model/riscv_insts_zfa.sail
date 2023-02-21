@@ -1,3 +1,54 @@
+/* FLI.H */
+
+union clause ast = RISCV_FLI_H : (bits(5), regidx)
+
+mapping clause encdec = RISCV_FLI_H(rs1, rd)                if (haveZfh() & haveZfa())
+  <-> 0b111_1010 @ 0b00001 @ rs1 @ 0b000 @ rd @ 0b101_0011  if (haveZfh() & haveZfa())
+
+mapping clause assembly = RISCV_FLI_H(constantidx, rd)
+  <-> "fli.h" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_5(constantidx)
+
+function clause execute (RISCV_FLI_H(constantidx, rd)) = {
+  let bits : bits(16) = match constantidx {
+    0b00000 => { 0xbc00 },  /* -1.0 */
+    0b00001 => { 0x0400 },  /* minimum positive normal */
+    0b00010 => { 0x0100 },  /* 1.0 * 2^-16 */
+    0b00011 => { 0x0200 },  /* 1.0 * 2^-15 */
+    0b00100 => { 0x1c00 },  /* 1.0 * 2^-8  */
+    0b00101 => { 0x2000 },  /* 1.0 * 2^-7  */
+    0b00110 => { 0x2c00 },  /* 1.0 * 2^-4  */
+    0b00111 => { 0x3000 },  /* 1.0 * 2^-3  */
+    0b01000 => { 0x3400 },  /* 0.25 */
+    0b01001 => { 0x3500 },  /* 0.3125 */
+    0b01010 => { 0x3600 },  /* 0.375 */
+    0b01011 => { 0x3700 },  /* 0.4375 */
+    0b01100 => { 0x3800 },  /* 0.5 */
+    0b01101 => { 0x3900 },  /* 0.625 */
+    0b01110 => { 0x3a00 },  /* 0.75 */
+    0b01111 => { 0x3b00 },  /* 0.875 */
+    0b10000 => { 0x3c00 },  /* 1.0 */
+    0b10001 => { 0x3d00 },  /* 1.25 */
+    0b10010 => { 0x3e00 },  /* 1.5 */
+    0b10011 => { 0x3f00 },  /* 1.75 */
+    0b10100 => { 0x4000 },  /* 2.0 */
+    0b10101 => { 0x4100 },  /* 2.5 */
+    0b10110 => { 0x4200 },  /* 3 */
+    0b10111 => { 0x4400 },  /* 4 */
+    0b11000 => { 0x4800 },  /* 8 */
+    0b11001 => { 0x4c00 },  /* 16 */
+    0b11010 => { 0x5800 },  /* 2^7 */
+    0b11011 => { 0x5c00 },  /* 2^8 */
+    0b11100 => { 0x7800 },  /* 2^15 */
+    0b11101 => { 0x7c00 },  /* 2^16 */
+    0b11110 => { 0x7c00 },  /* +inf */
+    0b11111 => { canonical_NaN_H() },
+  };
+  F(rd) = nan_box(bits);
+  RETIRE_SUCCESS
+}
+
+/* FLI.S */
+
 union clause ast = RISCV_FLI_S : (bits(5), regidx)
 
 mapping clause encdec = RISCV_FLI_S(rs1, rd)                if (haveFExt() & haveZfa())
@@ -42,6 +93,55 @@ function clause execute (RISCV_FLI_S(constantidx, rd)) = {
     0b11111 => { canonical_NaN_S() },
   };
   F(rd) = nan_box(bits);
+  RETIRE_SUCCESS
+}
+
+/* FLI.D */
+
+union clause ast = RISCV_FLI_D : (bits(5), regidx)
+
+mapping clause encdec = RISCV_FLI_D(rs1, rd)                if (haveDExt() & haveZfa())
+  <-> 0b111_1001 @ 0b00001 @ rs1 @ 0b000 @ rd @ 0b101_0011  if (haveDExt() & haveZfa())
+
+mapping clause assembly = RISCV_FLI_D(constantidx, rd)
+  <-> "fli.d" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_5(constantidx)
+
+function clause execute (RISCV_FLI_D(constantidx, rd)) = {
+  let bits : bits(64) = match constantidx {
+    0b00000 => { 0xbff0000000000000 },  /* -1.0 */
+    0b00001 => { 0x0010000000000000 },  /* minimum positive normal */
+    0b00010 => { 0x3Ef0000000000000 },  /* 1.0 * 2^-16 */
+    0b00011 => { 0x3f00000000000000 },  /* 1.0 * 2^-15 */
+    0b00100 => { 0x3f70000000000000 },  /* 1.0 * 2^-8  */
+    0b00101 => { 0x3f80000000000000 },  /* 1.0 * 2^-7  */
+    0b00110 => { 0x3fb0000000000000 },  /* 1.0 * 2^-4  */
+    0b00111 => { 0x3fc0000000000000 },  /* 1.0 * 2^-3  */
+    0b01000 => { 0x3fd0000000000000 },  /* 0.25 */
+    0b01001 => { 0x3fd4000000000000 },  /* 0.3125 */
+    0b01010 => { 0x3fd8000000000000 },  /* 0.375 */
+    0b01011 => { 0x3fdc000000000000 },  /* 0.4375 */
+    0b01100 => { 0x3fe0000000000000 },  /* 0.5 */
+    0b01101 => { 0x3fe4000000000000 },  /* 0.625 */
+    0b01110 => { 0x3fe8000000000000 },  /* 0.75 */
+    0b01111 => { 0x3fec000000000000 },  /* 0.875 */
+    0b10000 => { 0x3ff0000000000000 },  /* 1.0 */
+    0b10001 => { 0x3ff4000000000000 },  /* 1.25 */
+    0b10010 => { 0x3ff8000000000000 },  /* 1.5 */
+    0b10011 => { 0x3ffc000000000000 },  /* 1.75 */
+    0b10100 => { 0x4000000000000000 },  /* 2.0 */
+    0b10101 => { 0x4004000000000000 },  /* 2.5 */
+    0b10110 => { 0x4008000000000000 },  /* 3 */
+    0b10111 => { 0x4010000000000000 },  /* 4 */
+    0b11000 => { 0x4020000000000000 },  /* 8 */
+    0b11001 => { 0x4030000000000000 },  /* 16 */
+    0b11010 => { 0x4060000000000000 },  /* 2^7 */
+    0b11011 => { 0x4070000000000000 },  /* 2^8 */
+    0b11100 => { 0x40e0000000000000 },  /* 2^15 */
+    0b11101 => { 0x40f0000000000000 },  /* 2^16 */
+    0b11110 => { 0x7ff0000000000000 },  /* +inf */
+    0b11111 => { canonical_NaN_D() },
+  };
+  F(rd) = bits;
   RETIRE_SUCCESS
 }
 
