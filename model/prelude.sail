@@ -74,7 +74,6 @@ $include <arith.sail>
 $include <string.sail>
 $include <vector_dec.sail>
 $include <regfp.sail>
-$include <real.sail>
 
 val string_startswith = "string_startswith" : (string, string) -> bool
 val string_drop = "string_drop" : (string, nat) -> string
@@ -343,21 +342,21 @@ function def_spc_backwards s = ()
 val def_spc_matches_prefix : string -> option((unit, nat))
 function def_spc_matches_prefix s = opt_spc_matches_prefix(s)
 
-val div_int : (int, int) -> int
-function div_int(x, y) = {
-  floor(div_real(to_real(x), to_real(y)))
-}
-
-val "print_real" : (string, real) -> unit
 val "print_int" : (string, int) -> unit
 
-overload operator / = {div_int, div_real}
-overload operator * = {mult_atom, mult_int, mult_real}
+overload operator / = {quot_round_zero}
+overload operator * = {mult_atom, mult_int}
 
-/* helper for vector extension where the element width is between 8 and 64 */
-val log2 : forall 'n, 'n in {8, 16, 32, 64}. int('n) -> int
+/* helper for vector extension 
+ * 1. EEW between 8 and 64
+ * 2. EMUL in vmv<nr>r.v instructions between 1 and 8
+ */
+val log2 : forall 'n, 'n in {1, 2, 4, 8, 16, 32, 64}. int('n) -> int
 function log2(n) = {
   let result : int = match n {
+    1    => 0,
+    2    => 1,
+    4    => 2,
     8    => 3,
     16   => 4,
     32   => 5,
