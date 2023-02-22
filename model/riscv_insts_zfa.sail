@@ -204,3 +204,63 @@ function clause execute (RISCV_FMAXM_S(rs2, rs1, rd)) = {
   F(rd) = nan_box(rd_val_S);
   RETIRE_SUCCESS
 }
+
+/* FMINM.D */
+
+union clause ast = RISCV_FMINM_D : (regidx, regidx, regidx)
+
+mapping clause encdec = RISCV_FMINM_D(rs2, rs1, rd)     if (haveDExt() & haveZfa())
+  <-> 0b001_0101 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if (haveDExt() & haveZfa())
+
+mapping clause assembly = RISCV_FMINM_D(rs2, rs1, rd)
+  <-> "fminm.d" ^ spc() ^ freg_name(rd)
+                ^ spc() ^ freg_name(rs1)
+                ^ spc() ^ freg_name(rs2)
+
+function clause execute (RISCV_FMINM_D(rs2, rs1, rd)) = {
+  let rs1_val_D = F(rs1);
+  let rs2_val_D = F(rs2);
+
+  let is_quiet  = true;
+  let (rs1_lt_rs2, fflags) = fle_D (rs1_val_D, rs2_val_D, is_quiet);
+
+  let rd_val_D  = if      (f_is_NaN_D(rs1_val_D) | f_is_NaN_D(rs2_val_D))           then canonical_NaN_D()
+                  else if (f_is_neg_zero_D(rs1_val_D) & f_is_pos_zero_D(rs2_val_D)) then rs1_val_D
+                  else if (f_is_neg_zero_D(rs2_val_D) & f_is_pos_zero_D(rs1_val_D)) then rs2_val_D
+                  else if rs1_lt_rs2                                                then rs1_val_D
+                  else                                                              rs2_val_D;
+
+  accrue_fflags(fflags);
+  F(rd) = rd_val_D;
+  RETIRE_SUCCESS
+}
+
+/* FMAXM.D */
+
+union clause ast = RISCV_FMAXM_D : (regidx, regidx, regidx)
+
+mapping clause encdec = RISCV_FMAXM_D(rs2, rs1, rd)     if (haveDExt() & haveZfa())
+  <-> 0b001_0101 @ rs2 @ rs1 @ 0b011 @ rd @ 0b101_0011  if (haveDExt() & haveZfa())
+
+mapping clause assembly = RISCV_FMAXM_D(rs2, rs1, rd)
+  <-> "fmaxm.s" ^ spc() ^ freg_name(rd)
+                ^ spc() ^ freg_name(rs1)
+                ^ spc() ^ freg_name(rs2)
+
+function clause execute (RISCV_FMAXM_D(rs2, rs1, rd)) = {
+  let rs1_val_D = F(rs1);
+  let rs2_val_D = F(rs2);
+
+  let is_quiet  = true;
+  let (rs2_lt_rs1, fflags) = fle_D (rs2_val_D, rs1_val_D, is_quiet);
+
+  let rd_val_D  = if      (f_is_NaN_D(rs1_val_D) | f_is_NaN_D(rs2_val_D))           then canonical_NaN_D()
+                  else if (f_is_neg_zero_D(rs1_val_D) & f_is_pos_zero_D(rs2_val_D)) then rs2_val_D
+                  else if (f_is_neg_zero_D(rs2_val_D) & f_is_pos_zero_D(rs1_val_D)) then rs1_val_D
+                  else if rs2_lt_rs1                                                then rs1_val_D
+                  else                                                              rs2_val_D;
+
+  accrue_fflags(fflags);
+  F(rd) = rd_val_D;
+  RETIRE_SUCCESS
+}
