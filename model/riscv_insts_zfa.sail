@@ -145,6 +145,66 @@ function clause execute (RISCV_FLI_D(constantidx, rd)) = {
   RETIRE_SUCCESS
 }
 
+/* FMINM.H */
+
+union clause ast = RISCV_FMINM_H : (regidx, regidx, regidx)
+
+mapping clause encdec = RISCV_FMINM_H(rs2, rs1, rd)     if (haveZfh() & haveZfa())
+  <-> 0b001_0110 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if (haveZfh() & haveZfa())
+
+mapping clause assembly = RISCV_FMINM_H(rs2, rs1, rd)
+  <-> "fminm.h" ^ spc() ^ freg_name(rd)
+                ^ spc() ^ freg_name(rs1)
+                ^ spc() ^ freg_name(rs2)
+
+function clause execute (RISCV_FMINM_H(rs2, rs1, rd)) = {
+  let rs1_val_H = nan_unbox_H(F(rs1));
+  let rs2_val_H = nan_unbox_H(F(rs2));
+
+  let is_quiet  = true;
+  let (rs1_lt_rs2, fflags) = fle_H (rs1_val_H, rs2_val_H, is_quiet);
+
+  let rd_val_H  = if      (f_is_NaN_H(rs1_val_H) | f_is_NaN_H(rs2_val_H))           then canonical_NaN_H()
+                  else if (f_is_neg_zero_H(rs1_val_H) & f_is_pos_zero_H(rs2_val_H)) then rs1_val_H
+                  else if (f_is_neg_zero_H(rs2_val_H) & f_is_pos_zero_H(rs1_val_H)) then rs2_val_H
+                  else if rs1_lt_rs2                                                then rs1_val_H
+                  else /* (not rs1_lt_rs2) */                                            rs2_val_H;
+
+  accrue_fflags(fflags);
+  F(rd) = nan_box(rd_val_H);
+  RETIRE_SUCCESS
+}
+
+/* FMAXM.H */
+
+union clause ast = RISCV_FMAXM_H : (regidx, regidx, regidx)
+
+mapping clause encdec = RISCV_FMAXM_H(rs2, rs1, rd)     if (haveZfh() & haveZfa())
+  <-> 0b001_0110 @ rs2 @ rs1 @ 0b011 @ rd @ 0b101_0011  if (haveZfh() & haveZfa())
+
+mapping clause assembly = RISCV_FMAXM_H(rs2, rs1, rd)
+  <-> "fmaxm.h" ^ spc() ^ freg_name(rd)
+                ^ spc() ^ freg_name(rs1)
+                ^ spc() ^ freg_name(rs2)
+
+function clause execute (RISCV_FMAXM_H(rs2, rs1, rd)) = {
+  let rs1_val_H = nan_unbox_H(F(rs1));
+  let rs2_val_H = nan_unbox_H(F(rs2));
+
+  let is_quiet  = true;
+  let (rs2_lt_rs1, fflags) = fle_H (rs2_val_H, rs1_val_H, is_quiet);
+
+  let rd_val_H =  if      (f_is_NaN_H(rs1_val_H) | f_is_NaN_H(rs2_val_H))           then canonical_NaN_H()
+                  else if (f_is_neg_zero_H(rs1_val_H) & f_is_pos_zero_H(rs2_val_H)) then rs2_val_H
+                  else if (f_is_neg_zero_H(rs2_val_H) & f_is_pos_zero_H(rs1_val_H)) then rs1_val_H
+                  else if rs2_lt_rs1                                                then rs1_val_H
+                  else /* (not rs2_lt_rs1) */                                            rs2_val_H;
+
+  accrue_fflags(fflags);
+  F(rd) = nan_box(rd_val_H);
+  RETIRE_SUCCESS
+}
+
 /* FMINM.S */
 
 union clause ast = RISCV_FMINM_S : (regidx, regidx, regidx)
