@@ -324,3 +324,231 @@ function clause execute (RISCV_FMAXM_D(rs2, rs1, rd)) = {
   F(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
+
+/* FROUND.H */
+
+union clause ast = RISCV_FROUND_H : (regidx, rounding_mode, regidx)
+
+mapping clause encdec = RISCV_FROUND_H(rs1, rm, rd)                           if (haveZfh() & haveZfa())
+  <-> 0b010_0010 @ 0b00100 @ rs1 @ encdec_rounding_mode(rm) @ rd @ 0b101_0011 if (haveZfh() & haveZfa())
+
+mapping clause assembly = RISCV_FROUND_H(rs1, rm, rd)
+  <-> "fround.h" ^ spc() ^ freg_name(rd)
+                 ^ spc() ^ freg_name(rs1)
+                 ^ spc() ^ frm_mnemonic(rm)
+
+function clause execute (RISCV_FROUND_H(rs1, rm, rd)) = {
+  let rs1_val_H = nan_unbox_H(F(rs1));
+  let fflags = fcsr.FFLAGS();
+
+  match (select_instr_or_fcsr_rm(rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b =  encdec_rounding_mode(rm');
+
+      let (result_fflags, result_F) = if (f_is_NaN_H(rs1_val_H))        then (nvFlag(), rs1_val_H)
+      else if (f_is_pos_inf_H(rs1_val_H)  | f_is_neg_inf_H(rs1_val_H))  then (fflags, rs1_val_H)
+      else if (f_is_pos_zero_H(rs1_val_H) | f_is_neg_zero_H(rs1_val_H)) then (fflags, rs1_val_H)
+      else {
+        let (_, rd_val_H) = riscv_f16ToI32(rm_3b, rs1_val_H);
+        let (_, rd_val_H) = riscv_i32ToF16(rm_3b, rd_val_H);
+        (fflags, rd_val_H)
+      };
+
+      write_fflags(result_fflags);
+      F(rd) = nan_box_H(result_F);
+      RETIRE_SUCCESS
+    }
+  }
+}
+
+/* FROUNDNX.H */
+
+union clause ast = RISCV_FROUNDNX_H : (regidx, rounding_mode, regidx)
+
+mapping clause encdec = RISCV_FROUNDNX_H(rs1, rm, rd)                         if (haveZfh() & haveZfa())
+  <-> 0b010_0010 @ 0b00101 @ rs1 @ encdec_rounding_mode(rm) @ rd @ 0b101_0011 if (haveZfh() & haveZfa())
+
+mapping clause assembly = RISCV_FROUNDNX_H(rs1, rm, rd)
+  <-> "froundnx.h" ^ spc() ^ freg_name(rd)
+                   ^ spc() ^ freg_name(rs1)
+                   ^ spc() ^ frm_mnemonic(rm)
+
+function clause execute (RISCV_FROUNDNX_H(rs1, rm, rd)) = {
+  let rs1_val_H = nan_unbox_H(F(rs1));
+  let fflags = fcsr.FFLAGS();
+
+  match (select_instr_or_fcsr_rm(rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b =  encdec_rounding_mode(rm');
+
+      let (result_fflags, result_F) = if (f_is_NaN_H(rs1_val_H))        then (nvFlag(), rs1_val_H)
+      else if (f_is_pos_inf_H(rs1_val_H)  | f_is_neg_inf_H(rs1_val_H))  then (fflags, rs1_val_H)
+      else if (f_is_pos_zero_H(rs1_val_H) | f_is_neg_zero_H(rs1_val_H)) then (fflags, rs1_val_H)
+      else {
+        let (_, rd_val_H) = riscv_f16ToI32(rm_3b, rs1_val_H);
+        let (_, rd_val_H) = riscv_i32ToF16(rm_3b, rd_val_H);
+
+        if (rs1_val_H != rd_val_H) then (nxFlag(), rd_val_H)
+        else                            (fflags, rd_val_H)
+      };
+
+      write_fflags(result_fflags);
+      F(rd) = nan_box_H(result_F);
+      RETIRE_SUCCESS
+    }
+  }
+}
+
+/* FROUND.S */
+
+union clause ast = RISCV_FROUND_S : (regidx, rounding_mode, regidx)
+
+mapping clause encdec = RISCV_FROUND_S(rs1, rm, rd)                            if (haveFExt() & haveZfa())
+  <-> 0b010_0000 @ 0b00100 @ rs1 @ encdec_rounding_mode(rm) @ rd @ 0b101_0011  if (haveFExt() & haveZfa())
+
+mapping clause assembly = RISCV_FROUND_S(rs1, rm, rd)
+  <-> "fround.s" ^ spc() ^ freg_name(rd)
+                 ^ spc() ^ freg_name(rs1)
+                 ^ spc() ^ frm_mnemonic(rm)
+
+function clause execute (RISCV_FROUND_S(rs1, rm, rd)) = {
+  let rs1_val_S = nan_unbox_S(F(rs1));
+  let fflags = fcsr.FFLAGS();
+
+  match (select_instr_or_fcsr_rm(rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b =  encdec_rounding_mode(rm');
+
+      let (result_fflags, result_F) = if (f_is_NaN_S(rs1_val_S))        then (nvFlag(), rs1_val_S)
+      else if (f_is_pos_inf_S(rs1_val_S)  | f_is_neg_inf_S(rs1_val_S))  then (fflags, rs1_val_S)
+      else if (f_is_pos_zero_S(rs1_val_S) | f_is_neg_zero_S(rs1_val_S)) then (fflags, rs1_val_S)
+      else {
+        let (_, rd_val_S) = riscv_f32ToI32(rm_3b, rs1_val_S);
+        let (_, rd_val_S) = riscv_i32ToF32(rm_3b, rd_val_S);
+        (fflags, rd_val_S)
+      };
+
+      write_fflags(result_fflags);
+      F(rd) = nan_box_S(result_F);
+      RETIRE_SUCCESS
+    }
+  }
+}
+
+/* FROUNDNX.S */
+
+union clause ast = RISCV_FROUNDNX_S : (regidx, rounding_mode, regidx)
+
+mapping clause encdec = RISCV_FROUNDNX_S(rs1, rm, rd)                         if (haveFExt() & haveZfa())
+  <-> 0b010_0000 @ 0b00101 @ rs1 @ encdec_rounding_mode(rm) @ rd @ 0b101_0011 if (haveFExt() & haveZfa())
+
+mapping clause assembly = RISCV_FROUNDNX_S(rs1, rm, rd)
+  <-> "froundnx.s" ^ spc() ^ freg_name(rd)
+                   ^ spc() ^ freg_name(rs1)
+                   ^ spc() ^ frm_mnemonic(rm)
+
+function clause execute (RISCV_FROUNDNX_S(rs1, rm, rd)) = {
+  let rs1_val_S = nan_unbox_S(F(rs1));
+  let fflags = fcsr.FFLAGS();
+
+  match (select_instr_or_fcsr_rm(rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b =  encdec_rounding_mode(rm');
+
+      let (result_fflags, result_F) = if (f_is_NaN_S(rs1_val_S))        then (nvFlag(), rs1_val_S)
+      else if (f_is_pos_inf_S(rs1_val_S)  | f_is_neg_inf_S(rs1_val_S))  then (fflags, rs1_val_S)
+      else if (f_is_pos_zero_S(rs1_val_S) | f_is_neg_zero_S(rs1_val_S)) then (fflags, rs1_val_S)
+      else {
+        let (_, rd_val_S) = riscv_f32ToI32(rm_3b, rs1_val_S);
+        let (_, rd_val_S) = riscv_i32ToF32(rm_3b, rd_val_S);
+
+        if (rs1_val_S != rd_val_S) then (nxFlag(), rd_val_S)
+        else                            (fflags, rd_val_S)
+      };
+
+      write_fflags(result_fflags);
+      F(rd) = nan_box_S(result_F);
+      RETIRE_SUCCESS
+    }
+  }
+}
+
+/* FROUND.D */
+
+union clause ast = RISCV_FROUND_D : (regidx, rounding_mode, regidx)
+
+mapping clause encdec = RISCV_FROUND_D(rs1, rm, rd)                            if (haveDExt() & haveZfa())
+  <-> 0b010_0001 @ 0b00100 @ rs1 @ encdec_rounding_mode(rm) @ rd @ 0b101_0011  if (haveDExt() & haveZfa())
+
+mapping clause assembly = RISCV_FROUND_D(rs1, rm, rd)
+  <-> "fround.d" ^ spc() ^ freg_name(rd)
+                 ^ spc() ^ freg_name(rs1)
+                 ^ spc() ^ frm_mnemonic(rm)
+
+function clause execute (RISCV_FROUND_D(rs1, rm, rd)) = {
+  let rs1_val_D = F(rs1);
+  let fflags = fcsr.FFLAGS();
+
+  match (select_instr_or_fcsr_rm(rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b =  encdec_rounding_mode(rm');
+
+      let (result_fflags, result_F) = if (f_is_NaN_D(rs1_val_D))        then (nvFlag(), rs1_val_D)
+      else if (f_is_pos_inf_D(rs1_val_D)  | f_is_neg_inf_D(rs1_val_D))  then (fflags, rs1_val_D)
+      else if (f_is_pos_zero_D(rs1_val_D) | f_is_neg_zero_D(rs1_val_D)) then (fflags, rs1_val_D)
+      else {
+        let (_, rd_val_D) = riscv_f64ToI64(rm_3b, rs1_val_D);
+        let (_, rd_val_D) = riscv_i64ToF64(rm_3b, rd_val_D);
+        (fflags, rd_val_D)
+      };
+
+      write_fflags(result_fflags);
+      F(rd) = result_F;
+      RETIRE_SUCCESS
+    }
+  }
+}
+
+/* FROUNDNX.D */
+
+union clause ast = RISCV_FROUNDNX_D : (regidx, rounding_mode, regidx)
+
+mapping clause encdec = RISCV_FROUNDNX_D(rs1, rm, rd)                         if (haveDExt() & haveZfa())
+  <-> 0b010_0001 @ 0b00101 @ rs1 @ encdec_rounding_mode(rm) @ rd @ 0b101_0011 if (haveDExt() & haveZfa())
+
+mapping clause assembly = RISCV_FROUNDNX_D(rs1, rm, rd)
+  <-> "froundnx.d" ^ spc() ^ freg_name(rd)
+                   ^ spc() ^ freg_name(rs1)
+                   ^ spc() ^ frm_mnemonic(rm)
+
+function clause execute (RISCV_FROUNDNX_D(rs1, rm, rd)) = {
+  let rs1_val_D = F(rs1);
+  let fflags = fcsr.FFLAGS();
+
+  match (select_instr_or_fcsr_rm(rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b =  encdec_rounding_mode(rm');
+
+      let (result_fflags, result_F) = if (f_is_NaN_D(rs1_val_D))        then (nvFlag(), rs1_val_D)
+      else if (f_is_pos_inf_D(rs1_val_D)  | f_is_neg_inf_D(rs1_val_D))  then (fflags, rs1_val_D)
+      else if (f_is_pos_zero_D(rs1_val_D) | f_is_neg_zero_D(rs1_val_D)) then (fflags, rs1_val_D)
+      else {
+        let (_, rd_val_D) = riscv_f64ToI64(rm_3b, rs1_val_D);
+        let (_, rd_val_D) = riscv_i64ToF64(rm_3b, rd_val_D);
+
+        if (rs1_val_D != rd_val_D) then (nxFlag(), rd_val_D)
+        else                            (fflags, rd_val_D)
+      };
+
+      write_fflags(result_fflags);
+      F(rd) = result_F;
+      RETIRE_SUCCESS
+    }
+  }
+}
