@@ -8,6 +8,14 @@ mapping maybe_vmask : string <-> bits(1) = {
   sep() ^ "v0.t"  <-> 0b0
 }
 
+/* Check for valid EEW and EMUL values in vector widening/narrowing instructions */
+val check_eew_emul : (int, int) -> bool effect {rreg}
+function check_eew_emul(EEW, EMUL_pow) = {
+  let ELEN = int_power(2, get_elen_pow());
+  EEW      >= 8  & EEW      <= ELEN &
+  EMUL_pow >= -3 & EMUL_pow <= 3;
+}
+
 /* Check for vstart value */
 val assert_vstart : int -> bool effect {rreg}
 function assert_vstart(i) = {

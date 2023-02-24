@@ -1,10 +1,10 @@
 register elen : bits(1)
 
-val get_elen : unit -> {|32, 64|} effect {rreg}
+val get_elen_pow : unit -> {|5, 6|} effect {rreg}
 
-function get_elen() = match elen {
-    0b0 => 32,
-    0b1 => 64
+function get_elen_pow() = match elen {
+    0b0 => 5,
+    0b1 => 6
 }
 
 register vlen : bits(4)
