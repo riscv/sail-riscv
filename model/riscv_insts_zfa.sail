@@ -597,3 +597,142 @@ function clause execute (RISCV_FMVP_D_X(rs2, rs1, rd)) = {
   F(rd)             = rd_val_D;
   RETIRE_SUCCESS
 }
+
+/* FLEQ.H */
+
+union clause ast = RISCV_FLEQ_H : (regidx, regidx, regidx)
+
+mapping clause encdec = RISCV_FLEQ_H(rs2, rs1, rd)               if (haveZfh() & haveZfa())
+  <-> 0b101_0010 @ rs2 @ rs1 @ 0b100 @ rd @ 0b101_0011           if (haveZfh() & haveZfa())
+
+mapping clause assembly = RISCV_FLEQ_H(rs2, rs1, rd)
+  <-> "fleq.h" ^ spc() ^ freg_name(rd)
+               ^ spc() ^ freg_name(rs1)
+               ^ spc() ^ freg_name(rs2)
+
+function clause execute(RISCV_FLEQ_H(rs2, rs1, rd)) = {
+  let rs1_val_H = nan_unbox_H(F(rs1));
+  let rs2_val_H = nan_unbox_H(F(rs2));
+
+  let (_, rd_val) : (bits_fflags, bool) =
+      riscv_f16Le   (rs1_val_H, rs2_val_H);
+
+  X(rd) = EXTZ(bool_to_bits(rd_val));
+  RETIRE_SUCCESS
+}
+
+/* FLTQ.H */
+
+union clause ast = RISCV_FLTQ_H : (regidx, regidx, regidx)
+
+mapping clause encdec = RISCV_FLTQ_H(rs2, rs1, rd)               if (haveZfh() & haveZfa())
+  <-> 0b101_0010 @ rs2 @ rs1 @ 0b101 @ rd @ 0b101_0011           if (haveZfh() & haveZfa())
+
+mapping clause assembly = RISCV_FLTQ_H(rs2, rs1, rd)
+  <-> "fltq.h" ^ spc() ^ freg_name(rd)
+               ^ spc() ^ freg_name(rs1)
+               ^ spc() ^ freg_name(rs2)
+
+function clause execute(RISCV_FLTQ_H(rs2, rs1, rd)) = {
+  let rs1_val_H = nan_unbox_H(F(rs1));
+  let rs2_val_H = nan_unbox_H(F(rs2));
+
+  let (_, rd_val) : (bits_fflags, bool) =
+      riscv_f16Lt   (rs1_val_H, rs2_val_H);
+
+  X(rd) = EXTZ(bool_to_bits(rd_val));
+  RETIRE_SUCCESS
+}
+
+/* FLEQ.S */
+
+union clause ast = RISCV_FLEQ_S : (regidx, regidx, regidx)
+
+mapping clause encdec = RISCV_FLEQ_S(rs2, rs1, rd)               if (haveFExt() & haveZfa())
+  <-> 0b101_0000 @ rs2 @ rs1 @ 0b100 @ rd @ 0b101_0011           if (haveFExt() & haveZfa())
+
+mapping clause assembly = RISCV_FLEQ_S(rs2, rs1, rd)
+  <-> "fleq.s" ^ spc() ^ freg_name(rd)
+               ^ spc() ^ freg_name(rs1)
+               ^ spc() ^ freg_name(rs2)
+
+function clause execute(RISCV_FLEQ_S(rs2, rs1, rd)) = {
+  let rs1_val_S = nan_unbox_S(F(rs1));
+  let rs2_val_S = nan_unbox_S(F(rs2));
+
+  let (_, rd_val) : (bits_fflags, bool) =
+      riscv_f32Le   (rs1_val_S, rs2_val_S);
+
+  X(rd) = EXTZ(bool_to_bits(rd_val));
+  RETIRE_SUCCESS
+}
+
+/* FLTQ.S */
+
+union clause ast = RISCV_FLTQ_S : (regidx, regidx, regidx)
+
+mapping clause encdec = RISCV_FLTQ_S(rs2, rs1, rd)               if (haveFExt() & haveZfa())
+  <-> 0b101_0000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b101_0011           if (haveFExt() & haveZfa())
+
+mapping clause assembly = RISCV_FLTQ_S(rs2, rs1, rd)
+  <-> "fltq.s" ^ spc() ^ freg_name(rd)
+               ^ spc() ^ freg_name(rs1)
+               ^ spc() ^ freg_name(rs2)
+
+function clause execute(RISCV_FLTQ_S(rs2, rs1, rd)) = {
+  let rs1_val_S = nan_unbox_S(F(rs1));
+  let rs2_val_S = nan_unbox_S(F(rs2));
+
+  let (_, rd_val) : (bits_fflags, bool) =
+      riscv_f32Lt   (rs1_val_S, rs2_val_S);
+
+  X(rd) = EXTZ(bool_to_bits(rd_val));
+  RETIRE_SUCCESS
+}
+
+
+/* FLEQ.D */
+
+union clause ast = RISCV_FLEQ_D : (regidx, regidx, regidx)
+
+mapping clause encdec = RISCV_FLEQ_D(rs2, rs1, rd)               if (haveDExt() & haveZfa())
+  <-> 0b101_0001 @ rs2 @ rs1 @ 0b100 @ rd @ 0b101_0011           if (haveDExt() & haveZfa())
+
+mapping clause assembly = RISCV_FLEQ_D(rs2, rs1, rd)
+  <-> "fleq.d" ^ spc() ^ freg_name(rd)
+               ^ spc() ^ freg_name(rs1)
+               ^ spc() ^ freg_name(rs2)
+
+function clause execute(RISCV_FLEQ_D(rs2, rs1, rd)) = {
+  let rs1_val_D = F(rs1);
+  let rs2_val_D = F(rs2);
+
+  let (_, rd_val) : (bits_fflags, bool) =
+      riscv_f64Le   (rs1_val_D, rs2_val_D);
+
+  X(rd) = EXTZ(bool_to_bits(rd_val));
+  RETIRE_SUCCESS
+}
+
+/* FLTQ.D */
+
+union clause ast = RISCV_FLTQ_D : (regidx, regidx, regidx)
+
+mapping clause encdec = RISCV_FLTQ_D(rs2, rs1, rd)               if (haveDExt() & haveZfa())
+  <-> 0b101_0001 @ rs2 @ rs1 @ 0b101 @ rd @ 0b101_0011           if (haveDExt() & haveZfa())
+
+mapping clause assembly = RISCV_FLTQ_D(rs2, rs1, rd)
+  <-> "fltq.d" ^ spc() ^ freg_name(rd)
+               ^ spc() ^ freg_name(rs1)
+               ^ spc() ^ freg_name(rs2)
+
+function clause execute(RISCV_FLTQ_D(rs2, rs1, rd)) = {
+  let rs1_val_D = F(rs1);
+  let rs2_val_D = F(rs2);
+
+  let (_, rd_val) : (bits_fflags, bool) =
+      riscv_f64Lt   (rs1_val_D, rs2_val_D);
+
+  X(rd) = EXTZ(bool_to_bits(rd_val));
+  RETIRE_SUCCESS
+}
