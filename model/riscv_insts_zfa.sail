@@ -552,3 +552,48 @@ function clause execute (RISCV_FROUNDNX_D(rs1, rm, rd)) = {
     }
   }
 }
+
+/* FMVH.X.D */
+
+union clause ast = RISCV_FMVH_X_D : (regidx, regidx)
+
+mapping clause encdec   = RISCV_FMVH_X_D(rs1, rd)           if (haveDExt() & haveZfa() & in32BitMode())
+  <-> 0b111_0001 @ 0b00001 @ rs1 @ 0b000 @ rd @ 0b101_0011  if (haveDExt() & haveZfa() & in32BitMode())
+
+mapping clause assembly = RISCV_FMVH_X_D(rs1, rd)
+  <-> "fmvh.x.d" ^ spc() ^ reg_name(rd)
+                 ^ spc() ^ freg_name(rs1)
+
+function clause execute (RISCV_FMVH_X_D(rs1, rd)) = {
+  let rs1_val_D           = F(rs1)[63..32];
+  let rd_val_X : xlenbits = EXTS(rs1_val_D);
+  X(rd)                   = rd_val_X;
+  RETIRE_SUCCESS
+}
+
+/* FMVP.X.D */
+
+union clause ast = RISCV_FMVP_D_X : (regidx, regidx, regidx)
+
+mapping clause encdec = RISCV_FMVP_D_X(rs2, rs1, rd)        if (haveDExt() & haveZfa() & in32BitMode())
+  <-> 0b101_1001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011      if (haveDExt() & haveZfa() & in32BitMode())
+
+mapping clause assembly = RISCV_FMVP_D_X(rs2, rs1, rd)
+  <-> "fmvp.d.x" ^ spc() ^ freg_name(rd)
+                 ^ spc() ^ reg_name(rs1)
+                 ^ spc() ^ reg_name(rs2)
+
+function clause execute (RISCV_FMVP_D_X(rs2, rs1, rd)) = {
+  let rs1_val_X     = X(rs1)[31..0];
+  let rs2_val_X     = X(rs2)[31..0];
+
+  /* Concatenate the two values using '@' operator */
+  /* e.g. */
+  /*   rs1 = 0x01234567 */
+  /*   rs2 = 0x89abcdef */
+  /*   rd  = rs1 @ rs2 => 0x89abcdef01234567 */
+  let rd_val_D      = rs2_val_X @ rs1_val_X;
+
+  F(rd)             = rd_val_D;
+  RETIRE_SUCCESS
+}
