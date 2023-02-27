@@ -736,3 +736,32 @@ function clause execute(RISCV_FLTQ_D(rs2, rs1, rd)) = {
   X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
+
+/* FCVTMOD.W.D */
+
+union clause ast = RISCV_FCVTMOD_W_D : (regidx, regidx)
+
+/* We need rounding mode to be explicitly specified to RTZ(0b001) */
+mapping clause encdec = RISCV_FCVTMOD_W_D(rs1, rd)          if (haveDExt() & haveZfa())
+  <-> 0b110_0001 @ 0b01000 @ rs1 @ 0b001 @ rd @ 0b101_0011  if (haveDExt() & haveZfa())
+
+mapping clause assembly = RISCV_FCVTMOD_W_D(rs1, rd)
+  <-> "fcvtmod.w.d" ^ spc() ^ reg_name(rd)
+                    ^ spc() ^ freg_name(rs1)
+
+function clause execute(RISCV_FCVTMOD_W_D(rs1, rd)) = {
+  let rs1_val_D = F(rs1);
+
+  let (fflags, rd_val_temp) = riscv_f64ToI32(0b001, rs1_val_D);
+
+  let rd_val :xlenbits =
+    if (f_is_NaN_D(rs1_val_D) |
+        f_is_pos_inf_D(rs1_val_D) |
+        f_is_neg_inf_D(rs1_val_D))
+    then  EXTS(0b0)
+    else  EXTS(rd_val_temp[31..0]);
+
+  write_fflags(fflags);
+  X(rd) = rd_val;
+  RETIRE_SUCCESS
+}
