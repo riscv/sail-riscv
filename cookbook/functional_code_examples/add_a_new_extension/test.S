@@ -16,6 +16,7 @@
 // Support for a custom extension
 
 #define X_XMPL_OPCODE   (0x2b)    // inst[6:5] == 01, inst[4:2] == 1011  -->  custom-0
+#define X_XMPL(__rd__, __imm__)  .word (__imm__ << 12) | (__rd__ << 7) | (X_XMPL_OPCODE << 0)
 
 #define XO    (0)
 #define X1    (1)
@@ -50,7 +51,6 @@
 #define X30   (30)
 #define X31   (31)
 
-#define X_XMPL(__rd__, __imm__)  .word (__imm__ << 12) | (__rd__ << 7) | (X_XMPL_OPCODE << 0)
 
 
 
@@ -174,13 +174,14 @@ reset_vector:
 // --------------------------------------------------------
 //  The test!
 
+the_test_begin:
   X_XMPL(X2, 0x0dead)
   csrr  x3, XMPL_CSR_2
 
 //  li    x4, 0x76543210
 //  csrw  XMPL_CSR_2, x4    // Q: What happens to a write to a read-only csr?
 //                          // A: illegal_instruction trap
-
+the_test_end:
 
 
 

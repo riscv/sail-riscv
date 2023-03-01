@@ -3,26 +3,48 @@
 
 The main purpose of this cookbook,  is to explain how someone can add
 an extension (and a CSR) to the RISC-V Sail model. This example attempts
-to add a very simple instruction a very simple CSR to the model.  One
+to add a very simple instruction and a very simple CSR to the model.  One
 instruction will be added into the custom opcode space.  And that
 instruction will be used to manipulate the new CSR,  which can then
 be accessed by the existing CSR instructions.
 
+This is an example of what *is*,  not necessarily what it should be.
+This follows a pattern from the existing code.
+
+First,  we will walk through the pertinent sections of the RISC-V specifications
+to see what the specifications have to say about adding instructions.
+
+Let's start with the Unprivileged Specification
+
+image:images/UnprivTitle.png[]
+
+Chapter 26 of the Unpriv Spec ("Extending RISC-V") describes how you can extend
+the RISC-V  instruction set.
+
 See unpriv spec, chapter 26, "Extending RISC-V"
 
 See unpriv spec, chapter 24, "RV32/64G Instruction Set Listings"
+
+image:images/unpriv_ch24_inst_set_listings.png[]
+
 
 See unpriv spec, chapter 27, "ISA Extension Naming Convention", especially
 setion 27.10, "Non-Standard Extension Names".
 
 See priv spec, chapter 2, "CSR Listings", Table 2.1
 
+image:images/AllocationOfRISCV_CSRs.png[]
+
+
 Other goals:
 
 * Demonstrate the experimental switch
 * Demonstrate how to code WARL fields based on settings in the YAML files.
 
+So now that we've seen what the specifications say,  let's take ka look at
+what that means for the Sail model.
 
+First, we'll define a simple instruction, xmpl.  This instruction
 
 
 Example
@@ -32,19 +54,158 @@ CSR: xmpl_csr
 
 * Takes an unsigned immediate and puts the value into the xmpl_csr
 * The xmpl_csr can be read by the normal CSR instructions.
-* xmple_csr cannot be written with any form of the CSR instructions; 
+* xmpl_csr cannot be written with any form of the CSR instructions; 
 it should generate an exception.
 
 Files:
 
-* (new) riscv_insts_custom_xampl.sail : the implmentation of the instruction and the CSR.
-* (exists) riscv_csr_map.sail : the address map of the CSR registers.
+* (new) model/riscv_insts_custom_xampl.sail : the implmentation of the instruction and the CSR.
 * (exists) Makefile : must add riscv_insts_xample.sail to the list of source files
-* (new) test.s :  for testing the new instruction features
-* (exists) riscv_types.sail : need to add new instruction to the proper instruction opcode grouping.
-* (exists) riscv_insts_zicsr.sail : need to add new CSR functionality.
-* (exists) riscv_csr_map.sail : need to add new CSR name to the mapping
-* (exists) riscv_sys_control.sail : need to add the new CSR name to the list found in is_CSR_defined().
+* (exists) model/riscv_types.sail : need to add new instruction to the proper instruction opcode grouping.
+* (exists) model/riscv_csr_map.sail : the address map of the CSR registers.
+* (exists) mpodel/iscv_insts_zicsr.sail : need to add new CSR functionality.
+* (exists) model/riscv_csr_map.sail : need to add new CSR name to the mapping
+* (exists) model/riscv_sys_control.sail : need to add the new CSR name to the list found in is_CSR_defined().
+* (new) cookbook/functional_code_examples/add_a_new_extension/test.S :  for testing the new instruction features
+
+
+
+
+riscv_insts_custom_xmpl.sail:
+
+// include doesn't appear to render in github
+// Therefore, asciidoctor-reducer will be used to create
+// a complete (all files included) file, which will be
+// committed by git.  
+
+[source, sail]
+----
+include::../../../model/riscv_insts_custom_xmpl.sail[]
+----
+
+Makefile (around lines 26-37):
+```
+SAIL_DEFAULT_INST += riscv_insts_zba.sail
+SAIL_DEFAULT_INST += riscv_insts_zbb.sail
+SAIL_DEFAULT_INST += riscv_insts_zbc.sail
+SAIL_DEFAULT_INST += riscv_insts_zbs.sail
+
+SAIL_DEFAULT_INST += riscv_insts_zfh.sail
+
+SAIL_DEFAULT_INST += riscv_insts_zkn.sail
+SAIL_DEFAULT_INST += riscv_insts_zks.sail
+
+SAIL_DEFAULT_INST += riscv_insts_zbkb.sail
+SAIL_DEFAULT_INST += riscv_insts_zbkx.sail
+
+# Example custom extension (do not include this in the 
+#	usual model build.)
+SAIL_DEFAULT_INST += riscv_insts_custom_xmpl.sail
+```
+
+model/riscv_types.sail : need to add new instruction to the proper instruction opcode grouping.
+```
+TODO: What changes did I make to this file????
+```
+
+model/riscv_csr_map.sail (around lines 115-120):
+```
+.
+.
+mapping clause csr_name_map = 0xF11  <-> "mvendorid"
+mapping clause csr_name_map = 0xF12  <-> "marchid"
+mapping clause csr_name_map = 0xF13  <-> "mimpid"
+mapping clause csr_name_map = 0xF14  <-> "mhartid"
+mapping clause csr_name_map = 0xFC0  <-> "xmpl_csr"    // Custom CSR example
+mapping clause csr_name_map = 0xFC1  <-> "xmpl_2_csr"    // Custom CSR example
+.
+.
+
+```
+
+model/iscv_insts_zicsr.sail (around line 137):
+```
+.
+.
+    /* machine mode, custom extension example */
+    (0xFC0, _)  => xmpl_csr,  // error: Xmpl_csr is not a subtype of bitvector(32, dec)
+    (0xFC1, _)  => xmpl_csr_2.bits(),
+.
+.
+```
+
+model/riscv_sys_control.sail (within function +is_CSR_defined()+ ):
+```
+function is_CSR_defined( csr : csreg, p : Privilege) -> bool = 
+.
+.
+    /* custom CSRs */
+    0xFC0 => p == Machine,      // xmpl_csr     Example custom csr
+    0xFC1 => p == Machine,      // xmpl_csr_2   Example custom csr
+.
+.
+
+```
+
+cookbook/functional_code_examples/add_a_new_extension/test.S :  for testing the new instruction features
+
+[source, assembler]
+----
+include::./test.S.line_numbers[]
+----
+
+
+
+You will probably have to add command line switches to enable/disable extensions/functionality.
+Files that need to be touched are:
+
+* (exists) c_emulator/riscv_sim.c : implements the longopts functionality
+* (exists) model/riscv_sys_regs.sail : function signatures for sys_enable_XXX() functionms.
+* (exists) c_emulator/riscv_platform_impl.* : global variables for holding enabled state vars
+* (exists) c_emulator/riscv_platform.c :  implements the C functions that will be made available to Sail;
+functions like sys_enable_zfinx().
+
+
+What does the test.dump file look like?   Remember,  the RISC-V assembler knows nothing
+about the custom instruction we have added.
+
+cookbook/functional_code_examples/add_a_new_extension/test.dump:
+```
+    .
+    .
+    89	80000062 <the_test_begin>:
+    90	80000062:	0dead12b          	0xdead12b
+    91	80000066:	fc1021f3          	csrr	gp,0xfc1
+    .
+    .
+```
+
+What does the Sail log file look like?
+```
+.
+.
+   424	model/riscv_step.sail
+   425	model/riscv_step.sail:75.25-75.32
+   426	entering step() function...
+   427	
+   428	mem[X,0x80000062] -> 0xD12B
+   429	mem[X,0x80000064] -> 0x0DEA
+   430	[41] [M]: 0x80000062 (0x0DEAD12B) x.xmpl 1824162
+   431	
+   432	
+   433	model/riscv_step.sail
+   434	model/riscv_step.sail:75.25-75.32
+   435	entering step() function...
+   436	
+   437	mem[X,0x80000066] -> 0x21F3
+   438	mem[X,0x80000068] -> 0xFC10
+   439	[42] [M]: 0x80000066 (0xFC1021F3) csrrs gp, xmpl_2_csr, zero
+   440	CSR xmpl_2_csr -> 0x001BD5A2
+   441	x3 <- 0x001BD5A2
+.
+.
+
+```
 
 
 

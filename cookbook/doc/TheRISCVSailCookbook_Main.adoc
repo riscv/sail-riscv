@@ -1,7 +1,7 @@
 :doctype: book
 :sectids:
 The RISCV Sail Golden Model: A Cookbook for the RISCV ISA
-==============================================
+=========================================================
 William C. McSpadden <bill@riscv.org>; Martin Berger <contact@martinfriedrichberger.net>
 
 :toc:
@@ -108,4 +108,24 @@ Following are a set of FAQs that were generated via set of questions to the Sail
 
 include::./RISCV_model_FAQ.adoc[]
 
+
+== Colophon
+
+This document was prepared on an Ubuntu Linux workstation 
+using Microsofts VSCode for editing and rendering the asciidoc
+text.
+
++'shutter'+ was used for screenshots of various parts of the RISCV 
+specifications and were saved in PNG format.
+
+These screenshots were then edited using +'gimp'+ to highlight the
+pertinent sections of the screenshot.
+
++'asciidoctor-reducer'+ was used to combine and resolve all cross-document
+references and put them into one .adoc file,  TheRISCVSailCookbook_Complate.adoc.
+
+The pdf was created using +'asciidoctor-pdf'+ .
+
+See the Makefile, +cookbook/doc/Makefile+,  for the recipe for building
+the document.
 

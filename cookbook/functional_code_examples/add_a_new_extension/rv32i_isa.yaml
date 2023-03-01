@@ -31,6 +31,29 @@ hart0: &hart0
                 - extensions[25:0] in [0x0000000:0x3FFFFFF]
               wr_illegal:
                 - unchanged
+  xmpl_csr:
+   reset-val: 0x0
+   rv32:
+     accessible: true
+     Rsrvd:
+       implemented: true
+       type:
+           warl:
+              dependency_fields: []
+              legal:
+                - mxl[1:0] in [0x1]
+              wr_illegal:
+                - unchanged
+     FieldWARL:
+       implemented: true
+       type:
+           warl:
+              dependency_fields: []
+              legal:
+                - FieldWARL[24:0] in [0x0000000:0x3FFFFFF]
+              wr_illegal:
+                - unchanged
+  xmpl_csr_2:
   mvendorid:
    reset-val: 0xdeadbeef
    rv32:

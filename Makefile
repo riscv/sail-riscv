@@ -37,7 +37,7 @@ SAIL_DEFAULT_INST += riscv_insts_zbkb.sail
 SAIL_DEFAULT_INST += riscv_insts_zbkx.sail
 
 # Example custom extension (do not include this in the 
-#	usual model build.
+#	usual model build.)
 SAIL_DEFAULT_INST += riscv_insts_custom_xmpl.sail
 
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail

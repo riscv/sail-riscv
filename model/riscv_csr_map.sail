@@ -116,7 +116,8 @@ mapping clause csr_name_map = 0xF11  <-> "mvendorid"
 mapping clause csr_name_map = 0xF12  <-> "marchid"
 mapping clause csr_name_map = 0xF13  <-> "mimpid"
 mapping clause csr_name_map = 0xF14  <-> "mhartid"
-mapping clause csr_name_map = 0xFC0  <-> "xmple_csr"    // Custom CSR example
+mapping clause csr_name_map = 0xFC0  <-> "xmpl_csr"    // Custom CSR example
+mapping clause csr_name_map = 0xFC1  <-> "xmpl_2_csr"    // Custom CSR example
 /* machine trap setup */
 mapping clause csr_name_map = 0x300  <-> "mstatus"
 mapping clause csr_name_map = 0x301  <-> "misa"

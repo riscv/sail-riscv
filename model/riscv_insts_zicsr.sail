@@ -137,10 +137,7 @@ function readCSR csr : csreg -> xlenbits = {
     (0x7a0,  _) => ~(tselect),  /* this indicates we don't have any trigger support */
 
     /* machine mode, custom extension example */
-//    (0xFC0, _)  => xmpl_csr,  // error: Xmpl_csr is not a subtype of bitvector(32, dec)
-//    (0xFC0, 32)  => xmpl_csr, // error: Xmpl_csr is not a subtype of bitvector(32, dec)
     (0xFC0, _)  => xmpl_csr,  // error: Xmpl_csr is not a subtype of bitvector(32, dec)
-//    (0xFC0, _)  => xmpl_csr.bits(),  //  error (long error message which i couldn't interpret
     (0xFC1, _)  => xmpl_csr_2.bits(),
 
     /* supervisor mode */

@@ -828,18 +828,13 @@ function write_seed_csr () -> option(xlenbits) = None()
 
 /* Custom CSR example */
 
-//bitfield Xmpl_csr : xlenbits = { 
 bitfield Xmpl_csr : bitvector(32, dec) = {
   Rsrvd               : (xlen - 1) .. (xlen - 7),
   FieldWARL           : (xlen - 8) .. 0
 }
 
-//register xmpl_csr : Xmpl_csr
 register xmpl_csr : bitvector(32, dec)
 
-//function legalize_xmpl_csr(o : Xmpl_csr, v : xlenbits) -> Xmpl_csr = {
-//function legalize_xmpl_csr(o : Xmpl_csr, v : xlenbits) -> bitvector(32, dec) = {
-//function legalize_xmpl_csr(o : Xmpl_csr, v : bitvector(32, dec)) -> Xmpl_csr = {
 function legalize_xmpl_csr(o : Xmpl_csr, v : bitvector(32, dec)) -> bitvector(32, dec) = {
   let v = Mk_Xmpl_csr(v);
   // TODO: Write a meaningful legalize function. 
@@ -857,7 +852,6 @@ function legalize_xmpl_csr_2(o : Xmpl_csr_2, v : bitvector(32, dec)) -> bitvecto
   let v = Mk_Xmpl_csr_2(v);
   // TODO: Write a meaningful legalize function. 
   //    Just return the register value for now
-//  xmpl_csr_2    // ERROR:  Xmpl_csr_2 is not a subtype of bitvector(32, dec)
   xmpl_csr_2.bits()
 }
 
