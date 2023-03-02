@@ -411,7 +411,7 @@ cookbook/functional_code_examples/add_a_new_extension/test.S :  for testing the 
     16	// Support for a custom extension
     17	
     18	#define X_XMPL_OPCODE   (0x2b)    // inst[6:5] == 01, inst[4:2] == 1011  -->  custom-0
-    19	#define X_XMPL(__rd__, __imm__)  .word (__imm__ << 12) | (__rd__ << 7) | (X_XMPL_OPCODE << 0)
+    19	#define X_XMPL(__imm__)  .word (__imm__ << 7)  | (X_XMPL_OPCODE << 0)
     20	
     21	#define XO    (0)
     22	#define X1    (1)
@@ -570,7 +570,7 @@ cookbook/functional_code_examples/add_a_new_extension/test.S :  for testing the 
    175	//  The test!
    176	
    177	the_test_begin:
-   178	  X_XMPL(X2, 0x0dead)
+   178	  X_XMPL(0x0dead)
    179	  csrr  x3, XMPL_CSR_2
    180	
    181	//  li    x4, 0x76543210

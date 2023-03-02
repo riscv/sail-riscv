@@ -87,6 +87,8 @@ ASM_OBJS		:= $(subst .S,.o,${ASM_SRC})
 ASM_FLAGS		:= -DCONFIG_BASE=${CONFIG_BASE} ${MARCH}
 OBJDUMPFLAGS	= -t -Dz
 
+LINE_NUMBERS	:= $(addsuffix .line_numbers,${ASM_SRC} ${DUMP})
+
 C_SRC		:= $(wildcard *.c)
 C_OBJS		:= $(subst .c,.o,${C_SRC})
 C_FLAGS		:= -DCONFIG_BASE=${CONFIG_BASE} ${MARCH}
@@ -117,7 +119,7 @@ $(info     DUMP:      ${DUMP})
 $(info =================================================================)
 
 
-all: ${TARGET} ${DUMP}
+all: build
 
 
 
@@ -132,26 +134,29 @@ ${DUMP} : ${TARGET}
 %.o	: %.S
 	${ASM} -c ${ASM_FLAGS} -o $@ $<
 
+
 %.o	: %.c
 	${CC} -c ${C_FLAGS} -o $@ $<
 
+line_numbers : ${LINE_NUMBERS}
 
+%.line_numbers : %
+	cat -n $< > $@
 
-build: ${TARGET} ${DUMP}
+build: ${TARGET} ${DUMP} line_numbers
 
 dump: ${DUMP}
 
 install:
 
 clean:
-	rm -f ${OBJS} ${TARGET} ${DUMP} ${OUT_FILE}
+	rm -f ${OBJS} ${TARGET} ${DUMP} ${OUT_FILE} ${LINE_NUMBERS}
 
 
 run: ${TARGET}
 	${RUN_TOOL} ${RUN_FLAGS} ${TARGET} 2>&1 | tee ${OUT_FILE}
 
 clean_all: clean
-
 
 
 
