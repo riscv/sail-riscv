@@ -29,6 +29,8 @@ handle on the Sail programming language.
 
 <<platform-configuration>>
 
+<<add-a-new-extension>>
+
 
 :sectnums:
 == Introduction
@@ -100,6 +102,10 @@ TBD
 [#platform-configuration]
 == Platform Configuration example (Bill)
 
+TBD
+
+// All code and asciidoc description for "add a new extension"
+// is in the functional code example directory.
 include::../functional_code_examples/add_a_new_extension/add_a_new_extension.adoc[]
 
 == FAQs (Frequently Asked Questions)
