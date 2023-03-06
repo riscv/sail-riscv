@@ -163,7 +163,7 @@ function rvfi_read (addr, width, result) = {
     MemValue(v, _) => if width <= 16
                        then { rvfi_mem_data->rvfi_mem_rdata() = sail_zero_extend(v, 256);
                               rvfi_mem_data->rvfi_mem_rmask() = rvfi_encode_width_mask(width) }
-                       else { internal_error("Expected at most 16 bytes here!") },
+                       else { internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!") },
     MemException(_) => ()
   };
 }
@@ -237,7 +237,7 @@ function rvfi_write (addr, width, value, meta) = {
     rvfi_mem_data->rvfi_mem_wdata() = sail_zero_extend(value,256);
     rvfi_mem_data->rvfi_mem_wmask() = rvfi_encode_width_mask(width);
   } else {
-    internal_error("Expected at most 16 bytes here!");
+    internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!");
   }
 }
 $else

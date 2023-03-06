@@ -211,7 +211,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
                 /* update page table */
                 match mem_write_value_priv(to_phys_addr(EXTZ(ent.pteAddr)), 4, n_pte.bits(), Supervisor, false, false, false) {
                   MemValue(_)     => (),
-                  MemException(e) => internal_error("invalid physical address in TLB")
+                  MemException(e) => internal_error(__FILE__, __LINE__, "invalid physical address in TLB")
                 };
                 TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask), ext_ptw)
               }

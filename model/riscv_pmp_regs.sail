@@ -145,11 +145,13 @@ function pmpReadCfgReg(n) = {
          0 => append(pmp3cfg.bits(),  append(pmp2cfg.bits(),  append(pmp1cfg.bits(),  pmp0cfg.bits()))),
          1 => append(pmp7cfg.bits(),  append(pmp6cfg.bits(),  append(pmp5cfg.bits(),  pmp4cfg.bits()))),
          2 => append(pmp11cfg.bits(), append(pmp10cfg.bits(), append(pmp9cfg.bits(),  pmp8cfg.bits()))),
-         3 => append(pmp15cfg.bits(), append(pmp14cfg.bits(), append(pmp13cfg.bits(), pmp12cfg.bits())))
+         3 => append(pmp15cfg.bits(), append(pmp14cfg.bits(), append(pmp13cfg.bits(), pmp12cfg.bits()))),
+         _ => internal_error(__FILE__, __LINE__, "Unexpected pmp config reg read")
        }
-  else match n { //  sizeof(xlen) == 64
+  else match n { //  sizeof(xlen) >= 64
          0 => append(pmp7cfg.bits(),  append(pmp6cfg.bits(),  append(pmp5cfg.bits(),  append(pmp4cfg.bits(),  append(pmp3cfg.bits(),  append(pmp2cfg.bits(),  append(pmp1cfg.bits(),  pmp0cfg.bits()))))))),
-         2 => append(pmp15cfg.bits(), append(pmp14cfg.bits(), append(pmp13cfg.bits(), append(pmp12cfg.bits(), append(pmp11cfg.bits(), append(pmp10cfg.bits(), append(pmp9cfg.bits(),  pmp8cfg.bits())))))))
+         2 => append(pmp15cfg.bits(), append(pmp14cfg.bits(), append(pmp13cfg.bits(), append(pmp12cfg.bits(), append(pmp11cfg.bits(), append(pmp10cfg.bits(), append(pmp9cfg.bits(),  pmp8cfg.bits()))))))),
+         _ => internal_error(__FILE__, __LINE__, "Unexpected pmp config reg read")
        }
 }
 
@@ -187,9 +189,10 @@ function pmpWriteCfgReg(n, v) = {
                 pmp13cfg = pmpWriteCfg(pmp13cfg, v[15..8]);
                 pmp14cfg = pmpWriteCfg(pmp14cfg, v[23..16]);
                 pmp15cfg = pmpWriteCfg(pmp15cfg, v[31..24]);
-              }
+              },
+         _ => internal_error(__FILE__, __LINE__, "Unexpected pmp config reg write")
        }
-  else if sizeof(xlen) == 64
+  else if sizeof(xlen) >= 64
   then match n {
          0 => { pmp0cfg  = pmpWriteCfg(pmp0cfg,  v[7 ..0]);
                 pmp1cfg  = pmpWriteCfg(pmp1cfg,  v[15..8]);
@@ -208,7 +211,8 @@ function pmpWriteCfgReg(n, v) = {
                 pmp13cfg = pmpWriteCfg(pmp13cfg, v[47..40]);
                 pmp14cfg = pmpWriteCfg(pmp14cfg, v[55..48]);
                 pmp15cfg = pmpWriteCfg(pmp15cfg, v[63..56])
-              }
+              },
+         _ => internal_error(__FILE__, __LINE__, "Unexpected pmp config reg write")
        }
 }
 

@@ -384,14 +384,15 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
         TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) => {
           let (aq, rl, res) = (false, false, false);
-          match (width, sizeof(flen)) {
-            (BYTE, _)   => { handle_illegal(); RETIRE_FAIL },
-            (HALF, _)   => 
+          match (width) {
+            BYTE => { handle_illegal(); RETIRE_FAIL },
+            HALF =>
                process_fload16(rd, vaddr, mem_read(Read(Data), addr, 2, aq, rl, res)),
-            (WORD, _)   =>
+            WORD =>
                process_fload32(rd, vaddr, mem_read(Read(Data), addr, 4, aq, rl, res)),
-            (DOUBLE, 64) =>
-               process_fload64(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, res))
+            DOUBLE if sizeof(flen) >= 64 =>
+               process_fload64(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, res)),
+            _ => report_invalid_width(__FILE__, __LINE__, width, "floating point load"),
           }
         }
       }
@@ -431,7 +432,7 @@ val process_fstore : (xlenbits, MemoryOpResult(bool)) -> Retired effect {escape,
 function process_fstore(vaddr, value) =
   match value {
     MemValue(true)  => { RETIRE_SUCCESS },
-    MemValue(false) => { internal_error("store got false from mem_write_value") },
+    MemValue(false) => { internal_error(__FILE__, __LINE__, "store got false from mem_write_value") },
     MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
   }
 
@@ -458,11 +459,13 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
             MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
             MemValue(_) => {
               let rs2_val = F(rs2);
-              match (width, sizeof(flen)) {
-                (BYTE, _)    => { handle_illegal(); RETIRE_FAIL },
-                (HALF, _)    => process_fstore (vaddr, mem_write_value(addr, 2, rs2_val[15..0], aq, rl, con)),
-                (WORD, _)    => process_fstore (vaddr, mem_write_value(addr, 4, rs2_val[31..0], aq, rl, con)),
-                (DOUBLE, 64) => process_fstore (vaddr, mem_write_value(addr, 8, rs2_val,        aq, rl, con))
+              match (width) {
+                BYTE => { handle_illegal(); RETIRE_FAIL },
+                HALF => process_fstore (vaddr, mem_write_value(addr, 2, rs2_val[15..0], aq, rl, con)),
+                WORD => process_fstore (vaddr, mem_write_value(addr, 4, rs2_val[31..0], aq, rl, con)),
+                DOUBLE if sizeof(flen) >= 64 =>
+                  process_fstore (vaddr, mem_write_value(addr, 8, rs2_val, aq, rl, con)),
+                _ => report_invalid_width(__FILE__, __LINE__, width, "floating point store"),
               };
             }
           }
