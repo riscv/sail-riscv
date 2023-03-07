@@ -12,8 +12,7 @@ mapping maybe_vmask : string <-> bits(1) = {
 val check_eew_emul : (int, int) -> bool effect {rreg}
 function check_eew_emul(EEW, EMUL_pow) = {
   let ELEN = int_power(2, get_elen_pow());
-  EEW      >= 8  & EEW      <= ELEN &
-  EMUL_pow >= -3 & EMUL_pow <= 3;
+  EEW >= 8 & EEW <= ELEN & EMUL_pow >= -3 & EMUL_pow <= 3;
 }
 
 /* Check for vstart value */
