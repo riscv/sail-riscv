@@ -249,3 +249,81 @@ function clause execute (RISCV_VAESDF(vs2, vd, suffix)) = {
     RETIRE_SUCCESS
   }
 }
+
+/* VAESDM.VV */
+
+mapping vaesdm_mnemonic : bits(7) <-> string = {
+  0b1010001 <-> "vaesem.vv",
+  0b1010011 <-> "vaesem.vs",
+}
+
+union clause ast = RISCV_VAESDM : (regidx, regidx, string)
+
+mapping clause encdec = RISCV_VAESDM(vs2, vd, suffix)	       if (haveRVV() & haveZvkned())
+ <-> vv_or_vs(suffix) @ vs2 @ 0b00000 @ 0b010 @ vd @ 0b1110111 if (haveRVV() & haveZvkned())
+
+mapping clause assembly = RISCV_VAESDM(vs2, vd, suffix)
+ <-> vaesdm_mnemonic(vv_or_vs(suffix)) ^ spc() ^ vreg_name(vd)
+				       ^ sep() ^ vreg_name(vs2)
+
+function clause execute (RISCV_VAESDM(vs2, vd, suffix)) = {
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let LMUL     = if LMUL_pow < 0 then 0 else LMUL_pow;
+  let VLEN     = int_power(2, get_vlen_pow());
+  let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if (zvk_check_elements(VLEN, num_elem, LMUL, SEW) == false)
+  then {
+    handle_illegal();
+    RETIRE_FAIL
+  } else {
+    let 'n = num_elem;
+    let 'm = SEW;
+    assert('m == 32);
+
+    let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+    let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+    result      : vector('n, dec, bits('m)) = undefined;
+
+    vd_state : bits(128) = undefined;
+    vs2_key  : bits(128) = undefined;
+
+    eg_len = (unsigned(vl) / 'n);
+    eg_start = (unsigned(vstart) / 'n);
+
+    foreach (i from eg_start to (eg_len - 1)) {
+      assert(0 <= ((i * 4) + 3) & ((i * 4) + 3) < 'n);
+      vd_state[31..0]   = vd_val[i*4+0];
+      vd_state[63..32]  = vd_val[i*4+1];
+      vd_state[95..64]  = vd_val[i*4+2];
+      vd_state[127..96] = vd_val[i*4+3];
+
+      if suffix == "vv" then {
+	vs2_key[31..0]   = vs2_val[i*4+0];
+	vs2_key[63..32]  = vs2_val[i*4+1];
+	vs2_key[95..64]  = vs2_val[i*4+2];
+	vs2_key[127..96] = vs2_val[i*4+3];
+      } else {
+	vs2_key[31..0]   = vs2_val[0];
+	vs2_key[63..32]  = vs2_val[1];
+	vs2_key[95..64]  = vs2_val[2];
+	vs2_key[127..96] = vs2_val[3];
+      };
+
+      let sr       : bits(128) = aes_shift_rows_inv(vd_state);
+      let sb       : bits(128) = aes_subbytes_inv(sr);
+      let ark      : bits(128) = sb ^ vs2_key;
+      let mix      : bits(128) = aes_mixcolumns_inv(ark);
+
+      result[i*4+0] = mix[31..0];
+      result[i*4+1] = mix[63..32];
+      result[i*4+2] = mix[95..64];
+      result[i*4+3] = mix[127..96];
+    };
+
+    write_single_vreg(num_elem, 'm, vd, result);
+    vstart = EXTZ(0b0);
+    RETIRE_SUCCESS
+  }
+}
