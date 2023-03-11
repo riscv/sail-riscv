@@ -42,6 +42,8 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let VLEN_pow = get_vlen_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if ~(valid_rd_mask(vd, vm)) then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -104,14 +106,14 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
         VV_VMAXU         => to_bits(SEW, max(unsigned(vs2_val[i]), unsigned(vs1_val[i]))),
         VV_VMAX          => to_bits(SEW, max(signed(vs2_val[i]), signed(vs1_val[i]))),
         VV_VRGATHER      => {
-                              assert(vs1 != vd & vs2 != vd);
+                              if (vs1 == vd | vs2 == vd) then {handle_illegal(); return RETIRE_FAIL};
                               let idx = unsigned(vs1_val[i]);
                               let VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
                               assert(VLMAX <= 'n);
                               if idx < VLMAX then vs2_val[idx] else zeros() 
                             },
         VV_VRGATHEREI16  => {
-                              assert(vs1 != vd & vs2 != vd);
+                              if (vs1 == vd | vs2 == vd) then {handle_illegal(); return RETIRE_FAIL};
                               /* vrgatherei16.vv uses SEW/LMUL for the data in vs2 but EEW=16 and EMUL = (16/SEW)*LMUL for the indices in vs1 */
                               let vs1_new : vector('n, dec, bits(16)) = read_vreg(num_elem, 16, 4 + LMUL_pow - SEW_pow, vs1);
                               let idx = unsigned(vs1_new[i]);
@@ -171,10 +173,13 @@ function clause execute(NVSTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  if ~(check_eew_emul(SEW_widen, LMUL_pow_widen)) then {handle_illegal(); return RETIRE_FAIL};
+
+  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
+      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -235,10 +240,13 @@ function clause execute(NVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  if ~(check_eew_emul(SEW_widen, LMUL_pow_widen)) then {handle_illegal(); return RETIRE_FAIL};
+
+  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
+      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -294,7 +302,10 @@ function clause execute(MASKTYPEV(vs2, vs1, vd)) = {
   let end_element   = get_end_element();
   let SEW           = get_sew();
   let LMUL_pow      = get_lmul_pow();
-  let num_elem      = get_num_elem(LMUL_pow, SEW);
+  let num_elem      = get_num_elem(LMUL_pow, SEW); /* max(VLMAX,VLEN/SEW)) */
+  let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow); /* VLMAX */
+
+  if vd == vreg_name("v0") then {handle_illegal(); return RETIRE_FAIL};
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -309,13 +320,14 @@ function clause execute(MASKTYPEV(vs2, vs1, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if i < start_element then {
       result[i] = vd_val[i]
-    } else if i > end_element then {
+    } else if i > end_element | i >= real_num_elem then {
       if tail_ag == UNDISTURBED then {
         result[i] = vd_val[i]
       } else if tail_ag == AGNOSTIC then {
         result[i] = vd_val[i] /* TODO: configuration support */
       }
     } else {
+      /* the merge operates on all body elements */
       result[i] = if vm_val[i] then vs1_val[i] else vs2_val[i]
     }
   };
@@ -327,96 +339,6 @@ function clause execute(MASKTYPEV(vs2, vs1, vd)) = {
 
 mapping clause assembly = MASKTYPEV(vs2, vs1, vd)
 <-> "vmerge.vvm" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ sep() ^ "v0"
-
-/* ********************** OPIVX (Integer Merge Instruction) ********************** */
-union clause ast = MASKTYPEX : (regidx, regidx, regidx)
-
-mapping clause encdec = MASKTYPEX(vs2, rs1, vd) if haveRVV()
-  <-> 0b010111 @ 0b0 @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111 if haveRVV()
-
-function clause execute(MASKTYPEX(vs2, rs1, vd)) = {
-  let start_element = get_start_element();
-  let end_element   = get_end_element();
-  let SEW           = get_sew();
-  let LMUL_pow      = get_lmul_pow();
-  let num_elem      = get_num_elem(LMUL_pow, SEW);
-
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vreg_name("v0"));
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  result      : vector('n, dec, bits('m)) = undefined;
-
-  let tail_ag : agtype = get_vtype_vta();
-  foreach (i from 0 to (num_elem - 1)) {
-    if i < start_element then {
-      result[i] = vd_val[i]
-    } else if i > end_element then {
-      if tail_ag == UNDISTURBED then {
-        result[i] = vd_val[i]
-      } else if tail_ag == AGNOSTIC then {
-        result[i] = vd_val[i] /* TODO: configuration support */
-      }
-    } else {
-      result[i] = if vm_val[i] then rs1_val else vs2_val[i]
-    }
-  };
-
-  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = EXTZ(0b0);
-  RETIRE_SUCCESS
-}
-
-mapping clause assembly = MASKTYPEX(vs2, rs1, vd)
-  <-> "vmerge.vxm" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ sep() ^ "v0" 
-
-/* ********************** OPIVI (Integer Merge Instruction) ********************** */
-union clause ast = MASKTYPEI : (regidx, bits(5), regidx)
-
-mapping clause encdec = MASKTYPEI(vs2, simm, vd) if haveRVV()
-  <-> 0b010111 @ 0b0 @ vs2 @ simm @ 0b011 @ vd @ 0b1010111 if haveRVV()
-
-function clause execute(MASKTYPEI(vs2, simm, vd)) = {
-  let start_element = get_start_element();
-  let end_element   = get_end_element();
-  let SEW           = get_sew();
-  let LMUL_pow      = get_lmul_pow();
-  let num_elem      = get_num_elem(LMUL_pow, SEW);
-
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vreg_name("v0"));
-  let imm_val : bits('m)                  = EXTS(simm);
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  result      : vector('n, dec, bits('m)) = undefined;
-
-  let tail_ag : agtype = get_vtype_vta();
-  foreach (i from 0 to (num_elem - 1)) {
-    if i < start_element then {
-      result[i] = vd_val[i]
-    } else if i > end_element then {
-      if tail_ag == UNDISTURBED then {
-        result[i] = vd_val[i]
-      } else if tail_ag == AGNOSTIC then {
-        result[i] = vd_val[i] /* TODO: configuration support */
-      }
-    } else {
-      result[i] = if vm_val[i] then imm_val else vs2_val[i]
-    }
-  };
-
-  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = EXTZ(0b0);
-  RETIRE_SUCCESS
-}
-
-mapping clause assembly = MASKTYPEI(vs2, simm, vd)
-  <-> "vmerge.vim" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(simm) ^ sep() ^ "v0"
 
 /* ********************** OPIVV (Integer Move Instruction) *********************** */
 union clause ast = MOVETYPEV : (regidx, regidx)
@@ -439,6 +361,7 @@ function clause execute(MOVETYPEV(vs1, vd)) = {
   mask        : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then result[i] = vs1_val[i]
   };
@@ -484,6 +407,8 @@ function clause execute(VXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if ~(valid_rd_mask(vd, vm)) then {handle_illegal(); return RETIRE_FAIL};
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -598,10 +523,13 @@ function clause execute(NXSTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  if ~(check_eew_emul(SEW_widen, LMUL_pow_widen)) then {handle_illegal(); return RETIRE_FAIL};
+
+  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
+      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -662,10 +590,13 @@ function clause execute(NXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  if ~(check_eew_emul(SEW_widen, LMUL_pow_widen)) then {handle_illegal(); return RETIRE_FAIL};
+
+  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
+      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -730,6 +661,8 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
   let VLEN_pow = get_vlen_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if ~(valid_rd_mask(vd, vm)) then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -746,7 +679,7 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
     if mask[i] then {
       result[i] = match funct6 {
         VX_VSLIDEUP    => {
-                            assert(vs2 != vd);
+                            if (vs2 == vd) then {handle_illegal(); return RETIRE_FAIL};
                             if i >= rs1_val then vs2_val[i - rs1_val] else vd_val[i]
                           },
         VX_VSLIDEDOWN  => {
@@ -755,7 +688,7 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
                             if i + rs1_val < VLMAX then vs2_val[i + rs1_val] else zeros()
                           },
         VX_VRGATHER    => {
-                            assert(vs2 != vd);
+                            if (vs2 == vd) then {handle_illegal(); return RETIRE_FAIL};
                             let VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
                             assert(VLMAX > 0 & VLMAX <= 'n);
                             if rs1_val < VLMAX then vs2_val[rs1_val] else zeros() 
@@ -778,6 +711,55 @@ mapping vxsg_mnemonic : vxsgfunct6 <-> string = {
 mapping clause assembly = VXSG(funct6, vm, vs2, rs1, vd)
   <-> vxsg_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
 
+/* ********************** OPIVX (Integer Merge Instruction) ********************** */
+union clause ast = MASKTYPEX : (regidx, regidx, regidx)
+
+mapping clause encdec = MASKTYPEX(vs2, rs1, vd) if haveRVV()
+  <-> 0b010111 @ 0b0 @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111 if haveRVV()
+
+function clause execute(MASKTYPEX(vs2, rs1, vd)) = {
+  let start_element = get_start_element();
+  let end_element   = get_end_element();
+  let SEW           = get_sew();
+  let LMUL_pow      = get_lmul_pow();
+  let num_elem      = get_num_elem(LMUL_pow, SEW); /* max(VLMAX,VLEN/SEW)) */
+  let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow); /* VLMAX */
+
+  if vd == vreg_name("v0") then {handle_illegal(); return RETIRE_FAIL};
+
+  let 'n = num_elem;
+  let 'm = SEW;
+
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vreg_name("v0"));
+  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  result      : vector('n, dec, bits('m)) = undefined;
+
+  let tail_ag : agtype = get_vtype_vta();
+  foreach (i from 0 to (num_elem - 1)) {
+    if i < start_element then {
+      result[i] = vd_val[i]
+    } else if i > end_element | i >= real_num_elem then {
+      if tail_ag == UNDISTURBED then {
+        result[i] = vd_val[i]
+      } else if tail_ag == AGNOSTIC then {
+        result[i] = vd_val[i] /* TODO: configuration support */
+      }
+    } else {
+      /* the merge operates on all body elements */
+      result[i] = if vm_val[i] then rs1_val else vs2_val[i]
+    }
+  };
+
+  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
+  vstart = EXTZ(0b0);
+  RETIRE_SUCCESS
+}
+
+mapping clause assembly = MASKTYPEX(vs2, rs1, vd)
+  <-> "vmerge.vxm" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ sep() ^ "v0" 
+
 /* ********************** OPIVX (Integer Move Instruction) *********************** */
 union clause ast = MOVETYPEX : (regidx, regidx)
 
@@ -799,6 +781,7 @@ function clause execute(MOVETYPEX(rs1, vd)) = {
   mask        : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then result[i] = rs1_val
   };
@@ -837,6 +820,8 @@ function clause execute(VITYPE(funct6, vm, vs2, simm, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if ~(valid_rd_mask(vd, vm)) then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -848,7 +833,7 @@ function clause execute(VITYPE(funct6, vm, vs2, simm, vd)) = {
   mask        : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
-  
+
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
       result[i] = match funct6 {
@@ -926,10 +911,13 @@ function clause execute(NISTYPE(funct6, vm, vs2, simm, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  if ~(check_eew_emul(SEW_widen, LMUL_pow_widen)) then {handle_illegal(); return RETIRE_FAIL};
+
+  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
+      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -990,10 +978,13 @@ function clause execute(NITYPE(funct6, vm, vs2, simm, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  if ~(check_eew_emul(SEW_widen, LMUL_pow_widen)) then {handle_illegal(); return RETIRE_FAIL};
+
+  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
+      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -1058,6 +1049,8 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
   let VLEN_pow = get_vlen_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if ~(valid_rd_mask(vd, vm)) then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -1074,7 +1067,7 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
     if mask[i] then {
       result[i] = match funct6 {
         VI_VSLIDEUP    => {
-                            assert(vs2 != vd);
+                            if (vs2 == vd) then {handle_illegal(); return RETIRE_FAIL};
                             if i >= imm_val then vs2_val[i - imm_val] else vd_val[i]
                           },
         VI_VSLIDEDOWN  => {
@@ -1083,7 +1076,7 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
                             if i + imm_val < VLMAX then vs2_val[i + imm_val] else zeros()
                           },
         VI_VRGATHER    => {
-                            assert(vs2 != vd);
+                            if (vs2 == vd) then {handle_illegal(); return RETIRE_FAIL};
                             let VLMAX = int_power(2, LMUL_pow + VLEN_pow - SEW_pow);
                             assert(VLMAX > 0 & VLMAX <= 'n);
                             if imm_val < VLMAX then vs2_val[imm_val] else zeros() 
@@ -1106,6 +1099,55 @@ mapping visg_mnemonic : visgfunct6 <-> string = {
 mapping clause assembly = VISG(funct6, vm, vs2, simm, vd)
   <-> visg_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(simm) ^ maybe_vmask(vm)
 
+/* ********************** OPIVI (Integer Merge Instruction) ********************** */
+union clause ast = MASKTYPEI : (regidx, bits(5), regidx)
+
+mapping clause encdec = MASKTYPEI(vs2, simm, vd) if haveRVV()
+  <-> 0b010111 @ 0b0 @ vs2 @ simm @ 0b011 @ vd @ 0b1010111 if haveRVV()
+
+function clause execute(MASKTYPEI(vs2, simm, vd)) = {
+  let start_element = get_start_element();
+  let end_element   = get_end_element();
+  let SEW           = get_sew();
+  let LMUL_pow      = get_lmul_pow();
+  let num_elem      = get_num_elem(LMUL_pow, SEW); /* max(VLMAX,VLEN/SEW)) */
+  let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow); /* VLMAX */
+
+  if vd == vreg_name("v0") then {handle_illegal(); return RETIRE_FAIL};
+
+  let 'n = num_elem;
+  let 'm = SEW;
+
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vreg_name("v0"));
+  let imm_val : bits('m)                  = EXTS(simm);
+  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  result      : vector('n, dec, bits('m)) = undefined;
+
+  let tail_ag : agtype = get_vtype_vta();
+  foreach (i from 0 to (num_elem - 1)) {
+    if i < start_element then {
+      result[i] = vd_val[i]
+    } else if i > end_element | i >= real_num_elem then {
+      if tail_ag == UNDISTURBED then {
+        result[i] = vd_val[i]
+      } else if tail_ag == AGNOSTIC then {
+        result[i] = vd_val[i] /* TODO: configuration support */
+      }
+    } else {
+      /* the merge operates on all body elements */
+      result[i] = if vm_val[i] then imm_val else vs2_val[i]
+    }
+  };
+
+  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
+  vstart = EXTZ(0b0);
+  RETIRE_SUCCESS
+}
+
+mapping clause assembly = MASKTYPEI(vs2, simm, vd)
+  <-> "vmerge.vim" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(simm) ^ sep() ^ "v0"
+
 /* ********************** OPIVI (Integer Move Instruction) *********************** */
 union clause ast = MOVETYPEI : (regidx, bits(5))
 
@@ -1127,6 +1169,7 @@ function clause execute(MOVETYPEI(vd, simm)) = {
   mask        : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then result[i] = imm_val
   };
@@ -1146,18 +1189,28 @@ mapping clause encdec = VMVRTYPE(vs2, simm, vd) if haveRVV()
   <-> 0b100111 @ 0b1 @ vs2 @ simm @ 0b011 @ vd @ 0b1010111 if haveRVV()
 
 function clause execute(VMVRTYPE(vs2, simm, vd)) = {
+  let start_element = get_start_element();
   let SEW     = get_sew();
   let imm_val = unsigned(EXTZ(sizeof(xlen), simm));
   let EMUL    = imm_val + 1;
 
-  assert(EMUL == 1 | EMUL == 2 | EMUL == 4 | EMUL == 8);
+  if ~(EMUL == 1 | EMUL == 2 | EMUL == 4 | EMUL == 8) then {handle_illegal(); return RETIRE_FAIL};
+
   let EMUL_pow = log2(EMUL);
   let num_elem = get_num_elem(EMUL_pow, SEW);
   let 'n = num_elem;
   let 'm = SEW;
 
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, vreg_name("v0"));
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, EMUL_pow, vs2);
-  write_vreg(num_elem, SEW, EMUL_pow, vd, vs2_val);
+  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, EMUL_pow, vd);
+  result      : vector('n, dec, bits('m)) = undefined;
+
+  foreach (i from 0 to (num_elem - 1)) {
+    result[i] = if i < start_element then vd_val[i] else vs2_val[i]
+  };
+
+  write_vreg(num_elem, SEW, EMUL_pow, vd, result);
   vstart = EXTZ(0b0);
   RETIRE_SUCCESS
 } 
@@ -1198,6 +1251,8 @@ function clause execute(MVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if ~(valid_rd_mask(vd, vm)) then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -1233,10 +1288,10 @@ function clause execute(MVVTYPE(funct6, vm, vs2, vs1, vd)) = {
                           let rounding_incr = get_fixed_rounding_incr(result_sub, 1);
                           slice(result_sub >> 1, 0, 'm) + EXTZ('m, rounding_incr)
                         },
-        MVV_VMUL     => slice(to_bits(SEW * 2, signed(vs2_val[i]) * signed(vs1_val[i])), 0, SEW),
-        MVV_VMULH    => slice(to_bits(SEW * 2, signed(vs2_val[i]) * signed(vs1_val[i])), SEW, SEW),
-        MVV_VMULHU   => slice(to_bits(SEW * 2, unsigned(vs2_val[i]) * unsigned(vs1_val[i])), SEW, SEW),  
-        MVV_VMULHSU  => slice(to_bits(SEW * 2, signed(vs2_val[i]) * unsigned(vs1_val[i])), SEW, SEW),
+        MVV_VMUL     => get_slice_int(SEW, signed(vs2_val[i]) * signed(vs1_val[i]), 0),
+        MVV_VMULH    => get_slice_int(SEW, signed(vs2_val[i]) * signed(vs1_val[i]), SEW),
+        MVV_VMULHU   => get_slice_int(SEW, unsigned(vs2_val[i]) * unsigned(vs1_val[i]), SEW),  
+        MVV_VMULHSU  => get_slice_int(SEW, signed(vs2_val[i]) * unsigned(vs1_val[i]), SEW),
         MVV_VDIVU    => {
                           let q : int = if unsigned(vs1_val[i]) == 0 then -1 else quot_round_zero(unsigned(vs2_val[i]), unsigned(vs1_val[i]));
                           to_bits(SEW, q)
@@ -1306,6 +1361,8 @@ function clause execute(MVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
   let VLEN     = int_power(2, get_vlen_pow());
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if ~(valid_rd_mask(vd, vm)) then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -1322,10 +1379,10 @@ function clause execute(MVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
   foreach (i from 0 to (num_elem - 1)){
     if mask[i] then{
       result[i] = match funct6 {
-        MVV_VMACC  => slice(to_bits(VLEN, signed(vs1_val[i]) * signed(vs2_val[i])), 0, SEW) + vd_val[i],
-        MVV_VNMSAC => vd_val[i] - slice(to_bits(VLEN, signed(vs1_val[i]) * signed(vs2_val[i]) ), 0, SEW),
-        MVV_VMADD  => slice(to_bits(VLEN, signed(vs1_val[i]) * signed(vd_val[i])), 0, SEW) + vs2_val[i],
-        MVV_VNMSUB => vs2_val[i] - slice(to_bits(VLEN, signed(vs1_val[i]) * signed(vd_val[i]) ), 0, SEW)
+        MVV_VMACC  => get_slice_int(SEW, signed(vs1_val[i]) * signed(vs2_val[i]), 0) + vd_val[i],
+        MVV_VNMSAC => vd_val[i] - get_slice_int(SEW, signed(vs1_val[i]) * signed(vs2_val[i]), 0),
+        MVV_VMADD  => get_slice_int(SEW, signed(vs1_val[i]) * signed(vd_val[i]), 0) + vs2_val[i],
+        MVV_VNMSUB => vs2_val[i] - get_slice_int(SEW, signed(vs1_val[i]) * signed(vd_val[i]), 0)
       }
     }
   };
@@ -1364,10 +1421,13 @@ function clause execute(WVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  if ~(check_eew_emul(SEW_widen, LMUL_pow_widen)) then {handle_illegal(); return RETIRE_FAIL};
+
+  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) | 
+      ~(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) | ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -1381,7 +1441,7 @@ function clause execute(WVVTYPE(funct6, vm, vs2, vs1, vd)) = {
 
   assert(8 <= SEW_widen & SEW_widen <= 64);
   (result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
-  
+
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
       result[i] = match funct6 {
@@ -1431,10 +1491,13 @@ function clause execute(WVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  if ~(check_eew_emul(SEW_widen, LMUL_pow_widen)) then {handle_illegal(); return RETIRE_FAIL};
+
+  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) | 
+      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -1492,10 +1555,13 @@ function clause execute(WMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  if ~(check_eew_emul(SEW_widen, LMUL_pow_widen)) then {handle_illegal(); return RETIRE_FAIL};
+
+  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) | 
+      ~(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) | ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -1550,10 +1616,13 @@ function clause execute(VEXT2TYPE(funct6, vm, vs2, vd)) = {
   let SEW = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
   let SEW_half = SEW / 2;
   let LMUL_pow_half = LMUL_pow - 1;
-  if ~(check_eew_emul(SEW_half, LMUL_pow_half)) then {handle_illegal(); return RETIRE_FAIL};
+
+  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_half, LMUL_pow)) | 
+      ~(valid_eew_emul(SEW_half, LMUL_pow_half)) 
+  then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_half;
@@ -1605,10 +1674,13 @@ function clause execute(VEXT4TYPE(funct6, vm, vs2, vd)) = {
   let SEW = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
   let SEW_quart = SEW / 4;
   let LMUL_pow_quart = LMUL_pow - 2;
-  if ~(check_eew_emul(SEW_quart, LMUL_pow_quart)) then {handle_illegal(); return RETIRE_FAIL};
+
+  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_quart, LMUL_pow)) | 
+      ~(valid_eew_emul(SEW_quart, LMUL_pow_quart)) 
+  then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_quart;
@@ -1660,10 +1732,13 @@ function clause execute(VEXT8TYPE(funct6, vm, vs2, vd)) = {
   let SEW = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
   let SEW_eighth = SEW / 8;
   let LMUL_pow_eighth = LMUL_pow - 3;
-  if ~(check_eew_emul(SEW_eighth, LMUL_pow_eighth)) then {handle_illegal(); return RETIRE_FAIL};
+
+  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_eighth, LMUL_pow)) | 
+      ~(valid_eew_emul(SEW_eighth, LMUL_pow_eighth)) 
+  then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_eighth;
@@ -1734,14 +1809,14 @@ mapping clause encdec = MVVCOMPRESS(vs2, vs1, vd) if haveRVV()
 function clause execute(MVVCOMPRESS(vs2, vs1, vd)) = {
   let start_element = get_start_element();
   let end_element = get_end_element();
+
   /* vcompress should always be executed with a vstart of 0 */
-  if start_element != 0 then {handle_illegal(); return RETIRE_FAIL};
+  if (start_element != 0 | vs1 == vd | vs2 == vd) then {handle_illegal(); return RETIRE_FAIL};
 
   let SEW = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  assert(vd != vs1 & vd != vs2);
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -1809,6 +1884,8 @@ function clause execute(MVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if ~(valid_rd_mask(vd, vm)) then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -1845,19 +1922,19 @@ function clause execute(MVXTYPE(funct6, vm, vs2, rs1, vd)) = {
                               slice(result_sub >> 1, 0, 'm) + EXTZ('m, rounding_incr)
                             },
         MVX_VSLIDE1UP    => {
-                              assert(vs2 != vd);
+                              if (vs2 == vd) then {handle_illegal(); return RETIRE_FAIL};
                               if i == 0 then rs1_val else vs2_val[i - 1]
                             },
         MVX_VSLIDE1DOWN  => {
-                              assert(vs2 != vd);
+                              if (vs2 == vd) then {handle_illegal(); return RETIRE_FAIL};
                               let last_elem = get_end_element();
                               assert(last_elem < num_elem);
                               if i < last_elem then vs2_val[i + 1] else rs1_val
                             },
-        MVX_VMUL         => slice(to_bits(SEW * 2, signed(vs2_val[i]) * signed(rs1_val)), 0, SEW),
-        MVX_VMULH        => slice(to_bits(SEW * 2, signed(vs2_val[i]) * signed(rs1_val)), SEW, SEW),
-        MVX_VMULHU       => slice(to_bits(SEW * 2, unsigned(vs2_val[i]) * unsigned(rs1_val)), SEW, SEW),
-        MVX_VMULHSU      => slice(to_bits(SEW * 2, signed(vs2_val[i]) * unsigned(rs1_val)), SEW, SEW),
+        MVX_VMUL         => get_slice_int(SEW, signed(vs2_val[i]) * signed(rs1_val), 0),
+        MVX_VMULH        => get_slice_int(SEW, signed(vs2_val[i]) * signed(rs1_val), SEW),
+        MVX_VMULHU       => get_slice_int(SEW, unsigned(vs2_val[i]) * unsigned(rs1_val), SEW),
+        MVX_VMULHSU      => get_slice_int(SEW, signed(vs2_val[i]) * unsigned(rs1_val), SEW),
         MVX_VDIVU        => {
                               let q : int = if unsigned(rs1_val) == 0 then -1 else quot_round_zero(unsigned(vs2_val[i]), unsigned(rs1_val));
                               to_bits(SEW, q)
@@ -1929,6 +2006,8 @@ function clause execute(MVXMATYPE(funct6, vm, vs2, rs1, vd)) = {
   let VLEN     = int_power(2, get_vlen_pow());
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if ~(valid_rd_mask(vd, vm)) then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -1945,10 +2024,10 @@ function clause execute(MVXMATYPE(funct6, vm, vs2, rs1, vd)) = {
   foreach (i from 0 to (num_elem - 1)){
     if mask[i] then{
       result[i] = match funct6 {
-        MVX_VMACC  => slice(to_bits(VLEN, signed(rs1_val) * signed(vs2_val[i]) ), 0, SEW) + vd_val[i],
-        MVX_VNMSAC => vd_val[i] - slice(to_bits(VLEN, signed(rs1_val) * signed(vs2_val[i]) ), 0, SEW),
-        MVX_VMADD  => slice(to_bits(VLEN, signed(rs1_val) * signed(vd_val[i]) ), 0, SEW) + vs2_val[i],
-        MVX_VNMSUB => vs2_val[i] - slice(to_bits(VLEN, signed(rs1_val) * signed(vd_val[i]) ), 0, SEW)
+        MVX_VMACC  => get_slice_int(SEW, signed(rs1_val) * signed(vs2_val[i]), 0) + vd_val[i],
+        MVX_VNMSAC => vd_val[i] - get_slice_int(SEW, signed(rs1_val) * signed(vs2_val[i]), 0),
+        MVX_VMADD  => get_slice_int(SEW, signed(rs1_val) * signed(vd_val[i]), 0) + vs2_val[i],
+        MVX_VNMSUB => vs2_val[i] - get_slice_int(SEW, signed(rs1_val) * signed(vd_val[i]), 0)
       }
     }
   };
@@ -1988,10 +2067,13 @@ function clause execute(WVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  if ~(check_eew_emul(SEW_widen, LMUL_pow_widen)) then {handle_illegal(); return RETIRE_FAIL};
+
+  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) | 
+      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -2055,10 +2137,12 @@ function clause execute(WXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  if ~(check_eew_emul(SEW_widen, LMUL_pow_widen)) then {handle_illegal(); return RETIRE_FAIL};
+
+  if  ~(valid_rd_mask(vd, vm)) | ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -2117,10 +2201,13 @@ function clause execute(WMVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  if ~(check_eew_emul(SEW_widen, LMUL_pow_widen)) then {handle_illegal(); return RETIRE_FAIL};
+
+  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) | 
+      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  then {handle_illegal(); return RETIRE_FAIL};
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;

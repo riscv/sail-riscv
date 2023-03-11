@@ -101,7 +101,7 @@ function clause execute(VXCMPTYPE(funct6, vm, vs2, rs1, vd)) = {
   mask         : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
-  
+
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
       let res : bool = match funct6 {

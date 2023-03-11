@@ -84,7 +84,7 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
 
   let 'n = num_elem;
   let 'm = SEW;
-  
+
   let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
   result      : vector('n, dec, bool) = undefined;
@@ -99,7 +99,7 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] & vs2_val[i] then count = count + 1;
   };
-  
+
   X(rd) = to_bits(sizeof(xlen), count);
   vstart = EXTZ(0b0);
   RETIRE_SUCCESS
@@ -121,7 +121,7 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
 
   let 'n = num_elem;
   let 'm = SEW;
-  
+
   let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
   result      : vector('n, dec, bool) = undefined;
@@ -160,7 +160,7 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
 
   let 'n = num_elem;
   let 'm = SEW;
-  
+
   let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vd);
@@ -171,7 +171,7 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
   if ~(assert_vstart(0)) then {handle_illegal(); return RETIRE_FAIL};
 
   /* If masking is enabled, then dest reg cannot be v0 */
-  if vm == 0b0 & vd == vreg_name("v0") then {handle_illegal(); return RETIRE_FAIL};
+  if ~(valid_rd_mask(vd, vm)) then {handle_illegal(); return RETIRE_FAIL};
 
   /* Dest reg cannot be the same as source reg */
   if vd == vs2 then {handle_illegal(); return RETIRE_FAIL};
@@ -185,7 +185,7 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
       result[i] = if found_elem then false else true
     }
   };
-  
+
   write_vmask(num_elem, vd, result);
   vstart = EXTZ(0b0);
   RETIRE_SUCCESS
@@ -207,7 +207,7 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
 
   let 'n = num_elem;
   let 'm = SEW;
-  
+
   let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vd);
@@ -218,7 +218,7 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
   if ~(assert_vstart(0)) then {handle_illegal(); return RETIRE_FAIL};
 
   /* If masking is enabled, then dest reg cannot be v0 */
-  if vm == 0b0 & vd == vreg_name("v0") then {handle_illegal(); return RETIRE_FAIL};
+  if ~(valid_rd_mask(vd, vm)) then {handle_illegal(); return RETIRE_FAIL};
 
   /* Dest reg cannot be the same as source reg */
   if vd == vs2 then {handle_illegal(); return RETIRE_FAIL};
@@ -254,7 +254,7 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
 
   let 'n = num_elem;
   let 'm = SEW;
-  
+
   let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vd);
@@ -265,7 +265,7 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
   if ~(assert_vstart(0)) then {handle_illegal(); return RETIRE_FAIL};
 
   /* If masking is enabled, then dest reg cannot be v0 */
-  if vm == 0b0 & vd == vreg_name("v0") then {handle_illegal(); return RETIRE_FAIL};
+  if ~(valid_rd_mask(vd, vm)) then {handle_illegal(); return RETIRE_FAIL};
 
   /* Dest reg cannot be the same as source reg */
   if vd == vs2 then {handle_illegal(); return RETIRE_FAIL};
@@ -283,7 +283,7 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
       }
     }
   };
-  
+
   write_vmask(num_elem, vd, result);
   vstart = EXTZ(0b0);
   RETIRE_SUCCESS
@@ -305,7 +305,7 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
 
   let 'n = num_elem;
   let 'm = SEW;
-  
+
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
   let vs2_val : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -316,7 +316,7 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
   if ~(assert_vstart(0)) then {handle_illegal(); return RETIRE_FAIL};
 
   /* If masking is enabled, then dest reg cannot be v0 */
-  if vm == 0b0 & vd == vreg_name("v0") then {handle_illegal(); return RETIRE_FAIL};
+  if ~(valid_rd_mask(vd, vm)) then {handle_illegal(); return RETIRE_FAIL};
 
   /* Dest reg cannot be the same as source reg */
   if vd == vs2 then {handle_illegal(); return RETIRE_FAIL};
@@ -349,6 +349,8 @@ function clause execute(VID_V(vm, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if ~(valid_rd_mask(vd, vm)) then {handle_illegal(); return RETIRE_FAIL};
 
   let 'n = num_elem;
   let 'm = SEW;
