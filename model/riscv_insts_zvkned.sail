@@ -406,3 +406,82 @@ function clause execute (RISCV_VAESKF1_VI(vs2, rnd, vd)) = {
     RETIRE_SUCCESS
   }
 }
+
+/* VAESKF2.VI */
+
+union clause ast = RISCV_VAESKF2_VI : (regidx, regidx, regidx)
+
+mapping clause encdec = RISCV_VAESKF2_VI(vs2, rnd, vd) if (haveRVV() & haveZvkned())
+ <-> 0b1010101 @ vs2 @ rnd @ 0b010 @ vd @ 0b1110111    if (haveRVV() & haveZvkned())
+
+mapping clause assembly = RISCV_VAESKF2_VI(vs2, rnd, vd)
+ <-> "vaeskf2.vi" ^ sep() ^ vreg_name(vd)
+		  ^ sep() ^ vreg_name(vs2)
+		  ^ sep() ^ reg_name(rnd)
+
+function clause execute (RISCV_VAESKF2_VI(vs2, rnd, vd)) = {
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let LMUL     = if LMUL_pow < 0 then 0 else LMUL_pow;
+  let VLEN     = int_power(2, get_vlen_pow());
+  let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if (zvk_check_elements(VLEN, num_elem, LMUL, SEW) == false)
+  then {
+    handle_illegal();
+    RETIRE_FAIL
+  } else {
+    let 'n = num_elem;
+    let 'm = SEW;
+    assert('m == 32);
+
+    rnd_val : bits(4)                   = rnd[3..0];
+    let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+    let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+    result      : vector('n, dec, bits('m)) = undefined;
+
+    if (unsigned(rnd_val) < 2) | (unsigned(rnd_val) > 14)
+    then rnd_val[3] = not_bit(rnd_val[3]);
+
+    current_round_key : bits(128) = undefined;
+    round_key_b       : bits(128) = undefined;
+    w		      : bits(128) = undefined;
+
+    eg_len = (unsigned(vl) / 'n);
+    eg_start = (unsigned(vstart) / 'n);
+
+    foreach (i from eg_start to (eg_len - 1)) {
+      assert(0 <= ((i * 4) + 3) & ((i * 4) + 3) < 'n);
+      current_round_key[31..0]   = vs2_val[i*4+0];
+      current_round_key[63..32]  = vs2_val[i*4+1];
+      current_round_key[95..64]  = vs2_val[i*4+2];
+      current_round_key[127..96] = vs2_val[i*4+3];
+
+      round_key_b[31..0]   = vd_val[i*4+0];
+      round_key_b[63..32]  = vd_val[i*4+1];
+      round_key_b[95..64]  = vd_val[i*4+2];
+      round_key_b[127..96] = vd_val[i*4+3];
+
+      w[31..0] = if (rnd_val[0] == bitone)
+		 then
+		   aes_subword_fwd(current_round_key[127..96]) ^ round_key_b[31..0]
+		 else
+		   aes_subword_fwd(aes_rotword(current_round_key[127..96]))
+		     ^ aes_decode_rcon(rnd_val >> 1)
+		     ^ round_key_b[31..0];
+
+      w[63..32]  = w[31..0]  ^ round_key_b[63..32];
+      w[95..64]  = w[63..32] ^ round_key_b[95..64];
+      w[127..96] = w[95..64] ^ round_key_b[127..96];
+
+      result[i*4+0] = w[31..0];
+      result[i*4+1] = w[63..32];
+      result[i*4+2] = w[95..64];
+      result[i*4+3] = w[127..96];
+    };
+
+    write_single_vreg(num_elem, 'm, vd, result);
+    vstart = EXTZ(0b0);
+    RETIRE_SUCCESS
+  }
+}
