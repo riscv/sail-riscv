@@ -145,7 +145,7 @@ function loop () : unit -> unit = {
   let insns_per_tick = plat_insns_per_tick();
   i : int = 0;
   step_no : int = 0;
-  while (~ (htif_done)) do {
+  while not(htif_done) do {
     let stepped = step(step_no);
     if stepped then step_no = step_no + 1;
 

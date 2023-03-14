@@ -115,8 +115,8 @@ function flush_TLB_Entry(e, asid, addr) = {
   match(asid, addr) {
     ( None(),  None()) => true,
     ( None(), Some(a)) => e.vAddr == (e.vMatchMask & a),
-    (Some(i),  None()) => (e.asid == i) & (~ (e.global)),
+    (Some(i),  None()) => (e.asid == i) & not(e.global),
     (Some(i), Some(a)) => (  (e.asid == i) & (e.vAddr == (a & e.vMatchMask))
-                           & (~ (e.global)))
+                           & not(e.global))
   }
 }

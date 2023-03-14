@@ -141,7 +141,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
         /* "LR faults like a normal load, even though it's in the AMO major opcode space."
          * - Andrew Waterman, isa-dev, 10 Jul 2018.
          */
-        if (~ (aligned))
+        if not(aligned)
         then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
         else match translateAddr(vaddr, Read(Data)) {
                TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
@@ -199,7 +199,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
               WORD   => vaddr[1..0] == 0b00,
               DOUBLE => vaddr[2..0] == 0b000
             };
-          if (~ (aligned))
+          if not(aligned)
           then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
           else {
             if match_reservation(vaddr) == false then {

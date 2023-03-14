@@ -127,7 +127,7 @@ function clause execute (RISCV_JAL(imm, rd)) = {
     },
     Ext_ControlAddr_OK(target) => {
       /* Perform standard alignment check */
-      if bit_to_bool(target[1]) & (~ (haveRVC()))
+      if bit_to_bool(target[1]) & not(haveRVC())
       then {
         handle_mem_exception(target, E_Fetch_Addr_Align());
         RETIRE_FAIL
@@ -191,7 +191,7 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
         RETIRE_FAIL
       },
       Ext_ControlAddr_OK(target) => {
-        if bit_to_bool(target[1]) & (~ (haveRVC())) then {
+        if bit_to_bool(target[1]) & not(haveRVC()) then {
           handle_mem_exception(target, E_Fetch_Addr_Align());
           RETIRE_FAIL;
         } else {
@@ -357,8 +357,8 @@ union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width, bool, boo
 
 /* unsigned loads are only present for widths strictly less than xlen,
    signed loads also present for widths equal to xlen */
-mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not_bool(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
-  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_bits(size) @ rd @ 0b0000011 if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not_bool(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
+mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
+  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_bits(size) @ rd @ 0b0000011 if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
 
 val extend_value : forall 'n, 0 < 'n <= xlen_bytes. (bool, MemoryOpResult(bits(8 * 'n))) -> MemoryOpResult(xlenbits)
 function extend_value(is_unsigned, value) = match (value) {
@@ -789,7 +789,7 @@ mapping clause encdec = MRET()
 function clause execute MRET() = {
   if   cur_privilege != Machine
   then { handle_illegal(); RETIRE_FAIL }
-  else if ~(ext_check_xret_priv (Machine))
+  else if not(ext_check_xret_priv (Machine))
   then { ext_fail_xret_priv(); RETIRE_FAIL }
   else {
     set_next_pc(exception_handler(cur_privilege, CTL_MRET(), PC));
@@ -808,12 +808,12 @@ mapping clause encdec = SRET()
 function clause execute SRET() = {
   let sret_illegal : bool = match cur_privilege {
     User       => true,
-    Supervisor => ~ (haveSupMode ()) | mstatus.TSR() == 0b1,
-    Machine    => ~ (haveSupMode ())
+    Supervisor => not(haveSupMode ()) | mstatus.TSR() == 0b1,
+    Machine    => not(haveSupMode ())
   };
   if   sret_illegal
   then { handle_illegal(); RETIRE_FAIL }
-  else if ~(ext_check_xret_priv (Supervisor))
+  else if not(ext_check_xret_priv (Supervisor))
   then { ext_fail_xret_priv(); RETIRE_FAIL }
   else {
     set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC));

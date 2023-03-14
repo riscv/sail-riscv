@@ -133,7 +133,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                    _      => if is_imm then unsigned(rs1) != 0 else unsigned(rs1) != 0
                };
                iR = RFull(csr_name(csr)) :: iR;
-               if ~(is_imm) then {
+               if not(is_imm) then {
                   iR = RFull(GPRstr(rs1)) :: iR;
                };
                if isWrite then {
@@ -306,7 +306,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                    _      => if is_imm then unsigned(rs1) != 0 else unsigned(rs1) != 0
                };
                iR = RFull(csr_name(csr)) :: iR;
-               if ~(is_imm) then {
+               if not(is_imm) then {
                   iR = RFull(GPRstr(rs1)) :: iR;
                };
                if isWrite then {

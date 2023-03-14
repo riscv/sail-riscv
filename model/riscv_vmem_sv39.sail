@@ -191,7 +191,7 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
           match update_PTE_Bits(pteBits, ac, ext_pte) {
             None()           => TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask), ext_ptw),
             Some(pbits, ext) => {
-              if ~ (plat_enable_dirty_update ())
+              if not(plat_enable_dirty_update())
               then {
                 /* pte needs dirty/accessed update but that is not enabled */
                 TR_Failure(PTW_PTE_Update(), ext_ptw)
@@ -224,7 +224,7 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
               TR_Address(pAddr, ext_ptw)
             },
             Some(pbits, ext) =>
-              if ~ (plat_enable_dirty_update ())
+              if not(plat_enable_dirty_update())
               then {
                 /* pte needs dirty/accessed update but that is not enabled */
                 TR_Failure(PTW_PTE_Update(), ext_ptw)
