@@ -175,6 +175,8 @@ function have_privLevel(priv : priv_level) -> bool =
     0b11 => true,
   }
 
+function haveZvkned() -> bool = true
+
 bitfield Mstatus : bits(64) = {
   SD   : xlen - 1,
 
@@ -276,8 +278,8 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
 
   // Set dirty bit to OR of other status bits.
   let dirty = extStatus_of_bits(o[FS]) == Dirty |
-              extStatus_of_bits(o[XS]) == Dirty |
-              extStatus_of_bits(o[VS]) == Dirty;
+	      extStatus_of_bits(o[XS]) == Dirty |
+	      extStatus_of_bits(o[VS]) == Dirty;
 
   [o with SD = bool_to_bits(dirty)]
 }
@@ -541,8 +543,8 @@ function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
   match (trapVectorMode_of_bits(m[Mode])) {
     TV_Direct => Some(base),
     TV_Vector => if   c[IsInterrupt] == 0b1
-                 then Some(base + (zero_extend(c[Cause]) << 2))
-                 else Some(base),
+		 then Some(base + (zero_extend(c[Cause]) << 2))
+		 else Some(base),
     TV_Reserved => None()
   }
 }
@@ -729,7 +731,7 @@ function lower_mstatus(m : Mstatus) -> Sstatus = {
 
 function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
   let dirty = extStatus_of_bits(s[FS]) == Dirty | extStatus_of_bits(s[XS]) == Dirty |
-              extStatus_of_bits(s[VS]) == Dirty;
+	      extStatus_of_bits(s[VS]) == Dirty;
 
   [m with
     SD = bool_to_bits(dirty),
