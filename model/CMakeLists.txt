@@ -84,11 +84,13 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_zbkx.sail"
                 "riscv_insts_zicond.sail"
                 ${vext_srcs}
+                "riscv_insts_zvkned.sail"
                 "riscv_insts_zicbom.sail"
                 "riscv_insts_zicboz.sail"
                 "riscv_insts_zawrs.sail"
                 "riscv_insts_zvbb.sail"
                 "riscv_insts_zvbc.sail"
+                "riscv_insts_zvkned.sail"
                 "riscv_insts_zvknhab.sail"
                 "riscv_insts_zvksh.sail"
                 # Zimop and Zcmop should be at the end so they can be overridden by earlier extensions
@@ -186,6 +188,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_inst_retire.sail"
                 ${sail_vm_srcs}
                 # Shared/common code for the cryptography extension.
+                "riscv_zvk_utils.sail"
                 "riscv_types_kext.sail"
                 "riscv_zvk_utils.sail"
             )
