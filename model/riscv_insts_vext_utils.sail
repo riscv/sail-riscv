@@ -8,10 +8,49 @@ mapping maybe_vmask : string <-> bits(1) = {
   sep() ^ "v0.t"  <-> 0b0
 }
 
+/* Check for valid EEW and EMUL values in vector widening/narrowing instructions */
+val valid_eew_emul : (int, int) -> bool effect {rreg}
+function valid_eew_emul(EEW, EMUL_pow) = {
+  let ELEN = int_power(2, get_elen_pow());
+  EEW >= 8 & EEW <= ELEN & EMUL_pow >= -3 & EMUL_pow <= 3;
+}
+
 /* Check for vstart value */
 val assert_vstart : int -> bool effect {rreg}
 function assert_vstart(i) = {
   unsigned(vstart) == i;
+}
+
+/* Check for valid destination register when vector masking is enabled: 
+ *  The destination vector register group for a masked vector instruction 
+ *  cannot overlap the source mask register (v0), 
+ *  unless the destination vector register is being written with a mask value (e.g., compares)
+ *  or the scalar result of a reduction.
+ */
+val valid_rd_mask : (regidx, bits(1)) -> bool
+function valid_rd_mask(rd, vm) = {
+  vm != 0b0 | rd != vreg_name("v0")
+}
+
+/* Check for valid register overlap in vector widening/narrowing instructions:
+ *  In a widening instruction, the overlap is valid only in the highest-numbered part
+ *  of the destination register group, and the source EMUL is at least 1.
+ *  In a narrowing instruction, the overlap is valid only in the lowest-numbered part
+ *  of the source register group.
+ */
+val valid_reg_overlap : (regidx, regidx, int, int) -> bool
+function valid_reg_overlap(rs, rd, EMUL_pow_rs, EMUL_pow_rd) = {
+  let rs_group = if EMUL_pow_rs > 0 then int_power(2, EMUL_pow_rs) else 1;
+  let rd_group = if EMUL_pow_rd > 0 then int_power(2, EMUL_pow_rd) else 1;
+  let rs_int = unsigned(rs);
+  let rd_int = unsigned(rd);
+  let is_valid  = if EMUL_pow_rs < EMUL_pow_rd then {
+                    (rs_int + rs_group <= rd_int) | (rs_int >= rd_int + rd_group) |
+                    ((rs_int + rs_group == rd_int + rd_group) & (EMUL_pow_rs >= 0))
+                  } else if EMUL_pow_rs > EMUL_pow_rd then {
+                    (rd_int <= rs_int) | (rd_int >= rs_int + rs_group)
+                  } else true;
+  is_valid
 }
 
 /* Scalar register shaping */
@@ -92,7 +131,7 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
         result[i] = vd_val[i]; /* TODO: configuration support */
       };
       mask[i] = false
-    } else if vm_val[i] == false then {
+    } else if ~(vm_val[i]) then {
       /* Inactive body elements defined by vm */
       if mask_ag == UNDISTURBED then {
         result[i] = vd_val[i]
@@ -174,7 +213,7 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
       /* Mask tail is always agnostic */
       result[i] = vd_val[i]; /* TODO: configuration support */
       mask[i] = false
-    } else if vm_val[i] == false then {
+    } else if ~(vm_val[i]) then {
       /* Inactive body elements defined by vm */
       if mask_ag == UNDISTURBED then {
         result[i] = vd_val[i]

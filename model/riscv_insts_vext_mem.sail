@@ -115,6 +115,8 @@ function clause execute(VLETYPE(vm, rs1, width, vd)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
+  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+
   process_vle(vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
 
@@ -259,6 +261,8 @@ function clause execute(VLSETYPE(vm, rs2, rs1, width, vd)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
+  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+
   process_vlse(vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
 
@@ -402,7 +406,9 @@ function clause execute(VLUXEITYPE(vm, vs2, rs1, width, vd)) = {
   let EEW_data_bytes = get_sew_bytes();
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
-  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
+  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
+
+  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxei(vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
 }
@@ -423,7 +429,9 @@ function clause execute(VLOXEITYPE(vm, vs2, rs1, width, vd)) = {
   let EEW_data_bytes = get_sew_bytes();
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
-  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
+  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
+
+  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxei(vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
 }
@@ -605,6 +613,8 @@ function clause execute(VLEFFTYPE(vm, rs1, width, vd)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
+  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+
   process_vleff(vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
 
@@ -682,6 +692,8 @@ function clause execute(VLSEGTYPE(nf, vm, rs1, width, vd)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW); /* # of element of each register group */
   let nf_int = nfields_int(nf);
+
+  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlseg(nf_int, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -773,6 +785,8 @@ function clause execute(VLSEGFFTYPE(nf, vm, rs1, width, vd)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
+
+  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlsegff(nf_int, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -907,6 +921,8 @@ function clause execute(VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
+
+  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlsseg(nf_int, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
@@ -1043,8 +1059,10 @@ function clause execute(VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let EEW_data_bytes = get_sew_bytes();
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
-  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
+  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
   let nf_int = nfields_int(nf);
+
+  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxseg(nf_int, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
 }
@@ -1065,8 +1083,10 @@ function clause execute(VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let EEW_data_bytes = get_sew_bytes();
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
-  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
+  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
   let nf_int = nfields_int(nf);
+
+  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxseg(nf_int, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
 }
@@ -1248,7 +1268,7 @@ function clause execute(VLRETYPE(nf, rs1, width, vd)) = {
   let nf_int = nfields_int(nf);
 
   assert(elem_per_reg >= 0);
-  assert(nf_int == 1 | nf_int == 2 | nf_int == 4 | nf_int == 8);
+  if ~(nf_int == 1 | nf_int == 2 | nf_int == 4 | nf_int == 8) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlre(nf_int, vd, load_width_bytes, rs1, elem_per_reg)
 }
@@ -1352,7 +1372,7 @@ function clause execute(VSRETYPE(nf, rs1, vs3)) = {
   let nf_int = nfields_int(nf);
 
   assert(elem_per_reg >= 0);
-  assert(nf_int == 1 | nf_int == 2 | nf_int == 4 | nf_int == 8);
+  if ~(nf_int == 1 | nf_int == 2 | nf_int == 4 | nf_int == 8) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vsre(nf_int, load_width_bytes, rs1, vs3, elem_per_reg)
 }
