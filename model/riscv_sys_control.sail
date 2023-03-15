@@ -170,11 +170,11 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
 
 val check_CSR_access : (csrRW, priv_level, Privilege, bool) -> bool
 function check_CSR_access(csrrw, csrpr, p, isWrite) =
-    (~ (isWrite == true & csrrw == 0b11))  /* read/write */
+    not(isWrite == true & csrrw == 0b11)  /* read/write */
   & (privLevel_to_bits(p) >=_u csrpr)      /* privilege */
 
 function check_TVM_SATP(csr : csreg, p : Privilege) -> bool =
-  ~ (csr == 0x180 & p == Supervisor & mstatus.TVM() == 0b1)
+  not(csr == 0x180 & p == Supervisor & mstatus.TVM() == 0b1)
 
 function check_Counteren(csr : csreg, p : Privilege) -> bool =
   match(csr, p) {
@@ -182,9 +182,9 @@ function check_Counteren(csr : csreg, p : Privilege) -> bool =
     (0xC01, Supervisor) => mcounteren.TM() == 0b1,
     (0xC02, Supervisor) => mcounteren.IR() == 0b1,
 
-    (0xC00, User) => mcounteren.CY() == 0b1 & ((~ (haveSupMode())) | scounteren.CY() == 0b1),
-    (0xC01, User) => mcounteren.TM() == 0b1 & ((~ (haveSupMode())) | scounteren.TM() == 0b1),
-    (0xC02, User) => mcounteren.IR() == 0b1 & ((~ (haveSupMode())) | scounteren.IR() == 0b1),
+    (0xC00, User) => mcounteren.CY() == 0b1 & (not(haveSupMode()) | scounteren.CY() == 0b1),
+    (0xC01, User) => mcounteren.TM() == 0b1 & (not(haveSupMode()) | scounteren.TM() == 0b1),
+    (0xC02, User) => mcounteren.IR() == 0b1 & (not(haveSupMode()) | scounteren.IR() == 0b1),
 
     (_, _) => /* no HPM counters for now */
               if   0xC03 <=_u csr & csr <=_u 0xC1F
@@ -197,9 +197,9 @@ function check_Counteren(csr : csreg, p : Privilege) -> bool =
  * allowed in the current priv mode
  */
 function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
-  if ~(csr == 0x015) then {
+  if not(csr == 0x015) then {
     true
-  } else if ~(isWrite) then {
+  } else if not(isWrite) then {
     /* Read-only access to the seed CSR is not allowed */
     false
   } else {
@@ -319,7 +319,7 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
       Ints_Empty()      => None(),
       Ints_Pending(p)   => let r = (p, Machine) in Some(r),
       Ints_Delegated(d) =>
-        if (~ (haveSupMode())) then {
+        if not(haveSupMode()) then {
           if uIE then let r = (d, User) in Some(r)
           else                             None()
         } else {
@@ -343,7 +343,7 @@ function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege
   /* If we don't have different privilege levels, we don't need to check delegation.
    * Absence of U-mode implies absence of S-mode.
    */
-  if (~ (haveUsrMode())) | ((~ (haveSupMode())) & (~ (haveNExt()))) then {
+  if not(haveUsrMode()) | (not(haveSupMode()) & not(haveNExt())) then {
     assert(priv == Machine, "invalid current privilege");
     let enabled_pending = mip.bits() & mie.bits();
     match findPendingInterrupt(enabled_pending) {
@@ -432,7 +432,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        mstatus->SPP()  = match cur_privilege {
                            User => 0b0,
                            Supervisor => 0b1,
-                           Machine => internal_error("invalid privilege for s-mode trap")
+                           Machine => internal_error(__FILE__, __LINE__, "invalid privilege for s-mode trap")
                          };
        stval           = tval(info);
        sepc            = pc;
@@ -564,7 +564,7 @@ function init_sys() -> unit = {
   misa->S()   = 0b1;                            /* supervisor-mode */
 
   if   sys_enable_fdext() & sys_enable_zfinx()
-  then internal_error("F and Zfinx cannot both be enabled!");
+  then internal_error(__FILE__, __LINE__, "F and Zfinx cannot both be enabled!");
 
   /* We currently support both F and D */
   misa->F()   = bool_to_bits(sys_enable_fdext());      /* single-precision */

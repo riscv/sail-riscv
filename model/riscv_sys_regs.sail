@@ -161,11 +161,11 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
          let  v = Mk_Misa(v);
          /* Suppress changing C if nextPC would become misaligned or an extension vetoes or C was disabled at boot (i.e. not supported). */
          let m =
-           if   (v.C() == 0b0 & (nextPC[1] == bitone | ext_veto_disable_C())) | ~(sys_enable_rvc())
+           if   (v.C() == 0b0 & (nextPC[1] == bitone | ext_veto_disable_C())) | not(sys_enable_rvc())
            then m
            else update_C(m, v.C());
          /* Handle updates for F/D. */
-         if   ~(sys_enable_fdext()) | (v.D() == 0b1 & v.F() == 0b0)
+         if   not(sys_enable_fdext()) | (v.D() == 0b1 & v.F() == 0b0)
          then m
          else update_D(update_F(m, v.F()), v.D())
        }
@@ -316,13 +316,13 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
           } else m;
 
   /* Hardwired to zero in the absence of 'U' or 'N'. */
-  let m = if (~ (haveNExt())) then {
+  let m = if not(haveNExt()) then {
              let m = update_UPIE(m, 0b0);
              let m = update_UIE(m, 0b0);
              m
           } else m;
 
-  if (~ (haveUsrMode())) then {
+  if not(haveUsrMode()) then {
     let m = update_MPRV(m, 0b0);
     m
   } else m
@@ -339,7 +339,7 @@ function cur_Architecture() -> Architecture = {
     };
   match architecture(a) {
     Some(a) => a,
-    None()  => internal_error("Invalid current architecture")
+    None()  => internal_error(__FILE__, __LINE__, "Invalid current architecture")
   }
 }
 

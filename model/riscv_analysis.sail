@@ -133,7 +133,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                    _      => if is_imm then unsigned(rs1) != 0 else unsigned(rs1) != 0
                };
                iR = RFull(csr_name(csr)) :: iR;
-               if ~(is_imm) then {
+               if not(is_imm) then {
                   iR = RFull(GPRstr(rs1)) :: iR;
                };
                if isWrite then {
@@ -151,7 +151,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                  (true,  false) => IK_mem_read (Read_RISCV_acquire),
                  (true,  true)  => IK_mem_read (Read_RISCV_strong_acquire),
 
-                 _  => internal_error("LOAD type not implemented in initial_analysis")
+                 _  => internal_error(__FILE__, __LINE__, "LOAD type not implemented in initial_analysis")
                }
       },
       STORE(imm, rs2, rs1, width, aq, rl) => {
@@ -164,7 +164,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                  (false, true)  => IK_mem_write (Write_RISCV_release),
                  (true,  true)  => IK_mem_write (Write_RISCV_strong_release),
 
-                 _ => internal_error("STORE type not implemented in initial_analysis")
+                 _ => internal_error(__FILE__, __LINE__, "STORE type not implemented in initial_analysis")
                }
       },
       ADDIW(imm, rs, rd) => {
@@ -196,14 +196,14 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
 
                  (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => IK_simple (),
 
-                 _ => internal_error("barrier type not implemented in initial_analysis")
+                 _ => internal_error(__FILE__, __LINE__, "barrier type not implemented in initial_analysis")
                };
       },
       FENCE_TSO(pred, succ) => {
              ik =
                match (pred, succ) {
                  (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => IK_barrier (Barrier_RISCV_tso),
-                 _ => internal_error("barrier type not implemented in initial_analysis")
+                 _ => internal_error(__FILE__, __LINE__, "barrier type not implemented in initial_analysis")
                };
       },
      FENCEI() => {
@@ -217,7 +217,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
               (false, false) => IK_mem_read (Read_RISCV_reserved),
               (true,  false) => IK_mem_read (Read_RISCV_reserved_acquire),
               (true,  true)  => IK_mem_read (Read_RISCV_reserved_strong_acquire),
-              (false, true)  => internal_error("LOADRES type not implemented in initial_analysis")
+              (false, true)  => internal_error(__FILE__, __LINE__, "LOADRES type not implemented in initial_analysis")
             };
      },
      STORECON(aq, rl, rs2, rs1, width, rd) => {
@@ -230,7 +230,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                (false, true)  => IK_mem_write (Write_RISCV_conditional_release),
                (true,  true)  => IK_mem_write (Write_RISCV_conditional_strong_release),
 
-               (true,  false) => internal_error("STORECON type not implemented in initial_analysis")
+               (true,  false) => internal_error(__FILE__, __LINE__, "STORECON type not implemented in initial_analysis")
              };
       },
       AMO(op, aq, rl, rs2, rs1, width, rd) => {
@@ -306,7 +306,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                    _      => if is_imm then unsigned(rs1) != 0 else unsigned(rs1) != 0
                };
                iR = RFull(csr_name(csr)) :: iR;
-               if ~(is_imm) then {
+               if not(is_imm) then {
                   iR = RFull(GPRstr(rs1)) :: iR;
                };
                if isWrite then {
@@ -324,7 +324,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                  (true,  false) => IK_mem_read (Read_RISCV_acquire),
                  (true,  true)  => IK_mem_read (Read_RISCV_strong_acquire),
 
-                 _  => internal_error("LOAD type not implemented in initial_analysis")
+                 _  => internal_error(__FILE__, __LINE__, "LOAD type not implemented in initial_analysis")
                }
       },
       STORE(imm, rs2, rs1, width, aq, rl) => {
@@ -337,7 +337,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                  (false, true)  => IK_mem_write (Write_RISCV_release),
                  (true,  true)  => IK_mem_write (Write_RISCV_strong_release),
 
-                 _ => internal_error("STORE type not implemented in initial_analysis")
+                 _ => internal_error(__FILE__, __LINE__, "STORE type not implemented in initial_analysis")
                }
       },
       ADDIW(imm, rs, rd) => {
@@ -368,14 +368,14 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
 
                  (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => IK_simple (),
 
-                 _ => internal_error("barrier type not implemented in initial_analysis")
+                 _ => internal_error(__FILE__, __LINE__, "barrier type not implemented in initial_analysis")
                };
       },
       FENCE_TSO(pred, succ) => {
              ik =
                match (pred, succ) {
 		 (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => IK_barrier (Barrier_RISCV_tso ()),
-                 _ => internal_error("barrier type not implemented in initial_analysis")
+                 _ => internal_error(__FILE__, __LINE__, "barrier type not implemented in initial_analysis")
                };
       },
      FENCEI() => {
@@ -389,7 +389,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
               (false, false) => IK_mem_read (Read_RISCV_reserved),
               (true,  false) => IK_mem_read (Read_RISCV_reserved_acquire),
               (true,  true)  => IK_mem_read (Read_RISCV_reserved_strong_acquire),
-              (false, true)  => internal_error("LOADRES type not implemented in initial_analysis")
+              (false, true)  => internal_error(__FILE__, __LINE__, "LOADRES type not implemented in initial_analysis")
             };
      },
      STORECON(aq, rl, rs2, rs1, width, rd) => {
@@ -402,7 +402,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
                (false, true)  => IK_mem_write (Write_RISCV_conditional_release),
                (true,  true)  => IK_mem_write (Write_RISCV_conditional_strong_release),
 
-               (true,  false) => internal_error("STORECON type not implemented in initial_analysis")
+               (true,  false) => internal_error(__FILE__, __LINE__, "STORECON type not implemented in initial_analysis")
              };
       },
       AMO(op, aq, rl, rs2, rs1, width, rd) => {

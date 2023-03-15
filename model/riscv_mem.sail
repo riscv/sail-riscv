@@ -142,7 +142,7 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(
 
 /* PMP checks if enabled */
 function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), p : Privilege, paddr : xlenbits, width : atom('n), aq : bool, rl : bool, res: bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
-  if   (~ (plat_enable_pmp ()))
+  if   not(plat_enable_pmp())
   then checked_mem_read(t, paddr, width, aq, rl, res, meta)
   else {
     match pmpCheck(paddr, width, t, p) {
@@ -163,7 +163,7 @@ function rvfi_read (addr, width, result) = {
     MemValue(v, _) => if width <= 16
                        then { rvfi_mem_data->rvfi_mem_rdata() = sail_zero_extend(v, 256);
                               rvfi_mem_data->rvfi_mem_rmask() = rvfi_encode_width_mask(width) }
-                       else { internal_error("Expected at most 16 bytes here!") },
+                       else { internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!") },
     MemException(_) => ()
   };
 }
@@ -188,7 +188,7 @@ $endif
 /* The most generic memory read operation */
 function mem_read_priv_meta (typ, priv, paddr, width, aq, rl, res, meta) = {
   let result : MemoryOpResult((bits(8 * 'n), mem_meta)) =
-    if (aq | res) & (~ (is_aligned_addr(paddr, width)))
+    if (aq | res) & not(is_aligned_addr(paddr, width))
     then MemException(E_Load_Addr_Align())
     else match (aq, rl, res) {
       (false, true,  false) => throw(Error_not_implemented("load.rl")),
@@ -213,7 +213,7 @@ function mem_read (typ, paddr, width, aq, rel, res) =
 val mem_write_ea : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bool, bool, bool) -> MemoryOpResult(unit) effect {eamem, escape}
 
 function mem_write_ea (addr, width, aq, rl, con) = {
-  if (rl | con) & (~ (is_aligned_addr(addr, width)))
+  if (rl | con) & not(is_aligned_addr(addr, width))
   then MemException(E_SAMO_Addr_Align())
   else match (aq, rl, con) {
     (false, false, false) => MemValue(write_ram_ea(Write_plain, addr, width)),
@@ -237,7 +237,7 @@ function rvfi_write (addr, width, value, meta) = {
     rvfi_mem_data->rvfi_mem_wdata() = sail_zero_extend(value,256);
     rvfi_mem_data->rvfi_mem_wmask() = rvfi_encode_width_mask(width);
   } else {
-    internal_error("Expected at most 16 bytes here!");
+    internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!");
   }
 }
 $else
@@ -267,7 +267,7 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kin
 
 /* PMP checks if enabled */
 function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, paddr : xlenbits, width : atom('n), data: bits(8 * 'n), typ: AccessType(ext_access_type), priv: Privilege, meta: mem_meta) -> MemoryOpResult(bool) =
-  if   (~ (plat_enable_pmp ()))
+  if   not(plat_enable_pmp())
   then checked_mem_write(wk, paddr, width, data, meta)
   else {
     match pmpCheck(paddr, width, typ, priv) {
@@ -286,7 +286,7 @@ function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, pa
 val mem_write_value_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), AccessType(ext_access_type), Privilege, mem_meta, bool, bool, bool) -> MemoryOpResult(bool) effect {wmv, wmvt, rreg, wreg, escape}
 function mem_write_value_priv_meta (paddr, width, value, typ, priv, meta, aq, rl, con) = {
   rvfi_write(paddr, width, value, meta);
-  if (rl | con) & (~ (is_aligned_addr(paddr, width)))
+  if (rl | con) & not(is_aligned_addr(paddr, width))
   then MemException(E_SAMO_Addr_Align())
   else {
     let wk : write_kind = match (aq, rl, con) {

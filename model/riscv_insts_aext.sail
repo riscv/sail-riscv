@@ -141,7 +141,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
         /* "LR faults like a normal load, even though it's in the AMO major opcode space."
          * - Andrew Waterman, isa-dev, 10 Jul 2018.
          */
-        if (~ (aligned))
+        if not(aligned)
         then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
         else match translateAddr(vaddr, Read(Data)) {
                TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
@@ -151,7 +151,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
                    (HALF, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 2, aq, aq & rl, true), false),
                    (WORD, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 4, aq, aq & rl, true), false),
                    (DOUBLE, 64) => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 8, aq, aq & rl, true), false),
-                   _            => internal_error("Unexpected AMO width")
+                   _            => internal_error(__FILE__, __LINE__, "Unexpected AMO width")
                  }
              }
       }
@@ -199,7 +199,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
               WORD   => vaddr[1..0] == 0b00,
               DOUBLE => vaddr[2..0] == 0b000
             };
-          if (~ (aligned))
+          if not(aligned)
           then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
           else {
             if match_reservation(vaddr) == false then {
@@ -215,7 +215,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
                     (HALF, _)    => mem_write_ea(addr, 2, aq & rl, rl, true),
                     (WORD, _)    => mem_write_ea(addr, 4, aq & rl, rl, true),
                     (DOUBLE, 64) => mem_write_ea(addr, 8, aq & rl, rl, true),
-                    _            => internal_error("STORECON expected word or double")
+                    _            => internal_error(__FILE__, __LINE__, "STORECON expected word or double")
                   };
                   match (eares) {
                     MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
@@ -226,7 +226,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
                         (HALF, _)    => mem_write_value(addr, 2, rs2_val[15..0], aq & rl, rl, true),
                         (WORD, _)    => mem_write_value(addr, 4, rs2_val[31..0], aq & rl, rl, true),
                         (DOUBLE, 64) => mem_write_value(addr, 8, rs2_val,        aq & rl, rl, true),
-                        _            => internal_error("STORECON expected word or double")
+                        _            => internal_error(__FILE__, __LINE__, "STORECON expected word or double")
                       };
                       match (res) {
                         MemValue(true)  => { X(rd) = EXTZ(0b0); cancel_reservation(); RETIRE_SUCCESS },
@@ -287,7 +287,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
               (HALF, _)    => mem_write_ea(addr, 2, aq & rl, rl, true),
               (WORD, _)    => mem_write_ea(addr, 4, aq & rl, rl, true),
               (DOUBLE, 64) => mem_write_ea(addr, 8, aq & rl, rl, true),
-              _            => internal_error("Unexpected AMO width")
+              _            => internal_error(__FILE__, __LINE__, "Unexpected AMO width")
             };
             let is_unsigned : bool = match op {
               AMOMINU => true,
@@ -308,7 +308,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                   (HALF, _)    => extend_value(is_unsigned, mem_read(ReadWrite(Data, Data), addr, 2, aq, aq & rl, true)),
                   (WORD, _)    => extend_value(is_unsigned, mem_read(ReadWrite(Data, Data), addr, 4, aq, aq & rl, true)),
                   (DOUBLE, 64) => extend_value(is_unsigned, mem_read(ReadWrite(Data, Data), addr, 8, aq, aq & rl, true)),
-                  _            => internal_error("Unexpected AMO width")
+                  _            => internal_error(__FILE__, __LINE__, "Unexpected AMO width")
                 };
                 match (mval) {
                   MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL },
@@ -340,11 +340,11 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                       (HALF, _)    => mem_write_value(addr, 2, result[15..0], aq & rl, rl, true),
                       (WORD, _)    => mem_write_value(addr, 4, result[31..0], aq & rl, rl, true),
                       (DOUBLE, 64) => mem_write_value(addr, 8, result,        aq & rl, rl, true),
-                      _            => internal_error("Unexpected AMO width")
+                      _            => internal_error(__FILE__, __LINE__, "Unexpected AMO width")
                     };
                     match (wval) {
                       MemValue(true)  => { X(rd) = rval; RETIRE_SUCCESS },
-                      MemValue(false) => { internal_error("AMO got false from mem_write_value") },
+                      MemValue(false) => { internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value") },
                       MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL }
                     }
                   }

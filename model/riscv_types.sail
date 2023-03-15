@@ -128,6 +128,23 @@ function arch_to_bits(a : Architecture) -> arch_xlen =
     RV128 => 0b11
   }
 
+
+/* model-internal exceptions */
+
+union exception = {
+  Error_not_implemented : string,
+  Error_internal_error  : unit
+}
+
+val not_implemented : forall ('a : Type). string -> 'a effect {escape}
+function not_implemented message = throw(Error_not_implemented(message))
+
+val internal_error : forall ('a : Type). (string, int, string) -> 'a effect {escape}
+function internal_error(file, line, s) = {
+    assert (false, file ^ ":" ^ string_of_int(line) ^ ": " ^ s);
+    throw Error_internal_error()
+}
+
 /* privilege levels */
 
 type priv_level = bits(2)
@@ -141,12 +158,17 @@ function privLevel_to_bits (p) =
     Machine    => 0b11
   }
 
+/*!
+ * Converts the given 2-bit privilege level code to the [Privilege] enum.
+ * Calling with a reserved code will result in an internal error.
+ */
 val privLevel_of_bits : priv_level -> Privilege
 function privLevel_of_bits (p) =
   match (p) {
     0b00 => User,
     0b01 => Supervisor,
-    0b11 => Machine
+    0b11 => Machine,
+    0b10 => internal_error(__FILE__, __LINE__, "Invalid privilege level: " ^ BitStr(p))
   }
 
 val privLevel_to_str : Privilege -> string
@@ -301,22 +323,6 @@ function exceptionType_to_str(e) =
 
 overload to_str = {exceptionType_to_str}
 
-/* model-internal exceptions */
-
-union exception = {
-  Error_not_implemented : string,
-  Error_internal_error  : unit
-}
-
-val not_implemented : forall ('a : Type). string -> 'a effect {escape}
-function not_implemented message = throw(Error_not_implemented(message))
-
-val internal_error : forall ('a : Type). string -> 'a effect {escape}
-function internal_error(s) = {
-    assert (false, s);
-    throw Error_internal_error()
-}
-
 /* trap modes */
 
 type tv_mode = bits(2)
@@ -445,4 +451,29 @@ function word_width_bytes width = match width {
   HALF   => 2,
   WORD   => 4,
   DOUBLE => 8
+}
+
+/*!
+ * Raise an internal error reporting that width w is invalid for access kind, k,
+ * and current xlen. The file name and line number should be passed in as the
+ * first two arguments using the __FILE__ and __LINE__ built-in macros.
+ * This is mainly used to supress Sail warnings about incomplete matches and
+ * should be unreachable. See https://github.com/riscv/sail-riscv/issues/194
+ * and https://github.com/riscv/sail-riscv/pull/197 .
+ */
+val report_invalid_width : forall ('a : Type). (string, int, word_width, string) -> 'a effect {escape}
+function report_invalid_width(f , l, w, k) -> 'a = {
+  /*
+   * Ideally we would call internal_error here but this triggers a Sail bug,
+   * https://github.com/rems-project/sail/issues/203 in versions < 0.15.1, so
+   * we work around this by manually inlining.
+   * TODO when we are happy to require Sail >= 0.15.1 uncomment the following
+   * and remove the rest of the function.
+   */
+  // internal_error(f, l, "Invalid width, " ^ size_mnemonic(w) ^ ", for " ^ k ^
+  //   " with xlen=" ^ string_of_int(sizeof(xlen)));
+  assert (false, f ^ ":" ^ string_of_int(l) ^ ": " ^ "Invalid width, "
+    ^ size_mnemonic(w) ^ ", for " ^ k ^ " with xlen="
+    ^ string_of_int(sizeof(xlen)));
+  throw Error_internal_error()
 }

@@ -127,7 +127,7 @@ function clause execute (RISCV_JAL(imm, rd)) = {
     },
     Ext_ControlAddr_OK(target) => {
       /* Perform standard alignment check */
-      if bit_to_bool(target[1]) & (~ (haveRVC()))
+      if bit_to_bool(target[1]) & not(haveRVC())
       then {
         handle_mem_exception(target, E_Fetch_Addr_Align());
         RETIRE_FAIL
@@ -191,7 +191,7 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
         RETIRE_FAIL
       },
       Ext_ControlAddr_OK(target) => {
-        if bit_to_bool(target[1]) & (~ (haveRVC())) then {
+        if bit_to_bool(target[1]) & not(haveRVC()) then {
           handle_mem_exception(target, E_Fetch_Addr_Align());
           RETIRE_FAIL;
         } else {
@@ -357,8 +357,8 @@ union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width, bool, boo
 
 /* unsigned loads are only present for widths strictly less than xlen,
    signed loads also present for widths equal to xlen */
-mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not_bool(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
-  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_bits(size) @ rd @ 0b0000011 if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not_bool(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
+mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
+  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_bits(size) @ rd @ 0b0000011 if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
 
 val extend_value : forall 'n, 0 < 'n <= xlen_bytes. (bool, MemoryOpResult(bits(8 * 'n))) -> MemoryOpResult(xlenbits)
 function extend_value(is_unsigned, value) = match (value) {
@@ -394,15 +394,16 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
       else match translateAddr(vaddr, Read(Data)) {
         TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(paddr, _) =>
-          match (width, sizeof(xlen)) {
-            (BYTE, _)   =>
-               process_load(rd, vaddr, mem_read(Read(Data), paddr, 1, aq, rl, false), is_unsigned),
-            (HALF, _)   =>
-               process_load(rd, vaddr, mem_read(Read(Data), paddr, 2, aq, rl, false), is_unsigned),
-            (WORD, _)   =>
-               process_load(rd, vaddr, mem_read(Read(Data), paddr, 4, aq, rl, false), is_unsigned),
-            (DOUBLE, 64) =>
-               process_load(rd, vaddr, mem_read(Read(Data), paddr, 8, aq, rl, false), is_unsigned)
+          match (width) {
+            BYTE =>
+              process_load(rd, vaddr, mem_read(Read(Data), paddr, 1, aq, rl, false), is_unsigned),
+            HALF =>
+              process_load(rd, vaddr, mem_read(Read(Data), paddr, 2, aq, rl, false), is_unsigned),
+            WORD =>
+              process_load(rd, vaddr, mem_read(Read(Data), paddr, 4, aq, rl, false), is_unsigned),
+            DOUBLE if sizeof(xlen) >= 64 =>
+              process_load(rd, vaddr, mem_read(Read(Data), paddr, 8, aq, rl, false), is_unsigned),
+            _ => report_invalid_width(__FILE__, __LINE__, width, "load")
           }
       }
   }
@@ -459,15 +460,17 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
             MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
             MemValue(_) => {
               let rs2_val = X(rs2);
-              let res : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
-                (BYTE, _)    => mem_write_value(paddr, 1, rs2_val[7..0],  aq, rl, false),
-                (HALF, _)    => mem_write_value(paddr, 2, rs2_val[15..0], aq, rl, false),
-                (WORD, _)    => mem_write_value(paddr, 4, rs2_val[31..0], aq, rl, false),
-                (DOUBLE, 64) => mem_write_value(paddr, 8, rs2_val,        aq, rl, false)
+              let res : MemoryOpResult(bool) = match (width) {
+                BYTE => mem_write_value(paddr, 1, rs2_val[7..0],  aq, rl, false),
+                HALF => mem_write_value(paddr, 2, rs2_val[15..0], aq, rl, false),
+                WORD => mem_write_value(paddr, 4, rs2_val[31..0], aq, rl, false),
+                DOUBLE if sizeof(xlen) >= 64
+                     => mem_write_value(paddr, 8, rs2_val,        aq, rl, false),
+                _    => report_invalid_width(__FILE__, __LINE__, width, "store"),
               };
               match (res) {
                 MemValue(true)  => RETIRE_SUCCESS,
-                MemValue(false) => internal_error("store got false from mem_write_value"),
+                MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                 MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
               }
             }
@@ -786,7 +789,7 @@ mapping clause encdec = MRET()
 function clause execute MRET() = {
   if   cur_privilege != Machine
   then { handle_illegal(); RETIRE_FAIL }
-  else if ~(ext_check_xret_priv (Machine))
+  else if not(ext_check_xret_priv (Machine))
   then { ext_fail_xret_priv(); RETIRE_FAIL }
   else {
     set_next_pc(exception_handler(cur_privilege, CTL_MRET(), PC));
@@ -805,12 +808,12 @@ mapping clause encdec = SRET()
 function clause execute SRET() = {
   let sret_illegal : bool = match cur_privilege {
     User       => true,
-    Supervisor => ~ (haveSupMode ()) | mstatus.TSR() == 0b1,
-    Machine    => ~ (haveSupMode ())
+    Supervisor => not(haveSupMode ()) | mstatus.TSR() == 0b1,
+    Machine    => not(haveSupMode ())
   };
   if   sret_illegal
   then { handle_illegal(); RETIRE_FAIL }
-  else if ~(ext_check_xret_priv (Supervisor))
+  else if not(ext_check_xret_priv (Supervisor))
   then { ext_fail_xret_priv(); RETIRE_FAIL }
   else {
     set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC));
@@ -864,7 +867,7 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
     Supervisor => match (architecture(get_mstatus_SXL(mstatus)), mstatus.TVM()) {
                     (Some(_), 0b1)  => { handle_illegal(); RETIRE_FAIL },
                     (Some(_), 0b0) => { flush_TLB(asid, addr); RETIRE_SUCCESS },
-                    (_, _)           => internal_error("unimplemented sfence architecture")
+                    (_, _)           => internal_error(__FILE__, __LINE__, "unimplemented sfence architecture")
                   },
     Machine    => { flush_TLB(asid, addr); RETIRE_SUCCESS }
   }

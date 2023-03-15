@@ -86,7 +86,7 @@ function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
                      };
   match tvec_addr(tvec, cause) {
     Some(epc) => epc,
-    None()    => internal_error("Invalid tvec mode")
+    None()    => internal_error(__FILE__, __LINE__, "Invalid tvec mode")
   }
 }
 

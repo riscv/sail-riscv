@@ -70,8 +70,6 @@
 
 /* ****************************************************************** */
 
-union clause ast = ILLEGAL : word
-
 mapping clause encdec = ILLEGAL(s) <-> s
 
 function clause execute (ILLEGAL(s)) = { handle_illegal(); RETIRE_FAIL }
@@ -79,8 +77,6 @@ function clause execute (ILLEGAL(s)) = { handle_illegal(); RETIRE_FAIL }
 mapping clause assembly = ILLEGAL(s) <-> "illegal" ^ spc() ^ hex_bits_32(s)
 
 /* ****************************************************************** */
-
-union clause ast = C_ILLEGAL : half
 
 mapping clause encdec_compressed = C_ILLEGAL(s) <-> s
 
@@ -101,9 +97,3 @@ val print_insn : ast -> string
 function print_insn insn = assembly(insn)
 
 overload to_str = {print_insn}
-
-val decode : bits(32) -> ast effect {rreg}
-function decode bv = encdec(bv)
-
-val decodeCompressed : bits(16) -> ast effect {rreg}
-function decodeCompressed bv = encdec_compressed(bv)

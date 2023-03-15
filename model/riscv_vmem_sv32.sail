@@ -197,7 +197,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
           match update_PTE_Bits(pteBits, ac, ext_pte) {
             None()           => TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask), ext_ptw),
             Some(pbits, ext) => {
-              if ~ (plat_enable_dirty_update ())
+              if not(plat_enable_dirty_update())
               then {
                 /* pte needs dirty/accessed update but that is not enabled */
                 TR_Failure(PTW_PTE_Update(), ext_ptw)
@@ -211,7 +211,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
                 /* update page table */
                 match mem_write_value_priv(to_phys_addr(EXTZ(ent.pteAddr)), 4, n_pte.bits(), Supervisor, false, false, false) {
                   MemValue(_)     => (),
-                  MemException(e) => internal_error("invalid physical address in TLB")
+                  MemException(e) => internal_error(__FILE__, __LINE__, "invalid physical address in TLB")
                 };
                 TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask), ext_ptw)
               }
@@ -230,7 +230,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
               TR_Address(pAddr, ext_ptw)
             },
             Some(pbits, ext) =>
-              if ~ (plat_enable_dirty_update ())
+              if not(plat_enable_dirty_update())
               then {
                 /* pte needs dirty/accessed update but that is not enabled */
                 TR_Failure(PTW_PTE_Update(), ext_ptw)

@@ -84,7 +84,7 @@ function clause execute (RISCV_JALR(imm, rs1, rd)) = {
     },
     Ext_ControlAddr_OK(addr) => {
       let target = [addr with 0 = bitzero];  /* clear addr[0] */
-      if bit_to_bool(target[1]) & ~(haveRVC()) then {
+      if bit_to_bool(target[1]) & not(haveRVC()) then {
         handle_mem_exception(target, E_Fetch_Addr_Align());
         RETIRE_FAIL
       } else {

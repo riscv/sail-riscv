@@ -143,8 +143,8 @@ FYAML_LIBS = $(shell pkg-config --libs libfyaml)
 PCRE2_FLAGS = $(shell pkg-config --cflags)
 PCRE2_LIBS = $(shell pkg-config --libs libpcre2-8)
 
-C_FLAGS = -I $(SAIL_LIB_DIR) -I c_emulator $(GMP_FLAGS) $(ZLIB_FLAGS) $(SOFTFLOAT_FLAGS) $(FYAML_FLAGS) $(PCRE2_FLAGS)-fcommon
-C_LIBS  = $(GMP_LIBS) $(ZLIB_LIBS) $(SOFTFLOAT_LIBS) $(FYAML_LIBS) $(PCRE2_LIBS)
+C_FLAGS = -I $(SAIL_LIB_DIR) -I c_emulator $(GMP_FLAGS) $(ZLIB_FLAGS) $(SOFTFLOAT_FLAGS)
+C_LIBS  = $(GMP_LIBS) $(ZLIB_LIBS) $(SOFTFLOAT_LIBS)
 
 # The C simulator can be built to be linked against Spike for tandem-verification.
 # This needs the C bindings to Spike from https://github.com/SRI-CSL/l3riscv
@@ -236,10 +236,6 @@ cloc:
 gcovr:
 	gcovr -r . --html --html-detail -o index.html
 
-generated_definitions/ocaml/riscv_duopod_ocaml: $(PRELUDE_SRCS) model/riscv_duopod.sail
-	mkdir -p generated_definitions/ocaml
-	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml_build_dir generated_definitions/ocaml -o riscv_duopod_ocaml model/riscv_duopod.sail
-
 ocaml_emulator/tracecmp: ocaml_emulator/tracecmp.ml
 	ocamlfind ocamlopt -annot -linkpkg -package unix $^ -o $@
 
@@ -296,18 +292,6 @@ latex: $(SAIL_SRCS) Makefile
 generated_definitions/isabelle/$(ARCH)/ROOT: handwritten_support/ROOT
 	mkdir -p generated_definitions/isabelle/$(ARCH)
 	cp handwritten_support/ROOT generated_definitions/isabelle/$(ARCH)/
-
-generated_definitions/lem/riscv_duopod.lem: $(PRELUDE_SRCS) model/riscv_duopod.sail
-	mkdir -p generated_definitions/lem
-	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem -isa_output_dir generated_definitions/isabelle -lem_mwords -lem_lib Riscv_extras -lem_lib Mem_metadata -o riscv_duopod model/riscv_duopod.sail
-
-generated_definitions/isabelle/Riscv_duopod.thy: generated_definitions/isabelle/RV64/ROOT generated_definitions/lem/riscv_duopod.lem $(RISCV_EXTRAS_LEM)
-	lem -isa -outdir generated_definitions/isabelle -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
-		$(RISCV_EXTRAS_LEM) \
-		generated_definitions/lem/riscv_duopod_types.lem \
-		generated_definitions/lem/riscv_duopod.lem
-
-riscv_duopod: generated_definitions/ocaml/riscv_duopod_ocaml generated_definitions/isabelle/Riscv_duopod.thy
 
 riscv_isa: generated_definitions/isabelle/$(ARCH)/Riscv.thy
 riscv_isa_build: riscv_isa
@@ -388,9 +372,6 @@ riscv_coq_build: generated_definitions/coq/$(ARCH)/riscv.vo
 $(addprefix generated_definitions/coq/$(ARCH)/,riscv.v riscv_types.v): $(SAIL_COQ_SRCS) Makefile
 	mkdir -p generated_definitions/coq/$(ARCH)
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq/$(ARCH) -o riscv -coq_lib riscv_extras -coq_lib mem_metadata $(SAIL_COQ_SRCS)
-$(addprefix generated_definitions/coq/,riscv_duopod.v riscv_duopod_types.v): $(PRELUDE_SRCS) model/riscv_duopod.sail model/riscv_termination_duo.sail
-	mkdir -p generated_definitions/coq/
-	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq -o riscv_duopod -coq_lib riscv_extras -coq_lib mem_metadata model/riscv_duopod.sail model/riscv_termination_duo.sail
 
 %.vo: %.v
 ifeq ($(EXPLICIT_COQ_BBV),yes)
@@ -406,7 +387,6 @@ endif
 	coqc $(COQ_LIBS) $<
 
 generated_definitions/coq/$(ARCH)/riscv.vo: generated_definitions/coq/$(ARCH)/riscv_types.vo handwritten_support/riscv_extras.vo handwritten_support/mem_metadata.vo
-generated_definitions/coq/riscv_duopod.vo: generated_definitions/coq/riscv_duopod_types.vo handwritten_support/riscv_extras.vo handwritten_support/mem_metadata.vo
 
 echo_rmem_srcs:
 	echo $(SAIL_RMEM_SRCS)

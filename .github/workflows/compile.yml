@@ -1,13 +1,11 @@
 name: CI
 
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: [ubuntu-18.04]
+    runs-on: ubuntu-22.04
     steps:
-    - name: Add opam2 PPA
-      run: sudo add-apt-repository -y ppa:avsm/ppa
     - name: Install packages
       run: sudo apt install -y opam zlib1g-dev pkg-config libgmp-dev z3 device-tree-compiler
     - name: Init opam

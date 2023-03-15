@@ -109,6 +109,8 @@ function not_bit(b) = if b == bitone then bitzero else bitone
 
 overload ~ = {not_bool, not_vec, not_bit}
 
+val not = pure {coq: "negb", _: "not"} : forall ('p : Bool). bool('p) -> bool(not('p))
+
 val neq_vec = {lem: "neq"} : forall 'n. (bits('n), bits('n)) -> bool
 
 function neq_vec (x, y) = not_bool(eq_bits(x, y))

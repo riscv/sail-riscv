@@ -67,9 +67,12 @@
 /*=======================================================================================*/
 
 /* Extensions may wish to interpose and transform decoded instructions,
- * based on other machine state.  This is supported via a post-decode
- * instruction hook, the default implementation of which is provided below.
+ * based on other machine state. This is supported via decode instruction
+  hooks, the default implementation of which is provided below.
  */
 
-val ext_post_decode_hook : ast -> ast effect {rreg}
-function ext_post_decode_hook(x) = x
+val ext_decode_compressed : bits(16) -> ast effect {rreg}
+function ext_decode_compressed(bv) = encdec_compressed(bv)
+
+val ext_decode : bits(32) -> ast effect {rreg}
+function ext_decode(bv) = encdec(bv)

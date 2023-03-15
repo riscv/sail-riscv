@@ -101,14 +101,14 @@ function translationMode(priv) = {
         let mbits : satp_mode = Mk_Satp64(satp).Mode();
         match satp64Mode_of_bits(RV64, mbits) {
           Some(m) => m,
-          None()  => internal_error("invalid RV64 translation mode in satp")
+          None()  => internal_error(__FILE__, __LINE__, "invalid RV64 translation mode in satp")
         }
       },
       Some(RV32) => {
         let s = Mk_Satp32(satp[31..0]);
         if s.Mode() == 0b0 then Sbare else Sv32
       },
-      _    => internal_error("unsupported address translation arch")
+      _    => internal_error(__FILE__, __LINE__, "unsupported address translation arch")
     }
   }
 }
@@ -143,7 +143,7 @@ function translateAddr_priv(vAddr, ac, effPriv) = {
                     }
                else TR_Failure(translationException(ac, PTW_Invalid_Addr()), ext_ptw)
              },
-    _     => internal_error("unsupported address translation scheme")
+    _     => internal_error(__FILE__, __LINE__, "unsupported address translation scheme")
   }
 }
 

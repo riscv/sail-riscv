@@ -85,3 +85,12 @@ scattered mapping encdec
 
 val encdec_compressed : ast <-> bits(16) effect {rreg}
 scattered mapping encdec_compressed
+
+/*
+ * We declare the ILLEGAL/C_ILLEGAL ast clauses here instead of in
+ * riscv_insts_end, so that model extensions can make use of them.
+ * However, the encdec mapping must come last to ensure that all
+ * unmatched encodings decode to an illegal instruction.
+ */
+union clause ast = ILLEGAL : word
+union clause ast = C_ILLEGAL : half

@@ -101,7 +101,8 @@ function step(step_no : int) -> bool = {
           },
           /* non-error cases: */
           F_RVC(h) => {
-            let ast = decodeCompressed(h);
+            instbits = EXTZ(h);
+            let ast = ext_decode_compressed(h);
             if   get_config_print_instr()
             then {
               print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ to_str(ast));
@@ -109,20 +110,21 @@ function step(step_no : int) -> bool = {
             /* check for RVC once here instead of every RVC execute clause. */
             if haveRVC() then {
               nextPC = PC + 2;
-              (execute(ext_post_decode_hook(ast)), true)
+              (execute(ast), true)
              } else {
               handle_illegal();
               (RETIRE_FAIL, true)
              }
           },
           F_Base(w) => {
-            let ast = decode(w);
+            instbits = EXTZ(w);
+            let ast = ext_decode(w);
             if   get_config_print_instr()
             then {
               print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ to_str(ast));
             };
             nextPC = PC + 4;
-            (execute(ext_post_decode_hook(ast)), true)
+            (execute(ast), true)
           }
         }
       }
@@ -146,8 +148,7 @@ function loop () : unit -> unit = {
   let insns_per_tick = plat_insns_per_tick();
   i : int = 0;
   step_no : int = 0;
-  print(__FILE__); print(__LOC__); print("entering loop() function...\n");
-  while (~ (htif_done)) do {
+  while not(htif_done) do {
     let stepped = step(step_no);
     if stepped then step_no = step_no + 1;
 
