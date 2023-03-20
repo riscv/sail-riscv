@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Install packages
-      run: sudo apt install -y opam zlib1g-dev pkg-config libgmp-dev z3 device-tree-compiler
+      run: sudo apt install -y opam zlib1g-dev pkg-config libgmp-dev z3 device-tree-compiler libpcre2-dev
     - name: Init opam
       run: opam init --disable-sandboxing -y
     - name: Install sail

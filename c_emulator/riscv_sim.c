@@ -22,6 +22,12 @@
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
 
+//This macro must be defined before including pcre2.h. For a program that uses
+//only one code unit width, it makes it possible to use generic function names
+//such as pcre2_compile().
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
+
 #ifdef ENABLE_SPIKE
 #include "tv_spike_intf.h"
 #else
@@ -70,12 +76,16 @@ char *sig_file = NULL;
 uint64_t mem_sig_start = 0;
 uint64_t mem_sig_end = 0;
 int signature_granularity = 4;
+char *march_isa_string = NULL;
+int march_isa_int_ptr = 0;
 
 bool config_print_instr = true;
 bool config_print_reg = true;
 bool config_print_mem_access = true;
 bool config_print_platform = true;
 bool config_print_rvfi = false;
+
+int rv_cfg_c_ext_enable(char * isa_str, char * ext_pattern);
 
 void set_config_print(char *var, bool val) {
   if (var == NULL || strcmp("all", var) == 0) {
@@ -123,6 +133,10 @@ static struct option options[] = {
   {"report-arch",                 no_argument,       0, 'a'},
   {"test-signature",              required_argument, 0, 'T'},
   {"signature-granularity",       required_argument, 0, 'g'},
+  {"enable-experimental-extensions", no_argument,    0, 'X'}, // follows naming convention of LLVM
+  {"march",                       required_argument, 0, 'M'},
+
+
 #ifdef RVFI_DII
   {"rvfi-dii",                    required_argument, 0, 'r'},
 #endif
@@ -242,6 +256,8 @@ char *process_args(int argc, char **argv)
                     "v::"
                     "l:"
                     "x"
+                    "X"
+                    "M:"
 #ifdef SAILCOV
                     "c:"
 #endif
@@ -339,6 +355,19 @@ char *process_args(int argc, char **argv)
       fprintf(stderr, "enabling Zfinx support.\n");
       rv_enable_zfinx = true;
       rv_enable_fdext = false;
+      break;
+    case 'X':
+      fprintf(stderr, "enabling experimental support.\n");
+      rv_enable_experimental_extensions = true;
+      break;
+    case 'M':
+      march_isa_string = optarg;
+      fprintf(stdout, "march ISA string: %s\n", (char *)march_isa_string);
+
+      // Now parse the string an set the extension variables.
+      rv_enable_zicond = rv_cfg_c_ext_enable(march_isa_string, "zicond");
+      rv_enable_smepmp = rv_cfg_c_ext_enable(march_isa_string, "smepmp");
+
       break;
 #ifdef SAILCOV
     case 'c':
@@ -1075,3 +1104,56 @@ int main(int argc, char **argv)
   flush_logs();
   close_logs();
 }
+
+int rv_cfg_c_ext_enable(char * isa_str, char * ext_pattern)
+{
+  pcre2_code          *re;
+  int                 errornumber;
+  PCRE2_SIZE          erroroffset;
+  pcre2_match_data    *match_data;
+  int                 rc;
+
+  re = pcre2_compile(
+    ext_pattern,            /* the pattern */
+    PCRE2_ZERO_TERMINATED,  /* indicates pattern is zero-terminated */
+    0,                      /* default options */
+    &errornumber,           /* for error number */
+    &erroroffset,           /* for error offset */
+    NULL);                  /* use default compile context */
+
+  if (re == NULL) {    /* Compilation failed */
+    PCRE2_UCHAR buffer[256];
+    pcre2_get_error_message(errornumber, buffer, sizeof(buffer));
+    fprintf(stderr, "PCRE2 compilation failed at offset %d: %s\n", (int)erroroffset,
+            buffer);
+  }    
+
+  match_data = pcre2_match_data_create_from_pattern(re, NULL);
+
+  rc = pcre2_match(
+    re,                   /* the compiled pattern */
+    isa_str,              /* the subject string */
+    strlen(isa_str),      /* the length of the subject */
+    0,                    /* start at offset 0 in the subject */
+    0,                    /* default options */
+    match_data,           /* block for storing the result */
+    NULL);                /* use default match context */
+
+  if ((rc == 0) || (rc == -1)) {  /* Does not match */
+    return(0);
+  }
+  else if (rc == 1) {
+    return(1);
+  }
+  else {
+    fprintf(stderr, "unexpected match return value, %d, for '%s' in ISA string %s\n",
+            rc, ext_pattern, isa_str);
+    exit(1);
+  }
+}
+
+
+
+
+
+

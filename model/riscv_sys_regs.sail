@@ -148,6 +148,10 @@ val sys_enable_fdext = {c: "sys_enable_fdext", ocaml: "Platform.enable_fdext", _
 val sys_enable_zfinx = {c: "sys_enable_zfinx", ocaml: "Platform.enable_zfinx", _: "sys_enable_zfinx"} : unit -> bool
 /* whether the N extension was enabled at boot */
 val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "sys_enable_next"} : unit -> bool
+/* whether Zicond shoulbe be enabled */
+val sys_enable_zicond = {c: "sys_enable_zicond"} : unit -> bool
+/* whether Smepmp shoulbe be enabled */
+val sys_enable_smepmp = {c: "sys_enable_smepmp"} : unit -> bool
 
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
@@ -355,6 +359,10 @@ function haveDExt()    -> bool = (misa.D() == 0b1) & (mstatus.FS() != 0b00)
 function haveZhinx()   -> bool = sys_enable_zfinx()
 function haveZfinx()   -> bool = sys_enable_zfinx()
 function haveZdinx()   -> bool = sys_enable_zfinx() & sizeof(flen) >= 64
+
+/* Other exteniosn */
+function haveZicond()  -> bool = sys_enable_zicond()
+function haveSmepmp()  -> bool = sys_enable_smepmp()
 
 /* interrupt processing state */
 
