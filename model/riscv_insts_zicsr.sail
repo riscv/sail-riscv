@@ -217,9 +217,9 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
 
     /* machine mode counters */
     (0xB00,  _) => { mcycle[(sizeof(xlen) - 1) .. 0] = value; Some(value) },
-    (0xB02,  _) => { minstret[(sizeof(xlen) - 1) .. 0] = value; minstret_written = true; Some(value) },
+    (0xB02,  _) => { minstret[(sizeof(xlen) - 1) .. 0] = value; minstret_increment = false; Some(value) },
     (0xB80, 32) => { mcycle[63 .. 32] = value; Some(value) },
-    (0xB82, 32) => { minstret[63 .. 32] = value; minstret_written = true; Some(value) },
+    (0xB82, 32) => { minstret[63 .. 32] = value; minstret_increment = false; Some(value) },
 
     /* trigger/debug */
     (0x7a0,  _) => { tselect = value; Some(tselect) },

@@ -594,7 +594,7 @@ function init_sys() -> unit = {
   mcounteren->bits() = EXTZ(0b0);
 
   minstret           = EXTZ(0b0);
-  minstret_written   = false;
+  minstret_increment = true;
 
   init_pmp();
 
