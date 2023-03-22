@@ -487,7 +487,7 @@ register mepc : xlenbits
  * When misa.C is writable, it zeroes only xepc[0].
  */
 function legalize_xepc(v : xlenbits) -> xlenbits =
-  /* allow writing xepc[1] only if misa.C is enabled or could be enabled 
+  /* allow writing xepc[1] only if misa.C is enabled or could be enabled
      XXX specification says this legalization should be done on read */
   if   (sys_enable_writable_misa() & sys_enable_rvc()) | misa.C() == 0b1
   then [v with 0 = bitzero]
@@ -554,17 +554,17 @@ register mtime : bits(64)
  * simulation loop, we need to execute an instruction to find out
  * whether it retired, and hence can only increment instret after
  * execution.  To avoid doing this in the case minstret was explicitly
- * written to, we track writes to it in a separate model-internal
- * register.
+ * written to, we track whether it should increment in a separate
+ * model-internal register.
  */
 register minstret : bits(64)
-register minstret_written : bool
+
+// Should minstret be incremented when the instruction is retired.
+register minstret_increment : bool
 
 function retire_instruction() -> unit = {
-  if   minstret_written == true
-  then minstret_written = false
-  else if mcountinhibit.IR() == 0b0
-       then minstret = minstret + 1
+  if minstret_increment
+    then minstret = minstret + 1;
 }
 
 /* informational registers */
