@@ -488,8 +488,12 @@ function ext_write_fcsr (frm, fflags) = {
 val write_fflags : (bits(5)) -> unit effect {rreg, wreg, escape}
 function write_fflags(fflags) = {
   if   fcsr.FFLAGS() != fflags
-  then dirty_fd_context_if_present();
-  fcsr->FFLAGS() = fflags;
+  then {
+    fcsr->FFLAGS() = fflags;
+    dirty_fd_context_if_present();
+    if   get_config_print_reg()
+    then print("fcsr.FFLAGS <- " ^ BitStr(fflags))
+  }
 }
 
 /* called for non-softfloat paths (softfloat flags need updating) */
@@ -501,5 +505,7 @@ function accrue_fflags(flags) = {
     fcsr->FFLAGS() = f;
     update_softfloat_fflags(f);
     dirty_fd_context_if_present();
+    if   get_config_print_reg()
+    then print("fcsr.FFLAGS <- " ^ BitStr(flags))
   }
 }

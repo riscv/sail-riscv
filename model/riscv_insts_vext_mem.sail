@@ -115,7 +115,7 @@ function clause execute(VLETYPE(vm, rs1, width, vd)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vle(vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -128,7 +128,7 @@ mapping vletype_mnemonic : vlewidth <-> string = {
 }
 
 mapping clause assembly = VLETYPE(vm, rs1, width, vd)
-  <-> vletype_mnemonic(width) ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1) ^ sep() ^ maybe_vmask(vm)
+  <-> vletype_mnemonic(width) ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
 /* ******************** Vector Store Unit-Stride Normal (nf=0, mop=0, sumop=0) ******************* */
 union clause ast = VSETYPE : (bits(1), regidx, vlewidth, regidx)
@@ -167,7 +167,7 @@ function process_vse (vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) = {
                     let res : MemoryOpResult(bool) = mem_write_value(paddr, load_width_bytes, vs3_val[i], false, false, false);
                     match (res) {
                       MemValue(true)  => status = RETIRE_SUCCESS,
-                      MemValue(false) => internal_error("store got false from mem_write_value"),
+                      MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                       MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL }
                     }
                   }
@@ -203,7 +203,7 @@ mapping vsetype_mnemonic : vlewidth <-> string = {
 }
 
 mapping clause assembly = VSETYPE(vm, rs1, width, vs3)
-  <-> vsetype_mnemonic(width) ^ spc() ^ vreg_name(vs3) ^ sep() ^ reg_name(rs1) ^ sep() ^ maybe_vmask(vm)
+  <-> vsetype_mnemonic(width) ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
 /* ************************** Vector Load Strided Normal (nf=0, mop=10) ************************** */
 union clause ast = VLSETYPE : (bits(1), regidx, regidx, vlewidth, regidx)
@@ -261,7 +261,7 @@ function clause execute(VLSETYPE(vm, rs2, rs1, width, vd)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlse(vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
@@ -274,7 +274,7 @@ mapping vlsetype_mnemonic : vlewidth <-> string = {
 }
 
 mapping clause assembly = VLSETYPE(vm, rs2, rs1, width, vd)
-  <-> vlsetype_mnemonic(width) ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)^ sep() ^ maybe_vmask(vm)
+  <-> vlsetype_mnemonic(width) ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(rs2)^ maybe_vmask(vm)
 
 /* ************************** Vector Store Strided Normal (nf=0, mop=10) ************************* */
 union clause ast = VSSETYPE : (bits(1), regidx, regidx, vlewidth, regidx)
@@ -314,7 +314,7 @@ function process_vsse (vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) 
                     let res : MemoryOpResult(bool) = mem_write_value(paddr, load_width_bytes, vs3_val[i], false, false, false);
                     match (res) {
                       MemValue(true)  => status = RETIRE_SUCCESS,
-                      MemValue(false) => internal_error("store got false from mem_write_value"),
+                      MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                       MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL }
                     }
                   }
@@ -350,7 +350,7 @@ mapping vssetype_mnemonic : vlewidth <-> string = {
 }
 
 mapping clause assembly = VSSETYPE(vm, rs2, rs1, width, vs3)
-  <-> vssetype_mnemonic(width) ^ spc() ^ vreg_name(vs3) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)^ sep() ^ maybe_vmask(vm)
+  <-> vssetype_mnemonic(width) ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(rs2)^ maybe_vmask(vm)
 
 /* ************************ Vector Load Indexed Unordered (nf=0, mop=01) ************************* */
 union clause ast = VLUXEITYPE : (bits(1), regidx, regidx, vlewidth, regidx)
@@ -408,13 +408,13 @@ function clause execute(VLUXEITYPE(vm, vs2, rs1, width, vd)) = {
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxei(vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
 }
 
 mapping clause assembly = VLUXEITYPE(vm, vs2, rs1, width, vd)
-  <-> "vluxei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vluxei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************* Vector Load Indexed Ordered (nf=0, mop=11) ************************** */
 union clause ast = VLOXEITYPE : (bits(1), regidx, regidx, vlewidth, regidx)
@@ -431,13 +431,13 @@ function clause execute(VLOXEITYPE(vm, vs2, rs1, width, vd)) = {
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxei(vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
 }
 
 mapping clause assembly = VLOXEITYPE(vm, vs2, rs1, width, vd)
-  <-> "vloxei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vloxei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************ Vector Store Indexed Unordered (nf=0, mop=01) ************************ */
 union clause ast = VSUXEITYPE : (bits(1), regidx, regidx, vlewidth, regidx)
@@ -477,7 +477,7 @@ function process_vsxei (vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow
                       let res : MemoryOpResult(bool) = mem_write_value(paddr, EEW_data_bytes, vs3_val[i], false, false, false);
                       match (res) {
                         MemValue(true)  => status = RETIRE_SUCCESS,
-                        MemValue(false) => internal_error("store got false from mem_write_value"),
+                        MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                         MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL }
                       }
                     }
@@ -506,7 +506,7 @@ function clause execute(VSUXEITYPE(vm, vs2, rs1, width, vs3)) = {
 }
 
 mapping clause assembly = VSUXEITYPE(vm, vs2, rs1, width, vs3)
-  <-> "vsuxei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vsuxei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************* Vector Store Indexed Ordered (nf=0, mop=11) ************************* */
 union clause ast = VSOXEITYPE : (bits(1), regidx, regidx, vlewidth, regidx)
@@ -527,7 +527,7 @@ function clause execute(VSOXEITYPE(vm, vs2, rs1, width, vs3)) = {
 }
 
 mapping clause assembly = VSOXEITYPE(vm, vs2, rs1, width, vs3)
-  <-> "vsoxei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vsoxei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************* Vector Load Unit-Stride Fault-Only-First (nf=0, mop=0, lumop=10000) ************* */
 union clause ast = VLEFFTYPE : (bits(1), regidx, vlewidth, regidx)
@@ -613,7 +613,7 @@ function clause execute(VLEFFTYPE(vm, rs1, width, vd)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vleff(vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -626,7 +626,7 @@ mapping vlefftype_mnemonic : vlewidth <-> string = {
 }
 
 mapping clause assembly = VLEFFTYPE(vm, rs1, width, vd)
-  <-> vlefftype_mnemonic(width) ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1) ^ sep() ^ maybe_vmask(vm)
+  <-> vlefftype_mnemonic(width) ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
 /* ******************** Vector Load Unit-Stride Segment (mop=0, lumop=00000) ********************* */
 union clause ast = VLSEGTYPE : (bits(3), bits(1), regidx, vlewidth, regidx)
@@ -693,13 +693,13 @@ function clause execute(VLSEGTYPE(nf, vm, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW); /* # of element of each register group */
   let nf_int = nfields_int(nf);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlseg(nf_int, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
 
 mapping clause assembly = VLSEGTYPE(nf, vm, rs1, width, vd)
-  <-> "vlseg" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ maybe_vmask(vm)
+  <-> "vlseg" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
 /* ************ Vector Load Unit-Stride Segment Fault-Only-First (mop=0, lumop=10000) ************ */
 union clause ast = VLSEGFFTYPE : (bits(3), bits(1), regidx, vlewidth, regidx)
@@ -786,13 +786,13 @@ function clause execute(VLSEGFFTYPE(nf, vm, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlsegff(nf_int, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
 
 mapping clause assembly = VLSEGTYPE(nf, vm, rs1, width, vd)
-  <-> "vlseg" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ "ff.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1) ^ sep() ^ maybe_vmask(vm)
+  <-> "vlseg" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ "ff.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
 /* ******************** Vector Store Unit-Stride Segment (mop=0, sumop=00000) ******************** */
 union clause ast = VSSEGTYPE : (bits(3), bits(1), regidx, vlewidth, regidx)
@@ -831,7 +831,7 @@ function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) 
                       let res : MemoryOpResult(bool) = mem_write_value(paddr, load_width_bytes, one_elem_val, false, false, false);
                       match (res) {
                         MemValue(true)  => status = RETIRE_SUCCESS,
-                        MemValue(false) => internal_error("store got false from mem_write_value"),
+                        MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                         MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL }
                       }
                     }
@@ -862,7 +862,7 @@ function clause execute(VSSEGTYPE(nf, vm, rs1, width, vs3)) = {
 }
 
 mapping clause assembly = VSSEGTYPE(nf, vm, rs1, width, vs3)
-  <-> "vsseg" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ reg_name(rs1) ^ sep() ^ maybe_vmask(vm)
+  <-> "vsseg" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
 /* **************************** Vector Load Strided Segment (mop=10) ***************************** */
 union clause ast = VLSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, regidx)
@@ -922,13 +922,13 @@ function clause execute(VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlsseg(nf_int, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
 
 mapping clause assembly = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
-  <-> "vlsseg" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vlsseg" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(rs2) ^ maybe_vmask(vm)
 
 /* **************************** Vector Store Strided Segment (mop=10) **************************** */
 union clause ast = VSSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, regidx)
@@ -970,7 +970,7 @@ function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_
                       let res : MemoryOpResult(bool) = mem_write_value(paddr, load_width_bytes, one_elem_val, false, false, false);
                       match (res) {
                         MemValue(true)  => status = RETIRE_SUCCESS,
-                        MemValue(false) => internal_error("store got false from mem_write_value"),
+                        MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                         MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL }
                       }
                     }
@@ -1001,7 +1001,7 @@ function clause execute(VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)) = {
 }
 
 mapping clause assembly = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
-  <-> "vssseg" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vssseg" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(rs2) ^ maybe_vmask(vm)
 
 /* *********************** Vector Load Indexed Unordered Segment (mop=01) ************************ */
 union clause ast = VLUXSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, regidx)
@@ -1062,13 +1062,13 @@ function clause execute(VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
   let nf_int = nfields_int(nf);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxseg(nf_int, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
 }
 
 mapping clause assembly = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
-  <-> "vluxseg" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vluxseg" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************ Vector Load Indexed Ordered Segment (mop=11) ************************* */
 union clause ast = VLOXSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, regidx)
@@ -1086,13 +1086,13 @@ function clause execute(VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
   let nf_int = nfields_int(nf);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxseg(nf_int, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
 }
 
 mapping clause assembly = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
-  <-> "vloxseg" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vloxseg" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(vs2) ^ maybe_vmask(vm)
 
 /* *********************** Vector Store Indexed Unordered Segment (mop=01) *********************** */
 union clause ast = VSUXSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, regidx)
@@ -1135,7 +1135,7 @@ function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_inde
                       let res : MemoryOpResult(bool) = mem_write_value(paddr, EEW_data_bytes, one_elem_val, false, false, false);
                       match (res) {
                         MemValue(true)  => status = RETIRE_SUCCESS,
-                        MemValue(false) => internal_error("store got false from mem_write_value"),
+                        MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                         MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL }
                       }
                     }
@@ -1166,7 +1166,7 @@ function clause execute(VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
 }
 
 mapping clause assembly = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
-  <-> "vsuxseg" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vsuxseg" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************ Vector Store Indexed Ordered Segment (mop=11) ************************ */
 union clause ast = VSOXSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, regidx)
@@ -1188,7 +1188,7 @@ function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
 }
 
 mapping clause assembly = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
-  <-> "vsoxseg" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vsoxseg" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************** Vector Load Unit-Stride Whole Register (vm=1, mop=0, lumop=01000) ************** */
 union clause ast = VLRETYPE : (bits(3), regidx, vlewidth, regidx)
@@ -1268,13 +1268,13 @@ function clause execute(VLRETYPE(nf, rs1, width, vd)) = {
   let nf_int = nfields_int(nf);
 
   assert(elem_per_reg >= 0);
-  if ~(nf_int == 1 | nf_int == 2 | nf_int == 4 | nf_int == 8) then { handle_illegal(); return RETIRE_FAIL };
+  if not(nf_int == 1 | nf_int == 2 | nf_int == 4 | nf_int == 8) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlre(nf_int, vd, load_width_bytes, rs1, elem_per_reg)
 }
 
 mapping clause assembly = VLRETYPE(nf, rs1, width, vd)
-  <-> "vl" ^ nfields_string(nf) ^ "re" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1)
+  <-> "vl" ^ nfields_string(nf) ^ "re" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ************* Vector Store Unit-Stride Whole Register (vm=1, mop=0, lumop=01000) ************** */
 union clause ast = VSRETYPE : (bits(3), regidx, regidx)
@@ -1312,7 +1312,7 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
                     let res : MemoryOpResult(bool) = mem_write_value(paddr, load_width_bytes, one_elem_val, false, false, false);
                     match (res) {
                       MemValue(true)  => status = RETIRE_SUCCESS,
-                      MemValue(false) => internal_error("store got false from mem_write_value"),
+                      MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                       MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL }
                     }
                   }
@@ -1347,7 +1347,7 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
                     let res : MemoryOpResult(bool) = mem_write_value(paddr, load_width_bytes, vs_val[i], false, false, false);
                     match (res) {
                       MemValue(true)  => status = RETIRE_SUCCESS,
-                      MemValue(false) => internal_error("store got false from mem_write_value"),
+                      MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                       MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL }
                     }
                   }
@@ -1372,13 +1372,13 @@ function clause execute(VSRETYPE(nf, rs1, vs3)) = {
   let nf_int = nfields_int(nf);
 
   assert(elem_per_reg >= 0);
-  if ~(nf_int == 1 | nf_int == 2 | nf_int == 4 | nf_int == 8) then { handle_illegal(); return RETIRE_FAIL };
+  if not(nf_int == 1 | nf_int == 2 | nf_int == 4 | nf_int == 8) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vsre(nf_int, load_width_bytes, rs1, vs3, elem_per_reg)
 }
 
 mapping clause assembly = VSRETYPE(nf, rs1, vs3)
-  <-> "vs" ^ nfields_string(nf) ^ "r.v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ reg_name(rs1)
+  <-> "vs" ^ nfields_string(nf) ^ "r.v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* *********** Vector Mask Load/Store Unit-Stride (nf=0, mop=0, lumop or sumop=01011) ************ */
 union clause ast = VMTYPE : (regidx, regidx, vmlsop)
@@ -1442,7 +1442,7 @@ function process_vm(vd_or_vs3, rs1, EMUL_pow, num_elem, op) = {
                       let res : MemoryOpResult(bool) = mem_write_value(paddr, 1, vd_or_vs3_val[i], false, false, false);
                       match (res) {
                         MemValue(true)  => status = RETIRE_SUCCESS,
-                        MemValue(false) => internal_error("store got false from mem_write_value"),
+                        MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                         MemException(e) => { handle_mem_exception(vaddr, e); status = RETIRE_FAIL }
                       }
                     }
@@ -1477,4 +1477,4 @@ mapping vmtype_mnemonic : vmlsop <-> string = {
 }
 
 mapping clause assembly = VMTYPE(rs1, vd_or_vs3, op)
-  <-> vmtype_mnemonic(op) ^ spc() ^ vreg_name(vd_or_vs3) ^ sep() ^ reg_name(rs1)
+  <-> vmtype_mnemonic(op) ^ spc() ^ vreg_name(vd_or_vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"

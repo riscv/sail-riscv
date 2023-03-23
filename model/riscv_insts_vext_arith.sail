@@ -2,7 +2,7 @@
 /* This file implements part of the vector extension.                              */
 /* Chapter 11: Vector Integer Arithmetic Instructions                              */
 /* Chapter 12: Vector Fixed-Point Arithmetic Instructions                          */
-/* Chapter 16: Vector Permutation Instructions                                     */
+/* Chapter 16: Vector Permutation Instructions (integer part)                      */
 /* ******************************************************************************* */
 
 /* ******************************* OPIVV (VVTYPE) ******************************** */
@@ -42,7 +42,7 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let VLEN_pow = get_vlen_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -176,8 +176,8 @@ function clause execute(NVSTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
-      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -243,8 +243,8 @@ function clause execute(NVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
-      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -408,7 +408,7 @@ function clause execute(VXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -526,8 +526,8 @@ function clause execute(NXSTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
-      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -593,8 +593,8 @@ function clause execute(NXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
-      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -661,7 +661,7 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
   let VLEN_pow = get_vlen_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -820,7 +820,7 @@ function clause execute(VITYPE(funct6, vm, vs2, simm, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -914,8 +914,8 @@ function clause execute(NISTYPE(funct6, vm, vs2, simm, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
-      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -981,8 +981,8 @@ function clause execute(NITYPE(funct6, vm, vs2, simm, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
-      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -1049,7 +1049,7 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
   let VLEN_pow = get_vlen_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1194,7 +1194,7 @@ function clause execute(VMVRTYPE(vs2, simm, vd)) = {
   let imm_val = unsigned(EXTZ(sizeof(xlen), simm));
   let EMUL    = imm_val + 1;
 
-  if ~(EMUL == 1 | EMUL == 2 | EMUL == 4 | EMUL == 8) then { handle_illegal(); return RETIRE_FAIL };
+  if not(EMUL == 1 | EMUL == 2 | EMUL == 4 | EMUL == 8) then { handle_illegal(); return RETIRE_FAIL };
 
   let EMUL_pow = log2(EMUL);
   let num_elem = get_num_elem(EMUL_pow, SEW);
@@ -1225,7 +1225,7 @@ mapping simm_string : bits(5) <-> string = {
 mapping clause assembly = VMVRTYPE(vs2, simm, vd)
   <-> "vmv" ^ simm_string(simm) ^ "r.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2)
 
-/* ******************************* OPMVV (MVVTYPE) ******************************* */
+/* ******************************* OPMVV (VVTYPE) ******************************** */
 union clause ast = MVVTYPE : (mvvfunct6, bits(1), regidx, regidx, regidx)
 
 mapping encdec_mvvfunct6 : mvvfunct6 <-> bits(6) = {
@@ -1251,7 +1251,7 @@ function clause execute(MVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1341,7 +1341,7 @@ mapping mvvtype_mnemonic : mvvfunct6 <-> string = {
 mapping clause assembly = MVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> mvvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
-/* ************************ OPMVV (MVVtype Multiply-Add) ************************* */
+/* ************************* OPMVV (VVtype Multiply-Add) ************************* */
 /* Multiply-Add instructions switch the order of source operands in assembly (vs1/rs1 before vs2) */
 union clause ast = MVVMATYPE : (mvvmafunct6, bits(1), regidx, regidx, regidx)
 
@@ -1361,7 +1361,7 @@ function clause execute(MVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
   let VLEN     = int_power(2, get_vlen_pow());
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1424,8 +1424,8 @@ function clause execute(WVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) | 
-      ~(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) | ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) | 
+      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -1474,7 +1474,7 @@ mapping wvvtype_mnemonic : wvvfunct6 <-> string = {
 mapping clause assembly = WVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> wvvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
-/* ******************************* OPMVV (WVTYPE) ******************************** */
+/* *************************** OPMVV (WVTYPE Widening) *************************** */
 union clause ast = WVTYPE : (wvfunct6, bits(1), regidx, regidx, regidx)
 
 mapping encdec_wvfunct6 : wvfunct6 <-> bits(6) = {
@@ -1494,8 +1494,8 @@ function clause execute(WVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) | 
-      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) | 
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -1538,7 +1538,7 @@ mapping wvtype_mnemonic : wvfunct6 <-> string = {
 mapping clause assembly = WVTYPE(funct6, vm, vs2, vs1, vd)
   <-> wvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
-/* ******************** OPMVV (MVVtype Widening Multiply-Add) ******************** */
+/* ******************** OPMVV (VVtype Widening Multiply-Add) ********************* */
 /* Multiply-Add instructions switch the order of source operands in assembly (vs1/rs1 before vs2) */
 union clause ast = WMVVTYPE : (wmvvfunct6, bits(1), regidx, regidx, regidx)
 
@@ -1558,8 +1558,8 @@ function clause execute(WMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) | 
-      ~(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) | ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) | 
+      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -1619,8 +1619,8 @@ function clause execute(VEXT2TYPE(funct6, vm, vs2, vd)) = {
   let SEW_half = SEW / 2;
   let LMUL_pow_half = LMUL_pow - 1;
 
-  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_half, LMUL_pow)) | 
-      ~(valid_eew_emul(SEW_half, LMUL_pow_half)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs2, vd, LMUL_pow_half, LMUL_pow)) | 
+      not(valid_eew_emul(SEW_half, LMUL_pow_half)) 
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -1677,8 +1677,8 @@ function clause execute(VEXT4TYPE(funct6, vm, vs2, vd)) = {
   let SEW_quart = SEW / 4;
   let LMUL_pow_quart = LMUL_pow - 2;
 
-  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_quart, LMUL_pow)) | 
-      ~(valid_eew_emul(SEW_quart, LMUL_pow_quart)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs2, vd, LMUL_pow_quart, LMUL_pow)) | 
+      not(valid_eew_emul(SEW_quart, LMUL_pow_quart)) 
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -1735,8 +1735,8 @@ function clause execute(VEXT8TYPE(funct6, vm, vs2, vd)) = {
   let SEW_eighth = SEW / 8;
   let LMUL_pow_eighth = LMUL_pow - 3;
 
-  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow_eighth, LMUL_pow)) | 
-      ~(valid_eew_emul(SEW_eighth, LMUL_pow_eighth)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs2, vd, LMUL_pow_eighth, LMUL_pow)) | 
+      not(valid_eew_emul(SEW_eighth, LMUL_pow_eighth)) 
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -1856,7 +1856,7 @@ function clause execute(MVVCOMPRESS(vs2, vs1, vd)) = {
 mapping clause assembly = MVVCOMPRESS(vs2, vs1, vd)
   <-> "vcompress.vm" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
 
-/* ******************************* OPMVX (MVXTYPE) ******************************* */
+/* ******************************* OPMVX (VXTYPE) ******************************** */
 union clause ast = MVXTYPE : (mvxfunct6, bits(1), regidx, regidx, regidx)
 
 mapping encdec_mvxfunct6 : mvxfunct6 <-> bits(6) = {
@@ -1884,7 +1884,7 @@ function clause execute(MVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1986,7 +1986,7 @@ mapping mvxtype_mnemonic : mvxfunct6 <-> string = {
 mapping clause assembly = MVXTYPE(funct6, vm, vs2, rs1, vd)
   <-> mvxtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm) 
 
-/* ************************ OPMVX (MVXtype Multiply-Add) ************************* */
+/* ************************* OPMVX (VXtype Multiply-Add) ************************* */
 /* Multiply-Add instructions switch the order of source operands in assembly (vs1/rs1 before vs2) */
 union clause ast = MVXMATYPE : (mvxmafunct6, bits(1), regidx, regidx, regidx)
 
@@ -2006,7 +2006,7 @@ function clause execute(MVXMATYPE(funct6, vm, vs2, rs1, vd)) = {
   let VLEN     = int_power(2, get_vlen_pow());
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if ~(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -2070,8 +2070,8 @@ function clause execute(WVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) | 
-      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) | 
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -2120,7 +2120,7 @@ mapping wvxtype_mnemonic : wvxfunct6 <-> string = {
 mapping clause assembly = WVXTYPE(funct6, vm, vs2, rs1, vd)
   <-> wvxtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
 
-/* ******************************* OPMVX (WXTYPE) ******************************** */
+/* *************************** OPMVX (WXTYPE Widening) *************************** */
 union clause ast = WXTYPE : (wxfunct6, bits(1), regidx, regidx, regidx)
 
 mapping encdec_wxfunct6 : wxfunct6 <-> bits(6) = {
@@ -2140,7 +2140,7 @@ function clause execute(WXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  ~(valid_rd_mask(vd, vm)) | ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -2183,7 +2183,7 @@ mapping wxtype_mnemonic : wxfunct6 <-> string = {
 mapping clause assembly = WXTYPE(funct6, vm, vs2, rs1, vd)
   <-> wxtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
 
-/* ******************** OPMVX (MVXtype Widening Multiply-Add) ******************** */
+/* ******************** OPMVX (VXtype Widening Multiply-Add) ********************* */
 /* Multiply-Add instructions switch the order of source operands in assembly (vs1/rs1 before vs2) */
 union clause ast =  WMVXTYPE : (wmvxfunct6, bits(1), regidx, regidx, regidx)
 
@@ -2204,8 +2204,8 @@ function clause execute(WMVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  ~(valid_rd_mask(vd, vm)) | ~(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) | 
-      ~(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) | 
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) 
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;

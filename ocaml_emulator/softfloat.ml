@@ -53,6 +53,33 @@ let f32_sqrt rm v =
 let f64_sqrt rm v =
   ()
 
+let f16_rsqrte7 rm v =
+  ()
+
+let f32_rsqrte7 rm v =
+  ()
+
+let f64_rsqrte7 rm v =
+  ()
+
+let f16_recip7 rm v =
+  ()
+
+let f32_recip7 rm v =
+  ()
+
+let f64_recip7 rm v =
+  ()
+
+let f16_class v =
+  ()
+
+let f32_class v =
+  ()
+
+let f64_class v =
+  ()
+
 let f16_to_i32 rm v =
   ()
 
@@ -146,6 +173,9 @@ let f64_to_f32 rm v =
 let f16_lt v1 v2 =
   ()
 
+let f16_lt_quiet v1 v2 =
+  ()
+
 let f16_le v1 v2 =
   ()
 
@@ -155,6 +185,9 @@ let f16_eq v1 v2 =
 let f32_lt v1 v2 =
   ()
 
+let f32_lt_quiet v1 v2 =
+  ()
+
 let f32_le v1 v2 =
   ()
 
@@ -162,6 +195,9 @@ let f32_eq v1 v2 =
   ()
 
 let f64_lt v1 v2 =
+  ()
+
+let f64_lt_quiet v1 v2 =
   ()
 
 let f64_le v1 v2 =
