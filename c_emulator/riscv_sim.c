@@ -117,6 +117,9 @@ int insn_limit = 0;
 char *sailcov_file = NULL;
 #endif
 
+#define LONGOPT_ZICOND      (1000)
+#define LONGOPT_SMEPMP      (1001)
+
 static struct option options[] = {
   {"enable-dirty-update",         no_argument,       0, 'd'},
   {"enable-misaligned",           no_argument,       0, 'm'},
@@ -133,7 +136,9 @@ static struct option options[] = {
   {"report-arch",                 no_argument,       0, 'a'},
   {"test-signature",              required_argument, 0, 'T'},
   {"signature-granularity",       required_argument, 0, 'g'},
-  {"enable-experimental-extensions", no_argument,    0, 'X'}, // follows naming convention of LLVM
+  {"menable-experimental-extensions", no_argument,    0, 'X'}, // follows naming convention of LLVM
+  {"mexperimental-zicond",        no_argument,       0, LONGOPT_ZICOND}, // follows naming convention of LLVM
+  {"mexperimental-smepmp",        no_argument,       0, LONGOPT_SMEPMP}, // follows naming convention of LLVM
   {"march",                       required_argument, 0, 'M'},
 
 
@@ -359,6 +364,14 @@ char *process_args(int argc, char **argv)
     case 'X':
       fprintf(stderr, "enabling experimental support.\n");
       rv_enable_experimental_extensions = true;
+      break;
+    case LONGOPT_ZICOND:
+      fprintf(stderr, "enabling Zicond support.\n");
+      rv_enable_zicond = true;
+      break;
+    case LONGOPT_SMEPMP:
+      fprintf(stderr, "enabling Smepmp support.\n");
+      rv_enable_smepmp = true;
       break;
     case 'M':
       march_isa_string = optarg;
