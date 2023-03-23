@@ -257,3 +257,51 @@ function clause execute (RISCV_VBREV8_V(vm, vs2, vd)) = {
   vstart = EXTZ(0b0);
   RETIRE_SUCCESS
 }
+
+/* VREV8.V */
+
+union clause ast = RISCV_VREV8_V : (bits(1), regidx, regidx)
+
+mapping clause encdec = RISCV_VREV8_V(vm, vs2, vd)          if (haveRVV() & haveZvkb() & sizeof(xlen) == 64)
+ <-> 0b010010 @ vm @ vs2 @ 0b01001 @ 0b010 @ vd @ 0b1010111 if (haveRVV() & haveZvkb() & sizeof(xlen) == 64)
+
+mapping clause assembly = RISCV_VREV8_V(vm, vs2, vd)
+ <-> "vrev8.v" ^ spc() ^ vreg_name(vd)
+	       ^ sep() ^ vreg_name(vs2)
+	       ^ maybe_vmask(vm)
+
+function clause execute (RISCV_VREV8_V(vm, vs2, vd)) = {
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let VLEN     = int_power(2, get_vlen_pow());
+  let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  let 'n = num_elem;
+  let 'm = SEW;
+
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  result      : vector('n, dec, bits('m)) = undefined;
+  mask        : vector('n, dec, bool)     = undefined;
+
+  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+
+  foreach (i from unsigned(vstart) to (unsigned(vl) - 1)) {
+    assert(0 <= i & i < 'n);
+    if mask[i] then {
+      let input : bits('m) = vs2_val[i];
+      output    : bits('m) = zeros();
+
+      foreach (k from 0 to ('m - 8) by 8) {
+	output[(k + 7)..k] = input[('m - k - 1) .. ('m - k - 8)];
+      };
+
+      result[i] = output;
+    };
+  };
+
+  write_single_vreg(num_elem, 'm, vd, result);
+  vstart = EXTZ(0b0);
+  RETIRE_SUCCESS
+}
