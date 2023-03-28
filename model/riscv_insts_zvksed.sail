@@ -132,3 +132,100 @@ function clause execute (RISCV_VSM4K_VI(vs2, uimm, vd)) = {
     RETIRE_SUCCESS
   }
 }
+
+/* VSM4R.[VV,VS] */
+
+mapping zvksed_vv_or_vs : string <-> bits(7) = {
+   "vv" <-> 0b1010001,
+   "vs" <-> 0b1010011,
+}
+
+mapping vsm4r_mnemonic : bits(7) <-> string = {
+   0b1010001 <-> "vsm4r.vv",
+   0b1010011 <-> "vsm4r.vs",
+}
+
+union clause ast = RISCV_VSM4R_VV_VS : (regidx, regidx, string)
+
+mapping clause encdec = RISCV_VSM4R_VV_VS(vs2, vd, suffix)     if (haveRVV() & haveZvksed())
+ <-> zvksed_vv_or_vs(suffix) @ vs2 @ 0b10000 @ 0b010 @ vd @ 0b1110111 if (haveRVV() & haveZvksed())
+
+mapping clause assembly = RISCV_VSM4R_VV_VS(vs2, vd, suffix)
+ <-> vsm4r_mnemonic(zvksed_vv_or_vs(suffix)) ^ spc() ^ vreg_name(vd)
+				      ^ sep() ^ vreg_name(vs2)
+
+function clause execute (RISCV_VSM4R_VV_VS(vs2, vd, suffix)) = {
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let LMUL     = if LMUL_pow < 0 then 0 else LMUL_pow;
+  let VLEN     = int_power(2, get_vlen_pow());
+  let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if (zvk_check_elements(VLEN, num_elem, LMUL, SEW) == false)
+  then {
+    handle_illegal();
+    RETIRE_FAIL
+  } else {
+    let 'n = num_elem;
+    let 'm = SEW;
+    assert('m == 32);
+
+    let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+    let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+    result      : vector('n, dec, bits('m)) = undefined;
+
+    rk3_to_rk0 : bits(128) = undefined;
+    x3_to_x0   : bits(128) = undefined;
+
+    x7_to_x4   : bits(128) = zeros();
+    B          : bits(32) = zeros();
+    S          : bits(32) = zeros();
+
+    eg_len = (unsigned(vl) / 'n);
+    eg_start = (unsigned(vstart) / 'n);
+
+    foreach (i from eg_start to (eg_len - 1)) {
+      assert(0 <= ((i * 4) + 3) & ((i * 4) + 3) < 'n);
+      if suffix == "vv" then {
+	rk3_to_rk0[31..0]   = vs2_val[i*4+0];
+	rk3_to_rk0[63..32]  = vs2_val[i*4+1];
+	rk3_to_rk0[95..64]  = vs2_val[i*4+2];
+	rk3_to_rk0[127..96] = vs2_val[i*4+3];
+      } else {
+	rk3_to_rk0[31..0]   = vs2_val[0];
+	rk3_to_rk0[63..32]  = vs2_val[1];
+	rk3_to_rk0[95..64]  = vs2_val[2];
+	rk3_to_rk0[127..96] = vs2_val[3];
+      };
+
+      x3_to_x0[31..0]   = vd_val[i*4+0];
+      x3_to_x0[63..32]  = vd_val[i*4+1];
+      x3_to_x0[95..64]  = vd_val[i*4+2];
+      x3_to_x0[127..96] = vd_val[i*4+3];
+
+      B   = x3_to_x0[63..32] ^ x3_to_x0[95..64] ^ x3_to_x0[127..96] ^ rk3_to_rk0[31..0];
+      S   = sm4_subword(B);
+      x7_to_x4[31..0] = sm4_round(x3_to_x0[31..0], S);
+
+      B   = x3_to_x0[95..64] ^ x3_to_x0[127..96] ^ x7_to_x4[31..0] ^ rk3_to_rk0[63..32];
+      S   = sm4_subword(B);
+      x7_to_x4[63..32] = sm4_round(x3_to_x0[63..32], S);
+
+      B   = x3_to_x0[127..96] ^ x7_to_x4[31..0] ^ x7_to_x4[63..32] ^ rk3_to_rk0[95..64];
+      S   = sm4_subword(B);
+      x7_to_x4[95..64] = sm4_round(x3_to_x0[95..64], S);
+
+      B   = x7_to_x4[31..0] ^ x7_to_x4[63..32] ^ x7_to_x4[95..64] ^ rk3_to_rk0[127..96];
+      S   = sm4_subword(B);
+      x7_to_x4[127..96] = sm4_round(x3_to_x0[127..96], S);
+
+      result[i*4+0] = x7_to_x4[31..0];
+      result[i*4+1] = x7_to_x4[63..32];
+      result[i*4+2] = x7_to_x4[95..64];
+      result[i*4+3] = x7_to_x4[127..96];
+    };
+
+    write_single_vreg(num_elem, 'm, vd, result);
+    RETIRE_SUCCESS
+  }
+}
