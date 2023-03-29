@@ -44,6 +44,8 @@ SAIL_DEFAULT_INST += riscv_insts_vext_mem.sail
 SAIL_DEFAULT_INST += riscv_insts_vext_mask.sail
 SAIL_DEFAULT_INST += riscv_insts_vext_vm.sail
 
+SAIL_DEFAULT_INST += riscv_insts_zvksh.sail
+
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
 SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
 
