@@ -367,11 +367,11 @@ char *process_args(int argc, char **argv)
       break;
     case LONGOPT_ZICOND:
       fprintf(stderr, "enabling Zicond support.\n");
-      rv_enable_zicond = true;
+      rv_experimental_zicond = true;
       break;
     case LONGOPT_SMEPMP:
       fprintf(stderr, "enabling Smepmp support.\n");
-      rv_enable_smepmp = true;
+      rv_experimental_smepmp = true;
       break;
     case 'M':
       march_isa_string = optarg;
@@ -380,6 +380,11 @@ char *process_args(int argc, char **argv)
       // Now parse the string an set the extension variables.
       rv_enable_zicond = rv_cfg_c_ext_enable(march_isa_string, "zicond");
       rv_enable_smepmp = rv_cfg_c_ext_enable(march_isa_string, "smepmp");
+
+      /* If smepmp is enabled,  then pmps must be enabled as well */
+      if (rv_enable_smepmp == true) {
+        rv_enable_pmp = true;
+      }
 
       break;
 #ifdef SAILCOV

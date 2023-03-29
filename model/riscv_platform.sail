@@ -120,7 +120,7 @@ val plat_mtval_has_illegal_inst_bits = {ocaml: "Platform.mtval_has_illegal_inst_
 val sys_enable_smepmp = { c: "sys_enable_smepmp" } : unit -> bool
 
 /* whether the Zicond extension is supported */
-//val sys_enable_zicond =  { c: "sys_enable_zicond" } : unit -> bool
+val sys_enable_zicond =  { c: "sys_enable_zicond" } : unit -> bool
 
 /* whether the model supports extensions/CSRs/functionality that is considered "experimental"   */
 /*      this is meant to support testing of extensions that are in development but have not     */

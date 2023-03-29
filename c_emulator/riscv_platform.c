@@ -21,11 +21,13 @@ bool sys_enable_fdext(unit u)
 bool sys_enable_zfinx(unit u)
 { return rv_enable_zfinx; }
 
+/* When Smepmp spec is ratified, remove the 'experimental' conditionals */
 bool sys_enable_smepmp(unit u)
-{ return ( (rv_enable_smepmp == 0) ? false : true); }
+{ return ( (rv_enable_smepmp == 1) && rv_enable_experimental_extensions && rv_experimental_smepmp); }
 
+/* When Zicond spec is ratified, remove the 'experimental' conditionals */
 bool sys_enable_zicond(unit u)
-{ return ( (rv_enable_zicond == 0) ? false : true); }
+{ return ( (rv_enable_zicond == 1) && rv_enable_experimental_extensions && rv_experimental_zicond); }
 
 bool sys_enable_experimental_extensions(unit u)
 { return rv_enable_experimental_extensions; }
