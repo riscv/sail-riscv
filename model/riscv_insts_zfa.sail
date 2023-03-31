@@ -739,6 +739,56 @@ function clause execute(RISCV_FLTQ_D(rs2, rs1, rd)) = {
 
 /* FCVTMOD.W.D */
 
+/*
+ * Implement float64 to int32 conversion without saturation, the
+ * result is supplied modulo 2^32.
+ * Rounding mode for FCVTMOD.W.D is always RTZ(Round toward zero).
+ */
+val      fcvtmod_helper : forall 'm, 'm == 64. (bits('m)) -> (bits(5), xlenbits)
+function fcvtmod_helper(x64) = {
+  let (sign, exp, mant) = fsplit_D(x64);
+  fflags		= fcsr.FFLAGS();
+  result : bits(64)	= undefined;
+
+  /* Handle special cases. */
+  if (exp == zeros())
+  then return (nvFlag(), to_bits(sizeof(xlen), unsigned(0x0)))
+  /* NaN or Infinity. */
+  else if (exp == to_bits(11, unsigned(0x7ff)))
+  then return (nvFlag(), to_bits(sizeof(xlen), unsigned(0x0)))
+  else {
+    true_exp : int = unsigned(sub_vec_int(exp, 1023));
+    shift    : int = true_exp - 52;
+    result	   = to_bits(64, unsigned(mant)) | to_bits(64, unsigned(0x1)) << 52;
+
+    /* Shift the fraction into place and set NX flag. */
+    if (shift >= 64 | shift <= -64) then {
+	/* The fraction is shifted out entirely. */
+	result = zeros();
+	fflags = fflags | nxFlag();
+    } else if (shift >= 0) then {
+	/* Raise NX if bit 52 got shifted out. */
+	result = result  << to_bits(64, shift);
+	if (unsigned(result) >= 12)
+	then fflags = fflags | nxFlag();
+    } else {
+	result = result >> to_bits(64, negate(shift));
+	/* Raise NX if bits got shifted out. */
+	if ((result << to_bits(64, negate(shift))) != result)
+	then fflags = fflags | nxFlag();
+    };
+
+    if (sign == 0b1)
+    then result = negate_D(result);
+
+    let result32b = to_bits(32, unsigned(result));
+    if (to_bits(64, unsigned(result32b)) != result)
+    then fflags = fflags | nvFlag();
+
+    (fflags, EXTS(result[31..0]))
+  };
+}
+
 union clause ast = RISCV_FCVTMOD_W_D : (regidx, regidx)
 
 /* We need rounding mode to be explicitly specified to RTZ(0b001) */
@@ -747,19 +797,14 @@ mapping clause encdec = RISCV_FCVTMOD_W_D(rs1, rd)          if (haveDExt() & hav
 
 mapping clause assembly = RISCV_FCVTMOD_W_D(rs1, rd)
   <-> "fcvtmod.w.d" ^ spc() ^ reg_name(rd)
-                    ^ spc() ^ freg_name(rs1)
+		    ^ spc() ^ freg_name(rs1)
 
 function clause execute(RISCV_FCVTMOD_W_D(rs1, rd)) = {
   let rs1_val_D = F(rs1);
 
-  let (fflags, rd_val_temp) = riscv_f64ToI32(0b001, rs1_val_D);
+  let p = fcvtmod_helper(rs1_val_D);
 
-  let rd_val :xlenbits =
-    if (f_is_NaN_D(rs1_val_D) |
-        f_is_pos_inf_D(rs1_val_D) |
-        f_is_neg_inf_D(rs1_val_D))
-    then  EXTS(0b0)
-    else  EXTS(rd_val_temp[31..0]);
+  let (fflags, rd_val) = fcvtmod_helper(rs1_val_D);
 
   write_fflags(fflags);
   X(rd) = rd_val;
