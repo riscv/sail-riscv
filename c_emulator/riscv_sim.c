@@ -117,9 +117,6 @@ int insn_limit = 0;
 char *sailcov_file = NULL;
 #endif
 
-#define LONGOPT_ZICOND      (1000)
-#define LONGOPT_SMEPMP      (1001)
-
 static struct option options[] = {
   {"enable-dirty-update",         no_argument,       0, 'd'},
   {"enable-misaligned",           no_argument,       0, 'm'},
@@ -234,7 +231,6 @@ char *process_args(int argc, char **argv)
   int c;
   uint64_t ram_size = 0;
   while(true) {
-//    c = getopt_long(argc, argv,
     c = getopt_long_only(argc, argv,
                     "a"
                     "d"

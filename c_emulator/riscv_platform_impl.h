@@ -19,8 +19,6 @@ extern bool rv_mtval_has_illegal_inst_bits;
 
 extern int  rv_enable_smepmp;
 extern int  rv_enable_zicond;
-extern bool rv_experimental_zicond;
-extern bool rv_experimental_smepmp;
 
 extern bool rv_enable_experimental_extensions;
 
@@ -41,11 +39,4 @@ extern uint64_t rv_insns_per_tick;
 
 extern int term_fd;
 void plat_term_write_impl(char c);
-
-// for command line options and getopt()
-extern char *optarg;
-extern int optind, opterr, optopt;
-
-
-
 
