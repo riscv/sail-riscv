@@ -80,6 +80,18 @@ let f32_class v =
 let f64_class v =
   ()
 
+let f16_to_i8 rm v =
+  ()
+
+let f16_to_ui8 rm v =
+  ()
+
+let f16_to_i16 rm v =
+  ()
+
+let f16_to_ui16 rm v =
+  ()
+
 let f16_to_i32 rm v =
   ()
 
@@ -102,6 +114,12 @@ let i64_to_f16 rm v =
   ()
 
 let ui64_to_f16 rm v =
+  ()
+
+let f32_to_i16 rm v =
+  ()
+
+let f32_to_ui16 rm v =
   ()
 
 let f32_to_i32 rm v =

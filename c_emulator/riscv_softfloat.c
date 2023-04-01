@@ -364,6 +364,64 @@ unit softfloat_f64class(mach_bits v) {
 // The boolean 'true' argument in the conversion calls below selects
 // 'exact' conversion, which sets the Inexact exception flag if
 // needed.
+unit softfloat_f16toi8(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float16_t a;
+  int_fast8_t res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res = f16_to_i8(a, rm8, true);
+
+  zfloat_result = res;
+  zfloat_fflags |= (mach_bits) softfloat_exceptionFlags;
+
+  return UNIT;
+}
+
+unit softfloat_f16toui8(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float16_t a;
+  uint_fast8_t res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res = f16_to_ui8(a, rm8, true);
+
+  zfloat_result = res;
+  zfloat_fflags |= (mach_bits) softfloat_exceptionFlags;
+
+  return UNIT;
+}
+
+unit softfloat_f16toi16(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float16_t a;
+  float16_t res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res.v = f16_to_i8(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f16toui16(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float16_t a;
+  float16_t res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res.v = f16_to_ui8(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
 unit softfloat_f16toi32(mach_bits rm, mach_bits v) {
   SOFTFLOAT_PRELUDE(rm);
 
@@ -414,6 +472,34 @@ unit softfloat_f16toui64(mach_bits rm, mach_bits v) {
   uint_fast8_t rm8 = uint8_of_rm(rm);
   a.v = v;
   res.v = f16_to_ui64(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f32toi16(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t a;
+  float16_t res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res.v = f32_to_i16(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f32toui16(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t a;
+  float16_t res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res.v = f32_to_ui16(a, rm8, true);
 
   SOFTFLOAT_POSTLUDE(res);
 

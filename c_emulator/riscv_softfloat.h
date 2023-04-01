@@ -23,6 +23,10 @@ unit softfloat_f16sqrt(mach_bits rm, mach_bits v);
 unit softfloat_f32sqrt(mach_bits rm, mach_bits v);
 unit softfloat_f64sqrt(mach_bits rm, mach_bits v);
 
+unit softfloat_f16toi8(mach_bits rm, mach_bits v);
+unit softfloat_f16toui8(mach_bits rm, mach_bits v);
+unit softfloat_f16toi16(mach_bits rm, mach_bits v);
+unit softfloat_f16toui16(mach_bits rm, mach_bits v);
 unit softfloat_f16toi32(mach_bits rm, mach_bits v);
 unit softfloat_f16toui32(mach_bits rm, mach_bits v);
 unit softfloat_f16toi64(mach_bits rm, mach_bits v);
@@ -40,6 +44,8 @@ unit softfloat_f16class(mach_bits v);
 unit softfloat_f32class(mach_bits v);
 unit softfloat_f64class(mach_bits v);
 
+unit softfloat_f32toi16(mach_bits rm, mach_bits v);
+unit softfloat_f32toui16(mach_bits rm, mach_bits v);
 unit softfloat_f32toi32(mach_bits rm, mach_bits v);
 unit softfloat_f32toui32(mach_bits rm, mach_bits v);
 unit softfloat_f32toi64(mach_bits rm, mach_bits v);

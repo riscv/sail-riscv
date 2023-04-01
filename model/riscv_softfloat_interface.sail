@@ -320,6 +320,34 @@ function riscv_f64Class (v) = {
 /* **************************************************************** */
 /* CONVERSIONS                                                      */
 
+val     extern_f16ToI8 = {c: "softfloat_f16toi8", ocaml: "Softfloat.f16_to_i8", lem: "softfloat_f16_to_i8"} : (bits_rm, bits_H) -> unit
+val      riscv_f16ToI8 : (bits_rm, bits_H) -> (bits_fflags, bits(8)) effect {rreg}
+function riscv_f16ToI8 (rm, v) = {
+  extern_f16ToI8(rm, v);
+  (float_fflags[4 .. 0], float_result[7 .. 0])
+}
+
+val     extern_f16ToUi8 = {c: "softfloat_f16toui8", ocaml: "Softfloat.f16_to_ui8", lem: "softfloat_f16_to_ui8"} : (bits_rm, bits_H) -> unit
+val      riscv_f16ToUi8 : (bits_rm, bits_H) -> (bits_fflags, bits(8)) effect {rreg}
+function riscv_f16ToUi8 (rm, v) = {
+  extern_f16ToUi8(rm, v);
+  (float_fflags[4 .. 0], float_result[7 .. 0])
+}
+
+val     extern_f16ToI16 = {c: "softfloat_f16toi16", ocaml: "Softfloat.f16_to_i16", lem: "softfloat_f16_to_i16"} : (bits_rm, bits_H) -> unit
+val      riscv_f16ToI16 : (bits_rm, bits_H) -> (bits_fflags, bits(16)) effect {rreg}
+function riscv_f16ToI16 (rm, v) = {
+  extern_f16ToI16(rm, v);
+  (float_fflags[4 .. 0], float_result[15 .. 0])
+}
+
+val     extern_f16ToUi16 = {c: "softfloat_f16toui16", ocaml: "Softfloat.f16_to_ui16", lem: "softfloat_f16_to_ui16"} : (bits_rm, bits_H) -> unit
+val      riscv_f16ToUi16 : (bits_rm, bits_H) -> (bits_fflags, bits(16)) effect {rreg}
+function riscv_f16ToUi16 (rm, v) = {
+  extern_f16ToUi16(rm, v);
+  (float_fflags[4 .. 0], float_result[15 .. 0])
+}
+
 val     extern_f16ToI32 = {c: "softfloat_f16toi32", ocaml: "Softfloat.f16_to_i32", lem: "softfloat_f16_to_i32"} : (bits_rm, bits_H) -> unit
 val      riscv_f16ToI32 : (bits_rm, bits_H) -> (bits_fflags, bits_W) effect {rreg}
 function riscv_f16ToI32 (rm, v) = {
@@ -373,6 +401,20 @@ val     extern_ui64ToF16 = {c: "softfloat_ui64tof16", ocaml: "Softfloat.ui64_to_
 val      riscv_ui64ToF16 : (bits_rm, bits_LU) -> (bits_fflags, bits_H) effect {rreg}
 function riscv_ui64ToF16 (rm, v) = {
   extern_ui64ToF16(rm, v);
+  (float_fflags[4 .. 0], float_result[15 .. 0])
+}
+
+val     extern_f32ToI16 = {c: "softfloat_f32toi16", ocaml: "Softfloat.f32_to_i16", lem: "softfloat_f32_to_i16"} : (bits_rm, bits_S) -> unit
+val      riscv_f32ToI16 : (bits_rm, bits_S) -> (bits_fflags, bits(16)) effect {rreg}
+function riscv_f32ToI16 (rm, v) = {
+  extern_f32ToI16(rm, v);
+  (float_fflags[4 .. 0], float_result[15 .. 0])
+}
+
+val     extern_f32ToUi16 = {c: "softfloat_f32toui16", ocaml: "Softfloat.f32_to_ui16", lem: "softfloat_f32_to_ui16"} : (bits_rm, bits_S) -> unit
+val      riscv_f32ToUi16 : (bits_rm, bits_S) -> (bits_fflags, bits(16)) effect {rreg}
+function riscv_f32ToUi16 (rm, v) = {
+  extern_f32ToUi16(rm, v);
   (float_fflags[4 .. 0], float_result[15 .. 0])
 }
 

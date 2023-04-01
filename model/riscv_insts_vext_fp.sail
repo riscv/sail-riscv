@@ -364,9 +364,6 @@ function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
 
   if not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
 
-  /* Special case: 16-bit integers are not supported in single-width type-convert instructions */
-  if SEW == 16 then { handle_illegal(); return RETIRE_FAIL };
-
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -383,6 +380,7 @@ function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
       result[i] = match vfunary0 {
         FV_CVT_XU_F      => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
+                                16 => riscv_f16ToUi16(rm_3b, vs2_val[i]),
                                 32 => riscv_f32ToUi32(rm_3b, vs2_val[i]),
                                 64 => riscv_f64ToUi64(rm_3b, vs2_val[i])
                               };
@@ -391,6 +389,7 @@ function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
                             },
         FV_CVT_X_F       => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
+                                16 => riscv_f16ToI16(rm_3b, vs2_val[i]),
                                 32 => riscv_f32ToI32(rm_3b, vs2_val[i]),
                                 64 => riscv_f64ToI64(rm_3b, vs2_val[i])
                               };
@@ -399,6 +398,7 @@ function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
                             },
         FV_CVT_F_XU      => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
+                                16 => riscv_ui32ToF16(rm_3b, EXTZ(vs2_val[i])),
                                 32 => riscv_ui32ToF32(rm_3b, vs2_val[i]),
                                 64 => riscv_ui64ToF64(rm_3b, vs2_val[i])
                               };
@@ -407,6 +407,7 @@ function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
                             },
         FV_CVT_F_X       => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
+                                16 => riscv_i32ToF16(rm_3b, EXTS(vs2_val[i])),
                                 32 => riscv_i32ToF32(rm_3b, vs2_val[i]),
                                 64 => riscv_i64ToF64(rm_3b, vs2_val[i])
                               };
@@ -415,6 +416,7 @@ function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
                             },
         FV_CVT_RTZ_XU_F  => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
+                                16 => riscv_f16ToUi16(0b001, vs2_val[i]),
                                 32 => riscv_f32ToUi32(0b001, vs2_val[i]),
                                 64 => riscv_f64ToUi64(0b001, vs2_val[i])
                               };
@@ -423,6 +425,7 @@ function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
                             },
         FV_CVT_RTZ_X_F   => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
+                                16 => riscv_f16ToI16(0b001, vs2_val[i]),
                                 32 => riscv_f32ToI32(0b001, vs2_val[i]),
                                 64 => riscv_f64ToI64(0b001, vs2_val[i])
                               };
@@ -474,10 +477,10 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) | 
-      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) | not(valid_fp_op(SEW, rm_3b)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) |
+      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then { handle_illegal(); return RETIRE_FAIL };
-  assert(SEW >= 16 & SEW_widen <= 64);
+  assert(SEW >= 8 & SEW_widen <= 64);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -496,6 +499,7 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
       result[i] = match vfwunary0 {
         FWV_CVT_XU_F     => {
                               let (fflags, elem) : (bits_fflags, bits('o)) = match 'm {
+                                8  => { handle_illegal(); return RETIRE_FAIL },
                                 16 => riscv_f16ToUi32(rm_3b, vs2_val[i]),
                                 32 => riscv_f32ToUi64(rm_3b, vs2_val[i])
                               };
@@ -504,6 +508,7 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
                             },
         FWV_CVT_X_F      => {
                               let (fflags, elem) : (bits_fflags, bits('o)) = match 'm {
+                                8  => { handle_illegal(); return RETIRE_FAIL },
                                 16 => riscv_f16ToI32(rm_3b, vs2_val[i]),
                                 32 => riscv_f32ToI64(rm_3b, vs2_val[i])
                               };
@@ -512,7 +517,8 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
                             },
         FWV_CVT_F_XU     => {
                               let (fflags, elem) : (bits_fflags, bits('o)) = match 'm {
-                                16 => { handle_illegal(); return RETIRE_FAIL },
+                                8  => riscv_ui32ToF16(rm_3b, EXTZ(vs2_val[i])),
+                                16 => riscv_ui32ToF32(rm_3b, EXTZ(vs2_val[i])),
                                 32 => riscv_ui32ToF64(rm_3b, vs2_val[i])
                               };
                               write_fflags(fflags);
@@ -520,7 +526,8 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
                             },
         FWV_CVT_F_X      => {
                               let (fflags, elem) : (bits_fflags, bits('o)) = match 'm {
-                                16 => { handle_illegal(); return RETIRE_FAIL },
+                                8  => riscv_i32ToF16(rm_3b, EXTS(vs2_val[i])),
+                                16 => riscv_i32ToF32(rm_3b, EXTS(vs2_val[i])),
                                 32 => riscv_i32ToF64(rm_3b, vs2_val[i])
                               };
                               write_fflags(fflags);
@@ -528,6 +535,7 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
                             },
         FWV_CVT_F_F      => {
                               let (fflags, elem) : (bits_fflags, bits('o)) = match 'm {
+                                8  => { handle_illegal(); return RETIRE_FAIL },
                                 16 => riscv_f16ToF32(rm_3b, vs2_val[i]),
                                 32 => riscv_f32ToF64(rm_3b, vs2_val[i])
                               };
@@ -536,6 +544,7 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
                             },
         FWV_CVT_RTZ_XU_F => {
                               let (fflags, elem) : (bits_fflags, bits('o)) = match 'm {
+                                8  => { handle_illegal(); return RETIRE_FAIL },
                                 16 => riscv_f16ToUi32(0b001, vs2_val[i]),
                                 32 => riscv_f32ToUi64(0b001, vs2_val[i])
                               };
@@ -544,6 +553,7 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
                             },
         FWV_CVT_RTZ_X_F  => {
                               let (fflags, elem) : (bits_fflags, bits('o)) = match 'm {
+                                8  => { handle_illegal(); return RETIRE_FAIL },
                                 16 => riscv_f16ToI32(0b001, vs2_val[i]),
                                 32 => riscv_f32ToI64(0b001, vs2_val[i])
                               };
@@ -597,8 +607,8 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) | 
-      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) | not(valid_fp_op(SEW, rm_3b)) 
+  if  not(valid_rd_mask(vd, vm)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) |
+      not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -618,7 +628,8 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
       result[i] = match vfnunary0 {
         FNV_CVT_XU_F     => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
-                                16 => { handle_illegal(); return RETIRE_FAIL },
+                                8  => riscv_f16ToUi8(rm_3b, vs2_val[i]),
+                                16 => riscv_f32ToUi16(rm_3b, vs2_val[i]),
                                 32 => riscv_f64ToUi32(rm_3b, vs2_val[i])
                               };
                               write_fflags(fflags);
@@ -626,7 +637,8 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
                             },
         FNV_CVT_X_F      => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
-                                16 => { handle_illegal(); return RETIRE_FAIL },
+                                8  => riscv_f16ToI8(rm_3b, vs2_val[i]),
+                                16 => riscv_f32ToI16(rm_3b, vs2_val[i]),
                                 32 => riscv_f64ToI32(rm_3b, vs2_val[i])
                               };
                               write_fflags(fflags);
@@ -634,6 +646,7 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
                             },
         FNV_CVT_F_XU     => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
+                                8  => { handle_illegal(); return RETIRE_FAIL },
                                 16 => riscv_ui32ToF16(rm_3b, vs2_val[i]),
                                 32 => riscv_ui64ToF32(rm_3b, vs2_val[i])
                               };
@@ -642,6 +655,7 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
                             },
         FNV_CVT_F_X      => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
+                                8  => { handle_illegal(); return RETIRE_FAIL },
                                 16 => riscv_i32ToF16(rm_3b, vs2_val[i]),
                                 32 => riscv_i64ToF32(rm_3b, vs2_val[i])
                               };
@@ -650,6 +664,7 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
                             },
         FNV_CVT_F_F      => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
+                                8  => { handle_illegal(); return RETIRE_FAIL },
                                 16 => riscv_f32ToF16(rm_3b, vs2_val[i]),
                                 32 => riscv_f64ToF32(rm_3b, vs2_val[i])
                               };
@@ -658,6 +673,7 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
                             },
         FNV_CVT_ROD_F_F  => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
+                                8  => { handle_illegal(); return RETIRE_FAIL },
                                 16 => riscv_f32ToF16(0b110, vs2_val[i]),
                                 32 => riscv_f64ToF32(0b110, vs2_val[i])
                               };
@@ -666,7 +682,8 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
                             },
         FNV_CVT_RTZ_XU_F => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
-                                16 => { handle_illegal(); return RETIRE_FAIL },
+                                8  => riscv_f16ToUi8(0b001, vs2_val[i]),
+                                16 => riscv_f32ToUi16(0b001, vs2_val[i]),
                                 32 => riscv_f64ToUi32(0b001, vs2_val[i])
                               };
                               write_fflags(fflags);
@@ -674,7 +691,8 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
                             },
         FNV_CVT_RTZ_X_F  => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
-                                16 => { handle_illegal(); return RETIRE_FAIL },
+                                8  => riscv_f16ToI8(0b001, vs2_val[i]),
+                                16 => riscv_f32ToI16(0b001, vs2_val[i]),
                                 32 => riscv_f64ToI32(0b001, vs2_val[i])
                               };
                               write_fflags(fflags);

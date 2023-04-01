@@ -27,3 +27,13 @@ function get_vlen_pow() = match vlen {
 }
 
 type vlenmax : Int = 65536
+
+/* Note: At present, the values of elen and vlen need to be manually speficied
+ * in the init_sys() function of riscv_sys_control.sail before compiling the emulators,
+ * e.g.,
+ *  vlen = 0b0101;
+ *  elen = 0b1;
+ * means VLEN = 1024 and ELEN = 64,
+ * and the CSR vlenb is also not used.
+ * They will be configurable when user-specified configuration is supported in Sail.
+ */ 

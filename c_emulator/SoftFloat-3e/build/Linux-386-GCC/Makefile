@@ -166,8 +166,12 @@ OBJS_OTHERS = \
   i64_to_f64$(OBJ) \
   i64_to_extF80M$(OBJ) \
   i64_to_f128M$(OBJ) \
+  f16_to_ui8$(OBJ) \
+  f16_to_ui16$(OBJ) \
   f16_to_ui32$(OBJ) \
   f16_to_ui64$(OBJ) \
+  f16_to_i8$(OBJ) \
+  f16_to_i16$(OBJ) \
   f16_to_i32$(OBJ) \
   f16_to_i64$(OBJ) \
   f16_to_ui32_r_minMag$(OBJ) \
@@ -194,8 +198,10 @@ OBJS_OTHERS = \
   f16_lt_quiet$(OBJ) \
   f16_isSignalingNaN$(OBJ) \
   f16_classify$(OBJ) \
+  f32_to_ui16$(OBJ) \
   f32_to_ui32$(OBJ) \
   f32_to_ui64$(OBJ) \
+  f32_to_i16$(OBJ) \
   f32_to_i32$(OBJ) \
   f32_to_i64$(OBJ) \
   f32_to_ui32_r_minMag$(OBJ) \
