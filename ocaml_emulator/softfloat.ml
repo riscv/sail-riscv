@@ -169,3 +169,12 @@ let f64_le v1 v2 =
 
 let f64_eq v1 v2 =
   ()
+
+let f16_round_to_int exact rm v =
+  ()
+
+let f32_round_to_int exact rm v =
+  ()
+
+let f64_round_to_int exact rm v =
+  ()

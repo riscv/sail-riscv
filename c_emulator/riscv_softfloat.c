@@ -744,3 +744,42 @@ unit softfloat_f64eq(mach_bits v1, mach_bits v2) {
 
   return UNIT;
 }
+
+unit softfloat_f16roundToInt(mach_bits rm, mach_bits v, bool exact) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float16_t a, res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res = f16_roundToInt(a, rm8, exact);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f32roundToInt(mach_bits rm, mach_bits v, bool exact) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t a, res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res = f32_roundToInt(a, rm8, exact);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f64roundToInt(mach_bits rm, mach_bits v, bool exact) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float64_t a, res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+  a.v = v;
+  res = f64_roundToInt(a, rm8, exact);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
