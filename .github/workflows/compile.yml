@@ -22,13 +22,13 @@ jobs:
       run: eval $(opam env) && test/run_tests.sh
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: tests.xml
         path: test/tests.xml
     - name: Upload event payload
       if: always()
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: event.json
         path: ${{ github.event_path }}
