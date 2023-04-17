@@ -88,6 +88,10 @@ mapping clause csr_name_map = 0x002  <-> "frm"
 mapping clause csr_name_map = 0x003  <-> "fcsr"
 /* user entropy source */
 mapping clause csr_name_map = 0x015  <-> "seed"
+
+/* user jump table base */
+mapping clause csr_name_map = 0x017  <-> "jvt"
+
 /* counter/timers */
 mapping clause csr_name_map = 0xC00  <-> "cycle"
 mapping clause csr_name_map = 0xC01  <-> "time"

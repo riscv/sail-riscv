@@ -158,6 +158,9 @@ function readCSR csr : csreg -> xlenbits = {
     (0xC81, 32) => mtime[63 .. 32],
     (0xC82, 32) => minstret[63 .. 32],
 
+    /* Jump table CSR for compressed jump instructions */
+    (0x017, _)  => jvt.bits(),
+    
     /* user mode: Zkr */
     (0x015,  _) => read_seed_csr(),
 
@@ -240,9 +243,10 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
 
     /* user mode: seed (entropy source). writes are ignored */
     (0x015,  _) => write_seed_csr(),
-
-    _           => ext_write_CSR(csr, value)
+    (0x017,  _) => {jvt->bits() = value; Some(jvt.bits())},
+    _           => ext_write_CSR(csr, value),
   };
+
   match res {
     Some(v) => if   get_config_print_reg()
                then print_reg("CSR " ^ to_str(csr) ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")"),

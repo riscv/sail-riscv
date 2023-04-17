@@ -161,8 +161,14 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x015 => haveZkr(),
 
     /* check extensions */
+    /*    _     => ext_is_CSR_defined(csr, p),*/
+
+    /* user mode: Zcmt */
+    0x017 => haveZcmt(), // jvt
+
+    /* check extensions */
     _     => ext_is_CSR_defined(csr, p)
-  }
+}
 
 val check_CSR_access : (csrRW, priv_level, Privilege, bool) -> bool
 function check_CSR_access(csrrw, csrpr, p, isWrite) =
@@ -207,6 +213,28 @@ function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
     }
   }
 }
+
+/* JVT may only be accessed if we are doing a write, and access has been
+ * allowed in the current priv mode
+ */
+
+/*
+function check_jvt_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
+  if not(csr == 0x017) then {
+    true
+  } else if not(isWrite) then {
+    /* Read-only access to the JVT CSR is not allowed */
+    false
+  } else {
+    match (p) {
+      Machine => false,
+      Supervisor => false, /* TODO: base this on mseccfg */
+      User => true, /* TODO: base this on mseccfg */
+      _ => false
+    }
+  }
+  
+}*/
 
 function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
     is_CSR_defined(csr, p)

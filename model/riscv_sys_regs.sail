@@ -208,6 +208,9 @@ function haveZknd()   -> bool = true
 
 function haveZmmul()  -> bool = true
 
+/* Compressed extension support. */
+function haveZcmt()   -> bool = true
+
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
   SBE  : 4
@@ -824,3 +827,11 @@ function read_seed_csr() -> xlenbits = {
 
 /* Writes to the seed CSR are ignored */
 function write_seed_csr () -> option(xlenbits) = None()
+
+/* registers for JVT handling in compressed jump instructions*/
+bitfield JVT : xlenbits = {
+  Base : xlen - 1 .. 6 ,
+  Mode : 5 .. 0
+}
+
+register jvt : JVT  /* JVT Vector */
