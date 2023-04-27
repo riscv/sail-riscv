@@ -209,4 +209,4 @@ intro.
 exists w__0.
 lia.
 Qed.
-Hint Resolve n_leading_spaces_fact : sail.
+#[export] Hint Resolve n_leading_spaces_fact : sail.
