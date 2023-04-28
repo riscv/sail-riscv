@@ -190,6 +190,9 @@ let softfloat_ui64_to_f64 _ _ = ()
 val softfloat_f16_to_f32: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit
 let softfloat_f16_to_f32 _ _ = ()
 
+val softfloat_bf16_to_f32: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit
+let softfloat_bf16_to_f32 _ _ = ()
+
 val softfloat_f16_to_f64: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit
 let softfloat_f16_to_f64 _ _ = ()
 
@@ -198,6 +201,9 @@ let softfloat_f32_to_f64 _ _ = ()
 
 val softfloat_f32_to_f16: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit
 let softfloat_f32_to_f16 _ _ = ()
+
+val softfloat_f32_to_bf16: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit
+let softfloat_f32_to_bf16 _ _ = ()
 
 val softfloat_f64_to_f16: forall 'rm 's. Size 'rm, Size 's => bitvector 'rm -> bitvector 's -> unit
 let softfloat_f64_to_f16 _ _ = ()

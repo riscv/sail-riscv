@@ -101,6 +101,8 @@ enum f_un_rm_op_H = {FSQRT_H, FCVT_W_H, FCVT_WU_H, FCVT_H_W, FCVT_H_WU,    // RV
                      FCVT_H_S, FCVT_H_D, FCVT_S_H, FCVT_D_H,
                      FCVT_L_H, FCVT_LU_H, FCVT_H_L, FCVT_H_LU}             // RV64 only
 
+enum f_bf16_un_rm_op_H = {FCVT_BF16_S, FCVT_S_BF16}  /* RV32 and RV64 */
+
 enum f_un_op_H = {FCLASS_H, FMV_X_H, FMV_H_X}    /* RV32 and RV64 */
 
 enum f_bin_op_H = {FSGNJ_H, FSGNJN_H, FSGNJX_H, FMIN_H, FMAX_H, FEQ_H, FLT_H, FLE_H}

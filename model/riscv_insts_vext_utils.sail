@@ -635,3 +635,11 @@ function fp_widen(nval) = {
   accrue_fflags(fflags);
   wval
 }
+
+val fp_widen_bf16 : bits(16) -> bits(32) effect {escape, rreg, undef, wreg}
+function fp_widen_bf16(nval) = {
+  let rm_3b = fcsr.FRM();
+  let (fflags, wval) : (bits_fflags, bits(32)) = riscv_bf16ToF32(rm_3b, nval);
+  accrue_fflags(fflags);
+  wval
+}

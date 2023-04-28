@@ -173,6 +173,9 @@ let ui64_to_f64 rm v =
 let f16_to_f32 rm v =
   ()
 
+let bf16_to_f32 rm v =
+  ()
+
 let f16_to_f64 rm v =
   ()
 
@@ -180,6 +183,9 @@ let f32_to_f64 rm v =
   ()
 
 let f32_to_f16 rm v =
+  ()
+
+let f32_to_bf16 rm v =
   ()
 
 let f64_to_f16 rm v =

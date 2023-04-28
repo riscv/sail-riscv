@@ -300,7 +300,11 @@ function clause execute(FWVVMATYPE(funct6, vm, vs1, vs2, vd)) = {
         FWVV_VMACC   => fp_muladd(rm_3b, fp_widen(vs1_val[i]), fp_widen(vs2_val[i]), vd_val[i]),
         FWVV_VNMACC  => fp_nmulsub(rm_3b, fp_widen(vs1_val[i]), fp_widen(vs2_val[i]), vd_val[i]),
         FWVV_VMSAC   => fp_mulsub(rm_3b, fp_widen(vs1_val[i]), fp_widen(vs2_val[i]), vd_val[i]),
-        FWVV_VNMSAC  => fp_nmuladd(rm_3b, fp_widen(vs1_val[i]), fp_widen(vs2_val[i]), vd_val[i])
+        FWVV_VNMSAC  => fp_nmuladd(rm_3b, fp_widen(vs1_val[i]), fp_widen(vs2_val[i]), vd_val[i]),
+        FWVV_VMACC_BF16 => {
+          assert(SEW == 16);
+          fp_muladd(rm_3b, fp_widen_bf16(vs1_val[i]), fp_widen_bf16(vs2_val[i]), vd_val[i])
+        }
       }
     }
   };
@@ -597,6 +601,15 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
                               };
                               write_fflags(fflags);
                               elem
+                            },
+        FWV_CVT_BF16_F_F => {
+                              let (fflags, elem) : (bits_fflags, bits('o)) = match 'm {
+                                8  => { handle_illegal(); return RETIRE_FAIL },
+                                16 => riscv_bf16ToF32(rm_3b, vs2_val[i]),
+                                32 => { handle_illegal(); return RETIRE_FAIL }
+                              };
+                              write_fflags(fflags);
+                              elem
                             }
       }
     }
@@ -735,7 +748,16 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
                               };
                               write_fflags(fflags);
                               elem
-                            } 
+                            },
+        FNV_CVT_BF16_F_F => {
+                              let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
+                                8  => { handle_illegal(); return RETIRE_FAIL },
+                                16 => riscv_f32ToBF16(rm_3b, vs2_val[i]),
+                                32 => { handle_illegal(); return RETIRE_FAIL }
+                              };
+                              write_fflags(fflags);
+                              elem
+                            }
       }
     }
   };
@@ -1153,7 +1175,11 @@ function clause execute(FWVFMATYPE(funct6, vm, rs1, vs2, vd)) = {
         FWVF_VMACC   => fp_muladd(rm_3b, fp_widen(rs1_val), fp_widen(vs2_val[i]), vd_val[i]),
         FWVF_VNMACC  => fp_nmulsub(rm_3b, fp_widen(rs1_val), fp_widen(vs2_val[i]), vd_val[i]),
         FWVF_VMSAC   => fp_mulsub(rm_3b, fp_widen(rs1_val), fp_widen(vs2_val[i]), vd_val[i]),
-        FWVF_VNMSAC  => fp_nmuladd(rm_3b, fp_widen(rs1_val), fp_widen(vs2_val[i]), vd_val[i])
+        FWVF_VNMSAC  => fp_nmuladd(rm_3b, fp_widen(rs1_val), fp_widen(vs2_val[i]), vd_val[i]),
+        FWVF_VMACC_BF16 => {
+          assert(SEW == 16);
+          fp_muladd(rm_3b, fp_widen_bf16(rs1_val), fp_widen_bf16(vs2_val[i]), vd_val[i])
+        }
       }
     }
   };
