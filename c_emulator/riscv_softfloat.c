@@ -759,6 +759,19 @@ unit softfloat_f16tof32(mach_bits rm, mach_bits v) {
   return UNIT;
 }
 
+unit softfloat_bf16tof32(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  bfloat16_t a;
+  float32_t res;
+  a.v = v;
+  res = bf16_to_f32(a);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
 unit softfloat_f16tof64(mach_bits rm, mach_bits v) {
   SOFTFLOAT_PRELUDE(rm);
 
@@ -792,6 +805,19 @@ unit softfloat_f32tof16(mach_bits rm, mach_bits v) {
   float16_t res;
   a.v = v;
   res = f32_to_f16(a);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f32tobf16(mach_bits rm, mach_bits v) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t a;
+  bfloat16_t res;
+  a.v = v;
+  res = f32_to_bf16(a);
 
   SOFTFLOAT_POSTLUDE(res);
 
