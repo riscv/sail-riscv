@@ -91,6 +91,38 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x306 => p == Machine & haveUsrMode(), // mcounteren
     0x310 => p == Machine & (sizeof(xlen) == 32), // mstatush
     0x320 => p == Machine, // mcountinhibit
+
+    /* machine mode: event selectors */
+    0x323 => p == Machine, // mhpmevents[0]
+    0x324 => p == Machine, // mhpmevents[1]
+    0x325 => p == Machine, // mhpmevents[2]
+    0x326 => p == Machine, // mhpmevents[3]
+    0x327 => p == Machine, // mhpmevents[4]
+    0x328 => p == Machine, // mhpmevents[5]
+    0x329 => p == Machine, // mhpmevents[6]
+    0x32A => p == Machine, // mhpmevents[7]
+    0x32B => p == Machine, // mhpmevents[8]
+    0x32C => p == Machine, // mhpmevents[9]
+    0x32D => p == Machine, // mhpmevents[10]
+    0x32E => p == Machine, // mhpmevents[11]
+    0x32F => p == Machine, // mhpmevents[12]
+    0x330 => p == Machine, // mhpmevents[13]
+    0x331 => p == Machine, // mhpmevents[14]
+    0x332 => p == Machine, // mhpmevents[15]
+    0x333 => p == Machine, // mhpmevents[16]
+    0x334 => p == Machine, // mhpmevents[17]
+    0x335 => p == Machine, // mhpmevents[18]
+    0x336 => p == Machine, // mhpmevents[19]
+    0x337 => p == Machine, // mhpmevents[20]
+    0x338 => p == Machine, // mhpmevents[21]
+    0x339 => p == Machine, // mhpmevents[22]
+    0x33A => p == Machine, // mhpmevents[23]
+    0x33B => p == Machine, // mhpmevents[24]
+    0x33C => p == Machine, // mhpmevents[25]
+    0x33D => p == Machine, // mhpmevents[26]
+    0x33E => p == Machine, // mhpmevents[27]
+    0x33F => p == Machine, // mhpmevents[28]
+
     /* machine mode: trap handling */
     0x340 => p == Machine, // mscratch
     0x341 => p == Machine, // mepc
@@ -123,9 +155,67 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     /* counters */
     0xB00 => p == Machine, // mcycle
     0xB02 => p == Machine, // minstret
+    0xB03 => p == Machine, // mhpmcounters[0]
+    0xB04 => p == Machine, // mhpmcounters[1]
+    0xB05 => p == Machine, // mhpmcounters[2]
+    0xB06 => p == Machine, // mhpmcounters[3]
+    0xB07 => p == Machine, // mhpmcounters[4]
+    0xB08 => p == Machine, // mhpmcounters[5]
+    0xB09 => p == Machine, // mhpmcounters[6]
+    0xB0A => p == Machine, // mhpmcounters[7]
+    0xB0B => p == Machine, // mhpmcounters[8]
+    0xB0C => p == Machine, // mhpmcounters[9]
+    0xB0D => p == Machine, // mhpmcounters[10]
+    0xB0E => p == Machine, // mhpmcounters[11]
+    0xB0F => p == Machine, // mhpmcounters[12]
+    0xB10 => p == Machine, // mhpmcounters[13]
+    0xB11 => p == Machine, // mhpmcounters[14]
+    0xB12 => p == Machine, // mhpmcounters[15]
+    0xB13 => p == Machine, // mhpmcounters[16]
+    0xB14 => p == Machine, // mhpmcounters[17]
+    0xB15 => p == Machine, // mhpmcounters[18]
+    0xB16 => p == Machine, // mhpmcounters[19]
+    0xB17 => p == Machine, // mhpmcounters[20]
+    0xB18 => p == Machine, // mhpmcounters[21]
+    0xB19 => p == Machine, // mhpmcounters[22]
+    0xB1A => p == Machine, // mhpmcounters[23]
+    0xB1B => p == Machine, // mhpmcounters[24]
+    0xB1C => p == Machine, // mhpmcounters[25]
+    0xB1D => p == Machine, // mhpmcounters[26]
+    0xB1E => p == Machine, // mhpmcounters[27]
+    0xB1F => p == Machine, // mhpmcounters[28]
 
     0xB80 => p == Machine & (sizeof(xlen) == 32), // mcycleh
     0xB82 => p == Machine & (sizeof(xlen) == 32), // minstreth
+    0xB83 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[0]
+    0xB84 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[1]
+    0xB85 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[2]
+    0xB86 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[3]
+    0xB87 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[4]
+    0xB88 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[5]
+    0xB89 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[6]
+    0xB8A => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[7]
+    0xB8B => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[8]
+    0xB8C => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[9]
+    0xB8D => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[10]
+    0xB8E => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[11]
+    0xB8F => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[12]
+    0xB90 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[13]
+    0xB91 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[14]
+    0xB92 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[15]
+    0xB93 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[16]
+    0xB94 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[17]
+    0xB95 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[18]
+    0xB96 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[19]
+    0xB97 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[20]
+    0xB98 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[21]
+    0xB99 => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[22]
+    0xB9A => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[23]
+    0xB9B => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[24]
+    0xB9C => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[25]
+    0xB9D => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[26]
+    0xB9E => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[27]
+    0xB9F => p == Machine & (sizeof(xlen) == 32), // mhpmcounters[28]
 
     /* disabled trigger/debug module */
     0x7a0 => p == Machine,
@@ -152,6 +242,35 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0xC00 => haveUsrMode(),    // cycle
     0xC01 => haveUsrMode(),    // time
     0xC02 => haveUsrMode(),    // instret
+    0xC03 => haveUsrMode(),    // hpmcounters[0]
+    0xC04 => haveUsrMode(),    // hpmcounters[1]
+    0xC05 => haveUsrMode(),    // hpmcounters[2]
+    0xC06 => haveUsrMode(),    // hpmcounters[3]
+    0xC07 => haveUsrMode(),    // hpmcounters[4]
+    0xC08 => haveUsrMode(),    // hpmcounters[5]
+    0xC09 => haveUsrMode(),    // hpmcounters[6]
+    0xC0A => haveUsrMode(),    // hpmcounters[7]
+    0xC0B => haveUsrMode(),    // hpmcounters[8]
+    0xC0C => haveUsrMode(),    // hpmcounters[9]
+    0xC0D => haveUsrMode(),    // hpmcounters[10]
+    0xC0E => haveUsrMode(),    // hpmcounters[11]
+    0xC0F => haveUsrMode(),    // hpmcounters[12]
+    0xC10 => haveUsrMode(),    // hpmcounters[13]
+    0xC11 => haveUsrMode(),    // hpmcounters[14]
+    0xC12 => haveUsrMode(),    // hpmcounters[15]
+    0xC13 => haveUsrMode(),    // hpmcounters[16]
+    0xC14 => haveUsrMode(),    // hpmcounters[17]
+    0xC15 => haveUsrMode(),    // hpmcounters[18]
+    0xC16 => haveUsrMode(),    // hpmcounters[19]
+    0xC17 => haveUsrMode(),    // hpmcounters[20]
+    0xC18 => haveUsrMode(),    // hpmcounters[21]
+    0xC19 => haveUsrMode(),    // hpmcounters[22]
+    0xC1A => haveUsrMode(),    // hpmcounters[23]
+    0xC1B => haveUsrMode(),    // hpmcounters[24]
+    0xC1C => haveUsrMode(),    // hpmcounters[25]
+    0xC1D => haveUsrMode(),    // hpmcounters[26]
+    0xC1E => haveUsrMode(),    // hpmcounters[27]
+    0xC1F => haveUsrMode(),    // hpmcounters[28]
 
     0xC80 => haveUsrMode() & (sizeof(xlen) == 32),     // cycleh
     0xC81 => haveUsrMode() & (sizeof(xlen) == 32),     // timeh
@@ -177,15 +296,73 @@ function check_Counteren(csr : csreg, p : Privilege) -> bool =
     (0xC00, Supervisor) => mcounteren.CY() == 0b1,
     (0xC01, Supervisor) => mcounteren.TM() == 0b1,
     (0xC02, Supervisor) => mcounteren.IR() == 0b1,
+    (0xC03, Supervisor) => mcounteren.HPM()[0] == bitone,
+    (0xC04, Supervisor) => mcounteren.HPM()[1] == bitone,
+    (0xC05, Supervisor) => mcounteren.HPM()[2] == bitone,
+    (0xC06, Supervisor) => mcounteren.HPM()[3] == bitone,
+    (0xC07, Supervisor) => mcounteren.HPM()[4] == bitone,
+    (0xC08, Supervisor) => mcounteren.HPM()[5] == bitone,
+    (0xC09, Supervisor) => mcounteren.HPM()[6] == bitone,
+    (0xC0A, Supervisor) => mcounteren.HPM()[7] == bitone,
+    (0xC0B, Supervisor) => mcounteren.HPM()[8] == bitone,
+    (0xC0C, Supervisor) => mcounteren.HPM()[9] == bitone,
+    (0xC0D, Supervisor) => mcounteren.HPM()[10] == bitone,
+    (0xC0E, Supervisor) => mcounteren.HPM()[11] == bitone,
+    (0xC0F, Supervisor) => mcounteren.HPM()[12] == bitone,
+    (0xC10, Supervisor) => mcounteren.HPM()[13] == bitone,
+    (0xC11, Supervisor) => mcounteren.HPM()[14] == bitone,
+    (0xC12, Supervisor) => mcounteren.HPM()[15] == bitone,
+    (0xC13, Supervisor) => mcounteren.HPM()[16] == bitone,
+    (0xC14, Supervisor) => mcounteren.HPM()[17] == bitone,
+    (0xC15, Supervisor) => mcounteren.HPM()[18] == bitone,
+    (0xC16, Supervisor) => mcounteren.HPM()[19] == bitone,
+    (0xC17, Supervisor) => mcounteren.HPM()[10] == bitone,
+    (0xC18, Supervisor) => mcounteren.HPM()[21] == bitone,
+    (0xC19, Supervisor) => mcounteren.HPM()[22] == bitone,
+    (0xC1A, Supervisor) => mcounteren.HPM()[23] == bitone,
+    (0xC1B, Supervisor) => mcounteren.HPM()[24] == bitone,
+    (0xC1C, Supervisor) => mcounteren.HPM()[25] == bitone,
+    (0xC1D, Supervisor) => mcounteren.HPM()[26] == bitone,
+    (0xC1E, Supervisor) => mcounteren.HPM()[27] == bitone,
+    (0xC1F, Supervisor) => mcounteren.HPM()[28] == bitone,
 
-    (0xC00, User) => mcounteren.CY() == 0b1 & (not(haveSupMode()) | scounteren.CY() == 0b1),
-    (0xC01, User) => mcounteren.TM() == 0b1 & (not(haveSupMode()) | scounteren.TM() == 0b1),
-    (0xC02, User) => mcounteren.IR() == 0b1 & (not(haveSupMode()) | scounteren.IR() == 0b1),
+//  (0xC00, User) => mcounteren.CY() == 0b1 & (not(haveSupMode()) | scounteren.CY() == 0b1),
+//    (0xC01, User) => mcounteren.TM() == 0b1 & (not(haveSupMode()) | scounteren.TM() == 0b1),
+//  (0xC02, User) => mcounteren.IR() == 0b1 & (not(haveSupMode()) | scounteren.IR() == 0b1),
 
-    (_, _) => /* no HPM counters for now */
-              if   0xC03 <=_u csr & csr <=_u 0xC1F
-              then false
-              else true
+    (0xC80, User) => mcounteren.CY() == 0b1 & ((~ (haveSupMode())) | scounteren.CY() == 0b1),   // TODO: check address
+    (0xC81, User) => mcounteren.TM() == 0b1 & ((~ (haveSupMode())) | scounteren.TM() == 0b1),   // TODO: check address
+    (0xC82, User) => mcounteren.IR() == 0b1 & ((~ (haveSupMode())) | scounteren.IR() == 0b1),   // TODO: check address
+    (0xC83, User) => mcounteren.HPM()[0] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[0] == bitone),
+    (0xC84, User) => mcounteren.HPM()[1] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[1] == bitone),
+    (0xC85, User) => mcounteren.HPM()[2] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[2] == bitone),
+    (0xC86, User) => mcounteren.HPM()[3] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[3] == bitone),
+    (0xC87, User) => mcounteren.HPM()[4] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[4] == bitone),
+    (0xC88, User) => mcounteren.HPM()[5] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[5] == bitone),
+    (0xC89, User) => mcounteren.HPM()[6] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[6] == bitone),
+    (0xC8A, User) => mcounteren.HPM()[7] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[7] == bitone),
+    (0xC8B, User) => mcounteren.HPM()[8] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[8] == bitone),
+    (0xC8C, User) => mcounteren.HPM()[9] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[9] == bitone),
+    (0xC8D, User) => mcounteren.HPM()[10] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[10] == bitone),
+    (0xC8E, User) => mcounteren.HPM()[11] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[11] == bitone),
+    (0xC8F, User) => mcounteren.HPM()[12] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[12] == bitone),
+    (0xC90, User) => mcounteren.HPM()[13] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[13] == bitone),
+    (0xC91, User) => mcounteren.HPM()[14] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[14] == bitone),
+    (0xC92, User) => mcounteren.HPM()[15] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[15] == bitone),
+    (0xC93, User) => mcounteren.HPM()[16] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[16] == bitone),
+    (0xC94, User) => mcounteren.HPM()[17] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[17] == bitone),
+    (0xC95, User) => mcounteren.HPM()[18] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[18] == bitone),
+    (0xC96, User) => mcounteren.HPM()[19] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[19] == bitone),
+    (0xC97, User) => mcounteren.HPM()[20] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[20] == bitone),
+    (0xC98, User) => mcounteren.HPM()[21] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[21] == bitone),
+    (0xC99, User) => mcounteren.HPM()[22] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[22] == bitone),
+    (0xC9A, User) => mcounteren.HPM()[23] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[23] == bitone),
+    (0xC9B, User) => mcounteren.HPM()[24] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[24] == bitone),
+    (0xC9C, User) => mcounteren.HPM()[25] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[25] == bitone),
+    (0xC9D, User) => mcounteren.HPM()[26] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[26] == bitone),
+    (0xC9E, User) => mcounteren.HPM()[27] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[27] == bitone),
+    (0xC9F, User) => mcounteren.HPM()[28] == bitone & ((~ (haveSupMode())) | scounteren.HPM()[28] == bitone),
+    (_, _) => true
   }
 
 
@@ -595,6 +772,11 @@ function init_sys() -> unit = {
 
   minstret           = EXTZ(0b0);
   minstret_written   = false;
+
+  foreach (i from 0 to 28) {
+    mhpmevents[i]   = sail_zeros(sizeof(xlen));
+    mhpmcounters[i] = sail_zeros(64);
+  };
 
   init_pmp();
 

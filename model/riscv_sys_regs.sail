@@ -515,7 +515,7 @@ register mcounteren : Counteren
 register scounteren : Counteren
 
 function legalize_mcounteren(c : Counteren, v : xlenbits) -> Counteren = {
-  /* no HPM counters yet */
+  let c = update_HPM(c, v[31 .. 3]);
   let c = update_IR(c, [v[2]]);
   let c = update_TM(c, [v[1]]);
   let c = update_CY(c, [v[0]]);
@@ -523,7 +523,7 @@ function legalize_mcounteren(c : Counteren, v : xlenbits) -> Counteren = {
 }
 
 function legalize_scounteren(c : Counteren, v : xlenbits) -> Counteren = {
-  /* no HPM counters yet */
+  let c = update_HPM(c, v[31 .. 3]);
   let c = update_IR(c, [v[2]]);
   let c = update_TM(c, [v[1]]);
   let c = update_CY(c, [v[0]]);
@@ -531,13 +531,14 @@ function legalize_scounteren(c : Counteren, v : xlenbits) -> Counteren = {
 }
 
 bitfield Counterin : bits(32) = {
-  /* no HPM counters yet */
-  IR : 2,
-  CY : 0
+  HPM : 31 .. 3,
+  IR  : 2,
+  CY  : 0
 }
 register mcountinhibit : Counterin
 
 function legalize_mcountinhibit(c : Counterin, v : xlenbits) -> Counterin = {
+  let c = update_HPM(c, v[31 .. 3]);
   let c = update_IR(c, [v[2]]);
   let c = update_CY(c, [v[0]]);
   c
@@ -545,6 +546,12 @@ function legalize_mcountinhibit(c : Counterin, v : xlenbits) -> Counterin = {
 
 register mcycle : bits(64)
 register mtime : bits(64)
+
+/* HPM counters */
+
+register mhpmevents   : vector(29, dec, xlenbits)
+register mhpmcounters : vector(29, dec, bits(64))
+
 
 /* minstret
  *
@@ -559,8 +566,10 @@ register mtime : bits(64)
  */
 register minstret : bits(64)
 register minstret_written : bool
+register inst_retired : bool
 
 function retire_instruction() -> unit = {
+  inst_retired = true;
   if   minstret_written == true
   then minstret_written = false
   else if mcountinhibit.IR() == 0b0
