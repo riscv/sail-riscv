@@ -1,7 +1,45 @@
-/* ************************************************************************ */
-/* This file implements part of the vector extension.                       */
-/* Chapter 6: Configuration-Setting Instructions                            */
-/* ************************************************************************ */
+/*=================================================================================*/
+/*  Copyright (c) 2021-2023                                                        */
+/*    Authors from RIOS Lab, Tsinghua University:                                  */
+/*      Xinlai Wan <xinlai.w@rioslab.org>                                          */
+/*      Xi Wang <xi.w@rioslab.org>                                                 */
+/*      Yifei Zhu <yifei.z@rioslab.org>                                            */
+/*      Shenwei Hu <shenwei.h@rioslab.org>                                         */
+/*      Kalvin Vu                                                                  */
+/*    Other contributors:                                                          */
+/*      Jessica Clarke <jrtc27@jrtc27.com>                                         */
+/*      Victor Moya <victor.moya@semidynamics.com>                                 */
+/*                                                                                 */
+/*  All rights reserved.                                                           */
+/*                                                                                 */
+/*  Redistribution and use in source and binary forms, with or without             */
+/*  modification, are permitted provided that the following conditions             */
+/*  are met:                                                                       */
+/*  1. Redistributions of source code must retain the above copyright              */
+/*     notice, this list of conditions and the following disclaimer.               */
+/*  2. Redistributions in binary form must reproduce the above copyright           */
+/*     notice, this list of conditions and the following disclaimer in             */
+/*     the documentation and/or other materials provided with the                  */
+/*     distribution.                                                               */
+/*                                                                                 */
+/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''             */
+/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED              */
+/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                */
+/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR            */
+/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                   */
+/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT               */
+/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF               */
+/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND            */
+/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,             */
+/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT             */
+/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF             */
+/*  SUCH DAMAGE.                                                                   */
+/*=================================================================================*/
+
+/* ******************************************************************************* */
+/* This file implements part of the vector extension.                              */
+/* Chapter 6: Configuration-Setting Instructions                                   */
+/* ******************************************************************************* */
 
 mapping sew_flag : string <-> bits(3) = {
   "e8"    <-> 0b000,
@@ -37,7 +75,7 @@ mapping maybe_ma_flag : string <-> bits(1) = {
   sep() ^ "mu" <-> 0b0
 }
 
-/* ******************** vsetvli & vsetvl *********************** */
+/* ****************************** vsetvli & vsetvl ******************************* */
 union clause ast = VSET_TYPE : (vsetop, bits(1), bits(1), bits(3), bits(3), regidx, regidx)
 
 mapping encdec_vsetop : vsetop <-> bits(4) ={
@@ -107,8 +145,7 @@ mapping vsettype_mnemonic : vsetop <-> string ={
 mapping clause assembly = VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) 
   <-> vsettype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ maybe_ta_flag(ta) ^ maybe_ma_flag(ma)
 
-
-/* ******************** vsetivli *********************** */
+/* ********************************* vsetivli ************************************ */
 union clause ast = VSETI_TYPE : ( bits(1), bits(1), bits(3), bits(3), regidx, regidx)
 
 mapping clause encdec = VSETI_TYPE(ma, ta, sew, lmul, uimm, rd) if haveRVV() 
