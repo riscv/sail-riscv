@@ -1,6 +1,44 @@
-/* ************************************************************************** */
-/* This file implements functions used by vector instructions.                */
-/* ************************************************************************** */
+/*=================================================================================*/
+/*  Copyright (c) 2021-2023                                                        */
+/*    Authors from RIOS Lab, Tsinghua University:                                  */
+/*      Xinlai Wan <xinlai.w@rioslab.org>                                          */
+/*      Xi Wang <xi.w@rioslab.org>                                                 */
+/*      Yifei Zhu <yifei.z@rioslab.org>                                            */
+/*      Shenwei Hu <shenwei.h@rioslab.org>                                         */
+/*      Kalvin Vu                                                                  */
+/*    Other contributors:                                                          */
+/*      Jessica Clarke <jrtc27@jrtc27.com>                                         */
+/*      Victor Moya <victor.moya@semidynamics.com>                                 */
+/*                                                                                 */
+/*  All rights reserved.                                                           */
+/*                                                                                 */
+/*  Redistribution and use in source and binary forms, with or without             */
+/*  modification, are permitted provided that the following conditions             */
+/*  are met:                                                                       */
+/*  1. Redistributions of source code must retain the above copyright              */
+/*     notice, this list of conditions and the following disclaimer.               */
+/*  2. Redistributions in binary form must reproduce the above copyright           */
+/*     notice, this list of conditions and the following disclaimer in             */
+/*     the documentation and/or other materials provided with the                  */
+/*     distribution.                                                               */
+/*                                                                                 */
+/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''             */
+/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED              */
+/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                */
+/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR            */
+/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                   */
+/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT               */
+/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF               */
+/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND            */
+/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,             */
+/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT             */
+/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF             */
+/*  SUCH DAMAGE.                                                                   */
+/*=================================================================================*/
+
+/* ******************************************************************************* */
+/* This file implements functions used by vector instructions.                     */
+/* ******************************************************************************* */
 
 /* Vector mask mapping */
 mapping maybe_vmask : string <-> bits(1) = {
@@ -12,13 +50,25 @@ mapping maybe_vmask : string <-> bits(1) = {
 val valid_eew_emul : (int, int) -> bool effect {rreg}
 function valid_eew_emul(EEW, EMUL_pow) = {
   let ELEN = int_power(2, get_elen_pow());
-  EEW >= 8 & EEW <= ELEN & EMUL_pow >= -3 & EMUL_pow <= 3;
+  EEW >= 8 & EEW <= ELEN & EMUL_pow >= -3 & EMUL_pow <= 3
 }
 
 /* Check for vstart value */
 val assert_vstart : int -> bool effect {rreg}
 function assert_vstart(i) = {
-  unsigned(vstart) == i;
+  unsigned(vstart) == i
+}
+
+/* Check for valid floating-point operation types
+ *  1. Valid element width of floating-point numbers
+ *  2. Valid floating-point rounding mode
+ */
+val valid_fp_op : ({|8, 16, 32, 64|}, bits(3)) -> bool
+function valid_fp_op(SEW, rm_3b) = {
+  /* 128-bit floating-point values will be supported in future extensions */
+  let valid_sew = (SEW >= 16 & SEW <= 128); 
+  let valid_rm = not(rm_3b == 0b101 | rm_3b == 0b110 | rm_3b == 0b111);
+  valid_sew & valid_rm
 }
 
 /* Check for valid destination register when vector masking is enabled: 
@@ -55,13 +105,13 @@ function valid_reg_overlap(rs, rd, EMUL_pow_rs, EMUL_pow_rd) = {
 
 /* Scalar register shaping */
 val get_scalar : forall 'n, 'n >= 8. (regidx, int('n)) -> bits('n) effect {escape, rreg}
-function get_scalar(rs1, vsew_bits) = {
-  if sizeof(xlen) > vsew_bits then {
+function get_scalar(rs1, SEW) = {
+  if sizeof(xlen) > SEW then {
     /* Least significant SEW bits */
-    X(rs1)[vsew_bits - 1 .. 0]
-  } else if sizeof(xlen) < vsew_bits then {
+    X(rs1)[SEW - 1 .. 0]
+  } else if sizeof(xlen) < SEW then {
     /* Sign extend to SEW */
-    EXTS(vsew_bits, X(rs1))
+    EXTS(SEW, X(rs1))
   } else {
     X(rs1)
   }
@@ -131,7 +181,7 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
         result[i] = vd_val[i]; /* TODO: configuration support */
       };
       mask[i] = false
-    } else if ~(vm_val[i]) then {
+    } else if not(vm_val[i]) then {
       /* Inactive body elements defined by vm */
       if mask_ag == UNDISTURBED then {
         result[i] = vd_val[i]
@@ -213,7 +263,7 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
       /* Mask tail is always agnostic */
       result[i] = vd_val[i]; /* TODO: configuration support */
       mask[i] = false
-    } else if ~(vm_val[i]) then {
+    } else if not(vm_val[i]) then {
       /* Inactive body elements defined by vm */
       if mask_ag == UNDISTURBED then {
         result[i] = vd_val[i]
@@ -256,7 +306,7 @@ function NaN_unbox(regval, 'm) = {
 }
 
 /* Check if the floating point number is a signaling NaN */
-val      f_is_SNaN : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). bits('m) -> bool
+val      f_is_SNaN : forall 'm, 'm in {16, 32, 64, 128}. bits('m) -> bool
 function f_is_SNaN   xf = {
   match 'm {
     16   => (xf[14..10] == ones()) & (xf[9..9] == zeros()) & (xf[8..0] != zeros()),
@@ -267,7 +317,7 @@ function f_is_SNaN   xf = {
 }
 
 /* Either QNaN or SNan */
-val      f_is_NaN : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). bits('m) -> bool
+val      f_is_NaN : forall 'm, 'm in {16, 32, 64, 128}. bits('m) -> bool
 function f_is_NaN   xf = {
   match 'm {
     16   => (xf[14..10] == ones()) & (xf[9..0] != zeros()),
@@ -277,7 +327,7 @@ function f_is_NaN   xf = {
   }
 }
 
-val      f_is_neg_zero : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). bits('m) -> bool
+val      f_is_neg_zero : forall 'm, 'm in {16, 32, 64, 128}. bits('m) -> bool
 function f_is_neg_zero   xf = {
   match 'm {
     16   => (xf[15..15] == ones()) & (xf[14..0] == zeros()),
@@ -287,7 +337,7 @@ function f_is_neg_zero   xf = {
   }
 }
 
-val      f_is_pos_zero : forall 'm, ('m in {16, 32, 64, 128} & 'm <= flen). bits('m) -> bool
+val      f_is_pos_zero : forall 'm, 'm in {16, 32, 64, 128}. bits('m) -> bool
 function f_is_pos_zero   xf = {
   match 'm {
     16   => (xf == zeros()),
@@ -299,19 +349,20 @@ function f_is_pos_zero   xf = {
 
 /* Scalar register shaping for floating point operations */
 val get_scalar_fp : forall 'n, 'n in {16, 32, 64, 128}. (regidx, int('n)) -> bits('n) effect {escape, rreg}
-function get_scalar_fp(rs1, vsew_bits) = {
-  if sizeof(flen) > vsew_bits then {
+function get_scalar_fp(rs1, SEW) = {
+  if sizeof(flen) >= SEW then {
     /* Least significant SEW bits */
-    NaN_unbox(F(rs1), vsew_bits)
+    NaN_unbox(F(rs1), SEW)
   } else {
-    canonical_NaN(vsew_bits)
+    assert(false, "invalid vector floating-point type width: FLEN < SEW");
+    zeros()
   }
 }
 
 /* Shift amounts */
 val get_shift_amount : forall 'n 'm, 0 <= 'n & 'm in {8, 16, 32, 64}. (bits('n), int('m)) -> nat effect {escape}
-function get_shift_amount(bit_val, vsew_bits) = {
-  let lowlog2bits = log2(vsew_bits);
+function get_shift_amount(bit_val, SEW) = {
+  let lowlog2bits = log2(SEW);
   assert(0 < lowlog2bits & lowlog2bits < 'n);
   unsigned(bit_val[lowlog2bits - 1 .. 0]);
 }
@@ -328,7 +379,7 @@ function get_fixed_rounding_incr(vec_elem, shift_amount) = {
         (slice(vec_elem, shift_amount - 1, 1) == 0b1) & (slice(vec_elem, 0, shift_amount - 1) != zeros() | slice(vec_elem, shift_amount, 1) == 0b1)),
       0b10 => 0b0,
       0b11 => bool_to_bits(
-        ~(slice(vec_elem, shift_amount, 1) == 0b1) & (slice(vec_elem, 0, shift_amount) != zeros()))
+        not(slice(vec_elem, shift_amount, 1) == 0b1) & (slice(vec_elem, 0, shift_amount) != zeros()))
     } 
   }
 }
@@ -409,6 +460,44 @@ function fp_sub(rm_3b, op1, op2) = {
   result_val
 }
 
+val fp_min : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
+function fp_min(op1, op2) = {
+  let (fflags, op1_lt_op2) : (bits_fflags, bool) = match 'n {
+    16  => riscv_f16Lt_quiet(op1, op2),
+    32  => riscv_f32Lt_quiet(op1, op2),
+    64  => riscv_f64Lt_quiet(op1, op2)
+  };
+
+  let result_val = if (f_is_NaN(op1) & f_is_NaN(op2)) then canonical_NaN('n)
+                else if f_is_NaN(op1) then op2
+                else if f_is_NaN(op2) then op1
+                else if (f_is_neg_zero(op1) & f_is_pos_zero(op2)) then op1
+                else if (f_is_neg_zero(op2) & f_is_pos_zero(op1)) then op2
+                else if op1_lt_op2 then op1
+                else op2;
+  write_fflags(fflags);
+  result_val
+}
+
+val fp_max : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bits('n) effect {escape, rreg, undef, wreg}
+function fp_max(op1, op2) = {
+  let (fflags, op1_lt_op2) : (bits_fflags, bool) = match 'n {
+    16  => riscv_f16Lt_quiet(op1, op2),
+    32  => riscv_f32Lt_quiet(op1, op2),
+    64  => riscv_f64Lt_quiet(op1, op2)
+  };
+
+  let result_val = if (f_is_NaN(op1) & f_is_NaN(op2)) then canonical_NaN('n)
+                else if f_is_NaN(op1) then op2
+                else if f_is_NaN(op2) then op1
+                else if (f_is_neg_zero(op1) & f_is_pos_zero(op2)) then op2
+                else if (f_is_neg_zero(op2) & f_is_pos_zero(op1)) then op1
+                else if op1_lt_op2 then op2
+                else op1;
+  write_fflags(fflags);
+  result_val
+}
+
 val fp_eq : forall 'n, 'n in {16, 32, 64}. (bits('n), bits('n)) -> bool effect {escape, rreg, undef, wreg}
 function fp_eq(op1, op2) = {
   let (fflags, result_val) : (bits_fflags, bool) = match 'n {
@@ -427,7 +516,7 @@ function fp_gt(op1, op2) = {
     32  => riscv_f32Le(op1, op2),
     64  => riscv_f64Le(op1, op2)
   };
-  let result_val = (if fflags == 0b10000 then false else ~(temp_val));
+  let result_val = (if fflags == 0b10000 then false else not(temp_val));
   write_fflags(fflags);
   result_val
 }
@@ -439,7 +528,7 @@ function fp_ge(op1, op2) = {
     32  => riscv_f32Lt(op1, op2),
     64  => riscv_f64Lt(op1, op2)
   };
-  let result_val = (if fflags == 0b10000 then false else ~(temp_val));
+  let result_val = (if fflags == 0b10000 then false else not(temp_val));
   write_fflags(fflags);
   result_val
 }
@@ -536,7 +625,7 @@ function fp_nmulsub(rm_3b, op1, op2, opsub) = {
   result_val
 }
 
-val fp_widen : forall 'm, ('m in {16, 32} & 'm <= flen). bits('m) -> bits('m * 2) effect {escape, rreg, undef, wreg}
+val fp_widen : forall 'm, 'm in {16, 32}. bits('m) -> bits('m * 2) effect {escape, rreg, undef, wreg}
 function fp_widen(nval) = {
   let rm_3b = fcsr.FRM();
   let (fflags, wval) : (bits_fflags, bits('m * 2)) = match 'm {
