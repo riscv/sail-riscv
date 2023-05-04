@@ -153,6 +153,11 @@ function readCSR csr : csreg -> xlenbits = {
     (0xC21, _) => vtype.bits(),
     (0xC22, _) => vlenb,
 
+    (0x321,  _) => mcyclecfg.bits()[(sizeof(xlen) - 1) .. 0],
+    (0x322,  _) => minstretcfg.bits()[(sizeof(xlen) - 1) .. 0],
+    (0x721, 32) => mcyclecfg.bits()[63 .. 32],
+    (0x722, 32) => minstretcfg.bits()[63 .. 32],
+
     /* trigger/debug */
     (0x7a0,  _) => ~(tselect),  /* this indicates we don't have any trigger support */
 
@@ -259,6 +264,11 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x355,  _) => { Some(value) },
     (0x356,  _) => { Some(value) },
     (0x357,  _) => { Some(value) },
+
+    (0x321,  _) => { mcyclecfg = legalize_smcntrpmf(mcyclecfg, value); Some(value) },
+    (0x322,  _) => { minstretcfg = legalize_smcntrpmf(minstretcfg, value); Some(value) },
+    (0x721, 32) => { mcyclecfg = legalize_smcntrpmf_high(mcyclecfg, value); Some(value) },
+    (0x722, 32) => { minstretcfg = legalize_smcntrpmf_high(minstretcfg, value); Some(value) },
 
     /* trigger/debug */
     (0x7a0,  _) => { tselect = value; Some(tselect) },

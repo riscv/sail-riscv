@@ -320,7 +320,7 @@ function clint_store(addr, width, data) = {
 
 val tick_clock : unit -> unit
 function tick_clock() = {
-  if   mcountinhibit.CY() == 0b0
+  if   should_inc_mcycle()
   then mcycle = mcycle + 1;
 
   mtime  = mtime  + 1;

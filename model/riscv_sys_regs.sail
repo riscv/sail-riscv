@@ -556,6 +556,57 @@ function legalize_mcountinhibit(c : Counterin, v : xlenbits) -> Counterin = {
   c
 }
 
+bitfield CountSmcntrpmf : bits(64) = {
+  MINH  : 62,
+  SINH  : 61,
+  UINH  : 60,
+  VSINH : 59,
+  VUINH : 58
+}
+register mcyclecfg : CountSmcntrpmf
+
+function should_inc_mcycle() -> bool = {
+  if mcountinhibit.CY() == 0b1
+  then false
+  else match (cur_privilege) {
+    Machine    => mcyclecfg.MINH() != 0b1,
+    Supervisor => mcyclecfg.SINH() != 0b1,
+    User       => mcyclecfg.UINH() != 0b1
+    /* TODO: VSINH, VUINH when those modes are defined */
+  }
+}
+
+register minstretcfg : CountSmcntrpmf
+
+function should_inc_minstret(priv : Privilege) -> bool = {
+  if mcountinhibit.IR() == 0b1
+  then false
+  else match (priv) {
+    Machine    => minstretcfg.MINH() != 0b1,
+    Supervisor => minstretcfg.SINH() != 0b1,
+    User       => minstretcfg.UINH() != 0b1
+    /* TODO: VSINH, VUINH when those modes are defined */
+  }
+}
+
+function legalize_smcntrpmf_high(c : CountSmcntrpmf, value : bits(32)) -> CountSmcntrpmf = {
+  let c = update_MINH(c, [value[30]]);
+  let c = update_SINH(c, [value[29]]);
+  let c = update_UINH(c, [value[28]]);
+  let c = update_VSINH(c, [value[27]]);
+  let c = update_VUINH(c, [value[26]]);
+  c
+}
+
+function legalize_smcntrpmf_low(c : CountSmcntrpmf, value : bits(32)) -> CountSmcntrpmf = {
+  c
+}
+
+function legalize_smcntrpmf(c : CountSmcntrpmf, value : xlenbits) -> CountSmcntrpmf = {
+  let c = if sizeof(xlen) > 32 then legalize_smcntrpmf_high(c, value[63.. 32]) else c;
+  legalize_smcntrpmf_low(c, value[31..0])
+}
+
 register mcycle : bits(64)
 register mtime : bits(64)
 
