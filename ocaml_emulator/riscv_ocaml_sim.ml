@@ -38,6 +38,9 @@ let options = Arg.align ([("-dump-dts",
                           ("-enable-dirty-update",
                            Arg.Set P.config_enable_dirty_update,
                            " enable dirty-bit update during page-table walks");
+                          ("-enable-svadu",
+                           Arg.Set P.config_enable_svadu,
+                           " enable svadu extension HW updating PTE bits");
                           ("-enable-misaligned-access",
                            Arg.Set P.config_enable_misaligned_access,
                            " enable misaligned accesses without M-mode traps");

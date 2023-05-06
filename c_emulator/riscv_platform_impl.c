@@ -11,6 +11,7 @@ bool rv_enable_writable_misa = true;
 bool rv_enable_fdext = true;
 
 bool rv_enable_dirty_update = false;
+bool rv_enable_svadu = false;
 bool rv_enable_misaligned = false;
 bool rv_mtval_has_illegal_inst_bits = false;
 

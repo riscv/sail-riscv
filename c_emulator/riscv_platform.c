@@ -47,6 +47,9 @@ bool plat_enable_dirty_update(unit u)
   return rv_enable_dirty_update;
 }
 
+bool plat_enable_svadu(unit u)
+{ return rv_enable_svadu; }
+
 bool plat_enable_misaligned_access(unit u)
 {
   return rv_enable_misaligned;

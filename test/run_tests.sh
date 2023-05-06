@@ -55,7 +55,7 @@ cd $RISCVDIR
 make clean
 
 printf "Building 32-bit RISCV specification...\n"
-if ARCH=RV32 make ocaml_emulator/riscv_ocaml_sim_RV32 ;
+if ARCH=RV32 make -j ocaml_emulator/riscv_ocaml_sim_RV32 ;
 then
     green "Building 32-bit RISCV OCaml emulator" "ok"
 else
@@ -81,7 +81,7 @@ done
 finish_suite "32-bit RISCV OCaml tests"
 
 
-if ARCH=RV32 make c_emulator/riscv_sim_RV32;
+if ARCH=RV32 make -j c_emulator/riscv_sim_RV32;
 then
     green "Building 32-bit RISCV C emulator" "ok"
 else
@@ -102,7 +102,7 @@ make clean
 
 printf "Building 64-bit RISCV specification...\n"
 
-if make ocaml_emulator/riscv_ocaml_sim_RV64 ;
+if make -j ocaml_emulator/riscv_ocaml_sim_RV64 ;
 then
     green "Building 64-bit RISCV OCaml emulator" "ok"
 else
@@ -127,7 +127,7 @@ for test in $DIR/riscv-tests/rv64*.elf; do
 done
 finish_suite "64-bit RISCV OCaml tests"
 
-if make c_emulator/riscv_sim_RV64;
+if make -j c_emulator/riscv_sim_RV64;
 then
     green "Building 64-bit RISCV C emulator" "ok"
 else
@@ -146,7 +146,7 @@ finish_suite "64-bit RISCV C tests"
 # Do 'make clean' to avoid cross-arch pollution.
 make clean
 
-if ARCH=RV32 make c_emulator/riscv_rvfi_RV32;
+if ARCH=RV32 make -j c_emulator/riscv_rvfi_RV32;
 then
     green "Building 32-bit RISCV RVFI C emulator" "ok"
 else
@@ -157,7 +157,7 @@ finish_suite "32-bit RISCV RVFI C tests"
 # Do 'make clean' to avoid cross-arch pollution.
 make clean
 
-if ARCH=RV64 make c_emulator/riscv_rvfi_RV64;
+if ARCH=RV64 make -j c_emulator/riscv_rvfi_RV64;
 then
     green "Building 64-bit RISCV RVFI C emulator" "ok"
 else
