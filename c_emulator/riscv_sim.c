@@ -85,7 +85,7 @@ bool config_print_mem_access = true;
 bool config_print_platform = true;
 bool config_print_rvfi = false;
 
-int rv_cfg_c_ext_enable(char * isa_str, char * ext_pattern);
+static bool rv_cfg_c_ext_enable(char * isa_str, char * ext_pattern);
 
 void set_config_print(char *var, bool val) {
   if (var == NULL || strcmp("all", var) == 0) {
@@ -1110,7 +1110,7 @@ int main(int argc, char **argv)
   close_logs();
 }
 
-int rv_cfg_c_ext_enable(char * isa_str, char * ext_pattern)
+bool rv_cfg_c_ext_enable(char * isa_str, char * ext_pattern)
 {
   pcre2_code          *re;
   int                 errornumber;

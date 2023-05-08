@@ -17,8 +17,8 @@ extern bool rv_enable_dirty_update;
 extern bool rv_enable_misaligned;
 extern bool rv_mtval_has_illegal_inst_bits;
 
-extern int  rv_enable_smepmp;
-extern int  rv_enable_zicond;
+extern bool rv_enable_smepmp;
+extern bool rv_enable_zicond;
 
 extern bool rv_enable_experimental_extensions;
 
