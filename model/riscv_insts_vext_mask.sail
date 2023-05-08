@@ -61,7 +61,7 @@ mapping clause encdec = MMTYPE(funct6, vs2, vs1, vd) if haveRVV()
 function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let num_elem = int_power(2, get_vlen_pow());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -72,7 +72,7 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
   result      : vector('n, dec, bool) = undefined;
   mask        : vector('n, dec, bool) = undefined;
 
-  (result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
+  (result, mask) = init_masked_result_carry(num_elem, SEW, 0, vd_val);
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
@@ -118,7 +118,7 @@ mapping clause encdec = VCPOP_M(vm, vs2, rd) if haveRVV()
 function clause execute(VCPOP_M(vm, vs2, rd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let num_elem = int_power(2, get_vlen_pow());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -131,7 +131,7 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
   /* Value of vstart must be 0 */
   if not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
 
-  (result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vs2_val, vm_val);
+  (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
 
   count : nat = 0;
   foreach (i from 0 to (num_elem - 1)) {
@@ -155,7 +155,7 @@ mapping clause encdec = VFIRST_M(vm, vs2, rd) if haveRVV()
 function clause execute(VFIRST_M(vm, vs2, rd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let num_elem = int_power(2, get_vlen_pow());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -168,7 +168,7 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
   /* Value of vstart must be 0 */
   if not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
 
-  (result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vs2_val, vm_val);
+  (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
 
   index : int = -1;
   foreach (i from 0 to (num_elem - 1)) {
@@ -194,7 +194,7 @@ mapping clause encdec = VMSBF_M(vm, vs2, vd) if haveRVV()
 function clause execute(VMSBF_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let num_elem = int_power(2, get_vlen_pow());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -214,7 +214,7 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
   /* Dest reg cannot be the same as source reg */
   if vd == vs2 then { handle_illegal(); return RETIRE_FAIL };
 
-  (result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
 
   found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
@@ -241,7 +241,7 @@ mapping clause encdec = VMSIF_M(vm, vs2, vd) if haveRVV()
 function clause execute(VMSIF_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let num_elem = int_power(2, get_vlen_pow());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -261,7 +261,7 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
   /* Dest reg cannot be the same as source reg */
   if vd == vs2 then { handle_illegal(); return RETIRE_FAIL };
 
-  (result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
 
   found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
@@ -288,7 +288,7 @@ mapping clause encdec = VMSOF_M(vm, vs2, vd) if haveRVV()
 function clause execute(VMSOF_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let num_elem = int_power(2, get_vlen_pow());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -308,7 +308,7 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
   /* Dest reg cannot be the same as source reg */
   if vd == vs2 then { handle_illegal(); return RETIRE_FAIL };
 
-  (result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
 
   found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
