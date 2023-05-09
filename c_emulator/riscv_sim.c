@@ -226,7 +226,7 @@ char *process_args(int argc, char **argv)
                     "b:"
                     "t:"
                     "T:"
-                    "g"
+                    "g:"
                     "h"
                     "y:"
                     "u:"
