@@ -1,0 +1,137 @@
+:doctype: book
+:sectids:
+The RISCV Sail Golden Model: A Cookbook for the RISCV ISA
+=========================================================
+William C. McSpadden <bill@riscv.org>; Martin Berger <contact@martinfriedrichberger.net>
+
+:toc:
+:toc-placement: preamble
+:toclevels: 2
+
+:showtitle:
+
+// Need some preamble to get TOC
+{empty}
+
+
+[#list_of_programming_examples]
+== List of programming examples (in increasing complexity)
+
+The main purpose of this document,  is to give the user a set
+of programming examples for working on the RISC-V Sail model
+(often referred to as the RISC-V Golden Model).  The examples
+will show the user how to change or extend the model.  And it
+will also show the user how to write a RISC-V program (in both 
+assembler and C) and then run it on the Golden Model.
+
+You should read and utilize this document after you have a good
+handle on the Sail programming language. 
+
+<<platform-configuration>>
+
+<<add-a-new-extension>>
+
+
+:sectnums:
+== Introduction
+
+
+
+== How to contribute (Bill)
+
+
+=== Coding and indentation style
+
+
+=== Brevity
+
+Program examples should be short, both in terms of number-of-lines and in terms of execution time.  
+Each example should focus on one simple item.  And the execution of the example item should be clear.  
+The example should be short, standalone and easy to maintain.
+
+
+=== Maintainership (when something breaks)
+
+We would also ask that if you contribute a code example,  that you would maintain it.
+
+== Sail installation
+
+TBD
+
+=== Ubuntu (Bill Mc.)
+
+TBD
+
+=== MacOS (Martin)
+
+TBD
+
+=== Docker
+
+Docker is used as a ....
+
+=== Windows 
+
+
+=== Windows: Cygwin (Bill Mc.,  low priority)
+
+
+=== Other?
+
+
+== Basic description
+=== What Sail is
+Sail is a programming language that is targetted for
+ specifying an ISA.  Once specified, a set of
+instructions (usually found in a .elf file) can then
+be executed on the "model" and the results observed.
+
+The model is a sequential model only;  at this time, 
+there are no semantics allowing for any type of parallel
+execution.  
+
+=== What sail is not 
+Sail is not an RTL (Register Transfer Language).
+There is no direct support for timing (as in clock
+timing) and there is no support for parallel execution,
+all things that an RTL contains.
+
+=== version management and what to expect
+TBD
+
+[#platform-configuration]
+== Platform Configuration example (Bill)
+
+TBD
+
+// All code and asciidoc description for "add a new extension"
+// is in the functional code example directory.
+include::../functional_code_examples/add_a_new_extension/add_a_new_extension.adoc[]
+
+== FAQs (Frequently Asked Questions)
+
+Following are a set of FAQs that were generated via set of questions to the Sail developers.
+
+include::./RISCV_model_FAQ.adoc[]
+
+
+== Colophon
+
+This document was prepared on an Ubuntu Linux workstation 
+using Microsofts VSCode for editing and rendering the asciidoc
+text.
+
++'shutter'+ was used for screenshots of various parts of the RISCV 
+specifications and were saved in PNG format.
+
+These screenshots were then edited using +'gimp'+ to highlight the
+pertinent sections of the screenshot.
+
++'asciidoctor-reducer'+ was used to combine and resolve all cross-document
+references and put them into one .adoc file,  TheRISCVSailCookbook_Complate.adoc.
+
+The pdf was created using +'asciidoctor-pdf'+ .
+
+See the Makefile, +cookbook/doc/Makefile+,  for the recipe for building
+the document.
+

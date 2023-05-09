@@ -66,12 +66,23 @@
 /*  SUCH DAMAGE.                                                                         */
 /*=======================================================================================*/
 
+$include "rv_cfg_func_sigs.sail"
+
 function main () : unit -> unit = {
+
+  print("hello from main() in main.sail\n");
+
+  let reset_address : int = rv_cfg_int( "/reset/address") ;
+  print_int("/reset/address: 0x%x\n", reset_address);
+
   // initialize extensions
   ext_init ();
 
+
+
   // PC = __GetSlice_int(64, elf_entry(), 0);
   PC = sail_zero_extend(0x1000, sizeof(xlen));
+  // PC = sail_zero_extend(reset_address, sizeof(xlen));
   print_bits("PC = ", PC);
 
   try {

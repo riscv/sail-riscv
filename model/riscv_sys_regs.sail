@@ -144,7 +144,7 @@ val sys_enable_writable_misa = {c: "sys_enable_writable_misa", ocaml: "Platform.
 val sys_enable_rvc = {c: "sys_enable_rvc", ocaml: "Platform.enable_rvc", _: "sys_enable_rvc"} : unit -> bool
 /* whether misa.{f,d} were enabled at boot */
 val sys_enable_fdext = {c: "sys_enable_fdext", ocaml: "Platform.enable_fdext", _: "sys_enable_fdext"} : unit -> bool
-/* whether zfinx was enabled at boot */
+/* whether zfinx was enabled at boot/* Custom CSR example */ */
 val sys_enable_zfinx = {c: "sys_enable_zfinx", ocaml: "Platform.enable_zfinx", _: "sys_enable_zfinx"} : unit -> bool
 /* whether the N extension was enabled at boot */
 val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "sys_enable_next"} : unit -> bool
@@ -824,3 +824,40 @@ function read_seed_csr() -> xlenbits = {
 
 /* Writes to the seed CSR are ignored */
 function write_seed_csr () -> option(xlenbits) = None()
+
+
+/* Custom CSR example */
+
+bitfield Xmpl_csr : bitvector(32, dec) = {
+  Rsrvd               : (xlen - 1) .. (xlen - 7),
+  FieldWARL           : (xlen - 8) .. 0
+}
+
+register xmpl_csr : bitvector(32, dec)
+
+function legalize_xmpl_csr(o : Xmpl_csr, v : bitvector(32, dec)) -> bitvector(32, dec) = {
+  let v = Mk_Xmpl_csr(v);
+  // TODO: Write a meaningful legalize function. 
+  //    Just return the register value for now
+  xmpl_csr
+}
+
+bitfield Xmpl_csr_2 : xlenbits = {
+  Rsrvd               : (xlen - 1) .. (xlen - 7),
+  FieldWARL           : (xlen - 8) .. 0
+}
+register xmpl_csr_2 : Xmpl_csr_2
+
+function legalize_xmpl_csr_2(o : Xmpl_csr_2, v : bitvector(32, dec)) -> bitvector(32, dec) = {
+  let v = Mk_Xmpl_csr_2(v);
+  // TODO: Write a meaningful legalize function. 
+  //    Just return the register value for now
+  xmpl_csr_2.bits()
+}
+
+
+
+
+
+
+

@@ -270,6 +270,9 @@ sail-riscv
 - test                    // test files
   - riscv-tests           // snapshot of tests from the riscv/riscv-tests github repo
 - os-boot                 // information and sample files for booting OS images
+- cookbook                // RISC-V cookbook examples and documentation
+  - doc                   // the asciidoc documentation
+  - functional_code_examples // code examples 
 ```
 
 Getting started
@@ -345,9 +348,33 @@ Some useful options are: configuring whether misaligned accesses trap
 whether page-table walks update PTE bits (`--enable-dirty-update` for C
 and `-enable-dirty-update` for OCaml).
 
-### Experimental integration with riscv-config
+### Integration with RISCV-Config
 
-There is also (as yet unmerged) support for [integration with riscv-config](https://github.com/rems-project/sail-riscv/pull/43) to allow configuring the compiled model according to a riscv-config yaml specification.
+RISCV-Config ( https://github.com/riscv-software-src/riscv-config ) is the
+configuration standard used by the RISC-V Architectural Compatability Tests
+to specify how a RISC-V core is configured.  The RISC-V architecture allows
+for many implementation specific configurations such as:
+
+- Supported (implemented) ISA extensions
+- Misaligned address support (ie - HW support or trap)
+- Configuration of WARL fields in CSRs
+- Memory map
+
+RISCV-Config utilizes YAML and YAML schemas to describe the configuration.
+There are two YAML files that get examined:  1) an ISA YAML file that 
+describes the configuration of a RISC-V core (ie - supported ISA extensions,
+CSR configurations, etc), and 2) a platform YAML file that describes
+the platform configurations (ie - reset address, CLIC support, etc).
+
+Configuration is done at run-time not at compile time.  (Note:  there
+was an earlier PR (PR #43) that integrated RISCV-Config as a compile-time 
+capability. See: [integration with riscv-config](https://github.com/rems-project/sail-riscv/pull/43)
+It was determined that a run-time solution was needed rather than a compile-time solution.)
+Command line switches specify the YAML files that are to be used.
+
+When adding new extensions to the model,  corresponding configuration parameters
+need to be added to RISCV-Config.
+
 
 ### Booting OS images
 
@@ -383,6 +410,7 @@ Authors
  Nathaniel Wesley Filardo, Microsoft;
  Peter Rugg, University of Cambridge;
  Scott Johnson, Aril Computer Corp.
+ William C. McSpadden, RISC-V, International;
 
 Funding
 -------

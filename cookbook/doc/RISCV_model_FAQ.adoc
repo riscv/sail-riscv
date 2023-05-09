@@ -1,0 +1,95 @@
+=== Frequently Asked Questions about the Sail RISC-V Golden Model
+
+<<q_is_there_support_for_multi_hart_multi_core_simulation>>
+
+<<q_what_are_ml_files__what_are_their_purpose>>
+
+<<q__is_there_any_support_for_MTIMER>>
+
+<<q__is_the__main_loop__coded_in_Sail>>
+
+<<q-can-gdb-attach-to-the-riscv-golden-model-to-debug-riscv-code>>
+
+<<q__why_two_executables>>
+
+<<q___is_there_support_in_the_model_for_misaligned_memory_accesses>>
+
+<<q-what-is-the-meaning-of-life-the-universe-and-everything>>
+
+<<q-what-does-the-answer-to-what-is-the-meaning-of-life-the-universe-and-everything-mean>>
+
+
+[#q_is_there_support_for_multi_hart_multi_core_simulation]
+==== Q: Is there support for multi-HART or multi-Core simulation?
+
+A: There is no inherent support for multi-HART or multi-Core within the existing RISC-V Sail model. 
+There are future plans for adding this kind of simulation.  It is needed in order to simulate 
+(in a meaningful way) the atomic memory operations and to evaluate memory consistency
+and coherency.
+
+//  ( The following is from email between Bill McSpadden and Martin Berger )
+//  ( Subject: RISC-V Sail model questions, round 1: Multi-core, MTIMER, MMIO, main loop)
+//  ( Date: Feb 15, 2022, 7:20AM)
+
+The model isn't directly about testing. Testing is a separate
+activity. The point of the model is to be as clear as possible. and we
+should keep testing and the model separate.
+
+//  ( The following is from email between Bill McSpadden and Martin Berger )
+//  ( Subject: RISC-V Sail model questions, round 1: Multi-core, MTIMER, MMIO, main loop)
+//  ( Date: Feb 15, 2022, 7:20AM)
+
+[#q_what_are_ml_files__what_are_their_purpose]
+==== Q: What are .ml files?  What are their purpose?
+
+A: These are OCaml files. They are to the ocaml emulator what the .c
+files are to the c emulator. I question the need for an OCaml emulator
+,see also https://github.com/riscv/sail-riscv/issues/138
+
+[#q__is_there_any_support_for_MTIMER]
+==== Q: Is there any support for MTIMER?
+
+A: Yes.  MTIMER functionality lives in riscv_platform.sail.  At this date (2022-05-27) it lives
+at a fixed MMIO space as specified by the MCONFIG CSR.  In the future, once the Golden Model supports
+the RISCV_config YAML structure, the MTIMER can be assigned any address.
+
+[#q__is_the__main_loop__coded_in_Sail]
+==== Q: Is the "main loop" coded in Sail?
+
+A: The initial answer to this question ("The main execution loop can be found in `main.sail``.")
+is incorrect.  main.sail is not executed in the RISC-V model, even though it is
+compiled into the model.
+
+The main loop is actually found on the C side in the file `c_emulator/riscv_sim.c`
+in the function `run_sail()``.  In this function,  the Sail function, `zstep()`, is
+called (which is the Sail function, `step()` )
+
+[#q-can-gdb-attach-to-the-riscv-golden-model-to-debug-riscv-code]
+==== Q: Can gdb attach to the RISCV Golden Model to debug RISCV code?
+
+A:  Not at this time (2022-05-27).  It is being looked at as an enhancement.
+
+[#q__why_two_executables]
+==== Q: There are two C executables built: riscv_sim_RV32 and riscv_sim_RV64. Is there a reason why we need two executables? Can't XLEN be treated as a run-time setting rather than a compile time setting?
+
+A:  (Response from Martin Berger) I think this would require a redesign of the Sail code because of the way Sail's liquid types work. Currently xlen is a global type constant, that is used, directly or indirectly, everywhere. As a type-constant it is used during type checking. The typing system might (note the subjunctive) be flexible enough to turn this into a type-parameter, but probably not without major code surgery. I think we should ask the Cambridge team why they decided on the current approach.
+
+[#q___is_there_support_in_the_model_for_misaligned_memory_accesses]
+==== Q:  Is there support in the model for misaligned memory accesses?
+
+A: (Response from Martin Berger) Short answer: I don't know. Alignment stuff is distributed all over the code base.  riscv_platform.sail has some configuration options for this. Maybe that's a place to start looking?
+
+
+//  ( The following is some sample questions based on HGttG,Hitchhikers Guide to the Galax)
+
+[#q-what-is-the-meaning-of-life-the-universe-and-everything]
+==== Q: What is the meaning of life, the universe and everything?
+
+A: 42
+
+[#q-what-does-the-answer-to-what-is-the-meaning-of-life-the-universe-and-everything-mean]
+==== Q: What does the answer to "What is the meaning of life, the universe and everything" mean?
+
+A: One must construct an experimental, organic computer to compute the meaning.
+Project 'Earth' is one such computer.  Timeframe for an expected answer is... soon.
+

@@ -66,10 +66,13 @@
 /*  SUCH DAMAGE.                                                                         */
 /*=======================================================================================*/
 
+$include "rv_cfg_func_sigs.sail"
+
 /* The emulator fetch-execute-interrupt dispatch loop. */
 
 /* returns whether to increment the step count in the trace */
 function step(step_no : int) -> bool = {
+  print(__FILE__); print(__LOC__); print("entering step() function...\n");
   /* for step extensions */
   ext_pre_step_hook();
 
@@ -172,6 +175,9 @@ function init_model () -> unit = {
   init_platform (); /* devices */
   init_sys ();      /* processor */
   init_vmem ();     /* virtual memory */
+
+  let isa_str : string = rv_cfg_string("hart0/ISA");
+  print_string("isa_str: ", isa_str); print("\n");
 
   /* initialize extensions last */
   ext_init ();
