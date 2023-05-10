@@ -51,8 +51,8 @@ function clause execute (RISCV_FLI_H(constantidx, rd)) = {
 
 union clause ast = RISCV_FLI_S : (bits(5), regidx)
 
-mapping clause encdec = RISCV_FLI_S(rs1, rd)                if (haveFExt() & haveZfa())
-  <-> 0b111_1000 @ 0b00001 @ rs1 @ 0b000 @ rd @ 0b101_0011  if (haveFExt() & haveZfa())
+mapping clause encdec = RISCV_FLI_S(rs1, rd)                if haveZfa()
+  <-> 0b111_1000 @ 0b00001 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveZfa()
 
 mapping clause assembly = RISCV_FLI_S(constantidx, rd)
   <-> "fli.s" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_5(constantidx)
@@ -209,8 +209,8 @@ function clause execute (RISCV_FMAXM_H(rs2, rs1, rd)) = {
 
 union clause ast = RISCV_FMINM_S : (regidx, regidx, regidx)
 
-mapping clause encdec = RISCV_FMINM_S(rs2, rs1, rd)     if (haveFExt() & haveZfa())
-  <-> 0b001_0100 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if (haveFExt() & haveZfa())
+mapping clause encdec = RISCV_FMINM_S(rs2, rs1, rd)     if haveZfa()
+  <-> 0b001_0100 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if haveZfa()
 
 mapping clause assembly = RISCV_FMINM_S(rs2, rs1, rd)
   <-> "fminm.s" ^ spc() ^ freg_name(rd)
@@ -239,8 +239,8 @@ function clause execute (RISCV_FMINM_S(rs2, rs1, rd)) = {
 
 union clause ast = RISCV_FMAXM_S : (regidx, regidx, regidx)
 
-mapping clause encdec = RISCV_FMAXM_S(rs2, rs1, rd)     if (haveFExt() & haveZfa())
-  <-> 0b001_0100 @ rs2 @ rs1 @ 0b011 @ rd @ 0b101_0011  if (haveFExt() & haveZfa())
+mapping clause encdec = RISCV_FMAXM_S(rs2, rs1, rd)     if haveZfa()
+  <-> 0b001_0100 @ rs2 @ rs1 @ 0b011 @ rd @ 0b101_0011  if haveZfa()
 
 mapping clause assembly = RISCV_FMAXM_S(rs2, rs1, rd)
   <-> "fmaxm.s" ^ spc() ^ freg_name(rd)
@@ -389,8 +389,8 @@ function clause execute (RISCV_FROUNDNX_H(rs1, rm, rd)) = {
 
 union clause ast = RISCV_FROUND_S : (regidx, rounding_mode, regidx)
 
-mapping clause encdec = RISCV_FROUND_S(rs1, rm, rd)                            if (haveFExt() & haveZfa())
-  <-> 0b010_0000 @ 0b00100 @ rs1 @ encdec_rounding_mode(rm) @ rd @ 0b101_0011  if (haveFExt() & haveZfa())
+mapping clause encdec = RISCV_FROUND_S(rs1, rm, rd)                            if haveZfa()
+  <-> 0b010_0000 @ 0b00100 @ rs1 @ encdec_rounding_mode(rm) @ rd @ 0b101_0011  if haveZfa()
 
 mapping clause assembly = RISCV_FROUND_S(rs1, rm, rd)
   <-> "fround.s" ^ spc() ^ freg_name(rd)
@@ -419,8 +419,8 @@ function clause execute (RISCV_FROUND_S(rs1, rm, rd)) = {
 
 union clause ast = RISCV_FROUNDNX_S : (regidx, rounding_mode, regidx)
 
-mapping clause encdec = RISCV_FROUNDNX_S(rs1, rm, rd)                         if (haveFExt() & haveZfa())
-  <-> 0b010_0000 @ 0b00101 @ rs1 @ encdec_rounding_mode(rm) @ rd @ 0b101_0011 if (haveFExt() & haveZfa())
+mapping clause encdec = RISCV_FROUNDNX_S(rs1, rm, rd)                         if haveZfa()
+  <-> 0b010_0000 @ 0b00101 @ rs1 @ encdec_rounding_mode(rm) @ rd @ 0b101_0011 if haveZfa()
 
 mapping clause assembly = RISCV_FROUNDNX_S(rs1, rm, rd)
   <-> "froundnx.s" ^ spc() ^ freg_name(rd)
@@ -602,8 +602,8 @@ function clause execute(RISCV_FLTQ_H(rs2, rs1, rd)) = {
 
 union clause ast = RISCV_FLEQ_S : (regidx, regidx, regidx)
 
-mapping clause encdec = RISCV_FLEQ_S(rs2, rs1, rd)               if (haveFExt() & haveZfa())
-  <-> 0b101_0000 @ rs2 @ rs1 @ 0b100 @ rd @ 0b101_0011           if (haveFExt() & haveZfa())
+mapping clause encdec = RISCV_FLEQ_S(rs2, rs1, rd)               if haveZfa()
+  <-> 0b101_0000 @ rs2 @ rs1 @ 0b100 @ rd @ 0b101_0011           if haveZfa()
 
 mapping clause assembly = RISCV_FLEQ_S(rs2, rs1, rd)
   <-> "fleq.s" ^ spc() ^ freg_name(rd)
@@ -626,8 +626,8 @@ function clause execute(RISCV_FLEQ_S(rs2, rs1, rd)) = {
 
 union clause ast = RISCV_FLTQ_S : (regidx, regidx, regidx)
 
-mapping clause encdec = RISCV_FLTQ_S(rs2, rs1, rd)               if (haveFExt() & haveZfa())
-  <-> 0b101_0000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b101_0011           if (haveFExt() & haveZfa())
+mapping clause encdec = RISCV_FLTQ_S(rs2, rs1, rd)               if haveZfa()
+  <-> 0b101_0000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b101_0011           if haveZfa()
 
 mapping clause assembly = RISCV_FLTQ_S(rs2, rs1, rd)
   <-> "fltq.s" ^ spc() ^ freg_name(rd)
