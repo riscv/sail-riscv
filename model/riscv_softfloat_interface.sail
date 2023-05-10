@@ -468,10 +468,24 @@ function riscv_f16Lt (v1, v2) = {
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
+val     extern_f16Lt_quiet = {c: "softfloat_f16lt_quiet", ocaml: "Softfloat.f16_lt_quiet", lem: "softfloat_f16_lt_quiet"} : (bits_H, bits_H) -> unit
+val      riscv_f16Lt_quiet : (bits_H, bits_H) -> (bits_fflags, bool) effect {rreg}
+function riscv_f16Lt_quiet (v1, v2) = {
+  extern_f16Lt_quiet(v1, v2);
+  (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
+}
+
 val     extern_f16Le = {c: "softfloat_f16le", ocaml: "Softfloat.f16_le", lem: "softfloat_f16_le"} : (bits_H, bits_H) -> unit
 val      riscv_f16Le : (bits_H, bits_H) -> (bits_fflags, bool) effect {rreg}
 function riscv_f16Le (v1, v2) = {
   extern_f16Le(v1, v2);
+  (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
+}
+
+val     extern_f16Le_quiet = {c: "softfloat_f16le_quiet", ocaml: "Softfloat.f16_le_quiet", lem: "softfloat_f16_le_quiet"} : (bits_H, bits_H) -> unit
+val      riscv_f16Le_quiet : (bits_H, bits_H) -> (bits_fflags, bool) effect {rreg}
+function riscv_f16Le_quiet (v1, v2) = {
+  extern_f16Le_quiet(v1, v2);
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
@@ -489,10 +503,24 @@ function riscv_f32Lt (v1, v2) = {
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
+val     extern_f32Lt_quiet = {c: "softfloat_f32lt_quiet", ocaml: "Softfloat.f32_lt_quiet", lem: "softfloat_f32_lt_quiet"} : (bits_S, bits_S) -> unit
+val      riscv_f32Lt_quiet : (bits_S, bits_S) -> (bits_fflags, bool) effect {rreg}
+function riscv_f32Lt_quiet (v1, v2) = {
+  extern_f32Lt_quiet(v1, v2);
+  (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
+}
+
 val     extern_f32Le = {c: "softfloat_f32le", ocaml: "Softfloat.f32_le", lem: "softfloat_f32_le"} : (bits_S, bits_S) -> unit
 val      riscv_f32Le : (bits_S, bits_S) -> (bits_fflags, bool) effect {rreg}
 function riscv_f32Le (v1, v2) = {
   extern_f32Le(v1, v2);
+  (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
+}
+
+val     extern_f32Le_quiet = {c: "softfloat_f32le_quiet", ocaml: "Softfloat.f32_le_quiet", lem: "softfloat_f32_le_quiet"} : (bits_S, bits_S) -> unit
+val      riscv_f32Le_quiet : (bits_S, bits_S) -> (bits_fflags, bool) effect {rreg}
+function riscv_f32Le_quiet (v1, v2) = {
+  extern_f32Le_quiet(v1, v2);
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
@@ -510,10 +538,24 @@ function riscv_f64Lt (v1, v2) = {
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
+val     extern_f64Lt_quiet = {c: "softfloat_f64lt_quiet", ocaml: "Softfloat.f64_lt_quiet", lem: "softfloat_f64_lt_quiet"} : (bits_D, bits_D) -> unit
+val      riscv_f64Lt_quiet : (bits_D, bits_D) -> (bits_fflags, bool) effect {rreg}
+function riscv_f64Lt_quiet (v1, v2) = {
+  extern_f64Lt_quiet(v1, v2);
+  (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
+}
+
 val     extern_f64Le = {c: "softfloat_f64le", ocaml: "Softfloat.f64_le", lem: "softfloat_f64_le"} : (bits_D, bits_D) -> unit
 val      riscv_f64Le : (bits_D, bits_D) -> (bits_fflags, bool) effect {rreg}
 function riscv_f64Le (v1, v2) = {
   extern_f64Le(v1, v2);
+  (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
+}
+
+val     extern_f64Le_quiet = {c: "softfloat_f64le_quiet", ocaml: "Softfloat.f64_le_quiet", lem: "softfloat_f64_le_quiet"} : (bits_D, bits_D) -> unit
+val      riscv_f64Le_quiet : (bits_D, bits_D) -> (bits_fflags, bool) effect {rreg}
+function riscv_f64Le_quiet (v1, v2) = {
+  extern_f64Le_quiet(v1, v2);
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 

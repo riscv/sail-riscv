@@ -566,9 +566,10 @@ function clause execute(RISCV_FLEQ_H(rs2, rs1, rd)) = {
   let rs1_val_H = nan_unbox_H(F(rs1));
   let rs2_val_H = nan_unbox_H(F(rs2));
 
-  let (_, rd_val) : (bits_fflags, bool) =
-      riscv_f16Le   (rs1_val_H, rs2_val_H);
+  let (fflags, rd_val) : (bits_fflags, bool) =
+      riscv_f16Le_quiet   (rs1_val_H, rs2_val_H);
 
+  write_fflags(fflags);
   X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -589,9 +590,10 @@ function clause execute(RISCV_FLTQ_H(rs2, rs1, rd)) = {
   let rs1_val_H = nan_unbox_H(F(rs1));
   let rs2_val_H = nan_unbox_H(F(rs2));
 
-  let (_, rd_val) : (bits_fflags, bool) =
-      riscv_f16Lt   (rs1_val_H, rs2_val_H);
+  let (fflags, rd_val) : (bits_fflags, bool) =
+      riscv_f16Lt_quiet   (rs1_val_H, rs2_val_H);
 
+  write_fflags(fflags);
   X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -612,9 +614,10 @@ function clause execute(RISCV_FLEQ_S(rs2, rs1, rd)) = {
   let rs1_val_S = nan_unbox_S(F(rs1));
   let rs2_val_S = nan_unbox_S(F(rs2));
 
-  let (_, rd_val) : (bits_fflags, bool) =
-      riscv_f32Le   (rs1_val_S, rs2_val_S);
+  let (fflags, rd_val) : (bits_fflags, bool) =
+      riscv_f32Le_quiet   (rs1_val_S, rs2_val_S);
 
+  write_fflags(fflags);
   X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -635,9 +638,10 @@ function clause execute(RISCV_FLTQ_S(rs2, rs1, rd)) = {
   let rs1_val_S = nan_unbox_S(F(rs1));
   let rs2_val_S = nan_unbox_S(F(rs2));
 
-  let (_, rd_val) : (bits_fflags, bool) =
-      riscv_f32Lt   (rs1_val_S, rs2_val_S);
+  let (fflags, rd_val) : (bits_fflags, bool) =
+      riscv_f32Lt_quiet   (rs1_val_S, rs2_val_S);
 
+  write_fflags(fflags);
   X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -659,9 +663,10 @@ function clause execute(RISCV_FLEQ_D(rs2, rs1, rd)) = {
   let rs1_val_D = F(rs1);
   let rs2_val_D = F(rs2);
 
-  let (_, rd_val) : (bits_fflags, bool) =
-      riscv_f64Le   (rs1_val_D, rs2_val_D);
+  let (fflags, rd_val) : (bits_fflags, bool) =
+      riscv_f64Le_quiet   (rs1_val_D, rs2_val_D);
 
+  write_fflags(fflags);
   X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -682,9 +687,10 @@ function clause execute(RISCV_FLTQ_D(rs2, rs1, rd)) = {
   let rs1_val_D = F(rs1);
   let rs2_val_D = F(rs2);
 
-  let (_, rd_val) : (bits_fflags, bool) =
-      riscv_f64Lt   (rs1_val_D, rs2_val_D);
+  let (fflags, rd_val) : (bits_fflags, bool) =
+      riscv_f64Lt_quiet   (rs1_val_D, rs2_val_D);
 
+  write_fflags(fflags);
   X(rd) = EXTZ(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
