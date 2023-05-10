@@ -158,8 +158,8 @@ mapping clause assembly = RISCV_FMINM_H(rs2, rs1, rd)
                 ^ spc() ^ freg_name(rs2)
 
 function clause execute (RISCV_FMINM_H(rs2, rs1, rd)) = {
-  let rs1_val_H = nan_unbox_H(F(rs1));
-  let rs2_val_H = nan_unbox_H(F(rs2));
+  let rs1_val_H = F_H(rs1);
+  let rs2_val_H = F_H(rs2);
 
   let is_quiet  = true;
   let (rs1_lt_rs2, fflags) = fle_H (rs1_val_H, rs2_val_H, is_quiet);
@@ -171,7 +171,7 @@ function clause execute (RISCV_FMINM_H(rs2, rs1, rd)) = {
                   else /* (not rs1_lt_rs2) */                                            rs2_val_H;
 
   accrue_fflags(fflags);
-  F(rd) = nan_box(rd_val_H);
+  F_H(rd) = rd_val_H;
   RETIRE_SUCCESS
 }
 
@@ -188,8 +188,8 @@ mapping clause assembly = RISCV_FMAXM_H(rs2, rs1, rd)
                 ^ spc() ^ freg_name(rs2)
 
 function clause execute (RISCV_FMAXM_H(rs2, rs1, rd)) = {
-  let rs1_val_H = nan_unbox_H(F(rs1));
-  let rs2_val_H = nan_unbox_H(F(rs2));
+  let rs1_val_H = F_H(rs1);
+  let rs2_val_H = F_H(rs2);
 
   let is_quiet  = true;
   let (rs2_lt_rs1, fflags) = fle_H (rs2_val_H, rs1_val_H, is_quiet);
@@ -201,7 +201,7 @@ function clause execute (RISCV_FMAXM_H(rs2, rs1, rd)) = {
                   else /* (not rs2_lt_rs1) */                                            rs2_val_H;
 
   accrue_fflags(fflags);
-  F(rd) = nan_box(rd_val_H);
+  F_H(rd) = rd_val_H;
   RETIRE_SUCCESS
 }
 
@@ -218,8 +218,8 @@ mapping clause assembly = RISCV_FMINM_S(rs2, rs1, rd)
                 ^ spc() ^ freg_name(rs2)
 
 function clause execute (RISCV_FMINM_S(rs2, rs1, rd)) = {
-  let rs1_val_S = nan_unbox_S(F(rs1));
-  let rs2_val_S = nan_unbox_S(F(rs2));
+  let rs1_val_S = F_S(rs1);
+  let rs2_val_S = F_S(rs2);
 
   let is_quiet  = true;
   let (rs1_lt_rs2, fflags) = fle_S (rs1_val_S, rs2_val_S, is_quiet);
@@ -231,7 +231,7 @@ function clause execute (RISCV_FMINM_S(rs2, rs1, rd)) = {
                   else /* (not rs1_lt_rs2) */                                            rs2_val_S;
 
   accrue_fflags(fflags);
-  F(rd) = nan_box(rd_val_S);
+  F_S(rd) = rd_val_S;
   RETIRE_SUCCESS
 }
 
@@ -248,8 +248,8 @@ mapping clause assembly = RISCV_FMAXM_S(rs2, rs1, rd)
                 ^ spc() ^ freg_name(rs2)
 
 function clause execute (RISCV_FMAXM_S(rs2, rs1, rd)) = {
-  let rs1_val_S = nan_unbox_S(F(rs1));
-  let rs2_val_S = nan_unbox_S(F(rs2));
+  let rs1_val_S = F_S(rs1);
+  let rs2_val_S = F_S(rs2);
 
   let is_quiet  = true;
   let (rs2_lt_rs1, fflags) = fle_S (rs2_val_S, rs1_val_S, is_quiet);
@@ -261,7 +261,7 @@ function clause execute (RISCV_FMAXM_S(rs2, rs1, rd)) = {
                   else /* (not rs2_lt_rs1) */                                            rs2_val_S;
 
   accrue_fflags(fflags);
-  F(rd) = nan_box(rd_val_S);
+  F_S(rd) = rd_val_S;
   RETIRE_SUCCESS
 }
 
@@ -338,7 +338,7 @@ mapping clause assembly = RISCV_FROUND_H(rs1, rm, rd)
                  ^ spc() ^ frm_mnemonic(rm)
 
 function clause execute (RISCV_FROUND_H(rs1, rm, rd)) = {
-  let rs1_val_H = nan_unbox_H(F(rs1));
+  let rs1_val_H = F_H(rs1);
   fflags = fcsr.FFLAGS();
 
   match (select_instr_or_fcsr_rm(rm)) {
@@ -349,7 +349,7 @@ function clause execute (RISCV_FROUND_H(rs1, rm, rd)) = {
       fflags = fflags | round_fflags;
 
       write_fflags(fflags);
-      F(rd) = nan_box_H(rd_val_H);
+      F_H(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
   }
@@ -368,7 +368,7 @@ mapping clause assembly = RISCV_FROUNDNX_H(rs1, rm, rd)
                    ^ spc() ^ frm_mnemonic(rm)
 
 function clause execute (RISCV_FROUNDNX_H(rs1, rm, rd)) = {
-  let rs1_val_H = nan_unbox_H(F(rs1));
+  let rs1_val_H = F_H(rs1);
   fflags = fcsr.FFLAGS();
 
   match (select_instr_or_fcsr_rm(rm)) {
@@ -379,7 +379,7 @@ function clause execute (RISCV_FROUNDNX_H(rs1, rm, rd)) = {
       fflags = fflags | round_fflags;
 
       write_fflags(fflags);
-      F(rd) = nan_box_H(rd_val_H);
+      F_H(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
   }
@@ -398,7 +398,7 @@ mapping clause assembly = RISCV_FROUND_S(rs1, rm, rd)
                  ^ spc() ^ frm_mnemonic(rm)
 
 function clause execute (RISCV_FROUND_S(rs1, rm, rd)) = {
-  let rs1_val_S = nan_unbox_S(F(rs1));
+  let rs1_val_S = F_S(rs1);
   fflags = fcsr.FFLAGS();
 
   match (select_instr_or_fcsr_rm(rm)) {
@@ -409,7 +409,7 @@ function clause execute (RISCV_FROUND_S(rs1, rm, rd)) = {
       fflags = fflags | round_fflags;
 
       write_fflags(fflags);
-      F(rd) = nan_box_S(rd_val_S);
+      F_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
   }
@@ -428,7 +428,7 @@ mapping clause assembly = RISCV_FROUNDNX_S(rs1, rm, rd)
                    ^ spc() ^ frm_mnemonic(rm)
 
 function clause execute (RISCV_FROUNDNX_S(rs1, rm, rd)) = {
-  let rs1_val_S = nan_unbox_S(F(rs1));
+  let rs1_val_S = F_S(rs1);
   fflags = fcsr.FFLAGS();
 
   match (select_instr_or_fcsr_rm(rm)) {
@@ -439,7 +439,7 @@ function clause execute (RISCV_FROUNDNX_S(rs1, rm, rd)) = {
       fflags = fflags | round_fflags;
 
       write_fflags(fflags);
-      F(rd) = nan_box_S(rd_val_S);
+      F_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
   }
@@ -488,7 +488,7 @@ mapping clause assembly = RISCV_FROUNDNX_D(rs1, rm, rd)
                    ^ spc() ^ frm_mnemonic(rm)
 
 function clause execute (RISCV_FROUNDNX_D(rs1, rm, rd)) = {
-  let rs1_val_D = F(rs1);
+  let rs1_val_D = F_D(rs1);
   fflags = fcsr.FFLAGS();
 
   match (select_instr_or_fcsr_rm(rm)) {
@@ -499,7 +499,7 @@ function clause execute (RISCV_FROUNDNX_D(rs1, rm, rd)) = {
       fflags = fflags | round_fflags;
 
       write_fflags(fflags);
-      F(rd) = rd_val_D;
+      F_D(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
   }
@@ -517,7 +517,7 @@ mapping clause assembly = RISCV_FMVH_X_D(rs1, rd)
                  ^ spc() ^ freg_name(rs1)
 
 function clause execute (RISCV_FMVH_X_D(rs1, rd)) = {
-  let rs1_val_D           = F(rs1)[63..32];
+  let rs1_val_D           = F_D(rs1)[63..32];
   let rd_val_X : xlenbits = EXTS(rs1_val_D);
   X(rd)                   = rd_val_X;
   RETIRE_SUCCESS
@@ -546,7 +546,7 @@ function clause execute (RISCV_FMVP_D_X(rs2, rs1, rd)) = {
   /*   rd  = rs1 @ rs2 => 0x89abcdef01234567 */
   let rd_val_D      = rs2_val_X @ rs1_val_X;
 
-  F(rd)             = rd_val_D;
+  F_D(rd)           = rd_val_D;
   RETIRE_SUCCESS
 }
 
@@ -563,8 +563,8 @@ mapping clause assembly = RISCV_FLEQ_H(rs2, rs1, rd)
                ^ spc() ^ freg_name(rs2)
 
 function clause execute(RISCV_FLEQ_H(rs2, rs1, rd)) = {
-  let rs1_val_H = nan_unbox_H(F(rs1));
-  let rs2_val_H = nan_unbox_H(F(rs2));
+  let rs1_val_H = F_H(rs1);
+  let rs2_val_H = F_H(rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f16Le_quiet   (rs1_val_H, rs2_val_H);
@@ -587,8 +587,8 @@ mapping clause assembly = RISCV_FLTQ_H(rs2, rs1, rd)
                ^ spc() ^ freg_name(rs2)
 
 function clause execute(RISCV_FLTQ_H(rs2, rs1, rd)) = {
-  let rs1_val_H = nan_unbox_H(F(rs1));
-  let rs2_val_H = nan_unbox_H(F(rs2));
+  let rs1_val_H = F_H(rs1);
+  let rs2_val_H = F_H(rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f16Lt_quiet   (rs1_val_H, rs2_val_H);
@@ -611,8 +611,8 @@ mapping clause assembly = RISCV_FLEQ_S(rs2, rs1, rd)
                ^ spc() ^ freg_name(rs2)
 
 function clause execute(RISCV_FLEQ_S(rs2, rs1, rd)) = {
-  let rs1_val_S = nan_unbox_S(F(rs1));
-  let rs2_val_S = nan_unbox_S(F(rs2));
+  let rs1_val_S = F_S(rs1);
+  let rs2_val_S = F_S(rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Le_quiet   (rs1_val_S, rs2_val_S);
@@ -635,8 +635,8 @@ mapping clause assembly = RISCV_FLTQ_S(rs2, rs1, rd)
                ^ spc() ^ freg_name(rs2)
 
 function clause execute(RISCV_FLTQ_S(rs2, rs1, rd)) = {
-  let rs1_val_S = nan_unbox_S(F(rs1));
-  let rs2_val_S = nan_unbox_S(F(rs2));
+  let rs1_val_S = F_S(rs1);
+  let rs2_val_S = F_S(rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Lt_quiet   (rs1_val_S, rs2_val_S);
@@ -660,8 +660,8 @@ mapping clause assembly = RISCV_FLEQ_D(rs2, rs1, rd)
                ^ spc() ^ freg_name(rs2)
 
 function clause execute(RISCV_FLEQ_D(rs2, rs1, rd)) = {
-  let rs1_val_D = F(rs1);
-  let rs2_val_D = F(rs2);
+  let rs1_val_D = F_D(rs1);
+  let rs2_val_D = F_D(rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Le_quiet   (rs1_val_D, rs2_val_D);
@@ -684,8 +684,8 @@ mapping clause assembly = RISCV_FLTQ_D(rs2, rs1, rd)
                ^ spc() ^ freg_name(rs2)
 
 function clause execute(RISCV_FLTQ_D(rs2, rs1, rd)) = {
-  let rs1_val_D = F(rs1);
-  let rs2_val_D = F(rs2);
+  let rs1_val_D = F_D(rs1);
+  let rs2_val_D = F_D(rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Lt_quiet   (rs1_val_D, rs2_val_D);
@@ -758,7 +758,7 @@ mapping clause assembly = RISCV_FCVTMOD_W_D(rs1, rd)
 		    ^ spc() ^ freg_name(rs1)
 
 function clause execute(RISCV_FCVTMOD_W_D(rs1, rd)) = {
-  let rs1_val_D = F(rs1);
+  let rs1_val_D = F_D(rs1);
 
   let p = fcvtmod_helper(rs1_val_D);
 
