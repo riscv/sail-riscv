@@ -43,7 +43,7 @@ function clause execute (RISCV_FLI_H(constantidx, rd)) = {
     0b11110 => { 0x7c00 },  /* +inf */
     0b11111 => { canonical_NaN_H() },
   };
-  F(rd) = nan_box(bits);
+  F_H(rd) = bits;
   RETIRE_SUCCESS
 }
 
@@ -92,7 +92,7 @@ function clause execute (RISCV_FLI_S(constantidx, rd)) = {
     0b11110 => { 0x7f800000 },  /* +inf */
     0b11111 => { canonical_NaN_S() },
   };
-  F(rd) = nan_box(bits);
+  F_S(rd) = bits;
   RETIRE_SUCCESS
 }
 
@@ -141,7 +141,7 @@ function clause execute (RISCV_FLI_D(constantidx, rd)) = {
     0b11110 => { 0x7ff0000000000000 },  /* +inf */
     0b11111 => { canonical_NaN_D() },
   };
-  F(rd) = bits;
+  F_D(rd) = bits;
   RETIRE_SUCCESS
 }
 
