@@ -698,14 +698,14 @@ function fcvtmod_helper(x64) = {
 
   /* Handle special cases. */
   if (exp == zeros())
-  then (nvFlag(), to_bits(sizeof(xlen), unsigned(0x0)))
+  then (nvFlag(), zeros())
   /* NaN or Infinity. */
   else if (exp == ones())
-  then (nvFlag(), to_bits(sizeof(xlen), unsigned(0x0)))
+  then (nvFlag(), zeros())
   else {
     let true_exp : int = unsigned(sub_vec_int(exp, 1023));
     let shift    : int = true_exp - 52;
-    result	       = to_bits(64, unsigned(mant)) | to_bits(64, unsigned(0x1)) << 52;
+    result	       = to_bits(64, unsigned(mant)) | ones() << 52;
 
     /* Shift the fraction into place and set NX flag. */
     if (shift >= 64 | shift <= -64) then {
