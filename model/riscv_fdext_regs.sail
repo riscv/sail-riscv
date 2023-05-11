@@ -273,36 +273,42 @@ overload F = {rF_bits, wF_bits, rF, wF}
 val rF_H : bits(5) -> bits(16) effect {escape, rreg}
 function rF_H(i) = {
   assert(sizeof(flen) >= 16);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   nan_unbox(F(i))
 }
 
 val wF_H : (bits(5), bits(16)) -> unit effect {escape, wreg}
 function wF_H(i, data) = {
   assert(sizeof(flen) >= 16);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i) = nan_box(data)
 }
 
 val rF_S : bits(5) -> bits(32) effect {escape, rreg}
 function rF_S(i) = {
   assert(sizeof(flen) >= 32);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   nan_unbox(F(i))
 }
 
 val wF_S : (bits(5), bits(32)) -> unit effect {escape, wreg}
 function wF_S(i, data) = {
   assert(sizeof(flen) >= 32);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i) = nan_box(data)
 }
 
 val rF_D : bits(5) -> bits(64) effect {escape, rreg}
 function rF_D(i) = {
   assert(sizeof(flen) >= 64);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i)
 }
 
 val wF_D : (bits(5), bits(64)) -> unit effect {escape, wreg}
 function wF_D(i, data) = {
   assert(sizeof(flen) >= 64);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i) = data
 }
 
