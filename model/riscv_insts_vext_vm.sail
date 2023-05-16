@@ -60,8 +60,6 @@ function clause execute(VVMTYPE(funct6, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if vd == vreg_name("v0") then { handle_illegal(); return RETIRE_FAIL };
-
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -293,8 +291,6 @@ function clause execute(VXMTYPE(funct6, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
-  if vd == vreg_name("v0") then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -533,8 +529,6 @@ function clause execute(VIMTYPE(funct6, vs2, simm, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if vd == vreg_name("v0") then { handle_illegal(); return RETIRE_FAIL };
-
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -760,7 +754,7 @@ function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
   let 'n = num_elem;
@@ -824,7 +818,7 @@ function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
   let 'n = num_elem;
