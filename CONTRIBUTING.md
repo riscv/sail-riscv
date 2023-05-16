@@ -27,3 +27,8 @@ reproducible. Ideally the pull request is accompanied by some form of
 automated verification that is presented in a way that the reviewers
 of the pull request can run. It is desirable that the pull request
 explains how it relates to the existing RISC-V architectural tests.
+
+We recommend installing pre-commit hooks that ensure certain basic coding
+style issues can be detected and fixed before submitting the pull request.
+To set up these hooks, install [https://pre-commit.com/](pre-commit)
+(e.g. using `pip install --user pre-commit`) and run `pre-commit install`.
