@@ -3,15 +3,15 @@
 #include <stdio.h>
 
 /* Settings of the platform implementation, with common defaults. */
-bool rv_enable_pmp                  = false;
-bool rv_enable_zfinx                = false;
-bool rv_enable_rvc                  = true;
-bool rv_enable_next                 = false;
-bool rv_enable_writable_misa        = true;
-bool rv_enable_fdext                = true;
+bool rv_enable_pmp = false;
+bool rv_enable_zfinx = false;
+bool rv_enable_rvc = true;
+bool rv_enable_next = false;
+bool rv_enable_writable_misa = true;
+bool rv_enable_fdext = true;
 
-bool rv_enable_dirty_update         = false;
-bool rv_enable_misaligned           = false;
+bool rv_enable_dirty_update = false;
+bool rv_enable_misaligned = false;
 bool rv_mtval_has_illegal_inst_bits = false;
 
 uint64_t rv_ram_base = UINT64_C(0x80000000);
@@ -21,7 +21,8 @@ uint64_t rv_rom_base = UINT64_C(0x1000);
 uint64_t rv_rom_size = UINT64_C(0x100);
 
 // Provides entropy for the scalar cryptography extension.
-uint64_t rv_16_random_bits(void) {
+uint64_t rv_16_random_bits(void)
+{
   // This function can be changed to support deterministic sequences of
   // pseudo-random bytes. This is useful for testing.
   const char *name = "/dev/urandom";
