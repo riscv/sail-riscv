@@ -70,8 +70,8 @@
 
 /* Some helper functions for the assembler mappings. */
 
-/* These mappings produce a lot of pattern match warnings that are not useful. 
-   The following directive suppresses them (and will be ignored by older versions of Sail 
+/* These mappings produce a lot of pattern match warnings that are not useful.
+   The following directive suppresses them (and will be ignored by older versions of Sail
    with one additional warning). Would be better to fix the warnings properly but I don't
    know how. */
 $suppress_warnings
@@ -769,4 +769,3 @@ function hex_bits_64_backwards s =
   match hex_bits_64_matches_prefix(s) {
       Some (bv, n) if n == string_length(s) => bv
   }
-

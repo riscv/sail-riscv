@@ -132,7 +132,7 @@ function get_stvec() -> xlenbits =
 
 function get_utvec() -> xlenbits =
   utvec.bits()
-  
+
 function set_mtvec(value : xlenbits) -> xlenbits = {
   mtvec = legalize_tvec(mtvec, value);
   mtvec.bits()

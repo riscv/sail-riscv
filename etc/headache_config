@@ -4,4 +4,3 @@
 |  ".*\\.thy"      -> frame open:"(*" line:"=" close:"*)"
 |  ".*\\.sml"      -> frame open:"(*" line:"=" close:"*)"
 |  ".*\\.sail"   -> frame open:"/*" line:"=" close:"*/"
-

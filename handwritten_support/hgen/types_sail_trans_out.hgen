@@ -3,7 +3,7 @@ let translate_out_big_bit = function
   | _ -> assert false
 
 let translate_out_int inst = (Nat_big_num.to_int (translate_out_big_bit inst))
-let translate_out_signed_int inst bits = 
+let translate_out_signed_int inst bits =
     let i = (Nat_big_num.to_int (translate_out_big_bit inst)) in
     if (i >= (1 lsl (bits - 1))) then
     (i - (1 lsl bits)) else
@@ -27,7 +27,7 @@ let translate_out_bool = function
 let translate_out_enum (name,_,bits) =
     Nat_big_num.to_int (IInt.integer_of_bit_list bits)
 
-let translate_out_wordWidth w = 
+let translate_out_wordWidth w =
     match translate_out_enum w with
     | 0 -> RISCVBYTE
     | 1 -> RISCVHALF
@@ -41,40 +41,40 @@ let translate_out_uop op = match translate_out_enum op with
     | _ -> failwith "Unknown uop in sail translate out"
 
 let translate_out_bop op = match translate_out_enum op with
-| 0 -> RISCVBEQ 
-| 1 -> RISCVBNE 
-| 2 -> RISCVBLT 
-| 3 -> RISCVBGE 
+| 0 -> RISCVBEQ
+| 1 -> RISCVBNE
+| 2 -> RISCVBLT
+| 3 -> RISCVBGE
 | 4 -> RISCVBLTU
 | 5 -> RISCVBGEU
 | _ -> failwith "Unknown bop in sail translate out"
 
 let translate_out_iop op = match translate_out_enum op with
-| 0 -> RISCVADDI 
-| 1 -> RISCVSLTI 
+| 0 -> RISCVADDI
+| 1 -> RISCVSLTI
 | 2 -> RISCVSLTIU
-| 3 -> RISCVXORI 
-| 4 -> RISCVORI  
-| 5 -> RISCVANDI 
+| 3 -> RISCVXORI
+| 4 -> RISCVORI
+| 5 -> RISCVANDI
 | _ -> failwith "Unknown iop in sail translate out"
 
-let translate_out_sop op = match translate_out_enum op with 
+let translate_out_sop op = match translate_out_enum op with
 | 0 -> RISCVSLLI
 | 1 -> RISCVSRLI
 | 2 -> RISCVSRAI
 | _ -> failwith "Unknown sop in sail translate out"
 
 let translate_out_rop op = match translate_out_enum op with
-| 0 -> RISCVADD 
-| 1 -> RISCVSUB 
-| 2 -> RISCVSLL 
-| 3 -> RISCVSLT 
+| 0 -> RISCVADD
+| 1 -> RISCVSUB
+| 2 -> RISCVSLL
+| 3 -> RISCVSLT
 | 4 -> RISCVSLTU
-| 5 -> RISCVXOR 
-| 6 -> RISCVSRL 
-| 7 -> RISCVSRA 
-| 8 -> RISCVOR  
-| 9 -> RISCVAND 
+| 5 -> RISCVXOR
+| 6 -> RISCVSRL
+| 7 -> RISCVSRA
+| 8 -> RISCVOR
+| 9 -> RISCVAND
 | _ -> failwith "Unknown rop in sail translate out"
 
 let translate_out_ropw op = match translate_out_enum op with

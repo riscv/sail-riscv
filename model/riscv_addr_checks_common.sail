@@ -107,7 +107,7 @@ val ext_check_phys_mem_read : forall 'n, 0 < 'n <= max_mem_access . (AccessType 
 /*!
  * Validate a write to physical memory.
  * THIS(write_kind, paddr, size, data, metadata) should return Some(exception)
- * to abort the write or None to allow it to proceed. The check is performed 
+ * to abort the write or None to allow it to proceed. The check is performed
  * after PMP checks and does not apply to MMIO memory.
  */
 val ext_check_phys_mem_write : forall 'n, 0 < 'n <= max_mem_access . (write_kind, xlenbits, atom('n), bits(8 * 'n), mem_meta) -> Ext_PhysAddr_Check

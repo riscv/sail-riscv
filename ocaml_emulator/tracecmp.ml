@@ -356,4 +356,3 @@ let _ =
     | Some l, None   -> print_lines (in_file l) parse_spike_line
     | None, Some l   -> print_lines (in_file l) parse_sail_line
     | Some k, Some l -> compare_traces (in_file k) (in_file l) 0
-

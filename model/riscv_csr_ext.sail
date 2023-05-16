@@ -72,7 +72,7 @@ mapping clause csr_name_map = reg <-> hex_bits_12(reg)
 end csr_name_map
 
 /* XXX due to an apparent Sail bug the definition of this function must appear
-   after the last csr_name_map clause and not by the val spec as it was 
+   after the last csr_name_map clause and not by the val spec as it was
    previously. */
 function csr_name(csr) = csr_name_map(csr)
 

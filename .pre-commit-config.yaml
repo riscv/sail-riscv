@@ -6,6 +6,12 @@ repos:
     rev: v3.2.0
     hooks:
     -   id: trailing-whitespace
+        # Do not strip trailing whitespace from patches or SVG images.
+        # TODO: the objdump outputs should probably not be part of the repo.
+        exclude: '.*\.(diff|dump|patch|svg)'
     -   id: end-of-file-fixer
+        # Do not strip trailing newlines from patches or SVG images.
+        # TODO: the objdump outputs should probably not be part of the repo.
+        exclude: '.*\.(diff|dump|patch|svg)'
     -   id: check-yaml
     -   id: check-added-large-files

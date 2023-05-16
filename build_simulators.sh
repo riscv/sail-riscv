@@ -15,4 +15,3 @@ test_build make ARCH=RV64 ocaml_emulator/riscv_ocaml_sim_RV64
 
 test_build make ARCH=RV32 c_emulator/riscv_sim_RV32
 test_build make ARCH=RV64 c_emulator/riscv_sim_RV64
-

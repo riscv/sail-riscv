@@ -267,7 +267,7 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kin
   then match ext_check_phys_mem_write (wk, paddr, width, data, meta) {
     Ext_PhysAddr_OK() => phys_mem_write(wk, paddr, width, data, meta),
     Ext_PhysAddr_Error(e)  => MemException(e)
-  }  
+  }
   else MemException(E_SAMO_Access_Fault())
 
 /* PMP checks if enabled */
