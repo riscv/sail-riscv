@@ -14,7 +14,7 @@ This will be merged back into the main original repo after testing.
 Status (2019-10-24)
 -------------------
 
-1. Complete (almost): SAIL coding [Rishiyur Nikhil, Bluespec, Inc.]  
+1. Complete (almost): SAIL coding [Rishiyur Nikhil, Bluespec, Inc.]
    Remaining: tweaks to handle illegal rounding modes.
 2. In progress: Incorporate Berkeley SoftFloat calls [U.Cambridge]
 3. To do: Testing on all ISA tests

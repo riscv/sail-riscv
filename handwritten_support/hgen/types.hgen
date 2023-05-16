@@ -14,7 +14,7 @@ let pp_riscv_uop = function
 
 
 type riscvBop =  (* branch ops *)
-| RISCVBEQ 
+| RISCVBEQ
 | RISCVBNE
 | RISCVBLT
 | RISCVBGE
@@ -59,7 +59,7 @@ type riscvRop = (* reg-reg ops *)
 | RISCVADD
 | RISCVSUB
 | RISCVSLL
-| RISCVSLT 
+| RISCVSLT
 | RISCVSLTU
 | RISCVXOR
 | RISCVSRL
@@ -93,7 +93,7 @@ let pp_riscv_ropw = function
 | RISCVSRLW -> "srlw"
 | RISCVSRAW -> "sraw"
 
-type wordWidth = 
+type wordWidth =
   | RISCVBYTE
   | RISCVHALF
   | RISCVWORD

@@ -107,7 +107,7 @@ function print_instr_packet(bs) = {
 
 bitfield RVFI_DII_Execution_Packet_V1 : bits(704) = {
    rvfi_intr      : 703 .. 696, // [87] Trap handler:            Set for first instruction in trap handler.
-   rvfi_halt      : 695 .. 688, // [86] Halt indicator:          Marks the last instruction retired 
+   rvfi_halt      : 695 .. 688, // [86] Halt indicator:          Marks the last instruction retired
                                 //                                      before halting execution.
    rvfi_trap      : 687 .. 680, // [85] Trap indicator:          Invalid decode, misaligned access or
                                 //                                      jump command to misaligned address.

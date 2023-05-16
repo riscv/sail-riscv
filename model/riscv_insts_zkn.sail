@@ -96,7 +96,7 @@ function clause execute (AES32ESI (bs, rs2, rs1, rd)) = {
   let si      : bits( 8) = (X(rs2) >> shamt)[7..0]; /* SBox Input */
   let so      : bits(32) = 0x000000 @ aes_sbox_fwd(si);
   let result  : bits(32) = X(rs1)[31..0] ^ (so <<< shamt);
-  X(rd) = EXTS(result); 
+  X(rd) = EXTS(result);
   RETIRE_SUCCESS
 }
 
@@ -264,7 +264,7 @@ mapping clause assembly = AES64KS1I (rcon, rs1, rd)
 mapping clause assembly = AES64KS2 (rs2, rs1, rd)
   <-> "aes64ks2" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-mapping clause assembly = AES64IM (rs1, rd) 
+mapping clause assembly = AES64IM (rs1, rd)
   <-> "aes64im" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 mapping clause assembly = AES64ESM (rs2, rs1, rd)

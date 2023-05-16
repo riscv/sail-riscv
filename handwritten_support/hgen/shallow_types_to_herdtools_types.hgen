@@ -1,7 +1,7 @@
 (* let translate_out_big_bit = Sail_values.unsigned
- * 
+ *
  * let translate_out_int inst = (Nat_big_num.to_int (translate_out_big_bit inst))
- * let translate_out_signed_int inst bits = 
+ * let translate_out_signed_int inst bits =
  *     let i = (Nat_big_num.to_int (translate_out_big_bit inst)) in
  *     if (i >= (1 lsl (bits - 1))) then
  *     (i - (1 lsl bits)) else
@@ -68,9 +68,9 @@ let translate_out_amoop op = match op with
   | AMOMAXU -> RISCVAMOMAXU
 
 let translate_out_wordWidth op = match op with
-  | BYTE   -> RISCVBYTE  
-  | HALF   -> RISCVHALF  
-  | WORD   -> RISCVWORD  
+  | BYTE   -> RISCVBYTE
+  | HALF   -> RISCVHALF
+  | WORD   -> RISCVWORD
   | DOUBLE -> RISCVDOUBLE
 
 let translate_out_bool b = b (* function

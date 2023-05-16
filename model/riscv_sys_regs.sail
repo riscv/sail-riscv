@@ -487,7 +487,7 @@ register mepc : xlenbits
  * When misa.C is writable, it zeroes only xepc[0].
  */
 function legalize_xepc(v : xlenbits) -> xlenbits =
-  /* allow writing xepc[1] only if misa.C is enabled or could be enabled 
+  /* allow writing xepc[1] only if misa.C is enabled or could be enabled
      XXX specification says this legalization should be done on read */
   if   (sys_enable_writable_misa() & sys_enable_rvc()) | misa.C() == 0b1
   then [v with 0 = bitzero]

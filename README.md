@@ -12,7 +12,7 @@ coverage of the prose RISC-V specification is summarized
 [here](doc/Status.md).
 A [reading guide](doc/ReadingGuide.md) to the model is provided in the
 [doc/](doc/) subdirectory, along with a guide on [how to
-extend](doc/ExtendingGuide.md) the model. 
+extend](doc/ExtendingGuide.md) the model.
 
 
 Latex definitions can be generated from the model that are suitable
@@ -23,7 +23,7 @@ specifications that include the Sail formal definitions are available
 in the sail branch of this [risc-v-isa-manual repository](https://github.com/rems-project/riscv-isa-manual/tree/sail).
 The process to perform this inclusion is explained [here](https://github.com/rems-project/riscv-isa-manual/blob/sail/README.SAIL).
 
-This is one of [several formal models](https://github.com/riscv/ISA_Formal_Spec_Public_Review/blob/master/comparison_table.md) that were compared within the 
+This is one of [several formal models](https://github.com/riscv/ISA_Formal_Spec_Public_Review/blob/master/comparison_table.md) that were compared within the
 [RISC-V ISA Formal Spec Public Review](https://github.com/riscv/ISA_Formal_Spec_Public_Review).
 
 
@@ -35,16 +35,16 @@ What is Sail?
 engineer-friendly, vendor-pseudocode-like language for describing
 instruction semantics. It is essentially a first-order imperative
 language, but with lightweight dependent typing for numeric types and
-bitvector lengths, which are automatically checked using Z3. 
+bitvector lengths, which are automatically checked using Z3.
 <p>
 
 Given a Sail definition, the tool will type-check it and generate
 LaTeX snippets to use in documentation, executable emulators (in C and OCaml), theorem-prover definitions for
-Isabelle, HOL4, and Coq, and definitions to integrate with our 
+Isabelle, HOL4, and Coq, and definitions to integrate with our
 <a href="http://www.cl.cam.ac.uk/users/pes20/rmem">RMEM</a>
 and
 <a href="isla-axiomatic.cl.cam.ac.uk/">isla-axiomatic</a> tools for
-concurrency semantics.  
+concurrency semantics.
 <p>
 
   <img width="800" src="https://www.cl.cam.ac.uk/~pes20/sail/overview-sail.png?">
@@ -116,7 +116,7 @@ mapping clause assembly = ITYPE(imm, rs1, rd, op)
                       <-> itype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_12(imm)
 ~~~~~~
 
-### SRET 
+### SRET
 
 ~~~~~
 union clause ast = SRET : unit
@@ -357,7 +357,7 @@ For booting operating system images, see the information under the
 ### Using development versions of Sail
 
 Rarely, the version of Sail packaged in opam may not meet your needs. This could happen if you need a bug fix or new feature not yet in the released Sail version, or you are actively working on Sail. In this case you can tell the `sail-riscv` `Makefile` to use a local copy of Sail by setting `SAIL_DIR` to the root of a checkout of the Sail repo when you invoke `make`. Alternatively, you can use `opam pin` to install Sail from a local checkout of the Sail repo as described in the Sail installation instructions.
-                        
+
 Licence
 -------
 
@@ -368,7 +368,7 @@ Authors
 -------
 
  Prashanth Mundkur, SRI International;
- Rishiyur S. Nikhil (Bluespec Inc.); 
+ Rishiyur S. Nikhil (Bluespec Inc.);
  Jon French, University of Cambridge;
  Brian Campbell, University of Edinburgh;
  Robert Norton-Wright, University of Cambridge and Microsoft;

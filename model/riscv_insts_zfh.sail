@@ -773,7 +773,7 @@ mapping f_un_rm_type_mnemonic_H : f_un_rm_op_H <-> string = {
     FCVT_WU_H <-> "fcvt.wu.h",
     FCVT_H_W  <-> "fcvt.h.w",
     FCVT_H_WU <-> "fcvt.h.wu",
-    
+
     FCVT_H_S  <-> "fcvt.h.s",
     FCVT_H_D  <-> "fcvt.h.d",
     FCVT_S_H  <-> "fcvt.s.h",

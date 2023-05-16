@@ -59,9 +59,9 @@ let translate_amoop op = match op with
   | RISCVAMOMAXU -> AMOMAXU
 
 let translate_wordWidth op = match op with
-  | RISCVBYTE   -> BYTE  
-  | RISCVHALF   -> HALF  
-  | RISCVWORD   -> WORD  
+  | RISCVBYTE   -> BYTE
+  | RISCVHALF   -> HALF
+  | RISCVWORD   -> WORD
   | RISCVDOUBLE -> DOUBLE
 
 let translate_bool name b = b (* function
@@ -70,21 +70,21 @@ let translate_bool name b = b (* function
 
 let translate_imm21 name value =
   Lem_machine_word.wordFromInteger Lem_machine_word.instance_Machine_word_Size_Machine_word_ty21_dict (Nat_big_num.of_int value)
-  
-let translate_imm20 name value = 
+
+let translate_imm20 name value =
   Lem_machine_word.wordFromInteger Lem_machine_word.instance_Machine_word_Size_Machine_word_ty20_dict (Nat_big_num.of_int value)
-  
+
 let translate_imm13 name value =
   Lem_machine_word.wordFromInteger Lem_machine_word.instance_Machine_word_Size_Machine_word_ty13_dict (Nat_big_num.of_int value)
-  
+
 let translate_imm12 name value =
   Lem_machine_word.wordFromInteger Lem_machine_word.instance_Machine_word_Size_Machine_word_ty12_dict (Nat_big_num.of_int value)
-  
+
 let translate_imm6 name value =
   Lem_machine_word.wordFromInteger Lem_machine_word.instance_Machine_word_Size_Machine_word_ty6_dict (Nat_big_num.of_int value)
-  
+
 let translate_imm5 name value =
   Lem_machine_word.wordFromInteger Lem_machine_word.instance_Machine_word_Size_Machine_word_ty5_dict (Nat_big_num.of_int value)
-  
+
 let translate_imm4 name value =
   Lem_machine_word.wordFromInteger Lem_machine_word.instance_Machine_word_Size_Machine_word_ty4_dict (Nat_big_num.of_int value)

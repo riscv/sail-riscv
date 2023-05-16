@@ -19,7 +19,7 @@ The Sail specification currently captures the following ISA features:
 
 - Physical Memory Protection (PMP)
 
-For the RVWMO memory consistency model, this Sail ISA semantics is integrated with the RVWMO operational model in [the 
+For the RVWMO memory consistency model, this Sail ISA semantics is integrated with the RVWMO operational model in [the
 RMEM tool](https://github.com/rems-project/rmem).
 
 The Sail specification is parameterized over the following

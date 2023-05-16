@@ -161,9 +161,9 @@ function clause execute (ZBB_EXTOP(rs1, rd, op)) = {
   X(rd) = result;
   RETIRE_SUCCESS
 }
-  
+
 /* ****************************************************************** */
-union clause ast = RISCV_REV8 : (regidx, regidx)     
+union clause ast = RISCV_REV8 : (regidx, regidx)
 
 mapping clause encdec = RISCV_REV8(rs1, rd) if (haveZbb() | haveZbkb()) & sizeof(xlen) == 32
   <-> 0b011010011000 @ rs1 @ 0b101 @ rd @ 0b0010011 if (haveZbb() | haveZbkb()) & sizeof(xlen) == 32
