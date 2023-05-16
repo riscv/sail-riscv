@@ -8,14 +8,16 @@ jobs:
     steps:
     - name: Install packages
       run: sudo apt install -y opam zlib1g-dev pkg-config libgmp-dev z3 device-tree-compiler
-    - name: Init opam
-      run: opam init --disable-sandboxing -y
-    - name: Install sail
-      run: opam install -y sail
     - name: Check out repository code
       uses: actions/checkout@HEAD
       with:
         submodules: true
+    - name: Ensure pre-commit checks pass
+      run: pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always
+    - name: Init opam
+      run: opam init --disable-sandboxing -y
+    - name: Install sail
+      run: opam install -y sail
     - name: Build and test simulators
       run: eval $(opam env) && test/run_tests.sh
     - name: Upload test results
