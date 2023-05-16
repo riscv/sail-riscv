@@ -746,7 +746,10 @@ mapping clause assembly = RISCV_FCVTMOD_W_D(rs1, rd)
 		    ^ spc() ^ freg_name(rs1)
 
 function clause execute(RISCV_FCVTMOD_W_D(rs1, rd)) = {
-  let (fflags, rd_val) = fcvtmod_helper(F_D(rs1));
+  let rs1_val_D = F_D(rs1);
+
+  let (fflags, rd_val) = fcvtmod_helper(rs1_val_D);
+
   write_fflags(fflags);
   X(rd) = rd_val;
   RETIRE_SUCCESS
