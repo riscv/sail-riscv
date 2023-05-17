@@ -685,54 +685,57 @@ function clause execute(RISCV_FLTQ_D(rs2, rs1, rd)) = {
 
 /* FCVTMOD.W.D */
 
+/* Calculate the low 32 bits of the integer value from the binary64
+ * floating-point number and return them together with an indicator
+ * whether the NV (overflow) or NX (inexact) exceptions should be raised.
+ */
+val      fcvtmod_helper_inner : forall 'm, 'm >= 0. (bits(1), int('m), bits(53)) -> (bits(5), bits(32))
+function fcvtmod_helper_inner(sign, true_exp, true_mant) = {
+    /* perform the exponentation on the fixed-point
+       mantissa and extract the integer part */
+    let fixedpoint = to_bits(84, unsigned(true_mant)) << true_exp;
+    let integer    = unsigned(fixedpoint[83..52]);
+    let fractional = to_bits(52, unsigned(fixedpoint[51..0]));
+
+    /* apply the sign bit */
+    let result = if (sign == 0b1) then negate(integer)
+                                  else integer;
+
+    /* raise FP exception flags, honoring the precedence of nV > nX */
+    let flags : bits(5) = if (true_exp > 31)         then nvFlag()
+                     else if (fractional != zeros()) then nxFlag()
+                     else                            zeros();
+
+    (flags, to_bits(32, result))
+}
+
 /*
  * Implement float64 to int32 conversion without saturation, the
  * result is supplied modulo 2^32.
- * Rounding mode for FCVTMOD.W.D is always RTZ(Round toward zero).
  */
-val      fcvtmod_helper : forall 'm, 'm == 64. (bits('m)) -> (bits(5), xlenbits)
+val      fcvtmod_helper : forall 'm, 'm == 64. (bits('m)) -> (bits(5), bits(32))
 function fcvtmod_helper(x64) = {
   let (sign, exp, mant) = fsplit_D(x64);
-  fflags		= fcsr.FFLAGS();
-  result : bits(64)	= undefined;
 
-  /* Handle special cases. */
-  if (exp == zeros())
-  then (nvFlag(), zeros())
-  /* NaN or Infinity. */
-  else if (exp == ones())
-  then (nvFlag(), zeros())
-  else {
-    let true_exp : int = unsigned(sub_vec_int(exp, 1023));
-    let shift    : int = true_exp - 52;
-    result	       = to_bits(64, unsigned(mant)) | ones() << 52;
+  /* detect the non-normal cases */
+  let is_subnorm    = (exp == zeros() & mant != zeros());
+  let is_zero       = (exp == zeros() & mant == zeros());
+  let is_nan_or_inf = (exp == ones());
 
-    /* Shift the fraction into place and set NX flag. */
-    if (shift >= 64 | shift <= -64) then {
-	/* The fraction is shifted out entirely. */
-	result = zeros();
-	fflags = fflags | nxFlag();
-    } else if (shift >= 0) then {
-	/* Raise NX if bit 52 got shifted out. */
-	result = result  << to_bits(64, shift);
-	if (unsigned(result) >= 12)
-	then fflags = fflags | nxFlag();
-    } else {
-	result = result >> to_bits(64, negate(shift));
-	/* Raise NX if bits got shifted out. */
-	if ((result << to_bits(64, negate(shift))) != result)
-	then fflags = fflags | nxFlag();
-    };
+  /* For normal numbers, the mantissa and exponent use special encoding */
+  let true_mant     = 0b1 @ mant;  /* concatenate with the implicit bit */
+  let true_exp      = unsigned(exp) - 1023;   /* undo the offset-binary */
 
-    if (sign == 0b1)
-    then result = negate_D(result);
+  /* Detect the trivial cases for normal numbers */
+  let is_too_large  = true_exp >= 84;  /* bits will be 'multiplied' out */
+  let is_too_small  = true_exp <  0;   /* bits will be 'divided' out    */
 
-    let result32b = to_bits(32, unsigned(result));
-    if (to_bits(64, unsigned(result32b)) != result)
-    then fflags = fflags | nvFlag();
-
-    (fflags, EXTS(result[31..0]))
-  };
+       if (is_zero)       then (zeros(),  zeros())
+  else if (is_subnorm)    then (nxFlag(), zeros())
+  else if (is_nan_or_inf) then (nvFlag(), zeros())
+  else if (is_too_large)  then (nvFlag(), zeros())
+  else if (is_too_small)  then (nxFlag(), zeros())
+  else fcvtmod_helper_inner(sign, true_exp, true_mant)
 }
 
 union clause ast = RISCV_FCVTMOD_W_D : (regidx, regidx)
@@ -749,6 +752,6 @@ function clause execute(RISCV_FCVTMOD_W_D(rs1, rd)) = {
   let rs1_val_D = F_D(rs1);
   let (fflags, rd_val) = fcvtmod_helper(rs1_val_D);
   write_fflags(fflags);
-  X(rd) = rd_val;
+  X(rd) = EXTS(rd_val);
   RETIRE_SUCCESS
 }
