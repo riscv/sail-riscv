@@ -1,10 +1,27 @@
-Language: Cpp
-BasedOnStyle: WebKit
-AlignArrayOfStructures: Left
-AlignAfterOpenBracket: Align
-AllowShortFunctionsOnASingleLine: Empty
+BasedOnStyle: LLVM
+AlignConsecutiveMacros: true
+AlignTrailingComments: true
+AlwaysBreakAfterReturnType: All
+BreakBeforeBinaryOperators: true
+BreakBeforeBraces: Mozilla
+BreakBeforeTernaryOperators: true
 ColumnLimit: 80
-Cpp11BracedListStyle: true
-IndentWidth: 2
-PointerAlignment: Right
-SortIncludes: Never
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: false
+FixNamespaceComments: true
+IncludeBlocks: Regroup
+IndentCaseLabels: false
+IndentWidth: 4
+IncludeCategories:
+- Regex: '^<sys.*/'
+  Priority: 1
+  SortPriority: 2
+- Regex: '^<[^/].*\.h'
+  Priority: 8
+  SortPriority: 10
+- Regex: '^\".*\.h\"'
+  Priority: 10
+  SortPriority: 12
+SortIncludes: true
+SpacesBeforeTrailingComments: 4
+TabWidth: 4

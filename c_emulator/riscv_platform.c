@@ -1,147 +1,174 @@
-#include "sail.h"
-#include "rts.h"
-#include "riscv_prelude.h"
 #include "riscv_platform_impl.h"
+#include "riscv_prelude.h"
 #include "riscv_sail.h"
+#include "rts.h"
+#include "sail.h"
 
 /* This file contains the definitions of the C externs of Sail model. */
 
 static mach_bits reservation = 0;
 static bool reservation_valid = false;
 
-bool sys_enable_rvc(unit u)
+bool
+sys_enable_rvc(unit u)
 {
-  return rv_enable_rvc;
+    return rv_enable_rvc;
 }
 
-bool sys_enable_next(unit u)
+bool
+sys_enable_next(unit u)
 {
-  return rv_enable_next;
+    return rv_enable_next;
 }
 
-bool sys_enable_fdext(unit u)
+bool
+sys_enable_fdext(unit u)
 {
-  return rv_enable_fdext;
+    return rv_enable_fdext;
 }
 
-bool sys_enable_zfinx(unit u)
+bool
+sys_enable_zfinx(unit u)
 {
-  return rv_enable_zfinx;
+    return rv_enable_zfinx;
 }
 
-bool sys_enable_writable_misa(unit u)
+bool
+sys_enable_writable_misa(unit u)
 {
-  return rv_enable_writable_misa;
+    return rv_enable_writable_misa;
 }
 
-bool plat_enable_dirty_update(unit u)
+bool
+plat_enable_dirty_update(unit u)
 {
-  return rv_enable_dirty_update;
+    return rv_enable_dirty_update;
 }
 
-bool plat_enable_misaligned_access(unit u)
+bool
+plat_enable_misaligned_access(unit u)
 {
-  return rv_enable_misaligned;
+    return rv_enable_misaligned;
 }
 
-bool plat_mtval_has_illegal_inst_bits(unit u)
+bool
+plat_mtval_has_illegal_inst_bits(unit u)
 {
-  return rv_mtval_has_illegal_inst_bits;
+    return rv_mtval_has_illegal_inst_bits;
 }
 
-bool plat_enable_pmp(unit u)
+bool
+plat_enable_pmp(unit u)
 {
-  return rv_enable_pmp;
+    return rv_enable_pmp;
 }
 
-mach_bits plat_ram_base(unit u)
+mach_bits
+plat_ram_base(unit u)
 {
-  return rv_ram_base;
+    return rv_ram_base;
 }
 
-mach_bits plat_ram_size(unit u)
+mach_bits
+plat_ram_size(unit u)
 {
-  return rv_ram_size;
+    return rv_ram_size;
 }
 
-mach_bits plat_rom_base(unit u)
+mach_bits
+plat_rom_base(unit u)
 {
-  return rv_rom_base;
+    return rv_rom_base;
 }
 
-mach_bits plat_rom_size(unit u)
+mach_bits
+plat_rom_size(unit u)
 {
-  return rv_rom_size;
+    return rv_rom_size;
 }
 
 // Provides entropy for the scalar cryptography extension.
-mach_bits plat_get_16_random_bits()
+mach_bits
+plat_get_16_random_bits()
 {
-  return rv_16_random_bits();
+    return rv_16_random_bits();
 }
 
-mach_bits plat_clint_base(unit u)
+mach_bits
+plat_clint_base(unit u)
 {
-  return rv_clint_base;
+    return rv_clint_base;
 }
 
-mach_bits plat_clint_size(unit u)
+mach_bits
+plat_clint_size(unit u)
 {
-  return rv_clint_size;
+    return rv_clint_size;
 }
 
-unit load_reservation(mach_bits addr)
+unit
+load_reservation(mach_bits addr)
 {
-  reservation = addr;
-  reservation_valid = true;
-  /* fprintf(stderr, "reservation <- %0" PRIx64 "\n", reservation); */
-  return UNIT;
+    reservation = addr;
+    reservation_valid = true;
+    /* fprintf(stderr, "reservation <- %0" PRIx64 "\n", reservation); */
+    return UNIT;
 }
 
-bool speculate_conditional(unit u)
+bool
+speculate_conditional(unit u)
 {
-  return true;
+    return true;
 }
 
-static mach_bits check_mask(void)
+static mach_bits
+check_mask(void)
 {
-  return (zxlen_val == 32) ? 0x00000000FFFFFFFF : -1;
+    return (zxlen_val == 32) ? 0x00000000FFFFFFFF : -1;
 }
 
-bool match_reservation(mach_bits addr)
+bool
+match_reservation(mach_bits addr)
 {
-  mach_bits mask = check_mask();
-  bool ret = reservation_valid && (reservation & mask) == (addr & mask);
-  /*
-  fprintf(stderr, "reservation(%c): %0" PRIx64 ", key=%0" PRIx64 ": %s\n",
-          reservation_valid ? 'v' : 'i', reservation, addr, ret ? "ok" :
-  "fail");
-  */
+    mach_bits mask = check_mask();
+    bool ret = reservation_valid && (reservation & mask) == (addr & mask);
+    /*
+    fprintf(stderr, "reservation(%c): %0" PRIx64 ", key=%0" PRIx64 ": %s\n",
+            reservation_valid ? 'v' : 'i', reservation, addr, ret ? "ok" :
+    "fail");
+    */
 
-  return ret;
+    return ret;
 }
 
-unit cancel_reservation(unit u)
+unit
+cancel_reservation(unit u)
 { /* fprintf(stderr, "reservation <- none\n"); */
-  reservation_valid = false;
-  return UNIT;
+    reservation_valid = false;
+    return UNIT;
 }
 
-unit plat_term_write(mach_bits s)
+unit
+plat_term_write(mach_bits s)
 {
-  char c = s & 0xff;
-  plat_term_write_impl(c);
-  return UNIT;
+    char c = s & 0xff;
+    plat_term_write_impl(c);
+    return UNIT;
 }
 
-void plat_insns_per_tick(sail_int *rop, unit u) { }
-
-mach_bits plat_htif_tohost(unit u)
+void
+plat_insns_per_tick(sail_int *rop, unit u)
 {
-  return rv_htif_tohost;
 }
 
-unit memea(mach_bits len, sail_int n)
+mach_bits
+plat_htif_tohost(unit u)
 {
-  return UNIT;
+    return rv_htif_tohost;
+}
+
+unit
+memea(mach_bits len, sail_int n)
+{
+    return UNIT;
 }
