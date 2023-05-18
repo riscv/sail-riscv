@@ -73,7 +73,7 @@
 val ext_init_regs : unit -> unit effect {wreg}
 function ext_init_regs () = ()
 
-/*!
+/**
 This function is called after above when running rvfi and allows the model
 to be initialised differently (e.g. CHERI cap regs are initialised
 to omnipotent instead of null).
@@ -84,14 +84,14 @@ function ext_rvfi_init () = {
 }
 
 
-/*!
+/**
 THIS(csrno, priv, isWrite) allows an extension to block access to csrno,
 at Privilege level priv. It should return true if the access is allowed.
 */
 val ext_check_CSR : (bits(12), Privilege, bool) -> bool
 function ext_check_CSR (csrno, p, isWrite) = true
 
-/*!
+/**
 THIS is called if ext_check_CSR returns false. It should
 cause an appropriate RISCV exception.
  */

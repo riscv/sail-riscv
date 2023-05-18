@@ -158,7 +158,7 @@ function privLevel_to_bits (p) =
     Machine    => 0b11
   }
 
-/*!
+/**
  * Converts the given 2-bit privilege level code to the [Privilege] enum.
  * Calling with a reserved code will result in an internal error.
  */
@@ -452,7 +452,7 @@ function word_width_bytes width = match width {
   DOUBLE => 8
 }
 
-/*!
+/**
  * Raise an internal error reporting that width w is invalid for access kind, k,
  * and current xlen. The file name and line number should be passed in as the
  * first two arguments using the __FILE__ and __LINE__ built-in macros.

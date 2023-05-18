@@ -68,7 +68,7 @@
 
 /* accessors for default architectural addresses, for use from within instructions */
 
-/*!
+/**
   Retrieves the architectural PC value. This is not necessarily the value
   found in the PC register as extensions may choose to override this function.
   The value in the PC register is the absolute virtual address of the instruction
