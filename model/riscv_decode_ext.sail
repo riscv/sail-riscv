@@ -70,9 +70,8 @@
  * based on other machine state. This is supported via decode instruction
   hooks, the default implementation of which is provided below.
  */
+val ext_decode_compressed : bits(16) -> ast
+function ext_decode_compressed bv = encdec_compressed(bv)
 
-val ext_decode_compressed : bits(16) -> ast effect {rreg}
-function ext_decode_compressed(bv) = encdec_compressed(bv)
-
-val ext_decode : bits(32) -> ast effect {rreg}
-function ext_decode(bv) = encdec(bv)
+val ext_decode : bits(32) -> ast
+function ext_decode bv = encdec(bv)

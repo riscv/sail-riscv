@@ -68,9 +68,7 @@
 
 /* ****************************************************************** */
 /* This file specifies the instructions in the 'M' extension.         */
-
 /* ****************************************************************** */
-
 union clause ast = MUL : (regidx, regidx, regidx, bool, bool, bool)
 
 mapping encdec_mul_op : (bool, bool, bool) <-> bits(3) = {
@@ -84,16 +82,26 @@ mapping encdec_mul_op : (bool, bool, bool) <-> bits(3) = {
 mapping clause encdec = MUL(rs2, rs1, rd, high, signed1, signed2)
   <-> 0b0000001 @ rs2 @ rs1 @ encdec_mul_op(high, signed1, signed2) : bits(3) @ rd @ 0b0110011
 
-function clause execute (MUL(rs2, rs1, rd, high, signed1, signed2)) = {
+function clause execute MUL(rs2, rs1, rd, high, signed1, signed2) = {
   if haveMulDiv() | haveZmmul() then {
     let rs1_val = X(rs1);
     let rs2_val = X(rs2);
-    let rs1_int : int = if signed1 then signed(rs1_val) else unsigned(rs1_val);
-    let rs2_int : int = if signed2 then signed(rs2_val) else unsigned(rs2_val);
+    let rs1_int : int = if signed1 then {
+      signed(rs1_val)
+    } else {
+      unsigned(rs1_val)
+    };
+    let rs2_int : int = if signed2 then {
+      signed(rs2_val)
+    } else {
+      unsigned(rs2_val)
+    };
     let result_wide = to_bits(2 * sizeof(xlen), rs1_int * rs2_int);
-    let result = if   high
-                 then result_wide[(2 * sizeof(xlen) - 1) .. sizeof(xlen)]
-                 else result_wide[(sizeof(xlen) - 1) .. 0];
+    let result = if high then {
+      result_wide[((2 * sizeof(xlen)) - 1)..sizeof(xlen)]
+    } else {
+      result_wide[(sizeof(xlen) - 1)..0]
+    };
     X(rd) = result;
     RETIRE_SUCCESS
   } else {
@@ -118,15 +126,32 @@ union clause ast = DIV : (regidx, regidx, regidx, bool)
 mapping clause encdec = DIV(rs2, rs1, rd, s)
   <-> 0b0000001 @ rs2 @ rs1 @ 0b10 @ bool_not_bits(s) @ rd @ 0b0110011
 
-function clause execute (DIV(rs2, rs1, rd, s)) = {
+function clause execute DIV(rs2, rs1, rd, s) = {
   if haveMulDiv() then {
     let rs1_val = X(rs1);
     let rs2_val = X(rs2);
-    let rs1_int : int = if s then signed(rs1_val) else unsigned(rs1_val);
-    let rs2_int : int = if s then signed(rs2_val) else unsigned(rs2_val);
-    let q : int = if rs2_int == 0 then -1 else quot_round_zero(rs1_int, rs2_int);
+    let rs1_int : int = if s then {
+      signed(rs1_val)
+    } else {
+      unsigned(rs1_val)
+    };
+    let rs2_int : int = if s then {
+      signed(rs2_val)
+    } else {
+      unsigned(rs2_val)
+    };
+    let q : int = if rs2_int == 0 then {
+      -1
+    } else {
+      quot_round_zero(rs1_int, rs2_int)
+    };
+
     /* check for signed overflow */
-    let q': int = if s & q > xlen_max_signed then xlen_min_signed else q;
+    let q' : int = if s & (q > xlen_max_signed) then {
+      xlen_min_signed
+    } else {
+      q
+    };
     X(rd) = to_bits(sizeof(xlen), q');
     RETIRE_SUCCESS
   } else {
@@ -149,13 +174,26 @@ union clause ast = REM : (regidx, regidx, regidx, bool)
 mapping clause encdec = REM(rs2, rs1, rd, s)
   <-> 0b0000001 @ rs2 @ rs1 @ 0b11 @ bool_not_bits(s) @ rd @ 0b0110011
 
-function clause execute (REM(rs2, rs1, rd, s)) = {
+function clause execute REM(rs2, rs1, rd, s) = {
   if haveMulDiv() then {
     let rs1_val = X(rs1);
     let rs2_val = X(rs2);
-    let rs1_int : int = if s then signed(rs1_val) else unsigned(rs1_val);
-    let rs2_int : int = if s then signed(rs2_val) else unsigned(rs2_val);
-    let r : int = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
+    let rs1_int : int = if s then {
+      signed(rs1_val)
+    } else {
+      unsigned(rs1_val)
+    };
+    let rs2_int : int = if s then {
+      signed(rs2_val)
+    } else {
+      unsigned(rs2_val)
+    };
+    let r : int = if rs2_int == 0 then {
+      rs1_int
+    } else {
+      rem_round_zero(rs1_int, rs2_int)
+    };
+
     /* signed overflow case returns zero naturally as required due to -1 divisor */
     X(rd) = to_bits(sizeof(xlen), r);
     RETIRE_SUCCESS
@@ -176,14 +214,17 @@ mapping clause encdec = MULW(rs2, rs1, rd)
   <-> 0b0000001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
       if sizeof(xlen) == 64
 
-function clause execute (MULW(rs2, rs1, rd)) = {
+function clause execute MULW(rs2, rs1, rd) = {
   if haveMulDiv() | haveZmmul() then {
     let rs1_val = X(rs1)[31..0];
     let rs2_val = X(rs2)[31..0];
     let rs1_int : int = signed(rs1_val);
     let rs2_int : int = signed(rs2_val);
+
     /* to_bits requires expansion to 64 bits followed by truncation */
-    let result32 = to_bits(64, rs1_int * rs2_int)[31..0];
+    let result32 = to_bits(64, rs1_int * rs2_int)[
+      31..0
+    ];
     let result : xlenbits = EXTS(result32);
     X(rd) = result;
     RETIRE_SUCCESS
@@ -206,15 +247,32 @@ mapping clause encdec = DIVW(rs2, rs1, rd, s)
   <-> 0b0000001 @ rs2 @ rs1 @ 0b10 @ bool_not_bits(s) @ rd @ 0b0111011
       if sizeof(xlen) == 64
 
-function clause execute (DIVW(rs2, rs1, rd, s)) = {
+function clause execute DIVW(rs2, rs1, rd, s) = {
   if haveMulDiv() then {
     let rs1_val = X(rs1)[31..0];
     let rs2_val = X(rs2)[31..0];
-    let rs1_int : int = if s then signed(rs1_val) else unsigned(rs1_val);
-    let rs2_int : int = if s then signed(rs2_val) else unsigned(rs2_val);
-    let q : int = if rs2_int == 0 then -1 else quot_round_zero(rs1_int, rs2_int);
+    let rs1_int : int = if s then {
+      signed(rs1_val)
+    } else {
+      unsigned(rs1_val)
+    };
+    let rs2_int : int = if s then {
+      signed(rs2_val)
+    } else {
+      unsigned(rs2_val)
+    };
+    let q : int = if rs2_int == 0 then {
+      -1
+    } else {
+      quot_round_zero(rs1_int, rs2_int)
+    };
+
     /* check for signed overflow */
-    let q': int = if s & q > (2 ^ 31 - 1) then  (0 - 2^31) else q;
+    let q' : int = if s & (q > (pow2(31) - 1)) then {
+      0 - pow2(31)
+    } else {
+      q
+    };
     X(rd) = EXTS(to_bits(32, q'));
     RETIRE_SUCCESS
   } else {
@@ -236,13 +294,26 @@ mapping clause encdec = REMW(rs2, rs1, rd, s)
   <-> 0b0000001 @ rs2 @ rs1 @ 0b11 @ bool_not_bits(s) @ rd @ 0b0111011
       if sizeof(xlen) == 64
 
-function clause execute (REMW(rs2, rs1, rd, s)) = {
+function clause execute REMW(rs2, rs1, rd, s) = {
   if haveMulDiv() then {
     let rs1_val = X(rs1)[31..0];
     let rs2_val = X(rs2)[31..0];
-    let rs1_int : int = if s then signed(rs1_val) else unsigned(rs1_val);
-    let rs2_int : int = if s then signed(rs2_val) else unsigned(rs2_val);
-    let r : int = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
+    let rs1_int : int = if s then {
+      signed(rs1_val)
+    } else {
+      unsigned(rs1_val)
+    };
+    let rs2_int : int = if s then {
+      signed(rs2_val)
+    } else {
+      unsigned(rs2_val)
+    };
+    let r : int = if rs2_int == 0 then {
+      rs1_int
+    } else {
+      rem_round_zero(rs1_int, rs2_int)
+    };
+
     /* signed overflow case returns zero naturally as required due to -1 divisor */
     X(rd) = EXTS(to_bits(32, r));
     RETIRE_SUCCESS

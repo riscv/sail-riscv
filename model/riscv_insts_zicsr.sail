@@ -68,7 +68,6 @@
 
 /* ****************************************************************** */
 /* This file specifies the instructions in the 'Zicsr' extension.     */
-
 /* ****************************************************************** */
 union clause ast = CSR  : (bits(12), regidx, regidx, bool, csrop)
 
@@ -82,196 +81,364 @@ mapping clause encdec = CSR(csr, rs1, rd, is_imm, op)
   <-> csr @ rs1 @ bool_bits(is_imm) @ encdec_csrop(op) @ rd @ 0b1110011
 
 function readCSR csr : csreg -> xlenbits = {
-  let res : xlenbits =
-  match (csr, sizeof(xlen)) {
+  let res : xlenbits = match (csr, sizeof(xlen)) {
     /* machine mode */
-    (0xF11,  _) => EXTZ(mvendorid),
-    (0xF12,  _) => marchid,
-    (0xF13,  _) => mimpid,
-    (0xF14,  _) => mhartid,
-    (0x300,  _) => mstatus.bits(),
-    (0x301,  _) => misa.bits(),
-    (0x302,  _) => medeleg.bits(),
-    (0x303,  _) => mideleg.bits(),
-    (0x304,  _) => mie.bits(),
-    (0x305,  _) => get_mtvec(),
-    (0x306,  _) => EXTZ(mcounteren.bits()),
-    (0x310, 32) => mstatush.bits(),
-    (0x320,  _) => EXTZ(mcountinhibit.bits()),
-
-    (0x340,  _) => mscratch,
-    (0x341,  _) => get_xret_target(Machine) & pc_alignment_mask(),
-    (0x342,  _) => mcause.bits(),
-    (0x343,  _) => mtval,
-    (0x344,  _) => mip.bits(),
-
-    (0x3A0,  _) => pmpReadCfgReg(0),           // pmpcfg0
-    (0x3A1, 32) => pmpReadCfgReg(1),           // pmpcfg1
-    (0x3A2,  _) => pmpReadCfgReg(2),           // pmpcfg2
-    (0x3A3, 32) => pmpReadCfgReg(3),           // pmpcfg3
-
-    (0x3B0,  _) => pmpaddr0,
-    (0x3B1,  _) => pmpaddr1,
-    (0x3B2,  _) => pmpaddr2,
-    (0x3B3,  _) => pmpaddr3,
-    (0x3B4,  _) => pmpaddr4,
-    (0x3B5,  _) => pmpaddr5,
-    (0x3B6,  _) => pmpaddr6,
-    (0x3B7,  _) => pmpaddr7,
-    (0x3B8,  _) => pmpaddr8,
-    (0x3B9,  _) => pmpaddr9,
-    (0x3BA,  _) => pmpaddr10,
-    (0x3BB,  _) => pmpaddr11,
-    (0x3BC,  _) => pmpaddr12,
-    (0x3BD,  _) => pmpaddr13,
-    (0x3BE,  _) => pmpaddr14,
-    (0x3BF,  _) => pmpaddr15,
-
+    (0xF11, _) => EXTZ(mvendorid),
+    (0xF12, _) => marchid,
+    (0xF13, _) => mimpid,
+    (0xF14, _) => mhartid,
+    (0x300, _) => _mod_bits(mstatus),
+    (0x301, _) => _mod_bits(misa),
+    (0x302, _) => _mod_bits(medeleg),
+    (0x303, _) => _mod_bits(mideleg),
+    (0x304, _) => _mod_bits(mie),
+    (0x305, _) => get_mtvec(),
+    (0x306, _) => EXTZ(_mod_bits(mcounteren)),
+    (0x310, 32) => _mod_bits(mstatush),
+    (0x320, _) => EXTZ(_mod_bits(mcountinhibit)),
+    (0x340, _) => mscratch,
+    (0x341, _) => get_xret_target(Machine) & pc_alignment_mask(),
+    (0x342, _) => _mod_bits(mcause),
+    (0x343, _) => mtval,
+    (0x344, _) => _mod_bits(mip),
+    (0x3A0, _) => pmpReadCfgReg(0), // pmpcfg0
+    (0x3A1, 32) => pmpReadCfgReg(1), // pmpcfg1
+    (0x3A2, _) => pmpReadCfgReg(2), // pmpcfg2
+    (0x3A3, 32) => pmpReadCfgReg(3), // pmpcfg3
+    (0x3B0, _) => pmpaddr0,
+    (0x3B1, _) => pmpaddr1,
+    (0x3B2, _) => pmpaddr2,
+    (0x3B3, _) => pmpaddr3,
+    (0x3B4, _) => pmpaddr4,
+    (0x3B5, _) => pmpaddr5,
+    (0x3B6, _) => pmpaddr6,
+    (0x3B7, _) => pmpaddr7,
+    (0x3B8, _) => pmpaddr8,
+    (0x3B9, _) => pmpaddr9,
+    (0x3BA, _) => pmpaddr10,
+    (0x3BB, _) => pmpaddr11,
+    (0x3BC, _) => pmpaddr12,
+    (0x3BD, _) => pmpaddr13,
+    (0x3BE, _) => pmpaddr14,
+    (0x3BF, _) => pmpaddr15,
     /* machine mode counters */
-    (0xB00,  _) => mcycle[(sizeof(xlen) - 1) .. 0],
-    (0xB02,  _) => minstret[(sizeof(xlen) - 1) .. 0],
-    (0xB80, 32) => mcycle[63 .. 32],
-    (0xB82, 32) => minstret[63 .. 32],
-
+    (0xB00, _) => mcycle[
+      (sizeof(xlen) - 1)..0
+    ],
+    (0xB02, _) => minstret[
+      (sizeof(xlen) - 1)..0
+    ],
+    (0xB80, 32) => mcycle[
+      63..32
+    ],
+    (0xB82, 32) => minstret[
+      63..32
+    ],
     /* trigger/debug */
-    (0x7a0,  _) => ~(tselect),  /* this indicates we don't have any trigger support */
-
+    (0x7a0, _) => ~(tselect), /* this indicates we don't have any trigger support */
     /* supervisor mode */
-    (0x100,  _) => lower_mstatus(mstatus).bits(),
-    (0x102,  _) => sedeleg.bits(),
-    (0x103,  _) => sideleg.bits(),
-    (0x104,  _) => lower_mie(mie, mideleg).bits(),
-    (0x105,  _) => get_stvec(),
-    (0x106,  _) => EXTZ(scounteren.bits()),
-    (0x140,  _) => sscratch,
-    (0x141,  _) => get_xret_target(Supervisor) & pc_alignment_mask(),
-    (0x142,  _) => scause.bits(),
-    (0x143,  _) => stval,
-    (0x144,  _) => lower_mip(mip, mideleg).bits(),
-    (0x180,  _) => satp,
-
+    (0x100, _) => _mod_bits(lower_mstatus(mstatus)),
+    (0x102, _) => _mod_bits(sedeleg),
+    (0x103, _) => _mod_bits(sideleg),
+    (0x104, _) => _mod_bits(lower_mie(mie, mideleg)),
+    (0x105, _) => get_stvec(),
+    (0x106, _) => EXTZ(_mod_bits(scounteren)),
+    (0x140, _) => sscratch,
+    (0x141, _) => get_xret_target(Supervisor) & pc_alignment_mask(),
+    (0x142, _) => _mod_bits(scause),
+    (0x143, _) => stval,
+    (0x144, _) => _mod_bits(lower_mip(mip, mideleg)),
+    (0x180, _) => satp,
     /* user mode counters */
-    (0xC00,  _) => mcycle[(sizeof(xlen) - 1) .. 0],
-    (0xC01,  _) => mtime[(sizeof(xlen) - 1) .. 0],
-    (0xC02,  _) => minstret[(sizeof(xlen) - 1) .. 0],
-    (0xC80, 32) => mcycle[63 .. 32],
-    (0xC81, 32) => mtime[63 .. 32],
-    (0xC82, 32) => minstret[63 .. 32],
-
+    (0xC00, _) => mcycle[
+      (sizeof(xlen) - 1)..0
+    ],
+    (0xC01, _) => mtime[
+      (sizeof(xlen) - 1)..0
+    ],
+    (0xC02, _) => minstret[
+      (sizeof(xlen) - 1)..0
+    ],
+    (0xC80, 32) => mcycle[
+      63..32
+    ],
+    (0xC81, 32) => mtime[
+      63..32
+    ],
+    (0xC82, 32) => minstret[
+      63..32
+    ],
     /* user mode: Zkr */
-    (0x015,  _) => read_seed_csr(),
-
-    _           => /* check extensions */
-                   match ext_read_CSR(csr) {
-                     Some(res) => res,
-                     None()    => { print_bits("unhandled read to CSR ", csr);
-                                    EXTZ(0x0) }
-                   }
+    (0x015, _) => read_seed_csr(),
+    _ => /* check extensions */
+    match ext_read_CSR(csr) {
+      Some(res) => res,
+      None() => {
+        print_bits("unhandled read to CSR ", csr);
+        EXTZ(0x0)
+      },
+    },
   };
-  if   get_config_print_reg()
-  then print_reg("CSR " ^ to_str(csr) ^ " -> " ^ BitStr(res));
+  if get_config_print_reg() then {
+    print_reg("CSR " ^ (to_str(csr) ^ (" -> " ^ BitStr(res))))
+  };
   res
 }
 
-function writeCSR (csr : csreg, value : xlenbits) -> unit = {
-  let res : option(xlenbits) =
-  match (csr, sizeof(xlen)) {
+function writeCSR(csr : csreg, value : xlenbits) -> unit = {
+  let res : option(xlenbits) = match (csr, sizeof(xlen)) {
     /* machine mode */
-    (0x300,  _) => { mstatus = legalize_mstatus(mstatus, value); Some(mstatus.bits()) },
-    (0x301,  _) => { misa = legalize_misa(misa, value); Some(misa.bits()) },
-    (0x302,  _) => { medeleg = legalize_medeleg(medeleg, value); Some(medeleg.bits()) },
-    (0x303,  _) => { mideleg = legalize_mideleg(mideleg, value); Some(mideleg.bits()) },
-    (0x304,  _) => { mie = legalize_mie(mie, value); Some(mie.bits()) },
-    (0x305,  _) => { Some(set_mtvec(value)) },
-    (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(EXTZ(mcounteren.bits())) },
-    (0x310, 32) => { Some(mstatush.bits()) }, // ignore writes for now
-    (0x320,  _) => { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Some(EXTZ(mcountinhibit.bits())) },
-    (0x340,  _) => { mscratch = value; Some(mscratch) },
-    (0x341,  _) => { Some(set_xret_target(Machine, value)) },
-    (0x342,  _) => { mcause->bits() = value; Some(mcause.bits()) },
-    (0x343,  _) => { mtval = value; Some(mtval) },
-    (0x344,  _) => { mip = legalize_mip(mip, value); Some(mip.bits()) },
-
+    (0x300, _) => {
+      mstatus = legalize_mstatus(mstatus, value);
+      Some(_mod_bits(mstatus))
+    },
+    (0x301, _) => {
+      misa = legalize_misa(misa, value);
+      Some(_mod_bits(misa))
+    },
+    (0x302, _) => {
+      medeleg = legalize_medeleg(medeleg, value);
+      Some(_mod_bits(medeleg))
+    },
+    (0x303, _) => {
+      mideleg = legalize_mideleg(mideleg, value);
+      Some(_mod_bits(mideleg))
+    },
+    (0x304, _) => {
+      mie = legalize_mie(mie, value);
+      Some(_mod_bits(mie))
+    },
+    (0x305, _) => {
+      Some(set_mtvec(value))
+    },
+    (0x306, _) => {
+      mcounteren = legalize_mcounteren(mcounteren, value);
+      Some(EXTZ(_mod_bits(mcounteren)))
+    },
+    (0x310, 32) => {
+      Some(_mod_bits(mstatush)) // ignore writes for now
+    },
+    (0x320, _) => {
+      mcountinhibit = legalize_mcountinhibit(mcountinhibit, value);
+      Some(EXTZ(_mod_bits(mcountinhibit)))
+    },
+    (0x340, _) => {
+      mscratch = value;
+      Some(mscratch)
+    },
+    (0x341, _) => {
+      Some(set_xret_target(Machine, value))
+    },
+    (0x342, _) => {
+      _mod_bits(ref mcause) = value;
+      Some(_mod_bits(mcause))
+    },
+    (0x343, _) => {
+      mtval = value;
+      Some(mtval)
+    },
+    (0x344, _) => {
+      mip = legalize_mip(mip, value);
+      Some(_mod_bits(mip))
+    },
     // Note: Some(value) returned below is not the legalized value due to locked entries
-    (0x3A0,  _) => { pmpWriteCfgReg(0, value); Some(pmpReadCfgReg(0)) },  // pmpcfg0
-    (0x3A1, 32) => { pmpWriteCfgReg(1, value); Some(pmpReadCfgReg(1)) },  // pmpcfg1
-    (0x3A2,  _) => { pmpWriteCfgReg(2, value); Some(pmpReadCfgReg(2)) },  // pmpcfg2
-    (0x3A3, 32) => { pmpWriteCfgReg(3, value); Some(pmpReadCfgReg(3)) },  // pmpcfg3
-
-    (0x3B0,  _) => { pmpaddr0  = pmpWriteAddr(pmpLocked(pmp0cfg),  pmpTORLocked(pmp1cfg),  pmpaddr0,  value); Some(pmpaddr0) },
-    (0x3B1,  _) => { pmpaddr1  = pmpWriteAddr(pmpLocked(pmp1cfg),  pmpTORLocked(pmp2cfg),  pmpaddr1,  value); Some(pmpaddr1) },
-    (0x3B2,  _) => { pmpaddr2  = pmpWriteAddr(pmpLocked(pmp2cfg),  pmpTORLocked(pmp3cfg),  pmpaddr2,  value); Some(pmpaddr2) },
-    (0x3B3,  _) => { pmpaddr3  = pmpWriteAddr(pmpLocked(pmp3cfg),  pmpTORLocked(pmp4cfg),  pmpaddr3,  value); Some(pmpaddr3) },
-    (0x3B4,  _) => { pmpaddr4  = pmpWriteAddr(pmpLocked(pmp4cfg),  pmpTORLocked(pmp5cfg),  pmpaddr4,  value); Some(pmpaddr4) },
-    (0x3B5,  _) => { pmpaddr5  = pmpWriteAddr(pmpLocked(pmp5cfg),  pmpTORLocked(pmp6cfg),  pmpaddr5,  value); Some(pmpaddr5) },
-    (0x3B6,  _) => { pmpaddr6  = pmpWriteAddr(pmpLocked(pmp6cfg),  pmpTORLocked(pmp7cfg),  pmpaddr6,  value); Some(pmpaddr6) },
-    (0x3B7,  _) => { pmpaddr7  = pmpWriteAddr(pmpLocked(pmp7cfg),  pmpTORLocked(pmp8cfg),  pmpaddr7,  value); Some(pmpaddr7) },
-    (0x3B8,  _) => { pmpaddr8  = pmpWriteAddr(pmpLocked(pmp8cfg),  pmpTORLocked(pmp9cfg),  pmpaddr8,  value); Some(pmpaddr8) },
-    (0x3B9,  _) => { pmpaddr9  = pmpWriteAddr(pmpLocked(pmp9cfg),  pmpTORLocked(pmp10cfg), pmpaddr9,  value); Some(pmpaddr9) },
-    (0x3BA,  _) => { pmpaddr10 = pmpWriteAddr(pmpLocked(pmp10cfg), pmpTORLocked(pmp11cfg), pmpaddr10, value); Some(pmpaddr10) },
-    (0x3BB,  _) => { pmpaddr11 = pmpWriteAddr(pmpLocked(pmp11cfg), pmpTORLocked(pmp12cfg), pmpaddr11, value); Some(pmpaddr11) },
-    (0x3BC,  _) => { pmpaddr12 = pmpWriteAddr(pmpLocked(pmp12cfg), pmpTORLocked(pmp13cfg), pmpaddr12, value); Some(pmpaddr12) },
-    (0x3BD,  _) => { pmpaddr13 = pmpWriteAddr(pmpLocked(pmp13cfg), pmpTORLocked(pmp14cfg), pmpaddr13, value); Some(pmpaddr13) },
-    (0x3BE,  _) => { pmpaddr14 = pmpWriteAddr(pmpLocked(pmp14cfg), pmpTORLocked(pmp15cfg), pmpaddr14, value); Some(pmpaddr14) },
-    (0x3BF,  _) => { pmpaddr15 = pmpWriteAddr(pmpLocked(pmp15cfg), false,                  pmpaddr15, value); Some(pmpaddr15) },
-
+    (0x3A0, _) => {
+      pmpWriteCfgReg(0, value);
+      Some(pmpReadCfgReg(0)) // pmpcfg0
+    },
+    (0x3A1, 32) => {
+      pmpWriteCfgReg(1, value);
+      Some(pmpReadCfgReg(1)) // pmpcfg1
+    },
+    (0x3A2, _) => {
+      pmpWriteCfgReg(2, value);
+      Some(pmpReadCfgReg(2)) // pmpcfg2
+    },
+    (0x3A3, 32) => {
+      pmpWriteCfgReg(3, value);
+      Some(pmpReadCfgReg(3)) // pmpcfg3
+    },
+    (0x3B0, _) => {
+      pmpaddr0 = pmpWriteAddr(pmpLocked(pmp0cfg), pmpTORLocked(pmp1cfg), pmpaddr0, value);
+      Some(pmpaddr0)
+    },
+    (0x3B1, _) => {
+      pmpaddr1 = pmpWriteAddr(pmpLocked(pmp1cfg), pmpTORLocked(pmp2cfg), pmpaddr1, value);
+      Some(pmpaddr1)
+    },
+    (0x3B2, _) => {
+      pmpaddr2 = pmpWriteAddr(pmpLocked(pmp2cfg), pmpTORLocked(pmp3cfg), pmpaddr2, value);
+      Some(pmpaddr2)
+    },
+    (0x3B3, _) => {
+      pmpaddr3 = pmpWriteAddr(pmpLocked(pmp3cfg), pmpTORLocked(pmp4cfg), pmpaddr3, value);
+      Some(pmpaddr3)
+    },
+    (0x3B4, _) => {
+      pmpaddr4 = pmpWriteAddr(pmpLocked(pmp4cfg), pmpTORLocked(pmp5cfg), pmpaddr4, value);
+      Some(pmpaddr4)
+    },
+    (0x3B5, _) => {
+      pmpaddr5 = pmpWriteAddr(pmpLocked(pmp5cfg), pmpTORLocked(pmp6cfg), pmpaddr5, value);
+      Some(pmpaddr5)
+    },
+    (0x3B6, _) => {
+      pmpaddr6 = pmpWriteAddr(pmpLocked(pmp6cfg), pmpTORLocked(pmp7cfg), pmpaddr6, value);
+      Some(pmpaddr6)
+    },
+    (0x3B7, _) => {
+      pmpaddr7 = pmpWriteAddr(pmpLocked(pmp7cfg), pmpTORLocked(pmp8cfg), pmpaddr7, value);
+      Some(pmpaddr7)
+    },
+    (0x3B8, _) => {
+      pmpaddr8 = pmpWriteAddr(pmpLocked(pmp8cfg), pmpTORLocked(pmp9cfg), pmpaddr8, value);
+      Some(pmpaddr8)
+    },
+    (0x3B9, _) => {
+      pmpaddr9 = pmpWriteAddr(pmpLocked(pmp9cfg), pmpTORLocked(pmp10cfg), pmpaddr9, value);
+      Some(pmpaddr9)
+    },
+    (0x3BA, _) => {
+      pmpaddr10 = pmpWriteAddr(pmpLocked(pmp10cfg), pmpTORLocked(pmp11cfg), pmpaddr10, value);
+      Some(pmpaddr10)
+    },
+    (0x3BB, _) => {
+      pmpaddr11 = pmpWriteAddr(pmpLocked(pmp11cfg), pmpTORLocked(pmp12cfg), pmpaddr11, value);
+      Some(pmpaddr11)
+    },
+    (0x3BC, _) => {
+      pmpaddr12 = pmpWriteAddr(pmpLocked(pmp12cfg), pmpTORLocked(pmp13cfg), pmpaddr12, value);
+      Some(pmpaddr12)
+    },
+    (0x3BD, _) => {
+      pmpaddr13 = pmpWriteAddr(pmpLocked(pmp13cfg), pmpTORLocked(pmp14cfg), pmpaddr13, value);
+      Some(pmpaddr13)
+    },
+    (0x3BE, _) => {
+      pmpaddr14 = pmpWriteAddr(pmpLocked(pmp14cfg), pmpTORLocked(pmp15cfg), pmpaddr14, value);
+      Some(pmpaddr14)
+    },
+    (0x3BF, _) => {
+      pmpaddr15 = pmpWriteAddr(pmpLocked(pmp15cfg), false, pmpaddr15, value);
+      Some(pmpaddr15)
+    },
     /* machine mode counters */
-    (0xB00,  _) => { mcycle[(sizeof(xlen) - 1) .. 0] = value; Some(value) },
-    (0xB02,  _) => { minstret[(sizeof(xlen) - 1) .. 0] = value; minstret_written = true; Some(value) },
-    (0xB80, 32) => { mcycle[63 .. 32] = value; Some(value) },
-    (0xB82, 32) => { minstret[63 .. 32] = value; minstret_written = true; Some(value) },
-
+    (0xB00, _) => {
+      (mcycle[(sizeof(xlen) - 1)..0]) = value;
+      Some(value)
+    },
+    (0xB02, _) => {
+      (minstret[(sizeof(xlen) - 1)..0]) = value;
+      minstret_written = true;
+      Some(value)
+    },
+    (0xB80, 32) => {
+      (mcycle[63..32]) = value;
+      Some(value)
+    },
+    (0xB82, 32) => {
+      (minstret[63..32]) = value;
+      minstret_written = true;
+      Some(value)
+    },
     /* trigger/debug */
-    (0x7a0,  _) => { tselect = value; Some(tselect) },
-
+    (0x7a0, _) => {
+      tselect = value;
+      Some(tselect)
+    },
     /* supervisor mode */
-    (0x100,  _) => { mstatus = legalize_sstatus(mstatus, value); Some(mstatus.bits()) },
-    (0x102,  _) => { sedeleg = legalize_sedeleg(sedeleg, value); Some(sedeleg.bits()) },
-    (0x103,  _) => { sideleg->bits() = value; Some(sideleg.bits()) }, /* TODO: does this need legalization? */
-    (0x104,  _) => { mie = legalize_sie(mie, mideleg, value); Some(mie.bits()) },
-    (0x105,  _) => { Some(set_stvec(value)) },
-    (0x106,  _) => { scounteren = legalize_scounteren(scounteren, value); Some(EXTZ(scounteren.bits())) },
-    (0x140,  _) => { sscratch = value; Some(sscratch) },
-    (0x141,  _) => { Some(set_xret_target(Supervisor, value)) },
-    (0x142,  _) => { scause->bits() = value; Some(scause.bits()) },
-    (0x143,  _) => { stval = value; Some(stval) },
-    (0x144,  _) => { mip = legalize_sip(mip, mideleg, value); Some(mip.bits()) },
-    (0x180,  _) => { satp = legalize_satp(cur_Architecture(), satp, value); Some(satp) },
-
+    (0x100, _) => {
+      mstatus = legalize_sstatus(mstatus, value);
+      Some(_mod_bits(mstatus))
+    },
+    (0x102, _) => {
+      sedeleg = legalize_sedeleg(sedeleg, value);
+      Some(_mod_bits(sedeleg))
+    },
+    (0x103, _) => {
+      _mod_bits(ref sideleg) = value;
+      Some(_mod_bits(sideleg)) /* TODO: does this need legalization? */
+    },
+    (0x104, _) => {
+      mie = legalize_sie(mie, mideleg, value);
+      Some(_mod_bits(mie))
+    },
+    (0x105, _) => {
+      Some(set_stvec(value))
+    },
+    (0x106, _) => {
+      scounteren = legalize_scounteren(scounteren, value);
+      Some(EXTZ(_mod_bits(scounteren)))
+    },
+    (0x140, _) => {
+      sscratch = value;
+      Some(sscratch)
+    },
+    (0x141, _) => {
+      Some(set_xret_target(Supervisor, value))
+    },
+    (0x142, _) => {
+      _mod_bits(ref scause) = value;
+      Some(_mod_bits(scause))
+    },
+    (0x143, _) => {
+      stval = value;
+      Some(stval)
+    },
+    (0x144, _) => {
+      mip = legalize_sip(mip, mideleg, value);
+      Some(_mod_bits(mip))
+    },
+    (0x180, _) => {
+      satp = legalize_satp(cur_Architecture(), satp, value);
+      Some(satp)
+    },
     /* user mode: seed (entropy source). writes are ignored */
-    (0x015,  _) => write_seed_csr(),
-
-    _           => ext_write_CSR(csr, value)
+    (0x015, _) => write_seed_csr(),
+    _ => ext_write_CSR(csr, value),
   };
   match res {
-    Some(v) => if   get_config_print_reg()
-               then print_reg("CSR " ^ to_str(csr) ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")"),
-    None()  => print_bits("unhandled write to CSR ", csr)
+    Some(v) => if get_config_print_reg() then {
+      print_reg("CSR " ^ (to_str(csr) ^ (" <- " ^ (BitStr(v) ^ (" (input: " ^ (BitStr(value) ^ ")"))))))
+    },
+    None() => print_bits("unhandled write to CSR ", csr),
   }
 }
 
 function clause execute CSR(csr, rs1, rd, is_imm, op) = {
-  let rs1_val : xlenbits = if is_imm then EXTZ(rs1) else X(rs1);
-  let isWrite : bool = match op {
-    CSRRW  => true,
-    _      => if is_imm then unsigned(rs1_val) != 0 else unsigned(rs1) != 0
+  let rs1_val : xlenbits = if is_imm then {
+    EXTZ(rs1)
+  } else {
+    X(rs1)
   };
-  if not(check_CSR(csr, cur_privilege, isWrite))
-  then { handle_illegal(); RETIRE_FAIL }
-  else if not(ext_check_CSR(csr, cur_privilege, isWrite))
-  then { ext_check_CSR_fail(); RETIRE_FAIL }
-  else {
-    let csr_val = readCSR(csr); /* could have side-effects, so technically shouldn't perform for CSRW[I] with rd == 0 */
-    if isWrite then {
-      let new_val : xlenbits = match op {
-        CSRRW => rs1_val,
-        CSRRS => csr_val | rs1_val,
-        CSRRC => csr_val & ~(rs1_val)
+  let isWrite : bool = match op {
+    CSRRW => true,
+    _ => if is_imm then {
+      unsigned(rs1_val) != 0
+    } else {
+      unsigned(rs1) != 0
+    },
+  };
+  if not(check_CSR(csr, cur_privilege, isWrite)) then {
+    handle_illegal();
+    RETIRE_FAIL
+  } else {
+    if not(ext_check_CSR(csr, cur_privilege, isWrite)) then {
+      ext_check_CSR_fail();
+      RETIRE_FAIL
+    } else {
+      let csr_val = readCSR(csr) /* could have side-effects, so technically shouldn't perform for CSRW[I] with rd == 0 */ ;
+      if isWrite then {
+        let new_val : xlenbits = match op {
+          CSRRW => rs1_val,
+          CSRRS => csr_val | rs1_val,
+          CSRRC => csr_val & ~(rs1_val),
+        };
+        writeCSR(csr, new_val)
       };
-      writeCSR(csr, new_val)
-    };
-    X(rd) = csr_val;
-    RETIRE_SUCCESS
+      X(rd) = csr_val;
+      RETIRE_SUCCESS
+    }
   }
 }
 
