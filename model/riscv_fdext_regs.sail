@@ -70,9 +70,7 @@
 /* Floating point register file and accessors for F, D extensions   */
 /* Floating point CSR and accessors                                 */
 /* **************************************************************** */
-
 /* Original version written by Rishiyur S. Nikhil, Sept-Oct 2019    */
-
 /* **************************************************************** */
 /* NaN boxing/unboxing.                                             */
 /* When 16-bit floats (half-precision) are stored in 32/64-bit regs  */
@@ -83,43 +81,54 @@
 /* they must be 'NaN boxed' (upper 32b all ones).                   */
 /* When 32-bit floats (single-precision) are read from 64-bit regs  */
 /* they must be 'NaN unboxed'.                                      */
+function canonical_NaN_H () -> bits(16) = 0x7e00
+function canonical_NaN_S () -> bits(32) = 0x7fc00000
+function canonical_NaN_D () -> bits(64) = 0x7ff8000000000000
 
-function canonical_NaN_H() -> bits(16) = 0x_7e00
-function canonical_NaN_S() -> bits(32) = 0x_7fc0_0000
-function canonical_NaN_D() -> bits(64) = 0x_7ff8_0000_0000_0000
-
-val      nan_box_H : bits(16) -> flenbits
-function nan_box_H   val_16b =
-  if (sizeof(flen) == 32)
-  then 0x_FFFF @ val_16b
-  else 0x_FFFF_FFFF_FFFF @ val_16b
-
-val      nan_unbox_H : flenbits -> bits(16)
-function nan_unbox_H   regval =
-  if (sizeof(flen) == 32)
-  then if regval [32..16] == 0x_FFFF
-       then regval [15..0]
-       else canonical_NaN_H()
-  else if regval [63..16] == 0x_FFFF_FFFF_FFFF
-       then regval [15..0]
-       else canonical_NaN_H()
-
-val nan_box_S : bits(32) -> flenbits effect {escape}
-function nan_box_S val_32b = {
-  assert(sys_enable_fdext());
-  if (sizeof(flen) == 32)
-  then val_32b
-  else 0x_FFFF_FFFF @ val_32b
+val nan_box_H : bits(16) -> flenbits
+function nan_box_H val_16b = if sizeof(flen) == 32 then {
+  0xFFFF @ val_16b
+} else {
+  0xFFFFFFFFFFFF @ val_16b
 }
 
-val nan_unbox_S : flenbits -> bits(32) effect {escape}
+val nan_unbox_H : flenbits -> bits(16)
+function nan_unbox_H regval = if sizeof(flen) == 32 then {
+  if (regval[32..16]) == 0xFFFF then {
+    regval[15..0]
+  } else {
+    canonical_NaN_H()
+  }
+} else {
+  if (regval[63..16]) == 0xFFFFFFFFFFFF then {
+    regval[15..0]
+  } else {
+    canonical_NaN_H()
+  }
+}
+
+val nan_box_S : bits(32) -> flenbits
+function nan_box_S val_32b = {
+  assert(sys_enable_fdext());
+  if sizeof(flen) == 32 then {
+    val_32b
+  } else {
+    0xFFFFFFFF @ val_32b
+  }
+}
+
+val nan_unbox_S : flenbits -> bits(32)
 function nan_unbox_S regval = {
   assert(sys_enable_fdext());
-  if (sizeof(flen) == 32)
-  then regval
-  else if regval [63..32] == 0x_FFFF_FFFF
-       then regval [31..0]
-       else canonical_NaN_S()
+  if sizeof(flen) == 32 then {
+    regval
+  } else {
+    if (regval[63..32]) == 0xFFFFFFFF then {
+      regval[31..0]
+    } else {
+      canonical_NaN_S()
+    }
+  }
 }
 
 overload nan_box = { nan_box_H, nan_box_S }
@@ -127,17 +136,16 @@ overload nan_unbox = { nan_unbox_H, nan_unbox_S }
 
 /* **************************************************************** */
 /* Floating point register file                                     */
-
-register f0  : fregtype
-register f1  : fregtype
-register f2  : fregtype
-register f3  : fregtype
-register f4  : fregtype
-register f5  : fregtype
-register f6  : fregtype
-register f7  : fregtype
-register f8  : fregtype
-register f9  : fregtype
+register f0 : fregtype
+register f1 : fregtype
+register f2 : fregtype
+register f3 : fregtype
+register f4 : fregtype
+register f5 : fregtype
+register f6 : fregtype
+register f7 : fregtype
+register f8 : fregtype
+register f9 : fregtype
 register f10 : fregtype
 register f11 : fregtype
 register f12 : fregtype
@@ -161,74 +169,78 @@ register f29 : fregtype
 register f30 : fregtype
 register f31 : fregtype
 
-function dirty_fd_context() -> unit = {
+function dirty_fd_context () -> unit = {
   assert(sys_enable_fdext());
-  mstatus->FS() = extStatus_to_bits(Dirty);
-  mstatus->SD() = 0b1
+  _mod_FS(ref mstatus) = extStatus_to_bits(Dirty);
+  _mod_SD(ref mstatus) = 0b1
 }
 
-function dirty_fd_context_if_present() -> unit = {
+function dirty_fd_context_if_present () -> unit = {
   assert(sys_enable_fdext() != sys_enable_zfinx());
-  if sys_enable_fdext() then dirty_fd_context()
+  if sys_enable_fdext() then {
+    dirty_fd_context()
+  }
 }
 
-val rF : forall 'n, 0 <= 'n < 32. regno('n) -> flenbits effect {rreg, escape}
+val rF : forall 'n, (0 <= 'n) & ('n < 32). regno('n) -> flenbits
 function rF r = {
   assert(sys_enable_fdext());
-  let v : fregtype =
-    match r {
-      0 => f0,
-      1 => f1,
-      2 => f2,
-      3 => f3,
-      4 => f4,
-      5 => f5,
-      6 => f6,
-      7 => f7,
-      8 => f8,
-      9 => f9,
-      10 => f10,
-      11 => f11,
-      12 => f12,
-      13 => f13,
-      14 => f14,
-      15 => f15,
-      16 => f16,
-      17 => f17,
-      18 => f18,
-      19 => f19,
-      20 => f20,
-      21 => f21,
-      22 => f22,
-      23 => f23,
-      24 => f24,
-      25 => f25,
-      26 => f26,
-      27 => f27,
-      28 => f28,
-      29 => f29,
-      30 => f30,
-      31 => f31,
-      _  => {assert(false, "invalid floating point register number"); zero_freg}
-    };
+  let v : fregtype = match r {
+    0 => f0,
+    1 => f1,
+    2 => f2,
+    3 => f3,
+    4 => f4,
+    5 => f5,
+    6 => f6,
+    7 => f7,
+    8 => f8,
+    9 => f9,
+    10 => f10,
+    11 => f11,
+    12 => f12,
+    13 => f13,
+    14 => f14,
+    15 => f15,
+    16 => f16,
+    17 => f17,
+    18 => f18,
+    19 => f19,
+    20 => f20,
+    21 => f21,
+    22 => f22,
+    23 => f23,
+    24 => f24,
+    25 => f25,
+    26 => f26,
+    27 => f27,
+    28 => f28,
+    29 => f29,
+    30 => f30,
+    31 => f31,
+    _ => {
+      assert(false, "invalid floating point register number");
+      zero_freg
+    },
+  };
   fregval_from_freg(v)
 }
 
-val wF : forall 'n, 0 <= 'n < 32. (regno('n), flenbits) -> unit effect {wreg, escape}
-function wF (r, in_v) = {
+val wF : forall 'n, (0 <= 'n) & ('n < 32). (regno('n), flenbits) -> unit
+function wF(r, in_v) = {
   assert(sys_enable_fdext());
   let v = fregval_into_freg(in_v);
   match r {
-    0  => f0 = v,
-    1  => f1 = v,
-    2  => f2 = v,
-    3  => f3 = v,
-    4  => f4 = v,
-    5  => f5 = v,
-    6  => f6 = v,
-    7  => f7 = v,
-    8  => f8 = v,
-    9  => f9 = v,
+    0 => f0 = v,
+    1 => f1 = v,
+    2 => f2 = v,
+    3 => f3 = v,
+    4 => f4 = v,
+    5 => f5 = v,
+    6 => f6 = v,
+    7 => f7 = v,
+    8 => f8 = v,
+    9 => f9 = v,
     10 => f10 = v,
     11 => f11 = v,
     12 => f12 = v,
@@ -251,88 +263,104 @@ function wF (r, in_v) = {
     29 => f29 = v,
     30 => f30 = v,
     31 => f31 = v,
-    _  => assert(false, "invalid floating point register number")
+    _ => assert(false, "invalid floating point register number"),
   };
 
   dirty_fd_context();
 
-  if   get_config_print_reg()
-  then
-      /* TODO: will only print bits; should we print in floating point format? */
-      print_reg("f" ^ string_of_int(r) ^ " <- " ^ FRegStr(v));
+  if get_config_print_reg() then {
+    /* TODO: will only print bits; should we print in floating point format? */
+    print_reg("f" ^ (string_of_int(r) ^ (" <- " ^ FRegStr(v))))
+  }
 }
 
-function rF_bits(i: bits(5)) -> flenbits = rF(unsigned(i))
+function rF_bits i : bits(5) -> flenbits = rF(unsigned(i))
 
-function wF_bits(i: bits(5), data: flenbits) -> unit = {
+function wF_bits(i : bits(5), data : flenbits) -> unit = {
   wF(unsigned(i)) = data
 }
 
 overload F = {rF_bits, wF_bits, rF, wF}
 
-val rF_or_X_H : bits(5) -> bits(16) effect {escape, rreg}
-function rF_or_X_H(i) = {
+val rF_or_X_H : bits(5) -> bits(16)
+function rF_or_X_H i = {
   assert(sizeof(flen) >= 16);
   assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
-  then nan_unbox(F(i))
-  else X(i)[15..0]
-}
-
-val rF_or_X_S : bits(5) -> bits(32) effect {escape, rreg}
-function rF_or_X_S(i) = {
-  assert(sizeof(flen) >= 32);
-  assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
-  then nan_unbox(F(i))
-  else X(i)[31..0]
-}
-
-val rF_or_X_D : bits(5) -> bits(64) effect {escape, rreg}
-function rF_or_X_D(i) = {
-  assert(sizeof(flen) >= 64);
-  assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
-  then F(unsigned(i))
-  else if sizeof(xlen) >= 64
-  then X(i)[63..0]
-  else {
-    assert(i[0] == bitzero);
-    if i == zeros() then zeros() else X(i + 1) @ X(i)
+  if sys_enable_fdext() then {
+    nan_unbox(F(i))
+  } else {
+    X(i)[15..0]
   }
 }
 
-val wF_or_X_H : (bits(5), bits(16)) -> unit effect {escape, wreg}
+val rF_or_X_S : bits(5) -> bits(32)
+function rF_or_X_S i = {
+  assert(sizeof(flen) >= 32);
+  assert(sys_enable_fdext() != sys_enable_zfinx());
+  if sys_enable_fdext() then {
+    nan_unbox(F(i))
+  } else {
+    X(i)[31..0]
+  }
+}
+
+val rF_or_X_D : bits(5) -> bits(64)
+function rF_or_X_D i = {
+  assert(sizeof(flen) >= 64);
+  assert(sys_enable_fdext() != sys_enable_zfinx());
+  if sys_enable_fdext() then {
+    F(unsigned(i))
+  } else {
+    if sizeof(xlen) >= 64 then {
+      X(i)[63..0]
+    } else {
+      assert((i[0]) == bitzero);
+      if i == zeros() then {
+        zeros()
+      } else {
+        X(i + 1) @ X(i)
+      }
+    }
+  }
+}
+
+val wF_or_X_H : (bits(5), bits(16)) -> unit
 function wF_or_X_H(i, data) = {
   assert(sizeof(flen) >= 16);
   assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
-  then F(i) = nan_box(data)
-  else X(i) = EXTS(data)
+  if sys_enable_fdext() then {
+    F(i) = nan_box(data)
+  } else {
+    X(i) = EXTS(data)
+  }
 }
 
-val wF_or_X_S : (bits(5), bits(32)) -> unit effect {escape, wreg}
+val wF_or_X_S : (bits(5), bits(32)) -> unit
 function wF_or_X_S(i, data) = {
   assert(sizeof(flen) >= 32);
   assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
-  then F(i) = nan_box(data)
-  else X(i) = EXTS(data)
+  if sys_enable_fdext() then {
+    F(i) = nan_box(data)
+  } else {
+    X(i) = EXTS(data)
+  }
 }
 
-val wF_or_X_D : (bits(5), bits(64)) -> unit effect {escape, wreg}
+val wF_or_X_D : (bits(5), bits(64)) -> unit
 function wF_or_X_D(i, data) = {
-  assert (sizeof(flen) >= 64);
+  assert(sizeof(flen) >= 64);
   assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
-  then F(i) = data
-  else if sizeof(xlen) >= 64
-  then X(i) = EXTS(data)
-  else {
-    assert (i[0] == bitzero);
-    if i != zeros() then {
-      X(i)     = data[31..0];
-      X(i + 1) = data[63..32];
+  if sys_enable_fdext() then {
+    F(i) = data
+  } else {
+    if sizeof(xlen) >= 64 then {
+      X(i) = EXTS(data)
+    } else {
+      assert((i[0]) == bitzero);
+      if i != zeros() then {
+        X(i) = data[31..0];
+        X(i + 1) = data[63..32]
+      }
     }
   }
 }
@@ -342,7 +370,6 @@ overload F_or_X_S = { rF_or_X_S, wF_or_X_S }
 overload F_or_X_D = { rF_or_X_D, wF_or_X_D }
 
 /* register names */
-
 val freg_name_abi : regidx <-> string
 
 mapping freg_name_abi = {
@@ -383,7 +410,6 @@ mapping freg_name_abi = {
 overload to_str = {freg_name_abi}
 
 /* mappings for assembly */
-
 val freg_name : bits(5) <-> string
 mapping freg_name = {
     0b00000 <-> "ft0",
@@ -426,18 +452,18 @@ mapping freg_or_reg_name = {
   reg if sys_enable_zfinx() <-> reg_name(reg)  if sys_enable_zfinx()
 }
 
-val init_fdext_regs : unit -> unit effect {wreg}
+val init_fdext_regs : unit -> unit
 function init_fdext_regs () = {
-  f0  = zero_freg;
-  f1  = zero_freg;
-  f2  = zero_freg;
-  f3  = zero_freg;
-  f4  = zero_freg;
-  f5  = zero_freg;
-  f6  = zero_freg;
-  f7  = zero_freg;
-  f8  = zero_freg;
-  f9  = zero_freg;
+  f0 = zero_freg;
+  f1 = zero_freg;
+  f2 = zero_freg;
+  f3 = zero_freg;
+  f4 = zero_freg;
+  f5 = zero_freg;
+  f6 = zero_freg;
+  f7 = zero_freg;
+  f8 = zero_freg;
+  f9 = zero_freg;
   f10 = zero_freg;
   f11 = zero_freg;
   f12 = zero_freg;
@@ -467,8 +493,6 @@ function init_fdext_regs () = {
 /*     fflags    address 0x001    same as fcrs [4..0]               */
 /*     frm       address 0x002    same as fcrs [7..5]               */
 /*     fcsr      address 0x003                                      */
-
-
 bitfield Fcsr : bits(32) = {
   FRM    : 7 .. 5,
   FFLAGS : 4 .. 0,
@@ -476,30 +500,30 @@ bitfield Fcsr : bits(32) = {
 
 register fcsr : Fcsr
 
-val ext_write_fcsr : (bits(3), bits(5)) -> unit effect {rreg, wreg, escape}
-function ext_write_fcsr (frm, fflags) = {
-  fcsr->FRM()    = frm;      /* Note: frm can be an illegal value, 101, 110, 111 */
-  fcsr->FFLAGS() = fflags;
+val ext_write_fcsr : (bits(3), bits(5)) -> unit
+function ext_write_fcsr(frm, fflags) = {
+  _mod_FRM(ref fcsr) = frm /* Note: frm can be an illegal value, 101, 110, 111 */ ;
+  _mod_FFLAGS(ref fcsr) = fflags;
   update_softfloat_fflags(fflags);
-  dirty_fd_context_if_present();
+  dirty_fd_context_if_present()
 }
 
 /* called for softfloat paths (softfloat flags are consistent) */
-val write_fflags : (bits(5)) -> unit effect {rreg, wreg, escape}
-function write_fflags(fflags) = {
-  if   fcsr.FFLAGS() != fflags
-  then dirty_fd_context_if_present();
-  fcsr->FFLAGS() = fflags;
+val write_fflags : bits(5) -> unit
+function write_fflags fflags = {
+  if _mod_FFLAGS(fcsr) != fflags then {
+    dirty_fd_context_if_present()
+  };
+  _mod_FFLAGS(ref fcsr) = fflags
 }
 
 /* called for non-softfloat paths (softfloat flags need updating) */
-val accrue_fflags : (bits(5)) -> unit effect {rreg, wreg, escape}
-function accrue_fflags(flags) = {
-  let f = fcsr.FFLAGS() | flags;
-  if  fcsr.FFLAGS() != f
-  then {
-    fcsr->FFLAGS() = f;
+val accrue_fflags : bits(5) -> unit
+function accrue_fflags flags = {
+  let f = _mod_FFLAGS(fcsr) | flags;
+  if _mod_FFLAGS(fcsr) != f then {
+    _mod_FFLAGS(ref fcsr) = f;
     update_softfloat_fflags(f);
-    dirty_fd_context_if_present();
+    dirty_fd_context_if_present()
   }
 }

@@ -67,7 +67,6 @@
 /*=======================================================================================*/
 
 /* PTE attributes, permission checks and updates */
-
 type pteAttribs = bits(8)
 
 /* Reserved PTE bits could be used by extensions on RV64.  There are
@@ -99,12 +98,12 @@ bitfield PTE_Bits : pteAttribs = {
 
 function isPTEPtr(p : pteAttribs, ext : extPte) -> bool = {
   let a = Mk_PTE_Bits(p);
-  a.R() == 0b0 & a.W() == 0b0 & a.X() == 0b0
+  (_mod_R(a) == 0b0) & ((_mod_W(a) == 0b0) & (_mod_X(a) == 0b0))
 }
 
 function isInvalidPTE(p : pteAttribs, ext : extPte) -> bool = {
   let a = Mk_PTE_Bits(p);
-  a.V() == 0b0 | (a.W() == 0b1 & a.R() == 0b0)
+  (_mod_V(a) == 0b0) | ((_mod_W(a) == 0b1) & (_mod_R(a) == 0b0))
 }
 
 union PTE_Check = {
@@ -112,41 +111,66 @@ union PTE_Check = {
   PTE_Check_Failure : (ext_ptw, ext_ptw_fail)
 }
 
-function to_pte_check(b : bool) -> PTE_Check =
-  if b then PTE_Check_Success(()) else PTE_Check_Failure((), ())
+function to_pte_check b : bool -> PTE_Check = if b then {
+  PTE_Check_Success()
+} else {
+  PTE_Check_Failure((), ())
+}
 
 /* For extensions: this function gets the extension-available bits of the PTE in extPte,
  * and the accumulated information of the page-table-walk in ext_ptw.  It should return
  * the updated ext_ptw in both the success and failure cases.
  */
-function checkPTEPermission(ac : AccessType(ext_access_type), priv : Privilege, mxr : bool, do_sum : bool, p : PTE_Bits, ext : extPte, ext_ptw : ext_ptw) -> PTE_Check = {
+function checkPTEPermission(
+  ac : AccessType(ext_access_type),
+  priv : Privilege,
+  mxr : bool,
+  do_sum : bool,
+  p : PTE_Bits,
+  ext : extPte,
+  ext_ptw : ext_ptw,
+) -> (
+  PTE_Check
+) = {
   match (ac, priv) {
-    (Read(_),         User)       => to_pte_check(p.U() == 0b1 & (p.R() == 0b1 | (p.X() == 0b1 & mxr))),
-    (Write(_),        User)       => to_pte_check(p.U() == 0b1 & p.W() == 0b1),
-    (ReadWrite(_, _), User)       => to_pte_check(p.U() == 0b1 & p.W() == 0b1 & (p.R() == 0b1 | (p.X() == 0b1 & mxr))),
-    (Execute(),       User)       => to_pte_check(p.U() == 0b1 & p.X() == 0b1),
-
-    (Read(_),         Supervisor) => to_pte_check((p.U() == 0b0 | do_sum) & (p.R() == 0b1 | (p.X() == 0b1 & mxr))),
-    (Write(_),        Supervisor) => to_pte_check((p.U() == 0b0 | do_sum) & p.W() == 0b1),
-    (ReadWrite(_, _), Supervisor) => to_pte_check((p.U() == 0b0 | do_sum) & p.W() == 0b1 & (p.R() == 0b1 | (p.X() == 0b1 & mxr))),
-    (Execute(),       Supervisor) => to_pte_check(p.U() == 0b0 & p.X() == 0b1),
-
-    (_,               Machine)    => internal_error(__FILE__, __LINE__, "m-mode mem perm check")
+    (Read(_), User) => to_pte_check((_mod_U(p) == 0b1) & ((_mod_R(p) == 0b1) | ((_mod_X(p) == 0b1) & mxr))),
+    (Write(_), User) => to_pte_check((_mod_U(p) == 0b1) & (_mod_W(p) == 0b1)),
+    (ReadWrite(_, _), User) => to_pte_check(
+      (_mod_U(p) == 0b1) & ((_mod_W(p) == 0b1) & ((_mod_R(p) == 0b1) | ((_mod_X(p) == 0b1) & mxr))),
+    ),
+    (Execute(), User) => to_pte_check((_mod_U(p) == 0b1) & (_mod_X(p) == 0b1)),
+    (Read(_), Supervisor) => to_pte_check(
+      ((_mod_U(p) == 0b0) | do_sum) & ((_mod_R(p) == 0b1) | ((_mod_X(p) == 0b1) & mxr)),
+    ),
+    (Write(_), Supervisor) => to_pte_check(((_mod_U(p) == 0b0) | do_sum) & (_mod_W(p) == 0b1)),
+    (ReadWrite(_, _), Supervisor) => to_pte_check(
+      ((_mod_U(p) == 0b0) | do_sum) & ((_mod_W(p) == 0b1) & ((_mod_R(p) == 0b1) | ((_mod_X(p) == 0b1) & mxr))),
+    ),
+    (Execute(), Supervisor) => to_pte_check((_mod_U(p) == 0b0) & (_mod_X(p) == 0b1)),
+    (_, Machine) => internal_error(__FILE__, __LINE__, "m-mode mem perm check"),
   }
 }
 
 function update_PTE_Bits(p : PTE_Bits, a : AccessType(ext_access_type), ext : extPte) -> option((PTE_Bits, extPte)) = {
-  let update_d = p.D() == 0b0 & (match a {                                       // dirty-bit
-                                  Execute() => false,
-                                  Read() => false,
-                                  Write(_) => true,
-                                  ReadWrite(_,_) => true
-                                });
+  let update_d = (_mod_D(p) == 0b0) &
+    (match a {
+      // dirty-bit
+      Execute() => false,
+      Read() => false,
+      Write(_) => true,
+      ReadWrite(_, _) => true,
+    });
 
-  let update_a = p.A() == 0b0;                                                   // accessed-bit
+  let update_a = _mod_A(p) == 0b0; // accessed-bit
   if update_d | update_a then {
     let np = update_A(p, 0b1);
-    let np = if update_d then update_D(np, 0b1) else np;
+    let np = if update_d then {
+      update_D(np, 0b1)
+    } else {
+      np
+    };
     Some(np, ext)
-  } else None()
+  } else {
+    None()
+  }
 }

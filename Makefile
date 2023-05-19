@@ -188,6 +188,10 @@ all: ocaml_emulator/riscv_ocaml_sim_$(ARCH) c_emulator/riscv_sim_$(ARCH) riscv_i
 check: $(SAIL_SRCS) model/main.sail Makefile
 	$(SAIL) $(SAIL_FLAGS) $(SAIL_SRCS) model/main.sail
 
+format:
+	$(SAIL) -fmt $(SAIL_SRCS) model/main.sail
+.PHONY: format
+
 interpret: $(SAIL_SRCS) model/main.sail
 	$(SAIL) -i $(SAIL_FLAGS) $(SAIL_SRCS) model/main.sail
 

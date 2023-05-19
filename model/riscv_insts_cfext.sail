@@ -72,7 +72,6 @@
  * These instructions are only legal if misa.C() and misa.F()
  * are set.
  */
-
 /* ****************************************************************** */
 union clause ast = C_FLWSP : (bits(6), regidx)
 
@@ -81,7 +80,7 @@ mapping clause encdec_compressed = C_FLWSP(ui76 @ ui5 @ ui42, rd)
   <-> 0b011 @ ui5 : bits(1) @ rd : regidx @ ui42 : bits(3) @ ui76 : bits(2) @ 0b10
       if sizeof(xlen) == 32 & haveRVC() & haveFExt()
 
-function clause execute (C_FLWSP(imm, rd)) = {
+function clause execute C_FLWSP(imm, rd) = {
   let imm : bits(12) = EXTZ(imm @ 0b00);
   execute(LOAD_FP(imm, sp, rd, WORD))
 }
@@ -99,7 +98,7 @@ mapping clause encdec_compressed = C_FSWSP(ui76 @ ui52, rs2)
   <-> 0b111 @ ui52 : bits(4) @ ui76 : bits(2) @ rs2 : regidx @ 0b10
       if sizeof(xlen) == 32 & haveRVC() & haveFExt()
 
-function clause execute (C_FSWSP(uimm, rs2)) = {
+function clause execute C_FSWSP(uimm, rs2) = {
   let imm : bits(12) = EXTZ(uimm @ 0b00);
   execute(STORE_FP(imm, rs2, sp, WORD))
 }
@@ -117,7 +116,7 @@ mapping clause encdec_compressed = C_FLW(ui6 @ ui53 @ ui2, rs1, rd)
   <-> 0b011 @ ui53 : bits(3) @ rs1 : cregidx @ ui2 : bits(1) @ ui6 : bits(1) @ rd : cregidx @ 0b00
       if sizeof(xlen) == 32 & haveRVC() & haveFExt()
 
-function clause execute (C_FLW(uimm, rsc, rdc)) = {
+function clause execute C_FLW(uimm, rsc, rdc) = {
   let imm : bits(12) = EXTZ(uimm @ 0b00);
   let rd = creg2reg_idx(rdc);
   let rs = creg2reg_idx(rsc);
@@ -137,7 +136,7 @@ mapping clause encdec_compressed = C_FSW(ui6 @ ui53 @ ui2, rs1, rs2)
   <-> 0b111 @ ui53 : bits(3) @ rs1 : cregidx @ ui2 : bits(1) @ ui6 : bits(1) @ rs2 : cregidx @ 0b00
       if sizeof(xlen) == 32 & haveRVC() & haveFExt()
 
-function clause execute (C_FSW(uimm, rsc1, rsc2)) = {
+function clause execute C_FSW(uimm, rsc1, rsc2) = {
   let imm : bits(12) = EXTZ(uimm @ 0b00);
   let rs1 = creg2reg_idx(rsc1);
   let rs2 = creg2reg_idx(rsc2);

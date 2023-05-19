@@ -97,7 +97,6 @@
  * (e.g., PTW_Ext_Error) and existing (e.g., PTW_Invalid_PTE) PTW_Error
  * values.
  */
-
 type ext_ptw = unit
 let init_ext_ptw : ext_ptw = ()
 
@@ -107,23 +106,24 @@ type ext_ptw_fail = unit
  * and values in this type are typically generated from the final
  * result of the ext_ptw at the end of the walk.
  */
-type ext_ptw_error = unit /* No extensions for page-table-walk errors */
+type ext_ptw_error = unit
 
+/* No extensions for page-table-walk errors */
 /* This type supports extensions to the exceptions defined in the ISA. */
-type ext_exc_type = unit /* No exception extensions */
+type ext_exc_type = unit
 
+/* No exception extensions */
 /* Default translation of PTW errors into exception annotations */
-function ext_translate_exception(e : ext_ptw_error) -> ext_exc_type =
-  e /* type pun because both are unit; extensions may need to override this */
+function ext_translate_exception e : ext_ptw_error -> ext_exc_type = e /* type pun because both are unit; extensions may need to override this */
 
 /* Default conversion of extension exceptions to bits */
 val ext_exc_type_to_bits : ext_exc_type -> exc_code
-function ext_exc_type_to_bits(e) = 0x18 /* First code for a custom extension */
+function ext_exc_type_to_bits e = 0x18 /* First code for a custom extension */
 
 /* Default conversion of extension exceptions to integers */
-val num_of_ext_exc_type : ext_exc_type -> {'n, (0 <= 'n < xlen). int('n)}
-function num_of_ext_exc_type(e) = 24 /* First code for a custom extension */
+val num_of_ext_exc_type : ext_exc_type -> {'n, (0 <= 'n) & ('n < xlen). int('n)}
+function num_of_ext_exc_type e = 24 /* First code for a custom extension */
 
 /* Default conversion of extension exceptions to strings */
 val ext_exc_type_to_str : ext_exc_type -> string
-function ext_exc_type_to_str(e) = "extension-exception"
+function ext_exc_type_to_str e = "extension-exception"
