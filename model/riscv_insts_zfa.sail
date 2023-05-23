@@ -685,57 +685,64 @@ function clause execute(RISCV_FLTQ_D(rs2, rs1, rd)) = {
 
 /* FCVTMOD.W.D */
 
-/* Calculate the low 32 bits of the integer value from the binary64
- * floating-point number and return them together with an indicator
- * whether the NV (overflow) or NX (inexact) exceptions should be raised.
- */
-val      fcvtmod_helper_inner : forall 'm, 'm >= 0. (bits(1), int('m), bits(53)) -> (bits(5), bits(32))
-function fcvtmod_helper_inner(sign, true_exp, true_mant) = {
-    /* perform the exponentation on the fixed-point
-       mantissa and extract the integer part */
-    let fixedpoint = to_bits(84, unsigned(true_mant)) << true_exp;
-    let integer    = unsigned(fixedpoint[83..52]);
-    let fractional = to_bits(52, unsigned(fixedpoint[51..0]));
-
-    /* apply the sign bit */
-    let result = if (sign == 0b1) then negate(integer)
-                                  else integer;
-
-    /* raise FP exception flags, honoring the precedence of nV > nX */
-    let flags : bits(5) = if (true_exp > 31)         then nvFlag()
-                     else if (fractional != zeros()) then nxFlag()
-                     else                            zeros();
-
-    (flags, to_bits(32, result))
-}
-
 /*
  * Implement float64 to int32 conversion without saturation, the
  * result is supplied modulo 2^32.
  */
-val      fcvtmod_helper : forall 'm, 'm == 64. (bits('m)) -> (bits(5), bits(32))
+val      fcvtmod_helper : bits(64) -> (bits(5), bits(32))
 function fcvtmod_helper(x64) = {
   let (sign, exp, mant) = fsplit_D(x64);
 
-  /* detect the non-normal cases */
-  let is_subnorm    = (exp == zeros() & mant != zeros());
-  let is_zero       = (exp == zeros() & mant == zeros());
-  let is_nan_or_inf = (exp == ones());
+  /* Detect the non-normal cases */
+  let is_subnorm    = exp == zeros() & mant != zeros();
+  let is_zero       = exp == zeros() & mant == zeros();
+  let is_nan_or_inf = exp == ones();
 
   /* For normal numbers, the mantissa and exponent use special encoding */
   let true_mant     = 0b1 @ mant;  /* concatenate with the implicit bit */
   let true_exp      = unsigned(exp) - 1023;   /* undo the offset-binary */
 
-  /* Detect the trivial cases for normal numbers */
+  /*
+   * Detect the trivial cases for normal numbers.
+   *
+   * While is_too_large could subsume is_nan_or_inf, and is_too_small
+   * cound subsume is_subnorm, we deliberately enumerate these
+   * separately as is_too_large/is_too_small operate on normal
+   * numbers.
+   */
   let is_too_large  = true_exp >= 84;  /* bits will be 'multiplied' out */
   let is_too_small  = true_exp <  0;   /* bits will be 'divided' out    */
 
-       if (is_zero)       then (zeros(),  zeros())
-  else if (is_subnorm)    then (nxFlag(), zeros())
-  else if (is_nan_or_inf) then (nvFlag(), zeros())
-  else if (is_too_large)  then (nvFlag(), zeros())
-  else if (is_too_small)  then (nxFlag(), zeros())
-  else fcvtmod_helper_inner(sign, true_exp, true_mant)
+       if is_zero       then (zeros(),  zeros())
+  else if is_subnorm    then (nxFlag(), zeros())
+  else if is_nan_or_inf then (nvFlag(), zeros())
+  else if is_too_large  then (nvFlag(), zeros())
+  else if is_too_small  then (nxFlag(), zeros())
+  else {
+    /*
+     * Calculate the low 32 bits of the integer value from the
+     * binary64 floating-point number and return them together with an
+     * indicator whether a NV (overflow) or NX (inexact) exceptions is
+     * to be raised.
+     */
+
+    /* Perform the exponentation on the fixed-point mantissa and
+       extract the integer part */
+    let fixedpoint : bits(84) = EXTZ(true_mant) << true_exp;
+    let integer    = fixedpoint[83..52];
+    let fractional = fixedpoint[51..0];
+
+    /* Apply the sign bit */
+    let result = if sign == 0b1 then ~(integer) + 1
+                                else integer;
+
+    /* Raise FP exception flags, honoring the precedence of nV > nX */
+    let flags : bits(5) = if (true_exp > 31)         then nvFlag()
+                     else if (fractional != zeros()) then nxFlag()
+                     else                            zeros();
+
+    (flags, result)
+  }
 }
 
 union clause ast = RISCV_FCVTMOD_W_D : (regidx, regidx)
