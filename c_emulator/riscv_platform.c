@@ -21,6 +21,17 @@ bool sys_enable_fdext(unit u)
 bool sys_enable_zfinx(unit u)
 { return rv_enable_zfinx; }
 
+/* When Smepmp spec is ratified, remove the 'experimental' conditionals */
+bool sys_enable_smepmp(unit u)
+{ return rv_enable_smepmp && rv_enable_experimental_extensions ; }
+
+/* When Zicond spec is ratified, remove the 'experimental' conditionals */
+bool sys_enable_zicond(unit u)
+{ return rv_enable_zicond && rv_enable_experimental_extensions ; }
+
+bool sys_enable_experimental_extensions(unit u)
+{ return rv_enable_experimental_extensions; }
+
 bool sys_enable_writable_misa(unit u)
 { return rv_enable_writable_misa; }
 

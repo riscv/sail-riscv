@@ -148,7 +148,15 @@ val sys_enable_fdext = {c: "sys_enable_fdext", ocaml: "Platform.enable_fdext", _
 val sys_enable_zfinx = {c: "sys_enable_zfinx", ocaml: "Platform.enable_zfinx", _: "sys_enable_zfinx"} : unit -> bool
 /* whether the N extension was enabled at boot */
 val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "sys_enable_next"} : unit -> bool
-
+/* whether Zicond shoul be be enabled */
+val sys_enable_zicond = {c: "sys_enable_zicond"} : unit -> bool
+function sys_enable_zicond() = { false }
+/* whether Smepmp shoulbe be enabled */
+val sys_enable_smepmp = {c: "sys_enable_smepmp"} : unit -> bool
+function sys_enable_smepmp() = { false }
+/* whetherto enable experimetal extensions or not */
+val sys_enable_experimental_extensions = {c: "sys_enable_expermimental_extensions"} : unit -> bool
+function sys_enable_experimental_extensions() = { false }
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
    unsetting C. If it returns true the write will have no effect. */
@@ -204,6 +212,9 @@ function haveZkne()   -> bool = true
 function haveZknd()   -> bool = true
 
 function haveZmmul()  -> bool = true
+
+function haveZicond() -> bool = { sys_enable_zicond() }
+function haveSmepmp() -> bool = { sys_enable_smepmp() }
 
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
