@@ -86,6 +86,7 @@ function clause execute (RISCV_VSHA2ms(vs2, vs1, vd)) = {
   } else {
     let 'n = num_elem;
     let 'm = SEW;
+    assert('m == 32 | 'm == 64);
 
     let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, vreg_name("v0"));
     let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -96,13 +97,14 @@ function clause execute (RISCV_VSHA2ms(vs2, vs1, vd)) = {
 
     (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
-    w : vector(20, dec, bits('m)) = undefined;
-
     eg_len = (unsigned(vl) / 'n);
     eg_start = (unsigned(vstart) / 'n);
 
     foreach (i from eg_start to (eg_len - 1)) {
       assert(0 <= ((i * 4) + 3) & ((i * 4) + 3) < 'n);
+
+      w : vector(20, dec, bits('m)) = undefined;
+
       w[0]  = vd_val[i*4+0];
       w[1]  = vd_val[i*4+1];
       w[2]  = vd_val[i*4+2];
@@ -172,7 +174,8 @@ function clause execute (RISCV_VSHA2c(vs2, vs1, vd, suffix)) = {
   } else {
     let 'n = num_elem;
     let 'm = SEW;
-    assert('m == 32);
+    assert('m == 32 | 'm == 64);
+
     let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, vreg_name("v0"));
     let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
     let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
@@ -182,23 +185,9 @@ function clause execute (RISCV_VSHA2c(vs2, vs1, vd, suffix)) = {
 
     (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
-    w0 : bits('m) = undefined;
-    w1 : bits('m) = undefined;
-
-    a : bits('m) = undefined;
-    b : bits('m) = undefined;
-    e : bits('m) = undefined;
-    f : bits('m) = undefined;
-
-    c : bits('m) = undefined;
-    d : bits('m) = undefined;
-    g : bits('m) = undefined;
-    h : bits('m) = undefined;
-
-    MessageSchedPlusC : bits(128) = undefined;
-
     foreach (i from 0 to (num_elem - 1)) {
       assert(0 <= ((i * 4) + 3) & ((i * 4) + 3) < 'n);
+
       a = vs2_val[i*4+0];
       b = vs2_val[i*4+1];
       e = vs2_val[i*4+2];
@@ -209,17 +198,17 @@ function clause execute (RISCV_VSHA2c(vs2, vs1, vd, suffix)) = {
       g = vd_val[i*4+2];
       h = vd_val[i*4+3];
 
-      MessageSchedPlusC[31..0]   = vs1_val[i*4+0];
-      MessageSchedPlusC[63..32]  = vs1_val[i*4+1];
-      MessageSchedPlusC[95..64]  = vs1_val[i*4+2];
-      MessageSchedPlusC[127..96] = vs1_val[i*4+3];
+      MessageSchedPlusC = vs1_val[i*4+3]
+                        @ vs1_val[i*4+2]
+                        @ vs1_val[i*4+1]
+                        @ vs1_val[i*4+0];
 
       w0 =
-	 if suffix == "cl" then MessageSchedPlusC[31..0]
-	 else MessageSchedPlusC[127..96];
+	 if suffix == "cl" then MessageSchedPlusC[('m * 1) - 1..0]
+	 else MessageSchedPlusC[('m * 4) - 1..('m * 3)];
       w1 =
-	 if suffix == "cl" then MessageSchedPlusC[31..0]
-	 else MessageSchedPlusC[127..96];
+	 if suffix == "cl" then MessageSchedPlusC[('m * 1) - 1..0]
+	 else MessageSchedPlusC[('m * 4) - 1..('m * 3)];
 
       T1 = h + sum1(e, 'm) + ch(e,f,g) + to_bits('m, unsigned(w0));
       T2 = sum0(a, 'm) + maj(a, b, c);
