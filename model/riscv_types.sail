@@ -23,7 +23,8 @@
 /*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
 /*    Peter Rugg                                                                         */
 /*    Aril Computer Corp., for contributions by Scott Johnson                            */
-/*    VRULL GmbH, for contributions by Philipp Tomsich                                   */
+/*    Philipp Tomsich                                                                    */
+/*    VRULL GmbH, for contributions by its employees                                     */
 /*                                                                                       */
 /*  All rights reserved.                                                                 */
 /*                                                                                       */

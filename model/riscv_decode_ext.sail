@@ -6,7 +6,7 @@
 /*  in the prover_snapshots directory (which include copies of their                     */
 /*  licences), is subject to the BSD two-clause licence below.                           */
 /*                                                                                       */
-/*  Copyright (c) 2017-2021                                                              */
+/*  Copyright (c) 2017-2023                                                              */
 /*    Prashanth Mundkur                                                                  */
 /*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
 /*    Jon French                                                                         */
@@ -23,6 +23,8 @@
 /*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
 /*    Peter Rugg                                                                         */
 /*    Aril Computer Corp., for contributions by Scott Johnson                            */
+/*    Philipp Tomsich                                                                    */
+/*    VRULL GmbH, for contributions by its employees                                     */
 /*                                                                                       */
 /*  All rights reserved.                                                                 */
 /*                                                                                       */
