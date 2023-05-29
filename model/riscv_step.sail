@@ -73,11 +73,14 @@ function step(step_no : int) -> bool = {
   /* for step extensions */
   ext_pre_step_hook();
 
-  // This records whether or not minstret should be incremented when the
-  // instruction is retired. Since retirement occurs before CSR writes we
-  // initialise it based on mcountinhibit here, before it is potentially
-  // changed. This is also set to false if minstret is written.
-  // See the note near the minstret declaration for more information.
+  /*
+   * This records whether or not minstret should be incremented when
+   * the instruction is retired. Since retirement occurs before CSR
+   * writes we initialise it based on mcountinhibit here, before it is
+   * potentially changed. This is also set to false if minstret is
+   * written.  See the note near the minstret declaration for more
+   * information.
+   */
   minstret_increment = mcountinhibit.IR() == 0b0;
 
   let (retired, stepped) : (Retired, bool) =

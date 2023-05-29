@@ -565,12 +565,11 @@ register mtime : bits(64)
  */
 register minstret : bits(64)
 
-// Should minstret be incremented when the instruction is retired.
+/* Should minstret be incremented when the instruction is retired. */
 register minstret_increment : bool
 
 function retire_instruction() -> unit = {
-  if minstret_increment
-    then minstret = minstret + 1;
+  if minstret_increment then minstret = minstret + 1;
 }
 
 /* informational registers */
