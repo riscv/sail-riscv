@@ -1,5 +1,5 @@
 /*
- * Vector Cryptography Extension - Vector GCM/GMAC
+ * Vector Cryptography Extension - ShangMi Suite: SM4 Block Cipher
  * ----------------------------------------------------------------------
  */
 
