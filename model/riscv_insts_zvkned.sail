@@ -1,5 +1,5 @@
 /*
- * Vector Cryptography Extension - NIST Suite: Vecttor AES Block Cipher
+ * Vector Cryptography Extension - NIST Suite: Vector AES Block Cipher
  * ----------------------------------------------------------------------
  */
 
