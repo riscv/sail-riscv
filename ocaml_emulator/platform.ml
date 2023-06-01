@@ -87,7 +87,7 @@ let enable_zfinx ()                  = false
 let rom_base ()   = arch_bits_of_int64 P.rom_base
 let rom_size ()   = arch_bits_of_int   !rom_size_ref
 
-let dram_base ()  = arch_bits_of_int64 P.dram_base
+let dram_base ()  = arch_bits_of_int64 !P.dram_base_ref
 let dram_size ()  = arch_bits_of_int64 !P.dram_size_ref
 
 let clint_base () = arch_bits_of_int64 P.clint_base
