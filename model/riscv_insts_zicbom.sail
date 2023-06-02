@@ -25,6 +25,7 @@
 /*    Aril Computer Corp., for contributions by Scott Johnson                            */
 /*    Philipp Tomsich                                                                    */
 /*    VRULL GmbH, for contributions by its employees                                     */
+/*    PLCT, for contributions by its employees                                           */
 /*                                                                                       */
 /*  All rights reserved.                                                                 */
 /*                                                                                       */
@@ -68,129 +69,82 @@
 /*  SUCH DAMAGE.                                                                         */
 /*=======================================================================================*/
 
-/* Mapping of csr addresses to their names. */
+/* ****************************************************************** */
+union clause ast = RISCV_ZICBOM : (cbop_zicbom, regidx)
 
-val csr_name_map : csreg <-> string
+mapping encdec_cbop : cbop_zicbom <-> bits(12) = {
+  CBO_CLEAN <-> 0b000000000001,
+  CBO_FLUSH <-> 0b000000000010,
+  CBO_INVAL <-> 0b000000000000
+}
 
-scattered mapping csr_name_map
+mapping clause encdec = RISCV_ZICBOM(cbop, rs1) if haveZicbom()
+  <-> encdec_cbop(cbop) @ rs1 @ 0b010 @ 0b00000 @ 0b0001111 if haveZicbom()
 
-/* user trap setup */
-mapping clause csr_name_map = 0x000  <-> "ustatus"
-mapping clause csr_name_map = 0x004  <-> "uie"
-mapping clause csr_name_map = 0x005  <-> "utvec"
-/* user trap handling */
-mapping clause csr_name_map = 0x040  <-> "uscratch"
-mapping clause csr_name_map = 0x041  <-> "uepc"
-mapping clause csr_name_map = 0x042  <-> "ucause"
-mapping clause csr_name_map = 0x043  <-> "utval"
-mapping clause csr_name_map = 0x044  <-> "uip"
-/* user floating-point context */
-mapping clause csr_name_map = 0x001  <-> "fflags"
-mapping clause csr_name_map = 0x002  <-> "frm"
-mapping clause csr_name_map = 0x003  <-> "fcsr"
-/* user entropy source */
-mapping clause csr_name_map = 0x015  <-> "seed"
-/* counter/timers */
-mapping clause csr_name_map = 0xC00  <-> "cycle"
-mapping clause csr_name_map = 0xC01  <-> "time"
-mapping clause csr_name_map = 0xC02  <-> "instret"
-mapping clause csr_name_map = 0xC80  <-> "cycleh"
-mapping clause csr_name_map = 0xC81  <-> "timeh"
-mapping clause csr_name_map = 0xC82  <-> "instreth"
-/* TODO: other hpm counters */
-/* supervisor trap setup */
-mapping clause csr_name_map = 0x100  <-> "sstatus"
-mapping clause csr_name_map = 0x102  <-> "sedeleg"
-mapping clause csr_name_map = 0x103  <-> "sideleg"
-mapping clause csr_name_map = 0x104  <-> "sie"
-mapping clause csr_name_map = 0x105  <-> "stvec"
-mapping clause csr_name_map = 0x106  <-> "scounteren"
-/* supervisor trap handling */
-mapping clause csr_name_map = 0x140  <-> "sscratch"
-mapping clause csr_name_map = 0x141  <-> "sepc"
-mapping clause csr_name_map = 0x142  <-> "scause"
-mapping clause csr_name_map = 0x143  <-> "stval"
-mapping clause csr_name_map = 0x144  <-> "sip"
-/* supervisor protection and translation */
-mapping clause csr_name_map = 0x180  <-> "satp"
-/* supervisor envcfg */
-mapping clause csr_name_map = 0x10A  <-> "senvcfg"
-/* machine information registers */
-mapping clause csr_name_map = 0xF11  <-> "mvendorid"
-mapping clause csr_name_map = 0xF12  <-> "marchid"
-mapping clause csr_name_map = 0xF13  <-> "mimpid"
-mapping clause csr_name_map = 0xF14  <-> "mhartid"
-/* machine trap setup */
-mapping clause csr_name_map = 0x300  <-> "mstatus"
-mapping clause csr_name_map = 0x301  <-> "misa"
-mapping clause csr_name_map = 0x302  <-> "medeleg"
-mapping clause csr_name_map = 0x303  <-> "mideleg"
-mapping clause csr_name_map = 0x304  <-> "mie"
-mapping clause csr_name_map = 0x305  <-> "mtvec"
-mapping clause csr_name_map = 0x306  <-> "mcounteren"
-mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
-/* machine trap handling */
-mapping clause csr_name_map = 0x340  <-> "mscratch"
-mapping clause csr_name_map = 0x341  <-> "mepc"
-mapping clause csr_name_map = 0x342  <-> "mcause"
-mapping clause csr_name_map = 0x343  <-> "mtval"
-mapping clause csr_name_map = 0x344  <-> "mip"
-/* machine protection and translation */
-mapping clause csr_name_map = 0x3A0  <-> "pmpcfg0"
-mapping clause csr_name_map = 0x3A1  <-> "pmpcfg1"
-mapping clause csr_name_map = 0x3A2  <-> "pmpcfg2"
-mapping clause csr_name_map = 0x3A3  <-> "pmpcfg3"
-mapping clause csr_name_map = 0x3B0  <-> "pmpaddr0"
-mapping clause csr_name_map = 0x3B1  <-> "pmpaddr1"
-mapping clause csr_name_map = 0x3B2  <-> "pmpaddr2"
-mapping clause csr_name_map = 0x3B3  <-> "pmpaddr3"
-mapping clause csr_name_map = 0x3B4  <-> "pmpaddr4"
-mapping clause csr_name_map = 0x3B5  <-> "pmpaddr5"
-mapping clause csr_name_map = 0x3B6  <-> "pmpaddr6"
-mapping clause csr_name_map = 0x3B7  <-> "pmpaddr7"
-mapping clause csr_name_map = 0x3B8  <-> "pmpaddr8"
-mapping clause csr_name_map = 0x3B9  <-> "pmpaddr9"
-mapping clause csr_name_map = 0x3BA  <-> "pmpaddr10"
-mapping clause csr_name_map = 0x3BB  <-> "pmpaddr11"
-mapping clause csr_name_map = 0x3BC  <-> "pmpaddr12"
-mapping clause csr_name_map = 0x3BD  <-> "pmpaddr13"
-mapping clause csr_name_map = 0x3BE  <-> "pmpaddr14"
-mapping clause csr_name_map = 0x3BF  <-> "pmpaddr15"
-/* machine counters/timers */
-mapping clause csr_name_map = 0xB00  <-> "mcycle"
-mapping clause csr_name_map = 0xB02  <-> "minstret"
-mapping clause csr_name_map = 0xB80  <-> "mcycleh"
-mapping clause csr_name_map = 0xB82  <-> "minstreth"
-/* machine envcfg */
-mapping clause csr_name_map = 0x30A  <-> "menvcfg"
-/* TODO: other hpm counters and events */
-/* trigger/debug */
-mapping clause csr_name_map = 0x7a0  <-> "tselect"
-mapping clause csr_name_map = 0x7a1  <-> "tdata1"
-mapping clause csr_name_map = 0x7a2  <-> "tdata2"
-mapping clause csr_name_map = 0x7a3  <-> "tdata3"
+mapping cbop_mnemonic : cbop_zicbom <-> string = {
+  CBO_CLEAN <-> "cbo.clean",
+  CBO_FLUSH <-> "cbo.flush",
+  CBO_INVAL <-> "cbo.inval"
+}
 
-val csr_name : csreg -> string
-overload to_str = {csr_name}
+mapping clause assembly = RISCV_ZICBOM(cbop, rs1)
+  <-> cbop_mnemonic(cbop) ^ spc() ^ "(" ^ reg_name(rs1) ^ ")"
 
-/* Extensions may want to add additional CSR registers to the CSR address map.
- * These scattered functions support access to such registers.
- *
- * The default implementation provides access to the CSRs added by the 'N'
- * extension.
- */
+val process_clean_inval : (regidx, cbop_zicbom) -> Retired effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
+function process_clean_inval(rs1, cbop) = {
+  let rs1_val = X(rs1);
+  let cache_block_size = plat_cache_block_size();
+  let begin_addr = rs1_val & ~(cache_block_size - EXTZ(0b1));
+  let offset = begin_addr - rs1_val;
+  match ext_data_get_addr(rs1, offset, Read(Data), cache_block_size) {
+    Ext_DataAddr_Error(e) => { ext_handle_data_check_error(e); RETIRE_FAIL },
+    Ext_DataAddr_OK(vaddr) => {
+      let res: option(ExceptionType) = match translateAddr(vaddr, Read(Data)) {
+        TR_Address(paddr, _) => {
+          match mem_read(Read(Data), paddr, 1, false, false, false) {
+            MemValue(_) => None(),
+            MemException(e)  => Some(e)
+          }
+        },
+        TR_Failure(e, _) => Some(e)
+      };
+      match res {
+        None() => RETIRE_SUCCESS,  // do nothing for cbop currently
+        Some(e) => {
+          match (e) {
+            E_Load_Access_Fault() => { handle_mem_exception(vaddr, E_SAMO_Access_Fault()); RETIRE_FAIL },
+            E_Load_Page_Fault() => { handle_mem_exception(vaddr, E_SAMO_Page_Fault()); RETIRE_FAIL }
+          }
+        }
+      }
+    }
+  }
+}
 
+function cbo_clean_flush_enable(p : Privilege) -> bool =
+   ~((p != Machine & menvcfg.CBCFE() == 0b0) | (p == User & senvcfg.CBCFE() == 0b0))
 
-/* returns whether a CSR is defined and accessible at a given address
- * and privilege
- */
-val ext_is_CSR_defined : (csreg, Privilege) -> bool effect {rreg}
-scattered function ext_is_CSR_defined
+function cbop_for_cbo_inval(p : Privilege) -> option(cbop_zicbom) = {
+  let illegal = ((p != Machine) & (menvcfg.CBIE() == 0b00)) |
+                ((p == User) & (senvcfg.CBIE() == 0b00));
+  let flush = ((p != Machine) & (menvcfg.CBIE() == 0b01)) |
+              ((p == User) & (senvcfg.CBIE() == 0b01));
+  if illegal then None()
+  else if flush then Some(CBO_FLUSH)
+  else Some(CBO_INVAL)
+}
 
-/* returns the value of the CSR if it is defined */
-val ext_read_CSR : csreg -> option(xlenbits) effect {rreg}
-scattered function ext_read_CSR
-
-/* returns new value (after legalisation) if the CSR is defined */
-val ext_write_CSR : (csreg, xlenbits) -> option(xlenbits) effect {rreg, wreg, escape}
-scattered function ext_write_CSR
+function clause execute(RISCV_ZICBOM(cbop, rs1)) = {
+  let cbcfe = cbo_clean_flush_enable(cur_privilege);
+  let final_op : option(cbop_zicbom) = match (cbop, cbcfe) {
+    (CBO_CLEAN, true) => Some(CBO_CLEAN),
+    (CBO_CLEAN, false) => None(),
+    (CBO_FLUSH, true) => Some(CBO_FLUSH),
+    (CBO_FLUSH, false) => None(),
+    (CBO_INVAL, _) => cbop_for_cbo_inval(cur_privilege)
+  };
+  match final_op {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(cbop) => process_clean_inval(rs1, cbop)
+  }
+}

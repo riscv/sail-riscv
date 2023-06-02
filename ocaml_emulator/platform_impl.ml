@@ -57,6 +57,8 @@ let rom_base   = 0x00001000L;;  (* Spike::DEFAULT_RSTVEC *)
 
 let dram_size_ref = ref (Int64.(shift_left 64L 20))
 
+let cache_block_size_ref = ref (Int64.(64L))
+
 type mem_region = {
     addr : Int64.t;
     size : Int64.t
@@ -143,6 +145,9 @@ let set_dtc path =
 
 let set_dram_size mb =
   dram_size_ref := Int64.(shift_left (Int64.of_int mb) 20)
+
+let set_cache_block_size b =
+  cache_block_size_ref := Int64.(Int64.of_int b)
 
 let make_dtb dts = (* Call the dtc compiler, assumed to be at /usr/bin/dtc *)
   try

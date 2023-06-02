@@ -213,6 +213,10 @@ function haveZmmul()  -> bool = true
 /* Zicond extension support */
 function haveZicond() -> bool = true
 
+/* Cache Management Operations extension support. */
+function haveZicbom() -> bool = true
+function haveZicboz() -> bool = true
+
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
   SBE  : 4
@@ -830,3 +834,27 @@ function read_seed_csr() -> xlenbits = {
 
 /* Writes to the seed CSR are ignored */
 function write_seed_csr () -> option(xlenbits) = None()
+
+bitfield Envcfg : xlenbits = {
+  CBZE  : 7,
+  CBCFE : 6,
+  CBIE  : 5 .. 4
+}
+register senvcfg : Envcfg
+register menvcfg : Envcfg
+
+/* treat 0b10 as 0b00: Partially, the encoding was set up so that bit [4] was an
+ * "enable" bit, and bit [5] was an "operation" bit. So if bit [4] was zero,
+ *  bit [5] is a don't care.
+ */
+function legalize_envcfg_cbie(o : bits(2), v : bits(2)) -> bits(2) = match (v) {
+  0b10 => 0b00,
+  _ => v
+}
+
+function legalize_envcfg(o : Envcfg, v : xlenbits) -> Envcfg = {
+  let c = update_CBZE(o, [v[7]]);
+  let c = update_CBCFE(c, [v[6]]);
+  let c = update_CBIE(c, legalize_envcfg_cbie(o.CBIE(), v[5 .. 4]));
+  c
+}

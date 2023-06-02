@@ -59,6 +59,9 @@ let options = Arg.align ([("-dump-dts",
                           ("-ram-size",
                            Arg.Int PI.set_dram_size,
                            " size of physical ram memory to use (in MB)");
+                          ("-cache-block-size",
+                           Arg.Int PI.set_cache_block_size,
+                           " size of cache block size to use (in bytes)");
                           ("-report-arch",
                            Arg.Unit report_arch,
                            " report model architecture (RV32 or RV64)");
