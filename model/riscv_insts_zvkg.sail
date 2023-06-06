@@ -100,7 +100,7 @@ let SEW      = get_sew();
 	then H = xor_vec(H, to_bits(128, unsigned(0x87)));
       };
 
-      assert(0 <= 3 & 3 < 'n);
+      assert(0 <= 'n & 3 < 'n);
       // Bit reverse bytes to get back to GCM standard ordering
       let res = brev8(Z);
       result[i*4+0] = res[31..0];
@@ -180,7 +180,7 @@ function clause execute (RISCV_VGMUL_VV(vs2, vd)) = {
 	then H = H ^ to_bits(128, unsigned(0x87));
       };
 
-      assert(0 <= 3 & 3 < 'n);
+      assert(0 <= 'n & 3 < 'n);
       let res = brev8(Z);
       result[i*4+0] = res[31..0];
       result[i*4+1] = res[63..32];
