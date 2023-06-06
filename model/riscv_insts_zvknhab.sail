@@ -88,14 +88,10 @@ function clause execute (RISCV_VSHA2ms(vs2, vs1, vd)) = {
     let 'm = SEW;
     assert('m == 32 | 'm == 64);
 
-    let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, vreg_name("v0"));
     let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
     let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
     let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
     result      : vector('n, dec, bits('m)) = undefined;
-    mask        : vector('n, dec, bool)     = undefined;
-
-    (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
     eg_len = (unsigned(vl) / 'n);
     eg_start = (unsigned(vstart) / 'n);
@@ -176,14 +172,10 @@ function clause execute (RISCV_VSHA2c(vs2, vs1, vd, suffix)) = {
     let 'm = SEW;
     assert('m == 32 | 'm == 64);
 
-    let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, vreg_name("v0"));
     let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
     let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
     let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
     result      : vector('n, dec, bits('m)) = undefined;
-    mask        : vector('n, dec, bool)     = undefined;
-
-    (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
     foreach (i from 0 to (num_elem - 1)) {
       assert(0 <= ((i * 4) + 3) & ((i * 4) + 3) < 'n);
