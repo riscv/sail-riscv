@@ -435,11 +435,11 @@ void init_spike(const char *f, uint64_t entry, uint64_t ram_size)
   }
   if (tv_is_misaligned_enabled(s) != rv_enable_misaligned) {
     mismatch = true;
-    fprintf(
-        stderr,
-        "inconsistent enable-misaligned-access setting: spike %s, sail %s\n",
-        tv_is_misaligned_enabled(s) ? "on" : "off",
-        rv_enable_misaligned ? "on" : "off");
+    fprintf(stderr,
+            "inconsistent enable-misaligned-access setting: "
+            "spike %s, sail %s\n",
+            tv_is_misaligned_enabled(s) ? "on" : "off",
+            rv_enable_misaligned ? "on" : "off");
   }
   if (tv_ram_size(s) != rv_ram_size) {
     mismatch = true;
