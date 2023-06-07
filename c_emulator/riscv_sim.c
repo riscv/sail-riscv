@@ -243,14 +243,13 @@ char *process_args(int argc, char **argv)
 #ifdef RVFI_DII
                     "r:"
 #endif
-                    "V::"
-                    "v::"
-                    "l:"
-                    "x"
 #ifdef SAILCOV
                     "c:"
 #endif
-                    ,
+                    "V::"
+                    "v::"
+                    "l:"
+                    "x",
                     options, NULL);
     if (c == -1)
       break;
