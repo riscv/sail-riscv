@@ -734,8 +734,8 @@ void flush_logs(void)
 
 #ifdef RVFI_DII
 
-typedef void(packet_reader_fn)(lbits *rop, unit);
-static void get_and_send_rvfi_packet(packet_reader_fn *reader)
+typedef void (*packet_reader_fn)(lbits *rop, unit);
+static void get_and_send_rvfi_packet(packet_reader_fn reader)
 {
   lbits packet;
   CREATE(lbits)(&packet);
