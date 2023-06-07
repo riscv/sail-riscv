@@ -6,7 +6,9 @@ typedef int unit;
 #define UNIT 0
 typedef uint64_t mach_bits;
 
-struct zMisa {mach_bits zMisa_chunk_0;};
+struct zMisa {
+  mach_bits zMisa_chunk_0;
+};
 extern struct zMisa zmisa;
 
 void model_init(void);
@@ -17,9 +19,9 @@ bool zstep(sail_int);
 unit ztick_clock(unit);
 unit ztick_platform(unit);
 
-unit z_set_Misa_C(struct zMisa*, mach_bits);
-unit z_set_Misa_D(struct zMisa*, mach_bits);
-unit z_set_Misa_F(struct zMisa*, mach_bits);
+unit z_set_Misa_C(struct zMisa *, mach_bits);
+unit z_set_Misa_D(struct zMisa *, mach_bits);
+unit z_set_Misa_F(struct zMisa *, mach_bits);
 
 #ifdef RVFI_DII
 unit zext_rvfi_init(unit);
@@ -54,11 +56,9 @@ extern uint32_t zcur_privilege;
 
 extern mach_bits zPC;
 
-extern mach_bits
-        zx1,  zx2,  zx3,  zx4,  zx5,  zx6,  zx7,
-  zx8,  zx9,  zx10, zx11, zx12, zx13, zx14, zx15,
-  zx16, zx17, zx18, zx19, zx20, zx21, zx22, zx23,
-  zx24, zx25, zx26, zx27, zx28, zx29, zx30, zx31;
+extern mach_bits zx1, zx2, zx3, zx4, zx5, zx6, zx7, zx8, zx9, zx10, zx11, zx12,
+    zx13, zx14, zx15, zx16, zx17, zx18, zx19, zx20, zx21, zx22, zx23, zx24,
+    zx25, zx26, zx27, zx28, zx29, zx30, zx31;
 
 extern mach_bits zmstatus;
 extern mach_bits zmepc, zmtval;
@@ -66,7 +66,9 @@ extern mach_bits zsepc, zstval;
 
 extern mach_bits zfloat_result, zfloat_fflags;
 
-struct zMcause {mach_bits zMcause_chunk_0;};
+struct zMcause {
+  mach_bits zMcause_chunk_0;
+};
 extern struct zMcause zmcause, zscause;
 
 extern mach_bits zminstret;
