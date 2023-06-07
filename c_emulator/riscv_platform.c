@@ -4,6 +4,14 @@
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
 
+#ifdef DEBUG_RESERVATION
+#include <stdio.h>
+#include <inttypes.h>
+#define RESERVATION_DBG(args...) fprintf(stderr, args)
+#else
+#define RESERVATION_DBG(args...)
+#endif
+
 /* This file contains the definitions of the C externs of Sail model. */
 
 static mach_bits reservation = 0;
@@ -94,7 +102,7 @@ unit load_reservation(mach_bits addr)
 {
   reservation = addr;
   reservation_valid = true;
-  /* fprintf(stderr, "reservation <- %0" PRIx64 "\n", reservation); */
+  RESERVATION_DBG("reservation <- %0" PRIx64 "\n", reservation);
   return UNIT;
 }
 
@@ -112,17 +120,15 @@ bool match_reservation(mach_bits addr)
 {
   mach_bits mask = check_mask();
   bool ret = reservation_valid && (reservation & mask) == (addr & mask);
-  /*
-  fprintf(stderr, "reservation(%c): %0" PRIx64 ", key=%0" PRIx64 ": %s\n",
-          reservation_valid ? 'v' : 'i', reservation, addr, ret ? "ok" :
-  "fail");
-  */
-
+  RESERVATION_DBG("reservation(%c): %0" PRIx64 ", key=%0" PRIx64 ": %s\n",
+                  reservation_valid ? 'v' : 'i', reservation, addr,
+                  ret ? "ok" : "fail");
   return ret;
 }
 
 unit cancel_reservation(unit u)
-{ /* fprintf(stderr, "reservation <- none\n"); */
+{
+  RESERVATION_DBG("reservation <- none\n");
   reservation_valid = false;
   return UNIT;
 }
