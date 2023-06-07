@@ -97,10 +97,8 @@ void set_config_print(char *var, bool val)
   } else if (strcmp("platform", var) == 0) {
     config_print_platform = val;
   } else {
-    fprintf(
-        stderr,
-        "Unknown trace category: '%s' (should be instr|reg|mem|platform|all)\n",
-        var);
+    fprintf(stderr, "Unknown trace category: '%s' (should be %s)\n",
+            "instr|reg|mem|platform|all", var);
     exit(1);
   }
 }
