@@ -98,7 +98,7 @@ SAIL_OTHER_SRCS     = $(SAIL_STEP_SRCS) riscv_analysis.sail
 SAIL_OTHER_COQ_SRCS = riscv_termination_common.sail riscv_termination_rv64.sail riscv_analysis.sail
 endif
 
-#SAIL_OTHER_SRCS	+= riscv_hpmevents.sail
+SAIL_OTHER_SRCS	+= riscv_hpmevents.sail
 
 PRELUDE_SRCS   = $(addprefix model/,$(PRELUDE))
 SAIL_SRCS      = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS)  $(SAIL_OTHER_SRCS))

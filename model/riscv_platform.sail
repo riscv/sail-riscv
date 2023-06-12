@@ -86,6 +86,10 @@ val elf_entry = {
   c: "elf_entry"
 } : unit -> int
 
+/* Platform events */
+val plat_write_mhpmevent = {c: "riscv_write_mhpmevent",
+                            ocaml: "Platform.write_mhpmevent"} : (xlenbits, xlenbits, xlenbits) -> unit
+
 /* Main memory */
 val plat_ram_base = {c: "plat_ram_base", ocaml: "Platform.dram_base", interpreter: "Platform.dram_base", lem: "plat_ram_base"} : unit -> xlenbits
 val plat_ram_size = {c: "plat_ram_size", ocaml: "Platform.dram_size", interpreter: "Platform.dram_size", lem: "plat_ram_size"} : unit -> xlenbits
