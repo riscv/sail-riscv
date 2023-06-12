@@ -1,0 +1,18 @@
+// Written by: Alexandre Joannou
+// This file should contain comma separated enums that identify the
+// platform's events.  This file is included into riscv_hpmevents.h.
+// For example, each line should be of the form:
+//   E_event_name,
+     E_event_branch,
+     E_event_jal,
+     E_event_jalr,
+     E_event_auipc,
+     E_event_load,
+     E_event_store,
+     E_event_lr,
+     E_event_sc,
+     E_event_amo,
+     E_event_shift,
+     E_event_mulDiv,
+     E_event_fp,
+     E_event_fence,
