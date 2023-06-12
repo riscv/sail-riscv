@@ -17,6 +17,16 @@ endif
 
 SAIL_FLEN := riscv_flen_D.sail
 
+# Platforms currently only select HPM events.
+HPM_PLATFORM ?= DEFAULT
+ifeq ($(HPM_PLATFORM), EXAMPLE)
+  EVENT_ENUMS := platform/example_event_def.enums
+  EVENT_IMPL  := platform/riscv_events_example.c
+else
+# no event enum file
+  EVENT_IMPL := riscv_platform_events.c
+endif
+
 # Instruction sources, depending on target
 SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_misa_ext.sail
 SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail riscv_insts_hints.sail
@@ -88,6 +98,7 @@ SAIL_OTHER_SRCS     = $(SAIL_STEP_SRCS) riscv_analysis.sail
 SAIL_OTHER_COQ_SRCS = riscv_termination_common.sail riscv_termination_rv64.sail riscv_analysis.sail
 endif
 
+#SAIL_OTHER_SRCS	+= riscv_hpmevents.sail
 
 PRELUDE_SRCS   = $(addprefix model/,$(PRELUDE))
 SAIL_SRCS      = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS)  $(SAIL_OTHER_SRCS))
@@ -119,8 +130,10 @@ export LEM_DIR
 
 C_WARNINGS ?=
 #-Wall -Wextra -Wno-unused-label -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-function
-C_INCS = $(addprefix c_emulator/,riscv_prelude.h riscv_platform_impl.h riscv_platform.h riscv_softfloat.h)
-C_SRCS = $(addprefix c_emulator/,riscv_prelude.c riscv_platform_impl.c riscv_platform.c riscv_softfloat.c riscv_sim.c)
+C_INCS = $(addprefix c_emulator/,riscv_prelude.h riscv_platform_impl.h riscv_platform.h riscv_hpmevents.h riscv_hpmevents_impl.h riscv_softfloat.h $(EVENT_ENUMS))
+C_SRCS = $(addprefix c_emulator/,riscv_prelude.c riscv_platform_impl.c riscv_platform.c riscv_hpmevents.c $(EVENT_IMPL) riscv_softfloat.c riscv_sim.c)
+
+
 
 SOFTFLOAT_DIR    = c_emulator/SoftFloat-3e
 SOFTFLOAT_INCDIR = $(SOFTFLOAT_DIR)/source/include
@@ -137,6 +150,10 @@ ZLIB_LIBS = $(shell pkg-config --libs zlib)
 
 C_FLAGS = -I $(SAIL_LIB_DIR) -I c_emulator $(GMP_FLAGS) $(ZLIB_FLAGS) $(SOFTFLOAT_FLAGS)
 C_LIBS  = $(GMP_LIBS) $(ZLIB_LIBS) $(SOFTFLOAT_LIBS)
+
+ifneq (,$(EVENT_ENUMS))
+C_FLAGS += -DEVENT_ENUMS=\"$(EVENT_ENUMS)\"
+endif
 
 # The C simulator can be built to be linked against Spike for tandem-verification.
 # This needs the C bindings to Spike from https://github.com/SRI-CSL/l3riscv
@@ -233,7 +250,7 @@ ocaml_emulator/tracecmp: ocaml_emulator/tracecmp.ml
 
 generated_definitions/c/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
-	$(SAIL) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@)
+	$(SAIL) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_include riscv_hpmevents.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@)
 
 generated_definitions/c2/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c2
@@ -271,7 +288,7 @@ rvfi_preserve_fns=-c_preserve rvfi_set_instr_packet \
 
 generated_definitions/c/riscv_rvfi_model_$(ARCH).c: $(SAIL_RVFI_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
-	$(SAIL) $(rvfi_preserve_fns) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main.sail -o $(basename $@)
+	$(SAIL) $(rvfi_preserve_fns) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_include riscv_hpmevents.h -c_no_main $(SAIL_RVFI_SRCS) model/main.sail -o $(basename $@)
 	sed -i -e '/^[[:space:]]*$$/d' $@
 
 c_emulator/riscv_rvfi_$(ARCH): generated_definitions/c/riscv_rvfi_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile
