@@ -43,7 +43,7 @@ void signal_platform_events() {
   uint64_t inst = zinstruction;
   (void) inst;
 
-  printf("%s, %d, %s: \n", __FILE__, __LINE__, __FUNCTION__);
+  printf("%s, %d, %s:  inst: 0x%016lx\n", __FILE__, __LINE__, __FUNCTION__, inst);
 
 // rs2 test
 #define RS2_IDX 20
