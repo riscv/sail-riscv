@@ -5,7 +5,7 @@
 
 /* Settings of the platform implementation. */
 
-#define DEFAULT_RSTVEC     0x00001000
+#define DEFAULT_RSTVEC 0x00001000
 
 extern bool rv_enable_pmp;
 extern bool rv_enable_zfinx;
