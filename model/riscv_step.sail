@@ -66,6 +66,9 @@
 /*  SUCH DAMAGE.                                                                         */
 /*=======================================================================================*/
 
+val signal_platform_events = {c: "signal_platform_events" } : unit -> unit
+val sail_process_hpm_events :                                      (unit) -> unit
+
 /* The emulator fetch-execute-interrupt dispatch loop. */
 
 /* returns whether to increment the step count in the trace */
@@ -139,6 +142,9 @@ function step(step_no : int) -> bool = {
 
   /* for step extensions */
   ext_post_step_hook();
+
+  signal_platform_events();
+  sail_process_hpm_events();
 
   stepped
 }

@@ -67,6 +67,18 @@
 /*  SUCH DAMAGE.                                                                         */
 /*=======================================================================================*/
 
+//val eq_anything = pure {ocaml: "(fun (x, y) -> x = y)", lem: "eq", coq: "generic_eq", _: "eq_anything"} : forall ('a : Type). ('a, 'a) -> bool
+//
+//overload operator == = {eq_anything}
+//
+//val neq_anything : forall ('a : Type). ('a, 'a) -> bool
+//
+//function neq_anything(x, y) = not_bool(eq_anything(x, y))
+
+overload operator != = {neq_anything}
+
+
+
 // ==============================================================================
 // Translated from C into Sail.  The C imnplementation can be found
 //  on the hpm_events branch for the Sail model.  It is in the file 
@@ -91,6 +103,68 @@ enum model_event_id = {
     E_event_fence,
     E_last
 }
+
+// ==============================================================================
+// The following was taken from riscv_hpmevents_impl.h
+
+struct riscv_hpm_event = {
+    // This is a model internal event-id, used to identify the model
+    // supported events.
+    event           : model_event_id,
+
+    // This is the event-id used by the platform software to identify
+    // this event, for e.g. by writing this value to the mhpmevent
+    // registers.  The model cannot support an event-id of 0.
+
+//  plat_event_id   : int(32)
+    plat_event_id   : int
+}
+
+// TODO:  This needs to be configured dynamically at initialization time, and
+//          it needs to be done from a RISCV Config structure
+register platform_events : vector(30, dec, riscv_hpm_event) = [
+    struct { event = E_event_branch,  plat_event_id = 3 },  // 29
+    struct { event = E_event_jal,     plat_event_id = 4 },  // 28
+    struct { event = E_event_jalr,    plat_event_id = 5 },  // 27
+    struct { event = E_event_auipc,   plat_event_id = 6 },  // 26
+    struct { event = E_event_load,    plat_event_id = 7 },  // 25
+    struct { event = E_event_store,   plat_event_id = 8 },  // 24
+    struct { event = E_event_lr,      plat_event_id = 9 },  // 23
+    struct { event = E_event_sc,      plat_event_id = 10 }, // 22
+    struct { event = E_event_amo,     plat_event_id = 11 }, // 21
+    struct { event = E_event_shift,   plat_event_id = 12 }, // 20
+    struct { event = E_event_mulDiv,  plat_event_id = 13 }, // 19
+    struct { event = E_event_fp,      plat_event_id = 14 }, // 18
+    struct { event = E_event_fence,   plat_event_id = 15 }, // 17
+    struct { event = E_not_defined,   plat_event_id = 16 }, // 16
+    struct { event = E_not_defined,   plat_event_id = 17 }, // 15
+    struct { event = E_event_fence,   plat_event_id = 18 }, // 14
+    struct { event = E_not_defined,   plat_event_id = 19 }, // 13
+    struct { event = E_not_defined,   plat_event_id = 20 }, // 12
+    struct { event = E_not_defined,   plat_event_id = 21 }, // 11
+    struct { event = E_not_defined,   plat_event_id = 22 }, // 10
+    struct { event = E_not_defined,   plat_event_id = 23 }, // 9
+    struct { event = E_not_defined,   plat_event_id = 24 }, // 8 
+    struct { event = E_not_defined,   plat_event_id = 25 }, // 7
+    struct { event = E_not_defined,   plat_event_id = 26 }, // 6
+    struct { event = E_not_defined,   plat_event_id = 27 }, // 5
+    struct { event = E_not_defined,   plat_event_id = 28 }, // 4
+    struct { event = E_not_defined,   plat_event_id = 29 }, // 3
+    struct { event = E_not_defined,   plat_event_id = 30 }, // 2
+    struct { event = E_not_defined,   plat_event_id = 31 }, // 1
+    struct { event = E_last,          plat_event_id = 0 }   // 0    // This should be the last entry.
+]
+
+
+// ==============================================================================
+
+
+
+// ==============================================================================
+// The following was taken from riscv_events_example.c
+
+
+// ==============================================================================
 
 type mach_bits : Int = 64       // To match uint64_t in the riscv_hpmevents.c file
 
@@ -195,6 +269,62 @@ function plat_write_mhpmevent (regidx : xlenbits, new_event_id : xlenbits, prev_
     usable_event_map = usable;
 }
 
+/*
+// Assumes the array is terminated by the entry for E_last.
+void init_platform_events(riscv_hpm_event *events) {
+  hpm_eventset = 0;
+  usable_event_map = true;
+
+  bzero(event_map, sizeof(event_map));
+  // Ensure that we have 64 or fewer events.
+  riscv_hpm_event *e = events;
+  if (!e) return;
+  int event_cnt = 0;
+  while (e->event != E_last) {
+    assert(event_cnt < 64);
+    assert(e->event < E_last);
+    assert(e->plat_event_id != 0);
+    event_info *ei = &event_map[e->event];
+
+    ei->plat_event_id = e->plat_event_id;
+    event_cnt++;
+    e++;
+  }
+}
+*/
+
+val init_platform_events : unit -> unit
+function init_platform_events ( foo ) = {
+    hpm_eventset = to_bits(sizeof(xlen), 0);
+    usable_event_map = true;
+    events : vector(30, dec, riscv_hpm_event) = platform_events;
+
+    foreach (emid from 0 to 24) {
+        event_map[emid].plat_event_id   = to_bits(sizeof(xlen), 0); 
+        event_map[emid].regidx          = to_bits(sizeof(xlen), 0);
+        event_map[emid].count           = 0;
+    };
+
+    i : int = 0;
+    event_cnt : int = 0;
+//  while ( platform_events[i].event != E_last) do {          // error: no overloading of operator !=
+    while ( num_of_model_event_id(platform_events[i].event) != num_of_model_event_id(E_last)) do {          // error: no overloading of operator !=
+//  while ( ! (num_of_model_event_id(platform_events[i].event) == num_of_model_event_id(E_last))) do {      // error: fixity of !
+//  while ( not (num_of_model_event_id(platform_events[i].event) == num_of_model_event_id(E_last))) do {    // error: no overloading of operator ==
+        assert(event_cnt < 64);
+        assert(platform_events[i].event < E_last);
+        assert(platform_events[i].plat_event_id != 0);
+
+        event_map[platform_events[i]].plat_event_id = platform_events[i].plat_event_id;
+        event_cnt = event_cnt + 1;
+        i = i + 1;
+    };
+
+}
+
+
+
+
 /*  C implementation
 void reset_platform_events(void) {
   for (int eid = 0; eid < E_last; eid++) {
@@ -243,6 +373,9 @@ val increment_hpm_counter : forall ('n : Int) , (0 <= 'n <= 29) . (int('n)) -> u
 function increment_hpm_counter (regidx) -> unit =  {
     assert(regidx < 29);
 
+    print("file: " ^ __FILE__ ^ ", line: " ^ string_of_int(__LINE__) ^ ": ");
+
+
 //  let foobar : int('n) = 4096;    // Type error: int(4096 is not a subtype of int('n) as 4096 == 'n could not be proven
 //  let foobar : int('n) = 4;
 //  let foobar : 'n = 4;            // Type error: Type variable 'n in type 'n is Int rather than Type
@@ -284,6 +417,8 @@ function slow_process_hpm_selector (plat_event_id) -> unit = {
 //  idx : 'm        = 0;
     idx : int       = 0;
 //    let plat_event_id_int : int('n) = plat_event_id;
+
+    print("file: " ^ __FILE__ ^ ", line: " ^ string_of_int(__LINE__) ^ ": ");
 
     foreach (idx from 0 to (nregs - 1)) {
         assert(idx < 29);
@@ -330,20 +465,27 @@ void process_hpm_events(void) {
 }
 */
 
-val process_hpm_events : forall ('n : Int), (0 <= 'n <= 29) . (unit) -> unit 
-function process_hpm_events (unit) -> unit = {
+//val sail_process_hpm_events : forall ('n : Int), (0 <= 'n <= 29) . (unit) -> unit 
+val sail_process_hpm_events :                                      (unit) -> unit 
+function sail_process_hpm_events (unit) -> unit = {
     acc : bits(32) = hpm_eventset;
+
+    print("file: " ^ __FILE__ ^ ", line: " ^ string_of_int(__LINE__) ^ ": ");
     
     foreach (eid from num_of_model_event_id(E_not_defined) to num_of_model_event_id(E_last)) {
+        print("file: " ^ __FILE__ ^ ", line: " ^ string_of_int(__LINE__) ^ ": ");
         tmp : bits(32) = (acc >> eid) & EXTZ(0x1);      // TODO:  FIX THIS!!
         if ( tmp == EXTZ(32, 0x1)) then {               // TODO:  FIX THIS!!
             if (event_map[eid].plat_event_id == EXTZ(0x0)) then {
                 /* Do nothing */
+                print("file: " ^ __FILE__ ^ ", line: " ^ string_of_int(__LINE__) ^ ": ");
                 unit;
             } else {
                 if (usable_event_map) then {
+                    print("file: " ^ __FILE__ ^ ", line: " ^ string_of_int(__LINE__) ^ ": ");
                     if (event_map[eid].count > 0) then {
-//                        increment_hpm_counter(event_map[eid].regidx);
+                        print("file: " ^ __FILE__ ^ ", line: " ^ string_of_int(__LINE__) ^ ": ");
+//                      increment_hpm_counter(event_map[eid].regidx);
                         match event_map[eid].regidx {
                             0x00000000   => increment_hpm_counter(0),
                             0x00000001   => increment_hpm_counter(1),
@@ -377,10 +519,11 @@ function process_hpm_events (unit) -> unit = {
                             0x0000001c   => increment_hpm_counter(28),
                             0x0000001d   => increment_hpm_counter(29),
 
-                            _           => { print(__FILE__); print(", "); print(__LOC__); print(": "); print("Error: internal error\n"); }
+                            _           => { internal_error(__FILE__, __LINE__,  "internal error\n"); }
                         }
                     } else {
-//                        slow_process_hpm_selector(event_map[eid].plat_event_id);
+                        print("file: " ^ __FILE__ ^ ", line: " ^ string_of_int(__LINE__) ^ ": ");
+//                      slow_process_hpm_selector(event_map[eid].plat_event_id);
                         match event_map[eid].regidx {
                             0x00000000  => slow_process_hpm_selector(EXTZ(0x0)),
                             0x00000001  => slow_process_hpm_selector(EXTZ(0x1)),
@@ -416,7 +559,7 @@ function process_hpm_events (unit) -> unit = {
                             0x0000001e  => slow_process_hpm_selector(EXTZ(0x1e)),
                             0x0000001f  => slow_process_hpm_selector(EXTZ(0x1f)),
 
-                            _           => { print(__FILE__); print(", "); print(__LOC__); print(": "); print("Error: internal error\n"); }
+                            _           => { internal_error(__FILE__, __LINE__,  "internal error\n"); }
                         }
                     }
                 }

@@ -68,6 +68,7 @@
 
 default Order dec
 
+$include <generic_equality.sail>
 $include <smt.sail>
 $include <option.sail>
 $include <arith.sail>
@@ -114,9 +115,9 @@ val neq_vec = {lem: "neq"} : forall 'n. (bits('n), bits('n)) -> bool
 
 function neq_vec (x, y) = not_bool(eq_bits(x, y))
 
-val neq_anything = {lem: "neq", coq: "generic_neq"} : forall ('a : Type). ('a, 'a) -> bool
+//val neq_anything = {lem: "neq", coq: "generic_neq"} : forall ('a : Type). ('a, 'a) -> bool
 
-function neq_anything (x, y) = not_bool(x == y)
+//function neq_anything (x, y) = not_bool(x == y)
 
 overload operator != = {neq_vec, neq_anything}
 
