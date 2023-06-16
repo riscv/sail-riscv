@@ -61,7 +61,6 @@ unit riscv_write_mhpmevent(mach_bits regidx, mach_bits new_event_id, mach_bits p
   for (int eid = 0; eid < E_last; eid++) {
     if (event_map[eid].count > 1) {
       usable = false;
-      break;
     }
   }
   usable_event_map = usable;
