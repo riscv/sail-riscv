@@ -15,3 +15,8 @@ repos:
         exclude: '.*\.(diff|dump|patch|svg)'
     -   id: check-yaml
     -   id: check-added-large-files
+-   repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: 'v15.0.7'
+    hooks:
+    -   id: clang-format
+        types_or: [c, c++]  # Don't try running clang-format on .json files
