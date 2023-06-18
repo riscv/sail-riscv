@@ -59,13 +59,14 @@ function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(assert_vstart(0)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen))
+  then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   result      : vector('n, dec, bits('o)) = undefined;
@@ -124,12 +125,12 @@ function clause execute(RMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val   : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val   : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val   : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   let vs2_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   result       : vector('n, dec, bits('m)) = undefined;
@@ -190,13 +191,14 @@ mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd) if haveRVV()
 val process_rfvv_single: forall 'n 'm 'p, 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), int('p)) -> Retired effect {escape, rreg, undef, wreg}
 function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem, SEW, LMUL_pow) = {
   let rm_3b = fcsr.FRM();
-  if not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b))
+  then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   result      : vector('n, dec, bits('m)) = undefined;
@@ -227,7 +229,8 @@ function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem, SEW, LMUL_pow) =
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if   not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) | not(valid_fp_op(SEW, rm_3b)) 
+  if  not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b)) |
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen))
   then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW >= 16 & SEW_widen <= 64);
 
@@ -235,7 +238,7 @@ function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem, SEW, LMUL_pow) =
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val   : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val   : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val   : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let vs2_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   result       : vector('n, dec, bits('o)) = undefined;

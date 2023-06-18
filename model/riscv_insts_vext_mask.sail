@@ -63,6 +63,8 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = int_power(2, get_vlen_pow());
 
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -120,16 +122,15 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = int_power(2, get_vlen_pow());
 
+  if not(valid_vtype()) | not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
+
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
   result      : vector('n, dec, bool) = undefined;
   mask        : vector('n, dec, bool) = undefined;
-
-  /* Value of vstart must be 0 */
-  if not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
 
   (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
 
@@ -157,16 +158,15 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = int_power(2, get_vlen_pow());
 
+  if not(valid_vtype()) | not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
+
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
   result      : vector('n, dec, bool) = undefined;
   mask        : vector('n, dec, bool) = undefined;
-
-  /* Value of vstart must be 0 */
-  if not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
 
   (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
 
@@ -196,23 +196,17 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = int_power(2, get_vlen_pow());
 
+  if not(valid_vtype()) | not(assert_vstart(0)) | not(valid_rd_mask(vd, vm)) | vd == vs2
+  then { handle_illegal(); return RETIRE_FAIL };
+
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vd);
   result      : vector('n, dec, bool) = undefined;
   mask        : vector('n, dec, bool) = undefined;
-
-  /* Value of vstart must be 0 */
-  if not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
-
-  /* If masking is enabled, then dest reg cannot be v0 */
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
-
-  /* Dest reg cannot be the same as source reg */
-  if vd == vs2 then { handle_illegal(); return RETIRE_FAIL };
 
   (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
 
@@ -243,23 +237,17 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = int_power(2, get_vlen_pow());
 
+  if not(valid_vtype()) | not(assert_vstart(0)) | not(valid_rd_mask(vd, vm)) | vd == vs2
+  then { handle_illegal(); return RETIRE_FAIL };
+
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vd);
   result      : vector('n, dec, bool) = undefined;
   mask        : vector('n, dec, bool) = undefined;
-
-  /* Value of vstart must be 0 */
-  if not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
-
-  /* If masking is enabled, then dest reg cannot be v0 */
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
-
-  /* Dest reg cannot be the same as source reg */
-  if vd == vs2 then { handle_illegal(); return RETIRE_FAIL };
 
   (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
 
@@ -290,23 +278,17 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = int_power(2, get_vlen_pow());
 
+  if not(valid_vtype()) | not(assert_vstart(0)) | not(valid_rd_mask(vd, vm)) | vd == vs2
+  then { handle_illegal(); return RETIRE_FAIL };
+
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vd);
   result      : vector('n, dec, bool) = undefined;
   mask        : vector('n, dec, bool) = undefined;
-
-  /* Value of vstart must be 0 */
-  if not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
-
-  /* If masking is enabled, then dest reg cannot be v0 */
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
-
-  /* Dest reg cannot be the same as source reg */
-  if vd == vs2 then { handle_illegal(); return RETIRE_FAIL };
 
   (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
 
@@ -341,23 +323,17 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_vtype()) | not(assert_vstart(0)) | not(valid_rd_mask(vd, vm)) | vd == vs2
+  then { handle_illegal(); return RETIRE_FAIL };
+
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
   mask        : vector('n, dec, bool)     = undefined;
-
-  /* Value of vstart must be 0 */
-  if not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
-
-  /* If masking is enabled, then dest reg cannot be v0 */
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
-
-  /* Dest reg cannot be the same as source reg */
-  if vd == vs2 then { handle_illegal(); return RETIRE_FAIL };
 
   (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
@@ -388,12 +364,12 @@ function clause execute(VID_V(vm, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
   mask        : vector('n, dec, bool)     = undefined;

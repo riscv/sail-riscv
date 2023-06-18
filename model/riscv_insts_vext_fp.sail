@@ -66,13 +66,14 @@ function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) 
+  then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);    
@@ -141,13 +142,14 @@ function clause execute(FVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) 
+  then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);    
@@ -210,7 +212,8 @@ function clause execute(FWVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) |
+  if  not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) | 
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) |
       not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) | 
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) 
   then { handle_illegal(); return RETIRE_FAIL };
@@ -220,7 +223,7 @@ function clause execute(FWVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -275,7 +278,8 @@ function clause execute(FWVVMATYPE(funct6, vm, vs1, vs2, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) |
+  if  not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) | 
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) |
       not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) | 
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then { handle_illegal(); return RETIRE_FAIL };
@@ -285,7 +289,7 @@ function clause execute(FWVVMATYPE(funct6, vm, vs1, vs2, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -339,8 +343,9 @@ function clause execute(FWVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  not(valid_rd_mask(vd, vm)) | not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) | 
-      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) | not(valid_fp_op(SEW, rm_3b)) 
+  if  not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) | 
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) |
+      not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen))
   then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW >= 16 & SEW_widen <= 64);
 
@@ -348,7 +353,7 @@ function clause execute(FWVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
@@ -400,12 +405,13 @@ function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) 
+  then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
@@ -515,7 +521,8 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  not(valid_rd_mask(vd, vm)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) |
+  if  not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) |
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW >= 8 & SEW_widen <= 64);
@@ -524,7 +531,7 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   result      : vector('n, dec, bits('o)) = undefined;
@@ -645,7 +652,8 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  not(valid_rd_mask(vd, vm)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) |
+  if  not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) |
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then { handle_illegal(); return RETIRE_FAIL };
 
@@ -653,7 +661,7 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
@@ -778,12 +786,13 @@ function clause execute(VFUNARY1(vm, vs2, vfunary1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b))
+  then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
@@ -860,7 +869,8 @@ function clause execute(VFMVFS(vs2, rd)) = {
   let SEW      = get_sew();
   let num_elem = get_num_elem(0, SEW);
 
-  if not(valid_fp_op(SEW, rm_3b)) | SEW > sizeof(flen) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_fp_op(SEW, rm_3b)) | SEW > sizeof(flen)
+  then { handle_illegal(); return RETIRE_FAIL };
   assert(num_elem > 0 & SEW != 8);
 
   let 'n = num_elem;
@@ -905,13 +915,14 @@ function clause execute(FVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b))
+  then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);    
@@ -939,7 +950,6 @@ function clause execute(FVFTYPE(funct6, vm, vs2, rs1, vd)) = {
                               if i == 0 then rs1_val else vs2_val[i - 1]
                             },
         VF_VSLIDE1DOWN   => {
-                              if vs2 == vd then { handle_illegal(); return RETIRE_FAIL };
                               let last_elem = get_end_element();
                               assert(last_elem < num_elem);
                               if i < last_elem then vs2_val[i + 1] else rs1_val
@@ -996,13 +1006,14 @@ function clause execute(FVFMATYPE(funct6, vm, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b))
+  then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);    
@@ -1065,7 +1076,8 @@ function clause execute(FWVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) |
+  if  not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) |
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) 
   then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -1074,7 +1086,7 @@ function clause execute(FWVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -1129,7 +1141,8 @@ function clause execute(FWVFMATYPE(funct6, vm, rs1, vs2, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) |
+  if  not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) |
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -1138,7 +1151,7 @@ function clause execute(FWVFMATYPE(funct6, vm, rs1, vs2, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -1192,7 +1205,8 @@ function clause execute(FWFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  not(valid_rd_mask(vd, vm)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen)) | not(valid_fp_op(SEW, rm_3b)) 
+  if  not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) |
+      not(valid_eew_emul(SEW_widen, LMUL_pow_widen))
   then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW >= 16 & SEW_widen <= 64);
 
@@ -1200,7 +1214,7 @@ function clause execute(FWFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
@@ -1247,13 +1261,14 @@ function clause execute(VFMERGE(vs2, rs1, vd)) = {
   let num_elem      = get_num_elem(LMUL_pow, SEW); /* max(VLMAX,VLEN/SEW)) */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow); /* VLMAX */
 
-  if vd == vreg_name("v0") | not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | vd == 0b00000 | not(valid_fp_op(SEW, rm_3b))
+  then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, 0b00000);
   let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -1296,14 +1311,14 @@ function clause execute(VFMV(rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
   let 'n = num_elem;
   let 'm = SEW;
 
   let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, 0b00000);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   result      : vector('n, dec, bits('m)) = undefined;
   mask        : vector('n, dec, bool)     = undefined;
@@ -1333,13 +1348,13 @@ function clause execute(VFMVSF(rs1, vd)) = {
   let SEW      = get_sew();
   let num_elem = get_num_elem(0, SEW);
 
-  if not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
   assert(num_elem > 0 & SEW != 8);
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b1, 0b00000);
   let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, 0, vd);
   result      : vector('n, dec, bits('m)) = undefined;

@@ -849,7 +849,6 @@ register vtype : Vtype
 /* this returns the power of 2 for SEW */
 val get_sew_pow : unit -> {|3, 4, 5, 6|} effect {escape, rreg}
 function get_sew_pow() = {
-  let ELEN_pow = get_elen_pow();
   let SEW_pow : {|3, 4, 5, 6|} = match vtype.vsew() {
     0b000 => 3,
     0b001 => 4,
@@ -857,7 +856,6 @@ function get_sew_pow() = {
     0b011 => 6,
     _     => {assert(false, "invalid vsew field in vtype"); 0}
   };
-  assert(SEW_pow <= ELEN_pow);
   SEW_pow
 }
 /* this returns the actual value of SEW */
