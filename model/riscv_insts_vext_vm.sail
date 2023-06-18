@@ -60,10 +60,12 @@ function clause execute(VVMTYPE(funct6, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask_carry(num_elem, 0b0, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask_carry(num_elem, 0b0, 0b00000);
   let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
@@ -113,6 +115,8 @@ function clause execute(VVMCTYPE(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -167,7 +171,7 @@ function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if vd == vreg_name("v0") then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | vd == 0b00000 then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -178,7 +182,7 @@ function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
     vec_trues[i] = true
   };
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask_carry(num_elem, 0b0, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask_carry(num_elem, 0b0, 0b00000);
   let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -230,10 +234,12 @@ function clause execute(VVCMPTYPE(funct6, vm, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
@@ -292,10 +298,12 @@ function clause execute(VXMTYPE(funct6, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask_carry(num_elem, 0b0, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask_carry(num_elem, 0b0, 0b00000);
   let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
@@ -345,6 +353,8 @@ function clause execute(VXMCTYPE(funct6, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -399,7 +409,7 @@ function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if vd == vreg_name("v0") then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | vd == 0b00000 then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -410,7 +420,7 @@ function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
     vec_trues[i] = true
   };
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask_carry(num_elem, 0b0, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask_carry(num_elem, 0b0, 0b00000);
   let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -464,10 +474,12 @@ function clause execute(VXCMPTYPE(funct6, vm, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
@@ -529,10 +541,12 @@ function clause execute(VIMTYPE(funct6, vs2, simm, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask_carry(num_elem, 0b0, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask_carry(num_elem, 0b0, 0b00000);
   let imm_val : bits('m)                  = EXTS(simm);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
@@ -579,6 +593,8 @@ function clause execute(VIMCTYPE(funct6, vs2, simm, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -630,7 +646,7 @@ function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if vd == vreg_name("v0") then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | vd == 0b00000 then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -641,7 +657,7 @@ function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
     vec_trues[i] = true
   };
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask_carry(num_elem, 0b0, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask_carry(num_elem, 0b0, 0b00000);
   let imm_val : bits('m)                  = EXTS(simm);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -691,10 +707,12 @@ function clause execute(VICMPTYPE(funct6, vm, vs2, simm, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let imm_val : bits('m)                  = EXTS(simm);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
@@ -754,13 +772,13 @@ function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);  
@@ -818,13 +836,13 @@ function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_fp_op(SEW, rm_3b)) then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);    

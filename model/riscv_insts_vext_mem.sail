@@ -107,7 +107,7 @@ mapping clause encdec = VLETYPE(vm, rs1, width, vd) if haveRVV()
 val process_vle : forall 'b 'n 'p, ('b in {1, 2, 4, 8}) & ('n >= 0). (bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired effect {escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
 function process_vle (vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
-  let vm_val : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vd_val : vector('n, dec, bits('b * 8)) = read_vreg(num_elem, load_width_bytes * 8, EMUL_pow, vd);
   total : vector('n, dec, bits('b * 8)) = undefined;
   mask  : vector('n, dec, bool) = undefined;
@@ -153,7 +153,7 @@ function clause execute(VLETYPE(vm, rs1, width, vd)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vle(vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -177,7 +177,7 @@ mapping clause encdec = VSETYPE(vm, rs1, width, vs3) if haveRVV()
 val process_vse : forall 'b 'n 'p, ('b in {1, 2, 4, 8}) & ('n >= 0). (bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired effect {eamem, escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
 function process_vse (vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) = {
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs3_val : vector('n, dec, bits('b * 8)) = read_vreg(num_elem, load_width_bytes * 8, EMUL_pow, vs3);
   total : vector('n, dec, bits('b * 8)) = undefined;
   mask  : vector('n, dec, bool) = undefined;
@@ -230,6 +230,8 @@ function clause execute(VSETYPE(vm, rs1, width, vs3)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+
   process_vse(vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
 
@@ -252,7 +254,7 @@ mapping clause encdec = VLSETYPE(vm, rs2, rs1, width, vd) if haveRVV()
 val process_vlse : forall 'b 'n 'p, ('b in {1, 2, 4, 8}) & ('n >= 0). (bits(1), regidx, int('b), regidx, regidx, int('p), int('n)) -> Retired effect {escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
 function process_vlse (vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, dec, bits('b * 8)) = read_vreg(num_elem, load_width_bytes * 8, EMUL_pow, vd);
   let rs2_val : int = signed(get_scalar(rs2, sizeof(xlen)));
   total : vector('n, dec, bits('b * 8)) = undefined;
@@ -299,7 +301,7 @@ function clause execute(VLSETYPE(vm, rs2, rs1, width, vd)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlse(vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
@@ -323,7 +325,7 @@ mapping clause encdec = VSSETYPE(vm, rs2, rs1, width, vs3) if haveRVV()
 val process_vsse : forall 'b 'n 'p, ('b in {1, 2, 4, 8}) & ('n >= 0). (bits(1), regidx, int('b), regidx, regidx, int('p), int('n)) -> Retired effect {eamem, escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
 function process_vsse (vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs3_val : vector('n, dec, bits('b * 8)) = read_vreg(num_elem, load_width_bytes * 8, EMUL_pow, vs3);
   let rs2_val : int = signed(get_scalar(rs2, sizeof(xlen)));
   total : vector('n, dec, bits('b * 8)) = undefined;
@@ -377,6 +379,8 @@ function clause execute(VSSETYPE(vm, rs2, rs1, width, vs3)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+
   process_vsse(vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
 
@@ -399,7 +403,7 @@ mapping clause encdec = VLUXEITYPE(vm, vs2, rs1, width, vd) if haveRVV()
 val process_vlxei : forall 'ib 'db 'ip 'dp 'n, ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n >= 0). (bits(1), regidx, int('ib), int('db), int('ip), int('dp), regidx, regidx, int('n), int) -> Retired effect {escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
 function process_vlxei (vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
   let width_type : word_width = bytes_wordwidth(EEW_data_bytes);
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, dec, bits('db * 8)) = read_vreg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, vd);
   let vs2_val : vector('n, dec, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
   total : vector('n, dec, bits('db * 8)) = undefined;
@@ -446,7 +450,7 @@ function clause execute(VLUXEITYPE(vm, vs2, rs1, width, vd)) = {
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
 
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxei(vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
 }
@@ -469,7 +473,7 @@ function clause execute(VLOXEITYPE(vm, vs2, rs1, width, vd)) = {
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
 
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxei(vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
 }
@@ -486,7 +490,7 @@ mapping clause encdec = VSUXEITYPE(vm, vs2, rs1, width, vs3) if haveRVV()
 val process_vsxei : forall 'ib 'db 'ip 'dp 'n, ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n >= 0). (bits(1), regidx, int('ib), int('db), int('ip), int('dp), regidx, regidx, int('n), int) -> Retired effect {eamem, escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
 function process_vsxei (vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
   let width_type : word_width = bytes_wordwidth(EEW_data_bytes);
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs3_val : vector('n, dec, bits('db * 8)) = read_vreg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, vs3);
   let vs2_val : vector('n, dec, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
   total : vector('n, dec, bits('db * 8)) = undefined; /* just used to generate mask */
@@ -540,6 +544,8 @@ function clause execute(VSUXEITYPE(vm, vs2, rs1, width, vs3)) = {
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
 
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+
   process_vsxei(vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
 }
 
@@ -561,6 +567,8 @@ function clause execute(VSOXEITYPE(vm, vs2, rs1, width, vs3)) = {
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
 
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+
   process_vsxei(vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
 }
 
@@ -576,7 +584,7 @@ mapping clause encdec = VLEFFTYPE(vm, rs1, width, vd) if haveRVV()
 val process_vleff : forall 'b 'n 'p, ('b in {1, 2, 4, 8}) & ('n >= 0). (bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired effect {escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
 function process_vleff (vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
-  let vm_val : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vd_val : vector('n, dec, bits('b * 8)) = read_vreg(num_elem, load_width_bytes * 8, EMUL_pow, vd);
   total : vector('n, dec, bits('b * 8)) = undefined;
   mask  : vector('n, dec, bool) = undefined;
@@ -651,7 +659,7 @@ function clause execute(VLEFFTYPE(vm, rs1, width, vd)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vleff(vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -676,7 +684,7 @@ val process_vlseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}
 function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else int_power(2, EMUL_pow);
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
-  let vm_val : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   status : Retired = RETIRE_SUCCESS;
   vd_a = vd;
   vd_t = vd;
@@ -731,7 +739,7 @@ function clause execute(VLSEGTYPE(nf, vm, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW); /* # of element of each register group */
   let nf_int = nfields_int(nf);
 
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlseg(nf_int, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -750,7 +758,7 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else int_power(2, EMUL_pow);
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
   let start_element = get_start_element();
-  let vm_val : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   status : Retired = RETIRE_SUCCESS;
   if start_element >= num_elem then return status;
 
@@ -824,7 +832,7 @@ function clause execute(VLSEGFFTYPE(nf, vm, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
 
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlsegff(nf_int, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -843,7 +851,7 @@ function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) 
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else int_power(2, EMUL_pow);
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
   let start_element = get_start_element();
-  let vm_val : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   status : Retired = RETIRE_SUCCESS;
   if start_element >= num_elem then return status;
 
@@ -896,6 +904,8 @@ function clause execute(VSSEGTYPE(nf, vm, rs1, width, vs3)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
 
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+
   process_vsseg(nf_int, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
 
@@ -912,7 +922,7 @@ val process_vlsseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8
 function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else int_power(2, EMUL_pow);
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
-  let vm_val : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vd_val : vector('n, dec, bits('b * 8)) = read_vreg(num_elem, load_width_bytes * 8, EMUL_pow, vd); /* only to generate mask */
   result : vector('n, dec, bits('b * 8)) = undefined;
   mask   : vector('n, dec, bool) = undefined;
@@ -960,7 +970,7 @@ function clause execute(VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
 
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlsseg(nf_int, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
@@ -978,7 +988,7 @@ val process_vssseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8
 function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else int_power(2, EMUL_pow);
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs3_val : vector('n, dec, bits('b * 8)) = read_vreg(num_elem, load_width_bytes * 8, EMUL_pow, vs3); /* only to generate mask */
   result : vector('n, dec, bits('b * 8)) = undefined;
   mask   : vector('n, dec, bool) = undefined;
@@ -1035,6 +1045,8 @@ function clause execute(VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
 
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+
   process_vssseg(nf_int, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
 
@@ -1051,7 +1063,7 @@ val process_vlxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in 
 function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
   let EMUL_data_reg : int = if EMUL_data_pow <= 0 then 1 else int_power(2, EMUL_data_pow);
   let width_type : word_width = bytes_wordwidth(EEW_data_bytes);
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, dec, bits('db * 8)) = read_vreg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, vd);
   let vs2_val : vector('n, dec, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
   total : vector('n, dec, bits('db * 8)) = undefined;
@@ -1100,7 +1112,7 @@ function clause execute(VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
   let nf_int = nfields_int(nf);
 
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxseg(nf_int, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
 }
@@ -1124,7 +1136,7 @@ function clause execute(VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
   let nf_int = nfields_int(nf);
 
-  if not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxseg(nf_int, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
 }
@@ -1142,7 +1154,7 @@ val process_vsxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in 
 function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
   let EMUL_data_reg : int = if EMUL_data_pow <= 0 then 1 else int_power(2, EMUL_data_pow);
   let width_type : word_width = bytes_wordwidth(EEW_data_bytes);
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, vreg_name("v0"));
+  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs3_val : vector('n, dec, bits('db * 8)) = read_vreg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, vs3);
   let vs2_val : vector('n, dec, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
   total : vector('n, dec, bits('db * 8)) = undefined;
@@ -1200,6 +1212,8 @@ function clause execute(VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
   let nf_int = nfields_int(nf);
 
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+
   process_vsxseg(nf_int, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
 }
 
@@ -1221,6 +1235,8 @@ function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
   let nf_int = nfields_int(nf);
+
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vsxseg(nf_int, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
 }
@@ -1503,6 +1519,8 @@ function clause execute(VMTYPE(rs1, vd_or_vs3, op)) = {
   let EMUL_pow = 0;
   let tmp = unsigned(vl);
   let num_elem : int = if tmp % 8 == 0 then tmp / 8 else tmp / 8 + 1;
+
+  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
 
   /* unmask vle8 except that the effective vector length is evl=ceil(vl/8) */
   assert(num_elem >= 0);

@@ -88,11 +88,12 @@ mapping clause encdec = VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) if haveRVV()
 
 function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
   let VLEN_pow      = get_vlen_pow();
+  let ELEN_pow      = get_elen_pow();
   let LMUL_pow_ori  = get_lmul_pow();
   let SEW_pow_ori   = get_sew_pow(); 
   let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
 
-  /* set vtype and calculate VLMAX */
+  /* set vtype */
   match op {
     VSETVLI => {
       vtype->bits() = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul
@@ -102,10 +103,18 @@ function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
       vtype->bits() = X(rs2)
     }
   };
-  print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
+
+  /* check legal SEW and LMUL and calculate VLMAX */
   let LMUL_pow_new = get_lmul_pow();
   let SEW_pow_new  = get_sew_pow();
-  let VLMAX        = int_power(2, VLEN_pow + LMUL_pow_new - SEW_pow_new);
+  if SEW_pow_new > LMUL_pow_new + ELEN_pow then {
+    vtype->bits() = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
+    vl = EXTZ(0b0);
+    print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
+    print_reg("CSR vl <- " ^ BitStr(vl));
+    return RETIRE_SUCCESS
+  };
+  let VLMAX = int_power(2, VLEN_pow + LMUL_pow_new - SEW_pow_new);
 
   /* set vl according to VLMAX and AVL */
   if (rs1 != 0b00000) then { /* normal stripmining */
@@ -115,20 +124,20 @@ function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
          else if AVL < 2 * VLMAX then to_bits(sizeof(xlen), (AVL + 1) / 2) /* ceil(AVL / 2) ≤ vl ≤ VLMAX */
          else to_bits(sizeof(xlen), VLMAX);
     X(rd) = vl;
-    print_reg("CSR vl <- " ^ BitStr(vl))
   } else if (rd != 0b00000) then { /* set vl to VLMAX */
     let AVL = unsigned(ones(sizeof(xlen)));
     vl = to_bits(sizeof(xlen), VLMAX);
     X(rd) = vl;
-    print_reg("CSR vl <- " ^ BitStr(vl))
   } else { /* keep existing vl */
     let AVL = unsigned(vl);
     let ratio_pow_new = SEW_pow_new - LMUL_pow_new;
     if (ratio_pow_new != ratio_pow_ori) then { 
       vtype->bits() = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
-      print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
+      vl = EXTZ(0b0);
     }
   };
+  print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
+  print_reg("CSR vl <- " ^ BitStr(vl));
 
   /* reset vstart to 0 */
   vstart = EXTZ(0b0);
@@ -153,24 +162,33 @@ mapping clause encdec = VSETI_TYPE(ma, ta, sew, lmul, uimm, rd) if haveRVV()
 
 function clause execute VSETI_TYPE(ma, ta, sew, lmul, uimm, rd) = {
   let VLEN_pow      = get_vlen_pow();
+  let ELEN_pow      = get_elen_pow();
   let LMUL_pow_ori  = get_lmul_pow();
   let SEW_pow_ori   = get_sew_pow(); 
   let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
 
-  /* set vtype and calculate VLMAX */
+  /* set vtype */
   vtype->bits() = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul;
-  print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
 
+  /* check legal SEW and LMUL and calculate VLMAX */
   let LMUL_pow_new = get_lmul_pow();
   let SEW_pow_new  = get_sew_pow();
-  let VLMAX        = int_power(2, VLEN_pow + LMUL_pow_new - SEW_pow_new);
-  let AVL          = unsigned(uimm); /* AVL is encoded as 5-bit zero-extended imm in the rs1 field */
+  if SEW_pow_new > LMUL_pow_new + ELEN_pow then {
+    vtype->bits() = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
+    vl = EXTZ(0b0);
+    print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
+    print_reg("CSR vl <- " ^ BitStr(vl));
+    return RETIRE_SUCCESS
+  };
+  let VLMAX = int_power(2, VLEN_pow + LMUL_pow_new - SEW_pow_new);
+  let AVL   = unsigned(uimm); /* AVL is encoded as 5-bit zero-extended imm in the rs1 field */
 
   /* set vl according to VLMAX and AVL */
   vl = if AVL <= VLMAX then to_bits(sizeof(xlen), AVL)
        else if AVL < 2 * VLMAX then to_bits(sizeof(xlen), (AVL + 1) / 2) /* ceil(AVL / 2) ≤ vl ≤ VLMAX */
        else to_bits(sizeof(xlen), VLMAX);
   X(rd) = vl;
+  print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
   print_reg("CSR vl <- " ^ BitStr(vl));
 
   /* reset vstart to 0 */

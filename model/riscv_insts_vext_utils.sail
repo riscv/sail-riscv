@@ -53,6 +53,15 @@ function valid_eew_emul(EEW, EMUL_pow) = {
   EEW >= 8 & EEW <= ELEN & EMUL_pow >= -3 & EMUL_pow <= 3
 }
 
+/* Check for valid vtype setting
+ *  1. If the vill bit is set, then any attempt to execute a vector instruction that depends upon vtype will raise an illegal instruction exception.
+ *  2. vset{i}vl{i} and whole-register loads, stores, and moves do not depend upon vtype.
+ */
+val valid_vtype : unit -> bool effect {rreg}
+function valid_vtype() = {
+  vtype.vill() == 0b0
+}
+
 /* Check for vstart value */
 val assert_vstart : int -> bool effect {rreg}
 function assert_vstart(i) = {
@@ -79,7 +88,7 @@ function valid_fp_op(SEW, rm_3b) = {
  */
 val valid_rd_mask : (regidx, bits(1)) -> bool
 function valid_rd_mask(rd, vm) = {
-  vm != 0b0 | rd != vreg_name("v0")
+  vm != 0b0 | rd != 0b00000
 }
 
 /* Check for valid register overlap in vector widening/narrowing instructions:
