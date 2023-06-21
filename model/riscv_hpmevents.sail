@@ -67,18 +67,6 @@
 /*  SUCH DAMAGE.                                                                         */
 /*=======================================================================================*/
 
-//val eq_anything = pure {ocaml: "(fun (x, y) -> x = y)", lem: "eq", coq: "generic_eq", _: "eq_anything"} : forall ('a : Type). ('a, 'a) -> bool
-//
-//overload operator == = {eq_anything}
-//
-//val neq_anything : forall ('a : Type). ('a, 'a) -> bool
-//
-//function neq_anything(x, y) = not_bool(eq_anything(x, y))
-
-overload operator != = {neq_anything}
-
-
-
 // ==============================================================================
 // Translated from C into Sail.  The C imnplementation can be found
 //  on the hpm_events branch for the Sail model.  It is in the file 
@@ -115,44 +103,48 @@ struct riscv_hpm_event = {
     // This is the event-id used by the platform software to identify
     // this event, for e.g. by writing this value to the mhpmevent
     // registers.  The model cannot support an event-id of 0.
+    //
+    // The data type of plat_event_id is xlenbits.  This is because it is
+    //  the value that will be written to the mhpmevent register,  which
+    //  xlenbits wide.
 
-//  plat_event_id   : int(32)
-    plat_event_id   : int
+    plat_event_id   : xlenbits
 }
 
 // TODO:  This needs to be configured dynamically at initialization time, and
 //          it needs to be done from a RISCV Config structure
-register platform_events : vector(30, dec, riscv_hpm_event) = [
-    struct { event = E_event_branch,  plat_event_id = 3 },  // 29
-    struct { event = E_event_jal,     plat_event_id = 4 },  // 28
-    struct { event = E_event_jalr,    plat_event_id = 5 },  // 27
-    struct { event = E_event_auipc,   plat_event_id = 6 },  // 26
-    struct { event = E_event_load,    plat_event_id = 7 },  // 25
-    struct { event = E_event_store,   plat_event_id = 8 },  // 24
-    struct { event = E_event_lr,      plat_event_id = 9 },  // 23
-    struct { event = E_event_sc,      plat_event_id = 10 }, // 22
-    struct { event = E_event_amo,     plat_event_id = 11 }, // 21
-    struct { event = E_event_shift,   plat_event_id = 12 }, // 20
-    struct { event = E_event_mulDiv,  plat_event_id = 13 }, // 19
-    struct { event = E_event_fp,      plat_event_id = 14 }, // 18
-    struct { event = E_event_fence,   plat_event_id = 15 }, // 17
-    struct { event = E_not_defined,   plat_event_id = 16 }, // 16
-    struct { event = E_not_defined,   plat_event_id = 17 }, // 15
-    struct { event = E_event_fence,   plat_event_id = 18 }, // 14
-    struct { event = E_not_defined,   plat_event_id = 19 }, // 13
-    struct { event = E_not_defined,   plat_event_id = 20 }, // 12
-    struct { event = E_not_defined,   plat_event_id = 21 }, // 11
-    struct { event = E_not_defined,   plat_event_id = 22 }, // 10
-    struct { event = E_not_defined,   plat_event_id = 23 }, // 9
-    struct { event = E_not_defined,   plat_event_id = 24 }, // 8 
-    struct { event = E_not_defined,   plat_event_id = 25 }, // 7
-    struct { event = E_not_defined,   plat_event_id = 26 }, // 6
-    struct { event = E_not_defined,   plat_event_id = 27 }, // 5
-    struct { event = E_not_defined,   plat_event_id = 28 }, // 4
-    struct { event = E_not_defined,   plat_event_id = 29 }, // 3
-    struct { event = E_not_defined,   plat_event_id = 30 }, // 2
-    struct { event = E_not_defined,   plat_event_id = 31 }, // 1
-    struct { event = E_last,          plat_event_id = 0 }   // 0    // This should be the last entry.
+//register platform_events : vector(30, dec, riscv_hpm_event) = [
+register platform_events : vector(14, dec, riscv_hpm_event) = [
+    struct { event = E_event_branch,  plat_event_id = to_bits(sizeof(xlen),  3 ) },  // 29       // 1
+    struct { event = E_event_jal,     plat_event_id = to_bits(sizeof(xlen),  4 ) },  // 28       // 2
+    struct { event = E_event_jalr,    plat_event_id = to_bits(sizeof(xlen),  5 ) },  // 27       // 3
+    struct { event = E_event_auipc,   plat_event_id = to_bits(sizeof(xlen),  6 ) },  // 26       // 4
+    struct { event = E_event_load,    plat_event_id = to_bits(sizeof(xlen),  7 ) },  // 25       // 5
+    struct { event = E_event_store,   plat_event_id = to_bits(sizeof(xlen),  8 ) },  // 24       // 6
+    struct { event = E_event_lr,      plat_event_id = to_bits(sizeof(xlen),  9 ) },  // 23       // 7
+    struct { event = E_event_sc,      plat_event_id = to_bits(sizeof(xlen),  10 ) }, // 22       // 8
+    struct { event = E_event_amo,     plat_event_id = to_bits(sizeof(xlen),  11 ) }, // 21       // 9
+    struct { event = E_event_shift,   plat_event_id = to_bits(sizeof(xlen),  12 ) }, // 20       // 10
+    struct { event = E_event_mulDiv,  plat_event_id = to_bits(sizeof(xlen),  13 ) }, // 19       // 11
+    struct { event = E_event_fp,      plat_event_id = to_bits(sizeof(xlen),  14 ) }, // 18       // 12
+    struct { event = E_event_fence,   plat_event_id = to_bits(sizeof(xlen),  15 ) }, // 17       // 13
+//  struct { event = E_not_defined,   plat_event_id = 16 }, // 16
+//  struct { event = E_not_defined,   plat_event_id = 17 }, // 15
+//  struct { event = E_event_fence,   plat_event_id = 18 }, // 14
+//  struct { event = E_not_defined,   plat_event_id = 19 }, // 13
+//  struct { event = E_not_defined,   plat_event_id = 20 }, // 12
+//  struct { event = E_not_defined,   plat_event_id = 21 }, // 11
+//  struct { event = E_not_defined,   plat_event_id = 22 }, // 10
+//  struct { event = E_not_defined,   plat_event_id = 23 }, // 9
+//  struct { event = E_not_defined,   plat_event_id = 24 }, // 8 
+//  struct { event = E_not_defined,   plat_event_id = 25 }, // 7
+//  struct { event = E_not_defined,   plat_event_id = 26 }, // 6
+//  struct { event = E_not_defined,   plat_event_id = 27 }, // 5
+//  struct { event = E_not_defined,   plat_event_id = 28 }, // 4
+//  struct { event = E_not_defined,   plat_event_id = 29 }, // 3
+//  struct { event = E_not_defined,   plat_event_id = 30 }, // 2
+//  struct { event = E_not_defined,   plat_event_id = 31 }, // 1
+    struct { event = E_last,          plat_event_id = to_bits(sizeof(xlen), 0 ) }    // 0        // 14       // This should be the last entry.
 ]
 
 
@@ -174,6 +166,7 @@ struct event_info = {
     // registers.  The model cannot support an event-id of 0.
     // plat_event_id   : mach_bits,
     plat_event_id   : xlenbits,
+    // plat_event_id   : range(0,63),
     // the index of the counter register mapped to this event
     // regidx          : mach_bits,
     //regidx          : int,
@@ -185,16 +178,17 @@ struct event_info = {
 }
 
 //register event_map : vector(num_of_model_event_id(E_last), dec, event_info)   // TODO:  error message with this
-register event_map : vector(25, dec, event_info) = [
-    struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 24
-    struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 23
-    struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 22
-    struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 21
-    struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 20
-    struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 19
-    struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 18
-    struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 17
-    struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 16
+//register event_map : vector(25, dec, event_info) = [
+register event_map : vector(16, dec, event_info) = [
+//  struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 24
+//  struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 23
+//  struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 22
+//  struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 21
+//  struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 20
+//  struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 19
+//  struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 18
+//  struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 17
+//  struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 16
     struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 15
     struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 14
     struct { plat_event_id = to_bits(sizeof(xlen), 0), regidx = to_bits(sizeof(xlen), 0), count = 0 },  // 13
@@ -243,7 +237,9 @@ function plat_write_mhpmevent (regidx : xlenbits, new_event_id : xlenbits, prev_
     usable : bool = true;
 
     if (new_event_id != prev_event_id) then {
-        foreach (eid from num_of_model_event_id(E_not_defined) to num_of_model_event_id(E_last)) {
+//      foreach (eid from num_of_model_event_id(E_not_defined) to num_of_model_event_id(E_last)) {
+//      foreach (eid from 0                                    to 13                           ) {
+        foreach (eid from 0                                    to (length(event_map) - 1)      ) {
             print_int("eid: ", eid);
             if (event_map[eid].plat_event_id != to_bits(sizeof(xlen), 0)) then {
                 if (event_map[eid].plat_event_id == new_event_id) then {
@@ -261,7 +257,9 @@ function plat_write_mhpmevent (regidx : xlenbits, new_event_id : xlenbits, prev_
 
     // check whether the event map is still usable for a fast path: a
     // max of one counter per event.
-    foreach (eid from num_of_model_event_id(E_not_defined) to num_of_model_event_id(E_last)) {
+//  foreach (eid from num_of_model_event_id(E_not_defined) to num_of_model_event_id(E_last)) {
+//  foreach (eid from 0                                    to 13                           ) {
+    foreach (eid from 0                                    to (length(event_map) - 1)      ) {
         if (event_map[eid].count > 1) then {
             usable = false;
         }
@@ -297,27 +295,43 @@ val init_platform_events : unit -> unit
 function init_platform_events ( foo ) = {
     hpm_eventset = to_bits(sizeof(xlen), 0);
     usable_event_map = true;
-    events : vector(30, dec, riscv_hpm_event) = platform_events;
+    events : vector(14, dec, riscv_hpm_event) = platform_events;
 
-    foreach (emid from 0 to 24) {
+    foreach (emid from 0 to (length(event_map) - 1)) {
         event_map[emid].plat_event_id   = to_bits(sizeof(xlen), 0); 
         event_map[emid].regidx          = to_bits(sizeof(xlen), 0);
         event_map[emid].count           = 0;
     };
 
-    i : int = 0;
+//  i : int = 0;
+//  i : range(0,29) = 0;
+    i : range(0,13) = 0;
+//  i : range(0,15) = 0;
     event_cnt : int = 0;
+//  break : bool = false;
+    foreach( i from 0 to (length(platform_events) - 1))  {
 //  while ( platform_events[i].event != E_last) do {          // error: no overloading of operator !=
-    while ( num_of_model_event_id(platform_events[i].event) != num_of_model_event_id(E_last)) do {          // error: no overloading of operator !=
+//  while ( num_of_model_event_id(platform_events[i].event) != num_of_model_event_id(E_last) ) do {          // error: no overloading of operator !=
+//  while ( (num_of_model_event_id(platform_events[i].event) != num_of_model_event_id(E_last)) | break ) do {          // error: no overloading of operator !=
 //  while ( ! (num_of_model_event_id(platform_events[i].event) == num_of_model_event_id(E_last))) do {      // error: fixity of !
 //  while ( not (num_of_model_event_id(platform_events[i].event) == num_of_model_event_id(E_last))) do {    // error: no overloading of operator ==
         assert(event_cnt < 64);
-        assert(platform_events[i].event < E_last);
-        assert(platform_events[i].plat_event_id != 0);
+        assert( i < 30);
+//      assert(platform_events[i].event < E_last);      // No overloading for operator <
+        assert(platform_events[i].plat_event_id != to_bits(sizeof(xlen), 0));
+//      assert( (platform_events[i].plat_event_id >= to_bits(sizeof(xlen), 1)) & (platform_events[i].plat_event_id < to_bits(sizeof(xlen),32 ) ) );
+        assert( (unsigned(platform_events[i].plat_event_id) >= 1) & ( unsigned(platform_events[i].plat_event_id) < 32 ) );
+//      let j : range(0,24) = platform_events[i].plat_event_id;
+//      let j : range(0,31) = unsigned(platform_events[i].plat_event_id);
+//      let j : range(0,31) = platform_events[i].plat_event_id[4..0];
+        let jb : bits(4)     = platform_events[i].plat_event_id[3..0];
+//      let j : range(0,31)  = unsigned(jb);
+//      let j : range(0,13)  = unsigned(jb);
+        let j : range(0,15)  = unsigned(jb);
 
-        event_map[platform_events[i]].plat_event_id = platform_events[i].plat_event_id;
+//      event_map[platform_events[i].plat_event_id].plat_event_id = platform_events[i].plat_event_id;
+        event_map[j].plat_event_id = platform_events[i].plat_event_id;
         event_cnt = event_cnt + 1;
-        i = i + 1;
     };
 
 }
@@ -365,24 +379,16 @@ void increment_hpm_counter(uint64_t regidx) {
 
 */
 
-//val increment_hpm_counter : forall ('n : Int) , (0 <= 'n <= 29) . (atom('n)) -> unit
-//val increment_hpm_counter : forall ('n : Int) , (0 <= 'n <= 6) . (int('n)) -> unit
-val increment_hpm_counter : forall ('n : Int) , (0 <= 'n <= 29) . (int('n)) -> unit
-//val increment_hpm_counter : forall ('n : Int) , ('n <= 29) . (int('n)) -> unit
+val increment_hpm_counter : forall ('n : Int) , (0 <= 'n <  29) . (int('n)) -> unit
 
 function increment_hpm_counter (regidx) -> unit =  {
-    assert(regidx < 29);
+    assert(regidx <  29);
 
     print("file: " ^ __FILE__ ^ ", line: " ^ string_of_int(__LINE__) ^ ": ");
 
-
-//  let foobar : int('n) = 4096;    // Type error: int(4096 is not a subtype of int('n) as 4096 == 'n could not be proven
-//  let foobar : int('n) = 4;
-//  let foobar : 'n = 4;            // Type error: Type variable 'n in type 'n is Int rather than Type
-
     let inhibit_a : xlenbits = EXTZ(0x1) & (mcountinhibit.bits() >> (regidx + 3));
     let inhibit : bool = inhibit_a == EXTZ(0x1);
-//  let inhibit_b : bool     = (EXTZ(0x1) & (counterin.bits() : bits(32) >> (regidx + 3))) == EXTZ(0x1);  // TODO:  Why does this not compile?
+//  let inhibit : bool     = ( (EXTZ(sizeof(xlen),0x1) ) & (counterin.bits() : bits(32) >> (regidx + 3))) == EXTZ(0x1);  // TODO:  Why does this not compile?
 
     if ( not(inhibit) ) then {
         mhpmcounters[regidx] = mhpmcounters[regidx] + 1;
@@ -404,12 +410,7 @@ static void slow_process_hpm_selector(uint64_t plat_event_id) {
 
 // TODO: The number of platform events (and thus their IDs) is hardcoded.  Need 
 //  a way to make this more general.
-//val slow_process_hpm_selector :  forall (l'm 'n : Int) , ((0 <= 'n <= 25)  & (0 <= 'm <= 29)) . (int('n)) -> unit
-//val slow_process_hpm_selector :  forall ('n : Int) , (0 <= 'n <= 6) . (int('n)) -> unit
-//val slow_process_hpm_selector :  forall ('n : Int) , (0 <= 'n <= 29) . (int('n)) -> unit
-//val slow_process_hpm_selector :  forall ('n : Int) , (0 <= 'n <= 29) . (bits('n)) -> unit
-//val slow_process_hpm_selector :  forall ('n : Int) , (0 <= 'n <= 29) . (int('n)) -> unit
-//val slow_process_hpm_selector :  forall ('n : Int) , (0 <= 'n <= 29) . (xlenbits) -> unit
+
 val slow_process_hpm_selector :                                        (xlenbits) -> unit
 
 function slow_process_hpm_selector (plat_event_id) -> unit = {
@@ -422,20 +423,10 @@ function slow_process_hpm_selector (plat_event_id) -> unit = {
 
     foreach (idx from 0 to (nregs - 1)) {
         assert(idx < 29);
-//        let pevid : int('n) = mhpmevents[idx];
-//        let pevid : int('n) = mhpmevents[idx];
-//      let a1    : bits(32) = to_bits(32, mhpmevents[idx]);        // nope
         let a1    : bits(32) = mhpmevents[idx];                   // compiles
-//      let pevid : int('n)  = mhpmevents[idx][('n - 1) .. 0];
-//      let pevid : int('n)  = a1['n .. 0];
-//      let pevid : int('n)  = a1[('n - 1) .. 0];
-//      let pevid : int('n)  = 0;                                   // int(0) is not a subtype of int('n)
-//        let pevid : int      = 0;
-//        let pevid : int('n) = mhpmevents[idx];                // mhpmevents[i] is type xlenbits (which is bits(xlen) )
         let pevid : xlenbits = mhpmevents[idx];                // mhpmevents[i] is type xlenbits (which is bits(xlen) )
 
         if (pevid == plat_event_id) then {
-//        if (pevid == plat_event_id_int) then {
             increment_hpm_counter(idx);
         }
 
@@ -465,14 +456,14 @@ void process_hpm_events(void) {
 }
 */
 
-//val sail_process_hpm_events : forall ('n : Int), (0 <= 'n <= 29) . (unit) -> unit 
 val sail_process_hpm_events :                                      (unit) -> unit 
 function sail_process_hpm_events (unit) -> unit = {
     acc : bits(32) = hpm_eventset;
 
     print("file: " ^ __FILE__ ^ ", line: " ^ string_of_int(__LINE__) ^ ": ");
     
-    foreach (eid from num_of_model_event_id(E_not_defined) to num_of_model_event_id(E_last)) {
+//  foreach (eid from num_of_model_event_id(E_not_defined) to num_of_model_event_id(E_last)) {
+    foreach (eid from 0                                    to (length(event_map) - 1)      ) {
         print("file: " ^ __FILE__ ^ ", line: " ^ string_of_int(__LINE__) ^ ": ");
         tmp : bits(32) = (acc >> eid) & EXTZ(0x1);      // TODO:  FIX THIS!!
         if ( tmp == EXTZ(32, 0x1)) then {               // TODO:  FIX THIS!!
@@ -517,7 +508,6 @@ function sail_process_hpm_events (unit) -> unit = {
                             0x0000001a   => increment_hpm_counter(26),
                             0x0000001b   => increment_hpm_counter(27),
                             0x0000001c   => increment_hpm_counter(28),
-                            0x0000001d   => increment_hpm_counter(29),
 
                             _           => { internal_error(__FILE__, __LINE__,  "internal error\n"); }
                         }
