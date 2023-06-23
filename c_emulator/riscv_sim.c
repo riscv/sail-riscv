@@ -556,6 +556,7 @@ void init_sail(uint64_t elf_entry)
 
   // Register platform HPM events.
   init_platform_events(platform_events);
+//  zsail_init_platform_events(UNIT);
 
   // this is probably unnecessary now; remove
   if (!rv_enable_rvc) z_set_Misa_C(&zmisa, 0);
@@ -892,7 +893,7 @@ void run_sail(void)
     }
     { /* perform event processing */
       signal_platform_events();
-      process_hpm_events();
+//    process_hpm_events();
     }
     if (stepped) {
       step_no++;

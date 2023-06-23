@@ -328,3 +328,6 @@ val def_spc_backwards : string -> unit
 function def_spc_backwards s = ()
 val def_spc_matches_prefix : string -> option((unit, nat))
 function def_spc_matches_prefix s = opt_spc_matches_prefix(s)
+
+val trace : (string , int, string) -> unit
+function trace (file, line, msg) = { print( "Sail Trace: file: " ^ file ^ ", line: " ^ string_of_int(line) ^ ": " ^ msg); }

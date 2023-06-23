@@ -68,6 +68,7 @@
 
 val signal_platform_events = {c: "signal_platform_events" } : unit -> unit
 val sail_process_hpm_events :                                      (unit) -> unit
+val sail_init_platform_events : (unit) -> unit
 
 /* The emulator fetch-execute-interrupt dispatch loop. */
 
@@ -180,6 +181,7 @@ function init_model () -> unit = {
   init_platform (); /* devices */
   init_sys ();      /* processor */
   init_vmem ();     /* virtual memory */
+  sail_init_platform_events();
 
   /* initialize extensions last */
   ext_init ();

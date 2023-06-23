@@ -5,6 +5,12 @@
 #include "riscv_hpmevents.h"
 #include "riscv_hpmevents_impl.h"
 
+void C_trace(char *, int, const char*, char *);
+
+void C_trace (char * file, int line, const char * function, char * msg) {
+    printf("C_trace: %s, Line: %d, Function: %s. %s", file, line, function, msg);
+}
+
 typedef struct {
   // This is the event-id used by the platform software to identify
   // this event, for e.g. by writing this value to the mhpmevent
@@ -31,9 +37,12 @@ static bool usable_event_map;
 uint64_t hpm_eventset;
 
 // Events handled in and communicated from the simulator
+extern uint64_t zhpm_eventset;   // TODO: move to a header file
 void riscv_signal_event(model_event_id id) {
-  printf("%s, %d, %s: model_event_id: 0x%08x\n", __FILE__, __LINE__, __FUNCTION__, id);
+  char s[1024]; sprintf(s, "model_event_id: 0x%08x\n" , id);
+  C_trace(__FILE__, __LINE__, __FUNCTION__, s);
   hpm_eventset |= 0x1 << id;
+  zhpm_eventset |= 0x1 << id;
 }
 
 // Update our event map on every write to the event selector registers.
@@ -103,10 +112,11 @@ static const int nregs = 29;
 void increment_hpm_counter(uint64_t regidx) {
   uint64_t counterin = z_get_Counterin_bits(zmcountinhibit);
   int inhibit = 0x1 & (counterin >> (regidx + 3));
+  C_trace(__FILE__, __LINE__, __FUNCTION__, "\n");
   printf("%s, %d, %s:\n", __FILE__, __LINE__, __FUNCTION__);
   if (!inhibit) {
     uint64_t *cntr = &zmhpmcounters.data[regidx];
-    printf("%s, %d, %s:\n", __FILE__, __LINE__, __FUNCTION__);
+    C_trace(__FILE__, __LINE__, __FUNCTION__, "\n");
     (*cntr)++;
   }
 }
@@ -124,19 +134,20 @@ static void slow_process_hpm_selector(uint64_t plat_event_id) {
 void process_hpm_events(void) {
   uint64_t acc = hpm_eventset;
 
-  printf("%s, %d, %s: hpm_eventset: 0x%lx\n", __FILE__, __LINE__, __FUNCTION__, hpm_eventset);
+  char s[1024]; sprintf(s, "hpm_eventset: 0x%lx\n", hpm_eventset);
+  C_trace(__FILE__, __LINE__, __FUNCTION__, s);
   for (int eid = 0; eid < E_last; eid++) {
-    printf("%s, %d, %s:\n", __FILE__, __LINE__, __FUNCTION__);
+    C_trace(__FILE__, __LINE__, __FUNCTION__, "\n");
 //    if (acc & 0x1) {
     if ( (acc >> eid) & 0x1) {
-      printf("%s, %d, %s:\n", __FILE__, __LINE__, __FUNCTION__);
+      C_trace(__FILE__, __LINE__, __FUNCTION__, "\n");
       event_info *ei = &event_map[eid];
       if (ei->plat_event_id == 0) continue;
       if (usable_event_map) {
-        printf("%s, %d, %s:\n", __FILE__, __LINE__, __FUNCTION__);
+        C_trace(__FILE__, __LINE__, __FUNCTION__, "\n");
         if (ei->count) increment_hpm_counter(ei->regidx);
       } else {
-        printf("%s, %d, %s:\n", __FILE__, __LINE__, __FUNCTION__);
+        C_trace(__FILE__, __LINE__, __FUNCTION__, "\n");
         slow_process_hpm_selector(ei->plat_event_id);
       }
     }
