@@ -78,6 +78,15 @@ bool config_print_mem_access = true;
 bool config_print_platform = true;
 bool config_print_rvfi = false;
 
+// TODO:  Remove/replace the following code
+static bool enable_c_hpmcounters = false;
+bool c_hpmcounters_enabled(void);
+bool c_hpmcounters_enabled(void) {
+  return enable_c_hpmcounters;
+}
+// TODO:  Remove/replace the above code
+
+
 void set_config_print(char *var, bool val) {
   if (var == NULL || strcmp("all", var) == 0) {
     config_print_instr = val;
@@ -135,6 +144,8 @@ static struct option options[] = {
 #ifdef SAILCOV
   {"sailcov-file",                required_argument, 0, 'c'},
 #endif
+  // TODO:  Remove/replace the following code
+  {"enable-hpmcounters-c",        no_argument,       0, 'H'},
   {0, 0, 0, 0}
 };
 
@@ -236,6 +247,7 @@ char *process_args(int argc, char **argv)
                     "T:"
                     "g:"
                     "h"
+                    "H"
 #ifdef RVFI_DII
                     "r:"
 #endif
@@ -320,6 +332,11 @@ char *process_args(int argc, char **argv)
     case 'h':
       print_usage(argv[0], 0);
       break;
+    // TODO:  Remove/replace the following code
+    case 'H':
+      enable_c_hpmcounters = true;
+      break;
+    // TODO:  Remove/replace the above code
 #ifdef RVFI_DII
     case 'r':
       rvfi_dii = true;
@@ -892,8 +909,11 @@ void run_sail(void)
       KILL(sail_int)(&sail_step);
     }
     { /* perform event processing */
-      signal_platform_events();
-//    process_hpm_events();
+      // TODO:  Remove/replace the following code
+      if (c_hpmcounters_enabled() ) { 
+        process_hpm_events(); 
+        signal_platform_events();
+      }
     }
     if (stepped) {
       step_no++;

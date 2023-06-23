@@ -67,7 +67,8 @@
 /*=======================================================================================*/
 
 val signal_platform_events = {c: "signal_platform_events" } : unit -> unit
-val sail_process_hpm_events :                                      (unit) -> unit
+val c_hpmcounters_enabled  = {c: "c_hpmcounters_enabled" }  : unit -> bool
+val sail_process_hpm_events :                                 unit -> unit
 val sail_init_platform_events : (unit) -> unit
 
 /* The emulator fetch-execute-interrupt dispatch loop. */
@@ -145,7 +146,10 @@ function step(step_no : int) -> bool = {
   ext_post_step_hook();
 
   signal_platform_events();
-  sail_process_hpm_events();
+  /* TODO: remove the conditional once the C implemnation of hpmcounters is removed */
+  if ( not (c_hpmcounters_enabled() )) then {
+    sail_process_hpm_events();
+  };
 
   stepped
 }
