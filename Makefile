@@ -103,6 +103,7 @@ SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS) $(SA
 PLATFORM_OCAML_SRCS = $(addprefix ocaml_emulator/,platform.ml platform_impl.ml softfloat.ml riscv_ocaml_sim.ml)
 
 SAIL_FLAGS += -dno_cast
+SAIL_DOC_FLAGS ?= -doc_embed plain
 
 # Attempt to work with either sail from opam or built from repo in SAIL_DIR
 ifneq ($(SAIL_DIR),)
@@ -195,6 +196,9 @@ check: $(SAIL_SRCS) model/main.sail Makefile
 
 interpret: $(SAIL_SRCS) model/main.sail
 	$(SAIL) -i $(SAIL_FLAGS) $(SAIL_SRCS) model/main.sail
+
+sail_doc/riscv_$(ARCH).json: $(SAIL_SRCS) model/main.sail
+	$(SAIL) -doc -doc_bundle riscv_$(ARCH).json -o sail_doc $(SAIL_FLAGS) $(SAIL_DOC_FLAGS) $(SAIL_SRCS) model/main.sail
 
 riscv.smt_model: $(SAIL_SRCS)
 	$(SAIL) -smt_serialize $(SAIL_FLAGS) $(SAIL_SRCS) -o riscv
@@ -463,4 +467,6 @@ clean:
 	-Holmake cleanAll
 	-rm -f handwritten_support/riscv_extras.vo handwritten_support/riscv_extras.vos handwritten_support/riscv_extras.vok handwritten_support/riscv_extras.glob handwritten_support/.riscv_extras.aux
 	-rm -f handwritten_support/mem_metadata.vo handwritten_support/mem_metadata.vos handwritten_support/mem_metadata.vok handwritten_support/mem_metadata.glob handwritten_support/.mem_metadata.aux
+	-rm -f sail_doc/riscv_RV32.json
+	-rm -f sail_doc/riscv_RV64.json
 	ocamlbuild -clean
