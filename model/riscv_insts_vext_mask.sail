@@ -63,7 +63,7 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = int_power(2, get_vlen_pow());
 
-  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -122,7 +122,7 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = int_power(2, get_vlen_pow());
 
-  if not(valid_vtype()) | not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() | not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -158,7 +158,7 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = int_power(2, get_vlen_pow());
 
-  if not(valid_vtype()) | not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() | not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -196,7 +196,7 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = int_power(2, get_vlen_pow());
 
-  if not(valid_vtype()) | not(assert_vstart(0)) | not(valid_rd_mask(vd, vm)) | vd == vs2
+  if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -237,7 +237,7 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = int_power(2, get_vlen_pow());
 
-  if not(valid_vtype()) | not(assert_vstart(0)) | not(valid_rd_mask(vd, vm)) | vd == vs2
+  if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -278,7 +278,7 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = int_power(2, get_vlen_pow());
 
-  if not(valid_vtype()) | not(assert_vstart(0)) | not(valid_rd_mask(vd, vm)) | vd == vs2
+  if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -323,7 +323,7 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_vtype()) | not(assert_vstart(0)) | not(valid_rd_mask(vd, vm)) | vd == vs2
+  if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
   then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
@@ -364,7 +364,7 @@ function clause execute(VID_V(vm, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
