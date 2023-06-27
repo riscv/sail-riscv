@@ -59,8 +59,7 @@ function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if not(valid_vtype()) | not(assert_vstart(0)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen))
-  then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_reduction_widen(SEW_widen, LMUL_pow_widen) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -125,7 +124,7 @@ function clause execute(RMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if not(valid_vtype()) | not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_reduction() then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -191,8 +190,7 @@ mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd) if haveRVV()
 val process_rfvv_single: forall 'n 'm 'p, 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), int('p)) -> Retired effect {escape, rreg, undef, wreg}
 function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem, SEW, LMUL_pow) = {
   let rm_3b = fcsr.FRM();
-  if not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b))
-  then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_fp_reduction(SEW, rm_3b) then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
   let 'n = num_elem;
@@ -229,9 +227,7 @@ function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem, SEW, LMUL_pow) =
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b)) |
-      not(valid_eew_emul(SEW_widen, LMUL_pow_widen))
-  then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW >= 16 & SEW_widen <= 64);
 
   let 'n = num_elem;

@@ -112,6 +112,96 @@ function valid_reg_overlap(rs, rd, EMUL_pow_rs, EMUL_pow_rd) = {
   is_valid
 }
 
+/* ******************************************************************************* */
+/* The following functions summarize patterns of illegal instruction check.        */
+/* ******************************************************************************* */
+
+/* a. Normal check including vtype.vill field and vd/v0 overlap if vm = 0 */
+val illegal_normal : (regidx, bits(1)) -> bool
+function illegal_normal(vd, vm) = {
+  not(valid_vtype()) | not(valid_rd_mask(vd, vm))
+}
+
+/* b. Masked check for instructions encoded with vm = 0 */
+val illegal_vd_masked : regidx -> bool
+function illegal_vd_masked(vd) = {
+  not(valid_vtype()) | vd == 0b00000
+}
+
+/* c. Unmasked check for:
+ *  1. instructions encoded with vm = 1
+ *  2. instructions with scalar rd: vcpop.m, vfirst.m
+ *  3. instructions with vs3 rather than vd: vector stores
+ *  4. vd as mask register (eew = 1): 
+ *     vmadc.vvm/vxm/vim, vmsbc.vvm/vxm, mask logical, integer compare, vlm.v, vsm.v
+ */
+val illegal_vd_unmasked : unit -> bool
+function illegal_vd_unmasked() = {
+  not(valid_vtype())
+}
+
+/* d. Variable width check for:
+ *  1. integer/fixed-point widening/narrowing instructions
+ *  2. vector integer extension: vzext, vsext
+ */
+val illegal_variable_width : (regidx, bits(1), int, int) -> bool
+function illegal_variable_width(vd, vm, SEW_new, LMUL_pow_new) = {
+  not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_eew_emul(SEW_new, LMUL_pow_new))
+}
+
+/* e. Normal check for reduction instructions:
+ *  The destination vector register can overlap the source operands, including the mask register.
+ *  Vector reduction operations raise an illegal instruction exception if vstart is non-zero.
+ */
+val illegal_reduction : unit -> bool
+function illegal_reduction() = {
+  not(valid_vtype()) | not(assert_vstart(0))
+}
+
+/* f. Variable width check for widening reduction instructions */  
+val illegal_reduction_widen : (int, int) -> bool
+function illegal_reduction_widen(SEW_widen, LMUL_pow_widen) = {
+  not(valid_vtype()) | not(assert_vstart(0)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen))
+}
+
+/* g. Normal check for floating-point instructions */
+val illegal_fp_normal : (regidx, bits(1), {|8, 16, 32, 64|}, bits(3)) -> bool
+function illegal_fp_normal(vd, vm, SEW, rm_3b) = {
+  not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b))
+}
+
+/* h. Masked check for floating-point instructions encoded with vm = 0 */
+val illegal_fp_vd_masked : (regidx, {|8, 16, 32, 64|}, bits(3)) -> bool
+function illegal_fp_vd_masked(vd, SEW, rm_3b) = {
+  not(valid_vtype()) | vd == 0b00000 | not(valid_fp_op(SEW, rm_3b))
+}
+
+/* i. Unmasked check for floating-point instructions encoded with vm = 1 */
+val illegal_fp_vd_unmasked : ({|8, 16, 32, 64|}, bits(3)) -> bool
+function illegal_fp_vd_unmasked(SEW, rm_3b) = {
+  not(valid_vtype()) | not(valid_fp_op(SEW, rm_3b))
+}
+
+/* j. Variable width check for floating-point widening/narrowing instructions */
+val illegal_fp_variable_width : (regidx, bits(1), {|8, 16, 32, 64|}, bits(3), int, int) -> bool
+function illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_new, LMUL_pow_new) = {
+  not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) | 
+  not(valid_eew_emul(SEW_new, LMUL_pow_new))
+}
+
+/* k. Normal check for floating-point reduction instructions */
+val illegal_fp_reduction : ({|8, 16, 32, 64|}, bits(3)) -> bool
+function illegal_fp_reduction(SEW, rm_3b) = {
+  not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b))
+}
+
+/* l. Variable width check for floating-point widening reduction instructions */
+val illegal_fp_reduction_widen : ({|8, 16, 32, 64|}, bits(3), int, int) -> bool
+function illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) = {
+  not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b)) |
+  not(valid_eew_emul(SEW_widen, LMUL_pow_widen))
+}
+
 /* Scalar register shaping */
 val get_scalar : forall 'n, 'n >= 8. (regidx, int('n)) -> bits('n) effect {escape, rreg}
 function get_scalar(rs1, SEW) = {

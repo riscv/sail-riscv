@@ -153,7 +153,7 @@ function clause execute(VLETYPE(vm, rs1, width, vd)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
-  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vle(vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -230,7 +230,7 @@ function clause execute(VSETYPE(vm, rs1, width, vs3)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
-  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
   process_vse(vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -301,7 +301,7 @@ function clause execute(VLSETYPE(vm, rs2, rs1, width, vd)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
-  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlse(vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
@@ -379,7 +379,7 @@ function clause execute(VSSETYPE(vm, rs2, rs1, width, vs3)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
-  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
   process_vsse(vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
@@ -450,7 +450,7 @@ function clause execute(VLUXEITYPE(vm, vs2, rs1, width, vd)) = {
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
 
-  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxei(vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
 }
@@ -473,7 +473,7 @@ function clause execute(VLOXEITYPE(vm, vs2, rs1, width, vd)) = {
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
 
-  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxei(vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
 }
@@ -544,7 +544,7 @@ function clause execute(VSUXEITYPE(vm, vs2, rs1, width, vs3)) = {
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
 
-  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
   process_vsxei(vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
 }
@@ -567,7 +567,7 @@ function clause execute(VSOXEITYPE(vm, vs2, rs1, width, vs3)) = {
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
 
-  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
   process_vsxei(vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
 }
@@ -659,7 +659,7 @@ function clause execute(VLEFFTYPE(vm, rs1, width, vd)) = {
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
-  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vleff(vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -739,7 +739,7 @@ function clause execute(VLSEGTYPE(nf, vm, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW); /* # of element of each register group */
   let nf_int = nfields_int(nf);
 
-  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlseg(nf_int, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -832,7 +832,7 @@ function clause execute(VLSEGFFTYPE(nf, vm, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
 
-  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlsegff(nf_int, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -904,7 +904,7 @@ function clause execute(VSSEGTYPE(nf, vm, rs1, width, vs3)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
 
-  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
   process_vsseg(nf_int, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -970,7 +970,7 @@ function clause execute(VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
 
-  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlsseg(nf_int, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
@@ -1045,7 +1045,7 @@ function clause execute(VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
 
-  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
   process_vssseg(nf_int, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
@@ -1112,7 +1112,7 @@ function clause execute(VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
   let nf_int = nfields_int(nf);
 
-  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxseg(nf_int, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
 }
@@ -1136,7 +1136,7 @@ function clause execute(VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
   let nf_int = nfields_int(nf);
 
-  if not(valid_vtype()) | not(valid_rd_mask(vd, vm)) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxseg(nf_int, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
 }
@@ -1212,7 +1212,7 @@ function clause execute(VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
   let nf_int = nfields_int(nf);
 
-  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
   process_vsxseg(nf_int, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
 }
@@ -1236,7 +1236,7 @@ function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
   let nf_int = nfields_int(nf);
 
-  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
   process_vsxseg(nf_int, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
 }
@@ -1520,7 +1520,7 @@ function clause execute(VMTYPE(rs1, vd_or_vs3, op)) = {
   let tmp = unsigned(vl);
   let num_elem : int = if tmp % 8 == 0 then tmp / 8 else tmp / 8 + 1;
 
-  if not(valid_vtype()) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
   /* unmask vle8 except that the effective vector length is evl=ceil(vl/8) */
   assert(num_elem >= 0);
