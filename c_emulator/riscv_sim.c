@@ -911,8 +911,8 @@ void run_sail(void)
     { /* perform event processing */
       // TODO:  Remove/replace the following code
       if (c_hpmcounters_enabled() ) { 
-        process_hpm_events(); 
         signal_platform_events();
+        process_hpm_events(); 
       }
     }
     if (stepped) {

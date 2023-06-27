@@ -117,19 +117,32 @@ struct riscv_hpm_event = {
 register platform_events : vector(14, dec, riscv_hpm_event) = [
 //register platform_events : vector(14, inc, riscv_hpm_event) = [
     struct { event = E_last,          plat_event_id = to_bits(sizeof(xlen),  0 ) },   // 0        // 14       // This should be the last entry.
-    struct { event = E_event_branch,  plat_event_id = to_bits(sizeof(xlen),  15 ) },  // 29       // 1
-    struct { event = E_event_jal,     plat_event_id = to_bits(sizeof(xlen),  14 ) },  // 28       // 2
-    struct { event = E_event_jalr,    plat_event_id = to_bits(sizeof(xlen),  13 ) },  // 27       // 3
-    struct { event = E_event_auipc,   plat_event_id = to_bits(sizeof(xlen),  12 ) },  // 26       // 4
-    struct { event = E_event_load,    plat_event_id = to_bits(sizeof(xlen),  11 ) },  // 25       // 5
-    struct { event = E_event_store,   plat_event_id = to_bits(sizeof(xlen),  10 ) },  // 24       // 6
+//  struct { event = E_event_branch,  plat_event_id = to_bits(sizeof(xlen),  15 ) },  // 29       // 1
+//  struct { event = E_event_jal,     plat_event_id = to_bits(sizeof(xlen),  14 ) },  // 28       // 2
+//  struct { event = E_event_jalr,    plat_event_id = to_bits(sizeof(xlen),  13 ) },  // 27       // 3
+//  struct { event = E_event_auipc,   plat_event_id = to_bits(sizeof(xlen),  12 ) },  // 26       // 4
+//  struct { event = E_event_load,    plat_event_id = to_bits(sizeof(xlen),  11 ) },  // 25       // 5
+//  struct { event = E_event_store,   plat_event_id = to_bits(sizeof(xlen),  10 ) },  // 24       // 6
+//  struct { event = E_event_lr,      plat_event_id = to_bits(sizeof(xlen),  9  ) },  // 23       // 7
+//  struct { event = E_event_sc,      plat_event_id = to_bits(sizeof(xlen),  8  ) }, // 22       // 8
+//  struct { event = E_event_amo,     plat_event_id = to_bits(sizeof(xlen),  7  ) }, // 21       // 9
+//  struct { event = E_event_shift,   plat_event_id = to_bits(sizeof(xlen),  6  ) }, // 20       // 10
+//  struct { event = E_event_mulDiv,  plat_event_id = to_bits(sizeof(xlen),  5  ) }, // 19       // 11
+//  struct { event = E_event_fp,      plat_event_id = to_bits(sizeof(xlen),  4  ) }, // 18       // 12
+//  struct { event = E_event_fence,   plat_event_id = to_bits(sizeof(xlen),  3  ) }  // 17       // 13
+    struct { event = E_event_branch,  plat_event_id = to_bits(sizeof(xlen),  3  ) },  // 29       // 1
+    struct { event = E_event_jal,     plat_event_id = to_bits(sizeof(xlen),  4  ) },  // 28       // 2
+    struct { event = E_event_jalr,    plat_event_id = to_bits(sizeof(xlen),  5  ) },  // 27       // 3
+    struct { event = E_event_auipc,   plat_event_id = to_bits(sizeof(xlen),  6  ) },  // 26       // 4
+    struct { event = E_event_load,    plat_event_id = to_bits(sizeof(xlen),  7  ) },  // 25       // 5
+    struct { event = E_event_store,   plat_event_id = to_bits(sizeof(xlen),  8  ) },  // 24       // 6
     struct { event = E_event_lr,      plat_event_id = to_bits(sizeof(xlen),  9  ) },  // 23       // 7
-    struct { event = E_event_sc,      plat_event_id = to_bits(sizeof(xlen),  8  ) }, // 22       // 8
-    struct { event = E_event_amo,     plat_event_id = to_bits(sizeof(xlen),  7  ) }, // 21       // 9
-    struct { event = E_event_shift,   plat_event_id = to_bits(sizeof(xlen),  6  ) }, // 20       // 10
-    struct { event = E_event_mulDiv,  plat_event_id = to_bits(sizeof(xlen),  5  ) }, // 19       // 11
-    struct { event = E_event_fp,      plat_event_id = to_bits(sizeof(xlen),  4  ) }, // 18       // 12
-    struct { event = E_event_fence,   plat_event_id = to_bits(sizeof(xlen),  3  ) }  // 17       // 13
+    struct { event = E_event_sc,      plat_event_id = to_bits(sizeof(xlen),  10 ) }, // 22       // 8
+    struct { event = E_event_amo,     plat_event_id = to_bits(sizeof(xlen),  11 ) }, // 21       // 9
+    struct { event = E_event_shift,   plat_event_id = to_bits(sizeof(xlen),  12 ) }, // 20       // 10
+    struct { event = E_event_mulDiv,  plat_event_id = to_bits(sizeof(xlen),  13 ) }, // 19       // 11
+    struct { event = E_event_fp,      plat_event_id = to_bits(sizeof(xlen),  14 ) }, // 18       // 12
+    struct { event = E_event_fence,   plat_event_id = to_bits(sizeof(xlen),  18 ) }  // 17       // 13
 //  struct { event = E_not_defined,   plat_event_id = 16 }, // 16
 //  struct { event = E_not_defined,   plat_event_id = 17 }, // 15
 //  struct { event = E_event_fence,   plat_event_id = 18 }, // 14
@@ -356,7 +369,7 @@ function slow_process_hpm_selector (plat_event_id) -> unit = {
     };
 }
 
-val sail_process_hpm_events :                                      (unit) -> unit 
+val sail_process_hpm_events : (unit) -> unit 
 function sail_process_hpm_events (unit) -> unit = {
     acc : bits(32) = hpm_eventset;
 

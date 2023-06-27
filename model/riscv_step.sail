@@ -145,9 +145,9 @@ function step(step_no : int) -> bool = {
   /* for step extensions */
   ext_post_step_hook();
 
-  signal_platform_events();
   /* TODO: remove the conditional once the C implemnation of hpmcounters is removed */
   if ( not (c_hpmcounters_enabled() )) then {
+    signal_platform_events();
     sail_process_hpm_events();
   };
 

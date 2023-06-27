@@ -78,6 +78,7 @@ unit riscv_write_mhpmevent(mach_bits regidx, mach_bits new_event_id, mach_bits p
 // Assumes the array is terminated by the entry for E_last.
 void init_platform_events(riscv_hpm_event *events) {
   hpm_eventset = 0;
+  C_trace(__FILE__, __LINE__, __FUNCTION__, "hpm_eventset has been cleared\n");
   usable_event_map = true;
 
   bzero(event_map, sizeof(event_map));
@@ -105,6 +106,7 @@ void reset_platform_events(void) {
   }
   hpm_eventset = 0;
   usable_event_map = true;
+  C_trace(__FILE__, __LINE__, __FUNCTION__, "hpm_eventset has been cleared\n");
 }
 
 static const int nregs = 29;
@@ -113,18 +115,22 @@ void increment_hpm_counter(uint64_t regidx) {
   uint64_t counterin = z_get_Counterin_bits(zmcountinhibit);
   int inhibit = 0x1 & (counterin >> (regidx + 3));
   C_trace(__FILE__, __LINE__, __FUNCTION__, "\n");
-  printf("%s, %d, %s:\n", __FILE__, __LINE__, __FUNCTION__);
   if (!inhibit) {
     uint64_t *cntr = &zmhpmcounters.data[regidx];
-    C_trace(__FILE__, __LINE__, __FUNCTION__, "\n");
+    char s[1024]; sprintf(s, "regidx: %ld. count: %ld\n", regidx, *cntr);
+    C_trace(__FILE__, __LINE__, __FUNCTION__, s);
     (*cntr)++;
   }
 }
 
 static void slow_process_hpm_selector(uint64_t plat_event_id) {
+  char s[1024]; sprintf(s, "plat_event_id: %ld\n", plat_event_id);
+  C_trace(__FILE__, __LINE__, __FUNCTION__, s);
   // check all selector registers
   for (uint64_t idx = 0; idx < nregs; idx++) {
     uint64_t pevid = zmhpmevents.data[idx]; // XXX: Test for RV32
+    char s[1024]; sprintf(s, "pevid: %ld\n", pevid);
+    C_trace(__FILE__, __LINE__, __FUNCTION__, s);
     if (pevid == plat_event_id) {
       increment_hpm_counter(idx);
     }
@@ -137,7 +143,8 @@ void process_hpm_events(void) {
   char s[1024]; sprintf(s, "hpm_eventset: 0x%lx\n", hpm_eventset);
   C_trace(__FILE__, __LINE__, __FUNCTION__, s);
   for (int eid = 0; eid < E_last; eid++) {
-    C_trace(__FILE__, __LINE__, __FUNCTION__, "\n");
+    char s[1024]; sprintf(s, "acc: 0x%lx.  eid: %d\n", acc, eid);
+    C_trace(__FILE__, __LINE__, __FUNCTION__, s);
 //    if (acc & 0x1) {
     if ( (acc >> eid) & 0x1) {
       C_trace(__FILE__, __LINE__, __FUNCTION__, "\n");
@@ -151,7 +158,7 @@ void process_hpm_events(void) {
         slow_process_hpm_selector(ei->plat_event_id);
       }
     }
-    acc >>= 1;
   }
   hpm_eventset = 0;
+  C_trace(__FILE__, __LINE__, __FUNCTION__, "hpm_eventset has been cleared\n");
 }
