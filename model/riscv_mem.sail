@@ -158,7 +158,7 @@ function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_
 $ifdef RVFI_DII
 val rvfi_read : forall 'n, 'n > 0. (xlenbits, atom('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit effect {wreg}
 function rvfi_read (addr, width, result) = {
-  rvfi_mem_data->rvfi_mem_addr() = EXTZ(addr);
+  rvfi_mem_data->rvfi_mem_addr() = zero_extend(addr);
   rvfi_mem_data_present = true;
   match result {
     /* TODO: report tag bit for capability writes and extend mask by one bit. */
@@ -232,7 +232,7 @@ function mem_write_ea (addr, width, aq, rl, con) = {
 $ifdef RVFI_DII
 val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, atom('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit effect {wreg}
 function rvfi_write (addr, width, value, meta, result) = {
-  rvfi_mem_data->rvfi_mem_addr() = EXTZ(addr);
+  rvfi_mem_data->rvfi_mem_addr() = zero_extend(addr);
   rvfi_mem_data_present = true;
   match result {
     /* Log only the memory address (without the value) if the write fails. */

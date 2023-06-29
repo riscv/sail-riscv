@@ -287,9 +287,9 @@ function processPending(xip : Minterrupts, xie : Minterrupts, xideleg : xlenbits
   /* the others are delegated */
   let  effective_delg = xip.bits() & xideleg;
   /* we have pending interrupts if this privilege is enabled */
-  if      priv_enabled & (effective_pend != EXTZ(0b0))
+  if      priv_enabled & (effective_pend != zero_extend(0b0))
   then    Ints_Pending(effective_pend)
-  else if effective_delg != EXTZ(0b0)
+  else if effective_delg != zero_extend(0b0)
   then    Ints_Delegated(effective_delg)
   else    Ints_Empty()
 }
@@ -304,7 +304,7 @@ function processPending(xip : Minterrupts, xie : Minterrupts, xideleg : xlenbits
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   assert(haveUsrMode(), "no user mode: M/U or M/S/U system required");
   let effective_pending = mip.bits() & mie.bits();
-  if  effective_pending == EXTZ(0b0) then None() /* fast path */
+  if  effective_pending == zero_extend(0b0) then None() /* fast path */
   else {
     /* Higher privileges than the current one are implicitly enabled,
      * while lower privileges are blocked.  An unsupported privilege is
@@ -373,7 +373,7 @@ union ctl_result = {
 function tval(excinfo : option(xlenbits)) -> xlenbits = {
   match (excinfo) {
     Some(e) => e,
-    None()  => EXTZ(0b0)
+    None()  => zero_extend(0b0)
   }
 }
 
@@ -402,7 +402,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
   match (del_priv) {
     Machine => {
        mcause->IsInterrupt() = bool_to_bits(intr);
-       mcause->Cause()       = EXTZ(c);
+       mcause->Cause()       = zero_extend(c);
 
        mstatus->MPIE() = mstatus.MIE();
        mstatus->MIE()  = 0b0;
@@ -423,7 +423,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        assert (haveSupMode(), "no supervisor mode present for delegation");
 
        scause->IsInterrupt() = bool_to_bits(intr);
-       scause->Cause()       = EXTZ(c);
+       scause->Cause()       = zero_extend(c);
 
        mstatus->SPIE() = mstatus.SIE();
        mstatus->SIE()  = 0b0;
@@ -448,7 +448,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        assert(haveUsrMode(), "no user mode present for delegation");
 
        ucause->IsInterrupt() = bool_to_bits(intr);
-       ucause->Cause()       = EXTZ(c);
+       ucause->Cause()       = zero_extend(c);
 
        mstatus->UPIE() = mstatus.UIE();
        mstatus->UIE()  = 0b0;
@@ -551,7 +551,7 @@ function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
 function init_sys() -> unit = {
   cur_privilege = Machine;
 
-  mhartid     = EXTZ(0b0);
+  mhartid     = zero_extend(0b0);
 
   misa->MXL() = arch_to_bits(if sizeof(xlen) == 32 then RV32 else RV64);
   misa->A()   = 0b1;                            /* atomics */
@@ -578,31 +578,31 @@ function init_sys() -> unit = {
   if sizeof(xlen) == 64 then {
     mstatus = Mk_Mstatus([mstatus.bits() with 37 .. 36 = 0b00])
   };
-  mstatush->bits() = EXTZ(0b0);
+  mstatush->bits() = zero_extend(0b0);
 
-  mip->bits()     = EXTZ(0b0);
-  mie->bits()     = EXTZ(0b0);
-  mideleg->bits() = EXTZ(0b0);
-  medeleg->bits() = EXTZ(0b0);
-  mtvec->bits()   = EXTZ(0b0);
-  mcause->bits()  = EXTZ(0b0);
-  mepc            = EXTZ(0b0);
-  mtval           = EXTZ(0b0);
-  mscratch        = EXTZ(0b0);
+  mip->bits()     = zero_extend(0b0);
+  mie->bits()     = zero_extend(0b0);
+  mideleg->bits() = zero_extend(0b0);
+  medeleg->bits() = zero_extend(0b0);
+  mtvec->bits()   = zero_extend(0b0);
+  mcause->bits()  = zero_extend(0b0);
+  mepc            = zero_extend(0b0);
+  mtval           = zero_extend(0b0);
+  mscratch        = zero_extend(0b0);
 
-  mcycle          = EXTZ(0b0);
-  mtime           = EXTZ(0b0);
+  mcycle          = zero_extend(0b0);
+  mtime           = zero_extend(0b0);
 
-  mcounteren->bits() = EXTZ(0b0);
+  mcounteren->bits() = zero_extend(0b0);
 
-  minstret           = EXTZ(0b0);
+  minstret           = zero_extend(0b0);
   minstret_increment = true;
 
   init_pmp();
 
   // log compatibility with spike
   if   get_config_print_reg()
-  then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(EXTZ(0b0) : xlenbits) ^ ")")
+  then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()) ^ " (input: " ^ BitStr(zero_extend(0b0) : xlenbits) ^ ")")
 }
 
 /* memory access exceptions, defined here for use by the platform model. */

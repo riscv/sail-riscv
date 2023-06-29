@@ -297,7 +297,7 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
    * that does not have a matching bitfield entry. All bits above 32 are handled
    * explicitly later.
    */
-  let m : Mstatus = Mk_Mstatus(EXTZ(v[22 .. 11] @ 0b00 @ v[8 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
+  let m : Mstatus = Mk_Mstatus(zero_extend(v[22 .. 11] @ 0b00 @ v[8 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
 
   /* We don't have any extension context yet. */
   let m = update_XS(m, extStatus_to_bits(Off));
@@ -480,7 +480,7 @@ function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
   match (trapVectorMode_of_bits(m.Mode())) {
     TV_Direct => Some(base),
     TV_Vector => if   c.IsInterrupt() == 0b1
-                 then Some(base + (EXTZ(c.Cause()) << 2))
+                 then Some(base + (zero_extend(c.Cause()) << 2))
                  else Some(base),
     TV_Reserved => None()
   }
@@ -498,11 +498,11 @@ function legalize_xepc(v : xlenbits) -> xlenbits =
      XXX specification says this legalization should be done on read */
   if   (sys_enable_writable_misa() & sys_enable_rvc()) | misa.C() == 0b1
   then [v with 0 = bitzero]
-  else v & EXTS(0b100)
+  else v & sign_extend(0b100)
 
 /* masking for reads to xepc */
 function pc_alignment_mask() -> xlenbits =
-  ~(EXTZ(if misa.C() == 0b1 then 0b00 else 0b10))
+  ~(zero_extend(if misa.C() == 0b1 then 0b00 else 0b10))
 
 /* auxiliary exception registers */
 
@@ -612,7 +612,7 @@ function set_sstatus_UXL(s : Sstatus, a : arch_xlen) -> Sstatus = {
 }
 
 function lower_mstatus(m : Mstatus) -> Sstatus = {
-  let s = Mk_Sstatus(EXTZ(0b0));
+  let s = Mk_Sstatus(zero_extend(0b0));
   let s = update_SD(s, m.SD());
   let s = set_sstatus_UXL(s, get_mstatus_UXL(m));
   let s = update_MXR(s, m.MXR());
@@ -663,7 +663,7 @@ bitfield Sedeleg : xlenbits = {
 register sedeleg : Sedeleg
 
 function legalize_sedeleg(s : Sedeleg, v : xlenbits) -> Sedeleg = {
-  Mk_Sedeleg(EXTZ(v[8..0]))
+  Mk_Sedeleg(zero_extend(v[8..0]))
 }
 
 bitfield Sinterrupts : xlenbits = {
@@ -679,7 +679,7 @@ bitfield Sinterrupts : xlenbits = {
 
 /* Provides the sip read view of mip (m) as delegated by mideleg (d). */
 function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
-  let s : Sinterrupts = Mk_Sinterrupts(EXTZ(0b0));
+  let s : Sinterrupts = Mk_Sinterrupts(zero_extend(0b0));
   let s = update_SEI(s, m.SEI() & d.SEI());
   let s = update_STI(s, m.STI() & d.STI());
   let s = update_SSI(s, m.SSI() & d.SSI());
@@ -692,7 +692,7 @@ function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
 
 /* Provides the sie read view of mie (m) as delegated by mideleg (d). */
 function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
-  let s : Sinterrupts = Mk_Sinterrupts(EXTZ(0b0));
+  let s : Sinterrupts = Mk_Sinterrupts(zero_extend(0b0));
   let s = update_SEI(s, m.SEI() & d.SEI());
   let s = update_STI(s, m.STI() & d.STI());
   let s = update_SSI(s, m.SSI() & d.SSI());
@@ -825,7 +825,7 @@ function read_seed_csr() -> xlenbits = {
   let reserved_bits : bits(6) = 0b000000;
   let custom_bits : bits(8) = 0x00;
   let seed : bits(16) = get_16_random_bits();
-  EXTZ(opst_code(ES16) @ reserved_bits @ custom_bits @ seed)
+  zero_extend(opst_code(ES16) @ reserved_bits @ custom_bits @ seed)
 }
 
 /* Writes to the seed CSR are ignored */

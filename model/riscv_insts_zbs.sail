@@ -96,11 +96,11 @@ mapping clause assembly = ZBS_IOP(shamt, rs1, rd, op)
 function clause execute (ZBS_IOP(shamt, rs1, rd, op)) = {
   let rs1_val = X(rs1);
   let mask : xlenbits = if sizeof(xlen) == 32
-                        then EXTZ(0b1) << shamt[4..0]
-                        else EXTZ(0b1) << shamt;
+                        then zero_extend(0b1) << shamt[4..0]
+                        else zero_extend(0b1) << shamt;
   let result : xlenbits = match op {
     RISCV_BCLRI => rs1_val & ~(mask),
-    RISCV_BEXTI => EXTZ(bool_to_bits((rs1_val & mask) != zeros())),
+    RISCV_BEXTI => zero_extend(bool_to_bits((rs1_val & mask) != zeros())),
     RISCV_BINVI => rs1_val ^ mask,
     RISCV_BSETI => rs1_val | mask
   };
@@ -137,11 +137,11 @@ function clause execute (ZBS_RTYPE(rs2, rs1, rd, op)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   let mask : xlenbits = if sizeof(xlen) == 32
-                        then EXTZ(0b1) << rs2_val[4..0]
-                        else EXTZ(0b1) << rs2_val[5..0];
+                        then zero_extend(0b1) << rs2_val[4..0]
+                        else zero_extend(0b1) << rs2_val[5..0];
   let result : xlenbits = match op {
     RISCV_BCLR => rs1_val & ~(mask),
-    RISCV_BEXT => EXTZ(bool_to_bits((rs1_val & mask) != zeros())),
+    RISCV_BEXT => zero_extend(bool_to_bits((rs1_val & mask) != zeros())),
     RISCV_BINV => rs1_val ^ mask,
     RISCV_BSET => rs1_val | mask
   };

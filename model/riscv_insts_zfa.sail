@@ -576,7 +576,7 @@ mapping clause assembly = RISCV_FMVH_X_D(rs1, rd)
 
 function clause execute (RISCV_FMVH_X_D(rs1, rd)) = {
   let rs1_val_D           = F_D(rs1)[63..32];
-  let rd_val_X : xlenbits = EXTS(rs1_val_D);
+  let rd_val_X : xlenbits = sign_extend(rs1_val_D);
   X(rd)                   = rd_val_X;
   RETIRE_SUCCESS
 }
@@ -628,7 +628,7 @@ function clause execute(RISCV_FLEQ_H(rs2, rs1, rd)) = {
       riscv_f16Le_quiet   (rs1_val_H, rs2_val_H);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -652,7 +652,7 @@ function clause execute(RISCV_FLTQ_H(rs2, rs1, rd)) = {
       riscv_f16Lt_quiet   (rs1_val_H, rs2_val_H);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -676,7 +676,7 @@ function clause execute(RISCV_FLEQ_S(rs2, rs1, rd)) = {
       riscv_f32Le_quiet   (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -700,7 +700,7 @@ function clause execute(RISCV_FLTQ_S(rs2, rs1, rd)) = {
       riscv_f32Lt_quiet   (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -725,7 +725,7 @@ function clause execute(RISCV_FLEQ_D(rs2, rs1, rd)) = {
       riscv_f64Le_quiet   (rs1_val_D, rs2_val_D);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -749,7 +749,7 @@ function clause execute(RISCV_FLTQ_D(rs2, rs1, rd)) = {
       riscv_f64Lt_quiet   (rs1_val_D, rs2_val_D);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -798,7 +798,7 @@ function fcvtmod_helper(x64) = {
 
     /* Perform the exponentation on the fixed-point mantissa and
        extract the integer part */
-    let fixedpoint : bits(84) = EXTZ(true_mant) << true_exp;
+    let fixedpoint : bits(84) = zero_extend(true_mant) << true_exp;
     let integer    = fixedpoint[83..52];
     let fractional = fixedpoint[51..0];
 
@@ -829,6 +829,6 @@ function clause execute(RISCV_FCVTMOD_W_D(rs1, rd)) = {
   let rs1_val_D = F_D(rs1);
   let (fflags, rd_val) = fcvtmod_helper(rs1_val_D);
   write_fflags(fflags);
-  X(rd) = EXTS(rd_val);
+  X(rd) = sign_extend(rd_val);
   RETIRE_SUCCESS
 }

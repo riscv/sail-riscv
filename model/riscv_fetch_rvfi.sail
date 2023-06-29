@@ -70,9 +70,9 @@
 
 function fetch() -> FetchResult = {
   rvfi_inst_data->rvfi_order()    = minstret;
-  rvfi_pc_data->rvfi_pc_rdata() = EXTZ(get_arch_pc());
-  rvfi_inst_data->rvfi_mode() = EXTZ(privLevel_to_bits(cur_privilege));
-  rvfi_inst_data->rvfi_ixl() = EXTZ(misa.MXL());
+  rvfi_pc_data->rvfi_pc_rdata() = zero_extend(get_arch_pc());
+  rvfi_inst_data->rvfi_mode() = zero_extend(privLevel_to_bits(cur_privilege));
+  rvfi_inst_data->rvfi_ixl() = zero_extend(misa.MXL());
 
   /* First allow extensions to check pc */
   match ext_fetch_check_pc(PC, PC) {
@@ -85,7 +85,7 @@ function fetch() -> FetchResult = {
         TR_Failure(e, _) => F_Error(e, PC),
         TR_Address(_, _) => {
           let i = rvfi_instruction.rvfi_insn();
-          rvfi_inst_data->rvfi_insn()   = EXTZ(i);
+          rvfi_inst_data->rvfi_insn()   = zero_extend(i);
           if   (i[1 .. 0] != 0b11)
           then F_RVC(i[15 .. 0])
           else {

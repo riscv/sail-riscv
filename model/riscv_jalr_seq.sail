@@ -77,7 +77,7 @@ function clause execute (RISCV_JALR(imm, rs1, rd)) = {
  * some manner, but for now, we just keep a reordered definition to improve simulator
  * performance.
  */
-  let t : xlenbits = X(rs1) + EXTS(imm);
+  let t : xlenbits = X(rs1) + sign_extend(imm);
   /* Extensions get the first checks on the prospective target address. */
   match ext_control_check_addr(t) {
     Ext_ControlAddr_Error(e) => {

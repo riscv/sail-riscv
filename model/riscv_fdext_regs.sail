@@ -356,7 +356,7 @@ function wF_or_X_H(i, data) = {
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_H(i) = data
-  else X(i) = EXTS(data)
+  else X(i) = sign_extend(data)
 }
 
 val wF_or_X_S : (bits(5), bits(32)) -> unit effect {escape, wreg}
@@ -365,7 +365,7 @@ function wF_or_X_S(i, data) = {
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_S(i) = data
-  else X(i) = EXTS(data)
+  else X(i) = sign_extend(data)
 }
 
 val wF_or_X_D : (bits(5), bits(64)) -> unit effect {escape, wreg}
@@ -375,7 +375,7 @@ function wF_or_X_D(i, data) = {
   if   sys_enable_fdext()
   then F_D(i) = data
   else if sizeof(xlen) >= 64
-  then X(i) = EXTS(data)
+  then X(i) = sign_extend(data)
   else {
     assert (i[0] == bitzero);
     if i != zeros() then {

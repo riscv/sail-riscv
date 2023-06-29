@@ -89,7 +89,7 @@ val make_TLB_Entry : forall 'asidlen 'valen 'palen 'ptelen, 'valen > 0.
 function make_TLB_Entry(asid, global, vAddr, pAddr, pte, level, pteAddr, levelBitSize) = {
   let shift : nat = PAGESIZE_BITS + (level * levelBitSize);
   /* fixme hack: use a better idiom for masks */
-  let vAddrMask  : bits('valen) = shiftl(vAddr ^ vAddr ^ EXTZ(0b1), shift) - 1;
+  let vAddrMask  : bits('valen) = shiftl(vAddr ^ vAddr ^ zero_extend(0b1), shift) - 1;
   let vMatchMask : bits('valen) = ~ (vAddrMask);
   struct {
     asid = asid,

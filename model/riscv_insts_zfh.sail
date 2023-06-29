@@ -478,7 +478,7 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FEQ_H)) = {
       riscv_f16Eq (rs1_val_H, rs2_val_H);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -490,7 +490,7 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FLT_H)) = {
       riscv_f16Lt (rs1_val_H, rs2_val_H);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -502,7 +502,7 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FLE_H)) = {
       riscv_f16Le (rs1_val_H, rs2_val_H);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -659,7 +659,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_W_H)) = {
       let (fflags, rd_val_W) = riscv_f16ToI32 (rm_3b, rs1_val_H);
 
       write_fflags(fflags);
-      X(rd) = EXTS (rd_val_W);
+      X(rd) = sign_extend (rd_val_W);
       RETIRE_SUCCESS
     }
   }
@@ -674,7 +674,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_WU_H)) = {
       let (fflags, rd_val_WU) = riscv_f16ToUi32 (rm_3b, rs1_val_H);
 
       write_fflags(fflags);
-      X(rd) = EXTS (rd_val_WU);
+      X(rd) = sign_extend (rd_val_WU);
       RETIRE_SUCCESS
     }
   }
@@ -781,7 +781,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_L_H)) = {
       let (fflags, rd_val_L) = riscv_f16ToI64 (rm_3b, rs1_val_H);
 
       write_fflags(fflags);
-      X(rd) = EXTS(rd_val_L);
+      X(rd) = sign_extend(rd_val_L);
       RETIRE_SUCCESS
     }
   }
@@ -797,7 +797,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_LU_H)) = {
       let (fflags, rd_val_LU) = riscv_f16ToUi64 (rm_3b, rs1_val_H);
 
       write_fflags(fflags);
-      X(rd) = EXTS(rd_val_LU);
+      X(rd) = sign_extend(rd_val_LU);
       RETIRE_SUCCESS
     }
   }
@@ -967,13 +967,13 @@ function clause execute (F_UN_TYPE_H(rs1, rd, FCLASS_H)) = {
     else if f_is_QNaN_H        (rs1_val_H) then 0b_10_0000_0000
     else zeros();
 
-  X(rd) = EXTZ (rd_val_10b);
+  X(rd) = zero_extend (rd_val_10b);
   RETIRE_SUCCESS
 }
 
 function clause execute (F_UN_TYPE_H(rs1, rd, FMV_X_H)) = {
   let rs1_val_H            = F(rs1)[15..0];
-  let rd_val_X  : xlenbits = EXTS(rs1_val_H);
+  let rd_val_X  : xlenbits = sign_extend(rs1_val_H);
   X(rd) = rd_val_X;
   RETIRE_SUCCESS
 }

@@ -186,7 +186,7 @@ function clause execute (MULW(rs2, rs1, rd)) = {
     let rs2_int : int = signed(rs2_val);
     /* to_bits requires expansion to 64 bits followed by truncation */
     let result32 = to_bits(64, rs1_int * rs2_int)[31..0];
-    let result : xlenbits = EXTS(result32);
+    let result : xlenbits = sign_extend(result32);
     X(rd) = result;
     RETIRE_SUCCESS
   } else {
@@ -217,7 +217,7 @@ function clause execute (DIVW(rs2, rs1, rd, s)) = {
     let q : int = if rs2_int == 0 then -1 else quot_round_zero(rs1_int, rs2_int);
     /* check for signed overflow */
     let q': int = if s & q > (2 ^ 31 - 1) then  (0 - 2^31) else q;
-    X(rd) = EXTS(to_bits(32, q'));
+    X(rd) = sign_extend(to_bits(32, q'));
     RETIRE_SUCCESS
   } else {
     handle_illegal();
@@ -246,7 +246,7 @@ function clause execute (REMW(rs2, rs1, rd, s)) = {
     let rs2_int : int = if s then signed(rs2_val) else unsigned(rs2_val);
     let r : int = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
     /* signed overflow case returns zero naturally as required due to -1 divisor */
-    X(rd) = EXTS(to_bits(32, r));
+    X(rd) = sign_extend(to_bits(32, r));
     RETIRE_SUCCESS
   } else {
     handle_illegal();

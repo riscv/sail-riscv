@@ -73,10 +73,10 @@
 val walk39 : (vaddr39, AccessType(ext_access_type), Privilege, bool, bool, paddr64, nat, bool, ext_ptw) -> PTW_Result(paddr64, SV39_PTE) effect {rmem, rmemt, rreg, escape}
 function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let va = Mk_SV39_Vaddr(vaddr);
-  let pt_ofs : paddr64 = shiftl(EXTZ(shiftr(va.VPNi(), (level * SV39_LEVEL_BITS))[(SV39_LEVEL_BITS - 1) .. 0]),
+  let pt_ofs : paddr64 = shiftl(zero_extend(shiftr(va.VPNi(), (level * SV39_LEVEL_BITS))[(SV39_LEVEL_BITS - 1) .. 0]),
                                 PTE39_LOG_SIZE);
   let pte_addr = ptb + pt_ofs;
-  match (mem_read_priv(Read(Data), Supervisor, EXTZ(pte_addr), 8, false, false, false)) {
+  match (mem_read_priv(Read(Data), Supervisor, zero_extend(pte_addr), 8, false, false, false)) {
     MemException(_) => {
 /*    print("walk39(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
             ^ " pt_base=" ^ BitStr(ptb)
@@ -103,7 +103,7 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
         if isPTEPtr(pbits, ext_pte) then {
           if level > 0 then {
             /* walk down the pointer to the next level */
-            walk39(vaddr, ac, priv, mxr, do_sum, shiftl(EXTZ(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global, ext_ptw)
+            walk39(vaddr, ac, priv, mxr, do_sum, shiftl(zero_extend(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global, ext_ptw)
           } else {
             /* last-level PTE contains a pointer instead of a leaf */
 /*          print("walk39: last-level pte contains a ptr"); */
@@ -118,14 +118,14 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
             PTE_Check_Success(ext_ptw)  => {
               if level > 0 then { /* superpage */
                 /* fixme hack: to get a mask of appropriate size */
-                let mask = shiftl(pte.PPNi() ^ pte.PPNi() ^ EXTZ(0b1), level * SV39_LEVEL_BITS) - 1;
-                if (pte.PPNi() & mask) != EXTZ(0b0) then {
+                let mask = shiftl(pte.PPNi() ^ pte.PPNi() ^ zero_extend(0b1), level * SV39_LEVEL_BITS) - 1;
+                if (pte.PPNi() & mask) != zero_extend(0b0) then {
                   /* misaligned superpage mapping */
 /*                print("walk39: misaligned superpage mapping"); */
                   PTW_Failure(PTW_Misaligned(), ext_ptw)
                 } else {
                   /* add the appropriate bits of the VPN to the superpage PPN */
-                  let ppn = pte.PPNi() | (EXTZ(va.VPNi()) & mask);
+                  let ppn = pte.PPNi() | (zero_extend(va.VPNi()) & mask);
 /*                let res = append(ppn, va.PgOfs());
                   print("walk39: using superpage: pte.ppn=" ^ BitStr(pte.PPNi())
                         ^ " ppn=" ^ BitStr(ppn) ^ " res=" ^ BitStr(res)); */
@@ -191,7 +191,7 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
         PTE_Check_Failure(ext_ptw, ext_ptw_fail) => { TR_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw) },
         PTE_Check_Success(ext_ptw) => {
           match update_PTE_Bits(pteBits, ac, ext_pte) {
-            None()           => TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask), ext_ptw),
+            None()           => TR_Address(ent.pAddr | zero_extend(vAddr & ent.vAddrMask), ext_ptw),
             Some(pbits, ext) => {
               if not(plat_enable_dirty_update())
               then {
@@ -205,11 +205,11 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
                 n_ent.pte = n_pte.bits();
                 write_TLB39(idx, n_ent);
                 /* update page table */
-                match mem_write_value_priv(EXTZ(ent.pteAddr), 8, n_pte.bits(), Supervisor, false, false, false) {
+                match mem_write_value_priv(zero_extend(ent.pteAddr), 8, n_pte.bits(), Supervisor, false, false, false) {
                   MemValue(_)     => (),
                   MemException(e) => internal_error(__FILE__, __LINE__, "invalid physical address in TLB")
                 };
-                TR_Address(ent.pAddr | EXTZ(vAddr & ent.vAddrMask), ext_ptw)
+                TR_Address(ent.pAddr | zero_extend(vAddr & ent.vAddrMask), ext_ptw)
               }
             }
           }
@@ -233,7 +233,7 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
               } else {
                 w_pte : SV39_PTE = update_BITS(pte, pbits.bits());
 		w_pte : SV39_PTE = update_Ext(w_pte, ext);
-                match mem_write_value_priv(EXTZ(pteAddr), 8, w_pte.bits(), Supervisor, false, false, false) {
+                match mem_write_value_priv(zero_extend(pteAddr), 8, w_pte.bits(), Supervisor, false, false, false) {
                   MemValue(_) => {
                     add_to_TLB39(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
                     TR_Address(pAddr, ext_ptw)
