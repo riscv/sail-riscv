@@ -400,3 +400,140 @@ function sail_process_hpm_events (unit) -> unit = {
     };
     hpm_eventset = EXTZ(0x0);
 }
+
+
+// The following is patterned after riscv_events_example.c 
+
+val sail_signal_platform_events : (unit) -> unit
+function sail_signal_platform_events(unit) -> unit = {
+
+    let ast = ext_decode(instruction);
+
+    trace(__FILE__, __LINE__, to_str(ast));
+
+    // Count types of instructions.
+    match encdec(instruction) {
+        UTYPE(_, _, op)         => {
+            match op {
+                RISCV_AUIPC         => { riscv_signal_event(E_event_auipc); trace(__FILE__, __LINE__, ""); },
+                RISCV_LUI           => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+            }
+        },
+
+        RISCV_JAL(_, _)         => { riscv_signal_event(E_event_jal);  trace(__FILE__, __LINE__, ""); },
+        RISCV_JALR(_, _, _)     => { riscv_signal_event(E_event_jalr); trace(__FILE__, __LINE__, ""); },
+
+//      BTYPE(   _, _, op)       => {       // TODO:  Error does not print out file/line
+        BTYPE(_, _, _, op)       => {
+            match op {
+                RISCV_BEQ           => { riscv_signal_event(E_event_branch); trace(__FILE__, __LINE__, ""); },
+                RISCV_BNE           => { riscv_signal_event(E_event_branch); trace(__FILE__, __LINE__, ""); },
+                RISCV_BLT           => { riscv_signal_event(E_event_branch); trace(__FILE__, __LINE__, ""); },
+                RISCV_BGE           => { riscv_signal_event(E_event_branch); trace(__FILE__, __LINE__, ""); },
+                RISCV_BLTU          => { riscv_signal_event(E_event_branch); trace(__FILE__, __LINE__, ""); },
+                RISCV_BGEU          => { riscv_signal_event(E_event_branch); trace(__FILE__, __LINE__, ""); },
+            }
+
+        },
+        ITYPE(_, _, _, op)      => {
+            match op {
+                RISCV_ADDI          => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+                RISCV_SLTI          => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+                RISCV_SLTIU         => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+                RISCV_ANDI          => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+                RISCV_ORI           => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+                RISCV_XORI          => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+            }
+        },
+
+        RTYPE(_, _, _, op)       => {
+            match op {
+                RISCV_ADD           => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+                RISCV_SLT           => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+                RISCV_SLTU          => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+                RISCV_AND           => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+                RISCV_OR            => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+                RISCV_XOR           => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+                RISCV_SLL           => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+                RISCV_SRL           => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+                RISCV_SUB           => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+                RISCV_SRA           => { riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); },
+            }
+        },
+
+        LOAD(_, _, _, _, word_width, _, _)  => {
+            riscv_signal_event(E_event_load); trace(__FILE__, __LINE__, "");
+
+            /* Several other types of events might be useful to check for here:
+            *   address/address-range
+            *   misaligned
+            *   width
+            *  For now,  we're just going to count LOADs.
+            */
+        },
+
+        STORE( _, _, _, word_width, _, _)  => {
+            riscv_signal_event(E_event_store); trace(__FILE__, __LINE__, "");
+
+            /* Several other types of events might be useful to check for here:
+            *   address/address-range
+            *   misaligned
+            *   width
+            *  For now,  we're just going to count STOREs.
+            */
+        },
+
+        SHIFTIOP(_, _, _, op)   => {
+            match op {
+                RISCV_SLLI          => { riscv_signal_event(E_event_shift); trace(__FILE__, __LINE__, ""); },
+                RISCV_SRLI          => { riscv_signal_event(E_event_shift); trace(__FILE__, __LINE__, ""); },
+                RISCV_SRAI          => { riscv_signal_event(E_event_shift); trace(__FILE__, __LINE__, ""); },
+            }
+        },
+
+        FENCE(_, _)             => { 
+            riscv_signal_event(E_event_fence); trace(__FILE__, __LINE__, ""); 
+        },
+
+        FENCE_TSO(_, _)         => { 
+            riscv_signal_event(E_event_fence); trace(__FILE__, __LINE__, ""); 
+        },
+
+        FENCEI()                => { 
+            riscv_signal_event(E_event_fence); trace(__FILE__, __LINE__, ""); 
+        },
+
+        ECALL()                 => { 
+            riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); 
+        },
+
+        MRET()                  => { 
+            riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); 
+        },
+
+        SRET()                  => { 
+            riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); 
+        },
+
+        EBREAK()                => { 
+            riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); 
+        },
+
+        WFI()                   => { 
+            riscv_signal_event(E_not_defined); trace(__FILE__, __LINE__, ""); 
+        },
+
+        SFENCE_VMA(_, _)        => { 
+            riscv_signal_event(E_event_fence); trace(__FILE__, __LINE__, ""); 
+        },
+
+        _                       => print("no match")
+    }
+
+}
+
+
+
+
+
+
