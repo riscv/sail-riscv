@@ -98,14 +98,14 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
      },
      RISCV_JAL(imm, rd) => {
             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
-            let offset : bits(64) = EXTS(imm) in
+            let offset : bits(64) = sign_extend(imm) in
             Nias = [| NIAFP_concrete_address (PC + offset) |];
             ik = IK_branch();
      },
      RISCV_JALR(imm, rs, rd) => {
             if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
-            let offset : bits(64) = EXTS(imm) in
+            let offset : bits(64) = sign_extend(imm) in
             Nias = [| NIAFP_indirect_address() |];
             ik = IK_branch();
      },
@@ -113,7 +113,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
             if (rs2 == 0b00000) then () else iR = RFull(GPRstr(rs2)) :: iR;
             if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
             ik = IK_branch();
-            let offset : bits(64) = EXTS(imm) in
+            let offset : bits(64) = sign_extend(imm) in
             Nias = [| NIAFP_concrete_address(PC + offset), NIAFP_successor() |];
       },
       ITYPE(imm, rs, rd, op) => {
@@ -271,14 +271,14 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
      },
      RISCV_JAL(imm, rd) => {
 	    if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
-            let offset : bits(64) = EXTS(imm) in
+            let offset : bits(64) = sign_extend(imm) in
             Nias = [| NIAFP_concrete_address (PC + offset) |];
             ik = IK_branch();
      },
      RISCV_JALR(imm, rs, rd) => {
             if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
             if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
-            let offset : bits(64) = EXTS(imm) in
+            let offset : bits(64) = sign_extend(imm) in
             Nias = [| NIAFP_indirect_address() |];
             ik = IK_branch();
      },
@@ -286,7 +286,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
             if (rs2 == 0b00000) then () else iR = RFull(GPRstr(rs2)) :: iR;
             if (rs1 == 0b00000) then () else iR = RFull(GPRstr(rs1)) :: iR;
             ik = IK_branch();
-            let offset : bits(64) = EXTS(imm) in
+            let offset : bits(64) = sign_extend(imm) in
             Nias = [| NIAFP_concrete_address(PC + offset), NIAFP_successor() |];
       },
       ITYPE(imm, rs, rd, op) => {

@@ -221,4 +221,4 @@ function pmpWriteCfgReg(n, v) = {
 function pmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbits) -> xlenbits =
   if   sizeof(xlen) == 32
   then { if (locked | tor_locked) then reg else v }
-  else { if (locked | tor_locked) then reg else EXTZ(v[53..0]) }
+  else { if (locked | tor_locked) then reg else zero_extend(v[53..0]) }

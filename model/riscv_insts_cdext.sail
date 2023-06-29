@@ -84,7 +84,7 @@ mapping clause encdec_compressed = C_FLDSP(ui86 @ ui5 @ ui43, rd)
       if (sizeof(xlen) == 32 | sizeof(xlen) == 64) & haveRVC() & haveDExt()
 
 function clause execute (C_FLDSP(uimm, rd)) = {
-  let imm : bits(12) = EXTZ(uimm @ 0b000);
+  let imm : bits(12) = zero_extend(uimm @ 0b000);
   execute(LOAD_FP(imm, sp, rd, DOUBLE))
 }
 
@@ -102,7 +102,7 @@ mapping clause encdec_compressed = C_FSDSP(ui86 @ ui53, rs2)
       if (sizeof(xlen) == 32 | sizeof(xlen) == 64) & haveRVC() & haveDExt()
 
 function clause execute (C_FSDSP(uimm, rs2)) = {
-  let imm : bits(12) = EXTZ(uimm @ 0b000);
+  let imm : bits(12) = zero_extend(uimm @ 0b000);
   execute(STORE_FP(imm, rs2, sp, DOUBLE))
 }
 
@@ -120,7 +120,7 @@ mapping clause encdec_compressed = C_FLD(ui76 @ ui53, rs1, rd)
       if (sizeof(xlen) == 32 | sizeof(xlen) == 64) & haveRVC() & haveDExt()
 
 function clause execute (C_FLD(uimm, rsc, rdc)) = {
-  let imm : bits(12) = EXTZ(uimm @ 0b000);
+  let imm : bits(12) = zero_extend(uimm @ 0b000);
   let rd = creg2reg_idx(rdc);
   let rs = creg2reg_idx(rsc);
   execute(LOAD_FP(imm, rs, rd, DOUBLE))
@@ -140,7 +140,7 @@ mapping clause encdec_compressed = C_FSD(ui76 @ ui53, rs1, rs2)
       if (sizeof(xlen) == 32 | sizeof(xlen) == 64) & haveRVC() & haveDExt()
 
 function clause execute (C_FSD(uimm, rsc1, rsc2)) = {
-  let imm : bits(12) = EXTZ(uimm @ 0b000);
+  let imm : bits(12) = zero_extend(uimm @ 0b000);
   let rs1 = creg2reg_idx(rsc1);
   let rs2 = creg2reg_idx(rsc2);
   execute(STORE_FP(imm, rs2, rs1, DOUBLE))

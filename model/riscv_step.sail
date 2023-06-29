@@ -109,7 +109,7 @@ function step(step_no : int) -> bool = {
           },
           /* non-error cases: */
           F_RVC(h) => {
-            instbits = EXTZ(h);
+            instbits = zero_extend(h);
             let ast = ext_decode_compressed(h);
             if   get_config_print_instr()
             then {
@@ -125,7 +125,7 @@ function step(step_no : int) -> bool = {
              }
           },
           F_Base(w) => {
-            instbits = EXTZ(w);
+            instbits = zero_extend(w);
             let ast = ext_decode(w);
             if   get_config_print_instr()
             then {

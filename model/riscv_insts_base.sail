@@ -84,7 +84,7 @@ mapping clause encdec = UTYPE(imm, rd, op)
   <-> imm @ rd @ encdec_uop(op)
 
 function clause execute UTYPE(imm, rd, op) = {
-  let off : xlenbits = EXTS(imm @ 0x000);
+  let off : xlenbits = sign_extend(imm @ 0x000);
   let ret : xlenbits = match op {
     RISCV_LUI   => off,
     RISCV_AUIPC => get_arch_pc() + off
@@ -120,7 +120,7 @@ but this is difficult
 */
 
 function clause execute (RISCV_JAL(imm, rd)) = {
-  let t : xlenbits = PC + EXTS(imm);
+  let t : xlenbits = PC + sign_extend(imm);
   /* Extensions get the first checks on the prospective target address. */
   match ext_control_check_pc(t) {
     Ext_ControlAddr_Error(e) => {
@@ -184,7 +184,7 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
     RISCV_BLTU => rs1_val <_u rs2_val,
     RISCV_BGEU => rs1_val >=_u rs2_val
   };
-  let t : xlenbits = PC + EXTS(imm);
+  let t : xlenbits = PC + sign_extend(imm);
   if taken then {
     /* Extensions get the first checks on the prospective target address. */
     match ext_control_check_pc(t) {
@@ -234,11 +234,11 @@ mapping clause encdec = ITYPE(imm, rs1, rd, op)
 
 function clause execute (ITYPE (imm, rs1, rd, op)) = {
   let rs1_val = X(rs1);
-  let immext : xlenbits = EXTS(imm);
+  let immext : xlenbits = sign_extend(imm);
   let result : xlenbits = match op {
     RISCV_ADDI  => rs1_val + immext,
-    RISCV_SLTI  => EXTZ(bool_to_bits(rs1_val <_s immext)),
-    RISCV_SLTIU => EXTZ(bool_to_bits(rs1_val <_u immext)),
+    RISCV_SLTI  => zero_extend(bool_to_bits(rs1_val <_s immext)),
+    RISCV_SLTIU => zero_extend(bool_to_bits(rs1_val <_u immext)),
     RISCV_ANDI  => rs1_val & immext,
     RISCV_ORI   => rs1_val | immext,
     RISCV_XORI  => rs1_val ^ immext
@@ -318,8 +318,8 @@ function clause execute (RTYPE(rs2, rs1, rd, op)) = {
   let rs2_val = X(rs2);
   let result : xlenbits = match op {
     RISCV_ADD  => rs1_val + rs2_val,
-    RISCV_SLT  => EXTZ(bool_to_bits(rs1_val <_s rs2_val)),
-    RISCV_SLTU => EXTZ(bool_to_bits(rs1_val <_u rs2_val)),
+    RISCV_SLT  => zero_extend(bool_to_bits(rs1_val <_s rs2_val)),
+    RISCV_SLTU => zero_extend(bool_to_bits(rs1_val <_u rs2_val)),
     RISCV_AND  => rs1_val & rs2_val,
     RISCV_OR   => rs1_val | rs2_val,
     RISCV_XOR  => rs1_val ^ rs2_val,
@@ -364,7 +364,7 @@ mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (
 
 val extend_value : forall 'n, 0 < 'n <= xlen_bytes. (bool, MemoryOpResult(bits(8 * 'n))) -> MemoryOpResult(xlenbits)
 function extend_value(is_unsigned, value) = match (value) {
-  MemValue(v)     => MemValue(if is_unsigned then EXTZ(v) else EXTS(v) : xlenbits),
+  MemValue(v)     => MemValue(if is_unsigned then zero_extend(v) else sign_extend(v) : xlenbits),
   MemException(e) => MemException(e)
 }
 
@@ -385,7 +385,7 @@ function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
        }
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
-  let offset : xlenbits = EXTS(imm);
+  let offset : xlenbits = sign_extend(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
   match ext_data_get_addr(rs1, offset, Read(Data), width) {
@@ -441,7 +441,7 @@ mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)        
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
 function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
-  let offset : xlenbits = EXTS(imm);
+  let offset : xlenbits = sign_extend(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
   match ext_data_get_addr(rs1, offset, Write(Data), width) {
@@ -494,8 +494,8 @@ mapping clause encdec = ADDIW(imm, rs1, rd)
       if sizeof(xlen) == 64
 
 function clause execute (ADDIW(imm, rs1, rd)) = {
-  let result : xlenbits = EXTS(imm) + X(rs1);
-  X(rd) = EXTS(result[31..0]);
+  let result : xlenbits = sign_extend(imm) + X(rs1);
+  X(rd) = sign_extend(result[31..0]);
   RETIRE_SUCCESS
 }
 
@@ -527,7 +527,7 @@ function clause execute (SHIFTW(shamt, rs1, rd, op)) = {
     RISCV_SRLI => rs1_val >> shamt,
     RISCV_SRAI => shift_right_arith32(rs1_val, shamt)
   };
-  X(rd) = EXTS(result);
+  X(rd) = sign_extend(result);
   RETIRE_SUCCESS
 }
 
@@ -576,7 +576,7 @@ function clause execute (RTYPEW(rs2, rs1, rd, op)) = {
     RISCV_SRLW => rs1_val >> (rs2_val[4..0]),
     RISCV_SRAW => shift_right_arith32(rs1_val, rs2_val[4..0])
   };
-  X(rd) = EXTS(result);
+  X(rd) = sign_extend(result);
   RETIRE_SUCCESS
 }
 
@@ -616,7 +616,7 @@ function clause execute (SHIFTIWOP(shamt, rs1, rd, op)) = {
     RISCV_SRLIW => rs1_val[31..0] >> shamt,
     RISCV_SRAIW => shift_right_arith32(rs1_val[31..0], shamt)
   };
-  X(rd) = EXTS(result);
+  X(rd) = sign_extend(result);
   RETIRE_SUCCESS
 }
 

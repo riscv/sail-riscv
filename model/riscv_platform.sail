@@ -206,11 +206,11 @@ register mtimecmp : bits(64)  // memory-mapped internal clint register.
  * bffc mtime hi
  */
 
-let MSIP_BASE        : xlenbits = EXTZ(0x00000)
-let MTIMECMP_BASE    : xlenbits = EXTZ(0x04000)
-let MTIMECMP_BASE_HI : xlenbits = EXTZ(0x04004)
-let MTIME_BASE       : xlenbits = EXTZ(0x0bff8)
-let MTIME_BASE_HI    : xlenbits = EXTZ(0x0bffc)
+let MSIP_BASE        : xlenbits = zero_extend(0x00000)
+let MTIMECMP_BASE    : xlenbits = zero_extend(0x04000)
+let MTIMECMP_BASE_HI : xlenbits = zero_extend(0x04004)
+let MTIME_BASE       : xlenbits = zero_extend(0x0bff8)
+let MTIME_BASE_HI    : xlenbits = zero_extend(0x0bffc)
 
 val clint_load : forall 'n, 'n > 0. (AccessType(ext_access_type), xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rreg}
 function clint_load(t, addr, width) = {
@@ -359,7 +359,7 @@ register htif_payload_writes : bits(4)
 function reset_htif () -> unit = {
   htif_cmd_write = bitzero;
   htif_payload_writes = 0x0;
-  htif_tohost = EXTZ(0b0);
+  htif_tohost = zero_extend(0b0);
 }
 
 /* Since the htif tohost port is only available at a single address,
@@ -394,7 +394,7 @@ function htif_store(paddr, width, data) = {
   if      width == 8
   then    { htif_cmd_write = bitone;
             htif_payload_writes = htif_payload_writes + 1;
-            htif_tohost = EXTZ(data) }
+            htif_tohost = zero_extend(data) }
   else if width == 4 & paddr == plat_htif_tohost()
   then    { if   data == htif_tohost[31 .. 0]
             then htif_payload_writes = htif_payload_writes + 1
@@ -407,7 +407,7 @@ function htif_store(paddr, width, data) = {
             htif_cmd_write = bitone;
             htif_tohost = vector_update_subrange(htif_tohost, 63, 32, data) }
   /* unaligned command writes are not supported and will not be detected */
-  else    { htif_tohost = EXTZ(data) };
+  else    { htif_tohost = zero_extend(data) };
 
   /* Execute if there were repeated writes of the same payload without
    * a cmd (e.g. in riscv-tests), or we have a complete htif command.
@@ -487,11 +487,11 @@ function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : xlenbits, widt
 /* Platform initialization and ticking. */
 
 function init_platform() -> unit = {
-  htif_tohost = EXTZ(0b0);
+  htif_tohost = zero_extend(0b0);
   htif_done   = false;
-  htif_exit_code = EXTZ(0b0);
+  htif_exit_code = zero_extend(0b0);
   htif_cmd_write = bitzero;
-  htif_payload_writes = EXTZ(0b0);
+  htif_payload_writes = zero_extend(0b0);
 }
 
 function tick_platform() -> unit = {

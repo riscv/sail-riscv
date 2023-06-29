@@ -179,7 +179,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
     /* should only happen in rmem
      * rmem: allow SC to fail very early
      */
-    X(rd) = EXTZ(0b1); RETIRE_SUCCESS
+    X(rd) = zero_extend(0b1); RETIRE_SUCCESS
   } else {
     if haveAtomics() then {
       /* normal non-rmem case
@@ -206,7 +206,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
           else {
             if match_reservation(vaddr) == false then {
               /* cannot happen in rmem */
-              X(rd) = EXTZ(0b1); cancel_reservation(); RETIRE_SUCCESS
+              X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS
             } else {
               match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
                                                           * both result in a SAMO exception */
@@ -231,8 +231,8 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
                         _            => internal_error(__FILE__, __LINE__, "STORECON expected word or double")
                       };
                       match (res) {
-                        MemValue(true)  => { X(rd) = EXTZ(0b0); cancel_reservation(); RETIRE_SUCCESS },
-                        MemValue(false) => { X(rd) = EXTZ(0b1); cancel_reservation(); RETIRE_SUCCESS },
+                        MemValue(true)  => { X(rd) = zero_extend(0b0); cancel_reservation(); RETIRE_SUCCESS },
+                        MemValue(false) => { X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS },
                         MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL }
                       }
                     }
@@ -297,9 +297,9 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
               _       => false
             };
             let rs2_val : xlenbits = match width {
-              BYTE   => if is_unsigned then EXTZ(X(rs2)[7..0])  else EXTS(X(rs2)[7..0]),
-              HALF   => if is_unsigned then EXTZ(X(rs2)[15..0]) else EXTS(X(rs2)[15..0]),
-              WORD   => if is_unsigned then EXTZ(X(rs2)[31..0]) else EXTS(X(rs2)[31..0]),
+              BYTE   => if is_unsigned then zero_extend(X(rs2)[7..0])  else sign_extend(X(rs2)[7..0]),
+              HALF   => if is_unsigned then zero_extend(X(rs2)[15..0]) else sign_extend(X(rs2)[15..0]),
+              WORD   => if is_unsigned then zero_extend(X(rs2)[31..0]) else sign_extend(X(rs2)[31..0]),
               DOUBLE => X(rs2)
             };
             match (eares) {
@@ -332,9 +332,9 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                         AMOMAXU => to_bits(sizeof(xlen), max(unsigned(rs2_val), unsigned(loaded)))
                       };
                     let rval : xlenbits = match width {
-                      BYTE   => EXTS(loaded[7..0]),
-                      HALF   => EXTS(loaded[15..0]),
-                      WORD   => EXTS(loaded[31..0]),
+                      BYTE   => sign_extend(loaded[7..0]),
+                      HALF   => sign_extend(loaded[15..0]),
+                      WORD   => sign_extend(loaded[31..0]),
                       DOUBLE => loaded
                     };
                     let wval : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
