@@ -423,8 +423,8 @@ function sail_signal_platform_events(unit) -> unit = {
         RISCV_JAL(_, _)         => { riscv_signal_event(E_event_jal);  trace(__FILE__, __LINE__, ""); },
         RISCV_JALR(_, _, _)     => { riscv_signal_event(E_event_jalr); trace(__FILE__, __LINE__, ""); },
 
-//      BTYPE(   _, _, op)       => {       // TODO:  Error does not print out file/line
-        BTYPE(_, _, _, op)       => {
+        BTYPE(   _, _, op)       => {       // TODO:  Error does not print out file/line
+//      BTYPE(_, _, _, op)       => {
             match op {
                 RISCV_BEQ           => { riscv_signal_event(E_event_branch); trace(__FILE__, __LINE__, ""); },
                 RISCV_BNE           => { riscv_signal_event(E_event_branch); trace(__FILE__, __LINE__, ""); },
