@@ -8,6 +8,8 @@
  * ----------------------------------------------------------------------
  */
 
+function clause extensionEnabled(Ext_Zvkned) = true
+
 val	 zvk_check_elements : (int, int, int, int) -> bool
 function zvk_check_elements(VLEN, num_elem, LMUL, SEW) = {
   ((unsigned(vl)%num_elem) != 0) | ((unsigned(vstart)%num_elem) != 0) | (LMUL*VLEN) < (num_elem*SEW)
@@ -36,8 +38,8 @@ mapping vaesef_mnemonic : bits(7) <-> string = {
 
 union clause ast = RISCV_VAESEF : (regidx, regidx, string)
 
-mapping clause encdec = RISCV_VAESEF(vs2, vd, suffix)	       if (haveRVV() & haveZvkned())
- <-> vv_or_vs(suffix) @ vs2 @ 0b00011 @ 0b010 @ vd @ 0b1110111 if (haveRVV() & haveZvkned())
+mapping clause encdec = RISCV_VAESEF(vs2, vd, suffix)	       if extensionEnabled(Ext_Zvkned)
+ <-> vv_or_vs(suffix) @ vs2 @ 0b00011 @ 0b010 @ vd @ 0b1110111 if extensionEnabled(Ext_Zvkned)
 
 mapping clause assembly = RISCV_VAESEF(vs2, vd, suffix)
  <-> vaesef_mnemonic(vv_or_vs(suffix)) ^ spc() ^ vreg_name(vd)
@@ -113,8 +115,8 @@ mapping vaesem_mnemonic : bits(7) <-> string = {
 
 union clause ast = RISCV_VAESEM : (regidx, regidx, string)
 
-mapping clause encdec = RISCV_VAESEM(vs2, vd, suffix)	       if (haveRVV() & haveZvkned())
- <-> vv_or_vs(suffix) @ vs2 @ 0b00010 @ 0b010 @ vd @ 0b1110111 if (haveRVV() & haveZvkned())
+mapping clause encdec = RISCV_VAESEM(vs2, vd, suffix)	       if extensionEnabled(Ext_Zvkned)
+ <-> vv_or_vs(suffix) @ vs2 @ 0b00010 @ 0b010 @ vd @ 0b1110111 if extensionEnabled(Ext_Zvkned)
 
 mapping clause assembly = RISCV_VAESEM(vs2, vd, suffix)
  <-> vaesem_mnemonic(vv_or_vs(suffix)) ^ spc() ^ vreg_name(vd)
@@ -191,8 +193,8 @@ mapping vaesdf_mnemonic : bits(7) <-> string = {
 
 union clause ast = RISCV_VAESDF : (regidx, regidx, string)
 
-mapping clause encdec = RISCV_VAESDF(vs2, vd, suffix)		if (haveRVV() & haveZvkned())
- <-> vv_or_vs(suffix) @ vs2 @ 0b00001 @ 0b010 @ vd @ 0b1110111	if (haveRVV() & haveZvkned())
+mapping clause encdec = RISCV_VAESDF(vs2, vd, suffix)		if extensionEnabled(Ext_Zvkned)
+ <-> vv_or_vs(suffix) @ vs2 @ 0b00001 @ 0b010 @ vd @ 0b1110111	if extensionEnabled(Ext_Zvkned)
 
 mapping clause assembly = RISCV_VAESDF(vs2, vd, suffix)
  <-> vaesdf_mnemonic(vv_or_vs(suffix)) ^ sep() ^ vreg_name(vd)
@@ -268,8 +270,8 @@ mapping vaesdm_mnemonic : bits(7) <-> string = {
 
 union clause ast = RISCV_VAESDM : (regidx, regidx, string)
 
-mapping clause encdec = RISCV_VAESDM(vs2, vd, suffix)	       if (haveRVV() & haveZvkned())
- <-> vv_or_vs(suffix) @ vs2 @ 0b00000 @ 0b010 @ vd @ 0b1110111 if (haveRVV() & haveZvkned())
+mapping clause encdec = RISCV_VAESDM(vs2, vd, suffix)	       if extensionEnabled(Ext_Zvkned)
+ <-> vv_or_vs(suffix) @ vs2 @ 0b00000 @ 0b010 @ vd @ 0b1110111 if extensionEnabled(Ext_Zvkned)
 
 mapping clause assembly = RISCV_VAESDM(vs2, vd, suffix)
  <-> vaesdm_mnemonic(vv_or_vs(suffix)) ^ spc() ^ vreg_name(vd)
@@ -341,8 +343,8 @@ function clause execute (RISCV_VAESDM(vs2, vd, suffix)) = {
 
 union clause ast = RISCV_VAESKF1_VI : (regidx, regidx, regidx)
 
-mapping clause encdec = RISCV_VAESKF1_VI(vs2, rnd, vd) if (haveRVV() & haveZvkned())
- <-> 0b1000101 @ vs2 @ rnd @ 0b010 @ vd @ 0b1110111    if (haveRVV() & haveZvkned())
+mapping clause encdec = RISCV_VAESKF1_VI(vs2, rnd, vd) if extensionEnabled(Ext_Zvkned)
+ <-> 0b1000101 @ vs2 @ rnd @ 0b010 @ vd @ 0b1110111    if extensionEnabled(Ext_Zvkned)
 
 mapping clause assembly = RISCV_VAESKF1_VI(vs2, rnd, vd)
  <-> "vaeskf1.vi" ^ sep() ^ vreg_name(vd)
@@ -411,8 +413,8 @@ function clause execute (RISCV_VAESKF1_VI(vs2, rnd, vd)) = {
 
 union clause ast = RISCV_VAESKF2_VI : (regidx, regidx, regidx)
 
-mapping clause encdec = RISCV_VAESKF2_VI(vs2, rnd, vd) if (haveRVV() & haveZvkned())
- <-> 0b1010101 @ vs2 @ rnd @ 0b010 @ vd @ 0b1110111    if (haveRVV() & haveZvkned())
+mapping clause encdec = RISCV_VAESKF2_VI(vs2, rnd, vd) if extensionEnabled(Ext_Zvkned)
+ <-> 0b1010101 @ vs2 @ rnd @ 0b010 @ vd @ 0b1110111    if extensionEnabled(Ext_Zvkned)
 
 mapping clause assembly = RISCV_VAESKF2_VI(vs2, rnd, vd)
  <-> "vaeskf2.vi" ^ sep() ^ vreg_name(vd)
@@ -435,7 +437,7 @@ function clause execute (RISCV_VAESKF2_VI(vs2, rnd, vd)) = {
     let 'm = SEW;
     assert('m == 32);
 
-    rnd_val : bits(4)                   = rnd[3..0];
+    rnd_val : bits(4)			    = rnd[3..0];
     let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
     let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
     result      : vector('n, dec, bits('m)) = undefined;
@@ -467,7 +469,7 @@ function clause execute (RISCV_VAESKF2_VI(vs2, rnd, vd)) = {
 		   aes_subword_fwd(current_round_key[127..96]) ^ round_key_b[31..0]
 		 else
 		   aes_subword_fwd(aes_rotword(current_round_key[127..96]))
-		     ^ aes_decode_rcon(rnd_val >> 1)
+		     ^ aes_decode_rcon((rnd_val >> 1) - 1)
 		     ^ round_key_b[31..0];
 
       w[63..32]  = w[31..0]  ^ round_key_b[63..32];
@@ -490,8 +492,8 @@ function clause execute (RISCV_VAESKF2_VI(vs2, rnd, vd)) = {
 
 union clause ast = RISCV_VAESZ_VS : (regidx, regidx)
 
-mapping clause encdec = RISCV_VAESZ_VS(vs2, vd)		if (haveRVV() & haveZvkned())
- <-> 0b1010011 @ vs2 @ 0b00111 @ 0b010 @ vd @ 0b1110111 if (haveRVV() & haveZvkned())
+mapping clause encdec = RISCV_VAESZ_VS(vs2, vd)		if extensionEnabled(Ext_Zvkned)
+ <-> 0b1010011 @ vs2 @ 0b00111 @ 0b010 @ vd @ 0b1110111 if extensionEnabled(Ext_Zvkned)
 
 mapping clause assembly = RISCV_VAESZ_VS(vs2, vd)
  <-> "vaesz.vs" ^ sep() ^ vreg_name(vd)

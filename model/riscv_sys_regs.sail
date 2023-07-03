@@ -175,8 +175,6 @@ function have_privLevel(priv : priv_level) -> bool =
     0b11 => true,
   }
 
-function haveZvkned() -> bool = true
-
 bitfield Mstatus : bits(64) = {
   SD   : xlen - 1,
 
