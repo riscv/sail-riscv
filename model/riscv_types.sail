@@ -456,6 +456,33 @@ function word_width_bytes width = match width {
   DOUBLE => 8
 }
 
+enum amo_word_width = {AMO_BYTE, AMO_HALF, AMO_WORD, AMO_DOUBLE, AMO_QUAD}
+
+mapping amo_size_bits : amo_word_width <-> bits(3) = {
+  AMO_BYTE   <-> 0b000,
+  AMO_HALF   <-> 0b001,
+  AMO_WORD   <-> 0b010,
+  AMO_DOUBLE <-> 0b011,
+  AMO_QUAD   <-> 0b100,
+}
+
+mapping amo_size_mnemonic : amo_word_width <-> string = {
+  AMO_BYTE   <-> "b",
+  AMO_HALF   <-> "h",
+  AMO_WORD   <-> "w",
+  AMO_DOUBLE <-> "d",
+  AMO_QUAD   <-> "q",
+}
+
+val amo_word_width_bytes : amo_word_width -> {'s, 's == 1 | 's == 2 | 's == 4 | 's == 8 | 's == 16 . atom('s)}
+function amo_word_width_bytes width = match width {
+  AMO_BYTE   => 1,
+  AMO_HALF   => 2,
+  AMO_WORD   => 4,
+  AMO_DOUBLE => 8,
+  AMO_QUAD   => 16
+}
+
 /*!
  * Raise an internal error reporting that width w is invalid for access kind, k,
  * and current xlen. The file name and line number should be passed in as the
