@@ -265,7 +265,8 @@ mapping encdec_amoop : amoop <-> bits(5) = {
   AMOMIN  <-> 0b10000,
   AMOMAX  <-> 0b10100,
   AMOMINU <-> 0b11000,
-  AMOMAXU <-> 0b11100
+  AMOMAXU <-> 0b11100,
+  AMOCAS  <-> 0b00101
 }
 
 mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd) if amo_width_valid(size)
@@ -372,7 +373,8 @@ mapping amo_mnemonic : amoop <-> string = {
   AMOMIN  <-> "amomin",
   AMOMAX  <-> "amomax",
   AMOMINU <-> "amominu",
-  AMOMAXU <-> "amomaxu"
+  AMOMAXU <-> "amomaxu",
+  AMOCAS  <-> "amocas"
 }
 
 mapping clause assembly = AMO(op, aq, rl, rs2, rs1, width, rd)
