@@ -269,8 +269,28 @@ mapping encdec_amoop : amoop <-> bits(5) = {
   AMOCAS  <-> 0b00101
 }
 
-mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd) if amo_width_valid(size)
-  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111 if amo_width_valid(size)
+/**
+ * RISC-V only appears to define AMO for word and double, although
+ * there seem to be encodings reserved for other widths.
+ * zacas: amocas.d supported for RV32 and amocas.q for RV64
+ * amocas that operate on 2*XLEN data requires the first register
+ * of the register pair to be even numbered. RV32 supports amocas.d.
+ */
+function amo_encoding_valid(size : amo_word_width, op : amoop, rs2 : regidx, rd : regidx ) -> bool = {
+  match(size, sizeof(xlen), op) {
+    (AMO_WORD,    _, _)      => true,
+    (AMO_WORD,    _, AMOCAS) => haveZacas(),
+    (AMO_DOUBLE, 32, AMOCAS) => if rs2[0..0] != 0b0 | rd[0..0] != 0b0 then false else haveZacas(),
+    (AMO_DOUBLE, 64, AMOCAS) => haveZacas(),
+    (AMO_DOUBLE,  _, _)      => sizeof(xlen) >= 64,
+    (AMO_QUAD,   64, AMOCAS) => if rs2[0..0] != 0b0 | rd[0..0] != 0b0 then false else haveZacas(),
+    (AMO_QUAD,    _, _)      => false,
+     _                       => false
+  }
+}
+
+mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd) if amo_encoding_valid(size)
+  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111 if amo_encoding_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
