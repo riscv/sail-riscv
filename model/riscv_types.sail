@@ -395,7 +395,7 @@ enum ropw  = {RISCV_ADDW, RISCV_SUBW, RISCV_SLLW,
 enum sopw = {RISCV_SLLIW, RISCV_SRLIW,
              RISCV_SRAIW}                         /* RV64-only shift ops */
 enum amoop = {AMOSWAP, AMOADD, AMOXOR, AMOAND, AMOOR,
-              AMOMIN, AMOMAX, AMOMINU, AMOMAXU}   /* AMO ops */
+              AMOMIN, AMOMAX, AMOMINU, AMOMAXU, AMOCAS}   /* AMO ops */
 enum csrop = {CSRRW, CSRRS, CSRRC}                /* CSR ops */
 
 enum brop_zba = {RISCV_SH1ADD, RISCV_SH2ADD, RISCV_SH3ADD}
