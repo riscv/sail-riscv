@@ -187,11 +187,11 @@ function get_config_print_reg () = false
 function get_config_print_mem () = false
 function get_config_print_platform () = false
 
-val EXTS : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
-val EXTZ : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
+val sign_extend : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
+val zero_extend : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
 
-function EXTS(m, v) = sail_sign_extend(v, m)
-function EXTZ(m, v) = sail_zero_extend(v, m)
+function sign_extend(m, v) = sail_sign_extend(v, m)
+function zero_extend(m, v) = sail_zero_extend(v, m)
 
 val zeros_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
 function zeros_implicit (n) = sail_zeros(n)
@@ -245,11 +245,11 @@ overload operator << = {shift_bits_left, shiftl}
 /* Ideally these would be sail builtin */
 
 function shift_right_arith64 (v : bits(64), shift : bits(6)) -> bits(64) =
-    let v128 : bits(128) = EXTS(v) in
+    let v128 : bits(128) = sign_extend(v) in
     (v128 >> shift)[63..0]
 
 function shift_right_arith32 (v : bits(32), shift : bits(5)) -> bits(32) =
-    let v64 : bits(64) = EXTS(v) in
+    let v64 : bits(64) = sign_extend(v) in
     (v64 >> shift)[31..0]
 
 infix 7 >>>

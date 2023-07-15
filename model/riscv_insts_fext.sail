@@ -374,7 +374,7 @@ function process_fload16(rd, addr, value) =
   }
 
 function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
-  let offset : xlenbits = EXTS(imm);
+  let offset : xlenbits = sign_extend(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
   match ext_data_get_addr(rs1, offset, Read(Data), width) {
@@ -439,7 +439,7 @@ function process_fstore(vaddr, value) =
   }
 
 function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
-  let offset : xlenbits = EXTS(imm);
+  let offset : xlenbits = sign_extend(imm);
   let (aq, rl, con) = (false, false, false);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
@@ -686,7 +686,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)) = {
       let (fflags, rd_val_W) = riscv_f32ToI32 (rm_3b, rs1_val_S);
 
       write_fflags(fflags);
-      X(rd) = EXTS (rd_val_W);
+      X(rd) = sign_extend (rd_val_W);
       RETIRE_SUCCESS
     }
   }
@@ -701,7 +701,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)) = {
       let (fflags, rd_val_WU) = riscv_f32ToUi32 (rm_3b, rs1_val_S);
 
       write_fflags(fflags);
-      X(rd) = EXTS (rd_val_WU);
+      X(rd) = sign_extend (rd_val_WU);
       RETIRE_SUCCESS
     }
   }
@@ -747,7 +747,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
       let (fflags, rd_val_L) = riscv_f32ToI64 (rm_3b, rs1_val_S);
 
       write_fflags(fflags);
-      X(rd) = EXTS(rd_val_L);
+      X(rd) = sign_extend(rd_val_L);
       RETIRE_SUCCESS
     }
   }
@@ -763,7 +763,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
       let (fflags, rd_val_LU) = riscv_f32ToUi64 (rm_3b, rs1_val_S);
 
       write_fflags(fflags);
-      X(rd) = EXTS(rd_val_LU);
+      X(rd) = sign_extend(rd_val_LU);
       RETIRE_SUCCESS
     }
   }
@@ -987,7 +987,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
       riscv_f32Eq (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -999,7 +999,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)) = {
       riscv_f32Lt (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -1011,7 +1011,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)) = {
       riscv_f32Le (rs1_val_S, rs2_val_S);
 
   write_fflags(fflags);
-  X(rd) = EXTZ(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -1110,13 +1110,13 @@ function clause execute (F_UN_TYPE_S(rs1, rd, FCLASS_S)) = {
     else if f_is_QNaN_S        (rs1_val_S) then 0b_10_0000_0000
     else zeros();
 
-  X(rd) = EXTZ (rd_val_10b);
+  X(rd) = zero_extend (rd_val_10b);
   RETIRE_SUCCESS
 }
 
 function clause execute (F_UN_TYPE_S(rs1, rd, FMV_X_W)) = {
   let rs1_val_S            = F(rs1)[31..0];
-  let rd_val_X  : xlenbits = EXTS(rs1_val_S);
+  let rd_val_X  : xlenbits = sign_extend(rs1_val_S);
   X(rd) = rd_val_X;
   RETIRE_SUCCESS
 }

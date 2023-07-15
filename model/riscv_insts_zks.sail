@@ -91,14 +91,14 @@ mapping clause assembly = SM3P1 (rs1, rd) <->
 function clause execute (SM3P0(rs1, rd)) = {
   let r1     : bits(32) = X(rs1)[31..0];
   let result : bits(32) =  r1 ^ (r1 <<< 9) ^ (r1 <<< 17);
-  X(rd) = EXTS(result);
+  X(rd) = sign_extend(result);
   RETIRE_SUCCESS
 }
 
 function clause execute (SM3P1(rs1, rd)) = {
   let r1     : bits(32) = X(rs1)[31..0];
   let result : bits(32) =  r1 ^ (r1 <<< 15) ^ (r1 <<< 23);
-  X(rd) = EXTS(result);
+  X(rd) = sign_extend(result);
   RETIRE_SUCCESS
 }
 
@@ -131,7 +131,7 @@ function clause execute (SM4ED (bs, rs2, rs1, rd)) = {
                              ((x & 0x000000C0) << 10);
   let z     : bits(32) = (y <<< shamt);
   let result : bits(32) = z ^ X(rs1)[31..0];
-  X(rd)                = EXTS(result);
+  X(rd)                = sign_extend(result);
   RETIRE_SUCCESS
 }
 
@@ -143,6 +143,6 @@ function clause execute (SM4KS (bs, rs2, rs1, rd)) = {
                              ((x & 0x00000001) << 23) ^ ((x & 0x000000F8) << 13) ;
   let z     : bits(32) = (y <<< shamt);
   let result : bits(32) = z ^ X(rs1)[31..0];
-  X(rd) = EXTS(result);
+  X(rd) = sign_extend(result);
   RETIRE_SUCCESS
 }

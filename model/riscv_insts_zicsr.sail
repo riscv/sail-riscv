@@ -87,7 +87,7 @@ function readCSR csr : csreg -> xlenbits = {
   let res : xlenbits =
   match (csr, sizeof(xlen)) {
     /* machine mode */
-    (0xF11,  _) => EXTZ(mvendorid),
+    (0xF11,  _) => zero_extend(mvendorid),
     (0xF12,  _) => marchid,
     (0xF13,  _) => mimpid,
     (0xF14,  _) => mhartid,
@@ -97,9 +97,9 @@ function readCSR csr : csreg -> xlenbits = {
     (0x303,  _) => mideleg.bits(),
     (0x304,  _) => mie.bits(),
     (0x305,  _) => get_mtvec(),
-    (0x306,  _) => EXTZ(mcounteren.bits()),
+    (0x306,  _) => zero_extend(mcounteren.bits()),
     (0x310, 32) => mstatush.bits(),
-    (0x320,  _) => EXTZ(mcountinhibit.bits()),
+    (0x320,  _) => zero_extend(mcountinhibit.bits()),
 
     (0x340,  _) => mscratch,
     (0x341,  _) => get_xret_target(Machine) & pc_alignment_mask(),
@@ -144,7 +144,7 @@ function readCSR csr : csreg -> xlenbits = {
     (0x103,  _) => sideleg.bits(),
     (0x104,  _) => lower_mie(mie, mideleg).bits(),
     (0x105,  _) => get_stvec(),
-    (0x106,  _) => EXTZ(scounteren.bits()),
+    (0x106,  _) => zero_extend(scounteren.bits()),
     (0x140,  _) => sscratch,
     (0x141,  _) => get_xret_target(Supervisor) & pc_alignment_mask(),
     (0x142,  _) => scause.bits(),
@@ -167,7 +167,7 @@ function readCSR csr : csreg -> xlenbits = {
                    match ext_read_CSR(csr) {
                      Some(res) => res,
                      None()    => { print_bits("unhandled read to CSR ", csr);
-                                    EXTZ(0x0) }
+                                    zero_extend(0x0) }
                    }
   };
   if   get_config_print_reg()
@@ -185,9 +185,9 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x303,  _) => { mideleg = legalize_mideleg(mideleg, value); Some(mideleg.bits()) },
     (0x304,  _) => { mie = legalize_mie(mie, value); Some(mie.bits()) },
     (0x305,  _) => { Some(set_mtvec(value)) },
-    (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(EXTZ(mcounteren.bits())) },
+    (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(zero_extend(mcounteren.bits())) },
     (0x310, 32) => { Some(mstatush.bits()) }, // ignore writes for now
-    (0x320,  _) => { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Some(EXTZ(mcountinhibit.bits())) },
+    (0x320,  _) => { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Some(zero_extend(mcountinhibit.bits())) },
     (0x340,  _) => { mscratch = value; Some(mscratch) },
     (0x341,  _) => { Some(set_xret_target(Machine, value)) },
     (0x342,  _) => { mcause->bits() = value; Some(mcause.bits()) },
@@ -232,7 +232,7 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x103,  _) => { sideleg->bits() = value; Some(sideleg.bits()) }, /* TODO: does this need legalization? */
     (0x104,  _) => { mie = legalize_sie(mie, mideleg, value); Some(mie.bits()) },
     (0x105,  _) => { Some(set_stvec(value)) },
-    (0x106,  _) => { scounteren = legalize_scounteren(scounteren, value); Some(EXTZ(scounteren.bits())) },
+    (0x106,  _) => { scounteren = legalize_scounteren(scounteren, value); Some(zero_extend(scounteren.bits())) },
     (0x140,  _) => { sscratch = value; Some(sscratch) },
     (0x141,  _) => { Some(set_xret_target(Supervisor, value)) },
     (0x142,  _) => { scause->bits() = value; Some(scause.bits()) },
@@ -253,7 +253,7 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
 }
 
 function clause execute CSR(csr, rs1, rd, is_imm, op) = {
-  let rs1_val : xlenbits = if is_imm then EXTZ(rs1) else X(rs1);
+  let rs1_val : xlenbits = if is_imm then zero_extend(rs1) else X(rs1);
   let isWrite : bool = match op {
     CSRRW  => true,
     _      => if is_imm then unsigned(rs1_val) != 0 else unsigned(rs1) != 0

@@ -72,7 +72,7 @@
 type regtype = xlenbits
 
 /* default zero register */
-let zero_reg : regtype = EXTZ(0x0)
+let zero_reg : regtype = zero_extend(0x0)
 
 /* default register printer */
 val RegStr : regtype -> string

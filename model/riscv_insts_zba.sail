@@ -79,7 +79,7 @@ mapping clause assembly = RISCV_SLLIUW(shamt, rs1, rd)
 
 function clause execute (RISCV_SLLIUW(shamt, rs1, rd)) = {
   let rs1_val = X(rs1);
-  let result : xlenbits = EXTZ(rs1_val[31..0]) << shamt;
+  let result : xlenbits = zero_extend(rs1_val[31..0]) << shamt;
   X(rd) = result;
   RETIRE_SUCCESS
 }
@@ -118,7 +118,7 @@ function clause execute (ZBA_RTYPEUW(rs2, rs1, rd, op)) = {
     RISCV_SH2ADDUW => 0b10,
     RISCV_SH3ADDUW => 0b11
   };
-  let result : xlenbits = (EXTZ(rs1_val[31..0]) << shamt) + rs2_val;
+  let result : xlenbits = (zero_extend(rs1_val[31..0]) << shamt) + rs2_val;
   X(rd) = result;
   RETIRE_SUCCESS
 }

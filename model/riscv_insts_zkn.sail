@@ -105,28 +105,28 @@ mapping clause assembly = SHA256SUM1 (rs1, rd)
 function clause execute (SHA256SIG0(rs1, rd)) = {
   let inb    : bits(32) = X(rs1)[31..0];
   let result : bits(32) = (inb >>> 7) ^ (inb >>> 18) ^ (inb >>  3);
-  X(rd)      = EXTS(result);
+  X(rd)      = sign_extend(result);
   RETIRE_SUCCESS
 }
 
 function clause execute (SHA256SIG1(rs1, rd)) = {
   let inb    : bits(32) = X(rs1)[31..0];
   let result : bits(32) = (inb >>> 17) ^ (inb >>> 19) ^ (inb >> 10);
-  X(rd)      = EXTS(result);
+  X(rd)      = sign_extend(result);
   RETIRE_SUCCESS
 }
 
 function clause execute (SHA256SUM0(rs1, rd)) = {
   let inb    : bits(32) = X(rs1)[31..0];
   let result : bits(32) = (inb >>> 2) ^ (inb >>> 13) ^ (inb >>> 22);
-  X(rd)      = EXTS(result);
+  X(rd)      = sign_extend(result);
   RETIRE_SUCCESS
 }
 
 function clause execute (SHA256SUM1(rs1, rd)) = {
   let inb    : bits(32) = X(rs1)[31..0];
   let result : bits(32) = (inb >>> 6) ^ (inb >>> 11) ^ (inb >>> 25);
-  X(rd)      = EXTS(result);
+  X(rd)      = sign_extend(result);
   RETIRE_SUCCESS
 }
 
@@ -149,7 +149,7 @@ function clause execute (AES32ESMI (bs, rs2, rs1, rd)) = {
   let so      : bits( 8) = aes_sbox_fwd(si);
   let mixed   : bits(32) = aes_mixcolumn_byte_fwd(so);
   let result  : bits(32) = X(rs1)[31..0] ^ (mixed <<< shamt);
-  X(rd) = EXTS(result);
+  X(rd) = sign_extend(result);
   RETIRE_SUCCESS
 }
 
@@ -166,7 +166,7 @@ function clause execute (AES32ESI (bs, rs2, rs1, rd)) = {
   let si      : bits( 8) = (X(rs2) >> shamt)[7..0]; /* SBox Input */
   let so      : bits(32) = 0x000000 @ aes_sbox_fwd(si);
   let result  : bits(32) = X(rs1)[31..0] ^ (so <<< shamt);
-  X(rd) = EXTS(result);
+  X(rd) = sign_extend(result);
   RETIRE_SUCCESS
 }
 
@@ -189,7 +189,7 @@ function clause execute (AES32DSMI (bs, rs2, rs1, rd)) = {
   let so      : bits( 8) = aes_sbox_inv(si);
   let mixed   : bits(32) = aes_mixcolumn_byte_inv(so);
   let result  : bits(32) = X(rs1)[31..0] ^ (mixed <<< shamt);
-  X(rd) = EXTS(result);
+  X(rd) = sign_extend(result);
   RETIRE_SUCCESS
 }
 
@@ -206,7 +206,7 @@ function clause execute (AES32DSI (bs, rs2, rs1, rd)) = {
   let si      : bits( 8) = (X(rs2) >> shamt)[7..0]; /* SBox Input */
   let so      : bits(32) = 0x000000 @ aes_sbox_inv(si);
   let result  : bits(32) = X(rs1)[31..0] ^ (so <<< shamt);
-  X(rd) = EXTS(result);
+  X(rd) = sign_extend(result);
   RETIRE_SUCCESS
 }
 
@@ -259,37 +259,37 @@ mapping clause assembly = SHA512SUM1R (rs2, rs1, rd)
   <-> "sha512sum1r" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 function clause execute (SHA512SIG0H(rs2, rs1, rd)) = {
-  X(rd) = EXTS((X(rs1) >>  1) ^ (X(rs1) >>  7) ^ (X(rs1) >>  8) ^
+  X(rd) = sign_extend((X(rs1) >>  1) ^ (X(rs1) >>  7) ^ (X(rs1) >>  8) ^
                (X(rs2) << 31)                  ^ (X(rs2) << 24));
   RETIRE_SUCCESS
 }
 
 function clause execute (SHA512SIG0L(rs2, rs1, rd)) = {
-  X(rd) = EXTS((X(rs1) >>  1) ^ (X(rs1) >>  7) ^ (X(rs1) >>  8) ^
+  X(rd) = sign_extend((X(rs1) >>  1) ^ (X(rs1) >>  7) ^ (X(rs1) >>  8) ^
                (X(rs2) << 31) ^ (X(rs2) << 25) ^ (X(rs2) << 24));
   RETIRE_SUCCESS
 }
 
 function clause execute (SHA512SIG1H(rs2, rs1, rd)) = {
-  X(rd) = EXTS((X(rs1) <<  3) ^ (X(rs1) >>  6) ^ (X(rs1) >> 19) ^
+  X(rd) = sign_extend((X(rs1) <<  3) ^ (X(rs1) >>  6) ^ (X(rs1) >> 19) ^
                (X(rs2) >> 29)                  ^ (X(rs2) << 13));
   RETIRE_SUCCESS
 }
 
 function clause execute (SHA512SIG1L(rs2, rs1, rd)) = {
-  X(rd) = EXTS((X(rs1) <<  3) ^ (X(rs1) >>  6) ^ (X(rs1) >> 19) ^
+  X(rd) = sign_extend((X(rs1) <<  3) ^ (X(rs1) >>  6) ^ (X(rs1) >> 19) ^
                (X(rs2) >> 29) ^ (X(rs2) << 26) ^ (X(rs2) << 13));
   RETIRE_SUCCESS
 }
 
 function clause execute (SHA512SUM0R(rs2, rs1, rd)) = {
-  X(rd) = EXTS((X(rs1) << 25) ^ (X(rs1) << 30) ^ (X(rs1) >> 28) ^
+  X(rd) = sign_extend((X(rs1) << 25) ^ (X(rs1) << 30) ^ (X(rs1) >> 28) ^
                (X(rs2) >>  7) ^ (X(rs2) >>  2) ^ (X(rs2) <<  4));
   RETIRE_SUCCESS
 }
 
 function clause execute (SHA512SUM1R(rs2, rs1, rd)) = {
-  X(rd) = EXTS((X(rs1) << 23) ^ (X(rs1) >> 14) ^ (X(rs1) >> 18) ^
+  X(rd) = sign_extend((X(rs1) << 23) ^ (X(rs1) >> 14) ^ (X(rs1) >> 18) ^
                (X(rs2) >>  9) ^ (X(rs2) << 18) ^ (X(rs2) << 14));
   RETIRE_SUCCESS
 }

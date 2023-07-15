@@ -90,7 +90,7 @@ function clause execute (ZBKB_RTYPE(rs2, rs1, rd, op)) = {
   let rs2_val = X(rs2);
   let result : xlenbits = match op {
     RISCV_PACK  => rs2_val[(sizeof(xlen_bytes)*4 - 1)..0] @ rs1_val[(sizeof(xlen_bytes)*4 - 1)..0],
-    RISCV_PACKH => EXTZ(rs2_val[7..0] @ rs1_val[7..0])
+    RISCV_PACKH => zero_extend(rs2_val[7..0] @ rs1_val[7..0])
   };
   X(rd) = result;
   RETIRE_SUCCESS
@@ -110,7 +110,7 @@ function clause execute (ZBKB_PACKW(rs2, rs1, rd)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   let result : bits(32) = rs2_val[15..0] @ rs1_val[15..0];
-  X(rd) = EXTS(result);
+  X(rd) = sign_extend(result);
   RETIRE_SUCCESS
 }
 

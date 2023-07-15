@@ -78,7 +78,7 @@ bitfield Ustatus : xlenbits = {
 
 /* This is a view, so there is no register defined. */
 function lower_sstatus(s : Sstatus) -> Ustatus = {
-  let u = Mk_Ustatus(EXTZ(0b0));
+  let u = Mk_Ustatus(zero_extend(0b0));
   let u = update_UPIE(u, s.UPIE());
   let u = update_UIE(u, s.UIE());
   u
@@ -106,7 +106,7 @@ bitfield Uinterrupts : xlenbits = {
 
 /* Provides the uip read view of sip (s) as delegated by sideleg (d). */
 function lower_sip(s : Sinterrupts, d : Sinterrupts) -> Uinterrupts = {
-  let u : Uinterrupts = Mk_Uinterrupts(EXTZ(0b0));
+  let u : Uinterrupts = Mk_Uinterrupts(zero_extend(0b0));
   let u = update_UEI(u, s.UEI() & d.UEI());
   let u = update_UTI(u, s.UTI() & d.UTI());
   let u = update_USI(u, s.USI() & d.USI());
@@ -115,7 +115,7 @@ function lower_sip(s : Sinterrupts, d : Sinterrupts) -> Uinterrupts = {
 
 /* Provides the uie read view of sie as delegated by sideleg. */
 function lower_sie(s : Sinterrupts, d : Sinterrupts) -> Uinterrupts = {
-  let u : Uinterrupts = Mk_Uinterrupts(EXTZ(0b0));
+  let u : Uinterrupts = Mk_Uinterrupts(zero_extend(0b0));
   let u = update_UEI(u, s.UEI() & d.UEI());
   let u = update_UTI(u, s.UTI() & d.UTI());
   let u = update_USI(u, s.USI() & d.USI());

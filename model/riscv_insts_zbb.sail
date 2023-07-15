@@ -79,7 +79,7 @@ mapping clause assembly = RISCV_RORIW(shamt, rs1, rd)
 
 function clause execute (RISCV_RORIW(shamt, rs1, rd)) = {
   let rs1_val = (X(rs1))[31..0];
-  let result : xlenbits = EXTS(rs1_val >>> shamt);
+  let result : xlenbits = sign_extend(rs1_val >>> shamt);
   X(rd) = result;
   RETIRE_SUCCESS
 }
@@ -126,7 +126,7 @@ function clause execute (ZBB_RTYPEW(rs2, rs1, rd, op)) = {
     RISCV_ROLW => rs1_val <<< shamt,
     RISCV_RORW => rs1_val >>> shamt
   };
-  X(rd) = EXTS(result);
+  X(rd) = sign_extend(result);
   RETIRE_SUCCESS
 }
 
@@ -224,9 +224,9 @@ mapping clause assembly = ZBB_EXTOP(rs1, rd, op)
 function clause execute (ZBB_EXTOP(rs1, rd, op)) = {
   let rs1_val = X(rs1);
   let result : xlenbits = match op {
-    RISCV_SEXTB => EXTS(rs1_val[7..0]),
-    RISCV_SEXTH => EXTS(rs1_val[15..0]),
-    RISCV_ZEXTH => EXTZ(rs1_val[15..0])
+    RISCV_SEXTB => sign_extend(rs1_val[7..0]),
+    RISCV_SEXTH => sign_extend(rs1_val[15..0]),
+    RISCV_ZEXTH => zero_extend(rs1_val[15..0])
   };
   X(rd) = result;
   RETIRE_SUCCESS

@@ -74,7 +74,7 @@
 type fregtype = flenbits
 
 /* default zero register */
-let zero_freg : fregtype = EXTZ(0x0)
+let zero_freg : fregtype = zero_extend(0x0)
 
 /* default register printer */
 val FRegStr : fregtype -> string
