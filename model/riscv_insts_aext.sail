@@ -254,7 +254,7 @@ mapping clause assembly = STORECON(aq, rl, rs2, rs1, size, rd)
   <-> "sc." ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
-union clause ast = AMO : (amoop, bool, bool, regidx, regidx, word_width, regidx)
+union clause ast = AMO : (amoop, bool, bool, regidx, regidx, amo_word_width, regidx)
 
 mapping encdec_amoop : amoop <-> bits(5) = {
   AMOSWAP <-> 0b00001,
@@ -289,8 +289,8 @@ function amo_encoding_valid(size : amo_word_width, op : amoop, rs2 : regidx, rd 
   }
 }
 
-mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd) if amo_encoding_valid(size)
-  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111 if amo_encoding_valid(size)
+mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd) if amo_encoding_valid(size, op, rs2, rd)
+  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ amo_size_bits(size) @ rd @ 0b0101111 if amo_encoding_valid(size, op, rs2, rd)
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
@@ -478,4 +478,4 @@ mapping amo_mnemonic : amoop <-> string = {
 }
 
 mapping clause assembly = AMO(op, aq, rl, rs2, rs1, width, rd)
-  <-> amo_mnemonic(op) ^ "." ^ size_mnemonic(width) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
+  <-> amo_mnemonic(op) ^ "." ^ amo_size_mnemonic(width) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
