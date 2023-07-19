@@ -10,6 +10,7 @@ let config_enable_writable_misa        = ref true
 let config_enable_dirty_update         = ref false
 let config_enable_misaligned_access    = ref false
 let config_mtval_has_illegal_inst_bits = ref false
+let config_c_hints_expand              = ref false
 let config_enable_pmp                  = ref false
 
 let platform_arch = ref P.RV64
@@ -81,6 +82,7 @@ let enable_fdext ()                  = false
 let enable_dirty_update ()           = !config_enable_dirty_update
 let enable_misaligned_access ()      = !config_enable_misaligned_access
 let mtval_has_illegal_inst_bits ()   = !config_mtval_has_illegal_inst_bits
+let c_hints_expand ()                = !config_c_hints_expand
 let enable_pmp ()                    = !config_enable_pmp
 let enable_zfinx ()                  = false
 

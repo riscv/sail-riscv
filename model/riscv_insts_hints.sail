@@ -92,7 +92,9 @@ mapping clause encdec_compressed = C_ADDI_HINT(rsd)
   <-> 0b000 @ 0b0 @ rsd : regidx @ 0b00000 @ 0b01
       if rsd != zreg
 
-function clause execute (C_ADDI_HINT(rsd)) = RETIRE_SUCCESS
+function clause execute (C_ADDI_HINT(rsd)) =
+      if plat_c_hints_expand() then execute(ITYPE(0b000000000000, rsd, rsd, RISCV_ADDI))
+                               else RETIRE_SUCCESS
 
 mapping clause assembly = C_ADDI_HINT(rsd)
       if rsd != zreg
@@ -105,7 +107,11 @@ union clause ast = C_LI_HINT : (bits(6))
 mapping clause encdec_compressed = C_LI_HINT(imm5 @ imm40)
   <-> 0b010 @ imm5 : bits(1) @ 0b00000 @ imm40 : bits(5) @ 0b01
 
-function clause execute (C_LI_HINT(imm)) = RETIRE_SUCCESS
+function clause execute (C_LI_HINT(imm)) =
+      if plat_c_hints_expand() then {
+        let imm : bits(12) = EXTS(imm);
+        execute(ITYPE(imm, zreg, zreg, RISCV_ADDI))
+      } else RETIRE_SUCCESS
 
 mapping clause assembly = C_LI_HINT(imm)
   <-> "c.li.hint." ^ hex_bits_6(imm)
@@ -118,7 +124,11 @@ mapping clause encdec_compressed = C_LUI_HINT(imm17 @ imm1612)
   <-> 0b011 @ imm17 : bits(1) @ 0b00000 @ imm1612 : bits(5) @ 0b01
       if imm17 @ imm1612 != 0b000000
 
-function clause execute (C_LUI_HINT(imm)) = RETIRE_SUCCESS
+function clause execute (C_LUI_HINT(imm)) =
+      if plat_c_hints_expand() then {
+        let res : bits(20) = EXTS(imm);
+        execute(UTYPE(res, zreg, RISCV_LUI));
+      } else RETIRE_SUCCESS
 
 mapping clause assembly = C_LUI_HINT(imm)
       if imm != 0b000000
@@ -133,7 +143,9 @@ mapping clause encdec_compressed = C_MV_HINT(rs2)
   <-> 0b100 @ 0b0 @ 0b00000 @ rs2 : regidx @ 0b10
       if rs2 != zreg
 
-function clause execute (C_MV_HINT(rs2)) = RETIRE_SUCCESS
+function clause execute (C_MV_HINT(rs2)) =
+      if plat_c_hints_expand() then execute(RTYPE(rs2, zreg, zreg, RISCV_ADD))
+                               else RETIRE_SUCCESS
 
 mapping clause assembly = C_MV_HINT(rs2)
       if rs2 != zreg
@@ -148,7 +160,9 @@ mapping clause encdec_compressed = C_ADD_HINT(rs2)
   <-> 0b100 @ 0b1 @ 0b00000 @ rs2 : regidx @ 0b10
       if rs2 != zreg
 
-function clause execute (C_ADD_HINT(rs2)) = RETIRE_SUCCESS
+function clause execute (C_ADD_HINT(rs2)) =
+      if plat_c_hints_expand() then execute(RTYPE(rs2, zreg, zreg, RISCV_ADD))
+                               else RETIRE_SUCCESS
 
 mapping clause assembly = C_ADD_HINT(rs2)
       if rs2 != zreg
@@ -163,7 +177,9 @@ mapping clause encdec_compressed = C_SLLI_HINT(nzui5 @ nzui40, rsd)
   <-> 0b000 @ nzui5 : bits(1) @ rsd : regidx @ nzui40 : bits(5) @ 0b10
       if (nzui5 @ nzui40 == 0b000000 | rsd == zreg) & (sizeof(xlen) == 64 | nzui5 == 0b0)
 
-function clause execute (C_SLLI_HINT(shamt, rsd)) = RETIRE_SUCCESS
+function clause execute (C_SLLI_HINT(shamt, rsd)) =
+      if plat_c_hints_expand() then execute(SHIFTIOP(shamt, rsd, rsd, RISCV_SLLI))
+                               else RETIRE_SUCCESS
 
 mapping clause assembly = C_SLLI_HINT(shamt, rsd)
       if shamt == 0b000000 | rsd == zreg
@@ -176,7 +192,11 @@ union clause ast = C_SRLI_HINT : (cregidx)
 mapping clause encdec_compressed = C_SRLI_HINT(rsd)
   <-> 0b100 @ 0b0 @ 0b00 @ rsd : cregidx @ 0b00000 @ 0b01
 
-function clause execute (C_SRLI_HINT(rsd)) = RETIRE_SUCCESS
+function clause execute (C_SRLI_HINT(rsd)) =
+      if plat_c_hints_expand() then {
+        let rsd = creg2reg_idx(rsd);
+        execute(SHIFTIOP(0b000000, rsd, rsd, RISCV_SRLI))
+      } else RETIRE_SUCCESS
 
 mapping clause assembly = C_SRLI_HINT(rsd)
   <-> "c.srli.hint." ^ creg_name(rsd)
@@ -187,7 +207,11 @@ union clause ast = C_SRAI_HINT : (cregidx)
 mapping clause encdec_compressed = C_SRAI_HINT(rsd)
   <-> 0b100 @ 0b0 @ 0b01 @ rsd : cregidx @ 0b00000 @ 0b01
 
-function clause execute (C_SRAI_HINT(rsd)) = RETIRE_SUCCESS
+function clause execute (C_SRAI_HINT(rsd)) =
+      if plat_c_hints_expand() then {
+        let rsd = creg2reg_idx(rsd);
+        execute(SHIFTIOP(0b000000, rsd, rsd, RISCV_SRAI))
+      } else RETIRE_SUCCESS
 
 mapping clause assembly = C_SRAI_HINT(rsd)
   <-> "c.srai.hint." ^ creg_name(rsd)
