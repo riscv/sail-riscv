@@ -19,6 +19,8 @@ bool within_phys_mem(mach_bits, sail_int);
 mach_bits plat_rom_base(unit);
 mach_bits plat_rom_size(unit);
 
+mach_bits plat_cache_block_size(unit);
+
 // Provides entropy for the scalar cryptography extension.
 mach_bits plat_get_16_random_bits();
 

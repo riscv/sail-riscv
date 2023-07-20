@@ -90,6 +90,8 @@ let rom_size ()   = arch_bits_of_int   !rom_size_ref
 let dram_base ()  = arch_bits_of_int64 P.dram_base
 let dram_size ()  = arch_bits_of_int64 !P.dram_size_ref
 
+let cache_block_size ()  = arch_bits_of_int64 !P.cache_block_size_ref
+
 let clint_base () = arch_bits_of_int64 P.clint_base
 let clint_size () = arch_bits_of_int64 P.clint_size
 

@@ -98,6 +98,7 @@ function readCSR csr : csreg -> xlenbits = {
     (0x304,  _) => mie.bits(),
     (0x305,  _) => get_mtvec(),
     (0x306,  _) => EXTZ(mcounteren.bits()),
+    (0x30A,  _) => menvcfg.bits(),
     (0x310, 32) => mstatush.bits(),
     (0x320,  _) => EXTZ(mcountinhibit.bits()),
 
@@ -145,6 +146,7 @@ function readCSR csr : csreg -> xlenbits = {
     (0x104,  _) => lower_mie(mie, mideleg).bits(),
     (0x105,  _) => get_stvec(),
     (0x106,  _) => EXTZ(scounteren.bits()),
+    (0x10A,  _) => senvcfg.bits(),
     (0x140,  _) => sscratch,
     (0x141,  _) => get_xret_target(Supervisor) & pc_alignment_mask(),
     (0x142,  _) => scause.bits(),
@@ -186,6 +188,7 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x304,  _) => { mie = legalize_mie(mie, value); Some(mie.bits()) },
     (0x305,  _) => { Some(set_mtvec(value)) },
     (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(EXTZ(mcounteren.bits())) },
+    (0x30A,  _) => { menvcfg = legalize_envcfg(menvcfg, value); Some(menvcfg.bits()) },
     (0x310, 32) => { Some(mstatush.bits()) }, // ignore writes for now
     (0x320,  _) => { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Some(EXTZ(mcountinhibit.bits())) },
     (0x340,  _) => { mscratch = value; Some(mscratch) },
@@ -233,6 +236,7 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x104,  _) => { mie = legalize_sie(mie, mideleg, value); Some(mie.bits()) },
     (0x105,  _) => { Some(set_stvec(value)) },
     (0x106,  _) => { scounteren = legalize_scounteren(scounteren, value); Some(EXTZ(scounteren.bits())) },
+    (0x10A,  _) => { senvcfg = legalize_envcfg(senvcfg, value); Some(senvcfg.bits()) },
     (0x140,  _) => { sscratch = value; Some(sscratch) },
     (0x141,  _) => { Some(set_xret_target(Supervisor, value)) },
     (0x142,  _) => { scause->bits() = value; Some(scause.bits()) },

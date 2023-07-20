@@ -388,7 +388,7 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   let offset : xlenbits = EXTS(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
-  match ext_data_get_addr(rs1, offset, Read(Data), width) {
+  match ext_data_get_addr(rs1, offset, Read(Data), EXTZ(size_bits(width))) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
@@ -444,7 +444,7 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
   let offset : xlenbits = EXTS(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
-  match ext_data_get_addr(rs1, offset, Write(Data), width) {
+  match ext_data_get_addr(rs1, offset, Write(Data), EXTZ(size_bits(width))) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)

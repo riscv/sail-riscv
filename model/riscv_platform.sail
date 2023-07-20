@@ -88,6 +88,8 @@ val elf_entry = {
   c: "elf_entry"
 } : unit -> int
 
+val plat_cache_block_size = {c: "plat_cache_block_size", ocaml: "Platform.cache_block_size", interpreter: "Platform.cache_block_size", lem: "plat_cache_block_size"} : unit -> xlenbits
+
 /* Main memory */
 val plat_ram_base = {c: "plat_ram_base", ocaml: "Platform.dram_base", interpreter: "Platform.dram_base", lem: "plat_ram_base"} : unit -> xlenbits
 val plat_ram_size = {c: "plat_ram_size", ocaml: "Platform.dram_size", interpreter: "Platform.dram_size", lem: "plat_ram_size"} : unit -> xlenbits
