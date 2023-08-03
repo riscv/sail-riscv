@@ -740,9 +740,7 @@ int compare_states(struct tv_spike_t *s)
 void flush_logs(void)
 {
   if (config_print_instr) {
-    fprintf(stderr, "\n");
     fflush(stderr);
-    fprintf(trace_log, "\n");
     fflush(trace_log);
   }
 }
