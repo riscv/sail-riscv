@@ -217,7 +217,11 @@ static void read_dtb(const char *path)
   fprintf(stdout, "Read %zd bytes of DTB from %s.\n", dtb_len, path);
 }
 
-char *process_args(int argc, char **argv)
+/**
+ * Parses the command line arguments and returns the argv index for the ELF file
+ * that should be loaded.
+ */
+static int process_args(int argc, char **argv)
 {
   int c;
   uint64_t ram_size = 0;
@@ -375,7 +379,7 @@ char *process_args(int argc, char **argv)
   if (!rvfi_dii)
 #endif
     fprintf(stdout, "Running file %s.\n", argv[optind]);
-  return argv[optind];
+  return optind;
 }
 
 void check_elf(bool is32bit)
@@ -1022,7 +1026,8 @@ int main(int argc, char **argv)
   // Initialize model so that we can check or report its architecture.
   preinit_sail();
 
-  char *file = process_args(argc, argv);
+  int files_start = process_args(argc, argv);
+  char *file = argv[files_start];
   init_logs();
 
   if (gettimeofday(&init_start, NULL) < 0) {
