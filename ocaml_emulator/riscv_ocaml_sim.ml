@@ -50,6 +50,9 @@ let options = Arg.align ([("-dump-dts",
                           ("-mtval-has-illegal-inst-bits",
                            Arg.Set P.config_mtval_has_illegal_inst_bits,
                            " mtval stores instruction bits on an illegal instruction exception");
+                          ("-c-hints-expand",
+                           Arg.Set P.config_c_hints_expand,
+                           " compressed hint instructions expand to full instructions");
                           ("-disable-rvc",
                            Arg.Clear P.config_enable_rvc,
                            " disable the RVC extension on boot");

@@ -120,6 +120,7 @@ static struct option options[] = {
     {"disable-writable-misa",       no_argument,       0, 'I'},
     {"disable-fdext",               no_argument,       0, 'F'},
     {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'},
+    {"c-hints-expand",              no_argument,       0, 'H'},
     {"device-tree-blob",            required_argument, 0, 'b'},
     {"terminal-log",                required_argument, 0, 't'},
     {"show-times",                  required_argument, 0, 'p'},
@@ -232,6 +233,7 @@ char *process_args(int argc, char **argv)
                     "I"
                     "F"
                     "i"
+                    "H"
                     "s"
                     "p"
                     "z:"
@@ -288,6 +290,10 @@ char *process_args(int argc, char **argv)
     case 'i':
       fprintf(stderr, "enabling storing illegal instruction bits in mtval.\n");
       rv_mtval_has_illegal_inst_bits = true;
+      break;
+    case 'H':
+      fprintf(stderr, "enabling expanding of compressed hints.\n");
+      rv_c_hints_expand = true;
       break;
     case 's':
       do_dump_dts = true;
