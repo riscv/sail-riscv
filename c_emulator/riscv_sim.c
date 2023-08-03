@@ -148,12 +148,9 @@ static struct option options[] = {
 
 static void print_usage(const char *argv0, int ec)
 {
+  fprintf(stdout, "Usage: %s [options] <elf_file> [<elf_file> ...]\n", argv0);
 #ifdef RVFI_DII
-  fprintf(stdout,
-          "Usage: %s [options] <elf_file>\n       %s [options] -r <port>\n",
-          argv0, argv0);
-#else
-  fprintf(stdout, "Usage: %s [options] <elf_file>\n", argv0);
+  fprintf(stdout, "       %s [options] -r <port>\n", argv0);
 #endif
   struct option *opt = options;
   while (opt->name) {
@@ -227,8 +224,11 @@ static void read_dtb(const char *path)
 }
 
 /**
- * Parses the command line arguments and returns the argv index for the ELF file
- * that should be loaded.
+ * Parses the command line arguments and returns the argv index for the first
+ * ELF file that should be loaded. As getopt transforms the argv array, all
+ * argv values following that index are non-options and can be treated as
+ * additional ELF files that should be loaded into memory (but not scanned
+ * for the magic tohost/{begin,end}_signature symbols).
  */
 static int process_args(int argc, char **argv)
 {
@@ -411,13 +411,17 @@ void check_elf(bool is32bit)
     }
   }
 }
-uint64_t load_sail(char *f)
+uint64_t load_sail(char *f, bool main_file)
 {
   bool is32bit;
   uint64_t entry;
   uint64_t begin_sig, end_sig;
   load_elf(f, &is32bit, &entry);
   check_elf(is32bit);
+  if (!main_file) {
+    /* Don't scan for test-signature/htif symbols for additional ELF files. */
+    return entry;
+  }
   fprintf(stdout, "ELF Entry @ 0x%" PRIx64 "\n", entry);
   /* locate htif ports */
   if (lookup_sym(f, "tohost", &rv_htif_tohost) < 0) {
@@ -1049,7 +1053,7 @@ int main(int argc, char **argv)
   preinit_sail();
 
   int files_start = process_args(argc, argv);
-  char *file = argv[files_start];
+  char *initial_elf_file = argv[files_start];
   init_logs();
 
   if (gettimeofday(&init_start, NULL) < 0) {
@@ -1115,15 +1119,20 @@ int main(int argc, char **argv)
     }
     printf("Connected\n");
   } else
-    entry = load_sail(file);
+    entry = load_sail(initial_elf_file, /*main_file=*/true);
 #else
-  uint64_t entry = load_sail(file);
+  uint64_t entry = load_sail(initial_elf_file, /*main_file=*/true);
 #endif
+  /* Load any additional ELF files into memory */
+  for (int i = files_start + 1; i < argc; i++) {
+    fprintf(stdout, "Loading additional ELF file %s.\n", argv[i]);
+    (void)load_sail(argv[i], /*main_file=*/false);
+  }
 
   /* initialize spike before sail so that we can access the device-tree blob,
    * until we roll our own.
    */
-  init_spike(file, entry, rv_ram_size);
+  init_spike(initial_elf_file, entry, rv_ram_size);
   init_sail(entry);
 
   if (!init_check(s))
