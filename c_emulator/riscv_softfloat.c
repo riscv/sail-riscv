@@ -14,11 +14,12 @@ static uint_fast8_t uint8_of_rm(mach_bits rm)
   softfloat_exceptionFlags = 0;                                                \
   softfloat_roundingMode = (uint_fast8_t)rm
 
-#define SOFTFLOAT_POSTLUDE(res)                                                \
-  zfloat_result = res.v;                                                       \
-  zfloat_fflags |= (mach_bits)softfloat_exceptionFlags
+mach_bits softfloat_float_flags(unit u)
+{
+  return (mach_bits)softfloat_exceptionFlags;
+}
 
-unit softfloat_f16add(mach_bits rm, mach_bits v1, mach_bits v2)
+mach_bits softfloat_f16add(mach_bits rm, mach_bits v1, mach_bits v2)
 {
   SOFTFLOAT_PRELUDE(rm);
 
@@ -27,12 +28,10 @@ unit softfloat_f16add(mach_bits rm, mach_bits v1, mach_bits v2)
   b.v = v2;
   res = f16_add(a, b);
 
-  SOFTFLOAT_POSTLUDE(res);
-
-  return UNIT;
+  return res.v;
 }
 
-unit softfloat_f16sub(mach_bits rm, mach_bits v1, mach_bits v2)
+mach_bits softfloat_f16sub(mach_bits rm, mach_bits v1, mach_bits v2)
 {
   SOFTFLOAT_PRELUDE(rm);
 
@@ -41,12 +40,10 @@ unit softfloat_f16sub(mach_bits rm, mach_bits v1, mach_bits v2)
   b.v = v2;
   res = f16_sub(a, b);
 
-  SOFTFLOAT_POSTLUDE(res);
-
-  return UNIT;
+  return res.v;
 }
 
-unit softfloat_f16mul(mach_bits rm, mach_bits v1, mach_bits v2)
+mach_bits softfloat_f16mul(mach_bits rm, mach_bits v1, mach_bits v2)
 {
   SOFTFLOAT_PRELUDE(rm);
 
@@ -55,12 +52,10 @@ unit softfloat_f16mul(mach_bits rm, mach_bits v1, mach_bits v2)
   b.v = v2;
   res = f16_mul(a, b);
 
-  SOFTFLOAT_POSTLUDE(res);
-
-  return UNIT;
+  return res.v;
 }
 
-unit softfloat_f16div(mach_bits rm, mach_bits v1, mach_bits v2)
+mach_bits softfloat_f16div(mach_bits rm, mach_bits v1, mach_bits v2)
 {
   SOFTFLOAT_PRELUDE(rm);
 
@@ -69,9 +64,7 @@ unit softfloat_f16div(mach_bits rm, mach_bits v1, mach_bits v2)
   b.v = v2;
   res = f16_div(a, b);
 
-  SOFTFLOAT_POSTLUDE(res);
-
-  return UNIT;
+  return res.v;
 }
 
 unit softfloat_f32add(mach_bits rm, mach_bits v1, mach_bits v2)

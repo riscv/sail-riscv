@@ -99,48 +99,42 @@ type bits_WU     = bits(32)   /* Unsigned integer */
 type bits_L      = bits(64)   /* Signed integer */
 type bits_LU     = bits(64)   /* Unsigned integer */
 
-/* ***************************************************************** */
-/* Internal registers to pass results across the softfloat interface
- * to avoid return types involving structures.
- */
-register float_result : bits(64)
-register float_fflags : bits(64)
+/* ******************************************************************* */
+/* Get the floating point flags set by the most recent floating point  */
+/* operation. This is called so after each operation to avoid having   */
+/* to use a return type involving structures.                          */
 
-/* updater to keep the flags in sync with fcsr.fflags */
-val update_softfloat_fflags : bits(5) -> unit effect {wreg}
-function update_softfloat_fflags(flags) = {
-  float_fflags = sail_zero_extend(flags, 64);
-}
+val     extern_float_flags = {c: "softfloat_float_flags", ocaml: "Softfloat.float_flags", lem: "softfloat_float_flags"} : (unit) -> bits_LU
 
 /* **************************************************************** */
 /* ADD/SUB/MUL/DIV                                                  */
 
-val     extern_f16Add = {c: "softfloat_f16add", ocaml: "Softfloat.f16_add", lem: "softfloat_f16_add"} : (bits_rm, bits_H, bits_H) -> unit
+val     extern_f16Add = {c: "softfloat_f16add", ocaml: "Softfloat.f16_add", lem: "softfloat_f16_add"} : (bits_rm, bits_H, bits_H) -> bits_H
 val      riscv_f16Add : (bits_rm, bits_H, bits_H) -> (bits_fflags, bits_H) effect {rreg}
 function riscv_f16Add (rm, v1, v2) = {
-  extern_f16Add(rm, v1, v2);
-  (float_fflags[4 .. 0], float_result[15 .. 0])
+  let float_result = extern_f16Add(rm, v1, v2);
+  (extern_float_flags()[4 .. 0], float_result)
 }
 
-val     extern_f16Sub = {c: "softfloat_f16sub", ocaml: "Softfloat.f16_sub", lem: "softfloat_f16_sub"} : (bits_rm, bits_H, bits_H) -> unit
+val     extern_f16Sub = {c: "softfloat_f16sub", ocaml: "Softfloat.f16_sub", lem: "softfloat_f16_sub"} : (bits_rm, bits_H, bits_H) -> bits_H
 val      riscv_f16Sub : (bits_rm, bits_H, bits_H) -> (bits_fflags, bits_H) effect {rreg}
 function riscv_f16Sub (rm, v1, v2) = {
-  extern_f16Sub(rm, v1, v2);
-  (float_fflags[4 .. 0], float_result[15 .. 0])
+  let float_result = extern_f16Sub(rm, v1, v2);
+  (extern_float_flags()[4 .. 0], float_result)
 }
 
-val     extern_f16Mul = {c: "softfloat_f16mul", ocaml: "Softfloat.f16_mul", lem: "softfloat_f16_mul"} : (bits_rm, bits_H, bits_H) -> unit
+val     extern_f16Mul = {c: "softfloat_f16mul", ocaml: "Softfloat.f16_mul", lem: "softfloat_f16_mul"} : (bits_rm, bits_H, bits_H) -> bits_H
 val      riscv_f16Mul : (bits_rm, bits_H, bits_H) -> (bits_fflags, bits_H) effect {rreg}
 function riscv_f16Mul (rm, v1, v2) = {
-  extern_f16Mul(rm, v1, v2);
-  (float_fflags[4 .. 0], float_result[15 .. 0])
+  let float_result = extern_f16Mul(rm, v1, v2);
+  (extern_float_flags()[4 .. 0], float_result)
 }
 
-val     extern_f16Div = {c: "softfloat_f16div", ocaml: "Softfloat.f16_div", lem: "softfloat_f16_div"} : (bits_rm, bits_H, bits_H) -> unit
+val     extern_f16Div = {c: "softfloat_f16div", ocaml: "Softfloat.f16_div", lem: "softfloat_f16_div"} : (bits_rm, bits_H, bits_H) -> bits_H
 val      riscv_f16Div : (bits_rm, bits_H, bits_H) -> (bits_fflags, bits_H) effect {rreg}
 function riscv_f16Div (rm, v1, v2) = {
-  extern_f16Div(rm, v1, v2);
-  (float_fflags[4 .. 0], float_result[15 .. 0])
+  let float_result = extern_f16Div(rm, v1, v2);
+  (extern_float_flags()[4 .. 0], float_result)
 }
 
 val     extern_f32Add = {c: "softfloat_f32add", ocaml: "Softfloat.f32_add", lem: "softfloat_f32_add"} : (bits_rm, bits_S, bits_S) -> unit

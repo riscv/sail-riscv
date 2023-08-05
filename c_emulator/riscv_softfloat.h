@@ -1,9 +1,11 @@
 #pragma once
 
-unit softfloat_f16add(mach_bits rm, mach_bits v1, mach_bits v2);
-unit softfloat_f16sub(mach_bits rm, mach_bits v1, mach_bits v2);
-unit softfloat_f16mul(mach_bits rm, mach_bits v1, mach_bits v2);
-unit softfloat_f16div(mach_bits rm, mach_bits v1, mach_bits v2);
+mach_bits softfloat_float_flags(unit);
+
+mach_bits softfloat_f16add(mach_bits rm, mach_bits v1, mach_bits v2);
+mach_bits softfloat_f16sub(mach_bits rm, mach_bits v1, mach_bits v2);
+mach_bits softfloat_f16mul(mach_bits rm, mach_bits v1, mach_bits v2);
+mach_bits softfloat_f16div(mach_bits rm, mach_bits v1, mach_bits v2);
 
 unit softfloat_f32add(mach_bits rm, mach_bits v1, mach_bits v2);
 unit softfloat_f32sub(mach_bits rm, mach_bits v1, mach_bits v2);

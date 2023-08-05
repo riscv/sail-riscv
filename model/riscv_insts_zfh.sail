@@ -273,7 +273,7 @@ function clause execute (F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, op)) = {
         FMUL_H  => riscv_f16Mul (rm_3b, rs1_val_16b, rs2_val_16b),
         FDIV_H  => riscv_f16Div (rm_3b, rs1_val_16b, rs2_val_16b)
       };
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_H(rd) = rd_val_16b;
       RETIRE_SUCCESS
     }
