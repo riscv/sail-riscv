@@ -526,7 +526,7 @@ function clause execute (F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)) = {
           FNMSUB_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, rs3_val_32b),
           FNMADD_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, negate_S (rs3_val_32b))
         };
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_S(rd) = rd_val_32b;
       RETIRE_SUCCESS
     }
@@ -590,7 +590,7 @@ function clause execute (F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)) = {
         FMUL_S  => riscv_f32Mul (rm_3b, rs1_val_32b, rs2_val_32b),
         FDIV_S  => riscv_f32Div (rm_3b, rs1_val_32b, rs2_val_32b)
       };
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_S(rd) = rd_val_32b;
       RETIRE_SUCCESS
     }
@@ -670,7 +670,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_f32Sqrt   (rm_3b, rs1_val_S);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
@@ -685,7 +685,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_W) = riscv_f32ToI32 (rm_3b, rs1_val_S);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       X(rd) = sign_extend (rd_val_W);
       RETIRE_SUCCESS
     }
@@ -700,7 +700,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_WU) = riscv_f32ToUi32 (rm_3b, rs1_val_S);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       X(rd) = sign_extend (rd_val_WU);
       RETIRE_SUCCESS
     }
@@ -715,7 +715,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_W)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_i32ToF32 (rm_3b, rs1_val_W);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
@@ -730,7 +730,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_ui32ToF32 (rm_3b, rs1_val_WU);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
@@ -746,7 +746,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_L) = riscv_f32ToI64 (rm_3b, rs1_val_S);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       X(rd) = sign_extend(rd_val_L);
       RETIRE_SUCCESS
     }
@@ -762,7 +762,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_LU) = riscv_f32ToUi64 (rm_3b, rs1_val_S);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       X(rd) = sign_extend(rd_val_LU);
       RETIRE_SUCCESS
     }
@@ -778,7 +778,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
@@ -794,7 +794,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
@@ -986,7 +986,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Eq (rs1_val_S, rs2_val_S);
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -998,7 +998,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)) = {
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Lt (rs1_val_S, rs2_val_S);
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -1010,7 +1010,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)) = {
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Le (rs1_val_S, rs2_val_S);
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
