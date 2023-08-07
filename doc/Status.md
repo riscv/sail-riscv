@@ -19,6 +19,8 @@ The Sail specification currently captures the following ISA features:
 
 - Physical Memory Protection (PMP)
 
+- PMP Enhancements for memory accesses and execution prevention on Machine mode (Smepmp)
+
 For the RVWMO memory consistency model, this Sail ISA semantics is integrated with the RVWMO operational model in [the
 RMEM tool](https://github.com/rems-project/rmem).
 

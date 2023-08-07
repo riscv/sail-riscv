@@ -107,6 +107,9 @@ function readCSR csr : csreg -> xlenbits = {
     (0x343,  _) => mtval,
     (0x344,  _) => mip.bits(),
 
+    (0x747,  _) => mseccfg.bits(),             // mseccfg
+    (0x757, 32) => mseccfgh,                   // mseccfgh
+
     (0x3A0,  _) => pmpReadCfgReg(0),           // pmpcfg0
     (0x3A1, 32) => pmpReadCfgReg(1),           // pmpcfg1
     (0x3A2,  _) => pmpReadCfgReg(2),           // pmpcfg2
@@ -195,6 +198,8 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x344,  _) => { mip = legalize_mip(mip, value); Some(mip.bits()) },
 
     // Note: Some(value) returned below is not the legalized value due to locked entries
+    (0x747,  _) => { mseccfg = mseccfgWrite(mseccfg, value); Some(mseccfg.bits()) },
+    (0x757, 32) => { Some(mseccfgh) }, // ignore writes for now
     (0x3A0,  _) => { pmpWriteCfgReg(0, value); Some(pmpReadCfgReg(0)) },  // pmpcfg0
     (0x3A1, 32) => { pmpWriteCfgReg(1, value); Some(pmpReadCfgReg(1)) },  // pmpcfg1
     (0x3A2,  _) => { pmpWriteCfgReg(2, value); Some(pmpReadCfgReg(2)) },  // pmpcfg2
