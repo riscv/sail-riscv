@@ -205,7 +205,6 @@ function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
       Machine => true,
       Supervisor => false, /* TODO: base this on mseccfg */
       User => false, /* TODO: base this on mseccfg */
-      _ => false
     }
   }
 }
