@@ -108,7 +108,7 @@ mapping frm_mnemonic : rounding_mode <-> string = {
 val      valid_rounding_mode : bits(3) -> bool
 function valid_rounding_mode rm = (rm != 0b101 & rm != 0b110)
 
-val      select_instr_or_fcsr_rm : rounding_mode -> option(rounding_mode) effect {rreg}
+val      select_instr_or_fcsr_rm : rounding_mode -> option(rounding_mode)
 function select_instr_or_fcsr_rm instr_rm =
   if (instr_rm == RM_DYN)
   then {
@@ -345,7 +345,7 @@ mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if haveDExt()
 /* Execution semantics ================================ */
 
 val process_fload64 : (regidx, xlenbits, MemoryOpResult(bits(64)))
-                      -> Retired effect {escape, rreg, wreg}
+                      -> Retired
 function process_fload64(rd, addr, value) =
   if   sizeof(flen) == 64
   then match value {
@@ -358,7 +358,7 @@ function process_fload64(rd, addr, value) =
   }
 
 val process_fload32 : (regidx, xlenbits, MemoryOpResult(bits(32)))
-                      -> Retired effect {escape, rreg, wreg}
+                      -> Retired
 function process_fload32(rd, addr, value) =
   match value {
     MemValue(result) => { F(rd) = nan_box(result); RETIRE_SUCCESS },
@@ -366,7 +366,7 @@ function process_fload32(rd, addr, value) =
   }
 
 val process_fload16 : (regidx, xlenbits, MemoryOpResult(bits(16)))
-                      -> Retired effect {escape, rreg, wreg}
+                      -> Retired
 function process_fload16(rd, addr, value) =
   match value {
     MemValue(result) => { F(rd) = nan_box(result); RETIRE_SUCCESS },
@@ -430,7 +430,7 @@ mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)                 
 
 /* Execution semantics ================================ */
 
-val process_fstore : (xlenbits, MemoryOpResult(bool)) -> Retired effect {escape, rreg, wreg}
+val process_fstore : (xlenbits, MemoryOpResult(bool)) -> Retired
 function process_fstore(vaddr, value) =
   match value {
     MemValue(true)  => { RETIRE_SUCCESS },

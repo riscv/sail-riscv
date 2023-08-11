@@ -70,7 +70,7 @@
 
 /* Sv39 address translation for RV64. */
 
-val walk39 : (vaddr39, AccessType(ext_access_type), Privilege, bool, bool, paddr64, nat, bool, ext_ptw) -> PTW_Result(paddr64, SV39_PTE) effect {rmem, rmemt, rreg, escape}
+val walk39 : (vaddr39, AccessType(ext_access_type), Privilege, bool, bool, paddr64, nat, bool, ext_ptw) -> PTW_Result(paddr64, SV39_PTE)
 function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let va = Mk_SV39_Vaddr(vaddr);
   let pt_ofs : paddr64 = shiftl(zero_extend(shiftr(va.VPNi(), (level * SV39_LEVEL_BITS))[(SV39_LEVEL_BITS - 1) .. 0]),
@@ -152,14 +152,14 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
 type TLB39_Entry = TLB_Entry(16, 39, 56, 64)
 register tlb39 : option(TLB39_Entry)
 
-val lookup_TLB39 : (asid64, vaddr39) -> option((nat, TLB39_Entry)) effect {rreg}
+val lookup_TLB39 : (asid64, vaddr39) -> option((nat, TLB39_Entry))
 function lookup_TLB39(asid, vaddr) =
   match tlb39 {
     None()  => None(),
     Some(e) => if match_TLB_Entry(e, asid, vaddr) then Some((0, e)) else None()
   }
 
-val add_to_TLB39 : (asid64, vaddr39, paddr64, SV39_PTE, paddr64, nat, bool) -> unit effect {wreg, rreg}
+val add_to_TLB39 : (asid64, vaddr39, paddr64, SV39_PTE, paddr64, nat, bool) -> unit
 function add_to_TLB39(asid, vAddr, pAddr, pte, pteAddr, level, global) = {
   let ent : TLB39_Entry = make_TLB_Entry(asid, global, vAddr, pAddr, pte.bits(), level, pteAddr, SV39_LEVEL_BITS);
   tlb39 = Some(ent)
@@ -168,7 +168,7 @@ function add_to_TLB39(asid, vAddr, pAddr, pte, pteAddr, level, global) = {
 function write_TLB39(idx : nat, ent : TLB39_Entry) -> unit =
   tlb39 = Some(ent)
 
-val flush_TLB39 : (option(asid64), option(vaddr39)) -> unit effect {rreg, wreg}
+val flush_TLB39 : (option(asid64), option(vaddr39)) -> unit
 function flush_TLB39(asid, addr) =
   match (tlb39) {
     None()  => (),
@@ -179,7 +179,7 @@ function flush_TLB39(asid, addr) =
 
 /* address translation */
 
-val translate39 : (asid64, paddr64, vaddr39, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr64, PTW_Error) effect {rreg, wreg, wmv, wmvt, escape, rmem, rmemt}
+val translate39 : (asid64, paddr64, vaddr39, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr64, PTW_Error)
 function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = {
   match lookup_TLB39(asid, vAddr) {
     Some(idx, ent) => {

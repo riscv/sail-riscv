@@ -212,7 +212,7 @@ let MTIMECMP_BASE_HI : xlenbits = zero_extend(0x04004)
 let MTIME_BASE       : xlenbits = zero_extend(0x0bff8)
 let MTIME_BASE_HI    : xlenbits = zero_extend(0x0bffc)
 
-val clint_load : forall 'n, 'n > 0. (AccessType(ext_access_type), xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rreg}
+val clint_load : forall 'n, 'n > 0. (AccessType(ext_access_type), xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n))
 function clint_load(t, addr, width) = {
   let addr = addr - plat_clint_base ();
   /* FIXME: For now, only allow exact aligned access. */
@@ -284,7 +284,7 @@ function clint_dispatch() -> unit = {
 }
 
 /* The rreg effect is due to checking mtime. */
-val clint_store: forall 'n, 'n > 0. (xlenbits, int('n), bits(8 * 'n)) -> MemoryOpResult(bool) effect {rreg,wreg}
+val clint_store: forall 'n, 'n > 0. (xlenbits, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
 function clint_store(addr, width, data) = {
   let addr = addr - plat_clint_base ();
   if addr == MSIP_BASE & ('n == 8 | 'n == 4) then {
@@ -318,7 +318,7 @@ function clint_store(addr, width, data) = {
   }
 }
 
-val tick_clock : unit -> unit effect {rreg, wreg}
+val tick_clock : unit -> unit
 function tick_clock() = {
   if   mcountinhibit.CY() == 0b0
   then mcycle = mcycle + 1;
@@ -367,7 +367,7 @@ function reset_htif () -> unit = {
  * dispatched the address.
  */
 
-val htif_load : forall 'n, 'n > 0. (AccessType(ext_access_type), xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n)) effect {rreg}
+val htif_load : forall 'n, 'n > 0. (AccessType(ext_access_type), xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n))
 function htif_load(t, paddr, width) = {
   if   get_config_print_platform()
   then print_platform("htif[" ^ BitStr(paddr) ^ "] -> " ^ BitStr(htif_tohost));
@@ -386,7 +386,7 @@ function htif_load(t, paddr, width) = {
 }
 
 /* The rreg,wreg effects are an artifact of using 'register' to implement device state. */
-val htif_store: forall 'n, 0 < 'n <= 8. (xlenbits, int('n), bits(8 * 'n)) -> MemoryOpResult(bool) effect {rreg,wreg}
+val htif_store: forall 'n, 0 < 'n <= 8. (xlenbits, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
 function htif_store(paddr, width, data) = {
   if   get_config_print_platform()
   then print_platform("htif[" ^ BitStr(paddr) ^ "] <- " ^ BitStr(data));
@@ -444,7 +444,7 @@ function htif_store(paddr, width, data) = {
   MemValue(true)
 }
 
-val htif_tick : unit -> unit effect {rreg, wreg}
+val htif_tick : unit -> unit
 function htif_tick() = {
   if   get_config_print_platform()
   then print_platform("htif::tick " ^ BitStr(htif_tohost));

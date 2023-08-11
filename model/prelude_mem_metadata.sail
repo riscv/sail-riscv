@@ -76,8 +76,8 @@ type mem_meta = unit
 
 let default_meta : mem_meta = ()
 
-val __WriteRAM_Meta : forall 'n. (xlenbits, atom('n), mem_meta) -> unit effect {wmvt}
+val __WriteRAM_Meta : forall 'n. (xlenbits, atom('n), mem_meta) -> unit
 function __WriteRAM_Meta(addr, width, meta) = ()
 
-val __ReadRAM_Meta  : forall 'n. (xlenbits, atom('n)) -> mem_meta effect {rmem}
+val __ReadRAM_Meta  : forall 'n. (xlenbits, atom('n)) -> mem_meta
 function __ReadRAM_Meta(addr, width) = ()

@@ -87,7 +87,7 @@ val eq_anything = {ocaml: "(fun (x, y) -> x = y)", interpreter: "eq_anything", l
 
 overload operator == = {eq_string, eq_anything}
 
-val "reg_deref" : forall ('a : Type). register('a) -> 'a effect {rreg}
+val "reg_deref" : forall ('a : Type). register('a) -> 'a
 /* sneaky deref with no effect necessary for bitfield writes */
 val _reg_deref = "reg_deref" : forall ('a : Type). register('a) -> 'a
 

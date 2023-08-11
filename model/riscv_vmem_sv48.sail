@@ -70,7 +70,7 @@
 
 /* Sv48 address translation for RV64. */
 
-val walk48 : (vaddr48, AccessType(ext_access_type), Privilege, bool, bool, paddr64, nat, bool, ext_ptw) -> PTW_Result(paddr64, SV48_PTE) effect {rmem, rmemt, rreg, escape}
+val walk48 : (vaddr48, AccessType(ext_access_type), Privilege, bool, bool, paddr64, nat, bool, ext_ptw) -> PTW_Result(paddr64, SV48_PTE)
 function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let va = Mk_SV48_Vaddr(vaddr);
   let pt_ofs : paddr64 = shiftl(zero_extend(shiftr(va.VPNi(), (level * SV48_LEVEL_BITS))[(SV48_LEVEL_BITS - 1) .. 0]),
@@ -152,14 +152,14 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
 type TLB48_Entry = TLB_Entry(16, 48, 56, 64)
 register tlb48 : option(TLB48_Entry)
 
-val lookup_TLB48 : (asid64, vaddr48) -> option((nat, TLB48_Entry)) effect {rreg}
+val lookup_TLB48 : (asid64, vaddr48) -> option((nat, TLB48_Entry))
 function lookup_TLB48(asid, vaddr) =
   match tlb48 {
     None()  => None(),
     Some(e) => if match_TLB_Entry(e, asid, vaddr) then Some((0, e)) else None()
   }
 
-val add_to_TLB48 : (asid64, vaddr48, paddr64, SV48_PTE, paddr64, nat, bool) -> unit effect {wreg, rreg}
+val add_to_TLB48 : (asid64, vaddr48, paddr64, SV48_PTE, paddr64, nat, bool) -> unit
 function add_to_TLB48(asid, vAddr, pAddr, pte, pteAddr, level, global) = {
   let ent : TLB48_Entry = make_TLB_Entry(asid, global, vAddr, pAddr, pte.bits(), level, pteAddr, SV48_LEVEL_BITS);
   tlb48 = Some(ent)
@@ -168,7 +168,7 @@ function add_to_TLB48(asid, vAddr, pAddr, pte, pteAddr, level, global) = {
 function write_TLB48(idx : nat, ent : TLB48_Entry) -> unit =
   tlb48 = Some(ent)
 
-val flush_TLB48 : (option(asid64), option(vaddr48)) -> unit effect {rreg, wreg}
+val flush_TLB48 : (option(asid64), option(vaddr48)) -> unit
 function flush_TLB48(asid, addr) =
   match (tlb48) {
     None()  => (),
@@ -179,7 +179,7 @@ function flush_TLB48(asid, addr) =
 
 /* address translation */
 
-val translate48 : (asid64, paddr64, vaddr48, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr64, PTW_Error) effect {rreg, wreg, wmv, wmvt, escape, rmem, rmemt}
+val translate48 : (asid64, paddr64, vaddr48, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr64, PTW_Error)
 function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = {
   match walk48(vAddr, ac, priv, mxr, do_sum, ptb, level, false, ext_ptw) {
     PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),

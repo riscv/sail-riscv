@@ -99,7 +99,7 @@ function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
  * prepare_xret_target: used to get the value for control transfer to the xret target
  */
 
-val get_xret_target : Privilege -> xlenbits effect {rreg}
+val get_xret_target : Privilege -> xlenbits
 function get_xret_target(p) =
   match p {
     Machine    => mepc,
@@ -107,7 +107,7 @@ function get_xret_target(p) =
     User       => uepc
   }
 
-val set_xret_target : (Privilege, xlenbits) -> xlenbits effect {rreg, wreg}
+val set_xret_target : (Privilege, xlenbits) -> xlenbits
 function set_xret_target(p, value) = {
   let target = legalize_xepc(value);
   match p {
@@ -118,7 +118,7 @@ function set_xret_target(p, value) = {
   target
 }
 
-val prepare_xret_target : (Privilege) -> xlenbits effect {rreg, wreg}
+val prepare_xret_target : (Privilege) -> xlenbits
 function prepare_xret_target(p) =
   get_xret_target(p)
 

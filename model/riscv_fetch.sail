@@ -74,7 +74,7 @@
 
 function isRVC(h : half) -> bool = not(h[1 .. 0] == 0b11)
 
-val fetch : unit -> FetchResult effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
+val fetch : unit -> FetchResult
 function fetch() -> FetchResult =
   /* fetch PC check for extensions: extensions return a transformed PC to fetch,
    * but any exceptions use the untransformed PC.
