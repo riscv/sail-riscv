@@ -138,8 +138,6 @@ function string_of_bit(b: bit) -> string =
 
 overload BitStr = {string_of_bits, string_of_bit}
 
-val xor_vec = {c: "xor_bits", _: "xor_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
-
 val int_power = {ocaml: "int_power", interpreter: "int_power", lem: "pow", coq: "pow", c: "pow_int"} : (int, int) -> int
 
 overload operator ^ = {xor_vec, int_power, concat_str}
