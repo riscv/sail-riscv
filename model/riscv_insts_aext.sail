@@ -115,7 +115,7 @@ mapping clause encdec = LOADRES(aq, rl, rs1, size, rd) if amo_width_valid(size)
  * call to load_reservation in LR and cancel_reservation in SC.
  */
 
-val process_loadres : forall 'n, 0 < 'n <= xlen_bytes. (regidx, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> Retired effect {escape, rreg, wreg}
+val process_loadres : forall 'n, 0 < 'n <= xlen_bytes. (regidx, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> Retired
 function process_loadres(rd, addr, value, is_unsigned) =
   match extend_value(is_unsigned, value) {
     MemValue(result) => { load_reservation(addr); X(rd) = result; RETIRE_SUCCESS },

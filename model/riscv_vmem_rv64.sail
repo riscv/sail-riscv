@@ -93,7 +93,7 @@ function isValidSv48Addr(vAddr : xlenbits) -> bool = {
 
 /* Compute the address translation mode. */
 
-val translationMode : (Privilege) -> SATPMode effect {rreg, escape}
+val translationMode : (Privilege) -> SATPMode
 function translationMode(priv) = {
   if priv == Machine then Sbare
   else {
@@ -117,7 +117,7 @@ function translationMode(priv) = {
 
 /* Top-level address translation dispatcher */
 
-val translateAddr_priv : (xlenbits, AccessType(ext_access_type), Privilege) -> TR_Result(xlenbits, ExceptionType) effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
+val translateAddr_priv : (xlenbits, AccessType(ext_access_type), Privilege) -> TR_Result(xlenbits, ExceptionType)
 function translateAddr_priv(vAddr, ac, effPriv) = {
   let mxr    : bool   = mstatus.MXR() == 0b1;
   let do_sum : bool   = mstatus.SUM() == 0b1;
@@ -149,11 +149,11 @@ function translateAddr_priv(vAddr, ac, effPriv) = {
   }
 }
 
-val translateAddr : (xlenbits, AccessType(ext_access_type)) -> TR_Result(xlenbits, ExceptionType) effect {escape, rmem, rmemt, rreg, wmv, wmvt, wreg}
+val translateAddr : (xlenbits, AccessType(ext_access_type)) -> TR_Result(xlenbits, ExceptionType)
 function translateAddr(vAddr, ac) =
   translateAddr_priv(vAddr, ac, effectivePrivilege(ac, mstatus, cur_privilege))
 
-val flush_TLB : (option(xlenbits), option(xlenbits)) -> unit effect {rreg, wreg}
+val flush_TLB : (option(xlenbits), option(xlenbits)) -> unit
 function flush_TLB(asid_xlen, addr_xlen) -> unit = {
   /* Flush both Sv39 and Sv48 TLBs. */
   let (addr39, addr48) : (option(vaddr39), option(vaddr48)) =

@@ -110,7 +110,7 @@ register x29 : regtype
 register x30 : regtype
 register x31 : regtype
 
-val rX : forall 'n, 0 <= 'n < 32. regno('n) -> xlenbits effect {rreg, escape}
+val rX : forall 'n, 0 <= 'n < 32. regno('n) -> xlenbits
 function rX r = {
   let v : regtype =
     match r {
@@ -152,7 +152,7 @@ function rX r = {
 }
 
 $ifdef RVFI_DII
-val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit effect {wreg}
+val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit
 function rvfi_wX (r,v) = {
   rvfi_int_data->rvfi_rd_wdata() = zero_extend(v);
   rvfi_int_data->rvfi_rd_addr() = to_bits(8,r);
@@ -163,7 +163,7 @@ val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit
 function rvfi_wX (r,v) = ()
 $endif
 
-val wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit effect {wreg, escape}
+val wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit
 function wX (r, in_v) = {
   let v = regval_into_reg(in_v);
   match r {
@@ -308,7 +308,7 @@ mapping creg_name : bits(3) <-> string = {
   0b111 <-> "a5"
 }
 
-val init_base_regs : unit -> unit effect {wreg}
+val init_base_regs : unit -> unit
 function init_base_regs () = {
   x1  = zero_reg;
   x2  = zero_reg;

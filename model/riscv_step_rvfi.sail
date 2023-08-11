@@ -79,7 +79,7 @@ function ext_post_step_hook() -> unit = {
   rvfi_pc_data->rvfi_pc_wdata() = zero_extend(get_arch_pc())
 }
 
-val ext_init : unit -> unit effect {wreg}
+val ext_init : unit -> unit
 function ext_init() = {
   init_base_regs();
   init_fdext_regs();

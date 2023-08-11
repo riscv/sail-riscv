@@ -76,18 +76,18 @@
   The value in the PC register is the absolute virtual address of the instruction
   to fetch.
  */
-val get_arch_pc : unit -> xlenbits effect {rreg}
+val get_arch_pc : unit -> xlenbits
 function get_arch_pc() = PC
 
-val get_next_pc : unit -> xlenbits effect {rreg}
+val get_next_pc : unit -> xlenbits
 function get_next_pc() = nextPC
 
-val set_next_pc : xlenbits -> unit effect {wreg}
+val set_next_pc : xlenbits -> unit
 function set_next_pc(pc) = {
   nextPC = pc
 }
 
-val tick_pc : unit -> unit effect {rreg, wreg}
+val tick_pc : unit -> unit
 function tick_pc() = {
   PC = nextPC
 }

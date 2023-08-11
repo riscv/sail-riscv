@@ -228,7 +228,7 @@ function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
  * where cancellation can be performed.
  */
 
-val speculate_conditional = {ocaml: "Platform.speculate_conditional", interpreter: "excl_res", c: "speculate_conditional", lem: "speculate_conditional_success"} : unit -> bool effect {exmem}
+val speculate_conditional = {ocaml: "Platform.speculate_conditional", interpreter: "excl_res", c: "speculate_conditional", lem: "speculate_conditional_success"} : unit -> bool
 
 val load_reservation = {ocaml: "Platform.load_reservation", interpreter: "Platform.load_reservation", c: "load_reservation", lem: "load_reservation"} : xlenbits -> unit
 val match_reservation = {ocaml: "Platform.match_reservation", interpreter: "Platform.match_reservation", lem: "match_reservation", c: "match_reservation"} : xlenbits -> bool
@@ -377,7 +377,7 @@ function tval(excinfo : option(xlenbits)) -> xlenbits = {
 }
 
 $ifdef RVFI_DII
-val rvfi_trap : unit -> unit effect {wreg}
+val rvfi_trap : unit -> unit
 // TODO: record rvfi_trap_data
 function rvfi_trap () =
   rvfi_inst_data->rvfi_trap() = 0x01

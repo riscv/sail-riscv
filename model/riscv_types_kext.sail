@@ -144,7 +144,7 @@ function aes_mixcolumn_inv(x) = {
    do not decode to the AES64KS1I instruction. The 0xA case is used
    specifically for the AES-256 KeySchedule, and this function is never
    called in that case. */
-val aes_decode_rcon : bits(4) -> bits(32) effect {escape}
+val aes_decode_rcon : bits(4) -> bits(32)
 function aes_decode_rcon(r) = {
   assert(r <_u 0xA);
   match r {

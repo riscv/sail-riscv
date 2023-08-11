@@ -76,7 +76,7 @@
 
 function to_phys_addr(a : paddr32) -> xlenbits = a[31..0]
 
-val walk32 : (vaddr32, AccessType(ext_access_type), Privilege, bool, bool, paddr32, nat, bool, ext_ptw) -> PTW_Result(paddr32, SV32_PTE) effect {rmem, rmemt, rreg, escape}
+val walk32 : (vaddr32, AccessType(ext_access_type), Privilege, bool, bool, paddr32, nat, bool, ext_ptw) -> PTW_Result(paddr32, SV32_PTE)
 function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let va = Mk_SV32_Vaddr(vaddr);
   let pt_ofs : paddr32 = shiftl(zero_extend(shiftr(va.VPNi(), (level * SV32_LEVEL_BITS))[(SV32_LEVEL_BITS - 1) .. 0]),
@@ -158,14 +158,14 @@ function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
 type TLB32_Entry = TLB_Entry(9, 32, 34, 32)
 register tlb32 : option(TLB32_Entry)
 
-val lookup_TLB32 : (asid32, vaddr32) -> option((nat, TLB32_Entry)) effect {rreg}
+val lookup_TLB32 : (asid32, vaddr32) -> option((nat, TLB32_Entry))
 function lookup_TLB32(asid, vaddr) =
   match tlb32 {
     None()  => None(),
     Some(e) => if match_TLB_Entry(e, asid, vaddr) then Some((0, e)) else None()
   }
 
-val add_to_TLB32 : (asid32, vaddr32, paddr32, SV32_PTE, paddr32, nat, bool) -> unit effect {wreg, rreg}
+val add_to_TLB32 : (asid32, vaddr32, paddr32, SV32_PTE, paddr32, nat, bool) -> unit
 function add_to_TLB32(asid, vAddr, pAddr, pte, pteAddr, level, global) = {
   let ent : TLB32_Entry = make_TLB_Entry(asid, global, vAddr, pAddr, pte.bits(), level, pteAddr, SV32_LEVEL_BITS);
   tlb32 = Some(ent)
@@ -174,7 +174,7 @@ function add_to_TLB32(asid, vAddr, pAddr, pte, pteAddr, level, global) = {
 function write_TLB32(idx : nat, ent : TLB32_Entry) -> unit =
   tlb32 = Some(ent)
 
-val flush_TLB32 : (option(asid32), option(vaddr32)) -> unit effect {rreg, wreg}
+val flush_TLB32 : (option(asid32), option(vaddr32)) -> unit
 function flush_TLB32(asid, addr) =
   match (tlb32) {
     None()  => (),
@@ -185,7 +185,7 @@ function flush_TLB32(asid, addr) =
 
 /* address translation */
 
-val translate32 : (asid32, paddr32, vaddr32, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr32, PTW_Error) effect {rreg, wreg, wmv, wmvt, escape, rmem, rmemt}
+val translate32 : (asid32, paddr32, vaddr32, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr32, PTW_Error)
 function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = {
   match lookup_TLB32(asid, vAddr) {
     Some(idx, ent) => {

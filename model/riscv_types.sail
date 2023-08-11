@@ -138,10 +138,10 @@ union exception = {
   Error_internal_error  : unit
 }
 
-val not_implemented : forall ('a : Type). string -> 'a effect {escape}
+val not_implemented : forall ('a : Type). string -> 'a
 function not_implemented message = throw(Error_not_implemented(message))
 
-val internal_error : forall ('a : Type). (string, int, string) -> 'a effect {escape}
+val internal_error : forall ('a : Type). (string, int, string) -> 'a
 function internal_error(file, line, s) = {
     assert (false, file ^ ":" ^ string_of_int(line) ^ ": " ^ s);
     throw Error_internal_error()
@@ -464,7 +464,7 @@ function word_width_bytes width = match width {
  * should be unreachable. See https://github.com/riscv/sail-riscv/issues/194
  * and https://github.com/riscv/sail-riscv/pull/197 .
  */
-val report_invalid_width : forall ('a : Type). (string, int, word_width, string) -> 'a effect {escape}
+val report_invalid_width : forall ('a : Type). (string, int, word_width, string) -> 'a
 function report_invalid_width(f , l, w, k) -> 'a = {
   /*
    * Ideally we would call internal_error here but this triggers a Sail bug,

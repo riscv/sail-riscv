@@ -77,7 +77,7 @@
 
 /* **************************************************************** */
 
-/* val clause ext_is_CSR_defined : (csreg, Privilege) -> bool effect {rreg} */
+/* val clause ext_is_CSR_defined : (csreg, Privilege) -> bool */
 
 function clause ext_is_CSR_defined (0x001, _) = haveFExt() | haveZfinx()
 function clause ext_is_CSR_defined (0x002, _) = haveFExt() | haveZfinx()

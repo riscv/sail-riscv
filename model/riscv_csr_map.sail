@@ -180,13 +180,13 @@ overload to_str = {csr_name}
 /* returns whether a CSR is defined and accessible at a given address
  * and privilege
  */
-val ext_is_CSR_defined : (csreg, Privilege) -> bool effect {rreg}
+val ext_is_CSR_defined : (csreg, Privilege) -> bool
 scattered function ext_is_CSR_defined
 
 /* returns the value of the CSR if it is defined */
-val ext_read_CSR : csreg -> option(xlenbits) effect {rreg}
+val ext_read_CSR : csreg -> option(xlenbits)
 scattered function ext_read_CSR
 
 /* returns new value (after legalisation) if the CSR is defined */
-val ext_write_CSR : (csreg, xlenbits) -> option(xlenbits) effect {rreg, wreg, escape}
+val ext_write_CSR : (csreg, xlenbits) -> option(xlenbits)
 scattered function ext_write_CSR
