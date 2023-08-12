@@ -45,12 +45,8 @@ mapping sew_flag : string <-> bits(3) = {
   "e8"    <-> 0b000,
   "e16"   <-> 0b001,
   "e32"   <-> 0b010,
-  "e64"   <-> 0b011,
-  "e128"  <-> 0b100,
-  "e256"  <-> 0b101,
-  "e512"  <-> 0b110,
-  "e1024" <-> 0b111
-} 
+  "e64"   <-> 0b011
+}
 
 mapping maybe_lmul_flag : string <-> bits(3) = {
   ""              <-> 0b000, /* m1 by default */

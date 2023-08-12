@@ -292,38 +292,6 @@ function write_single_vreg(num_elem, SEW, vrid, v) = {
   V(vrid) = r
 }
 
-/* Reads multiple vregs into a single element */
-val read_mult_vreg : forall 'n 'm, 'n >= 0. (int('n), int('m), regidx) -> bits('m) effect {escape, rreg}
-function read_mult_vreg(num_vreg, SEW, vrid) = {
-  let VLEN = int_power(2, get_vlen_pow());
-  assert(0 < VLEN & VLEN <= sizeof(vlenmax));
-  assert('m >= VLEN);
-  var result : bits('m) = zeros();
-
-  foreach (i from (num_vreg - 1) downto 0) {
-    let vrid_lmul : regidx   = vrid + to_bits(5, i);
-    let bv        : vregtype = V(vrid_lmul);
-
-    result = (result << VLEN);
-    result = result | sail_zero_extend(bv[VLEN - 1 .. 0], SEW);
-  };
-
-  result
-}
-
-/* Writes a single element into multiple vregs */
-val write_mult_vreg : forall 'n 'm, 'n >= 0. (int('n), int('m), regidx, bits('m)) -> unit effect {escape, rreg, wreg}
-function write_mult_vreg(num_vreg, SEW, vrid, bv) = {
-  let VLEN = int_power(2, get_vlen_pow());
-  assert(0 < VLEN & VLEN <= sizeof(vlenmax));
-  assert('m >= VLEN);
-  foreach (i from (num_vreg - 1) downto 0) {
-    let vrid_lmul : regidx   = vrid + to_bits(5, i);
-    let single_bv : vregtype = sail_zero_extend(slice(bv >> (VLEN * i), 0, VLEN), sizeof(vlenmax));
-    V(vrid_lmul) = single_bv
-  }
-}
-
 /* The general vreg reading operation with num_elem as max(VLMAX,VLEN/SEW)) */
 val read_vreg : forall 'n 'm 'p. (int('n), int('m), int('p), regidx) -> vector('n, dec, bits('m)) effect {escape, rreg, undef}
 function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
@@ -334,35 +302,25 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
   /* Check for valid vrid */
   if unsigned(vrid) + 2 ^ LMUL_pow_reg > 32 then {
     /* vrid would read past largest vreg (v31) */
-    result = undefined
+    assert(false, "invalid register group: vrid overflow the largest number")
   } else if unsigned(vrid) % (2 ^ LMUL_pow_reg) != 0 then {
-    /* vrid must be a multiple of lmul */
-    result = undefined
+    /* vrid must be a multiple of emul */
+    assert(false, "invalid register group: vrid is not a multiple of EMUL")
   } else {
-    if SEW > VLEN then {
-      /* Multiple vregs per element */
-      let 'num_reg_per_elem : int = SEW / VLEN;
-      assert('num_reg_per_elem >= 0);
-      foreach (i from 0 to (num_elem - 1)) {
-        let vrid_lmul : regidx = vrid + to_bits(5, i * 'num_reg_per_elem);
-        result[i] = read_mult_vreg('num_reg_per_elem, SEW, vrid_lmul)
-      }
+    if LMUL_pow < 0 then { 
+      result = read_single_vreg('n, SEW, vrid);
     } else {
-      if LMUL_pow < 0 then { 
-        result = read_single_vreg('n, SEW, vrid);
-      } else {
-        let 'num_elem_single : int = VLEN / SEW;
-        foreach (i_lmul from 0 to (2 ^ LMUL_pow_reg - 1)) {
-          let r_start_i : int = i_lmul * 'num_elem_single;
-          let r_end_i   : int = r_start_i + 'num_elem_single - 1;
-          let vrid_lmul     : regidx = vrid + to_bits(5, i_lmul);
-          let single_result : vector('num_elem_single, dec, bits('m)) = read_single_vreg('num_elem_single, SEW, vrid_lmul);
-          foreach (r_i from r_start_i to r_end_i) {
-            let s_i : int = r_i - r_start_i;
-            assert(0 <= r_i & r_i < num_elem);
-            assert(0 <= s_i & s_i < 'num_elem_single);
-            result[r_i] = single_result[s_i];
-          }
+      let 'num_elem_single : int = VLEN / SEW;
+      foreach (i_lmul from 0 to (2 ^ LMUL_pow_reg - 1)) {
+        let r_start_i : int = i_lmul * 'num_elem_single;
+        let r_end_i   : int = r_start_i + 'num_elem_single - 1;
+        let vrid_lmul     : regidx = vrid + to_bits(5, i_lmul);
+        let single_result : vector('num_elem_single, dec, bits('m)) = read_single_vreg('num_elem_single, SEW, vrid_lmul);
+        foreach (r_i from r_start_i to r_end_i) {
+          let s_i : int = r_i - r_start_i;
+          assert(0 <= r_i & r_i < num_elem);
+          assert(0 <= s_i & s_i < 'num_elem_single);
+          result[r_i] = single_result[s_i];
         }
       }
     }
@@ -390,29 +348,19 @@ function write_vreg(num_elem, SEW, LMUL_pow, vrid, vec) = {
   let VLEN = int_power(2, get_vlen_pow());
   let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
 
-  if SEW > VLEN then {
-    /* Multiple vregs per element */
-    let 'num_reg_per_elem : int = SEW / VLEN;
-    assert('num_reg_per_elem >= 0);
-    foreach (i from 0 to (num_elem - 1)) {
-      let vrid_lmul : regidx = vrid + to_bits(5, i * 'num_reg_per_elem);
-      write_mult_vreg('num_reg_per_elem, SEW, vrid_lmul, vec[i])
-    }
-  } else {
-    let 'num_elem_single  : int = VLEN / SEW;
-    foreach (i_lmul from 0 to (2 ^ LMUL_pow_reg - 1)) {
-      var single_vec : vector('num_elem_single, dec, bits('m)) = undefined;
-      let vrid_lmul  : regidx = vrid + to_bits(5, i_lmul);
-      let r_start_i  : int = i_lmul * 'num_elem_single;
-      let r_end_i    : int = r_start_i + 'num_elem_single - 1;
-      foreach (r_i from r_start_i to r_end_i) {
-        let s_i : int = r_i - r_start_i;
-        assert(0 <= r_i & r_i < num_elem);
-        assert(0 <= s_i & s_i < 'num_elem_single);
-        single_vec[s_i] = vec[r_i]
-      };
-      write_single_vreg('num_elem_single, SEW, vrid_lmul, single_vec)
-    }
+  let 'num_elem_single  : int = VLEN / SEW;
+  foreach (i_lmul from 0 to (2 ^ LMUL_pow_reg - 1)) {
+    var single_vec : vector('num_elem_single, dec, bits('m)) = undefined;
+    let vrid_lmul  : regidx = vrid + to_bits(5, i_lmul);
+    let r_start_i  : int = i_lmul * 'num_elem_single;
+    let r_end_i    : int = r_start_i + 'num_elem_single - 1;
+    foreach (r_i from r_start_i to r_end_i) {
+      let s_i : int = r_i - r_start_i;
+      assert(0 <= r_i & r_i < num_elem);
+      assert(0 <= s_i & s_i < 'num_elem_single);
+      single_vec[s_i] = vec[r_i]
+    };
+    write_single_vreg('num_elem_single, SEW, vrid_lmul, single_vec)
   }
 }
 

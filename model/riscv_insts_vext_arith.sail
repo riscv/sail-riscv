@@ -1405,7 +1405,6 @@ mapping clause encdec = MVVMATYPE(funct6, vm, vs2, vs1, vd) if haveRVV()
 function clause execute(MVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let VLEN     = int_power(2, get_vlen_pow());
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
@@ -1422,7 +1421,6 @@ function clause execute(MVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
 
   (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
-  assert(VLEN >= 0);
   foreach (i from 0 to (num_elem - 1)){
     if mask[i] then{
       result[i] = match funct6 {
@@ -1487,7 +1485,6 @@ function clause execute(WVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   result      : vector('n, dec, bits('o)) = undefined;
   mask        : vector('n, dec, bool)     = undefined;
 
-  assert(8 <= SEW_widen & SEW_widen <= 64);
   (result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -1557,7 +1554,6 @@ function clause execute(WVTYPE(funct6, vm, vs2, vs1, vd)) = {
   result      : vector('n, dec, bits('o)) = undefined;
   mask        : vector('n, dec, bool)     = undefined;
 
-  assert(8 <= SEW_widen & SEW_widen <= 64);
   (result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -1622,7 +1618,6 @@ function clause execute(WMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   result      : vector('n, dec, bits('o)) = undefined;
   mask        : vector('n, dec, bool)     = undefined;
 
-  assert(8 <= SEW_widen & SEW_widen <= 64);
   (result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -2053,7 +2048,6 @@ mapping clause encdec = MVXMATYPE(funct6, vm, vs2, rs1, vd) if haveRVV()
 function clause execute(MVXMATYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let VLEN     = int_power(2, get_vlen_pow());
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
@@ -2070,7 +2064,6 @@ function clause execute(MVXMATYPE(funct6, vm, vs2, rs1, vd)) = {
 
   (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
-  assert(VLEN >= 0);
   foreach (i from 0 to (num_elem - 1)){
     if mask[i] then{
       result[i] = match funct6 {
@@ -2135,7 +2128,6 @@ function clause execute(WVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   result      : vector('n, dec, bits('o)) = undefined;
   mask        : vector('n, dec, bool)     = undefined;
 
-  assert(8 <= SEW_widen & SEW_widen <= 64);
   (result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -2204,7 +2196,6 @@ function clause execute(WXTYPE(funct6, vm, vs2, rs1, vd)) = {
   result      : vector('n, dec, bits('o)) = undefined;
   mask        : vector('n, dec, bool)     = undefined;
 
-  assert(8 <= SEW_widen & SEW_widen <= 64);
   (result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -2269,7 +2260,6 @@ function clause execute(WMVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   result      : vector('n, dec, bits('o)) = undefined;
   mask        : vector('n, dec, bool)     = undefined;
 
-  assert(8 <= SEW_widen & SEW_widen <= 64);
   (result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {

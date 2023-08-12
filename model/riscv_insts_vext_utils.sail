@@ -112,6 +112,16 @@ function valid_reg_overlap(rs, rd, EMUL_pow_rs, EMUL_pow_rd) = {
   is_valid
 }
 
+/* Check for valid register grouping in vector segment load/store instructions:
+ *  The EMUL of load vd or store vs3 times the number of fields per segment
+ *  must not be larger than 8. (EMUL * NFIELDS <= 8)
+ */
+val valid_segment : (int, int) -> bool
+function valid_segment(nf, EMUL_pow) = {
+  if EMUL_pow < 0 then nf / int_power(2, 0 - EMUL_pow) <= 8
+  else nf * int_power(2, EMUL_pow) <= 8
+}
+
 /* ******************************************************************************* */
 /* The following functions summarize patterns of illegal instruction check.        */
 /* ******************************************************************************* */
@@ -202,6 +212,18 @@ function illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) = {
   not(valid_eew_emul(SEW_widen, LMUL_pow_widen))
 }
 
+/* m. Normal check for segment load instructions */
+val illegal_segment_load : (regidx, bits(1), int, int) -> bool
+function illegal_segment_load(vd, vm, nf, EMUL_pow) = {
+  not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_segment(nf, EMUL_pow))
+}
+
+/* m. Normal check for segment store instructions (no vd) */
+val illegal_segment_store : (int, int) -> bool
+function illegal_segment_store(nf, EMUL_pow) = {
+  not(valid_vtype()) | not(valid_segment(nf, EMUL_pow))
+}
+
 /* Scalar register shaping */
 val get_scalar : forall 'n, 'n >= 8. (regidx, int('n)) -> bits('n) effect {escape, rreg}
 function get_scalar(rs1, SEW) = {
@@ -246,7 +268,7 @@ function get_end_element() = {
  *   vector2 is a "mask" vector that is true for an element if the corresponding element
  *     in the result vector should be updated by the calling instruction
  */
-val init_masked_result : forall 'n 'm 'p, 8 <= 'm <= 64. (int('n), int('m), int('p), vector('n, dec, bits('m)), vector('n, dec, bool)) -> (vector('n, dec, bits('m)), vector('n, dec, bool)) effect {escape, rreg, undef, wreg}
+val init_masked_result : forall 'n 'm 'p. (int('n), int('m), int('p), vector('n, dec, bits('m)), vector('n, dec, bool)) -> (vector('n, dec, bits('m)), vector('n, dec, bool)) effect {escape, rreg, undef}
 function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
@@ -256,7 +278,7 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   result : vector('n, dec, bits('m)) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
-  let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow);
+  let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / int_power(2, 0 - LMUL_pow);
   assert(num_elem >= real_num_elem);
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -297,9 +319,46 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   (result, mask)
 }
 
+/* For instructions like vector reduction and vector store, 
+ * masks on prestart, inactive and tail elements only affect the validation of source register elements
+ * (vs3 for store and vs2 for reduction). There's no destination register to be masked.
+ * In these cases, this function can be called to simply get the mask vector for vs (without the prepared vd result vector).
+ */
+val init_masked_source : forall 'n 'p. (int('n), int('p), vector('n, dec, bool)) -> vector('n, dec, bool) effect {escape, rreg, undef}
+function init_masked_source(num_elem, LMUL_pow, vm_val) = {
+  let start_element = get_start_element();
+  let end_element   = get_end_element();
+  mask : vector('n, dec, bool) = undefined;
+
+  /* Determine the actual number of elements when lmul < 1 */
+  let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / int_power(2, 0 - LMUL_pow);
+  assert(num_elem >= real_num_elem);
+
+  foreach (i from 0 to (num_elem - 1)) {
+    if i < start_element then {
+      /* Prestart elements defined by vstart */
+      mask[i] = false
+    } else if i > end_element then {
+      /* Tail elements defined by vl */
+      mask[i] = false
+    } else if i >= real_num_elem then {
+      /* Tail elements defined by lmul < 1 */
+      mask[i] = false
+    } else if not(vm_val[i]) then {
+      /* Inactive body elements defined by vm */
+      mask[i] = false
+    } else {
+      /* Active body elements */
+      mask[i] = true;
+    }
+  };
+
+  mask
+}
+
 /* Mask handling for carry functions that use masks as input/output */
 /* Only prestart and tail elements are masked in a mask value */
-val init_masked_result_carry : forall 'n 'm 'p, 8 <= 'm <= 64. (int('n), int('m), int('p), vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool)) effect {escape, rreg, undef, wreg}
+val init_masked_result_carry : forall 'n 'm 'p. (int('n), int('m), int('p), vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool)) effect {escape, rreg, undef}
 function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
@@ -307,7 +366,7 @@ function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
   result : vector('n, dec, bool) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
-  let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow);
+  let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / int_power(2, 0 - LMUL_pow);
   assert(num_elem >= real_num_elem);
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -335,7 +394,7 @@ function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
 }
 
 /* Mask handling for cmp functions that use masks as output */
-val init_masked_result_cmp : forall 'n 'm 'p, 8 <= 'm <= 64. (int('n), int('m), int('p), vector('n, dec, bool), vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool)) effect {escape, rreg, undef, wreg}
+val init_masked_result_cmp : forall 'n 'm 'p. (int('n), int('m), int('p), vector('n, dec, bool), vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool)) effect {escape, rreg, undef}
 function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
@@ -344,7 +403,7 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   result : vector('n, dec, bool) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
-  let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow);
+  let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / int_power(2, 0 - LMUL_pow);
   assert(num_elem >= real_num_elem);
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -377,6 +436,28 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   };
 
   (result, mask)
+}
+
+/* For vector load/store segment instructions:
+ *   Read multiple register groups and concatenate them in parallel
+ *   The whole segments with the same element index are combined together 
+ */
+val read_vreg_seg : forall 'n 'm 'p 'q. (int('n), int('m), int('p), int('q), regidx) -> vector('n, dec, bits('q * 'm)) effect {escape, rreg, undef}
+function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
+  assert('q * 'm > 0);
+  let LMUL_reg : int = if LMUL_pow <= 0 then 1 else int_power(2, LMUL_pow);
+  vreg_list : vector('q, dec, vector('n, dec, bits('m))) = undefined;
+  result : vector('n, dec, bits('q * 'm)) = undefined;
+  foreach (j from 0 to (nf - 1)) {
+    vreg_list[j] = read_vreg(num_elem, SEW, LMUL_pow, vrid + to_bits(5, j * LMUL_reg));
+  };
+  foreach (i from 0 to (num_elem - 1)) {
+    result[i] = zeros('q * 'm);
+    foreach (j from 0 to (nf - 1)) {
+      result[i] = result[i] | EXTZ(vreg_list[j][i] << (j * 'm))
+    }
+  };
+  result
 }
 
 /* Floating point canonical NaN for 16-bit, 32-bit, 64-bit and 128-bit types */

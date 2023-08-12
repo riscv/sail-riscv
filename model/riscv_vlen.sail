@@ -74,4 +74,7 @@ type vlenmax : Int = 65536
  * means VLEN = 1024 and ELEN = 64,
  * and the CSR vlenb is also not used.
  * They will be configurable when user-specified configuration is supported in Sail.
+ *
+ * Also, VLEN >= ELEN must be satisfied and this condition check should be added
+ * after their initialization.
  */

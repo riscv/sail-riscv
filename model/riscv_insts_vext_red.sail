@@ -55,32 +55,32 @@ mapping clause encdec = RIVVTYPE(funct6, vm, vs2, vs1, vd) if haveRVV()
 function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+  let num_elem_vs = get_num_elem(LMUL_pow, SEW);
+  let num_elem_vd = get_num_elem(0, SEW_widen); /* vd regardless of LMUL setting */
 
   if illegal_reduction_widen(SEW_widen, LMUL_pow_widen) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
+  if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
+
+  let 'n = num_elem_vs;
+  let 'd = num_elem_vd;
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let vd_val  : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  result      : vector('n, dec, bits('o)) = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem_vs, vm, 0b00000);
+  let vd_val  : vector('d, dec, bits('o)) = read_vreg(num_elem_vd, SEW_widen, 0, vd);
+  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
+  let mask    : vector('n, dec, bool)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
 
-  assert(8 <= SEW_widen & SEW_widen <= 64);
-  (result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
-
-  let scalar : bits('o) = read_single_element(SEW_widen, 0, LMUL_pow_widen, vs1);
+  let scalar : bits('o) = read_single_element(SEW_widen, 0, 0, vs1); /* vs1 regardless of LMUL setting */
   sum : bits('o) = match funct6 {
     IVV_VWREDSUMU  => to_bits(SEW_widen, unsigned(scalar)),
     IVV_VWREDSUM   => to_bits(SEW_widen, signed(scalar))
   };
 
-  foreach (i from 0 to (num_elem - 1)) {
+  foreach (i from 0 to (num_elem_vs - 1)) {
     if mask[i] then {
       sum = match funct6 {
         IVV_VWREDSUMU  => to_bits(SEW_widen, unsigned(vs2_val[i]) + unsigned(sum)),
@@ -89,7 +89,9 @@ function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
     }
   };
 
-  write_single_element(SEW_widen, 0, LMUL_pow_widen, vd, sum);
+  write_single_element(SEW_widen, 0, 0, vd, sum);
+  /* other elements in vd are treated as tail elements, currently remain unchanged */
+  /* TODO: configuration support for agnostic behavior */
   vstart = EXTZ(0b0);
   RETIRE_SUCCESS
 }
@@ -122,23 +124,24 @@ mapping clause encdec = RMVVTYPE(funct6, vm, vs2, vs1, vd) if haveRVV()
 function clause execute(RMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let num_elem_vs = get_num_elem(LMUL_pow, SEW);
+  let num_elem_vd = get_num_elem(0, SEW); /* vd regardless of LMUL setting */
 
   if illegal_reduction() then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
+  if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
+
+  let 'n = num_elem_vs;
+  let 'd = num_elem_vd;
   let 'm = SEW;
 
-  let vm_val   : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let vd_val   : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let vs2_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  result       : vector('n, dec, bits('m)) = undefined;
-  mask         : vector('n, dec, bool)     = undefined;
+  let vm_val   : vector('n, dec, bool)     = read_vmask(num_elem_vs, vm, 0b00000);
+  let vd_val   : vector('d, dec, bits('m)) = read_vreg(num_elem_vd, SEW, 0, vd);
+  let vs2_val  : vector('n, dec, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
+  let mask     : vector('n, dec, bool)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
 
-  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
-
-  sum : bits('m) = read_single_element(SEW, 0, LMUL_pow, vs1);
-  foreach (i from 0 to (num_elem - 1)) {
+  sum : bits('m) = read_single_element(SEW, 0, 0, vs1); /* vs1 regardless of LMUL setting */
+  foreach (i from 0 to (num_elem_vs - 1)) {
     if mask[i] then {
       sum = match funct6 {
         MVV_VREDSUM   => sum + vs2_val[i],
@@ -153,7 +156,9 @@ function clause execute(RMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
     }
   };
 
-  write_single_element(SEW, 0, LMUL_pow, vd, sum);
+  write_single_element(SEW, 0, 0, vd, sum);
+  /* other elements in vd are treated as tail elements, currently remain unchanged */
+  /* TODO: configuration support for agnostic behavior */
   vstart = EXTZ(0b0);
   RETIRE_SUCCESS
 }
@@ -188,26 +193,29 @@ mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd) if haveRVV()
   <-> encdec_rfvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if haveRVV()
 
 val process_rfvv_single: forall 'n 'm 'p, 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), int('p)) -> Retired effect {escape, rreg, undef, wreg}
-function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem, SEW, LMUL_pow) = {
+function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
   let rm_3b = fcsr.FRM();
+  let num_elem_vd = get_num_elem(0, SEW); /* vd regardless of LMUL setting */
+
   if illegal_fp_reduction(SEW, rm_3b) then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
-  let 'n = num_elem;
+  if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
+
+  let 'n = num_elem_vs;
+  let 'd = num_elem_vd;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  result      : vector('n, dec, bits('m)) = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem_vs, vm, 0b00000);
+  let vd_val  : vector('d, dec, bits('m)) = read_vreg(num_elem_vd, SEW, 0, vd);
+  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
+  let mask    : vector('n, dec, bool)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
 
-  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
-
-  sum : bits('m) = read_single_element(SEW, 0, LMUL_pow, vs1);
-  foreach (i from 0 to (num_elem - 1)) {
+  sum : bits('m) = read_single_element(SEW, 0, 0, vs1); /* vs1 regardless of LMUL setting */
+  foreach (i from 0 to (num_elem_vs - 1)) {
     if mask[i] then {
       sum = match funct6 {
+        /* currently ordered/unordered sum reductions do the same operations */
         FVV_VFREDOSUM   => fp_add(rm_3b, sum, vs2_val[i]),
         FVV_VFREDUSUM   => fp_add(rm_3b, sum, vs2_val[i]),
         FVV_VFREDMAX    => fp_max(sum, vs2_val[i]),
@@ -216,41 +224,46 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem, SEW, LMUL_pow) 
     }
   };
 
-  write_single_element(SEW, 0, LMUL_pow, vd, sum);
+  write_single_element(SEW, 0, 0, vd, sum);
+  /* other elements in vd are treated as tail elements, currently remain unchanged */
+  /* TODO: configuration support for agnostic behavior */
   vstart = EXTZ(0b0);
   RETIRE_SUCCESS
 }
 
 val process_rfvv_widen: forall 'n 'm 'p, 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), int('p)) -> Retired effect {escape, rreg, undef, wreg}
-function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem, SEW, LMUL_pow) = {
+function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
   let rm_3b          = fcsr.FRM();
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+  let num_elem_vd = get_num_elem(0, SEW_widen); /* vd regardless of LMUL setting */
 
   if illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW >= 16 & SEW_widen <= 64);
 
-  let 'n = num_elem;
+  if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
+
+  let 'n = num_elem_vs;
+  let 'd = num_elem_vd;
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val   : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let vd_val   : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
-  let vs2_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  result       : vector('n, dec, bits('o)) = undefined;
-  mask         : vector('n, dec, bool)     = undefined;
+  let vm_val   : vector('n, dec, bool)     = read_vmask(num_elem_vs, vm, 0b00000);
+  let vd_val   : vector('d, dec, bits('o)) = read_vreg(num_elem_vd, SEW_widen, 0, vd);
+  let vs2_val  : vector('n, dec, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
+  let mask     : vector('n, dec, bool)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
 
-  (result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
-
-  sum : bits('o) = read_single_element(SEW_widen, 0, LMUL_pow_widen, vs1);
-  foreach (i from 0 to (num_elem - 1)) {
+  sum : bits('o) = read_single_element(SEW_widen, 0, 0, vs1); /* vs1 regardless of LMUL setting */
+  foreach (i from 0 to (num_elem_vs - 1)) {
     if mask[i] then {
-      /* Currently ordered/unordered sum reductions do the same operations */
+      /* currently ordered/unordered sum reductions do the same operations */
       sum = fp_add(rm_3b, sum, fp_widen(vs2_val[i]))
     }
   };
 
-  write_single_element(SEW_widen, 0, LMUL_pow_widen, vd, sum);
+  write_single_element(SEW_widen, 0, 0, vd, sum);
+  /* other elements in vd are treated as tail elements, currently remain unchanged */
+  /* TODO: configuration support for agnostic behavior */
   vstart = EXTZ(0b0);
   RETIRE_SUCCESS
 }
@@ -258,12 +271,12 @@ function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem, SEW, LMUL_pow) =
 function clause execute(RFVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let num_elem_vs = get_num_elem(LMUL_pow, SEW);
 
   if funct6 == FVV_VFWREDOSUM | funct6 == FVV_VFWREDUSUM then 
-    process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem, SEW, LMUL_pow)
+    process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow)
   else
-    process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem, SEW, LMUL_pow)
+    process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow)
 }
 
 mapping rfvvtype_mnemonic : rfvvfunct6 <-> string = {
