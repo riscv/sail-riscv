@@ -422,7 +422,7 @@ function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
                                 32 => riscv_f32ToUi32(rm_3b, vs2_val[i]),
                                 64 => riscv_f64ToUi64(rm_3b, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem                                
                             },
         FV_CVT_X_F       => {
@@ -431,7 +431,7 @@ function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
                                 32 => riscv_f32ToI32(rm_3b, vs2_val[i]),
                                 64 => riscv_f64ToI64(rm_3b, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem                                
                             },
         FV_CVT_F_XU      => {
@@ -670,7 +670,7 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
                                 16 => riscv_f32ToUi16(rm_3b, vs2_val[i]),
                                 32 => riscv_f64ToUi32(rm_3b, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem
                             },
         FNV_CVT_X_F      => {
@@ -679,7 +679,7 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
                                 16 => riscv_f32ToI16(rm_3b, vs2_val[i]),
                                 32 => riscv_f64ToI32(rm_3b, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem
                             },
         FNV_CVT_F_XU     => {
@@ -809,7 +809,7 @@ function clause execute(VFUNARY1(vm, vs2, vfunary1, vd)) = {
                               32  => riscv_f32Rsqrte7(rm_3b, vs2_val[i]),
                               64  => riscv_f64Rsqrte7(rm_3b, vs2_val[i])
                             };
-                            write_fflags(fflags);
+                            accrue_fflags(fflags);
                             elem
                           },
         FVV_VREC7      => {
@@ -818,7 +818,7 @@ function clause execute(VFUNARY1(vm, vs2, vfunary1, vd)) = {
                               32  => riscv_f32Recip7(rm_3b, vs2_val[i]),
                               64  => riscv_f64Recip7(rm_3b, vs2_val[i])
                             };
-                            write_fflags(fflags);
+                            accrue_fflags(fflags);
                             elem
                           },         
         FVV_VCLASS     => {
@@ -827,7 +827,7 @@ function clause execute(VFUNARY1(vm, vs2, vfunary1, vd)) = {
                               32  => riscv_f32Class(vs2_val[i]),
                               64  => riscv_f64Class(vs2_val[i])
                             };
-                            write_fflags(fflags);
+                            accrue_fflags(fflags);
                             elem
                           }
       }

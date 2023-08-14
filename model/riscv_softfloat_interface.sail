@@ -246,107 +246,7 @@ function riscv_f64Sqrt (rm, v) = {
 }
 
 /* **************************************************************** */
-/* RECIPROCAL SQUARE ROOT ESTIMATE                                  */
-
-val     extern_f16Rsqrte7 = {c: "softfloat_f16rsqrte7", ocaml: "Softfloat.f16_rsqrte7", lem: "softfloat_f16_rsqrte7"} : (bits_rm, bits_H) -> unit
-val      riscv_f16Rsqrte7 : (bits_rm, bits_H) -> (bits_fflags, bits_H) effect {rreg}
-function riscv_f16Rsqrte7 (rm, v) = {
-  extern_f16Rsqrte7(rm, v);
-  (float_fflags[4 .. 0], float_result[15 .. 0])
-}
-
-val     extern_f32Rsqrte7 = {c: "softfloat_f32rsqrte7", ocaml: "Softfloat.f32_rsqrte7", lem: "softfloat_f32_rsqrte7"} : (bits_rm, bits_S) -> unit
-val      riscv_f32Rsqrte7 : (bits_rm, bits_S) -> (bits_fflags, bits_S) effect {rreg}
-function riscv_f32Rsqrte7 (rm, v) = {
-  extern_f32Rsqrte7(rm, v);
-  (float_fflags[4 .. 0], float_result[31 .. 0])
-}
-
-val     extern_f64Rsqrte7 = {c: "softfloat_f64rsqrte7", ocaml: "Softfloat.f64_rsqrte7", lem: "softfloat_f64_rsqrte7"} : (bits_rm, bits_D) -> unit
-val      riscv_f64Rsqrte7 : (bits_rm, bits_D) -> (bits_fflags, bits_D) effect {rreg}
-function riscv_f64Rsqrte7 (rm, v) = {
-  extern_f64Rsqrte7(rm, v);
-  (float_fflags[4 .. 0], float_result)
-}
-
-/* **************************************************************** */
-/* RECIPROCAL ESTIMATE                                              */
-
-val     extern_f16Recip7 = {c: "softfloat_f16recip7", ocaml: "Softfloat.f16_recip7", lem: "softfloat_f16_recip7"} : (bits_rm, bits_H) -> unit
-val      riscv_f16Recip7 : (bits_rm, bits_H) -> (bits_fflags, bits_H) effect {rreg}
-function riscv_f16Recip7 (rm, v) = {
-  extern_f16Recip7(rm, v);
-  (float_fflags[4 .. 0], float_result[15 .. 0])
-}
-
-val     extern_f32Recip7 = {c: "softfloat_f32recip7", ocaml: "Softfloat.f32_recip7", lem: "softfloat_f32_recip7"} : (bits_rm, bits_S) -> unit
-val      riscv_f32Recip7 : (bits_rm, bits_S) -> (bits_fflags, bits_S) effect {rreg}
-function riscv_f32Recip7 (rm, v) = {
-  extern_f32Recip7(rm, v);
-  (float_fflags[4 .. 0], float_result[31 .. 0])
-}
-
-val     extern_f64Recip7 = {c: "softfloat_f64recip7", ocaml: "Softfloat.f64_recip7", lem: "softfloat_f64_recip7"} : (bits_rm, bits_D) -> unit
-val      riscv_f64Recip7 : (bits_rm, bits_D) -> (bits_fflags, bits_D) effect {rreg}
-function riscv_f64Recip7 (rm, v) = {
-  extern_f64Recip7(rm, v);
-  (float_fflags[4 .. 0], float_result)
-}
-
-/* **************************************************************** */
-/* CLASSIFY                                                         */
-
-val     extern_f16Class = {c: "softfloat_f16class", ocaml: "Softfloat.f16_class", lem: "softfloat_f16_class"} : bits_H -> unit
-val      riscv_f16Class : bits_H -> (bits_fflags, bits_H) effect {rreg}
-function riscv_f16Class (v) = {
-  extern_f16Class(v);
-  (float_fflags[4 .. 0], float_result[15 .. 0])
-}
-
-val     extern_f32Class = {c: "softfloat_f32class", ocaml: "Softfloat.f32_class", lem: "softfloat_f32_class"} : bits_S -> unit
-val      riscv_f32Class : bits_S -> (bits_fflags, bits_S) effect {rreg}
-function riscv_f32Class (v) = {
-  extern_f32Class(v);
-  (float_fflags[4 .. 0], float_result[31 .. 0])
-}
-
-val     extern_f64Class = {c: "softfloat_f64class", ocaml: "Softfloat.f64_class", lem: "softfloat_f64_class"} : bits_D -> unit
-val      riscv_f64Class : bits_D -> (bits_fflags, bits_D) effect {rreg}
-function riscv_f64Class (v) = {
-  extern_f64Class(v);
-  (float_fflags[4 .. 0], float_result)
-}
-
-/* **************************************************************** */
 /* CONVERSIONS                                                      */
-
-val     extern_f16ToI8 = {c: "softfloat_f16toi8", ocaml: "Softfloat.f16_to_i8", lem: "softfloat_f16_to_i8"} : (bits_rm, bits_H) -> unit
-val      riscv_f16ToI8 : (bits_rm, bits_H) -> (bits_fflags, bits(8)) effect {rreg}
-function riscv_f16ToI8 (rm, v) = {
-  extern_f16ToI8(rm, v);
-  (float_fflags[4 .. 0], float_result[7 .. 0])
-}
-
-val     extern_f16ToUi8 = {c: "softfloat_f16toui8", ocaml: "Softfloat.f16_to_ui8", lem: "softfloat_f16_to_ui8"} : (bits_rm, bits_H) -> unit
-val      riscv_f16ToUi8 : (bits_rm, bits_H) -> (bits_fflags, bits(8)) effect {rreg}
-function riscv_f16ToUi8 (rm, v) = {
-  extern_f16ToUi8(rm, v);
-  (float_fflags[4 .. 0], float_result[7 .. 0])
-}
-
-val     extern_f16ToI16 = {c: "softfloat_f16toi16", ocaml: "Softfloat.f16_to_i16", lem: "softfloat_f16_to_i16"} : (bits_rm, bits_H) -> unit
-val      riscv_f16ToI16 : (bits_rm, bits_H) -> (bits_fflags, bits(16)) effect {rreg}
-function riscv_f16ToI16 (rm, v) = {
-  extern_f16ToI16(rm, v);
-  (float_fflags[4 .. 0], float_result[15 .. 0])
-}
-
-val     extern_f16ToUi16 = {c: "softfloat_f16toui16", ocaml: "Softfloat.f16_to_ui16", lem: "softfloat_f16_to_ui16"} : (bits_rm, bits_H) -> unit
-val      riscv_f16ToUi16 : (bits_rm, bits_H) -> (bits_fflags, bits(16)) effect {rreg}
-function riscv_f16ToUi16 (rm, v) = {
-  extern_f16ToUi16(rm, v);
-  (float_fflags[4 .. 0], float_result[15 .. 0])
-}
 
 val     extern_f16ToI32 = {c: "softfloat_f16toi32", ocaml: "Softfloat.f16_to_i32", lem: "softfloat_f16_to_i32"} : (bits_rm, bits_H) -> unit
 val      riscv_f16ToI32 : (bits_rm, bits_H) -> (bits_fflags, bits_W) effect {rreg}
@@ -404,19 +304,6 @@ function riscv_ui64ToF16 (rm, v) = {
   (float_fflags[4 .. 0], float_result[15 .. 0])
 }
 
-val     extern_f32ToI16 = {c: "softfloat_f32toi16", ocaml: "Softfloat.f32_to_i16", lem: "softfloat_f32_to_i16"} : (bits_rm, bits_S) -> unit
-val      riscv_f32ToI16 : (bits_rm, bits_S) -> (bits_fflags, bits(16)) effect {rreg}
-function riscv_f32ToI16 (rm, v) = {
-  extern_f32ToI16(rm, v);
-  (float_fflags[4 .. 0], float_result[15 .. 0])
-}
-
-val     extern_f32ToUi16 = {c: "softfloat_f32toui16", ocaml: "Softfloat.f32_to_ui16", lem: "softfloat_f32_to_ui16"} : (bits_rm, bits_S) -> unit
-val      riscv_f32ToUi16 : (bits_rm, bits_S) -> (bits_fflags, bits(16)) effect {rreg}
-function riscv_f32ToUi16 (rm, v) = {
-  extern_f32ToUi16(rm, v);
-  (float_fflags[4 .. 0], float_result[15 .. 0])
-}
 
 val     extern_f32ToI32 = {c: "softfloat_f32toi32", ocaml: "Softfloat.f32_to_i32", lem: "softfloat_f32_to_i32"} : (bits_rm, bits_S) -> unit
 val      riscv_f32ToI32 : (bits_rm, bits_S) -> (bits_fflags, bits_W) effect {rreg}

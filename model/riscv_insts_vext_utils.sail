@@ -5,7 +5,8 @@
 /*      Xi Wang <xi.w@rioslab.org>                                                 */
 /*      Yifei Zhu <yifei.z@rioslab.org>                                            */
 /*      Shenwei Hu <shenwei.h@rioslab.org>                                         */
-/*      Kalvin Vu                                                                  */
+/*      Kalvin Vu
+        Lei Chen <lei.chen@rioslab.org>                                                                  */
 /*    Other contributors:                                                          */
 /*      Jessica Clarke <jrtc27@jrtc27.com>                                         */
 /*      Victor Moya <victor.moya@semidynamics.com>                                 */
@@ -814,4 +815,347 @@ function fp_widen(nval) = {
   };
   accrue_fflags(fflags);
   wval
+}
+
+val riscv_f16ToI16 : (bits_rm, bits_H) -> (bits_fflags, bits(16)) effect {rreg}
+function riscv_f16ToI16 (rm, v) = {
+  let (_, sig32) = riscv_f16ToI32(rm, v);
+  if signed(sig32) > signed(EXTZ(16, ones(15))) then (nvFlag(), EXTZ(16, ones(15)))
+  else if signed(sig32) < signed(EXTZ(16, 0b1) << 15) then (nvFlag(), EXTZ(16, 0b1) << 15)
+  else (zeros(5), sig32[15 .. 0]);
+}
+
+val riscv_f16ToI8 : (bits_rm, bits_H) -> (bits_fflags, bits(8)) effect {rreg}
+function riscv_f16ToI8 (rm, v) = {
+  let (_, sig32) = riscv_f16ToI32(rm, v);
+  if signed(sig32) > signed(EXTZ(8, ones(7))) then (nvFlag(), EXTZ(8, ones(7)))
+  else if signed(sig32) < signed(EXTZ(8, 0b1) << 7) then (nvFlag(), EXTZ(8, 0b1) << 7)
+  else (zeros(5), sig32[7 .. 0]);
+}
+
+val riscv_f32ToI16 : (bits_rm, bits_S) -> (bits_fflags, bits(16)) effect {rreg}
+function riscv_f32ToI16 (rm, v) = {
+  let (_, sig32) = riscv_f32ToI32(rm, v);
+  if signed(sig32) > signed(EXTZ(16, ones(15))) then (nvFlag(), EXTZ(16, ones(15)))
+  else if signed(sig32) < signed(EXTZ(16, 0b1) << 15) then (nvFlag(), EXTZ(16, 0b1) << 15)
+  else (zeros(5), sig32[15 .. 0]);
+}
+
+val riscv_f16ToUi16 : (bits_rm, bits_H) -> (bits_fflags, bits(16)) effect {rreg}
+function riscv_f16ToUi16 (rm, v) = {
+  let (_, sig32) = riscv_f16ToUi32(rm, v);
+  if unsigned(sig32) > unsigned(ones(16)) then (nvFlag(), ones(16))
+  else (zeros(5), sig32[15 .. 0]);
+}
+
+val riscv_f16ToUi8 : (bits_rm, bits_H) -> (bits_fflags, bits(8)) effect {rreg}
+function riscv_f16ToUi8 (rm, v) = {
+  let (_, sig32) = riscv_f16ToUi32(rm, v);
+  if unsigned(sig32) > unsigned(ones(8)) then (nvFlag(), ones(8))
+  else (zeros(5), sig32[7 .. 0]);
+}
+
+val riscv_f32ToUi16 : (bits_rm, bits_S) -> (bits_fflags, bits(16)) effect {rreg}
+function riscv_f32ToUi16 (rm, v) = {
+  let (_, sig32) = riscv_f32ToUi32(rm, v);
+  if unsigned(sig32) > unsigned(ones(16)) then (nvFlag(), ones(16))
+  else (zeros(5), sig32[15 .. 0]);
+}
+
+val riscv_f16Class : bits_H -> (bits_fflags, bits_H) effect {rreg}
+function riscv_f16Class (v) = {
+  let infOrNaN = v[14 .. 10] == ones(5);
+  let subnormalOrZero = v[14 .. 10] == zeros(5);
+  let sign = v[15] == bitone; 
+  let fracZero = v[9 .. 0] == zeros(10);
+  let isNaN = infOrNaN & not(fracZero);
+  let isSNaN = isNaN & v[9] == bitzero;
+
+  let result_val = 
+    EXTZ(16, bool_to_bits(isNaN & not(isSNaN)) @ 
+    bool_to_bits(isNaN & isSNaN) @
+    bool_to_bits(not(sign) & infOrNaN & fracZero ) @ 
+    bool_to_bits(not(sign) & not(infOrNaN) & not(subnormalOrZero)) @
+    bool_to_bits(not(sign) & subnormalOrZero & not(fracZero)) @
+    bool_to_bits(not(sign) & subnormalOrZero & fracZero) @
+    bool_to_bits(sign & subnormalOrZero & fracZero) @
+    bool_to_bits(sign & subnormalOrZero & not(fracZero)) @
+    bool_to_bits(sign & not(infOrNaN) & not(subnormalOrZero)) @
+    bool_to_bits(sign & infOrNaN & fracZero));
+
+  (zeros(5), result_val[15 .. 0])
+} 
+
+val riscv_f32Class : bits_S -> (bits_fflags, bits_S) effect {rreg}
+function riscv_f32Class (v) = {
+  let infOrNaN = v[30 .. 23] == ones(8);
+  let subnormalOrZero = v[30 .. 23] == zeros(8);
+  let sign = v[31] == bitone; 
+  let fracZero = v[22 .. 0] == zeros(23);
+  let isNaN = infOrNaN & not(fracZero);
+  let isSNaN = isNaN & v[22] == bitzero;
+
+  let result_val = 
+    EXTZ(32, bool_to_bits(isNaN & not(isSNaN)) @ 
+    bool_to_bits(isNaN & isSNaN) @
+    bool_to_bits(not(sign) & infOrNaN & fracZero ) @ 
+    bool_to_bits(not(sign) & not(infOrNaN) & not(subnormalOrZero)) @
+    bool_to_bits(not(sign) & subnormalOrZero & not(fracZero)) @
+    bool_to_bits(not(sign) & subnormalOrZero & fracZero) @
+    bool_to_bits(sign & subnormalOrZero & fracZero) @
+    bool_to_bits(sign & subnormalOrZero & not(fracZero)) @
+    bool_to_bits(sign & not(infOrNaN) & not(subnormalOrZero)) @
+    bool_to_bits(sign & infOrNaN & fracZero));
+
+  (zeros(5), result_val[31 .. 0])
+}
+
+val riscv_f64Class : bits_D -> (bits_fflags, bits_D) effect {rreg}
+function riscv_f64Class (v) = {
+  let infOrNaN = v[62 .. 52] == ones(11);
+  let subnormalOrZero = v[62 .. 52] == zeros(11);
+  let sign = v[63] == bitone; 
+  let fracZero = v[51 .. 0] == zeros(52);
+  let isNaN = infOrNaN & not(fracZero);
+  let isSNaN = isNaN & v[51] == bitzero;
+
+  let result_val = 
+    EXTZ(64, bool_to_bits(isNaN & not(isSNaN)) @ 
+    bool_to_bits(isNaN & isSNaN) @
+    bool_to_bits(not(sign) & infOrNaN & fracZero ) @ 
+    bool_to_bits(not(sign) & not(infOrNaN) & not(subnormalOrZero)) @
+    bool_to_bits(not(sign) & subnormalOrZero & not(fracZero)) @
+    bool_to_bits(not(sign) & subnormalOrZero & fracZero) @
+    bool_to_bits(sign & subnormalOrZero & fracZero) @
+    bool_to_bits(sign & subnormalOrZero & not(fracZero)) @
+    bool_to_bits(sign & not(infOrNaN) & not(subnormalOrZero)) @
+    bool_to_bits(sign & infOrNaN & fracZero));
+
+  (zeros(5), result_val[63 .. 0])
+}
+
+val count_leadingzeros : (bits(64), int) -> int
+function count_leadingzeros (sig, len) = {
+  idx : int = -1;
+  assert(len == 10 | len == 23 | len == 52);
+  foreach (i from 0 to (len - 1)) {
+    if sig[i] == bitone then idx = i;
+  };
+  len - idx - 1
+}
+
+val rsqrt7 : forall 'm, 'm in {16, 32, 64}. (bits('m), bool) -> bits_D
+function rsqrt7 (v, sub) = {
+  let (sig, exp, sign, e, s) : (bits(64), bits(64), bits(1), nat, nat) = match 'm {
+    16 => (EXTZ(64, v[9 .. 0]), EXTZ(64, v[14 .. 10]), [v[15]], 5, 10),
+    32 => (EXTZ(64,v[22 .. 0]), EXTZ(64, v[30 .. 23]), [v[31]], 8, 23),
+    64 => (EXTZ(64,v[51 .. 0]), EXTZ(64, v[62 .. 52]), [v[63]], 11, 52)
+  };
+  assert(s == 10 & e == 5 | s == 23 & e == 8 | s == 52 & e == 11);
+  let table : vector(128, dec, int) = [
+      52, 51, 50, 48, 47, 46, 44, 43,
+      42, 41, 40, 39, 38, 36, 35, 34,
+      33, 32, 31, 30, 30, 29, 28, 27,
+      26, 25, 24, 23, 23, 22, 21, 20,
+      19, 19, 18, 17, 16, 16, 15, 14,
+      14, 13, 12, 12, 11, 10, 10, 9,
+      9, 8, 7, 7, 6, 6, 5, 4,
+      4, 3, 3, 2, 2, 1, 1, 0,
+      127, 125, 123, 121, 119, 118, 116, 114,
+      113, 111, 109, 108, 106, 105, 103, 102,
+      100, 99, 97, 96, 95, 93, 92, 91,
+      90, 88, 87, 86, 85, 84, 83, 82,
+      80, 79, 78, 77, 76, 75, 74, 73,
+      72, 71, 70, 70, 69, 68, 67, 66,
+      65, 64, 63, 63, 62, 61, 60, 59,
+      59, 58, 57, 56, 56, 55, 54, 53];
+  
+  let (normalized_exp, normalized_sig) = 
+      if sub then {
+        let nr_leadingzeros = count_leadingzeros(sig, s);
+        assert(nr_leadingzeros >= 0);
+        (to_bits(64, (0-nr_leadingzeros)), EXTZ(64, sig[(s - 1) .. 0] << (1 + nr_leadingzeros)))
+      } else {
+        (exp, sig)
+      };
+
+  let idx : nat = match 'm {
+    16 => unsigned([normalized_exp[0]] @ normalized_sig[9 .. 4]),
+    32 => unsigned([normalized_exp[0]] @ normalized_sig[22 .. 17]),
+    64 => unsigned([normalized_exp[0]] @ normalized_sig[51 .. 46])
+  };
+  assert(idx >= 0 & idx < 128);
+  let out_sig = to_bits(s, table[(127 - idx)]) << (s - 7);
+  let out_exp = to_bits(e, (3 * (2^(e - 1) - 1) - 1 - signed(normalized_exp))/2);
+  EXTZ(64, sign@out_exp@out_sig)
+}
+
+val riscv_f16Rsqrte7 : (bits_rm, bits_H) -> (bits_fflags, bits_H) effect {rreg}
+function riscv_f16Rsqrte7 (rm, v) = {
+  let (_, ret) = riscv_f16Class(v);
+  let (fflags, result) : (bits_fflags, bits_H)= match ret {
+    0x0001 => (nvFlag(), 0x7E00),
+    0x0002 => (nvFlag(), 0x7E00),
+    0x0004 => (nvFlag(), 0x7E00),
+    0x0100 => (nvFlag(), 0x7E00),
+    0x0200 => (zeros(5), 0x7E00),
+    0x0008 => (dzFlag(), 0xfc00),
+    0x0010 => (dzFlag(), 0x7c00),
+    0x0080 => (zeros(5), 0x0000),
+    0x0020 => (zeros(5), rsqrt7(v, true)[15 .. 0]),
+    _      => (zeros(5), rsqrt7(v, false)[15 .. 0])
+  };
+  (fflags, result)
+}
+
+val riscv_f32Rsqrte7 : (bits_rm, bits_S) -> (bits_fflags, bits_S) effect {rreg}
+function riscv_f32Rsqrte7 (rm, v) = {
+  let (_, ret) = riscv_f32Class(v);
+  let (fflags, result) : (bits_fflags, bits_S)= match ret [15 .. 0] {
+    0x0001 => (nvFlag(), 0x7FC00000),
+    0x0002 => (nvFlag(), 0x7FC00000),
+    0x0004 => (nvFlag(), 0x7FC00000),
+    0x0100 => (nvFlag(), 0x7FC00000),
+    0x0200 => (zeros(5), 0x7FC00000),
+    0x0008 => (dzFlag(), 0xff800000),
+    0x0010 => (dzFlag(), 0x7f800000),
+    0x0080 => (zeros(5), 0x00000000),
+    0x0020 => (zeros(5), rsqrt7(v, true)[31 .. 0]),
+    _      => (zeros(5), rsqrt7(v, false)[31 .. 0])
+  };
+  (fflags, result)
+}
+
+val riscv_f64Rsqrte7 : (bits_rm, bits_D) -> (bits_fflags, bits_D) effect {rreg}
+function riscv_f64Rsqrte7 (rm, v) = {
+  let (_, ret) = riscv_f64Class(v);
+  let (fflags, result) : (bits_fflags, bits_D)= match ret[15 .. 0] {
+    0x0001 => (nvFlag(), 0x7FF8000000000000),
+    0x0002 => (nvFlag(), 0x7FF8000000000000),
+    0x0004 => (nvFlag(), 0x7FF8000000000000),
+    0x0100 => (nvFlag(), 0x7FF8000000000000),
+    0x0200 => (zeros(5), 0x7FF8000000000000),
+    0x0008 => (dzFlag(), 0xfff0000000000000),
+    0x0010 => (dzFlag(), 0x7ff0000000000000),
+    0x0080 => (zeros(5), zeros(64)),
+    0x0020 => (zeros(5), rsqrt7(v, true)[63 .. 0]),
+    _      => (zeros(5), rsqrt7(v, false)[63 .. 0])
+  };
+  (fflags, result)
+}
+
+val recip7 : forall 'm, 'm in {16, 32, 64}. (bits('m), bits(3), bool) -> (bool, bits_D)
+function recip7 (v, rm_3b, sub) = {
+  let (sig, exp, sign, e, s) : (bits(64), bits(64), bits(1), nat, nat) = match 'm {
+    16 => (EXTZ(64, v[9 .. 0]), EXTZ(64, v[14 .. 10]), [v[15]], 5, 10),
+    32 => (EXTZ(64,v[22 .. 0]), EXTZ(64, v[30 .. 23]), [v[31]], 8, 23),
+    64 => (EXTZ(64,v[51 .. 0]), EXTZ(64, v[62 .. 52]), [v[63]], 11, 52)
+  };
+  assert(s == 10 & e == 5 | s == 23 & e == 8 | s == 52 & e == 11);
+  let table : vector(128, dec, int) = [
+      127, 125, 123, 121, 119, 117, 116, 114,
+      112, 110, 109, 107, 105, 104, 102, 100,
+      99, 97, 96, 94, 93, 91, 90, 88,
+      87, 85, 84, 83, 81, 80, 79, 77,
+      76, 75, 74, 72, 71, 70, 69, 68,
+      66, 65, 64, 63, 62, 61, 60, 59,
+      58, 57, 56, 55, 54, 53, 52, 51,
+      50, 49, 48, 47, 46, 45, 44, 43,
+      42, 41, 40, 40, 39, 38, 37, 36,
+      35, 35, 34, 33, 32, 31, 31, 30,
+      29, 28, 28, 27, 26, 25, 25, 24,
+      23, 23, 22, 21, 21, 20, 19, 19,
+      18, 17, 17, 16, 15, 15, 14, 14,
+      13, 12, 12, 11, 11, 10, 9, 9,
+      8, 8, 7, 7, 6, 5, 5, 4,
+      4, 3, 3, 2, 2, 1, 1, 0];
+
+  let nr_leadingzeros = count_leadingzeros(sig, s);
+  assert(nr_leadingzeros >= 0);
+  let (normalized_exp, normalized_sig) = 
+      if sub then {
+        (to_bits(64, (0-nr_leadingzeros)), EXTZ(64, sig[(s - 1) .. 0] << (1 + nr_leadingzeros)))
+      } else {
+        (exp, sig)
+      };
+
+  let idx : nat = match 'm {
+    16 => unsigned(normalized_sig[9 .. 3]),
+    32 => unsigned(normalized_sig[22 .. 16]),
+    64 => unsigned(normalized_sig[51 .. 45])
+  };
+  assert(idx >= 0 & idx < 128);
+  let mid_exp = to_bits(e, 2 * (2^(e - 1) - 1) - 1 - signed(normalized_exp));
+  let mid_sig = to_bits(s, table[(127 - idx)]) << (s - 7);
+
+  let (out_exp, out_sig)= 
+      if mid_exp == zeros(e) then {
+        (mid_exp, mid_sig >> 1 | 0b1@zeros(s - 1))
+      } else if mid_exp == ones(e) then {
+        (zeros(e), mid_sig >> 2 | 0b01@zeros(s - 2))
+      } else (mid_exp, mid_sig);
+
+  if sub & nr_leadingzeros > 1 then {
+      if (rm_3b == 0b001 | rm_3b == 0b010 & sign == 0b0 | rm_3b == 0b011 & sign == 0b1) then {
+        (true, EXTZ(64, sign@ones(e - 1)@0b0@ones(s)))
+      }
+      else (true, EXTZ(64, sign@ones(e)@zeros(s)))
+    } else (false, EXTZ(64, sign@out_exp@out_sig))
+}
+
+val riscv_f16Recip7 : (bits_rm, bits_H) -> (bits_fflags, bits_H) effect {rreg}
+function riscv_f16Recip7 (rm, v) = {
+  let (_, ret) = riscv_f16Class(v);
+  let (round_abnormal_true, res_true) = recip7(v, rm, true);
+  let (round_abnormal_false, res_false) = recip7(v, rm, false);
+  let (fflags, result) : (bits_fflags, bits_H)= match ret {
+    0x0001 => (zeros(5), 0x8000),
+    0x0080 => (zeros(5), 0x0000),
+    0x0008 => (dzFlag(), 0xfc00),
+    0x0010 => (dzFlag(), 0x7c00),
+    0x0100 => (nvFlag(), 0x7E00),
+    0x0200 => (zeros(5), 0x7E00),
+    0x0004 => if (round_abnormal_true) then {(nxFlag() | ofFlag(), res_true[15 .. 0])} else (zeros(5), res_true[15 .. 0]),
+    0x0020 => if (round_abnormal_true) then {(nxFlag() | ofFlag(), res_true[15 .. 0])} else (zeros(5), res_true[15 .. 0]),
+    _      => if (round_abnormal_false) then {(nxFlag() | ofFlag(), res_false[15 .. 0])} else (zeros(5), res_false[15 .. 0])
+  };
+  (fflags, result)
+}
+
+val riscv_f32Recip7 : (bits_rm, bits_S) -> (bits_fflags, bits_S) effect {rreg}
+function riscv_f32Recip7 (rm, v) = {
+  let (_, ret) = riscv_f32Class(v);
+  let (round_abnormal_true, res_true) = recip7(v, rm, true);
+  let (round_abnormal_false, res_false) = recip7(v, rm, false);
+  let (fflags, result) : (bits_fflags, bits_S)= match ret [15 .. 0] {
+    0x0001 => (zeros(5), 0x80000000),
+    0x0080 => (zeros(5), 0x00000000),
+    0x0008 => (dzFlag(), 0xff800000),
+    0x0010 => (dzFlag(), 0x7f800000),
+    0x0100 => (nvFlag(), 0x7FC00000),
+    0x0200 => (zeros(5), 0x7FC00000),
+    0x0004 => if (round_abnormal_true) then {(nxFlag() | ofFlag(), res_true[31 .. 0])} else (zeros(5), res_true[31 .. 0]),
+    0x0020 => if (round_abnormal_true) then {(nxFlag() | ofFlag(), res_true[31 .. 0])} else (zeros(5), res_true[31 .. 0]),
+    _      => if (round_abnormal_false) then {(nxFlag() | ofFlag(), res_false[31 .. 0])} else (zeros(5), res_false[31 .. 0])
+  };
+  (fflags, result)
+}
+
+val riscv_f64Recip7 : (bits_rm, bits_D) -> (bits_fflags, bits_D) effect {rreg}
+function riscv_f64Recip7 (rm, v) = {
+  let (_, ret) = riscv_f64Class(v);
+  let (round_abnormal_true, res_true) = recip7(v, rm, true);
+  let (round_abnormal_false, res_false) = recip7(v, rm, false);
+  let (fflags, result) : (bits_fflags, bits_D)= match ret [15 .. 0] {
+    0x0001 => (zeros(5), 0x8000000000000000),
+    0x0080 => (zeros(5), 0x0000000000000000),
+    0x0008 => (dzFlag(), 0xfff0000000000000),
+    0x0010 => (dzFlag(), 0x7ff0000000000000),
+    0x0100 => (nvFlag(), 0x7FF8000000000000),
+    0x0200 => (zeros(5), 0x7FF8000000000000),
+    0x0004 => if (round_abnormal_true) then {(nxFlag() | ofFlag(), res_true[63 .. 0])} else (zeros(5), res_true[63 .. 0]),
+    0x0020 => if (round_abnormal_true) then {(nxFlag() | ofFlag(), res_true[63 .. 0])} else (zeros(5), res_true[63 .. 0]),
+    _      => if (round_abnormal_false) then {(nxFlag() | ofFlag(), res_false[63 .. 0])} else (zeros(5), res_false[63 .. 0])
+  };
+  (fflags, result)
 }
