@@ -6,3 +6,4 @@ _build/
 _sbuild/
 *.o
 *.a
+/z3_problems
