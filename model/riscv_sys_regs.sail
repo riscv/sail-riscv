@@ -573,6 +573,37 @@ function retire_instruction() -> unit = {
   if minstret_increment then minstret = minstret + 1;
 }
 
+/*
+ * NOTE: This would be better placed in riscv_platform.sail, but that file
+ *       appears _after_ this one in the compile order meaning the valspec
+ *       for this function is unavailable when it's first encountered here.
+ *       Hence it appears here.
+ */
+val plat_enable_svadu = {ocaml: "Platform.enable_svadu",
+                         interpreter: "Platform.enable_svadu",
+                         c: "plat_enable_svadu",
+                         lem: "plat_enable_svadu"} : unit -> bool
+
+bitfield MEnvCfg : bits(64) = {
+  ADUE : 61
+  /* Fill in other fields when adding support for them */
+}
+register menvcfg : MEnvCfg
+
+function legalize_menvcfg_high(c : MEnvCfg, value : bits(32)) -> MEnvCfg = {
+  let newval = Mk_MEnvCfg(value @ to_bits(32, 0));
+  if plat_enable_svadu()
+  then update_ADUE(c, newval.ADUE())
+  else c
+}
+
+function legalize_menvcfg(c : MEnvCfg, value : xlenbits) -> MEnvCfg = {
+  if sizeof(xlen) == 64 then
+    legalize_menvcfg_high(c, value[63..32])
+  else
+    c
+}
+
 /* informational registers */
 register mvendorid : bits(32)
 register mimpid : xlenbits

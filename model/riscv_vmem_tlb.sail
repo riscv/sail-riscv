@@ -122,3 +122,7 @@ function flush_TLB_Entry(e, asid, addr) = {
                            & not(e.global))
   }
 }
+
+function should_update_PTE_bits() -> bool = {
+  plat_enable_dirty_update() | (plat_enable_svadu() & menvcfg.ADUE() == 0b1)
+}

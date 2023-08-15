@@ -160,6 +160,10 @@ function readCSR csr : csreg -> xlenbits = {
     (0xC81, 32) => mtime[63 .. 32],
     (0xC82, 32) => minstret[63 .. 32],
 
+    /* menvcfg */
+    (0x30A,  _) => menvcfg.bits()[(sizeof(xlen) - 1) .. 0],
+    (0x31A, 32) => menvcfg.bits()[63 .. 32],
+
     /* user mode: Zkr */
     (0x015,  _) => read_seed_csr(),
 
@@ -186,6 +190,8 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x304,  _) => { mie = legalize_mie(mie, value); Some(mie.bits()) },
     (0x305,  _) => { Some(set_mtvec(value)) },
     (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(zero_extend(mcounteren.bits())) },
+    (0x30A,  _) => { menvcfg = legalize_menvcfg(menvcfg, value); Some(menvcfg.bits()[sizeof(xlen) - 1 .. 0]) },
+    (0x31A, 32) => { menvcfg = legalize_menvcfg_high(menvcfg, value); Some(menvcfg.bits()[63 .. 32]) },
     (0x310, 32) => { Some(mstatush.bits()) }, // ignore writes for now
     (0x320,  _) => { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Some(zero_extend(mcountinhibit.bits())) },
     (0x340,  _) => { mscratch = value; Some(mscratch) },

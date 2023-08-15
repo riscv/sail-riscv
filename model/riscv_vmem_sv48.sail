@@ -190,7 +190,7 @@ function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
           TR_Address(pAddr, ext_ptw)
         },
         Some(pbits, ext) =>
-          if not(plat_enable_dirty_update())
+          if not(should_update_PTE_bits())
           then {
             /* pte needs dirty/accessed update but that is not enabled */
             TR_Failure(PTW_PTE_Update(), ext_ptw)

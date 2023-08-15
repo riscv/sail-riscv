@@ -8,6 +8,7 @@ bool sys_enable_zfinx(unit);
 bool sys_enable_writable_misa(unit);
 
 bool plat_enable_dirty_update(unit);
+bool plat_enable_svadu(unit);
 bool plat_enable_misaligned_access(unit);
 bool plat_mtval_has_illegal_inst_bits(unit);
 bool plat_enable_pmp(unit);
