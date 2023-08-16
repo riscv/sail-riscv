@@ -115,7 +115,7 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
 /*            print("walk48: pte permission check failure"); */
               PTW_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw)
             },
-	    PTE_Check_Success(ext_ptw) => {
+            PTE_Check_Success(ext_ptw) => {
               if level > 0 then { /* superpage */
                 /* fixme hack: to get a mask of appropriate size */
                 let mask = shiftl(pte.PPNi() ^ pte.PPNi() ^ zero_extend(0b1), level * SV48_LEVEL_BITS) - 1;
@@ -196,7 +196,7 @@ function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
             TR_Failure(PTW_PTE_Update(), ext_ptw)
           } else {
             w_pte : SV48_PTE = update_BITS(pte, pbits.bits());
-	    w_pte : SV48_PTE = update_Ext(w_pte, ext);
+            w_pte : SV48_PTE = update_Ext(w_pte, ext);
             match mem_write_value_priv(zero_extend(pteAddr), 8, w_pte.bits(), Supervisor, false, false, false) {
               MemValue(_) => {
                 add_to_TLB48(asid, vAddr, pAddr, w_pte, pteAddr, level, global);

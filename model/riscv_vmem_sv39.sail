@@ -111,7 +111,7 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
           }
         } else { /* leaf PTE */
           match checkPTEPermission(ac, priv, mxr, do_sum, pattr, ext_pte, ext_ptw) {
-	    PTE_Check_Failure(ext_ptw, ext_ptw_fail) => {
+            PTE_Check_Failure(ext_ptw, ext_ptw_fail) => {
 /*            print("walk39: pte permission check failure"); */
               PTW_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw)
             },
@@ -232,7 +232,7 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
                 TR_Failure(PTW_PTE_Update(), ext_ptw)
               } else {
                 w_pte : SV39_PTE = update_BITS(pte, pbits.bits());
-		w_pte : SV39_PTE = update_Ext(w_pte, ext);
+                w_pte : SV39_PTE = update_Ext(w_pte, ext);
                 match mem_write_value_priv(zero_extend(pteAddr), 8, w_pte.bits(), Supervisor, false, false, false) {
                   MemValue(_) => {
                     add_to_TLB39(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
