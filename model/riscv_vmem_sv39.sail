@@ -231,8 +231,8 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
                 /* pte needs dirty/accessed update but that is not enabled */
                 TR_Failure(PTW_PTE_Update(), ext_ptw)
               } else {
-                w_pte : SV39_PTE = update_BITS(pte, pbits.bits());
-                w_pte : SV39_PTE = update_Ext(w_pte, ext);
+                var w_pte : SV39_PTE = update_BITS(pte, pbits.bits());
+                w_pte = update_Ext(w_pte, ext);
                 match mem_write_value_priv(zero_extend(pteAddr), 8, w_pte.bits(), Supervisor, false, false, false) {
                   MemValue(_) => {
                     add_to_TLB39(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
