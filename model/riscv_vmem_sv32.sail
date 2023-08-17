@@ -237,7 +237,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
                 /* pte needs dirty/accessed update but that is not enabled */
                 TR_Failure(PTW_PTE_Update(), ext_ptw)
               } else {
-                w_pte : SV32_PTE = update_BITS(pte, pbits.bits());
+                var w_pte : SV32_PTE = update_BITS(pte, pbits.bits());
                 /* ext is unused since there are no reserved bits for extensions */
                 match mem_write_value_priv(to_phys_addr(pteAddr), 4, w_pte.bits(), Supervisor, false, false, false) {
                   MemValue(_) => {
