@@ -298,9 +298,8 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   if haveAtomics() then {
     /* Get the address, X(rs1) (no offset).
      * Some extensions perform additional checks on address validity.
-     * For obtaining virtual address, the width is not needed.
      */
-    match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), BYTE) {
+    match ext_data_get_amo_addr(rs1, ReadWrite(Data, Data), width) {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
         match translateAddr(vaddr, ReadWrite(Data, Data)) {
