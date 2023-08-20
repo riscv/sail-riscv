@@ -5,7 +5,7 @@
  * This file must be included in the model build whatever the value of XLEN.
  */
 
-/* 
+/*
  * Cryptography extension shared / utility functions
  * ----------------------------------------------------------------------
  */
@@ -138,7 +138,7 @@ let aes_sbox_fwd_table : list(bits(8)) = [|
 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf, 0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42,
 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 |]
-    
+
 let aes_sbox_inv_table : list(bits(8)) = [|
 0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81,
 0xf3, 0xd7, 0xfb, 0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e,
@@ -200,7 +200,7 @@ function aes_subword_inv(x) = {
   aes_sbox_inv(x[31..24]) @
   aes_sbox_inv(x[23..16]) @
   aes_sbox_inv(x[15.. 8]) @
-  aes_sbox_inv(x[ 7.. 0]) 
+  aes_sbox_inv(x[ 7.. 0])
 }
 
 /* Easy function to perform an SM4 SBox operation on 1 byte. */
@@ -226,7 +226,7 @@ function aes_apply_fwd_sbox_to_each_byte(x) = {
 }
 
 /* 64-bit to 64-bit function which applies the AES inverse sbox to each byte
- * in a 64-bit word. 
+ * in a 64-bit word.
  */
 val aes_apply_inv_sbox_to_each_byte : bits(64) -> bits(64)
 function aes_apply_inv_sbox_to_each_byte(x) = {
@@ -271,23 +271,22 @@ function aes_rv64_shiftrows_inv(rs2, rs1) = {
   getbyte(rs1, 0)
 }
 
-/* 128-bit to 128-bit implementation of the forward AES ShiftRows transform. 
+/* 128-bit to 128-bit implementation of the forward AES ShiftRows transform.
  * Byte 0 of state is input column 0, bits  7..0.
  * Byte 5 of state is input column 1, bits 15..8.
  */
 val aes_shift_rows_fwd : bits(128) -> bits(128)
 function aes_shift_rows_fwd(x) = {
-  let ic3 : bits(32) = aes_get_column(x, 3); 
-  let ic2 : bits(32) = aes_get_column(x, 2); 
-  let ic1 : bits(32) = aes_get_column(x, 1); 
-  let ic0 : bits(32) = aes_get_column(x, 0); 
-  let oc0 : bits(32) = ic0[31..24] @ ic1[23..16] @ ic2[15.. 8] @ ic3[ 7.. 0];
-  let oc1 : bits(32) = ic1[31..24] @ ic2[23..16] @ ic3[15.. 8] @ ic0[ 7.. 0];
-  let oc2 : bits(32) = ic2[31..24] @ ic3[23..16] @ ic0[15.. 8] @ ic1[ 7.. 0];
-  let oc3 : bits(32) = ic3[31..24] @ ic0[23..16] @ ic1[15.. 8] @ ic2[ 7.. 0];
+  let ic3 : bits(32) = aes_get_column(x, 3);
+  let ic2 : bits(32) = aes_get_column(x, 2);
+  let ic1 : bits(32) = aes_get_column(x, 1);
+  let ic0 : bits(32) = aes_get_column(x, 0);
+  let oc0 : bits(32) = ic3[31..24] @ ic2[23..16] @ ic1[15.. 8] @ ic0[ 7.. 0];
+  let oc1 : bits(32) = ic0[31..24] @ ic3[23..16] @ ic2[15.. 8] @ ic1[ 7.. 0];
+  let oc2 : bits(32) = ic1[31..24] @ ic0[23..16] @ ic3[15.. 8] @ ic2[ 7.. 0];
+  let oc3 : bits(32) = ic2[31..24] @ ic1[23..16] @ ic0[15.. 8] @ ic3[ 7.. 0];
   (oc3 @ oc2 @ oc1 @ oc0) /* Return value */
 }
-
 /* 128-bit to 128-bit implementation of the inverse AES ShiftRows transform.
  * Byte 0 of state is input column 0, bits  7..0.
  * Byte 5 of state is input column 1, bits 15..8.
@@ -295,13 +294,13 @@ function aes_shift_rows_fwd(x) = {
 val aes_shift_rows_inv : bits(128) -> bits(128)
 function aes_shift_rows_inv(x) = {
   let ic3 : bits(32) = aes_get_column(x, 3); /* In column 3 */
-  let ic2 : bits(32) = aes_get_column(x, 2); 
-  let ic1 : bits(32) = aes_get_column(x, 1); 
-  let ic0 : bits(32) = aes_get_column(x, 0); 
-  let oc0 : bits(32) = ic0[31..24] @ ic3[23..16] @ ic2[15.. 8] @ ic1[ 7.. 0];
-  let oc1 : bits(32) = ic1[31..24] @ ic0[23..16] @ ic3[15.. 8] @ ic2[ 7.. 0];
-  let oc2 : bits(32) = ic2[31..24] @ ic1[23..16] @ ic0[15.. 8] @ ic3[ 7.. 0];
-  let oc3 : bits(32) = ic3[31..24] @ ic2[23..16] @ ic1[15.. 8] @ ic0[ 7.. 0];
+  let ic2 : bits(32) = aes_get_column(x, 2);
+  let ic1 : bits(32) = aes_get_column(x, 1);
+  let ic0 : bits(32) = aes_get_column(x, 0);
+  let oc0 : bits(32) = ic1[31..24] @ ic2[23..16] @ ic3[15.. 8] @ ic0[ 7.. 0];
+  let oc1 : bits(32) = ic2[31..24] @ ic3[23..16] @ ic0[15.. 8] @ ic1[ 7.. 0];
+  let oc2 : bits(32) = ic3[31..24] @ ic0[23..16] @ ic1[15.. 8] @ ic2[ 7.. 0];
+  let oc3 : bits(32) = ic0[31..24] @ ic1[23..16] @ ic2[15.. 8] @ ic3[ 7.. 0];
   (oc3 @ oc2 @ oc1 @ oc0) /* Return value */
 }
 

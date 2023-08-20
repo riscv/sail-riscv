@@ -209,6 +209,7 @@ function haveZknd()   -> bool = true
 
 function haveZmmul()  -> bool = true
 function haveRVV()    -> bool = misa.V() == 0b1
+function haveZvkned() -> bool = true
 /* see below for F and D extension tests */
 
 bitfield Mstatush : bits(32) = {
