@@ -877,3 +877,58 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
 
 mapping clause assembly = SFENCE_VMA(rs1, rs2)
   <-> "sfence.vma" ^ spc() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+
+/* ****************************************************************** */
+union clause ast = SINVAL_VMA : (regidx, regidx)
+
+mapping clause encdec = SINVAL_VMA(rs1, rs2)
+  <-> 0b0001011 @ rs2 @ rs1 @ 0b000 @ 0b00000 @ 0b1110011
+
+function clause execute SINVAL_VMA(rs1, rs2) = {
+  execute(SFENCE_VMA(rs1, rs2))
+}
+
+mapping clause assembly = SINVAL_VMA(rs1, rs2)
+  <-> "sinval.vma" ^ spc() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+
+/* ****************************************************************** */
+union clause ast = SFENCE_W_INVAL : unit
+
+mapping clause encdec = SFENCE_W_INVAL()
+    <-> 0b0001100 @ 0b00000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
+
+function clause execute SFENCE_W_INVAL() = {
+  /* Guarantees that any previous stores already visible to the
+   * current RISC-V hart are ordered before subsequent SINVAL.VMA.
+   * Can be implemented as a no-op since all memory operations are
+   * visible immediately in the current model.*/
+
+  if cur_privilege == User
+  then { handle_illegal(); RETIRE_FAIL }
+  else { RETIRE_SUCCESS }
+}
+
+mapping clause assembly = SFENCE_W_INVAL() <-> "sfence.w.inval"
+
+/* ****************************************************************** */
+union clause ast = SFENCE_INVAL_IR : unit
+
+mapping clause encdec = SFENCE_INVAL_IR()
+    <-> 0b0001100 @ 0b00001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
+
+function clause execute SFENCE_INVAL_IR() = {
+  /* Guarantees that any previous SINVAL.VMA instructions executed
+   * by the current hart are ordered before memory accesses from
+   * the current hart to the memory-management data structures.
+   * Can be implemented as a no-op since all memory operations are
+   * visible immediately in the current model. */
+
+  if cur_privilege == User
+  then { handle_illegal(); RETIRE_FAIL }
+  else { RETIRE_SUCCESS }
+
+}
+
+mapping clause assembly = SFENCE_INVAL_IR() <-> "sfence.inval.ir"
+
+/* ****************************************************************** */
