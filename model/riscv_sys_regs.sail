@@ -156,22 +156,19 @@ val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "
    unsetting C. If it returns true the write will have no effect. */
 val ext_veto_disable_C : unit -> bool effect {rreg}
 
-/* We currently only support dynamic changes for the C extension. */
 function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
-  if   sys_enable_writable_misa ()
-  then { /* Handle modifications to C. */
-         let  v = Mk_Misa(v);
-         /* Suppress changing C if nextPC would become misaligned or an extension vetoes or C was disabled at boot (i.e. not supported). */
-         let m =
-           if   (v.C() == 0b0 & (nextPC[1] == bitone | ext_veto_disable_C())) | not(sys_enable_rvc())
-           then m
-           else update_C(m, v.C());
-         /* Handle updates for F/D. */
-         if   not(sys_enable_fdext()) | (v.D() == 0b1 & v.F() == 0b0)
-         then m
-         else update_D(update_F(m, v.F()), v.D())
-       }
-  else m
+  let  v = Mk_Misa(v);
+  /* Suppress updates to MISA if MISA is not writable or if by disabling C next PC would become misaligned or an extension vetoes */
+  if   not(sys_enable_writable_misa()) | (v.C() == 0b0 & (nextPC[1] == bitone | ext_veto_disable_C()))
+  then m
+  else {
+    /* Suppress enabling C if C was disabled at boot (i.e. not supported) */
+    let m = if not(sys_enable_rvc()) then m else update_C(m, v.C());
+    /* Handle updates for F/D. */
+    if   not(sys_enable_fdext()) | (v.D() == 0b1 & v.F() == 0b0)
+    then m
+    else update_D(update_F(m, v.F()), v.D())
+  }
 }
 
 /* helpers to check support for various extensions. */

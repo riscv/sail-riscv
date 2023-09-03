@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,10 +49,14 @@ const char *RV32ISA = "RV32IMAC";
 #define CSR_MTVAL 0x343
 #define CSR_MIP 0x344
 
+#define OPT_TRACE_OUTPUT 1000
+
 static bool do_dump_dts = false;
 static bool do_show_times = false;
 struct tv_spike_t *s = NULL;
 char *term_log = NULL;
+static const char *trace_log_path = NULL;
+FILE *trace_log = NULL;
 char *dtb_file = NULL;
 unsigned char *dtb = NULL;
 size_t dtb_len = 0;
@@ -111,33 +116,34 @@ char *sailcov_file = NULL;
 #endif
 
 static struct option options[] = {
-    {"enable-dirty-update",         no_argument,       0, 'd'},
-    {"enable-misaligned",           no_argument,       0, 'm'},
-    {"enable-pmp",                  no_argument,       0, 'P'},
-    {"enable-next",                 no_argument,       0, 'N'},
-    {"ram-size",                    required_argument, 0, 'z'},
-    {"disable-compressed",          no_argument,       0, 'C'},
-    {"disable-writable-misa",       no_argument,       0, 'I'},
-    {"disable-fdext",               no_argument,       0, 'F'},
-    {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'},
-    {"device-tree-blob",            required_argument, 0, 'b'},
-    {"terminal-log",                required_argument, 0, 't'},
-    {"show-times",                  required_argument, 0, 'p'},
-    {"report-arch",                 no_argument,       0, 'a'},
-    {"test-signature",              required_argument, 0, 'T'},
-    {"signature-granularity",       required_argument, 0, 'g'},
+    {"enable-dirty-update",         no_argument,       0, 'd'             },
+    {"enable-misaligned",           no_argument,       0, 'm'             },
+    {"enable-pmp",                  no_argument,       0, 'P'             },
+    {"enable-next",                 no_argument,       0, 'N'             },
+    {"ram-size",                    required_argument, 0, 'z'             },
+    {"disable-compressed",          no_argument,       0, 'C'             },
+    {"disable-writable-misa",       no_argument,       0, 'I'             },
+    {"disable-fdext",               no_argument,       0, 'F'             },
+    {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'             },
+    {"device-tree-blob",            required_argument, 0, 'b'             },
+    {"terminal-log",                required_argument, 0, 't'             },
+    {"show-times",                  required_argument, 0, 'p'             },
+    {"report-arch",                 no_argument,       0, 'a'             },
+    {"test-signature",              required_argument, 0, 'T'             },
+    {"signature-granularity",       required_argument, 0, 'g'             },
 #ifdef RVFI_DII
-    {"rvfi-dii",                    required_argument, 0, 'r'},
+    {"rvfi-dii",                    required_argument, 0, 'r'             },
 #endif
-    {"help",                        no_argument,       0, 'h'},
-    {"trace",                       optional_argument, 0, 'v'},
-    {"no-trace",                    optional_argument, 0, 'V'},
-    {"inst-limit",                  required_argument, 0, 'l'},
-    {"enable-zfinx",                no_argument,       0, 'x'},
+    {"help",                        no_argument,       0, 'h'             },
+    {"trace",                       optional_argument, 0, 'v'             },
+    {"no-trace",                    optional_argument, 0, 'V'             },
+    {"trace-output",                required_argument, 0, OPT_TRACE_OUTPUT},
+    {"inst-limit",                  required_argument, 0, 'l'             },
+    {"enable-zfinx",                no_argument,       0, 'x'             },
 #ifdef SAILCOV
-    {"sailcov-file",                required_argument, 0, 'c'},
+    {"sailcov-file",                required_argument, 0, 'c'             },
 #endif
-    {0,                             0,                 0, 0  }
+    {0,                             0,                 0, 0               }
 };
 
 static void print_usage(const char *argv0, int ec)
@@ -151,7 +157,10 @@ static void print_usage(const char *argv0, int ec)
 #endif
   struct option *opt = options;
   while (opt->name) {
-    fprintf(stdout, "\t -%c\t --%s\n", (char)opt->val, opt->name);
+    if (isprint(opt->val))
+      fprintf(stdout, "\t -%c\t --%s\n", (char)opt->val, opt->name);
+    else
+      fprintf(stdout, "\t   \t --%s\n", opt->name);
     opt++;
   }
   exit(ec);
@@ -352,6 +361,10 @@ char *process_args(int argc, char **argv)
       sailcov_file = strdup(optarg);
       break;
 #endif
+    case OPT_TRACE_OUTPUT:
+      trace_log_path = optarg;
+      fprintf(stderr, "using %s for trace output.\n", trace_log_path);
+      break;
     case '?':
       print_usage(argv[0], 1);
       break;
@@ -626,6 +639,9 @@ void close_logs(void)
     exit(EXIT_FAILURE);
   }
 #endif
+  if (trace_log != stdout) {
+    fclose(trace_log);
+  }
 }
 
 void finish(int ec)
@@ -724,10 +740,8 @@ int compare_states(struct tv_spike_t *s)
 void flush_logs(void)
 {
   if (config_print_instr) {
-    fprintf(stderr, "\n");
     fflush(stderr);
-    fprintf(stdout, "\n");
-    fflush(stdout);
+    fflush(trace_log);
   }
 }
 
@@ -1006,6 +1020,14 @@ void init_logs()
                          S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR))
           < 0) {
     fprintf(stderr, "Cannot create terminal log '%s': %s\n", term_log,
+            strerror(errno));
+    exit(1);
+  }
+
+  if (trace_log_path == NULL) {
+    trace_log = stdout;
+  } else if ((trace_log = fopen(trace_log_path, "w+")) < 0) {
+    fprintf(stderr, "Cannot create trace log '%s': %s\n", trace_log,
             strerror(errno));
     exit(1);
   }
