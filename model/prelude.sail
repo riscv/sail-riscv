@@ -151,8 +151,8 @@ overload operator - = {sub_vec, sub_vec_int}
 val quot_round_zero = {ocaml: "quot_round_zero", interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot"} : (int, int) -> int
 val rem_round_zero = {ocaml: "rem_round_zero", interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", coq: "Z.rem"} : (int, int) -> int
 
-/* The following should get us euclidean modulus, and is compatible with pre and post 0.9 versions of sail */
-overload operator % = {emod_int, mod}
+/* The following defines % as euclidean modulus */
+overload operator % = {emod_int}
 
 val min_int = {ocaml: "min_int", interpreter: "min_int", lem: "min", coq: "min_atom", c: "min_int"} : forall 'x 'y.
   (int('x), int('y)) -> {'z, ('x <= 'y & 'z == 'x) | ('x > 'y & 'z == 'y). int('z)}
