@@ -458,7 +458,7 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
             DOUBLE => mem_write_ea(addr, 8, aq, rl, false)
           };
           match (eares) {
-            MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
+            MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
             MemValue(_) => {
               let rs2_val = F(rs2);
               match (width) {

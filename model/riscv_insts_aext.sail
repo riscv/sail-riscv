@@ -220,7 +220,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
                     _            => internal_error(__FILE__, __LINE__, "STORECON expected word or double")
                   };
                   match (eares) {
-                    MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
+                    MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                     MemValue(_) => {
                       rs2_val = X(rs2);
                       let res : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
@@ -233,7 +233,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
                       match (res) {
                         MemValue(true)  => { X(rd) = zero_extend(0b0); cancel_reservation(); RETIRE_SUCCESS },
                         MemValue(false) => { X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS },
-                        MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL }
+                        MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
                       }
                     }
                   }
@@ -303,7 +303,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
               DOUBLE => X(rs2)
             };
             match (eares) {
-              MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL },
+              MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
               MemValue(_) => {
                 let mval : MemoryOpResult(xlenbits) = match (width, sizeof(xlen)) {
                   (BYTE, _)    => extend_value(is_unsigned, mem_read(ReadWrite(Data, Data), addr, 1, aq, aq & rl, true)),
@@ -313,7 +313,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                   _            => internal_error(__FILE__, __LINE__, "Unexpected AMO width")
                 };
                 match (mval) {
-                  MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL },
+                  MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                   MemValue(loaded) => {
                     let result : xlenbits =
                       match op {
@@ -347,7 +347,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                     match (wval) {
                       MemValue(true)  => { X(rd) = rval; RETIRE_SUCCESS },
                       MemValue(false) => { internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value") },
-                      MemException(e) => { handle_mem_exception(addr, e); RETIRE_FAIL }
+                      MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
                     }
                   }
                 }
