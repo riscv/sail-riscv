@@ -663,7 +663,7 @@ function fp_add(rm_3b, op1, op2) = {
     32  => riscv_f32Add(rm_3b, op1, op2),
     64  => riscv_f64Add(rm_3b, op1, op2)
   };
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   result_val
 }
 
@@ -674,7 +674,7 @@ function fp_sub(rm_3b, op1, op2) = {
     32  => riscv_f32Sub(rm_3b, op1, op2),
     64  => riscv_f64Sub(rm_3b, op1, op2)
   };
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   result_val
 }
 
@@ -693,7 +693,7 @@ function fp_min(op1, op2) = {
                 else if (f_is_neg_zero(op2) & f_is_pos_zero(op1)) then op2
                 else if op1_lt_op2 then op1
                 else op2;
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   result_val
 }
 
@@ -712,7 +712,7 @@ function fp_max(op1, op2) = {
                 else if (f_is_neg_zero(op2) & f_is_pos_zero(op1)) then op1
                 else if op1_lt_op2 then op2
                 else op1;
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   result_val
 }
 
@@ -723,7 +723,7 @@ function fp_eq(op1, op2) = {
     32  => riscv_f32Eq(op1, op2),
     64  => riscv_f64Eq(op1, op2)
   };
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   result_val
 }
 
@@ -735,7 +735,7 @@ function fp_gt(op1, op2) = {
     64  => riscv_f64Le(op1, op2)
   };
   let result_val = (if fflags == 0b10000 then false else not(temp_val));
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   result_val
 }
 
@@ -747,7 +747,7 @@ function fp_ge(op1, op2) = {
     64  => riscv_f64Lt(op1, op2)
   };
   let result_val = (if fflags == 0b10000 then false else not(temp_val));
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   result_val
 }
 
@@ -758,7 +758,7 @@ function fp_lt(op1, op2) = {
     32  => riscv_f32Lt(op1, op2),
     64  => riscv_f64Lt(op1, op2)
   };
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   result_val
 }
 
@@ -769,7 +769,7 @@ function fp_le(op1, op2) = {
     32  => riscv_f32Le(op1, op2),
     64  => riscv_f64Le(op1, op2)
   };
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   result_val
 }
 
@@ -780,7 +780,7 @@ function fp_mul(rm_3b, op1, op2) = {
     32  => riscv_f32Mul(rm_3b, op1, op2),
     64  => riscv_f64Mul(rm_3b, op1, op2)
   };
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   result_val
 }
 
@@ -791,7 +791,7 @@ function fp_div(rm_3b, op1, op2) = {
     32  => riscv_f32Div(rm_3b, op1, op2),
     64  => riscv_f64Div(rm_3b, op1, op2)
   };
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   result_val
 }
 
@@ -802,7 +802,7 @@ function fp_muladd(rm_3b, op1, op2, opadd) = {
     32  => riscv_f32MulAdd(rm_3b, op1, op2, opadd),
     64  => riscv_f64MulAdd(rm_3b, op1, op2, opadd)
   };
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   result_val
 }
 
@@ -814,7 +814,7 @@ function fp_nmuladd(rm_3b, op1, op2, opadd) = {
     32  => riscv_f32MulAdd(rm_3b, op1, op2, opadd),
     64  => riscv_f64MulAdd(rm_3b, op1, op2, opadd)
   };
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   result_val
 }
 
@@ -826,7 +826,7 @@ function fp_mulsub(rm_3b, op1, op2, opsub) = {
     32  => riscv_f32MulAdd(rm_3b, op1, op2, opsub),
     64  => riscv_f64MulAdd(rm_3b, op1, op2, opsub)
   };
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   result_val
 }
 
@@ -839,7 +839,7 @@ function fp_nmulsub(rm_3b, op1, op2, opsub) = {
     32  => riscv_f32MulAdd(rm_3b, op1, op2, opsub),
     64  => riscv_f64MulAdd(rm_3b, op1, op2, opsub)
   };
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   result_val
 }
 

@@ -273,7 +273,7 @@ function clause execute (F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, op)) = {
         FMUL_H  => riscv_f16Mul (rm_3b, rs1_val_16b, rs2_val_16b),
         FDIV_H  => riscv_f16Div (rm_3b, rs1_val_16b, rs2_val_16b)
       };
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_H(rd) = rd_val_16b;
       RETIRE_SUCCESS
     }
@@ -338,7 +338,7 @@ function clause execute (F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, op)) = {
           FNMSUB_H => riscv_f16MulAdd (rm_3b, negate_H (rs1_val_16b), rs2_val_16b, rs3_val_16b),
           FNMADD_H => riscv_f16MulAdd (rm_3b, negate_H (rs1_val_16b), rs2_val_16b, negate_H (rs3_val_16b))
         };
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_H(rd) = rd_val_16b;
       RETIRE_SUCCESS
     }
@@ -477,7 +477,7 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FEQ_H)) = {
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f16Eq (rs1_val_H, rs2_val_H);
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -489,7 +489,7 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FLT_H)) = {
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f16Lt (rs1_val_H, rs2_val_H);
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -501,7 +501,7 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FLE_H)) = {
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f16Le (rs1_val_H, rs2_val_H);
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -643,7 +643,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FSQRT_H)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_f16Sqrt   (rm_3b, rs1_val_H);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_H(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
@@ -658,7 +658,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_W_H)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_W) = riscv_f16ToI32 (rm_3b, rs1_val_H);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       X(rd) = sign_extend (rd_val_W);
       RETIRE_SUCCESS
     }
@@ -673,7 +673,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_WU_H)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_WU) = riscv_f16ToUi32 (rm_3b, rs1_val_H);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       X(rd) = sign_extend (rd_val_WU);
       RETIRE_SUCCESS
     }
@@ -688,7 +688,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_W)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_i32ToF16 (rm_3b, rs1_val_W);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_H(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
@@ -703,7 +703,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_WU)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_ui32ToF16 (rm_3b, rs1_val_WU);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_H(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
@@ -718,7 +718,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_S)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_f32ToF16 (rm_3b, rs1_val_S);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_H(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
@@ -733,7 +733,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_D)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_f64ToF16 (rm_3b, rs1_val_D);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_H(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
@@ -748,7 +748,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_S_H)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_f16ToF32 (rm_3b, rs1_val_H);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
@@ -764,7 +764,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_D_H)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_f16ToF64 (rm_3b, rs1_val_H);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_D(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
@@ -780,7 +780,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_L_H)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_L) = riscv_f16ToI64 (rm_3b, rs1_val_H);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       X(rd) = sign_extend(rd_val_L);
       RETIRE_SUCCESS
     }
@@ -796,7 +796,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_LU_H)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_LU) = riscv_f16ToUi64 (rm_3b, rs1_val_H);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       X(rd) = sign_extend(rd_val_LU);
       RETIRE_SUCCESS
     }
@@ -812,7 +812,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_L)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_i64ToF16 (rm_3b, rs1_val_L);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_H(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
@@ -828,7 +828,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_LU)) = {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_ui64ToF16 (rm_3b, rs1_val_LU);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_or_X_H(rd) = rd_val_H;
       RETIRE_SUCCESS
     }

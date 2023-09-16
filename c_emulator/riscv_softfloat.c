@@ -16,7 +16,7 @@ static uint_fast8_t uint8_of_rm(mach_bits rm)
 
 #define SOFTFLOAT_POSTLUDE(res)                                                \
   zfloat_result = res.v;                                                       \
-  zfloat_fflags |= (mach_bits)softfloat_exceptionFlags
+  zfloat_fflags = (mach_bits)softfloat_exceptionFlags
 
 unit softfloat_f16add(mach_bits rm, mach_bits v1, mach_bits v2)
 {
