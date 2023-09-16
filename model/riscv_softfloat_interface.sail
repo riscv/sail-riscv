@@ -106,12 +106,6 @@ type bits_LU     = bits(64)   /* Unsigned integer */
 register float_result : bits(64)
 register float_fflags : bits(64)
 
-/* updater to keep the flags in sync with fcsr.fflags */
-val update_softfloat_fflags : bits(5) -> unit
-function update_softfloat_fflags(flags) = {
-  float_fflags = sail_zero_extend(flags, 64);
-}
-
 /* **************************************************************** */
 /* ADD/SUB/MUL/DIV                                                  */
 

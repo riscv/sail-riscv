@@ -416,7 +416,7 @@ function clause execute (RISCV_FROUND_H(rs1, rm, rd)) = {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_f16roundToInt(rm_3b, rs1_val_H, false);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_H(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
@@ -444,7 +444,7 @@ function clause execute (RISCV_FROUNDNX_H(rs1, rm, rd)) = {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_f16roundToInt(rm_3b, rs1_val_H, true);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_H(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
@@ -472,7 +472,7 @@ function clause execute (RISCV_FROUND_S(rs1, rm, rd)) = {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_f32roundToInt(rm_3b, rs1_val_S, false);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
@@ -500,7 +500,7 @@ function clause execute (RISCV_FROUNDNX_S(rs1, rm, rd)) = {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_f32roundToInt(rm_3b, rs1_val_S, true);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
@@ -528,7 +528,7 @@ function clause execute (RISCV_FROUND_D(rs1, rm, rd)) = {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_f64roundToInt(rm_3b, rs1_val_D, false);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
@@ -556,7 +556,7 @@ function clause execute (RISCV_FROUNDNX_D(rs1, rm, rd)) = {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_f64roundToInt(rm_3b, rs1_val_D, true);
 
-      write_fflags(fflags);
+      accrue_fflags(fflags);
       F_D(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
@@ -627,7 +627,7 @@ function clause execute(RISCV_FLEQ_H(rs2, rs1, rd)) = {
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f16Le_quiet   (rs1_val_H, rs2_val_H);
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -651,7 +651,7 @@ function clause execute(RISCV_FLTQ_H(rs2, rs1, rd)) = {
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f16Lt_quiet   (rs1_val_H, rs2_val_H);
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -675,7 +675,7 @@ function clause execute(RISCV_FLEQ_S(rs2, rs1, rd)) = {
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Le_quiet   (rs1_val_S, rs2_val_S);
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -699,7 +699,7 @@ function clause execute(RISCV_FLTQ_S(rs2, rs1, rd)) = {
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Lt_quiet   (rs1_val_S, rs2_val_S);
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -724,7 +724,7 @@ function clause execute(RISCV_FLEQ_D(rs2, rs1, rd)) = {
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Le_quiet   (rs1_val_D, rs2_val_D);
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -748,7 +748,7 @@ function clause execute(RISCV_FLTQ_D(rs2, rs1, rd)) = {
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Lt_quiet   (rs1_val_D, rs2_val_D);
 
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
   RETIRE_SUCCESS
 }
@@ -828,7 +828,7 @@ mapping clause assembly = RISCV_FCVTMOD_W_D(rs1, rd)
 function clause execute(RISCV_FCVTMOD_W_D(rs1, rd)) = {
   let rs1_val_D = F_D(rs1);
   let (fflags, rd_val) = fcvtmod_helper(rs1_val_D);
-  write_fflags(fflags);
+  accrue_fflags(fflags);
   X(rd) = sign_extend(rd_val);
   RETIRE_SUCCESS
 }

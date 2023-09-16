@@ -440,7 +440,7 @@ function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
                                 32 => riscv_ui32ToF32(rm_3b, vs2_val[i]),
                                 64 => riscv_ui64ToF64(rm_3b, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem
                             },
         FV_CVT_F_X       => {
@@ -449,7 +449,7 @@ function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
                                 32 => riscv_i32ToF32(rm_3b, vs2_val[i]),
                                 64 => riscv_i64ToF64(rm_3b, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem
                             },
         FV_CVT_RTZ_XU_F  => {
@@ -541,7 +541,7 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
                                 16 => riscv_f16ToUi32(rm_3b, vs2_val[i]),
                                 32 => riscv_f32ToUi64(rm_3b, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem
                             },
         FWV_CVT_X_F      => {
@@ -550,7 +550,7 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
                                 16 => riscv_f16ToI32(rm_3b, vs2_val[i]),
                                 32 => riscv_f32ToI64(rm_3b, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem
                             },
         FWV_CVT_F_XU     => {
@@ -559,7 +559,7 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
                                 16 => riscv_ui32ToF32(rm_3b, zero_extend(vs2_val[i])),
                                 32 => riscv_ui32ToF64(rm_3b, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem
                             },
         FWV_CVT_F_X      => {
@@ -568,7 +568,7 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
                                 16 => riscv_i32ToF32(rm_3b, sign_extend(vs2_val[i])),
                                 32 => riscv_i32ToF64(rm_3b, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem
                             },
         FWV_CVT_F_F      => {
@@ -577,7 +577,7 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
                                 16 => riscv_f16ToF32(rm_3b, vs2_val[i]),
                                 32 => riscv_f32ToF64(rm_3b, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem
                             },
         FWV_CVT_RTZ_XU_F => {
@@ -586,7 +586,7 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
                                 16 => riscv_f16ToUi32(0b001, vs2_val[i]),
                                 32 => riscv_f32ToUi64(0b001, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem
                             },
         FWV_CVT_RTZ_X_F  => {
@@ -595,7 +595,7 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
                                 16 => riscv_f16ToI32(0b001, vs2_val[i]),
                                 32 => riscv_f32ToI64(0b001, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem
                             }
       }
@@ -688,7 +688,7 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
                                 16 => riscv_ui32ToF16(rm_3b, vs2_val[i]),
                                 32 => riscv_ui64ToF32(rm_3b, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem
                             },
         FNV_CVT_F_X      => {
@@ -697,7 +697,7 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
                                 16 => riscv_i32ToF16(rm_3b, vs2_val[i]),
                                 32 => riscv_i64ToF32(rm_3b, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem
                             },
         FNV_CVT_F_F      => {
@@ -706,7 +706,7 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
                                 16 => riscv_f32ToF16(rm_3b, vs2_val[i]),
                                 32 => riscv_f64ToF32(rm_3b, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem
                             },
         FNV_CVT_ROD_F_F  => {
@@ -715,7 +715,7 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
                                 16 => riscv_f32ToF16(0b110, vs2_val[i]),
                                 32 => riscv_f64ToF32(0b110, vs2_val[i])
                               };
-                              write_fflags(fflags);
+                              accrue_fflags(fflags);
                               elem
                             },
         FNV_CVT_RTZ_XU_F => {
@@ -801,7 +801,7 @@ function clause execute(VFUNARY1(vm, vs2, vfunary1, vd)) = {
                               32  => riscv_f32Sqrt(rm_3b, vs2_val[i]),
                               64  => riscv_f64Sqrt(rm_3b, vs2_val[i])
                             };
-                            write_fflags(fflags);
+                            accrue_fflags(fflags);
                             elem
                           },
         FVV_VRSQRT7    => {
