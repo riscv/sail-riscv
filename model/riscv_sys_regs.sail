@@ -213,6 +213,9 @@ function haveZicond() -> bool = true
 /* Zimop extension support */
 function haveZimop() -> bool = true
 
+/* Zcmop extension support */
+function haveZcmop() -> bool = true
+
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
   SBE  : 4
