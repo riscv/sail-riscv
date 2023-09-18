@@ -505,44 +505,6 @@ mapping clause assembly = ADDIW(imm, rs1, rd)
       if sizeof(xlen) == 64
 
 /* ****************************************************************** */
-union clause ast = SHIFTW : (bits(5), regidx, regidx, sop)
-
-mapping clause encdec = SHIFTW(shamt, rs1, rd, RISCV_SLLI)
-      if sizeof(xlen) == 64
-  <-> 0b0000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0011011
-      if sizeof(xlen) == 64
-mapping clause encdec = SHIFTW(shamt, rs1, rd, RISCV_SRLI)
-      if sizeof(xlen) == 64
-  <-> 0b0000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
-      if sizeof(xlen) == 64
-mapping clause encdec = SHIFTW(shamt, rs1, rd, RISCV_SRAI)
-      if sizeof(xlen) == 64
-  <-> 0b0100000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
-      if sizeof(xlen) == 64
-
-function clause execute (SHIFTW(shamt, rs1, rd, op)) = {
-  let rs1_val = (X(rs1))[31..0];
-  let result : bits(32) = match op {
-    RISCV_SLLI => rs1_val << shamt,
-    RISCV_SRLI => rs1_val >> shamt,
-    RISCV_SRAI => shift_right_arith32(rs1_val, shamt)
-  };
-  X(rd) = sign_extend(result);
-  RETIRE_SUCCESS
-}
-
-mapping shiftw_mnemonic : sop <-> string = {
-  RISCV_SLLI <-> "slli",
-  RISCV_SRLI <-> "srli",
-  RISCV_SRAI <-> "srai"
-}
-
-mapping clause assembly = SHIFTW(shamt, rs1, rd, op)
-      if sizeof(xlen) == 64
-  <-> shiftw_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_5(shamt)
-      if sizeof(xlen) == 64
-
-/* ****************************************************************** */
 union clause ast = RTYPEW : (regidx, regidx, regidx, ropw)
 
 mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_ADDW)
@@ -610,11 +572,11 @@ mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRAIW)
       if sizeof(xlen) == 64
 
 function clause execute (SHIFTIWOP(shamt, rs1, rd, op)) = {
-  let rs1_val = X(rs1);
+  let rs1_val = (X(rs1))[31..0];
   let result : bits(32) = match op {
-    RISCV_SLLIW => rs1_val[31..0] << shamt,
-    RISCV_SRLIW => rs1_val[31..0] >> shamt,
-    RISCV_SRAIW => shift_right_arith32(rs1_val[31..0], shamt)
+    RISCV_SLLIW => rs1_val << shamt,
+    RISCV_SRLIW => rs1_val >> shamt,
+    RISCV_SRAIW => shift_right_arith32(rs1_val, shamt)
   };
   X(rd) = sign_extend(result);
   RETIRE_SUCCESS

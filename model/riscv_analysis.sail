@@ -173,7 +173,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
              if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
              if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
-      SHIFTW(imm, rs, rd, op) => {
+      SHIFTIWOP(imm, rs, rd, op) => {
              if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
              if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
@@ -346,7 +346,7 @@ function initial_analysis (instr:ast) -> (regfps,regfps,regfps,niafps,diafp,inst
              if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
              if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
-      SHIFTW(imm, rs, rd, op) => {
+      SHIFTIWOP(imm, rs, rd, op) => {
              if (rs == 0b00000) then () else iR = RFull(GPRstr(rs)) :: iR;
              if (rd == 0b00000) then () else oR = RFull(GPRstr(rd)) :: oR;
       },
