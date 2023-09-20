@@ -1,0 +1,19 @@
+# Editorconfig according to ./CODE_STYLE.md
+
+# Top-most EditorConfig file
+root = true
+
+[*]
+# Block-level indentation uses two spaces
+indent_style = space
+indent_size = 2
+# Unix-style line endings should be used
+end_of_line = lf
+# All files should end with a newline character
+insert_final_newline = true
+# There should be no trailing spaces on any lines
+trim_trailing_whitespace = true
+
+[Makefile]
+# Follow Makefile spec.
+indent_style = tab
