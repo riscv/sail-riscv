@@ -181,33 +181,71 @@ function flush_TLB48(asid, addr) =
 
 val translate48 : (asid64, paddr64, vaddr48, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr64, PTW_Error)
 function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = {
-  match walk48(vAddr, ac, priv, mxr, do_sum, ptb, level, false, ext_ptw) {
-    PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),
-    PTW_Success(pAddr, pte, pteAddr, level, global, ext_ptw) => {
-      match update_PTE_Bits(Mk_PTE_Bits(pte.BITS()), ac, pte.Ext()) {
-        None() => {
-          add_to_TLB48(asid, vAddr, pAddr, pte, pteAddr, level, global);
-          TR_Address(pAddr, ext_ptw)
-        },
-        Some(pbits, ext) =>
-          if not(plat_enable_dirty_update())
-          then {
-            /* pte needs dirty/accessed update but that is not enabled */
-            TR_Failure(PTW_PTE_Update(), ext_ptw)
-          } else {
-            var w_pte : SV48_PTE = update_BITS(pte, pbits.bits());
-            w_pte = update_Ext(w_pte, ext);
-            match mem_write_value_priv(zero_extend(pteAddr), 8, w_pte.bits(), Supervisor, false, false, false) {
-              MemValue(_) => {
-                add_to_TLB48(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
-                TR_Address(pAddr, ext_ptw)
-              },
-              MemException(e) => {
-                /* pte is not in valid memory */
-                TR_Failure(PTW_Access(), ext_ptw)
+  match lookup_TLB48(asid, vAddr) {
+    Some(idx, ent) => {
+/*    print("translate48: TLB48 hit for " ^ BitStr(vAddr)); */
+      let  pte = Mk_SV48_PTE(ent.pte);
+      let  ext_pte = pte.Ext();
+      let  pteBits = Mk_PTE_Bits(pte.BITS());
+      match checkPTEPermission(ac, priv, mxr, do_sum, pteBits, ext_pte, ext_ptw) {
+        PTE_Check_Failure(ext_ptw, ext_ptw_fail) => { TR_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw) },
+        PTE_Check_Success(ext_ptw) => {
+          match update_PTE_Bits(pteBits, ac, ext_pte) {
+            None()           => TR_Address(ent.pAddr | zero_extend(vAddr & ent.vAddrMask), ext_ptw),
+            Some(pbits, ext) => {
+              if not(plat_enable_dirty_update())
+              then {
+                /* pte needs dirty/accessed update but that is not enabled */
+                TR_Failure(PTW_PTE_Update(), ext_ptw)
+              } else {
+                /* update PTE entry and TLB */
+                n_pte = update_BITS(pte, pbits.bits());
+                n_pte = update_Ext(n_pte, ext);
+                n_ent : TLB48_Entry = ent;
+                n_ent.pte = n_pte.bits();
+                write_TLB48(idx, n_ent);
+                /* update page table */
+                match mem_write_value_priv(zero_extend(ent.pteAddr), 8, n_pte.bits(), Supervisor, false, false, false) {
+                  MemValue(_)     => (),
+                  MemException(e) => internal_error(__FILE__, __LINE__, "invalid physical address in TLB")
+                };
+                TR_Address(ent.pAddr | zero_extend(vAddr & ent.vAddrMask), ext_ptw)
               }
             }
           }
+        }
+      }
+    },
+    None() => {
+      match walk48(vAddr, ac, priv, mxr, do_sum, ptb, level, false, ext_ptw) {
+        PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),
+        PTW_Success(pAddr, pte, pteAddr, level, global, ext_ptw) => {
+          match update_PTE_Bits(Mk_PTE_Bits(pte.BITS()), ac, pte.Ext()) {
+            None() => {
+              add_to_TLB48(asid, vAddr, pAddr, pte, pteAddr, level, global);
+              TR_Address(pAddr, ext_ptw)
+            },
+            Some(pbits, ext) =>
+              if not(plat_enable_dirty_update())
+              then {
+                /* pte needs dirty/accessed update but that is not enabled */
+                TR_Failure(PTW_PTE_Update(), ext_ptw)
+              } else {
+                var w_pte : SV48_PTE = update_BITS(pte, pbits.bits());
+                w_pte = update_Ext(w_pte, ext);
+                match mem_write_value_priv(zero_extend(pteAddr), 8, w_pte.bits(), Supervisor, false, false, false) {
+                  MemValue(_) => {
+                    add_to_TLB48(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
+                    TR_Address(pAddr, ext_ptw)
+                  },
+                  MemException(e) => {
+                    /* pte is not in valid memory */
+                    TR_Failure(PTW_Access(), ext_ptw)
+                  }
+                }
+              }
+          }
+        }
       }
     }
   }
