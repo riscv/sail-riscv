@@ -150,6 +150,9 @@ val sys_enable_fdext = {c: "sys_enable_fdext", ocaml: "Platform.enable_fdext", _
 val sys_enable_zfinx = {c: "sys_enable_zfinx", ocaml: "Platform.enable_zfinx", _: "sys_enable_zfinx"} : unit -> bool
 /* whether the N extension was enabled at boot */
 val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "sys_enable_next"} : unit -> bool
+/* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
+   supervisor mode is implemented and non-bare addressing modes are supported. */
+val sys_enable_fiom = {c: "sys_enable_fiom", ocaml: "Platform.enable_fiom", _: "sys_enable_fiom"} : unit -> bool
 
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
@@ -833,3 +836,45 @@ function read_seed_csr() -> xlenbits = {
 
 /* Writes to the seed CSR are ignored */
 function write_seed_csr () -> option(xlenbits) = None()
+
+// menvcfg is 64 bits. senvcfg is SXLEN bits and does not have the two
+// upper fields so for simplicity we can use the same type.
+bitfield Envcfg : bits(64) = {
+  // Supervisor TimeCmp Extension
+  STCE   : 63,
+  // Page Based Memory Types Extension
+  PBMTE  : 62,
+  // Reserved WPRI bits.
+  wpri_1 : 61 .. 8,
+  // Cache Block Zero instruction Enable
+  CBZE   : 7,
+  // Cache Block Clean and Flush instruction Enable
+  CBCFE  : 6,
+  // Cache Block Invalidate instruction Enable
+  CBIE   : 5 .. 4,
+  // Reserved WPRI bits.
+  wpri_0 : 3 .. 1,
+  // Fence of I/O implies Memory
+  FIOM   : 0,
+}
+
+register menvcfg : Envcfg
+register senvcfg : Envcfg
+
+function legalize_envcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
+  let v = Mk_Envcfg(v);
+  let o = update_FIOM(o, if sys_enable_fiom() then v.FIOM() else 0b0);
+  // Other extensions are not implemented yet so all other fields are read only zero.
+  o
+}
+
+// Return whether or not FIOM is currently active, based on the current
+// privilege and the menvcfg/senvcfg settings. This means that I/O fences
+// imply memory fence.
+function is_fiom_active() -> bool = {
+  match cur_privilege {
+    Machine => false,
+    Supervisor => menvcfg.FIOM() == 0b1,
+    User => (menvcfg.FIOM() | senvcfg.FIOM()) == 0b1,
+  }
+}

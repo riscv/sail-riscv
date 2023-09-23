@@ -50,6 +50,9 @@ let options = Arg.align ([("-dump-dts",
                           ("-mtval-has-illegal-inst-bits",
                            Arg.Set P.config_mtval_has_illegal_inst_bits,
                            " mtval stores instruction bits on an illegal instruction exception");
+                          ("-enable-fiom",
+                           Arg.Set P.config_enable_fiom,
+                           " enable FIOM (Fence of I/O implies Memory) bit in menvcfg");
                           ("-disable-rvc",
                            Arg.Clear P.config_enable_rvc,
                            " disable the RVC extension on boot");

@@ -161,6 +161,10 @@ val sys_enable_zfinx : unit -> bool
 let sys_enable_zfinx () = false
 declare ocaml target_rep function sys_enable_zfinx = `Platform.enable_zfinx`
 
+val sys_enable_fiom : unit -> bool
+let sys_enable_fiom () = true
+declare ocaml target_rep function sys_enable_fiom = `Platform.enable_fiom`
+
 val plat_ram_base : forall 'a. Size 'a => unit -> bitvector 'a
 let plat_ram_base () = wordFromInteger 0
 declare ocaml target_rep function plat_ram_base = `Platform.dram_base`
