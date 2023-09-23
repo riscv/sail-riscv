@@ -136,6 +136,13 @@ function readCSR csr : csreg -> xlenbits = {
     (0xB02,  _) => minstret[(sizeof(xlen) - 1) .. 0],
     (0xB80, 32) => mcycle[63 .. 32],
     (0xB82, 32) => minstret[63 .. 32],
+    (0x350,  _) => zero_extend(0b0),
+    (0x351,  _) => zero_extend(0b0),
+    (0x352,  _) => zero_extend(0b0),
+    (0x353,  _) => zero_extend(0b0),
+    (0x355,  _) => zero_extend(0b0),
+    (0x356,  _) => zero_extend(0b0),
+    (0x357,  _) => zero_extend(0b0),
 
     /* vector */
     (0x008, _) => zero_extend(vstart),
@@ -237,6 +244,13 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0xB02,  _) => { minstret[(sizeof(xlen) - 1) .. 0] = value; minstret_increment = false; Some(value) },
     (0xB80, 32) => { mcycle[63 .. 32] = value; Some(value) },
     (0xB82, 32) => { minstret[63 .. 32] = value; minstret_increment = false; Some(value) },
+    (0x350,  _) => { Some(value) },
+    (0x351,  _) => { Some(value) },
+    (0x352,  _) => { Some(value) },
+    (0x353,  _) => { Some(value) },
+    (0x355,  _) => { Some(value) },
+    (0x356,  _) => { Some(value) },
+    (0x357,  _) => { Some(value) },
 
     /* trigger/debug */
     (0x7a0,  _) => { tselect = value; Some(tselect) },

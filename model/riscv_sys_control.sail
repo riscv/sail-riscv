@@ -123,6 +123,13 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x3BD => p == Machine, // pmpaddrD
     0x3BE => p == Machine, // pmpaddrE
     0x3BF => p == Machine, // pmpaddrF
+    0x350 => p == Machine, // miselect
+    0x351 => p == Machine, // mireg
+    0x352 => p == Machine, // mireg2
+    0x353 => p == Machine, // mireg3
+    0x355 => p == Machine, // mireg4
+    0x356 => p == Machine, // mireg5
+    0x357 => p == Machine, // mireg6
 
     /* counters */
     0xB00 => p == Machine, // mcycle

@@ -159,6 +159,13 @@ mapping clause csr_name_map = 0xB00  <-> "mcycle"
 mapping clause csr_name_map = 0xB02  <-> "minstret"
 mapping clause csr_name_map = 0xB80  <-> "mcycleh"
 mapping clause csr_name_map = 0xB82  <-> "minstreth"
+mapping clause csr_name_map = 0x350  <-> "miselect"
+mapping clause csr_name_map = 0x351  <-> "mireg"
+mapping clause csr_name_map = 0x352  <-> "mireg2"
+mapping clause csr_name_map = 0x353  <-> "mireg3"
+mapping clause csr_name_map = 0x355  <-> "mireg4"
+mapping clause csr_name_map = 0x356  <-> "mireg5"
+mapping clause csr_name_map = 0x357  <-> "mireg6"
 /* TODO: other hpm counters and events */
 /* trigger/debug */
 mapping clause csr_name_map = 0x7a0  <-> "tselect"
