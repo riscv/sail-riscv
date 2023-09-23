@@ -637,10 +637,22 @@ union clause ast = FENCE : (bits(4), bits(4))
 mapping clause encdec = FENCE(pred, succ)
   <-> 0b0000 @ pred @ succ @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
 
+function effective_fence_set(set : bits(4), fiom : bool) -> bits(4) = {
+  // The bits are IORW. If FIOM is set then I implies R and O implies W.
+  if fiom then {
+    set[3 .. 2] @ (set[1 .. 0] | set[3 .. 2])
+  } else set
+}
+
 /* For future versions of Sail where barriers can be parameterised */
 $ifdef FEATURE_UNION_BARRIER
 
 function clause execute (FENCE(pred, succ)) = {
+  // If the FIOM bit in menvcfg/senvcfg is set then the I/O bits can imply R/W.
+  let fiom = is_fiom_active();
+  let pred = effective_fence_set(pred, fiom);
+  let succ = effective_fence_set(succ, fiom);
+
   match (pred, succ) {
     (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_rw_rw()),
     (_ : bits(2) @ 0b10, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_r_rw()),
@@ -664,6 +676,11 @@ function clause execute (FENCE(pred, succ)) = {
 $else
 
 function clause execute (FENCE(pred, succ)) = {
+  // If the FIOM bit in menvcfg/senvcfg is set then the I/O bits can imply R/W.
+  let fiom = is_fiom_active();
+  let pred = effective_fence_set(pred, fiom);
+  let succ = effective_fence_set(succ, fiom);
+
   match (pred, succ) {
     (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_rw_rw),
     (_ : bits(2) @ 0b10, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_r_rw),

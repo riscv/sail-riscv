@@ -50,6 +50,7 @@ const char *RV32ISA = "RV32IMAC";
 #define CSR_MIP 0x344
 
 #define OPT_TRACE_OUTPUT 1000
+#define OPT_ENABLE_FIOM 1001
 
 static bool do_dump_dts = false;
 static bool do_show_times = false;
@@ -140,6 +141,7 @@ static struct option options[] = {
     {"trace-output",                required_argument, 0, OPT_TRACE_OUTPUT},
     {"inst-limit",                  required_argument, 0, 'l'             },
     {"enable-zfinx",                no_argument,       0, 'x'             },
+    {"enable-fiom",                 no_argument,       0, OPT_ENABLE_FIOM },
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'             },
 #endif
@@ -301,6 +303,11 @@ static int process_args(int argc, char **argv)
     case 'i':
       fprintf(stderr, "enabling storing illegal instruction bits in mtval.\n");
       rv_mtval_has_illegal_inst_bits = true;
+      break;
+    case OPT_ENABLE_FIOM:
+      fprintf(stderr,
+              "enabling FIOM (Fence of I/O implies Memory) bit in menvcfg.\n");
+      rv_enable_fiom = true;
       break;
     case 's':
       do_dump_dts = true;
