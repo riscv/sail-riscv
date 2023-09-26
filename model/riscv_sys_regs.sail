@@ -164,10 +164,10 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   else {
     /* Suppress enabling C if C was disabled at boot (i.e. not supported) */
     let m = if not(sys_enable_rvc()) then m else update_C(m, v.C());
-    /* Handle updates for F/D. */
-    if   not(sys_enable_fdext()) | (v.D() == 0b1 & v.F() == 0b0)
+    /* Suppress updates to misa.{f,d} if disabled at boot */
+    if   not(sys_enable_fdext())
     then m
-    else update_D(update_F(m, v.F()), v.D())
+    else update_D(update_F(m, v.F()), v.D() & v.F())
   }
 }
 
