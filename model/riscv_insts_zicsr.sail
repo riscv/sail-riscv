@@ -171,6 +171,14 @@ function readCSR csr : csreg -> xlenbits = {
     (0x144,  _) => lower_mip(mip, mideleg).bits(),
     (0x180,  _) => satp,
 
+    (0x150,  _) => siselect.bits(),
+    (0x151,  _) => zero_extend(0b0),
+    (0x152,  _) => zero_extend(0b0),
+    (0x153,  _) => zero_extend(0b0),
+    (0x155,  _) => zero_extend(0b0),
+    (0x156,  _) => zero_extend(0b0),
+    (0x157,  _) => zero_extend(0b0),
+
     /* user mode counters */
     (0xC00,  _) => mcycle[(sizeof(xlen) - 1) .. 0],
     (0xC01,  _) => mtime[(sizeof(xlen) - 1) .. 0],
@@ -269,6 +277,14 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x143,  _) => { stval = value; Some(stval) },
     (0x144,  _) => { mip = legalize_sip(mip, mideleg, value); Some(mip.bits()) },
     (0x180,  _) => { satp = legalize_satp(cur_Architecture(), satp, value); Some(satp) },
+
+    (0x150,  _) => { siselect = legalize_siselect(siselect, value); Some(value) },
+    (0x151,  _) => { Some(value) },
+    (0x152,  _) => { Some(value) },
+    (0x153,  _) => { Some(value) },
+    (0x155,  _) => { Some(value) },
+    (0x156,  _) => { Some(value) },
+    (0x157,  _) => { Some(value) },
 
     /* user mode: seed (entropy source). writes are ignored */
     (0x015,  _) => write_seed_csr(),

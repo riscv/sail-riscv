@@ -785,6 +785,17 @@ function legalize_satp32(a : Architecture, o : bits(32), v : bits(32)) -> bits(3
   v
 }
 
+bitfield Siselect : xlenbits = {
+  REG : 11 .. 0
+}
+
+register siselect : Siselect
+
+function legalize_siselect(s : Siselect, v: xlenbits) -> Siselect = {
+  let s = update_REG(s, v[11..0]);
+  s
+}
+
 /* disabled trigger/debug module */
 register tselect : xlenbits
 

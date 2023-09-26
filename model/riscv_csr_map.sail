@@ -113,6 +113,14 @@ mapping clause csr_name_map = 0x143  <-> "stval"
 mapping clause csr_name_map = 0x144  <-> "sip"
 /* supervisor protection and translation */
 mapping clause csr_name_map = 0x180  <-> "satp"
+/* supervisor CSR access */
+mapping clause csr_name_map = 0x150  <-> "siselect"
+mapping clause csr_name_map = 0x151  <-> "sireg"
+mapping clause csr_name_map = 0x152  <-> "sireg2"
+mapping clause csr_name_map = 0x153  <-> "sireg3"
+mapping clause csr_name_map = 0x155  <-> "sireg4"
+mapping clause csr_name_map = 0x156  <-> "sireg5"
+mapping clause csr_name_map = 0x157  <-> "sireg6"
 /* machine information registers */
 mapping clause csr_name_map = 0xF11  <-> "mvendorid"
 mapping clause csr_name_map = 0xF12  <-> "marchid"

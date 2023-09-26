@@ -160,6 +160,15 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     /* supervisor mode: address translation */
     0x180 => haveSupMode() & (p == Machine | p == Supervisor), // satp
 
+    /* supervisor CSR access */
+    0x150 => haveSupMode() & (p == Machine | p == Supervisor), // siselect
+    0x151 => haveSupMode() & (p == Machine | p == Supervisor), // sireg
+    0x152 => haveSupMode() & (p == Machine | p == Supervisor), // sireg2
+    0x153 => haveSupMode() & (p == Machine | p == Supervisor), // sireg3
+    0x155 => haveSupMode() & (p == Machine | p == Supervisor), // sireg4
+    0x156 => haveSupMode() & (p == Machine | p == Supervisor), // sireg5
+    0x157 => haveSupMode() & (p == Machine | p == Supervisor), // sireg6
+
     /* user mode: counters */
     0xC00 => haveUsrMode(),    // cycle
     0xC01 => haveUsrMode(),    // time
