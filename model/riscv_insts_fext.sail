@@ -25,6 +25,9 @@
 
 /* **************************************************************** */
 
+enum clause extension = Ext_Zfh
+function clause extensionEnabled(Ext_Zfh) = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
+
 mapping encdec_rounding_mode : rounding_mode <-> bits(3) = {
   RM_RNE <-> 0b000,
   RM_RTZ <-> 0b001,
@@ -259,7 +262,7 @@ function fle_S   (v1,       v2,        is_quiet) = {
 /* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
 
-function haveSingleFPU() -> bool = haveFExt() | haveZfinx()
+function haveSingleFPU() -> bool = extensionEnabled(Ext_F) | haveZfinx()
 
 /* ****************************************************************** */
 /* Floating-point loads                                               */
@@ -271,14 +274,14 @@ union clause ast = LOAD_FP : (bits(12), regidx, regidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, HALF)          if haveZfh()
-                    <-> imm @ rs1 @ 0b001 @ rd @ 0b000_0111  if haveZfh()
+mapping clause encdec = LOAD_FP(imm, rs1, rd, HALF)          if extensionEnabled(Ext_Zfh)
+                    <-> imm @ rs1 @ 0b001 @ rd @ 0b000_0111  if extensionEnabled(Ext_Zfh)
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)          if haveFExt()
-                    <-> imm @ rs1 @ 0b010 @ rd @ 0b000_0111  if haveFExt()
+mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)          if extensionEnabled(Ext_F)
+                    <-> imm @ rs1 @ 0b010 @ rd @ 0b000_0111  if extensionEnabled(Ext_F)
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if haveDExt()
-                    <-> imm @ rs1 @ 0b011 @ rd @ 0b000_0111  if haveDExt()
+mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if extensionEnabled(Ext_D)
+                    <-> imm @ rs1 @ 0b011 @ rd @ 0b000_0111  if extensionEnabled(Ext_D)
 
 /* Execution semantics ================================ */
 
@@ -357,14 +360,14 @@ union clause ast = STORE_FP : (bits(12), regidx, regidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, HALF)                             if haveZfh()
-                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b001 @ imm5 : bits(5) @ 0b010_0111  if haveZfh()
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, HALF)                             if extensionEnabled(Ext_Zfh)
+                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b001 @ imm5 : bits(5) @ 0b010_0111  if extensionEnabled(Ext_Zfh)
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)                             if haveFExt()
-                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b010 @ imm5 : bits(5) @ 0b010_0111  if haveFExt()
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)                             if extensionEnabled(Ext_F)
+                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b010 @ imm5 : bits(5) @ 0b010_0111  if extensionEnabled(Ext_F)
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)                           if haveDExt()
-                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b011 @ imm5 : bits(5) @ 0b010_0111  if haveDExt()
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)                           if extensionEnabled(Ext_D)
+                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b011 @ imm5 : bits(5) @ 0b010_0111  if extensionEnabled(Ext_D)
 
 /* Execution semantics ================================ */
 
@@ -1024,11 +1027,11 @@ union clause ast = F_UN_TYPE_S : (regidx, regidx, f_un_op_S)
 mapping clause encdec = F_UN_TYPE_S(rs1, rd, FCLASS_S)                        if haveSingleFPU()
                     <-> 0b111_0000 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveSingleFPU()
 
-mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_X_W)                         if haveFExt()
-                    <-> 0b111_0000 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveFExt()
+mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_X_W)                         if extensionEnabled(Ext_F)
+                    <-> 0b111_0000 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_F)
 
-mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_W_X)                         if haveFExt()
-                    <-> 0b111_1000 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveFExt()
+mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_W_X)                         if extensionEnabled(Ext_F)
+                    <-> 0b111_1000 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_F)
 
 /* Execution semantics ================================ */
 

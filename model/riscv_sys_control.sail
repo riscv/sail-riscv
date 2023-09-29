@@ -8,6 +8,8 @@
 
 /* Machine-mode and supervisor-mode functionality. */
 
+enum clause extension = Ext_Zkr
+function clause extensionEnabled(Ext_Zkr) = true
 
 /* CSR access control */
 
@@ -87,7 +89,7 @@ function is_CSR_defined (csr : csreg) -> bool =
     0xC82 => haveUsrMode() & (sizeof(xlen) == 32),     // instreth
 
     /* user mode: Zkr */
-    0x015 => haveZkr(),
+    0x015 => extensionEnabled(Ext_Zkr),
 
     /* check extensions */
     _     => ext_is_CSR_defined(csr)

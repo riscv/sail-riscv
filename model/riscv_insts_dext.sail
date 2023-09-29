@@ -224,7 +224,7 @@ function fle_D   (v1,       v2,        is_quiet) = {
 /* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
 
-function haveDoubleFPU() -> bool = haveDExt() | haveZdinx()
+function haveDoubleFPU() -> bool = extensionEnabled(Ext_D) | haveZdinx()
 
 /* RV32Zdinx requires even register pairs; can be omitted for code  */
 /* not used for RV32Zdinx (i.e. RV64-only or D-only).               */
@@ -902,11 +902,11 @@ mapping clause encdec = F_UN_TYPE_D(rs1, rd, FCLASS_D)                        if
 
 /* D instructions, RV64 only */
 
-mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_X_D)                         if haveDExt() & sizeof(xlen) >= 64
-                    <-> 0b111_0001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveDExt() & sizeof(xlen) >= 64
+mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_X_D)                         if extensionEnabled(Ext_D) & sizeof(xlen) >= 64
+                    <-> 0b111_0001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_D) & sizeof(xlen) >= 64
 
-mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_D_X)                         if haveDExt() & sizeof(xlen) >= 64
-                    <-> 0b111_1001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveDExt() & sizeof(xlen) >= 64
+mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_D_X)                         if extensionEnabled(Ext_D) & sizeof(xlen) >= 64
+                    <-> 0b111_1001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_D) & sizeof(xlen) >= 64
 
 /* Execution semantics ================================ */
 

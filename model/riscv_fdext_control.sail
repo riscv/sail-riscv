@@ -15,11 +15,17 @@
 
 /* **************************************************************** */
 
+enum clause extension = Ext_F
+function clause extensionEnabled(Ext_F) = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
+
+enum clause extension = Ext_D
+function clause extensionEnabled(Ext_D) = (misa[D] == 0b1) & (mstatus[FS] != 0b00) & sizeof(flen) >= 64
+
 /* val clause ext_is_CSR_defined : (csreg) -> bool */
 
-function clause ext_is_CSR_defined (0x001) = haveFExt() | haveZfinx()
-function clause ext_is_CSR_defined (0x002) = haveFExt() | haveZfinx()
-function clause ext_is_CSR_defined (0x003) = haveFExt() | haveZfinx()
+function clause ext_is_CSR_defined (0x001) = extensionEnabled(Ext_F) | haveZfinx()
+function clause ext_is_CSR_defined (0x002) = extensionEnabled(Ext_F) | haveZfinx()
+function clause ext_is_CSR_defined (0x003) = extensionEnabled(Ext_F) | haveZfinx()
 
 function clause ext_read_CSR (0x001) = Some(zero_extend(fcsr[FFLAGS]))
 function clause ext_read_CSR (0x002) = Some(zero_extend(fcsr[FRM]))

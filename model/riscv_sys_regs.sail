@@ -142,35 +142,12 @@ function haveNExt()    -> bool = misa[N] == 0b1
 function haveBExt() -> bool = misa[B] == 0b1
 function haveZba()  -> bool = true | haveBExt()
 function haveZbb()  -> bool = true | haveBExt()
-function haveZbs()  -> bool = true | haveBExt()
-function haveZbc()  -> bool = true
-
-/* Zfa (additional FP) extension */
-function haveZfa()  -> bool = true
-
-/* Scalar Cryptography extensions support. */
-function haveZbkb() -> bool = true
-function haveZbkc() -> bool = true
-function haveZbkx() -> bool = true
-
-/* Cryptography extension support. Note these will need updating once */
-/* Sail can be dynamically configured with different extension support */
-/* and have dynamic changes of XLEN via S/UXL */
-function haveZkr()    -> bool = true
-function haveZksh()   -> bool = true
-function haveZksed()  -> bool = true
-function haveZknh()   -> bool = true
-function haveZkne()   -> bool = true
-function haveZknd()   -> bool = true
 
 function haveZmmul()  -> bool = true
 
 /* A extension sub-extensions */
 function haveZaamo()  -> bool = haveAtomics()
 function haveZalrsc() -> bool = haveAtomics()
-
-/* Zicond extension support */
-function haveZicond() -> bool = true
 
 /* Zabha extension support */
 function haveZabha() -> bool = true
@@ -335,11 +312,6 @@ function in32BitMode() -> bool = {
   cur_Architecture() == RV32
 }
 
-/* F and D extensions have to enabled both via misa.{FD} as well as mstatus.FS */
-function haveFExt()    -> bool = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
-function haveDExt()    -> bool = (misa[D] == 0b1) & (mstatus[FS] != 0b00) & sizeof(flen) >= 64
-/* Zfh (half-precision) extension depends on misa.F and mstatus.FS */
-function haveZfh()     -> bool = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
 /* V extension has to enable both via misa.V as well as mstatus.VS */
 function haveVExt()    -> bool = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
 
