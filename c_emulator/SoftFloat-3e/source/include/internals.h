@@ -45,6 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 union ui16_f16 { uint16_t ui; float16_t f; };
 union ui32_f32 { uint32_t ui; float32_t f; };
 union ui64_f64 { uint64_t ui; float64_t f; };
+union ui16_bf16 { uint16_t ui; bfloat16_t f; };
 
 #ifdef SOFTFLOAT_FAST_INT64
 union extF80M_extF80 { struct extFloat80M fM; extFloat80_t f; };
@@ -90,6 +91,7 @@ int_fast64_t softfloat_roundMToI64( bool, uint32_t *, uint_fast8_t, bool );
 struct exp8_sig16 { int_fast8_t exp; uint_fast16_t sig; };
 struct exp8_sig16 softfloat_normSubnormalF16Sig( uint_fast16_t );
 
+bfloat16_t softfloat_roundPackToBF16( bool, int_fast16_t, uint_fast16_t );
 float16_t softfloat_roundPackToF16( bool, int_fast16_t, uint_fast16_t );
 float16_t softfloat_normRoundPackToF16( bool, int_fast16_t, uint_fast16_t );
 
@@ -98,6 +100,16 @@ float16_t softfloat_subMagsF16( uint_fast16_t, uint_fast16_t );
 float16_t
  softfloat_mulAddF16(
      uint_fast16_t, uint_fast16_t, uint_fast16_t, uint_fast8_t );
+
+/*----------------------------------------------------------------------------
+ *----------------------------------------------------------------------------*/
+#define signBF16UI signF16UI
+#define expBF16UI( a ) (((a)>>7) & 0xFF)
+#define fracBF16UI( a ) ((a) & 0x7F)
+#define packToBF16UI( sign, exp, sig ) (((uint16_t) (sign)<<15) + ((uint16_t) (exp)<<7) + (sig))
+#define isNaNBF16UI( a ) (((a) & 0x7F80) == 0x7F80 && ((a) & 0x007F))
+#define softfloat_isSigNaNBF16UI( uiA ) ((((uiA) & 0x7FC0) == 0x7F80) && ((uiA) & 0x003F))
+#define defaultNaNBF16UI 0x7FC0
 
 /*----------------------------------------------------------------------------
 *----------------------------------------------------------------------------*/

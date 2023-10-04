@@ -102,12 +102,27 @@ struct commonNaN { char _unused; };
 #define softfloat_isSigNaNF16UI( uiA ) ((((uiA) & 0x7E00) == 0x7C00) && ((uiA) & 0x01FF))
 
 /*----------------------------------------------------------------------------
+  | Assuming `uiA' has the bit pattern of a 16-bit brain-floating-point NaN, converts
+  | this NaN to the common NaN form, and stores the resulting common NaN at the
+  | location pointed to by `zPtr'.  If the NaN is a signaling NaN, the invalid
+  | exception is raised.
+  | (if it's not a quiet NaN (signaling), raise an exception)
+  *----------------------------------------------------------------------------*/
+#define softfloat_bf16UIToCommonNaN( uiA, zPtr ) if ( ! ((uiA) & 0x0040) ) softfloat_raiseFlags( softfloat_flag_invalid )
+
+/*----------------------------------------------------------------------------
 | Assuming 'uiA' has the bit pattern of a 16-bit floating-point NaN, converts
 | this NaN to the common NaN form, and stores the resulting common NaN at the
 | location pointed to by 'zPtr'.  If the NaN is a signaling NaN, the invalid
 | exception is raised.
 *----------------------------------------------------------------------------*/
 #define softfloat_f16UIToCommonNaN( uiA, zPtr ) if ( ! ((uiA) & 0x0200) ) softfloat_raiseFlags( softfloat_flag_invalid )
+
+/*----------------------------------------------------------------------------
+  | Converts the common NaN pointed to by `aPtr' into a 16-bit floating-point
+  | NaN, and returns the bit pattern of this value as an unsigned integer.
+  *----------------------------------------------------------------------------*/
+#define softfloat_commonNaNToBF16UI( aPtr ) ((uint_fast16_t) defaultNaNBF16UI)
 
 /*----------------------------------------------------------------------------
 | Converts the common NaN pointed to by 'aPtr' into a 16-bit floating-point

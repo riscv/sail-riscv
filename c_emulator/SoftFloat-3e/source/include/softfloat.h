@@ -177,6 +177,13 @@ float16_t f16_rsqrte7( float16_t );
 float16_t f16_recip7( float16_t );
 
 /*----------------------------------------------------------------------------
+  | bfloat16 (brain float) floating-point operations.
+  *----------------------------------------------------------------------------*/
+float32_t bf16_to_f32( bfloat16_t );
+bool bf16_isSignalingNaN( bfloat16_t );
+bfloat16_t f32_to_bf16( float32_t );
+
+/*----------------------------------------------------------------------------
 | 32-bit (single-precision) floating-point operations.
 *----------------------------------------------------------------------------*/
 uint_fast16_t f32_to_ui16( float32_t, uint_fast8_t, bool );

@@ -363,6 +363,9 @@ OBJS_OTHERS = \
   f128M_eq_signaling$(OBJ) \
   f128M_le_quiet$(OBJ) \
   f128M_lt_quiet$(OBJ) \
+  bf16_to_f32$(OBJ) \
+  f32_to_bf16$(OBJ) \
+  s_roundPackToBF16$(OBJ) \
 
 OBJS_RECIPROCAL = \
   f16_rsqrte7$(OBJ) \
