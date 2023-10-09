@@ -373,7 +373,7 @@ mapping clause encdec = RISCV_FMAXM_D(rs2, rs1, rd)     if haveDExt() & haveZfa(
   <-> 0b001_0101 @ rs2 @ rs1 @ 0b011 @ rd @ 0b101_0011  if haveDExt() & haveZfa()
 
 mapping clause assembly = RISCV_FMAXM_D(rs2, rs1, rd)
-  <-> "fmaxm.s" ^ spc() ^ freg_name(rd)
+  <-> "fmaxm.d" ^ spc() ^ freg_name(rd)
                 ^ spc() ^ freg_name(rs1)
                 ^ spc() ^ freg_name(rs2)
 
