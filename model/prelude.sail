@@ -74,53 +74,21 @@ $include <smt.sail>
 $include <option.sail>
 $include <arith.sail>
 $include <string.sail>
+$include "mapping.sail"
 $include <vector_dec.sail>
 $include <regfp.sail>
+$include <generic_equality.sail>
+$include "hex_bits.sail"
 
-val string_startswith = "string_startswith" : (string, string) -> bool
-val string_drop = "string_drop" : (string, nat) -> string
-val string_take = "string_take" : (string, nat) -> string
-val string_length = "string_length" : string -> nat
-val string_append = {c: "concat_str", _: "string_append"} : (string, string) -> string
-
-val eq_anything = {ocaml: "(fun (x, y) -> x = y)", interpreter: "eq_anything", lem: "eq", coq: "generic_eq", c: "eq_anything"} : forall ('a : Type). ('a, 'a) -> bool
-
-overload operator == = {eq_string, eq_anything}
-
-val "reg_deref" : forall ('a : Type). register('a) -> 'a
-/* sneaky deref with no effect necessary for bitfield writes */
-val _reg_deref = "reg_deref" : forall ('a : Type). register('a) -> 'a
-
-val any_vector_update = {ocaml: "update", lem: "update_list_dec", coq: "vector_update"} : forall 'n ('a : Type).
-  (vector('n, dec, 'a), int, 'a) -> vector('n, dec, 'a)
-
-overload vector_update = {any_vector_update}
-
-val update_subrange = {ocaml: "update_subrange", interpreter: "update_subrange", lem: "update_subrange_vec_dec", coq: "update_subrange_vec_dec"} : forall 'n 'm 'o.
-  (bits('n), atom('m), atom('o), bits('m - ('o - 1))) -> bits('n)
-
-val vector_concat = {ocaml: "append", lem: "append_list", coq: "vec_concat"} : forall ('n : Int) ('m : Int) ('a : Type).
-  (vector('n, dec, 'a), vector('m, dec, 'a)) -> vector('n + 'm, dec, 'a)
-
-overload append = {vector_concat}
 
 val not_bit : bit -> bit
-
 function not_bit(b) = if b == bitone then bitzero else bitone
 
 overload ~ = {not_bool, not_vec, not_bit}
 
-val not = pure {coq: "negb", _: "not"} : forall ('p : Bool). bool('p) -> bool(not('p))
-
-val neq_vec = {lem: "neq"} : forall 'n. (bits('n), bits('n)) -> bool
-
-function neq_vec (x, y) = not_bool(eq_bits(x, y))
-
-val neq_anything = {lem: "neq", coq: "generic_neq"} : forall ('a : Type). ('a, 'a) -> bool
-
-function neq_anything (x, y) = not_bool(x == y)
-
-overload operator != = {neq_vec, neq_anything}
+// not_bool alias.
+val not : forall ('p : Bool). bool('p) -> bool(not('p))
+function not(b) = not_bool(b)
 
 overload operator & = {and_vec}
 
@@ -283,53 +251,6 @@ function reverse_bits_in_byte (xs : bits(8)) -> bits(8) = {
 }
 
 overload reverse = {reverse_bits_in_byte}
-
-/* helpers for mappings */
-
-val spc : unit <-> string
-val opt_spc : unit <-> string
-val def_spc : unit <-> string
-
-val "decimal_string_of_bits" : forall 'n. bits('n) -> string
-val hex_bits : forall 'n . (atom('n), bits('n)) <-> string
-
-val n_leading_spaces : string -> nat
-function n_leading_spaces s =
-  match s {
-    "" => 0,
-    _ => match string_take(s, 1) {
-      " " => 1 + n_leading_spaces(string_drop(s, 1)),
-      _ => 0
-    }
-  }
-
-val spc_forwards : unit -> string
-function spc_forwards () = " "
-val spc_backwards : string -> unit
-function spc_backwards s = ()
-val spc_matches_prefix : string -> option((unit, nat))
-function spc_matches_prefix s = {
-  let n = n_leading_spaces(s);
-  match n {
-    0 => None(),
-    _ => Some((), n)
-  }
-}
-
-val opt_spc_forwards : unit -> string
-function opt_spc_forwards () = ""
-val opt_spc_backwards : string -> unit
-function opt_spc_backwards s = ()
-val opt_spc_matches_prefix : string -> option((unit, nat))
-function opt_spc_matches_prefix s =
-  Some((), n_leading_spaces(s))
-
-val def_spc_forwards : unit -> string
-function def_spc_forwards () = " "
-val def_spc_backwards : string -> unit
-function def_spc_backwards s = ()
-val def_spc_matches_prefix : string -> option((unit, nat))
-function def_spc_matches_prefix s = opt_spc_matches_prefix(s)
 
 overload operator / = {quot_round_zero}
 overload operator * = {mult_atom, mult_int}
