@@ -1,4 +1,4 @@
-HAVE_OPAM_BBV=$(shell if opam config var coq-bbv:share >/dev/null 2>/dev/null; then echo yes; else echo no; fi)
+HAVE_OPAM_BBV=$(shell if opam var coq-bbv:share >/dev/null 2>/dev/null; then echo yes; else echo no; fi)
 
 ifeq ($(HAVE_OPAM_BBV),no)
 BBV_DIR?=../../../bbv/src/bbv

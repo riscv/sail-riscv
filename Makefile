@@ -113,14 +113,14 @@ export SAIL_DIR
 EXPLICIT_COQ_SAIL=yes
 else
 # Use sail from opam package
-SAIL_DIR:=$(shell opam config var sail:share)
+SAIL_DIR:=$(shell opam var sail:share)
 SAIL:=sail
 endif
 SAIL_LIB_DIR:=$(SAIL_DIR)/lib
 export SAIL_LIB_DIR
 SAIL_SRC_DIR:=$(SAIL_DIR)/src
 
-LEM_DIR?=$(shell opam config var lem:share)
+LEM_DIR?=$(shell opam var lem:share)
 export LEM_DIR
 
 C_WARNINGS ?=
@@ -353,7 +353,7 @@ riscv_hol_build: generated_definitions/hol4/$(ARCH)/riscvTheory.uo
 ifdef BBV_DIR
   EXPLICIT_COQ_BBV = yes
 else
-  EXPLICIT_COQ_BBV = $(shell if opam config var coq-bbv:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
+  EXPLICIT_COQ_BBV = $(shell if opam var coq-bbv:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
   ifeq ($(EXPLICIT_COQ_BBV),yes)
     #Coq BBV library hopefully checked out in directory above us
     BBV_DIR = ../bbv
@@ -361,7 +361,7 @@ else
 endif
 
 ifndef EXPLICIT_COQ_SAIL
-  EXPLICIT_COQ_SAIL = $(shell if opam config var coq-sail:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
+  EXPLICIT_COQ_SAIL = $(shell if opam var coq-sail:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
 endif
 
 COQ_LIBS = -R generated_definitions/coq Riscv -R generated_definitions/coq/$(ARCH) $(ARCH) -R handwritten_support Riscv_common
