@@ -152,7 +152,7 @@ val sys_enable_zfinx = {c: "sys_enable_zfinx", ocaml: "Platform.enable_zfinx", _
 val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "sys_enable_next"} : unit -> bool
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
-val sys_enable_fiom = {c: "sys_enable_fiom", ocaml: "Platform.enable_fiom", _: "sys_enable_fiom"} : unit -> bool
+val sys_enable_writable_fiom = {c: "sys_enable_writable_fiom", ocaml: "Platform.enable_writable_fiom", _: "sys_enable_writable_fiom"} : unit -> bool
 
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
@@ -857,7 +857,7 @@ register senvcfg : Envcfg
 
 function legalize_envcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
   let v = Mk_Envcfg(v);
-  let o = update_FIOM(o, if sys_enable_fiom() then v.FIOM() else 0b0);
+  let o = update_FIOM(o, if sys_enable_writable_fiom() then v.FIOM() else 0b0);
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }

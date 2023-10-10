@@ -50,7 +50,7 @@ const char *RV32ISA = "RV32IMAC";
 #define CSR_MIP 0x344
 
 #define OPT_TRACE_OUTPUT 1000
-#define OPT_ENABLE_FIOM 1001
+#define OPT_ENABLE_WRITABLE_FIOM 1001
 
 static bool do_dump_dts = false;
 static bool do_show_times = false;
@@ -117,35 +117,35 @@ char *sailcov_file = NULL;
 #endif
 
 static struct option options[] = {
-    {"enable-dirty-update",         no_argument,       0, 'd'             },
-    {"enable-misaligned",           no_argument,       0, 'm'             },
-    {"enable-pmp",                  no_argument,       0, 'P'             },
-    {"enable-next",                 no_argument,       0, 'N'             },
-    {"ram-size",                    required_argument, 0, 'z'             },
-    {"disable-compressed",          no_argument,       0, 'C'             },
-    {"disable-writable-misa",       no_argument,       0, 'I'             },
-    {"disable-fdext",               no_argument,       0, 'F'             },
-    {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'             },
-    {"device-tree-blob",            required_argument, 0, 'b'             },
-    {"terminal-log",                required_argument, 0, 't'             },
-    {"show-times",                  required_argument, 0, 'p'             },
-    {"report-arch",                 no_argument,       0, 'a'             },
-    {"test-signature",              required_argument, 0, 'T'             },
-    {"signature-granularity",       required_argument, 0, 'g'             },
+    {"enable-dirty-update",         no_argument,       0, 'd'                     },
+    {"enable-misaligned",           no_argument,       0, 'm'                     },
+    {"enable-pmp",                  no_argument,       0, 'P'                     },
+    {"enable-next",                 no_argument,       0, 'N'                     },
+    {"ram-size",                    required_argument, 0, 'z'                     },
+    {"disable-compressed",          no_argument,       0, 'C'                     },
+    {"disable-writable-misa",       no_argument,       0, 'I'                     },
+    {"disable-fdext",               no_argument,       0, 'F'                     },
+    {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'                     },
+    {"device-tree-blob",            required_argument, 0, 'b'                     },
+    {"terminal-log",                required_argument, 0, 't'                     },
+    {"show-times",                  required_argument, 0, 'p'                     },
+    {"report-arch",                 no_argument,       0, 'a'                     },
+    {"test-signature",              required_argument, 0, 'T'                     },
+    {"signature-granularity",       required_argument, 0, 'g'                     },
 #ifdef RVFI_DII
-    {"rvfi-dii",                    required_argument, 0, 'r'             },
+    {"rvfi-dii",                    required_argument, 0, 'r'                     },
 #endif
-    {"help",                        no_argument,       0, 'h'             },
-    {"trace",                       optional_argument, 0, 'v'             },
-    {"no-trace",                    optional_argument, 0, 'V'             },
-    {"trace-output",                required_argument, 0, OPT_TRACE_OUTPUT},
-    {"inst-limit",                  required_argument, 0, 'l'             },
-    {"enable-zfinx",                no_argument,       0, 'x'             },
-    {"enable-fiom",                 no_argument,       0, OPT_ENABLE_FIOM },
+    {"help",                        no_argument,       0, 'h'                     },
+    {"trace",                       optional_argument, 0, 'v'                     },
+    {"no-trace",                    optional_argument, 0, 'V'                     },
+    {"trace-output",                required_argument, 0, OPT_TRACE_OUTPUT        },
+    {"inst-limit",                  required_argument, 0, 'l'                     },
+    {"enable-zfinx",                no_argument,       0, 'x'                     },
+    {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
 #ifdef SAILCOV
-    {"sailcov-file",                required_argument, 0, 'c'             },
+    {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
-    {0,                             0,                 0, 0               }
+    {0,                             0,                 0, 0                       }
 };
 
 static void print_usage(const char *argv0, int ec)
@@ -304,10 +304,10 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "enabling storing illegal instruction bits in mtval.\n");
       rv_mtval_has_illegal_inst_bits = true;
       break;
-    case OPT_ENABLE_FIOM:
+    case OPT_ENABLE_WRITABLE_FIOM:
       fprintf(stderr,
               "enabling FIOM (Fence of I/O implies Memory) bit in menvcfg.\n");
-      rv_enable_fiom = true;
+      rv_enable_writable_fiom = true;
       break;
     case 's':
       do_dump_dts = true;
