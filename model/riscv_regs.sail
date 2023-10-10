@@ -204,7 +204,7 @@ function wX (r, in_v) = {
   if (r != 0) then {
      rvfi_wX(r, in_v);
      if   get_config_print_reg()
-     then print_reg("x" ^ string_of_int(r) ^ " <- " ^ RegStr(v));
+     then print_reg("x" ^ dec_str(r) ^ " <- " ^ RegStr(v));
   }
 }
 

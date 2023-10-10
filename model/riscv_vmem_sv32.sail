@@ -84,7 +84,7 @@ function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let pte_addr = ptb + pt_ofs;
   match (mem_read_priv(Read(Data), Supervisor, to_phys_addr(pte_addr), 4, false, false, false)) {
     MemException(_) => {
-/*    print("walk32(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
+/*    print("walk32(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ dec_str(level)
             ^ " pt_base=" ^ BitStr(to_phys_addr(ptb))
             ^ " pt_ofs=" ^ BitStr(to_phys_addr(pt_ofs))
             ^ " pte_addr=" ^ BitStr(to_phys_addr(pte_addr))
@@ -97,7 +97,7 @@ function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
       let ext_pte : extPte = default_sv32_ext_pte;
       let pattr = Mk_PTE_Bits(pbits);
       let is_global = global | (pattr[G] == 0b1);
-/*    print("walk32(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
+/*    print("walk32(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ dec_str(level)
             ^ " pt_base=" ^ BitStr(to_phys_addr(ptb))
             ^ " pt_ofs=" ^ BitStr(to_phys_addr(pt_ofs))
             ^ " pte_addr=" ^ BitStr(to_phys_addr(pte_addr))

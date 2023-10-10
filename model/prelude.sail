@@ -94,17 +94,13 @@ overload operator & = {and_vec}
 
 overload operator | = {or_vec}
 
-val string_of_int = {c: "string_of_int", ocaml: "string_of_int", interpreter: "string_of_int", lem: "stringFromInteger", coq: "string_of_int"} : int -> string
-
-val "string_of_bits" : forall 'n. bits('n) -> string
-
-function string_of_bit(b: bit) -> string =
+function bit_str(b: bit) -> string =
   match b {
     bitzero => "0b0",
     bitone => "0b1"
   }
 
-overload BitStr = {string_of_bits, string_of_bit}
+overload BitStr = {bits_str, bit_str}
 
 val int_power = {ocaml: "int_power", interpreter: "int_power", lem: "pow", coq: "pow", c: "pow_int"} : (int, int) -> int
 

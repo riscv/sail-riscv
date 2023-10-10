@@ -143,7 +143,7 @@ function not_implemented message = throw(Error_not_implemented(message))
 
 val internal_error : forall ('a : Type). (string, int, string) -> 'a
 function internal_error(file, line, s) = {
-    assert (false, file ^ ":" ^ string_of_int(line) ^ ": " ^ s);
+    assert (false, file ^ ":" ^ dec_str(line) ^ ": " ^ s);
     throw Error_internal_error()
 }
 
@@ -469,9 +469,9 @@ function report_invalid_width(f , l, w, k) -> 'a = {
    * and remove the rest of the function.
    */
   // internal_error(f, l, "Invalid width, " ^ size_mnemonic(w) ^ ", for " ^ k ^
-  //   " with xlen=" ^ string_of_int(sizeof(xlen)));
-  assert (false, f ^ ":" ^ string_of_int(l) ^ ": " ^ "Invalid width, "
+  //   " with xlen=" ^ dec_str(sizeof(xlen)));
+  assert (false, f ^ ":" ^ dec_str(l) ^ ": " ^ "Invalid width, "
     ^ size_mnemonic(w) ^ ", for " ^ k ^ " with xlen="
-    ^ string_of_int(sizeof(xlen)));
+    ^ dec_str(sizeof(xlen)));
   throw Error_internal_error()
 }

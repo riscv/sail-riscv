@@ -78,7 +78,7 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let pte_addr = ptb + pt_ofs;
   match (mem_read_priv(Read(Data), Supervisor, zero_extend(pte_addr), 8, false, false, false)) {
     MemException(_) => {
-/*    print("walk39(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
+/*    print("walk39(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ dec_str(level)
             ^ " pt_base=" ^ BitStr(ptb)
             ^ " pt_ofs=" ^ BitStr(pt_ofs)
             ^ " pte_addr=" ^ BitStr(pte_addr)
@@ -91,7 +91,7 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
       let ext_pte = pte[Ext];
       let pattr = Mk_PTE_Bits(pbits);
       let is_global = global | (pattr[G] == 0b1);
-/*    print("walk39(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
+/*    print("walk39(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ dec_str(level)
             ^ " pt_base=" ^ BitStr(ptb)
             ^ " pt_ofs=" ^ BitStr(pt_ofs)
             ^ " pte_addr=" ^ BitStr(pte_addr)
