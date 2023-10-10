@@ -202,7 +202,7 @@ function wV (r, in_v) = {
   let VLEN = unsigned(vlenb) * 8;
   assert(0 < VLEN & VLEN <= sizeof(vlenmax));
   if   get_config_print_reg()
-  then print_reg("v" ^ string_of_int(r) ^ " <- " ^ BitStr(v[VLEN - 1 .. 0]));
+  then print_reg("v" ^ dec_str(r) ^ " <- " ^ BitStr(v[VLEN - 1 .. 0]));
 }
 
 function rV_bits(i: bits(5)) -> vregtype = rV(unsigned(i))
