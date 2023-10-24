@@ -263,7 +263,7 @@ function clause execute (C_MUL(rsd,rs2)) = {
   let rd = creg2reg_idx(rsd);
   let rs = creg2reg_idx(rs2);
 
-  execute(MUL((rs, rd, rd, false, true, true))
+  execute(MUL((rs, rd, rd, false, true, true)))
 }
 
 mapping clause assembly = C_MUL(rsd, rs2) <->
