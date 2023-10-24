@@ -101,7 +101,7 @@ mapping clause encdec_compressed = C_LHU(ui5, rs1, rd)
 function clause execute (C_LHU(uimm, rsc, rdc)) = {
   let immext : xlenbits = zero_extend(uimm);
   let imm : bits(12) = zero_extend(uimm);
-  
+
   let rd = creg2reg_idx(rdc);
   let rs = creg2reg_idx(rsc);
 
@@ -119,7 +119,7 @@ mapping clause encdec_compressed = C_LH(ui5, rs1, rd)
 function clause execute (C_LH(uimm, rsc, rdc)) = {
   let immext : xlenbits = zero_extend(uimm);
   let imm : bits(12) = zero_extend(uimm);
-  
+
   let rd = creg2reg_idx(rdc);
   let rs = creg2reg_idx(rsc);
 
@@ -178,7 +178,7 @@ mapping clause encdec_compressed = C_ZEXT_B(rsd)
 
 function clause execute (C_ZEXT_B(rsd)) = {
   let rsdc = creg2reg_idx(rsd);
-  
+
   X(rsdc) = zero_extend(X(rsdc)[7..0]);
   RETIRE_SUCCESS
 }
@@ -194,9 +194,8 @@ mapping clause encdec_compressed = C_SEXT_B(rsd)
 
 function clause execute (C_SEXT_B(rsd)) = {
   let rsdc = creg2reg_idx(rsd);
-  
-  X(rsdc) = sign_extend(X(rsdc)[7..0]);
-  RETIRE_SUCCESS
+
+  execute(ZBB_EXTOP(rsdc, rsdc, RISCV_SEXTB))
 }
 
 mapping clause assembly = C_SEXT_B(rsd)
@@ -209,9 +208,8 @@ mapping clause encdec_compressed = C_ZEXT_H(rsd)
 
 function clause execute (C_ZEXT_H(rsd)) = {
   let rsdc = creg2reg_idx(rsd);
-  
-  X(rsdc) = zero_extend(X(rsdc)[15..0]);
-  RETIRE_SUCCESS
+
+  execute(ZBB_EXTOP(rsdc, rsdc, RISCV_ZEXTH))
 }
 
 mapping clause assembly = C_ZEXT_H(rsd)
@@ -225,9 +223,8 @@ mapping clause encdec_compressed = C_SEXT_H(rsd)
 
 function clause execute (C_SEXT_H(rsd)) = {
   let rsdc = creg2reg_idx(rsd);
-  
-  X(rsdc) = sign_extend(X(rsdc)[15..0]);
-  RETIRE_SUCCESS
+
+  execute(ZBB_EXTOP(rsdc, rsdc,  RISCV_SEXTH))
 }
 
 mapping clause assembly = C_SEXT_H(rsd)
@@ -240,7 +237,7 @@ mapping clause encdec_compressed = C_ZEXT_W(rsd)
 
 function clause execute (C_ZEXT_W(rsd)) = {
   let rsdc = creg2reg_idx(rsd);
-  
+
   X(rsdc) = zero_extend(X(rsdc)[31..0]);
   RETIRE_SUCCESS
 }
@@ -265,10 +262,8 @@ mapping clause encdec_compressed = C_MUL(rsd, rs2)
 function clause execute (C_MUL(rsd,rs2)) = {
   let rd = creg2reg_idx(rsd);
   let rs = creg2reg_idx(rs2);
-  
-  let result_wide = to_bits(2 * sizeof(xlen), signed(X(rd)) * signed(X(rs)));
-  X(rd) = result_wide[(sizeof(xlen) - 1) .. 0];
-  RETIRE_SUCCESS
+
+  execute(MUL((rs, rd, rd, false, true, true))
 }
 
 mapping clause assembly = C_MUL(rsd, rs2) <->
