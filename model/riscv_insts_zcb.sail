@@ -68,7 +68,7 @@
 /*=======================================================================================*/
 
 /* ****************************************************************** */
-/* This file specifies the instructions in the 'ZCEE' extension.      */
+/* This file specifies the instructions in the 'Zcb' extension.      */
 /* ****************************************************************** */
 
 /* ------------------------------------------------------------------ */
@@ -78,11 +78,10 @@
 /* ****************************************************************** */
 union clause ast = C_LBU : (bits(2), cregidx, cregidx)
 
-mapping clause encdec_compressed = C_LBU(ui65, rs1, rd)
-  <-> 0b100 @ 0b000 @ rs1 : cregidx @ ui65 : bits(2) @ rd : cregidx @ 0b00
+mapping clause encdec_compressed = C_LBU(ui01, rs1, rd)
+  <-> 0b100 @ 0b000 @ rs1 : cregidx @ ui01 : bits(2) @ rd : cregidx @ 0b00
 
 function clause execute (C_LBU(uimm, rsc, rdc)) = {
-  let immext : xlenbits = zero_extend(uimm);
   let imm : bits(12) = zero_extend(uimm);
 
   let rd = creg2reg_idx(rdc);
@@ -95,11 +94,10 @@ mapping clause assembly = C_LBU(uimm, rsc, rdc)
 /* ****************************************************************** */
 union clause ast = C_LHU : (bits(1), cregidx, cregidx)
 
-mapping clause encdec_compressed = C_LHU(ui5, rs1, rd)
-  <-> 0b100 @ 0b001 @ rs1 : cregidx @ 0b0 @ ui5 : bits(1) @ rd : cregidx @ 0b00
+mapping clause encdec_compressed = C_LHU(ui1, rs1, rd)
+  <-> 0b100 @ 0b001 @ rs1 : cregidx @ 0b0 @ ui1 : bits(1) @ rd : cregidx @ 0b00
 
 function clause execute (C_LHU(uimm, rsc, rdc)) = {
-  let immext : xlenbits = zero_extend(uimm);
   let imm : bits(12) = zero_extend(uimm);
 
   let rd = creg2reg_idx(rdc);
@@ -113,8 +111,8 @@ mapping clause assembly = C_LHU(uimm, rsc, rdc)
 /* ****************************************************************** */
 union clause ast = C_LH : (bits(1), cregidx, cregidx)
 
-mapping clause encdec_compressed = C_LH(ui5, rs1, rd)
-  <-> 0b100 @ 0b001 @ rs1 : cregidx @ 0b1 @ ui5 : bits(1) @ rd : cregidx @ 0b00
+mapping clause encdec_compressed = C_LH(ui1, rs1, rd)
+  <-> 0b100 @ 0b001 @ rs1 : cregidx @ 0b1 @ ui1 : bits(1) @ rd : cregidx @ 0b00
 
 function clause execute (C_LH(uimm, rsc, rdc)) = {
   let immext : xlenbits = zero_extend(uimm);
@@ -134,11 +132,10 @@ mapping clause assembly = C_LH(uimm, rsc, rdc)
 
 union clause ast = C_SB : (bits(2), cregidx, cregidx)
 
-mapping clause encdec_compressed = C_SB(ui65, rs1, rs2)
-  <-> 0b100 @ 0b010 @ rs1 : cregidx @ ui65 : bits(2) @ rs2 : cregidx @ 0b00
+mapping clause encdec_compressed = C_SB(ui01, rs1, rs2)
+  <-> 0b100 @ 0b010 @ rs1 : cregidx @ ui01 : bits(2) @ rs2 : cregidx @ 0b00
 
 function clause execute (C_SB(uimm, rs1c, rs2c)) = {
-  let immext : xlenbits = zero_extend(uimm);
   let imm : bits(12) = zero_extend(uimm);
 
   let rs1c = creg2reg_idx(rs1c);
@@ -151,11 +148,10 @@ mapping clause assembly = C_SB(uimm, rs1, rs2)
 /* ****************************************************************** */
 union clause ast = C_SH : (bits(1), cregidx, cregidx)
 
-mapping clause encdec_compressed = C_SH(ui5, rs1, rs2)
-  <-> 0b100 @ 0b011 @ rs1 : cregidx @ 0b0 @ ui5 : bits(1) @ rs2 : cregidx @ 0b00
+mapping clause encdec_compressed = C_SH(ui1, rs1, rs2)
+  <-> 0b100 @ 0b011 @ rs1 : cregidx @ 0b0 @ ui1 : bits(1) @ rs2 : cregidx @ 0b00
 
 function clause execute (C_SH(uimm, rs1c, rs2c)) = {
-  let immext : xlenbits = zero_extend(uimm);
   let imm : bits(12) = zero_extend(uimm);
 
   let rs2c = creg2reg_idx(rs2c);
@@ -257,13 +253,13 @@ union clause ast = C_MUL : (cregidx,cregidx)
 /* the encode/decode mapping between AST elements and 16-bit half words */
 
 mapping clause encdec_compressed = C_MUL(rsd, rs2)
-  <-> 0b100 @ 0b111 @ rsd : cregidx @ 0b00 @ rs2 : cregidx @ 0b01
+  <-> 0b100 @ 0b111 @ rsd : cregidx @ 0b10 @ rs2 : cregidx @ 0b01
 
 function clause execute (C_MUL(rsd,rs2)) = {
   let rd = creg2reg_idx(rsd);
   let rs = creg2reg_idx(rs2);
 
-  execute(MUL((rs, rd, rd, false, true, true)))
+  execute(MUL(rs, rd, rd, false, true, true))
 }
 
 mapping clause assembly = C_MUL(rsd, rs2) <->
