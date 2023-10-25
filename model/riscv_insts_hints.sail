@@ -82,7 +82,7 @@ mapping clause encdec_compressed = C_NOP_HINT(im5 @ im40)
 
 function clause execute C_NOP_HINT(imm) = RETIRE_SUCCESS
 
-mapping clause assembly = C_NOP_HINT(imm) <-> "c.nop.hint." ^ hex_bits_6(imm)
+mapping clause assembly = C_NOP_HINT(imm) <-> "c.nop.hint." ^ spc() ^ hex_bits_6(imm)
 
 /* ****************************************************************** */
 union clause ast = C_ADDI_HINT : (regidx)
@@ -96,7 +96,7 @@ function clause execute (C_ADDI_HINT(rsd)) = RETIRE_SUCCESS
 
 mapping clause assembly = C_ADDI_HINT(rsd)
       if rsd != zreg
-  <-> "c.addi.hint." ^ reg_name(rsd)
+  <-> "c.addi.hint." ^ spc() ^ reg_name(rsd)
       if rsd != zreg
 
 /* ****************************************************************** */
@@ -108,7 +108,7 @@ mapping clause encdec_compressed = C_LI_HINT(imm5 @ imm40)
 function clause execute (C_LI_HINT(imm)) = RETIRE_SUCCESS
 
 mapping clause assembly = C_LI_HINT(imm)
-  <-> "c.li.hint." ^ hex_bits_6(imm)
+  <-> "c.li.hint." ^ spc() ^ hex_bits_6(imm)
 
 /* ****************************************************************** */
 union clause ast = C_LUI_HINT : (bits(6))
@@ -122,7 +122,7 @@ function clause execute (C_LUI_HINT(imm)) = RETIRE_SUCCESS
 
 mapping clause assembly = C_LUI_HINT(imm)
       if imm != 0b000000
-  <-> "c.lui.hint." ^ hex_bits_6(imm)
+  <-> "c.lui.hint." ^ spc() ^ hex_bits_6(imm)
       if imm != 0b000000
 
 /* ****************************************************************** */
@@ -137,7 +137,7 @@ function clause execute (C_MV_HINT(rs2)) = RETIRE_SUCCESS
 
 mapping clause assembly = C_MV_HINT(rs2)
       if rs2 != zreg
-  <-> "c.mv.hint." ^ reg_name(rs2)
+  <-> "c.mv.hint." ^ spc() ^ reg_name(rs2)
       if rs2 != zreg
 
 /* ****************************************************************** */
@@ -152,7 +152,7 @@ function clause execute (C_ADD_HINT(rs2)) = RETIRE_SUCCESS
 
 mapping clause assembly = C_ADD_HINT(rs2)
       if rs2 != zreg
-  <-> "c.add.hint." ^ reg_name(rs2)
+  <-> "c.add.hint." ^ spc() ^ reg_name(rs2)
       if rs2 != zreg
 
 /* ****************************************************************** */
@@ -167,7 +167,7 @@ function clause execute (C_SLLI_HINT(shamt, rsd)) = RETIRE_SUCCESS
 
 mapping clause assembly = C_SLLI_HINT(shamt, rsd)
       if shamt == 0b000000 | rsd == zreg
-  <-> "c.slli.hint." ^ reg_name(rsd) ^ "." ^ hex_bits_6(shamt)
+  <-> "c.slli.hint." ^ spc() ^ reg_name(rsd) ^ "." ^ hex_bits_6(shamt)
       if shamt == 0b000000 | rsd == zreg
 
 /* ****************************************************************** */
@@ -179,7 +179,7 @@ mapping clause encdec_compressed = C_SRLI_HINT(rsd)
 function clause execute (C_SRLI_HINT(rsd)) = RETIRE_SUCCESS
 
 mapping clause assembly = C_SRLI_HINT(rsd)
-  <-> "c.srli.hint." ^ creg_name(rsd)
+  <-> "c.srli.hint." ^ spc() ^ creg_name(rsd)
 
 /* ****************************************************************** */
 union clause ast = C_SRAI_HINT : (cregidx)
@@ -190,7 +190,7 @@ mapping clause encdec_compressed = C_SRAI_HINT(rsd)
 function clause execute (C_SRAI_HINT(rsd)) = RETIRE_SUCCESS
 
 mapping clause assembly = C_SRAI_HINT(rsd)
-  <-> "c.srai.hint." ^ creg_name(rsd)
+  <-> "c.srai.hint." ^ spc() ^ creg_name(rsd)
 
 /* ****************************************************************** */
 /* The reserved fences are not really hints, but for now they
