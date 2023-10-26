@@ -153,6 +153,8 @@ val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
 val sys_enable_writable_fiom = {c: "sys_enable_writable_fiom", ocaml: "Platform.enable_writable_fiom", _: "sys_enable_writable_fiom"} : unit -> bool
+/* whether the MMU should update dirty bits in PTEs *//* FIXME: is the same as plat_enable_dirty_update() in riscv_platform.sail */
+val sys_enable_dirty_update = {c: "plat_enable_dirty_update", ocaml: "Platform.enable_dirty_update", _: "plat_enable_dirty_update"} : unit -> bool
 /* whether misa.v was enabled at boot */
 val sys_enable_vext = {c: "sys_enable_vext", ocaml: "Platform.enable_vext", _: "sys_enable_vext"} : unit -> bool
 
@@ -848,8 +850,10 @@ bitfield Envcfg : bits(64) = {
   STCE   : 63,
   // Page Based Memory Types Extension
   PBMTE  : 62,
+  // Svadu Extension (Hardware update of PTE A/D bits)
+  ADUE   : 61,
   // Reserved WPRI bits.
-  wpri_1 : 61 .. 8,
+  wpri_1 : 60 .. 8,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable
@@ -865,7 +869,15 @@ bitfield Envcfg : bits(64) = {
 register menvcfg : Envcfg
 register senvcfg : Envcfg
 
-function legalize_envcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
+function legalize_menvcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
+  let v = Mk_Envcfg(v);
+  let o = update_FIOM(o, if sys_enable_writable_fiom() then v.FIOM() else 0b0);
+  let o = update_ADUE(o, if sys_enable_dirty_update() then 0b1 else v.ADUE());
+  // Other extensions are not implemented yet so all other fields are read only zero.
+  o
+}
+
+function legalize_senvcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
   let v = Mk_Envcfg(v);
   let o = update_FIOM(o, if sys_enable_writable_fiom() then v.FIOM() else 0b0);
   // Other extensions are not implemented yet so all other fields are read only zero.

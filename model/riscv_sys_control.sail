@@ -602,7 +602,9 @@ function init_sys() -> unit = {
   minstret_increment = true;
 
   menvcfg->bits() = zero_extend(0b0);
+  menvcfg->ADUE() = bool_to_bits(sys_enable_dirty_update());
   senvcfg->bits() = zero_extend(0b0);
+
   /* initialize vector csrs */
   elen               = 0b1; /* ELEN=64 as the common case */
   vlen               = 0b0100; /* VLEN=512 as a default value */
