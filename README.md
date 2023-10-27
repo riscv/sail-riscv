@@ -105,6 +105,7 @@ Supported RISC-V ISA features
 - Zalrsc extension for load-reserved and store-conditional operations, v1.0
 - Zaamo extension for atomic memory operations, v1.0
 - Zabha extension for byte and halfword atomic memory operations, v1.0
+- Zalasr extension for load-acquire and store-release, v0.3.5
 - F and D extensions for single and double-precision floating-point, v2.2
 - Zfh and Zfhmin extensions for half-precision floating-point, v1.0
 - Zfa extension for additional floating-point instructions, v1.0
