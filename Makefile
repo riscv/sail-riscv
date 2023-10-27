@@ -196,6 +196,8 @@ endif
 
 .PHONY:
 
+default: c_emulator/riscv_sim_$(ARCH)
+
 all: ocaml_emulator/riscv_ocaml_sim_$(ARCH) c_emulator/riscv_sim_$(ARCH) riscv_isa riscv_coq riscv_hol riscv_rmem
 .PHONY: all
 
