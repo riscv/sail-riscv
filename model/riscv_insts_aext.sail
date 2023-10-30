@@ -29,23 +29,30 @@ function lrsc_width_str(width : word_width) -> string =
   }
 
 /**
- * RISC-V only appears to define LR / SC / AMOs for word and double, although
- * there seem to be encodings reserved for other widths.
+ * RISC-V A-extension defines LR / SC / AMOs for word and double
+ * RISC-V Zabha extension defines AMOs for byte and halfword
  */
-function amo_width_valid(size : word_width) -> bool = {
+function lrsc_width_valid(size : word_width) -> bool = {
   match(size) {
     WORD   => true,
     DOUBLE => sizeof(xlen) >= 64,
     _      => false
   }
 }
+function amo_width_valid(size : word_width) -> bool = {
+  match(size) {
+    BYTE   => haveZabha(),
+    HALF   => haveZabha(),
+    WORD   => true,
+    DOUBLE => sizeof(xlen) >= 64,
+  }
+}
 
 /* ****************************************************************** */
 union clause ast = LOADRES : (bool, bool, regidx, word_width, regidx)
 
-mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)                                                if haveZalrsc() & amo_width_valid(size)
-  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if haveZalrsc() & amo_width_valid(size)
-
+mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)                                                if haveZalrsc() & lrsc_width_valid(size)
+  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if haveZalrsc() & lrsc_width_valid(size)
 
 /* We could set load-reservations on physical or virtual addresses.
  * For now we set them on virtual addresses, since it makes the
@@ -88,8 +95,8 @@ mapping clause assembly = LOADRES(aq, rl, rs1, size, rd)
 /* ****************************************************************** */
 union clause ast = STORECON : (bool, bool, regidx, regidx, word_width, regidx)
 
-mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)                                      if haveZalrsc() & amo_width_valid(size)
-  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if haveZalrsc() & amo_width_valid(size)
+mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)                                      if haveZalrsc() & lrsc_width_valid(size)
+  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if haveZalrsc() & lrsc_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful. This may need revisiting. */
 function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
