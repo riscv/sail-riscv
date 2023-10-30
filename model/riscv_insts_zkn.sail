@@ -328,8 +328,8 @@ mapping clause encdec = AES64DSM (rs2, rs1, rd) if haveZknd() & sizeof(xlen) == 
 mapping clause encdec = AES64DS (rs2, rs1, rd) if haveZknd() & sizeof(xlen) == 64
   <-> 0b00 @ 0b11101 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
 
-mapping clause assembly = AES64KS1I (rcon, rs1, rd)
-  <-> "aes64ks1i" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_4(rcon)
+mapping clause assembly = AES64KS1I (rnum, rs1, rd)
+  <-> "aes64ks1i" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_4(rnum)
 
 mapping clause assembly = AES64KS2 (rs2, rs1, rd)
   <-> "aes64ks2" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)

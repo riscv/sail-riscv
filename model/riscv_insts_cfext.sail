@@ -106,9 +106,9 @@ function clause execute (C_FSWSP(uimm, rs2)) = {
   execute(STORE_FP(imm, rs2, sp, WORD))
 }
 
-mapping clause assembly = C_FSWSP(uimm, rd)
+mapping clause assembly = C_FSWSP(uimm, rs2)
       if sizeof(xlen) == 32
-  <-> "c.fswsp" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_6(uimm)
+  <-> "c.fswsp" ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_6(uimm)
       if sizeof(xlen) == 32
 
 /* ****************************************************************** */
