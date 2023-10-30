@@ -21,7 +21,7 @@ function aqrl_str(aq : bool, rl : bool) -> string =
   }
 
 function lrsc_width_str(width : word_width) -> string =
-  match (width) {
+  match width {
     BYTE   => ".b",
     HALF   => ".h",
     WORD   => ".w",
@@ -33,14 +33,15 @@ function lrsc_width_str(width : word_width) -> string =
  * RISC-V Zabha extension defines AMOs for byte and halfword
  */
 function lrsc_width_valid(size : word_width) -> bool = {
-  match(size) {
+  match size {
     WORD   => true,
     DOUBLE => sizeof(xlen) >= 64,
     _      => false
   }
 }
+
 function amo_width_valid(size : word_width) -> bool = {
-  match(size) {
+  match size {
     BYTE   => haveZabha(),
     HALF   => haveZabha(),
     WORD   => true,
@@ -132,7 +133,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
               TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
               TR_Address(addr, _) => {
                 let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
-                match (eares) {
+                match eares {
                   MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                   MemValue(_) => {
                     let rs2_val = X(rs2);
@@ -194,7 +195,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
         TR_Address(addr, _) => {
           let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
           let rs2_val = X(rs2)[width_bytes * 8 - 1 .. 0];
-          match (eares) {
+          match eares {
             MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
             MemValue(_) => {
               match mem_read(ReadWrite(Data, Data), addr, width_bytes, aq, aq & rl, true) {
