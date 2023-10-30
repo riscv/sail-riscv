@@ -529,8 +529,8 @@ function clause execute (C_SWSP(uimm, rs2)) = {
   execute(STORE(imm, rs2, sp, WORD, false, false))
 }
 
-mapping clause assembly = C_SWSP(uimm, rd)
-  <-> "c.swsp" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_6(uimm)
+mapping clause assembly = C_SWSP(uimm, rs2)
+  <-> "c.swsp" ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_6(uimm)
 
 /* ****************************************************************** */
 union clause ast = C_SDSP : (bits(6), regidx)
