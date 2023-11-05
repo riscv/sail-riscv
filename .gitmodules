@@ -1,0 +1,3 @@
+[submodule "new_test/TEST_DIR_ROOT/lib/gmsl.git"]
+	path = new_test/TEST_DIR_ROOT/lib/gmsl.git
+	url = git@github.com:jgrahamc/gmsl.git

@@ -1,0 +1,15 @@
+nmi:
+  label: nmi_vector
+reset:
+# label: reset_vector
+#  address: 0x1000
+  address: 0x80000000
+mtime:
+  implemented: True
+  address: 0x20000
+
+# TODO: until we have a method for doing a memory map,
+#   we will keep with the original model of having 1 RAM
+#   block whose size can be given in MBs.
+ram_size : 4
+
