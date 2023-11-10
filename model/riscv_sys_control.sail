@@ -168,12 +168,46 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
 
     /* supervisor CSR access */
     0x150 => haveSupMode() & (p == Machine | p == Supervisor), // siselect
-    0x151 => haveSupMode() & (p == Machine | p == Supervisor), // sireg
-    0x152 => haveSupMode() & (p == Machine | p == Supervisor), // sireg2
-    0x153 => haveSupMode() & (p == Machine | p == Supervisor), // sireg3
-    0x155 => haveSupMode() & (p == Machine | p == Supervisor), // sireg4
-    0x156 => haveSupMode() & (p == Machine | p == Supervisor), // sireg5
-    0x157 => haveSupMode() & (p == Machine | p == Supervisor), // sireg6
+    0x151 => {
+      if haveSupMode() & (p == Machine | p == Supervisor) & menvcfg.CDE() == 0b1 then
+          match siselect.REG() {
+            0x040 => mcounteren.CY() == 0b1,
+            0x042 => mcounteren.IR() == 0b1,
+            _ => false
+          }
+        else false
+    }, // sireg
+    0x152 => {
+      if haveSupMode() & (p == Machine | p == Supervisor) & menvcfg.CDE() == 0b1 &
+        sizeof(xlen) == 32 then
+           match siselect.REG() {
+            0x040 => mcounteren.CY() == 0b1,
+            0x042 => mcounteren.IR() == 0b1,
+            _ => false
+          }
+        else false
+    }, // sireg2
+    0x153 => false, // sireg3
+    0x155 => {
+      if haveSupMode() & (p == Machine | p == Supervisor) & menvcfg.CDE() == 0b1 then
+          match siselect.REG() {
+            0x040 => mcounteren.CY() == 0b1,
+            0x042 => mcounteren.IR() == 0b1,
+            _ => false
+          }
+        else false
+    }, // sireg4
+    0x156 => {
+      if haveSupMode() & (p == Machine | p == Supervisor) & menvcfg.CDE() == 0b1 &
+        sizeof(xlen) == 32 then
+          match siselect.REG() {
+            0x040 => mcounteren.CY() == 0b1,
+            0x042 => mcounteren.IR() == 0b1,
+            _ => false
+          }
+        else false
+    }, // sireg5
+    0x157 => false, // sireg6
 
     /* user mode: counters */
     0xC00 => haveUsrMode(),    // cycle

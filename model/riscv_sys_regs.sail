@@ -911,7 +911,11 @@ bitfield Envcfg : bits(64) = {
   // Page Based Memory Types Extension
   PBMTE  : 62,
   // Reserved WPRI bits.
-  wpri_1 : 61 .. 8,
+  wpri_2 : 61,
+  // Counter Delegation Enable
+  CDE    : 60,
+  // Reserved WPRI bits.
+  wpri_1 : 59 .. 8,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable
@@ -930,6 +934,7 @@ register senvcfg : Envcfg
 function legalize_envcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
   let v = Mk_Envcfg(v);
   let o = update_FIOM(o, if sys_enable_writable_fiom() then v.FIOM() else 0b0);
+  let o = update_CDE(o, v.CDE());
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }

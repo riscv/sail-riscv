@@ -84,6 +84,18 @@ mapping clause encdec = CSR(csr, rs1, rd, is_imm, op)
   <-> csr @ rs1 @ bool_bits(is_imm) @ encdec_csrop(op) @ rd @ 0b1110011
 
 function readCSR csr : csreg -> xlenbits = {
+  let csr : csreg = match (csr, siselect.REG()) {
+    (0x151, 0x040) => 0xB00,  // sireg, cycle
+    (0x155, 0x040) => 0xB80,  // sireg4, cycleh
+    (0x152, 0x040) => 0x321,  // sireg2, cyclecfg
+    (0x156, 0x040) => 0x721,  // sireg5, cyclecfgh
+    (0x151, 0x042) => 0xB02,  // sireg, instret
+    (0x155, 0x042) => 0xB82,  // sireg4, instreth
+    (0x152, 0x042) => 0x322,  // sireg2, instretcfg
+    (0x156, 0x042) => 0x722,  // sireg5, instretcfgh
+    (_, _) => csr
+  };
+
   let res : xlenbits =
   match (csr, sizeof(xlen)) {
     /* machine mode */
@@ -208,6 +220,18 @@ function readCSR csr : csreg -> xlenbits = {
 }
 
 function writeCSR (csr : csreg, value : xlenbits) -> unit = {
+  let csr : csreg = match (csr, siselect.REG()) {
+    (0x151, 0x040) => 0xB00,  // sireg, cycle
+    (0x155, 0x040) => 0xB80,  // sireg4, cycleh
+    (0x152, 0x040) => 0x321,  // sireg2, cyclecfg
+    (0x156, 0x040) => 0x721,  // sireg5, cyclecfgh
+    (0x151, 0x042) => 0xB02,  // sireg, instret
+    (0x155, 0x042) => 0xB82,  // sireg4, instreth
+    (0x152, 0x042) => 0x322,  // sireg2, instretcfg
+    (0x156, 0x042) => 0x722,  // sireg5, instretcfgh
+    (_, _) => csr
+  };
+
   let res : option(xlenbits) =
   match (csr, sizeof(xlen)) {
     /* machine mode */
