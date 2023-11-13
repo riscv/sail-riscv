@@ -47,6 +47,7 @@ function step(step_no : int) -> bool = {
           },
           /* non-error cases: */
           F_RVC(h) => {
+            sail_instr_announce(h);
             instbits = zero_extend(h);
             let ast = ext_decode_compressed(h);
             if   get_config_print_instr()
@@ -63,6 +64,7 @@ function step(step_no : int) -> bool = {
              }
           },
           F_Base(w) => {
+            sail_instr_announce(w);
             instbits = zero_extend(w);
             let ast = ext_decode(w);
             if   get_config_print_instr()
@@ -96,7 +98,10 @@ function loop () : unit -> unit = {
   step_no : int = 0;
   while not(htif_done) do {
     let stepped = step(step_no);
-    if stepped then step_no = step_no + 1;
+    if stepped then {
+      step_no = step_no + 1;
+      sail_end_cycle()
+    };
 
     /* check htif exit */
     if htif_done then {
