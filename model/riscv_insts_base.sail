@@ -154,7 +154,7 @@ mapping clause encdec = RISCV_JALR(imm, rs1, rd)
   <-> imm @ rs1 @ 0b000 @ rd @ 0b1100111
 
 mapping clause assembly = RISCV_JALR(imm, rs1, rd)
-  <-> "jalr" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_12(imm)
+  <-> "jalr" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* see riscv_jalr_seq.sail or riscv_jalr_rmem.sail for the execute clause. */
 
@@ -430,7 +430,7 @@ mapping maybe_u = {
 }
 
 mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, size, aq, rl)
-  <-> "l" ^ size_mnemonic(size) ^ maybe_u(is_unsigned) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
+  <-> "l" ^ size_mnemonic(size) ^ maybe_u(is_unsigned) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ****************************************************************** */
 union clause ast = STORE : (bits(12), regidx, regidx, word_width, bool, bool)
