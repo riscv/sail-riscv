@@ -56,64 +56,11 @@ $(info TEST_DIR_PATH abspath:  $(abspath ${TEST_DIR_PATH}))
 #	for useful data structures and functions.
 include ${TEST_DIR_PATH}/lib/gmsl.git/gmsl
 
-#=========================================================
-# A test definition
-
-CONFIG_BASE		:= 0x80000000
-MARCH          	:= -march=rv32imc_zicsr -mabi=ilp32
-
-C_SRC		:= $(wildcard *.c)
-C_OBJS		:= $(subst .s,.o,$(subst .S,.o,${ASM_SRC}))
-CC_FLAGS	:= 
-ASM_SRC		:= $(wildcard *.S *.s)
-ASM_OBJS	:= $(subst .s,.o,$(subst .S,.o,${ASM_SRC}))
-OBJS_TMP	:= ${ASM_OBJS} ${C_OBJS}
-ASM_FLAGS 	:= -DCONFIG_BASE=${CONFIG_BASE} ${MARCH}
-LD_FILE 	:= 
-LD_FLAGS	:= -T riscv_test.ld
-RUN_FLAGS 	:= 
-XLEN		:= 32
-OBJDIR_TMP	:= $(strip ${XLEN} ${ASM_FLAGS} ${CC_FLAGS} ${LD_FILE} ${LD_FLAGS} ${RUN_FLAGS})
-
-
-# Create a unique objdir name for the variations of the test.
-# make does not do a good, general job of string processing with
-#	spaces,  so we'll use sed instead with
-
-UNIQ_TESTNAME  	:= $(shell echo ${OBJDIR_TMP} | sed 's/ /__/g' | sed 's/-/_/g' | sed 's/=/_/g')
-$(info UNIQ_TESTNAME: ${UNIQ_TESTNAME})
-
-OBJDIR			:= $(addsuffix .artifactdir,${UNIQ_TESTNAME})
-$(info OBJDIR: ${OBJDIR})
-
-OBJS		:= $(addprefix ${OBJDIR}/,${OBJS_TMP})
-
-TESTLIST 		:= $(call set_insert,${UNIQ_TESTNAME},${TESTLIST})
-TESTLIST_BUILD	:= $(call set_insert,${OBJDIR}/test.elf,${TESTLIST_BUILD})
-$(info TESTLIST_BUILD: ${TESTLIST_BUILD})
-$(call set,C_SRC_AA,${UNIQ_TESTNAME},${C_SRC})
-$(info C_SRC: $(call get,C_SRC_AA,${UNIQ_TESTNAME}))
-$(call set,ASM_SRC_AA,${UNIQ_TESTNAME},${ASM_SRC})
-$(info ASM_SRC: $(call get,ASM_SRC_AA,${UNIQ_TESTNAME}))
-$(call set,ASM_FLAGS_AA,${UNIQ_TESTNAME},${ASM_FLAGS})
-$(info ASM_FLAGS: $(call get,ASM_FLAGS_AA,${UNIQ_TESTNAME}))
-$(call set,RUN_FLAGS_AA,${UNIQ_TESTNAME},${RUN_FLAGS})
-$(info RUN_FLAGS: $(call get,RUN_FLAGS_AA,${UNIQ_TESTNAME}))
-$(call set,XLEN_AA,${UNIQ_TESTNAME},${XLEN})
-$(info XLEN: $(call get,XLEN_AA,${UNIQ_TESTNAME}))
-$(call set,OBJDIR_AA,${UNIQ_TESTNAME},${OBJDIR})
-$(info OBJDIR: $(call get,OBJDIR_AA,${UNIQ_TESTNAME}))
-$(call set,OBJS_AA,${UNIQ_TESTNAME},${OBJS})
-$(info OBJS: $(call get,OBJS_AA,${UNIQ_TESTNAME}))
-$(call set,LD_FLAGS_AA,${UNIQ_TESTNAME},${LD_FLAGS})
-$(info LD_FLAGS: $(call get,LD_FLAGS_AA,${UNIQ_TESTNAME}))
-#=========================================================
-
-$(info TESTLIST: ${TESTLIST})
 
 TESTDIRS 		:= $(wildcard *.testdir)
 ARTIFACTDIRS	:= $(wildcard *.artifactdir)
 
+$(info Including ${TEST_DIR_PATH}/lib/Makefile.common...)
 include ${TEST_DIR_PATH}/lib/Makefile.common
 
 

@@ -62,7 +62,7 @@ include ${TEST_DIR_PATH}/lib/gmsl.git/gmsl
 
 ASM_FLAGS 	:=
 RUN_FLAGS 	:= -h
-XLEN		:= RV32
+XLEN		:= 32
 OBJDIR_TMP	:= $(strip ${XLEN} ${ASM_FLAGS} ${RUN_FLAGS})
 
 
@@ -98,7 +98,7 @@ ASM_FLAGS 	:=
 LD_FILE 	:= 
 LD_FLAGS	:=
 RUN_FLAGS 	:= -h
-XLEN		:= RV64
+XLEN		:= 64
 OBJDIR_TMP	:= $(strip ${XLEN} ${ASM_FLAGS} ${CC_FLAGS} ${LD_FILE} ${LD_FLAGS} ${RUN_FLAGS})
 
 
@@ -119,6 +119,7 @@ $(call set,RUN_FLAGS_AA,${UNIQ_TESTNAME},${RUN_FLAGS})
 $(info RUN_FLAGS: $(call get,RUN_FLAGS_AA,${UNIQ_TESTNAME}))
 $(call set,XLEN_AA,${UNIQ_TESTNAME},${XLEN})
 $(info XLEN: $(call get,XLEN_AA,${UNIQ_TESTNAME}))
+$(call set,OBJDIR_AA,${UNIQ_TESTNAME},${OBJDIR}
 #=========================================================
 #=========================================================
 # A test definition
@@ -153,94 +154,6 @@ $(info TESTLIST: ${TESTLIST})
 TESTDIRS 		:= $(wildcard *.testdir)
 ARTIFACTDIRS	:= $(wildcard *.artifactdir)
 
-
-
-
-
-
-
-
-all:
-
-
-build:
-
-
-install:
-
-
-# Run in parallel (potentially,  based on the -j switch to make)
-#	TODO: also redirect stderr into test.failed
-.PHONY: ${TESTLIST}
-run_tests : ${TESTLIST}
-${TESTLIST} :
-	@echo "making \"$@\"" ;
-	@mkdir -p $@.artifactdir || ( echo "unable to create $@.artifactdir" >> test.failed ; exit $$? ; ) ;
-	@if [ ! -e ${TEST_DIR_PATH}/../../c_emulator/riscv_sim_$(call get,XLEN_AA,$@) ] ; 									\
-		then																						\
-		echo "${TEST_DIR_PATH}/../../c_emulator/riscv_sim_$@.$(call get,XLEN_AA,$@) does not exist." >> $@.artifactdir/test.failed ;	\
-		fi ;
-	@${TEST_DIR_PATH}/../../c_emulator/riscv_sim_$(call get,XLEN_AA,$@) $(call get,arr_sw,$@)> $@.artifactdir/test.run.stdout	; 					\
-	if [ $$? -ne 0 ] ;                                              								\
-		then                                                            							\
-		echo "riscv_sim_$@.$(call get,XLEN_AA,$@) exited with nonzero exit status" >> $@.artifactdir/test.failed ;						\
-		fi ;
-	@if [ ! -e $@.artifactdir/test.run.stdout ] ;																\
-		then																						\
-		echo "file, \"$@.artifactdir/test.run.stdout\" not found" >> $@.artifactdir/test.failed ;										\
-		fi ;
-	@if [ ! -e $@.artifactdir/test.failed ] ;																	\
-		then																						\
-		echo "${PWD} passed" >> $@.artifactdir/test.passed ;													\
-		fi;
-
-
-# Gather all the test results from this directory  on down.
-#	Do not run this target in parallel,  else the output into
-#	./test.failed will get intermixed and become unreadable.
-check :
-	@echo "$$PWD: making \"$@\"" ;
-	@rm -f test.passed test.failed ;
-	@for testdir in ${TESTDIRS}; 										\
-		do																\
-		if [ ! -e $$testdir/Makefile ] ;								\
-			then														\
-			echo "ERROR: no Makefile in $$testdir." >> test.failed;		\
-			fi ;														\
-		make -C $$testdir $@ ;											\
-		if [ $$? -ne 0 ] ;                                              			\
-			then                                                            		\
-			echo "'make -C $$testdir $@' exited with nonzero exit status" >> test.failed ;	\
-			fi ;																			\
-		done;
-	@for artifactdir in ${ARTIFACTDIRS}; 										\
-		do																		\
-		if [ -e $$artifactdir/test.failed ] ;									\
-			then																\
-			echo "$$artifactdir/test.failed exists." >> test.failed;			\
-			cat $$artifactdir/test.failed >> test.failed ;						\
-			fi;																	\
-		if [ -e $$artifactdir/test.passed ] ;									\
-			then																\
-			echo "$$PWD/$$artifactdir/test.passed exists." >> test.passed;			\
-			fi;																	\
-		if [ ! -e $$artifactdir/test.failed ] ;									\
-			then																\
-			if [ ! -e $$artifactdir/test.passed ] ;								\
-				then															\
-				echo "neither $$PWD/$$artifactdir/test.failed nor test.passed exists." >> test.failed ; 	\
-				fi ;																				\
-			fi;																						\
-		done ;
-	
-	
-
-clean:
-	rm -f test.failed test.passed
-	rm -rf *.artifactdir
-
-# Cleans local artifacts and the install location
-clean_all:
-
+include ${TEST_DIR_PATH}/lib/Makefile.common
 
 
