@@ -57,16 +57,23 @@ $(info TEST_DIR_PATH abspath:  $(abspath ${TEST_DIR_PATH}))
 include ${TEST_DIR_PATH}/lib/gmsl.git/gmsl
 
 #=========================================================
-# A test definition
+# List of source files that are the source for a test
+C_SRC		:= $(wildcard *.c)
+ASM_SRC		:= $(wildcard *.S *.s)
+
+C_OBJS		:= $(subst .s,.o,$(subst .S,.o,${ASM_SRC}))
+ASM_OBJS	:= $(subst .s,.o,$(subst .S,.o,${ASM_SRC}))
+OBJS_BASE	:= ${C_OBJS} ${ASM_OBJS}
+
+#=========================================================
+# Per test-instance test definition
+#	These variables are what make the instance of the test
+#	unique. 
 
 CONFIG_BASE		:= 0x80000000
 MARCH          	:= -march=rv32imc_zicsr -mabi=ilp32
 
-C_SRC		:= $(wildcard *.c)
-C_OBJS		:= $(subst .s,.o,$(subst .S,.o,${ASM_SRC}))
 CC_FLAGS	:= 
-ASM_SRC		:= $(wildcard *.S *.s)
-ASM_OBJS	:= $(subst .s,.o,$(subst .S,.o,${ASM_SRC}))
 OBJS_TMP	:= ${ASM_OBJS} ${C_OBJS}
 ASM_FLAGS 	:= -DCONFIG_BASE=${CONFIG_BASE} ${MARCH}
 LD_FILE 	:= 
@@ -90,6 +97,59 @@ OBJS		:= $(addprefix ${OBJDIR}/,${OBJS_TMP})
 
 TESTLIST 		:= $(call set_insert,${UNIQ_TESTNAME},${TESTLIST})
 TESTLIST_BUILD	:= $(call set_insert,${OBJDIR}/test.elf,${TESTLIST_BUILD})
+OBJDIRS_SET   	:= $(call set_insert,${OBJDIR},${OBJDIRS_SET})
+
+$(call set,C_SRC_AA,${UNIQ_TESTNAME},${C_SRC})
+$(call set,CC_FLAGS_AA,${UNIQ_TESTNAME},${CC_FLAGS})
+$(call set,ASM_SRC_AA,${UNIQ_TESTNAME},${ASM_SRC})
+$(call set,ASM_FLAGS_AA,${UNIQ_TESTNAME},${ASM_FLAGS})
+$(call set,RUN_FLAGS_AA,${UNIQ_TESTNAME},${RUN_FLAGS})
+$(call set,XLEN_AA,${UNIQ_TESTNAME},${XLEN})
+$(call set,OBJDIR_AA,${UNIQ_TESTNAME},${OBJDIR})
+$(call set,OBJS_AA,${UNIQ_TESTNAME},${OBJS})
+$(call set,LD_FLAGS_AA,${UNIQ_TESTNAME},${LD_FLAGS})
+
+$(info TESTLIST_BUILD: ${TESTLIST_BUILD})
+$(info C_SRC: $(call get,C_SRC_AA,${UNIQ_TESTNAME}))
+$(info ASM_SRC: $(call get,ASM_SRC_AA,${UNIQ_TESTNAME}))
+$(info ASM_FLAGS: $(call get,ASM_FLAGS_AA,${UNIQ_TESTNAME}))
+$(info RUN_FLAGS: $(call get,RUN_FLAGS_AA,${UNIQ_TESTNAME}))
+$(info XLEN: $(call get,XLEN_AA,${UNIQ_TESTNAME}))
+$(info OBJDIR: $(call get,OBJDIR_AA,${UNIQ_TESTNAME}))
+$(info OBJS: $(call get,OBJS_AA,${UNIQ_TESTNAME}))
+$(info LD_FLAGS: $(call get,LD_FLAGS_AA,${UNIQ_TESTNAME}))
+#=========================================================
+#=========================================================
+# A test definition
+
+CONFIG_BASE		:= 0x80000000
+MARCH          	:= -march=rv64imc_zicsr -mabi=lp64
+
+CC_FLAGS	:= 
+OBJS_TMP	:= ${ASM_OBJS} ${C_OBJS}
+ASM_FLAGS 	:= -DCONFIG_BASE=${CONFIG_BASE} ${MARCH}
+LD_FILE 	:= 
+LD_FLAGS	:= -T riscv_test.ld
+RUN_FLAGS 	:= 
+XLEN		:= 64
+OBJDIR_TMP	:= $(strip ${XLEN} ${ASM_FLAGS} ${CC_FLAGS} ${LD_FILE} ${LD_FLAGS} ${RUN_FLAGS})
+
+
+# Create a unique objdir name for the variations of the test.
+# make does not do a good, general job of string processing with
+#	spaces,  so we'll use sed instead with
+
+UNIQ_TESTNAME  	:= $(shell echo ${OBJDIR_TMP} | sed 's/ /__/g' | sed 's/-/_/g' | sed 's/=/_/g')
+$(info UNIQ_TESTNAME: ${UNIQ_TESTNAME})
+
+OBJDIR			:= $(addsuffix .artifactdir,${UNIQ_TESTNAME})
+$(info OBJDIR: ${OBJDIR})
+
+OBJS		:= $(addprefix ${OBJDIR}/,${OBJS_TMP})
+
+TESTLIST 		:= $(call set_insert,${UNIQ_TESTNAME},${TESTLIST})
+TESTLIST_BUILD	:= $(call set_insert,${OBJDIR}/test.elf,${TESTLIST_BUILD})
+OBJDIRS_SET   	:= $(call set_insert,${OBJDIR},${OBJDIRS_SET})
 $(info TESTLIST_BUILD: ${TESTLIST_BUILD})
 $(call set,C_SRC_AA,${UNIQ_TESTNAME},${C_SRC})
 $(info C_SRC: $(call get,C_SRC_AA,${UNIQ_TESTNAME}))
