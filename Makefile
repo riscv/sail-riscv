@@ -187,15 +187,7 @@ C_LIBS += $(SAIL_LIB_DIR)/coverage/libsail_coverage.a -lm -lpthread -ldl
 endif
 
 RISCV_EXTRAS_LEM_FILES = riscv_extras.lem mem_metadata.lem riscv_extras_fdext.lem
-# Feature detect if we are on the latest development version of Sail
-# and use an updated lem file if so. This is just until the opam
-# version catches up with changes to the barrier type.
-SAIL_LATEST := $(shell $(SAIL) -have_feature FEATURE_UNION_BARRIER 1>&2 2> /dev/null; echo $$?)
-ifeq ($(SAIL_LATEST),0)
-RISCV_EXTRAS_LEM = $(addprefix handwritten_support/0.11/,$(RISCV_EXTRAS_LEM_FILES))
-else
 RISCV_EXTRAS_LEM = $(addprefix handwritten_support/,$(RISCV_EXTRAS_LEM_FILES))
-endif
 
 .PHONY:
 
@@ -325,12 +317,12 @@ endif
 
 generated_definitions/lem/$(ARCH)/riscv.lem: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/lem/$(ARCH) generated_definitions/isabelle/$(ARCH)
-	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem/$(ARCH) -isa_output_dir generated_definitions/isabelle/$(ARCH) -o riscv -lem_mwords -lem_lib Riscv_extras -lem_lib Riscv_extras_fdext -lem_lib Mem_metadata $(SAIL_SRCS)
+	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem/$(ARCH) -isa_output_dir generated_definitions/isabelle/$(ARCH) -o riscv -lem_lib Riscv_extras -lem_lib Riscv_extras_fdext -lem_lib Mem_metadata $(SAIL_SRCS)
 	echo "declare {isabelle} rename field sync_exception_ext = sync_exception_ext_exception" >> generated_definitions/lem/$(ARCH)/riscv_types.lem
 
 # sed -i isn't posix compliant, unfortunately
 generated_definitions/isabelle/$(ARCH)/Riscv.thy: generated_definitions/isabelle/$(ARCH)/ROOT generated_definitions/lem/$(ARCH)/riscv.lem $(RISCV_EXTRAS_LEM) Makefile
-	lem -isa -outdir generated_definitions/isabelle/$(ARCH) -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
+	lem -wl ign -isa -outdir generated_definitions/isabelle/$(ARCH) -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
 		$(RISCV_EXTRAS_LEM) \
 		generated_definitions/lem/$(ARCH)/riscv_types.lem \
 		generated_definitions/lem/$(ARCH)/riscv.lem
@@ -451,7 +443,7 @@ generated_definitions/for-rmem/riscv.defs: $(SAIL_RMEM_SRCS)
 
 FORCE:
 
-SHARE_FILES:=$(sort $(wildcard model/*.sail)) $(sort $(wildcard c_emulator/*.c)) $(sort $(wildcard c_emulator/*.h)) $(sort $(wildcard handwritten_support/*.lem)) $(sort $(wildcard handwritten_support/hgen/*.hgen)) $(sort $(wildcard handwritten_support/0.11/*.lem)) $(RMEM_FILES)
+SHARE_FILES:=$(sort $(wildcard model/*.sail)) $(sort $(wildcard c_emulator/*.c)) $(sort $(wildcard c_emulator/*.h)) $(sort $(wildcard handwritten_support/*.lem)) $(sort $(wildcard handwritten_support/hgen/*.hgen)) $(RMEM_FILES)
 sail-riscv.install: FORCE
 	echo 'bin: ["c_emulator/riscv_sim_RV64" "c_emulator/riscv_sim_RV32"]' > sail-riscv.install
 	echo 'share: [ $(foreach f,$(SHARE_FILES),"$f" {"$f"}) ]' >> sail-riscv.install
