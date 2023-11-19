@@ -83,14 +83,22 @@ mapping encdec_uop : uop <-> bits(7) = {
 mapping clause encdec = UTYPE(imm, rd, op)
   <-> imm @ rd @ encdec_uop(op)
 
+/* Zicfilp : Landing page label check */
+val zicfilp_lpad :  (bits(20)) -> Retired
+
 function clause execute UTYPE(imm, rd, op) = {
   let off : xlenbits = sign_extend(imm @ 0x000);
-  let ret : xlenbits = match op {
-    RISCV_LUI   => off,
-    RISCV_AUIPC => get_arch_pc() + off
+  /* Zicfilp : AUIPC with rd=x0 is a landing pad */
+  if haveZicfilp() & rd == 0b00000 & op == RISCV_AUIPC then {
+    zicfilp_lpad(imm);
+  } else {
+    let ret : xlenbits = match op {
+      RISCV_LUI   => off,
+      RISCV_AUIPC => get_arch_pc() + off
+    };
+    X(rd) = ret;
+    RETIRE_SUCCESS
   };
-  X(rd) = ret;
-  RETIRE_SUCCESS
 }
 
 mapping utype_mnemonic : uop <-> string = {
