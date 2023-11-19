@@ -77,7 +77,11 @@ function ext_check_xret_priv (p : Privilege) : Privilege -> bool = true
 /* Called if above check fails */
 function ext_fail_xret_priv () : unit -> unit = ()
 
-function handle_trap_extension(p : Privilege, pc : xlenbits, u : option(unit)) -> unit = ()
+/* Zicfilp : save elp on trap */
+val zicfilp_trap_extension : (Privilege) -> unit
+function handle_trap_extension(del_priv : Privilege, pc : xlenbits, u : option(unit)) -> unit = {
+    zicfilp_trap_extension(del_priv);
+}
 
 /* used for traps and ECALL */
 function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {

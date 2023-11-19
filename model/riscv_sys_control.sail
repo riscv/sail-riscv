@@ -469,6 +469,9 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
   };
 }
 
+/* Zicfilp : extension to restore elp */
+val zicfilp_set_elp_to_mpelp : (unit) -> unit
+val zicfilp_set_elp_to_spelp : (unit) -> unit
 function exception_handler(cur_priv : Privilege, ctl : ctl_result,
                            pc: xlenbits) -> xlenbits = {
   match (cur_priv, ctl) {
@@ -488,6 +491,9 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   cur_privilege != Machine
       then mstatus->MPRV() = 0b0;
 
+      /* Zicfilp: extension to restore ELP */
+      zicfilp_set_elp_to_mpelp();
+
       if   get_config_print_reg()
       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
       if   get_config_print_platform()
@@ -504,6 +510,9 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus->SPP()  = 0b0;
       if   cur_privilege != Machine
       then mstatus->MPRV() = 0b0;
+
+      /* Zicfilp: extension to restore ELP */
+      zicfilp_set_elp_to_spelp();
 
       if   get_config_print_reg()
       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits()));
@@ -534,6 +543,13 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
 function handle_mem_exception(addr : xlenbits, e : ExceptionType) -> unit = {
   let t : sync_exception = struct { trap    = e,
                                     excinfo = Some(addr),
+                                    ext     = None() } in
+  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
+}
+
+function handle_sw_check_exception(code : SWCheckCodes) -> unit = {
+  let t : sync_exception = struct { trap    = E_SW_Check_Fault(),
+                                    excinfo = Some(sw_check_code_to_bits(code)),
                                     ext     = None() } in
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }
