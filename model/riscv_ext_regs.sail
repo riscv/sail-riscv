@@ -80,9 +80,12 @@ This function is called after above when running rvfi and allows the model
 to be initialised differently (e.g. CHERI cap regs are initialised
 to omnipotent instead of null).
  */
+val init_zicfilp_regs : unit -> unit
 val ext_rvfi_init : unit -> unit
 function ext_rvfi_init () = {
-  x1 = x1 // to avoid hook being optimized out
+  x1 = x1; // to avoid hook being optimized out
+  /* Zicfilp register state */
+  init_zicfilp_regs();
 }
 
 

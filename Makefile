@@ -42,6 +42,9 @@ SAIL_DEFAULT_INST += riscv_insts_zbkx.sail
 
 SAIL_DEFAULT_INST += riscv_insts_zicond.sail
 
+SAIL_DEFAULT_INST += riscv_zicfilp_regs.sail     # Zicfilp state
+SAIL_DEFAULT_INST += riscv_insts_zicfilp.sail    # Zicfilp instructions
+
 SAIL_DEFAULT_INST += riscv_insts_vext_utils.sail
 SAIL_DEFAULT_INST += riscv_insts_vext_vset.sail
 SAIL_DEFAULT_INST += riscv_insts_vext_arith.sail
@@ -95,6 +98,8 @@ SAIL_ARCH_SRCS += riscv_types_kext.sail    # Shared/common code for the cryptogr
 
 SAIL_STEP_SRCS = riscv_step_common.sail riscv_step_ext.sail riscv_decode_ext.sail riscv_fetch.sail riscv_step.sail
 RVFI_STEP_SRCS = riscv_step_common.sail riscv_step_rvfi.sail riscv_decode_ext.sail riscv_fetch_rvfi.sail riscv_step.sail
+SAIL_STEP_SRCS += riscv_step_zicfilp.sail
+RVFI_STEP_SRCS += riscv_step_zicfilp.sail
 
 # Control inclusion of 64-bit only riscv_analysis
 ifeq ($(ARCH),RV32)

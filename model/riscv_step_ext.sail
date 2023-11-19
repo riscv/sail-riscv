@@ -70,9 +70,14 @@
 
 /* The default implementation of hooks for the step() and main() functions. */
 
+/* Zicfilp extension to fetch */
+val zicfilp_check_if_lpad : (FetchResult) -> FetchResult
+
 function ext_init() -> unit = ()
 
-function ext_fetch_hook(f : FetchResult) -> FetchResult = f
+function ext_fetch_hook(f : FetchResult) -> FetchResult = {
+  zicfilp_check_if_lpad(f)
+}
 
 function ext_pre_step_hook()  -> unit = ()
 function ext_post_step_hook() -> unit = ()

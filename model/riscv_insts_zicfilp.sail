@@ -25,6 +25,7 @@
 /*    Aril Computer Corp., for contributions by Scott Johnson                            */
 /*    Philipp Tomsich                                                                    */
 /*    VRULL GmbH, for contributions by its employees                                     */
+/*    Ved Shanbhogue                                                                     */
 /*                                                                                       */
 /*  All rights reserved.                                                                 */
 /*                                                                                       */
@@ -68,135 +69,111 @@
 /*  SUCH DAMAGE.                                                                         */
 /*=======================================================================================*/
 
-/* Mapping of csr addresses to their names. */
+/* ****************************************************************** */
+/* This file specifies the instructions in the 'Zicfilp' extension.   */
+/* ****************************************************************** */
+/* Forward-edge CFI: Landing pads */
+/* Sail does not yet support H extension - this needs to be updated to
+   support henvcfg for VS when H extension support is included        */
+function zicfilp_xLPE() -> bool = {
+  /* When S-mode is implemented
+   *   Priv      xLPE
+   *   M         mseccfg.MLPE
+   *   S/HS      menvcfg.LPE
+   *   VS        henvcfg.LPE
+   *   U/VU      senvcfg.LPE
+   * When S-mode is not implemented
+   *   Priv      xLPE
+   *   M         mseccfg.MLPE
+   *   U         menvcfg.LPE
+   */
+  if   not(haveZicfilp())
+  then false
+  else if cur_privilege == Machine 
+  then mseccfg.MLPE() == 0b1
+  else if cur_privilege == Supervisor
+  then menvcfg.LPE() == 0b1
+  else if not(haveSupMode())
+  then menvcfg.LPE() == 0b1
+  else senvcfg.LPE() == 0b1
+}
+/* extension to jalr */
+function zicfilp_update_elp(rs1_reg : regidx, rd_reg : regidx) -> unit = {
+  /* 
+   * An indirect branch using JALR, C.JALR, or C.JR with rs1 as x7 is termed
+   * a software guarded branch. Such branches do not need to land on a LPAD
+   * instruction and thus do not set ELP to LP_EXPECTED. JALR/C.JR/C.JALR
+   * using x1/x5 as source are returns; they do not set ELP to LP_EXPECTED.
+   *
+   * is_lp_expected = ( (JALR || C.JR || C.JALR) &&
+   *                    (rs1 != x1) && (rs1 != x5) && (rs1 != x7) ) ? 1 : 0;
+   */
+  let is_lp_expected : bool = ((rs1_reg != 0b00001) & (rs1_reg != 0b00101) & 
+                               (rs1_reg != 0b00111));
+  if is_lp_expected == true & zicfilp_xLPE()
+  then elp = ElpState_to_bits(LP_EXPECTED);
 
-val csr_name_map : csreg <-> string
+}
+/* AUIPC with rd=x0 is a lpad instruction when zicfilp is active else a no-op */
+function zicfilp_lpad( lpl : bits(20) ) -> Retired = {
+   /* expected label is in x7 bits 31:12 */
+   let  exp_lbl : bits(20) = x7[31..12];
 
-scattered mapping csr_name_map
-
-/* user trap setup */
-mapping clause csr_name_map = 0x000  <-> "ustatus"
-mapping clause csr_name_map = 0x004  <-> "uie"
-mapping clause csr_name_map = 0x005  <-> "utvec"
-/* user trap handling */
-mapping clause csr_name_map = 0x040  <-> "uscratch"
-mapping clause csr_name_map = 0x041  <-> "uepc"
-mapping clause csr_name_map = 0x042  <-> "ucause"
-mapping clause csr_name_map = 0x043  <-> "utval"
-mapping clause csr_name_map = 0x044  <-> "uip"
-/* user floating-point context */
-mapping clause csr_name_map = 0x001  <-> "fflags"
-mapping clause csr_name_map = 0x002  <-> "frm"
-mapping clause csr_name_map = 0x003  <-> "fcsr"
-/* user entropy source */
-mapping clause csr_name_map = 0x015  <-> "seed"
-/* counter/timers */
-mapping clause csr_name_map = 0xC00  <-> "cycle"
-mapping clause csr_name_map = 0xC01  <-> "time"
-mapping clause csr_name_map = 0xC02  <-> "instret"
-mapping clause csr_name_map = 0xC80  <-> "cycleh"
-mapping clause csr_name_map = 0xC81  <-> "timeh"
-mapping clause csr_name_map = 0xC82  <-> "instreth"
-/* TODO: other hpm counters */
-/* supervisor trap setup */
-mapping clause csr_name_map = 0x100  <-> "sstatus"
-mapping clause csr_name_map = 0x102  <-> "sedeleg"
-mapping clause csr_name_map = 0x103  <-> "sideleg"
-mapping clause csr_name_map = 0x104  <-> "sie"
-mapping clause csr_name_map = 0x105  <-> "stvec"
-mapping clause csr_name_map = 0x106  <-> "scounteren"
-/* supervisor trap handling */
-mapping clause csr_name_map = 0x140  <-> "sscratch"
-mapping clause csr_name_map = 0x141  <-> "sepc"
-mapping clause csr_name_map = 0x142  <-> "scause"
-mapping clause csr_name_map = 0x143  <-> "stval"
-mapping clause csr_name_map = 0x144  <-> "sip"
-/* supervisor protection and translation */
-mapping clause csr_name_map = 0x180  <-> "satp"
-/* machine information registers */
-mapping clause csr_name_map = 0xF11  <-> "mvendorid"
-mapping clause csr_name_map = 0xF12  <-> "marchid"
-mapping clause csr_name_map = 0xF13  <-> "mimpid"
-mapping clause csr_name_map = 0xF14  <-> "mhartid"
-/* machine trap setup */
-mapping clause csr_name_map = 0x300  <-> "mstatus"
-mapping clause csr_name_map = 0x301  <-> "misa"
-mapping clause csr_name_map = 0x302  <-> "medeleg"
-mapping clause csr_name_map = 0x303  <-> "mideleg"
-mapping clause csr_name_map = 0x304  <-> "mie"
-mapping clause csr_name_map = 0x305  <-> "mtvec"
-mapping clause csr_name_map = 0x306  <-> "mcounteren"
-mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
-/* machine trap handling */
-mapping clause csr_name_map = 0x340  <-> "mscratch"
-mapping clause csr_name_map = 0x341  <-> "mepc"
-mapping clause csr_name_map = 0x342  <-> "mcause"
-mapping clause csr_name_map = 0x343  <-> "mtval"
-mapping clause csr_name_map = 0x344  <-> "mip"
-/* machine protection and translation */
-mapping clause csr_name_map = 0x3A0  <-> "pmpcfg0"
-mapping clause csr_name_map = 0x3A1  <-> "pmpcfg1"
-mapping clause csr_name_map = 0x3A2  <-> "pmpcfg2"
-mapping clause csr_name_map = 0x3A3  <-> "pmpcfg3"
-mapping clause csr_name_map = 0x3B0  <-> "pmpaddr0"
-mapping clause csr_name_map = 0x3B1  <-> "pmpaddr1"
-mapping clause csr_name_map = 0x3B2  <-> "pmpaddr2"
-mapping clause csr_name_map = 0x3B3  <-> "pmpaddr3"
-mapping clause csr_name_map = 0x3B4  <-> "pmpaddr4"
-mapping clause csr_name_map = 0x3B5  <-> "pmpaddr5"
-mapping clause csr_name_map = 0x3B6  <-> "pmpaddr6"
-mapping clause csr_name_map = 0x3B7  <-> "pmpaddr7"
-mapping clause csr_name_map = 0x3B8  <-> "pmpaddr8"
-mapping clause csr_name_map = 0x3B9  <-> "pmpaddr9"
-mapping clause csr_name_map = 0x3BA  <-> "pmpaddr10"
-mapping clause csr_name_map = 0x3BB  <-> "pmpaddr11"
-mapping clause csr_name_map = 0x3BC  <-> "pmpaddr12"
-mapping clause csr_name_map = 0x3BD  <-> "pmpaddr13"
-mapping clause csr_name_map = 0x3BE  <-> "pmpaddr14"
-mapping clause csr_name_map = 0x3BF  <-> "pmpaddr15"
-/* machine counters/timers */
-mapping clause csr_name_map = 0xB00  <-> "mcycle"
-mapping clause csr_name_map = 0xB02  <-> "minstret"
-mapping clause csr_name_map = 0xB80  <-> "mcycleh"
-mapping clause csr_name_map = 0xB82  <-> "minstreth"
-/* machine security configuration */
-mapping clause csr_name_map = 0x747  <-> "mseccfg"
-/* TODO: other hpm counters and events */
-/* trigger/debug */
-mapping clause csr_name_map = 0x7a0  <-> "tselect"
-mapping clause csr_name_map = 0x7a1  <-> "tdata1"
-mapping clause csr_name_map = 0x7a2  <-> "tdata2"
-mapping clause csr_name_map = 0x7a3  <-> "tdata3"
-/* vector csrs */
-mapping clause csr_name_map = 0x008  <-> "vstart"
-mapping clause csr_name_map = 0x009  <-> "vxsat"
-mapping clause csr_name_map = 0x00A  <-> "vxrm"
-mapping clause csr_name_map = 0x00F  <-> "vcsr"
-mapping clause csr_name_map = 0xC20  <-> "vl"
-mapping clause csr_name_map = 0xC21  <-> "vtype"
-mapping clause csr_name_map = 0xC22  <-> "vlenb"
-
-val csr_name : csreg -> string
-overload to_str = {csr_name}
-
-/* Extensions may want to add additional CSR registers to the CSR address map.
- * These scattered functions support access to such registers.
- *
- * The default implementation provides access to the CSRs added by the 'N'
- * extension.
- */
-
-
-/* returns whether a CSR is defined and accessible at a given address
- * and privilege
- */
-val ext_is_CSR_defined : (csreg, Privilege) -> bool
-scattered function ext_is_CSR_defined
-
-/* returns the value of the CSR if it is defined */
-val ext_read_CSR : csreg -> option(xlenbits)
-scattered function ext_read_CSR
-
-/* returns new value (after legalisation) if the CSR is defined */
-val ext_write_CSR : (csreg, xlenbits) -> option(xlenbits)
-scattered function ext_write_CSR
+   if  zicfilp_xLPE() & (elp == ElpState_to_bits(LP_EXPECTED)) then {
+       if ( (lpl != exp_lbl) & (lpl != 0b00000000000000000000) )
+       then { handle_sw_check_exception(LANDING_PAD_FAULT); RETIRE_FAIL }
+       else {elp = ElpState_to_bits(NO_LP_EXPECTED); RETIRE_SUCCESS };
+   } else {
+     RETIRE_SUCCESS
+   }
+}
+/* trap delivery extension */
+function zicfilp_trap_extension(del_priv : Privilege) -> unit = {
+  /* When a trap is taken into privilege mode x, the xPELP is set
+     to ELP and ELP is set to NO_LP_EXPECTED. */
+  /* Sail does not have support for Debug mode - this needs to be
+     updated when Debug mode support is added */
+  if haveZicfilp() then {
+    match (del_priv, sizeof(xlen)) {
+      (Machine, 32 ) => {mstatush = update_MPELP(mstatush, elp)},
+      (Machine, _  ) => {mstatus  = update_mstatus_MPELP(mstatus, elp)},
+      (      _, _  ) => {mstatus  = update_SPELP(mstatus, elp)},
+    };
+    elp = ElpState_to_bits(NO_LP_EXPECTED);
+  }
+}
+/* extension to MRET */
+function zicfilp_set_elp_to_mpelp() -> unit = {
+  /* An MRET or SRET instruction is used to return from a trap in M-mode
+   * or S-mode, respectively. When executing an xRET instruction, if xPP
+   * holds the value y, then ELP is set to the value of xPELP if yLPE is
+   * 1; otherwise, it is set to NO_LP_EXPECTED; xPELP is set to
+   * NO_LP_EXPECTED.
+   */
+  if haveZicfilp() then {
+    match zicfilp_xLPE() {
+      true  => { elp = get_MPELP() },
+      false => { elp = ElpState_to_bits(NO_LP_EXPECTED) }
+    };
+    match (sizeof(xlen)) {
+      32 => {mstatush = update_MPELP(mstatush, ElpState_to_bits(NO_LP_EXPECTED))},
+       _ => {mstatus  = update_mstatus_MPELP(mstatus, ElpState_to_bits(NO_LP_EXPECTED))}
+    };
+  }
+}
+/* extension to SRET */
+function zicfilp_set_elp_to_spelp() -> unit = {
+  /* An MRET or SRET instruction is used to return from a trap in M-mode
+   * or S-mode, respectively. When executing an xRET instruction, if xPP
+   * holds the value y, then ELP is set to the value of xPELP if yLPE is
+   * 1; otherwise, it is set to NO_LP_EXPECTED; xPELP is set to
+   * NO_LP_EXPECTED.
+   */
+  if haveZicfilp() then {
+    match zicfilp_xLPE() {
+      true  => { elp = mstatus.SPELP() },
+      false => { elp = ElpState_to_bits(NO_LP_EXPECTED) }
+    };
+    mstatus = update_SPELP(mstatus, ElpState_to_bits(NO_LP_EXPECTED));
+  }
+}

@@ -7,6 +7,7 @@
 /*  licences), is subject to the BSD two-clause licence below.                           */
 /*                                                                                       */
 /*  Copyright (c) 2017-2023                                                              */
+/*    Ved Shanbhogue                                                                     */
 /*    Prashanth Mundkur                                                                  */
 /*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
 /*    Jon French                                                                         */
@@ -68,135 +69,49 @@
 /*  SUCH DAMAGE.                                                                         */
 /*=======================================================================================*/
 
-/* Mapping of csr addresses to their names. */
-
-val csr_name_map : csreg <-> string
-
-scattered mapping csr_name_map
-
-/* user trap setup */
-mapping clause csr_name_map = 0x000  <-> "ustatus"
-mapping clause csr_name_map = 0x004  <-> "uie"
-mapping clause csr_name_map = 0x005  <-> "utvec"
-/* user trap handling */
-mapping clause csr_name_map = 0x040  <-> "uscratch"
-mapping clause csr_name_map = 0x041  <-> "uepc"
-mapping clause csr_name_map = 0x042  <-> "ucause"
-mapping clause csr_name_map = 0x043  <-> "utval"
-mapping clause csr_name_map = 0x044  <-> "uip"
-/* user floating-point context */
-mapping clause csr_name_map = 0x001  <-> "fflags"
-mapping clause csr_name_map = 0x002  <-> "frm"
-mapping clause csr_name_map = 0x003  <-> "fcsr"
-/* user entropy source */
-mapping clause csr_name_map = 0x015  <-> "seed"
-/* counter/timers */
-mapping clause csr_name_map = 0xC00  <-> "cycle"
-mapping clause csr_name_map = 0xC01  <-> "time"
-mapping clause csr_name_map = 0xC02  <-> "instret"
-mapping clause csr_name_map = 0xC80  <-> "cycleh"
-mapping clause csr_name_map = 0xC81  <-> "timeh"
-mapping clause csr_name_map = 0xC82  <-> "instreth"
-/* TODO: other hpm counters */
-/* supervisor trap setup */
-mapping clause csr_name_map = 0x100  <-> "sstatus"
-mapping clause csr_name_map = 0x102  <-> "sedeleg"
-mapping clause csr_name_map = 0x103  <-> "sideleg"
-mapping clause csr_name_map = 0x104  <-> "sie"
-mapping clause csr_name_map = 0x105  <-> "stvec"
-mapping clause csr_name_map = 0x106  <-> "scounteren"
-/* supervisor trap handling */
-mapping clause csr_name_map = 0x140  <-> "sscratch"
-mapping clause csr_name_map = 0x141  <-> "sepc"
-mapping clause csr_name_map = 0x142  <-> "scause"
-mapping clause csr_name_map = 0x143  <-> "stval"
-mapping clause csr_name_map = 0x144  <-> "sip"
-/* supervisor protection and translation */
-mapping clause csr_name_map = 0x180  <-> "satp"
-/* machine information registers */
-mapping clause csr_name_map = 0xF11  <-> "mvendorid"
-mapping clause csr_name_map = 0xF12  <-> "marchid"
-mapping clause csr_name_map = 0xF13  <-> "mimpid"
-mapping clause csr_name_map = 0xF14  <-> "mhartid"
-/* machine trap setup */
-mapping clause csr_name_map = 0x300  <-> "mstatus"
-mapping clause csr_name_map = 0x301  <-> "misa"
-mapping clause csr_name_map = 0x302  <-> "medeleg"
-mapping clause csr_name_map = 0x303  <-> "mideleg"
-mapping clause csr_name_map = 0x304  <-> "mie"
-mapping clause csr_name_map = 0x305  <-> "mtvec"
-mapping clause csr_name_map = 0x306  <-> "mcounteren"
-mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
-/* machine trap handling */
-mapping clause csr_name_map = 0x340  <-> "mscratch"
-mapping clause csr_name_map = 0x341  <-> "mepc"
-mapping clause csr_name_map = 0x342  <-> "mcause"
-mapping clause csr_name_map = 0x343  <-> "mtval"
-mapping clause csr_name_map = 0x344  <-> "mip"
-/* machine protection and translation */
-mapping clause csr_name_map = 0x3A0  <-> "pmpcfg0"
-mapping clause csr_name_map = 0x3A1  <-> "pmpcfg1"
-mapping clause csr_name_map = 0x3A2  <-> "pmpcfg2"
-mapping clause csr_name_map = 0x3A3  <-> "pmpcfg3"
-mapping clause csr_name_map = 0x3B0  <-> "pmpaddr0"
-mapping clause csr_name_map = 0x3B1  <-> "pmpaddr1"
-mapping clause csr_name_map = 0x3B2  <-> "pmpaddr2"
-mapping clause csr_name_map = 0x3B3  <-> "pmpaddr3"
-mapping clause csr_name_map = 0x3B4  <-> "pmpaddr4"
-mapping clause csr_name_map = 0x3B5  <-> "pmpaddr5"
-mapping clause csr_name_map = 0x3B6  <-> "pmpaddr6"
-mapping clause csr_name_map = 0x3B7  <-> "pmpaddr7"
-mapping clause csr_name_map = 0x3B8  <-> "pmpaddr8"
-mapping clause csr_name_map = 0x3B9  <-> "pmpaddr9"
-mapping clause csr_name_map = 0x3BA  <-> "pmpaddr10"
-mapping clause csr_name_map = 0x3BB  <-> "pmpaddr11"
-mapping clause csr_name_map = 0x3BC  <-> "pmpaddr12"
-mapping clause csr_name_map = 0x3BD  <-> "pmpaddr13"
-mapping clause csr_name_map = 0x3BE  <-> "pmpaddr14"
-mapping clause csr_name_map = 0x3BF  <-> "pmpaddr15"
-/* machine counters/timers */
-mapping clause csr_name_map = 0xB00  <-> "mcycle"
-mapping clause csr_name_map = 0xB02  <-> "minstret"
-mapping clause csr_name_map = 0xB80  <-> "mcycleh"
-mapping clause csr_name_map = 0xB82  <-> "minstreth"
-/* machine security configuration */
-mapping clause csr_name_map = 0x747  <-> "mseccfg"
-/* TODO: other hpm counters and events */
-/* trigger/debug */
-mapping clause csr_name_map = 0x7a0  <-> "tselect"
-mapping clause csr_name_map = 0x7a1  <-> "tdata1"
-mapping clause csr_name_map = 0x7a2  <-> "tdata2"
-mapping clause csr_name_map = 0x7a3  <-> "tdata3"
-/* vector csrs */
-mapping clause csr_name_map = 0x008  <-> "vstart"
-mapping clause csr_name_map = 0x009  <-> "vxsat"
-mapping clause csr_name_map = 0x00A  <-> "vxrm"
-mapping clause csr_name_map = 0x00F  <-> "vcsr"
-mapping clause csr_name_map = 0xC20  <-> "vl"
-mapping clause csr_name_map = 0xC21  <-> "vtype"
-mapping clause csr_name_map = 0xC22  <-> "vlenb"
-
-val csr_name : csreg -> string
-overload to_str = {csr_name}
-
-/* Extensions may want to add additional CSR registers to the CSR address map.
- * These scattered functions support access to such registers.
- *
- * The default implementation provides access to the CSRs added by the 'N'
- * extension.
- */
-
-
-/* returns whether a CSR is defined and accessible at a given address
- * and privilege
- */
-val ext_is_CSR_defined : (csreg, Privilege) -> bool
-scattered function ext_is_CSR_defined
-
-/* returns the value of the CSR if it is defined */
-val ext_read_CSR : csreg -> option(xlenbits)
-scattered function ext_read_CSR
-
-/* returns new value (after legalisation) if the CSR is defined */
-val ext_write_CSR : (csreg, xlenbits) -> option(xlenbits)
-scattered function ext_write_CSR
+/* ****************************************************************** */
+/* This file specifies the fetch extension in the 'Zicfilp' extension.*/
+/* ****************************************************************** */
+/* Forward-edge CFI: Landing pads */
+val zicfilp_xLPE : (unit) -> bool
+function zicfilp_check_if_lpad(f : FetchResult) -> FetchResult = {
+   if   not(zicfilp_xLPE())
+   then f
+   else {
+     /* landing pad is a AUIPC with rd=x0 */
+     /* When ELP is set to LP_EXPECTED, if the next instruction in
+      * the instruction stream is not 4-byte aligned, or is not LPAD, or
+      * if the landing pad label encoded in LPAD is not zero and does not
+      * match the expected landing pad label in bits 31:12 of the x7
+      * register, then a software-check exception (cause=18) with xtval
+      * set to "landing pad fault (code=2)" is raised else the ELP is
+      * updated to NO_LP_EXPECTED. The label check is performed in
+      * riscv_insts_zicfilp:zicfilp_lpad
+      */
+     match f {
+       F_Base(f) => {
+         let inst    : word    = zero_extend(f);
+         let lpad_op : bits(7) = inst[6 .. 0];
+         let rd_reg  : regidx  = inst[11.. 7];
+         if   elp != ElpState_to_bits(LP_EXPECTED)
+         then F_Base(f)
+         else if PC[1 .. 0] != 0b00
+         then F_Error(E_SW_Check_Fault(), zero_extend(sw_check_code_to_bits(LANDING_PAD_FAULT)))
+         else if ((lpad_op != 0b0010111) | (rd_reg != 0b00000))
+         then F_Error(E_SW_Check_Fault(), zero_extend(sw_check_code_to_bits(LANDING_PAD_FAULT)))
+         else F_Base(f)
+       },
+       F_RVC(f) => {
+         if   (elp != ElpState_to_bits(LP_EXPECTED))
+         then F_RVC(f)
+         else F_Error(E_SW_Check_Fault(), zero_extend(sw_check_code_to_bits(LANDING_PAD_FAULT)))
+       },
+       F_Ext_Error(e)   => {
+         f
+       },
+       F_Error(e, addr) => {
+         f
+       }
+     }
+   }
+}
