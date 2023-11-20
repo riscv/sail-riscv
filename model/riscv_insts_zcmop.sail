@@ -78,8 +78,8 @@
 /* ****************************************************************** */
 
 union clause ast = ZCMOP : (bits(3))
-mapping clause encdec_compressed = ZCMOP(mop_10_08) if haveZcmop()
-  <-> 0b01100 @ mop_10_08 : bits(3) @ 0b100000 @ 0b01
+mapping clause encdec_compressed = ZCMOP(mop) if haveZcmop()
+  <-> 0b01100 @ mop : bits(3) @ 0b100000 @ 0b01
 
 mapping zcmop_mnemonic : bits(3) <-> string = {
   0b000 <-> "c.mop.1",
