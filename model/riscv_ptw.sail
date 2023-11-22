@@ -99,21 +99,31 @@ overload to_str = {ptw_error_to_str}
  * with any customization to checkPTEPermission().
  */
 function ext_get_ptw_error(eptwf : ext_ptw_fail) -> PTW_Error =
-  PTW_No_Permission()
+  match eptwf {
+      SHADOW_STACK_ACCESS_FAULT => PTW_Access(),
+      PERMISSION                => PTW_No_Permission()
+  }
 
 /* conversion of these translation/PTW failures into architectural exceptions */
 function translationException(a : AccessType(ext_access_type), f : PTW_Error) -> ExceptionType = {
   let e : ExceptionType =
   match (a, f) {
-    (_, PTW_Ext_Error(e))        => E_Extension(ext_translate_exception(e)),
-    (ReadWrite(_), PTW_Access()) => E_SAMO_Access_Fault(),
-    (ReadWrite(_), _)            => E_SAMO_Page_Fault(),
-    (Read(_), PTW_Access())      => E_Load_Access_Fault(),
-    (Read(_), _)                 => E_Load_Page_Fault(),
-    (Write(_), PTW_Access())     => E_SAMO_Access_Fault(),
-    (Write(_), _)                => E_SAMO_Page_Fault(),
-    (Execute(), PTW_Access())    => E_Fetch_Access_Fault(),
-    (Execute(), _)               => E_Fetch_Page_Fault()
+    (_, PTW_Ext_Error(e))          => E_Extension(ext_translate_exception(e)),
+    (ReadWrite(_), PTW_Access())   => E_SAMO_Access_Fault(),
+    (ReadWrite(_), _)              => E_SAMO_Page_Fault(),
+    (Read(_), PTW_Access())        => E_Load_Access_Fault(),
+    (Read(_), _)                   => E_Load_Page_Fault(),
+    (Write(_), PTW_Access())       => E_SAMO_Access_Fault(),
+    (Write(_), _)                  => E_SAMO_Page_Fault(),
+    (Execute(), PTW_Access())      => E_Fetch_Access_Fault(),
+    (Execute(), _)                 => E_Fetch_Page_Fault(),
+    /* Zicfiss: shadow stack store/amo exceptions */
+    (SSReadWrite(_), PTW_Access()) => E_SAMO_Access_Fault(),
+    (SSReadWrite(_), _)            => E_SAMO_Page_Fault(),
+    (SSRead(_), PTW_Access())      => E_SAMO_Access_Fault(),
+    (SSRead(_), _)                 => E_SAMO_Page_Fault(),
+    (SSWrite(_), PTW_Access())     => E_SAMO_Access_Fault(),
+    (SSWrite(_), _)                => E_SAMO_Page_Fault()
   } in {
 /*  print_mem("translationException(" ^ a ^ ", " ^ f ^ ") -> " ^ e); */
     e
