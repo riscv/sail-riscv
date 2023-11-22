@@ -108,13 +108,21 @@ function translateAddr_priv(vAddr, ac, effPriv) = {
   /* PTW extensions: initialize the PTW extension state */
   let ext_ptw : ext_ptw = init_ext_ptw;
 
-  match mode {
-    Sbare => TR_Address(vAddr, ext_ptw),
-    Sv32  => match translate32(asid, ptb, vAddr, ac, effPriv, mxr, do_sum, SV32_LEVELS - 1, ext_ptw) {
-               TR_Address(pa, ext_ptw) => TR_Address(to_phys_addr(pa), ext_ptw),
-               TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
-             },
-    _     => internal_error(__FILE__, __LINE__, "unsupported address translation scheme")
+  /* Zicfiss: Shadow stack accesses cause SAMO access fault if mode is Bare */
+  match (mode, ac) {
+    (Sbare, SSRead(_))         => TR_Failure(translationException(ac, PTW_Access()), ext_ptw),
+    (Sbare, SSWrite(_))        => TR_Failure(translationException(ac, PTW_Access()), ext_ptw),
+    (Sbare, SSReadWrite(_, _)) => TR_Failure(translationException(ac, PTW_Access()), ext_ptw),
+    (_,     _)                 => {
+      match mode {
+        Sbare => TR_Address(vAddr, ext_ptw),
+        Sv32  => match translate32(asid, ptb, vAddr, ac, effPriv, mxr, do_sum, SV32_LEVELS - 1, ext_ptw) {
+                   TR_Address(pa, ext_ptw) => TR_Address(to_phys_addr(pa), ext_ptw),
+                   TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
+                 },
+        _     => internal_error(__FILE__, __LINE__, "unsupported address translation scheme")
+      }
+    }
   }
 }
 
