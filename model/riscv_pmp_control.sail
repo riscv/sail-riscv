@@ -99,10 +99,14 @@ function pmpAddrRange(cfg: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits
 val pmpCheckRWX: (Pmpcfg_ent, AccessType(ext_access_type)) -> bool
 function pmpCheckRWX(ent, acc) = {
   match acc {
-    Read(_)      => ent.R() == 0b1,
-    Write(_)     => ent.W() == 0b1,
-    ReadWrite(_) => ent.R() == 0b1 & ent.W() == 0b1,
-    Execute()    => ent.X() == 0b1
+    Read(_)        => ent.R() == 0b1,
+    Write(_)       => ent.W() == 0b1,
+    ReadWrite(_)   => ent.R() == 0b1 & ent.W() == 0b1,
+    Execute()      => ent.X() == 0b1,
+    /* Zicfiss: ss read/write require write perms */
+    SSRead(_)      => ent.W() == 0b1,
+    SSWrite(_)     => ent.W() == 0b1,
+    SSReadWrite(_) => ent.R() == 0b1 & ent.W() == 0b1
   }
 }
 
@@ -228,10 +232,14 @@ function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: atom('n), acc: Acce
   if   check
   then None()
   else match acc {
-    Read(_)      => Some(E_Load_Access_Fault()),
-    Write(_)     => Some(E_SAMO_Access_Fault()),
-    ReadWrite(_) => Some(E_SAMO_Access_Fault()),
-    Execute()    => Some(E_Fetch_Access_Fault())
+    Read(_)        => Some(E_Load_Access_Fault()),
+    Write(_)       => Some(E_SAMO_Access_Fault()),
+    ReadWrite(_)   => Some(E_SAMO_Access_Fault()),
+    Execute()      => Some(E_Fetch_Access_Fault()),
+    /* Zicfiss - shadow stack accesses cause SAMO access fault */
+    SSRead(_)      => Some(E_SAMO_Access_Fault()),
+    SSWrite(_)     => Some(E_SAMO_Access_Fault()),
+    SSReadWrite(_) => Some(E_SAMO_Access_Fault())
   }
 }
 
