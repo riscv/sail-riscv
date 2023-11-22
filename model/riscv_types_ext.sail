@@ -103,7 +103,7 @@
 type ext_ptw = unit
 let init_ext_ptw : ext_ptw = ()
 
-type ext_ptw_fail = unit
+enum ext_ptw_fail = {PERMISSION, SHADOW_STACK_ACCESS_FAULT}
 
 /* This type can be used for custom errors for page-table-walks,
  * and values in this type are typically generated from the final
