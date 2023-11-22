@@ -215,6 +215,15 @@ function haveZmmul()  -> bool = true
 /* Zicond extension support */
 function haveZicond() -> bool = true
 
+/* Zimop extension support */
+function haveZimop() -> bool = true
+
+/* Zcmop extension support */
+function haveZcmop() -> bool = true
+
+/* Zicfiss extension support */
+function haveZicfiss() -> bool = true
+
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
   SBE  : 4
@@ -856,8 +865,10 @@ bitfield Envcfg : bits(64) = {
   CBCFE  : 6,
   // Cache Block Invalidate instruction Enable
   CBIE   : 5 .. 4,
+  // Zicfiss: Shadow stack enable
+  SSE    : 3,
   // Reserved WPRI bits.
-  wpri_0 : 3 .. 1,
+  wpri_0 : 2 .. 1,
   // Fence of I/O implies Memory
   FIOM   : 0,
 }
@@ -868,6 +879,8 @@ register senvcfg : Envcfg
 function legalize_envcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
   let v = Mk_Envcfg(v);
   let o = update_FIOM(o, if sys_enable_writable_fiom() then v.FIOM() else 0b0);
+  // Zicfiss - SSE: shadow stack enable
+  let o = update_SSE(o, if haveZicfiss() then v.SSE() else 0b0);
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
