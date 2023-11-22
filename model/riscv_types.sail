@@ -190,10 +190,15 @@ enum Retired = {RETIRE_SUCCESS, RETIRE_FAIL}
 /* memory access types */
 
 union AccessType ('a : Type) = {
-  Read      : 'a,
-  Write     : 'a,
-  ReadWrite : ('a, 'a),
-  Execute   : unit
+  Read        : 'a,
+  Write       : 'a,
+  ReadWrite   : ('a, 'a),
+  Execute     : unit,
+
+  /* Zicfiss: Access types for shadow stack */
+  SSRead      : 'a,
+  SSWrite     : 'a,
+  SSReadWrite : ('a, 'a)
 }
 
 enum word_width = {BYTE, HALF, WORD, DOUBLE}
@@ -245,6 +250,9 @@ union ExceptionType = {
  E_Load_Page_Fault    : unit,
  E_Reserved_14        : unit,
  E_SAMO_Page_Fault    : unit,
+ E_Reserved_16        : unit,
+ E_Reserved_17        : unit,
+ E_SW_Check_Fault     : unit,
 
  /* extensions */
  E_Extension          : ext_exc_type
@@ -269,6 +277,9 @@ function exceptionType_to_bits(e) =
     E_Load_Page_Fault()    => 0x0d,
     E_Reserved_14()        => 0x0e,
     E_SAMO_Page_Fault()    => 0x0f,
+    E_Reserved_16()        => 0x10,
+    E_Reserved_17()        => 0x11,
+    E_SW_Check_Fault()     => 0x12,
 
     /* extensions */
     E_Extension(e)         => ext_exc_type_to_bits(e)
@@ -293,6 +304,9 @@ function num_of_ExceptionType(e) =
     E_Load_Page_Fault()    => 13,
     E_Reserved_14()        => 14,
     E_SAMO_Page_Fault()    => 15,
+    E_Reserved_16()        => 16,
+    E_Reserved_17()        => 17,
+    E_SW_Check_Fault()     => 18,
 
     /* extensions */
     E_Extension(e)         => num_of_ext_exc_type(e)
@@ -318,12 +332,24 @@ function exceptionType_to_str(e) =
     E_Load_Page_Fault()    => "load-page-fault",
     E_Reserved_14()        => "reserved-1",
     E_SAMO_Page_Fault()    => "store/amo-page-fault",
+    E_Reserved_16()        => "reserved-2",
+    E_Reserved_17()        => "reserved-3",
+    E_SW_Check_Fault()     => "software-check-fault",
 
     /* extensions */
     E_Extension(e)         => ext_exc_type_to_str(e)
   }
 
 overload to_str = {exceptionType_to_str}
+
+/* SW check exception codes */
+enum SWCheckCodes = {LANDING_PAD_FAULT, SHADOW_STACK_FAULT}
+
+function sw_check_code_to_bits (c : SWCheckCodes) -> xlenbits =
+  match (c) {
+    LANDING_PAD_FAULT  => zero_extend(0b010),
+    SHADOW_STACK_FAULT => zero_extend(0b011)
+  }
 
 /* trap modes */
 
