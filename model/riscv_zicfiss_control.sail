@@ -71,6 +71,16 @@
 /* Architectural state for the Zicfiss extension. */
 function clause ext_is_CSR_defined(0x011, _) = haveZicfiss() // ssp
 function clause ext_read_CSR(0x011)          = Some(ssp)
-function clause ext_write_CSR(0x011, value)  = {ssp = value; Some(ssp)}
-
+function clause ext_write_CSR(0x011, value)  = {
+  /* if UXL/SXL can be set to 32 in RV64, the bit 2 is not read-only zero;
+   * Sail model does not support dynamic switching of UXL/SXL so that is
+   * not considered in the following algorithm yet.
+   */
+  match architecture(misa.MXL()) {
+    Some(RV32) => ssp[31 .. 2] = value[31 .. 2],
+    Some(RV64) => ssp[63 .. 3] = value[63 .. 3],
+     _         => internal_error(__FILE__, __LINE__, "Unexpected architecture")
+  };
+  Some(ssp);
+}
 
