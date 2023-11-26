@@ -68,6 +68,9 @@
 /*  SUCH DAMAGE.                                                                         */
 /*=======================================================================================*/
 
+/* Zicfilp : Update ELP state */
+val zicfilp_update_elp : (regidx, regidx) -> unit
+
 /* The definition for the sequential model. */
 
 function clause execute (RISCV_JALR(imm, rs1, rd)) = {
@@ -92,6 +95,8 @@ function clause execute (RISCV_JALR(imm, rs1, rd)) = {
       } else {
         X(rd) = get_next_pc();
         set_next_pc(target);
+        /* update ELP if Zicfilp is active */
+        zicfilp_update_elp(rs1, rd);
         RETIRE_SUCCESS
       }
     }
