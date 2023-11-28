@@ -465,6 +465,13 @@ function handle_mem_exception(addr : xlenbits, e : ExceptionType) -> unit = {
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }
 
+function handle_sw_check_exception(code : SWCheckCodes) -> unit = {
+  let t : sync_exception = struct { trap    = E_SW_Check_Fault(),
+                                    excinfo = Some(sw_check_code_to_bits(code)),
+                                    ext     = None() } in
+  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
+}
+
 function handle_exception(e: ExceptionType) -> unit = {
   let t : sync_exception = struct { trap    = e,
                                     excinfo = None(),
