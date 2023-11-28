@@ -497,6 +497,7 @@ function handle_exception(e: ExceptionType) -> unit = {
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
   set_next_pc(trap_handler(del_priv, true, interruptType_to_bits(i), PC, None(), None()))
 
+val init_zicfilp_regs : unit -> unit
 /* state state initialization */
 
 function init_sys() -> unit = {
@@ -576,6 +577,8 @@ function init_sys() -> unit = {
 
   // PMP's L and A fields are set to 0 on reset.
   init_pmp();
+
+  init_zicfilp_regs();
 
   // log compatibility with spike
   if   get_config_print_reg()

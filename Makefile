@@ -49,6 +49,9 @@ SAIL_DEFAULT_INST += riscv_insts_zbkx.sail
 
 SAIL_DEFAULT_INST += riscv_insts_zicond.sail
 
+SAIL_DEFAULT_INST += riscv_zicfilp_regs.sail     # Zicfilp state
+SAIL_DEFAULT_INST += riscv_insts_zicfilp.sail    # Zicfilp instructions
+
 SAIL_DEFAULT_INST += riscv_insts_vext_utils.sail
 SAIL_DEFAULT_INST += riscv_insts_vext_vset.sail
 SAIL_DEFAULT_INST += riscv_insts_vext_arith.sail
