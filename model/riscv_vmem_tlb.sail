@@ -68,9 +68,13 @@
 /*  SUCH DAMAGE.                                                                         */
 /*=======================================================================================*/
 
-/* idealized generic TLB entry to model fence.vm and also speed up simulation. */
+/* Idealized generic TLB entry to model fence.vm and also speed up simulation.
+ * The type size constraints allow Sail to use uint64 which is much faster than
+ * bigints.
+ */
 
-struct TLB_Entry('asidlen: Int, 'valen: Int, 'palen: Int, 'ptelen: Int) = {
+struct TLB_Entry('asidlen: Int, 'valen: Int, 'palen: Int, 'ptelen: Int),
+                 'asidlen <= 64 & 'valen <= 64 & 'palen <= 64 & 'ptelen <= 64 = {
   asid : bits('asidlen),
   global : bool,
   vAddr : bits('valen),      /* VPN */
@@ -83,7 +87,8 @@ struct TLB_Entry('asidlen: Int, 'valen: Int, 'palen: Int, 'ptelen: Int) = {
 }
 
 
-val make_TLB_Entry : forall 'asidlen 'valen 'palen 'ptelen, 'valen > 0.
+val make_TLB_Entry : forall 'asidlen 'valen 'palen 'ptelen,
+                            'asidlen <= 64 & 'valen <= 64 & 'palen <= 64 & 'ptelen <= 64 & 'valen > 0.
   (bits('asidlen), bool, bits('valen), bits('palen), bits('ptelen), nat, bits('palen), nat)
   -> TLB_Entry('asidlen, 'valen, 'palen, 'ptelen)
 function make_TLB_Entry(asid, global, vAddr, pAddr, pte, level, pteAddr, levelBitSize) = {
@@ -104,13 +109,15 @@ function make_TLB_Entry(asid, global, vAddr, pAddr, pte, level, pteAddr, levelBi
   }
 }
 
-val match_TLB_Entry : forall 'asidlen 'valen 'palen 'ptelen.
+val match_TLB_Entry : forall 'asidlen 'valen 'palen 'ptelen,
+                             'asidlen <= 64 & 'valen <= 64 & 'palen <= 64 & 'ptelen <= 64.
   (TLB_Entry('asidlen, 'valen, 'palen, 'ptelen), bits('asidlen), bits('valen))
   -> bool
 function match_TLB_Entry(ent, asid, vaddr) =
   (ent.global | (ent.asid == asid)) & (ent.vAddr == (ent.vMatchMask & vaddr))
 
-val flush_TLB_Entry : forall 'asidlen 'valen 'palen 'ptelen.
+val flush_TLB_Entry : forall 'asidlen 'valen 'palen 'ptelen,
+                             'asidlen <= 64 & 'valen <= 64 & 'palen <= 64 & 'ptelen <= 64.
   (TLB_Entry('asidlen, 'valen, 'palen, 'ptelen), option(bits('asidlen)), option(bits('valen)))
   -> bool
 function flush_TLB_Entry(e, asid, addr) = {
