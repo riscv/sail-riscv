@@ -223,6 +223,7 @@ function haveZmmul()  -> bool = true
 function haveZicond() -> bool = true
 
 bitfield Mstatush : bits(32) = {
+  MPELP: 9,
   MBE  : 5,
   SBE  : 4
 }
@@ -231,9 +232,10 @@ register mstatush : Mstatush
 bitfield Mstatus : xlenbits = {
   SD   : xlen - 1,
 
-  // The MBE and SBE fields are in mstatus in RV64 and absent in RV32.
+  // The MPELP, MBE and SBE fields are in mstatus in RV64 and absent in RV32.
   // On RV32, they are in mstatush, which doesn't exist in RV64.  For now,
   // they are handled in an ad-hoc way.
+  // MPELP: 41
   // MBE  : 37
   // SBE  : 36
 
@@ -242,6 +244,7 @@ bitfield Mstatus : xlenbits = {
   // SXL  : 35 .. 34,
   // UXL  : 33 .. 32,
 
+  SPELP: 23,
   TSR  : 22,
   TW   : 21,
   TVM  : 20,
@@ -303,9 +306,12 @@ function set_mstatus_UXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
 
 function legalize_mstatush(o : Mstatush, v : bits(32)) -> Mstatush = {
   let v : Mstatush = Mk_Mstatush(v);
-  o
+  let m = if haveZicfilp() then [o with MPELP = v[MPELP]] else o;
+  m
   /* MBE and SBE writes are ignored - dynamic XLEN not supported */
 }
+/* function to update MPELP field in mstatus */
+val update_mstatus_MPELP : (Mstatus, bits(1)) -> Mstatus
 
 function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   /*
@@ -313,7 +319,11 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
    * that does not have a matching bitfield entry. All bits above 32 are handled
    * explicitly later.
    */
-  let m : Mstatus = Mk_Mstatus(zero_extend(v[22 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
+  let m : Mstatus = Mk_Mstatus(zero_extend(v[23 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
+
+  let m = if not(haveZicfilp()) then [m with SPELP = 0b0] else m;
+  /* Update MPELP if Zicfilp supported and xlen is 64; for xlen 32 MPELP is in mstatush */
+  let m = if haveZicfilp() & sizeof(xlen) == 64 then update_mstatus_MPELP(m, v[41..41]) else m;
 
   /* We don't have any extension context yet. */
   let m = [m with XS = extStatus_to_bits(Off)];
@@ -587,6 +597,7 @@ bitfield Sstatus : xlenbits = {
   // The UXL field does not exist on RV32, so we define an explicit
   // getter and setter below.
   // UXL  : 30 .. 29,
+  SPELP: 23,
   MXR  : 19,
   SUM  : 18,
   XS   : 16 .. 15,
@@ -615,6 +626,7 @@ function lower_mstatus(m : Mstatus) -> Sstatus = {
   let s = Mk_Sstatus(zero_extend(0b0));
   let s = [s with SD = m[SD]];
   let s = set_sstatus_UXL(s, get_mstatus_UXL(m));
+  let s = [s with SPELP = m[SPELP]];
   let s = [s with MXR = m[MXR]];
   let s = [s with SUM = m[SUM]];
   let s = [s with XS = m[XS]];
@@ -631,6 +643,8 @@ function lower_mstatus(m : Mstatus) -> Sstatus = {
 function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
   let m = [m with MXR = s[MXR]];
   let m = [m with SUM = s[SUM]];
+
+  let m = if not(haveZicfilp()) then m else [m with SPELP = s[SPELP]];
 
   let m = [m with XS = s[XS]];
   // See comment for mstatus.FS.
@@ -842,7 +856,7 @@ bitfield Envcfg : bits(64) = {
   // Page Based Memory Types Extension
   PBMTE  : 62,
   // Reserved WPRI bits.
-  wpri_1 : 61 .. 8,
+  wpri_2 : 61 .. 8,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable
@@ -850,7 +864,11 @@ bitfield Envcfg : bits(64) = {
   // Cache Block Invalidate instruction Enable
   CBIE   : 5 .. 4,
   // Reserved WPRI bits.
-  wpri_0 : 3 .. 1,
+  wpri_1 : 3 .. 3,
+  // Landing-pad enable
+  LPE    : 2 .. 2,
+  // Reserved WPRI bits.
+  wpri_0 : 1 .. 1,
   // Fence of I/O implies Memory
   FIOM   : 0,
 }
@@ -861,13 +879,17 @@ register senvcfg : Envcfg
 function legalize_menvcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
   let v = Mk_Envcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
+  /* If Zicfilp supported then update LPE field */
+  let o = [o with LPE = if haveZicfilp() then v[LPE] else 0b0];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
 
 function legalize_senvcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
   let v = Mk_Envcfg(v);
-  let o = update_FIOM(o, if sys_enable_writable_fiom() then v.FIOM() else 0b0);
+  let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
+  /* If Zicfilp supported then update LPE field */
+  let o = [o with LPE = if haveZicfilp() then v[LPE] else 0b0];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
