@@ -222,6 +222,9 @@ function haveZmmul()  -> bool = true
 /* Zicond extension support */
 function haveZicond() -> bool = true
 
+/* Zicfilp extension support */
+function haveZicfilp() -> bool = true
+
 bitfield Mstatush : bits(32) = {
   MPELP: 9,
   MBE  : 5,
