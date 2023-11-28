@@ -316,6 +316,8 @@ val rvfi_trap : unit -> unit
 function rvfi_trap () = ()
 $endif
 
+val zicfilp_preserve_elp : (Privilege) -> unit
+
 /* handle exceptional ctl flow by updating nextPC and operating privilege */
 
 function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
@@ -341,6 +343,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        cur_privilege   = del_priv;
 
+       zicfilp_preserve_elp(del_priv);
        handle_trap_extension(del_priv, pc, ext);
 
        if   get_config_print_reg()
@@ -366,6 +369,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        cur_privilege   = del_priv;
 
+       zicfilp_preserve_elp(del_priv);
        handle_trap_extension(del_priv, pc, ext);
 
        if   get_config_print_reg()
@@ -386,6 +390,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        cur_privilege   = del_priv;
 
+       zicfilp_preserve_elp(del_priv);
        handle_trap_extension(del_priv, pc, ext);
 
        if   get_config_print_reg()
@@ -395,6 +400,10 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
     }
   };
 }
+
+/* Zicfilp : extension to restore elp */
+val zicfilp_set_elp_to_mpelp : (unit) -> unit
+val zicfilp_set_elp_to_spelp : (unit) -> unit
 
 function exception_handler(cur_priv : Privilege, ctl : ctl_result,
                            pc: xlenbits) -> xlenbits = {
@@ -415,6 +424,9 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
+      /* Zicfilp: extension to restore ELP */
+      zicfilp_set_elp_to_mpelp();
+
       if   get_config_print_reg()
       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
       if   get_config_print_platform()
@@ -431,6 +443,9 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus[SPP]  = 0b0;
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
+
+      /* Zicfilp: extension to restore ELP */
+      zicfilp_set_elp_to_spelp();
 
       if   get_config_print_reg()
       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));

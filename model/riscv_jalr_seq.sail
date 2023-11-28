@@ -6,6 +6,9 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
+/* Zicfilp : Update ELP state */
+val zicfilp_update_elp : (regidx) -> unit
+
 /* The definition for the sequential model. */
 
 function clause execute (RISCV_JALR(imm, rs1, rd)) = {
@@ -30,6 +33,8 @@ function clause execute (RISCV_JALR(imm, rs1, rd)) = {
       } else {
         X(rd) = get_next_pc();
         set_next_pc(target);
+        /* update ELP if Zicfilp is active */
+        zicfilp_update_elp(rs1);
         RETIRE_SUCCESS
       }
     }

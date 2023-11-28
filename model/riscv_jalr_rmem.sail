@@ -6,6 +6,9 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
+/* Zicfilp : Update ELP state */
+val zicfilp_update_elp : (regidx) -> unit
+
 /* The definition for the memory model. */
 
 function clause execute (RISCV_JALR(imm, rs1, rd)) = {
@@ -14,5 +17,7 @@ function clause execute (RISCV_JALR(imm, rs1, rd)) = {
   X(rd) = nextPC; /* compatible with JALR, C.JR and C.JALR */
   let newPC : xlenbits = X(rs1) + sign_extend(imm);
   nextPC = [newPC with 0 = bitzero];  /* Clear newPC[0] */
+  /* update ELP if Zicfilp is active */
+  zicfilp_update_elp(rs1);
   RETIRE_SUCCESS
 }
