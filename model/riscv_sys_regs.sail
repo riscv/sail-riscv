@@ -901,7 +901,7 @@ register vtype : Vtype
 
 /* the dynamic selected element width (SEW) */
 /* this returns the power of 2 for SEW */
-val get_sew_pow : unit -> {|3, 4, 5, 6|} effect {escape, rreg}
+val get_sew_pow : unit -> {|3, 4, 5, 6|}
 function get_sew_pow() = {
   let SEW_pow : {|3, 4, 5, 6|} = match vtype.vsew() {
     0b000 => 3,
@@ -913,7 +913,7 @@ function get_sew_pow() = {
   SEW_pow
 }
 /* this returns the actual value of SEW */
-val get_sew : unit -> {|8, 16, 32, 64|} effect {escape, rreg}
+val get_sew : unit -> {|8, 16, 32, 64|}
 function get_sew() = {
   match get_sew_pow() {
     3 => 8,
@@ -923,7 +923,7 @@ function get_sew() = {
   }
 }
 /* this returns the value of SEW in bytes */
-val get_sew_bytes : unit -> {|1, 2, 4, 8|} effect {escape, rreg}
+val get_sew_bytes : unit -> {|1, 2, 4, 8|}
 function get_sew_bytes() = {
   match get_sew_pow() {
     3 => 1,
@@ -935,7 +935,7 @@ function get_sew_bytes() = {
 
 /* the vector register group multiplier (LMUL) */
 /* this returns the power of 2 for LMUL */
-val get_lmul_pow : unit -> {|-3, -2, -1, 0, 1, 2, 3|} effect {escape, rreg}
+val get_lmul_pow : unit -> {|-3, -2, -1, 0, 1, 2, 3|}
 function get_lmul_pow() = {
   match vtype.vlmul() {
     0b101 => -3,
@@ -959,8 +959,8 @@ function decode_agtype(ag) = {
   }
 }
 
-val get_vtype_vma : unit -> agtype effect {rreg}
+val get_vtype_vma : unit -> agtype
 function get_vtype_vma() = decode_agtype(vtype.vma())
 
-val get_vtype_vta : unit -> agtype effect {rreg}
+val get_vtype_vta : unit -> agtype
 function get_vtype_vta() = decode_agtype(vtype.vta())
