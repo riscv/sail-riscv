@@ -109,12 +109,12 @@ struct SV_Params = {
 
   // PTE
   levels              : { 2,  3,  4},    //    2     3     4
-  log_pte_size_bytes  : { 2,  3,  3},    //    2     3     3
-  pte_msbs_lsb_index  : {32, 54, 54},    //   32    54    54
-  pte_msbs_size_bits  : { 0, 10, 10},    //    0    10    10
-  pte_PPNs_lsb_index  : {10, 10, 10},    //   10    10    10
-  pte_PPNs_size_bits  : {22, 44, 44},    //   22    44    44
-  pte_PPN_j_size_bits : {10,  9,  9}     //   10     9     9
+  log_pte_size_bytes  : { 2,  3},        //    2     3     3
+  pte_msbs_lsb_index  : {32, 54},        //   32    54    54
+  pte_msbs_size_bits  : { 0, 10},        //    0    10    10
+  pte_PPNs_lsb_index  : {10},            //   10    10    10
+  pte_PPNs_size_bits  : {22, 44},        //   22    44    44
+  pte_PPN_j_size_bits : {10,  9}         //   10     9     9
 }
 
 // PRIVATE
