@@ -89,7 +89,7 @@ struct TLB_Entry = {
 
 // Single-entry TLB (could enlarge this in future for better simulation speed)
 // PRIVATE
-register tlb : option(TLB_Entry)
+register tlb : option(TLB_Entry) = None()
 
 // PUBLIC: invoked in init_vmem() [riscv_vmem.sail]
 function init_TLB() -> unit =
@@ -98,33 +98,6 @@ function init_TLB() -> unit =
 // PUBLIC: invoked in translate_TLB_hit() [riscv_vmem.sail]
 function write_TLB(idx : nat, ent : TLB_Entry) -> unit =
   tlb = Some(ent)
-
-// PRIVATE
-function make_TLB_Entry(asid	      : bits(16),
-			global	      : bool,
-			vAddr	      : bits(64),
-			pAddr	      : bits(64),
-			pte	      : bits(64),
-			level	      : nat,
-			pteAddr	      : bits(64),
-			levelBitSize  : nat,
-			PAGESIZE_BITS : nat)	   -> TLB_Entry = {
-  let shift : nat = PAGESIZE_BITS + (level * levelBitSize);
-  // fixme hack: use a better idiom for masks
-  // let vAddrMask	 : bits(64) = shiftl(vAddr ^ vAddr ^ one_64b, shift) - 1;
-  let one_64b	 : bits(64) = zero_extend(0b1);
-  let vAddrMask	 : bits(64) = (one_64b << shift) - one_64b;
-  let vMatchMask : bits(64) = ~ (vAddrMask);
-  struct {asid	     = asid,
-	  global     = global,
-	  pte	     = pte,
-	  pteAddr    = pteAddr,
-	  vAddrMask  = vAddrMask,
-	  vMatchMask = vMatchMask,
-	  vAddr	     = vAddr & vMatchMask,
-	  pAddr	     = shiftl(shiftr(pAddr, shift), shift),
-	  age	     = mcycle}
-}
 
 // PRIVATE
 function match_TLB_Entry(ent   : TLB_Entry,
@@ -154,25 +127,29 @@ function lookup_TLB (asid : bits(16), vaddr : bits(64)) -> option((nat, TLB_Entr
   }
 
 // PRIVATE
-function add_to_TLB(asid	  : bits(16),
-		    vAddr	  : bits(64),
-		    pAddr	  : bits(64),
-		    pte		  : bits(64),
-		    pteAddr	  : bits(64),
-		    level	  : nat,
-		    global	  : bool,
-		    levelBitSize  : nat,
-		    PAGESIZE_BITS : nat)     -> unit = {
-  let ent : TLB_Entry = make_TLB_Entry(asid,
-				       global,
-				       vAddr,
-				       pAddr,
-				       pte,
-				       level,
-				       pteAddr,
-				       levelBitSize,
-				       PAGESIZE_BITS);
-  tlb = Some(ent)
+function add_to_TLB(asid          : bits(16),
+                    vAddr         : bits(64),
+                    pAddr         : bits(64),
+                    pte           : bits(64),
+                    pteAddr       : bits(64),
+                    level         : nat,
+                    global        : bool,
+                    levelBitSize  : nat,
+                    PAGESIZE_BITS : nat)     -> unit = {
+  let shift      : nat       = PAGESIZE_BITS + (level * levelBitSize);
+  let one_64b    : bits(64)  = zero_extend(0b1);
+  let vAddrMask  : bits(64)  = (one_64b << shift) - one_64b;
+  let vMatchMask : bits(64)  = ~ (vAddrMask);
+  let entry      : TLB_Entry = struct {asid       = asid,
+                                       global     = global,
+                                       pte        = pte,
+                                       pteAddr    = pteAddr,
+                                       vAddrMask  = vAddrMask,
+                                       vMatchMask = vMatchMask,
+                                       vAddr      = vAddr & vMatchMask,
+                                       pAddr      = shiftl(shiftr(pAddr, shift), shift),
+                                       age        = mcycle};
+  tlb = Some(entry)
 }
 
 // Top-level TLB flush function
@@ -189,7 +166,7 @@ function flush_TLB(asid_xlen : option(xlenbits),
       None() => None(),
       Some(a) => Some(zero_extend(a))
     };
-  match (tlb) {
+  match tlb {
     None()  => (),
     Some(e) => if   flush_TLB_Entry(e, asid, addr_64b)
 	       then tlb = None()
