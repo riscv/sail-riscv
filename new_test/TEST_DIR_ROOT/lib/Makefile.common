@@ -28,14 +28,15 @@ ifndef TEST_DIR_PATH_KEYDIR
 $(error The make variable \'TEST_DIR_PATH_KEYDIR\' must be set.)
 endif
 
-# TODO: need to consider how to support both LLVM and gcc.
-ifndef RISCV32_TOOL_PATH
-$(error The environment variable, \'RISCV32_TOOL_PATH\' must be set)
-endif
-
-ifndef RISCV64_TOOL_PATH
-$(error The environment variable, \'RISCV64_TOOL_PATH\' must be set)
-endif
+# TODO:  how to check for availablity of toolsuite
+## TODO: need to consider how to support both LLVM and gcc.
+#ifndef RISCV32_TOOL_PATH
+#$(error The environment variable, \'RISCV32_TOOL_PATH\' must be set)
+#endif
+#
+#ifndef RISCV64_TOOL_PATH
+#$(error The environment variable, \'RISCV64_TOOL_PATH\' must be set)
+#endif
 
 
 $(info TEST_DIR_PATH: ${TEST_DIR_PATH})
@@ -46,9 +47,13 @@ $(info UNIQ_TESTNAME: ${UNIQ_TESTNAME})
 TESTDIRS 		:= $(wildcard *.testdir)
 
 
-CC				:= ${RISCV32_TOOL_PATH}/riscv32-unknown-elf-gcc
-ASM				:= ${RISCV32_TOOL_PATH}/riscv32-unknown-elf-gcc
-LD 				:= ${RISCV32_TOOL_PATH}/riscv32-unknown-elf-ld
+#CC				:= riscv32-unknown-elf-gcc
+#ASM				:= riscv32-unknown-elf-gcc
+#LD 				:= riscv32-unknown-elf-ld
+
+#CC				:= ${RISCV32_TOOL_PATH}/riscv32-unknown-elf-gcc
+#ASM				:= ${RISCV32_TOOL_PATH}/riscv32-unknown-elf-gcc
+#LD 				:= ${RISCV32_TOOL_PATH}/riscv32-unknown-elf-ld
 
 #CC				:= ${RISCV64_TOOL_PATH}/riscv64-unknown-elf-gcc
 #ASM				:= ${RISCV64_TOOL_PATH}/riscv64-unknown-elf-gcc
@@ -89,6 +94,10 @@ ASM_FLAGS_AA_FOR_SH := $(foreach var,${TESTLIST},["$(var)"]="$(call get,ASM_FLAG
 CC_FLAGS_AA_FOR_SH 	:= $(foreach var,${TESTLIST},["$(var)"]="$(call get,CC_FLAGS_AA,$(var))" )
 LD_FLAGS_AA_FOR_SH 	:= $(foreach var,${TESTLIST},["$(var)"]="$(call get,LD_FLAGS_AA,$(var))" )
 RUN_FLAGS_AA_FOR_SH := $(foreach var,${TESTLIST},["$(var)"]="$(call get,RUN_FLAGS_AA,$(var))" )
+XLEN_AA_FOR_SH 		:= $(foreach var,${TESTLIST},["$(var)"]="$(call get,XLEN_AA,$(var))" )
+ASM_AA_FOR_SH 		:= $(foreach var,${TESTLIST},["$(var)"]="$(call get,ASM_AA,$(var))" )
+CC_AA_FOR_SH 		:= $(foreach var,${TESTLIST},["$(var)"]="$(call get,CC_AA,$(var))" )
+LD_AA_FOR_SH 		:= $(foreach var,${TESTLIST},["$(var)"]="$(call get,LD_AA,$(var))" )
 
 $(info ASM_FLAGS_AA_FOR_SH: ${ASM_FLAGS_AA_FOR_SH})
 
@@ -100,26 +109,37 @@ test :
 	testlist=(${TESTLIST}) ; \
 	echo "testlist[]: $${testlist[@]}";
 	declare -A asm_flags_aa=( ${ASM_FLAGS_AA_FOR_SH} ) ; 	\
-	echo "asm_flags_aa[]: $${asm_flags_aa[@]}";				\
-	declare -A cc_flags_aa=( ${CC_FLAGS_AA_FOR_SH} ) ; 	\
-	echo "cc_flags_aa[]: $${cc_flags_aa[@]}";				\
-	declare -A ld_flags_aa=( ${LD_FLAGS_AA_FOR_SH} ) ; 	\
-	echo "ld_flags_aa[]: $${ld_flags_aa[@]}";				\
-	declare -A run_flags_aa=( ${run_FLAGS_AA_FOR_SH} ) ; 	\
+	echo "asm_flags_aa[]: $${asm_flags_aa[@]}";
+	declare -A cc_flags_aa=( ${CC_FLAGS_AA_FOR_SH} ) ; 		\
+	echo "cc_flags_aa[]: $${cc_flags_aa[@]}";
+	declare -A ld_flags_aa=( ${LD_FLAGS_AA_FOR_SH} ) ; 		\
+	echo "ld_flags_aa[]: $${ld_flags_aa[@]}";
+	declare -A run_flags_aa=( ${RUN_FLAGS_AA_FOR_SH} ) ; 	\
 	echo "run_flags_aa[]: $${runflags_aa[@]}";
+	declare -A xlen_aa=( ${XLEN_AA_FOR_SH} ) ; 				\
+	echo "xlen_aa[]: $${xlen_aa[@]}";
 
 .PHONY : ${TESTLIST}
 build_tests : ${TESTLIST}
 ${TESTLIST} :
 	@echo "making \"$@\" in $$PWD" ;
 	mkdir -p $@.artifactdir || ( echo "unable to create $@.artifactdir" >> test.failed ; exit $$? ; ) ;
+	declare -A cc_aa=( ${CC_AA_FOR_SH} ) ; 	\
+	declare -A asm_aa=( ${ASM_AA_FOR_SH} ) ; 	\
+	declare -A ld_aa=( ${LD_AA_FOR_SH} ) ; 	\
 	declare -A asm_flags_aa=( ${ASM_FLAGS_AA_FOR_SH} ) ; 	\
 	declare -A cc_flags_aa=( ${CC_FLAGS_AA_FOR_SH} ) ; 	\
 	declare -A ld_flags_aa=( ${LD_FLAGS_AA_FOR_SH} ) ; 	\
-	declare -A run_flags_aa=( ${run_FLAGS_AA_FOR_SH} ) ; 	\
+	declare -A run_flags_aa=( ${RUN_FLAGS_AA_FOR_SH} ) ; 	\
 	echo "calling \'make $@\'" ; \
 	echo "make $@.artifactdir/test.elf ASM_FLAGS_NEXT=$${asm_flags_aa["$@"]} CC_FLAGS_NEXT=$${cc_flags_aa["$@"]} LD_FLAGS_NEXT=$${ld_flags_aa["$@"]}" ;		\
-	make $@.artifactdir/test.elf ASM_FLAGS_NEXT="$${asm_flags_aa[$@]}" CC_FLAGS_NEXT="$${cc_flags_aa[$@]}" LD_FLAGS_NEXT="$${ld_flags_aa[$@]}" ;		\
+	make $@.artifactdir/test.elf \
+		ASM_NEXT="$${asm_aa[$@]}" \
+		ASM_FLAGS_NEXT="$${asm_flags_aa[$@]}" \
+		CC_NEXT="$${cc_aa[$@]}" \
+		CC_FLAGS_NEXT="$${cc_flags_aa[$@]}" \
+		LD_NEXT="$${ld_aa[$@]}" \
+		LD_FLAGS_NEXT="$${ld_flags_aa[$@]}" ;		\
 	if [ $$? -ne 0 ] ;                                              								\
 		then                                                            							\
 		echo "\'make $@\' exited with nonzero exit status" >> $@.artifactdir/test.failed ;						\
@@ -136,19 +156,19 @@ ${OBJDIRS_OBJS} :  %.S
 	@echo "making \"$@\" in $$PWD" ;
 	@echo "ASM_FLAGS_NEXT: ${ASM_FLAGS_NEXT}" ;
 	@mkdir -p $(dir $@) || ( echo "unable to create $@.artifactdir" >> test.failed ; exit $$? ; ) ;
-	${ASM} -c ${ASM_FLAGS_NEXT} -o $@ $<
+	${ASM_NEXT} -c ${ASM_FLAGS_NEXT} -o $@ $<
 
 ${OBJDIRS_OBJS} :  %.c
 	@echo "making \"$@\" in $$PWD" ;
 	@mkdir -p $(dir $@) || ( echo "unable to create $@.artifactdir" >> test.failed ; exit $$? ; ) ;
-	${CC} -c ${CC_FLAGS_NEXT} -o $@ $<
+	${CC_NEXT} -c ${CC_FLAGS_NEXT} -o $@ $<
 
 
 OBJS	:= $(addprefix %/,${OBJS_BASE})
 #$(call get,OBJDIR_AA,${UNIQ_TESTNAME})/test.elf : $(call get,OBJS_AA,${UNIQ_TESTNAME})
 %/test.elf : ${OBJS}
 	@echo "making \"$@\" in $$PWD" ;
-	${LD} ${LD_FLAGS_NEXT} -o $@ $<
+	${LD_NEXT} ${LD_FLAGS_NEXT} -o $@ $<
 
 
 install:
@@ -177,30 +197,34 @@ run:
 		fi;
 
 
-# Run in parallel (potentially,  based on the -j switch to make)
-#	TODO: also redirect stderr into test.failed
-#.PHONY: ${TESTLIST}
-#run_tests : ${TESTLIST}
-#${TESTLIST} :
-#	@echo "making \"$@\"" ;
-#	@mkdir -p $@.artifactdir || ( echo "unable to create $@.artifactdir" >> test.failed ; exit $$? ; ) ;
-#	@if [ ! -e ${TEST_DIR_PATH}/../../c_emulator/riscv_sim_RV$(call get,XLEN_AA,$@) ] ; 									\
-#		then																						\
-#		echo "${TEST_DIR_PATH}/../../c_emulator/riscv_sim_RV$(call get,XLEN_AA,$@) does not exist." >> $@.artifactdir/test.failed ;	\
-#		fi ;
-#	${TEST_DIR_PATH}/../../c_emulator/riscv_sim_RV$(call get,XLEN_AA,$@) $(call get,RUN_FLAGS_AA,$@) $(call get,OBJDIR_AA,${UNIQ_TESTNAME})/test.elf > $@.artifactdir/test.run.stdout	; 					\
-#	if [ $$? -ne 0 ] ;                                              								\
-#		then                                                            							\
-#		echo "riscv_sim_$@.$(call get,XLEN_AA,$@) exited with nonzero exit status" >> $@.artifactdir/test.failed ;						\
-#		fi ;
-#	@if [ ! -e $@.artifactdir/test.run.stdout ] ;																\
-#		then																						\
-#		echo "file, \"$@.artifactdir/test.run.stdout\" not found" >> $@.artifactdir/test.failed ;										\
-#		fi ;
-#	@if [ ! -e $@.artifactdir/test.failed ] ;																	\
-#		then																						\
-#		echo "${PWD} passed" >> $@.artifactdir/test.passed ;													\
-#		fi;
+# TODO: Run in parallel (potentially,  based on the -j switch to make)
+# TODO: also redirect stderr into test.failed
+.PHONY: run_tests
+run_tests :
+	@echo "making \"$@\"" ;
+	declare -A xlen_aa=( ${XLEN_AA_FOR_SH} ) ; 	\
+	declare -A run_flags_aa=( ${RUN_FLAGS_AA_FOR_SH} ) ; 	\
+	for testdir in ${TESTLIST} ; \
+		do \
+		mkdir -p $$testdir.artifactdir || ( echo "unable to create $$testdir.artifactdir" >> test.failed ; exit $$? ; ) ; \
+		if [ ! -e ${TEST_DIR_PATH}/../../c_emulator/riscv_sim_RV$${xlen_aa[$$testdir]} ] ; 									\
+			then																						\
+			echo "${TEST_DIR_PATH}/../../c_emulator/riscv_sim_RV$${xlen_aa[$$testdir]} does not exist." >> $$testdir.artifactdir/test.failed ;	\
+			fi ; \
+		${TEST_DIR_PATH}/../../c_emulator/riscv_sim_RV$${xlen_aa[$$testdir]} $${run_flags_aa[$$testdir]} $$testdir.artifactdir/test.elf > $$testdir.artifactdir/test.run.stdout	; 					\
+		if [ $$? -ne 0 ] ;                                              								\
+			then                                                            							\
+			echo "riscv_sim_RV$${xlen_aa[$$testdir]} exited with nonzero exit status" >> $$testdir.artifactdir/test.failed ;						\
+			fi ; \
+		if [ ! -e $$testdir.artifactdir/test.run.stdout ] ;																\
+			then																						\
+			echo "file, \"$$testdir.artifactdir/test.run.stdout\" not found" >> $$testdir.artifactdir/test.failed ;										\
+			fi ; \
+		if [ ! -e $$testdir.artifactdir/test.failed ] ;																	\
+			then																						\
+			echo "${PWD} passed" >> $$testdir.artifactdir/test.passed ;													\
+			fi; \
+		done ;
 
 
 # Gather all the test results from this directory  on down.

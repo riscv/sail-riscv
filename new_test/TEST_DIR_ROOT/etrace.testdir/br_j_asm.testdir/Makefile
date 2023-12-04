@@ -56,6 +56,15 @@ $(info TEST_DIR_PATH abspath:  $(abspath ${TEST_DIR_PATH}))
 #	for useful data structures and functions.
 include ${TEST_DIR_PATH}/lib/gmsl.git/gmsl
 
+# Tools need to be in your $PATH,  or the path must be fully specified.
+CC32		:= riscv32-unknown-elf-gcc
+ASM32		:= riscv32-unknown-elf-gcc
+LD32		:= riscv32-unknown-elf-ld
+
+CC64		:= riscv64-unknown-elf-gcc
+ASM64		:= riscv64-unknown-elf-gcc
+LD64		:= riscv64-unknown-elf-ld
+
 #=========================================================
 # List of source files that are the source for a test
 C_SRC		:= $(wildcard *.c)
@@ -87,8 +96,7 @@ OBJDIR_TMP	:= $(strip ${XLEN} ${ASM_FLAGS} ${CC_FLAGS} ${LD_FILE} ${LD_FLAGS} ${
 # make does not do a good, general job of string processing with
 #	spaces,  so we'll use sed instead with
 
-UNIQ_TESTNAME  	:= $(shell echo ${OBJDIR_TMP} | sed 's/ /__/g' | sed 's/-/_/g' | sed 's/=/_/g')
-$(info UNIQ_TESTNAME: ${UNIQ_TESTNAME})
+UNIQ_TESTNAME  	:= $(addprefix RV,$(shell echo ${OBJDIR_TMP} | sed 's/ /__/g' | sed 's/-/_/g' | sed 's/=/_/g' | sed 's/__*/_/g'))
 
 OBJDIR			:= $(addsuffix .artifactdir,${UNIQ_TESTNAME})
 $(info OBJDIR: ${OBJDIR})
@@ -108,6 +116,17 @@ $(call set,XLEN_AA,${UNIQ_TESTNAME},${XLEN})
 $(call set,OBJDIR_AA,${UNIQ_TESTNAME},${OBJDIR})
 $(call set,OBJS_AA,${UNIQ_TESTNAME},${OBJS})
 $(call set,LD_FLAGS_AA,${UNIQ_TESTNAME},${LD_FLAGS})
+ifeq (${XLEN},32)
+$(call set,CC_AA,${UNIQ_TESTNAME},${CC32})
+$(call set,ASM_AA,${UNIQ_TESTNAME},${ASM32})
+$(call set,LD_AA,${UNIQ_TESTNAME},${LD32})
+else ifeq (${XLEN},64)
+$(call set,CC_AA,${UNIQ_TESTNAME},${CC64})
+$(call set,ASM_AA,${UNIQ_TESTNAME},${ASM64})
+$(call set,LD_AA,${UNIQ_TESTNAME},${LD64})
+else
+$(error Invalid value set for XLEN)
+endif
 
 $(info TESTLIST_BUILD: ${TESTLIST_BUILD})
 $(info C_SRC: $(call get,C_SRC_AA,${UNIQ_TESTNAME}))
@@ -123,7 +142,8 @@ $(info LD_FLAGS: $(call get,LD_FLAGS_AA,${UNIQ_TESTNAME}))
 # A test definition
 
 CONFIG_BASE		:= 0x80000000
-MARCH          	:= -march=rv64imc_zicsr -mabi=lp64
+#MARCH          	:= -march=rv64imc_zicsr -mabi=lp64
+MARCH          	:= -march=rv64imc       -mabi=lp64
 
 CC_FLAGS	:= 
 OBJS_TMP	:= ${ASM_OBJS} ${C_OBJS}
@@ -139,7 +159,7 @@ OBJDIR_TMP	:= $(strip ${XLEN} ${ASM_FLAGS} ${CC_FLAGS} ${LD_FILE} ${LD_FLAGS} ${
 # make does not do a good, general job of string processing with
 #	spaces,  so we'll use sed instead with
 
-UNIQ_TESTNAME  	:= $(shell echo ${OBJDIR_TMP} | sed 's/ /__/g' | sed 's/-/_/g' | sed 's/=/_/g')
+UNIQ_TESTNAME  	:= $(addprefix RV,$(shell echo ${OBJDIR_TMP} | sed 's/ /__/g' | sed 's/-/_/g' | sed 's/=/_/g' | sed 's/__*/_/g'))
 $(info UNIQ_TESTNAME: ${UNIQ_TESTNAME})
 
 OBJDIR			:= $(addsuffix .artifactdir,${UNIQ_TESTNAME})
@@ -167,6 +187,17 @@ $(call set,OBJS_AA,${UNIQ_TESTNAME},${OBJS})
 $(info OBJS: $(call get,OBJS_AA,${UNIQ_TESTNAME}))
 $(call set,LD_FLAGS_AA,${UNIQ_TESTNAME},${LD_FLAGS})
 $(info LD_FLAGS: $(call get,LD_FLAGS_AA,${UNIQ_TESTNAME}))
+ifeq (${XLEN},32)
+$(call set,CC_AA,${UNIQ_TESTNAME},${CC32})
+$(call set,ASM_AA,${UNIQ_TESTNAME},${ASM32})
+$(call set,LD_AA,${UNIQ_TESTNAME},${LD32})
+else ifeq (${XLEN},64)
+$(call set,CC_AA,${UNIQ_TESTNAME},${CC64})
+$(call set,ASM_AA,${UNIQ_TESTNAME},${ASM64})
+$(call set,LD_AA,${UNIQ_TESTNAME},${LD64})
+else
+$(error Invalid value set for XLEN)
+endif
 #=========================================================
 
 $(info TESTLIST: ${TESTLIST})
