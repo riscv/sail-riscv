@@ -76,15 +76,15 @@
 
 // PRIVATE
 struct TLB_Entry = {
-  asid	     : bits(16),  // address-space id
-  global     : bool,	  // global translation
-  vAddr	     : bits(64),  // VPN
-  pAddr	     : bits(64),  // ppn
+  asid       : bits(16),  // address-space id
+  global     : bool,      // global translation
+  vAddr      : bits(64),  // VPN
+  pAddr      : bits(64),  // ppn
   vMatchMask : bits(64),  // matching mask for superpages
   vAddrMask  : bits(64),  // selection mask for superpages
-  pte	     : bits(64),  // PTE
+  pte        : bits(64),  // PTE
   pteAddr    : bits(64),  // for dirty writeback
-  age	     : bits(64)	  // for replacement policy?
+  age        : bits(64)   // for replacement policy?
 }
 
 // Single-entry TLB (could enlarge this in future for better simulation speed)
@@ -101,21 +101,21 @@ function write_TLB(idx : nat, ent : TLB_Entry) -> unit =
 
 // PRIVATE
 function match_TLB_Entry(ent   : TLB_Entry,
-			 asid  : bits(16),
-			 vaddr : bits(64)) -> bool =
+                         asid  : bits(16),
+                         vaddr : bits(64)) -> bool =
   (ent.global | (ent.asid == asid))
   & (ent.vAddr == (ent.vMatchMask & vaddr))
 
 // PRIVATE
 function flush_TLB_Entry(e    : TLB_Entry,
-			 asid : option(bits(16)),
-			 addr : option(bits(64))) -> bool = {
+                         asid : option(bits(16)),
+                         addr : option(bits(64))) -> bool = {
   match (asid, addr) {
     ( None(),  None()) => true,
     ( None(), Some(a)) => e.vAddr == (e.vMatchMask & a),
     (Some(i),  None()) => (e.asid == i) & not(e.global),
     (Some(i), Some(a)) => (  (e.asid == i) & (e.vAddr == (a & e.vMatchMask))
-			   & not(e.global))
+                           & not(e.global))
   }
 }
 
@@ -155,7 +155,7 @@ function add_to_TLB(asid          : bits(16),
 // Top-level TLB flush function
 // PUBLIC: invoked from exec SFENCE_VMA
 function flush_TLB(asid_xlen : option(xlenbits),
-		   addr_xlen : option(xlenbits)) -> unit = {
+                   addr_xlen : option(xlenbits)) -> unit = {
   let asid : option(bits(16)) =
     match asid_xlen {
       None()  => None(),
@@ -169,7 +169,7 @@ function flush_TLB(asid_xlen : option(xlenbits),
   match tlb {
     None()  => (),
     Some(e) => if   flush_TLB_Entry(e, asid, addr_64b)
-	       then tlb = None()
-	       else ()
+               then tlb = None()
+               else ()
   }
 }
