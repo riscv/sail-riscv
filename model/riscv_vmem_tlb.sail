@@ -137,18 +137,18 @@ function add_to_TLB(asid          : bits(16),
                     levelBitSize  : nat,
                     PAGESIZE_BITS : nat)     -> unit = {
   let shift      : nat       = PAGESIZE_BITS + (level * levelBitSize);
-  let one_64b    : bits(64)  = zero_extend(0b1);
-  let vAddrMask  : bits(64)  = (one_64b << shift) - one_64b;
+  assert(shift <= 64);
+  let vAddrMask  : bits(64)  = zero_extend(ones(shift));
   let vMatchMask : bits(64)  = ~ (vAddrMask);
-  let entry      : TLB_Entry = struct {asid       = asid,
-                                       global     = global,
-                                       pte        = pte,
-                                       pteAddr    = pteAddr,
-                                       vAddrMask  = vAddrMask,
-                                       vMatchMask = vMatchMask,
-                                       vAddr      = vAddr & vMatchMask,
-                                       pAddr      = shiftl(shiftr(pAddr, shift), shift),
-                                       age        = mcycle};
+  let entry      : TLB_Entry = struct{asid       = asid,
+                                      global     = global,
+                                      pte        = pte,
+                                      pteAddr    = pteAddr,
+                                      vAddrMask  = vAddrMask,
+                                      vMatchMask = vMatchMask,
+                                      vAddr      = vAddr & vMatchMask,
+                                      pAddr      = shiftl(shiftr(pAddr, shift), shift),
+                                      age        = mcycle};
   tlb = Some(entry)
 }
 
@@ -163,12 +163,12 @@ function flush_TLB(asid_xlen : option(xlenbits),
     };
   let addr_64b : option(bits(64)) =
     match addr_xlen {
-      None() => None(),
+      None()  => None(),
       Some(a) => Some(zero_extend(a))
     };
   match tlb {
     None()  => (),
-    Some(e) => if   flush_TLB_Entry(e, asid, addr_64b)
+    Some(e) => if flush_TLB_Entry(e, asid, addr_64b)
                then tlb = None()
                else ()
   }
