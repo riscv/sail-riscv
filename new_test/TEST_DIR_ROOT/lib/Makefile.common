@@ -165,7 +165,6 @@ ${OBJDIRS_OBJS} :  %.c
 
 
 OBJS	:= $(addprefix %/,${OBJS_BASE})
-#$(call get,OBJDIR_AA,${UNIQ_TESTNAME})/test.elf : $(call get,OBJS_AA,${UNIQ_TESTNAME})
 %/test.elf : ${OBJS}
 	@echo "making \"$@\" in $$PWD" ;
 	${LD_NEXT} ${LD_FLAGS_NEXT} -o $@ $<
