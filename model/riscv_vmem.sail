@@ -71,7 +71,7 @@
 // ****************************************************************
 // Virtual memory address translation and memory protection,
 // including PTWs (Page Table Walks) and TLBs (Translation Look-aside Buffers)
-// Supported VM modes: Sv32, Sv39, Sv48.  TODO: Sv57
+// Supported VM modes: Sv32, Sv39, Sv48.  FUTURE: Sv57
 
 // STYLE NOTES:
 //   PRIVATE items are used only within this VM code.
@@ -249,17 +249,16 @@ function offset_of_va(va : bits(64)) -> bits(64) = {
 // Valid xlen-wide values containing virtual addrs must have upper
 // bits equal to the MSB of the virtual address.
 // Virtual address widths depend on the virtual memory mode.
-
 // PRIVATE
-function isValidVAddr(sv_params : SV_Params, vAddr : bits(64)) -> bool = {
-  let index = sv_params.va_size_bits - 1;
-  assert((0 <= index) & (index < 64));
-  let upper_bits = vAddr >> (sv_params.va_size_bits);
-  let va_msb	 = vAddr[index];
+function is_valid_vAddr(struct { va_size_bits, _ } : SV_Params,
+                        vAddr                      : bits(64))  -> bool = {
+  let index      = va_size_bits - 1;
+  let upper_bits = vAddr[63 .. va_size_bits];
+  let va_msb     = vAddr[index];
   if va_msb == bitzero then
     upper_bits == zeros()
   else
-    upper_bits == ones() >> (sv_params.va_size_bits)
+    upper_bits == ones()
 }
 
 // ****************************************************************
@@ -327,36 +326,36 @@ union PTE_Check = {
 }
 
 // PRIVATE
-function checkPTEPermission(ac	    : AccessType(ext_access_type),
-			    priv    : Privilege,
-			    mxr	    : bool,
-			    do_sum  : bool,
-			    pte_U   : bit,
-			    pte_X   : bit,
-			    pte_W   : bit,
-			    pte_R   : bit,
-			    ext	    : extPte,
-			    ext_ptw : ext_ptw) -> PTE_Check = {
+function check_PTE_permission(ac      : AccessType(ext_access_type),
+                              priv    : Privilege,
+                              mxr     : bool,
+                              do_sum  : bool,
+                              pte_U   : bit,
+                              pte_X   : bit,
+                              pte_W   : bit,
+                              pte_R   : bit,
+                              ext     : extPte,
+                              ext_ptw : ext_ptw) -> PTE_Check = {
   let b : bool =
     match (ac, priv) {
-      (Read(_),		User)	    => ((pte_U == bitone)
-					& ((pte_R == bitone) | ((pte_X == bitone & mxr)))),
-      (Write(_),	User)	    => ((pte_U == bitone) & (pte_W == bitone)),
-      (ReadWrite(_, _), User)	    => ((pte_U == bitone)
-					& (pte_W == bitone)
-					& ((pte_R == bitone) | ((pte_X == bitone) & mxr))),
-      (Execute(),	User)	    => ((pte_U == bitone) & (pte_X == bitone)),
-      (Read(_),		Supervisor) => (((pte_U == bitzero) | do_sum)
-					& ((pte_R == bitone) | ((pte_X == bitone) & mxr))),
-      (Write(_),	Supervisor) => (((pte_U == bitzero) | do_sum) & (pte_W == bitone)),
+      (Read(_),         User)       => ((pte_U == bitone)
+                                        & ((pte_R == bitone) | ((pte_X == bitone & mxr)))),
+      (Write(_),        User)       => ((pte_U == bitone) & (pte_W == bitone)),
+      (ReadWrite(_, _), User)       => ((pte_U == bitone)
+                                        & (pte_W == bitone)
+                                        & ((pte_R == bitone) | ((pte_X == bitone) & mxr))),
+      (Execute(),       User)       => ((pte_U == bitone) & (pte_X == bitone)),
+      (Read(_),         Supervisor) => (((pte_U == bitzero) | do_sum)
+                                        & ((pte_R == bitone) | ((pte_X == bitone) & mxr))),
+      (Write(_),        Supervisor) => (((pte_U == bitzero) | do_sum) & (pte_W == bitone)),
       (ReadWrite(_, _), Supervisor) => (((pte_U == bitzero) | do_sum)
-					& (pte_W == bitone)
-					& ((pte_R == bitone) | ((pte_X == bitone) & mxr))),
-      (Execute(),	Supervisor) => ((pte_U == bitzero) & (pte_X == bitone)),
-      (_,		Machine)    => internal_error(__FILE__, __LINE__,
-						      "m-mode mem perm check")};
+                                        & (pte_W == bitone)
+                                        & ((pte_R == bitone) | ((pte_X == bitone) & mxr))),
+      (Execute(),       Supervisor) => ((pte_U == bitzero) & (pte_X == bitone)),
+      (_,               Machine)    => internal_error(__FILE__, __LINE__,
+                                                      "m-mode mem perm check")};
   if b then PTE_Check_Success(())
-  else	    PTE_Check_Failure((), ())
+  else      PTE_Check_Failure((), ())
 }
 
 // Update PTE bits if needed; return new PTE if updated
@@ -419,7 +418,7 @@ overload to_str = {ptw_error_to_str}
 
 // hook for (non-standard) extensions to customize errors reported by page-table
 // walks during address translation; it typically works in conjunction
-// with any customization to checkPTEPermission().
+// with any customization to check_PTE_permission().
 
 // PRIVATE
 function ext_get_ptw_error(eptwf : ext_ptw_fail) -> PTW_Error =
@@ -516,13 +515,13 @@ function pt_walk(sv_params,
 	}
 	// Leaf PTE
 	else {
-	  let pte_check = checkPTEPermission(ac, priv, mxr, do_sum,
-					     U_of_PTE(pte),
-					     X_of_PTE(pte),
-					     W_of_PTE(pte),
-					     R_of_PTE(pte),
-					     ext_pte,
-					     ext_ptw);
+	  let pte_check = check_PTE_permission(ac, priv, mxr, do_sum,
+					       U_of_PTE(pte),
+					       X_of_PTE(pte),
+					       W_of_PTE(pte),
+					       R_of_PTE(pte),
+					       ext_pte,
+					       ext_ptw);
 	  match pte_check {
 	    PTE_Check_Failure(ext_ptw, ext_ptw_fail) =>
 	      PTW_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw),
@@ -664,77 +663,77 @@ union TR_Result('paddr : Type, 'failure : Type) = {
 // part of RISC-V architecture spec (see TLB_NOTE above).
 // PRIVATE: translate on TLB hit, and maintenance of PTE in TLB
 function translate_TLB_hit(sv_params : SV_Params,
-			   asid	     : bits(16),
-			   ptb	     : bits(64),
-			   vAddr     : bits(64),
-			   ac	     : AccessType(ext_access_type),
-			   priv	     : Privilege,
-			   mxr	     : bool,
-			   do_sum    : bool,
-			   level     : nat,
-			   ext_ptw   : ext_ptw,
-			   tlb_index : nat,
-			   ent	     : TLB_Entry)
-			  -> TR_Result(bits(64), PTW_Error) = {
-  let pte	= ent.pte;
-  let ext_pte	= msbs_of_PTE(sv_params, pte);
-  let pte_check = checkPTEPermission(ac, priv, mxr, do_sum,
-				     U_of_PTE(pte),
-				     X_of_PTE(pte),
-				     W_of_PTE(pte),
-				     R_of_PTE(pte),
-				     ext_pte,
-				     ext_ptw);
+                           asid      : bits(16),
+                           ptb       : bits(64),
+                           vAddr     : bits(64),
+                           ac        : AccessType(ext_access_type),
+                           priv      : Privilege,
+                           mxr       : bool,
+                           do_sum    : bool,
+                           level     : nat,
+                           ext_ptw   : ext_ptw,
+                           tlb_index : nat,
+                           ent       : TLB_Entry)
+                          -> TR_Result(bits(64), PTW_Error) = {
+  let pte       = ent.pte;
+  let ext_pte   = msbs_of_PTE(sv_params, pte);
+  let pte_check = check_PTE_permission(ac, priv, mxr, do_sum,
+                                       U_of_PTE(pte),
+                                       X_of_PTE(pte),
+                                       W_of_PTE(pte),
+                                       R_of_PTE(pte),
+                                       ext_pte,
+                                       ext_ptw);
   let tr_result : TR_Result(bits(64), PTW_Error)
   = match pte_check {
       PTE_Check_Failure(ext_ptw, ext_ptw_fail) =>
-	TR_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw),
+        TR_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw),
       PTE_Check_Success(ext_ptw) =>
-	match update_PTE_Bits(sv_params, pte, ac, ext_pte) {
-	  None()     => TR_Address(ent.pAddr | (vAddr & ent.vAddrMask), ext_ptw),
-	  Some(pte') =>
-	    // See riscv_platform.sail
-	    if not(plat_enable_dirty_update()) then
-	      // pte needs dirty/accessed update but that is not enabled
-	      TR_Failure(PTW_PTE_Update(), ext_ptw)
-	    else {
-	      // Writeback the PTE (which has new A/D bits)
-	      n_ent : TLB_Entry = ent;
-	      n_ent.pte = pte';
-	      write_TLB(tlb_index, n_ent);
-	      let pte_phys_addr : xlenbits = ent.pteAddr[(sizeof(xlen) - 1) .. 0];
-	      let mv = mem_write_value_priv(pte_phys_addr,
-					    8,
-					    pte',
-					    Supervisor,
-					    false,
-					    false,
-					    false);
-	      match mv {
-		MemValue(_)	=> (),
-		MemException(e) => internal_error(__FILE__, __LINE__,
-						  "invalid physical address in TLB")
-	      };
-	      TR_Address(ent.pAddr | (vAddr & ent.vAddrMask), ext_ptw)
-	    }
-	}
+        match update_PTE_Bits(sv_params, pte, ac, ext_pte) {
+          None()     => TR_Address(ent.pAddr | (vAddr & ent.vAddrMask), ext_ptw),
+          Some(pte') =>
+            // See riscv_platform.sail
+            if not(plat_enable_dirty_update()) then
+              // pte needs dirty/accessed update but that is not enabled
+              TR_Failure(PTW_PTE_Update(), ext_ptw)
+            else {
+              // Writeback the PTE (which has new A/D bits)
+              n_ent : TLB_Entry = ent;
+              n_ent.pte = pte';
+              write_TLB(tlb_index, n_ent);
+              let pte_phys_addr : xlenbits = ent.pteAddr[(sizeof(xlen) - 1) .. 0];
+              let mv = mem_write_value_priv(pte_phys_addr,
+                                            8,
+                                            pte',
+                                            Supervisor,
+                                            false,
+                                            false,
+                                            false);
+              match mv {
+                MemValue(_)     => (),
+                MemException(e) => internal_error(__FILE__, __LINE__,
+                                                  "invalid physical address in TLB")
+              };
+              TR_Address(ent.pAddr | (vAddr & ent.vAddrMask), ext_ptw)
+            }
+        }
     };
   tr_result
 }
 
 // PRIVATE: translate on TLB miss (do a page-table walk)
 function translate_TLB_miss(sv_params : SV_Params,
-			    asid      : bits(16),
-			    ptb	      : bits(64),
-			    vAddr     : bits(64),
-			    ac	      : AccessType(ext_access_type),
-			    priv      : Privilege,
-			    mxr	      : bool,
-			    do_sum    : bool,
-			    level     : nat,
-			    ext_ptw   : ext_ptw) -> TR_Result(bits(64), PTW_Error) = {
+                            asid      : bits(16),
+                            ptb       : bits(64),
+                            vAddr     : bits(64),
+                            ac        : AccessType(ext_access_type),
+                            priv      : Privilege,
+                            mxr       : bool,
+                            do_sum    : bool,
+                            level     : nat,
+                            ext_ptw   : ext_ptw) -> TR_Result(bits(64), PTW_Error) = {
   let ptw_result = pt_walk(sv_params, vAddr, ac, priv, mxr, do_sum,
-			   ptb, level, false, ext_ptw);
+                           ptb, level, false, ext_ptw);
   match ptw_result {
     PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),
     PTW_Success(pAddr, pte, pteAddr, level, global, ext_ptw) => {
@@ -742,55 +741,55 @@ function translate_TLB_miss(sv_params : SV_Params,
       // Without TLBs, this 'match' expression can be replaced simply
       // by: 'TR_Address(pAddr, ext_ptw)'    (see TLB_NOTE above)
       match update_PTE_Bits(sv_params, pte, ac, ext_pte) {
-	None() => {
-	  add_to_TLB(asid, vAddr, pAddr, pte, pteAddr, level, global,
-		     sv_params.vpn_size_bits,    // TODO: ppn_size_bits?
-		     PAGESIZE_BITS);
-	  TR_Address(pAddr, ext_ptw)
-	},
-	Some(pte') =>
-	  // See riscv_platform.sail
-	  if not(plat_enable_dirty_update()) then
-	    // pte needs dirty/accessed update but that is not enabled
-	    TR_Failure(PTW_PTE_Update(), ext_ptw)
-	  else {
-	    // Writeback the PTE (which has new A/D bits)
-	    let pte_phys_addr : xlenbits = pteAddr[(sizeof(xlen) - 1) .. 0];
-	    let mv = mem_write_value_priv(pte_phys_addr, // pteAddr,
-					  8,
-					  pte',
-					  Supervisor,
-					  false,
-					  false,
-					  false);
-	    match mv {
-	      MemValue(_) => {
-		add_to_TLB(asid, vAddr, pAddr, pte', pteAddr, level, global,
-			   sv_params.vpn_size_bits,    // TODO: ppn_size_bits?
-			   PAGESIZE_BITS);
-		TR_Address(pAddr, ext_ptw)
-	      },
-	      MemException(e) =>
-		TR_Failure(PTW_Access(), ext_ptw)
-	    }
-	  }
-	}
+        None() => {
+          add_to_TLB(asid, vAddr, pAddr, pte, pteAddr, level, global,
+                     sv_params.vpn_size_bits,    // TODO: ppn_size_bits?
+                     PAGESIZE_BITS);
+          TR_Address(pAddr, ext_ptw)
+        },
+        Some(pte') =>
+          // See riscv_platform.sail
+          if not(plat_enable_dirty_update()) then
+            // pte needs dirty/accessed update but that is not enabled
+            TR_Failure(PTW_PTE_Update(), ext_ptw)
+          else {
+            // Writeback the PTE (which has new A/D bits)
+            let pte_phys_addr : xlenbits = pteAddr[(sizeof(xlen) - 1) .. 0];
+            let mv = mem_write_value_priv(pte_phys_addr, // pteAddr,
+                                          8,
+                                          pte',
+                                          Supervisor,
+                                          false,
+                                          false,
+                                          false);
+            match mv {
+              MemValue(_) => {
+                add_to_TLB(asid, vAddr, pAddr, pte', pteAddr, level, global,
+                           sv_params.vpn_size_bits,    // TODO: ppn_size_bits?
+                           PAGESIZE_BITS);
+                TR_Address(pAddr, ext_ptw)
+              },
+              MemException(e) =>
+                TR_Failure(PTW_Access(), ext_ptw)
+            }
+          }
+        }
       }
     }
 }
 
 // PRIVATE
 function translate(sv_params : SV_Params,
-		   asid	     : bits(16),
-		   ptb	      : bits(64),
-		   vAddr_arg : bits(64),
-		   ac	      : AccessType(ext_access_type),
-		   priv	     : Privilege,
-		   mxr	      : bool,
-		   do_sum    : bool,
-		   level     : nat,
-		   ext_ptw   : ext_ptw)
-		  -> TR_Result(bits(64), PTW_Error) = {
+                   asid      : bits(16),
+                   ptb        : bits(64),
+                   vAddr_arg : bits(64),
+                   ac         : AccessType(ext_access_type),
+                   priv      : Privilege,
+                   mxr        : bool,
+                   do_sum    : bool,
+                   level     : nat,
+                   ext_ptw   : ext_ptw)
+                  -> TR_Result(bits(64), PTW_Error) = {
   let one_64b  : bits(64) = zero_extend(0b1);
   let va_mask = (one_64b << sv_params.va_size_bits) - 1;
   let vAddr   = (vAddr_arg & va_mask);
@@ -799,9 +798,9 @@ function translate(sv_params : SV_Params,
   // are not part of RISC-V archticture spec (see TLB_NOTE above)
   match lookup_TLB(asid, vAddr) {
     Some(index, ent) => translate_TLB_hit(sv_params, asid, ptb, vAddr, ac, priv,
-					  mxr, do_sum, level, ext_ptw, index, ent),
-    None()	     => translate_TLB_miss(sv_params, asid, ptb, vAddr, ac, priv,
-					   mxr, do_sum, level, ext_ptw)
+                                          mxr, do_sum, level, ext_ptw, index, ent),
+    None()           => translate_TLB_miss(sv_params, asid, ptb, vAddr, ac, priv,
+                                           mxr, do_sum, level, ext_ptw)
   }
 }
 
@@ -822,9 +821,9 @@ function translateAddr(vAddr   : xlenbits,
   let (valid_va, sv_params) : (bool, SV_Params) = match mode {
     Sbare => return TR_Address(vAddr, ext_ptw),
     Sv32  => (true,                                 sv32_params),
-    Sv39  => (isValidVAddr(sv39_params, vAddr_64b), sv39_params),
-    Sv48  => (isValidVAddr(sv48_params, vAddr_64b), sv48_params),
-    // Sv57 => (isValidVAddr(sv57_params, vAddr_64b), sv57_params),    // FUTURE
+    Sv39  => (is_valid_vAddr(sv39_params, vAddr_64b), sv39_params),
+    Sv48  => (is_valid_vAddr(sv48_params, vAddr_64b), sv48_params),
+    // Sv57 => (is_valid_vAddr(sv57_params, vAddr_64b), sv57_params),    // FUTURE
   };
   if not(valid_va) then
     TR_Failure(translationException(ac, PTW_Invalid_Addr()), ext_ptw)
