@@ -219,9 +219,15 @@ let sv57_params : SV_Params = struct {
 }
 */
 
+// This 'undefined_SV_Params()' function is not used anywhere, but is
+// currently (2023-12) needed to work around an issue where Sail tries
+// to figure out how it could do
+//     let x : SV_Params = undefined
+// even though the code never does this.  This has been fixed in Sail.
+// The fix will become available in a new Sail release, at which point
+// this function can be deleted (TODO).
 // PRIVATE
 val      undefined_SV_Params : unit -> SV_Params
-
 function undefined_SV_Params() = sv32_params
 
 // ****************************************************************
@@ -230,23 +236,23 @@ function undefined_SV_Params() = sv32_params
 // PRIVATE: Extract full VPN field from VA
 function vpns_of_va(sv_params : SV_Params,
                     va        : bits(64)) -> bits(64) = {
-    let mask : bits(64) = zero_extend(ones(sv_params.va_size_bits));
-    (va & mask) >> PAGESIZE_BITS
+  let mask : bits(64) = zero_extend(ones(sv_params.va_size_bits));
+  (va & mask) >> PAGESIZE_BITS
 }
 
 // PRIVATE: Extract VPN[level] from  VA
 function vpn_j_of_va(sv_params : SV_Params,
                      va        : bits(64),
                      level     : nat)       -> bits(64) = {
-    let lsb  : nat       = PAGESIZE_BITS + level * sv_params.vpn_size_bits;
-    let mask : bits(64) = zero_extend(ones(sv_params.vpn_size_bits));
-    ((va >> lsb) & mask)
+  let lsb  : nat       = PAGESIZE_BITS + level * sv_params.vpn_size_bits;
+  let mask : bits(64) = zero_extend(ones(sv_params.vpn_size_bits));
+  ((va >> lsb) & mask)
 }
 
 // PRIVATE: Extract offset within page from VA
 function offset_of_va(va : bits(64)) -> bits(64) = {
-    let mask : bits(64) = zero_extend(ones(PAGESIZE_BITS));
-    va & mask
+  let mask : bits(64) = zero_extend(ones(PAGESIZE_BITS));
+  va & mask
 }
 
 // Valid xlen-wide values containing virtual addrs must have upper
@@ -255,7 +261,7 @@ function offset_of_va(va : bits(64)) -> bits(64) = {
 // PRIVATE
 function is_valid_vAddr(struct { va_size_bits, _ } : SV_Params,
                         vAddr                      : bits(64)) -> bool =
-   vAddr == sign_extend(vAddr[va_size_bits - 1 .. 0])
+ vAddr == sign_extend(vAddr[va_size_bits - 1 .. 0])
 
 // ****************************************************************
 // PTE (Page Table Entry) in PTN (Page Table Node)
@@ -604,9 +610,7 @@ function satp_to_PT_base(sv_params : SV_Params, satp_val : xlenbits) -> bits(64)
   ppn_64b << PAGESIZE_BITS
 }
 
-// Compute address translation mode from SATP
-// TODO: shouldn't we look at mstatus_UXL if priv is User?
-
+// Compute address translation mode from SATP register
 // PRIVATE
 function translationMode(priv : Privilege) -> SATPMode = {
   if priv == Machine then
@@ -631,7 +635,7 @@ function translationMode(priv : Privilege) -> SATPMode = {
                       }
                     },
       Some(RV32) => match satp[31] {
-                      // When xlen is 64, mstatus.SXL/UXL (for S, U privileges) can be RV32
+                      // When xlen is 64, mstatus.SXL (for S privilege) can be RV32
                       bitzero => Sbare,
                       bitone  => Sv32
                     },
