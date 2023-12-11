@@ -75,13 +75,9 @@ $include <option.sail>
 $include <arith.sail>
 $include <string.sail>
 $include <vector_dec.sail>
+$include <mapping.sail>
 $include <regfp.sail>
-
-val string_startswith = "string_startswith" : (string, string) -> bool
-val string_drop = "string_drop" : (string, nat) -> string
-val string_take = "string_take" : (string, nat) -> string
-val string_length = "string_length" : string -> nat
-val string_append = {c: "concat_str", _: "string_append"} : (string, string) -> string
+$include <hex_bits.sail>
 
 val eq_anything = {ocaml: "(fun (x, y) -> x = y)", interpreter: "eq_anything", lem: "eq", coq: "generic_eq", c: "eq_anything"} : forall ('a : Type). ('a, 'a) -> bool
 
@@ -154,19 +150,10 @@ val rem_round_zero = {ocaml: "rem_round_zero", interpreter: "rem_round_zero", le
 /* The following defines % as euclidean modulus */
 overload operator % = {emod_int}
 
-val min_int = {ocaml: "min_int", interpreter: "min_int", lem: "min", coq: "min_atom", c: "min_int"} : forall 'x 'y.
-  (int('x), int('y)) -> {'z, ('x <= 'y & 'z == 'x) | ('x > 'y & 'z == 'y). int('z)}
-
-val max_int = {ocaml: "max_int", interpreter: "max_int", lem: "max", coq: "max_atom", c: "max_int"} : forall 'x 'y.
-  (int('x), int('y)) -> {'z, ('x >= 'y & 'z == 'x) | ('x < 'y & 'z == 'y). int('z)}
-
 overload min = {min_int}
 
 overload max = {max_int}
 
-val pow2 = "pow2" : forall 'n. atom('n) -> atom(2 ^ 'n)
-
-val print = "print_endline" : string -> unit
 val print_string = "print_string" : (string, string) -> unit
 
 val print_instr    = {ocaml: "Platform.print_instr", interpreter: "print_endline", c: "print_instr", lem: "print_dbg", _: "print_endline"} : string -> unit
@@ -286,50 +273,7 @@ overload reverse = {reverse_bits_in_byte}
 
 /* helpers for mappings */
 
-val spc : unit <-> string
-val opt_spc : unit <-> string
-val def_spc : unit <-> string
-
 val "decimal_string_of_bits" : forall 'n. bits('n) -> string
-val hex_bits : forall 'n . (atom('n), bits('n)) <-> string
-
-val n_leading_spaces : string -> nat
-function n_leading_spaces s =
-  match s {
-    "" => 0,
-    _ => match string_take(s, 1) {
-      " " => 1 + n_leading_spaces(string_drop(s, 1)),
-      _ => 0
-    }
-  }
-
-val spc_forwards : unit -> string
-function spc_forwards () = " "
-val spc_backwards : string -> unit
-function spc_backwards s = ()
-val spc_matches_prefix : string -> option((unit, nat))
-function spc_matches_prefix s = {
-  let n = n_leading_spaces(s);
-  match n {
-    0 => None(),
-    _ => Some((), n)
-  }
-}
-
-val opt_spc_forwards : unit -> string
-function opt_spc_forwards () = ""
-val opt_spc_backwards : string -> unit
-function opt_spc_backwards s = ()
-val opt_spc_matches_prefix : string -> option((unit, nat))
-function opt_spc_matches_prefix s =
-  Some((), n_leading_spaces(s))
-
-val def_spc_forwards : unit -> string
-function def_spc_forwards () = " "
-val def_spc_backwards : string -> unit
-function def_spc_backwards s = ()
-val def_spc_matches_prefix : string -> option((unit, nat))
-function def_spc_matches_prefix s = opt_spc_matches_prefix(s)
 
 overload operator / = {quot_round_zero}
 overload operator * = {mult_atom, mult_int}
