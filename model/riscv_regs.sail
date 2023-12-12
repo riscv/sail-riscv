@@ -154,8 +154,8 @@ function rX r = {
 $ifdef RVFI_DII
 val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit
 function rvfi_wX (r,v) = {
-  rvfi_int_data->rvfi_rd_wdata() = zero_extend(v);
-  rvfi_int_data->rvfi_rd_addr() = to_bits(8,r);
+  rvfi_int_data[rvfi_rd_wdata] = zero_extend(v);
+  rvfi_int_data[rvfi_rd_addr] = to_bits(8,r);
   rvfi_int_data_present = true;
 }
 $else
