@@ -7,6 +7,9 @@ else ifeq ($(ARCH),64)
   override ARCH := RV64
 endif
 
+# Set OPAMCLI to 2.0 to supress warnings about opam config var
+export OPAMCLI := 2.0
+
 ifeq ($(ARCH),RV32)
   SAIL_XLEN := riscv_xlen32.sail
 else ifeq ($(ARCH),RV64)

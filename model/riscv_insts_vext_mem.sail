@@ -104,7 +104,7 @@ union clause ast = VLSEGTYPE : (bits(3), bits(1), regidx, vlewidth, regidx)
 mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd) if haveVExt()
   <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if haveVExt()
 
-val process_vlseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired effect {escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
+val process_vlseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired
 function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else int_power(2, EMUL_pow);
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
@@ -170,7 +170,7 @@ union clause ast = VLSEGFFTYPE : (bits(3), bits(1), regidx, vlewidth, regidx)
 mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd) if haveVExt()
   <-> nf @ 0b0 @ 0b00 @ vm @ 0b10000 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if haveVExt()
 
-val process_vlsegff : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired effect {escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
+val process_vlsegff : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired
 function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else int_power(2, EMUL_pow);
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
@@ -275,7 +275,7 @@ union clause ast = VSSEGTYPE : (bits(3), bits(1), regidx, vlewidth, regidx)
 mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3) if haveVExt()
   <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ rs1 @ encdec_vlewidth(width) @ vs3 @ 0b0100111 if haveVExt()
 
-val process_vsseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired effect {eamem, escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
+val process_vsseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired
 function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else int_power(2, EMUL_pow);
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
@@ -344,7 +344,7 @@ union clause ast = VLSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, reg
 mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd) if haveVExt()
   <-> nf @ 0b0 @ 0b10 @ vm @ rs2 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if haveVExt()
 
-val process_vlsseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, regidx, int('p), int('n)) -> Retired effect {escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
+val process_vlsseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, regidx, int('p), int('n)) -> Retired
 function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else int_power(2, EMUL_pow);
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
@@ -411,7 +411,7 @@ union clause ast = VSSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, reg
 mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3) if haveVExt()
   <-> nf @ 0b0 @ 0b10 @ vm @ rs2 @ rs1 @ encdec_vlewidth(width) @ vs3 @ 0b0100111 if haveVExt()
 
-val process_vssseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, regidx, int('p), int('n)) -> Retired effect {eamem, escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
+val process_vssseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, regidx, int('p), int('n)) -> Retired
 function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else int_power(2, EMUL_pow);
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
@@ -481,7 +481,7 @@ union clause ast = VLUXSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, re
 mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd) if haveVExt()
   <-> nf @ 0b0 @ 0b01 @ vm @ vs2 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if haveVExt()
 
-val process_vlxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('ib), int('db), int('ip), int('dp), regidx, regidx, int('n), int) -> Retired effect {eamem, escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
+val process_vlxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('ib), int('db), int('ip), int('dp), regidx, regidx, int('n), int) -> Retired
 function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
   let EMUL_data_reg : int = if EMUL_data_pow <= 0 then 1 else int_power(2, EMUL_data_pow);
   let width_type : word_width = bytes_wordwidth(EEW_data_bytes);
@@ -573,7 +573,7 @@ union clause ast = VSUXSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, re
 mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3) if haveVExt()
   <-> nf @ 0b0 @ 0b01 @ vm @ vs2 @ rs1 @ encdec_vlewidth(width) @ vs3 @ 0b0100111 if haveVExt()
 
-val process_vsxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('ib), int('db), int('ip), int('dp), regidx, regidx, int('n), int) -> Retired effect {eamem, escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
+val process_vsxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('ib), int('db), int('ip), int('dp), regidx, regidx, int('n), int) -> Retired
 function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
   let EMUL_data_reg : int = if EMUL_data_pow <= 0 then 1 else int_power(2, EMUL_data_pow);
   let width_type : word_width = bytes_wordwidth(EEW_data_bytes);
@@ -668,7 +668,7 @@ union clause ast = VLRETYPE : (bits(3), regidx, vlewidth, regidx)
 mapping clause encdec = VLRETYPE(nf, rs1, width, vd) if haveVExt()
   <-> nf @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if haveVExt()
 
-val process_vlre : forall 'f 'b 'n, ('f in {1, 2, 4, 8}) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), regidx, int('b), regidx, int('n)) -> Retired effect {escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
+val process_vlre : forall 'f 'b 'n, ('f in {1, 2, 4, 8}) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), regidx, int('b), regidx, int('n)) -> Retired
 function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
   let width_type : word_width = bytes_wordwidth(load_width_bytes);
   let start_element = get_start_element();
@@ -750,7 +750,7 @@ union clause ast = VSRETYPE : (bits(3), regidx, regidx)
 mapping clause encdec = VSRETYPE(nf, rs1, vs3) if haveVExt()
   <-> nf @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ rs1 @ 0b000 @ vs3 @ 0b0100111 if haveVExt()
 
-val process_vsre : forall 'f 'b 'n, ('f in {1, 2, 4, 8}) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), int('b), regidx, regidx, int('n)) -> Retired effect {eamem, escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
+val process_vsre : forall 'f 'b 'n, ('f in {1, 2, 4, 8}) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), int('b), regidx, regidx, int('n)) -> Retired
 function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
   let width_type : word_width = BYTE;
   let start_element = get_start_element();
@@ -855,7 +855,7 @@ mapping encdec_lsop : vmlsop <-> bits(7) = {
 mapping clause encdec = VMTYPE(rs1, vd_or_vs3, op) if haveVExt()
   <-> 0b000 @ 0b0 @ 0b00 @ 0b1 @ 0b01011 @ rs1 @ 0b000 @ vd_or_vs3 @ encdec_lsop(op) if haveVExt()
 
-val process_vm : forall 'n 'l, ('n >= 0 & 'l >= 0). (regidx, regidx, int('n), int('l), vmlsop) -> Retired effect {eamem, escape, rmem, rmemt, rreg, undef, wmv, wmvt, wreg}
+val process_vm : forall 'n 'l, ('n >= 0 & 'l >= 0). (regidx, regidx, int('n), int('l), vmlsop) -> Retired
 function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
   let width_type : word_width = BYTE;
   let start_element = get_start_element();
