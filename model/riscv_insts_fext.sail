@@ -112,7 +112,7 @@ val      select_instr_or_fcsr_rm : rounding_mode -> option(rounding_mode)
 function select_instr_or_fcsr_rm instr_rm =
   if (instr_rm == RM_DYN)
   then {
-    let fcsr_rm = fcsr.FRM();
+    let fcsr_rm = fcsr[FRM];
     if (valid_rounding_mode(fcsr_rm) & fcsr_rm != encdec_rounding_mode(RM_DYN))
       then Some(encdec_rounding_mode(fcsr_rm)) else None()
   }

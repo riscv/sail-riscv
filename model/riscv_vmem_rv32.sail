@@ -87,7 +87,7 @@ function translationMode(priv) = {
     match arch {
       Some(RV32) => {
         let s = Mk_Satp32(satp[31..0]);
-        if s.Mode() == 0b0 then Sbare else Sv32
+        if s[Mode] == 0b0 then Sbare else Sv32
       },
       _    => internal_error(__FILE__, __LINE__, "unsupported address translation arch")
     }
@@ -98,8 +98,8 @@ function translationMode(priv) = {
 
 val translateAddr_priv : (xlenbits, AccessType(ext_access_type), Privilege) -> TR_Result(xlenbits, ExceptionType)
 function translateAddr_priv(vAddr, ac, effPriv) = {
-  let mxr    : bool   = mstatus.MXR() == 0b1;
-  let do_sum : bool   = mstatus.SUM() == 0b1;
+  let mxr    : bool   = mstatus[MXR] == 0b1;
+  let do_sum : bool   = mstatus[SUM] == 0b1;
   let mode : SATPMode = translationMode(effPriv);
 
   let asid = curAsid32(satp);

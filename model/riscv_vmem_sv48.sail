@@ -73,7 +73,7 @@
 val walk48 : (vaddr48, AccessType(ext_access_type), Privilege, bool, bool, paddr64, nat, bool, ext_ptw) -> PTW_Result(paddr64, SV48_PTE)
 function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
   let va = Mk_SV48_Vaddr(vaddr);
-  let pt_ofs : paddr64 = shiftl(zero_extend(shiftr(va.VPNi(), (level * SV48_LEVEL_BITS))[(SV48_LEVEL_BITS - 1) .. 0]),
+  let pt_ofs : paddr64 = shiftl(zero_extend(shiftr(va[VPNi], (level * SV48_LEVEL_BITS))[(SV48_LEVEL_BITS - 1) .. 0]),
                                 PTE48_LOG_SIZE);
   let pte_addr = ptb + pt_ofs;
   match (mem_read_priv(Read(Data), Supervisor, zero_extend(pte_addr), 8, false, false, false)) {
@@ -87,10 +87,10 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
     },
     MemValue(v) => {
       let pte = Mk_SV48_PTE(v);
-      let pbits = pte.BITS();
-      let ext_pte = pte.Ext();
+      let pbits = pte[BITS];
+      let ext_pte = pte[Ext];
       let pattr = Mk_PTE_Bits(pbits);
-      let is_global = global | (pattr.G() == 0b1);
+      let is_global = global | (pattr[G] == 0b1);
 /*    print("walk48(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
             ^ " pt_base=" ^ BitStr(ptb)
             ^ " pt_ofs=" ^ BitStr(pt_ofs)
@@ -103,7 +103,7 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
         if isPTEPtr(pbits, ext_pte) then {
           if level > 0 then {
             /* walk down the pointer to the next level */
-            walk48(vaddr, ac, priv, mxr, do_sum, shiftl(zero_extend(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global, ext_ptw)
+            walk48(vaddr, ac, priv, mxr, do_sum, shiftl(zero_extend(pte[PPNi]), PAGESIZE_BITS), level - 1, is_global, ext_ptw)
           } else {
             /* last-level PTE contains a pointer instead of a leaf */
 /*          print("walk48: last-level pte contains a ptr"); */
@@ -118,24 +118,24 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
             PTE_Check_Success(ext_ptw) => {
               if level > 0 then { /* superpage */
                 /* fixme hack: to get a mask of appropriate size */
-                let mask = shiftl(pte.PPNi() ^ pte.PPNi() ^ zero_extend(0b1), level * SV48_LEVEL_BITS) - 1;
-                if (pte.PPNi() & mask) != zero_extend(0b0) then {
+                let mask = shiftl(pte[PPNi] ^ pte[PPNi] ^ zero_extend(0b1), level * SV48_LEVEL_BITS) - 1;
+                if (pte[PPNi] & mask) != zero_extend(0b0) then {
                   /* misaligned superpage mapping */
 /*                print("walk48: misaligned superpage mapping"); */
                   PTW_Failure(PTW_Misaligned(), ext_ptw)
                 } else {
                   /* add the appropriate bits of the VPN to the superpage PPN */
-                  let ppn = pte.PPNi() | (zero_extend(va.VPNi()) & mask);
-/*                let res = append(ppn, va.PgOfs());
-                  print("walk48: using superpage: pte.ppn=" ^ BitStr(pte.PPNi())
+                  let ppn = pte[PPNi] | (zero_extend(va[VPNi]) & mask);
+/*                let res = append(ppn, va[PgOfs]);
+                  print("walk48: using superpage: pte.ppn=" ^ BitStr(pte[PPNi])
                         ^ " ppn=" ^ BitStr(ppn) ^ " res=" ^ BitStr(res)); */
-                  PTW_Success(append(ppn, va.PgOfs()), pte, pte_addr, level, is_global, ext_ptw)
+                  PTW_Success(append(ppn, va[PgOfs]), pte, pte_addr, level, is_global, ext_ptw)
                 }
               } else {
                 /* normal leaf PTE */
-/*              let res = append(pte.PPNi(), va.PgOfs());
-                print("walk48: pte.ppn=" ^ BitStr(pte.PPNi()) ^ " ppn=" ^ BitStr(pte.PPNi()) ^ " res=" ^ BitStr(res)); */
-                PTW_Success(append(pte.PPNi(), va.PgOfs()), pte, pte_addr, level, is_global, ext_ptw)
+/*              let res = append(pte[PPNi], va[PgOfs]);
+                print("walk48: pte.ppn=" ^ BitStr(pte[PPNi]) ^ " ppn=" ^ BitStr(pte[PPNi]) ^ " res=" ^ BitStr(res)); */
+                PTW_Success(append(pte[PPNi], va[PgOfs]), pte, pte_addr, level, is_global, ext_ptw)
               }
             }
           }
@@ -161,7 +161,7 @@ function lookup_TLB48(asid, vaddr) =
 
 val add_to_TLB48 : (asid64, vaddr48, paddr64, SV48_PTE, paddr64, nat, bool) -> unit
 function add_to_TLB48(asid, vAddr, pAddr, pte, pteAddr, level, global) = {
-  let ent : TLB48_Entry = make_TLB_Entry(asid, global, vAddr, pAddr, pte.bits(), level, pteAddr, SV48_LEVEL_BITS);
+  let ent : TLB48_Entry = make_TLB_Entry(asid, global, vAddr, pAddr, pte.bits, level, pteAddr, SV48_LEVEL_BITS);
   tlb48 = Some(ent)
 }
 
@@ -184,7 +184,7 @@ function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
   match walk48(vAddr, ac, priv, mxr, do_sum, ptb, level, false, ext_ptw) {
     PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),
     PTW_Success(pAddr, pte, pteAddr, level, global, ext_ptw) => {
-      match update_PTE_Bits(Mk_PTE_Bits(pte.BITS()), ac, pte.Ext()) {
+      match update_PTE_Bits(Mk_PTE_Bits(pte[BITS]), ac, pte[Ext]) {
         None() => {
           add_to_TLB48(asid, vAddr, pAddr, pte, pteAddr, level, global);
           TR_Address(pAddr, ext_ptw)
@@ -195,9 +195,9 @@ function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
             /* pte needs dirty/accessed update but that is not enabled */
             TR_Failure(PTW_PTE_Update(), ext_ptw)
           } else {
-            var w_pte : SV48_PTE = update_BITS(pte, pbits.bits());
+            var w_pte : SV48_PTE = update_BITS(pte, pbits.bits);
             w_pte = update_Ext(w_pte, ext);
-            match mem_write_value_priv(zero_extend(pteAddr), 8, w_pte.bits(), Supervisor, false, false, false) {
+            match mem_write_value_priv(zero_extend(pteAddr), 8, w_pte.bits, Supervisor, false, false, false) {
               MemValue(_) => {
                 add_to_TLB48(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
                 TR_Address(pAddr, ext_ptw)

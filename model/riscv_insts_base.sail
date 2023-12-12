@@ -789,7 +789,7 @@ mapping clause encdec = SRET()
 function clause execute SRET() = {
   let sret_illegal : bool = match cur_privilege {
     User       => true,
-    Supervisor => not(haveSupMode ()) | mstatus.TSR() == 0b1,
+    Supervisor => not(haveSupMode ()) | mstatus[TSR] == 0b1,
     Machine    => not(haveSupMode ())
   };
   if   sret_illegal
@@ -826,7 +826,7 @@ mapping clause encdec = WFI()
 function clause execute WFI() =
   match cur_privilege {
     Machine    => { platform_wfi(); RETIRE_SUCCESS },
-    Supervisor => if   mstatus.TW() == 0b1
+    Supervisor => if   mstatus[TW] == 0b1
                   then { handle_illegal(); RETIRE_FAIL }
                   else { platform_wfi(); RETIRE_SUCCESS },
     User       => { handle_illegal(); RETIRE_FAIL }
@@ -845,7 +845,7 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
   let asid : option(xlenbits) = if rs2 == 0b00000 then None() else Some(X(rs2));
   match cur_privilege {
     User       => { handle_illegal(); RETIRE_FAIL },
-    Supervisor => match (architecture(get_mstatus_SXL(mstatus)), mstatus.TVM()) {
+    Supervisor => match (architecture(get_mstatus_SXL(mstatus)), mstatus[TVM]) {
                     (Some(_), 0b1)  => { handle_illegal(); RETIRE_FAIL },
                     (Some(_), 0b0) => { flush_TLB(asid, addr); RETIRE_SUCCESS },
                     (_, _)           => internal_error(__FILE__, __LINE__, "unimplemented sfence architecture")

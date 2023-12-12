@@ -77,7 +77,7 @@
 type pmp_addr_range = option((xlenbits, xlenbits))
 
 function pmpAddrRange(cfg: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits) -> pmp_addr_range = {
-  match pmpAddrMatchType_of_bits(cfg.A()) {
+  match pmpAddrMatchType_of_bits(cfg[A]) {
     OFF   => None(),
     TOR   => { Some ((prev_pmpaddr << 2, pmpaddr << 2)) },
     NA4   => { // TODO: I find the spec unclear for entries marked NA4 and G = 1.
@@ -99,10 +99,10 @@ function pmpAddrRange(cfg: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits
 val pmpCheckRWX: (Pmpcfg_ent, AccessType(ext_access_type)) -> bool
 function pmpCheckRWX(ent, acc) = {
   match acc {
-    Read(_)      => ent.R() == 0b1,
-    Write(_)     => ent.W() == 0b1,
-    ReadWrite(_) => ent.R() == 0b1 & ent.W() == 0b1,
-    Execute()    => ent.X() == 0b1
+    Read(_)      => ent[R] == 0b1,
+    Write(_)     => ent[W] == 0b1,
+    ReadWrite(_) => ent[R] == 0b1 & ent[W] == 0b1,
+    Execute()    => ent[X] == 0b1
   }
 }
 

@@ -83,7 +83,7 @@ function step(step_no : int) -> bool = {
    * written.  See the note near the minstret declaration for more
    * information.
    */
-  minstret_increment = mcountinhibit.IR() == 0b0;
+  minstret_increment = mcountinhibit[IR] == 0b0;
 
   let (retired, stepped) : (Retired, bool) =
     match dispatchInterrupt(cur_privilege) {

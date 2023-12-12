@@ -144,25 +144,25 @@ val pmpReadCfgReg : forall 'n, 0 <= 'n < 4 . (atom('n)) -> xlenbits
 function pmpReadCfgReg(n) = {
   if   sizeof(xlen) == 32
   then match n {
-         0 => append(pmp3cfg.bits(),  append(pmp2cfg.bits(),  append(pmp1cfg.bits(),  pmp0cfg.bits()))),
-         1 => append(pmp7cfg.bits(),  append(pmp6cfg.bits(),  append(pmp5cfg.bits(),  pmp4cfg.bits()))),
-         2 => append(pmp11cfg.bits(), append(pmp10cfg.bits(), append(pmp9cfg.bits(),  pmp8cfg.bits()))),
-         3 => append(pmp15cfg.bits(), append(pmp14cfg.bits(), append(pmp13cfg.bits(), pmp12cfg.bits()))),
+         0 => append(pmp3cfg.bits,  append(pmp2cfg.bits,  append(pmp1cfg.bits,  pmp0cfg.bits))),
+         1 => append(pmp7cfg.bits,  append(pmp6cfg.bits,  append(pmp5cfg.bits,  pmp4cfg.bits))),
+         2 => append(pmp11cfg.bits, append(pmp10cfg.bits, append(pmp9cfg.bits,  pmp8cfg.bits))),
+         3 => append(pmp15cfg.bits, append(pmp14cfg.bits, append(pmp13cfg.bits, pmp12cfg.bits))),
          _ => internal_error(__FILE__, __LINE__, "Unexpected pmp config reg read")
        }
   else match n { //  sizeof(xlen) >= 64
-         0 => append(pmp7cfg.bits(),  append(pmp6cfg.bits(),  append(pmp5cfg.bits(),  append(pmp4cfg.bits(),  append(pmp3cfg.bits(),  append(pmp2cfg.bits(),  append(pmp1cfg.bits(),  pmp0cfg.bits()))))))),
-         2 => append(pmp15cfg.bits(), append(pmp14cfg.bits(), append(pmp13cfg.bits(), append(pmp12cfg.bits(), append(pmp11cfg.bits(), append(pmp10cfg.bits(), append(pmp9cfg.bits(),  pmp8cfg.bits()))))))),
+         0 => append(pmp7cfg.bits,  append(pmp6cfg.bits,  append(pmp5cfg.bits,  append(pmp4cfg.bits,  append(pmp3cfg.bits,  append(pmp2cfg.bits,  append(pmp1cfg.bits,  pmp0cfg.bits))))))),
+         2 => append(pmp15cfg.bits, append(pmp14cfg.bits, append(pmp13cfg.bits, append(pmp12cfg.bits, append(pmp11cfg.bits, append(pmp10cfg.bits, append(pmp9cfg.bits,  pmp8cfg.bits))))))),
          _ => internal_error(__FILE__, __LINE__, "Unexpected pmp config reg read")
        }
 }
 
 /* Helpers to handle locked entries */
 function pmpLocked(cfg: Pmpcfg_ent) -> bool =
-   cfg.L() == 0b1
+   cfg[L] == 0b1
 
 function pmpTORLocked(cfg: Pmpcfg_ent) -> bool =
-   (cfg.L() == 0b1) & (pmpAddrMatchType_of_bits(cfg.A()) == TOR)
+   (cfg[L] == 0b1) & (pmpAddrMatchType_of_bits(cfg[A]) == TOR)
 
 function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
   if pmpLocked(cfg) then cfg
