@@ -15,6 +15,8 @@ Formatting
 
 * Block-level indentation uses two spaces
 
+* Tabs should not be used
+
 * There should be no trailing spaces on any lines
 
 * All files should end with a newline character
