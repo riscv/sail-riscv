@@ -91,13 +91,13 @@ type asid32 = bits(9)
 
 function curAsid32(satp : bits(32)) -> asid32 = {
   let s = Mk_Satp32(satp);
-  s.Asid()
+  s[Asid]
 }
 
 /* page table base from satp */
 function curPTB32(satp : bits(32)) -> paddr32 = {
   let s : Satp32 = Mk_Satp32(satp);
-  shiftl(zero_extend(s.PPN()), PAGESIZE_BITS)
+  shiftl(zero_extend(s[PPN]), PAGESIZE_BITS)
 }
 
 /* Sv32 parameters and bitfield layouts */
@@ -147,13 +147,13 @@ type asid64 = bits(16)
 
 function curAsid64(satp : bits(64)) -> asid64 = {
   let s = Mk_Satp64(satp);
-  s.Asid()
+  s[Asid]
 }
 
 /* page table base from satp */
 function curPTB64(satp : bits(64)) -> paddr64 = {
   let s = Mk_Satp64(satp);
-  shiftl(zero_extend(s.PPN()), PAGESIZE_BITS)
+  shiftl(zero_extend(s[PPN]), PAGESIZE_BITS)
 }
 
 /* Sv39 parameters and bitfield layouts */

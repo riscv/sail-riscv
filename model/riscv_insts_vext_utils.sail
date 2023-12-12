@@ -63,7 +63,7 @@ function valid_eew_emul(EEW, EMUL_pow) = {
  */
 val valid_vtype : unit -> bool
 function valid_vtype() = {
-  vtype.vill() == 0b0
+  vtype[vill] == 0b0
 }
 
 /* Check for vstart value */
@@ -643,7 +643,7 @@ function signed_saturation(len, elem) = {
 
 /* Get the floating point rounding mode from csr fcsr */
 val get_fp_rounding_mode : unit -> rounding_mode
-function get_fp_rounding_mode() = encdec_rounding_mode(fcsr.FRM())
+function get_fp_rounding_mode() = encdec_rounding_mode(fcsr[FRM])
 
 /* Negate a floating point number */
 val negate_fp : forall 'm, 'm in {16, 32, 64}. bits('m) -> bits('m)
@@ -863,7 +863,7 @@ function fp_class(xf) = {
 
 val fp_widen : forall 'm, 'm in {16, 32}. bits('m) -> bits('m * 2)
 function fp_widen(nval) = {
-  let rm_3b = fcsr.FRM();
+  let rm_3b = fcsr[FRM];
   let (fflags, wval) : (bits_fflags, bits('m * 2)) = match 'm {
     16 => riscv_f16ToF32(rm_3b, nval),
     32 => riscv_f32ToF64(rm_3b, nval)

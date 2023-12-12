@@ -767,7 +767,7 @@ mapping clause encdec = FVVMTYPE(funct6, vm, vs2, vs1, vd) if haveVExt()
   <-> encdec_fvvmfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -831,7 +831,7 @@ mapping clause encdec = FVFMTYPE(funct6, vm, vs2, rs1, vd) if haveVExt()
   <-> encdec_fvfmfunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
