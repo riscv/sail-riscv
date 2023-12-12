@@ -168,11 +168,11 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   then m
   else {
     /* Suppress enabling C if C was disabled at boot (i.e. not supported) */
-    let m = if not(sys_enable_rvc()) then m else update_C(m, v[C]);
+    let m = if not(sys_enable_rvc()) then m else [m with C = v[C]];
     /* Suppress updates to misa.{f,d} if disabled at boot */
     if   not(sys_enable_fdext())
     then m
-    else update_D(update_F(m, v[F]), v[D] & v[F])
+    else [m with F = v[F], D = v[D] & v[F]]
   }
 }
 
@@ -303,17 +303,17 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   let m : Mstatus = Mk_Mstatus(zero_extend(v[22 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
 
   /* We don't have any extension context yet. */
-  let m = update_XS(m, extStatus_to_bits(Off));
+  let m = [m with XS = extStatus_to_bits(Off)];
 
   /* FS is WARL, and making FS writable can support the M-mode emulation of an FPU
    * to support code running in S/U-modes.  Spike does this, and for now, we match it,
    * but only if Zfinx isn't enabled.
    * FIXME: This should be made a platform parameter.
    */
-  let m = if sys_enable_zfinx() then update_FS(m, extStatus_to_bits(Off)) else m;
+  let m = if sys_enable_zfinx() then [m with FS = extStatus_to_bits(Off)] else m;
   let dirty = extStatus_of_bits(m[FS]) == Dirty | extStatus_of_bits(m[XS]) == Dirty |
               extStatus_of_bits(m[VS]) == Dirty;
-  let m = update_SD(m, bool_to_bits(dirty));
+  let m = [m with SD = bool_to_bits(dirty)];
 
   /* We don't support dynamic changes to SXL and UXL. */
   let m = set_mstatus_SXL(m, get_mstatus_SXL(o));
@@ -326,13 +326,13 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
 
   /* Hardwired to zero in the absence of 'U' or 'N'. */
   let m = if not(haveNExt()) then {
-             let m = update_UPIE(m, 0b0);
-             let m = update_UIE(m, 0b0);
+             let m = [m with UPIE = 0b0];
+             let m = [m with UIE = 0b0];
              m
           } else m;
 
   if not(haveUsrMode()) then {
-    let m = update_MPRV(m, 0b0);
+    let m = [m with MPRV = 0b0];
     m
   } else m
 }
@@ -392,42 +392,32 @@ function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   /* The only writable bits are the S-mode bits, and with the 'N'
    * extension, the U-mode bits. */
   let v = Mk_Minterrupts(v);
-  let m = update_SEI(o, v[SEI]);
-  let m = update_STI(m, v[STI]);
-  let m = update_SSI(m, v[SSI]);
+  let m = [o with SEI = v[SEI], STI = v[STI], SSI = v[SSI]];
   if haveUsrMode() & haveNExt() then {
-    let m = update_UEI(m, v[UEI]);
-    let m = update_UTI(m, v[UTI]);
-    let m = update_USI(m, v[USI]);
-    m
+    [m with UEI = v[UEI], UTI = v[UTI], USI = v[USI]]
   } else m
 }
 
 function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
-  let m = update_MEI(o, v[MEI]);
-  let m = update_MTI(m, v[MTI]);
-  let m = update_MSI(m, v[MSI]);
-  let m = update_SEI(m, v[SEI]);
-  let m = update_STI(m, v[STI]);
-  let m = update_SSI(m, v[SSI]);
+  let m = [o with
+    MEI = v[MEI],
+    MTI = v[MTI],
+    MSI = v[MSI],
+    SEI = v[SEI],
+    STI = v[STI],
+    SSI = v[SSI]
+  ];
   /* The U-mode bits will be modified if we have the 'N' extension. */
   if haveUsrMode() & haveNExt() then {
-    let m = update_UEI(m, v[UEI]);
-    let m = update_UTI(m, v[UTI]);
-    let m = update_USI(m, v[USI]);
-    m
+    [m with UEI = v[UEI], UTI = v[UTI], USI = v[USI]]
   } else m
 }
 
 function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   /* M-mode interrupt delegation bits "should" be hardwired to 0. */
   /* FIXME: needs verification against eventual spec language. */
-  let m = Mk_Minterrupts(v);
-  let m = update_MEI(m, 0b0);
-  let m = update_MTI(m, 0b0);
-  let m = update_MSI(m, 0b0);
-  m
+  [Mk_Minterrupts(v) with MEI = 0b0, MTI = 0b0, MSI = 0b0]
 }
 
 /* exception processing state */
@@ -451,10 +441,8 @@ bitfield Medeleg : xlenbits = {
 register medeleg : Medeleg  /* Delegation to S-mode */
 
 function legalize_medeleg(o : Medeleg, v : xlenbits) -> Medeleg = {
-  let m = Mk_Medeleg(v);
   /* M-EnvCalls delegation is not supported */
-  let m = update_MEnvCall(m, 0b0);
-  m
+  [Mk_Medeleg(v) with MEnvCall = 0b0]
 }
 
 /* registers for trap handling */
@@ -470,7 +458,7 @@ function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
  match (trapVectorMode_of_bits(v[Mode])) {
    TV_Direct => v,
    TV_Vector => v,
-   _         => update_Mode(v, o[Mode])
+   _         => [v with Mode = o[Mode]]
  }
 }
 
@@ -529,18 +517,12 @@ register scounteren : Counteren
 
 function legalize_mcounteren(c : Counteren, v : xlenbits) -> Counteren = {
   /* no HPM counters yet */
-  let c = update_IR(c, [v[2]]);
-  let c = update_TM(c, [v[1]]);
-  let c = update_CY(c, [v[0]]);
-  c
+  [c with IR = [v[2]], TM = [v[1]], CY = [v[0]]]
 }
 
 function legalize_scounteren(c : Counteren, v : xlenbits) -> Counteren = {
   /* no HPM counters yet */
-  let c = update_IR(c, [v[2]]);
-  let c = update_TM(c, [v[1]]);
-  let c = update_CY(c, [v[0]]);
-  c
+  [c with IR = [v[2]], TM = [v[1]], CY = [v[0]]]
 }
 
 bitfield Counterin : bits(32) = {
@@ -551,9 +533,7 @@ bitfield Counterin : bits(32) = {
 register mcountinhibit : Counterin
 
 function legalize_mcountinhibit(c : Counterin, v : xlenbits) -> Counterin = {
-  let c = update_IR(c, [v[2]]);
-  let c = update_CY(c, [v[0]]);
-  c
+  [c with IR = [v[2]], CY = [v[0]]]
 }
 
 register mcycle : bits(64)
@@ -620,38 +600,38 @@ function set_sstatus_UXL(s : Sstatus, a : arch_xlen) -> Sstatus = {
 
 function lower_mstatus(m : Mstatus) -> Sstatus = {
   let s = Mk_Sstatus(zero_extend(0b0));
-  let s = update_SD(s, m[SD]);
+  let s = [s with SD = m[SD]];
   let s = set_sstatus_UXL(s, get_mstatus_UXL(m));
-  let s = update_MXR(s, m[MXR]);
-  let s = update_SUM(s, m[SUM]);
-  let s = update_XS(s, m[XS]);
-  let s = update_FS(s, m[FS]);
-  let s = update_VS(s, m[VS]);
-  let s = update_SPP(s, m[SPP]);
-  let s = update_SPIE(s, m[SPIE]);
-  let s = update_UPIE(s, m[UPIE]);
-  let s = update_SIE(s, m[SIE]);
-  let s = update_UIE(s, m[UIE]);
+  let s = [s with MXR = m[MXR]];
+  let s = [s with SUM = m[SUM]];
+  let s = [s with XS = m[XS]];
+  let s = [s with FS = m[FS]];
+  let s = [s with VS = m[VS]];
+  let s = [s with SPP = m[SPP]];
+  let s = [s with SPIE = m[SPIE]];
+  let s = [s with UPIE = m[UPIE]];
+  let s = [s with SIE = m[SIE]];
+  let s = [s with UIE = m[UIE]];
   s
 }
 
 function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
-  let m = update_MXR(m, s[MXR]);
-  let m = update_SUM(m, s[SUM]);
+  let m = [m with MXR = s[MXR]];
+  let m = [m with SUM = s[SUM]];
 
-  let m = update_XS(m, s[XS]);
+  let m = [m with XS = s[XS]];
   // See comment for mstatus.FS.
-  let m = update_FS(m, s[FS]);
-  let m = update_VS(m, s[VS]);
+  let m = [m with FS = s[FS]];
+  let m = [m with VS = s[VS]];
   let dirty = extStatus_of_bits(m[FS]) == Dirty | extStatus_of_bits(m[XS]) == Dirty |
               extStatus_of_bits(m[VS]) == Dirty;
-  let m = update_SD(m, bool_to_bits(dirty));
+  let m = [m with SD = bool_to_bits(dirty)];
 
-  let m = update_SPP(m, s[SPP]);
-  let m = update_SPIE(m, s[SPIE]);
-  let m = update_UPIE(m, s[UPIE]);
-  let m = update_SIE(m, s[SIE]);
-  let m = update_UIE(m, s[UIE]);
+  let m = [m with SPP = s[SPP]];
+  let m = [m with SPIE = s[SPIE]];
+  let m = [m with UPIE = s[UPIE]];
+  let m = [m with SIE = s[SIE]];
+  let m = [m with UIE = s[UIE]];
   m
 }
 
@@ -690,35 +670,35 @@ bitfield Sinterrupts : xlenbits = {
 /* Provides the sip read view of mip (m) as delegated by mideleg (d). */
 function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   let s : Sinterrupts = Mk_Sinterrupts(zero_extend(0b0));
-  let s = update_SEI(s, m[SEI] & d[SEI]);
-  let s = update_STI(s, m[STI] & d[STI]);
-  let s = update_SSI(s, m[SSI] & d[SSI]);
+  let s = [s with SEI = m[SEI] & d[SEI]];
+  let s = [s with STI = m[STI] & d[STI]];
+  let s = [s with SSI = m[SSI] & d[SSI]];
 
-  let s = update_UEI(s, m[UEI] & d[UEI]);
-  let s = update_UTI(s, m[UTI] & d[UTI]);
-  let s = update_USI(s, m[USI] & d[USI]);
+  let s = [s with UEI = m[UEI] & d[UEI]];
+  let s = [s with UTI = m[UTI] & d[UTI]];
+  let s = [s with USI = m[USI] & d[USI]];
   s
 }
 
 /* Provides the sie read view of mie (m) as delegated by mideleg (d). */
 function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   let s : Sinterrupts = Mk_Sinterrupts(zero_extend(0b0));
-  let s = update_SEI(s, m[SEI] & d[SEI]);
-  let s = update_STI(s, m[STI] & d[STI]);
-  let s = update_SSI(s, m[SSI] & d[SSI]);
-  let s = update_UEI(s, m[UEI] & d[UEI]);
-  let s = update_UTI(s, m[UTI] & d[UTI]);
-  let s = update_USI(s, m[USI] & d[USI]);
+  let s = [s with SEI = m[SEI] & d[SEI]];
+  let s = [s with STI = m[STI] & d[STI]];
+  let s = [s with SSI = m[SSI] & d[SSI]];
+  let s = [s with UEI = m[UEI] & d[UEI]];
+  let s = [s with UTI = m[UTI] & d[UTI]];
+  let s = [s with USI = m[USI] & d[USI]];
   s
 }
 
 /* Returns the new value of mip from the previous mip (o) and the written sip (s) as delegated by mideleg (d). */
 function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
-  let m = if d[SSI] == 0b1 then update_SSI(m, s[SSI]) else m;
+  let m = if d[SSI] == 0b1 then [m with SSI = s[SSI]] else m;
   if haveNExt() then {
-    let m = if d[UEI] == 0b1 then update_UEI(m, s[UEI]) else m;
-    let m = if d[USI] == 0b1 then update_USI(m, s[USI]) else m;
+    let m = if d[UEI] == 0b1 then [m with UEI = s[UEI]] else m;
+    let m = if d[USI] == 0b1 then [m with USI = s[USI]] else m;
     m
   } else m
 }
@@ -730,13 +710,13 @@ function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterr
 /* Returns the new value of mie from the previous mie (o) and the written sie (s) as delegated by mideleg (d). */
 function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
-  let m = if d[SEI] == 0b1 then update_SEI(m, s[SEI]) else m;
-  let m = if d[STI] == 0b1 then update_STI(m, s[STI]) else m;
-  let m = if d[SSI] == 0b1 then update_SSI(m, s[SSI]) else m;
+  let m = if d[SEI] == 0b1 then [m with SEI = s[SEI]] else m;
+  let m = if d[STI] == 0b1 then [m with STI = s[STI]] else m;
+  let m = if d[SSI] == 0b1 then [m with SSI = s[SSI]] else m;
   if haveNExt() then {
-    let m = if d[UEI] == 0b1 then update_UEI(m, s[UEI]) else m;
-    let m = if d[UTI] == 0b1 then update_UTI(m, s[UTI]) else m;
-    let m = if d[USI] == 0b1 then update_USI(m, s[USI]) else m;
+    let m = if d[UEI] == 0b1 then [m with UEI = s[UEI]] else m;
+    let m = if d[UTI] == 0b1 then [m with UTI = s[UTI]] else m;
+    let m = if d[USI] == 0b1 then [m with USI = s[USI]] else m;
     m
   } else m
 }
@@ -867,7 +847,7 @@ register senvcfg : Envcfg
 
 function legalize_envcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
   let v = Mk_Envcfg(v);
-  let o = update_FIOM(o, if sys_enable_writable_fiom() then v[FIOM] else 0b0);
+  let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
