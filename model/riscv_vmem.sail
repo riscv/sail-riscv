@@ -370,7 +370,7 @@ function update_PTE_Bits(sv_params : SV_Params,
   let pte_lsbs = Mk_PTE_LSBs (pte [7 .. 0]);
 
   // Update 'dirty' bit?
-  let update_d : bool = (pte_lsbs.D() == 0b0) 
+  let update_d : bool = (pte_lsbs.D() == 0b0)
 			& (match a {
 			     Execute()	     => false,
 			     Read()	     => false,
