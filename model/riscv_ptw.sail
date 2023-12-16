@@ -98,8 +98,11 @@ overload to_str = {ptw_error_to_str}
  * walks during address translation; it typically works in conjunction
  * with any customization to checkPTEPermission().
  */
-function ext_get_ptw_error(eptwf : ext_ptw_fail) -> PTW_Error =
+function ext_get_ptw_permission_error(eptwf : ext_ptw_fail) -> PTW_Error =
   PTW_No_Permission()
+
+function ext_get_ptw_access_error(eptwf : ext_ptw_fail) -> PTW_Error =
+  PTW_Access()
 
 /* conversion of these translation/PTW failures into architectural exceptions */
 function translationException(a : AccessType(ext_access_type), f : PTW_Error) -> ExceptionType = {

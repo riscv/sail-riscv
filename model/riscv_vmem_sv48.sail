@@ -111,9 +111,13 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
           }
         } else { /* leaf PTE */
           match checkPTEPermission(ac, priv, mxr, do_sum, pattr, ext_pte, ext_ptw) {
-            PTE_Check_Failure(ext_ptw, ext_ptw_fail) => {
+            PTE_Check_Failure_Permission(ext_ptw, ext_ptw_fail) => {
 /*            print("walk48: pte permission check failure"); */
-              PTW_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw)
+              PTW_Failure(ext_get_ptw_permission_error(ext_ptw_fail), ext_ptw)
+            },
+            PTE_Check_Failure_No_Access(ext_ptw, ext_ptw_fail) => {
+/*            print("walk48: pte access fault failure"); */
+              PTW_Failure(ext_get_ptw_access_error(ext_ptw_fail), ext_ptw)
             },
             PTE_Check_Success(ext_ptw) => {
               if level > 0 then { /* superpage */
