@@ -852,11 +852,23 @@ bitfield Envcfg : bits(64) = {
 register menvcfg : Envcfg
 register senvcfg : Envcfg
 
-function legalize_envcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
+function legalize_menvcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
   let v = Mk_Envcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
+}
+
+function legalize_senvcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
+  let v = Mk_Envcfg(v);
+  let o = update_FIOM(o, if sys_enable_writable_fiom() then v.FIOM() else 0b0);
+  // Other extensions are not implemented yet so all other fields are read only zero.
+  o
+}
+
+function get_senvcfg() -> bits(64) = {
+  let o : Envcfg = senvcfg;
+  o.bits()
 }
 
 // Return whether or not FIOM is currently active, based on the current
