@@ -129,23 +129,31 @@ function translateAddr_priv(vAddr, ac, effPriv) = {
   /* PTW extensions: initialize the PTW extension state. */
   let ext_ptw : ext_ptw = init_ext_ptw;
 
-  match mode {
-    Sbare => TR_Address(vAddr, ext_ptw),
-    Sv39  => { if   isValidSv39Addr(vAddr)
-               then match translate39(asid, ptb, vAddr[38 .. 0], ac, effPriv, mxr, do_sum, SV39_LEVELS - 1, ext_ptw) {
-                      TR_Address(pa, ext_ptw) => TR_Address(zero_extend(pa), ext_ptw),
-                      TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
-                    }
-               else TR_Failure(translationException(ac, PTW_Invalid_Addr()), ext_ptw)
-             },
-    Sv48  => { if   isValidSv48Addr(vAddr)
-               then match translate48(asid, ptb, vAddr[47 .. 0], ac, effPriv, mxr, do_sum, SV48_LEVELS - 1, ext_ptw) {
-                      TR_Address(pa, ext_ptw) => TR_Address(zero_extend(pa), ext_ptw),
-                      TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
-                    }
-               else TR_Failure(translationException(ac, PTW_Invalid_Addr()), ext_ptw)
-             },
-    _     => internal_error(__FILE__, __LINE__, "unsupported address translation scheme")
+  /* Zicfiss: Shadow stack accesses cause SAMO access fault if mode is Bare */
+  match (mode, ac) {
+    (Sbare, SSRead(_))         => TR_Failure(translationException(ac, PTW_Access()), ext_ptw),
+    (Sbare, SSWrite(_))        => TR_Failure(translationException(ac, PTW_Access()), ext_ptw),
+    (Sbare, SSReadWrite(_, _)) => TR_Failure(translationException(ac, PTW_Access()), ext_ptw),
+    (_,     _)                 => {
+      match mode {
+        Sbare => TR_Address(vAddr, ext_ptw),
+        Sv39  => { if   isValidSv39Addr(vAddr)
+                   then match translate39(asid, ptb, vAddr[38 .. 0], ac, effPriv, mxr, do_sum, SV39_LEVELS - 1, ext_ptw) {
+                          TR_Address(pa, ext_ptw) => TR_Address(zero_extend(pa), ext_ptw),
+                          TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
+                        }
+                   else TR_Failure(translationException(ac, PTW_Invalid_Addr()), ext_ptw)
+                 },
+        Sv48  => { if   isValidSv48Addr(vAddr)
+                   then match translate48(asid, ptb, vAddr[47 .. 0], ac, effPriv, mxr, do_sum, SV48_LEVELS - 1, ext_ptw) {
+                          TR_Address(pa, ext_ptw) => TR_Address(zero_extend(pa), ext_ptw),
+                          TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
+                        }
+                   else TR_Failure(translationException(ac, PTW_Invalid_Addr()), ext_ptw)
+                 },
+        _     => internal_error(__FILE__, __LINE__, "unsupported address translation scheme")
+      }
+    }
   }
 }
 
