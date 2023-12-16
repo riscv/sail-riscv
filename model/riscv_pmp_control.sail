@@ -44,7 +44,11 @@ function pmpCheckRWX(ent, acc) = {
     Read(_)      => ent[R] == 0b1,
     Write(_)     => ent[W] == 0b1,
     ReadWrite(_) => ent[R] == 0b1 & ent[W] == 0b1,
-    Execute()    => ent[X] == 0b1
+    Execute()    => ent[X] == 0b1,
+    /* Zicfiss: ss read/write require write perms */
+    SSRead(_)      => ent[W] == 0b1,
+    SSWrite(_)     => ent[W] == 0b1,
+    SSReadWrite(_) => ent[R] == 0b1 & ent[W] == 0b1
   }
 }
 
@@ -109,6 +113,10 @@ function accessToFault(acc : AccessType(ext_access_type)) -> ExceptionType =
     Write(_)     => E_SAMO_Access_Fault(),
     ReadWrite(_) => E_SAMO_Access_Fault(),
     Execute()    => E_Fetch_Access_Fault(),
+    /* Zicfiss - shadow stack accesses cause SAMO access fault */
+    SSRead(_)      => E_SAMO_Access_Fault(),
+    SSWrite(_)     => E_SAMO_Access_Fault(),
+    SSReadWrite(_) => E_SAMO_Access_Fault()
   }
 
 function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: int('n), acc: AccessType(ext_access_type), priv: Privilege)
