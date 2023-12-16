@@ -228,6 +228,9 @@ function haveZimop() -> bool = true
 /* Zcmop extension support */
 function haveZcmop() -> bool = true
 
+/* Zicfiss extension support */
+function haveZicfiss() -> bool = true
+
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
   SBE  : 4
@@ -849,8 +852,10 @@ bitfield Envcfg : bits(64) = {
   CBCFE  : 6,
   // Cache Block Invalidate instruction Enable
   CBIE   : 5 .. 4,
+  // Zicfiss: Shadow stack enable
+  SSE    : 3,
   // Reserved WPRI bits.
-  wpri_0 : 3 .. 1,
+  wpri_0 : 2 .. 1,
   // Fence of I/O implies Memory
   FIOM   : 0,
 }
@@ -861,6 +866,8 @@ register senvcfg : Envcfg
 function legalize_menvcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
   let v = Mk_Envcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
+  // Zicfiss - SSE: shadow stack enable
+  let o = [o with SSE = if haveZicfiss() then v[SSE] else 0b0];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
@@ -868,12 +875,16 @@ function legalize_menvcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
 function legalize_senvcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
   let v = Mk_Envcfg(v);
   let o = update_FIOM(o, if sys_enable_writable_fiom() then v.FIOM() else 0b0);
+  // Zicfiss - SSE: shadow stack enable - is ROZ in senvcfg if menvcfg.SSE is 0
+  let o = update_SSE(o, if haveZicfiss() & menvcfg.SSE() == 0b1 then v.SSE() else 0b0);
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
 
 function get_senvcfg() -> bits(64) = {
   let o : Envcfg = senvcfg;
+  // Zicfiss - SSE: shadow stack enable - is ROZ in senvcfg if menvcfg.SSE is 0
+  let o = update_SSE(o, if  haveZicfiss() & menvcfg.SSE() == 0b1 then o.SSE() else 0b0);
   o.bits()
 }
 
