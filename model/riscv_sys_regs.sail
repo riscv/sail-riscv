@@ -168,6 +168,12 @@ function haveZalrsc() -> bool = haveAtomics()
 /* Zicond extension support */
 function haveZicond() -> bool = true
 
+/* Zimop extension support */
+function haveZimop() -> bool = true
+
+/* Zcmop extension support */
+function haveZcmop() -> bool = true
+
 /*
  * Illegal values legalized to least privileged mode supported.
  * Note: the only valid combinations of supported modes are M, M+U, M+S+U.
