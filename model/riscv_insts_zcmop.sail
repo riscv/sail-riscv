@@ -76,10 +76,25 @@
  * the fetch-execute logic.
  */
 /* ****************************************************************** */
+/* Zcmops may be redefined by other extensions */
+function is_ext_defined_cmop(mop : bits(3)) -> bool = {
+  /* Zicfiss uses the following cmop codepoints:
+   * mop.rr.7 rd=x0, rs2=x1/x5, rs1=x0 => sspush rs2
+   * c.mop.1 => c.sspush   x1
+   * c.mop.5 => c.sspopchk x5
+   */
+  match mop  {
+    0b000 => haveZicfiss(),
+    0b010 => haveZicfiss(),
+    _     => false
+  }
+}
 
 union clause ast = ZCMOP : (bits(3))
-mapping clause encdec_compressed = ZCMOP(mop) if haveZcmop()
-  <-> 0b01100 @ mop : bits(3) @ 0b100000 @ 0b01 if haveZcmop()
+mapping clause encdec_compressed = ZCMOP(mop)
+      if haveZcmop() & not(is_ext_defined_cmop(mop))
+  <-> 0b01100 @ mop : bits(3) @ 0b100000 @ 0b01
+      if haveZcmop() & not(is_ext_defined_cmop(mop))
 
 mapping zcmop_mnemonic : bits(3) <-> string = {
   0b000 <-> "c.mop.1",
@@ -93,7 +108,9 @@ mapping zcmop_mnemonic : bits(3) <-> string = {
 }
 
 mapping clause assembly = ZCMOP(mop)
+      if haveZcmop() & not(is_ext_defined_cmop(mop))
   <-> zcmop_mnemonic(mop)
+      if haveZcmop() & not(is_ext_defined_cmop(mop))
 
 function clause execute ZCMOP(mop) = {
   RETIRE_SUCCESS

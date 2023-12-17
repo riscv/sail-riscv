@@ -76,11 +76,39 @@
 union clause ast = ZIMOP_MOP_R : (bits(5), regidx, regidx)
 union clause ast = ZIMOP_MOP_RR : (bits(3), regidx, regidx, regidx)
 
-mapping clause encdec = ZIMOP_MOP_R(mop_30 @ mop_27_26 @ mop_21_20, rs1, rd) if haveZimop()
-  <-> 0b1 @ mop_30 : bits(1) @ 0b00 @ mop_27_26 : bits(2) @ 0b0111 @ mop_21_20 : bits(2) @ rs1 @ 0b100 @ rd @ 0b1110011 if haveZimop()
-
-mapping clause encdec = ZIMOP_MOP_RR(mop_30 @ mop_27_26, rs2, rs1, rd) if haveZimop()
-  <-> 0b1 @ mop_30 : bits(1) @ 0b00 @ mop_27_26 : bits(2) @ 0b1 @ rs2 @ rs1 @ 0b100 @ rd @ 0b1110011 if haveZimop()
+/* Zimops mop.r may be redefined by other extensions */
+function is_ext_defined_mop_r(mop : bits(5), rs1 : regidx, rd: regidx) -> bool = {
+  /* Zicfiss uses the following mop.r.28 codepoints:
+   * mop.r.28 rd=x0,  rs1=x1/x5 => sspopchk rs1
+   * mop.r.28 rd!=x0, rs1=x0    => ssrdp    rd
+   */
+  match (mop, rs1, rd) {
+    (0b11100, 0b00001, 0b00000)               => haveZicfiss(),
+    (0b11100, 0b00101, 0b00000)               => haveZicfiss(),
+    (0b11100, 0b00000,       _) if rd == zreg => false,
+    (0b11100, 0b00000,       _) if rd != zreg => haveZicfiss(),
+    (_, _, _)                                 => false
+  }
+}
+/* Zimops mop.rr may be redefined by other extensions */
+function is_ext_defined_mop_rr(mop : bits(3), rs2 : regidx, rs1 : regidx, rd: regidx) -> bool = {
+  /* Zicfiss uses the following mop.rr.7 codepoints:
+   * mop.rr.7 rd=x0, rs2=x1/x5, rs1=x0 => sspush rs2
+   */
+  match (mop, rs2, rs1, rd) {
+    (0b111, 0b00001, 0b00000, 0b00000) => haveZicfiss(),
+    (0b111, 0b00101, 0b00000, 0b00000) => haveZicfiss(),
+    (_, _, _, _)                       => false
+  }
+}
+mapping clause encdec = ZIMOP_MOP_R(mop_30 @ mop_27_26 @ mop_21_20, rs1, rd)
+      if haveZimop() & not(is_ext_defined_mop_r(mop_30 @ mop_27_26 @ mop_21_20, rs1, rd))
+  <-> 0b1 @ mop_30 : bits(1) @ 0b00 @ mop_27_26 : bits(2) @ 0b0111 @ mop_21_20 : bits(2) @ rs1 @ 0b100 @ rd @ 0b1110011
+      if haveZimop() & not(is_ext_defined_mop_r(mop_30 @ mop_27_26 @ mop_21_20, rs1, rd))
+mapping clause encdec = ZIMOP_MOP_RR(mop_30 @ mop_27_26, rs2, rs1, rd)
+      if haveZimop() & not(is_ext_defined_mop_rr(mop_30 @ mop_27_26, rs2, rs1, rd))
+  <-> 0b1 @ mop_30 : bits(1) @ 0b00 @ mop_27_26 : bits(2) @ 0b1 @ rs2 @ rs1 @ 0b100 @ rd @ 0b1110011
+      if haveZimop() & not(is_ext_defined_mop_rr(mop_30 @ mop_27_26, rs2, rs1, rd))
 
 mapping zimop_r_mnemonic : bits(5) <-> string = {
   0b00000 <-> "mop.r.0",
@@ -129,10 +157,14 @@ mapping zimop_rr_mnemonic : bits(3) <-> string = {
 }
 
 mapping clause assembly = ZIMOP_MOP_R(mop, rs1, rd)
-  <->  zimop_r_mnemonic(mop) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
+      if haveZimop() & not(is_ext_defined_mop_r(mop, rs1, rd))
+  <-> zimop_r_mnemonic(mop) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
+      if haveZimop() & not(is_ext_defined_mop_r(mop, rs1, rd))
 
 mapping clause assembly = ZIMOP_MOP_RR(mop, rs2, rs1, rd)
+      if haveZimop() & not(is_ext_defined_mop_rr(mop, rs2, rs1, rd))
   <-> zimop_rr_mnemonic(mop) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+      if haveZimop() & not(is_ext_defined_mop_rr(mop, rs2, rs1, rd))
 
 function clause execute ZIMOP_MOP_R(mop, rs1, rd) = {
   X(rd) = zeros();
