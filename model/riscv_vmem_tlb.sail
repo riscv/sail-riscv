@@ -72,7 +72,7 @@
 // specification, we model a simple TLB so that
 // (1) we can meaningfully test SFENCE.VMA which would be a no-op wihout a TLB;
 // (2) we can greatly speed up simulation speed (for Linux boot, can
-//     reduce elapsed time from 10s of minutes to few minutes.
+//     reduce elapsed time from 10s of minutes to few minutes).
 
 // PRIVATE
 struct TLB_Entry = {

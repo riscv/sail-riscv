@@ -71,7 +71,7 @@
 // ****************************************************************
 // Virtual memory address translation and memory protection,
 // including PTWs (Page Table Walks) and TLBs (Translation Look-aside Buffers)
-// Supported VM modes: Sv32, Sv39, Sv48.  FUTURE: Sv57
+// Supported VM modes: Sv32, Sv39, Sv48.  TODO: Sv57
 
 // STYLE NOTES:
 //   PRIVATE items are used only within this VM code.
@@ -88,14 +88,14 @@
 // ignore TLB functionality at first reading.
 
 // ****************************************************************
-// Parameters for VM modes sv32, sv39, sv48 and (future) Sv57
+// Parameters for VM modes sv32, sv39, sv48 and (TODO) Sv57
 
 // All VM modes use the same page size (4KB, with 12-bit index)
 
 // This two-line idiom constrains the value (2nd line) to be a singleton,
 // which helps in type-checking wherever it is used.
 type PAGESIZE_BITS : Int = 12
-let  PAGESIZE_BITS = sizeof(PAGESIZE_BITS)
+let  pagesize_bits = sizeof(PAGESIZE_BITS)
 
 // PRIVATE
 struct SV_Params = {
@@ -192,7 +192,7 @@ let sv48_params : SV_Params = struct {
        pte_PPN_j_size_bits = 9
 }
 
-// For future; not currently used
+// TODO; not currently used
 // PRIVATE
 /*
 let sv57_params : SV_Params = struct {
@@ -237,23 +237,20 @@ function undefined_SV_Params() = sv32_params
 function vpns_of_va(sv_params : SV_Params,
                     va        : bits(64)) -> bits(64) = {
   let mask : bits(64) = zero_extend(ones(sv_params.va_size_bits));
-  (va & mask) >> PAGESIZE_BITS
+  (va & mask) >> pagesize_bits
 }
 
 // PRIVATE: Extract VPN[level] from  VA
 function vpn_j_of_va(sv_params : SV_Params,
                      va        : bits(64),
                      level     : nat)       -> bits(64) = {
-  let lsb  : nat       = PAGESIZE_BITS + level * sv_params.vpn_size_bits;
+  let lsb  : nat      = pagesize_bits + level * sv_params.vpn_size_bits;
   let mask : bits(64) = zero_extend(ones(sv_params.vpn_size_bits));
   ((va >> lsb) & mask)
 }
 
 // PRIVATE: Extract offset within page from VA
-function offset_of_va(va : bits(64)) -> bits(64) = {
-  let mask : bits(64) = zero_extend(ones(PAGESIZE_BITS));
-  va & mask
-}
+function offset_of_va(va : bits(64)) -> bits(PAGESIZE_BITS) = va[pagesize_bits - 1 .. 0]
 
 // Valid xlen-wide values containing virtual addrs must have upper
 // bits equal to the MSB of the virtual address.
@@ -302,7 +299,7 @@ bitfield PTE_LSBs : bits(8) = {
 }
 
 // PRIVATE: check if a PTE is a pointer to next level (non-leaf)
-function pte_is_ptr(pte_lsbs : PTE_LSBs) -> bool = (  pte_lsbs.X() == 0b0)
+function pte_is_ptr(pte_lsbs : PTE_LSBs) -> bool = (pte_lsbs.X() == 0b0)
                                                    & (pte_lsbs.W() == 0b0)
                                                    & (pte_lsbs.R() == 0b0)
 
@@ -335,7 +332,7 @@ function check_PTE_permission(ac       : AccessType(ext_access_type),
   let pte_R = pte_lsbs.R();
   let pte_W = pte_lsbs.W();
   let pte_X = pte_lsbs.X();
-  let b : bool =
+  let success : bool =
     match (ac, priv) {
       (Read(_),         User)       => (pte_U == 0b1)
                                        & ((pte_R == 0b1)
@@ -356,8 +353,8 @@ function check_PTE_permission(ac       : AccessType(ext_access_type),
       (Execute(),       Supervisor) => (pte_U == 0b0) & (pte_X == 0b1),
       (_,               Machine)    => internal_error(__FILE__, __LINE__,
                                                       "m-mode mem perm check")};
-  if b then PTE_Check_Success(())
-  else      PTE_Check_Failure((), ())
+  if success then PTE_Check_Success(())
+  else            PTE_Check_Failure((), ())
 }
 
 // Update PTE bits if needed; return new PTE if updated
@@ -468,7 +465,8 @@ val pt_walk : (SV_Params,
                bool,                         // mstatus.MXR
                bool,                         // do_sum
                bits(64),                     // PT base addr
-               nat,                          // tree level for this recursive call
+               range(0,3),                   // tree level for this recursive call
+                                             //     range(0,4) when add Sv57 (TODO)
                bool,                         // global translation,
                ext_ptw)                      // ext_ptw
               -> PTW_Result
@@ -486,6 +484,11 @@ function pt_walk(sv_params,
   let vpn_j      = vpn_j_of_va(sv_params, va, level);
   let pte_offset = vpn_j << sv_params.log_pte_size_bytes;
   let pte_addr   = pt_base + pte_offset;
+
+  // In Sv32, physical addrs are actually 34 bits, not XLEN(=32) bits.
+  // Below, 'pte_phys_addr' is XLEN bits because it's an arg to
+  // 'mem_read_priv()' [riscv_mem.sail] where it's declared as xlenbits.
+  // That def and this use need to be fixed together (TODO)
   let pte_phys_addr : xlenbits = pte_addr[(sizeof(xlen) - 1) .. 0];
 
   // Read this-level PTE from mem
@@ -510,8 +513,8 @@ function pt_walk(sv_params,
         if pte_is_ptr(pte_lsbs) then {
           if level > 0 then {
             // follow the pointer to walk next level
-            let pt_base' : bits(64) = shiftl(ppns, PAGESIZE_BITS);
-            let level'        = level - 1;
+            let pt_base' : bits(64) = ppns << pagesize_bits;
+            let level'              = level - 1;
             pt_walk(sv_params, va, ac, priv, mxr, do_sum,
                     pt_base', level', global', ext_ptw)
           }
@@ -540,14 +543,14 @@ function pt_walk(sv_params,
                   PTW_Failure(PTW_Misaligned(), ext_ptw)
                 else {
                   // Compose final PA in superpage:
-                  // Superpage PPN + lower VPNs + PAGESIZE_BITS page-offset
+                  // Superpage PPN + lower VPNs + pagesize_bits page-offset
                   let ppn = ppns | (vpns_of_va (sv_params, va) & mask);
-                  let pa  = ((ppn << PAGESIZE_BITS) | offset_of_va(va));
+                  let pa  = ((ppn << pagesize_bits) | zero_extend(offset_of_va(va)));
                   PTW_Success(pa, pte, pte_addr, level, global', ext_ptw)
                 }
               }
               else {
-                let pa = ((ppns << PAGESIZE_BITS) | offset_of_va (va));
+                let pa = ((ppns << pagesize_bits) | zero_extend(offset_of_va (va)));
                 PTW_Success(pa, pte, pte_addr, level, global', ext_ptw)
               }
           }
@@ -608,7 +611,7 @@ function satp_to_PT_base(sv_params : SV_Params, satp_val : xlenbits) -> bits(64)
   let satp_64b : bits(64) = zero_extend(satp_val);
   let mask_64b : bits(64) = zero_extend(ones(sv_params.satp_ppn_size_bits));
   let ppn_64b  : bits(64) = (satp_64b >>  sv_params.satp_ppn_lsb_index) & mask_64b;
-  ppn_64b << PAGESIZE_BITS
+  ppn_64b << pagesize_bits
 }
 
 // Compute address translation mode from SATP register
@@ -669,7 +672,6 @@ function translate_TLB_hit(sv_params : SV_Params,
                            priv      : Privilege,
                            mxr       : bool,
                            do_sum    : bool,
-                           level     : nat,
                            ext_ptw   : ext_ptw,
                            tlb_index : nat,
                            ent       : TLB_Entry)
@@ -726,10 +728,10 @@ function translate_TLB_miss(sv_params : SV_Params,
                             priv      : Privilege,
                             mxr       : bool,
                             do_sum    : bool,
-                            level     : nat,
                             ext_ptw   : ext_ptw) -> TR_Result(bits(64), PTW_Error) = {
-  let ptw_result = pt_walk(sv_params, vAddr, ac, priv, mxr, do_sum,
-                           ptb, level, false, ext_ptw);
+  let initial_level = sv_params.levels - 1;
+  let ptw_result    = pt_walk(sv_params, vAddr, ac, priv, mxr, do_sum,
+                              ptb, initial_level, false, ext_ptw);
   match ptw_result {
     PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),
     PTW_Success(pAddr, pte, pteAddr, level, global, ext_ptw) => {
@@ -740,7 +742,7 @@ function translate_TLB_miss(sv_params : SV_Params,
         None() => {
           add_to_TLB(asid, vAddr, pAddr, pte, pteAddr, level, global,
                      sv_params.vpn_size_bits,
-                     PAGESIZE_BITS);
+                     pagesize_bits);
           TR_Address(pAddr, ext_ptw)
         },
         Some(pte') =>
@@ -762,7 +764,7 @@ function translate_TLB_miss(sv_params : SV_Params,
               MemValue(_) => {
                 add_to_TLB(asid, vAddr, pAddr, pte', pteAddr, level, global,
                            sv_params.vpn_size_bits,
-                           PAGESIZE_BITS);
+                           pagesize_bits);
                 TR_Address(pAddr, ext_ptw)
               },
               MemException(e) =>
@@ -783,7 +785,6 @@ function translate(sv_params : SV_Params,
                    priv      : Privilege,
                    mxr        : bool,
                    do_sum    : bool,
-                   level     : nat,
                    ext_ptw   : ext_ptw)
                   -> TR_Result(bits(64), PTW_Error) = {
   let va_mask : bits(64) = zero_extend(ones(sv_params.va_size_bits));
@@ -793,9 +794,9 @@ function translate(sv_params : SV_Params,
   // are not part of RISC-V archticture spec (see TLB_NOTE above)
   match lookup_TLB(asid, vAddr) {
     Some(index, ent) => translate_TLB_hit(sv_params, asid, ptb, vAddr, ac, priv,
-                                          mxr, do_sum, level, ext_ptw, index, ent),
+                                          mxr, do_sum, ext_ptw, index, ent),
     None()           => translate_TLB_miss(sv_params, asid, ptb, vAddr, ac, priv,
-                                           mxr, do_sum, level, ext_ptw)
+                                           mxr, do_sum, ext_ptw)
   }
 }
 
@@ -818,7 +819,7 @@ function translateAddr(vAddr   : xlenbits,
     Sv32  => (true,                                 sv32_params),
     Sv39  => (is_valid_vAddr(sv39_params, vAddr_64b), sv39_params),
     Sv48  => (is_valid_vAddr(sv48_params, vAddr_64b), sv48_params),
-    // Sv57 => (is_valid_vAddr(sv57_params, vAddr_64b), sv57_params),    // FUTURE
+    // Sv57 => (is_valid_vAddr(sv57_params, vAddr_64b), sv57_params),    // TODO
   };
   if not(valid_va) then
     TR_Failure(translationException(ac, PTW_Invalid_Addr()), ext_ptw)
@@ -832,7 +833,6 @@ function translateAddr(vAddr   : xlenbits,
                                ptb,
                                vAddr_64b,
                                ac, effPriv, mxr, do_sum,
-                               sv_params.levels - 1,    // initial level
                                ext_ptw);
     // Fixup result PA or exception
     match tr_result1 {
