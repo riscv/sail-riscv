@@ -106,14 +106,42 @@ function pmpCheckRWX(ent, acc) = {
   }
 }
 
-// this needs to be called with the effective current privilege.
-val pmpCheckPerms: (Pmpcfg_ent, AccessType(ext_access_type), Privilege) -> bool
+/* this needs to be called with the effective current privilege */
+val pmpCheckPerms: (Pmpcfg_ent, AccessType(ext_access_type), Privilege) -> bool effect {rreg}
 function pmpCheckPerms(ent, acc, priv) = {
-  match priv {
-    Machine => if   pmpLocked(ent)
-               then pmpCheckRWX(ent, acc)
-               else true,
-    _       => pmpCheckRWX(ent, acc)
+  match mseccfg.MML() {
+    0b1 =>
+      match (ent.L(), ent.R(), ent.W(), ent.X()) {
+        (0b1, 0b0, 0b1, _) =>
+          match acc {
+            Execute(_) => true,
+            Read(_)    => priv == Machine & ent.X() == 0b1,
+            _          => false
+          },
+        (0b0, 0b0, 0b1, _) =>
+          match acc {
+            Read(_)  => true,
+            Write(_) => priv == Machine | ent.X() == 0b1,
+            _        => false
+          },
+        (0b1, 0b1, 0b1, 0b1) =>
+          match acc {
+            Read(_) => true,
+            _       => false
+          },
+        (_, _, _, _) =>
+          if (priv == Machine) == pmpLockBit(ent)
+          then pmpCheckRWX(ent, acc)
+          else false
+      },
+    0b0 =>
+      match priv {
+        Machine =>
+          if pmpLockBit(ent)
+          then pmpCheckRWX(ent, acc)
+          else true,
+        _       => pmpCheckRWX(ent, acc)
+      }
   }
 }
 
@@ -219,10 +247,19 @@ function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: atom('n), acc: Acce
   match pmpMatchEntry(addr, width, acc, priv, pmp15cfg, pmpaddr15, pmpaddr14) {
     PMP_Success  => true,
     PMP_Fail     => false,
-    PMP_Continue => match priv {
-                      Machine => true,
-                      _       => false
-                    }
+    PMP_Continue =>
+      match priv {
+        Machine =>
+          if mseccfg.MMWP() == 0b1                /* Make Read, Write and execute denied by default, if condition meets for M mode */
+          then false
+          else if mseccfg.MML() == 0b1            /* Make execute denied, if condition meets for M mode */
+          then match acc {
+                 Execute(_) => false,
+                 _          => true
+               }
+          else true,
+        _       => false                          /* Make Read, Write and execute denied by default for S/U mode */
+      }
   }}}}}}}}}}}}}}}};
 
   if   check
@@ -236,6 +273,10 @@ function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: atom('n), acc: Acce
 }
 
 function init_pmp() -> unit = {
+  mseccfg->RLB() = 0b0;
+  mseccfg->MML() = 0b0;
+  mseccfg->MMWP() = 0b0;
+  mseccfgh = zero_extend(0b0);
   pmp0cfg  = update_A(pmp0cfg,  pmpAddrMatchType_to_bits(OFF));
   pmp1cfg  = update_A(pmp1cfg,  pmpAddrMatchType_to_bits(OFF));
   pmp2cfg  = update_A(pmp2cfg,  pmpAddrMatchType_to_bits(OFF));

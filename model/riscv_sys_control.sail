@@ -102,6 +102,9 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x343 => p == Machine, // mtval
     0x344 => p == Machine, // mip
 
+    0x747 => p == Machine, // mseccfg
+    0x757 => p == Machine & (sizeof(xlen) == 32), // mseccfgh
+
     0x3A0 => p == Machine,                        // pmpcfg0
     0x3A1 => p == Machine & (sizeof(xlen) == 32), // pmpcfg1
     0x3A2 => p == Machine,                        // pmpcfg2
