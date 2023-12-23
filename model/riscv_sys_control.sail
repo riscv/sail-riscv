@@ -123,6 +123,13 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x3BD => p == Machine, // pmpaddrD
     0x3BE => p == Machine, // pmpaddrE
     0x3BF => p == Machine, // pmpaddrF
+    0x350 => p == Machine, // miselect
+    0x351 => p == Machine, // mireg
+    0x352 => p == Machine, // mireg2
+    0x353 => p == Machine, // mireg3
+    0x355 => p == Machine, // mireg4
+    0x356 => p == Machine, // mireg5
+    0x357 => p == Machine, // mireg6
 
     /* counters */
     0xB00 => p == Machine, // mcycle
@@ -133,6 +140,12 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
 
     /* disabled trigger/debug module */
     0x7a0 => p == Machine,
+
+    /* Smcntrpmf */
+    0x321 => p == Machine, // mcyclecfg
+    0x322 => p == Machine, // minstretcfg
+    0x721 => p == Machine, // mcyclecfgh
+    0x722 => p == Machine, // minstretcfgh
 
     /* supervisor mode: trap setup */
     0x100 => haveSupMode() & (p == Machine | p == Supervisor), // sstatus
@@ -152,6 +165,49 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
 
     /* supervisor mode: address translation */
     0x180 => haveSupMode() & (p == Machine | p == Supervisor), // satp
+
+    /* supervisor CSR access */
+    0x150 => haveSupMode() & (p == Machine | p == Supervisor), // siselect
+    0x151 => {
+      if haveSupMode() & (p == Machine | p == Supervisor) & menvcfg.CDE() == 0b1 then
+          match siselect.REG() {
+            0x040 => mcounteren.CY() == 0b1,
+            0x042 => mcounteren.IR() == 0b1,
+            _ => false
+          }
+        else false
+    }, // sireg
+    0x152 => {
+      if haveSupMode() & (p == Machine | p == Supervisor) & menvcfg.CDE() == 0b1 &
+        sizeof(xlen) == 32 then
+           match siselect.REG() {
+            0x040 => mcounteren.CY() == 0b1,
+            0x042 => mcounteren.IR() == 0b1,
+            _ => false
+          }
+        else false
+    }, // sireg2
+    0x153 => false, // sireg3
+    0x155 => {
+      if haveSupMode() & (p == Machine | p == Supervisor) & menvcfg.CDE() == 0b1 then
+          match siselect.REG() {
+            0x040 => mcounteren.CY() == 0b1,
+            0x042 => mcounteren.IR() == 0b1,
+            _ => false
+          }
+        else false
+    }, // sireg4
+    0x156 => {
+      if haveSupMode() & (p == Machine | p == Supervisor) & menvcfg.CDE() == 0b1 &
+        sizeof(xlen) == 32 then
+          match siselect.REG() {
+            0x040 => mcounteren.CY() == 0b1,
+            0x042 => mcounteren.IR() == 0b1,
+            _ => false
+          }
+        else false
+    }, // sireg5
+    0x157 => false, // sireg6
 
     /* user mode: counters */
     0xC00 => haveUsrMode(),    // cycle

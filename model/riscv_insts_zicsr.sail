@@ -84,6 +84,18 @@ mapping clause encdec = CSR(csr, rs1, rd, is_imm, op)
   <-> csr @ rs1 @ bool_bits(is_imm) @ encdec_csrop(op) @ rd @ 0b1110011
 
 function readCSR csr : csreg -> xlenbits = {
+  let csr : csreg = match (csr, siselect.REG()) {
+    (0x151, 0x040) => 0xB00,  // sireg, cycle
+    (0x155, 0x040) => 0xB80,  // sireg4, cycleh
+    (0x152, 0x040) => 0x321,  // sireg2, cyclecfg
+    (0x156, 0x040) => 0x721,  // sireg5, cyclecfgh
+    (0x151, 0x042) => 0xB02,  // sireg, instret
+    (0x155, 0x042) => 0xB82,  // sireg4, instreth
+    (0x152, 0x042) => 0x322,  // sireg2, instretcfg
+    (0x156, 0x042) => 0x722,  // sireg5, instretcfgh
+    (_, _) => csr
+  };
+
   let res : xlenbits =
   match (csr, sizeof(xlen)) {
     /* machine mode */
@@ -136,6 +148,13 @@ function readCSR csr : csreg -> xlenbits = {
     (0xB02,  _) => minstret[(sizeof(xlen) - 1) .. 0],
     (0xB80, 32) => mcycle[63 .. 32],
     (0xB82, 32) => minstret[63 .. 32],
+    (0x350,  _) => zero_extend(0b0),
+    (0x351,  _) => zero_extend(0b0),
+    (0x352,  _) => zero_extend(0b0),
+    (0x353,  _) => zero_extend(0b0),
+    (0x355,  _) => zero_extend(0b0),
+    (0x356,  _) => zero_extend(0b0),
+    (0x357,  _) => zero_extend(0b0),
 
     /* vector */
     (0x008, _) => zero_extend(vstart),
@@ -145,6 +164,11 @@ function readCSR csr : csreg -> xlenbits = {
     (0xC20, _) => vl,
     (0xC21, _) => vtype.bits(),
     (0xC22, _) => vlenb,
+
+    (0x321,  _) => mcyclecfg.bits()[(sizeof(xlen) - 1) .. 0],
+    (0x322,  _) => minstretcfg.bits()[(sizeof(xlen) - 1) .. 0],
+    (0x721, 32) => mcyclecfg.bits()[63 .. 32],
+    (0x722, 32) => minstretcfg.bits()[63 .. 32],
 
     /* trigger/debug */
     (0x7a0,  _) => ~(tselect),  /* this indicates we don't have any trigger support */
@@ -163,6 +187,14 @@ function readCSR csr : csreg -> xlenbits = {
     (0x143,  _) => stval,
     (0x144,  _) => lower_mip(mip, mideleg).bits(),
     (0x180,  _) => satp,
+
+    (0x150,  _) => siselect.bits(),
+    (0x151,  _) => zero_extend(0b0),
+    (0x152,  _) => zero_extend(0b0),
+    (0x153,  _) => zero_extend(0b0),
+    (0x155,  _) => zero_extend(0b0),
+    (0x156,  _) => zero_extend(0b0),
+    (0x157,  _) => zero_extend(0b0),
 
     /* user mode counters */
     (0xC00,  _) => mcycle[(sizeof(xlen) - 1) .. 0],
@@ -188,6 +220,18 @@ function readCSR csr : csreg -> xlenbits = {
 }
 
 function writeCSR (csr : csreg, value : xlenbits) -> unit = {
+  let csr : csreg = match (csr, siselect.REG()) {
+    (0x151, 0x040) => 0xB00,  // sireg, cycle
+    (0x155, 0x040) => 0xB80,  // sireg4, cycleh
+    (0x152, 0x040) => 0x321,  // sireg2, cyclecfg
+    (0x156, 0x040) => 0x721,  // sireg5, cyclecfgh
+    (0x151, 0x042) => 0xB02,  // sireg, instret
+    (0x155, 0x042) => 0xB82,  // sireg4, instreth
+    (0x152, 0x042) => 0x322,  // sireg2, instretcfg
+    (0x156, 0x042) => 0x722,  // sireg5, instretcfgh
+    (_, _) => csr
+  };
+
   let res : option(xlenbits) =
   match (csr, sizeof(xlen)) {
     /* machine mode */
@@ -237,6 +281,18 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0xB02,  _) => { minstret[(sizeof(xlen) - 1) .. 0] = value; minstret_increment = false; Some(value) },
     (0xB80, 32) => { mcycle[63 .. 32] = value; Some(value) },
     (0xB82, 32) => { minstret[63 .. 32] = value; minstret_increment = false; Some(value) },
+    (0x350,  _) => { Some(value) },
+    (0x351,  _) => { Some(value) },
+    (0x352,  _) => { Some(value) },
+    (0x353,  _) => { Some(value) },
+    (0x355,  _) => { Some(value) },
+    (0x356,  _) => { Some(value) },
+    (0x357,  _) => { Some(value) },
+
+    (0x321,  _) => { mcyclecfg = legalize_smcntrpmf(mcyclecfg, value); Some(value) },
+    (0x322,  _) => { minstretcfg = legalize_smcntrpmf(minstretcfg, value); Some(value) },
+    (0x721, 32) => { mcyclecfg = legalize_smcntrpmf_high(mcyclecfg, value); Some(value) },
+    (0x722, 32) => { minstretcfg = legalize_smcntrpmf_high(minstretcfg, value); Some(value) },
 
     /* trigger/debug */
     (0x7a0,  _) => { tselect = value; Some(tselect) },
@@ -255,6 +311,14 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x143,  _) => { stval = value; Some(stval) },
     (0x144,  _) => { mip = legalize_sip(mip, mideleg, value); Some(mip.bits()) },
     (0x180,  _) => { satp = legalize_satp(cur_Architecture(), satp, value); Some(satp) },
+
+    (0x150,  _) => { siselect = legalize_siselect(siselect, value); Some(value) },
+    (0x151,  _) => { Some(value) },
+    (0x152,  _) => { Some(value) },
+    (0x153,  _) => { Some(value) },
+    (0x155,  _) => { Some(value) },
+    (0x156,  _) => { Some(value) },
+    (0x157,  _) => { Some(value) },
 
     /* user mode: seed (entropy source). writes are ignored */
     (0x015,  _) => write_seed_csr(),
