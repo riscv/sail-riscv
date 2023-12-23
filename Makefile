@@ -258,11 +258,23 @@ generated_definitions/c2/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Mak
 $(SOFTFLOAT_LIBS):
 	$(MAKE) SPECIALIZE_TYPE=$(SOFTFLOAT_SPECIALIZE_TYPE) -C $(SOFTFLOAT_LIBDIR)
 
-# convenience target
+# convenience targets to build both simulator binaries
+# using a single command: make csim_all
+csim_all: csim-RV32 csim-RV64
+
+csim-RV32:
+	@$(MAKE) ARCH=RV32 csim
+
+csim-RV64:
+	@$(MAKE) ARCH=RV64 csim
+
+# convenience targets
 .PHONY: csim
 csim: c_emulator/riscv_sim_$(ARCH)
+
 .PHONY: osim
 osim: ocaml_emulator/riscv_ocaml_sim_$(ARCH)
+
 .PHONY: rvfi
 rvfi: c_emulator/riscv_rvfi_$(ARCH)
 
