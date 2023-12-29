@@ -140,6 +140,11 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     /* supervisor mode: address translation */
     0x180 => haveSupMode() & (p == Machine | p == Supervisor), // satp
 
+    /* supervisor mode: resource management configurations */
+    0x181 => haveSsqosid() & ((p == Machine) |
+                              ((p == Supervisor) & haveSmstateen() & (mstateen0.PRIV_V1P14() == 0b1)) |
+                              ((p == Supervisor) & not(haveSmstateen()))), // srmcfg
+
     /* user mode: counters */
     0xC00 => haveUsrMode(),    // cycle
     0xC01 => haveUsrMode(),    // time
@@ -589,7 +594,7 @@ function init_sys() -> unit = {
 
   menvcfg.bits = zero_extend(0b0);
   senvcfg.bits = zero_extend(0b0);
-  mstateen0->bits() = zero_extend(0b0);
+  mstateen0.bits = zero_extend(0b0);
 
   /* initialize vector csrs */
   elen               = 0b1; /* ELEN=64 as the common case */
@@ -613,6 +618,8 @@ function init_sys() -> unit = {
 
   // PMP's L and A fields are set to 0 on reset.
   init_pmp();
+
+  srmcfg->RCID()     = 0b000000000000;
 
   // log compatibility with spike
   if   get_config_print_reg()

@@ -877,18 +877,24 @@ function is_fiom_active() -> bool = {
 }
 
 bitfield Mstateen0 : bits(64) = {
-  // controls to new state introduced by the following small extensions of Priv-1.14-era:
-  PRIV114  : 55
+  // PRIV_V1P14 control access to various state added concurrent
+  // with Priv Specification version 1.14. The following is the
+  // list of state currently defined to be controlled by this bit:
+  //   - CSR srmcfg introduced by Ssqosid extension
+  PRIV_V1P14  : 55
 }
+
 register mstateen0 : Mstateen0
-// If any extension controlled by PRIV114 bit in mstateen0 is present
-// then PRIV114 bit is present
-function havePriv114Extensions() -> bool = {
+
+// If any extension controlled by PRIV_V1P14 bit in mstateen0 are
+// present then the PRIV_V1P14 bit in mstateen0 is present
+function have_PRIV_V1P14_Extensions() -> bool = {
   haveSsqosid()
 }
+
 function legalize_mstateen0(o : Mstateen0, v : bits(64)) -> Mstateen0 = {
   let v = Mk_Mstateen0(v);
-  let o = update_PRIV114(o, if havePriv114Extensions() then v.PRIV114() else 0b0);
+  let o = update_PRIV_V1P14(o, if have_PRIV_V1P14_Extensions() then v.PRIV_V1P14() else 0b0);
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
@@ -974,4 +980,19 @@ val get_vtype_vma : unit -> agtype
 function get_vtype_vma() = decode_agtype(vtype[vma])
 
 val get_vtype_vta : unit -> agtype
+
 function get_vtype_vta() = decode_agtype(vtype[vta])
+
+/* srmcfg CSR introduced by Ssqosid */
+bitfield Srmcfg : xlenbits = {
+  MCID : 27 .. 16,
+  RCID : 11 .. 0
+}
+
+register srmcfg : Srmcfg
+
+function legalize_srmcfg(s : Srmcfg, v : xlenbits) -> Srmcfg = {
+  let s = update_MCID(s, v[27 .. 16]);
+  let s = update_RCID(s, v[11 .. 0]);
+  s
+}
