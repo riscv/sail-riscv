@@ -168,6 +168,12 @@ function haveZalrsc() -> bool = haveAtomics()
 /* Zicond extension support */
 function haveZicond() -> bool = true
 
+/* Smstateen extension support */
+function haveSmstateen() -> bool = true
+
+/* Ssqosid extension support */
+function haveSsqosid() -> bool = true
+
 /*
  * Illegal values legalized to least privileged mode supported.
  * Note: the only valid combinations of supported modes are M, M+U, M+S+U.
@@ -858,6 +864,24 @@ function is_fiom_active() -> bool = {
     User => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
   }
 }
+
+bitfield Mstateen0 : bits(64) = {
+  // controls to new state introduced by the following small extensions of Priv-1.14-era:
+  PRIV114  : 55
+}
+register mstateen0 : Mstateen0
+// If any extension controlled by PRIV114 bit in mstateen0 is present
+// then PRIV114 bit is present
+function havePriv114Extensions() -> bool = {
+  haveSsqosid()
+}
+function legalize_mstateen0(o : Mstateen0, v : bits(64)) -> Mstateen0 = {
+  let v = Mk_Mstateen0(v);
+  let o = update_PRIV114(o, if havePriv114Extensions() then v.PRIV114() else 0b0);
+  // Other extensions are not implemented yet so all other fields are read only zero.
+  o
+}
+
 /* vector csrs */
 register vstart : bits(16) /* use the largest possible length of vstart */
 register vxsat  : bits(1)
