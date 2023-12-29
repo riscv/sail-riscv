@@ -16,11 +16,12 @@ function is_sstateen_accessible() -> bool = currentlyEnabled(Ext_S) & (currently
 termination_measure is_hstateen_accessible() = 5 // > Ext_H
 termination_measure is_sstateen_accessible() = 2 // > Ext_S
 
-enum stateen_bit = {STATEEN_FCSR, STATEEN_ENVCFG, STATEEN_SE}
+enum stateen_bit = {STATEEN_FCSR, STATEEN_SRMCFG, STATEEN_ENVCFG, STATEEN_SE}
 
 mapping stateen_bit_index : stateen_bit <-> range(0, 63) = {
   STATEEN_SE     <-> 63,
   STATEEN_ENVCFG <-> 62,
+  STATEEN_SRMCFG <-> 55,
   STATEEN_FCSR   <-> 1,
 }
 
@@ -65,6 +66,7 @@ function legalize_mstateen0(m : Mstateen0, v : bits(64)) -> Mstateen0 = {
   [m with
     SE0    = if config extensions.Stateen.SE0_readonly_zero then 0b0 else v[SE0],
     ENVCFG = if currentlyEnabled(Ext_S) then v[ENVCFG] else 0b0,
+    SRMCFG = if currentlyEnabled(Ext_Ssqosid) then v[SRMCFG] else 0b0,
     FCSR   = if hartSupports(Ext_Zfinx) & (misa[F] == 0b0) then v[FCSR] else 0b0,
     C      = if config extensions.Stateen.C_readonly_zero then 0b0 else v[C],
   ];
@@ -74,10 +76,29 @@ function legalize_mstateen1(m : Mstateen1, _v : bits(64)) -> Mstateen1 = { m }
 function legalize_mstateen2(m : Mstateen2, _v : bits(64)) -> Mstateen2 = { m }
 function legalize_mstateen3(m : Mstateen3, _v : bits(64)) -> Mstateen3 = { m }
 
-register hstateen0 : Mstateen0 = Mk_Mstateen0(zeros())
-register hstateen1 : Mstateen1 = Mk_Mstateen1(zeros())
-register hstateen2 : Mstateen2 = Mk_Mstateen2(zeros())
-register hstateen3 : Mstateen3 = Mk_Mstateen3(zeros())
+bitfield Hstateen0 : bits(64) = {
+  SE0     : 63,
+  ENVCFG  : 62,
+
+  CSRIND  : 60,
+  AIA     : 59,
+  IMSIC   : 58,
+  CONTEXT : 57,
+  CTR     : 54,
+
+  JVT     : 2,
+  FCSR    : 1,
+  C       : 0,
+}
+
+bitfield Hstateen1 : bits(64) = { SE1 : 63 }
+bitfield Hstateen2 : bits(64) = { SE2 : 63 }
+bitfield Hstateen3 : bits(64) = { SE3 : 63 }
+
+register hstateen0 : Hstateen0 = Mk_Hstateen0(zeros())
+register hstateen1 : Hstateen1 = Mk_Hstateen1(zeros())
+register hstateen2 : Hstateen2 = Mk_Hstateen2(zeros())
+register hstateen3 : Hstateen3 = Mk_Hstateen3(zeros())
 
 private function get_hstateen(idx : range(0, 3)) -> bits(64) = {
   if not(is_hstateen_accessible()) then ones()
@@ -93,24 +114,26 @@ termination_measure get_hstateen(_) = 6 // > is_hstateen_accessible
 
 function get_hstateen_mask(idx : range(0, 3)) -> bits(64) = get_mstateen(idx)
 
-function legalize_hstateen0(h : Mstateen0, v : bits(64)) -> Mstateen0 = {
-  let legalized = legalize_mstateen0(h, v);
-  Mk_Mstateen0(legalized.bits & get_hstateen_mask(0))
+function legalize_hstateen0(h : Hstateen0, v : bits(64)) -> Hstateen0 = {
+  let v = Mk_Hstateen0(v & get_hstateen_mask(0));
+  [h with
+    SE0    = if config extensions.Stateen.SE0_readonly_zero then 0b0 else v[SE0],
+    ENVCFG = if currentlyEnabled(Ext_S) then v[ENVCFG] else 0b0,
+    FCSR   = if hartSupports(Ext_Zfinx) & (misa[F] == 0b0) then v[FCSR] else 0b0,
+    C      = if config extensions.Stateen.C_readonly_zero then 0b0 else v[C],
+  ];
 }
 
-function legalize_hstateen1(h : Mstateen1, v : bits(64)) -> Mstateen1 = {
-  let legalized = legalize_mstateen1(h, v);
-  Mk_Mstateen1(legalized.bits & get_hstateen_mask(1))
+function legalize_hstateen1(_h : Hstateen1, v : bits(64)) -> Hstateen1 = {
+  Mk_Hstateen1(v & get_hstateen_mask(1));
 }
 
-function legalize_hstateen2(h : Mstateen2, v : bits(64)) -> Mstateen2 = {
-  let legalized = legalize_mstateen2(h, v);
-  Mk_Mstateen2(legalized.bits & get_hstateen_mask(2))
+function legalize_hstateen2(_h : Hstateen2, v : bits(64)) -> Hstateen2 = {
+  Mk_Hstateen2(v & get_hstateen_mask(2));
 }
 
-function legalize_hstateen3(h : Mstateen3, v : bits(64)) -> Mstateen3 = {
-  let legalized = legalize_mstateen3(h, v);
-  Mk_Mstateen3(legalized.bits & get_hstateen_mask(3))
+function legalize_hstateen3(_h : Hstateen3, v : bits(64)) -> Hstateen3 = {
+  Mk_Hstateen3(v & get_hstateen_mask(3));
 }
 
 bitfield Sstateen0 : bits(32) = {

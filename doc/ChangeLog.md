@@ -15,6 +15,7 @@
   - Sstvecd
   - Ssu64xl
   - Smstateen, Sstateen
+  - Ssqosid
 
 - The model now requires the Sail 0.20.1 compiler version.
 
