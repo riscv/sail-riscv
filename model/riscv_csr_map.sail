@@ -233,6 +233,9 @@ mapping clause csr_name_map = 0x00F  <-> "vcsr"
 mapping clause csr_name_map = 0xC20  <-> "vl"
 mapping clause csr_name_map = 0xC21  <-> "vtype"
 mapping clause csr_name_map = 0xC22  <-> "vlenb"
+/* Smstateen csrs */
+mapping clause csr_name_map = 0x30C  <-> "mstateen0"
+mapping clause csr_name_map = 0x31C  <-> "mstateen0h"
 
 val csr_name : csreg -> string
 overload to_str = {csr_name}

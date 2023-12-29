@@ -99,8 +99,10 @@ function readCSR csr : csreg -> xlenbits = {
     (0x305,  _) => get_mtvec(),
     (0x306,  _) => zero_extend(mcounteren.bits),
     (0x30A,  _) => menvcfg.bits[sizeof(xlen) - 1 .. 0],
+    (0x30C,  _) => mstateen0.bits()[sizeof(xlen) - 1 .. 0],
     (0x310, 32) => mstatush.bits,
     (0x31A, 32) => menvcfg.bits[63 .. 32],
+    (0x31C, 32) => mstateen0.bits()[63 .. 32],
     (0x320,  _) => zero_extend(mcountinhibit.bits),
 
     (0x340,  _) => mscratch,
@@ -186,8 +188,11 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(zero_extend(mcounteren.bits)) },
     (0x30A, 32) => { menvcfg = legalize_envcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); Some(menvcfg.bits[31 .. 0]) },
     (0x30A, 64) => { menvcfg = legalize_envcfg(menvcfg, value); Some(menvcfg.bits) },
+    (0x30C, 32) => { mstateen0 = legalize_mstateen0(mstateen0, mstateen0.bits()[63 .. 32] @ value); Some(mstateen0.bits()[31 .. 0]) },
+    (0x30C, 64) => { mstateen0 = legalize_mstateen0(mstateen0, value); Some(mstateen0.bits()) },
     (0x310, 32) => { Some(mstatush.bits) }, // ignore writes for now
     (0x31A, 32) => { menvcfg = legalize_envcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); Some(menvcfg.bits[63 .. 32]) },
+    (0x31C, 32) => { mstateen0 = legalize_mstateen0(mstateen0, value @ mstateen0.bits()[31 .. 0]); Some(mstateen0.bits()[63 .. 32]) },
     (0x320,  _) => { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Some(zero_extend(mcountinhibit.bits)) },
     (0x340,  _) => { mscratch = value; Some(mscratch) },
     (0x341,  _) => { Some(set_xret_target(Machine, value)) },
