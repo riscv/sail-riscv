@@ -9,6 +9,7 @@
   - Sstvala
   - Sstvecd
   - Ssu64xl
+  - Ssqosid
 
 # Release notes for version 0.9
 

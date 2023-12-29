@@ -477,6 +477,11 @@ enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
 
+// QoS identifiers
+enum clause extension = Ext_Ssqosid
+mapping clause extensionName = Ext_Ssqosid <-> "ssqosid"
+function clause hartSupports(Ext_Ssqosid) = config extensions.Ssqosid.supported
+
 // When adding a new extension X, we need to make sure that if X being supported
 // depends on Y being supported, then the value associated to X is _greater_ than
 // the value associated to Y. The default value is 0.
@@ -682,6 +687,7 @@ let extensions_ordered_for_isa_string = [
 
   // Supervisor extensions, ordered alphabetically.
   Ext_Sscofpmf,
+  Ext_Ssqosid,
   Ext_Sstc,
   Ext_Sstvala,
   Ext_Sstvecd,
