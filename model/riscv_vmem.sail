@@ -121,7 +121,7 @@ struct SV_Params = {
 }
 
 // Current level during a page-table walk (0 to SV_Params.levels - 1)
-type Level = range(0,3)    // range(0,4) when add Sv57 (TODO)
+type PTW_Level = range(0,3)    // range(0,4) when add Sv57 (TODO)
 
 // PRIVATE
 let sv32_params : SV_Params = struct {
@@ -246,7 +246,7 @@ function vpns_of_va(sv_params : SV_Params,
 // PRIVATE: Extract VPN[level] from  VA
 function vpn_j_of_va(sv_params : SV_Params,
                      va        : bits(64),
-                     level     : Level)    -> bits(64) = {
+                     level     : PTW_Level) -> bits(64) = {
   let lsb  : range(0,63) = pagesize_bits + level * sv_params.vpn_size_bits;
   assert (lsb < sizeof(xlen));
   let mask : bits(64) = zero_extend(ones(sv_params.vpn_size_bits));
@@ -469,7 +469,7 @@ val pt_walk : (SV_Params,
                bool,                         // mstatus.MXR
                bool,                         // do_sum
                bits(64),                     // PT base addr
-               Level,                        // tree level for this recursive call
+               PTW_Level,                    // tree level for this recursive call
                bool,                         // global translation,
                ext_ptw)                      // ext_ptw
               -> PTW_Result
