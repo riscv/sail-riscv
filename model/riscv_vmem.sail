@@ -120,6 +120,9 @@ struct SV_Params = {
   pte_PPN_j_size_bits : {10,  9}         //   10     9     9
 }
 
+// Current level during a page-table walk (0 to SV_Params.levels - 1)
+type Level = range(0,3)    // range(0,4) when add Sv57 (TODO)
+
 // PRIVATE
 let sv32_params : SV_Params = struct {
        // SATP CSR
@@ -243,8 +246,9 @@ function vpns_of_va(sv_params : SV_Params,
 // PRIVATE: Extract VPN[level] from  VA
 function vpn_j_of_va(sv_params : SV_Params,
                      va        : bits(64),
-                     level     : nat)       -> bits(64) = {
-  let lsb  : nat      = pagesize_bits + level * sv_params.vpn_size_bits;
+                     level     : Level)    -> bits(64) = {
+  let lsb  : range(0,63) = pagesize_bits + level * sv_params.vpn_size_bits;
+  assert (lsb < sizeof(xlen));
   let mask : bits(64) = zero_extend(ones(sv_params.vpn_size_bits));
   ((va >> lsb) & mask)
 }
@@ -455,7 +459,7 @@ union PTW_Result = {
 // ****************************************************************
 // Page Table Walk (PTW)
 
-// Note: 'pt_walk()' is recursive => cannot merge 'val' and 'function' decls
+// Note: 'pt_walk()' is recursive => needs separate 'val' decls
 
 // PRIVATE
 val pt_walk : (SV_Params,
@@ -465,8 +469,7 @@ val pt_walk : (SV_Params,
                bool,                         // mstatus.MXR
                bool,                         // do_sum
                bits(64),                     // PT base addr
-               range(0,3),                   // tree level for this recursive call
-                                             //     range(0,4) when add Sv57 (TODO)
+               Level,                        // tree level for this recursive call
                bool,                         // global translation,
                ext_ptw)                      // ext_ptw
               -> PTW_Result
@@ -779,11 +782,11 @@ function translate_TLB_miss(sv_params : SV_Params,
 // PRIVATE
 function translate(sv_params : SV_Params,
                    asid      : bits(16),
-                   ptb        : bits(64),
+                   ptb       : bits(64),
                    vAddr_arg : bits(64),
-                   ac         : AccessType(ext_access_type),
+                   ac        : AccessType(ext_access_type),
                    priv      : Privilege,
-                   mxr        : bool,
+                   mxr       : bool,
                    do_sum    : bool,
                    ext_ptw   : ext_ptw)
                   -> TR_Result(bits(64), PTW_Error) = {
