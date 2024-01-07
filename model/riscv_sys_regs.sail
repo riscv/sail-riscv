@@ -161,6 +161,10 @@ function haveZknd()   -> bool = true
 
 function haveZmmul()  -> bool = true
 
+/* A extension sub-extensions */
+function haveZaamo()  -> bool = haveAtomics()
+function haveZalrsc() -> bool = haveAtomics()
+
 /* Zicond extension support */
 function haveZicond() -> bool = true
 
