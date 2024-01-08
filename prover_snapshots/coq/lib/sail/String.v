@@ -1,4 +1,72 @@
+(*==========================================================================*)
+(*     Sail                                                                 *)
+(*                                                                          *)
+(*  Sail and the Sail architecture models here, comprising all files and    *)
+(*  directories except the ASL-derived Sail code in the aarch64 directory,  *)
+(*  are subject to the BSD two-clause licence below.                        *)
+(*                                                                          *)
+(*  The ASL derived parts of the ARMv8.3 specification in                   *)
+(*  aarch64/no_vector and aarch64/full are copyright ARM Ltd.               *)
+(*                                                                          *)
+(*  Copyright (c) 2013-2021                                                 *)
+(*    Kathyrn Gray                                                          *)
+(*    Shaked Flur                                                           *)
+(*    Stephen Kell                                                          *)
+(*    Gabriel Kerneis                                                       *)
+(*    Robert Norton-Wright                                                  *)
+(*    Christopher Pulte                                                     *)
+(*    Peter Sewell                                                          *)
+(*    Alasdair Armstrong                                                    *)
+(*    Brian Campbell                                                        *)
+(*    Thomas Bauereiss                                                      *)
+(*    Anthony Fox                                                           *)
+(*    Jon French                                                            *)
+(*    Dominic Mulligan                                                      *)
+(*    Stephen Kell                                                          *)
+(*    Mark Wassell                                                          *)
+(*    Alastair Reid (Arm Ltd)                                               *)
+(*                                                                          *)
+(*  All rights reserved.                                                    *)
+(*                                                                          *)
+(*  This work was partially supported by EPSRC grant EP/K008528/1 <a        *)
+(*  href="http://www.cl.cam.ac.uk/users/pes20/rems">REMS: Rigorous          *)
+(*  Engineering for Mainstream Systems</a>, an ARM iCASE award, EPSRC IAA   *)
+(*  KTF funding, and donations from Arm.  This project has received         *)
+(*  funding from the European Research Council (ERC) under the European     *)
+(*  Union’s Horizon 2020 research and innovation programme (grant           *)
+(*  agreement No 789108, ELVER).                                            *)
+(*                                                                          *)
+(*  This software was developed by SRI International and the University of  *)
+(*  Cambridge Computer Laboratory (Department of Computer Science and       *)
+(*  Technology) under DARPA/AFRL contracts FA8650-18-C-7809 ("CIFV")        *)
+(*  and FA8750-10-C-0237 ("CTSRD").                                         *)
+(*                                                                          *)
+(*  Redistribution and use in source and binary forms, with or without      *)
+(*  modification, are permitted provided that the following conditions      *)
+(*  are met:                                                                *)
+(*  1. Redistributions of source code must retain the above copyright       *)
+(*     notice, this list of conditions and the following disclaimer.        *)
+(*  2. Redistributions in binary form must reproduce the above copyright    *)
+(*     notice, this list of conditions and the following disclaimer in      *)
+(*     the documentation and/or other materials provided with the           *)
+(*     distribution.                                                        *)
+(*                                                                          *)
+(*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''      *)
+(*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED       *)
+(*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A         *)
+(*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR     *)
+(*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,            *)
+(*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT        *)
+(*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF        *)
+(*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND     *)
+(*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,      *)
+(*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT      *)
+(*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF      *)
+(*  SUCH DAMAGE.                                                            *)
+(*==========================================================================*)
+
 Require Import Sail.Values.
+Require Import Sail.MachineWord.
 Require Import Coq.Strings.Ascii.
 Local Open Scope Z.
 
@@ -9,16 +77,15 @@ Definition string_startswith s expected :=
   let prefix := String.substring 0 (String.length expected) s in
   generic_eq prefix expected.
 
-Definition string_drop s (n : Z) `{ArithFact (n >=? 0)} :=
+Definition string_drop s (n : Z) :=
   let n := Z.to_nat n in
   String.substring n (String.length s - n) s.
 
-Definition string_take s (n : Z) `{ArithFact (n >=? 0)} :=
+Definition string_take s (n : Z) :=
   let n := Z.to_nat n in
   String.substring 0 n s.
 
-Definition string_length s : {n : Z & ArithFact (n >=? 0)} :=
- build_ex (Z.of_nat (String.length s)).
+Definition string_length s : Z := Z.of_nat (String.length s).
 
 Definition string_append := String.append.
 
@@ -57,7 +124,7 @@ match s with
     else (acc, len)
   end
 end.
-Local Definition int_of (s : string) (base : Z) (len : nat) : option (Z * {n : Z & ArithFact (n >=? 0)}) :=
+Local Definition int_of (s : string) (base : Z) (len : nat) : option (Z * Z) :=
 match s with
 | EmptyString => None
 | String h t =>
@@ -67,7 +134,7 @@ match s with
     if i <? base
     then
     let (i, len') := more_digits t base i (S len) in
-    Some (i, build_ex (Z.of_nat len'))
+    Some (i, Z.of_nat len')
     else None
   end
 end.
@@ -75,7 +142,7 @@ end.
 (* I've stuck closely to OCaml's int_of_string, because that's what's currently
    used elsewhere. *)
 
-Definition maybe_int_of_prefix (s : string) : option (Z * {n : Z & ArithFact (n >=? 0)}) :=
+Definition maybe_int_of_prefix (s : string) : option (Z * Z) :=
 match s with
 | EmptyString => None
 | String "0" (String ("x"|"X") t) => int_of t 16 2
@@ -94,9 +161,7 @@ Definition maybe_int_of_string (s : string) : option Z :=
 match maybe_int_of_prefix s with
 | None => None
 | Some (i,len) =>
-  if projT1 len =? projT1 (string_length s)
-  then Some i
-  else None
+  if len =? string_length s then Some i else None
 end.
 
 Fixpoint n_leading_spaces (s:string) : nat :=
@@ -106,21 +171,23 @@ Fixpoint n_leading_spaces (s:string) : nat :=
   | _ => 0
   end.
 
-Definition opt_spc_matches_prefix s : option (unit * {n : Z & ArithFact (n >=? 0)}) :=
-  Some (tt, build_ex (Z.of_nat (n_leading_spaces s))).
+Definition n_leading_spaces_Z (s:string) : Z := Z.of_nat (n_leading_spaces s).
 
-Definition spc_matches_prefix s : option (unit * {n : Z & ArithFact (n >=? 0)}) :=
+Definition opt_spc_matches_prefix s : option (unit * Z) :=
+  Some (tt, Z.of_nat (n_leading_spaces s)).
+
+Definition spc_matches_prefix s : option (unit * Z) :=
   match n_leading_spaces s with
   | O => None
-  | S n => Some (tt, build_ex (Z.of_nat (S n)))
+  | S n => Some (tt, Z.of_nat (S n))
   end.
 
-Definition hex_bits_n_matches_prefix sz `{ArithFact (sz >=? 0)} s : option (mword sz * {n : Z & ArithFact (n >=? 0)}) :=
+Definition hex_bits_n_matches_prefix sz s : option (mword sz * Z) :=
   match maybe_int_of_prefix s with
   | None => None
   | Some (n, len) =>
     if andb (0 <=? n) (n <? pow 2 sz)
-    then Some (of_int sz n, len)
+    then Some (mword_of_int n, len)
     else None
   end.
 
@@ -198,16 +265,13 @@ match z with
 | Zneg p => String "-" (hex_string_of_N (pos_limit p) (Npos p) "")
 end.
 
-Definition decimal_string_of_bv {a} `{Bitvector a} (bv : a) : string :=
-  match unsigned bv with
-  | None => "?"
-  | Some i => string_of_int i
-  end.
+Definition decimal_string_of_bits {n} (bv : mword n) : string := string_of_int (int_of_mword false bv).
 
-Definition decimal_string_of_bits {n} (bv : mword n) : string := decimal_string_of_bv bv.
-
+Definition string_of_word {n} (bv : MachineWord.word n) := String "0" (String "b" (MachineWord.word_to_binary_string bv)).
+Definition string_of_bits {n} (w : mword n) : string := string_of_word (get_word w).
 
 (* Some aliases for compatibility. *)
 Definition dec_str := string_of_int.
 Definition hex_str := hex_string_of_int.
+Definition hex_str_upper := hex_string_of_int.
 Definition concat_str := String.append.

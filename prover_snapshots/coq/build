@@ -22,8 +22,3 @@ coqc $BBV_OPT -Q ../lib/sail Sail riscv_extras.v
 coqc $BBV_OPT -Q ../lib/sail Sail mem_metadata.v
 coqc $BBV_OPT -Q ../lib/sail Sail riscv_types.v
 coqc $BBV_OPT -Q ../lib/sail Sail riscv.v
-cd ../duopod
-coqc $BBV_OPT -Q ../lib/sail Sail riscv_extras.v
-coqc $BBV_OPT -Q ../lib/sail Sail mem_metadata.v
-coqc $BBV_OPT -Q ../lib/sail Sail riscv_duopod_types.v
-coqc $BBV_OPT -Q ../lib/sail Sail riscv_duopod.v

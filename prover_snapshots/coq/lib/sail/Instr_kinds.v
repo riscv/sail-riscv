@@ -1,52 +1,69 @@
-(*========================================================================*)
-(*     Sail                                                               *)
-(*                                                                        *)
-(*  Copyright (c) 2013-2017                                               *)
-(*    Kathyrn Gray                                                        *)
-(*    Shaked Flur                                                         *)
-(*    Stephen Kell                                                        *)
-(*    Gabriel Kerneis                                                     *)
-(*    Robert Norton-Wright                                                *)
-(*    Christopher Pulte                                                   *)
-(*    Peter Sewell                                                        *)
-(*    Alasdair Armstrong                                                  *)
-(*    Brian Campbell                                                      *)
-(*    Thomas Bauereiss                                                    *)
-(*    Anthony Fox                                                         *)
-(*    Jon French                                                          *)
-(*    Dominic Mulligan                                                    *)
-(*    Stephen Kell                                                        *)
-(*    Mark Wassell                                                        *)
-(*                                                                        *)
-(*  All rights reserved.                                                  *)
-(*                                                                        *)
-(*  This software was developed by the University of Cambridge Computer   *)
-(*  Laboratory as part of the Rigorous Engineering of Mainstream Systems  *)
-(*  (REMS) project, funded by EPSRC grant EP/K008528/1.                   *)
-(*                                                                        *)
-(*  Redistribution and use in source and binary forms, with or without    *)
-(*  modification, are permitted provided that the following conditions    *)
-(*  are met:                                                              *)
-(*  1. Redistributions of source code must retain the above copyright     *)
-(*     notice, this list of conditions and the following disclaimer.      *)
-(*  2. Redistributions in binary form must reproduce the above copyright  *)
-(*     notice, this list of conditions and the following disclaimer in    *)
-(*     the documentation and/or other materials provided with the         *)
-(*     distribution.                                                      *)
-(*                                                                        *)
-(*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''    *)
-(*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED     *)
-(*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A       *)
-(*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR   *)
-(*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,          *)
-(*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT      *)
-(*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF      *)
-(*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND   *)
-(*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,    *)
-(*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT    *)
-(*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF    *)
-(*  SUCH DAMAGE.                                                          *)
-(*========================================================================*)
+(*==========================================================================*)
+(*     Sail                                                                 *)
+(*                                                                          *)
+(*  Sail and the Sail architecture models here, comprising all files and    *)
+(*  directories except the ASL-derived Sail code in the aarch64 directory,  *)
+(*  are subject to the BSD two-clause licence below.                        *)
+(*                                                                          *)
+(*  The ASL derived parts of the ARMv8.3 specification in                   *)
+(*  aarch64/no_vector and aarch64/full are copyright ARM Ltd.               *)
+(*                                                                          *)
+(*  Copyright (c) 2013-2021                                                 *)
+(*    Kathyrn Gray                                                          *)
+(*    Shaked Flur                                                           *)
+(*    Stephen Kell                                                          *)
+(*    Gabriel Kerneis                                                       *)
+(*    Robert Norton-Wright                                                  *)
+(*    Christopher Pulte                                                     *)
+(*    Peter Sewell                                                          *)
+(*    Alasdair Armstrong                                                    *)
+(*    Brian Campbell                                                        *)
+(*    Thomas Bauereiss                                                      *)
+(*    Anthony Fox                                                           *)
+(*    Jon French                                                            *)
+(*    Dominic Mulligan                                                      *)
+(*    Stephen Kell                                                          *)
+(*    Mark Wassell                                                          *)
+(*    Alastair Reid (Arm Ltd)                                               *)
+(*                                                                          *)
+(*  All rights reserved.                                                    *)
+(*                                                                          *)
+(*  This work was partially supported by EPSRC grant EP/K008528/1 <a        *)
+(*  href="http://www.cl.cam.ac.uk/users/pes20/rems">REMS: Rigorous          *)
+(*  Engineering for Mainstream Systems</a>, an ARM iCASE award, EPSRC IAA   *)
+(*  KTF funding, and donations from Arm.  This project has received         *)
+(*  funding from the European Research Council (ERC) under the European     *)
+(*  Union’s Horizon 2020 research and innovation programme (grant           *)
+(*  agreement No 789108, ELVER).                                            *)
+(*                                                                          *)
+(*  This software was developed by SRI International and the University of  *)
+(*  Cambridge Computer Laboratory (Department of Computer Science and       *)
+(*  Technology) under DARPA/AFRL contracts FA8650-18-C-7809 ("CIFV")        *)
+(*  and FA8750-10-C-0237 ("CTSRD").                                         *)
+(*                                                                          *)
+(*  Redistribution and use in source and binary forms, with or without      *)
+(*  modification, are permitted provided that the following conditions      *)
+(*  are met:                                                                *)
+(*  1. Redistributions of source code must retain the above copyright       *)
+(*     notice, this list of conditions and the following disclaimer.        *)
+(*  2. Redistributions in binary form must reproduce the above copyright    *)
+(*     notice, this list of conditions and the following disclaimer in      *)
+(*     the documentation and/or other materials provided with the           *)
+(*     distribution.                                                        *)
+(*                                                                          *)
+(*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''      *)
+(*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED       *)
+(*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A         *)
+(*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR     *)
+(*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,            *)
+(*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT        *)
+(*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF        *)
+(*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND     *)
+(*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,      *)
+(*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT      *)
+(*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF      *)
+(*  SUCH DAMAGE.                                                            *)
+(*==========================================================================*)
 
 Require Import DecidableClass.
 
@@ -87,6 +104,8 @@ Inductive read_kind :=
   | Read_RISCV_reserved_strong_acquire
   (* x86 reads *)
   | Read_X86_locked (* the read part of a lock'd instruction (rmw) *)
+  (* instruction fetch *)
+  | Read_ifetch
 .
 Scheme Equality for read_kind.
 (*
@@ -104,6 +123,7 @@ instance (Show read_kind)
     | Read_RISCV_reserved_acquire -> "Read_RISCV_reserved_acquire"
     | Read_RISCV_reserved_strong_acquire -> "Read_RISCV_reserved_strong_acquire"
     | Read_X86_locked -> "Read_X86_locked"
+    | Read_ifetch -> "Read_ifetch"
   end
 end
 *)
@@ -145,11 +165,13 @@ Inductive a64_barrier_domain :=
   | A64_InnerShare
   | A64_OuterShare
   | A64_NonShare.
+Scheme Equality for a64_barrier_domain.
 
 Inductive a64_barrier_type :=
   A64_barrier_all
   | A64_barrier_LD
   | A64_barrier_ST.
+Scheme Equality for a64_barrier_type.
 
 Inductive barrier_kind :=
   (* Power barriers *)
@@ -158,8 +180,8 @@ Inductive barrier_kind :=
   | Barrier_Eieio : unit -> barrier_kind
   | Barrier_Isync : unit -> barrier_kind
   (* AArch64 barriers *)
-  | Barrier_DMB : a64_barrier_domain -> a64_barrier_type -> barrier_kind
-  | Barrier_DSB : a64_barrier_domain -> a64_barrier_type -> barrier_kind
+  | Barrier_DMB : a64_barrier_domain * a64_barrier_type -> barrier_kind
+  | Barrier_DSB : a64_barrier_domain * a64_barrier_type -> barrier_kind
   | Barrier_ISB : unit -> barrier_kind
  (* | Barrier_TM_COMMIT*)
   (* MIPS barriers *)
@@ -178,7 +200,37 @@ Inductive barrier_kind :=
   | Barrier_RISCV_i : unit -> barrier_kind
   (* X86 *)
   | Barrier_x86_MFENCE : unit -> barrier_kind.
-Scheme Equality for barrier_kind.
+(* Doesn't work for *  Scheme Equality for barrier_kind.*)
+Definition barrier_kind_beq x y :=
+match x, y with
+  | Barrier_Sync _, Barrier_Sync _ => true
+  | Barrier_LwSync _, Barrier_LwSync _ => true
+  | Barrier_Eieio _, Barrier_Eieio _ => true
+  | Barrier_Isync _, Barrier_Isync _ => true
+  (* AArch64 barriers *)
+  | Barrier_DMB (d, t), Barrier_DMB (d', t') => andb (a64_barrier_domain_beq d d') (a64_barrier_type_beq t t')
+  | Barrier_DSB (d, t), Barrier_DSB (d', t') => andb (a64_barrier_domain_beq d d') (a64_barrier_type_beq t t')
+  | Barrier_ISB _, Barrier_ISB _ => true
+ (* | Barrier_TM_COMMIT*)
+  (* MIPS barriers *)
+  | Barrier_MIPS_SYNC _, Barrier_MIPS_SYNC _ => true
+  (* RISC-V barriers *)
+  | Barrier_RISCV_rw_rw _, Barrier_RISCV_rw_rw _ => true
+  | Barrier_RISCV_r_rw _, Barrier_RISCV_r_rw _ => true
+  | Barrier_RISCV_r_r _, Barrier_RISCV_r_r _ => true
+  | Barrier_RISCV_rw_w _, Barrier_RISCV_rw_w _ => true
+  | Barrier_RISCV_w_w _, Barrier_RISCV_w_w _ => true
+  | Barrier_RISCV_w_rw _, Barrier_RISCV_w_rw _ => true
+  | Barrier_RISCV_rw_r _, Barrier_RISCV_rw_r _ => true
+  | Barrier_RISCV_r_w _, Barrier_RISCV_r_w _ => true
+  | Barrier_RISCV_w_r _, Barrier_RISCV_w_r _ => true
+  | Barrier_RISCV_tso _, Barrier_RISCV_tso _ => true
+  | Barrier_RISCV_i _, Barrier_RISCV_i _ => true
+  (* X86 *)
+  | Barrier_x86_MFENCE _, Barrier_x86_MFENCE _ => true
+  | _, _ => false
+end.
+
 
 (*
 instance (Show barrier_kind)
@@ -224,6 +276,16 @@ instance (Show trans_kind)
   end
 end*)
 
+(* cache maintenance instructions *)
+Inductive cache_op_kind :=
+  (* AArch64 DC *)
+  | Cache_op_D_IVAC | Cache_op_D_ISW  | Cache_op_D_CSW  |  Cache_op_D_CISW
+  | Cache_op_D_ZVA  | Cache_op_D_CVAC | Cache_op_D_CVAU | Cache_op_D_CIVAC
+  (* AArch64 IC *)
+  | Cache_op_I_IALLUIS | Cache_op_I_IALLU | Cache_op_I_IVAU
+.
+Scheme Equality for cache_op_kind.
+
 Inductive instruction_kind :=
   | IK_barrier   : barrier_kind -> instruction_kind
   | IK_mem_read  : read_kind -> instruction_kind
@@ -233,7 +295,9 @@ Inductive instruction_kind :=
   indirect/computed-branch (single nia of kind NIA_indirect_address)
   and branch/jump (single nia of kind NIA_concrete_address) *)
   | IK_trans     : trans_kind -> instruction_kind
-  | IK_simple    : unit -> instruction_kind.
+  | IK_simple    : unit -> instruction_kind
+  | IK_cache_op  : cache_op_kind -> instruction_kind
+.
 
 (*
 instance (Show instruction_kind)
@@ -263,6 +327,7 @@ match r with
   | Read_RISCV_reserved_acquire => true
   | Read_RISCV_reserved_strong_acquire => true
   | Read_X86_locked => true
+  | Read_ifetch => false
 end.
 
 
@@ -281,6 +346,7 @@ instance (EnumerationType read_kind)
     | Read_RISCV_reserved_acquire -> 9
     | Read_RISCV_reserved_strong_acquire -> 10
     | Read_X86_locked -> 11
+    | Read_ifetch -> 12
   end
 end
 

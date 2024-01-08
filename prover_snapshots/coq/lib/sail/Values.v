@@ -1,11 +1,78 @@
+(*==========================================================================*)
+(*     Sail                                                                 *)
+(*                                                                          *)
+(*  Sail and the Sail architecture models here, comprising all files and    *)
+(*  directories except the ASL-derived Sail code in the aarch64 directory,  *)
+(*  are subject to the BSD two-clause licence below.                        *)
+(*                                                                          *)
+(*  The ASL derived parts of the ARMv8.3 specification in                   *)
+(*  aarch64/no_vector and aarch64/full are copyright ARM Ltd.               *)
+(*                                                                          *)
+(*  Copyright (c) 2013-2021                                                 *)
+(*    Kathyrn Gray                                                          *)
+(*    Shaked Flur                                                           *)
+(*    Stephen Kell                                                          *)
+(*    Gabriel Kerneis                                                       *)
+(*    Robert Norton-Wright                                                  *)
+(*    Christopher Pulte                                                     *)
+(*    Peter Sewell                                                          *)
+(*    Alasdair Armstrong                                                    *)
+(*    Brian Campbell                                                        *)
+(*    Thomas Bauereiss                                                      *)
+(*    Anthony Fox                                                           *)
+(*    Jon French                                                            *)
+(*    Dominic Mulligan                                                      *)
+(*    Stephen Kell                                                          *)
+(*    Mark Wassell                                                          *)
+(*    Alastair Reid (Arm Ltd)                                               *)
+(*                                                                          *)
+(*  All rights reserved.                                                    *)
+(*                                                                          *)
+(*  This work was partially supported by EPSRC grant EP/K008528/1 <a        *)
+(*  href="http://www.cl.cam.ac.uk/users/pes20/rems">REMS: Rigorous          *)
+(*  Engineering for Mainstream Systems</a>, an ARM iCASE award, EPSRC IAA   *)
+(*  KTF funding, and donations from Arm.  This project has received         *)
+(*  funding from the European Research Council (ERC) under the European     *)
+(*  Union’s Horizon 2020 research and innovation programme (grant           *)
+(*  agreement No 789108, ELVER).                                            *)
+(*                                                                          *)
+(*  This software was developed by SRI International and the University of  *)
+(*  Cambridge Computer Laboratory (Department of Computer Science and       *)
+(*  Technology) under DARPA/AFRL contracts FA8650-18-C-7809 ("CIFV")        *)
+(*  and FA8750-10-C-0237 ("CTSRD").                                         *)
+(*                                                                          *)
+(*  Redistribution and use in source and binary forms, with or without      *)
+(*  modification, are permitted provided that the following conditions      *)
+(*  are met:                                                                *)
+(*  1. Redistributions of source code must retain the above copyright       *)
+(*     notice, this list of conditions and the following disclaimer.        *)
+(*  2. Redistributions in binary form must reproduce the above copyright    *)
+(*     notice, this list of conditions and the following disclaimer in      *)
+(*     the documentation and/or other materials provided with the           *)
+(*     distribution.                                                        *)
+(*                                                                          *)
+(*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''      *)
+(*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED       *)
+(*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A         *)
+(*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR     *)
+(*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,            *)
+(*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT        *)
+(*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF        *)
+(*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND     *)
+(*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,      *)
+(*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT      *)
+(*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF      *)
+(*  SUCH DAMAGE.                                                            *)
+(*==========================================================================*)
+
 (* Version of sail_values.lem that uses Lems machine words library *)
 
 (*Require Import Sail_impl_base*)
 Require Export ZArith.
 Require Import Ascii.
 Require Export String.
-Require Import bbv.Word.
-Require Export bbv.HexNotationWord.
+Require BinaryString.
+Require HexString.
 Require Export List.
 Require Export Sumbool.
 Require Export DecidableClass.
@@ -13,16 +80,14 @@ Require Import Eqdep_dec.
 Require Export Zeuclid.
 Require Import Lia.
 Import ListNotations.
+Require Import Rbase.  (* TODO would like to avoid this in models without reals *)
+Require Eqdep EqdepFacts.
+
+Require Import Sail.TypeCasts.
+Require Import Sail.MachineWord.
 
 Local Open Scope Z.
 Local Open Scope bool.
-
-Module Z_eq_dec.
-Definition U := Z.
-Definition eq_dec := Z.eq_dec.
-End Z_eq_dec.
-Module ZEqdep := DecidableEqDep (Z_eq_dec).
-
 
 (* Constraint solving basics.  A HintDb which unfolding hints and lemmata
    can be added to, and a typeclass to wrap constraint arguments in to
@@ -88,12 +153,12 @@ Require Import Coq.Program.Tactics.
 
 Section Morphism.
 Local Obligation Tactic := try solve [simpl_relation | firstorder auto].
-Global Program Instance ArithFactP_iff_morphism :
+#[export] Program Instance ArithFactP_iff_morphism :
   Proper (iff ==> iff) ArithFactP.
 End Morphism.
 
 Definition build_ex {T:Type} (n:T) {P:T -> Prop} `{H:ArithFactP (P n)} : {x : T & ArithFactP (P x)} :=
-  existT _ n H.
+  @existT _ _ n H.
 
 Definition build_ex2 {T:Type} {T':T -> Type} (n:T) (m:T' n) {P:T -> Prop} `{H:ArithFactP (P n)} : {x : T & T' x & ArithFactP (P x)} :=
   existT2 _ _ n m H.
@@ -123,7 +188,7 @@ rewrite <- Decidable_spec.
 destruct Decidable_witness; simpl in *; 
 congruence.
 Qed.
-Instance Decidable_eq_from_dec {T:Type} (eqdec: forall x y : T, {x = y} + {x <> y}) : 
+#[export] Instance Decidable_eq_from_dec {T:Type} (eqdec: forall x y : T, {x = y} + {x <> y}) : 
   forall (x y : T), Decidable (eq x y).
 refine (fun x y => {|
   Decidable_witness := proj1_sig (bool_of_sumbool (eqdec x y))
@@ -131,15 +196,15 @@ refine (fun x y => {|
 destruct (eqdec x y); simpl; split; congruence.
 Defined.
 
-Instance Decidable_eq_unit : forall (x y : unit), Decidable (x = y).
+#[export] Instance Decidable_eq_unit : forall (x y : unit), Decidable (x = y).
 refine (fun x y => {| Decidable_witness := true |}).
 destruct x, y; split; auto.
 Defined.
 
-Instance Decidable_eq_string : forall (x y : string), Decidable (x = y) :=
+#[export] Instance Decidable_eq_string : forall (x y : string), Decidable (x = y) :=
   Decidable_eq_from_dec String.string_dec.
 
-Instance Decidable_eq_pair {A B : Type} `(DA : forall x y : A, Decidable (x = y), DB : forall x y : B, Decidable (x = y)) : forall x y : A*B, Decidable (x = y).
+#[export] Instance Decidable_eq_pair {A B : Type} `(DA : forall x y : A, Decidable (x = y), DB : forall x y : B, Decidable (x = y)) : forall x y : A*B, Decidable (x = y).
 refine (fun x y =>
 {| Decidable_witness := andb (@Decidable_witness _ (DA (fst x) (fst y)))
      (@Decidable_witness _ (DB (snd x) (snd y))) |}).
@@ -162,13 +227,29 @@ split.
   tauto.
 Qed.
 
-Definition generic_dec {T:Type} (x y:T) `{Decidable (x = y)} : {x = y} + {x <> y}.
-refine ((if Decidable_witness as b return (b = true <-> x = y -> _) then fun H' => _ else fun H' => _) Decidable_spec).
-* left. tauto.
-* right. intuition.
+#[export] Instance Decidable_eq_option {A : Type} `(D: forall x y : A, Decidable (x = y)) : forall x y : option A, Decidable (x = y).
+refine (fun x y => {| Decidable_witness :=
+  match x with
+  | None => match y with None => true | Some _ => false end
+  | Some x' => match y with None => false | Some y' => (@Decidable_witness _ (D x' y')) end
+  end |}).
+destruct x as [x'|]; destruct y as [y'|].
+- destruct (D x' y') as [b H]; simpl.
+  rewrite H.
+  split; congruence.
+- split; congruence.
+- split; congruence.
+- split; congruence.
 Defined.
 
-Instance Decidable_eq_list {A : Type} `(D : forall x y : A, Decidable (x = y)) : forall (x y : list A), Decidable (x = y) :=
+Definition generic_dec {T:Type} (x y:T) `{Decidable (x = y)} : {x = y} + {x <> y}.
+refine ((if Decidable_witness as b return (b = true <-> x = y -> _) then fun H' => left _ else fun H' => right _) Decidable_spec).
+* tauto.
+* rewrite <- H'.
+  congruence.
+Defined.
+
+#[export] Instance Decidable_eq_list {A : Type} `(D : forall x y : A, Decidable (x = y)) : forall (x y : list A), Decidable (x = y) :=
   Decidable_eq_from_dec (list_eq_dec (fun x y => generic_dec x y)).
 
 (* Used by generated code that builds Decidable equality instances for records. *)
@@ -186,15 +267,17 @@ Notation "x <=? y <? z" := ((x <=? y) && (y <? z)) (at level 70, y at next level
 Notation "x <? y <? z" := ((x <? y) && (y <? z)) (at level 70, y at next level) : Z_scope.
 Notation "x <? y <=? z" := ((x <? y) && (y <=? z)) (at level 70, y at next level) : Z_scope.
 
-(* Project away range constraints in comparisons *)
-Definition ltb_range_l {lo hi} (l : {x & ArithFact (lo <=? x <=? hi)}) r := Z.ltb (projT1 l) r.
-Definition leb_range_l {lo hi} (l : {x & ArithFact (lo <=? x <=? hi)}) r := Z.leb (projT1 l) r.
-Definition gtb_range_l {lo hi} (l : {x & ArithFact (lo <=? x <=? hi)}) r := Z.gtb (projT1 l) r.
-Definition geb_range_l {lo hi} (l : {x & ArithFact (lo <=? x <=? hi)}) r := Z.geb (projT1 l) r.
-Definition ltb_range_r {lo hi} l (r : {x & ArithFact (lo <=? x <=? hi)}) := Z.ltb l (projT1 r).
-Definition leb_range_r {lo hi} l (r : {x & ArithFact (lo <=? x <=? hi)}) := Z.leb l (projT1 r).
-Definition gtb_range_r {lo hi} l (r : {x & ArithFact (lo <=? x <=? hi)}) := Z.gtb l (projT1 r).
-Definition geb_range_r {lo hi} l (r : {x & ArithFact (lo <=? x <=? hi)}) := Z.geb l (projT1 r).
+Inductive result {a : Type} {b : Type} :=
+| Ok : a -> result
+| Err : b -> result.
+Arguments result : clear implicits.
+
+#[export]
+Instance dummy_result {a : Type} {b : Type} `{Inhabited a} `{Inhabited b} :
+  Inhabited (result a b) :=
+{
+  inhabitant := Ok inhabitant
+}.
 
 Definition ii := Z.
 Definition nn := nat.
@@ -202,12 +285,7 @@ Definition nn := nat.
 (*val pow : Z -> Z -> Z*)
 Definition pow m n := m ^ n.
 
-Program Definition pow2 n : {z : Z & ArithFact (2 ^ n <=? z <=? 2 ^ n)} := existT _ (pow 2 n) _.
-Next Obligation.
-constructor.
-unfold pow.
-auto using Z.leb_refl with bool.
-Qed.
+Definition pow2 n := pow 2 n.
 
 Lemma ZEuclid_div_pos : forall x y, 0 < y -> 0 <= x -> 0 <= ZEuclid.div x y.
 intros.
@@ -253,7 +331,7 @@ apply ZEuclid.div_mod.
 assumption.
 Qed.
 
-Hint Resolve ZEuclid_div_pos ZEuclid_pos_div ZEuclid_div_ge ZEuclid_div_mod0 : sail.
+#[export] Hint Resolve ZEuclid_div_pos ZEuclid_pos_div ZEuclid_div_ge ZEuclid_div_mod0 : sail.
 
 Lemma Z_geb_ge n m : (n >=? m) = true <-> n >= m.
 rewrite Z.geb_leb.
@@ -296,6 +374,7 @@ Definition abs_real r := realAbs r
 Definition power_real b e := realPowInteger b e*)
 
 Definition print_endline (_ : string) : unit := tt.
+Definition print (_ : string) : unit := tt.
 Definition prerr_endline (_ : string) : unit := tt.
 Definition prerr (_ : string) : unit := tt.
 Definition print_int (_ : string) (_ : Z) : unit := tt.
@@ -329,15 +408,23 @@ induction n.
   auto with arith.
 Qed.
 Definition repeat {a} (xs : list a) (n : Z) :=
-  if n <=? 0 then []
+  if n <? 0 then []
   else repeat' xs (Z.to_nat n).
-Lemma repeat_length {a} {xs : list a} {n : Z} (H : n >= 0) : length_list (repeat xs n) = n * length_list xs.
+Lemma repeat_length {a} {xs : list a} {n : Z} (H : n >= 0) : (List.length (repeat xs n) = (Z.to_nat n) * List.length xs)%nat.
+unfold repeat.
+apply Z.ge_le in H.
+rewrite <- Z.ltb_ge in H.
+rewrite H.
+apply repeat'_length.
+Qed.
+Lemma repeat_length_list {a} {xs : list a} {n : Z} (H : n >= 0) : length_list (repeat xs n) = n * length_list xs.
 unfold length_list, repeat.
 destruct n.
 + reflexivity. 
 + simpl (List.length _).
   rewrite repeat'_length.
   rewrite Nat2Z.inj_mul.
+  unfold Z.to_nat.
   rewrite positive_nat_Z.
   reflexivity.  
 + exfalso.
@@ -451,8 +538,12 @@ Inductive bitU := B0 | B1 | BU.
 
 Scheme Equality for bitU.
 Definition eq_bit := bitU_beq.
-Instance Decidable_eq_bit : forall (x y : bitU), Decidable (x = y) :=
+#[export] Instance Decidable_eq_bit : forall (x y : bitU), Decidable (x = y) :=
   Decidable_eq_from_dec bitU_eq_dec.
+
+#[export] Instance dummy_bitU : Inhabited bitU := {
+  inhabitant := BU
+}.
 
 Definition showBitU b :=
 match b with
@@ -477,7 +568,7 @@ Class BitU (a : Type) : Type := {
   of_bitU : bitU -> a
 }.
 
-Instance bitU_BitU : (BitU bitU) := {
+#[export] Instance bitU_BitU : (BitU bitU) := {
   to_bitU b := b;
   of_bitU b := b
 }.
@@ -629,24 +720,6 @@ end.
 Definition add_one_bool_ignore_overflow bits :=
   List.rev (add_one_bool_ignore_overflow_aux (List.rev bits)).
 
-(* Ported from Lem, bad for large n.
-Definition bools_of_int len n :=
-  let bs_abs := bools_of_nat len (Z.abs_nat n) in
-  if n >=? 0 then bs_abs
-  else add_one_bool_ignore_overflow (List.map negb bs_abs).
-*)
-Fixpoint bitlistFromWord_rev {n} w :=
-match w with
-| WO => []
-| WS b w => b :: bitlistFromWord_rev w
-end.
-Definition bitlistFromWord {n} w :=
-  List.rev (@bitlistFromWord_rev n w).
-
-Definition bools_of_int len n :=
-  let w := Word.ZToWord (Z.to_nat len) n in
-  bitlistFromWord w.
-
 (*** Bit lists ***)
 
 (*val bits_of_nat_aux : natural -> list bitU*)
@@ -712,11 +785,10 @@ Definition ext_bits pad len bits :=
   else pad_bitlist pad bits longer.
 
 Definition extz_bits len bits := ext_bits B0 len bits.
-Parameter undefined_list_bitU : list bitU.
+
 Definition exts_bits len bits :=
   match bits with
-  | BU :: _ => undefined_list_bitU (*failwith "exts_bits: undefined bit"*)
-  | B1 :: _ => ext_bits B1 len bits
+  | b :: _ => ext_bits b len bits
   | _ => ext_bits B0 len bits
   end.
 
@@ -724,7 +796,7 @@ Fixpoint add_one_bit_ignore_overflow_aux bits := match bits with
   | [] => []
   | B0 :: bits => B1 :: bits
   | B1 :: bits => B0 :: add_one_bit_ignore_overflow_aux bits
-  | BU :: _ => undefined_list_bitU (*failwith "add_one_bit_ignore_overflow: undefined bit"*)
+  | BU :: _ => dummy bits (*failwith "add_one_bit_ignore_overflow: undefined bit"*)
 end.
 (*declare {isabelle} termination_argument add_one_bit_ignore_overflow_aux = automatic*)
 
@@ -862,25 +934,25 @@ Qed.
 Close Scope nat.
 
 (*val access_list_inc : forall a. list a -> Z -> a*)
-Definition access_list_inc {A} (xs : list A) n `{ArithFact (0 <=? n)} `{ArithFact (n <? length_list xs)} : A.
-refine (nth_in_range (Z.to_nat n) xs (nth_Z_nat _ _)).
-* apply Z.leb_le.
-  auto using use_ArithFact.
-* apply Z.ltb_lt.
-  auto using use_ArithFact.
+Definition access_list_inc {A} (xs : list A) `{Inhabited A} (n : Z) : A.
+refine (
+  let i := Z.to_nat n in
+  if sumbool_of_bool ((0 <=? n) && (i <? List.length xs)%nat) then
+    nth_in_range i xs _
+  else dummy_value
+).
+rewrite Bool.andb_true_iff in e.
+rewrite Nat.ltb_lt in e.
+tauto.
 Defined.
 
 (*val access_list_dec : forall a. list a -> Z -> a*)
-Definition access_list_dec {A} (xs : list A) n `{H1:ArithFact (0 <=? n)} `{H2:ArithFact (n <? length_list xs)} : A.
-refine (
+Definition access_list_dec {A} (xs : list A) n `{Inhabited A} : A :=
   let top := (length_list xs) - 1 in
-  @access_list_inc A xs (top - n) _ _).
-abstract (constructor; apply use_ArithFact, Z.leb_le in H1; apply use_ArithFact, Z.ltb_lt in H2; apply Z.leb_le; lia).
-abstract (constructor; apply use_ArithFact, Z.leb_le in H1; apply use_ArithFact, Z.ltb_lt in H2; apply Z.ltb_lt; lia).
-Defined.
+  access_list_inc xs (top - n).
 
 (*val access_list : forall a. bool -> list a -> Z -> a*)
-Definition access_list {A} (is_inc : bool) (xs : list A) n `{ArithFact (0 <=? n)} `{ArithFact (n <? length_list xs)} :=
+Definition access_list {A} (is_inc : bool) (xs : list A) n `{Inhabited A} :=
   if is_inc then access_list_inc xs n else access_list_dec xs n.
 
 Definition access_list_opt_inc {A} (xs : list A) n := nth_error xs (Z.to_nat n).
@@ -916,72 +988,110 @@ end*)
 
 (*** Machine words *)
 
+Section MachineWords.
+
+Import MachineWord.
+
+(* ISA models tend to use integers for sizes, so Sail's bitvectors are integer
+   indexed.  To avoid carrying around proofs that sizes are non-negative
+   everywhere we define negative sized machine words to be a trivial value. *)
+
 Definition mword (n : Z) :=
   match n with
-  | Zneg _ => False
+  | Zneg _ => word 0
   | Z0 => word 0
   | Zpos p => word (Pos.to_nat p)
   end.
 
+#[export] Instance dummy_mword {n} : Inhabited (mword n) := {
+  inhabitant := match n with
+  | Zpos _ => zeros _
+  | _ => zeros _
+  end
+}.
+
 Definition get_word {n} : mword n -> word (Z.to_nat n) :=
   match n with
-  | Zneg _ => fun x => match x with end
+  | Zneg _ => fun x => x
   | Z0 => fun x => x
   | Zpos p => fun x => x
   end.
 
+Lemma get_word_inj {n} (w v : mword n) : get_word w = get_word v -> w = v.
+destruct n; simpl; auto.
+Qed.
+
 Definition with_word {n} {P : Type -> Type} : (word (Z.to_nat n) -> P (word (Z.to_nat n))) -> mword n -> P (mword n) :=
 match n with
-| Zneg _ => fun f w => match w with end
+| Zneg _ => fun f w => f w
 | Z0 => fun f w => f w
 | Zpos _ => fun f w => f w
 end.
 
-Program Definition to_word {n} : n >=? 0 = true -> word (Z.to_nat n) -> mword n :=
+Definition to_word {n} : word (Z.to_nat n) -> mword n :=
   match n with
-  | Zneg _ => fun H _ => _
-  | Z0 => fun _ w => w
-  | Zpos _ => fun _ w => w
+  | Zneg _ => fun _ => zeros _
+  | Z0 => fun w => w
+  | Zpos _ => fun w => w
   end.
 
-Definition word_to_mword {n} (w : word (Z.to_nat n)) `{H:ArithFact (n >=? 0)} : mword n :=
-  to_word (use_ArithFact H) w.
+Definition to_word_nat {n} (w : word n) : mword (Z.of_nat n) :=
+  to_word (cast_nat w (eq_sym (Nat2Z.id n))).
+
+(* Establish the relationship between to_word and to_word_nat, starting with some
+   reasoning using dependent equality, but ultimately finishing with a directly
+   usably plain equality result. *)
+
+Lemma to_word_eq_dep m n (w : MachineWord.word (Z.to_nat m)) (v : MachineWord.word (Z.to_nat n)) :
+  m > 0 ->
+  n > 0 ->
+  EqdepFacts.eq_dep Z (fun n => MachineWord.word (Z.to_nat n)) m w n v ->
+  EqdepFacts.eq_dep Z mword _ (to_word w) _ (to_word v).
+intros M N EQ.
+destruct m,n; try lia.
+inversion EQ. subst.
+constructor.
+Qed.
+
+Lemma cast_nat_eq_dep T m n o (x : T m) (y : T n) EQ : EqdepFacts.eq_dep _ _ _ x _ y -> EqdepFacts.eq_dep _ _ _ x o (cast_nat y EQ).
+intros.
+subst.
+rewrite cast_nat_refl.
+assumption.
+Qed.
+
+Lemma Z_nat_eq_dep T m n (x : T (Z.to_nat m)) (y : T (Z.to_nat n)) : m > 0 -> n > 0 -> EqdepFacts.eq_dep nat T _ x _ y -> EqdepFacts.eq_dep Z (fun n => T (Z.to_nat n)) _ x _ y.
+intros M N EQ.
+assert (m = n). {
+  inversion EQ.
+  apply Z2Nat.inj; auto with zarith.
+}
+subst.
+apply Eqdep.EqdepTheory.eq_dep_eq in EQ.
+subst.
+constructor.
+Qed.
+
+Lemma to_word_to_word_nat n (w : MachineWord.word (Z.to_nat n)) :
+  n > 0 ->
+  to_word w = autocast (to_word_nat w).
+intros.
+apply Eqdep_dec.eq_dep_eq_dec; auto using Z.eq_dec.
+eapply EqdepFacts.eq_dep_trans. 2: apply autocast_eq_dep. 2: auto with zarith.
+unfold to_word_nat.
+apply to_word_eq_dep; auto with zarith.
+apply Z_nat_eq_dep; auto with zarith.
+apply cast_nat_eq_dep.
+constructor.
+Qed.
+
+Definition word_to_mword {n} (w : word (Z.to_nat n)) : mword n :=
+  to_word w.
 
 (*val length_mword : forall a. mword a -> Z*)
 Definition length_mword {n} (w : mword n) := n.
 
-(*val slice_mword_dec : forall a b. mword a -> Z -> Z -> mword b*)
-(*Definition slice_mword_dec w i j := word_extract (Z.to_nat i) (Z.to_nat j) w.
-
-val slice_mword_inc : forall a b. mword a -> Z -> Z -> mword b
-Definition slice_mword_inc w i j :=
-  let top := (length_mword w) - 1 in
-  slice_mword_dec w (top - i) (top - j)
-
-val slice_mword : forall a b. bool -> mword a -> Z -> Z -> mword b
-Definition slice_mword is_inc w i j := if is_inc then slice_mword_inc w i j else slice_mword_dec w i j
-
-val update_slice_mword_dec : forall a b. mword a -> Z -> Z -> mword b -> mword a
-Definition update_slice_mword_dec w i j w' := word_update w (Z.to_nat i) (Z.to_nat j) w'
-
-val update_slice_mword_inc : forall a b. mword a -> Z -> Z -> mword b -> mword a
-Definition update_slice_mword_inc w i j w' :=
-  let top := (length_mword w) - 1 in
-  update_slice_mword_dec w (top - i) (top - j) w'
-
-val update_slice_mword : forall a b. bool -> mword a -> Z -> Z -> mword b -> mword a
-Definition update_slice_mword is_inc w i j w' :=
-  if is_inc then update_slice_mword_inc w i j w' else update_slice_mword_dec w i j w'
-
-val access_mword_dec : forall a. mword a -> Z -> bitU*)
-Parameter undefined_bit : bool.
-Definition getBit {n} :=
-match n with
-| O => fun (w : word O) i => undefined_bit
-| S n => fun (w : word (S n)) i => wlsb (wrshift' w i)
-end.
-
-Definition access_mword_dec {m} (w : mword m) n := bitU_of_bool (getBit (get_word w) (Z.to_nat n)).
+Definition access_mword_dec {m} (w : mword m) n := bitU_of_bool (get_bit (get_word w) (Z.to_nat n)).
 
 (*val access_mword_inc : forall a. mword a -> Z -> bitU*)
 Definition access_mword_inc {m} (w : mword m) n :=
@@ -992,19 +1102,9 @@ Definition access_mword_inc {m} (w : mword m) n :=
 Definition access_mword {a} (is_inc : bool) (w : mword a) n :=
   if is_inc then access_mword_inc w n else access_mword_dec w n.
 
-Definition setBit {n} :=
-match n with
-| O => fun (w : word O) i b => w
-| S n => fun (w : word (S n)) i (b : bool) =>
-  let bit : word (S n) := wlshift' (natToWord _ 1) i in
-  let mask : word (S n) := wnot bit in
-  let masked := wand mask w in
-  if b then masked else wor masked bit
-end.
-
 (*val update_mword_bool_dec : forall 'a. mword 'a -> integer -> bool -> mword 'a*)
 Definition update_mword_bool_dec {a} (w : mword a) n b : mword a :=
-  with_word (P := id) (fun w => setBit w (Z.to_nat n) b) w.
+  with_word (P := id) (fun w => set_bit w (Z.to_nat n) b) w.
 Definition update_mword_dec {a} (w : mword a) n b :=
  match bool_of_bitU b with
  | Some bl => Some (update_mword_bool_dec w n bl)
@@ -1021,8 +1121,8 @@ Definition update_mword {a} (is_inc : bool) (w : mword a) n b :=
   if is_inc then update_mword_inc w n b else update_mword_dec w n b.
 
 (*val int_of_mword : forall 'a. bool -> mword 'a -> integer*)
-Definition int_of_mword {a} `{ArithFact (a >=? 0)} (sign : bool) (w : mword a) :=
-  if sign then wordToZ (get_word w) else Z.of_N (wordToN (get_word w)).
+Definition int_of_mword {a} (sign : bool) (w : mword a) :=
+  if sign then word_to_Z (get_word w) else Z.of_N (word_to_N (get_word w)).
 
 
 (*val mword_of_int : forall a. Size a => Z -> Z -> mword a
@@ -1030,17 +1130,12 @@ Definition mword_of_int len n :=
   let w := wordFromInteger n in
   if (length_mword w = len) then w else failwith "unexpected word length"
 *)
-Program Definition mword_of_int {len} `{H:ArithFact (len >=? 0)} n : mword len :=
+Definition mword_of_int {len} n : mword len :=
 match len with
-| Zneg _ => _
-| Z0 => ZToWord 0 n
-| Zpos p => ZToWord (Pos.to_nat p) n
+| Zneg _ => zeros _
+| Z0 => Z_to_word 0 n
+| Zpos p => Z_to_word (Pos.to_nat p) n
 end.
-Next Obligation.
-destruct H as [H].
-unfold Z.geb, Z.compare in H.
-discriminate.
-Defined.
 
 (*
 (* Translating between a type level number (itself n) and an integer *)
@@ -1054,64 +1149,29 @@ val make_the_value : forall n. Z -> itself n
 Definition inline make_the_value x := the_value
 *)
 
-Fixpoint wordFromBitlist_rev l : word (length l) :=
-match l with
-| [] => WO
-| b::t => WS b (wordFromBitlist_rev t)
-end.
-Definition wordFromBitlist l : word (length l) :=
-  nat_cast _ (List.rev_length l) (wordFromBitlist_rev (List.rev l)).
+Definition mword_to_N {n} (w : mword n) : N :=
+  word_to_N (get_word w).
 
-Local Open Scope nat.
+Lemma word_to_N_cast_nat {m n w} {E : m = n} :
+  word_to_N (cast_nat w E) = word_to_N w.
+subst.
+rewrite cast_nat_refl.
+reflexivity.
+Qed.
 
-Fixpoint nat_diff {T : nat -> Type} n m {struct n} :
-forall
- (lt : forall p, T n -> T (n + p))
- (eq : T m -> T m)
- (gt : forall p, T (m + p) -> T m), T n -> T m :=
-(match n, m return (forall p, T n -> T (n + p)) -> (T m -> T m) -> (forall p, T (m + p) -> T m) -> T n -> T m with
-| O, O => fun lt eq gt => eq
-| S n', O => fun lt eq gt => gt _
-| O, S m' => fun lt eq gt => lt _
-| S n', S m' => @nat_diff (fun x => T (S x)) n' m'
-end).
+Lemma mword_to_N_cast_Z {m n w} {E : m = n} :
+  mword_to_N (cast_Z w E) = mword_to_N w.
+subst.
+rewrite cast_Z_refl.
+reflexivity.
+Qed.
 
-Definition fit_bbv_word {n m} : word n -> word m :=
-nat_diff n m
- (fun p w => nat_cast _ (Nat.add_comm _ _) (extz w p))
- (fun w => w)
- (fun p w => split2 _ _ (nat_cast _ (Nat.add_comm _ _) w)).
+Definition mword_to_bools {n} (w : mword n) : list bool := word_to_bools (get_word w).
+Definition bools_to_mword (l : list bool) : mword (length_list l) := to_word_nat (bools_to_word l).
 
-Local Close Scope nat.
+End MachineWords.
 
 (*** Bitvectors *)
-
-Class Bitvector (a:Type) : Type := {
-  bits_of : a -> list bitU;
-  of_bits : list bitU -> option a;
-  of_bools : list bool -> a;
-  (* The first parameter specifies the desired length of the bitvector *)
-  of_int : Z -> Z -> a;
-  length : a -> Z;
-  unsigned : a -> option Z;
-  signed : a -> option Z;
-  arith_op_bv : (Z -> Z -> Z) -> bool -> a -> a -> a
-}.
-
-Instance bitlist_Bitvector {a : Type} `{BitU a} : (Bitvector (list a)) := {
-  bits_of v := List.map to_bitU v;
-  of_bits v := Some (List.map of_bitU v);
-  of_bools v := List.map of_bitU (List.map bitU_of_bool v);
-  of_int len n := List.map of_bitU (bits_of_int len n);
-  length := length_list;
-  unsigned v := unsigned_of_bits (List.map to_bitU v);
-  signed v := signed_of_bits (List.map to_bitU v);
-  arith_op_bv op sign l r := List.map of_bitU (arith_op_bits op sign (List.map to_bitU l) (List.map to_bitU r))
-}.
-
-Class ReasonableSize (a : Z) : Prop := {
-  isPositive : a >=? 0 = true
-}.
 
 (* Definitions in the context that involve proof for other constraints can
    break some of the constraint solving tactics, so prune definition bodies
@@ -1134,13 +1194,6 @@ destruct (Bool.bool_dec l r) as [e | ne].
 * exists true; tauto.
 Qed.
 
-Lemma ArithFact_mword (a : Z) (w : mword a) : ArithFact (a >=? 0).
-constructor.
-destruct a.
-* auto with zarith.
-* auto using Z.le_ge, Zle_0_pos.
-* destruct w.
-Qed.
 (* Remove constructor from ArithFact(P)s and if they're used elsewhere
    in the context create a copy that rewrites will work on. *)
 Ltac unwrap_ArithFacts :=
@@ -1341,10 +1394,10 @@ Ltac destruct_exists :=
    The filter_disjunctions tactic simplifies hypotheses by obtaining p. *)
 
 Lemma truefalse : true = false <-> False.
-intuition.
+intuition auto using Bool.diff_false_true.
 Qed.
 Lemma falsetrue : false = true <-> False.
-intuition.
+intuition auto using Bool.diff_false_true.
 Qed.
 Lemma or_False_l P : False \/ P <-> P.
 intuition.
@@ -1505,12 +1558,10 @@ Ltac clean_up_props :=
 Ltac prepare_for_solver :=
 (*dump_context;*)
  generalize_embedded_proofs;
- clear_irrelevant_defns;
  clear_non_Z_bool_defns;
  autounfold with sail in * |- *; (* You can add Hint Unfold ... : sail to let lia see through fns *)
  split_cases;
  extract_properties;
- repeat match goal with w:mword ?n |- _ => apply ArithFact_mword in w end;
  unwrap_ArithFacts;
  destruct_exists;
  unbool_comparisons;
@@ -1801,7 +1852,7 @@ Ltac ex_iff_solve :=
 
 
 Lemma iff_false_left {P Q R : Prop} : (false = true) <-> Q -> (false = true) /\ P <-> Q /\ R.
-intuition.
+intuition congruence.
 Qed.
 
 (* Very simple proofs for trivial arithmetic.  Preferable to running omega/lia because
@@ -1899,8 +1950,10 @@ Ltac sail_extra_tactic := fail.
 
 Ltac main_solver :=
  solve
- [ apply ArithFact_mword; assumption
- | z_comparisons
+ [ z_comparisons
+ | subst; match goal with |- context [ZEuclid.div] => solve_euclid
+                        | |- context [ZEuclid.modulo] => solve_euclid
+   end
  | lia
    (* Try sail hints before dropping the existential *)
  | subst; eauto 3 with zarith sail
@@ -1908,9 +1961,6 @@ Ltac main_solver :=
  | subst; drop_Z_exists;
    repeat match goal with |- and _ _ => split end;
    eauto 3 with datatypes zarith sail
- | subst; match goal with |- context [ZEuclid.div] => solve_euclid
-                        | |- context [ZEuclid.modulo] => solve_euclid
-   end
  | match goal with |- context [Z.mul] => nia end
  (* If we have a disjunction from a set constraint on a variable we can often
     solve a goal by trying them (admittedly this is quite heavy handed...) *)
@@ -2117,6 +2167,8 @@ prepare_for_solver;
 (*dump_context;*)
 unbool_comparisons_goal; (* Applying the ArithFact constructor will reveal an = true, so this might do more than it did in prepare_for_solver *)
 repeat match goal with |- and _ _ => split end;
+(* Break up enumerations *)
+repeat match goal with |- context[match ?x with _ => _ end] => destruct x end;
 main_solver.
 
 (* This can be redefined to remove the abstract. *)
@@ -2147,6 +2199,7 @@ Ltac clear_proof_bodies :=
 
 Ltac solve_arithfact :=
   clear_proof_bodies;
+  clear_irrelevant_defns;
   try solve [squashed_andor_solver]; (* Do this first so that it can name the intros *)
   intros; (* To solve implications for derive_m *)
   clear_fixpoints; (* Avoid using recursive calls *)
@@ -2170,74 +2223,24 @@ Ltac solve_arithfact :=
    slow running constraints into proof mode. *)
 Ltac run_solver := solve_arithfact.
 
-Hint Extern 0 (ArithFact _) => run_solver : typeclass_instances.
-Hint Extern 0 (ArithFactP _) => run_solver : typeclass_instances.
+#[export] Hint Extern 0 (ArithFact _) => run_solver : typeclass_instances.
+#[export] Hint Extern 0 (ArithFactP _) => run_solver : typeclass_instances.
 
-Hint Unfold length_mword : sail.
+#[export] Hint Unfold length_mword : sail.
 
 Lemma unit_comparison_lemma : true = true <-> True.
 intuition.
 Qed.
-Hint Resolve unit_comparison_lemma : sail.
+#[export] Hint Resolve unit_comparison_lemma : sail.
 
 Definition neq_atom (x : Z) (y : Z) : bool := negb (Z.eqb x y).
-Hint Unfold neq_atom : sail.
-
-Lemma ReasonableSize_witness (a : Z) (w : mword a) : ReasonableSize a.
-constructor.
-destruct a.
-* auto with zarith.
-* auto using Z.le_ge, Zle_0_pos.
-* destruct w.
-Qed.
-
-Hint Extern 0 (ReasonableSize ?A) => (unwrap_ArithFacts; solve [apply ReasonableSize_witness; assumption | constructor; auto with zarith]) : typeclass_instances.
-
-Definition to_range (x : Z) : {y : Z & ArithFact ((x <=? y <=? x))} := build_ex x.
-
-Instance mword_Bitvector {a : Z} `{ArithFact (a >=? 0)} : (Bitvector (mword a)) := {
-  bits_of v := List.map bitU_of_bool (bitlistFromWord (get_word v));
-  of_bits v := option_map (fun bl => to_word isPositive (fit_bbv_word (wordFromBitlist bl))) (just_list (List.map bool_of_bitU v));
-  of_bools v := to_word isPositive (fit_bbv_word (wordFromBitlist v));
-  of_int len z := mword_of_int z; (* cheat a little *)
-  length v := a;
-  unsigned v := Some (Z.of_N (wordToN (get_word v)));
-  signed v := Some (wordToZ (get_word v));
-  arith_op_bv op sign l r := mword_of_int (op (int_of_mword sign l) (int_of_mword sign r))
-}.
-
-Section Bitvector_defs.
-Context {a b} `{Bitvector a} `{Bitvector b}.
+#[export] Hint Unfold neq_atom : sail.
 
 Definition opt_def {a} (def:a) (v:option a) :=
 match v with
 | Some x => x
 | None => def
 end.
-
-(* The Lem version is partial, but lets go with BU here to avoid constraints for now *)
-Definition access_bv_inc (v : a) n := opt_def BU (access_list_opt_inc (bits_of v) n).
-Definition access_bv_dec (v : a) n := opt_def BU (access_list_opt_dec (bits_of v) n).
-
-Definition update_bv_inc (v : a) n b := update_list true  (bits_of v) n b.
-Definition update_bv_dec (v : a) n b := update_list false (bits_of v) n b.
-
-Definition subrange_bv_inc (v : a) i j := subrange_list true  (bits_of v) i j.
-Definition subrange_bv_dec (v : a) i j := subrange_list true  (bits_of v) i j.
-
-Definition update_subrange_bv_inc (v : a) i j (v' : b) := update_subrange_list true  (bits_of v) i j (bits_of v').
-Definition update_subrange_bv_dec (v : a) i j (v' : b) := update_subrange_list false (bits_of v) i j (bits_of v').
-
-(*val extz_bv : forall a b. Bitvector a, Bitvector b => Z -> a -> b*)
-Definition extz_bv n (v : a) : option b := of_bits (extz_bits n (bits_of v)).
-
-(*val exts_bv : forall a b. Bitvector a, Bitvector b => Z -> a -> b*)
-Definition exts_bv n (v : a) : option b := of_bits (exts_bits n (bits_of v)).
-
-(*val string_of_bv : forall a. Bitvector a => a -> string *)
-Definition string_of_bv v := show_bitlist (bits_of v).
-
-End Bitvector_defs.
 
 (*** Bytes and addresses *)
 
@@ -2255,19 +2258,26 @@ Fixpoint byte_chunks {a} (bs : list a) := match bs with
 end.
 (*declare {isabelle} termination_argument byte_chunks = automatic*)
 
-Section BytesBits.
-Context {a} `{Bitvector a}.
+Definition bits_of {n} (v : mword n) := List.map bitU_of_bool (mword_to_bools v).
+Definition of_bits {n} v : option (mword n) :=
+  match just_list (List.map bool_of_bitU v) with
+  | Some bl =>
+    match Z.eq_dec (length_list bl) n with
+    | left H => Some (cast_Z (bools_to_mword bl) H)
+    | right _ => None
+    end
+  | None => None
+  end.
+Definition of_bools {n} v : mword n := autocast (bools_to_mword v).
 
 (*val bytes_of_bits : forall a. Bitvector a => a -> option (list memory_byte)*)
-Definition bytes_of_bits (bs : a) := byte_chunks (bits_of bs).
+Definition bytes_of_bits {n} (bs : mword n) := byte_chunks (bits_of bs).
 
 (*val bits_of_bytes : forall a. Bitvector a => list memory_byte -> a*)
-Definition bits_of_bytes (bs : list memory_byte) : list bitU := List.concat (List.map bits_of bs).
+Definition bits_of_bytes (bs : list memory_byte) : list bitU := List.concat (List.map (List.map to_bitU) bs).
 
-Definition mem_bytes_of_bits (bs : a) := option_map (@rev (list bitU)) (bytes_of_bits bs).
+Definition mem_bytes_of_bits {n} (bs : mword n) := option_map (@rev (list bitU)) (bytes_of_bits bs).
 Definition bits_of_mem_bytes (bs : list memory_byte) := bits_of_bytes (List.rev bs).
-
-End BytesBits.
 
 (*val bitv_of_byte_lifteds : list Sail_impl_base.byte_lifted -> list bitU
 Definition bitv_of_byte_lifteds v :=
@@ -2351,6 +2361,12 @@ Arguments read_from [_ _ _].
 Arguments write_to [_ _ _].
 Arguments of_regval [_ _ _].
 Arguments regval_of [_ _ _].
+
+(* Remember that these inhabitants are not used by well typed Sail
+code, so it doesn't matter that it's not useful. *)
+#[export] Instance dummy_register_ref {T regstate regval} `{Inhabited T} `{Inhabited regval} : Inhabited (register_ref regstate regval T) := {
+  inhabitant := {| name := ""; read_from := fun _ => dummy_value; write_to := fun _ s => s; of_regval := fun _ => None; regval_of := fun _ => dummy_value |}
+}.
 
 (* Register accessors: pair of functions for reading and writing register values *)
 Definition register_accessors regstate regval : Type :=
@@ -2491,9 +2507,45 @@ Definition external_mem_value v :=
 val internal_mem_value : memory_value -> list bitU
 Definition internal_mem_value bytes :=
   List.reverse bytes $> bitv_of_byte_lifteds*)
+*)
 
+(* The choice operations in the monads operate on a small selection of base
+   types.  Normally, -undefined_gen is used to construct functions for more
+   complex types. *)
 
-val foreach : forall a vars.
+Inductive ChooseType : Type :=
+  | ChooseBool | ChooseBit | ChooseInt | ChooseNat | ChooseReal | ChooseString
+  | ChooseRange (lo hi : Z) | ChooseBitvector (n:Z).
+Scheme Equality for ChooseType.
+Definition choose_type ty :=
+  match ty with
+  | ChooseBool => bool | ChooseBit => bitU | ChooseInt => Z | ChooseNat => Z
+  | ChooseReal => R | ChooseString => string
+  | ChooseRange _ _ => Z | ChooseBitvector n => mword n
+  end.
+
+(* The property that is expected to hold of the chosen value. *)
+Definition choose_prop ty : choose_type ty -> Prop :=
+  match ty with
+  | ChooseBool
+  | ChooseBit
+  | ChooseInt
+  | ChooseNat
+  | ChooseReal
+  | ChooseString => fun _ => True
+  | ChooseBitvector _n => fun _ => True
+  | ChooseRange lo hi => fun z => (lo <= z <= hi)%Z
+  end.
+
+(* TODO: try and split out Reals again *)
+#[export] Instance R_inhabited : Inhabited R := { inhabitant := R0 }.
+
+(* NB: this only works because we don't enforce choose_prop here. *)
+#[export] Instance choose_type_inhabited {ty} : Inhabited (choose_type ty).
+destruct ty; simpl; constructor; apply inhabitant.
+Defined.
+
+(*val foreach : forall a vars.
   (list a) -> vars -> (a -> vars -> vars) -> vars*)
 Fixpoint foreach {a Vars} (l : list a) (vars : Vars) (body : a -> Vars -> Vars) : Vars :=
 match l with
@@ -2528,34 +2580,27 @@ Fixpoint foreach_Z' {Vars} from to step n (vars : Vars) (body : Z -> Vars -> Var
 Definition foreach_Z {Vars} from to step vars body :=
   foreach_Z' (Vars := Vars) from to step (S (Z.abs_nat (from - to))) vars body.
 
-(* Define these in proof mode to avoid anomalies related to abstract.
-   (See https://github.com/coq/coq/issues/10959) *)
-
-Fixpoint foreach_Z_up' {Vars} (from to step off : Z) (n:nat) `{ArithFact (0 <? step)} `{ArithFact (0 <=? off)} (vars : Vars) (body : forall (z : Z) `(ArithFact ((from <=? z <=? to))), Vars -> Vars) {struct n} : Vars.
-refine (
+Fixpoint foreach_Z_up' {Vars} (from to step off : Z) (n:nat) (* 0 <? step *) (* 0 <=? off *) (vars : Vars) (body : forall (z : Z) (* from <=? z <=? to *), Vars -> Vars) {struct n} : Vars :=
   if sumbool_of_bool (from + off <=? to) then
     match n with
     | O => vars
-    | S n => let vars := body (from + off) _ vars in foreach_Z_up' _ from to step (off + step) n _ _ vars body
+    | S n => let vars := body (from + off) vars in foreach_Z_up' from to step (off + step) n vars body
     end
   else vars
-).
-Defined.
+.
 
-Fixpoint foreach_Z_down' {Vars} from to step off (n:nat) `{ArithFact (0 <? step)} `{ArithFact (off <=? 0)} (vars : Vars) (body : forall (z : Z) `(ArithFact ((to <=? z <=? from))), Vars -> Vars) {struct n} : Vars.
-refine (
+Fixpoint foreach_Z_down' {Vars} from to step off (n:nat) (* 0 <? step *) (* off <=? 0 *) (vars : Vars) (body : forall (z : Z) (* to <=? z <=? from *), Vars -> Vars) {struct n} : Vars :=
   if sumbool_of_bool (to <=? from + off) then
     match n with
     | O => vars
-    | S n => let vars := body (from + off) _ vars in foreach_Z_down' _ from to step (off - step) n _ _ vars body
+    | S n => let vars := body (from + off) vars in foreach_Z_down' from to step (off - step) n vars body
     end
   else vars
-).
-Defined.
+.
 
-Definition foreach_Z_up {Vars} from to step vars body `{ArithFact (0 <? step)} :=
+Definition foreach_Z_up {Vars} from to step vars body (* 0 <? step *) :=
     foreach_Z_up' (Vars := Vars) from to step 0 (S (Z.abs_nat (from - to))) vars body.
-Definition foreach_Z_down {Vars} from to step vars body `{ArithFact (0 <? step)} :=
+Definition foreach_Z_down {Vars} from to step vars body (* 0 <? step *) :=
     foreach_Z_down' (Vars := Vars) from to step 0 (S (Z.abs_nat (from - to))) vars body.
 
 (*val while : forall vars. vars -> (vars -> bool) -> (vars -> vars) -> vars
@@ -2645,64 +2690,53 @@ end
 *)
 *)
 
-(* Arithmetic functions which return proofs that match the expected Sail
-   types in smt.sail. *)
-
-Definition ediv_with_eq n m : {o : Z & ArithFact (o =? ZEuclid.div n m)} := build_ex (ZEuclid.div n m).
-Definition emod_with_eq n m : {o : Z & ArithFact (o =? ZEuclid.modulo n m)} := build_ex (ZEuclid.modulo n m).
-Definition abs_with_eq n   : {o : Z & ArithFact (o =? Z.abs n)} := build_ex (Z.abs n).
-
-(* Similarly, for ranges (currently in MIPS) *)
-
-Definition eq_range {n m o p} (l : {l & ArithFact (n <=? l <=? m)}) (r : {r & ArithFact (o <=? r <=? p)}) : bool :=
-  (projT1 l) =? (projT1 r).
-Definition add_range {n m o p} (l : {l & ArithFact (n <=? l <=? m)}) (r : {r & ArithFact (o <=? r <=? p)})
-  : {x & ArithFact (n+o <=? x <=? m+p)} :=
-  build_ex ((projT1 l) + (projT1 r)).
-Definition sub_range {n m o p} (l : {l & ArithFact (n <=? l <=? m)}) (r : {r & ArithFact (o <=? r <=? p)})
-  : {x & ArithFact (n-p <=? x <=? m-o)} :=
-  build_ex ((projT1 l) - (projT1 r)).
-Definition negate_range {n m} (l : {l : Z & ArithFact (n <=? l <=? m)})
-  : {x : Z & ArithFact ((- m) <=? x <=? (- n))} :=
-  build_ex (- (projT1 l)).
-
-Definition min_atom (a : Z) (b : Z) : {c : Z & ArithFact (((c =? a) || (c =? b)) && (c <=? a) && (c <=? b))} :=
-  build_ex (Z.min a b).
-Definition max_atom (a : Z) (b : Z) : {c : Z & ArithFact (((c =? a) || (c =? b)) && (c >=? a) && (c >=? b))} :=
-  build_ex (Z.max a b).
+(* TODO: make all Sail model preludes use the Z definitions directly, preferably by having them in the standard library *)
+Definition min_atom (a : Z) (b : Z) : Z := Z.min a b.
+Definition max_atom (a : Z) (b : Z) : Z := Z.max a b.
 
 
 (*** Generic vectors *)
 
-Definition vec (T:Type) (n:Z) := { l : list T & length_list l = n }.
+Definition vec (T:Type) (n:Z) := { l : list T & List.length l = Z.to_nat n }.
 Definition vec_length {T n} (v : vec T n) := n.
-Definition vec_access_dec {T n} (v : vec T n) m `{ArithFact ((0 <=? m <? n))} : T :=
+Definition vec_access_dec {T n} (v : vec T n) m `{Inhabited T} : T :=
   access_list_dec (projT1 v) m.
 
-Definition vec_access_inc {T n} (v : vec T n) m `{ArithFact (0 <=? m <? n)} : T :=
+Definition vec_access_inc {T n} (v : vec T n) m `{Inhabited T} : T :=
   access_list_inc (projT1 v) m.
 
-Program Definition vec_init {T} (t : T) (n : Z) `{ArithFact (n >=? 0)} : vec T n :=
-  existT _ (repeat [t] n) _.
-Next Obligation.
-intros.
-cbv beta.
-rewrite repeat_length. 2: apply Z_geb_ge, fact.
-unfold length_list.
-simpl.
-auto with zarith.
+#[export] Instance dummy_vec {T:Type} `{Inhabited T} n : Inhabited (vec T n).
+refine (Build_Inhabited _
+  (if sumbool_of_bool (n >=? 0) then @existT _ _ (repeat [dummy_value] n) _ else @existT _ _ [] _)
+).
+* rewrite repeat_length.
+  - simpl.
+    apply Nat.mul_1_r.
+  - auto with zarith.
+* destruct n; try reflexivity.
+  compute in e. congruence.
 Qed.
 
-Definition vec_concat {T m n} (v : vec T m) (w : vec T n) : vec T (m + n).
-refine (existT _ (projT1 v ++ projT1 w) _).
-destruct v.
-destruct w.
-simpl.
-unfold length_list in *.
-rewrite <- e, <- e0.
+Definition vec_init {T} (t : T) `{Inhabited T} (n : Z) : vec T n.
+refine (
+  if sumbool_of_bool (n >=? 0) then
+    @existT _ _ (repeat [t] n) _
+  else dummy_value
+).
+rewrite repeat_length.
+- simpl.
+  apply Nat.mul_1_r.
+- auto with zarith.
+Defined.
+
+Definition vec_concat {T m n} `{Inhabited T} (v : vec T m) (w : vec T n) : vec T (m + n).
+refine (
+  if sumbool_of_bool ((m >=? 0) && (n >=? 0)) then
+     @existT _ _ (projT1 v ++ projT1 w) _
+  else dummy_value).
+destruct v,w.
 rewrite app_length.
-rewrite Nat2Z.inj_add.
-reflexivity.
+rewrite Z2Nat.inj_add; auto with zarith.
 Defined.
 
 Lemma skipn_length {A n} {l: list A} : (n <= List.length l -> List.length (skipn n l) = List.length l - n)%nat.
@@ -2716,10 +2750,9 @@ induction n.
     simpl.
     rewrite IHn; auto with arith.
 Qed.
-Lemma update_list_inc_length {T} {l:list T} {m x} : 0 <= m < length_list l -> length_list (update_list_inc l m x) = length_list l.
-unfold update_list_inc, list_update, length_list.
+Lemma update_list_inc_length {T} {l:list T} {m x} : 0 <= m < length_list l -> List.length (update_list_inc l m x) = List.length l.
+unfold update_list_inc, list_update.
 intro H.
-f_equal.
 assert ((0 <= Z.to_nat m < Datatypes.length l)%nat).
 { destruct H as [H1 H2].
   split.
@@ -2735,60 +2768,73 @@ rewrite skipn_length;
 lia.
 Qed.
 
-Program Definition vec_update_dec {T n} (v : vec T n) m t `{ArithFact (0 <=? m <? n)} : vec T n := existT _ (update_list_dec (projT1 v) m t) _.
-Next Obligation.
-intros; cbv beta.
+Lemma vec_update_dec_lemma {T n} {v : vec T n} {m t} : 0 <=? m <? n = true -> length (update_list_dec (projT1 v) m t) = Z.to_nat n.
+intro.
 unfold update_list_dec.
+destruct v as [v' L].
 rewrite update_list_inc_length.
-+ destruct v. apply e.
-+ destruct H as [H].
++ apply L.
++ simpl.
+  unfold length_list.
   unbool_comparisons.
-  destruct v. simpl (projT1 _). rewrite e.
+  rewrite L.
   lia.
 Qed.
 
-Program Definition vec_update_inc {T n} (v : vec T n) m t `{ArithFact (0 <=? m <? n)} : vec T n := existT _ (update_list_inc (projT1 v) m t) _.
-Next Obligation.
-intros; cbv beta.
+Definition vec_update_dec {T n} `{Inhabited T} (v : vec T n) (m : Z) (t : T) : vec T n :=
+  match sumbool_of_bool (0 <=? m <? n) with
+  | left e => @existT _ _ (update_list_dec (projT1 v) m t) (vec_update_dec_lemma e)
+  | right _ => dummy_value
+  end.
+
+Lemma vec_update_inc_lemma {T n} {v : vec T n} {m t} : 0 <=? m <? n = true -> length (update_list_inc (projT1 v) m t) = Z.to_nat n.
+intro e.
+destruct v as [v' L].
 rewrite update_list_inc_length.
-+ destruct v. apply e.
-+ destruct H.
++ apply L.
++ unfold length_list.
+  simpl.
   unbool_comparisons.
-  destruct v. simpl (projT1 _). rewrite e.
-  auto.
+  rewrite L.
+  lia.
 Qed.
 
-Program Definition vec_map {S T} (f : S -> T) {n} (v : vec S n) : vec T n := existT _ (List.map f (projT1 v)) _.
-Next Obligation.
+Definition vec_update_inc {T n} `{Inhabited T} (v : vec T n) (m : Z) (t : T) : vec T n :=
+  match sumbool_of_bool (0 <=? m <? n) with
+  | left e => @existT _ _ (update_list_inc (projT1 v) m t) (vec_update_inc_lemma e)
+  | right _ => dummy_value
+  end.
+
+Definition vec_map {S T} (f : S -> T) {n} (v : vec S n) : vec T n.
+refine (@existT _ _ (List.map f (projT1 v)) _).
 destruct v as [l H].
 cbn.
 unfold length_list.
 rewrite map_length.
 apply H.
-Qed.
+Defined.
 
 Program Definition just_vec {A n} (v : vec (option A) n) : option (vec A n) :=
   match just_list (projT1 v) with
   | None => None
-  | Some v' => Some (existT _ v' _)
+  | Some v' => Some (@existT _ _ v' _)
   end.
 Next Obligation.
-intros; cbv beta.
-rewrite <- (just_list_length_Z _ _ Heq_anonymous).
+rewrite <- (just_list_length _ _ Heq_anonymous).
 destruct v.
 assumption.
-Qed.
+Defined.
 
 Definition list_of_vec {A n} (v : vec A n) : list A := projT1 v.
 
 Definition vec_eq_dec {T n} (D : forall x y : T, {x = y} + {x <> y}) (x y : vec T n) :
   {x = y} + {x <> y}.
 refine (if List.list_eq_dec D (projT1 x) (projT1 y) then left _ else right _).
-* apply eq_sigT_hprop; auto using ZEqdep.UIP.
+* apply eq_sigT_hprop; auto using UIP_nat.
 * contradict n0. rewrite n0. reflexivity.
 Defined.
 
-Instance Decidable_eq_vec {T : Type} {n} `(DT : forall x y : T, Decidable (x = y)) :
+#[export] Instance Decidable_eq_vec {T : Type} {n} `(DT : forall x y : T, Decidable (x = y)) :
   forall x y : vec T n, Decidable (x = y).
 refine (fun x y => {|
   Decidable_witness := proj1_sig (bool_of_sumbool (vec_eq_dec (fun x y => generic_dec x y) x y))
@@ -2796,15 +2842,27 @@ refine (fun x y => {|
 destruct (vec_eq_dec _ x y); simpl; split; congruence.
 Defined.
 
-Program Definition vec_of_list {A} n (l : list A) : option (vec A n) :=
-  if sumbool_of_bool (n =? length_list l) then Some (existT _ l _) else None.
-Next Obligation.
+Definition vec_of_list {A} n (l : list A) : option (vec A n).
+refine (
+  match sumbool_of_bool (n =? length_list l) with
+  | left H => Some (@existT _ _ l _)
+  | right _ => None
+  end
+).
 symmetry.
-apply Z.eqb_eq.
-assumption.
-Qed.
+apply Z.eqb_eq in H.
+rewrite H.
+unfold length_list.
+rewrite Nat2Z.id.
+reflexivity.
+Defined.
 
-Definition vec_of_list_len {A} (l : list A) : vec A (length_list l) := existT _ l (eq_refl _).
+Definition vec_of_list_len {A} (l : list A) : vec A (length_list l). 
+refine (@existT _ _ l _).
+unfold length_list.
+rewrite Nat2Z.id.
+reflexivity.
+Defined.
 
 Definition map_bind {A B} (f : A -> option B) (a : option A) : option B :=
 match a with
@@ -2812,77 +2870,25 @@ match a with
 | None => None
 end.
 
-Definition sub_nat (x : Z) `{ArithFact (x >=? 0)} (y : Z) `{ArithFact (y >=? 0)} :
-  {z : Z & ArithFact (z >=? 0)} :=
-  let z := x - y in
-  if sumbool_of_bool (z >=? 0) then build_ex z else build_ex 0.
+(* Limits for remainders *)
 
-Definition min_nat (x : Z) `{ArithFact (x >=? 0)} (y : Z) `{ArithFact (y >=? 0)} :
-  {z : Z & ArithFact (z >=? 0)} :=
-  build_ex (Z.min x y).
-
-Definition max_nat (x : Z) `{ArithFact (x >=? 0)} (y : Z) `{ArithFact (y >=? 0)} :
-  {z : Z & ArithFact (z >=? 0)} :=
-  build_ex (Z.max x y).
-
-Definition shl_int_1 (x y : Z) `{HE:ArithFact (x =? 1)} `{HR:ArithFact (0 <=? y <=? 3)}: {z : Z & ArithFact (member_Z_list z [1;2;4;8])}.
-refine (existT _ (shl_int x y) _).
-destruct HE as [HE].
-destruct HR as [HR].
-unbool_comparisons.
-assert (y = 0 \/ y = 1 \/ y = 2 \/ y = 3) by lia.
-constructor.
-intuition (subst; compute; auto).
-Defined.
-
-Definition shl_int_8 (x y : Z) `{HE:ArithFact (x =? 8)} `{HR:ArithFact (0 <=? y <=? 3)}: {z : Z & ArithFact (member_Z_list z [8;16;32;64])}.
-refine (existT _ (shl_int x y) _).
-destruct HE as [HE].
-destruct HR as [HR].
-unbool_comparisons.
-assert (y = 0 \/ y = 1 \/ y = 2 \/ y = 3) by lia.
-constructor.
-intuition (subst; compute; auto).
-Defined.
-
-Definition shl_int_32 (x y : Z) `{HE:ArithFact (x =? 32)} `{HR:ArithFact (member_Z_list y [0;1])}: {z : Z & ArithFact (member_Z_list z [32;64])}.
-refine (existT _ (shl_int x y) _).
-destruct HE as [HE].
-destruct HR as [HR].
-constructor.
-unbool_comparisons.
-destruct HR as [HR | [HR | []]];
-subst; compute;
-auto.
-Defined.
-
-Definition shr_int_32 (x y : Z) `{HE:ArithFact (0 <=? x <=? 31)} `{HR:ArithFact (y =? 1)}: {z : Z & ArithFact (0 <=? z <=? 15)}.
-refine (existT _ (shr_int x y) _).
-abstract (
-  destruct HE as [HE];
-  destruct HR as [HR];
-  unbool_comparisons;
-  subst;
-  constructor;
-  unbool_comparisons_goal;
-  unfold shr_int;
-  rewrite <- Z.div2_spec;
-  rewrite Z.div2_div;
-  specialize (Z.div_mod x 2);
-  specialize (Z.mod_pos_bound x 2);
-  generalize (Z.div x 2);
-  generalize (x mod 2);
-  intros;
-  nia).
-Defined.
-
-Lemma shl_8_ge_0 {n} : shl_int 8 n >= 0.
-unfold shl_int.
-apply Z.le_ge.  
-apply <- Z.shiftl_nonneg.
-lia.
+Require Zquot.
+Lemma Z_rem_really_nonneg : forall a b : Z, 0 <= a -> 0 <= Z.rem a b.
+intros.
+destruct (Z.eq_dec b 0).
++ subst. rewrite Zquot.Zrem_0_r. assumption.
++ auto using Z.rem_nonneg.
 Qed.
-Hint Resolve shl_8_ge_0 : sail.
+
+Lemma Z_rem_pow_upper_bound : forall x x0 l,
+0 <= x -> 2 ^ l <= x0 -> x0 <= 2 ^ l -> 0 <= l -> Z.rem x x0 < 2 ^ l.
+intros.
+assert (x0 = 2 ^ l). auto with zarith.
+subst.
+apply Z.rem_bound_pos; auto with zarith.
+Qed.
+
+#[export] Hint Resolve Z_rem_really_nonneg Z_rem_pow_upper_bound : sail.
 
 (* This is needed because Sail's internal constraint language doesn't have
    < and could disappear if we add it... *)
@@ -2891,4 +2897,13 @@ Lemma sail_lt_ge (x y : Z) :
   x < y <-> y >= x +1.
 lia.
 Qed.
-Hint Resolve sail_lt_ge : sail.
+#[export] Hint Resolve sail_lt_ge : sail.
+
+(* Override expensive unary exponential notation for binary, fill in sizes too *)
+Notation "sz ''b' a" := (MachineWord.N_to_word sz (BinaryString.Raw.to_N a N0)) (at level 50).
+Notation "''b' a" := (MachineWord.N_to_word _ (BinaryString.Raw.to_N a N0) :
+                       mword (ltac:(let sz := eval cbv in (Z.of_nat (String.length a)) in exact sz)))
+                     (at level 50, only parsing).
+Notation "'Ox' a" := (MachineWord.N_to_word _ (HexString.Raw.to_N a N0) :
+                       mword (ltac:(let sz := eval cbv in (4 * (Z.of_nat (String.length a))) in exact sz)))
+                     (at level 50, only parsing).
