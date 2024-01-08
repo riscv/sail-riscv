@@ -6,7 +6,6 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-termination_measure n_leading_spaces s = string_length(s)
 val compressed_measure : ast -> int
 function compressed_measure(instr) =
   match instr {
@@ -45,3 +44,18 @@ function compressed_measure(instr) =
     _ => 0
   }
 termination_measure execute(i) = compressed_measure(i)
+termination_measure pt_walk(_,_,_,_,_,_,_,level,_, _) = level
+
+function extensionEnabled_measure(ext : extension) -> int =
+  match ext {
+    Ext_Zca => 1, // Ext_C
+    Ext_Zfhmin => 1, // Ext_Zfh
+    Ext_Zba => 1, // Ext_B
+    Ext_Zbb => 1, // Ext_B
+    Ext_Zbs => 1, // Ext_B
+    Ext_Zcb => 2, // Ext_Zca
+    Ext_Zcd => 2, // Ext_Zca, (Ext_D)
+    Ext_Zcf => 2, // Ext_Zca, (Ext_F)
+    _ => 0
+  }
+termination_measure extensionEnabled(ext) = extensionEnabled_measure(ext)

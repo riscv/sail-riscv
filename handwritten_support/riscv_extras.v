@@ -68,7 +68,7 @@
 (*  SUCH DAMAGE.                                                                         *)
 (*=======================================================================================*)
 
-Require Import Sail.Base.
+Require Import SailStdpp.Base.
 Require Import String.
 Require Import List.
 Require Import Lia.
@@ -170,18 +170,6 @@ Definition eq_bit (x : bitU) (y : bitU) : bool :=
   | _,_ => false
   end.
 
-Require Import Zeuclid.
-Definition euclid_modulo (m n : Z) `{ArithFact (n >? 0)} : {z : Z & ArithFact (0 <=? z <=? n-1)}.
-apply existT with (x := ZEuclid.modulo m n).
-constructor.
-destruct H.
-unbool_comparisons.
-unbool_comparisons_goal.
-assert (Z.abs n = n). { rewrite Z.abs_eq; auto with zarith. }
-rewrite <- H at 3.
-lapply (ZEuclid.mod_always_pos m n); lia.
-Qed.
-
 (* Override the more general version *)
 
 Definition mults_vec {n} (l : mword n) (r : mword n) : mword (2 * n) := mults_vec l r.
@@ -198,8 +186,25 @@ Definition string_of_int z := DecimalString.NilZero.string_of_int (Z.to_int z).
 Axiom sys_enable_writable_misa : unit -> bool.
 Axiom sys_enable_rvc : unit -> bool.
 Axiom sys_enable_fdext : unit -> bool.
+Axiom sys_enable_svinval : unit -> bool.
+Axiom sys_enable_zcb : unit -> bool.
 Axiom sys_enable_zfinx : unit -> bool.
 Axiom sys_enable_writable_fiom : unit -> bool.
+Axiom sys_enable_vext : unit -> bool.
+Axiom sys_enable_bext : unit -> bool.
+Axiom sys_enable_zicbom : unit -> bool.
+Axiom sys_enable_zicboz : unit -> bool.
+Axiom sys_enable_sstc : unit -> bool.
+Axiom sys_writable_hpm_counters : unit -> mword 32.
+
+Axiom sys_vext_vl_use_ceil : unit -> bool.
+Axiom sys_vector_elen_exp : unit -> Z.
+Axiom sys_vector_vlen_exp : unit -> Z.
+
+Axiom sys_pmp_count : unit -> Z.
+Axiom sys_pmp_count_ok : 0 <= sys_pmp_count tt <= 64.
+Axiom sys_pmp_grain : unit -> Z.
+Axiom sys_pmp_grain_ok : 0 <= sys_pmp_grain tt <= 63.
 
 (* The constraint solver can do this itself, but a Coq bug puts
    anonymous_subproof into the term instead of an actual subproof. *)
