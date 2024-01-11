@@ -187,6 +187,7 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
 /* we currently don't model 'E', so always assume 'I'. */
 function haveAtomics() -> bool = misa[A] == 0b1
 function haveRVC()     -> bool = misa[C] == 0b1
+function haveBExt()    -> bool = misa[B] == 0b1
 function haveMulDiv()  -> bool = misa[M] == 0b1
 function haveSupMode() -> bool = misa[S] == 0b1
 function haveUsrMode() -> bool = misa[U] == 0b1
