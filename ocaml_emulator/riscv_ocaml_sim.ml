@@ -68,6 +68,9 @@ let options = Arg.align ([("-dump-dts",
                           ("-disable-vext",
                            Arg.Clear P.config_enable_vext,
                            " disable the RVV extension on boot");
+                          ("-enable-bext",
+                           Arg.Clear P.config_enable_bext,
+                           " enable the B extension on boot");
                           ("-disable-writable-misa-c",
                            Arg.Clear P.config_enable_writable_misa,
                            " leave misa hardwired to its initial value");
