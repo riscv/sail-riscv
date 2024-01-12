@@ -106,7 +106,10 @@ function isPTEPtr(p : pteAttribs, ext : extPte) -> bool = {
 
 function isInvalidPTE(p : pteAttribs, ext : extPte) -> bool = {
   let a = Mk_PTE_Bits(p);
-  a.V() == 0b0 | (a.W() == 0b1 & a.R() == 0b0)
+  a.V() == 0b0                  |
+  (a.W() == 0b1 & a.R() == 0b0) |
+  (ext != 0b0000000000)         |
+  (isPTEPtr(p, ext) & (a.D() == 0b1 | a.A() == 0b1 | a.U() == 0b1))
 }
 
 union PTE_Check = {
