@@ -74,9 +74,11 @@
 // (2) we can greatly speed up simulation speed (for Linux boot, can
 //     reduce elapsed time from 10s of minutes to few minutes).
 
+type asidbits = bits(16)
+
 // PRIVATE
 struct TLB_Entry = {
-  asid       : bits(16),  // address-space id
+  asid       : asidbits,  // address-space id
   global     : bool,      // global translation
   vAddr      : bits(64),  // VPN
   pAddr      : bits(64),  // ppn
@@ -101,14 +103,14 @@ function write_TLB(idx : nat, ent : TLB_Entry) -> unit =
 
 // PRIVATE
 function match_TLB_Entry(ent   : TLB_Entry,
-                         asid  : bits(16),
+                         asid  : asidbits,
                          vaddr : bits(64)) -> bool =
   (ent.global | (ent.asid == asid))
   & (ent.vAddr == (ent.vMatchMask & vaddr))
 
 // PRIVATE
 function flush_TLB_Entry(e    : TLB_Entry,
-                         asid : option(bits(16)),
+                         asid : option(asidbits),
                          addr : option(bits(64))) -> bool = {
   match (asid, addr) {
     ( None(),  None()) => true,
@@ -120,14 +122,14 @@ function flush_TLB_Entry(e    : TLB_Entry,
 }
 
 // PUBLIC: invoked in translate() [riscv_vmem.sail]
-function lookup_TLB (asid : bits(16), vaddr : bits(64)) -> option((nat, TLB_Entry)) =
+function lookup_TLB (asid : asidbits, vaddr : bits(64)) -> option((nat, TLB_Entry)) =
   match tlb {
     None()  => None(),
     Some(e) => if match_TLB_Entry(e, asid, vaddr) then Some((0, e)) else None()
   }
 
 // PRIVATE
-function add_to_TLB(asid          : bits(16),
+function add_to_TLB(asid          : asidbits,
                     vAddr         : bits(64),
                     pAddr         : bits(64),
                     pte           : bits(64),
@@ -136,7 +138,7 @@ function add_to_TLB(asid          : bits(16),
                     global        : bool,
                     levelBitSize  : nat,
                     PAGESIZE_BITS : nat)     -> unit = {
-  let shift      : nat       = PAGESIZE_BITS + (level * levelBitSize);
+  let shift = PAGESIZE_BITS + (level * levelBitSize);
   assert(shift <= 64);
   let vAddrMask  : bits(64)  = zero_extend(ones(shift));
   let vMatchMask : bits(64)  = ~ (vAddrMask);
@@ -156,7 +158,7 @@ function add_to_TLB(asid          : bits(16),
 // PUBLIC: invoked from exec SFENCE_VMA
 function flush_TLB(asid_xlen : option(xlenbits),
                    addr_xlen : option(xlenbits)) -> unit = {
-  let asid : option(bits(16)) =
+  let asid : option(asidbits) =
     match asid_xlen {
       None()  => None(),
       Some(a) => Some(a[15 .. 0])
