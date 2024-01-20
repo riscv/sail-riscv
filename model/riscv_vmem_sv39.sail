@@ -88,19 +88,20 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
     MemValue(v) => {
       let pte = Mk_SV39_PTE(v);
       let pbits = pte.BITS();
-      let ext_pte = pte.Ext();
+      let std_ext = pte.Ext();
       let pattr = Mk_PTE_Bits(pbits);
+      let eattr = Mk_PTE_StdExt_Bits(std_ext);
       let is_global = global | (pattr.G() == 0b1);
 /*    print("walk39(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
             ^ " pt_base=" ^ BitStr(ptb)
             ^ " pt_ofs=" ^ BitStr(pt_ofs)
             ^ " pte_addr=" ^ BitStr(pte_addr)
             ^ " pte=" ^ BitStr(v)); */
-      if isInvalidPTE(pbits, ext_pte) then {
+      if isInvalidPTE(pbits, std_ext) then {
 /*      print("walk39: invalid pte"); */
         PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
       } else {
-        if isPTEPtr(pbits, ext_pte) then {
+        if isPTEPtr(pbits, std_ext) then {
           if level > 0 then {
             /* walk down the pointer to the next level */
             walk39(vaddr, ac, priv, mxr, do_sum, shiftl(zero_extend(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global, ext_ptw)
@@ -110,7 +111,7 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
             PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
           }
         } else { /* leaf PTE */
-          match checkPTEPermission(ac, priv, mxr, do_sum, pattr, ext_pte, ext_ptw) {
+          match checkPTEPermission(ac, priv, mxr, do_sum, pattr, std_ext, ext_ptw) {
             PTE_Check_Failure(ext_ptw, ext_ptw_fail) => {
 /*            print("walk39: pte permission check failure"); */
               PTW_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw)
@@ -119,7 +120,9 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
               if level > 0 then { /* superpage */
                 /* fixme hack: to get a mask of appropriate size */
                 let mask = shiftl(pte.PPNi() ^ pte.PPNi() ^ zero_extend(0b1), level * SV39_LEVEL_BITS) - 1;
-                if (pte.PPNi() & mask) != zero_extend(0b0) then {
+                if haveSvnapot() & eattr.N() == 0b1 then {
+                  PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
+                } else if (pte.PPNi() & mask) != zero_extend(0b0) then {
                   /* misaligned superpage mapping */
 /*                print("walk39: misaligned superpage mapping"); */
                   PTW_Failure(PTW_Misaligned(), ext_ptw)
@@ -133,9 +136,18 @@ function walk39(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
                 }
               } else {
                 /* normal leaf PTE */
-/*              let res = append(pte.PPNi(), va.PgOfs());
-                print("walk39: pte.ppn=" ^ BitStr(pte.PPNi()) ^ " ppn=" ^ BitStr(pte.PPNi()) ^ " res=" ^ BitStr(res)); */
-                PTW_Success(append(pte.PPNi(), va.PgOfs()), pte, pte_addr, level, is_global, ext_ptw)
+                if ( haveSvnapot() & eattr.N() == 0b1 & pte.PPNi()[3 .. 0] != 0b1000 ) then {
+                  PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
+                } else {
+                  let ppn : bits(44) = match (haveSvnapot(), eattr.N()) {
+                    (false, _)  => pte.PPNi(),
+                    (true, 0b0) => pte.PPNi(),
+                    (true, 0b1) => append(pte.PPNi()[43 .. 4], va.VPNi()[3 .. 0])
+                  };
+/*                let res = append(ppn, va.PgOfs());
+                  print("walk39: pte.ppn=" ^ BitStr(pte.PPNi()) ^ " ppn=" ^ BitStr(ppn) ^ " res=" ^ BitStr(res)); */
+                  PTW_Success(append(ppn, va.PgOfs()), pte, pte_addr, level, is_global, ext_ptw)
+                }
               }
             }
           }
@@ -185,12 +197,12 @@ function translate39(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
     Some(idx, ent) => {
 /*    print("translate39: TLB39 hit for " ^ BitStr(vAddr)); */
       let  pte = Mk_SV39_PTE(ent.pte);
-      let  ext_pte = pte.Ext();
+      let  std_ext = pte.Ext();
       let  pteBits = Mk_PTE_Bits(pte.BITS());
-      match checkPTEPermission(ac, priv, mxr, do_sum, pteBits, ext_pte, ext_ptw) {
+      match checkPTEPermission(ac, priv, mxr, do_sum, pteBits, std_ext, ext_ptw) {
         PTE_Check_Failure(ext_ptw, ext_ptw_fail) => { TR_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw) },
         PTE_Check_Success(ext_ptw) => {
-          match update_PTE_Bits(pteBits, ac, ext_pte) {
+          match update_PTE_Bits(pteBits, ac, std_ext) {
             None()           => TR_Address(ent.pAddr | zero_extend(vAddr & ent.vAddrMask), ext_ptw),
             Some(pbits, ext) => {
               if not(plat_enable_dirty_update())

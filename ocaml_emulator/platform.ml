@@ -13,6 +13,8 @@ let config_mtval_has_illegal_inst_bits = ref false
 let config_enable_pmp                  = ref false
 let config_enable_writable_fiom        = ref true
 let config_enable_vext                 = ref true
+let config_enable_svnapot              = ref false
+let config_enable_svpbmt               = ref false
 
 let platform_arch = ref P.RV64
 
@@ -87,6 +89,8 @@ let mtval_has_illegal_inst_bits ()   = !config_mtval_has_illegal_inst_bits
 let enable_pmp ()                    = !config_enable_pmp
 let enable_zfinx ()                  = false
 let enable_writable_fiom ()          = !config_enable_writable_fiom
+let enable_svnapot ()                = !config_enable_svnapot
+let enable_svpbmt ()                 = !config_enable_svpbmt
 
 let rom_base ()   = arch_bits_of_int64 P.rom_base
 let rom_size ()   = arch_bits_of_int   !rom_size_ref

@@ -94,7 +94,7 @@ function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
     MemValue(v) => {
       let pte = Mk_SV32_PTE(v);
       let pbits = pte.BITS();
-      let ext_pte : extPte = default_sv32_ext_pte;
+      let std_ext : pteStdExtAttribs = default_sv32_pte_std_ext_attribs;
       let pattr = Mk_PTE_Bits(pbits);
       let is_global = global | (pattr.G() == 0b1);
 /*    print("walk32(vaddr=" ^ BitStr(vaddr) ^ " level=" ^ string_of_int(level)
@@ -102,11 +102,11 @@ function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
             ^ " pt_ofs=" ^ BitStr(to_phys_addr(pt_ofs))
             ^ " pte_addr=" ^ BitStr(to_phys_addr(pte_addr))
             ^ " pte=" ^ BitStr(v)); */
-      if isInvalidPTE(pbits, ext_pte) then {
+      if isInvalidPTE(pbits, std_ext) then {
 /*      print("walk32: invalid pte"); */
         PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
       } else {
-        if isPTEPtr(pbits, ext_pte) then {
+        if isPTEPtr(pbits, std_ext) then {
           if level > 0 then {
             /* walk down the pointer to the next level */
             walk32(vaddr, ac, priv, mxr, do_sum, shiftl(zero_extend(pte.PPNi()), PAGESIZE_BITS), level - 1, is_global, ext_ptw)
@@ -116,7 +116,7 @@ function walk32(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
             PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
           }
         } else { /* leaf PTE */
-          match checkPTEPermission(ac, priv, mxr, do_sum, pattr, ext_pte, ext_ptw) {
+          match checkPTEPermission(ac, priv, mxr, do_sum, pattr, std_ext, ext_ptw) {
             PTE_Check_Failure(ext_ptw, ext_ptw_fail) => {
 /*            print("walk32: pte permission check failure"); */
               PTW_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw)
@@ -191,12 +191,12 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
     Some(idx, ent) => {
 /*    print("translate32: TLB32 hit for " ^ BitStr(vAddr)); */
       let  pte = Mk_SV32_PTE(ent.pte);
-      let  ext_pte : extPte = zeros(); // no reserved bits for extensions
+      let  std_ext : pteStdExtAttribs = default_sv32_pte_std_ext_attribs;
       let  pteBits = Mk_PTE_Bits(pte.BITS());
-      match checkPTEPermission(ac, priv, mxr, do_sum, pteBits, ext_pte, ext_ptw) {
+      match checkPTEPermission(ac, priv, mxr, do_sum, pteBits, std_ext, ext_ptw) {
         PTE_Check_Failure(ext_ptw, ext_ptw_fail) => { TR_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw) },
         PTE_Check_Success(ext_ptw) => {
-          match update_PTE_Bits(pteBits, ac, ext_pte) {
+          match update_PTE_Bits(pteBits, ac, std_ext) {
             None()           => TR_Address(ent.pAddr | zero_extend(vAddr & ent.vAddrMask), ext_ptw),
             Some(pbits, ext) => {
               if not(plat_enable_dirty_update())
