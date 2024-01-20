@@ -19,13 +19,20 @@
 
 type pte_flags_bits = bits(8)
 
-// For PTW extensions (non-standard)
-type extPte = bits(64)
+// For PTW extensions (standard)
+type extPte = bits(10)
+
+bitfield PTE_Ext_Flags : extPte = {
+  N    : 9,
+  PBMT : 8 .. 7,
+  reserved : 6 .. 0
+}
 
 // PRIVATE: extract msbs of PTE above the PPN
-function msbs_of_PTE(sv_params : SV_Params, pte : bits(64)) -> bits(64) = {
+function msbs_of_PTE(sv_params : SV_Params, pte : bits(64)) -> bits(10) = {
   let mask : bits(64) = zero_extend(ones(sv_params.pte_msbs_size_bits));
-  (pte >> sv_params.pte_msbs_lsb_index) & mask
+  let mbits: bits(64) = (pte >> sv_params.pte_msbs_lsb_index) & mask;
+  mbits[9 .. 0]
 }
 
 // PRIVATE: extract PPNs of PTE
@@ -51,10 +58,33 @@ function pte_is_ptr(pte_flags : PTE_Flags) -> bool = (pte_flags[X] == 0b0)
                                                       & (pte_flags[W] == 0b0)
                                                       & (pte_flags[R] == 0b0)
 
+// Extension hooks can request standard PTE validity checks by returning Ext_PTE_Std
+enum Ext_isInvalPTE_Check = {
+  Ext_PTE_Invalid,
+  Ext_PTE_Valid,
+  Ext_PTE_Std
+}
+
+// Extension hook to override standard definition of extended PTE attribute bits
+function ext_pte_is_invalid (p : PTE_Flags, e : PTE_Ext_Flags) -> Ext_isInvalPTE_Check =
+  Ext_PTE_Std
+
 // PRIVATE: check if a PTE is valid
-function pte_is_invalid(pte_flags : PTE_Flags) -> bool = (pte_flags[V] == 0b0)
-                                                         | ((pte_flags[W] == 0b1)
-                                                            & (pte_flags[R] == 0b0))
+function pte_is_invalid(pte_flags : PTE_Flags, pte_ext_flags : PTE_Ext_Flags, level : PTW_Level) -> bool = {
+  match ext_pte_is_invalid(pte_flags, pte_ext_flags) {
+    Ext_PTE_Invalid => true,
+    Ext_PTE_Valid   => false,
+    Ext_PTE_Std     => {
+        pte_flags[V] == 0b0
+      | pte_flags[W] == 0b1 & pte_flags[R] == 0b0
+      | (pte_is_ptr(pte_flags) & (pte_flags[D] == 0b1 | pte_flags[A] == 0b1 | pte_flags[U] == 0b1))
+      | pte_ext_flags[reserved] != zeros()
+      | pte_ext_flags[N] == 0b1 & (not(haveSvnapot()) | pte_is_ptr(pte_flags) | level > 0)
+      | pte_ext_flags[PBMT] == 0b11
+      | (pte_ext_flags[PBMT] != 0b00 & (not(haveSvpbmt()) | pte_is_ptr(pte_flags) | menvcfg[PBMTE] == 0b0))
+    }
+  }
+}
 
 // ----------------
 // Check access permissions in PTE

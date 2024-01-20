@@ -23,7 +23,7 @@ function fetch() -> FetchResult =
       then F_Error(E_Fetch_Addr_Align(), PC)
       else match translateAddr(use_pc, Execute()) {
         TR_Failure(e, _)     => F_Error(e, PC),
-        TR_Address(ppclo, _) => {
+        TR_Address(ppclo, _, _) => {
           /* split instruction fetch into 16-bit granules to handle RVC, as
            * well as to generate precise fault addresses in any fetch
            * exceptions.
@@ -41,7 +41,7 @@ function fetch() -> FetchResult =
                   Ext_FetchAddr_OK(use_pc_hi) => {
                     match translateAddr(use_pc_hi, Execute()) {
                       TR_Failure(e, _)     => F_Error(e, PC_hi),
-                      TR_Address(ppchi, _) => {
+                      TR_Address(ppchi, _, _) => {
                         match mem_read(Execute(), ppchi, 2, false, false, false) {
                           MemException(e) => F_Error(e, PC_hi),
                           MemValue(ihi)   => F_Base(append(ihi, ilo))

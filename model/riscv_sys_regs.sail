@@ -108,6 +108,12 @@ val sys_enable_vext = {c: "sys_enable_vext", ocaml: "Platform.enable_vext", _: "
 /* whether misa.b was enabled at boot */
 val sys_enable_bext = {c: "sys_enable_bext", ocaml: "Platform.enable_bext", _: "sys_enable_bext"} : unit -> bool
 
+/* whether svnapot was enabled at boot */
+val sys_enable_svnapot = {c: "sys_enable_svnapot", ocaml: "Platform.enable_svnapot", _: "sys_enable_svnapot"} : unit -> bool
+
+/* whether svpbmt was enabled at boot */
+val sys_enable_svpbmt = {c: "sys_enable_svpbmt", ocaml: "Platform.enable_svpbmt", _: "sys_enable_svpbmt"} : unit -> bool
+
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
    unsetting C. If it returns true the write will have no effect. */
@@ -174,6 +180,12 @@ function haveZicond() -> bool = true
 
 /* Zabha extension support */
 function haveZabha() -> bool = true
+
+/* Svpbmt extension support */
+function haveSvpbmt() -> bool = sys_enable_svpbmt()
+
+/* Svnapot extension support */
+function haveSvnapot() -> bool = sys_enable_svnapot()
 
 /*
  * Illegal values legalized to least privileged mode supported.
@@ -843,7 +855,10 @@ register senvcfg : SEnvcfg
 
 function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
-  let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
+  let o = [o with
+            FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0,
+            PBMTE = if haveSvpbmt() then v[PBMTE] else 0b0
+          ];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }

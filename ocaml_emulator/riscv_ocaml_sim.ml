@@ -91,7 +91,13 @@ let options = Arg.align ([("-dump-dts",
                            " requested isa");
                           ("-with-dtc",
                            Arg.String PI.set_dtc,
-                           " full path to dtc to use")
+                           " full path to dtc to use");
+                          ("-enable-svnapot",
+                           Arg.Set P.config_enable_svnapot,
+                           " enable svnapot extension");
+                          ("-enable-svpbmt",
+                           Arg.Set P.config_enable_svpbmt,
+                           " enable svpbmt extension")
                          ])
 
 let usage_msg = "RISC-V platform options:"
