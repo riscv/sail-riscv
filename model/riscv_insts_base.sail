@@ -9,6 +9,8 @@
 /* ****************************************************************** */
 /* This file specifies the instructions in the base integer set.      */
 
+enum clause extension = Ext_C
+function clause extensionEnabled(Ext_C) = misa[C] == 0b1
 
 /* ****************************************************************** */
 union clause ast = UTYPE : (bits(20), regidx, uop)
@@ -67,7 +69,7 @@ function clause execute (RISCV_JAL(imm, rd)) = {
     },
     Ext_ControlAddr_OK(target) => {
       /* Perform standard alignment check */
-      if bit_to_bool(target[1]) & not(haveRVC())
+      if bit_to_bool(target[1]) & not(extensionEnabled(Ext_C))
       then {
         handle_mem_exception(target, E_Fetch_Addr_Align());
         RETIRE_FAIL
@@ -131,7 +133,7 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
         RETIRE_FAIL
       },
       Ext_ControlAddr_OK(target) => {
-        if bit_to_bool(target[1]) & not(haveRVC()) then {
+        if bit_to_bool(target[1]) & not(extensionEnabled(Ext_C)) then {
           handle_mem_exception(target, E_Fetch_Addr_Align());
           RETIRE_FAIL;
         } else {
