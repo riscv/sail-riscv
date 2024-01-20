@@ -8,6 +8,8 @@ bool sys_enable_zfinx(unit);
 bool sys_enable_writable_misa(unit);
 bool sys_enable_writable_fiom(unit);
 bool sys_enable_vext(unit);
+bool sys_enable_svnapot(unit);
+bool sys_enable_svpbmt(unit);
 
 uint64_t sys_pmp_count(unit);
 uint64_t sys_pmp_grain(unit);

@@ -53,6 +53,8 @@ const char *RV32ISA = "RV32IMAC";
 #define OPT_ENABLE_WRITABLE_FIOM 1001
 #define OPT_PMP_COUNT 1002
 #define OPT_PMP_GRAIN 1003
+#define OPT_ENABLE_SVNAPOT       1004
+#define OPT_ENABLE_SVPBMT        1005
 
 static bool do_dump_dts = false;
 static bool do_show_times = false;
@@ -148,6 +150,8 @@ static struct option options[] = {
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
+    {"enable-svnapot",              no_argument,      0, OPT_ENABLE_SVNAPOT       },
+    {"enable-svpbmt",               no_argument,      0, OPT_ENABLE_SVPBMT        },
     {0,                             0,                 0, 0                       }
 };
 
@@ -399,6 +403,14 @@ static int process_args(int argc, char **argv)
     case OPT_TRACE_OUTPUT:
       trace_log_path = optarg;
       fprintf(stderr, "using %s for trace output.\n", trace_log_path);
+      break;
+    case OPT_ENABLE_SVNAPOT:
+      fprintf(stderr, "enabling Svnapot extension.\n");
+      rv_enable_svnapot = true;
+      break;
+    case OPT_ENABLE_SVPBMT:
+      fprintf(stderr, "enabling Svpbmt extension.\n");
+      rv_enable_svpbmt = true;
       break;
     case '?':
       print_usage(argv[0], 1);
