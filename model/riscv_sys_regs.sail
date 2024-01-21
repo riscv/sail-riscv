@@ -215,6 +215,9 @@ function haveZmmul()  -> bool = true
 /* Zicond extension support */
 function haveZicond() -> bool = true
 
+/* Svinval extension support */
+function haveSvinval() -> bool = true
+
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
   SBE  : 4

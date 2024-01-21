@@ -856,3 +856,53 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
 
 mapping clause assembly = SFENCE_VMA(rs1, rs2)
   <-> "sfence.vma" ^ spc() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+
+/* ****************************************************************** */
+union clause ast = SFENCE_W_INVAL : unit
+
+mapping clause encdec = SFENCE_W_INVAL() if haveSvinval()
+  <-> 0b0001100 @ 0b00001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011 if haveSvinval()
+
+function clause execute SFENCE_W_INVAL() = {
+  match cur_privilege {
+    User => { handle_illegal(); RETIRE_FAIL },
+    _    => { RETIRE_SUCCESS }
+  }
+}
+
+mapping clause assembly = SFENCE_W_INVAL() <-> "sfence.w.inval"
+
+/* ****************************************************************** */
+union clause ast = SFENCE_INVAL_IR : unit
+
+mapping clause encdec = SFENCE_INVAL_IR() if haveSvinval()
+  <-> 0b0001100 @ 0b00000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011 if haveSvinval()
+
+function clause execute SFENCE_INVAL_IR() = {
+  match cur_privilege {
+    User => { handle_illegal(); RETIRE_FAIL },
+    _    => { RETIRE_SUCCESS }
+  }
+}
+
+mapping clause assembly = SFENCE_INVAL_IR() <-> "sfence.inval.ir"
+
+/* ****************************************************************** */
+union clause ast = SINVAL_VMA : (regidx, regidx)
+
+mapping clause encdec = SINVAL_VMA(rs1, rs2) if haveSvinval()
+  <-> 0b0001011 @ rs2 @ rs1 @ 0b000 @ 0b00000 @ 0b1110011 if haveSvinval()
+
+function clause execute SINVAL_VMA(rs1, rs2) = {
+  let addr : option(xlenbits) = if rs1 == 0b00000 then None() else Some(X(rs1));
+  let asid : option(xlenbits) = if rs2 == 0b00000 then None() else Some(X(rs2));
+  match (cur_privilege, mstatus.TVM()) {
+    (User, _)         => { handle_illegal(); RETIRE_FAIL },
+    (Supervisor, 0b1) => { handle_illegal(); RETIRE_FAIL },
+    (Supervisor, 0b0) => { flush_TLB(asid, addr); RETIRE_SUCCESS },
+    (Machine, _)      => { flush_TLB(asid, addr); RETIRE_SUCCESS }
+  }
+}
+
+mapping clause assembly = SINVAL_VMA(rs1, rs2)
+  <-> "sinval.vma" ^ spc() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
