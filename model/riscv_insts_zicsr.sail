@@ -87,6 +87,8 @@ function readCSR csr : csreg -> xlenbits = {
     (0x142,  _) => scause.bits,
     (0x143,  _) => stval,
     (0x144,  _) => lower_mip(mip, mideleg).bits,
+    (0x14D,  _) => stimecmp[sizeof(xlen) - 1 .. 0],
+    (0x15D, 32) => stimecmp[63 .. 32],
     (0x180,  _) => satp,
 
     /* user mode counters */
@@ -168,6 +170,8 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x142,  _) => { scause.bits = value; Some(scause.bits) },
     (0x143,  _) => { stval = value; Some(stval) },
     (0x144,  _) => { mip = legalize_sip(mip, mideleg, value); Some(mip.bits) },
+    (0x14D,  _) => { stimecmp[(sizeof(xlen) - 1) .. 0] = value; Some(stimecmp[sizeof(xlen) - 1 ..0]) },
+    (0x15D, 32) => { stimecmp[63 ..32] = value; Some(stimecmp[63 .. 32]) },
     (0x180,  _) => { satp = legalize_satp(cur_Architecture(), satp, value); Some(satp) },
 
     /* user mode: seed (entropy source). writes are ignored */

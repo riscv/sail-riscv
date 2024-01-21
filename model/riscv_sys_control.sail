@@ -73,6 +73,9 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x142 => haveSupMode() & (p == Machine | p == Supervisor), // scause
     0x143 => haveSupMode() & (p == Machine | p == Supervisor), // stval
     0x144 => haveSupMode() & (p == Machine | p == Supervisor), // sip
+    /* Sstc : supervisor timer register */
+    0x14D => haveSupMode() & haveSstc() & (p == Machine | (p == Supervisor & (menvcfg.STCE() == 0b1))), // stimecmp
+    0x15D => haveSupMode() & haveSstc() & (p == Machine | (p == Supervisor & (menvcfg.STCE() == 0b1))), // stimecmph
 
     /* supervisor mode: address translation */
     0x180 => haveSupMode() & (p == Machine | p == Supervisor), // satp
@@ -106,7 +109,9 @@ function check_Counteren(csr : csreg, p : Privilege) -> bool =
     (0xC00, Supervisor) => mcounteren[CY] == 0b1,
     (0xC01, Supervisor) => mcounteren[TM] == 0b1,
     (0xC02, Supervisor) => mcounteren[IR] == 0b1,
-
+    /* Sstc extension */
+    (0x14D, Supervisor) => mcounteren[TM] == 0b1,
+    (0x15D, Supervisor) => mcounteren[TM] == 0b1,
     (0xC00, User) => mcounteren[CY] == 0b1 & (not(haveSupMode()) | scounteren[CY] == 0b1),
     (0xC01, User) => mcounteren[TM] == 0b1 & (not(haveSupMode()) | scounteren[TM] == 0b1),
     (0xC02, User) => mcounteren[IR] == 0b1 & (not(haveSupMode()) | scounteren[IR] == 0b1),

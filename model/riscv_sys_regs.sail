@@ -168,6 +168,9 @@ function haveZalrsc() -> bool = haveAtomics()
 /* Zicond extension support */
 function haveZicond() -> bool = true
 
+/* Sstc extension support */
+function haveSstc() -> bool = true
+
 /*
  * Illegal values legalized to least privileged mode supported.
  * Note: the only valid combinations of supported modes are M, M+U, M+S+U.
@@ -365,11 +368,52 @@ register mip     : Minterrupts /* Pending */
 register mie     : Minterrupts /* Enabled */
 register mideleg : Minterrupts /* Delegation to S-mode */
 
+bitfield MEnvcfg : bits(64) = {
+  // Supervisor TimeCmp Extension
+  STCE   : 63,
+  // Page Based Memory Types Extension
+  PBMTE  : 62,
+  // Reserved WPRI bits.
+  wpri_1 : 61 .. 8,
+  // Cache Block Zero instruction Enable
+  CBZE   : 7,
+  // Cache Block Clean and Flush instruction Enable
+  CBCFE  : 6,
+  // Cache Block Invalidate instruction Enable
+  CBIE   : 5 .. 4,
+  // Reserved WPRI bits.
+  wpri_0 : 3 .. 1,
+  // Fence of I/O implies Memory
+  FIOM   : 0,
+}
+
+bitfield SEnvcfg : xlenbits = {
+  // Cache Block Zero instruction Enable
+  CBZE   : 7,
+  // Cache Block Clean and Flush instruction Enable
+  CBCFE  : 6,
+  // Cache Block Invalidate instruction Enable
+  CBIE   : 5 .. 4,
+  // Reserved WPRI bits.
+  wpri_0 : 3 .. 1,
+  // Fence of I/O implies Memory
+  FIOM   : 0,
+}
+
+register menvcfg : MEnvcfg
+register senvcfg : SEnvcfg
+
 function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   /* The only writable bits are the S-mode bits, and with the 'N'
    * extension, the U-mode bits. */
   let v = Mk_Minterrupts(v);
-  let m = [o with SEI = v[SEI], STI = v[STI], SSI = v[SSI]];
+
+  let m = [o with SEI = v[SEI], SSI = v[SSI]];
+
+  let m = if (not(haveSstc()) | menvcfg[STCE] == 0b0) then {
+    [m with STI = v[STI]];
+  } else m;
+
   if haveUsrMode() & haveNExt() then {
     [m with UEI = v[UEI], UTI = v[UTI], USI = v[USI]]
   } else m
@@ -673,7 +717,13 @@ function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
 /* Returns the new value of mip from the previous mip (o) and the written sip (s) as delegated by mideleg (d). */
 function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
+
   let m = if d[SSI] == 0b1 then [m with SSI = s[SSI]] else m;
+
+  let m = if d[STI] == 0b1 & (not(haveSstc()) | menvcfg[STCE] == 0b0) then {
+    [m with STI = s[STI]]
+  } else m;
+
   if haveNExt() then {
     let m = if d[UEI] == 0b1 then [m with UEI = s[UEI]] else m;
     let m = if d[USI] == 0b1 then [m with USI = s[USI]] else m;
@@ -799,44 +849,10 @@ function read_seed_csr() -> xlenbits = {
 /* Writes to the seed CSR are ignored */
 function write_seed_csr () -> option(xlenbits) = None()
 
-bitfield MEnvcfg : bits(64) = {
-  // Supervisor TimeCmp Extension
-  STCE   : 63,
-  // Page Based Memory Types Extension
-  PBMTE  : 62,
-  // Reserved WPRI bits.
-  wpri_1 : 61 .. 8,
-  // Cache Block Zero instruction Enable
-  CBZE   : 7,
-  // Cache Block Clean and Flush instruction Enable
-  CBCFE  : 6,
-  // Cache Block Invalidate instruction Enable
-  CBIE   : 5 .. 4,
-  // Reserved WPRI bits.
-  wpri_0 : 3 .. 1,
-  // Fence of I/O implies Memory
-  FIOM   : 0,
-}
-
-bitfield SEnvcfg : xlenbits = {
-  // Cache Block Zero instruction Enable
-  CBZE   : 7,
-  // Cache Block Clean and Flush instruction Enable
-  CBCFE  : 6,
-  // Cache Block Invalidate instruction Enable
-  CBIE   : 5 .. 4,
-  // Reserved WPRI bits.
-  wpri_0 : 3 .. 1,
-  // Fence of I/O implies Memory
-  FIOM   : 0,
-}
-
-register menvcfg : MEnvcfg
-register senvcfg : SEnvcfg
-
 function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
+  let o = [o with STCE = if haveSstc() then v[STCE] else 0b0];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
@@ -941,4 +957,8 @@ val get_vtype_vma : unit -> agtype
 function get_vtype_vma() = decode_agtype(vtype[vma])
 
 val get_vtype_vta : unit -> agtype
+
 function get_vtype_vta() = decode_agtype(vtype[vta])
+
+/* Sstc : Supervisor Timer Register */
+register stimecmp : bits(64)

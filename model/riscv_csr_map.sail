@@ -49,6 +49,11 @@ mapping clause csr_name_map = 0x141  <-> "sepc"
 mapping clause csr_name_map = 0x142  <-> "scause"
 mapping clause csr_name_map = 0x143  <-> "stval"
 mapping clause csr_name_map = 0x144  <-> "sip"
+/* supervisor environment configuration */
+mapping clause csr_name_map = 0x10A  <-> "senvcfg"
+/* Sstc - supervisor timer register */
+mapping clause csr_name_map = 0x14D  <-> "stimecmp"
+mapping clause csr_name_map = 0x15D  <-> "stimecmph"
 /* supervisor protection and translation */
 mapping clause csr_name_map = 0x180  <-> "satp"
 /* supervisor envcfg */
@@ -76,6 +81,9 @@ mapping clause csr_name_map = 0x341  <-> "mepc"
 mapping clause csr_name_map = 0x342  <-> "mcause"
 mapping clause csr_name_map = 0x343  <-> "mtval"
 mapping clause csr_name_map = 0x344  <-> "mip"
+/* machine environment configuration */
+mapping clause csr_name_map = 0x30A  <-> "menvcfg"
+mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
 /* machine protection and translation */
 mapping clause csr_name_map = 0x3A0  <-> "pmpcfg0"
 mapping clause csr_name_map = 0x3A1  <-> "pmpcfg1"
