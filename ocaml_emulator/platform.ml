@@ -183,3 +183,14 @@ let init arch elf_file =
   in ( write_rom 0 rom;
        get_slice_int (cur_arch_bitwidth (), rom_base, Big_int.zero)
      )
+
+(* Srnmi - resumable NMI *)
+let rnmi_exc_trap_vector() = arch_bits_of_int !P.config_smrnmi_exc_trap_vec
+let rnmi_int_trap_vector() = arch_bits_of_int !P.config_smrnmi_int_trap_vec
+let is_rnmi_pending = ref true
+
+let rnmi_pending nmie =
+  let was_rnmi_pending = !is_rnmi_pending in
+  if was_rnmi_pending && nmie
+  then is_rnmi_pending := false;
+  was_rnmi_pending && nmie

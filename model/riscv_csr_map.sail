@@ -163,6 +163,13 @@ mapping clause csr_name_map = 0xB02  <-> "minstret"
 mapping clause csr_name_map = 0xB80  <-> "mcycleh"
 mapping clause csr_name_map = 0xB82  <-> "minstreth"
 /* TODO: other hpm counters and events */
+
+/* Smrnmi - resumable NMI CSRs */
+mapping clause csr_name_map = 0x740  <-> "mnscratch"
+mapping clause csr_name_map = 0x741  <-> "mnepc"
+mapping clause csr_name_map = 0x742  <-> "mncause"
+mapping clause csr_name_map = 0x744  <-> "mnstatus"
+
 /* trigger/debug */
 mapping clause csr_name_map = 0x7a0  <-> "tselect"
 mapping clause csr_name_map = 0x7a1  <-> "tdata1"
