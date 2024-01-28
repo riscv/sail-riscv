@@ -42,3 +42,6 @@ unit plat_term_write(mach_bits);
 mach_bits plat_htif_tohost(unit);
 
 unit memea(mach_bits, sail_int);
+
+/* Zawrs : Wait-on-Reservation-Set */
+bool reservation_set_valid(unit);
