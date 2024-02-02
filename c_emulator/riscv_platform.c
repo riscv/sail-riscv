@@ -47,6 +47,16 @@ bool sys_enable_vext(unit u)
   return rv_enable_vext;
 }
 
+uint64_t sys_pmp_count(unit u)
+{
+  return rv_pmp_count;
+}
+
+uint64_t sys_pmp_grain(unit u)
+{
+  return rv_pmp_grain;
+}
+
 bool sys_enable_writable_misa(unit u)
 {
   return rv_enable_writable_misa;
@@ -65,11 +75,6 @@ bool plat_enable_misaligned_access(unit u)
 bool plat_mtval_has_illegal_inst_bits(unit u)
 {
   return rv_mtval_has_illegal_inst_bits;
-}
-
-bool plat_enable_pmp(unit u)
-{
-  return rv_enable_pmp;
 }
 
 mach_bits plat_ram_base(unit u)

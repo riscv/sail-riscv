@@ -153,6 +153,13 @@ val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
 val sys_enable_writable_fiom = {c: "sys_enable_writable_fiom", ocaml: "Platform.enable_writable_fiom", _: "sys_enable_writable_fiom"} : unit -> bool
+
+/* How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime). */
+val sys_pmp_count = {c: "sys_pmp_count", ocaml: "Platform.pmp_count", _: "sys_pmp_count"} : unit -> range(0, 64)
+/* G parameter that specifies the PMP grain size. The grain size is 2^(G+2), e.g.
+   G=0 -> 4 bytes, G=10 -> 4096 bytes. */
+val sys_pmp_grain = {c: "sys_pmp_grain", ocaml: "Platform.pmp_grain", _: "sys_pmp_grain"} : unit -> range(0, 63)
+
 /* whether misa.v was enabled at boot */
 val sys_enable_vext = {c: "sys_enable_vext", ocaml: "Platform.enable_vext", _: "sys_enable_vext"} : unit -> bool
 
