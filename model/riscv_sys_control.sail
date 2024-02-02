@@ -102,29 +102,14 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x343 => p == Machine, // mtval
     0x344 => p == Machine, // mip
 
-    0x3A0 => p == Machine,                        // pmpcfg0
-    0x3A1 => p == Machine & (sizeof(xlen) == 32), // pmpcfg1
-    0x3A2 => p == Machine,                        // pmpcfg2
-    0x3A3 => p == Machine & (sizeof(xlen) == 32), // pmpcfg3
+    // pmpcfgN
+    0x3A @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(idx) & (idx[0] == bitzero | sizeof(xlen) == 32),
 
-    0x3B0 => p == Machine, // pmpaddr0
-    0x3B1 => p == Machine, // pmpaddr1
-    0x3B2 => p == Machine, // pmpaddr2
-    0x3B3 => p == Machine, // pmpaddr3
-    0x3B4 => p == Machine, // pmpaddr4
-    0x3B5 => p == Machine, // pmpaddr5
-    0x3B6 => p == Machine, // pmpaddr6
-    0x3B7 => p == Machine, // pmpaddr7
-    0x3B8 => p == Machine, // pmpaddr8
-    0x3B9 => p == Machine, // pmpaddr9
-    0x3BA => p == Machine, // pmpaddrA
-    0x3BB => p == Machine, // pmpaddrB
-    0x3BC => p == Machine, // pmpaddrC
-    0x3BD => p == Machine, // pmpaddrD
-    0x3BE => p == Machine, // pmpaddrE
-    0x3BF => p == Machine, // pmpaddrF
-
-    /* counters */
+    // pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
+    0x3B @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(0b00 @ idx),
+    0x3C @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(0b01 @ idx),
+    0x3D @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(0b10 @ idx),
+    0x3E @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(0b11 @ idx),
     0xB00 => p == Machine, // mcycle
     0xB02 => p == Machine, // minstret
 
@@ -623,6 +608,7 @@ function init_sys() -> unit = {
   vtype[vsew]      = 0b000;
   vtype[vlmul]     = 0b000;
 
+  // PMP's L and A fields are set to 0 on reset.
   init_pmp();
 
   // log compatibility with spike

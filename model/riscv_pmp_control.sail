@@ -70,7 +70,6 @@
 
 /* address ranges */
 
-// TODO: handle PMP grain > 4 (i.e. G > 0).
 // TODO: handle the 34-bit paddr32 on RV32
 
 /* [min, max) of the matching range. */
@@ -80,14 +79,21 @@ function pmpAddrRange(cfg: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits
   match pmpAddrMatchType_of_bits(cfg[A]) {
     OFF   => None(),
     TOR   => { Some ((prev_pmpaddr << 2, pmpaddr << 2)) },
-    NA4   => { // TODO: I find the spec unclear for entries marked NA4 and G = 1.
-               // (for G >= 2, it is the same as NAPOT). In particular, it affects
-               // whether pmpaddr[0] is always read as 0.
+    NA4   => {
+               // NA4 is not selectable when the PMP grain G >= 1. See pmpWriteCfg().
+               assert(sys_pmp_grain() < 1, "NA4 cannot be selected when PMP grain G >= 1.");
                let lo = pmpaddr << 2;
                Some((lo, lo + 4))
              },
-    NAPOT => { let mask = pmpaddr ^ (pmpaddr + 1);  // generate 1s in signifying bits
+    NAPOT => {
+               // Example pmpaddr: 0b00010101111
+               //                          ^--- last 0 dictates region size & alignment
+               let mask = pmpaddr ^ (pmpaddr + 1);
+               // pmpaddr + 1:     0b00010110000
+               // mask:            0b00000011111
+               // ~mask:           0b11111100000
                let lo   = pmpaddr & (~ (mask));
+               // mask + 1:        0b00000100000
                let len  = mask + 1;
                Some((lo << 2, (lo + len) << 2))
              }
@@ -152,104 +158,38 @@ function pmpMatchEntry(addr: xlenbits, width: xlenbits, acc: AccessType(ext_acce
 
 /* priority checks */
 
+function accessToFault(acc : AccessType(ext_access_type)) -> ExceptionType =
+  match acc {
+    Read(_)      => E_Load_Access_Fault(),
+    Write(_)     => E_SAMO_Access_Fault(),
+    ReadWrite(_) => E_SAMO_Access_Fault(),
+    Execute()    => E_Fetch_Access_Fault(),
+  }
+
 function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: atom('n), acc: AccessType(ext_access_type), priv: Privilege)
                   -> option(ExceptionType) = {
   let width : xlenbits = to_bits(sizeof(xlen), width);
-  let check : bool =
-  match pmpMatchEntry(addr, width, acc, priv, pmp0cfg, pmpaddr0, zeros()) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmp1cfg, pmpaddr1, pmpaddr0) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmp2cfg, pmpaddr2, pmpaddr1) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmp3cfg, pmpaddr3, pmpaddr2) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmp4cfg, pmpaddr4, pmpaddr3) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmp5cfg, pmpaddr5, pmpaddr4) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmp6cfg, pmpaddr6, pmpaddr5) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmp7cfg, pmpaddr7, pmpaddr6) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmp8cfg, pmpaddr8, pmpaddr7) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmp9cfg, pmpaddr9, pmpaddr8) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmp10cfg, pmpaddr10, pmpaddr9) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmp11cfg, pmpaddr11, pmpaddr10) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmp12cfg, pmpaddr12, pmpaddr11) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmp13cfg, pmpaddr13, pmpaddr12) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmp14cfg, pmpaddr14, pmpaddr13) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue =>
-  match pmpMatchEntry(addr, width, acc, priv, pmp15cfg, pmpaddr15, pmpaddr14) {
-    PMP_Success  => true,
-    PMP_Fail     => false,
-    PMP_Continue => match priv {
-                      Machine => true,
-                      _       => false
-                    }
-  }}}}}}}}}}}}}}}};
 
-  if   check
-  then None()
-  else match acc {
-    Read(_)      => Some(E_Load_Access_Fault()),
-    Write(_)     => Some(E_SAMO_Access_Fault()),
-    ReadWrite(_) => Some(E_SAMO_Access_Fault()),
-    Execute()    => Some(E_Fetch_Access_Fault())
-  }
+  foreach (i from 0 to 63) {
+    let prev_pmpaddr = (if i > 0 then pmpReadAddrReg(i - 1) else zeros());
+    match pmpMatchEntry(addr, width, acc, priv, pmpcfg_n[i], pmpReadAddrReg(i), prev_pmpaddr) {
+      PMP_Success  => { return None(); },
+      PMP_Fail     => { return Some(accessToFault(acc)); },
+      PMP_Continue => (),
+    }
+  };
+  if priv == Machine then None() else Some(accessToFault(acc))
 }
 
 function init_pmp() -> unit = {
-  pmp0cfg  = update_A(pmp0cfg,  pmpAddrMatchType_to_bits(OFF));
-  pmp1cfg  = update_A(pmp1cfg,  pmpAddrMatchType_to_bits(OFF));
-  pmp2cfg  = update_A(pmp2cfg,  pmpAddrMatchType_to_bits(OFF));
-  pmp3cfg  = update_A(pmp3cfg,  pmpAddrMatchType_to_bits(OFF));
-  pmp4cfg  = update_A(pmp4cfg,  pmpAddrMatchType_to_bits(OFF));
-  pmp5cfg  = update_A(pmp5cfg,  pmpAddrMatchType_to_bits(OFF));
-  pmp6cfg  = update_A(pmp6cfg,  pmpAddrMatchType_to_bits(OFF));
-  pmp7cfg  = update_A(pmp7cfg,  pmpAddrMatchType_to_bits(OFF));
-  pmp8cfg  = update_A(pmp8cfg,  pmpAddrMatchType_to_bits(OFF));
-  pmp9cfg  = update_A(pmp9cfg,  pmpAddrMatchType_to_bits(OFF));
-  pmp10cfg = update_A(pmp10cfg, pmpAddrMatchType_to_bits(OFF));
-  pmp11cfg = update_A(pmp11cfg, pmpAddrMatchType_to_bits(OFF));
-  pmp12cfg = update_A(pmp12cfg, pmpAddrMatchType_to_bits(OFF));
-  pmp13cfg = update_A(pmp13cfg, pmpAddrMatchType_to_bits(OFF));
-  pmp14cfg = update_A(pmp14cfg, pmpAddrMatchType_to_bits(OFF));
-  pmp15cfg = update_A(pmp15cfg, pmpAddrMatchType_to_bits(OFF))
+  assert(
+    sys_pmp_count() == 0 | sys_pmp_count() == 16 | sys_pmp_count() == 64,
+    "sys_pmp_count() must be 0, 16, or 64"
+  );
+
+  foreach (i from 0 to 63) {
+    // On reset the PMP register's A and L bits are set to 0 unless the plaform
+    // mandates a different value.
+    pmpcfg_n[i] = [pmpcfg_n[i] with A = pmpAddrMatchType_to_bits(OFF), L = 0b0];
+  };
 }

@@ -92,12 +92,6 @@ val elf_entry = {
 val plat_ram_base = {c: "plat_ram_base", ocaml: "Platform.dram_base", interpreter: "Platform.dram_base", lem: "plat_ram_base"} : unit -> xlenbits
 val plat_ram_size = {c: "plat_ram_size", ocaml: "Platform.dram_size", interpreter: "Platform.dram_size", lem: "plat_ram_size"} : unit -> xlenbits
 
-/* whether the platform supports PMP configurations */
-val plat_enable_pmp = {ocaml: "Platform.enable_pmp",
-                       interpreter: "Platform.enable_pmp",
-                       c: "plat_enable_pmp",
-                       lem: "plat_enable_pmp"} : unit -> bool
-
 /* whether the MMU should update dirty bits in PTEs */
 val plat_enable_dirty_update = {ocaml: "Platform.enable_dirty_update",
                                 interpreter: "Platform.enable_dirty_update",
