@@ -40,7 +40,7 @@
 /*  SSITH research programme.                                                            */
 /*                                                                                       */
 /*  This project has received funding from the European Research Council                 */
-/*  (ERC) under the European Unionâ€™s Horizon 2020 research and innovation                */
+/*  (ERC) under the European Union’s Horizon 2020 research and innovation                */
 /*  programme (grant agreement 789108, ELVER).                                           */
 /*                                                                                       */
 /*                                                                                       */
@@ -342,3 +342,39 @@ function init_base_regs () = {
   x30 = zero_reg;
   x31 = zero_reg
 }
+
+/* register pair */
+
+val rX_D : bits(5) -> bits(xlen*2) effect {escape, rreg}
+function rX_D(i) = {
+  assert(i[0] == bitzero);
+  if sizeof(xlen)==32 then{
+	  if i == zeros() then zeros() else 
+	  	let j = i+1 in
+	  	    let val1:bits(64) = sail_zero_extend(X(j), 64) in
+		  	  let val2:bits(64) = sail_zero_extend(X(i), 64) in
+		  	    (val1<<32) +val2
+	  }
+  	  else {assert(false, "register pair not supported for 64 bits architecture"); zeros()}
+}
+
+val wX_D : (bits(5), bits(xlen*2)) -> unit effect {escape, wreg}
+function wX_D(i, data) = {
+  assert (i[0] == bitzero);
+  if sizeof(xlen)==32 then{  
+	  if i != zeros() then 
+	    let j = unsigned (i+1) in{
+	      X(i)     = data[31..0];
+	      X(j) = data[63..32];
+	  } 
+	  }
+	  else {assert(false, "register pair not supported for 64 bits architecture")}
+}
+
+function rX_D_bits(i: bits(5)) -> xlenbits_double = rX_D(i)
+
+function wX_D_bits(i: bits(5), data: xlenbits_double) -> unit = {
+  wX_D(i) = data
+}
+
+overload X_D = { rX_D_bits, wX_D_bits, rX_D, wX_D }

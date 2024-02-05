@@ -1,0 +1,412 @@
+
+rv32ui-c.sdsp.elf:	file format elf32-littleriscv
+
+Disassembly of section .text.init:
+
+80000000 <_start>:
+80000000: 91 a0        	j	0x80000044 <reset_vector>
+80000002: 01 00        	nop
+
+80000004 <trap_vector>:
+80000004: 73 2f 20 34  	csrr	t5, mcause
+80000008: a1 4f        	li	t6, 8
+8000000a: 63 04 ff 03  	beq	t5, t6, 0x80000032 <write_tohost>
+8000000e: a5 4f        	li	t6, 9
+80000010: 63 01 ff 03  	beq	t5, t6, 0x80000032 <write_tohost>
+80000014: ad 4f        	li	t6, 11
+80000016: 63 0e ff 01  	beq	t5, t6, 0x80000032 <write_tohost>
+8000001a: 13 0f 00 00  	li	t5, 0
+8000001e: 63 03 0f 00  	beqz	t5, 0x80000024 <trap_vector+0x20>
+80000022: 02 8f        	jr	t5
+80000024: 73 2f 20 34  	csrr	t5, mcause
+80000028: 63 53 0f 00  	bgez	t5, 0x8000002e <other_exception>
+8000002c: 09 a0        	j	0x8000002e <other_exception>
+
+8000002e <other_exception>:
+8000002e: 93 e1 91 53  	ori	gp, gp, 1337
+
+80000032 <write_tohost>:
+80000032: 17 1f 00 00  	auipc	t5, 1
+80000036: 23 27 3f fc  	sw	gp, -50(t5)
+8000003a: 17 1f 00 00  	auipc	t5, 1
+8000003e: 23 25 0f fc  	sw	zero, -54(t5)
+80000042: c5 bf        	j	0x80000032 <write_tohost>
+
+80000044 <reset_vector>:
+80000044: 81 40        	li	ra, 0
+80000046: 01 41        	li	sp, 0
+80000048: 81 41        	li	gp, 0
+8000004a: 01 42        	li	tp, 0
+8000004c: 81 42        	li	t0, 0
+8000004e: 01 43        	li	t1, 0
+80000050: 81 43        	li	t2, 0
+80000052: 01 44        	li	s0, 0
+80000054: 81 44        	li	s1, 0
+80000056: 01 45        	li	a0, 0
+80000058: 81 45        	li	a1, 0
+8000005a: 01 46        	li	a2, 0
+8000005c: 81 46        	li	a3, 0
+8000005e: 01 47        	li	a4, 0
+80000060: 81 47        	li	a5, 0
+80000062: 01 48        	li	a6, 0
+80000064: 81 48        	li	a7, 0
+80000066: 01 49        	li	s2, 0
+80000068: 81 49        	li	s3, 0
+8000006a: 01 4a        	li	s4, 0
+8000006c: 81 4a        	li	s5, 0
+8000006e: 01 4b        	li	s6, 0
+80000070: 81 4b        	li	s7, 0
+80000072: 01 4c        	li	s8, 0
+80000074: 81 4c        	li	s9, 0
+80000076: 01 4d        	li	s10, 0
+80000078: 81 4d        	li	s11, 0
+8000007a: 01 4e        	li	t3, 0
+8000007c: 81 4e        	li	t4, 0
+8000007e: 01 4f        	li	t5, 0
+80000080: 81 4f        	li	t6, 0
+80000082: 73 25 40 f1  	csrr	a0, mhartid
+80000086: 01 e1        	bnez	a0, 0x80000086 <reset_vector+0x42>
+80000088: 97 02 00 00  	auipc	t0, 0
+8000008c: 93 82 02 01  	addi	t0, t0, 16
+80000090: 73 90 52 30  	csrw	mtvec, t0
+80000094: 73 50 44 74  	csrwi	1860, 8
+80000098: 97 02 00 00  	auipc	t0, 0
+8000009c: 93 82 02 01  	addi	t0, t0, 16
+800000a0: 73 90 52 30  	csrw	mtvec, t0
+800000a4: 73 50 00 18  	csrwi	satp, 0
+800000a8: 97 02 00 00  	auipc	t0, 0
+800000ac: 93 82 c2 01  	addi	t0, t0, 28
+800000b0: 73 90 52 30  	csrw	mtvec, t0
+800000b4: b7 02 00 80  	lui	t0, 524288
+800000b8: fd 12        	addi	t0, t0, -1
+800000ba: 73 90 02 3b  	csrw	pmpaddr0, t0
+800000be: fd 42        	li	t0, 31
+800000c0: 73 90 02 3a  	csrw	pmpcfg0, t0
+800000c4: 73 50 40 30  	csrwi	mie, 0
+800000c8: 97 02 00 00  	auipc	t0, 0
+800000cc: 93 82 42 01  	addi	t0, t0, 20
+800000d0: 73 90 52 30  	csrw	mtvec, t0
+800000d4: 73 50 20 30  	csrwi	medeleg, 0
+800000d8: 73 50 30 30  	csrwi	mideleg, 0
+800000dc: 81 41        	li	gp, 0
+800000de: 97 02 00 00  	auipc	t0, 0
+800000e2: 93 82 62 f2  	addi	t0, t0, -218
+800000e6: 73 90 52 30  	csrw	mtvec, t0
+800000ea: 05 45        	li	a0, 1
+800000ec: 7e 05        	slli	a0, a0, 31
+800000ee: 63 4a 05 00  	bltz	a0, 0x80000102 <reset_vector+0xbe>
+800000f2: 0f 00 f0 0f  	fence
+800000f6: 85 41        	li	gp, 1
+800000f8: 93 08 d0 05  	li	a7, 93
+800000fc: 01 45        	li	a0, 0
+800000fe: 73 00 00 00  	ecall
+80000102: 93 02 00 00  	li	t0, 0
+80000106: 63 89 02 00  	beqz	t0, 0x80000118 <reset_vector+0xd4>
+8000010a: 73 90 52 10  	csrw	stvec, t0
+8000010e: ad 62        	lui	t0, 11
+80000110: 93 82 92 10  	addi	t0, t0, 265
+80000114: 73 90 22 30  	csrw	medeleg, t0
+80000118: 73 50 00 30  	csrwi	mstatus, 0
+8000011c: 97 02 00 00  	auipc	t0, 0
+80000120: 93 82 42 01  	addi	t0, t0, 20
+80000124: 73 90 12 34  	csrw	mepc, t0
+80000128: 73 25 40 f1  	csrr	a0, mhartid
+8000012c: 73 00 20 30  	mret
+80000130: 97 05 00 00  	auipc	a1, 0
+80000134: 93 85 05 2d  	addi	a1, a1, 720
+80000138: 17 01 00 00  	auipc	sp, 0
+8000013c: 13 01 81 2c  	addi	sp, sp, 712
+
+80000140 <test_41>:
+80000140: 93 01 90 02  	li	gp, 41
+80000144: 22 65        	<unknown>
+80000146: 05 05        	addi	a0, a0, 1
+80000148: 2a e4        	<unknown>
+8000014a: 22 66        	<unknown>
+8000014c: b7 33 54 76  	lui	t2, 484675
+80000150: 93 83 13 21  	addi	t2, t2, 529
+80000154: 63 19 76 26  	bne	a2, t2, 0x800003c6 <fail>
+80000158: b7 c3 dc fe  	lui	t2, 1043916
+8000015c: 93 83 83 a9  	addi	t2, t2, -1384
+80000160: 63 93 76 26  	bne	a3, t2, 0x800003c6 <fail>
+
+80000164 <test_42>:
+80000164: 93 01 a0 02  	li	gp, 42
+80000168: 22 65        	<unknown>
+8000016a: 05 05        	addi	a0, a0, 1
+8000016c: 85 05        	addi	a1, a1, 1
+8000016e: 2a e4        	<unknown>
+80000170: 22 65        	<unknown>
+80000172: b7 33 54 76  	lui	t2, 484675
+80000176: 93 83 23 21  	addi	t2, t2, 530
+8000017a: 63 16 75 24  	bne	a0, t2, 0x800003c6 <fail>
+8000017e: b7 c3 dc fe  	lui	t2, 1043916
+80000182: 93 83 93 a9  	addi	t2, t2, -1383
+80000186: 63 90 75 24  	bne	a1, t2, 0x800003c6 <fail>
+
+8000018a <test_43>:
+8000018a: 93 01 b0 02  	li	gp, 43
+8000018e: 22 65        	<unknown>
+80000190: 13 07 15 00  	addi	a4, a0, 1
+80000194: 93 87 15 00  	addi	a5, a1, 1
+80000198: 3a e4        	<unknown>
+8000019a: 22 67        	<unknown>
+8000019c: b7 33 54 76  	lui	t2, 484675
+800001a0: 93 83 33 21  	addi	t2, t2, 531
+800001a4: 63 11 77 22  	bne	a4, t2, 0x800003c6 <fail>
+800001a8: b7 c3 dc fe  	lui	t2, 1043916
+800001ac: 93 83 a3 a9  	addi	t2, t2, -1382
+800001b0: 63 9b 77 20  	bne	a5, t2, 0x800003c6 <fail>
+
+800001b4 <test_45>:
+800001b4: 93 01 d0 02  	li	gp, 45
+800001b8: 22 65        	<unknown>
+800001ba: 13 08 15 00  	addi	a6, a0, 1
+800001be: 93 88 15 00  	addi	a7, a1, 1
+800001c2: 42 e4        	<unknown>
+800001c4: 22 68        	<unknown>
+800001c6: b7 33 54 76  	lui	t2, 484675
+800001ca: 93 83 43 21  	addi	t2, t2, 532
+800001ce: 63 1c 78 1e  	bne	a6, t2, 0x800003c6 <fail>
+800001d2: b7 c3 dc fe  	lui	t2, 1043916
+800001d6: 93 83 b3 a9  	addi	t2, t2, -1381
+800001da: 63 96 78 1e  	bne	a7, t2, 0x800003c6 <fail>
+
+800001de <test_46>:
+800001de: 93 01 e0 02  	li	gp, 46
+800001e2: 22 65        	<unknown>
+800001e4: 13 09 15 00  	addi	s2, a0, 1
+800001e8: 93 89 15 00  	addi	s3, a1, 1
+800001ec: 4a e4        	<unknown>
+800001ee: 22 69        	<unknown>
+800001f0: b7 33 54 76  	lui	t2, 484675
+800001f4: 93 83 53 21  	addi	t2, t2, 533
+800001f8: 63 17 79 1c  	bne	s2, t2, 0x800003c6 <fail>
+800001fc: b7 c3 dc fe  	lui	t2, 1043916
+80000200: 93 83 c3 a9  	addi	t2, t2, -1380
+80000204: 63 91 79 1c  	bne	s3, t2, 0x800003c6 <fail>
+
+80000208 <test_47>:
+80000208: 93 01 f0 02  	li	gp, 47
+8000020c: 22 65        	<unknown>
+8000020e: 13 0a 15 00  	addi	s4, a0, 1
+80000212: 93 8a 15 00  	addi	s5, a1, 1
+80000216: 52 e4        	<unknown>
+80000218: 22 6a        	<unknown>
+8000021a: b7 33 54 76  	lui	t2, 484675
+8000021e: 93 83 63 21  	addi	t2, t2, 534
+80000222: 63 12 7a 1a  	bne	s4, t2, 0x800003c6 <fail>
+80000226: b7 c3 dc fe  	lui	t2, 1043916
+8000022a: 93 83 d3 a9  	addi	t2, t2, -1379
+8000022e: 63 9c 7a 18  	bne	s5, t2, 0x800003c6 <fail>
+
+80000232 <test_48>:
+80000232: 93 01 00 03  	li	gp, 48
+80000236: 22 65        	<unknown>
+80000238: 13 0b 15 00  	addi	s6, a0, 1
+8000023c: 93 8b 15 00  	addi	s7, a1, 1
+80000240: 5a e4        	<unknown>
+80000242: 22 6b        	<unknown>
+80000244: b7 33 54 76  	lui	t2, 484675
+80000248: 93 83 73 21  	addi	t2, t2, 535
+8000024c: 63 1d 7b 16  	bne	s6, t2, 0x800003c6 <fail>
+80000250: b7 c3 dc fe  	lui	t2, 1043916
+80000254: 93 83 e3 a9  	addi	t2, t2, -1378
+80000258: 63 97 7b 16  	bne	s7, t2, 0x800003c6 <fail>
+
+8000025c <test_49>:
+8000025c: 93 01 10 03  	li	gp, 49
+80000260: 22 65        	<unknown>
+80000262: 13 0c 15 00  	addi	s8, a0, 1
+80000266: 93 8c 15 00  	addi	s9, a1, 1
+8000026a: 62 e4        	<unknown>
+8000026c: 22 6c        	<unknown>
+8000026e: b7 33 54 76  	lui	t2, 484675
+80000272: 93 83 83 21  	addi	t2, t2, 536
+80000276: 63 18 7c 14  	bne	s8, t2, 0x800003c6 <fail>
+8000027a: b7 c3 dc fe  	lui	t2, 1043916
+8000027e: 93 83 f3 a9  	addi	t2, t2, -1377
+80000282: 63 92 7c 14  	bne	s9, t2, 0x800003c6 <fail>
+
+80000286 <test_50>:
+80000286: 93 01 20 03  	li	gp, 50
+8000028a: 22 65        	<unknown>
+8000028c: 13 0d 15 00  	addi	s10, a0, 1
+80000290: 93 8d 15 00  	addi	s11, a1, 1
+80000294: 6a e4        	<unknown>
+80000296: 22 6d        	<unknown>
+80000298: b7 33 54 76  	lui	t2, 484675
+8000029c: 93 83 93 21  	addi	t2, t2, 537
+800002a0: 63 13 7d 12  	bne	s10, t2, 0x800003c6 <fail>
+800002a4: b7 c3 dc fe  	lui	t2, 1043916
+800002a8: 93 83 03 aa  	addi	t2, t2, -1376
+800002ac: 63 9d 7d 10  	bne	s11, t2, 0x800003c6 <fail>
+
+800002b0 <test_51>:
+800002b0: 93 01 30 03  	li	gp, 51
+800002b4: 22 65        	<unknown>
+800002b6: 13 0e 15 00  	addi	t3, a0, 1
+800002ba: 93 8e 15 00  	addi	t4, a1, 1
+800002be: 72 e4        	<unknown>
+800002c0: 22 6e        	<unknown>
+800002c2: b7 33 54 76  	lui	t2, 484675
+800002c6: 93 83 a3 21  	addi	t2, t2, 538
+800002ca: 63 1e 7e 0e  	bne	t3, t2, 0x800003c6 <fail>
+800002ce: b7 c3 dc fe  	lui	t2, 1043916
+800002d2: 93 83 13 aa  	addi	t2, t2, -1375
+800002d6: 63 98 7e 0e  	bne	t4, t2, 0x800003c6 <fail>
+
+800002da <test_52>:
+800002da: 93 01 40 03  	li	gp, 52
+800002de: 22 65        	<unknown>
+800002e0: 13 0f 15 00  	addi	t5, a0, 1
+800002e4: 93 8f 15 00  	addi	t6, a1, 1
+800002e8: 7a e4        	<unknown>
+800002ea: 22 6f        	<unknown>
+800002ec: b7 33 54 76  	lui	t2, 484675
+800002f0: 93 83 b3 21  	addi	t2, t2, 539
+800002f4: 63 19 7f 0c  	bne	t5, t2, 0x800003c6 <fail>
+800002f8: b7 c3 dc fe  	lui	t2, 1043916
+800002fc: 93 83 23 aa  	addi	t2, t2, -1374
+80000300: 63 93 7f 0c  	bne	t6, t2, 0x800003c6 <fail>
+
+80000304 <test_53>:
+80000304: 93 01 50 03  	li	gp, 53
+80000308: 22 65        	<unknown>
+8000030a: 13 02 15 00  	addi	tp, a0, 1
+8000030e: 93 82 15 00  	addi	t0, a1, 1
+80000312: 12 e4        	<unknown>
+80000314: 22 62        	<unknown>
+80000316: b7 33 54 76  	lui	t2, 484675
+8000031a: 93 83 c3 21  	addi	t2, t2, 540
+8000031e: 63 14 72 0a  	bne	tp, t2, 0x800003c6 <fail>
+80000322: b7 c3 dc fe  	lui	t2, 1043916
+80000326: 93 83 33 aa  	addi	t2, t2, -1373
+8000032a: 63 9e 72 08  	bne	t0, t2, 0x800003c6 <fail>
+
+8000032e <test_54>:
+8000032e: 93 01 60 03  	li	gp, 54
+80000332: 22 65        	<unknown>
+80000334: 13 04 15 00  	addi	s0, a0, 1
+80000338: 93 84 15 00  	addi	s1, a1, 1
+8000033c: 22 e4        	<unknown>
+8000033e: 22 64        	<unknown>
+80000340: b7 33 54 76  	lui	t2, 484675
+80000344: 93 83 d3 21  	addi	t2, t2, 541
+80000348: 63 1f 74 06  	bne	s0, t2, 0x800003c6 <fail>
+8000034c: b7 c3 dc fe  	lui	t2, 1043916
+80000350: 93 83 43 aa  	addi	t2, t2, -1372
+80000354: 63 99 74 06  	bne	s1, t2, 0x800003c6 <fail>
+
+80000358 <test_55>:
+80000358: 93 01 70 03  	li	gp, 55
+8000035c: 22 65        	<unknown>
+8000035e: 13 03 15 00  	addi	t1, a0, 1
+80000362: 93 83 15 00  	addi	t2, a1, 1
+80000366: 1a e4        	<unknown>
+80000368: 22 63        	<unknown>
+8000036a: b7 33 54 76  	lui	t2, 484675
+8000036e: 93 83 e3 21  	addi	t2, t2, 542
+80000372: 63 1a 73 04  	bne	t1, t2, 0x800003c6 <fail>
+80000376: b7 c3 dc fe  	lui	t2, 1043916
+8000037a: 93 83 53 aa  	addi	t2, t2, -1371
+8000037e: 63 94 73 04  	bne	t2, t2, 0x800003c6 <fail>
+
+80000382 <test_56>:
+80000382: 93 01 80 03  	li	gp, 56
+80000386: 22 65        	<unknown>
+80000388: 93 01 11 00  	addi	gp, sp, 1
+8000038c: 0a e4        	<unknown>
+8000038e: 22 61        	<unknown>
+80000390: b7 03 00 80  	lui	t2, 524288
+80000394: 93 83 03 40  	addi	t2, t2, 1024
+80000398: 63 17 71 02  	bne	sp, t2, 0x800003c6 <fail>
+8000039c: b7 03 00 80  	lui	t2, 524288
+800003a0: 93 83 13 40  	addi	t2, t2, 1025
+800003a4: 63 91 71 02  	bne	gp, t2, 0x800003c6 <fail>
+
+800003a8 <test_44>:
+800003a8: 93 01 c0 02  	li	gp, 44
+800003ac: 22 65        	<unknown>
+800003ae: 93 00 15 00  	addi	ra, a0, 1
+800003b2: 02 e4        	<unknown>
+800003b4: 22 66        	<unknown>
+800003b6: 81 43        	li	t2, 0
+800003b8: 63 17 76 00  	bne	a2, t2, 0x800003c6 <fail>
+800003bc: 81 43        	li	t2, 0
+800003be: 63 94 76 00  	bne	a3, t2, 0x800003c6 <fail>
+800003c2: 63 1e 30 00  	bne	zero, gp, 0x800003de <pass>
+
+800003c6 <fail>:
+800003c6: 0f 00 f0 0f  	fence
+800003ca: 63 80 01 00  	beqz	gp, 0x800003ca <fail+0x4>
+800003ce: 86 01        	slli	gp, gp, 1
+800003d0: 93 e1 11 00  	ori	gp, gp, 1
+800003d4: 93 08 d0 05  	li	a7, 93
+800003d8: 0e 85        	mv	a0, gp
+800003da: 73 00 00 00  	ecall
+
+800003de <pass>:
+800003de: 0f 00 f0 0f  	fence
+800003e2: 85 41        	li	gp, 1
+800003e4: 93 08 d0 05  	li	a7, 93
+800003e8: 01 45        	li	a0, 0
+800003ea: 73 00 00 00  	ecall
+800003ee: 13 00 00 00  	nop
+800003f2: 13 00 00 00  	nop
+800003f6: 13 00 00 00  	nop
+800003fa: 13 00 00 00  	nop
+800003fe: 01 00        	nop
+
+80000400 <data>:
+80000400: 10 32        	<unknown>
+80000402: 54 76        	<unknown>
+80000404: 98 ba        	<unknown>
+80000406: dc fe        	<unknown>
+80000408: 10 32        	<unknown>
+8000040a: 54 76        	<unknown>
+8000040c: 98 ba        	<unknown>
+8000040e: dc fe        	<unknown>
+80000410: 00 00        	unimp
+
+Disassembly of section .data:
+
+80002000 <tdat1>:
+80002000: ef be ad de  	jal	t4, 0x7ffdd5ea <rv32ui-c.sdsp.out+0x7ffdd5ea>
+80002004: ef be ad de  	jal	t4, 0x7ffdd5ee <rv32ui-c.sdsp.out+0x7ffdd5ee>
+
+80002008 <tdat2>:
+80002008: ef be ad de  	jal	t4, 0x7ffdd5f2 <rv32ui-c.sdsp.out+0x7ffdd5f2>
+8000200c: ef be ad de  	jal	t4, 0x7ffdd5f6 <rv32ui-c.sdsp.out+0x7ffdd5f6>
+
+80002010 <tdat3>:
+80002010: ef be ad de  	jal	t4, 0x7ffdd5fa <rv32ui-c.sdsp.out+0x7ffdd5fa>
+80002014: ef be ad de  	jal	t4, 0x7ffdd5fe <rv32ui-c.sdsp.out+0x7ffdd5fe>
+
+80002018 <tdat4>:
+80002018: ef be ad de  	jal	t4, 0x7ffdd602 <rv32ui-c.sdsp.out+0x7ffdd602>
+8000201c: ef be ad de  	jal	t4, 0x7ffdd606 <rv32ui-c.sdsp.out+0x7ffdd606>
+
+80002020 <tdat5>:
+80002020: ef be ad de  	jal	t4, 0x7ffdd60a <rv32ui-c.sdsp.out+0x7ffdd60a>
+80002024: ef be ad de  	jal	t4, 0x7ffdd60e <rv32ui-c.sdsp.out+0x7ffdd60e>
+
+80002028 <tdat6>:
+80002028: ef be ad de  	jal	t4, 0x7ffdd612 <rv32ui-c.sdsp.out+0x7ffdd612>
+8000202c: ef be ad de  	jal	t4, 0x7ffdd616 <rv32ui-c.sdsp.out+0x7ffdd616>
+
+80002030 <tdat7>:
+80002030: ef be ad de  	jal	t4, 0x7ffdd61a <rv32ui-c.sdsp.out+0x7ffdd61a>
+80002034: ef be ad de  	jal	t4, 0x7ffdd61e <rv32ui-c.sdsp.out+0x7ffdd61e>
+
+80002038 <tdat8>:
+80002038: ef be ad de  	jal	t4, 0x7ffdd622 <rv32ui-c.sdsp.out+0x7ffdd622>
+8000203c: ef be ad de  	jal	t4, 0x7ffdd626 <rv32ui-c.sdsp.out+0x7ffdd626>
+
+80002040 <tdat9>:
+80002040: ef be ad de  	jal	t4, 0x7ffdd62a <rv32ui-c.sdsp.out+0x7ffdd62a>
+80002044: ef be ad de  	jal	t4, 0x7ffdd62e <rv32ui-c.sdsp.out+0x7ffdd62e>
+
+80002048 <tdat10>:
+80002048: ef be ad de  	jal	t4, 0x7ffdd632 <rv32ui-c.sdsp.out+0x7ffdd632>
+8000204c: ef be ad de  	jal	t4, 0x7ffdd636 <rv32ui-c.sdsp.out+0x7ffdd636>

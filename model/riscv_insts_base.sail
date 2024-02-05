@@ -40,9 +40,10 @@
 /*  SSITH research programme.                                                            */
 /*                                                                                       */
 /*  This project has received funding from the European Research Council                 */
-/*  (ERC) under the European Union’s Horizon 2020 research and innovation                */
+/*  (ERC) under the European Union's Horizon 2020 research and innovation                */
 /*  programme (grant agreement 789108, ELVER).                                           */
 /*                                                                                       */
+/*  Modified by NXP on 02/02/2024                                                        */
 /*                                                                                       */
 /*  Redistribution and use in source and binary forms, with or without                   */
 /*  modification, are permitted provided that the following conditions                   */
@@ -356,11 +357,13 @@ mapping clause assembly = RTYPE(rs2, rs1, rd, op)
 
 /* ****************************************************************** */
 union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width, bool, bool)
-
-/* unsigned loads are only present for widths strictly less than xlen,
-   signed loads also present for widths equal to xlen */
-mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
-  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_bits(size) @ rd @ 0b0000011 if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes))
+/*Zilsd support*/
+/* unsigned loads are only present for widths strictly less than xlen_bytes,
+   signed loads also present for widths equal to xlen_bytes */
+/* for Zilsd unsigned loads are only present for widths strictly less than xlen_bytes*2,
+   signed loads also present for widths equal to xlen_bytes*2 */
+mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes)) | (haveZilsd() & (word_width_bytes(size) < sizeof(xlen_bytes)*2) | (not_bool(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes)*2))
+  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_bits(size) @ rd @ 0b0000011 if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes)) | (haveZilsd() & (word_width_bytes(size) < sizeof(xlen_bytes)*2) | (not_bool(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes)*2))
 
 val extend_value : forall 'n, 0 < 'n <= xlen_bytes. (bool, MemoryOpResult(bits(8 * 'n))) -> MemoryOpResult(xlenbits)
 function extend_value(is_unsigned, value) = match (value) {
@@ -368,10 +371,24 @@ function extend_value(is_unsigned, value) = match (value) {
   MemException(e) => MemException(e)
 }
 
+val extend_value_pair : forall 'n, 0 < 'n <= xlen_bytes*2. (bool, MemoryOpResult(bits(8 * 'n))) -> MemoryOpResult(xlenbits_double)
+function extend_value_pair(is_unsigned, value) = match (value) {
+  MemValue(v)     => MemValue(if is_unsigned then sign_extend(sizeof(xlen*2), v) else sign_extend(sizeof(xlen*2),v) : xlenbits_double),
+  MemException(e) => MemException(e)
+}
+
+
 val process_load : forall 'n, 0 < 'n <= xlen_bytes. (regidx, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> Retired
 function process_load(rd, vaddr, value, is_unsigned) =
   match extend_value(is_unsigned, value) {
     MemValue(result) => { X(rd) = result; RETIRE_SUCCESS },
+    MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+  }
+  
+val process_load_pair : forall 'n, 0 < 'n <= xlen_bytes*2. (regidx, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> Retired effect {escape, rreg, wreg}
+function process_load_pair(rd, vaddr, value, is_unsigned) =
+  match extend_value_pair(is_unsigned, value) {
+    MemValue(result) => { if get_config_print_platform() then X_D(rd) = result; RETIRE_SUCCESS },
     MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
   }
 
@@ -403,9 +420,19 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
               process_load(rd, vaddr, mem_read(Read(Data), paddr, 2, aq, rl, false), is_unsigned),
             WORD =>
               process_load(rd, vaddr, mem_read(Read(Data), paddr, 4, aq, rl, false), is_unsigned),
-            DOUBLE if sizeof(xlen) >= 64 =>
+            DOUBLE if sizeof(xlen) == 64 =>
               process_load(rd, vaddr, mem_read(Read(Data), paddr, 8, aq, rl, false), is_unsigned),
-            _ => report_invalid_width(__FILE__, __LINE__, width, "load")
+            DOUBLE if haveZilsd() => {
+        	    let r1 = mem_read(Read(Data), paddr, 4, aq, rl, false) in
+        	    match(r1){
+        	    MemException(e) => process_load_pair(rd, vaddr, r1, is_unsigned),
+        	    MemValue(result1) => let r2 = mem_read(Read(Data), paddr+4, 4, aq, rl, false) in
+        	    	match(r2){
+        	    	MemException(e) => process_load_pair(rd, vaddr, r2, is_unsigned),  
+        	    	MemValue(result2) => let v1:bits(64) = sail_zero_extend(result1, 64) in let v2:bits(64) = sail_zero_extend(result2, 64) in process_load_pair(rd, vaddr, 							MemValue((v2<<32) +v1), is_unsigned),
+        	    	}
+        	    }        
+	    }
           }
       }
   }
@@ -434,9 +461,9 @@ mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, size, aq, rl)
 
 /* ****************************************************************** */
 union clause ast = STORE : (bits(12), regidx, regidx, word_width, bool, bool)
-
-mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)              if word_width_bytes(size) <= sizeof(xlen_bytes)
-  <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ imm5 : bits(5) @ 0b0100011 if word_width_bytes(size) <= sizeof(xlen_bytes)
+/*Zilsd support*/
+mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)              if (word_width_bytes(size) <= sizeof(xlen_bytes)) | (haveZilsd() & word_width_bytes(size) <= 2* sizeof(xlen_bytes))
+  <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ imm5 : bits(5) @ 0b0100011 if (word_width_bytes(size) <= sizeof(xlen_bytes)) | (haveZilsd() & word_width_bytes(size) <= 2* sizeof(xlen_bytes))
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
@@ -466,9 +493,22 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
                 BYTE => mem_write_value(paddr, 1, rs2_val[7..0],  aq, rl, false),
                 HALF => mem_write_value(paddr, 2, rs2_val[15..0], aq, rl, false),
                 WORD => mem_write_value(paddr, 4, rs2_val[31..0], aq, rl, false),
-                DOUBLE if sizeof(xlen) >= 64
-                     => mem_write_value(paddr, 8, rs2_val,        aq, rl, false),
-                _    => report_invalid_width(__FILE__, __LINE__, width, "store"),
+                DOUBLE => if sizeof(xlen) >= 64 then
+                			{mem_write_value(paddr, 8, rs2_val, aq, rl, false)}
+                		else if haveZilsd() then{ 
+		        		let rs21_val:bits(64) = X_D(rs2) in {
+		        			let v1= mem_write_value(paddr, 4, rs21_val[31..0], aq, rl, false) in
+		        			match(v1){
+		        			MemValue(false) => internal_error(__FILE__, __LINE__, "mem_write_value returned false"),
+		        			MemValue(true) => let v2= mem_write_value(paddr+4, 4, rs21_val[63..32], aq, rl, false) in
+		        				match(v2){
+		        				MemValue(false) => internal_error(__FILE__, __LINE__, "mem_write_value returned false"),
+		        				MemValue(true) => if v1 == MemValue(true) then v2 else v1
+		        				}
+		        			}
+		        		}
+                		}
+                		else MemValue(false)
               };
               match (res) {
                 MemValue(true)  => RETIRE_SUCCESS,

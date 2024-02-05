@@ -73,3 +73,4 @@
 type xlen       : Int = 64
 type xlen_bytes : Int = 8
 type xlenbits         = bits(xlen)
+type xlenbits_double = bits(xlen * 2)
