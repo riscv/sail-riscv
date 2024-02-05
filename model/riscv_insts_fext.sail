@@ -346,11 +346,11 @@ mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if haveDExt()
 
 val process_fload64 : (regidx, xlenbits, MemoryOpResult(bits(64)))
                       -> Retired
-function process_fload64(rd, addr, value) =
+function process_fload64(rd, vaddr, value) =
   if   sizeof(flen) == 64
   then match value {
          MemValue(result) => { F(rd) = result; RETIRE_SUCCESS },
-         MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
+         MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
        }
   else {
     /* should not get here */
@@ -359,18 +359,18 @@ function process_fload64(rd, addr, value) =
 
 val process_fload32 : (regidx, xlenbits, MemoryOpResult(bits(32)))
                       -> Retired
-function process_fload32(rd, addr, value) =
+function process_fload32(rd, vaddr, value) =
   match value {
     MemValue(result) => { F(rd) = nan_box(result); RETIRE_SUCCESS },
-    MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
+    MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
   }
 
 val process_fload16 : (regidx, xlenbits, MemoryOpResult(bits(16)))
                       -> Retired
-function process_fload16(rd, addr, value) =
+function process_fload16(rd, vaddr, value) =
   match value {
     MemValue(result) => { F(rd) = nan_box(result); RETIRE_SUCCESS },
-    MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
+    MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
   }
 
 function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
@@ -382,8 +382,8 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
       then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
-      else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+      else match translateAddr(vaddr, Read(Data), width) {
+        TR_Failure(e, c, _) => { handle_exception(e, c); RETIRE_FAIL },
         TR_Address(addr, _) => {
           let (aq, rl, res) = (false, false, false);
           match (width) {
@@ -448,8 +448,8 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
       then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
-      else match translateAddr(vaddr, Write(Data)) {
-        TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+      else match translateAddr(vaddr, Write(Data), width) {
+        TR_Failure(e, c, _) => { handle_exception(e, c); RETIRE_FAIL },
         TR_Address(addr, _) => {
           let eares : MemoryOpResult(unit) = match width {
             BYTE   => MemValue () /* bogus placeholder for illegal size */,

@@ -114,6 +114,9 @@ type ext_ptw_error = unit /* No extensions for page-table-walk errors */
 /* This type supports extensions to the exceptions defined in the ISA. */
 type ext_exc_type = unit /* No exception extensions */
 
+/* This type supports extensions to the memory AccessType */
+type ext_access_type = unit /* No memory access extensions */
+
 /* Default translation of PTW errors into exception annotations */
 function ext_translate_exception(e : ext_ptw_error) -> ext_exc_type =
   e /* type pun because both are unit; extensions may need to override this */

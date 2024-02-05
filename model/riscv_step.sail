@@ -86,11 +86,11 @@ function step(step_no : int) -> bool = {
   minstret_increment = mcountinhibit[IR] == 0b0;
 
   let (retired, stepped) : (Retired, bool) =
-    match dispatchInterrupt(cur_privilege) {
-      Some(intr, priv) => {
-        if   get_config_print_instr()
-        then print_bits("Handling interrupt: ", interruptType_to_bits(intr));
-        handle_interrupt(intr, priv);
+    match dispatchInterrupt(cur_privilege, cur_virtualization) {
+      Some(intr, priv, virt) => {
+        if   get_config_print_platform()
+        then print_platform("trapping from " ^ to_str(cur_privilege, cur_virtualization) ^ " to " ^ to_str(priv, virt) ^ " to handle " ^ to_str(intr));
+        handle_interrupt(intr, priv, virt);
         (RETIRE_FAIL, false)
       },
       None() => {
@@ -103,17 +103,18 @@ function step(step_no : int) -> bool = {
             (RETIRE_FAIL, false)
           },
           /* standard error */
-          F_Error(e, addr) => {
-            handle_mem_exception(addr, e);
+          F_Error(e, c) => {
+            handle_exception(e, c);
             (RETIRE_FAIL, false)
           },
           /* non-error cases: */
           F_RVC(h) => {
             instbits = zero_extend(h);
             let ast = ext_decode_compressed(h);
+            instbits_transformed = enc_transformed(ast, zeros()); // BUG: Address offset may be nonzero for misaligned memory accesses
             if   get_config_print_instr()
             then {
-              print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ to_str(ast));
+              print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ to_str(cur_privilege, cur_virtualization) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ to_str(ast));
             };
             /* check for RVC once here instead of every RVC execute clause. */
             if haveRVC() then {
@@ -127,9 +128,10 @@ function step(step_no : int) -> bool = {
           F_Base(w) => {
             instbits = zero_extend(w);
             let ast = ext_decode(w);
+            instbits_transformed = enc_transformed(ast, zeros()); // BUG: Address offset may be nonzero for misaligned memory accesses
             if   get_config_print_instr()
             then {
-              print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ to_str(ast));
+              print_instr("[" ^ string_of_int(step_no) ^ "] [" ^ to_str(cur_privilege, cur_virtualization) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ to_str(ast));
             };
             nextPC = PC + 4;
             (execute(ast), true)

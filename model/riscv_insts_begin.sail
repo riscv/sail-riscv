@@ -88,6 +88,10 @@ scattered mapping encdec
 val encdec_compressed : ast <-> bits(16)
 scattered mapping encdec_compressed
 
+/* Mapping for transformed instructions as defined in the hypervisor extension */
+val enc_transformed : (ast, bits(5)) -> bits(32)
+scattered function enc_transformed
+
 /*
  * We declare the ILLEGAL/C_ILLEGAL ast clauses here instead of in
  * riscv_insts_end, so that model extensions can make use of them.

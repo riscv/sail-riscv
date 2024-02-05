@@ -5,6 +5,7 @@ bool sys_enable_rvc(unit);
 bool sys_enable_next(unit);
 bool sys_enable_fdext(unit);
 bool sys_enable_zfinx(unit);
+bool sys_enable_hext(unit);
 bool sys_enable_writable_misa(unit);
 bool sys_enable_writable_fiom(unit);
 bool sys_enable_vext(unit);
@@ -12,6 +13,7 @@ bool sys_enable_vext(unit);
 bool plat_enable_dirty_update(unit);
 bool plat_enable_misaligned_access(unit);
 bool plat_mtval_has_illegal_inst_bits(unit);
+bool plat_xtinst_has_transformed_inst(unit);
 bool plat_enable_pmp(unit);
 
 mach_bits plat_ram_base(unit);
@@ -35,6 +37,12 @@ unit cancel_reservation(unit);
 void plat_insns_per_tick(sail_int *rop, unit);
 
 unit plat_term_write(mach_bits);
+unit plat_term_read(unit);
 mach_bits plat_htif_tohost(unit);
+// Address of fromhost symbol
+mach_bits plat_htif_fromhost(unit);
+// fromhost mmio
+mach_bits plat_htif_fromhost_read(unit);
+unit plat_htif_fromhost_write(mach_bits);
 
 unit memea(mach_bits, sail_int);

@@ -79,19 +79,6 @@ function ext_fail_xret_priv () : unit -> unit = ()
 
 function handle_trap_extension(p : Privilege, pc : xlenbits, u : option(unit)) -> unit = ()
 
-/* used for traps and ECALL */
-function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
-  let tvec : Mtvec = match p {
-                       Machine    => mtvec,
-                       Supervisor => stvec,
-                       User       => utvec
-                     };
-  match tvec_addr(tvec, cause) {
-    Some(epc) => epc,
-    None()    => internal_error(__FILE__, __LINE__, "Invalid tvec mode")
-  }
-}
-
 /* xRET handling involves three functions:
  *
  * get_xret_target:     used to read the value of the xret target  (no control flow transfer)
@@ -99,36 +86,45 @@ function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
  * prepare_xret_target: used to get the value for control transfer to the xret target
  */
 
-val get_xret_target : Privilege -> xlenbits
-function get_xret_target(p) =
+val get_xret_target : (Privilege, Virtualization) -> xlenbits
+function get_xret_target(p, v) =
   match p {
-    Machine    => mepc,
-    Supervisor => sepc,
-    User       => uepc
+    Machine => mepc,
+    Supervisor => match v {
+      V0 => sepc,
+      V1 => vsepc
+    },
+    User => uepc
   }
 
-val set_xret_target : (Privilege, xlenbits) -> xlenbits
-function set_xret_target(p, value) = {
+val set_xret_target : (Privilege, Virtualization, xlenbits) -> xlenbits
+function set_xret_target(p, v, value) = {
   let target = legalize_xepc(value);
   match p {
-    Machine    => mepc = target,
-    Supervisor => sepc = target,
-    User       => uepc = target
+    Machine => mepc = target,
+    Supervisor => match v {
+      V0 => sepc = target,
+      V1 => vsepc = target
+    },
+    User => uepc = target
   };
   target
 }
 
-val prepare_xret_target : (Privilege) -> xlenbits
-function prepare_xret_target(p) =
-  get_xret_target(p)
+val prepare_xret_target : (Privilege, Virtualization) -> xlenbits
+function prepare_xret_target(p, v) =
+  get_xret_target(p, v)
 
-/* other trap-related CSRs */
+/* Accessors for trap vector CSRs */
 
 function get_mtvec() -> xlenbits =
   mtvec.bits
 
 function get_stvec() -> xlenbits =
   stvec.bits
+
+function get_vstvec() -> xlenbits =
+  vstvec.bits()
 
 function get_utvec() -> xlenbits =
   utvec.bits
@@ -143,7 +139,48 @@ function set_stvec(value : xlenbits) -> xlenbits = {
   stvec.bits
 }
 
+function set_vstvec(value : xlenbits) -> xlenbits = {
+  vstvec = legalize_tvec(vstvec, value);
+  vstvec.bits()
+}
+
 function set_utvec(value : xlenbits) -> xlenbits = {
   utvec = legalize_tvec(utvec, value);
   utvec.bits
+}
+
+/* trap vector handling involves three functions:
+ *
+ * get_trap_vector:     used to read the value of the trap vector
+ * set_trap_vector:     used to write a value of the trap vector
+ * prepare_trap_vector: used to get the trap target for a given privilege, virtualization & cause
+ */
+
+function get_trap_vector(p: Privilege, v: Virtualization) -> xlenbits =
+  match p {
+    Machine => get_mtvec(),
+    Supervisor => match v {
+      V0 => get_stvec(),
+      v1 => get_vstvec()
+    },
+    User => get_utvec()
+  }
+
+function set_trap_vector(p: Privilege, v: Virtualization, value: xlenbits) -> xlenbits =
+  match p {
+    Machine => set_mtvec(value),
+    Supervisor => match v {
+      V0 => set_stvec(value),
+      v1 => set_vstvec(value)
+    },
+    User =>set_utvec(value)
+  }
+
+/* used for traps and ECALL */
+function prepare_trap_vector(p : Privilege, v: Virtualization, cause : Mcause) -> xlenbits = {
+  let tvec : Mtvec = Mk_Mtvec(get_trap_vector(p, v));
+  match tvec_addr(tvec, cause) {
+    Some(epc) => epc,
+    None()    => internal_error(__FILE__, __LINE__, "Invalid tvec mode")
+  }
 }

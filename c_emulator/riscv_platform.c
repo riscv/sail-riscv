@@ -37,6 +37,11 @@ bool sys_enable_zfinx(unit u)
   return rv_enable_zfinx;
 }
 
+bool sys_enable_hext(unit u)
+{
+  return rv_enable_hext;
+}
+
 bool sys_enable_writable_fiom(unit u)
 {
   return rv_enable_writable_fiom;
@@ -65,6 +70,11 @@ bool plat_enable_misaligned_access(unit u)
 bool plat_mtval_has_illegal_inst_bits(unit u)
 {
   return rv_mtval_has_illegal_inst_bits;
+}
+
+bool plat_xtinst_has_transformed_inst(unit u)
+{
+  return rv_xtinst_has_transformed_inst;
 }
 
 bool plat_enable_pmp(unit u)
@@ -150,11 +160,33 @@ unit plat_term_write(mach_bits s)
   return UNIT;
 }
 
+unit plat_term_read(unit u)
+{
+  plat_term_read_impl();
+  return UNIT;
+}
+
 void plat_insns_per_tick(sail_int *rop, unit u) { }
 
 mach_bits plat_htif_tohost(unit u)
 {
   return rv_htif_tohost;
+}
+
+mach_bits plat_htif_fromhost(unit u)
+{
+  return rv_htif_fromhost_addr;
+}
+
+mach_bits plat_htif_fromhost_read(unit u)
+{
+  return (mach_bits)rv_htif_fromhost_val;
+}
+
+unit plat_htif_fromhost_write(mach_bits s)
+{
+  rv_htif_fromhost_val = (uint64_t)s;
+  return UNIT;
 }
 
 unit memea(mach_bits len, sail_int n)

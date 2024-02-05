@@ -6,10 +6,12 @@ module Elf = Elf_loader;;
 
 let config_enable_rvc                  = ref true
 let config_enable_next                 = ref false
+let config_enable_hext                 = ref false
 let config_enable_writable_misa        = ref true
 let config_enable_dirty_update         = ref false
 let config_enable_misaligned_access    = ref false
 let config_mtval_has_illegal_inst_bits = ref false
+let config_xtinst_has_transformed_inst = ref false
 let config_enable_pmp                  = ref false
 let config_enable_writable_fiom        = ref true
 let config_enable_vext                 = ref true
@@ -79,11 +81,13 @@ let make_rom arch start_pc =
 let enable_writable_misa ()          = !config_enable_writable_misa
 let enable_rvc ()                    = !config_enable_rvc
 let enable_next ()                   = !config_enable_next
+let enable_hext ()                   = !config_enable_hext
 let enable_fdext ()                  = false
 let enable_vext ()                   = !config_enable_vext
 let enable_dirty_update ()           = !config_enable_dirty_update
 let enable_misaligned_access ()      = !config_enable_misaligned_access
 let mtval_has_illegal_inst_bits ()   = !config_mtval_has_illegal_inst_bits
+let xtinst_has_transformed_inst ()   = !config_xtinst_has_transformed_inst
 let enable_pmp ()                    = !config_enable_pmp
 let enable_zfinx ()                  = false
 let enable_writable_fiom ()          = !config_enable_writable_fiom
@@ -99,8 +103,25 @@ let clint_size () = arch_bits_of_int64 P.clint_size
 
 let insns_per_tick () = Big_int.of_int P.insns_per_tick
 
+let tohost_addr () =
+  Big_int.to_int64 (match (Elf.elf_symbol ("tohost")) with
+                      | Some addr -> addr
+                      | None   -> Big_int.zero)
+
+let fromhost_addr () =
+  Big_int.to_int64 (match (Elf.elf_symbol ("fromhost")) with
+                      | Some addr -> addr
+                      | None   -> Big_int.zero)
+
 let htif_tohost () =
-  arch_bits_of_int64 (Big_int.to_int64 (Elf.elf_tohost ()))
+  arch_bits_of_int64 (tohost_addr ())
+
+let htif_fromhost () =
+  arch_bits_of_int64 (fromhost_addr ())
+
+(* todo: update val on term_read ()*)
+let htif_fromhost_read () = arch_bits_of_int64 !P.htif_fromhost
+let htif_fromhost_write arch_bits = P.htif_fromhost := Big_int.to_int64 (uint arch_bits)
 
 (* Entropy Source - get random bits *)
 
@@ -146,7 +167,8 @@ let term_write char_bits =
 
 let term_read () =
   let c = P.term_read () in
-  arch_bits_of_int (int_of_char c)
+  P.htif_fromhost := Int64.of_int (0x100000000000000 lor (int_of_char c));
+  ()
 
 (* physical memory *)
 
@@ -158,7 +180,8 @@ let init arch elf_file =
   platform_arch := arch;
   Elf.load_elf elf_file;
 
-  print_platform (Printf.sprintf "\nRegistered htif_tohost at 0x%Lx.\n" (Big_int.to_int64 (Elf.elf_tohost ())));
+  print_platform (Printf.sprintf "\nRegistered htif_tohost at 0x%Lx.\n" (tohost_addr ()));
+  print_platform (Printf.sprintf "Registered htif_fromhost at 0x%Lx.\n" (fromhost_addr ()));
   print_platform (Printf.sprintf "Registered clint at 0x%Lx (size 0x%Lx).\n%!" P.clint_base P.clint_size);
 
   let start_pc = Elf.Big_int.to_int64 (Elf.elf_entry ()) in

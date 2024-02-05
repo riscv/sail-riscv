@@ -73,8 +73,8 @@
  */
 
 union FetchResult = {
-  F_Ext_Error : ext_fetch_addr_error,      /* For extensions */
-  F_Base      : word,                      /* Base ISA */
-  F_RVC       : half,                      /* Compressed ISA */
-  F_Error     : (ExceptionType, xlenbits)  /* standard exception and PC */
+  F_Ext_Error : ext_fetch_addr_error,              /* For extensions */
+  F_Base      : word,                              /* Base ISA */
+  F_RVC       : half,                              /* Compressed ISA */
+  F_Error     : (ExceptionType, ExceptionContext)  /* standard exception and corresponding context */
 }

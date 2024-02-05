@@ -393,8 +393,8 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
       then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
-      else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+      else match translateAddr(vaddr, Read(Data), width) {
+        TR_Failure(e, c, _)  => { handle_exception(e, c); RETIRE_FAIL },
         TR_Address(paddr, _) =>
           match (width) {
             BYTE =>
@@ -449,8 +449,8 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
       then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
-      else match translateAddr(vaddr, Write(Data)) {
-        TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+      else match translateAddr(vaddr, Write(Data), width) {
+        TR_Failure(e, c, _)  => { handle_exception(e, c); RETIRE_FAIL },
         TR_Address(paddr, _) => {
           let eares : MemoryOpResult(unit) = match width {
             BYTE   => mem_write_ea(paddr, 1, aq, rl, false),
@@ -747,15 +747,14 @@ mapping clause encdec = ECALL()
   <-> 0b000000000000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute ECALL() = {
-  let t : sync_exception =
-    struct { trap = match (cur_privilege) {
-                      User       => E_U_EnvCall(),
-                      Supervisor => E_S_EnvCall(),
-                      Machine    => E_M_EnvCall()
-                    },
-             excinfo = (None() : option(xlenbits)),
-             ext     = None() };
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC));
+  let e : ExceptionType = match (cur_privilege, cur_virtualization) {
+    (User, _)        => E_U_EnvCall(),
+    (Supervisor, V0) => E_S_EnvCall(),
+    (Supervisor, V1) => E_VS_EnvCall(),
+    (Machine,_)      => E_M_EnvCall()
+  };
+  let c : ExceptionContext = empty_exception_context();
+  set_next_pc(exception_handler(cur_privilege, cur_virtualization, CTL_TRAP(e, c), PC));
   RETIRE_FAIL
 }
 
@@ -773,7 +772,7 @@ function clause execute MRET() = {
   else if not(ext_check_xret_priv (Machine))
   then { ext_fail_xret_priv(); RETIRE_FAIL }
   else {
-    set_next_pc(exception_handler(cur_privilege, CTL_MRET(), PC));
+    set_next_pc(exception_handler(cur_privilege, cur_virtualization, CTL_MRET(), PC));
     RETIRE_SUCCESS
   }
 }
@@ -787,18 +786,27 @@ mapping clause encdec = SRET()
   <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute SRET() = {
-  let sret_illegal : bool = match cur_privilege {
-    User       => true,
-    Supervisor => not(haveSupMode ()) | mstatus[TSR] == 0b1,
-    Machine    => not(haveSupMode ())
+  let sret_exc : option(ExceptionType) = match (cur_privilege, cur_virtualization) {
+    (User, V0)       => Some(E_Illegal_Instr()),
+    (User, V1)       => Some(E_Virtual_Instr()),
+    (Supervisor, V0) => if not(haveSupMode ()) | mstatus[TSR] == 0b1
+                        then Some(E_Illegal_Instr())
+                        else None(),
+    (Supervisor, V1) => if hstatus[VTSR] == 0b1
+                        then Some(E_Virtual_Instr())
+                        else None(),
+    (Machine, _)     => if not(haveSupMode())
+                        then Some(E_Illegal_Instr())
+                        else None(),
   };
-  if   sret_illegal
-  then { handle_illegal(); RETIRE_FAIL }
-  else if not(ext_check_xret_priv (Supervisor))
-  then { ext_fail_xret_priv(); RETIRE_FAIL }
-  else {
-    set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC));
-    RETIRE_SUCCESS
+  match sret_exc {
+    Some(e) => { handle_instr_fault(e); RETIRE_FAIL },
+    None()  => if not(ext_check_xret_priv (Supervisor))
+               then { ext_fail_xret_priv(); RETIRE_FAIL }
+               else {
+                 set_next_pc(exception_handler(cur_privilege, cur_virtualization, CTL_SRET(), PC));
+                 RETIRE_SUCCESS
+               }
   }
 }
 
@@ -823,13 +831,80 @@ union clause ast = WFI : unit
 mapping clause encdec = WFI()
   <-> 0b000100000101 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
+function timeout_wfi(timeout_exc: ExceptionType) -> Retired = {
+  /* Should cause exception if WFI does not complete within an
+   * implementation-specific bounded time limit. This time limit
+   * may be zero, in which case WFI in a less-privilleged mode
+   * always causes an exception.
+   *
+   * Thus always causing an exception is an incomplete but
+   * valid implementation
+   *
+   * Check https://github.com/riscv/riscv-isa-manual/issues/961 for more on this
+   */
+   handle_instr_fault(timeout_exc);
+   RETIRE_FAIL
+}
+
 function clause execute WFI() =
-  match cur_privilege {
-    Machine    => { platform_wfi(); RETIRE_SUCCESS },
-    Supervisor => if   mstatus[TW] == 0b1
-                  then { handle_illegal(); RETIRE_FAIL }
-                  else { platform_wfi(); RETIRE_SUCCESS },
-    User       => { handle_illegal(); RETIRE_FAIL }
+  match (cur_privilege, cur_virtualization) {
+    (Machine, _)     => { platform_wfi(); RETIRE_SUCCESS },
+    (Supervisor, V0) => if mstatus[TW] == 0b1
+                        then { timeout_wfi(E_Illegal_Instr()) }
+                        else { platform_wfi(); RETIRE_SUCCESS },
+    (Supervisor, V1) => if mstatus[TW] == 0b1
+                        then { timeout_wfi(E_Illegal_Instr()) }
+                        else if hstatus[VTW] == 0b1
+                        then { timeout_wfi(E_Virtual_Instr()) }
+                        else { platform_wfi(); RETIRE_SUCCESS },
+    (User, V0)       => if mstatus[TW] == 0b1
+                        then timeout_wfi(E_Illegal_Instr())
+                        else if haveSupMode()
+                        then timeout_wfi(E_Illegal_Instr())
+                        else { platform_wfi(); RETIRE_SUCCESS },
+/* FIXME: unclear VU-mode wfi semantics
+ *
+ * SPEC: "When TW=0, the WFI instruction may execute in lower privilege
+ *       modes when not prevented for some other reason"
+ *       => stall/nop
+ *
+ * SPEC: "When TW=1, then if WFI is executed in any less-privileged mode,
+ *       and it does not complete within an implementation-specific,
+ *       bounded time limit, the WFI instruction causes an illegal
+ *       instruction exception"
+ *       => set_timeout & stall/nop
+ *
+ * SPEC: "An implementation may have WFI always raise an illegal
+ *       instruction exception in less-privileged modes when TW=1, ..."
+ *       => set_timeout = uncontional trap
+ *
+ * SPEC: WFI "... may raise an illegal instruction exception when TW=1 in
+ *       mstatus"
+ *       (in accordance with previous points)
+ *
+ * SPEC: "When S-mode is implemented, then executing WFI in U-mode causes
+ *       an illegal instruction exception, unless it completes within an
+ *       implementation-specific, bounded time limit"
+ *       => set_timeout & stall/nop
+ *
+ * NOTE: S-mode is aways implemented when the hypervisor extension is
+ *       enabled => exec in VU-mode similar to U-mode?
+ *       => 'set_timeout & stall/nop' vs 'stall/nop'
+ *
+ * SPEC: "When VTW=1 (and assuming mstatus.TW=0), an attempt in VS-mode
+ *       to execute WFI raises a virtual instruction exception if the WFI
+ *       does not complete within an implementation-specific, bounded
+ *       time limit"
+ *       (VS-specific, does not change VU-mode behaviour)
+ *
+ * SPEC: A virtual instruction exception occurs "in VU-mode, attempts to
+ *       execute WFI when mstatus.TW=0"
+ *       => trap
+ *       (Uncontitional trap seems not logical here, 'set_timeout & stall/nop' makes more sense in my opinion)
+ */
+    (User, V1)       => if mstatus[TW] == 0b1
+                        then { timeout_wfi(E_Illegal_Instr()) }
+                        else { timeout_wfi(E_Virtual_Instr()) },
   }
 
 mapping clause assembly = WFI() <-> "wfi"
@@ -843,14 +918,20 @@ mapping clause encdec = SFENCE_VMA(rs1, rs2)
 function clause execute SFENCE_VMA(rs1, rs2) = {
   let addr : option(xlenbits) = if rs1 == 0b00000 then None() else Some(X(rs1));
   let asid : option(xlenbits) = if rs2 == 0b00000 then None() else Some(X(rs2));
-  match cur_privilege {
-    User       => { handle_illegal(); RETIRE_FAIL },
-    Supervisor => match (architecture(get_mstatus_SXL(mstatus)), mstatus[TVM]) {
-                    (Some(_), 0b1)  => { handle_illegal(); RETIRE_FAIL },
-                    (Some(_), 0b0) => { flush_TLB(asid, addr); RETIRE_SUCCESS },
-                    (_, _)           => internal_error(__FILE__, __LINE__, "unimplemented sfence architecture")
-                  },
-    Machine    => { flush_TLB(asid, addr); RETIRE_SUCCESS }
+  match (cur_privilege, cur_virtualization) {
+    (User, V1)       => { handle_instr_fault(E_Virtual_Instr()); RETIRE_FAIL },
+    (Supervisor, V1) => match (architecture(get_hstatus_VSXL(hstatus)), hstatus[VTVM]) {
+                          (Some(_), 0b1) => { handle_instr_fault(E_Virtual_Instr()); RETIRE_FAIL },
+                          (Some(_), 0b0) => { flush_TLB(asid, VS, addr); RETIRE_SUCCESS },
+                          (_, _)         => internal_error(__FILE__, __LINE__, "unimplemented sfence architecture"),
+    },
+    (User, V0)       => { handle_instr_fault(E_Illegal_Instr()); RETIRE_FAIL },
+    (Supervisor, V0) => match (architecture(get_mstatus_SXL(mstatus)), mstatus[TVM]) {
+                          (Some(_), 0b1) => { handle_instr_fault(E_Illegal_Instr()); RETIRE_FAIL },
+                          (Some(_), 0b0) => { flush_TLB(asid, S, addr); RETIRE_SUCCESS },
+                          (_, _)         => internal_error(__FILE__, __LINE__, "unimplemented sfence architecture"),
+    },
+    (Machine, _)     => { flush_TLB(asid, S, addr); RETIRE_SUCCESS },
   }
 }
 

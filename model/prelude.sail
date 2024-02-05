@@ -252,6 +252,16 @@ function reverse_bits_in_byte (xs : bits(8)) -> bits(8) = {
 
 overload reverse = {reverse_bits_in_byte}
 
+/* helpers for bitvector option type */
+val some_or : forall 'n, 'n >= 0 . (option(bits('n)), bits('n)) -> bits('n)
+function some_or(o, d) = match o {
+  Some(v) => v,
+  None()  => d,
+}
+
+val some_or_zero : forall 'n, 'n >= 0. (implicit('n), option(bits('n))) -> bits('n)
+function some_or_zero(n, o) = some_or(o, zeros(n))
+
 overload operator / = {quot_round_zero}
 overload operator * = {mult_atom, mult_int}
 

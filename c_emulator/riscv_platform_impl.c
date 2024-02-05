@@ -9,11 +9,12 @@ bool rv_enable_rvc = true;
 bool rv_enable_next = false;
 bool rv_enable_writable_misa = true;
 bool rv_enable_fdext = true;
+bool rv_enable_hext = true;
 bool rv_enable_vext = true;
-
 bool rv_enable_dirty_update = false;
 bool rv_enable_misaligned = false;
 bool rv_mtval_has_illegal_inst_bits = false;
+bool rv_xtinst_has_transformed_inst = false;
 bool rv_enable_writable_fiom = true;
 
 uint64_t rv_ram_base = UINT64_C(0x80000000);
@@ -41,6 +42,8 @@ uint64_t rv_clint_base = UINT64_C(0x2000000);
 uint64_t rv_clint_size = UINT64_C(0xc0000);
 
 uint64_t rv_htif_tohost = UINT64_C(0x80001000);
+uint64_t rv_htif_fromhost_addr = UINT64_C(0x80001008);
+uint64_t rv_htif_fromhost_val = 0x0;
 uint64_t rv_insns_per_tick = UINT64_C(100);
 
 int term_fd = 1; // set during startup
@@ -49,4 +52,11 @@ void plat_term_write_impl(char c)
   if (write(term_fd, &c, sizeof(c)) < 0) {
     fprintf(stderr, "Unable to write to terminal!\n");
   }
+}
+
+void plat_term_read_impl(void)
+{
+  char ch = getc(stdin);
+  rv_htif_fromhost_val = ((uint64_t)HTIF_DEV_CONSOLE << HTIF_DEV_SHIFT)
+      | ((uint64_t)HTIF_CONSOLE_CMD_GETC << HTIF_CMD_SHIFT) | ((uint64_t)ch);
 }

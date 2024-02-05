@@ -129,7 +129,7 @@ val plat_clint_size = {ocaml: "Platform.clint_size", interpreter: "Platform.clin
 /* Location of HTIF ports */
 val plat_htif_tohost = {ocaml: "Platform.htif_tohost", c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> xlenbits
 function plat_htif_tohost () = to_bits(sizeof(xlen), elf_tohost ())
-// todo: fromhost
+val plat_htif_fromhost = {ocaml: "Platform.htif_fromhost", c: "plat_htif_fromhost", lem: "plat_htif_fromhost"} : unit -> xlenbits
 
 val phys_mem_segments : unit -> list((xlenbits, xlenbits))
 function phys_mem_segments() =
@@ -179,11 +179,9 @@ function within_clint forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, wi
   & (addr_int + sizeof('n)) <= (clint_base_int + clint_size_int)
 }
 
-function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool =
-    plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4)
-
-function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool =
-    plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4)
+function within_htif forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool =
+    plat_htif_tohost()   == addr | (plat_htif_tohost()   + 4 == addr & width == 4) |
+    plat_htif_fromhost() == addr | (plat_htif_fromhost() + 4 == addr & width == 4)
 
 /* CLINT (Core Local Interruptor), based on Spike. */
 
@@ -311,6 +309,24 @@ function clint_store(addr, width, data) = {
     mtimecmp = vector_update_subrange(mtimecmp, 63, 32, sail_zero_extend(data, 32)); /* FIXME: Redundant zero_extend currently required by Lem backend */
     clint_dispatch();
     MemValue(true)
+  } else if addr == MTIME_BASE & 'n == 8 then {
+    if   get_config_print_platform()
+    then print_platform("clint<8>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtime)");
+    mtime = zero_extend(data);
+    clint_dispatch();
+    MemValue(true)
+  } else if addr == MTIME_BASE & 'n == 4 then {
+    if   get_config_print_platform()
+    then print_platform("clint<4>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtime)");
+    mtime[31 .. 0] = zero_extend(data);
+    clint_dispatch();
+    MemValue(true)
+  } else if addr == MTIME_BASE_HI & 'n == 4 then {
+    if   get_config_print_platform()
+    then print_platform("clint<4>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtime)");
+    mtime[63 .. 32] = zero_extend(data);
+    clint_dispatch();
+    MemValue(true)
   } else {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (<unmapped>)");
@@ -330,7 +346,7 @@ function tick_clock() = {
 /* Basic terminal character I/O. */
 
 val plat_term_write = {ocaml: "Platform.term_write", c: "plat_term_write", lem: "plat_term_write"} : bits(8) -> unit
-val plat_term_read  = {ocaml: "Platform.term_read",  c: "plat_term_read", lem: "plat_term_read"}  : unit -> bits(8)
+val plat_term_read  = {ocaml: "Platform.term_read",  c: "plat_term_read", lem: "plat_term_read"}  : unit -> unit
 
 /* Spike's HTIF device interface, which multiplexes the above MMIO devices. */
 
@@ -341,6 +357,8 @@ bitfield htif_cmd : bits(64) = {
 }
 
 register htif_tohost : bits(64)
+val htif_read_fromhost = {ocaml: "Platform.htif_fromhost_read", c: "plat_htif_fromhost_read"} : unit -> bits(64)
+val htif_write_fromhost = {ocaml: "Platform.htif_fromhost_write", c: "plat_htif_fromhost_write"} : bits(64) -> unit
 register htif_done   : bool
 register htif_exit_code : bits(64)
 
@@ -369,8 +387,10 @@ function reset_htif () -> unit = {
 
 val htif_load : forall 'n, 'n > 0. (AccessType(ext_access_type), xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n))
 function htif_load(t, paddr, width) = {
-  if   get_config_print_platform()
+  if   get_config_print_platform() & (paddr == plat_htif_tohost())
   then print_platform("htif[" ^ BitStr(paddr) ^ "] -> " ^ BitStr(htif_tohost));
+  if   get_config_print_platform() & (paddr == plat_htif_fromhost())
+  then print_platform("htif[" ^ BitStr(paddr) ^ "] -> " ^ BitStr(htif_read_fromhost()));
   /* FIXME: For now, only allow the expected access widths. */
   if      width == 8 & (paddr == plat_htif_tohost())
   then    MemValue(sail_zero_extend(htif_tohost, 64))         /* FIXME: Redundant zero_extend currently required by Lem backend */
@@ -378,6 +398,12 @@ function htif_load(t, paddr, width) = {
   then    MemValue(sail_zero_extend(htif_tohost[31..0], 32))  /* FIXME: Redundant zero_extend currently required by Lem backend */
   else if width == 4 & paddr == plat_htif_tohost() + 4
   then    MemValue(sail_zero_extend(htif_tohost[63..32], 32)) /* FIXME: Redundant zero_extend currently required by Lem backend */
+  else if width == 8 & (paddr == plat_htif_fromhost())
+  then    MemValue(sail_zero_extend(htif_read_fromhost(), 64))         /* FIXME: Redundant zero_extend currently required by Lem backend */
+  else if width == 4 & paddr == plat_htif_fromhost()
+  then    MemValue(sail_zero_extend(htif_read_fromhost()[31..0], 32))  /* FIXME: Redundant zero_extend currently required by Lem backend */
+  else if width == 4 & paddr == plat_htif_fromhost() + 4
+  then    MemValue(sail_zero_extend(htif_read_fromhost()[63..32], 32)) /* FIXME: Redundant zero_extend currently required by Lem backend */
   else match t {
     Execute()  => MemException(E_Fetch_Access_Fault()),
     Read(Data) => MemException(E_Load_Access_Fault()),
@@ -391,7 +417,7 @@ function htif_store(paddr, width, data) = {
   if   get_config_print_platform()
   then print_platform("htif[" ^ BitStr(paddr) ^ "] <- " ^ BitStr(data));
   /* Store the written value so that we can ack it later. */
-  if      width == 8
+  if width == 8 & paddr == plat_htif_tohost()
   then    { htif_cmd_write = bitone;
             htif_payload_writes = htif_payload_writes + 1;
             htif_tohost = zero_extend(data) }
@@ -406,6 +432,12 @@ function htif_store(paddr, width, data) = {
             else htif_payload_writes = 0x1;
             htif_cmd_write = bitone;
             htif_tohost = vector_update_subrange(htif_tohost, 63, 32, data) }
+  else if width == 8 & paddr == plat_htif_fromhost()
+  then    { htif_write_fromhost(data) }
+  else if width == 4 & paddr == plat_htif_fromhost()
+  then    { htif_write_fromhost(htif_read_fromhost()[63 .. 32] @ data[31 .. 0]) }
+  else if width == 4 & paddr == plat_htif_fromhost() + 4
+  then    { htif_write_fromhost(data[31 .. 0] @ htif_read_fromhost()[31 .. 0]) }
   /* unaligned command writes are not supported and will not be detected */
   else    { htif_tohost = zero_extend(data) };
 
@@ -429,9 +461,9 @@ function htif_store(paddr, width, data) = {
       },
       0x01 => { /* terminal */
         if   get_config_print_platform()
-        then print_platform("htif-term cmd: " ^ BitStr(cmd[payload]));
+        then print("htif-term cmd " ^ BitStr(cmd[cmd]) ^ ": " ^ BitStr(cmd[payload]));
         match cmd[cmd] {
-          0x00 => /* TODO: terminal input handling */ (),
+          0x00 => plat_term_read(), /* Copy char to fromhost */
           0x01 => plat_term_write(cmd[payload][7..0]),
           c    => print("Unknown term cmd: " ^ BitStr(c))
         };
@@ -454,14 +486,14 @@ function htif_tick() = {
 /* Top-level MMIO dispatch */
 $ifndef RVFI_DII
 function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool =
-  within_clint(addr, width) | (within_htif_readable(addr, width) & 1 <= 'n)
+  within_clint(addr, width) | (within_htif(addr, width) & 1 <= 'n)
 $else
 function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool = false
 $endif
 
 $ifndef RVFI_DII
 function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool =
-  within_clint(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
+  within_clint(addr, width) | (within_htif(addr, width) & 'n <= 8)
 $else
 function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool = false
 $endif
@@ -469,7 +501,7 @@ $endif
 function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n)) -> MemoryOpResult(bits(8 * 'n)) =
   if   within_clint(paddr, width)
   then clint_load(t, paddr, width)
-  else if within_htif_readable(paddr, width) & (1 <= 'n)
+  else if within_htif(paddr, width) & (1 <= 'n)
   then htif_load(t, paddr, width)
   else match t {
     Execute()  => MemException(E_Fetch_Access_Fault()),
@@ -480,7 +512,7 @@ function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_acc
 function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : xlenbits, width : atom('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
   if   within_clint(paddr, width)
   then clint_store(paddr, width, data)
-  else if within_htif_writable(paddr, width) & 'n <= 8
+  else if within_htif(paddr, width) & 'n <= 8
   then htif_store(paddr, width, data)
   else MemException(E_SAMO_Access_Fault())
 
@@ -500,15 +532,21 @@ function tick_platform() -> unit = {
 
 /* Platform-specific handling of instruction faults */
 
-function handle_illegal() -> unit = {
-  let info = if plat_mtval_has_illegal_inst_bits ()
-             then Some(instbits)
-             else None();
-  let t : sync_exception = struct { trap    = E_Illegal_Instr(),
-                                    excinfo = info,
-                                    ext     = None() };
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
+function handle_instr_fault(e: ExceptionType) -> unit = {
+  /* handle_instr_fault only supports the following exception causes */
+  assert(match e {
+          E_Illegal_Instr() => true,
+          E_Virtual_Instr() => true,
+          _                 => false,
+        }, "exception not supported by current handler");
+  let c = instr_exception_context(zero_extend(instbits), plat_mtval_has_illegal_inst_bits()) in
+  set_next_pc(exception_handler(cur_privilege, cur_virtualization, CTL_TRAP(e, c), PC))
 }
+
+// Note: Would its purpose be clearer if called 'handle_illegal_instr()'?
+function handle_illegal() -> unit = handle_instr_fault(E_Illegal_Instr())
+
+function handle_virtual_instr() -> unit = handle_instr_fault(E_Virtual_Instr())
 
 /* Platform-specific wait-for-interrupt */
 

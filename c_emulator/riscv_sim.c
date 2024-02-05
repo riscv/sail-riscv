@@ -125,7 +125,9 @@ static struct option options[] = {
     {"disable-compressed",          no_argument,       0, 'C'                     },
     {"disable-writable-misa",       no_argument,       0, 'I'                     },
     {"disable-fdext",               no_argument,       0, 'F'                     },
+    {"disable-hext",                no_argument,       0, 'H'                     },
     {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'                     },
+    {"xtinst-has-transformed-inst", no_argument,       0, 'f'                     },
     {"device-tree-blob",            required_argument, 0, 'b'                     },
     {"terminal-log",                required_argument, 0, 't'                     },
     {"show-times",                  required_argument, 0, 'p'                     },
@@ -246,8 +248,10 @@ static int process_args(int argc, char **argv)
                     "N"
                     "I"
                     "F"
+                    "H"
                     "W"
                     "i"
+                    "f"
                     "s"
                     "p"
                     "z:"
@@ -301,6 +305,9 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "disabling floating point (F and D extensions).\n");
       rv_enable_fdext = false;
       break;
+    case 'H':
+      fprintf(stderr, "disabling hypervisor extension.\n");
+      rv_enable_hext = false;
     case 'W':
       fprintf(stderr, "disabling RVV vector instructions.\n");
       rv_enable_vext = false;
@@ -313,6 +320,11 @@ static int process_args(int argc, char **argv)
       fprintf(stderr,
               "enabling FIOM (Fence of I/O implies Memory) bit in menvcfg.\n");
       rv_enable_writable_fiom = true;
+    case 'f':
+      fprintf(stderr,
+              "enabling storing transformed instruction bits in mtinst and "
+              "htinst.\n");
+      rv_xtinst_has_transformed_inst = true;
       break;
     case 's':
       do_dump_dts = true;
@@ -441,6 +453,12 @@ uint64_t load_sail(char *f, bool main_file)
     exit(1);
   }
   fprintf(stderr, "tohost located at 0x%0" PRIx64 "\n", rv_htif_tohost);
+  if (lookup_sym(f, "fromhost", &rv_htif_fromhost_addr) < 0) {
+    fprintf(stderr, "Unable to locate htif fromhost port.\n");
+    exit(1);
+  }
+  fprintf(stderr, "fromhost located at 0x%0" PRIx64 "\n",
+          rv_htif_fromhost_addr);
   /* locate test-signature locations if any */
   if (!lookup_sym(f, "begin_signature", &begin_sig)) {
     fprintf(stdout, "begin_signature: 0x%0" PRIx64 "\n", begin_sig);
@@ -598,6 +616,7 @@ void init_sail(uint64_t elf_entry)
     rv_clint_base = UINT64_C(0);
     rv_clint_size = UINT64_C(0);
     rv_htif_tohost = UINT64_C(0);
+    rv_htif_fromhost_addr = UINT64_C(0);
     zPC = elf_entry;
   } else
 #endif

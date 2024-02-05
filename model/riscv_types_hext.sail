@@ -68,55 +68,42 @@
 /*  SUCH DAMAGE.                                                                         */
 /*=======================================================================================*/
 
-/* Current fetch hooks for RISC-V extensions call extensions
- * to check PC validity *before* standard fetch processing checks.
- */
+/* Virtualization modes */
+enum Virtualization = {V0, V1}
+type virt_mode = bits(1)
 
-function isRVC(h : half) -> bool = not(h[1 .. 0] == 0b11)
-
-val fetch : unit -> FetchResult
-function fetch() -> FetchResult =
-  /* fetch PC check for extensions: extensions return a transformed PC to fetch,
-   * but any exceptions use the untransformed PC.
-   */
-  match ext_fetch_check_pc(PC, PC) {
-    Ext_FetchAddr_Error(e)   => F_Ext_Error(e),
-    Ext_FetchAddr_OK(use_pc) => {
-      if   (use_pc[0] != bitzero | (use_pc[1] != bitzero & not(haveRVC())))
-      then F_Error(E_Fetch_Addr_Align(), mem_exception_context(PC, if cur_virtualization == V1 then true else false)) // Note: V==1 is illegal for M-mode
-      else match translateAddr(use_pc, Execute(), HALF) {
-        TR_Failure(e, c, _)  => F_Error(e, c),
-        TR_Address(ppclo, _) => {
-          /* split instruction fetch into 16-bit granules to handle RVC, as
-           * well as to generate precise fault addresses in any fetch
-           * exceptions.
-           */
-          match mem_read(Execute(), ppclo, 2, false, false, false) {
-            MemException(e) => F_Error(e, mem_exception_context(PC, if cur_virtualization == V1 then true else false)), // Note: V==1 is illegal for M-mode
-            MemValue(ilo)   => {
-              if   isRVC(ilo)
-              then F_RVC(ilo)
-              else {
-                /* fetch PC check for the next instruction granule */
-                PC_hi : xlenbits = PC + 2;
-                match ext_fetch_check_pc(PC, PC_hi) {
-                  Ext_FetchAddr_Error(e)      => F_Ext_Error(e),
-                  Ext_FetchAddr_OK(use_pc_hi) => {
-                    match translateAddr(use_pc_hi, Execute(), HALF) {
-                      TR_Failure(e, c, _)  => F_Error(e, c),
-                      TR_Address(ppchi, _) => {
-                        match mem_read(Execute(), ppchi, 2, false, false, false) {
-                          MemException(e) => F_Error(e, mem_exception_context(PC_hi, if cur_virtualization == V1 then true else false)), // Note: V==1 is illegal for M-mode
-                          MemValue(ihi)   => F_Base(append(ihi, ilo))
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+val virtMode_of_bits : virt_mode -> Virtualization
+function virtMode_of_bits(v) =
+    match (v) {
+    0b0 => V0,
+    0b1 => V1
   }
+
+val virtMode_to_bits : Virtualization -> virt_mode
+function virtMode_to_bits (v) =
+  match (v) {
+    V0 => 0b0,
+    V1 => 0b1
+  }
+
+val virtMode_to_str : Virtualization -> string
+function virtMode_to_str (v) =
+  match (v) {
+    V0 => "V=0",
+    V1 => "V=1"
+  }
+
+overload to_str = {virtMode_to_str}
+
+val virt_priv_to_str : (Privilege, Virtualization) -> string
+function virt_priv_to_str (priv, virt) =
+  match (priv, virt) {
+    (User, V1)       => "VU",
+    (User, V0)       => "U",
+    (Supervisor, V1) => "VS",
+    (Supervisor, V0) => "HS",
+    (Machine, V1)    => internal_error(__FILE__, __LINE__, "illegal privilege mode"),
+    (Machine, V0)    => "M",
+  }
+
+overload to_str = {virt_priv_to_str}

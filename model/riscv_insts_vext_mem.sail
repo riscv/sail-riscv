@@ -123,8 +123,8 @@ function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) =
           Ext_DataAddr_OK(vaddr) =>
               if check_misaligned(vaddr, width_type)
               then { handle_mem_exception(vaddr, E_Load_Addr_Align()); return RETIRE_FAIL }
-              else match translateAddr(vaddr, Read(Data)) {
-                TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
+              else match translateAddr(vaddr, Read(Data), width_type) {
+                TR_Failure(e, c, _)     => { handle_exception(e, c); return RETIRE_FAIL },
                 TR_Address(paddr, _) => {
                   match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
                     MemValue(elem)   => write_single_element(load_width_bytes * 8, i, vd + to_bits(5, j * EMUL_reg), elem),
@@ -203,9 +203,9 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
                   print_reg("CSR vl <- " ^ BitStr(vl));
                   trimmed = true
                 }
-              } else match translateAddr(vaddr, Read(Data)) {
-                TR_Failure(e, _)     => {
-                  if i == 0 then { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
+              } else match translateAddr(vaddr, Read(Data), width_type) {
+                TR_Failure(e, c, _)     => {
+                  if i == 0 then { handle_exception(e, c); return RETIRE_FAIL }
                   else {
                     vl = to_bits(sizeof(xlen), i);
                     print_reg("CSR vl <- " ^ BitStr(vl));
@@ -293,8 +293,8 @@ function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) 
           Ext_DataAddr_OK(vaddr) =>
             if check_misaligned(vaddr, width_type)
             then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
-            else match translateAddr(vaddr, Write(Data)) {
-              TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
+            else match translateAddr(vaddr, Write(Data), width_type) {
+              TR_Failure(e, c, _)     => { handle_exception(e, c); return RETIRE_FAIL },
               TR_Address(paddr, _) => {
                 let eares : MemoryOpResult(unit) = mem_write_ea(paddr, load_width_bytes, false, false, false);
                 match (eares) {
@@ -364,8 +364,8 @@ function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_e
           Ext_DataAddr_OK(vaddr) =>
             if check_misaligned(vaddr, width_type)
             then { handle_mem_exception(vaddr, E_Load_Addr_Align()); return RETIRE_FAIL }
-            else match translateAddr(vaddr, Read(Data)) {
-              TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
+            else match translateAddr(vaddr, Read(Data), width_type) {
+              TR_Failure(e, c, _)     => { handle_exception(e, c); return RETIRE_FAIL },
               TR_Address(paddr, _) => {
                 match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
                   MemValue(elem)   => write_single_element(load_width_bytes * 8, i, vd + to_bits(5, j * EMUL_reg), elem),
@@ -430,8 +430,8 @@ function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_
           Ext_DataAddr_OK(vaddr) =>
             if check_misaligned(vaddr, width_type)
             then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
-            else match translateAddr(vaddr, Write(Data)) {
-              TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
+            else match translateAddr(vaddr, Write(Data), width_type) {
+              TR_Failure(e, c, _)     => { handle_exception(e, c); return RETIRE_FAIL },
               TR_Address(paddr, _) => {
                 let eares : MemoryOpResult(unit) = mem_write_ea(paddr, load_width_bytes, false, false, false);
                 match (eares) {
@@ -502,8 +502,8 @@ function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index
           Ext_DataAddr_OK(vaddr) =>
             if check_misaligned(vaddr, width_type)
             then { handle_mem_exception(vaddr, E_Load_Addr_Align()); return RETIRE_FAIL }
-            else match translateAddr(vaddr, Read(Data)) {
-              TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
+            else match translateAddr(vaddr, Read(Data), width_type) {
+              TR_Failure(e, c, _)     => { handle_exception(e, c); return RETIRE_FAIL },
               TR_Address(paddr, _) => {
                 match mem_read(Read(Data), paddr, EEW_data_bytes, false, false, false) {
                   MemValue(elem)   => write_single_element(EEW_data_bytes * 8, i, vd + to_bits(5, j * EMUL_data_reg), elem),
@@ -593,8 +593,8 @@ function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_inde
           Ext_DataAddr_OK(vaddr) =>
             if check_misaligned(vaddr, width_type)
             then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
-            else match translateAddr(vaddr, Write(Data)) {
-              TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
+            else match translateAddr(vaddr, Write(Data), width_type) {
+              TR_Failure(e, c, _)     => { handle_exception(e, c); return RETIRE_FAIL },
               TR_Address(paddr, _) => {
                 let eares : MemoryOpResult(unit) = mem_write_ea(paddr, EEW_data_bytes, false, false, false);
                 match (eares) {
@@ -686,8 +686,8 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
         Ext_DataAddr_OK(vaddr) =>
           if check_misaligned(vaddr, width_type)
           then { handle_mem_exception(vaddr, E_Load_Addr_Align()); return RETIRE_FAIL }
-          else match translateAddr(vaddr, Read(Data)) {
-            TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
+          else match translateAddr(vaddr, Read(Data), width_type) {
+            TR_Failure(e, c, _)     => { handle_exception(e, c); return RETIRE_FAIL },
             TR_Address(paddr, _) => {
               match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
                 MemValue(elem)   => write_single_element(load_width_bytes * 8, i, vd + to_bits(5, cur_field), elem),
@@ -710,8 +710,8 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
         Ext_DataAddr_OK(vaddr) =>
           if check_misaligned(vaddr, width_type)
           then { handle_mem_exception(vaddr, E_Load_Addr_Align()); return RETIRE_FAIL }
-          else match translateAddr(vaddr, Read(Data)) {
-            TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
+          else match translateAddr(vaddr, Read(Data), width_type) {
+            TR_Failure(e, c, _)     => { handle_exception(e, c); return RETIRE_FAIL },
             TR_Address(paddr, _) => {
               match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
                 MemValue(elem)   => write_single_element(load_width_bytes * 8, i, vd + to_bits(5, j), elem),
@@ -768,8 +768,8 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
         Ext_DataAddr_OK(vaddr) =>
           if check_misaligned(vaddr, width_type)
           then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
-          else match translateAddr(vaddr, Write(Data)) {
-            TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
+          else match translateAddr(vaddr, Write(Data), width_type) {
+            TR_Failure(e, c, _)     => { handle_exception(e, c); return RETIRE_FAIL },
             TR_Address(paddr, _) => {
               let eares : MemoryOpResult(unit) = mem_write_ea(paddr, load_width_bytes, false, false, false);
               match (eares) {
@@ -802,8 +802,8 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
         Ext_DataAddr_OK(vaddr) =>
           if check_misaligned(vaddr, width_type)
           then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
-          else match translateAddr(vaddr, Write(Data)) {
-            TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
+          else match translateAddr(vaddr, Write(Data), width_type) {
+            TR_Failure(e, c, _)     => { handle_exception(e, c); return RETIRE_FAIL },
             TR_Address(paddr, _) => {
               let eares : MemoryOpResult(unit) = mem_write_ea(paddr, load_width_bytes, false, false, false);
               match (eares) {
@@ -870,8 +870,8 @@ function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
           Ext_DataAddr_OK(vaddr) =>
             if check_misaligned(vaddr, width_type)
             then { handle_mem_exception(vaddr, E_Load_Addr_Align()); return RETIRE_FAIL }
-            else match translateAddr(vaddr, Read(Data)) {
-              TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
+            else match translateAddr(vaddr, Read(Data), width_type) {
+              TR_Failure(e, c, _)     => { handle_exception(e, c); return RETIRE_FAIL },
               TR_Address(paddr, _) => {
                 match mem_read(Read(Data), paddr, 1, false, false, false) {
                   MemValue(elem)   => write_single_element(8, i, vd_or_vs3, elem),
@@ -886,8 +886,8 @@ function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
           Ext_DataAddr_OK(vaddr) =>
             if check_misaligned(vaddr, width_type)
             then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
-            else match translateAddr(vaddr, Write(Data)) {
-              TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
+            else match translateAddr(vaddr, Write(Data), width_type) {
+              TR_Failure(e, c, _)     => { handle_exception(e, c); return RETIRE_FAIL },
               TR_Address(paddr, _) => {
                 let eares : MemoryOpResult(unit) = mem_write_ea(paddr, 1, false, false, false);
                 match (eares) {
