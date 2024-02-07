@@ -90,7 +90,7 @@ function clause ext_is_CSR_defined(0x011, priv) = { // ssp
   else if priv == Supervisor
   then menvcfg[SSE] == 0b1
   else if haveSupMode()
-  then senvcfg.SSE() == 0b1
+  then senvcfg[SSE] == 0b1
   else false
 }
 function clause ext_read_CSR(0x011)          = Some(ssp)
@@ -101,7 +101,7 @@ function clause ext_write_CSR(0x011, value)  = {
    * Sail model does not support dynamic switching of UXL/SXL so that is
    * not considered in the following algorithm yet.
    */
-  if ( architecture(misa.MXL()) == Some(RV64) ) then
+  if ( architecture(misa[MXL]) == Some(RV64) ) then
     ssp[2 .. 2] = 0b0;
   Some(ssp);
 }

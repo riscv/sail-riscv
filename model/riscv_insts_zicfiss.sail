@@ -90,7 +90,7 @@ function zicfiss_xSSE(priv : Privilege) -> bool = {
   else if priv == Supervisor
   then menvcfg[SSE] == 0b1
   else if haveSupMode()
-  then senvcfg.SSE() == 0b1
+  then senvcfg[SSE] == 0b1
   else false
 }
 

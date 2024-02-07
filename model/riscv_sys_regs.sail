@@ -860,7 +860,7 @@ function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
   let v = Mk_SEnvcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
   // Zicfiss - SSE: shadow stack enable - is ROZ in senvcfg if menvcfg.SSE is 0
-  let o = update_SSE(o, if haveZicfiss() & menvcfg.SSE() == 0b1 then v.SSE() else 0b0);
+  let o = [o with SSE = if haveZicfiss() & menvcfg[SSE] == 0b1 then v[SSE] else 0b0];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
