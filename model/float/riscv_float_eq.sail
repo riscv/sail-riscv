@@ -70,9 +70,13 @@
 /*=======================================================================================*/
 
 /* **************************************************************** */
-/* This file implements the floating-point for some common helper   */
-/* functions. They will be leveraged by other softfloat sail        */
-/* implementations.                                                 */
+/* This file implements the floating-point for equal and consumes   */
+/* by the softfloat API contract, riscv_softfloat_interface.sail.   */
+/*                                                                  */
+/* The below floating-point types are supported.                    */
+/* 1. Double-precision, aka 64 bits floating-point.                 */
+/* 2. Single-precision, aka 32 bits floating-point.                 */
+/* 3. Half-precision, aka 16 bits floating-point.                   */
 /*                                                                  */
 /* However, the implementation still need some global variables in  */
 /* file riscv_softfloat_interface.sail. It includes:                */
@@ -81,43 +85,69 @@
 /* 3. float_roundingMode.                                           */
 /* **************************************************************** */
 
-let softfloat_flag_inexact   : bits(64) = 0x0000000000000001
-let softfloat_flag_underflow : bits(64) = 0x0000000000000002
-let softfloat_flag_overflow  : bits(64) = 0x0000000000000004
-let softfloat_flag_infinit   : bits(64) = 0x0000000000000008
-let softfloat_flag_invalid   : bits(64) = 0x0000000000000010
+val            operator == : (bits_S, bits_S) -> bool
+val            operator |  : (bool, bool) -> bool
+val            operator |  : (bits_S, bits_S) -> bits_S
+val            operator << : (bits_S, int) -> bits_S
+val  f_is_at_least_one_NaN : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
+val f_is_at_least_one_SNaN : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
 
-val      riscv_softfloat_enter : (bits_rm) -> unit
-function riscv_softfloat_enter (roundingMode) -> unit = {
-  float_fflags = zeros(64);
-  float_roundingMode = roundingMode;
+val      riscv_float_f16_eq : (bits_H, bits_H) -> unit
+function riscv_float_f16_eq (op1, op2) = {
+  riscv_float_enter (0b000);
+
+  var result : bits_H = zeros(16);
+
+  if f_is_at_least_one_NaN (op1, op2) then {
+    if f_is_at_least_one_SNaN (op1, op2) then {
+      riscv_float_raise_flags (float_flag_invalid);
+    };
+  } else if op1 == op2 | ((op1 | op2) << 1) == zeros(16) then {
+    result[0] = bitone;
+  };
+
+  riscv_float_leave (result);
 }
 
-val      riscv_softfloat_bits_H_leave : (bits_H) -> unit
-function riscv_softfloat_bits_H_leave (result) -> unit = {
-  float_result[15 .. 0] = result;
+val      riscv_float_f32_eq : (bits_S, bits_S) -> unit
+function riscv_float_f32_eq (op1, op2) = {
+  riscv_float_enter (0b000);
+
+  var result : bits_S = zeros(32);
+
+  if f_is_at_least_one_NaN (op1, op2) then {
+    if f_is_at_least_one_SNaN (op1, op2) then {
+      riscv_float_raise_flags (float_flag_invalid);
+    };
+  } else if op1 == op2 | ((op1 | op2) << 1) == zeros(32) then {
+    result[0] = bitone;
+  };
+
+  riscv_float_leave (result);
 }
 
-val      riscv_softfloat_bits_S_leave : (bits_S) -> unit
-function riscv_softfloat_bits_S_leave (result) -> unit = {
-  float_result[31 .. 0] = result;
+val      riscv_float_f64_eq : (bits_D, bits_D) -> unit
+function riscv_float_f64_eq (op1, op2) = {
+  riscv_float_enter (0b000);
+
+  var result : bits_D = zeros(64);
+
+  if f_is_at_least_one_NaN (op1, op2) then {
+    if f_is_at_least_one_SNaN (op1, op2) then {
+      riscv_float_raise_flags (float_flag_invalid);
+    };
+  } else if op1 == op2 | ((op1 | op2) & 0x7fffffffffffffff) == zeros(64) then {
+    result[0] = bitone;
+  };
+
+  riscv_float_leave (result);
 }
 
-val      riscv_softfloat_bits_D_leave : (bits_D) -> unit
-function riscv_softfloat_bits_D_leave (result) -> unit = {
-  float_result[63 .. 0] = result;
-}
-
-val      riscv_softfloat_leave : forall 'm, 'm in {16, 32, 64}. bits('m) -> unit
-function riscv_softfloat_leave (op) = {
+val      riscv_float_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> unit
+function riscv_float_eq (op1, op2) = {
   match 'm {
-    16 => riscv_softfloat_bits_H_leave(op),
-    32 => riscv_softfloat_bits_S_leave(op),
-    64 => riscv_softfloat_bits_D_leave(op),
+    16 => riscv_float_f16_eq(op1, op2),
+    32 => riscv_float_f32_eq(op1, op2),
+    64 => riscv_float_f64_eq(op1, op2),
   }
-}
-
-val      riscv_softfloat_raise_flags : (bits(64)) -> unit
-function riscv_softfloat_raise_flags (flags) -> unit = {
-  float_fflags = float_fflags | flags
 }

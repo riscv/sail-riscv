@@ -487,10 +487,10 @@ function riscv_f16Le_quiet (v1, v2) = {
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
-val      riscv_softfloat_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> unit
+val      riscv_float_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> unit
 val      riscv_f16Eq : (bits_H, bits_H) -> (bits_fflags, bool)
 function riscv_f16Eq (v1, v2) = {
-  riscv_softfloat_eq (v1, v2);
+  riscv_float_eq (v1, v2);
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
@@ -522,10 +522,10 @@ function riscv_f32Le_quiet (v1, v2) = {
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
-val      riscv_softfloat_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> unit
+val      riscv_float_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> unit
 val      riscv_f32Eq : (bits_S, bits_S) -> (bits_fflags, bool)
 function riscv_f32Eq (v1, v2) = {
-  riscv_softfloat_eq (v1, v2);
+  riscv_float_eq (v1, v2);
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
@@ -557,10 +557,10 @@ function riscv_f64Le_quiet (v1, v2) = {
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
-val      riscv_softfloat_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> unit
+val      riscv_float_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> unit
 val      riscv_f64Eq : (bits_D, bits_D) -> (bits_fflags, bool)
 function riscv_f64Eq (v1, v2) = {
-  riscv_softfloat_eq (v1, v2);
+  riscv_float_eq (v1, v2);
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
