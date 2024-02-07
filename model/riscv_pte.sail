@@ -107,7 +107,7 @@ function isPTEPtr(p : pteAttribs, ext : extPte) -> bool = {
 /* Zicfiss: ss pte -> rwx=010b */
 val is_shadow_stack_PTE_enable : unit -> bool
 function is_ss_pte(p : PTE_Bits) -> bool =
-  (p.R() == 0b0 & p.W() == 0b1 & p.X() == 0b0 & is_shadow_stack_PTE_enable())
+  (p[R] == 0b0 & p[W] == 0b1 & p[X] == 0b0 & is_shadow_stack_PTE_enable())
 
 function isInvalidPTE(p : pteAttribs, ext : extPte) -> bool = {
   let a = Mk_PTE_Bits(p);
@@ -125,7 +125,7 @@ function to_pte_check(b : bool) -> PTE_Check =
 
 /* Zicfiss: access-fault conditions */
 function is_read_only_pte(p : PTE_Bits) -> bool =
-  (p.R() == 0b1 & p.W() == 0b0 & p.X() == 0b0)
+  (p[R] == 0b1 & p[W] == 0b0 & p[X] == 0b0)
 function is_shadow_stack_pte_access_fault(ac : AccessType(ext_access_type), p : PTE_Bits) -> bool = {
   match (haveZicfiss(), ac) {
     (false, _)                 => false,

@@ -88,9 +88,9 @@ function zicfiss_xSSE(priv : Privilege) -> bool = {
   if   priv == Machine 
   then false
   else if priv == Supervisor 
-  then menvcfg.SSE() == 0b1
+  then menvcfg[SSE] == 0b1
   else if haveSupMode()
-  then senvcfg.SSE() == 0b1
+  then senvcfg[SSE] == 0b1
   else false
 }
 
@@ -312,11 +312,11 @@ mapping clause assembly = SSAMOSWAP(aq, rl, rs2, rs1, size, rd)
       if haveZicfiss() & ssamoswap_width_valid(size)
 /* ****************************************************************** */
 function clause execute (SSAMOSWAP(aq, rl, rs2, rs1, width, rd)) = {
-  if   cur_privilege != Machine & menvcfg.SSE() == 0b0
+  if   cur_privilege != Machine & menvcfg[SSE] == 0b0
   then { handle_illegal(); RETIRE_FAIL }
   else if not(haveSupMode())
   then { handle_illegal(); RETIRE_FAIL }
-  else if cur_privilege == User & senvcfg.SSE() == 0b0
+  else if cur_privilege == User & senvcfg[SSE] == 0b0
   then { handle_illegal(); RETIRE_FAIL }
   else {
     match ext_data_get_addr(rs1, zeros(), SSReadWrite(Data, Data), width) {
