@@ -560,6 +560,15 @@ function f_is_SNaN(xf) = {
   }
 }
 
+val f_is_at_least_one_SNaN : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
+function f_is_at_least_one_SNaN (op1, op2) = {
+  match 'm {
+    16 => f_is_SNaN_H(op1) | f_is_SNaN_H(op2),
+    32 => f_is_SNaN_S(op1) | f_is_SNaN_S(op2),
+    64 => f_is_SNaN_D(op1) | f_is_SNaN_D(op2),
+  }
+}
+
 val f_is_QNaN : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
 function f_is_QNaN(xf) = {
   match 'm {
@@ -575,6 +584,15 @@ function f_is_NaN(xf) = {
     16 => f_is_NaN_H(xf),
     32 => f_is_NaN_S(xf),
     64 => f_is_NaN_D(xf)
+  }
+}
+
+val f_is_at_least_one_NaN : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
+function f_is_at_least_one_NaN (op1, op2) = {
+  match 'm {
+    16 => f_is_NaN_H(op1) | f_is_NaN_H(op2),
+    32 => f_is_NaN_S(op1) | f_is_NaN_S(op2),
+    64 => f_is_NaN_D(op1) | f_is_NaN_D(op2),
   }
 }
 
