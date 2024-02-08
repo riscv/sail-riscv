@@ -51,6 +51,8 @@ mapping clause csr_name_map = 0x143  <-> "stval"
 mapping clause csr_name_map = 0x144  <-> "sip"
 /* supervisor protection and translation */
 mapping clause csr_name_map = 0x180  <-> "satp"
+/* supervisor envcfg */
+mapping clause csr_name_map = 0x10A  <-> "senvcfg"
 /* machine information registers */
 mapping clause csr_name_map = 0xF11  <-> "mvendorid"
 mapping clause csr_name_map = 0xF12  <-> "marchid"
@@ -65,6 +67,8 @@ mapping clause csr_name_map = 0x304  <-> "mie"
 mapping clause csr_name_map = 0x305  <-> "mtvec"
 mapping clause csr_name_map = 0x306  <-> "mcounteren"
 mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
+/* machine envcfg */
+mapping clause csr_name_map = 0x30A  <-> "menvcfg"
 /* machine trap handling */
 mapping clause csr_name_map = 0x340  <-> "mscratch"
 mapping clause csr_name_map = 0x341  <-> "mepc"
