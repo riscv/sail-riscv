@@ -87,7 +87,6 @@
 /* **************************************************************** */
 /* All arguments and results have one of these types                */
 
-type bits_rm     = bits(3)    /* Rounding mode */
 type bits_fflags = bits(5)    /* Accrued exceptions: NV,DZ,OF,UF,NX */
 type bits_H      = bits(16)   /* Half-precision float value */
 type bits_S      = bits(32)   /* Single-precision float value */
@@ -98,14 +97,6 @@ type bits_WU     = bits(32)   /* Unsigned integer */
 
 type bits_L      = bits(64)   /* Signed integer */
 type bits_LU     = bits(64)   /* Unsigned integer */
-
-/* ***************************************************************** */
-/* Internal registers to pass results across the softfloat interface
- * to avoid return types involving structures.
- */
-register float_result : bits(64)
-register float_fflags : bits(64)
-register float_roundingMode : bits_rm
 
 /* **************************************************************** */
 /* ADD/SUB/MUL/DIV                                                  */
@@ -487,7 +478,6 @@ function riscv_f16Le_quiet (v1, v2) = {
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
-val      riscv_float_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> unit
 val      riscv_f16Eq : (bits_H, bits_H) -> (bits_fflags, bool)
 function riscv_f16Eq (v1, v2) = {
   riscv_float_eq (v1, v2);
@@ -522,7 +512,6 @@ function riscv_f32Le_quiet (v1, v2) = {
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
-val      riscv_float_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> unit
 val      riscv_f32Eq : (bits_S, bits_S) -> (bits_fflags, bool)
 function riscv_f32Eq (v1, v2) = {
   riscv_float_eq (v1, v2);
@@ -557,7 +546,6 @@ function riscv_f64Le_quiet (v1, v2) = {
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
-val      riscv_float_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> unit
 val      riscv_f64Eq : (bits_D, bits_D) -> (bits_fflags, bool)
 function riscv_f64Eq (v1, v2) = {
   riscv_float_eq (v1, v2);

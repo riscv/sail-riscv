@@ -79,75 +79,27 @@
 /* 3. Half-precision, aka 16 bits floating-point.                   */
 /*                                                                  */
 /* However, the implementation still need some global variables in  */
-/* file riscv_softfloat_interface.sail. It includes:                */
+/* file riscv_float_common.sail. It includes:                       */
 /* 1. float_result.                                                 */
 /* 2. float_fflags.                                                 */
 /* 3. float_roundingMode.                                           */
 /* **************************************************************** */
 
-val            operator == : (bits_S, bits_S) -> bool
-val            operator |  : (bool, bool) -> bool
-val            operator |  : (bits_S, bits_S) -> bits_S
-val            operator << : (bits_S, int) -> bits_S
-val  f_is_at_least_one_NaN : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
-val f_is_at_least_one_SNaN : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
-
-val      riscv_float_f16_eq : (bits_H, bits_H) -> unit
-function riscv_float_f16_eq (op1, op2) = {
-  riscv_float_enter (0b000);
-
-  var result : bits_H = zeros(16);
-
-  if f_is_at_least_one_NaN (op1, op2) then {
-    if f_is_at_least_one_SNaN (op1, op2) then {
-      riscv_float_raise_flags (float_flag_invalid);
-    };
-  } else if op1 == op2 | ((op1 | op2) << 1) == zeros(16) then {
-    result[0] = bitone;
-  };
-
-  riscv_float_leave (result);
-}
-
-val      riscv_float_f32_eq : (bits_S, bits_S) -> unit
-function riscv_float_f32_eq (op1, op2) = {
-  riscv_float_enter (0b000);
-
-  var result : bits_S = zeros(32);
-
-  if f_is_at_least_one_NaN (op1, op2) then {
-    if f_is_at_least_one_SNaN (op1, op2) then {
-      riscv_float_raise_flags (float_flag_invalid);
-    };
-  } else if op1 == op2 | ((op1 | op2) << 1) == zeros(32) then {
-    result[0] = bitone;
-  };
-
-  riscv_float_leave (result);
-}
-
-val      riscv_float_f64_eq : (bits_D, bits_D) -> unit
-function riscv_float_f64_eq (op1, op2) = {
-  riscv_float_enter (0b000);
-
-  var result : bits_D = zeros(64);
-
-  if f_is_at_least_one_NaN (op1, op2) then {
-    if f_is_at_least_one_SNaN (op1, op2) then {
-      riscv_float_raise_flags (float_flag_invalid);
-    };
-  } else if op1 == op2 | ((op1 | op2) & 0x7fffffffffffffff) == zeros(64) then {
-    result[0] = bitone;
-  };
-
-  riscv_float_leave (result);
-}
+val f_is_NaN  : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
+val f_is_SNaN : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
 
 val      riscv_float_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> unit
-function riscv_float_eq (op1, op2) = {
-  match 'm {
-    16 => riscv_float_f16_eq(op1, op2),
-    32 => riscv_float_f32_eq(op1, op2),
-    64 => riscv_float_f64_eq(op1, op2),
-  }
+function riscv_float_eq (op1, op2) -> unit = {
+  riscv_float_enter (0b000);
+
+  let is_nan : bool = f_is_NaN (op1) | f_is_NaN (op2);
+  let is_snan : bool = f_is_SNaN (op1) | f_is_SNaN (op2);
+
+  if is_nan & is_snan then riscv_float_raise_flags (float_flag_invalid);
+
+  let is_equal : bool = if not(is_nan)
+                        then op1 == op2 | ((op1 | op2) << 1) == zeros()
+                        else false;
+
+  riscv_float_leave (zero_extend('m, bool_bits(is_equal)));
 }

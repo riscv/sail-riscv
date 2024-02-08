@@ -73,18 +73,25 @@
 /* This file implements the floating-point for some common helper   */
 /* functions. They will be leveraged by other float sail implement  */
 /*                                                                  */
-/* However, the implementation still need some global variables in  */
-/* file riscv_softfloat_interface.sail. It includes:                */
+/* However, the implementation still need some global variables:    */
 /* 1. float_result.                                                 */
 /* 2. float_fflags.                                                 */
 /* 3. float_roundingMode.                                           */
 /* **************************************************************** */
 
-let float_flag_inexact   : bits(64) = 0x0000000000000001
-let float_flag_underflow : bits(64) = 0x0000000000000002
-let float_flag_overflow  : bits(64) = 0x0000000000000004
-let float_flag_infinit   : bits(64) = 0x0000000000000008
-let float_flag_invalid   : bits(64) = 0x0000000000000010
+type bits_rm     = bits(3)    /* Rounding mode */
+
+/* ***************************************************************** */
+/* Internal registers to pass results across the softfloat interface */
+/* to avoid return types involving structures.                       */
+/*                                                                   */
+/* Todo: we will consider return the float_result directly in sail.  */
+/* ***************************************************************** */
+register float_result       : bits(64)
+register float_fflags       : bits(64)
+register float_roundingMode : bits_rm
+
+let float_flag_invalid   : bits(64) = zero_extend (64, 0x10)
 
 val      riscv_float_enter : (bits_rm) -> unit
 function riscv_float_enter (roundingMode) -> unit = {
@@ -92,27 +99,12 @@ function riscv_float_enter (roundingMode) -> unit = {
   float_roundingMode = roundingMode;
 }
 
-val      riscv_float_bits_H_leave : (bits_H) -> unit
-function riscv_float_bits_H_leave (result) -> unit = {
-  float_result[15 .. 0] = result;
-}
-
-val      riscv_float_bits_S_leave : (bits_S) -> unit
-function riscv_float_bits_S_leave (result) -> unit = {
-  float_result[31 .. 0] = result;
-}
-
-val      riscv_float_bits_D_leave : (bits_D) -> unit
-function riscv_float_bits_D_leave (result) -> unit = {
-  float_result[63 .. 0] = result;
-}
-
 val      riscv_float_leave : forall 'm, 'm in {16, 32, 64}. bits('m) -> unit
-function riscv_float_leave (op) = {
+function riscv_float_leave (result) -> unit = {
   match 'm {
-    16 => riscv_float_bits_H_leave(op),
-    32 => riscv_float_bits_S_leave(op),
-    64 => riscv_float_bits_D_leave(op),
+    16 => float_result[15 .. 0] = result,
+    32 => float_result[31 .. 0] = result,
+    64 => float_result[63 .. 0] = result,
   }
 }
 
