@@ -2,8 +2,7 @@
 # ====================================================================================================================
 # Filename:		Makefile
 #
-# Description:	Makefile for building and running 
-#
+# Description:	Makefile for building and running and checking a RISC-V Sail model test
 # Author(s):	Bill McSpadden (bill@riscv.org)
 #
 # Revision:		See git log

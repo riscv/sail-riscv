@@ -316,12 +316,21 @@ timer_interrupt_return:
 
 timer_interrupt_test:
   addi  x7,       x0,     TIMER_COUNT
-  
+
+#if __riscv_xlen == 64
+//  lui    x8,       ((MMR_MTIMECMPL >> 12) & 0x00000000ffffffff)
+  li    x8,       (MMR_MTIMECMPL & 0x00000000ffffffff)
+  sd    x7,       (0)(x8)
+
+//  lui   x8,       MMR_MTIMECMPH >> 12
+//  sw    x0,       (MMR_MTIMECMPH & 0xfff)(x8)
+#else
   lui   x8,       MMR_MTIMECMPL >> 12
   sw    x7,       (MMR_MTIMECMPL & 0xfff)(x8)
 
   lui   x8,       MMR_MTIMECMPH >> 12
   sw    x0,       (MMR_MTIMECMPH & 0xfff)(x8)
+#endif
 
   addi  x7,       x0,     MIE_MTIE
   csrs  mie,      x7
