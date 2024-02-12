@@ -42,6 +42,9 @@ function readCSR csr : csreg -> xlenbits = {
     (0x31A, 32) => menvcfg.bits[63 .. 32],
     (0x320,  _) => zero_extend(mcountinhibit.bits),
 
+    /* Hardware Performance Monitoring event selection */
+    (0b0011001 /* 0x320 */ @ index : bits(5), _) if unsigned(index) >= 3 => read_mhpmevent(hpmidx_from_bits(index)),
+
     (0x340,  _) => mscratch,
     (0x341,  _) => get_xret_target(Machine) & pc_alignment_mask(),
     (0x342,  _) => mcause.bits,
@@ -61,6 +64,10 @@ function readCSR csr : csreg -> xlenbits = {
     (0xB02,  _) => minstret[(sizeof(xlen) - 1) .. 0],
     (0xB80, 32) => mcycle[63 .. 32],
     (0xB82, 32) => minstret[63 .. 32],
+
+    /* Hardware Performance Monitoring machine mode counters */
+    (0b1011000 /* 0xB00 */ @ index : bits(5), _) if unsigned(index) >= 3 => read_mhpmcounter(hpmidx_from_bits(index)),
+    (0b1011100 /* 0xB80 */ @ index : bits(5), 32) if unsigned(index) >= 3 => read_mhpmcounterh(hpmidx_from_bits(index)),
 
     /* vector */
     (0x008, _) => zero_extend(vstart),
@@ -96,6 +103,10 @@ function readCSR csr : csreg -> xlenbits = {
     (0xC80, 32) => mcycle[63 .. 32],
     (0xC81, 32) => mtime[63 .. 32],
     (0xC82, 32) => minstret[63 .. 32],
+
+    /* Hardware Performance Monitoring user mode counters */
+    (0b1100000 /* 0xC00 */ @ index : bits(5), _) if unsigned(index) >= 3 => read_mhpmcounter(hpmidx_from_bits(index)),
+    (0b1100100 /* 0xC80 */ @ index : bits(5), 32) if unsigned(index) >= 3 => read_mhpmcounterh(hpmidx_from_bits(index)),
 
     /* user mode: Zkr */
     (0x015,  _) => read_seed_csr(),
@@ -151,6 +162,23 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0xB02,  _) => { minstret[(sizeof(xlen) - 1) .. 0] = value; minstret_increment = false; Some(value) },
     (0xB80, 32) => { mcycle[63 .. 32] = value; Some(value) },
     (0xB82, 32) => { minstret[63 .. 32] = value; minstret_increment = false; Some(value) },
+
+    /* Hardware Performance Monitoring machine mode counters */
+    (0b0011001 /* 0x320 */ @ index : bits(5), _) if unsigned(index) >= 3 => {
+      let index = hpmidx_from_bits(index);
+      write_mhpmevent(index, value);
+      Some(read_mhpmevent(index))
+    },
+    (0b1011000 /* 0xB00 */ @ index : bits(5), _) if unsigned(index) >= 3 => {
+      let index = hpmidx_from_bits(index);
+      write_mhpmcounter(index, value);
+      Some(read_mhpmcounter(index))
+    },
+    (0b1011100 /* 0xB80 */ @ index : bits(5), 32) if unsigned(index) >= 3 => {
+      let index = hpmidx_from_bits(index);
+      write_mhpmcounterh(index, value);
+      Some(read_mhpmcounterh(index))
+    },
 
     /* trigger/debug */
     (0x7a0,  _) => { tselect = value; Some(tselect) },
