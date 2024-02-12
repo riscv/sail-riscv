@@ -78,28 +78,31 @@
 /* 2. Single-precision, aka 32 bits floating-point.                 */
 /* 3. Half-precision, aka 16 bits floating-point.                   */
 /*                                                                  */
-/* However, the implementation still need some global variables in  */
-/* file riscv_float_common.sail. It includes:                       */
-/* 1. float_result.                                                 */
-/* 2. float_fflags.                                                 */
-/* 3. float_roundingMode.                                           */
 /* **************************************************************** */
 
-val f_is_NaN  : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
-val f_is_SNaN : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
+val f_is_NaN      : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
+val f_is_SNaN     : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
+val accrue_fflags : (bits_fflags) -> unit
 
-val      riscv_float_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> unit
-function riscv_float_eq (op1, op2) -> unit = {
-  riscv_float_enter (0b000);
-
+val      riscv_float_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> (bits_fflags, bool)
+function riscv_float_eq (op1, op2) -> (bits_fflags, bool) = {
   let is_nan : bool = f_is_NaN (op1) | f_is_NaN (op2);
   let is_snan : bool = f_is_SNaN (op1) | f_is_SNaN (op2);
-
-  if is_nan & is_snan then riscv_float_raise_flags (float_flag_invalid);
+  let fflags : bits_fflags = if is_nan & is_snan then float_flag_invalid else zeros ();
 
   let is_equal : bool = if not(is_nan)
                         then op1 == op2 | ((op1 | op2) << 1) == zeros()
                         else false;
+  let result : bits('m) = zero_extend('m, bool_bits(is_equal));
 
-  riscv_float_leave (zero_extend('m, bool_bits(is_equal)));
+  (fflags, is_equal)
+}
+
+val      riscv_float_raise_flags_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
+function riscv_float_raise_flags_eq (op1, op2) -> bool = {
+  let (fflags, is_equal) = riscv_float_eq (op1, op2);
+
+  accrue_fflags(fflags);
+
+  is_equal
 }

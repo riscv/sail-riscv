@@ -760,8 +760,8 @@ function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
       let res : bool = match funct6 {
-        FVVM_VMFEQ    => fp_eq(vs2_val[i], vs1_val[i]),
-        FVVM_VMFNE    => ~(fp_eq(vs2_val[i], vs1_val[i])),
+        FVVM_VMFEQ    => riscv_float_raise_flags_eq(vs2_val[i], vs1_val[i]),
+        FVVM_VMFNE    => ~(riscv_float_raise_flags_eq(vs2_val[i], vs1_val[i])),
         FVVM_VMFLE    => fp_le(vs2_val[i], vs1_val[i]),
         FVVM_VMFLT    => fp_lt(vs2_val[i], vs1_val[i])
       };
@@ -824,8 +824,8 @@ function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
       let res : bool = match funct6 {
-        VFM_VMFEQ    => fp_eq(vs2_val[i], rs1_val),
-        VFM_VMFNE    => ~(fp_eq(vs2_val[i], rs1_val)),
+        VFM_VMFEQ    => riscv_float_raise_flags_eq(vs2_val[i], rs1_val),
+        VFM_VMFNE    => ~(riscv_float_raise_flags_eq(vs2_val[i], rs1_val)),
         VFM_VMFLE    => fp_le(vs2_val[i], rs1_val),
         VFM_VMFLT    => fp_lt(vs2_val[i], rs1_val),
         VFM_VMFGE    => fp_ge(vs2_val[i], rs1_val),

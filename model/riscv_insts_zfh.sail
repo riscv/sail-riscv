@@ -413,7 +413,7 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FEQ_H)) = {
   let rs2_val_H = F_or_X_H(rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
-      riscv_f16Eq (rs1_val_H, rs2_val_H);
+      riscv_float_eq (rs1_val_H, rs2_val_H);
 
   accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));

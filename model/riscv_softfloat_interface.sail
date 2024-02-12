@@ -25,7 +25,7 @@
 /* **************************************************************** */
 /* All arguments and results have one of these types                */
 
-type bits_fflags = bits(5)    /* Accrued exceptions: NV,DZ,OF,UF,NX */
+type bits_rm     = bits(3)    /* Rounding mode */
 type bits_H      = bits(16)   /* Half-precision float value */
 type bits_S      = bits(32)   /* Single-precision float value */
 type bits_D      = bits(64)   /* Double-precision float value */
@@ -35,6 +35,15 @@ type bits_WU     = bits(32)   /* Unsigned integer */
 
 type bits_L      = bits(64)   /* Signed integer */
 type bits_LU     = bits(64)   /* Unsigned integer */
+
+/* ***************************************************************** */
+/* Internal registers to pass results across the softfloat interface */
+/* to avoid return types involving structures.                       */
+/*                                                                   */
+/* Todo: we will consider return the float_result directly in sail.  */
+/* ***************************************************************** */
+register float_result       : bits(64)
+register float_fflags       : bits(64)
 
 /* **************************************************************** */
 /* ADD/SUB/MUL/DIV                                                  */
@@ -416,12 +425,6 @@ function riscv_f16Le_quiet (v1, v2) = {
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
-val      riscv_f16Eq : (bits_H, bits_H) -> (bits_fflags, bool)
-function riscv_f16Eq (v1, v2) = {
-  riscv_float_eq (v1, v2);
-  (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
-}
-
 val     extern_f32Lt = {c: "softfloat_f32lt", ocaml: "Softfloat.f32_lt", lem: "softfloat_f32_lt"} : (bits_S, bits_S) -> unit
 val      riscv_f32Lt : (bits_S, bits_S) -> (bits_fflags, bool)
 function riscv_f32Lt (v1, v2) = {
@@ -450,12 +453,6 @@ function riscv_f32Le_quiet (v1, v2) = {
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
-val      riscv_f32Eq : (bits_S, bits_S) -> (bits_fflags, bool)
-function riscv_f32Eq (v1, v2) = {
-  riscv_float_eq (v1, v2);
-  (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
-}
-
 val     extern_f64Lt = {c: "softfloat_f64lt", ocaml: "Softfloat.f64_lt", lem: "softfloat_f64_lt"} : (bits_D, bits_D) -> unit
 val      riscv_f64Lt : (bits_D, bits_D) -> (bits_fflags, bool)
 function riscv_f64Lt (v1, v2) = {
@@ -481,12 +478,6 @@ val     extern_f64Le_quiet = {c: "softfloat_f64le_quiet", ocaml: "Softfloat.f64_
 val      riscv_f64Le_quiet : (bits_D, bits_D) -> (bits_fflags, bool)
 function riscv_f64Le_quiet (v1, v2) = {
   extern_f64Le_quiet(v1, v2);
-  (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
-}
-
-val      riscv_f64Eq : (bits_D, bits_D) -> (bits_fflags, bool)
-function riscv_f64Eq (v1, v2) = {
-  riscv_float_eq (v1, v2);
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 

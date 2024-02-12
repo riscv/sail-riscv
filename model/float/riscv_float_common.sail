@@ -73,42 +73,8 @@
 /* This file implements the floating-point for some common helper   */
 /* functions. They will be leveraged by other float sail implement  */
 /*                                                                  */
-/* However, the implementation still need some global variables:    */
-/* 1. float_result.                                                 */
-/* 2. float_fflags.                                                 */
-/* 3. float_roundingMode.                                           */
 /* **************************************************************** */
 
-type bits_rm     = bits(3)    /* Rounding mode */
+type bits_fflags = bits(5)    /* Accrued exceptions: NV,DZ,OF,UF,NX */
 
-/* ***************************************************************** */
-/* Internal registers to pass results across the softfloat interface */
-/* to avoid return types involving structures.                       */
-/*                                                                   */
-/* Todo: we will consider return the float_result directly in sail.  */
-/* ***************************************************************** */
-register float_result       : bits(64)
-register float_fflags       : bits(64)
-register float_roundingMode : bits_rm
-
-let float_flag_invalid   : bits(64) = zero_extend (64, 0x10)
-
-val      riscv_float_enter : (bits_rm) -> unit
-function riscv_float_enter (roundingMode) -> unit = {
-  float_fflags = zeros(64);
-  float_roundingMode = roundingMode;
-}
-
-val      riscv_float_leave : forall 'm, 'm in {16, 32, 64}. bits('m) -> unit
-function riscv_float_leave (result) -> unit = {
-  match 'm {
-    16 => float_result[15 .. 0] = result,
-    32 => float_result[31 .. 0] = result,
-    64 => float_result[63 .. 0] = result,
-  }
-}
-
-val      riscv_float_raise_flags : (bits(64)) -> unit
-function riscv_float_raise_flags (flags) -> unit = {
-  float_fflags = float_fflags | flags
-}
+let float_flag_invalid : bits_fflags = 0b10000
