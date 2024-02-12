@@ -42,8 +42,8 @@ type bits_LU     = bits(64)   /* Unsigned integer */
 /*                                                                   */
 /* Todo: we will consider return the float_result directly in sail.  */
 /* ***************************************************************** */
-register float_result       : bits(64)
-register float_fflags       : bits(64)
+register float_result : bits(64)
+register float_fflags : bits(64)
 
 /* **************************************************************** */
 /* ADD/SUB/MUL/DIV                                                  */
