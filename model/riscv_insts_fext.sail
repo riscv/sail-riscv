@@ -921,8 +921,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   let rs2_val_S = F_or_X_S(rs2);
 
-  let (fflags, rd_val) : (bits_fflags, bool) =
-      riscv_float_eq(rs1_val_S, rs2_val_S);
+  let (fflags, rd_val) = float_eq(rs1_val_S, rs2_val_S);
 
   accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));

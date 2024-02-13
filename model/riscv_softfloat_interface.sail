@@ -40,7 +40,7 @@ type bits_LU     = bits(64)   /* Unsigned integer */
 /* Internal registers to pass results across the softfloat interface */
 /* to avoid return types involving structures.                       */
 /*                                                                   */
-/* Todo: we will consider return the float_result directly in sail.  */
+/* Todo: Return the float_result directly in Sail.                   */
 /* ***************************************************************** */
 register float_result : bits(64)
 register float_fflags : bits(64)
