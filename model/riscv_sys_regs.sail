@@ -766,6 +766,39 @@ function read_seed_csr() -> xlenbits = {
 /* Writes to the seed CSR are ignored */
 function write_seed_csr () -> option(xlenbits) = None()
 
+/*  mseccfg is a XLEN-bit read/write register that controls */
+/*  security features */
+bitfield Mseccfg : xlenbits = {
+  // Reserved WPRI bits.
+  wpri_2 : xlen - 1 .. 34,
+  // PMM bits of Pointer Masking Extension
+  PMM    : 33 .. 32,
+  // Reserved WPRI bits.
+  wpri_1 : 10 .. 31,
+  // Supervisor SEED bits
+  SSEED  : 9,
+  // User SEED bits
+  USEED  : 8,
+  // Reserved WPRI bits.
+  wpri_0 : 7 .. 3,
+  // RLB bits
+  RLB    : 2,
+  // Reserved WPRI bits.
+  MMWP   : 1,
+  // MML bits
+  MML    : 0,
+}
+
+register mseccfg : Mseccfg
+
+function legalize_mseccfg(o : Mseccfg, v : xlenbits) -> Mseccfg = {
+  let v = Mk_Mseccfg(v);
+  // Update PMM field only if Pointer Masking is enabled and Written value is legal
+  let o = update_PMM(o, if (sys_enable_pmm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM());
+  // Other extensions are not implemented yet so all other fields are read only zero.
+  o
+}
+
 // menvcfg is 64 bits. senvcfg is SXLEN bits and does not have the two
 // upper fields so for simplicity we can use the same type.
 bitfield Envcfg : bits(64) = {

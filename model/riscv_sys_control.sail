@@ -30,8 +30,10 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x305 => p == Machine, // mtvec
     0x306 => p == Machine & haveUsrMode(), // mcounteren
     0x30A => p == Machine & haveUsrMode(), // menvcfg
+    0x30B => p == Machine, // mseccfg   
     0x310 => p == Machine & (sizeof(xlen) == 32), // mstatush
     0x31A => p == Machine & haveUsrMode() & (sizeof(xlen) == 32), // menvcfgh
+    0x31B => p == Machine & (sizeof(xlen) == 32), // mseccfgh    
     0x320 => p == Machine, // mcountinhibit
     /* machine mode: trap handling */
     0x340 => p == Machine, // mscratch
@@ -524,8 +526,9 @@ function init_sys() -> unit = {
   minstret           = zero_extend(0b0);
   minstret_increment = true;
 
-  menvcfg.bits = zero_extend(0b0);
-  senvcfg.bits = zero_extend(0b0);
+  menvcfg->bits() = zero_extend(0b0);
+  mseccfg->bits() = zero_extend(0b0); 
+  senvcfg->bits() = zero_extend(0b0);
   /* initialize vector csrs */
   elen               = 0b1; /* ELEN=64 as the common case */
   vlen               = 0b0100; /* VLEN=512 as a default value */
