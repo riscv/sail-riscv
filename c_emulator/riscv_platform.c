@@ -42,6 +42,11 @@ bool sys_enable_writable_fiom(unit u)
   return rv_enable_writable_fiom;
 }
 
+bool sys_enable_pmm(unit u)
+{
+  return rv_enable_pmm;
+}
+
 bool sys_enable_vext(unit u)
 {
   return rv_enable_vext;

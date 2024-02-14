@@ -124,6 +124,7 @@ static struct option options[] = {
     {"pmp-count",                   required_argument, 0, OPT_PMP_COUNT           },
     {"pmp-grain",                   required_argument, 0, OPT_PMP_GRAIN           },
     {"enable-next",                 no_argument,       0, 'N'                     },
+    {"enable-pmm",                  no_argument,       0, 'M'                     },     
     {"ram-size",                    required_argument, 0, 'z'                     },
     {"disable-compressed",          no_argument,       0, 'C'                     },
     {"disable-writable-misa",       no_argument,       0, 'I'                     },
@@ -249,6 +250,7 @@ static int process_args(int argc, char **argv)
                     "P"
                     "C"
                     "N"
+                    "M"
                     "I"
                     "F"
                     "W"
@@ -312,6 +314,10 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "enabling N extension.\n");
       rv_enable_next = true;
       break;
+    case 'M':
+      fprintf(stderr, "enabling pointer masking support.\n");
+      rv_enable_pmm = true;
+      break;       
     case 'I':
       fprintf(stderr, "disabling writable misa CSR.\n");
       rv_enable_writable_misa = false;

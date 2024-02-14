@@ -321,28 +321,79 @@ function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
          WORD   => vaddr[0] == bitone | vaddr[1] == bitone,
          DOUBLE => vaddr[0] == bitone | vaddr[1] == bitone | vaddr[2] == bitone
        }
+function transform_VA (effective_address : xlenbits,PMLEN :int) -> xlenbits = {
+  assert(PMLEN >= 0, "PMLEN out of range");
+  assert(PMLEN <= 63, "PMLEN out of range");
+  let XLEN = sizeof(xlen);
+  let i = XLEN -(PMLEN +1);
+  let effective_bit = effective_address[i..i];
+  let NVBITS = replicate_bits(effective_bit, PMLEN);
+  let VBITS = effective_address[i..0];
+  NVBITS @ VBITS
+}
+
+function transform_PA (effective_address : xlenbits,PMLEN :int) -> xlenbits = {
+  assert(PMLEN >= 0, "PMLEN out of range");
+  assert(PMLEN <= 63, "PMLEN out of range");
+  let XLEN = sizeof(xlen);
+  let i = XLEN -(PMLEN + 1);
+  let NVBITS = replicate_bits(0b0, PMLEN);
+  let VBITS = effective_address[i..0];
+  NVBITS @ VBITS
+}
+
+function transform_effective_address(vaddr : xlenbits, pmm : bool) -> xlenbits = {
+ if pmm then {
+    let pmm_bits : bits(2) = get_pmm();
+    let mode : SATPMode = translationMode(cur_privilege);
+    match (mode) {
+      (Sbare) => {
+        match (pmm_bits){
+          (0b10) => transform_PA (vaddr,7),
+          (0b11) => transform_PA (vaddr,16),
+        }
+      },
+      (Sv48) => {
+        match (pmm_bits){
+          (0b10) => transform_VA (vaddr,7),
+          (0b11) => transform_VA (vaddr,16),          
+        }
+      },
+      (Sv57) => {
+        match (pmm_bits){
+          (0b10) => transform_VA (vaddr,7),
+        }
+      },
+    }
+ }
+ else {
+  vaddr //PMM is not active
+ }
+}
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
+  let pmm = is_pmm_active();
   let offset : xlenbits = sign_extend(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
   match ext_data_get_addr(rs1, offset, Read(Data), width) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
-      if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
-      else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+      let  vaddr_ = transform_effective_address(vaddr, pmm) in
+      if   check_misaligned(vaddr_, width)
+      then { handle_mem_exception(vaddr_, E_Load_Addr_Align()); RETIRE_FAIL }
+      else match translateAddr(vaddr_, Read(Data)) {
+        TR_Failure(e, _) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
         TR_Address(paddr, _) =>
           match (width) {
             BYTE =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 1, aq, rl, false), is_unsigned),
+              process_load(rd, vaddr_, mem_read(Read(Data), paddr, 1, aq, rl, false), is_unsigned),
             HALF =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 2, aq, rl, false), is_unsigned),
+              process_load(rd, vaddr_, mem_read(Read(Data), paddr, 2, aq, rl, false), is_unsigned),
             WORD =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 4, aq, rl, false), is_unsigned),
+              process_load(rd, vaddr_, mem_read(Read(Data), paddr, 4, aq, rl, false), is_unsigned),
             DOUBLE if sizeof(xlen) >= 64 =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 8, aq, rl, false), is_unsigned),
+              process_load(rd, vaddr_, mem_read(Read(Data), paddr, 8, aq, rl, false), is_unsigned),
             _ => report_invalid_width(__FILE__, __LINE__, width, "load")
           }
       }
@@ -379,16 +430,18 @@ mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)        
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
 function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
+  let pmm = is_pmm_active();
   let offset : xlenbits = sign_extend(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
   match ext_data_get_addr(rs1, offset, Write(Data), width) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
+      let  vaddr_ = transform_effective_address(vaddr, pmm) in    
       if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
-      else match translateAddr(vaddr, Write(Data)) {
-        TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+      then { handle_mem_exception(vaddr_, E_SAMO_Addr_Align()); RETIRE_FAIL }
+      else match translateAddr(vaddr_, Write(Data)) {
+        TR_Failure(e, _)    => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
         TR_Address(paddr, _) => {
           let eares : MemoryOpResult(unit) = match width {
             BYTE   => mem_write_ea(paddr, 1, aq, rl, false),
@@ -397,7 +450,7 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
             DOUBLE => mem_write_ea(paddr, 8, aq, rl, false)
           };
           match (eares) {
-            MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            MemException(e) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
             MemValue(_) => {
               let rs2_val = X(rs2);
               let res : MemoryOpResult(bool) = match (width) {
@@ -411,7 +464,7 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
               match (res) {
                 MemValue(true)  => RETIRE_SUCCESS,
                 MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                MemException(e) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL }
               }
             }
           }

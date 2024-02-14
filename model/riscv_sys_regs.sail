@@ -91,7 +91,8 @@ val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
 val sys_enable_writable_fiom = {c: "sys_enable_writable_fiom", ocaml: "Platform.enable_writable_fiom", _: "sys_enable_writable_fiom"} : unit -> bool
-
+/* whether the PME extension was enabled at boot */
+val sys_enable_pmm = {c: "sys_enable_pmm", ocaml: "Platform.enable_pmm", _: "sys_enable_pmm"} : unit -> bool
 /* How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime). */
 val sys_pmp_count = {c: "sys_pmp_count", ocaml: "Platform.pmp_count", _: "sys_pmp_count"} : unit -> range(0, 64)
 /* G parameter that specifies the PMP grain size. The grain size is 2^(G+2), e.g.
@@ -807,7 +808,11 @@ bitfield Envcfg : bits(64) = {
   // Page Based Memory Types Extension
   PBMTE  : 62,
   // Reserved WPRI bits.
-  wpri_1 : 61 .. 8,
+  wpri_2 : 61 .. 34,
+  // PMM bits of Pointer Masking Extension
+  PMM    : 33 .. 32,
+  // Reserved WPRI bits.
+  wpri_1 : 31 .. 8,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable
@@ -825,7 +830,9 @@ register senvcfg : Envcfg
 
 function legalize_envcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
   let v = Mk_Envcfg(v);
-  let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
+  let o = update_FIOM(o, if sys_enable_writable_fiom() then v.FIOM() else 0b0);
+  // Update PMM field only if Pointer Masking is enabled and Written value is legal
+  let o = update_PMM(o, if (sys_enable_pmm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM());
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
@@ -840,6 +847,26 @@ function is_fiom_active() -> bool = {
     User => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
   }
 }
+
+// Return whether or not PMM is currently active, based on the current
+// privilege and the menvcfg,senvcfg and mseccfg settings. 
+function is_pmm_active() -> bool = {
+  match cur_privilege {
+    Machine => (mseccfg.PMM() == 0b11 | mseccfg.PMM() == 0b10),
+    Supervisor => (menvcfg.PMM() == 0b11 | menvcfg.PMM() == 0b10),
+    User => ((menvcfg.PMM() == 0b11 | menvcfg.PMM() == 0b10) | (senvcfg.PMM() == 0b11 | senvcfg.PMM() == 0b10)),
+  }
+}
+
+//Returns the PMM bits value depends on the Privilege mode
+function get_pmm() -> bits(2) = {
+  match cur_privilege {
+    Machine => mseccfg.PMM(),
+    Supervisor => menvcfg.PMM(),
+    User => senvcfg.PMM(),
+  }
+} 
+
 /* vector csrs */
 register vstart : bits(16) /* use the largest possible length of vstart */
 register vxsat  : bits(1)
