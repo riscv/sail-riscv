@@ -40,7 +40,7 @@
 /*  SSITH research programme.                                                            */
 /*                                                                                       */
 /*  This project has received funding from the European Research Council                 */
-/*  (ERC) under the European Union’s Horizon 2020 research and innovation                */
+/*  (ERC) under the European Union's Horizon 2020 research and innovation                */
 /*  programme (grant agreement 789108, ELVER).                                           */
 /*                                                                                       */
 /*                                                                                       */
@@ -126,9 +126,9 @@ mapping clause assembly = C_LW(uimm, rsc, rdc)
 union clause ast = C_LD : (bits(5), cregidx, cregidx)
 
 mapping clause encdec_compressed = C_LD(ui76 @ ui53, rs1, rd)
-      if sizeof(xlen) == 64 | haveZilsd()
+      if sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false)) 
   <-> 0b011 @ ui53 : bits(3) @ rs1 : cregidx @ ui76 : bits(2) @ rd : cregidx @ 0b00
-      if sizeof(xlen) == 64 | haveZilsd()
+      if sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false))
 
 function clause execute (C_LD(uimm, rsc, rdc)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
@@ -138,9 +138,9 @@ function clause execute (C_LD(uimm, rsc, rdc)) = {
 }
 
 mapping clause assembly = C_LD(uimm, rsc, rdc)
-      if sizeof(xlen) == 64 | haveZilsd()
+      if sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false)) 
   <-> "c.ld" ^ spc() ^ creg_name(rdc) ^ sep() ^ creg_name(rsc) ^ sep() ^ hex_bits_8(uimm @ 0b000)
-      if sizeof(xlen) == 64 | haveZilsd()
+      if sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false))
 
 /* ****************************************************************** */
 union clause ast = C_SW : (bits(5), cregidx, cregidx)
@@ -162,9 +162,9 @@ mapping clause assembly = C_SW(uimm, rsc1, rsc2)
 union clause ast = C_SD : (bits(5), cregidx, cregidx)
 
 mapping clause encdec_compressed = C_SD(ui76 @ ui53, rs1, rs2)
-      if sizeof(xlen) == 64 | haveZilsd()
+      if sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false))
   <-> 0b111 @ ui53 : bits(3) @ rs1 : bits(3) @ ui76 : bits(2) @ rs2 : bits(3) @ 0b00
-      if sizeof(xlen) == 64 | haveZilsd()
+      if sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false))
 
 function clause execute (C_SD(uimm, rsc1, rsc2)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
@@ -174,9 +174,9 @@ function clause execute (C_SD(uimm, rsc1, rsc2)) = {
 }
 
 mapping clause assembly = C_SD(uimm, rsc1, rsc2)
-      if sizeof(xlen) == 64 | haveZilsd()
+      if sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false))
   <-> "c.sd" ^ spc() ^ creg_name(rsc1) ^ sep() ^ creg_name(rsc2) ^ sep() ^ hex_bits_8(uimm @ 0b000)
-      if sizeof(xlen) == 64 | haveZilsd()
+      if sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false))
 
 /* ****************************************************************** */
 union clause ast = C_ADDI : (bits(6), regidx)
@@ -504,9 +504,9 @@ mapping clause assembly = C_LWSP(uimm, rd)
 union clause ast = C_LDSP : (bits(6), regidx)
 
 mapping clause encdec_compressed = C_LDSP(ui86 @ ui5 @ ui43, rd)
-      if rd != zreg & (sizeof(xlen) == 64 | haveZilsd())
+      if rd != zreg & (sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false)))
   <-> 0b011 @ ui5 : bits(1) @ rd : regidx @ ui43 : bits(2) @ ui86 : bits(3) @ 0b10
-      if rd != zreg & (sizeof(xlen) == 64 | haveZilsd())
+      if rd != zreg & (sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false)))
 
 function clause execute (C_LDSP(uimm, rd)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
@@ -514,9 +514,9 @@ function clause execute (C_LDSP(uimm, rd)) = {
 }
 
 mapping clause assembly = C_LDSP(uimm, rd)
-      if rd != zreg & (sizeof(xlen) == 64 | haveZilsd())
+      if rd != zreg & (sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false)))
   <-> "c.ldsp" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_6(uimm)
-      if rd != zreg & (sizeof(xlen) == 64 | haveZilsd())
+      if rd != zreg & (sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false)))
 
 /* ****************************************************************** */
 union clause ast = C_SWSP : (bits(6), regidx)
@@ -536,9 +536,9 @@ mapping clause assembly = C_SWSP(uimm, rs2)
 union clause ast = C_SDSP : (bits(6), regidx)
 
 mapping clause encdec_compressed = C_SDSP(ui86 @ ui53, rs2)
-      if sizeof(xlen) == 64 | haveZilsd()
+      if sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false))
   <-> 0b111 @ ui53 : bits(3) @ ui86 : bits(3) @ rs2 : regidx @ 0b10
-      if sizeof(xlen) == 64 | haveZilsd()
+      if sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false))
 
 function clause execute (C_SDSP(uimm, rs2)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
@@ -546,9 +546,9 @@ function clause execute (C_SDSP(uimm, rs2)) = {
 }
 
 mapping clause assembly = C_SDSP(uimm, rs2)
-      if sizeof(xlen) == 64 | haveZilsd()
+      if sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false))
   <-> "c.sdsp" ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_6(uimm)
-      if sizeof(xlen) == 64 | haveZilsd()
+      if sizeof(xlen) == 64 | (haveZilsd() & haveRVC() & (haveFExt() == false))
 
 /* ****************************************************************** */
 union clause ast = C_JR : (regidx)
