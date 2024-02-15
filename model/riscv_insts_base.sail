@@ -438,7 +438,7 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       let  vaddr_ = transform_effective_address(vaddr, pmm) in    
-      if   check_misaligned(vaddr, width)
+      if   check_misaligned(vaddr_, width)
       then { handle_mem_exception(vaddr_, E_SAMO_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr_, Write(Data)) {
         TR_Failure(e, _)    => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },

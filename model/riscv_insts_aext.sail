@@ -61,6 +61,7 @@ function process_loadres(rd, addr, value, is_unsigned) =
   }
 
 function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
+  let pmm = is_pmm_active();  
   if haveAtomics() then {
     /* Get the address, X(rs1) (no offset).
      * Extensions might perform additional checks on address validity.
@@ -68,29 +69,30 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
     match ext_data_get_addr(rs1, zeros(), Read(Data), width) {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
+        let  vaddr_ = transform_effective_address(vaddr, pmm);
         let aligned : bool =
            /* BYTE and HALF would only occur due to invalid decodes, but it doesn't hurt
             * to treat them as valid here; otherwise we'd need to throw an internal_error.
             */
            match width {
              BYTE   => true,
-             HALF   => vaddr[0..0] == 0b0,
-             WORD   => vaddr[1..0] == 0b00,
-             DOUBLE => vaddr[2..0] == 0b000
+             HALF   => vaddr_[0..0] == 0b0,
+             WORD   => vaddr_[1..0] == 0b00,
+             DOUBLE => vaddr_[2..0] == 0b000
            };
         /* "LR faults like a normal load, even though it's in the AMO major opcode space."
          * - Andrew Waterman, isa-dev, 10 Jul 2018.
          */
         if not(aligned)
-        then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
-        else match translateAddr(vaddr, Read(Data)) {
-               TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+        then { handle_mem_exception(vaddr_, E_Load_Addr_Align()); RETIRE_FAIL }
+        else match translateAddr(vaddr_, Read(Data)) {
+               TR_Failure(e, _)    => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
                TR_Address(addr, _) =>
                  match (width, sizeof(xlen)) {
-                   (BYTE, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 1, aq, aq & rl, true), false),
-                   (HALF, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 2, aq, aq & rl, true), false),
-                   (WORD, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 4, aq, aq & rl, true), false),
-                   (DOUBLE, 64) => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 8, aq, aq & rl, true), false),
+                   (BYTE, _)    => process_loadres(rd, vaddr_, mem_read(Read(Data), addr, 1, aq, aq & rl, true), false),
+                   (HALF, _)    => process_loadres(rd, vaddr_, mem_read(Read(Data), addr, 2, aq, aq & rl, true), false),
+                   (WORD, _)    => process_loadres(rd, vaddr_, mem_read(Read(Data), addr, 4, aq, aq & rl, true), false),
+                   (DOUBLE, 64) => process_loadres(rd, vaddr_, mem_read(Read(Data), addr, 8, aq, aq & rl, true), false),
                    _            => internal_error(__FILE__, __LINE__, "Unexpected AMO width")
                  }
              }
@@ -113,6 +115,7 @@ mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd) if amo_width_valid(
 
 /* NOTE: Currently, we only EA if address translation is successful. This may need revisiting. */
 function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
+  let pmm = is_pmm_active(); 
   if speculate_conditional () == false then {
     /* should only happen in rmem
      * rmem: allow SC to fail very early
@@ -129,26 +132,27 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
       match ext_data_get_addr(rs1, zeros(), Write(Data), width) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
         Ext_DataAddr_OK(vaddr) => {
+          let  vaddr_ = transform_effective_address(vaddr, pmm);          
           let aligned : bool =
             /* BYTE and HALF would only occur due to invalid decodes, but it doesn't hurt
              * to treat them as valid here; otherwise we'd need to throw an internal_error.
              */
             match width {
               BYTE   => true,
-              HALF   => vaddr[0..0] == 0b0,
-              WORD   => vaddr[1..0] == 0b00,
-              DOUBLE => vaddr[2..0] == 0b000
+              HALF   => vaddr_[0..0] == 0b0,
+              WORD   => vaddr_[1..0] == 0b00,
+              DOUBLE => vaddr_[2..0] == 0b000
             };
           if not(aligned)
-          then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
+          then { handle_mem_exception(vaddr_, E_SAMO_Addr_Align()); RETIRE_FAIL }
           else {
-            if match_reservation(vaddr) == false then {
+            if match_reservation(vaddr_) == false then {
               /* cannot happen in rmem */
               X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS
             } else {
-              match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
+              match translateAddr(vaddr_, Write(Data)) {  /* Write and ReadWrite are equivalent here:
                                                           * both result in a SAMO exception */
-                TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+                TR_Failure(e, _) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
                 TR_Address(addr, _) => {
                   let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
                     (BYTE, _)    => mem_write_ea(addr, 1, aq & rl, rl, true),
@@ -158,7 +162,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
                     _            => internal_error(__FILE__, __LINE__, "STORECON expected word or double")
                   };
                   match (eares) {
-                    MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+                    MemException(e) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
                     MemValue(_) => {
                       rs2_val = X(rs2);
                       let res : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
@@ -171,7 +175,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
                       match (res) {
                         MemValue(true)  => { X(rd) = zero_extend(0b0); cancel_reservation(); RETIRE_SUCCESS },
                         MemValue(false) => { X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS },
-                        MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                        MemException(e) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL }
                       }
                     }
                   }
@@ -212,6 +216,7 @@ mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd) if amo_width_valid(s
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
 function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
+  let pmm = is_pmm_active();   
   if haveAtomics() then {
     /* Get the address, X(rs1) (no offset).
      * Some extensions perform additional checks on address validity.
@@ -219,8 +224,9 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
     match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width) {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
-        match translateAddr(vaddr, ReadWrite(Data, Data)) {
-          TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+        let  vaddr_ = transform_effective_address(vaddr, pmm) in          
+        match translateAddr(vaddr_, ReadWrite(Data, Data)) {
+          TR_Failure(e, _) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
           TR_Address(addr, _) => {
             let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
               (BYTE, _)    => mem_write_ea(addr, 1, aq & rl, rl, true),
@@ -241,7 +247,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
               DOUBLE => X(rs2)
             };
             match (eares) {
-              MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+              MemException(e) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
               MemValue(_) => {
                 let mval : MemoryOpResult(xlenbits) = match (width, sizeof(xlen)) {
                   (BYTE, _)    => extend_value(is_unsigned, mem_read(ReadWrite(Data, Data), addr, 1, aq, aq & rl, true)),
@@ -251,7 +257,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                   _            => internal_error(__FILE__, __LINE__, "Unexpected AMO width")
                 };
                 match (mval) {
-                  MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+                  MemException(e)  => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
                   MemValue(loaded) => {
                     let result : xlenbits =
                       match op {
@@ -285,7 +291,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                     match (wval) {
                       MemValue(true)  => { X(rd) = rval; RETIRE_SUCCESS },
                       MemValue(false) => { internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value") },
-                      MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                      MemException(e) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL }
                     }
                   }
                 }
