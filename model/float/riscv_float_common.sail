@@ -12,6 +12,7 @@
 /*                                                                  */
 /* **************************************************************** */
 
+type bits_rm     = bits(3)    /* Rounding mode */
 type bits_fflags = bits(5)    /* Accrued exceptions: NV,DZ,OF,UF,NX */
 
 let float_flag_invalid : bits_fflags = 0b10000

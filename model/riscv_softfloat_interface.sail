@@ -25,7 +25,6 @@
 /* **************************************************************** */
 /* All arguments and results have one of these types                */
 
-type bits_rm     = bits(3)    /* Rounding mode */
 type bits_H      = bits(16)   /* Half-precision float value */
 type bits_S      = bits(32)   /* Single-precision float value */
 type bits_D      = bits(64)   /* Double-precision float value */
@@ -37,11 +36,9 @@ type bits_L      = bits(64)   /* Signed integer */
 type bits_LU     = bits(64)   /* Unsigned integer */
 
 /* ***************************************************************** */
-/* Internal registers to pass results across the softfloat interface */
-/* to avoid return types involving structures.                       */
-/*                                                                   */
-/* Todo: Return the float_result directly in Sail.                   */
-/* ***************************************************************** */
+/* Internal registers to pass results across the softfloat interface
+ * to avoid return types involving structures.
+ */
 register float_result : bits(64)
 register float_fflags : bits(64)
 
