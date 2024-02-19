@@ -157,6 +157,11 @@ ZLIB_FLAGS = $(shell pkg-config --cflags zlib)
 ZLIB_LIBS = $(shell pkg-config --libs zlib)
 
 C_FLAGS = -I $(SAIL_LIB_DIR) -I c_emulator $(GMP_FLAGS) $(ZLIB_FLAGS) $(SOFTFLOAT_FLAGS)
+# Conditional check for ENABLE_STATIC=1
+ifneq (,$(ENABLE_STATIC))
+    # If ENABLE_STATIC is set, append specific static linking flags
+    C_FLAGS += -static
+endif
 C_LIBS  = $(GMP_LIBS) $(ZLIB_LIBS) $(SOFTFLOAT_LIBS)
 
 # The C simulator can be built to be linked against Spike for tandem-verification.
