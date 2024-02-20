@@ -1,0 +1,84 @@
+name: arch-test
+
+on:
+    push:
+      branches:
+        - master
+    pull_request:
+      branches:
+        - master
+
+jobs:
+    model-testing:
+        runs-on: ubuntu-latest
+
+        steps:
+        - uses: actions/checkout@v2
+          with:
+            fetch-depth: 0
+
+        - name: Install Dependencies
+          run: |
+            sudo xargs apt-get install -y < .github/workflows/apt-packages.txt
+            pip3 install git+https://github.com/riscv/riscof.git
+            wget -c https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2024.04.12/riscv64-elf-ubuntu-22.04-gcc-nightly-2024.04.12-nightly.tar.gz
+            tar -xzf riscv64-elf-ubuntu-22.04-gcc-nightly-2024.04.12-nightly.tar.gz
+            echo $GITHUB_WORKSPACE/riscv/bin >> $GITHUB_PATH
+
+        - name: Build spike
+          run: |
+            ci-tests/build-spike
+            echo $GITHUB_WORKSPACE/install/bin >> $GITHUB_PATH
+
+        - name: Build Sail
+          run: |
+            ci-tests/build-sail
+            echo $GITHUB_WORKSPACE/c_emulator >> $GITHUB_PATH
+
+        - name: Init arch-tests
+          run: |
+            cd ci-tests/riscof
+            git clone https://github.com/riscv-non-isa/riscv-arch-test
+            cd riscv-arch-test && git fetch --tags && git checkout tags/3.8.10
+
+        - name: Run RV32E
+          run: |
+            cd ci-tests/riscof
+            sed -i 's/\(ispec=\)\(.*\)/\1spike\/spike_isa32e.yaml/' config.ini
+            ./run-tests.sh rv32e_work
+
+        - name: Upload Artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            name: artifacts_rv32e
+            path: |
+              ci-tests/riscof/rv32e_work/report.html
+              ci-tests/riscof/rv32e_work/style.css
+
+        - name: Run RV32I
+          run: |
+            cd ci-tests/riscof
+            sed -i 's/\(ispec=\)\(.*\)/\1spike\/spike_isa32.yaml/' config.ini
+            ./run-tests.sh rv32i_work
+
+        - name: Upload Artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            name: artifacts_rv32i
+            path: |
+              ci-tests/riscof/rv32i_work/report.html
+              ci-tests/riscof/rv32i_work/style.css
+
+        - name: Run RV64I
+          run: |
+            cd ci-tests/riscof
+            sed -i 's/\(ispec=\)\(.*\)/\1spike\/spike_isa64.yaml/' config.ini
+            ./run-tests.sh rv64i_work
+
+        - name: Upload Artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            name: artifacts_rv64i
+            path: |
+              ci-tests/riscof/rv64i_work/report.html
+              ci-tests/riscof/rv64i_work/style.css

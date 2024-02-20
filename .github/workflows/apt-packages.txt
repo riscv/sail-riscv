@@ -1,0 +1,8 @@
+opam
+zlib1g-dev
+pkg-config
+libgmp-dev
+z3
+device-tree-compiler
+build-essential
+python3-setuptools

@@ -1,0 +1,8 @@
+# !bin/bash
+
+set -e
+
+opam init --disable-sandboxing -y
+eval $(opam config env)
+opam install -y sail
+./build_simulators.sh
