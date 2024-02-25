@@ -61,6 +61,7 @@ mapping clause csr_name_map = 0xF14  <-> "mhartid"
 mapping clause csr_name_map = 0xF15  <-> "mconfigptr"
 /* machine trap setup */
 mapping clause csr_name_map = 0x300  <-> "mstatus"
+mapping clause csr_name_map = 0x310  <-> "mstatush"
 mapping clause csr_name_map = 0x301  <-> "misa"
 mapping clause csr_name_map = 0x302  <-> "medeleg"
 mapping clause csr_name_map = 0x303  <-> "mideleg"
@@ -70,12 +71,14 @@ mapping clause csr_name_map = 0x306  <-> "mcounteren"
 mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
 /* machine envcfg */
 mapping clause csr_name_map = 0x30A  <-> "menvcfg"
+mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
 /* machine trap handling */
 mapping clause csr_name_map = 0x340  <-> "mscratch"
 mapping clause csr_name_map = 0x341  <-> "mepc"
 mapping clause csr_name_map = 0x342  <-> "mcause"
 mapping clause csr_name_map = 0x343  <-> "mtval"
 mapping clause csr_name_map = 0x344  <-> "mip"
+mapping clause csr_name_map = 0x34B  <-> "mtval2"
 /* machine protection and translation */
 mapping clause csr_name_map = 0x3A0  <-> "pmpcfg0"
 mapping clause csr_name_map = 0x3A1  <-> "pmpcfg1"

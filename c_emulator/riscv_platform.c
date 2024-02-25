@@ -72,6 +72,16 @@ bool sys_enable_writable_misa(unit u)
   return rv_enable_writable_misa;
 }
 
+bool sys_enable_ssdbltrp(unit u)
+{
+  return rv_enable_ssdbltrp;
+}
+
+bool sys_enable_smdbltrp(unit u)
+{
+  return rv_enable_smdbltrp;
+}
+
 bool plat_enable_dirty_update(unit u)
 {
   return rv_enable_dirty_update;

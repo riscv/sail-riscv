@@ -40,6 +40,7 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x342 => p == Machine, // mcause
     0x343 => p == Machine, // mtval
     0x344 => p == Machine, // mip
+    0x34B => p == Machine & (haveHExt() | haveSsdbltrp()), // mtval2
 
     // pmpcfgN
     0x3A @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(idx) & (idx[0] == bitzero | sizeof(xlen) == 32),
@@ -313,26 +314,47 @@ val rvfi_trap : unit -> unit
 function rvfi_trap () = ()
 $endif
 
+val platform_handle_critical_error : unit -> unit
+
+function m_mode_double_trap_handler(intr: bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception)) -> xlenbits = {
+    /* When Smrnmi PR is merged add the handling for redirection to RNMI handler */
+    platform_handle_critical_error();
+    zeros()
+}
+
 /* handle exceptional ctl flow by updating nextPC and operating privilege */
 
-function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
-                     -> xlenbits = {
+function trap_handler(xdeleg_del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception)) -> xlenbits = {
   rvfi_trap();
   if   get_config_print_platform()
   then print_platform("handling " ^ (if intr then "int#" else "exc#")
-                      ^ BitStr(c) ^ " at priv " ^ to_str(del_priv)
+                      ^ BitStr(c) ^ " at priv " ^ to_str(xdeleg_del_priv)
                       ^ " with tval " ^ BitStr(tval(info)));
 
   cancel_reservation();
 
-  match (del_priv) {
-    Machine => {
+  /* Ssdbltrp/Smdbltrp : Determine if a double trap condition occurred */
+  let m_mode_double_trap : bool = if (xdeleg_del_priv == Machine & get_mstatus_MDT() == 0b1)
+                                  then true else false;
+  let double_trap : bool = if m_mode_double_trap | (xdeleg_del_priv == Supervisor & mstatus[SDT] == 0b1 & menvcfg[DTE] == 0b1)
+                           then true else false;
+  let del_priv : Privilege = if double_trap then Machine else xdeleg_del_priv;
+
+  match (m_mode_double_trap, del_priv) {
+    (false, Machine) => {
        mcause[IsInterrupt] = bool_to_bits(intr);
        mcause[Cause]       = zero_extend(c);
+
+       if double_trap then mtval2 = mcause.bits;
+       if double_trap then mcause[IsInterrupt] = 0b0;
+       if double_trap then mcause[Cause] = zero_extend(exceptionType_to_bits(E_Double_Trap()));
 
        mstatus[MPIE] = mstatus[MIE];
        mstatus[MIE]  = 0b0;
        mstatus[MPP]  = privLevel_to_bits(cur_privilege);
+       if haveSmdbltrp()
+       then set_mstatus_MDT(0b1);
+
        mtval           = tval(info);
        mepc            = pc;
 
@@ -345,7 +367,10 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        prepare_trap_vector(del_priv, mcause)
     },
-    Supervisor => {
+    (true, Machine) => {
+       m_mode_double_trap_handler(intr, c, pc, info, ext);
+    },
+    (_, Supervisor) => {
        assert (haveSupMode(), "no supervisor mode present for delegation");
 
        scause[IsInterrupt] = bool_to_bits(intr);
@@ -358,6 +383,9 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
                            Supervisor => 0b1,
                            Machine => internal_error(__FILE__, __LINE__, "invalid privilege for s-mode trap")
                          };
+       if haveSsdbltrp() & menvcfg[DTE] == 0b1
+       then mstatus[SDT] = 0b1;
+
        stval           = tval(info);
        sepc            = pc;
 
@@ -370,7 +398,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        prepare_trap_vector(del_priv, scause)
     },
-    User => {
+    (_, User) => {
        assert(haveUsrMode(), "no user mode present for delegation");
 
        ucause[IsInterrupt] = bool_to_bits(intr);
@@ -411,6 +439,10 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus[MPP]  = privLevel_to_bits(if haveUsrMode() then User else Machine);
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
+      if haveSmdbltrp()
+      then set_mstatus_MDT(0b0);
+      if haveSsdbltrp() & cur_privilege == User
+      then mstatus[SDT] = 0b0;
 
       if   get_config_print_reg()
       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
@@ -428,6 +460,10 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus[SPP]  = 0b0;
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
+      if haveSsdbltrp()
+      then mstatus[SDT] = 0b0;
+      if haveSmdbltrp()
+      then set_mstatus_MDT(0b0);
 
       if   get_config_print_reg()
       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
@@ -505,9 +541,15 @@ function init_sys() -> unit = {
 
   /* set to little-endian mode */
   if sizeof(xlen) == 64 then {
-    mstatus = Mk_Mstatus([mstatus.bits with 37 .. 36 = 0b00])
+    mstatus = Mk_Mstatus([mstatus.bits with 37 .. 36 = 0b00]);
+    if haveSmdbltrp() then {
+        /* Smdbltrp: reset value of MDT is 1 */
+        mstatus = Mk_Mstatus([mstatus.bits with 45 .. 45 = 0b1])
+    }
   };
   mstatush.bits = zero_extend(0b0);
+  /* Smdbltrp: reset value of MDT is 1 */
+  mstatush[MDT] = if haveSmdbltrp() then 0b1 else 0b0;
 
   mip.bits     = zero_extend(0b0);
   mie.bits     = zero_extend(0b0);
