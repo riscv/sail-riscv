@@ -844,9 +844,9 @@ register vtype : Vtype
 
 /* the dynamic selected element width (SEW) */
 /* this returns the power of 2 for SEW */
-val get_sew_pow : unit -> {|3, 4, 5, 6|}
+val get_sew_pow : unit -> {3, 4, 5, 6}
 function get_sew_pow() = {
-  let SEW_pow : {|3, 4, 5, 6|} = match vtype[vsew] {
+  let SEW_pow : {3, 4, 5, 6} = match vtype[vsew] {
     0b000 => 3,
     0b001 => 4,
     0b010 => 5,
@@ -856,29 +856,31 @@ function get_sew_pow() = {
   SEW_pow
 }
 /* this returns the actual value of SEW */
-val get_sew : unit -> {|8, 16, 32, 64|}
+val get_sew : unit -> {8, 16, 32, 64}
 function get_sew() = {
   match get_sew_pow() {
     3 => 8,
     4 => 16,
     5 => 32,
-    6 => 64
+    6 => 64,
+    _ => {internal_error(__FILE__, __LINE__, "invalid SEW"); 8}
   }
 }
 /* this returns the value of SEW in bytes */
-val get_sew_bytes : unit -> {|1, 2, 4, 8|}
+val get_sew_bytes : unit -> {1, 2, 4, 8}
 function get_sew_bytes() = {
   match get_sew_pow() {
     3 => 1,
     4 => 2,
     5 => 4,
-    6 => 8
+    6 => 8,
+    _ => {internal_error(__FILE__, __LINE__, "invalid SEW"); 1}
   }
 }
 
 /* the vector register group multiplier (LMUL) */
 /* this returns the power of 2 for LMUL */
-val get_lmul_pow : unit -> {|-3, -2, -1, 0, 1, 2, 3|}
+val get_lmul_pow : unit -> {-3, -2, -1, 0, 1, 2, 3}
 function get_lmul_pow() = {
   match vtype[vlmul] {
     0b101 => -3,

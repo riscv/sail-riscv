@@ -371,6 +371,7 @@ function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_fp_normal(vd, vm, SEW, rm_3b) then { handle_illegal(); return RETIRE_FAIL };
+  assert(SEW != 8);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -618,6 +619,7 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then { handle_illegal(); return RETIRE_FAIL };
+  assert(SEW != 64);
 
   let 'n = num_elem;
   let 'm = SEW;
