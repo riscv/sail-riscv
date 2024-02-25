@@ -8,7 +8,7 @@
 
 register elen : bits(1)
 
-val get_elen_pow : unit -> {|5, 6|}
+val get_elen_pow : unit -> {5, 6}
 
 function get_elen_pow() = match elen {
     0b0 => 5,
@@ -21,7 +21,7 @@ function get_elen_pow() = match elen {
 
 register vlen : bits(4)
 
-val get_vlen_pow : unit -> {|5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16|}
+val get_vlen_pow : unit -> {5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
 
 function get_vlen_pow() = match vlen {
     0b0000 => 5,
