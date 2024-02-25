@@ -183,6 +183,7 @@ union ExceptionType = {
  E_Load_Page_Fault    : unit,
  E_Reserved_14        : unit,
  E_SAMO_Page_Fault    : unit,
+ E_Double_Trap        : unit,
 
  /* extensions */
  E_Extension          : ext_exc_type
@@ -207,6 +208,7 @@ function exceptionType_to_bits(e) =
     E_Load_Page_Fault()    => 0x0d,
     E_Reserved_14()        => 0x0e,
     E_SAMO_Page_Fault()    => 0x0f,
+    E_Double_Trap()        => 0x10,
 
     /* extensions */
     E_Extension(e)         => ext_exc_type_to_bits(e)
@@ -231,6 +233,7 @@ function num_of_ExceptionType(e) =
     E_Load_Page_Fault()    => 13,
     E_Reserved_14()        => 14,
     E_SAMO_Page_Fault()    => 15,
+    E_Double_Trap()        => 16,
 
     /* extensions */
     E_Extension(e)         => num_of_ext_exc_type(e)
@@ -256,6 +259,7 @@ function exceptionType_to_str(e) =
     E_Load_Page_Fault()    => "load-page-fault",
     E_Reserved_14()        => "reserved-1",
     E_SAMO_Page_Fault()    => "store/amo-page-fault",
+    E_Double_Trap()        => "double-trap",
 
     /* extensions */
     E_Extension(e)         => ext_exc_type_to_str(e)
