@@ -298,7 +298,7 @@ static int process_args(int argc, char **argv)
     case OPT_PMP_GRAIN:
       pmp_grain = atoi(optarg);
       fprintf(stderr, "PMP grain: %d\n", pmp_grain);
-      if (pmp_grain >= 64) {
+      if (pmp_grain >= 64 || pmp_grain < 0) {
         fprintf(stderr, "invalid PMP grain: must less than 64");
         exit(1);
       }
