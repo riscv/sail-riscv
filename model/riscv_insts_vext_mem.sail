@@ -11,7 +11,7 @@
 /* Chapter 7: Vector Loads and Stores                                              */
 /* ******************************************************************************* */
 
-mapping nfields_int : bits(3) <-> {|1, 2, 3, 4, 5, 6, 7, 8|} = {
+mapping nfields_int : bits(3) <-> {1, 2, 3, 4, 5, 6, 7, 8} = {
   0b000     <-> 1,
   0b001     <-> 2,
   0b010     <-> 3,
@@ -47,14 +47,14 @@ mapping encdec_vlewidth : vlewidth <-> bits(3) = {
   VLE64     <-> 0b111
 }
 
-mapping vlewidth_bytesnumber : vlewidth <-> {|1, 2, 4, 8|} = {
+mapping vlewidth_bytesnumber : vlewidth <-> {1, 2, 4, 8} = {
   VLE8      <-> 1,
   VLE16     <-> 2,
   VLE32     <-> 4,
   VLE64     <-> 8
 }
 
-mapping vlewidth_pow : vlewidth <-> {|3, 4, 5, 6|} = {
+mapping vlewidth_pow : vlewidth <-> {3, 4, 5, 6} = {
   VLE8      <-> 3,
   VLE16     <-> 4,
   VLE32     <-> 5,

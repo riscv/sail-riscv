@@ -185,7 +185,8 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_po
         FVV_VFREDOSUM   => fp_add(rm_3b, sum, vs2_val[i]),
         FVV_VFREDUSUM   => fp_add(rm_3b, sum, vs2_val[i]),
         FVV_VFREDMAX    => fp_max(sum, vs2_val[i]),
-        FVV_VFREDMIN    => fp_min(sum, vs2_val[i])
+        FVV_VFREDMIN    => fp_min(sum, vs2_val[i]),
+        _               => internal_error(__FILE__, __LINE__, "Widening op unexpected")
       }
     }
   };
