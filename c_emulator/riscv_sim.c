@@ -239,8 +239,8 @@ static int process_args(int argc, char **argv)
 {
   int c;
   uint64_t ram_size = 0;
-  uint64_t pmp_count = 0;
-  uint64_t pmp_grain = 0;
+  int pmp_count = 0;
+  int pmp_grain = 0;
   while (true) {
     c = getopt_long(argc, argv,
                     "a"
@@ -287,8 +287,8 @@ static int process_args(int argc, char **argv)
       rv_enable_misaligned = true;
       break;
     case OPT_PMP_COUNT:
-      pmp_count = atol(optarg);
-      fprintf(stderr, "PMP count: %lld\n", pmp_count);
+      pmp_count = atoi(optarg);
+      fprintf(stderr, "PMP count: %d\n", pmp_count);
       if (pmp_count != 0 && pmp_count != 16 && pmp_count != 64) {
         fprintf(stderr, "invalid PMP count: must be 0, 16 or 64");
         exit(1);
@@ -296,8 +296,8 @@ static int process_args(int argc, char **argv)
       rv_pmp_count = pmp_count;
       break;
     case OPT_PMP_GRAIN:
-      pmp_grain = atol(optarg);
-      fprintf(stderr, "PMP grain: %lld\n", pmp_grain);
+      pmp_grain = atoi(optarg);
+      fprintf(stderr, "PMP grain: %d\n", pmp_grain);
       if (pmp_grain >= 64) {
         fprintf(stderr, "invalid PMP grain: must less than 64");
         exit(1);
