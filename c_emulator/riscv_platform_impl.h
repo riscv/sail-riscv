@@ -16,6 +16,7 @@ extern bool rv_enable_rvc;
 extern bool rv_enable_next;
 extern bool rv_enable_fdext;
 extern bool rv_enable_vext;
+extern uint64_t rv_writable_hpm_counters;
 extern bool rv_enable_writable_misa;
 extern bool rv_enable_dirty_update;
 extern bool rv_enable_misaligned;
