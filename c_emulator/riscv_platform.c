@@ -166,3 +166,9 @@ unit memea(mach_bits len, sail_int n)
 {
   return UNIT;
 }
+
+/* Zawrs : Wait-on-Reservation-Set */
+bool reservation_set_valid(unit u)
+{
+  return reservation_valid;
+}
