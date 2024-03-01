@@ -29,6 +29,7 @@ function readCSR csr : csreg -> xlenbits = {
     (0xF12,  _) => marchid,
     (0xF13,  _) => mimpid,
     (0xF14,  _) => mhartid,
+    (0xF15,  _) => mconfigptr,
     (0x300,  _) => mstatus.bits,
     (0x301,  _) => misa.bits,
     (0x302,  _) => medeleg.bits,
