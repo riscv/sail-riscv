@@ -21,6 +21,7 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0xf12 => p == Machine, // marchdid
     0xf13 => p == Machine, // mimpid
     0xf14 => p == Machine, // mhartid
+    0xf15 => p == Machine, // mconfigptr
     /* machine mode: trap setup */
     0x300 => p == Machine, // mstatus
     0x301 => p == Machine, // misa
@@ -477,6 +478,7 @@ function init_sys() -> unit = {
   cur_privilege = Machine;
 
   mhartid     = zero_extend(0b0);
+  mconfigptr  = zero_extend(0b0);
 
   misa[MXL] = arch_to_bits(if sizeof(xlen) == 32 then RV32 else RV64);
   misa[A]   = 0b1;                             /* atomics */
