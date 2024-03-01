@@ -113,6 +113,16 @@ mach_bits plat_clint_size(unit u)
   return rv_clint_size;
 }
 
+mach_bits plat_clic_base(unit u)
+{
+  return rv_clic_base;
+}
+
+mach_bits plat_clic_size(unit u)
+{
+  return rv_clic_size;
+}
+
 unit load_reservation(mach_bits addr)
 {
   reservation = addr;

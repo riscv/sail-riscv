@@ -29,6 +29,9 @@ mach_bits plat_get_16_random_bits();
 mach_bits plat_clint_base(unit);
 mach_bits plat_clint_size(unit);
 
+mach_bits plat_clic_base(unit);
+mach_bits plat_clic_size(unit);
+
 bool speculate_conditional(unit);
 unit load_reservation(mach_bits);
 bool match_reservation(mach_bits);
