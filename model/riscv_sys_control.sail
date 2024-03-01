@@ -262,24 +262,30 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
 /* Examine the current interrupt state and return an interrupt to be *
  * handled (if any), and the privilege it should be handled at.
  */
-function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege)) = {
-  /* If we don't have different privilege levels, we don't need to check delegation.
-   * Absence of U-mode implies absence of S-mode.
-   */
-  if not(haveUsrMode()) | (not(haveSupMode()) & not(haveNExt())) then {
-    assert(priv == Machine, "invalid current privilege");
-    let enabled_pending = mip.bits & mie.bits;
-    match findPendingInterrupt(enabled_pending) {
-      Some(i) => let r = (i, Machine) in Some(r),
-      None()  => None()
-    }
-  } else {
-    match getPendingSet(priv) {
-      None()      => None(),
-      Some(ip, p) => match findPendingInterrupt(ip) {
-                       None()  => None(),
-                       Some(i) => let r = (i, p) in Some(r)
-                     }
+function dispatchInterrupt(priv : Privilege) -> option((exc_code, Privilege)) = {
+
+  if haveSmclic() then 
+    dispatchClicInterrupt(priv) 
+  else { 
+
+    /* If we don't have different privilege levels, we don't need to check delegation.
+     * Absence of U-mode implies absence of S-mode.
+     */
+    if not(haveUsrMode()) | (not(haveSupMode()) & not(haveNExt())) then {
+      assert(priv == Machine, "invalid current privilege");
+      let enabled_pending = mip.bits & mie.bits;
+      match findPendingInterrupt(enabled_pending) {
+        Some(i) => let r = (interruptType_to_bits(i), Machine) in Some(r),
+        None()  => None()
+      }
+    } else {
+      match getPendingSet(priv) {
+        None()      => None(),
+        Some(ip, p) => match findPendingInterrupt(ip) {
+                         None()  => None(),
+                         Some(i) => let r = (interruptType_to_bits(i), p) in Some(r)
+                       }
+      }
     }
   }
 }
@@ -316,6 +322,13 @@ $endif
 
 function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
                      -> xlenbits = {
+  var top_ip_attr  : clicintattr_layout = undefined;
+  if haveSmclic() then {
+    top_ip_attr = clicintattr[unsigned(c)];        
+  } else {
+    top_ip_attr = [top_ip_attr with MODE = 0b11, TRIG = 0b00, SHV = 0b0];
+  };
+
   rvfi_trap();
   if   get_config_print_platform()
   then print_platform("handling " ^ (if intr then "int#" else "exc#")
@@ -335,6 +348,16 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        mtval           = tval(info);
        mepc            = pc;
 
+       if haveSmclic() then {  
+         mpil = mil;
+         if intr then {
+           mil  = clicintctl[unsigned(c)];
+         } else {
+           minhv = inhv;
+           inhv = 0b0;
+         }
+       };
+
        cur_privilege   = del_priv;
 
        handle_trap_extension(del_priv, pc, ext);
@@ -342,7 +365,11 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        if   get_config_print_reg()
        then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
 
-       prepare_trap_vector(del_priv, mcause)
+       if (haveSmclic() & intr & is_shv(top_ip_attr[SHV])) then {
+         prepare_shv_clic_trap_vector(del_priv, c)
+       } else {
+         prepare_trap_vector(del_priv, mcause)
+       }
     },
     Supervisor => {
        assert (haveSupMode(), "no supervisor mode present for delegation");
@@ -360,6 +387,16 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        stval           = tval(info);
        sepc            = pc;
 
+       if haveSmclic() then {
+         spil = sil;
+         if intr then {
+           sil  = clicintctl[unsigned(c)];
+         } else {
+           sinhv = inhv;
+           inhv = 0b0;
+         }
+       };
+
        cur_privilege   = del_priv;
 
        handle_trap_extension(del_priv, pc, ext);
@@ -367,7 +404,11 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        if   get_config_print_reg()
        then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
 
-       prepare_trap_vector(del_priv, scause)
+       if (haveSmclic() & intr & is_shv(top_ip_attr[SHV])) then {
+         prepare_shv_clic_trap_vector(del_priv, c)
+       } else {
+         prepare_trap_vector(del_priv, scause)
+       }
     },
     User => {
        assert(haveUsrMode(), "no user mode present for delegation");
@@ -380,6 +421,16 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        utval           = tval(info);
        uepc            = pc;
 
+       if haveSmclic() then {
+         upil = uil;
+         if intr then {
+           uil  = clicintctl[unsigned(c)];
+         } else {
+           uinhv = inhv;
+           inhv = 0b0;
+         }
+       };
+
        cur_privilege   = del_priv;
 
        handle_trap_extension(del_priv, pc, ext);
@@ -387,7 +438,11 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        if   get_config_print_reg()
        then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
 
-       prepare_trap_vector(del_priv, ucause)
+       if (haveSmclic() & intr & is_shv(top_ip_attr[SHV])) then {
+         prepare_shv_clic_trap_vector(del_priv, c)
+       } else {
+         prepare_trap_vector(del_priv, ucause)
+       }
     }
   };
 }
@@ -406,6 +461,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       let prev_priv   = cur_privilege;
       mstatus[MIE]  = mstatus[MPIE];
       mstatus[MPIE] = 0b1;
+      if haveSmclic() then mil = mpil;
       cur_privilege   = privLevel_of_bits(mstatus[MPP]);
       mstatus[MPP]  = privLevel_to_bits(if haveUsrMode() then User else Machine);
       if   cur_privilege != Machine
@@ -417,12 +473,24 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
       cancel_reservation();
-      prepare_xret_target(Machine) & pc_alignment_mask()
+      if haveSmclic() & (minhv == 0b1) then { 
+        minhv = 0b0;
+        var table_entry_addr : xlenbits = prepare_xret_target(Machine) & inhv_pc_alignment_mask();
+        match vector_table_fetch(table_entry_addr) {
+          F_TableError(e, table_addr) => {inhv = 0b1; handle_mem_exception(table_entry_addr, e); table_entry_addr}, 
+          F_TableEntry(table_entry)   => {
+            table_entry
+          }
+        }
+      } else {
+        prepare_xret_target(Machine) & pc_alignment_mask()
+      }
     },
     (_, CTL_SRET())  => {
       let prev_priv   = cur_privilege;
       mstatus[SIE]  = mstatus[SPIE];
       mstatus[SPIE] = 0b1;
+      if haveSmclic() then sil = spil;
       cur_privilege   = if mstatus[SPP] == 0b1 then Supervisor else User;
       mstatus[SPP]  = 0b0;
       if   cur_privilege != Machine
@@ -435,12 +503,24 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
                           ^ " to " ^ to_str(cur_privilege));
 
       cancel_reservation();
-      prepare_xret_target(Supervisor) & pc_alignment_mask()
+      if haveSmclic() & (sinhv == 0b1) then { 
+        sinhv = 0b0;
+        var table_entry_addr : xlenbits = prepare_xret_target(Supervisor) & inhv_pc_alignment_mask();
+        match vector_table_fetch(table_entry_addr) {
+          F_TableError(e, table_addr) => {inhv = 0b1; handle_mem_exception(table_entry_addr, e); table_entry_addr}, 
+          F_TableEntry(table_entry)   => {
+            table_entry
+          }
+        }
+      } else {
+        prepare_xret_target(Supervisor) & pc_alignment_mask()
+      }
     },
     (_, CTL_URET())  => {
       let prev_priv   = cur_privilege;
       mstatus[UIE]  = mstatus[UPIE];
       mstatus[UPIE] = 0b1;
+      if haveSmclic() then uil = upil;
       cur_privilege   = User;
 
       if   get_config_print_reg()
@@ -449,7 +529,18 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
       cancel_reservation();
-      prepare_xret_target(User) & pc_alignment_mask()
+      if haveSmclic() & (uinhv == 0b1) then { 
+        uinhv = 0b0;
+        var table_entry_addr : xlenbits = prepare_xret_target(User) & inhv_pc_alignment_mask();
+        match vector_table_fetch(table_entry_addr) {
+          F_TableError(e, table_addr) => {inhv = 0b1; handle_mem_exception(table_entry_addr, e); table_entry_addr}, 
+          F_TableEntry(table_entry)   => {
+            table_entry
+          }
+        }
+      } else {
+        prepare_xret_target(User) & pc_alignment_mask()
+      }
     }
   }
 }
@@ -468,8 +559,8 @@ function handle_exception(e: ExceptionType) -> unit = {
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }
 
-function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
-  set_next_pc(trap_handler(del_priv, true, interruptType_to_bits(i), PC, None(), None()))
+function handle_interrupt(i : exc_code, del_priv : Privilege) -> unit =
+  set_next_pc(trap_handler(del_priv, true, i, PC, None(), None()))
 
 /* state state initialization */
 
@@ -545,6 +636,8 @@ function init_sys() -> unit = {
   vtype[vta]       = 0b0;
   vtype[vsew]      = 0b000;
   vtype[vlmul]     = 0b000;
+  /* initialize Smclic csrs */
+  init_clicintregs();
 
   // PMP's L and A fields are set to 0 on reset.
   init_pmp();

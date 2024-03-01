@@ -193,6 +193,14 @@ val plat_clint_size : unit -> bitvector
 let plat_clint_size () = []
 declare ocaml target_rep function plat_clint_size = `Platform.clint_size`
 
+val plat_clic_base : unit -> bitvector
+let plat_clic_base () = []
+declare ocaml target_rep function plat_clic_base = `Platform.clic_base`
+
+val plat_clic_size : unit -> bitvector
+let plat_clic_size () = []
+declare ocaml target_rep function plat_clic_size = `Platform.clic_size`
+
 val plat_enable_dirty_update : unit -> bool
 let plat_enable_dirty_update () = false
 declare ocaml target_rep function plat_enable_dirty_update = `Platform.enable_dirty_update`

@@ -25,10 +25,10 @@ function step(step_no : int) -> bool = {
 
   let (retired, stepped) : (Retired, bool) =
     match dispatchInterrupt(cur_privilege) {
-      Some(intr, priv) => {
+      Some(exccode, priv) => {
         if   get_config_print_instr()
-        then print_bits("Handling interrupt: ", interruptType_to_bits(intr));
-        handle_interrupt(intr, priv);
+        then print_bits("Handling interrupt: ", exccode);
+        handle_interrupt(exccode, priv);
         (RETIRE_FAIL, false)
       },
       None() => {

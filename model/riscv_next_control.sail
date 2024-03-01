@@ -18,13 +18,21 @@ function clause ext_is_CSR_defined(0x043, _) = haveUsrMode() & haveNExt() // utv
 function clause ext_is_CSR_defined(0x044, _) = haveUsrMode() & haveNExt() // uip
 
 function clause ext_read_CSR(0x000) = Some(lower_sstatus(lower_mstatus(mstatus)).bits)
-function clause ext_read_CSR(0x004) = Some(lower_sie(lower_mie(mie, mideleg), sideleg).bits)
+function clause ext_read_CSR(0x004) = if haveSmclic() then { Some(zero_extend(0b0)) } else Some(lower_sie(lower_mie(mie, mideleg), sideleg).bits)
 function clause ext_read_CSR(0x005) = Some(get_utvec())
 function clause ext_read_CSR(0x040) = Some(uscratch)
 function clause ext_read_CSR(0x041) = Some(get_xret_target(User) & pc_alignment_mask())
-function clause ext_read_CSR(0x042) = Some(ucause.bits)
+function clause ext_read_CSR(0x042) = if haveSmclic() then {
+                                        clicucause.bits            = ucause.bits;
+                                        clicucause[Uinhv]          = uinhv;
+                                        clicucause[ClicUcauseUpie] = mstatus[UPIE];
+                                        clicucause[Upil]           = upil;
+                                        Some(clicucause.bits)   
+                                      } else 
+                                        Some(ucause.bits)
+
 function clause ext_read_CSR(0x043) = Some(utval)
-function clause ext_read_CSR(0x044) = Some(lower_sip(lower_mip(mip, mideleg), sideleg).bits)
+function clause ext_read_CSR(0x044) = if haveSmclic() then { Some(zero_extend(0b0)) } else Some(lower_sip(lower_mip(mip, mideleg), sideleg).bits)
 
 function clause ext_write_CSR(0x000, value) = { mstatus = legalize_ustatus(mstatus, value); Some(mstatus.bits) }
 function clause ext_write_CSR(0x004, value) = { let sie = legalize_uie(lower_mie(mie, mideleg), sideleg, value);
@@ -33,7 +41,17 @@ function clause ext_write_CSR(0x004, value) = { let sie = legalize_uie(lower_mie
 function clause ext_write_CSR(0x005, value) = { Some(set_utvec(value)) }
 function clause ext_write_CSR(0x040, value) = { uscratch = value; Some(uscratch) }
 function clause ext_write_CSR(0x041, value) = { Some(set_xret_target(User, value)) }
-function clause ext_write_CSR(0x042, value) = { ucause.bits = value; Some(ucause.bits) }
+function clause ext_write_CSR(0x042, value) = { if haveSmclic() then { 
+                                                  clicucause.bits = value;
+                                                  uinhv         = clicucause[Uinhv];
+                                                  mstatus[UPIE] = clicucause[ClicUcauseUpie];
+                                                  upil          = clicucause[Upil];
+                                                  Some(clicucause.bits)          
+                                                } else { 
+                                                  ucause.bits = value; Some(ucause.bits) 
+                                                }
+                                              }
+
 function clause ext_write_CSR(0x043, value) = { utval = value; Some(utval) }
 function clause ext_write_CSR(0x044, value) = { let sip = legalize_uip(lower_mip(mip, mideleg), sideleg, value);
                                                  mip = lift_sip(mip, mideleg, sip);

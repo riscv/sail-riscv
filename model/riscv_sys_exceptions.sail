@@ -63,16 +63,20 @@ function prepare_xret_target(p) =
 /* other trap-related CSRs */
 
 function get_mtvec() -> xlenbits =
-  mtvec.bits
+  if haveSmclic() then { mtvec.bits & sign_extend(0b1000011)} else 
+    mtvec.bits
 
 function get_stvec() -> xlenbits =
-  stvec.bits
+  if haveSmclic() then { stvec.bits | zero_extend(0b11) & sign_extend(0b1000011)} else 
+    stvec.bits & sign_extend(0b101)
 
 function get_utvec() -> xlenbits =
-  utvec.bits
+  if haveSmclic() then { utvec.bits | zero_extend(0b11) & sign_extend(0b1000011)} else 
+    utvec.bits & sign_extend(0b101)
 
 function set_mtvec(value : xlenbits) -> xlenbits = {
   mtvec = legalize_tvec(mtvec, value);
+  if haveSmclic() == false then {mpil = zero_extend(0b0); spil = zero_extend(0b0); upil = zero_extend(0b0)};
   mtvec.bits
 }
 

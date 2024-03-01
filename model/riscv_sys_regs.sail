@@ -403,9 +403,12 @@ function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
  match (trapVectorMode_of_bits(v[Mode])) {
    TV_Direct => v,
    TV_Vector => v,
+   TV_Smclic => v,
    _         => [v with Mode = o[Mode]]
  }
 }
+
+function haveSmclic()  -> bool = mtvec[Mode] == 0b11
 
 bitfield Mcause : xlenbits = {
   IsInterrupt : xlen - 1,
@@ -421,6 +424,7 @@ function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
     TV_Vector => if   c[IsInterrupt] == 0b1
                  then Some(base + (zero_extend(c[Cause]) << 2))
                  else Some(base),
+    TV_Smclic => Some(base),                 
     TV_Reserved => None()
   }
 }

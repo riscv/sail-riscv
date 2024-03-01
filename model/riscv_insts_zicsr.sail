@@ -33,7 +33,7 @@ function readCSR csr : csreg -> xlenbits = {
     (0x301,  _) => misa.bits,
     (0x302,  _) => medeleg.bits,
     (0x303,  _) => mideleg.bits,
-    (0x304,  _) => mie.bits,
+    (0x304,  _) => if haveSmclic() then { zero_extend(0b0) } else mie.bits,
     (0x305,  _) => get_mtvec(),
     (0x306,  _) => zero_extend(mcounteren.bits),
     (0x30A,  _) => menvcfg.bits[sizeof(xlen) - 1 .. 0],
@@ -43,9 +43,17 @@ function readCSR csr : csreg -> xlenbits = {
 
     (0x340,  _) => mscratch,
     (0x341,  _) => get_xret_target(Machine) & pc_alignment_mask(),
-    (0x342,  _) => mcause.bits,
+    (0x342,  _) => if haveSmclic() then { 
+                     clicmcause.bits            = mcause.bits;
+                     clicmcause[Minhv]          = minhv;
+                     clicmcause[ClicMcauseMpp]  = mstatus[MPP];
+                     clicmcause[ClicMcauseMpie] = mstatus[MPIE];
+                     clicmcause[Mpil]           = mpil;
+                     clicmcause.bits              
+                   } else 
+                     mcause.bits,
     (0x343,  _) => mtval,
-    (0x344,  _) => mip.bits,
+    (0x344,  _) => if haveSmclic() then { zero_extend(0b0) } else mip.bits,
 
     // pmpcfgN
     (0x3A @ idx : bits(4),  _) if idx[0] == bitzero | sizeof(xlen) == 32 => pmpReadCfgReg(unsigned(idx)),
@@ -77,15 +85,23 @@ function readCSR csr : csreg -> xlenbits = {
     (0x100,  _) => lower_mstatus(mstatus).bits,
     (0x102,  _) => sedeleg.bits,
     (0x103,  _) => sideleg.bits,
-    (0x104,  _) => lower_mie(mie, mideleg).bits,
+    (0x104,  _) => if haveSmclic() then { zero_extend(0b0) } else lower_mie(mie, mideleg).bits,
     (0x105,  _) => get_stvec(),
     (0x106,  _) => zero_extend(scounteren.bits),
     (0x10A,  _) => senvcfg.bits[sizeof(xlen) - 1 .. 0],
     (0x140,  _) => sscratch,
     (0x141,  _) => get_xret_target(Supervisor) & pc_alignment_mask(),
-    (0x142,  _) => scause.bits,
+    (0x142,  _) => if haveSmclic() then { 
+                     clicscause.bits            = scause.bits;
+                     clicscause[Sinhv]          = sinhv;
+                     clicscause[ClicScauseSpp]  = mstatus[SPP];
+                     clicscause[ClicScauseSpie] = mstatus[SPIE];
+                     clicscause[Spil]           = mpil;
+                     clicscause.bits   
+                   } else 
+                     scause.bits,
     (0x143,  _) => stval,
-    (0x144,  _) => lower_mip(mip, mideleg).bits,
+    (0x144,  _) => if haveSmclic() then { zero_extend(0b0) } else lower_mip(mip, mideleg).bits,
     (0x180,  _) => satp,
 
     /* user mode counters */
@@ -119,7 +135,7 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x301,  _) => { misa = legalize_misa(misa, value); Some(misa.bits) },
     (0x302,  _) => { medeleg = legalize_medeleg(medeleg, value); Some(medeleg.bits) },
     (0x303,  _) => { mideleg = legalize_mideleg(mideleg, value); Some(mideleg.bits) },
-    (0x304,  _) => { mie = legalize_mie(mie, value); Some(mie.bits) },
+    (0x304,  _) => { if haveSmclic() then { mie = mie; Some(mie.bits) } else { mie = legalize_mie(mie, value); Some(mie.bits) } },
     (0x305,  _) => { Some(set_mtvec(value)) },
     (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(zero_extend(mcounteren.bits)) },
     (0x30A, 32) => { menvcfg = legalize_envcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); Some(menvcfg.bits[31 .. 0]) },
@@ -129,9 +145,19 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x320,  _) => { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Some(zero_extend(mcountinhibit.bits)) },
     (0x340,  _) => { mscratch = value; Some(mscratch) },
     (0x341,  _) => { Some(set_xret_target(Machine, value)) },
-    (0x342,  _) => { mcause.bits = value; Some(mcause.bits) },
+    (0x342,  _) => { if haveSmclic() then { 
+                       clicmcause.bits = value;
+                       minhv         = clicmcause[Minhv];
+                       mstatus[MPP]  = clicmcause[ClicMcauseMpp];
+                       mstatus[MPIE] = clicmcause[ClicMcauseMpie];
+                       mpil          = clicmcause[Mpil];
+                       Some(clicmcause.bits)          
+                     } else { 
+                       mcause.bits = value; Some(mcause.bits) 
+                     }
+                   },
     (0x343,  _) => { mtval = value; Some(mtval) },
-    (0x344,  _) => { mip = legalize_mip(mip, value); Some(mip.bits) },
+    (0x344,  _) => { if haveSmclic() then { mip = mip; Some(mip.bits) } else { mip = legalize_mip(mip, value); Some(mip.bits) } },
 
     // pmpcfgN
     (0x3A @ idx : bits(4),  _) if idx[0] == bitzero | sizeof(xlen) == 32 => {
@@ -158,15 +184,25 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x100,  _) => { mstatus = legalize_sstatus(mstatus, value); Some(mstatus.bits) },
     (0x102,  _) => { sedeleg = legalize_sedeleg(sedeleg, value); Some(sedeleg.bits) },
     (0x103,  _) => { sideleg.bits = value; Some(sideleg.bits) }, /* TODO: does this need legalization? */
-    (0x104,  _) => { mie = legalize_sie(mie, mideleg, value); Some(mie.bits) },
+    (0x104,  _) => { if haveSmclic() then { mie = mie; Some(mie.bits) } else { mie = legalize_sie(mie, mideleg, value); Some(mie.bits) } },
     (0x105,  _) => { Some(set_stvec(value)) },
     (0x106,  _) => { scounteren = legalize_scounteren(scounteren, value); Some(zero_extend(scounteren.bits)) },
     (0x10A,  _) => { senvcfg = legalize_envcfg(senvcfg, zero_extend(value)); Some(senvcfg.bits[sizeof(xlen) - 1 .. 0]) },
     (0x140,  _) => { sscratch = value; Some(sscratch) },
     (0x141,  _) => { Some(set_xret_target(Supervisor, value)) },
-    (0x142,  _) => { scause.bits = value; Some(scause.bits) },
+    (0x142,  _) => { if haveSmclic() then { 
+                       clicscause.bits = value;
+                       sinhv         = clicscause[Sinhv];
+                       mstatus[SPP]  = clicscause[ClicScauseSpp];
+                       mstatus[SPIE] = clicscause[ClicScauseSpie];
+                       spil          = clicscause[Spil];
+                       Some(clicscause.bits)          
+                     } else { 
+                       scause.bits = value; Some(scause.bits)   
+                     } 
+                   },
     (0x143,  _) => { stval = value; Some(stval) },
-    (0x144,  _) => { mip = legalize_sip(mip, mideleg, value); Some(mip.bits) },
+    (0x144,  _) => { if haveSmclic() then { mip = mip; Some(mip.bits) } else { mip = legalize_sip(mip, mideleg, value); Some(mip.bits) } },
     (0x180,  _) => { satp = legalize_satp(cur_Architecture(), satp, value); Some(satp) },
 
     /* user mode: seed (entropy source). writes are ignored */
@@ -201,17 +237,32 @@ function clause execute CSR(csr, rs1, rd, is_imm, op) = {
   else if not(ext_check_CSR(csr, cur_privilege, isWrite))
   then { ext_check_CSR_fail(); RETIRE_FAIL }
   else {
-    let csr_val = readCSR(csr); /* could have side-effects, so technically shouldn't perform for CSRW[I] with rd == 0 */
-    if isWrite then {
-      let new_val : xlenbits = match op {
-        CSRRW => rs1_val,
-        CSRRS => csr_val | rs1_val,
-        CSRRC => csr_val & ~(rs1_val)
-      };
-      writeCSR(csr, new_val)
-    };
-    X(rd) = csr_val;
-    RETIRE_SUCCESS
+    let cond_writeCSR : bool = isWrite & (op == CSRRW) & is_imm == false;
+    match (csr, sizeof(xlen)) {
+      /* special conditional write CSRs, CSRRS/C/I/read behavior reserved */
+      (0x348,  _) => {if cond_writeCSR then {match ext_write_CSR(csr, rs1_val) {Some(res) => {X(rd) = res; RETIRE_SUCCESS},None()=>RETIRE_FAIL};}else{ext_check_CSR_fail(); RETIRE_FAIL}},
+      (0x349,  _) => {if cond_writeCSR then {match ext_write_CSR(csr, rs1_val) {Some(res) => {X(rd) = res; RETIRE_SUCCESS},None()=>RETIRE_FAIL};}else{ext_check_CSR_fail(); RETIRE_FAIL}},
+      (0x148,  _) => {if cond_writeCSR then {match ext_write_CSR(csr, rs1_val) {Some(res) => {X(rd) = res; RETIRE_SUCCESS},None()=>RETIRE_FAIL};}else{ext_check_CSR_fail(); RETIRE_FAIL}},
+      (0x149,  _) => {if cond_writeCSR then {match ext_write_CSR(csr, rs1_val) {Some(res) => {X(rd) = res; RETIRE_SUCCESS},None()=>RETIRE_FAIL};}else{ext_check_CSR_fail(); RETIRE_FAIL}},
+      (0x049,  _) => {if cond_writeCSR then {match ext_write_CSR(csr, rs1_val) {Some(res) => {X(rd) = res; RETIRE_SUCCESS},None()=>RETIRE_FAIL};}else{ext_check_CSR_fail(); RETIRE_FAIL}},
+      /* special Smclic nxti CSRs */
+      (0x345,  _) => {match access_nxti_CSR(csr, rs1_val, rd, is_imm, op, isWrite, Machine)    {Some(res) => {X(rd) = res; RETIRE_SUCCESS},None()=>RETIRE_FAIL};},
+      (0x145,  _) => {match access_nxti_CSR(csr, rs1_val, rd, is_imm, op, isWrite, Supervisor) {Some(res) => {X(rd) = res; RETIRE_SUCCESS},None()=>RETIRE_FAIL};},
+      (0x045,  _) => {match access_nxti_CSR(csr, rs1_val, rd, is_imm, op, isWrite, User)       {Some(res) => {X(rd) = res; RETIRE_SUCCESS},None()=>RETIRE_FAIL};},
+      _           => { /* standard CSRs */
+        let csr_val = readCSR(csr); /* could have side-effects, so technically shouldn't perform for CSRW[I] with rd == 0 */
+        if isWrite then {
+          let new_val : xlenbits = match op {
+            CSRRW => rs1_val,
+            CSRRS => csr_val | rs1_val,
+            CSRRC => csr_val & ~(rs1_val)
+          };
+          writeCSR(csr, new_val)
+        };
+        X(rd) = csr_val;
+        RETIRE_SUCCESS   
+      }   
+    }
   }
 }
 
