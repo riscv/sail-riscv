@@ -102,6 +102,9 @@ let dram_size ()  = arch_bits_of_int64 !P.dram_size_ref
 let clint_base () = arch_bits_of_int64 P.clint_base
 let clint_size () = arch_bits_of_int64 P.clint_size
 
+let clic_base () = arch_bits_of_int64 P.clic_base
+let clic_size () = arch_bits_of_int64 P.clic_size
+
 let insns_per_tick () = Big_int.of_int P.insns_per_tick
 
 let htif_tohost () =
@@ -165,6 +168,7 @@ let init arch elf_file =
 
   print_platform (Printf.sprintf "\nRegistered htif_tohost at 0x%Lx.\n" (Big_int.to_int64 (Elf.elf_tohost ())));
   print_platform (Printf.sprintf "Registered clint at 0x%Lx (size 0x%Lx).\n%!" P.clint_base P.clint_size);
+  print_platform (Printf.sprintf "Registered clic at 0x%Lx (size 0x%Lx).\n%!" P.clic_base P.clic_size);
 
   let start_pc = Elf.Big_int.to_int64 (Elf.elf_entry ()) in
   let rom = make_rom arch start_pc in

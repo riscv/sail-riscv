@@ -53,6 +53,8 @@ let reset_vec_int arch start_pc = [
 let dram_base  = 0x80000000L;;  (* Spike::DRAM_BASE *)
 let clint_base = 0x02000000L;;  (* Spike::CLINT_BASE *)
 let clint_size = 0x000c0000L;;  (* Spike::CLINT_SIZE *)
+let clic_base = 0x04000000L;;  (* Spike::MCLIC_BASE *)
+let clic_size = 0x000c0000L;;  (* Spike::CLIC_SIZE *)
 let rom_base   = 0x00001000L;;  (* Spike::DEFAULT_RSTVEC *)
 
 let dram_size_ref = ref (Int64.(shift_left 64L 20))
@@ -107,6 +109,12 @@ let spike_dts isa_spec mmu_spec cpu_hz insns_per_rtc_tick mems =
   ^ "      interrupts-extended = <&CPU0_intc 3 &CPU0_intc 7 >;\n"
   ^ "      reg = <0x" ^ Printf.sprintf "%Lx" Int64.(shift_right_logical clint_base 32) ^ " 0x" ^ Printf.sprintf "%Lx" Int64.(logand clint_base 0xffffffffL)
   ^             " 0x" ^ Printf.sprintf "%Lx" Int64.(shift_right_logical clint_size 32) ^ " 0x" ^ Printf.sprintf "%Lx" Int64.(logand clint_size 0xffffffffL) ^ ">;\n"
+  ^ "    };\n"
+  ^ "    clic@" ^ Printf.sprintf "%Lx" clic_base ^ " {\n"
+  ^ "      compatible = \"riscv,clic0\";\n"
+  ^ "      interrupts-extended = <&CPU0_intc 3 &CPU0_intc 7 >;\n"
+  ^ "      reg = <0x" ^ Printf.sprintf "%Lx" Int64.(shift_right_logical clic_base 32) ^ " 0x" ^ Printf.sprintf "%Lx" Int64.(logand clic_base 0xffffffffL)
+  ^             " 0x" ^ Printf.sprintf "%Lx" Int64.(shift_right_logical clic_size 32) ^ " 0x" ^ Printf.sprintf "%Lx" Int64.(logand clic_size 0xffffffffL) ^ ">;\n"
   ^ "    };\n"
   ^ "  };\n"
   ^ "  htif {\n"
