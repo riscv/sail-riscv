@@ -58,6 +58,10 @@ val plat_rom_size   = {ocaml: "Platform.rom_size", interpreter: "Platform.rom_si
 val plat_clint_base = {ocaml: "Platform.clint_base", interpreter: "Platform.clint_base", c: "plat_clint_base", lem: "plat_clint_base"} : unit -> xlenbits
 val plat_clint_size = {ocaml: "Platform.clint_size", interpreter: "Platform.clint_size", c: "plat_clint_size", lem: "plat_clint_size"} : unit -> xlenbits
 
+/* Location of clic memory mapped registers */
+val plat_clic_base = {ocaml: "Platform.clic_base", interpreter: "Platform.clic_base", c: "plat_clic_base", lem: "plat_clic_base"} : unit -> xlenbits
+val plat_clic_size = {ocaml: "Platform.clic_size", interpreter: "Platform.clic_size", c: "plat_clic_size", lem: "plat_clic_size"} : unit -> xlenbits
+
 /* Location of HTIF ports */
 val plat_htif_tohost = {ocaml: "Platform.htif_tohost", c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> xlenbits
 function plat_htif_tohost () = to_bits(sizeof(xlen), elf_tohost ())
@@ -109,6 +113,18 @@ function within_clint forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, wi
   let clint_size_int = unsigned(plat_clint_size ());
     clint_base_int <= addr_int
   & (addr_int + sizeof('n)) <= (clint_base_int + clint_size_int)
+}
+
+function within_clic forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool = {
+  /* To avoid overflow issues when physical memory extends to the end
+   * of the addressable range, we need to perform address bound checks
+   * on unsigned unbounded integers.
+   */
+  let addr_int       = unsigned(addr);
+  let clic_base_int = unsigned(plat_clic_base ());
+  let clic_size_int = unsigned(plat_clic_size ());
+    clic_base_int <= addr_int
+  & (addr_int + sizeof('n)) <= (clic_base_int + clic_size_int)
 }
 
 function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool =
@@ -208,10 +224,14 @@ function clint_dispatch() -> unit = {
   if   get_config_print_platform()
   then print_platform("clint::tick mtime <- " ^ BitStr(mtime));
   mip[MTI] = 0b0;
+  clicintip_raw[CLIC_MTI] = 0b0;
   if mtimecmp <=_u mtime then {
     if   get_config_print_platform()
     then print_platform(" clint timer pending at mtime " ^ BitStr(mtime));
-    mip[MTI] = 0b1
+    mip[MTI] = 0b1;
+    clicintip_raw[CLIC_MTI] = 0b1;
+    if   get_config_print_platform()
+    then print_platform(" clicintip[MTI] pending " ^ BitStr(clicintip[CLIC_MTI]) ^ " clicintip_raw[MTI] pending " ^ BitStr(clicintip_raw[CLIC_MTI]))
   }
 }
 
@@ -223,6 +243,7 @@ function clint_store(addr, width, data) = {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mip.MSI <- " ^ BitStr(data[0]) ^ ")");
     mip[MSI] = [data[0]];
+    clicintip_raw[CLIC_MSI] = [data[0]];
     clint_dispatch();
     MemValue(true)
   } else if addr == MTIMECMP_BASE & 'n == 8 then {
@@ -257,6 +278,157 @@ function tick_clock() = {
 
   mtime  = mtime  + 1;
   clint_dispatch()
+}
+
+/* CLIC memory-mapped IO */
+
+/* relative address map:
+ *
+ * 100C clicint[3]          -- connected to CLINT MSI software interrupt
+ * 101C clicint[7]          -- connected to CLINT MTI timer interrupt
+ * no other clicint regs currently implemented
+ */
+
+let CLIC_MSI_BASE    : xlenbits = zero_extend(0x0100C)
+let CLIC_MTI_BASE    : xlenbits = zero_extend(0x0101C)
+
+
+
+val clic_load : forall 'n, 'n > 0. (AccessType(ext_access_type), xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n))
+function clic_load(t, addr, width) = {
+  var clicint     : bits(32) = undefined;
+  var ip_ip       : bits(1) = undefined;
+  var ip_ie       : bits(1) = undefined;
+  var ip_attr_layout : clicintattr_layout = undefined;
+  var ip_attr     : bits(8) = undefined;
+  var ip_ctl      : ilbits = undefined;
+
+  let addr = addr - plat_clic_base ();
+  /* FIXME: For now, only allow exact aligned access. */
+  if addr == CLIC_MSI_BASE & ('n == 4)
+  then {
+    ip_ip   = clicintip[CLIC_MSI];
+    ip_ie   = clicintie[CLIC_MSI];
+    ip_attr_layout = clicintattr[CLIC_MSI];
+    ip_attr = zero_extend(shiftl(ip_attr_layout[MODE],6)) | 
+              zero_extend(shiftl(ip_attr_layout[TRIG],1)) | 
+              zero_extend(ip_attr_layout[SHV]);
+    ip_ctl  = clicintctl[CLIC_MSI];
+    clicint = zero_extend(shiftl(ip_ctl,24)) | 
+              zero_extend(shiftl(ip_attr,16)) |
+              zero_extend(shiftl(ip_ie,8)) |
+              zero_extend(ip_ip);
+    if   get_config_print_platform()
+    then print_platform("clic[" ^ BitStr(addr) ^ "] -> " ^ BitStr(clicint));
+    MemValue(sail_zero_extend(clicint[31..0], 32))
+  }
+  else if addr == CLIC_MTI_BASE & ('n == 4)
+  then { 
+    ip_ip   = clicintip[CLIC_MTI];
+    ip_ie   = clicintie[CLIC_MTI];
+    ip_attr_layout = clicintattr[CLIC_MSI];
+    ip_attr = zero_extend(shiftl(ip_attr_layout[MODE],6)) | 
+              zero_extend(shiftl(ip_attr_layout[TRIG],1)) | 
+              zero_extend(ip_attr_layout[SHV]);
+    ip_ctl  = clicintctl[CLIC_MTI];
+    clicint = zero_extend(shiftl(ip_ctl,24)) | 
+              zero_extend(shiftl(ip_attr,16)) |
+              zero_extend(shiftl(ip_ie,8)) |
+              zero_extend(ip_ip);
+    if   get_config_print_platform()
+    then print_platform("clic[" ^ BitStr(addr) ^ "] -> " ^ BitStr(clicint));
+    MemValue(sail_zero_extend(clicint[31..0], 32))
+  }
+  else {
+    if   get_config_print_platform()
+    then print_platform("clic[" ^ BitStr(addr) ^ "] -> <not-mapped>");
+    MemValue( sail_zero_extend(0b0, sizeof(8 * 'n)))
+  }
+}
+
+val clic_store: forall 'n, 'n > 0. (xlenbits, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
+function clic_store(addr, width, data) = {
+  var ip_attr_layout : clicintattr_layout = undefined;
+  var ip_attr     : bits(8) = undefined;
+  var ip_shv      : bits(1) = undefined;
+  let addr = addr - plat_clic_base ();
+    /* FIXME: For now, only allow word or byte access. */
+  if addr == CLIC_MSI_BASE & ('n == 4) then {
+    if   get_config_print_platform()
+    then print_platform("clic[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (clicintip.MSI <- " ^ BitStr(data[0]) ^ ")");
+    clicintip[CLIC_MSI]   = [data[0]];
+    clicintie[CLIC_MSI]   = [data[8]];
+    ip_attr               = zero_extend(data[23..16]);
+    ip_attr_layout[MODE]  = zero_extend(ip_attr[7..6]);
+    ip_attr_layout[TRIG]  = zero_extend(ip_attr[2..1]);
+    if bit_to_bool(ip_attr[0]) then ip_shv = 0b1 else ip_shv = 0b0;
+    ip_attr_layout[SHV]   = ip_shv;
+    clicintattr[CLIC_MSI] = ip_attr_layout;
+    clicintctl[CLIC_MSI]  = zero_extend(data[31..24]);
+    MemValue(true)
+  } else if addr == CLIC_MSI_BASE & ('n == 1) then {
+    if   get_config_print_platform()
+    then print_platform("clic[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (clicintip.MSI <- " ^ BitStr(data[0]) ^ ")");
+    clicintip[CLIC_MSI]   = [data[0]];
+    MemValue(true)
+  } else if addr == CLIC_MSI_BASE+1 & ('n == 1) then {
+    if   get_config_print_platform()
+    then print_platform("clic[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (clicintie.MSI <- " ^ BitStr(data[0]) ^ ")");
+    clicintie[CLIC_MSI]   = [data[0]];
+    MemValue(true)
+  } else if addr == CLIC_MSI_BASE+2 & ('n == 1) then {
+    if   get_config_print_platform()
+    then print_platform("clic[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (clicintattr.MSI <- " ^ BitStr(data[7..0]) ^ ")");
+    ip_attr               = zero_extend(data[7..0]);
+    ip_attr_layout[MODE]  = zero_extend(ip_attr[7..6]);
+    ip_attr_layout[TRIG]  = zero_extend(ip_attr[2..1]);
+    if bit_to_bool(ip_attr[0]) then ip_shv = 0b1 else ip_shv = 0b0;
+    ip_attr_layout[SHV]   = ip_shv;
+    clicintattr[CLIC_MSI] = ip_attr_layout;
+    MemValue(true)
+  } else if addr == CLIC_MSI_BASE+3 & ('n == 1) then {
+    if   get_config_print_platform()
+    then print_platform("clic[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (clicintctl.MSI <- " ^ BitStr(data[7..0]) ^ ")");
+    clicintctl[CLIC_MSI]  = zero_extend(data[7..0]);
+    MemValue(true)
+  } else if addr == CLIC_MTI_BASE & 'n == 4 then {
+    if   get_config_print_platform()
+    then print_platform("clic[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (clicintip.MTI <- " ^ BitStr(data[0]) ^ ")");
+    clicintip[CLIC_MTI]   = [data[0]];
+    clicintie[CLIC_MTI]   = [data[8]];
+    ip_attr               = zero_extend(data[23..16]);
+    ip_attr_layout[MODE]  = zero_extend(ip_attr[7..6]);
+    ip_attr_layout[TRIG]  = zero_extend(ip_attr[2..1]);
+    if bit_to_bool(ip_attr[0]) then ip_shv = 0b1 else ip_shv = 0b0;
+    ip_attr_layout[SHV]   = ip_shv;
+    clicintattr[CLIC_MTI] = ip_attr_layout;
+    clicintctl[CLIC_MTI]  = zero_extend(data[31..24]);
+    MemValue(true)
+  } else if addr == CLIC_MTI_BASE+1 & ('n == 1) then {
+    if   get_config_print_platform()
+    then print_platform("clic[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (clicintie.MTI <- " ^ BitStr(data[0]) ^ ")");
+    clicintie[CLIC_MTI]   = [data[0]];
+    MemValue(true)
+  } else if addr == CLIC_MTI_BASE+2 & ('n == 1) then {
+    if   get_config_print_platform()
+    then print_platform("clic[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (clicintattr.MTI <- " ^ BitStr(data[7..0]) ^ ")");
+    ip_attr               = zero_extend(data[7..0]);
+    ip_attr_layout[MODE]  = zero_extend(ip_attr[7..6]);
+    ip_attr_layout[TRIG]  = zero_extend(ip_attr[2..1]);
+    if bit_to_bool(ip_attr[0]) then ip_shv = 0b1 else ip_shv = 0b0;
+    ip_attr_layout[SHV]   = ip_shv;
+    clicintattr[CLIC_MTI] = ip_attr_layout;
+    MemValue(true)
+  } else if addr == CLIC_MTI_BASE+3 & ('n == 1) then {
+    if   get_config_print_platform()
+    then print_platform("clic[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (clicintctl.MTI <- " ^ BitStr(data[7..0]) ^ ")");
+    clicintctl[CLIC_MTI]  = zero_extend(data[7..0]);
+    MemValue(true)
+  } else {
+    if   get_config_print_platform()
+    then print_platform("clic[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (<unmapped>)");
+    MemValue(true)
+  }
 }
 
 /* Basic terminal character I/O. */
@@ -386,14 +558,14 @@ function htif_tick() = {
 /* Top-level MMIO dispatch */
 $ifndef RVFI_DII
 function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool =
-  within_clint(addr, width) | (within_htif_readable(addr, width) & 1 <= 'n)
+  within_clint(addr, width) | within_clic(addr, width) | (within_htif_readable(addr, width) & 1 <= 'n)
 $else
 function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool = false
 $endif
 
 $ifndef RVFI_DII
 function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool =
-  within_clint(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
+  within_clint(addr, width) | within_clic(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
 $else
 function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : atom('n)) -> bool = false
 $endif
@@ -401,6 +573,8 @@ $endif
 function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : atom('n)) -> MemoryOpResult(bits(8 * 'n)) =
   if   within_clint(paddr, width)
   then clint_load(t, paddr, width)
+  else if within_clic(paddr, width)
+  then clic_load(t, paddr, width)
   else if within_htif_readable(paddr, width) & (1 <= 'n)
   then htif_load(t, paddr, width)
   else match t {
@@ -412,6 +586,8 @@ function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_acc
 function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : xlenbits, width : atom('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
   if   within_clint(paddr, width)
   then clint_store(paddr, width, data)
+  else if within_clic(paddr, width)
+  then clic_store(paddr, width, data)
   else if within_htif_writable(paddr, width) & 'n <= 8
   then htif_store(paddr, width, data)
   else MemException(E_SAMO_Access_Fault())

@@ -266,13 +266,14 @@ overload to_str = {exceptionType_to_str}
 /* trap modes */
 
 type tv_mode = bits(2)
-enum TrapVectorMode = {TV_Direct, TV_Vector, TV_Reserved}
+enum TrapVectorMode = {TV_Direct, TV_Vector, TV_Smclic, TV_Reserved}
 
 val trapVectorMode_of_bits : tv_mode -> TrapVectorMode
 function trapVectorMode_of_bits (m) =
   match (m) {
     0b00 => TV_Direct,
     0b01 => TV_Vector,
+    0b11 => TV_Smclic,
     _    => TV_Reserved
   }
 
