@@ -1,3 +1,70 @@
+(*==========================================================================*)
+(*     Sail                                                                 *)
+(*                                                                          *)
+(*  Sail and the Sail architecture models here, comprising all files and    *)
+(*  directories except the ASL-derived Sail code in the aarch64 directory,  *)
+(*  are subject to the BSD two-clause licence below.                        *)
+(*                                                                          *)
+(*  The ASL derived parts of the ARMv8.3 specification in                   *)
+(*  aarch64/no_vector and aarch64/full are copyright ARM Ltd.               *)
+(*                                                                          *)
+(*  Copyright (c) 2013-2021                                                 *)
+(*    Kathyrn Gray                                                          *)
+(*    Shaked Flur                                                           *)
+(*    Stephen Kell                                                          *)
+(*    Gabriel Kerneis                                                       *)
+(*    Robert Norton-Wright                                                  *)
+(*    Christopher Pulte                                                     *)
+(*    Peter Sewell                                                          *)
+(*    Alasdair Armstrong                                                    *)
+(*    Brian Campbell                                                        *)
+(*    Thomas Bauereiss                                                      *)
+(*    Anthony Fox                                                           *)
+(*    Jon French                                                            *)
+(*    Dominic Mulligan                                                      *)
+(*    Stephen Kell                                                          *)
+(*    Mark Wassell                                                          *)
+(*    Alastair Reid (Arm Ltd)                                               *)
+(*                                                                          *)
+(*  All rights reserved.                                                    *)
+(*                                                                          *)
+(*  This work was partially supported by EPSRC grant EP/K008528/1 <a        *)
+(*  href="http://www.cl.cam.ac.uk/users/pes20/rems">REMS: Rigorous          *)
+(*  Engineering for Mainstream Systems</a>, an ARM iCASE award, EPSRC IAA   *)
+(*  KTF funding, and donations from Arm.  This project has received         *)
+(*  funding from the European Research Council (ERC) under the European     *)
+(*  Union’s Horizon 2020 research and innovation programme (grant           *)
+(*  agreement No 789108, ELVER).                                            *)
+(*                                                                          *)
+(*  This software was developed by SRI International and the University of  *)
+(*  Cambridge Computer Laboratory (Department of Computer Science and       *)
+(*  Technology) under DARPA/AFRL contracts FA8650-18-C-7809 ("CIFV")        *)
+(*  and FA8750-10-C-0237 ("CTSRD").                                         *)
+(*                                                                          *)
+(*  Redistribution and use in source and binary forms, with or without      *)
+(*  modification, are permitted provided that the following conditions      *)
+(*  are met:                                                                *)
+(*  1. Redistributions of source code must retain the above copyright       *)
+(*     notice, this list of conditions and the following disclaimer.        *)
+(*  2. Redistributions in binary form must reproduce the above copyright    *)
+(*     notice, this list of conditions and the following disclaimer in      *)
+(*     the documentation and/or other materials provided with the           *)
+(*     distribution.                                                        *)
+(*                                                                          *)
+(*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''      *)
+(*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED       *)
+(*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A         *)
+(*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR     *)
+(*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,            *)
+(*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT        *)
+(*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF        *)
+(*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND     *)
+(*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,      *)
+(*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT      *)
+(*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF      *)
+(*  SUCH DAMAGE.                                                            *)
+(*==========================================================================*)
+
 Require Import Sail.Values.
 Require Import Sail.Prompt_monad.
 Require Import Sail.Prompt.
@@ -30,31 +97,27 @@ Fixpoint foreachS {A RV Vars E} (xs : list A) (vars : Vars) (body : A -> Vars ->
      foreachS xs vars body
 end.
 
-Fixpoint foreach_ZS_up' {rv e Vars} (from to step off : Z) (n : nat) `{ArithFact (0 <? step)} `{ArithFact (0 <=? off)} (vars : Vars) (body : forall (z : Z) `(ArithFact (from <=? z <=? to)), Vars -> monadS rv Vars e) {struct n} : monadS rv Vars e.
-exact (
+Fixpoint foreach_ZS_up' {rv e Vars} (from to step off : Z) (n : nat) (* 0 <? step *) (* 0 <=? off *) (vars : Vars) (body : forall (z : Z) (* from <=? z <=? to *), Vars -> monadS rv Vars e) {struct n} : monadS rv Vars e :=
   match sumbool_of_bool (from + off <=? to) with left LE =>
     match n with
     | O => returnS vars
-    | S n => body (from + off) _ vars >>$= fun vars => foreach_ZS_up' rv e Vars from to step (off + step) n _ _ vars body
+    | S n => body (from + off) vars >>$= fun vars => foreach_ZS_up' from to step (off + step) n vars body
     end
   | right _ => returnS vars
-  end).
-Defined.
+  end.
 
-Fixpoint foreach_ZS_down' {rv e Vars} (from to step off : Z) (n : nat) `{ArithFact (0 <? step)} `{ArithFact (off <=? 0)} (vars : Vars) (body : forall (z : Z) `(ArithFact (to <=? z <=? from)), Vars -> monadS rv Vars e) {struct n} : monadS rv Vars e.
-exact (
+Fixpoint foreach_ZS_down' {rv e Vars} (from to step off : Z) (n : nat) (* 0 <? step *) (* off <=? 0 *) (vars : Vars) (body : forall (z : Z) (* to <=? z <=? from *), Vars -> monadS rv Vars e) {struct n} : monadS rv Vars e :=
   match sumbool_of_bool (to <=? from + off) with left LE =>
     match n with
     | O => returnS vars
-    | S n => body (from + off) _ vars >>$= fun vars => foreach_ZS_down' _ _ _ from to step (off - step) n _ _ vars body
+    | S n => body (from + off) vars >>$= fun vars => foreach_ZS_down' from to step (off - step) n vars body
     end
   | right _ => returnS vars
-  end).
-Defined.
+  end.
 
-Definition foreach_ZS_up {rv e Vars} from to step vars body `{ArithFact (0 <? step)} :=
+Definition foreach_ZS_up {rv e Vars} from to step vars body (* 0 <? step *) :=
     foreach_ZS_up' (rv := rv) (e := e) (Vars := Vars) from to step 0 (S (Z.abs_nat (from - to))) vars body.
-Definition foreach_ZS_down {rv e Vars} from to step vars body `{ArithFact (0 <? step)} :=
+Definition foreach_ZS_down {rv e Vars} from to step vars body (* 0 <? step *) :=
     foreach_ZS_down' (rv := rv) (e := e) (Vars := Vars) from to step 0 (S (Z.abs_nat (from - to))) vars body.
 
 (*val genlistS : forall 'a 'rv 'e. (nat -> monadS 'rv 'a 'e) -> nat -> monadS 'rv (list 'a) 'e*)
@@ -73,19 +136,19 @@ Definition or_boolS {RV E} (l r : monadS RV bool E) : monadS RV bool E :=
 Definition and_boolSP {rv E} {P Q R:bool->Prop} (x : monadS rv {b:bool & ArithFactP (P b)} E) (y : monadS rv {b:bool & ArithFactP (Q b)} E)
   `{H:forall l r, ArithFactP ((P l) -> ((l = true -> (Q r)) -> (R (andb l r))))}
   : monadS rv {b:bool & ArithFactP (R b)} E :=
-  x >>$= fun '(existT _ x p) => (if x return ArithFactP (P x) -> _ then
-    fun p => y >>$= fun '(existT _ y q) => returnS (existT _ y (and_bool_full_proof p q H))
-  else fun p => returnS (existT _ false (and_bool_left_proof p H))) p.
+  x >>$= fun '(@existT _ _ x p) => (if x return ArithFactP (P x) -> _ then
+    fun p => y >>$= fun '(@existT _ _ y q) => returnS (@existT _ _ y (and_bool_full_proof p q H))
+  else fun p => returnS (@existT _ _ false (and_bool_left_proof p H))) p.
 
 Definition or_boolSP {rv E} {P Q R:bool -> Prop} (l : monadS rv {b : bool & ArithFactP (P b)} E) (r : monadS rv {b : bool & ArithFactP (Q b)} E)
  `{forall l r, ArithFactP ((P l) -> (((l = false) -> (Q r)) -> (R (orb l r))))}
  : monadS rv {b : bool & ArithFactP (R b)} E :=
- l >>$= fun '(existT _ l p) =>
-  (if l return ArithFactP (P l) -> _ then fun p => returnS (existT _ true (or_bool_left_proof p H))
-   else fun p => r >>$= fun '(existT _ r q) => returnS (existT _ r (or_bool_full_proof p q H))) p.
+ l >>$= fun '(@existT _ _ l p) =>
+  (if l return ArithFactP (P l) -> _ then fun p => returnS (@existT _ _ true (or_bool_left_proof p H))
+   else fun p => r >>$= fun '(@existT _ _ r q) => returnS (@existT _ _ r (or_bool_full_proof p q H))) p.
 
 Definition build_trivial_exS {rv E} {T:Type} (x : monadS rv T E) : monadS rv {x : T & ArithFact true} E :=
- x >>$= fun x => returnS (existT _ x (Build_ArithFactP _ eq_refl)).
+ x >>$= fun x => returnS (@existT _ _ x (Build_ArithFactP _ eq_refl)).
 
 (*val bool_of_bitU_fail : forall 'rv 'e. bitU -> monadS 'rv bool 'e*)
 Definition bool_of_bitU_fail {RV E} (b : bitU) : monadS RV bool E :=
@@ -100,7 +163,7 @@ Definition bool_of_bitU_nondetS {RV E} (b : bitU) : monadS RV bool E :=
 match b with
   | B0 => returnS false
   | B1 => returnS true
-  | BU => undefined_boolS tt
+  | BU => nondet_boolS
 end.
 
 (*val bools_of_bits_nondetS : forall 'rv 'e. list bitU -> monadS 'rv (list bool) 'e*)
@@ -169,35 +232,4 @@ Defined.
 Definition untilST {RV Vars E} (vars : Vars) measure (cond : Vars -> monadS RV bool E) (body : Vars -> monadS RV Vars E) : monadS RV Vars E :=
   let limit := measure vars in
   untilST' limit vars cond body (Zwf_guarded limit).
-
-
-(*val choose_boolsS : forall 'rv 'e. nat -> monadS 'rv (list bool) 'e*)
-Definition choose_boolsS {RV E} n : monadS RV (list bool) E :=
- genlistS (fun _ => choose_boolS tt) n.
-
-(* TODO: Replace by chooseS and prove equivalence to prompt monad version *)
-(*val internal_pickS : forall 'rv 'a 'e. list 'a -> monadS 'rv 'a 'e*)
-Definition internal_pickS {RV A E} (xs : list A) : monadS RV A E :=
-  (* Use sufficiently many nondeterministically chosen bits and convert into an
-     index into the list *)
-  choose_boolsS (List.length xs) >>$= fun bs =>
-  let idx := ((nat_of_bools bs) mod List.length xs)%nat in
-  match List.nth_error xs idx with
-    | Some x => returnS x
-    | None => failS "choose internal_pick"
-  end.
-
-Fixpoint undefined_word_natS {rv e} n : monadS rv (Word.word n) e :=
-  match n with
-  | O => returnS Word.WO
-  | S m =>
-    choose_boolS tt >>$= fun b =>
-    undefined_word_natS m >>$= fun t =>
-    returnS (Word.WS b t)
-  end.
-
-Definition undefined_bitvectorS {rv e} n `{ArithFact (n >=? 0)} : monadS rv (mword n) e :=
-  undefined_word_natS (Z.to_nat n) >>$= fun w =>
-  returnS (word_to_mword w).
-
 
