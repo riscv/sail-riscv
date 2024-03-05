@@ -84,6 +84,8 @@ val sys_enable_writable_misa = {c: "sys_enable_writable_misa", ocaml: "Platform.
 val sys_enable_rvc = {c: "sys_enable_rvc", ocaml: "Platform.enable_rvc", _: "sys_enable_rvc"} : unit -> bool
 /* whether misa.{f,d} were enabled at boot */
 val sys_enable_fdext = {c: "sys_enable_fdext", ocaml: "Platform.enable_fdext", _: "sys_enable_fdext"} : unit -> bool
+/* whether Zcb was enabled at boot */
+val sys_enable_zcb = {c: "sys_enable_zcb", ocaml: "Platform.enable_zcb", _: "sys_enable_zcb"} : unit -> bool
 /* whether zfinx was enabled at boot */
 val sys_enable_zfinx = {c: "sys_enable_zfinx", ocaml: "Platform.enable_zfinx", _: "sys_enable_zfinx"} : unit -> bool
 /* whether the N extension was enabled at boot */
@@ -308,6 +310,9 @@ function haveDExt()    -> bool = (misa[D] == 0b1) & (mstatus[FS] != 0b00) & size
 function haveZfh()     -> bool = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
 /* V extension has to enable both via misa.V as well as mstatus.VS */
 function haveVExt()    -> bool = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
+
+/* Zcb has simple code-size saving instructions. (The Zcb extension depends on the Zca extension.) */
+function haveZcb()     -> bool = sys_enable_zcb()
 
 /* Zhinx, Zfinx and Zdinx extensions (TODO: gate FCSR access on [mhs]stateen0 bit 1 when implemented) */
 function haveZhinx()   -> bool = sys_enable_zfinx()
