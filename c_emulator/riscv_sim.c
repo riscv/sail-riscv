@@ -53,6 +53,7 @@ const char *RV32ISA = "RV32IMAC";
 #define OPT_ENABLE_WRITABLE_FIOM 1001
 #define OPT_PMP_COUNT 1002
 #define OPT_PMP_GRAIN 1003
+#define OPT_ENABLE_ZCB 10014
 
 static bool do_dump_dts = false;
 static bool do_show_times = false;
@@ -145,6 +146,7 @@ static struct option options[] = {
     {"inst-limit",                  required_argument, 0, 'l'                     },
     {"enable-zfinx",                no_argument,       0, 'x'                     },
     {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
+    {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
@@ -385,6 +387,10 @@ static int process_args(int argc, char **argv)
       break;
     case 'l':
       insn_limit = atoi(optarg);
+      break;
+    case OPT_ENABLE_ZCB:
+      fprintf(stderr, "enabling Zcb extension.\n");
+      rv_enable_zcb = true;
       break;
     case 'x':
       fprintf(stderr, "enabling Zfinx support.\n");
