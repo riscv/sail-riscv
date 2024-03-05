@@ -6,6 +6,7 @@
 uint64_t rv_pmp_count = 0;
 uint64_t rv_pmp_grain = 0;
 
+bool rv_enable_zcb = false;
 bool rv_enable_zfinx = false;
 bool rv_enable_rvc = true;
 bool rv_enable_next = false;

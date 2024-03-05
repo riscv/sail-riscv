@@ -32,6 +32,11 @@ bool sys_enable_fdext(unit u)
   return rv_enable_fdext;
 }
 
+bool sys_enable_zcb(unit u)
+{
+  return rv_enable_zcb;
+}
+
 bool sys_enable_zfinx(unit u)
 {
   return rv_enable_zfinx;
