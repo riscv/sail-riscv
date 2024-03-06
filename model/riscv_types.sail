@@ -28,7 +28,7 @@ type csreg   = bits(12)   /* CSR addressing */
 
 /* register file indexing */
 
-type regno ('n : Int), 0 <= 'n < 32 = atom('n)
+type regno ('n : Int), 0 <= 'n < 32 = int('n)
 
 val regidx_to_regno : bits(5) -> {'n, 0 <= 'n < 32. regno('n)}
 function regidx_to_regno b = let 'r = unsigned(b) in r
@@ -381,7 +381,7 @@ mapping size_mnemonic : word_width <-> string = {
   DOUBLE <-> "d"
 }
 
-val word_width_bytes : word_width -> {'s, 's == 1 | 's == 2 | 's == 4 | 's == 8 . atom('s)}
+val word_width_bytes : word_width -> {'s, 's == 1 | 's == 2 | 's == 4 | 's == 8 . int('s)}
 function word_width_bytes width = match width {
   BYTE   => 1,
   HALF   => 2,

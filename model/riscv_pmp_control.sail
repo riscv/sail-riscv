@@ -104,7 +104,7 @@ function accessToFault(acc : AccessType(ext_access_type)) -> ExceptionType =
     Execute()    => E_Fetch_Access_Fault(),
   }
 
-function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: atom('n), acc: AccessType(ext_access_type), priv: Privilege)
+function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: int('n), acc: AccessType(ext_access_type), priv: Privilege)
                   -> option(ExceptionType) = {
   let width : xlenbits = to_bits(sizeof(xlen), width);
 
