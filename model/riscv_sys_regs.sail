@@ -371,7 +371,7 @@ bitfield Medeleg : xlenbits = {
   SAMO_Page_Fault   : 15,
   Load_Page_Fault   : 13,
   Fetch_Page_Fault  : 12,
-  MEnvCall          : 10,
+  MEnvCall          : 11,
   SEnvCall          : 9,
   UEnvCall          : 8,
   SAMO_Access_Fault : 7,
