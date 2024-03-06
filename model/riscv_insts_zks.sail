@@ -15,10 +15,10 @@ union clause ast = SM3P0 : (regidx, regidx)
 union clause ast = SM3P1 : (regidx, regidx)
 
 mapping clause encdec = SM3P0 (rs1, rd) if haveZksh()
-  <-> 0b00 @ 0b01000 @ 0b01000 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b01000 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZksh()
 
 mapping clause encdec = SM3P1 (rs1, rd) if haveZksh()
-  <-> 0b00 @ 0b01000 @ 0b01001 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b01001 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZksh()
 
 mapping clause assembly = SM3P0 (rs1, rd) <->
   "sm3p0" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
@@ -49,10 +49,10 @@ union clause ast = SM4ED : (bits(2), regidx, regidx, regidx)
 union clause ast = SM4KS : (bits(2), regidx, regidx, regidx)
 
 mapping clause encdec = SM4ED (bs, rs2, rs1, rd) if haveZksed()
-  <-> bs @ 0b11000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> bs @ 0b11000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZksed()
 
 mapping clause encdec = SM4KS (bs, rs2, rs1, rd) if haveZksed()
-  <-> bs @ 0b11010 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> bs @ 0b11010 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZksed()
 
 mapping clause assembly = SM4ED (bs, rs2, rs1, rd) <->
     "sm4ed" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)
