@@ -50,6 +50,19 @@ function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> option(read_ki
     (false, true, true)   => None()
   }
 
+function write_kind_of_flags (aq : bool, rl : bool, con : bool) -> write_kind =
+  match (aq, rl, con) {
+    (false, false, false) => Write_plain,
+    (false, true,  false) => Write_RISCV_release,
+    (false, false, true)  => Write_RISCV_conditional,
+    (false, true , true)  => Write_RISCV_conditional_release,
+    (true,  true,  false) => Write_RISCV_strong_release,
+    (true,  true , true)  => Write_RISCV_conditional_strong_release,
+    // throw an illegal instruction here?
+    (true,  false, false) => throw(Error_not_implemented("store.aq")),
+    (true,  false, true)  => throw(Error_not_implemented("sc.aq"))
+  }
+
 // only used for actual memory regions, to avoid MMIO effects
 function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : int('n), aq : bool, rl: bool, res : bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
   let result = (match read_kind_of_flags(aq, rl, res) {
@@ -66,28 +79,39 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
   }
 }
 
-/* dispatches to MMIO regions or physical memory regions depending on physical memory map */
-function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : int('n), aq : bool, rl : bool, res: bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
-  if   within_mmio_readable(paddr, width)
-  then MemoryOpResult_add_meta(mmio_read(t, paddr, width), default_meta)
-  else if within_phys_mem(paddr, width)
-  then match ext_check_phys_mem_read(t, paddr, width, aq, rl, res, meta) {
-    Ext_PhysAddr_OK()     => phys_mem_read(t, paddr, width, aq, rl, res, meta),
-    Ext_PhysAddr_Error(e) => MemException(e)
-  } else match t {
-    Execute()  => MemException(E_Fetch_Access_Fault()),
-    Read(Data) => MemException(E_Load_Access_Fault()),
-    _          => MemException(E_SAMO_Access_Fault())
-  }
+// Check if access is permitted according to PMPs and PMAs.
+val phys_access_check : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), Privilege, xlenbits, int('n)) -> option(ExceptionType)
+function phys_access_check (t, p, paddr, width) = {
+  let pmpError : option(ExceptionType) = if sys_pmp_count() == 0 then None() else pmpCheck(paddr, width, t, p);
+  // TODO: Also check PMAs and select the highest priority fault.
+  pmpError
+}
 
-/* PMP checks if enabled */
-function pmp_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), p : Privilege, paddr : xlenbits, width : int('n), aq : bool, rl : bool, res: bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
-  if   sys_pmp_count() == 0
-  then checked_mem_read(t, paddr, width, aq, rl, res, meta)
-  else {
-    match pmpCheck(paddr, width, t, p) {
-      None()  => checked_mem_read(t, paddr, width, aq, rl, res, meta),
-      Some(e) => MemException(e)
+/* dispatches to MMIO regions or physical memory regions depending on physical memory map */
+function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
+  t : AccessType(ext_access_type),
+  priv : Privilege,
+  paddr : xlenbits,
+  width : int('n),
+  aq : bool,
+  rl : bool,
+  res: bool,
+  meta : bool,
+) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
+  match phys_access_check(t, priv, paddr, width) {
+    Some(e) => MemException(e),
+    None() => {
+      if   within_mmio_readable(paddr, width)
+      then MemoryOpResult_add_meta(mmio_read(t, paddr, width), default_meta)
+      else if within_phys_mem(paddr, width)
+      then match ext_check_phys_mem_read(t, paddr, width, aq, rl, res, meta) {
+        Ext_PhysAddr_OK()     => phys_mem_read(t, paddr, width, aq, rl, res, meta),
+        Ext_PhysAddr_Error(e) => MemException(e)
+      } else match t {
+        Execute()  => MemException(E_Fetch_Access_Fault()),
+        Read(Data) => MemException(E_Load_Access_Fault()),
+        _          => MemException(E_SAMO_Access_Fault())
+      }
     }
   }
 
@@ -133,7 +157,7 @@ function mem_read_priv_meta (typ, priv, paddr, width, aq, rl, res, meta) = {
     else match (aq, rl, res) {
       (false, true,  false) => throw(Error_not_implemented("load.rl")),
       (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
-      (_, _, _)             => pmp_mem_read(typ, priv, paddr, width, aq, rl, res, meta)
+      (_, _, _)             => checked_mem_read(typ, priv, paddr, width, aq, rl, res, meta)
     };
   rvfi_read(paddr, width, result);
   result
@@ -151,21 +175,10 @@ function mem_read (typ, paddr, width, aq, rel, res) =
   mem_read_priv(typ, effectivePrivilege(typ, mstatus, cur_privilege), paddr, width, aq, rel, res)
 
 val mem_write_ea : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, int('n), bool, bool, bool) -> MemoryOpResult(unit)
-
-function mem_write_ea (addr, width, aq, rl, con) = {
+function mem_write_ea (addr, width, aq, rl, con) =
   if (rl | con) & not(is_aligned_addr(addr, width))
   then MemException(E_SAMO_Addr_Align())
-  else match (aq, rl, con) {
-    (false, false, false) => MemValue(write_ram_ea(Write_plain, addr, width)),
-    (false, true,  false) => MemValue(write_ram_ea(Write_RISCV_release, addr, width)),
-    (false, false, true)  => MemValue(write_ram_ea(Write_RISCV_conditional, addr, width)),
-    (false, true , true)  => MemValue(write_ram_ea(Write_RISCV_conditional_release, addr, width)),
-    (true,  false, false) => throw(Error_not_implemented("store.aq")),
-    (true,  true,  false) => MemValue(write_ram_ea(Write_RISCV_strong_release, addr, width)),
-    (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
-    (true,  true , true)  => MemValue(write_ram_ea(Write_RISCV_conditional_strong_release, addr, width))
-  }
-}
+  else MemValue(write_ram_ea(write_kind_of_flags(aq, rl, con), addr, width))
 
 $ifdef RVFI_DII
 val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, int('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit
@@ -198,24 +211,30 @@ function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, 
 }
 
 /* dispatches to MMIO regions or physical memory regions depending on physical memory map */
-function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : xlenbits, width : int('n), data: bits(8 * 'n), meta: mem_meta) -> MemoryOpResult(bool) =
-  if   within_mmio_writable(paddr, width)
-  then mmio_write(paddr, width, data)
-  else if within_phys_mem(paddr, width)
-  then match ext_check_phys_mem_write (wk, paddr, width, data, meta) {
-    Ext_PhysAddr_OK() => phys_mem_write(wk, paddr, width, data, meta),
-    Ext_PhysAddr_Error(e)  => MemException(e)
-  }
-  else MemException(E_SAMO_Access_Fault())
-
-/* PMP checks if enabled */
-function pmp_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk: write_kind, paddr : xlenbits, width : int('n), data: bits(8 * 'n), typ: AccessType(ext_access_type), priv: Privilege, meta: mem_meta) -> MemoryOpResult(bool) =
-  if   sys_pmp_count() == 0
-  then checked_mem_write(wk, paddr, width, data, meta)
-  else {
-    match pmpCheck(paddr, width, typ, priv) {
-      None()  => checked_mem_write(wk, paddr, width, data, meta),
-      Some(e) => MemException(e)
+function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
+  paddr : xlenbits,
+  width : int('n),
+  data: bits(8 * 'n),
+  typ : AccessType(ext_access_type),
+  priv : Privilege,
+  meta: mem_meta,
+  aq : bool,
+  rl : bool,
+  con : bool,
+) -> MemoryOpResult(bool) =
+  match phys_access_check(typ, priv, paddr, width) {
+    Some(e) => MemException(e),
+    None() => {
+      if   within_mmio_writable(paddr, width)
+      then mmio_write(paddr, width, data)
+      else if within_phys_mem(paddr, width)
+      then {
+        let wk = write_kind_of_flags(aq, rl, con);
+        match ext_check_phys_mem_write (wk, paddr, width, data, meta) {
+          Ext_PhysAddr_OK() => phys_mem_write(wk, paddr, width, data, meta),
+          Ext_PhysAddr_Error(e)  => MemException(e),
+        }
+      } else MemException(E_SAMO_Access_Fault())
     }
   }
 
@@ -231,18 +250,7 @@ function mem_write_value_priv_meta (paddr, width, value, typ, priv, meta, aq, rl
   if (rl | con) & not(is_aligned_addr(paddr, width))
   then MemException(E_SAMO_Addr_Align())
   else {
-    let wk : write_kind = match (aq, rl, con) {
-      (false, false, false) => Write_plain,
-      (false, true,  false) => Write_RISCV_release,
-      (false, false, true)  => Write_RISCV_conditional,
-      (false, true , true)  => Write_RISCV_conditional_release,
-      (true,  true,  false) => Write_RISCV_strong_release,
-      (true,  true , true)  => Write_RISCV_conditional_strong_release,
-      // throw an illegal instruction here?
-      (true,  false, false) => throw(Error_not_implemented("store.aq")),
-      (true,  false, true)  => throw(Error_not_implemented("sc.aq"))
-    };
-    let result = pmp_mem_write(wk, paddr, width, value, typ, priv, meta);
+    let result = checked_mem_write(paddr, width, value, typ, priv, meta, aq, rl, con);
     rvfi_write(paddr, width, value, meta, result);
     result
   }
