@@ -37,7 +37,7 @@ function nan_box_H   val_16b =
 val      nan_unbox_H : flenbits -> bits(16)
 function nan_unbox_H   regval =
   if (sizeof(flen) == 32)
-  then if regval [32..16] == 0x_FFFF
+  then if regval [31..16] == 0x_FFFF
        then regval [15..0]
        else canonical_NaN_H()
   else if regval [63..16] == 0x_FFFF_FFFF_FFFF
