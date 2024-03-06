@@ -367,7 +367,8 @@ mapping bool_not_bits : bool <-> bits(1) = {
   false  <-> 0b1
 }
 
-mapping size_bits : word_width <-> bits(2) = {
+// Get the bit encoding of word_width.
+mapping size_enc : word_width <-> bits(2) = {
   BYTE   <-> 0b00,
   HALF   <-> 0b01,
   WORD   <-> 0b10,
@@ -381,12 +382,11 @@ mapping size_mnemonic : word_width <-> string = {
   DOUBLE <-> "d"
 }
 
-val word_width_bytes : word_width -> {'s, 's == 1 | 's == 2 | 's == 4 | 's == 8 . int('s)}
-function word_width_bytes width = match width {
-  BYTE   => 1,
-  HALF   => 2,
-  WORD   => 4,
-  DOUBLE => 8
+mapping size_bytes : word_width <-> {1, 2, 4, 8} = {
+  BYTE   <-> 1,
+  HALF   <-> 2,
+  WORD   <-> 4,
+  DOUBLE <-> 8,
 }
 
 /*!
