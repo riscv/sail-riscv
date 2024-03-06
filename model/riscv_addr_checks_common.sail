@@ -40,7 +40,7 @@ union Ext_PhysAddr_Check = {
  * return Some(exception) to abort the read or None to allow it to proceed. The
  * check is performed after PMP checks and does not apply to MMIO memory.
  */
-val ext_check_phys_mem_read : forall 'n, 0 < 'n <= max_mem_access . (AccessType (ext_access_type), xlenbits, atom('n), bool, bool, bool, bool) -> Ext_PhysAddr_Check
+val ext_check_phys_mem_read : forall 'n, 0 < 'n <= max_mem_access . (AccessType (ext_access_type), xlenbits, int('n), bool, bool, bool, bool) -> Ext_PhysAddr_Check
 
 /*!
  * Validate a write to physical memory.
@@ -48,4 +48,4 @@ val ext_check_phys_mem_read : forall 'n, 0 < 'n <= max_mem_access . (AccessType 
  * to abort the write or None to allow it to proceed. The check is performed
  * after PMP checks and does not apply to MMIO memory.
  */
-val ext_check_phys_mem_write : forall 'n, 0 < 'n <= max_mem_access . (write_kind, xlenbits, atom('n), bits(8 * 'n), mem_meta) -> Ext_PhysAddr_Check
+val ext_check_phys_mem_write : forall 'n, 0 < 'n <= max_mem_access . (write_kind, xlenbits, int('n), bits(8 * 'n), mem_meta) -> Ext_PhysAddr_Check
