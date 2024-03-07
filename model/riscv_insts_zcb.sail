@@ -197,8 +197,8 @@ function clause execute C_NOT(rsdc) = {
 union clause ast = C_MUL : (cregidx, cregidx)
 
 mapping clause encdec_compressed =
-      C_MUL(rsdc, rs2c)                                             if haveZcb() & (haveMulDiv() | haveZmmul())
-  <-> 0b100 @ 0b111 @ rsdc : cregidx @ 0b10 @ rs2c : cregidx @ 0b01 if haveZcb() & (haveMulDiv() | haveZmmul())
+      C_MUL(rsdc, rs2c)                                             if haveZcb() & (extensionEnabled(Ext_M) | extensionEnabled(Ext_Zmmul))
+  <-> 0b100 @ 0b111 @ rsdc : cregidx @ 0b10 @ rs2c : cregidx @ 0b01 if haveZcb() & (extensionEnabled(Ext_M) | extensionEnabled(Ext_Zmmul))
 
 mapping clause assembly = C_MUL(rsdc, rs2c) <->
   "c.mul" ^ spc() ^ creg_name(rsdc) ^ sep() ^ creg_name(rs2c)

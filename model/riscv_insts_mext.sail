@@ -11,6 +11,12 @@
 
 /* ****************************************************************** */
 
+enum clause extension = Ext_M
+function clause extensionEnabled(Ext_M) = misa[M] == 0b1
+enum clause extension = Ext_Zmmul
+function clause extensionEnabled(Ext_Zmmul) = true
+
+
 union clause ast = MUL : (regidx, regidx, regidx, mul_op)
 
 mapping encdec_mul_op : mul_op <-> bits(3) = {
@@ -20,8 +26,8 @@ mapping encdec_mul_op : mul_op <-> bits(3) = {
   struct { high = true,  signed_rs1 = false, signed_rs2 = false } <-> 0b011
 }
 
-mapping clause encdec = MUL(rs2, rs1, rd, mul_op)                    if haveMulDiv() | haveZmmul()
-  <-> 0b0000001 @ rs2 @ rs1 @ encdec_mul_op(mul_op) @ rd @ 0b0110011 if haveMulDiv() | haveZmmul()
+mapping clause encdec = MUL(rs2, rs1, rd, mul_op)                    if extensionEnabled(Ext_M) | extensionEnabled(Ext_Zmmul)
+  <-> 0b0000001 @ rs2 @ rs1 @ encdec_mul_op(mul_op) @ rd @ 0b0110011 if extensionEnabled(Ext_M) | extensionEnabled(Ext_Zmmul)
 
 function clause execute (MUL(rs2, rs1, rd, mul_op)) = {
   let rs1_val = X(rs1);
@@ -49,8 +55,8 @@ mapping clause assembly = MUL(rs2, rs1, rd, mul_op)
 /* ****************************************************************** */
 union clause ast = DIV : (regidx, regidx, regidx, bool)
 
-mapping clause encdec = DIV(rs2, rs1, rd, s)                           if haveMulDiv()
-  <-> 0b0000001 @ rs2 @ rs1 @ 0b10 @ bool_not_bits(s) @ rd @ 0b0110011 if haveMulDiv()
+mapping clause encdec = DIV(rs2, rs1, rd, s)                           if extensionEnabled(Ext_M)
+  <-> 0b0000001 @ rs2 @ rs1 @ 0b10 @ bool_not_bits(s) @ rd @ 0b0110011 if extensionEnabled(Ext_M)
 
 function clause execute (DIV(rs2, rs1, rd, s)) = {
   let rs1_val = X(rs1);
@@ -75,8 +81,8 @@ mapping clause assembly = DIV(rs2, rs1, rd, s)
 /* ****************************************************************** */
 union clause ast = REM : (regidx, regidx, regidx, bool)
 
-mapping clause encdec = REM(rs2, rs1, rd, s)                           if haveMulDiv()
-  <-> 0b0000001 @ rs2 @ rs1 @ 0b11 @ bool_not_bits(s) @ rd @ 0b0110011 if haveMulDiv()
+mapping clause encdec = REM(rs2, rs1, rd, s)                           if extensionEnabled(Ext_M)
+  <-> 0b0000001 @ rs2 @ rs1 @ 0b11 @ bool_not_bits(s) @ rd @ 0b0110011 if extensionEnabled(Ext_M)
 
 function clause execute (REM(rs2, rs1, rd, s)) = {
   let rs1_val = X(rs1);
@@ -96,9 +102,9 @@ mapping clause assembly = REM(rs2, rs1, rd, s)
 union clause ast = MULW : (regidx, regidx, regidx)
 
 mapping clause encdec = MULW(rs2, rs1, rd)
-      if sizeof(xlen) == 64 & (haveMulDiv() | haveZmmul())
+      if sizeof(xlen) == 64 & (extensionEnabled(Ext_M) | extensionEnabled(Ext_Zmmul))
   <-> 0b0000001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
-      if sizeof(xlen) == 64 & (haveMulDiv() | haveZmmul())
+      if sizeof(xlen) == 64 & (extensionEnabled(Ext_M) | extensionEnabled(Ext_Zmmul))
 
 function clause execute (MULW(rs2, rs1, rd)) = {
   let rs1_val = X(rs1)[31..0];
@@ -121,9 +127,9 @@ mapping clause assembly = MULW(rs2, rs1, rd)
 union clause ast = DIVW : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = DIVW(rs2, rs1, rd, s)
-      if sizeof(xlen) == 64 & haveMulDiv()
+      if sizeof(xlen) == 64 & extensionEnabled(Ext_M)
   <-> 0b0000001 @ rs2 @ rs1 @ 0b10 @ bool_not_bits(s) @ rd @ 0b0111011
-      if sizeof(xlen) == 64 & haveMulDiv()
+      if sizeof(xlen) == 64 & extensionEnabled(Ext_M)
 
 function clause execute (DIVW(rs2, rs1, rd, s)) = {
   let rs1_val = X(rs1)[31..0];
@@ -146,9 +152,9 @@ mapping clause assembly = DIVW(rs2, rs1, rd, s)
 union clause ast = REMW : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = REMW(rs2, rs1, rd, s)
-      if sizeof(xlen) == 64 & haveMulDiv()
+      if sizeof(xlen) == 64 & extensionEnabled(Ext_M)
   <-> 0b0000001 @ rs2 @ rs1 @ 0b11 @ bool_not_bits(s) @ rd @ 0b0111011
-      if sizeof(xlen) == 64 & haveMulDiv()
+      if sizeof(xlen) == 64 & extensionEnabled(Ext_M)
 
 function clause execute (REMW(rs2, rs1, rd, s)) = {
   let rs1_val = X(rs1)[31..0];

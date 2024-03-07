@@ -130,8 +130,6 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
 
 /* helpers to check support for various extensions. */
 /* we currently don't model 'E', so always assume 'I'. */
-function haveAtomics() -> bool = misa[A] == 0b1
-function haveMulDiv()  -> bool = misa[M] == 0b1
 function haveSupMode() -> bool = misa[S] == 0b1
 function haveUsrMode() -> bool = misa[U] == 0b1
 function haveNExt()    -> bool = misa[N] == 0b1
@@ -141,15 +139,6 @@ function haveNExt()    -> bool = misa[N] == 0b1
 function haveBExt() -> bool = misa[B] == 0b1
 function haveZba()  -> bool = true | haveBExt()
 function haveZbb()  -> bool = true | haveBExt()
-
-function haveZmmul()  -> bool = true
-
-/* A extension sub-extensions */
-function haveZaamo()  -> bool = haveAtomics()
-function haveZalrsc() -> bool = haveAtomics()
-
-/* Zabha extension support */
-function haveZabha() -> bool = true
 
 /*
  * Illegal values legalized to least privileged mode supported.
