@@ -6,8 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* Define the XLEN value for the architecture. */
-
-type xlen       : Int = 64
-type xlen_bytes : Int = 8
-type xlenbits         = bits(xlen)
+// Define the XLEN value for the architecture.
+// This is done using the smallest/most logarithmic possible value since Sail's
+// type system works well for multiply and 2^ but not divide and log2.
+type log2_xlen_bytes : Int = 3
