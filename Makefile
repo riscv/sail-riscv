@@ -17,6 +17,7 @@ else ifeq ($(ARCH),RV64)
 else
   $(error '$(ARCH)' is not a valid architecture, must be one of: RV32, RV64)
 endif
+SAIL_XLEN += riscv_xlen.sail
 
 SAIL_FLEN := riscv_flen_D.sail
 SAIL_VLEN := riscv_vlen.sail
