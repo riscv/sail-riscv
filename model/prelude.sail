@@ -116,22 +116,31 @@ val to_bits : forall 'l, 'l >= 0.(atom('l), int) -> bits('l)
 function to_bits (l, n) = get_slice_int(l, n, 0)
 
 infix 4 <_s
+infix 4 >_s
+infix 4 <=_s
 infix 4 >=_s
 infix 4 <_u
-infix 4 >=_u
+infix 4 >_u
 infix 4 <=_u
+infix 4 >=_u
 
 val operator <_s  : forall 'n, 'n > 0. (bits('n), bits('n)) -> bool
+val operator >_s  : forall 'n, 'n > 0. (bits('n), bits('n)) -> bool
+val operator <=_s : forall 'n, 'n > 0. (bits('n), bits('n)) -> bool
 val operator >=_s : forall 'n, 'n > 0. (bits('n), bits('n)) -> bool
 val operator <_u  : forall 'n. (bits('n), bits('n)) -> bool
-val operator >=_u : forall 'n. (bits('n), bits('n)) -> bool
+val operator >_u  : forall 'n. (bits('n), bits('n)) -> bool
 val operator <=_u : forall 'n. (bits('n), bits('n)) -> bool
+val operator >=_u : forall 'n. (bits('n), bits('n)) -> bool
 
 function operator <_s  (x, y) = signed(x) < signed(y)
+function operator >_s  (x, y) = signed(x) > signed(y)
+function operator <=_s (x, y) = signed(x) <= signed(y)
 function operator >=_s (x, y) = signed(x) >= signed(y)
 function operator <_u  (x, y) = unsigned(x) < unsigned(y)
-function operator >=_u (x, y) = unsigned(x) >= unsigned(y)
+function operator >_u  (x, y) = unsigned(x) > unsigned(y)
 function operator <=_u (x, y) = unsigned(x) <= unsigned(y)
+function operator >=_u (x, y) = unsigned(x) >= unsigned(y)
 
 infix 7 >>
 infix 7 <<
