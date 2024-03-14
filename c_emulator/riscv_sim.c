@@ -53,6 +53,8 @@ const char *RV32ISA = "RV32IMAC";
 #define OPT_ENABLE_WRITABLE_FIOM 1001
 #define OPT_PMP_COUNT 1002
 #define OPT_PMP_GRAIN 1003
+#define OPT_ENABLE_SSDBLTRP 1006
+#define OPT_ENABLE_SMDBLTRP 1007
 
 static bool do_dump_dts = false;
 static bool do_show_times = false;
@@ -148,6 +150,8 @@ static struct option options[] = {
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
+    {"enable-ssdbltrp",             no_argument,       0, OPT_ENABLE_SSDBLTRP   },
+    {"enable-smdbltrp",             no_argument,       0, OPT_ENABLE_SMDBLTRP   },
     {0,                             0,                 0, 0                       }
 };
 
@@ -399,6 +403,14 @@ static int process_args(int argc, char **argv)
     case OPT_TRACE_OUTPUT:
       trace_log_path = optarg;
       fprintf(stderr, "using %s for trace output.\n", trace_log_path);
+      break;
+    case OPT_ENABLE_SSDBLTRP:
+      fprintf(stderr, "enabling Ssdbltrp extension.\n");
+      rv_enable_ssdbltrp = true;
+      break;
+    case OPT_ENABLE_SMDBLTRP:
+      fprintf(stderr, "enabling Smdbltrp extension.\n");
+      rv_enable_smdbltrp = true;
       break;
     case '?':
       print_usage(argv[0], 1);
