@@ -108,8 +108,8 @@ mapping vreg_name = {
 
 function dirty_v_context() -> unit = {
   assert(sys_enable_vext());
-  mstatus->VS() = extStatus_to_bits(Dirty);
-  mstatus->SD() = 0b1
+  mstatus[VS] = extStatus_to_bits(Dirty);
+  mstatus[SD] = 0b1
 }
 
 function dirty_v_context_if_present() -> unit = {
@@ -202,7 +202,7 @@ function wV (r, in_v) = {
   let VLEN = unsigned(vlenb) * 8;
   assert(0 < VLEN & VLEN <= sizeof(vlenmax));
   if   get_config_print_reg()
-  then print_reg("v" ^ string_of_int(r) ^ " <- " ^ BitStr(v[VLEN - 1 .. 0]));
+  then print_reg("v" ^ dec_str(r) ^ " <- " ^ BitStr(v[VLEN - 1 .. 0]));
 }
 
 function rV_bits(i: bits(5)) -> vregtype = rV(unsigned(i))
@@ -259,8 +259,8 @@ register vcsr : Vcsr
 
 val ext_write_vcsr : (bits(2), bits(1)) -> unit
 function ext_write_vcsr (vxrm_val, vxsat_val) = {
-  vcsr->vxrm()  = vxrm_val; /* Note: frm can be an illegal value, 101, 110, 111 */
-  vcsr->vxsat() = vxsat_val;
+  vcsr[vxrm]  = vxrm_val; /* Note: frm can be an illegal value, 101, 110, 111 */
+  vcsr[vxsat] = vxsat_val;
   dirty_v_context_if_present()
 }
 

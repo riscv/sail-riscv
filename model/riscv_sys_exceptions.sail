@@ -125,25 +125,25 @@ function prepare_xret_target(p) =
 /* other trap-related CSRs */
 
 function get_mtvec() -> xlenbits =
-  mtvec.bits()
+  mtvec.bits
 
 function get_stvec() -> xlenbits =
-  stvec.bits()
+  stvec.bits
 
 function get_utvec() -> xlenbits =
-  utvec.bits()
+  utvec.bits
 
 function set_mtvec(value : xlenbits) -> xlenbits = {
   mtvec = legalize_tvec(mtvec, value);
-  mtvec.bits()
+  mtvec.bits
 }
 
 function set_stvec(value : xlenbits) -> xlenbits = {
   stvec = legalize_tvec(stvec, value);
-  stvec.bits()
+  stvec.bits
 }
 
 function set_utvec(value : xlenbits) -> xlenbits = {
   utvec = legalize_tvec(utvec, value);
-  utvec.bits()
+  utvec.bits
 }

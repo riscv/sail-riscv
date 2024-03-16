@@ -71,7 +71,7 @@
 /* ********************************************************************* */
 /* This file specifies the compressed floating-point instructions.
  *
- * These instructions are only legal if misa.C() and misa.D()
+ * These instructions are only legal if misa[C] and misa[D]
  * are set.
  */
 

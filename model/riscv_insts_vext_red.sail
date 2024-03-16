@@ -190,7 +190,7 @@ mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd) if haveVExt()
 
 val process_rfvv_single: forall 'n 'm 'p, 'n >= 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), int('p)) -> Retired
 function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
-  let rm_3b = fcsr.FRM();
+  let rm_3b = fcsr[FRM];
   let num_elem_vd = get_num_elem(0, SEW); /* vd regardless of LMUL setting */
 
   if illegal_fp_reduction(SEW, rm_3b) then { handle_illegal(); return RETIRE_FAIL };
@@ -229,7 +229,7 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_po
 
 val process_rfvv_widen: forall 'n 'm 'p, 'n >= 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), int('p)) -> Retired
 function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
-  let rm_3b          = fcsr.FRM();
+  let rm_3b          = fcsr[FRM];
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
   let num_elem_vd = get_num_elem(0, SEW_widen); /* vd regardless of LMUL setting */

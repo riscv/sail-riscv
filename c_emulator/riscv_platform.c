@@ -47,6 +47,16 @@ bool sys_enable_vext(unit u)
   return rv_enable_vext;
 }
 
+uint64_t sys_pmp_count(unit u)
+{
+  return rv_pmp_count;
+}
+
+uint64_t sys_pmp_grain(unit u)
+{
+  return rv_pmp_grain;
+}
+
 bool sys_enable_writable_misa(unit u)
 {
   return rv_enable_writable_misa;
@@ -67,9 +77,14 @@ bool plat_mtval_has_illegal_inst_bits(unit u)
   return rv_mtval_has_illegal_inst_bits;
 }
 
-bool plat_enable_pmp(unit u)
+bool sys_enable_svnapot(unit u)
 {
-  return rv_enable_pmp;
+  return rv_enable_svnapot;
+}
+
+bool sys_enable_svpbmt(unit u)
+{
+  return rv_enable_svpbmt;
 }
 
 bool sys_enable_svnapot(unit u)

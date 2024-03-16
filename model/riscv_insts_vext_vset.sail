@@ -92,11 +92,11 @@ function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
   /* set vtype */
   match op {
     VSETVLI => {
-      vtype->bits() = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul
+      vtype.bits = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul
     },
     VSETVL  => {
       let rs2 : regidx = sew[1 .. 0] @ lmul;
-      vtype->bits() = X(rs2)
+      vtype.bits = X(rs2)
     }
   };
 
@@ -107,9 +107,9 @@ function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
     /* Note: Implementations can set vill or trap if the vtype setting is not supported.
      * TODO: configuration support for both solutions
      */
-    vtype->bits() = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
+    vtype.bits = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
     vl = zeros();
-    print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
+    print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
     print_reg("CSR vl <- " ^ BitStr(vl));
     return RETIRE_SUCCESS
   };
@@ -137,11 +137,11 @@ function clause execute VSET_TYPE(op, ma, ta, sew, lmul, rs1, rd) = {
       /* Note: Implementations can set vill or trap if the vtype setting is not supported.
        * TODO: configuration support for both solutions
        */
-      vtype->bits() = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
+      vtype.bits = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
       vl = zeros();
     }
   };
-  print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
+  print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
   print_reg("CSR vl <- " ^ BitStr(vl));
 
   /* reset vstart to 0 */
@@ -173,7 +173,7 @@ function clause execute VSETI_TYPE(ma, ta, sew, lmul, uimm, rd) = {
   let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
 
   /* set vtype */
-  vtype->bits() = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul;
+  vtype.bits = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul;
 
   /* check legal SEW and LMUL and calculate VLMAX */
   let LMUL_pow_new = get_lmul_pow();
@@ -182,9 +182,9 @@ function clause execute VSETI_TYPE(ma, ta, sew, lmul, uimm, rd) = {
     /* Note: Implementations can set vill or trap if the vtype setting is not supported.
      * TODO: configuration support for both solutions
      */
-    vtype->bits() = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
+    vtype.bits = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
     vl = zeros();
-    print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
+    print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
     print_reg("CSR vl <- " ^ BitStr(vl));
     return RETIRE_SUCCESS
   };
@@ -199,7 +199,7 @@ function clause execute VSETI_TYPE(ma, ta, sew, lmul, uimm, rd) = {
    * TODO: configuration support for either using ceil(AVL / 2) or VLMAX
    */
   X(rd) = vl;
-  print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
+  print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
   print_reg("CSR vl <- " ^ BitStr(vl));
 
   /* reset vstart to 0 */

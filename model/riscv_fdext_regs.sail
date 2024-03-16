@@ -165,8 +165,8 @@ register f31 : fregtype
 
 function dirty_fd_context() -> unit = {
   assert(sys_enable_fdext());
-  mstatus->FS() = extStatus_to_bits(Dirty);
-  mstatus->SD() = 0b1
+  mstatus[FS] = extStatus_to_bits(Dirty);
+  mstatus[SD] = 0b1
 }
 
 function dirty_fd_context_if_present() -> unit = {
@@ -261,7 +261,7 @@ function wF (r, in_v) = {
   if   get_config_print_reg()
   then
       /* TODO: will only print bits; should we print in floating point format? */
-      print_reg("f" ^ string_of_int(r) ^ " <- " ^ FRegStr(v));
+      print_reg("f" ^ dec_str(r) ^ " <- " ^ FRegStr(v));
 }
 
 function rF_bits(i: bits(5)) -> flenbits = rF(unsigned(i))
@@ -526,18 +526,18 @@ register fcsr : Fcsr
 
 val ext_write_fcsr : (bits(3), bits(5)) -> unit
 function ext_write_fcsr (frm, fflags) = {
-  fcsr->FRM()    = frm;      /* Note: frm can be an illegal value, 101, 110, 111 */
-  fcsr->FFLAGS() = fflags;
+  fcsr[FRM]    = frm;      /* Note: frm can be an illegal value, 101, 110, 111 */
+  fcsr[FFLAGS] = fflags;
   dirty_fd_context_if_present();
 }
 
 /* OR flags into the fflags register. */
 val accrue_fflags : (bits(5)) -> unit
 function accrue_fflags(flags) = {
-  let f = fcsr.FFLAGS() | flags;
-  if  fcsr.FFLAGS() != f
+  let f = fcsr[FFLAGS] | flags;
+  if  fcsr[FFLAGS] != f
   then {
-    fcsr->FFLAGS() = f;
+    fcsr[FFLAGS] = f;
     dirty_fd_context_if_present();
   }
 }

@@ -92,12 +92,6 @@ val elf_entry = {
 val plat_ram_base = {c: "plat_ram_base", ocaml: "Platform.dram_base", interpreter: "Platform.dram_base", lem: "plat_ram_base"} : unit -> xlenbits
 val plat_ram_size = {c: "plat_ram_size", ocaml: "Platform.dram_size", interpreter: "Platform.dram_size", lem: "plat_ram_size"} : unit -> xlenbits
 
-/* whether the platform supports PMP configurations */
-val plat_enable_pmp = {ocaml: "Platform.enable_pmp",
-                       interpreter: "Platform.enable_pmp",
-                       c: "plat_enable_pmp",
-                       lem: "plat_enable_pmp"} : unit -> bool
-
 /* whether the MMU should update dirty bits in PTEs */
 val plat_enable_dirty_update = {ocaml: "Platform.enable_dirty_update",
                                 interpreter: "Platform.enable_dirty_update",
@@ -219,8 +213,8 @@ function clint_load(t, addr, width) = {
   if addr == MSIP_BASE & ('n == 8 | 'n == 4)
   then {
     if   get_config_print_platform()
-    then print_platform("clint[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mip.MSI()));
-    MemValue(sail_zero_extend(mip.MSI(), sizeof(8 * 'n)))
+    then print_platform("clint[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mip[MSI]));
+    MemValue(sail_zero_extend(mip[MSI], sizeof(8 * 'n)))
   }
   else if addr == MTIMECMP_BASE & ('n == 4)
   then {
@@ -275,11 +269,11 @@ function clint_load(t, addr, width) = {
 function clint_dispatch() -> unit = {
   if   get_config_print_platform()
   then print_platform("clint::tick mtime <- " ^ BitStr(mtime));
-  mip->MTI() = 0b0;
+  mip[MTI] = 0b0;
   if mtimecmp <=_u mtime then {
     if   get_config_print_platform()
     then print_platform(" clint timer pending at mtime " ^ BitStr(mtime));
-    mip->MTI() = 0b1
+    mip[MTI] = 0b1
   }
 }
 
@@ -290,7 +284,7 @@ function clint_store(addr, width, data) = {
   if addr == MSIP_BASE & ('n == 8 | 'n == 4) then {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mip.MSI <- " ^ BitStr(data[0]) ^ ")");
-    mip->MSI() = [data[0]];
+    mip[MSI] = [data[0]];
     clint_dispatch();
     MemValue(true)
   } else if addr == MTIMECMP_BASE & 'n == 8 then {
@@ -320,7 +314,7 @@ function clint_store(addr, width, data) = {
 
 val tick_clock : unit -> unit
 function tick_clock() = {
-  if   mcountinhibit.CY() == 0b0
+  if   mcountinhibit[CY] == 0b0
   then mcycle = mcycle + 1;
 
   mtime  = mtime  + 1;
@@ -416,23 +410,23 @@ function htif_store(paddr, width, data) = {
         | (unsigned(htif_payload_writes) > 2))
   then {
     let cmd = Mk_htif_cmd(htif_tohost);
-    match cmd.device() {
+    match cmd[device] {
       0x00 => { /* syscall-proxy */
         if   get_config_print_platform()
-        then print_platform("htif-syscall-proxy cmd: " ^ BitStr(cmd.payload()));
-        if   cmd.payload()[0] == bitone
+        then print_platform("htif-syscall-proxy cmd: " ^ BitStr(cmd[payload]));
+        if   cmd[payload][0] == bitone
         then {
              htif_done = true;
-             htif_exit_code = (sail_zero_extend(cmd.payload(), 64) >> 1)
+             htif_exit_code = (sail_zero_extend(cmd[payload], 64) >> 1)
         }
         else ()
       },
       0x01 => { /* terminal */
         if   get_config_print_platform()
-        then print_platform("htif-term cmd: " ^ BitStr(cmd.payload()));
-        match cmd.cmd() {
+        then print_platform("htif-term cmd: " ^ BitStr(cmd[payload]));
+        match cmd[cmd] {
           0x00 => /* TODO: terminal input handling */ (),
-          0x01 => plat_term_write(cmd.payload()[7..0]),
+          0x01 => plat_term_write(cmd[payload][7..0]),
           c    => print("Unknown term cmd: " ^ BitStr(c))
         };
         /* reset to ack */
