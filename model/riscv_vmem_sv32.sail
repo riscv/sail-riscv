@@ -185,7 +185,7 @@ function flush_TLB32(asid, addr) =
 
 /* address translation */
 
-val translate32 : (asid32, paddr32, vaddr32, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr32, PTW_Error)
+val translate32 : (asid32, paddr32, vaddr32, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr32, pteStdExtAttribs, PTW_Error)
 function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = {
   match lookup_TLB32(asid, vAddr) {
     Some(idx, ent) => {
@@ -197,7 +197,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
         PTE_Check_Failure(ext_ptw, ext_ptw_fail) => { TR_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw) },
         PTE_Check_Success(ext_ptw) => {
           match update_PTE_Bits(pteBits, ac, std_ext) {
-            None()           => TR_Address(ent.pAddr | zero_extend(vAddr & ent.vAddrMask), ext_ptw),
+            None()           => TR_Address(ent.pAddr | zero_extend(vAddr & ent.vAddrMask), std_ext, ext_ptw),
             Some(pbits, ext) => {
               if not(plat_enable_dirty_update())
               then {
@@ -215,7 +215,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
                   MemValue(_)     => (),
                   MemException(e) => internal_error(__FILE__, __LINE__, "invalid physical address in TLB")
                 };
-                TR_Address(ent.pAddr | zero_extend(vAddr & ent.vAddrMask), ext_ptw)
+                TR_Address(ent.pAddr | zero_extend(vAddr & ent.vAddrMask), std_ext, ext_ptw)
               }
             }
           }
@@ -229,7 +229,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
           match update_PTE_Bits(Mk_PTE_Bits(pte[BITS]), ac, zeros()) {
             None() => {
               add_to_TLB32(asid, vAddr, pAddr, pte, pteAddr, level, global);
-              TR_Address(pAddr, ext_ptw)
+              TR_Address(pAddr, zeros(), ext_ptw)
             },
             Some(pbits, ext) =>
               if not(plat_enable_dirty_update())
@@ -242,7 +242,7 @@ function translate32(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
                 match mem_write_value_priv(to_phys_addr(pteAddr), 4, w_pte.bits, Supervisor, false, false, false) {
                   MemValue(_) => {
                     add_to_TLB32(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
-                    TR_Address(pAddr, ext_ptw)
+                    TR_Address(pAddr, zeros(), ext_ptw)
                   },
                   MemException(e) => {
                     /* pte is not in valid memory */

@@ -87,16 +87,6 @@ bool sys_enable_svpbmt(unit u)
   return rv_enable_svpbmt;
 }
 
-bool sys_enable_svnapot(unit u)
-{
-  return rv_enable_svnapot;
-}
-
-bool sys_enable_svpbmt(unit u)
-{
-  return rv_enable_svpbmt;
-}
-
 mach_bits plat_ram_base(unit u)
 {
   return rv_ram_base;

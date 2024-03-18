@@ -88,7 +88,7 @@ function walk48(vaddr, ac, priv, mxr, do_sum, ptb, level, global, ext_ptw) = {
     MemValue(v) => {
       let pte = Mk_SV48_PTE(v);
       let pbits = pte[BITS];
-      let std_ext = pte[Ext];
+      let std_ext : pteStdExtAttribs = pte[Ext];
       let pattr = Mk_PTE_Bits(pbits);
       let eattr = Mk_PTE_StdExt_Bits(std_ext);
       let is_global = global | (pattr[G] == 0b1);
@@ -191,7 +191,7 @@ function flush_TLB48(asid, addr) =
 
 /* address translation */
 
-val translate48 : (asid64, paddr64, vaddr48, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr64, PTW_Error)
+val translate48 : (asid64, paddr64, vaddr48, AccessType(ext_access_type), Privilege, bool, bool, nat, ext_ptw) -> TR_Result(paddr64, pteStdExtAttribs, PTW_Error)
 function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = {
   match walk48(vAddr, ac, priv, mxr, do_sum, ptb, level, false, ext_ptw) {
     PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),
@@ -199,7 +199,7 @@ function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
       match update_PTE_Bits(Mk_PTE_Bits(pte[BITS]), ac, pte[Ext]) {
         None() => {
           add_to_TLB48(asid, vAddr, pAddr, pte, pteAddr, level, global);
-          TR_Address(pAddr, ext_ptw)
+          TR_Address(pAddr, pte[Ext], ext_ptw)
         },
         Some(pbits, ext) =>
           if not(plat_enable_dirty_update())
@@ -212,7 +212,7 @@ function translate48(asid, ptb, vAddr, ac, priv, mxr, do_sum, level, ext_ptw) = 
             match mem_write_value_priv(zero_extend(pteAddr), 8, w_pte.bits, Supervisor, false, false, false) {
               MemValue(_) => {
                 add_to_TLB48(asid, vAddr, pAddr, w_pte, pteAddr, level, global);
-                TR_Address(pAddr, ext_ptw)
+                TR_Address(pAddr, pte[Ext], ext_ptw)
               },
               MemException(e) => {
                 /* pte is not in valid memory */

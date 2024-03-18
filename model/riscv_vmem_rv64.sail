@@ -117,7 +117,7 @@ function translationMode(priv) = {
 
 /* Top-level address translation dispatcher */
 
-val translateAddr_priv : (xlenbits, AccessType(ext_access_type), Privilege) -> TR_Result(xlenbits, ExceptionType)
+val translateAddr_priv : (xlenbits, AccessType(ext_access_type), Privilege) -> TR_Result(xlenbits, pteStdExtAttribs, ExceptionType)
 function translateAddr_priv(vAddr, ac, effPriv) = {
   let mxr    : bool   = mstatus[MXR] == 0b1;
   let do_sum : bool   = mstatus[SUM] == 0b1;
@@ -130,17 +130,17 @@ function translateAddr_priv(vAddr, ac, effPriv) = {
   let ext_ptw : ext_ptw = init_ext_ptw;
 
   match mode {
-    Sbare => TR_Address(vAddr, ext_ptw),
+    Sbare => TR_Address(vAddr, zeros(), ext_ptw),
     Sv39  => { if   isValidSv39Addr(vAddr)
                then match translate39(asid, ptb, vAddr[38 .. 0], ac, effPriv, mxr, do_sum, SV39_LEVELS - 1, ext_ptw) {
-                      TR_Address(pa, ext_ptw) => TR_Address(zero_extend(pa), ext_ptw),
+                      TR_Address(pa, std_ext, ext_ptw) => TR_Address(zero_extend(pa), std_ext, ext_ptw),
                       TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
                     }
                else TR_Failure(translationException(ac, PTW_Invalid_Addr()), ext_ptw)
              },
     Sv48  => { if   isValidSv48Addr(vAddr)
                then match translate48(asid, ptb, vAddr[47 .. 0], ac, effPriv, mxr, do_sum, SV48_LEVELS - 1, ext_ptw) {
-                      TR_Address(pa, ext_ptw) => TR_Address(zero_extend(pa), ext_ptw),
+                      TR_Address(pa, std_ext, ext_ptw) => TR_Address(zero_extend(pa), std_ext, ext_ptw),
                       TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
                     }
                else TR_Failure(translationException(ac, PTW_Invalid_Addr()), ext_ptw)
@@ -149,7 +149,7 @@ function translateAddr_priv(vAddr, ac, effPriv) = {
   }
 }
 
-val translateAddr : (xlenbits, AccessType(ext_access_type)) -> TR_Result(xlenbits, ExceptionType)
+val translateAddr : (xlenbits, AccessType(ext_access_type)) -> TR_Result(xlenbits, pteStdExtAttribs, ExceptionType)
 function translateAddr(vAddr, ac) =
   translateAddr_priv(vAddr, ac, effectivePrivilege(ac, mstatus, cur_privilege))
 
