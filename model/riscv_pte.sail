@@ -167,7 +167,7 @@ function checkPTEPermission(ac : AccessType(ext_access_type), priv : Privilege, 
   }
 }
 
-function update_PTE_Bits(p : PTE_Bits, a : AccessType(ext_access_type), std_ext : pteStdExtAttribs) -> option((PTE_Bits, pteStdExtAttribs)) = { 
+function update_PTE_Bits(p : PTE_Bits, a : AccessType(ext_access_type), std_ext : pteStdExtAttribs) -> option((PTE_Bits, pteStdExtAttribs)) = {
   let update_d = p[D] == 0b0 & (match a {                                       // dirty-bit
                                   Execute() => false,
                                   Read() => false,

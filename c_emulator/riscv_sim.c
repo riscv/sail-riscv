@@ -150,8 +150,8 @@ static struct option options[] = {
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
-    {"enable-svnapot",              no_argument,      0, OPT_ENABLE_SVNAPOT       },
-    {"enable-svpbmt",               no_argument,      0, OPT_ENABLE_SVPBMT        },
+    {"enable-svnapot",              no_argument,       0, OPT_ENABLE_SVNAPOT      },
+    {"enable-svpbmt",               no_argument,       0, OPT_ENABLE_SVPBMT       },
     {0,                             0,                 0, 0                       }
 };
 
