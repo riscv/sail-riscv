@@ -66,7 +66,7 @@ overload min = {min_int}
 
 overload max = {max_int}
 
-val pow2 = "pow2" : forall 'n. atom('n) -> atom(2 ^ 'n)
+val pow2 = "pow2" : forall 'n. int('n) -> int(2 ^ 'n)
 
 val print = "print_endline" : string -> unit
 val print_string = "print_string" : (string, string) -> unit
@@ -112,7 +112,7 @@ function bit_to_bool b = match b {
   bitzero => false
 }
 
-val to_bits : forall 'l, 'l >= 0.(atom('l), int) -> bits('l)
+val to_bits : forall 'l, 'l >= 0.(int('l), int) -> bits('l)
 function to_bits (l, n) = get_slice_int(l, n, 0)
 
 infix 4 <_s
@@ -148,8 +148,8 @@ infix 7 <<
 val "shift_bits_right" : forall 'n 'm. (bits('n), bits('m)) -> bits('n)
 val "shift_bits_left"  : forall 'n 'm. (bits('n), bits('m)) -> bits('n)
 
-val "shiftl" : forall 'm 'n, 'n >= 0. (bits('m), atom('n)) -> bits('m)
-val "shiftr" : forall 'm 'n, 'n >= 0. (bits('m), atom('n)) -> bits('m)
+val "shiftl" : forall 'm 'n, 'n >= 0. (bits('m), int('n)) -> bits('m)
+val "shiftr" : forall 'm 'n, 'n >= 0. (bits('m), int('n)) -> bits('m)
 
 overload operator >> = {shift_bits_right, shiftr}
 overload operator << = {shift_bits_left, shiftl}
@@ -175,11 +175,11 @@ val rotate_bits_left : forall 'n 'm, 'm >= 0. (bits('n), bits('m)) -> bits('n)
 function rotate_bits_left (v, n) =
     (v << n) | (v >> (to_bits(length(n), length(v)) - n))
 
-val rotater : forall 'm 'n, 'm >= 'n >= 0. (bits('m), atom('n)) -> bits('m)
+val rotater : forall 'm 'n, 'm >= 'n >= 0. (bits('m), int('n)) -> bits('m)
 function rotater (v, n) =
     (v >> n) | (v << (length(v) - n))
 
-val rotatel : forall 'm 'n, 'm >= 'n >= 0. (bits('m), atom('n)) -> bits('m)
+val rotatel : forall 'm 'n, 'm >= 'n >= 0. (bits('m), int('n)) -> bits('m)
 function rotatel (v, n) =
     (v << n) | (v >> (length(v) - n))
 

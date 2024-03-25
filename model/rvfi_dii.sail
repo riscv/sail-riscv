@@ -298,7 +298,7 @@ function rvfi_get_mem_data () = {
   return rvfi_mem_data.bits;
 }
 
-val rvfi_encode_width_mask : forall 'n, 0 < 'n <= 32. atom('n) -> bits(32)
+val rvfi_encode_width_mask : forall 'n, 0 < 'n <= 32. int('n) -> bits(32)
 
 function rvfi_encode_width_mask(width) =
   (0xFFFFFFFF >> (32 - width))

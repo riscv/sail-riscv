@@ -766,9 +766,7 @@ function read_seed_csr() -> xlenbits = {
 /* Writes to the seed CSR are ignored */
 function write_seed_csr () -> option(xlenbits) = None()
 
-// menvcfg is 64 bits. senvcfg is SXLEN bits and does not have the two
-// upper fields so for simplicity we can use the same type.
-bitfield Envcfg : bits(64) = {
+bitfield MEnvcfg : bits(64) = {
   // Supervisor TimeCmp Extension
   STCE   : 63,
   // Page Based Memory Types Extension
@@ -787,11 +785,31 @@ bitfield Envcfg : bits(64) = {
   FIOM   : 0,
 }
 
-register menvcfg : Envcfg
-register senvcfg : Envcfg
+bitfield SEnvcfg : xlenbits = {
+  // Cache Block Zero instruction Enable
+  CBZE   : 7,
+  // Cache Block Clean and Flush instruction Enable
+  CBCFE  : 6,
+  // Cache Block Invalidate instruction Enable
+  CBIE   : 5 .. 4,
+  // Reserved WPRI bits.
+  wpri_0 : 3 .. 1,
+  // Fence of I/O implies Memory
+  FIOM   : 0,
+}
 
-function legalize_envcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
-  let v = Mk_Envcfg(v);
+register menvcfg : MEnvcfg
+register senvcfg : SEnvcfg
+
+function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
+  let v = Mk_MEnvcfg(v);
+  let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
+  // Other extensions are not implemented yet so all other fields are read only zero.
+  o
+}
+
+function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
+  let v = Mk_SEnvcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
