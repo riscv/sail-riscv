@@ -161,7 +161,7 @@ union PTW_Result('paddr : Type, 'pte : Type) = {
 
 /* Result of address translation */
 
-union TR_Result('paddr : Type, 'failure : Type) = {
-  TR_Address : ('paddr, ext_ptw),
+union TR_Result('paddr : Type, 'std_ext_bits : Type, 'failure : Type) = {
+  TR_Address : ('paddr, 'std_ext_bits, ext_ptw),
   TR_Failure : ('failure, ext_ptw)
 }
