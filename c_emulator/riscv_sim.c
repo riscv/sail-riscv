@@ -288,7 +288,7 @@ static int process_args(int argc, char **argv)
       break;
     case OPT_PMP_COUNT:
       pmp_count = atol(optarg);
-      fprintf(stderr, "PMP count: %lld\n", pmp_count);
+      fprintf(stderr, "PMP count: %" PRIu64 "\n", pmp_count);
       if (pmp_count != 0 && pmp_count != 16 && pmp_count != 64) {
         fprintf(stderr, "invalid PMP count: must be 0, 16 or 64");
         exit(1);
@@ -297,7 +297,7 @@ static int process_args(int argc, char **argv)
       break;
     case OPT_PMP_GRAIN:
       pmp_grain = atol(optarg);
-      fprintf(stderr, "PMP grain: %lld\n", pmp_grain);
+      fprintf(stderr, "PMP grain: %" PRIu64 "\n", pmp_grain);
       if (pmp_grain >= 64) {
         fprintf(stderr, "invalid PMP grain: must less than 64");
         exit(1);
