@@ -286,8 +286,8 @@ mapping clause assembly = RISCV_FMINM_D(rs2, rs1, rd)
                 ^ sep() ^ freg_name(rs2)
 
 function clause execute (RISCV_FMINM_D(rs2, rs1, rd)) = {
-  let rs1_val_D = F(rs1);
-  let rs2_val_D = F(rs2);
+  let rs1_val_D = F_D(rs1);
+  let rs2_val_D = F_D(rs2);
 
   let is_quiet  = true;
   let (rs1_lt_rs2, fflags) = fle_D (rs1_val_D, rs2_val_D, is_quiet);
@@ -299,7 +299,7 @@ function clause execute (RISCV_FMINM_D(rs2, rs1, rd)) = {
                   else                                                              rs2_val_D;
 
   accrue_fflags(fflags);
-  F(rd) = rd_val_D;
+  F_D(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
 
@@ -316,8 +316,8 @@ mapping clause assembly = RISCV_FMAXM_D(rs2, rs1, rd)
                 ^ sep() ^ freg_name(rs2)
 
 function clause execute (RISCV_FMAXM_D(rs2, rs1, rd)) = {
-  let rs1_val_D = F(rs1);
-  let rs2_val_D = F(rs2);
+  let rs1_val_D = F_D(rs1);
+  let rs2_val_D = F_D(rs2);
 
   let is_quiet  = true;
   let (rs2_lt_rs1, fflags) = fle_D (rs2_val_D, rs1_val_D, is_quiet);
@@ -329,7 +329,7 @@ function clause execute (RISCV_FMAXM_D(rs2, rs1, rd)) = {
                   else                                                              rs2_val_D;
 
   accrue_fflags(fflags);
-  F(rd) = rd_val_D;
+  F_D(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
 
@@ -458,7 +458,7 @@ mapping clause assembly = RISCV_FROUND_D(rs1, rm, rd)
                  ^ sep() ^ frm_mnemonic(rm)
 
 function clause execute (RISCV_FROUND_D(rs1, rm, rd)) = {
-  let rs1_val_D = F(rs1);
+  let rs1_val_D = F_D(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -467,7 +467,7 @@ function clause execute (RISCV_FROUND_D(rs1, rm, rd)) = {
       let (fflags, rd_val_D) = riscv_f64roundToInt(rm_3b, rs1_val_D, false);
 
       accrue_fflags(fflags);
-      F(rd) = rd_val_D;
+      F_D(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
   }
