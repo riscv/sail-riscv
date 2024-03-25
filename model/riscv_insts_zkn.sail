@@ -17,16 +17,16 @@ union clause ast = SHA256SUM0 : (regidx, regidx)
 union clause ast = SHA256SUM1 : (regidx, regidx)
 
 mapping clause encdec = SHA256SUM0 (rs1, rd) if haveZknh()
-  <-> 0b00 @ 0b01000 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh()
 
 mapping clause encdec = SHA256SUM1 (rs1, rd) if haveZknh()
-  <-> 0b00 @ 0b01000 @ 0b00001 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00001 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh()
 
 mapping clause encdec = SHA256SIG0 (rs1, rd) if haveZknh()
-  <-> 0b00 @ 0b01000 @ 0b00010 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00010 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh()
 
 mapping clause encdec = SHA256SIG1 (rs1, rd) if haveZknh()
-  <-> 0b00 @ 0b01000 @ 0b00011 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00011 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh()
 
 mapping clause assembly = SHA256SIG0 (rs1, rd)
   <-> "sha256sig0" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
@@ -76,7 +76,7 @@ function clause execute (SHA256SUM1(rs1, rd)) = {
 union clause ast = AES32ESMI : (bits(2), regidx, regidx, regidx)
 
 mapping clause encdec = AES32ESMI (bs, rs2, rs1, rd) if haveZkne() & sizeof(xlen) == 32
-  <-> bs @ 0b10011 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> bs @ 0b10011 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZkne() & sizeof(xlen) == 32
 
 mapping clause assembly = AES32ESMI (bs, rs2, rs1, rd) <->
     "aes32esmi" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)
@@ -94,7 +94,7 @@ function clause execute (AES32ESMI (bs, rs2, rs1, rd)) = {
 union clause ast = AES32ESI : (bits(2), regidx, regidx, regidx)
 
 mapping clause encdec = AES32ESI (bs, rs2, rs1, rd) if haveZkne() & sizeof(xlen) == 32
-  <-> bs @ 0b10001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> bs @ 0b10001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZkne() & sizeof(xlen) == 32
 
 mapping clause assembly = AES32ESI (bs, rs2, rs1, rd) <->
     "aes32esi" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)
@@ -116,7 +116,7 @@ function clause execute (AES32ESI (bs, rs2, rs1, rd)) = {
 union clause ast = AES32DSMI : (bits(2), regidx, regidx, regidx)
 
 mapping clause encdec = AES32DSMI (bs, rs2, rs1, rd) if haveZknd() & sizeof(xlen) == 32
-  <-> bs @ 0b10111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> bs @ 0b10111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknd() & sizeof(xlen) == 32
 
 mapping clause assembly = AES32DSMI (bs, rs2, rs1, rd) <->
     "aes32dsmi" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)
@@ -134,7 +134,7 @@ function clause execute (AES32DSMI (bs, rs2, rs1, rd)) = {
 union clause ast = AES32DSI  : (bits(2), regidx, regidx, regidx)
 
 mapping clause encdec = AES32DSI (bs, rs2, rs1, rd) if haveZknd() & sizeof(xlen) == 32
-  <-> bs @ 0b10101 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> bs @ 0b10101 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknd() & sizeof(xlen) == 32
 
 mapping clause assembly = AES32DSI (bs, rs2, rs1, rd) <->
     "aes32dsi" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)
@@ -161,22 +161,22 @@ union clause ast = SHA512SUM0R : (regidx, regidx, regidx)
 union clause ast = SHA512SUM1R : (regidx, regidx, regidx)
 
 mapping clause encdec = SHA512SUM0R (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
-  <-> 0b01 @ 0b01000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b01 @ 0b01000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknh() & sizeof(xlen) == 32
 
 mapping clause encdec = SHA512SUM1R (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
-  <-> 0b01 @ 0b01001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b01 @ 0b01001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknh() & sizeof(xlen) == 32
 
 mapping clause encdec = SHA512SIG0L (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
-  <-> 0b01 @ 0b01010 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b01 @ 0b01010 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknh() & sizeof(xlen) == 32
 
 mapping clause encdec = SHA512SIG0H (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
-  <-> 0b01 @ 0b01110 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b01 @ 0b01110 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknh() & sizeof(xlen) == 32
 
 mapping clause encdec = SHA512SIG1L (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
-  <-> 0b01 @ 0b01011 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b01 @ 0b01011 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknh() & sizeof(xlen) == 32
 
 mapping clause encdec = SHA512SIG1H (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
-  <-> 0b01 @ 0b01111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b01 @ 0b01111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknh() & sizeof(xlen) == 32
 
 mapping clause assembly = SHA512SIG0L (rs2, rs1, rd)
   <-> "sha512sig0l" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
@@ -246,25 +246,25 @@ union clause ast = AES64DSM  : (regidx, regidx, regidx)
 union clause ast = AES64DS   : (regidx, regidx, regidx)
 
 mapping clause encdec = AES64KS1I (rnum, rs1, rd) if (haveZkne() | haveZknd()) & (sizeof(xlen) == 64) & (rnum <_u 0xB)
-  <-> 0b00 @ 0b11000 @ 0b1 @ rnum @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b11000 @ 0b1 @ rnum @ rs1 @ 0b001 @ rd @ 0b0010011 if (haveZkne() | haveZknd()) & (sizeof(xlen) == 64) & (rnum <_u 0xB)
 
 mapping clause encdec = AES64IM (rs1, rd) if haveZknd() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b11000 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b11000 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknd() & sizeof(xlen) == 64
 
 mapping clause encdec = AES64KS2 (rs2, rs1, rd) if (haveZkne() | haveZknd()) & sizeof(xlen) == 64
-  <-> 0b01 @ 0b11111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b01 @ 0b11111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if (haveZkne() | haveZknd()) & sizeof(xlen) == 64
 
 mapping clause encdec = AES64ESM (rs2, rs1, rd) if haveZkne() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b11011 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b00 @ 0b11011 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZkne() & sizeof(xlen) == 64
 
 mapping clause encdec = AES64ES (rs2, rs1, rd) if haveZkne() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b11001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b00 @ 0b11001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZkne() & sizeof(xlen) == 64
 
 mapping clause encdec = AES64DSM (rs2, rs1, rd) if haveZknd() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b11111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b00 @ 0b11111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknd() & sizeof(xlen) == 64
 
 mapping clause encdec = AES64DS (rs2, rs1, rd) if haveZknd() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b11101 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b00 @ 0b11101 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknd() & sizeof(xlen) == 64
 
 mapping clause assembly = AES64KS1I (rnum, rs1, rd)
   <-> "aes64ks1i" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_4(rnum)
@@ -361,16 +361,16 @@ union clause ast = SHA512SUM0 : (regidx, regidx)
 union clause ast = SHA512SUM1 : (regidx, regidx)
 
 mapping clause encdec = SHA512SUM0 (rs1, rd) if haveZknh() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b01000 @ 0b00100 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00100 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh() & sizeof(xlen) == 64
 
 mapping clause encdec = SHA512SUM1 (rs1, rd) if haveZknh() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b01000 @ 0b00101 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00101 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh() & sizeof(xlen) == 64
 
 mapping clause encdec = SHA512SIG0 (rs1, rd) if haveZknh() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b01000 @ 0b00110 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00110 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh() & sizeof(xlen) == 64
 
 mapping clause encdec = SHA512SIG1 (rs1, rd) if haveZknh() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b01000 @ 0b00111 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00111 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh() & sizeof(xlen) == 64
 
 mapping clause assembly = SHA512SIG0 (rs1, rd)
   <-> "sha512sig0" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
