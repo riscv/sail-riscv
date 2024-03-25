@@ -745,7 +745,9 @@ function fcvtmod_helper(x64) = {
                                 else integer;
 
     /* Raise FP exception flags, honoring the precedence of nV > nX */
-    let flags : bits(5) = if (true_exp > 31)         then nvFlag()
+    let max_integer = if sign == 0b1 then unsigned(0x80000000)
+                                     else unsigned(0x7fffffff);
+    let flags : bits(5) = if (true_exp > 31 | unsigned(integer) > max_integer) then nvFlag()
                      else if (fractional != zeros()) then nxFlag()
                      else                            zeros();
 
