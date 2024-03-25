@@ -45,7 +45,7 @@ function assert_vstart(i) = {
  *  1. Valid element width of floating-point numbers
  *  2. Valid floating-point rounding mode
  */
-val valid_fp_op : ({|8, 16, 32, 64|}, bits(3)) -> bool
+val valid_fp_op : ({8, 16, 32, 64}, bits(3)) -> bool
 function valid_fp_op(SEW, rm_3b) = {
   /* 128-bit floating-point values will be supported in future extensions */
   let valid_sew = (SEW >= 16 & SEW <= 128);
@@ -146,38 +146,38 @@ function illegal_reduction_widen(SEW_widen, LMUL_pow_widen) = {
 }
 
 /* g. Normal check for floating-point instructions */
-val illegal_fp_normal : (regidx, bits(1), {|8, 16, 32, 64|}, bits(3)) -> bool
+val illegal_fp_normal : (regidx, bits(1), {8, 16, 32, 64}, bits(3)) -> bool
 function illegal_fp_normal(vd, vm, SEW, rm_3b) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* h. Masked check for floating-point instructions encoded with vm = 0 */
-val illegal_fp_vd_masked : (regidx, {|8, 16, 32, 64|}, bits(3)) -> bool
+val illegal_fp_vd_masked : (regidx, {8, 16, 32, 64}, bits(3)) -> bool
 function illegal_fp_vd_masked(vd, SEW, rm_3b) = {
   not(valid_vtype()) | vd == 0b00000 | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* i. Unmasked check for floating-point instructions encoded with vm = 1 */
-val illegal_fp_vd_unmasked : ({|8, 16, 32, 64|}, bits(3)) -> bool
+val illegal_fp_vd_unmasked : ({8, 16, 32, 64}, bits(3)) -> bool
 function illegal_fp_vd_unmasked(SEW, rm_3b) = {
   not(valid_vtype()) | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* j. Variable width check for floating-point widening/narrowing instructions */
-val illegal_fp_variable_width : (regidx, bits(1), {|8, 16, 32, 64|}, bits(3), int, int) -> bool
+val illegal_fp_variable_width : (regidx, bits(1), {8, 16, 32, 64}, bits(3), int, int) -> bool
 function illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_new, LMUL_pow_new) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) |
   not(valid_eew_emul(SEW_new, LMUL_pow_new))
 }
 
 /* k. Normal check for floating-point reduction instructions */
-val illegal_fp_reduction : ({|8, 16, 32, 64|}, bits(3)) -> bool
+val illegal_fp_reduction : ({8, 16, 32, 64}, bits(3)) -> bool
 function illegal_fp_reduction(SEW, rm_3b) = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* l. Variable width check for floating-point widening reduction instructions */
-val illegal_fp_reduction_widen : ({|8, 16, 32, 64|}, bits(3), int, int) -> bool
+val illegal_fp_reduction_widen : ({8, 16, 32, 64}, bits(3), int, int) -> bool
 function illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b)) |
   not(valid_eew_emul(SEW_widen, LMUL_pow_widen))
