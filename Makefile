@@ -71,15 +71,21 @@ SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdex
 SAIL_SYS_SRCS += riscv_csr_ext.sail         # access to CSR extensions
 SAIL_SYS_SRCS += riscv_sys_control.sail     # general exception handling
 
-SAIL_RV32_VM_SRCS = riscv_vmem_sv32.sail riscv_vmem_rv32.sail
-SAIL_RV64_VM_SRCS = riscv_vmem_sv39.sail riscv_vmem_sv48.sail riscv_vmem_rv64.sail
+# SAIL_RV32_VM_SRCS = riscv_vmem_sv32.sail riscv_vmem_rv32.sail
+# SAIL_RV64_VM_SRCS = riscv_vmem_sv39.sail riscv_vmem_sv48.sail riscv_vmem_rv64.sail
 
-SAIL_VM_SRCS = riscv_pte.sail riscv_ptw.sail riscv_vmem_common.sail riscv_vmem_tlb.sail
-ifeq ($(ARCH),RV32)
-SAIL_VM_SRCS += $(SAIL_RV32_VM_SRCS)
-else
-SAIL_VM_SRCS += $(SAIL_RV64_VM_SRCS)
-endif
+# SAIL_VM_SRCS = riscv_pte.sail riscv_ptw.sail riscv_vmem_common.sail riscv_vmem_tlb.sail
+# ifeq ($(ARCH),RV32)
+# SAIL_VM_SRCS += $(SAIL_RV32_VM_SRCS)
+# else
+# SAIL_VM_SRCS += $(SAIL_RV64_VM_SRCS)
+# endif
+
+SAIL_VM_SRCS += riscv_vmem_common.sail
+SAIL_VM_SRCS += riscv_vmem_pte.sail
+SAIL_VM_SRCS += riscv_vmem_ptw.sail
+SAIL_VM_SRCS += riscv_vmem_tlb.sail
+SAIL_VM_SRCS += riscv_vmem.sail
 
 # Non-instruction sources
 PRELUDE = prelude.sail $(SAIL_XLEN) $(SAIL_FLEN) $(SAIL_VLEN) prelude_mem_metadata.sail prelude_mem.sail
