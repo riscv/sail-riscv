@@ -54,6 +54,9 @@ const char *RV32ISA = "RV32IMAC";
 #define OPT_PMP_COUNT 1002
 #define OPT_PMP_GRAIN 1003
 
+#define OPT_SMRNMI_INT_TRAP_VEC  1004
+#define OPT_SMRNMI_EXC_TRAP_VEC  1005
+
 static bool do_dump_dts = false;
 static bool do_show_times = false;
 struct tv_spike_t *s = NULL;
@@ -148,6 +151,8 @@ static struct option options[] = {
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
+    {"smrnmi_int_trap_vec",         required_argument, 0, OPT_SMRNMI_INT_TRAP_VEC },
+    {"smrnmi_exc_trap_vec",         required_argument, 0, OPT_SMRNMI_EXC_TRAP_VEC },
     {0,                             0,                 0, 0                       }
 };
 
@@ -399,6 +404,16 @@ static int process_args(int argc, char **argv)
     case OPT_TRACE_OUTPUT:
       trace_log_path = optarg;
       fprintf(stderr, "using %s for trace output.\n", trace_log_path);
+      break;
+    case OPT_SMRNMI_INT_TRAP_VEC:
+      smrnmi_int_trap_vec = strtoull(optarg, NULL, 16);
+      fprintf(stderr, "using 0x%lx as SMRNMI Int. trap vector.\n",
+              smrnmi_int_trap_vec);
+      break;
+    case OPT_SMRNMI_EXC_TRAP_VEC:
+      smrnmi_exc_trap_vec = strtoull(optarg, NULL, 16);
+      fprintf(stderr, "using 0x%lx as SMRNMI Exc. trap vector.\n",
+              smrnmi_exc_trap_vec);
       break;
     case '?':
       print_usage(argv[0], 1);

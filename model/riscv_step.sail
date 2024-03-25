@@ -28,7 +28,10 @@ function step(step_no : int) -> bool = {
       Some(intr, priv) => {
         if   get_config_print_instr()
         then print_bits("Handling interrupt: ", interruptType_to_bits(intr));
-        handle_interrupt(intr, priv);
+        match intr {
+          I_M_RNMI => { set_next_pc(rnmi_handler(PC)) },
+          _        => { handle_interrupt(intr, priv); }
+        };
         (RETIRE_FAIL, false)
       },
       None() => {
