@@ -883,7 +883,7 @@ function have_PRIV_V1P14_Extensions() -> bool = {
 
 function legalize_mstateen0(o : Mstateen0, v : bits(64)) -> Mstateen0 = {
   let v = Mk_Mstateen0(v);
-  let o = update_PRIV_V1P14(o, if have_PRIV_V1P14_Extensions() then v.PRIV_V1P14() else 0b0);
+  let o = [o with PRIV_V1P14 = if have_PRIV_V1P14_Extensions() then v[PRIV_V1P14] else 0b0];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
@@ -983,7 +983,6 @@ bitfield Srmcfg : xlenbits = {
 register srmcfg : Srmcfg
 
 function legalize_srmcfg(s : Srmcfg, v : xlenbits) -> Srmcfg = {
-  let s = update_MCID(s, v[27 .. 16]);
-  let s = update_RCID(s, v[11 .. 0]);
+  let s = [s with MCID = v[27 .. 16], RCID = v[11 .. 0]];
   s
 }
