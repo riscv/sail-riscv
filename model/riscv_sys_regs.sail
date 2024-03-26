@@ -1,71 +1,9 @@
 /*=======================================================================================*/
-/*  RISCV Sail Model                                                                     */
-/*                                                                                       */
 /*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except for the snapshots of the Lem and Sail libraries                   */
-/*  in the prover_snapshots directory (which include copies of their                     */
-/*  licences), is subject to the BSD two-clause licence below.                           */
+/*  directories except where otherwise noted is subject the BSD                          */
+/*  two-clause license in the LICENSE file.                                              */
 /*                                                                                       */
-/*  Copyright (c) 2017-2023                                                              */
-/*    Prashanth Mundkur                                                                  */
-/*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
-/*    Jon French                                                                         */
-/*    Brian Campbell                                                                     */
-/*    Robert Norton-Wright                                                               */
-/*    Alasdair Armstrong                                                                 */
-/*    Thomas Bauereiss                                                                   */
-/*    Shaked Flur                                                                        */
-/*    Christopher Pulte                                                                  */
-/*    Peter Sewell                                                                       */
-/*    Alexander Richardson                                                               */
-/*    Hesham Almatary                                                                    */
-/*    Jessica Clarke                                                                     */
-/*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
-/*    Peter Rugg                                                                         */
-/*    Aril Computer Corp., for contributions by Scott Johnson                            */
-/*    Philipp Tomsich                                                                    */
-/*    VRULL GmbH, for contributions by its employees                                     */
-/*                                                                                       */
-/*  All rights reserved.                                                                 */
-/*                                                                                       */
-/*  This software was developed by the above within the Rigorous                         */
-/*  Engineering of Mainstream Systems (REMS) project, partly funded by                   */
-/*  EPSRC grant EP/K008528/1, at the Universities of Cambridge and                       */
-/*  Edinburgh.                                                                           */
-/*                                                                                       */
-/*  This software was developed by SRI International and the University of               */
-/*  Cambridge Computer Laboratory (Department of Computer Science and                    */
-/*  Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and                 */
-/*  under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA                 */
-/*  SSITH research programme.                                                            */
-/*                                                                                       */
-/*  This project has received funding from the European Research Council                 */
-/*  (ERC) under the European Union’s Horizon 2020 research and innovation                */
-/*  programme (grant agreement 789108, ELVER).                                           */
-/*                                                                                       */
-/*                                                                                       */
-/*  Redistribution and use in source and binary forms, with or without                   */
-/*  modification, are permitted provided that the following conditions                   */
-/*  are met:                                                                             */
-/*  1. Redistributions of source code must retain the above copyright                    */
-/*     notice, this list of conditions and the following disclaimer.                     */
-/*  2. Redistributions in binary form must reproduce the above copyright                 */
-/*     notice, this list of conditions and the following disclaimer in                   */
-/*     the documentation and/or other materials provided with the                        */
-/*     distribution.                                                                     */
-/*                                                                                       */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''                   */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED                    */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                      */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR                  */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                         */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                     */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF                     */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND                  */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,                   */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT                   */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF                   */
-/*  SUCH DAMAGE.                                                                         */
+/*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
 /* Machine-mode and supervisor-mode state definitions. */
@@ -140,9 +78,7 @@ bitfield Misa : xlenbits = {
 }
 register misa : Misa
 
-// menvcfg is 64 bits. senvcfg is SXLEN bits and does not have the two
-// upper fields so for simplicity we can use the same type.
-bitfield Envcfg : bits(64) = {
+bitfield MEnvcfg : bits(64) = {
   // Supervisor TimeCmp Extension
   STCE   : 63,
   // Page Based Memory Types Extension
@@ -161,8 +97,21 @@ bitfield Envcfg : bits(64) = {
   FIOM   : 0,
 }
 
-register menvcfg : Envcfg
-register senvcfg : Envcfg
+bitfield SEnvcfg : xlenbits = {
+  // Cache Block Zero instruction Enable
+  CBZE   : 7,
+  // Cache Block Clean and Flush instruction Enable
+  CBCFE  : 6,
+  // Cache Block Invalidate instruction Enable
+  CBIE   : 5 .. 4,
+  // Reserved WPRI bits.
+  wpri_0 : 3 .. 1,
+  // Fence of I/O implies Memory
+  FIOM   : 0,
+}
+
+register menvcfg : MEnvcfg
+register senvcfg : SEnvcfg
 
 /* whether misa is R/W */
 val sys_enable_writable_misa = {c: "sys_enable_writable_misa", ocaml: "Platform.enable_writable_misa", _: "sys_enable_writable_misa"} : unit -> bool
@@ -466,7 +415,7 @@ bitfield Medeleg : xlenbits = {
   SAMO_Page_Fault   : 15,
   Load_Page_Fault   : 13,
   Fetch_Page_Fault  : 12,
-  MEnvCall          : 10,
+  MEnvCall          : 11,
   SEnvCall          : 9,
   UEnvCall          : 8,
   SAMO_Access_Fault : 7,
@@ -867,20 +816,21 @@ function read_seed_csr() -> xlenbits = {
 /* Writes to the seed CSR are ignored */
 function write_seed_csr () -> option(xlenbits) = None()
 
-function legalize_senvcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
-  let v = Mk_Envcfg(v);
+function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
+  let v = Mk_MEnvcfg(v);
+  let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
+  let o = [o with STCE = if haveSstc() then v[STCE] else 0b0];
+  // Other extensions are not implemented yet so all other fields are read only zero.
+  o
+}
+
+function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
+  let v = Mk_SEnvcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
 
-function legalize_menvcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
-  let v = Mk_Envcfg(v);
-  let o = update_FIOM(o, if sys_enable_writable_fiom() then v.FIOM() else 0b0);
-  let o = update_STCE(o, if haveSstc() then v.STCE() else 0b0);
-  // Other extensions are not implemented yet so all other fields are read only zero.
-  o
-}
 // Return whether or not FIOM is currently active, based on the current
 // privilege and the menvcfg/senvcfg settings. This means that I/O fences
 // imply memory fence.
