@@ -11,6 +11,7 @@
 extern uint64_t rv_pmp_count;
 extern uint64_t rv_pmp_grain;
 
+extern bool rv_enable_zcb;
 extern bool rv_enable_zfinx;
 extern bool rv_enable_rvc;
 extern bool rv_enable_next;
