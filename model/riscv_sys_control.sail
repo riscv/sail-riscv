@@ -30,8 +30,10 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x305 => p == Machine, // mtvec
     0x306 => p == Machine & haveUsrMode(), // mcounteren
     0x30A => p == Machine & haveUsrMode(), // menvcfg
+    0x30C => p == Machine & haveSupMode() & haveSmstateen(), // mstateen0
     0x310 => p == Machine & (sizeof(xlen) == 32), // mstatush
     0x31A => p == Machine & haveUsrMode() & (sizeof(xlen) == 32), // menvcfgh
+    0x31C => p == Machine & haveSupMode() & (sizeof(xlen) == 32) & haveSmstateen(), // mstateen0h
     0x320 => p == Machine, // mcountinhibit
     /* machine mode: trap handling */
     0x340 => p == Machine, // mscratch
@@ -76,6 +78,11 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     /* supervisor mode: address translation */
     0x180 => haveSupMode() & (p == Machine | p == Supervisor), // satp
 
+    /* supervisor mode: resource management configurations */
+    0x181 => haveSsqosid() & ((p == Machine) |
+                              ((p == Supervisor) & haveSmstateen() & (mstateen0.PRIV_V1P14() == 0b1)) |
+                              ((p == Supervisor) & not(haveSmstateen()))), // srmcfg
+
     /* user mode: counters */
     0xC00 => haveUsrMode(),    // cycle
     0xC01 => haveUsrMode(),    // time
@@ -115,7 +122,6 @@ function check_Counteren(csr : csreg, p : Privilege) -> bool =
               then false
               else true
   }
-
 
 /* Seed may only be accessed if we are doing a write, and access has been
  * allowed in the current priv mode
@@ -526,6 +532,8 @@ function init_sys() -> unit = {
 
   menvcfg.bits = zero_extend(0b0);
   senvcfg.bits = zero_extend(0b0);
+  mstateen0.bits = zero_extend(0b0);
+
   /* initialize vector csrs */
   elen               = 0b1; /* ELEN=64 as the common case */
   vlen               = 0b0100; /* VLEN=512 as a default value */
@@ -548,6 +556,8 @@ function init_sys() -> unit = {
 
   // PMP's L and A fields are set to 0 on reset.
   init_pmp();
+
+  srmcfg->RCID()     = 0b000000000000;
 
   // log compatibility with spike
   if   get_config_print_reg()
