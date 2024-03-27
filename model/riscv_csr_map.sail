@@ -58,6 +58,7 @@ mapping clause csr_name_map = 0xF11  <-> "mvendorid"
 mapping clause csr_name_map = 0xF12  <-> "marchid"
 mapping clause csr_name_map = 0xF13  <-> "mimpid"
 mapping clause csr_name_map = 0xF14  <-> "mhartid"
+mapping clause csr_name_map = 0xF15  <-> "mconfigptr"
 /* machine trap setup */
 mapping clause csr_name_map = 0x300  <-> "mstatus"
 mapping clause csr_name_map = 0x301  <-> "misa"

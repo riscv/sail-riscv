@@ -510,6 +510,7 @@ register mimpid : xlenbits
 register marchid : xlenbits
 /* TODO: this should be readonly, and always 0 for now */
 register mhartid : xlenbits
+register mconfigptr : xlenbits
 
 /* S-mode registers */
 
