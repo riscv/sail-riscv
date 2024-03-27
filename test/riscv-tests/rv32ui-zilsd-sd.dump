@@ -1,5 +1,5 @@
 
-rv32ui-sd.elf:	file format elf32-littleriscv
+rv32ui-zilsd-sd.elf:	file format elf32-littleriscv
 
 Disassembly of section .text.init:
 
@@ -123,8 +123,8 @@ Disassembly of section .text.init:
 80000146: 93 84 a4 0a  	addi	s1, s1, 170
 8000014a: 97 07 00 00  	auipc	a5, 0
 8000014e: 93 87 27 01  	addi	a5, a5, 18
-80000152: 23 30 85 00  	<unknown>
-80000156: 03 36 05 00  	<unknown>
+80000152: 23 30 85 00  	sd	s0, 0(a0)
+80000156: 03 36 05 00  	ld	a2, 0(a0)
 8000015a: 11 a0        	j	0x8000015e <test_4+0x2e>
 8000015c: 22 86        	mv	a2, s0
 8000015e: b7 13 aa 0f  	lui	t2, 64161
@@ -144,8 +144,8 @@ Disassembly of section .text.init:
 8000018c: 93 84 a4 0a  	addi	s1, s1, 170
 80000190: 97 07 00 00  	auipc	a5, 0
 80000194: 93 87 27 01  	addi	a5, a5, 18
-80000198: 23 30 85 00  	<unknown>
-8000019c: 03 39 05 00  	<unknown>
+80000198: 23 30 85 00  	sd	s0, 0(a0)
+8000019c: 03 39 05 00  	ld	s2, 0(a0)
 800001a0: 11 a0        	j	0x800001a4 <test_5+0x2e>
 800001a2: 22 89        	mv	s2, s0
 800001a4: b7 13 aa 0f  	lui	t2, 64161
@@ -165,8 +165,8 @@ Disassembly of section .text.init:
 800001d2: 93 84 a4 0a  	addi	s1, s1, 170
 800001d6: 97 07 00 00  	auipc	a5, 0
 800001da: 93 87 27 01  	addi	a5, a5, 18
-800001de: 23 30 85 00  	<unknown>
-800001e2: 03 35 05 00  	<unknown>
+800001de: 23 30 85 00  	sd	s0, 0(a0)
+800001e2: 03 35 05 00  	ld	a0, 0(a0)
 800001e6: 11 a0        	j	0x800001ea <test_6+0x2e>
 800001e8: 22 85        	mv	a0, s0
 800001ea: b7 13 aa 0f  	lui	t2, 64161
@@ -186,8 +186,8 @@ Disassembly of section .text.init:
 80000218: 93 84 a4 0a  	addi	s1, s1, 170
 8000021c: 97 07 00 00  	auipc	a5, 0
 80000220: 93 87 27 01  	addi	a5, a5, 18
-80000224: 23 30 85 00  	<unknown>
-80000228: 03 3a 05 00  	<unknown>
+80000224: 23 30 85 00  	sd	s0, 0(a0)
+80000228: 03 3a 05 00  	ld	s4, 0(a0)
 8000022c: 11 a0        	j	0x80000230 <test_7+0x2e>
 8000022e: 22 8a        	mv	s4, s0
 80000230: b7 13 aa 0f  	lui	t2, 64161
@@ -207,8 +207,8 @@ Disassembly of section .text.init:
 8000025e: 93 84 a4 0a  	addi	s1, s1, 170
 80000262: 97 07 00 00  	auipc	a5, 0
 80000266: 93 87 27 01  	addi	a5, a5, 18
-8000026a: 23 30 85 00  	<unknown>
-8000026e: 03 37 05 00  	<unknown>
+8000026a: 23 30 85 00  	sd	s0, 0(a0)
+8000026e: 03 37 05 00  	ld	a4, 0(a0)
 80000272: 11 a0        	j	0x80000276 <test_9+0x2e>
 80000274: 22 87        	mv	a4, s0
 80000276: b7 13 aa 0f  	lui	t2, 64161
@@ -228,8 +228,8 @@ Disassembly of section .text.init:
 800002a4: 93 84 a4 0a  	addi	s1, s1, 170
 800002a8: 97 07 00 00  	auipc	a5, 0
 800002ac: 93 87 27 01  	addi	a5, a5, 18
-800002b0: 23 30 85 00  	<unknown>
-800002b4: 03 38 05 00  	<unknown>
+800002b0: 23 30 85 00  	sd	s0, 0(a0)
+800002b4: 03 38 05 00  	ld	a6, 0(a0)
 800002b8: 11 a0        	j	0x800002bc <test_10+0x2e>
 800002ba: 22 88        	mv	a6, s0
 800002bc: b7 13 aa 0f  	lui	t2, 64161
@@ -249,8 +249,8 @@ Disassembly of section .text.init:
 800002ea: 93 84 a4 0a  	addi	s1, s1, 170
 800002ee: 97 07 00 00  	auipc	a5, 0
 800002f2: 93 87 27 01  	addi	a5, a5, 18
-800002f6: 23 30 85 00  	<unknown>
-800002fa: 03 3b 05 00  	<unknown>
+800002f6: 23 30 85 00  	sd	s0, 0(a0)
+800002fa: 03 3b 05 00  	ld	s6, 0(a0)
 800002fe: 11 a0        	j	0x80000302 <test_11+0x2e>
 80000300: 22 8b        	mv	s6, s0
 80000302: b7 13 aa 0f  	lui	t2, 64161
@@ -270,8 +270,8 @@ Disassembly of section .text.init:
 80000330: 93 84 a4 0a  	addi	s1, s1, 170
 80000334: 97 07 00 00  	auipc	a5, 0
 80000338: 93 87 27 01  	addi	a5, a5, 18
-8000033c: 23 30 85 00  	<unknown>
-80000340: 03 3c 05 00  	<unknown>
+8000033c: 23 30 85 00  	sd	s0, 0(a0)
+80000340: 03 3c 05 00  	ld	s8, 0(a0)
 80000344: 11 a0        	j	0x80000348 <test_12+0x2e>
 80000346: 22 8c        	mv	s8, s0
 80000348: b7 13 aa 0f  	lui	t2, 64161
@@ -291,8 +291,8 @@ Disassembly of section .text.init:
 80000376: 93 84 a4 0a  	addi	s1, s1, 170
 8000037a: 97 07 00 00  	auipc	a5, 0
 8000037e: 93 87 27 01  	addi	a5, a5, 18
-80000382: 23 30 85 00  	<unknown>
-80000386: 03 3d 05 00  	<unknown>
+80000382: 23 30 85 00  	sd	s0, 0(a0)
+80000386: 03 3d 05 00  	ld	s10, 0(a0)
 8000038a: 11 a0        	j	0x8000038e <test_13+0x2e>
 8000038c: 22 8d        	mv	s10, s0
 8000038e: b7 13 aa 0f  	lui	t2, 64161
@@ -312,8 +312,8 @@ Disassembly of section .text.init:
 800003bc: 93 84 a4 0a  	addi	s1, s1, 170
 800003c0: 97 07 00 00  	auipc	a5, 0
 800003c4: 93 87 27 01  	addi	a5, a5, 18
-800003c8: 23 30 85 00  	<unknown>
-800003cc: 03 3e 05 00  	<unknown>
+800003c8: 23 30 85 00  	sd	s0, 0(a0)
+800003cc: 03 3e 05 00  	ld	t3, 0(a0)
 800003d0: 11 a0        	j	0x800003d4 <test_14+0x2e>
 800003d2: 22 8e        	mv	t3, s0
 800003d4: b7 13 aa 0f  	lui	t2, 64161
@@ -333,8 +333,8 @@ Disassembly of section .text.init:
 80000402: 93 84 a4 0a  	addi	s1, s1, 170
 80000406: 97 07 00 00  	auipc	a5, 0
 8000040a: 93 87 27 01  	addi	a5, a5, 18
-8000040e: 23 30 85 00  	<unknown>
-80000412: 03 3f 05 00  	<unknown>
+8000040e: 23 30 85 00  	sd	s0, 0(a0)
+80000412: 03 3f 05 00  	ld	t5, 0(a0)
 80000416: 11 a0        	j	0x8000041a <test_15+0x2e>
 80000418: 22 8f        	mv	t5, s0
 8000041a: b7 13 aa 0f  	lui	t2, 64161
@@ -354,8 +354,8 @@ Disassembly of section .text.init:
 80000448: 93 84 a4 0a  	addi	s1, s1, 170
 8000044c: 97 07 00 00  	auipc	a5, 0
 80000450: 93 87 27 01  	addi	a5, a5, 18
-80000454: 23 30 85 00  	<unknown>
-80000458: 03 31 05 00  	<unknown>
+80000454: 23 30 85 00  	sd	s0, 0(a0)
+80000458: 03 31 05 00  	ld	sp, 0(a0)
 8000045c: 11 a0        	j	0x80000460 <test_16+0x2e>
 8000045e: 22 81        	mv	sp, s0
 80000460: b7 13 aa 0f  	lui	t2, 64161
@@ -375,8 +375,8 @@ Disassembly of section .text.init:
 8000048e: 93 84 a4 0a  	addi	s1, s1, 170
 80000492: 97 07 00 00  	auipc	a5, 0
 80000496: 93 87 27 01  	addi	a5, a5, 18
-8000049a: 23 30 85 00  	<unknown>
-8000049e: 03 32 05 00  	<unknown>
+8000049a: 23 30 85 00  	sd	s0, 0(a0)
+8000049e: 03 32 05 00  	ld	tp, 0(a0)
 800004a2: 11 a0        	j	0x800004a6 <test_17+0x2e>
 800004a4: 22 82        	mv	tp, s0
 800004a6: b7 13 aa 0f  	lui	t2, 64161
@@ -396,8 +396,8 @@ Disassembly of section .text.init:
 800004d4: 93 84 a4 0a  	addi	s1, s1, 170
 800004d8: 97 07 00 00  	auipc	a5, 0
 800004dc: 93 87 27 01  	addi	a5, a5, 18
-800004e0: 23 30 85 00  	<unknown>
-800004e4: 03 33 05 00  	<unknown>
+800004e0: 23 30 85 00  	sd	s0, 0(a0)
+800004e4: 03 33 05 00  	ld	t1, 0(a0)
 800004e8: 11 a0        	j	0x800004ec <test_18+0x2e>
 800004ea: 22 83        	mv	t1, s0
 800004ec: b7 13 aa 0f  	lui	t2, 64161
@@ -417,8 +417,8 @@ Disassembly of section .text.init:
 8000051a: 93 84 a4 0a  	addi	s1, s1, 170
 8000051e: 97 07 00 00  	auipc	a5, 0
 80000522: 93 87 27 01  	addi	a5, a5, 18
-80000526: 23 30 85 00  	<unknown>
-8000052a: 03 34 05 00  	<unknown>
+80000526: 23 30 85 00  	sd	s0, 0(a0)
+8000052a: 03 34 05 00  	ld	s0, 0(a0)
 8000052e: 11 a0        	j	0x80000532 <test_19+0x2e>
 80000530: 22 84        	mv	s0, s0
 80000532: b7 13 aa 0f  	lui	t2, 64161
@@ -428,8 +428,8 @@ Disassembly of section .text.init:
 80000542: 93 83 a3 0a  	addi	t2, t2, 170
 80000546: 63 9b 74 00  	bne	s1, t2, 0x8000055c <fail>
 8000054a: 06 88        	mv	a6, ra
-8000054c: 23 30 85 00  	<unknown>
-80000550: 03 30 05 00  	<unknown>
+8000054c: 23 30 85 00  	sd	s0, 0(a0)
+80000550: 03 30 05 00  	ld	zero, 0(a0)
 80000554: 63 94 00 01  	bne	ra, a6, 0x8000055c <fail>
 80000558: 63 1e 30 00  	bne	zero, gp, 0x80000574 <pass>
 
@@ -449,45 +449,3 @@ Disassembly of section .text.init:
 8000057e: 01 45        	li	a0, 0
 80000580: 73 00 00 00  	ecall
 80000584: 00 00        	unimp
-
-Disassembly of section .data:
-
-80002000 <tdat1>:
-80002000: ef be ad de  	jal	t4, 0x7ffdd5ea <rv32ui-sd.out+0x7ffdd5ea>
-80002004: ef be ad de  	jal	t4, 0x7ffdd5ee <rv32ui-sd.out+0x7ffdd5ee>
-
-80002008 <tdat2>:
-80002008: ef be ad de  	jal	t4, 0x7ffdd5f2 <rv32ui-sd.out+0x7ffdd5f2>
-8000200c: ef be ad de  	jal	t4, 0x7ffdd5f6 <rv32ui-sd.out+0x7ffdd5f6>
-
-80002010 <tdat3>:
-80002010: ef be ad de  	jal	t4, 0x7ffdd5fa <rv32ui-sd.out+0x7ffdd5fa>
-80002014: ef be ad de  	jal	t4, 0x7ffdd5fe <rv32ui-sd.out+0x7ffdd5fe>
-
-80002018 <tdat4>:
-80002018: ef be ad de  	jal	t4, 0x7ffdd602 <rv32ui-sd.out+0x7ffdd602>
-8000201c: ef be ad de  	jal	t4, 0x7ffdd606 <rv32ui-sd.out+0x7ffdd606>
-
-80002020 <tdat5>:
-80002020: ef be ad de  	jal	t4, 0x7ffdd60a <rv32ui-sd.out+0x7ffdd60a>
-80002024: ef be ad de  	jal	t4, 0x7ffdd60e <rv32ui-sd.out+0x7ffdd60e>
-
-80002028 <tdat6>:
-80002028: ef be ad de  	jal	t4, 0x7ffdd612 <rv32ui-sd.out+0x7ffdd612>
-8000202c: ef be ad de  	jal	t4, 0x7ffdd616 <rv32ui-sd.out+0x7ffdd616>
-
-80002030 <tdat7>:
-80002030: ef be ad de  	jal	t4, 0x7ffdd61a <rv32ui-sd.out+0x7ffdd61a>
-80002034: ef be ad de  	jal	t4, 0x7ffdd61e <rv32ui-sd.out+0x7ffdd61e>
-
-80002038 <tdat8>:
-80002038: ef be ad de  	jal	t4, 0x7ffdd622 <rv32ui-sd.out+0x7ffdd622>
-8000203c: ef be ad de  	jal	t4, 0x7ffdd626 <rv32ui-sd.out+0x7ffdd626>
-
-80002040 <tdat9>:
-80002040: ef be ad de  	jal	t4, 0x7ffdd62a <rv32ui-sd.out+0x7ffdd62a>
-80002044: ef be ad de  	jal	t4, 0x7ffdd62e <rv32ui-sd.out+0x7ffdd62e>
-
-80002048 <tdat10>:
-80002048: ef be ad de  	jal	t4, 0x7ffdd632 <rv32ui-sd.out+0x7ffdd632>
-8000204c: ef be ad de  	jal	t4, 0x7ffdd636 <rv32ui-sd.out+0x7ffdd636>

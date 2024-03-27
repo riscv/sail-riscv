@@ -1,5 +1,5 @@
 
-rv32ui-c.sd.elf:	file format elf32-littleriscv
+rv32ui-zilsd-c.sd.elf:	file format elf32-littleriscv
 
 Disassembly of section .text.init:
 
@@ -123,8 +123,8 @@ Disassembly of section .text.init:
 80000146: 93 84 a4 0a  	addi	s1, s1, 170
 8000014a: 97 07 00 00  	auipc	a5, 0
 8000014e: 93 87 e7 00  	addi	a5, a5, 14
-80000152: 00 e1        	<unknown>
-80000154: 10 61        	<unknown>
+80000152: 00 e1        	sd	s0, 0(a0)
+80000154: 10 61        	ld	a2, 0(a0)
 80000156: 11 a0        	j	0x8000015a <test_2+0x2a>
 80000158: 22 86        	mv	a2, s0
 8000015a: b7 13 aa 0f  	lui	t2, 64161
@@ -144,8 +144,8 @@ Disassembly of section .text.init:
 80000188: 93 84 a4 0a  	addi	s1, s1, 170
 8000018c: 97 07 00 00  	auipc	a5, 0
 80000190: 93 87 e7 00  	addi	a5, a5, 14
-80000194: 00 e1        	<unknown>
-80000196: 08 61        	<unknown>
+80000194: 00 e1        	sd	s0, 0(a0)
+80000196: 08 61        	ld	a0, 0(a0)
 80000198: 11 a0        	j	0x8000019c <test_3+0x2a>
 8000019a: 22 85        	mv	a0, s0
 8000019c: b7 13 aa 0f  	lui	t2, 64161
@@ -165,8 +165,8 @@ Disassembly of section .text.init:
 800001ca: 93 84 a4 0a  	addi	s1, s1, 170
 800001ce: 97 07 00 00  	auipc	a5, 0
 800001d2: 93 87 e7 00  	addi	a5, a5, 14
-800001d6: 00 e1        	<unknown>
-800001d8: 18 61        	<unknown>
+800001d6: 00 e1        	sd	s0, 0(a0)
+800001d8: 18 61        	ld	a4, 0(a0)
 800001da: 11 a0        	j	0x800001de <test_4+0x2a>
 800001dc: 22 87        	mv	a4, s0
 800001de: b7 13 aa 0f  	lui	t2, 64161
@@ -186,8 +186,8 @@ Disassembly of section .text.init:
 8000020c: 93 84 a4 0a  	addi	s1, s1, 170
 80000210: 97 07 00 00  	auipc	a5, 0
 80000214: 93 87 e7 00  	addi	a5, a5, 14
-80000218: 00 e1        	<unknown>
-8000021a: 00 61        	<unknown>
+80000218: 00 e1        	sd	s0, 0(a0)
+8000021a: 00 61        	ld	s0, 0(a0)
 8000021c: 11 a0        	j	0x80000220 <test_5+0x2a>
 8000021e: 22 84        	mv	s0, s0
 80000220: b7 13 aa 0f  	lui	t2, 64161
@@ -214,45 +214,3 @@ Disassembly of section .text.init:
 8000025e: 01 45        	li	a0, 0
 80000260: 73 00 00 00  	ecall
 80000264: 00 00        	unimp
-
-Disassembly of section .data:
-
-80002000 <tdat1>:
-80002000: ef be ad de  	jal	t4, 0x7ffdd5ea <rv32ui-c.sd.out+0x7ffdd5ea>
-80002004: ef be ad de  	jal	t4, 0x7ffdd5ee <rv32ui-c.sd.out+0x7ffdd5ee>
-
-80002008 <tdat2>:
-80002008: ef be ad de  	jal	t4, 0x7ffdd5f2 <rv32ui-c.sd.out+0x7ffdd5f2>
-8000200c: ef be ad de  	jal	t4, 0x7ffdd5f6 <rv32ui-c.sd.out+0x7ffdd5f6>
-
-80002010 <tdat3>:
-80002010: ef be ad de  	jal	t4, 0x7ffdd5fa <rv32ui-c.sd.out+0x7ffdd5fa>
-80002014: ef be ad de  	jal	t4, 0x7ffdd5fe <rv32ui-c.sd.out+0x7ffdd5fe>
-
-80002018 <tdat4>:
-80002018: ef be ad de  	jal	t4, 0x7ffdd602 <rv32ui-c.sd.out+0x7ffdd602>
-8000201c: ef be ad de  	jal	t4, 0x7ffdd606 <rv32ui-c.sd.out+0x7ffdd606>
-
-80002020 <tdat5>:
-80002020: ef be ad de  	jal	t4, 0x7ffdd60a <rv32ui-c.sd.out+0x7ffdd60a>
-80002024: ef be ad de  	jal	t4, 0x7ffdd60e <rv32ui-c.sd.out+0x7ffdd60e>
-
-80002028 <tdat6>:
-80002028: ef be ad de  	jal	t4, 0x7ffdd612 <rv32ui-c.sd.out+0x7ffdd612>
-8000202c: ef be ad de  	jal	t4, 0x7ffdd616 <rv32ui-c.sd.out+0x7ffdd616>
-
-80002030 <tdat7>:
-80002030: ef be ad de  	jal	t4, 0x7ffdd61a <rv32ui-c.sd.out+0x7ffdd61a>
-80002034: ef be ad de  	jal	t4, 0x7ffdd61e <rv32ui-c.sd.out+0x7ffdd61e>
-
-80002038 <tdat8>:
-80002038: ef be ad de  	jal	t4, 0x7ffdd622 <rv32ui-c.sd.out+0x7ffdd622>
-8000203c: ef be ad de  	jal	t4, 0x7ffdd626 <rv32ui-c.sd.out+0x7ffdd626>
-
-80002040 <tdat9>:
-80002040: ef be ad de  	jal	t4, 0x7ffdd62a <rv32ui-c.sd.out+0x7ffdd62a>
-80002044: ef be ad de  	jal	t4, 0x7ffdd62e <rv32ui-c.sd.out+0x7ffdd62e>
-
-80002048 <tdat10>:
-80002048: ef be ad de  	jal	t4, 0x7ffdd632 <rv32ui-c.sd.out+0x7ffdd632>
-8000204c: ef be ad de  	jal	t4, 0x7ffdd636 <rv32ui-c.sd.out+0x7ffdd636>

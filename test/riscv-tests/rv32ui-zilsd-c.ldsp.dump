@@ -1,5 +1,5 @@
 
-rv32ui-c.ldsp.elf:	file format elf32-littleriscv
+rv32ui-zilsd-c.ldsp.elf:	file format elf32-littleriscv
 
 Disassembly of section .text.init:
 
@@ -121,7 +121,7 @@ Disassembly of section .text.init:
 8000013e: 13 07 f7 de  	addi	a4, a4, -529
 80000142: 17 21 00 00  	auipc	sp, 2
 80000146: 13 01 e1 eb  	addi	sp, sp, -322
-8000014a: 22 66        	<unknown>
+8000014a: 22 66        	ld	a2, 8(sp)
 8000014c: b7 43 65 87  	lui	t2, 554580
 80000150: 93 83 13 32  	addi	t2, t2, 801
 80000154: 63 16 76 2e  	bne	a2, t2, 0x80000440 <fail>
@@ -137,7 +137,7 @@ Disassembly of section .text.init:
 80000172: 13 07 f7 de  	addi	a4, a4, -529
 80000176: 17 21 00 00  	auipc	sp, 2
 8000017a: 13 01 a1 e8  	addi	sp, sp, -374
-8000017e: 22 65        	<unknown>
+8000017e: 22 65        	ld	a0, 8(sp)
 80000180: b7 43 65 87  	lui	t2, 554580
 80000184: 93 83 13 32  	addi	t2, t2, 801
 80000188: 63 1c 75 2a  	bne	a0, t2, 0x80000440 <fail>
@@ -153,7 +153,7 @@ Disassembly of section .text.init:
 800001a6: 13 07 f7 de  	addi	a4, a4, -529
 800001aa: 17 21 00 00  	auipc	sp, 2
 800001ae: 13 01 61 e5  	addi	sp, sp, -426
-800001b2: 22 68        	<unknown>
+800001b2: 22 68        	ld	a6, 8(sp)
 800001b4: b7 43 65 87  	lui	t2, 554580
 800001b8: 93 83 13 32  	addi	t2, t2, 801
 800001bc: 63 12 78 28  	bne	a6, t2, 0x80000440 <fail>
@@ -169,7 +169,7 @@ Disassembly of section .text.init:
 800001da: 13 07 f7 de  	addi	a4, a4, -529
 800001de: 17 21 00 00  	auipc	sp, 2
 800001e2: 13 01 21 e2  	addi	sp, sp, -478
-800001e6: 22 69        	<unknown>
+800001e6: 22 69        	ld	s2, 8(sp)
 800001e8: b7 43 65 87  	lui	t2, 554580
 800001ec: 93 83 13 32  	addi	t2, t2, 801
 800001f0: 63 18 79 24  	bne	s2, t2, 0x80000440 <fail>
@@ -185,7 +185,7 @@ Disassembly of section .text.init:
 8000020e: 13 07 f7 de  	addi	a4, a4, -529
 80000212: 17 21 00 00  	auipc	sp, 2
 80000216: 13 01 e1 de  	addi	sp, sp, -530
-8000021a: 22 6a        	<unknown>
+8000021a: 22 6a        	ld	s4, 8(sp)
 8000021c: b7 43 65 87  	lui	t2, 554580
 80000220: 93 83 13 32  	addi	t2, t2, 801
 80000224: 63 1e 7a 20  	bne	s4, t2, 0x80000440 <fail>
@@ -201,7 +201,7 @@ Disassembly of section .text.init:
 80000242: 13 07 f7 de  	addi	a4, a4, -529
 80000246: 17 21 00 00  	auipc	sp, 2
 8000024a: 13 01 a1 db  	addi	sp, sp, -582
-8000024e: 22 6b        	<unknown>
+8000024e: 22 6b        	ld	s6, 8(sp)
 80000250: b7 43 65 87  	lui	t2, 554580
 80000254: 93 83 13 32  	addi	t2, t2, 801
 80000258: 63 14 7b 1e  	bne	s6, t2, 0x80000440 <fail>
@@ -217,7 +217,7 @@ Disassembly of section .text.init:
 80000276: 13 07 f7 de  	addi	a4, a4, -529
 8000027a: 17 21 00 00  	auipc	sp, 2
 8000027e: 13 01 61 d8  	addi	sp, sp, -634
-80000282: 22 6c        	<unknown>
+80000282: 22 6c        	ld	s8, 8(sp)
 80000284: b7 43 65 87  	lui	t2, 554580
 80000288: 93 83 13 32  	addi	t2, t2, 801
 8000028c: 63 1a 7c 1a  	bne	s8, t2, 0x80000440 <fail>
@@ -233,7 +233,7 @@ Disassembly of section .text.init:
 800002aa: 13 07 f7 de  	addi	a4, a4, -529
 800002ae: 17 21 00 00  	auipc	sp, 2
 800002b2: 13 01 21 d5  	addi	sp, sp, -686
-800002b6: 22 6d        	<unknown>
+800002b6: 22 6d        	ld	s10, 8(sp)
 800002b8: b7 43 65 87  	lui	t2, 554580
 800002bc: 93 83 13 32  	addi	t2, t2, 801
 800002c0: 63 10 7d 18  	bne	s10, t2, 0x80000440 <fail>
@@ -249,7 +249,7 @@ Disassembly of section .text.init:
 800002de: 13 07 f7 de  	addi	a4, a4, -529
 800002e2: 17 21 00 00  	auipc	sp, 2
 800002e6: 13 01 e1 d1  	addi	sp, sp, -738
-800002ea: 22 6e        	<unknown>
+800002ea: 22 6e        	ld	t3, 8(sp)
 800002ec: b7 43 65 87  	lui	t2, 554580
 800002f0: 93 83 13 32  	addi	t2, t2, 801
 800002f4: 63 16 7e 14  	bne	t3, t2, 0x80000440 <fail>
@@ -265,7 +265,7 @@ Disassembly of section .text.init:
 80000312: 13 07 f7 de  	addi	a4, a4, -529
 80000316: 17 21 00 00  	auipc	sp, 2
 8000031a: 13 01 a1 ce  	addi	sp, sp, -790
-8000031e: 22 6f        	<unknown>
+8000031e: 22 6f        	ld	t5, 8(sp)
 80000320: b7 43 65 87  	lui	t2, 554580
 80000324: 93 83 13 32  	addi	t2, t2, 801
 80000328: 63 1c 7f 10  	bne	t5, t2, 0x80000440 <fail>
@@ -281,7 +281,7 @@ Disassembly of section .text.init:
 80000346: 13 07 f7 de  	addi	a4, a4, -529
 8000034a: 17 21 00 00  	auipc	sp, 2
 8000034e: 13 01 61 cb  	addi	sp, sp, -842
-80000352: 22 61        	<unknown>
+80000352: 22 61        	ld	sp, 8(sp)
 80000354: b7 43 65 87  	lui	t2, 554580
 80000358: 93 83 13 32  	addi	t2, t2, 801
 8000035c: 63 12 71 0e  	bne	sp, t2, 0x80000440 <fail>
@@ -297,7 +297,7 @@ Disassembly of section .text.init:
 8000037a: 13 07 f7 de  	addi	a4, a4, -529
 8000037e: 17 21 00 00  	auipc	sp, 2
 80000382: 13 01 21 c8  	addi	sp, sp, -894
-80000386: 22 62        	<unknown>
+80000386: 22 62        	ld	tp, 8(sp)
 80000388: b7 43 65 87  	lui	t2, 554580
 8000038c: 93 83 13 32  	addi	t2, t2, 801
 80000390: 63 18 72 0a  	bne	tp, t2, 0x80000440 <fail>
@@ -313,7 +313,7 @@ Disassembly of section .text.init:
 800003ae: 13 07 f7 de  	addi	a4, a4, -529
 800003b2: 17 21 00 00  	auipc	sp, 2
 800003b6: 13 01 e1 c4  	addi	sp, sp, -946
-800003ba: 22 63        	<unknown>
+800003ba: 22 63        	ld	t1, 8(sp)
 800003bc: b7 43 65 87  	lui	t2, 554580
 800003c0: 93 83 13 32  	addi	t2, t2, 801
 800003c4: 63 1e 73 06  	bne	t1, t2, 0x80000440 <fail>
@@ -329,7 +329,7 @@ Disassembly of section .text.init:
 800003e2: 13 07 f7 de  	addi	a4, a4, -529
 800003e6: 17 21 00 00  	auipc	sp, 2
 800003ea: 13 01 a1 c1  	addi	sp, sp, -998
-800003ee: 22 64        	<unknown>
+800003ee: 22 64        	ld	s0, 8(sp)
 800003f0: b7 43 65 87  	lui	t2, 554580
 800003f4: 93 83 13 32  	addi	t2, t2, 801
 800003f8: 63 14 74 04  	bne	s0, t2, 0x80000440 <fail>
@@ -345,7 +345,7 @@ Disassembly of section .text.init:
 80000416: 13 07 f7 de  	addi	a4, a4, -529
 8000041a: 17 21 00 00  	auipc	sp, 2
 8000041e: 13 01 61 be  	addi	sp, sp, -1050
-80000422: 22 67        	<unknown>
+80000422: 22 67        	ld	a4, 8(sp)
 80000424: b7 43 65 87  	lui	t2, 554580
 80000428: 93 83 13 32  	addi	t2, t2, 801
 8000042c: 63 1a 77 00  	bne	a4, t2, 0x80000440 <fail>
@@ -370,26 +370,3 @@ Disassembly of section .text.init:
 80000462: 01 45        	li	a0, 0
 80000464: 73 00 00 00  	ecall
 80000468: 00 00        	unimp
-
-Disassembly of section .data:
-
-80002000 <tdat61>:
-80002000: ff 00 ff 00  	<unknown>
-80002004: ff 00 ff 0f  	<unknown>
-
-80002008 <tdat62>:
-80002008: 21 43        	li	t1, 8
-8000200a: 65 87        	srai	a4, a4, 25
-8000200c: ef cd ab 09  	jal	s11, 0x800be0a6 <end_signature+0xbc086>
-
-80002010 <tdat63>:
-80002010: 90 ba        	<unknown>
-80002012: dc fe        	<unknown>
-80002014: 90 ba        	<unknown>
-80002016: dc fe        	<unknown>
-
-80002018 <tdat64>:
-80002018: cd ab        	j	0x8000260a <end_signature+0x5ea>
-8000201a: cd ab        	j	0x8000260c <end_signature+0x5ec>
-8000201c: cd ab        	j	0x8000260e <end_signature+0x5ee>
-8000201e: cd ab        	j	0x80002610 <end_signature+0x5f0>

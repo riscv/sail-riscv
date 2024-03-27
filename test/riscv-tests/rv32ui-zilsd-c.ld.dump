@@ -1,5 +1,5 @@
 
-rv32ui-c.ld.elf:	file format elf32-littleriscv
+rv32ui-zilsd-c.ld.elf:	file format elf32-littleriscv
 
 Disassembly of section .text.init:
 
@@ -121,7 +121,7 @@ Disassembly of section .text.init:
 8000013e: 13 07 f7 0f  	addi	a4, a4, 255
 80000142: 17 24 00 00  	auipc	s0, 2
 80000146: 13 04 e4 eb  	addi	s0, s0, -322
-8000014a: 10 60        	<unknown>
+8000014a: 10 60        	ld	a2, 0(s0)
 8000014c: b7 03 ff 00  	lui	t2, 4080
 80000150: 93 83 f3 0f  	addi	t2, t2, 255
 80000154: 63 18 76 0a  	bne	a2, t2, 0x80000204 <fail>
@@ -137,7 +137,7 @@ Disassembly of section .text.init:
 80000172: 13 07 f7 0f  	addi	a4, a4, 255
 80000176: 17 24 00 00  	auipc	s0, 2
 8000017a: 13 04 a4 e8  	addi	s0, s0, -374
-8000017e: 08 60        	<unknown>
+8000017e: 08 60        	ld	a0, 0(s0)
 80000180: b7 03 ff 00  	lui	t2, 4080
 80000184: 93 83 f3 0f  	addi	t2, t2, 255
 80000188: 63 1e 75 06  	bne	a0, t2, 0x80000204 <fail>
@@ -153,7 +153,7 @@ Disassembly of section .text.init:
 800001a6: 13 07 f7 0f  	addi	a4, a4, 255
 800001aa: 17 24 00 00  	auipc	s0, 2
 800001ae: 13 04 64 e5  	addi	s0, s0, -426
-800001b2: 00 60        	<unknown>
+800001b2: 00 60        	ld	s0, 0(s0)
 800001b4: b7 03 ff 00  	lui	t2, 4080
 800001b8: 93 83 f3 0f  	addi	t2, t2, 255
 800001bc: 63 14 74 04  	bne	s0, t2, 0x80000204 <fail>
@@ -169,7 +169,7 @@ Disassembly of section .text.init:
 800001da: 13 07 f7 0f  	addi	a4, a4, 255
 800001de: 17 24 00 00  	auipc	s0, 2
 800001e2: 13 04 24 e2  	addi	s0, s0, -478
-800001e6: 18 60        	<unknown>
+800001e6: 18 60        	ld	a4, 0(s0)
 800001e8: b7 03 ff 00  	lui	t2, 4080
 800001ec: 93 83 f3 0f  	addi	t2, t2, 255
 800001f0: 63 1a 77 00  	bne	a4, t2, 0x80000204 <fail>
@@ -194,25 +194,3 @@ Disassembly of section .text.init:
 80000226: 01 45        	li	a0, 0
 80000228: 73 00 00 00  	ecall
 8000022c: 00 00        	unimp
-
-Disassembly of section .data:
-
-80002000 <tdat1>:
-80002000: ff 00 ff 00  	<unknown>
-80002004: ff 00 ff 0f  	<unknown>
-
-80002008 <tdat2>:
-80002008: 00 ff        	<unknown>
-8000200a: 00 ff        	<unknown>
-8000200c: 00 ff        	<unknown>
-8000200e: 00 ff        	<unknown>
-
-80002010 <tdat3>:
-80002010: f0 0f        	addi	a2, sp, 988
-80002012: f0 0f        	addi	a2, sp, 988
-80002014: f0 0f        	addi	a2, sp, 988
-80002016: f0 0f        	addi	a2, sp, 988
-
-80002018 <tdat4>:
-80002018: 0f f0 0f f0  	<unknown>
-8000201c: 0f f0 0f f0  	<unknown>
