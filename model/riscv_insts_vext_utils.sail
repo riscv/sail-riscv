@@ -685,17 +685,6 @@ function fp_max(op1, op2) = {
   result_val
 }
 
-val fp_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
-function fp_eq(op1, op2) = {
-  let (fflags, result_val) : (bits_fflags, bool) = match 'm {
-    16  => riscv_f16Eq(op1, op2),
-    32  => riscv_f32Eq(op1, op2),
-    64  => riscv_f64Eq(op1, op2)
-  };
-  accrue_fflags(fflags);
-  result_val
-}
-
 val fp_gt : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
 function fp_gt(op1, op2) = {
   let (fflags, temp_val) : (bits_fflags, bool) = match 'm {
