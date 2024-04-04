@@ -63,8 +63,8 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, op)) = {
-  let rs1_val_16b = F_or_X_H(rs1);
-  let rs2_val_16b = F_or_X_H(rs2);
+  let rs1_val_16b = F_or_X(16, rs1);
+  let rs2_val_16b = F_or_X(16, rs2);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -76,7 +76,7 @@ function clause execute (F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, op)) = {
         FDIV_H  => riscv_f16Div (rm_3b, rs1_val_16b, rs2_val_16b)
       };
       accrue_fflags(fflags);
-      F_or_X_H(rd) = rd_val_16b;
+      F_or_X(rd) = rd_val_16b;
       RETIRE_SUCCESS
     }
   }
@@ -126,9 +126,9 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, op)) = {
-  let rs1_val_16b = F_or_X_H(rs1);
-  let rs2_val_16b = F_or_X_H(rs2);
-  let rs3_val_16b = F_or_X_H(rs3);
+  let rs1_val_16b = F_or_X(16, rs1);
+  let rs2_val_16b = F_or_X(16, rs2);
+  let rs3_val_16b = F_or_X(16, rs3);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -141,7 +141,7 @@ function clause execute (F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, op)) = {
           FNMADD_H => riscv_f16MulAdd (rm_3b, f_negate (rs1_val_16b), rs2_val_16b, f_negate (rs3_val_16b))
         };
       accrue_fflags(fflags);
-      F_or_X_H(rd) = rd_val_16b;
+      F_or_X(rd) = rd_val_16b;
       RETIRE_SUCCESS
     }
   }
@@ -200,41 +200,41 @@ mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FLE_H)                 if hav
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FSGNJ_H)) = {
-  let rs1_val_H    = F_or_X_H(rs1);
-  let rs2_val_H    = F_or_X_H(rs2);
+  let rs1_val_H    = F_or_X(16, rs1);
+  let rs2_val_H    = F_or_X(16, rs2);
   let (s1, e1, m1) = fsplit (rs1_val_H);
   let (s2, e2, m2) = fsplit (rs2_val_H);
   let rd_val_H     = fmake (s2, e1, m1);
 
-  F_or_X_H(rd) = rd_val_H;
+  F_or_X(rd) = rd_val_H;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FSGNJN_H)) = {
-  let rs1_val_H    = F_or_X_H(rs1);
-  let rs2_val_H    = F_or_X_H(rs2);
+  let rs1_val_H    = F_or_X(16, rs1);
+  let rs2_val_H    = F_or_X(16, rs2);
   let (s1, e1, m1) = fsplit (rs1_val_H);
   let (s2, e2, m2) = fsplit (rs2_val_H);
   let rd_val_H     = fmake (0b1 ^ s2, e1, m1);
 
-  F_or_X_H(rd) = rd_val_H;
+  F_or_X(rd) = rd_val_H;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FSGNJX_H)) = {
-  let rs1_val_H    = F_or_X_H(rs1);
-  let rs2_val_H    = F_or_X_H(rs2);
+  let rs1_val_H    = F_or_X(16, rs1);
+  let rs2_val_H    = F_or_X(16, rs2);
   let (s1, e1, m1) = fsplit (rs1_val_H);
   let (s2, e2, m2) = fsplit (rs2_val_H);
   let rd_val_H     = fmake (s1 ^ s2, e1, m1);
 
-  F_or_X_H(rd) = rd_val_H;
+  F_or_X(rd) = rd_val_H;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FMIN_H)) = {
-  let rs1_val_H = F_or_X_H(rs1);
-  let rs2_val_H = F_or_X_H(rs2);
+  let rs1_val_H = F_or_X(16, rs1);
+  let rs2_val_H = F_or_X(16, rs2);
 
   let is_quiet  = true;
   let (rs1_lt_rs2, fflags) = fle(rs1_val_H, rs2_val_H, is_quiet);
@@ -248,13 +248,13 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FMIN_H)) = {
                   else /* (not rs1_lt_rs2) */                                        rs2_val_H;
 
   accrue_fflags(fflags);
-  F_or_X_H(rd) = rd_val_H;
+  F_or_X(rd) = rd_val_H;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FMAX_H)) = {
-  let rs1_val_H = F_or_X_H(rs1);
-  let rs2_val_H = F_or_X_H(rs2);
+  let rs1_val_H = F_or_X(16, rs1);
+  let rs2_val_H = F_or_X(16, rs2);
 
   let is_quiet  = true;
   let (rs2_lt_rs1, fflags) = fle(rs2_val_H, rs1_val_H, is_quiet);
@@ -268,13 +268,13 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FMAX_H)) = {
                   else /* (not rs2_lt_rs1) */                                        rs2_val_H;
 
   accrue_fflags(fflags);
-  F_or_X_H(rd) = rd_val_H;
+  F_or_X(rd) = rd_val_H;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FEQ_H)) = {
-  let rs1_val_H = F_or_X_H(rs1);
-  let rs2_val_H = F_or_X_H(rs2);
+  let rs1_val_H = F_or_X(16, rs1);
+  let rs2_val_H = F_or_X(16, rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f16Eq (rs1_val_H, rs2_val_H);
@@ -285,8 +285,8 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FEQ_H)) = {
 }
 
 function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FLT_H)) = {
-  let rs1_val_H = F_or_X_H(rs1);
-  let rs2_val_H = F_or_X_H(rs2);
+  let rs1_val_H = F_or_X(16, rs1);
+  let rs2_val_H = F_or_X(16, rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f16Lt (rs1_val_H, rs2_val_H);
@@ -297,8 +297,8 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FLT_H)) = {
 }
 
 function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FLE_H)) = {
-  let rs1_val_H = F_or_X_H(rs1);
-  let rs2_val_H = F_or_X_H(rs2);
+  let rs1_val_H = F_or_X(16, rs1);
+  let rs2_val_H = F_or_X(16, rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f16Le (rs1_val_H, rs2_val_H);
@@ -438,7 +438,7 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FSQRT_H)) = {
-  let rs1_val_H = F_or_X_H(rs1);
+  let rs1_val_H = F_or_X(16, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -446,14 +446,14 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FSQRT_H)) = {
       let (fflags, rd_val_H) = riscv_f16Sqrt   (rm_3b, rs1_val_H);
 
       accrue_fflags(fflags);
-      F_or_X_H(rd) = rd_val_H;
+      F_or_X(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_W_H)) = {
-  let rs1_val_H = F_or_X_H(rs1);
+  let rs1_val_H = F_or_X(16, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -468,7 +468,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_W_H)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_WU_H)) = {
-  let rs1_val_H = F_or_X_H(rs1);
+  let rs1_val_H = F_or_X(16, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -491,7 +491,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_W)) = {
       let (fflags, rd_val_H) = riscv_i32ToF16 (rm_3b, rs1_val_W);
 
       accrue_fflags(fflags);
-      F_or_X_H(rd) = rd_val_H;
+      F_or_X(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
   }
@@ -506,14 +506,14 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_WU)) = {
       let (fflags, rd_val_H) = riscv_ui32ToF16 (rm_3b, rs1_val_WU);
 
       accrue_fflags(fflags);
-      F_or_X_H(rd) = rd_val_H;
+      F_or_X(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
+  let rs1_val_S = F_or_X(32, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -521,14 +521,14 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_S)) = {
       let (fflags, rd_val_H) = riscv_f32ToF16 (rm_3b, rs1_val_S);
 
       accrue_fflags(fflags);
-      F_or_X_H(rd) = rd_val_H;
+      F_or_X(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_D)) = {
-  let rs1_val_D = F_or_X_D(rs1);
+  let rs1_val_D = F_or_X(64, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -536,14 +536,14 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_D)) = {
       let (fflags, rd_val_H) = riscv_f64ToF16 (rm_3b, rs1_val_D);
 
       accrue_fflags(fflags);
-      F_or_X_H(rd) = rd_val_H;
+      F_or_X(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_S_H)) = {
-  let rs1_val_H = F_or_X_H(rs1);
+  let rs1_val_H = F_or_X(16, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -551,7 +551,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_S_H)) = {
       let (fflags, rd_val_S) = riscv_f16ToF32 (rm_3b, rs1_val_H);
 
       accrue_fflags(fflags);
-      F_or_X_S(rd) = rd_val_S;
+      F_or_X(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
   }
@@ -559,7 +559,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_S_H)) = {
 
 
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_D_H)) = {
-  let rs1_val_H = F_or_X_H(rs1);
+  let rs1_val_H = F_or_X(16, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -567,7 +567,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_D_H)) = {
       let (fflags, rd_val_D) = riscv_f16ToF64 (rm_3b, rs1_val_H);
 
       accrue_fflags(fflags);
-      F_or_X_D(rd) = rd_val_D;
+      F_or_X(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
   }
@@ -575,7 +575,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_D_H)) = {
 
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_L_H)) = {
   assert(sizeof(xlen) >= 64);
-  let rs1_val_H = F_or_X_H(rs1);
+  let rs1_val_H = F_or_X(16, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -591,7 +591,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_L_H)) = {
 
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_LU_H)) = {
   assert(sizeof(xlen) >= 64);
-  let rs1_val_H = F_or_X_H(rs1);
+  let rs1_val_H = F_or_X(16, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -615,7 +615,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_L)) = {
       let (fflags, rd_val_H) = riscv_i64ToF16 (rm_3b, rs1_val_L);
 
       accrue_fflags(fflags);
-      F_or_X_H(rd) = rd_val_H;
+      F_or_X(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
   }
@@ -631,7 +631,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_LU)) = {
       let (fflags, rd_val_H) = riscv_ui64ToF16 (rm_3b, rs1_val_LU);
 
       accrue_fflags(fflags);
-      F_or_X_H(rd) = rd_val_H;
+      F_or_X(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
   }
@@ -754,7 +754,7 @@ mapping clause encdec = F_UN_TYPE_H(rs1, rd, FMV_H_X)                         if
 /* Execution semantics ================================ */
 
 function clause execute (F_UN_TYPE_H(rs1, rd, FCLASS_H)) = {
-  let rs1_val_H = F_or_X_H(rs1);
+  let rs1_val_H = F_or_X(16, rs1);
 
   let rd_val_10b : bits (10) =
     if      f_is_neg_inf     (rs1_val_H) then 0b_00_0000_0001

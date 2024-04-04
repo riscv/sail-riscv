@@ -215,76 +215,34 @@ overload F_box = { rF_box, wF_box }
 // Access functions that access X registers if Zfinx (float in X) is enabled
 // (mutually exclusive with the F/D extensions), otherwise F registers.
 
-val rF_or_X_H : regidx -> bits(16)
-function rF_or_X_H(i) = {
-  assert(sizeof(flen) >= 16);
+val rF_or_X : forall 'n, 'n in {16, 32, 64} . (implicit('n), regidx) -> bits('n)
+function rF_or_X(_n, i) = {
+  assert(sizeof(flen) >= 'n);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_box(i)
-  else X(i)[15..0]
-}
-
-val rF_or_X_S : regidx -> bits(32)
-function rF_or_X_S(i) = {
-  assert(sizeof(flen) >= 32);
-  assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
-  then F_box(i)
-  else X(i)[31..0]
-}
-
-val rF_or_X_D : regidx -> bits(64)
-function rF_or_X_D(i) = {
-  assert(sizeof(flen) >= 64);
-  assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
-  then F_box(i)
-  else if sizeof(xlen) >= 64
-  then X(i)[63..0]
-  else {
+  else if sizeof(xlen) == 32 & 'n == 64 then {
     assert(i[0] == bitzero);
     if i == zeros() then zeros() else X(i + 1) @ X(i)
-  }
+  } else X(i)['n - 1 .. 0]
 }
 
-val wF_or_X_H : (regidx, bits(16)) -> unit
-function wF_or_X_H(i, data) = {
-  assert(sizeof(flen) >= 16);
+val wF_or_X : forall 'n, 'n in {16, 32, 64} . (regidx, bits('n)) -> unit
+function wF_or_X(i, data) = {
+  assert(sizeof(flen) >= 'n);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_box(i) = data
-  else X(i) = sign_extend(data)
-}
-
-val wF_or_X_S : (regidx, bits(32)) -> unit
-function wF_or_X_S(i, data) = {
-  assert(sizeof(flen) >= 32);
-  assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
-  then F_box(i) = data
-  else X(i) = sign_extend(data)
-}
-
-val wF_or_X_D : (regidx, bits(64)) -> unit
-function wF_or_X_D(i, data) = {
-  assert (sizeof(flen) >= 64);
-  assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
-  then F_box(i) = data
-  else if sizeof(xlen) >= 64
-  then X(i) = sign_extend(data)
-  else {
+  else if sizeof(xlen) == 32 & 'n == 64 then {
     assert (i[0] == bitzero);
     if i != zeros() then {
       X(i)     = data[31..0];
       X(i + 1) = data[63..32];
     }
-  }
+  } else X(i) = sign_extend(data)
 }
 
-overload F_or_X_H = { rF_or_X_H, wF_or_X_H }
-overload F_or_X_S = { rF_or_X_S, wF_or_X_S }
-overload F_or_X_D = { rF_or_X_D, wF_or_X_D }
+overload F_or_X = { rF_or_X, wF_or_X }
 
 /* register names */
 
