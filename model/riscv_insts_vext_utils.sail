@@ -437,106 +437,6 @@ function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
   result
 }
 
-/* Floating point classification functions */
-val f_is_neg_inf : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
-function f_is_neg_inf(xf) = {
-  match 'm {
-    16 => f_is_neg_inf_H(xf),
-    32 => f_is_neg_inf_S(xf),
-    64 => f_is_neg_inf_D(xf)
-  }
-}
-
-val f_is_neg_norm : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
-function f_is_neg_norm(xf) = {
-  match 'm {
-    16 => f_is_neg_norm_H(xf),
-    32 => f_is_neg_norm_S(xf),
-    64 => f_is_neg_norm_D(xf)
-  }
-}
-
-val f_is_neg_subnorm : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
-function f_is_neg_subnorm(xf) = {
-  match 'm {
-    16 => f_is_neg_subnorm_H(xf),
-    32 => f_is_neg_subnorm_S(xf),
-    64 => f_is_neg_subnorm_D(xf)
-  }
-}
-
-val f_is_neg_zero : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
-function f_is_neg_zero(xf) = {
-  match 'm {
-    16 => f_is_neg_zero_H(xf),
-    32 => f_is_neg_zero_S(xf),
-    64 => f_is_neg_zero_D(xf)
-  }
-}
-
-val f_is_pos_zero : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
-function f_is_pos_zero(xf) = {
-  match 'm {
-    16 => f_is_pos_zero_H(xf),
-    32 => f_is_pos_zero_S(xf),
-    64 => f_is_pos_zero_D(xf)
-  }
-}
-
-val f_is_pos_subnorm : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
-function f_is_pos_subnorm(xf) = {
-  match 'm {
-    16 => f_is_pos_subnorm_H(xf),
-    32 => f_is_pos_subnorm_S(xf),
-    64 => f_is_pos_subnorm_D(xf)
-  }
-}
-
-val f_is_pos_norm : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
-function f_is_pos_norm(xf) = {
-  match 'm {
-    16 => f_is_pos_norm_H(xf),
-    32 => f_is_pos_norm_S(xf),
-    64 => f_is_pos_norm_D(xf)
-  }
-}
-
-val f_is_pos_inf : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
-function f_is_pos_inf(xf) = {
-  match 'm {
-    16 => f_is_pos_inf_H(xf),
-    32 => f_is_pos_inf_S(xf),
-    64 => f_is_pos_inf_D(xf)
-  }
-}
-
-val f_is_SNaN : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
-function f_is_SNaN(xf) = {
-  match 'm {
-    16 => f_is_SNaN_H(xf),
-    32 => f_is_SNaN_S(xf),
-    64 => f_is_SNaN_D(xf)
-  }
-}
-
-val f_is_QNaN : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
-function f_is_QNaN(xf) = {
-  match 'm {
-    16 => f_is_QNaN_H(xf),
-    32 => f_is_QNaN_S(xf),
-    64 => f_is_QNaN_D(xf)
-  }
-}
-
-val f_is_NaN : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
-function f_is_NaN(xf) = {
-  match 'm {
-    16 => f_is_NaN_H(xf),
-    32 => f_is_NaN_S(xf),
-    64 => f_is_NaN_D(xf)
-  }
-}
-
 /* Scalar register shaping for floating point operations */
 val get_scalar_fp : forall 'n, 'n in {16, 32, 64}. (regidx, int('n)) -> bits('n)
 function get_scalar_fp(rs1, SEW) = {
@@ -603,16 +503,6 @@ function signed_saturation(len, elem) = {
 /* Get the floating point rounding mode from csr fcsr */
 val get_fp_rounding_mode : unit -> rounding_mode
 function get_fp_rounding_mode() = encdec_rounding_mode(fcsr[FRM])
-
-/* Negate a floating point number */
-val negate_fp : forall 'm, 'm in {16, 32, 64}. bits('m) -> bits('m)
-function negate_fp(xf) = {
-  match 'm {
-    16 => negate_H(xf),
-    32 => negate_S(xf),
-    64 => negate_D(xf)
-  }
-}
 
 /* Floating point functions using softfloat interface */
 val fp_add: forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m)) -> bits('m)
@@ -767,7 +657,7 @@ function fp_muladd(rm_3b, op1, op2, opadd) = {
 
 val fp_nmuladd : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m), bits('m)) -> bits('m)
 function fp_nmuladd(rm_3b, op1, op2, opadd) = {
-  let op1 = negate_fp(op1);
+  let op1 = f_negate(op1);
   let (fflags, result_val) : (bits_fflags, bits('m)) = match 'm {
     16  => riscv_f16MulAdd(rm_3b, op1, op2, opadd),
     32  => riscv_f32MulAdd(rm_3b, op1, op2, opadd),
@@ -779,7 +669,7 @@ function fp_nmuladd(rm_3b, op1, op2, opadd) = {
 
 val fp_mulsub : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m), bits('m)) -> bits('m)
 function fp_mulsub(rm_3b, op1, op2, opsub) = {
-  let opsub = negate_fp(opsub);
+  let opsub = f_negate(opsub);
   let (fflags, result_val) : (bits_fflags, bits('m)) = match 'm {
     16  => riscv_f16MulAdd(rm_3b, op1, op2, opsub),
     32  => riscv_f32MulAdd(rm_3b, op1, op2, opsub),
@@ -791,8 +681,8 @@ function fp_mulsub(rm_3b, op1, op2, opsub) = {
 
 val fp_nmulsub : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m), bits('m)) -> bits('m)
 function fp_nmulsub(rm_3b, op1, op2, opsub) = {
-  let opsub = negate_fp(opsub);
-  let op1 = negate_fp(op1);
+  let opsub = f_negate(opsub);
+  let op1 = f_negate(op1);
   let (fflags, result_val) : (bits_fflags, bits('m)) = match 'm {
     16  => riscv_f16MulAdd(rm_3b, op1, op2, opsub),
     32  => riscv_f32MulAdd(rm_3b, op1, op2, opsub),

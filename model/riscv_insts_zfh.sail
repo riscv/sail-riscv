@@ -25,113 +25,13 @@
 
 /* **************************************************************** */
 
-val      fsplit_H : bits(16) -> (bits(1), bits(5), bits(10))
-function fsplit_H   (xf16) = (xf16[15..15], xf16[14..10], xf16[9..0])
-
-val      fmake_H  : (bits(1), bits(5), bits(10)) -> bits(16)
-function fmake_H (sign, exp, mant) = sign @ exp @ mant
-
-val      negate_H : bits(16) -> bits(16)
-function negate_H (xf16) = {
-  let (sign, exp, mant) = fsplit_H (xf16);
-  let new_sign = if (sign == 0b0) then 0b1 else 0b0;
-  fmake_H (new_sign, exp, mant)
-}
-
-val      f_is_neg_inf_H : bits(16) -> bool
-function f_is_neg_inf_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
-  (  (sign == 0b1)
-   & (exp  == ones())
-   & (mant == zeros()))
-}
-
-val      f_is_neg_norm_H : bits(16) -> bool
-function f_is_neg_norm_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
-  (  (sign == 0b1)
-   & (exp  != zeros())
-   & (exp  != ones()))
-}
-
-val      f_is_neg_subnorm_H : bits(16) -> bool
-function f_is_neg_subnorm_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
-  (  (sign == 0b1)
-   & (exp  == zeros())
-   & (mant != zeros()))
-}
-
-val      f_is_pos_subnorm_H : bits(16) -> bool
-function f_is_pos_subnorm_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
-  (  (sign == zeros())
-   & (exp  == zeros())
-   & (mant != zeros()))
-}
-
-val      f_is_pos_norm_H : bits(16) -> bool
-function f_is_pos_norm_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
-  (  (sign == zeros())
-   & (exp  != zeros())
-   & (exp  != ones()))
-}
-
-val      f_is_pos_inf_H : bits(16) -> bool
-function f_is_pos_inf_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
-  (  (sign == zeros())
-   & (exp  == ones())
-   & (mant == zeros()))
-}
-
-val      f_is_neg_zero_H : bits(16) -> bool
-function f_is_neg_zero_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
-  (  (sign == ones())
-   & (exp  == zeros())
-   & (mant == zeros()))
-}
-
-val      f_is_pos_zero_H : bits(16) -> bool
-function f_is_pos_zero_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
-  (  (sign == zeros())
-   & (exp  == zeros())
-   & (mant == zeros()))
-}
-
-val      f_is_SNaN_H : bits(16) -> bool
-function f_is_SNaN_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
-  (  (exp == ones())
-   & (mant [9] == bitzero)
-   & (mant != zeros()))
-}
-
-val      f_is_QNaN_H : bits(16) -> bool
-function f_is_QNaN_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
-  (  (exp == ones())
-   & (mant [9] == bitone))
-}
-
-/* Either QNaN or SNan */
-val      f_is_NaN_H : bits(16) -> bool
-function f_is_NaN_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
-  (  (exp == ones())
-   & (mant != zeros()))
-}
-
 val      fle_H : (bits(16), bits (16), bool) -> (bool, bits(5))
 function fle_H   (v1,       v2,        is_quiet) = {
-  let (s1, e1, m1) = fsplit_H (v1);
-  let (s2, e2, m2) = fsplit_H (v2);
+  let (s1, e1, m1) = fsplit (v1);
+  let (s2, e2, m2) = fsplit (v2);
 
-  let v1Is0    = f_is_neg_zero_H(v1) | f_is_pos_zero_H(v1);
-  let v2Is0    = f_is_neg_zero_H(v2) | f_is_pos_zero_H(v2);
+  let v1Is0    = f_is_neg_zero(v1) | f_is_pos_zero(v1);
+  let v2Is0    = f_is_neg_zero(v2) | f_is_pos_zero(v2);
 
   let result : bool =
     if (s1 == 0b0) & (s2 == 0b0) then
@@ -148,11 +48,11 @@ function fle_H   (v1,       v2,        is_quiet) = {
       else unsigned (e1)  >  unsigned (e2);
 
   let fflags = if is_quiet then
-                 if   (f_is_SNaN_H(v1) | f_is_SNaN_H(v2))
+                 if   (f_is_SNaN(v1) | f_is_SNaN(v2))
                  then nvFlag()
                  else zeros()
                else
-                 if   (f_is_NaN_H(v1) | f_is_NaN_H(v2))
+                 if   (f_is_NaN(v1) | f_is_NaN(v2))
                  then nvFlag()
                  else zeros();
 
@@ -272,9 +172,9 @@ function clause execute (F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, op)) = {
       let (fflags, rd_val_16b) : (bits(5), bits(16)) =
         match op {
           FMADD_H  => riscv_f16MulAdd (rm_3b, rs1_val_16b, rs2_val_16b, rs3_val_16b),
-          FMSUB_H  => riscv_f16MulAdd (rm_3b, rs1_val_16b, rs2_val_16b, negate_H (rs3_val_16b)),
-          FNMSUB_H => riscv_f16MulAdd (rm_3b, negate_H (rs1_val_16b), rs2_val_16b, rs3_val_16b),
-          FNMADD_H => riscv_f16MulAdd (rm_3b, negate_H (rs1_val_16b), rs2_val_16b, negate_H (rs3_val_16b))
+          FMSUB_H  => riscv_f16MulAdd (rm_3b, rs1_val_16b, rs2_val_16b, f_negate (rs3_val_16b)),
+          FNMSUB_H => riscv_f16MulAdd (rm_3b, f_negate (rs1_val_16b), rs2_val_16b, rs3_val_16b),
+          FNMADD_H => riscv_f16MulAdd (rm_3b, f_negate (rs1_val_16b), rs2_val_16b, f_negate (rs3_val_16b))
         };
       accrue_fflags(fflags);
       F_or_X_H(rd) = rd_val_16b;
@@ -338,9 +238,9 @@ mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FLE_H)                 if hav
 function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FSGNJ_H)) = {
   let rs1_val_H    = F_or_X_H(rs1);
   let rs2_val_H    = F_or_X_H(rs2);
-  let (s1, e1, m1) = fsplit_H (rs1_val_H);
-  let (s2, e2, m2) = fsplit_H (rs2_val_H);
-  let rd_val_H     = fmake_H (s2, e1, m1);
+  let (s1, e1, m1) = fsplit (rs1_val_H);
+  let (s2, e2, m2) = fsplit (rs2_val_H);
+  let rd_val_H     = fmake (s2, e1, m1);
 
   F_or_X_H(rd) = rd_val_H;
   RETIRE_SUCCESS
@@ -349,9 +249,9 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FSGNJ_H)) = {
 function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FSGNJN_H)) = {
   let rs1_val_H    = F_or_X_H(rs1);
   let rs2_val_H    = F_or_X_H(rs2);
-  let (s1, e1, m1) = fsplit_H (rs1_val_H);
-  let (s2, e2, m2) = fsplit_H (rs2_val_H);
-  let rd_val_H     = fmake_H (0b1 ^ s2, e1, m1);
+  let (s1, e1, m1) = fsplit (rs1_val_H);
+  let (s2, e2, m2) = fsplit (rs2_val_H);
+  let rd_val_H     = fmake (0b1 ^ s2, e1, m1);
 
   F_or_X_H(rd) = rd_val_H;
   RETIRE_SUCCESS
@@ -360,9 +260,9 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FSGNJN_H)) = {
 function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FSGNJX_H)) = {
   let rs1_val_H    = F_or_X_H(rs1);
   let rs2_val_H    = F_or_X_H(rs2);
-  let (s1, e1, m1) = fsplit_H (rs1_val_H);
-  let (s2, e2, m2) = fsplit_H (rs2_val_H);
-  let rd_val_H     = fmake_H (s1 ^ s2, e1, m1);
+  let (s1, e1, m1) = fsplit (rs1_val_H);
+  let (s2, e2, m2) = fsplit (rs2_val_H);
+  let rd_val_H     = fmake (s1 ^ s2, e1, m1);
 
   F_or_X_H(rd) = rd_val_H;
   RETIRE_SUCCESS
@@ -375,13 +275,13 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FMIN_H)) = {
   let is_quiet  = true;
   let (rs1_lt_rs2, fflags) = fle_H (rs1_val_H, rs2_val_H, is_quiet);
 
-  let rd_val_H  = if      (f_is_NaN_H(rs1_val_H) & f_is_NaN_H(rs2_val_H))           then canonical_NaN(16)
-                  else if f_is_NaN_H(rs1_val_H)                                     then rs2_val_H
-                  else if f_is_NaN_H(rs2_val_H)                                     then rs1_val_H
-                  else if (f_is_neg_zero_H(rs1_val_H) & f_is_pos_zero_H(rs2_val_H)) then rs1_val_H
-                  else if (f_is_neg_zero_H(rs2_val_H) & f_is_pos_zero_H(rs1_val_H)) then rs2_val_H
-                  else if rs1_lt_rs2                                                then rs1_val_H
-                  else /* (not rs1_lt_rs2) */                                            rs2_val_H;
+  let rd_val_H  = if      (f_is_NaN(rs1_val_H) & f_is_NaN(rs2_val_H))           then canonical_NaN(16)
+                  else if f_is_NaN(rs1_val_H)                                   then rs2_val_H
+                  else if f_is_NaN(rs2_val_H)                                   then rs1_val_H
+                  else if (f_is_neg_zero(rs1_val_H) & f_is_pos_zero(rs2_val_H)) then rs1_val_H
+                  else if (f_is_neg_zero(rs2_val_H) & f_is_pos_zero(rs1_val_H)) then rs2_val_H
+                  else if rs1_lt_rs2                                            then rs1_val_H
+                  else /* (not rs1_lt_rs2) */                                        rs2_val_H;
 
   accrue_fflags(fflags);
   F_or_X_H(rd) = rd_val_H;
@@ -395,13 +295,13 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FMAX_H)) = {
   let is_quiet  = true;
   let (rs2_lt_rs1, fflags) = fle_H (rs2_val_H, rs1_val_H, is_quiet);
 
-  let rd_val_H  = if      (f_is_NaN_H(rs1_val_H) & f_is_NaN_H(rs2_val_H))           then canonical_NaN(16)
-                  else if f_is_NaN_H(rs1_val_H)                                     then rs2_val_H
-                  else if f_is_NaN_H(rs2_val_H)                                     then rs1_val_H
-                  else if (f_is_neg_zero_H(rs1_val_H) & f_is_pos_zero_H(rs2_val_H)) then rs2_val_H
-                  else if (f_is_neg_zero_H(rs2_val_H) & f_is_pos_zero_H(rs1_val_H)) then rs1_val_H
-                  else if rs2_lt_rs1                                                then rs1_val_H
-                  else /* (not rs2_lt_rs1) */                                            rs2_val_H;
+  let rd_val_H  = if      (f_is_NaN(rs1_val_H) & f_is_NaN(rs2_val_H))           then canonical_NaN(16)
+                  else if f_is_NaN(rs1_val_H)                                   then rs2_val_H
+                  else if f_is_NaN(rs2_val_H)                                   then rs1_val_H
+                  else if (f_is_neg_zero(rs1_val_H) & f_is_pos_zero(rs2_val_H)) then rs2_val_H
+                  else if (f_is_neg_zero(rs2_val_H) & f_is_pos_zero(rs1_val_H)) then rs1_val_H
+                  else if rs2_lt_rs1                                            then rs1_val_H
+                  else /* (not rs2_lt_rs1) */                                        rs2_val_H;
 
   accrue_fflags(fflags);
   F_or_X_H(rd) = rd_val_H;
@@ -893,16 +793,16 @@ function clause execute (F_UN_TYPE_H(rs1, rd, FCLASS_H)) = {
   let rs1_val_H = F_or_X_H(rs1);
 
   let rd_val_10b : bits (10) =
-    if      f_is_neg_inf_H     (rs1_val_H) then 0b_00_0000_0001
-    else if f_is_neg_norm_H    (rs1_val_H) then 0b_00_0000_0010
-    else if f_is_neg_subnorm_H (rs1_val_H) then 0b_00_0000_0100
-    else if f_is_neg_zero_H    (rs1_val_H) then 0b_00_0000_1000
-    else if f_is_pos_zero_H    (rs1_val_H) then 0b_00_0001_0000
-    else if f_is_pos_subnorm_H (rs1_val_H) then 0b_00_0010_0000
-    else if f_is_pos_norm_H    (rs1_val_H) then 0b_00_0100_0000
-    else if f_is_pos_inf_H     (rs1_val_H) then 0b_00_1000_0000
-    else if f_is_SNaN_H        (rs1_val_H) then 0b_01_0000_0000
-    else if f_is_QNaN_H        (rs1_val_H) then 0b_10_0000_0000
+    if      f_is_neg_inf     (rs1_val_H) then 0b_00_0000_0001
+    else if f_is_neg_norm    (rs1_val_H) then 0b_00_0000_0010
+    else if f_is_neg_subnorm (rs1_val_H) then 0b_00_0000_0100
+    else if f_is_neg_zero    (rs1_val_H) then 0b_00_0000_1000
+    else if f_is_pos_zero    (rs1_val_H) then 0b_00_0001_0000
+    else if f_is_pos_subnorm (rs1_val_H) then 0b_00_0010_0000
+    else if f_is_pos_norm    (rs1_val_H) then 0b_00_0100_0000
+    else if f_is_pos_inf     (rs1_val_H) then 0b_00_1000_0000
+    else if f_is_SNaN        (rs1_val_H) then 0b_01_0000_0000
+    else if f_is_QNaN        (rs1_val_H) then 0b_10_0000_0000
     else zeros();
 
   X(rd) = zero_extend (rd_val_10b);

@@ -172,11 +172,11 @@ function clause execute (RISCV_FMINM_H(rs2, rs1, rd)) = {
   let is_quiet  = true;
   let (rs1_lt_rs2, fflags) = fle_H (rs1_val_H, rs2_val_H, is_quiet);
 
-  let rd_val_H  = if      (f_is_NaN_H(rs1_val_H) | f_is_NaN_H(rs2_val_H))           then canonical_NaN(16)
-                  else if (f_is_neg_zero_H(rs1_val_H) & f_is_pos_zero_H(rs2_val_H)) then rs1_val_H
-                  else if (f_is_neg_zero_H(rs2_val_H) & f_is_pos_zero_H(rs1_val_H)) then rs2_val_H
-                  else if rs1_lt_rs2                                                then rs1_val_H
-                  else /* (not rs1_lt_rs2) */                                            rs2_val_H;
+  let rd_val_H  = if      (f_is_NaN(rs1_val_H) | f_is_NaN(rs2_val_H))           then canonical_NaN(16)
+                  else if (f_is_neg_zero(rs1_val_H) & f_is_pos_zero(rs2_val_H)) then rs1_val_H
+                  else if (f_is_neg_zero(rs2_val_H) & f_is_pos_zero(rs1_val_H)) then rs2_val_H
+                  else if rs1_lt_rs2                                            then rs1_val_H
+                  else /* (not rs1_lt_rs2) */                                        rs2_val_H;
 
   accrue_fflags(fflags);
   F_box(rd) = rd_val_H;
@@ -202,11 +202,11 @@ function clause execute (RISCV_FMAXM_H(rs2, rs1, rd)) = {
   let is_quiet  = true;
   let (rs2_lt_rs1, fflags) = fle_H (rs2_val_H, rs1_val_H, is_quiet);
 
-  let rd_val_H =  if      (f_is_NaN_H(rs1_val_H) | f_is_NaN_H(rs2_val_H))           then canonical_NaN(16)
-                  else if (f_is_neg_zero_H(rs1_val_H) & f_is_pos_zero_H(rs2_val_H)) then rs2_val_H
-                  else if (f_is_neg_zero_H(rs2_val_H) & f_is_pos_zero_H(rs1_val_H)) then rs1_val_H
-                  else if rs2_lt_rs1                                                then rs1_val_H
-                  else /* (not rs2_lt_rs1) */                                            rs2_val_H;
+  let rd_val_H =  if      (f_is_NaN(rs1_val_H) | f_is_NaN(rs2_val_H))           then canonical_NaN(16)
+                  else if (f_is_neg_zero(rs1_val_H) & f_is_pos_zero(rs2_val_H)) then rs2_val_H
+                  else if (f_is_neg_zero(rs2_val_H) & f_is_pos_zero(rs1_val_H)) then rs1_val_H
+                  else if rs2_lt_rs1                                            then rs1_val_H
+                  else /* (not rs2_lt_rs1) */                                        rs2_val_H;
 
   accrue_fflags(fflags);
   F_box(rd) = rd_val_H;
@@ -232,11 +232,11 @@ function clause execute (RISCV_FMINM_S(rs2, rs1, rd)) = {
   let is_quiet  = true;
   let (rs1_lt_rs2, fflags) = fle_S (rs1_val_S, rs2_val_S, is_quiet);
 
-  let rd_val_S  = if      (f_is_NaN_S(rs1_val_S) | f_is_NaN_S(rs2_val_S))           then canonical_NaN(32)
-                  else if (f_is_neg_zero_S(rs1_val_S) & f_is_pos_zero_S(rs2_val_S)) then rs1_val_S
-                  else if (f_is_neg_zero_S(rs2_val_S) & f_is_pos_zero_S(rs1_val_S)) then rs2_val_S
-                  else if rs1_lt_rs2                                                then rs1_val_S
-                  else /* (not rs1_lt_rs2) */                                            rs2_val_S;
+  let rd_val_S  = if      (f_is_NaN(rs1_val_S) | f_is_NaN(rs2_val_S))           then canonical_NaN(32)
+                  else if (f_is_neg_zero(rs1_val_S) & f_is_pos_zero(rs2_val_S)) then rs1_val_S
+                  else if (f_is_neg_zero(rs2_val_S) & f_is_pos_zero(rs1_val_S)) then rs2_val_S
+                  else if rs1_lt_rs2                                            then rs1_val_S
+                  else /* (not rs1_lt_rs2) */                                        rs2_val_S;
 
   accrue_fflags(fflags);
   F_box(rd) = rd_val_S;
@@ -262,11 +262,11 @@ function clause execute (RISCV_FMAXM_S(rs2, rs1, rd)) = {
   let is_quiet  = true;
   let (rs2_lt_rs1, fflags) = fle_S (rs2_val_S, rs1_val_S, is_quiet);
 
-  let rd_val_S  = if      (f_is_NaN_S(rs1_val_S) | f_is_NaN_S(rs2_val_S))           then canonical_NaN(32)
-                  else if (f_is_neg_zero_S(rs1_val_S) & f_is_pos_zero_S(rs2_val_S)) then rs2_val_S
-                  else if (f_is_neg_zero_S(rs2_val_S) & f_is_pos_zero_S(rs1_val_S)) then rs1_val_S
-                  else if rs2_lt_rs1                                                then rs1_val_S
-                  else /* (not rs2_lt_rs1) */                                            rs2_val_S;
+  let rd_val_S  = if      (f_is_NaN(rs1_val_S) | f_is_NaN(rs2_val_S))           then canonical_NaN(32)
+                  else if (f_is_neg_zero(rs1_val_S) & f_is_pos_zero(rs2_val_S)) then rs2_val_S
+                  else if (f_is_neg_zero(rs2_val_S) & f_is_pos_zero(rs1_val_S)) then rs1_val_S
+                  else if rs2_lt_rs1                                            then rs1_val_S
+                  else /* (not rs2_lt_rs1) */                                        rs2_val_S;
 
   accrue_fflags(fflags);
   F_box(rd) = rd_val_S;
@@ -292,11 +292,11 @@ function clause execute (RISCV_FMINM_D(rs2, rs1, rd)) = {
   let is_quiet  = true;
   let (rs1_lt_rs2, fflags) = fle_D (rs1_val_D, rs2_val_D, is_quiet);
 
-  let rd_val_D  = if      (f_is_NaN_D(rs1_val_D) | f_is_NaN_D(rs2_val_D))           then canonical_NaN(64)
-                  else if (f_is_neg_zero_D(rs1_val_D) & f_is_pos_zero_D(rs2_val_D)) then rs1_val_D
-                  else if (f_is_neg_zero_D(rs2_val_D) & f_is_pos_zero_D(rs1_val_D)) then rs2_val_D
-                  else if rs1_lt_rs2                                                then rs1_val_D
-                  else                                                              rs2_val_D;
+  let rd_val_D  = if      (f_is_NaN(rs1_val_D) | f_is_NaN(rs2_val_D))           then canonical_NaN(64)
+                  else if (f_is_neg_zero(rs1_val_D) & f_is_pos_zero(rs2_val_D)) then rs1_val_D
+                  else if (f_is_neg_zero(rs2_val_D) & f_is_pos_zero(rs1_val_D)) then rs2_val_D
+                  else if rs1_lt_rs2                                            then rs1_val_D
+                  else                                                               rs2_val_D;
 
   accrue_fflags(fflags);
   F_box(rd) = rd_val_D;
@@ -322,11 +322,11 @@ function clause execute (RISCV_FMAXM_D(rs2, rs1, rd)) = {
   let is_quiet  = true;
   let (rs2_lt_rs1, fflags) = fle_D (rs2_val_D, rs1_val_D, is_quiet);
 
-  let rd_val_D  = if      (f_is_NaN_D(rs1_val_D) | f_is_NaN_D(rs2_val_D))           then canonical_NaN(64)
-                  else if (f_is_neg_zero_D(rs1_val_D) & f_is_pos_zero_D(rs2_val_D)) then rs2_val_D
-                  else if (f_is_neg_zero_D(rs2_val_D) & f_is_pos_zero_D(rs1_val_D)) then rs1_val_D
-                  else if rs2_lt_rs1                                                then rs1_val_D
-                  else                                                              rs2_val_D;
+  let rd_val_D  = if      (f_is_NaN(rs1_val_D) | f_is_NaN(rs2_val_D))           then canonical_NaN(64)
+                  else if (f_is_neg_zero(rs1_val_D) & f_is_pos_zero(rs2_val_D)) then rs2_val_D
+                  else if (f_is_neg_zero(rs2_val_D) & f_is_pos_zero(rs1_val_D)) then rs1_val_D
+                  else if rs2_lt_rs1                                            then rs1_val_D
+                  else                                                               rs2_val_D;
 
   accrue_fflags(fflags);
   F_box(rd) = rd_val_D;
@@ -699,7 +699,7 @@ function clause execute(RISCV_FLTQ_D(rs2, rs1, rd)) = {
  */
 val      fcvtmod_helper : bits(64) -> (bits(5), bits(32))
 function fcvtmod_helper(x64) = {
-  let (sign, exp, mant) = fsplit_D(x64);
+  let (sign, exp, mant) = fsplit(x64);
 
   /* Detect the non-normal cases */
   let is_subnorm    = exp == zeros() & mant != zeros();

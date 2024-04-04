@@ -66,125 +66,19 @@ function dzFlag() -> bits(5) = 0b_01000
 function nvFlag() -> bits(5) = 0b_10000
 
 /* **************************************************************** */
-/* S and D value structure (sign, exponent, mantissa)               */
-
-/* TODO: this should be a 'mapping' */
-val      fsplit_S : bits(32) -> (bits(1), bits(8), bits(23))
-function fsplit_S   x32 = (x32[31..31], x32[30..23], x32[22..0])
-
-val      fmake_S  : (bits(1), bits(8), bits(23)) -> bits(32)
-function fmake_S (sign, exp, mant) = sign @ exp @ mant
-
-/* ---- Structure tests */
-
-val      f_is_neg_inf_S : bits(32) -> bool
-function f_is_neg_inf_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == 0b1)
-   & (exp  == ones())
-   & (mant == zeros()))
-}
-
-val      f_is_neg_norm_S : bits(32) -> bool
-function f_is_neg_norm_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == 0b1)
-   & (exp  != zeros())
-   & (exp  != ones()))
-}
-
-val      f_is_neg_subnorm_S : bits(32) -> bool
-function f_is_neg_subnorm_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == 0b1)
-   & (exp  == zeros())
-   & (mant != zeros()))
-}
-
-val      f_is_neg_zero_S : bits(32) -> bool
-function f_is_neg_zero_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == ones())
-   & (exp  == zeros())
-   & (mant == zeros()))
-}
-
-val      f_is_pos_zero_S : bits(32) -> bool
-function f_is_pos_zero_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == zeros())
-   & (exp  == zeros())
-   & (mant == zeros()))
-}
-
-val      f_is_pos_subnorm_S : bits(32) -> bool
-function f_is_pos_subnorm_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == zeros())
-   & (exp  == zeros())
-   & (mant != zeros()))
-}
-
-val      f_is_pos_norm_S : bits(32) -> bool
-function f_is_pos_norm_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == zeros())
-   & (exp  != zeros())
-   & (exp  != ones()))
-}
-
-val      f_is_pos_inf_S : bits(32) -> bool
-function f_is_pos_inf_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == zeros())
-   & (exp  == ones())
-   & (mant == zeros()))
-}
-
-val      f_is_SNaN_S : bits(32) -> bool
-function f_is_SNaN_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (exp == ones())
-   & (mant [22] == bitzero)
-   & (mant != zeros()))
-}
-
-val      f_is_QNaN_S : bits(32) -> bool
-function f_is_QNaN_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (exp == ones())
-   & (mant [22] == bitone))
-}
-
-/* Either QNaN or SNan */
-val      f_is_NaN_S : bits(32) -> bool
-function f_is_NaN_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (exp == ones())
-   & (mant != zeros()))
-}
-
-/* **************************************************************** */
 /* Help functions used in the semantic functions                    */
-
-val      negate_S : bits(32) -> bits(32)
-function negate_S (x32) = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  let new_sign = if (sign == 0b0) then 0b1 else 0b0;
-  fmake_S (new_sign, exp, mant)
-}
 
 val      feq_quiet_S : (bits(32), bits (32)) -> (bool, bits(5))
 function feq_quiet_S   (v1,       v2) = {
-  let (s1, e1, m1) = fsplit_S (v1);
-  let (s2, e2, m2) = fsplit_S (v2);
+  let (s1, e1, m1) = fsplit (v1);
+  let (s2, e2, m2) = fsplit (v2);
 
-  let v1Is0    = f_is_neg_zero_S(v1) | f_is_pos_zero_S(v1);
-  let v2Is0    = f_is_neg_zero_S(v2) | f_is_pos_zero_S(v2);
+  let v1Is0    = f_is_neg_zero(v1) | f_is_pos_zero(v1);
+  let v2Is0    = f_is_neg_zero(v2) | f_is_pos_zero(v2);
 
   let result = ((v1 == v2) | (v1Is0 & v2Is0));
 
-  let fflags = if   (f_is_SNaN_S(v1) | f_is_SNaN_S(v2))
+  let fflags = if   (f_is_SNaN(v1) | f_is_SNaN(v2))
                then nvFlag()
                else zeros();
 
@@ -193,8 +87,8 @@ function feq_quiet_S   (v1,       v2) = {
 
 val      flt_S : (bits(32), bits (32), bool) -> (bool, bits(5))
 function flt_S   (v1,       v2,        is_quiet) = {
-  let (s1, e1, m1) = fsplit_S (v1);
-  let (s2, e2, m2) = fsplit_S (v2);
+  let (s1, e1, m1) = fsplit (v1);
+  let (s2, e2, m2) = fsplit (v2);
 
   let result : bool =
     if (s1 == 0b0) & (s2 == 0b0) then
@@ -211,11 +105,11 @@ function flt_S   (v1,       v2,        is_quiet) = {
         else unsigned (e1) > unsigned (e2);
 
   let fflags = if is_quiet then
-                 if   (f_is_SNaN_S(v1) | f_is_SNaN_S(v2))
+                 if   (f_is_SNaN(v1) | f_is_SNaN(v2))
                  then nvFlag()
                  else zeros()
                else
-                 if   (f_is_NaN_S(v1) | f_is_NaN_S(v2))
+                 if   (f_is_NaN(v1) | f_is_NaN(v2))
                  then nvFlag()
                  else zeros();
 
@@ -224,11 +118,11 @@ function flt_S   (v1,       v2,        is_quiet) = {
 
 val      fle_S : (bits(32), bits (32), bool) -> (bool, bits(5))
 function fle_S   (v1,       v2,        is_quiet) = {
-  let (s1, e1, m1) = fsplit_S (v1);
-  let (s2, e2, m2) = fsplit_S (v2);
+  let (s1, e1, m1) = fsplit (v1);
+  let (s2, e2, m2) = fsplit (v2);
 
-  let v1Is0    = f_is_neg_zero_S(v1) | f_is_pos_zero_S(v1);
-  let v2Is0    = f_is_neg_zero_S(v2) | f_is_pos_zero_S(v2);
+  let v1Is0    = f_is_neg_zero(v1) | f_is_pos_zero(v1);
+  let v2Is0    = f_is_neg_zero(v2) | f_is_pos_zero(v2);
 
   let result : bool =
     if (s1 == 0b0) & (s2 == 0b0) then
@@ -245,11 +139,11 @@ function fle_S   (v1,       v2,        is_quiet) = {
       else unsigned (e1)  >  unsigned (e2);
 
   let fflags = if is_quiet then
-                 if   (f_is_SNaN_S(v1) | f_is_SNaN_S(v2))
+                 if   (f_is_SNaN(v1) | f_is_SNaN(v2))
                  then nvFlag()
                  else zeros()
                else
-                 if   (f_is_NaN_S(v1) | f_is_NaN_S(v2))
+                 if   (f_is_NaN(v1) | f_is_NaN(v2))
                  then nvFlag()
                  else zeros();
 
@@ -460,9 +354,9 @@ function clause execute (F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)) = {
       let (fflags, rd_val_32b) : (bits(5), bits(32)) =
         match op {
           FMADD_S  => riscv_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, rs3_val_32b),
-          FMSUB_S  => riscv_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, negate_S (rs3_val_32b)),
-          FNMSUB_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, rs3_val_32b),
-          FNMADD_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, negate_S (rs3_val_32b))
+          FMSUB_S  => riscv_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, f_negate (rs3_val_32b)),
+          FNMSUB_S => riscv_f32MulAdd (rm_3b, f_negate (rs1_val_32b), rs2_val_32b, rs3_val_32b),
+          FNMADD_S => riscv_f32MulAdd (rm_3b, f_negate (rs1_val_32b), rs2_val_32b, f_negate (rs3_val_32b))
         };
       accrue_fflags(fflags);
       F_or_X_S(rd) = rd_val_32b;
@@ -847,9 +741,9 @@ mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)                 if hav
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)) = {
   let rs1_val_S    = F_or_X_S(rs1);
   let rs2_val_S    = F_or_X_S(rs2);
-  let (s1, e1, m1) = fsplit_S (rs1_val_S);
-  let (s2, e2, m2) = fsplit_S (rs2_val_S);
-  let rd_val_S     = fmake_S (s2, e1, m1);
+  let (s1, e1, m1) = fsplit (rs1_val_S);
+  let (s2, e2, m2) = fsplit (rs2_val_S);
+  let rd_val_S     = fmake (s2, e1, m1);
 
   F_or_X_S(rd) = rd_val_S;
   RETIRE_SUCCESS
@@ -858,9 +752,9 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)) = {
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)) = {
   let rs1_val_S    = F_or_X_S(rs1);
   let rs2_val_S    = F_or_X_S(rs2);
-  let (s1, e1, m1) = fsplit_S (rs1_val_S);
-  let (s2, e2, m2) = fsplit_S (rs2_val_S);
-  let rd_val_S     = fmake_S (0b1 ^ s2, e1, m1);
+  let (s1, e1, m1) = fsplit (rs1_val_S);
+  let (s2, e2, m2) = fsplit (rs2_val_S);
+  let rd_val_S     = fmake (0b1 ^ s2, e1, m1);
 
   F_or_X_S(rd) = rd_val_S;
   RETIRE_SUCCESS
@@ -869,9 +763,9 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)) = {
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)) = {
   let rs1_val_S    = F_or_X_S(rs1);
   let rs2_val_S    = F_or_X_S(rs2);
-  let (s1, e1, m1) = fsplit_S (rs1_val_S);
-  let (s2, e2, m2) = fsplit_S (rs2_val_S);
-  let rd_val_S     = fmake_S (s1 ^ s2, e1, m1);
+  let (s1, e1, m1) = fsplit (rs1_val_S);
+  let (s2, e2, m2) = fsplit (rs2_val_S);
+  let rd_val_S     = fmake (s1 ^ s2, e1, m1);
 
   F_or_X_S(rd) = rd_val_S;
   RETIRE_SUCCESS
@@ -884,13 +778,13 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)) = {
   let is_quiet  = true;
   let (rs1_lt_rs2, fflags) = fle_S (rs1_val_S, rs2_val_S, is_quiet);
 
-  let rd_val_S  = if      (f_is_NaN_S(rs1_val_S) & f_is_NaN_S(rs2_val_S))           then canonical_NaN(32)
-                  else if f_is_NaN_S(rs1_val_S)                                     then rs2_val_S
-                  else if f_is_NaN_S(rs2_val_S)                                     then rs1_val_S
-                  else if (f_is_neg_zero_S(rs1_val_S) & f_is_pos_zero_S(rs2_val_S)) then rs1_val_S
-                  else if (f_is_neg_zero_S(rs2_val_S) & f_is_pos_zero_S(rs1_val_S)) then rs2_val_S
-                  else if rs1_lt_rs2                                                then rs1_val_S
-                  else /* (not rs1_lt_rs2) */                                            rs2_val_S;
+  let rd_val_S  = if      (f_is_NaN(rs1_val_S) & f_is_NaN(rs2_val_S))           then canonical_NaN(32)
+                  else if f_is_NaN(rs1_val_S)                                   then rs2_val_S
+                  else if f_is_NaN(rs2_val_S)                                   then rs1_val_S
+                  else if (f_is_neg_zero(rs1_val_S) & f_is_pos_zero(rs2_val_S)) then rs1_val_S
+                  else if (f_is_neg_zero(rs2_val_S) & f_is_pos_zero(rs1_val_S)) then rs2_val_S
+                  else if rs1_lt_rs2                                            then rs1_val_S
+                  else /* (not rs1_lt_rs2) */                                        rs2_val_S;
 
   accrue_fflags(fflags);
   F_or_X_S(rd) = rd_val_S;
@@ -904,13 +798,13 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)) = {
   let is_quiet  = true;
   let (rs2_lt_rs1, fflags) = fle_S (rs2_val_S, rs1_val_S, is_quiet);
 
-  let rd_val_S  = if      (f_is_NaN_S(rs1_val_S) & f_is_NaN_S(rs2_val_S))           then canonical_NaN(32)
-                  else if f_is_NaN_S(rs1_val_S)                                     then rs2_val_S
-                  else if f_is_NaN_S(rs2_val_S)                                     then rs1_val_S
-                  else if (f_is_neg_zero_S(rs1_val_S) & f_is_pos_zero_S(rs2_val_S)) then rs2_val_S
-                  else if (f_is_neg_zero_S(rs2_val_S) & f_is_pos_zero_S(rs1_val_S)) then rs1_val_S
-                  else if rs2_lt_rs1                                                then rs1_val_S
-                  else /* (not rs2_lt_rs1) */                                            rs2_val_S;
+  let rd_val_S  = if      (f_is_NaN(rs1_val_S) & f_is_NaN(rs2_val_S))           then canonical_NaN(32)
+                  else if f_is_NaN(rs1_val_S)                                   then rs2_val_S
+                  else if f_is_NaN(rs2_val_S)                                   then rs1_val_S
+                  else if (f_is_neg_zero(rs1_val_S) & f_is_pos_zero(rs2_val_S)) then rs2_val_S
+                  else if (f_is_neg_zero(rs2_val_S) & f_is_pos_zero(rs1_val_S)) then rs1_val_S
+                  else if rs2_lt_rs1                                            then rs1_val_S
+                  else /* (not rs2_lt_rs1) */                                        rs2_val_S;
 
   accrue_fflags(fflags);
   F_or_X_S(rd) = rd_val_S;
@@ -1036,16 +930,16 @@ function clause execute (F_UN_TYPE_S(rs1, rd, FCLASS_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
 
   let rd_val_10b : bits (10) =
-    if      f_is_neg_inf_S     (rs1_val_S) then 0b_00_0000_0001
-    else if f_is_neg_norm_S    (rs1_val_S) then 0b_00_0000_0010
-    else if f_is_neg_subnorm_S (rs1_val_S) then 0b_00_0000_0100
-    else if f_is_neg_zero_S    (rs1_val_S) then 0b_00_0000_1000
-    else if f_is_pos_zero_S    (rs1_val_S) then 0b_00_0001_0000
-    else if f_is_pos_subnorm_S (rs1_val_S) then 0b_00_0010_0000
-    else if f_is_pos_norm_S    (rs1_val_S) then 0b_00_0100_0000
-    else if f_is_pos_inf_S     (rs1_val_S) then 0b_00_1000_0000
-    else if f_is_SNaN_S        (rs1_val_S) then 0b_01_0000_0000
-    else if f_is_QNaN_S        (rs1_val_S) then 0b_10_0000_0000
+    if      f_is_neg_inf     (rs1_val_S) then 0b_00_0000_0001
+    else if f_is_neg_norm    (rs1_val_S) then 0b_00_0000_0010
+    else if f_is_neg_subnorm (rs1_val_S) then 0b_00_0000_0100
+    else if f_is_neg_zero    (rs1_val_S) then 0b_00_0000_1000
+    else if f_is_pos_zero    (rs1_val_S) then 0b_00_0001_0000
+    else if f_is_pos_subnorm (rs1_val_S) then 0b_00_0010_0000
+    else if f_is_pos_norm    (rs1_val_S) then 0b_00_0100_0000
+    else if f_is_pos_inf     (rs1_val_S) then 0b_00_1000_0000
+    else if f_is_SNaN        (rs1_val_S) then 0b_01_0000_0000
+    else if f_is_QNaN        (rs1_val_S) then 0b_10_0000_0000
     else zeros();
 
   X(rd) = zero_extend (rd_val_10b);
