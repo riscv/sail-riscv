@@ -170,7 +170,7 @@ function clause execute (RISCV_FMINM_H(rs2, rs1, rd)) = {
   let rs2_val_H = F_box(16, rs2);
 
   let is_quiet  = true;
-  let (rs1_lt_rs2, fflags) = fle_H (rs1_val_H, rs2_val_H, is_quiet);
+  let (rs1_lt_rs2, fflags) = fle(rs1_val_H, rs2_val_H, is_quiet);
 
   let rd_val_H  = if      (f_is_NaN(rs1_val_H) | f_is_NaN(rs2_val_H))           then canonical_NaN(16)
                   else if (f_is_neg_zero(rs1_val_H) & f_is_pos_zero(rs2_val_H)) then rs1_val_H
@@ -200,7 +200,7 @@ function clause execute (RISCV_FMAXM_H(rs2, rs1, rd)) = {
   let rs2_val_H = F_box(16, rs2);
 
   let is_quiet  = true;
-  let (rs2_lt_rs1, fflags) = fle_H (rs2_val_H, rs1_val_H, is_quiet);
+  let (rs2_lt_rs1, fflags) = fle(rs2_val_H, rs1_val_H, is_quiet);
 
   let rd_val_H =  if      (f_is_NaN(rs1_val_H) | f_is_NaN(rs2_val_H))           then canonical_NaN(16)
                   else if (f_is_neg_zero(rs1_val_H) & f_is_pos_zero(rs2_val_H)) then rs2_val_H
@@ -230,7 +230,7 @@ function clause execute (RISCV_FMINM_S(rs2, rs1, rd)) = {
   let rs2_val_S = F_box(32, rs2);
 
   let is_quiet  = true;
-  let (rs1_lt_rs2, fflags) = fle_S (rs1_val_S, rs2_val_S, is_quiet);
+  let (rs1_lt_rs2, fflags) = fle(rs1_val_S, rs2_val_S, is_quiet);
 
   let rd_val_S  = if      (f_is_NaN(rs1_val_S) | f_is_NaN(rs2_val_S))           then canonical_NaN(32)
                   else if (f_is_neg_zero(rs1_val_S) & f_is_pos_zero(rs2_val_S)) then rs1_val_S
@@ -260,7 +260,7 @@ function clause execute (RISCV_FMAXM_S(rs2, rs1, rd)) = {
   let rs2_val_S = F_box(32, rs2);
 
   let is_quiet  = true;
-  let (rs2_lt_rs1, fflags) = fle_S (rs2_val_S, rs1_val_S, is_quiet);
+  let (rs2_lt_rs1, fflags) = fle(rs2_val_S, rs1_val_S, is_quiet);
 
   let rd_val_S  = if      (f_is_NaN(rs1_val_S) | f_is_NaN(rs2_val_S))           then canonical_NaN(32)
                   else if (f_is_neg_zero(rs1_val_S) & f_is_pos_zero(rs2_val_S)) then rs2_val_S
@@ -290,7 +290,7 @@ function clause execute (RISCV_FMINM_D(rs2, rs1, rd)) = {
   let rs2_val_D = F_box(64, rs2);
 
   let is_quiet  = true;
-  let (rs1_lt_rs2, fflags) = fle_D (rs1_val_D, rs2_val_D, is_quiet);
+  let (rs1_lt_rs2, fflags) = fle(rs1_val_D, rs2_val_D, is_quiet);
 
   let rd_val_D  = if      (f_is_NaN(rs1_val_D) | f_is_NaN(rs2_val_D))           then canonical_NaN(64)
                   else if (f_is_neg_zero(rs1_val_D) & f_is_pos_zero(rs2_val_D)) then rs1_val_D
@@ -320,7 +320,7 @@ function clause execute (RISCV_FMAXM_D(rs2, rs1, rd)) = {
   let rs2_val_D = F_box(64, rs2);
 
   let is_quiet  = true;
-  let (rs2_lt_rs1, fflags) = fle_D (rs2_val_D, rs1_val_D, is_quiet);
+  let (rs2_lt_rs1, fflags) = fle(rs2_val_D, rs1_val_D, is_quiet);
 
   let rd_val_D  = if      (f_is_NaN(rs1_val_D) | f_is_NaN(rs2_val_D))           then canonical_NaN(64)
                   else if (f_is_neg_zero(rs1_val_D) & f_is_pos_zero(rs2_val_D)) then rs2_val_D
@@ -721,11 +721,11 @@ function fcvtmod_helper(x64) = {
   let is_too_large  = true_exp >= 84;  /* bits will be 'multiplied' out */
   let is_too_small  = true_exp <  0;   /* bits will be 'divided' out    */
 
-       if is_zero       then (zeros(),  zeros())
-  else if is_subnorm    then (nxFlag(), zeros())
-  else if is_nan_or_inf then (nvFlag(), zeros())
-  else if is_too_large  then (nvFlag(), zeros())
-  else if is_too_small  then (nxFlag(), zeros())
+       if is_zero       then (zeros(), zeros())
+  else if is_subnorm    then (nxFlag, zeros())
+  else if is_nan_or_inf then (nvFlag, zeros())
+  else if is_too_large  then (nvFlag, zeros())
+  else if is_too_small  then (nxFlag, zeros())
   else {
     /*
      * Calculate the low 32 bits of the integer value from the
@@ -745,8 +745,8 @@ function fcvtmod_helper(x64) = {
                                 else integer;
 
     /* Raise FP exception flags, honoring the precedence of nV > nX */
-    let flags : bits(5) = if (true_exp > 31)         then nvFlag()
-                     else if (fractional != zeros()) then nxFlag()
+    let flags : bits(5) = if (true_exp > 31)         then nvFlag
+                     else if (fractional != zeros()) then nxFlag
                      else                            zeros();
 
     (flags, result)

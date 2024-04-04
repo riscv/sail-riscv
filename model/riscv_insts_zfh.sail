@@ -24,42 +24,6 @@
 /* improvements, and version updates.                               */
 
 /* **************************************************************** */
-
-val      fle_H : (bits(16), bits (16), bool) -> (bool, bits(5))
-function fle_H   (v1,       v2,        is_quiet) = {
-  let (s1, e1, m1) = fsplit (v1);
-  let (s2, e2, m2) = fsplit (v2);
-
-  let v1Is0    = f_is_neg_zero(v1) | f_is_pos_zero(v1);
-  let v2Is0    = f_is_neg_zero(v2) | f_is_pos_zero(v2);
-
-  let result : bool =
-    if (s1 == 0b0) & (s2 == 0b0) then
-      if   (e1 == e2)
-      then unsigned (m1) <=  unsigned (m2)
-      else unsigned (e1)  <  unsigned (e2)
-    else if (s1 == 0b0) & (s2 == 0b1)
-    then (v1Is0 & v2Is0)                         /* Equal in this case (+0=-0) */
-    else if (s1 == 0b1) & (s2 == 0b0)
-    then true
-    else
-      if   (e1 == e2)
-      then unsigned (m1) >=  unsigned (m2)
-      else unsigned (e1)  >  unsigned (e2);
-
-  let fflags = if is_quiet then
-                 if   (f_is_SNaN(v1) | f_is_SNaN(v2))
-                 then nvFlag()
-                 else zeros()
-               else
-                 if   (f_is_NaN(v1) | f_is_NaN(v2))
-                 then nvFlag()
-                 else zeros();
-
-  (result, fflags)
-}
-
-/* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
 
 function haveHalfFPU() -> bool = haveZfh() | haveZhinx()
@@ -273,7 +237,7 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FMIN_H)) = {
   let rs2_val_H = F_or_X_H(rs2);
 
   let is_quiet  = true;
-  let (rs1_lt_rs2, fflags) = fle_H (rs1_val_H, rs2_val_H, is_quiet);
+  let (rs1_lt_rs2, fflags) = fle(rs1_val_H, rs2_val_H, is_quiet);
 
   let rd_val_H  = if      (f_is_NaN(rs1_val_H) & f_is_NaN(rs2_val_H))           then canonical_NaN(16)
                   else if f_is_NaN(rs1_val_H)                                   then rs2_val_H
@@ -293,7 +257,7 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FMAX_H)) = {
   let rs2_val_H = F_or_X_H(rs2);
 
   let is_quiet  = true;
-  let (rs2_lt_rs1, fflags) = fle_H (rs2_val_H, rs1_val_H, is_quiet);
+  let (rs2_lt_rs1, fflags) = fle(rs2_val_H, rs1_val_H, is_quiet);
 
   let rd_val_H  = if      (f_is_NaN(rs1_val_H) & f_is_NaN(rs2_val_H))           then canonical_NaN(16)
                   else if f_is_NaN(rs1_val_H)                                   then rs2_val_H

@@ -725,45 +725,45 @@ function fp_widen(nval) = {
 val riscv_f16ToI16 : (bits_rm, bits_H) -> (bits_fflags, bits(16))
 function riscv_f16ToI16 (rm, v) = {
   let (_, sig32) = riscv_f16ToI32(rm, v);
-  if signed(sig32) > signed(0b0 @ ones(15)) then (nvFlag(), 0b0 @ ones(15))
-  else if signed(sig32) < signed(0b1 @ zeros(15)) then (nvFlag(), 0b1 @ zeros(15))
+  if signed(sig32) > signed(0b0 @ ones(15)) then (nvFlag, 0b0 @ ones(15))
+  else if signed(sig32) < signed(0b1 @ zeros(15)) then (nvFlag, 0b1 @ zeros(15))
   else (zeros(5), sig32[15 .. 0]);
 }
 
 val riscv_f16ToI8 : (bits_rm, bits_H) -> (bits_fflags, bits(8))
 function riscv_f16ToI8 (rm, v) = {
   let (_, sig32) = riscv_f16ToI32(rm, v);
-  if signed(sig32) > signed(0b0 @ ones(7)) then (nvFlag(), 0b0 @ ones(7))
-  else if signed(sig32) < signed(0b1 @ zeros(7)) then (nvFlag(), 0b1 @ zeros(7))
+  if signed(sig32) > signed(0b0 @ ones(7)) then (nvFlag, 0b0 @ ones(7))
+  else if signed(sig32) < signed(0b1 @ zeros(7)) then (nvFlag, 0b1 @ zeros(7))
   else (zeros(5), sig32[7 .. 0]);
 }
 
 val riscv_f32ToI16 : (bits_rm, bits_S) -> (bits_fflags, bits(16))
 function riscv_f32ToI16 (rm, v) = {
   let (_, sig32) = riscv_f32ToI32(rm, v);
-  if signed(sig32) > signed(0b0 @ ones(15)) then (nvFlag(), 0b0 @ ones(15))
-  else if signed(sig32) < signed(0b1 @ zeros(15)) then (nvFlag(), 0b1 @ zeros(15))
+  if signed(sig32) > signed(0b0 @ ones(15)) then (nvFlag, 0b0 @ ones(15))
+  else if signed(sig32) < signed(0b1 @ zeros(15)) then (nvFlag, 0b1 @ zeros(15))
   else (zeros(5), sig32[15 .. 0]);
 }
 
 val riscv_f16ToUi16 : (bits_rm, bits_H) -> (bits_fflags, bits(16))
 function riscv_f16ToUi16 (rm, v) = {
   let (_, sig32) = riscv_f16ToUi32(rm, v);
-  if unsigned(sig32) > unsigned(ones(16)) then (nvFlag(), ones(16))
+  if unsigned(sig32) > unsigned(ones(16)) then (nvFlag, ones(16))
   else (zeros(5), sig32[15 .. 0]);
 }
 
 val riscv_f16ToUi8 : (bits_rm, bits_H) -> (bits_fflags, bits(8))
 function riscv_f16ToUi8 (rm, v) = {
   let (_, sig32) = riscv_f16ToUi32(rm, v);
-  if unsigned(sig32) > unsigned(ones(8)) then (nvFlag(), ones(8))
+  if unsigned(sig32) > unsigned(ones(8)) then (nvFlag, ones(8))
   else (zeros(5), sig32[7 .. 0]);
 }
 
 val riscv_f32ToUi16 : (bits_rm, bits_S) -> (bits_fflags, bits(16))
 function riscv_f32ToUi16 (rm, v) = {
   let (_, sig32) = riscv_f32ToUi32(rm, v);
-  if unsigned(sig32) > unsigned(ones(16)) then (nvFlag(), ones(16))
+  if unsigned(sig32) > unsigned(ones(16)) then (nvFlag, ones(16))
   else (zeros(5), sig32[15 .. 0]);
 }
 
@@ -826,13 +826,13 @@ function rsqrt7 (v, sub) = {
 val riscv_f16Rsqrte7 : (bits_rm, bits_H) -> (bits_fflags, bits_H)
 function riscv_f16Rsqrte7 (rm, v) = {
   match fp_class(v) {
-    0x0001 => (nvFlag(), 0x7e00),
-    0x0002 => (nvFlag(), 0x7e00),
-    0x0004 => (nvFlag(), 0x7e00),
-    0x0100 => (nvFlag(), 0x7e00),
+    0x0001 => (nvFlag, 0x7e00),
+    0x0002 => (nvFlag, 0x7e00),
+    0x0004 => (nvFlag, 0x7e00),
+    0x0100 => (nvFlag, 0x7e00),
     0x0200 => (zeros(5), 0x7e00),
-    0x0008 => (dzFlag(), 0xfc00),
-    0x0010 => (dzFlag(), 0x7c00),
+    0x0008 => (dzFlag, 0xfc00),
+    0x0010 => (dzFlag, 0x7c00),
     0x0080 => (zeros(5), 0x0000),
     0x0020 => (zeros(5), rsqrt7(v, true)[15 .. 0]),
     _      => (zeros(5), rsqrt7(v, false)[15 .. 0])
@@ -842,13 +842,13 @@ function riscv_f16Rsqrte7 (rm, v) = {
 val riscv_f32Rsqrte7 : (bits_rm, bits_S) -> (bits_fflags, bits_S)
 function riscv_f32Rsqrte7 (rm, v) = {
   match fp_class(v)[15 .. 0] {
-    0x0001 => (nvFlag(), 0x7fc00000),
-    0x0002 => (nvFlag(), 0x7fc00000),
-    0x0004 => (nvFlag(), 0x7fc00000),
-    0x0100 => (nvFlag(), 0x7fc00000),
+    0x0001 => (nvFlag, 0x7fc00000),
+    0x0002 => (nvFlag, 0x7fc00000),
+    0x0004 => (nvFlag, 0x7fc00000),
+    0x0100 => (nvFlag, 0x7fc00000),
     0x0200 => (zeros(5), 0x7fc00000),
-    0x0008 => (dzFlag(), 0xff800000),
-    0x0010 => (dzFlag(), 0x7f800000),
+    0x0008 => (dzFlag, 0xff800000),
+    0x0010 => (dzFlag, 0x7f800000),
     0x0080 => (zeros(5), 0x00000000),
     0x0020 => (zeros(5), rsqrt7(v, true)[31 .. 0]),
     _      => (zeros(5), rsqrt7(v, false)[31 .. 0])
@@ -858,13 +858,13 @@ function riscv_f32Rsqrte7 (rm, v) = {
 val riscv_f64Rsqrte7 : (bits_rm, bits_D) -> (bits_fflags, bits_D)
 function riscv_f64Rsqrte7 (rm, v) = {
   match fp_class(v)[15 .. 0] {
-    0x0001 => (nvFlag(), 0x7ff8000000000000),
-    0x0002 => (nvFlag(), 0x7ff8000000000000),
-    0x0004 => (nvFlag(), 0x7ff8000000000000),
-    0x0100 => (nvFlag(), 0x7ff8000000000000),
+    0x0001 => (nvFlag, 0x7ff8000000000000),
+    0x0002 => (nvFlag, 0x7ff8000000000000),
+    0x0004 => (nvFlag, 0x7ff8000000000000),
+    0x0100 => (nvFlag, 0x7ff8000000000000),
     0x0200 => (zeros(5), 0x7ff8000000000000),
-    0x0008 => (dzFlag(), 0xfff0000000000000),
-    0x0010 => (dzFlag(), 0x7ff0000000000000),
+    0x0008 => (dzFlag, 0xfff0000000000000),
+    0x0010 => (dzFlag, 0x7ff0000000000000),
     0x0080 => (zeros(5), zeros(64)),
     0x0020 => (zeros(5), rsqrt7(v, true)[63 .. 0]),
     _      => (zeros(5), rsqrt7(v, false)[63 .. 0])
@@ -937,13 +937,13 @@ function riscv_f16Recip7 (rm, v) = {
   match fp_class(v) {
     0x0001 => (zeros(5), 0x8000),
     0x0080 => (zeros(5), 0x0000),
-    0x0008 => (dzFlag(), 0xfc00),
-    0x0010 => (dzFlag(), 0x7c00),
-    0x0100 => (nvFlag(), 0x7e00),
+    0x0008 => (dzFlag, 0xfc00),
+    0x0010 => (dzFlag, 0x7c00),
+    0x0100 => (nvFlag, 0x7e00),
     0x0200 => (zeros(5), 0x7e00),
-    0x0004 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[15 .. 0]) else (zeros(5), res_true[15 .. 0]),
-    0x0020 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[15 .. 0]) else (zeros(5), res_true[15 .. 0]),
-    _      => if round_abnormal_false then (nxFlag() | ofFlag(), res_false[15 .. 0]) else (zeros(5), res_false[15 .. 0])
+    0x0004 => if round_abnormal_true then (nxFlag | ofFlag, res_true[15 .. 0]) else (zeros(5), res_true[15 .. 0]),
+    0x0020 => if round_abnormal_true then (nxFlag | ofFlag, res_true[15 .. 0]) else (zeros(5), res_true[15 .. 0]),
+    _      => if round_abnormal_false then (nxFlag | ofFlag, res_false[15 .. 0]) else (zeros(5), res_false[15 .. 0])
   }
 }
 
@@ -954,13 +954,13 @@ function riscv_f32Recip7 (rm, v) = {
   match fp_class(v)[15 .. 0] {
     0x0001 => (zeros(5), 0x80000000),
     0x0080 => (zeros(5), 0x00000000),
-    0x0008 => (dzFlag(), 0xff800000),
-    0x0010 => (dzFlag(), 0x7f800000),
-    0x0100 => (nvFlag(), 0x7fc00000),
+    0x0008 => (dzFlag, 0xff800000),
+    0x0010 => (dzFlag, 0x7f800000),
+    0x0100 => (nvFlag, 0x7fc00000),
     0x0200 => (zeros(5), 0x7fc00000),
-    0x0004 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[31 .. 0]) else (zeros(5), res_true[31 .. 0]),
-    0x0020 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[31 .. 0]) else (zeros(5), res_true[31 .. 0]),
-    _      => if round_abnormal_false then (nxFlag() | ofFlag(), res_false[31 .. 0]) else (zeros(5), res_false[31 .. 0])
+    0x0004 => if round_abnormal_true then (nxFlag | ofFlag, res_true[31 .. 0]) else (zeros(5), res_true[31 .. 0]),
+    0x0020 => if round_abnormal_true then (nxFlag | ofFlag, res_true[31 .. 0]) else (zeros(5), res_true[31 .. 0]),
+    _      => if round_abnormal_false then (nxFlag | ofFlag, res_false[31 .. 0]) else (zeros(5), res_false[31 .. 0])
   }
 }
 
@@ -971,12 +971,12 @@ function riscv_f64Recip7 (rm, v) = {
   match fp_class(v)[15 .. 0] {
     0x0001 => (zeros(5), 0x8000000000000000),
     0x0080 => (zeros(5), 0x0000000000000000),
-    0x0008 => (dzFlag(), 0xfff0000000000000),
-    0x0010 => (dzFlag(), 0x7ff0000000000000),
-    0x0100 => (nvFlag(), 0x7ff8000000000000),
+    0x0008 => (dzFlag, 0xfff0000000000000),
+    0x0010 => (dzFlag, 0x7ff0000000000000),
+    0x0100 => (nvFlag, 0x7ff8000000000000),
     0x0200 => (zeros(5), 0x7ff8000000000000),
-    0x0004 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[63 .. 0]) else (zeros(5), res_true[63 .. 0]),
-    0x0020 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[63 .. 0]) else (zeros(5), res_true[63 .. 0]),
-    _      => if round_abnormal_false then (nxFlag() | ofFlag(), res_false[63 .. 0]) else (zeros(5), res_false[63 .. 0])
+    0x0004 => if round_abnormal_true then (nxFlag | ofFlag, res_true[63 .. 0]) else (zeros(5), res_true[63 .. 0]),
+    0x0020 => if round_abnormal_true then (nxFlag | ofFlag, res_true[63 .. 0]) else (zeros(5), res_true[63 .. 0]),
+    _      => if round_abnormal_false then (nxFlag | ofFlag, res_false[63 .. 0]) else (zeros(5), res_false[63 .. 0])
   }
 }

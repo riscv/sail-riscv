@@ -57,100 +57,6 @@ function select_instr_or_fcsr_rm instr_rm =
   else Some(instr_rm)
 
 /* **************************************************************** */
-/* Floating point accrued exception flags                           */
-
-function nxFlag() -> bits(5) = 0b_00001
-function ufFlag() -> bits(5) = 0b_00010
-function ofFlag() -> bits(5) = 0b_00100
-function dzFlag() -> bits(5) = 0b_01000
-function nvFlag() -> bits(5) = 0b_10000
-
-/* **************************************************************** */
-/* Help functions used in the semantic functions                    */
-
-val      feq_quiet_S : (bits(32), bits (32)) -> (bool, bits(5))
-function feq_quiet_S   (v1,       v2) = {
-  let (s1, e1, m1) = fsplit (v1);
-  let (s2, e2, m2) = fsplit (v2);
-
-  let v1Is0    = f_is_neg_zero(v1) | f_is_pos_zero(v1);
-  let v2Is0    = f_is_neg_zero(v2) | f_is_pos_zero(v2);
-
-  let result = ((v1 == v2) | (v1Is0 & v2Is0));
-
-  let fflags = if   (f_is_SNaN(v1) | f_is_SNaN(v2))
-               then nvFlag()
-               else zeros();
-
-  (result, fflags)
-}
-
-val      flt_S : (bits(32), bits (32), bool) -> (bool, bits(5))
-function flt_S   (v1,       v2,        is_quiet) = {
-  let (s1, e1, m1) = fsplit (v1);
-  let (s2, e2, m2) = fsplit (v2);
-
-  let result : bool =
-    if (s1 == 0b0) & (s2 == 0b0) then
-      if   (e1 == e2)
-      then unsigned (m1) < unsigned (m2)
-      else unsigned (e1) < unsigned (e2)
-    else if (s1 == 0b0) & (s2 == 0b1)
-    then false
-    else if (s1 == 0b1) & (s2 == 0b0)
-    then true
-    else
-        if   (e1 == e2)
-        then unsigned (m1) > unsigned (m2)
-        else unsigned (e1) > unsigned (e2);
-
-  let fflags = if is_quiet then
-                 if   (f_is_SNaN(v1) | f_is_SNaN(v2))
-                 then nvFlag()
-                 else zeros()
-               else
-                 if   (f_is_NaN(v1) | f_is_NaN(v2))
-                 then nvFlag()
-                 else zeros();
-
-  (result, fflags)
-}
-
-val      fle_S : (bits(32), bits (32), bool) -> (bool, bits(5))
-function fle_S   (v1,       v2,        is_quiet) = {
-  let (s1, e1, m1) = fsplit (v1);
-  let (s2, e2, m2) = fsplit (v2);
-
-  let v1Is0    = f_is_neg_zero(v1) | f_is_pos_zero(v1);
-  let v2Is0    = f_is_neg_zero(v2) | f_is_pos_zero(v2);
-
-  let result : bool =
-    if (s1 == 0b0) & (s2 == 0b0) then
-      if   (e1 == e2)
-      then unsigned (m1) <=  unsigned (m2)
-      else unsigned (e1)  <  unsigned (e2)
-    else if (s1 == 0b0) & (s2 == 0b1)
-    then (v1Is0 & v2Is0)                         /* Equal in this case (+0=-0) */
-    else if (s1 == 0b1) & (s2 == 0b0)
-    then true
-    else
-      if   (e1 == e2)
-      then unsigned (m1) >=  unsigned (m2)
-      else unsigned (e1)  >  unsigned (e2);
-
-  let fflags = if is_quiet then
-                 if   (f_is_SNaN(v1) | f_is_SNaN(v2))
-                 then nvFlag()
-                 else zeros()
-               else
-                 if   (f_is_NaN(v1) | f_is_NaN(v2))
-                 then nvFlag()
-                 else zeros();
-
-  (result, fflags)
-}
-
-/* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
 
 function haveSingleFPU() -> bool = haveFExt() | haveZfinx()
@@ -776,7 +682,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)) = {
   let rs2_val_S = F_or_X_S(rs2);
 
   let is_quiet  = true;
-  let (rs1_lt_rs2, fflags) = fle_S (rs1_val_S, rs2_val_S, is_quiet);
+  let (rs1_lt_rs2, fflags) = fle(rs1_val_S, rs2_val_S, is_quiet);
 
   let rd_val_S  = if      (f_is_NaN(rs1_val_S) & f_is_NaN(rs2_val_S))           then canonical_NaN(32)
                   else if f_is_NaN(rs1_val_S)                                   then rs2_val_S
@@ -796,7 +702,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)) = {
   let rs2_val_S = F_or_X_S(rs2);
 
   let is_quiet  = true;
-  let (rs2_lt_rs1, fflags) = fle_S (rs2_val_S, rs1_val_S, is_quiet);
+  let (rs2_lt_rs1, fflags) = fle(rs2_val_S, rs1_val_S, is_quiet);
 
   let rd_val_S  = if      (f_is_NaN(rs1_val_S) & f_is_NaN(rs2_val_S))           then canonical_NaN(32)
                   else if f_is_NaN(rs1_val_S)                                   then rs2_val_S
