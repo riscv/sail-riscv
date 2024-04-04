@@ -21,14 +21,12 @@ val accrue_fflags : (bits_fflags) -> unit
 
 val      float_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> (bits_fflags, bool)
 function float_eq (op1, op2) = {
-  let is_nan          = f_is_NaN(op1) | f_is_NaN(op2);
-  let is_snan         = f_is_SNaN(op1) | f_is_SNaN(op2);
-  let fflags          = if   is_nan & is_snan
-                        then float_flag_invalid
-                        else zeros();
-  let is_equal : bool = if   not(is_nan)
-                        then op1 == op2 | ((op1 | op2) << 1) == zeros()
-                        else false;
+  let is_nan    = f_is_NaN(op1) | f_is_NaN(op2);
+  let is_snan   = f_is_SNaN(op1) | f_is_SNaN(op2);
+  let fflags    = if   is_snan
+                  then float_flag_invalid
+                  else zeros();
+  let is_equal  = not(is_nan) & (op1 == op2) | ((op1 | op2) << 1) == zeros();
 
   (fflags, is_equal)
 }
