@@ -375,7 +375,7 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FMIN_H)) = {
   let is_quiet  = true;
   let (rs1_lt_rs2, fflags) = fle_H (rs1_val_H, rs2_val_H, is_quiet);
 
-  let rd_val_H  = if      (f_is_NaN_H(rs1_val_H) & f_is_NaN_H(rs2_val_H))           then canonical_NaN_H()
+  let rd_val_H  = if      (f_is_NaN_H(rs1_val_H) & f_is_NaN_H(rs2_val_H))           then canonical_NaN(16)
                   else if f_is_NaN_H(rs1_val_H)                                     then rs2_val_H
                   else if f_is_NaN_H(rs2_val_H)                                     then rs1_val_H
                   else if (f_is_neg_zero_H(rs1_val_H) & f_is_pos_zero_H(rs2_val_H)) then rs1_val_H
@@ -395,7 +395,7 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FMAX_H)) = {
   let is_quiet  = true;
   let (rs2_lt_rs1, fflags) = fle_H (rs2_val_H, rs1_val_H, is_quiet);
 
-  let rd_val_H  = if      (f_is_NaN_H(rs1_val_H) & f_is_NaN_H(rs2_val_H))           then canonical_NaN_H()
+  let rd_val_H  = if      (f_is_NaN_H(rs1_val_H) & f_is_NaN_H(rs2_val_H))           then canonical_NaN(16)
                   else if f_is_NaN_H(rs1_val_H)                                     then rs2_val_H
                   else if f_is_NaN_H(rs2_val_H)                                     then rs1_val_H
                   else if (f_is_neg_zero_H(rs1_val_H) & f_is_pos_zero_H(rs2_val_H)) then rs2_val_H

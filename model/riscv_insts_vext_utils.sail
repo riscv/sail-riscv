@@ -437,16 +437,6 @@ function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
   result
 }
 
-/* Floating point canonical NaN for 16-bit, 32-bit and 64-bit types */
-val canonical_NaN : forall 'm, 'm in {16, 32, 64}. int('m) -> bits('m)
-function canonical_NaN('m) = {
-  match 'm {
-    16 => canonical_NaN_H(),
-    32 => canonical_NaN_S(),
-    64 => canonical_NaN_D()
-  }
-}
-
 /* Floating point classification functions */
 val f_is_neg_inf : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
 function f_is_neg_inf(xf) = {
