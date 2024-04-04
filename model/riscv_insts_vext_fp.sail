@@ -832,9 +832,9 @@ function clause execute(VFMVFS(vs2, rd)) = {
 
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, 0, vs2);
   match 'm {
-    16 => F_H(rd) = vs2_val[0],
-    32 => F_S(rd) = vs2_val[0],
-    64 => F_D(rd) = vs2_val[0]
+    16 => F_box(rd) = vs2_val[0],
+    32 => F_box(rd) = vs2_val[0],
+    64 => F_box(rd) = vs2_val[0]
   };
   vstart = zeros();
 

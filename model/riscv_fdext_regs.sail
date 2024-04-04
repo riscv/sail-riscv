@@ -184,66 +184,43 @@ function wF (r, in_v) = {
       print_reg("f" ^ dec_str(r) ^ " <- " ^ FRegStr(v));
 }
 
-function rF_bits(i: regidx) -> flenbits = rF(unsigned(i))
+// Same as rF, wF but the index is `regidx` instead of `range(0, 31)`.
 
-function wF_bits(i: regidx, data: flenbits) -> unit = {
+function rF_bits(i : regidx) -> flenbits = rF(unsigned(i))
+
+function wF_bits(i : regidx, data : flenbits) -> unit = {
   wF(unsigned(i)) = data
 }
 
 overload F = {rF_bits, wF_bits, rF, wF}
 
-val rF_H : regidx -> bits(16)
-function rF_H(i) = {
-  assert(sizeof(flen) >= 16);
+// Floating point access functions that automatically box/unbox smaller floats.
+
+val rF_box : forall 'n, 'n in {16, 32, 64} . (implicit('n), regidx) -> bits('n)
+function rF_box(_n, i) = {
+  assert(sizeof(flen) >= 'n);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   nan_unbox(F(i))
 }
 
-val wF_H : (regidx, bits(16)) -> unit
-function wF_H(i, data) = {
-  assert(sizeof(flen) >= 16);
+val wF_box : forall 'n, 'n in {16, 32, 64} . (regidx, bits('n)) -> unit
+function wF_box(i, data) = {
+  assert(sizeof(flen) >= 'n);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i) = nan_box(data)
 }
 
-val rF_S : regidx -> bits(32)
-function rF_S(i) = {
-  assert(sizeof(flen) >= 32);
-  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
-  nan_unbox(F(i))
-}
+overload F_box = { rF_box, wF_box }
 
-val wF_S : (regidx, bits(32)) -> unit
-function wF_S(i, data) = {
-  assert(sizeof(flen) >= 32);
-  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
-  F(i) = nan_box(data)
-}
-
-val rF_D : regidx -> bits(64)
-function rF_D(i) = {
-  assert(sizeof(flen) >= 64);
-  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
-  F(i)
-}
-
-val wF_D : (regidx, bits(64)) -> unit
-function wF_D(i, data) = {
-  assert(sizeof(flen) >= 64);
-  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
-  F(i) = data
-}
-
-overload F_H = { rF_H, wF_H }
-overload F_S = { rF_S, wF_S }
-overload F_D = { rF_D, wF_D }
+// Access functions that access X registers if Zfinx (float in X) is enabled
+// (mutually exclusive with the F/D extensions), otherwise F registers.
 
 val rF_or_X_H : regidx -> bits(16)
 function rF_or_X_H(i) = {
   assert(sizeof(flen) >= 16);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
-  then F_H(i)
+  then F_box(i)
   else X(i)[15..0]
 }
 
@@ -252,7 +229,7 @@ function rF_or_X_S(i) = {
   assert(sizeof(flen) >= 32);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
-  then F_S(i)
+  then F_box(i)
   else X(i)[31..0]
 }
 
@@ -261,7 +238,7 @@ function rF_or_X_D(i) = {
   assert(sizeof(flen) >= 64);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
-  then F_D(i)
+  then F_box(i)
   else if sizeof(xlen) >= 64
   then X(i)[63..0]
   else {
@@ -275,7 +252,7 @@ function wF_or_X_H(i, data) = {
   assert(sizeof(flen) >= 16);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
-  then F_H(i) = data
+  then F_box(i) = data
   else X(i) = sign_extend(data)
 }
 
@@ -284,7 +261,7 @@ function wF_or_X_S(i, data) = {
   assert(sizeof(flen) >= 32);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
-  then F_S(i) = data
+  then F_box(i) = data
   else X(i) = sign_extend(data)
 }
 
@@ -293,7 +270,7 @@ function wF_or_X_D(i, data) = {
   assert (sizeof(flen) >= 64);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
-  then F_D(i) = data
+  then F_box(i) = data
   else if sizeof(xlen) >= 64
   then X(i) = sign_extend(data)
   else {

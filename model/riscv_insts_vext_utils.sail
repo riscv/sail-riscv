@@ -542,9 +542,9 @@ val get_scalar_fp : forall 'n, 'n in {16, 32, 64}. (regidx, int('n)) -> bits('n)
 function get_scalar_fp(rs1, SEW) = {
   assert(sizeof(flen) >= SEW, "invalid vector floating-point type width: FLEN < SEW");
   match SEW {
-    16 => F_H(rs1),
-    32 => F_S(rs1),
-    64 => F_D(rs1)
+    16 => F_box(rs1),
+    32 => F_box(rs1),
+    64 => F_box(rs1)
   }
 }
 
