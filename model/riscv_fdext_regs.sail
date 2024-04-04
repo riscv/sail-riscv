@@ -184,50 +184,50 @@ function wF (r, in_v) = {
       print_reg("f" ^ dec_str(r) ^ " <- " ^ FRegStr(v));
 }
 
-function rF_bits(i: bits(5)) -> flenbits = rF(unsigned(i))
+function rF_bits(i: regidx) -> flenbits = rF(unsigned(i))
 
-function wF_bits(i: bits(5), data: flenbits) -> unit = {
+function wF_bits(i: regidx, data: flenbits) -> unit = {
   wF(unsigned(i)) = data
 }
 
 overload F = {rF_bits, wF_bits, rF, wF}
 
-val rF_H : bits(5) -> bits(16)
+val rF_H : regidx -> bits(16)
 function rF_H(i) = {
   assert(sizeof(flen) >= 16);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   nan_unbox(F(i))
 }
 
-val wF_H : (bits(5), bits(16)) -> unit
+val wF_H : (regidx, bits(16)) -> unit
 function wF_H(i, data) = {
   assert(sizeof(flen) >= 16);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i) = nan_box(data)
 }
 
-val rF_S : bits(5) -> bits(32)
+val rF_S : regidx -> bits(32)
 function rF_S(i) = {
   assert(sizeof(flen) >= 32);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   nan_unbox(F(i))
 }
 
-val wF_S : (bits(5), bits(32)) -> unit
+val wF_S : (regidx, bits(32)) -> unit
 function wF_S(i, data) = {
   assert(sizeof(flen) >= 32);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i) = nan_box(data)
 }
 
-val rF_D : bits(5) -> bits(64)
+val rF_D : regidx -> bits(64)
 function rF_D(i) = {
   assert(sizeof(flen) >= 64);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i)
 }
 
-val wF_D : (bits(5), bits(64)) -> unit
+val wF_D : (regidx, bits(64)) -> unit
 function wF_D(i, data) = {
   assert(sizeof(flen) >= 64);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
@@ -238,7 +238,7 @@ overload F_H = { rF_H, wF_H }
 overload F_S = { rF_S, wF_S }
 overload F_D = { rF_D, wF_D }
 
-val rF_or_X_H : bits(5) -> bits(16)
+val rF_or_X_H : regidx -> bits(16)
 function rF_or_X_H(i) = {
   assert(sizeof(flen) >= 16);
   assert(sys_enable_fdext() != sys_enable_zfinx());
@@ -247,7 +247,7 @@ function rF_or_X_H(i) = {
   else X(i)[15..0]
 }
 
-val rF_or_X_S : bits(5) -> bits(32)
+val rF_or_X_S : regidx -> bits(32)
 function rF_or_X_S(i) = {
   assert(sizeof(flen) >= 32);
   assert(sys_enable_fdext() != sys_enable_zfinx());
@@ -256,7 +256,7 @@ function rF_or_X_S(i) = {
   else X(i)[31..0]
 }
 
-val rF_or_X_D : bits(5) -> bits(64)
+val rF_or_X_D : regidx -> bits(64)
 function rF_or_X_D(i) = {
   assert(sizeof(flen) >= 64);
   assert(sys_enable_fdext() != sys_enable_zfinx());
@@ -270,7 +270,7 @@ function rF_or_X_D(i) = {
   }
 }
 
-val wF_or_X_H : (bits(5), bits(16)) -> unit
+val wF_or_X_H : (regidx, bits(16)) -> unit
 function wF_or_X_H(i, data) = {
   assert(sizeof(flen) >= 16);
   assert(sys_enable_fdext() != sys_enable_zfinx());
@@ -279,7 +279,7 @@ function wF_or_X_H(i, data) = {
   else X(i) = sign_extend(data)
 }
 
-val wF_or_X_S : (bits(5), bits(32)) -> unit
+val wF_or_X_S : (regidx, bits(32)) -> unit
 function wF_or_X_S(i, data) = {
   assert(sizeof(flen) >= 32);
   assert(sys_enable_fdext() != sys_enable_zfinx());
@@ -288,7 +288,7 @@ function wF_or_X_S(i, data) = {
   else X(i) = sign_extend(data)
 }
 
-val wF_or_X_D : (bits(5), bits(64)) -> unit
+val wF_or_X_D : (regidx, bits(64)) -> unit
 function wF_or_X_D(i, data) = {
   assert (sizeof(flen) >= 64);
   assert(sys_enable_fdext() != sys_enable_zfinx());
@@ -352,7 +352,7 @@ overload to_str = {freg_name_abi}
 
 /* mappings for assembly */
 
-val freg_name : bits(5) <-> string
+val freg_name : regidx <-> string
 mapping freg_name = {
     0b00000 <-> "ft0",
     0b00001 <-> "ft1",
@@ -388,7 +388,7 @@ mapping freg_name = {
     0b11111 <-> "ft11"
 }
 
-val freg_or_reg_name : bits(5) <-> string
+val freg_or_reg_name : regidx <-> string
 mapping freg_or_reg_name = {
   reg if sys_enable_fdext() <-> freg_name(reg) if sys_enable_fdext(),
   reg if sys_enable_zfinx() <-> reg_name(reg)  if sys_enable_zfinx()
@@ -444,7 +444,7 @@ bitfield Fcsr : bits(32) = {
 
 register fcsr : Fcsr
 
-val ext_write_fcsr : (bits(3), bits(5)) -> unit
+val ext_write_fcsr : (bits(3), regidx) -> unit
 function ext_write_fcsr (frm, fflags) = {
   fcsr[FRM]    = frm;      /* Note: frm can be an illegal value, 101, 110, 111 */
   fcsr[FFLAGS] = fflags;
@@ -452,7 +452,7 @@ function ext_write_fcsr (frm, fflags) = {
 }
 
 /* OR flags into the fflags register. */
-val accrue_fflags : (bits(5)) -> unit
+val accrue_fflags : (regidx) -> unit
 function accrue_fflags(flags) = {
   let f = fcsr[FFLAGS] | flags;
   if  fcsr[FFLAGS] != f
