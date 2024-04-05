@@ -134,7 +134,7 @@ union AccessType ('a : Type) = {
   Execute   : unit
 }
 
-enum word_width = {BYTE, HALF, WORD, DOUBLE}
+enum word_width = {BYTE, HALF, WORD, DOUBLE, QUAD}
 
 /* architectural interrupt definitions */
 
@@ -379,14 +379,16 @@ mapping size_mnemonic : word_width <-> string = {
   BYTE   <-> "b",
   HALF   <-> "h",
   WORD   <-> "w",
-  DOUBLE <-> "d"
+  DOUBLE <-> "d",
+  QUAD   <-> "q"
 }
 
-mapping size_bytes : word_width <-> {1, 2, 4, 8} = {
+mapping size_bytes : word_width <-> {1, 2, 4, 8, 16} = {
   BYTE   <-> 1,
   HALF   <-> 2,
   WORD   <-> 4,
   DOUBLE <-> 8,
+  QUAD   <-> 16
 }
 
 struct mul_op = {

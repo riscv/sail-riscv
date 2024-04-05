@@ -280,12 +280,28 @@ mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)          if haveFExt()
 mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if haveDExt()
                     <-> imm @ rs1 @ 0b011 @ rd @ 0b000_0111  if haveDExt()
 
+mapping clause encdec = LOAD_FP(imm, rs1, rd, QUAD)          if haveQExt()
+                    <-> imm @ rs1 @ 0b100 @ rd @ 0b000_0111  if haveQExt()
+
 /* Execution semantics ================================ */
 
 val process_fload64 : (regidx, xlenbits, MemoryOpResult(bits(64)))
                       -> Retired
 function process_fload64(rd, addr, value) =
-  if   sizeof(flen) == 64
+  if   sizeof(flen) == 128
+  then match value {
+         MemValue(result) => { F(rd) = nan_box(result); RETIRE_SUCCESS },
+         MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
+       }
+  else {
+    /* should not get here */
+    RETIRE_FAIL
+  }
+
+val process_fload128 : (regidx, xlenbits, MemoryOpResult(bits(128)))
+                      -> Retired
+function process_fload128(rd, addr, value) =
+  if   sizeof(flen) == 128
   then match value {
          MemValue(result) => { F(rd) = result; RETIRE_SUCCESS },
          MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
@@ -332,6 +348,8 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
                process_fload32(rd, vaddr, mem_read(Read(Data), addr, 4, aq, rl, res)),
             DOUBLE if sizeof(flen) >= 64 =>
                process_fload64(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, res)),
+            QUAD if sizeof(flen) >= 128 =>
+               process_fload128(rd, vaddr, mem_read(Read(Data), addr, 16, aq, rl, res)),
             _ => report_invalid_width(__FILE__, __LINE__, width, "floating point load"),
           }
         }
@@ -366,6 +384,11 @@ mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)                   
 mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)                           if haveDExt()
                     <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b011 @ imm5 : bits(5) @ 0b010_0111  if haveDExt()
 
+
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, QUAD)                             if haveQExt()
+                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b100 @ imm5 : bits(5) @ 0b010_0111  if haveQExt()
+
+
 /* Execution semantics ================================ */
 
 val process_fstore : (xlenbits, MemoryOpResult(bool)) -> Retired
@@ -393,7 +416,8 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
             BYTE   => MemValue () /* bogus placeholder for illegal size */,
             HALF   => mem_write_ea(addr, 2, aq, rl, false),
             WORD   => mem_write_ea(addr, 4, aq, rl, false),
-            DOUBLE => mem_write_ea(addr, 8, aq, rl, false)
+            DOUBLE => mem_write_ea(addr, 8, aq, rl, false),
+            QUAD   => mem_write_ea(addr, 16, aq, rl, false)
           };
           match (eares) {
             MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
@@ -404,7 +428,9 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
                 HALF => process_fstore (vaddr, mem_write_value(addr, 2, rs2_val[15..0], aq, rl, con)),
                 WORD => process_fstore (vaddr, mem_write_value(addr, 4, rs2_val[31..0], aq, rl, con)),
                 DOUBLE if sizeof(flen) >= 64 =>
-                  process_fstore (vaddr, mem_write_value(addr, 8, rs2_val, aq, rl, con)),
+                  process_fstore (vaddr, mem_write_value(addr, 8, rs2_val[63..0], aq, rl, con)),
+                QUAD if sizeof(flen) >= 128 =>
+                  process_fstore (vaddr, mem_write_value(addr, 16, rs2_val, aq, rl, con)),
                 _ => report_invalid_width(__FILE__, __LINE__, width, "floating point store"),
               };
             }

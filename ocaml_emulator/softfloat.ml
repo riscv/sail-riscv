@@ -35,6 +35,18 @@ let f64_mul rm v1 v2 =
 let f64_div rm v1 v2 =
   ()
 
+let f128_add rm v1 v2 =
+  ()
+
+let f128_sub rm v1 v2 =
+  ()
+
+let f128_mul rm v1 v2 =
+  ()
+
+let f128_div rm v1 v2 =
+  ()
+
 let f16_muladd rm v1 v2 v3 =
   ()
 
@@ -44,6 +56,10 @@ let f32_muladd rm v1 v2 v3 =
 let f64_muladd rm v1 v2 v3 =
   ()
 
+let f128_muladd rm v1 v2 v3 =
+  ()
+
+
 let f16_sqrt rm v =
   ()
 
@@ -51,6 +67,9 @@ let f32_sqrt rm v =
   ()
 
 let f64_sqrt rm v =
+  ()
+
+let f128_sqrt rm v =
   ()
 
 let f16_to_i32 rm v =
@@ -143,6 +162,43 @@ let f64_to_f16 rm v =
 let f64_to_f32 rm v =
   ()
 
+let f128_to_i32 rm v =
+  ()
+
+let f128_to_ui32 rm v =
+  ()
+
+let i32_to_f128 rm v =
+  ()
+
+let ui32_to_f128 rm v =
+  ()
+
+let f32_to_f128 rm v =
+  ()
+
+let f128_to_f32 rm v =
+  ()
+
+let f128_to_f64 rm v =
+  ()
+
+let f64_to_f128 rm v =
+  ()
+
+let f128_to_i64 rm v =
+  ()
+
+let i64_to_f128 rm v =
+  ()
+
+let f128_to_ui64 rm v =
+  ()
+
+let ui64_to_f128 rm v =
+  ()
+
+
 let f16_lt v1 v2 =
   ()
 
@@ -186,6 +242,15 @@ let f64_le_quiet v1 v2 =
   ()
 
 let f64_eq v1 v2 =
+  ()
+
+let f128_lt v1 v2 =
+  ()
+
+let f128_le v1 v2 =
+  ()
+
+let f128_eq v1 v2 =
   ()
 
 let f16_round_to_int exact rm v =
