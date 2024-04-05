@@ -6,20 +6,23 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* **************************************************************** */
-/* Floating point register file and accessors for F, D extensions   */
-/* Floating point CSR and accessors                                 */
-/* **************************************************************** */
+/* ***************************************************************** */
+/* Floating point register file and accessors for F, D, Q extensions */
+/* Floating point CSR and accessors                                  */
+/* ***************************************************************** */
 
-/* Original version written by Rishiyur S. Nikhil, Sept-Oct 2019    */
+/* Original version written by Rishiyur S. Nikhil, Sept-Oct 2019     */
 
-/* **************************************************************** */
+/* ***************************************************************** */
 
 enum clause extension = Ext_F
 function clause extensionEnabled(Ext_F) = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
 
 enum clause extension = Ext_D
 function clause extensionEnabled(Ext_D) = (misa[D] == 0b1) & (mstatus[FS] != 0b00) & sizeof(flen) >= 64
+
+enum clause extension = Ext_Q
+function clause extensionEnabled(Ext_Q) = (misa[Q] == 0b1) & (mstatus[FS] != 0b00) & sizeof(flen) >= 128
 
 enum clause extension = Ext_Zfinx
 function clause extensionEnabled(Ext_Zfinx) = sys_enable_zfinx()

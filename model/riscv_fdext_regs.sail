@@ -6,64 +6,100 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* **************************************************************** */
-/* Floating point register file and accessors for F, D extensions   */
-/* Floating point CSR and accessors                                 */
-/* **************************************************************** */
+/* ***************************************************************** */
+/* Floating point register file and accessors for F, D, Q extensions */
+/* Floating point CSR and accessors                                  */
+/* ***************************************************************** */
 
 /* Original version written by Rishiyur S. Nikhil, Sept-Oct 2019    */
 
 /* **************************************************************** */
 /* NaN boxing/unboxing.                                             */
-/* When 16-bit floats (half-precision) are stored in 32/64-bit regs  */
-/* they must be 'NaN boxed'.                                         */
-/* When 16-bit floats (half-precision) are read from 32/64-bit regs  */
-/* they must be 'NaN unboxed'.                                       */
-/* When 32-bit floats (single-precision) are stored in 64-bit regs  */
+/* When 16-bit floats (half-precision) are stored in 32/64/128-bit  */
+/* regs they must be 'NaN boxed'.                                   */
+/* When 16-bit floats (half-precision) are read from 32/64/128-bit  */
+/* regs they must be 'NaN unboxed'.                                 */
+/* When 32-bit floats (single-precision) are stored in 64/128-bit   */
+/* regs they must be 'NaN boxed'.                                   */
+/* When 32-bit floats (single-precision) are read from 64/128-bit   */
+/* regs they must be 'NaN unboxed'.                                 */
+/* When 64-bit floats (double-precision) are stored in 128-bit regs */
 /* they must be 'NaN boxed' (upper 32b all ones).                   */
-/* When 32-bit floats (single-precision) are read from 64-bit regs  */
+/* When 64-bit floats (double-precision) are read from 128-bit regs */
 /* they must be 'NaN unboxed'.                                      */
 
 function canonical_NaN_H() -> bits(16) = 0x_7e00
 function canonical_NaN_S() -> bits(32) = 0x_7fc0_0000
 function canonical_NaN_D() -> bits(64) = 0x_7ff8_0000_0000_0000
+function canonical_NaN_Q() -> bits(128) = 0x_7fff_0000_0000_0000_0000_0000_0000_0000
 
 val      nan_box_H : bits(16) -> flenbits
 function nan_box_H   val_16b =
-  if (sizeof(flen) == 32)
-  then 0x_FFFF @ val_16b
-  else 0x_FFFF_FFFF_FFFF @ val_16b
+  match (sizeof(flen)) {
+    32  => 0x_FFFF @ val_16b,
+    64  => 0x_FFFF_FFFF_FFFF @ val_16b,
+    _ => 0x_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF @ val_16b // flen = 128
+  }
 
 val      nan_unbox_H : flenbits -> bits(16)
-function nan_unbox_H   regval =
-  if (sizeof(flen) == 32)
-  then if regval [31..16] == 0x_FFFF
-       then regval [15..0]
-       else canonical_NaN_H()
-  else if regval [63..16] == 0x_FFFF_FFFF_FFFF
-       then regval [15..0]
-       else canonical_NaN_H()
+function nan_unbox_H   regval = {
+  match sizeof(flen) {
+    32  if regval [31..16] == 0x_FFFF
+        => regval[15..0],
+    64  if regval [63..16] == 0x_FFFF_FFFF_FFFF
+        => regval[15..0],
+    128 if regval [127..16] ==  0x_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF
+        => regval[15..0],
+    _ => canonical_NaN_H()
+  }
+}
 
 val nan_box_S : bits(32) -> flenbits
 function nan_box_S val_32b = {
   assert(sys_enable_fdext());
-  if (sizeof(flen) == 32)
-  then val_32b
-  else 0x_FFFF_FFFF @ val_32b
+  match sizeof(flen) {
+    32  => val_32b,
+    64  => 0x_FFFF_FFFF @ val_32b,
+    _ => 0x_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF @ val_32b  // flen = 128
+  }
 }
 
 val nan_unbox_S : flenbits -> bits(32)
 function nan_unbox_S regval = {
   assert(sys_enable_fdext());
-  if (sizeof(flen) == 32)
-  then regval
-  else if regval [63..32] == 0x_FFFF_FFFF
-       then regval [31..0]
-       else canonical_NaN_S()
+  match sizeof(flen) {
+    32  => regval,
+    64 if regval [63..32] == 0x_FFFF_FFFF
+        => regval [31..0],
+    128 if regval [127..32] == 0x_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF
+        => regval [31..0],
+    _ => canonical_NaN_S()
+  }
 }
 
-overload nan_box = { nan_box_H, nan_box_S }
-overload nan_unbox = { nan_unbox_H, nan_unbox_S }
+val nan_box_D : bits(64) -> flenbits
+function nan_box_D val_64b = {
+  assert(sys_enable_fdext());
+  assert(sizeof(flen) >= 64);
+  if (sizeof(flen) ==64)
+    then val_64b
+    else 0x_FFFF_FFFF_FFFF_FFFF @ val_64b
+  }
+
+val nan_unbox_D : flenbits -> bits(64)
+function nan_unbox_D regval = {
+  assert(sys_enable_fdext());
+  assert(sizeof(flen) >= 64);
+  match sizeof(flen) {
+    64  => regval,
+    128 if regval [127..64] == 0x_FFFF_FFFF_FFFF_FFFF
+        => regval [63..0],
+    _ => canonical_NaN_D()
+  }
+}
+
+overload nan_box = { nan_box_H, nan_box_S, nan_box_D }
+overload nan_unbox = { nan_unbox_H, nan_unbox_S, nan_unbox_D }
 
 /* **************************************************************** */
 /* Floating point register file                                     */
@@ -240,12 +276,26 @@ val rF_D : regidx -> bits(64)
 function rF_D(i) = {
   assert(sizeof(flen) >= 64);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
-  F(i)
+  nan_unbox(F(i))
 }
 
 val wF_D : (regidx, bits(64)) -> unit
 function wF_D(i, data) = {
   assert(sizeof(flen) >= 64);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  F(i) = nan_box(data)
+}
+
+val rF_Q : bits(5) -> bits(128)
+function rF_Q(i) = {
+  assert(sizeof(flen) >= 128);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  F(i)
+}
+
+val wF_Q : (bits(5), bits(128)) -> unit
+function wF_Q(i, data) = {
+  assert(sizeof(flen) >= 128);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i) = data
 }
@@ -253,6 +303,7 @@ function wF_D(i, data) = {
 overload F_H = { rF_H, wF_H }
 overload F_S = { rF_S, wF_S }
 overload F_D = { rF_D, wF_D }
+overload F_Q = { rF_Q, wF_Q }
 
 val rF_or_X_H : regidx -> bits(16)
 function rF_or_X_H(i) = {
