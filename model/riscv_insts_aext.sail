@@ -24,14 +24,6 @@ function aqrl_str(aq : bool, rl : bool) -> string =
     (true, true)   => ".aqrl"
   }
 
-function lrsc_width_str(width : word_width) -> string =
-  match width {
-    BYTE   => ".b",
-    HALF   => ".h",
-    WORD   => ".w",
-    DOUBLE => ".d"
-  }
-
 /**
  * RISC-V A-extension defines LR / SC / AMOs for word and double
  * RISC-V Zabha extension defines AMOs for byte and halfword
@@ -50,6 +42,7 @@ function amo_width_valid(size : word_width) -> bool = {
     HALF   => currentlyEnabled(Ext_Zabha),
     WORD   => true,
     DOUBLE => xlen >= 64,
+    _      => false
   }
 }
 
@@ -59,7 +52,7 @@ function clause currentlyEnabled(Ext_Zalrsc) = hartSupports(Ext_Zalrsc) | curren
 union clause ast = LOADRES : (bool, bool, regidx, word_width, regidx)
 
 mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)
-  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111
+  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ encdec_reg(rs1) @ size_enc_wide(size) @ encdec_reg(rd) @ 0b0101111
   when currentlyEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
 
 /* We could set load-reservations on physical or virtual addresses.
@@ -108,7 +101,7 @@ mapping clause assembly = LOADRES(aq, rl, rs1, size, rd)
 union clause ast = STORECON : (bool, bool, regidx, regidx, word_width, regidx)
 
 mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)
-  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111
+  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ size_enc_wide(size) @ encdec_reg(rd) @ 0b0101111
   when currentlyEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful. This may need revisiting. */
@@ -186,7 +179,7 @@ mapping encdec_amoop : amoop <-> bits(5) = {
 }
 
 mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)
-  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111
+  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ size_enc_wide(size) @ encdec_reg(rd) @ 0b0101111
   when currentlyEnabled(Ext_Zaamo) & amo_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful.

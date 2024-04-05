@@ -158,6 +158,56 @@ function clause execute (FLI_D(constantidx, rd)) = {
   RETIRE_SUCCESS
 }
 
+/* FLI.Q */
+
+union clause ast = RISCV_FLI_Q : (bits(5), fregidx)
+
+mapping clause encdec = RISCV_FLI_Q(rs1, rd)
+  <-> 0b111_1011 @ 0b00001 @ rs1 @ 0b000 @ encdec_freg(rd) @ 0b101_0011
+  when currentlyEnabled(Ext_Q) & currentlyEnabled(Ext_Zfa)
+
+mapping clause assembly = RISCV_FLI_Q(constantidx, rd)
+  <-> "fli.q" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_5(constantidx)
+
+function clause execute (RISCV_FLI_Q(constantidx, rd)) = {
+  let bits : bits(128) = match constantidx {
+    0b00000 => { 0xbfff0000000000000000000000000000 },  /* -1.0 */
+    0b00001 => { 0x00010000000000000000000000000000 },  /* minimum positive normal */
+    0b00010 => { 0x3fef0000000000000000000000000000 },  /* 1.0 * 2^-16 */
+    0b00011 => { 0x3ff00000000000000000000000000000 },  /* 1.0 * 2^-15 */
+    0b00100 => { 0x3ff70000000000000000000000000000 },  /* 1.0 * 2^-8  */
+    0b00101 => { 0x3ff80000000000000000000000000000 },  /* 1.0 * 2^-7  */
+    0b00110 => { 0x3ffb0000000000000000000000000000 },  /* 1.0 * 2^-4  */
+    0b00111 => { 0x3ffc0000000000000000000000000000 },  /* 1.0 * 2^-3  */
+    0b01000 => { 0x3ffd0000000000000000000000000000 },  /* 0.25 */
+    0b01001 => { 0x3ffd4000000000000000000000000000 },  /* 0.3125 */
+    0b01010 => { 0x3ffd8000000000000000000000000000 },  /* 0.375 */
+    0b01011 => { 0x3ffdc000000000000000000000000000 },  /* 0.4375 */
+    0b01100 => { 0x3ffe0000000000000000000000000000 },  /* 0.5 */
+    0b01101 => { 0x3ffe4000000000000000000000000000 },  /* 0.625 */
+    0b01110 => { 0x3ffe8000000000000000000000000000 },  /* 0.75 */
+    0b01111 => { 0x3ffec000000000000000000000000000 },  /* 0.875 */
+    0b10000 => { 0x3fff0000000000000000000000000000 },  /* 1.0 */
+    0b10001 => { 0x3fff4000000000000000000000000000 },  /* 1.25 */
+    0b10010 => { 0x3fff8000000000000000000000000000 },  /* 1.5 */
+    0b10011 => { 0x3fffc000000000000000000000000000 },  /* 1.75 */
+    0b10100 => { 0x40000000000000000000000000000000 },  /* 2.0 */
+    0b10101 => { 0x40004000000000000000000000000000 },  /* 2.5 */
+    0b10110 => { 0x40008000000000000000000000000000 },  /* 3 */
+    0b10111 => { 0x40010000000000000000000000000000 },  /* 4 */
+    0b11000 => { 0x40020000000000000000000000000000 },  /* 8 */
+    0b11001 => { 0x40030000000000000000000000000000 },  /* 16 */
+    0b11010 => { 0x40060000000000000000000000000000 },  /* 2^7 */
+    0b11011 => { 0x40070000000000000000000000000000 },  /* 2^8 */
+    0b11100 => { 0x400e0000000000000000000000000000 },  /* 2^15 */
+    0b11101 => { 0x400f0000000000000000000000000000 },  /* 2^16 */
+    0b11110 => { 0x7fff0000000000000000000000000000 },  /* +inf */
+    0b11111 => { canonical_NaN_Q() },
+  };
+  F_Q(rd) = bits;
+  RETIRE_SUCCESS
+}
+
 /* FMINM.H */
 
 union clause ast = FMINM_H : (fregidx, fregidx, fregidx)
@@ -344,6 +394,68 @@ function clause execute (FMAXM_D(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
+/* FMINM.Q */
+
+union clause ast = RISCV_FMINM_Q : (fregidx, fregidx, fregidx)
+
+mapping clause encdec = RISCV_FMINM_Q(rs2, rs1, rd)
+  <-> 0b001_0111 @ encdec_freg(rs2) @ encdec_freg(rs1)@ 0b010 @ encdec_freg(rd) @ 0b101_0011
+  when currentlyEnabled(Ext_Q) & currentlyEnabled(Ext_Zfa)
+
+mapping clause assembly = RISCV_FMINM_Q(rs2, rs1, rd)
+  <-> "fminm.q" ^ spc() ^ freg_name(rd)
+                ^ sep() ^ freg_name(rs1)
+                ^ sep() ^ freg_name(rs2)
+
+function clause execute (RISCV_FMINM_Q(rs2, rs1, rd)) = {
+  let rs1_val_Q = F_Q(rs1);
+  let rs2_val_Q = F_Q(rs2);
+
+  let is_quiet  = true;
+  let (rs1_lt_rs2, fflags) = fle_Q (rs1_val_Q, rs2_val_Q, is_quiet);
+
+  let rd_val_Q  = if      (f_is_NaN_Q(rs1_val_Q) | f_is_NaN_Q(rs2_val_Q))           then canonical_NaN_Q()
+                  else if (f_is_neg_zero_Q(rs1_val_Q) & f_is_pos_zero_Q(rs2_val_Q)) then rs1_val_Q
+                  else if (f_is_neg_zero_Q(rs2_val_Q) & f_is_pos_zero_Q(rs1_val_Q)) then rs2_val_Q
+                  else if rs1_lt_rs2                                                then rs1_val_Q
+                  else                                                              rs2_val_Q;
+
+  accrue_fflags(fflags);
+  F_Q(rd) = rd_val_Q;
+  RETIRE_SUCCESS
+}
+
+/* FMAXM.Q */
+
+union clause ast = RISCV_FMAXM_Q : (fregidx, fregidx, fregidx)
+
+mapping clause encdec = RISCV_FMAXM_Q(rs2, rs1, rd)
+  <-> 0b001_0111 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b011 @ encdec_freg(rd) @ 0b101_0011
+  when currentlyEnabled(Ext_Q) & currentlyEnabled(Ext_Zfa)
+
+mapping clause assembly = RISCV_FMAXM_Q(rs2, rs1, rd)
+  <-> "fmaxm.q" ^ spc() ^ freg_name(rd)
+                ^ sep() ^ freg_name(rs1)
+                ^ sep() ^ freg_name(rs2)
+
+function clause execute (RISCV_FMAXM_Q(rs2, rs1, rd)) = {
+  let rs1_val_Q = F_Q(rs1);
+  let rs2_val_Q = F_Q(rs2);
+
+  let is_quiet  = true;
+  let (rs2_lt_rs1, fflags) = fle_Q (rs2_val_Q, rs1_val_Q, is_quiet);
+
+  let rd_val_Q  = if      (f_is_NaN_Q(rs1_val_Q) | f_is_NaN_Q(rs2_val_Q))           then canonical_NaN_Q()
+                  else if (f_is_neg_zero_Q(rs1_val_Q) & f_is_pos_zero_Q(rs2_val_Q)) then rs2_val_Q
+                  else if (f_is_neg_zero_Q(rs2_val_Q) & f_is_pos_zero_Q(rs1_val_Q)) then rs1_val_Q
+                  else if rs2_lt_rs1                                                then rs1_val_Q
+                  else                                                              rs2_val_Q;
+
+  accrue_fflags(fflags);
+  F_Q(rd) = rd_val_Q;
+  RETIRE_SUCCESS
+}
+
 /* FROUND.H */
 
 union clause ast = FROUND_H : (fregidx, rounding_mode, fregidx)
@@ -518,6 +630,64 @@ function clause execute (FROUNDNX_D(rs1, rm, rd)) = {
   }
 }
 
+/* FROUND.Q */
+
+union clause ast = RISCV_FROUND_Q : (fregidx, rounding_mode, fregidx)
+
+mapping clause encdec = RISCV_FROUND_Q(rs1, rm, rd)
+  <-> 0b010_0011 @ 0b00100 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b101_0011
+  when currentlyEnabled(Ext_Q) & currentlyEnabled(Ext_Zfa)
+
+mapping clause assembly = RISCV_FROUND_Q(rs1, rm, rd)
+  <-> "fround.q" ^ spc() ^ freg_name(rd)
+                 ^ sep() ^ freg_name(rs1)
+                 ^ sep() ^ frm_mnemonic(rm)
+
+function clause execute (RISCV_FROUND_Q(rs1, rm, rd)) = {
+  let rs1_val_Q = F_Q(rs1);
+
+  match (select_instr_or_fcsr_rm(rm)) {
+    None()    => RETIRE_FAIL(Illegal_Instruction()),
+    Some(rm') => {
+      let rm_3b =  encdec_rounding_mode(rm');
+      let (fflags, rd_val_Q) = riscv_f128roundToInt(rm_3b, rs1_val_Q, false);
+
+      accrue_fflags(fflags);
+      F_Q(rd) = rd_val_Q;
+      RETIRE_SUCCESS
+    }
+  }
+}
+
+/* FROUNDNX.Q */
+
+union clause ast = RISCV_FROUNDNX_Q : (fregidx, rounding_mode, fregidx)
+
+mapping clause encdec = RISCV_FROUNDNX_Q(rs1, rm, rd)
+  <-> 0b010_0011 @ 0b00101 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b101_0011
+  when currentlyEnabled(Ext_Q) & currentlyEnabled(Ext_Zfa)
+
+mapping clause assembly = RISCV_FROUNDNX_Q(rs1, rm, rd)
+  <-> "froundnx.q" ^ spc() ^ freg_name(rd)
+                   ^ sep() ^ freg_name(rs1)
+                   ^ sep() ^ frm_mnemonic(rm)
+
+function clause execute (RISCV_FROUNDNX_Q(rs1, rm, rd)) = {
+  let rs1_val_Q = F_Q(rs1);
+
+  match (select_instr_or_fcsr_rm(rm)) {
+    None()    => RETIRE_FAIL(Illegal_Instruction()),
+    Some(rm') => {
+      let rm_3b =  encdec_rounding_mode(rm');
+      let (fflags, rd_val_Q) = riscv_f128roundToInt(rm_3b, rs1_val_Q, true);
+
+      accrue_fflags(fflags);
+      F_Q(rd) = rd_val_Q;
+      RETIRE_SUCCESS
+    }
+  }
+}
+
 /* FMVH.X.D */
 
 union clause ast = FMVH_X_D : (fregidx, regidx)
@@ -562,6 +732,55 @@ function clause execute (FMVP_D_X(rs2, rs1, rd)) = {
   let rd_val_D      = rs2_val_X @ rs1_val_X;
 
   F_D(rd)           = rd_val_D;
+  RETIRE_SUCCESS
+}
+
+/* FMVH.X.Q */
+
+union clause ast = RISCV_FMVH_X_Q : (fregidx, regidx)
+
+mapping clause encdec   = RISCV_FMVH_X_Q(rs1, rd)
+  <-> 0b111_0011 @ 0b00001 @ encdec_freg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011
+  when currentlyEnabled(Ext_Q) & currentlyEnabled(Ext_Zfa) & in64BitMode()
+
+mapping clause assembly = RISCV_FMVH_X_Q(rs1, rd)
+  <-> "fmvh.x.q" ^ spc() ^ reg_name(rd)
+                 ^ sep() ^ freg_name(rs1)
+
+function clause execute (RISCV_FMVH_X_Q(rs1, rd)) = {
+  assert(xlen == 64);
+  let rs1_val_Q           = F_Q(rs1)[127..64];
+  let rd_val_X : xlenbits = sign_extend(rs1_val_Q);
+  X(rd)                   = rd_val_X;
+  RETIRE_SUCCESS
+}
+
+/* FMVP.X.Q */
+
+union clause ast = RISCV_FMVP_Q_X : (regidx, regidx, fregidx)
+
+mapping clause encdec = RISCV_FMVP_Q_X(rs2, rs1, rd)
+  <-> 0b101_1011 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011
+  when currentlyEnabled(Ext_Q) & currentlyEnabled(Ext_Zfa) & in64BitMode()
+
+mapping clause assembly = RISCV_FMVP_Q_X(rs2, rs1, rd)
+  <-> "fmvp.q.x" ^ spc() ^ freg_name(rd)
+                 ^ sep() ^ reg_name(rs1)
+                 ^ sep() ^ reg_name(rs2)
+
+function clause execute (RISCV_FMVP_Q_X(rs2, rs1, rd)) = {
+  assert(xlen ==64);
+  let rs1_val_X     = X(rs1)[63..0];
+  let rs2_val_X     = X(rs2)[63..0];
+
+  /* Concatenate the two values using '@' operator */
+  /* e.g. */
+  /*   rs1 = 0x01234567 */
+  /*   rs2 = 0x89abcdef */
+  /*   rd  = rs1 @ rs2 => 0x89abcdef01234567 */
+  let rd_val_Q      = rs2_val_X @ rs1_val_X;
+
+  F_Q(rd)           = rd_val_Q;
   RETIRE_SUCCESS
 }
 
@@ -710,6 +929,56 @@ function clause execute(FLTQ_D(rs2, rs1, rd)) = {
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Lt_quiet   (rs1_val_D, rs2_val_D);
+
+  accrue_fflags(fflags);
+  X(rd) = zero_extend(bool_to_bits(rd_val));
+  RETIRE_SUCCESS
+}
+
+/* FLEQ.Q */
+
+union clause ast = RISCV_FLEQ_Q : (fregidx, fregidx, regidx)
+
+mapping clause encdec = RISCV_FLEQ_Q(rs2, rs1, rd)
+  <-> 0b101_0011 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b101_0011
+  when currentlyEnabled(Ext_Q) & currentlyEnabled(Ext_Zfa)
+
+mapping clause assembly = RISCV_FLEQ_Q(rs2, rs1, rd)
+  <-> "fleq.q" ^ spc() ^ reg_name(rd)
+               ^ sep() ^ freg_name(rs1)
+               ^ sep() ^ freg_name(rs2)
+
+function clause execute(RISCV_FLEQ_Q(rs2, rs1, rd)) = {
+  let rs1_val_Q = F_Q(rs1);
+  let rs2_val_Q = F_Q(rs2);
+
+  let (fflags, rd_val) : (bits_fflags, bool) =
+      riscv_f128Le_quiet   (rs1_val_Q, rs2_val_Q);
+
+  accrue_fflags(fflags);
+  X(rd) = zero_extend(bool_to_bits(rd_val));
+  RETIRE_SUCCESS
+}
+
+/* FLTQ.Q */
+
+union clause ast = RISCV_FLTQ_Q : (fregidx, fregidx, regidx)
+
+mapping clause encdec = RISCV_FLTQ_Q(rs2, rs1, rd)
+  <-> 0b101_0011 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b101_0011
+  when currentlyEnabled(Ext_Q) & currentlyEnabled(Ext_Zfa)
+
+mapping clause assembly = RISCV_FLTQ_Q(rs2, rs1, rd)
+  <-> "fltq.q" ^ spc() ^ reg_name(rd)
+               ^ sep() ^ freg_name(rs1)
+               ^ sep() ^ freg_name(rs2)
+
+function clause execute(RISCV_FLTQ_Q(rs2, rs1, rd)) = {
+  let rs1_val_Q = F_Q(rs1);
+  let rs2_val_Q = F_Q(rs2);
+
+  let (fflags, rd_val) : (bits_fflags, bool) =
+      riscv_f128Lt_quiet   (rs1_val_Q, rs2_val_Q);
 
   accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));

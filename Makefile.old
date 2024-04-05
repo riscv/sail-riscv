@@ -6,6 +6,7 @@
 
 # Select architecture: RV32 or RV64.
 ARCH ?= RV64
+FLEN ?= 64
 
 ifeq ($(ARCH),32)
   override ARCH := RV32
@@ -21,8 +22,17 @@ else
   $(error '$(ARCH)' is not a valid architecture, must be one of: RV32, RV64)
 endif
 
+ifeq ($(FLEN),32)
+	SAIL_FLEN := riscv_flen_F.sail
+else ifeq ($(FLEN),64)
+  SAIL_FLEN := riscv_flen_D.sail
+else ifeq ($(FLEN),128)
+  SAIL_FLEN := riscv_flen_Q.sail
+else
+  $(error '$(FLEN)' is not a valid value for FLEN, must be one of: 32, 64, 128)
+endif
+
 SAIL_XLEN += riscv_xlen.sail
-SAIL_FLEN := riscv_flen_D.sail
 SAIL_FLEN += riscv_flen.sail
 SAIL_VLEN := riscv_vlen.sail
 
@@ -31,6 +41,7 @@ SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_mis
 SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_zifencei.sail riscv_insts_aext.sail riscv_insts_zca.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_hints.sail
 SAIL_DEFAULT_INST += riscv_insts_fext.sail riscv_insts_zcf.sail
 SAIL_DEFAULT_INST += riscv_insts_dext.sail riscv_insts_zcd.sail
+SAIL_DEFAULT_INST += riscv_insts_qext.sail
 
 SAIL_DEFAULT_INST += riscv_insts_svinval.sail
 

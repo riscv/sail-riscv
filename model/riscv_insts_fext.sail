@@ -16,9 +16,9 @@
 
 /* **************************************************************** */
 /* IMPORTANT!                                                       */
-/* The files 'riscv_insts_fext.sail', 'riscv_insts_dext.sail' and   */
-/* 'riscv_insts_zfh.sail' define the F, D and Zfh extensions,       */
-/* respectively.                                                    */
+/* The files 'riscv_insts_fext.sail', 'riscv_insts_dext.sail',      */
+/* 'riscv_insts_qext.sail' and 'riscv_insts_zfh.sail' define the    */
+/* F, D, Q and Zfh extensions, respectively.                        */
 /* The texts follow each other very closely; please try to maintain */
 /* this correspondence as the files are maintained for bug-fixes,   */
 /* improvements, and version updates.                               */
@@ -268,7 +268,7 @@ function haveSingleFPU() -> bool = currentlyEnabled(Ext_F) | currentlyEnabled(Ex
 /* Floating-point loads                                               */
 
 /* AST */
-/* FLH, FLW and FLD; H/W/D is encoded in 'word_width' */
+/* FLH, FLW, FLD and FLQ; H/W/D/Q is encoded in 'word_width' */
 
 union clause ast = LOAD_FP : (bits(12), regidx, fregidx, word_width)
 
@@ -285,6 +285,10 @@ mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)
 mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)
   <-> imm @ encdec_reg(rs1) @ 0b011 @ encdec_freg(rd) @ 0b000_0111
   when currentlyEnabled(Ext_D)
+
+mapping clause encdec = LOAD_FP(imm, rs1, rd, QUAD)
+  <-> imm @ encdec_reg(rs1) @ 0b100 @ encdec_freg(rd) @ 0b000_0111
+  when currentlyEnabled(Ext_Q)
 
 /* Execution semantics ================================ */
 
@@ -328,7 +332,7 @@ mapping clause assembly = LOAD_FP(imm, rs1, rd, width)
 /* Floating-point stores                                              */
 
 /* AST */
-/* FSH, FSW and FSD; H/W/D is encoded in 'word_width' */
+/* FSH, FSW, FSD and FSQ; H/W/D/Q is encoded in 'word_width' */
 
 union clause ast = STORE_FP : (bits(12), fregidx, regidx, word_width)
 
@@ -345,6 +349,10 @@ mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)
 mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)
   <-> imm7 : bits(7) @ encdec_freg(rs2) @ encdec_reg(rs1) @ 0b011 @ imm5 : bits(5) @ 0b010_0111
   when currentlyEnabled(Ext_D)
+
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, QUAD)
+  <-> imm7 : bits(7) @ encdec_freg(rs2) @ encdec_reg(rs1) @ 0b100 @ imm5 : bits(5) @ 0b010_0111
+  when currentlyEnabled(Ext_Q)
 
 /* Execution semantics ================================ */
 

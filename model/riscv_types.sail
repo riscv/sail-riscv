@@ -120,7 +120,7 @@ union AccessType ('a : Type) = {
   InstructionFetch : unit
 }
 
-enum word_width = {BYTE, HALF, WORD, DOUBLE}
+enum word_width = {BYTE, HALF, WORD, DOUBLE, QUAD}
 
 /* architectural interrupt definitions */
 
@@ -338,26 +338,37 @@ enum extop_zbb = {SEXTB, SEXTH, ZEXTH}
 
 enum zicondop = {CZERO_EQZ, CZERO_NEZ}
 
-// Get the bit encoding of word_width.
+// Get the short bit encoding of word_width for use with signed expressions.
 mapping size_enc : word_width <-> bits(2) = {
   BYTE   <-> 0b00,
   HALF   <-> 0b01,
   WORD   <-> 0b10,
-  DOUBLE <-> 0b11
+  DOUBLE <-> 0b11,
+}
+
+// Get the full bit encoding of word_width.
+mapping size_enc_wide : word_width <-> bits(3) = {
+  BYTE   <-> 0b0 @ size_enc(BYTE),
+  HALF   <-> 0b0 @ size_enc(HALF),
+  WORD   <-> 0b0 @ size_enc(WORD),
+  DOUBLE <-> 0b0 @ size_enc(DOUBLE),
+  QUAD   <-> 0b100,
 }
 
 mapping size_mnemonic : word_width <-> string = {
   BYTE   <-> "b",
   HALF   <-> "h",
   WORD   <-> "w",
-  DOUBLE <-> "d"
+  DOUBLE <-> "d",
+  QUAD   <-> "q",
 }
 
-mapping size_bytes : word_width <-> {1, 2, 4, 8} = {
+mapping size_bytes : word_width <-> {1, 2, 4, 8, 16} = {
   BYTE   <-> 1,
   HALF   <-> 2,
   WORD   <-> 4,
   DOUBLE <-> 8,
+  QUAD   <-> 16,
 }
 
 struct mul_op = {

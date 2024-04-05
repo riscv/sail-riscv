@@ -86,6 +86,9 @@ let softfloat_f32_round_to_int _ _ _ = ()
 val softfloat_f64_round_to_int : bitvector -> bitvector -> bool -> unit
 let softfloat_f64_round_to_int _ _ _ = ()
 
+val softfloat_f128_round_to_int : bitvector -> bitvector -> bitvector -> bool -> unit
+let softfloat_f128_round_to_int _ _ _ = ()
+
 val softfloat_f16_add : bitvector -> bitvector -> bitvector -> unit
 let softfloat_f16_add _ _ _ = ()
 
@@ -122,6 +125,18 @@ let softfloat_f64_mul _ _ _ = ()
 val softfloat_f64_div : bitvector -> bitvector -> bitvector -> unit
 let softfloat_f64_div _ _ _ = ()
 
+val softfloat_f128_add : bitvector -> bitvector -> bitvector ->  bitvector -> bitvector ->  unit
+let softfloat_f128_add _ _ _ = ()
+
+val softfloat_f128_sub : bitvector -> bitvector -> bitvector -> bitvector -> bitvector ->  unit
+let softfloat_f128_sub _ _ _ = ()
+
+val softfloat_f128_mul : bitvector -> bitvector -> bitvector -> bitvector -> bitvector ->  unit
+let softfloat_f128_mul _ _ _ = ()
+
+val softfloat_f128_div : bitvector -> bitvector -> bitvector -> bitvector -> bitvector ->  unit
+let softfloat_f128_div _ _ _ = ()
+
 
 val softfloat_f16_muladd : bitvector -> bitvector -> bitvector -> bitvector -> unit
 let softfloat_f16_muladd _ _ _ _ = ()
@@ -132,6 +147,9 @@ let softfloat_f32_muladd _ _ _ _ = ()
 val softfloat_f64_muladd : bitvector -> bitvector -> bitvector -> bitvector -> unit
 let softfloat_f64_muladd _ _ _ _ = ()
 
+val softfloat_f128_muladd : bitvector -> bitvector -> bitvector -> bitvector -> bitvector -> bitvector -> bitvector -> unit
+let softfloat_f128_muladd _ _ _ _ = ()
+
 
 val softfloat_f16_sqrt : bitvector -> bitvector -> unit
 let softfloat_f16_sqrt _ _ = ()
@@ -141,6 +159,9 @@ let softfloat_f32_sqrt _ _ = ()
 
 val softfloat_f64_sqrt : bitvector -> bitvector -> unit
 let softfloat_f64_sqrt _ _ = ()
+
+val softfloat_f128_sqrt : bitvector -> bitvector -> bitvector -> unit
+let softfloat_f128_sqrt _ _ = ()
 
 
 val softfloat_f16_to_i32: bitvector -> bitvector -> unit
@@ -217,6 +238,30 @@ let softfloat_i64_to_f64 _ _ = ()
 val softfloat_ui64_to_f64: bitvector -> bitvector -> unit
 let softfloat_ui64_to_f64 _ _ = ()
 
+val softfloat_f128_to_i32: bitvector -> bitvector -> bitvector -> unit
+let softfloat_f128_to_i32 _ _ = ()
+
+val softfloat_f128_to_ui32: bitvector -> bitvector -> bitvector -> unit
+let softfloat_f128_to_ui32 _ _ = ()
+
+val softfloat_i32_to_f128: bitvector -> bitvector -> unit
+let softfloat_i32_to_f128 _ _ = ()
+
+val softfloat_ui32_to_f128: bitvector -> bitvector -> unit
+let softfloat_ui32_to_f128 _ _ = ()
+
+val softfloat_f128_to_i64: bitvector -> bitvector -> bitvector -> unit
+let softfloat_f128_to_i64 _ _ = ()
+
+val softfloat_f128_to_ui64: bitvector -> bitvector -> bitvector -> unit
+let softfloat_f128_to_ui64 _ _ = ()
+
+val softfloat_i64_to_f128: bitvector -> bitvector -> unit
+let softfloat_i64_to_f128 _ _ = ()
+
+val softfloat_ui64_to_f128: bitvector -> bitvector -> unit
+let softfloat_ui64_to_f128 _ _ = ()
+
 
 val softfloat_f16_to_f32: bitvector -> bitvector -> unit
 let softfloat_f16_to_f32 _ _ = ()
@@ -224,17 +269,35 @@ let softfloat_f16_to_f32 _ _ = ()
 val softfloat_f16_to_f64: bitvector -> bitvector -> unit
 let softfloat_f16_to_f64 _ _ = ()
 
-val softfloat_f32_to_f64: bitvector -> bitvector -> unit
-let softfloat_f32_to_f64 _ _ = ()
+val softfloat_f16_to_f128: bitvector -> bitvector -> unit
+let softfloat_f16_to_f128 _ _ = ()
 
 val softfloat_f32_to_f16: bitvector -> bitvector -> unit
 let softfloat_f32_to_f16 _ _ = ()
+
+val softfloat_f32_to_f64: bitvector -> bitvector -> unit
+let softfloat_f32_to_f64 _ _ = ()
+
+val softfloat_f32_to_f128: bitvector -> bitvector -> unit
+let softfloat_f32_to_f128 _ _ = ()
 
 val softfloat_f64_to_f16: bitvector -> bitvector -> unit
 let softfloat_f64_to_f16 _ _ = ()
 
 val softfloat_f64_to_f32: bitvector -> bitvector -> unit
 let softfloat_f64_to_f32 _ _ = ()
+
+val softfloat_f64_to_f128: bitvector -> bitvector -> unit
+let softfloat_f64_to_f128 _ _ = ()
+
+val softfloat_f128_to_f16: bitvector -> bitvector -> bitvector -> unit
+let softfloat_f128_to_f16 _ _ = ()
+
+val softfloat_f128_to_f32: bitvector -> bitvector -> bitvector -> unit
+let softfloat_f128_to_f32 _ _ = ()
+
+val softfloat_f128_to_f64: bitvector -> bitvector -> bitvector -> unit
+let softfloat_f128_to_f64 _ _ = ()
 
 
 val softfloat_f16_lt : bitvector -> bitvector -> unit
@@ -281,3 +344,18 @@ let softfloat_f64_le_quiet _ _ = ()
 
 val softfloat_f64_eq : bitvector -> bitvector -> unit
 let softfloat_f64_eq _ _ = ()
+
+val softfloat_f128_lt : bitvector -> bitvector -> bitvector -> unit
+let softfloat_f128_lt _ _ = ()
+
+val softfloat_f128_lt_quiet : bitvector -> bitvector -> bitvector -> unit
+let softfloat_f128_lt_quiet _ _ = ()
+
+val softfloat_f128_le : bitvector -> bitvector -> bitvector -> unit
+let softfloat_f128_le _ _ = ()
+
+val softfloat_f128_le_quiet : bitvector -> bitvector -> bitvector -> unit
+let softfloat_f128_le_quiet _ _ = ()
+
+val softfloat_f128_eq : bitvector -> bitvector -> bitvector -> unit
+let softfloat_f128_eq _ _ = ()

@@ -289,6 +289,7 @@ function is_aligned(vaddr : xlenbits, width : word_width) -> bool =
     HALF   => vaddr[0..0] == zeros(),
     WORD   => vaddr[1..0] == zeros(),
     DOUBLE => vaddr[2..0] == zeros(),
+    QUAD   => vaddr[3..0] == zeros(),
   }
 
 // Return true if the address is misaligned and we don't support misaligned access.
@@ -346,7 +347,7 @@ mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, size, aq, rl)
 union clause ast = STORE : (bits(12), regidx, regidx, word_width, bool, bool)
 
 mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)
-  <-> imm7 : bits(7) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ imm5 : bits(5) @ 0b0100011
+  <-> imm7 : bits(7) @ encdec_reg(rs2) @ encdec_reg(rs1) @ size_enc_wide(size) @ imm5 : bits(5) @ 0b0100011
   when size_bytes(size) <= xlen_bytes
 
 /* NOTE: Currently, we only EA if address translation is successful.

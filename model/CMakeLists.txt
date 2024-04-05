@@ -7,13 +7,15 @@ function(string_upper_initial s result)
 endfunction()
 
 foreach (xlen IN ITEMS 32 64)
-    foreach (flen IN ITEMS 32 64)
+    foreach (flen IN ITEMS 32 64 128)
         foreach (variant IN ITEMS "" "rvfi" "rocq" "rmem" "lean" "lem" "isabelle")
             set(arch "rv${xlen}")
             if (flen EQUAL 32)
                 string(APPEND arch "f")
-            else()
+            elseif(flen EQUAL 64)
                 string(APPEND arch "d")
+            else()
+                string(APPEND arch "q")
             endif()
             if (variant STREQUAL "rvfi")
                 string(APPEND arch "_${variant}")
@@ -26,7 +28,9 @@ foreach (xlen IN ITEMS 32 64)
 
             # TODO: Unfortunately 32 or 64 bit float support is a compile time.
             # See https://github.com/riscv/sail-riscv/issues/348
-            if (flen EQUAL 64)
+            if (flen EQUAL 128)
+                set(sail_flen "riscv_flen_Q.sail")
+            elseif (flen EQUAL 64)
                 set(sail_flen "riscv_flen_D.sail")
             else()
                 set(sail_flen "riscv_flen_F.sail")
@@ -68,6 +72,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_zcf.sail"
                 "riscv_insts_dext.sail"
                 "riscv_insts_zcd.sail"
+                "riscv_insts_qext.sail"
                 "riscv_insts_svinval.sail"
                 "riscv_insts_zba.sail"
                 "riscv_insts_zbb.sail"
@@ -75,7 +80,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_zbs.sail"
                 "riscv_insts_zcb.sail"
                 "riscv_insts_zfh.sail"
-                # Zfa needs to be added after fext, dext and Zfh (as it needs
+                # Zfa needs to be added after fext, dext, qext and Zfh (as it needs
                 # definitions from those)
                 "riscv_insts_zfa.sail"
                 "riscv_insts_zkn.sail"
