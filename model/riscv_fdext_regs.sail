@@ -6,22 +6,26 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* **************************************************************** */
-/* Floating point register file and accessors for F, D extensions   */
-/* Floating point CSR and accessors                                 */
-/* **************************************************************** */
+/* ***************************************************************** */
+/* Floating point register file and accessors for F, D, Q extensions */
+/* Floating point CSR and accessors                                  */
+/* ***************************************************************** */
 
 /* Original version written by Rishiyur S. Nikhil, Sept-Oct 2019    */
 
 /* **************************************************************** */
 /* NaN boxing/unboxing.                                             */
-/* When 16-bit floats (half-precision) are stored in 32/64-bit regs  */
-/* they must be 'NaN boxed'.                                         */
-/* When 16-bit floats (half-precision) are read from 32/64-bit regs  */
-/* they must be 'NaN unboxed'.                                       */
-/* When 32-bit floats (single-precision) are stored in 64-bit regs  */
+/* When 16-bit floats (half-precision) are stored in 32/64/128-bit  */
+/* regs they must be 'NaN boxed'.                                   */
+/* When 16-bit floats (half-precision) are read from 32/64/128-bit  */
+/* regs they must be 'NaN unboxed'.                                 */
+/* When 32-bit floats (single-precision) are stored in 64/128-bit   */
+/* regs they must be 'NaN boxed'.                                   */
+/* When 32-bit floats (single-precision) are read from 64/128-bit   */
+/* regs they must be 'NaN unboxed'.                                 */
+/* When 64-bit floats (double-precision) are stored in 128-bit regs */
 /* they must be 'NaN boxed' (upper 32b all ones).                   */
-/* When 32-bit floats (single-precision) are read from 64-bit regs  */
+/* When 64-bit floats (double-precision) are read from 128-bit regs */
 /* they must be 'NaN unboxed'.                                      */
 
 function canonical_NaN_H() -> bits(16) = 0x_7e00
@@ -39,7 +43,6 @@ function nan_box_H   val_16b =
 
 val      nan_unbox_H : flenbits -> bits(16)
 function nan_unbox_H   regval = {
-  assert(sizeof(flen) == 128);
   match sizeof(flen) {
     32  if regval [31..16] == 0x_FFFF
         => regval[15..0],
@@ -63,7 +66,6 @@ function nan_box_S val_32b = {
 
 val nan_unbox_S : flenbits -> bits(32)
 function nan_unbox_S regval = {
-  assert(sizeof(flen) == 128);
   assert(sys_enable_fdext());
   match sizeof(flen) {
     32  => regval,
@@ -86,8 +88,8 @@ function nan_box_D val_64b = {
 
 val nan_unbox_D : flenbits -> bits(64)
 function nan_unbox_D regval = {
-  assert(sizeof(flen) == 128);
   assert(sys_enable_fdext());
+  assert(sizeof(flen) >= 64);
   match sizeof(flen) {
     64  => regval,
     128 if regval [127..64] == 0x_FFFF_FFFF_FFFF_FFFF
@@ -286,9 +288,24 @@ function wF_D(i, data) = {
   F(i) = nan_box(data)
 }
 
+val rF_Q : bits(5) -> bits(128)
+function rF_Q(i) = {
+  assert(sizeof(flen) >= 128);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  F(i)
+}
+
+val wF_Q : (bits(5), bits(128)) -> unit
+function wF_Q(i, data) = {
+  assert(sizeof(flen) >= 128);
+  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  F(i) = data
+}
+
 overload F_H = { rF_H, wF_H }
 overload F_S = { rF_S, wF_S }
 overload F_D = { rF_D, wF_D }
+overload F_Q = { rF_Q, wF_Q }
 
 val rF_or_X_H : bits(5) -> bits(16)
 function rF_or_X_H(i) = {

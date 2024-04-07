@@ -133,7 +133,7 @@ function haveMulDiv()  -> bool = misa[M] == 0b1
 function haveSupMode() -> bool = misa[S] == 0b1
 function haveUsrMode() -> bool = misa[U] == 0b1
 function haveNExt()    -> bool = misa[N] == 0b1
-/* see below for F and D (and Z*inx counterparts) extension tests */
+/* see below for F, D and Q (and Z*inx counterparts) extension tests */
 
 /* BitManip extension support. */
 function haveZba()  -> bool = true

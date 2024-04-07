@@ -30,6 +30,7 @@ static float128_t to_float128(sail_bits v1)
   mpz_t *from = v1.bits;
 
   // I don't know if you mind a small memory leak or not
+  // malloc not being released
   if (!isInitialized) {
     mpz_init(tmp);
     isInitialized = true;
@@ -67,13 +68,13 @@ static void softfloat_postlude_128(float128_t res)
   }
 
   // set upper 64 bits
-  recreate_lbits_of_fbits(&zfloat_result, res.v[0], 128ull, true);
+  recreate_lbits_of_fbits(&zfloat_result, res.v[1], 128ull, true);
   shiftl(&zfloat_result, zfloat_result, _64);
 
   // set lower 64 bits
-  mpz_set_ui(lo, (uint32_t)(res.v[1] >> 32));
+  mpz_set_ui(lo, (uint32_t)(res.v[0] >> 32));
   mpz_mul_2exp(lo, lo, 32);
-  mpz_add_ui(lo, lo, (uint32_t)res.v[1]);
+  mpz_add_ui(lo, lo, (uint32_t)res.v[0]);
   add_bits_int(&zfloat_result, zfloat_result, lo);
 
   zfloat_fflags = (mach_bits)softfloat_exceptionFlags;

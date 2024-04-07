@@ -6,14 +6,14 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* **************************************************************** */
-/* Floating point register file and accessors for F, D extensions   */
-/* Floating point CSR and accessors                                 */
-/* **************************************************************** */
+/* ***************************************************************** */
+/* Floating point register file and accessors for F, D, Q extensions */
+/* Floating point CSR and accessors                                  */
+/* ***************************************************************** */
 
-/* Original version written by Rishiyur S. Nikhil, Sept-Oct 2019    */
+/* Original version written by Rishiyur S. Nikhil, Sept-Oct 2019     */
 
-/* **************************************************************** */
+/* ***************************************************************** */
 
 /* val clause ext_is_CSR_defined : (csreg, Privilege) -> bool */
 

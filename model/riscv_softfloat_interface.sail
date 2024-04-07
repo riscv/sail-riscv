@@ -8,7 +8,7 @@
 
 /* **************************************************************** */
 /* This file lists all the external Berkeley softfloat functions    */
-/* invoked from the SAIL spec for RISC-V F and D extensions         */
+/* invoked from the SAIL spec for RISC-V F, D and Q extensions      */
 /* (in:    riscv_insts_fdext.sail)                                  */
 /*                                                                  */
 /* Each of these functions corresponds to one in 'SoftFloat.hs'     */

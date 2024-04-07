@@ -7,8 +7,8 @@
 /*=======================================================================================*/
 
 /* **************************************************************** */
-/* This file specifies the instructions in the F extension          */
-/* (single precision floating point).                               */
+/* This file specifies the instructions in the Q extension          */
+/* (quad precision floating point).                                 */
 
 /* RISC-V follows IEEE 754-2008 floating point arithmetic standard. */
 
@@ -16,14 +16,18 @@
 
 /* **************************************************************** */
 /* IMPORTANT!                                                       */
-/* The files 'riscv_insts_fext.sail', 'riscv_insts_dext.sail' and   */
-/* 'riscv_insts_zfh.sail' define the F, D and Zfh extensions,       */
-/* respectively.                                                    */
+/* The files 'riscv_insts_fext.sail', 'riscv_insts_dext.sail',      */
+/* 'riscv_insts_qext.sail' and 'riscv_insts_zfh.sail' define the    */
+/* F, D, Q and Zfh extensions, respectively.                        */
 /* The texts follow each other very closely; please try to maintain */
 /* this correspondence as the files are maintained for bug-fixes,   */
 /* improvements, and version updates.                               */
 
 /* **************************************************************** */
+/* Note: Rounding Modes and Floating point accrued exception flags  */
+/* are defined in riscv_insts_fext.sail.                            */
+/* In RISC-V, the Q extension requires the F extension, so that     */
+/* should have been processed before this one.                      */
 
 /* **************************************************************** */
 /* S and D value structure (sign, exponent, mantissa)               */
@@ -217,35 +221,45 @@ function fle_Q   (v1,       v2,        is_quiet) = {
   (result, fflags)
 }
 
+/* ****************************************************************** */
+/* Floating-point loads                                               */
+/* These are defined in: riscv_insts_fext.sail                        */
 
+/* ****************************************************************** */
+/* Floating-point stores                                              */
+/* These are defined in: riscv_insts_fext.sail                        */
 
-/* not sure about the bits repr, thus extract here TODO : check the repr */
-let Q_word_width_repr = 0b100
+/* ****************************************************************** */
+/* Fused multiply-add */
 
-/* AST <-> Binary encoding ================================ */
+/* AST */
+
 union clause ast = F_MADD_TYPE_Q : (regidx, regidx, regidx, rounding_mode, regidx, f_madd_op_Q)
 
-mapping clause encdec =
-    F_MADD_TYPE_Q(rs3, rs2, rs1, rm, rd, FMADD_Q)                        if haveQExt()
-<-> rs3 @ 0b11 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0011 if haveQExt()
+/* AST <-> Binary encoding ================================ */
 
 mapping clause encdec =
-    F_MADD_TYPE_Q(rs3, rs2, rs1, rm, rd, FMSUB_Q)                        if haveQExt()
-<-> rs3 @ 0b11 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0111 if haveQExt()
+    F_MADD_TYPE_Q(rs3, rs2, rs1, rm, rd, FMADD_Q)                         if haveQExt()
+<-> rs3 @ 0b11 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0011  if haveQExt()
 
 mapping clause encdec =
-    F_MADD_TYPE_Q(rs3, rs2, rs1, rm, rd, FNMSUB_Q)                       if haveQExt()
-<-> rs3 @ 0b11 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1011 if haveQExt()
+    F_MADD_TYPE_Q(rs3, rs2, rs1, rm, rd, FMSUB_Q)                         if haveQExt()
+<-> rs3 @ 0b11 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0111  if haveQExt()
 
 mapping clause encdec =
-    F_MADD_TYPE_Q(rs3, rs2, rs1, rm, rd, FNMADD_Q)                       if haveQExt()
-<-> rs3 @ 0b11 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1111 if haveQExt()
+    F_MADD_TYPE_Q(rs3, rs2, rs1, rm, rd, FNMSUB_Q)                        if haveQExt()
+<-> rs3 @ 0b11 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1011  if haveQExt()
 
+mapping clause encdec =
+    F_MADD_TYPE_Q(rs3, rs2, rs1, rm, rd, FNMADD_Q)                        if haveQExt()
+<-> rs3 @ 0b11 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1111  if haveQExt()
+
+/* Execution semantics ================================ */
 
 function clause execute (F_MADD_TYPE_Q(rs3, rs2, rs1, rm, rd, op)) = {
-  let rs1_val_128b = F(rs1);
-  let rs2_val_128b = F(rs2);
-  let rs3_val_128b = F(rs3);
+  let rs1_val_128b = F_Q(rs1);
+  let rs2_val_128b = F_Q(rs2);
+  let rs3_val_128b = F_Q(rs3);
 
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -259,11 +273,13 @@ function clause execute (F_MADD_TYPE_Q(rs3, rs2, rs1, rm, rd, op)) = {
           FNMADD_Q => riscv_f128MulAdd (rm_3b, negate_Q (rs1_val_128b), rs2_val_128b, negate_Q (rs3_val_128b))
         };
       accrue_fflags(fflags);
-      F(rd) = rd_val_128b;
+      F_Q(rd) = rd_val_128b;
       RETIRE_SUCCESS
     }
   }
 }
+
+/* AST -> Assembly notation ================================ */
 
 mapping f_madd_type_mnemonic_Q : f_madd_op_Q <-> string = {
     FMADD_Q  <-> "fmadd.q",
@@ -280,7 +296,10 @@ mapping clause assembly = F_MADD_TYPE_Q(rs3, rs2, rs1, rm, rd, op)
                           ^ sep() ^ freg_or_reg_name(rs3)
                           ^ sep() ^ frm_mnemonic(rm)
 
+/* ****************************************************************** */
+/* Binary ops with rounding mode */
 
+/* AST */
 
 union clause ast = F_BIN_RM_TYPE_Q : (regidx, regidx, rounding_mode, regidx, f_bin_rm_op_Q)
 
@@ -305,8 +324,8 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_RM_TYPE_Q(rs2, rs1, rm, rd, op)) = {
-  let rs1_val_128b = F(rs1);
-  let rs2_val_128b = F(rs2);
+  let rs1_val_128b = F_Q(rs1);
+  let rs2_val_128b = F_Q(rs2);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -318,7 +337,7 @@ function clause execute (F_BIN_RM_TYPE_Q(rs2, rs1, rm, rd, op)) = {
         FDIV_Q  => riscv_f128Div (rm_3b, rs1_val_128b, rs2_val_128b)
       };
       accrue_fflags(fflags);
-      F(rd) = rd_val_128b;
+      F_Q(rd) = rd_val_128b;
       RETIRE_SUCCESS
     }
   }
@@ -339,7 +358,6 @@ mapping clause assembly = F_BIN_RM_TYPE_Q(rs2, rs1, rm, rd, op)
                           ^ sep() ^ freg_or_reg_name(rs1)
                           ^ sep() ^ freg_or_reg_name(rs2)
                           ^ sep() ^ frm_mnemonic(rm)
-
 
 /* ****************************************************************** */
 /* Unary with rounding mode */
@@ -389,25 +407,25 @@ mapping clause encdec =
 /* Q instructions, RV64 only */
 
 mapping clause encdec =
-    F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_L_Q)                                     if haveQExt()
-<-> 0b110_0011 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveQExt()
+    F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_L_Q)                                     if haveQExt() & sizeof(xlen) >= 64
+<-> 0b110_0011 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveQExt() & sizeof(xlen) >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_LU_Q)                                    if haveQExt()
-<-> 0b110_0011 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveQExt()
+    F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_LU_Q)                                    if haveQExt() & sizeof(xlen) >= 64
+<-> 0b110_0011 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveQExt() & sizeof(xlen) >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_L)                                     if haveQExt()
-<-> 0b110_1011 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveQExt()
+    F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_L)                                     if haveQExt() & sizeof(xlen) >= 64
+<-> 0b110_1011 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveQExt() & sizeof(xlen) >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_LU)                                    if haveQExt()
-<-> 0b110_1011 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveQExt()
+    F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_LU)                                    if haveQExt() & sizeof(xlen) >= 64
+<-> 0b110_1011 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveQExt() & sizeof(xlen) >= 64
 
 /* Execution semantics ================================ */
 
 function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FSQRT_Q)) = {
-  let rs1_val_Q = F(rs1);
+  let rs1_val_Q = F_Q(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -415,14 +433,14 @@ function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FSQRT_Q)) = {
       let (fflags, rd_val_Q) = riscv_f128Sqrt   (rm_3b, rs1_val_Q);
 
       accrue_fflags(fflags);
-      F(rd) = rd_val_Q;
+      F_Q(rd) = rd_val_Q;
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_W_Q)) = {
-  let rs1_val_Q = F(rs1);
+  let rs1_val_Q = F_Q(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -437,7 +455,7 @@ function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_W_Q)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_WU_Q)) = {
-  let rs1_val_Q = F(rs1);
+  let rs1_val_Q = F_Q(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -460,7 +478,7 @@ function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_W)) = {
       let (fflags, rd_val_Q) = riscv_i32ToF128 (rm_3b, rs1_val_W);
 
       accrue_fflags(fflags);
-      F(rd) = rd_val_Q;
+      F_Q(rd) = rd_val_Q;
       RETIRE_SUCCESS
     }
   }
@@ -475,14 +493,14 @@ function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_WU)) = {
       let (fflags, rd_val_Q) = riscv_ui32ToF128 (rm_3b, rs1_val_WU);
 
       accrue_fflags(fflags);
-      F(rd) = rd_val_Q;
+      F_Q(rd) = rd_val_Q;
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_S_Q)) = {
-  let rs1_val_Q = F(rs1);
+  let rs1_val_Q = F_Q(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -490,14 +508,14 @@ function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_S_Q)) = {
       let (fflags, rd_val_S) = riscv_f128ToF32 (rm_3b, rs1_val_Q);
 
       accrue_fflags(fflags);
-      F(rd) = rd_val_S;
+      F_Q(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_S)) = {
-  let rs1_val_S = F(rs1);
+  let rs1_val_S = F_Q(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -505,14 +523,14 @@ function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_S)) = {
       let (fflags, rd_val_Q) = riscv_f32ToF128 (rm_3b, rs1_val_S);
 
       accrue_fflags(fflags);
-      F(rd) = rd_val_Q;
+      F_Q(rd) = rd_val_Q;
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_D_Q)) = {
-  let rs1_val_Q = F(rs1);
+  let rs1_val_Q = F_Q(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -520,14 +538,14 @@ function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_D_Q)) = {
       let (fflags, rd_val_D) = riscv_f128ToF64 (rm_3b, rs1_val_Q);
 
       accrue_fflags(fflags);
-      F(rd) = rd_val_D;
+      F_Q(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_D)) = {
-  let rs1_val_D = F(rs1);
+  let rs1_val_D = F_Q(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -535,7 +553,7 @@ function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_D)) = {
       let (fflags, rd_val_Q) = riscv_f64ToF128 (rm_3b, rs1_val_D);
 
       accrue_fflags(fflags);
-      F(rd) = rd_val_Q;
+      F_Q(rd) = rd_val_Q;
       RETIRE_SUCCESS
     }
   }
@@ -543,7 +561,7 @@ function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_D)) = {
 
 function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_L_Q)) = {
   assert(sizeof(xlen) >= 64);
-  let rs1_val_Q = F(rs1);
+  let rs1_val_Q = F_Q(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -559,7 +577,7 @@ function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_L_Q)) = {
 
 function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_LU_Q)) = {
   assert(sizeof(xlen) >= 64);
-  let rs1_val_Q = F(rs1);
+  let rs1_val_Q = F_Q(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -583,7 +601,7 @@ function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_L)) = {
       let (fflags, rd_val_Q) = riscv_i64ToF128 (rm_3b, rs1_val_L);
 
       accrue_fflags(fflags);
-      F(rd) = rd_val_Q;
+      F_Q(rd) = rd_val_Q;
       RETIRE_SUCCESS
     }
   }
@@ -599,7 +617,7 @@ function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_LU)) = {
       let (fflags, rd_val_Q) = riscv_ui64ToF128 (rm_3b, rs1_val_LU);
 
       accrue_fflags(fflags);
-      F(rd) = rd_val_Q;
+      F_Q(rd) = rd_val_Q;
       RETIRE_SUCCESS
     }
   }
@@ -711,7 +729,7 @@ mapping clause assembly = F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_D)
 
 union clause ast = F_BIN_TYPE_Q : (regidx, regidx, regidx, f_bin_op_Q)
 
-/* AST <-> Binary encoding ================ */
+/* AST <-> Binary encoding ================================ */
 
 mapping clause encdec = F_BIN_TYPE_Q(rs2, rs1, rd, FSGNJ_Q)               if haveQExt()
                     <-> 0b001_0011 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveQExt()
@@ -722,6 +740,11 @@ mapping clause encdec = F_BIN_TYPE_Q(rs2, rs1, rd, FSGNJN_Q)              if hav
 mapping clause encdec = F_BIN_TYPE_Q(rs2, rs1, rd, FSGNJX_Q)              if haveQExt()
                     <-> 0b001_0011 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if haveQExt()
 
+mapping clause encdec = F_BIN_TYPE_Q(rs2, rs1, rd, FMIN_Q)                if haveQExt()
+                    <-> 0b001_0111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveQExt()
+
+mapping clause encdec = F_BIN_TYPE_Q(rs2, rs1, rd, FMAX_Q)                if haveQExt()
+                    <-> 0b001_0111 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveQExt()
 
 mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)                 if haveQExt()
                     <-> 0b101_0011 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if haveQExt()
@@ -732,80 +755,45 @@ mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)                 if hav
 mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)                 if haveQExt()
                     <-> 0b101_0011 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveQExt()
 
+/* Execution semantics ================================ */
+
 function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FSGNJ_Q)) = {
-  let rs1_val_Q    = F(rs1);
-  let rs2_val_Q    = F(rs2);
+  let rs1_val_Q    = F_Q(rs1);
+  let rs2_val_Q    = F_Q(rs2);
 
   let (s1, e1, m1) = fsplit_Q (rs1_val_Q);
   let (s2, e2, m2) = fsplit_Q (rs2_val_Q);
   let rd_val_Q     = fmake_Q (s2, e1, m1);
 
-  F(rd) = rd_val_Q;
+  F_Q(rd) = rd_val_Q;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FSGNJN_Q)) = {
-  let rs1_val_Q    = F(rs1);
-  let rs2_val_Q    = F(rs2);
+  let rs1_val_Q    = F_Q(rs1);
+  let rs2_val_Q    = F_Q(rs2);
   let (s1, e1, m1) = fsplit_Q (rs1_val_Q);
   let (s2, e2, m2) = fsplit_Q (rs2_val_Q);
   let rd_val_Q     = fmake_Q (0b1 ^ s2, e1, m1);
 
-  F(rd) = rd_val_Q;
+  F_Q(rd) = rd_val_Q;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FSGNJX_Q)) = {
-  let rs1_val_Q    = F(rs1);
-  let rs2_val_Q    = F(rs2);
+  let rs1_val_Q    = F_Q(rs1);
+  let rs2_val_Q    = F_Q(rs2);
   let (s1, e1, m1) = fsplit_Q (rs1_val_Q);
   let (s2, e2, m2) = fsplit_Q (rs2_val_Q);
   let rd_val_Q     = fmake_Q (s1 ^ s2, e1, m1);
 
-  F(rd) = rd_val_Q;
+  F_Q(rd) = rd_val_Q;
   RETIRE_SUCCESS
 }
-
-function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FEQ_Q)) = {
-  let rs1_val_Q = F(rs1);
-  let rs2_val_Q = F(rs2);
-
-  let (fflags, rd_val) : (bits_fflags, bool) =
-      riscv_f128Eq (rs1_val_Q, rs2_val_Q);
-
-  accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
-  RETIRE_SUCCESS
-}
-
-function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FLT_Q)) = {
-  let rs1_val_Q = F(rs1);
-  let rs2_val_Q = F(rs2);
-
-  let (fflags, rd_val) : (bits_fflags, bool) =
-      riscv_f128Lt (rs1_val_Q, rs2_val_Q);
-
-  accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
-  RETIRE_SUCCESS
-}
-
-function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FLE_Q)) = {
-  let rs1_val_Q = F(rs1);
-  let rs2_val_Q = F(rs2);
-
-  let (fflags, rd_val) : (bits_fflags, bool) =
-      riscv_f128Le (rs1_val_Q, rs2_val_Q);
-
-  accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
-  RETIRE_SUCCESS
-}
-
 
 function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FMIN_Q)) = {
-  let rs1_val_Q = F(rs1);
-  let rs2_val_Q = F(rs2);
+  let rs1_val_Q = F_Q(rs1);
+  let rs2_val_Q = F_Q(rs2);
 
   let is_quiet  = true;
   let (rs1_lt_rs2, fflags) = fle_Q (rs1_val_Q, rs2_val_Q, is_quiet);
@@ -819,13 +807,13 @@ function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FMIN_Q)) = {
                   else /* (not rs1_lt_rs2) */                                            rs2_val_Q;
 
   accrue_fflags(fflags);
-  F(rd) = rd_val_Q;
+  F_Q(rd) = rd_val_Q;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FMAX_Q)) = {
-  let rs1_val_Q = F(rs1);
-  let rs2_val_Q = F(rs2);
+  let rs1_val_Q = F_Q(rs1);
+  let rs2_val_Q = F_Q(rs2);
 
   let is_quiet  = true;
   let (rs2_lt_rs1, fflags) = fle_Q (rs2_val_Q, rs1_val_Q, is_quiet);
@@ -839,9 +827,47 @@ function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FMAX_Q)) = {
                   else /* (not rs2_lt_rs1) */                                            rs2_val_Q;
 
   accrue_fflags(fflags);
-  F(rd) = rd_val_Q;
+  F_Q(rd) = rd_val_Q;
   RETIRE_SUCCESS
 }
+
+function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FEQ_Q)) = {
+  let rs1_val_Q = F_Q(rs1);
+  let rs2_val_Q = F_Q(rs2);
+
+  let (fflags, rd_val) : (bits_fflags, bool) =
+      riscv_f128Eq (rs1_val_Q, rs2_val_Q);
+
+  accrue_fflags(fflags);
+  X(rd) = zero_extend(bool_to_bits(rd_val));
+  RETIRE_SUCCESS
+}
+
+function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FLT_Q)) = {
+  let rs1_val_Q = F_Q(rs1);
+  let rs2_val_Q = F_Q(rs2);
+
+  let (fflags, rd_val) : (bits_fflags, bool) =
+      riscv_f128Lt (rs1_val_Q, rs2_val_Q);
+
+  accrue_fflags(fflags);
+  X(rd) = zero_extend(bool_to_bits(rd_val));
+  RETIRE_SUCCESS
+}
+
+function clause execute (F_BIN_TYPE_Q(rs2, rs1, rd, FLE_Q)) = {
+  let rs1_val_Q = F_Q(rs1);
+  let rs2_val_Q = F_Q(rs2);
+
+  let (fflags, rd_val) : (bits_fflags, bool) =
+      riscv_f128Le (rs1_val_Q, rs2_val_Q);
+
+  accrue_fflags(fflags);
+  X(rd) = zero_extend(bool_to_bits(rd_val));
+  RETIRE_SUCCESS
+}
+
+/* AST -> Assembly notation ================================ */
 
 mapping f_bin_type_mnemonic_Q : f_bin_op_Q <-> string = {
     FSGNJ_Q  <-> "fsgnj.q",
@@ -872,7 +898,17 @@ mapping clause assembly = F_BIN_TYPE_Q(rs2, rs1, rd, FSGNJX_Q)
                           ^ sep() ^ freg_or_reg_name(rs1)
                           ^ sep() ^ freg_or_reg_name(rs2)
 
+mapping clause assembly = F_BIN_TYPE_Q(rs2, rs1, rd, FMIN_Q)
+                      <-> f_bin_type_mnemonic_Q(FMIN_Q)
+                          ^ spc() ^ freg_or_reg_name(rd)
+                          ^ sep() ^ freg_or_reg_name(rs1)
+                          ^ sep() ^ freg_or_reg_name(rs2)
 
+mapping clause assembly = F_BIN_TYPE_Q(rs2, rs1, rd, FMAX_Q)
+                      <-> f_bin_type_mnemonic_Q(FMAX_Q)
+                          ^ spc() ^ freg_or_reg_name(rd)
+                          ^ sep() ^ freg_or_reg_name(rs1)
+                          ^ sep() ^ freg_or_reg_name(rs2)
 mapping clause assembly = F_BIN_TYPE_Q(rs2, rs1, rd, FEQ_Q)
                       <-> f_bin_type_mnemonic_Q(FEQ_Q)
                           ^ spc() ^ reg_name(rd)
@@ -891,7 +927,6 @@ mapping clause assembly = F_BIN_TYPE_Q(rs2, rs1, rd, FLE_Q)
                           ^ sep() ^ freg_or_reg_name(rs1)
                           ^ sep() ^ freg_or_reg_name(rs2)
 
-
 /* ****************************************************************** */
 /* Unary, no rounding mode */
 
@@ -899,12 +934,13 @@ union clause ast = F_UN_TYPE_Q : (regidx, regidx, f_un_op_Q)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = F_UN_TYPE_Q(rs1, rd, FCLASS_Q)
-                    <-> 0b111_0011 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b101_0011
-
+mapping clause encdec = F_UN_TYPE_Q(rs1, rd, FCLASS_Q)                        if haveQExt()
+                    <-> 0b111_0011 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveQExt()
+/* FMV Q instructions are RV128 only */
+/* Execution semantics ================================ */
 
 function clause execute (F_UN_TYPE_Q(rs1, rd, FCLASS_Q)) = {
-  let rs1_val_Q = F(rs1);
+  let rs1_val_Q = F_Q(rs1);
 
   let rd_val_10b : bits (10) =
     if      f_is_neg_inf_Q     (rs1_val_Q) then 0b_00_0000_0001
@@ -923,13 +959,15 @@ function clause execute (F_UN_TYPE_Q(rs1, rd, FCLASS_Q)) = {
   RETIRE_SUCCESS
 }
 
+/* AST -> Assembly notation ================================ */
 
 mapping f_un_type_mnemonic_Q : f_un_op_Q <-> string = {
     FCLASS_Q <-> "fclass.d"
  }
 
-
 mapping clause assembly = F_UN_TYPE_Q(rs1, rd, FCLASS_Q)
                       <-> f_un_type_mnemonic_Q(FCLASS_Q)
                           ^ spc() ^ reg_name(rd)
                           ^ sep() ^ freg_or_reg_name(rs1)
+
+/* ****************************************************************** */
