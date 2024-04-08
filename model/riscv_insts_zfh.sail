@@ -543,6 +543,10 @@ mapping clause encdec =
 <-> 0b010_0010 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
 
 mapping clause encdec =
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_Q)                                     if haveHalfFPU()
+<-> 0b010_0010 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
+
+mapping clause encdec =
     F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_S_H)                                     if haveHalfFPU()
 <-> 0b010_0000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
 
@@ -550,8 +554,9 @@ mapping clause encdec =
     F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_D_H)                                     if haveHalfFPU()
 <-> 0b010_0001 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
 
-// TODO:
-/* FCVT_H_Q, FCVT_Q_H : Will be added with Q Extension */
+mapping clause encdec =
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_Q_H)                                     if haveHalfFPU()
+<-> 0b010_0011 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
 
 /* F instructions, RV64 only */
 
@@ -678,6 +683,21 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_D)) = {
   }
 }
 
+function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_Q)) = {
+  let rs1_val_Q = F_Q(rs1);
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_H) = riscv_f128ToF16 (rm_3b, rs1_val_Q);
+
+      accrue_fflags(fflags);
+      F_or_X_H(rd) = rd_val_H;
+      RETIRE_SUCCESS
+    }
+  }
+}
+
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_S_H)) = {
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
@@ -693,7 +713,6 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_S_H)) = {
   }
 }
 
-
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_D_H)) = {
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
@@ -704,6 +723,21 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_D_H)) = {
 
       accrue_fflags(fflags);
       F_or_X_D(rd) = rd_val_D;
+      RETIRE_SUCCESS
+    }
+  }
+}
+
+function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_Q_H)) = {
+  let rs1_val_H = F_or_X_H(rs1);
+  match (select_instr_or_fcsr_rm (rm)) {
+    None() => { handle_illegal(); RETIRE_FAIL },
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_Q) = riscv_f16ToF128 (rm_3b, rs1_val_H);
+
+      accrue_fflags(fflags);
+      F_Q(rd) = rd_val_Q;
       RETIRE_SUCCESS
     }
   }
@@ -784,8 +818,10 @@ mapping f_un_rm_type_mnemonic_H : f_un_rm_op_H <-> string = {
 
     FCVT_H_S  <-> "fcvt.h.s",
     FCVT_H_D  <-> "fcvt.h.d",
+    FCVT_H_Q  <-> "fcvt.h.q",
     FCVT_S_H  <-> "fcvt.s.h",
     FCVT_D_H  <-> "fcvt.d.h",
+    FCVT_Q_H  <-> "fcvt.q.h",
 
     FCVT_L_H  <-> "fcvt.l.h",
     FCVT_LU_H <-> "fcvt.lu.h",
@@ -859,6 +895,12 @@ mapping clause assembly = F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_D)
                           ^ sep() ^ freg_or_reg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
 
+mapping clause assembly = F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_Q)
+                      <-> f_un_rm_type_mnemonic_H(FCVT_H_Q)
+                          ^ spc() ^ freg_or_reg_name(rd)
+                          ^ sep() ^ freg_or_reg_name(rs1)
+                          ^ sep() ^ frm_mnemonic(rm)
+
 mapping clause assembly = F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_S_H)
                       <-> f_un_rm_type_mnemonic_H(FCVT_S_H)
                           ^ spc() ^ freg_or_reg_name(rd)
@@ -867,6 +909,12 @@ mapping clause assembly = F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_S_H)
 
 mapping clause assembly = F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_D_H)
                       <-> f_un_rm_type_mnemonic_H(FCVT_D_H)
+                          ^ spc() ^ freg_or_reg_name(rd)
+                          ^ sep() ^ freg_or_reg_name(rs1)
+                          ^ sep() ^ frm_mnemonic(rm)
+
+mapping clause assembly = F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_Q_H)
+                      <-> f_un_rm_type_mnemonic_H(FCVT_Q_H)
                           ^ spc() ^ freg_or_reg_name(rd)
                           ^ sep() ^ freg_or_reg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)

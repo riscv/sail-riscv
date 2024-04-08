@@ -596,6 +596,70 @@ unit softfloat_f64toui64(mach_bits rm, mach_bits v)
   return UNIT;
 }
 
+unit softfloat_f128toi32(mach_bits rm, sail_bits v)
+{
+  SOFTFLOAT_PRELUDE(rm);
+
+  float128_t a;
+  float32_t res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+
+  a = to_float128(v);
+  res.v = f128_to_i32(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f128toui32(mach_bits rm, sail_bits v)
+{
+  SOFTFLOAT_PRELUDE(rm);
+
+  float128_t a;
+  float32_t res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+
+  a = to_float128(v);
+  res.v = f128_to_ui32(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f128toi64(mach_bits rm, sail_bits v)
+{
+  SOFTFLOAT_PRELUDE(rm);
+
+  float128_t a;
+  float64_t res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+
+  a = to_float128(v);
+  res.v = f128_to_i64(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f128toui64(mach_bits rm, sail_bits v)
+{
+  SOFTFLOAT_PRELUDE(rm);
+
+  float128_t a;
+  float64_t res;
+  uint_fast8_t rm8 = uint8_of_rm(rm);
+
+  a = to_float128(v);
+  res.v = f128_to_ui64(a, rm8, true);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
 unit softfloat_i32tof16(mach_bits rm, mach_bits v)
 {
   SOFTFLOAT_PRELUDE(rm);
@@ -740,6 +804,66 @@ unit softfloat_ui64tof64(mach_bits rm, mach_bits v)
   return UNIT;
 }
 
+unit softfloat_i32tof128(mach_bits rm, mach_bits v)
+{
+  SOFTFLOAT_PRELUDE(rm);
+
+  int32_t a;
+  float128_t res;
+
+  a = (int32_t)v;
+  res = i32_to_f128(a);
+
+  SOFTFLOAT_POSTLUDE_128(res);
+
+  return UNIT;
+}
+
+unit softfloat_ui32tof128(mach_bits rm, mach_bits v)
+{
+  SOFTFLOAT_PRELUDE(rm);
+
+  uint32_t a;
+  float128_t res;
+
+  a = (uint32_t)v;
+  res = ui32_to_f128(a);
+
+  SOFTFLOAT_POSTLUDE_128(res);
+
+  return UNIT;
+}
+
+unit softfloat_i64tof128(mach_bits rm, mach_bits v)
+{
+  SOFTFLOAT_PRELUDE(rm);
+
+  int64_t a;
+  float128_t res;
+
+  a = (int64_t)v;
+  res = i64_to_f128(a);
+
+  SOFTFLOAT_POSTLUDE_128(res);
+
+  return UNIT;
+}
+
+unit softfloat_ui64tof128(mach_bits rm, mach_bits v)
+{
+  SOFTFLOAT_PRELUDE(rm);
+
+  uint64_t a;
+  float128_t res;
+
+  a = (uint64_t)v;
+  res = ui64_to_f128(a);
+
+  SOFTFLOAT_POSTLUDE_128(res);
+
+  return UNIT;
+}
+
 unit softfloat_f16tof32(mach_bits rm, mach_bits v)
 {
   SOFTFLOAT_PRELUDE(rm);
@@ -768,16 +892,17 @@ unit softfloat_f16tof64(mach_bits rm, mach_bits v)
   return UNIT;
 }
 
-unit softfloat_f32tof64(mach_bits rm, mach_bits v)
+unit softfloat_f16tof128(mach_bits rm, mach_bits v)
 {
   SOFTFLOAT_PRELUDE(rm);
 
-  float32_t a;
-  float64_t res;
-  a.v = v;
-  res = f32_to_f64(a);
+  float16_t a;
+  float128_t res;
 
-  SOFTFLOAT_POSTLUDE(res);
+  a.v = v;
+  res = f16_to_f128(a);
+
+  SOFTFLOAT_POSTLUDE_128(res);
 
   return UNIT;
 }
@@ -792,6 +917,35 @@ unit softfloat_f32tof16(mach_bits rm, mach_bits v)
   res = f32_to_f16(a);
 
   SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f32tof64(mach_bits rm, mach_bits v)
+{
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t a;
+  float64_t res;
+  a.v = v;
+  res = f32_to_f64(a);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f32tof128(mach_bits rm, mach_bits v)
+{
+  SOFTFLOAT_PRELUDE(rm);
+
+  float32_t a;
+  float128_t res;
+
+  a.v = v;
+  res = f32_to_f128(a);
+
+  SOFTFLOAT_POSTLUDE_128(res);
 
   return UNIT;
 }
@@ -818,6 +972,66 @@ unit softfloat_f64tof32(mach_bits rm, mach_bits v)
   float32_t res;
   a.v = v;
   res = f64_to_f32(a);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f64tof128(mach_bits rm, mach_bits v)
+{
+  SOFTFLOAT_PRELUDE(rm);
+
+  float64_t a;
+  float128_t res;
+
+  a.v = v;
+  res = f64_to_f128(a);
+
+  SOFTFLOAT_POSTLUDE_128(res);
+
+  return UNIT;
+}
+
+unit softfloat_f128tof16(mach_bits rm, sail_bits v)
+{
+  SOFTFLOAT_PRELUDE(rm);
+
+  float128_t a;
+  float16_t res;
+
+  a = to_float128(v);
+  res = f128_to_f16(a);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f128tof32(mach_bits rm, sail_bits v)
+{
+  SOFTFLOAT_PRELUDE(rm);
+
+  float128_t a;
+  float32_t res;
+
+  a = to_float128(v);
+  res = f128_to_f32(a);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f128tof64(mach_bits rm, sail_bits v)
+{
+  SOFTFLOAT_PRELUDE(rm);
+
+  float128_t a;
+  float64_t res;
+
+  a = to_float128(v);
+  res = f128_to_f64(a);
 
   SOFTFLOAT_POSTLUDE(res);
 
@@ -1034,6 +1248,81 @@ unit softfloat_f64eq(mach_bits v1, mach_bits v2)
   return UNIT;
 }
 
+unit softfloat_f128lt(sail_bits v1, sail_bits v2)
+{
+  SOFTFLOAT_PRELUDE(0);
+
+  float128_t a, b;
+  float64_t res;
+  a = to_float128(v1);
+  b = to_float128(v2);
+  res.v = f128_lt(a, b);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f128lt_quiet(sail_bits v1, sail_bits v2)
+{
+  SOFTFLOAT_PRELUDE(0);
+
+  float128_t a, b;
+  float64_t res;
+  a = to_float128(v1);
+  b = to_float128(v2);
+  res.v = f128_lt_quiet(a, b);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f128le(sail_bits v1, sail_bits v2)
+{
+  SOFTFLOAT_PRELUDE(0);
+
+  float128_t a, b;
+  float64_t res;
+  a = to_float128(v1);
+  b = to_float128(v2);
+  res.v = f128_le(a, b);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f128le_quiet(sail_bits v1, sail_bits v2)
+{
+  SOFTFLOAT_PRELUDE(0);
+
+  float128_t a, b;
+  float64_t res;
+  a = to_float128(v1);
+  b = to_float128(v2);
+  res.v = f128_le_quiet(a, b);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
+unit softfloat_f128eq(sail_bits v1, sail_bits v2)
+{
+  SOFTFLOAT_PRELUDE(0);
+
+  float128_t a, b;
+  float64_t res;
+  a = to_float128(v1);
+  b = to_float128(v2);
+  res.v = f128_eq(a, b);
+
+  SOFTFLOAT_POSTLUDE(res);
+
+  return UNIT;
+}
+
 unit softfloat_f16roundToInt(mach_bits rm, mach_bits v, bool exact)
 {
   SOFTFLOAT_PRELUDE(rm);
@@ -1076,230 +1365,16 @@ unit softfloat_f64roundToInt(mach_bits rm, mach_bits v, bool exact)
   return UNIT;
 }
 
-unit softfloat_f128lt(sail_bits v1, sail_bits v2)
-{
-  SOFTFLOAT_PRELUDE(0);
-
-  float128_t a, b;
-  float64_t res;
-  a = to_float128(v1);
-  b = to_float128(v2);
-  res.v = f128_lt(a, b);
-
-  SOFTFLOAT_POSTLUDE(res);
-
-  return UNIT;
-}
-unit softfloat_f128le(sail_bits v1, sail_bits v2)
-{
-  SOFTFLOAT_PRELUDE(0);
-
-  float128_t a, b;
-  float64_t res;
-  a = to_float128(v1);
-  b = to_float128(v2);
-  res.v = f128_le(a, b);
-
-  SOFTFLOAT_POSTLUDE(res);
-
-  return UNIT;
-}
-unit softfloat_f128eq(sail_bits v1, sail_bits v2)
-{
-  SOFTFLOAT_PRELUDE(0);
-
-  float128_t a, b;
-  float64_t res;
-  a = to_float128(v1);
-  b = to_float128(v2);
-  res.v = f128_eq(a, b);
-
-  SOFTFLOAT_POSTLUDE(res);
-
-  return UNIT;
-}
-
-unit softfloat_f128toi32(mach_bits rm, sail_bits v)
+unit softfloat_f128roundToInt(mach_bits rm, sail_bits v, bool exact)
 {
   SOFTFLOAT_PRELUDE(rm);
 
-  float128_t a;
-  float32_t res;
+  float128_t a, res;
   uint_fast8_t rm8 = uint8_of_rm(rm);
-
   a = to_float128(v);
-  res.v = f128_to_i32(a, rm8, true);
-
-  SOFTFLOAT_POSTLUDE(res);
-
-  return UNIT;
-}
-
-unit softfloat_f128toui32(mach_bits rm, sail_bits v)
-{
-  SOFTFLOAT_PRELUDE(rm);
-
-  float128_t a;
-  float32_t res;
-  uint_fast8_t rm8 = uint8_of_rm(rm);
-
-  a = to_float128(v);
-  res.v = f128_to_ui32(a, rm8, true);
-
-  SOFTFLOAT_POSTLUDE(res);
-
-  return UNIT;
-}
-
-unit softfloat_f128toi64(mach_bits rm, sail_bits v)
-{
-  SOFTFLOAT_PRELUDE(rm);
-
-  float128_t a;
-  float64_t res;
-  uint_fast8_t rm8 = uint8_of_rm(rm);
-
-  a = to_float128(v);
-  res.v = f128_to_i64(a, rm8, true);
-
-  SOFTFLOAT_POSTLUDE(res);
-
-  return UNIT;
-}
-
-unit softfloat_f128toui64(mach_bits rm, sail_bits v)
-{
-  SOFTFLOAT_PRELUDE(rm);
-
-  float128_t a;
-  float64_t res;
-  uint_fast8_t rm8 = uint8_of_rm(rm);
-
-  a = to_float128(v);
-  res.v = f128_to_ui64(a, rm8, true);
-
-  SOFTFLOAT_POSTLUDE(res);
-
-  return UNIT;
-}
-
-unit softfloat_i32tof128(mach_bits rm, mach_bits v)
-{
-  SOFTFLOAT_PRELUDE(rm);
-
-  int32_t a;
-  float128_t res;
-
-  a = (int32_t)v;
-  res = i32_to_f128(a);
+  res = f128_roundToInt(a, rm8, exact);
 
   SOFTFLOAT_POSTLUDE_128(res);
-
-  return UNIT;
-}
-
-unit softfloat_ui32tof128(mach_bits rm, mach_bits v)
-{
-  SOFTFLOAT_PRELUDE(rm);
-
-  uint32_t a;
-  float128_t res;
-
-  a = (uint32_t)v;
-  res = ui32_to_f128(a);
-
-  SOFTFLOAT_POSTLUDE_128(res);
-
-  return UNIT;
-}
-
-unit softfloat_i64tof128(mach_bits rm, mach_bits v)
-{
-  SOFTFLOAT_PRELUDE(rm);
-
-  int64_t a;
-  float128_t res;
-
-  a = (int64_t)v;
-  res = i64_to_f128(a);
-
-  SOFTFLOAT_POSTLUDE_128(res);
-
-  return UNIT;
-}
-
-unit softfloat_ui64tof128(mach_bits rm, mach_bits v)
-{
-  SOFTFLOAT_PRELUDE(rm);
-
-  uint64_t a;
-  float128_t res;
-
-  a = (uint64_t)v;
-  res = ui64_to_f128(a);
-
-  SOFTFLOAT_POSTLUDE_128(res);
-
-  return UNIT;
-}
-
-unit softfloat_f32tof128(mach_bits rm, sail_bits v)
-{
-  SOFTFLOAT_PRELUDE(rm);
-
-  float128_t tmp;
-  float32_t a;
-  float128_t res;
-
-  tmp = to_float128(v);
-  a.v = (uint32_t)tmp.v[1];
-  res = f32_to_f128(a);
-
-  SOFTFLOAT_POSTLUDE_128(res);
-
-  return UNIT;
-}
-unit softfloat_f64tof128(mach_bits rm, sail_bits v)
-{
-  SOFTFLOAT_PRELUDE(rm);
-
-  float128_t tmp;
-  float64_t a;
-  float128_t res;
-
-  tmp = to_float128(v);
-  a.v = (uint64_t)tmp.v[1];
-  res = f64_to_f128(a);
-
-  SOFTFLOAT_POSTLUDE_128(res);
-
-  return UNIT;
-}
-unit softfloat_f128tof32(mach_bits rm, sail_bits v)
-{
-  SOFTFLOAT_PRELUDE(rm);
-
-  float128_t a;
-  float32_t res;
-
-  a = to_float128(v);
-  res = f128_to_f32(a);
-
-  SOFTFLOAT_POSTLUDE(res);
-
-  return UNIT;
-}
-unit softfloat_f128tof64(mach_bits rm, sail_bits v)
-{
-  SOFTFLOAT_PRELUDE(rm);
-
-  float128_t a;
-  float64_t res;
-
-  a = to_float128(v);
-  res = f128_to_f64(a);
-
-  SOFTFLOAT_POSTLUDE(res);
 
   return UNIT;
 }

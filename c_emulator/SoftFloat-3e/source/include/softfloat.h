@@ -147,9 +147,9 @@ int_fast32_t f16_to_i32_r_minMag( float16_t, bool );
 int_fast64_t f16_to_i64_r_minMag( float16_t, bool );
 float32_t f16_to_f32( float16_t );
 float64_t f16_to_f64( float16_t );
+float128_t f16_to_f128( float16_t );
 #ifdef SOFTFLOAT_FAST_INT64
 extFloat80_t f16_to_extF80( float16_t );
-float128_t f16_to_f128( float16_t );
 #endif
 void f16_to_extF80M( float16_t, extFloat80_t * );
 void f16_to_f128M( float16_t, float128_t * );
@@ -309,19 +309,19 @@ bool extF80M_isSignalingNaN( const extFloat80_t * );
 | 128-bit (quadruple-precision) floating-point operations.
 *----------------------------------------------------------------------------*/
 #ifdef SOFTFLOAT_FAST_INT64
+extFloat80_t f128_to_extF80( float128_t );
+#endif
 uint_fast32_t f128_to_ui32_r_minMag( float128_t, bool );
 uint_fast64_t f128_to_ui64_r_minMag( float128_t, bool );
 int_fast32_t f128_to_i32_r_minMag( float128_t, bool );
 int_fast64_t f128_to_i64_r_minMag( float128_t, bool );
 float16_t f128_to_f16( float128_t );
-extFloat80_t f128_to_extF80( float128_t );
 float128_t f128_roundToInt( float128_t, uint_fast8_t, bool );
 float128_t f128_rem( float128_t, float128_t );
 bool f128_eq_signaling( float128_t, float128_t );
 bool f128_le_quiet( float128_t, float128_t );
 bool f128_lt_quiet( float128_t, float128_t );
 bool f128_isSignalingNaN( float128_t );
-#endif
 bool f128_eq( float128_t, float128_t );
 bool f128_le( float128_t, float128_t );
 bool f128_lt( float128_t, float128_t );

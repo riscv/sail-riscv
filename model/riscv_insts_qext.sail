@@ -508,14 +508,14 @@ function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_S_Q)) = {
       let (fflags, rd_val_S) = riscv_f128ToF32 (rm_3b, rs1_val_Q);
 
       accrue_fflags(fflags);
-      F_Q(rd) = rd_val_S;
+      F_S(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_S)) = {
-  let rs1_val_S = F_Q(rs1);
+  let rs1_val_S = F_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -538,14 +538,14 @@ function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_D_Q)) = {
       let (fflags, rd_val_D) = riscv_f128ToF64 (rm_3b, rs1_val_Q);
 
       accrue_fflags(fflags);
-      F_Q(rd) = rd_val_D;
+      F_D(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_Q(rs1, rm, rd, FCVT_Q_D)) = {
-  let rs1_val_D = F_Q(rs1);
+  let rs1_val_D = F_D(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {

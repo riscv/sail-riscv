@@ -305,6 +305,10 @@ function in32BitMode() -> bool = {
   cur_Architecture() == RV32
 }
 
+function in64BitMode() -> bool = {
+  cur_Architecture() == RV64
+}
+
 /* F, D and Q extensions have to enabled both via misa.{FDQ} as well as mstatus.FS */
 function haveFExt()    -> bool = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
 function haveDExt()    -> bool = (misa[D] == 0b1) & (mstatus[FS] != 0b00) & sizeof(flen) >= 64
