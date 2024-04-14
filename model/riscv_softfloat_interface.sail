@@ -133,28 +133,28 @@ function riscv_f64Div (rm, v1, v2) = {
 }
 
 
-val     extern_f128Add = {c: "softfloat_f128add", ocaml: "Softfloat.f128_add"} : (bits_rm, bits_Q, bits_Q) -> unit
+val     extern_f128Add = {c: "softfloat_f128add", ocaml: "Softfloat.f128_add", lem: "softfloat_f128_add"} : (bits_rm, bits_Q, bits_Q) -> unit
 val      riscv_f128Add : (bits_rm, bits_Q, bits_Q) -> (bits_fflags, bits_Q)
 function riscv_f128Add (rm, v1, v2) = {
   extern_f128Add(rm, v1, v2);
   (float_fflags[4 .. 0], float_result[127..0])
 }
 
-val     extern_f128Sub = {c: "softfloat_f128sub", ocaml: "Softfloat.f128_sub"} : (bits_rm, bits_Q, bits_Q) -> unit
+val     extern_f128Sub = {c: "softfloat_f128sub", ocaml: "Softfloat.f128_sub", lem: "softfloat_f128_sub"} : (bits_rm, bits_Q, bits_Q) -> unit
 val      riscv_f128Sub : (bits_rm, bits_Q, bits_Q) -> (bits_fflags, bits_Q)
 function riscv_f128Sub (rm, v1, v2) = {
   extern_f128Sub(rm, v1, v2);
   (float_fflags[4 .. 0], float_result[127..0])
 }
 
-val     extern_f128Mul = {c: "softfloat_f128mul", ocaml: "Softfloat.f128_mul"} : (bits_rm, bits_Q, bits_Q) -> unit
+val     extern_f128Mul = {c: "softfloat_f128mul", ocaml: "Softfloat.f128_mul", lem: "softfloat_f128_mul"} : (bits_rm, bits_Q, bits_Q) -> unit
 val      riscv_f128Mul : (bits_rm, bits_Q, bits_Q) -> (bits_fflags, bits_Q)
 function riscv_f128Mul (rm, v1, v2) = {
   extern_f128Mul(rm, v1, v2);
   (float_fflags[4 .. 0], float_result[127..0])
 }
 
-val     extern_f128Div = {c: "softfloat_f128div", ocaml: "Softfloat.f128_div"} : (bits_rm, bits_Q, bits_Q) -> unit
+val     extern_f128Div = {c: "softfloat_f128div", ocaml: "Softfloat.f128_div", lem: "softfloat_f128_div"} : (bits_rm, bits_Q, bits_Q) -> unit
 val      riscv_f128Div : (bits_rm, bits_Q, bits_Q) -> (bits_fflags, bits_Q)
 function riscv_f128Div (rm, v1, v2) = {
   extern_f128Div(rm, v1, v2);
@@ -184,7 +184,7 @@ function riscv_f64MulAdd (rm, v1, v2, v3) = {
   (float_fflags[4 .. 0], float_result[63..0])
 }
 
-val     extern_f128MulAdd = {c: "softfloat_f128muladd", ocaml: "Softfloat.f128_muladd"} : (bits_rm, bits_Q, bits_Q, bits_Q) -> unit
+val     extern_f128MulAdd = {c: "softfloat_f128muladd", ocaml: "Softfloat.f128_muladd", lem: "softfloat_f128_muladd"} : (bits_rm, bits_Q, bits_Q, bits_Q) -> unit
 val      riscv_f128MulAdd : (bits_rm, bits_Q, bits_Q, bits_Q) -> (bits_fflags, bits_Q)
 function riscv_f128MulAdd (rm, v1, v2, v3) = {
   extern_f128MulAdd(rm, v1, v2, v3);
@@ -216,7 +216,7 @@ function riscv_f64Sqrt (rm, v) = {
   (float_fflags[4 .. 0], float_result[63..0])
 }
 
-val     extern_f128Sqrt = {c: "softfloat_f128sqrt", ocaml: "Softfloat.f128_sqrt"} : (bits_rm, bits_Q) -> unit
+val     extern_f128Sqrt = {c: "softfloat_f128sqrt", ocaml: "Softfloat.f128_sqrt", lem: "softfloat_f128_sqrt"} : (bits_rm, bits_Q) -> unit
 val      riscv_f128Sqrt : (bits_rm, bits_Q) -> (bits_fflags, bits_Q)
 function riscv_f128Sqrt (rm, v) = {
   extern_f128Sqrt(rm, v);
@@ -394,56 +394,56 @@ function riscv_ui64ToF64 (rm, v) = {
   (float_fflags[4 .. 0], float_result[63..0])
 }
 
-val     extern_f128ToI32 = {c: "softfloat_f128toi32", ocaml: "Softfloat.f128_to_i32"} : (bits_rm, bits_Q) -> unit
+val     extern_f128ToI32 = {c: "softfloat_f128toi32", ocaml: "Softfloat.f128_to_i32", lem: "softfloat_f128_to_i32"} : (bits_rm, bits_Q) -> unit
 val      riscv_f128ToI32 : (bits_rm, bits_Q) -> (bits_fflags, bits_W)
 function riscv_f128ToI32 (rm, v) = {
   extern_f128ToI32(rm, v);
   (float_fflags[4 .. 0], float_result[31..0])
 }
 
-val     extern_f128ToUi32 = {c: "softfloat_f128toui32", ocaml: "Softfloat.f128_to_ui32"} : (bits_rm, bits_Q) -> unit
+val     extern_f128ToUi32 = {c: "softfloat_f128toui32", ocaml: "Softfloat.f128_to_ui32", lem: "softfloat_f128_to_ui32"} : (bits_rm, bits_Q) -> unit
 val      riscv_f128ToUi32 : (bits_rm, bits_Q) -> (bits_fflags, bits_W)
 function riscv_f128ToUi32 (rm, v) = {
   extern_f128ToUi32(rm, v);
   (float_fflags[4 .. 0], float_result[31..0])
 }
 
-val     extern_i32ToF128 = {c: "softfloat_i32tof128", ocaml: "Softfloat.i32_to_f128"} : (bits_rm, bits_W) -> unit
+val     extern_i32ToF128 = {c: "softfloat_i32tof128", ocaml: "Softfloat.i32_to_f128", lem: "softfloat_i32_to_f128"} : (bits_rm, bits_W) -> unit
 val      riscv_i32ToF128 : (bits_rm, bits_W) -> (bits_fflags, bits_Q)
 function riscv_i32ToF128 (rm, v) = {
   extern_i32ToF128(rm, v);
   (float_fflags[4 .. 0], float_result[127..0])
 }
 
-val     extern_ui32ToF128 = {c: "softfloat_ui32tof128", ocaml: "Softfloat.ui32_to_f128"} : (bits_rm, bits_W) -> unit
+val     extern_ui32ToF128 = {c: "softfloat_ui32tof128", ocaml: "Softfloat.ui32_to_f128", lem: "softfloat_ui32_to_f128"} : (bits_rm, bits_W) -> unit
 val      riscv_ui32ToF128 : (bits_rm, bits_W) -> (bits_fflags, bits_Q)
 function riscv_ui32ToF128 (rm, v) = {
   extern_ui32ToF128(rm, v);
   (float_fflags[4 .. 0], float_result[127..0])
 }
 
-val     extern_f128ToI64 = {c: "softfloat_f128toi64", ocaml: "Softfloat.f128_to_i64"} : (bits_rm, bits_Q) -> unit
+val     extern_f128ToI64 = {c: "softfloat_f128toi64", ocaml: "Softfloat.f128_to_i64", lem: "softfloat_f128_to_i64"} : (bits_rm, bits_Q) -> unit
 val      riscv_f128ToI64 : (bits_rm, bits_Q) -> (bits_fflags, bits_L)
 function riscv_f128ToI64 (rm, v) = {
   extern_f128ToI64(rm, v);
   (float_fflags[4 .. 0], float_result[63..0])
 }
 
-val     extern_f128ToUi64 = {c: "softfloat_f128toui64", ocaml: "Softfloat.f128_to_ui64"} : (bits_rm, bits_Q) -> unit
+val     extern_f128ToUi64 = {c: "softfloat_f128toui64", ocaml: "Softfloat.f128_to_ui64", lem: "softfloat_f128_to_ui64"} : (bits_rm, bits_Q) -> unit
 val      riscv_f128ToUi64 : (bits_rm, bits_Q) -> (bits_fflags, bits_LU)
 function riscv_f128ToUi64 (rm, v) = {
   extern_f128ToUi64(rm, v);
   (float_fflags[4 .. 0], float_result[63..0])
 }
 
-val     extern_i64ToF128 = {c: "softfloat_i64tof128", ocaml: "Softfloat.i64_to_f128"} : (bits_rm, bits_L) -> unit
+val     extern_i64ToF128 = {c: "softfloat_i64tof128", ocaml: "Softfloat.i64_to_f128", lem: "softfloat_i64_to_f128"} : (bits_rm, bits_L) -> unit
 val      riscv_i64ToF128 : (bits_rm, bits_L) -> (bits_fflags, bits_Q)
 function riscv_i64ToF128 (rm, v) = {
   extern_i64ToF128(rm, v);
   (float_fflags[4 .. 0], float_result[127..0])
 }
 
-val     extern_ui64ToF128 = {c: "softfloat_ui64tof128", ocaml: "Softfloat.ui64_to_f128"} : (bits_rm, bits_LU) -> unit
+val     extern_ui64ToF128 = {c: "softfloat_ui64tof128", ocaml: "Softfloat.ui64_to_f128", lem: "softfloat_ui64_to_f128"} : (bits_rm, bits_LU) -> unit
 val      riscv_ui64ToF128 : (bits_rm, bits_LU) -> (bits_fflags, bits_Q)
 function riscv_ui64ToF128 (rm, v) = {
   extern_ui64ToF128(rm, v);
@@ -464,7 +464,7 @@ function riscv_f16ToF64 (rm, v) = {
   (float_fflags[4 .. 0], float_result[63..0])
 }
 
-val     extern_f16ToF128 = {c: "softfloat_f16tof128", ocaml: "Softfloat.f16_to_f128"} : (bits_rm, bits_H) -> unit
+val     extern_f16ToF128 = {c: "softfloat_f16tof128", ocaml: "Softfloat.f16_to_f128", lem: "softfloat_f16_to_f128"} : (bits_rm, bits_H) -> unit
 val      riscv_f16ToF128 : (bits_rm, bits_H) -> (bits_fflags, bits_Q)
 function riscv_f16ToF128 (rm, v) = {
   extern_f16ToF128(rm, v);
@@ -485,7 +485,7 @@ function riscv_f32ToF64 (rm, v) = {
   (float_fflags[4 .. 0], float_result[63..0])
 }
 
-val     extern_f32ToF128 = {c: "softfloat_f32tof128", ocaml: "Softfloat.f32_to_f128"} : (bits_rm, bits_S) -> unit
+val     extern_f32ToF128 = {c: "softfloat_f32tof128", ocaml: "Softfloat.f32_to_f128", lem: "softfloat_f32_to_f128"} : (bits_rm, bits_S) -> unit
 val      riscv_f32ToF128 : (bits_rm, bits_S) -> (bits_fflags, bits_Q)
 function riscv_f32ToF128 (rm, v) = {
   extern_f32ToF128(rm, v);
@@ -506,28 +506,28 @@ function riscv_f64ToF32 (rm, v) = {
   (float_fflags[4 .. 0], float_result[31 .. 0])
 }
 
-val     extern_f64ToF128 = {c: "softfloat_f64tof128", ocaml: "Softfloat.f64_to_f128"} : (bits_rm, bits_D) -> unit
+val     extern_f64ToF128 = {c: "softfloat_f64tof128", ocaml: "Softfloat.f64_to_f128", lem: "softfloat_f64_to_f128"} : (bits_rm, bits_D) -> unit
 val      riscv_f64ToF128 : (bits_rm, bits_D) -> (bits_fflags, bits_Q)
 function riscv_f64ToF128 (rm, v) = {
   extern_f64ToF128(rm, v);
   (float_fflags[4 .. 0], float_result[127..0])
 }
 
-val     extern_f128ToF16 = {c: "softfloat_f128tof16", ocaml: "Softfloat.f128_to_f16"} : (bits_rm, bits_Q) -> unit
+val     extern_f128ToF16 = {c: "softfloat_f128tof16", ocaml: "Softfloat.f128_to_f16", lem: "softfloat_f128_to_f16"} : (bits_rm, bits_Q) -> unit
 val      riscv_f128ToF16 : (bits_rm, bits_Q) -> (bits_fflags, bits_H)
 function riscv_f128ToF16 (rm, v) = {
   extern_f128ToF16(rm, v);
   (float_fflags[4 .. 0], float_result[15..0])
 }
 
-val     extern_f128ToF32 = {c: "softfloat_f128tof32", ocaml: "Softfloat.f128_to_f32"} : (bits_rm, bits_Q) -> unit
+val     extern_f128ToF32 = {c: "softfloat_f128tof32", ocaml: "Softfloat.f128_to_f32", lem: "softfloat_f128_to_f32"} : (bits_rm, bits_Q) -> unit
 val      riscv_f128ToF32 : (bits_rm, bits_Q) -> (bits_fflags, bits_S)
 function riscv_f128ToF32 (rm, v) = {
   extern_f128ToF32(rm, v);
   (float_fflags[4 .. 0], float_result[31..0])
 }
 
-val     extern_f128ToF64 = {c: "softfloat_f128tof64", ocaml: "Softfloat.f128_to_f64"} : (bits_rm, bits_Q) -> unit
+val     extern_f128ToF64 = {c: "softfloat_f128tof64", ocaml: "Softfloat.f128_to_f64", lem: "softfloat_f128_to_f64"} : (bits_rm, bits_Q) -> unit
 val      riscv_f128ToF64 : (bits_rm, bits_Q) -> (bits_fflags, bits_D)
 function riscv_f128ToF64 (rm, v) = {
   extern_f128ToF64(rm, v);
@@ -642,7 +642,7 @@ function riscv_f64Eq (v1, v2) = {
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
-val     extern_f128Lt = {c: "softfloat_f128lt", ocaml: "Softfloat.f128_lt"} : (bits_Q, bits_Q) -> unit
+val     extern_f128Lt = {c: "softfloat_f128lt", ocaml: "Softfloat.f128_lt", lem: "softfloat_f128_lt"} : (bits_Q, bits_Q) -> unit
 val      riscv_f128Lt : (bits_Q, bits_Q) -> (bits_fflags, bool)
 function riscv_f128Lt (v1, v2) = {
   extern_f128Lt(v1, v2);
@@ -656,7 +656,7 @@ function riscv_f128Lt_quiet (v1, v2) = {
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
-val     extern_f128Le = {c: "softfloat_f128le", ocaml: "Softfloat.f128_le"} : (bits_Q, bits_Q) -> unit
+val     extern_f128Le = {c: "softfloat_f128le", ocaml: "Softfloat.f128_le", lem: "softfloat_f128_le"} : (bits_Q, bits_Q) -> unit
 val      riscv_f128Le : (bits_Q, bits_Q) -> (bits_fflags, bool)
 function riscv_f128Le (v1, v2) = {
   extern_f128Le(v1, v2);
@@ -670,7 +670,7 @@ function riscv_f128Le_quiet (v1, v2) = {
   (float_fflags[4 .. 0], bit_to_bool(float_result[0]))
 }
 
-val     extern_f128Eq = {c: "softfloat_f128eq", ocaml: "Softfloat.f128_eq"} : (bits_Q, bits_Q) -> unit
+val     extern_f128Eq = {c: "softfloat_f128eq", ocaml: "Softfloat.f128_eq", lem: "softfloat_f128_eq"} : (bits_Q, bits_Q) -> unit
 val      riscv_f128Eq : (bits_Q, bits_Q) -> (bits_fflags, bool)
 function riscv_f128Eq (v1, v2) = {
   extern_f128Eq(v1, v2);
