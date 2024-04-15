@@ -367,12 +367,21 @@ mapping bool_not_bits : bool <-> bits(1) = {
   false  <-> 0b1
 }
 
-// Get the bit encoding of word_width.
+// Get the short bit encoding of word_width for use with signed expressions.
 mapping size_enc : word_width <-> bits(2) = {
   BYTE   <-> 0b00,
   HALF   <-> 0b01,
   WORD   <-> 0b10,
-  DOUBLE <-> 0b11
+  DOUBLE <-> 0b11,
+}
+
+// Get the full bit encoding of word_width.
+mapping size_enc_wide : word_width <-> bits(3) = {
+  QUAD   <-> 0b100,
+  BYTE   <-> 0b0 @ size_enc(BYTE),
+  HALF   <-> 0b0 @ size_enc(HALF),
+  WORD   <-> 0b0 @ size_enc(WORD),
+  DOUBLE <-> 0b0 @ size_enc(DOUBLE),
 }
 
 mapping size_mnemonic : word_width <-> string = {

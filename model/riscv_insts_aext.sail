@@ -20,14 +20,6 @@ function aqrl_str(aq : bool, rl : bool) -> string =
     (true, true)   => ".aqrl"
   }
 
-function lrsc_width_str(width : word_width) -> string =
-  match (width) {
-    BYTE   => ".b",
-    HALF   => ".h",
-    WORD   => ".w",
-    DOUBLE => ".d"
-  }
-
 /**
  * RISC-V only appears to define LR / SC / AMOs for word and double, although
  * there seem to be encodings reserved for other widths.
@@ -43,8 +35,8 @@ function amo_width_valid(size : word_width) -> bool = {
 /* ****************************************************************** */
 union clause ast = LOADRES : (bool, bool, regidx, word_width, regidx)
 
-mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)                                                if haveAtomics() & amo_width_valid(size)
-  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if haveAtomics() & amo_width_valid(size)
+mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)                                               if haveAtomics() & amo_width_valid(size)
+  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ rs1 @ size_enc_wide(size) @ rd @ 0b0101111 if haveAtomics() & amo_width_valid(size)
 
 
 /* We could set load-reservations on physical or virtual addresses.
@@ -68,14 +60,15 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) => {
       let aligned : bool =
-          /* BYTE and HALF would only occur due to invalid decodes, but it doesn't hurt
+          /* BYTE, HALF, and QUAD would only occur due to invalid decodes, but it doesn't hurt
           * to treat them as valid here; otherwise we'd need to throw an internal_error.
           */
           match width {
             BYTE   => true,
             HALF   => vaddr[0..0] == 0b0,
             WORD   => vaddr[1..0] == 0b00,
-            DOUBLE => vaddr[2..0] == 0b000
+            DOUBLE => vaddr[2..0] == 0b000,
+             QUAD   => vaddr[4..0] == 0b00000
           };
       /* "LR faults like a normal load, even though it's in the AMO major opcode space."
         * - Andrew Waterman, isa-dev, 10 Jul 2018.
@@ -103,8 +96,8 @@ mapping clause assembly = LOADRES(aq, rl, rs1, size, rd)
 /* ****************************************************************** */
 union clause ast = STORECON : (bool, bool, regidx, regidx, word_width, regidx)
 
-mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)                                      if haveAtomics() & amo_width_valid(size)
-  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if haveAtomics() & amo_width_valid(size)
+mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)                                     if haveAtomics() & amo_width_valid(size)
+  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ size_enc_wide(size) @ rd @ 0b0101111 if haveAtomics() & amo_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful. This may need revisiting. */
 function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
@@ -124,14 +117,15 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
         let aligned : bool =
-          /* BYTE and HALF would only occur due to invalid decodes, but it doesn't hurt
+          /* BYTE, HALF, and QUAD would only occur due to invalid decodes, but it doesn't hurt
             * to treat them as valid here; otherwise we'd need to throw an internal_error.
             */
           match width {
             BYTE   => true,
             HALF   => vaddr[0..0] == 0b0,
             WORD   => vaddr[1..0] == 0b00,
-            DOUBLE => vaddr[2..0] == 0b000
+            DOUBLE => vaddr[2..0] == 0b000,
+            QUAD   => vaddr[4..0] == 0b00000
           };
         if not(aligned)
         then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
@@ -196,8 +190,8 @@ mapping encdec_amoop : amoop <-> bits(5) = {
   AMOMAXU <-> 0b11100
 }
 
-mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)                                                if haveAtomics() & amo_width_valid(size)
-  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if haveAtomics() & amo_width_valid(size)
+mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)                                               if haveAtomics() & amo_width_valid(size)
+  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ size_enc_wide(size) @ rd @ 0b0101111 if haveAtomics() & amo_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
@@ -227,7 +221,8 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
             BYTE   => if is_unsigned then zero_extend(X(rs2)[7..0])  else sign_extend(X(rs2)[7..0]),
             HALF   => if is_unsigned then zero_extend(X(rs2)[15..0]) else sign_extend(X(rs2)[15..0]),
             WORD   => if is_unsigned then zero_extend(X(rs2)[31..0]) else sign_extend(X(rs2)[31..0]),
-            DOUBLE => X(rs2)
+            DOUBLE => X(rs2),
+              _            => internal_error(__FILE__, __LINE__, "Unexpected AMO width")
           };
           match (eares) {
             MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
@@ -262,7 +257,8 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                     BYTE   => sign_extend(loaded[7..0]),
                     HALF   => sign_extend(loaded[15..0]),
                     WORD   => sign_extend(loaded[31..0]),
-                    DOUBLE => loaded
+                    DOUBLE => loaded,
+                      _            => internal_error(__FILE__, __LINE__, "Unexpected AMO width")
                   };
                   let wval : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
                     (BYTE, _)    => mem_write_value(addr, 1, result[7..0],  aq & rl, rl, true),

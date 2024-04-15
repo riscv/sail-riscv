@@ -34,7 +34,7 @@ function nan_box_H   val_16b =
   match (sizeof(flen)) {
     32  => 0x_FFFF @ val_16b,
     64  => 0x_FFFF_FFFF_FFFF @ val_16b,
-    128 => 0x_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF @ val_16b
+    _ => 0x_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF @ val_16b // flen = 128
   }
 
 val      nan_unbox_H : flenbits -> bits(16)
@@ -43,13 +43,11 @@ function nan_unbox_H   regval = {
   match sizeof(flen) {
     32  if regval [31..16] == 0x_FFFF
         => regval[15..0],
-    32  => canonical_NaN_H(),
     64  if regval [63..16] == 0x_FFFF_FFFF_FFFF
         => regval[15..0],
-    64  => canonical_NaN_H(),
     128 if regval [127..16] ==  0x_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF
         => regval[15..0],
-    128 => canonical_NaN_H()
+    _ => canonical_NaN_H()
   }
 }
 
@@ -59,7 +57,7 @@ function nan_box_S val_32b = {
   match sizeof(flen) {
     32  => val_32b,
     64  => 0x_FFFF_FFFF @ val_32b,
-    128 => 0x_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF @ val_32b
+    _ => 0x_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF @ val_32b  // flen = 128
   }
 }
 
@@ -71,22 +69,20 @@ function nan_unbox_S regval = {
     32  => regval,
     64 if regval [63..32] == 0x_FFFF_FFFF
         => regval [31..0],
-    64  => canonical_NaN_S(),
     128 if regval [127..32] == 0x_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF
         => regval [31..0],
-    128 => canonical_NaN_S()
+    _ => canonical_NaN_S()
   }
 }
 
 val nan_box_D : bits(64) -> flenbits
 function nan_box_D val_64b = {
   assert(sys_enable_fdext());
-  assert(sizeof(flen) == 128);
-  match sizeof(flen) {
-    64  => val_64b,
-    128 => 0x_FFFF_FFFF_FFFF_FFFF @ val_64b
+  assert(sizeof(flen) >= 64);
+  if (sizeof(flen) ==64)
+    then val_64b
+    else 0x_FFFF_FFFF_FFFF_FFFF @ val_64b
   }
-}
 
 val nan_unbox_D : flenbits -> bits(64)
 function nan_unbox_D regval = {
@@ -96,7 +92,7 @@ function nan_unbox_D regval = {
     64  => regval,
     128 if regval [127..64] == 0x_FFFF_FFFF_FFFF_FFFF
         => regval [63..0],
-    128 => canonical_NaN_D()
+    _ => canonical_NaN_D()
   }
 }
 
