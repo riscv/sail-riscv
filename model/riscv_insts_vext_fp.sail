@@ -1,40 +1,10 @@
-/*=================================================================================*/
-/*  Copyright (c) 2021-2023                                                        */
-/*    Authors from RIOS Lab, Tsinghua University:                                  */
-/*      Xinlai Wan <xinlai.w@rioslab.org>                                          */
-/*      Xi Wang <xi.w@rioslab.org>                                                 */
-/*      Yifei Zhu <yifei.z@rioslab.org>                                            */
-/*      Shenwei Hu <shenwei.h@rioslab.org>                                         */
-/*      Kalvin Vu                                                                  */
-/*    Other contributors:                                                          */
-/*      Jessica Clarke <jrtc27@jrtc27.com>                                         */
-/*      Victor Moya <victor.moya@semidynamics.com>                                 */
-/*                                                                                 */
-/*  All rights reserved.                                                           */
-/*                                                                                 */
-/*  Redistribution and use in source and binary forms, with or without             */
-/*  modification, are permitted provided that the following conditions             */
-/*  are met:                                                                       */
-/*  1. Redistributions of source code must retain the above copyright              */
-/*     notice, this list of conditions and the following disclaimer.               */
-/*  2. Redistributions in binary form must reproduce the above copyright           */
-/*     notice, this list of conditions and the following disclaimer in             */
-/*     the documentation and/or other materials provided with the                  */
-/*     distribution.                                                               */
-/*                                                                                 */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''             */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED              */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR            */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                   */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT               */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF               */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND            */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,             */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT             */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF             */
-/*  SUCH DAMAGE.                                                                   */
-/*=================================================================================*/
+/*=======================================================================================*/
+/*  This Sail RISC-V architecture model, comprising all files and                        */
+/*  directories except where otherwise noted is subject the BSD                          */
+/*  two-clause license in the LICENSE file.                                              */
+/*                                                                                       */
+/*  SPDX-License-Identifier: BSD-2-Clause                                                */
+/*=======================================================================================*/
 
 /* ******************************************************************************* */
 /* This file implements part of the vector extension.                              */
@@ -61,7 +31,7 @@ mapping clause encdec = FVVTYPE(funct6, vm, vs2, vs1, vd) if haveVExt()
   <-> encdec_fvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -136,7 +106,7 @@ mapping clause encdec = FVVMATYPE(funct6, vm, vs2, vs1, vd) if haveVExt()
   <-> encdec_fvvmafunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(FVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -203,7 +173,7 @@ mapping clause encdec = FWVVTYPE(funct6, vm, vs2, vs1, vd) if haveVExt()
   <-> encdec_fwvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(FWVVTYPE(funct6, vm, vs2, vs1, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -268,7 +238,7 @@ mapping clause encdec = FWVVMATYPE(funct6, vm, vs1, vs2, vd) if haveVExt()
   <-> encdec_fwvvmafunct6(funct6) @ vm @ vs1 @ vs2 @ 0b001 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(FWVVMATYPE(funct6, vm, vs1, vs2, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -332,7 +302,7 @@ mapping clause encdec = FWVTYPE(funct6, vm, vs2, vs1, vd) if haveVExt()
   <-> encdec_fwvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(FWVTYPE(funct6, vm, vs2, vs1, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -395,12 +365,13 @@ mapping clause encdec = VFUNARY0(vm, vs2, vfunary0, vd) if haveVExt()
   <-> 0b010010 @ vm @ vs2 @ encdec_vfunary0_vs1(vfunary0) @ 0b001 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_fp_normal(vd, vm, SEW, rm_3b) then { handle_illegal(); return RETIRE_FAIL };
+  assert(SEW != 8);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -508,7 +479,7 @@ mapping clause encdec = VFWUNARY0(vm, vs2, vfwunary0, vd) if haveVExt()
   <-> 0b010010 @ vm @ vs2 @ encdec_vfwunary0_vs1(vfwunary0) @ 0b001 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -638,7 +609,7 @@ mapping clause encdec = VFNUNARY0(vm, vs2, vfnunary0, vd) if haveVExt()
   <-> 0b010010 @ vm @ vs2 @ encdec_vfnunary0_vs1(vfnunary0) @ 0b001 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -648,6 +619,7 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then { handle_illegal(); return RETIRE_FAIL };
+  assert(SEW != 64);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -773,7 +745,7 @@ mapping clause encdec = VFUNARY1(vm, vs2, vfunary1, vd) if haveVExt()
   <-> 0b010011 @ vm @ vs2 @ encdec_vfunary1_vs1(vfunary1) @ 0b001 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(VFUNARY1(vm, vs2, vfunary1, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -849,7 +821,7 @@ mapping clause encdec = VFMVFS(vs2, rd) if haveVExt()
   <-> 0b010000 @ 0b1 @ vs2 @ 0b00000 @ 0b001 @ rd @ 0b1010111 if haveVExt()
 
 function clause execute(VFMVFS(vs2, rd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let num_elem = get_num_elem(0, SEW);
 
@@ -897,7 +869,7 @@ mapping clause encdec = FVFTYPE(funct6, vm, vs2, rs1, vd) if haveVExt()
   <-> encdec_fvffunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(FVFTYPE(funct6, vm, vs2, rs1, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -987,7 +959,7 @@ mapping clause encdec = FVFMATYPE(funct6, vm, vs2, rs1, vd) if haveVExt()
   <-> encdec_fvfmafunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(FVFMATYPE(funct6, vm, vs2, rs1, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -1054,7 +1026,7 @@ mapping clause encdec = FWVFTYPE(funct6, vm, vs2, rs1, vd) if haveVExt()
   <-> encdec_fwvffunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(FWVFTYPE(funct6, vm, vs2, rs1, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -1118,7 +1090,7 @@ mapping clause encdec = FWVFMATYPE(funct6, vm, rs1, vs2, vd) if haveVExt()
   <-> encdec_fwvfmafunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(FWVFMATYPE(funct6, vm, rs1, vs2, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -1181,7 +1153,7 @@ mapping clause encdec = FWFTYPE(funct6, vm, vs2, rs1, vd) if haveVExt()
   <-> encdec_fwffunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(FWFTYPE(funct6, vm, vs2, rs1, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -1235,7 +1207,7 @@ mapping clause encdec = VFMERGE(vs2, rs1, vd) if haveVExt()
   <-> 0b010111 @ 0b0 @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(VFMERGE(vs2, rs1, vd)) = {
-  let rm_3b         = fcsr.FRM();
+  let rm_3b         = fcsr[FRM];
   let start_element = get_start_element();
   let end_element   = get_end_element();
   let SEW           = get_sew();
@@ -1286,7 +1258,7 @@ mapping clause encdec = VFMV(rs1, vd) if haveVExt()
   <-> 0b010111 @ 0b1 @ 0b00000 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(VFMV(rs1, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -1324,7 +1296,7 @@ mapping clause encdec = VFMVSF(rs1, vd) if haveVExt()
   <-> 0b010000 @ 0b1 @ 0b00000 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
 
 function clause execute(VFMVSF(rs1, vd)) = {
-  let rm_3b    = fcsr.FRM();
+  let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let num_elem = get_num_elem(0, SEW);
 

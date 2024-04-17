@@ -1,40 +1,10 @@
-/*=================================================================================*/
-/*  Copyright (c) 2021-2023                                                        */
-/*    Authors from RIOS Lab, Tsinghua University:                                  */
-/*      Xinlai Wan <xinlai.w@rioslab.org>                                          */
-/*      Xi Wang <xi.w@rioslab.org>                                                 */
-/*      Yifei Zhu <yifei.z@rioslab.org>                                            */
-/*      Shenwei Hu <shenwei.h@rioslab.org>                                         */
-/*      Kalvin Vu                                                                  */
-/*    Other contributors:                                                          */
-/*      Jessica Clarke <jrtc27@jrtc27.com>                                         */
-/*      Victor Moya <victor.moya@semidynamics.com>                                 */
-/*                                                                                 */
-/*  All rights reserved.                                                           */
-/*                                                                                 */
-/*  Redistribution and use in source and binary forms, with or without             */
-/*  modification, are permitted provided that the following conditions             */
-/*  are met:                                                                       */
-/*  1. Redistributions of source code must retain the above copyright              */
-/*     notice, this list of conditions and the following disclaimer.               */
-/*  2. Redistributions in binary form must reproduce the above copyright           */
-/*     notice, this list of conditions and the following disclaimer in             */
-/*     the documentation and/or other materials provided with the                  */
-/*     distribution.                                                               */
-/*                                                                                 */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''             */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED              */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR            */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                   */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT               */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF               */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND            */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,             */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT             */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF             */
-/*  SUCH DAMAGE.                                                                   */
-/*=================================================================================*/
+/*=======================================================================================*/
+/*  This Sail RISC-V architecture model, comprising all files and                        */
+/*  directories except where otherwise noted is subject the BSD                          */
+/*  two-clause license in the LICENSE file.                                              */
+/*                                                                                       */
+/*  SPDX-License-Identifier: BSD-2-Clause                                                */
+/*=======================================================================================*/
 
 /* ******************************************************************************* */
 /* This file implements part of the vector extension.                              */
@@ -76,9 +46,9 @@ function handle_illegal_vtype() = {
   /* Note: Implementations can set vill or trap if the vtype setting is not supported.
    * TODO: configuration support for both solutions
    */
-  vtype->bits() = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
+  vtype.bits = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
   vl = zeros();
-  print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
+  print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
   print_reg("CSR vl <- " ^ BitStr(vl))
 }
 
@@ -104,14 +74,14 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
 
   /* set vtype */
-  vtype->bits() = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul;
+  vtype.bits = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul;
 
   /* check new SEW and LMUL are legal and calculate VLMAX */
   let VLEN_pow     = get_vlen_pow();
   let ELEN_pow     = get_elen_pow();
   let LMUL_pow_new = get_lmul_pow();
   let SEW_pow_new  = get_sew_pow();
-  if SEW_pow_new > LMUL_pow_new + ELEN_pow then { handle_illegal_vtype(); return RETIRE_SUCCESS };
+  if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
   let VLMAX = int_power(2, VLEN_pow + LMUL_pow_new - SEW_pow_new);
 
   /* set vl according to VLMAX and AVL */
@@ -133,7 +103,7 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   /* reset vstart to 0 */
   vstart = zeros();
 
-  print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
+  print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
   print_reg("CSR vl <- " ^ BitStr(vl));
   print_reg("CSR vstart <- " ^ BitStr(vstart));
 
@@ -155,14 +125,14 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
 
   /* set vtype */
-  vtype->bits() = X(rs2);
+  vtype.bits = X(rs2);
 
   /* check new SEW and LMUL are legal and calculate VLMAX */
   let VLEN_pow     = get_vlen_pow();
   let ELEN_pow     = get_elen_pow();
   let LMUL_pow_new = get_lmul_pow();
   let SEW_pow_new  = get_sew_pow();
-  if SEW_pow_new > LMUL_pow_new + ELEN_pow then { handle_illegal_vtype(); return RETIRE_SUCCESS };
+  if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
   let VLMAX = int_power(2, VLEN_pow + LMUL_pow_new - SEW_pow_new);
 
   /* set vl according to VLMAX and AVL */
@@ -184,7 +154,7 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   /* reset vstart to 0 */
   vstart = zeros();
 
-  print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
+  print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
   print_reg("CSR vl <- " ^ BitStr(vl));
   print_reg("CSR vstart <- " ^ BitStr(vstart));
 
@@ -202,14 +172,14 @@ mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd) if haveVExt()
 
 function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   /* set vtype */
-  vtype->bits() = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul;
+  vtype.bits = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul;
 
   /* check new SEW and LMUL are legal and calculate VLMAX */
   let VLEN_pow     = get_vlen_pow();
   let ELEN_pow     = get_elen_pow();
   let LMUL_pow_new = get_lmul_pow();
   let SEW_pow_new  = get_sew_pow();
-  if SEW_pow_new > LMUL_pow_new + ELEN_pow then { handle_illegal_vtype(); return RETIRE_SUCCESS };
+  if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
   let VLMAX = int_power(2, VLEN_pow + LMUL_pow_new - SEW_pow_new);
 
   /* set vl according to VLMAX and AVL */
@@ -220,7 +190,7 @@ function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   /* reset vstart to 0 */
   vstart = zeros();
 
-  print_reg("CSR vtype <- " ^ BitStr(vtype.bits()));
+  print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
   print_reg("CSR vl <- " ^ BitStr(vl));
   print_reg("CSR vstart <- " ^ BitStr(vstart));
 

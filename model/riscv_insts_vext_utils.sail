@@ -1,41 +1,10 @@
-/*=================================================================================*/
-/*  Copyright (c) 2021-2023                                                        */
-/*    Authors from RIOS Lab, Tsinghua University:                                  */
-/*      Xinlai Wan <xinlai.w@rioslab.org>                                          */
-/*      Xi Wang <xi.w@rioslab.org>                                                 */
-/*      Yifei Zhu <yifei.z@rioslab.org>                                            */
-/*      Shenwei Hu <shenwei.h@rioslab.org>                                         */
-/*      Kalvin Vu                                                                  */
-/*      Lei Chen <lei.chen@rioslab.org>                                            */
-/*    Other contributors:                                                          */
-/*      Jessica Clarke <jrtc27@jrtc27.com>                                         */
-/*      Victor Moya <victor.moya@semidynamics.com>                                 */
-/*                                                                                 */
-/*  All rights reserved.                                                           */
-/*                                                                                 */
-/*  Redistribution and use in source and binary forms, with or without             */
-/*  modification, are permitted provided that the following conditions             */
-/*  are met:                                                                       */
-/*  1. Redistributions of source code must retain the above copyright              */
-/*     notice, this list of conditions and the following disclaimer.               */
-/*  2. Redistributions in binary form must reproduce the above copyright           */
-/*     notice, this list of conditions and the following disclaimer in             */
-/*     the documentation and/or other materials provided with the                  */
-/*     distribution.                                                               */
-/*                                                                                 */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''             */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED              */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR            */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                   */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT               */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF               */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND            */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,             */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT             */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF             */
-/*  SUCH DAMAGE.                                                                   */
-/*=================================================================================*/
+/*=======================================================================================*/
+/*  This Sail RISC-V architecture model, comprising all files and                        */
+/*  directories except where otherwise noted is subject the BSD                          */
+/*  two-clause license in the LICENSE file.                                              */
+/*                                                                                       */
+/*  SPDX-License-Identifier: BSD-2-Clause                                                */
+/*=======================================================================================*/
 
 /* ******************************************************************************* */
 /* This file implements functions used by vector instructions.                     */
@@ -51,7 +20,7 @@ mapping maybe_vmask : string <-> bits(1) = {
  *  1. vector widening/narrowing instructions
  *  2. vector load/store instructions
  */
-val valid_eew_emul : (int, int) -> bool effect {rreg}
+val valid_eew_emul : (int, int) -> bool
 function valid_eew_emul(EEW, EMUL_pow) = {
   let ELEN = int_power(2, get_elen_pow());
   EEW >= 8 & EEW <= ELEN & EMUL_pow >= -3 & EMUL_pow <= 3
@@ -61,13 +30,13 @@ function valid_eew_emul(EEW, EMUL_pow) = {
  *  1. If the vill bit is set, then any attempt to execute a vector instruction that depends upon vtype will raise an illegal instruction exception.
  *  2. vset{i}vl{i} and whole-register loads, stores, and moves do not depend upon vtype.
  */
-val valid_vtype : unit -> bool effect {rreg}
+val valid_vtype : unit -> bool
 function valid_vtype() = {
-  vtype.vill() == 0b0
+  vtype[vill] == 0b0
 }
 
 /* Check for vstart value */
-val assert_vstart : int -> bool effect {rreg}
+val assert_vstart : int -> bool
 function assert_vstart(i) = {
   unsigned(vstart) == i
 }
@@ -76,7 +45,7 @@ function assert_vstart(i) = {
  *  1. Valid element width of floating-point numbers
  *  2. Valid floating-point rounding mode
  */
-val valid_fp_op : ({|8, 16, 32, 64|}, bits(3)) -> bool
+val valid_fp_op : ({8, 16, 32, 64}, bits(3)) -> bool
 function valid_fp_op(SEW, rm_3b) = {
   /* 128-bit floating-point values will be supported in future extensions */
   let valid_sew = (SEW >= 16 & SEW <= 128);
@@ -177,38 +146,38 @@ function illegal_reduction_widen(SEW_widen, LMUL_pow_widen) = {
 }
 
 /* g. Normal check for floating-point instructions */
-val illegal_fp_normal : (regidx, bits(1), {|8, 16, 32, 64|}, bits(3)) -> bool
+val illegal_fp_normal : (regidx, bits(1), {8, 16, 32, 64}, bits(3)) -> bool
 function illegal_fp_normal(vd, vm, SEW, rm_3b) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* h. Masked check for floating-point instructions encoded with vm = 0 */
-val illegal_fp_vd_masked : (regidx, {|8, 16, 32, 64|}, bits(3)) -> bool
+val illegal_fp_vd_masked : (regidx, {8, 16, 32, 64}, bits(3)) -> bool
 function illegal_fp_vd_masked(vd, SEW, rm_3b) = {
   not(valid_vtype()) | vd == 0b00000 | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* i. Unmasked check for floating-point instructions encoded with vm = 1 */
-val illegal_fp_vd_unmasked : ({|8, 16, 32, 64|}, bits(3)) -> bool
+val illegal_fp_vd_unmasked : ({8, 16, 32, 64}, bits(3)) -> bool
 function illegal_fp_vd_unmasked(SEW, rm_3b) = {
   not(valid_vtype()) | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* j. Variable width check for floating-point widening/narrowing instructions */
-val illegal_fp_variable_width : (regidx, bits(1), {|8, 16, 32, 64|}, bits(3), int, int) -> bool
+val illegal_fp_variable_width : (regidx, bits(1), {8, 16, 32, 64}, bits(3), int, int) -> bool
 function illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_new, LMUL_pow_new) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) |
   not(valid_eew_emul(SEW_new, LMUL_pow_new))
 }
 
 /* k. Normal check for floating-point reduction instructions */
-val illegal_fp_reduction : ({|8, 16, 32, 64|}, bits(3)) -> bool
+val illegal_fp_reduction : ({8, 16, 32, 64}, bits(3)) -> bool
 function illegal_fp_reduction(SEW, rm_3b) = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* l. Variable width check for floating-point widening reduction instructions */
-val illegal_fp_reduction_widen : ({|8, 16, 32, 64|}, bits(3), int, int) -> bool
+val illegal_fp_reduction_widen : ({8, 16, 32, 64}, bits(3), int, int) -> bool
 function illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b)) |
   not(valid_eew_emul(SEW_widen, LMUL_pow_widen))
@@ -242,7 +211,7 @@ function illegal_indexed_store(nf, EEW_index, EMUL_pow_index, EMUL_pow_data) = {
 }
 
 /* Scalar register shaping */
-val get_scalar : forall 'm, 'm >= 8. (regidx, int('m)) -> bits('m) effect {escape, rreg}
+val get_scalar : forall 'm, 'm >= 8. (regidx, int('m)) -> bits('m)
 function get_scalar(rs1, SEW) = {
   if SEW <= sizeof(xlen) then {
     /* Least significant SEW bits */
@@ -254,7 +223,7 @@ function get_scalar(rs1, SEW) = {
 }
 
 /* Get the starting element index from csr vtype */
-val get_start_element : unit -> nat effect {escape, rreg, wreg}
+val get_start_element : unit -> nat
 function get_start_element() = {
   let start_element = unsigned(vstart);
   let VLEN_pow = get_vlen_pow();
@@ -269,7 +238,7 @@ function get_start_element() = {
 }
 
 /* Get the ending element index from csr vl */
-val get_end_element : unit -> int effect {escape, rreg, wreg}
+val get_end_element : unit -> int
 function get_end_element() = unsigned(vl) - 1
 
 /* Mask handling; creates a pre-masked result vector for vstart, vl, vta/vma, and vm */
@@ -280,7 +249,7 @@ function get_end_element() = unsigned(vl) - 1
  *   vector2 is a "mask" vector that is true for an element if the corresponding element
  *     in the result vector should be updated by the calling instruction
  */
-val init_masked_result : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), vector('n, dec, bits('m)), vector('n, dec, bool)) -> (vector('n, dec, bits('m)), vector('n, dec, bool)) effect {escape, rreg, undef}
+val init_masked_result : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), vector('n, dec, bits('m)), vector('n, dec, bool)) -> (vector('n, dec, bits('m)), vector('n, dec, bool))
 function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
@@ -333,7 +302,7 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
  * (vs3 for store and vs2 for reduction). There's no destination register to be masked.
  * In these cases, this function can be called to simply get the mask vector for vs (without the prepared vd result vector).
  */
-val init_masked_source : forall 'n 'p, 'n >= 0. (int('n), int('p), vector('n, dec, bool)) -> vector('n, dec, bool) effect {escape, rreg, undef}
+val init_masked_source : forall 'n 'p, 'n >= 0. (int('n), int('p), vector('n, dec, bool)) -> vector('n, dec, bool)
 function init_masked_source(num_elem, LMUL_pow, vm_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
@@ -367,7 +336,7 @@ function init_masked_source(num_elem, LMUL_pow, vm_val) = {
 
 /* Mask handling for carry functions that use masks as input/output */
 /* Only prestart and tail elements are masked in a mask value */
-val init_masked_result_carry : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool)) effect {escape, rreg, undef}
+val init_masked_result_carry : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool))
 function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
@@ -403,7 +372,7 @@ function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
 }
 
 /* Mask handling for cmp functions that use masks as output */
-val init_masked_result_cmp : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), vector('n, dec, bool), vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool)) effect {escape, rreg, undef}
+val init_masked_result_cmp : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), vector('n, dec, bool), vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool))
 function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
@@ -450,7 +419,7 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
  *   Read multiple register groups and concatenate them in parallel
  *   The whole segments with the same element index are combined together
  */
-val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'q >= 0. (int('n), int('m), int('p), int('q), regidx) -> vector('n, dec, bits('q * 'm)) effect {escape, rreg, undef}
+val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'q >= 0. (int('n), int('m), int('p), int('q), regidx) -> vector('n, dec, bits('q * 'm))
 function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
   assert('q * 'm > 0);
   let LMUL_reg : int = if LMUL_pow <= 0 then 1 else int_power(2, LMUL_pow);
@@ -579,7 +548,7 @@ function f_is_NaN(xf) = {
 }
 
 /* Scalar register shaping for floating point operations */
-val get_scalar_fp : forall 'n, 'n in {16, 32, 64}. (regidx, int('n)) -> bits('n) effect {escape, rreg}
+val get_scalar_fp : forall 'n, 'n in {16, 32, 64}. (regidx, int('n)) -> bits('n)
 function get_scalar_fp(rs1, SEW) = {
   assert(sizeof(flen) >= SEW, "invalid vector floating-point type width: FLEN < SEW");
   match SEW {
@@ -590,7 +559,7 @@ function get_scalar_fp(rs1, SEW) = {
 }
 
 /* Shift amounts */
-val get_shift_amount : forall 'n 'm, 0 <= 'n & 'm in {8, 16, 32, 64}. (bits('n), int('m)) -> nat effect {escape}
+val get_shift_amount : forall 'n 'm, 0 <= 'n & 'm in {8, 16, 32, 64}. (bits('n), int('m)) -> nat
 function get_shift_amount(bit_val, SEW) = {
   let lowlog2bits = log2(SEW);
   assert(0 < lowlog2bits & lowlog2bits < 'n);
@@ -598,7 +567,7 @@ function get_shift_amount(bit_val, SEW) = {
 }
 
 /* Fixed point rounding increment */
-val get_fixed_rounding_incr : forall ('m 'n : Int), ('m > 0 & 'n >= 0). (bits('m), int('n)) -> bits(1) effect {rreg, undef}
+val get_fixed_rounding_incr : forall ('m 'n : Int), ('m > 0 & 'n >= 0). (bits('m), int('n)) -> bits(1)
 function get_fixed_rounding_incr(vec_elem, shift_amount) = {
   if shift_amount == 0 then 0b0
   else {
@@ -615,7 +584,7 @@ function get_fixed_rounding_incr(vec_elem, shift_amount) = {
 }
 
 /* Fixed point unsigned saturation */
-val unsigned_saturation : forall ('m 'n: Int), ('n >= 'm > 1). (int('m), bits('n)) -> bits('m) effect {escape, rreg, undef, wreg}
+val unsigned_saturation : forall ('m 'n: Int), ('n >= 'm > 1). (int('m), bits('n)) -> bits('m)
 function unsigned_saturation(len, elem) = {
   if unsigned(elem) > unsigned(ones('m)) then {
     vxsat = 0b1;
@@ -627,7 +596,7 @@ function unsigned_saturation(len, elem) = {
 }
 
 /* Fixed point signed saturation */
-val signed_saturation : forall ('m 'n: Int), ('n >= 'm > 1). (int('m), bits('n)) -> bits('m) effect {escape, rreg, undef, wreg}
+val signed_saturation : forall ('m 'n: Int), ('n >= 'm > 1). (int('m), bits('n)) -> bits('m)
 function signed_saturation(len, elem) = {
   if signed(elem) > signed(0b0 @ ones('m - 1)) then {
     vxsat = 0b1;
@@ -642,8 +611,8 @@ function signed_saturation(len, elem) = {
 }
 
 /* Get the floating point rounding mode from csr fcsr */
-val get_fp_rounding_mode : unit -> rounding_mode effect {rreg}
-function get_fp_rounding_mode() = encdec_rounding_mode(fcsr.FRM())
+val get_fp_rounding_mode : unit -> rounding_mode
+function get_fp_rounding_mode() = encdec_rounding_mode(fcsr[FRM])
 
 /* Negate a floating point number */
 val negate_fp : forall 'm, 'm in {16, 32, 64}. bits('m) -> bits('m)
@@ -656,7 +625,7 @@ function negate_fp(xf) = {
 }
 
 /* Floating point functions using softfloat interface */
-val fp_add: forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m)) -> bits('m) effect {escape, rreg, undef, wreg}
+val fp_add: forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m)) -> bits('m)
 function fp_add(rm_3b, op1, op2) = {
   let (fflags, result_val) : (bits_fflags, bits('m)) = match 'm {
     16  => riscv_f16Add(rm_3b, op1, op2),
@@ -667,7 +636,7 @@ function fp_add(rm_3b, op1, op2) = {
   result_val
 }
 
-val fp_sub: forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m)) -> bits('m) effect {escape, rreg, undef, wreg}
+val fp_sub: forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m)) -> bits('m)
 function fp_sub(rm_3b, op1, op2) = {
   let (fflags, result_val) : (bits_fflags, bits('m)) = match 'm {
     16  => riscv_f16Sub(rm_3b, op1, op2),
@@ -678,7 +647,7 @@ function fp_sub(rm_3b, op1, op2) = {
   result_val
 }
 
-val fp_min : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bits('m) effect {escape, rreg, undef, wreg}
+val fp_min : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bits('m)
 function fp_min(op1, op2) = {
   let (fflags, op1_lt_op2) : (bits_fflags, bool) = match 'm {
     16  => riscv_f16Lt_quiet(op1, op2),
@@ -697,7 +666,7 @@ function fp_min(op1, op2) = {
   result_val
 }
 
-val fp_max : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bits('m) effect {escape, rreg, undef, wreg}
+val fp_max : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bits('m)
 function fp_max(op1, op2) = {
   let (fflags, op1_lt_op2) : (bits_fflags, bool) = match 'm {
     16  => riscv_f16Lt_quiet(op1, op2),
@@ -716,7 +685,7 @@ function fp_max(op1, op2) = {
   result_val
 }
 
-val fp_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool effect {escape, rreg, undef, wreg}
+val fp_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
 function fp_eq(op1, op2) = {
   let (fflags, result_val) : (bits_fflags, bool) = match 'm {
     16  => riscv_f16Eq(op1, op2),
@@ -727,7 +696,7 @@ function fp_eq(op1, op2) = {
   result_val
 }
 
-val fp_gt : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool effect {escape, rreg, undef, wreg}
+val fp_gt : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
 function fp_gt(op1, op2) = {
   let (fflags, temp_val) : (bits_fflags, bool) = match 'm {
     16  => riscv_f16Le(op1, op2),
@@ -739,7 +708,7 @@ function fp_gt(op1, op2) = {
   result_val
 }
 
-val fp_ge : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool effect {escape, rreg, undef, wreg}
+val fp_ge : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
 function fp_ge(op1, op2) = {
   let (fflags, temp_val) : (bits_fflags, bool) = match 'm {
     16  => riscv_f16Lt(op1, op2),
@@ -751,7 +720,7 @@ function fp_ge(op1, op2) = {
   result_val
 }
 
-val fp_lt : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool effect {escape, rreg, undef, wreg}
+val fp_lt : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
 function fp_lt(op1, op2) = {
   let (fflags, result_val) : (bits_fflags, bool) = match 'm {
     16  => riscv_f16Lt(op1, op2),
@@ -762,7 +731,7 @@ function fp_lt(op1, op2) = {
   result_val
 }
 
-val fp_le : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool effect {escape, rreg, undef, wreg}
+val fp_le : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
 function fp_le(op1, op2) = {
   let (fflags, result_val) : (bits_fflags, bool) = match 'm {
     16  => riscv_f16Le(op1, op2),
@@ -773,7 +742,7 @@ function fp_le(op1, op2) = {
   result_val
 }
 
-val fp_mul : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m)) -> bits('m) effect {escape, rreg, undef, wreg}
+val fp_mul : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m)) -> bits('m)
 function fp_mul(rm_3b, op1, op2) = {
   let (fflags, result_val) : (bits_fflags, bits('m)) = match 'm {
     16  => riscv_f16Mul(rm_3b, op1, op2),
@@ -784,7 +753,7 @@ function fp_mul(rm_3b, op1, op2) = {
   result_val
 }
 
-val fp_div : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m)) -> bits('m) effect {escape, rreg, undef, wreg}
+val fp_div : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m)) -> bits('m)
 function fp_div(rm_3b, op1, op2) = {
   let (fflags, result_val) : (bits_fflags, bits('m)) = match 'm {
     16  => riscv_f16Div(rm_3b, op1, op2),
@@ -795,7 +764,7 @@ function fp_div(rm_3b, op1, op2) = {
   result_val
 }
 
-val fp_muladd : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m), bits('m)) -> bits('m) effect {escape, rreg, undef, wreg}
+val fp_muladd : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m), bits('m)) -> bits('m)
 function fp_muladd(rm_3b, op1, op2, opadd) = {
   let (fflags, result_val) : (bits_fflags, bits('m)) = match 'm {
     16  => riscv_f16MulAdd(rm_3b, op1, op2, opadd),
@@ -806,7 +775,7 @@ function fp_muladd(rm_3b, op1, op2, opadd) = {
   result_val
 }
 
-val fp_nmuladd : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m), bits('m)) -> bits('m) effect {escape, rreg, undef, wreg}
+val fp_nmuladd : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m), bits('m)) -> bits('m)
 function fp_nmuladd(rm_3b, op1, op2, opadd) = {
   let op1 = negate_fp(op1);
   let (fflags, result_val) : (bits_fflags, bits('m)) = match 'm {
@@ -818,7 +787,7 @@ function fp_nmuladd(rm_3b, op1, op2, opadd) = {
   result_val
 }
 
-val fp_mulsub : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m), bits('m)) -> bits('m) effect {escape, rreg, undef, wreg}
+val fp_mulsub : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m), bits('m)) -> bits('m)
 function fp_mulsub(rm_3b, op1, op2, opsub) = {
   let opsub = negate_fp(opsub);
   let (fflags, result_val) : (bits_fflags, bits('m)) = match 'm {
@@ -830,7 +799,7 @@ function fp_mulsub(rm_3b, op1, op2, opsub) = {
   result_val
 }
 
-val fp_nmulsub : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m), bits('m)) -> bits('m) effect {escape, rreg, undef, wreg}
+val fp_nmulsub : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m), bits('m)) -> bits('m)
 function fp_nmulsub(rm_3b, op1, op2, opsub) = {
   let opsub = negate_fp(opsub);
   let op1 = negate_fp(op1);
@@ -861,9 +830,9 @@ function fp_class(xf) = {
   zero_extend(result_val_10b)
 }
 
-val fp_widen : forall 'm, 'm in {16, 32}. bits('m) -> bits('m * 2) effect {escape, rreg, undef, wreg}
+val fp_widen : forall 'm, 'm in {16, 32}. bits('m) -> bits('m * 2)
 function fp_widen(nval) = {
-  let rm_3b = fcsr.FRM();
+  let rm_3b = fcsr[FRM];
   let (fflags, wval) : (bits_fflags, bits('m * 2)) = match 'm {
     16 => riscv_f16ToF32(rm_3b, nval),
     32 => riscv_f32ToF64(rm_3b, nval)
@@ -873,7 +842,7 @@ function fp_widen(nval) = {
 }
 
 /* Floating point functions without softfloat support */
-val riscv_f16ToI16 : (bits_rm, bits_H) -> (bits_fflags, bits(16)) effect {rreg}
+val riscv_f16ToI16 : (bits_rm, bits_H) -> (bits_fflags, bits(16))
 function riscv_f16ToI16 (rm, v) = {
   let (_, sig32) = riscv_f16ToI32(rm, v);
   if signed(sig32) > signed(0b0 @ ones(15)) then (nvFlag(), 0b0 @ ones(15))
@@ -881,7 +850,7 @@ function riscv_f16ToI16 (rm, v) = {
   else (zeros(5), sig32[15 .. 0]);
 }
 
-val riscv_f16ToI8 : (bits_rm, bits_H) -> (bits_fflags, bits(8)) effect {rreg}
+val riscv_f16ToI8 : (bits_rm, bits_H) -> (bits_fflags, bits(8))
 function riscv_f16ToI8 (rm, v) = {
   let (_, sig32) = riscv_f16ToI32(rm, v);
   if signed(sig32) > signed(0b0 @ ones(7)) then (nvFlag(), 0b0 @ ones(7))
@@ -889,7 +858,7 @@ function riscv_f16ToI8 (rm, v) = {
   else (zeros(5), sig32[7 .. 0]);
 }
 
-val riscv_f32ToI16 : (bits_rm, bits_S) -> (bits_fflags, bits(16)) effect {rreg}
+val riscv_f32ToI16 : (bits_rm, bits_S) -> (bits_fflags, bits(16))
 function riscv_f32ToI16 (rm, v) = {
   let (_, sig32) = riscv_f32ToI32(rm, v);
   if signed(sig32) > signed(0b0 @ ones(15)) then (nvFlag(), 0b0 @ ones(15))
@@ -897,21 +866,21 @@ function riscv_f32ToI16 (rm, v) = {
   else (zeros(5), sig32[15 .. 0]);
 }
 
-val riscv_f16ToUi16 : (bits_rm, bits_H) -> (bits_fflags, bits(16)) effect {rreg}
+val riscv_f16ToUi16 : (bits_rm, bits_H) -> (bits_fflags, bits(16))
 function riscv_f16ToUi16 (rm, v) = {
   let (_, sig32) = riscv_f16ToUi32(rm, v);
   if unsigned(sig32) > unsigned(ones(16)) then (nvFlag(), ones(16))
   else (zeros(5), sig32[15 .. 0]);
 }
 
-val riscv_f16ToUi8 : (bits_rm, bits_H) -> (bits_fflags, bits(8)) effect {rreg}
+val riscv_f16ToUi8 : (bits_rm, bits_H) -> (bits_fflags, bits(8))
 function riscv_f16ToUi8 (rm, v) = {
   let (_, sig32) = riscv_f16ToUi32(rm, v);
   if unsigned(sig32) > unsigned(ones(8)) then (nvFlag(), ones(8))
   else (zeros(5), sig32[7 .. 0]);
 }
 
-val riscv_f32ToUi16 : (bits_rm, bits_S) -> (bits_fflags, bits(16)) effect {rreg}
+val riscv_f32ToUi16 : (bits_rm, bits_S) -> (bits_fflags, bits(16))
 function riscv_f32ToUi16 (rm, v) = {
   let (_, sig32) = riscv_f32ToUi32(rm, v);
   if unsigned(sig32) > unsigned(ones(16)) then (nvFlag(), ones(16))
@@ -974,10 +943,9 @@ function rsqrt7 (v, sub) = {
   zero_extend(64, sign @ out_exp @ out_sig)
 }
 
-val riscv_f16Rsqrte7 : (bits_rm, bits_H) -> (bits_fflags, bits_H) effect {rreg}
+val riscv_f16Rsqrte7 : (bits_rm, bits_H) -> (bits_fflags, bits_H)
 function riscv_f16Rsqrte7 (rm, v) = {
-  let class = fp_class(v);
-  let (fflags, result) : (bits_fflags, bits_H)= match class {
+  match fp_class(v) {
     0x0001 => (nvFlag(), 0x7e00),
     0x0002 => (nvFlag(), 0x7e00),
     0x0004 => (nvFlag(), 0x7e00),
@@ -988,14 +956,12 @@ function riscv_f16Rsqrte7 (rm, v) = {
     0x0080 => (zeros(5), 0x0000),
     0x0020 => (zeros(5), rsqrt7(v, true)[15 .. 0]),
     _      => (zeros(5), rsqrt7(v, false)[15 .. 0])
-  };
-  (fflags, result)
+  }
 }
 
-val riscv_f32Rsqrte7 : (bits_rm, bits_S) -> (bits_fflags, bits_S) effect {rreg}
+val riscv_f32Rsqrte7 : (bits_rm, bits_S) -> (bits_fflags, bits_S)
 function riscv_f32Rsqrte7 (rm, v) = {
-  let class = fp_class(v);
-  let (fflags, result) : (bits_fflags, bits_S)= match class[15 .. 0] {
+  match fp_class(v)[15 .. 0] {
     0x0001 => (nvFlag(), 0x7fc00000),
     0x0002 => (nvFlag(), 0x7fc00000),
     0x0004 => (nvFlag(), 0x7fc00000),
@@ -1006,14 +972,12 @@ function riscv_f32Rsqrte7 (rm, v) = {
     0x0080 => (zeros(5), 0x00000000),
     0x0020 => (zeros(5), rsqrt7(v, true)[31 .. 0]),
     _      => (zeros(5), rsqrt7(v, false)[31 .. 0])
-  };
-  (fflags, result)
+  }
 }
 
-val riscv_f64Rsqrte7 : (bits_rm, bits_D) -> (bits_fflags, bits_D) effect {rreg}
+val riscv_f64Rsqrte7 : (bits_rm, bits_D) -> (bits_fflags, bits_D)
 function riscv_f64Rsqrte7 (rm, v) = {
-  let class = fp_class(v);
-  let (fflags, result) : (bits_fflags, bits_D)= match class[15 .. 0] {
+  match fp_class(v)[15 .. 0] {
     0x0001 => (nvFlag(), 0x7ff8000000000000),
     0x0002 => (nvFlag(), 0x7ff8000000000000),
     0x0004 => (nvFlag(), 0x7ff8000000000000),
@@ -1024,8 +988,7 @@ function riscv_f64Rsqrte7 (rm, v) = {
     0x0080 => (zeros(5), zeros(64)),
     0x0020 => (zeros(5), rsqrt7(v, true)[63 .. 0]),
     _      => (zeros(5), rsqrt7(v, false)[63 .. 0])
-  };
-  (fflags, result)
+  }
 }
 
 val recip7 : forall 'm, 'm in {16, 32, 64}. (bits('m), bits(3), bool) -> (bool, bits_D)
@@ -1087,12 +1050,11 @@ function recip7 (v, rm_3b, sub) = {
     } else (false, zero_extend(64, sign @ out_exp @ out_sig))
 }
 
-val riscv_f16Recip7 : (bits_rm, bits_H) -> (bits_fflags, bits_H) effect {rreg}
+val riscv_f16Recip7 : (bits_rm, bits_H) -> (bits_fflags, bits_H)
 function riscv_f16Recip7 (rm, v) = {
-  let class = fp_class(v);
   let (round_abnormal_true, res_true) = recip7(v, rm, true);
   let (round_abnormal_false, res_false) = recip7(v, rm, false);
-  let (fflags, result) : (bits_fflags, bits_H) = match class {
+  match fp_class(v) {
     0x0001 => (zeros(5), 0x8000),
     0x0080 => (zeros(5), 0x0000),
     0x0008 => (dzFlag(), 0xfc00),
@@ -1102,16 +1064,14 @@ function riscv_f16Recip7 (rm, v) = {
     0x0004 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[15 .. 0]) else (zeros(5), res_true[15 .. 0]),
     0x0020 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[15 .. 0]) else (zeros(5), res_true[15 .. 0]),
     _      => if round_abnormal_false then (nxFlag() | ofFlag(), res_false[15 .. 0]) else (zeros(5), res_false[15 .. 0])
-  };
-  (fflags, result)
+  }
 }
 
-val riscv_f32Recip7 : (bits_rm, bits_S) -> (bits_fflags, bits_S) effect {rreg}
+val riscv_f32Recip7 : (bits_rm, bits_S) -> (bits_fflags, bits_S)
 function riscv_f32Recip7 (rm, v) = {
-  let class = fp_class(v);
   let (round_abnormal_true, res_true) = recip7(v, rm, true);
   let (round_abnormal_false, res_false) = recip7(v, rm, false);
-  let (fflags, result) : (bits_fflags, bits_S) = match class[15 .. 0] {
+  match fp_class(v)[15 .. 0] {
     0x0001 => (zeros(5), 0x80000000),
     0x0080 => (zeros(5), 0x00000000),
     0x0008 => (dzFlag(), 0xff800000),
@@ -1121,16 +1081,14 @@ function riscv_f32Recip7 (rm, v) = {
     0x0004 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[31 .. 0]) else (zeros(5), res_true[31 .. 0]),
     0x0020 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[31 .. 0]) else (zeros(5), res_true[31 .. 0]),
     _      => if round_abnormal_false then (nxFlag() | ofFlag(), res_false[31 .. 0]) else (zeros(5), res_false[31 .. 0])
-  };
-  (fflags, result)
+  }
 }
 
-val riscv_f64Recip7 : (bits_rm, bits_D) -> (bits_fflags, bits_D) effect {rreg}
+val riscv_f64Recip7 : (bits_rm, bits_D) -> (bits_fflags, bits_D)
 function riscv_f64Recip7 (rm, v) = {
-  let class = fp_class(v);
   let (round_abnormal_true, res_true) = recip7(v, rm, true);
   let (round_abnormal_false, res_false) = recip7(v, rm, false);
-  let (fflags, result) : (bits_fflags, bits_D) = match class[15 .. 0] {
+  match fp_class(v)[15 .. 0] {
     0x0001 => (zeros(5), 0x8000000000000000),
     0x0080 => (zeros(5), 0x0000000000000000),
     0x0008 => (dzFlag(), 0xfff0000000000000),
@@ -1140,6 +1098,5 @@ function riscv_f64Recip7 (rm, v) = {
     0x0004 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[63 .. 0]) else (zeros(5), res_true[63 .. 0]),
     0x0020 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[63 .. 0]) else (zeros(5), res_true[63 .. 0]),
     _      => if round_abnormal_false then (nxFlag() | ofFlag(), res_false[63 .. 0]) else (zeros(5), res_false[63 .. 0])
-  };
-  (fflags, result)
+  }
 }

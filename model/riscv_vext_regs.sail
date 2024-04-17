@@ -1,40 +1,10 @@
-/*=================================================================================*/
-/*  Copyright (c) 2021-2023                                                        */
-/*    Authors from RIOS Lab, Tsinghua University:                                  */
-/*      Xinlai Wan <xinlai.w@rioslab.org>                                          */
-/*      Xi Wang <xi.w@rioslab.org>                                                 */
-/*      Yifei Zhu <yifei.z@rioslab.org>                                            */
-/*      Shenwei Hu <shenwei.h@rioslab.org>                                         */
-/*      Kalvin Vu                                                                  */
-/*    Other contributors:                                                          */
-/*      Jessica Clarke <jrtc27@jrtc27.com>                                         */
-/*      Victor Moya <victor.moya@semidynamics.com>                                 */
-/*                                                                                 */
-/*  All rights reserved.                                                           */
-/*                                                                                 */
-/*  Redistribution and use in source and binary forms, with or without             */
-/*  modification, are permitted provided that the following conditions             */
-/*  are met:                                                                       */
-/*  1. Redistributions of source code must retain the above copyright              */
-/*     notice, this list of conditions and the following disclaimer.               */
-/*  2. Redistributions in binary form must reproduce the above copyright           */
-/*     notice, this list of conditions and the following disclaimer in             */
-/*     the documentation and/or other materials provided with the                  */
-/*     distribution.                                                               */
-/*                                                                                 */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''             */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED              */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR            */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                   */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT               */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF               */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND            */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,             */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT             */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF             */
-/*  SUCH DAMAGE.                                                                   */
-/*=================================================================================*/
+/*=======================================================================================*/
+/*  This Sail RISC-V architecture model, comprising all files and                        */
+/*  directories except where otherwise noted is subject the BSD                          */
+/*  two-clause license in the LICENSE file.                                              */
+/*                                                                                       */
+/*  SPDX-License-Identifier: BSD-2-Clause                                                */
+/*=======================================================================================*/
 
 /* vector registers */
 register vr0 : vregtype
@@ -108,15 +78,15 @@ mapping vreg_name = {
 
 function dirty_v_context() -> unit = {
   assert(sys_enable_vext());
-  mstatus->VS() = extStatus_to_bits(Dirty);
-  mstatus->SD() = 0b1
+  mstatus[VS] = extStatus_to_bits(Dirty);
+  mstatus[SD] = 0b1
 }
 
 function dirty_v_context_if_present() -> unit = {
   if sys_enable_vext() then dirty_v_context()
 }
 
-val rV : forall 'n, 0 <= 'n < 32. regno('n) -> vregtype effect {rreg, escape}
+val rV : forall 'n, 0 <= 'n < 32. regno('n) -> vregtype
 function rV r = {
   let zero_vreg : vregtype = zeros();
   let v : vregtype =
@@ -158,7 +128,7 @@ function rV r = {
     v
 }
 
-val wV : forall 'n, 0 <= 'n < 32. (regno('n), vregtype) -> unit effect {rreg, wreg, escape}
+val wV : forall 'n, 0 <= 'n < 32. (regno('n), vregtype) -> unit
 function wV (r, in_v) = {
   let v = in_v;
   match r {
@@ -202,7 +172,7 @@ function wV (r, in_v) = {
   let VLEN = unsigned(vlenb) * 8;
   assert(0 < VLEN & VLEN <= sizeof(vlenmax));
   if   get_config_print_reg()
-  then print_reg("v" ^ string_of_int(r) ^ " <- " ^ BitStr(v[VLEN - 1 .. 0]));
+  then print_reg("v" ^ dec_str(r) ^ " <- " ^ BitStr(v[VLEN - 1 .. 0]));
 }
 
 function rV_bits(i: bits(5)) -> vregtype = rV(unsigned(i))
@@ -213,7 +183,7 @@ function wV_bits(i: bits(5), data: vregtype) -> unit = {
 
 overload V = {rV_bits, wV_bits, rV, wV}
 
-val init_vregs : unit -> unit effect {wreg}
+val init_vregs : unit -> unit
 function init_vregs () = {
   let zero_vreg : vregtype = zeros();
   vr0  = zero_vreg;
@@ -257,15 +227,15 @@ bitfield Vcsr : bits(3) = {
 }
 register vcsr : Vcsr
 
-val ext_write_vcsr : (bits(2), bits(1)) -> unit effect {rreg, wreg}
+val ext_write_vcsr : (bits(2), bits(1)) -> unit
 function ext_write_vcsr (vxrm_val, vxsat_val) = {
-  vcsr->vxrm()  = vxrm_val; /* Note: frm can be an illegal value, 101, 110, 111 */
-  vcsr->vxsat() = vxsat_val;
+  vcsr[vxrm]  = vxrm_val; /* Note: frm can be an illegal value, 101, 110, 111 */
+  vcsr[vxsat] = vxsat_val;
   dirty_v_context_if_present()
 }
 
 /* num_elem means max(VLMAX,VLEN/SEW)) according to Section 5.4 of RVV spec */
-val get_num_elem : (int, int) -> nat effect {escape, rreg}
+val get_num_elem : (int, int) -> nat
 function get_num_elem(LMUL_pow, SEW) = {
   let VLEN = unsigned(vlenb) * 8;
   let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
@@ -277,7 +247,7 @@ function get_num_elem(LMUL_pow, SEW) = {
 }
 
 /* Reads a single vreg into multiple elements */
-val read_single_vreg : forall 'n 'm, 'n >= 0. (int('n), int('m), regidx) -> vector('n, dec, bits('m)) effect {escape, rreg, undef}
+val read_single_vreg : forall 'n 'm, 'n >= 0. (int('n), int('m), regidx) -> vector('n, dec, bits('m))
 function read_single_vreg(num_elem, SEW, vrid) = {
   let bv     : vregtype                  = V(vrid);
   var result : vector('n, dec, bits('m)) = undefined;
@@ -292,7 +262,7 @@ function read_single_vreg(num_elem, SEW, vrid) = {
 }
 
 /* Writes multiple elements into a single vreg */
-val write_single_vreg : forall 'n 'm, 'n >= 0. (int('n), int('m), regidx, vector('n, dec, bits('m))) -> unit effect {escape, rreg, wreg}
+val write_single_vreg : forall 'n 'm, 'n >= 0. (int('n), int('m), regidx, vector('n, dec, bits('m))) -> unit
 function write_single_vreg(num_elem, SEW, vrid, v) = {
   r : vregtype = zeros();
 
@@ -306,7 +276,7 @@ function write_single_vreg(num_elem, SEW, vrid, v) = {
 }
 
 /* The general vreg reading operation with num_elem as max(VLMAX,VLEN/SEW)) */
-val read_vreg : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), regidx) -> vector('n, dec, bits('m)) effect {escape, rreg, undef}
+val read_vreg : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), regidx) -> vector('n, dec, bits('m))
 function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
   var result : vector('n, dec, bits('m)) = undefined;
   let VLEN = unsigned(vlenb) * 8;
@@ -344,7 +314,7 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
 }
 
 /* Single element reading operation */
-val read_single_element : forall 'm 'x, 8 <= 'm <= 128. (int('m), int('x), regidx) -> bits('m) effect {escape, rreg, undef}
+val read_single_element : forall 'm 'x, 8 <= 'm <= 128. (int('m), int('x), regidx) -> bits('m)
 function read_single_element(EEW, index, vrid) = {
   let VLEN = unsigned(vlenb) * 8;
   assert(VLEN >= EEW);
@@ -358,7 +328,7 @@ function read_single_element(EEW, index, vrid) = {
 }
 
 /* The general vreg writing operation with num_elem as max(VLMAX,VLEN/SEW)) */
-val write_vreg : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), regidx, vector('n, dec, bits('m))) -> unit effect {escape, rreg, undef, wreg}
+val write_vreg : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), regidx, vector('n, dec, bits('m))) -> unit
 function write_vreg(num_elem, SEW, LMUL_pow, vrid, vec) = {
   let VLEN = unsigned(vlenb) * 8;
   let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
@@ -381,7 +351,7 @@ function write_vreg(num_elem, SEW, LMUL_pow, vrid, vec) = {
 }
 
 /* Single element writing operation */
-val write_single_element : forall 'm 'x, 8 <= 'm <= 128. (int('m), int('x), regidx, bits('m)) -> unit effect {escape, rreg, undef, wreg}
+val write_single_element : forall 'm 'x, 8 <= 'm <= 128. (int('m), int('x), regidx, bits('m)) -> unit
 function write_single_element(EEW, index, vrid, value) = {
   let VLEN = unsigned(vlenb) * 8;
   let 'elem_per_reg : int = VLEN / EEW;
@@ -403,7 +373,7 @@ function write_single_element(EEW, index, vrid, value) = {
 }
 
 /* Mask register reading operation with num_elem as max(VLMAX,VLEN/SEW)) */
-val read_vmask : forall 'n, 'n >= 0. (int('n), bits(1), regidx) -> vector('n, dec, bool) effect {escape, rreg, undef}
+val read_vmask : forall 'n, 'n >= 0. (int('n), bits(1), regidx) -> vector('n, dec, bool)
 function read_vmask(num_elem, vm, vrid) = {
   let VLEN = unsigned(vlenb) * 8;
   assert(num_elem <= sizeof(vlenmax));
@@ -422,7 +392,7 @@ function read_vmask(num_elem, vm, vrid) = {
 }
 
 /* This is a special version of read_vmask for carry/borrow instructions, where vm=1 means no carry */
-val read_vmask_carry : forall 'n, 'n >= 0. (int('n), bits(1), regidx) -> vector('n, dec, bool) effect {escape, rreg, undef}
+val read_vmask_carry : forall 'n, 'n >= 0. (int('n), bits(1), regidx) -> vector('n, dec, bool)
 function read_vmask_carry(num_elem, vm, vrid) = {
   let VLEN = unsigned(vlenb) * 8;
   assert(0 < num_elem & num_elem <= sizeof(vlenmax));
@@ -441,7 +411,7 @@ function read_vmask_carry(num_elem, vm, vrid) = {
 }
 
 /* Mask register writing operation with num_elem as max(VLMAX,VLEN/SEW)) */
-val write_vmask : forall 'n, 'n >= 0. (int('n), regidx, vector('n, dec, bool)) -> unit effect {escape, rreg, undef, wreg}
+val write_vmask : forall 'n, 'n >= 0. (int('n), regidx, vector('n, dec, bool)) -> unit
 function write_vmask(num_elem, vrid, v) = {
   let VLEN = unsigned(vlenb) * 8;
   assert(0 < VLEN & VLEN <= sizeof(vlenmax));
