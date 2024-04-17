@@ -775,7 +775,7 @@ bitfield Mseccfg : xlenbits = {
   // PMM bits of Pointer Masking Extension
   PMM    : 33 .. 32,
   // Reserved WPRI bits.
-  wpri_1 : 10 .. 31,
+  wpri_1 : 31 .. 10,
   // Supervisor SEED bits
   SSEED  : 9,
   // User SEED bits

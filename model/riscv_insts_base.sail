@@ -362,6 +362,7 @@ function transform_effective_address(vaddr : xlenbits, pmm : bool) -> xlenbits =
       (Sv57) => {
         match (pmm_bits){
           (0b10) => transform_VA (vaddr,7),
+          (0b11) => transform_VA (vaddr,16),          
         }
       },
     }
