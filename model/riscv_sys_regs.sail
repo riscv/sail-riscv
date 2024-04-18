@@ -128,29 +128,26 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   }
 }
 
-/* helpers to check support for various extensions. */
-/* we currently don't model 'E', so always assume 'I'. */
-function haveSupMode() -> bool = misa[S] == 0b1
-function haveUsrMode() -> bool = misa[U] == 0b1
-function haveNExt()    -> bool = misa[N] == 0b1
-/* see below for F and D (and Z*inx counterparts) extension tests */
+enum clause extension = Ext_N
+function clause extensionEnabled(Ext_N) = misa[N] == 0b1
 
-/* BitManip extension support. */
-function haveBExt() -> bool = misa[B] == 0b1
-function haveZba()  -> bool = true | haveBExt()
-function haveZbb()  -> bool = true | haveBExt()
+enum clause extension = Ext_U
+function clause extensionEnabled(Ext_U) = misa[U] == 0b1
+
+enum clause extension = Ext_S
+function clause extensionEnabled(Ext_S) = misa[S] == 0b1
 
 /*
  * Illegal values legalized to least privileged mode supported.
  * Note: the only valid combinations of supported modes are M, M+U, M+S+U.
  */
 function lowest_supported_privLevel() -> Privilege =
-  if haveUsrMode() then User else Machine
+  if extensionEnabled(Ext_U) then User else Machine
 
 function have_privLevel(priv : priv_level) -> bool =
   match priv {
-    0b00 => haveUsrMode(),
-    0b01 => haveSupMode(),
+    0b00 => extensionEnabled(Ext_U),
+    0b01 => extensionEnabled(Ext_S),
     0b10 => false,
     0b11 => true,
   }
@@ -269,13 +266,13 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
           } else m;
 
   /* Hardwired to zero in the absence of 'U' or 'N'. */
-  let m = if not(haveNExt()) then {
+  let m = if not(extensionEnabled(Ext_N)) then {
              let m = [m with UPIE = 0b0];
              let m = [m with UIE = 0b0];
              m
           } else m;
 
-  if not(haveUsrMode()) then {
+  if not(extensionEnabled(Ext_U)) then {
     let m = [m with MPRV = 0b0];
     m
   } else m
@@ -299,19 +296,6 @@ function cur_Architecture() -> Architecture = {
 function in32BitMode() -> bool = {
   cur_Architecture() == RV32
 }
-
-/* V extension has to enable both via misa.V as well as mstatus.VS */
-function haveVExt()    -> bool = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
-
-function haveSvinval() -> bool = sys_enable_svinval()
-
-/* Zcb has simple code-size saving instructions. (The Zcb extension depends on the Zca extension.) */
-function haveZcb()     -> bool = sys_enable_zcb()
-
-/* Zhinx, Zfinx and Zdinx extensions (TODO: gate FCSR access on [mhs]stateen0 bit 1 when implemented) */
-function haveZhinx()   -> bool = sys_enable_zfinx()
-function haveZfinx()   -> bool = sys_enable_zfinx()
-function haveZdinx()   -> bool = sys_enable_zfinx() & sizeof(flen) >= 64
 
 /* interrupt processing state */
 
@@ -337,7 +321,7 @@ function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
    * extension, the U-mode bits. */
   let v = Mk_Minterrupts(v);
   let m = [o with SEI = v[SEI], STI = v[STI], SSI = v[SSI]];
-  if haveUsrMode() & haveNExt() then {
+  if extensionEnabled(Ext_U) & extensionEnabled(Ext_N) then {
     [m with UEI = v[UEI], UTI = v[UTI], USI = v[USI]]
   } else m
 }
@@ -353,7 +337,7 @@ function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
     SSI = v[SSI]
   ];
   /* The U-mode bits will be modified if we have the 'N' extension. */
-  if haveUsrMode() & haveNExt() then {
+  if extensionEnabled(Ext_U) & extensionEnabled(Ext_N) then {
     [m with UEI = v[UEI], UTI = v[UTI], USI = v[USI]]
   } else m
 }
@@ -641,7 +625,7 @@ function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
 function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
   let m = if d[SSI] == 0b1 then [m with SSI = s[SSI]] else m;
-  if haveNExt() then {
+  if extensionEnabled(Ext_N) then {
     let m = if d[UEI] == 0b1 then [m with UEI = s[UEI]] else m;
     let m = if d[USI] == 0b1 then [m with USI = s[USI]] else m;
     m
@@ -658,7 +642,7 @@ function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterru
   let m = if d[SEI] == 0b1 then [m with SEI = s[SEI]] else m;
   let m = if d[STI] == 0b1 then [m with STI = s[STI]] else m;
   let m = if d[SSI] == 0b1 then [m with SSI = s[SSI]] else m;
-  if haveNExt() then {
+  if extensionEnabled(Ext_N) then {
     let m = if d[UEI] == 0b1 then [m with UEI = s[UEI]] else m;
     let m = if d[UTI] == 0b1 then [m with UTI = s[UTI]] else m;
     let m = if d[USI] == 0b1 then [m with USI = s[USI]] else m;

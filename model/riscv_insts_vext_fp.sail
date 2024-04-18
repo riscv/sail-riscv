@@ -27,8 +27,8 @@ mapping encdec_fvvfunct6 : fvvfunct6 <-> bits(6) = {
   FVV_VMUL       <-> 0b100100
 }
 
-mapping clause encdec = FVVTYPE(funct6, vm, vs2, vs1, vd) if haveVExt()
-  <-> encdec_fvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = FVVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
+  <-> encdec_fvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -102,8 +102,8 @@ mapping encdec_fvvmafunct6 : fvvmafunct6 <-> bits(6) = {
   FVV_VNMSAC     <-> 0b101111
 }
 
-mapping clause encdec = FVVMATYPE(funct6, vm, vs2, vs1, vd) if haveVExt()
-  <-> encdec_fvvmafunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = FVVMATYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
+  <-> encdec_fvvmafunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -169,8 +169,8 @@ mapping encdec_fwvvfunct6 : fwvvfunct6 <-> bits(6) = {
   FWVV_VMUL       <-> 0b111000
 }
 
-mapping clause encdec = FWVVTYPE(funct6, vm, vs2, vs1, vd) if haveVExt()
-  <-> encdec_fwvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = FWVVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
+  <-> encdec_fwvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FWVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -234,8 +234,8 @@ mapping encdec_fwvvmafunct6 : fwvvmafunct6 <-> bits(6) = {
   FWVV_VNMSAC     <-> 0b111111
 }
 
-mapping clause encdec = FWVVMATYPE(funct6, vm, vs1, vs2, vd) if haveVExt()
-  <-> encdec_fwvvmafunct6(funct6) @ vm @ vs1 @ vs2 @ 0b001 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = FWVVMATYPE(funct6, vm, vs1, vs2, vd) if extensionEnabled(Ext_V)
+  <-> encdec_fwvvmafunct6(funct6) @ vm @ vs1 @ vs2 @ 0b001 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FWVVMATYPE(funct6, vm, vs1, vs2, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -298,8 +298,8 @@ mapping encdec_fwvfunct6 : fwvfunct6 <-> bits(6) = {
   FWV_VSUB       <-> 0b110110
 }
 
-mapping clause encdec = FWVTYPE(funct6, vm, vs2, vs1, vd) if haveVExt()
-  <-> encdec_fwvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = FWVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
+  <-> encdec_fwvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FWVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -361,8 +361,8 @@ mapping encdec_vfunary0_vs1 : vfunary0 <-> bits(5) = {
   FV_CVT_RTZ_X_F    <-> 0b00111
 }
 
-mapping clause encdec = VFUNARY0(vm, vs2, vfunary0, vd) if haveVExt()
-  <-> 0b010010 @ vm @ vs2 @ encdec_vfunary0_vs1(vfunary0) @ 0b001 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = VFUNARY0(vm, vs2, vfunary0, vd) if extensionEnabled(Ext_V)
+  <-> 0b010010 @ vm @ vs2 @ encdec_vfunary0_vs1(vfunary0) @ 0b001 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -475,8 +475,8 @@ mapping encdec_vfwunary0_vs1 : vfwunary0 <-> bits(5) = {
   FWV_CVT_RTZ_X_F   <-> 0b01111
 }
 
-mapping clause encdec = VFWUNARY0(vm, vs2, vfwunary0, vd) if haveVExt()
-  <-> 0b010010 @ vm @ vs2 @ encdec_vfwunary0_vs1(vfwunary0) @ 0b001 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = VFWUNARY0(vm, vs2, vfwunary0, vd) if extensionEnabled(Ext_V)
+  <-> 0b010010 @ vm @ vs2 @ encdec_vfwunary0_vs1(vfwunary0) @ 0b001 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -605,8 +605,8 @@ mapping encdec_vfnunary0_vs1 : vfnunary0 <-> bits(5) = {
   FNV_CVT_RTZ_X_F   <-> 0b10111
 }
 
-mapping clause encdec = VFNUNARY0(vm, vs2, vfnunary0, vd) if haveVExt()
-  <-> 0b010010 @ vm @ vs2 @ encdec_vfnunary0_vs1(vfnunary0) @ 0b001 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = VFNUNARY0(vm, vs2, vfnunary0, vd) if extensionEnabled(Ext_V)
+  <-> 0b010010 @ vm @ vs2 @ encdec_vfnunary0_vs1(vfnunary0) @ 0b001 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -741,8 +741,8 @@ mapping encdec_vfunary1_vs1 : vfunary1 <-> bits(5) = {
   FVV_VCLASS      <-> 0b10000
 }
 
-mapping clause encdec = VFUNARY1(vm, vs2, vfunary1, vd) if haveVExt()
-  <-> 0b010011 @ vm @ vs2 @ encdec_vfunary1_vs1(vfunary1) @ 0b001 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = VFUNARY1(vm, vs2, vfunary1, vd) if extensionEnabled(Ext_V)
+  <-> 0b010011 @ vm @ vs2 @ encdec_vfunary1_vs1(vfunary1) @ 0b001 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VFUNARY1(vm, vs2, vfunary1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -817,8 +817,8 @@ mapping clause assembly = VFUNARY1(vm, vs2, vfunary1, vd)
 /* ****************************** OPFVV (VWFUNARY0) ****************************** */
 union clause ast = VFMVFS : (regidx, regidx)
 
-mapping clause encdec = VFMVFS(vs2, rd) if haveVExt()
-  <-> 0b010000 @ 0b1 @ vs2 @ 0b00000 @ 0b001 @ rd @ 0b1010111 if haveVExt()
+mapping clause encdec = VFMVFS(vs2, rd) if extensionEnabled(Ext_V)
+  <-> 0b010000 @ 0b1 @ vs2 @ 0b00000 @ 0b001 @ rd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VFMVFS(vs2, rd)) = {
   let rm_3b    = fcsr[FRM];
@@ -865,8 +865,8 @@ mapping encdec_fvffunct6 : fvffunct6 <-> bits(6) = {
   VF_VRSUB         <-> 0b100111
 }
 
-mapping clause encdec = FVFTYPE(funct6, vm, vs2, rs1, vd) if haveVExt()
-  <-> encdec_fvffunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = FVFTYPE(funct6, vm, vs2, rs1, vd) if extensionEnabled(Ext_V)
+  <-> encdec_fvffunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -955,8 +955,8 @@ mapping encdec_fvfmafunct6 : fvfmafunct6 <-> bits(6) = {
   VF_VNMSAC     <-> 0b101111
 }
 
-mapping clause encdec = FVFMATYPE(funct6, vm, vs2, rs1, vd) if haveVExt()
-  <-> encdec_fvfmafunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = FVFMATYPE(funct6, vm, vs2, rs1, vd) if extensionEnabled(Ext_V)
+  <-> encdec_fvfmafunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FVFMATYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1022,8 +1022,8 @@ mapping encdec_fwvffunct6 : fwvffunct6 <-> bits(6) = {
   FWVF_VMUL       <-> 0b111000
 }
 
-mapping clause encdec = FWVFTYPE(funct6, vm, vs2, rs1, vd) if haveVExt()
-  <-> encdec_fwvffunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = FWVFTYPE(funct6, vm, vs2, rs1, vd) if extensionEnabled(Ext_V)
+  <-> encdec_fwvffunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FWVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1086,8 +1086,8 @@ mapping encdec_fwvfmafunct6 : fwvfmafunct6 <-> bits(6) = {
   FWVF_VNMSAC     <-> 0b111111
 }
 
-mapping clause encdec = FWVFMATYPE(funct6, vm, rs1, vs2, vd) if haveVExt()
-  <-> encdec_fwvfmafunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = FWVFMATYPE(funct6, vm, rs1, vs2, vd) if extensionEnabled(Ext_V)
+  <-> encdec_fwvfmafunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FWVFMATYPE(funct6, vm, rs1, vs2, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1149,8 +1149,8 @@ mapping encdec_fwffunct6 : fwffunct6 <-> bits(6) = {
   FWF_VSUB       <-> 0b110110
 }
 
-mapping clause encdec = FWFTYPE(funct6, vm, vs2, rs1, vd) if haveVExt()
-  <-> encdec_fwffunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = FWFTYPE(funct6, vm, vs2, rs1, vd) if extensionEnabled(Ext_V)
+  <-> encdec_fwffunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FWFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1203,8 +1203,8 @@ mapping clause assembly = FWFTYPE(funct6, vm, vs2, rs1, vd)
 /* This instruction operates on all body elements regardless of mask value */
 union clause ast = VFMERGE : (regidx, regidx, regidx)
 
-mapping clause encdec = VFMERGE(vs2, rs1, vd) if haveVExt()
-  <-> 0b010111 @ 0b0 @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = VFMERGE(vs2, rs1, vd) if extensionEnabled(Ext_V)
+  <-> 0b010111 @ 0b0 @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VFMERGE(vs2, rs1, vd)) = {
   let rm_3b         = fcsr[FRM];
@@ -1254,8 +1254,8 @@ mapping clause assembly = VFMERGE(vs2, rs1, vd)
 /* This instruction shares the encoding with vfmerge.vfm, but with vm=1 and vs2=v0 */
 union clause ast = VFMV : (regidx, regidx)
 
-mapping clause encdec = VFMV(rs1, vd) if haveVExt()
-  <-> 0b010111 @ 0b1 @ 0b00000 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = VFMV(rs1, vd) if extensionEnabled(Ext_V)
+  <-> 0b010111 @ 0b1 @ 0b00000 @ rs1 @ 0b101 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VFMV(rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1292,8 +1292,8 @@ mapping clause assembly = VFMV(rs1, vd)
 /* ****************************** OPFVF (VRFUNARY0) ****************************** */
 union clause ast = VFMVSF : (regidx, regidx)
 
-mapping clause encdec = VFMVSF(rs1, vd) if haveVExt()
-  <-> 0b010000 @ 0b1 @ 0b00000 @ rs1 @ 0b101 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = VFMVSF(rs1, vd) if extensionEnabled(Ext_V)
+  <-> 0b010000 @ 0b1 @ 0b00000 @ rs1 @ 0b101 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VFMVSF(rs1, vd)) = {
   let rm_3b    = fcsr[FRM];

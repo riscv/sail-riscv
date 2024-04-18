@@ -64,8 +64,8 @@ mapping vlewidth_pow : vlewidth <-> {3, 4, 5, 6} = {
 /* ******************** Vector Load Unit-Stride Normal & Segment (mop=0b00, lumop=0b00000) ********************* */
 union clause ast = VLSEGTYPE : (bits(3), bits(1), regidx, vlewidth, regidx)
 
-mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd) if haveVExt()
-  <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if haveVExt()
+mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd) if extensionEnabled(Ext_V)
+  <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if extensionEnabled(Ext_V)
 
 val process_vlseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired
 function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
@@ -130,8 +130,8 @@ mapping clause assembly = VLSEGTYPE(nf, vm, rs1, width, vd)
 /* ************ Vector Load Unit-Stride Normal & Segment Fault-Only-First (mop=0b00, lumop=0b10000) ************ */
 union clause ast = VLSEGFFTYPE : (bits(3), bits(1), regidx, vlewidth, regidx)
 
-mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd) if haveVExt()
-  <-> nf @ 0b0 @ 0b00 @ vm @ 0b10000 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if haveVExt()
+mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd) if extensionEnabled(Ext_V)
+  <-> nf @ 0b0 @ 0b00 @ vm @ 0b10000 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if extensionEnabled(Ext_V)
 
 val process_vlsegff : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired
 function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
@@ -235,8 +235,8 @@ mapping clause assembly = VLSEGFFTYPE(nf, vm, rs1, width, vd)
 /* ******************** Vector Store Unit-Stride Normal & Segment (mop=0b00, sumop=0b00000) ******************** */
 union clause ast = VSSEGTYPE : (bits(3), bits(1), regidx, vlewidth, regidx)
 
-mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3) if haveVExt()
-  <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ rs1 @ encdec_vlewidth(width) @ vs3 @ 0b0100111 if haveVExt()
+mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3) if extensionEnabled(Ext_V)
+  <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ rs1 @ encdec_vlewidth(width) @ vs3 @ 0b0100111 if extensionEnabled(Ext_V)
 
 val process_vsseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired
 function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) = {
@@ -304,8 +304,8 @@ mapping clause assembly = VSSEGTYPE(nf, vm, rs1, width, vs3)
 /* ****************************** Vector Load Strided Normal & Segment (mop=0b10) ****************************** */
 union clause ast = VLSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, regidx)
 
-mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd) if haveVExt()
-  <-> nf @ 0b0 @ 0b10 @ vm @ rs2 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if haveVExt()
+mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd) if extensionEnabled(Ext_V)
+  <-> nf @ 0b0 @ 0b10 @ vm @ rs2 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if extensionEnabled(Ext_V)
 
 val process_vlsseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, regidx, int('p), int('n)) -> Retired
 function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
@@ -371,8 +371,8 @@ mapping clause assembly = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
 /* ***************************** Vector Store Strided Normal & Segment (mop=0b10) ****************************** */
 union clause ast = VSSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, regidx)
 
-mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3) if haveVExt()
-  <-> nf @ 0b0 @ 0b10 @ vm @ rs2 @ rs1 @ encdec_vlewidth(width) @ vs3 @ 0b0100111 if haveVExt()
+mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3) if extensionEnabled(Ext_V)
+  <-> nf @ 0b0 @ 0b10 @ vm @ rs2 @ rs1 @ encdec_vlewidth(width) @ vs3 @ 0b0100111 if extensionEnabled(Ext_V)
 
 val process_vssseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, regidx, int('p), int('n)) -> Retired
 function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
@@ -441,8 +441,8 @@ mapping clause assembly = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
 /* ************************* Vector Load Indexed Unordered Normal & Segment (mop=0b01) ************************* */
 union clause ast = VLUXSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, regidx)
 
-mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd) if haveVExt()
-  <-> nf @ 0b0 @ 0b01 @ vm @ vs2 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if haveVExt()
+mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd) if extensionEnabled(Ext_V)
+  <-> nf @ 0b0 @ 0b01 @ vm @ vs2 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if extensionEnabled(Ext_V)
 
 val process_vlxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('ib), int('db), int('ip), int('dp), regidx, regidx, int('n), int) -> Retired
 function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
@@ -509,8 +509,8 @@ mapping clause assembly = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
 /* ************************** Vector Load Indexed Ordered Normal & Segment (mop=0b11) ************************** */
 union clause ast = VLOXSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, regidx)
 
-mapping clause encdec = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd) if haveVExt()
-  <-> nf @ 0b0 @ 0b11 @ vm @ vs2 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if haveVExt()
+mapping clause encdec = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd) if extensionEnabled(Ext_V)
+  <-> nf @ 0b0 @ 0b11 @ vm @ vs2 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if extensionEnabled(Ext_V)
 
 function clause execute(VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let EEW_index_pow = vlewidth_pow(width);
@@ -533,8 +533,8 @@ mapping clause assembly = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
 /* ************************ Vector Store Indexed Unordered Normal & Segment (mop=0b01) ************************* */
 union clause ast = VSUXSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, regidx)
 
-mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3) if haveVExt()
-  <-> nf @ 0b0 @ 0b01 @ vm @ vs2 @ rs1 @ encdec_vlewidth(width) @ vs3 @ 0b0100111 if haveVExt()
+mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3) if extensionEnabled(Ext_V)
+  <-> nf @ 0b0 @ 0b01 @ vm @ vs2 @ rs1 @ encdec_vlewidth(width) @ vs3 @ 0b0100111 if extensionEnabled(Ext_V)
 
 val process_vsxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('ib), int('db), int('ip), int('dp), regidx, regidx, int('n), int) -> Retired
 function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
@@ -604,8 +604,8 @@ mapping clause assembly = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
 /* ************************* Vector Store Indexed Ordered Normal & Segment (mop=0b11) ************************** */
 union clause ast = VSOXSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, regidx)
 
-mapping clause encdec = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3) if haveVExt()
-  <-> nf @ 0b0 @ 0b11 @ vm @ vs2 @ rs1 @ encdec_vlewidth(width) @ vs3 @ 0b0100111 if haveVExt()
+mapping clause encdec = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3) if extensionEnabled(Ext_V)
+  <-> nf @ 0b0 @ 0b11 @ vm @ vs2 @ rs1 @ encdec_vlewidth(width) @ vs3 @ 0b0100111 if extensionEnabled(Ext_V)
 
 function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let EEW_index_pow = vlewidth_pow(width);
@@ -628,8 +628,8 @@ mapping clause assembly = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
 /* ***************** Vector Load Unit-Stride Whole Register (vm=0b1, mop=0b00, lumop=0b01000) ****************** */
 union clause ast = VLRETYPE : (bits(3), regidx, vlewidth, regidx)
 
-mapping clause encdec = VLRETYPE(nf, rs1, width, vd) if haveVExt()
-  <-> nf @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if haveVExt()
+mapping clause encdec = VLRETYPE(nf, rs1, width, vd) if extensionEnabled(Ext_V)
+  <-> nf @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if extensionEnabled(Ext_V)
 
 val process_vlre : forall 'f 'b 'n, ('f in {1, 2, 4, 8}) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), regidx, int('b), regidx, int('n)) -> Retired
 function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
@@ -710,8 +710,8 @@ mapping clause assembly = VLRETYPE(nf, rs1, width, vd)
 /* ***************** Vector Store Unit-Stride Whole Register (vm=0b1, mop=0b00, lumop=0b01000) ***************** */
 union clause ast = VSRETYPE : (bits(3), regidx, regidx)
 
-mapping clause encdec = VSRETYPE(nf, rs1, vs3) if haveVExt()
-  <-> nf @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ rs1 @ 0b000 @ vs3 @ 0b0100111 if haveVExt()
+mapping clause encdec = VSRETYPE(nf, rs1, vs3) if extensionEnabled(Ext_V)
+  <-> nf @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ rs1 @ 0b000 @ vs3 @ 0b0100111 if extensionEnabled(Ext_V)
 
 val process_vsre : forall 'f 'b 'n, ('f in {1, 2, 4, 8}) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), int('b), regidx, regidx, int('n)) -> Retired
 function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
@@ -815,8 +815,8 @@ mapping encdec_lsop : vmlsop <-> bits(7) = {
   VSM      <-> 0b0100111
 }
 
-mapping clause encdec = VMTYPE(rs1, vd_or_vs3, op) if haveVExt()
-  <-> 0b000 @ 0b0 @ 0b00 @ 0b1 @ 0b01011 @ rs1 @ 0b000 @ vd_or_vs3 @ encdec_lsop(op) if haveVExt()
+mapping clause encdec = VMTYPE(rs1, vd_or_vs3, op) if extensionEnabled(Ext_V)
+  <-> 0b000 @ 0b0 @ 0b00 @ 0b1 @ 0b01011 @ rs1 @ 0b000 @ vd_or_vs3 @ encdec_lsop(op) if extensionEnabled(Ext_V)
 
 val process_vm : forall 'n 'l, ('n >= 0 & 'l >= 0). (regidx, regidx, int('n), int('l), vmlsop) -> Retired
 function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {

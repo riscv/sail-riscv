@@ -19,8 +19,8 @@ mapping encdec_rivvfunct6 : rivvfunct6 <-> bits(6) = {
   IVV_VWREDSUM    <-> 0b110001
 }
 
-mapping clause encdec = RIVVTYPE(funct6, vm, vs2, vs1, vd) if haveVExt()
-  <-> encdec_rivvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = RIVVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
+  <-> encdec_rivvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -84,8 +84,8 @@ mapping encdec_rmvvfunct6 : rmvvfunct6 <-> bits(6) = {
   MVV_VREDMAX     <-> 0b000111
 }
 
-mapping clause encdec = RMVVTYPE(funct6, vm, vs2, vs1, vd) if haveVExt()
-  <-> encdec_rmvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b010 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = RMVVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
+  <-> encdec_rmvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(RMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -155,8 +155,8 @@ mapping encdec_rfvvfunct6 : rfvvfunct6 <-> bits(6) = {
   FVV_VFWREDUSUM  <-> 0b110001
 }
 
-mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd) if haveVExt()
-  <-> encdec_rfvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
+  <-> encdec_rfvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 val process_rfvv_single: forall 'n 'm 'p, 'n >= 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), int('p)) -> Retired
 function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {

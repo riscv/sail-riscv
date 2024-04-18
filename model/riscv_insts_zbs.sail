@@ -7,7 +7,7 @@
 /*=======================================================================================*/
 
 enum clause extension = Ext_Zbs
-function clause extensionEnabled(Ext_Zbs) = true | haveBExt()
+function clause extensionEnabled(Ext_Zbs) = true | extensionEnabled(Ext_B)
 
 /* ****************************************************************** */
 union clause ast = ZBS_IOP : (bits(6), regidx, regidx, biop_zbs)

@@ -6,6 +6,9 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
+enum clause extension = Ext_Zhinx
+function clause extensionEnabled(Ext_Zhinx) = sys_enable_zfinx()
+
 /* **************************************************************** */
 /* This file specifies the instructions in the Zfh extension        */
 /* (half precision floating point).                                 */
@@ -162,7 +165,7 @@ function fle_H   (v1,       v2,        is_quiet) = {
 /* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
 
-function haveHalfFPU() -> bool = extensionEnabled(Ext_Zfh) | haveZhinx()
+function haveHalfFPU() -> bool = extensionEnabled(Ext_Zfh) | extensionEnabled(Ext_Zhinx)
 
 /* ****************************************************************** */
 /* Floating-point loads                                               */
