@@ -84,6 +84,8 @@ val sys_enable_writable_misa = {c: "sys_enable_writable_misa", ocaml: "Platform.
 val sys_enable_rvc = {c: "sys_enable_rvc", ocaml: "Platform.enable_rvc", _: "sys_enable_rvc"} : unit -> bool
 /* whether misa.{f,d} were enabled at boot */
 val sys_enable_fdext = {c: "sys_enable_fdext", ocaml: "Platform.enable_fdext", _: "sys_enable_fdext"} : unit -> bool
+/* whether Zcb was enabled at boot */
+val sys_enable_zcb = {c: "sys_enable_zcb", ocaml: "Platform.enable_zcb", _: "sys_enable_zcb"} : unit -> bool
 /* whether zfinx was enabled at boot */
 val sys_enable_zfinx = {c: "sys_enable_zfinx", ocaml: "Platform.enable_zfinx", _: "sys_enable_zfinx"} : unit -> bool
 /* whether the N extension was enabled at boot */
@@ -93,6 +95,7 @@ val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "
 val sys_enable_writable_fiom = {c: "sys_enable_writable_fiom", ocaml: "Platform.enable_writable_fiom", _: "sys_enable_writable_fiom"} : unit -> bool
 /* whether the PME extension was enabled at boot */
 val sys_enable_pmm = {c: "sys_enable_pmm", ocaml: "Platform.enable_pmm", _: "sys_enable_pmm"} : unit -> bool
+
 /* How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime). */
 val sys_pmp_count = {c: "sys_pmp_count", ocaml: "Platform.pmp_count", _: "sys_pmp_count"} : unit -> range(0, 64)
 /* G parameter that specifies the PMP grain size. The grain size is 2^(G+2), e.g.
@@ -304,11 +307,14 @@ function in32BitMode() -> bool = {
 
 /* F and D extensions have to enabled both via misa.{FD} as well as mstatus.FS */
 function haveFExt()    -> bool = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
-function haveDExt()    -> bool = (misa[D] == 0b1) & (mstatus[FS] != 0b00)
+function haveDExt()    -> bool = (misa[D] == 0b1) & (mstatus[FS] != 0b00) & sizeof(flen) >= 64
 /* Zfh (half-precision) extension depends on misa.F and mstatus.FS */
 function haveZfh()     -> bool = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
 /* V extension has to enable both via misa.V as well as mstatus.VS */
 function haveVExt()    -> bool = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
+
+/* Zcb has simple code-size saving instructions. (The Zcb extension depends on the Zca extension.) */
+function haveZcb()     -> bool = sys_enable_zcb()
 
 /* Zhinx, Zfinx and Zdinx extensions (TODO: gate FCSR access on [mhs]stateen0 bit 1 when implemented) */
 function haveZhinx()   -> bool = sys_enable_zfinx()
@@ -372,7 +378,7 @@ bitfield Medeleg : xlenbits = {
   SAMO_Page_Fault   : 15,
   Load_Page_Fault   : 13,
   Fetch_Page_Fault  : 12,
-  MEnvCall          : 10,
+  MEnvCall          : 11,
   SEnvCall          : 9,
   UEnvCall          : 8,
   SAMO_Access_Fault : 7,
@@ -769,7 +775,7 @@ function write_seed_csr () -> option(xlenbits) = None()
 
 /*  mseccfg is a XLEN-bit read/write register that controls */
 /*  security features */
-bitfield Mseccfg : xlenbits = {
+bitfield MSeccfg : xlenbits = {
   // Reserved WPRI bits.
   wpri_2 : xlen - 1 .. 34,
   // PMM bits of Pointer Masking Extension
@@ -790,19 +796,7 @@ bitfield Mseccfg : xlenbits = {
   MML    : 0,
 }
 
-register mseccfg : Mseccfg
-
-function legalize_mseccfg(o : Mseccfg, v : xlenbits) -> Mseccfg = {
-  let v = Mk_Mseccfg(v);
-  // Update PMM field only if Pointer Masking is enabled and Written value is legal
-  let o = update_PMM(o, if (sys_enable_pmm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM());
-  // Other extensions are not implemented yet so all other fields are read only zero.
-  o
-}
-
-// menvcfg is 64 bits. senvcfg is SXLEN bits and does not have the two
-// upper fields so for simplicity we can use the same type.
-bitfield Envcfg : bits(64) = {
+bitfield MEnvcfg : bits(64) = {
   // Supervisor TimeCmp Extension
   STCE   : 63,
   // Page Based Memory Types Extension
@@ -825,14 +819,47 @@ bitfield Envcfg : bits(64) = {
   FIOM   : 0,
 }
 
-register menvcfg : Envcfg
-register senvcfg : Envcfg
+bitfield SEnvcfg : xlenbits = {
+  // PMM bits of Pointer Masking Extension
+  PMM    : 33 .. 32,
+  // Cache Block Zero instruction Enable
+  CBZE   : 7,
+  // Cache Block Clean and Flush instruction Enable
+  CBCFE  : 6,
+  // Cache Block Invalidate instruction Enable
+  CBIE   : 5 .. 4,
+  // Reserved WPRI bits.
+  wpri_0 : 3 .. 1,
+  // Fence of I/O implies Memory
+  FIOM   : 0,
+}
 
-function legalize_envcfg(o : Envcfg, v : bits(64)) -> Envcfg = {
-  let v = Mk_Envcfg(v);
-  let o = update_FIOM(o, if sys_enable_writable_fiom() then v.FIOM() else 0b0);
+register mseccfg : MSeccfg
+register menvcfg : MEnvcfg
+register senvcfg : SEnvcfg
+
+function legalize_mseccfg(o : MSeccfg, v : xlenbits) -> MSeccfg = {
+  let v = Mk_MSeccfg(v);
   // Update PMM field only if Pointer Masking is enabled and Written value is legal
-  let o = update_PMM(o, if (sys_enable_pmm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM());
+  let o = [o with PMM  = if (sys_enable_pmm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];
+  // Other extensions are not implemented yet so all other fields are read only zero.
+  o
+}
+
+function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
+  let v = Mk_MEnvcfg(v);
+  let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
+  // Update PMM field only if Pointer Masking is enabled and Written value is legal
+  let o = [o with PMM  = if (sys_enable_pmm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];
+  // Other extensions are not implemented yet so all other fields are read only zero.
+  o
+}
+
+function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
+  let v = Mk_SEnvcfg(v);
+  let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
+  // Update PMM field only if Pointer Masking is enabled and Written value is legal
+  let o = [o with PMM  = if (sys_enable_pmm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];  
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
@@ -858,15 +885,6 @@ function is_pmm_active() -> bool = {
   }
 }
 
-//Returns the PMM bits value depends on the Privilege mode
-function get_pmm() -> bits(2) = {
-  match cur_privilege {
-    Machine => mseccfg.PMM(),
-    Supervisor => menvcfg.PMM(),
-    User => senvcfg.PMM(),
-  }
-} 
-
 /* vector csrs */
 register vstart : bits(16) /* use the largest possible length of vstart */
 register vxsat  : bits(1)
@@ -884,11 +902,20 @@ bitfield Vtype  : xlenbits = {
 }
 register vtype : Vtype
 
+//Returns the PMM bits value depends on the Privilege mode
+function get_pmm() -> bits(2) = {
+  match cur_privilege {
+    Machine => mseccfg.PMM(),
+    Supervisor => menvcfg.PMM(),
+    User => senvcfg.PMM(),
+  }
+} 
+
 /* the dynamic selected element width (SEW) */
 /* this returns the power of 2 for SEW */
-val get_sew_pow : unit -> {|3, 4, 5, 6|}
+val get_sew_pow : unit -> {3, 4, 5, 6}
 function get_sew_pow() = {
-  let SEW_pow : {|3, 4, 5, 6|} = match vtype[vsew] {
+  let SEW_pow : {3, 4, 5, 6} = match vtype[vsew] {
     0b000 => 3,
     0b001 => 4,
     0b010 => 5,
@@ -898,29 +925,31 @@ function get_sew_pow() = {
   SEW_pow
 }
 /* this returns the actual value of SEW */
-val get_sew : unit -> {|8, 16, 32, 64|}
+val get_sew : unit -> {8, 16, 32, 64}
 function get_sew() = {
   match get_sew_pow() {
     3 => 8,
     4 => 16,
     5 => 32,
-    6 => 64
+    6 => 64,
+    _ => {internal_error(__FILE__, __LINE__, "invalid SEW"); 8}
   }
 }
 /* this returns the value of SEW in bytes */
-val get_sew_bytes : unit -> {|1, 2, 4, 8|}
+val get_sew_bytes : unit -> {1, 2, 4, 8}
 function get_sew_bytes() = {
   match get_sew_pow() {
     3 => 1,
     4 => 2,
     5 => 4,
-    6 => 8
+    6 => 8,
+    _ => {internal_error(__FILE__, __LINE__, "invalid SEW"); 1}
   }
 }
 
 /* the vector register group multiplier (LMUL) */
 /* this returns the power of 2 for LMUL */
-val get_lmul_pow : unit -> {|-3, -2, -1, 0, 1, 2, 3|}
+val get_lmul_pow : unit -> {-3, -2, -1, 0, 1, 2, 3}
 function get_lmul_pow() = {
   match vtype[vlmul] {
     0b101 => -3,

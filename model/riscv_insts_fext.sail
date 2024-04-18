@@ -319,10 +319,10 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
   match ext_data_get_addr(rs1, offset, Read(Data), width) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
-      let  vaddr_ = transform_effective_address(vaddr, pmm) in    
+      let  vaddr_ = transform_effective_address(vaddr, pmm) in
       if   check_misaligned(vaddr_, width)
       then { handle_mem_exception(vaddr_, E_Load_Addr_Align()); RETIRE_FAIL }
-      else match translateAddr(vaddr, Read(Data)) {
+      else match translateAddr(vaddr_, Read(Data)) {
         TR_Failure(e, _) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
         TR_Address(addr, _) => {
           let (aq, rl, res) = (false, false, false);
@@ -379,7 +379,7 @@ function process_fstore(vaddr, value) =
   }
 
 function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
-  let pmm = is_pmm_active();  
+  let pmm = is_pmm_active();
   let offset : xlenbits = sign_extend(imm);
   let (aq, rl, con) = (false, false, false);
   /* Get the address, X(rs1) + offset.
@@ -387,7 +387,7 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
   match ext_data_get_addr(rs1, offset, Write(Data), width) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
-      let  vaddr_ = transform_effective_address(vaddr, pmm) in      
+      let  vaddr_ = transform_effective_address(vaddr, pmm) in
       if   check_misaligned(vaddr_, width)
       then { handle_mem_exception(vaddr_, E_SAMO_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr_, Write(Data)) {

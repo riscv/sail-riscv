@@ -53,6 +53,7 @@ const char *RV32ISA = "RV32IMAC";
 #define OPT_ENABLE_WRITABLE_FIOM 1001
 #define OPT_PMP_COUNT 1002
 #define OPT_PMP_GRAIN 1003
+#define OPT_ENABLE_ZCB 10014
 
 static bool do_dump_dts = false;
 static bool do_show_times = false;
@@ -124,7 +125,6 @@ static struct option options[] = {
     {"pmp-count",                   required_argument, 0, OPT_PMP_COUNT           },
     {"pmp-grain",                   required_argument, 0, OPT_PMP_GRAIN           },
     {"enable-next",                 no_argument,       0, 'N'                     },
-    {"enable-pmm",                  no_argument,       0, 'M'                     },     
     {"ram-size",                    required_argument, 0, 'z'                     },
     {"disable-compressed",          no_argument,       0, 'C'                     },
     {"disable-writable-misa",       no_argument,       0, 'I'                     },
@@ -136,6 +136,7 @@ static struct option options[] = {
     {"report-arch",                 no_argument,       0, 'a'                     },
     {"test-signature",              required_argument, 0, 'T'                     },
     {"signature-granularity",       required_argument, 0, 'g'                     },
+    {"enable-pmm",                  no_argument,       0, 'Y'                     },
 #ifdef RVFI_DII
     {"rvfi-dii",                    required_argument, 0, 'r'                     },
 #endif
@@ -145,7 +146,8 @@ static struct option options[] = {
     {"trace-output",                required_argument, 0, OPT_TRACE_OUTPUT        },
     {"inst-limit",                  required_argument, 0, 'l'                     },
     {"enable-zfinx",                no_argument,       0, 'x'                     },
-    {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
+    {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},    
+    {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
@@ -250,7 +252,6 @@ static int process_args(int argc, char **argv)
                     "P"
                     "C"
                     "N"
-                    "M"
                     "I"
                     "F"
                     "W"
@@ -263,6 +264,7 @@ static int process_args(int argc, char **argv)
                     "T:"
                     "g:"
                     "h"
+                    "Y"                    
 #ifdef RVFI_DII
                     "r:"
 #endif
@@ -290,7 +292,7 @@ static int process_args(int argc, char **argv)
       break;
     case OPT_PMP_COUNT:
       pmp_count = atol(optarg);
-      fprintf(stderr, "PMP count: %lld\n", pmp_count);
+      fprintf(stderr, "PMP count: %" PRIu64 "\n", pmp_count);
       if (pmp_count != 0 && pmp_count != 16 && pmp_count != 64) {
         fprintf(stderr, "invalid PMP count: must be 0, 16 or 64");
         exit(1);
@@ -299,7 +301,7 @@ static int process_args(int argc, char **argv)
       break;
     case OPT_PMP_GRAIN:
       pmp_grain = atol(optarg);
-      fprintf(stderr, "PMP grain: %lld\n", pmp_grain);
+      fprintf(stderr, "PMP grain: %" PRIu64 "\n", pmp_grain);
       if (pmp_grain >= 64) {
         fprintf(stderr, "invalid PMP grain: must less than 64");
         exit(1);
@@ -314,10 +316,10 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "enabling N extension.\n");
       rv_enable_next = true;
       break;
-    case 'M':
+    case 'Y':
       fprintf(stderr, "enabling pointer masking support.\n");
       rv_enable_pmm = true;
-      break;       
+      break;      
     case 'I':
       fprintf(stderr, "disabling writable misa CSR.\n");
       rv_enable_writable_misa = false;
@@ -391,6 +393,10 @@ static int process_args(int argc, char **argv)
       break;
     case 'l':
       insn_limit = atoi(optarg);
+      break;
+    case OPT_ENABLE_ZCB:
+      fprintf(stderr, "enabling Zcb extension.\n");
+      rv_enable_zcb = true;
       break;
     case 'x':
       fprintf(stderr, "enabling Zfinx support.\n");

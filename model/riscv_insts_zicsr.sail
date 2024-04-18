@@ -29,19 +29,17 @@ function readCSR csr : csreg -> xlenbits = {
     (0xF12,  _) => marchid,
     (0xF13,  _) => mimpid,
     (0xF14,  _) => mhartid,
-    (0x300,  _) => mstatus.bits(),
-    (0x301,  _) => misa.bits(),
-    (0x302,  _) => medeleg.bits(),
-    (0x303,  _) => mideleg.bits(),
-    (0x304,  _) => mie.bits(),
+    (0x300,  _) => mstatus.bits,
+    (0x301,  _) => misa.bits,
+    (0x302,  _) => medeleg.bits,
+    (0x303,  _) => mideleg.bits,
+    (0x304,  _) => mie.bits,
     (0x305,  _) => get_mtvec(),
-    (0x306,  _) => zero_extend(mcounteren.bits()),
-    (0x30A,  _) => menvcfg.bits()[sizeof(xlen) - 1 .. 0],
-    (0x747,  _) => mseccfg.bits()[sizeof(xlen) - 1 .. 0],    
-    (0x310, 32) => mstatush.bits(),
-    (0x31A, 32) => menvcfg.bits()[63 .. 32],
-    (0x757, 32) => mseccfg.bits()[63 .. 32],    
-    (0x320,  _) => zero_extend(mcountinhibit.bits()),
+    (0x306,  _) => zero_extend(mcounteren.bits),
+    (0x30A,  _) => menvcfg.bits[sizeof(xlen) - 1 .. 0],
+    (0x310, 32) => mstatush.bits,
+    (0x31A, 32) => menvcfg.bits[63 .. 32],
+    (0x320,  _) => zero_extend(mcountinhibit.bits),
 
     (0x340,  _) => mscratch,
     (0x341,  _) => get_xret_target(Machine) & pc_alignment_mask(),
@@ -56,6 +54,10 @@ function readCSR csr : csreg -> xlenbits = {
     (0x3C @ idx : bits(4),  _) => pmpReadAddrReg(unsigned(0b01 @ idx)),
     (0x3D @ idx : bits(4),  _) => pmpReadAddrReg(unsigned(0b10 @ idx)),
     (0x3E @ idx : bits(4),  _) => pmpReadAddrReg(unsigned(0b11 @ idx)),
+
+    /* machine protection */
+    (0x747,  _) => mseccfg.bits()[sizeof(xlen) - 1 .. 0],
+    (0x757, 32) => mseccfg.bits()[63 .. 32],
 
     /* machine mode counters */
     (0xB00,  _) => mcycle[(sizeof(xlen) - 1) .. 0],
@@ -117,26 +119,23 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
   let res : option(xlenbits) =
   match (csr, sizeof(xlen)) {
     /* machine mode */
-    (0x300,  _) => { mstatus = legalize_mstatus(mstatus, value); Some(mstatus.bits()) },
-    (0x301,  _) => { misa = legalize_misa(misa, value); Some(misa.bits()) },
-    (0x302,  _) => { medeleg = legalize_medeleg(medeleg, value); Some(medeleg.bits()) },
-    (0x303,  _) => { mideleg = legalize_mideleg(mideleg, value); Some(mideleg.bits()) },
-    (0x304,  _) => { mie = legalize_mie(mie, value); Some(mie.bits()) },
+    (0x300,  _) => { mstatus = legalize_mstatus(mstatus, value); Some(mstatus.bits) },
+    (0x301,  _) => { misa = legalize_misa(misa, value); Some(misa.bits) },
+    (0x302,  _) => { medeleg = legalize_medeleg(medeleg, value); Some(medeleg.bits) },
+    (0x303,  _) => { mideleg = legalize_mideleg(mideleg, value); Some(mideleg.bits) },
+    (0x304,  _) => { mie = legalize_mie(mie, value); Some(mie.bits) },
     (0x305,  _) => { Some(set_mtvec(value)) },
-    (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(zero_extend(mcounteren.bits())) },
-    (0x30A, 32) => { menvcfg = legalize_envcfg(menvcfg, menvcfg.bits()[63 .. 32] @ value); Some(menvcfg.bits()[31 .. 0]) },
-    (0x30A, 64) => { menvcfg = legalize_envcfg(menvcfg, value); Some(menvcfg.bits()) },
-    (0x747, 32) => { mseccfg = legalize_mseccfg(mseccfg, mseccfg.bits()[63 .. 32] @ value); Some(mseccfg.bits()[31 .. 0]) },
-    (0x747, 64) => { mseccfg = legalize_mseccfg(mseccfg, value); Some(mseccfg.bits()) },    
-    (0x310, 32) => { Some(mstatush.bits()) }, // ignore writes for now
-    (0x31A, 32) => { menvcfg = legalize_envcfg(menvcfg, value @ menvcfg.bits()[31 .. 0]); Some(menvcfg.bits()[63 .. 32]) },
-    (0x757, 32) => { mseccfg = legalize_mseccfg(mseccfg, value @ mseccfg.bits()[31 .. 0]); Some(mseccfg.bits()[63 .. 32]) },    
-    (0x320,  _) => { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Some(zero_extend(mcountinhibit.bits())) },
+    (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(zero_extend(mcounteren.bits)) },
+    (0x30A, 32) => { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); Some(menvcfg.bits[31 .. 0]) },
+    (0x30A, 64) => { menvcfg = legalize_menvcfg(menvcfg, value); Some(menvcfg.bits) },
+    (0x310, 32) => { Some(mstatush.bits) }, // ignore writes for now
+    (0x31A, 32) => { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); Some(menvcfg.bits[63 .. 32]) },
+    (0x320,  _) => { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Some(zero_extend(mcountinhibit.bits)) },
     (0x340,  _) => { mscratch = value; Some(mscratch) },
     (0x341,  _) => { Some(set_xret_target(Machine, value)) },
-    (0x342,  _) => { mcause->bits() = value; Some(mcause.bits()) },
+    (0x342,  _) => { mcause.bits = value; Some(mcause.bits) },
     (0x343,  _) => { mtval = value; Some(mtval) },
-    (0x344,  _) => { mip = legalize_mip(mip, value); Some(mip.bits()) },
+    (0x344,  _) => { mip = legalize_mip(mip, value); Some(mip.bits) },
 
     // pmpcfgN
     (0x3A @ idx : bits(4),  _) if idx[0] == bitzero | sizeof(xlen) == 32 => {
@@ -149,6 +148,11 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x3C @ idx : bits(4),  _) => { let idx = unsigned(0b01 @ idx); pmpWriteAddrReg(idx, value); Some(pmpReadAddrReg(idx)) },
     (0x3D @ idx : bits(4),  _) => { let idx = unsigned(0b10 @ idx); pmpWriteAddrReg(idx, value); Some(pmpReadAddrReg(idx)) },
     (0x3E @ idx : bits(4),  _) => { let idx = unsigned(0b11 @ idx); pmpWriteAddrReg(idx, value); Some(pmpReadAddrReg(idx)) },
+
+    /* machine protection */
+    (0x747, 32) => { mseccfg = legalize_mseccfg(mseccfg, mseccfg.bits()[63 .. 32] @ value); Some(mseccfg.bits()[31 .. 0]) },
+    (0x747, 64) => { mseccfg = legalize_mseccfg(mseccfg, value); Some(mseccfg.bits()) },
+    (0x757, 32) => { mseccfg = legalize_mseccfg(mseccfg, value @ mseccfg.bits()[31 .. 0]); Some(mseccfg.bits()[63 .. 32]) },
 
     /* machine mode counters */
     (0xB00,  _) => { mcycle[(sizeof(xlen) - 1) .. 0] = value; Some(value) },
@@ -166,7 +170,7 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x104,  _) => { mie = legalize_sie(mie, mideleg, value); Some(mie.bits) },
     (0x105,  _) => { Some(set_stvec(value)) },
     (0x106,  _) => { scounteren = legalize_scounteren(scounteren, value); Some(zero_extend(scounteren.bits)) },
-    (0x10A,  _) => { senvcfg = legalize_envcfg(senvcfg, zero_extend(value)); Some(senvcfg.bits[sizeof(xlen) - 1 .. 0]) },
+    (0x10A,  _) => { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); Some(senvcfg.bits[sizeof(xlen) - 1 .. 0]) },
     (0x140,  _) => { sscratch = value; Some(sscratch) },
     (0x141,  _) => { Some(set_xret_target(Supervisor, value)) },
     (0x142,  _) => { scause.bits = value; Some(scause.bits) },

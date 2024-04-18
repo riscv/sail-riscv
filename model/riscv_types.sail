@@ -28,7 +28,7 @@ type csreg   = bits(12)   /* CSR addressing */
 
 /* register file indexing */
 
-type regno ('n : Int), 0 <= 'n < 32 = atom('n)
+type regno ('n : Int), 0 <= 'n < 32 = int('n)
 
 val regidx_to_regno : bits(5) -> {'n, 0 <= 'n < 32. regno('n)}
 function regidx_to_regno b = let 'r = unsigned(b) in r
@@ -246,7 +246,7 @@ function exceptionType_to_str(e) =
     E_Breakpoint()         => "breakpoint",
     E_Load_Addr_Align()    => "misaligned-load",
     E_Load_Access_Fault()  => "load-access-fault",
-    E_SAMO_Addr_Align()    => "misaliged-store/amo",
+    E_SAMO_Addr_Align()    => "misaligned-store/amo",
     E_SAMO_Access_Fault()  => "store/amo-access-fault",
     E_U_EnvCall()          => "u-call",
     E_S_EnvCall()          => "s-call",
@@ -367,7 +367,8 @@ mapping bool_not_bits : bool <-> bits(1) = {
   false  <-> 0b1
 }
 
-mapping size_bits : word_width <-> bits(2) = {
+// Get the bit encoding of word_width.
+mapping size_enc : word_width <-> bits(2) = {
   BYTE   <-> 0b00,
   HALF   <-> 0b01,
   WORD   <-> 0b10,
@@ -381,12 +382,11 @@ mapping size_mnemonic : word_width <-> string = {
   DOUBLE <-> "d"
 }
 
-val word_width_bytes : word_width -> {'s, 's == 1 | 's == 2 | 's == 4 | 's == 8 . atom('s)}
-function word_width_bytes width = match width {
-  BYTE   => 1,
-  HALF   => 2,
-  WORD   => 4,
-  DOUBLE => 8
+mapping size_bytes : word_width <-> {1, 2, 4, 8} = {
+  BYTE   <-> 1,
+  HALF   <-> 2,
+  WORD   <-> 4,
+  DOUBLE <-> 8,
 }
 
 /*!

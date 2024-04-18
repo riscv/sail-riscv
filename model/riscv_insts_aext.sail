@@ -44,7 +44,7 @@ function amo_width_valid(size : word_width) -> bool = {
 union clause ast = LOADRES : (bool, bool, regidx, word_width, regidx)
 
 mapping clause encdec = LOADRES(aq, rl, rs1, size, rd) if amo_width_valid(size)
-  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111 if amo_width_valid(size)
+  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if amo_width_valid(size)
 
 
 /* We could set load-reservations on physical or virtual addresses.
@@ -61,7 +61,7 @@ function process_loadres(rd, addr, value, is_unsigned) =
   }
 
 function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
-  let pmm = is_pmm_active();  
+  let pmm = is_pmm_active();
   if haveAtomics() then {
     /* Get the address, X(rs1) (no offset).
      * Extensions might perform additional checks on address validity.
@@ -111,11 +111,11 @@ mapping clause assembly = LOADRES(aq, rl, rs1, size, rd)
 union clause ast = STORECON : (bool, bool, regidx, regidx, word_width, regidx)
 
 mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd) if amo_width_valid(size)
-  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111 if amo_width_valid(size)
+  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if amo_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful. This may need revisiting. */
 function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
-  let pmm = is_pmm_active(); 
+  let pmm = is_pmm_active();
   if speculate_conditional () == false then {
     /* should only happen in rmem
      * rmem: allow SC to fail very early
@@ -132,7 +132,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
       match ext_data_get_addr(rs1, zeros(), Write(Data), width) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
         Ext_DataAddr_OK(vaddr) => {
-          let  vaddr_ = transform_effective_address(vaddr, pmm);          
+          let  vaddr_ = transform_effective_address(vaddr, pmm);
           let aligned : bool =
             /* BYTE and HALF would only occur due to invalid decodes, but it doesn't hurt
              * to treat them as valid here; otherwise we'd need to throw an internal_error.
@@ -211,12 +211,12 @@ mapping encdec_amoop : amoop <-> bits(5) = {
 }
 
 mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd) if amo_width_valid(size)
-  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111 if amo_width_valid(size)
+  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if amo_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
 function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
-  let pmm = is_pmm_active();   
+  let pmm = is_pmm_active();
   if haveAtomics() then {
     /* Get the address, X(rs1) (no offset).
      * Some extensions perform additional checks on address validity.
@@ -224,7 +224,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
     match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width) {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
-        let  vaddr_ = transform_effective_address(vaddr, pmm) in          
+        let  vaddr_ = transform_effective_address(vaddr, pmm) in 
         match translateAddr(vaddr_, ReadWrite(Data, Data)) {
           TR_Failure(e, _) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
           TR_Address(addr, _) => {

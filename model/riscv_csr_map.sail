@@ -67,9 +67,8 @@ mapping clause csr_name_map = 0x304  <-> "mie"
 mapping clause csr_name_map = 0x305  <-> "mtvec"
 mapping clause csr_name_map = 0x306  <-> "mcounteren"
 mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
-/* machine configuration */
+/* machine envcfg */
 mapping clause csr_name_map = 0x30A  <-> "menvcfg"
-mapping clause csr_name_map = 0x747  <-> "mseccfg"
 /* machine trap handling */
 mapping clause csr_name_map = 0x340  <-> "mscratch"
 mapping clause csr_name_map = 0x341  <-> "mepc"
@@ -162,6 +161,8 @@ mapping clause csr_name_map = 0xB00  <-> "mcycle"
 mapping clause csr_name_map = 0xB02  <-> "minstret"
 mapping clause csr_name_map = 0xB80  <-> "mcycleh"
 mapping clause csr_name_map = 0xB82  <-> "minstreth"
+/* machine security */
+mapping clause csr_name_map = 0x747  <-> "mseccfg"
 /* TODO: other hpm counters and events */
 /* trigger/debug */
 mapping clause csr_name_map = 0x7a0  <-> "tselect"
