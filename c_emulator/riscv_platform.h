@@ -9,6 +9,7 @@ bool sys_enable_zcb(unit);
 bool sys_enable_zfinx(unit);
 bool sys_enable_writable_misa(unit);
 bool sys_enable_writable_fiom(unit);
+bool sys_enable_pmm(unit);
 bool sys_enable_vext(unit);
 bool sys_enable_bext(unit);
 bool sys_enable_zicbom(unit);

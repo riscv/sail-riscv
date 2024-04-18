@@ -321,6 +321,7 @@ function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
   not(plat_enable_misaligned_access()) & not(is_aligned(vaddr, width))
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
+  let pmm = is_pmm_active();
   let offset : xlenbits = sign_extend(imm);
   let width_bytes = size_bytes(width);
 
@@ -377,6 +378,7 @@ mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)        
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
 function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
+  let pmm = is_pmm_active();
   let offset : xlenbits = sign_extend(imm);
   let width_bytes = size_bytes(width);
 
@@ -388,20 +390,21 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
   match ext_data_get_addr(rs1, offset, Write(Data), width_bytes) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
-      if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
-      else match translateAddr(vaddr, Write(Data)) {
-        TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+      let  vaddr_ = transform_effective_address(vaddr, pmm) in
+      if   check_misaligned(vaddr_, width)
+      then { handle_mem_exception(vaddr_, E_SAMO_Addr_Align()); RETIRE_FAIL }
+      else match translateAddr(vaddr_, Write(Data)) {
+        TR_Failure(e, _)    => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
         TR_Address(paddr, _) => {
           let eares = mem_write_ea(paddr, width_bytes, aq, rl, false);
           match (eares) {
-            MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            MemException(e) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
             MemValue(_) => {
               let rs2_val = X(rs2);
               match mem_write_value(paddr, width_bytes, rs2_val[width_bytes * 8 - 1 .. 0], aq, rl, false) {
                 MemValue(true)  => RETIRE_SUCCESS,
                 MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                MemException(e) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL }
               }
             }
           }

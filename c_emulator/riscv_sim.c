@@ -145,6 +145,7 @@ static struct option options[] = {
     {"report-arch",                 no_argument,       0, 'a'                     },
     {"test-signature",              required_argument, 0, 'T'                     },
     {"signature-granularity",       required_argument, 0, 'g'                     },
+    {"enable-pmm",                  no_argument,       0, 'Y'                     },
 #ifdef RVFI_DII
     {"rvfi-dii",                    required_argument, 0, 'r'                     },
 #endif
@@ -156,6 +157,7 @@ static struct option options[] = {
     {"enable-zfinx",                no_argument,       0, 'x'                     },
     {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
     {"enable-svinval",              no_argument,       0, OPT_ENABLE_SVINVAL      },
+    {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},    
     {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
     {"enable-zicbom",               no_argument,       0, OPT_ENABLE_ZICBOM       },
     {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
@@ -289,6 +291,7 @@ static int process_args(int argc, char **argv)
                     "T:"
                     "g:"
                     "h"
+                    "Y"                    
 #ifdef RVFI_DII
                     "r:"
 #endif
@@ -344,6 +347,10 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "enabling N extension.\n");
       rv_enable_next = true;
       break;
+    case 'Y':
+      fprintf(stderr, "enabling pointer masking support.\n");
+      rv_enable_pmm = true;
+      break;      
     case 'I':
       fprintf(stderr, "disabling writable misa CSR.\n");
       rv_enable_writable_misa = false;

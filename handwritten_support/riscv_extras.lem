@@ -176,6 +176,9 @@ declare ocaml target_rep function sys_pmp_grain = `Platform.sys_pmp_grain`
 val sys_pmp_count : unit -> integer
 let sys_pmp_count () = 0
 declare ocaml target_rep function sys_pmp_count = `Platform.sys_pmp_count`
+val sys_enable_pmm : unit -> bool
+let sys_enable_pmm () = false
+declare ocaml target_rep function sys_enable_pmm = `Platform.enable_pmm`
 
 val plat_ram_base : unit -> bitvector
 let plat_ram_base () = []

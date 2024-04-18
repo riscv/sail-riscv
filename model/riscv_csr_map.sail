@@ -162,6 +162,8 @@ mapping clause csr_name_map = 0xB00  <-> "mcycle"
 mapping clause csr_name_map = 0xB02  <-> "minstret"
 mapping clause csr_name_map = 0xB80  <-> "mcycleh"
 mapping clause csr_name_map = 0xB82  <-> "minstreth"
+/* machine security */
+mapping clause csr_name_map = 0x747  <-> "mseccfg"
 /* TODO: other hpm counters and events */
 /* trigger/debug */
 mapping clause csr_name_map = 0x7a0  <-> "tselect"

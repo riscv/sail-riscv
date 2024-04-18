@@ -19,6 +19,7 @@ let config_enable_zicbom               = ref false
 let config_enable_zicboz               = ref false
 let config_pmp_count                   = ref Big_int.zero
 let config_pmp_grain                   = ref Big_int.zero
+let config_enable_pmm                  = ref false
 
 let set_config_pmp_count x = config_pmp_count := Big_int.of_int x
 let set_config_pmp_grain x = config_pmp_grain := Big_int.of_int x
@@ -106,6 +107,7 @@ let enable_svinval ()                = !config_enable_svinval
 let enable_zcb ()                    = !config_enable_zcb
 let enable_zfinx ()                  = false
 let enable_writable_fiom ()          = !config_enable_writable_fiom
+let enable_pmm ()                    = !config_enable_pmm
 let pmp_count ()                     = !config_pmp_count
 let pmp_grain ()                     = !config_pmp_grain
 

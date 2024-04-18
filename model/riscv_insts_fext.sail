@@ -315,26 +315,28 @@ function process_fload16(rd, addr, value) =
   }
 
 function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
+  let pmm = is_pmm_active();
   let offset : xlenbits = sign_extend(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
   match ext_data_get_addr(rs1, offset, Read(Data), size_bytes(width)) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
-      if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
-      else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+      let  vaddr_ = transform_effective_address(vaddr, pmm) in
+      if   check_misaligned(vaddr_, width)
+      then { handle_mem_exception(vaddr_, E_Load_Addr_Align()); RETIRE_FAIL }
+      else match translateAddr(vaddr_, Read(Data)) {
+        TR_Failure(e, _) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
         TR_Address(addr, _) => {
           let (aq, rl, res) = (false, false, false);
           match (width) {
             BYTE => { handle_illegal(); RETIRE_FAIL },
             HALF =>
-               process_fload16(rd, vaddr, mem_read(Read(Data), addr, 2, aq, rl, res)),
+               process_fload16(rd, vaddr_, mem_read(Read(Data), addr, 2, aq, rl, res)),
             WORD =>
-               process_fload32(rd, vaddr, mem_read(Read(Data), addr, 4, aq, rl, res)),
+               process_fload32(rd, vaddr_, mem_read(Read(Data), addr, 4, aq, rl, res)),
             DOUBLE if sizeof(flen) >= 64 =>
-               process_fload64(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, res)),
+               process_fload64(rd, vaddr_, mem_read(Read(Data), addr, 8, aq, rl, res)),
             _ => report_invalid_width(__FILE__, __LINE__, width, "floating point load"),
           }
         }
@@ -380,6 +382,7 @@ function process_fstore(vaddr, value) =
   }
 
 function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
+  let pmm = is_pmm_active();
   let offset : xlenbits = sign_extend(imm);
   let (aq, rl, con) = (false, false, false);
   /* Get the address, X(rs1) + offset.
@@ -387,10 +390,11 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
   match ext_data_get_addr(rs1, offset, Write(Data), size_bytes(width)) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
-      if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
-      else match translateAddr(vaddr, Write(Data)) {
-        TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+      let  vaddr_ = transform_effective_address(vaddr, pmm) in
+      if   check_misaligned(vaddr_, width)
+      then { handle_mem_exception(vaddr_, E_SAMO_Addr_Align()); RETIRE_FAIL }
+      else match translateAddr(vaddr_, Write(Data)) {
+        TR_Failure(e, _)    => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
         TR_Address(addr, _) => {
           let eares : MemoryOpResult(unit) = match width {
             BYTE   => MemValue () /* bogus placeholder for illegal size */,
@@ -399,15 +403,15 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
             DOUBLE => mem_write_ea(addr, 8, aq, rl, false)
           };
           match (eares) {
-            MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            MemException(e) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
             MemValue(_) => {
               let rs2_val = F(rs2);
               match (width) {
                 BYTE => { handle_illegal(); RETIRE_FAIL },
-                HALF => process_fstore (vaddr, mem_write_value(addr, 2, rs2_val[15..0], aq, rl, con)),
-                WORD => process_fstore (vaddr, mem_write_value(addr, 4, rs2_val[31..0], aq, rl, con)),
+                HALF => process_fstore (vaddr_, mem_write_value(addr, 2, rs2_val[15..0], aq, rl, con)),
+                WORD => process_fstore (vaddr_, mem_write_value(addr, 4, rs2_val[31..0], aq, rl, con)),
                 DOUBLE if sizeof(flen) >= 64 =>
-                  process_fstore (vaddr, mem_write_value(addr, 8, rs2_val, aq, rl, con)),
+                  process_fstore (vaddr_, mem_write_value(addr, 8, rs2_val, aq, rl, con)),
                 _ => report_invalid_width(__FILE__, __LINE__, width, "floating point store"),
               };
             }

@@ -57,6 +57,10 @@ function is_CSR_defined (csr : csreg) -> bool =
     0xB80 => sizeof(xlen) == 32, // mcycleh
     0xB82 => sizeof(xlen) == 32, // minstreth
 
+    /* machine protection */
+    0x747 => p == Machine, // mseccfg
+    0x757 => p == Machine & (sizeof(xlen) == 32), // mseccfgh      
+
     /* disabled trigger/debug module */
     0x7a0 => true,
 
@@ -541,6 +545,7 @@ function init_sys() -> unit = {
   minstret           = zero_extend(0b0);
   minstret_increment = true;
 
+  mseccfg.bits = zero_extend(0b0);
   menvcfg.bits = zero_extend(0b0);
   senvcfg.bits = zero_extend(0b0);
   /* initialize vector csrs */
