@@ -68,7 +68,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
             HALF   => vaddr[0..0] == 0b0,
             WORD   => vaddr[1..0] == 0b00,
             DOUBLE => vaddr[2..0] == 0b000,
-             QUAD   => vaddr[4..0] == 0b00000
+            QUAD   => vaddr[3..0] == 0b0000,
           };
       /* "LR faults like a normal load, even though it's in the AMO major opcode space."
         * - Andrew Waterman, isa-dev, 10 Jul 2018.
@@ -125,7 +125,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
             HALF   => vaddr[0..0] == 0b0,
             WORD   => vaddr[1..0] == 0b00,
             DOUBLE => vaddr[2..0] == 0b000,
-            QUAD   => vaddr[4..0] == 0b00000
+            QUAD   => vaddr[3..0] == 0b0000,
           };
         if not(aligned)
         then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }

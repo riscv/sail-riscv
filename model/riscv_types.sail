@@ -389,7 +389,7 @@ mapping size_mnemonic : word_width <-> string = {
   HALF   <-> "h",
   WORD   <-> "w",
   DOUBLE <-> "d",
-  QUAD   <-> "q"
+  QUAD   <-> "q",
 }
 
 mapping size_bytes : word_width <-> {1, 2, 4, 8, 16} = {
@@ -397,7 +397,7 @@ mapping size_bytes : word_width <-> {1, 2, 4, 8, 16} = {
   HALF   <-> 2,
   WORD   <-> 4,
   DOUBLE <-> 8,
-  QUAD   <-> 16
+  QUAD   <-> 16,
 }
 
 struct mul_op = {

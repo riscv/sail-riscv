@@ -318,9 +318,9 @@ function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
   else match width {
          BYTE   => false,
          HALF   => vaddr[0] == bitone,
-         WORD   => vaddr[0] == bitone | vaddr[1] == bitone,
-         DOUBLE => vaddr[0] == bitone | vaddr[1] == bitone | vaddr[2] == bitone,
-         QUAD   => vaddr[0] == bitone | vaddr[1] == bitone | vaddr[2] == bitone | vaddr[3] == bitone
+         WORD   => vaddr[1..0] != zeros(),
+         DOUBLE => vaddr[2..0] != zeros(),
+         QUAD   => vaddr[3..0] != zeros(),
        }
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
