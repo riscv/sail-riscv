@@ -327,9 +327,9 @@ function transform_VA (effective_address : xlenbits,PMLEN :int) -> xlenbits = {
   let XLEN = sizeof(xlen);
   let i = XLEN -(PMLEN +1);
   let effective_bit = effective_address[i..i];
-  let NVBITS = replicate_bits(effective_bit, PMLEN);
-  let VBITS = effective_address[i..0];
-  NVBITS @ VBITS
+  let masked_bits = replicate_bits(effective_bit, PMLEN);
+  let unmasked_bits = effective_address[i..0];
+  masked_bits @ unmasked_bits
 }
 
 function transform_PA (effective_address : xlenbits,PMLEN :int) -> xlenbits = {
@@ -337,9 +337,9 @@ function transform_PA (effective_address : xlenbits,PMLEN :int) -> xlenbits = {
   assert(PMLEN <= 63, "PMLEN out of range");
   let XLEN = sizeof(xlen);
   let i = XLEN -(PMLEN + 1);
-  let NVBITS = replicate_bits(0b0, PMLEN);
-  let VBITS = effective_address[i..0];
-  NVBITS @ VBITS
+  let masked_bits = replicate_bits(0b0, PMLEN);
+  let unmasked_bits = effective_address[i..0];
+  masked_bits @ unmasked_bits
 }
 
 function transform_effective_address(vaddr : xlenbits, pmm : bool) -> xlenbits = {
@@ -353,6 +353,12 @@ function transform_effective_address(vaddr : xlenbits, pmm : bool) -> xlenbits =
           (0b11) => transform_PA (vaddr,16),
         }
       },
+      (Sv39) => {
+        match (pmm_bits){
+          (0b10) => transform_VA (vaddr,7),
+          (0b11) => transform_VA (vaddr,16),          
+        }
+      },      
       (Sv48) => {
         match (pmm_bits){
           (0b10) => transform_VA (vaddr,7),
