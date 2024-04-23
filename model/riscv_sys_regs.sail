@@ -96,7 +96,7 @@ val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "
    supervisor mode is implemented and non-bare addressing modes are supported. */
 val sys_enable_writable_fiom = {c: "sys_enable_writable_fiom", ocaml: "Platform.enable_writable_fiom", _: "sys_enable_writable_fiom"} : unit -> bool
 /* whether the PME extension was enabled at boot */
-val sys_enable_pmm = {c: "sys_enable_pmm", ocaml: "Platform.enable_pmm", _: "sys_enable_pmm"} : unit -> bool
+val sys_enable_zpm = {c: "sys_enable_zpm", ocaml: "Platform.enable_zpm", _: "sys_enable_zpm"} : unit -> bool
 
 /* How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime). */
 val sys_pmp_count = {c: "sys_pmp_count", ocaml: "Platform.pmp_count", _: "sys_pmp_count"} : unit -> range(0, 64)
@@ -820,7 +820,7 @@ register senvcfg : SEnvcfg
 function legalize_mseccfg(o : MSeccfg, v : xlenbits) -> MSeccfg = {
   let v = Mk_MSeccfg(v);
   // Update PMM field only if Pointer Masking is enabled and Written value is legal
-  let o = [o with PMM  = if (sys_enable_pmm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];
+  let o = [o with PMM  = if (sys_enable_zpm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
@@ -829,7 +829,7 @@ function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
   // Update PMM field only if Pointer Masking is enabled and Written value is legal
-  let o = [o with PMM  = if (sys_enable_pmm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];
+  let o = [o with PMM  = if (sys_enable_zpm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
@@ -838,7 +838,7 @@ function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
   let v = Mk_SEnvcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
   // Update PMM field only if Pointer Masking is enabled and Written value is legal
-  let o = [o with PMM  = if (sys_enable_pmm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];  
+  let o = [o with PMM  = if (sys_enable_zpm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];  
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
@@ -886,7 +886,7 @@ function get_pmm() -> bits(2) = {
   match cur_privilege {
     Machine => mseccfg.PMM(),
     Supervisor => menvcfg.PMM(),
-    User => senvcfg.PMM(),
+    User => if haveSupMode() then senvcfg.PMM() else menvcfg.PMM(),
   }
 } 
 

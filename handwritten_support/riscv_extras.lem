@@ -169,6 +169,7 @@ val sys_enable_writable_fiom : unit -> bool
 let sys_enable_writable_fiom () = true
 declare ocaml target_rep function sys_enable_writable_fiom = `Platform.enable_writable_fiom`
 
+<<<<<<< HEAD
 val sys_pmp_grain : unit -> integer
 let sys_pmp_grain () = 0
 declare ocaml target_rep function sys_pmp_grain = `Platform.sys_pmp_grain`
@@ -179,6 +180,11 @@ declare ocaml target_rep function sys_pmp_count = `Platform.sys_pmp_count`
 val sys_enable_pmm : unit -> bool
 let sys_enable_pmm () = false
 declare ocaml target_rep function sys_enable_pmm = `Platform.enable_pmm`
+=======
+val sys_enable_zpm : unit -> bool
+let sys_enable_zpm () = false
+declare ocaml target_rep function sys_enable_zpm = `Platform.enable_zpm`
+>>>>>>> 717cb55 (Renamed pmm with zpm)
 
 val plat_ram_base : unit -> bitvector
 let plat_ram_base () = []
