@@ -145,7 +145,7 @@ static struct option options[] = {
     {"report-arch",                 no_argument,       0, 'a'                     },
     {"test-signature",              required_argument, 0, 'T'                     },
     {"signature-granularity",       required_argument, 0, 'g'                     },
-    {"enable-pmm",                  no_argument,       0, 'Y'                     },
+    {"enable-zpm",                  no_argument,       0, 'Y'                     },
 #ifdef RVFI_DII
     {"rvfi-dii",                    required_argument, 0, 'r'                     },
 #endif
@@ -349,7 +349,7 @@ static int process_args(int argc, char **argv)
       break;
     case 'Y':
       fprintf(stderr, "enabling pointer masking support.\n");
-      rv_enable_pmm = true;
+      rv_enable_zpm = true;
       break;      
     case 'I':
       fprintf(stderr, "disabling writable misa CSR.\n");

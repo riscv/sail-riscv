@@ -824,7 +824,7 @@ register senvcfg : SEnvcfg
 function legalize_mseccfg(o : MSeccfg, v : xlenbits) -> MSeccfg = {
   let v = Mk_MSeccfg(v);
   // Update PMM field only if Pointer Masking is enabled and Written value is legal
-  let o = [o with PMM  = if (sys_enable_pmm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];
+  let o = [o with PMM  = if (sys_enable_zpm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
@@ -833,7 +833,7 @@ function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
   // Update PMM field only if Pointer Masking is enabled and Written value is legal
-  let o = [o with PMM  = if (sys_enable_pmm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];
+  let o = [o with PMM  = if (sys_enable_zpm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
@@ -842,7 +842,7 @@ function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
   let v = Mk_SEnvcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
   // Update PMM field only if Pointer Masking is enabled and Written value is legal
-  let o = [o with PMM  = if (sys_enable_pmm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];  
+  let o = [o with PMM  = if (sys_enable_zpm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];  
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
@@ -890,7 +890,7 @@ function get_pmm() -> bits(2) = {
   match cur_privilege {
     Machine => mseccfg.PMM(),
     Supervisor => menvcfg.PMM(),
-    User => senvcfg.PMM(),
+    User => if haveSupMode() then senvcfg.PMM() else menvcfg.PMM(),
   }
 } 
 

@@ -318,7 +318,73 @@ function is_aligned(vaddr : xlenbits, width : word_width) -> bool =
 
 // Return true if the address is misaligned and we don't support misaligned access.
 function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
+<<<<<<< HEAD
   not(plat_enable_misaligned_access()) & not(is_aligned(vaddr, width))
+=======
+  if   plat_enable_misaligned_access() then false
+  else match width {
+         BYTE   => false,
+         HALF   => vaddr[0] == bitone,
+         WORD   => vaddr[0] == bitone | vaddr[1] == bitone,
+         DOUBLE => vaddr[0] == bitone | vaddr[1] == bitone | vaddr[2] == bitone
+       }
+function transform_VA (effective_address : xlenbits,PMLEN :int) -> xlenbits = {
+  assert(PMLEN >= 0, "PMLEN out of range");
+  assert(PMLEN <= 63, "PMLEN out of range");
+  let XLEN = sizeof(xlen);
+  let i = XLEN -(PMLEN +1);
+  let effective_bit = effective_address[i..i];
+  let masked_bits = replicate_bits(effective_bit, PMLEN);
+  let unmasked_bits = effective_address[i..0];
+  masked_bits @ unmasked_bits
+}
+
+function transform_PA (effective_address : xlenbits,PMLEN :int) -> xlenbits = {
+  assert(PMLEN >= 0, "PMLEN out of range");
+  assert(PMLEN <= 63, "PMLEN out of range");
+  let XLEN = sizeof(xlen);
+  let i = XLEN -(PMLEN + 1);
+  let masked_bits = replicate_bits(0b0, PMLEN);
+  let unmasked_bits = effective_address[i..0];
+  masked_bits @ unmasked_bits
+}
+
+function transform_effective_address(vaddr : xlenbits, pmm : bool) -> xlenbits = {
+ if pmm then {
+    let pmm_bits : bits(2) = get_pmm();
+    let mode : SATPMode = translationMode(cur_privilege);
+    match (mode) {
+      (Sbare) => {
+        match (pmm_bits){
+          (0b10) => transform_PA (vaddr,7),
+          (0b11) => transform_PA (vaddr,16),
+        }
+      },
+      (Sv39) => {
+        match (pmm_bits){
+          (0b10) => transform_VA (vaddr,7),
+          (0b11) => transform_VA (vaddr,16),          
+        }
+      },      
+      (Sv48) => {
+        match (pmm_bits){
+          (0b10) => transform_VA (vaddr,7),
+          (0b11) => transform_VA (vaddr,16),          
+        }
+      },
+      (Sv57) => {
+        match (pmm_bits){
+          (0b10) => transform_VA (vaddr,7),
+          (0b11) => transform_VA (vaddr,16),          
+        }
+      },
+    }
+ }
+ else {
+  vaddr //PMM is not active
+ }
+}
+>>>>>>> 717cb55 (Renamed pmm with zpm)
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   let pmm = is_pmm_active();
