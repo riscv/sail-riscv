@@ -2,7 +2,7 @@ RISCV Sail Model
 ================
 
 This repository contains a formal specification of the RISC-V architecture, written in
-[Sail](https://www.cl.cam.ac.uk/~pes20/sail/) ([repo](https://github.com/rems-project/sail)).   It has been adopted by the RISC-V Foundation.  As of 2021-08-24, the repo has been moved from <https://github.com/rems-project/sail-riscv> to <https://github.com/riscv/sail-riscv>.
+[Sail](https://github.com/rems-project/sail).   It has been adopted by the RISC-V Foundation.  As of 2021-08-24, the repo has been moved from <https://github.com/rems-project/sail-riscv> to <https://github.com/riscv/sail-riscv>.
 
 The model specifies
 assembly language formats of the instructions, the corresponding
@@ -30,33 +30,25 @@ This is one of [several formal models](https://github.com/riscv/ISA_Formal_Spec_
 What is Sail?
 -------------
 
-[Sail](https://www.cl.cam.ac.uk/~pes20/sail/) ([repo](https://github.com/rems-project/sail)) is a language for describing the instruction-set architecture
-(ISA) semantics of processors. Sail aims to provide a
-engineer-friendly, vendor-pseudocode-like language for describing
-instruction semantics. It is essentially a first-order imperative
-language, but with lightweight dependent typing for numeric types and
-bitvector lengths, which are automatically checked using Z3.
+[Sail](https://github.com/rems-project/sail) is a language for describing the instruction-set architecture
+(ISA) semantics of processors: the architectural specification of the behaviour of machine instructions. Sail is an
+engineer-friendly language, much like earlier vendor pseudocode, but more precisely defined and with tooling to support a wide range of use-cases.
 <p>
 
-Given a Sail definition, the tool will type-check it and generate
-LaTeX snippets to use in documentation, executable emulators (in C and OCaml), theorem-prover definitions for
-Isabelle, HOL4, and Coq, and definitions to integrate with our
-<a href="http://www.cl.cam.ac.uk/users/pes20/rmem">RMEM</a>
-and
-<a href="isla-axiomatic.cl.cam.ac.uk/">isla-axiomatic</a> tools for
-concurrency semantics.
+Given a Sail specification, the tool can type-check it, generate documentation snippets (in LaTeX or AsciiDoc), generate executable emulators (in C or OCaml), show specification coverage, generate versions of the ISA for relaxed memory model tools, support automated instruction-sequence test generation, generate  theorem-prover definitions for
+interactive proof (in Isabelle, HOL4, and Coq), support proof about binary code (in Islaris), and (in progress) generate a reference ISA model in SystemVerilog that can be used for formal hardware verification. 
 <p>
 
   <img width="800" src="https://www.cl.cam.ac.uk/~pes20/sail/overview-sail.png?">
 <p>
 
 Sail is being used for multiple ISA descriptions, including
-essentially complete versions of the sequential behaviour of Armv8-A
+essentially complete versions of the sequential behaviour of Arm-A
 (automatically derived from the authoritative Arm-internal
 specification, and released under a BSD Clear licence with Arm's
-permission), RISC-V, MIPS, CHERI-RISC-V, and CHERI-MIPS; all these are complete
+permission), RISC-V, CHERI-RISC-V, CHERIoT, MIPS, and CHERI-MIPS; all these are complete
 enough to boot various operating systems.  There are also Sail models
-for smaller fragments of IBM POWER and x86.
+for smaller fragments of IBM POWER and x86, including a version of the ACL2 x86 model automatically translated from that.
 
 
 
