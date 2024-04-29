@@ -30,198 +30,6 @@
 /* should have been processed before this one.                      */
 
 /* **************************************************************** */
-/* S and D value structure (sign, exponent, mantissa)               */
-
-/* TODO: this should be a 'mapping' */
-val      fsplit_D : bits(64) -> (bits(1), bits(11), bits(52))
-function fsplit_D   x64 = (x64[63..63], x64[62..52], x64[51..0])
-
-val      fmake_D  : (bits(1), bits(11), bits(52)) -> bits(64)
-function fmake_D (sign, exp, mant) = sign @ exp @ mant
-
-/* ---- Structure tests */
-
-val      f_is_neg_inf_D : bits(64) -> bool
-function f_is_neg_inf_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
-  (  (sign == 0b1)
-   & (exp  == ones())
-   & (mant == zeros()))
-}
-
-val      f_is_neg_norm_D : bits(64) -> bool
-function f_is_neg_norm_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
-  (  (sign == 0b1)
-   & (exp  != zeros())
-   & (exp  != ones()))
-}
-
-val      f_is_neg_subnorm_D : bits(64) -> bool
-function f_is_neg_subnorm_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
-  (  (sign == 0b1)
-   & (exp  == zeros())
-   & (mant != zeros()))
-}
-
-val      f_is_neg_zero_D : bits(64) -> bool
-function f_is_neg_zero_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
-  (  (sign == ones())
-   & (exp  == zeros())
-   & (mant == zeros()))
-}
-
-val      f_is_pos_zero_D : bits(64) -> bool
-function f_is_pos_zero_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
-  (  (sign == zeros())
-   & (exp  == zeros())
-   & (mant == zeros()))
-}
-
-val      f_is_pos_subnorm_D : bits(64) -> bool
-function f_is_pos_subnorm_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
-  (  (sign == zeros())
-   & (exp  == zeros())
-   & (mant != zeros()))
-}
-
-val      f_is_pos_norm_D : bits(64) -> bool
-function f_is_pos_norm_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
-  (  (sign == zeros())
-   & (exp  != zeros())
-   & (exp  != ones()))
-}
-
-val      f_is_pos_inf_D : bits(64) -> bool
-function f_is_pos_inf_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
-  (  (sign == zeros())
-   & (exp  == ones())
-   & (mant == zeros()))
-}
-
-val      f_is_SNaN_D : bits(64) -> bool
-function f_is_SNaN_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
-  (  (exp == ones())
-   & (mant [51] == bitzero)
-   & (mant != zeros()))
-}
-
-val      f_is_QNaN_D : bits(64) -> bool
-function f_is_QNaN_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
-  (  (exp == ones())
-   & (mant [51] == bitone))
-}
-
-/* Either QNaN or SNan */
-val      f_is_NaN_D : bits(64) -> bool
-function f_is_NaN_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
-  (  (exp == ones())
-   & (mant != zeros()))
-}
-
-
-/* **************************************************************** */
-/* Help functions used in the semantic functions                    */
-
-val      negate_D : bits(64) -> bits(64)
-function negate_D (x64) = {
-  let (sign, exp, mant) = fsplit_D (x64);
-  let new_sign = if (sign == 0b0) then 0b1 else 0b0;
-  fmake_D (new_sign, exp, mant)
-}
-
-val      feq_quiet_D : (bits(64), bits (64)) -> (bool, bits(5))
-function feq_quiet_D   (v1,       v2) = {
-  let (s1, e1, m1) = fsplit_D (v1);
-  let (s2, e2, m2) = fsplit_D (v2);
-
-  let v1Is0    = f_is_neg_zero_D(v1) | f_is_pos_zero_D(v1);
-  let v2Is0    = f_is_neg_zero_D(v2) | f_is_pos_zero_D(v2);
-
-  let result = ((v1 == v2) | (v1Is0 & v2Is0));
-
-  let fflags = if   (f_is_SNaN_D(v1) | f_is_SNaN_D(v2))
-               then nvFlag()
-               else zeros();
-
-  (result, fflags)
-}
-
-val      flt_D : (bits(64), bits (64), bool) -> (bool, bits(5))
-function flt_D   (v1,       v2,        is_quiet) = {
-  let (s1, e1, m1) = fsplit_D (v1);
-  let (s2, e2, m2) = fsplit_D (v2);
-
-  let result : bool =
-    if (s1 == 0b0) & (s2 == 0b0) then
-      if   (e1 == e2)
-      then unsigned (m1) < unsigned (m2)
-      else unsigned (e1) < unsigned (e2)
-    else if (s1 == 0b0) & (s2 == 0b1) then
-      false
-    else if (s1 == 0b1) & (s2 == 0b0) then
-      true
-    else
-      if   (e1 == e2)
-      then unsigned (m1) > unsigned (m2)
-      else unsigned (e1) > unsigned (e2);
-
-  let fflags = if is_quiet then
-                 if   (f_is_SNaN_D(v1) | f_is_SNaN_D(v2))
-                 then nvFlag()
-                 else zeros()
-               else
-                 if   (f_is_NaN_D(v1) | f_is_NaN_D(v2))
-                 then nvFlag()
-                 else zeros();
-
-  (result, fflags)
-}
-
-val      fle_D : (bits(64), bits (64), bool) -> (bool, bits(5))
-function fle_D   (v1,       v2,        is_quiet) = {
-  let (s1, e1, m1) = fsplit_D (v1);
-  let (s2, e2, m2) = fsplit_D (v2);
-
-  let v1Is0    = f_is_neg_zero_D(v1) | f_is_pos_zero_D(v1);
-  let v2Is0    = f_is_neg_zero_D(v2) | f_is_pos_zero_D(v2);
-
-  let result : bool =
-    if (s1 == 0b0) & (s2 == 0b0) then
-      if   (e1 == e2)
-      then unsigned (m1) <=  unsigned (m2)
-      else unsigned (e1)  <  unsigned (e2)
-    else if (s1 == 0b0) & (s2 == 0b1) then
-      (v1Is0 & v2Is0)                         /* Equal in this case (+0=-0) */
-    else if (s1 == 0b1) & (s2 == 0b0) then
-      true
-    else
-      if   (e1 == e2)
-      then unsigned (m1) >=  unsigned (m2)
-      else unsigned (e1)  >  unsigned (e2);
-
-  let fflags = if is_quiet then
-                 if   (f_is_SNaN_D(v1) | f_is_SNaN_D(v2))
-                 then nvFlag()
-                 else zeros()
-               else
-                 if   (f_is_NaN_D(v1) | f_is_NaN_D(v2))
-                 then nvFlag()
-                 else zeros();
-
-  (result, fflags)
-}
-
-/* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
 
 function haveDoubleFPU() -> bool = haveDExt() | haveZdinx()
@@ -272,9 +80,9 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)) = {
-  let rs1_val_64b = F_or_X_D(rs1);
-  let rs2_val_64b = F_or_X_D(rs2);
-  let rs3_val_64b = F_or_X_D(rs3);
+  let rs1_val_64b = F_or_X(64, rs1);
+  let rs2_val_64b = F_or_X(64, rs2);
+  let rs3_val_64b = F_or_X(64, rs3);
 
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -283,12 +91,12 @@ function clause execute (F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)) = {
       let (fflags, rd_val_64b) : (bits(5), bits(64)) =
         match op {
           FMADD_D  => riscv_f64MulAdd (rm_3b, rs1_val_64b, rs2_val_64b, rs3_val_64b),
-          FMSUB_D  => riscv_f64MulAdd (rm_3b, rs1_val_64b, rs2_val_64b, negate_D (rs3_val_64b)),
-          FNMSUB_D => riscv_f64MulAdd (rm_3b, negate_D (rs1_val_64b), rs2_val_64b, rs3_val_64b),
-          FNMADD_D => riscv_f64MulAdd (rm_3b, negate_D (rs1_val_64b), rs2_val_64b, negate_D (rs3_val_64b))
+          FMSUB_D  => riscv_f64MulAdd (rm_3b, rs1_val_64b, rs2_val_64b, f_negate (rs3_val_64b)),
+          FNMSUB_D => riscv_f64MulAdd (rm_3b, f_negate (rs1_val_64b), rs2_val_64b, rs3_val_64b),
+          FNMADD_D => riscv_f64MulAdd (rm_3b, f_negate (rs1_val_64b), rs2_val_64b, f_negate (rs3_val_64b))
         };
       accrue_fflags(fflags);
-      F_or_X_D(rd) = rd_val_64b;
+      F_or_X(rd) = rd_val_64b;
       RETIRE_SUCCESS
     }
   }
@@ -339,8 +147,8 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op)) = {
-  let rs1_val_64b = F_or_X_D(rs1);
-  let rs2_val_64b = F_or_X_D(rs2);
+  let rs1_val_64b = F_or_X(64, rs1);
+  let rs2_val_64b = F_or_X(64, rs2);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -352,7 +160,7 @@ function clause execute (F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op)) = {
         FDIV_D  => riscv_f64Div (rm_3b, rs1_val_64b, rs2_val_64b)
       };
       accrue_fflags(fflags);
-      F_or_X_D(rd) = rd_val_64b;
+      F_or_X(rd) = rd_val_64b;
       RETIRE_SUCCESS
     }
   }
@@ -432,7 +240,7 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FSQRT_D)) = {
-  let rs1_val_D = F_or_X_D(rs1);
+  let rs1_val_D = F_or_X(64, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -440,14 +248,14 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FSQRT_D)) = {
       let (fflags, rd_val_D) = riscv_f64Sqrt   (rm_3b, rs1_val_D);
 
       accrue_fflags(fflags);
-      F_or_X_D(rd) = rd_val_D;
+      F_or_X(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_W_D)) = {
-  let rs1_val_D = F_or_X_D(rs1);
+  let rs1_val_D = F_or_X(64, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -462,7 +270,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_W_D)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_WU_D)) = {
-  let rs1_val_D = F_or_X_D(rs1);
+  let rs1_val_D = F_or_X(64, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -485,7 +293,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_W)) = {
       let (fflags, rd_val_D) = riscv_i32ToF64 (rm_3b, rs1_val_W);
 
       accrue_fflags(fflags);
-      F_or_X_D(rd) = rd_val_D;
+      F_or_X(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
   }
@@ -500,14 +308,14 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_WU)) = {
       let (fflags, rd_val_D) = riscv_ui32ToF64 (rm_3b, rs1_val_WU);
 
       accrue_fflags(fflags);
-      F_or_X_D(rd) = rd_val_D;
+      F_or_X(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_S_D)) = {
-  let rs1_val_D = F_or_X_D(rs1);
+  let rs1_val_D = F_or_X(64, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -515,14 +323,14 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_S_D)) = {
       let (fflags, rd_val_S) = riscv_f64ToF32 (rm_3b, rs1_val_D);
 
       accrue_fflags(fflags);
-      F_or_X_S(rd) = rd_val_S;
+      F_or_X(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
+  let rs1_val_S = F_or_X(32, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -530,7 +338,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_S)) = {
       let (fflags, rd_val_D) = riscv_f32ToF64 (rm_3b, rs1_val_S);
 
       accrue_fflags(fflags);
-      F_or_X_D(rd) = rd_val_D;
+      F_or_X(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
   }
@@ -538,7 +346,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_S)) = {
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)) = {
   assert(sizeof(xlen) >= 64);
-  let rs1_val_D = F_or_X_D(rs1);
+  let rs1_val_D = F_or_X(64, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -554,7 +362,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)) = {
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_LU_D)) = {
   assert(sizeof(xlen) >= 64);
-  let rs1_val_D = F_or_X_D(rs1);
+  let rs1_val_D = F_or_X(64, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -578,7 +386,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_L)) = {
       let (fflags, rd_val_D) = riscv_i64ToF64 (rm_3b, rs1_val_L);
 
       accrue_fflags(fflags);
-      F_or_X_D(rd) = rd_val_D;
+      F_or_X(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
   }
@@ -594,7 +402,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_LU)) = {
       let (fflags, rd_val_D) = riscv_ui64ToF64 (rm_3b, rs1_val_LU);
 
       accrue_fflags(fflags);
-      F_or_X_D(rd) = rd_val_D;
+      F_or_X(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
   }
@@ -720,82 +528,82 @@ mapping clause encdec = F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)                 if hav
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJ_D)) = {
-  let rs1_val_D    = F_or_X_D(rs1);
-  let rs2_val_D    = F_or_X_D(rs2);
+  let rs1_val_D    = F_or_X(64, rs1);
+  let rs2_val_D    = F_or_X(64, rs2);
 
-  let (s1, e1, m1) = fsplit_D (rs1_val_D);
-  let (s2, e2, m2) = fsplit_D (rs2_val_D);
-  let rd_val_D     = fmake_D (s2, e1, m1);
+  let (s1, e1, m1) = fsplit (rs1_val_D);
+  let (s2, e2, m2) = fsplit (rs2_val_D);
+  let rd_val_D     = fmake (s2, e1, m1);
 
-  F_or_X_D(rd) = rd_val_D;
+  F_or_X(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJN_D)) = {
-  let rs1_val_D    = F_or_X_D(rs1);
-  let rs2_val_D    = F_or_X_D(rs2);
-  let (s1, e1, m1) = fsplit_D (rs1_val_D);
-  let (s2, e2, m2) = fsplit_D (rs2_val_D);
-  let rd_val_D     = fmake_D (0b1 ^ s2, e1, m1);
+  let rs1_val_D    = F_or_X(64, rs1);
+  let rs2_val_D    = F_or_X(64, rs2);
+  let (s1, e1, m1) = fsplit (rs1_val_D);
+  let (s2, e2, m2) = fsplit (rs2_val_D);
+  let rd_val_D     = fmake (0b1 ^ s2, e1, m1);
 
-  F_or_X_D(rd) = rd_val_D;
+  F_or_X(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJX_D)) = {
-  let rs1_val_D    = F_or_X_D(rs1);
-  let rs2_val_D    = F_or_X_D(rs2);
-  let (s1, e1, m1) = fsplit_D (rs1_val_D);
-  let (s2, e2, m2) = fsplit_D (rs2_val_D);
-  let rd_val_D     = fmake_D (s1 ^ s2, e1, m1);
+  let rs1_val_D    = F_or_X(64, rs1);
+  let rs2_val_D    = F_or_X(64, rs2);
+  let (s1, e1, m1) = fsplit (rs1_val_D);
+  let (s2, e2, m2) = fsplit (rs2_val_D);
+  let rd_val_D     = fmake (s1 ^ s2, e1, m1);
 
-  F_or_X_D(rd) = rd_val_D;
+  F_or_X(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMIN_D)) = {
-  let rs1_val_D = F_or_X_D(rs1);
-  let rs2_val_D = F_or_X_D(rs2);
+  let rs1_val_D = F_or_X(64, rs1);
+  let rs2_val_D = F_or_X(64, rs2);
 
   let is_quiet  = true;
-  let (rs1_lt_rs2, fflags) = fle_D (rs1_val_D, rs2_val_D, is_quiet);
+  let (rs1_lt_rs2, fflags) = fle(rs1_val_D, rs2_val_D, is_quiet);
 
-  let rd_val_D  = if      (f_is_NaN_D(rs1_val_D) & f_is_NaN_D(rs2_val_D))           then canonical_NaN_D()
-                  else if f_is_NaN_D(rs1_val_D)                                     then rs2_val_D
-                  else if f_is_NaN_D(rs2_val_D)                                     then rs1_val_D
-                  else if (f_is_neg_zero_D(rs1_val_D) & f_is_pos_zero_D(rs2_val_D)) then rs1_val_D
-                  else if (f_is_neg_zero_D(rs2_val_D) & f_is_pos_zero_D(rs1_val_D)) then rs2_val_D
-                  else if rs1_lt_rs2                                                then rs1_val_D
-                  else /* (not rs1_lt_rs2) */                                            rs2_val_D;
+  let rd_val_D  = if      (f_is_NaN(rs1_val_D) & f_is_NaN(rs2_val_D))           then canonical_NaN(64)
+                  else if f_is_NaN(rs1_val_D)                                   then rs2_val_D
+                  else if f_is_NaN(rs2_val_D)                                   then rs1_val_D
+                  else if (f_is_neg_zero(rs1_val_D) & f_is_pos_zero(rs2_val_D)) then rs1_val_D
+                  else if (f_is_neg_zero(rs2_val_D) & f_is_pos_zero(rs1_val_D)) then rs2_val_D
+                  else if rs1_lt_rs2                                            then rs1_val_D
+                  else /* (not rs1_lt_rs2) */                                        rs2_val_D;
 
   accrue_fflags(fflags);
-  F_or_X_D(rd) = rd_val_D;
+  F_or_X(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FMAX_D)) = {
-  let rs1_val_D = F_or_X_D(rs1);
-  let rs2_val_D = F_or_X_D(rs2);
+  let rs1_val_D = F_or_X(64, rs1);
+  let rs2_val_D = F_or_X(64, rs2);
 
   let is_quiet  = true;
-  let (rs2_lt_rs1, fflags) = fle_D (rs2_val_D, rs1_val_D, is_quiet);
+  let (rs2_lt_rs1, fflags) = fle(rs2_val_D, rs1_val_D, is_quiet);
 
-  let rd_val_D  = if      (f_is_NaN_D(rs1_val_D) & f_is_NaN_D(rs2_val_D))           then canonical_NaN_D()
-                  else if f_is_NaN_D(rs1_val_D)                                     then rs2_val_D
-                  else if f_is_NaN_D(rs2_val_D)                                     then rs1_val_D
-                  else if (f_is_neg_zero_D(rs1_val_D) & f_is_pos_zero_D(rs2_val_D)) then rs2_val_D
-                  else if (f_is_neg_zero_D(rs2_val_D) & f_is_pos_zero_D(rs1_val_D)) then rs1_val_D
-                  else if rs2_lt_rs1                                                then rs1_val_D
-                  else /* (not rs2_lt_rs1) */                                            rs2_val_D;
+  let rd_val_D  = if      (f_is_NaN(rs1_val_D) & f_is_NaN(rs2_val_D))           then canonical_NaN(64)
+                  else if f_is_NaN(rs1_val_D)                                   then rs2_val_D
+                  else if f_is_NaN(rs2_val_D)                                   then rs1_val_D
+                  else if (f_is_neg_zero(rs1_val_D) & f_is_pos_zero(rs2_val_D)) then rs2_val_D
+                  else if (f_is_neg_zero(rs2_val_D) & f_is_pos_zero(rs1_val_D)) then rs1_val_D
+                  else if rs2_lt_rs1                                            then rs1_val_D
+                  else /* (not rs2_lt_rs1) */                                        rs2_val_D;
 
   accrue_fflags(fflags);
-  F_or_X_D(rd) = rd_val_D;
+  F_or_X(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
-  let rs1_val_D = F_or_X_D(rs1);
-  let rs2_val_D = F_or_X_D(rs2);
+  let rs1_val_D = F_or_X(64, rs1);
+  let rs2_val_D = F_or_X(64, rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Eq (rs1_val_D, rs2_val_D);
@@ -806,8 +614,8 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)) = {
-  let rs1_val_D = F_or_X_D(rs1);
-  let rs2_val_D = F_or_X_D(rs2);
+  let rs1_val_D = F_or_X(64, rs1);
+  let rs2_val_D = F_or_X(64, rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Lt (rs1_val_D, rs2_val_D);
@@ -818,8 +626,8 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLT_D)) = {
 }
 
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FLE_D)) = {
-  let rs1_val_D = F_or_X_D(rs1);
-  let rs2_val_D = F_or_X_D(rs2);
+  let rs1_val_D = F_or_X(64, rs1);
+  let rs2_val_D = F_or_X(64, rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Le (rs1_val_D, rs2_val_D);
@@ -911,19 +719,19 @@ mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_D_X)                         if
 /* Execution semantics ================================ */
 
 function clause execute (F_UN_TYPE_D(rs1, rd, FCLASS_D)) = {
-  let rs1_val_D = F_or_X_D(rs1);
+  let rs1_val_D = F_or_X(64, rs1);
 
   let rd_val_10b : bits (10) =
-    if      f_is_neg_inf_D     (rs1_val_D) then 0b_00_0000_0001
-    else if f_is_neg_norm_D    (rs1_val_D) then 0b_00_0000_0010
-    else if f_is_neg_subnorm_D (rs1_val_D) then 0b_00_0000_0100
-    else if f_is_neg_zero_D    (rs1_val_D) then 0b_00_0000_1000
-    else if f_is_pos_zero_D    (rs1_val_D) then 0b_00_0001_0000
-    else if f_is_pos_subnorm_D (rs1_val_D) then 0b_00_0010_0000
-    else if f_is_pos_norm_D    (rs1_val_D) then 0b_00_0100_0000
-    else if f_is_pos_inf_D     (rs1_val_D) then 0b_00_1000_0000
-    else if f_is_SNaN_D        (rs1_val_D) then 0b_01_0000_0000
-    else if f_is_QNaN_D        (rs1_val_D) then 0b_10_0000_0000
+    if      f_is_neg_inf     (rs1_val_D) then 0b_00_0000_0001
+    else if f_is_neg_norm    (rs1_val_D) then 0b_00_0000_0010
+    else if f_is_neg_subnorm (rs1_val_D) then 0b_00_0000_0100
+    else if f_is_neg_zero    (rs1_val_D) then 0b_00_0000_1000
+    else if f_is_pos_zero    (rs1_val_D) then 0b_00_0001_0000
+    else if f_is_pos_subnorm (rs1_val_D) then 0b_00_0010_0000
+    else if f_is_pos_norm    (rs1_val_D) then 0b_00_0100_0000
+    else if f_is_pos_inf     (rs1_val_D) then 0b_00_1000_0000
+    else if f_is_SNaN        (rs1_val_D) then 0b_01_0000_0000
+    else if f_is_QNaN        (rs1_val_D) then 0b_10_0000_0000
     else zeros();
 
   X(rd) = zero_extend (rd_val_10b);

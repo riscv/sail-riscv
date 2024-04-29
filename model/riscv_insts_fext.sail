@@ -57,206 +57,6 @@ function select_instr_or_fcsr_rm instr_rm =
   else Some(instr_rm)
 
 /* **************************************************************** */
-/* Floating point accrued exception flags                           */
-
-function nxFlag() -> bits(5) = 0b_00001
-function ufFlag() -> bits(5) = 0b_00010
-function ofFlag() -> bits(5) = 0b_00100
-function dzFlag() -> bits(5) = 0b_01000
-function nvFlag() -> bits(5) = 0b_10000
-
-/* **************************************************************** */
-/* S and D value structure (sign, exponent, mantissa)               */
-
-/* TODO: this should be a 'mapping' */
-val      fsplit_S : bits(32) -> (bits(1), bits(8), bits(23))
-function fsplit_S   x32 = (x32[31..31], x32[30..23], x32[22..0])
-
-val      fmake_S  : (bits(1), bits(8), bits(23)) -> bits(32)
-function fmake_S (sign, exp, mant) = sign @ exp @ mant
-
-/* ---- Structure tests */
-
-val      f_is_neg_inf_S : bits(32) -> bool
-function f_is_neg_inf_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == 0b1)
-   & (exp  == ones())
-   & (mant == zeros()))
-}
-
-val      f_is_neg_norm_S : bits(32) -> bool
-function f_is_neg_norm_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == 0b1)
-   & (exp  != zeros())
-   & (exp  != ones()))
-}
-
-val      f_is_neg_subnorm_S : bits(32) -> bool
-function f_is_neg_subnorm_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == 0b1)
-   & (exp  == zeros())
-   & (mant != zeros()))
-}
-
-val      f_is_neg_zero_S : bits(32) -> bool
-function f_is_neg_zero_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == ones())
-   & (exp  == zeros())
-   & (mant == zeros()))
-}
-
-val      f_is_pos_zero_S : bits(32) -> bool
-function f_is_pos_zero_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == zeros())
-   & (exp  == zeros())
-   & (mant == zeros()))
-}
-
-val      f_is_pos_subnorm_S : bits(32) -> bool
-function f_is_pos_subnorm_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == zeros())
-   & (exp  == zeros())
-   & (mant != zeros()))
-}
-
-val      f_is_pos_norm_S : bits(32) -> bool
-function f_is_pos_norm_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == zeros())
-   & (exp  != zeros())
-   & (exp  != ones()))
-}
-
-val      f_is_pos_inf_S : bits(32) -> bool
-function f_is_pos_inf_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (sign == zeros())
-   & (exp  == ones())
-   & (mant == zeros()))
-}
-
-val      f_is_SNaN_S : bits(32) -> bool
-function f_is_SNaN_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (exp == ones())
-   & (mant [22] == bitzero)
-   & (mant != zeros()))
-}
-
-val      f_is_QNaN_S : bits(32) -> bool
-function f_is_QNaN_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (exp == ones())
-   & (mant [22] == bitone))
-}
-
-/* Either QNaN or SNan */
-val      f_is_NaN_S : bits(32) -> bool
-function f_is_NaN_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  (  (exp == ones())
-   & (mant != zeros()))
-}
-
-/* **************************************************************** */
-/* Help functions used in the semantic functions                    */
-
-val      negate_S : bits(32) -> bits(32)
-function negate_S (x32) = {
-  let (sign, exp, mant) = fsplit_S (x32);
-  let new_sign = if (sign == 0b0) then 0b1 else 0b0;
-  fmake_S (new_sign, exp, mant)
-}
-
-val      feq_quiet_S : (bits(32), bits (32)) -> (bool, bits(5))
-function feq_quiet_S   (v1,       v2) = {
-  let (s1, e1, m1) = fsplit_S (v1);
-  let (s2, e2, m2) = fsplit_S (v2);
-
-  let v1Is0    = f_is_neg_zero_S(v1) | f_is_pos_zero_S(v1);
-  let v2Is0    = f_is_neg_zero_S(v2) | f_is_pos_zero_S(v2);
-
-  let result = ((v1 == v2) | (v1Is0 & v2Is0));
-
-  let fflags = if   (f_is_SNaN_S(v1) | f_is_SNaN_S(v2))
-               then nvFlag()
-               else zeros();
-
-  (result, fflags)
-}
-
-val      flt_S : (bits(32), bits (32), bool) -> (bool, bits(5))
-function flt_S   (v1,       v2,        is_quiet) = {
-  let (s1, e1, m1) = fsplit_S (v1);
-  let (s2, e2, m2) = fsplit_S (v2);
-
-  let result : bool =
-    if (s1 == 0b0) & (s2 == 0b0) then
-      if   (e1 == e2)
-      then unsigned (m1) < unsigned (m2)
-      else unsigned (e1) < unsigned (e2)
-    else if (s1 == 0b0) & (s2 == 0b1)
-    then false
-    else if (s1 == 0b1) & (s2 == 0b0)
-    then true
-    else
-        if   (e1 == e2)
-        then unsigned (m1) > unsigned (m2)
-        else unsigned (e1) > unsigned (e2);
-
-  let fflags = if is_quiet then
-                 if   (f_is_SNaN_S(v1) | f_is_SNaN_S(v2))
-                 then nvFlag()
-                 else zeros()
-               else
-                 if   (f_is_NaN_S(v1) | f_is_NaN_S(v2))
-                 then nvFlag()
-                 else zeros();
-
-  (result, fflags)
-}
-
-val      fle_S : (bits(32), bits (32), bool) -> (bool, bits(5))
-function fle_S   (v1,       v2,        is_quiet) = {
-  let (s1, e1, m1) = fsplit_S (v1);
-  let (s2, e2, m2) = fsplit_S (v2);
-
-  let v1Is0    = f_is_neg_zero_S(v1) | f_is_pos_zero_S(v1);
-  let v2Is0    = f_is_neg_zero_S(v2) | f_is_pos_zero_S(v2);
-
-  let result : bool =
-    if (s1 == 0b0) & (s2 == 0b0) then
-      if   (e1 == e2)
-      then unsigned (m1) <=  unsigned (m2)
-      else unsigned (e1)  <  unsigned (e2)
-    else if (s1 == 0b0) & (s2 == 0b1)
-    then (v1Is0 & v2Is0)                         /* Equal in this case (+0=-0) */
-    else if (s1 == 0b1) & (s2 == 0b0)
-    then true
-    else
-      if   (e1 == e2)
-      then unsigned (m1) >=  unsigned (m2)
-      else unsigned (e1)  >  unsigned (e2);
-
-  let fflags = if is_quiet then
-                 if   (f_is_SNaN_S(v1) | f_is_SNaN_S(v2))
-                 then nvFlag()
-                 else zeros()
-               else
-                 if   (f_is_NaN_S(v1) | f_is_NaN_S(v2))
-                 then nvFlag()
-                 else zeros();
-
-  (result, fflags)
-}
-
-/* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
 
 function haveSingleFPU() -> bool = haveFExt() | haveZfinx()
@@ -450,9 +250,9 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)) = {
-  let rs1_val_32b = F_or_X_S(rs1);
-  let rs2_val_32b = F_or_X_S(rs2);
-  let rs3_val_32b = F_or_X_S(rs3);
+  let rs1_val_32b = F_or_X(32, rs1);
+  let rs2_val_32b = F_or_X(32, rs2);
+  let rs3_val_32b = F_or_X(32, rs3);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -460,12 +260,12 @@ function clause execute (F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)) = {
       let (fflags, rd_val_32b) : (bits(5), bits(32)) =
         match op {
           FMADD_S  => riscv_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, rs3_val_32b),
-          FMSUB_S  => riscv_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, negate_S (rs3_val_32b)),
-          FNMSUB_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, rs3_val_32b),
-          FNMADD_S => riscv_f32MulAdd (rm_3b, negate_S (rs1_val_32b), rs2_val_32b, negate_S (rs3_val_32b))
+          FMSUB_S  => riscv_f32MulAdd (rm_3b, rs1_val_32b, rs2_val_32b, f_negate (rs3_val_32b)),
+          FNMSUB_S => riscv_f32MulAdd (rm_3b, f_negate (rs1_val_32b), rs2_val_32b, rs3_val_32b),
+          FNMADD_S => riscv_f32MulAdd (rm_3b, f_negate (rs1_val_32b), rs2_val_32b, f_negate (rs3_val_32b))
         };
       accrue_fflags(fflags);
-      F_or_X_S(rd) = rd_val_32b;
+      F_or_X(rd) = rd_val_32b;
       RETIRE_SUCCESS
     }
   }
@@ -516,8 +316,8 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)) = {
-  let rs1_val_32b = F_or_X_S(rs1);
-  let rs2_val_32b = F_or_X_S(rs2);
+  let rs1_val_32b = F_or_X(32, rs1);
+  let rs2_val_32b = F_or_X(32, rs2);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -529,7 +329,7 @@ function clause execute (F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)) = {
         FDIV_S  => riscv_f32Div (rm_3b, rs1_val_32b, rs2_val_32b)
       };
       accrue_fflags(fflags);
-      F_or_X_S(rd) = rd_val_32b;
+      F_or_X(rd) = rd_val_32b;
       RETIRE_SUCCESS
     }
   }
@@ -601,7 +401,7 @@ mapping clause encdec =
 /* Execution semantics ================================ */
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
+  let rs1_val_S = F_or_X(32, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -609,14 +409,14 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)) = {
       let (fflags, rd_val_S) = riscv_f32Sqrt   (rm_3b, rs1_val_S);
 
       accrue_fflags(fflags);
-      F_or_X_S(rd) = rd_val_S;
+      F_or_X(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
   }
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
+  let rs1_val_S = F_or_X(32, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -631,7 +431,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
+  let rs1_val_S = F_or_X(32, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -654,7 +454,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_W)) = {
       let (fflags, rd_val_S) = riscv_i32ToF32 (rm_3b, rs1_val_W);
 
       accrue_fflags(fflags);
-      F_or_X_S(rd) = rd_val_S;
+      F_or_X(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
   }
@@ -669,7 +469,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
       let (fflags, rd_val_S) = riscv_ui32ToF32 (rm_3b, rs1_val_WU);
 
       accrue_fflags(fflags);
-      F_or_X_S(rd) = rd_val_S;
+      F_or_X(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
   }
@@ -677,7 +477,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
   assert(sizeof(xlen) >= 64);
-  let rs1_val_S = F_or_X_S(rs1);
+  let rs1_val_S = F_or_X(32, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -693,7 +493,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
   assert(sizeof(xlen) >= 64);
-  let rs1_val_S = F_or_X_S(rs1);
+  let rs1_val_S = F_or_X(32, rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
     Some(rm') => {
@@ -717,7 +517,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
       let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
 
       accrue_fflags(fflags);
-      F_or_X_S(rd) = rd_val_S;
+      F_or_X(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
   }
@@ -733,7 +533,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
       let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
 
       accrue_fflags(fflags);
-      F_or_X_S(rd) = rd_val_S;
+      F_or_X(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
   }
@@ -845,81 +645,81 @@ mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)                 if hav
 /* Execution semantics ================================ */
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)) = {
-  let rs1_val_S    = F_or_X_S(rs1);
-  let rs2_val_S    = F_or_X_S(rs2);
-  let (s1, e1, m1) = fsplit_S (rs1_val_S);
-  let (s2, e2, m2) = fsplit_S (rs2_val_S);
-  let rd_val_S     = fmake_S (s2, e1, m1);
+  let rs1_val_S    = F_or_X(32, rs1);
+  let rs2_val_S    = F_or_X(32, rs2);
+  let (s1, e1, m1) = fsplit (rs1_val_S);
+  let (s2, e2, m2) = fsplit (rs2_val_S);
+  let rd_val_S     = fmake (s2, e1, m1);
 
-  F_or_X_S(rd) = rd_val_S;
+  F_or_X(rd) = rd_val_S;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)) = {
-  let rs1_val_S    = F_or_X_S(rs1);
-  let rs2_val_S    = F_or_X_S(rs2);
-  let (s1, e1, m1) = fsplit_S (rs1_val_S);
-  let (s2, e2, m2) = fsplit_S (rs2_val_S);
-  let rd_val_S     = fmake_S (0b1 ^ s2, e1, m1);
+  let rs1_val_S    = F_or_X(32, rs1);
+  let rs2_val_S    = F_or_X(32, rs2);
+  let (s1, e1, m1) = fsplit (rs1_val_S);
+  let (s2, e2, m2) = fsplit (rs2_val_S);
+  let rd_val_S     = fmake (0b1 ^ s2, e1, m1);
 
-  F_or_X_S(rd) = rd_val_S;
+  F_or_X(rd) = rd_val_S;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)) = {
-  let rs1_val_S    = F_or_X_S(rs1);
-  let rs2_val_S    = F_or_X_S(rs2);
-  let (s1, e1, m1) = fsplit_S (rs1_val_S);
-  let (s2, e2, m2) = fsplit_S (rs2_val_S);
-  let rd_val_S     = fmake_S (s1 ^ s2, e1, m1);
+  let rs1_val_S    = F_or_X(32, rs1);
+  let rs2_val_S    = F_or_X(32, rs2);
+  let (s1, e1, m1) = fsplit (rs1_val_S);
+  let (s2, e2, m2) = fsplit (rs2_val_S);
+  let rd_val_S     = fmake (s1 ^ s2, e1, m1);
 
-  F_or_X_S(rd) = rd_val_S;
+  F_or_X(rd) = rd_val_S;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
-  let rs2_val_S = F_or_X_S(rs2);
+  let rs1_val_S = F_or_X(32, rs1);
+  let rs2_val_S = F_or_X(32, rs2);
 
   let is_quiet  = true;
-  let (rs1_lt_rs2, fflags) = fle_S (rs1_val_S, rs2_val_S, is_quiet);
+  let (rs1_lt_rs2, fflags) = fle(rs1_val_S, rs2_val_S, is_quiet);
 
-  let rd_val_S  = if      (f_is_NaN_S(rs1_val_S) & f_is_NaN_S(rs2_val_S))           then canonical_NaN_S()
-                  else if f_is_NaN_S(rs1_val_S)                                     then rs2_val_S
-                  else if f_is_NaN_S(rs2_val_S)                                     then rs1_val_S
-                  else if (f_is_neg_zero_S(rs1_val_S) & f_is_pos_zero_S(rs2_val_S)) then rs1_val_S
-                  else if (f_is_neg_zero_S(rs2_val_S) & f_is_pos_zero_S(rs1_val_S)) then rs2_val_S
-                  else if rs1_lt_rs2                                                then rs1_val_S
-                  else /* (not rs1_lt_rs2) */                                            rs2_val_S;
+  let rd_val_S  = if      (f_is_NaN(rs1_val_S) & f_is_NaN(rs2_val_S))           then canonical_NaN(32)
+                  else if f_is_NaN(rs1_val_S)                                   then rs2_val_S
+                  else if f_is_NaN(rs2_val_S)                                   then rs1_val_S
+                  else if (f_is_neg_zero(rs1_val_S) & f_is_pos_zero(rs2_val_S)) then rs1_val_S
+                  else if (f_is_neg_zero(rs2_val_S) & f_is_pos_zero(rs1_val_S)) then rs2_val_S
+                  else if rs1_lt_rs2                                            then rs1_val_S
+                  else /* (not rs1_lt_rs2) */                                        rs2_val_S;
 
   accrue_fflags(fflags);
-  F_or_X_S(rd) = rd_val_S;
+  F_or_X(rd) = rd_val_S;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
-  let rs2_val_S = F_or_X_S(rs2);
+  let rs1_val_S = F_or_X(32, rs1);
+  let rs2_val_S = F_or_X(32, rs2);
 
   let is_quiet  = true;
-  let (rs2_lt_rs1, fflags) = fle_S (rs2_val_S, rs1_val_S, is_quiet);
+  let (rs2_lt_rs1, fflags) = fle(rs2_val_S, rs1_val_S, is_quiet);
 
-  let rd_val_S  = if      (f_is_NaN_S(rs1_val_S) & f_is_NaN_S(rs2_val_S))           then canonical_NaN_S()
-                  else if f_is_NaN_S(rs1_val_S)                                     then rs2_val_S
-                  else if f_is_NaN_S(rs2_val_S)                                     then rs1_val_S
-                  else if (f_is_neg_zero_S(rs1_val_S) & f_is_pos_zero_S(rs2_val_S)) then rs2_val_S
-                  else if (f_is_neg_zero_S(rs2_val_S) & f_is_pos_zero_S(rs1_val_S)) then rs1_val_S
-                  else if rs2_lt_rs1                                                then rs1_val_S
-                  else /* (not rs2_lt_rs1) */                                            rs2_val_S;
+  let rd_val_S  = if      (f_is_NaN(rs1_val_S) & f_is_NaN(rs2_val_S))           then canonical_NaN(32)
+                  else if f_is_NaN(rs1_val_S)                                   then rs2_val_S
+                  else if f_is_NaN(rs2_val_S)                                   then rs1_val_S
+                  else if (f_is_neg_zero(rs1_val_S) & f_is_pos_zero(rs2_val_S)) then rs2_val_S
+                  else if (f_is_neg_zero(rs2_val_S) & f_is_pos_zero(rs1_val_S)) then rs1_val_S
+                  else if rs2_lt_rs1                                            then rs1_val_S
+                  else /* (not rs2_lt_rs1) */                                        rs2_val_S;
 
   accrue_fflags(fflags);
-  F_or_X_S(rd) = rd_val_S;
+  F_or_X(rd) = rd_val_S;
   RETIRE_SUCCESS
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
-  let rs2_val_S = F_or_X_S(rs2);
+  let rs1_val_S = F_or_X(32, rs1);
+  let rs2_val_S = F_or_X(32, rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Eq (rs1_val_S, rs2_val_S);
@@ -930,8 +730,8 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
-  let rs2_val_S = F_or_X_S(rs2);
+  let rs1_val_S = F_or_X(32, rs1);
+  let rs2_val_S = F_or_X(32, rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Lt (rs1_val_S, rs2_val_S);
@@ -942,8 +742,8 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)) = {
 }
 
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
-  let rs2_val_S = F_or_X_S(rs2);
+  let rs1_val_S = F_or_X(32, rs1);
+  let rs2_val_S = F_or_X(32, rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Le (rs1_val_S, rs2_val_S);
@@ -1033,19 +833,19 @@ mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_W_X)                         if
 /* Execution semantics ================================ */
 
 function clause execute (F_UN_TYPE_S(rs1, rd, FCLASS_S)) = {
-  let rs1_val_S = F_or_X_S(rs1);
+  let rs1_val_S = F_or_X(32, rs1);
 
   let rd_val_10b : bits (10) =
-    if      f_is_neg_inf_S     (rs1_val_S) then 0b_00_0000_0001
-    else if f_is_neg_norm_S    (rs1_val_S) then 0b_00_0000_0010
-    else if f_is_neg_subnorm_S (rs1_val_S) then 0b_00_0000_0100
-    else if f_is_neg_zero_S    (rs1_val_S) then 0b_00_0000_1000
-    else if f_is_pos_zero_S    (rs1_val_S) then 0b_00_0001_0000
-    else if f_is_pos_subnorm_S (rs1_val_S) then 0b_00_0010_0000
-    else if f_is_pos_norm_S    (rs1_val_S) then 0b_00_0100_0000
-    else if f_is_pos_inf_S     (rs1_val_S) then 0b_00_1000_0000
-    else if f_is_SNaN_S        (rs1_val_S) then 0b_01_0000_0000
-    else if f_is_QNaN_S        (rs1_val_S) then 0b_10_0000_0000
+    if      f_is_neg_inf     (rs1_val_S) then 0b_00_0000_0001
+    else if f_is_neg_norm    (rs1_val_S) then 0b_00_0000_0010
+    else if f_is_neg_subnorm (rs1_val_S) then 0b_00_0000_0100
+    else if f_is_neg_zero    (rs1_val_S) then 0b_00_0000_1000
+    else if f_is_pos_zero    (rs1_val_S) then 0b_00_0001_0000
+    else if f_is_pos_subnorm (rs1_val_S) then 0b_00_0010_0000
+    else if f_is_pos_norm    (rs1_val_S) then 0b_00_0100_0000
+    else if f_is_pos_inf     (rs1_val_S) then 0b_00_1000_0000
+    else if f_is_SNaN        (rs1_val_S) then 0b_01_0000_0000
+    else if f_is_QNaN        (rs1_val_S) then 0b_10_0000_0000
     else zeros();
 
   X(rd) = zero_extend (rd_val_10b);

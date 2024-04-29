@@ -49,9 +49,9 @@ function clause execute (RISCV_FLI_H(constantidx, rd)) = {
     0b11100 => { 0x7800 },  /* 2^15 */
     0b11101 => { 0x7c00 },  /* 2^16 */
     0b11110 => { 0x7c00 },  /* +inf */
-    0b11111 => { canonical_NaN_H() },
+    0b11111 => { canonical_NaN(16) },
   };
-  F_H(rd) = bits;
+  F_box(rd) = bits;
   RETIRE_SUCCESS
 }
 
@@ -98,9 +98,9 @@ function clause execute (RISCV_FLI_S(constantidx, rd)) = {
     0b11100 => { 0x47000000 },  /* 2^15 */
     0b11101 => { 0x47800000 },  /* 2^16 */
     0b11110 => { 0x7f800000 },  /* +inf */
-    0b11111 => { canonical_NaN_S() },
+    0b11111 => { canonical_NaN(32) },
   };
-  F_S(rd) = bits;
+  F_box(rd) = bits;
   RETIRE_SUCCESS
 }
 
@@ -147,9 +147,9 @@ function clause execute (RISCV_FLI_D(constantidx, rd)) = {
     0b11100 => { 0x40e0000000000000 },  /* 2^15 */
     0b11101 => { 0x40f0000000000000 },  /* 2^16 */
     0b11110 => { 0x7ff0000000000000 },  /* +inf */
-    0b11111 => { canonical_NaN_D() },
+    0b11111 => { canonical_NaN(64) },
   };
-  F_D(rd) = bits;
+  F_box(rd) = bits;
   RETIRE_SUCCESS
 }
 
@@ -166,20 +166,20 @@ mapping clause assembly = RISCV_FMINM_H(rs2, rs1, rd)
                 ^ sep() ^ freg_name(rs2)
 
 function clause execute (RISCV_FMINM_H(rs2, rs1, rd)) = {
-  let rs1_val_H = F_H(rs1);
-  let rs2_val_H = F_H(rs2);
+  let rs1_val_H = F_box(16, rs1);
+  let rs2_val_H = F_box(16, rs2);
 
   let is_quiet  = true;
-  let (rs1_lt_rs2, fflags) = fle_H (rs1_val_H, rs2_val_H, is_quiet);
+  let (rs1_lt_rs2, fflags) = fle(rs1_val_H, rs2_val_H, is_quiet);
 
-  let rd_val_H  = if      (f_is_NaN_H(rs1_val_H) | f_is_NaN_H(rs2_val_H))           then canonical_NaN_H()
-                  else if (f_is_neg_zero_H(rs1_val_H) & f_is_pos_zero_H(rs2_val_H)) then rs1_val_H
-                  else if (f_is_neg_zero_H(rs2_val_H) & f_is_pos_zero_H(rs1_val_H)) then rs2_val_H
-                  else if rs1_lt_rs2                                                then rs1_val_H
-                  else /* (not rs1_lt_rs2) */                                            rs2_val_H;
+  let rd_val_H  = if      (f_is_NaN(rs1_val_H) | f_is_NaN(rs2_val_H))           then canonical_NaN(16)
+                  else if (f_is_neg_zero(rs1_val_H) & f_is_pos_zero(rs2_val_H)) then rs1_val_H
+                  else if (f_is_neg_zero(rs2_val_H) & f_is_pos_zero(rs1_val_H)) then rs2_val_H
+                  else if rs1_lt_rs2                                            then rs1_val_H
+                  else /* (not rs1_lt_rs2) */                                        rs2_val_H;
 
   accrue_fflags(fflags);
-  F_H(rd) = rd_val_H;
+  F_box(rd) = rd_val_H;
   RETIRE_SUCCESS
 }
 
@@ -196,20 +196,20 @@ mapping clause assembly = RISCV_FMAXM_H(rs2, rs1, rd)
                 ^ sep() ^ freg_name(rs2)
 
 function clause execute (RISCV_FMAXM_H(rs2, rs1, rd)) = {
-  let rs1_val_H = F_H(rs1);
-  let rs2_val_H = F_H(rs2);
+  let rs1_val_H = F_box(16, rs1);
+  let rs2_val_H = F_box(16, rs2);
 
   let is_quiet  = true;
-  let (rs2_lt_rs1, fflags) = fle_H (rs2_val_H, rs1_val_H, is_quiet);
+  let (rs2_lt_rs1, fflags) = fle(rs2_val_H, rs1_val_H, is_quiet);
 
-  let rd_val_H =  if      (f_is_NaN_H(rs1_val_H) | f_is_NaN_H(rs2_val_H))           then canonical_NaN_H()
-                  else if (f_is_neg_zero_H(rs1_val_H) & f_is_pos_zero_H(rs2_val_H)) then rs2_val_H
-                  else if (f_is_neg_zero_H(rs2_val_H) & f_is_pos_zero_H(rs1_val_H)) then rs1_val_H
-                  else if rs2_lt_rs1                                                then rs1_val_H
-                  else /* (not rs2_lt_rs1) */                                            rs2_val_H;
+  let rd_val_H =  if      (f_is_NaN(rs1_val_H) | f_is_NaN(rs2_val_H))           then canonical_NaN(16)
+                  else if (f_is_neg_zero(rs1_val_H) & f_is_pos_zero(rs2_val_H)) then rs2_val_H
+                  else if (f_is_neg_zero(rs2_val_H) & f_is_pos_zero(rs1_val_H)) then rs1_val_H
+                  else if rs2_lt_rs1                                            then rs1_val_H
+                  else /* (not rs2_lt_rs1) */                                        rs2_val_H;
 
   accrue_fflags(fflags);
-  F_H(rd) = rd_val_H;
+  F_box(rd) = rd_val_H;
   RETIRE_SUCCESS
 }
 
@@ -226,20 +226,20 @@ mapping clause assembly = RISCV_FMINM_S(rs2, rs1, rd)
                 ^ sep() ^ freg_name(rs2)
 
 function clause execute (RISCV_FMINM_S(rs2, rs1, rd)) = {
-  let rs1_val_S = F_S(rs1);
-  let rs2_val_S = F_S(rs2);
+  let rs1_val_S = F_box(32, rs1);
+  let rs2_val_S = F_box(32, rs2);
 
   let is_quiet  = true;
-  let (rs1_lt_rs2, fflags) = fle_S (rs1_val_S, rs2_val_S, is_quiet);
+  let (rs1_lt_rs2, fflags) = fle(rs1_val_S, rs2_val_S, is_quiet);
 
-  let rd_val_S  = if      (f_is_NaN_S(rs1_val_S) | f_is_NaN_S(rs2_val_S))           then canonical_NaN_S()
-                  else if (f_is_neg_zero_S(rs1_val_S) & f_is_pos_zero_S(rs2_val_S)) then rs1_val_S
-                  else if (f_is_neg_zero_S(rs2_val_S) & f_is_pos_zero_S(rs1_val_S)) then rs2_val_S
-                  else if rs1_lt_rs2                                                then rs1_val_S
-                  else /* (not rs1_lt_rs2) */                                            rs2_val_S;
+  let rd_val_S  = if      (f_is_NaN(rs1_val_S) | f_is_NaN(rs2_val_S))           then canonical_NaN(32)
+                  else if (f_is_neg_zero(rs1_val_S) & f_is_pos_zero(rs2_val_S)) then rs1_val_S
+                  else if (f_is_neg_zero(rs2_val_S) & f_is_pos_zero(rs1_val_S)) then rs2_val_S
+                  else if rs1_lt_rs2                                            then rs1_val_S
+                  else /* (not rs1_lt_rs2) */                                        rs2_val_S;
 
   accrue_fflags(fflags);
-  F_S(rd) = rd_val_S;
+  F_box(rd) = rd_val_S;
   RETIRE_SUCCESS
 }
 
@@ -256,20 +256,20 @@ mapping clause assembly = RISCV_FMAXM_S(rs2, rs1, rd)
                 ^ sep() ^ freg_name(rs2)
 
 function clause execute (RISCV_FMAXM_S(rs2, rs1, rd)) = {
-  let rs1_val_S = F_S(rs1);
-  let rs2_val_S = F_S(rs2);
+  let rs1_val_S = F_box(32, rs1);
+  let rs2_val_S = F_box(32, rs2);
 
   let is_quiet  = true;
-  let (rs2_lt_rs1, fflags) = fle_S (rs2_val_S, rs1_val_S, is_quiet);
+  let (rs2_lt_rs1, fflags) = fle(rs2_val_S, rs1_val_S, is_quiet);
 
-  let rd_val_S  = if      (f_is_NaN_S(rs1_val_S) | f_is_NaN_S(rs2_val_S))           then canonical_NaN_S()
-                  else if (f_is_neg_zero_S(rs1_val_S) & f_is_pos_zero_S(rs2_val_S)) then rs2_val_S
-                  else if (f_is_neg_zero_S(rs2_val_S) & f_is_pos_zero_S(rs1_val_S)) then rs1_val_S
-                  else if rs2_lt_rs1                                                then rs1_val_S
-                  else /* (not rs2_lt_rs1) */                                            rs2_val_S;
+  let rd_val_S  = if      (f_is_NaN(rs1_val_S) | f_is_NaN(rs2_val_S))           then canonical_NaN(32)
+                  else if (f_is_neg_zero(rs1_val_S) & f_is_pos_zero(rs2_val_S)) then rs2_val_S
+                  else if (f_is_neg_zero(rs2_val_S) & f_is_pos_zero(rs1_val_S)) then rs1_val_S
+                  else if rs2_lt_rs1                                            then rs1_val_S
+                  else /* (not rs2_lt_rs1) */                                        rs2_val_S;
 
   accrue_fflags(fflags);
-  F_S(rd) = rd_val_S;
+  F_box(rd) = rd_val_S;
   RETIRE_SUCCESS
 }
 
@@ -286,20 +286,20 @@ mapping clause assembly = RISCV_FMINM_D(rs2, rs1, rd)
                 ^ sep() ^ freg_name(rs2)
 
 function clause execute (RISCV_FMINM_D(rs2, rs1, rd)) = {
-  let rs1_val_D = F_D(rs1);
-  let rs2_val_D = F_D(rs2);
+  let rs1_val_D = F_box(64, rs1);
+  let rs2_val_D = F_box(64, rs2);
 
   let is_quiet  = true;
-  let (rs1_lt_rs2, fflags) = fle_D (rs1_val_D, rs2_val_D, is_quiet);
+  let (rs1_lt_rs2, fflags) = fle(rs1_val_D, rs2_val_D, is_quiet);
 
-  let rd_val_D  = if      (f_is_NaN_D(rs1_val_D) | f_is_NaN_D(rs2_val_D))           then canonical_NaN_D()
-                  else if (f_is_neg_zero_D(rs1_val_D) & f_is_pos_zero_D(rs2_val_D)) then rs1_val_D
-                  else if (f_is_neg_zero_D(rs2_val_D) & f_is_pos_zero_D(rs1_val_D)) then rs2_val_D
-                  else if rs1_lt_rs2                                                then rs1_val_D
-                  else                                                              rs2_val_D;
+  let rd_val_D  = if      (f_is_NaN(rs1_val_D) | f_is_NaN(rs2_val_D))           then canonical_NaN(64)
+                  else if (f_is_neg_zero(rs1_val_D) & f_is_pos_zero(rs2_val_D)) then rs1_val_D
+                  else if (f_is_neg_zero(rs2_val_D) & f_is_pos_zero(rs1_val_D)) then rs2_val_D
+                  else if rs1_lt_rs2                                            then rs1_val_D
+                  else                                                               rs2_val_D;
 
   accrue_fflags(fflags);
-  F_D(rd) = rd_val_D;
+  F_box(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
 
@@ -316,20 +316,20 @@ mapping clause assembly = RISCV_FMAXM_D(rs2, rs1, rd)
                 ^ sep() ^ freg_name(rs2)
 
 function clause execute (RISCV_FMAXM_D(rs2, rs1, rd)) = {
-  let rs1_val_D = F_D(rs1);
-  let rs2_val_D = F_D(rs2);
+  let rs1_val_D = F_box(64, rs1);
+  let rs2_val_D = F_box(64, rs2);
 
   let is_quiet  = true;
-  let (rs2_lt_rs1, fflags) = fle_D (rs2_val_D, rs1_val_D, is_quiet);
+  let (rs2_lt_rs1, fflags) = fle(rs2_val_D, rs1_val_D, is_quiet);
 
-  let rd_val_D  = if      (f_is_NaN_D(rs1_val_D) | f_is_NaN_D(rs2_val_D))           then canonical_NaN_D()
-                  else if (f_is_neg_zero_D(rs1_val_D) & f_is_pos_zero_D(rs2_val_D)) then rs2_val_D
-                  else if (f_is_neg_zero_D(rs2_val_D) & f_is_pos_zero_D(rs1_val_D)) then rs1_val_D
-                  else if rs2_lt_rs1                                                then rs1_val_D
-                  else                                                              rs2_val_D;
+  let rd_val_D  = if      (f_is_NaN(rs1_val_D) | f_is_NaN(rs2_val_D))           then canonical_NaN(64)
+                  else if (f_is_neg_zero(rs1_val_D) & f_is_pos_zero(rs2_val_D)) then rs2_val_D
+                  else if (f_is_neg_zero(rs2_val_D) & f_is_pos_zero(rs1_val_D)) then rs1_val_D
+                  else if rs2_lt_rs1                                            then rs1_val_D
+                  else                                                               rs2_val_D;
 
   accrue_fflags(fflags);
-  F_D(rd) = rd_val_D;
+  F_box(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
 
@@ -346,7 +346,7 @@ mapping clause assembly = RISCV_FROUND_H(rs1, rm, rd)
                  ^ sep() ^ frm_mnemonic(rm)
 
 function clause execute (RISCV_FROUND_H(rs1, rm, rd)) = {
-  let rs1_val_H = F_H(rs1);
+  let rs1_val_H = F_box(16, rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -355,7 +355,7 @@ function clause execute (RISCV_FROUND_H(rs1, rm, rd)) = {
       let (fflags, rd_val_H) = riscv_f16roundToInt(rm_3b, rs1_val_H, false);
 
       accrue_fflags(fflags);
-      F_H(rd) = rd_val_H;
+      F_box(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
   }
@@ -374,7 +374,7 @@ mapping clause assembly = RISCV_FROUNDNX_H(rs1, rm, rd)
                    ^ sep() ^ frm_mnemonic(rm)
 
 function clause execute (RISCV_FROUNDNX_H(rs1, rm, rd)) = {
-  let rs1_val_H = F_H(rs1);
+  let rs1_val_H = F_box(16, rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -383,7 +383,7 @@ function clause execute (RISCV_FROUNDNX_H(rs1, rm, rd)) = {
       let (fflags, rd_val_H) = riscv_f16roundToInt(rm_3b, rs1_val_H, true);
 
       accrue_fflags(fflags);
-      F_H(rd) = rd_val_H;
+      F_box(rd) = rd_val_H;
       RETIRE_SUCCESS
     }
   }
@@ -402,7 +402,7 @@ mapping clause assembly = RISCV_FROUND_S(rs1, rm, rd)
                  ^ sep() ^ frm_mnemonic(rm)
 
 function clause execute (RISCV_FROUND_S(rs1, rm, rd)) = {
-  let rs1_val_S = F_S(rs1);
+  let rs1_val_S = F_box(32, rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -411,7 +411,7 @@ function clause execute (RISCV_FROUND_S(rs1, rm, rd)) = {
       let (fflags, rd_val_S) = riscv_f32roundToInt(rm_3b, rs1_val_S, false);
 
       accrue_fflags(fflags);
-      F_S(rd) = rd_val_S;
+      F_box(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
   }
@@ -430,7 +430,7 @@ mapping clause assembly = RISCV_FROUNDNX_S(rs1, rm, rd)
                    ^ sep() ^ frm_mnemonic(rm)
 
 function clause execute (RISCV_FROUNDNX_S(rs1, rm, rd)) = {
-  let rs1_val_S = F_S(rs1);
+  let rs1_val_S = F_box(32, rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -439,7 +439,7 @@ function clause execute (RISCV_FROUNDNX_S(rs1, rm, rd)) = {
       let (fflags, rd_val_S) = riscv_f32roundToInt(rm_3b, rs1_val_S, true);
 
       accrue_fflags(fflags);
-      F_S(rd) = rd_val_S;
+      F_box(rd) = rd_val_S;
       RETIRE_SUCCESS
     }
   }
@@ -458,7 +458,7 @@ mapping clause assembly = RISCV_FROUND_D(rs1, rm, rd)
                  ^ sep() ^ frm_mnemonic(rm)
 
 function clause execute (RISCV_FROUND_D(rs1, rm, rd)) = {
-  let rs1_val_D = F_D(rs1);
+  let rs1_val_D = F_box(64, rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -467,7 +467,7 @@ function clause execute (RISCV_FROUND_D(rs1, rm, rd)) = {
       let (fflags, rd_val_D) = riscv_f64roundToInt(rm_3b, rs1_val_D, false);
 
       accrue_fflags(fflags);
-      F_D(rd) = rd_val_D;
+      F_box(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
   }
@@ -486,7 +486,7 @@ mapping clause assembly = RISCV_FROUNDNX_D(rs1, rm, rd)
                    ^ sep() ^ frm_mnemonic(rm)
 
 function clause execute (RISCV_FROUNDNX_D(rs1, rm, rd)) = {
-  let rs1_val_D = F_D(rs1);
+  let rs1_val_D = F_box(64, rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -495,7 +495,7 @@ function clause execute (RISCV_FROUNDNX_D(rs1, rm, rd)) = {
       let (fflags, rd_val_D) = riscv_f64roundToInt(rm_3b, rs1_val_D, true);
 
       accrue_fflags(fflags);
-      F_D(rd) = rd_val_D;
+      F_box(rd) = rd_val_D;
       RETIRE_SUCCESS
     }
   }
@@ -513,7 +513,7 @@ mapping clause assembly = RISCV_FMVH_X_D(rs1, rd)
                  ^ sep() ^ freg_name(rs1)
 
 function clause execute (RISCV_FMVH_X_D(rs1, rd)) = {
-  let rs1_val_D           = F_D(rs1)[63..32];
+  let rs1_val_D           = F_box(64, rs1)[63..32];
   let rd_val_X : xlenbits = sign_extend(rs1_val_D);
   X(rd)                   = rd_val_X;
   RETIRE_SUCCESS
@@ -542,7 +542,7 @@ function clause execute (RISCV_FMVP_D_X(rs2, rs1, rd)) = {
   /*   rd  = rs1 @ rs2 => 0x89abcdef01234567 */
   let rd_val_D      = rs2_val_X @ rs1_val_X;
 
-  F_D(rd)           = rd_val_D;
+  F_box(rd)         = rd_val_D;
   RETIRE_SUCCESS
 }
 
@@ -559,8 +559,8 @@ mapping clause assembly = RISCV_FLEQ_H(rs2, rs1, rd)
                ^ sep() ^ freg_name(rs2)
 
 function clause execute(RISCV_FLEQ_H(rs2, rs1, rd)) = {
-  let rs1_val_H = F_H(rs1);
-  let rs2_val_H = F_H(rs2);
+  let rs1_val_H = F_box(16, rs1);
+  let rs2_val_H = F_box(16, rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f16Le_quiet   (rs1_val_H, rs2_val_H);
@@ -583,8 +583,8 @@ mapping clause assembly = RISCV_FLTQ_H(rs2, rs1, rd)
                ^ sep() ^ freg_name(rs2)
 
 function clause execute(RISCV_FLTQ_H(rs2, rs1, rd)) = {
-  let rs1_val_H = F_H(rs1);
-  let rs2_val_H = F_H(rs2);
+  let rs1_val_H = F_box(16, rs1);
+  let rs2_val_H = F_box(16, rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f16Lt_quiet   (rs1_val_H, rs2_val_H);
@@ -607,8 +607,8 @@ mapping clause assembly = RISCV_FLEQ_S(rs2, rs1, rd)
                ^ sep() ^ freg_name(rs2)
 
 function clause execute(RISCV_FLEQ_S(rs2, rs1, rd)) = {
-  let rs1_val_S = F_S(rs1);
-  let rs2_val_S = F_S(rs2);
+  let rs1_val_S = F_box(32, rs1);
+  let rs2_val_S = F_box(32, rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Le_quiet   (rs1_val_S, rs2_val_S);
@@ -631,8 +631,8 @@ mapping clause assembly = RISCV_FLTQ_S(rs2, rs1, rd)
                ^ sep() ^ freg_name(rs2)
 
 function clause execute(RISCV_FLTQ_S(rs2, rs1, rd)) = {
-  let rs1_val_S = F_S(rs1);
-  let rs2_val_S = F_S(rs2);
+  let rs1_val_S = F_box(32, rs1);
+  let rs2_val_S = F_box(32, rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f32Lt_quiet   (rs1_val_S, rs2_val_S);
@@ -656,8 +656,8 @@ mapping clause assembly = RISCV_FLEQ_D(rs2, rs1, rd)
                ^ sep() ^ freg_name(rs2)
 
 function clause execute(RISCV_FLEQ_D(rs2, rs1, rd)) = {
-  let rs1_val_D = F_D(rs1);
-  let rs2_val_D = F_D(rs2);
+  let rs1_val_D = F_box(64, rs1);
+  let rs2_val_D = F_box(64, rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Le_quiet   (rs1_val_D, rs2_val_D);
@@ -680,8 +680,8 @@ mapping clause assembly = RISCV_FLTQ_D(rs2, rs1, rd)
                ^ sep() ^ freg_name(rs2)
 
 function clause execute(RISCV_FLTQ_D(rs2, rs1, rd)) = {
-  let rs1_val_D = F_D(rs1);
-  let rs2_val_D = F_D(rs2);
+  let rs1_val_D = F_box(64, rs1);
+  let rs2_val_D = F_box(64, rs2);
 
   let (fflags, rd_val) : (bits_fflags, bool) =
       riscv_f64Lt_quiet   (rs1_val_D, rs2_val_D);
@@ -699,7 +699,7 @@ function clause execute(RISCV_FLTQ_D(rs2, rs1, rd)) = {
  */
 val      fcvtmod_helper : bits(64) -> (bits(5), bits(32))
 function fcvtmod_helper(x64) = {
-  let (sign, exp, mant) = fsplit_D(x64);
+  let (sign, exp, mant) = fsplit(x64);
 
   /* Detect the non-normal cases */
   let is_subnorm    = exp == zeros() & mant != zeros();
@@ -721,11 +721,11 @@ function fcvtmod_helper(x64) = {
   let is_too_large  = true_exp >= 84;  /* bits will be 'multiplied' out */
   let is_too_small  = true_exp <  0;   /* bits will be 'divided' out    */
 
-       if is_zero       then (zeros(),  zeros())
-  else if is_subnorm    then (nxFlag(), zeros())
-  else if is_nan_or_inf then (nvFlag(), zeros())
-  else if is_too_large  then (nvFlag(), zeros())
-  else if is_too_small  then (nxFlag(), zeros())
+       if is_zero       then (zeros(), zeros())
+  else if is_subnorm    then (nxFlag, zeros())
+  else if is_nan_or_inf then (nvFlag, zeros())
+  else if is_too_large  then (nvFlag, zeros())
+  else if is_too_small  then (nxFlag, zeros())
   else {
     /*
      * Calculate the low 32 bits of the integer value from the
@@ -745,8 +745,8 @@ function fcvtmod_helper(x64) = {
                                 else integer;
 
     /* Raise FP exception flags, honoring the precedence of nV > nX */
-    let flags : bits(5) = if (true_exp > 31)         then nvFlag()
-                     else if (fractional != zeros()) then nxFlag()
+    let flags : bits(5) = if (true_exp > 31)         then nvFlag
+                     else if (fractional != zeros()) then nxFlag
                      else                            zeros();
 
     (flags, result)
@@ -764,7 +764,7 @@ mapping clause assembly = RISCV_FCVTMOD_W_D(rs1, rd)
 		    ^ sep() ^ freg_name(rs1)
 
 function clause execute(RISCV_FCVTMOD_W_D(rs1, rd)) = {
-  let rs1_val_D = F_D(rs1);
+  let rs1_val_D = F_box(64, rs1);
   let (fflags, rd_val) = fcvtmod_helper(rs1_val_D);
   accrue_fflags(fflags);
   X(rd) = sign_extend(rd_val);
