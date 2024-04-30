@@ -53,7 +53,7 @@ const char *RV32ISA = "RV32IMAC";
 #define OPT_ENABLE_WRITABLE_FIOM 1001
 #define OPT_PMP_COUNT 1002
 #define OPT_PMP_GRAIN 1003
-#define OPT_ENABLE_SVINVAL 10017
+#define OPT_ENABLE_SVINVAL 1004
 #define OPT_ENABLE_ZCB 10014
 
 static bool do_dump_dts = false;
