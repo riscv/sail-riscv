@@ -30,7 +30,7 @@ mapping clause encdec =
 function clause execute SFENCE_W_INVAL() = {
   if cur_privilege == User
   then { handle_illegal(); RETIRE_FAIL }
-  else { RETIRE_SUCCESS }
+  else { RETIRE_SUCCESS } // Implemented as no-op as all memory operations are visible immediately the current Sail model
 }
 
 mapping clause assembly = SFENCE_W_INVAL() <-> "sfence.w.inval"
@@ -46,7 +46,7 @@ mapping clause encdec =
 function clause execute SFENCE_INVAL_IR() = {
   if cur_privilege == User
   then { handle_illegal(); RETIRE_FAIL }
-  else { RETIRE_SUCCESS }
+  else { RETIRE_SUCCESS } // Implemented as no-op as all memory operations are visible immediately in current Sail model
 }
 
 mapping clause assembly = SFENCE_INVAL_IR() <-> "sfence.inval.ir"
