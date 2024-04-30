@@ -93,6 +93,8 @@ val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
 val sys_enable_writable_fiom = {c: "sys_enable_writable_fiom", ocaml: "Platform.enable_writable_fiom", _: "sys_enable_writable_fiom"} : unit -> bool
+/* whether the PME extension was enabled at boot */
+val sys_enable_zpm = {c: "sys_enable_zpm", ocaml: "Platform.enable_zpm", _: "sys_enable_zpm"} : unit -> bool
 
 /* How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime). */
 val sys_pmp_count = {c: "sys_pmp_count", ocaml: "Platform.pmp_count", _: "sys_pmp_count"} : unit -> range(0, 64)
@@ -772,13 +774,40 @@ function read_seed_csr() -> xlenbits = {
 /* Writes to the seed CSR are ignored */
 function write_seed_csr () -> option(xlenbits) = None()
 
+/*  mseccfg is a XLEN-bit read/write register that controls */
+/*  security features */
+bitfield MSeccfg : xlenbits = {
+  // Reserved WPRI bits.
+  wpri_2 : xlen - 1 .. 34,
+  // PMM bits of Pointer Masking Extension
+  PMM    : 33 .. 32,
+  // Reserved WPRI bits.
+  wpri_1 : 31 .. 10,
+  // Supervisor SEED bits
+  SSEED  : 9,
+  // User SEED bits
+  USEED  : 8,
+  // Reserved WPRI bits.
+  wpri_0 : 7 .. 3,
+  // RLB bits
+  RLB    : 2,
+  // Reserved WPRI bits.
+  MMWP   : 1,
+  // MML bits
+  MML    : 0,
+}
+
 bitfield MEnvcfg : bits(64) = {
   // Supervisor TimeCmp Extension
   STCE   : 63,
   // Page Based Memory Types Extension
   PBMTE  : 62,
   // Reserved WPRI bits.
-  wpri_1 : 61 .. 8,
+  wpri_2 : 61 .. 34,
+  // PMM bits of Pointer Masking Extension
+  PMM    : 33 .. 32,
+  // Reserved WPRI bits.
+  wpri_1 : 31 .. 8,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable
@@ -792,6 +821,8 @@ bitfield MEnvcfg : bits(64) = {
 }
 
 bitfield SEnvcfg : xlenbits = {
+  // PMM bits of Pointer Masking Extension
+  PMM    : 33 .. 32,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable
@@ -804,12 +835,23 @@ bitfield SEnvcfg : xlenbits = {
   FIOM   : 0,
 }
 
+register mseccfg : MSeccfg
 register menvcfg : MEnvcfg
 register senvcfg : SEnvcfg
+
+function legalize_mseccfg(o : MSeccfg, v : xlenbits) -> MSeccfg = {
+  let v = Mk_MSeccfg(v);
+  // Update PMM field only if Pointer Masking is enabled and Written value is legal
+  let o = [o with PMM  = if (sys_enable_zpm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];
+  // Other extensions are not implemented yet so all other fields are read only zero.
+  o
+}
 
 function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
+  // Update PMM field only if Pointer Masking is enabled and Written value is legal
+  let o = [o with PMM  = if (sys_enable_zpm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
@@ -817,6 +859,8 @@ function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
 function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
   let v = Mk_SEnvcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
+  // Update PMM field only if Pointer Masking is enabled and Written value is legal
+  let o = [o with PMM  = if (sys_enable_zpm() & (sizeof(xlen) != 32) & (v.PMM() != 0b01)) then v.PMM() else o.PMM()];  
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
@@ -831,6 +875,17 @@ function is_fiom_active() -> bool = {
     User => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
   }
 }
+
+// Return whether or not PMM is currently active, based on the current
+// privilege and the menvcfg,senvcfg and mseccfg settings. 
+function is_pmm_active() -> bool = {
+  match cur_privilege {
+    Machine => (mseccfg.PMM() == 0b11 | mseccfg.PMM() == 0b10),
+    Supervisor => (menvcfg.PMM() == 0b11 | menvcfg.PMM() == 0b10),
+    User => ((menvcfg.PMM() == 0b11 | menvcfg.PMM() == 0b10) | (senvcfg.PMM() == 0b11 | senvcfg.PMM() == 0b10)),
+  }
+}
+
 /* vector csrs */
 register vstart : bits(16) /* use the largest possible length of vstart */
 register vxsat  : bits(1)
@@ -847,6 +902,15 @@ bitfield Vtype  : xlenbits = {
   vlmul     : 2 .. 0
 }
 register vtype : Vtype
+
+//Returns the PMM bits value depends on the Privilege mode
+function get_pmm() -> bits(2) = {
+  match cur_privilege {
+    Machine => mseccfg.PMM(),
+    Supervisor => menvcfg.PMM(),
+    User => if haveSupMode() then senvcfg.PMM() else menvcfg.PMM(),
+  }
+} 
 
 /* the dynamic selected element width (SEW) */
 /* this returns the power of 2 for SEW */

@@ -50,6 +50,9 @@ let options = Arg.align ([("-dump-dts",
                           ("-enable-next",
                            Arg.Set P.config_enable_next,
                            " enable N extension");
+                          ("-enable-zpm",
+                           Arg.Set P.config_enable_zpm,
+                           " enable zpm support");                           
                           ("-mtval-has-illegal-inst-bits",
                            Arg.Set P.config_mtval_has_illegal_inst_bits,
                            " mtval stores instruction bits on an illegal instruction exception");
