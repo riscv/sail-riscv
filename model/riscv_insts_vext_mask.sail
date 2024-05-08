@@ -69,11 +69,11 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
 mapping mmtype_mnemonic : mmfunct6 <-> string = {
   MM_VMAND     <-> "vmand.mm",
   MM_VMNAND    <-> "vmnand.mm",
-  MM_VMANDNOT  <-> "vmandnot.mm",
+  MM_VMANDNOT  <-> "vmandn.mm",
   MM_VMXOR     <-> "vmxor.mm",
   MM_VMOR      <-> "vmor.mm",
   MM_VMNOR     <-> "vmnor.mm",
-  MM_VMORNOT   <-> "vmornot.mm",
+  MM_VMORNOT   <-> "vmorn.mm",
   MM_VMXNOR    <-> "vmxnor.mm"
 }
 
