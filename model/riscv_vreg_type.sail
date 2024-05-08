@@ -53,7 +53,7 @@ enum nxfunct6     = { NX_VNCLIPU, NX_VNCLIP}
 
 enum nxsfunct6    = { NXS_VNSRL, NXS_VNSRA }
 
-enum mmfunct6     = { MM_VMAND, MM_VMNAND, MM_VMANDNOT, MM_VMXOR, MM_VMOR, MM_VMNOR, MM_VMORNOT, MM_VMXNOR }
+enum mmfunct6     = { MM_VMAND, MM_VMNAND, MM_VMANDN, MM_VMXOR, MM_VMOR, MM_VMNOR, MM_VMORN, MM_VMXNOR }
 
 enum nifunct6     = { NI_VNCLIPU, NI_VNCLIP }
 
