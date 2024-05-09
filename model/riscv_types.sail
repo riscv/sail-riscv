@@ -389,6 +389,12 @@ mapping size_bytes : word_width <-> {1, 2, 4, 8} = {
   DOUBLE <-> 8,
 }
 
+struct mul_op = {
+  high       : bool,
+  signed_rs1 : bool,
+  signed_rs2 : bool
+}
+
 /*!
  * Raise an internal error reporting that width w is invalid for access kind, k,
  * and current xlen. The file name and line number should be passed in as the
@@ -399,17 +405,6 @@ mapping size_bytes : word_width <-> {1, 2, 4, 8} = {
  */
 val report_invalid_width : forall ('a : Type). (string, int, word_width, string) -> 'a
 function report_invalid_width(f , l, w, k) -> 'a = {
-  /*
-   * Ideally we would call internal_error here but this triggers a Sail bug,
-   * https://github.com/rems-project/sail/issues/203 in versions < 0.15.1, so
-   * we work around this by manually inlining.
-   * TODO when we are happy to require Sail >= 0.15.1 uncomment the following
-   * and remove the rest of the function.
-   */
-  // internal_error(f, l, "Invalid width, " ^ size_mnemonic(w) ^ ", for " ^ k ^
-  //   " with xlen=" ^ dec_str(sizeof(xlen)));
-  assert (false, f ^ ":" ^ dec_str(l) ^ ": " ^ "Invalid width, "
-    ^ size_mnemonic(w) ^ ", for " ^ k ^ " with xlen="
-    ^ dec_str(sizeof(xlen)));
-  throw Error_internal_error()
+  internal_error(f, l, "Invalid width, " ^ size_mnemonic(w) ^ ", for " ^ k ^
+     " with xlen=" ^ dec_str(sizeof(xlen)))
 }

@@ -11,27 +11,26 @@
 
 /* ****************************************************************** */
 
-union clause ast = MUL : (regidx, regidx, regidx, bool, bool, bool)
+union clause ast = MUL : (regidx, regidx, regidx, mul_op)
 
-mapping encdec_mul_op : (bool, bool, bool) <-> bits(3) = {
-  (false, true, true)  <-> 0b000,
-  (true, true, true)   <-> 0b001,
-  (true, true, false)  <-> 0b010,
-  (true, false, false) <-> 0b011
+mapping encdec_mul_op : mul_op <-> bits(3) = {
+  struct { high = false, signed_rs1 = true,  signed_rs2 = true  } <-> 0b000,
+  struct { high = true,  signed_rs1 = true,  signed_rs2 = true  } <-> 0b001,
+  struct { high = true,  signed_rs1 = true,  signed_rs2 = false } <-> 0b010,
+  struct { high = true,  signed_rs1 = false, signed_rs2 = false } <-> 0b011
 }
 
-/* for some reason the : bits(3) here is still necessary - BUG */
-mapping clause encdec = MUL(rs2, rs1, rd, high, signed1, signed2)
-  <-> 0b0000001 @ rs2 @ rs1 @ encdec_mul_op(high, signed1, signed2) : bits(3) @ rd @ 0b0110011
+mapping clause encdec = MUL(rs2, rs1, rd, mul_op)
+  <-> 0b0000001 @ rs2 @ rs1 @ encdec_mul_op(mul_op) @ rd @ 0b0110011
 
-function clause execute (MUL(rs2, rs1, rd, high, signed1, signed2)) = {
+function clause execute (MUL(rs2, rs1, rd, mul_op)) = {
   if haveMulDiv() | haveZmmul() then {
     let rs1_val = X(rs1);
     let rs2_val = X(rs2);
-    let rs1_int : int = if signed1 then signed(rs1_val) else unsigned(rs1_val);
-    let rs2_int : int = if signed2 then signed(rs2_val) else unsigned(rs2_val);
+    let rs1_int : int = if mul_op.signed_rs1 then signed(rs1_val) else unsigned(rs1_val);
+    let rs2_int : int = if mul_op.signed_rs2 then signed(rs2_val) else unsigned(rs2_val);
     let result_wide = to_bits(2 * sizeof(xlen), rs1_int * rs2_int);
-    let result = if   high
+    let result = if   mul_op.high
                  then result_wide[(2 * sizeof(xlen) - 1) .. sizeof(xlen)]
                  else result_wide[(sizeof(xlen) - 1) .. 0];
     X(rd) = result;
@@ -42,15 +41,15 @@ function clause execute (MUL(rs2, rs1, rd, high, signed1, signed2)) = {
   }
 }
 
-mapping mul_mnemonic : (bool, bool, bool) <-> string = {
-  (false, true, true)  <-> "mul",
-  (true, true, true)   <-> "mulh",
-  (true, true, false)  <-> "mulhsu",
-  (true, false, false) <-> "mulhu"
+mapping mul_mnemonic : mul_op <-> string = {
+  struct { high = false, signed_rs1 = true,  signed_rs2 = true  } <-> "mul",
+  struct { high = true,  signed_rs1 = true,  signed_rs2 = true  } <-> "mulh",
+  struct { high = true,  signed_rs1 = true,  signed_rs2 = false } <-> "mulhsu",
+  struct { high = true,  signed_rs1 = false, signed_rs2 = false } <-> "mulhu"
 }
 
-mapping clause assembly = MUL(rs2, rs1, rd, high, signed1, signed2)
-  <-> mul_mnemonic(high, signed1, signed2) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+mapping clause assembly = MUL(rs2, rs1, rd, mul_op)
+  <-> mul_mnemonic(mul_op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
 union clause ast = DIV : (regidx, regidx, regidx, bool)
