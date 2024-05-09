@@ -131,7 +131,7 @@ function clause execute (C_ADDI(nzi, rsd)) = {
 
 mapping clause assembly = C_ADDI(nzi, rsd)
       if nzi != 0b000000 & rsd != zreg
-  <-> "c.addi" ^ spc() ^ reg_name(rsd) ^ sep() ^ hex_bits_6(nzi)
+  <-> "c.addi" ^ spc() ^ reg_name(rsd) ^ sep() ^ hex_bits_signed_6(nzi)
       if nzi != 0b000000 & rsd != zreg
 
 /* ****************************************************************** */
@@ -147,7 +147,7 @@ function clause execute (C_JAL(imm)) =
 
 mapping clause assembly = C_JAL(imm)
       if sizeof(xlen) == 32
-  <-> "c.jal" ^ spc() ^ hex_bits_12(imm @ 0b0)
+  <-> "c.jal" ^ spc() ^ hex_bits_signed_12(imm @ 0b0)
       if sizeof(xlen) == 32
 
 /* ****************************************************************** */
@@ -163,7 +163,7 @@ function clause execute (C_ADDIW(imm, rsd)) =
 
 mapping clause assembly = C_ADDIW(imm, rsd)
       if sizeof(xlen) == 64
-  <-> "c.addiw" ^ spc() ^ reg_name(rsd) ^ sep() ^ hex_bits_6(imm)
+  <-> "c.addiw" ^ spc() ^ reg_name(rsd) ^ sep() ^ hex_bits_signed_6(imm)
       if sizeof(xlen) == 64
 
 /* ****************************************************************** */
@@ -181,7 +181,7 @@ function clause execute (C_LI(imm, rd)) = {
 
 mapping clause assembly = C_LI(imm, rd)
       if rd != zreg
-  <-> "c.li" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_6(imm)
+  <-> "c.li" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_6(imm)
       if rd != zreg
 
 /* ****************************************************************** */
@@ -199,7 +199,7 @@ function clause execute (C_ADDI16SP(imm)) = {
 
 mapping clause assembly = C_ADDI16SP(imm)
       if imm != 0b000000
-  <-> "c.addi16sp" ^ spc() ^ hex_bits_6(imm)
+  <-> "c.addi16sp" ^ spc() ^ hex_bits_signed_6(imm)
       if imm != 0b000000
 
 /* ****************************************************************** */
@@ -217,7 +217,7 @@ function clause execute (C_LUI(imm, rd)) = {
 
 mapping clause assembly = C_LUI(imm, rd)
       if rd != zreg & rd != sp & imm != 0b000000
-  <-> "c.lui" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_6(imm)
+  <-> "c.lui" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_6(imm)
       if rd != zreg & rd != sp & imm != 0b000000
 
 /* ****************************************************************** */
@@ -268,7 +268,7 @@ function clause execute (C_ANDI(imm, rsd)) = {
 }
 
 mapping clause assembly = C_ANDI(imm, rsd)
-  <-> "c.andi" ^ spc() ^ creg_name(rsd) ^ sep() ^ hex_bits_6(imm)
+  <-> "c.andi" ^ spc() ^ creg_name(rsd) ^ sep() ^ hex_bits_signed_6(imm)
 
 /* ****************************************************************** */
 union clause ast = C_SUB : (cregidx, cregidx)
@@ -378,7 +378,7 @@ function clause execute (C_J(imm)) =
   execute(RISCV_JAL(sign_extend(imm @ 0b0), zreg))
 
 mapping clause assembly = C_J(imm)
-  <-> "c.j" ^ spc() ^ hex_bits_11(imm)
+  <-> "c.j" ^ spc() ^ hex_bits_signed_11(imm)
 
 /* ****************************************************************** */
 union clause ast = C_BEQZ : (bits(8), cregidx)
@@ -390,7 +390,7 @@ function clause execute (C_BEQZ(imm, rs)) =
   execute(BTYPE(sign_extend(imm @ 0b0), zreg, creg2reg_idx(rs), RISCV_BEQ))
 
 mapping clause assembly = C_BEQZ(imm, rs)
-  <-> "c.beqz" ^ spc() ^ creg_name(rs) ^ sep() ^ hex_bits_8(imm)
+  <-> "c.beqz" ^ spc() ^ creg_name(rs) ^ sep() ^ hex_bits_signed_8(imm)
 
 /* ****************************************************************** */
 union clause ast = C_BNEZ : (bits(8), cregidx)
@@ -402,7 +402,7 @@ function clause execute (C_BNEZ(imm, rs)) =
   execute(BTYPE(sign_extend(imm @ 0b0), zreg, creg2reg_idx(rs), RISCV_BNE))
 
 mapping clause assembly = C_BNEZ(imm, rs)
-  <-> "c.bnez" ^ spc() ^ creg_name(rs) ^ sep() ^ hex_bits_8(imm)
+  <-> "c.bnez" ^ spc() ^ creg_name(rs) ^ sep() ^ hex_bits_signed_8(imm)
 
 /* ****************************************************************** */
 union clause ast = C_SLLI : (bits(6), regidx)

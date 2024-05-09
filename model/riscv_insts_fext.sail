@@ -344,7 +344,7 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
 mapping clause assembly = LOAD_FP(imm, rs1, rd, width)
                       <-> "fl" ^ size_mnemonic(width)
                           ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ hex_bits_12(imm)
+                          ^ sep() ^ hex_bits_signed_12(imm)
                           ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 /* ****************************************************************** */
@@ -419,7 +419,7 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
 mapping clause assembly = STORE_FP(imm, rs2, rs1, width)
                       <-> "fs" ^ size_mnemonic(width)
                           ^ spc() ^ freg_name(rs2)
-                          ^ sep() ^ hex_bits_12(imm)
+                          ^ sep() ^ hex_bits_signed_12(imm)
                           ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 /* ****************************************************************** */

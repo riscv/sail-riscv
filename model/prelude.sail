@@ -17,6 +17,7 @@ $include <vector_dec.sail>
 $include <regfp.sail>
 $include <generic_equality.sail>
 $include "hex_bits.sail"
+$include "hex_bits_signed.sail"
 
 
 val not_bit : bit -> bit

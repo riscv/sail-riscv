@@ -37,7 +37,7 @@ mapping utype_mnemonic : uop <-> string = {
 }
 
 mapping clause assembly = UTYPE(imm, rd, op)
-  <-> utype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_20(imm)
+  <-> utype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_20(imm)
 
 /* ****************************************************************** */
 union clause ast = RISCV_JAL : (bits(21), regidx)
@@ -83,7 +83,7 @@ function clause execute (RISCV_JAL(imm, rd)) = {
 /* TODO: handle 2-byte-alignment in mappings */
 
 mapping clause assembly = RISCV_JAL(imm, rd)
-  <-> "jal" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_21(imm)
+  <-> "jal" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_21(imm)
 
 /* ****************************************************************** */
 union clause ast = RISCV_JALR : (bits(12), regidx, regidx)
@@ -92,7 +92,7 @@ mapping clause encdec = RISCV_JALR(imm, rs1, rd)
   <-> imm @ rs1 @ 0b000 @ rd @ 0b1100111
 
 mapping clause assembly = RISCV_JALR(imm, rs1, rd)
-  <-> "jalr" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
+  <-> "jalr" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* see riscv_jalr_seq.sail or riscv_jalr_rmem.sail for the execute clause. */
 
@@ -153,7 +153,7 @@ mapping btype_mnemonic : bop <-> string = {
 }
 
 mapping clause assembly = BTYPE(imm, rs2, rs1, op)
-  <-> btype_mnemonic(op) ^ spc() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_13(imm)
+  <-> btype_mnemonic(op) ^ spc() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_signed_13(imm)
 
 /* ****************************************************************** */
 union clause ast = ITYPE : (bits(12), regidx, regidx, iop)
@@ -195,7 +195,7 @@ mapping itype_mnemonic : iop <-> string = {
 }
 
 mapping clause assembly = ITYPE(imm, rs1, rd, op)
-  <-> itype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_12(imm)
+  <-> itype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
 
 /* ****************************************************************** */
 union clause ast = SHIFTIOP : (bits(6), regidx, regidx, sop)
@@ -368,7 +368,7 @@ mapping maybe_u = {
 }
 
 mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, size, aq, rl)
-  <-> "l" ^ size_mnemonic(size) ^ maybe_u(is_unsigned) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
+  <-> "l" ^ size_mnemonic(size) ^ maybe_u(is_unsigned) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ****************************************************************** */
 union clause ast = STORE : (bits(12), regidx, regidx, word_width, bool, bool)
@@ -421,7 +421,7 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
 }
 
 mapping clause assembly = STORE(imm, rs2, rs1, size, aq, rl)
-  <-> "s" ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
+  <-> "s" ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_signed_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 /* ****************************************************************** */
 union clause ast = ADDIW : (bits(12), regidx, regidx)
@@ -439,7 +439,7 @@ function clause execute (ADDIW(imm, rs1, rd)) = {
 
 mapping clause assembly = ADDIW(imm, rs1, rd)
       if sizeof(xlen) == 64
-  <-> "addiw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_12(imm)
+  <-> "addiw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
       if sizeof(xlen) == 64
 
 /* ****************************************************************** */
