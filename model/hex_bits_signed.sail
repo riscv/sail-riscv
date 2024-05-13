@@ -74,7 +74,7 @@ $include <string.sail>
 val parse_hex_bits_signed : forall 'n, 'n > 0. (int('n), string) -> bits('n)
 val valid_hex_bits_signed : forall 'n, 'n > 0. (int('n), string) -> bool
 
-val hex_bits_signed: forall 'n, 'n > 0. bits('n) <-> (int('n), string)
+val hex_bits_signed : forall 'n, 'n > 0. bits('n) <-> (int('n), string)
 
 function hex_bits_signed_forwards(bv) = {
   if signed(bv) < 0
@@ -86,8 +86,8 @@ function hex_bits_signed_forwards_matches(bv) = true
 function parse_hex_bits_signed(n, str) = {
   if string_take(str, 1) == "-"
   then {
-    let str_ = string_drop(str, 1);
-    let bv = parse_hex_bits(n, str_);
+    let str = string_drop(str, 1);
+    let bv = parse_hex_bits(n, str);
     not_vec(bv) + 1
   }
   else parse_hex_bits(n, str)
