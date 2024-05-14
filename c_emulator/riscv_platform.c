@@ -57,6 +57,16 @@ bool sys_enable_vext(unit u)
   return rv_enable_vext;
 }
 
+bool sys_misaligned_order_decreasing(unit u)
+{
+  return rv_misaligned_order_decreasing;
+}
+
+bool sys_misaligned_to_byte(unit u)
+{
+  return rv_misaligned_to_byte;
+}
+
 uint64_t sys_pmp_count(unit u)
 {
   return rv_pmp_count;
@@ -108,7 +118,7 @@ mach_bits plat_rom_size(unit u)
 }
 
 // Provides entropy for the scalar cryptography extension.
-mach_bits plat_get_16_random_bits()
+mach_bits plat_get_16_random_bits(unit u)
 {
   return rv_16_random_bits();
 }

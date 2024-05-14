@@ -40,6 +40,12 @@ function amo_width_valid(size : word_width) -> bool = {
   }
 }
 
+val extend_value : forall 'n, 0 < 'n <= xlen_bytes. (bool, MemoryOpResult(bits(8 * 'n))) -> MemoryOpResult(xlenbits)
+function extend_value(is_unsigned, value) = match (value) {
+  MemValue(v)     => MemValue(if is_unsigned then zero_extend(v) else sign_extend(v) : xlenbits),
+  MemException(e) => MemException(e)
+}
+
 /* ****************************************************************** */
 union clause ast = LOADRES : (bool, bool, regidx, word_width, regidx)
 
