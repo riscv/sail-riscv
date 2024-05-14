@@ -90,6 +90,8 @@ val sys_enable_svinval = {c: "sys_enable_svinval", ocaml: "Platform.enable_svinv
 val sys_enable_zcb = {c: "sys_enable_zcb", ocaml: "Platform.enable_zcb", _: "sys_enable_zcb"} : unit -> bool
 /* whether zfinx was enabled at boot */
 val sys_enable_zfinx = {c: "sys_enable_zfinx", ocaml: "Platform.enable_zfinx", _: "sys_enable_zfinx"} : unit -> bool
+/* whether sdtrig was enabled at boot */
+val sys_enable_sdtrig = {c: "sys_enable_sdtrig", ocaml: "Platform.enable_sdtrig", _: "sys_enable_sdtrig"} : unit -> bool
 /* whether the N extension was enabled at boot */
 val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "sys_enable_next"} : unit -> bool
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
@@ -317,6 +319,9 @@ function haveSvinval() -> bool = sys_enable_svinval()
 
 /* Zcb has simple code-size saving instructions. (The Zcb extension depends on the Zca extension.) */
 function haveZcb()     -> bool = sys_enable_zcb()
+
+/* Sdtrig ISA extension ( Trigger Module ) */
+function haveSdtrig()     -> bool = sys_enable_sdtrig()
 
 /* Zhinx, Zfinx and Zdinx extensions (TODO: gate FCSR access on [mhs]stateen0 bit 1 when implemented) */
 function haveZhinx()   -> bool = sys_enable_zfinx()
@@ -721,7 +726,266 @@ function legalize_satp32(a : Architecture, o : bits(32), v : bits(32)) -> bits(3
 }
 
 /* disabled trigger/debug module */
-register tselect : xlenbits
+bitfield TSelect : xlenbits = {
+  // Trigger TYPE bits.
+  Index  : 0 .. xlen - 1, 
+}
+
+bitfield TData1 : xlenbits = {
+  // Trigger TYPE bits.
+  TYPE   : xlen - 4 .. xlen - 1,        
+  // Debug Mode bit.
+  Dmode  : xlen - 5,
+  // Trigger-specific data bits.
+  Data   : 0 .. xlen - 6,  
+}
+
+
+bitfield TInfo : xlenbits = {
+  // Bits Hardwired to Zeros.
+  Zeroes : 32 .. xlen - 1,        
+  // Bits contains the version of the Sdtrig extension implemented.
+  Version: 24 .. 31,        
+  // Bits Hardwired to Zeros.
+  Zeroes : 16 .. 23,
+  // Indicates if the currently selected trigger exists.
+  Info   : 0 .. 15,  
+}
+
+bitfield MControl : xlenbits = {
+  // Trigger TYPE bits.
+  TYPE   : xlen - 4 .. xlen - 1,
+  // Debug Mode bit
+  Dmode  : xlen - 5,
+  // Specifies the largest supported range for hardware when match is 1.
+  Maskmax: xlen - 11 .. xlen - 6,
+  // Reserved WPRI bits.
+  wpri_1   : 23 .. xlen - 12,
+  // 2 high bits of the access size.
+  Sizehi : 21 .. 22,
+  // Trigger firing status bit.
+  Hit    : 20,          
+  // Determines the contents of the XLEN-bit compare values.
+  Select : 19,
+  // Specifies timing of trigger action relative to instruction execution.
+  Timing : 18,
+  // 2 lower bits of the access size.
+  Sizelo : 16 .. 17,      
+  // Action on Trigger bits.
+  Action : 12 .. 15,
+  // Chain trigger bit.
+  Chain  : 11,            
+  // Match bits.
+  Match  : 10 .. 7,
+  // Trigger in M-mode.
+  M      : 6,
+  // Reserved WPRI bit.
+  wpri_0 : 5,
+  // Trigger in S-mode.
+  S      : 4,  
+  // Trigger in U-mode.
+  U      : 3,
+  // Execute trigger bit.
+  Execute: 2,                
+  // Store trigger bit.
+  Store  : 1,
+  // Load trigger bit.
+  Load   : 0,  
+}
+
+bitfield MControl6 : xlenbits = {
+  // Trigger TYPE bits.
+  TYPE   : xlen - 4 .. xlen - 1,
+  // Debug Mode bit
+  Dmode  : xlen - 5,
+  // Reserved WPRI bits.
+  wpri_1 : 27 .. xlen - 6,
+  // Uncertain bit.
+  Uncertain : 26,
+  // MSB of hit bits.
+  Hit1   : 25,  
+  // Trigger in VS-mode.
+  VS     : 24,  
+  // Trigger in VU-mode.
+  VU     : 23,        
+  // LSB of hit bits.
+  Hit0   : 22,          
+  // Determines the contents of the XLEN-bit compare values.
+  Select : 21,
+  // Reserved WPRI bits.
+  wpri_0 : 19 .. 20,
+  // Determines the size of access bits.
+  Size   : 16 .. 18,      
+  // Action on Trigger bits.
+  Action : 12 .. 15,
+  // Chain trigger bit.
+  Chain  : 11,            
+  // Match bits.
+  Match  : 10 .. 7,
+  // Trigger in M-mode.
+  M      : 6,
+  // Uncertainen WARL bit.
+  Uncertainen : 5,
+  // Trigger in S-mode.
+  S      : 4,  
+  // Trigger in U-mode.
+  U      : 3,
+  // Execute trigger bit.
+  Execute: 2,                
+  // Store trigger bit.
+  Store  : 1,
+  // Load trigger bit.
+  Load   : 0,  
+}
+
+bitfield ICount : xlenbits = {
+  // Trigger TYPE bits.
+  TYPE   : xlen - 4 .. xlen - 1,
+  // Debug Mode bit
+  Dmode  : xlen - 5,
+  // Reserved WPRI bits.
+  wpri   : 27 .. xlen - 6,  
+  // Trigger in VS-mode.
+  VS     : 26,  
+  // Trigger in VU-mode.
+  VU     : 25,        
+  // Trigger firing status bit.
+  Hit    : 24,
+  // Trigger in M-mode.
+  Count  : 10 .. 23,
+  // Trigger in M-mode.
+  M      : 9,
+  // Uncertainen WARL bit.
+  Pending: 8,
+  // Trigger in S-mode.
+  S      : 7,  
+  // Trigger in U-mode.
+  U      : 6,      
+  // Action on Trigger bits.
+  Action : 0 .. 5,
+}
+
+bitfield ITrigger : xlenbits = {
+  // Trigger TYPE bits.
+  TYPE   : xlen - 4 .. xlen - 1,
+  // Debug Mode bit
+  Dmode  : xlen - 5,
+  // Trigger firing status bit.
+  Hit    : xlen - 6,
+  // Reserved WPRI bits.
+  wpri_1   : 13 .. xlen - 7,  
+  // Trigger in VS-mode.
+  VS     : 12,  
+  // Trigger in VU-mode.
+  VU     : 11,  
+  // Non-maskable interrupts bit
+  NMI    : 10,
+  // Trigger in M-mode.
+  M      : 9,
+  // Reserved WPRI bits.
+  wpri_0 : 8,
+  // Trigger in S-mode.
+  S      : 7,  
+  // Trigger in U-mode.
+  U      : 6,      
+  // Action on Trigger bits.
+  Action : 0 .. 5,
+}
+
+bitfield ETrigger : xlenbits = {
+  // Trigger TYPE bits.
+  TYPE   : xlen - 4 .. xlen - 1,
+  // Debug Mode bit
+  Dmode  : xlen - 5,
+  // Trigger firing status bit.
+  Hit    : xlen - 6,
+  // Reserved WPRI bits.
+  wpri_2 : 13 .. xlen - 7,  
+  // Trigger in VS-mode.
+  VS     : 12,  
+  // Trigger in VU-mode.
+  VU     : 11,  
+  // Reserved WPRI bits.
+  wpri_1 : 10,
+  // Trigger in M-mode.
+  M      : 9,
+  // Reserved WPRI bits.
+  wpri_0 : 8,
+  // Trigger in S-mode.
+  S      : 7,  
+  // Trigger in U-mode.
+  U      : 6 .. 21,      
+  // Action on Trigger bits.
+  Action : 0 .. 5,
+}
+
+bitfield TMexttrigger : xlenbits = {
+  // Trigger TYPE bits.
+  TYPE   : xlen - 4 .. xlen - 1,
+  // Debug Mode bit
+  Dmode  : xlen - 5,
+  // Trigger firing status bit.
+  Hit    : xlen - 6,
+  // Reserved WPRI bits.
+  wpri   : 23 .. xlen - 7,  
+  // Interrupt control signal bit.
+  Intctl : 22,    
+  // Determines the contents of the XLEN-bit compare values.
+  Select : 6 .. 21,       
+  // Action on Trigger bits.
+  Action : 0 .. 5,
+}
+
+bitfield TControl : xlenbits = {
+  // Reserved WPRI bits.
+  wpri_2 : 8 .. xlen - 1,
+  // M-mode previous trigger enable bit
+  MPTE   : 7,
+  // Reserved WPRI bits.
+  wpri_1 : 4 .. 6,      
+  // M-mode trigger enable bit.
+  MTE    : 3,       
+  // Reserved WPRI bits.
+  wpri_0 : 0 .. 2,
+}
+
+/* Debug/Trace trigger register select */
+register tselect  : TSelect
+/* First Debug/Trace trigger data register */
+register tdata1   : TData1
+/* Second Debug/Trace trigger data register */
+register tdata2   : xlenbits
+/* Third Debug/Trace trigger data register */
+register tdata3   : xlenbits
+/* Match Control Debug/Trace trigger register */
+register mcontrol : MControl
+/* Match Control TYPE 6 Debug/Trace trigger register */
+register mcontrol6: MControl6
+/* Instruction Count Debug/Trace trigger register */
+register icount   : ICount
+/* Interrupt Trigger Debug/Trace trigger register */
+register itrigger : ITrigger
+/* Exception Trigger Debug/Trace trigger register */
+register etrigger : ETrigger
+/* External Trigger Debug/Trace trigger register */
+register tmexttrigger : TMexttrigger
+/* Debug/Trace trigger Control register */
+register tcontrol : TControl
+/*  Debug/Trace trigger Info register */
+register tinfo    : TInfo
+
+function isValidTselect(tselect: xlenbits) -> bool = {
+  let N_triggers = 3;// Number of triggers supported
+  (tselect >= 0) & (tselect < N_triggers);
+}  
+
+function legalize_tselect(o : TSelect, v : xlenbits) -> TSelect = {
+  let v = Mk_TSelect(v);
+  // Update Index field only if Trigger Module is enabled and Written value is legal
+  let o = [o with Index  = if (sys_enable_sdtrig() & isValidTselect(v.Index())) then v.Index() else o.Index()];
+  o
+}
+
 
 /*
  * The seed CSR (entropy source)

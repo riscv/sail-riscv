@@ -54,6 +54,7 @@ const char *RV32ISA = "RV32IMAC";
 #define OPT_PMP_COUNT 1002
 #define OPT_PMP_GRAIN 1003
 #define OPT_ENABLE_SVINVAL 1004
+#define OPT_ENABLE_SDTRIG 1005
 #define OPT_ENABLE_ZCB 10014
 
 static bool do_dump_dts = false;
@@ -149,6 +150,7 @@ static struct option options[] = {
     {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
     {"enable-svinval",              no_argument,       0, OPT_ENABLE_SVINVAL      },
     {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
+    {"enable-sdtrig",               no_argument,       0, OPT_ENABLE_SDTRIG       },   
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
@@ -394,6 +396,10 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "enabling Zcb extension.\n");
       rv_enable_zcb = true;
       break;
+    case OPT_ENABLE_SDTRIG:
+      fprintf(stderr, "enabling sdtrig extension.\n");
+      rv_enable_sdtrig = true;
+      break;      
     case 'x':
       fprintf(stderr, "enabling Zfinx support.\n");
       rv_enable_zfinx = true;

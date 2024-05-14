@@ -149,6 +149,10 @@ val sys_enable_zfinx : unit -> bool
 let sys_enable_zfinx () = false
 declare ocaml target_rep function sys_enable_zfinx = `Platform.enable_zfinx`
 
+val sys_enable_sdtrig : unit -> bool
+let sys_enable_sdtrig () = false
+declare ocaml target_rep function sys_enable_sdtrig = `Platform.enable_sdtrig`
+
 val sys_enable_next : unit -> bool
 let sys_enable_next () = true
 declare ocaml target_rep function sys_enable_next = `Platform.enable_next`
