@@ -11,6 +11,9 @@
 extern uint64_t rv_pmp_count;
 extern uint64_t rv_pmp_grain;
 
+extern bool rv_misaligned_order_decreasing;
+extern bool rv_misaligned_to_byte;
+
 extern bool rv_enable_svinval;
 extern bool rv_enable_zcb;
 extern bool rv_enable_zfinx;

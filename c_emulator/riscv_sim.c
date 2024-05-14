@@ -56,6 +56,8 @@ enum {
   OPT_PMP_GRAIN,
   OPT_ENABLE_SVINVAL,
   OPT_ENABLE_ZCB,
+  OPT_MISALIGNED_ORDER_DEC,
+  OPT_MISALIGNED_TO_BYTE,
 };
 
 static bool do_dump_dts = false;
@@ -127,6 +129,8 @@ static struct option options[] = {
     {"enable-misaligned",           no_argument,       0, 'm'                     },
     {"pmp-count",                   required_argument, 0, OPT_PMP_COUNT           },
     {"pmp-grain",                   required_argument, 0, OPT_PMP_GRAIN           },
+    {"misaligned-order-decreasing", no_argument,       0, OPT_MISALIGNED_ORDER_DEC},
+    {"misaligned-to-byte",          no_argument,       0, OPT_MISALIGNED_TO_BYTE  },
     {"enable-next",                 no_argument,       0, 'N'                     },
     {"ram-size",                    required_argument, 0, 'z'                     },
     {"disable-compressed",          no_argument,       0, 'C'                     },
@@ -314,6 +318,18 @@ static int process_args(int argc, char **argv)
         exit(1);
       }
       rv_pmp_grain = pmp_grain;
+      break;
+    case OPT_MISALIGNED_ORDER_DEC:
+      fprintf(stderr,
+              "misaligned access virtual addresses will be translated in "
+              "decreasing order.\n");
+      rv_misaligned_order_decreasing = true;
+      break;
+    case OPT_MISALIGNED_TO_BYTE:
+      fprintf(stderr,
+              "misaligned accesses will be split into individual "
+              "byte operations.\n");
+      rv_misaligned_to_byte = true;
       break;
     case 'C':
       fprintf(stderr, "disabling RVC compressed instructions.\n");
