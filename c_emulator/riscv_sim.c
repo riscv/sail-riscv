@@ -58,7 +58,11 @@ enum {
   OPT_ENABLE_ZCB,
   OPT_ENABLE_ZICBOM,
   OPT_ENABLE_ZICBOZ,
+  OPT_ENABLE_ZAMA16B,
   OPT_CACHE_BLOCK_SIZE,
+  OPT_MISALIGNED_ORDER_DEC,
+  OPT_MISALIGNED_TO_BYTE,
+  OPT_MISALIGNED_WITHIN,
 };
 
 static bool do_dump_dts = false;
@@ -133,6 +137,9 @@ static struct option options[] = {
     {"enable-misaligned",           no_argument,       0, 'm'                     },
     {"pmp-count",                   required_argument, 0, OPT_PMP_COUNT           },
     {"pmp-grain",                   required_argument, 0, OPT_PMP_GRAIN           },
+    {"misaligned-order-decreasing", no_argument,       0, OPT_MISALIGNED_ORDER_DEC},
+    {"misaligned-to-byte",          no_argument,       0, OPT_MISALIGNED_TO_BYTE  },
+    {"misaligned-allowed-within",   required_argument, 0, OPT_MISALIGNED_WITHIN   },
     {"ram-size",                    required_argument, 0, 'z'                     },
     {"disable-compressed",          no_argument,       0, 'C'                     },
     {"disable-writable-misa",       no_argument,       0, 'I'                     },
@@ -158,6 +165,7 @@ static struct option options[] = {
     {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
     {"enable-zicbom",               no_argument,       0, OPT_ENABLE_ZICBOM       },
     {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
+    {"enable-zama16b",              no_argument,       0, OPT_ENABLE_ZAMA16B      },
     {"cache-block-size",            required_argument, 0, OPT_CACHE_BLOCK_SIZE    },
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
@@ -334,6 +342,25 @@ static int process_args(int argc, char **argv)
       }
       rv_pmp_grain = pmp_grain;
       break;
+    case OPT_MISALIGNED_ORDER_DEC:
+      fprintf(stderr,
+              "misaligned access virtual addresses will be translated in "
+              "decreasing order.\n");
+      rv_misaligned_order_decreasing = true;
+      break;
+    case OPT_MISALIGNED_TO_BYTE:
+      fprintf(stderr,
+              "misaligned accesses will be split into individual "
+              "byte operations.\n");
+      rv_misaligned_to_byte = true;
+      break;
+    case OPT_MISALIGNED_WITHIN:
+      rv_misaligned_allowed_within = atol(optarg);
+      fprintf(stderr,
+              "misaligned accesses will be atomic when within %" PRIu64
+              " regions\n",
+              rv_misaligned_allowed_within);
+      break;
     case 'C':
       fprintf(stderr, "disabling RVC compressed instructions.\n");
       rv_enable_rvc = false;
@@ -423,6 +450,10 @@ static int process_args(int argc, char **argv)
     case OPT_ENABLE_ZICBOM:
       fprintf(stderr, "enabling Zicbom extension.\n");
       rv_enable_zicbom = true;
+      break;
+    case OPT_ENABLE_ZAMA16B:
+      fprintf(stderr, "enabling Zama16b extension.\n");
+      rv_enable_zama16b = true;
       break;
     case OPT_ENABLE_ZICBOZ:
       fprintf(stderr, "enabling Zicboz extension.\n");

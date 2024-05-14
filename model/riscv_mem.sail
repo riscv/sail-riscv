@@ -38,6 +38,14 @@
 function is_aligned_addr forall 'n. (addr : xlenbits, width : int('n)) -> bool =
   unsigned(addr) % width == 0
 
+function check_misaligned(vaddr : xlenbits, width : word_width) -> bool = {
+  if plat_enable_misaligned_access() then {
+    false
+  } else {
+    not(is_aligned_addr(vaddr, size_bytes(width)))
+  }
+}
+
 function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> option(read_kind) =
   match (aq, rl, res) {
     (false, false, false) => Some(Read_plain),
