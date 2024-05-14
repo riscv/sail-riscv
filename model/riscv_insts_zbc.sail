@@ -18,7 +18,7 @@ mapping clause assembly = RISCV_CLMUL(rs2, rs1, rd)
 function clause execute (RISCV_CLMUL(rs2, rs1, rd)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
-  result : xlenbits = zeros();
+  var result : xlenbits = zeros();
   foreach (i from 0 to (xlen_val - 1))
     if rs2_val[i] == bitone then result = result ^ (rs1_val << i);
   X(rd) = result;
@@ -37,7 +37,7 @@ mapping clause assembly = RISCV_CLMULH(rs2, rs1, rd)
 function clause execute (RISCV_CLMULH(rs2, rs1, rd)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
-  result : xlenbits = zeros();
+  var result : xlenbits = zeros();
   foreach (i from 0 to (xlen_val - 1))
     if rs2_val[i] == bitone then result = result ^ (rs1_val >> (xlen_val - i));
   X(rd) = result;
@@ -56,7 +56,7 @@ mapping clause assembly = RISCV_CLMULR(rs2, rs1, rd)
 function clause execute (RISCV_CLMULR(rs2, rs1, rd)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
-  result : xlenbits = zeros();
+  var result : xlenbits = zeros();
   foreach (i from 0 to (xlen_val - 1))
     if rs2_val[i] == bitone then result = result ^ (rs1_val >> (xlen_val - i - 1));
   X(rd) = result;
