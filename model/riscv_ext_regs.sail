@@ -28,7 +28,7 @@ function ext_rvfi_init () = {
 THIS(csrno, priv, isWrite) allows an extension to block access to csrno,
 at Privilege level priv. It should return true if the access is allowed.
 */
-val ext_check_CSR : (bits(12), Privilege, bool) -> bool
+val ext_check_CSR : (csreg, Privilege, bool) -> bool
 function ext_check_CSR (csrno, p, isWrite) = true
 
 /*!
