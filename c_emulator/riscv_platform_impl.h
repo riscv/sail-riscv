@@ -30,6 +30,8 @@ extern uint64_t rv_ram_size;
 extern uint64_t rv_rom_base;
 extern uint64_t rv_rom_size;
 
+extern uint64_t rv_cache_block_size_exp;
+
 // Provides entropy for the scalar cryptography extension.
 extern uint64_t rv_16_random_bits(void);
 

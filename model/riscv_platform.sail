@@ -26,6 +26,9 @@ val elf_entry = {
   c: "elf_entry"
 } : unit -> int
 
+// Cache block size is 2^cache_block_size_exp. Max 4096.
+val plat_cache_block_size_exp = {c: "plat_cache_block_size_exp", ocaml: "Platform.cache_block_size_exp", interpreter: "Platform.cache_block_size_exp", lem: "plat_cache_block_size_exp"} : unit -> range(0, 12)
+
 /* Main memory */
 val plat_ram_base = {c: "plat_ram_base", ocaml: "Platform.dram_base", interpreter: "Platform.dram_base", lem: "plat_ram_base"} : unit -> xlenbits
 val plat_ram_size = {c: "plat_ram_size", ocaml: "Platform.dram_size", interpreter: "Platform.dram_size", lem: "plat_ram_size"} : unit -> xlenbits
