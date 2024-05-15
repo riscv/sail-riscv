@@ -71,12 +71,21 @@ let options = Arg.align ([("-dump-dts",
                           ("-enable-bext",
                            Arg.Clear P.config_enable_bext,
                            " enable the B extension on boot");
+                           ("-enable-zicbom",
+                           Arg.Set P.config_enable_zicbom,
+                           " enable the Zicbom extension");
+                           ("-enable-zicboz",
+                           Arg.Set P.config_enable_zicboz,
+                           " enable the Zicboz extension");
                           ("-disable-writable-misa-c",
                            Arg.Clear P.config_enable_writable_misa,
                            " leave misa hardwired to its initial value");
                           ("-ram-size",
                            Arg.Int PI.set_dram_size,
                            " size of physical ram memory to use (in MB)");
+                          ("-cache-block-size",
+                           Arg.Int PI.set_cache_block_size,
+                           " cache block size of the cache block size (default 64; max 4096)");
                           ("-report-arch",
                            Arg.Unit report_arch,
                            " report model architecture (RV32 or RV64)");

@@ -108,6 +108,11 @@ val sys_enable_vext = {c: "sys_enable_vext", ocaml: "Platform.enable_vext", _: "
 /* whether misa.b was enabled at boot */
 val sys_enable_bext = {c: "sys_enable_bext", ocaml: "Platform.enable_bext", _: "sys_enable_bext"} : unit -> bool
 
+// CBO extensions. Zicbop cannot be enabled/disabled because it has no effect
+// at all on this model.
+val sys_enable_zicbom = {c: "sys_enable_zicbom", ocaml: "Platform.enable_zicbom", _: "sys_enable_zicbom"} : unit -> bool
+val sys_enable_zicboz = {c: "sys_enable_zicboz", ocaml: "Platform.enable_zicboz", _: "sys_enable_zicboz"} : unit -> bool
+
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
    unsetting C. If it returns true the write will have no effect. */
@@ -136,6 +141,10 @@ function clause extensionEnabled(Ext_U) = misa[U] == 0b1
 
 enum clause extension = Ext_S
 function clause extensionEnabled(Ext_S) = misa[S] == 0b1
+
+/* Cache Management Operations extension support. */
+function haveZicbom() -> bool = sys_enable_zicbom()
+function haveZicboz() -> bool = sys_enable_zicboz()
 
 /*
  * Illegal values legalized to least privileged mode supported.
