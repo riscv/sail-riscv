@@ -27,6 +27,8 @@ SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext
 SAIL_DEFAULT_INST += riscv_insts_fext.sail riscv_insts_cfext.sail
 SAIL_DEFAULT_INST += riscv_insts_dext.sail riscv_insts_cdext.sail
 
+SAIL_DEFAULT_INST += riscv_insts_svinval.sail
+
 SAIL_DEFAULT_INST += riscv_insts_zba.sail
 SAIL_DEFAULT_INST += riscv_insts_zbb.sail
 SAIL_DEFAULT_INST += riscv_insts_zbc.sail
@@ -136,14 +138,16 @@ export SAIL_DIR
 EXPLICIT_COQ_SAIL=yes
 else
 # Use sail from opam package
-SAIL_DIR:=$(shell opam config var sail:share)
+SAIL_DIR:=$(shell OPAMCLI=$(OPAMCLI) opam config var sail:share)
 SAIL:=sail
 endif
 SAIL_LIB_DIR:=$(SAIL_DIR)/lib
 export SAIL_LIB_DIR
 SAIL_SRC_DIR:=$(SAIL_DIR)/src
 
-LEM_DIR?=$(shell opam config var lem:share)
+ifndef LEM_DIR
+LEM_DIR:=$(shell OPAMCLI=$(OPAMCLI) opam config var lem:share)
+endif
 export LEM_DIR
 
 C_WARNINGS ?=
@@ -199,7 +203,7 @@ RISCV_EXTRAS_LEM = $(addprefix handwritten_support/,$(RISCV_EXTRAS_LEM_FILES))
 
 .PHONY:
 
-all: ocaml_emulator/riscv_ocaml_sim_$(ARCH) c_emulator/riscv_sim_$(ARCH) riscv_isa riscv_coq riscv_hol riscv_rmem
+all: ocaml_emulator/riscv_ocaml_sim_$(ARCH) c_emulator/riscv_sim_$(ARCH)
 .PHONY: all
 
 # the following ensures empty sail-generated .c files don't hang around and
@@ -368,9 +372,9 @@ riscv_hol_build: generated_definitions/hol4/$(ARCH)/riscvTheory.uo
 .PHONY: riscv_hol riscv_hol_build
 
 ifdef BBV_DIR
-  EXPLICIT_COQ_BBV = yes
+  EXPLICIT_COQ_BBV := yes
 else
-  EXPLICIT_COQ_BBV = $(shell if opam config var coq-bbv:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
+  EXPLICIT_COQ_BBV := $(shell if OPAMCLI=$(OPAMCLI) opam config var coq-bbv:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
   ifeq ($(EXPLICIT_COQ_BBV),yes)
     #Coq BBV library hopefully checked out in directory above us
     BBV_DIR = ../bbv
@@ -378,7 +382,7 @@ else
 endif
 
 ifndef EXPLICIT_COQ_SAIL
-  EXPLICIT_COQ_SAIL = $(shell if opam config var coq-sail:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
+  EXPLICIT_COQ_SAIL := $(shell if OPAMCLI=$(OPAMCLI) opam config var coq-sail:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
 endif
 
 COQ_LIBS = -R generated_definitions/coq Riscv -R generated_definitions/coq/$(ARCH) $(ARCH) -R handwritten_support Riscv_common

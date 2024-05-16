@@ -64,7 +64,7 @@ mapping clause assembly = RISCV_ZIP(rs1, rd)
 function clause execute (RISCV_ZIP(rs1, rd)) = {
   assert(sizeof(xlen) == 32);
   let rs1_val = X(rs1);
-  result : xlenbits = zeros();
+  var result : xlenbits = zeros();
   foreach (i from 0 to (sizeof(xlen_bytes)*4 - 1)) {
     result[i*2] = rs1_val[i];
     result[i*2 + 1] = rs1_val[i + sizeof(xlen_bytes)*4];
@@ -85,7 +85,7 @@ mapping clause assembly = RISCV_UNZIP(rs1, rd)
 function clause execute (RISCV_UNZIP(rs1, rd)) = {
   assert(sizeof(xlen) == 32);
   let rs1_val = X(rs1);
-  result : xlenbits = zeros();
+  var result : xlenbits = zeros();
   foreach (i from 0 to (sizeof(xlen_bytes)*4 - 1)) {
     result[i] = rs1_val[i*2];
     result[i + sizeof(xlen_bytes)*4] = rs1_val[i*2 + 1];
@@ -105,7 +105,7 @@ mapping clause assembly = RISCV_BREV8(rs1, rd)
 
 function clause execute (RISCV_BREV8(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : xlenbits = zeros();
+  var result : xlenbits = zeros();
   foreach (i from 0 to (sizeof(xlen) - 8) by 8)
     result[i+7..i] = reverse(rs1_val[i+7..i]);
   X(rd) = result;

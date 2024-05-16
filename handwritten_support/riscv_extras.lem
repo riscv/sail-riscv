@@ -169,6 +169,14 @@ val sys_enable_writable_fiom : unit -> bool
 let sys_enable_writable_fiom () = true
 declare ocaml target_rep function sys_enable_writable_fiom = `Platform.enable_writable_fiom`
 
+val sys_pmp_grain : unit -> integer
+let sys_pmp_grain () = 0
+declare ocaml target_rep function sys_pmp_grain = `Platform.sys_pmp_grain`
+
+val sys_pmp_count : unit -> integer
+let sys_pmp_count () = 0
+declare ocaml target_rep function sys_pmp_count = `Platform.sys_pmp_count`
+
 val plat_ram_base : unit -> bitvector
 let plat_ram_base () = []
 declare ocaml target_rep function plat_ram_base = `Platform.dram_base`

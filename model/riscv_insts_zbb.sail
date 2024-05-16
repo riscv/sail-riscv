@@ -184,7 +184,7 @@ mapping clause assembly = RISCV_REV8(rs1, rd)
 
 function clause execute (RISCV_REV8(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : xlenbits = zeros();
+  var result : xlenbits = zeros();
   foreach (i from 0 to (sizeof(xlen) - 8) by 8)
     result[(i + 7) .. i] = rs1_val[(sizeof(xlen) - i - 1) .. (sizeof(xlen) - i - 8)];
   X(rd) = result;
@@ -202,7 +202,7 @@ mapping clause assembly = RISCV_ORCB(rs1, rd)
 
 function clause execute (RISCV_ORCB(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : xlenbits = zeros();
+  var result : xlenbits = zeros();
   foreach (i from 0 to (sizeof(xlen) - 8) by 8)
     result[(i + 7) .. i] = if rs1_val[(i + 7) .. i] == zeros()
                            then 0x00
@@ -222,7 +222,7 @@ mapping clause assembly = RISCV_CPOP(rs1, rd)
 
 function clause execute (RISCV_CPOP(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : nat = 0;
+  var result : nat = 0;
   foreach (i from 0 to (xlen_val - 1))
     if rs1_val[i] == bitone then result = result + 1;
   X(rd) = to_bits(sizeof(xlen), result);
@@ -240,7 +240,7 @@ mapping clause assembly = RISCV_CPOPW(rs1, rd)
 
 function clause execute (RISCV_CPOPW(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : nat = 0;
+  var result : nat = 0;
   foreach (i from 0 to 31)
     if rs1_val[i] == bitone then result = result + 1;
   X(rd) = to_bits(sizeof(xlen), result);
@@ -258,8 +258,8 @@ mapping clause assembly = RISCV_CLZ(rs1, rd)
 
 function clause execute (RISCV_CLZ(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : nat = 0;
-  done : bool = false;
+  var result : nat = 0;
+  var done : bool = false;
   foreach (i from (sizeof(xlen) - 1) downto 0)
     if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1
@@ -279,8 +279,8 @@ mapping clause assembly = RISCV_CLZW(rs1, rd)
 
 function clause execute (RISCV_CLZW(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : nat = 0;
-  done : bool = false;
+  var result : nat = 0;
+  var done : bool = false;
   foreach (i from 31 downto 0)
     if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1
@@ -300,8 +300,8 @@ mapping clause assembly = RISCV_CTZ(rs1, rd)
 
 function clause execute (RISCV_CTZ(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : nat = 0;
-  done : bool = false;
+  var result : nat = 0;
+  var done : bool = false;
   foreach (i from 0 to (sizeof(xlen) - 1))
     if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1
@@ -321,8 +321,8 @@ mapping clause assembly = RISCV_CTZW(rs1, rd)
 
 function clause execute (RISCV_CTZW(rs1, rd)) = {
   let rs1_val = X(rs1);
-  result : nat = 0;
-  done : bool = false;
+  var result : nat = 0;
+  var done : bool = false;
   foreach (i from 0 to 31)
     if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1

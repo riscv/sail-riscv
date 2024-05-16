@@ -53,6 +53,9 @@ let options = Arg.align ([("-dump-dts",
                           ("-mtval-has-illegal-inst-bits",
                            Arg.Set P.config_mtval_has_illegal_inst_bits,
                            " mtval stores instruction bits on an illegal instruction exception");
+                          ("-enable-svinval",
+                           Arg.Set P.config_enable_svinval,
+                           " enable Svinval extension");
                           ("-enable-zcb",
                            Arg.Set P.config_enable_zcb,
                            " enable Zcb (simple code size) extension");

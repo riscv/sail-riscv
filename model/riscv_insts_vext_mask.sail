@@ -17,11 +17,11 @@ union clause ast = MMTYPE : (mmfunct6, regidx, regidx, regidx)
 mapping encdec_mmfunct6 : mmfunct6 <-> bits(6) = {
   MM_VMAND     <-> 0b011001,
   MM_VMNAND    <-> 0b011101,
-  MM_VMANDNOT  <-> 0b011000,
+  MM_VMANDN    <-> 0b011000,
   MM_VMXOR     <-> 0b011011,
   MM_VMOR      <-> 0b011010,
   MM_VMNOR     <-> 0b011110,
-  MM_VMORNOT   <-> 0b011100,
+  MM_VMORN     <-> 0b011100,
   MM_VMXNOR    <-> 0b011111
 }
 
@@ -51,11 +51,11 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
       result[i] = match funct6 {
         MM_VMAND     => vs2_val[i] & vs1_val[i],
         MM_VMNAND    => not(vs2_val[i] & vs1_val[i]),
-        MM_VMANDNOT  => vs2_val[i] & not(vs1_val[i]),
+        MM_VMANDN    => vs2_val[i] & not(vs1_val[i]),
         MM_VMXOR     => vs2_val[i] != vs1_val[i],
         MM_VMOR      => vs2_val[i] | vs1_val[i],
         MM_VMNOR     => not(vs2_val[i] | vs1_val[i]),
-        MM_VMORNOT   => vs2_val[i] | not(vs1_val[i]),
+        MM_VMORN     => vs2_val[i] | not(vs1_val[i]),
         MM_VMXNOR    => vs2_val[i] == vs1_val[i]
       }
     }
@@ -69,11 +69,11 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
 mapping mmtype_mnemonic : mmfunct6 <-> string = {
   MM_VMAND     <-> "vmand.mm",
   MM_VMNAND    <-> "vmnand.mm",
-  MM_VMANDNOT  <-> "vmandnot.mm",
+  MM_VMANDN    <-> "vmandn.mm",
   MM_VMXOR     <-> "vmxor.mm",
   MM_VMOR      <-> "vmor.mm",
   MM_VMNOR     <-> "vmnor.mm",
-  MM_VMORNOT   <-> "vmornot.mm",
+  MM_VMORN     <-> "vmorn.mm",
   MM_VMXNOR    <-> "vmxnor.mm"
 }
 
