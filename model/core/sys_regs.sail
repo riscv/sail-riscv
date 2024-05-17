@@ -305,7 +305,15 @@ bitfield Seccfg : bits(64) = {
   SSEED  : 9,
   // Enable access to SEED in U-mode
   USEED  : 8,
+  // Rule Locking Bypass
+  RLB    : 2,
+  // Machine Mode Whitelist Policy
+  MMWP   : 1,
+  // Machine Mode Lockdown
+  MML    : 0
 }
+
+val checkPmpNcfgL : range(0, 63) -> bits(1)
 
 private function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
   let sseed_read_only_zero =
@@ -316,12 +324,24 @@ private function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
       (config extensions.Zkr.useed_read_only_zero : bool)
     | not(currentlyEnabled(Ext_U))
     | not(currentlyEnabled(Ext_Zkr));
+  let rlb_read_only_zero =
+      not(currentlyEnabled(Ext_Smepmp))
+    | (o[RLB] == 0b0 & checkPmpNcfgL(63) == 0b1);
+  let mml_unable_to_set =
+      not(currentlyEnabled(Ext_Smepmp))
+    | (o[MML] == 0b1);
+  let mmwp_unable_to_set =
+      not(currentlyEnabled(Ext_Smepmp))
+    | (o[MMWP] == 0b1);
 
   let v = Mk_Seccfg(v);
   [o with
     MLPE  = if hartSupports(Ext_Zicfilp) then v[MLPE] else 0b0,
     SSEED = if sseed_read_only_zero then 0b0 else v[SSEED],
     USEED = if useed_read_only_zero then 0b0 else v[USEED],
+    RLB   = if rlb_read_only_zero then 0b0 else v[RLB],
+    MMWP  = if mmwp_unable_to_set then o[MMWP] else v[MMWP],
+    MML   = if mml_unable_to_set then o[MML] else v[MML],
   ]
 }
 
@@ -331,8 +351,8 @@ mapping clause csr_name_map = 0x747  <-> "mseccfg"
 mapping clause csr_name_map = 0x757  <-> "mseccfgh"
 
 // "mseccfg exists if Zkr is implemented, or if it is required by other processor features."
-function clause is_CSR_accessible(0x747, _, _) = currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) // mseccfg
-function clause is_CSR_accessible(0x757, _, _) = (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp)) & xlen == 32 // mseccfgh
+function clause is_CSR_accessible(0x747, _, _) = currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | currentlyEnabled(Ext_Smepmp) // mseccfg
+function clause is_CSR_accessible(0x757, _, _) = (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | currentlyEnabled(Ext_Smepmp)) & xlen == 32 // mseccfgh
 
 function clause read_CSR(0x747) = mseccfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x757 if xlen == 32) = mseccfg.bits[63 .. 32]
