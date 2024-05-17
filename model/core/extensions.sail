@@ -554,6 +554,10 @@ enum clause extension = Ext_Smnpm
 mapping clause extensionName = Ext_Smnpm <-> "smnpm"
 function clause hartSupports(Ext_Smnpm) = config extensions.Smnpm.supported : bool & (xlen == 64)
 function clause currentlyEnabled(Ext_Smnpm) = hartSupports(Ext_Smnpm)
+// Pmp enhancements for memory access and execution prevention on Machine mode
+enum clause extension = Ext_Smepmp
+mapping clause extensionName = Ext_Smepmp <-> "smepmp"
+function clause hartSupports(Ext_Smepmp) = config extensions.Smepmp.supported
 // Machine-mode view of the state-enable extension
 enum clause extension = Ext_Smstateen
 mapping clause extensionName = Ext_Smstateen <-> "smstateen"
@@ -836,6 +840,7 @@ let extensions_ordered_for_isa_string = [
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,
+  Ext_Smepmp,
   Ext_Smmpm,
   Ext_Smnpm,
   Ext_Smstateen,
