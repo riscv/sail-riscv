@@ -107,6 +107,11 @@ val sys_pmp_grain = pure "sys_pmp_grain" : unit -> range(0, 63)
 /* Which HPM counters are supported (as a bit mask). Bits [2 .. 0] are ignored. */
 val sys_writable_hpm_counters = pure "sys_writable_hpm_counters" : unit -> bits(32)
 
+/* Enable Smepmp */
+val sys_enable_smepmp = pure "sys_enable_smepmp" : unit -> bool
+/* TODO: for extension smmpm and zkr to enable */
+function sys_has_mseccfg() -> bool = sys_enable_smepmp()
+
 /* whether misa.v was enabled at boot */
 val sys_enable_vext = pure "sys_enable_vext" : unit -> bool
 
@@ -408,6 +413,47 @@ function is_fiom_active() -> bool = {
     User => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
   }
 }
+
+bitfield Mseccfg_ent : bits(64) = {
+  RLB  : 2,       /* Rule Locking Bypass */
+  MMWP : 1,       /* Machine Mode Whitelist Policy */
+  MML  : 0        /* Machine Mode Lockdown */
+}
+
+register mseccfg  : Mseccfg_ent
+
+val checkPmpNcfgL : range(0, 63) -> bits(1)
+
+function mseccfgWrite(reg: Mseccfg_ent, v: bits(64)) -> Mseccfg_ent = {
+  let legal_v : Mseccfg_ent = Mk_Mseccfg_ent(zero_extend(v[2 .. 0]));
+  let reg : Mseccfg_ent = match (reg[RLB], legal_v[RLB], checkPmpNcfgL(63)) {
+     // to set RLB, need to check PMPCFG_L
+    (0b0, 0b1, 0b1) => reg,
+    (_, _, _)     => [reg with RLB = legal_v[RLB]],
+  };
+  let reg : Mseccfg_ent = match (reg[MML], reg[MMWP]) {
+    // Implements stickiness of MML bit, if once set remains set
+    (0b0, 0b0) => [reg with MMWP = legal_v[MMWP], MML = legal_v[MML]],
+    (0b0, 0b1) => [reg with MML = legal_v[MML]],
+    (0b1, 0b0) => [reg with MMWP = legal_v[MMWP]],
+    (0b1, 0b1) => reg
+  };
+  reg
+}
+
+mapping clause csr_name_map = 0x747  <-> "mseccfg"
+mapping clause csr_name_map = 0x757  <-> "mseccfgh"
+
+function clause is_CSR_defined(0x747) = sys_has_mseccfg()
+function clause is_CSR_defined(0x757) = sys_has_mseccfg() & xlen == 32
+
+function clause read_CSR(0x747) = mseccfg.bits[xlen - 1 .. 0]
+function clause read_CSR(0x757 if xlen == 32) = mseccfg.bits[63 .. 32]
+
+// Keep a consistent writing style, as it may be necessary to integrate the ifs process into the writeCSR function body in the future
+function clause write_CSR((0x747, value) if xlen == 64) = { mseccfg = mseccfgWrite(mseccfg, value); mseccfg.bits }
+function clause write_CSR((0x747, value) if xlen == 32) = { mseccfg = mseccfgWrite(mseccfg, mseccfg.bits[63 .. 32] @ value); mseccfg.bits[xlen - 1 .. 0] }
+function clause write_CSR((0x757, value) if xlen == 32) = { mseccfg = mseccfgWrite(mseccfg, value @ mseccfg.bits[31 .. 0]); mseccfg.bits[63 .. 32] }
 
 /* interrupt processing state */
 

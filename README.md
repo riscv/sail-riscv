@@ -126,6 +126,7 @@ Supported RISC-V ISA features
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
 - Physical Memory Protection (PMP)
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
+- Smepmp extension for pmp enhancements for memory access and execution prevention on Machine mode, v1.0
 
 #### The following features are not currently supported:
 - The Hypervisor Extension.
