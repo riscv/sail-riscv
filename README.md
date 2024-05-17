@@ -116,6 +116,7 @@ For booting operating system images, see the information under the
 - Zvkt extension for vector data independent execution latency, v1.0 (no impact on model)
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
+- Smepmp extension for pmp enhancements for memory access and execution prevention on Machine mode, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
 - Svinval extension for fine-grained address-translation cache invalidation, v1.0

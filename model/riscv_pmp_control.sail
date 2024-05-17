@@ -6,6 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
+function clause currentlyEnabled(Ext_Smepmp) = hartSupports(Ext_Smepmp)
 
 /* permission checks */
 
@@ -18,6 +19,34 @@ function pmpCheckRWX(ent, acc) =
     InstructionFetch() => ent[X] == 0b1,
   }
 
+/* this needs to be called with the effective current privilege */
+val pmpCheckPerms: (Pmpcfg_ent, AccessType(ext_access_type), Privilege) -> bool
+function pmpCheckPerms(ent, acc, priv) = {
+  if mseccfg[MML] == 0b1
+  then {
+    match (ent[L], ent[R], ent[W], ent[X]) {
+      (0b1, 0b0, 0b1, _) =>
+        match acc {
+          InstructionFetch(_) => true,
+          Read(_)    => priv == Machine & ent[X] == 0b1,
+          _          => false
+        },
+      (0b0, 0b0, 0b1, _) =>
+        match acc {
+          Read(_)  => true,
+          Write(_) => priv == Machine | ent[X] == 0b1,
+          _        => false
+        },
+      (0b1, 0b1, 0b1, 0b1) =>
+        match acc {
+          Read(_) => true,
+          _       => false
+        },
+      (L, _, _, _) => ((priv == Machine) == (L == 0b1)) & pmpCheckRWX(ent, acc)
+    }
+  }
+  else (priv == Machine & not(pmpLocked(ent))) | pmpCheckRWX(ent, acc)
+}
 
 /* matching logic */
 
@@ -106,19 +135,34 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
       PMP_NoMatch      => (),
       PMP_PartialMatch => return Some(accessToFault(acc)),
       PMP_Match        => return (
-        if pmpCheckRWX(cfg, acc) | (priv == Machine & not(pmpLocked(cfg)))
+        if (currentlyEnabled(Ext_Smepmp) & pmpCheckPerms(cfg, acc, priv)) |
+            pmpCheckRWX(cfg, acc) |
+           (priv == Machine & not(pmpLocked(cfg)))
         then None()
         else Some(accessToFault(acc))
       ),
     };
   };
-  if priv == Machine then None() else Some(accessToFault(acc))
+  /* Make Read, Write and execute denied by default, if mseccfg[MMWP] == 0b1 for M mode
+   * Make execute denied, if mseccfg[MML] == 0b1 for M mode
+   */
+  if priv == Machine & mseccfg[MMWP] == 0b0 & (mseccfg[MML] == 0b0 | acc != InstructionFetch())
+  then None()
+  else Some(accessToFault(acc))
 }
 
 function reset_pmp() -> unit = {
+  mseccfg = [mseccfg with MML = 0b0, MMWP = 0b0, RLB = 0b0];
+
   foreach (i from 0 to 63) {
     // On reset the PMP register's A and L bits are set to 0 unless the platform
     // mandates a different value.
     pmpcfg_n[i] = [pmpcfg_n[i] with A = pmpAddrMatchType_encdec(OFF), L = 0b0];
   };
+}
+
+function checkPmpNcfgL(n : range(0, 63)) -> bits(1) = {
+  if n == 0
+  then pmpcfg_n[0][L]
+  else checkPmpNcfgL(n - 1) | (pmpcfg_n[n][L])
 }

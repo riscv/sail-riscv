@@ -375,6 +375,11 @@ enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
 
+// Pmp enhancements for memory access and execution prevention on Machine mode
+enum clause extension = Ext_Smepmp
+mapping clause extensionName = Ext_Smepmp <-> "smepmp"
+function clause hartSupports(Ext_Smepmp) = config extensions.Smepmp.supported
+
 let extensions_ordered_for_isa_string = [
   // Single letter extensions.
   Ext_M,
@@ -476,4 +481,5 @@ let extensions_ordered_for_isa_string = [
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,
+  Ext_Smepmp,
 ]
