@@ -128,7 +128,7 @@ function update_PTE_Bits(sv_params : SV_Params,
     let pte_flags = [pte_flags with
                       A = 0b1,
                       D = (if update_d then 0b1 else pte_flags[D])];
-    Some(pte[63 .. 8] @ pte_flags.bits())
+    Some(pte[63 .. 8] @ pte_flags.bits)
   }
   else
     None()

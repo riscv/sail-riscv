@@ -426,8 +426,8 @@ function translateAddr(vAddr   : xlenbits,
   if not(valid_va) then
     TR_Failure(translationException(ac, PTW_Invalid_Addr()), init_ext_ptw)
   else {
-    let mxr               = mstatus.MXR() == 0b1;
-    let do_sum            = mstatus.SUM() == 0b1;
+    let mxr               = mstatus[MXR] == 0b1;
+    let do_sum            = mstatus[SUM] == 0b1;
     let asid   : asidbits = satp_to_asid(satp);
     let ptb    : bits(64) = satp_to_PT_base(satp);
     let tr_result1 = translate(sv_params,
