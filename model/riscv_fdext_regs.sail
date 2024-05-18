@@ -327,47 +327,6 @@ overload F_or_X_H = { rF_or_X_H, wF_or_X_H }
 overload F_or_X_S = { rF_or_X_S, wF_or_X_S }
 overload F_or_X_D = { rF_or_X_D, wF_or_X_D }
 
-/* register names */
-
-val freg_name_abi : regidx <-> string
-
-mapping freg_name_abi = {
-    0b00000 <-> "ft0",
-    0b00001 <-> "ft1",
-    0b00010 <-> "ft2",
-    0b00011 <-> "ft3",
-    0b00100 <-> "ft4",
-    0b00101 <-> "ft5",
-    0b00110 <-> "ft6",
-    0b00111 <-> "ft7",
-    0b01000 <-> "fs0",
-    0b01001 <-> "fs1",
-    0b01010 <-> "fa0",
-    0b01011 <-> "fa1",
-    0b01100 <-> "fa2",
-    0b01101 <-> "fa3",
-    0b01110 <-> "fa4",
-    0b01111 <-> "fa5",
-    0b10000 <-> "fa6",
-    0b10001 <-> "fa7",
-    0b10010 <-> "fs2",
-    0b10011 <-> "fs3",
-    0b10100 <-> "fs4",
-    0b10101 <-> "fs5",
-    0b10110 <-> "fs6",
-    0b10111 <-> "fs7",
-    0b11000 <-> "fs8",
-    0b11001 <-> "fs9",
-    0b11010 <-> "fs10",
-    0b11011 <-> "fs11",
-    0b11100 <-> "ft8",
-    0b11101 <-> "ft9",
-    0b11110 <-> "ft10",
-    0b11111 <-> "ft11"
-}
-
-overload to_str = {freg_name_abi}
-
 /* mappings for assembly */
 
 val freg_name : bits(5) <-> string
