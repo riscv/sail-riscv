@@ -41,7 +41,7 @@ mapping maybe_ma_flag : string <-> bits(1) = {
   sep() ^ "mu" <-> 0b0
 }
 
-val handle_illegal_vtype : unit -> unit effect {rreg}
+val handle_illegal_vtype : unit -> unit
 function handle_illegal_vtype() = {
   /* Note: Implementations can set vill or trap if the vtype setting is not supported.
    * TODO: configuration support for both solutions
