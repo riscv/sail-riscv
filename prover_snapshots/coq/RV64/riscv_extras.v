@@ -1,6 +1,77 @@
+(*=======================================================================================*)
+(*  RISCV Sail Model                                                                     *)
+(*                                                                                       *)
+(*  This Sail RISC-V architecture model, comprising all files and                        *)
+(*  directories except for the snapshots of the Lem and Sail libraries                   *)
+(*  in the prover_snapshots directory (which include copies of their                     *)
+(*  licences), is subject to the BSD two-clause licence below.                           *)
+(*                                                                                       *)
+(*  Copyright (c) 2017-2023                                                              *)
+(*    Prashanth Mundkur                                                                  *)
+(*    Rishiyur S. Nikhil and Bluespec, Inc.                                              *)
+(*    Jon French                                                                         *)
+(*    Brian Campbell                                                                     *)
+(*    Robert Norton-Wright                                                               *)
+(*    Alasdair Armstrong                                                                 *)
+(*    Thomas Bauereiss                                                                   *)
+(*    Shaked Flur                                                                        *)
+(*    Christopher Pulte                                                                  *)
+(*    Peter Sewell                                                                       *)
+(*    Alexander Richardson                                                               *)
+(*    Hesham Almatary                                                                    *)
+(*    Jessica Clarke                                                                     *)
+(*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  *)
+(*    Peter Rugg                                                                         *)
+(*    Aril Computer Corp., for contributions by Scott Johnson                            *)
+(*    Philipp Tomsich                                                                    *)
+(*    VRULL GmbH, for contributions by its employees                                     *)
+(*                                                                                       *)
+(*  All rights reserved.                                                                 *)
+(*                                                                                       *)
+(*  This software was developed by the above within the Rigorous                         *)
+(*  Engineering of Mainstream Systems (REMS) project, partly funded by                   *)
+(*  EPSRC grant EP/K008528/1, at the Universities of Cambridge and                       *)
+(*  Edinburgh.                                                                           *)
+(*                                                                                       *)
+(*  This software was developed by SRI International and the University of               *)
+(*  Cambridge Computer Laboratory (Department of Computer Science and                    *)
+(*  Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and                 *)
+(*  under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA                 *)
+(*  SSITH research programme.                                                            *)
+(*                                                                                       *)
+(*  This project has received funding from the European Research Council                 *)
+(*  (ERC) under the European Union’s Horizon 2020 research and innovation                *)
+(*  programme (grant agreement 789108, ELVER).                                           *)
+(*                                                                                       *)
+(*                                                                                       *)
+(*  Redistribution and use in source and binary forms, with or without                   *)
+(*  modification, are permitted provided that the following conditions                   *)
+(*  are met:                                                                             *)
+(*  1. Redistributions of source code must retain the above copyright                    *)
+(*     notice, this list of conditions and the following disclaimer.                     *)
+(*  2. Redistributions in binary form must reproduce the above copyright                 *)
+(*     notice, this list of conditions and the following disclaimer in                   *)
+(*     the documentation and/or other materials provided with the                        *)
+(*     distribution.                                                                     *)
+(*                                                                                       *)
+(*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''                   *)
+(*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED                    *)
+(*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                      *)
+(*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR                  *)
+(*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                         *)
+(*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                     *)
+(*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF                     *)
+(*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND                  *)
+(*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,                   *)
+(*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT                   *)
+(*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF                   *)
+(*  SUCH DAMAGE.                                                                         *)
+(*=======================================================================================*)
+
 Require Import Sail.Base.
 Require Import String.
 Require Import List.
+Require Import Lia.
 Import List.ListNotations.
 Open Scope Z.
 
@@ -78,20 +149,6 @@ match vs with
 | (h::_) => returnm h
 | _ => Fail "empty list in internal_pick"
 end.
-Definition undefined_string {rv e} (_:unit) : monad rv string e := returnm ""%string.
-Definition undefined_unit {rv e} (_:unit) : monad rv unit e := returnm tt.
-Definition undefined_int {rv e} (_:unit) : monad rv Z e := returnm (0:ii).
-(*val undefined_vector : forall 'rv 'a 'e. integer -> 'a -> monad 'rv (list 'a) 'e*)
-Definition undefined_vector {rv a e} len (u : a) `{ArithFact (len >=? 0)} : monad rv (vec a len) e := returnm (vec_init u len).
-(*val undefined_bitvector : forall 'rv 'a 'e. Bitvector 'a => integer -> monad 'rv 'a 'e*)
-Definition undefined_bitvector {rv e} len `{ArithFact (len >=? 0)} : monad rv (mword len) e := returnm (mword_of_int 0).
-(*val undefined_bits : forall 'rv 'a 'e. Bitvector 'a => integer -> monad 'rv 'a 'e*)
-Definition undefined_bits {rv e} := @undefined_bitvector rv e.
-Definition undefined_bit {rv e} (_:unit) : monad rv bitU e := returnm BU.
-(*Definition undefined_real {rv e} (_:unit) : monad rv real e := returnm (realFromFrac 0 1).*)
-Definition undefined_range {rv e} i j `{ArithFact (i <=? j)} : monad rv {z : Z & ArithFact (i <=? z <=? j)} e := returnm (build_ex i).
-Definition undefined_atom {rv e} i : monad rv Z e := returnm i.
-Definition undefined_nat {rv e} (_:unit) : monad rv Z e := returnm (0:ii).
 
 Definition skip {rv e} (_:unit) : monad rv unit e := returnm tt.
 
@@ -122,7 +179,7 @@ unbool_comparisons.
 unbool_comparisons_goal.
 assert (Z.abs n = n). { rewrite Z.abs_eq; auto with zarith. }
 rewrite <- H at 3.
-lapply (ZEuclid.mod_always_pos m n); omega.
+lapply (ZEuclid.mod_always_pos m n); lia.
 Qed.
 
 (* Override the more general version *)
@@ -142,6 +199,9 @@ Axiom sys_enable_writable_misa : unit -> bool.
 Axiom sys_enable_rvc : unit -> bool.
 Axiom sys_enable_fdext : unit -> bool.
 Axiom sys_enable_next : unit -> bool.
+Axiom sys_enable_zfinx : unit -> bool.
+Axiom sys_enable_writable_fiom : unit -> bool.
+Axiom sys_enable_vext : unit -> bool.
 
 (* The constraint solver can do this itself, but a Coq bug puts
    anonymous_subproof into the term instead of an actual subproof. *)
@@ -149,6 +209,6 @@ Lemma n_leading_spaces_fact {w__0} :
   w__0 >= 0 -> exists ex17629_ : Z, 1 + w__0 = 1 + ex17629_ /\ 0 <= ex17629_.
 intro.
 exists w__0.
-omega.
+lia.
 Qed.
-Hint Resolve n_leading_spaces_fact : sail.
+#[export] Hint Resolve n_leading_spaces_fact : sail.
