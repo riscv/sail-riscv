@@ -109,15 +109,12 @@ SAIL_ARCH_SRCS += riscv_types_kext.sail    # Shared/common code for the cryptogr
 SAIL_STEP_SRCS = riscv_step_common.sail riscv_step_ext.sail riscv_decode_ext.sail riscv_fetch.sail riscv_step.sail
 RVFI_STEP_SRCS = riscv_step_common.sail riscv_step_rvfi.sail riscv_decode_ext.sail riscv_fetch_rvfi.sail riscv_step.sail
 
-# Control inclusion of 64-bit only riscv_analysis
-ifeq ($(ARCH),RV32)
 SAIL_OTHER_SRCS     = $(SAIL_STEP_SRCS)
+ifeq ($(ARCH),RV32)
 SAIL_OTHER_COQ_SRCS = riscv_termination_common.sail riscv_termination_rv32.sail
 else
-SAIL_OTHER_SRCS     = $(SAIL_STEP_SRCS) riscv_analysis.sail
-SAIL_OTHER_COQ_SRCS = riscv_termination_common.sail riscv_termination_rv64.sail riscv_analysis.sail
+SAIL_OTHER_COQ_SRCS = riscv_termination_common.sail riscv_termination_rv64.sail
 endif
-
 
 PRELUDE_SRCS   = $(addprefix model/,$(PRELUDE))
 SAIL_SRCS      = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS)  $(SAIL_OTHER_SRCS))

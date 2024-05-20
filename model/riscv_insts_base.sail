@@ -544,9 +544,6 @@ function effective_fence_set(set : bits(4), fiom : bool) -> bits(4) = {
   } else set
 }
 
-/* For future versions of Sail where barriers can be parameterised */
-$ifdef FEATURE_UNION_BARRIER
-
 function clause execute (FENCE(pred, succ)) = {
   // If the FIOM bit in menvcfg/senvcfg is set then the I/O bits can imply R/W.
   let fiom = is_fiom_active();
@@ -554,15 +551,15 @@ function clause execute (FENCE(pred, succ)) = {
   let succ = effective_fence_set(succ, fiom);
 
   match (pred, succ) {
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_rw_rw()),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_r_rw()),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_r_r()),
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_rw_w()),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_w_w()),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_w_rw()),
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_rw_r()),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_r_w()),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_w_r()),
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => sail_barrier(Barrier_RISCV_rw_rw),
+    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b11) => sail_barrier(Barrier_RISCV_r_rw),
+    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b10) => sail_barrier(Barrier_RISCV_r_r),
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b01) => sail_barrier(Barrier_RISCV_rw_w),
+    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b01) => sail_barrier(Barrier_RISCV_w_w),
+    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b11) => sail_barrier(Barrier_RISCV_w_rw),
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b10) => sail_barrier(Barrier_RISCV_rw_r),
+    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => sail_barrier(Barrier_RISCV_r_w),
+    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => sail_barrier(Barrier_RISCV_w_r),
 
     (_ : bits(4)       , _ : bits(2) @ 0b00) => (),
     (_ : bits(2) @ 0b00, _ : bits(4)       ) => (),
@@ -572,36 +569,6 @@ function clause execute (FENCE(pred, succ)) = {
   };
   RETIRE_SUCCESS
 }
-
-$else
-
-function clause execute (FENCE(pred, succ)) = {
-  // If the FIOM bit in menvcfg/senvcfg is set then the I/O bits can imply R/W.
-  let fiom = is_fiom_active();
-  let pred = effective_fence_set(pred, fiom);
-  let succ = effective_fence_set(succ, fiom);
-
-  match (pred, succ) {
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_rw_rw),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_r_rw),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_r_r),
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_rw_w),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_w_w),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_w_rw),
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_rw_r),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_r_w),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_w_r),
-
-    (_ : bits(4)       , _ : bits(2) @ 0b00) => (),
-    (_ : bits(2) @ 0b00, _ : bits(4)       ) => (),
-
-    _ => { print("FIXME: unsupported fence");
-           () }
-  };
-  RETIRE_SUCCESS
-}
-
-$endif
 
 mapping bit_maybe_r : bits(1) <-> string = {
   0b1 <-> "r",
@@ -636,11 +603,9 @@ union clause ast = FENCE_TSO : (bits(4), bits(4))
 mapping clause encdec = FENCE_TSO(pred, succ)
   <-> 0b1000 @ pred @ succ @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
 
-$ifdef FEATURE_UNION_BARRIER
-
 function clause execute (FENCE_TSO(pred, succ)) = {
   match (pred, succ) {
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_tso()),
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => sail_barrier(Barrier_RISCV_tso),
     (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
 
     _ => { print("FIXME: unsupported fence");
@@ -648,21 +613,6 @@ function clause execute (FENCE_TSO(pred, succ)) = {
   };
   RETIRE_SUCCESS
 }
-
-$else
-
-function clause execute (FENCE_TSO(pred, succ)) = {
-  match (pred, succ) {
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_tso),
-    (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
-
-    _ => { print("FIXME: unsupported fence");
-           () }
-  };
-  RETIRE_SUCCESS
-}
-
-$endif
 
 mapping clause assembly = FENCE_TSO(pred, succ)
   <-> "fence.tso" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ)
