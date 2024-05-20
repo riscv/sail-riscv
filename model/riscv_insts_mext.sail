@@ -20,11 +20,10 @@ mapping encdec_mul_op : mul_op <-> bits(3) = {
   struct { high = true,  signed_rs1 = false, signed_rs2 = false } <-> 0b011
 }
 
-mapping clause encdec = MUL(rs2, rs1, rd, mul_op)
-  <-> 0b0000001 @ rs2 @ rs1 @ encdec_mul_op(mul_op) @ rd @ 0b0110011
+mapping clause encdec = MUL(rs2, rs1, rd, mul_op)                    if haveMulDiv() | haveZmmul()
+  <-> 0b0000001 @ rs2 @ rs1 @ encdec_mul_op(mul_op) @ rd @ 0b0110011 if haveMulDiv() | haveZmmul()
 
 function clause execute (MUL(rs2, rs1, rd, mul_op)) = {
-  if haveMulDiv() | haveZmmul() then {
     let rs1_val = X(rs1);
     let rs2_val = X(rs2);
     let rs1_int : int = if mul_op.signed_rs1 then signed(rs1_val) else unsigned(rs1_val);
@@ -35,10 +34,6 @@ function clause execute (MUL(rs2, rs1, rd, mul_op)) = {
                  else result_wide[(sizeof(xlen) - 1) .. 0];
     X(rd) = result;
     RETIRE_SUCCESS
-  } else {
-    handle_illegal();
-    RETIRE_FAIL
-  }
 }
 
 mapping mul_mnemonic : mul_op <-> string = {
@@ -54,11 +49,10 @@ mapping clause assembly = MUL(rs2, rs1, rd, mul_op)
 /* ****************************************************************** */
 union clause ast = DIV : (regidx, regidx, regidx, bool)
 
-mapping clause encdec = DIV(rs2, rs1, rd, s)
-  <-> 0b0000001 @ rs2 @ rs1 @ 0b10 @ bool_not_bits(s) @ rd @ 0b0110011
+mapping clause encdec = DIV(rs2, rs1, rd, s)                           if haveMulDiv()
+  <-> 0b0000001 @ rs2 @ rs1 @ 0b10 @ bool_not_bits(s) @ rd @ 0b0110011 if haveMulDiv()
 
 function clause execute (DIV(rs2, rs1, rd, s)) = {
-  if haveMulDiv() then {
     let rs1_val = X(rs1);
     let rs2_val = X(rs2);
     let rs1_int : int = if s then signed(rs1_val) else unsigned(rs1_val);
@@ -68,10 +62,6 @@ function clause execute (DIV(rs2, rs1, rd, s)) = {
     let q': int = if s & q > xlen_max_signed then xlen_min_signed else q;
     X(rd) = to_bits(sizeof(xlen), q');
     RETIRE_SUCCESS
-  } else {
-    handle_illegal();
-    RETIRE_FAIL
-  }
 }
 
 mapping maybe_not_u : bool <-> string = {
@@ -85,11 +75,10 @@ mapping clause assembly = DIV(rs2, rs1, rd, s)
 /* ****************************************************************** */
 union clause ast = REM : (regidx, regidx, regidx, bool)
 
-mapping clause encdec = REM(rs2, rs1, rd, s)
-  <-> 0b0000001 @ rs2 @ rs1 @ 0b11 @ bool_not_bits(s) @ rd @ 0b0110011
+mapping clause encdec = REM(rs2, rs1, rd, s)                           if haveMulDiv()
+  <-> 0b0000001 @ rs2 @ rs1 @ 0b11 @ bool_not_bits(s) @ rd @ 0b0110011 if haveMulDiv()
 
 function clause execute (REM(rs2, rs1, rd, s)) = {
-  if haveMulDiv() then {
     let rs1_val = X(rs1);
     let rs2_val = X(rs2);
     let rs1_int : int = if s then signed(rs1_val) else unsigned(rs1_val);
@@ -98,10 +87,6 @@ function clause execute (REM(rs2, rs1, rd, s)) = {
     /* signed overflow case returns zero naturally as required due to -1 divisor */
     X(rd) = to_bits(sizeof(xlen), r);
     RETIRE_SUCCESS
-  } else {
-    handle_illegal();
-    RETIRE_FAIL
-  }
 }
 
 mapping clause assembly = REM(rs2, rs1, rd, s)
@@ -111,12 +96,11 @@ mapping clause assembly = REM(rs2, rs1, rd, s)
 union clause ast = MULW : (regidx, regidx, regidx)
 
 mapping clause encdec = MULW(rs2, rs1, rd)
-      if sizeof(xlen) == 64
+      if sizeof(xlen) == 64 & (haveMulDiv() | haveZmmul())
   <-> 0b0000001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
-      if sizeof(xlen) == 64
+      if sizeof(xlen) == 64 & (haveMulDiv() | haveZmmul())
 
 function clause execute (MULW(rs2, rs1, rd)) = {
-  if haveMulDiv() | haveZmmul() then {
     let rs1_val = X(rs1)[31..0];
     let rs2_val = X(rs2)[31..0];
     let rs1_int : int = signed(rs1_val);
@@ -126,10 +110,6 @@ function clause execute (MULW(rs2, rs1, rd)) = {
     let result : xlenbits = sign_extend(result32);
     X(rd) = result;
     RETIRE_SUCCESS
-  } else {
-    handle_illegal();
-    RETIRE_FAIL
-  }
 }
 
 mapping clause assembly = MULW(rs2, rs1, rd)
@@ -141,12 +121,11 @@ mapping clause assembly = MULW(rs2, rs1, rd)
 union clause ast = DIVW : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = DIVW(rs2, rs1, rd, s)
-      if sizeof(xlen) == 64
+      if sizeof(xlen) == 64 & haveMulDiv()
   <-> 0b0000001 @ rs2 @ rs1 @ 0b10 @ bool_not_bits(s) @ rd @ 0b0111011
-      if sizeof(xlen) == 64
+      if sizeof(xlen) == 64 & haveMulDiv()
 
 function clause execute (DIVW(rs2, rs1, rd, s)) = {
-  if haveMulDiv() then {
     let rs1_val = X(rs1)[31..0];
     let rs2_val = X(rs2)[31..0];
     let rs1_int : int = if s then signed(rs1_val) else unsigned(rs1_val);
@@ -156,10 +135,6 @@ function clause execute (DIVW(rs2, rs1, rd, s)) = {
     let q': int = if s & q > (2 ^ 31 - 1) then  (0 - 2^31) else q;
     X(rd) = sign_extend(to_bits(32, q'));
     RETIRE_SUCCESS
-  } else {
-    handle_illegal();
-    RETIRE_FAIL
-  }
 }
 
 mapping clause assembly = DIVW(rs2, rs1, rd, s)
@@ -171,12 +146,11 @@ mapping clause assembly = DIVW(rs2, rs1, rd, s)
 union clause ast = REMW : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = REMW(rs2, rs1, rd, s)
-      if sizeof(xlen) == 64
+      if sizeof(xlen) == 64 & haveMulDiv()
   <-> 0b0000001 @ rs2 @ rs1 @ 0b11 @ bool_not_bits(s) @ rd @ 0b0111011
-      if sizeof(xlen) == 64
+      if sizeof(xlen) == 64 & haveMulDiv()
 
 function clause execute (REMW(rs2, rs1, rd, s)) = {
-  if haveMulDiv() then {
     let rs1_val = X(rs1)[31..0];
     let rs2_val = X(rs2)[31..0];
     let rs1_int : int = if s then signed(rs1_val) else unsigned(rs1_val);
@@ -185,10 +159,6 @@ function clause execute (REMW(rs2, rs1, rd, s)) = {
     /* signed overflow case returns zero naturally as required due to -1 divisor */
     X(rd) = sign_extend(to_bits(32, r));
     RETIRE_SUCCESS
-  } else {
-    handle_illegal();
-    RETIRE_FAIL
-  }
 }
 
 mapping clause assembly = REMW(rs2, rs1, rd, s)
