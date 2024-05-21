@@ -315,7 +315,7 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
   let offset : xlenbits = sign_extend(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
-  match ext_data_get_addr(rs1, offset, Read(Data), width) {
+  match ext_data_get_addr(rs1, offset, Read(Data), size_bytes(width)) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
@@ -381,7 +381,7 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
   let (aq, rl, con) = (false, false, false);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
-  match ext_data_get_addr(rs1, offset, Write(Data), width) {
+  match ext_data_get_addr(rs1, offset, Write(Data), size_bytes(width)) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
