@@ -10,7 +10,7 @@
 /* This file specifies the instructions in the 'Zicsr' extension.     */
 
 /* ****************************************************************** */
-union clause ast = CSR  : (bits(12), regidx, regidx, bool, csrop)
+union clause ast = CSR  : (csreg, regidx, regidx, bool, csrop)
 
 mapping encdec_csrop : csrop <-> bits(2) = {
   CSRRW <-> 0b01,

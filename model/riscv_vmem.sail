@@ -107,7 +107,7 @@ function pt_walk(sv_params,
   let mem_result = mem_read_priv(Read(Data),              // AccessType
                                  Supervisor,              // Privilege
                                  pte_phys_addr,
-                                 8,                       // atom (8)
+                                 2 ^ sv_params.log_pte_size_bytes,
                                  false,                   // aq
                                  false,                   // rl
                                  false);                  // res
@@ -115,6 +115,9 @@ function pt_walk(sv_params,
   match mem_result {
     MemException(_) => PTW_Failure(PTW_Access(), ext_ptw),
     MemValue(pte)   => {
+      // Extend to 64 bits even on RV32 for simplicity.
+      let pte : bits(64) = zero_extend(pte);
+
       let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
       if pte_is_invalid(pte_flags) then
         PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
@@ -259,6 +262,16 @@ function translationMode(priv : Privilege) -> SATPMode = {
 // ****************************************************************
 // VA to PA translation
 
+// Write a Page Table Entry. Currently PTEs are passed around as 64 bits, even
+// for Sv32 where they are actually 32 bits. `pte_size` is used to indicate
+// the actual size in bytes that we want to write.
+function write_pte forall 'n, 'n in {4, 8} . (
+  paddr    : xlenbits,
+  pte_size : int('n),
+  pte      : bits(64),
+) -> MemoryOpResult(bool) =
+  mem_write_value_priv(paddr, pte_size, pte[pte_size * 8 - 1 .. 0], Supervisor, false, false, false)
+
 // Result of address translation
 
 // PUBLIC
@@ -304,14 +317,8 @@ function translate_TLB_hit(sv_params : SV_Params,
             let n_ent = {ent with pte=pte'};
             write_TLB(tlb_index, n_ent);
             let pte_phys_addr = ent.pteAddr[(sizeof(xlen) - 1) .. 0];
-            let mv = mem_write_value_priv(pte_phys_addr,
-                                          8,
-                                          pte',
-                                          Supervisor,
-                                          false,
-                                          false,
-                                          false);
-            match mv {
+
+            match write_pte(pte_phys_addr, 2 ^ sv_params.log_pte_size_bytes, pte') {
               MemValue(_)     => (),
               MemException(e) => internal_error(__FILE__, __LINE__,
                                                 "invalid physical address in TLB")
@@ -356,14 +363,8 @@ function translate_TLB_miss(sv_params : SV_Params,
           else {
             // Writeback the PTE (which has new A/D bits)
             let pte_phys_addr = pteAddr[(sizeof(xlen) - 1) .. 0];
-            let mv = mem_write_value_priv(pte_phys_addr, // pteAddr,
-                                          8,
-                                          pte',
-                                          Supervisor,
-                                          false,
-                                          false,
-                                          false);
-            match mv {
+
+            match write_pte(pte_phys_addr, 2 ^ sv_params.log_pte_size_bytes, pte') {
               MemValue(_) => {
                 add_to_TLB(asid, vAddr, pAddr, pte', pteAddr, level, global,
                            sv_params.vpn_size_bits,
@@ -425,8 +426,8 @@ function translateAddr(vAddr   : xlenbits,
   if not(valid_va) then
     TR_Failure(translationException(ac, PTW_Invalid_Addr()), init_ext_ptw)
   else {
-    let mxr               = mstatus.MXR() == 0b1;
-    let do_sum            = mstatus.SUM() == 0b1;
+    let mxr               = mstatus[MXR] == 0b1;
+    let do_sum            = mstatus[SUM] == 0b1;
     let asid   : asidbits = satp_to_asid(satp);
     let ptb    : bits(64) = satp_to_PT_base(satp);
     let tr_result1 = translate(sv_params,

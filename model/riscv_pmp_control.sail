@@ -8,19 +8,17 @@
 
 /* address ranges */
 
-// TODO: handle the 34-bit paddr32 on RV32
+// [min, max) of the matching range, in units of 4 bytes.
+type pmp_addr_range_in_words = option((xlenbits, xlenbits))
 
-/* [min, max) of the matching range. */
-type pmp_addr_range = option((xlenbits, xlenbits))
-
-function pmpAddrRange(cfg: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits) -> pmp_addr_range = {
+function pmpAddrRange(cfg: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits) -> pmp_addr_range_in_words = {
   match pmpAddrMatchType_of_bits(cfg[A]) {
     OFF   => None(),
-    TOR   => { Some ((prev_pmpaddr << 2, pmpaddr << 2)) },
+    TOR   => { Some ((prev_pmpaddr, pmpaddr)) },
     NA4   => {
                // NA4 is not selectable when the PMP grain G >= 1. See pmpWriteCfg().
                assert(sys_pmp_grain() < 1, "NA4 cannot be selected when PMP grain G >= 1.");
-               let lo = pmpaddr << 2;
+               let lo = pmpaddr;
                Some((lo, lo + 4))
              },
     NAPOT => {
@@ -33,7 +31,7 @@ function pmpAddrRange(cfg: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits
                let lo   = pmpaddr & (~ (mask));
                // mask + 1:        0b00000100000
                let len  = mask + 1;
-               Some((lo << 2, (lo + len) << 2))
+               Some((lo, (lo + len)))
              }
   }
 }
@@ -65,18 +63,27 @@ function pmpCheckPerms(ent, acc, priv) = {
 
 enum pmpAddrMatch = {PMP_NoMatch, PMP_PartialMatch, PMP_Match}
 
-function pmpMatchAddr(addr: xlenbits, width: xlenbits, rng: pmp_addr_range) -> pmpAddrMatch = {
+function pmpMatchAddr(addr: xlenbits, width: xlenbits, rng: pmp_addr_range_in_words) -> pmpAddrMatch = {
   match rng {
     None()         => PMP_NoMatch,
-    Some((lo, hi)) => if   hi <=_u lo   /* to handle mis-configuration */
-                      then PMP_NoMatch
-                      else {
-                        if      (addr + width <=_u lo) | (hi <=_u addr)
-                        then    PMP_NoMatch
-                        else if (lo <=_u addr) & (addr + width <=_u hi)
-                        then    PMP_Match
-                        else    PMP_PartialMatch
-                      }
+    Some((lo, hi)) => {
+      // Convert to integers.
+      let addr  = unsigned(addr);
+      let width = unsigned(width);
+      // These are in units of 4 bytes.
+      let lo = unsigned(lo) * 4;
+      let hi = unsigned(hi) * 4;
+
+      if   hi <= lo   /* to handle mis-configuration */
+      then PMP_NoMatch
+      else {
+        if      (addr + width <= lo) | (hi <= addr)
+        then    PMP_NoMatch
+        else if (lo <= addr) & (addr + width <= hi)
+        then    PMP_Match
+        else    PMP_PartialMatch
+      }
+    },
   }
 }
 

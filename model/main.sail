@@ -6,19 +6,74 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function main () : unit -> unit = {
-  // initialize extensions
-  ext_init ();
+// When the symbolic execution is running a litmus test, it sets a
+// different entry point for each thread in the compiled litmus test.
 
-  // PC = __GetSlice_int(64, elf_entry(), 0);
-  PC = sail_zero_extend(0x1000, sizeof(xlen));
+val get_entry_point : unit -> xlenbits
+
+$ifdef SYMBOLIC
+
+$include <elf.sail>
+
+function get_entry_point() = to_bits(sizeof(xlen), elf_entry())
+
+$else
+
+function get_entry_point() = zero_extend(0x1000)
+
+$endif
+
+function main() : unit -> unit = {
+  // initialize extensions
+  ext_init();
+
+  PC = get_entry_point();
   print_bits("PC = ", PC);
 
   try {
     init_model();
+    sail_end_cycle();
     loop()
   } catch {
     Error_not_implemented(s) => print_string("Error: Not implemented: ", s),
     Error_internal_error() => print("Error: internal error")
   }
 }
+
+// For symbolic execution using Isla, we need an entry point that
+// allows us to execute a single instruction.
+$ifdef SYMBOLIC
+
+$include <isla.sail>
+
+val isla_footprint_no_init : forall 'n, 'n in {16, 32}. bits('n) -> bool
+
+function isla_footprint_no_init(opcode) = {
+  try {
+    isla_reset_registers();
+    sail_end_cycle();
+
+    let instr = if length(opcode) == 16 then {
+      ext_decode_compressed(opcode)
+    } else {
+      ext_decode(opcode)
+    };
+    let _ = execute(instr);
+    true
+  } catch {
+    _ => false
+  }
+}
+
+val isla_footprint : forall 'n, 'n in {16, 32}. bits('n) -> bool
+
+function isla_footprint(opcode) = {
+  try {
+    init_model();
+    isla_footprint_no_init(opcode)
+  } catch {
+    _ => false
+  }
+}
+
+$endif

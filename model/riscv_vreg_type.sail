@@ -14,7 +14,6 @@ type vreglenbits = bits(vlenmax) /* use the largest possible register length */
 type vregtype = vreglenbits
 
 /* vector instruction types */
-enum vsetop       = { VSETVLI, VSETVL }
 
 enum vvfunct6     = { VV_VADD, VV_VSUB, VV_VMINU, VV_VMIN, VV_VMAXU, VV_VMAX, VV_VAND, VV_VOR, VV_VXOR,
   VV_VRGATHER, VV_VRGATHEREI16, VV_VSADDU, VV_VSADD, VV_VSSUBU, VV_VSSUB, VV_VSLL, VV_VSMUL,
