@@ -758,9 +758,9 @@ bitfield MControl : xlenbits = {
   // Debug Mode bit
   Dmode  : xlen - 5,
   // Specifies the largest supported range for hardware when match is 1.
-  // Maskmax: xlen - 6 .. xlen - 11,
+  // Maskmax: xlen - 6 .. xlen - 11,  /*TODO*/
   // Reserved WPRI bits.
-  // Zeros   : xlen - 12 .. 23,
+  // Zeros   : xlen - 12 .. 23,       /*TODO*/
   // 2 high bits of the access size.
   Sizehi : 22 .. 21,
   // Trigger firing status bit.
@@ -793,50 +793,50 @@ bitfield MControl : xlenbits = {
   Load   : 0,  
 }
 
-// bitfield MControl6 : xlenbits = {
-//   // Trigger TYPE bits.
-//   TYPE   : xlen - 4 .. xlen - 1,
-//   // Debug Mode bit
-//   Dmode  : xlen - 5,
-//   // Reserved WPRI bits.
-//   wpri_1 : 27 .. xlen - 6,
-//   // Uncertain bit.
-//   Uncertain : 26,
-//   // MSB of hit bits.
-//   Hit1   : 25,  
-//   // Trigger in VS-mode.
-//   VS     : 24,  
-//   // Trigger in VU-mode.
-//   VU     : 23,        
-//   // LSB of hit bits.
-//   Hit0   : 22,          
-//   // Determines the contents of the XLEN-bit compare values.
-//   Select : 21,
-//   // Reserved WPRI bits.
-//   wpri_0 : 19 .. 20,
-//   // Determines the size of access bits.
-//   Size   : 16 .. 18,      
-//   // Action on Trigger bits.
-//   Action : 12 .. 15,
-//   // Chain trigger bit.
-//   Chain  : 11,            
-//   // Match bits.
-//   Match  : 10 .. 7,
-//   // Trigger in M-mode.
-//   M      : 6,
-//   // Uncertainen WARL bit.
-//   Uncertainen : 5,
-//   // Trigger in S-mode.
-//   S      : 4,  
-//   // Trigger in U-mode.
-//   U      : 3,
-//   // Execute trigger bit.
-//   Execute: 2,                
-//   // Store trigger bit.
-//   Store  : 1,
-//   // Load trigger bit.
-//   Load   : 0,  
-// }
+bitfield MControl6 : xlenbits = {
+  // Trigger TYPE bits.
+  TYPE   : xlen - 1 .. xlen - 4,
+  // Debug Mode bit
+  Dmode  : xlen - 5,
+  // // Reserved WPRI bits.
+  // wpri_1 : 27 .. xlen - 6,   /*TODO*/
+  // Uncertain bit.
+  Uncertain : 26,
+  // MSB of hit bits.
+  Hit1   : 25,  
+  // Trigger in VS-mode.
+  VS     : 24,  
+  // Trigger in VU-mode.
+  VU     : 23,        
+  // LSB of hit bits.
+  Hit0   : 22,          
+  // Determines the contents of the XLEN-bit compare values.
+  Select : 21,
+  // Reserved WPRI bits.
+  wpri_0 : 20 .. 19,
+  // Determines the size of access bits.
+  Size   : 18 .. 16,      
+  // Action on Trigger bits.
+  Action : 15 .. 12,
+  // Chain trigger bit.
+  Chain  : 11,            
+  // Match bits.
+  Match  : 10 .. 7,
+  // Trigger in M-mode.
+  M      : 6,
+  // Uncertainen WARL bit.
+  Uncertainen : 5,
+  // Trigger in S-mode.
+  S      : 4,  
+  // Trigger in U-mode.
+  U      : 3,
+  // Execute trigger bit.
+  Execute: 2,                
+  // Store trigger bit.
+  Store  : 1,
+  // Load trigger bit.
+  Load   : 0,  
+}
 
 // bitfield ICount : xlenbits = {
 //   // Trigger TYPE bits.
@@ -959,8 +959,8 @@ register tdata2   : xlenbits
 register tdata3   : xlenbits
 /* Match Control Debug/Trace trigger register */
 register mcontrol : MControl
-// /* Match Control TYPE 6 Debug/Trace trigger register */
-// register mcontrol6: MControl6
+/* Match Control TYPE 6 Debug/Trace trigger register */
+register mcontrol6: MControl6
 /* Instruction Count Debug/Trace trigger register */
 // register icount   : ICount
 // /* Interrupt Trigger Debug/Trace trigger register */
