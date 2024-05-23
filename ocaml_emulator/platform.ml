@@ -5,6 +5,8 @@ module Elf = Elf_loader;;
 (* Platform configuration *)
 
 let config_enable_rvc                  = ref true
+let config_enable_zilsd                = ref false
+let config_enable_zcmlsd               = ref false
 let config_enable_next                 = ref false
 let config_enable_writable_misa        = ref true
 let config_enable_dirty_update         = ref false
@@ -86,6 +88,8 @@ let enable_misaligned_access ()      = !config_enable_misaligned_access
 let mtval_has_illegal_inst_bits ()   = !config_mtval_has_illegal_inst_bits
 let enable_pmp ()                    = !config_enable_pmp
 let enable_zfinx ()                  = false
+let enable_zilsd ()                  = !config_enable_zilsd
+let enable_zcmlsd ()                 = !config_enable_zcmlsd
 let enable_writable_fiom ()          = !config_enable_writable_fiom
 
 let rom_base ()   = arch_bits_of_int64 P.rom_base

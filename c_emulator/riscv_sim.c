@@ -141,6 +141,8 @@ static struct option options[] = {
     {"trace-output",                required_argument, 0, OPT_TRACE_OUTPUT        },
     {"inst-limit",                  required_argument, 0, 'l'                     },
     {"enable-zfinx",                no_argument,       0, 'x'                     },
+    {"enable-zilsd",                no_argument,       0, 'y'                     },
+    {"enable-zcmlsd",               no_argument,       0, 'Z'                     },
     {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
@@ -265,7 +267,9 @@ static int process_args(int argc, char **argv)
                     "V::"
                     "v::"
                     "l:"
-                    "x",
+                    "x"
+                    "y"
+                    "Z",
                     options, NULL);
     if (c == -1)
       break;
@@ -372,6 +376,14 @@ static int process_args(int argc, char **argv)
       rv_enable_zfinx = true;
       rv_enable_fdext = false;
       break;
+    case 'y':
+      fprintf(stderr, "enabling Zilsd support.\n");
+      rv_enable_zilsd = true;
+      break;
+    case 'Z':
+      fprintf(stderr, "enabling Zcmlsd support.\n");
+      rv_enable_zcmlsd = true;
+      break; 
 #ifdef SAILCOV
     case 'c':
       sailcov_file = strdup(optarg);

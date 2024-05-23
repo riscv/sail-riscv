@@ -37,6 +37,16 @@ bool sys_enable_zfinx(unit u)
   return rv_enable_zfinx;
 }
 
+bool sys_enable_zilsd(unit u)
+{
+  return rv_enable_zilsd;
+}
+
+bool sys_enable_zcmlsd(unit u)
+{
+  return rv_enable_zcmlsd;
+}
+
 bool sys_enable_writable_fiom(unit u)
 {
   return rv_enable_writable_fiom;
