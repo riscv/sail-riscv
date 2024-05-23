@@ -8,3 +8,4 @@ _sbuild/
 *.a
 /z3_problems
 c_emulator/riscv_sim_RV32
+c_emulator/riscv_sim_RV64
