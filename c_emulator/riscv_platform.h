@@ -27,7 +27,7 @@ mach_bits plat_rom_base(unit);
 mach_bits plat_rom_size(unit);
 
 // Provides entropy for the scalar cryptography extension.
-mach_bits plat_get_16_random_bits();
+mach_bits plat_get_16_random_bits(unit);
 
 mach_bits plat_clint_base(unit);
 mach_bits plat_clint_size(unit);
