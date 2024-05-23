@@ -97,6 +97,9 @@ let enable_writable_fiom ()          = !config_enable_writable_fiom
 let pmp_count ()                     = !config_pmp_count
 let pmp_grain ()                     = !config_pmp_grain
 
+let misaligned_to_byte () = false
+let misaligned_order_decreasing () = false
+
 let rom_base ()   = arch_bits_of_int64 P.rom_base
 let rom_size ()   = arch_bits_of_int   !rom_size_ref
 

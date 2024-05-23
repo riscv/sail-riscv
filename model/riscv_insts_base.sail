@@ -297,55 +297,43 @@ union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width, bool, boo
 
 /* unsigned loads are only present for widths strictly less than xlen,
    signed loads also present for widths equal to xlen */
-mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (size_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & size_bytes(size) <= sizeof(xlen_bytes))
-  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_enc(size) @ rd @ 0b0000011 if (size_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & size_bytes(size) <= sizeof(xlen_bytes))
+function valid_load_encdec(width : word_width, is_unsigned : bool) -> bool =
+  (size_bytes(width) < sizeof(xlen_bytes)) | (not(is_unsigned) & size_bytes(width) <= sizeof(xlen_bytes))
 
-val extend_value : forall 'n, 0 < 'n <= xlen_bytes. (bool, MemoryOpResult(bits(8 * 'n))) -> MemoryOpResult(xlenbits)
-function extend_value(is_unsigned, value) = match (value) {
-  MemValue(v)     => MemValue(if is_unsigned then zero_extend(v) else sign_extend(v) : xlenbits),
-  MemException(e) => MemException(e)
-}
-
-val process_load : forall 'n, 0 < 'n <= xlen_bytes. (regidx, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> Retired
-function process_load(rd, vaddr, value, is_unsigned) =
-  match extend_value(is_unsigned, value) {
-    MemValue(result) => { X(rd) = result; RETIRE_SUCCESS },
-    MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
-  }
-
-function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
-  if   plat_enable_misaligned_access() then false
-  else match width {
-         BYTE   => false,
-         HALF   => vaddr[0] == bitone,
-         WORD   => vaddr[0] == bitone | vaddr[1] == bitone,
-         DOUBLE => vaddr[0] == bitone | vaddr[1] == bitone | vaddr[2] == bitone
-       }
+mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, width, false, false) if valid_load_encdec(width, is_unsigned)
+  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_enc(width) @ rd @ 0b0000011 if valid_load_encdec(width, is_unsigned)
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   let offset : xlenbits = sign_extend(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
   match ext_data_get_addr(rs1, offset, Read(Data), width) {
-    Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
-    Ext_DataAddr_OK(vaddr) =>
-      if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
-      else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-        TR_Address(paddr, _) =>
-          match (width) {
-            BYTE =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 1, aq, rl, false), is_unsigned),
-            HALF =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 2, aq, rl, false), is_unsigned),
-            WORD =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 4, aq, rl, false), is_unsigned),
-            DOUBLE if sizeof(xlen) >= 64 =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 8, aq, rl, false), is_unsigned),
-            _ => report_invalid_width(__FILE__, __LINE__, width, "load")
-          }
+    Ext_DataAddr_Error(e)  => {
+      ext_handle_data_check_error(e);
+      RETIRE_FAIL
+    },
+
+    Ext_DataAddr_OK(vaddr) => {
+      if check_misaligned(vaddr, width) then {
+         handle_mem_exception(vaddr, E_Load_Addr_Align());
+         return RETIRE_FAIL
+      };
+
+      let bytes = size_bytes(width);
+      if bytes > sizeof(xlen_bytes) then {
+         report_invalid_width(__FILE__, __LINE__, width, "load")
+      } else match vmem_read(vaddr, bytes, aq, rl, false) {
+         Err(vaddr, e) => {
+           handle_mem_exception(vaddr, e);
+           RETIRE_FAIL
+         },
+
+         Ok(data) => {
+           X(rd) = if is_unsigned then zero_extend(data) else sign_extend(data);
+           RETIRE_SUCCESS
+         }
       }
+    }
   }
 }
 
@@ -367,61 +355,47 @@ mapping maybe_u = {
   false <-> ""
 }
 
-mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, size, aq, rl)
-  <-> "l" ^ size_mnemonic(size) ^ maybe_u(is_unsigned) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
+mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)
+  <-> "l" ^ size_mnemonic(width) ^ maybe_u(is_unsigned) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ****************************************************************** */
 union clause ast = STORE : (bits(12), regidx, regidx, word_width, bool, bool)
 
-mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)              if size_bytes(size) <= sizeof(xlen_bytes)
-  <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ imm5 : bits(5) @ 0b0100011 if size_bytes(size) <= sizeof(xlen_bytes)
+mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, width, false, false) if size_bytes(width) <= sizeof(xlen_bytes)
+  <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b0 @ size_enc(width) @ imm5 : bits(5) @ 0b0100011 if size_bytes(width) <= sizeof(xlen_bytes)
 
-/* NOTE: Currently, we only EA if address translation is successful.
-   This may need revisiting. */
 function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
   let offset : xlenbits = sign_extend(imm);
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
   match ext_data_get_addr(rs1, offset, Write(Data), width) {
-    Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
-    Ext_DataAddr_OK(vaddr) =>
-      if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
-      else match translateAddr(vaddr, Write(Data)) {
-        TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-        TR_Address(paddr, _) => {
-          let eares : MemoryOpResult(unit) = match width {
-            BYTE   => mem_write_ea(paddr, 1, aq, rl, false),
-            HALF   => mem_write_ea(paddr, 2, aq, rl, false),
-            WORD   => mem_write_ea(paddr, 4, aq, rl, false),
-            DOUBLE => mem_write_ea(paddr, 8, aq, rl, false)
-          };
-          match (eares) {
-            MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-            MemValue(_) => {
-              let rs2_val = X(rs2);
-              let res : MemoryOpResult(bool) = match (width) {
-                BYTE => mem_write_value(paddr, 1, rs2_val[7..0],  aq, rl, false),
-                HALF => mem_write_value(paddr, 2, rs2_val[15..0], aq, rl, false),
-                WORD => mem_write_value(paddr, 4, rs2_val[31..0], aq, rl, false),
-                DOUBLE if sizeof(xlen) >= 64
-                     => mem_write_value(paddr, 8, rs2_val,        aq, rl, false),
-                _    => report_invalid_width(__FILE__, __LINE__, width, "store"),
-              };
-              match (res) {
-                MemValue(true)  => RETIRE_SUCCESS,
-                MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
-              }
-            }
-          }
+    Ext_DataAddr_Error(e)  => {
+      ext_handle_data_check_error(e);
+      RETIRE_FAIL
+    },
+
+    Ext_DataAddr_OK(vaddr) => {
+      if check_misaligned(vaddr, width) then {
+        handle_mem_exception(vaddr, E_SAMO_Addr_Align());
+        return RETIRE_FAIL
+      };
+
+      let bytes = size_bytes(width);
+      if bytes > sizeof(xlen_bytes) then {
+        report_invalid_width(__FILE__, __LINE__, width, "store")
+      } else match vmem_write_from_register(vaddr, bytes, unsigned(rs2), aq, rl, false) {
+        Ok() => RETIRE_SUCCESS,
+        Err(vaddr, e) => {
+          handle_mem_exception(vaddr, e);
+          return RETIRE_FAIL
         }
       }
+    }
   }
 }
 
-mapping clause assembly = STORE(imm, rs2, rs1, size, aq, rl)
-  <-> "s" ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
+mapping clause assembly = STORE(imm, rs2, rs1, width, aq, rl)
+  <-> "s" ^ size_mnemonic(width) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 /* ****************************************************************** */
 union clause ast = ADDIW : (bits(12), regidx, regidx)

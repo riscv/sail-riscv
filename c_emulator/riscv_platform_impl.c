@@ -6,6 +6,10 @@
 uint64_t rv_pmp_count = 0;
 uint64_t rv_pmp_grain = 0;
 
+/* Defaults for misaligned access behavior in the generated simulator */
+bool rv_misaligned_order_decreasing = false;
+bool rv_misaligned_to_byte = false;
+
 bool rv_enable_svinval = false;
 bool rv_enable_zcb = false;
 bool rv_enable_zfinx = false;

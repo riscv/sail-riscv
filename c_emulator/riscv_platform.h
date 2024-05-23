@@ -11,6 +11,9 @@ bool sys_enable_writable_misa(unit);
 bool sys_enable_writable_fiom(unit);
 bool sys_enable_vext(unit);
 
+bool sys_misaligned_order_decreasing(unit);
+bool sys_misaligned_to_byte(unit);
+
 uint64_t sys_pmp_count(unit);
 uint64_t sys_pmp_grain(unit);
 
@@ -26,7 +29,7 @@ mach_bits plat_rom_base(unit);
 mach_bits plat_rom_size(unit);
 
 // Provides entropy for the scalar cryptography extension.
-mach_bits plat_get_16_random_bits();
+mach_bits plat_get_16_random_bits(unit);
 
 mach_bits plat_clint_base(unit);
 mach_bits plat_clint_size(unit);

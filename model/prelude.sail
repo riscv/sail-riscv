@@ -10,6 +10,7 @@ default Order dec
 
 $include <smt.sail>
 $include <option.sail>
+$include <result.sail>
 $include <arith.sail>
 $include <string.sail>
 $include "mapping.sail"
