@@ -33,8 +33,7 @@ function step(step_no : int) -> bool = {
       },
       None() => {
         /* the extension hook interposes on the fetch result */
-        let f : FetchResult = ext_fetch_hook(fetch());
-        match f {
+        match ext_fetch_hook(fetch()) {
           /* extension error */
           F_Ext_Error(e)   => {
             ext_handle_fetch_check_error(e);
@@ -58,10 +57,10 @@ function step(step_no : int) -> bool = {
             if haveRVC() then {
               nextPC = PC + 2;
               (execute(ast), true)
-             } else {
+            } else {
               handle_illegal();
               (RETIRE_FAIL, true)
-             }
+            }
           },
           F_Base(w) => {
             sail_instr_announce(w);
