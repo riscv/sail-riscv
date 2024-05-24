@@ -743,11 +743,11 @@ bitfield TData1 : xlenbits = {
 
 bitfield TInfo : xlenbits = {
   // Bits Hardwired to Zeros.
-  Zeroes : xlen - 1 .. 32,
+  // wpri_1 : xlen - 1 .. 32,
   // Bits contains the version of the Sdtrig extension implemented.
   Version: 31 .. 24,
   // Bits Hardwired to Zeros.
-  Zeroes : 23 .. 16,
+  wpri_0 : 23 .. 16,
   // Indicates if the currently selected trigger exists.
   Info   : 15 .. 0,
 }
@@ -760,7 +760,7 @@ bitfield MControl : xlenbits = {
   // Specifies the largest supported range for hardware when match is 1.
   // Maskmax: xlen - 6 .. xlen - 11,  /*TODO*/
   // Reserved WPRI bits.
-  // Zeros   : xlen - 12 .. 23,       /*TODO*/
+  // wpri_1   : xlen - 12 .. 23,       /*TODO*/
   // 2 high bits of the access size.
   Sizehi : 22 .. 21,
   // Trigger firing status bit.
@@ -780,7 +780,7 @@ bitfield MControl : xlenbits = {
   // Trigger in M-mode.
   M      : 6,
   // Reserved WPRI bit.
-  Zero : 5,
+  wpri_0 : 5,
   // Trigger in S-mode.
   S      : 4,
   // Trigger in U-mode.
@@ -838,103 +838,103 @@ bitfield MControl6 : xlenbits = {
   Load   : 0,
 }
 
-// bitfield ICount : xlenbits = {
-//   // Trigger TYPE bits.
-//   TYPE   : xlen - 4 .. xlen - 1,
-//   // Debug Mode bit
-//   Dmode  : xlen - 5,
-//   // Reserved WPRI bits.
-//   wpri   : 27 .. xlen - 6,
-//   // Trigger in VS-mode.
-//   VS     : 26,
-//   // Trigger in VU-mode.
-//   VU     : 25,
-//   // Trigger firing status bit.
-//   Hit    : 24,
-//   // Trigger in M-mode.
-//   Count  : 10 .. 23,
-//   // Trigger in M-mode.
-//   M      : 9,
-//   // Uncertainen WARL bit.
-//   Pending: 8,
-//   // Trigger in S-mode.
-//   S      : 7,
-//   // Trigger in U-mode.
-//   U      : 6,
-//   // Action on Trigger bits.
-//   Action : 0 .. 5,
-// }
+bitfield ICount : xlenbits = {
+  // Trigger TYPE bits.
+  TYPE   : xlen - 1 .. xlen - 4,
+  // Debug Mode bit
+  Dmode  : xlen - 5,
+  // Reserved WPRI bits.
+  // wpri   : 27 .. xlen - 6,   /*TODO*/
+  // Trigger in VS-mode.
+  VS     : 26,
+  // Trigger in VU-mode.
+  VU     : 25,
+  // Trigger firing status bit.
+  Hit    : 24,
+  // Trigger in M-mode.
+  Count  : 23 .. 10,
+  // Trigger in M-mode.
+  M      : 9,
+  // Uncertainen WARL bit.
+  Pending: 8,
+  // Trigger in S-mode.
+  S      : 7,
+  // Trigger in U-mode.
+  U      : 6,
+  // Action on Trigger bits.
+  Action : 5 .. 0,
+}
 
-// bitfield ITrigger : xlenbits = {
-//   // Trigger TYPE bits.
-//   TYPE   : xlen - 4 .. xlen - 1,
-//   // Debug Mode bit
-//   Dmode  : xlen - 5,
-//   // Trigger firing status bit.
-//   Hit    : xlen - 6,
-//   // Reserved WPRI bits.
-//   wpri_1   : 13 .. xlen - 7,
-//   // Trigger in VS-mode.
-//   VS     : 12,
-//   // Trigger in VU-mode.
-//   VU     : 11,
-//   // Non-maskable interrupts bit
-//   NMI    : 10,
-//   // Trigger in M-mode.
-//   M      : 9,
-//   // Reserved WPRI bits.
-//   wpri_0 : 8,
-//   // Trigger in S-mode.
-//   S      : 7,
-//   // Trigger in U-mode.
-//   U      : 6,
-//   // Action on Trigger bits.
-//   Action : 0 .. 5,
-// }
+bitfield ITrigger : xlenbits = {
+  // Trigger TYPE bits.
+  TYPE   : xlen - 1 .. xlen - 4,
+  // Debug Mode bit
+  Dmode  : xlen - 5,
+  // Trigger firing status bit.
+  Hit    : xlen - 6,
+  // Reserved WPRI bits.
+  wpri_1   : xlen - 7 .. 13,
+  // Trigger in VS-mode.
+  VS     : 12,
+  // Trigger in VU-mode.
+  VU     : 11,
+  // Non-maskable interrupts bit
+  NMI    : 10,
+  // Trigger in M-mode.
+  M      : 9,
+  // Reserved WPRI bits.
+  wpri_0 : 8,
+  // Trigger in S-mode.
+  S      : 7,
+  // Trigger in U-mode.
+  U      : 6,
+  // Action on Trigger bits.
+  Action : 5 .. 0,
+}
 
-// bitfield ETrigger : xlenbits = {
-//   // Trigger TYPE bits.
-//   TYPE   : xlen - 4 .. xlen - 1,
-//   // Debug Mode bit
-//   Dmode  : xlen - 5,
-//   // Trigger firing status bit.
-//   Hit    : xlen - 6,
-//   // Reserved WPRI bits.
-//   wpri_2 : 13 .. xlen - 7,
-//   // Trigger in VS-mode.
-//   VS     : 12,
-//   // Trigger in VU-mode.
-//   VU     : 11,
-//   // Reserved WPRI bits.
-//   wpri_1 : 10,
-//   // Trigger in M-mode.
-//   M      : 9,
-//   // Reserved WPRI bits.
-//   wpri_0 : 8,
-//   // Trigger in S-mode.
-//   S      : 7,
-//   // Trigger in U-mode.
-//   U      : 6 .. 21,
-//   // Action on Trigger bits.
-//   Action : 0 .. 5,
-// }
+bitfield ETrigger : xlenbits = {
+  // Trigger TYPE bits.
+  TYPE   : xlen - 1 .. xlen - 4,
+  // Debug Mode bit
+  Dmode  : xlen - 5,
+  // Trigger firing status bit.
+  Hit    : xlen - 6,
+  // Reserved WPRI bits.
+  wpri_2 : xlen - 7 .. 13,
+  // Trigger in VS-mode.
+  VS     : 12,
+  // Trigger in VU-mode.
+  VU     : 11,
+  // Reserved WPRI bits.
+  wpri_1 : 10,
+  // Trigger in M-mode.
+  M      : 9,
+  // Reserved WPRI bits.
+  wpri_0 : 8,
+  // Trigger in S-mode.
+  S      : 7,
+  // Trigger in U-mode.
+  U      : 6,
+  // Action on Trigger bits.
+  Action : 5 .. 0,
+}
 
-// bitfield TMexttrigger : xlenbits = {
-//   // Trigger TYPE bits.
-//   TYPE   : xlen - 4 .. xlen - 1,
-//   // Debug Mode bit
-//   Dmode  : xlen - 5,
-//   // Trigger firing status bit.
-//   Hit    : xlen - 6,
-//   // Reserved WPRI bits.
-//   wpri   : 23 .. xlen - 7,
-//   // Interrupt control signal bit.
-//   Intctl : 22,
-//   // Determines the contents of the XLEN-bit compare values.
-//   Select : 6 .. 21,
-//   // Action on Trigger bits.
-//   Action : 0 .. 5,
-// }
+bitfield TMexttrigger : xlenbits = {
+  // Trigger TYPE bits.
+  TYPE   : xlen - 1 .. xlen - 4,
+  // Debug Mode bit
+  Dmode  : xlen - 5,
+  // Trigger firing status bit.
+  Hit    : xlen - 6,
+  // Reserved WPRI bits.
+  wpri   : xlen - 7 .. 23,
+  // Interrupt control signal bit.
+  Intctl : 22,
+  // Determines the contents of the XLEN-bit compare values.
+  Select : 21 .. 6,
+  // Action on Trigger bits.
+  Action : 5 .. 0,
+}
 
 bitfield TControl : xlenbits = {
   // Reserved WPRI bits.
