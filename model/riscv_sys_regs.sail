@@ -728,28 +728,28 @@ function legalize_satp32(a : Architecture, o : bits(32), v : bits(32)) -> bits(3
 /* disabled trigger/debug module */
 bitfield TSelect : xlenbits = {
   // Trigger TYPE bits.
-  Index  : xlen - 1 .. 0, 
+  Index  : xlen - 1 .. 0,
 }
 
 bitfield TData1 : xlenbits = {
   // Trigger TYPE bits.
-  TYPE   : xlen - 1 .. xlen - 4,        
+  TYPE   : xlen - 1 .. xlen - 4,
   // Debug Mode bit.
   Dmode  : xlen - 5,
   // Trigger-specific data bits.
-  Data   : xlen - 6 .. 0,  
+  Data   : xlen - 6 .. 0,
 }
 
 
 bitfield TInfo : xlenbits = {
   // Bits Hardwired to Zeros.
-  Zeroes : xlen - 1 .. 32,        
+  Zeroes : xlen - 1 .. 32,
   // Bits contains the version of the Sdtrig extension implemented.
-  Version: 31 .. 24,        
+  Version: 31 .. 24,
   // Bits Hardwired to Zeros.
   Zeroes : 23 .. 16,
   // Indicates if the currently selected trigger exists.
-  Info   : 15 .. 0,  
+  Info   : 15 .. 0,
 }
 
 bitfield MControl : xlenbits = {
@@ -764,17 +764,17 @@ bitfield MControl : xlenbits = {
   // 2 high bits of the access size.
   Sizehi : 22 .. 21,
   // Trigger firing status bit.
-  Hit    : 20,          
+  Hit    : 20,
   // Determines the contents of the XLEN-bit compare values.
   Select : 19,
   // Specifies timing of trigger action relative to instruction execution.
   Timing : 18,
   // 2 lower bits of the access size.
-  Sizelo : 17 .. 16,      
+  Sizelo : 17 .. 16,
   // Action on Trigger bits.
   Action : 15 .. 12,
   // Chain trigger bit.
-  Chain  : 11,            
+  Chain  : 11,
   // Match bits.
   Match  : 10 .. 7,
   // Trigger in M-mode.
@@ -782,15 +782,15 @@ bitfield MControl : xlenbits = {
   // Reserved WPRI bit.
   Zero : 5,
   // Trigger in S-mode.
-  S      : 4,  
+  S      : 4,
   // Trigger in U-mode.
   U      : 3,
   // Execute trigger bit.
-  Execute: 2,                
+  Execute: 2,
   // Store trigger bit.
   Store  : 1,
   // Load trigger bit.
-  Load   : 0,  
+  Load   : 0,
 }
 
 bitfield MControl6 : xlenbits = {
@@ -803,23 +803,23 @@ bitfield MControl6 : xlenbits = {
   // Uncertain bit.
   Uncertain : 26,
   // MSB of hit bits.
-  Hit1   : 25,  
+  Hit1   : 25,
   // Trigger in VS-mode.
-  VS     : 24,  
+  VS     : 24,
   // Trigger in VU-mode.
-  VU     : 23,        
+  VU     : 23,
   // LSB of hit bits.
-  Hit0   : 22,          
+  Hit0   : 22,
   // Determines the contents of the XLEN-bit compare values.
   Select : 21,
   // Reserved WPRI bits.
   wpri_0 : 20 .. 19,
   // Determines the size of access bits.
-  Size   : 18 .. 16,      
+  Size   : 18 .. 16,
   // Action on Trigger bits.
   Action : 15 .. 12,
   // Chain trigger bit.
-  Chain  : 11,            
+  Chain  : 11,
   // Match bits.
   Match  : 10 .. 7,
   // Trigger in M-mode.
@@ -827,15 +827,15 @@ bitfield MControl6 : xlenbits = {
   // Uncertainen WARL bit.
   Uncertainen : 5,
   // Trigger in S-mode.
-  S      : 4,  
+  S      : 4,
   // Trigger in U-mode.
   U      : 3,
   // Execute trigger bit.
-  Execute: 2,                
+  Execute: 2,
   // Store trigger bit.
   Store  : 1,
   // Load trigger bit.
-  Load   : 0,  
+  Load   : 0,
 }
 
 // bitfield ICount : xlenbits = {
@@ -844,11 +844,11 @@ bitfield MControl6 : xlenbits = {
 //   // Debug Mode bit
 //   Dmode  : xlen - 5,
 //   // Reserved WPRI bits.
-//   wpri   : 27 .. xlen - 6,  
+//   wpri   : 27 .. xlen - 6,
 //   // Trigger in VS-mode.
-//   VS     : 26,  
+//   VS     : 26,
 //   // Trigger in VU-mode.
-//   VU     : 25,        
+//   VU     : 25,
 //   // Trigger firing status bit.
 //   Hit    : 24,
 //   // Trigger in M-mode.
@@ -858,9 +858,9 @@ bitfield MControl6 : xlenbits = {
 //   // Uncertainen WARL bit.
 //   Pending: 8,
 //   // Trigger in S-mode.
-//   S      : 7,  
+//   S      : 7,
 //   // Trigger in U-mode.
-//   U      : 6,      
+//   U      : 6,
 //   // Action on Trigger bits.
 //   Action : 0 .. 5,
 // }
@@ -873,11 +873,11 @@ bitfield MControl6 : xlenbits = {
 //   // Trigger firing status bit.
 //   Hit    : xlen - 6,
 //   // Reserved WPRI bits.
-//   wpri_1   : 13 .. xlen - 7,  
+//   wpri_1   : 13 .. xlen - 7,
 //   // Trigger in VS-mode.
-//   VS     : 12,  
+//   VS     : 12,
 //   // Trigger in VU-mode.
-//   VU     : 11,  
+//   VU     : 11,
 //   // Non-maskable interrupts bit
 //   NMI    : 10,
 //   // Trigger in M-mode.
@@ -885,9 +885,9 @@ bitfield MControl6 : xlenbits = {
 //   // Reserved WPRI bits.
 //   wpri_0 : 8,
 //   // Trigger in S-mode.
-//   S      : 7,  
+//   S      : 7,
 //   // Trigger in U-mode.
-//   U      : 6,      
+//   U      : 6,
 //   // Action on Trigger bits.
 //   Action : 0 .. 5,
 // }
@@ -900,11 +900,11 @@ bitfield MControl6 : xlenbits = {
 //   // Trigger firing status bit.
 //   Hit    : xlen - 6,
 //   // Reserved WPRI bits.
-//   wpri_2 : 13 .. xlen - 7,  
+//   wpri_2 : 13 .. xlen - 7,
 //   // Trigger in VS-mode.
-//   VS     : 12,  
+//   VS     : 12,
 //   // Trigger in VU-mode.
-//   VU     : 11,  
+//   VU     : 11,
 //   // Reserved WPRI bits.
 //   wpri_1 : 10,
 //   // Trigger in M-mode.
@@ -912,9 +912,9 @@ bitfield MControl6 : xlenbits = {
 //   // Reserved WPRI bits.
 //   wpri_0 : 8,
 //   // Trigger in S-mode.
-//   S      : 7,  
+//   S      : 7,
 //   // Trigger in U-mode.
-//   U      : 6 .. 21,      
+//   U      : 6 .. 21,
 //   // Action on Trigger bits.
 //   Action : 0 .. 5,
 // }
@@ -927,11 +927,11 @@ bitfield MControl6 : xlenbits = {
 //   // Trigger firing status bit.
 //   Hit    : xlen - 6,
 //   // Reserved WPRI bits.
-//   wpri   : 23 .. xlen - 7,  
+//   wpri   : 23 .. xlen - 7,
 //   // Interrupt control signal bit.
-//   Intctl : 22,    
+//   Intctl : 22,
 //   // Determines the contents of the XLEN-bit compare values.
-//   Select : 6 .. 21,       
+//   Select : 6 .. 21,
 //   // Action on Trigger bits.
 //   Action : 0 .. 5,
 // }
@@ -942,9 +942,9 @@ bitfield TControl : xlenbits = {
   // M-mode previous trigger enable bit
   MPTE   : 7,
   // Reserved WPRI bits.
-  wpri_1 : 6 .. 4,      
+  wpri_1 : 6 .. 4,
   // M-mode trigger enable bit.
-  MTE    : 3,       
+  MTE    : 3,
   // Reserved WPRI bits.
   wpri_0 : 2 .. 0,
 }
@@ -977,7 +977,7 @@ register tinfo    : TInfo
 function isValidTselect(tselect_val : xlenbits) -> bool = {
   let N_triggers = 3;// Number of triggers supported
   (unsigned(tselect_val) >= 0) & (unsigned(tselect_val) < N_triggers);
-}  
+}
 
 function legalize_tselect(o : TSelect, v : xlenbits) -> TSelect = {
   let v = Mk_TSelect(v);

@@ -150,7 +150,7 @@ static struct option options[] = {
     {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
     {"enable-svinval",              no_argument,       0, OPT_ENABLE_SVINVAL      },
     {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
-    {"enable-sdtrig",               no_argument,       0, OPT_ENABLE_SDTRIG       },   
+    {"enable-sdtrig",               no_argument,       0, OPT_ENABLE_SDTRIG       },
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
@@ -399,7 +399,7 @@ static int process_args(int argc, char **argv)
     case OPT_ENABLE_SDTRIG:
       fprintf(stderr, "enabling sdtrig extension.\n");
       rv_enable_sdtrig = true;
-      break;      
+      break;
     case 'x':
       fprintf(stderr, "enabling Zfinx support.\n");
       rv_enable_zfinx = true;

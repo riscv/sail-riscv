@@ -61,7 +61,7 @@ let options = Arg.align ([("-dump-dts",
                            " enable Zcb (simple code size) extension");
                           ("-enable-sdtrig",
                            Arg.Set P.config_enable_sdtrig,
-                           " enable sdtrig extension"); 
+                           " enable sdtrig extension");
                           ("-enable-writable-fiom",
                            Arg.Set P.config_enable_writable_fiom,
                            " enable FIOM (Fence of I/O implies Memory) bit in menvcfg");
