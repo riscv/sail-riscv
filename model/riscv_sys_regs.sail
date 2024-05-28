@@ -95,6 +95,10 @@ val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
 val sys_enable_writable_fiom = {c: "sys_enable_writable_fiom", ocaml: "Platform.enable_writable_fiom", _: "sys_enable_writable_fiom"} : unit -> bool
+/* whether Ssctr is enabled */
+val sys_enable_ssctr = {c: "sys_enable_ssctr", ocaml: "Platform.enable_ssctr", _: "sys_enable_ssctr"} : unit -> bool
+/* whether Smctr is enabled */
+val sys_enable_smctr = {c: "sys_enable_smctr", ocaml: "Platform.enable_smctr", _: "sys_enable_smctr"} : unit -> bool
 
 /* How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime). */
 val sys_pmp_count = {c: "sys_pmp_count", ocaml: "Platform.pmp_count", _: "sys_pmp_count"} : unit -> range(0, 64)
@@ -167,6 +171,21 @@ function haveZalrsc() -> bool = haveAtomics()
 
 /* Zicond extension support */
 function haveZicond() -> bool = true
+
+/* Smstateen extension support */
+function haveSmstateen() -> bool = true
+
+/* Sscsrind extension support */
+function haveSscsrind() -> bool = true
+
+/* Smcsrind extension support */
+function haveSmcsrind() -> bool = true
+
+/* Smctr extension support - Smctr depends on S-mode, and Smcsrind */
+function haveSmctr() -> bool = haveSupMode() & sys_enable_smctr() & haveSscsrind()
+
+/* Ssctr extension support - Ssctr is delegation of Smctr to S-mode */
+function haveSsctr() -> bool = haveSmctr()
 
 /*
  * Illegal values legalized to least privileged mode supported.
@@ -858,6 +877,45 @@ function is_fiom_active() -> bool = {
     User => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
   }
 }
+
+/* Smstateen */
+bitfield Mstateen0 : bits(64) = {
+  SE0        : 63,               // Controls access to hstateen0/h and sstateen0
+  ENVCFG     : 62,               // Controls access to henvcfg/h and senvcfg
+  WPRI_1     : 61,
+  CSRIND     : 60,               // controls access to the siselect, sireg*, vsiselect,
+                                 // and the vsireg* CSRs provided by the Sscsrind extensions
+  AIA        : 59,               // Controls access to Ssaia state not
+                                 // controlled by CSRIND or IMSIC
+  IMSIC      : 58,               // Controls access IMSIC state - including
+                                 // stopei and vstopei
+  CONTEXT    : 57,               // Controls access to scontext and hcontext
+  PRIV_V1P13 : 56,               // Controls access to hedelegh
+  WPRI_1     : 55,
+  CTR        : 54,               // Controls Ssctr state
+  WPRI_0     : 53 .. 3,
+  JVT        : 2,                // Controls access to the jvt CSR
+  FCSR       : 1,                // Controls access to the fcsr
+  C          : 0                 // Controls access to any and all custom state
+}
+
+register mstateen0 : Mstateen0
+
+function isSscsrindEnabled() -> bool =
+  match(haveSmstateen(), mstateen0[CSRIND]) {
+    (false,  _) => true,
+    (true, 0b0) => false,
+    (true, 0b1) => true
+ }
+
+function legalize_mstateen0(o : Mstateen0, v : bits(64)) -> Mstateen0 = {
+  let v = Mk_Mstateen0(v);
+  let o = [o with CSRIND = if haveSscsrind() then v[CSRIND] else 0b0];
+  let o = [o with CTR = if haveSmctr() then v[CTR] else 0b0];
+  // Other extensions are not implemented yet so all other fields are read only zero.
+  o
+}
+
 /* vector csrs */
 register vstart : bits(16) /* use the largest possible length of vstart */
 register vxsat  : bits(1)
@@ -942,3 +1000,98 @@ function get_vtype_vma() = decode_agtype(vtype[vma])
 
 val get_vtype_vta : unit -> agtype
 function get_vtype_vta() = decode_agtype(vtype[vta])
+
+bitfield SMiselect : xlenbits = {
+  REG : 11 .. 0
+}
+
+register siselect : SMiselect
+register miselect : SMiselect
+
+function legalize_iselect(s : SMiselect, v: xlenbits) -> SMiselect = {
+  let s = Mk_SMiselect(v);
+  s
+}
+
+function isValidMiselect() -> bool = {
+  /* The behavior upon accessing mireg* from M-mode,
+   * while miselect holds a value that is not implemented,
+   * is UNSPECIFIED. It is expected that implementations
+   * will typically raise an illegal instruction exception
+   */
+  false;
+}
+
+function isValidSiselect() -> bool = {
+  /* The behavior upon accessing sireg* from M/S-mode,
+   * while siselect holds a value that is not implemented,
+   * is UNSPECIFIED. It is expected that implementations
+   * will typically raise an illegal instruction exception
+   */
+  if unsigned(siselect[REG]) >= 512 & unsigned(siselect[REG]) <= 767
+  then haveSmctr() /* 0x200 - 0x2FF is designated for Smctr/Ssctr */
+  else false;
+}
+
+function get_mireg() -> xlenbits = zeros()
+function get_mireg2() -> xlenbits = zeros()
+function get_mireg3() -> xlenbits = zeros()
+function get_mireg4() -> xlenbits = zeros()
+function get_mireg5() -> xlenbits = zeros()
+function get_mireg6() -> xlenbits = zeros()
+function set_mireg(v: xlenbits)  -> unit = ()
+function set_mireg2(v: xlenbits) -> unit = ()
+function set_mireg3(v: xlenbits) -> unit = ()
+function set_mireg4(v: xlenbits) -> unit = ()
+function set_mireg5(v: xlenbits) -> unit = ()
+function set_mireg6(v: xlenbits) -> unit = ()
+
+val get_ctr_sireg  : unit -> xlenbits
+val get_ctr_sireg2 : unit -> xlenbits
+val get_ctr_sireg3 : unit -> xlenbits
+val set_ctr_sireg  : xlenbits -> unit
+val set_ctr_sireg2 : xlenbits -> unit
+val set_ctr_sireg3 : xlenbits -> unit
+function get_sireg() -> xlenbits = {
+  if unsigned(siselect[REG]) >= 512 & unsigned(siselect[REG]) <= 767
+  then get_ctr_sireg()
+  else zeros()
+}
+function get_sireg2() -> xlenbits = {
+  if unsigned(siselect[REG]) >= 512 & unsigned(siselect[REG]) <= 767
+  then get_ctr_sireg2()
+  else zeros()
+}
+function get_sireg3() -> xlenbits = {
+  if unsigned(siselect[REG]) >= 512 & unsigned(siselect[REG]) <= 767
+  then get_ctr_sireg3()
+  else zeros()
+}
+function get_sireg4() -> xlenbits = {
+  zeros()
+}
+function get_sireg5() -> xlenbits = {
+  zeros()
+}
+function get_sireg6() -> xlenbits = {
+  zeros()
+}
+
+function set_sireg(v: xlenbits) -> unit = {
+  let ctr_idx = siselect.bits[7 .. 0];
+  if unsigned(siselect[REG]) >= 512 & unsigned(siselect[REG]) <= 767
+  then set_ctr_sireg(v)
+}
+function set_sireg2(v: xlenbits) -> unit = {
+  let ctr_idx = siselect.bits[7 .. 0];
+  if unsigned(siselect[REG]) >= 512 & unsigned(siselect[REG]) <= 767
+  then set_ctr_sireg2(v)
+}
+function set_sireg3(v: xlenbits) -> unit = {
+  let ctr_idx = siselect.bits[7 .. 0];
+  if unsigned(siselect[REG]) >= 512 & unsigned(siselect[REG]) <= 767
+  then set_ctr_sireg3(v)
+}
+function set_sireg4(v: xlenbits) -> unit = ()
+function set_sireg5(v: xlenbits) -> unit = ()
+function set_sireg6(v: xlenbits) -> unit = ()

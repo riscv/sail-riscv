@@ -71,7 +71,22 @@ bool sys_enable_writable_misa(unit u)
 {
   return rv_enable_writable_misa;
 }
-
+uint64_t sys_valid_ctr_depth(unit u)
+{
+  return rv_valid_ctr_depth;
+}
+uint64_t sys_num_cce_bits(unit u)
+{
+  return rv_num_cce_bits;
+}
+uint64_t sys_mctrctl_warl_mask(unit u)
+{
+  return rv_mctrctl_warl_mask;
+}
+bool sys_enable_smctr(unit u)
+{
+  return rv_enable_smctr;
+}
 bool plat_enable_dirty_update(unit u)
 {
   return rv_enable_dirty_update;

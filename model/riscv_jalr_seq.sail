@@ -8,6 +8,8 @@
 
 /* The definition for the sequential model. */
 
+val update_ctr_jalr : (regidx, regidx) -> unit
+
 function clause execute (RISCV_JALR(imm, rs1, rd)) = {
 /* For the sequential model, the memory-model definition doesn't work directly
  * if rs1 = rd.  We would effectively have to keep a regfile for reads and another for
@@ -30,6 +32,8 @@ function clause execute (RISCV_JALR(imm, rs1, rd)) = {
       } else {
         X(rd) = get_next_pc();
         set_next_pc(target);
+        /* update control transfer record if Ssctr/Smctr is active */
+        update_ctr_jalr(rs1, rd);
         RETIRE_SUCCESS
       }
     }

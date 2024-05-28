@@ -8,7 +8,6 @@
 
 /* Machine-mode and supervisor-mode functionality. */
 
-
 /* CSR access control */
 
 function csrAccess(csr : csreg) -> csrRW = csr[11..10]
@@ -31,8 +30,10 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x305 => p == Machine, // mtvec
     0x306 => p == Machine & haveUsrMode(), // mcounteren
     0x30A => p == Machine & haveUsrMode(), // menvcfg
+    0x30C => p == Machine & haveSupMode() & haveSmstateen(), // mstateen0
     0x310 => p == Machine & (sizeof(xlen) == 32), // mstatush
     0x31A => p == Machine & haveUsrMode() & (sizeof(xlen) == 32), // menvcfgh
+    0x31C => p == Machine & haveSupMode() & (sizeof(xlen) == 32) & haveSmstateen(), // mstateen0h
     0x320 => p == Machine, // mcountinhibit
     /* machine mode: trap handling */
     0x340 => p == Machine, // mscratch
@@ -40,6 +41,16 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x342 => p == Machine, // mcause
     0x343 => p == Machine, // mtval
     0x344 => p == Machine, // mip
+    /* machine mode: Machine Control Transfer Records Control Register */
+    0x34E => p == Machine & haveSmctr(), // mctrctl
+    /* machine mode: indirect register select and alias CSRs */
+    0x350 => p == Machine & haveSmcsrind(), // miselect
+    0x351 => p == Machine & haveSmcsrind() & isValidMiselect(), // mireg
+    0x352 => p == Machine & haveSmcsrind() & isValidMiselect(), // mireg2
+    0x353 => p == Machine & haveSmcsrind() & isValidMiselect(), // mireg3
+    0x355 => p == Machine & haveSmcsrind() & isValidMiselect(), // mireg4
+    0x356 => p == Machine & haveSmcsrind() & isValidMiselect(), // mireg5
+    0x357 => p == Machine & haveSmcsrind() & isValidMiselect(), // mireg6
 
     // pmpcfgN
     0x3A @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(idx) & (idx[0] == bitzero | sizeof(xlen) == 32),
@@ -73,6 +84,30 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x142 => haveSupMode() & (p == Machine | p == Supervisor), // scause
     0x143 => haveSupMode() & (p == Machine | p == Supervisor), // stval
     0x144 => haveSupMode() & (p == Machine | p == Supervisor), // sip
+
+    /* supervisor mode: Machine Control Transfer Records Control Register */
+    0x14E => haveSmctr() & (p == Machine | (p == Supervisor & mstateen0[CTR] == 0b1)), // sctrctl
+    /* supervisor mode: Machine Control Transfer Records Status Register */
+    0x14F => haveSmctr() & (p == Machine | (p == Supervisor & mstateen0[CTR] == 0b1)), // sctrstatus
+
+    /* supervisor mode: indirect register select and alias CSRs */
+    0x150 => haveSupMode() & haveSscsrind() &
+             (p == Machine | (p == Supervisor & isSscsrindEnabled())), // siselect
+    0x151 => haveSupMode() & haveSscsrind() & isValidSiselect() &
+             (p == Machine | (p == Supervisor & isSscsrindEnabled())), // sireg
+    0x152 => haveSupMode() & haveSscsrind() & isValidSiselect() &
+             (p == Machine | (p == Supervisor & isSscsrindEnabled())), // sireg2
+    0x153 => haveSupMode() & haveSscsrind() & isValidSiselect() &
+             (p == Machine | (p == Supervisor & isSscsrindEnabled())), // sireg3
+    0x155 => haveSupMode() & haveSscsrind() & isValidSiselect() &
+             (p == Machine | (p == Supervisor & isSscsrindEnabled())), // sireg4
+    0x156 => haveSupMode() & haveSscsrind() & isValidSiselect() &
+             (p == Machine | (p == Supervisor & isSscsrindEnabled())), // sireg5
+    0x157 => haveSupMode() & haveSscsrind() & isValidSiselect() &
+             (p == Machine | (p == Supervisor & isSscsrindEnabled())), // sireg6
+
+    /* supervisor mode: Machine Control Transfer Records Depth Register */
+    0x15F => haveSmctr() & (p == Machine | (p == Supervisor & mstateen0[CTR] == 0b1)), // sctrdepth
 
     /* supervisor mode: address translation */
     0x180 => haveSupMode() & (p == Machine | p == Supervisor), // satp
@@ -314,6 +349,7 @@ function rvfi_trap () = ()
 $endif
 
 /* handle exceptional ctl flow by updating nextPC and operating privilege */
+val update_ctr_traps : (bool, exc_code, Privilege) -> unit
 
 function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
                      -> xlenbits = {
@@ -324,6 +360,9 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
                       ^ " with tval " ^ BitStr(tval(info)));
 
   cancel_reservation();
+
+  /* Update control transfer records when Smctr/Ssctr is implemented */
+  update_ctr_traps(intr, c, del_priv);
 
   match (del_priv) {
     Machine => {
@@ -393,6 +432,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
   };
 }
 
+val update_ctr_trap_return : (Privilege) -> unit
 function exception_handler(cur_priv : Privilege, ctl : ctl_result,
                            pc: xlenbits) -> xlenbits = {
   match (cur_priv, ctl) {
@@ -418,6 +458,8 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
       cancel_reservation();
+      /* Update control transfer records when Smctr/Ssctr is implemented */
+      update_ctr_trap_return(prev_priv);
       prepare_xret_target(Machine) & pc_alignment_mask()
     },
     (_, CTL_SRET())  => {
@@ -436,6 +478,8 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
                           ^ " to " ^ to_str(cur_privilege));
 
       cancel_reservation();
+      /* Update control transfer records when Smctr/Ssctr is implemented */
+      update_ctr_trap_return(prev_priv);
       prepare_xret_target(Supervisor) & pc_alignment_mask()
     },
     (_, CTL_URET())  => {
@@ -529,6 +573,11 @@ function init_sys() -> unit = {
 
   menvcfg.bits = zero_extend(0b0);
   senvcfg.bits = zero_extend(0b0);
+  mstateen0.bits = zero_extend(0b0);
+
+  /* Smctr/Ssctr cycle counter */
+  ctr_cycle_counter_valid = false;
+
   /* initialize vector csrs */
   elen               = 0b1; /* ELEN=64 as the common case */
   vlen               = 0b0100; /* VLEN=512 as a default value */
