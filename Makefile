@@ -185,7 +185,7 @@ ifneq (,$(COVERAGE))
 C_FLAGS += --coverage -O1
 SAIL_FLAGS += -Oconstant_fold
 else
-C_FLAGS += -O3 -flto
+C_FLAGS += -O3 -flto=auto
 endif
 
 ifneq (,$(SAILCOV))
