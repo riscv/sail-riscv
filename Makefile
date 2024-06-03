@@ -18,7 +18,7 @@ else
   $(error '$(ARCH)' is not a valid architecture, must be one of: RV32, RV64)
 endif
 
-SAIL_FLEN := riscv_flen_D.sail
+SAIL_FLEN := riscv_flen_Q.sail
 SAIL_VLEN := riscv_vlen.sail
 
 # Instruction sources, depending on target
@@ -26,6 +26,7 @@ SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_mis
 SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail riscv_insts_hints.sail
 SAIL_DEFAULT_INST += riscv_insts_fext.sail riscv_insts_cfext.sail
 SAIL_DEFAULT_INST += riscv_insts_dext.sail riscv_insts_cdext.sail
+SAIL_DEFAULT_INST += riscv_insts_qext.sail
 
 SAIL_DEFAULT_INST += riscv_insts_svinval.sail
 

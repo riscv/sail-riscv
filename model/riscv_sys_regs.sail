@@ -133,7 +133,7 @@ function haveMulDiv()  -> bool = misa[M] == 0b1
 function haveSupMode() -> bool = misa[S] == 0b1
 function haveUsrMode() -> bool = misa[U] == 0b1
 function haveNExt()    -> bool = misa[N] == 0b1
-/* see below for F and D (and Z*inx counterparts) extension tests */
+/* see below for F, D and Q (and Z*inx counterparts) extension tests */
 
 /* BitManip extension support. */
 function haveZba()  -> bool = true
@@ -305,9 +305,14 @@ function in32BitMode() -> bool = {
   cur_Architecture() == RV32
 }
 
-/* F and D extensions have to enabled both via misa.{FD} as well as mstatus.FS */
+function in64BitMode() -> bool = {
+  cur_Architecture() == RV64
+}
+
+/* F, D and Q extensions have to enabled both via misa.{FDQ} as well as mstatus.FS */
 function haveFExt()    -> bool = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
 function haveDExt()    -> bool = (misa[D] == 0b1) & (mstatus[FS] != 0b00) & sizeof(flen) >= 64
+function haveQExt()    -> bool = (misa[Q] == 0b1) & (mstatus[FS] != 0b00) & sizeof(flen) >= 128
 /* Zfh (half-precision) extension depends on misa.F and mstatus.FS */
 function haveZfh()     -> bool = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
 /* V extension has to enable both via misa.V as well as mstatus.VS */

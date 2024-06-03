@@ -318,8 +318,9 @@ function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
   else match width {
          BYTE   => false,
          HALF   => vaddr[0] == bitone,
-         WORD   => vaddr[0] == bitone | vaddr[1] == bitone,
-         DOUBLE => vaddr[0] == bitone | vaddr[1] == bitone | vaddr[2] == bitone
+         WORD   => vaddr[1..0] != zeros(),
+         DOUBLE => vaddr[2..0] != zeros(),
+         QUAD   => vaddr[3..0] != zeros(),
        }
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
@@ -374,7 +375,7 @@ mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, size, aq, rl)
 union clause ast = STORE : (bits(12), regidx, regidx, word_width, bool, bool)
 
 mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)              if size_bytes(size) <= sizeof(xlen_bytes)
-  <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ imm5 : bits(5) @ 0b0100011 if size_bytes(size) <= sizeof(xlen_bytes)
+  <-> imm7 : bits(7) @ rs2 @ rs1 @ size_enc_wide(size) @ imm5 : bits(5) @ 0b0100011 if size_bytes(size) <= sizeof(xlen_bytes)
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
@@ -394,7 +395,8 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
             BYTE   => mem_write_ea(paddr, 1, aq, rl, false),
             HALF   => mem_write_ea(paddr, 2, aq, rl, false),
             WORD   => mem_write_ea(paddr, 4, aq, rl, false),
-            DOUBLE => mem_write_ea(paddr, 8, aq, rl, false)
+            DOUBLE => mem_write_ea(paddr, 8, aq, rl, false),
+            _    => report_invalid_width(__FILE__, __LINE__, width, "store got invalid width"),
           };
           match (eares) {
             MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
