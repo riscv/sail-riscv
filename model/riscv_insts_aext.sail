@@ -64,7 +64,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
   /* Get the address, X(rs1) (no offset).
     * Extensions might perform additional checks on address validity.
     */
-  match ext_data_get_addr(rs1, zeros(), Read(Data), width) {
+  match ext_data_get_addr(rs1, zeros(), Read(Data), size_bytes(width)) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) => {
       let aligned : bool =
@@ -120,7 +120,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
     /* Get the address, X(rs1) (no offset).
       * Extensions might perform additional checks on address validity.
       */
-    match ext_data_get_addr(rs1, zeros(), Write(Data), width) {
+    match ext_data_get_addr(rs1, zeros(), Write(Data), size_bytes(width)) {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
         let aligned : bool =
@@ -205,7 +205,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   /* Get the address, X(rs1) (no offset).
     * Some extensions perform additional checks on address validity.
     */
-  match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width) {
+  match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), size_bytes(width)) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) => {
       match translateAddr(vaddr, ReadWrite(Data, Data)) {
