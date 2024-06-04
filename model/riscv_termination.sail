@@ -59,3 +59,6 @@ function extensionEnabled_measure(ext : extension) -> int =
     _ => 0
   }
 termination_measure extensionEnabled(ext) = extensionEnabled_measure(ext)
+
+// The top-level loop isn't terminating, but we put a limit so that it can still be included in the Coq output
+termination_measure loop while 100
