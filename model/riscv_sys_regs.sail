@@ -799,7 +799,7 @@ bitfield MControl6 : xlenbits = {
   // Debug Mode bit
   Dmode  : xlen - 5,
   // // Reserved WPRI bits.
-  // wpri_1 : 27 .. xlen - 6,   /*TODO*/
+  // wpri_1 : xlen - 6 .. 27,   /*TODO*/
   // Uncertain bit.
   Uncertain : 26,
   // MSB of hit bits.
@@ -844,7 +844,7 @@ bitfield ICount : xlenbits = {
   // Debug Mode bit
   Dmode  : xlen - 5,
   // Reserved WPRI bits.
-  // wpri   : 27 .. xlen - 6,   /*TODO*/
+  // wpri   : xlen - 6 .. 27,   /*TODO*/
   // Trigger in VS-mode.
   VS     : 26,
   // Trigger in VU-mode.
@@ -962,13 +962,13 @@ register mcontrol : MControl
 /* Match Control TYPE 6 Debug/Trace trigger register */
 register mcontrol6: MControl6
 /* Instruction Count Debug/Trace trigger register */
-// register icount   : ICount
-// /* Interrupt Trigger Debug/Trace trigger register */
-// register itrigger : ITrigger
-// /* Exception Trigger Debug/Trace trigger register */
-// register etrigger : ETrigger
-// /* External Trigger Debug/Trace trigger register */
-// register tmexttrigger : TMexttrigger
+register icount   : ICount
+/* Interrupt Trigger Debug/Trace trigger register */
+register itrigger : ITrigger
+/* Exception Trigger Debug/Trace trigger register */
+register etrigger : ETrigger
+/* External Trigger Debug/Trace trigger register */
+register tmexttrigger : TMexttrigger
 /* Debug/Trace trigger Control register */
 register tcontrol : TControl
 /*  Debug/Trace trigger Info register */
@@ -985,7 +985,25 @@ function legalize_tselect(o : TSelect, v : xlenbits) -> TSelect = {
   let o = [o with Index  = if (sys_enable_sdtrig() & isValidTselect(v[Index])) then v[Index] else o[Index]];
   o
 }
+// function isValidTdata1(tdata1_val : xlenbits) -> bool = {
+//   // let N_triggers = 3;// Number of triggers supported
+//   (unsigned(tdata1_val.bits[xlen - 5]) == 0) & (unsigned(tdata1_val.bits[xlen - 5 .. 0]) == 0);
+// }
 
+function legalize_tdata1(o : TData1, v : xlenbits) -> TData1 = {
+  let v = Mk_TData1(v);
+  // Update Index field only if Trigger Module is enabled and Written value is legal
+  let o = [o with Data = if sys_enable_sdtrig() then v[Data] else o[Data]];
+  let o = [o with TYPE = if sys_enable_sdtrig() then v[TYPE] else o[TYPE]];
+  [o with Dmode = if sys_enable_sdtrig() then 0b1 else 0b0]
+}
+// function legalize_tdata1_64(o : TData1, v : xlenbits) -> TData1 = {
+//   let v = Mk_TData1(v);
+//   // Update Index field only if Trigger Module is enabled and Written value is legal
+//   let o = [o with Data = if sys_enable_sdtrig() then v[Data] else o[Data]];
+//   let o = [o with TYPE = v[TYPE]];
+//   [o with Dmode = 0b1]
+// }
 
 /*
  * The seed CSR (entropy source)
