@@ -80,8 +80,15 @@ instantiation sail_mem_write with
    because it means width argument can be fast native integer. It
    would be even better if it could be <= 8 bytes so that data can
    also be a 64-bit int but CHERI needs 128-bit accesses for
-   capabilities and SIMD / vector instructions will also need more. */
-type max_mem_access : Int = 16
+   capabilities and SIMD / vector instructions will also need more.
+
+   The specific value does not matter (if it is >8) since anything up
+   to 2^64-1 will result in a native int being used for the width type.
+
+   4096 was chosen because it is a page size, and a reasonable maximum
+   for cbo.zero.
+   */
+type max_mem_access : Int = 4096
 
 val write_ram : forall 'n, 0 < 'n <= max_mem_access. (write_kind, xlenbits, int('n), bits(8 * 'n), mem_meta) -> bool
 
