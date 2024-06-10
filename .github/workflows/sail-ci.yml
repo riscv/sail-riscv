@@ -1,0 +1,66 @@
+name: SAIL CI
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    if: github.repository == 'rpsene/sail-riscv'
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Install dependencies
+      id: install_dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y opam zlib1g-dev pkg-config libgmp-dev z3 device-tree-compiler
+        pip install pre-commit
+
+    - name: Ensure pre-commit checks pass
+      id: pre_commit
+      run: pre-commit run --all-files --show-diff-on-failure --color=always
+
+    - name: Init opam
+      id: init_opam
+      run: opam init --disable-sandboxing -y
+
+    - name: Install sail
+      id: install_sail
+      run: opam install -y sail
+
+    - name: Build and test simulators
+      if: steps.install_dependencies.outcome == 'success' && steps.pre_commit.outcome == 'success' && steps.init_opam.outcome == 'success' && steps.install_sail.outcome == 'success'
+      id: build_test_simulators
+      run: eval $(opam env) && test/run_tests.sh
+
+    - name: Upload test.xml
+      id: upload_test_xml
+      if: steps.build_test_simulators.outcome == 'success'
+      uses: actions/upload-artifact@v4
+      with:
+        name: tests.xml
+        path: test/tests.xml
+
+    - name: Upload event.json
+      id: upload_event_json
+      if: steps.build_test_simulators.outcome == 'success'
+      uses: actions/upload-artifact@v4
+      with:
+        name: event.json
+        path: ${{ github.event_path }}
+
+    - name: Publish Test Results
+      if: steps.build_test_simulators.outcome == 'success'
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      with:
+        files: |
+          test/tests.xml
+
+    - name: PR comment with file
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        filePath: /path/to/file.txt
