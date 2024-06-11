@@ -267,11 +267,11 @@ c_preserve_fns=-c_preserve _set_Misa_C
 
 generated_definitions/c/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
-	$(SAIL) $(SAIL_FLAGS) $(c_preserve_fns) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@)
+	$(SAIL) $(SAIL_FLAGS) $(c_preserve_fns) -O -Oconstant_fold -memo_z3 -c -c_include riscv_default_callbacks.c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@)
 
 generated_definitions/c2/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c2
-	$(SAIL) $(SAIL_FLAGS) -no_warn -memo_z3 -config c_emulator/config.json -c2 $(SAIL_SRCS) -o $(basename $@)
+	$(SAIL) $(SAIL_FLAGS) -no_warn -memo_z3 -config c_emulator/config.json -c2 -c_include riscv_default_callbacks.c $(SAIL_SRCS) -o $(basename $@)
 
 $(SOFTFLOAT_LIBS):
 	$(MAKE) SPECIALIZE_TYPE=$(SOFTFLOAT_SPECIALIZE_TYPE) -C $(SOFTFLOAT_LIBDIR)
@@ -312,6 +312,35 @@ generated_definitions/c/riscv_rvfi_model_$(ARCH).c: $(SAIL_RVFI_SRCS) model/main
 
 c_emulator/riscv_rvfi_$(ARCH): generated_definitions/c/riscv_rvfi_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile
 	$(CC) -g $(C_WARNINGS) $(C_FLAGS) $< -DRVFI_DII $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
+
+# Note: We have to add -c_preserve since the functions might be optimized out otherwise
+rvfi_preserve_fns=-c_preserve rvfi_set_instr_packet \
+  -c_preserve rvfi_get_cmd \
+  -c_preserve rvfi_get_insn \
+  -c_preserve rvfi_get_v2_trace_size \
+  -c_preserve rvfi_get_v2_support_packet \
+  -c_preserve rvfi_get_exec_packet_v1 \
+  -c_preserve rvfi_get_exec_packet_v2 \
+  -c_preserve rvfi_get_mem_data \
+  -c_preserve rvfi_get_int_data \
+  -c_preserve rvfi_zero_exec_packet \
+  -c_preserve rvfi_halt_exec_packet \
+  -c_preserve rvfi_write \
+  -c_preserve rvfi_read \
+  -c_preserve rvfi_wX \
+  -c_preserve print_rvfi_exec \
+  -c_preserve print_instr_packet \
+  -c_preserve print_rvfi_exec
+
+# sed -i isn't posix compliant, unfortunately
+generated_definitions/c/riscv_rvfi_model_$(ARCH).c: $(SAIL_RVFI_SRCS) model/main.sail Makefile
+	mkdir -p generated_definitions/c
+	$(SAIL) $(c_preserve_fns) $(rvfi_preserve_fns) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) -c_include riscv_rvfi_callbacks.c model/main.sail -o $(basename $@)
+	sed -e '/^[[:space:]]*$$/d' $@ > $@.new
+	mv $@.new $@
+
+c_emulator/riscv_rvfi_$(ARCH): generated_definitions/c/riscv_rvfi_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile
+	gcc -g $(C_WARNINGS) $(C_FLAGS) $< -DRVFI_DII $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
 latex: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/latex

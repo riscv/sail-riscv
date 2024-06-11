@@ -155,6 +155,7 @@ function rF (r : regno) -> flenbits = {
 
 function wF (r : regno, in_v : flenbits) -> unit = {
   assert(sys_enable_fdext());
+  if rv_enable_callbacks then freg_update_callback(regno_to_regidx(r), in_v);
   let v = fregval_into_freg(in_v);
   match r {
     0  => f0 = v,
@@ -193,11 +194,6 @@ function wF (r : regno, in_v : flenbits) -> unit = {
   };
 
   dirty_fd_context();
-
-  if   get_config_print_reg()
-  then
-      /* TODO: will only print bits; should we print in floating point format? */
-      print_reg("f" ^ dec_str(r) ^ " <- " ^ FRegStr(v));
 }
 
 function rF_bits(i: regidx) -> flenbits = rF(unsigned(i))

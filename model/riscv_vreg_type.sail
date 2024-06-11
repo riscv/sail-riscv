@@ -146,3 +146,8 @@ enum fwffunct6    = { FWF_VADD, FWF_VSUB }
 enum fvfmfunct6   = { VFM_VMFEQ, VFM_VMFLE, VFM_VMFLT, VFM_VMFNE, VFM_VMFGT, VFM_VMFGE }
 
 enum vmlsop       = { VLM, VSM }
+
+/* Callbacks for vregs state-changing events */
+
+/* Default for this function in riscv_default_callbacks.c and platform_impl.ml */
+val vreg_update_callback = pure {ocaml: "Platform.vreg_update_callback", c: "vreg_update_callback"} : (regidx, vregtype) -> unit
