@@ -157,6 +157,7 @@ function rF r = {
 val wF : forall 'n, 0 <= 'n < 32. (regno('n), flenbits) -> unit
 function wF (r, in_v) = {
   assert(sys_enable_fdext());
+  if rv_enable_callbacks then freg_update_callback(regno_to_regidx(r), in_v);
   let v = fregval_into_freg(in_v);
   match r {
     0  => f0 = v,

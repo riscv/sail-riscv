@@ -48,6 +48,11 @@ function handle_illegal_vtype() = {
    */
   vtype.bits = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
   vl = zeros();
+
+  if rv_enable_callbacks then {
+    csr_update_callback("vtype", vtype.bits);
+    csr_update_callback("vl", vl);
+  };
   print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
   print_reg("CSR vl <- " ^ BitStr(vl))
 }
@@ -103,6 +108,11 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   /* reset vstart to 0 */
   vstart = zeros();
 
+  if rv_enable_callbacks then {
+    csr_update_callback("vtype", vtype.bits);
+    csr_update_callback("vl", vl);
+    csr_update_callback("vstart", zero_extend(vstart));
+  };
   print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
   print_reg("CSR vl <- " ^ BitStr(vl));
   print_reg("CSR vstart <- " ^ BitStr(vstart));
@@ -154,6 +164,11 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   /* reset vstart to 0 */
   vstart = zeros();
 
+  if rv_enable_callbacks then {
+    csr_update_callback("vtype", vtype.bits);
+    csr_update_callback("vl", vl);
+    csr_update_callback("vstart", zero_extend(vstart));
+  };
   print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
   print_reg("CSR vl <- " ^ BitStr(vl));
   print_reg("CSR vstart <- " ^ BitStr(vstart));
@@ -189,7 +204,11 @@ function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
 
   /* reset vstart to 0 */
   vstart = zeros();
-
+  if rv_enable_callbacks then {
+    csr_update_callback("vtype", vtype.bits);
+    csr_update_callback("vl", vl);
+    csr_update_callback("vstart", zero_extend(vstart));
+  };
   print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
   print_reg("CSR vl <- " ^ BitStr(vl));
   print_reg("CSR vstart <- " ^ BitStr(vstart));

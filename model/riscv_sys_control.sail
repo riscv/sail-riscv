@@ -303,21 +303,10 @@ function tval(excinfo : option(xlenbits)) -> xlenbits = {
   }
 }
 
-$ifdef RVFI_DII
-val rvfi_trap : unit -> unit
-// TODO: record rvfi_trap_data
-function rvfi_trap () =
-  rvfi_inst_data[rvfi_trap] = 0x01
-$else
-val rvfi_trap : unit -> unit
-function rvfi_trap () = ()
-$endif
-
 /* handle exceptional ctl flow by updating nextPC and operating privilege */
 
 function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
                      -> xlenbits = {
-  rvfi_trap();
   if   get_config_print_platform()
   then print_platform("handling " ^ (if intr then "int#" else "exc#")
                       ^ BitStr(c) ^ " at priv " ^ to_str(del_priv)
@@ -340,6 +329,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        handle_trap_extension(del_priv, pc, ext);
 
+       if rv_enable_callbacks then csr_update_callback("mstatus", mstatus.bits);
        if   get_config_print_reg()
        then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
 
@@ -365,6 +355,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        handle_trap_extension(del_priv, pc, ext);
 
+       if rv_enable_callbacks then csr_update_callback("mstatus", mstatus.bits);
        if   get_config_print_reg()
        then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
 
@@ -385,6 +376,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        handle_trap_extension(del_priv, pc, ext);
 
+       if rv_enable_callbacks then csr_update_callback("mstatus", mstatus.bits);
        if   get_config_print_reg()
        then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
 
@@ -412,6 +404,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
+      if rv_enable_callbacks then csr_update_callback("mstatus", mstatus.bits);
       if   get_config_print_reg()
       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
       if   get_config_print_platform()
@@ -429,6 +422,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
+      if rv_enable_callbacks then csr_update_callback("mstatus", mstatus.bits);
       if   get_config_print_reg()
       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
       if   get_config_print_platform()
@@ -444,6 +438,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus[UPIE] = 0b1;
       cur_privilege   = User;
 
+      if rv_enable_callbacks then csr_update_callback("mstatus", mstatus.bits);
       if   get_config_print_reg()
       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
       if   get_config_print_platform()
@@ -551,6 +546,7 @@ function init_sys() -> unit = {
   // PMP's L and A fields are set to 0 on reset.
   init_pmp();
 
+  if rv_enable_callbacks then csr_update_callback("mstatus", mstatus.bits);
   // log compatibility with spike
   if   get_config_print_reg()
   then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits) ^ " (input: " ^ BitStr(zero_extend(0b0) : xlenbits) ^ ")")

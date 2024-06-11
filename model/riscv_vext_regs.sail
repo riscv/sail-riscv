@@ -264,6 +264,7 @@ function read_single_vreg(num_elem, SEW, vrid) = {
 /* Writes multiple elements into a single vreg */
 val write_single_vreg : forall 'n 'm, 'n >= 0. (int('n), int('m), regidx, vector('n, dec, bits('m))) -> unit
 function write_single_vreg(num_elem, SEW, vrid, v) = {
+  if rv_enable_callbacks then vreg_update_callback(vrid);
   r : vregtype = zeros();
 
   assert(8 <= SEW & SEW <= 64);

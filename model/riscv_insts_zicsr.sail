@@ -209,6 +209,7 @@ function clause execute CSR(csr, rs1, rd, is_imm, op) = {
         CSRRS => csr_val | rs1_val,
         CSRRC => csr_val & ~(rs1_val)
       };
+      if rv_enable_callbacks then csr_update_callback(csr_name_map(csr), new_val);
       writeCSR(csr, new_val)
     };
     X(rd) = csr_val;

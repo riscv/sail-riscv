@@ -33,6 +33,9 @@ type regno ('n : Int), 0 <= 'n < 32 = int('n)
 val regidx_to_regno : bits(5) -> {'n, 0 <= 'n < 32. regno('n)}
 function regidx_to_regno b = let 'r = unsigned(b) in r
 
+val regno_to_regidx : {'n, 0 <= 'n < 32. regno('n)} -> bits(5)
+function regno_to_regidx b = let 'r = to_bits(5, b) in r
+
 /* mapping RVC register indices into normal indices */
 val creg2reg_idx : cregidx -> regidx
 function creg2reg_idx(creg) = 0b01 @ creg
@@ -408,3 +411,17 @@ function report_invalid_width(f , l, w, k) -> 'a = {
   internal_error(f, l, "Invalid width, " ^ size_mnemonic(w) ^ ", for " ^ k ^
      " with xlen=" ^ dec_str(sizeof(xlen)))
 }
+
+/* Callbacks for state-changing events */
+
+/* Whether need to call the callback functions */
+register rv_enable_callbacks : bool = false
+
+/* Defaults for these functions in riscv_default_callbacks.c */
+
+val mem_update_callback = pure {c: "mem_update_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* addr */ xlenbits, /* width */ int('n), /* data */ bits(8 * 'n)) -> unit
+val pc_update_callback = pure {c: "pc_update_callback"} : xlenbits -> unit
+val xreg_update_callback = pure {c: "xreg_update_callback"} : (regidx, xlenbits) -> unit
+val freg_update_callback = pure {c: "freg_update_callback"} : (regidx, flenbits) -> unit
+val csr_update_callback = pure {c: "csr_update_callback"} : (/* name from the csr_name_map */ string, xlenbits) -> unit
+val vreg_update_callback = pure {c: "vreg_update_callback"} : regidx -> unit
