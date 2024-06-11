@@ -43,6 +43,8 @@ type regno = range(0, 31)
 
 function regidx_to_regno (b : regidx) -> regno = unsigned(b)
 
+function regno_to_regidx (b : regno) -> regidx = to_bits(5, b)
+
 /* mapping RVC register indices into normal indices */
 val creg2reg_idx : cregidx -> regidx
 function creg2reg_idx(creg) = 0b01 @ creg
@@ -410,3 +412,16 @@ function report_invalid_width(f , l, w, k) -> 'a = {
   internal_error(f, l, "Invalid width, " ^ size_mnemonic(w) ^ ", for " ^ k ^
      " with xlen=" ^ dec_str(xlen))
 }
+
+/* Callbacks for state-changing events */
+
+/* Defaults for these functions in riscv_default_callbacks.c and platform_impl.ml */
+
+val mem_write_callback = pure {ocaml: "Platform.mem_write_callback", c: "mem_write_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* addr */ xlenbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
+val mem_read_callback = pure {ocaml: "Platform.mem_read_callback", c: "mem_read_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* addr */ xlenbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
+val mem_exception_callback = pure {ocaml: "Platform.mem_exception_callback", c: "mem_exception_callback"} : forall 'n, 0 <= 'n < xlen . (/* addr */ xlenbits, /* num_of_ExceptionType */ int('n)) -> unit
+val pc_write_callback = pure {ocaml: "Platform.pc_write_callback", c: "pc_write_callback"} : xlenbits -> unit
+val xreg_write_callback = pure {ocaml: "Platform.xreg_write_callback", c: "xreg_write_callback"} : (regidx, xlenbits) -> unit
+val freg_write_callback = pure {ocaml: "Platform.freg_write_callback", c: "freg_write_callback"} : (regidx, flenbits) -> unit
+val csr_write_callback = pure {ocaml: "Platform.csr_write_callback", c: "csr_write_callback"} : (csreg, xlenbits) -> unit
+val csr_read_callback = pure {ocaml: "Platform.csr_read_callback", c: "csr_read_callback"} : (csreg, xlenbits) -> unit
