@@ -999,8 +999,8 @@ function legalize_tdata1(o : TData1, v : xlenbits) -> TData1 = {
 }
 function legalize_tinfo(o : TInfo) -> xlenbits = {
   // let o = 0x01000001;
-  if (sizeof(xlen) == 32) then return 0x01000001 else return 0x0000000001000001
-  
+  if (sizeof(xlen) == 32) then 0x01000001 else 0x0000000001000001
+
 }
 
 /*
