@@ -997,13 +997,11 @@ function legalize_tdata1(o : TData1, v : xlenbits) -> TData1 = {
   let o = [o with TYPE = if sys_enable_sdtrig() then v[TYPE] else o[TYPE]];
   [o with Dmode = if sys_enable_sdtrig() then 0b1 else 0b0]
 }
-// function legalize_tdata1_64(o : TData1, v : xlenbits) -> TData1 = {
-//   let v = Mk_TData1(v);
-//   // Update Index field only if Trigger Module is enabled and Written value is legal
-//   let o = [o with Data = if sys_enable_sdtrig() then v[Data] else o[Data]];
-//   let o = [o with TYPE = v[TYPE]];
-//   [o with Dmode = 0b1]
-// }
+function legalize_tinfo(o : TInfo) -> xlenbits = {
+  // let o = 0x01000001;
+  if (sizeof(xlen) == 32) then return 0x01000001 else return 0x0000000001000001
+  
+}
 
 /*
  * The seed CSR (entropy source)

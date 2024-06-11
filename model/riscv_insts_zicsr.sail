@@ -76,7 +76,7 @@ function readCSR csr : csreg -> xlenbits = {
     (0x7a1,  _) => tdata1.bits,
     (0x7a2,  _) => tdata2,
     (0x7a3,  _) => tdata3,
-    (0x7a4,  _) => tinfo.bits,
+    (0x7a4,  _) => legalize_tinfo(tinfo),
     (0x7a5,  _) => tcontrol.bits,
 
     /* supervisor mode */
