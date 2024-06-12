@@ -985,24 +985,23 @@ function legalize_tselect(o : TSelect, v : xlenbits) -> TSelect = {
   let o = [o with Index  = if (sys_enable_sdtrig() & isValidTselect(v[Index])) then v[Index] else o[Index]];
   o
 }
-// function isValidTdata1(tdata1_val : xlenbits) -> bool = {
-//   // let N_triggers = 3;// Number of triggers supported
-//   (unsigned(tdata1_val.bits[xlen - 5]) == 0) & (unsigned(tdata1_val.bits[xlen - 5 .. 0]) == 0);
-// }
 
 function legalize_tdata1(o : TData1, v : xlenbits) -> TData1 = {
   let v = Mk_TData1(v);
-  // Update Index field only if Trigger Module is enabled and Written value is legal
-  let o = [o with Data = if sys_enable_sdtrig() then v[Data] else o[Data]];
   let o = [o with TYPE = if sys_enable_sdtrig() then v[TYPE] else o[TYPE]];
-  [o with Dmode = if sys_enable_sdtrig() then 0b1 else 0b0]
+  let o = [o with Data = if sys_enable_sdtrig() then (if v[TYPE] != 0x0 then v[Data] else o[Data]) else o[Data]];
+  [o with Dmode = 0b0]
 }
 function legalize_tinfo(o : TInfo) -> xlenbits = {
-  // let o = 0x01000001;
-  if (sizeof(xlen) == 32) then 0x01000001 else 0x0000000001000001
-
+  if sys_enable_sdtrig() then zero_extend(0x1000001) else return zero_extend(0b0)
 }
 
+function legalize_tcontrol(o : TControl, v : xlenbits) -> TControl = {
+  let v = Mk_TControl(v);
+  let o = [o with MPTE = if sys_enable_sdtrig() then o[MTE] else o[MPTE]];
+  let o = [o with MTE = if sys_enable_sdtrig() then v[MTE] else o[MTE]];
+  o
+}
 /*
  * The seed CSR (entropy source)
  * ------------------------------------------------------------

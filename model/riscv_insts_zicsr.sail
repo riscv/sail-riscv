@@ -160,11 +160,10 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     /* trigger/debug */
     (0x7a0,  _) => { tselect = legalize_tselect(tselect, value); Some(tselect.bits) },
     (0x7a1, _) => { tdata1 = legalize_tdata1(tdata1, value); Some(tdata1.bits) },
-    // (0x7a1, 64) => { tdata1 = legalize_tdata1_64(tdata1, value); Some(tdata1.bits) },
     // (0x7a2,  _) => { tdata2[(sizeof(xlen) - 1) .. 0] = value; Some(value) },
     // (0x7a3,  _) => { tdata3[(sizeof(xlen) - 1) .. 0] = value; Some(value) },
-    // (0x7a4,  _) => { tinfo[(sizeof(xlen) - 1) .. 0] = value; Some(value) },
-    // (0x7a5,  _) => { tcontrol[(sizeof(xlen) - 1) .. 0] = value; Some(value) },
+    (0x7a4, _) => { Some(tinfo.bits) },       // ignoring Writes to Tinfo
+    (0x7a5, _) => { tcontrol = legalize_tcontrol(tcontrol, value); Some(tcontrol.bits) },
 
     /* supervisor mode */
     (0x100,  _) => { mstatus = legalize_sstatus(mstatus, value); Some(mstatus.bits) },
