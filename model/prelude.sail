@@ -99,17 +99,27 @@ overload zeros = {zeros_implicit}
 val ones : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
 function ones (n) = sail_ones (n)
 
-val bool_to_bit : bool -> bit
-function bool_to_bit x = if x then bitone else bitzero
-
-val bool_to_bits : bool -> bits(1)
-function bool_to_bits x = [bool_to_bit(x)]
-
-val bit_to_bool : bit -> bool
-function bit_to_bool b = match b {
-  bitone  => true,
-  bitzero => false
+mapping bool_bit : bool <-> bit = {
+  true <-> bitone,
+  false <-> bitzero,
 }
+
+mapping bool_bits : bool <-> bits(1) = {
+  true   <-> 0b1,
+  false  <-> 0b0,
+}
+
+mapping bool_not_bits : bool <-> bits(1) = {
+  true   <-> 0b0,
+  false  <-> 0b1,
+}
+
+// These aliases make the conversion direction a bit clearer.
+function bool_to_bit(x : bool) -> bit = bool_bit(x)
+function bit_to_bool(x : bit) -> bool = bool_bit(x)
+function bool_to_bits(x : bool) -> bits(1) = bool_bits(x)
+function bits_to_bool(x : bits(1)) -> bool = bool_bits(x)
+
 
 val to_bits : forall 'l, 'l >= 0.(int('l), int) -> bits('l)
 function to_bits (l, n) = get_slice_int(l, n, 0)
