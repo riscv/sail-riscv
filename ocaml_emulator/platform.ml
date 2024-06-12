@@ -19,6 +19,7 @@ let config_pmp_grain                   = ref Big_int.zero
 
 let set_config_pmp_count x = config_pmp_count := Big_int.of_int x
 let set_config_pmp_grain x = config_pmp_grain := Big_int.of_int x
+let config_writable_hpm_counters       = ref (ones (Big_int.of_int 32))
 
 let platform_arch = ref P.RV64
 
@@ -87,6 +88,7 @@ let enable_rvc ()                    = !config_enable_rvc
 let enable_next ()                   = !config_enable_next
 let enable_fdext ()                  = false
 let enable_vext ()                   = !config_enable_vext
+let writable_hpm_counters ()         = !config_writable_hpm_counters
 let enable_dirty_update ()           = !config_enable_dirty_update
 let enable_misaligned_access ()      = !config_enable_misaligned_access
 let mtval_has_illegal_inst_bits ()   = !config_mtval_has_illegal_inst_bits

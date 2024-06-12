@@ -14,6 +14,7 @@ bool rv_enable_next = false;
 bool rv_enable_writable_misa = true;
 bool rv_enable_fdext = true;
 bool rv_enable_vext = true;
+uint64_t rv_writable_hpm_counters = 0xFFFFFFFF;
 
 bool rv_enable_dirty_update = false;
 bool rv_enable_misaligned = false;
