@@ -180,7 +180,9 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width_bytes) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) => {
-      match translateAddr(vaddr, ReadWrite(Data, Data)) {
+      if not(is_aligned(vaddr, width))
+      then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
+      else match translateAddr(vaddr, ReadWrite(Data, Data)) {
         TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) => {
           let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
