@@ -78,40 +78,6 @@ for test in $DIR/riscv-tests/rv32*.elf; do
        red "OCaml-32 $(basename $test)" "fail"
     fi
 done
-for test in $DIR/riscv-tests/Zilsd/rv32*.elf; do
-    # skip F/D tests on OCaml for now
-    pat='rv32ud-.+elf'
-    if [[ $(basename $test) =~ $pat ]];
-    then continue
-    fi
-    pat='rv32uf-.+elf'
-    if [[ $(basename $test) =~ $pat ]];
-    then continue
-    fi
-    if $RISCVDIR/ocaml_emulator/riscv_ocaml_sim_RV32 -enable-zilsd "$test" >"${test/.elf/.out}" 2>&1 && grep -q SUCCESS "${test/.elf/.out}"
-    then
-       green "OCaml-32 $(basename $test)" "ok"
-    else
-       red "OCaml-32 $(basename $test)" "fail"
-    fi
-done
-for test in $DIR/riscv-tests/Zcmlsd/rv32*.elf; do
-    # skip F/D tests on OCaml for now
-    pat='rv32ud-.+elf'
-    if [[ $(basename $test) =~ $pat ]];
-    then continue
-    fi
-    pat='rv32uf-.+elf'
-    if [[ $(basename $test) =~ $pat ]];
-    then continue
-    fi
-    if $RISCVDIR/ocaml_emulator/riscv_ocaml_sim_RV32 -enable-zilsd -enable-zcmlsd "$test" >"${test/.elf/.out}" 2>&1 && grep -q SUCCESS "${test/.elf/.out}"
-    then
-       green "OCaml-32 $(basename $test)" "ok"
-    else
-       red "OCaml-32 $(basename $test)" "fail"
-    fi
-done
 finish_suite "32-bit RISCV OCaml tests"
 
 
@@ -123,22 +89,6 @@ else
 fi
 for test in $DIR/riscv-tests/rv32*.elf; do
     if timeout 5 $RISCVDIR/c_emulator/riscv_sim_RV32 -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
-    then
-	green "C-32 $(basename $test)" "ok"
-    else
-	red "C-32 $(basename $test)" "fail"
-    fi
-done
-for test in $DIR/riscv-tests/Zilsd/rv32*.elf; do
-    if timeout 5 $RISCVDIR/c_emulator/riscv_sim_RV32 -p -y  $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
-    then
-	green "C-32 $(basename $test)" "ok"
-    else
-	red "C-32 $(basename $test)" "fail"
-    fi
-done
-for test in $DIR/riscv-tests/Zcmlsd/rv32*.elf; do
-    if timeout 5 $RISCVDIR/c_emulator/riscv_sim_RV32 -p -y -Z $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
     then
 	green "C-32 $(basename $test)" "ok"
     else

@@ -41,15 +41,24 @@ let options = Arg.align ([("-dump-dts",
                           ("-enable-misaligned-access",
                            Arg.Set P.config_enable_misaligned_access,
                            " enable misaligned accesses without M-mode traps");
-                          ("-enable-pmp",
-                           Arg.Set P.config_enable_pmp,
-                           " enable PMP support");
+                          ("-pmp-count",
+                           Arg.Int P.set_config_pmp_count,
+                           " number of supported PMPs (0, 16, 64)");
+                          ("-pmp-grain",
+                           Arg.Int P.set_config_pmp_grain,
+                           " exponent of granularity of PMP addresses (G in the spec)");
                           ("-enable-next",
                            Arg.Set P.config_enable_next,
                            " enable N extension");
                           ("-mtval-has-illegal-inst-bits",
                            Arg.Set P.config_mtval_has_illegal_inst_bits,
                            " mtval stores instruction bits on an illegal instruction exception");
+                          ("-enable-svinval",
+                           Arg.Set P.config_enable_svinval,
+                           " enable Svinval extension");
+                          ("-enable-zcb",
+                           Arg.Set P.config_enable_zcb,
+                           " enable Zcb (simple code size) extension");
                           ("-enable-writable-fiom",
                            Arg.Set P.config_enable_writable_fiom,
                            " enable FIOM (Fence of I/O implies Memory) bit in menvcfg");

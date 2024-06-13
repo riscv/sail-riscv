@@ -8,7 +8,11 @@
 
 #define DEFAULT_RSTVEC 0x00001000
 
-extern bool rv_enable_pmp;
+extern uint64_t rv_pmp_count;
+extern uint64_t rv_pmp_grain;
+
+extern bool rv_enable_svinval;
+extern bool rv_enable_zcb;
 extern bool rv_enable_zfinx;
 extern bool rv_enable_zilsd;
 extern bool rv_enable_zcmlsd;

@@ -27,10 +27,14 @@ SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_cext
 SAIL_DEFAULT_INST += riscv_insts_fext.sail riscv_insts_cfext.sail
 SAIL_DEFAULT_INST += riscv_insts_dext.sail riscv_insts_cdext.sail
 
+SAIL_DEFAULT_INST += riscv_insts_svinval.sail
+
 SAIL_DEFAULT_INST += riscv_insts_zba.sail
 SAIL_DEFAULT_INST += riscv_insts_zbb.sail
 SAIL_DEFAULT_INST += riscv_insts_zbc.sail
 SAIL_DEFAULT_INST += riscv_insts_zbs.sail
+
+SAIL_DEFAULT_INST += riscv_insts_zcb.sail
 
 SAIL_DEFAULT_INST += riscv_insts_zfh.sail
 # Zfa needs to be added after fext, dext and Zfh (as it needs
@@ -71,18 +75,24 @@ SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdex
 SAIL_SYS_SRCS += riscv_csr_ext.sail         # access to CSR extensions
 SAIL_SYS_SRCS += riscv_sys_control.sail     # general exception handling
 
-SAIL_RV32_VM_SRCS = riscv_vmem_sv32.sail riscv_vmem_rv32.sail
-SAIL_RV64_VM_SRCS = riscv_vmem_sv39.sail riscv_vmem_sv48.sail riscv_vmem_rv64.sail
+# SAIL_RV32_VM_SRCS = riscv_vmem_sv32.sail riscv_vmem_rv32.sail
+# SAIL_RV64_VM_SRCS = riscv_vmem_sv39.sail riscv_vmem_sv48.sail riscv_vmem_rv64.sail
 
-SAIL_VM_SRCS = riscv_pte.sail riscv_ptw.sail riscv_vmem_common.sail riscv_vmem_tlb.sail
-ifeq ($(ARCH),RV32)
-SAIL_VM_SRCS += $(SAIL_RV32_VM_SRCS)
-else
-SAIL_VM_SRCS += $(SAIL_RV64_VM_SRCS)
-endif
+# SAIL_VM_SRCS = riscv_pte.sail riscv_ptw.sail riscv_vmem_common.sail riscv_vmem_tlb.sail
+# ifeq ($(ARCH),RV32)
+# SAIL_VM_SRCS += $(SAIL_RV32_VM_SRCS)
+# else
+# SAIL_VM_SRCS += $(SAIL_RV64_VM_SRCS)
+# endif
+
+SAIL_VM_SRCS += riscv_vmem_common.sail
+SAIL_VM_SRCS += riscv_vmem_pte.sail
+SAIL_VM_SRCS += riscv_vmem_ptw.sail
+SAIL_VM_SRCS += riscv_vmem_tlb.sail
+SAIL_VM_SRCS += riscv_vmem.sail
 
 # Non-instruction sources
-PRELUDE = prelude.sail prelude_mapping.sail $(SAIL_XLEN) $(SAIL_FLEN) $(SAIL_VLEN) prelude_mem_metadata.sail prelude_mem.sail
+PRELUDE = prelude.sail $(SAIL_XLEN) $(SAIL_FLEN) $(SAIL_VLEN) prelude_mem_metadata.sail prelude_mem.sail
 
 SAIL_REGS_SRCS = riscv_reg_type.sail riscv_freg_type.sail riscv_regs.sail riscv_pc_access.sail riscv_sys_regs.sail
 SAIL_REGS_SRCS += riscv_pmp_regs.sail riscv_pmp_control.sail
@@ -99,15 +109,12 @@ SAIL_ARCH_SRCS += riscv_types_kext.sail    # Shared/common code for the cryptogr
 SAIL_STEP_SRCS = riscv_step_common.sail riscv_step_ext.sail riscv_decode_ext.sail riscv_fetch.sail riscv_step.sail
 RVFI_STEP_SRCS = riscv_step_common.sail riscv_step_rvfi.sail riscv_decode_ext.sail riscv_fetch_rvfi.sail riscv_step.sail
 
-# Control inclusion of 64-bit only riscv_analysis
-ifeq ($(ARCH),RV32)
 SAIL_OTHER_SRCS     = $(SAIL_STEP_SRCS)
+ifeq ($(ARCH),RV32)
 SAIL_OTHER_COQ_SRCS = riscv_termination_common.sail riscv_termination_rv32.sail
 else
-SAIL_OTHER_SRCS     = $(SAIL_STEP_SRCS) riscv_analysis.sail
-SAIL_OTHER_COQ_SRCS = riscv_termination_common.sail riscv_termination_rv64.sail riscv_analysis.sail
+SAIL_OTHER_COQ_SRCS = riscv_termination_common.sail riscv_termination_rv64.sail
 endif
-
 
 PRELUDE_SRCS   = $(addprefix model/,$(PRELUDE))
 SAIL_SRCS      = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS)  $(SAIL_OTHER_SRCS))
@@ -128,14 +135,16 @@ export SAIL_DIR
 EXPLICIT_COQ_SAIL=yes
 else
 # Use sail from opam package
-SAIL_DIR:=$(shell opam config var sail:share)
+SAIL_DIR:=$(shell OPAMCLI=$(OPAMCLI) opam config var sail:share)
 SAIL:=sail
 endif
 SAIL_LIB_DIR:=$(SAIL_DIR)/lib
 export SAIL_LIB_DIR
 SAIL_SRC_DIR:=$(SAIL_DIR)/src
 
-LEM_DIR?=$(shell opam config var lem:share)
+ifndef LEM_DIR
+LEM_DIR:=$(shell OPAMCLI=$(OPAMCLI) opam config var lem:share)
+endif
 export LEM_DIR
 
 C_WARNINGS ?=
@@ -176,7 +185,7 @@ ifneq (,$(COVERAGE))
 C_FLAGS += --coverage -O1
 SAIL_FLAGS += -Oconstant_fold
 else
-C_FLAGS += -O3 -flto
+C_FLAGS += -O3 -flto=auto
 endif
 
 ifneq (,$(SAILCOV))
@@ -191,7 +200,7 @@ RISCV_EXTRAS_LEM = $(addprefix handwritten_support/,$(RISCV_EXTRAS_LEM_FILES))
 
 .PHONY:
 
-all: ocaml_emulator/riscv_ocaml_sim_$(ARCH) c_emulator/riscv_sim_$(ARCH) riscv_isa riscv_coq riscv_hol riscv_rmem
+all: ocaml_emulator/riscv_ocaml_sim_$(ARCH) c_emulator/riscv_sim_$(ARCH)
 .PHONY: all
 
 # the following ensures empty sail-generated .c files don't hang around and
@@ -247,9 +256,11 @@ gcovr:
 ocaml_emulator/tracecmp: ocaml_emulator/tracecmp.ml
 	ocamlfind ocamlopt -annot -linkpkg -package unix $^ -o $@
 
+c_preserve_fns=-c_preserve _set_Misa_C
+
 generated_definitions/c/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
-	$(SAIL) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@)
+	$(SAIL) $(SAIL_FLAGS) $(c_preserve_fns) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@)
 
 generated_definitions/c2/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c2
@@ -288,7 +299,7 @@ rvfi_preserve_fns=-c_preserve rvfi_set_instr_packet \
 # sed -i isn't posix compliant, unfortunately
 generated_definitions/c/riscv_rvfi_model_$(ARCH).c: $(SAIL_RVFI_SRCS) model/main.sail Makefile
 	mkdir -p generated_definitions/c
-	$(SAIL) $(rvfi_preserve_fns) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main.sail -o $(basename $@)
+	$(SAIL) $(c_preserve_fns) $(rvfi_preserve_fns) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main.sail -o $(basename $@)
 	sed -e '/^[[:space:]]*$$/d' $@ > $@.new
 	mv $@.new $@
 
@@ -358,9 +369,9 @@ riscv_hol_build: generated_definitions/hol4/$(ARCH)/riscvTheory.uo
 .PHONY: riscv_hol riscv_hol_build
 
 ifdef BBV_DIR
-  EXPLICIT_COQ_BBV = yes
+  EXPLICIT_COQ_BBV := yes
 else
-  EXPLICIT_COQ_BBV = $(shell if opam config var coq-bbv:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
+  EXPLICIT_COQ_BBV := $(shell if OPAMCLI=$(OPAMCLI) opam config var coq-bbv:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
   ifeq ($(EXPLICIT_COQ_BBV),yes)
     #Coq BBV library hopefully checked out in directory above us
     BBV_DIR = ../bbv
@@ -368,7 +379,7 @@ else
 endif
 
 ifndef EXPLICIT_COQ_SAIL
-  EXPLICIT_COQ_SAIL = $(shell if opam config var coq-sail:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
+  EXPLICIT_COQ_SAIL := $(shell if OPAMCLI=$(OPAMCLI) opam config var coq-sail:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
 endif
 
 COQ_LIBS = -R generated_definitions/coq Riscv -R generated_definitions/coq/$(ARCH) $(ARCH) -R handwritten_support Riscv_common

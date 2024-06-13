@@ -1,86 +1,79 @@
 /*=======================================================================================*/
-/*  RISCV Sail Model                                                                     */
-/*                                                                                       */
 /*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except for the snapshots of the Lem and Sail libraries                   */
-/*  in the prover_snapshots directory (which include copies of their                     */
-/*  licences), is subject to the BSD two-clause licence below.                           */
+/*  directories except where otherwise noted is subject the BSD                          */
+/*  two-clause license in the LICENSE file.                                              */
 /*                                                                                       */
-/*  Copyright (c) 2017-2023                                                              */
-/*    Prashanth Mundkur                                                                  */
-/*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
-/*    Jon French                                                                         */
-/*    Brian Campbell                                                                     */
-/*    Robert Norton-Wright                                                               */
-/*    Alasdair Armstrong                                                                 */
-/*    Thomas Bauereiss                                                                   */
-/*    Shaked Flur                                                                        */
-/*    Christopher Pulte                                                                  */
-/*    Peter Sewell                                                                       */
-/*    Alexander Richardson                                                               */
-/*    Hesham Almatary                                                                    */
-/*    Jessica Clarke                                                                     */
-/*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
-/*    Peter Rugg                                                                         */
-/*    Aril Computer Corp., for contributions by Scott Johnson                            */
-/*    Philipp Tomsich                                                                    */
-/*    VRULL GmbH, for contributions by its employees                                     */
-/*                                                                                       */
-/*  All rights reserved.                                                                 */
-/*                                                                                       */
-/*  This software was developed by the above within the Rigorous                         */
-/*  Engineering of Mainstream Systems (REMS) project, partly funded by                   */
-/*  EPSRC grant EP/K008528/1, at the Universities of Cambridge and                       */
-/*  Edinburgh.                                                                           */
-/*                                                                                       */
-/*  This software was developed by SRI International and the University of               */
-/*  Cambridge Computer Laboratory (Department of Computer Science and                    */
-/*  Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and                 */
-/*  under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA                 */
-/*  SSITH research programme.                                                            */
-/*                                                                                       */
-/*  This project has received funding from the European Research Council                 */
-/*  (ERC) under the European Union’s Horizon 2020 research and innovation                */
-/*  programme (grant agreement 789108, ELVER).                                           */
-/*                                                                                       */
-/*                                                                                       */
-/*  Redistribution and use in source and binary forms, with or without                   */
-/*  modification, are permitted provided that the following conditions                   */
-/*  are met:                                                                             */
-/*  1. Redistributions of source code must retain the above copyright                    */
-/*     notice, this list of conditions and the following disclaimer.                     */
-/*  2. Redistributions in binary form must reproduce the above copyright                 */
-/*     notice, this list of conditions and the following disclaimer in                   */
-/*     the documentation and/or other materials provided with the                        */
-/*     distribution.                                                                     */
-/*                                                                                       */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''                   */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED                    */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                      */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR                  */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                         */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                     */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF                     */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND                  */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,                   */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT                   */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF                   */
-/*  SUCH DAMAGE.                                                                         */
+/*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function main () : unit -> unit = {
-  // initialize extensions
-  ext_init ();
+// When the symbolic execution is running a litmus test, it sets a
+// different entry point for each thread in the compiled litmus test.
 
-  // PC = __GetSlice_int(64, elf_entry(), 0);
-  PC = sail_zero_extend(0x1000, sizeof(xlen));
+val get_entry_point : unit -> xlenbits
+
+$ifdef SYMBOLIC
+
+$include <elf.sail>
+
+function get_entry_point() = to_bits(sizeof(xlen), elf_entry())
+
+$else
+
+function get_entry_point() = zero_extend(0x1000)
+
+$endif
+
+function main() : unit -> unit = {
+  // initialize extensions
+  ext_init();
+
+  PC = get_entry_point();
   print_bits("PC = ", PC);
 
   try {
     init_model();
+    sail_end_cycle();
     loop()
   } catch {
     Error_not_implemented(s) => print_string("Error: Not implemented: ", s),
     Error_internal_error() => print("Error: internal error")
   }
 }
+
+// For symbolic execution using Isla, we need an entry point that
+// allows us to execute a single instruction.
+$ifdef SYMBOLIC
+
+$include <isla.sail>
+
+val isla_footprint_no_init : forall 'n, 'n in {16, 32}. bits('n) -> bool
+
+function isla_footprint_no_init(opcode) = {
+  try {
+    isla_reset_registers();
+    sail_end_cycle();
+
+    let instr = if length(opcode) == 16 then {
+      ext_decode_compressed(opcode)
+    } else {
+      ext_decode(opcode)
+    };
+    let _ = execute(instr);
+    true
+  } catch {
+    _ => false
+  }
+}
+
+val isla_footprint : forall 'n, 'n in {16, 32}. bits('n) -> bool
+
+function isla_footprint(opcode) = {
+  try {
+    init_model();
+    isla_footprint_no_init(opcode)
+  } catch {
+    _ => false
+  }
+}
+
+$endif

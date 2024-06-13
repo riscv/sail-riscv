@@ -1,78 +1,15 @@
 /*=======================================================================================*/
-/*  RISCV Sail Model                                                                     */
-/*                                                                                       */
 /*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except for the snapshots of the Lem and Sail libraries                   */
-/*  in the prover_snapshots directory (which include copies of their                     */
-/*  licences), is subject to the BSD two-clause licence below.                           */
+/*  directories except where otherwise noted is subject the BSD                          */
+/*  two-clause license in the LICENSE file.                                              */
 /*                                                                                       */
-/*  Copyright (c) 2017-2023                                                              */
-/*    Prashanth Mundkur                                                                  */
-/*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
-/*    Jon French                                                                         */
-/*    Brian Campbell                                                                     */
-/*    Robert Norton-Wright                                                               */
-/*    Alasdair Armstrong                                                                 */
-/*    Thomas Bauereiss                                                                   */
-/*    Shaked Flur                                                                        */
-/*    Christopher Pulte                                                                  */
-/*    Peter Sewell                                                                       */
-/*    Alexander Richardson                                                               */
-/*    Hesham Almatary                                                                    */
-/*    Jessica Clarke                                                                     */
-/*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
-/*    Peter Rugg                                                                         */
-/*    Aril Computer Corp., for contributions by Scott Johnson                            */
-/*    Philipp Tomsich                                                                    */
-/*    VRULL GmbH, for contributions by its employees                                     */
-/*                                                                                       */
-/*  All rights reserved.                                                                 */
-/*                                                                                       */
-/*  This software was developed by the above within the Rigorous                         */
-/*  Engineering of Mainstream Systems (REMS) project, partly funded by                   */
-/*  EPSRC grant EP/K008528/1, at the Universities of Cambridge and                       */
-/*  Edinburgh.                                                                           */
-/*                                                                                       */
-/*  This software was developed by SRI International and the University of               */
-/*  Cambridge Computer Laboratory (Department of Computer Science and                    */
-/*  Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and                 */
-/*  under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA                 */
-/*  SSITH research programme.                                                            */
-/*                                                                                       */
-/*  This project has received funding from the European Research Council                 */
-/*  (ERC) under the European Union’s Horizon 2020 research and innovation                */
-/*  programme (grant agreement 789108, ELVER).                                           */
-/*                                                                                       */
-/*  Modified by NXP on 02/02/2024                                                        */
-/*                                                                                       */
-/*  Redistribution and use in source and binary forms, with or without                   */
-/*  modification, are permitted provided that the following conditions                   */
-/*  are met:                                                                             */
-/*  1. Redistributions of source code must retain the above copyright                    */
-/*     notice, this list of conditions and the following disclaimer.                     */
-/*  2. Redistributions in binary form must reproduce the above copyright                 */
-/*     notice, this list of conditions and the following disclaimer in                   */
-/*     the documentation and/or other materials provided with the                        */
-/*     distribution.                                                                     */
-/*                                                                                       */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''                   */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED                    */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                      */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR                  */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                         */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                     */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF                     */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND                  */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,                   */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT                   */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF                   */
-/*  SUCH DAMAGE.                                                                         */
+/*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
 /* ****************************************************************** */
 /* This file specifies the instructions in the base integer set.      */
 
-
+/*  Modified by NXP on 06/13/2024 for zilsd support                   */
 /* ****************************************************************** */
 union clause ast = UTYPE : (bits(20), regidx, uop)
 
@@ -100,7 +37,7 @@ mapping utype_mnemonic : uop <-> string = {
 }
 
 mapping clause assembly = UTYPE(imm, rd, op)
-  <-> utype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_20(imm)
+  <-> utype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_20(imm)
 
 /* ****************************************************************** */
 union clause ast = RISCV_JAL : (bits(21), regidx)
@@ -146,7 +83,7 @@ function clause execute (RISCV_JAL(imm, rd)) = {
 /* TODO: handle 2-byte-alignment in mappings */
 
 mapping clause assembly = RISCV_JAL(imm, rd)
-  <-> "jal" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_21(imm)
+  <-> "jal" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_21(imm)
 
 /* ****************************************************************** */
 union clause ast = RISCV_JALR : (bits(12), regidx, regidx)
@@ -155,7 +92,7 @@ mapping clause encdec = RISCV_JALR(imm, rs1, rd)
   <-> imm @ rs1 @ 0b000 @ rd @ 0b1100111
 
 mapping clause assembly = RISCV_JALR(imm, rs1, rd)
-  <-> "jalr" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
+  <-> "jalr" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* see riscv_jalr_seq.sail or riscv_jalr_rmem.sail for the execute clause. */
 
@@ -216,7 +153,7 @@ mapping btype_mnemonic : bop <-> string = {
 }
 
 mapping clause assembly = BTYPE(imm, rs2, rs1, op)
-  <-> btype_mnemonic(op) ^ spc() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_13(imm)
+  <-> btype_mnemonic(op) ^ spc() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_signed_13(imm)
 
 /* ****************************************************************** */
 union clause ast = ITYPE : (bits(12), regidx, regidx, iop)
@@ -258,7 +195,7 @@ mapping itype_mnemonic : iop <-> string = {
 }
 
 mapping clause assembly = ITYPE(imm, rs1, rd, op)
-  <-> itype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_12(imm)
+  <-> itype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
 
 /* ****************************************************************** */
 union clause ast = SHIFTIOP : (bits(6), regidx, regidx, sop)
@@ -357,84 +294,73 @@ mapping clause assembly = RTYPE(rs2, rs1, rd, op)
 
 /* ****************************************************************** */
 union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width, bool, bool)
-/*Zilsd support*/
-/* unsigned loads are only present for widths strictly less than xlen_bytes,
-   signed loads also present for widths equal to xlen_bytes */
+
+/* unsigned loads are only present for widths strictly less than xlen,
+   signed loads also present for widths equal to xlen */
 /* for Zilsd unsigned loads are only present for widths strictly less than xlen_bytes*2,
    signed loads also present for widths equal to xlen_bytes*2 */
-mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes)) | (haveZilsd() & (word_width_bytes(size) < sizeof(xlen_bytes)*2) | (not_bool(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes)*2))
-  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_bits(size) @ rd @ 0b0000011 if (word_width_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes)) | (haveZilsd() & (word_width_bytes(size) < sizeof(xlen_bytes)*2) | (not_bool(is_unsigned) & word_width_bytes(size) <= sizeof(xlen_bytes)*2))
+ function load_precond(is_unsigned: bool, size:word_width) -> bool =
+   (size_bytes(size) < sizeof(xlen_bytes)) | 
+   (not(is_unsigned) & size_bytes(size) <= sizeof(xlen_bytes)) |
+   (haveZilsd() & (size_bytes(size) < sizeof(xlen_bytes)*2) |
+   (not(is_unsigned) & size_bytes(size) <= sizeof(xlen_bytes)*2))
 
-val extend_value : forall 'n, 0 < 'n <= xlen_bytes. (bool, MemoryOpResult(bits(8 * 'n))) -> MemoryOpResult(xlenbits)
-function extend_value(is_unsigned, value) = match (value) {
-  MemValue(v)     => MemValue(if is_unsigned then zero_extend(v) else sign_extend(v) : xlenbits),
-  MemException(e) => MemException(e)
-}
+mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if load_precond(is_unsigned, size)
+  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_enc(size) @ rd @ 0b0000011  if load_precond(is_unsigned, size)
 
-val extend_value_pair : forall 'n, 0 < 'n <= xlen_bytes*2. (bool, MemoryOpResult(bits(8 * 'n))) -> MemoryOpResult(xlenbits_double)
-function extend_value_pair(is_unsigned, value) = match (value) {
-  MemValue(v)     => MemValue(if is_unsigned then sign_extend(sizeof(xlen*2), v) else sign_extend(sizeof(xlen*2),v) : xlenbits_double),
-  MemException(e) => MemException(e)
-}
+val extend_value : forall 'n, 0 < 'n <= xlen. (bool, bits('n)) -> xlenbits
+function extend_value(is_unsigned, value) = if is_unsigned then zero_extend(value) else sign_extend(value)
 
 
-val process_load : forall 'n, 0 < 'n <= xlen_bytes. (regidx, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> Retired
-function process_load(rd, vaddr, value, is_unsigned) =
-  match extend_value(is_unsigned, value) {
-    MemValue(result) => { X(rd) = result; RETIRE_SUCCESS },
-    MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
-  }
-  
-val process_load_pair : forall 'n, 0 < 'n <= xlen_bytes*2. (regidx, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> Retired effect {escape, rreg, wreg}
-function process_load_pair(rd, vaddr, value, is_unsigned) =
-  match extend_value_pair(is_unsigned, value) {
-    MemValue(result) => { if get_config_print_platform() then X_D(rd) = result; RETIRE_SUCCESS },
-    MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+function is_aligned(vaddr : xlenbits, width : word_width) -> bool =
+  match width {
+    BYTE   => true,
+    HALF   => vaddr[0..0] == zeros(),
+    WORD   => vaddr[1..0] == zeros(),
+    DOUBLE => vaddr[2..0] == zeros(),
   }
 
+// Return true if the address is misaligned and we don't support misaligned access.
 function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
-  if   plat_enable_misaligned_access() then false
-  else match width {
-         BYTE   => false,
-         HALF   => vaddr[0] == bitone,
-         WORD   => vaddr[0] == bitone | vaddr[1] == bitone,
-         DOUBLE => vaddr[0] == bitone | vaddr[1] == bitone | vaddr[2] == bitone
-       }
+  not(plat_enable_misaligned_access()) & not(is_aligned(vaddr, width))
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   let offset : xlenbits = sign_extend(imm);
+  let single_transfer = (size_bytes(width) <= sizeof(xlen_bytes));
+  let width_bytes = if single_transfer  then size_bytes(width) else sizeof(xlen_bytes);
+
+  // This is checked during decoding.
+  assert(width_bytes <= sizeof(xlen_bytes) & width_bytes >=1);
+
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
-  match ext_data_get_addr(rs1, offset, Read(Data), width) {
+  match ext_data_get_addr(rs1, offset, Read(Data), width_bytes) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
-    Ext_DataAddr_OK(vaddr) =>
+    Ext_DataAddr_OK(vaddr) => {
       if   check_misaligned(vaddr, width)
       then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr, Read(Data)) {
         TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(paddr, _) =>
-          match (width) {
-            BYTE =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 1, aq, rl, false), is_unsigned),
-            HALF =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 2, aq, rl, false), is_unsigned),
-            WORD =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 4, aq, rl, false), is_unsigned),
-            DOUBLE if sizeof(xlen) == 64 =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 8, aq, rl, false), is_unsigned),
-            DOUBLE if haveZilsd() => {
-        	    let r1 = mem_read(Read(Data), paddr, 4, aq, rl, false) in
-        	    match(r1){
-        	    MemException(e) => process_load_pair(rd, vaddr, r1, is_unsigned),
-        	    MemValue(result1) => let r2 = mem_read(Read(Data), paddr+4, 4, aq, rl, false) in
-        	    	match(r2){
-        	    	MemException(e) => process_load_pair(rd, vaddr, r2, is_unsigned),  
-        	    	MemValue(result2) => let v1:bits(64) = sail_zero_extend(result1, 64) in let v2:bits(64) = sail_zero_extend(result2, 64) in process_load_pair(rd, vaddr, 							MemValue((v2<<32) +v1), is_unsigned),
-        	    	}
-        	    }        
-	    }
-          }
+          match mem_read(Read(Data), paddr, width_bytes, aq, rl, false) {
+            MemValue(result) => 
+                  if (single_transfer) then { 
+                    X(rd) = extend_value(is_unsigned, result); RETIRE_SUCCESS }
+                  else {
+                    if(haveZilsd() & (sizeof(xlen) == 32)) then
+                      match mem_read(Read(Data), paddr+width_bytes, width_bytes, aq, rl, false) {
+                        MemValue(resultl) => { 
+                          let v1:bits(xlen_double) = sail_zero_extend(result, sizeof(xlen_double)) in 
+                            let v2:bits(xlen_double) = sail_zero_extend(resultl, sizeof(xlen_double)) in 
+                                {X_D(rd) = (v2<<sizeof(xlen)) + v1; RETIRE_SUCCESS}
+                        },
+                        MemException(e) => {handle_mem_exception(vaddr, e); RETIRE_FAIL}
+                    } else  internal_error(__FILE__, __LINE__, "invalid configuration")
+                  },
+            MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+          },
       }
+    },
   }
 }
 
@@ -457,21 +383,32 @@ mapping maybe_u = {
 }
 
 mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, size, aq, rl)
-  <-> "l" ^ size_mnemonic(size) ^ maybe_u(is_unsigned) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
+  <-> "l" ^ size_mnemonic(size) ^ maybe_u(is_unsigned) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ****************************************************************** */
 union clause ast = STORE : (bits(12), regidx, regidx, word_width, bool, bool)
-/*Zilsd support*/
-mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)              if (word_width_bytes(size) <= sizeof(xlen_bytes)) | (haveZilsd() & word_width_bytes(size) <= 2* sizeof(xlen_bytes))
-  <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ imm5 : bits(5) @ 0b0100011 if (word_width_bytes(size) <= sizeof(xlen_bytes)) | (haveZilsd() & word_width_bytes(size) <= 2* sizeof(xlen_bytes))
+
+function store_precond(size: word_width) -> bool =
+  size_bytes(size) <= sizeof(xlen_bytes) | 
+  (haveZilsd() & (size_bytes(size) <= sizeof(xlen_bytes)*2))
+
+mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)              if store_precond(size)
+  <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ imm5 : bits(5) @ 0b0100011  if store_precond(size)
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
 function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
   let offset : xlenbits = sign_extend(imm);
+  let width_bytes = size_bytes(width);
+  let single_transfer = width_bytes <= sizeof(xlen_bytes);
+
+  // This is checked during decoding.
+  assert(width_bytes >0 & ( single_transfer | 
+  (haveZilsd() & (width_bytes == 2 * sizeof(xlen_bytes)))));
+
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
-  match ext_data_get_addr(rs1, offset, Write(Data), width) {
+  match ext_data_get_addr(rs1, offset, Write(Data), width_bytes) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
@@ -479,42 +416,36 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
       else match translateAddr(vaddr, Write(Data)) {
         TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(paddr, _) => {
-          let eares : MemoryOpResult(unit) = match width {
-            BYTE   => mem_write_ea(paddr, 1, aq, rl, false),
-            HALF   => mem_write_ea(paddr, 2, aq, rl, false),
-            WORD   => mem_write_ea(paddr, 4, aq, rl, false),
-            DOUBLE => mem_write_ea(paddr, 8, aq, rl, false)
-          };
+          let eares = mem_write_ea(paddr, width_bytes, aq, rl, false);
           match (eares) {
             MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
             MemValue(_) => {
-              let rs2_val = X(rs2);
-              let res : MemoryOpResult(bool) = match (width) {
-                BYTE => mem_write_value(paddr, 1, rs2_val[7..0],  aq, rl, false),
-                HALF => mem_write_value(paddr, 2, rs2_val[15..0], aq, rl, false),
-                WORD => mem_write_value(paddr, 4, rs2_val[31..0], aq, rl, false),
-                DOUBLE => if sizeof(xlen) >= 64 then
-                			{mem_write_value(paddr, 8, rs2_val, aq, rl, false)}
-                		else if haveZilsd() then{ 
-		        		let rs21_val:bits(64) = X_D(rs2) in {
-		        			let v1= mem_write_value(paddr, 4, rs21_val[31..0], aq, rl, false) in
-		        			match(v1){
-		        			MemValue(false) => internal_error(__FILE__, __LINE__, "mem_write_value returned false"),
-		        			MemValue(true) => let v2= mem_write_value(paddr+4, 4, rs21_val[63..32], aq, rl, false) in
-		        				match(v2){
-		        				MemValue(false) => internal_error(__FILE__, __LINE__, "mem_write_value returned false"),
-		        				MemValue(true) => if v1 == MemValue(true) then v2 else v1
-		        				}
-		        			}
-		        		}
-                		}
-                		else MemValue(false)
-              };
-              match (res) {
-                MemValue(true)  => RETIRE_SUCCESS,
-                MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+              if single_transfer then{
+                let rs2_val = X(rs2);
+                assert (width_bytes > 0 & ((width_bytes * 8 - 1 )< sizeof(xlen)));
+                match mem_write_value(paddr, width_bytes, 
+                    rs2_val[width_bytes * 8 - 1 .. 0], aq, rl, false) {
+                  MemValue(true)  => RETIRE_SUCCESS,
+                  MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
+                  MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                }
               }
+              else if haveZilsd() & (sizeof(xlen) == 32) then {
+                let rs21_val:xlenbits_double = X_D(rs2) in{
+                  match mem_write_value(paddr, sizeof(xlen_bytes), 
+                      rs21_val[sizeof(xlen_bytes) * 8 - 1 .. 0], aq, rl, false) {
+                    MemValue(true)  => {
+                      match mem_write_value(paddr+sizeof(xlen_bytes), sizeof(xlen_bytes), rs21_val[((width_bytes * 8)- 1) .. sizeof(xlen_bytes) * 8], aq, rl, false){
+                        MemValue(true) =>  RETIRE_SUCCESS,
+                        MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
+                        MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                      }
+                    },
+                    MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
+                    MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                  }
+                }
+              } else internal_error(__FILE__, __LINE__, "unsupported store data size")
             }
           }
         }
@@ -523,7 +454,7 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
 }
 
 mapping clause assembly = STORE(imm, rs2, rs1, size, aq, rl)
-  <-> "s" ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
+  <-> "s" ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_signed_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 /* ****************************************************************** */
 union clause ast = ADDIW : (bits(12), regidx, regidx)
@@ -541,7 +472,7 @@ function clause execute (ADDIW(imm, rs1, rd)) = {
 
 mapping clause assembly = ADDIW(imm, rs1, rd)
       if sizeof(xlen) == 64
-  <-> "addiw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_12(imm)
+  <-> "addiw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
       if sizeof(xlen) == 64
 
 /* ****************************************************************** */
@@ -646,9 +577,6 @@ function effective_fence_set(set : bits(4), fiom : bool) -> bits(4) = {
   } else set
 }
 
-/* For future versions of Sail where barriers can be parameterised */
-$ifdef FEATURE_UNION_BARRIER
-
 function clause execute (FENCE(pred, succ)) = {
   // If the FIOM bit in menvcfg/senvcfg is set then the I/O bits can imply R/W.
   let fiom = is_fiom_active();
@@ -656,15 +584,15 @@ function clause execute (FENCE(pred, succ)) = {
   let succ = effective_fence_set(succ, fiom);
 
   match (pred, succ) {
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_rw_rw()),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_r_rw()),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_r_r()),
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_rw_w()),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_w_w()),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_w_rw()),
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_rw_r()),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_r_w()),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_w_r()),
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => sail_barrier(Barrier_RISCV_rw_rw),
+    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b11) => sail_barrier(Barrier_RISCV_r_rw),
+    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b10) => sail_barrier(Barrier_RISCV_r_r),
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b01) => sail_barrier(Barrier_RISCV_rw_w),
+    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b01) => sail_barrier(Barrier_RISCV_w_w),
+    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b11) => sail_barrier(Barrier_RISCV_w_rw),
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b10) => sail_barrier(Barrier_RISCV_rw_r),
+    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => sail_barrier(Barrier_RISCV_r_w),
+    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => sail_barrier(Barrier_RISCV_w_r),
 
     (_ : bits(4)       , _ : bits(2) @ 0b00) => (),
     (_ : bits(2) @ 0b00, _ : bits(4)       ) => (),
@@ -674,36 +602,6 @@ function clause execute (FENCE(pred, succ)) = {
   };
   RETIRE_SUCCESS
 }
-
-$else
-
-function clause execute (FENCE(pred, succ)) = {
-  // If the FIOM bit in menvcfg/senvcfg is set then the I/O bits can imply R/W.
-  let fiom = is_fiom_active();
-  let pred = effective_fence_set(pred, fiom);
-  let succ = effective_fence_set(succ, fiom);
-
-  match (pred, succ) {
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_rw_rw),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_r_rw),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_r_r),
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_rw_w),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_w_w),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_w_rw),
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_rw_r),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => __barrier(Barrier_RISCV_r_w),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => __barrier(Barrier_RISCV_w_r),
-
-    (_ : bits(4)       , _ : bits(2) @ 0b00) => (),
-    (_ : bits(2) @ 0b00, _ : bits(4)       ) => (),
-
-    _ => { print("FIXME: unsupported fence");
-           () }
-  };
-  RETIRE_SUCCESS
-}
-
-$endif
 
 mapping bit_maybe_r : bits(1) <-> string = {
   0b1 <-> "r",
@@ -738,11 +636,9 @@ union clause ast = FENCE_TSO : (bits(4), bits(4))
 mapping clause encdec = FENCE_TSO(pred, succ)
   <-> 0b1000 @ pred @ succ @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
 
-$ifdef FEATURE_UNION_BARRIER
-
 function clause execute (FENCE_TSO(pred, succ)) = {
   match (pred, succ) {
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_tso()),
+    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => sail_barrier(Barrier_RISCV_tso),
     (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
 
     _ => { print("FIXME: unsupported fence");
@@ -750,21 +646,6 @@ function clause execute (FENCE_TSO(pred, succ)) = {
   };
   RETIRE_SUCCESS
 }
-
-$else
-
-function clause execute (FENCE_TSO(pred, succ)) = {
-  match (pred, succ) {
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => __barrier(Barrier_RISCV_tso),
-    (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
-
-    _ => { print("FIXME: unsupported fence");
-           () }
-  };
-  RETIRE_SUCCESS
-}
-
-$endif
 
 mapping clause assembly = FENCE_TSO(pred, succ)
   <-> "fence.tso" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ)
@@ -829,7 +710,7 @@ mapping clause encdec = SRET()
 function clause execute SRET() = {
   let sret_illegal : bool = match cur_privilege {
     User       => true,
-    Supervisor => not(haveSupMode ()) | mstatus.TSR() == 0b1,
+    Supervisor => not(haveSupMode ()) | mstatus[TSR] == 0b1,
     Machine    => not(haveSupMode ())
   };
   if   sret_illegal
@@ -866,7 +747,7 @@ mapping clause encdec = WFI()
 function clause execute WFI() =
   match cur_privilege {
     Machine    => { platform_wfi(); RETIRE_SUCCESS },
-    Supervisor => if   mstatus.TW() == 0b1
+    Supervisor => if   mstatus[TW] == 0b1
                   then { handle_illegal(); RETIRE_FAIL }
                   else { platform_wfi(); RETIRE_SUCCESS },
     User       => { handle_illegal(); RETIRE_FAIL }
@@ -885,7 +766,7 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
   let asid : option(xlenbits) = if rs2 == 0b00000 then None() else Some(X(rs2));
   match cur_privilege {
     User       => { handle_illegal(); RETIRE_FAIL },
-    Supervisor => match (architecture(get_mstatus_SXL(mstatus)), mstatus.TVM()) {
+    Supervisor => match (architecture(get_mstatus_SXL(mstatus)), mstatus[TVM]) {
                     (Some(_), 0b1)  => { handle_illegal(); RETIRE_FAIL },
                     (Some(_), 0b0) => { flush_TLB(asid, addr); RETIRE_SUCCESS },
                     (_, _)           => internal_error(__FILE__, __LINE__, "unimplemented sfence architecture")

@@ -1,40 +1,10 @@
-/*=================================================================================*/
-/*  Copyright (c) 2021-2023                                                        */
-/*    Authors from RIOS Lab, Tsinghua University:                                  */
-/*      Xinlai Wan <xinlai.w@rioslab.org>                                          */
-/*      Xi Wang <xi.w@rioslab.org>                                                 */
-/*      Yifei Zhu <yifei.z@rioslab.org>                                            */
-/*      Shenwei Hu <shenwei.h@rioslab.org>                                         */
-/*      Kalvin Vu                                                                  */
-/*    Other contributors:                                                          */
-/*      Jessica Clarke <jrtc27@jrtc27.com>                                         */
-/*      Victor Moya <victor.moya@semidynamics.com>                                 */
-/*                                                                                 */
-/*  All rights reserved.                                                           */
-/*                                                                                 */
-/*  Redistribution and use in source and binary forms, with or without             */
-/*  modification, are permitted provided that the following conditions             */
-/*  are met:                                                                       */
-/*  1. Redistributions of source code must retain the above copyright              */
-/*     notice, this list of conditions and the following disclaimer.               */
-/*  2. Redistributions in binary form must reproduce the above copyright           */
-/*     notice, this list of conditions and the following disclaimer in             */
-/*     the documentation and/or other materials provided with the                  */
-/*     distribution.                                                               */
-/*                                                                                 */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''             */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED              */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR            */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                   */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT               */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF               */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND            */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,             */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT             */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF             */
-/*  SUCH DAMAGE.                                                                   */
-/*=================================================================================*/
+/*=======================================================================================*/
+/*  This Sail RISC-V architecture model, comprising all files and                        */
+/*  directories except where otherwise noted is subject the BSD                          */
+/*  two-clause license in the LICENSE file.                                              */
+/*                                                                                       */
+/*  SPDX-License-Identifier: BSD-2-Clause                                                */
+/*=======================================================================================*/
 
 /* Definitions for vector registers (V extension) */
 
@@ -44,7 +14,6 @@ type vreglenbits = bits(vlenmax) /* use the largest possible register length */
 type vregtype = vreglenbits
 
 /* vector instruction types */
-enum vsetop       = { VSETVLI, VSETVL }
 
 enum vvfunct6     = { VV_VADD, VV_VSUB, VV_VMINU, VV_VMIN, VV_VMAXU, VV_VMAX, VV_VAND, VV_VOR, VV_VXOR,
   VV_VRGATHER, VV_VRGATHEREI16, VV_VSADDU, VV_VSADD, VV_VSSUBU, VV_VSSUB, VV_VSLL, VV_VSMUL,
@@ -83,7 +52,7 @@ enum nxfunct6     = { NX_VNCLIPU, NX_VNCLIP}
 
 enum nxsfunct6    = { NXS_VNSRL, NXS_VNSRA }
 
-enum mmfunct6     = { MM_VMAND, MM_VMNAND, MM_VMANDNOT, MM_VMXOR, MM_VMOR, MM_VMNOR, MM_VMORNOT, MM_VMXNOR }
+enum mmfunct6     = { MM_VMAND, MM_VMNAND, MM_VMANDN, MM_VMXOR, MM_VMOR, MM_VMNOR, MM_VMORN, MM_VMXNOR }
 
 enum nifunct6     = { NI_VNCLIPU, NI_VNCLIP }
 

@@ -1,40 +1,10 @@
-/*=================================================================================*/
-/*  Copyright (c) 2021-2023                                                        */
-/*    Authors from RIOS Lab, Tsinghua University:                                  */
-/*      Xinlai Wan <xinlai.w@rioslab.org>                                          */
-/*      Xi Wang <xi.w@rioslab.org>                                                 */
-/*      Yifei Zhu <yifei.z@rioslab.org>                                            */
-/*      Shenwei Hu <shenwei.h@rioslab.org>                                         */
-/*      Kalvin Vu                                                                  */
-/*    Other contributors:                                                          */
-/*      Jessica Clarke <jrtc27@jrtc27.com>                                         */
-/*      Victor Moya <victor.moya@semidynamics.com>                                 */
-/*                                                                                 */
-/*  All rights reserved.                                                           */
-/*                                                                                 */
-/*  Redistribution and use in source and binary forms, with or without             */
-/*  modification, are permitted provided that the following conditions             */
-/*  are met:                                                                       */
-/*  1. Redistributions of source code must retain the above copyright              */
-/*     notice, this list of conditions and the following disclaimer.               */
-/*  2. Redistributions in binary form must reproduce the above copyright           */
-/*     notice, this list of conditions and the following disclaimer in             */
-/*     the documentation and/or other materials provided with the                  */
-/*     distribution.                                                               */
-/*                                                                                 */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''             */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED              */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR            */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                   */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT               */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF               */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND            */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,             */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT             */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF             */
-/*  SUCH DAMAGE.                                                                   */
-/*=================================================================================*/
+/*=======================================================================================*/
+/*  This Sail RISC-V architecture model, comprising all files and                        */
+/*  directories except where otherwise noted is subject the BSD                          */
+/*  two-clause license in the LICENSE file.                                              */
+/*                                                                                       */
+/*  SPDX-License-Identifier: BSD-2-Clause                                                */
+/*=======================================================================================*/
 
 /* ******************************************************************************* */
 /* This file implements part of the vector extension.                              */
@@ -47,11 +17,11 @@ union clause ast = MMTYPE : (mmfunct6, regidx, regidx, regidx)
 mapping encdec_mmfunct6 : mmfunct6 <-> bits(6) = {
   MM_VMAND     <-> 0b011001,
   MM_VMNAND    <-> 0b011101,
-  MM_VMANDNOT  <-> 0b011000,
+  MM_VMANDN    <-> 0b011000,
   MM_VMXOR     <-> 0b011011,
   MM_VMOR      <-> 0b011010,
   MM_VMNOR     <-> 0b011110,
-  MM_VMORNOT   <-> 0b011100,
+  MM_VMORN     <-> 0b011100,
   MM_VMXNOR    <-> 0b011111
 }
 
@@ -81,11 +51,11 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
       result[i] = match funct6 {
         MM_VMAND     => vs2_val[i] & vs1_val[i],
         MM_VMNAND    => not(vs2_val[i] & vs1_val[i]),
-        MM_VMANDNOT  => vs2_val[i] & not(vs1_val[i]),
+        MM_VMANDN    => vs2_val[i] & not(vs1_val[i]),
         MM_VMXOR     => vs2_val[i] != vs1_val[i],
         MM_VMOR      => vs2_val[i] | vs1_val[i],
         MM_VMNOR     => not(vs2_val[i] | vs1_val[i]),
-        MM_VMORNOT   => vs2_val[i] | not(vs1_val[i]),
+        MM_VMORN     => vs2_val[i] | not(vs1_val[i]),
         MM_VMXNOR    => vs2_val[i] == vs1_val[i]
       }
     }
@@ -99,11 +69,11 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
 mapping mmtype_mnemonic : mmfunct6 <-> string = {
   MM_VMAND     <-> "vmand.mm",
   MM_VMNAND    <-> "vmnand.mm",
-  MM_VMANDNOT  <-> "vmandnot.mm",
+  MM_VMANDN    <-> "vmandn.mm",
   MM_VMXOR     <-> "vmxor.mm",
   MM_VMOR      <-> "vmor.mm",
   MM_VMNOR     <-> "vmnor.mm",
-  MM_VMORNOT   <-> "vmornot.mm",
+  MM_VMORN     <-> "vmorn.mm",
   MM_VMXNOR    <-> "vmxnor.mm"
 }
 

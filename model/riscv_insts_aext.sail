@@ -1,71 +1,9 @@
 /*=======================================================================================*/
-/*  RISCV Sail Model                                                                     */
-/*                                                                                       */
 /*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except for the snapshots of the Lem and Sail libraries                   */
-/*  in the prover_snapshots directory (which include copies of their                     */
-/*  licences), is subject to the BSD two-clause licence below.                           */
+/*  directories except where otherwise noted is subject the BSD                          */
+/*  two-clause license in the LICENSE file.                                              */
 /*                                                                                       */
-/*  Copyright (c) 2017-2023                                                              */
-/*    Prashanth Mundkur                                                                  */
-/*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
-/*    Jon French                                                                         */
-/*    Brian Campbell                                                                     */
-/*    Robert Norton-Wright                                                               */
-/*    Alasdair Armstrong                                                                 */
-/*    Thomas Bauereiss                                                                   */
-/*    Shaked Flur                                                                        */
-/*    Christopher Pulte                                                                  */
-/*    Peter Sewell                                                                       */
-/*    Alexander Richardson                                                               */
-/*    Hesham Almatary                                                                    */
-/*    Jessica Clarke                                                                     */
-/*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
-/*    Peter Rugg                                                                         */
-/*    Aril Computer Corp., for contributions by Scott Johnson                            */
-/*    Philipp Tomsich                                                                    */
-/*    VRULL GmbH, for contributions by its employees                                     */
-/*                                                                                       */
-/*  All rights reserved.                                                                 */
-/*                                                                                       */
-/*  This software was developed by the above within the Rigorous                         */
-/*  Engineering of Mainstream Systems (REMS) project, partly funded by                   */
-/*  EPSRC grant EP/K008528/1, at the Universities of Cambridge and                       */
-/*  Edinburgh.                                                                           */
-/*                                                                                       */
-/*  This software was developed by SRI International and the University of               */
-/*  Cambridge Computer Laboratory (Department of Computer Science and                    */
-/*  Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and                 */
-/*  under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA                 */
-/*  SSITH research programme.                                                            */
-/*                                                                                       */
-/*  This project has received funding from the European Research Council                 */
-/*  (ERC) under the European Union’s Horizon 2020 research and innovation                */
-/*  programme (grant agreement 789108, ELVER).                                           */
-/*                                                                                       */
-/*                                                                                       */
-/*  Redistribution and use in source and binary forms, with or without                   */
-/*  modification, are permitted provided that the following conditions                   */
-/*  are met:                                                                             */
-/*  1. Redistributions of source code must retain the above copyright                    */
-/*     notice, this list of conditions and the following disclaimer.                     */
-/*  2. Redistributions in binary form must reproduce the above copyright                 */
-/*     notice, this list of conditions and the following disclaimer in                   */
-/*     the documentation and/or other materials provided with the                        */
-/*     distribution.                                                                     */
-/*                                                                                       */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''                   */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED                    */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                      */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR                  */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                         */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                     */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF                     */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND                  */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,                   */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT                   */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF                   */
-/*  SUCH DAMAGE.                                                                         */
+/*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
 /* ****************************************************************** */
@@ -105,8 +43,8 @@ function amo_width_valid(size : word_width) -> bool = {
 /* ****************************************************************** */
 union clause ast = LOADRES : (bool, bool, regidx, word_width, regidx)
 
-mapping clause encdec = LOADRES(aq, rl, rs1, size, rd) if amo_width_valid(size)
-  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111 if amo_width_valid(size)
+mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)                                                if haveAtomics() & amo_width_valid(size)
+  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if haveAtomics() & amo_width_valid(size)
 
 
 /* We could set load-reservations on physical or virtual addresses.
@@ -115,52 +53,32 @@ mapping clause encdec = LOADRES(aq, rl, rs1, size, rd) if amo_width_valid(size)
  * call to load_reservation in LR and cancel_reservation in SC.
  */
 
-val process_loadres : forall 'n, 0 < 'n <= xlen_bytes. (regidx, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> Retired
-function process_loadres(rd, addr, value, is_unsigned) =
-  match extend_value(is_unsigned, value) {
-    MemValue(result) => { load_reservation(addr); X(rd) = result; RETIRE_SUCCESS },
-    MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
-  }
-
 function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
-  if haveAtomics() then {
-    /* Get the address, X(rs1) (no offset).
-     * Extensions might perform additional checks on address validity.
-     */
-    match ext_data_get_addr(rs1, zeros(), Read(Data), width) {
-      Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
-      Ext_DataAddr_OK(vaddr) => {
-        let aligned : bool =
-           /* BYTE and HALF would only occur due to invalid decodes, but it doesn't hurt
-            * to treat them as valid here; otherwise we'd need to throw an internal_error.
-            */
-           match width {
-             BYTE   => true,
-             HALF   => vaddr[0..0] == 0b0,
-             WORD   => vaddr[1..0] == 0b00,
-             DOUBLE => vaddr[2..0] == 0b000
-           };
-        /* "LR faults like a normal load, even though it's in the AMO major opcode space."
-         * - Andrew Waterman, isa-dev, 10 Jul 2018.
-         */
-        if not(aligned)
-        then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
-        else match translateAddr(vaddr, Read(Data)) {
-               TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-               TR_Address(addr, _) =>
-                 match (width, sizeof(xlen)) {
-                   (BYTE, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 1, aq, aq & rl, true), false),
-                   (HALF, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 2, aq, aq & rl, true), false),
-                   (WORD, _)    => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 4, aq, aq & rl, true), false),
-                   (DOUBLE, 64) => process_loadres(rd, vaddr, mem_read(Read(Data), addr, 8, aq, aq & rl, true), false),
-                   _            => internal_error(__FILE__, __LINE__, "Unexpected AMO width")
-                 }
-             }
+  let width_bytes = size_bytes(width);
+
+  // This is checked during decoding.
+  assert(width_bytes <= sizeof(xlen_bytes));
+
+  /* Get the address, X(rs1) (no offset).
+    * Extensions might perform additional checks on address validity.
+    */
+  match ext_data_get_addr(rs1, zeros(), Read(Data), width_bytes) {
+    Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
+    Ext_DataAddr_OK(vaddr) => {
+      /* "LR faults like a normal load, even though it's in the AMO major opcode space."
+        * - Andrew Waterman, isa-dev, 10 Jul 2018.
+        */
+      if not(is_aligned(vaddr, width))
+      then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
+      else match translateAddr(vaddr, Read(Data)) {
+        TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+        TR_Address(addr, _) =>
+          match mem_read(Read(Data), addr, width_bytes, aq, aq & rl, true) {
+            MemValue(result) => { load_reservation(vaddr); X(rd) = sign_extend(result); RETIRE_SUCCESS },
+            MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+          },
       }
     }
-  } else {
-    handle_illegal();
-    RETIRE_FAIL
   }
 }
 
@@ -170,71 +88,51 @@ mapping clause assembly = LOADRES(aq, rl, rs1, size, rd)
 /* ****************************************************************** */
 union clause ast = STORECON : (bool, bool, regidx, regidx, word_width, regidx)
 
-mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd) if amo_width_valid(size)
-  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111 if amo_width_valid(size)
+mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)                                      if haveAtomics() & amo_width_valid(size)
+  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if haveAtomics() & amo_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful. This may need revisiting. */
 function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
+  let width_bytes = size_bytes(width);
+
+  // This is checked during decoding.
+  assert(width_bytes <= sizeof(xlen_bytes));
+
   if speculate_conditional () == false then {
     /* should only happen in rmem
      * rmem: allow SC to fail very early
      */
     X(rd) = zero_extend(0b1); RETIRE_SUCCESS
   } else {
-    if haveAtomics() then {
-      /* normal non-rmem case
-       * rmem: SC is allowed to succeed (but might fail later)
-       */
-      /* Get the address, X(rs1) (no offset).
-       * Extensions might perform additional checks on address validity.
-       */
-      match ext_data_get_addr(rs1, zeros(), Write(Data), width) {
-        Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
-        Ext_DataAddr_OK(vaddr) => {
-          let aligned : bool =
-            /* BYTE and HALF would only occur due to invalid decodes, but it doesn't hurt
-             * to treat them as valid here; otherwise we'd need to throw an internal_error.
-             */
-            match width {
-              BYTE   => true,
-              HALF   => vaddr[0..0] == 0b0,
-              WORD   => vaddr[1..0] == 0b00,
-              DOUBLE => vaddr[2..0] == 0b000
-            };
-          if not(aligned)
-          then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
-          else {
-            if match_reservation(vaddr) == false then {
-              /* cannot happen in rmem */
-              X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS
-            } else {
-              match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
-                                                          * both result in a SAMO exception */
-                TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-                TR_Address(addr, _) => {
-                  let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
-                    (BYTE, _)    => mem_write_ea(addr, 1, aq & rl, rl, true),
-                    (HALF, _)    => mem_write_ea(addr, 2, aq & rl, rl, true),
-                    (WORD, _)    => mem_write_ea(addr, 4, aq & rl, rl, true),
-                    (DOUBLE, 64) => mem_write_ea(addr, 8, aq & rl, rl, true),
-                    _            => internal_error(__FILE__, __LINE__, "STORECON expected word or double")
-                  };
-                  match (eares) {
-                    MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-                    MemValue(_) => {
-                      rs2_val = X(rs2);
-                      let res : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
-                        (BYTE, _)    => mem_write_value(addr, 1, rs2_val[7..0], aq & rl, rl, true),
-                        (HALF, _)    => mem_write_value(addr, 2, rs2_val[15..0], aq & rl, rl, true),
-                        (WORD, _)    => mem_write_value(addr, 4, rs2_val[31..0], aq & rl, rl, true),
-                        (DOUBLE, 64) => mem_write_value(addr, 8, rs2_val,        aq & rl, rl, true),
-                        _            => internal_error(__FILE__, __LINE__, "STORECON expected word or double")
-                      };
-                      match (res) {
-                        MemValue(true)  => { X(rd) = zero_extend(0b0); cancel_reservation(); RETIRE_SUCCESS },
-                        MemValue(false) => { X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS },
-                        MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
-                      }
+    /* normal non-rmem case
+      * rmem: SC is allowed to succeed (but might fail later)
+      */
+    /* Get the address, X(rs1) (no offset).
+      * Extensions might perform additional checks on address validity.
+      */
+    match ext_data_get_addr(rs1, zeros(), Write(Data), width_bytes) {
+      Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
+      Ext_DataAddr_OK(vaddr) => {
+        if not(is_aligned(vaddr, width))
+        then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
+        else {
+          if match_reservation(vaddr) == false then {
+            /* cannot happen in rmem */
+            X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS
+          } else {
+            match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
+                                                        * both result in a SAMO exception */
+              TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+              TR_Address(addr, _) => {
+                let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
+                match (eares) {
+                  MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+                  MemValue(_) => {
+                    let rs2_val = X(rs2);
+                    match mem_write_value(addr, width_bytes, rs2_val[width_bytes * 8 - 1 .. 0], aq & rl, rl, true) {
+                      MemValue(true)  => { X(rd) = zero_extend(0b0); cancel_reservation(); RETIRE_SUCCESS },
+                      MemValue(false) => { X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS },
+                      MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
                     }
                   }
                 }
@@ -243,9 +141,6 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
           }
         }
       }
-    } else {
-      handle_illegal();
-      RETIRE_FAIL
     }
   }
 }
@@ -268,87 +163,52 @@ mapping encdec_amoop : amoop <-> bits(5) = {
   AMOMAXU <-> 0b11100
 }
 
-mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd) if amo_width_valid(size)
-  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_bits(size) @ rd @ 0b0101111 if amo_width_valid(size)
+mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)                                                if haveAtomics() & amo_width_valid(size)
+  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if haveAtomics() & amo_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
 function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
-  if haveAtomics() then {
-    /* Get the address, X(rs1) (no offset).
-     * Some extensions perform additional checks on address validity.
-     */
-    match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width) {
-      Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
-      Ext_DataAddr_OK(vaddr) => {
-        match translateAddr(vaddr, ReadWrite(Data, Data)) {
-          TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-          TR_Address(addr, _) => {
-            let eares : MemoryOpResult(unit) = match (width, sizeof(xlen)) {
-              (BYTE, _)    => mem_write_ea(addr, 1, aq & rl, rl, true),
-              (HALF, _)    => mem_write_ea(addr, 2, aq & rl, rl, true),
-              (WORD, _)    => mem_write_ea(addr, 4, aq & rl, rl, true),
-              (DOUBLE, 64) => mem_write_ea(addr, 8, aq & rl, rl, true),
-              _            => internal_error(__FILE__, __LINE__, "Unexpected AMO width")
-            };
-            let is_unsigned : bool = match op {
-              AMOMINU => true,
-              AMOMAXU => true,
-              _       => false
-            };
-            let rs2_val : xlenbits = match width {
-              BYTE   => if is_unsigned then zero_extend(X(rs2)[7..0])  else sign_extend(X(rs2)[7..0]),
-              HALF   => if is_unsigned then zero_extend(X(rs2)[15..0]) else sign_extend(X(rs2)[15..0]),
-              WORD   => if is_unsigned then zero_extend(X(rs2)[31..0]) else sign_extend(X(rs2)[31..0]),
-              DOUBLE => X(rs2)
-            };
-            match (eares) {
-              MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-              MemValue(_) => {
-                let mval : MemoryOpResult(xlenbits) = match (width, sizeof(xlen)) {
-                  (BYTE, _)    => extend_value(is_unsigned, mem_read(ReadWrite(Data, Data), addr, 1, aq, aq & rl, true)),
-                  (HALF, _)    => extend_value(is_unsigned, mem_read(ReadWrite(Data, Data), addr, 2, aq, aq & rl, true)),
-                  (WORD, _)    => extend_value(is_unsigned, mem_read(ReadWrite(Data, Data), addr, 4, aq, aq & rl, true)),
-                  (DOUBLE, 64) => extend_value(is_unsigned, mem_read(ReadWrite(Data, Data), addr, 8, aq, aq & rl, true)),
-                  _            => internal_error(__FILE__, __LINE__, "Unexpected AMO width")
-                };
-                match (mval) {
-                  MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-                  MemValue(loaded) => {
-                    let result : xlenbits =
-                      match op {
-                        AMOSWAP => rs2_val,
-                        AMOADD  => rs2_val + loaded,
-                        AMOXOR  => rs2_val ^ loaded,
-                        AMOAND  => rs2_val & loaded,
-                        AMOOR   => rs2_val | loaded,
+  let 'width_bytes = size_bytes(width);
 
-                        /* These operations convert bitvectors to integer values using [un]signed,
-                         * and back using to_bits().
-                         */
-                        AMOMIN  => to_bits(sizeof(xlen), min(signed(rs2_val),   signed(loaded))),
-                        AMOMAX  => to_bits(sizeof(xlen), max(signed(rs2_val),   signed(loaded))),
-                        AMOMINU => to_bits(sizeof(xlen), min(unsigned(rs2_val), unsigned(loaded))),
-                        AMOMAXU => to_bits(sizeof(xlen), max(unsigned(rs2_val), unsigned(loaded)))
-                      };
-                    let rval : xlenbits = match width {
-                      BYTE   => sign_extend(loaded[7..0]),
-                      HALF   => sign_extend(loaded[15..0]),
-                      WORD   => sign_extend(loaded[31..0]),
-                      DOUBLE => loaded
+  // This is checked during decoding.
+  assert(width_bytes <= sizeof(xlen_bytes));
+
+  /* Get the address, X(rs1) (no offset).
+    * Some extensions perform additional checks on address validity.
+    */
+  match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width_bytes) {
+    Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
+    Ext_DataAddr_OK(vaddr) => {
+      if not(is_aligned(vaddr, width))
+      then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
+      else match translateAddr(vaddr, ReadWrite(Data, Data)) {
+        TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+        TR_Address(addr, _) => {
+          let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
+          let rs2_val = X(rs2)[width_bytes * 8 - 1 .. 0];
+          match (eares) {
+            MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            MemValue(_) => {
+              match mem_read(ReadWrite(Data, Data), addr, width_bytes, aq, aq & rl, true) {
+                MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+                MemValue(loaded) => {
+                  let result : bits('width_bytes * 8) =
+                    match op {
+                      AMOSWAP => rs2_val,
+                      AMOADD  => rs2_val + loaded,
+                      AMOXOR  => rs2_val ^ loaded,
+                      AMOAND  => rs2_val & loaded,
+                      AMOOR   => rs2_val | loaded,
+                      AMOMIN  => if rs2_val <_s loaded then rs2_val else loaded,
+                      AMOMAX  => if rs2_val >_s loaded then rs2_val else loaded,
+                      AMOMINU => if rs2_val <_u loaded then rs2_val else loaded,
+                      AMOMAXU => if rs2_val >_u loaded then rs2_val else loaded,
                     };
-                    let wval : MemoryOpResult(bool) = match (width, sizeof(xlen)) {
-                      (BYTE, _)    => mem_write_value(addr, 1, result[7..0],  aq & rl, rl, true),
-                      (HALF, _)    => mem_write_value(addr, 2, result[15..0], aq & rl, rl, true),
-                      (WORD, _)    => mem_write_value(addr, 4, result[31..0], aq & rl, rl, true),
-                      (DOUBLE, 64) => mem_write_value(addr, 8, result,        aq & rl, rl, true),
-                      _            => internal_error(__FILE__, __LINE__, "Unexpected AMO width")
-                    };
-                    match (wval) {
-                      MemValue(true)  => { X(rd) = rval; RETIRE_SUCCESS },
-                      MemValue(false) => { internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value") },
-                      MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
-                    }
+                  match mem_write_value(addr, width_bytes, sign_extend(result), aq & rl, rl, true) {
+                    MemValue(true)  => { X(rd) = sign_extend(loaded); RETIRE_SUCCESS },
+                    MemValue(false) => { internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value") },
+                    MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
                   }
                 }
               }
@@ -357,9 +217,6 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
         }
       }
     }
-  } else {
-    handle_illegal();
-    RETIRE_FAIL
   }
 }
 

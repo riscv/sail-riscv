@@ -3,7 +3,11 @@
 #include <stdio.h>
 
 /* Settings of the platform implementation, with common defaults. */
-bool rv_enable_pmp = false;
+uint64_t rv_pmp_count = 0;
+uint64_t rv_pmp_grain = 0;
+
+bool rv_enable_svinval = false;
+bool rv_enable_zcb = false;
 bool rv_enable_zfinx = false;
 bool rv_enable_zilsd = false;
 bool rv_enable_zcmlsd = false;

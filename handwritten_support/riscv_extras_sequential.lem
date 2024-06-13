@@ -149,14 +149,6 @@ val sys_enable_zfinx : unit -> bool
 let sys_enable_zfinx () = false
 declare ocaml target_rep function sys_enable_zfinx = `Platform.enable_zfinx`
 
-val sys_enable_zilsd : unit -> bool
-let sys_enable_zilsd () = false
-declare ocaml target_rep function sys_enable_zilsd = 'Platform.enable_zilsd'
-
-val sys_enable_zcmlsd : unit -> bool
-let sys_enable_zcmlsd () = false
-declare ocaml target_rep function sys_enable_zcmlsd = 'Platform.enable_zcmlsd'
-
 val sys_enable_next : unit -> bool
 let sys_enable_next () = true
 declare ocaml target_rep function sys_enable_next = `Platform.enable_next`
@@ -164,6 +156,14 @@ declare ocaml target_rep function sys_enable_next = `Platform.enable_next`
 val sys_enable_writable_fiom : unit -> bool
 let sys_enable_writable_fiom () = true
 declare ocaml target_rep function sys_enable_writable_fiom = `Platform.enable_writable_fiom`
+
+val sys_enable_zilsd : unit -> bool
+let sys_enable_zilsd () = false
+declare ocaml target_rep function sys_enable_zilsd = 'Platform.enable_zilsd'
+
+val sys_enable_zcmlsd : unit -> bool
+let sys_enable_zcmlsd () = false
+declare ocaml target_rep function sys_enable_zcmlsd = 'Platform.enable_zcmlsd'
 
 val plat_ram_base : forall 'a. Size 'a => unit -> bitvector 'a
 let plat_ram_base () = wordFromInteger 0
@@ -196,10 +196,6 @@ declare ocaml target_rep function plat_enable_dirty_update = `Platform.enable_di
 val plat_enable_misaligned_access : unit -> bool
 let plat_enable_misaligned_access () = false
 declare ocaml target_rep function plat_enable_misaligned_access = `Platform.enable_misaligned_access`
-
-val plat_enable_pmp : unit -> bool
-let plat_enable_pmp () = false
-declare ocaml target_rep function plat_enable_pmp = `Platform.enable_pmp`
 
 val plat_mtval_has_illegal_inst_bits : unit -> bool
 let plat_mtval_has_illegal_inst_bits () = false

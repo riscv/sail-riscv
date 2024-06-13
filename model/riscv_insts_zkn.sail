@@ -1,71 +1,9 @@
 /*=======================================================================================*/
-/*  RISCV Sail Model                                                                     */
-/*                                                                                       */
 /*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except for the snapshots of the Lem and Sail libraries                   */
-/*  in the prover_snapshots directory (which include copies of their                     */
-/*  licences), is subject to the BSD two-clause licence below.                           */
+/*  directories except where otherwise noted is subject the BSD                          */
+/*  two-clause license in the LICENSE file.                                              */
 /*                                                                                       */
-/*  Copyright (c) 2017-2023                                                              */
-/*    Prashanth Mundkur                                                                  */
-/*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
-/*    Jon French                                                                         */
-/*    Brian Campbell                                                                     */
-/*    Robert Norton-Wright                                                               */
-/*    Alasdair Armstrong                                                                 */
-/*    Thomas Bauereiss                                                                   */
-/*    Shaked Flur                                                                        */
-/*    Christopher Pulte                                                                  */
-/*    Peter Sewell                                                                       */
-/*    Alexander Richardson                                                               */
-/*    Hesham Almatary                                                                    */
-/*    Jessica Clarke                                                                     */
-/*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
-/*    Peter Rugg                                                                         */
-/*    Aril Computer Corp., for contributions by Scott Johnson                            */
-/*    Philipp Tomsich                                                                    */
-/*    VRULL GmbH, for contributions by its employees                                     */
-/*                                                                                       */
-/*  All rights reserved.                                                                 */
-/*                                                                                       */
-/*  This software was developed by the above within the Rigorous                         */
-/*  Engineering of Mainstream Systems (REMS) project, partly funded by                   */
-/*  EPSRC grant EP/K008528/1, at the Universities of Cambridge and                       */
-/*  Edinburgh.                                                                           */
-/*                                                                                       */
-/*  This software was developed by SRI International and the University of               */
-/*  Cambridge Computer Laboratory (Department of Computer Science and                    */
-/*  Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and                 */
-/*  under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA                 */
-/*  SSITH research programme.                                                            */
-/*                                                                                       */
-/*  This project has received funding from the European Research Council                 */
-/*  (ERC) under the European Union’s Horizon 2020 research and innovation                */
-/*  programme (grant agreement 789108, ELVER).                                           */
-/*                                                                                       */
-/*                                                                                       */
-/*  Redistribution and use in source and binary forms, with or without                   */
-/*  modification, are permitted provided that the following conditions                   */
-/*  are met:                                                                             */
-/*  1. Redistributions of source code must retain the above copyright                    */
-/*     notice, this list of conditions and the following disclaimer.                     */
-/*  2. Redistributions in binary form must reproduce the above copyright                 */
-/*     notice, this list of conditions and the following disclaimer in                   */
-/*     the documentation and/or other materials provided with the                        */
-/*     distribution.                                                                     */
-/*                                                                                       */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''                   */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED                    */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                      */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR                  */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                         */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                     */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF                     */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND                  */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,                   */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT                   */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF                   */
-/*  SUCH DAMAGE.                                                                         */
+/*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
 /*
@@ -79,16 +17,16 @@ union clause ast = SHA256SUM0 : (regidx, regidx)
 union clause ast = SHA256SUM1 : (regidx, regidx)
 
 mapping clause encdec = SHA256SUM0 (rs1, rd) if haveZknh()
-  <-> 0b00 @ 0b01000 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh()
 
 mapping clause encdec = SHA256SUM1 (rs1, rd) if haveZknh()
-  <-> 0b00 @ 0b01000 @ 0b00001 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00001 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh()
 
 mapping clause encdec = SHA256SIG0 (rs1, rd) if haveZknh()
-  <-> 0b00 @ 0b01000 @ 0b00010 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00010 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh()
 
 mapping clause encdec = SHA256SIG1 (rs1, rd) if haveZknh()
-  <-> 0b00 @ 0b01000 @ 0b00011 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00011 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh()
 
 mapping clause assembly = SHA256SIG0 (rs1, rd)
   <-> "sha256sig0" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
@@ -138,7 +76,7 @@ function clause execute (SHA256SUM1(rs1, rd)) = {
 union clause ast = AES32ESMI : (bits(2), regidx, regidx, regidx)
 
 mapping clause encdec = AES32ESMI (bs, rs2, rs1, rd) if haveZkne() & sizeof(xlen) == 32
-  <-> bs @ 0b10011 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> bs @ 0b10011 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZkne() & sizeof(xlen) == 32
 
 mapping clause assembly = AES32ESMI (bs, rs2, rs1, rd) <->
     "aes32esmi" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)
@@ -156,7 +94,7 @@ function clause execute (AES32ESMI (bs, rs2, rs1, rd)) = {
 union clause ast = AES32ESI : (bits(2), regidx, regidx, regidx)
 
 mapping clause encdec = AES32ESI (bs, rs2, rs1, rd) if haveZkne() & sizeof(xlen) == 32
-  <-> bs @ 0b10001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> bs @ 0b10001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZkne() & sizeof(xlen) == 32
 
 mapping clause assembly = AES32ESI (bs, rs2, rs1, rd) <->
     "aes32esi" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)
@@ -178,7 +116,7 @@ function clause execute (AES32ESI (bs, rs2, rs1, rd)) = {
 union clause ast = AES32DSMI : (bits(2), regidx, regidx, regidx)
 
 mapping clause encdec = AES32DSMI (bs, rs2, rs1, rd) if haveZknd() & sizeof(xlen) == 32
-  <-> bs @ 0b10111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> bs @ 0b10111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknd() & sizeof(xlen) == 32
 
 mapping clause assembly = AES32DSMI (bs, rs2, rs1, rd) <->
     "aes32dsmi" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)
@@ -196,7 +134,7 @@ function clause execute (AES32DSMI (bs, rs2, rs1, rd)) = {
 union clause ast = AES32DSI  : (bits(2), regidx, regidx, regidx)
 
 mapping clause encdec = AES32DSI (bs, rs2, rs1, rd) if haveZknd() & sizeof(xlen) == 32
-  <-> bs @ 0b10101 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> bs @ 0b10101 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknd() & sizeof(xlen) == 32
 
 mapping clause assembly = AES32DSI (bs, rs2, rs1, rd) <->
     "aes32dsi" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)
@@ -223,22 +161,22 @@ union clause ast = SHA512SUM0R : (regidx, regidx, regidx)
 union clause ast = SHA512SUM1R : (regidx, regidx, regidx)
 
 mapping clause encdec = SHA512SUM0R (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
-  <-> 0b01 @ 0b01000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b01 @ 0b01000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknh() & sizeof(xlen) == 32
 
 mapping clause encdec = SHA512SUM1R (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
-  <-> 0b01 @ 0b01001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b01 @ 0b01001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknh() & sizeof(xlen) == 32
 
 mapping clause encdec = SHA512SIG0L (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
-  <-> 0b01 @ 0b01010 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b01 @ 0b01010 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknh() & sizeof(xlen) == 32
 
 mapping clause encdec = SHA512SIG0H (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
-  <-> 0b01 @ 0b01110 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b01 @ 0b01110 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknh() & sizeof(xlen) == 32
 
 mapping clause encdec = SHA512SIG1L (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
-  <-> 0b01 @ 0b01011 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b01 @ 0b01011 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknh() & sizeof(xlen) == 32
 
 mapping clause encdec = SHA512SIG1H (rs2, rs1, rd) if haveZknh() & sizeof(xlen) == 32
-  <-> 0b01 @ 0b01111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b01 @ 0b01111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknh() & sizeof(xlen) == 32
 
 mapping clause assembly = SHA512SIG0L (rs2, rs1, rd)
   <-> "sha512sig0l" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
@@ -308,25 +246,25 @@ union clause ast = AES64DSM  : (regidx, regidx, regidx)
 union clause ast = AES64DS   : (regidx, regidx, regidx)
 
 mapping clause encdec = AES64KS1I (rnum, rs1, rd) if (haveZkne() | haveZknd()) & (sizeof(xlen) == 64) & (rnum <_u 0xB)
-  <-> 0b00 @ 0b11000 @ 0b1 @ rnum @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b11000 @ 0b1 @ rnum @ rs1 @ 0b001 @ rd @ 0b0010011 if (haveZkne() | haveZknd()) & (sizeof(xlen) == 64) & (rnum <_u 0xB)
 
 mapping clause encdec = AES64IM (rs1, rd) if haveZknd() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b11000 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b11000 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknd() & sizeof(xlen) == 64
 
 mapping clause encdec = AES64KS2 (rs2, rs1, rd) if (haveZkne() | haveZknd()) & sizeof(xlen) == 64
-  <-> 0b01 @ 0b11111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b01 @ 0b11111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if (haveZkne() | haveZknd()) & sizeof(xlen) == 64
 
 mapping clause encdec = AES64ESM (rs2, rs1, rd) if haveZkne() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b11011 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b00 @ 0b11011 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZkne() & sizeof(xlen) == 64
 
 mapping clause encdec = AES64ES (rs2, rs1, rd) if haveZkne() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b11001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b00 @ 0b11001 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZkne() & sizeof(xlen) == 64
 
 mapping clause encdec = AES64DSM (rs2, rs1, rd) if haveZknd() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b11111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b00 @ 0b11111 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknd() & sizeof(xlen) == 64
 
 mapping clause encdec = AES64DS (rs2, rs1, rd) if haveZknd() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b11101 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+  <-> 0b00 @ 0b11101 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011 if haveZknd() & sizeof(xlen) == 64
 
 mapping clause assembly = AES64KS1I (rnum, rs1, rd)
   <-> "aes64ks1i" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_4(rnum)
@@ -423,16 +361,16 @@ union clause ast = SHA512SUM0 : (regidx, regidx)
 union clause ast = SHA512SUM1 : (regidx, regidx)
 
 mapping clause encdec = SHA512SUM0 (rs1, rd) if haveZknh() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b01000 @ 0b00100 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00100 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh() & sizeof(xlen) == 64
 
 mapping clause encdec = SHA512SUM1 (rs1, rd) if haveZknh() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b01000 @ 0b00101 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00101 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh() & sizeof(xlen) == 64
 
 mapping clause encdec = SHA512SIG0 (rs1, rd) if haveZknh() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b01000 @ 0b00110 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00110 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh() & sizeof(xlen) == 64
 
 mapping clause encdec = SHA512SIG1 (rs1, rd) if haveZknh() & sizeof(xlen) == 64
-  <-> 0b00 @ 0b01000 @ 0b00111 @ rs1 @ 0b001 @ rd @ 0b0010011
+  <-> 0b00 @ 0b01000 @ 0b00111 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZknh() & sizeof(xlen) == 64
 
 mapping clause assembly = SHA512SIG0 (rs1, rd)
   <-> "sha512sig0" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)

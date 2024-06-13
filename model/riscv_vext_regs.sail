@@ -1,40 +1,10 @@
-/*=================================================================================*/
-/*  Copyright (c) 2021-2023                                                        */
-/*    Authors from RIOS Lab, Tsinghua University:                                  */
-/*      Xinlai Wan <xinlai.w@rioslab.org>                                          */
-/*      Xi Wang <xi.w@rioslab.org>                                                 */
-/*      Yifei Zhu <yifei.z@rioslab.org>                                            */
-/*      Shenwei Hu <shenwei.h@rioslab.org>                                         */
-/*      Kalvin Vu                                                                  */
-/*    Other contributors:                                                          */
-/*      Jessica Clarke <jrtc27@jrtc27.com>                                         */
-/*      Victor Moya <victor.moya@semidynamics.com>                                 */
-/*                                                                                 */
-/*  All rights reserved.                                                           */
-/*                                                                                 */
-/*  Redistribution and use in source and binary forms, with or without             */
-/*  modification, are permitted provided that the following conditions             */
-/*  are met:                                                                       */
-/*  1. Redistributions of source code must retain the above copyright              */
-/*     notice, this list of conditions and the following disclaimer.               */
-/*  2. Redistributions in binary form must reproduce the above copyright           */
-/*     notice, this list of conditions and the following disclaimer in             */
-/*     the documentation and/or other materials provided with the                  */
-/*     distribution.                                                               */
-/*                                                                                 */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''             */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED              */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR            */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                   */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT               */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF               */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND            */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,             */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT             */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF             */
-/*  SUCH DAMAGE.                                                                   */
-/*=================================================================================*/
+/*=======================================================================================*/
+/*  This Sail RISC-V architecture model, comprising all files and                        */
+/*  directories except where otherwise noted is subject the BSD                          */
+/*  two-clause license in the LICENSE file.                                              */
+/*                                                                                       */
+/*  SPDX-License-Identifier: BSD-2-Clause                                                */
+/*=======================================================================================*/
 
 /* vector registers */
 register vr0 : vregtype
@@ -108,8 +78,8 @@ mapping vreg_name = {
 
 function dirty_v_context() -> unit = {
   assert(sys_enable_vext());
-  mstatus->VS() = extStatus_to_bits(Dirty);
-  mstatus->SD() = 0b1
+  mstatus[VS] = extStatus_to_bits(Dirty);
+  mstatus[SD] = 0b1
 }
 
 function dirty_v_context_if_present() -> unit = {
@@ -202,7 +172,7 @@ function wV (r, in_v) = {
   let VLEN = unsigned(vlenb) * 8;
   assert(0 < VLEN & VLEN <= sizeof(vlenmax));
   if   get_config_print_reg()
-  then print_reg("v" ^ string_of_int(r) ^ " <- " ^ BitStr(v[VLEN - 1 .. 0]));
+  then print_reg("v" ^ dec_str(r) ^ " <- " ^ BitStr(v[VLEN - 1 .. 0]));
 }
 
 function rV_bits(i: bits(5)) -> vregtype = rV(unsigned(i))
@@ -259,8 +229,8 @@ register vcsr : Vcsr
 
 val ext_write_vcsr : (bits(2), bits(1)) -> unit
 function ext_write_vcsr (vxrm_val, vxsat_val) = {
-  vcsr->vxrm()  = vxrm_val; /* Note: frm can be an illegal value, 101, 110, 111 */
-  vcsr->vxsat() = vxsat_val;
+  vcsr[vxrm]  = vxrm_val; /* Note: frm can be an illegal value, 101, 110, 111 */
+  vcsr[vxsat] = vxsat_val;
   dirty_v_context_if_present()
 }
 

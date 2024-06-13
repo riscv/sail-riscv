@@ -1,41 +1,10 @@
-/*=================================================================================*/
-/*  Copyright (c) 2021-2023                                                        */
-/*    Authors from RIOS Lab, Tsinghua University:                                  */
-/*      Xinlai Wan <xinlai.w@rioslab.org>                                          */
-/*      Xi Wang <xi.w@rioslab.org>                                                 */
-/*      Yifei Zhu <yifei.z@rioslab.org>                                            */
-/*      Shenwei Hu <shenwei.h@rioslab.org>                                         */
-/*      Kalvin Vu                                                                  */
-/*      Lei Chen <lei.chen@rioslab.org>                                            */
-/*    Other contributors:                                                          */
-/*      Jessica Clarke <jrtc27@jrtc27.com>                                         */
-/*      Victor Moya <victor.moya@semidynamics.com>                                 */
-/*                                                                                 */
-/*  All rights reserved.                                                           */
-/*                                                                                 */
-/*  Redistribution and use in source and binary forms, with or without             */
-/*  modification, are permitted provided that the following conditions             */
-/*  are met:                                                                       */
-/*  1. Redistributions of source code must retain the above copyright              */
-/*     notice, this list of conditions and the following disclaimer.               */
-/*  2. Redistributions in binary form must reproduce the above copyright           */
-/*     notice, this list of conditions and the following disclaimer in             */
-/*     the documentation and/or other materials provided with the                  */
-/*     distribution.                                                               */
-/*                                                                                 */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''             */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED              */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR            */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                   */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT               */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF               */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND            */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,             */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT             */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF             */
-/*  SUCH DAMAGE.                                                                   */
-/*=================================================================================*/
+/*=======================================================================================*/
+/*  This Sail RISC-V architecture model, comprising all files and                        */
+/*  directories except where otherwise noted is subject the BSD                          */
+/*  two-clause license in the LICENSE file.                                              */
+/*                                                                                       */
+/*  SPDX-License-Identifier: BSD-2-Clause                                                */
+/*=======================================================================================*/
 
 /* ******************************************************************************* */
 /* This file implements functions used by vector instructions.                     */
@@ -63,7 +32,7 @@ function valid_eew_emul(EEW, EMUL_pow) = {
  */
 val valid_vtype : unit -> bool
 function valid_vtype() = {
-  vtype.vill() == 0b0
+  vtype[vill] == 0b0
 }
 
 /* Check for vstart value */
@@ -76,7 +45,7 @@ function assert_vstart(i) = {
  *  1. Valid element width of floating-point numbers
  *  2. Valid floating-point rounding mode
  */
-val valid_fp_op : ({|8, 16, 32, 64|}, bits(3)) -> bool
+val valid_fp_op : ({8, 16, 32, 64}, bits(3)) -> bool
 function valid_fp_op(SEW, rm_3b) = {
   /* 128-bit floating-point values will be supported in future extensions */
   let valid_sew = (SEW >= 16 & SEW <= 128);
@@ -177,38 +146,38 @@ function illegal_reduction_widen(SEW_widen, LMUL_pow_widen) = {
 }
 
 /* g. Normal check for floating-point instructions */
-val illegal_fp_normal : (regidx, bits(1), {|8, 16, 32, 64|}, bits(3)) -> bool
+val illegal_fp_normal : (regidx, bits(1), {8, 16, 32, 64}, bits(3)) -> bool
 function illegal_fp_normal(vd, vm, SEW, rm_3b) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* h. Masked check for floating-point instructions encoded with vm = 0 */
-val illegal_fp_vd_masked : (regidx, {|8, 16, 32, 64|}, bits(3)) -> bool
+val illegal_fp_vd_masked : (regidx, {8, 16, 32, 64}, bits(3)) -> bool
 function illegal_fp_vd_masked(vd, SEW, rm_3b) = {
   not(valid_vtype()) | vd == 0b00000 | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* i. Unmasked check for floating-point instructions encoded with vm = 1 */
-val illegal_fp_vd_unmasked : ({|8, 16, 32, 64|}, bits(3)) -> bool
+val illegal_fp_vd_unmasked : ({8, 16, 32, 64}, bits(3)) -> bool
 function illegal_fp_vd_unmasked(SEW, rm_3b) = {
   not(valid_vtype()) | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* j. Variable width check for floating-point widening/narrowing instructions */
-val illegal_fp_variable_width : (regidx, bits(1), {|8, 16, 32, 64|}, bits(3), int, int) -> bool
+val illegal_fp_variable_width : (regidx, bits(1), {8, 16, 32, 64}, bits(3), int, int) -> bool
 function illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_new, LMUL_pow_new) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) |
   not(valid_eew_emul(SEW_new, LMUL_pow_new))
 }
 
 /* k. Normal check for floating-point reduction instructions */
-val illegal_fp_reduction : ({|8, 16, 32, 64|}, bits(3)) -> bool
+val illegal_fp_reduction : ({8, 16, 32, 64}, bits(3)) -> bool
 function illegal_fp_reduction(SEW, rm_3b) = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* l. Variable width check for floating-point widening reduction instructions */
-val illegal_fp_reduction_widen : ({|8, 16, 32, 64|}, bits(3), int, int) -> bool
+val illegal_fp_reduction_widen : ({8, 16, 32, 64}, bits(3), int, int) -> bool
 function illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b)) |
   not(valid_eew_emul(SEW_widen, LMUL_pow_widen))
@@ -643,7 +612,7 @@ function signed_saturation(len, elem) = {
 
 /* Get the floating point rounding mode from csr fcsr */
 val get_fp_rounding_mode : unit -> rounding_mode
-function get_fp_rounding_mode() = encdec_rounding_mode(fcsr.FRM())
+function get_fp_rounding_mode() = encdec_rounding_mode(fcsr[FRM])
 
 /* Negate a floating point number */
 val negate_fp : forall 'm, 'm in {16, 32, 64}. bits('m) -> bits('m)
@@ -863,7 +832,7 @@ function fp_class(xf) = {
 
 val fp_widen : forall 'm, 'm in {16, 32}. bits('m) -> bits('m * 2)
 function fp_widen(nval) = {
-  let rm_3b = fcsr.FRM();
+  let rm_3b = fcsr[FRM];
   let (fflags, wval) : (bits_fflags, bits('m * 2)) = match 'm {
     16 => riscv_f16ToF32(rm_3b, nval),
     32 => riscv_f32ToF64(rm_3b, nval)

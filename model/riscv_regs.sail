@@ -1,71 +1,9 @@
 /*=======================================================================================*/
-/*  RISCV Sail Model                                                                     */
-/*                                                                                       */
 /*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except for the snapshots of the Lem and Sail libraries                   */
-/*  in the prover_snapshots directory (which include copies of their                     */
-/*  licences), is subject to the BSD two-clause licence below.                           */
+/*  directories except where otherwise noted is subject the BSD                          */
+/*  two-clause license in the LICENSE file.                                              */
 /*                                                                                       */
-/*  Copyright (c) 2017-2023                                                              */
-/*    Prashanth Mundkur                                                                  */
-/*    Rishiyur S. Nikhil and Bluespec, Inc.                                              */
-/*    Jon French                                                                         */
-/*    Brian Campbell                                                                     */
-/*    Robert Norton-Wright                                                               */
-/*    Alasdair Armstrong                                                                 */
-/*    Thomas Bauereiss                                                                   */
-/*    Shaked Flur                                                                        */
-/*    Christopher Pulte                                                                  */
-/*    Peter Sewell                                                                       */
-/*    Alexander Richardson                                                               */
-/*    Hesham Almatary                                                                    */
-/*    Jessica Clarke                                                                     */
-/*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  */
-/*    Peter Rugg                                                                         */
-/*    Aril Computer Corp., for contributions by Scott Johnson                            */
-/*    Philipp Tomsich                                                                    */
-/*    VRULL GmbH, for contributions by its employees                                     */
-/*                                                                                       */
-/*  All rights reserved.                                                                 */
-/*                                                                                       */
-/*  This software was developed by the above within the Rigorous                         */
-/*  Engineering of Mainstream Systems (REMS) project, partly funded by                   */
-/*  EPSRC grant EP/K008528/1, at the Universities of Cambridge and                       */
-/*  Edinburgh.                                                                           */
-/*                                                                                       */
-/*  This software was developed by SRI International and the University of               */
-/*  Cambridge Computer Laboratory (Department of Computer Science and                    */
-/*  Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and                 */
-/*  under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA                 */
-/*  SSITH research programme.                                                            */
-/*                                                                                       */
-/*  This project has received funding from the European Research Council                 */
-/*  (ERC) under the European Union’s Horizon 2020 research and innovation                */
-/*  programme (grant agreement 789108, ELVER).                                           */
-/*                                                                                       */
-/*                                                                                       */
-/*  Redistribution and use in source and binary forms, with or without                   */
-/*  modification, are permitted provided that the following conditions                   */
-/*  are met:                                                                             */
-/*  1. Redistributions of source code must retain the above copyright                    */
-/*     notice, this list of conditions and the following disclaimer.                     */
-/*  2. Redistributions in binary form must reproduce the above copyright                 */
-/*     notice, this list of conditions and the following disclaimer in                   */
-/*     the documentation and/or other materials provided with the                        */
-/*     distribution.                                                                     */
-/*                                                                                       */
-/*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''                   */
-/*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED                    */
-/*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                      */
-/*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR                  */
-/*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                         */
-/*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                     */
-/*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF                     */
-/*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND                  */
-/*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,                   */
-/*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT                   */
-/*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF                   */
-/*  SUCH DAMAGE.                                                                         */
+/*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
 /* program counter */
@@ -154,8 +92,8 @@ function rX r = {
 $ifdef RVFI_DII
 val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit
 function rvfi_wX (r,v) = {
-  rvfi_int_data->rvfi_rd_wdata() = zero_extend(v);
-  rvfi_int_data->rvfi_rd_addr() = to_bits(8,r);
+  rvfi_int_data[rvfi_rd_wdata] = zero_extend(v);
+  rvfi_int_data[rvfi_rd_addr] = to_bits(8,r);
   rvfi_int_data_present = true;
 }
 $else
@@ -204,7 +142,7 @@ function wX (r, in_v) = {
   if (r != 0) then {
      rvfi_wX(r, in_v);
      if   get_config_print_reg()
-     then print_reg("x" ^ string_of_int(r) ^ " <- " ^ RegStr(v));
+     then print_reg("x" ^ dec_str(r) ^ " <- " ^ RegStr(v));
   }
 }
 
@@ -215,49 +153,6 @@ function wX_bits(i: bits(5), data: xlenbits) -> unit = {
 }
 
 overload X = {rX_bits, wX_bits, rX, wX}
-
-/* register names */
-
-val reg_name_abi : regidx -> string
-
-function reg_name_abi(r) = {
-  match (r) {
-    0b00000 => "zero",
-    0b00001 => "ra",
-    0b00010 => "sp",
-    0b00011 => "gp",
-    0b00100 => "tp",
-    0b00101 => "t0",
-    0b00110 => "t1",
-    0b00111 => "t2",
-    0b01000 => "fp",
-    0b01001 => "s1",
-    0b01010 => "a0",
-    0b01011 => "a1",
-    0b01100 => "a2",
-    0b01101 => "a3",
-    0b01110 => "a4",
-    0b01111 => "a5",
-    0b10000 => "a6",
-    0b10001 => "a7",
-    0b10010 => "s2",
-    0b10011 => "s3",
-    0b10100 => "s4",
-    0b10101 => "s5",
-    0b10110 => "s6",
-    0b10111 => "s7",
-    0b11000 => "s8",
-    0b11001 => "s9",
-    0b11010 => "s10",
-    0b11011 => "s11",
-    0b11100 => "t3",
-    0b11101 => "t4",
-    0b11110 => "t5",
-    0b11111 => "t6"
-  }
-}
-
-overload to_str = {reg_name_abi}
 
 /* mappings for assembly */
 

@@ -51,6 +51,12 @@ const char *RV32ISA = "RV32IMAC";
 
 #define OPT_TRACE_OUTPUT 1000
 #define OPT_ENABLE_WRITABLE_FIOM 1001
+#define OPT_PMP_COUNT 1002
+#define OPT_PMP_GRAIN 1003
+#define OPT_ENABLE_SVINVAL 1004
+#define OPT_ENABLE_ZCB 10014
+#define OPT_ENABLE_ZILSD 10020
+#define OPT_ENABLE_ZCMLSD 10021
 
 static bool do_dump_dts = false;
 static bool do_show_times = false;
@@ -119,7 +125,8 @@ char *sailcov_file = NULL;
 static struct option options[] = {
     {"enable-dirty-update",         no_argument,       0, 'd'                     },
     {"enable-misaligned",           no_argument,       0, 'm'                     },
-    {"enable-pmp",                  no_argument,       0, 'P'                     },
+    {"pmp-count",                   required_argument, 0, OPT_PMP_COUNT           },
+    {"pmp-grain",                   required_argument, 0, OPT_PMP_GRAIN           },
     {"enable-next",                 no_argument,       0, 'N'                     },
     {"ram-size",                    required_argument, 0, 'z'                     },
     {"disable-compressed",          no_argument,       0, 'C'                     },
@@ -141,9 +148,11 @@ static struct option options[] = {
     {"trace-output",                required_argument, 0, OPT_TRACE_OUTPUT        },
     {"inst-limit",                  required_argument, 0, 'l'                     },
     {"enable-zfinx",                no_argument,       0, 'x'                     },
-    {"enable-zilsd",                no_argument,       0, 'y'                     },
-    {"enable-zcmlsd",               no_argument,       0, 'Z'                     },
     {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
+    {"enable-svinval",              no_argument,       0, OPT_ENABLE_SVINVAL      },
+    {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
+    {"enable-zilsd",                no_argument,       0, OPT_ENABLE_ZILSD        },
+    {"enable-zcmlsd",               no_argument,       0, OPT_ENABLE_ZCMLSD       },
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
@@ -238,6 +247,8 @@ static int process_args(int argc, char **argv)
 {
   int c;
   uint64_t ram_size = 0;
+  uint64_t pmp_count = 0;
+  uint64_t pmp_grain = 0;
   while (true) {
     c = getopt_long(argc, argv,
                     "a"
@@ -267,9 +278,7 @@ static int process_args(int argc, char **argv)
                     "V::"
                     "v::"
                     "l:"
-                    "x"
-                    "y"
-                    "Z",
+                    "x",
                     options, NULL);
     if (c == -1)
       break;
@@ -285,9 +294,23 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "enabling misaligned access.\n");
       rv_enable_misaligned = true;
       break;
-    case 'P':
-      fprintf(stderr, "enabling PMP support.\n");
-      rv_enable_pmp = true;
+    case OPT_PMP_COUNT:
+      pmp_count = atol(optarg);
+      fprintf(stderr, "PMP count: %" PRIu64 "\n", pmp_count);
+      if (pmp_count != 0 && pmp_count != 16 && pmp_count != 64) {
+        fprintf(stderr, "invalid PMP count: must be 0, 16 or 64");
+        exit(1);
+      }
+      rv_pmp_count = pmp_count;
+      break;
+    case OPT_PMP_GRAIN:
+      pmp_grain = atol(optarg);
+      fprintf(stderr, "PMP grain: %" PRIu64 "\n", pmp_grain);
+      if (pmp_grain >= 64) {
+        fprintf(stderr, "invalid PMP grain: must less than 64");
+        exit(1);
+      }
+      rv_pmp_grain = pmp_grain;
       break;
     case 'C':
       fprintf(stderr, "disabling RVC compressed instructions.\n");
@@ -371,16 +394,20 @@ static int process_args(int argc, char **argv)
     case 'l':
       insn_limit = atoi(optarg);
       break;
+    case OPT_ENABLE_ZCB:
+      fprintf(stderr, "enabling Zcb extension.\n");
+      rv_enable_zcb = true;
+      break;	  
     case 'x':
       fprintf(stderr, "enabling Zfinx support.\n");
       rv_enable_zfinx = true;
       rv_enable_fdext = false;
       break;
-    case 'y':
+    case OPT_ENABLE_ZILSD:
       fprintf(stderr, "enabling Zilsd support.\n");
       rv_enable_zilsd = true;
       break;
-    case 'Z':
+    case OPT_ENABLE_ZCMLSD:
       fprintf(stderr, "enabling Zcmlsd support.\n");
       rv_enable_zcmlsd = true;
       break; 

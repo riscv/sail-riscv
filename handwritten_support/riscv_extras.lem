@@ -177,6 +177,14 @@ val sys_enable_writable_fiom : unit -> bool
 let sys_enable_writable_fiom () = true
 declare ocaml target_rep function sys_enable_writable_fiom = `Platform.enable_writable_fiom`
 
+val sys_pmp_grain : unit -> integer
+let sys_pmp_grain () = 0
+declare ocaml target_rep function sys_pmp_grain = `Platform.sys_pmp_grain`
+
+val sys_pmp_count : unit -> integer
+let sys_pmp_count () = 0
+declare ocaml target_rep function sys_pmp_count = `Platform.sys_pmp_count`
+
 val plat_ram_base : unit -> bitvector
 let plat_ram_base () = []
 declare ocaml target_rep function plat_ram_base = `Platform.dram_base`
@@ -208,10 +216,6 @@ declare ocaml target_rep function plat_enable_dirty_update = `Platform.enable_di
 val plat_enable_misaligned_access : unit -> bool
 let plat_enable_misaligned_access () = false
 declare ocaml target_rep function plat_enable_misaligned_access = `Platform.enable_misaligned_access`
-
-val plat_enable_pmp : unit -> bool
-let plat_enable_pmp () = false
-declare ocaml target_rep function plat_enable_pmp = `Platform.enable_pmp`
 
 val plat_mtval_has_illegal_inst_bits : unit -> bool
 let plat_mtval_has_illegal_inst_bits () = false
