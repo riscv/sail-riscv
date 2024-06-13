@@ -171,8 +171,7 @@ function wV (r, in_v) = {
 
   let VLEN = unsigned(vlenb) * 8;
   assert(0 < VLEN & VLEN <= sizeof(vlenmax));
-  if   get_config_print_reg()
-  then print_reg("v" ^ dec_str(r) ^ " <- " ^ BitStr(v[VLEN - 1 .. 0]));
+  if rv_enable_callbacks then vreg_update_callback(regno_to_regidx(r), v);
 }
 
 function rV_bits(i: bits(5)) -> vregtype = rV(unsigned(i))
@@ -264,7 +263,6 @@ function read_single_vreg(num_elem, SEW, vrid) = {
 /* Writes multiple elements into a single vreg */
 val write_single_vreg : forall 'n 'm, 'n >= 0. (int('n), int('m), regidx, vector('n, dec, bits('m))) -> unit
 function write_single_vreg(num_elem, SEW, vrid, v) = {
-  if rv_enable_callbacks then vreg_update_callback(vrid);
   r : vregtype = zeros();
 
   assert(8 <= SEW & SEW <= 64);

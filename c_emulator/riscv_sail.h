@@ -31,8 +31,9 @@ extern bool have_exception;
 /* Callbacks for state-changing events */
 
 /* Whether need to call the callback functions */
-extern bool rv_enable_callbacks;
-/* The model assumes that these functions do not change the state of the model. */
+extern bool zrv_enable_callbacks;
+/* The model assumes that these functions do not change the state of the model.
+ */
 int mem_update_callback(uint64_t addr, uint64_t width, lbits data);
 int xreg_update_callback(unsigned reg, uint64_t value);
 int freg_update_callback(unsigned reg, uint64_t value);

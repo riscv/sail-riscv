@@ -101,18 +101,17 @@ function readCSR csr : csreg -> xlenbits = {
     (0x015,  _) => read_seed_csr(),
 
     _           => /* check extensions */
-                   match ext_read_CSR(csr) {
+                   match ext_notification_read_CSR(csr) {
                      Some(res) => res,
                      None()    => { print_bits("unhandled read to CSR ", csr);
                                     zero_extend(0x0) }
                    }
   };
-  if   get_config_print_reg()
-  then print_reg("CSR " ^ to_str(csr) ^ " -> " ^ BitStr(res));
   res
 }
 
 function writeCSR (csr : csreg, value : xlenbits) -> unit = {
+  if rv_enable_callbacks then csr_update_callback(csr_name_map(csr), value);
   let res : option(xlenbits) =
   match (csr, sizeof(xlen)) {
     /* machine mode */
@@ -184,11 +183,6 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
 
     _           => ext_write_CSR(csr, value)
   };
-  match res {
-    Some(v) => if   get_config_print_reg()
-               then print_reg("CSR " ^ to_str(csr) ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")"),
-    None()  => print_bits("unhandled write to CSR ", csr)
-  }
 }
 
 function clause execute CSR(csr, rs1, rd, is_imm, op) = {
@@ -209,7 +203,6 @@ function clause execute CSR(csr, rs1, rd, is_imm, op) = {
         CSRRS => csr_val | rs1_val,
         CSRRC => csr_val & ~(rs1_val)
       };
-      if rv_enable_callbacks then csr_update_callback(csr_name_map(csr), new_val);
       writeCSR(csr, new_val)
     };
     X(rd) = csr_val;

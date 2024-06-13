@@ -196,11 +196,6 @@ function wF (r, in_v) = {
   };
 
   dirty_fd_context();
-
-  if   get_config_print_reg()
-  then
-      /* TODO: will only print bits; should we print in floating point format? */
-      print_reg("f" ^ dec_str(r) ^ " <- " ^ FRegStr(v));
 }
 
 function rF_bits(i: bits(5)) -> flenbits = rF(unsigned(i))

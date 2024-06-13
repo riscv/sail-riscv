@@ -153,9 +153,7 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
             Ext_DataAddr_Error(e)  => {
               if i == 0 then { ext_handle_data_check_error(e); return RETIRE_FAIL }
               else {
-                vl = to_bits(sizeof(xlen), i);
-                if rv_enable_callbacks then csr_update_callback("vl", vl);
-                print_reg("CSR vl <- " ^ BitStr(vl));
+                ext_notification_write_CSR(csr_name_map("vl"), to_bits(sizeof(xlen), i));
                 trimmed = true
               }
             },
@@ -163,18 +161,14 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
               if check_misaligned(vaddr, width_type) then {
                 if i == 0 then { handle_mem_exception(vaddr, E_Load_Addr_Align()); return RETIRE_FAIL }
                 else {
-                  vl = to_bits(sizeof(xlen), i);
-                  if rv_enable_callbacks then csr_update_callback("vl", vl);
-                  print_reg("CSR vl <- " ^ BitStr(vl));
+                  ext_notification_write_CSR(csr_name_map("vl"), to_bits(sizeof(xlen), i));
                   trimmed = true
                 }
               } else match translateAddr(vaddr, Read(Data)) {
                 TR_Failure(e, _)     => {
                   if i == 0 then { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
                   else {
-                    vl = to_bits(sizeof(xlen), i);
-                    if rv_enable_callbacks then csr_update_callback("vl", vl);
-                    print_reg("CSR vl <- " ^ BitStr(vl));
+                    ext_notification_write_CSR(csr_name_map("vl"), to_bits(sizeof(xlen), i));
                     trimmed = true
                   }
                 },
@@ -184,9 +178,7 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
                     MemException(e)  => {
                       if i == 0 then { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
                       else {
-                        vl = to_bits(sizeof(xlen), i);
-                        if rv_enable_callbacks then csr_update_callback("vl", vl);
-                        print_reg("CSR vl <- " ^ BitStr(vl));
+                        ext_notification_write_CSR(csr_name_map("vl"), to_bits(sizeof(xlen), i));
                         trimmed = true
                       }
                     }
