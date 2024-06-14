@@ -105,6 +105,14 @@ val sys_pmp_grain = {c: "sys_pmp_grain", ocaml: "Platform.pmp_grain", _: "sys_pm
 /* whether misa.v was enabled at boot */
 val sys_enable_vext = {c: "sys_enable_vext", ocaml: "Platform.enable_vext", _: "sys_enable_vext"} : unit -> bool
 
+// CBO extensions. Zicbop cannot be enabled/disabled because it has no effect
+// at all on this model.
+// TODO: Add command line flags.
+// val sys_enable_zicbom = {c: "sys_enable_zicbom", ocaml: "Platform.enable_zicbom", _: "sys_enable_zicbom"} : unit -> bool
+// val sys_enable_zicboz = {c: "sys_enable_zicboz", ocaml: "Platform.enable_zicboz", _: "sys_enable_zicboz"} : unit -> bool
+function sys_enable_zicbom() -> bool = true
+function sys_enable_zicboz() -> bool = true
+
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
    unsetting C. If it returns true the write will have no effect. */
@@ -167,6 +175,10 @@ function haveZalrsc() -> bool = haveAtomics()
 
 /* Zicond extension support */
 function haveZicond() -> bool = true
+
+/* Cache Management Operations extension support. */
+function haveZicbom() -> bool = sys_enable_zicbom()
+function haveZicboz() -> bool = sys_enable_zicboz()
 
 bitfield Mstatush : bits(32) = {
   MBE  : 5,

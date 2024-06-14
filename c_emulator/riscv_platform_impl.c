@@ -26,6 +26,9 @@ uint64_t rv_ram_size = UINT64_C(0x4000000);
 uint64_t rv_rom_base = UINT64_C(0x1000);
 uint64_t rv_rom_size = UINT64_C(0x100);
 
+// Default 64, which is mandated by RVA22.
+uint64_t rv_cache_block_size_exp = UINT64_C(6);
+
 // Provides entropy for the scalar cryptography extension.
 uint64_t rv_16_random_bits(void)
 {

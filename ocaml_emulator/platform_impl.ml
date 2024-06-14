@@ -57,6 +57,9 @@ let rom_base   = 0x00001000L;;  (* Spike::DEFAULT_RSTVEC *)
 
 let dram_size_ref = ref (Int64.(shift_left 64L 20))
 
+(* Default 64, which is mandated by RVA22. *)
+let cache_block_size_exp_ref = ref (Int64.(6L))
+
 type mem_region = {
     addr : Int64.t;
     size : Int64.t
@@ -143,6 +146,20 @@ let set_dtc path =
 
 let set_dram_size mb =
   dram_size_ref := Int64.(shift_left (Int64.of_int mb) 20)
+
+(* Calculate x=log2(n) and return Some(x) if n is a power of 2, otherwise None. *)
+let log2 n =
+  let rec loop i =
+    if i >= Sys.int_size - 1 then None
+    else if (1 lsl i) = n then Some i
+    else loop (i + 1)
+  in
+  if n <= 0 then None else loop 0
+
+let set_cache_block_size b =
+  match log2 b with
+    | Some(block_size_exp) -> cache_block_size_exp_ref := Int64.(Int64.of_int block_size_exp)
+    | None -> (Printf.eprintf "Invalid cache block size provided."; exit 1)
 
 let make_dtb dts = (* Call the dtc compiler, assumed to be at /usr/bin/dtc *)
   try
