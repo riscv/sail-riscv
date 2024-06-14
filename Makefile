@@ -1,3 +1,12 @@
+# Check the current Sail version
+SAIL_VERSION := $(shell etc/version_check.sh > /dev/null; echo $$?)
+ifeq ($(SAIL_VERSION),1)
+ifeq ($(SKIP_SAIL_VERSION_CHECK),)
+  $(info $(shell etc/version_check.sh))
+  $(error 'Sail version check failed. Set SKIP_SAIL_VERSION_CHECK=true to ignore.')
+endif
+endif
+
 # Select architecture: RV32 or RV64.
 ARCH ?= RV64
 
