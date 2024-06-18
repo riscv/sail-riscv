@@ -168,6 +168,21 @@ function haveZalrsc() -> bool = haveAtomics()
 /* Zicond extension support */
 function haveZicond() -> bool = true
 
+/*
+ * Illegal values legalized to least privileged mode supported.
+ * Note: the only valid combinations of supported modes are M, M+U, M+S+U.
+ */
+function lowest_supported_privLevel() -> Privilege =
+  if haveUsrMode() then User else Machine
+
+function have_privLevel(priv : priv_level) -> bool =
+  match priv {
+    0b00 => haveUsrMode(),
+    0b01 => haveSupMode(),
+    0b10 => false,
+    0b11 => true,
+  }
+
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
   SBE  : 4
@@ -254,6 +269,10 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
    * explicitly later.
    */
   let m : Mstatus = Mk_Mstatus(zero_extend(v[22 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
+
+  /* Legalize MPP */
+  let m = [m with MPP = if have_privLevel(m[MPP]) then m[MPP]
+                        else privLevel_to_bits(lowest_supported_privLevel())];
 
   /* We don't have any extension context yet. */
   let m = [m with XS = extStatus_to_bits(Off)];
