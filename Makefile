@@ -226,14 +226,18 @@ generated_definitions/ocaml/$(ARCH)/riscv.ml: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/ocaml/$(ARCH)
 	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml-nobuild -ocaml_build_dir generated_definitions/ocaml/$(ARCH) -o riscv $(SAIL_SRCS)
 
+# cp -f is required because the generated_definitions/ocaml/$ARCH/*.ml files can
+# be read-only, which would otherwise make subsequent builds fail.
 ocaml_emulator/_sbuild/riscv_ocaml_sim.native: generated_definitions/ocaml/$(ARCH)/riscv.ml ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) Makefile
 	mkdir -p ocaml_emulator/_sbuild
-	cp ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) generated_definitions/ocaml/$(ARCH)/*.ml ocaml_emulator/_sbuild
+	cp ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) ocaml_emulator/_sbuild
+	cp -f generated_definitions/ocaml/$(ARCH)/*.ml ocaml_emulator/_sbuild
 	cd ocaml_emulator/_sbuild && ocamlbuild -use-ocamlfind riscv_ocaml_sim.native
 
 ocaml_emulator/_sbuild/coverage.native: generated_definitions/ocaml/$(ARCH)/riscv.ml ocaml_emulator/_tags.bisect $(PLATFORM_OCAML_SRCS) Makefile
 	mkdir -p ocaml_emulator/_sbuild
-	cp $(PLATFORM_OCAML_SRCS) generated_definitions/ocaml/$(ARCH)/*.ml ocaml_emulator/_sbuild
+	cp $(PLATFORM_OCAML_SRCS) ocaml_emulator/_sbuild
+	cp -f generated_definitions/ocaml/$(ARCH)/*.ml ocaml_emulator/_sbuild
 	cp ocaml_emulator/_tags.bisect ocaml_emulator/_sbuild/_tags
 	cd ocaml_emulator/_sbuild && ocamlbuild -use-ocamlfind riscv_ocaml_sim.native && cp -L riscv_ocaml_sim.native coverage.native
 
