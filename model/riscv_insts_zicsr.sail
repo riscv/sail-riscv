@@ -47,6 +47,7 @@ function readCSR csr : csreg -> xlenbits = {
     (0x342,  _) => mcause.bits,
     (0x343,  _) => mtval,
     (0x344,  _) => mip.bits,
+    (0x34B,  _) => mtval2,
 
     // pmpcfgN
     (0x3A @ idx : bits(4),  _) if idx[0] == bitzero | sizeof(xlen) == 32 => pmpReadCfgReg(unsigned(idx)),
@@ -125,7 +126,7 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(zero_extend(mcounteren.bits)) },
     (0x30A, 32) => { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); Some(menvcfg.bits[31 .. 0]) },
     (0x30A, 64) => { menvcfg = legalize_menvcfg(menvcfg, value); Some(menvcfg.bits) },
-    (0x310, 32) => { Some(mstatush.bits) }, // ignore writes for now
+    (0x310, 32) => { mstatush = legalize_mstatush(mstatush, value); Some(mstatush.bits) },
     (0x31A, 32) => { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); Some(menvcfg.bits[63 .. 32]) },
     (0x320,  _) => { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Some(zero_extend(mcountinhibit.bits)) },
     (0x340,  _) => { mscratch = value; Some(mscratch) },
@@ -133,6 +134,7 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x342,  _) => { mcause.bits = value; Some(mcause.bits) },
     (0x343,  _) => { mtval = value; Some(mtval) },
     (0x344,  _) => { mip = legalize_mip(mip, value); Some(mip.bits) },
+    (0x34B,  _) => { mtval = value; Some(mtval) },
 
     // pmpcfgN
     (0x3A @ idx : bits(4),  _) if idx[0] == bitzero | sizeof(xlen) == 32 => {

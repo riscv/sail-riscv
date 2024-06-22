@@ -88,7 +88,13 @@ let options = Arg.align ([("-dump-dts",
                            " requested isa");
                           ("-with-dtc",
                            Arg.String PI.set_dtc,
-                           " full path to dtc to use")
+                           " full path to dtc to use");
+                          ("-enable-ssdbltrp",
+                           Arg.Set P.config_enable_ssdbltrp,
+                           " enable ssdbltrp extension");
+                          ("-enable-smdbltrp",
+                           Arg.Set P.config_enable_smdbltrp,
+                           " enable smdbltrp extension")
                          ])
 
 let usage_msg = "RISC-V platform options:"

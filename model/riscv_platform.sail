@@ -454,3 +454,12 @@ function platform_wfi() -> unit = {
     mcycle = mtimecmp;
   }
 }
+function platform_handle_critical_error() -> unit = {
+  /* When Debug Mode is added to model, then add Sddbltrp
+   * to wait for halt request.
+   */
+  if   get_config_print_platform()
+  then print_platform("handling M-mode critical error");
+  htif_done = true;
+  htif_exit_code = zeros();
+}

@@ -23,6 +23,8 @@ extern bool rv_enable_dirty_update;
 extern bool rv_enable_misaligned;
 extern bool rv_mtval_has_illegal_inst_bits;
 extern bool rv_enable_writable_fiom;
+extern bool rv_enable_ssdbltrp;
+extern bool rv_enable_smdbltrp;
 
 extern uint64_t rv_ram_base;
 extern uint64_t rv_ram_size;

@@ -14,6 +14,8 @@ bool rv_enable_next = false;
 bool rv_enable_writable_misa = true;
 bool rv_enable_fdext = true;
 bool rv_enable_vext = true;
+bool rv_enable_ssdbltrp = false;
+bool rv_enable_smdbltrp = false;
 
 bool rv_enable_dirty_update = false;
 bool rv_enable_misaligned = false;

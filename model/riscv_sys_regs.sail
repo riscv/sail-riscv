@@ -104,6 +104,10 @@ val sys_pmp_grain = {c: "sys_pmp_grain", ocaml: "Platform.pmp_grain", _: "sys_pm
 
 /* whether misa.v was enabled at boot */
 val sys_enable_vext = {c: "sys_enable_vext", ocaml: "Platform.enable_vext", _: "sys_enable_vext"} : unit -> bool
+/* whether Ssdbltrp was enabled at boot */
+val sys_enable_ssdbltrp = {c: "sys_enable_ssdbltrp", ocaml: "Platform.enable_ssdbltrp", _: "sys_enable_ssdbltrp"} : unit -> bool
+/* whether Smdbltrp was enabled at boot */
+val sys_enable_smdbltrp = {c: "sys_enable_smdbltrp", ocaml: "Platform.enable_smdbltrp", _: "sys_enable_smdbltrp"} : unit -> bool
 
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
@@ -168,6 +172,54 @@ function haveZalrsc() -> bool = haveAtomics()
 /* Zicond extension support */
 function haveZicond() -> bool = true
 
+/* Ssdbltrp extension support */
+function haveSsdbltrp() -> bool = sys_enable_ssdbltrp()
+/* Smdbltrp extension support */
+function haveSmdbltrp() -> bool = sys_enable_smdbltrp()
+
+function haveHExt() -> bool = false
+
+// menvcfg is 64 bits. senvcfg is SXLEN bits and does not have the two
+// upper fields so for simplicity we can use the same type.
+bitfield MEnvcfg : bits(64) = {
+  // Supervisor TimeCmp Extension
+  STCE   : 63,
+  // Page Based Memory Types Extension
+  PBMTE  : 62,
+  // Reserved WPRI bits.
+  wpri_2 : 61 .. 60,
+  // Ssdbltrp: Double Trap Enable
+  DTE    : 59,
+  // Reserved WPRI bits.
+  wpri_1 : 58 .. 8,
+  // Cache Block Zero instruction Enable
+  CBZE   : 7,
+  // Cache Block Clean and Flush instruction Enable
+  CBCFE  : 6,
+  // Cache Block Invalidate instruction Enable
+  CBIE   : 5 .. 4,
+  // Reserved WPRI bits.
+  wpri_0 : 3 .. 1,
+  // Fence of I/O implies Memory
+  FIOM   : 0,
+}
+
+bitfield SEnvcfg : xlenbits = {
+  // Cache Block Zero instruction Enable
+  CBZE   : 7,
+  // Cache Block Clean and Flush instruction Enable
+  CBCFE  : 6,
+  // Cache Block Invalidate instruction Enable
+  CBIE   : 5 .. 4,
+  // Reserved WPRI bits.
+  wpri_0 : 3 .. 1,
+  // Fence of I/O implies Memory
+  FIOM   : 0,
+}
+
+register menvcfg : MEnvcfg
+register senvcfg : SEnvcfg
+
 /*
  * Illegal values legalized to least privileged mode supported.
  * Note: the only valid combinations of supported modes are M, M+U, M+S+U.
@@ -184,6 +236,7 @@ function have_privLevel(priv : priv_level) -> bool =
   }
 
 bitfield Mstatush : bits(32) = {
+  MDT  : 13,
   MBE  : 5,
   SBE  : 4
 }
@@ -191,6 +244,10 @@ register mstatush : Mstatush
 
 bitfield Mstatus : xlenbits = {
   SD   : xlen - 1,
+
+  // MDT bit introduced by Smdbltrp is also handled in same ad-hoc way
+  // as done for MBE and SBE
+  // MDT  : 42
 
   // The MBE and SBE fields are in mstatus in RV64 and absent in RV32.
   // On RV32, they are in mstatush, which doesn't exist in RV64.  For now,
@@ -203,6 +260,7 @@ bitfield Mstatus : xlenbits = {
   // SXL  : 35 .. 34,
   // UXL  : 33 .. 32,
 
+  SDT  : 24,
   TSR  : 22,
   TW   : 21,
   TVM  : 20,
@@ -226,6 +284,17 @@ bitfield Mstatus : xlenbits = {
   UIE  : 0
 }
 register mstatus : Mstatus
+
+function legalize_mstatush(o : Mstatush, v : bits(32)) -> Mstatush = {
+  let v : Mstatush = Mk_Mstatush(v);
+
+  /* Smdbltrp: When the MDT bit is set to 1, the MIE bit is cleared to 0. */
+  let o = [o with MDT = if haveSmdbltrp() then v[MDT] else 0b0];
+  if o[MDT] == 0b1 then mstatus[MIE] = 0b0;
+
+  /* We don't currently support changing MBE and SBE. */
+  o
+}
 
 function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
   if   t != Execute() & m[MPRV] == 0b1
@@ -262,13 +331,25 @@ function set_mstatus_UXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
   }
 }
 
+function set_mstatus_MDT(v : bits(1) ) -> unit = {
+  if   sizeof(xlen) == 32
+  then mstatush[MDT] = v
+  else mstatus.bits[42 .. 42] = v;
+}
+
+function get_mstatus_MDT() -> bits(1) = {
+  if   sizeof(xlen) == 32
+  then mstatush[MDT]
+  else mstatus.bits[42 .. 42]
+}
+
 function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   /*
    * Populate all defined fields using the bits of v, stripping anything
    * that does not have a matching bitfield entry. All bits above 32 are handled
    * explicitly later.
    */
-  let m : Mstatus = Mk_Mstatus(zero_extend(v[22 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
+  let m : Mstatus = Mk_Mstatus(zero_extend(v[24 .. 24] @ 0b0 @ v[22 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
 
   /* Legalize MPP */
   let m = [m with MPP = if have_privLevel(m[MPP]) then m[MPP]
@@ -295,6 +376,26 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   let m = if sizeof(xlen) == 64 then {
              Mk_Mstatus([m.bits with 37 .. 36 = 0b00])
           } else m;
+
+  /* Smdbltrp: legalize MDT (bit 42 - RV64 only) and SDT */
+  let m = if sizeof(xlen) == 64 then {
+             Mk_Mstatus([m.bits with 42 .. 42 = if haveSmdbltrp() then v[42 .. 42] else 0b0])
+          } else m;
+  let m = if not(haveSsdbltrp()) then [m with SDT = 0b0] else m;
+  /*
+   * When the MDT bit is set to 1, the MIE bit is cleared to 0.
+   * MIE cannot be set unless SDT is already 0 or is being set to 0
+   */
+  let m = if sizeof(xlen) == 64 then {
+             if m.bits[42 .. 42] == 0b1 then [m with MIE = 0b0] else m;
+          } else {
+             if mstatush[MDT] == 0b1 then [m with MIE = 0b0] else m;
+          };
+  /*
+   * When the SDT bit is set to 1, the SIE bit is cleared to 0.
+   * SIE cannot be set unless SDT is already 0 or is being set to 0
+   */
+  let m = if m[SDT] == 0b1 then [m with SIE = 0b0] else m;
 
   /* Hardwired to zero in the absence of 'U' or 'N'. */
   let m = if not(haveNExt()) then {
@@ -400,6 +501,7 @@ function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
 /* exception processing state */
 
 bitfield Medeleg : xlenbits = {
+  Double_Trap_Fault : 16,
   SAMO_Page_Fault   : 15,
   Load_Page_Fault   : 13,
   Fetch_Page_Fault  : 12,
@@ -419,7 +521,8 @@ register medeleg : Medeleg  /* Delegation to S-mode */
 
 function legalize_medeleg(o : Medeleg, v : xlenbits) -> Medeleg = {
   /* M-EnvCalls delegation is not supported */
-  [Mk_Medeleg(v) with MEnvCall = 0b0]
+  /* Ssdbltrp: Double Trap delegation is not supported */
+  [Mk_Medeleg(v) with MEnvCall = 0b0, Double_Trap_Fault = 0b0]
 }
 
 /* registers for trap handling */
@@ -477,6 +580,7 @@ function pc_alignment_mask() -> xlenbits =
 
 /* auxiliary exception registers */
 
+register mtval2   : xlenbits
 register mtval    : xlenbits
 register mscratch : xlenbits
 
@@ -552,6 +656,7 @@ bitfield Sstatus : xlenbits = {
   // The UXL field does not exist on RV32, so we define an explicit
   // getter and setter below.
   // UXL  : 30 .. 29,
+  SDT  : 24,
   MXR  : 19,
   SUM  : 18,
   XS   : 16 .. 15,
@@ -590,6 +695,7 @@ function lower_mstatus(m : Mstatus) -> Sstatus = {
   let s = [s with UPIE = m[UPIE]];
   let s = [s with SIE = m[SIE]];
   let s = [s with UIE = m[UIE]];
+  let s = [s with SDT = if menvcfg[DTE] == 0b1 then m[SDT] else 0b0];
   s
 }
 
@@ -610,6 +716,7 @@ function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
   let m = [m with UPIE = s[UPIE]];
   let m = [m with SIE = s[SIE]];
   let m = [m with UIE = s[UIE]];
+  let m = [m with SDT = if menvcfg[DTE] == 0b1 then s[SDT] else m[SDT]];
   m
 }
 
@@ -799,44 +906,10 @@ function read_seed_csr() -> xlenbits = {
 /* Writes to the seed CSR are ignored */
 function write_seed_csr () -> option(xlenbits) = None()
 
-bitfield MEnvcfg : bits(64) = {
-  // Supervisor TimeCmp Extension
-  STCE   : 63,
-  // Page Based Memory Types Extension
-  PBMTE  : 62,
-  // Reserved WPRI bits.
-  wpri_1 : 61 .. 8,
-  // Cache Block Zero instruction Enable
-  CBZE   : 7,
-  // Cache Block Clean and Flush instruction Enable
-  CBCFE  : 6,
-  // Cache Block Invalidate instruction Enable
-  CBIE   : 5 .. 4,
-  // Reserved WPRI bits.
-  wpri_0 : 3 .. 1,
-  // Fence of I/O implies Memory
-  FIOM   : 0,
-}
-
-bitfield SEnvcfg : xlenbits = {
-  // Cache Block Zero instruction Enable
-  CBZE   : 7,
-  // Cache Block Clean and Flush instruction Enable
-  CBCFE  : 6,
-  // Cache Block Invalidate instruction Enable
-  CBIE   : 5 .. 4,
-  // Reserved WPRI bits.
-  wpri_0 : 3 .. 1,
-  // Fence of I/O implies Memory
-  FIOM   : 0,
-}
-
-register menvcfg : MEnvcfg
-register senvcfg : SEnvcfg
-
 function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
+  let o = [o with DTE = if haveSsdbltrp() then v[DTE] else 0b0];
   // Other extensions are not implemented yet so all other fields are read only zero.
   o
 }
