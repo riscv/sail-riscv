@@ -276,11 +276,8 @@ Install [Sail](https://github.com/rems-project/sail/) [using opam](https://githu
 $ make
 ```
 will build the 64-bit OCaml simulator in
-`ocaml_emulator/riscv_ocaml_sim_RV64`, the C simulator in
-`c_emulator/riscv_sim_RV64`, the Isabelle model in
-`generated_definitions/isabelle/RV64/Riscv.thy`, the Coq model in
-`generated_definitions/coq/RV64/riscv.v`, and the HOL4 model in
-`generated_definitions/hol4/RV64/riscvScript.sml`.
+`ocaml_emulator/riscv_ocaml_sim_RV64` and the C simulator in
+`c_emulator/riscv_sim_RV64`.
 
 One can build either the RV32 or the RV64 model by specifying
 `ARCH=RV32` or `ARCH=RV64` on the `make` line, and using the matching
@@ -292,13 +289,16 @@ $ ARCH=RV32 make
 ```
 
 which creates the 32-bit OCaml simulator in
-`ocaml_emulator/riscv_ocaml_sim_RV32`, and the C simulator in
-`c_emulator/riscv_sim_RV32`, and the prover models in the
-corresponding `RV32` subdirectories.
+`ocaml_emulator/riscv_ocaml_sim_RV32` and the C simulator in
+`c_emulator/riscv_sim_RV32`.
 
 The Makefile targets `riscv_isa_build`, `riscv_coq_build`, and
 `riscv_hol_build` invoke the respective prover to process the
-definitions.  We have tested Isabelle 2018, Coq 8.8.1, and HOL4
+definitions and produce the Isabelle model in
+`generated_definitions/isabelle/RV64/Riscv.thy`, the Coq model in
+`generated_definitions/coq/RV64/riscv.v`, or the HOL4 model in
+`generated_definitions/hol4/RV64/riscvScript.sml` respectively.
+We have tested Isabelle 2018, Coq 8.8.1, and HOL4
 Kananaskis-12.  When building these targets, please make sure the
 corresponding prover libraries in the Sail directory
 (`$SAIL_DIR/lib/$prover`) are up-to-date and built, e.g. by running
