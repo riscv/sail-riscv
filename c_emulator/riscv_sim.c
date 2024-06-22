@@ -54,6 +54,10 @@ const char *RV32ISA = "RV32IMAC";
 #define OPT_PMP_COUNT 1002
 #define OPT_PMP_GRAIN 1003
 #define OPT_ENABLE_SVINVAL 1004
+#define OPT_ENABLE_SMCTR 1005
+#define OPT_VALID_CTR_DEPTH 1006
+#define OPT_NUM_CCE_BITS 1007
+#define OPT_MCTRCTL_WARL_MASK 1008
 #define OPT_ENABLE_ZCB 10014
 
 static bool do_dump_dts = false;
@@ -149,6 +153,10 @@ static struct option options[] = {
     {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
     {"enable-svinval",              no_argument,       0, OPT_ENABLE_SVINVAL      },
     {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
+    {"valid-ctr-depth",             required_argument, 0, OPT_VALID_CTR_DEPTH     },
+    {"num-cce-bits",                required_argument, 0, OPT_NUM_CCE_BITS        },
+    {"enable-smctr",                no_argument,       0, OPT_ENABLE_SMCTR        },
+    {"mctrctl-warl-mask",           required_argument, 0, OPT_MCTRCTL_WARL_MASK   },
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
@@ -245,6 +253,10 @@ static int process_args(int argc, char **argv)
   uint64_t ram_size = 0;
   uint64_t pmp_count = 0;
   uint64_t pmp_grain = 0;
+  uint64_t valid_ctr_depth = 0;
+  uint64_t num_cce_bits = 0;
+  uint64_t mctrctl_warl_mask = 0;
+
   while (true) {
     c = getopt_long(argc, argv,
                     "a"
@@ -393,6 +405,38 @@ static int process_args(int argc, char **argv)
     case OPT_ENABLE_ZCB:
       fprintf(stderr, "enabling Zcb extension.\n");
       rv_enable_zcb = true;
+      break;
+    case OPT_ENABLE_SMCTR:
+      fprintf(stderr, "enabling Smctr extension.\n");
+      rv_enable_smctr = true;
+      break;
+    case OPT_VALID_CTR_DEPTH:
+      rv_valid_ctr_depth = atol(optarg);
+      fprintf(stderr, "Valid CTR depth: %" PRIu64 "\n", rv_valid_ctr_depth);
+      if (rv_valid_ctr_depth > 0x1F) {
+        fprintf(stderr, "invalid CTR depth");
+        exit(1);
+      }
+      break;
+    case OPT_NUM_CCE_BITS:
+      num_cce_bits = atol(optarg);
+      fprintf(stderr, "Num CCE bits: %" PRIu64 "\n", num_cce_bits);
+      if (num_cce_bits > 4) {
+        fprintf(stderr, "invalid number of cce bits: must be 0,1,2,3, or 4 ");
+        exit(1);
+      }
+      rv_num_cce_bits = num_cce_bits;
+      break;
+    case OPT_MCTRCTL_WARL_MASK:
+      mctrctl_warl_mask = atol(optarg);
+      fprintf(stderr, "mctrctl WARL mask: %" PRIu64 "\n", mctrctl_warl_mask);
+      if (((mctrctl_warl_mask & 0x7) == 0)
+          || ((mctrctl_warl_mask & (1 << 11)) == 0)) {
+        fprintf(stderr,
+                "invalid mctrctl WARL mask - M/S/U/BPFRZ bits are mandatory");
+        exit(1);
+      }
+      rv_mctrctl_warl_mask = mctrctl_warl_mask;
       break;
     case 'x':
       fprintf(stderr, "enabling Zfinx support.\n");

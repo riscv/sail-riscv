@@ -57,6 +57,7 @@ match bv {
 but this is difficult
 */
 
+val update_ctr_jal : regidx -> unit
 function clause execute (RISCV_JAL(imm, rd)) = {
   let t : xlenbits = PC + sign_extend(imm);
   /* Extensions get the first checks on the prospective target address. */
@@ -74,6 +75,8 @@ function clause execute (RISCV_JAL(imm, rd)) = {
       } else {
         X(rd) = get_next_pc();
         set_next_pc(target);
+        /* update control transfer record if Ssctr/Smctr is active */
+        update_ctr_jal(rd);
         RETIRE_SUCCESS
       }
     }
@@ -111,6 +114,7 @@ mapping encdec_bop : bop <-> bits(3) = {
 mapping clause encdec = BTYPE(imm7_6 @ imm5_0 @ imm7_5_0 @ imm5_4_1 @ 0b0, rs2, rs1, op)
   <-> imm7_6 : bits(1) @ imm7_5_0 : bits(6) @ rs2 @ rs1 @ encdec_bop(op) @ imm5_4_1 : bits(4) @ imm5_0 : bits(1) @ 0b1100011
 
+val update_ctr_conditional: (bool) -> unit
 function clause execute (BTYPE(imm, rs2, rs1, op)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
@@ -136,11 +140,17 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
           RETIRE_FAIL;
         } else {
           set_next_pc(target);
+          /* Update control transfer record if Smctr/Ssctr is active */
+          update_ctr_conditional(true);
           RETIRE_SUCCESS
         }
       }
     }
-  } else RETIRE_SUCCESS
+  } else {
+    /* Update control transfer record if Smctr/Ssctr is active */
+    update_ctr_conditional(false);
+    RETIRE_SUCCESS
+  }
 }
 
 mapping btype_mnemonic : bop <-> string = {

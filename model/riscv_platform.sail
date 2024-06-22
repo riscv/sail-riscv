@@ -250,10 +250,14 @@ function clint_store(addr, width, data) = {
   }
 }
 
+val count_ctr_cycles : unit -> unit
 val tick_clock : unit -> unit
 function tick_clock() = {
   if   mcountinhibit[CY] == 0b0
   then mcycle = mcycle + 1;
+
+  /* Smctr/Ssctr - update CTR cycles */
+  count_ctr_cycles();
 
   mtime  = mtime  + 1;
   clint_dispatch()

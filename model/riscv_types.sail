@@ -147,7 +147,8 @@ enum InterruptType = {
   I_M_Timer,
   I_U_External,
   I_S_External,
-  I_M_External
+  I_M_External,
+  I_L_LCOFI
 }
 
 val interruptType_to_bits : InterruptType -> exc_code
@@ -161,7 +162,8 @@ function interruptType_to_bits (i) =
     I_M_Timer    => 0x07,
     I_U_External => 0x08,
     I_S_External => 0x09,
-    I_M_External => 0x0b
+    I_M_External => 0x0b,
+    I_L_LCOFI    => 0x0d
   }
 
 /* architectural exception definitions */

@@ -49,8 +49,22 @@ mapping clause csr_name_map = 0x141  <-> "sepc"
 mapping clause csr_name_map = 0x142  <-> "scause"
 mapping clause csr_name_map = 0x143  <-> "stval"
 mapping clause csr_name_map = 0x144  <-> "sip"
+/* Supervisor Control Transfer Records Control Register */
+mapping clause csr_name_map = 0x14E  <-> "sctrctl"
+/* Supervisor Control Transfer Records Status Register */
+mapping clause csr_name_map = 0x14F  <-> "sctrstatus"
 /* supervisor protection and translation */
 mapping clause csr_name_map = 0x180  <-> "satp"
+/* supervisor indirect register select and alias CSRs */
+mapping clause csr_name_map = 0x150  <-> "siselect"
+mapping clause csr_name_map = 0x151  <-> "sireg"
+mapping clause csr_name_map = 0x152  <-> "sireg2"
+mapping clause csr_name_map = 0x153  <-> "sireg3"
+mapping clause csr_name_map = 0x155  <-> "sireg4"
+mapping clause csr_name_map = 0x156  <-> "sireg5"
+mapping clause csr_name_map = 0x157  <-> "sireg6"
+/* Supervisor Control Transfer Records Depth Register */
+mapping clause csr_name_map = 0x15F  <-> "sctrdepth"
 /* supervisor envcfg */
 mapping clause csr_name_map = 0x10A  <-> "senvcfg"
 /* machine information registers */
@@ -70,12 +84,25 @@ mapping clause csr_name_map = 0x306  <-> "mcounteren"
 mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
 /* machine envcfg */
 mapping clause csr_name_map = 0x30A  <-> "menvcfg"
+/* Smstateen csrs */
+mapping clause csr_name_map = 0x30C  <-> "mstateen0"
+mapping clause csr_name_map = 0x31C  <-> "mstateen0h"
 /* machine trap handling */
 mapping clause csr_name_map = 0x340  <-> "mscratch"
 mapping clause csr_name_map = 0x341  <-> "mepc"
 mapping clause csr_name_map = 0x342  <-> "mcause"
 mapping clause csr_name_map = 0x343  <-> "mtval"
 mapping clause csr_name_map = 0x344  <-> "mip"
+/* Machine Control Transfer Records Control Register */
+mapping clause csr_name_map = 0x34E  <-> "mctrctl"
+/* Machine indirect register select and alias CSRs */
+mapping clause csr_name_map = 0x350  <-> "miselect"
+mapping clause csr_name_map = 0x351  <-> "mireg"
+mapping clause csr_name_map = 0x352  <-> "mireg2"
+mapping clause csr_name_map = 0x353  <-> "mireg3"
+mapping clause csr_name_map = 0x355  <-> "mireg4"
+mapping clause csr_name_map = 0x356  <-> "mireg5"
+mapping clause csr_name_map = 0x357  <-> "mireg6"
 /* machine protection and translation */
 mapping clause csr_name_map = 0x3A0  <-> "pmpcfg0"
 mapping clause csr_name_map = 0x3A1  <-> "pmpcfg1"

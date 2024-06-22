@@ -38,8 +38,10 @@ function readCSR csr : csreg -> xlenbits = {
     (0x305,  _) => get_mtvec(),
     (0x306,  _) => zero_extend(mcounteren.bits),
     (0x30A,  _) => menvcfg.bits[sizeof(xlen) - 1 .. 0],
+    (0x30C,  _) => mstateen0.bits[sizeof(xlen) - 1 .. 0],
     (0x310, 32) => mstatush.bits,
     (0x31A, 32) => menvcfg.bits[63 .. 32],
+    (0x31C, 32) => mstateen0.bits[63 .. 32],
     (0x320,  _) => zero_extend(mcountinhibit.bits),
 
     (0x340,  _) => mscratch,
@@ -47,6 +49,16 @@ function readCSR csr : csreg -> xlenbits = {
     (0x342,  _) => mcause.bits,
     (0x343,  _) => mtval,
     (0x344,  _) => mip.bits,
+
+    (0x34E,  _) => mctrctl.bits[sizeof(xlen) - 1 .. 0],
+
+    (0x350,  _) => miselect.bits,
+    (0x351,  _) => get_mireg(),
+    (0x352,  _) => get_mireg2(),
+    (0x353,  _) => get_mireg3(),
+    (0x355,  _) => get_mireg4(),
+    (0x356,  _) => get_mireg5(),
+    (0x357,  _) => get_mireg6(),
 
     // pmpcfgN
     (0x3A @ idx : bits(4),  _) if idx[0] == bitzero | sizeof(xlen) == 32 => pmpReadCfgReg(unsigned(idx)),
@@ -87,6 +99,16 @@ function readCSR csr : csreg -> xlenbits = {
     (0x142,  _) => scause.bits,
     (0x143,  _) => stval,
     (0x144,  _) => lower_mip(mip, mideleg).bits,
+    (0x14E,  _) => lower_sctrctl(mctrctl).bits[sizeof(xlen) - 1 .. 0],
+    (0x14F,  _) => zero_extend(sctrstatus.bits),
+    (0x150,  _) => siselect.bits(),
+    (0x151,  _) => get_sireg(),
+    (0x152,  _) => get_sireg2(),
+    (0x153,  _) => get_sireg3(),
+    (0x155,  _) => get_sireg4(),
+    (0x156,  _) => get_sireg5(),
+    (0x157,  _) => get_sireg6(),
+    (0x15F,  _) => zero_extend(sctrdepth.bits),
     (0x180,  _) => satp,
 
     /* user mode counters */
@@ -125,14 +147,27 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(zero_extend(mcounteren.bits)) },
     (0x30A, 32) => { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); Some(menvcfg.bits[31 .. 0]) },
     (0x30A, 64) => { menvcfg = legalize_menvcfg(menvcfg, value); Some(menvcfg.bits) },
+    (0x30C, 32) => { mstateen0 = legalize_mstateen0(mstateen0, mstateen0.bits[63 .. 32] @ value); Some(mstateen0.bits[31 .. 0]) },
+    (0x30C, 64) => { mstateen0 = legalize_mstateen0(mstateen0, value); Some(mstateen0.bits) },
     (0x310, 32) => { Some(mstatush.bits) }, // ignore writes for now
     (0x31A, 32) => { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); Some(menvcfg.bits[63 .. 32]) },
+    (0x31C, 32) => { mstateen0 = legalize_mstateen0(mstateen0, value @ mstateen0.bits[31 .. 0]); Some(mstateen0.bits[63 .. 32]) },
     (0x320,  _) => { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Some(zero_extend(mcountinhibit.bits)) },
     (0x340,  _) => { mscratch = value; Some(mscratch) },
     (0x341,  _) => { Some(set_xret_target(Machine, value)) },
     (0x342,  _) => { mcause.bits = value; Some(mcause.bits) },
     (0x343,  _) => { mtval = value; Some(mtval) },
     (0x344,  _) => { mip = legalize_mip(mip, value); Some(mip.bits) },
+
+    (0x34E,  _) => { mctrctl = legalize_mctrctl(mctrctl, value); Some(mctrctl.bits[sizeof(xlen) - 1 .. 0]) },
+
+    (0x350,  _) => { miselect = legalize_iselect(miselect, value); Some(miselect.bits) },
+    (0x351,  _) => { set_mireg(value);  Some(get_mireg())  },
+    (0x352,  _) => { set_mireg2(value); Some(get_mireg2()) },
+    (0x353,  _) => { set_mireg3(value); Some(get_mireg3()) },
+    (0x355,  _) => { set_mireg4(value); Some(get_mireg4()) },
+    (0x356,  _) => { set_mireg5(value); Some(get_mireg5()) },
+    (0x357,  _) => { set_mireg6(value); Some(get_mireg6()) },
 
     // pmpcfgN
     (0x3A @ idx : bits(4),  _) if idx[0] == bitzero | sizeof(xlen) == 32 => {
@@ -168,6 +203,20 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x142,  _) => { scause.bits = value; Some(scause.bits) },
     (0x143,  _) => { stval = value; Some(stval) },
     (0x144,  _) => { mip = legalize_sip(mip, mideleg, value); Some(mip.bits) },
+
+    (0x14E,  _) => { mctrctl = legalize_sctrctl(mctrctl, value); Some(mctrctl.bits[sizeof(xlen) - 1 .. 0]) },
+    (0x14F,  _) => { sctrstatus = legalize_sctrstatus(sctrstatus, value); Some(zero_extend(sctrstatus.bits)) },
+
+    (0x150,  _) => { siselect = legalize_iselect(siselect, value); Some(siselect.bits) },
+    (0x151,  _) => { set_sireg(value);  Some(get_sireg()) },
+    (0x152,  _) => { set_sireg2(value); Some(get_sireg2()) },
+    (0x153,  _) => { set_sireg3(value); Some(get_sireg3()) },
+    (0x155,  _) => { set_sireg4(value); Some(get_sireg4()) },
+    (0x156,  _) => { set_sireg5(value); Some(get_sireg5()) },
+    (0x157,  _) => { set_sireg6(value); Some(get_sireg6()) },
+
+    (0x15F,  _) => { sctrdepth = legalize_sctrdepth(sctrdepth, value); Some(zero_extend(sctrdepth.bits)) },
+
     (0x180,  _) => { satp = legalize_satp(cur_Architecture(), satp, value); Some(satp) },
 
     /* user mode: seed (entropy source). writes are ignored */

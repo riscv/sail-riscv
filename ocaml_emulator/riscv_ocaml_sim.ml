@@ -88,7 +88,19 @@ let options = Arg.align ([("-dump-dts",
                            " requested isa");
                           ("-with-dtc",
                            Arg.String PI.set_dtc,
-                           " full path to dtc to use")
+                           " full path to dtc to use");
+                          ("-enable-smctr",
+                           Arg.Set P.config_enable_smctr,
+                           " enable Smctr extension");
+                          ("-valid-ctr-depth",
+                           Arg.Int P.set_valid_ctr_depth,
+                           " valid CTR depths");
+                          ("-mctrctl-warl-mask",
+                           Arg.Int P.set_mctrctl_warl_mask,
+                           " writable (WARL) bits in mctrctl");
+                          ("-num-cce-bits",
+                           Arg.Int P.set_num_cce_bits,
+                           " number of CCE bits (0, 1, 2, 3, 4)");
                          ])
 
 let usage_msg = "RISC-V platform options:"

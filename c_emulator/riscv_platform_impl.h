@@ -11,6 +11,11 @@
 extern uint64_t rv_pmp_count;
 extern uint64_t rv_pmp_grain;
 
+extern uint64_t rv_valid_ctr_depth;
+extern uint64_t rv_num_cce_bits;
+extern uint64_t rv_mctrctl_warl_mask;
+extern bool rv_enable_smctr;
+
 extern bool rv_enable_svinval;
 extern bool rv_enable_zcb;
 extern bool rv_enable_zfinx;
