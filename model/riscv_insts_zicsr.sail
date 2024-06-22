@@ -38,8 +38,10 @@ function readCSR csr : csreg -> xlenbits = {
     (0x305,  _) => get_mtvec(),
     (0x306,  _) => zero_extend(mcounteren.bits),
     (0x30A,  _) => menvcfg.bits[sizeof(xlen) - 1 .. 0],
+    (0x30C,  _) => mstateen0.bits[sizeof(xlen) - 1 .. 0],
     (0x310, 32) => mstatush.bits,
     (0x31A, 32) => menvcfg.bits[63 .. 32],
+    (0x31C, 32) => mstateen0.bits[63 .. 32],
     (0x320,  _) => zero_extend(mcountinhibit.bits),
 
     (0x340,  _) => mscratch,
@@ -88,6 +90,7 @@ function readCSR csr : csreg -> xlenbits = {
     (0x143,  _) => stval,
     (0x144,  _) => lower_mip(mip, mideleg).bits,
     (0x180,  _) => satp,
+    (0x181,  _) => srmcfg.bits(),
 
     /* user mode counters */
     (0xC00,  _) => mcycle[(sizeof(xlen) - 1) .. 0],
@@ -125,8 +128,11 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(zero_extend(mcounteren.bits)) },
     (0x30A, 32) => { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); Some(menvcfg.bits[31 .. 0]) },
     (0x30A, 64) => { menvcfg = legalize_menvcfg(menvcfg, value); Some(menvcfg.bits) },
+    (0x30C, 32) => { mstateen0 = legalize_mstateen0(mstateen0, mstateen0.bits()[63 .. 32] @ value); Some(mstateen0.bits()[31 .. 0]) },
+    (0x30C, 64) => { mstateen0 = legalize_mstateen0(mstateen0, value); Some(mstateen0.bits()) },
     (0x310, 32) => { Some(mstatush.bits) }, // ignore writes for now
     (0x31A, 32) => { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); Some(menvcfg.bits[63 .. 32]) },
+    (0x31C, 32) => { mstateen0 = legalize_mstateen0(mstateen0, value @ mstateen0.bits()[31 .. 0]); Some(mstateen0.bits()[63 .. 32]) },
     (0x320,  _) => { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Some(zero_extend(mcountinhibit.bits)) },
     (0x340,  _) => { mscratch = value; Some(mscratch) },
     (0x341,  _) => { Some(set_xret_target(Machine, value)) },
@@ -169,6 +175,7 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x143,  _) => { stval = value; Some(stval) },
     (0x144,  _) => { mip = legalize_sip(mip, mideleg, value); Some(mip.bits) },
     (0x180,  _) => { satp = legalize_satp(cur_Architecture(), satp, value); Some(satp) },
+    (0x181,  _) => { srmcfg = legalize_srmcfg(srmcfg, value); Some(srmcfg.bits()) },
 
     /* user mode: seed (entropy source). writes are ignored */
     (0x015,  _) => write_seed_csr(),
