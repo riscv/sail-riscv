@@ -478,10 +478,6 @@ opam-uninstall:
 	if [ -z "$(INSTALL_DIR)" ]; then echo INSTALL_DIR is unset; false; fi
 	rm $(INSTALL_DIR)/bin/riscv_sim_RV64
 	rm $(INSTALL_DIR)/bin/riscv_sim_RV32
-apply_header:
-	headache -c etc/headache_config -h LICENCE `ls model/*.sail`
-	headache -c etc/headache_config -h LICENCE `ls handwritten_support/*.lem`
-	headache -c etc/headache_config -h LICENCE `ls handwritten_support/*.v`
 
 clean:
 	-rm -rf generated_definitions/ocaml/* generated_definitions/c/* generated_definitions/latex/*
