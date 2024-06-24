@@ -454,3 +454,15 @@ function platform_wfi() -> unit = {
     mcycle = mtimecmp;
   }
 }
+
+/* Start implementation defined short timeout if short is true
+ * For no timeout, start a implementation defined timeout if privilege
+ * level is less than M.
+ */
+function platform_start_wrs_timeout(short : bool) -> unit = ()
+
+/* Stop any timer started by WRS */
+function platform_stop_wrs_timeout() -> unit =  ()
+
+/* Return status of WRS timer timeout */
+function platform_is_wrs_timed_out() -> bool = true

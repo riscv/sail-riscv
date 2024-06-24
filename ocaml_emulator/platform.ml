@@ -181,3 +181,7 @@ let init arch elf_file =
   in ( write_rom 0 rom;
        get_slice_int (cur_arch_bitwidth (), rom_base, Big_int.zero)
      )
+
+(* Zawrs: Wait-on-Reservation-Set *)
+let reservation_set_valid () =
+  "none" <> !reservation

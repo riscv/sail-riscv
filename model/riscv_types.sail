@@ -357,6 +357,9 @@ enum extop_zbb = {RISCV_SEXTB, RISCV_SEXTH, RISCV_ZEXTH}
 
 enum zicondop = {RISCV_CZERO_EQZ, RISCV_CZERO_NEZ}
 
+/* Zawrs : Wait-on-Reservation-Set */
+enum wrsop = {WRS_STO, WRS_NTO}
+
 mapping bool_bits : bool <-> bits(1) = {
   true   <-> 0b1,
   false  <-> 0b0
