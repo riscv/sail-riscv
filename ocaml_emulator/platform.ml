@@ -14,6 +14,7 @@ let config_enable_svinval              = ref false
 let config_enable_zcb                  = ref false
 let config_enable_writable_fiom        = ref true
 let config_enable_vext                 = ref true
+let config_enable_bext                 = ref false
 let config_pmp_count                   = ref Big_int.zero
 let config_pmp_grain                   = ref Big_int.zero
 
@@ -87,6 +88,7 @@ let enable_rvc ()                    = !config_enable_rvc
 let enable_next ()                   = !config_enable_next
 let enable_fdext ()                  = false
 let enable_vext ()                   = !config_enable_vext
+let enable_bext ()                   = !config_enable_bext
 let enable_dirty_update ()           = !config_enable_dirty_update
 let enable_misaligned_access ()      = !config_enable_misaligned_access
 let mtval_has_illegal_inst_bits ()   = !config_mtval_has_illegal_inst_bits

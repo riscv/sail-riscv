@@ -105,6 +105,9 @@ val sys_pmp_grain = {c: "sys_pmp_grain", ocaml: "Platform.pmp_grain", _: "sys_pm
 /* whether misa.v was enabled at boot */
 val sys_enable_vext = {c: "sys_enable_vext", ocaml: "Platform.enable_vext", _: "sys_enable_vext"} : unit -> bool
 
+/* whether misa.b was enabled at boot */
+val sys_enable_bext = {c: "sys_enable_bext", ocaml: "Platform.enable_bext", _: "sys_enable_bext"} : unit -> bool
+
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
    unsetting C. If it returns true the write will have no effect. */
@@ -136,10 +139,11 @@ function haveNExt()    -> bool = misa[N] == 0b1
 /* see below for F and D (and Z*inx counterparts) extension tests */
 
 /* BitManip extension support. */
-function haveZba()  -> bool = true
-function haveZbb()  -> bool = true
+function haveBExt() -> bool = misa[B] == 0b1
+function haveZba()  -> bool = true | haveBExt()
+function haveZbb()  -> bool = true | haveBExt()
+function haveZbs()  -> bool = true | haveBExt()
 function haveZbc()  -> bool = true
-function haveZbs()  -> bool = true
 
 /* Zfa (additional FP) extension */
 function haveZfa()  -> bool = true
