@@ -226,14 +226,18 @@ generated_definitions/ocaml/$(ARCH)/riscv.ml: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/ocaml/$(ARCH)
 	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml-nobuild -ocaml_build_dir generated_definitions/ocaml/$(ARCH) -o riscv $(SAIL_SRCS)
 
+# cp -f is required because the generated_definitions/ocaml/$ARCH/*.ml files can
+# be read-only, which would otherwise make subsequent builds fail.
 ocaml_emulator/_sbuild/riscv_ocaml_sim.native: generated_definitions/ocaml/$(ARCH)/riscv.ml ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) Makefile
 	mkdir -p ocaml_emulator/_sbuild
-	cp ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) generated_definitions/ocaml/$(ARCH)/*.ml ocaml_emulator/_sbuild
+	cp ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) ocaml_emulator/_sbuild
+	cp -f generated_definitions/ocaml/$(ARCH)/*.ml ocaml_emulator/_sbuild
 	cd ocaml_emulator/_sbuild && ocamlbuild -use-ocamlfind riscv_ocaml_sim.native
 
 ocaml_emulator/_sbuild/coverage.native: generated_definitions/ocaml/$(ARCH)/riscv.ml ocaml_emulator/_tags.bisect $(PLATFORM_OCAML_SRCS) Makefile
 	mkdir -p ocaml_emulator/_sbuild
-	cp $(PLATFORM_OCAML_SRCS) generated_definitions/ocaml/$(ARCH)/*.ml ocaml_emulator/_sbuild
+	cp $(PLATFORM_OCAML_SRCS) ocaml_emulator/_sbuild
+	cp -f generated_definitions/ocaml/$(ARCH)/*.ml ocaml_emulator/_sbuild
 	cp ocaml_emulator/_tags.bisect ocaml_emulator/_sbuild/_tags
 	cd ocaml_emulator/_sbuild && ocamlbuild -use-ocamlfind riscv_ocaml_sim.native && cp -L riscv_ocaml_sim.native coverage.native
 
@@ -278,7 +282,7 @@ osim: ocaml_emulator/riscv_ocaml_sim_$(ARCH)
 rvfi: c_emulator/riscv_rvfi_$(ARCH)
 
 c_emulator/riscv_sim_$(ARCH): generated_definitions/c/riscv_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile
-	gcc -g $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
+	$(CC) -g $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
 # Note: We have to add -c_preserve since the functions might be optimized out otherwise
 rvfi_preserve_fns=-c_preserve rvfi_set_instr_packet \
@@ -304,7 +308,7 @@ generated_definitions/c/riscv_rvfi_model_$(ARCH).c: $(SAIL_RVFI_SRCS) model/main
 	mv $@.new $@
 
 c_emulator/riscv_rvfi_$(ARCH): generated_definitions/c/riscv_rvfi_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile
-	gcc -g $(C_WARNINGS) $(C_FLAGS) $< -DRVFI_DII $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
+	$(CC) -g $(C_WARNINGS) $(C_FLAGS) $< -DRVFI_DII $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
 
 latex: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/latex
@@ -474,10 +478,6 @@ opam-uninstall:
 	if [ -z "$(INSTALL_DIR)" ]; then echo INSTALL_DIR is unset; false; fi
 	rm $(INSTALL_DIR)/bin/riscv_sim_RV64
 	rm $(INSTALL_DIR)/bin/riscv_sim_RV32
-apply_header:
-	headache -c etc/headache_config -h LICENCE `ls model/*.sail`
-	headache -c etc/headache_config -h LICENCE `ls handwritten_support/*.lem`
-	headache -c etc/headache_config -h LICENCE `ls handwritten_support/*.v`
 
 clean:
 	-rm -rf generated_definitions/ocaml/* generated_definitions/c/* generated_definitions/latex/*
