@@ -57,6 +57,11 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
 
     /* disabled trigger/debug module */
     0x7a0 => p == Machine,
+    0x7a1 => p == Machine,
+    0x7a2 => p == Machine,
+    0x7a3 => p == Machine,
+    0x7a4 => p == Machine,
+    0x7a5 => p == Machine,
 
     /* supervisor mode: trap setup */
     0x100 => haveSupMode() & (p == Machine | p == Supervisor), // sstatus

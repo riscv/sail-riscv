@@ -72,7 +72,12 @@ function readCSR csr : csreg -> xlenbits = {
     (0xC22, _) => vlenb,
 
     /* trigger/debug */
-    (0x7a0,  _) => ~(tselect),  /* this indicates we don't have any trigger support */
+    (0x7a0,  _) => tselect.bits,
+    (0x7a1,  _) => tdata1.bits,
+    (0x7a2,  _) => tdata2,
+    (0x7a3,  _) => tdata3,
+    (0x7a4,  _) => legalize_tinfo(tinfo),
+    (0x7a5,  _) => tcontrol.bits,
 
     /* supervisor mode */
     (0x100,  _) => lower_mstatus(mstatus).bits,
@@ -153,7 +158,12 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0xB82, 32) => { minstret[63 .. 32] = value; minstret_increment = false; Some(value) },
 
     /* trigger/debug */
-    (0x7a0,  _) => { tselect = value; Some(tselect) },
+    (0x7a0,  _) => { tselect = legalize_tselect(tselect, value); Some(tselect.bits) },
+    (0x7a1, _) => { tdata1 = legalize_tdata1(tdata1, value); Some(tdata1.bits) },
+    // (0x7a2,  _) => { tdata2[(sizeof(xlen) - 1) .. 0] = value; Some(value) },
+    // (0x7a3,  _) => { tdata3[(sizeof(xlen) - 1) .. 0] = value; Some(value) },
+    (0x7a4, _) => { Some(tinfo.bits) },       // ignoring Writes to Tinfo
+    (0x7a5, _) => { tcontrol = legalize_tcontrol(tcontrol, value); Some(tcontrol.bits) },
 
     /* supervisor mode */
     (0x100,  _) => { mstatus = legalize_sstatus(mstatus, value); Some(mstatus.bits) },

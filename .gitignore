@@ -7,3 +7,8 @@ _sbuild/
 *.o
 *.a
 /z3_problems
+c_emulator/riscv_sim_RV32
+c_emulator/riscv_sim_RV64
+c_emulator/riscv_rvfi_RV64
+ocaml_emulator/riscv_ocaml_sim_RV64
+ocaml_emulator/riscv_ocaml_sim_RV32
