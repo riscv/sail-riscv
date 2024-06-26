@@ -71,6 +71,12 @@ function readCSR csr : csreg -> xlenbits = {
     (0xC21, _) => vtype.bits,
     (0xC22, _) => vlenb,
 
+    /* Smrnmi - resumable NMI */
+    (0x740, _) => mnscratch,
+    (0x741, _) => mnepc & pc_alignment_mask(),
+    (0x742, _) => mncause.bits,
+    (0x744, _) => mnstatus.bits,
+
     /* trigger/debug */
     (0x7a0,  _) => ~(tselect),  /* this indicates we don't have any trigger support */
 
@@ -151,6 +157,12 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0xB02,  _) => { minstret[(sizeof(xlen) - 1) .. 0] = value; minstret_increment = false; Some(value) },
     (0xB80, 32) => { mcycle[63 .. 32] = value; Some(value) },
     (0xB82, 32) => { minstret[63 .. 32] = value; minstret_increment = false; Some(value) },
+
+    /* Smrnmi : resumable NMI */
+    (0x740,  _) => { mnscratch = value; Some(mnscratch) },
+    (0x741,  _) => { mnepc = value & pc_alignment_mask(); Some(mnepc & pc_alignment_mask()) },
+    (0x742,  _) => { mncause = legalize_mncause(mncause, value); Some(mncause.bits) },
+    (0x744,  _) => { mnstatus = legalize_mnstatus(mnstatus, value); Some(mnstatus.bits) },
 
     /* trigger/debug */
     (0x7a0,  _) => { tselect = value; Some(tselect) },

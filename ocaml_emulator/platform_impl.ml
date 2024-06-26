@@ -194,6 +194,13 @@ let show_bytes s =
 let dump_dts arch = show_bytes (make_dts arch)
 let dump_dtb arch = show_bytes (bytes_to_string (make_dtb (make_dts arch)))
 
+(* Smrnmi : Resumable NMI *)
+let config_smrnmi_exc_trap_vec = ref (Int.(0))
+let config_smrnmi_int_trap_vec = ref (Int.(0))
+let set_smrnmi_exc_trap_vec v = config_smrnmi_exc_trap_vec := v
+let set_smrnmi_int_trap_vec v = config_smrnmi_int_trap_vec := v
+
+
 (*
 let save_string_to_file s fname =
   let out = open_out fname in
