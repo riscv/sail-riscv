@@ -472,7 +472,8 @@ uint64_t load_sail(char *f, bool main_file)
     fprintf(stderr, "Unable to locate htif fromhost port.\n");
     exit(1);
   }
-  fprintf(stderr, "fromhost located at 0x%0" PRIx64 "\n", rv_htif_fromhost_addr);
+  fprintf(stderr, "fromhost located at 0x%0" PRIx64 "\n",
+          rv_htif_fromhost_addr);
   /* locate test-signature locations if any */
   if (!lookup_sym(f, "begin_signature", &begin_sig)) {
     fprintf(stdout, "begin_signature: 0x%0" PRIx64 "\n", begin_sig);
