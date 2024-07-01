@@ -463,11 +463,16 @@ uint64_t load_sail(char *f, bool main_file)
   }
   fprintf(stdout, "ELF Entry @ 0x%" PRIx64 "\n", entry);
   /* locate htif ports */
-  if (lookup_sym(f, "tohost", &rv_htif_tohost) < 0) {
+  if (lookup_sym(f, "tohost", &rv_htif_tohost_addr) < 0) {
     fprintf(stderr, "Unable to locate htif tohost port.\n");
     exit(1);
   }
-  fprintf(stderr, "tohost located at 0x%0" PRIx64 "\n", rv_htif_tohost);
+  fprintf(stderr, "tohost located at 0x%0" PRIx64 "\n", rv_htif_tohost_addr);
+  if (lookup_sym(f, "fromhost", &rv_htif_fromhost_addr) < 0) {
+    fprintf(stderr, "Unable to locate htif fromhost port.\n");
+    exit(1);
+  }
+  fprintf(stderr, "fromhost located at 0x%0" PRIx64 "\n", rv_htif_fromhost_addr);
   /* locate test-signature locations if any */
   if (!lookup_sym(f, "begin_signature", &begin_sig)) {
     fprintf(stdout, "begin_signature: 0x%0" PRIx64 "\n", begin_sig);
@@ -624,7 +629,8 @@ void init_sail(uint64_t elf_entry)
     rv_rom_size = UINT64_C(0);
     rv_clint_base = UINT64_C(0);
     rv_clint_size = UINT64_C(0);
-    rv_htif_tohost = UINT64_C(0);
+    rv_htif_tohost_addr = UINT64_C(0);
+    rv_htif_fromhost_addr = UINT64_C(0);
     zPC = elf_entry;
   } else
 #endif
