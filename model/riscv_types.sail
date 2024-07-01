@@ -415,11 +415,16 @@ function report_invalid_width(f , l, w, k) -> 'a = {
 /* Callbacks for state-changing events */
 
 /* Whether need to call the callback functions */
+$ifdef RVFI_DII
+register rv_enable_callbacks : bool = true
+$else
 register rv_enable_callbacks : bool = false
+$endif
 
 /* Defaults for these functions in riscv_default_callbacks.c and platform_impl.ml */
 
-val mem_update_callback = pure {ocaml: "Platform.mem_update_callback", c: "mem_update_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* addr */ xlenbits, /* width */ int('n), /* data */ bits(8 * 'n)) -> unit
+val mem_update_callback = pure {ocaml: "Platform.mem_update_callback", c: "mem_update_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* addr */ xlenbits, /* width */ int('n), /* value */ bits(8 * 'n), /* is exception */ bool) -> unit
+val mem_read_callback = pure {ocaml: "Platform.mem_read_callback", c: "mem_read_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* addr */ xlenbits, /* width */ int('n), /* value */ bits(8 * 'n), /* is exception */ bool) -> unit
 val pc_update_callback = pure {ocaml: "Platform.pc_update_callback", c: "pc_update_callback"} : xlenbits -> unit
 val xreg_update_callback = pure {ocaml: "Platform.xreg_update_callback", c: "xreg_update_callback"} : (regidx, xlenbits) -> unit
 val freg_update_callback = pure {ocaml: "Platform.freg_update_callback", c: "freg_update_callback"} : (regidx, flenbits) -> unit

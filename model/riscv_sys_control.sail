@@ -303,10 +303,21 @@ function tval(excinfo : option(xlenbits)) -> xlenbits = {
   }
 }
 
+$ifdef RVFI_DII
+val rvfi_trap : unit -> unit
+// TODO: record rvfi_trap_data
+function rvfi_trap () =
+  rvfi_inst_data[rvfi_trap] = 0x01
+$else
+val rvfi_trap : unit -> unit
+function rvfi_trap () = ()
+$endif
+
 /* handle exceptional ctl flow by updating nextPC and operating privilege */
 
 function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
                      -> xlenbits = {
+  rvfi_trap();
   if   get_config_print_platform()
   then print_platform("handling " ^ (if intr then "int#" else "exc#")
                       ^ BitStr(c) ^ " at priv " ^ to_str(del_priv)

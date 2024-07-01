@@ -24,7 +24,8 @@ let platform_arch = ref P.RV64
 
 (* Defaults for callbacks functions.
    The model assumes that these functions do not change the state of the model. *)
-let mem_update_callback (addr, width, data) = ()
+let mem_update_callback (addr, width, value, is_exception) = ()
+let mem_read_callback (addr, width, value, is_exception) = ()
 let pc_update_callback value = ()
 let xreg_update_callback (reg, value) = ()
 let freg_update_callback (reg, value) = ()

@@ -23,6 +23,28 @@ unit z_set_Misa_C(struct zMisa *, mach_bits);
 unit z_set_Misa_D(struct zMisa *, mach_bits);
 unit z_set_Misa_F(struct zMisa *, mach_bits);
 
+#ifdef RVFI_DII
+unit zext_rvfi_init(unit);
+unit zrvfi_set_instr_packet(mach_bits);
+mach_bits zrvfi_get_cmd(unit);
+mach_bits zrvfi_get_insn(unit);
+bool zrvfi_step(sail_int);
+unit zrvfi_zzero_exec_packet(unit);
+unit zrvfi_halt_exec_packet(unit);
+void zrvfi_get_exec_packet_v1(sail_bits *rop, unit);
+void zrvfi_get_exec_packet_v2(sail_bits *rop, unit);
+extern bool zrvfi_int_data_present;
+void zrvfi_get_int_data(sail_bits *rop, unit);
+extern bool zrvfi_mem_data_present;
+void zrvfi_get_mem_data(sail_bits *rop, unit);
+mach_bits zrvfi_get_v2_trace_sizze(unit);
+void zrvfi_get_v2_support_packet(sail_bits *rop, unit);
+
+// Debugging prints
+unit zprint_rvfi_exec(unit);
+unit zprint_instr_packet(uint64_t);
+#endif
+
 extern mach_bits zxlen_val;
 extern bool zhtif_done;
 extern mach_bits zhtif_exit_code;
@@ -34,11 +56,14 @@ extern bool have_exception;
 extern bool zrv_enable_callbacks;
 /* The model assumes that these functions do not change the state of the model.
  */
-int mem_update_callback(uint64_t addr, uint64_t width, lbits data);
+int mem_update_callback(uint64_t addr, uint64_t width, lbits value,
+                        bool is_exception);
+int mem_read_callback(uint64_t addr, uint64_t width, lbits value,
+                      bool is_exception);
 int xreg_update_callback(unsigned reg, uint64_t value);
 int freg_update_callback(unsigned reg, uint64_t value);
 int csr_update_callback(const char *reg_name, uint64_t value);
-int vreg_update_callback(unsigned reg);
+int vreg_update_callback(unsigned reg, lbits value);
 int pc_update_callback(uint64_t value);
 
 /* machine state */
