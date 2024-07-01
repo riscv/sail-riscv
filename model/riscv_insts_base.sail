@@ -12,14 +12,22 @@
 
 /* ****************************************************************** */
 union clause ast = UTYPE : (bits(20), regidx, uop)
+union clause ast = zicfilp_lpad : (bits(20))
 
 mapping encdec_uop : uop <-> bits(7) = {
   RISCV_LUI   <-> 0b0110111,
   RISCV_AUIPC <-> 0b0010111
 }
 
+/* Zicfilp landing pad lpad is auipc x0, imm */
+function is_lpad(op : uop, rd : regidx) -> bool =
+  haveZicfilp() & rd == zreg & op == RISCV_AUIPC
+
 mapping clause encdec = UTYPE(imm, rd, op)
-  <-> imm @ rd @ encdec_uop(op)
+  <-> imm @ rd @ encdec_uop(op) if not(is_lpad(op, rd))
+
+mapping clause encdec = zicfilp_lpad(imm)
+  <-> imm @ 0b00000 @ 0b0010111
 
 function clause execute UTYPE(imm, rd, op) = {
   let off : xlenbits = sign_extend(imm @ 0x000);
@@ -38,6 +46,9 @@ mapping utype_mnemonic : uop <-> string = {
 
 mapping clause assembly = UTYPE(imm, rd, op)
   <-> utype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_20(imm)
+
+mapping clause assembly = zicfilp_lpad(imm)
+  <-> "lpad" ^ spc() ^ hex_bits_20(imm)
 
 /* ****************************************************************** */
 union clause ast = RISCV_JAL : (bits(21), regidx)
