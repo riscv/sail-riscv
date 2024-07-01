@@ -243,7 +243,7 @@ function clint_store(addr, width, data) = {
     mtimecmp = vector_update_subrange(mtimecmp, 63, 32, sail_zero_extend(data, 32)); /* FIXME: Redundant zero_extend currently required by Lem backend */
     clint_dispatch();
     MemValue(true)
-    } else if addr == MTIME_BASE & 'n == 8 then {
+  } else if addr == MTIME_BASE & 'n == 8 then {
     if   get_config_print_platform()
     then print_platform("clint<8>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtime)");
     mtime = data;
