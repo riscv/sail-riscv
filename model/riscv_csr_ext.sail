@@ -22,3 +22,18 @@ end ext_read_CSR
 
 function clause ext_write_CSR (_, _) = None()
 end ext_write_CSR
+
+function ext_notification_read_CSR (csr : csreg) -> option(xlenbits) = {
+  let res = ext_read_CSR(csr);
+  if rv_enable_callbacks then
+    match res {
+      Some(value) => csr_read_callback(csr_name_map(csr), value),
+      None()  => (),
+    };
+  res
+}
+
+function ext_notification_write_CSR (csr : csreg, value : xlenbits) -> unit = {
+  let res = ext_write_CSR(csr, value);
+  if rv_enable_callbacks then csr_update_callback(csr_name_map(csr), value)
+}
