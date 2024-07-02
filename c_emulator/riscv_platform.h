@@ -39,6 +39,14 @@ unit cancel_reservation(unit);
 void plat_insns_per_tick(sail_int *rop, unit);
 
 unit plat_term_write(mach_bits);
-mach_bits plat_htif_tohost(unit);
+unit plat_term_read(unit);
+
+// Addresses of HTIF symbols
+mach_bits plat_htif_tohost_addr(unit);
+mach_bits plat_htif_fromhost_addr(unit);
+
+// Access to HTIF memory mapped IO
+mach_bits plat_htif_fromhost_read(unit);
+unit plat_htif_fromhost_write(mach_bits);
 
 unit memea(mach_bits, sail_int);

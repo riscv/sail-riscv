@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include "riscv_htif.h"
 
 /* Settings of the platform implementation. */
 
@@ -36,9 +37,12 @@ extern uint64_t rv_16_random_bits(void);
 extern uint64_t rv_clint_base;
 extern uint64_t rv_clint_size;
 
-extern uint64_t rv_htif_tohost;
+extern uint64_t rv_htif_tohost_addr;
+extern uint64_t rv_htif_fromhost_addr;
+extern uint64_t rv_htif_fromhost_val;
 extern uint64_t rv_insns_per_tick;
 
 extern FILE *trace_log;
 extern int term_fd;
 void plat_term_write_impl(char c);
+void plat_term_read_impl(void);

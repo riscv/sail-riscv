@@ -62,6 +62,8 @@ type mem_region = {
     size : Int64.t
 }
 
+let htif_fromhost = ref (Int64.zero)
+
 (* dts from spike *)
 let spike_dts isa_spec mmu_spec cpu_hz insns_per_rtc_tick mems =
     "/dts-v1/;\n"
