@@ -384,16 +384,13 @@ function translate_TLB_miss(sv_params : SV_Params,
 function translate(sv_params : SV_Params,
                    asid      : asidbits,
                    ptb       : bits(64),
-                   vAddr_arg : bits(64),
+                   vAddr     : bits(64),
                    ac        : AccessType(ext_access_type),
                    priv      : Privilege,
                    mxr       : bool,
                    do_sum    : bool,
                    ext_ptw   : ext_ptw)
                   -> TR_Result(bits(64), PTW_Error) = {
-  let va_mask : bits(64) = zero_extend(ones(sv_params.va_size_bits));
-  let vAddr              = (vAddr_arg & va_mask);
-
   // On first reading, assume lookup_TLB returns None(), since TLBs
   // are not part of RISC-V archticture spec (see TLB_NOTE above)
   match lookup_TLB(asid, vAddr) {
