@@ -51,10 +51,15 @@ function pte_is_ptr(pte_flags : PTE_Flags) -> bool = (pte_flags[X] == 0b0)
                                                       & (pte_flags[W] == 0b0)
                                                       & (pte_flags[R] == 0b0)
 
+// PRIVATE: Zicfiss: ss pte -> rwx=010b
+val is_shadow_stack_PTE_enable : unit -> bool
+function is_ss_pte(p : PTE_Flags) -> bool =
+  (p[R] == 0b0 & p[W] == 0b1 & p[X] == 0b0 & is_shadow_stack_PTE_enable())
+
 // PRIVATE: check if a PTE is valid
-function pte_is_invalid(pte_flags : PTE_Flags) -> bool = (pte_flags[V] == 0b0)
-                                                         | ((pte_flags[W] == 0b1)
-                                                            & (pte_flags[R] == 0b0))
+function pte_is_invalid(pte_flags : PTE_Flags) -> bool =
+   (pte_flags[V] == 0b0) |
+   (((pte_flags[W] == 0b1) & (pte_flags[R] == 0b0)) & not(is_ss_pte(pte_flags)))
 
 // ----------------
 // Check access permissions in PTE
@@ -64,8 +69,26 @@ function pte_is_invalid(pte_flags : PTE_Flags) -> bool = (pte_flags[V] == 0b0)
 // in ext_ptw. It should return the updated ext_ptw in both success and failure cases.
 
 union PTE_Check = {
-  PTE_Check_Success : ext_ptw,
-  PTE_Check_Failure : (ext_ptw, ext_ptw_fail)
+  PTE_Check_Success            : ext_ptw,
+  PTE_Check_Failure_Permission : (ext_ptw, ext_ptw_fail),
+  PTE_Check_Failure_No_Access  : (ext_ptw, ext_ptw_fail)
+}
+
+// Zicfiss: access-fault conditions
+function is_read_only_pte(p : PTE_Flags) -> bool =
+  (p[R] == 0b1 & p[W] == 0b0 & p[X] == 0b0)
+function is_shadow_stack_pte_access_fault(ac : AccessType(ext_access_type),
+                                           p : PTE_Flags) -> bool = {
+  match (haveZicfiss(), ac) {
+    (false, _)                 => false,
+    (_,     Read(_))           => false,
+    (_,     SSRead(_))         => not(is_ss_pte(p)) & not(is_read_only_pte(p)),
+    (_,     Write(_))          => is_ss_pte(p),
+    (_,     SSWrite(_))        => not(is_ss_pte(p)) & not(is_read_only_pte(p)),
+    (_,     ReadWrite(_, _))   => is_ss_pte(p),
+    (_,     SSReadWrite(_, _)) => not(is_ss_pte(p)) & not(is_read_only_pte(p)),
+    (_,     Execute())         => is_ss_pte(p)
+  }
 }
 
 // PRIVATE
@@ -76,33 +99,44 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
                               pte_flags : PTE_Flags,
                               ext       : extPte,
                               ext_ptw   : ext_ptw) -> PTE_Check = {
-  let pte_U = pte_flags[U];
-  let pte_R = pte_flags[R];
-  let pte_W = pte_flags[W];
-  let pte_X = pte_flags[X];
-  let success : bool =
-    match (ac, priv) {
-      (Read(_),         User)       => (pte_U == 0b1)
-                                       & ((pte_R == 0b1)
-                                          | ((pte_X == 0b1 & mxr))),
-      (Write(_),        User)       => (pte_U == 0b1) & (pte_W == 0b1),
-      (ReadWrite(_, _), User)       => (pte_U == 0b1)
-                                       & (pte_W == 0b1)
-                                       & ((pte_R == 0b1) | ((pte_X == 0b1) & mxr)),
-      (Execute(),       User)       => (pte_U == 0b1) & (pte_X == 0b1),
-      (Read(_),         Supervisor) => ((pte_U == 0b0) | do_sum)
-                                       & ((pte_R == 0b1) | ((pte_X == 0b1) & mxr)),
-      (Write(_),        Supervisor) => ((pte_U == 0b0) | do_sum)
-                                       & (pte_W == 0b1),
-      (ReadWrite(_, _), Supervisor) => ((pte_U == 0b0) | do_sum)
-                                       & (pte_W == 0b1)
-                                       & ((pte_R == 0b1)
-                                          | ((pte_X == 0b1) & mxr)),
-      (Execute(),       Supervisor) => (pte_U == 0b0) & (pte_X == 0b1),
-      (_,               Machine)    => internal_error(__FILE__, __LINE__,
-                                                      "m-mode mem perm check")};
-  if success then PTE_Check_Success(())
-  else            PTE_Check_Failure((), ())
+  if is_shadow_stack_pte_access_fault(ac, pte_flags) then {
+    PTE_Check_Failure_No_Access((), ())
+  } else {
+    let pte_U = pte_flags[U];
+    let pte_R = pte_flags[R];
+    let pte_W = pte_flags[W];
+    let pte_X = pte_flags[X];
+
+    let success : bool =
+      match (ac, priv) {
+        (Read(_),         User)       => (pte_U == 0b1)
+                                         & ((pte_R == 0b1)
+                                            | ((pte_X == 0b1 & mxr))),
+        (SSRead(_),       User)       => (pte_U == 0b1) & (pte_W == 0b1),
+        (Write(_),        User)       => (pte_U == 0b1) & (pte_W == 0b1),
+        (SSWrite(_),      User)       => (pte_U == 0b1) & (pte_W == 0b1),
+        (ReadWrite(_, _), User)       => (pte_U == 0b1)
+                                         & (pte_W == 0b1)
+                                         & ((pte_R == 0b1) | ((pte_X == 0b1) & mxr)),
+        (SSReadWrite(_),  User)       => (pte_U == 0b1) & (pte_W == 0b1),
+        (Execute(),       User)       => (pte_U == 0b1) & (pte_X == 0b1),
+        (Read(_),         Supervisor) => ((pte_U == 0b0) | do_sum)
+                                         & ((pte_R == 0b1) | ((pte_X == 0b1) & mxr)),
+        (SSRead(_),       Supervisor) => ((pte_U == 0b0) | do_sum) & (pte_W == 0b1),
+        (Write(_),        Supervisor) => ((pte_U == 0b0) | do_sum)
+                                         & (pte_W == 0b1),
+        (SSWrite(_),      Supervisor) => ((pte_U == 0b0) | do_sum) & (pte_W == 0b1),
+        (ReadWrite(_, _), Supervisor) => ((pte_U == 0b0) | do_sum)
+                                         & (pte_W == 0b1)
+                                         & ((pte_R == 0b1)
+                                            | ((pte_X == 0b1) & mxr)),
+        (SSReadWrite(_),  Supervisor) => ((pte_U == 0b0) | do_sum) & (pte_W == 0b1),
+        (Execute(),       Supervisor) => (pte_U == 0b0) & (pte_X == 0b1),
+        (_,               Machine)    => internal_error(__FILE__, __LINE__,
+                                                        "m-mode mem perm check")};
+    if success then PTE_Check_Success(())
+    else            PTE_Check_Failure_Permission((), ())
+  }
 }
 
 // Update PTE bits if needed; return new PTE if updated
@@ -116,10 +150,13 @@ function update_PTE_Bits(sv_params : SV_Params,
   // Update 'dirty' bit?
   let update_d : bool = (pte_flags[D] == 0b0)
                         & (match a {
-                             Execute()       => false,
-                             Read()          => false,
-                             Write(_)        => true,
-                             ReadWrite(_, _) => true
+                             Execute()         => false,
+                             Read()            => false,
+                             SSRead()          => false,
+                             Write(_)          => true,
+                             SSWrite(_)        => true,
+                             ReadWrite(_, _)   => true,
+                             SSReadWrite(_, _) => true
                            });
   // Update 'accessed'-bit?
   let update_a = (pte_flags[A] == 0b0);

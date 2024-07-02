@@ -143,8 +143,10 @@ function pt_walk(sv_params,
           let pte_check = check_PTE_permission(ac, priv, mxr, do_sum, pte_flags,
                                                ext_pte, ext_ptw);
           match pte_check {
-            PTE_Check_Failure(ext_ptw, ext_ptw_fail) =>
-              PTW_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw),
+            PTE_Check_Failure_Permission(ext_ptw, ext_ptw_fail) =>
+              PTW_Failure(ext_get_ptw_permission_error(ext_ptw_fail), ext_ptw),
+            PTE_Check_Failure_No_Access(ext_ptw, ext_ptw_fail) =>
+              PTW_Failure(ext_get_ptw_access_error(ext_ptw_fail), ext_ptw),
             PTE_Check_Success(ext_ptw) =>
               if level > 0 then {
                 // Superpage; construct mask for lower-level PPNs from the PTE
@@ -302,8 +304,10 @@ function translate_TLB_hit(sv_params : SV_Params,
                                        ext_pte,
                                        ext_ptw);
   match pte_check {
-    PTE_Check_Failure(ext_ptw, ext_ptw_fail) =>
-      TR_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw),
+    PTE_Check_Failure_Permission(ext_ptw, ext_ptw_fail) =>
+      TR_Failure(ext_get_ptw_permission_error(ext_ptw_fail), ext_ptw),
+    PTE_Check_Failure_No_Access(ext_ptw, ext_ptw_fail) =>
+      TR_Failure(ext_get_ptw_access_error(ext_ptw_fail), ext_ptw),
     PTE_Check_Success(ext_ptw) =>
       match update_PTE_Bits(sv_params, pte, ac) {
         None()     => TR_Address(ent.pAddr | (vAddr & ent.vAddrMask), ext_ptw),
@@ -416,30 +420,42 @@ function translateAddr(vAddr   : xlenbits,
   // See riscv_sys_regs.sail for effectivePrivilege() and cur_privilege
   let effPriv   : Privilege = effectivePrivilege(ac, mstatus, cur_privilege);
   let mode      : SATPMode  = translationMode(effPriv);
-  let (valid_va, sv_params) : (bool, SV_Params) = match mode {
-    Sbare => return TR_Address(vAddr, init_ext_ptw),
-    Sv32  => (true,                                 sv32_params),
-    Sv39  => (is_valid_vAddr(sv39_params, vAddr_64b), sv39_params),
-    Sv48  => (is_valid_vAddr(sv48_params, vAddr_64b), sv48_params),
-    // Sv57 => (is_valid_vAddr(sv57_params, vAddr_64b), sv57_params),    // TODO
+
+  // Zicfiss: Shadow stack accesses cause access fault in Bare mode
+  let ss_access_fault : bool = match ac {
+    SSRead(_)         => if mode == Sbare then true else false,
+    SSWrite(_)        => if mode == Sbare then true else false,
+    SSReadWrite(_, _) => if mode == Sbare then true else false,
+    _                 => false
   };
-  if not(valid_va) then
-    TR_Failure(translationException(ac, PTW_Invalid_Addr()), init_ext_ptw)
+  if ss_access_fault then
+    TR_Failure(translationException(ac, PTW_Access()), init_ext_ptw)
   else {
-    let mxr               = mstatus[MXR] == 0b1;
-    let do_sum            = mstatus[SUM] == 0b1;
-    let asid   : asidbits = satp_to_asid(satp);
-    let ptb    : bits(64) = satp_to_PT_base(satp);
-    let tr_result1 = translate(sv_params,
-                               asid,
-                               ptb,
-                               vAddr_64b,
-                               ac, effPriv, mxr, do_sum,
-                               init_ext_ptw);
-    // Fixup result PA or exception
-    match tr_result1 {
-      TR_Address(pa, ext_ptw) => TR_Address(truncate(pa, sizeof(xlen)), ext_ptw),
-      TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
+    let (valid_va, sv_params) : (bool, SV_Params) = match mode {
+      Sbare => return TR_Address(vAddr, init_ext_ptw),
+      Sv32  => (true,                                 sv32_params),
+      Sv39  => (is_valid_vAddr(sv39_params, vAddr_64b), sv39_params),
+      Sv48  => (is_valid_vAddr(sv48_params, vAddr_64b), sv48_params),
+      // Sv57 => (is_valid_vAddr(sv57_params, vAddr_64b), sv57_params),    // TODO
+    };
+    if not(valid_va) then
+      TR_Failure(translationException(ac, PTW_Invalid_Addr()), init_ext_ptw)
+    else {
+      let mxr               = mstatus[MXR] == 0b1;
+      let do_sum            = mstatus[SUM] == 0b1;
+      let asid   : asidbits = satp_to_asid(satp);
+      let ptb    : bits(64) = satp_to_PT_base(satp);
+      let tr_result1 = translate(sv_params,
+                                 asid,
+                                 ptb,
+                                 vAddr_64b,
+                                 ac, effPriv, mxr, do_sum,
+                                 init_ext_ptw);
+      // Fixup result PA or exception
+      match tr_result1 {
+        TR_Address(pa, ext_ptw) => TR_Address(truncate(pa, sizeof(xlen)), ext_ptw),
+        TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
+      }
     }
   }
 }

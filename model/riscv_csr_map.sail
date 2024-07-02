@@ -176,6 +176,8 @@ mapping clause csr_name_map = 0x00F  <-> "vcsr"
 mapping clause csr_name_map = 0xC20  <-> "vl"
 mapping clause csr_name_map = 0xC21  <-> "vtype"
 mapping clause csr_name_map = 0xC22  <-> "vlenb"
+/* Zicfiss csrs */
+mapping clause csr_name_map = 0x011  <-> "ssp"
 
 val csr_name : csreg -> string
 overload to_str = {csr_name}
