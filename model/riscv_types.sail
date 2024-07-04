@@ -28,10 +28,9 @@ type csreg   = bits(12)   /* CSR addressing */
 
 /* register file indexing */
 
-type regno ('n : Int), 0 <= 'n < 32 = int('n)
+type regno = range(0, 31)
 
-val regidx_to_regno : bits(5) -> {'n, 0 <= 'n < 32. regno('n)}
-function regidx_to_regno b = let 'r = unsigned(b) in r
+function regidx_to_regno (b : regidx) -> regno = unsigned(b)
 
 /* mapping RVC register indices into normal indices */
 val creg2reg_idx : cregidx -> regidx
