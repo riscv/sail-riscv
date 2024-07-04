@@ -45,15 +45,6 @@ function vpn_j_of_va(sv_params : SV_Params,
   ((va >> lsb) & mask)
 }
 
-// PRIVATE: Count trailing zeros
-function LowestSetBit(x : bits(64)) -> bits(64) = {
-  var count : bits(64) = zeros();
-  let perfect_one : bits(64) = 0x0000_0000_0000_0001;
-  foreach (i from 0 to (sizeof(xlen) - 1) by 1 in inc)
-    if [x[i]] == 0b1 then return(count + perfect_one) else (count = count + perfect_one);
-  return count;
-}
-
 // PRIVATE: Extract offset within page from VA
 function offset_of_va(va : bits(64)) -> bits(PAGESIZE_BITS) = va[pagesize_bits - 1 .. 0]
 
@@ -176,23 +167,25 @@ function pt_walk(sv_params,
                 let mask_bits = level * sv_params.pte_PPN_j_size_bits;
                 let mask : bits(64) = ~ (ones() << mask_bits);
                 let ppn : bits(64) = ppns | (vpns_of_va(sv_params, va) & mask);
-                let napot_bits  = LowestSetBit(ppn);
-                let perfect_one : bits(64) = 0x0000_0000_0000_0001;
-                let napot_mask : bits(64) = (perfect_one << napot_bits) - perfect_one;
+                let napot_mask : bits(64) = ppn ^ (ppn - 1);
                 let napot_mask_not : bits(64) = ~ (napot_mask);
                 let ptshift_level = sv_params.levels - 1;
                 let ptshift = ptshift_level * sv_params.vpn_size_bits;
 
                 let page_base = (ppn & napot_mask_not) | 
                                 (vpns_of_va(sv_params, va) & napot_mask) | 
-                                (vpns_of_va(sv_params, va) & ((perfect_one << ptshift) - perfect_one));
+                                (vpns_of_va(sv_params, va) & ((zero_extend(0b1) << ptshift) - zero_extend(0b1)));
 
                 let pa = (ppns << pagesize_bits) | zero_extend(offset_of_va(va));
                 let pa_napot = page_base << 12 | zero_extend(offset_of_va(va));
 
                 // For svnapot ext purpose.
-                if (pte & (perfect_one << 63)) == (perfect_one << 63) then {
-                  return PTW_Success(pa_napot, pte, pte_addr, level, global', ext_ptw)
+                if (pte & (zero_extend(0b1) << 63)) == (zero_extend(0b1) << 63) then {
+                  if (napot_mask != zero_extend(0xf)) then {
+                    return PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
+                  } else {
+                    return PTW_Success(pa_napot, pte, pte_addr, level, global', ext_ptw)
+                  }
                 };
 
                 PTW_Success(pa, pte, pte_addr, level, global', ext_ptw)
