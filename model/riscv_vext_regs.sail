@@ -40,7 +40,7 @@ register vr29 : vregtype
 register vr30 : vregtype
 register vr31 : vregtype
 
-val vreg_name : bits(5) <-> string
+val vreg_name : regidx <-> string
 mapping vreg_name = {
     0b00000 <-> "v0",
     0b00001 <-> "v1",
@@ -86,8 +86,7 @@ function dirty_v_context_if_present() -> unit = {
   if sys_enable_vext() then dirty_v_context()
 }
 
-val rV : forall 'n, 0 <= 'n < 32. regno('n) -> vregtype
-function rV r = {
+function rV (r : regno) -> vregtype = {
   let zero_vreg : vregtype = zeros();
   let v : vregtype =
     match r {
@@ -128,8 +127,7 @@ function rV r = {
     v
 }
 
-val wV : forall 'n, 0 <= 'n < 32. (regno('n), vregtype) -> unit
-function wV (r, in_v) = {
+function wV (r : regno, in_v : vregtype) -> unit = {
   let v = in_v;
   match r {
     0 => vr0 = v,
@@ -175,9 +173,9 @@ function wV (r, in_v) = {
   then print_reg("v" ^ dec_str(r) ^ " <- " ^ BitStr(v[VLEN - 1 .. 0]));
 }
 
-function rV_bits(i: bits(5)) -> vregtype = rV(unsigned(i))
+function rV_bits(i: regidx) -> vregtype = rV(unsigned(i))
 
-function wV_bits(i: bits(5), data: vregtype) -> unit = {
+function wV_bits(i: regidx, data: vregtype) -> unit = {
   wV(unsigned(i)) = data
 }
 
