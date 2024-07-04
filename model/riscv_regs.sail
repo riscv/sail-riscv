@@ -48,8 +48,7 @@ register x29 : regtype
 register x30 : regtype
 register x31 : regtype
 
-val rX : forall 'n, 0 <= 'n < 32. regno('n) -> xlenbits
-function rX r = {
+function rX (r : regno) -> xlenbits = {
   let v : regtype =
     match r {
       0 => zero_reg,
@@ -90,19 +89,16 @@ function rX r = {
 }
 
 $ifdef RVFI_DII
-val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit
-function rvfi_wX (r,v) = {
+function rvfi_wX (r : regno, v : xlenbits) -> unit = {
   rvfi_int_data[rvfi_rd_wdata] = zero_extend(v);
   rvfi_int_data[rvfi_rd_addr] = to_bits(8,r);
   rvfi_int_data_present = true;
 }
 $else
-val rvfi_wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit
-function rvfi_wX (r,v) = ()
+function rvfi_wX (r : regno, v : xlenbits) -> unit = ()
 $endif
 
-val wX : forall 'n, 0 <= 'n < 32. (regno('n), xlenbits) -> unit
-function wX (r, in_v) = {
+function wX (r : regno, in_v : xlenbits) -> unit = {
   let v = regval_into_reg(in_v);
   match r {
     0  => (),
@@ -146,9 +142,9 @@ function wX (r, in_v) = {
   }
 }
 
-function rX_bits(i: bits(5)) -> xlenbits = rX(unsigned(i))
+function rX_bits(i: regidx) -> xlenbits = rX(unsigned(i))
 
-function wX_bits(i: bits(5), data: xlenbits) -> unit = {
+function wX_bits(i: regidx, data: xlenbits) -> unit = {
   wX(unsigned(i)) = data
 }
 
@@ -156,7 +152,7 @@ overload X = {rX_bits, wX_bits, rX, wX}
 
 /* mappings for assembly */
 
-val reg_name : bits(5) <-> string
+val reg_name : regidx <-> string
 mapping reg_name = {
     0b00000 <-> "zero",
     0b00001 <-> "ra",
@@ -192,7 +188,7 @@ mapping reg_name = {
     0b11111 <-> "t6"
 }
 
-mapping creg_name : bits(3) <-> string = {
+mapping creg_name : cregidx <-> string = {
   0b000 <-> "s0",
   0b001 <-> "s1",
   0b010 <-> "a0",
