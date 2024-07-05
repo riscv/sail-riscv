@@ -211,7 +211,16 @@ function clint_dispatch() -> unit = {
   if mtimecmp <=_u mtime then {
     if   get_config_print_platform()
     then print_platform(" clint timer pending at mtime " ^ BitStr(mtime));
-    mip[MTI] = 0b1
+    mip[MTI] = 0b1;
+  };
+  /* Sstc - supervisor timer register */
+  if haveSstc() & menvcfg[STCE] == 0b1 then {
+    mip[STI] = 0b0;
+    if stimecmp <=_u mtime then {
+      if   get_config_print_platform()
+      then print_platform(" supervisor timer pending at mtime " ^ BitStr(mtime));
+      mip[STI] = 0b1;
+    }
   }
 }
 
