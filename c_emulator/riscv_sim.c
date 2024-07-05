@@ -250,6 +250,7 @@ static int process_args(int argc, char **argv)
   while (true) {
     c = getopt_long(argc, argv,
                     "a"
+                    "B"
                     "d"
                     "m"
                     "P"
@@ -283,6 +284,10 @@ static int process_args(int argc, char **argv)
     switch (c) {
     case 'a':
       report_arch();
+      break;
+    case 'B':
+      fprintf(stderr, "enabling B extension.\n");
+      rv_enable_bext = true;
       break;
     case 'd':
       fprintf(stderr, "enabling dirty update.\n");
