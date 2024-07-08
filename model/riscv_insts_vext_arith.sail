@@ -517,6 +517,19 @@ mapping vxtype_mnemonic : vxfunct6 <-> string = {
 mapping clause assembly = VXTYPE(funct6, vm, vs2, rs1, vd)
   <-> vxtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
 
+/* ******************************************************************************* */
+union clause ast = VNEG : (regidx, regidx)
+
+mapping clause assembly = VNEG(vs, vd)
+  <-> "vneg.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs)
+
+function clause pseudo_of(VNEG(vs, vd)) = [|
+  assembly(VXTYPE(VX_VRSUB, 0b1, vs, reg_name("x0"), vd))
+|]
+
+function clause execute VNEG(vs, vd) =
+  execute(VXTYPE(VX_VRSUB, 0b1, vs, 0b00000, vd))
+
 /* ************************** OPIVX (WXTYPE Narrowing) *************************** */
 /* ************** Vector Narrowing Integer Right Shift Instructions ************** */
 union clause ast = NXSTYPE : (nxsfunct6, bits(1), regidx, regidx, regidx)

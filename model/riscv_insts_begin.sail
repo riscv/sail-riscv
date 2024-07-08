@@ -26,6 +26,9 @@ scattered mapping encdec
 val encdec_compressed : ast <-> bits(16)
 scattered mapping encdec_compressed
 
+val pseudo_of : ast -> list(string)
+scattered function pseudo_of
+
 /*
  * We declare the ILLEGAL/C_ILLEGAL ast clauses here instead of in
  * riscv_insts_end, so that model extensions can make use of them.
