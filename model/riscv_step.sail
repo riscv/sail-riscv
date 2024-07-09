@@ -53,13 +53,19 @@ function step(step_no : int) -> bool = {
             then {
               print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ to_str(ast));
             };
-            /* check for RVC once here instead of every RVC execute clause. */
-            if haveRVC() then {
-              nextPC = PC + 2;
-              (execute(ast), true)
-            } else {
-              handle_illegal();
+            /* Zicfilp requires a landing pad (a base inst) if ELP is LP_EXPECTED */
+            if elp == ElpState_to_bits(LP_EXPECTED) then {
+              handle_sw_check_exception(LANDING_PAD_FAULT);
               (RETIRE_FAIL, true)
+            } else {
+              /* check for RVC once here instead of every RVC execute clause. */
+              if haveRVC() then {
+                nextPC = PC + 2;
+                (execute(ast), true)
+              } else {
+                handle_illegal();
+                (RETIRE_FAIL, true)
+              }
             }
           },
           F_Base(w) => {
@@ -70,8 +76,14 @@ function step(step_no : int) -> bool = {
             then {
               print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ to_str(ast));
             };
-            nextPC = PC + 4;
-            (execute(ast), true)
+            /* Zicfilp requires a aligned lpad if elp is LP_EXPECTED */
+            if zicfilp_is_elp_violated() then {
+              handle_sw_check_exception(LANDING_PAD_FAULT);
+              (RETIRE_FAIL, true)
+            } else {
+              nextPC = PC + 4;
+              (execute(ast), true)
+            }
           }
         }
       }

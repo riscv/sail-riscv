@@ -58,6 +58,9 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     /* disabled trigger/debug module */
     0x7a0 => p == Machine,
 
+    /* Machine security configuration */
+    0x747 => p == Machine,
+
     /* supervisor mode: trap setup */
     0x100 => haveSupMode() & (p == Machine | p == Supervisor), // sstatus
     0x102 => haveSupMode() & haveNExt() & (p == Machine | p == Supervisor), // sedeleg
@@ -313,6 +316,8 @@ val rvfi_trap : unit -> unit
 function rvfi_trap () = ()
 $endif
 
+val zicfilp_preserve_elp : (Privilege) -> unit
+
 /* handle exceptional ctl flow by updating nextPC and operating privilege */
 
 function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
@@ -338,6 +343,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        cur_privilege   = del_priv;
 
+       zicfilp_preserve_elp(del_priv);
        handle_trap_extension(del_priv, pc, ext);
 
        if   get_config_print_reg()
@@ -363,6 +369,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        cur_privilege   = del_priv;
 
+       zicfilp_preserve_elp(del_priv);
        handle_trap_extension(del_priv, pc, ext);
 
        if   get_config_print_reg()
@@ -383,6 +390,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        cur_privilege   = del_priv;
 
+       zicfilp_preserve_elp(del_priv);
        handle_trap_extension(del_priv, pc, ext);
 
        if   get_config_print_reg()
@@ -392,6 +400,10 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
     }
   };
 }
+
+/* Zicfilp : extension to restore elp */
+val zicfilp_set_elp_to_mpelp : (unit) -> unit
+val zicfilp_set_elp_to_spelp : (unit) -> unit
 
 function exception_handler(cur_priv : Privilege, ctl : ctl_result,
                            pc: xlenbits) -> xlenbits = {
@@ -412,6 +424,9 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
+      /* Zicfilp: extension to restore ELP */
+      zicfilp_set_elp_to_mpelp();
+
       if   get_config_print_reg()
       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
       if   get_config_print_platform()
@@ -428,6 +443,9 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus[SPP]  = 0b0;
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
+
+      /* Zicfilp: extension to restore ELP */
+      zicfilp_set_elp_to_spelp();
 
       if   get_config_print_reg()
       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
@@ -462,6 +480,13 @@ function handle_mem_exception(addr : xlenbits, e : ExceptionType) -> unit = {
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }
 
+function handle_sw_check_exception(code : SWCheckCodes) -> unit = {
+  let t : sync_exception = struct { trap    = E_SW_Check_Fault(),
+                                    excinfo = Some(sw_check_code_to_bits(code)),
+                                    ext     = None() } in
+  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
+}
+
 function handle_exception(e: ExceptionType) -> unit = {
   let t : sync_exception = struct { trap    = e,
                                     excinfo = None(),
@@ -472,6 +497,7 @@ function handle_exception(e: ExceptionType) -> unit = {
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
   set_next_pc(trap_handler(del_priv, true, interruptType_to_bits(i), PC, None(), None()))
 
+val init_zicfilp_regs : unit -> unit
 /* state state initialization */
 
 function init_sys() -> unit = {
@@ -552,6 +578,8 @@ function init_sys() -> unit = {
 
   // PMP's L and A fields are set to 0 on reset.
   init_pmp();
+
+  init_zicfilp_regs();
 
   // log compatibility with spike
   if   get_config_print_reg()
