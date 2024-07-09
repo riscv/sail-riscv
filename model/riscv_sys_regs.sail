@@ -142,6 +142,9 @@ function clause extensionEnabled(Ext_U) = misa[U] == 0b1
 enum clause extension = Ext_S
 function clause extensionEnabled(Ext_S) = misa[S] == 0b1
 
+enum clause extension = Ext_H
+function clause extensionEnabled(Ext_H) = misa[H] == 0b1
+
 /* Hardware Performance Monitoring counters */
 enum clause extension = Ext_Zihpm
 function clause extensionEnabled(Ext_Zihpm) = true
