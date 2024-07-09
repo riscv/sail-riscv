@@ -356,16 +356,6 @@ enum extop_zbb = {RISCV_SEXTB, RISCV_SEXTH, RISCV_ZEXTH}
 
 enum zicondop = {RISCV_CZERO_EQZ, RISCV_CZERO_NEZ}
 
-mapping bool_bits : bool <-> bits(1) = {
-  true   <-> 0b1,
-  false  <-> 0b0
-}
-
-mapping bool_not_bits : bool <-> bits(1) = {
-  true   <-> 0b0,
-  false  <-> 0b1
-}
-
 // Get the bit encoding of word_width.
 mapping size_enc : word_width <-> bits(2) = {
   BYTE   <-> 0b00,
