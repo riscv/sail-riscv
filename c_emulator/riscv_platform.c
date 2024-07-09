@@ -16,6 +16,7 @@
 
 static mach_bits reservation = 0;
 static bool reservation_valid = false;
+static int is_rnmi_pending = 1;
 
 bool sys_enable_rvc(unit u)
 {
@@ -180,4 +181,23 @@ mach_bits plat_htif_tohost(unit u)
 unit memea(mach_bits len, sail_int n)
 {
   return UNIT;
+}
+
+// Smrnmi : resumable NMI pending
+bool rnmi_pending(bool nmie)
+{
+  if (is_rnmi_pending && nmie) {
+    is_rnmi_pending = 0;
+    return true;
+  } else {
+    return false;
+  }
+}
+mach_bits rnmi_exc_trap_vector(unit u)
+{
+  return (mach_bits)smrnmi_exc_trap_vec;
+}
+mach_bits rnmi_int_trap_vector(unit u)
+{
+  return (mach_bits)smrnmi_int_trap_vec;
 }

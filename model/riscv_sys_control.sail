@@ -44,6 +44,12 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     // pmpcfgN
     0x3A @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(idx) & (idx[0] == bitzero | sizeof(xlen) == 32),
 
+    /* machine mode: Smrnmi RNMi handling */
+    0x740 => p == Machine & haveSmrnmi(), // mnscratch
+    0x741 => p == Machine & haveSmrnmi(), // mnepc
+    0x742 => p == Machine & haveSmrnmi(), // mncause
+    0x744 => p == Machine & haveSmrnmi(), // mnstatus
+
     // pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
     0x3B @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(0b00 @ idx),
     0x3C @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(0b01 @ idx),
@@ -161,6 +167,7 @@ val load_reservation = {ocaml: "Platform.load_reservation", interpreter: "Platfo
 val match_reservation = {ocaml: "Platform.match_reservation", interpreter: "Platform.match_reservation", lem: "match_reservation", c: "match_reservation"} : xlenbits -> bool
 val cancel_reservation = {ocaml: "Platform.cancel_reservation", interpreter: "Platform.cancel_reservation", c: "cancel_reservation", lem: "cancel_reservation"} : unit -> unit
 
+
 /* Exception delegation: given an exception and the privilege at which
  * it occured, returns the privilege at which it should be handled.
  */
@@ -260,6 +267,8 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   }
 }
 
+/* Smrnmi : whether RNMI is pending */
+val rnmi_pending = {ocaml: "Platform.rnmi_pending", interpreter: "Platform.rnmi_pending", c: "rnmi_pending", lem: "rnmi_pending"} : bool -> bool
 /* Examine the current interrupt state and return an interrupt to be *
  * handled (if any), and the privilege it should be handled at.
  */
@@ -267,7 +276,9 @@ function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege
   /* If we don't have different privilege levels, we don't need to check delegation.
    * Absence of U-mode implies absence of S-mode.
    */
-  if not(haveUsrMode()) | (not(haveSupMode()) & not(haveNExt())) then {
+  if haveSmrnmi() & rnmi_pending(mnstatus[NMIE] == 0b1) & mnstatus[NMIE] == 0b1 then {
+    let r = (I_M_RNMI, Machine) in Some(r)
+  } else if not(haveUsrMode()) | (not(haveSupMode()) & not(haveNExt())) then {
     assert(priv == Machine, "invalid current privilege");
     let enabled_pending = mip.bits & mie.bits;
     match findPendingInterrupt(enabled_pending) {
@@ -288,10 +299,11 @@ function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege
 /* types of privilege transitions */
 
 union ctl_result = {
-  CTL_TRAP : sync_exception,
-  CTL_SRET : unit,
-  CTL_MRET : unit,
-  CTL_URET : unit
+  CTL_TRAP  : sync_exception,
+  CTL_SRET  : unit,
+  CTL_MRET  : unit,
+  CTL_MNRET : unit,
+  CTL_URET  : unit
 }
 
 /* trap value */
@@ -392,6 +404,30 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
     }
   };
 }
+/* Smrnmi - resumable NMI */
+val rnmi_int_trap_vector = {ocaml: "Platform.rnmi_int_trap_vector", interpreter: "Platform.rnmi_int_trap_vector", c: "rnmi_int_trap_vector", lem: "rnmi_int_trap_vector"} : unit -> xlenbits
+function rnmi_handler(pc : xlenbits) -> xlenbits = {
+
+  rvfi_trap();
+  if   get_config_print_platform()
+  then print_platform("handling RNMI");
+
+  cancel_reservation();
+
+  mncause[Cause] = zero_extend(0b0);
+  mnstatus[NMIE] = 0b0;
+  mnstatus[MNPP] = privLevel_to_bits(cur_privilege);
+  mnepc          = pc;
+
+  cur_privilege  = Machine;
+
+  handle_trap_extension(Machine, pc, None());
+
+  if   get_config_print_reg()
+  then print_reg("CSR mnstatus <- " ^ BitStr(mnstatus.bits()));
+
+  rnmi_int_trap_vector();
+}
 
 function exception_handler(cur_priv : Privilege, ctl : ctl_result,
                            pc: xlenbits) -> xlenbits = {
@@ -419,6 +455,21 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
 
       cancel_reservation();
       prepare_xret_target(Machine) & pc_alignment_mask()
+    },
+    (_, CTL_MNRET())  => {
+      let prev_priv  = cur_privilege;
+      mnstatus[NMIE] = 0b1;
+      cur_privilege  = privLevel_of_bits(mnstatus.MNPP());
+      if   cur_privilege != Machine
+      then mstatus[MPRV] = 0b0;
+
+      if   get_config_print_reg()
+      then print_reg("CSR mnstatus <- " ^ BitStr(mnstatus.bits));
+      if   get_config_print_platform()
+      then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
+
+      cancel_reservation();
+      mnepc & pc_alignment_mask()
     },
     (_, CTL_SRET())  => {
       let prev_priv   = cur_privilege;
@@ -530,6 +581,14 @@ function init_sys() -> unit = {
 
   menvcfg.bits = zero_extend(0b0);
   senvcfg.bits = zero_extend(0b0);
+
+  /* Srnmi : resumable NMI */
+  mncause[Cause]       = zero_extend(0b0);
+  mncause[IsInterrupt] = 0b1;
+  mnepc                = zero_extend(0b0);
+  mnscratch            = zero_extend(0b0);
+  mnstatus.bits        = zero_extend(0b0);
+
   /* initialize vector csrs */
   elen               = 0b1; /* ELEN=64 as the common case */
   vlen               = 0b0100; /* VLEN=512 as a default value */

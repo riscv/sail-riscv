@@ -31,6 +31,10 @@ extern uint64_t rv_ram_size;
 extern uint64_t rv_rom_base;
 extern uint64_t rv_rom_size;
 
+/* Smrnmi : Resumable NMI vectors */
+extern uint64_t smrnmi_int_trap_vec;
+extern uint64_t smrnmi_exc_trap_vec;
+
 // Provides entropy for the scalar cryptography extension.
 extern uint64_t rv_16_random_bits(void);
 

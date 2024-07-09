@@ -729,3 +729,22 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
 
 mapping clause assembly = SFENCE_VMA(rs1, rs2)
   <-> "sfence.vma" ^ spc() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+
+/* ****************************************************************** */
+union clause ast = MNRET : unit
+
+mapping clause encdec = MNRET() if haveSmrnmi()
+  <-> 0b0111000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011 if haveSmrnmi()
+
+function clause execute MNRET() = {
+  if   cur_privilege != Machine
+  then { handle_illegal(); RETIRE_FAIL }
+  else if not(ext_check_mnret_priv ())
+  then { ext_fail_mnret_priv(); RETIRE_FAIL }
+  else {
+    set_next_pc(exception_handler(cur_privilege, CTL_MNRET(), PC));
+    RETIRE_SUCCESS
+  }
+}
+
+mapping clause assembly = MNRET() <-> "mnret"

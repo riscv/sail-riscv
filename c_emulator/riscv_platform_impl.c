@@ -27,6 +27,10 @@ uint64_t rv_ram_size = UINT64_C(0x4000000);
 uint64_t rv_rom_base = UINT64_C(0x1000);
 uint64_t rv_rom_size = UINT64_C(0x100);
 
+/* Smrnmi : Resumable NMI vectors */
+uint64_t smrnmi_int_trap_vec = UINT64_C(0);
+uint64_t smrnmi_exc_trap_vec = UINT64_C(0);
+
 // Provides entropy for the scalar cryptography extension.
 uint64_t rv_16_random_bits(void)
 {

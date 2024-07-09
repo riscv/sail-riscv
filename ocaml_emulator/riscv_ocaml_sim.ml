@@ -91,7 +91,13 @@ let options = Arg.align ([("-dump-dts",
                            " requested isa");
                           ("-with-dtc",
                            Arg.String PI.set_dtc,
-                           " full path to dtc to use")
+                           " full path to dtc to use");
+                          ("-smrnmi_int_trap_vec",
+                           Arg.Int PI.set_smrnmi_int_trap_vec,
+                           " configure SMRNMI interrupt trap vector");
+                          ("-smrnmi_exc_trap_vec",
+                           Arg.Int PI.set_smrnmi_exc_trap_vec,
+                           " configure SMRNMI exception trap vector")
                          ])
 
 let usage_msg = "RISC-V platform options:"

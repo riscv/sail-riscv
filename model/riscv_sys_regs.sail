@@ -172,6 +172,12 @@ function haveZalrsc() -> bool = haveAtomics()
 /* Zicond extension support */
 function haveZicond() -> bool = true
 
+/* Smrnmi extension support */
+function haveSmrnmi() -> bool = true
+
+/* H extension support */
+function haveHext() -> bool = false
+
 /*
  * Illegal values legalized to least privileged mode supported.
  * Note: the only valid combinations of supported modes are M, M+U, M+S+U.
@@ -231,8 +237,18 @@ bitfield Mstatus : xlenbits = {
 }
 register mstatus : Mstatus
 
+/* Smrnmi : resumable NMI registers */
+bitfield Mnstatus : xlenbits = {
+  MNPP : 12 .. 11,
+  MNPV : 7,
+  NMIE : 3,
+}
+register mnstatus  : Mnstatus
+register mnscratch : xlenbits
+register mnepc     : xlenbits
+
 function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
-  if   t != Execute() & m[MPRV] == 0b1
+  if   t != Execute() & m[MPRV] == 0b1 & ((mnstatus[NMIE] == 0b1) | not(haveSmrnmi()))
   then privLevel_of_bits(m[MPP])
   else priv
 
@@ -448,6 +464,8 @@ bitfield Mcause : xlenbits = {
   Cause       : xlen - 2 .. 0
 }
 register mcause : Mcause
+/* Smrnmi : resumable NMI cause register */
+register mncause   : Mcause
 
 /* Interpreting the trap-vector address */
 function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
@@ -483,6 +501,21 @@ function pc_alignment_mask() -> xlenbits =
 
 register mtval    : xlenbits
 register mscratch : xlenbits
+
+function legalize_mnstatus(o : Mnstatus, v : xlenbits) -> Mnstatus = {
+  let m = o;
+  let v = Mk_Mnstatus(v);
+  let m = [m with MNPV = if haveHext() then v[MNPV] else 0b0];
+  let m = [m with MNPP = if have_privLevel(v[MNPP]) then v[MNPP]
+                         else privLevel_to_bits(lowest_supported_privLevel())];
+  /* NMIE can be set but not cleared */
+  let m = [m with NMIE = (m[NMIE] | v[NMIE])];
+  m
+}
+function legalize_mncause(o : Mcause, v : xlenbits) -> Mcause = {
+  let v = Mk_Mcause(v);
+  [o with Cause = v[Cause]];
+}
 
 /* counters */
 
