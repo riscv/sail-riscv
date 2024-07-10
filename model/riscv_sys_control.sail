@@ -14,68 +14,68 @@
 function csrAccess(csr : csreg) -> csrRW = csr[11..10]
 function csrPriv(csr : csreg) -> priv_level = csr[9..8]
 
-function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
+function is_CSR_defined (csr : csreg) -> bool =
   match (csr) {
     /* machine mode: informational */
-    0xf11 => p == Machine, // mvendorid
-    0xf12 => p == Machine, // marchdid
-    0xf13 => p == Machine, // mimpid
-    0xf14 => p == Machine, // mhartid
-    0xf15 => p == Machine, // mconfigptr
+    0xf11 => true, // mvendorid
+    0xf12 => true, // marchdid
+    0xf13 => true, // mimpid
+    0xf14 => true, // mhartid
+    0xf15 => true, // mconfigptr
     /* machine mode: trap setup */
-    0x300 => p == Machine, // mstatus
-    0x301 => p == Machine, // misa
-    0x302 => p == Machine & (haveSupMode() | haveNExt()), // medeleg
-    0x303 => p == Machine & (haveSupMode() | haveNExt()), // mideleg
-    0x304 => p == Machine, // mie
-    0x305 => p == Machine, // mtvec
-    0x306 => p == Machine & haveUsrMode(), // mcounteren
-    0x30A => p == Machine & haveUsrMode(), // menvcfg
-    0x310 => p == Machine & (sizeof(xlen) == 32), // mstatush
-    0x31A => p == Machine & haveUsrMode() & (sizeof(xlen) == 32), // menvcfgh
-    0x320 => p == Machine, // mcountinhibit
+    0x300 => true, // mstatus
+    0x301 => true, // misa
+    0x302 => haveSupMode() | haveNExt(), // medeleg
+    0x303 => haveSupMode() | haveNExt(), // mideleg
+    0x304 => true, // mie
+    0x305 => true, // mtvec
+    0x306 => haveUsrMode(), // mcounteren
+    0x30A => haveUsrMode(), // menvcfg
+    0x310 => sizeof(xlen) == 32, // mstatush
+    0x31A => haveUsrMode() & (sizeof(xlen) == 32), // menvcfgh
+    0x320 => true, // mcountinhibit
     /* machine mode: trap handling */
-    0x340 => p == Machine, // mscratch
-    0x341 => p == Machine, // mepc
-    0x342 => p == Machine, // mcause
-    0x343 => p == Machine, // mtval
-    0x344 => p == Machine, // mip
+    0x340 => true, // mscratch
+    0x341 => true, // mepc
+    0x342 => true, // mcause
+    0x343 => true, // mtval
+    0x344 => true, // mip
 
     // pmpcfgN
-    0x3A @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(idx) & (idx[0] == bitzero | sizeof(xlen) == 32),
+    0x3A @ idx : bits(4) => sys_pmp_count() > unsigned(idx) & (idx[0] == bitzero | sizeof(xlen) == 32),
 
     // pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
-    0x3B @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(0b00 @ idx),
-    0x3C @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(0b01 @ idx),
-    0x3D @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(0b10 @ idx),
-    0x3E @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(0b11 @ idx),
-    0xB00 => p == Machine, // mcycle
-    0xB02 => p == Machine, // minstret
+    0x3B @ idx : bits(4) => sys_pmp_count() > unsigned(0b00 @ idx),
+    0x3C @ idx : bits(4) => sys_pmp_count() > unsigned(0b01 @ idx),
+    0x3D @ idx : bits(4) => sys_pmp_count() > unsigned(0b10 @ idx),
+    0x3E @ idx : bits(4) => sys_pmp_count() > unsigned(0b11 @ idx),
+    0xB00 => true, // mcycle
+    0xB02 => true, // minstret
 
-    0xB80 => p == Machine & (sizeof(xlen) == 32), // mcycleh
-    0xB82 => p == Machine & (sizeof(xlen) == 32), // minstreth
+    0xB80 => sizeof(xlen) == 32, // mcycleh
+    0xB82 => sizeof(xlen) == 32, // minstreth
 
     /* disabled trigger/debug module */
-    0x7a0 => p == Machine,
+    0x7a0 => true,
 
     /* supervisor mode: trap setup */
-    0x100 => haveSupMode() & (p == Machine | p == Supervisor), // sstatus
-    0x102 => haveSupMode() & haveNExt() & (p == Machine | p == Supervisor), // sedeleg
-    0x103 => haveSupMode() & haveNExt() & (p == Machine | p == Supervisor), // sideleg
-    0x104 => haveSupMode() & (p == Machine | p == Supervisor), // sie
-    0x105 => haveSupMode() & (p == Machine | p == Supervisor), // stvec
-    0x106 => haveSupMode() & (p == Machine | p == Supervisor), // scounteren
-    0x10A => haveSupMode() & (p == Machine | p == Supervisor), // senvcfg
+    0x100 => haveSupMode(), // sstatus
+    0x102 => haveSupMode() & haveNExt(), // sedeleg
+    0x103 => haveSupMode() & haveNExt(), // sideleg
+    0x104 => haveSupMode(), // sie
+    0x105 => haveSupMode(), // stvec
+    0x106 => haveSupMode(), // scounteren
+    0x10A => haveSupMode(), // senvcfg
 
     /* supervisor mode: trap handling */
-    0x140 => haveSupMode() & (p == Machine | p == Supervisor), // sscratch
-    0x141 => haveSupMode() & (p == Machine | p == Supervisor), // sepc
-    0x142 => haveSupMode() & (p == Machine | p == Supervisor), // scause
-    0x143 => haveSupMode() & (p == Machine | p == Supervisor), // stval
-    0x144 => haveSupMode() & (p == Machine | p == Supervisor), // sip
+    0x140 => haveSupMode(), // sscratch
+    0x141 => haveSupMode(), // sepc
+    0x142 => haveSupMode(), // scause
+    0x143 => haveSupMode(), // stval
+    0x144 => haveSupMode(), // sip
 
     /* supervisor mode: address translation */
-    0x180 => haveSupMode() & (p == Machine | p == Supervisor), // satp
+    0x180 => haveSupMode(), // satp
 
     /* user mode: counters */
     0xC00 => haveUsrMode(),    // cycle
@@ -90,7 +90,7 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0x015 => haveZkr(),
 
     /* check extensions */
-    _     => ext_is_CSR_defined(csr, p)
+    _     => ext_is_CSR_defined(csr)
   }
 
 val check_CSR_access : (csrRW, priv_level, Privilege, bool) -> bool
@@ -137,7 +137,7 @@ function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
 }
 
 function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
-    is_CSR_defined(csr, p)
+    is_CSR_defined(csr)
   & check_CSR_access(csrAccess(csr), csrPriv(csr), p, isWrite)
   & check_TVM_SATP(csr, p)
   & check_Counteren(csr, p)

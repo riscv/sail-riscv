@@ -15,11 +15,11 @@
 
 /* **************************************************************** */
 
-/* val clause ext_is_CSR_defined : (csreg, Privilege) -> bool */
+/* val clause ext_is_CSR_defined : (csreg) -> bool */
 
-function clause ext_is_CSR_defined (0x001, _) = haveFExt() | haveZfinx()
-function clause ext_is_CSR_defined (0x002, _) = haveFExt() | haveZfinx()
-function clause ext_is_CSR_defined (0x003, _) = haveFExt() | haveZfinx()
+function clause ext_is_CSR_defined (0x001) = haveFExt() | haveZfinx()
+function clause ext_is_CSR_defined (0x002) = haveFExt() | haveZfinx()
+function clause ext_is_CSR_defined (0x003) = haveFExt() | haveZfinx()
 
 function clause ext_read_CSR (0x001) = Some(zero_extend(fcsr[FFLAGS]))
 function clause ext_read_CSR (0x002) = Some(zero_extend(fcsr[FRM]))
