@@ -428,9 +428,13 @@ function init_sys() -> unit = {
   misa[U]   = 0b1;                             /* user-mode */
   misa[S]   = 0b1;                             /* supervisor-mode */
   misa[V]   = bool_to_bits(sys_enable_vext()); /* vector extension */
+  misa[H]   = bool_to_bits(sys_enable_hext()); /* hypervisor extension */
 
   if   sys_enable_fdext() & sys_enable_zfinx()
   then internal_error(__FILE__, __LINE__, "F and Zfinx cannot both be enabled!");
+
+  if   sys_enable_next() & sys_enable_hext()
+  then internal_error(__FILE__, __LINE__, "The hypervisor extension currently does not consider the possibility of user-mode interrupts");
 
   /* We currently support both F and D */
   misa[F]   = bool_to_bits(sys_enable_fdext());      /* single-precision */
@@ -485,6 +489,8 @@ function init_sys() -> unit = {
 
   // PMP's L and A fields are set to 0 on reset.
   init_pmp();
+
+  if extensionEnabled(Ext_H) then init_hext() else cur_virtualization = V0;
 
   // log compatibility with spike
   if   get_config_print_reg()
