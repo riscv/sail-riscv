@@ -164,25 +164,20 @@ function have_privLevel(priv : priv_level) -> bool =
     0b11 => true,
   }
 
-bitfield Mstatush : bits(32) = {
-  MBE  : 5,
-  SBE  : 4
-}
-register mstatush : Mstatush
-
-bitfield Mstatus : xlenbits = {
+bitfield Mstatus : bits(64) = {
   SD   : xlen - 1,
 
-  // The MBE and SBE fields are in mstatus in RV64 and absent in RV32.
-  // On RV32, they are in mstatush, which doesn't exist in RV64.  For now,
-  // they are handled in an ad-hoc way.
-  // MBE  : 37
-  // SBE  : 36
+  // These fields are in mstatus in RV64 and absent in RV32.
+  // On RV32, they are in mstatush, which doesn't exist in RV64.
+  MPV  : 39,
+  GVA  : 38,
+  MBE  : 37,
+  SBE  : 36,
 
   // The SXL and UXL fields don't exist on RV32, so they are modelled
   // via explicit getters and setters; see below.
-  // SXL  : 35 .. 34,
-  // UXL  : 33 .. 32,
+  SXL  : 35 .. 34,
+  UXL  : 33 .. 32,
 
   TSR  : 22,
   TW   : 21,
@@ -199,6 +194,7 @@ bitfield Mstatus : xlenbits = {
   SPP  : 8,
 
   MPIE : 7,
+  UBE  : 6,
   SPIE : 5,
 
   MIE  : 3,
@@ -214,40 +210,29 @@ function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv :
 function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
   if   xlen == 32
   then arch_to_bits(RV32)
-  else m.bits[35 .. 34]
+  else m[SXL]
 }
 
 function set_mstatus_SXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
   if   xlen == 32
   then m
-  else {
-    let m = vector_update_subrange(m.bits, 35, 34,  a);
-    Mk_Mstatus(m)
-  }
+  else [m with SXL = a]
 }
 
 function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
   if   xlen == 32
   then arch_to_bits(RV32)
-  else m.bits[33 .. 32]
+  else m[UXL]
 }
 
 function set_mstatus_UXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
   if   xlen == 32
   then m
-  else {
-    let m = vector_update_subrange(m.bits, 33, 32,  a);
-    Mk_Mstatus(m)
-  }
+  else [m with UXL = a]
 }
 
-function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
-  /*
-   * Populate all defined fields using the bits of v, stripping anything
-   * that does not have a matching bitfield entry. All bits above 32 are handled
-   * explicitly later.
-   */
-  let m : Mstatus = Mk_Mstatus(zero_extend(v[22 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
+function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
+  let m = Mk_Mstatus(v[63 .. 63] @ zeros(23) @ v[39 .. 32] @ zeros(9) @ v[22 .. 3] @ 0b0 @ v[1 .. 0]);
 
   /* Legalize MPP */
   let m = [m with MPP = if have_privLevel(m[MPP]) then m[MPP]
@@ -271,9 +256,12 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   let m = set_mstatus_UXL(m, get_mstatus_UXL(o));
 
   /* We don't currently support changing MBE and SBE. */
-  let m = if xlen == 64 then {
-             Mk_Mstatus([m.bits with 37 .. 36 = 0b00])
-          } else m;
+  let m = if sizeof(xlen) == 64
+          then [m with MBE = 0b0]
+          else m;
+  let m = if sizeof(xlen) == 64
+          then [m with SBE = 0b0]
+          else m;
 
   if not(extensionEnabled(Ext_U)) then {
     let m = [m with MPRV = 0b0];
@@ -303,51 +291,85 @@ function in32BitMode() -> bool = {
 /* interrupt processing state */
 
 bitfield Minterrupts : xlenbits = {
-  MEI : 11, /* external interrupts */
-  SEI : 9,
+  SGEI : 12, /* external interrupts */
+  MEI  : 11,
+  VSEI : 10,
+  SEI  : 9,
+  UEI  : 8,
 
-  MTI : 7,  /* timers interrupts */
-  STI : 5,
+  MTI  : 7,  /* timers interrupts */
+  VSTI : 6,
+  STI  : 5,
+  UTI  : 4,
 
-  MSI : 3,  /* software interrupts */
-  SSI : 1,
+  MSI  : 3,  /* software interrupts */
+  VSSI : 2,
+  SSI  : 1,
+  USI  : 0,
 }
 register mip     : Minterrupts /* Pending */
 register mie     : Minterrupts /* Enabled */
 register mideleg : Minterrupts /* Delegation to S-mode */
 
+/*! Legalize mip from the previous mip (m) and the written mip (m) */
 function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
-  /* The only writable bits are the S-mode bits, and with the 'N'
-   * extension, the U-mode bits. */
   let v = Mk_Minterrupts(v);
-  [o with SEI = v[SEI], STI = v[STI], SSI = v[SSI]]
+  /* S-mode bits are writable */
+  let m = [o with SEI = v[SEI], STI = v[STI], SSI = v[SSI]];
+  /* As SGEI, VSEI, VSTI & VSSI in mip are aliases for their corresponding bits
+  in hip, only mip.VSSI is writable */
+  let m = if extensionEnabled(Ext_H)
+          then [m with VSSI = v[VSSI]]
+          else m;
+  m
 }
 
 function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
-  [o with
+  let m = [o with
     MEI = v[MEI],
     MTI = v[MTI],
     MSI = v[MSI],
     SEI = v[SEI],
     STI = v[STI],
     SSI = v[SSI]
-  ]
+  ];
+  /* These interrupts can only be enabled when the hypervisor extention is present */
+  if extensionEnabled(Ext_H)
+  then [m with
+      SGEI = v[SGEI],
+      VSEI = v[VSEI],
+      VSTI = v[VSTI], 
+      VSSI = v[VSSI]
+    ]
+  else m
 }
 
 function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   /* M-mode interrupt delegation bits "should" be hardwired to 0. */
   /* FIXME: needs verification against eventual spec language. */
-  [Mk_Minterrupts(v) with MEI = 0b0, MTI = 0b0, MSI = 0b0]
+  let m = [Mk_Minterrupts(v) with MEI = 0b0, MTI = 0b0, MSI = 0b0];
+  /* VS-mode interrupts are always delegated when the H-extesion is present */
+  let m = if extensionEnabled(Ext_H)
+          then [m with VSEI = 0b1, VSTI = 0b1, VSSI = 0b1]
+          else m;
+  /* If GEILEN > 0, SGEI is always delegated */
+  let m = if extensionEnabled(Ext_H) then [m with SGEI = 0b1] else m;
+  m
 }
 
 /* exception processing state */
 
 bitfield Medeleg : xlenbits = {
+  SAMO_GPage_Fault  : 23,
+  Virtual_Instr     : 22,
+  Load_GPage_Fault  : 21,
+  Fetch_GPage_Fault : 20,
   SAMO_Page_Fault   : 15,
   Load_Page_Fault   : 13,
   Fetch_Page_Fault  : 12,
   MEnvCall          : 11,
+  VSEnvCall         : 10,
   SEnvCall          : 9,
   UEnvCall          : 8,
   SAMO_Access_Fault : 7,
@@ -525,11 +547,11 @@ register mconfigptr : xlenbits
 /* S-mode registers */
 
 /* sstatus reveals a subset of mstatus */
-bitfield Sstatus : xlenbits = {
+bitfield Sstatus : bits(64) = {
   SD   : xlen - 1,
   // The UXL field does not exist on RV32, so we define an explicit
   // getter and setter below.
-  // UXL  : 30 .. 29,
+  UXL  : 33 .. 32,
   MXR  : 19,
   SUM  : 18,
   XS   : 16 .. 15,
@@ -587,7 +609,7 @@ function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
 }
 
 function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
-  legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(v)).bits)
+  legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(zero_extend(v))).bits)
 }
 
 

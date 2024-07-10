@@ -30,7 +30,7 @@ function clause read_CSR(0xF12) = marchid
 function clause read_CSR(0xF13) = mimpid
 function clause read_CSR(0xF14) = mhartid
 function clause read_CSR(0xF15) = mconfigptr
-function clause read_CSR(0x300) = mstatus.bits
+function clause read_CSR(0x300) = mstatus.bits[xlen - 1 .. 0]
 function clause read_CSR(0x301) = misa.bits
 function clause read_CSR(0x302) = medeleg.bits
 function clause read_CSR(0x303) = mideleg.bits
@@ -38,7 +38,7 @@ function clause read_CSR(0x304) = mie.bits
 function clause read_CSR(0x305) = get_mtvec()
 function clause read_CSR(0x306) = zero_extend(mcounteren.bits)
 function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
-function clause read_CSR(0x310 if xlen == 32) = mstatush.bits
+function clause read_CSR(0x310 if xlen == 32) = mstatus.bits[63 .. 32]
 function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
 function clause read_CSR(0x320) = zero_extend(mcountinhibit.bits)
 
@@ -73,7 +73,7 @@ function clause read_CSR(0b1011100 /* 0xB80 */ @ index : bits(5) if xlen == 32 &
 function clause read_CSR(0x7a0) = ~(tselect)  /* this indicates we don't have any trigger support */
 
 /* supervisor mode */
-function clause read_CSR(0x100) = lower_mstatus(mstatus).bits
+function clause read_CSR(0x100) = lower_mstatus(mstatus).bits[(xlen - 1) .. 0]
 function clause read_CSR(0x104) = lower_mie(mie, mideleg).bits
 function clause read_CSR(0x105) = get_stvec()
 function clause read_CSR(0x106) = zero_extend(scounteren.bits)
@@ -101,7 +101,8 @@ function clause read_CSR(0b1100100 /* 0xC80 */ @ index : bits(5) if xlen == 32 &
 function clause read_CSR(0x015) = read_seed_csr()
 
 /* machine mode */
-function clause write_CSR(0x300, value) = { mstatus = legalize_mstatus(mstatus, value); mstatus.bits }
+function clause write_CSR((0x300, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, mstatus.bits[63 .. 32] @ value); mstatus.bits[31 .. 0] }
+function clause write_CSR((0x300, value) if xlen == 64) = { mstatus = legalize_mstatus(mstatus, value); mstatus.bits }
 function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); misa.bits }
 function clause write_CSR(0x302, value) = { medeleg = legalize_medeleg(medeleg, value); medeleg.bits }
 function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, value); mideleg.bits }
@@ -110,7 +111,7 @@ function clause write_CSR(0x305, value) = { set_mtvec(value) }
 function clause write_CSR(0x306, value) = { mcounteren = legalize_mcounteren(mcounteren, value); zero_extend(mcounteren.bits) }
 function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); menvcfg.bits[31 .. 0] }
 function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); menvcfg.bits }
-function clause write_CSR((0x310, value) if xlen == 32) = { mstatush.bits } // ignore writes for now
+function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, value @ mstatus.bits[31 .. 0]); mstatus.bits[63 .. 32] }
 function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); menvcfg.bits[63 .. 32] }
 function clause write_CSR(0x320, value) = { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); zero_extend(mcountinhibit.bits) }
 function clause write_CSR(0x340, value) = { mscratch = value; mscratch }
@@ -159,7 +160,7 @@ function clause write_CSR((0b1011100 /* 0xB80 */ @ index : bits(5), value) if xl
 function clause write_CSR(0x7a0, value) = { tselect = value; tselect }
 
 /* supervisor mode */
-function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); mstatus.bits }
+function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); mstatus.bits[(xlen - 1) .. 0] }
 function clause write_CSR(0x104, value) = { mie = legalize_sie(mie, mideleg, value); mie.bits }
 function clause write_CSR(0x105, value) = { set_stvec(value) }
 function clause write_CSR(0x106, value) = { scounteren = legalize_scounteren(scounteren, value); zero_extend(scounteren.bits) }
