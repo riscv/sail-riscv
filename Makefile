@@ -50,13 +50,16 @@ SAIL_DEFAULT_INST += riscv_insts_zbkx.sail
 SAIL_DEFAULT_INST += riscv_insts_zicond.sail
 
 SAIL_DEFAULT_INST += riscv_insts_vext_utils.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_fp_utils.sail
 SAIL_DEFAULT_INST += riscv_insts_vext_vset.sail
 SAIL_DEFAULT_INST += riscv_insts_vext_arith.sail
 SAIL_DEFAULT_INST += riscv_insts_vext_fp.sail
 SAIL_DEFAULT_INST += riscv_insts_vext_mem.sail
 SAIL_DEFAULT_INST += riscv_insts_vext_mask.sail
 SAIL_DEFAULT_INST += riscv_insts_vext_vm.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_fp_vm.sail
 SAIL_DEFAULT_INST += riscv_insts_vext_red.sail
+SAIL_DEFAULT_INST += riscv_insts_vext_fp_red.sail
 
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
 SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
