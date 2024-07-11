@@ -14,7 +14,7 @@ end csr_name_map
    previously. */
 function csr_name(csr) = csr_name_map(csr)
 
-function clause ext_is_CSR_defined(_, _) = false
+function clause ext_is_CSR_defined(_) = false
 end ext_is_CSR_defined
 
 function clause ext_read_CSR _ = None()

@@ -188,10 +188,9 @@ overload to_str = {csr_name}
  */
 
 
-/* returns whether a CSR is defined and accessible at a given address
- * and privilege
+/* returns whether a CSR exists
  */
-val ext_is_CSR_defined : (csreg, Privilege) -> bool
+val ext_is_CSR_defined : (csreg) -> bool
 scattered function ext_is_CSR_defined
 
 /* returns the value of the CSR if it is defined */
