@@ -292,7 +292,7 @@ function translate_TLB_hit(sv_params : SV_Params,
                            mxr       : bool,
                            do_sum    : bool,
                            ext_ptw   : ext_ptw,
-                           tlb_index : nat,
+                           tlb_index : tlb_index_range,
                            ent       : TLB_Entry)
                           -> TR_Result(bits(64), PTW_Error) = {
   let pte       = ent.pte;

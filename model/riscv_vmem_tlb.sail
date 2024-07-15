@@ -27,17 +27,37 @@ struct TLB_Entry = {
   age        : bits(64)   // for replacement policy?
 }
 
-// Single-entry TLB (could enlarge this in future for better simulation speed)
+// 64 entries is based on benchmarks of Linux boots and is where you stop
+// seeing performance improvements.
+type num_tlb_entries : Int = 64
+type tlb_index_range = range(0, num_tlb_entries - 1)
+
 // PRIVATE
-register tlb : option(TLB_Entry) = None()
+register tlb : vector(num_tlb_entries, option(TLB_Entry)) = [
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+]
+
+// Indexed by the lowest bits of the VPN.
+function tlb_hash(vaddr : bits(64)) -> tlb_index_range =
+  unsigned(vaddr[17 .. 12])
 
 // PUBLIC: invoked in init_vmem() [riscv_vmem.sail]
-function init_TLB() -> unit =
-  tlb = None()
+function init_TLB() -> unit = {
+  foreach (i from 0 to (length(tlb) - 1)) {
+    tlb[i] = None();
+  }
+}
 
 // PUBLIC: invoked in translate_TLB_hit() [riscv_vmem.sail]
-function write_TLB(idx : nat, ent : TLB_Entry) -> unit =
-  tlb = Some(ent)
+function write_TLB(index : tlb_index_range, ent : TLB_Entry) -> unit =
+  tlb[index] = Some(ent)
 
 // PRIVATE
 function match_TLB_Entry(ent   : TLB_Entry,
@@ -60,11 +80,13 @@ function flush_TLB_Entry(e    : TLB_Entry,
 }
 
 // PUBLIC: invoked in translate() [riscv_vmem.sail]
-function lookup_TLB (asid : asidbits, vaddr : bits(64)) -> option((nat, TLB_Entry)) =
-  match tlb {
-    None()  => None(),
-    Some(e) => if match_TLB_Entry(e, asid, vaddr) then Some((0, e)) else None()
+function lookup_TLB (asid : asidbits, vaddr : bits(64)) -> option((tlb_index_range, TLB_Entry)) = {
+  let index = tlb_hash(vaddr);
+  match tlb[index] {
+    None() => None(),
+    Some(entry) => if match_TLB_Entry(entry, asid, vaddr) then Some((index, entry)) else None(),
   }
+}
 
 // PRIVATE
 function add_to_TLB(asid          : asidbits,
@@ -75,21 +97,28 @@ function add_to_TLB(asid          : asidbits,
                     level         : nat,
                     global        : bool,
                     levelBitSize  : nat,
-                    PAGESIZE_BITS : nat)     -> unit = {
-  let shift = PAGESIZE_BITS + (level * levelBitSize);
+                    pagesize_bits : nat) -> unit = {
+  let shift = pagesize_bits + (level * levelBitSize);
   assert(shift <= 64);
   let vAddrMask  : bits(64)  = zero_extend(ones(shift));
   let vMatchMask : bits(64)  = ~ (vAddrMask);
-  let entry      : TLB_Entry = struct{asid       = asid,
-                                      global     = global,
-                                      pte        = pte,
-                                      pteAddr    = pteAddr,
-                                      vAddrMask  = vAddrMask,
-                                      vMatchMask = vMatchMask,
-                                      vAddr      = vAddr & vMatchMask,
-                                      pAddr      = shiftl(shiftr(pAddr, shift), shift),
-                                      age        = mcycle};
-  tlb = Some(entry)
+
+  let entry : TLB_Entry = struct{asid       = asid,
+                                 global     = global,
+                                 pte        = pte,
+                                 pteAddr    = pteAddr,
+                                 vAddrMask  = vAddrMask,
+                                 vMatchMask = vMatchMask,
+                                 vAddr      = vAddr & vMatchMask,
+                                 pAddr      = pAddr & vMatchMask,
+                                 age        = mcycle};
+
+  // Add the TLB entry. Note that this may be a super-page, but we still want
+  // to add it to the index corresponding to the page because that is how
+  // lookup_TLB looks it up. For superpages will just end up with the same
+  // TLB entry in multiple slots.
+  let index = tlb_hash(vAddr);
+  tlb[index] = Some(entry);
 }
 
 // Top-level TLB flush function
@@ -106,10 +135,10 @@ function flush_TLB(asid_xlen : option(xlenbits),
       None()  => None(),
       Some(a) => Some(zero_extend(a))
     };
-  match tlb {
-    None()  => (),
-    Some(e) => if flush_TLB_Entry(e, asid, addr_64b)
-               then tlb = None()
-               else ()
+  foreach (i from 0 to (length(tlb) - 1)) {
+    match tlb[i] {
+      Some(e) => if flush_TLB_Entry(e, asid, addr_64b) then { tlb[i] = None(); },
+      None()  => (),
+    }
   }
 }
