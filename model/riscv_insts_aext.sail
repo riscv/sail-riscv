@@ -56,9 +56,13 @@ mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)                          
   <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if haveZalrsc() & lrsc_width_valid(size)
 
 /* We could set load-reservations on physical or virtual addresses.
- * For now we set them on virtual addresses, since it makes the
- * sequential model of SC a bit simpler, at the cost of an explicit
- * call to load_reservation in LR and cancel_reservation in SC.
+ * However most chips (especially multi-core) will use physical addresses.
+ * Additionally, matching on physical addresses allows as many SC's to
+ * succeed as the spec allows. This simplifies verification against real chips
+ * since you can force spurious failures from a DUT into the Sail model and
+ * then compare the result (a kind of one-way waiver). Using virtual addresses
+ * requires cancelling the reservation in some additional places, e.g. xRET, and
+ * that will break comparison with a DUT that doesn't require cancellation there.
  */
 
 function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
@@ -82,7 +86,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
         TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) =>
           match mem_read(Read(Data), addr, width_bytes, aq, aq & rl, true) {
-            MemValue(result) => { load_reservation(vaddr); X(rd) = sign_extend(result); RETIRE_SUCCESS },
+            MemValue(result) => { load_reservation(addr); X(rd) = sign_extend(result); RETIRE_SUCCESS },
             MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
           },
       }
@@ -124,14 +128,15 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
         if not(is_aligned(vaddr, width))
         then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
         else {
-          if match_reservation(vaddr) == false then {
-            /* cannot happen in rmem */
-            X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS
-          } else {
-            match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
-                                                        * both result in a SAMO exception */
-              TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-              TR_Address(addr, _) => {
+          match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
+                                                      * both result in a SAMO exception */
+            TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            TR_Address(addr, _) => {
+              // Check reservation with physical address.
+              if not(match_reservation(addr)) then {
+                /* cannot happen in rmem */
+                X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS
+              } else {
                 let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
                 match eares {
                   MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },

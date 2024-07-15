@@ -323,8 +323,6 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
                       ^ BitStr(c) ^ " at priv " ^ to_str(del_priv)
                       ^ " with tval " ^ BitStr(tval(info)));
 
-  cancel_reservation();
-
   match (del_priv) {
     Machine => {
        mcause[IsInterrupt] = bool_to_bits(intr);
@@ -417,7 +415,6 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   get_config_print_platform()
       then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
-      cancel_reservation();
       prepare_xret_target(Machine) & pc_alignment_mask()
     },
     (_, CTL_SRET())  => {
@@ -435,7 +432,6 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       then print_platform("ret-ing from " ^ to_str(prev_priv)
                           ^ " to " ^ to_str(cur_privilege));
 
-      cancel_reservation();
       prepare_xret_target(Supervisor) & pc_alignment_mask()
     },
     (_, CTL_URET())  => {
@@ -449,7 +445,6 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   get_config_print_platform()
       then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
-      cancel_reservation();
       prepare_xret_target(User) & pc_alignment_mask()
     }
   }
