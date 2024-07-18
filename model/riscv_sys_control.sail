@@ -31,8 +31,10 @@ function is_CSR_defined (csr : csreg) -> bool =
     0x305 => true, // mtvec
     0x306 => haveUsrMode(), // mcounteren
     0x30A => haveUsrMode(), // menvcfg
+    0x30C => haveSupMode() & haveSmstateen(), // mstateen0
     0x310 => sizeof(xlen) == 32, // mstatush
     0x31A => haveUsrMode() & (sizeof(xlen) == 32), // menvcfgh
+    0x31C => haveSupMode() & (sizeof(xlen) == 32) & haveSmstateen(), // mstateen0h
     0x320 => true, // mcountinhibit
     /* machine mode: trap handling */
     0x340 => true, // mscratch
@@ -77,6 +79,9 @@ function is_CSR_defined (csr : csreg) -> bool =
     /* supervisor mode: address translation */
     0x180 => haveSupMode(), // satp
 
+    /* supervisor mode: resource management configurations */
+    0x181 => haveSsqosid(), // srmcfg
+
     /* user mode: counters */
     0xC00 => haveUsrMode(),    // cycle
     0xC01 => haveUsrMode(),    // time
@@ -117,7 +122,6 @@ function check_Counteren(csr : csreg, p : Privilege) -> bool =
               else true
   }
 
-
 /* Seed may only be accessed if we are doing a write, and access has been
  * allowed in the current priv mode
  */
@@ -136,12 +140,18 @@ function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
   }
 }
 
+function check_srmcfg(csr : csreg, p : Privilege) -> bool =
+    csr == 0x181
+    & p == Supervisor
+    & ((haveSmstateen() & mstateen0.PRIV_V1P14() == 0b1) | not(haveSmstateen()))
+
 function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
     is_CSR_defined(csr)
   & check_CSR_access(csrAccess(csr), csrPriv(csr), p, isWrite)
   & check_TVM_SATP(csr, p)
   & check_Counteren(csr, p)
   & check_seed_CSR(csr, p, isWrite)
+  & check_srmcfg(csr, p)
 
 /* Reservation handling for LR/SC.
  *
@@ -525,6 +535,8 @@ function init_sys() -> unit = {
 
   menvcfg.bits = zero_extend(0b0);
   senvcfg.bits = zero_extend(0b0);
+  mstateen0.bits = zero_extend(0b0);
+
   /* initialize vector csrs */
   elen               = 0b1; /* ELEN=64 as the common case */
   vlen               = 0b0100; /* VLEN=512 as a default value */
@@ -547,6 +559,8 @@ function init_sys() -> unit = {
 
   // PMP's L and A fields are set to 0 on reset.
   init_pmp();
+
+  srmcfg->RCID()     = 0b000000000000;
 
   // log compatibility with spike
   if   get_config_print_reg()
