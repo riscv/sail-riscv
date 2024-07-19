@@ -23,6 +23,9 @@ union clause ast = C_FLWSP : (bits(6), regidx)
 mapping clause encdec_compressed = C_FLWSP(ui76 @ ui5 @ ui42, rd)                  if extensionEnabled(Ext_Zcf)
   <-> 0b011 @ ui5 : bits(1) @ rd : regidx @ ui42 : bits(3) @ ui76 : bits(2) @ 0b10 if extensionEnabled(Ext_Zcf)
 
+mapping clause fmtencdec_compressed = C_FLWSP(imm, rd)
+  <-> CIFormat(struct { funct3 = 0b011, imm = imm, rd = rd, op = 0b10 })
+
 function clause execute (C_FLWSP(imm, rd)) = {
   let imm : bits(12) = zero_extend(imm @ 0b00);
   execute(LOAD_FP(imm, sp, rd, WORD))
@@ -39,6 +42,9 @@ union clause ast = C_FSWSP : (bits(6), regidx)
 mapping clause encdec_compressed = C_FSWSP(ui76 @ ui52, rs2)        if extensionEnabled(Ext_Zcf)
   <-> 0b111 @ ui52 : bits(4) @ ui76 : bits(2) @ rs2 : regidx @ 0b10 if extensionEnabled(Ext_Zcf)
 
+mapping clause fmtencdec_compressed = C_FSWSP(imm, rs2)
+  <-> CIFormat(struct { funct3 = 0b111, imm = imm, rd = rs2, op = 0b10 })
+
 function clause execute (C_FSWSP(uimm, rs2)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
   execute(STORE_FP(imm, rs2, sp, WORD))
@@ -54,6 +60,9 @@ union clause ast = C_FLW : (bits(5), cregidx, cregidx)
 
 mapping clause encdec_compressed = C_FLW(ui6 @ ui53 @ ui2, rs1, rd)                                if extensionEnabled(Ext_Zcf)
   <-> 0b011 @ ui53 : bits(3) @ rs1 : cregidx @ ui2 : bits(1) @ ui6 : bits(1) @ rd : cregidx @ 0b00 if extensionEnabled(Ext_Zcf)
+
+mapping clause fmtencdec_compressed = C_FLW(imm, rs1, rd)
+  <-> CLFormat(struct { funct3 = 0b011, imm = imm, rs1 = rs1, rd = rd, op = 0b00 })
 
 function clause execute (C_FLW(uimm, rsc, rdc)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
@@ -72,6 +81,9 @@ union clause ast = C_FSW : (bits(5), cregidx, cregidx)
 
 mapping clause encdec_compressed = C_FSW(ui6 @ ui53 @ ui2, rs1, rs2)                                if extensionEnabled(Ext_Zcf)
   <-> 0b111 @ ui53 : bits(3) @ rs1 : cregidx @ ui2 : bits(1) @ ui6 : bits(1) @ rs2 : cregidx @ 0b00 if extensionEnabled(Ext_Zcf)
+
+mapping clause fmtencdec_compressed = C_FSW(imm, rs1, rs2)
+  <-> CSFormat(struct { funct3 = 0b111, imm = imm, rs1 = rs1, rs2 = rs2, op = 0b00 })
 
 function clause execute (C_FSW(uimm, rsc1, rsc2)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
