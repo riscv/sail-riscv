@@ -18,8 +18,11 @@ mapping encdec_csrop : csrop <-> bits(2) = {
   CSRRC <-> 0b11
 }
 
-mapping clause encdec = CSR(csr, rs1, rd, is_imm, op)
+mapping clause oldencdec = CSR(csr, rs1, rd, is_imm, op)
   <-> csr @ rs1 @ bool_bits(is_imm) @ encdec_csrop(op) @ rd @ 0b1110011
+
+mapping clause fmtencdec = CSR(csr, rs1, rd, is_imm, op)
+  <-> IFormat(struct { imm = csr, rs1 = rs1, funct3 = bool_bits(is_imm) @ encdec_csrop(op), rd = rd, opcode = 0b1110011 })
 
 function readCSR csr : csreg -> xlenbits = {
   let res : xlenbits =
