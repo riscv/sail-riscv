@@ -54,7 +54,7 @@ function step(step_no : int) -> bool = {
               print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ to_str(ast));
             };
             /* check for RVC once here instead of every RVC execute clause. */
-            if haveRVC() then {
+            if extensionEnabled(Ext_C) then {
               nextPC = PC + 2;
               (execute(ast), true)
             } else {

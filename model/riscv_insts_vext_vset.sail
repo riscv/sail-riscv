@@ -11,6 +11,9 @@
 /* Chapter 6: Configuration-Setting Instructions                                   */
 /* ******************************************************************************* */
 
+enum clause extension = Ext_V
+function clause extensionEnabled(Ext_V) = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
+
 mapping sew_flag : string <-> bits(3) = {
   "e8"    <-> 0b000,
   "e16"   <-> 0b001,
@@ -65,8 +68,8 @@ function calculate_new_vl(AVL, VLMAX) = {
 /* *********************************** vsetvli *********************************** */
 union clause ast = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
 
-mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd) if haveVExt()
-  <-> 0b0000 @ ma @ ta @ sew @ lmul @ rs1 @ 0b111 @ rd @ 0b1010111 if haveVExt()
+mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd) if extensionEnabled(Ext_V)
+  <-> 0b0000 @ ma @ ta @ sew @ lmul @ rs1 @ 0b111 @ rd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   let LMUL_pow_ori  = get_lmul_pow();
@@ -116,8 +119,8 @@ mapping clause assembly = VSETVLI(ma, ta, sew, lmul, rs1, rd)
 /* *********************************** vsetvl ************************************ */
 union clause ast = VSETVL : (regidx, regidx, regidx)
 
-mapping clause encdec = VSETVL(rs2, rs1, rd) if haveVExt()
-  <-> 0b1000000 @ rs2 @ rs1 @ 0b111 @ rd @ 0b1010111 if haveVExt()
+mapping clause encdec = VSETVL(rs2, rs1, rd) if extensionEnabled(Ext_V)
+  <-> 0b1000000 @ rs2 @ rs1 @ 0b111 @ rd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute VSETVL(rs2, rs1, rd) = {
   let LMUL_pow_ori  = get_lmul_pow();
@@ -167,8 +170,8 @@ mapping clause assembly = VSETVL(rs2, rs1, rd)
 /* ********************************** vsetivli *********************************** */
 union clause ast = VSETIVLI : ( bits(1), bits(1), bits(3), bits(3), regidx, regidx)
 
-mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd) if haveVExt()
-  <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ rd @ 0b1010111 if haveVExt()
+mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd) if extensionEnabled(Ext_V)
+  <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ rd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   /* set vtype */

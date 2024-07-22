@@ -6,11 +6,17 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
+enum clause extension = Ext_B
+function clause extensionEnabled(Ext_B) = misa[B] == 0b1
+
+enum clause extension = Ext_Zba
+function clause extensionEnabled(Ext_Zba) = true | extensionEnabled(Ext_B)
+
 /* ****************************************************************** */
 union clause ast = RISCV_SLLIUW : (bits(6), regidx, regidx)
 
-mapping clause encdec = RISCV_SLLIUW(shamt, rs1, rd) if haveZba() & sizeof(xlen) == 64
-  <-> 0b000010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0011011 if haveZba() & sizeof(xlen) == 64
+mapping clause encdec = RISCV_SLLIUW(shamt, rs1, rd) if extensionEnabled(Ext_Zba) & sizeof(xlen) == 64
+  <-> 0b000010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0011011 if extensionEnabled(Ext_Zba) & sizeof(xlen) == 64
 
 mapping clause assembly = RISCV_SLLIUW(shamt, rs1, rd)
   <-> "slli.uw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_6(shamt)
@@ -25,17 +31,17 @@ function clause execute (RISCV_SLLIUW(shamt, rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = ZBA_RTYPEUW : (regidx, regidx, regidx, bropw_zba)
 
-mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, RISCV_ADDUW) if haveZba() & sizeof(xlen) == 64
-  <-> 0b0000100 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011 if haveZba() & sizeof(xlen) == 64
+mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, RISCV_ADDUW) if extensionEnabled(Ext_Zba) & sizeof(xlen) == 64
+  <-> 0b0000100 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011 if extensionEnabled(Ext_Zba) & sizeof(xlen) == 64
 
-mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, RISCV_SH1ADDUW) if haveZba() & sizeof(xlen) == 64
-  <-> 0b0010000 @ rs2 @ rs1 @ 0b010 @ rd @ 0b0111011 if haveZba() & sizeof(xlen) == 64
+mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, RISCV_SH1ADDUW) if extensionEnabled(Ext_Zba) & sizeof(xlen) == 64
+  <-> 0b0010000 @ rs2 @ rs1 @ 0b010 @ rd @ 0b0111011 if extensionEnabled(Ext_Zba) & sizeof(xlen) == 64
 
-mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, RISCV_SH2ADDUW) if haveZba() & sizeof(xlen) == 64
-  <-> 0b0010000 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0111011 if haveZba() & sizeof(xlen) == 64
+mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, RISCV_SH2ADDUW) if extensionEnabled(Ext_Zba) & sizeof(xlen) == 64
+  <-> 0b0010000 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0111011 if extensionEnabled(Ext_Zba) & sizeof(xlen) == 64
 
-mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, RISCV_SH3ADDUW) if haveZba() & sizeof(xlen) == 64
-  <-> 0b0010000 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0111011 if haveZba() & sizeof(xlen) == 64
+mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, RISCV_SH3ADDUW) if extensionEnabled(Ext_Zba) & sizeof(xlen) == 64
+  <-> 0b0010000 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0111011 if extensionEnabled(Ext_Zba) & sizeof(xlen) == 64
 
 mapping zba_rtypeuw_mnemonic : bropw_zba <-> string = {
   RISCV_ADDUW    <-> "add.uw",
@@ -64,12 +70,12 @@ function clause execute (ZBA_RTYPEUW(rs2, rs1, rd, op)) = {
 /* ****************************************************************** */
 union clause ast = ZBA_RTYPE : (regidx, regidx, regidx, brop_zba)
 
-mapping clause encdec = ZBA_RTYPE(rs2, rs1, rd, RISCV_SH1ADD) if haveZba()
-  <-> 0b0010000 @ rs2 @ rs1 @ 0b010 @ rd @ 0b0110011 if haveZba()
-mapping clause encdec = ZBA_RTYPE(rs2, rs1, rd, RISCV_SH2ADD) if haveZba()
-  <-> 0b0010000 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0110011 if haveZba()
-mapping clause encdec = ZBA_RTYPE(rs2, rs1, rd, RISCV_SH3ADD) if haveZba()
-  <-> 0b0010000 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0110011 if haveZba()
+mapping clause encdec = ZBA_RTYPE(rs2, rs1, rd, RISCV_SH1ADD) if extensionEnabled(Ext_Zba)
+  <-> 0b0010000 @ rs2 @ rs1 @ 0b010 @ rd @ 0b0110011 if extensionEnabled(Ext_Zba)
+mapping clause encdec = ZBA_RTYPE(rs2, rs1, rd, RISCV_SH2ADD) if extensionEnabled(Ext_Zba)
+  <-> 0b0010000 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0110011 if extensionEnabled(Ext_Zba)
+mapping clause encdec = ZBA_RTYPE(rs2, rs1, rd, RISCV_SH3ADD) if extensionEnabled(Ext_Zba)
+  <-> 0b0010000 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0110011 if extensionEnabled(Ext_Zba)
 
 mapping zba_rtype_mnemonic : brop_zba <-> string = {
   RISCV_SH1ADD <-> "sh1add",

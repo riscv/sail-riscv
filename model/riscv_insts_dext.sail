@@ -224,13 +224,16 @@ function fle_D   (v1,       v2,        is_quiet) = {
 /* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
 
-function haveDoubleFPU() -> bool = haveDExt() | haveZdinx()
+enum clause extension = Ext_Zdinx
+function clause extensionEnabled(Ext_Zdinx) = sys_enable_zfinx() & sizeof(flen) >= 64
+
+function haveDoubleFPU() -> bool = extensionEnabled(Ext_D) | extensionEnabled(Ext_Zdinx)
 
 /* RV32Zdinx requires even register pairs; can be omitted for code  */
 /* not used for RV32Zdinx (i.e. RV64-only or D-only).               */
 val validDoubleRegs : forall 'n, 'n > 0. (implicit('n), vector('n, dec, regidx)) -> bool
 function validDoubleRegs(n, regs) = {
-  if haveZdinx() & sizeof(xlen) == 32 then
+  if extensionEnabled(Ext_Zdinx) & sizeof(xlen) == 32 then
     foreach (i from 0 to (n - 1))
       if (regs[i][0] == bitone) then return false;
   true
@@ -902,11 +905,11 @@ mapping clause encdec = F_UN_TYPE_D(rs1, rd, FCLASS_D)                        if
 
 /* D instructions, RV64 only */
 
-mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_X_D)                         if haveDExt() & sizeof(xlen) >= 64
-                    <-> 0b111_0001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveDExt() & sizeof(xlen) >= 64
+mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_X_D)                         if extensionEnabled(Ext_D) & sizeof(xlen) >= 64
+                    <-> 0b111_0001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_D) & sizeof(xlen) >= 64
 
-mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_D_X)                         if haveDExt() & sizeof(xlen) >= 64
-                    <-> 0b111_1001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveDExt() & sizeof(xlen) >= 64
+mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_D_X)                         if extensionEnabled(Ext_D) & sizeof(xlen) >= 64
+                    <-> 0b111_1001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_D) & sizeof(xlen) >= 64
 
 /* Execution semantics ================================ */
 

@@ -9,11 +9,11 @@
 /* ****************************************************************** */
 union clause ast = ZBKB_RTYPE : (regidx, regidx, regidx, brop_zbkb)
 
-mapping clause encdec = ZBKB_RTYPE(rs2, rs1, rd, RISCV_PACK) if haveZbkb()
-  <-> 0b0000100 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0110011 if haveZbkb()
+mapping clause encdec = ZBKB_RTYPE(rs2, rs1, rd, RISCV_PACK) if extensionEnabled(Ext_Zbkb)
+  <-> 0b0000100 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0110011 if extensionEnabled(Ext_Zbkb)
 
-mapping clause encdec = ZBKB_RTYPE(rs2, rs1, rd, RISCV_PACKH) if haveZbkb()
-  <-> 0b0000100 @ rs2 @ rs1 @ 0b111 @ rd @ 0b0110011 if haveZbkb()
+mapping clause encdec = ZBKB_RTYPE(rs2, rs1, rd, RISCV_PACKH) if extensionEnabled(Ext_Zbkb)
+  <-> 0b0000100 @ rs2 @ rs1 @ 0b111 @ rd @ 0b0110011 if extensionEnabled(Ext_Zbkb)
 
 mapping zbkb_rtype_mnemonic : brop_zbkb <-> string = {
   RISCV_PACK  <-> "pack",
@@ -37,8 +37,8 @@ function clause execute (ZBKB_RTYPE(rs2, rs1, rd, op)) = {
 /* ****************************************************************** */
 union clause ast = ZBKB_PACKW : (regidx, regidx, regidx)
 
-mapping clause encdec = ZBKB_PACKW(rs2, rs1, rd) if haveZbkb() & sizeof(xlen) == 64
-  <-> 0b0000100 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0111011 if haveZbkb() & sizeof(xlen) == 64
+mapping clause encdec = ZBKB_PACKW(rs2, rs1, rd) if extensionEnabled(Ext_Zbkb) & sizeof(xlen) == 64
+  <-> 0b0000100 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0111011 if extensionEnabled(Ext_Zbkb) & sizeof(xlen) == 64
 
 mapping clause assembly = ZBKB_PACKW(rs2, rs1, rd)
   <-> "packw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
@@ -55,8 +55,8 @@ function clause execute (ZBKB_PACKW(rs2, rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_ZIP : (regidx, regidx)
 
-mapping clause encdec = RISCV_ZIP(rs1, rd) if haveZbkb() & sizeof(xlen) == 32
-  <-> 0b000010001111 @ rs1 @ 0b001 @ rd @ 0b0010011 if haveZbkb() & sizeof(xlen) == 32
+mapping clause encdec = RISCV_ZIP(rs1, rd) if extensionEnabled(Ext_Zbkb) & sizeof(xlen) == 32
+  <-> 0b000010001111 @ rs1 @ 0b001 @ rd @ 0b0010011 if extensionEnabled(Ext_Zbkb) & sizeof(xlen) == 32
 
 mapping clause assembly = RISCV_ZIP(rs1, rd)
   <-> "zip" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
@@ -76,8 +76,8 @@ function clause execute (RISCV_ZIP(rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_UNZIP : (regidx, regidx)
 
-mapping clause encdec = RISCV_UNZIP(rs1, rd) if haveZbkb() & sizeof(xlen) == 32
-  <-> 0b000010001111 @ rs1 @ 0b101 @ rd @ 0b0010011 if haveZbkb() & sizeof(xlen) == 32
+mapping clause encdec = RISCV_UNZIP(rs1, rd) if extensionEnabled(Ext_Zbkb) & sizeof(xlen) == 32
+  <-> 0b000010001111 @ rs1 @ 0b101 @ rd @ 0b0010011 if extensionEnabled(Ext_Zbkb) & sizeof(xlen) == 32
 
 mapping clause assembly = RISCV_UNZIP(rs1, rd)
   <-> "unzip" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
@@ -97,8 +97,8 @@ function clause execute (RISCV_UNZIP(rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_BREV8 : (regidx, regidx)
 
-mapping clause encdec = RISCV_BREV8(rs1, rd) if haveZbkb()
-  <-> 0b011010000111 @ rs1 @ 0b101 @ rd @ 0b0010011 if haveZbkb()
+mapping clause encdec = RISCV_BREV8(rs1, rd) if extensionEnabled(Ext_Zbkb)
+  <-> 0b011010000111 @ rs1 @ 0b101 @ rd @ 0b0010011 if extensionEnabled(Ext_Zbkb)
 
 mapping clause assembly = RISCV_BREV8(rs1, rd)
   <-> "brev8" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
