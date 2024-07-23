@@ -34,7 +34,9 @@ function clause execute UTYPE(imm, rd, op) = {
 }
 
 mapping utype_mnemonic : uop <-> string = {
+  $[name "load upper immediate"]
   RISCV_LUI   <-> "lui",
+  $[name "add upper immediate to PC"]
   RISCV_AUIPC <-> "auipc"
 }
 
@@ -42,6 +44,7 @@ mapping clause assembly = UTYPE(imm, rd, op)
   <-> utype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_20(imm)
 
 /* ****************************************************************** */
+$[name "jump and link"]
 union clause ast = RISCV_JAL : (bits(21), regidx)
 
 mapping clause encdec = RISCV_JAL(imm_19 @ imm_7_0 @ imm_8 @ imm_18_13 @ imm_12_9 @ 0b0, rd)
@@ -148,11 +151,17 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
 }
 
 mapping btype_mnemonic : bop <-> string = {
+  $[name "branch if equal"]
   RISCV_BEQ  <-> "beq",
+  $[name "branch if not equal"]
   RISCV_BNE  <-> "bne",
+  $[name "branch if less than"]
   RISCV_BLT  <-> "blt",
+  $[name "branch if greater than"]
   RISCV_BGE  <-> "bge",
+  $[name "branch if less than (unsigned)"]
   RISCV_BLTU <-> "bltu",
+  $[name "branch if greater than or equal to (unsigned)"]
   RISCV_BGEU <-> "bgeu"
 }
 
@@ -208,7 +217,7 @@ mapping clause assembly = ITYPE(imm, rs1, rd, op)
   <-> itype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
 
 /* ****************************************************************** */
-$[name "Shift Immediate"]
+$[name "shift immediate"]
 union clause ast = SHIFTIOP : (bits(6), regidx, regidx, sop)
 
 mapping encdec_sop : sop <-> bits(3) = {
@@ -240,8 +249,11 @@ function clause execute (SHIFTIOP(shamt, rs1, rd, op)) = {
 }
 
 mapping shiftiop_mnemonic : sop <-> string = {
+  $[name "shift left (logical) immediate"]
   RISCV_SLLI <-> "slli",
+  $[name "shift right (logical) immediate"]
   RISCV_SRLI <-> "srli",
+  $[name "shift right (arithmetic) immediate"]
   RISCV_SRAI <-> "srai"
 }
 
@@ -288,15 +300,25 @@ function clause execute (RTYPE(rs2, rs1, rd, op)) = {
 }
 
 mapping rtype_mnemonic : rop <-> string = {
+  $[name "add"]
   RISCV_ADD  <-> "add",
+  $[name "set less than"]
   RISCV_SLT  <-> "slt",
+  $[name "set less than (unsigned)"]
   RISCV_SLTU <-> "sltu",
+  $[name "AND"]
   RISCV_AND  <-> "and",
+  $[name "OR"]
   RISCV_OR   <-> "or",
+  $[name "exclusive OR"]
   RISCV_XOR  <-> "xor",
+  $[name "shift left (logical)"]
   RISCV_SLL  <-> "sll",
+  $[name "shift right (logical)"]
   RISCV_SRL  <-> "srl",
+  $[name "subtract"]
   RISCV_SUB  <-> "sub",
+  $[name "shift right (arithmetic)"]
   RISCV_SRA  <-> "sra"
 }
 
@@ -480,10 +502,15 @@ function clause execute (RTYPEW(rs2, rs1, rd, op)) = {
 }
 
 mapping rtypew_mnemonic : ropw <-> string = {
+  $[name "add word (RV64)"]
   RISCV_ADDW <-> "addw",
+  $[name "subtract word (RV64)"]
   RISCV_SUBW <-> "subw",
+  $[name "shift left (logical) word (RV64)"]
   RISCV_SLLW <-> "sllw",
+  $[name "shift right (logical) word (RV64)"]
   RISCV_SRLW <-> "srlw",
+  $[name "shift right (arithmetic) word (RV64)"]
   RISCV_SRAW <-> "sraw"
 }
 
@@ -521,8 +548,11 @@ function clause execute (SHIFTIWOP(shamt, rs1, rd, op)) = {
 }
 
 mapping shiftiwop_mnemonic : sopw <-> string = {
+  $[name "shift left (logical) immediate word (RV64)"]
   RISCV_SLLIW <-> "slliw",
+  $[name "shift right (logical) immediate word (RV64)"]
   RISCV_SRLIW <-> "srliw",
+  $[name "shift right (arithmetic) immediate word (RV64)"]
   RISCV_SRAIW <-> "sraiw"
 }
 
