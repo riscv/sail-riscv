@@ -49,10 +49,10 @@ function handle_illegal_vtype() = {
   /* Note: Implementations can set vill or trap if the vtype setting is not supported.
    * TODO: configuration support for both solutions
    */
-  let new_vtype = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
-
-  ext_notification_write_CSR(csr_name_map("vtype"), new_vtype);
-  ext_notification_write_CSR(csr_name_map("vl"), zeros())
+  vtype.bits = 0b1 @ zeros(sizeof(xlen) - 1); /* set vtype.vill */
+  vl = zeros();
+  csr_write_callback(csr_name_map("vtype"), vtype.bits);
+  csr_write_callback(csr_name_map("vl"), vl);
 }
 
 val calculate_new_vl : (int, int) -> xlenbits
@@ -77,8 +77,7 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
 
   /* set vtype */
-  let new_vtype = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul;
-  ext_notification_write_CSR(csr_name_map("vtype"), new_vtype);
+  vtype.bits = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul;
 
   /* check new SEW and LMUL are legal and calculate VLMAX */
   let VLEN_pow     = get_vlen_pow();
@@ -92,11 +91,11 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   if (rs1 != 0b00000) then { /* normal stripmining */
     let rs1_val = X(rs1);
     let AVL = unsigned(rs1_val);
-    ext_notification_write_CSR(csr_name_map("vl"), calculate_new_vl(AVL, VLMAX));
+    vl = calculate_new_vl(AVL, VLMAX);
     X(rd) = vl;
   } else if (rd != 0b00000) then { /* set vl to VLMAX */
     let AVL = unsigned(ones(sizeof(xlen)));
-    ext_notification_write_CSR(csr_name_map("vl"), to_bits(sizeof(xlen), VLMAX));
+    vl = to_bits(sizeof(xlen), VLMAX);
     X(rd) = vl;
   } else { /* keep existing vl */
     let AVL = unsigned(vl);
@@ -105,7 +104,11 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   };
 
   /* reset vstart to 0 */
-  ext_notification_write_CSR(csr_name_map("vstart"), zeros());
+  vstart = zeros();
+
+  csr_write_callback(csr_name_map("vtype"), vtype.bits);
+  csr_write_callback(csr_name_map("vl"), vl);
+  csr_write_callback(csr_name_map("vstart"), zero_extend(vstart));
 
   RETIRE_SUCCESS
 }
@@ -125,8 +128,7 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
 
   /* set vtype */
-  let new_vtype = X(rs2);
-  ext_notification_write_CSR(csr_name_map("vtype"), new_vtype);
+  vtype.bits = X(rs2);
 
   /* check new SEW and LMUL are legal and calculate VLMAX */
   let VLEN_pow     = get_vlen_pow();
@@ -140,11 +142,11 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   if (rs1 != 0b00000) then { /* normal stripmining */
     let rs1_val = X(rs1);
     let AVL = unsigned(rs1_val);
-    ext_notification_write_CSR(csr_name_map("vl"), calculate_new_vl(AVL, VLMAX));
+    vl = calculate_new_vl(AVL, VLMAX);
     X(rd) = vl;
   } else if (rd != 0b00000) then { /* set vl to VLMAX */
     let AVL = unsigned(ones(sizeof(xlen)));
-    ext_notification_write_CSR(csr_name_map("vl"), to_bits(sizeof(xlen), VLMAX));
+    vl = to_bits(sizeof(xlen), VLMAX);
     X(rd) = vl;
   } else { /* keep existing vl */
     let AVL = unsigned(vl);
@@ -153,7 +155,11 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   };
 
   /* reset vstart to 0 */
-  ext_notification_write_CSR(csr_name_map("vstart"), zeros());
+  vstart = zeros();
+
+  csr_write_callback(csr_name_map("vtype"), vtype.bits);
+  csr_write_callback(csr_name_map("vl"), vl);
+  csr_write_callback(csr_name_map("vstart"), zero_extend(vstart));
 
   RETIRE_SUCCESS
 }
@@ -169,8 +175,7 @@ mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd) if extensionEnable
 
 function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   /* set vtype */
-  let new_vtype = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul;
-  ext_notification_write_CSR(csr_name_map("vtype"), new_vtype);
+  vtype.bits = 0b0 @ zeros(sizeof(xlen) - 9) @ ma @ ta @ sew @ lmul;
 
   /* check new SEW and LMUL are legal and calculate VLMAX */
   let VLEN_pow     = get_vlen_pow();
@@ -182,11 +187,15 @@ function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
 
   /* set vl according to VLMAX and AVL */
   let AVL = unsigned(uimm); /* AVL is encoded as 5-bit zero-extended imm in the rs1 field */
-  ext_notification_write_CSR(csr_name_map("vl"), calculate_new_vl(AVL, VLMAX));
+  vl = calculate_new_vl(AVL, VLMAX);
   X(rd) = vl;
 
   /* reset vstart to 0 */
-  ext_notification_write_CSR(csr_name_map("vstart"), zeros());
+  vstart = zeros();
+
+  csr_write_callback(csr_name_map("vtype"), vtype.bits);
+  csr_write_callback(csr_name_map("vl"), vl);
+  csr_write_callback(csr_name_map("vstart"), zero_extend(vstart));
 
   RETIRE_SUCCESS
 }

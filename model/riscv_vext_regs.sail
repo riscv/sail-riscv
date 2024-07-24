@@ -169,7 +169,7 @@ function wV (r : regno, in_v : vregtype) -> unit = {
 
   let VLEN = unsigned(vlenb) * 8;
   assert(0 < VLEN & VLEN <= sizeof(vlenmax));
-  if rv_enable_callbacks then vreg_update_callback(regno_to_regidx(r), v);
+  vreg_write_callback(regno_to_regidx(r), v);
 }
 
 function rV_bits(i: regidx) -> vregtype = rV(unsigned(i))

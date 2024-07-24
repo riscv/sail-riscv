@@ -28,6 +28,6 @@ function set_next_pc(pc) = {
 
 val tick_pc : unit -> unit
 function tick_pc() = {
-  if rv_enable_callbacks then pc_update_callback(PC);
+  pc_write_callback(PC);
   PC = nextPC
 }

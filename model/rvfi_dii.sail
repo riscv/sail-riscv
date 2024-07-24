@@ -330,12 +330,10 @@ function print_rvfi_exec () = {
 
 val internal_error : forall ('a : Type). (string, int, string) -> 'a
 
-val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, int('n), bits(8 * 'n), bool) -> unit
-function rvfi_write (addr, width, value, is_exception) = {
+val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, int('n), bits(8 * 'n)) -> unit
+function rvfi_write (addr, width, value) = {
   rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
   rvfi_mem_data_present = true;
-  /* Log only the memory address (without the value) if the write fails. */
-  if is_exception == false then {
   if width <= 16 then {
     /* TODO: report tag bit for capability writes and extend mask by one bit. */
     rvfi_mem_data[rvfi_mem_wdata] = sail_zero_extend(value, 256);
@@ -343,15 +341,12 @@ function rvfi_write (addr, width, value, is_exception) = {
   } else {
     internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!");
   };
-  };
 }
 
-val rvfi_read : forall 'n, 'n > 0. (xlenbits, int('n), bits(8 * 'n), bool) -> unit
-function rvfi_read (addr, width, value, is_exception) = {
+val rvfi_read : forall 'n, 'n > 0. (xlenbits, int('n), bits(8 * 'n)) -> unit
+function rvfi_read (addr, width, value) = {
   rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
   rvfi_mem_data_present = true;
-  /* Log only the memory address (without the value) if the write fails. */
-  if is_exception == false then {
   if width <= 16 then {
     /* TODO: report tag bit for capability writes and extend mask by one bit. */
     rvfi_mem_data[rvfi_mem_rdata] = sail_zero_extend(value, 256);
@@ -359,7 +354,13 @@ function rvfi_read (addr, width, value, is_exception) = {
   } else {
     internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!")
   };
-  };
+}
+
+val rvfi_mem_exception : xlenbits -> unit
+function rvfi_mem_exception (addr) = {
+  /* Log only the memory address (without the value) if the write fails. */
+  rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
+  rvfi_mem_data_present = true;
 }
 
 val rvfi_wX : forall 'n, 0 <= 'n < 32. (int('n), xlenbits) -> unit

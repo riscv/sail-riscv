@@ -89,6 +89,7 @@ bool config_print_reg = true;
 bool config_print_mem_access = true;
 bool config_print_platform = true;
 bool config_print_rvfi = false;
+bool rv_enable_callbacks = true;
 
 void set_config_print(char *var, bool val)
 {
@@ -98,6 +99,7 @@ void set_config_print(char *var, bool val)
     config_print_reg = val;
     config_print_platform = val;
     config_print_rvfi = val;
+    rv_enable_callbacks = val;
   } else if (strcmp("instr", var) == 0) {
     config_print_instr = val;
   } else if (strcmp("reg", var) == 0) {

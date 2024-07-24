@@ -340,7 +340,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        handle_trap_extension(del_priv, pc, ext);
 
-       if rv_enable_callbacks then csr_update_callback("mstatus", mstatus.bits);
+       csr_write_callback(csr_name_map("mstatus"), mstatus.bits);
 
        prepare_trap_vector(del_priv, mcause)
     },
@@ -364,7 +364,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        handle_trap_extension(del_priv, pc, ext);
 
-       if rv_enable_callbacks then csr_update_callback("mstatus", mstatus.bits);
+       csr_write_callback(csr_name_map("mstatus"), mstatus.bits);
 
        prepare_trap_vector(del_priv, scause)
     },
@@ -383,7 +383,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        handle_trap_extension(del_priv, pc, ext);
 
-       if rv_enable_callbacks then csr_update_callback("mstatus", mstatus.bits);
+       csr_write_callback(csr_name_map("mstatus"), mstatus.bits);
 
        prepare_trap_vector(del_priv, ucause)
     }
@@ -409,7 +409,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
-      if rv_enable_callbacks then csr_update_callback("mstatus", mstatus.bits);
+      csr_write_callback(csr_name_map("mstatus"), mstatus.bits);
       if   get_config_print_platform()
       then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
@@ -424,7 +424,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
-      if rv_enable_callbacks then csr_update_callback("mstatus", mstatus.bits);
+      csr_write_callback(csr_name_map("mstatus"), mstatus.bits);
       if   get_config_print_platform()
       then print_platform("ret-ing from " ^ to_str(prev_priv)
                           ^ " to " ^ to_str(cur_privilege));
@@ -437,7 +437,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus[UPIE] = 0b1;
       cur_privilege   = User;
 
-      if rv_enable_callbacks then csr_update_callback("mstatus", mstatus.bits);
+      csr_write_callback(csr_name_map("mstatus"), mstatus.bits);
       if   get_config_print_platform()
       then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
@@ -544,7 +544,7 @@ function init_sys() -> unit = {
   // PMP's L and A fields are set to 0 on reset.
   init_pmp();
 
-  if rv_enable_callbacks then csr_update_callback("mstatus", mstatus.bits);
+  csr_write_callback(csr_name_map("mstatus"), mstatus.bits);
 }
 
 /* memory access exceptions, defined here for use by the platform model. */

@@ -25,14 +25,15 @@ let platform_arch = ref P.RV64
 
 (* Defaults for callbacks functions.
    The model assumes that these functions do not change the state of the model. *)
-let mem_update_callback (addr, width, value, is_exception) = ()
-let mem_read_callback (addr, width, value, is_exception) = ()
-let pc_update_callback value = ()
-let xreg_update_callback (reg, value) = ()
-let freg_update_callback (reg, value) = ()
-let csr_update_callback (reg_name, value) = ()
-let csr_read_callback (reg_name, value) = ()
-let vreg_update_callback (reg, value) = ()
+let mem_write_callback (addr, width, value) = ()
+let mem_read_callback (addr, width, value) = ()
+let mem_exception_callback (addr, num_of_exception) = ()
+let pc_write_callback value = ()
+let xreg_write_callback (reg, value) = ()
+let freg_write_callback (reg, value) = ()
+let csr_write_callback (reg, value) = ()
+let csr_read_callback (reg, value) = ()
+let vreg_write_callback (reg, value) = ()
 
 (* logging *)
 

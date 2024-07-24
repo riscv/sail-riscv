@@ -132,11 +132,10 @@ function mem_read_priv_meta (typ, priv, paddr, width, aq, rl, res, meta) = {
       (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
       (_, _, _)             => checked_mem_read(typ, priv, paddr, width, aq, rl, res, meta)
     };
-  if rv_enable_callbacks then
-    match result {
-      MemValue(value, _) => mem_read_callback(paddr, width, value, /* is_exception */ false),
-      MemException(_) => mem_read_callback(paddr, width, zeros(), /* is_exception */ true)
-    };
+  match result {
+    MemValue(value, _) => mem_read_callback(paddr, width, value),
+    MemException(e) => mem_exception_callback(paddr, num_of_ExceptionType(e))
+  };
   result
 }
 
@@ -206,11 +205,10 @@ function mem_write_value_priv_meta (paddr, width, value, typ, priv, meta, aq, rl
   then MemException(E_SAMO_Addr_Align())
   else {
     let result = checked_mem_write(paddr, width, value, typ, priv, meta, aq, rl, con);
-    if rv_enable_callbacks then
-      match result {
-        MemValue(_) => mem_update_callback(paddr, width, value, /* is_exception */ false),
-        MemException(_) => mem_update_callback(paddr, width, value, /* is_exception */ true)
-      };
+    match result {
+      MemValue(_) => mem_write_callback(paddr, width, value),
+      MemException(e) => mem_exception_callback(paddr, num_of_ExceptionType(e))
+    };
     result
   }
 }

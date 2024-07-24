@@ -126,7 +126,7 @@ function wX (r : regno, in_v : xlenbits) -> unit = {
     _  => assert(false, "invalid register number")
   };
   if (r != 0) then {
-    if rv_enable_callbacks then xreg_update_callback(regno_to_regidx(r), in_v);
+    xreg_write_callback(regno_to_regidx(r), in_v);
   }
 }
 

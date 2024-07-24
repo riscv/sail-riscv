@@ -150,4 +150,4 @@ enum vmlsop       = { VLM, VSM }
 /* Callbacks for vregs state-changing events */
 
 /* Default for this function in riscv_default_callbacks.c and platform_impl.ml */
-val vreg_update_callback = pure {ocaml: "Platform.vreg_update_callback", c: "vreg_update_callback"} : (regidx, vregtype) -> unit
+val vreg_write_callback = pure {ocaml: "Platform.vreg_write_callback", c: "vreg_write_callback"} : (regidx, vregtype) -> unit
