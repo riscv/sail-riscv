@@ -243,6 +243,24 @@ function clint_store(addr, width, data) = {
     mtimecmp = vector_update_subrange(mtimecmp, 63, 32, sail_zero_extend(data, 32)); /* FIXME: Redundant zero_extend currently required by Lem backend */
     clint_dispatch();
     MemValue(true)
+  } else if addr == MTIME_BASE & 'n == 8 then {
+    if   get_config_print_platform()
+    then print_platform("clint<8>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtime)");
+    mtime = data;
+    clint_dispatch();
+    MemValue(true)
+  } else if addr == MTIME_BASE & 'n == 4 then {
+    if   get_config_print_platform()
+    then print_platform("clint<4>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtime)");
+    mtime[31 .. 0] = data;
+    clint_dispatch();
+    MemValue(true)
+  } else if addr == MTIME_BASE_HI & 'n == 4 then {
+    if   get_config_print_platform()
+    then print_platform("clint<4>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtime)");
+    mtime[63 .. 32] = data;
+    clint_dispatch();
+    MemValue(true)
   } else {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (<unmapped>)");
