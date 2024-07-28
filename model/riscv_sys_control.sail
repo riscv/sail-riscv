@@ -58,8 +58,8 @@ function is_CSR_defined (csr : csreg) -> bool =
     0xB82 => sizeof(xlen) == 32, // minstreth
 
     /* machine protection */
-    0x747 => p == Machine, // mseccfg
-    0x757 => p == Machine & (sizeof(xlen) == 32), // mseccfgh      
+    0x747 => true, // mseccfg
+    0x757 => sizeof(xlen) == 32, // mseccfgh      
 
     /* disabled trigger/debug module */
     0x7a0 => true,
