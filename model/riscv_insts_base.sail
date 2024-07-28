@@ -318,41 +318,29 @@ function is_aligned(vaddr : xlenbits, width : word_width) -> bool =
 
 // Return true if the address is misaligned and we don't support misaligned access.
 function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
-<<<<<<< HEAD
   not(plat_enable_misaligned_access()) & not(is_aligned(vaddr, width))
-=======
-  if   plat_enable_misaligned_access() then false
-  else match width {
-         BYTE   => false,
-         HALF   => vaddr[0] == bitone,
-         WORD   => vaddr[0] == bitone | vaddr[1] == bitone,
-         DOUBLE => vaddr[0] == bitone | vaddr[1] == bitone | vaddr[2] == bitone
-       }
-function transform_VA (effective_address : xlenbits,PMLEN :int) -> xlenbits = {
-  assert(PMLEN >= 0, "PMLEN out of range");
-  assert(PMLEN <= 63, "PMLEN out of range");
+
+function transform_VA (effective_address : xlenbits,pmlen : {7, 16}) -> xlenbits = {
   let XLEN = sizeof(xlen);
-  let i = XLEN -(PMLEN +1);
+  let i = XLEN -(pmlen +1);
   let effective_bit = effective_address[i..i];
-  let masked_bits = replicate_bits(effective_bit, PMLEN);
+  let masked_bits = replicate_bits(effective_bit, pmlen);
   let unmasked_bits = effective_address[i..0];
   masked_bits @ unmasked_bits
 }
 
-function transform_PA (effective_address : xlenbits,PMLEN :int) -> xlenbits = {
-  assert(PMLEN >= 0, "PMLEN out of range");
-  assert(PMLEN <= 63, "PMLEN out of range");
+function transform_PA (effective_address : xlenbits,pmlen : {7, 16}) -> xlenbits = {
   let XLEN = sizeof(xlen);
-  let i = XLEN -(PMLEN + 1);
-  let masked_bits = replicate_bits(0b0, PMLEN);
+  let i = XLEN -(pmlen +1);
+  let masked_bits = replicate_bits(0b0, pmlen);
   let unmasked_bits = effective_address[i..0];
   masked_bits @ unmasked_bits
 }
 
 function transform_effective_address(vaddr : xlenbits, pmm : bool) -> xlenbits = {
  if pmm then {
-    let pmm_bits : bits(2) = get_pmm();
-    let mode : SATPMode = translationMode(cur_privilege);
+    let pmm_bits = get_pmm();
+    let mode = translationMode(cur_privilege);
     match (mode) {
       (Sbare) => {
         match (pmm_bits){
@@ -384,7 +372,6 @@ function transform_effective_address(vaddr : xlenbits, pmm : bool) -> xlenbits =
   vaddr //PMM is not active
  }
 }
->>>>>>> 717cb55 (Renamed pmm with zpm)
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   let pmm = is_pmm_active();
@@ -399,15 +386,16 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   match ext_data_get_addr(rs1, offset, Read(Data), width_bytes) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) => {
-      if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
-      else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+      let  vaddr_ = transform_effective_address(vaddr, pmm) in
+      if   check_misaligned(vaddr_, width)
+      then { handle_mem_exception(vaddr_, E_Load_Addr_Align()); RETIRE_FAIL }
+      else match translateAddr(vaddr_, Read(Data)) {
+        TR_Failure(e, _) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
         TR_Address(paddr, _) =>
 
           match mem_read(Read(Data), paddr, width_bytes, aq, rl, false) {
             MemValue(result) => { X(rd) = extend_value(is_unsigned, result); RETIRE_SUCCESS },
-            MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            MemException(e) => { handle_mem_exception(vaddr_, e); RETIRE_FAIL },
           },
       }
     },

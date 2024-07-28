@@ -59,6 +59,7 @@ enum {
   OPT_ENABLE_ZICBOM,
   OPT_ENABLE_ZICBOZ,
   OPT_CACHE_BLOCK_SIZE,
+  OPT_ENABLE_ZJPM,
 };
 
 static bool do_dump_dts = false;
@@ -134,7 +135,7 @@ static struct option options[] = {
     {"pmp-count",                   required_argument, 0, OPT_PMP_COUNT           },
     {"pmp-grain",                   required_argument, 0, OPT_PMP_GRAIN           },
     {"enable-next",                 no_argument,       0, 'N'                     },
-    {"ram-size",                    required_argument, 0, 'z'                     },
+    {"ram-size",                    required_argument, 0, 'z'                     }, 
     {"disable-compressed",          no_argument,       0, 'C'                     },
     {"disable-writable-misa",       no_argument,       0, 'I'                     },
     {"disable-fdext",               no_argument,       0, 'F'                     },
@@ -145,7 +146,7 @@ static struct option options[] = {
     {"report-arch",                 no_argument,       0, 'a'                     },
     {"test-signature",              required_argument, 0, 'T'                     },
     {"signature-granularity",       required_argument, 0, 'g'                     },
-    {"enable-zpm",                  no_argument,       0, 'Y'                     },
+    {"enable-zpm",                  no_argument,       0, OPT_ENABLE_ZJPM          }, 
 #ifdef RVFI_DII
     {"rvfi-dii",                    required_argument, 0, 'r'                     },
 #endif
@@ -157,7 +158,6 @@ static struct option options[] = {
     {"enable-zfinx",                no_argument,       0, 'x'                     },
     {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
     {"enable-svinval",              no_argument,       0, OPT_ENABLE_SVINVAL      },
-    {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},    
     {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
     {"enable-zicbom",               no_argument,       0, OPT_ENABLE_ZICBOM       },
     {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
@@ -290,8 +290,7 @@ static int process_args(int argc, char **argv)
                     "t:"
                     "T:"
                     "g:"
-                    "h"
-                    "Y"                    
+                    "h"                    
 #ifdef RVFI_DII
                     "r:"
 #endif
@@ -347,7 +346,7 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "enabling N extension.\n");
       rv_enable_next = true;
       break;
-    case 'Y':
+    case OPT_ENABLE_ZJPM:
       fprintf(stderr, "enabling pointer masking support.\n");
       rv_enable_zpm = true;
       break;      
