@@ -7,11 +7,10 @@
 /*=======================================================================================*/
 
 /* ********************************************************************* */
-/* This file specifies the compressed instructions in the 'C' extension. */
+/* This file specifies the compressed instructions in the 'Zca' extension. */
 
-/* These instructions are only legal if misa[C] is true.  Instead of
- * checking this in every execute clause, we currently do the check in one place
- * in the fetch-execute logic.
+/* Instead of checking for Zca in every execute clause, we currently do
+ * the check in one place in the fetch-execute logic.
  */
 
 /* ****************************************************************** */

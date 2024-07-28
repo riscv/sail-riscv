@@ -6,15 +6,6 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* ********************************************************************* */
-/* This file specifies the compressed floating-point instructions.
- *
- * These instructions are only legal if misa[C] and misa[D]
- * are set.
- */
-
-/* ****************************************************************** */
-
 enum clause extension = Ext_Zcd
 function clause extensionEnabled(Ext_Zcd) = extensionEnabled(Ext_Zca) & extensionEnabled(Ext_D) & (sizeof(xlen) == 32 | sizeof(xlen) == 64)
 
