@@ -12,6 +12,9 @@ bool sys_enable_writable_fiom(unit);
 bool sys_enable_vext(unit);
 bool sys_enable_bext(unit);
 
+bool sys_misaligned_order_decreasing(unit);
+bool sys_misaligned_to_byte(unit);
+
 uint64_t sys_pmp_count(unit);
 uint64_t sys_pmp_grain(unit);
 
