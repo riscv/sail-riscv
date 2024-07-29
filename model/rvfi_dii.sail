@@ -219,7 +219,7 @@ function rvfi_zero_exec_packet () = {
 val rvfi_halt_exec_packet : unit -> unit
 
 function rvfi_halt_exec_packet () =
-  rvfi_inst_data->rvfi_halt() = 0x01
+  rvfi_inst_data[rvfi_halt] = 0x01
 
 val rvfi_get_v2_support_packet : unit -> bits(704)
 function rvfi_get_v2_support_packet () = {
@@ -246,11 +246,11 @@ function rvfi_get_exec_packet_v1 () = {
   let v1_packet = update_rvfi_pc_rdata(v1_packet, rvfi_pc_data[rvfi_pc_rdata]);
 
   let v1_packet = update_rvfi_rd_addr(v1_packet, rvfi_int_data[rvfi_rd_addr]);
-  let v1_packet = update_rvfi_rs2_addr(v1_packet, rvfi_int_data.rvfi_rs2_addr());
-  let v1_packet = update_rvfi_rs1_addr(v1_packet, rvfi_int_data.rvfi_rs1_addr());
+  let v1_packet = update_rvfi_rs2_addr(v1_packet, rvfi_int_data[rvfi_rs2_addr]);
+  let v1_packet = update_rvfi_rs1_addr(v1_packet, rvfi_int_data[rvfi_rs1_addr]);
   let v1_packet = update_rvfi_rd_wdata(v1_packet, rvfi_int_data[rvfi_rd_wdata]);
-  let v1_packet = update_rvfi_rs2_data(v1_packet, rvfi_int_data.rvfi_rs2_rdata());
-  let v1_packet = update_rvfi_rs1_data(v1_packet, rvfi_int_data.rvfi_rs1_rdata());
+  let v1_packet = update_rvfi_rs2_data(v1_packet, rvfi_int_data[rvfi_rs2_rdata]);
+  let v1_packet = update_rvfi_rs1_data(v1_packet, rvfi_int_data[rvfi_rs1_rdata]);
 
   let v1_packet = update_rvfi_mem_wmask(v1_packet, truncate(rvfi_mem_data[rvfi_mem_wmask], 8));
   let v1_packet = update_rvfi_mem_rmask(v1_packet, truncate(rvfi_mem_data[rvfi_mem_rmask], 8));
@@ -310,16 +310,16 @@ function print_rvfi_exec () = {
   print_bits("rvfi_halt     : ", rvfi_inst_data[rvfi_halt]);
   print_bits("rvfi_trap     : ", rvfi_inst_data[rvfi_trap]);
   print_bits("rvfi_rd_addr  : ", rvfi_int_data[rvfi_rd_addr]);
-  print_bits("rvfi_rs2_addr : ", rvfi_int_data.rvfi_rs2_addr());
-  print_bits("rvfi_rs1_addr : ", rvfi_int_data.rvfi_rs1_addr());
+  print_bits("rvfi_rs2_addr : ", rvfi_int_data[rvfi_rs2_addr]);
+  print_bits("rvfi_rs1_addr : ", rvfi_int_data[rvfi_rs1_addr]);
   print_bits("rvfi_mem_wmask: ", rvfi_mem_data[rvfi_mem_wmask]);
   print_bits("rvfi_mem_rmask: ", rvfi_mem_data[rvfi_mem_rmask]);
   print_bits("rvfi_mem_wdata: ", rvfi_mem_data[rvfi_mem_wdata]);
   print_bits("rvfi_mem_rdata: ", rvfi_mem_data[rvfi_mem_rdata]);
   print_bits("rvfi_mem_addr : ", rvfi_mem_data[rvfi_mem_addr]);
   print_bits("rvfi_rd_wdata : ", rvfi_int_data[rvfi_rd_wdata]);
-  print_bits("rvfi_rs2_data : ", rvfi_int_data.rvfi_rs2_rdata());
-  print_bits("rvfi_rs1_data : ", rvfi_int_data.rvfi_rs1_rdata());
+  print_bits("rvfi_rs2_data : ", rvfi_int_data[rvfi_rs2_rdata]);
+  print_bits("rvfi_rs1_data : ", rvfi_int_data[rvfi_rs1_rdata]);
   print_bits("rvfi_insn     : ", rvfi_inst_data[rvfi_insn]);
   print_bits("rvfi_pc_wdata : ", rvfi_pc_data[rvfi_pc_wdata]);
   print_bits("rvfi_pc_rdata : ", rvfi_pc_data[rvfi_pc_rdata]);
