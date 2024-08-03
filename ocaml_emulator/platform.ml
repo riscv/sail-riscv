@@ -23,6 +23,18 @@ let set_config_pmp_grain x = config_pmp_grain := Big_int.of_int x
 
 let platform_arch = ref P.RV64
 
+(* Defaults for callbacks functions.
+   The model assumes that these functions do not change the state of the model. *)
+let mem_write_callback (addr, width, value) = ()
+let mem_read_callback (addr, width, value) = ()
+let mem_exception_callback (addr, num_of_exception) = ()
+let pc_write_callback value = ()
+let xreg_write_callback (reg, value) = ()
+let freg_write_callback (reg, value) = ()
+let csr_write_callback (reg, value) = ()
+let csr_read_callback (reg, value) = ()
+let vreg_write_callback (reg, value) = ()
+
 (* logging *)
 
 let config_print_instr       = ref true

@@ -107,8 +107,7 @@ function readCSR csr : csreg -> xlenbits = {
                                     zero_extend(0x0) }
                    }
   };
-  if   get_config_print_reg()
-  then print_reg("CSR " ^ to_str(csr) ^ " -> " ^ BitStr(res));
+  csr_read_callback(csr, res);
   res
 }
 
@@ -185,8 +184,7 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     _           => ext_write_CSR(csr, value)
   };
   match res {
-    Some(v) => if   get_config_print_reg()
-               then print_reg("CSR " ^ to_str(csr) ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")"),
+    Some(v) => csr_write_callback(csr, v),
     None()  => print_bits("unhandled write to CSR ", csr)
   }
 }
