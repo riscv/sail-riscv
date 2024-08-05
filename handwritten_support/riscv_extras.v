@@ -201,6 +201,7 @@ Axiom sys_enable_fdext : unit -> bool.
 Axiom sys_enable_next : unit -> bool.
 Axiom sys_enable_zfinx : unit -> bool.
 Axiom sys_enable_writable_fiom : unit -> bool.
+Axiom sys_enable_zpm : unit -> bool.
 
 (* The constraint solver can do this itself, but a Coq bug puts
    anonymous_subproof into the term instead of an actual subproof. *)

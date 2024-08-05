@@ -56,6 +56,10 @@ function readCSR csr : csreg -> xlenbits = {
     (0x3D @ idx : bits(4),  _) => pmpReadAddrReg(unsigned(0b10 @ idx)),
     (0x3E @ idx : bits(4),  _) => pmpReadAddrReg(unsigned(0b11 @ idx)),
 
+    /* machine protection */
+    (0x747,  _) => mseccfg.bits()[sizeof(xlen) - 1 .. 0],
+    (0x757, 32) => mseccfg.bits()[63 .. 32],
+
     /* machine mode counters */
     (0xB00,  _) => mcycle[(sizeof(xlen) - 1) .. 0],
     (0xB02,  _) => minstret[(sizeof(xlen) - 1) .. 0],
@@ -145,6 +149,11 @@ function writeCSR (csr : csreg, value : xlenbits) -> unit = {
     (0x3C @ idx : bits(4),  _) => { let idx = unsigned(0b01 @ idx); pmpWriteAddrReg(idx, value); Some(pmpReadAddrReg(idx)) },
     (0x3D @ idx : bits(4),  _) => { let idx = unsigned(0b10 @ idx); pmpWriteAddrReg(idx, value); Some(pmpReadAddrReg(idx)) },
     (0x3E @ idx : bits(4),  _) => { let idx = unsigned(0b11 @ idx); pmpWriteAddrReg(idx, value); Some(pmpReadAddrReg(idx)) },
+
+    /* machine protection */
+    (0x747, 32) => { mseccfg = legalize_mseccfg(mseccfg, mseccfg.bits()[63 .. 32] @ value); Some(mseccfg.bits()[31 .. 0]) },
+    (0x747, 64) => { mseccfg = legalize_mseccfg(mseccfg, value); Some(mseccfg.bits()) },
+    (0x757, 32) => { mseccfg = legalize_mseccfg(mseccfg, value @ mseccfg.bits()[31 .. 0]); Some(mseccfg.bits()[63 .. 32]) },
 
     /* machine mode counters */
     (0xB00,  _) => { mcycle[(sizeof(xlen) - 1) .. 0] = value; Some(value) },

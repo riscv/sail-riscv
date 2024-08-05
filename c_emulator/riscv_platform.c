@@ -52,6 +52,11 @@ bool sys_enable_writable_fiom(unit u)
   return rv_enable_writable_fiom;
 }
 
+bool sys_enable_zpm(unit u)
+{
+  return rv_enable_zpm;
+}
+
 bool sys_enable_vext(unit u)
 {
   return rv_enable_vext;
