@@ -23,7 +23,7 @@ function fetch() -> FetchResult = {
         TR_Failure(e, _) => F_Error(e, PC),
         TR_Address(_, _) => {
           let i = rvfi_instruction[rvfi_insn];
-          rvfi_inst_data->rvfi_insn()   = zero_extend(i);
+          rvfi_inst_data[rvfi_insn]   = zero_extend(i);
           if   (i[1 .. 0] != 0b11)
           then F_RVC(i[15 .. 0])
           else {

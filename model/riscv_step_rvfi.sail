@@ -14,7 +14,7 @@ function ext_pre_step_hook()  -> unit = ()
 
 function ext_post_step_hook() -> unit = {
   /* record the next pc */
-  rvfi_pc_data->rvfi_pc_wdata() = zero_extend(get_arch_pc())
+  rvfi_pc_data[rvfi_pc_wdata] = zero_extend(get_arch_pc())
 }
 
 val ext_init : unit -> unit
