@@ -119,7 +119,9 @@ function pt_walk(sv_params,
       let pte : bits(64) = zero_extend(pte);
 
       let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
-      if pte_is_invalid(pte_flags) then
+      let ext_pte   = msbs_of_PTE(sv_params, pte);
+      let ext_pte_flags = Mk_PTE_Ext_Flags(ext_pte);
+      if pte_is_invalid(pte_flags, ext_pte_flags, level) then
         PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
       else {
         let ppns : bits(64) = PPNs_of_PTE(sv_params, pte);
@@ -139,7 +141,6 @@ function pt_walk(sv_params,
         }
         else {
           // Leaf PTE
-          let ext_pte   = msbs_of_PTE(sv_params, pte);
           let pte_check = check_PTE_permission(ac, priv, mxr, do_sum, pte_flags,
                                                ext_pte, ext_ptw);
           match pte_check {
@@ -162,9 +163,14 @@ function pt_walk(sv_params,
                   let pa  = (ppn << pagesize_bits) | zero_extend(offset_of_va(va));
                   PTW_Success(pa, pte, pte_addr, level, global', ext_ptw)
                 }
-              }
-              else {
-                let pa = (ppns << pagesize_bits) | zero_extend(offset_of_va(va));
+              } else if (haveSvnapot() & ext_pte_flags[N] == 0b1 & ppns[3 .. 0] != 0b1000) then {
+                  // Only 64K NAPOT PTEs are valid
+                  PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
+              } else {
+                let final_ppn : bits(64) = if haveSvnapot() & ext_pte_flags[N] == 0b1
+                  then ppns[63 .. 4] @ vpn_j[3 .. 0]
+                  else ppns;
+                let pa = (final_ppn << pagesize_bits) | zero_extend(offset_of_va(va));
                 PTW_Success(pa, pte, pte_addr, level, global', ext_ptw)
               }
           }
@@ -275,8 +281,8 @@ function write_pte forall 'n, 'n in {4, 8} . (
 // Result of address translation
 
 // PUBLIC
-union TR_Result('paddr : Type, 'failure : Type) = {
-  TR_Address : ('paddr, ext_ptw),
+union TR_Result('paddr : Type, 'ext_pte_bits : Type, 'failure : Type) = {
+  TR_Address : ('paddr, 'ext_pte_bits, ext_ptw),
   TR_Failure : ('failure, ext_ptw)
 }
 
@@ -294,7 +300,7 @@ function translate_TLB_hit(sv_params : SV_Params,
                            ext_ptw   : ext_ptw,
                            tlb_index : tlb_index_range,
                            ent       : TLB_Entry)
-                          -> TR_Result(bits(64), PTW_Error) = {
+                          -> TR_Result(bits(64), extPte, PTW_Error) = {
   let pte       = ent.pte;
   let ext_pte   = msbs_of_PTE(sv_params, pte);
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
@@ -306,7 +312,7 @@ function translate_TLB_hit(sv_params : SV_Params,
       TR_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw),
     PTE_Check_Success(ext_ptw) =>
       match update_PTE_Bits(sv_params, pte, ac) {
-        None()     => TR_Address(ent.pAddr | (vAddr & ent.vAddrMask), ext_ptw),
+        None()     => TR_Address(ent.pAddr | (vAddr & ent.vAddrMask), ext_pte, ext_ptw),
         Some(pte') =>
           // See riscv_platform.sail
           if not(plat_enable_dirty_update()) then
@@ -323,7 +329,7 @@ function translate_TLB_hit(sv_params : SV_Params,
               MemException(e) => internal_error(__FILE__, __LINE__,
                                                 "invalid physical address in TLB")
             };
-            TR_Address(ent.pAddr | (vAddr & ent.vAddrMask), ext_ptw)
+            TR_Address(ent.pAddr | (vAddr & ent.vAddrMask), ext_pte, ext_ptw)
           }
       }
   }
@@ -338,7 +344,7 @@ function translate_TLB_miss(sv_params : SV_Params,
                             priv      : Privilege,
                             mxr       : bool,
                             do_sum    : bool,
-                            ext_ptw   : ext_ptw) -> TR_Result(bits(64), PTW_Error) = {
+                            ext_ptw   : ext_ptw) -> TR_Result(bits(64), extPte, PTW_Error) = {
   let initial_level = sv_params.levels - 1;
   let ptw_result    = pt_walk(sv_params, vAddr, ac, priv, mxr, do_sum,
                               ptb, initial_level, false, ext_ptw);
@@ -353,7 +359,7 @@ function translate_TLB_miss(sv_params : SV_Params,
           add_to_TLB(asid, vAddr, pAddr, pte, pteAddr, level, global,
                      sv_params.vpn_size_bits,
                      pagesize_bits);
-          TR_Address(pAddr, ext_ptw)
+          TR_Address(pAddr, ext_pte, ext_ptw)
         },
         Some(pte') =>
           // See riscv_platform.sail
@@ -369,7 +375,7 @@ function translate_TLB_miss(sv_params : SV_Params,
                 add_to_TLB(asid, vAddr, pAddr, pte', pteAddr, level, global,
                            sv_params.vpn_size_bits,
                            pagesize_bits);
-                TR_Address(pAddr, ext_ptw)
+                TR_Address(pAddr, ext_pte, ext_ptw)
               },
               MemException(e) =>
                 TR_Failure(PTW_Access(), ext_ptw)
@@ -390,7 +396,7 @@ function translate(sv_params : SV_Params,
                    mxr       : bool,
                    do_sum    : bool,
                    ext_ptw   : ext_ptw)
-                  -> TR_Result(bits(64), PTW_Error) = {
+                  -> TR_Result(bits(64), extPte, PTW_Error) = {
   // On first reading, assume lookup_TLB returns None(), since TLBs
   // are not part of RISC-V archticture spec (see TLB_NOTE above)
   match lookup_TLB(asid, vAddr) {
@@ -405,7 +411,7 @@ function translate(sv_params : SV_Params,
 // PUBLIC: invoked from instr-fetch and load/store/amo
 function translateAddr(vAddr   : xlenbits,
                        ac      : AccessType(ext_access_type))
-                      -> TR_Result(xlenbits, ExceptionType) = {
+                      -> TR_Result(xlenbits, extPte, ExceptionType) = {
   // Internally the vmem code works with 64-bit values, whether xlen==32 or xlen==64
   // This 'extend' is a no-op when xlen==64 and extends when xlen==32
   let vAddr_64b : bits(64) = zero_extend(vAddr);
@@ -414,7 +420,7 @@ function translateAddr(vAddr   : xlenbits,
   let effPriv   : Privilege = effectivePrivilege(ac, mstatus, cur_privilege);
   let mode      : SATPMode  = translationMode(effPriv);
   let (valid_va, sv_params) : (bool, SV_Params) = match mode {
-    Sbare => return TR_Address(vAddr, init_ext_ptw),
+    Sbare => return TR_Address(vAddr, zeros(), init_ext_ptw),
     Sv32  => (true,                                 sv32_params),
     Sv39  => (is_valid_vAddr(sv39_params, vAddr_64b), sv39_params),
     Sv48  => (is_valid_vAddr(sv48_params, vAddr_64b), sv48_params),
@@ -435,7 +441,7 @@ function translateAddr(vAddr   : xlenbits,
                                init_ext_ptw);
     // Fixup result PA or exception
     match tr_result1 {
-      TR_Address(pa, ext_ptw) => TR_Address(truncate(pa, sizeof(xlen)), ext_ptw),
+      TR_Address(pa, ext_pte, ext_ptw) => TR_Address(truncate(pa, sizeof(xlen)), ext_pte, ext_ptw),
       TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
     }
   }
