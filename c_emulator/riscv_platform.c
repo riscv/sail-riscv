@@ -62,6 +62,16 @@ bool sys_enable_bext(unit u)
   return rv_enable_bext;
 }
 
+bool sys_enable_zicbom(unit u)
+{
+  return rv_enable_zicbom;
+}
+
+bool sys_enable_zicboz(unit u)
+{
+  return rv_enable_zicboz;
+}
+
 uint64_t sys_pmp_count(unit u)
 {
   return rv_pmp_count;
@@ -110,6 +120,11 @@ mach_bits plat_rom_base(unit u)
 mach_bits plat_rom_size(unit u)
 {
   return rv_rom_size;
+}
+
+mach_bits plat_cache_block_size_exp()
+{
+  return rv_cache_block_size_exp;
 }
 
 // Provides entropy for the scalar cryptography extension.
