@@ -138,7 +138,7 @@ function clause execute (DIVW(rs2, rs1, rd, s)) = {
   let rs2_int : int = if s then signed(rs2_val) else unsigned(rs2_val);
   let q : int = if rs2_int == 0 then -1 else quot_round_zero(rs1_int, rs2_int);
   /* check for signed overflow */
-  let q': int = if s & q > (2 ^ 31 - 1) then  (0 - 2^31) else q;
+  let q': int = if s & q > (2 ^ 31 - 1) then  (0 - (2 ^ 31)) else q;
   X(rd) = sign_extend(to_bits(32, q'));
   RETIRE_SUCCESS
 }

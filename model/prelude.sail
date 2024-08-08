@@ -39,9 +39,7 @@ function bit_str(b: bit) -> string =
 
 overload BitStr = {bits_str, bit_str}
 
-val int_power = {ocaml: "int_power", interpreter: "int_power", lem: "pow", coq: "pow", c: "pow_int"} : (int, int) -> int
-
-overload operator ^ = {xor_vec, int_power, concat_str}
+overload operator ^ = {xor_vec, concat_str}
 
 val sub_vec = {c: "sub_bits", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
 
