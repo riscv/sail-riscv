@@ -34,7 +34,9 @@ function clause execute UTYPE(imm, rd, op) = {
 }
 
 mapping utype_mnemonic : uop <-> string = {
+  $[name "load upper immediate"]
   RISCV_LUI   <-> "lui",
+  $[name "add upper immediate to PC"]
   RISCV_AUIPC <-> "auipc"
 }
 
@@ -42,6 +44,7 @@ mapping clause assembly = UTYPE(imm, rd, op)
   <-> utype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_20(imm)
 
 /* ****************************************************************** */
+$[name "jump and link"]
 union clause ast = RISCV_JAL : (bits(21), regidx)
 
 mapping clause encdec = RISCV_JAL(imm_19 @ imm_7_0 @ imm_8 @ imm_18_13 @ imm_12_9 @ 0b0, rd)
@@ -88,6 +91,7 @@ mapping clause assembly = RISCV_JAL(imm, rd)
   <-> "jal" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_21(imm)
 
 /* ****************************************************************** */
+$[name "jump and link register"]
 union clause ast = RISCV_JALR : (bits(12), regidx, regidx)
 
 mapping clause encdec = RISCV_JALR(imm, rs1, rd)
@@ -99,6 +103,7 @@ mapping clause assembly = RISCV_JALR(imm, rs1, rd)
 /* see riscv_jalr_seq.sail or riscv_jalr_rmem.sail for the execute clause. */
 
 /* ****************************************************************** */
+$[name "conditional branch"]
 union clause ast = BTYPE : (bits(13), regidx, regidx, bop)
 
 mapping encdec_bop : bop <-> bits(3) = {
@@ -188,18 +193,25 @@ function clause execute (ITYPE (imm, rs1, rd, op)) = {
 }
 
 mapping itype_mnemonic : iop <-> string = {
-  RISCV_ADDI  <-> "addi",
-  RISCV_SLTI  <-> "slti",
-  RISCV_SLTIU <-> "sltiu",
-  RISCV_XORI  <-> "xori",
-  RISCV_ORI   <-> "ori",
-  RISCV_ANDI  <-> "andi"
+  $[name "add immediate"]
+    RISCV_ADDI  <-> "addi",
+  $[name "set less than immediate"]
+    RISCV_SLTI  <-> "slti",
+  $[name "set less than immediate unsigned"]
+    RISCV_SLTIU <-> "sltiu",
+  $[name "XOR immediate"]
+    RISCV_XORI  <-> "xori",
+  $[name "OR immediate"]
+    RISCV_ORI   <-> "ori",
+  $[name "AND immediate"]
+    RISCV_ANDI  <-> "andi"
 }
 
 mapping clause assembly = ITYPE(imm, rs1, rd, op)
   <-> itype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
 
 /* ****************************************************************** */
+$[name "shift immediate"]
 union clause ast = SHIFTIOP : (bits(6), regidx, regidx, sop)
 
 mapping encdec_sop : sop <-> bits(3) = {
@@ -279,15 +291,25 @@ function clause execute (RTYPE(rs2, rs1, rd, op)) = {
 }
 
 mapping rtype_mnemonic : rop <-> string = {
+  $[name "add"]
   RISCV_ADD  <-> "add",
+  $[name "set less than"]
   RISCV_SLT  <-> "slt",
+  $[name "set less than (unsigned)"]
   RISCV_SLTU <-> "sltu",
+  $[name "AND"]
   RISCV_AND  <-> "and",
+  $[name "OR"]
   RISCV_OR   <-> "or",
+  $[name "exclusive OR"]
   RISCV_XOR  <-> "xor",
+  $[name "shift left (logical)"]
   RISCV_SLL  <-> "sll",
+  $[name "shift right (logical)"]
   RISCV_SRL  <-> "srl",
+  $[name "subtract"]
   RISCV_SUB  <-> "sub",
+  $[name "shift right (arithmetic)"]
   RISCV_SRA  <-> "sra"
 }
 
@@ -295,6 +317,7 @@ mapping clause assembly = RTYPE(rs2, rs1, rd, op)
   <-> rtype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
+$[name "load"]
 union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width, bool, bool)
 
 /* unsigned loads are only present for widths strictly less than xlen,
@@ -366,6 +389,7 @@ mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, size, aq, rl)
   <-> "l" ^ size_mnemonic(size) ^ maybe_u(is_unsigned) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ****************************************************************** */
+$[name "store"]
 union clause ast = STORE : (bits(12), regidx, regidx, word_width, bool, bool)
 
 mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)              if size_bytes(size) <= sizeof(xlen_bytes)
@@ -411,6 +435,7 @@ mapping clause assembly = STORE(imm, rs2, rs1, size, aq, rl)
   <-> "s" ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_signed_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 /* ****************************************************************** */
+$[name "add immediate word"]
 union clause ast = ADDIW : (bits(12), regidx, regidx)
 
 mapping clause encdec = ADDIW(imm, rs1, rd)
@@ -468,10 +493,15 @@ function clause execute (RTYPEW(rs2, rs1, rd, op)) = {
 }
 
 mapping rtypew_mnemonic : ropw <-> string = {
+  $[name "add word (RV64)"]
   RISCV_ADDW <-> "addw",
+  $[name "subtract word (RV64)"]
   RISCV_SUBW <-> "subw",
+  $[name "shift left (logical) word (RV64)"]
   RISCV_SLLW <-> "sllw",
+  $[name "shift right (logical) word (RV64)"]
   RISCV_SRLW <-> "srlw",
+  $[name "shift right (arithmetic) word (RV64)"]
   RISCV_SRAW <-> "sraw"
 }
 
@@ -481,6 +511,7 @@ mapping clause assembly = RTYPEW(rs2, rs1, rd, op)
       if sizeof(xlen) == 64
 
 /* ****************************************************************** */
+$[name "shift immediate word"]
 union clause ast = SHIFTIWOP : (bits(5), regidx, regidx, sopw)
 
 mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SLLIW)
@@ -519,6 +550,7 @@ mapping clause assembly = SHIFTIWOP(shamt, rs1, rd, op)
       if sizeof(xlen) == 64
 
 /* ****************************************************************** */
+$[name "fence (memory)"]
 union clause ast = FENCE : (bits(4), bits(4))
 
 mapping clause encdec = FENCE(pred, succ)
@@ -585,6 +617,7 @@ mapping clause assembly = FENCE(pred, succ)
   <-> "fence" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ)
 
 /* ****************************************************************** */
+$[name "fence (total store order)"]
 union clause ast = FENCE_TSO : (bits(4), bits(4))
 
 mapping clause encdec = FENCE_TSO(pred, succ)
@@ -605,6 +638,7 @@ mapping clause assembly = FENCE_TSO(pred, succ)
   <-> "fence.tso" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ)
 
 /* ****************************************************************** */
+$[name "fence (instruction)"]
 union clause ast = FENCEI : unit
 
 mapping clause encdec = FENCEI()
@@ -616,6 +650,7 @@ function clause execute FENCEI() = { /* __barrier(Barrier_RISCV_i); */ RETIRE_SU
 mapping clause assembly = FENCEI() <-> "fence.i"
 
 /* ****************************************************************** */
+$[name "environment call"]
 union clause ast = ECALL : unit
 
 mapping clause encdec = ECALL()
@@ -637,6 +672,7 @@ function clause execute ECALL() = {
 mapping clause assembly = ECALL() <-> "ecall"
 
 /* ****************************************************************** */
+$[name "machine-level return"]
 union clause ast = MRET : unit
 
 mapping clause encdec = MRET()
@@ -656,6 +692,7 @@ function clause execute MRET() = {
 mapping clause assembly = MRET() <-> "mret"
 
 /* ****************************************************************** */
+$[name "supervisor-level return"]
 union clause ast = SRET : unit
 
 mapping clause encdec = SRET()
@@ -680,6 +717,7 @@ function clause execute SRET() = {
 mapping clause assembly = SRET() <-> "sret"
 
 /* ****************************************************************** */
+$[name "environment breakpoint"]
 union clause ast = EBREAK : unit
 
 mapping clause encdec = EBREAK()
@@ -693,6 +731,7 @@ function clause execute EBREAK() = {
 mapping clause assembly = EBREAK() <-> "ebreak"
 
 /* ****************************************************************** */
+$[name "wait for interrupt"]
 union clause ast = WFI : unit
 
 mapping clause encdec = WFI()
@@ -710,6 +749,7 @@ function clause execute WFI() =
 mapping clause assembly = WFI() <-> "wfi"
 
 /* ****************************************************************** */
+$[name "store fence (virtual memory address)"]
 union clause ast = SFENCE_VMA : (regidx, regidx)
 
 mapping clause encdec = SFENCE_VMA(rs1, rs2)
