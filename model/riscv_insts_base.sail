@@ -200,6 +200,25 @@ mapping clause assembly = ITYPE(imm, rs1, rd, op)
   <-> itype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
 
 /* ****************************************************************** */
+union clause ast = LA : (regidx, bits(32))
+
+mapping clause assembly = LA(rd, imm)
+  <-> "la" ^ spc() ^ reg_name(rd) ^sep() ^ hex_bits_32(imm)
+
+function clause pseudo_of(LA(rd, imm)) = [|
+  assembly(UTYPE(imm[31..12],rd,RISCV_AUIPC)),
+  assembly(ITYPE(imm[11..0],reg_name("x0"),rd,RISCV_ADDI))
+|]
+
+function clause execute LA(rd, imm) = {
+  if execute(UTYPE(imm[31..12],rd,RISCV_AUIPC)) == RETIRE_SUCCESS &
+     execute(ITYPE(imm[11..0],reg_name("x0"),rd,RISCV_ADDI)) == RETIRE_SUCCESS then
+      RETIRE_SUCCESS
+  else
+      RETIRE_FAIL
+}
+
+/* ****************************************************************** */
 union clause ast = SHIFTIOP : (bits(6), regidx, regidx, sop)
 
 mapping encdec_sop : sop <-> bits(3) = {
