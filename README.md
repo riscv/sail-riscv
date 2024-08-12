@@ -62,7 +62,7 @@ These are verbatim excerpts from the model file containing the base instructions
 ~~~~~
 /* the assembly abstract syntax tree (AST) clause for the ITYPE instructions */
 
-union clause ast = ITYPE : (bits(12), regbits, regbits, iop)
+union clause ast = ITYPE : (bits(12), regidx, regidx, iop)
 
 /* the encode/decode mapping between AST elements and 32-bit words */
 
@@ -81,17 +81,17 @@ mapping clause encdec = ITYPE(imm, rs1, rd, op) <-> imm @ rs1 @ encdec_iop(op) @
 
 function clause execute (ITYPE (imm, rs1, rd, op)) = {
   let rs1_val = X(rs1);
-  let immext : xlenbits = EXTS(imm);
+  let immext : xlenbits = sign_extend(imm);
   let result : xlenbits = match op {
     RISCV_ADDI  => rs1_val + immext,
-    RISCV_SLTI  => EXTZ(rs1_val <_s immext),
-    RISCV_SLTIU => EXTZ(rs1_val <_u immext),
+    RISCV_SLTI  => zero_extend(bool_to_bits(rs1_val <_s immext)),
+    RISCV_SLTIU => zero_extend(bool_to_bits(rs1_val <_u immext)),
     RISCV_ANDI  => rs1_val & immext,
     RISCV_ORI   => rs1_val | immext,
     RISCV_XORI  => rs1_val ^ immext
   };
   X(rd) = result;
-  true
+  RETIRE_SUCCESS
 }
 
 /* the assembly/disassembly mapping between AST elements and strings */
@@ -106,7 +106,7 @@ mapping itype_mnemonic : iop <-> string = {
 }
 
 mapping clause assembly = ITYPE(imm, rs1, rd, op)
-                      <-> itype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_12(imm)
+                      <-> itype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
 ~~~~~~
 
 ### SRET
@@ -117,14 +117,19 @@ union clause ast = SRET : unit
 mapping clause encdec = SRET() <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute SRET() = {
-  match cur_privilege {
-    User       => handle_illegal(),
-    Supervisor => if   mstatus.TSR() == true
-                  then handle_illegal()
-                  else nextPC = handle_exception(cur_privilege, CTL_SRET(), PC),
-    Machine    => nextPC = handle_exception(cur_privilege, CTL_SRET(), PC)
+  let sret_illegal : bool = match cur_privilege {
+    User       => true,
+    Supervisor => not(extensionEnabled(Ext_S)) | mstatus[TSR] == 0b1,
+    Machine    => not(extensionEnabled(Ext_S))
   };
-  false
+  if   sret_illegal
+  then { handle_illegal(); RETIRE_FAIL }
+  else if not(ext_check_xret_priv (Supervisor))
+  then { ext_fail_xret_priv(); RETIRE_FAIL }
+  else {
+    set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC));
+    RETIRE_SUCCESS
+  }
 }
 
 mapping clause assembly = SRET() <-> "sret"
