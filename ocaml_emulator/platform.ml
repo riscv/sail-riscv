@@ -15,6 +15,8 @@ let config_enable_zcb                  = ref false
 let config_enable_writable_fiom        = ref true
 let config_enable_vext                 = ref true
 let config_enable_bext                 = ref false
+let config_enable_zicbom               = ref false
+let config_enable_zicboz               = ref false
 let config_pmp_count                   = ref Big_int.zero
 let config_pmp_grain                   = ref Big_int.zero
 
@@ -89,6 +91,8 @@ let enable_next ()                   = !config_enable_next
 let enable_fdext ()                  = false
 let enable_vext ()                   = !config_enable_vext
 let enable_bext ()                   = !config_enable_bext
+let enable_zicbom ()                 = !config_enable_zicbom
+let enable_zicboz ()                 = !config_enable_zicboz
 let enable_dirty_update ()           = !config_enable_dirty_update
 let enable_misaligned_access ()      = !config_enable_misaligned_access
 let mtval_has_illegal_inst_bits ()   = !config_mtval_has_illegal_inst_bits
@@ -104,6 +108,8 @@ let rom_size ()   = arch_bits_of_int   !rom_size_ref
 
 let dram_base ()  = arch_bits_of_int64 P.dram_base
 let dram_size ()  = arch_bits_of_int64 !P.dram_size_ref
+
+let cache_block_size_exp () = Big_int.of_int64 !P.cache_block_size_exp_ref
 
 let clint_base () = arch_bits_of_int64 P.clint_base
 let clint_size () = arch_bits_of_int64 P.clint_size
