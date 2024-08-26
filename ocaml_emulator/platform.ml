@@ -17,7 +17,8 @@ let config_enable_vext                 = ref true
 let config_enable_bext                 = ref false
 let config_pmp_count                   = ref Big_int.zero
 let config_pmp_grain                   = ref Big_int.zero
-
+let config_enable_svnapot              = ref false
+let config_enable_svpbmt               = ref false
 let set_config_pmp_count x = config_pmp_count := Big_int.of_int x
 let set_config_pmp_grain x = config_pmp_grain := Big_int.of_int x
 
@@ -96,6 +97,8 @@ let enable_svinval ()                = !config_enable_svinval
 let enable_zcb ()                    = !config_enable_zcb
 let enable_zfinx ()                  = false
 let enable_writable_fiom ()          = !config_enable_writable_fiom
+let enable_svnapot ()                = !config_enable_svnapot
+let enable_svpbmt ()                 = !config_enable_svpbmt
 let pmp_count ()                     = !config_pmp_count
 let pmp_grain ()                     = !config_pmp_grain
 
