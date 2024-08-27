@@ -15,6 +15,13 @@ unit print_instr(sail_string s)
   return UNIT;
 }
 
+unit print_step(unit u)
+{
+  if (config_print_step)
+    fprintf(trace_log, "\n");
+  return UNIT;
+}
+
 unit print_reg(sail_string s)
 {
   if (config_print_reg)
