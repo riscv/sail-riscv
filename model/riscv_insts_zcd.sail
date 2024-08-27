@@ -8,6 +8,7 @@
 
 enum clause extension = Ext_Zcd
 function clause extensionEnabled(Ext_Zcd) = extensionEnabled(Ext_Zca) & extensionEnabled(Ext_D) & (sizeof(xlen) == 32 | sizeof(xlen) == 64)
+// function clause extensionEnabled(Ext_Zcd) = extensionEnabled(Ext_Zca) & extensionEnabled(Ext_D)
 
 union clause ast = C_FLDSP : (bits(6), regidx)
 

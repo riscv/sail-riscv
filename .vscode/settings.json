@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.tcc": "cpp",
+        "softfloat_types.h": "c",
+        "rts.h": "c",
+        "quadmath.h": "c"
+    }
+}
