@@ -26,7 +26,7 @@ SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_mis
 SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_zca.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail riscv_insts_hints.sail
 SAIL_DEFAULT_INST += riscv_insts_fext.sail riscv_insts_zcf.sail
 SAIL_DEFAULT_INST += riscv_insts_dext.sail riscv_insts_zcd.sail
-
+SAIL_DEFAULT_INST += riscv_insts_zcmp.sail
 SAIL_DEFAULT_INST += riscv_insts_svinval.sail
 
 SAIL_DEFAULT_INST += riscv_insts_zba.sail
