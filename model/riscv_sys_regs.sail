@@ -204,14 +204,17 @@ function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv :
 function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
   if   sizeof(xlen) == 32
   then arch_to_bits(RV32)
-  else m.bits[35 .. 34]
+  else
+    if   not(have_privLevel(privLevel_to_bits(Supervisor)))
+    then 0b00
+    else m.bits[35 .. 34]
 }
 
 function set_mstatus_SXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
   if   sizeof(xlen) == 32
   then m
   else {
-    let m = vector_update_subrange(m.bits, 35, 34,  a);
+    let m = vector_update_subrange(m.bits, 35, 34, a);
     Mk_Mstatus(m)
   }
 }
@@ -219,14 +222,17 @@ function set_mstatus_SXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
 function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
   if   sizeof(xlen) == 32
   then arch_to_bits(RV32)
-  else m.bits[33 .. 32]
+  else
+    if   not(have_privLevel(privLevel_to_bits(User)))
+    then 0b00
+    else m.bits[33 .. 32]
 }
 
 function set_mstatus_UXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
   if   sizeof(xlen) == 32
   then m
   else {
-    let m = vector_update_subrange(m.bits, 33, 32,  a);
+    let m = vector_update_subrange(m.bits, 33, 32, a);
     Mk_Mstatus(m)
   }
 }
@@ -257,6 +263,10 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   let m = [m with SD = bool_to_bits(dirty)];
 
   /* We don't support dynamic changes to SXL and UXL. */
+  match (arch_xlen_to_int(get_mstatus_SXL(o)), arch_xlen_to_int(get_mstatus_UXL(o))) {
+    (Some(sxl), Some(uxl)) => assert(sxl >= uxl),
+    _ => ()
+  };
   let m = set_mstatus_SXL(m, get_mstatus_SXL(o));
   let m = set_mstatus_UXL(m, get_mstatus_UXL(o));
 
