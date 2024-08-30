@@ -193,6 +193,10 @@ val plat_rom_size : unit -> bitvector
 let plat_rom_size () = []
 declare ocaml target_rep function plat_rom_size = `Platform.rom_size`
 
+val plat_cache_block_size_exp : unit -> bitvector
+let plat_cache_block_size_exp () = []
+declare ocaml target_rep function plat_cache_block_size_exp = `Platform.cache_block_size_exp`
+
 val plat_clint_base : unit -> bitvector
 let plat_clint_base () = []
 declare ocaml target_rep function plat_clint_base = `Platform.clint_base`

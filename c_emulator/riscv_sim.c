@@ -56,6 +56,9 @@ enum {
   OPT_PMP_GRAIN,
   OPT_ENABLE_SVINVAL,
   OPT_ENABLE_ZCB,
+  OPT_ENABLE_ZICBOM,
+  OPT_ENABLE_ZICBOZ,
+  OPT_CACHE_BLOCK_SIZE,
 };
 
 static bool do_dump_dts = false;
@@ -151,6 +154,9 @@ static struct option options[] = {
     {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
     {"enable-svinval",              no_argument,       0, OPT_ENABLE_SVINVAL      },
     {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
+    {"enable-zicbom",               no_argument,       0, OPT_ENABLE_ZICBOM       },
+    {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
+    {"cache-block-size",            required_argument, 0, OPT_CACHE_BLOCK_SIZE    },
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
@@ -234,6 +240,17 @@ static void read_dtb(const char *path)
   fprintf(stdout, "Read %zd bytes of DTB from %s.\n", dtb_len, path);
 }
 
+// Return log2(x), or -1 if x is not a power of 2.
+static int ilog2(uint64_t x)
+{
+  for (unsigned i = 0; i < sizeof(x) * 8; ++i) {
+    if (x == (UINT64_C(1) << i)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 /**
  * Parses the command line arguments and returns the argv index for the first
  * ELF file that should be loaded. As getopt transforms the argv array, all
@@ -247,6 +264,7 @@ static int process_args(int argc, char **argv)
   uint64_t ram_size = 0;
   uint64_t pmp_count = 0;
   uint64_t pmp_grain = 0;
+  uint64_t block_size_exp = 0;
   while (true) {
     c = getopt_long(argc, argv,
                     "a"
@@ -400,6 +418,26 @@ static int process_args(int argc, char **argv)
     case OPT_ENABLE_ZCB:
       fprintf(stderr, "enabling Zcb extension.\n");
       rv_enable_zcb = true;
+      break;
+    case OPT_ENABLE_ZICBOM:
+      fprintf(stderr, "enabling Zicbom extension.\n");
+      rv_enable_zicbom = true;
+      break;
+    case OPT_ENABLE_ZICBOZ:
+      fprintf(stderr, "enabling Zicboz extension.\n");
+      rv_enable_zicboz = true;
+      break;
+    case OPT_CACHE_BLOCK_SIZE:
+      block_size_exp = ilog2(atol(optarg));
+
+      if (block_size_exp < 0 || block_size_exp > 12) {
+        fprintf(stderr, "invalid cache-block-size '%s' provided.\n", optarg);
+        exit(1);
+      }
+
+      fprintf(stderr, "setting cache-block-size to 2^%" PRIu64 " = %u B\n",
+              block_size_exp, 1 << block_size_exp);
+      rv_cache_block_size_exp = block_size_exp;
       break;
     case 'x':
       fprintf(stderr, "enabling Zfinx support.\n");

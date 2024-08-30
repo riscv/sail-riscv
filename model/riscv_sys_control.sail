@@ -103,6 +103,14 @@ function check_CSR_access(csrrw, csrpr, p, isWrite) =
 function check_TVM_SATP(csr : csreg, p : Privilege) -> bool =
   not(csr == 0x180 & p == Supervisor & mstatus[TVM] == 0b1)
 
+// There are several features that are controlled by machine/supervisor enable
+// bits (m/senvcfg, m/scounteren, etc.). This abstracts that logic.
+function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bit, supervisor_enable_bit : bit) -> bool = match p {
+  Machine => true,
+  Supervisor => machine_enable_bit == bitone,
+  User => machine_enable_bit == bitone & (not(extensionEnabled(Ext_S)) | supervisor_enable_bit == bitone),
+}
+
 function check_Counteren(csr : csreg, p : Privilege) -> bool =
   match(csr, p) {
     (0xC00, Supervisor) => mcounteren[CY] == 0b1,
