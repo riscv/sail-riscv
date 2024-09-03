@@ -28,6 +28,7 @@ let platform_arch = ref P.RV64
 (* logging *)
 
 let config_print_instr       = ref true
+let config_print_step        = ref false
 let config_print_reg         = ref true
 let config_print_mem_access  = ref true
 let config_print_platform    = ref true
@@ -35,6 +36,11 @@ let config_print_platform    = ref true
 let print_instr s =
   if !config_print_instr
   then print_endline s
+  else ()
+
+let print_step () =
+  if !config_print_step
+  then print_endline ""
   else ()
 
 let print_reg s =

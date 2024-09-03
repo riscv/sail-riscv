@@ -95,6 +95,9 @@ let options = Arg.align ([("-dump-dts",
                           ("-signature-granularity",
                            Arg.Int set_signature_granularity,
                            " test signature granularity (in bytes)");
+                          ("-trace-delimit-step",
+                           Arg.Set P.config_print_step,
+                           " delimit instructions in the trace output");
                           ("-isa",
                            Arg.String (fun s -> opt_isa := Some s),
                            " requested isa");

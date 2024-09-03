@@ -92,6 +92,7 @@ bool config_print_reg = true;
 bool config_print_mem_access = true;
 bool config_print_platform = true;
 bool config_print_rvfi = false;
+bool config_print_step = false;
 
 void set_config_print(char *var, bool val)
 {
@@ -111,9 +112,11 @@ void set_config_print(char *var, bool val)
     config_print_rvfi = val;
   } else if (strcmp("platform", var) == 0) {
     config_print_platform = val;
+  } else if (strcmp("step", var) == 0) {
+    config_print_step = val;
   } else {
-    fprintf(stderr, "Unknown trace category: '%s' (should be %s)\n",
-            "instr|reg|mem|platform|all", var);
+    fprintf(stderr, "Unknown trace category: '%s' (should be %s)\n", var,
+            "instr|reg|mem|rvfi|platform|step|all");
     exit(1);
   }
 }
@@ -1027,6 +1030,9 @@ void run_sail(void)
       KILL(sail_int)(&sail_step);
     }
     if (stepped) {
+      if (config_print_step) {
+        fprintf(trace_log, "\n");
+      }
       step_no++;
       insn_cnt++;
       total_insns++;

@@ -99,6 +99,9 @@ function loop () : unit -> unit = {
     let stepped = step(step_no);
     if stepped then {
       step_no = step_no + 1;
+      if get_config_print_instr() then {
+        print_step()
+      };
       sail_end_cycle()
     };
 
