@@ -239,7 +239,7 @@ function get_num_elem(LMUL_pow, SEW) = {
   let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
   /* Ignore lmul < 1 so that the entire vreg is read, allowing all masking to
    * be handled in init_masked_result */
-  let num_elem = int_power(2, LMUL_pow_reg) * VLEN / SEW;
+  let num_elem = 2 ^ (LMUL_pow_reg) * VLEN / SEW;
   assert(num_elem > 0);
   num_elem
 }

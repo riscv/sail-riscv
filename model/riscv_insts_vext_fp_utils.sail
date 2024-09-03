@@ -500,7 +500,7 @@ function rsqrt7 (v, sub) = {
   };
   assert(idx >= 0 & idx < 128);
   let out_sig = to_bits(s, table[(127 - idx)]) << (s - 7);
-  let out_exp = to_bits(e, (3 * (2^(e - 1) - 1) - 1 - signed(normalized_exp)) / 2);
+  let out_exp = to_bits(e, (3 * (2 ^ (e - 1) - 1) - 1 - signed(normalized_exp)) / 2);
   zero_extend(64, sign @ out_exp @ out_sig)
 }
 
@@ -593,7 +593,7 @@ function recip7 (v, rm_3b, sub) = {
     64 => unsigned(normalized_sig[51 .. 45])
   };
   assert(idx >= 0 & idx < 128);
-  let mid_exp = to_bits(e, 2 * (2^(e - 1) - 1) - 1 - signed(normalized_exp));
+  let mid_exp = to_bits(e, 2 * (2 ^ (e - 1) - 1) - 1 - signed(normalized_exp));
   let mid_sig = to_bits(s, table[(127 - idx)]) << (s - 7);
 
   let (out_exp, out_sig)=
