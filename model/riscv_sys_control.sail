@@ -278,7 +278,6 @@ function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege
    * Absence of U-mode implies absence of S-mode.
    */
   if not(extensionEnabled(Ext_U)) | (not(extensionEnabled(Ext_S)) & not(extensionEnabled(Ext_N))) then {
-    assert(priv == Machine, "invalid current privilege");
     let enabled_pending = mip.bits & mie.bits;
     match findPendingInterrupt(enabled_pending) {
       Some(i) => let r = (i, Machine) in Some(r),
