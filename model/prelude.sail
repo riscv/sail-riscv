@@ -41,47 +41,37 @@ overload BitStr = {bits_str, bit_str}
 
 overload operator ^ = {xor_vec, concat_str}
 
-val sub_vec = {c: "sub_bits", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
+val sub_vec = pure {c: "sub_bits", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
 
-val sub_vec_int = {c: "sub_bits_int", _: "sub_vec_int"} : forall 'n. (bits('n), int) -> bits('n)
+val sub_vec_int = pure {c: "sub_bits_int", _: "sub_vec_int"} : forall 'n. (bits('n), int) -> bits('n)
 
 overload operator - = {sub_vec, sub_vec_int}
 
-val quot_round_zero = {ocaml: "quot_round_zero", interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot"} : (int, int) -> int
-val rem_round_zero = {ocaml: "rem_round_zero", interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", coq: "Z.rem"} : (int, int) -> int
+val quot_round_zero = pure {ocaml: "quot_round_zero", interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot"} : (int, int) -> int
+val rem_round_zero = pure {ocaml: "rem_round_zero", interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", coq: "Z.rem"} : (int, int) -> int
 
 /* The following defines % as euclidean modulus */
 overload operator % = {emod_int}
 
-val min_int = {ocaml: "min_int", interpreter: "min_int", lem: "min", coq: "min_atom", c: "min_int"} : forall 'x 'y.
-  (int('x), int('y)) -> {'z, ('x <= 'y & 'z == 'x) | ('x > 'y & 'z == 'y). int('z)}
-
-val max_int = {ocaml: "max_int", interpreter: "max_int", lem: "max", coq: "max_atom", c: "max_int"} : forall 'x 'y.
-  (int('x), int('y)) -> {'z, ('x >= 'y & 'z == 'x) | ('x < 'y & 'z == 'y). int('z)}
-
 overload min = {min_int}
-
 overload max = {max_int}
 
-val pow2 = "pow2" : forall 'n. int('n) -> int(2 ^ 'n)
+val print_string = impure "print_string" : (string, string) -> unit
 
-val print = "print_endline" : string -> unit
-val print_string = "print_string" : (string, string) -> unit
+val print_instr    = impure {ocaml: "Platform.print_instr", interpreter: "print_endline", c: "print_instr", lem: "print_dbg", _: "print_endline"} : string -> unit
+val print_reg      = impure {ocaml: "Platform.print_reg", interpreter: "print_endline", c: "print_reg", lem: "print_dbg", _: "print_endline"} : string -> unit
+val print_mem      = impure {ocaml: "Platform.print_mem_access", interpreter: "print_endline", c: "print_mem_access", lem: "print_dbg", _: "print_endline"} : string -> unit
+val print_platform = impure {ocaml: "Platform.print_platform", interpreter: "print_endline", c: "print_platform", lem: "print_dbg", _: "print_endline"} : string -> unit
 
-val print_instr    = {ocaml: "Platform.print_instr", interpreter: "print_endline", c: "print_instr", lem: "print_dbg", _: "print_endline"} : string -> unit
-val print_reg      = {ocaml: "Platform.print_reg", interpreter: "print_endline", c: "print_reg", lem: "print_dbg", _: "print_endline"} : string -> unit
-val print_mem      = {ocaml: "Platform.print_mem_access", interpreter: "print_endline", c: "print_mem_access", lem: "print_dbg", _: "print_endline"} : string -> unit
-val print_platform = {ocaml: "Platform.print_platform", interpreter: "print_endline", c: "print_platform", lem: "print_dbg", _: "print_endline"} : string -> unit
-
-val print_step = {ocaml: "Platform.print_step", c: "print_step"} : unit -> unit
+val print_step = impure {ocaml: "Platform.print_step", c: "print_step"} : unit -> unit
 
 function print_step() = ()
 
-val get_config_print_instr = {ocaml: "Platform.get_config_print_instr", c:"get_config_print_instr"} : unit -> bool
-val get_config_print_reg = {ocaml: "Platform.get_config_print_reg", c:"get_config_print_reg"} : unit -> bool
-val get_config_print_mem = {ocaml: "Platform.get_config_print_mem", c:"get_config_print_mem"} : unit -> bool
+val get_config_print_instr = pure {ocaml: "Platform.get_config_print_instr", c:"get_config_print_instr"} : unit -> bool
+val get_config_print_reg = pure {ocaml: "Platform.get_config_print_reg", c:"get_config_print_reg"} : unit -> bool
+val get_config_print_mem = pure {ocaml: "Platform.get_config_print_mem", c:"get_config_print_mem"} : unit -> bool
 
-val get_config_print_platform = {ocaml: "Platform.get_config_print_platform", c:"get_config_print_platform"} : unit -> bool
+val get_config_print_platform = pure {ocaml: "Platform.get_config_print_platform", c:"get_config_print_platform"} : unit -> bool
 // defaults for other backends
 function get_config_print_instr () = false
 function get_config_print_reg () = false
