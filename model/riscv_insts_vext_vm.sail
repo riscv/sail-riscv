@@ -39,8 +39,8 @@ function clause execute(VVMTYPE(funct6, vs2, vs1, vd)) = {
   let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool)     = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  var result  : vector('n, dec, bool)     = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
 
@@ -94,8 +94,8 @@ function clause execute(VVMCTYPE(funct6, vs2, vs1, vd)) = {
   let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool)     = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  var result  : vector('n, dec, bool)     = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
 
@@ -147,7 +147,7 @@ function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
   let 'm = SEW;
 
   /* for bypassing normal masking in init_masked_result */
-  vec_trues : vector('n, dec, bool) = undefined;
+  var vec_trues : vector('n, dec, bool) = undefined;
   foreach (i from 0 to (num_elem - 1)) {
     vec_trues[i] = true
   };
@@ -156,8 +156,8 @@ function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
   let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  result      : vector('n, dec, bits('m)) = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  var result  : vector('n, dec, bits('m)) = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vec_trues);
 
@@ -213,8 +213,8 @@ function clause execute(VVCMPTYPE(funct6, vm, vs2, vs1, vd)) = {
   let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool)     = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  var result  : vector('n, dec, bool)     = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
@@ -277,8 +277,8 @@ function clause execute(VXMTYPE(funct6, vs2, rs1, vd)) = {
   let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool)     = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  var result  : vector('n, dec, bool)     = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
 
@@ -332,8 +332,8 @@ function clause execute(VXMCTYPE(funct6, vs2, rs1, vd)) = {
   let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool)     = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  var result  : vector('n, dec, bool)     = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
 
@@ -385,7 +385,7 @@ function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
   let 'm = SEW;
 
   /* for bypassing normal masking in init_masked_result */
-  vec_trues : vector('n, dec, bool) = undefined;
+  var vec_trues : vector('n, dec, bool) = undefined;
   foreach (i from 0 to (num_elem - 1)) {
     vec_trues[i] = true
   };
@@ -394,8 +394,8 @@ function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
   let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  result      : vector('n, dec, bits('m)) = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  var result  : vector('n, dec, bits('m)) = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vec_trues);
 
@@ -453,8 +453,8 @@ function clause execute(VXCMPTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool)     = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  var result  : vector('n, dec, bool)     = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
@@ -520,8 +520,8 @@ function clause execute(VIMTYPE(funct6, vs2, simm, vd)) = {
   let imm_val : bits('m)                  = sign_extend(simm);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool)     = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  var result  : vector('n, dec, bool)     = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
 
@@ -572,8 +572,8 @@ function clause execute(VIMCTYPE(funct6, vs2, simm, vd)) = {
   let imm_val : bits('m)                  = sign_extend(simm);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool)     = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  var result  : vector('n, dec, bool)     = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
 
@@ -622,7 +622,7 @@ function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
   let 'm = SEW;
 
   /* for bypassing normal masking in init_masked_result */
-  vec_trues : vector('n, dec, bool) = undefined;
+  var vec_trues : vector('n, dec, bool) = undefined;
   foreach (i from 0 to (num_elem - 1)) {
     vec_trues[i] = true
   };
@@ -631,8 +631,8 @@ function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
   let imm_val : bits('m)                  = sign_extend(simm);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  result      : vector('n, dec, bits('m)) = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  var result  : vector('n, dec, bits('m)) = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vec_trues);
 
@@ -686,8 +686,8 @@ function clause execute(VICMPTYPE(funct6, vm, vs2, simm, vd)) = {
   let imm_val : bits('m)                  = sign_extend(simm);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool)     = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  var result  : vector('n, dec, bool)     = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 

@@ -93,8 +93,8 @@ function step(step_no : int) -> bool = {
 
 function loop () : unit -> unit = {
   let insns_per_tick = plat_insns_per_tick();
-  i : int = 0;
-  step_no : int = 0;
+  var i : int = 0;
+  var step_no : int = 0;
   while not(htif_done) do {
     let stepped = step(step_no);
     if stepped then {

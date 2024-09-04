@@ -41,8 +41,8 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
   let vs1_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs1);
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool) = undefined;
-  mask        : vector('n, dec, bool) = undefined;
+  var result  : vector('n, dec, bool) = undefined;
+  var mask    : vector('n, dec, bool) = undefined;
 
   (result, mask) = init_masked_result_carry(num_elem, SEW, 0, vd_val);
 
@@ -98,12 +98,12 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
 
   let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
-  result      : vector('n, dec, bool) = undefined;
-  mask        : vector('n, dec, bool) = undefined;
+  var result  : vector('n, dec, bool) = undefined;
+  var mask    : vector('n, dec, bool) = undefined;
 
   (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
 
-  count : nat = 0;
+  var count : nat = 0;
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] & vs2_val[i] then count = count + 1;
   };
@@ -134,12 +134,12 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
 
   let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
-  result      : vector('n, dec, bool) = undefined;
-  mask        : vector('n, dec, bool) = undefined;
+  var result  : vector('n, dec, bool) = undefined;
+  var mask    : vector('n, dec, bool) = undefined;
 
   (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
 
-  index : int = -1;
+  var index : int = -1;
   foreach (i from 0 to (num_elem - 1)) {
     if index == -1 then {
       if mask[i] & vs2_val[i] then index = i;
@@ -174,12 +174,12 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
   let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool) = undefined;
-  mask        : vector('n, dec, bool) = undefined;
+  var result  : vector('n, dec, bool) = undefined;
+  var mask    : vector('n, dec, bool) = undefined;
 
   (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
 
-  found_elem : bool = false;
+  var found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
       if vs2_val[i] then found_elem = true;
@@ -215,12 +215,12 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
   let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool) = undefined;
-  mask        : vector('n, dec, bool) = undefined;
+  var result  : vector('n, dec, bool) = undefined;
+  var mask    : vector('n, dec, bool) = undefined;
 
   (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
 
-  found_elem : bool = false;
+  var found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
       result[i] = if found_elem then false else true;
@@ -256,12 +256,12 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
   let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool) = undefined;
-  mask        : vector('n, dec, bool) = undefined;
+  var result  : vector('n, dec, bool) = undefined;
+  var mask    : vector('n, dec, bool) = undefined;
 
   (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
 
-  found_elem : bool = false;
+  var found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
       if vs2_val[i] & not(found_elem) then {
@@ -301,12 +301,12 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  result      : vector('n, dec, bits('m)) = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  var result  : vector('n, dec, bits('m)) = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 
-  sum : int = 0;
+  var sum : int = 0;
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
       result[i] = to_bits(SEW, sum);
@@ -340,8 +340,8 @@ function clause execute(VID_V(vm, vd)) = {
 
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  result      : vector('n, dec, bits('m)) = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  var result  : vector('n, dec, bits('m)) = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
 
   (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
 

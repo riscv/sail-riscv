@@ -205,8 +205,8 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   let end_element   = get_end_element();
   let tail_ag : agtype = get_vtype_vta();
   let mask_ag : agtype = get_vtype_vma();
-  mask : vector('n, dec, bool) = undefined;
-  result : vector('n, dec, bits('m)) = undefined;
+  var mask : vector('n, dec, bool) = undefined;
+  var result : vector('n, dec, bits('m)) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (2 ^ (0 - LMUL_pow));
@@ -256,7 +256,7 @@ val init_masked_source : forall 'n 'p, 'n >= 0. (int('n), int('p), vector('n, de
 function init_masked_source(num_elem, LMUL_pow, vm_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
-  mask : vector('n, dec, bool) = undefined;
+  var mask : vector('n, dec, bool) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (2 ^ (0 - LMUL_pow));
@@ -290,8 +290,8 @@ val init_masked_result_carry : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int(
 function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
-  mask : vector('n, dec, bool) = undefined;
-  result : vector('n, dec, bool) = undefined;
+  var mask : vector('n, dec, bool) = undefined;
+  var result : vector('n, dec, bool) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (2 ^ (0 - LMUL_pow));
@@ -327,8 +327,8 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
   let mask_ag : agtype = get_vtype_vma();
-  mask : vector('n, dec, bool) = undefined;
-  result : vector('n, dec, bool) = undefined;
+  var mask : vector('n, dec, bool) = undefined;
+  var result : vector('n, dec, bool) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (2 ^ (0 - LMUL_pow));
@@ -373,8 +373,8 @@ val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'q >= 0. (int('n), int('m), in
 function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
   assert('q * 'm > 0);
   let LMUL_reg : int = if LMUL_pow <= 0 then 1 else 2 ^ (LMUL_pow);
-  vreg_list : vector('q, dec, vector('n, dec, bits('m))) = undefined;
-  result : vector('n, dec, bits('q * 'm)) = undefined;
+  var vreg_list : vector('q, dec, vector('n, dec, bits('m))) = undefined;
+  var result : vector('n, dec, bits('q * 'm)) = undefined;
   foreach (j from 0 to (nf - 1)) {
     vreg_list[j] = read_vreg(num_elem, SEW, LMUL_pow, vrid + to_bits(5, j * LMUL_reg));
   };
@@ -441,7 +441,7 @@ function signed_saturation(len, elem) = {
 
 val count_leadingzeros : (bits(64), int) -> int
 function count_leadingzeros (sig, len) = {
-  idx : int = -1;
+  var idx : int = -1;
   assert(len == 10 | len == 23 | len == 52);
   foreach (i from 0 to (len - 1)) {
     if sig[i] == bitone then idx = i;
