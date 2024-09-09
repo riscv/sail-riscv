@@ -378,18 +378,21 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
 
 val maybe_aq : bool <-> string
 mapping maybe_aq = {
+  $[name "acquire"]
   true  <-> ".aq",
   false <-> ""
 }
 
 val maybe_rl : bool <-> string
 mapping maybe_rl = {
+  $[name "release"]
   true  <-> ".rl",
   false <-> ""
 }
 
 val maybe_u : bool <-> string
 mapping maybe_u = {
+  $[name "unsigned"]
   true  <-> "u",
   false <-> ""
 }
