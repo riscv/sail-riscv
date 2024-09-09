@@ -77,6 +77,9 @@ let options = Arg.align ([("-dump-dts",
                            ("-enable-zicboz",
                            Arg.Set P.config_enable_zicboz,
                            " enable the Zicboz extension");
+                           ("-enable-zicbop",
+                           Arg.Set P.config_enable_zicbop,
+                           " enable the Zicbop extension");
                           ("-disable-writable-misa-c",
                            Arg.Clear P.config_enable_writable_misa,
                            " leave misa hardwired to its initial value");

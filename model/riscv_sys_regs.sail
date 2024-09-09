@@ -112,6 +112,7 @@ val sys_enable_bext = {c: "sys_enable_bext", ocaml: "Platform.enable_bext", _: "
 // at all on this model.
 val sys_enable_zicbom = {c: "sys_enable_zicbom", ocaml: "Platform.enable_zicbom", _: "sys_enable_zicbom"} : unit -> bool
 val sys_enable_zicboz = {c: "sys_enable_zicboz", ocaml: "Platform.enable_zicboz", _: "sys_enable_zicboz"} : unit -> bool
+val sys_enable_zicbop = {c: "sys_enable_zicbop", ocaml: "Platform.enable_zicbop", _: "sys_enable_zicbop"} : unit -> bool
 
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
