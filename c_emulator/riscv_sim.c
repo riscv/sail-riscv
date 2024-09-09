@@ -58,6 +58,7 @@ enum {
   OPT_ENABLE_ZCB,
   OPT_ENABLE_ZICBOM,
   OPT_ENABLE_ZICBOZ,
+  OPT_ENABLE_ZICBOP,
   OPT_CACHE_BLOCK_SIZE,
 };
 
@@ -156,6 +157,7 @@ static struct option options[] = {
     {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
     {"enable-zicbom",               no_argument,       0, OPT_ENABLE_ZICBOM       },
     {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
+    {"enable-zicbop",               no_argument,       0, OPT_ENABLE_ZICBOP       },
     {"cache-block-size",            required_argument, 0, OPT_CACHE_BLOCK_SIZE    },
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
@@ -426,6 +428,10 @@ static int process_args(int argc, char **argv)
     case OPT_ENABLE_ZICBOZ:
       fprintf(stderr, "enabling Zicboz extension.\n");
       rv_enable_zicboz = true;
+      break;
+    case OPT_ENABLE_ZICBOP:
+      fprintf(stderr, "enabling Zicbop extension.\n");
+      rv_enable_zicbop = true;
       break;
     case OPT_CACHE_BLOCK_SIZE:
       block_size_exp = ilog2(atol(optarg));

@@ -17,6 +17,7 @@ let config_enable_vext                 = ref true
 let config_enable_bext                 = ref false
 let config_enable_zicbom               = ref false
 let config_enable_zicboz               = ref false
+let config_enable_zicbop               = ref false
 let config_pmp_count                   = ref Big_int.zero
 let config_pmp_grain                   = ref Big_int.zero
 
@@ -93,6 +94,7 @@ let enable_vext ()                   = !config_enable_vext
 let enable_bext ()                   = !config_enable_bext
 let enable_zicbom ()                 = !config_enable_zicbom
 let enable_zicboz ()                 = !config_enable_zicboz
+let enable_zicbop ()                 = !config_enable_zicbop
 let enable_dirty_update ()           = !config_enable_dirty_update
 let enable_misaligned_access ()      = !config_enable_misaligned_access
 let mtval_has_illegal_inst_bits ()   = !config_mtval_has_illegal_inst_bits

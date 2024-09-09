@@ -347,6 +347,7 @@ enum amoop = {AMOSWAP, AMOADD, AMOXOR, AMOAND, AMOOR,
 enum csrop = {CSRRW, CSRRS, CSRRC}                /* CSR ops */
 
 enum cbop_zicbom = {CBO_CLEAN, CBO_FLUSH, CBO_INVAL}  /* Zicbom ops */
+enum cbop_zicbop = {PREFETCH_I, PREFETCH_R, PREFETCH_W}  /* Zicbop ops */
 
 enum brop_zba = {RISCV_SH1ADD, RISCV_SH2ADD, RISCV_SH3ADD}
 
