@@ -56,14 +56,14 @@ overload operator % = {emod_int}
 overload min = {min_int}
 overload max = {max_int}
 
-val print_string = impure "print_string" : (string, string) -> unit
+val print_string = pure "print_string" : (string, string) -> unit
 
-val print_instr    = impure {ocaml: "Platform.print_instr", interpreter: "print_endline", c: "print_instr", lem: "print_dbg", _: "print_endline"} : string -> unit
-val print_reg      = impure {ocaml: "Platform.print_reg", interpreter: "print_endline", c: "print_reg", lem: "print_dbg", _: "print_endline"} : string -> unit
-val print_mem      = impure {ocaml: "Platform.print_mem_access", interpreter: "print_endline", c: "print_mem_access", lem: "print_dbg", _: "print_endline"} : string -> unit
-val print_platform = impure {ocaml: "Platform.print_platform", interpreter: "print_endline", c: "print_platform", lem: "print_dbg", _: "print_endline"} : string -> unit
+val print_instr    = pure {ocaml: "Platform.print_instr", interpreter: "print_endline", c: "print_instr", lem: "print_dbg", _: "print_endline"} : string -> unit
+val print_reg      = pure {ocaml: "Platform.print_reg", interpreter: "print_endline", c: "print_reg", lem: "print_dbg", _: "print_endline"} : string -> unit
+val print_mem      = pure {ocaml: "Platform.print_mem_access", interpreter: "print_endline", c: "print_mem_access", lem: "print_dbg", _: "print_endline"} : string -> unit
+val print_platform = pure {ocaml: "Platform.print_platform", interpreter: "print_endline", c: "print_platform", lem: "print_dbg", _: "print_endline"} : string -> unit
 
-val print_step = impure {ocaml: "Platform.print_step", c: "print_step"} : unit -> unit
+val print_step = pure {ocaml: "Platform.print_step", c: "print_step"} : unit -> unit
 
 function print_step() = ()
 
