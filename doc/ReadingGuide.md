@@ -63,12 +63,12 @@ such as the platform memory map.
   controller, and the MMIO interfaces to the clock, timer and terminal
   devices.  Sail `extern` definitions are used to connect externally
   provided (i.e. external to the Sail model) platform functionality,
-  such as those provided by the platform support in the C and OCaml
-  emulators.  This file also contains the externally selectable
+  such as those provided by the platform support in the C
+  emulator.  This file also contains the externally selectable
   options for platform behavior, such as the handling of misaligned
   memory accesses, the handling of PTE dirty-bit updates during
   address translation, etc.  These platform options can be specified
-  via command line switches in the C and OCaml emulators.
+  via command line switches in the C emulator.
 
 - `riscv_mem.sail` contains the functions that convert accesses to
   physical addresses into accesses to physical memory, or MMIO
@@ -128,7 +128,7 @@ Structure of the C emulator
 ----------------------------
 
 The diagram below illustrates how the C emulator is built from the
-Sail model.  The OCaml emulator follows the same approach.
+Sail model.
 
 <img src="figs/riscvcsimdeps.svg">
 

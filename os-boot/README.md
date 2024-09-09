@@ -35,15 +35,6 @@ performance and benchmarking a model without any execution tracing is
 available on the optimize branch (`git checkout optimize`) of this
 repository. This currently requires the latest Sail built from source.
 
-Booting Linux with the OCaml backend
-------------------------------------
-
-The OCaml model only needs the ELF-version of the BBL, since it can generate its
-own DTB.
-```
-$ ./ocaml_emulator/riscv_ocaml_sim_<arch> bbl > execution-trace.log 2> console.log
-```
-
 Caveats for OS boot
 -------------------
 
