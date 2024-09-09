@@ -228,10 +228,6 @@ riscv.smt_model: $(SAIL_SRCS)
 cgen: $(SAIL_SRCS) model/main.sail
 	$(SAIL) -cgen $(SAIL_FLAGS) $(SAIL_SRCS) model/main.sail
 
-generated_definitions/ocaml/$(ARCH)/riscv.ml: $(SAIL_SRCS) Makefile
-	mkdir -p generated_definitions/ocaml/$(ARCH)
-	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml-nobuild -ocaml_build_dir generated_definitions/ocaml/$(ARCH) -o riscv $(SAIL_SRCS)
-
 cloc:
 	cloc --by-file --force-lang C,sail $(SAIL_SRCS)
 

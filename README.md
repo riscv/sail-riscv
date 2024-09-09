@@ -204,15 +204,6 @@ Those tests have also been run on RISC-V hardware, on a SiFive RISC-V
 FU540 multicore proto board (Freedom Unleashed), kindly on loan from
 Imperas. To date, only sequentially consistent behaviour was observed there.
 
-Use in test generation
-----------------------
-
-The Sail OCaml backend can produce QuickCheck-style random generators for
-types in Sail specifications, which have been used to produce random
-instructions sequences for testing.  The generation of individual
-types can be overridden by the developer to, for example, remove
-implementation-specific instructions or introduce register biasing.
-
 Generating theorem-prover definitions
 --------------------------------------
 
