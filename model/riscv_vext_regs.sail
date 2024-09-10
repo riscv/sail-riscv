@@ -262,7 +262,7 @@ function read_single_vreg(num_elem, SEW, vrid) = {
 /* Writes multiple elements into a single vreg */
 val write_single_vreg : forall 'n 'm, 'n >= 0. (int('n), int('m), regidx, vector('n, dec, bits('m))) -> unit
 function write_single_vreg(num_elem, SEW, vrid, v) = {
-  r : vregtype = zeros();
+  var r : vregtype = zeros();
 
   assert(8 <= SEW & SEW <= 64);
   foreach (i from (num_elem - 1) downto 0) {
@@ -358,7 +358,7 @@ function write_single_element(EEW, index, vrid, value) = {
   let real_index : int    = index % 'elem_per_reg;
 
   let vrid_val : vector('elem_per_reg, dec, bits('m)) = read_single_vreg('elem_per_reg, EEW, real_vrid);
-  r : vregtype = zeros();
+  var r : vregtype = zeros();
   foreach (i from ('elem_per_reg - 1) downto 0) {
     r = r << EEW;
     if i == real_index then {

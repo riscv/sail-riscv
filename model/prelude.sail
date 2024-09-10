@@ -198,7 +198,7 @@ overload operator >>> = {rotate_bits_right, rotater}
 overload operator <<< = {rotate_bits_left, rotatel}
 
 function reverse_bits_in_byte (xs : bits(8)) -> bits(8) = {
-  ys : bits(8) = zeros();
+  var ys : bits(8) = zeros();
   foreach (i from 0 to 7)
     ys[i] = xs[7-i];
   ys

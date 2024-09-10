@@ -143,7 +143,7 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 
   let (result, mask) = init_masked_result(num_elem, nf * load_width_bytes * 8, EMUL_pow, vd_seg, vm_val);
 
-  trimmed : bool = false;
+  var trimmed : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
     if not(trimmed) then {
       if vm_val[i] then { /* active segments */
@@ -637,8 +637,8 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
   let start_element = get_start_element();
   if start_element >= nf * elem_per_reg then return RETIRE_SUCCESS; /* no elements are written if vstart >= evl */
   let elem_to_align : int = start_element % elem_per_reg;
-  cur_field : int = start_element / elem_per_reg;
-  cur_elem  : int = start_element;
+  var cur_field : int = start_element / elem_per_reg;
+  var cur_elem  : int = start_element;
 
   if elem_to_align > 0 then {
     foreach (i from elem_to_align to (elem_per_reg - 1)) {
@@ -719,8 +719,8 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
   let start_element = get_start_element();
   if start_element >= nf * elem_per_reg then return RETIRE_SUCCESS; /* no elements are written if vstart >= evl */
   let elem_to_align : int = start_element % elem_per_reg;
-  cur_field : int = start_element / elem_per_reg;
-  cur_elem  : int = start_element;
+  var cur_field : int = start_element / elem_per_reg;
+  var cur_elem  : int = start_element;
 
   if elem_to_align > 0 then {
     foreach (i from elem_to_align to (elem_per_reg - 1)) {

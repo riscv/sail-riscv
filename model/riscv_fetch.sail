@@ -35,7 +35,7 @@ function fetch() -> FetchResult =
               then F_RVC(ilo)
               else {
                 /* fetch PC check for the next instruction granule */
-                PC_hi : xlenbits = PC + 2;
+                let PC_hi = PC + 2;
                 match ext_fetch_check_pc(PC, PC_hi) {
                   Ext_FetchAddr_Error(e)      => F_Ext_Error(e),
                   Ext_FetchAddr_OK(use_pc_hi) => {
