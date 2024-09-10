@@ -55,8 +55,10 @@ end extensionEnabled
 end ast
 end execute
 end assembly
-end encdec
+end fmtencdec_compressed
+end fmtencdec
 end encdec_compressed
+end oldencdec
 
 val print_insn : ast -> string
 function print_insn insn = assembly(insn)
