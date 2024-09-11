@@ -172,7 +172,7 @@ mapping encdec_iop : iop <-> bits(3) = {
 }
 
 mapping clause encdec = ITYPE(imm, rs1, rd, op)
-  <-> imm @ rs1 @ encdec_iop(op) @ rd @ 0b0010011
+  <-> imm @ rs1 @ encdec_iop(op) @ rd @ 0b0010011 if op != RISCV_ORI & rd != zeros()
 
 function clause execute (ITYPE (imm, rs1, rd, op)) = {
   let rs1_val = X(rs1);
