@@ -418,6 +418,10 @@ static int process_args(int argc, char **argv)
     case 'l':
       insn_limit = atoi(optarg);
       break;
+    case OPT_ENABLE_SVINVAL:
+      fprintf(stderr, "enabling svinval extension.\n");
+      rv_enable_svinval = true;
+      break;
     case OPT_ENABLE_ZCB:
       fprintf(stderr, "enabling Zcb extension.\n");
       rv_enable_zcb = true;
