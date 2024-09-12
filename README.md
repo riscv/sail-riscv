@@ -284,6 +284,8 @@ will build the 64-bit OCaml simulator in
 `ocaml_emulator/riscv_ocaml_sim_RV64` and the C simulator in
 `c_emulator/riscv_sim_RV64`.
 
+If you get an error message saying `sail: unknown option '--require-version'.` it's because your Sail compiler is too old. You need version 0.18 or later.
+
 One can build either the RV32 or the RV64 model by specifying
 `ARCH=RV32` or `ARCH=RV64` on the `make` line, and using the matching
 target suffix.  RV64 is built by default, but the RV32 model can be
