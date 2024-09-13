@@ -277,20 +277,28 @@ function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege
   /* If we don't have different privilege levels, we don't need to check delegation.
    * Absence of U-mode implies absence of S-mode.
    */
-  if not(extensionEnabled(Ext_U)) | (not(extensionEnabled(Ext_S)) & not(extensionEnabled(Ext_N))) then {
-    assert(priv == Machine, "invalid current privilege");
-    let enabled_pending = mip.bits & mie.bits;
-    match findPendingInterrupt(enabled_pending) {
-      Some(i) => let r = (i, Machine) in Some(r),
-      None()  => None()
-    }
-  } else {
+  let multipleModesSupported = extensionEnabled(Ext_U);
+  if not(multipleModesSupported) then {
+    assert(priv == Machine, "invalid current privilege")
+  };
+  /* Even with U-mode, we don't need to check delegation when M-mode is the only
+     one that can take interrupts, i.e. when we don't have S-mode and don't have
+     the N extension
+  */
+  let delegationPossible = extensionEnabled(Ext_S) | extensionEnabled(Ext_N);
+  if multipleModesSupported & delegationPossible then {
     match getPendingSet(priv) {
       None()      => None(),
       Some(ip, p) => match findPendingInterrupt(ip) {
                        None()  => None(),
                        Some(i) => let r = (i, p) in Some(r)
                      }
+    }
+  } else {
+    let enabled_pending = mip.bits & mie.bits;
+    match findPendingInterrupt(enabled_pending) {
+      Some(i) => let r = (i, Machine) in Some(r),
+      None()  => None()
     }
   }
 }
