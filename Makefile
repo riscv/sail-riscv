@@ -24,45 +24,46 @@ SAIL_VLEN := riscv_vlen.sail
 
 # Instruction sources, depending on target
 SAIL_CHECK_SRCS = riscv_addr_checks_common.sail riscv_addr_checks.sail riscv_misa_ext.sail
-SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_zca.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail riscv_insts_hints.sail
-SAIL_DEFAULT_INST += riscv_insts_fext.sail riscv_insts_zcf.sail
-SAIL_DEFAULT_INST += riscv_insts_dext.sail riscv_insts_zcd.sail
+#SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_aext.sail riscv_insts_zca.sail riscv_insts_mext.sail riscv_insts_zicsr.sail riscv_insts_next.sail riscv_insts_hints.sail
+#SAIL_DEFAULT_INST += riscv_insts_fext.sail riscv_insts_zcf.sail
+#SAIL_DEFAULT_INST += riscv_insts_dext.sail riscv_insts_zcd.sail
+SAIL_DEFAULT_INST = riscv_insts_base.sail riscv_insts_zicsr.sail riscv_insts_next.sail
 
-SAIL_DEFAULT_INST += riscv_insts_svinval.sail
+#SAIL_DEFAULT_INST += riscv_insts_svinval.sail
 
-SAIL_DEFAULT_INST += riscv_insts_zba.sail
-SAIL_DEFAULT_INST += riscv_insts_zbb.sail
-SAIL_DEFAULT_INST += riscv_insts_zbc.sail
-SAIL_DEFAULT_INST += riscv_insts_zbs.sail
+#SAIL_DEFAULT_INST += riscv_insts_zba.sail
+#SAIL_DEFAULT_INST += riscv_insts_zbb.sail
+#SAIL_DEFAULT_INST += riscv_insts_zbc.sail
+#SAIL_DEFAULT_INST += riscv_insts_zbs.sail
 
-SAIL_DEFAULT_INST += riscv_insts_zcb.sail
+#SAIL_DEFAULT_INST += riscv_insts_zcb.sail
 
-SAIL_DEFAULT_INST += riscv_insts_zfh.sail
+#SAIL_DEFAULT_INST += riscv_insts_zfh.sail
 # Zfa needs to be added after fext, dext and Zfh (as it needs
 # definitions from those)
-SAIL_DEFAULT_INST += riscv_insts_zfa.sail
+#SAIL_DEFAULT_INST += riscv_insts_zfa.sail
 
-SAIL_DEFAULT_INST += riscv_insts_zkn.sail
-SAIL_DEFAULT_INST += riscv_insts_zks.sail
+#SAIL_DEFAULT_INST += riscv_insts_zkn.sail
+#SAIL_DEFAULT_INST += riscv_insts_zks.sail
 
-SAIL_DEFAULT_INST += riscv_insts_zbkb.sail
-SAIL_DEFAULT_INST += riscv_insts_zbkx.sail
+#SAIL_DEFAULT_INST += riscv_insts_zbkb.sail
+#SAIL_DEFAULT_INST += riscv_insts_zbkx.sail
 
-SAIL_DEFAULT_INST += riscv_insts_zicond.sail
+#SAIL_DEFAULT_INST += riscv_insts_zicond.sail
 
-SAIL_DEFAULT_INST += riscv_insts_vext_utils.sail
-SAIL_DEFAULT_INST += riscv_insts_vext_fp_utils.sail
-SAIL_DEFAULT_INST += riscv_insts_vext_vset.sail
-SAIL_DEFAULT_INST += riscv_insts_vext_arith.sail
-SAIL_DEFAULT_INST += riscv_insts_vext_fp.sail
-SAIL_DEFAULT_INST += riscv_insts_vext_mem.sail
-SAIL_DEFAULT_INST += riscv_insts_vext_mask.sail
-SAIL_DEFAULT_INST += riscv_insts_vext_vm.sail
-SAIL_DEFAULT_INST += riscv_insts_vext_fp_vm.sail
-SAIL_DEFAULT_INST += riscv_insts_vext_red.sail
-SAIL_DEFAULT_INST += riscv_insts_vext_fp_red.sail
-SAIL_DEFAULT_INST += riscv_insts_zicbom.sail
-SAIL_DEFAULT_INST += riscv_insts_zicboz.sail
+#SAIL_DEFAULT_INST += riscv_insts_vext_utils.sail
+#SAIL_DEFAULT_INST += riscv_insts_vext_fp_utils.sail
+#SAIL_DEFAULT_INST += riscv_insts_vext_vset.sail
+#SAIL_DEFAULT_INST += riscv_insts_vext_arith.sail
+#SAIL_DEFAULT_INST += riscv_insts_vext_fp.sail
+#SAIL_DEFAULT_INST += riscv_insts_vext_mem.sail
+#SAIL_DEFAULT_INST += riscv_insts_vext_mask.sail
+#SAIL_DEFAULT_INST += riscv_insts_vext_vm.sail
+#SAIL_DEFAULT_INST += riscv_insts_vext_fp_vm.sail
+#SAIL_DEFAULT_INST += riscv_insts_vext_red.sail
+#SAIL_DEFAULT_INST += riscv_insts_vext_fp_red.sail
+#SAIL_DEFAULT_INST += riscv_insts_zicbom.sail
+#SAIL_DEFAULT_INST += riscv_insts_zicboz.sail
 
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
 SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail

@@ -23,8 +23,13 @@ mapping encdec_uop : uop <-> bits(7) = {
   RISCV_AUIPC <-> 0b0010111
 }
 
-mapping clause encdec = UTYPE(imm, rd, op)
+mapping clause oldencdec = UTYPE(imm, rd, op)
   <-> imm @ rd @ encdec_uop(op)
+
+function clause opcode2format 0b0110111 = U_Format
+function clause opcode2format 0b0010111 = U_Format
+mapping clause fmtencdec = UTYPE(imm, rd, op)
+  <-> UFormat(struct { imm = imm, rd = rd, opcode = encdec_uop(op) })
 
 function clause execute UTYPE(imm, rd, op) = {
   let off : xlenbits = sign_extend(imm @ 0x000);
@@ -47,13 +52,17 @@ mapping clause assembly = UTYPE(imm, rd, op)
 /* ****************************************************************** */
 union clause ast = RISCV_JAL : (bits(21), regidx)
 
-mapping clause encdec = RISCV_JAL(imm_19 @ imm_7_0 @ imm_8 @ imm_18_13 @ imm_12_9 @ 0b0, rd)
+mapping clause oldencdec = RISCV_JAL(imm_19 @ imm_7_0 @ imm_8 @ imm_18_13 @ imm_12_9 @ 0b0, rd)
   <-> imm_19 : bits(1) @ imm_18_13 : bits(6) @ imm_12_9 : bits(4) @ imm_8 : bits(1) @ imm_7_0 : bits(8) @ rd @ 0b1101111
+
+function clause opcode2format 0b1101111 = J_Format
+mapping clause fmtencdec = RISCV_JAL(imm, rd)
+  <-> JFormat(struct { imm = imm, rd = rd, opcode = 0b1101111 })
 
 /*
 ideally we want some syntax like
 
-mapping clause encdec = RISCV_JAL(imm @ 0b0, rd) <-> imm[19] @ imm[9..0] @ imm[10] @ imm[18..11] @ rd @ 0b1101111
+mapping clause oldencdec = RISCV_JAL(imm @ 0b0, rd) <-> imm[19] @ imm[9..0] @ imm[10] @ imm[18..11] @ rd @ 0b1101111
 
 match bv {
   imm[19] @ imm[9..0] @ imm[10] @ imm[18..11] -> imm @ 0b0
@@ -93,8 +102,12 @@ mapping clause assembly = RISCV_JAL(imm, rd)
 /* ****************************************************************** */
 union clause ast = RISCV_JALR : (bits(12), regidx, regidx)
 
-mapping clause encdec = RISCV_JALR(imm, rs1, rd)
+mapping clause oldencdec = RISCV_JALR(imm, rs1, rd)
   <-> imm @ rs1 @ 0b000 @ rd @ 0b1100111
+
+function clause opcode2format 0b1100111 = I_Format
+mapping clause fmtencdec = RISCV_JALR(imm, rs1, rd)
+  <-> IFormat(struct { imm = imm, rs1 = rs1, funct3 = 0b000, rd = rd, opcode = 0b1100111 })
 
 mapping clause assembly = RISCV_JALR(imm, rs1, rd)
   <-> "jalr" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
@@ -113,8 +126,12 @@ mapping encdec_bop : bop <-> bits(3) = {
   RISCV_BGEU <-> 0b111
 }
 
-mapping clause encdec = BTYPE(imm7_6 @ imm5_0 @ imm7_5_0 @ imm5_4_1 @ 0b0, rs2, rs1, op)
+mapping clause oldencdec = BTYPE(imm7_6 @ imm5_0 @ imm7_5_0 @ imm5_4_1 @ 0b0, rs2, rs1, op)
   <-> imm7_6 : bits(1) @ imm7_5_0 : bits(6) @ rs2 @ rs1 @ encdec_bop(op) @ imm5_4_1 : bits(4) @ imm5_0 : bits(1) @ 0b1100011
+
+function clause opcode2format 0b1100011 = B_Format
+mapping clause fmtencdec = BTYPE(imm, rs2, rs1, op)
+  <-> BFormat(struct { imm = imm, rs2 = rs2, rs1 = rs1, funct3 = encdec_bop(op), opcode = 0b1100011 })
 
 function clause execute (BTYPE(imm, rs2, rs1, op)) = {
   let rs1_val = X(rs1);
@@ -172,8 +189,12 @@ mapping encdec_iop : iop <-> bits(3) = {
   RISCV_XORI  <-> 0b100
 }
 
-mapping clause encdec = ITYPE(imm, rs1, rd, op)
+mapping clause oldencdec = ITYPE(imm, rs1, rd, op)
   <-> imm @ rs1 @ encdec_iop(op) @ rd @ 0b0010011
+
+function clause opcode2format 0b0010011 = I_Format
+mapping clause fmtencdec = ITYPE(imm, rs1, rd, op)
+  <-> IFormat(struct { imm = imm, rs1 = rs1, funct3 = encdec_iop(op), rd = rd, opcode = 0b0010011 })
 
 function clause execute (ITYPE (imm, rs1, rd, op)) = {
   let rs1_val = X(rs1);
@@ -211,9 +232,17 @@ mapping encdec_sop : sop <-> bits(3) = {
   RISCV_SRAI <-> 0b101
 }
 
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SLLI) <-> 0b000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) <-> 0b000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) <-> 0b010000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
+mapping clause oldencdec = SHIFTIOP(shamt, rs1, rd, RISCV_SLLI) <-> 0b000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
+mapping clause oldencdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) <-> 0b000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
+mapping clause oldencdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) <-> 0b010000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
+
+function clause opcode2format 0b0010011 = I_Format
+mapping clause fmtencdec = SHIFTIOP(shamt, rs1, rd, RISCV_SLLI) if sizeof(xlen) == 64 | shamt[5] == bitzero
+  <-> IFormat(struct { imm = 0b000000 @ shamt, rs1 = rs1, funct3 = 0b001, rd = rd, opcode = 0b0010011 }) if sizeof(xlen) == 64 | shamt[5] == bitzero
+mapping clause fmtencdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) if sizeof(xlen) == 64 | shamt[5] == bitzero
+  <-> IFormat(struct { imm = 0b000000 @ shamt, rs1 = rs1, funct3 = 0b101, rd = rd, opcode = 0b0010011 }) if sizeof(xlen) == 64 | shamt[5] == bitzero
+mapping clause fmtencdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) if sizeof(xlen) == 64 | shamt[5] == bitzero
+  <-> IFormat(struct { imm = 0b010000 @ shamt, rs1 = rs1, funct3 = 0b101, rd = rd, opcode = 0b0010011 }) if sizeof(xlen) == 64 | shamt[5] == bitzero
 
 function clause execute (SHIFTIOP(shamt, rs1, rd, op)) = {
   let rs1_val = X(rs1);
@@ -245,16 +274,38 @@ mapping clause assembly = SHIFTIOP(shamt, rs1, rd, op)
 /* ****************************************************************** */
 union clause ast = RTYPE : (regidx, regidx, regidx, rop)
 
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_ADD)  <-> 0b0000000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SLT)  <-> 0b0000000 @ rs2 @ rs1 @ 0b010 @ rd @ 0b0110011
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SLTU) <-> 0b0000000 @ rs2 @ rs1 @ 0b011 @ rd @ 0b0110011
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_AND)  <-> 0b0000000 @ rs2 @ rs1 @ 0b111 @ rd @ 0b0110011
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_OR)   <-> 0b0000000 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0110011
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_XOR)  <-> 0b0000000 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0110011
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SLL)  <-> 0b0000000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SRL)  <-> 0b0000000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SUB)  <-> 0b0100000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
-mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SRA)  <-> 0b0100000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011
+mapping clause oldencdec = RTYPE(rs2, rs1, rd, RISCV_ADD)  <-> 0b0000000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+mapping clause oldencdec = RTYPE(rs2, rs1, rd, RISCV_SLT)  <-> 0b0000000 @ rs2 @ rs1 @ 0b010 @ rd @ 0b0110011
+mapping clause oldencdec = RTYPE(rs2, rs1, rd, RISCV_SLTU) <-> 0b0000000 @ rs2 @ rs1 @ 0b011 @ rd @ 0b0110011
+mapping clause oldencdec = RTYPE(rs2, rs1, rd, RISCV_AND)  <-> 0b0000000 @ rs2 @ rs1 @ 0b111 @ rd @ 0b0110011
+mapping clause oldencdec = RTYPE(rs2, rs1, rd, RISCV_OR)   <-> 0b0000000 @ rs2 @ rs1 @ 0b110 @ rd @ 0b0110011
+mapping clause oldencdec = RTYPE(rs2, rs1, rd, RISCV_XOR)  <-> 0b0000000 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0110011
+mapping clause oldencdec = RTYPE(rs2, rs1, rd, RISCV_SLL)  <-> 0b0000000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011
+mapping clause oldencdec = RTYPE(rs2, rs1, rd, RISCV_SRL)  <-> 0b0000000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011
+mapping clause oldencdec = RTYPE(rs2, rs1, rd, RISCV_SUB)  <-> 0b0100000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0110011
+mapping clause oldencdec = RTYPE(rs2, rs1, rd, RISCV_SRA)  <-> 0b0100000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011
+
+function clause opcode2format 0b0110011 = R_Format
+mapping clause fmtencdec = RTYPE(rs2, rs1, rd, RISCV_ADD)
+  <-> RFormat(struct { funct7 = 0b0000000, rs2 = rs2, rs1 = rs1, funct3 = 0b000, rd = rd, opcode = 0b0110011 })
+mapping clause fmtencdec = RTYPE(rs2, rs1, rd, RISCV_SLT)
+  <-> RFormat(struct { funct7 = 0b0000000, rs2 = rs2, rs1 = rs1, funct3 = 0b010, rd = rd, opcode = 0b0110011 })
+mapping clause fmtencdec = RTYPE(rs2, rs1, rd, RISCV_SLTU)
+  <-> RFormat(struct { funct7 = 0b0000000, rs2 = rs2, rs1 = rs1, funct3 = 0b011, rd = rd, opcode = 0b0110011 })
+mapping clause fmtencdec = RTYPE(rs2, rs1, rd, RISCV_AND)
+  <-> RFormat(struct { funct7 = 0b0000000, rs2 = rs2, rs1 = rs1, funct3 = 0b111, rd = rd, opcode = 0b0110011 })
+mapping clause fmtencdec = RTYPE(rs2, rs1, rd, RISCV_OR)
+  <-> RFormat(struct { funct7 = 0b0000000, rs2 = rs2, rs1 = rs1, funct3 = 0b110, rd = rd, opcode = 0b0110011 })
+mapping clause fmtencdec = RTYPE(rs2, rs1, rd, RISCV_XOR)
+  <-> RFormat(struct { funct7 = 0b0000000, rs2 = rs2, rs1 = rs1, funct3 = 0b100, rd = rd, opcode = 0b0110011 })
+mapping clause fmtencdec = RTYPE(rs2, rs1, rd, RISCV_SLL)
+  <-> RFormat(struct { funct7 = 0b0000000, rs2 = rs2, rs1 = rs1, funct3 = 0b001, rd = rd, opcode = 0b0110011 })
+mapping clause fmtencdec = RTYPE(rs2, rs1, rd, RISCV_SRL)
+  <-> RFormat(struct { funct7 = 0b0000000, rs2 = rs2, rs1 = rs1, funct3 = 0b101, rd = rd, opcode = 0b0110011 })
+mapping clause fmtencdec = RTYPE(rs2, rs1, rd, RISCV_SUB)
+  <-> RFormat(struct { funct7 = 0b0100000, rs2 = rs2, rs1 = rs1, funct3 = 0b000, rd = rd, opcode = 0b0110011 })
+mapping clause fmtencdec = RTYPE(rs2, rs1, rd, RISCV_SRA)
+  <-> RFormat(struct { funct7 = 0b0100000, rs2 = rs2, rs1 = rs1, funct3 = 0b101, rd = rd, opcode = 0b0110011 })
 
 function clause execute (RTYPE(rs2, rs1, rd, op)) = {
   let rs1_val = X(rs1);
@@ -302,8 +353,12 @@ union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width, bool, boo
 
 /* unsigned loads are only present for widths strictly less than xlen,
    signed loads also present for widths equal to xlen */
-mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (size_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & size_bytes(size) <= sizeof(xlen_bytes))
+mapping clause oldencdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (size_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & size_bytes(size) <= sizeof(xlen_bytes))
   <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_enc(size) @ rd @ 0b0000011 if (size_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & size_bytes(size) <= sizeof(xlen_bytes))
+
+function clause opcode2format 0b0000011 = I_Format
+mapping clause fmtencdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (size_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & size_bytes(size) <= sizeof(xlen_bytes))
+  <-> IFormat(struct { imm = imm, rs1 = rs1, funct3 = bool_bits(is_unsigned) @ size_enc(size), rd = rd, opcode = 0b0000011 }) if (size_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & size_bytes(size) <= sizeof(xlen_bytes))
 
 val extend_value : forall 'n, 0 < 'n <= xlen. (bool, bits('n)) -> xlenbits
 function extend_value(is_unsigned, value) = if is_unsigned then zero_extend(value) else sign_extend(value)
@@ -371,8 +426,12 @@ mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, size, aq, rl)
 /* ****************************************************************** */
 union clause ast = STORE : (bits(12), regidx, regidx, word_width, bool, bool)
 
-mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)              if size_bytes(size) <= sizeof(xlen_bytes)
+mapping clause oldencdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)              if size_bytes(size) <= sizeof(xlen_bytes)
   <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ imm5 : bits(5) @ 0b0100011 if size_bytes(size) <= sizeof(xlen_bytes)
+
+function clause opcode2format 0b0100011 = S_Format
+mapping clause fmtencdec = STORE(imm, rs2, rs1, size, false, false) if size_bytes(size) <= sizeof(xlen_bytes)
+  <-> SFormat(struct { imm = imm, rs2 = rs2, rs1 = rs1, funct3 = 0b0 @ size_enc(size), opcode = 0b0100011 }) if size_bytes(size) <= sizeof(xlen_bytes)
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
@@ -416,10 +475,14 @@ mapping clause assembly = STORE(imm, rs2, rs1, size, aq, rl)
 /* ****************************************************************** */
 union clause ast = ADDIW : (bits(12), regidx, regidx)
 
-mapping clause encdec = ADDIW(imm, rs1, rd)
+mapping clause oldencdec = ADDIW(imm, rs1, rd)
       if sizeof(xlen) == 64
   <-> imm @ rs1 @ 0b000 @ rd @ 0b0011011
       if sizeof(xlen) == 64
+
+function clause opcode2format 0b0011011 = I_Format
+mapping clause fmtencdec = ADDIW(imm, rs1, rd) if sizeof(xlen) == 64
+  <-> IFormat(struct { imm = imm, rs1 = rs1, funct3 = 0b000, rd = rd, opcode = 0b0011011 }) if sizeof(xlen) == 64
 
 function clause execute (ADDIW(imm, rs1, rd)) = {
   let result : xlenbits = sign_extend(imm) + X(rs1);
@@ -435,26 +498,40 @@ mapping clause assembly = ADDIW(imm, rs1, rd)
 /* ****************************************************************** */
 union clause ast = RTYPEW : (regidx, regidx, regidx, ropw)
 
-mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_ADDW)
+let RTYPEW_opcode : bits(7) = 0b0110011
+
+mapping clause oldencdec = RTYPEW(rs2, rs1, rd, RISCV_ADDW)
       if sizeof(xlen) == 64
-  <-> 0b0000000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
+  <-> 0b0000000 @ rs2 @ rs1 @ 0b000 @ rd @ RTYPEW_opcode
       if sizeof(xlen) == 64
-mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SUBW)
+mapping clause oldencdec = RTYPEW(rs2, rs1, rd, RISCV_SUBW)
       if sizeof(xlen) == 64
-  <-> 0b0100000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
+  <-> 0b0100000 @ rs2 @ rs1 @ 0b000 @ rd @ RTYPEW_opcode
       if sizeof(xlen) == 64
-mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SLLW)
+mapping clause oldencdec = RTYPEW(rs2, rs1, rd, RISCV_SLLW)
       if sizeof(xlen) == 64
-  <-> 0b0000000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0111011
+  <-> 0b0000000 @ rs2 @ rs1 @ 0b001 @ rd @ RTYPEW_opcode
       if sizeof(xlen) == 64
-mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SRLW)
+mapping clause oldencdec = RTYPEW(rs2, rs1, rd, RISCV_SRLW)
       if sizeof(xlen) == 64
-  <-> 0b0000000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0111011
+  <-> 0b0000000 @ rs2 @ rs1 @ 0b101 @ rd @ RTYPEW_opcode
       if sizeof(xlen) == 64
-mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SRAW)
+mapping clause oldencdec = RTYPEW(rs2, rs1, rd, RISCV_SRAW)
       if sizeof(xlen) == 64
-  <-> 0b0100000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0111011
+  <-> 0b0100000 @ rs2 @ rs1 @ 0b101 @ rd @ RTYPEW_opcode
       if sizeof(xlen) == 64
+
+function clause opcode2format 0b0110011 = R_Format
+mapping clause fmtencdec = RTYPEW(rs2, rs1, rd, RISCV_ADDW) if sizeof(xlen) == 64
+  <-> RFormat(struct { funct7 = 0b0000000, rs2 = rs2, rs1 = rs1, funct3 = 0b000, rd = rd, opcode = RTYPEW_opcode }) if sizeof(xlen) == 64
+mapping clause fmtencdec = RTYPEW(rs2, rs1, rd, RISCV_SUBW) if sizeof(xlen) == 64
+  <-> RFormat(struct { funct7 = 0b0100000, rs2 = rs2, rs1 = rs1, funct3 = 0b000, rd = rd, opcode = RTYPEW_opcode }) if sizeof(xlen) == 64
+mapping clause fmtencdec = RTYPEW(rs2, rs1, rd, RISCV_SLLW) if sizeof(xlen) == 64
+  <-> RFormat(struct { funct7 = 0b0000000, rs2 = rs2, rs1 = rs1, funct3 = 0b001, rd = rd, opcode = RTYPEW_opcode }) if sizeof(xlen) == 64
+mapping clause fmtencdec = RTYPEW(rs2, rs1, rd, RISCV_SRLW) if sizeof(xlen) == 64
+  <-> RFormat(struct { funct7 = 0b0000000, rs2 = rs2, rs1 = rs1, funct3 = 0b101, rd = rd, opcode = RTYPEW_opcode }) if sizeof(xlen) == 64
+mapping clause fmtencdec = RTYPEW(rs2, rs1, rd, RISCV_SRAW) if sizeof(xlen) == 64
+  <-> RFormat(struct { funct7 = 0b0100000, rs2 = rs2, rs1 = rs1, funct3 = 0b101, rd = rd, opcode = RTYPEW_opcode }) if sizeof(xlen) == 64
 
 function clause execute (RTYPEW(rs2, rs1, rd, op)) = {
   let rs1_val = (X(rs1))[31..0];
@@ -486,18 +563,26 @@ mapping clause assembly = RTYPEW(rs2, rs1, rd, op)
 /* ****************************************************************** */
 union clause ast = SHIFTIWOP : (bits(5), regidx, regidx, sopw)
 
-mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SLLIW)
+mapping clause oldencdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SLLIW)
       if sizeof(xlen) == 64
   <-> 0b0000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0011011
       if sizeof(xlen) == 64
-mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRLIW)
+mapping clause oldencdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRLIW)
       if sizeof(xlen) == 64
   <-> 0b0000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
       if sizeof(xlen) == 64
-mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRAIW)
+mapping clause oldencdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRAIW)
       if sizeof(xlen) == 64
   <-> 0b0100000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
       if sizeof(xlen) == 64
+
+function clause opcode2format 0b0011011 = I_Format
+mapping clause fmtencdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SLLIW) if sizeof(xlen) == 64
+  <-> IFormat(struct { imm = 0b0000000 @ shamt, rs1 = rs1, funct3 = 0b001, rd = rd, opcode = 0b0011011 }) if sizeof(xlen) == 64
+mapping clause fmtencdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRLIW) if sizeof(xlen) == 64
+  <-> IFormat(struct { imm = 0b0000000 @ shamt, rs1 = rs1, funct3 = 0b101, rd = rd, opcode = 0b0011011 }) if sizeof(xlen) == 64
+mapping clause fmtencdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRAIW) if sizeof(xlen) == 64
+  <-> IFormat(struct { imm = 0b0100000 @ shamt, rs1 = rs1, funct3 = 0b101, rd = rd, opcode = 0b0011011 }) if sizeof(xlen) == 64
 
 function clause execute (SHIFTIWOP(shamt, rs1, rd, op)) = {
   let rs1_val = (X(rs1))[31..0];
@@ -524,8 +609,12 @@ mapping clause assembly = SHIFTIWOP(shamt, rs1, rd, op)
 /* ****************************************************************** */
 union clause ast = FENCE : (bits(4), bits(4))
 
-mapping clause encdec = FENCE(pred, succ)
+mapping clause oldencdec = FENCE(pred, succ)
   <-> 0b0000 @ pred @ succ @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
+
+function clause opcode2format 0b0001111 = I_Format
+mapping clause fmtencdec = FENCE(pred, succ)
+  <-> IFormat(struct { imm = 0b0000 @ pred @ succ, rs1 = 0b00000, funct3 = 0b000, rd = 0b00000, opcode = 0b0001111 })
 
 function effective_fence_set(set : bits(4), fiom : bool) -> bits(4) = {
   // The bits are IORW. If FIOM is set then I implies R and O implies W.
@@ -590,8 +679,11 @@ mapping clause assembly = FENCE(pred, succ)
 /* ****************************************************************** */
 union clause ast = FENCE_TSO : (bits(4), bits(4))
 
-mapping clause encdec = FENCE_TSO(pred, succ)
+mapping clause oldencdec = FENCE_TSO(pred, succ)
   <-> 0b1000 @ pred @ succ @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
+
+mapping clause fmtencdec = FENCE_TSO(pred, succ)
+  <-> IFormat(struct { imm = 0b1000 @ pred @ succ, rs1 = 0b00000, funct3 = 0b000, rd = 0b00000, opcode = 0b0001111 })
 
 function clause execute (FENCE_TSO(pred, succ)) = {
   match (pred, succ) {
@@ -610,8 +702,11 @@ mapping clause assembly = FENCE_TSO(pred, succ)
 /* ****************************************************************** */
 union clause ast = FENCEI : unit
 
-mapping clause encdec = FENCEI()
+mapping clause oldencdec = FENCEI()
   <-> 0b000000000000 @ 0b00000 @ 0b001 @ 0b00000 @ 0b0001111
+
+mapping clause fmtencdec = FENCEI()
+  <-> IFormat(struct { imm = 0b000000000000, rs1 = 0b00000, funct3 = 0b001, rd = 0b00000, opcode = 0b0001111 })
 
 /* fence.i is a nop for the memory model */
 function clause execute FENCEI() = { /* __barrier(Barrier_RISCV_i); */ RETIRE_SUCCESS }
@@ -621,8 +716,12 @@ mapping clause assembly = FENCEI() <-> "fence.i"
 /* ****************************************************************** */
 union clause ast = ECALL : unit
 
-mapping clause encdec = ECALL()
+mapping clause oldencdec = ECALL()
   <-> 0b000000000000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
+
+function clause opcode2format 0b1110011 = I_Format
+mapping clause fmtencdec = ECALL()
+  <-> IFormat(struct { imm = 0b000000000000, rs1 = 0b00000, funct3 = 0b000, rd = 0b00000, opcode = 0b1110011 })
 
 function clause execute ECALL() = {
   let t : sync_exception =
@@ -642,8 +741,11 @@ mapping clause assembly = ECALL() <-> "ecall"
 /* ****************************************************************** */
 union clause ast = MRET : unit
 
-mapping clause encdec = MRET()
+mapping clause oldencdec = MRET()
   <-> 0b0011000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
+
+mapping clause fmtencdec = MRET()
+  <-> IFormat(struct { imm = 0b001100000010, rs1 = 0b00000, funct3 = 0b000, rd = 0b00000, opcode = 0b1110011 })
 
 function clause execute MRET() = {
   if   cur_privilege != Machine
@@ -661,8 +763,11 @@ mapping clause assembly = MRET() <-> "mret"
 /* ****************************************************************** */
 union clause ast = SRET : unit
 
-mapping clause encdec = SRET()
+mapping clause oldencdec = SRET()
   <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
+
+mapping clause fmtencdec = SRET()
+  <-> IFormat(struct { imm = 0b000100000010, rs1 = 0b00000, funct3 = 0b000, rd = 0b00000, opcode = 0b1110011 })
 
 function clause execute SRET() = {
   let sret_illegal : bool = match cur_privilege {
@@ -685,8 +790,11 @@ mapping clause assembly = SRET() <-> "sret"
 /* ****************************************************************** */
 union clause ast = EBREAK : unit
 
-mapping clause encdec = EBREAK()
+mapping clause oldencdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
+
+mapping clause fmtencdec = EBREAK()
+  <-> IFormat(struct { imm = 0b000000000001, rs1 = 0b00000, funct3 = 0b000, rd = 0b00000, opcode = 0b1110011 })
 
 function clause execute EBREAK() = {
   handle_mem_exception(PC, E_Breakpoint());
@@ -698,8 +806,11 @@ mapping clause assembly = EBREAK() <-> "ebreak"
 /* ****************************************************************** */
 union clause ast = WFI : unit
 
-mapping clause encdec = WFI()
+mapping clause oldencdec = WFI()
   <-> 0b000100000101 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
+
+mapping clause fmtencdec = WFI()
+  <-> IFormat(struct { imm = 0b000100000101, rs1 = 0b00000, funct3 = 0b000, rd = 0b00000, opcode = 0b1110011 })
 
 function clause execute WFI() =
   match cur_privilege {
@@ -715,8 +826,11 @@ mapping clause assembly = WFI() <-> "wfi"
 /* ****************************************************************** */
 union clause ast = SFENCE_VMA : (regidx, regidx)
 
-mapping clause encdec = SFENCE_VMA(rs1, rs2)
+mapping clause oldencdec = SFENCE_VMA(rs1, rs2)
   <-> 0b0001001 @ rs2 @ rs1 @ 0b000 @ 0b00000 @ 0b1110011
+
+mapping clause fmtencdec = SFENCE_VMA(rs1, rs2)
+  <-> RFormat(struct { funct7 = 0b0001001, rs2 = rs2, rs1 = rs1, funct3 = 0b000, rd = 0b00000, opcode = 0b1110011 })
 
 function clause execute SFENCE_VMA(rs1, rs2) = {
   let addr : option(xlenbits) = if rs1 == 0b00000 then None() else Some(X(rs1));

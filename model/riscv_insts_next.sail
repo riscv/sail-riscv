@@ -11,8 +11,12 @@
 
 union clause ast = URET : unit
 
-mapping clause encdec = URET()
+mapping clause oldencdec = URET()
   <-> 0b0000000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
+
+function clause opcode2format 0b1110011 = R_Format
+mapping clause fmtencdec = URET()
+  <-> RFormat(struct { funct7 = 0b0000000, rs2 = 0b00000, rs1 = 0b00000, funct3 = 0b000, rd = 0b00000, opcode = 0b1110011 })
 
 function clause execute URET() = {
   if   not(extensionEnabled(Ext_U)) | not(sys_enable_next())
