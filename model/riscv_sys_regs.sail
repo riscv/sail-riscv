@@ -79,39 +79,39 @@ bitfield Misa : xlenbits = {
 register misa : Misa
 
 /* whether misa is R/W */
-val sys_enable_writable_misa = pure {c: "sys_enable_writable_misa", _: "sys_enable_writable_misa"} : unit -> bool
+val sys_enable_writable_misa = pure "sys_enable_writable_misa" : unit -> bool
 /* whether misa.c was enabled at boot */
-val sys_enable_rvc = pure {c: "sys_enable_rvc", _: "sys_enable_rvc"} : unit -> bool
+val sys_enable_rvc = pure "sys_enable_rvc" : unit -> bool
 /* whether misa.{f,d} were enabled at boot */
-val sys_enable_fdext = pure {c: "sys_enable_fdext", _: "sys_enable_fdext"} : unit -> bool
+val sys_enable_fdext = pure "sys_enable_fdext" : unit -> bool
 /* whether Svinval was enabled at boot */
-val sys_enable_svinval = pure {c: "sys_enable_svinval", _: "sys_enable_svinval"} : unit -> bool
+val sys_enable_svinval = pure "sys_enable_svinval" : unit -> bool
 /* whether Zcb was enabled at boot */
-val sys_enable_zcb = pure {c: "sys_enable_zcb", _: "sys_enable_zcb"} : unit -> bool
+val sys_enable_zcb = pure "sys_enable_zcb" : unit -> bool
 /* whether zfinx was enabled at boot */
-val sys_enable_zfinx = pure {c: "sys_enable_zfinx", _: "sys_enable_zfinx"} : unit -> bool
+val sys_enable_zfinx = pure "sys_enable_zfinx" : unit -> bool
 /* whether the N extension was enabled at boot */
-val sys_enable_next = pure {c: "sys_enable_next", _: "sys_enable_next"} : unit -> bool
+val sys_enable_next = pure "sys_enable_next" : unit -> bool
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
-val sys_enable_writable_fiom = pure {c: "sys_enable_writable_fiom", _: "sys_enable_writable_fiom"} : unit -> bool
+val sys_enable_writable_fiom = pure "sys_enable_writable_fiom" : unit -> bool
 
 /* How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime). */
-val sys_pmp_count = pure {c: "sys_pmp_count", _: "sys_pmp_count"} : unit -> range(0, 64)
+val sys_pmp_count = pure "sys_pmp_count" : unit -> range(0, 64)
 /* G parameter that specifies the PMP grain size. The grain size is 2^(G+2), e.g.
    G=0 -> 4 bytes, G=10 -> 4096 bytes. */
-val sys_pmp_grain = pure {c: "sys_pmp_grain", _: "sys_pmp_grain"} : unit -> range(0, 63)
+val sys_pmp_grain = pure "sys_pmp_grain" : unit -> range(0, 63)
 
 /* whether misa.v was enabled at boot */
-val sys_enable_vext = pure {c: "sys_enable_vext", _: "sys_enable_vext"} : unit -> bool
+val sys_enable_vext = pure "sys_enable_vext" : unit -> bool
 
 /* whether misa.b was enabled at boot */
-val sys_enable_bext = pure {c: "sys_enable_bext", _: "sys_enable_bext"} : unit -> bool
+val sys_enable_bext = pure "sys_enable_bext" : unit -> bool
 
 // CBO extensions. Zicbop cannot be enabled/disabled because it has no effect
 // at all on this model.
-val sys_enable_zicbom = pure {c: "sys_enable_zicbom", _: "sys_enable_zicbom"} : unit -> bool
-val sys_enable_zicboz = pure {c: "sys_enable_zicboz", _: "sys_enable_zicboz"} : unit -> bool
+val sys_enable_zicbom = pure "sys_enable_zicbom" : unit -> bool
+val sys_enable_zicboz = pure "sys_enable_zicboz" : unit -> bool
 
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
