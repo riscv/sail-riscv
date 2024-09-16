@@ -113,7 +113,7 @@ mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)                    
 
 /* NOTE: Currently, we only EA if address translation is successful. This may need revisiting. */
 function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
-  let pmm = is_pmm_active();  
+  let pmm = is_pmm_active();
   let width_bytes = size_bytes(width);
 
   // This is checked during decoding.
@@ -134,7 +134,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
     match ext_data_get_addr(rs1, zeros(), Write(Data), width_bytes) {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
-        let  vaddr_ = transform_effective_address(vaddr, pmm);        
+        let  vaddr_ = transform_effective_address(vaddr, pmm);
         if not(is_aligned(vaddr_, width))
         then { handle_mem_exception(vaddr_, E_SAMO_Addr_Align()); RETIRE_FAIL }
         else {
@@ -195,7 +195,7 @@ mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)                     
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
 function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
-  let pmm = is_pmm_active();  
+  let pmm = is_pmm_active();
   let 'width_bytes = size_bytes(width);
 
   // This is checked during decoding.
@@ -207,7 +207,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width_bytes) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) => {
-      let  vaddr_ = transform_effective_address(vaddr, pmm);       
+      let  vaddr_ = transform_effective_address(vaddr, pmm);
       if not(is_aligned(vaddr_, width))
       then { handle_mem_exception(vaddr_, E_SAMO_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr_, ReadWrite(Data, Data)) {

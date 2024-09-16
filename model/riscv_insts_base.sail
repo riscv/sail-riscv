@@ -320,57 +320,26 @@ function is_aligned(vaddr : xlenbits, width : word_width) -> bool =
 function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
   not(plat_enable_misaligned_access()) & not(is_aligned(vaddr, width))
 
-function transform_VA (effective_address : xlenbits,pmlen : {7, 16}) -> xlenbits = {
-  let XLEN = sizeof(xlen);
-  let i = XLEN -(pmlen +1);
-  let effective_bit = effective_address[i..i];
-  let masked_bits = replicate_bits(effective_bit, pmlen);
-  let unmasked_bits = effective_address[i..0];
-  masked_bits @ unmasked_bits
+function transform_VA (effective_address : xlenbits, pmlen : {7, 16}) -> xlenbits = {
+  sign_extend(effective_address[sizeof(xlen) - pmlen - 1 .. 0])
 }
 
-function transform_PA (effective_address : xlenbits,pmlen : {7, 16}) -> xlenbits = {
-  let XLEN = sizeof(xlen);
-  let i = XLEN -(pmlen +1);
-  let masked_bits = replicate_bits(0b0, pmlen);
-  let unmasked_bits = effective_address[i..0];
-  masked_bits @ unmasked_bits
+function transform_PA (effective_address : xlenbits, pmlen : {7, 16}) -> xlenbits = {
+  zero_extend(effective_address[sizeof(xlen) - pmlen - 1 .. 0])
 }
 
 function transform_effective_address(vaddr : xlenbits, pmm : bool) -> xlenbits = {
  if pmm then {
     let pmm_bits = get_pmm();
     let mode = translationMode(cur_privilege);
-    match (mode) {
-      (Sbare) => {
-        match (pmm_bits){
-          (0b10) => transform_PA (vaddr,7),
-          (0b11) => transform_PA (vaddr,16),
-        }
-      },
-      (Sv39) => {
-        match (pmm_bits){
-          (0b10) => transform_VA (vaddr,7),
-          (0b11) => transform_VA (vaddr,16),          
-        }
-      },      
-      (Sv48) => {
-        match (pmm_bits){
-          (0b10) => transform_VA (vaddr,7),
-          (0b11) => transform_VA (vaddr,16),          
-        }
-      },
-      (Sv57) => {
-        match (pmm_bits){
-          (0b10) => transform_VA (vaddr,7),
-          (0b11) => transform_VA (vaddr,16),          
-        }
-      },
+    match pmm_bits {
+      pmm_mode(Enabled7) => if mode == Sbare then transform_PA(vaddr, 7) else transform_VA(vaddr, 7),
+      pmm_mode(Enabled16) => if mode == Sbare then transform_PA(vaddr, 16) else transform_VA(vaddr, 16),
     }
- }
- else {
-  vaddr //PMM is not active
- }
+  }
+  else {
+    vaddr
+  }
 }
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {

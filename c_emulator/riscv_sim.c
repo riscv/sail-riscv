@@ -59,7 +59,7 @@ enum {
   OPT_ENABLE_ZICBOM,
   OPT_ENABLE_ZICBOZ,
   OPT_CACHE_BLOCK_SIZE,
-  OPT_ENABLE_ZJPM,
+  OPT_ENABLE_ZPM,
 };
 
 static bool do_dump_dts = false;
@@ -135,7 +135,7 @@ static struct option options[] = {
     {"pmp-count",                   required_argument, 0, OPT_PMP_COUNT           },
     {"pmp-grain",                   required_argument, 0, OPT_PMP_GRAIN           },
     {"enable-next",                 no_argument,       0, 'N'                     },
-    {"ram-size",                    required_argument, 0, 'z'                     }, 
+    {"ram-size",                    required_argument, 0, 'z'                     },
     {"disable-compressed",          no_argument,       0, 'C'                     },
     {"disable-writable-misa",       no_argument,       0, 'I'                     },
     {"disable-fdext",               no_argument,       0, 'F'                     },
@@ -146,7 +146,7 @@ static struct option options[] = {
     {"report-arch",                 no_argument,       0, 'a'                     },
     {"test-signature",              required_argument, 0, 'T'                     },
     {"signature-granularity",       required_argument, 0, 'g'                     },
-    {"enable-zpm",                  no_argument,       0, OPT_ENABLE_ZJPM          }, 
+    {"enable-zpm",                  no_argument,       0, OPT_ENABLE_ZPM          },
 #ifdef RVFI_DII
     {"rvfi-dii",                    required_argument, 0, 'r'                     },
 #endif
@@ -290,7 +290,7 @@ static int process_args(int argc, char **argv)
                     "t:"
                     "T:"
                     "g:"
-                    "h"                    
+                    "h"
 #ifdef RVFI_DII
                     "r:"
 #endif
@@ -346,10 +346,10 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "enabling N extension.\n");
       rv_enable_next = true;
       break;
-    case OPT_ENABLE_ZJPM:
+    case OPT_ENABLE_ZPM:
       fprintf(stderr, "enabling pointer masking support.\n");
       rv_enable_zpm = true;
-      break;      
+      break;
     case 'I':
       fprintf(stderr, "disabling writable misa CSR.\n");
       rv_enable_writable_misa = false;
