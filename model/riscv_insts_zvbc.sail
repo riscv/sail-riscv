@@ -48,7 +48,7 @@ function clause execute (VCLMUL_VV(vm, vs2, vs1, vd)) = {
         if vs2_val[i][n] == bitone then result[i] = result[i] ^ (vs1_val[i] << n);
       write_vreg(num_elem, SEW, LMUL_pow, vd, result);
     };
-};
+  };
   vstart = zeros();
   RETIRE_SUCCESS
 }
