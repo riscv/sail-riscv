@@ -59,6 +59,7 @@ enum {
   OPT_ENABLE_ZICBOM,
   OPT_ENABLE_ZICBOZ,
   OPT_CACHE_BLOCK_SIZE,
+  OPT_ENABLE_ZPM,
 };
 
 static bool do_dump_dts = false;
@@ -145,6 +146,7 @@ static struct option options[] = {
     {"report-arch",                 no_argument,       0, 'a'                     },
     {"test-signature",              required_argument, 0, 'T'                     },
     {"signature-granularity",       required_argument, 0, 'g'                     },
+    {"enable-zpm",                  no_argument,       0, OPT_ENABLE_ZPM          },
 #ifdef RVFI_DII
     {"rvfi-dii",                    required_argument, 0, 'r'                     },
 #endif
@@ -343,6 +345,10 @@ static int process_args(int argc, char **argv)
     case 'N':
       fprintf(stderr, "enabling N extension.\n");
       rv_enable_next = true;
+      break;
+    case OPT_ENABLE_ZPM:
+      fprintf(stderr, "enabling pointer masking support.\n");
+      rv_enable_zpm = true;
       break;
     case 'I':
       fprintf(stderr, "disabling writable misa CSR.\n");

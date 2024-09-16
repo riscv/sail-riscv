@@ -157,6 +157,10 @@ val sys_enable_writable_fiom : unit -> bool
 let sys_enable_writable_fiom () = true
 declare ocaml target_rep function sys_enable_writable_fiom = `Platform.enable_writable_fiom`
 
+val sys_enable_zpm : unit -> bool
+let sys_enable_zpm () = false
+declare ocaml target_rep function sys_enable_zpm = `Platform.enable_zpm`
+
 val plat_ram_base : forall 'a. Size 'a => unit -> bitvector 'a
 let plat_ram_base () = wordFromInteger 0
 declare ocaml target_rep function plat_ram_base = `Platform.dram_base`
