@@ -15,13 +15,11 @@
 */
 
 val elf_tohost = pure {
-  ocaml: "Elf_loader.elf_tohost",
   interpreter: "Elf_loader.elf_tohost",
   c: "elf_tohost"
 } :  unit -> int
 
 val elf_entry = pure {
-  ocaml: "Elf_loader.elf_entry",
   interpreter: "Elf_loader.elf_entry",
   c: "elf_entry"
 } : unit -> int
@@ -29,42 +27,39 @@ val elf_entry = pure {
 // Cache block size is 2^cache_block_size_exp. Max is `max_mem_access` (4096)
 // because this model performs `cbo.zero` with a single write, and the behaviour
 // with cache blocks larger than a page is not clearly defined.
-val plat_cache_block_size_exp = pure {c: "plat_cache_block_size_exp", ocaml: "Platform.cache_block_size_exp", interpreter: "Platform.cache_block_size_exp", lem: "plat_cache_block_size_exp"} : unit -> range(0, 12)
+val plat_cache_block_size_exp = pure {c: "plat_cache_block_size_exp", interpreter: "Platform.cache_block_size_exp", lem: "plat_cache_block_size_exp"} : unit -> range(0, 12)
 
 /* Main memory */
-val plat_ram_base = pure {c: "plat_ram_base", ocaml: "Platform.dram_base", interpreter: "Platform.dram_base", lem: "plat_ram_base"} : unit -> xlenbits
-val plat_ram_size = pure {c: "plat_ram_size", ocaml: "Platform.dram_size", interpreter: "Platform.dram_size", lem: "plat_ram_size"} : unit -> xlenbits
+val plat_ram_base = pure {c: "plat_ram_base", interpreter: "Platform.dram_base", lem: "plat_ram_base"} : unit -> xlenbits
+val plat_ram_size = pure {c: "plat_ram_size", interpreter: "Platform.dram_size", lem: "plat_ram_size"} : unit -> xlenbits
 
 /* whether the MMU should update dirty bits in PTEs */
-val plat_enable_dirty_update = pure {ocaml: "Platform.enable_dirty_update",
-                                     interpreter: "Platform.enable_dirty_update",
+val plat_enable_dirty_update = pure {interpreter: "Platform.enable_dirty_update",
                                      c: "plat_enable_dirty_update",
                                      lem: "plat_enable_dirty_update"} : unit -> bool
 
 /* whether the platform supports misaligned accesses without trapping to M-mode. if false,
  * misaligned loads/stores are trapped to Machine mode.
  */
-val plat_enable_misaligned_access = pure {ocaml: "Platform.enable_misaligned_access",
-                                          interpreter: "Platform.enable_misaligned_access",
+val plat_enable_misaligned_access = pure {interpreter: "Platform.enable_misaligned_access",
                                           c: "plat_enable_misaligned_access",
                                           lem: "plat_enable_misaligned_access"} : unit -> bool
 
 /* whether mtval stores the bits of a faulting instruction on illegal instruction exceptions */
-val plat_mtval_has_illegal_inst_bits = pure {ocaml: "Platform.mtval_has_illegal_inst_bits",
-                                             interpreter: "Platform.mtval_has_illegal_inst_bits",
+val plat_mtval_has_illegal_inst_bits = pure {interpreter: "Platform.mtval_has_illegal_inst_bits",
                                              c: "plat_mtval_has_illegal_inst_bits",
                                              lem: "plat_mtval_has_illegal_inst_bits"} : unit -> bool
 
 /* ROM holding reset vector and device-tree DTB */
-val plat_rom_base   = pure {ocaml: "Platform.rom_base", interpreter: "Platform.rom_base", c: "plat_rom_base", lem: "plat_rom_base"} : unit -> xlenbits
-val plat_rom_size   = pure {ocaml: "Platform.rom_size", interpreter: "Platform.rom_size", c: "plat_rom_size", lem: "plat_rom_size"} : unit -> xlenbits
+val plat_rom_base   = pure {interpreter: "Platform.rom_base", c: "plat_rom_base", lem: "plat_rom_base"} : unit -> xlenbits
+val plat_rom_size   = pure {interpreter: "Platform.rom_size", c: "plat_rom_size", lem: "plat_rom_size"} : unit -> xlenbits
 
 /* Location of clock-interface, which should match with the spec in the DTB */
-val plat_clint_base = pure {ocaml: "Platform.clint_base", interpreter: "Platform.clint_base", c: "plat_clint_base", lem: "plat_clint_base"} : unit -> xlenbits
-val plat_clint_size = pure {ocaml: "Platform.clint_size", interpreter: "Platform.clint_size", c: "plat_clint_size", lem: "plat_clint_size"} : unit -> xlenbits
+val plat_clint_base = pure {interpreter: "Platform.clint_base", c: "plat_clint_base", lem: "plat_clint_base"} : unit -> xlenbits
+val plat_clint_size = pure {interpreter: "Platform.clint_size", c: "plat_clint_size", lem: "plat_clint_size"} : unit -> xlenbits
 
 /* Location of HTIF ports */
-val plat_htif_tohost = pure {ocaml: "Platform.htif_tohost", c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> xlenbits
+val plat_htif_tohost = pure {c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> xlenbits
 function plat_htif_tohost () = to_bits(sizeof(xlen), elf_tohost ())
 // todo: fromhost
 
@@ -124,7 +119,7 @@ function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (addr : xlen
 
 /* CLINT (Core Local Interruptor), based on Spike. */
 
-val plat_insns_per_tick = pure {ocaml: "Platform.insns_per_tick", interpreter: "Platform.insns_per_tick", c: "plat_insns_per_tick", lem: "plat_insns_per_tick"} : unit -> int
+val plat_insns_per_tick = pure {interpreter: "Platform.insns_per_tick", c: "plat_insns_per_tick", lem: "plat_insns_per_tick"} : unit -> int
 
 // assumes a single hart, since this typically is a vector of per-hart registers.
 register mtimecmp : bits(64)  // memory-mapped internal clint register.
@@ -284,8 +279,8 @@ function tick_clock() = {
 
 /* Basic terminal character I/O. */
 
-val plat_term_write = impure {ocaml: "Platform.term_write", c: "plat_term_write", lem: "plat_term_write"} : bits(8) -> unit
-val plat_term_read  = impure {ocaml: "Platform.term_read",  c: "plat_term_read", lem: "plat_term_read"}  : unit -> bits(8)
+val plat_term_write = impure {c: "plat_term_write", lem: "plat_term_write"} : bits(8) -> unit
+val plat_term_read  = impure {c: "plat_term_read", lem: "plat_term_read"}  : unit -> bits(8)
 
 /* Spike's HTIF device interface, which multiplexes the above MMIO devices. */
 

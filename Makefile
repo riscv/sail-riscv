@@ -128,8 +128,6 @@ SAIL_RMEM_SRCS = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_RMEM_INST_SRCS) $(S
 SAIL_RVFI_SRCS = $(addprefix model/,$(SAIL_ARCH_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS) $(RVFI_STEP_SRCS))
 SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS) $(SAIL_OTHER_COQ_SRCS))
 
-PLATFORM_OCAML_SRCS = $(addprefix ocaml_emulator/,platform.ml platform_impl.ml softfloat.ml riscv_ocaml_sim.ml)
-
 SAIL_FLAGS += --require-version 0.18
 SAIL_FLAGS += --strict-var
 SAIL_FLAGS += -dno_cast
@@ -208,7 +206,7 @@ RISCV_EXTRAS_LEM = $(addprefix handwritten_support/,$(RISCV_EXTRAS_LEM_FILES))
 
 .PHONY:
 
-all: ocaml_emulator/riscv_ocaml_sim_$(ARCH) c_emulator/riscv_sim_$(ARCH)
+all: c_emulator/riscv_sim_$(ARCH)
 .PHONY: all
 
 # the following ensures empty sail-generated .c files don't hang around and
@@ -230,43 +228,11 @@ riscv.smt_model: $(SAIL_SRCS)
 cgen: $(SAIL_SRCS) model/main.sail
 	$(SAIL) -cgen $(SAIL_FLAGS) $(SAIL_SRCS) model/main.sail
 
-generated_definitions/ocaml/$(ARCH)/riscv.ml: $(SAIL_SRCS) Makefile
-	mkdir -p generated_definitions/ocaml/$(ARCH)
-	$(SAIL) $(SAIL_FLAGS) -ocaml -ocaml-nobuild -ocaml_build_dir generated_definitions/ocaml/$(ARCH) -o riscv $(SAIL_SRCS)
-
-# cp -f is required because the generated_definitions/ocaml/$ARCH/*.ml files can
-# be read-only, which would otherwise make subsequent builds fail.
-ocaml_emulator/_sbuild/riscv_ocaml_sim.native: generated_definitions/ocaml/$(ARCH)/riscv.ml ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) Makefile
-	mkdir -p ocaml_emulator/_sbuild
-	cp ocaml_emulator/_tags $(PLATFORM_OCAML_SRCS) ocaml_emulator/_sbuild
-	cp -f generated_definitions/ocaml/$(ARCH)/*.ml ocaml_emulator/_sbuild
-	cd ocaml_emulator/_sbuild && ocamlbuild -use-ocamlfind riscv_ocaml_sim.native
-
-ocaml_emulator/_sbuild/coverage.native: generated_definitions/ocaml/$(ARCH)/riscv.ml ocaml_emulator/_tags.bisect $(PLATFORM_OCAML_SRCS) Makefile
-	mkdir -p ocaml_emulator/_sbuild
-	cp $(PLATFORM_OCAML_SRCS) ocaml_emulator/_sbuild
-	cp -f generated_definitions/ocaml/$(ARCH)/*.ml ocaml_emulator/_sbuild
-	cp ocaml_emulator/_tags.bisect ocaml_emulator/_sbuild/_tags
-	cd ocaml_emulator/_sbuild && ocamlbuild -use-ocamlfind riscv_ocaml_sim.native && cp -L riscv_ocaml_sim.native coverage.native
-
-ocaml_emulator/riscv_ocaml_sim_$(ARCH): ocaml_emulator/_sbuild/riscv_ocaml_sim.native
-	rm -f $@ && cp -L $^ $@ && rm -f $^
-
-ocaml_emulator/coverage_$(ARCH): ocaml_emulator/_sbuild/coverage.native
-	rm -f ocaml_emulator/riscv_ocaml_sim_$(ARCH) && cp -L $^ ocaml_emulator/riscv_ocaml_sim_$(ARCH) # since the test scripts runs this file
-	rm -rf bisect*.out bisect ocaml_emulator/coverage_$(ARCH) $^
-	./test/run_tests.sh # this will generate bisect*.out files in this directory
-	mkdir ocaml_emulator/bisect && mv bisect*.out bisect/
-	mkdir ocaml_emulator/coverage_$(ARCH) && bisect-ppx-report -html ocaml_emulator/coverage_$(ARCH)/ -I ocaml_emulator/_sbuild/ bisect/bisect*.out
-
 cloc:
 	cloc --by-file --force-lang C,sail $(SAIL_SRCS)
 
 gcovr:
 	gcovr -r . --html --html-detail -o index.html
-
-ocaml_emulator/tracecmp: ocaml_emulator/tracecmp.ml
-	ocamlfind ocamlopt -annot -linkpkg -package unix $^ -o $@
 
 c_preserve_fns=-c_preserve _set_Misa_C
 
@@ -284,8 +250,6 @@ $(SOFTFLOAT_LIBS):
 # convenience target
 .PHONY: csim
 csim: c_emulator/riscv_sim_$(ARCH)
-.PHONY: osim
-osim: ocaml_emulator/riscv_ocaml_sim_$(ARCH)
 .PHONY: rvfi
 rvfi: c_emulator/riscv_rvfi_$(ARCH)
 
@@ -470,29 +434,12 @@ sail-riscv.install: FORCE
 	echo 'bin: ["c_emulator/riscv_sim_RV64" "c_emulator/riscv_sim_RV32"]' > sail-riscv.install
 	echo 'share: [ $(foreach f,$(SHARE_FILES),"$f" {"$f"}) ]' >> sail-riscv.install
 
-opam-build:
-	$(MAKE) ARCH=64 c_emulator/riscv_sim_RV64
-	$(MAKE) ARCH=32 c_emulator/riscv_sim_RV32
-	$(MAKE) riscv_rmem
-
-opam-install:
-	if [ -z "$(INSTALL_DIR)" ]; then echo INSTALL_DIR is unset; false; fi
-	mkdir -p $(INSTALL_DIR)/bin
-	cp c_emulator/riscv_sim_RV64 $(INSTALL_DIR)/bin
-	cp c_emulator/riscv_sim_RV32 $(INSTALL_DIR)/bin
-
-opam-uninstall:
-	if [ -z "$(INSTALL_DIR)" ]; then echo INSTALL_DIR is unset; false; fi
-	rm $(INSTALL_DIR)/bin/riscv_sim_RV64
-	rm $(INSTALL_DIR)/bin/riscv_sim_RV32
-
 clean:
-	-rm -rf generated_definitions/ocaml/* generated_definitions/c/* generated_definitions/latex/*
+	-rm -rf generated_definitions/c/* generated_definitions/latex/*
 	-rm -rf generated_definitions/lem/* generated_definitions/isabelle/* generated_definitions/hol4/* generated_definitions/coq/*
 	-rm -rf generated_definitions/for-rmem/*
 	-$(MAKE) -C $(SOFTFLOAT_LIBDIR) clean
 	-rm -f c_emulator/riscv_sim_RV32 c_emulator/riscv_sim_RV64  c_emulator/riscv_rvfi_RV32 c_emulator/riscv_rvfi_RV64
-	-rm -rf ocaml_emulator/_sbuild ocaml_emulator/_build ocaml_emulator/riscv_ocaml_sim_RV32 ocaml_emulator/riscv_ocaml_sim_RV64 ocaml_emulator/tracecmp
 	-rm -f *.gcno *.gcda
 	-rm -f z3_problems
 	-Holmake cleanAll
@@ -500,4 +447,3 @@ clean:
 	-rm -f handwritten_support/mem_metadata.vo handwritten_support/mem_metadata.vos handwritten_support/mem_metadata.vok handwritten_support/mem_metadata.glob handwritten_support/.mem_metadata.aux
 	-rm -f sail_doc/riscv_RV32.json
 	-rm -f sail_doc/riscv_RV64.json
-	ocamlbuild -clean
