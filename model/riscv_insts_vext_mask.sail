@@ -98,8 +98,7 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
   let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
 
-  let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
-  var result = initial_result;
+  let (_, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
 
   var count : nat = 0;
   foreach (i from 0 to (num_elem - 1)) {
@@ -133,8 +132,7 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
   let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
 
-  let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
-  var result = initial_result;
+  let (_, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
 
   var index : int = -1;
   foreach (i from 0 to (num_elem - 1)) {
