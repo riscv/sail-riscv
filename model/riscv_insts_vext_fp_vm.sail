@@ -41,10 +41,9 @@ function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
   let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
-  var result  : vector('n, dec, bool)     = undefined;
-  var mask    : vector('n, dec, bool)     = undefined;
 
-  (result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
@@ -105,10 +104,9 @@ function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
-  var result  : vector('n, dec, bool)     = undefined;
-  var mask    : vector('n, dec, bool)     = undefined;
 
-  (result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {

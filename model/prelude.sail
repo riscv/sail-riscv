@@ -47,6 +47,8 @@ val sub_vec_int = pure {c: "sub_bits_int", _: "sub_vec_int"} : forall 'n. (bits(
 
 overload operator - = {sub_vec, sub_vec_int}
 
+val quot_positive_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot"} : forall 'n 'm, 'n >= 0 & 'm > 0. (int('n), int('m)) -> int(div('n, 'm))
+
 val quot_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot"} : (int, int) -> int
 val rem_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", coq: "Z.rem"} : (int, int) -> int
 
@@ -196,7 +198,7 @@ function reverse_bits_in_byte (xs : bits(8)) -> bits(8) = {
 
 overload reverse = {reverse_bits_in_byte}
 
-overload operator / = {quot_round_zero}
+overload operator / = {quot_positive_round_zero, quot_round_zero}
 overload operator * = {mult_atom, mult_int}
 
 /* helper for vector extension
