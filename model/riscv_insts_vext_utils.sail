@@ -199,7 +199,7 @@ function get_end_element() = unsigned(vl) - 1
  *   vector2 is a "mask" vector that is true for an element if the corresponding element
  *     in the result vector should be updated by the calling instruction
  */
-val init_masked_result : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), vector('n, dec, bits('m)), vector('n, dec, bool)) -> (vector('n, dec, bits('m)), vector('n, dec, bool))
+val init_masked_result : forall 'n 'm 'p, 'n >= 0 & 'm >= 0. (int('n), int('m), int('p), vector('n, dec, bits('m)), vector('n, dec, bool)) -> (vector('n, dec, bits('m)), vector('n, dec, bool))
 function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
