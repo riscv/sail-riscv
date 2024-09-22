@@ -9,112 +9,129 @@
 enum clause extension = Ext_Zvbb
 function clause extensionEnabled(Ext_Zvbb) = true
 
-union clause ast = VANDN_VV : (bits(1), regidx, regidx, regidx)
+mapping vm_name : bits(1) <-> string = {
+  0b0 <-> "0",
+  0b1 <-> "1"
+}
 
-mapping clause encdec = VANDN_VV (vm, vs2, vs1, vd) if extensionEnabled(Ext_Zvbb)
-  <-> 0b000001 @ vm @ vs2 @ vs1 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_Zvbb)
+union clause ast = VWSLL_VV : (bits(1), regidx, regidx, regidx)
 
-mapping clause assembly = VCLMUL_VV (vm, vs2, vs1, vd)
-  <-> "vandn.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ sep() ^ vm_name(vm)
+mapping clause encdec = VWSLL_VV (vm, vs2, vs1, vd) if extensionEnabled(Ext_Zvbb)
+  <-> 0b110101 @ vm @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111 if extensionEnabled(Ext_Zvbb)
 
-function clause execute (VCLMUL_VV(vm, vs2, vs1, vd)) = {
+mapping clause assembly = VWSLL_VV (vm, vs2, vs1, vd)
+  <-> "vwsll.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ sep() ^ vm_name(vm)
+
+function clause execute (VWSLL_VV(vm, vs2, vs1, vd)) = {
   let SEW                     = get_sew();
   let LMUL_pow                = get_lmul_pow();
   let num_elem                = get_num_elem(LMUL_pow, SEW);
+  let SEW_widen               = SEW * 2;
+  let LMUL_pow_widen          = LMUL_pow + 1;
 
   let 'n = num_elem;
   let 'm = SEW;
+  let 'o = SEW_widen;
 
-  var result  : vector('n, dec, bits('m)) = undefined;
-  var mask    : vector('n, dec, bool)     = undefined;
-  let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  var result      : vector('n, dec, bits('o)) = undefined;
+  var mask        : vector('n, dec, bool)     = undefined;
+  let vm_val      : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vd_val      : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow, vd);
+  let vs1_val_vec : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val_vec : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
-  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  (result, mask)  = init_masked_result(num_elem, SEW_widen, LMUL_pow - 1, vd_val, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
-        result[i] = vs2_val[i] & ~vs1_val[i];
+      let SEW_widen_bits = to_bits(SEW_widen, 'o);
+      let vs1_val : bits('o) = zero_extend(vs1_val_vec[i]);
+      let vs2_val : bits('o) = zero_extend(vs2_val_vec[i]);
+      result[i] = vs2_val << (vs1_val & zero_extend(SEW_widen_bits - 1));
     };
-    write_vreg(num_elem, SEW, LMUL_pow, vd, result);
+    write_vreg(num_elem, SEW_widen, LMUL_pow, vd, result);
   };
   vstart = zeros();
   RETIRE_SUCCESS
 }
 
-union clause ast = VANDN_VX : (bits(1), regidx, regidx, regidx)
+union clause ast = VWSLL_VX : (bits(1), regidx, regidx, regidx)
 
-mapping clause encdec = VANDN_VX (vm, vs2, rs1, vd) if extensionEnabled(Ext_Zvbb)
-  <-> 0b000001 @ vm @ vs2 @ rs1 @ 0b110 @ vd @ 0b1010111 if extensionEnabled(Ext_Zvbb)
+mapping clause encdec = VWSLL_VX (vm, vs2, rs1, vd) if extensionEnabled(Ext_Zvbb)
+  <-> 0b110101 @ vm @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111 if extensionEnabled(Ext_Zvbb)
 
-mapping clause assembly = VCLMUL_VX (vm, vs2, rs1, vd)
-  <-> "vandn.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(rs1) ^ sep() ^ vm_name(vm)
+mapping clause assembly = VWSLL_VX (vm, vs2, rs1, vd)
+  <-> "vwsll.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ sep() ^ vm_name(vm)
 
-function clause execute (VCLMUL_VX(vm, vs2, rs1, vd)) = {
+function clause execute (VWSLL_VX(vm, vs2, rs1, vd)) = {
   let SEW                     = get_sew();
   let LMUL_pow                = get_lmul_pow();
   let num_elem                = get_num_elem(LMUL_pow, SEW);
+  let SEW_widen               = SEW * 2;
+  let LMUL_pow_widen          = LMUL_pow + 1;
 
   let 'n = num_elem;
   let 'm = SEW;
+  let 'o = SEW_widen;
 
-  var result  : vector('n, dec, bits('m)) = undefined;
-  var mask    : vector('n, dec, bool)     = undefined;
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let rs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, rs1);
+  var result      : vector('n, dec, bits('o)) = undefined;
+  var mask        : vector('n, dec, bool)     = undefined;
+  let vm_val      : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vd_val      : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow, vd);
+  let rs1_val     : bits('o)                  = zero_extend(get_scalar(rs1, SEW));
+  let vs2_val_vec : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
-  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  (result, mask)  = init_masked_result(num_elem, SEW_widen, LMUL_pow - 1, vd_val, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
-      result[i] = vs2_val[i] & ~rs1_val[i];
+      let SEW_widen_bits = to_bits(SEW_widen, 'o);
+      let vs2_val : bits('o) = zero_extend(vs2_val_vec[i]);
+      result[i] = vs2_val << (rs1_val & zero_extend(SEW_widen_bits - 1));
     };
-    write_vreg(num_elem, SEW, LMUL_pow, vd, result);
+    write_vreg(num_elem, SEW_widen, LMUL_pow, vd, result);
   };
   vstart = zeros();
   RETIRE_SUCCESS
 }
 
-union clause ast = VBREV_V : (bits(1), regidx, regidx)
+union clause ast = VWSLL_VI : (bits(1), regidx, bits(5), regidx)
 
-mapping clause encdec = VBREV_V (vm, vs2, vd) if extensionEnabled(Ext_Zvbb)
-  <-> 0b010010 @ vm @ vs2 @ 01010 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_Zvbb)
+mapping clause encdec = VWSLL_VI (vm, vs2, uimm, vd) if extensionEnabled(Ext_Zvbb)
+  <-> 0b110101 @ vm @ vs2 @ uimm @ 0b011 @ vd @ 0b1010111 if extensionEnabled(Ext_Zvbb)
 
-mapping clause assembly = VBREV_V (vm, vs2, vd)
-  <-> "vbrev.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vm_name(vm)
+mapping clause assembly = VWSLL_VI (vm, vs2, uimm, vd)
+  <-> "vwsll.vi" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(uimm) ^ sep() ^ vm_name(vm)
 
-function clause execute (VBREV_V(vm, vs2, vd)) = {
+function clause execute (VWSLL_VI(vm, vs2, uimm, vd)) = {
   let SEW                     = get_sew();
   let LMUL_pow                = get_lmul_pow();
-  let num_elem                = get_num_elem(LMUL_pow, SEW);
+  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let SEW_widen               = SEW * 2;
+  let LMUL_pow_widen          = LMUL_pow + 1;
 
   let 'n = num_elem;
   let 'm = SEW;
+  let 'o = SEW_widen;
 
-  var result  : vector('n, dec, bits('m)) = undefined;
-  var mask    : vector('n, dec, bool)     = undefined;
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let uimm_val: bits('o)                  = zero_extend(uimm);
 
-  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  var mask        : vector('n, dec, bool)     = undefined;
+  var result      : vector('n, dec, bits('o)) = undefined;
+  let vs2_val_vec : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val      : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow, vd);
+
+  (result, mask)  = init_masked_result(num_elem, SEW_widen, LMUL_pow - 1, vd_val, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
-      result[i] = reverse(vs2_val[i]);
+        let SEW_widen_bits = to_bits(SEW_widen, 'o);
+        let vs2_val : bits('o) = zero_extend(vs2_val_vec[i]);
+        result[i] = vs2_val << (uimm_val & zero_extend(SEW_widen_bits - 1));
     };
-    write_vreg(num_elem, SEW, LMUL_pow, vd, result);
+    write_vreg(num_elem, SEW_widen, LMUL_pow, vd, result);
   };
   vstart = zeros();
   RETIRE_SUCCESS
 }
-
-union clause ast = VBREV8_V : (bits(1), regidx, regidx)
-
-mapping clause encdec = VBREV8_V (vm, vs2, vd) if extensionEnabled(Ext_Zvbb)
-  <-> 0b010010 @ vm @ vs2 @ 01000 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_Zvbb)
-
-mapping clause assembly = VBREV8_V (vm, vs2, vd)
-  <-> "vbrev8.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vm_name(vm)
-
-function clause execute (VBREV8_V (vm, vs2, vd)) = {
-
-};
