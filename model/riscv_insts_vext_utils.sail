@@ -369,12 +369,11 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
  *   Read multiple register groups and concatenate them in parallel
  *   The whole segments with the same element index are combined together
  */
-val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'q >= 0. (int('n), int('m), int('p), int('q), regidx) -> vector('n, dec, bits('q * 'm))
+val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'm >= 0 & 'q >= 0. (int('n), int('m), int('p), int('q), regidx) -> vector('n, dec, bits('q * 'm))
 function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
-  assert('q * 'm > 0);
   let LMUL_reg : int = if LMUL_pow <= 0 then 1 else 2 ^ (LMUL_pow);
-  var vreg_list : vector('q, dec, vector('n, dec, bits('m))) = undefined;
-  var result : vector('n, dec, bits('q * 'm)) = undefined;
+  var vreg_list : vector('q, dec, vector('n, dec, bits('m))) = vector_init(vector_init(zeros()));
+  var result : vector('n, dec, bits('q * 'm)) = vector_init(zeros());
   foreach (j from 0 to (nf - 1)) {
     vreg_list[j] = read_vreg(num_elem, SEW, LMUL_pow, vrid + to_bits(5, j * LMUL_reg));
   };
