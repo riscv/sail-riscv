@@ -87,6 +87,11 @@ bool sys_enable_writable_misa(unit u)
   return rv_enable_writable_misa;
 }
 
+mach_bits sys_writable_hpm_counters(unit u)
+{
+  return rv_writable_hpm_counters;
+}
+
 bool plat_enable_dirty_update(unit u)
 {
   return rv_enable_dirty_update;

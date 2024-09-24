@@ -51,11 +51,19 @@ function is_CSR_defined (csr : csreg) -> bool =
     0x3C @ idx : bits(4) => sys_pmp_count() > unsigned(0b01 @ idx),
     0x3D @ idx : bits(4) => sys_pmp_count() > unsigned(0b10 @ idx),
     0x3E @ idx : bits(4) => sys_pmp_count() > unsigned(0b11 @ idx),
+
+    /* counters */
+    0b0011001 /* 0x320 */ @ index : bits(5) if unsigned(index) >= 3 => extensionEnabled(Ext_Zihpm), // mhpmevent3..31
+
     0xB00 => true, // mcycle
     0xB02 => true, // minstret
 
+    0b1011000 /* 0xB00 */ @ index : bits(5) if unsigned(index) >= 3 => extensionEnabled(Ext_Zihpm), // mhpmcounter3..31
+
     0xB80 => sizeof(xlen) == 32, // mcycleh
     0xB82 => sizeof(xlen) == 32, // minstreth
+
+    0b1011100 /* 0xB80 */ @ index : bits(5) if unsigned(index) >= 3 => extensionEnabled(Ext_Zihpm) & (sizeof(xlen) == 32), // mhpmcounterh3..31
 
     /* disabled trigger/debug module */
     0x7a0 => true,
@@ -84,9 +92,13 @@ function is_CSR_defined (csr : csreg) -> bool =
     0xC01 => extensionEnabled(Ext_U),    // time
     0xC02 => extensionEnabled(Ext_U),    // instret
 
+    0b1100000 /* 0xC00 */ @ index : bits(5) if unsigned(index) >= 3 => extensionEnabled(Ext_Zihpm) & extensionEnabled(Ext_U), // hpmcounter3..31
+
     0xC80 => extensionEnabled(Ext_U) & (sizeof(xlen) == 32),     // cycleh
     0xC81 => extensionEnabled(Ext_U) & (sizeof(xlen) == 32),     // timeh
     0xC82 => extensionEnabled(Ext_U) & (sizeof(xlen) == 32),     // instreth
+
+    0b1100100 /* 0xC80 */ @ index : bits(5) if unsigned(index) >= 3 => extensionEnabled(Ext_Zihpm) & extensionEnabled(Ext_U) & (sizeof(xlen) == 32), // hpmcounterh3..31
 
     /* user mode: Zkr */
     0x015 => extensionEnabled(Ext_Zkr),
@@ -111,22 +123,16 @@ function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bit, super
   User => machine_enable_bit == bitone & (not(extensionEnabled(Ext_S)) | supervisor_enable_bit == bitone),
 }
 
-function check_Counteren(csr : csreg, p : Privilege) -> bool =
-  match(csr, p) {
-    (0xC00, Supervisor) => mcounteren[CY] == 0b1,
-    (0xC01, Supervisor) => mcounteren[TM] == 0b1,
-    (0xC02, Supervisor) => mcounteren[IR] == 0b1,
+// Return true if the counter is enabled OR the CSR is not a counter.
+function check_Counteren(csr : csreg, p : Privilege) -> bool = {
+  // Check if it is not a counter.
+  if csr <_u 0xC00 | 0xC1F <_u csr
+  then return true;
 
-    (0xC00, User) => mcounteren[CY] == 0b1 & (not(extensionEnabled(Ext_S)) | scounteren[CY] == 0b1),
-    (0xC01, User) => mcounteren[TM] == 0b1 & (not(extensionEnabled(Ext_S)) | scounteren[TM] == 0b1),
-    (0xC02, User) => mcounteren[IR] == 0b1 & (not(extensionEnabled(Ext_S)) | scounteren[IR] == 0b1),
-
-    (_, _) => /* no HPM counters for now */
-              if   0xC03 <=_u csr & csr <=_u 0xC1F
-              then false
-              else true
-  }
-
+  // Check the relevant bit in m/scounteren.
+  let index = unsigned(csr[4 .. 0]);
+  feature_enabled_for_priv(p, mcounteren.bits[index], scounteren.bits[index])
+}
 
 /* Seed may only be accessed if we are doing a write, and access has been
  * allowed in the current priv mode
