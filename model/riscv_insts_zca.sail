@@ -377,7 +377,7 @@ function clause execute (C_J(imm)) =
   execute(RISCV_JAL(sign_extend(imm @ 0b0), zreg))
 
 mapping clause assembly = C_J(imm)
-  <-> "c.j" ^ spc() ^ hex_bits_signed_11(imm)
+  <-> "c.j" ^ spc() ^ hex_bits_signed_12(imm @ 0b0)
 
 /* ****************************************************************** */
 union clause ast = C_BEQZ : (bits(8), cregidx)
