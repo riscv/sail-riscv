@@ -231,7 +231,7 @@ function haveDoubleFPU() -> bool = extensionEnabled(Ext_D) | extensionEnabled(Ex
 
 /* RV32Zdinx requires even register pairs; can be omitted for code  */
 /* not used for RV32Zdinx (i.e. RV64-only or D-only).               */
-val validDoubleRegs : forall 'n, 'n > 0. (implicit('n), vector('n, dec, regidx)) -> bool
+val validDoubleRegs : forall 'n, 'n > 0. (implicit('n), vector('n, regidx)) -> bool
 function validDoubleRegs(n, regs) = {
   if extensionEnabled(Ext_Zdinx) & sizeof(xlen) == 32 then
     foreach (i from 0 to (n - 1))
