@@ -503,11 +503,11 @@ function retire_instruction() -> unit = {
 
 // HPM (Hardware Performance Monitoring) counters. The lowest three values are
 // not used but they are defined for simplicity.
-register mhpmcounter : vector(32, dec, bits(64))
+register mhpmcounter : vector(32, bits(64))
 
 // HPM events selector. These control what the HPM counters measure. The lowest
 // three values are not used but they are defined for simplicity.
-register mhpmevent : vector(32, dec, xlenbits)
+register mhpmevent : vector(32, xlenbits)
 
 // Valid HPM counter indices. The lowest three are used for mcycle, mtime and minstret.
 type hpmidx = range(3, 31)

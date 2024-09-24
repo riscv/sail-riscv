@@ -466,7 +466,7 @@ function rsqrt7 (v, sub) = {
     64 => (zero_extend(64, v[51 .. 0]), zero_extend(64, v[62 .. 52]), [v[63]], 11, 52)
   };
   assert(s == 10 & e == 5 | s == 23 & e == 8 | s == 52 & e == 11);
-  let table : vector(128, dec, int) = [
+  let table : vector(128, int) = [
       52, 51, 50, 48, 47, 46, 44, 43,
       42, 41, 40, 39, 38, 36, 35, 34,
       33, 32, 31, 30, 30, 29, 28, 27,
@@ -560,7 +560,7 @@ function recip7 (v, rm_3b, sub) = {
     64 => (zero_extend(64, v[51 .. 0]), zero_extend(64, v[62 .. 52]), [v[63]], 11, 52)
   };
   assert(s == 10 & e == 5 | s == 23 & e == 8 | s == 52 & e == 11);
-  let table : vector(128, dec, int) = [
+  let table : vector(128, int) = [
       127, 125, 123, 121, 119, 117, 116, 114,
       112, 110, 109, 107, 105, 104, 102, 100,
       99, 97, 96, 94, 93, 91, 90, 88,

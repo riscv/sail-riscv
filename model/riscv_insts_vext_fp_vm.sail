@@ -37,10 +37,10 @@ function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let vs1_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -100,10 +100,10 @@ function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
   let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vd);
+  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;

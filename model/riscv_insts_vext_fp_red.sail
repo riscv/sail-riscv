@@ -40,10 +40,10 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_po
   let 'd = num_elem_vd;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem_vs, vm, 0b00000);
-  let vd_val  : vector('d, dec, bits('m)) = read_vreg(num_elem_vd, SEW, 0, vd);
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
-  let mask    : vector('n, dec, bool)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem_vs, vm, 0b00000);
+  let vd_val  : vector('d, bits('m)) = read_vreg(num_elem_vd, SEW, 0, vd);
+  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
+  let mask    : vector('n, bool)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
 
   var sum : bits('m) = read_single_element(SEW, 0, vs1); /* vs1 regardless of LMUL setting */
   foreach (i from 0 to (num_elem_vs - 1)) {
@@ -83,10 +83,10 @@ function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem_vs, vm, 0b00000);
-  let vd_val  : vector('d, dec, bits('o)) = read_vreg(num_elem_vd, SEW_widen, 0, vd);
-  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
-  let mask    : vector('n, dec, bool)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem_vs, vm, 0b00000);
+  let vd_val  : vector('d, bits('o)) = read_vreg(num_elem_vd, SEW_widen, 0, vd);
+  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
+  let mask    : vector('n, bool)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
 
   var sum : bits('o) = read_single_element(SEW_widen, 0, vs1); /* vs1 regardless of LMUL setting */
   foreach (i from 0 to (num_elem_vs - 1)) {

@@ -199,14 +199,14 @@ function get_end_element() = unsigned(vl) - 1
  *   vector2 is a "mask" vector that is true for an element if the corresponding element
  *     in the result vector should be updated by the calling instruction
  */
-val init_masked_result : forall 'n 'm 'p, 'n >= 0 & 'm >= 0. (int('n), int('m), int('p), vector('n, dec, bits('m)), vector('n, dec, bool)) -> (vector('n, dec, bits('m)), vector('n, dec, bool))
+val init_masked_result : forall 'n 'm 'p, 'n >= 0 & 'm >= 0. (int('n), int('m), int('p), vector('n, bits('m)), vector('n, bool)) -> (vector('n, bits('m)), vector('n, bool))
 function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
   let tail_ag : agtype = get_vtype_vta();
   let mask_ag : agtype = get_vtype_vma();
-  var mask : vector('n, dec, bool) = undefined;
-  var result : vector('n, dec, bits('m)) = undefined;
+  var mask : vector('n, bool) = undefined;
+  var result : vector('n, bits('m)) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (2 ^ (0 - LMUL_pow));
@@ -252,11 +252,11 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
  * (vs3 for store and vs2 for reduction). There's no destination register to be masked.
  * In these cases, this function can be called to simply get the mask vector for vs (without the prepared vd result vector).
  */
-val init_masked_source : forall 'n 'p, 'n >= 0. (int('n), int('p), vector('n, dec, bool)) -> vector('n, dec, bool)
+val init_masked_source : forall 'n 'p, 'n >= 0. (int('n), int('p), vector('n, bool)) -> vector('n, bool)
 function init_masked_source(num_elem, LMUL_pow, vm_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
-  var mask : vector('n, dec, bool) = undefined;
+  var mask : vector('n, bool) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (2 ^ (0 - LMUL_pow));
@@ -286,12 +286,12 @@ function init_masked_source(num_elem, LMUL_pow, vm_val) = {
 
 /* Mask handling for carry functions that use masks as input/output */
 /* Only prestart and tail elements are masked in a mask value */
-val init_masked_result_carry : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool))
+val init_masked_result_carry : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), vector('n, bool)) -> (vector('n, bool), vector('n, bool))
 function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
-  var mask : vector('n, dec, bool) = undefined;
-  var result : vector('n, dec, bool) = undefined;
+  var mask : vector('n, bool) = undefined;
+  var result : vector('n, bool) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (2 ^ (0 - LMUL_pow));
@@ -322,13 +322,13 @@ function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
 }
 
 /* Mask handling for cmp functions that use masks as output */
-val init_masked_result_cmp : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), vector('n, dec, bool), vector('n, dec, bool)) -> (vector('n, dec, bool), vector('n, dec, bool))
+val init_masked_result_cmp : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), vector('n, bool), vector('n, bool)) -> (vector('n, bool), vector('n, bool))
 function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
   let mask_ag : agtype = get_vtype_vma();
-  var mask : vector('n, dec, bool) = undefined;
-  var result : vector('n, dec, bool) = undefined;
+  var mask : vector('n, bool) = undefined;
+  var result : vector('n, bool) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (2 ^ (0 - LMUL_pow));
@@ -369,11 +369,11 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
  *   Read multiple register groups and concatenate them in parallel
  *   The whole segments with the same element index are combined together
  */
-val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'm >= 0 & 'q >= 0. (int('n), int('m), int('p), int('q), regidx) -> vector('n, dec, bits('q * 'm))
+val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'm >= 0 & 'q >= 0. (int('n), int('m), int('p), int('q), regidx) -> vector('n, bits('q * 'm))
 function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
   let LMUL_reg : int = if LMUL_pow <= 0 then 1 else 2 ^ (LMUL_pow);
-  var vreg_list : vector('q, dec, vector('n, dec, bits('m))) = vector_init(vector_init(zeros()));
-  var result : vector('n, dec, bits('q * 'm)) = vector_init(zeros());
+  var vreg_list : vector('q, vector('n, bits('m))) = vector_init(vector_init(zeros()));
+  var result : vector('n, bits('q * 'm)) = vector_init(zeros());
   foreach (j from 0 to (nf - 1)) {
     vreg_list[j] = read_vreg(num_elem, SEW, LMUL_pow, vrid + to_bits(5, j * LMUL_reg));
   };

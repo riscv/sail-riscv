@@ -40,8 +40,8 @@ bitfield Pmpcfg_ent : bits(8) = {
   R : 0         /* read */
 }
 
-register pmpcfg_n : vector(64, dec, Pmpcfg_ent)
-register pmpaddr_n : vector(64, dec, xlenbits)
+register pmpcfg_n : vector(64, Pmpcfg_ent)
+register pmpaddr_n : vector(64, xlenbits)
 
 /* Packing and unpacking pmpcfg regs for xlen-width accesses */
 
