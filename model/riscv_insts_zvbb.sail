@@ -29,11 +29,11 @@ function clause execute (VWSLL_VV(vm, vs2, vs1, vd)) = {
   let 'o = SEW_widen;
 
   let vm_val      : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let vd_val      : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow, vd);
+  let vd_val      : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let vs1_val_vec : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val_vec : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
-  let (initial_result, mask)  = init_masked_result(num_elem, SEW_widen, LMUL_pow - 1, vd_val, vm_val);
+  let (initial_result, mask)  = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -43,7 +43,7 @@ function clause execute (VWSLL_VV(vm, vs2, vs1, vd)) = {
       let vs2_val : bits('o) = zero_extend(vs2_val_vec[i]);
       result[i] = vs2_val << (vs1_val & zero_extend(SEW_widen_bits - 1));
     };
-    write_vreg(num_elem, SEW_widen, LMUL_pow, vd, result);
+    write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
   };
   vstart = zeros();
   RETIRE_SUCCESS
@@ -69,11 +69,11 @@ function clause execute (VWSLL_VX(vm, vs2, rs1, vd)) = {
   let 'o = SEW_widen;
 
   let vm_val      : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let vd_val      : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow, vd);
+  let vd_val      : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let rs1_val     : bits('o)                  = zero_extend(get_scalar(rs1, SEW));
   let vs2_val_vec : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
-  let (initial_result, mask)  = init_masked_result(num_elem, SEW_widen, LMUL_pow - 1, vd_val, vm_val);
+  let (initial_result, mask)  = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -82,7 +82,7 @@ function clause execute (VWSLL_VX(vm, vs2, rs1, vd)) = {
       let vs2_val : bits('o) = zero_extend(vs2_val_vec[i]);
       result[i] = vs2_val << (rs1_val & zero_extend(SEW_widen_bits - 1));
     };
-    write_vreg(num_elem, SEW_widen, LMUL_pow, vd, result);
+    write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
   };
   vstart = zeros();
   RETIRE_SUCCESS
@@ -99,7 +99,7 @@ mapping clause assembly = VWSLL_VI (vm, vs2, uimm, vd)
 function clause execute (VWSLL_VI(vm, vs2, uimm, vd)) = {
   let SEW                     = get_sew();
   let LMUL_pow                = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let num_elem                = get_num_elem(LMUL_pow, SEW);
   let SEW_widen               = SEW * 2;
   let LMUL_pow_widen          = LMUL_pow + 1;
 
@@ -111,9 +111,9 @@ function clause execute (VWSLL_VI(vm, vs2, uimm, vd)) = {
   let uimm_val: bits('o)                  = zero_extend(uimm);
 
   let vs2_val_vec : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val      : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow, vd);
+  let vd_val      : vector('n, dec, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
 
-  let (initial_result, mask)  = init_masked_result(num_elem, SEW_widen, LMUL_pow - 1, vd_val, vm_val);
+  let (initial_result, mask)  = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -122,7 +122,7 @@ function clause execute (VWSLL_VI(vm, vs2, uimm, vd)) = {
         let vs2_val : bits('o) = zero_extend(vs2_val_vec[i]);
         result[i] = vs2_val << (uimm_val & zero_extend(SEW_widen_bits - 1));
     };
-    write_vreg(num_elem, SEW_widen, LMUL_pow, vd, result);
+    write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
   };
   vstart = zeros();
   RETIRE_SUCCESS
