@@ -16,96 +16,96 @@ function clause extensionEnabled(Ext_Zkr) = true
 function csrAccess(csr : csreg) -> csrRW = csr[11..10]
 function csrPriv(csr : csreg) -> priv_level = csr[9..8]
 
-function is_CSR_defined (csr : csreg) -> bool =
-  match (csr) {
-    /* machine mode: informational */
-    0xf11 => true, // mvendorid
-    0xf12 => true, // marchdid
-    0xf13 => true, // mimpid
-    0xf14 => true, // mhartid
-    0xf15 => true, // mconfigptr
-    /* machine mode: trap setup */
-    0x300 => true, // mstatus
-    0x301 => true, // misa
-    0x302 => extensionEnabled(Ext_S) | extensionEnabled(Ext_N), // medeleg
-    0x303 => extensionEnabled(Ext_S) | extensionEnabled(Ext_N), // mideleg
-    0x304 => true, // mie
-    0x305 => true, // mtvec
-    0x306 => extensionEnabled(Ext_U), // mcounteren
-    0x30A => extensionEnabled(Ext_U), // menvcfg
-    0x310 => sizeof(xlen) == 32, // mstatush
-    0x31A => extensionEnabled(Ext_U) & (sizeof(xlen) == 32), // menvcfgh
-    0x320 => true, // mcountinhibit
-    /* machine mode: trap handling */
-    0x340 => true, // mscratch
-    0x341 => true, // mepc
-    0x342 => true, // mcause
-    0x343 => true, // mtval
-    0x344 => true, // mip
+// TODO: These is_CSR_defined definitions should be moved to the files
+// corresponding to their extensions rather than all be here.
 
-    // pmpcfgN
-    0x3A @ idx : bits(4) => sys_pmp_count() > unsigned(idx) & (idx[0] == bitzero | sizeof(xlen) == 32),
+/* machine mode: informational */
+function clause is_CSR_defined(0xf11) = true // mvendorid
+function clause is_CSR_defined(0xf12) = true // marchdid
+function clause is_CSR_defined(0xf13) = true // mimpid
+function clause is_CSR_defined(0xf14) = true // mhartid
+function clause is_CSR_defined(0xf15) = true // mconfigptr
+/* machine mode: trap setup */
+function clause is_CSR_defined(0x300) = true // mstatus
+function clause is_CSR_defined(0x301) = true // misa
+function clause is_CSR_defined(0x302) = extensionEnabled(Ext_S) | extensionEnabled(Ext_N) // medeleg
+function clause is_CSR_defined(0x303) = extensionEnabled(Ext_S) | extensionEnabled(Ext_N) // mideleg
+function clause is_CSR_defined(0x304) = true // mie
+function clause is_CSR_defined(0x305) = true // mtvec
+function clause is_CSR_defined(0x306) = extensionEnabled(Ext_U) // mcounteren
+function clause is_CSR_defined(0x30A) = extensionEnabled(Ext_U) // menvcfg
+function clause is_CSR_defined(0x310) = sizeof(xlen) == 32 // mstatush
+function clause is_CSR_defined(0x31A) = extensionEnabled(Ext_U) & (sizeof(xlen) == 32) // menvcfgh
+function clause is_CSR_defined(0x320) = true // mcountinhibit
 
-    // pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
-    0x3B @ idx : bits(4) => sys_pmp_count() > unsigned(0b00 @ idx),
-    0x3C @ idx : bits(4) => sys_pmp_count() > unsigned(0b01 @ idx),
-    0x3D @ idx : bits(4) => sys_pmp_count() > unsigned(0b10 @ idx),
-    0x3E @ idx : bits(4) => sys_pmp_count() > unsigned(0b11 @ idx),
 
-    /* counters */
-    0b0011001 /* 0x320 */ @ index : bits(5) if unsigned(index) >= 3 => extensionEnabled(Ext_Zihpm), // mhpmevent3..31
+/* machine mode: trap handling */
+function clause is_CSR_defined(0x340) = true // mscratch
+function clause is_CSR_defined(0x341) = true // mepc
+function clause is_CSR_defined(0x342) = true // mcause
+function clause is_CSR_defined(0x343) = true // mtval
+function clause is_CSR_defined(0x344) = true // mip
 
-    0xB00 => true, // mcycle
-    0xB02 => true, // minstret
+// pmpcfgN
+function clause is_CSR_defined(0x3A) @ idx : bits(4) = sys_pmp_count() > unsigned(idx) & (idx[0] == bitzero | sizeof(xlen) == 32)
 
-    0b1011000 /* 0xB00 */ @ index : bits(5) if unsigned(index) >= 3 => extensionEnabled(Ext_Zihpm), // mhpmcounter3..31
+// pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
+function clause is_CSR_defined(0x3B) @ idx : bits(4) = sys_pmp_count() > unsigned(0b00 @ idx)
+function clause is_CSR_defined(0x3C) @ idx : bits(4) = sys_pmp_count() > unsigned(0b01 @ idx)
+function clause is_CSR_defined(0x3D) @ idx : bits(4) = sys_pmp_count() > unsigned(0b10 @ idx)
+function clause is_CSR_defined(0x3E) @ idx : bits(4) = sys_pmp_count() > unsigned(0b11 @ idx)
 
-    0xB80 => sizeof(xlen) == 32, // mcycleh
-    0xB82 => sizeof(xlen) == 32, // minstreth
+/* counters */
+function clause is_CSR_defined(0b0011001 /* 0x320 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) // mhpmevent3..31
 
-    0b1011100 /* 0xB80 */ @ index : bits(5) if unsigned(index) >= 3 => extensionEnabled(Ext_Zihpm) & (sizeof(xlen) == 32), // mhpmcounterh3..31
+function clause is_CSR_defined(0xB00) = true // mcycle
+function clause is_CSR_defined(0xB02) = true // minstret
 
-    /* disabled trigger/debug module */
-    0x7a0 => true,
+function clause is_CSR_defined(0b1011000 /* 0xB00 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) // mhpmcounter3..31
 
-    /* supervisor mode: trap setup */
-    0x100 => extensionEnabled(Ext_S), // sstatus
-    0x102 => extensionEnabled(Ext_S) & extensionEnabled(Ext_N), // sedeleg
-    0x103 => extensionEnabled(Ext_S) & extensionEnabled(Ext_N), // sideleg
-    0x104 => extensionEnabled(Ext_S), // sie
-    0x105 => extensionEnabled(Ext_S), // stvec
-    0x106 => extensionEnabled(Ext_S), // scounteren
-    0x10A => extensionEnabled(Ext_S), // senvcfg
+function clause is_CSR_defined(0xB80) = sizeof(xlen) == 32 // mcycleh
+function clause is_CSR_defined(0xB82) = sizeof(xlen) == 32 // minstreth
 
-    /* supervisor mode: trap handling */
-    0x140 => extensionEnabled(Ext_S), // sscratch
-    0x141 => extensionEnabled(Ext_S), // sepc
-    0x142 => extensionEnabled(Ext_S), // scause
-    0x143 => extensionEnabled(Ext_S), // stval
-    0x144 => extensionEnabled(Ext_S), // sip
+function clause is_CSR_defined(0b1011100 /* 0xB80 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) & (sizeof(xlen) == 32) // mhpmcounterh3..31
 
-    /* supervisor mode: address translation */
-    0x180 => extensionEnabled(Ext_S), // satp
+/* disabled trigger/debug module */
+function clause is_CSR_defined(0x7a0) = true
 
-    /* user mode: counters */
-    0xC00 => extensionEnabled(Ext_U),    // cycle
-    0xC01 => extensionEnabled(Ext_U),    // time
-    0xC02 => extensionEnabled(Ext_U),    // instret
+/* supervisor mode: trap setup */
+function clause is_CSR_defined(0x100) = extensionEnabled(Ext_S) // sstatus
+function clause is_CSR_defined(0x102) = extensionEnabled(Ext_S) & extensionEnabled(Ext_N) // sedeleg
+function clause is_CSR_defined(0x103) = extensionEnabled(Ext_S) & extensionEnabled(Ext_N) // sideleg
+function clause is_CSR_defined(0x104) = extensionEnabled(Ext_S) // sie
+function clause is_CSR_defined(0x105) = extensionEnabled(Ext_S) // stvec
+function clause is_CSR_defined(0x106) = extensionEnabled(Ext_S) // scounteren
+function clause is_CSR_defined(0x10A) = extensionEnabled(Ext_S) // senvcfg
 
-    0b1100000 /* 0xC00 */ @ index : bits(5) if unsigned(index) >= 3 => extensionEnabled(Ext_Zihpm) & extensionEnabled(Ext_U), // hpmcounter3..31
+/* supervisor mode: trap handling */
+function clause is_CSR_defined(0x140) = extensionEnabled(Ext_S) // sscratch
+function clause is_CSR_defined(0x141) = extensionEnabled(Ext_S) // sepc
+function clause is_CSR_defined(0x142) = extensionEnabled(Ext_S) // scause
+function clause is_CSR_defined(0x143) = extensionEnabled(Ext_S) // stval
+function clause is_CSR_defined(0x144) = extensionEnabled(Ext_S) // sip
 
-    0xC80 => extensionEnabled(Ext_U) & (sizeof(xlen) == 32),     // cycleh
-    0xC81 => extensionEnabled(Ext_U) & (sizeof(xlen) == 32),     // timeh
-    0xC82 => extensionEnabled(Ext_U) & (sizeof(xlen) == 32),     // instreth
+/* supervisor mode: address translation */
+function clause is_CSR_defined(0x180) = extensionEnabled(Ext_S) // satp
 
-    0b1100100 /* 0xC80 */ @ index : bits(5) if unsigned(index) >= 3 => extensionEnabled(Ext_Zihpm) & extensionEnabled(Ext_U) & (sizeof(xlen) == 32), // hpmcounterh3..31
+/* user mode: counters */
+function clause is_CSR_defined(0xC00) = extensionEnabled(Ext_U) // cycle
+function clause is_CSR_defined(0xC01) = extensionEnabled(Ext_U) // time
+function clause is_CSR_defined(0xC02) = extensionEnabled(Ext_U) // instret
 
-    /* user mode: Zkr */
-    0x015 => extensionEnabled(Ext_Zkr),
+function clause is_CSR_defined(0b1100000 /* 0xC00 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) & extensionEnabled(Ext_U) // hpmcounter3..31
 
-    /* check extensions */
-    _     => ext_is_CSR_defined(csr)
-  }
+function clause is_CSR_defined(0xC80) = extensionEnabled(Ext_U) & (sizeof(xlen) == 32) // cycleh
+function clause is_CSR_defined(0xC81) = extensionEnabled(Ext_U) & (sizeof(xlen) == 32) // timeh
+function clause is_CSR_defined(0xC82) = extensionEnabled(Ext_U) & (sizeof(xlen) == 32) // instreth
+
+function clause is_CSR_defined(0b1100100 /* 0xC80 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) & extensionEnabled(Ext_U) & (sizeof(xlen) == 32) // hpmcounterh3..31
+
+/* user mode: Zkr */
+function clause is_CSR_defined(0x015) = extensionEnabled(Ext_Zkr)
+
 
 val check_CSR_access : (csrRW, priv_level, Privilege, bool) -> bool
 function check_CSR_access(csrrw, csrpr, p, isWrite) =

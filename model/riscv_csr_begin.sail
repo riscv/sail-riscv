@@ -12,6 +12,9 @@ val csr_name_map : csreg <-> string
 
 scattered mapping csr_name_map
 
+// TODO: These csr_name_map definitions should be moved to the files
+// corresponding to their extensions rather than all be here.
+
 /* user trap setup */
 mapping clause csr_name_map = 0x000  <-> "ustatus"
 mapping clause csr_name_map = 0x004  <-> "uie"
@@ -336,13 +339,13 @@ overload to_str = {csr_name}
 
 /* returns whether a CSR exists
  */
-val ext_is_CSR_defined : (csreg) -> bool
-scattered function ext_is_CSR_defined
+val is_CSR_defined : (csreg) -> bool
+scattered function is_CSR_defined
 
 /* returns the value of the CSR if it is defined */
-val ext_read_CSR : csreg -> option(xlenbits)
-scattered function ext_read_CSR
+val read_CSR : csreg -> xlenbits
+scattered function read_CSR
 
 /* returns new value (after legalisation) if the CSR is defined */
-val ext_write_CSR : (csreg, xlenbits) -> option(xlenbits)
-scattered function ext_write_CSR
+val write_CSR : (csreg, xlenbits) -> xlenbits
+scattered function write_CSR

@@ -67,18 +67,19 @@ SAIL_DEFAULT_INST += riscv_insts_zicboz.sail
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
 SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
 
-SAIL_SEQ_INST_SRCS  = riscv_insts_begin.sail $(SAIL_SEQ_INST) riscv_insts_end.sail
-SAIL_RMEM_INST_SRCS = riscv_insts_begin.sail $(SAIL_RMEM_INST) riscv_insts_end.sail
+# TODO: riscv_csr_end.sail here temporarily until the scattered definitions
+# are moved from riscv_insts_zicsr.sail to more appropriate places.
+SAIL_SEQ_INST_SRCS  = riscv_insts_begin.sail $(SAIL_SEQ_INST) riscv_insts_end.sail riscv_csr_end.sail
+SAIL_RMEM_INST_SRCS = riscv_insts_begin.sail $(SAIL_RMEM_INST) riscv_insts_end.sail riscv_csr_end.sail
 
 # System and platform sources
-SAIL_SYS_SRCS =  riscv_csr_map.sail
+SAIL_SYS_SRCS =  riscv_csr_begin.sail       # Start of CSR scattered definitions.
 SAIL_SYS_SRCS += riscv_vext_control.sail    # helpers for the 'V' extension
 SAIL_SYS_SRCS += riscv_next_regs.sail
 SAIL_SYS_SRCS += riscv_sys_exceptions.sail  # default basic helpers for exception handling
 SAIL_SYS_SRCS += riscv_sync_exception.sail  # define the exception structure used in the model
 SAIL_SYS_SRCS += riscv_next_control.sail    # helpers for the 'N' extension
 SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdext_control.sail
-SAIL_SYS_SRCS += riscv_csr_ext.sail         # access to CSR extensions
 SAIL_SYS_SRCS += riscv_sys_control.sail     # general exception handling
 
 # SAIL_RV32_VM_SRCS = riscv_vmem_sv32.sail riscv_vmem_rv32.sail

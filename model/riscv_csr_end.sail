@@ -14,11 +14,17 @@ end csr_name_map
    previously. */
 function csr_name(csr) = csr_name_map(csr)
 
-function clause ext_is_CSR_defined(_) = false
-end ext_is_CSR_defined
+function clause is_CSR_defined(_) = false
+end is_CSR_defined
 
-function clause ext_read_CSR _ = None()
-end ext_read_CSR
+function clause read_CSR(csr) = {
+   // This should be impossible because is_CSR_defined() should have returned false.
+   internal_error(__FILE__, __LINE__, "Read from CSR that does not exist: " ^ bits_str(csr));
+}
+end read_CSR
 
-function clause ext_write_CSR (_, _) = None()
-end ext_write_CSR
+function clause write_CSR(csr, _) = {
+   // This should be impossible because is_CSR_defined() should have returned false.
+   internal_error(__FILE__, __LINE__, "Write to CSR that does not exist: " ^ bits_str(csr));
+}
+end write_CSR
