@@ -21,203 +21,180 @@ mapping encdec_csrop : csrop <-> bits(2) = {
 mapping clause encdec = CSR(csr, rs1, rd, is_imm, op)
   <-> csr @ rs1 @ bool_bits(is_imm) @ encdec_csrop(op) @ rd @ 0b1110011
 
-function readCSR csr : csreg -> xlenbits = {
-  let res : xlenbits =
-  match (csr, sizeof(xlen)) {
-    /* machine mode */
-    (0xF11,  _) => zero_extend(mvendorid),
-    (0xF12,  _) => marchid,
-    (0xF13,  _) => mimpid,
-    (0xF14,  _) => mhartid,
-    (0xF15,  _) => mconfigptr,
-    (0x300,  _) => mstatus.bits,
-    (0x301,  _) => misa.bits,
-    (0x302,  _) => medeleg.bits,
-    (0x303,  _) => mideleg.bits,
-    (0x304,  _) => mie.bits,
-    (0x305,  _) => get_mtvec(),
-    (0x306,  _) => zero_extend(mcounteren.bits),
-    (0x30A,  _) => menvcfg.bits[sizeof(xlen) - 1 .. 0],
-    (0x310, 32) => mstatush.bits,
-    (0x31A, 32) => menvcfg.bits[63 .. 32],
-    (0x320,  _) => zero_extend(mcountinhibit.bits),
+// TODO: These read/write_CSR definitions should be moved to the files
+// corresponding to their extensions rather than all be here.
 
-    /* Hardware Performance Monitoring event selection */
-    (0b0011001 /* 0x320 */ @ index : bits(5), _) if unsigned(index) >= 3 => read_mhpmevent(hpmidx_from_bits(index)),
+/* machine mode */
+function clause read_CSR(0xF11) = zero_extend(mvendorid)
+function clause read_CSR(0xF12) = marchid
+function clause read_CSR(0xF13) = mimpid
+function clause read_CSR(0xF14) = mhartid
+function clause read_CSR(0xF15) = mconfigptr
+function clause read_CSR(0x300) = mstatus.bits
+function clause read_CSR(0x301) = misa.bits
+function clause read_CSR(0x302) = medeleg.bits
+function clause read_CSR(0x303) = mideleg.bits
+function clause read_CSR(0x304) = mie.bits
+function clause read_CSR(0x305) = get_mtvec()
+function clause read_CSR(0x306) = zero_extend(mcounteren.bits)
+function clause read_CSR(0x30A) = menvcfg.bits[sizeof(xlen) - 1 .. 0]
+function clause read_CSR(0x310 if sizeof(xlen) == 32) = mstatush.bits
+function clause read_CSR(0x31A if sizeof(xlen) == 32) = menvcfg.bits[63 .. 32]
+function clause read_CSR(0x320) = zero_extend(mcountinhibit.bits)
 
-    (0x340,  _) => mscratch,
-    (0x341,  _) => get_xret_target(Machine) & pc_alignment_mask(),
-    (0x342,  _) => mcause.bits,
-    (0x343,  _) => mtval,
-    (0x344,  _) => mip.bits,
+/* Hardware Performance Monitoring event selection */
+function clause read_CSR(0b0011001 /* 0x320 */ @ index : bits(5) if unsigned(index) >= 3) = read_mhpmevent(hpmidx_from_bits(index))
 
-    // pmpcfgN
-    (0x3A @ idx : bits(4),  _) if idx[0] == bitzero | sizeof(xlen) == 32 => pmpReadCfgReg(unsigned(idx)),
-    // pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
-    (0x3B @ idx : bits(4),  _) => pmpReadAddrReg(unsigned(0b00 @ idx)),
-    (0x3C @ idx : bits(4),  _) => pmpReadAddrReg(unsigned(0b01 @ idx)),
-    (0x3D @ idx : bits(4),  _) => pmpReadAddrReg(unsigned(0b10 @ idx)),
-    (0x3E @ idx : bits(4),  _) => pmpReadAddrReg(unsigned(0b11 @ idx)),
+function clause read_CSR(0x340) = mscratch
+function clause read_CSR(0x341) = get_xret_target(Machine) & pc_alignment_mask()
+function clause read_CSR(0x342) = mcause.bits
+function clause read_CSR(0x343) = mtval
+function clause read_CSR(0x344) = mip.bits
 
-    /* machine mode counters */
-    (0xB00,  _) => mcycle[(sizeof(xlen) - 1) .. 0],
-    (0xB02,  _) => minstret[(sizeof(xlen) - 1) .. 0],
-    (0xB80, 32) => mcycle[63 .. 32],
-    (0xB82, 32) => minstret[63 .. 32],
+// pmpcfgN
+function clause read_CSR(0x3A @ idx : bits(4) if idx[0] == bitzero | sizeof(xlen) == 32) = pmpReadCfgReg(unsigned(idx))
+// pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
+function clause read_CSR(0x3B @ idx : bits(4)) = pmpReadAddrReg(unsigned(0b00 @ idx))
+function clause read_CSR(0x3C @ idx : bits(4)) = pmpReadAddrReg(unsigned(0b01 @ idx))
+function clause read_CSR(0x3D @ idx : bits(4)) = pmpReadAddrReg(unsigned(0b10 @ idx))
+function clause read_CSR(0x3E @ idx : bits(4)) = pmpReadAddrReg(unsigned(0b11 @ idx))
 
-    /* Hardware Performance Monitoring machine mode counters */
-    (0b1011000 /* 0xB00 */ @ index : bits(5), _) if unsigned(index) >= 3 => read_mhpmcounter(hpmidx_from_bits(index)),
-    (0b1011100 /* 0xB80 */ @ index : bits(5), 32) if unsigned(index) >= 3 => read_mhpmcounterh(hpmidx_from_bits(index)),
+/* machine mode counters */
+function clause read_CSR(0xB00) = mcycle[(sizeof(xlen) - 1) .. 0]
+function clause read_CSR(0xB02) = minstret[(sizeof(xlen) - 1) .. 0]
+function clause read_CSR(0xB80 if sizeof(xlen) == 32)= mcycle[63 .. 32]
+function clause read_CSR(0xB82 if sizeof(xlen) == 32) = minstret[63 .. 32]
 
-    /* vector */
-    (0x008, _) => zero_extend(vstart),
-    (0x009, _) => zero_extend(vxsat),
-    (0x00A, _) => zero_extend(vxrm),
-    (0x00F, _) => zero_extend(vcsr.bits),
-    (0xC20, _) => vl,
-    (0xC21, _) => vtype.bits,
-    (0xC22, _) => vlenb,
+/* Hardware Performance Monitoring machine mode counters */
+function clause read_CSR(0b1011000 /* 0xB00 */ @ index : bits(5) if unsigned(index) >= 3) = read_mhpmcounter(hpmidx_from_bits(index))
+function clause read_CSR(0b1011100 /* 0xB80 */ @ index : bits(5) if sizeof(xlen) == 32 & unsigned(index) >= 3) = read_mhpmcounterh(hpmidx_from_bits(index))
 
-    /* trigger/debug */
-    (0x7a0,  _) => ~(tselect),  /* this indicates we don't have any trigger support */
+/* vector */
+function clause read_CSR(0x008) = zero_extend(vstart)
+function clause read_CSR(0x009) = zero_extend(vxsat)
+function clause read_CSR(0x00A) = zero_extend(vxrm)
+function clause read_CSR(0x00F) = zero_extend(vcsr.bits)
+function clause read_CSR(0xC20) = vl
+function clause read_CSR(0xC21) = vtype.bits
+function clause read_CSR(0xC22) = vlenb
 
-    /* supervisor mode */
-    (0x100,  _) => lower_mstatus(mstatus).bits,
-    (0x102,  _) => sedeleg.bits,
-    (0x103,  _) => sideleg.bits,
-    (0x104,  _) => lower_mie(mie, mideleg).bits,
-    (0x105,  _) => get_stvec(),
-    (0x106,  _) => zero_extend(scounteren.bits),
-    (0x10A,  _) => senvcfg.bits[sizeof(xlen) - 1 .. 0],
-    (0x140,  _) => sscratch,
-    (0x141,  _) => get_xret_target(Supervisor) & pc_alignment_mask(),
-    (0x142,  _) => scause.bits,
-    (0x143,  _) => stval,
-    (0x144,  _) => lower_mip(mip, mideleg).bits,
-    (0x180,  _) => satp,
+/* trigger/debug */
+function clause read_CSR(0x7a0) = ~(tselect)  /* this indicates we don't have any trigger support */
 
-    /* user mode counters */
-    (0xC00,  _) => mcycle[(sizeof(xlen) - 1) .. 0],
-    (0xC01,  _) => mtime[(sizeof(xlen) - 1) .. 0],
-    (0xC02,  _) => minstret[(sizeof(xlen) - 1) .. 0],
-    (0xC80, 32) => mcycle[63 .. 32],
-    (0xC81, 32) => mtime[63 .. 32],
-    (0xC82, 32) => minstret[63 .. 32],
+/* supervisor mode */
+function clause read_CSR(0x100) = lower_mstatus(mstatus).bits
+function clause read_CSR(0x102) = sedeleg.bits
+function clause read_CSR(0x103) = sideleg.bits
+function clause read_CSR(0x104) = lower_mie(mie, mideleg).bits
+function clause read_CSR(0x105) = get_stvec()
+function clause read_CSR(0x106) = zero_extend(scounteren.bits)
+function clause read_CSR(0x10A) = senvcfg.bits[sizeof(xlen) - 1 .. 0]
+function clause read_CSR(0x140) = sscratch
+function clause read_CSR(0x141) = get_xret_target(Supervisor) & pc_alignment_mask()
+function clause read_CSR(0x142) = scause.bits
+function clause read_CSR(0x143) = stval
+function clause read_CSR(0x144) = lower_mip(mip, mideleg).bits
+function clause read_CSR(0x180) = satp
 
-    /* Hardware Performance Monitoring user mode counters */
-    (0b1100000 /* 0xC00 */ @ index : bits(5), _) if unsigned(index) >= 3 => read_mhpmcounter(hpmidx_from_bits(index)),
-    (0b1100100 /* 0xC80 */ @ index : bits(5), 32) if unsigned(index) >= 3 => read_mhpmcounterh(hpmidx_from_bits(index)),
+/* user mode counters */
+function clause read_CSR(0xC00) = mcycle[(sizeof(xlen) - 1) .. 0]
+function clause read_CSR(0xC01) = mtime[(sizeof(xlen) - 1) .. 0]
+function clause read_CSR(0xC02) = minstret[(sizeof(xlen) - 1) .. 0]
+function clause read_CSR(0xC80 if sizeof(xlen) == 32) = mcycle[63 .. 32]
+function clause read_CSR(0xC81 if sizeof(xlen) == 32) = mtime[63 .. 32]
+function clause read_CSR(0xC82 if sizeof(xlen) == 32) = minstret[63 .. 32]
 
-    /* user mode: Zkr */
-    (0x015,  _) => read_seed_csr(),
+/* Hardware Performance Monitoring user mode counters */
+function clause read_CSR(0b1100000 /* 0xC00 */ @ index : bits(5) if unsigned(index) >= 3) = read_mhpmcounter(hpmidx_from_bits(index))
+function clause read_CSR(0b1100100 /* 0xC80 */ @ index : bits(5) if sizeof(xlen) == 32 & unsigned(index) >= 3) = read_mhpmcounterh(hpmidx_from_bits(index))
 
-    _           => /* check extensions */
-                   match ext_read_CSR(csr) {
-                     Some(res) => res,
-                     None()    => { print_bits("unhandled read to CSR ", csr);
-                                    zero_extend(0x0) }
-                   }
-  };
-  if   get_config_print_reg()
-  then print_reg("CSR " ^ to_str(csr) ^ " -> " ^ BitStr(res));
-  res
+/* user mode: Zkr */
+function clause read_CSR(0x015) = read_seed_csr()
+
+/* machine mode */
+function clause write_CSR(0x300, value) = { mstatus = legalize_mstatus(mstatus, value); mstatus.bits }
+function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); misa.bits }
+function clause write_CSR(0x302, value) = { medeleg = legalize_medeleg(medeleg, value); medeleg.bits }
+function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, value); mideleg.bits }
+function clause write_CSR(0x304, value) = { mie = legalize_mie(mie, value); mie.bits }
+function clause write_CSR(0x305, value) = { set_mtvec(value) }
+function clause write_CSR(0x306, value) = { mcounteren = legalize_mcounteren(mcounteren, value); zero_extend(mcounteren.bits) }
+function clause write_CSR((0x30A, value) if sizeof(xlen) == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); menvcfg.bits[31 .. 0] }
+function clause write_CSR((0x30A, value) if sizeof(xlen) == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); menvcfg.bits }
+function clause write_CSR((0x310, value) if sizeof(xlen) == 32) = { mstatush.bits } // ignore writes for now
+function clause write_CSR((0x31A, value) if sizeof(xlen) == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); menvcfg.bits[63 .. 32] }
+function clause write_CSR(0x320, value) = { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); zero_extend(mcountinhibit.bits) }
+function clause write_CSR(0x340, value) = { mscratch = value; mscratch }
+function clause write_CSR(0x341, value) = { set_xret_target(Machine, value) }
+function clause write_CSR(0x342, value) = { mcause.bits = value; mcause.bits }
+function clause write_CSR(0x343, value) = { mtval = value; mtval }
+function clause write_CSR(0x344, value) = { mip = legalize_mip(mip, value); mip.bits }
+
+// pmpcfgN
+function clause write_CSR((0x3A @ idx : bits(4), value) if idx[0] == bitzero | sizeof(xlen) == 32) = {
+  let idx = unsigned(idx);
+  pmpWriteCfgReg(idx, value);
+  pmpReadCfgReg(idx)
 }
 
-function writeCSR (csr : csreg, value : xlenbits) -> unit = {
-  let res : option(xlenbits) =
-  match (csr, sizeof(xlen)) {
-    /* machine mode */
-    (0x300,  _) => { mstatus = legalize_mstatus(mstatus, value); Some(mstatus.bits) },
-    (0x301,  _) => { misa = legalize_misa(misa, value); Some(misa.bits) },
-    (0x302,  _) => { medeleg = legalize_medeleg(medeleg, value); Some(medeleg.bits) },
-    (0x303,  _) => { mideleg = legalize_mideleg(mideleg, value); Some(mideleg.bits) },
-    (0x304,  _) => { mie = legalize_mie(mie, value); Some(mie.bits) },
-    (0x305,  _) => { Some(set_mtvec(value)) },
-    (0x306,  _) => { mcounteren = legalize_mcounteren(mcounteren, value); Some(zero_extend(mcounteren.bits)) },
-    (0x30A, 32) => { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); Some(menvcfg.bits[31 .. 0]) },
-    (0x30A, 64) => { menvcfg = legalize_menvcfg(menvcfg, value); Some(menvcfg.bits) },
-    (0x310, 32) => { Some(mstatush.bits) }, // ignore writes for now
-    (0x31A, 32) => { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); Some(menvcfg.bits[63 .. 32]) },
-    (0x320,  _) => { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Some(zero_extend(mcountinhibit.bits)) },
-    (0x340,  _) => { mscratch = value; Some(mscratch) },
-    (0x341,  _) => { Some(set_xret_target(Machine, value)) },
-    (0x342,  _) => { mcause.bits = value; Some(mcause.bits) },
-    (0x343,  _) => { mtval = value; Some(mtval) },
-    (0x344,  _) => { mip = legalize_mip(mip, value); Some(mip.bits) },
+// pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
+function clause write_CSR(0x3B @ idx : bits(4), value) = { let idx = unsigned(0b00 @ idx); pmpWriteAddrReg(idx, value); pmpReadAddrReg(idx) }
+function clause write_CSR(0x3C @ idx : bits(4), value) = { let idx = unsigned(0b01 @ idx); pmpWriteAddrReg(idx, value); pmpReadAddrReg(idx) }
+function clause write_CSR(0x3D @ idx : bits(4), value) = { let idx = unsigned(0b10 @ idx); pmpWriteAddrReg(idx, value); pmpReadAddrReg(idx) }
+function clause write_CSR(0x3E @ idx : bits(4), value) = { let idx = unsigned(0b11 @ idx); pmpWriteAddrReg(idx, value); pmpReadAddrReg(idx) }
 
-    // pmpcfgN
-    (0x3A @ idx : bits(4),  _) if idx[0] == bitzero | sizeof(xlen) == 32 => {
-      let idx = unsigned(idx);
-      pmpWriteCfgReg(idx, value); Some(pmpReadCfgReg(idx))
-    },
+/* machine mode counters */
+function clause write_CSR(0xB00, value) = { mcycle[(sizeof(xlen) - 1) .. 0] = value; value }
+function clause write_CSR(0xB02, value) = { minstret[(sizeof(xlen) - 1) .. 0] = value; minstret_increment = false; value }
+function clause write_CSR((0xB80, value) if sizeof(xlen) == 32) = { mcycle[63 .. 32] = value; value }
+function clause write_CSR((0xB82, value) if sizeof(xlen) == 32) = { minstret[63 .. 32] = value; minstret_increment = false; value }
 
-    // pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
-    (0x3B @ idx : bits(4),  _) => { let idx = unsigned(0b00 @ idx); pmpWriteAddrReg(idx, value); Some(pmpReadAddrReg(idx)) },
-    (0x3C @ idx : bits(4),  _) => { let idx = unsigned(0b01 @ idx); pmpWriteAddrReg(idx, value); Some(pmpReadAddrReg(idx)) },
-    (0x3D @ idx : bits(4),  _) => { let idx = unsigned(0b10 @ idx); pmpWriteAddrReg(idx, value); Some(pmpReadAddrReg(idx)) },
-    (0x3E @ idx : bits(4),  _) => { let idx = unsigned(0b11 @ idx); pmpWriteAddrReg(idx, value); Some(pmpReadAddrReg(idx)) },
-
-    /* machine mode counters */
-    (0xB00,  _) => { mcycle[(sizeof(xlen) - 1) .. 0] = value; Some(value) },
-    (0xB02,  _) => { minstret[(sizeof(xlen) - 1) .. 0] = value; minstret_increment = false; Some(value) },
-    (0xB80, 32) => { mcycle[63 .. 32] = value; Some(value) },
-    (0xB82, 32) => { minstret[63 .. 32] = value; minstret_increment = false; Some(value) },
-
-    /* Hardware Performance Monitoring machine mode counters */
-    (0b0011001 /* 0x320 */ @ index : bits(5), _) if unsigned(index) >= 3 => {
-      let index = hpmidx_from_bits(index);
-      write_mhpmevent(index, value);
-      Some(read_mhpmevent(index))
-    },
-    (0b1011000 /* 0xB00 */ @ index : bits(5), _) if unsigned(index) >= 3 => {
-      let index = hpmidx_from_bits(index);
-      write_mhpmcounter(index, value);
-      Some(read_mhpmcounter(index))
-    },
-    (0b1011100 /* 0xB80 */ @ index : bits(5), 32) if unsigned(index) >= 3 => {
-      let index = hpmidx_from_bits(index);
-      write_mhpmcounterh(index, value);
-      Some(read_mhpmcounterh(index))
-    },
-
-    /* trigger/debug */
-    (0x7a0,  _) => { tselect = value; Some(tselect) },
-
-    /* supervisor mode */
-    (0x100,  _) => { mstatus = legalize_sstatus(mstatus, value); Some(mstatus.bits) },
-    (0x102,  _) => { sedeleg = legalize_sedeleg(sedeleg, value); Some(sedeleg.bits) },
-    (0x103,  _) => { sideleg.bits = value; Some(sideleg.bits) }, /* TODO: does this need legalization? */
-    (0x104,  _) => { mie = legalize_sie(mie, mideleg, value); Some(mie.bits) },
-    (0x105,  _) => { Some(set_stvec(value)) },
-    (0x106,  _) => { scounteren = legalize_scounteren(scounteren, value); Some(zero_extend(scounteren.bits)) },
-    (0x10A,  _) => { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); Some(senvcfg.bits[sizeof(xlen) - 1 .. 0]) },
-    (0x140,  _) => { sscratch = value; Some(sscratch) },
-    (0x141,  _) => { Some(set_xret_target(Supervisor, value)) },
-    (0x142,  _) => { scause.bits = value; Some(scause.bits) },
-    (0x143,  _) => { stval = value; Some(stval) },
-    (0x144,  _) => { mip = legalize_sip(mip, mideleg, value); Some(mip.bits) },
-    (0x180,  _) => { satp = legalize_satp(cur_Architecture(), satp, value); Some(satp) },
-
-    /* user mode: seed (entropy source). writes are ignored */
-    (0x015,  _) => write_seed_csr(),
-
-    /* vector */
-    (0x008, _) => { let vstart_length = get_vlen_pow(); vstart = zero_extend(16, value[(vstart_length - 1) .. 0]); Some(zero_extend(vstart)) },
-    (0x009, _) => { vxsat = value[0 .. 0]; Some(zero_extend(vxsat)) },
-    (0x00A, _) => { vxrm = value[1 .. 0]; Some(zero_extend(vxrm)) },
-    (0x00F, _) => { vcsr.bits = value[2 ..0]; Some(zero_extend(vcsr.bits)) },
-    (0xC20, _) => { vl = value; Some(vl) },
-    (0xC21, _) => { vtype.bits = value; Some(vtype.bits) },
-    (0xC22, _) => { vlenb = value; Some(vlenb) },
-
-    _           => ext_write_CSR(csr, value)
-  };
-  match res {
-    Some(v) => if   get_config_print_reg()
-               then print_reg("CSR " ^ to_str(csr) ^ " <- " ^ BitStr(v) ^ " (input: " ^ BitStr(value) ^ ")"),
-    None()  => print_bits("unhandled write to CSR ", csr)
-  }
+/* Hardware Performance Monitoring machine mode counters */
+function clause write_CSR((0b0011001 /* 0x320 */ @ index : bits(5), value) if unsigned(index) >= 3) = {
+  let index = hpmidx_from_bits(index);
+  write_mhpmevent(index, value);
+  read_mhpmevent(index)
 }
+function clause write_CSR((0b1011000 /* 0xB00 */ @ index : bits(5), value) if unsigned(index) >= 3) = {
+  let index = hpmidx_from_bits(index);
+  write_mhpmcounter(index, value);
+  read_mhpmcounter(index)
+}
+function clause write_CSR((0b1011100 /* 0xB80 */ @ index : bits(5), value) if sizeof(xlen) == 32 & unsigned(index) >= 3) = {
+  let index = hpmidx_from_bits(index);
+  write_mhpmcounterh(index, value);
+  read_mhpmcounterh(index)
+}
+
+/* trigger/debug */
+function clause write_CSR(0x7a0, value) = { tselect = value; tselect }
+
+/* supervisor mode */
+function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); mstatus.bits }
+function clause write_CSR(0x102, value) = { sedeleg = legalize_sedeleg(sedeleg, value); sedeleg.bits }
+function clause write_CSR(0x103, value) = { sideleg.bits = value; sideleg.bits } /* TODO: does this need legalization? */
+function clause write_CSR(0x104, value) = { mie = legalize_sie(mie, mideleg, value); mie.bits }
+function clause write_CSR(0x105, value) = { set_stvec(value) }
+function clause write_CSR(0x106, value) = { scounteren = legalize_scounteren(scounteren, value); zero_extend(scounteren.bits) }
+function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); senvcfg.bits[sizeof(xlen) - 1 .. 0] }
+function clause write_CSR(0x140, value) = { sscratch = value; sscratch }
+function clause write_CSR(0x141, value) = { set_xret_target(Supervisor, value) }
+function clause write_CSR(0x142, value) = { scause.bits = value; scause.bits }
+function clause write_CSR(0x143, value) = { stval = value; stval }
+function clause write_CSR(0x144, value) = { mip = legalize_sip(mip, mideleg, value); mip.bits }
+function clause write_CSR(0x180, value) = { satp = legalize_satp(cur_Architecture(), satp, value); satp }
+
+/* user mode: seed (entropy source). writes are ignored */
+function clause write_CSR(0x015, value) = write_seed_csr()
+
+/* vector */
+function clause write_CSR(0x008, value) = { let vstart_length = get_vlen_pow(); vstart = zero_extend(16, value[(vstart_length - 1) .. 0]); zero_extend(vstart) }
+function clause write_CSR(0x009, value) = { vxsat = value[0 .. 0]; zero_extend(vxsat) }
+function clause write_CSR(0x00A, value) = { vxrm = value[1 .. 0]; zero_extend(vxrm) }
+function clause write_CSR(0x00F, value) = { vcsr.bits = value[2 ..0]; zero_extend(vcsr.bits) }
+function clause write_CSR(0xC20, value) = { vl = value; vl }
+function clause write_CSR(0xC21, value) = { vtype.bits = value; vtype.bits }
+function clause write_CSR(0xC22, value) = { vlenb = value; vlenb }
 
 function clause execute CSR(csr, rs1, rd, is_imm, op) = {
   let rs1_val : xlenbits = if is_imm then zero_extend(rs1) else X(rs1);
@@ -230,14 +207,19 @@ function clause execute CSR(csr, rs1, rd, is_imm, op) = {
   else if not(ext_check_CSR(csr, cur_privilege, isWrite))
   then { ext_check_CSR_fail(); RETIRE_FAIL }
   else {
-    let csr_val = readCSR(csr); /* could have side-effects, so technically shouldn't perform for CSRW[I] with rd == 0 */
+    let csr_val = read_CSR(csr); /* could have side-effects, so technically shouldn't perform for CSRW[I] with rd == 0 */
     if isWrite then {
       let new_val : xlenbits = match op {
         CSRRW => rs1_val,
         CSRRS => csr_val | rs1_val,
         CSRRC => csr_val & ~(rs1_val)
       };
-      writeCSR(csr, new_val)
+      let final_val = write_CSR(csr, new_val);
+      if get_config_print_reg()
+      then print_reg("CSR " ^ to_str(csr) ^ " <- " ^ bits_str(final_val) ^ " (input: " ^ bits_str(new_val) ^ ")")
+    } else {
+      if get_config_print_reg()
+      then print_reg("CSR " ^ to_str(csr) ^ " -> " ^ bits_str(csr_val));
     };
     X(rd) = csr_val;
     RETIRE_SUCCESS

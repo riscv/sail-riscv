@@ -793,7 +793,7 @@ function read_seed_csr() -> xlenbits = {
 }
 
 /* Writes to the seed CSR are ignored */
-function write_seed_csr () -> option(xlenbits) = None()
+function write_seed_csr () -> xlenbits = zeros()
 
 bitfield MEnvcfg : bits(64) = {
   // Supervisor TimeCmp Extension
