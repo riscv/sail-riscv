@@ -34,8 +34,8 @@ function clause is_CSR_defined(0x304) = true // mie
 function clause is_CSR_defined(0x305) = true // mtvec
 function clause is_CSR_defined(0x306) = extensionEnabled(Ext_U) // mcounteren
 function clause is_CSR_defined(0x30A) = extensionEnabled(Ext_U) // menvcfg
-function clause is_CSR_defined(0x310) = sizeof(xlen) == 32 // mstatush
-function clause is_CSR_defined(0x31A) = extensionEnabled(Ext_U) & (sizeof(xlen) == 32) // menvcfgh
+function clause is_CSR_defined(0x310) = xlen == 32 // mstatush
+function clause is_CSR_defined(0x31A) = extensionEnabled(Ext_U) & (xlen == 32) // menvcfgh
 function clause is_CSR_defined(0x320) = true // mcountinhibit
 
 
@@ -47,7 +47,7 @@ function clause is_CSR_defined(0x343) = true // mtval
 function clause is_CSR_defined(0x344) = true // mip
 
 // pmpcfgN
-function clause is_CSR_defined(0x3A) @ idx : bits(4) = sys_pmp_count() > unsigned(idx) & (idx[0] == bitzero | sizeof(xlen) == 32)
+function clause is_CSR_defined(0x3A) @ idx : bits(4) = sys_pmp_count() > unsigned(idx) & (idx[0] == bitzero | xlen == 32)
 
 // pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
 function clause is_CSR_defined(0x3B) @ idx : bits(4) = sys_pmp_count() > unsigned(0b00 @ idx)
@@ -63,10 +63,10 @@ function clause is_CSR_defined(0xB02) = true // minstret
 
 function clause is_CSR_defined(0b1011000 /* 0xB00 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) // mhpmcounter3..31
 
-function clause is_CSR_defined(0xB80) = sizeof(xlen) == 32 // mcycleh
-function clause is_CSR_defined(0xB82) = sizeof(xlen) == 32 // minstreth
+function clause is_CSR_defined(0xB80) = xlen == 32 // mcycleh
+function clause is_CSR_defined(0xB82) = xlen == 32 // minstreth
 
-function clause is_CSR_defined(0b1011100 /* 0xB80 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) & (sizeof(xlen) == 32) // mhpmcounterh3..31
+function clause is_CSR_defined(0b1011100 /* 0xB80 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) & (xlen == 32) // mhpmcounterh3..31
 
 /* disabled trigger/debug module */
 function clause is_CSR_defined(0x7a0) = true
@@ -97,11 +97,11 @@ function clause is_CSR_defined(0xC02) = extensionEnabled(Ext_U) // instret
 
 function clause is_CSR_defined(0b1100000 /* 0xC00 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) & extensionEnabled(Ext_U) // hpmcounter3..31
 
-function clause is_CSR_defined(0xC80) = extensionEnabled(Ext_U) & (sizeof(xlen) == 32) // cycleh
-function clause is_CSR_defined(0xC81) = extensionEnabled(Ext_U) & (sizeof(xlen) == 32) // timeh
-function clause is_CSR_defined(0xC82) = extensionEnabled(Ext_U) & (sizeof(xlen) == 32) // instreth
+function clause is_CSR_defined(0xC80) = extensionEnabled(Ext_U) & (xlen == 32) // cycleh
+function clause is_CSR_defined(0xC81) = extensionEnabled(Ext_U) & (xlen == 32) // timeh
+function clause is_CSR_defined(0xC82) = extensionEnabled(Ext_U) & (xlen == 32) // instreth
 
-function clause is_CSR_defined(0b1100100 /* 0xC80 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) & extensionEnabled(Ext_U) & (sizeof(xlen) == 32) // hpmcounterh3..31
+function clause is_CSR_defined(0b1100100 /* 0xC80 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) & extensionEnabled(Ext_U) & (xlen == 32) // hpmcounterh3..31
 
 /* user mode: Zkr */
 function clause is_CSR_defined(0x015) = extensionEnabled(Ext_Zkr)
@@ -499,7 +499,7 @@ function init_sys() -> unit = {
   mhartid     = zero_extend(0b0);
   mconfigptr  = zero_extend(0b0);
 
-  misa[MXL] = arch_to_bits(if sizeof(xlen) == 32 then RV32 else RV64);
+  misa[MXL] = arch_to_bits(if xlen == 32 then RV32 else RV64);
   misa[A]   = 0b1;                             /* atomics */
   misa[C]   = bool_to_bits(sys_enable_rvc());  /* RVC */
   misa[B]   = bool_to_bits(sys_enable_bext()); /* Bit-manipulation */
@@ -524,7 +524,7 @@ function init_sys() -> unit = {
   mstatus[MPP] = privLevel_to_bits(lowest_supported_privLevel());
 
   /* set to little-endian mode */
-  if sizeof(xlen) == 64 then {
+  if xlen == 64 then {
     mstatus = Mk_Mstatus([mstatus.bits with 37 .. 36 = 0b00])
   };
   mstatush.bits = zero_extend(0b0);
@@ -552,7 +552,7 @@ function init_sys() -> unit = {
   /* initialize vector csrs */
   elen               = 0b1; /* ELEN=64 as the common case */
   vlen               = 0b0100; /* VLEN=512 as a default value */
-  vlenb              = to_bits(sizeof(xlen), 2 ^ (get_vlen_pow() - 3)); /* vlenb holds the constant value VLEN/8 */
+  vlenb              = to_bits(xlen, 2 ^ (get_vlen_pow() - 3)); /* vlenb holds the constant value VLEN/8 */
   /* VLEN value needs to be manually changed currently.
    * See riscv_vlen.sail for details.
    */

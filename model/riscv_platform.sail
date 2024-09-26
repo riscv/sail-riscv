@@ -60,7 +60,7 @@ val plat_clint_size = pure {interpreter: "Platform.clint_size", c: "plat_clint_s
 
 /* Location of HTIF ports */
 val plat_htif_tohost = pure {c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> xlenbits
-function plat_htif_tohost () = to_bits(sizeof(xlen), elf_tohost ())
+function plat_htif_tohost () = to_bits(xlen, elf_tohost ())
 // todo: fromhost
 
 val phys_mem_segments : unit -> list((xlenbits, xlenbits))

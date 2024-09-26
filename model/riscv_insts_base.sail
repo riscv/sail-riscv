@@ -211,21 +211,21 @@ mapping encdec_sop : sop <-> bits(3) = {
   RISCV_SRAI <-> 0b101
 }
 
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SLLI) <-> 0b000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) <-> 0b000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) <-> 0b010000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SLLI) <-> 0b000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == bitzero
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) <-> 0b000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == bitzero
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) <-> 0b010000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == bitzero
 
 function clause execute (SHIFTIOP(shamt, rs1, rd, op)) = {
   let rs1_val = X(rs1);
   /* the decoder guard should ensure that shamt[5] = 0 for RV32 */
   let result : xlenbits = match op {
-    RISCV_SLLI => if   sizeof(xlen) == 32
+    RISCV_SLLI => if   xlen == 32
                   then rs1_val << shamt[4..0]
                   else rs1_val << shamt,
-    RISCV_SRLI => if   sizeof(xlen) == 32
+    RISCV_SRLI => if   xlen == 32
                   then rs1_val >> shamt[4..0]
                   else rs1_val >> shamt,
-    RISCV_SRAI => if   sizeof(xlen) == 32
+    RISCV_SRAI => if   xlen == 32
                   then shift_right_arith32(rs1_val, shamt[4..0])
                   else shift_right_arith64(rs1_val, shamt)
   };
@@ -266,14 +266,14 @@ function clause execute (RTYPE(rs2, rs1, rd, op)) = {
     RISCV_AND  => rs1_val & rs2_val,
     RISCV_OR   => rs1_val | rs2_val,
     RISCV_XOR  => rs1_val ^ rs2_val,
-    RISCV_SLL  => if   sizeof(xlen) == 32
+    RISCV_SLL  => if   xlen == 32
                   then rs1_val << (rs2_val[4..0])
                   else rs1_val << (rs2_val[5..0]),
-    RISCV_SRL  => if   sizeof(xlen) == 32
+    RISCV_SRL  => if   xlen == 32
                   then rs1_val >> (rs2_val[4..0])
                   else rs1_val >> (rs2_val[5..0]),
     RISCV_SUB  => rs1_val - rs2_val,
-    RISCV_SRA  => if   sizeof(xlen) == 32
+    RISCV_SRA  => if   xlen == 32
                   then shift_right_arith32(rs1_val, rs2_val[4..0])
                   else shift_right_arith64(rs1_val, rs2_val[5..0])
   };
@@ -417,9 +417,9 @@ mapping clause assembly = STORE(imm, rs2, rs1, size, aq, rl)
 union clause ast = ADDIW : (bits(12), regidx, regidx)
 
 mapping clause encdec = ADDIW(imm, rs1, rd)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> imm @ rs1 @ 0b000 @ rd @ 0b0011011
-      if sizeof(xlen) == 64
+      if xlen == 64
 
 function clause execute (ADDIW(imm, rs1, rd)) = {
   let result : xlenbits = sign_extend(imm) + X(rs1);
@@ -428,33 +428,33 @@ function clause execute (ADDIW(imm, rs1, rd)) = {
 }
 
 mapping clause assembly = ADDIW(imm, rs1, rd)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> "addiw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
-      if sizeof(xlen) == 64
+      if xlen == 64
 
 /* ****************************************************************** */
 union clause ast = RTYPEW : (regidx, regidx, regidx, ropw)
 
 mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_ADDW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0000000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
-      if sizeof(xlen) == 64
+      if xlen == 64
 mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SUBW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0100000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
-      if sizeof(xlen) == 64
+      if xlen == 64
 mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SLLW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0000000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0111011
-      if sizeof(xlen) == 64
+      if xlen == 64
 mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SRLW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0000000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0111011
-      if sizeof(xlen) == 64
+      if xlen == 64
 mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SRAW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0100000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0111011
-      if sizeof(xlen) == 64
+      if xlen == 64
 
 function clause execute (RTYPEW(rs2, rs1, rd, op)) = {
   let rs1_val = (X(rs1))[31..0];
@@ -479,25 +479,25 @@ mapping rtypew_mnemonic : ropw <-> string = {
 }
 
 mapping clause assembly = RTYPEW(rs2, rs1, rd, op)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> rtypew_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
-      if sizeof(xlen) == 64
+      if xlen == 64
 
 /* ****************************************************************** */
 union clause ast = SHIFTIWOP : (bits(5), regidx, regidx, sopw)
 
 mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SLLIW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0011011
-      if sizeof(xlen) == 64
+      if xlen == 64
 mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRLIW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
-      if sizeof(xlen) == 64
+      if xlen == 64
 mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRAIW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0100000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
-      if sizeof(xlen) == 64
+      if xlen == 64
 
 function clause execute (SHIFTIWOP(shamt, rs1, rd, op)) = {
   let rs1_val = (X(rs1))[31..0];
@@ -517,9 +517,9 @@ mapping shiftiwop_mnemonic : sopw <-> string = {
 }
 
 mapping clause assembly = SHIFTIWOP(shamt, rs1, rd, op)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> shiftiwop_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_5(shamt)
-      if sizeof(xlen) == 64
+      if xlen == 64
 
 /* ****************************************************************** */
 union clause ast = FENCE : (bits(4), bits(4))

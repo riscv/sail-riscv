@@ -1056,7 +1056,7 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
   let 'm = SEW;
 
   let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let imm_val : nat                       = unsigned(zero_extend(sizeof(xlen), simm));
+  let imm_val : nat                       = unsigned(zero_extend(xlen, simm));
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
@@ -1191,7 +1191,7 @@ mapping clause encdec = VMVRTYPE(vs2, simm, vd) if extensionEnabled(Ext_V)
 function clause execute(VMVRTYPE(vs2, simm, vd)) = {
   let start_element = get_start_element();
   let SEW     = get_sew();
-  let imm_val = unsigned(zero_extend(sizeof(xlen), simm));
+  let imm_val = unsigned(zero_extend(xlen, simm));
   let EMUL    = imm_val + 1;
 
   if not(EMUL == 1 | EMUL == 2 | EMUL == 4 | EMUL == 8) then { handle_illegal(); return RETIRE_FAIL };
@@ -1778,8 +1778,8 @@ function clause execute(VMVXS(vs2, rd)) = {
   let 'm = SEW;
 
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, 0, vs2);
-  X(rd) = if sizeof(xlen) < SEW then slice(vs2_val[0], 0, sizeof(xlen))
-          else if sizeof(xlen) > SEW then sign_extend(vs2_val[0])
+  X(rd) = if xlen < SEW then slice(vs2_val[0], 0, xlen)
+          else if xlen > SEW then sign_extend(vs2_val[0])
           else vs2_val[0];
   vstart = zeros();
 

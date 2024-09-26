@@ -7,7 +7,7 @@
 /*=======================================================================================*/
 
 enum clause extension = Ext_Zcd
-function clause extensionEnabled(Ext_Zcd) = extensionEnabled(Ext_Zca) & extensionEnabled(Ext_D) & (sizeof(xlen) == 32 | sizeof(xlen) == 64)
+function clause extensionEnabled(Ext_Zcd) = extensionEnabled(Ext_Zca) & extensionEnabled(Ext_D) & (xlen == 32 | xlen == 64)
 
 union clause ast = C_FLDSP : (bits(6), regidx)
 
@@ -20,9 +20,9 @@ function clause execute (C_FLDSP(uimm, rd)) = {
 }
 
 mapping clause assembly = C_FLDSP(uimm, rd)
-      if (sizeof(xlen) == 32 | sizeof(xlen) == 64)
+      if (xlen == 32 | xlen == 64)
   <-> "c.fldsp" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_6(uimm)
-      if (sizeof(xlen) == 32 | sizeof(xlen) == 64)
+      if (xlen == 32 | xlen == 64)
 
 /* ****************************************************************** */
 union clause ast = C_FSDSP : (bits(6), regidx)
@@ -36,9 +36,9 @@ function clause execute (C_FSDSP(uimm, rs2)) = {
 }
 
 mapping clause assembly = C_FSDSP(uimm, rs2)
-      if (sizeof(xlen) == 32 | sizeof(xlen) == 64)
+      if (xlen == 32 | xlen == 64)
   <-> "c.fsdsp" ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_6(uimm)
-      if (sizeof(xlen) == 32 | sizeof(xlen) == 64)
+      if (xlen == 32 | xlen == 64)
 
 /* ****************************************************************** */
 union clause ast = C_FLD : (bits(5), cregidx, cregidx)
@@ -54,9 +54,9 @@ function clause execute (C_FLD(uimm, rsc, rdc)) = {
 }
 
 mapping clause assembly = C_FLD(uimm, rsc, rdc)
-      if (sizeof(xlen) == 32 | sizeof(xlen) == 64)
+      if (xlen == 32 | xlen == 64)
   <-> "c.fld" ^ spc() ^ creg_name(rdc) ^ sep() ^ creg_name(rsc) ^ sep() ^ hex_bits_8(uimm @ 0b000)
-      if (sizeof(xlen) == 32 | sizeof(xlen) == 64)
+      if (xlen == 32 | xlen == 64)
 
 /* ****************************************************************** */
 union clause ast = C_FSD : (bits(5), cregidx, cregidx)
@@ -72,6 +72,6 @@ function clause execute (C_FSD(uimm, rsc1, rsc2)) = {
 }
 
 mapping clause assembly = C_FSD(uimm, rsc1, rsc2)
-      if (sizeof(xlen) == 32 | sizeof(xlen) == 64)
+      if (xlen == 32 | xlen == 64)
   <-> "c.fsd" ^ spc() ^ creg_name(rsc1) ^ sep() ^ creg_name(rsc2) ^ sep() ^ hex_bits_8(uimm @ 0b000)
-      if (sizeof(xlen) == 32 | sizeof(xlen) == 64)
+      if (xlen == 32 | xlen == 64)

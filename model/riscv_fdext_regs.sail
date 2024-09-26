@@ -278,7 +278,7 @@ function rF_or_X_D(i) = {
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_D(i)
-  else if sizeof(xlen) >= 64
+  else if xlen >= 64
   then X(i)[63..0]
   else {
     assert(i[0] == bitzero);
@@ -310,7 +310,7 @@ function wF_or_X_D(i, data) = {
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_D(i) = data
-  else if sizeof(xlen) >= 64
+  else if xlen >= 64
   then X(i) = sign_extend(data)
   else {
     assert (i[0] == bitzero);

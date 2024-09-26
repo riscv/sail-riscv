@@ -167,8 +167,8 @@ function clause execute C_SEXT_H(rsdc) = {
 union clause ast = C_ZEXT_W : (cregidx)
 
 mapping clause encdec_compressed =
-      C_ZEXT_W(rsdc)                                       if extensionEnabled(Ext_Zcb) & extensionEnabled(Ext_Zba) & sizeof(xlen) == 64
-  <-> 0b100 @ 0b111 @ rsdc : cregidx @ 0b11 @ 0b100 @ 0b01 if extensionEnabled(Ext_Zcb) & extensionEnabled(Ext_Zba) & sizeof(xlen) == 64
+      C_ZEXT_W(rsdc)                                       if extensionEnabled(Ext_Zcb) & extensionEnabled(Ext_Zba) & xlen == 64
+  <-> 0b100 @ 0b111 @ rsdc : cregidx @ 0b11 @ 0b100 @ 0b01 if extensionEnabled(Ext_Zcb) & extensionEnabled(Ext_Zba) & xlen == 64
 
 mapping clause assembly = C_ZEXT_W(rsdc) <->
   "c.zext.w" ^ spc() ^ creg_name(rsdc)

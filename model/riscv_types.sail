@@ -22,11 +22,11 @@ scattered function extensionEnabled
 /* this value is only defined for the runtime platform for ELF loading
  * checks, and not used in the model.
  */
-let xlen_val = sizeof(xlen)
+let xlen_val = xlen
 
-let xlen_max_unsigned = 2 ^ sizeof(xlen) - 1
-let xlen_max_signed = 2 ^ (sizeof(xlen) - 1) - 1
-let xlen_min_signed = 0 - 2 ^ (sizeof(xlen) - 1)
+let xlen_max_unsigned = 2 ^ xlen - 1
+let xlen_max_signed = 2 ^ (xlen - 1) - 1
+let xlen_min_signed = 0 - 2 ^ (xlen - 1)
 
 type half = bits(16)
 type word = bits(32)
@@ -408,5 +408,5 @@ struct mul_op = {
 val report_invalid_width : forall ('a : Type). (string, int, word_width, string) -> 'a
 function report_invalid_width(f , l, w, k) -> 'a = {
   internal_error(f, l, "Invalid width, " ^ size_mnemonic(w) ^ ", for " ^ k ^
-     " with xlen=" ^ dec_str(sizeof(xlen)))
+     " with xlen=" ^ dec_str(xlen))
 }

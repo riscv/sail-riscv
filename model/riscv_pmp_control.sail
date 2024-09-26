@@ -113,7 +113,7 @@ function accessToFault(acc : AccessType(ext_access_type)) -> ExceptionType =
 
 function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: int('n), acc: AccessType(ext_access_type), priv: Privilege)
                   -> option(ExceptionType) = {
-  let width : xlenbits = to_bits(sizeof(xlen), width);
+  let width : xlenbits = to_bits(xlen, width);
 
   foreach (i from 0 to 63) {
     let prev_pmpaddr = (if i > 0 then pmpReadAddrReg(i - 1) else zeros());

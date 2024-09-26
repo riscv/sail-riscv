@@ -16,7 +16,7 @@
 /* ****************************************************************** */
 
 enum clause extension = Ext_Zcf
-function clause extensionEnabled(Ext_Zcf) = extensionEnabled(Ext_Zca) & extensionEnabled(Ext_F) & sizeof(xlen) == 32
+function clause extensionEnabled(Ext_Zcf) = extensionEnabled(Ext_Zca) & extensionEnabled(Ext_F) & xlen == 32
 
 union clause ast = C_FLWSP : (bits(6), regidx)
 
@@ -29,9 +29,9 @@ function clause execute (C_FLWSP(imm, rd)) = {
 }
 
 mapping clause assembly = C_FLWSP(imm, rd)
-      if sizeof(xlen) == 32
+      if xlen == 32
   <-> "c.flwsp" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_6(imm)
-      if sizeof(xlen) == 32
+      if xlen == 32
 
 /* ****************************************************************** */
 union clause ast = C_FSWSP : (bits(6), regidx)
@@ -45,9 +45,9 @@ function clause execute (C_FSWSP(uimm, rs2)) = {
 }
 
 mapping clause assembly = C_FSWSP(uimm, rs2)
-      if sizeof(xlen) == 32
+      if xlen == 32
   <-> "c.fswsp" ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_6(uimm)
-      if sizeof(xlen) == 32
+      if xlen == 32
 
 /* ****************************************************************** */
 union clause ast = C_FLW : (bits(5), cregidx, cregidx)
@@ -63,9 +63,9 @@ function clause execute (C_FLW(uimm, rsc, rdc)) = {
 }
 
 mapping clause assembly = C_FLW(uimm, rsc, rdc)
-      if sizeof(xlen) == 32
+      if xlen == 32
   <-> "c.flw" ^ spc() ^ creg_name(rdc) ^ sep() ^ creg_name(rsc) ^ sep() ^ hex_bits_7(uimm @ 0b00)
-      if sizeof(xlen) == 32
+      if xlen == 32
 
 /* ****************************************************************** */
 union clause ast = C_FSW : (bits(5), cregidx, cregidx)
@@ -81,6 +81,6 @@ function clause execute (C_FSW(uimm, rsc1, rsc2)) = {
 }
 
 mapping clause assembly = C_FSW(uimm, rsc1, rsc2)
-      if sizeof(xlen) == 32
+      if xlen == 32
   <-> "c.fsw" ^ spc() ^ creg_name(rsc1) ^ sep() ^ creg_name(rsc2) ^ sep() ^ hex_bits_7(uimm @ 0b00)
-      if sizeof(xlen) == 32
+      if xlen == 32

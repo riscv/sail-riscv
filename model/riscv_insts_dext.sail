@@ -233,7 +233,7 @@ function haveDoubleFPU() -> bool = extensionEnabled(Ext_D) | extensionEnabled(Ex
 /* not used for RV32Zdinx (i.e. RV64-only or D-only).               */
 val validDoubleRegs : forall 'n, 'n > 0. (implicit('n), vector('n, regidx)) -> bool
 function validDoubleRegs(n, regs) = {
-  if extensionEnabled(Ext_Zdinx) & sizeof(xlen) == 32 then
+  if extensionEnabled(Ext_Zdinx) & xlen == 32 then
     foreach (i from 0 to (n - 1))
       if (regs[i][0] == bitone) then return false;
   true
@@ -417,20 +417,20 @@ mapping clause encdec =
 /* D instructions, RV64 only */
 
 mapping clause encdec =
-    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)                                     if haveDoubleFPU() & sizeof(xlen) >= 64
-<-> 0b110_0001 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveDoubleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)                                     if haveDoubleFPU() & xlen >= 64
+<-> 0b110_0001 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveDoubleFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_LU_D)                                    if haveDoubleFPU() & sizeof(xlen) >= 64
-<-> 0b110_0001 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveDoubleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_LU_D)                                    if haveDoubleFPU() & xlen >= 64
+<-> 0b110_0001 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveDoubleFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_L)                                     if haveDoubleFPU() & sizeof(xlen) >= 64
-<-> 0b110_1001 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveDoubleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_L)                                     if haveDoubleFPU() & xlen >= 64
+<-> 0b110_1001 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveDoubleFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_LU)                                    if haveDoubleFPU() & sizeof(xlen) >= 64
-<-> 0b110_1001 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveDoubleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_LU)                                    if haveDoubleFPU() & xlen >= 64
+<-> 0b110_1001 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveDoubleFPU() & xlen >= 64
 
 /* Execution semantics ================================ */
 
@@ -540,7 +540,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_S)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_D = F_or_X_D(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -556,7 +556,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_L_D)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_LU_D)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_D = F_or_X_D(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -572,7 +572,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_LU_D)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_L)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_L = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -588,7 +588,7 @@ function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_L)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_D(rs1, rm, rd, FCVT_D_LU)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_LU = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -905,11 +905,11 @@ mapping clause encdec = F_UN_TYPE_D(rs1, rd, FCLASS_D)                        if
 
 /* D instructions, RV64 only */
 
-mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_X_D)                         if extensionEnabled(Ext_D) & sizeof(xlen) >= 64
-                    <-> 0b111_0001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_D) & sizeof(xlen) >= 64
+mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_X_D)                         if extensionEnabled(Ext_D) & xlen >= 64
+                    <-> 0b111_0001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_D) & xlen >= 64
 
-mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_D_X)                         if extensionEnabled(Ext_D) & sizeof(xlen) >= 64
-                    <-> 0b111_1001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_D) & sizeof(xlen) >= 64
+mapping clause encdec = F_UN_TYPE_D(rs1, rd, FMV_D_X)                         if extensionEnabled(Ext_D) & xlen >= 64
+                    <-> 0b111_1001 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_D) & xlen >= 64
 
 /* Execution semantics ================================ */
 
@@ -934,7 +934,7 @@ function clause execute (F_UN_TYPE_D(rs1, rd, FCLASS_D)) = {
 }
 
 function clause execute (F_UN_TYPE_D(rs1, rd, FMV_X_D)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_D            = F(rs1)[63..0];
   let rd_val_X  : xlenbits = sign_extend(rs1_val_D);
   X(rd) = rd_val_X;
@@ -942,7 +942,7 @@ function clause execute (F_UN_TYPE_D(rs1, rd, FMV_X_D)) = {
 }
 
 function clause execute (F_UN_TYPE_D(rs1, rd, FMV_D_X)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_X            = X(rs1);
   let rd_val_D             = rs1_val_X [63..0];
   F(rd) = rd_val_D;

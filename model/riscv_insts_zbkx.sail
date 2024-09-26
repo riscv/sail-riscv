@@ -22,9 +22,9 @@ function clause execute (RISCV_XPERM8(rs2, rs1, rd)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   var result : xlenbits = zeros();
-  foreach (i from 0 to (sizeof(xlen) - 8) by 8) {
+  foreach (i from 0 to (xlen - 8) by 8) {
     let index = unsigned(rs2_val[i+7..i]);
-    result[i+7..i] = if 8*index < sizeof(xlen)
+    result[i+7..i] = if 8*index < xlen
                      then rs1_val[8*index+7..8*index]
                      else zeros()
   };
@@ -45,9 +45,9 @@ function clause execute (RISCV_XPERM4(rs2, rs1, rd)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   var result : xlenbits = zeros();
-  foreach (i from 0 to (sizeof(xlen) - 4) by 4) {
+  foreach (i from 0 to (xlen - 4) by 4) {
     let index = unsigned(rs2_val[i+3..i]);
-    result[i+3..i] = if 4*index < sizeof(xlen)
+    result[i+3..i] = if 4*index < xlen
                      then rs1_val[4*index+3..4*index]
                      else zeros()
   };

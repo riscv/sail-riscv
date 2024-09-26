@@ -105,7 +105,7 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
     if mask[i] & vs2_val[i] then count = count + 1;
   };
 
-  X(rd) = to_bits(sizeof(xlen), count);
+  X(rd) = to_bits(xlen, count);
   vstart = zeros();
   RETIRE_SUCCESS
 }
@@ -141,7 +141,7 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
     };
   };
 
-  X(rd) = to_bits(sizeof(xlen), index);
+  X(rd) = to_bits(xlen, index);
   vstart = zeros();
   RETIRE_SUCCESS
 }

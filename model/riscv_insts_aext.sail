@@ -38,7 +38,7 @@ function lrsc_width_str(width : word_width) -> string =
 function lrsc_width_valid(size : word_width) -> bool = {
   match size {
     WORD   => true,
-    DOUBLE => sizeof(xlen) >= 64,
+    DOUBLE => xlen >= 64,
     _      => false
   }
 }
@@ -48,7 +48,7 @@ function amo_width_valid(size : word_width) -> bool = {
     BYTE   => extensionEnabled(Ext_Zabha),
     HALF   => extensionEnabled(Ext_Zabha),
     WORD   => true,
-    DOUBLE => sizeof(xlen) >= 64,
+    DOUBLE => xlen >= 64,
   }
 }
 
