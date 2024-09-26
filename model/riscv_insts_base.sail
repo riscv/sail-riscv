@@ -302,8 +302,8 @@ union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width, bool, boo
 
 /* unsigned loads are only present for widths strictly less than xlen,
    signed loads also present for widths equal to xlen */
-mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (size_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & size_bytes(size) <= sizeof(xlen_bytes))
-  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_enc(size) @ rd @ 0b0000011 if (size_bytes(size) < sizeof(xlen_bytes)) | (not(is_unsigned) & size_bytes(size) <= sizeof(xlen_bytes))
+mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (size_bytes(size) < xlen_bytes) | (not(is_unsigned) & size_bytes(size) <= xlen_bytes)
+  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_enc(size) @ rd @ 0b0000011 if (size_bytes(size) < xlen_bytes) | (not(is_unsigned) & size_bytes(size) <= xlen_bytes)
 
 val extend_value : forall 'n, 0 < 'n <= xlen. (bool, bits('n)) -> xlenbits
 function extend_value(is_unsigned, value) = if is_unsigned then zero_extend(value) else sign_extend(value)
@@ -325,7 +325,7 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   let width_bytes = size_bytes(width);
 
   // This is checked during decoding.
-  assert(width_bytes <= sizeof(xlen_bytes));
+  assert(width_bytes <= xlen_bytes);
 
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
@@ -371,8 +371,8 @@ mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, size, aq, rl)
 /* ****************************************************************** */
 union clause ast = STORE : (bits(12), regidx, regidx, word_width, bool, bool)
 
-mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)              if size_bytes(size) <= sizeof(xlen_bytes)
-  <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ imm5 : bits(5) @ 0b0100011 if size_bytes(size) <= sizeof(xlen_bytes)
+mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)              if size_bytes(size) <= xlen_bytes
+  <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ imm5 : bits(5) @ 0b0100011 if size_bytes(size) <= xlen_bytes
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
@@ -381,7 +381,7 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
   let width_bytes = size_bytes(width);
 
   // This is checked during decoding.
-  assert(width_bytes <= sizeof(xlen_bytes));
+  assert(width_bytes <= xlen_bytes);
 
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */

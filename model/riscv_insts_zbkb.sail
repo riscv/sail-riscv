@@ -27,7 +27,7 @@ function clause execute (ZBKB_RTYPE(rs2, rs1, rd, op)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   let result : xlenbits = match op {
-    RISCV_PACK  => rs2_val[(sizeof(xlen_bytes)*4 - 1)..0] @ rs1_val[(sizeof(xlen_bytes)*4 - 1)..0],
+    RISCV_PACK  => rs2_val[(xlen_bytes*4 - 1)..0] @ rs1_val[(xlen_bytes*4 - 1)..0],
     RISCV_PACKH => zero_extend(rs2_val[7..0] @ rs1_val[7..0])
   };
   X(rd) = result;
@@ -65,9 +65,9 @@ function clause execute (RISCV_ZIP(rs1, rd)) = {
   assert(xlen == 32);
   let rs1_val = X(rs1);
   var result : xlenbits = zeros();
-  foreach (i from 0 to (sizeof(xlen_bytes)*4 - 1)) {
+  foreach (i from 0 to (xlen_bytes*4 - 1)) {
     result[i*2] = rs1_val[i];
-    result[i*2 + 1] = rs1_val[i + sizeof(xlen_bytes)*4];
+    result[i*2 + 1] = rs1_val[i + xlen_bytes*4];
   };
   X(rd) = result;
   RETIRE_SUCCESS
@@ -86,9 +86,9 @@ function clause execute (RISCV_UNZIP(rs1, rd)) = {
   assert(xlen == 32);
   let rs1_val = X(rs1);
   var result : xlenbits = zeros();
-  foreach (i from 0 to (sizeof(xlen_bytes)*4 - 1)) {
+  foreach (i from 0 to (xlen_bytes*4 - 1)) {
     result[i] = rs1_val[i*2];
-    result[i + sizeof(xlen_bytes)*4] = rs1_val[i*2 + 1];
+    result[i + xlen_bytes*4] = rs1_val[i*2 + 1];
   };
   X(rd) = result;
   RETIRE_SUCCESS
