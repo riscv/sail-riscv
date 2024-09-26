@@ -288,7 +288,7 @@ mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if extensionEnabled
 val process_fload64 : (regidx, xlenbits, MemoryOpResult(bits(64)))
                       -> Retired
 function process_fload64(rd, addr, value) =
-  if   sizeof(flen) == 64
+  if   flen == 64
   then match value {
          MemValue(result) => { F(rd) = result; RETIRE_SUCCESS },
          MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
@@ -333,7 +333,7 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
                process_fload16(rd, vaddr, mem_read(Read(Data), addr, 2, aq, rl, res)),
             WORD =>
                process_fload32(rd, vaddr, mem_read(Read(Data), addr, 4, aq, rl, res)),
-            DOUBLE if sizeof(flen) >= 64 =>
+            DOUBLE if flen >= 64 =>
                process_fload64(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, res)),
             _ => report_invalid_width(__FILE__, __LINE__, width, "floating point load"),
           }
@@ -406,7 +406,7 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
                 BYTE => { handle_illegal(); RETIRE_FAIL },
                 HALF => process_fstore (vaddr, mem_write_value(addr, 2, rs2_val[15..0], aq, rl, con)),
                 WORD => process_fstore (vaddr, mem_write_value(addr, 4, rs2_val[31..0], aq, rl, con)),
-                DOUBLE if sizeof(flen) >= 64 =>
+                DOUBLE if flen >= 64 =>
                   process_fstore (vaddr, mem_write_value(addr, 8, rs2_val, aq, rl, con)),
                 _ => report_invalid_width(__FILE__, __LINE__, width, "floating point store"),
               };

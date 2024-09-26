@@ -816,7 +816,7 @@ function clause execute(VFMVFS(vs2, rd)) = {
   let SEW      = get_sew();
   let num_elem = get_num_elem(0, SEW);
 
-  if illegal_fp_vd_unmasked(SEW, rm_3b) | SEW > sizeof(flen)
+  if illegal_fp_vd_unmasked(SEW, rm_3b) | SEW > flen
   then { handle_illegal(); return RETIRE_FAIL };
   assert(num_elem > 0 & SEW != 8);
 

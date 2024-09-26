@@ -30,13 +30,13 @@ function canonical_NaN_D() -> bits(64) = 0x_7ff8_0000_0000_0000
 
 val      nan_box_H : bits(16) -> flenbits
 function nan_box_H   val_16b =
-  if (sizeof(flen) == 32)
+  if (flen == 32)
   then 0x_FFFF @ val_16b
   else 0x_FFFF_FFFF_FFFF @ val_16b
 
 val      nan_unbox_H : flenbits -> bits(16)
 function nan_unbox_H   regval =
-  if (sizeof(flen) == 32)
+  if (flen == 32)
   then if regval [31..16] == 0x_FFFF
        then regval [15..0]
        else canonical_NaN_H()
@@ -47,7 +47,7 @@ function nan_unbox_H   regval =
 val nan_box_S : bits(32) -> flenbits
 function nan_box_S val_32b = {
   assert(sys_enable_fdext());
-  if (sizeof(flen) == 32)
+  if (flen == 32)
   then val_32b
   else 0x_FFFF_FFFF @ val_32b
 }
@@ -55,7 +55,7 @@ function nan_box_S val_32b = {
 val nan_unbox_S : flenbits -> bits(32)
 function nan_unbox_S regval = {
   assert(sys_enable_fdext());
-  if (sizeof(flen) == 32)
+  if (flen == 32)
   then regval
   else if regval [63..32] == 0x_FFFF_FFFF
        then regval [31..0]
@@ -210,42 +210,42 @@ overload F = {rF_bits, wF_bits, rF, wF}
 
 val rF_H : regidx -> bits(16)
 function rF_H(i) = {
-  assert(sizeof(flen) >= 16);
+  assert(flen >= 16);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   nan_unbox(F(i))
 }
 
 val wF_H : (regidx, bits(16)) -> unit
 function wF_H(i, data) = {
-  assert(sizeof(flen) >= 16);
+  assert(flen >= 16);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i) = nan_box(data)
 }
 
 val rF_S : regidx -> bits(32)
 function rF_S(i) = {
-  assert(sizeof(flen) >= 32);
+  assert(flen >= 32);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   nan_unbox(F(i))
 }
 
 val wF_S : (regidx, bits(32)) -> unit
 function wF_S(i, data) = {
-  assert(sizeof(flen) >= 32);
+  assert(flen >= 32);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i) = nan_box(data)
 }
 
 val rF_D : regidx -> bits(64)
 function rF_D(i) = {
-  assert(sizeof(flen) >= 64);
+  assert(flen >= 64);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i)
 }
 
 val wF_D : (regidx, bits(64)) -> unit
 function wF_D(i, data) = {
-  assert(sizeof(flen) >= 64);
+  assert(flen >= 64);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i) = data
 }
@@ -256,7 +256,7 @@ overload F_D = { rF_D, wF_D }
 
 val rF_or_X_H : regidx -> bits(16)
 function rF_or_X_H(i) = {
-  assert(sizeof(flen) >= 16);
+  assert(flen >= 16);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_H(i)
@@ -265,7 +265,7 @@ function rF_or_X_H(i) = {
 
 val rF_or_X_S : regidx -> bits(32)
 function rF_or_X_S(i) = {
-  assert(sizeof(flen) >= 32);
+  assert(flen >= 32);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_S(i)
@@ -274,7 +274,7 @@ function rF_or_X_S(i) = {
 
 val rF_or_X_D : regidx -> bits(64)
 function rF_or_X_D(i) = {
-  assert(sizeof(flen) >= 64);
+  assert(flen >= 64);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_D(i)
@@ -288,7 +288,7 @@ function rF_or_X_D(i) = {
 
 val wF_or_X_H : (regidx, bits(16)) -> unit
 function wF_or_X_H(i, data) = {
-  assert(sizeof(flen) >= 16);
+  assert(flen >= 16);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_H(i) = data
@@ -297,7 +297,7 @@ function wF_or_X_H(i, data) = {
 
 val wF_or_X_S : (regidx, bits(32)) -> unit
 function wF_or_X_S(i, data) = {
-  assert(sizeof(flen) >= 32);
+  assert(flen >= 32);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_S(i) = data
@@ -306,7 +306,7 @@ function wF_or_X_S(i, data) = {
 
 val wF_or_X_D : (regidx, bits(64)) -> unit
 function wF_or_X_D(i, data) = {
-  assert (sizeof(flen) >= 64);
+  assert (flen >= 64);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_D(i) = data

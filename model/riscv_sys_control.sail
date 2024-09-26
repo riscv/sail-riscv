@@ -514,7 +514,7 @@ function init_sys() -> unit = {
 
   /* We currently support both F and D */
   misa[F]   = bool_to_bits(sys_enable_fdext());      /* single-precision */
-  misa[D]   = if   sizeof(flen) >= 64
+  misa[D]   = if   flen >= 64
                 then bool_to_bits(sys_enable_fdext())  /* double-precision */
                 else 0b0;
 
