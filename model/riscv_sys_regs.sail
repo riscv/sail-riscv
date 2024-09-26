@@ -309,6 +309,10 @@ function in32BitMode() -> bool = {
   cur_Architecture() == RV32
 }
 
+function in64BitMode() -> bool = {
+  cur_Architecture() == RV64
+}
+
 /* interrupt processing state */
 
 bitfield Minterrupts : xlenbits = {

@@ -16,9 +16,9 @@
 
 /* **************************************************************** */
 /* IMPORTANT!                                                       */
-/* The files 'riscv_insts_fext.sail', 'riscv_insts_dext.sail' and   */
-/* 'riscv_insts_zfh.sail' define the F, D and Zfh extensions,       */
-/* respectively.                                                    */
+/* The files 'riscv_insts_fext.sail', 'riscv_insts_dext.sail',      */
+/* 'riscv_insts_qext.sail' and 'riscv_insts_zfh.sail' define the    */
+/* F, D, Q and Zfh extensions, respectively.                        */
 /* The texts follow each other very closely; please try to maintain */
 /* this correspondence as the files are maintained for bug-fixes,   */
 /* improvements, and version updates.                               */
@@ -945,7 +945,7 @@ function clause execute (F_UN_TYPE_D(rs1, rd, FMV_D_X)) = {
   assert(sizeof(xlen) >= 64);
   let rs1_val_X            = X(rs1);
   let rd_val_D             = rs1_val_X [63..0];
-  F(rd) = rd_val_D;
+  F_D(rd) = rd_val_D;
   RETIRE_SUCCESS
 }
 
