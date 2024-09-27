@@ -71,18 +71,25 @@ function nvFlag() -> bits(5) = 0b_10000
 /* **************************************************************** */
 /* S and D value structure (sign, exponent, mantissa)               */
 
-/* TODO: this should be a 'mapping' */
 val      fsplit_S : bits(32) -> (bits(1), bits(8), bits(23))
 function fsplit_S   x32 = (x32[31..31], x32[30..23], x32[22..0])
 
 val      fmake_S  : (bits(1), bits(8), bits(23)) -> bits(32)
 function fmake_S (sign, exp, mant) = sign @ exp @ mant
 
+val fExtractor_S : bits(32) <-> (bits(1), bits(8), bits(23))
+function fExtractor_S_forwards(x32) = fsplit_S(x32)
+function fExtractor_S_forwards_matches(x32) = true
+function fExtractor_S_backwards(sign, exp, mant) = fmake_S(sign, exp, mant)
+function fExtractor_S_backwards_matches(sign, exp, mant) = true
+
+mapping fstruct_S : bits(32) <-> (bits(1), bits(8), bits(23)) = {fExtractor_S(sign, exp, mant) <-> (sign, exp, mant)}
+
 /* ---- Structure tests */
 
 val      f_is_neg_inf_S : bits(32) -> bool
 function f_is_neg_inf_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
+  let (sign, exp, mant) = fstruct_S (x32);
   (  (sign == 0b1)
    & (exp  == ones())
    & (mant == zeros()))
@@ -90,7 +97,7 @@ function f_is_neg_inf_S   x32 = {
 
 val      f_is_neg_norm_S : bits(32) -> bool
 function f_is_neg_norm_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
+  let (sign, exp, mant) = fstruct_S (x32);
   (  (sign == 0b1)
    & (exp  != zeros())
    & (exp  != ones()))
@@ -98,7 +105,7 @@ function f_is_neg_norm_S   x32 = {
 
 val      f_is_neg_subnorm_S : bits(32) -> bool
 function f_is_neg_subnorm_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
+  let (sign, exp, mant) = fstruct_S (x32);
   (  (sign == 0b1)
    & (exp  == zeros())
    & (mant != zeros()))
@@ -106,7 +113,7 @@ function f_is_neg_subnorm_S   x32 = {
 
 val      f_is_neg_zero_S : bits(32) -> bool
 function f_is_neg_zero_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
+  let (sign, exp, mant) = fstruct_S (x32);
   (  (sign == ones())
    & (exp  == zeros())
    & (mant == zeros()))
@@ -114,7 +121,7 @@ function f_is_neg_zero_S   x32 = {
 
 val      f_is_pos_zero_S : bits(32) -> bool
 function f_is_pos_zero_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
+  let (sign, exp, mant) = fstruct_S (x32);
   (  (sign == zeros())
    & (exp  == zeros())
    & (mant == zeros()))
@@ -122,7 +129,7 @@ function f_is_pos_zero_S   x32 = {
 
 val      f_is_pos_subnorm_S : bits(32) -> bool
 function f_is_pos_subnorm_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
+  let (sign, exp, mant) = fstruct_S (x32);
   (  (sign == zeros())
    & (exp  == zeros())
    & (mant != zeros()))
@@ -130,7 +137,7 @@ function f_is_pos_subnorm_S   x32 = {
 
 val      f_is_pos_norm_S : bits(32) -> bool
 function f_is_pos_norm_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
+  let (sign, exp, mant) = fstruct_S (x32);
   (  (sign == zeros())
    & (exp  != zeros())
    & (exp  != ones()))
@@ -138,7 +145,7 @@ function f_is_pos_norm_S   x32 = {
 
 val      f_is_pos_inf_S : bits(32) -> bool
 function f_is_pos_inf_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
+  let (sign, exp, mant) = fstruct_S (x32);
   (  (sign == zeros())
    & (exp  == ones())
    & (mant == zeros()))
@@ -146,7 +153,7 @@ function f_is_pos_inf_S   x32 = {
 
 val      f_is_SNaN_S : bits(32) -> bool
 function f_is_SNaN_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
+  let (sign, exp, mant) = fstruct_S (x32);
   (  (exp == ones())
    & (mant [22] == bitzero)
    & (mant != zeros()))
@@ -154,7 +161,7 @@ function f_is_SNaN_S   x32 = {
 
 val      f_is_QNaN_S : bits(32) -> bool
 function f_is_QNaN_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
+  let (sign, exp, mant) = fstruct_S (x32);
   (  (exp == ones())
    & (mant [22] == bitone))
 }
@@ -162,7 +169,7 @@ function f_is_QNaN_S   x32 = {
 /* Either QNaN or SNan */
 val      f_is_NaN_S : bits(32) -> bool
 function f_is_NaN_S   x32 = {
-  let (sign, exp, mant) = fsplit_S (x32);
+  let (sign, exp, mant) = fstruct_S (x32);
   (  (exp == ones())
    & (mant != zeros()))
 }
@@ -172,15 +179,15 @@ function f_is_NaN_S   x32 = {
 
 val      negate_S : bits(32) -> bits(32)
 function negate_S (x32) = {
-  let (sign, exp, mant) = fsplit_S (x32);
+  let (sign, exp, mant) = fstruct_S (x32);
   let new_sign = if (sign == 0b0) then 0b1 else 0b0;
-  fmake_S (new_sign, exp, mant)
+  fstruct_S ((new_sign, exp, mant))
 }
 
 val      feq_quiet_S : (bits(32), bits (32)) -> (bool, bits(5))
 function feq_quiet_S   (v1,       v2) = {
-  let (s1, e1, m1) = fsplit_S (v1);
-  let (s2, e2, m2) = fsplit_S (v2);
+  let (s1, e1, m1) = fstruct_S (v1);
+  let (s2, e2, m2) = fstruct_S (v2);
 
   let v1Is0    = f_is_neg_zero_S(v1) | f_is_pos_zero_S(v1);
   let v2Is0    = f_is_neg_zero_S(v2) | f_is_pos_zero_S(v2);
@@ -196,8 +203,8 @@ function feq_quiet_S   (v1,       v2) = {
 
 val      flt_S : (bits(32), bits (32), bool) -> (bool, bits(5))
 function flt_S   (v1,       v2,        is_quiet) = {
-  let (s1, e1, m1) = fsplit_S (v1);
-  let (s2, e2, m2) = fsplit_S (v2);
+  let (s1, e1, m1) = fstruct_S (v1);
+  let (s2, e2, m2) = fstruct_S (v2);
 
   let result : bool =
     if (s1 == 0b0) & (s2 == 0b0) then
@@ -227,8 +234,8 @@ function flt_S   (v1,       v2,        is_quiet) = {
 
 val      fle_S : (bits(32), bits (32), bool) -> (bool, bits(5))
 function fle_S   (v1,       v2,        is_quiet) = {
-  let (s1, e1, m1) = fsplit_S (v1);
-  let (s2, e2, m2) = fsplit_S (v2);
+  let (s1, e1, m1) = fstruct_S (v1);
+  let (s2, e2, m2) = fstruct_S (v2);
 
   let v1Is0    = f_is_neg_zero_S(v1) | f_is_pos_zero_S(v1);
   let v2Is0    = f_is_neg_zero_S(v2) | f_is_pos_zero_S(v2);
@@ -850,9 +857,9 @@ mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)                 if hav
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)) = {
   let rs1_val_S    = F_or_X_S(rs1);
   let rs2_val_S    = F_or_X_S(rs2);
-  let (s1, e1, m1) = fsplit_S (rs1_val_S);
-  let (s2, e2, m2) = fsplit_S (rs2_val_S);
-  let rd_val_S     = fmake_S (s2, e1, m1);
+  let (s1, e1, m1) = fstruct_S (rs1_val_S);
+  let (s2, e2, m2) = fstruct_S (rs2_val_S);
+  let rd_val_S     = fstruct_S ((s2, e1, m1));
 
   F_or_X_S(rd) = rd_val_S;
   RETIRE_SUCCESS
@@ -861,9 +868,9 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)) = {
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)) = {
   let rs1_val_S    = F_or_X_S(rs1);
   let rs2_val_S    = F_or_X_S(rs2);
-  let (s1, e1, m1) = fsplit_S (rs1_val_S);
-  let (s2, e2, m2) = fsplit_S (rs2_val_S);
-  let rd_val_S     = fmake_S (0b1 ^ s2, e1, m1);
+  let (s1, e1, m1) = fstruct_S (rs1_val_S);
+  let (s2, e2, m2) = fstruct_S (rs2_val_S);
+  let rd_val_S     = fstruct_S ((0b1 ^ s2, e1, m1));
 
   F_or_X_S(rd) = rd_val_S;
   RETIRE_SUCCESS
@@ -872,9 +879,9 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)) = {
 function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)) = {
   let rs1_val_S    = F_or_X_S(rs1);
   let rs2_val_S    = F_or_X_S(rs2);
-  let (s1, e1, m1) = fsplit_S (rs1_val_S);
-  let (s2, e2, m2) = fsplit_S (rs2_val_S);
-  let rd_val_S     = fmake_S (s1 ^ s2, e1, m1);
+  let (s1, e1, m1) = fstruct_S (rs1_val_S);
+  let (s2, e2, m2) = fstruct_S (rs2_val_S);
+  let rd_val_S     = fstruct_S ((s1 ^ s2, e1, m1));
 
   F_or_X_S(rd) = rd_val_S;
   RETIRE_SUCCESS

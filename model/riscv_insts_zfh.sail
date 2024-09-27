@@ -34,16 +34,24 @@ function fsplit_H   (xf16) = (xf16[15..15], xf16[14..10], xf16[9..0])
 val      fmake_H  : (bits(1), bits(5), bits(10)) -> bits(16)
 function fmake_H (sign, exp, mant) = sign @ exp @ mant
 
+val fExtractor_H : bits(16) <-> (bits(1), bits(5), bits(10))
+function fExtractor_H_forwards(xf16) = fsplit_H(xf16)
+function fExtractor_H_forwards_matches(xf16) = true
+function fExtractor_H_backwards(sign, exp, mant) = fmake_H(sign, exp, mant)
+function fExtractor_H_backwards_matches(sign, exp, mant) = true
+
+mapping fstruct_H : bits(16) <-> (bits(1), bits(5), bits(10)) = {fExtractor_H(sign, exp, mant) <-> (sign, exp, mant)}
+
 val      negate_H : bits(16) -> bits(16)
 function negate_H (xf16) = {
-  let (sign, exp, mant) = fsplit_H (xf16);
+  let (sign, exp, mant) = fstruct_H (xf16);
   let new_sign = if (sign == 0b0) then 0b1 else 0b0;
-  fmake_H (new_sign, exp, mant)
+  fstruct_H ((new_sign, exp, mant))
 }
 
 val      f_is_neg_inf_H : bits(16) -> bool
 function f_is_neg_inf_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
+  let (sign, exp, mant) = fstruct_H (xf16);
   (  (sign == 0b1)
    & (exp  == ones())
    & (mant == zeros()))
@@ -51,7 +59,7 @@ function f_is_neg_inf_H   xf16 = {
 
 val      f_is_neg_norm_H : bits(16) -> bool
 function f_is_neg_norm_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
+  let (sign, exp, mant) = fstruct_H (xf16);
   (  (sign == 0b1)
    & (exp  != zeros())
    & (exp  != ones()))
@@ -59,7 +67,7 @@ function f_is_neg_norm_H   xf16 = {
 
 val      f_is_neg_subnorm_H : bits(16) -> bool
 function f_is_neg_subnorm_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
+  let (sign, exp, mant) = fstruct_H (xf16);
   (  (sign == 0b1)
    & (exp  == zeros())
    & (mant != zeros()))
@@ -67,7 +75,7 @@ function f_is_neg_subnorm_H   xf16 = {
 
 val      f_is_pos_subnorm_H : bits(16) -> bool
 function f_is_pos_subnorm_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
+  let (sign, exp, mant) = fstruct_H (xf16);
   (  (sign == zeros())
    & (exp  == zeros())
    & (mant != zeros()))
@@ -75,7 +83,7 @@ function f_is_pos_subnorm_H   xf16 = {
 
 val      f_is_pos_norm_H : bits(16) -> bool
 function f_is_pos_norm_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
+  let (sign, exp, mant) = fstruct_H (xf16);
   (  (sign == zeros())
    & (exp  != zeros())
    & (exp  != ones()))
@@ -83,7 +91,7 @@ function f_is_pos_norm_H   xf16 = {
 
 val      f_is_pos_inf_H : bits(16) -> bool
 function f_is_pos_inf_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
+  let (sign, exp, mant) = fstruct_H (xf16);
   (  (sign == zeros())
    & (exp  == ones())
    & (mant == zeros()))
@@ -91,7 +99,7 @@ function f_is_pos_inf_H   xf16 = {
 
 val      f_is_neg_zero_H : bits(16) -> bool
 function f_is_neg_zero_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
+  let (sign, exp, mant) = fstruct_H (xf16);
   (  (sign == ones())
    & (exp  == zeros())
    & (mant == zeros()))
@@ -99,7 +107,7 @@ function f_is_neg_zero_H   xf16 = {
 
 val      f_is_pos_zero_H : bits(16) -> bool
 function f_is_pos_zero_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
+  let (sign, exp, mant) = fstruct_H (xf16);
   (  (sign == zeros())
    & (exp  == zeros())
    & (mant == zeros()))
@@ -107,7 +115,7 @@ function f_is_pos_zero_H   xf16 = {
 
 val      f_is_SNaN_H : bits(16) -> bool
 function f_is_SNaN_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
+  let (sign, exp, mant) = fstruct_H (xf16);
   (  (exp == ones())
    & (mant [9] == bitzero)
    & (mant != zeros()))
@@ -115,7 +123,7 @@ function f_is_SNaN_H   xf16 = {
 
 val      f_is_QNaN_H : bits(16) -> bool
 function f_is_QNaN_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
+  let (sign, exp, mant) = fstruct_H (xf16);
   (  (exp == ones())
    & (mant [9] == bitone))
 }
@@ -123,15 +131,15 @@ function f_is_QNaN_H   xf16 = {
 /* Either QNaN or SNan */
 val      f_is_NaN_H : bits(16) -> bool
 function f_is_NaN_H   xf16 = {
-  let (sign, exp, mant) = fsplit_H (xf16);
+  let (sign, exp, mant) = fstruct_H (xf16);
   (  (exp == ones())
    & (mant != zeros()))
 }
 
 val      fle_H : (bits(16), bits (16), bool) -> (bool, bits(5))
 function fle_H   (v1,       v2,        is_quiet) = {
-  let (s1, e1, m1) = fsplit_H (v1);
-  let (s2, e2, m2) = fsplit_H (v2);
+  let (s1, e1, m1) = fstruct_H (v1);
+  let (s2, e2, m2) = fstruct_H (v2);
 
   let v1Is0    = f_is_neg_zero_H(v1) | f_is_pos_zero_H(v1);
   let v2Is0    = f_is_neg_zero_H(v2) | f_is_pos_zero_H(v2);
@@ -341,9 +349,9 @@ mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FLE_H)                 if hav
 function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FSGNJ_H)) = {
   let rs1_val_H    = F_or_X_H(rs1);
   let rs2_val_H    = F_or_X_H(rs2);
-  let (s1, e1, m1) = fsplit_H (rs1_val_H);
-  let (s2, e2, m2) = fsplit_H (rs2_val_H);
-  let rd_val_H     = fmake_H (s2, e1, m1);
+  let (s1, e1, m1) = fstruct_H (rs1_val_H);
+  let (s2, e2, m2) = fstruct_H (rs2_val_H);
+  let rd_val_H     = fstruct_H ((s2, e1, m1));
 
   F_or_X_H(rd) = rd_val_H;
   RETIRE_SUCCESS
@@ -352,9 +360,9 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FSGNJ_H)) = {
 function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FSGNJN_H)) = {
   let rs1_val_H    = F_or_X_H(rs1);
   let rs2_val_H    = F_or_X_H(rs2);
-  let (s1, e1, m1) = fsplit_H (rs1_val_H);
-  let (s2, e2, m2) = fsplit_H (rs2_val_H);
-  let rd_val_H     = fmake_H (0b1 ^ s2, e1, m1);
+  let (s1, e1, m1) = fstruct_H (rs1_val_H);
+  let (s2, e2, m2) = fstruct_H (rs2_val_H);
+  let rd_val_H     = fstruct_H ((0b1 ^ s2, e1, m1));
 
   F_or_X_H(rd) = rd_val_H;
   RETIRE_SUCCESS
@@ -363,9 +371,9 @@ function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FSGNJN_H)) = {
 function clause execute (F_BIN_TYPE_H(rs2, rs1, rd, FSGNJX_H)) = {
   let rs1_val_H    = F_or_X_H(rs1);
   let rs2_val_H    = F_or_X_H(rs2);
-  let (s1, e1, m1) = fsplit_H (rs1_val_H);
-  let (s2, e2, m2) = fsplit_H (rs2_val_H);
-  let rd_val_H     = fmake_H (s1 ^ s2, e1, m1);
+  let (s1, e1, m1) = fstruct_H (rs1_val_H);
+  let (s2, e2, m2) = fstruct_H (rs2_val_H);
+  let rd_val_H     = fstruct_H ((s1 ^ s2, e1, m1));
 
   F_or_X_H(rd) = rd_val_H;
   RETIRE_SUCCESS
