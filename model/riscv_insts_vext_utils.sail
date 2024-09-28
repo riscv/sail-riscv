@@ -399,7 +399,7 @@ val get_fixed_rounding_incr : forall ('m 'n : Int), ('m > 0 & 'n >= 0). (bits('m
 function get_fixed_rounding_incr(vec_elem, shift_amount) = {
   if shift_amount == 0 then 0b0
   else {
-    let rounding_mode = vxrm[1 .. 0];
+    let rounding_mode = vcsr[vxrm];
     match rounding_mode {
       0b00 => slice(vec_elem, shift_amount - 1, 1),
       0b01 => bool_to_bits(
