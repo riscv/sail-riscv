@@ -190,7 +190,7 @@ function clause write_CSR(0x015, value) = write_seed_csr()
 /* vector */
 function clause write_CSR(0x008, value) = { let vstart_length = get_vlen_pow(); vstart = zero_extend(16, value[(vstart_length - 1) .. 0]); zero_extend(vstart) }
 function clause write_CSR(0x009, value) = { vxsat = value[0 .. 0]; zero_extend(vxsat) }
-function clause write_CSR(0x00A, value) = { vxrm = value[1 .. 0]; zero_extend(vxrm) }
+function clause write_CSR(0x00A, value) = { vcsr[vxrm] = value[1 .. 0]; zero_extend(vcsr[vxrm]) }
 function clause write_CSR(0x00F, value) = { vcsr.bits = value[2 ..0]; zero_extend(vcsr.bits) }
 function clause write_CSR(0xC20, value) = { vl = value; vl }
 function clause write_CSR(0xC21, value) = { vtype.bits = value; vtype.bits }
