@@ -856,7 +856,6 @@ function is_fiom_active() -> bool = {
 }
 /* vector csrs */
 register vstart : bits(16) /* use the largest possible length of vstart */
-register vxsat  : bits(1)
 register vl     : xlenbits
 register vlenb  : xlenbits
 

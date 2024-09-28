@@ -415,10 +415,10 @@ function get_fixed_rounding_incr(vec_elem, shift_amount) = {
 val unsigned_saturation : forall ('m 'n: Int), ('n >= 'm > 1). (int('m), bits('n)) -> bits('m)
 function unsigned_saturation(len, elem) = {
   if unsigned(elem) > unsigned(ones('m)) then {
-    vxsat = 0b1;
+    vcsr[vxsat] = 0b1;
     ones('m)
   } else {
-    vxsat = 0b0;
+    vcsr[vxsat] = 0b0;
     elem['m - 1 .. 0]
   }
 }
@@ -427,13 +427,13 @@ function unsigned_saturation(len, elem) = {
 val signed_saturation : forall ('m 'n: Int), ('n >= 'm > 1). (int('m), bits('n)) -> bits('m)
 function signed_saturation(len, elem) = {
   if signed(elem) > signed(0b0 @ ones('m - 1)) then {
-    vxsat = 0b1;
+    vcsr[vxsat] = 0b1;
     0b0 @ ones('m - 1)
   } else if signed(elem) < signed(0b1 @ zeros('m - 1)) then {
-    vxsat = 0b1;
+    vcsr[vxsat] = 0b1;
     0b1 @ zeros('m - 1)
   } else {
-    vxsat = 0b0;
+    vcsr[vxsat] = 0b0;
     elem['m - 1 .. 0]
   };
 }

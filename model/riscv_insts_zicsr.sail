@@ -71,7 +71,7 @@ function clause read_CSR(0b1011100 /* 0xB80 */ @ index : bits(5) if sizeof(xlen)
 
 /* vector */
 function clause read_CSR(0x008) = zero_extend(vstart)
-function clause read_CSR(0x009) = zero_extend(vxsat)
+function clause read_CSR(0x009) = zero_extend(vcsr[vxsat])
 function clause read_CSR(0x00A) = zero_extend(vcsr[vxrm])
 function clause read_CSR(0x00F) = zero_extend(vcsr.bits)
 function clause read_CSR(0xC20) = vl
@@ -189,7 +189,7 @@ function clause write_CSR(0x015, value) = write_seed_csr()
 
 /* vector */
 function clause write_CSR(0x008, value) = { let vstart_length = get_vlen_pow(); vstart = zero_extend(16, value[(vstart_length - 1) .. 0]); zero_extend(vstart) }
-function clause write_CSR(0x009, value) = { vxsat = value[0 .. 0]; zero_extend(vxsat) }
+function clause write_CSR(0x009, value) = { vcsr[vxsat] = value[0 .. 0]; zero_extend(vcsr[vxsat]) }
 function clause write_CSR(0x00A, value) = { vcsr[vxrm] = value[1 .. 0]; zero_extend(vcsr[vxrm]) }
 function clause write_CSR(0x00F, value) = { vcsr.bits = value[2 ..0]; zero_extend(vcsr.bits) }
 function clause write_CSR(0xC20, value) = { vl = value; vl }
