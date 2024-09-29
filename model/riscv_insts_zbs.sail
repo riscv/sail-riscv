@@ -12,17 +12,17 @@ function clause extensionEnabled(Ext_Zbs) = true | extensionEnabled(Ext_B)
 /* ****************************************************************** */
 union clause ast = ZBS_IOP : (bits(6), regidx, regidx, biop_zbs)
 
-mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BCLRI) if extensionEnabled(Ext_Zbs) & (sizeof(xlen) == 64 | shamt[5] == bitzero)
-  <-> 0b010010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if extensionEnabled(Ext_Zbs) & (sizeof(xlen) == 64 | shamt[5] == bitzero)
+mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BCLRI) if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
+  <-> 0b010010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
 
-mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BEXTI) if extensionEnabled(Ext_Zbs) & (sizeof(xlen) == 64 | shamt[5] == bitzero)
-  <-> 0b010010 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if extensionEnabled(Ext_Zbs) & (sizeof(xlen) == 64 | shamt[5] == bitzero)
+mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BEXTI) if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
+  <-> 0b010010 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
 
-mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BINVI) if extensionEnabled(Ext_Zbs) & (sizeof(xlen) == 64 | shamt[5] == bitzero)
-  <-> 0b011010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if extensionEnabled(Ext_Zbs) & (sizeof(xlen) == 64 | shamt[5] == bitzero)
+mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BINVI) if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
+  <-> 0b011010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
 
-mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BSETI) if extensionEnabled(Ext_Zbs) & (sizeof(xlen) == 64 | shamt[5] == bitzero)
-  <-> 0b001010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if extensionEnabled(Ext_Zbs) & (sizeof(xlen) == 64 | shamt[5] == bitzero)
+mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BSETI) if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
+  <-> 0b001010 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
 
 mapping zbs_iop_mnemonic : biop_zbs <-> string = {
   RISCV_BCLRI <-> "bclri",
@@ -36,7 +36,7 @@ mapping clause assembly = ZBS_IOP(shamt, rs1, rd, op)
 
 function clause execute (ZBS_IOP(shamt, rs1, rd, op)) = {
   let rs1_val = X(rs1);
-  let mask : xlenbits = if sizeof(xlen) == 32
+  let mask : xlenbits = if xlen == 32
                         then zero_extend(0b1) << shamt[4..0]
                         else zero_extend(0b1) << shamt;
   let result : xlenbits = match op {
@@ -77,7 +77,7 @@ mapping clause assembly = ZBS_RTYPE(rs2, rs1, rd, op)
 function clause execute (ZBS_RTYPE(rs2, rs1, rd, op)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
-  let mask : xlenbits = if sizeof(xlen) == 32
+  let mask : xlenbits = if xlen == 32
                         then zero_extend(0b1) << rs2_val[4..0]
                         else zero_extend(0b1) << rs2_val[5..0];
   let result : xlenbits = match op {

@@ -40,7 +40,7 @@ function vpn_j_of_va(sv_params : SV_Params,
                      va        : bits(64),
                      level     : PTW_Level) -> bits(64) = {
   let lsb  : range(0,63) = pagesize_bits + level * sv_params.vpn_size_bits;
-  assert (lsb < sizeof(xlen));
+  assert (lsb < xlen);
   let mask : bits(64) = zero_extend(ones(sv_params.vpn_size_bits));
   ((va >> lsb) & mask)
 }
@@ -101,7 +101,7 @@ function pt_walk(sv_params,
   // Below, 'pte_phys_addr' is XLEN bits because it's an arg to
   // 'mem_read_priv()' [riscv_mem.sail] where it's declared as xlenbits.
   // That def and this use need to be fixed together (TODO)
-  let pte_phys_addr : xlenbits = pte_addr[(sizeof(xlen) - 1) .. 0];
+  let pte_phys_addr : xlenbits = pte_addr[(xlen - 1) .. 0];
 
   // Read this-level PTE from mem
   let mem_result = mem_read_priv(Read(Data),              // AccessType
@@ -187,22 +187,22 @@ function legalize_satp(a : Architecture,
                        o : xlenbits,        // previous value of satp
                        v : xlenbits)        // proposed new value of satp
                       -> xlenbits = {       // new legal value of satp
-  if sizeof(xlen) == 32 then {
+  if xlen == 32 then {
     // The slice and extend ops below are no-ops when xlen==32,
     // but appease the type-checker when xlen==64 (when this code is not executed!)
     let o32      : bits(32) = o[31 .. 0];
     let v32      : bits(32) = v[31 .. 0];
     let new_satp : bits(32) = legalize_satp32(a, o32, v32);
     zero_extend(new_satp);
-  } else if sizeof(xlen) == 64 then {
+  } else if xlen == 64 then {
     // The extend and truncate ops below are no-ops when xlen==64,
     // but appease the type-checker when xlen==32 (when this code is not executed!)
     let o64      : bits(64) = zero_extend(o);
     let v64      : bits(64) = zero_extend(v);
     let new_satp : bits(64) = legalize_satp64(a, o64, v64);
-    truncate(new_satp, sizeof(xlen))
+    truncate(new_satp, xlen)
   } else
-    internal_error(__FILE__, __LINE__, "Unsupported xlen" ^ dec_str(sizeof(xlen)))
+    internal_error(__FILE__, __LINE__, "Unsupported xlen" ^ dec_str(xlen))
 }
 
 // ----------------
@@ -211,18 +211,18 @@ function legalize_satp(a : Architecture,
 // ASID is 9b in Sv32, 16b in Sv39/Sv48/Sv57: we use 16b for both
 // PRIVATE
 function satp_to_asid(satp_val : xlenbits) -> asidbits =
-   if      sizeof(xlen) == 32 then zero_extend(Mk_Satp32(satp_val)[Asid])
-   else if sizeof(xlen) == 64 then Mk_Satp64(satp_val)[Asid]
+   if      xlen == 32 then zero_extend(Mk_Satp32(satp_val)[Asid])
+   else if xlen == 64 then Mk_Satp64(satp_val)[Asid]
    else internal_error(__FILE__, __LINE__,
-                       "Unsupported xlen" ^ dec_str(sizeof(xlen)))
+                       "Unsupported xlen" ^ dec_str(xlen))
 
 // Result is 64b to cover both RV32 and RV64 addrs
 // PRIVATE
 function satp_to_PT_base(satp_val : xlenbits) -> bits(64) = {
-  let ppn = if      sizeof(xlen) == 32 then zero_extend (64, Mk_Satp32(satp_val)[PPN])
-            else if sizeof(xlen) == 64 then zero_extend (64, Mk_Satp64(satp_val)[PPN])
+  let ppn = if      xlen == 32 then zero_extend (64, Mk_Satp32(satp_val)[PPN])
+            else if xlen == 64 then zero_extend (64, Mk_Satp64(satp_val)[PPN])
             else internal_error(__FILE__, __LINE__,
-                                "Unsupported xlen" ^ dec_str(sizeof(xlen)));
+                                "Unsupported xlen" ^ dec_str(xlen));
   ppn << pagesize_bits
 }
 
@@ -231,12 +231,12 @@ function satp_to_PT_base(satp_val : xlenbits) -> bits(64) = {
 function translationMode(priv : Privilege) -> SATPMode = {
   if priv == Machine then
     Sbare
-  else if sizeof(xlen) == 32 then
+  else if xlen == 32 then
     match Mk_Satp32(satp)[Mode] {
       0b0 => Sbare,
       0b1  => Sv32
     }
-  else if sizeof(xlen) == 64 then {
+  else if xlen == 64 then {
     // Translation mode is based on mstatus.SXL, which could be RV32 when xlen==64
     let arch = architecture(get_mstatus_SXL(mstatus));
     match arch {
@@ -316,7 +316,7 @@ function translate_TLB_hit(sv_params : SV_Params,
             // Writeback the PTE (which has new A/D bits)
             let n_ent = {ent with pte=pte'};
             write_TLB(tlb_index, n_ent);
-            let pte_phys_addr = ent.pteAddr[(sizeof(xlen) - 1) .. 0];
+            let pte_phys_addr = ent.pteAddr[(xlen - 1) .. 0];
 
             match write_pte(pte_phys_addr, 2 ^ sv_params.log_pte_size_bytes, pte') {
               MemValue(_)     => (),
@@ -362,7 +362,7 @@ function translate_TLB_miss(sv_params : SV_Params,
             TR_Failure(PTW_PTE_Update(), ext_ptw)
           else {
             // Writeback the PTE (which has new A/D bits)
-            let pte_phys_addr = pteAddr[(sizeof(xlen) - 1) .. 0];
+            let pte_phys_addr = pteAddr[(xlen - 1) .. 0];
 
             match write_pte(pte_phys_addr, 2 ^ sv_params.log_pte_size_bytes, pte') {
               MemValue(_) => {
@@ -435,7 +435,7 @@ function translateAddr(vAddr   : xlenbits,
                                init_ext_ptw);
     // Fixup result PA or exception
     match tr_result1 {
-      TR_Address(pa, ext_ptw) => TR_Address(truncate(pa, sizeof(xlen)), ext_ptw),
+      TR_Address(pa, ext_ptw) => TR_Address(truncate(pa, xlen), ext_ptw),
       TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
     }
   }

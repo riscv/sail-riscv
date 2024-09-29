@@ -214,13 +214,13 @@ function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv :
   else priv
 
 function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
-  if   sizeof(xlen) == 32
+  if   xlen == 32
   then arch_to_bits(RV32)
   else m.bits[35 .. 34]
 }
 
 function set_mstatus_SXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
-  if   sizeof(xlen) == 32
+  if   xlen == 32
   then m
   else {
     let m = vector_update_subrange(m.bits, 35, 34,  a);
@@ -229,13 +229,13 @@ function set_mstatus_SXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
 }
 
 function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
-  if   sizeof(xlen) == 32
+  if   xlen == 32
   then arch_to_bits(RV32)
   else m.bits[33 .. 32]
 }
 
 function set_mstatus_UXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
-  if   sizeof(xlen) == 32
+  if   xlen == 32
   then m
   else {
     let m = vector_update_subrange(m.bits, 33, 32,  a);
@@ -273,7 +273,7 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   let m = set_mstatus_UXL(m, get_mstatus_UXL(o));
 
   /* We don't currently support changing MBE and SBE. */
-  let m = if sizeof(xlen) == 64 then {
+  let m = if xlen == 64 then {
              Mk_Mstatus([m.bits with 37 .. 36 = 0b00])
           } else m;
 
@@ -519,13 +519,13 @@ function hpmidx_from_bits(b : bits(5)) -> hpmidx = {
   index
 }
 
-function read_mhpmcounter(index : hpmidx) -> xlenbits = mhpmcounter[index][(sizeof(xlen) - 1) .. 0]
+function read_mhpmcounter(index : hpmidx) -> xlenbits = mhpmcounter[index][(xlen - 1) .. 0]
 function read_mhpmcounterh(index : hpmidx) -> bits(32) = mhpmcounter[index][63 .. 32]
 function read_mhpmevent(index : hpmidx) -> xlenbits = mhpmevent[index]
 
 // Write the HPM CSRs. These return the new value of the CSR, for use in writeCSR.
 function write_mhpmcounter(index : hpmidx, value : xlenbits) -> unit =
-  if sys_writable_hpm_counters()[index] == bitone then mhpmcounter[index][(sizeof(xlen) - 1) .. 0] = value
+  if sys_writable_hpm_counters()[index] == bitone then mhpmcounter[index][(xlen - 1) .. 0] = value
 
 function write_mhpmcounterh(index : hpmidx, value : bits(32)) -> unit =
   if sys_writable_hpm_counters()[index] == bitone then mhpmcounter[index][63 .. 32] = value

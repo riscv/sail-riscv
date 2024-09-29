@@ -27,7 +27,7 @@ function clause execute (ZBKB_RTYPE(rs2, rs1, rd, op)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   let result : xlenbits = match op {
-    RISCV_PACK  => rs2_val[(sizeof(xlen_bytes)*4 - 1)..0] @ rs1_val[(sizeof(xlen_bytes)*4 - 1)..0],
+    RISCV_PACK  => rs2_val[(xlen_bytes*4 - 1)..0] @ rs1_val[(xlen_bytes*4 - 1)..0],
     RISCV_PACKH => zero_extend(rs2_val[7..0] @ rs1_val[7..0])
   };
   X(rd) = result;
@@ -37,14 +37,14 @@ function clause execute (ZBKB_RTYPE(rs2, rs1, rd, op)) = {
 /* ****************************************************************** */
 union clause ast = ZBKB_PACKW : (regidx, regidx, regidx)
 
-mapping clause encdec = ZBKB_PACKW(rs2, rs1, rd) if extensionEnabled(Ext_Zbkb) & sizeof(xlen) == 64
-  <-> 0b0000100 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0111011 if extensionEnabled(Ext_Zbkb) & sizeof(xlen) == 64
+mapping clause encdec = ZBKB_PACKW(rs2, rs1, rd) if extensionEnabled(Ext_Zbkb) & xlen == 64
+  <-> 0b0000100 @ rs2 @ rs1 @ 0b100 @ rd @ 0b0111011 if extensionEnabled(Ext_Zbkb) & xlen == 64
 
 mapping clause assembly = ZBKB_PACKW(rs2, rs1, rd)
   <-> "packw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 function clause execute (ZBKB_PACKW(rs2, rs1, rd)) = {
-  assert(sizeof(xlen) == 64);
+  assert(xlen == 64);
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   let result : bits(32) = rs2_val[15..0] @ rs1_val[15..0];
@@ -55,19 +55,19 @@ function clause execute (ZBKB_PACKW(rs2, rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_ZIP : (regidx, regidx)
 
-mapping clause encdec = RISCV_ZIP(rs1, rd) if extensionEnabled(Ext_Zbkb) & sizeof(xlen) == 32
-  <-> 0b000010001111 @ rs1 @ 0b001 @ rd @ 0b0010011 if extensionEnabled(Ext_Zbkb) & sizeof(xlen) == 32
+mapping clause encdec = RISCV_ZIP(rs1, rd) if extensionEnabled(Ext_Zbkb) & xlen == 32
+  <-> 0b000010001111 @ rs1 @ 0b001 @ rd @ 0b0010011 if extensionEnabled(Ext_Zbkb) & xlen == 32
 
 mapping clause assembly = RISCV_ZIP(rs1, rd)
   <-> "zip" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (RISCV_ZIP(rs1, rd)) = {
-  assert(sizeof(xlen) == 32);
+  assert(xlen == 32);
   let rs1_val = X(rs1);
   var result : xlenbits = zeros();
-  foreach (i from 0 to (sizeof(xlen_bytes)*4 - 1)) {
+  foreach (i from 0 to (xlen_bytes*4 - 1)) {
     result[i*2] = rs1_val[i];
-    result[i*2 + 1] = rs1_val[i + sizeof(xlen_bytes)*4];
+    result[i*2 + 1] = rs1_val[i + xlen_bytes*4];
   };
   X(rd) = result;
   RETIRE_SUCCESS
@@ -76,19 +76,19 @@ function clause execute (RISCV_ZIP(rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_UNZIP : (regidx, regidx)
 
-mapping clause encdec = RISCV_UNZIP(rs1, rd) if extensionEnabled(Ext_Zbkb) & sizeof(xlen) == 32
-  <-> 0b000010001111 @ rs1 @ 0b101 @ rd @ 0b0010011 if extensionEnabled(Ext_Zbkb) & sizeof(xlen) == 32
+mapping clause encdec = RISCV_UNZIP(rs1, rd) if extensionEnabled(Ext_Zbkb) & xlen == 32
+  <-> 0b000010001111 @ rs1 @ 0b101 @ rd @ 0b0010011 if extensionEnabled(Ext_Zbkb) & xlen == 32
 
 mapping clause assembly = RISCV_UNZIP(rs1, rd)
   <-> "unzip" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (RISCV_UNZIP(rs1, rd)) = {
-  assert(sizeof(xlen) == 32);
+  assert(xlen == 32);
   let rs1_val = X(rs1);
   var result : xlenbits = zeros();
-  foreach (i from 0 to (sizeof(xlen_bytes)*4 - 1)) {
+  foreach (i from 0 to (xlen_bytes*4 - 1)) {
     result[i] = rs1_val[i*2];
-    result[i + sizeof(xlen_bytes)*4] = rs1_val[i*2 + 1];
+    result[i + xlen_bytes*4] = rs1_val[i*2 + 1];
   };
   X(rd) = result;
   RETIRE_SUCCESS
@@ -106,7 +106,7 @@ mapping clause assembly = RISCV_BREV8(rs1, rd)
 function clause execute (RISCV_BREV8(rs1, rd)) = {
   let rs1_val = X(rs1);
   var result : xlenbits = zeros();
-  foreach (i from 0 to (sizeof(xlen) - 8) by 8)
+  foreach (i from 0 to (xlen - 8) by 8)
     result[i+7..i] = reverse(rs1_val[i+7..i]);
   X(rd) = result;
   RETIRE_SUCCESS

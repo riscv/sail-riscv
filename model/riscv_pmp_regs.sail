@@ -46,7 +46,7 @@ register pmpaddr_n : vector(64, xlenbits)
 /* Packing and unpacking pmpcfg regs for xlen-width accesses */
 
 function pmpReadCfgReg(n : range(0, 15)) -> xlenbits = {
-  if sizeof(xlen) == 32
+  if xlen == 32
   then {
     pmpcfg_n[n*4 + 3].bits @
     pmpcfg_n[n*4 + 2].bits @
@@ -74,13 +74,13 @@ function pmpReadAddrReg(n : range(0, 63)) -> xlenbits = {
   match match_type[1] {
     bitone if G >= 2 => {
       // [G-2..0] read as all ones to form mask, therefore we need G-1 bits.
-      let mask : xlenbits = zero_extend(ones(min(G - 1, sizeof(xlen))));
+      let mask : xlenbits = zero_extend(ones(min(G - 1, xlen)));
       addr | mask
     },
 
     bitzero if G >= 1 => {
       // [G-1..0] read as all zeros to form mask, therefore we need G bits.
-      let mask : xlenbits = zero_extend(ones(min(G , sizeof(xlen))));
+      let mask : xlenbits = zero_extend(ones(min(G , xlen)));
       addr & ~(mask)
     },
 
@@ -117,7 +117,7 @@ function pmpWriteCfg(n: range(0, 63), cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent
   }
 
 function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
-  if sizeof(xlen) == 32
+  if xlen == 32
   then {
     foreach (i from 0 to 3) {
       let idx = n*4 + i;
@@ -134,7 +134,7 @@ function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
 }
 
 function pmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbits) -> xlenbits =
-  if   sizeof(xlen) == 32
+  if   xlen == 32
   then { if (locked | tor_locked) then reg else v }
   else { if (locked | tor_locked) then reg else zero_extend(v[53..0]) }
 

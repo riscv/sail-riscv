@@ -288,7 +288,7 @@ mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if extensionEnabled
 val process_fload64 : (regidx, xlenbits, MemoryOpResult(bits(64)))
                       -> Retired
 function process_fload64(rd, addr, value) =
-  if   sizeof(flen) == 64
+  if   flen == 64
   then match value {
          MemValue(result) => { F(rd) = result; RETIRE_SUCCESS },
          MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
@@ -333,7 +333,7 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
                process_fload16(rd, vaddr, mem_read(Read(Data), addr, 2, aq, rl, res)),
             WORD =>
                process_fload32(rd, vaddr, mem_read(Read(Data), addr, 4, aq, rl, res)),
-            DOUBLE if sizeof(flen) >= 64 =>
+            DOUBLE if flen >= 64 =>
                process_fload64(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, res)),
             _ => report_invalid_width(__FILE__, __LINE__, width, "floating point load"),
           }
@@ -406,7 +406,7 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
                 BYTE => { handle_illegal(); RETIRE_FAIL },
                 HALF => process_fstore (vaddr, mem_write_value(addr, 2, rs2_val[15..0], aq, rl, con)),
                 WORD => process_fstore (vaddr, mem_write_value(addr, 4, rs2_val[31..0], aq, rl, con)),
-                DOUBLE if sizeof(flen) >= 64 =>
+                DOUBLE if flen >= 64 =>
                   process_fstore (vaddr, mem_write_value(addr, 8, rs2_val, aq, rl, con)),
                 _ => report_invalid_width(__FILE__, __LINE__, width, "floating point store"),
               };
@@ -586,20 +586,20 @@ mapping clause encdec =
 /* F instructions, RV64 only */
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)                                     if haveSingleFPU() & sizeof(xlen) >= 64
-<-> 0b110_0000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)                                     if haveSingleFPU() & xlen >= 64
+<-> 0b110_0000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)                                    if haveSingleFPU() & sizeof(xlen) >= 64
-<-> 0b110_0000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)                                    if haveSingleFPU() & xlen >= 64
+<-> 0b110_0000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)                                     if haveSingleFPU() & sizeof(xlen) >= 64
-<-> 0b110_1000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)                                     if haveSingleFPU() & xlen >= 64
+<-> 0b110_1000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)                                    if haveSingleFPU() & sizeof(xlen) >= 64
-<-> 0b110_1000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)                                    if haveSingleFPU() & xlen >= 64
+<-> 0b110_1000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & xlen >= 64
 
 /* Execution semantics ================================ */
 
@@ -679,7 +679,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -695,7 +695,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -711,7 +711,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_L = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -727,7 +727,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_LU = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },

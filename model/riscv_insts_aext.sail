@@ -38,7 +38,7 @@ function lrsc_width_str(width : word_width) -> string =
 function lrsc_width_valid(size : word_width) -> bool = {
   match size {
     WORD   => true,
-    DOUBLE => sizeof(xlen) >= 64,
+    DOUBLE => xlen >= 64,
     _      => false
   }
 }
@@ -48,7 +48,7 @@ function amo_width_valid(size : word_width) -> bool = {
     BYTE   => extensionEnabled(Ext_Zabha),
     HALF   => extensionEnabled(Ext_Zabha),
     WORD   => true,
-    DOUBLE => sizeof(xlen) >= 64,
+    DOUBLE => xlen >= 64,
   }
 }
 
@@ -75,7 +75,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
   let width_bytes = size_bytes(width);
 
   // This is checked during decoding.
-  assert(width_bytes <= sizeof(xlen_bytes));
+  assert(width_bytes <= xlen_bytes);
 
   /* Get the address, X(rs1) (no offset).
     * Extensions might perform additional checks on address validity.
@@ -114,7 +114,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
   let width_bytes = size_bytes(width);
 
   // This is checked during decoding.
-  assert(width_bytes <= sizeof(xlen_bytes));
+  assert(width_bytes <= xlen_bytes);
 
   if speculate_conditional () == false then {
     /* should only happen in rmem
@@ -194,7 +194,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   let 'width_bytes = size_bytes(width);
 
   // This is checked during decoding.
-  assert(width_bytes <= sizeof(xlen_bytes));
+  assert(width_bytes <= xlen_bytes);
 
   /* Get the address, X(rs1) (no offset).
     * Some extensions perform additional checks on address validity.
