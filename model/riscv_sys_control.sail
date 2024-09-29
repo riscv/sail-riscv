@@ -558,6 +558,8 @@ function init_sys() -> unit = {
    */
   vstart             = zero_extend(0b0);
   vl                 = zero_extend(0b0);
+  vcsr[vxrm]       = vxrm;
+  vcsr[vxsat]      = vxsat;
   vtype[vill]      = 0b1;
   vtype[reserved]  = zero_extend(0b0);
   vtype[vma]       = 0b0;
