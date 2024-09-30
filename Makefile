@@ -7,9 +7,6 @@ else ifeq ($(ARCH),64)
   override ARCH := RV64
 endif
 
-# Set OPAMCLI to 2.0 to supress warnings about opam config var
-export OPAMCLI := 2.0
-
 ifeq ($(ARCH),RV32)
   SAIL_XLEN := riscv_xlen32.sail
 else ifeq ($(ARCH),RV64)
@@ -134,24 +131,15 @@ SAIL_FLAGS += --strict-var
 SAIL_FLAGS += -dno_cast
 SAIL_DOC_FLAGS ?= -doc_embed plain
 
-# Attempt to work with either sail from opam or built from repo in SAIL_DIR
-ifneq ($(SAIL_DIR),)
-# Use sail repo in SAIL_DIR
-SAIL:=$(SAIL_DIR)/sail
-export SAIL_DIR
-EXPLICIT_COQ_SAIL=yes
-else
-# Use sail from opam package
-SAIL_DIR:=$(shell OPAMCLI=$(OPAMCLI) opam config var sail:share)
-SAIL:=sail
-endif
-SAIL_LIB_DIR:=$(SAIL_DIR)/lib
-export SAIL_LIB_DIR
-SAIL_SRC_DIR:=$(SAIL_DIR)/src
+# Sail command to use.
+SAIL := sail
 
-ifndef LEM_DIR
-LEM_DIR:=$(shell OPAMCLI=$(OPAMCLI) opam config var lem:share)
-endif
+# <sail install dir>/share/sail
+SAIL_DIR := $(shell $(SAIL) --dir)
+SAIL_LIB_DIR := $(SAIL_DIR)/lib
+SAIL_SRC_DIR := $(SAIL_DIR)/src
+
+LEM_DIR := $(SAIL_DIR)/../lem
 export LEM_DIR
 
 C_WARNINGS ?=
@@ -344,27 +332,10 @@ riscv_hol: generated_definitions/hol4/$(ARCH)/riscvScript.sml
 riscv_hol_build: generated_definitions/hol4/$(ARCH)/riscvTheory.uo
 .PHONY: riscv_hol riscv_hol_build
 
-ifdef BBV_DIR
-  EXPLICIT_COQ_BBV := yes
-else
-  EXPLICIT_COQ_BBV := $(shell if OPAMCLI=$(OPAMCLI) opam config var coq-bbv:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
-  ifeq ($(EXPLICIT_COQ_BBV),yes)
-    #Coq BBV library hopefully checked out in directory above us
-    BBV_DIR = ../bbv
-  endif
-endif
-
-ifndef EXPLICIT_COQ_SAIL
-  EXPLICIT_COQ_SAIL := $(shell if OPAMCLI=$(OPAMCLI) opam config var coq-sail:share >/dev/null 2>/dev/null; then echo no; else echo yes; fi)
-endif
 
 COQ_LIBS = -R generated_definitions/coq Riscv -R generated_definitions/coq/$(ARCH) $(ARCH) -R handwritten_support Riscv_common
-ifeq ($(EXPLICIT_COQ_BBV),yes)
-  COQ_LIBS += -Q $(BBV_DIR)/src/bbv bbv
-endif
-ifeq ($(EXPLICIT_COQ_SAIL),yes)
-  COQ_LIBS += -Q $(SAIL_LIB_DIR)/coq Sail
-endif
+COQ_LIBS += -Q $(BBV_DIR)/src/bbv bbv
+COQ_LIBS += -Q $(SAIL_LIB_DIR)/coq Sail
 
 riscv_coq: $(addprefix generated_definitions/coq/$(ARCH)/,riscv.v riscv_types.v)
 riscv_coq_build: generated_definitions/coq/$(ARCH)/riscv.vo
@@ -375,15 +346,11 @@ $(addprefix generated_definitions/coq/$(ARCH)/,riscv.v riscv_types.v): $(SAIL_CO
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq/$(ARCH) -o riscv -coq_lib riscv_extras -coq_lib mem_metadata $(SAIL_COQ_SRCS)
 
 %.vo: %.v
-ifeq ($(EXPLICIT_COQ_BBV),yes)
-  ifeq ($(wildcard $(BBV_DIR)/src),)
+ifeq ($(wildcard $(BBV_DIR)/src),)
 	$(error BBV directory not found. Please set the BBV_DIR environment variable)
-  endif
 endif
-ifeq ($(EXPLICIT_COQ_SAIL),yes)
-  ifeq ($(wildcard $(SAIL_LIB_DIR)/coq),)
+ifeq ($(wildcard $(SAIL_LIB_DIR)/coq),)
 	$(error lib directory of Sail not found. Please set the SAIL_LIB_DIR environment variable)
-  endif
 endif
 	coqc $(COQ_LIBS) $<
 

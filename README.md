@@ -256,13 +256,13 @@ Getting started
 
 ### Building the model
 
-Install [Sail](https://github.com/rems-project/sail/) [using opam](https://github.com/rems-project/sail/blob/sail2/INSTALL.md) then:
+Install [Sail](https://github.com/rems-project/sail/). On Linux you can download a [binary release](https://github.com/rems-project/sail/releases) (strongly recommended), or you can install from source [using opam](https://github.com/rems-project/sail/blob/sail2/INSTALL.md). Then:
 
 ```
 $ make
 ```
 
-will build the C simulator in `c_emulator/riscv_sim_RV64`.
+will build the simulator in `c_emulator/riscv_sim_RV64`.
 
 If you get an error message saying `sail: unknown option '--require-version'.` it's because your Sail compiler is too old. You need version 0.18 or later.
 
@@ -275,7 +275,7 @@ built using:
 $ ARCH=RV32 make
 ```
 
-which creates the C simulator in `c_emulator/riscv_sim_RV32`.
+which creates the simulator in `c_emulator/riscv_sim_RV32`.
 
 The Makefile targets `riscv_isa_build`, `riscv_coq_build`, and
 `riscv_hol_build` invoke the respective prover to process the
@@ -291,7 +291,7 @@ corresponding prover libraries in the Sail directory
 
 ### Executing test binaries
 
-The C simulator can be used to execute small test binaries.
+The simulator can be used to execute small test binaries.
 
 ```
 $ ./c_emulator/riscv_sim_<arch> <elf-file>
