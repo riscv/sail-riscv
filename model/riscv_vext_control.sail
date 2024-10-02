@@ -19,10 +19,6 @@ function clause read_CSR (0x009) = zero_extend(vcsr[vxsat])
 function clause read_CSR (0x00A) = zero_extend(vcsr[vxrm])
 function clause read_CSR (0x00F) = zero_extend(vcsr.bits)
 
-function clause read_CSR (0x009) = zero_extend(vcsr[vxsat])
-function clause read_CSR (0x00A) = zero_extend(vcsr[vxrm])
-function clause read_CSR (0x00F) = zero_extend(vcsr.bits)
-
 function clause write_CSR (0x009, value) = { ext_write_vcsr (vcsr[vxrm], value[0 .. 0]); zero_extend(vcsr[vxsat]) }
 function clause write_CSR (0x00A, value) = { ext_write_vcsr (value[1 .. 0], vcsr[vxsat]); zero_extend(vcsr[vxrm]) }
 function clause write_CSR (0x00F, value) = { ext_write_vcsr (value [2 .. 1], value [0 .. 0]); zero_extend(vcsr.bits) }
