@@ -69,15 +69,6 @@ function clause read_CSR(0xB82 if xlen == 32) = minstret[63 .. 32]
 function clause read_CSR(0b1011000 /* 0xB00 */ @ index : bits(5) if unsigned(index) >= 3) = read_mhpmcounter(hpmidx_from_bits(index))
 function clause read_CSR(0b1011100 /* 0xB80 */ @ index : bits(5) if xlen == 32 & unsigned(index) >= 3) = read_mhpmcounterh(hpmidx_from_bits(index))
 
-/* vector */
-function clause read_CSR(0x008) = zero_extend(vstart)
-function clause read_CSR(0x009) = zero_extend(vxsat)
-function clause read_CSR(0x00A) = zero_extend(vxrm)
-function clause read_CSR(0x00F) = zero_extend(vcsr.bits)
-function clause read_CSR(0xC20) = vl
-function clause read_CSR(0xC21) = vtype.bits
-function clause read_CSR(0xC22) = vlenb
-
 /* trigger/debug */
 function clause read_CSR(0x7a0) = ~(tselect)  /* this indicates we don't have any trigger support */
 
@@ -186,15 +177,6 @@ function clause write_CSR(0x180, value) = { satp = legalize_satp(cur_Architectur
 
 /* user mode: seed (entropy source). writes are ignored */
 function clause write_CSR(0x015, value) = write_seed_csr()
-
-/* vector */
-function clause write_CSR(0x008, value) = { let vstart_length = get_vlen_pow(); vstart = zero_extend(16, value[(vstart_length - 1) .. 0]); zero_extend(vstart) }
-function clause write_CSR(0x009, value) = { vxsat = value[0 .. 0]; zero_extend(vxsat) }
-function clause write_CSR(0x00A, value) = { vxrm = value[1 .. 0]; zero_extend(vxrm) }
-function clause write_CSR(0x00F, value) = { vcsr.bits = value[2 ..0]; zero_extend(vcsr.bits) }
-function clause write_CSR(0xC20, value) = { vl = value; vl }
-function clause write_CSR(0xC21, value) = { vtype.bits = value; vtype.bits }
-function clause write_CSR(0xC22, value) = { vlenb = value; vlenb }
 
 function clause execute CSR(csr, rs1, rd, is_imm, op) = {
   let rs1_val : xlenbits = if is_imm then zero_extend(rs1) else X(rs1);

@@ -557,11 +557,9 @@ function init_sys() -> unit = {
    * See riscv_vlen.sail for details.
    */
   vstart             = zero_extend(0b0);
-  vxsat              = 0b0;
-  vxrm               = 0b00;
-  vcsr[vxrm]       = vxrm;
-  vcsr[vxsat]      = vxsat;
   vl                 = zero_extend(0b0);
+  vcsr[vxrm]       = 0b00;
+  vcsr[vxsat]      = 0b0;
   vtype[vill]      = 0b1;
   vtype[reserved]  = zero_extend(0b0);
   vtype[vma]       = 0b0;
