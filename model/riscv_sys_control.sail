@@ -432,8 +432,14 @@ function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, 
       let matchOption : bits(4) = MCtrl6[match_opt];
       /* Decide content to match address/data based on select bit */
       let tdata2_content : xlenbits = match (MCtrl6[select]) {
-        0b0 => addr,
-        0b1 => data
+        0b0 => { size_matched = true; addr },
+        0b1 => {
+          size_matched = match matchSize_of_bits(MCtrl6[size]) {
+            ANY => true,
+            _   => (match_size == matchSize_of_bits(MCtrl6[size])),
+          };
+          data
+        }
       };
       /* Data matched according to the select match options */
       data_matched = match (matchOpt_of_bits(matchOption)) {
@@ -442,13 +448,26 @@ function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, 
           let idx : {'n, (1 <= 'n < xlen). int('n)} = find_first_zero(tdata2_content);
           tdata2_x.tdata2[i][(xlen - 1) .. (xlen - idx)] == tdata2_content[(xlen - 1) .. (xlen - idx)]
         },
-        MOPT_GE    => { (tdata2_x.tdata2[i][(sizeof(xlen) - 1) .. 0] >=_u tdata2_content) },
-        MOPT_LT    => { (tdata2_x.tdata2[i][(sizeof(xlen) - 1) .. 0] <_u  tdata2_content) },
+        MOPT_GE    => { (tdata2_content >=_u tdata2_x.tdata2[i][(sizeof(xlen) - 1) .. 0]) },
+        MOPT_LT    => { (tdata2_content <_u  tdata2_x.tdata2[i][(sizeof(xlen) - 1) .. 0]) },
+        MOPT_MASK_LOW => {
+          let intemrd_cmpr_val : half_xlenbits = tdata2_content[((sizeof(xlen) / 2) - 1) .. 0] & tdata2_x.tdata2[i][(sizeof(xlen) - 1) .. (sizeof(xlen) / 2)];
+          intemrd_cmpr_val == tdata2_x.tdata2[i][((sizeof(xlen) / 2) - 1) .. 0]
+        },
+        MOPT_MASK_HIGH => {
+          let intemrd_cmpr_val : half_xlenbits = tdata2_content[(sizeof(xlen) - 1) .. (sizeof(xlen) / 2)] & tdata2_x.tdata2[i][(sizeof(xlen) - 1) .. (sizeof(xlen) / 2)];
+          intemrd_cmpr_val == tdata2_x.tdata2[i][((sizeof(xlen) / 2) - 1) .. 0]
+        },
+        MOPT_NOT_EQUAL => { (tdata2_x.tdata2[i] != tdata2_content) },
+        MOPT_NOT_MASK_LOW => {
+          let intemrd_cmpr_val : half_xlenbits = tdata2_content[((sizeof(xlen) / 2) - 1) .. 0] & tdata2_x.tdata2[i][(sizeof(xlen) - 1) .. (sizeof(xlen) / 2)];
+          intemrd_cmpr_val != tdata2_x.tdata2[i][((sizeof(xlen) / 2) - 1) .. 0]
+        },
+        MOPT_NOT_MASK_HIGH => {
+          let intemrd_cmpr_val : half_xlenbits = tdata2_content[(sizeof(xlen) - 1) .. (sizeof(xlen) / 2)] & tdata2_x.tdata2[i][(sizeof(xlen) - 1) .. (sizeof(xlen) / 2)];
+          intemrd_cmpr_val != tdata2_x.tdata2[i][((sizeof(xlen) / 2) - 1) .. 0]
+        },
         _          => false
-      };
-      size_matched = match matchSize_of_bits(MCtrl6[size]) {
-        ANY => true,
-        _   => (match_size == matchSize_of_bits(MCtrl6[size])),
       };
       if ((((MCtrl6[m] == 0b1) & (cur_priv == Machine))     | /* Trigger is enabled in M-mode */
            ((MCtrl6[s] == 0b1) & (cur_priv == Supervisor))  | /* Trigger is enabled in S-mode */

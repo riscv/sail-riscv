@@ -1051,14 +1051,7 @@ function legalize_tdata1(o : xlenbits, v : xlenbits) -> xlenbits = {
       /* m | uncertainen | s | u | execute | store | load */
       new_value[6 .. 0]   = MCtrl6.bits[6 .. 0];
       /* match */
-      if (
-        match_option == MOPT_EQUAL |
-        match_option == MOPT_GE    |
-        match_option == MOPT_LT    |
-        match_option == MOPT_NAPOT
-      ) 
-      then { new_value[10 .. 7]  = v[10 .. 7] }
-      else { new_value[10 .. 7]  = o[10 .. 7] };
+      new_value[10 .. 7]  = v[10 .. 7];
       /* size | action | chain */
       new_value[18 .. 11] = (MCtrl6[size] @ trigger_action[3 .. 0] @ MCtrl6[chain]);
       /* hit0 | select */
