@@ -42,12 +42,16 @@ function step(step_no : int) -> bool = {
           match ext_fetch_hook(fetch()) {
             /* extension error */
             F_Ext_Error(e)   => {
-              ext_handle_fetch_check_error(e);
+              if not(instrDataMatch(cur_privilege, PC, zero_extend(0b0), ANY, INSTR_MATCH)) then {
+                ext_handle_fetch_check_error(e);
+              };
               (RETIRE_FAIL, false)
             },
             /* standard error */
             F_Error(e, addr) => {
-              handle_mem_exception(virtaddr(addr), e);
+              if not(instrDataMatch(cur_privilege, PC, zero_extend(0b0), ANY, INSTR_MATCH)) then {
+                handle_mem_exception(virtaddr(addr), e);
+              };
               (RETIRE_FAIL, false)
             },
             /* non-error cases: */

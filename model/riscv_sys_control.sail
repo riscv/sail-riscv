@@ -446,8 +446,8 @@ function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, 
       data_matched = match (matchOpt_of_bits(matchOption)) {
         MOPT_EQUAL => { (tdata2_x.tdata2[i] == tdata2_content) },
         MOPT_NAPOT => {
-          let idx : {'n, (1 <= 'n < xlen). int('n)} = find_first_zero(tdata2_content);
-          tdata2_x.tdata2[i][(xlen - 1) .. (xlen - idx)] == tdata2_content[(xlen - 1) .. (xlen - idx)]
+          let idx : {'n, (1 <= 'n < xlen). int('n)} = find_first_zero(tdata2_x.tdata2[i]);
+          tdata2_x.tdata2[i][(xlen - 1) .. idx] == tdata2_content[(xlen - 1) .. idx]
         },
         MOPT_GE    => { (tdata2_content >=_u tdata2_x.tdata2[i][(xlen - 1) .. 0]) },
         MOPT_LT    => { (tdata2_content <_u  tdata2_x.tdata2[i][(xlen - 1) .. 0]) },
@@ -461,8 +461,8 @@ function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, 
         },
         MOPT_NOT_EQUAL => { (tdata2_x.tdata2[i] != tdata2_content) },
         MOPT_NOT_NAPOT => {
-          let idx : {'n, (1 <= 'n < xlen). int('n)} = find_first_zero(tdata2_content);
-          tdata2_x.tdata2[i][(xlen - 1) .. (xlen - idx)] != tdata2_content[(xlen - 1) .. (xlen - idx)]
+          let idx : {'n, (1 <= 'n < xlen). int('n)} = find_first_zero(tdata2_x.tdata2[i]);
+          tdata2_x.tdata2[i][(xlen - 1) .. idx] != tdata2_content[(xlen - 1) .. idx]
         },
         MOPT_NOT_MASK_LOW => {
           let intemrd_cmpr_val : half_xlenbits = tdata2_content[(half_xlen - 1) .. 0] & tdata2_x.tdata2[i][(xlen - 1) .. half_xlen];
