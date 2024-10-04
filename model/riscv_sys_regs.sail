@@ -1004,8 +1004,8 @@ bitfield InterruptTrigger : xlenbits = {
 
 /* Legalize Tdata1 */
 function legalize_tdata1(o : xlenbits, v : xlenbits) -> xlenbits = {
-  let trigger_type   : bits(4)           = v[(sizeof(xlen) - 1) .. (sizeof(xlen) - 4)];
-  let trigger_dmode  : bits(1)           = v[(sizeof(xlen) - 5) .. (sizeof(xlen) - 5)];
+  let trigger_type   : bits(4)           = v[(xlen - 1) .. (xlen - 4)];
+  let trigger_dmode  : bits(1)           = v[(xlen - 5) .. (xlen - 5)];
   /* TODO: Update trigger action when remaining trigger action option will add */
   let trigger_action : bits(6)           = (0b00 @ 0x0);
   let MCtrl6         : MatchControlType6 = Mk_MatchControlType6(v[26 .. 0]);
@@ -1014,8 +1014,8 @@ function legalize_tdata1(o : xlenbits, v : xlenbits) -> xlenbits = {
   let ExcepTrigger   : InterruptTrigger  = Mk_InterruptTrigger(v);
   var new_value      : xlenbits          = o;
 
-  new_value[(sizeof(xlen) - 1) .. (sizeof(xlen) - 4)] = trigger_type;
-  new_value[(sizeof(xlen) - 5) .. (sizeof(xlen) - 5)] = trigger_dmode;
+  new_value[(xlen - 1) .. (xlen - 4)] = trigger_type;
+  new_value[(xlen - 5) .. (xlen - 5)] = trigger_dmode;
   match triggerType_of_bits(trigger_type){
     TRIG_ICOUNT    => {
       /* Trigger action */
@@ -1032,7 +1032,7 @@ function legalize_tdata1(o : xlenbits, v : xlenbits) -> xlenbits = {
       /* nmi | m */
       new_value[10 .. 9] = (IntrptTrigger[nmi] @ IntrptTrigger[m]);
       /* hit */
-      new_value[(sizeof(xlen) - 6) .. (sizeof(xlen) - 6)] = IntrptTrigger[hit];
+      new_value[(xlen - 6) .. (xlen - 6)] = IntrptTrigger[hit];
       new_value
     },
     TRIG_ETRIGGER  => {
@@ -1043,7 +1043,7 @@ function legalize_tdata1(o : xlenbits, v : xlenbits) -> xlenbits = {
       /* m */
       new_value[9 .. 9] = IntrptTrigger[m];
       /* hit */
-      new_value[(sizeof(xlen) - 6) .. (sizeof(xlen) - 6)] = IntrptTrigger[hit];
+      new_value[(xlen - 6) .. (xlen - 6)] = IntrptTrigger[hit];
       new_value
     },
     TRIG_MCONTROL6 => {
@@ -1051,7 +1051,7 @@ function legalize_tdata1(o : xlenbits, v : xlenbits) -> xlenbits = {
       /* m | uncertainen | s | u | execute | store | load */
       new_value[6 .. 0]   = MCtrl6.bits[6 .. 0];
       /* match */
-      new_value[10 .. 7]  = v[10 .. 7];
+      new_value[10 .. 7]  = match matchOpt_of_bits(v[10 .. 7]) { RSVD => { o[10 .. 7]}, _ => { v[10 .. 7] } };
       /* size | action | chain */
       new_value[18 .. 11] = (MCtrl6[size] @ trigger_action[3 .. 0] @ MCtrl6[chain]);
       /* hit0 | select */

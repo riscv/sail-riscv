@@ -320,7 +320,8 @@ enum MATCH_OPTIONS = {
   MOPT_NOT_EQUAL,
   MOPT_NOT_NAPOT,
   MOPT_NOT_MASK_LOW,
-  MOPT_NOT_MASK_HIGH
+  MOPT_NOT_MASK_HIGH,
+  RSVD
 }
 
 mapping matchOpt_of_bits : bits(4) <-> MATCH_OPTIONS = {
@@ -330,10 +331,16 @@ mapping matchOpt_of_bits : bits(4) <-> MATCH_OPTIONS = {
   0x3 <-> MOPT_LT,
   0x4 <-> MOPT_MASK_LOW,
   0x5 <-> MOPT_MASK_HIGH,
+  0x6 <-> RSVD,
+  0x7 <-> RSVD,
   0x8 <-> MOPT_NOT_EQUAL,
   0x9 <-> MOPT_NOT_NAPOT,
+  0xA <-> RSVD,
+  0xB <-> RSVD,
   0xC <-> MOPT_NOT_MASK_LOW,
-  0xD <-> MOPT_NOT_MASK_HIGH
+  0xD <-> MOPT_NOT_MASK_HIGH,
+  0xE <-> RSVD,
+  0xF <-> RSVD,
 }
 
 enum MatchType = {

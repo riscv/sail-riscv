@@ -241,7 +241,7 @@ function TriggerFireMatch(cur_priv : Privilege) -> bool = {
 function icount_trigger_match(cur_priv : Privilege) -> unit = {
   /* Traverse through all the triggers */
   foreach (i from 0 to (sizeof(N_TRIGGERS) - 1)) {
-    let trigger_type : bits(4) = tdata1_x.tdata1[i][(sizeof(xlen) - 1) .. (sizeof(xlen) - 4)];
+    let trigger_type : bits(4) = tdata1_x.tdata1[i][(xlen - 1) .. (xlen - 4)];
     /* If Instruction Count trigger is found */
     if (trigger_type == triggerType_to_bits(TRIG_ICOUNT)) then {
       var InstrCount : InstructionCount  = Mk_InstructionCount(tdata1_x.tdata1[i][26 .. 0]);
@@ -266,7 +266,7 @@ function icount_trigger_match(cur_priv : Privilege) -> unit = {
 function IEtrigger_match(cur_priv : Privilege, idx : {'n, (0 <= 'n < xlen). int('n)}) -> unit = {
   /* Traverse through all the triggers */
   foreach (i from 0 to (sizeof(N_TRIGGERS) - 1)) {
-    let trigger_type : bits(4) = tdata1_x.tdata1[i][(sizeof(xlen) - 1) .. (sizeof(xlen) - 4)];
+    let trigger_type : bits(4) = tdata1_x.tdata1[i][(xlen - 1) .. (xlen - 4)];
     /* If Interrupt / Exception trigger found */
     if ((trigger_type == triggerType_to_bits(TRIG_ETRIGGER)) |
         (trigger_type == triggerType_to_bits(TRIG_ITRIGGER))) then {
@@ -412,7 +412,7 @@ function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit = {
 }
 
 function find_first_zero(v: xlenbits) -> {'n, (1 <= 'n < xlen). int('n)} = {
-  foreach (i from 1 to (sizeof(xlen) - 1)) {
+  foreach (i from 1 to (xlen - 1)) {
     if v[i .. i] == 0b0 then return i;
   };
   return 1;
@@ -421,9 +421,10 @@ function find_first_zero(v: xlenbits) -> {'n, (1 <= 'n < xlen). int('n)} = {
 /* Match Control Type 6 Trigger Match */
 function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, match_size : matchSize, match_type : MatchType) -> bool = {
   var raise_exception : bool = false;
+  let half_xlen = sizeof(half_xlen);
   /* Traverse through all tirggers */
   foreach (i from 0 to (sizeof(N_TRIGGERS) - 1)) {
-    let trigger_type : bits(4) = tdata1_x.tdata1[i][(sizeof(xlen) - 1) .. (sizeof(xlen) - 4)];
+    let trigger_type : bits(4) = tdata1_x.tdata1[i][(xlen - 1) .. (xlen - 4)];
     var data_matched : bool = false;
     var size_matched : bool = false;
     /* Match Control Type 6 Trigger found */
@@ -448,24 +449,28 @@ function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, 
           let idx : {'n, (1 <= 'n < xlen). int('n)} = find_first_zero(tdata2_content);
           tdata2_x.tdata2[i][(xlen - 1) .. (xlen - idx)] == tdata2_content[(xlen - 1) .. (xlen - idx)]
         },
-        MOPT_GE    => { (tdata2_content >=_u tdata2_x.tdata2[i][(sizeof(xlen) - 1) .. 0]) },
-        MOPT_LT    => { (tdata2_content <_u  tdata2_x.tdata2[i][(sizeof(xlen) - 1) .. 0]) },
+        MOPT_GE    => { (tdata2_content >=_u tdata2_x.tdata2[i][(xlen - 1) .. 0]) },
+        MOPT_LT    => { (tdata2_content <_u  tdata2_x.tdata2[i][(xlen - 1) .. 0]) },
         MOPT_MASK_LOW => {
-          let intemrd_cmpr_val : half_xlenbits = tdata2_content[((sizeof(xlen) / 2) - 1) .. 0] & tdata2_x.tdata2[i][(sizeof(xlen) - 1) .. (sizeof(xlen) / 2)];
-          intemrd_cmpr_val == tdata2_x.tdata2[i][((sizeof(xlen) / 2) - 1) .. 0]
+          let intemrd_cmpr_val : half_xlenbits = tdata2_content[(half_xlen - 1) .. 0] & tdata2_x.tdata2[i][(xlen - 1) .. half_xlen];
+          intemrd_cmpr_val == tdata2_x.tdata2[i][(half_xlen - 1) .. 0]
         },
         MOPT_MASK_HIGH => {
-          let intemrd_cmpr_val : half_xlenbits = tdata2_content[(sizeof(xlen) - 1) .. (sizeof(xlen) / 2)] & tdata2_x.tdata2[i][(sizeof(xlen) - 1) .. (sizeof(xlen) / 2)];
-          intemrd_cmpr_val == tdata2_x.tdata2[i][((sizeof(xlen) / 2) - 1) .. 0]
+          let intemrd_cmpr_val : half_xlenbits = tdata2_content[(xlen - 1) .. half_xlen] & tdata2_x.tdata2[i][(xlen - 1) .. half_xlen];
+          intemrd_cmpr_val == tdata2_x.tdata2[i][(half_xlen - 1) .. 0]
         },
         MOPT_NOT_EQUAL => { (tdata2_x.tdata2[i] != tdata2_content) },
+        MOPT_NOT_NAPOT => {
+          let idx : {'n, (1 <= 'n < xlen). int('n)} = find_first_zero(tdata2_content);
+          tdata2_x.tdata2[i][(xlen - 1) .. (xlen - idx)] != tdata2_content[(xlen - 1) .. (xlen - idx)]
+        },
         MOPT_NOT_MASK_LOW => {
-          let intemrd_cmpr_val : half_xlenbits = tdata2_content[((sizeof(xlen) / 2) - 1) .. 0] & tdata2_x.tdata2[i][(sizeof(xlen) - 1) .. (sizeof(xlen) / 2)];
-          intemrd_cmpr_val != tdata2_x.tdata2[i][((sizeof(xlen) / 2) - 1) .. 0]
+          let intemrd_cmpr_val : half_xlenbits = tdata2_content[(half_xlen - 1) .. 0] & tdata2_x.tdata2[i][(xlen - 1) .. half_xlen];
+          intemrd_cmpr_val != tdata2_x.tdata2[i][(half_xlen - 1) .. 0]
         },
         MOPT_NOT_MASK_HIGH => {
-          let intemrd_cmpr_val : half_xlenbits = tdata2_content[(sizeof(xlen) - 1) .. (sizeof(xlen) / 2)] & tdata2_x.tdata2[i][(sizeof(xlen) - 1) .. (sizeof(xlen) / 2)];
-          intemrd_cmpr_val != tdata2_x.tdata2[i][((sizeof(xlen) / 2) - 1) .. 0]
+          let intemrd_cmpr_val : half_xlenbits = tdata2_content[(xlen - 1) .. half_xlen] & tdata2_x.tdata2[i][(xlen - 1) .. half_xlen];
+          intemrd_cmpr_val != tdata2_x.tdata2[i][(half_xlen - 1) .. 0]
         },
         _          => false
       };
@@ -544,7 +549,7 @@ function check_trigger_firing(cur_priv : Privilege) -> bool = {
     InstrCount = Mk_InstructionCount(tdata1_x.tdata1[i][26 .. 0]);
     IEtrigger  = Mk_InterruptTrigger(tdata1_x.tdata1[i]);
     MCtrl6     = Mk_MatchControlType6(tdata1_x.tdata1[i][26 .. 0]);
-    let trigger_type : bits(4) = tdata1_x.tdata1[i][(sizeof(xlen) - 1) .. (sizeof(xlen) - 4)];
+    let trigger_type : bits(4) = tdata1_x.tdata1[i][(xlen - 1) .. (xlen - 4)];
     match triggerType_of_bits(trigger_type) {
       /* Check Exception Trigger Firing */
       TRIG_ETRIGGER => { 
@@ -661,7 +666,7 @@ function init_sys() -> unit = {
   vtype[vlmul]     = 0b000;
 
   foreach (i from 0 to 6) {
-    tdata1_x.tdata1[i][(sizeof(xlen) - 1) .. (sizeof(xlen) - 4)] = 0xf;
+    tdata1_x.tdata1[i][(xlen - 1) .. (xlen - 4)] = 0xf;
   };
 
   // PMP's L and A fields are set to 0 on reset.
