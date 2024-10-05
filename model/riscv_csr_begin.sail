@@ -15,10 +15,6 @@ scattered mapping csr_name_map
 // TODO: These csr_name_map definitions should be moved to the files
 // corresponding to their extensions rather than all be here.
 
-/* user floating-point context */
-mapping clause csr_name_map = 0x001  <-> "fflags"
-mapping clause csr_name_map = 0x002  <-> "frm"
-mapping clause csr_name_map = 0x003  <-> "fcsr"
 /* user entropy source */
 mapping clause csr_name_map = 0x015  <-> "seed"
 /* counter/timers */
