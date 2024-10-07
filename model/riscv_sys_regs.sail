@@ -349,6 +349,9 @@ function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   [o with
     FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0,
+    CBZE = if extensionEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
+    CBCFE = if extensionEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
+    CBIE = if extensionEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
     STCE = if extensionEnabled(Ext_Sstc) then v[STCE] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
   ]
@@ -358,12 +361,16 @@ function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
   let v = Mk_SEnvcfg(v);
   [o with
     FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0,
+    CBZE = if extensionEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
+    CBCFE = if extensionEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
+    CBIE = if extensionEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
     // Other extensions are not implemented yet so all other fields are read only zero.
-  ];
+  ]
 }
 
-register menvcfg : MEnvcfg
-register senvcfg : SEnvcfg
+// Initialised to legal values in case some bits are hard-coded to 1.
+register menvcfg : MEnvcfg = legalize_menvcfg(Mk_MEnvcfg(zeros()), zeros())
+register senvcfg : SEnvcfg = legalize_senvcfg(Mk_SEnvcfg(zeros()), zeros())
 
 mapping clause csr_name_map = 0x30A  <-> "menvcfg"
 mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
