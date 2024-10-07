@@ -68,9 +68,9 @@ let options = Arg.align ([("-dump-dts",
                           ("-enable-zilsd",
                            Arg.Set P.config_enable_zilsd,
                            " enable the ZILSD extension on boot");
-                          ("-enable-zcmlsd",
-                           Arg.Set P.config_enable_zcmlsd,
-                           " enable the ZCMLSD extension on boot");                                                      
+                          ("-enable-zclsd",
+                           Arg.Set P.config_enable_zclsd,
+                           " enable the ZCLSD extension on boot");                                                      
                           ("-disable-vext",
                            Arg.Clear P.config_enable_vext,
                            " disable the RVV extension on boot");

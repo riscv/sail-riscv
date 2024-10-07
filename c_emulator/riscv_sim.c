@@ -1,4 +1,4 @@
-#include <ctype.h>
+#include <ctype.h>	
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,7 +56,7 @@ const char *RV32ISA = "RV32IMAC";
 #define OPT_ENABLE_SVINVAL 1004
 #define OPT_ENABLE_ZCB 10014
 #define OPT_ENABLE_ZILSD 10020
-#define OPT_ENABLE_ZCMLSD 10021
+#define OPT_ENABLE_ZCLSD 10021
 
 static bool do_dump_dts = false;
 static bool do_show_times = false;
@@ -152,7 +152,7 @@ static struct option options[] = {
     {"enable-svinval",              no_argument,       0, OPT_ENABLE_SVINVAL      },
     {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
     {"enable-zilsd",                no_argument,       0, OPT_ENABLE_ZILSD        },
-    {"enable-zcmlsd",               no_argument,       0, OPT_ENABLE_ZCMLSD       },
+    {"enable-zclsd",               no_argument,       0, OPT_ENABLE_ZCLSD       },
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
@@ -407,9 +407,9 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "enabling Zilsd support.\n");
       rv_enable_zilsd = true;
       break;
-    case OPT_ENABLE_ZCMLSD:
-      fprintf(stderr, "enabling Zcmlsd support.\n");
-      rv_enable_zcmlsd = true;
+    case OPT_ENABLE_ZCLSD:
+      fprintf(stderr, "enabling Zclsd support.\n");
+      rv_enable_zclsd = true;
       break; 
 #ifdef SAILCOV
     case 'c':

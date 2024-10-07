@@ -52,9 +52,9 @@ bool sys_enable_zilsd(unit u)
   return rv_enable_zilsd;
 }
 
-bool sys_enable_zcmlsd(unit u)
+bool sys_enable_zclsd(unit u)
 {
-  return rv_enable_zcmlsd;
+  return rv_enable_zclsd;
 }
 
 bool sys_enable_writable_fiom(unit u)

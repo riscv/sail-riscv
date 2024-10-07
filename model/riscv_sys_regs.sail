@@ -91,7 +91,7 @@ val sys_enable_zcb = {c: "sys_enable_zcb", ocaml: "Platform.enable_zcb", _: "sys
 /* whether zfinx was enabled at boot */
 val sys_enable_zfinx = {c: "sys_enable_zfinx", ocaml: "Platform.enable_zfinx", _: "sys_enable_zfinx"} : unit -> bool
 val sys_enable_zilsd = {c: "sys_enable_zilsd", ocaml: "Platform.enable_zilsd", _: "sys_enable_zilsd"} : unit -> bool
-val sys_enable_zcmlsd = {c: "sys_enable_zcmlsd", ocaml: "Platform.enable_zcmlsd", _: "sys_enable_zcmlsd"} : unit -> bool
+val sys_enable_zclsd = {c: "sys_enable_zclsd", ocaml: "Platform.enable_zclsd", _: "sys_enable_zclsd"} : unit -> bool
 /* whether the N extension was enabled at boot */
 val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "sys_enable_next"} : unit -> bool
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
@@ -327,7 +327,7 @@ function haveZdinx()   -> bool = sys_enable_zfinx() & sizeof(flen) >= 64
 
 /* Zilsd extension support */
 function haveZilsd() ->  bool = sizeof(xlen) == 32 & sys_enable_zilsd() 
-function haveZcmlsd()   -> bool = sys_enable_rvc() & sys_enable_zilsd() & sys_enable_zcmlsd() & (haveFExt() == false)
+function haveZclsd()   -> bool = sys_enable_rvc() & sys_enable_zilsd() & sys_enable_zclsd() & (haveFExt() == false)
 
 /* interrupt processing state */
 

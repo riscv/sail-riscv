@@ -6,7 +6,7 @@ module Elf = Elf_loader;;
 
 let config_enable_rvc                  = ref true
 let config_enable_zilsd                = ref false
-let config_enable_zcmlsd               = ref false
+let config_enable_zclsd               = ref false
 let config_enable_next                 = ref false
 let config_enable_writable_misa        = ref true
 let config_enable_dirty_update         = ref false
@@ -96,7 +96,7 @@ let enable_svinval ()                = !config_enable_svinval
 let enable_zcb ()                    = !config_enable_zcb
 let enable_zfinx ()                  = false
 let enable_zilsd ()                  = !config_enable_zilsd
-let enable_zcmlsd ()                 = !config_enable_zcmlsd
+let enable_zclsd ()                 = !config_enable_zclsd
 let enable_writable_fiom ()          = !config_enable_writable_fiom
 let pmp_count ()                     = !config_pmp_count
 let pmp_grain ()                     = !config_pmp_grain

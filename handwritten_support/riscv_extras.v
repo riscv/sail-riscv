@@ -202,7 +202,7 @@ Axiom sys_enable_next : unit -> bool.
 Axiom sys_enable_zfinx : unit -> bool.
 Axiom sys_enable_writable_fiom : unit -> bool.
 Axiom sys_enable_zilsd : unit -> bool.
-Axiom sys_enable_zcmlsd : unit -> bool.
+Axiom sys_enable_zclsd : unit -> bool.
 
 
 (* The constraint solver can do this itself, but a Coq bug puts
