@@ -152,14 +152,12 @@ function clause execute (VCLZ_V(vm, vs2, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  var result  : vector('n, dec, bits('m)) = undefined;
-  var mask    : vector('n, dec, bool)     = undefined;
   let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
-
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
-  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
@@ -188,14 +186,13 @@ function clause execute (VCTZ_V(vm, vs2, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  var result  : vector('n, dec, bits('m)) = undefined;
-  var mask    : vector('n, dec, bool)     = undefined;
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
 
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
-  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
