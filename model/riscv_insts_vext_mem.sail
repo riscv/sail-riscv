@@ -459,7 +459,7 @@ function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index
     if mask[i] then { /* active segments */
       vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
-        let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
+        let elem_offset : int = signed(vs2_val[i]) + j * EEW_data_bytes;
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), EEW_data_bytes) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
           Ext_DataAddr_OK(vaddr) =>
@@ -550,7 +550,7 @@ function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_inde
     if mask[i] then { /* active segments */
       vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
-        let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
+        let elem_offset : int = signed(vs2_val[i]) + j * EEW_data_bytes;
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), EEW_data_bytes) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
           Ext_DataAddr_OK(vaddr) =>
