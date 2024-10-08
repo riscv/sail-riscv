@@ -127,3 +127,83 @@ function clause execute (VWSLL_VI(vm, vs2, uimm, vd)) = {
   vstart = zeros();
   RETIRE_SUCCESS
 }
+
+val count_trailing_zeros : forall 'n, 'n >= 0 . (bits('n)) -> range(0, 'n)
+function count_trailing_zeros(x) = {
+    foreach (i from 0 to ('n - 1)) {
+        if x[i] == bitone then return i
+    };
+    'n
+}
+
+union clause ast = VCLZ_V : (bits(1), regidx, regidx)
+
+mapping clause encdec = VCLZ_V (vm, vs2, vd) if extensionEnabled(Ext_Zvbb)
+  <-> 0b010010 @ vm @ vs2 @ 0b01100 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_Zvbb)
+
+mapping clause assembly = VCLZ_V (vm, vs2, vd)
+  <-> "vclz.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+
+function clause execute (VCLZ_V(vm, vs2, vd)) = {
+  let SEW                     = get_sew();
+  let LMUL_pow                = get_lmul_pow();
+  let num_elem                = get_num_elem(LMUL_pow, SEW);
+
+  let 'n = num_elem;
+  let 'm = SEW;
+
+  var result  : vector('n, dec, bits('m)) = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
+
+  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+
+  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+
+  foreach (i from 0 to (num_elem - 1)) {
+    if mask[i] then {
+      let clz = count_leading_zeros(vs2_val[i]);
+      result[i] = to_bits('m, clz);
+    };
+    write_vreg(num_elem, SEW, LMUL_pow, vd, result);
+  };
+  vstart = zeros();
+  RETIRE_SUCCESS
+}
+
+union clause ast = VCTZ_V : (bits(1), regidx, regidx)
+
+mapping clause encdec = VCTZ_V (vm, vs2, vd) if extensionEnabled(Ext_Zvbb)
+  <-> 0b010010 @ vm @ vs2 @ 0b01101 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_Zvbb)
+
+mapping clause assembly = VCTZ_V (vm, vs2, vd)
+  <-> "vctz.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+
+function clause execute (VCTZ_V(vm, vs2, vd)) = {
+  let SEW                     = get_sew();
+  let LMUL_pow                = get_lmul_pow();
+  let num_elem                = get_num_elem(LMUL_pow, SEW);
+
+  let 'n = num_elem;
+  let 'm = SEW;
+
+  var result  : vector('n, dec, bits('m)) = undefined;
+  var mask    : vector('n, dec, bool)     = undefined;
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
+
+  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+
+  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+
+  foreach (i from 0 to (num_elem - 1)) {
+    if mask[i] then {
+      let ctz = count_trailing_zeros(vs2_val[i]);
+      result[i] = to_bits('m, ctz);
+    };
+    write_vreg(num_elem, SEW, LMUL_pow, vd, result);
+  };
+  vstart = zeros();
+  RETIRE_SUCCESS
+}
