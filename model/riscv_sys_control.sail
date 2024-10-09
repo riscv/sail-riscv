@@ -28,8 +28,8 @@ function clause is_CSR_defined(0xf15) = true // mconfigptr
 /* machine mode: trap setup */
 function clause is_CSR_defined(0x300) = true // mstatus
 function clause is_CSR_defined(0x301) = true // misa
-function clause is_CSR_defined(0x302) = extensionEnabled(Ext_S) | extensionEnabled(Ext_N) // medeleg
-function clause is_CSR_defined(0x303) = extensionEnabled(Ext_S) | extensionEnabled(Ext_N) // mideleg
+function clause is_CSR_defined(0x302) = extensionEnabled(Ext_S) // medeleg
+function clause is_CSR_defined(0x303) = extensionEnabled(Ext_S) // mideleg
 function clause is_CSR_defined(0x304) = true // mie
 function clause is_CSR_defined(0x305) = true // mtvec
 function clause is_CSR_defined(0x306) = extensionEnabled(Ext_U) // mcounteren
@@ -73,8 +73,6 @@ function clause is_CSR_defined(0x7a0) = true
 
 /* supervisor mode: trap setup */
 function clause is_CSR_defined(0x100) = extensionEnabled(Ext_S) // sstatus
-function clause is_CSR_defined(0x102) = extensionEnabled(Ext_S) & extensionEnabled(Ext_N) // sedeleg
-function clause is_CSR_defined(0x103) = extensionEnabled(Ext_S) & extensionEnabled(Ext_N) // sideleg
 function clause is_CSR_defined(0x104) = extensionEnabled(Ext_S) // sie
 function clause is_CSR_defined(0x105) = extensionEnabled(Ext_S) // stvec
 function clause is_CSR_defined(0x106) = extensionEnabled(Ext_S) // scounteren
@@ -183,13 +181,7 @@ val cancel_reservation = impure {interpreter: "Platform.cancel_reservation", c: 
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let idx   = num_of_ExceptionType(e);
   let super = bit_to_bool(medeleg.bits[idx]);
-  /* if S-mode is absent, medeleg delegates to U-mode if 'N' is supported. */
-  let user  = if   extensionEnabled(Ext_S)
-              then super & extensionEnabled(Ext_N) & bit_to_bool(sedeleg.bits[idx])
-              else super & extensionEnabled(Ext_N);
-  let deleg = if      extensionEnabled(Ext_U) & user  then User
-              else if extensionEnabled(Ext_S) & super then Supervisor
-              else                               Machine;
+  let deleg = if extensionEnabled(Ext_S) & super then Supervisor else Machine;
   /* We cannot transition to a less-privileged mode. */
   if   privLevel_to_bits(deleg) <_u privLevel_to_bits(p)
   then p else deleg
@@ -206,10 +198,7 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   else if ip[SEI] == 0b1 then Some(I_S_External)
   else if ip[SSI] == 0b1 then Some(I_S_Software)
   else if ip[STI] == 0b1 then Some(I_S_Timer)
-  else if ip[UEI] == 0b1 then Some(I_U_External)
-  else if ip[USI] == 0b1 then Some(I_U_Software)
-  else if ip[UTI] == 0b1 then Some(I_U_Timer)
-  else                         None()
+  else                        None()
 }
 
 /* Process the pending interrupts xip at a privilege according to
@@ -225,28 +214,26 @@ union interrupt_set = {
 function processPending(xip : Minterrupts, xie : Minterrupts, xideleg : xlenbits,
                         priv_enabled : bool) -> interrupt_set = {
   /* interrupts that are enabled but not delegated are pending */
-  let  effective_pend = xip.bits & xie.bits & (~ (xideleg));
+  let  effective_pend = xip.bits & xie.bits & ~(xideleg);
   /* the others are delegated */
   let  effective_delg = xip.bits & xideleg;
   /* we have pending interrupts if this privilege is enabled */
-  if      priv_enabled & (effective_pend != zero_extend(0b0))
+  if      priv_enabled & (effective_pend != zeros())
   then    Ints_Pending(effective_pend)
-  else if effective_delg != zero_extend(0b0)
+  else if effective_delg != zeros()
   then    Ints_Delegated(effective_delg)
   else    Ints_Empty()
 }
 
 /* Given the current privilege level, iterate over privileges to get a
- * pending set for an enabled privilege. This is only called for M/U or
- * M/S/U systems.
+ * pending set for an enabled privilege.
  *
  * We don't use the lowered views of {xie,xip} here, since the spec
- * allows for example the M_Timer to be delegated to the U-mode.
+ * allows for example the M_Timer to be delegated to the S-mode.
  */
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
-  assert(extensionEnabled(Ext_U), "no user mode: M/U or M/S/U system required");
   let effective_pending = mip.bits & mie.bits;
-  if  effective_pending == zero_extend(0b0) then None() /* fast path */
+  if  effective_pending == zeros() then None() /* fast path */
   else {
     /* Higher privileges than the current one are implicitly enabled,
      * while lower privileges are blocked.  An unsupported privilege is
@@ -254,24 +241,10 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
      */
     let mIE = priv != Machine | (priv == Machine & mstatus[MIE] == 0b1);
     let sIE = extensionEnabled(Ext_S) & (priv == User | (priv == Supervisor & mstatus[SIE] == 0b1));
-    let uIE = extensionEnabled(Ext_N) & (priv == User & mstatus[UIE] == 0b1);
     match processPending(mip, mie, mideleg.bits, mIE) {
       Ints_Empty()      => None(),
-      Ints_Pending(p)   => let r = (p, Machine) in Some(r),
-      Ints_Delegated(d) =>
-        if not(extensionEnabled(Ext_S)) then {
-          if uIE then let r = (d, User) in Some(r)
-          else                             None()
-        } else {
-          /* the delegated bits are pending for S-mode */
-          match processPending(Mk_Minterrupts(d), mie, sideleg.bits, sIE) {
-            Ints_Empty()      => None(),
-            Ints_Pending(p)   => let r = (p, Supervisor) in Some(r),
-            Ints_Delegated(d) => if   uIE
-                                 then let r = (d, User) in Some(r)
-                                 else None()
-          }
-        }
+      Ints_Pending(p)   => Some((p, Machine)),
+      Ints_Delegated(d) => if sIE then Some((d, Supervisor)) else None(),
     }
   }
 }
@@ -280,32 +253,12 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
  * handled (if any), and the privilege it should be handled at.
  */
 function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege)) = {
-  /* If we don't have different privilege levels, we don't need to check delegation.
-   * Absence of U-mode implies absence of S-mode.
-   */
-  let multipleModesSupported = extensionEnabled(Ext_U);
-  if not(multipleModesSupported) then {
-    assert(priv == Machine, "invalid current privilege")
-  };
-  /* Even with U-mode, we don't need to check delegation when M-mode is the only
-     one that can take interrupts, i.e. when we don't have S-mode and don't have
-     the N extension
-  */
-  let delegationPossible = extensionEnabled(Ext_S) | extensionEnabled(Ext_N);
-  if multipleModesSupported & delegationPossible then {
-    match getPendingSet(priv) {
-      None()      => None(),
-      Some(ip, p) => match findPendingInterrupt(ip) {
-                       None()  => None(),
-                       Some(i) => let r = (i, p) in Some(r)
-                     }
-    }
-  } else {
-    let enabled_pending = mip.bits & mie.bits;
-    match findPendingInterrupt(enabled_pending) {
-      Some(i) => let r = (i, Machine) in Some(r),
-      None()  => None()
-    }
+  match getPendingSet(priv) {
+    None()       => None(),
+    Some(ip, p)  => match findPendingInterrupt(ip) {
+                      None()  => None(),
+                      Some(i) => Some((i, p)),
+                    }
   }
 }
 
@@ -315,7 +268,6 @@ union ctl_result = {
   CTL_TRAP : sync_exception,
   CTL_SRET : unit,
   CTL_MRET : unit,
-  CTL_URET : unit
 }
 
 /* trap value */
@@ -392,26 +344,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        prepare_trap_vector(del_priv, scause)
     },
-    User => {
-       assert(extensionEnabled(Ext_U), "no user mode present for delegation");
-
-       ucause[IsInterrupt] = bool_to_bits(intr);
-       ucause[Cause]       = zero_extend(c);
-
-       mstatus[UPIE] = mstatus[UIE];
-       mstatus[UIE]  = 0b0;
-       utval           = tval(info);
-       uepc            = pc;
-
-       cur_privilege   = del_priv;
-
-       handle_trap_extension(del_priv, pc, ext);
-
-       if   get_config_print_reg()
-       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
-
-       prepare_trap_vector(del_priv, ucause)
-    }
+    User => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
   };
 }
 
@@ -458,19 +391,6 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
 
       prepare_xret_target(Supervisor) & pc_alignment_mask()
     },
-    (_, CTL_URET())  => {
-      let prev_priv   = cur_privilege;
-      mstatus[UIE]  = mstatus[UPIE];
-      mstatus[UPIE] = 0b1;
-      cur_privilege   = User;
-
-      if   get_config_print_reg()
-      then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
-      if   get_config_print_platform()
-      then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
-
-      prepare_xret_target(User) & pc_alignment_mask()
-    }
   }
 }
 
