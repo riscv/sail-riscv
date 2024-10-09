@@ -428,7 +428,7 @@ static int process_args(int argc, char **argv)
       rv_enable_zicbom = true;
       break;
     case OPT_REENT_OPT1:
-      fprintf(stderr, "Selecting Re-enterancy Option 1. \n");
+      fprintf(stderr, "Selecting Sdtrig Reentrancy Option 1. \n");
       rv_reent_opt1 = true;
       break;
     case OPT_ENABLE_ZICBOZ:
