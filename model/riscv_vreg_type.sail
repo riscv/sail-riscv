@@ -149,5 +149,16 @@ enum vmlsop       = { VLM, VSM }
 
 /* Callbacks for vregs state-changing events */
 
-/* Default for this function in riscv_default_callbacks.c and platform_impl.ml */
-val vreg_write_callback = pure {ocaml: "Platform.vreg_write_callback", c: "vreg_write_callback"} : (regidx, vregtype) -> unit
+/* Default for this function in riscv_default_callbacks.c */
+
+val vreg_write_callback = pure {c: "vreg_write_callback"} : (regidx, vregtype) -> unit
+
+/* Implementations of default callbacks for trace printing */
+
+val vreg_write_callback_default : (regidx, vregtype) -> unit
+function vreg_write_callback_default (reg, value) = {
+  let VLEN = unsigned(vlenb) * 8;
+  assert(0 < VLEN & VLEN <= sizeof(vlenmax));
+  print_reg("v" ^ dec_str(regidx_to_regno(reg)) ^ " <- " ^ BitStr(value[VLEN - 1 .. 0]))
+}
+

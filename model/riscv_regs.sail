@@ -125,9 +125,7 @@ function wX (r : regno, in_v : xlenbits) -> unit = {
     31 => x31 = v,
     _  => assert(false, "invalid register number")
   };
-  if (r != 0) then {
-    xreg_write_callback(regno_to_regidx(r), in_v);
-  }
+  if (r != 0) then xreg_write_callback(regno_to_regidx(r), in_v)
 }
 
 function rX_bits(i: regidx) -> xlenbits = rX(unsigned(i))

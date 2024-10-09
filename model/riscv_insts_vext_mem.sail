@@ -183,7 +183,6 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
                       else {
                         vl = to_bits(xlen, i);
                         csr_write_callback(csr_name_map("vl"), vl);
->>>>>>> cb0b429d (Implementing callbacks in sail-riscv for state-changing events)
                         trimmed = true
                       }
                     }

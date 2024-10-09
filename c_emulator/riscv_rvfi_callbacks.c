@@ -10,7 +10,8 @@ int mem_write_callback(uint64_t addr, uint64_t width, lbits value)
   if (rv_enable_callbacks)
     zrvfi_write(addr, width, value);
 }
-int mem_read_callback(uint64_t addr, uint64_t width, lbits value)
+int mem_read_callback(const char *type, uint64_t addr, uint64_t width,
+                      lbits value)
 {
   if (rv_enable_callbacks) {
     sail_int len;

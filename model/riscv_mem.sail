@@ -73,9 +73,7 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
     (Execute(),  None()) => MemException(E_Fetch_Access_Fault()),
     (Read(Data), None()) => MemException(E_Load_Access_Fault()),
     (_,          None()) => MemException(E_SAMO_Access_Fault()),
-    (_,      Some(v, m)) => { if   get_config_print_mem()
-                              then print_mem("mem[" ^ to_str(t) ^ "," ^ BitStr(paddr) ^ "] -> " ^ BitStr(v));
-                              MemValue(v, m) }
+    (_,      Some(v, m)) => MemValue(v, m)
   }
 }
 
@@ -133,7 +131,7 @@ function mem_read_priv_meta (typ, priv, paddr, width, aq, rl, res, meta) = {
       (_, _, _)             => checked_mem_read(typ, priv, paddr, width, aq, rl, res, meta)
     };
   match result {
-    MemValue(value, _) => mem_read_callback(paddr, width, value),
+    MemValue(value, _) => mem_read_callback(to_str(typ), paddr, width, value),
     MemException(e) => mem_exception_callback(paddr, num_of_ExceptionType(e))
   };
   result
@@ -158,10 +156,7 @@ function mem_write_ea (addr, width, aq, rl, con) =
 
 // only used for actual memory regions, to avoid MMIO effects
 function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : xlenbits, width : int('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
-  let result = MemValue(write_ram(wk, paddr, width, data, meta));
-  if   get_config_print_mem()
-  then print_mem("mem[" ^ BitStr(paddr) ^ "] <- " ^ BitStr(data));
-  result
+  MemValue(write_ram(wk, paddr, width, data, meta));
 }
 
 /* dispatches to MMIO regions or physical memory regions depending on physical memory map */
