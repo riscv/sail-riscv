@@ -313,7 +313,7 @@ function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_e
   let width_type : word_width = size_bytes(load_width_bytes);
   let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
   let vd_seg  : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
-  let rs2_val : int = unsigned(get_scalar(rs2, xlen));
+  let rs2_val : int = signed(get_scalar(rs2, xlen));
 
   let (result, mask) = init_masked_result(num_elem, nf * load_width_bytes * 8, EMUL_pow, vd_seg, vm_val);
 
@@ -380,7 +380,7 @@ function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_
   let width_type : word_width = size_bytes(load_width_bytes);
   let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs3_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
-  let rs2_val : int = unsigned(get_scalar(rs2, xlen));
+  let rs2_val : int = signed(get_scalar(rs2, xlen));
   let mask    : vector('n, bool) = init_masked_source(num_elem, EMUL_pow, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -459,7 +459,7 @@ function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index
     if mask[i] then { /* active segments */
       vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
-        let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
+        let elem_offset : int = signed(vs2_val[i]) + j * EEW_data_bytes;
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), EEW_data_bytes) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
           Ext_DataAddr_OK(vaddr) =>
@@ -550,7 +550,7 @@ function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_inde
     if mask[i] then { /* active segments */
       vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
-        let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
+        let elem_offset : int = signed(vs2_val[i]) + j * EEW_data_bytes;
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), EEW_data_bytes) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
           Ext_DataAddr_OK(vaddr) =>
