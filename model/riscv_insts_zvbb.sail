@@ -204,3 +204,41 @@ function clause execute (VCTZ_V(vm, vs2, vd)) = {
   vstart = zeros();
   RETIRE_SUCCESS
 }
+
+union clause ast = VCPOP_V : (bits(1), regidx, regidx)
+
+mapping clause encdec = VCPOP_V (vm, vs2, vd) if extensionEnabled(Ext_Zvbb)
+  <-> 0b010010 @ vm @ vs2 @ 0b01110 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_Zvbb)
+
+mapping clause assembly = VCPOP_V (vm, vs2, vd)
+  <-> "vcpop.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+
+function clause execute (VCPOP_V(vm, vs2, vd)) = {
+  let SEW                     = get_sew();
+  let LMUL_pow                = get_lmul_pow();
+  let num_elem                = get_num_elem(LMUL_pow, SEW);
+
+  let 'n = num_elem;
+  let 'm = SEW;
+
+
+  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+
+  let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  var result = initial_result;
+
+  foreach (i from 0 to (num_elem - 1)) {
+    if mask[i] then {
+      foreach (j from 0 to (SEW - 1)) {
+        if vs2_val[i][j] == bitone then {
+          result[i] = result[i] + 1;
+        };
+      }
+    };
+    write_vreg(num_elem, SEW, LMUL_pow, vd, result);
+  };
+  vstart = zeros();
+  RETIRE_SUCCESS
+}
