@@ -279,8 +279,7 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
 
   /* Hardwired to zero in the absence of 'U' or 'N'. */
   let m = if not(extensionEnabled(Ext_N)) then {
-             let m = [m with UPIE = 0b0, UIE = 0b0];
-             m
+             [m with UPIE = 0b0, UIE = 0b0]
           } else m;
 
   if not(extensionEnabled(Ext_U)) then {
@@ -606,7 +605,7 @@ function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
     SPIE = s[SPIE],
     UPIE = s[UPIE],
     SIE = s[SIE],
-    UIE = s[UIE]
+    UIE = s[UIE],
   ]
 }
 
@@ -652,7 +651,7 @@ function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
     SSI = m[SSI] & d[SSI],
     UEI = m[UEI] & d[UEI],
     UTI = m[UTI] & d[UTI],
-    USI = m[USI] & d[USI]
+    USI = m[USI] & d[USI],
   ]
 }
 
@@ -666,7 +665,7 @@ function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
     SSI = m[SSI] & d[SSI],
     UEI = m[UEI] & d[UEI],
     UTI = m[UTI] & d[UTI],
-    USI = m[USI] & d[USI]
+    USI = m[USI] & d[USI],
   ]
 }
 
