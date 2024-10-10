@@ -12,6 +12,7 @@ bool sys_enable_writable_fiom(unit);
 bool sys_enable_vext(unit);
 bool sys_enable_bext(unit);
 bool sys_enable_zicbom(unit);
+bool sys_reent_opt1(unit);
 bool sys_enable_zicboz(unit);
 
 uint64_t sys_pmp_count(unit);

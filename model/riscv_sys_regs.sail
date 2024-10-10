@@ -116,6 +116,8 @@ val sys_enable_bext = pure "sys_enable_bext" : unit -> bool
 val sys_enable_zicbom = pure "sys_enable_zicbom" : unit -> bool
 val sys_enable_zicboz = pure "sys_enable_zicboz" : unit -> bool
 
+val sys_reent_opt1 = pure {c: "sys_reent_opt1", ocaml: "Platform.reent_opt1", _: "sys_reent_opt1"} : unit -> bool
+
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
    unsetting C. If it returns true the write will have no effect. */
@@ -382,7 +384,11 @@ register medeleg : Medeleg  /* Delegation to S-mode */
 
 function legalize_medeleg(o : Medeleg, v : xlenbits) -> Medeleg = {
   /* M-EnvCalls delegation is not supported */
-  [Mk_Medeleg(v) with MEnvCall = 0b0]
+  let m = Mk_Medeleg(v);
+  let m = [m with MEnvCall = 0b0];
+  /* medeleg[3] <-> Breakpoint Exception is hard-wire to 0 for second solution
+     of re-enterancy problem */
+  if (sys_reent_opt1()) then { let m = [m with Breakpoint = bool_bits(not(sys_reent_opt1()))]; m } else { m }
 }
 
 /* registers for trap handling */
@@ -742,6 +748,262 @@ function legalize_satp32(a : Architecture, o : bits(32), v : bits(32)) -> bits(3
 
 /* disabled trigger/debug module */
 register tselect : xlenbits
+
+/*  Legalize TSELECT */
+function legalize_tselect(o : xlenbits, v : xlenbits) -> xlenbits = {
+  let t : xlenbits = o;
+  // TODO: Avoid hardcode value
+  if (unsigned(v) <= (sizeof(N_TRIGGERS) - 1)) then { v } else { t }
+}
+
+struct N_TDATA1 = {
+  tdata1 : vector(N_TRIGGERS, xlenbits)
+}
+
+struct N_TDATA2 = {
+  tdata2 : vector(N_TRIGGERS, xlenbits)
+}
+
+struct N_TDATA3 = {
+  tdata3 : vector(N_TRIGGERS, xlenbits)
+}
+
+register tdata1_x : N_TDATA1 = undefined
+
+register tdata2_x : N_TDATA2 = undefined
+
+register tdata3_x : N_TDATA3 = undefined
+
+register tdata1 : xlenbits = undefined
+
+register tdata2 : xlenbits
+
+register tdata3 : xlenbits
+
+/* Match Control Type 6 Trigger Bit fields */
+bitfield MatchControlType6 : bits(27) = {
+  /* Trigger perfectly satisfied or not */
+  uncertain   : 26,
+  /* Sets when mcontrol6 fire after the instruction retires */
+  hit1        : 25,
+  /* Enable Mcontrol6 trigger in VS-mode */
+  vs          : 24,
+  /* Enable Mcontrol6 trigger in VU-mode */
+  vu          : 23,
+  /* Sets when mcontrol6 fire before the instruction retires */
+  hit0        : 22,
+  /* 0: address match, 1: data match */
+  select      : 21,
+  /* Reserved bits */
+  rsvd1       : 20 .. 19,
+  /* Access Size */
+  size        : 18 .. 16,
+  /* Trigger Action */
+  action      : 15 .. 12,
+  /* trigger chaning */
+  chain       : 11,
+  /* Trigger match options */
+  match_opt   : 10 .. 7,
+  /* Enable Mcontrol6 trigger in M-mode */
+  m           : 6,
+  /* Enable uncertain matches */
+  uncertainen : 5,
+  /* Enable Mcontrol6 trigger in S-mode */
+  s           : 4,
+  /* Enable Mcontrol6 trigger in U-mode */
+  u           : 3,
+  /* Trigger fires on the virtual address or opcode WARL
+     of an instruction that is executed */
+  execute     : 2,
+  /* Trigger fires on the virtual address or data of WARL
+     any store */
+  store       : 1,
+  /* Trigger fires on the virtual address or data of WARL
+     any load */
+  load        : 0
+}
+
+/* Instruction Count Trigger Bit fields */
+bitfield InstructionCount : bits(27) = {
+  /* Enable Instruction Count trigger in VS-mode */
+  vs      : 26,
+  /* Enable Instruction Count trigger in VU-mode */
+  vu      : 25,
+  /* Sets it when trigger fires */
+  hit     : 24,
+  /* Number of instructions to count */
+  count   : 23 .. 10,
+  /* Enable Instruction Count trigger in M-mode */
+  m       : 9,
+  /* Sets when count decremented from 1 to 0 */
+  pending : 8,
+  /* Enable Instruction Count trigger in S-mode */
+  s       : 7,
+  /* Enable Instruction Count trigger in U-mode */
+  u       : 6,
+  /* Trigger Action */
+  action  : 5 .. 0
+}
+
+/* Interrupt/Exception Trigger Bit fields */
+bitfield InterruptTrigger : xlenbits = {
+  /* Sets it when this trigger matches */
+  hit    : xlen - 6,
+  /* Reserved bits */
+  rsvd2  : xlen - 19,
+  /* Enable Exception/Interrupt trigger from VS-mode */
+  vs     : 12,
+  /* Enable Exception/Interrupt trigger from VU-mode */
+  vu     : 11,
+  /* Non-maskable interrupts cause the trigger to fire - Only for Itrigger*/
+  nmi    : 10,
+  /* Enable Exception/Interrupr trigger from M-mode */
+  m      : 9,
+  /* Reserved bits */
+  rsvd1  : 8,
+  /* Enable Exception/Interrupr trigger from S-mode */
+  s      : 7,
+  /* Enable Exception/Interrupr trigger from U-mode */
+  u      : 6, 
+  /* Trigger Action */
+  action : 5 .. 0
+}
+
+/* Legalize Tdata1 */
+function legalize_tdata1(o : xlenbits, v : xlenbits) -> xlenbits = {
+  let trigger_type   : bits(4)           = v[(xlen - 1) .. (xlen - 4)];
+  let trigger_dmode  : bits(1)           = v[(xlen - 5) .. (xlen - 5)];
+  /* TODO: Update trigger action when remaining trigger action option will add */
+  let trigger_action : bits(6)           = (0b00 @ 0x0);
+  let MCtrl6         : MatchControlType6 = Mk_MatchControlType6(v[26 .. 0]);
+  let InstrCount     : InstructionCount  = Mk_InstructionCount(v[26 .. 0]);
+  let IntrptTrigger  : InterruptTrigger  = Mk_InterruptTrigger(v);
+  let ExcepTrigger   : InterruptTrigger  = Mk_InterruptTrigger(v);
+  var new_value      : xlenbits          = o;
+
+  new_value[(xlen - 1) .. (xlen - 4)] = trigger_type;
+  new_value[(xlen - 5) .. (xlen - 5)] = trigger_dmode;
+  match triggerType_of_bits(trigger_type){
+    TRIG_ICOUNT    => {
+      /* Trigger action */
+      new_value[5 .. 0]  = trigger_action;
+      /* vs | vu | hit | count | m | pending | s | u */
+      new_value[24 .. 6] = InstrCount.bits[24 .. 6];
+      new_value
+    },
+    TRIG_ITRIGGER  => {
+      /* Trigger action  */
+      new_value[5 .. 0]  = trigger_action;
+      /* s | u */
+      new_value[7 .. 6]  = (IntrptTrigger[s] @ IntrptTrigger[u]);
+      /* nmi | m */
+      new_value[10 .. 9] = (IntrptTrigger[nmi] @ IntrptTrigger[m]);
+      /* hit */
+      new_value[(xlen - 6) .. (xlen - 6)] = IntrptTrigger[hit];
+      new_value
+    },
+    TRIG_ETRIGGER  => {
+      /* trigger action */
+      new_value[5 .. 0] = trigger_action;
+      /* s | u */
+      new_value[7 .. 6] = (IntrptTrigger[s] @ IntrptTrigger[u]);
+      /* m */
+      new_value[9 .. 9] = IntrptTrigger[m];
+      /* hit */
+      new_value[(xlen - 6) .. (xlen - 6)] = IntrptTrigger[hit];
+      new_value
+    },
+    TRIG_MCONTROL6 => {
+      let match_option : MATCH_OPTIONS = matchOpt_of_bits(v[10 .. 7]);
+      /* m | uncertainen | s | u | execute | store | load */
+      new_value[6 .. 0]   = MCtrl6.bits[6 .. 0];
+      /* match */
+      new_value[10 .. 7]  = match matchOpt_of_bits(v[10 .. 7]) { RSVD => { o[10 .. 7]}, _ => { v[10 .. 7] } };
+      /* size | action | chain */
+      new_value[18 .. 11] = (MCtrl6[size] @ trigger_action[3 .. 0] @ MCtrl6[chain]);
+      /* hit0 | select */
+      new_value[22 .. 21] = (MCtrl6[hit0] @ MCtrl6[select]);
+      /* uncertain | hit1 */
+      new_value[26 .. 25] = (MCtrl6[uncertain] @ MCtrl6[hit1]);
+      new_value
+    },
+    TRIG_DISABLED  => {v},
+    _ => { new_value = o; new_value }
+  }
+  
+}
+
+/* Write tdata1 of current trigger */
+function tdata1_write(tselect_val : xlenbits, o : xlenbits, new_value : xlenbits) -> xlenbits = {
+  let index : int = unsigned(tselect[2 .. 0]);
+  let v : xlenbits = legalize_tdata1(o, new_value);
+  if ((index >= 0) & (index < vector_length(tdata1_x.tdata1))) then 
+  { tdata1_x.tdata1[index] = v; v } else { o }
+}
+
+/* Read tdata1 of current trigger */
+function tdata1_read(tselect_val : xlenbits) -> xlenbits = {
+  let index : int = unsigned(tselect[2 .. 0]);
+  if ((index >= 0) & (index < vector_length(tdata1_x.tdata1))) then 
+  { tdata1_x.tdata1[index]; } else { zero_extend(0b0); }
+}
+
+/* Write tdata2 of current trigger */
+function tdata2_write(tselect_val : xlenbits, o : xlenbits, v : xlenbits) -> xlenbits = {
+  let index : int = unsigned(tselect[2 .. 0]);
+  if ((index >= 0) & (index < vector_length(tdata2_x.tdata2))) then 
+  { tdata2_x.tdata2[index] = v; v } else { o }
+}
+
+/* Read TData2 of current trigger */
+function tdata2_read(tselect_val : xlenbits) -> xlenbits = {
+  let index : int = unsigned(tselect[2 .. 0]);
+  if ((index >= 0) & (index < vector_length(tdata2_x.tdata2))) then 
+  { tdata2_x.tdata2[index]; } else { zero_extend(0b0); }
+}
+
+/* Write tdata3 of current trigger */
+function tdata3_write(tselect_val : xlenbits, o : xlenbits, v : xlenbits) -> xlenbits = {
+  let index : int = unsigned(tselect[2 .. 0]);
+  if ((index >= 0) & (index < vector_length(tdata3_x.tdata3))) then 
+  { tdata3_x.tdata3[index] = v; v } else { o }
+}
+
+/* Read TData3 of current trigger */
+function tdata3_read(tselect_val : xlenbits) -> xlenbits = {
+  let index : int = unsigned(tselect[2 .. 0]);
+  if ((index >= 0) & (index < vector_length(tdata3_x.tdata3))) then 
+  { tdata3_x.tdata3[index]; } else { zero_extend(0b0); }
+}
+
+register tinfo : xlenbits
+
+function tinfo_read(tselect_val : xlenbits) -> xlenbits = {
+  let tinfo_info    : bits(16) = zero_extend(
+    (0x0001 << triggerType_to_bits(TRIG_ICOUNT))    |
+    (0x0001 << triggerType_to_bits(TRIG_ITRIGGER))  |
+    (0x0001 << triggerType_to_bits(TRIG_ETRIGGER))  |
+    (0x0001 << triggerType_to_bits(TRIG_MCONTROL6)) |
+    (0x0001 << triggerType_to_bits(TRIG_DISABLED))
+  );
+  let tinfo_version : bits(8)  = zero_extend(0b1);
+
+  zero_extend(tinfo_version @ 0x00 @ tinfo_info)
+}
+
+
+bitfield Tcontrol : xlenbits = {
+  mpte  : 7,
+  rsvd2 : 6 .. 4,
+  mte   : 3,
+  rsvd1 : 2 .. 0
+}
+
+function legalize_tcontrol(v : xlenbits) -> xlenbits = {
+  zero_extend(v[7 .. 7] @ 0b000 @ v[3 .. 3] @ 0b000)
+}
+
+register tcontrol : Tcontrol
 
 /*
  * The seed CSR (entropy source)

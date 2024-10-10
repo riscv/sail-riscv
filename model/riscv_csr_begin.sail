@@ -317,6 +317,8 @@ mapping clause csr_name_map = 0x7a0  <-> "tselect"
 mapping clause csr_name_map = 0x7a1  <-> "tdata1"
 mapping clause csr_name_map = 0x7a2  <-> "tdata2"
 mapping clause csr_name_map = 0x7a3  <-> "tdata3"
+mapping clause csr_name_map = 0x7a4  <-> "tinfo"
+mapping clause csr_name_map = 0x7a5  <-> "tcontrol"
 /* vector csrs */
 mapping clause csr_name_map = 0x008  <-> "vstart"
 mapping clause csr_name_map = 0x009  <-> "vxsat"
