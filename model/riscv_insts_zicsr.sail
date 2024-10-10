@@ -74,8 +74,6 @@ function clause read_CSR(0x7a0) = ~(tselect)  /* this indicates we don't have an
 
 /* supervisor mode */
 function clause read_CSR(0x100) = lower_mstatus(mstatus).bits
-function clause read_CSR(0x102) = sedeleg.bits
-function clause read_CSR(0x103) = sideleg.bits
 function clause read_CSR(0x104) = lower_mie(mie, mideleg).bits
 function clause read_CSR(0x105) = get_stvec()
 function clause read_CSR(0x106) = zero_extend(scounteren.bits)
@@ -162,8 +160,6 @@ function clause write_CSR(0x7a0, value) = { tselect = value; tselect }
 
 /* supervisor mode */
 function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); mstatus.bits }
-function clause write_CSR(0x102, value) = { sedeleg = legalize_sedeleg(sedeleg, value); sedeleg.bits }
-function clause write_CSR(0x103, value) = { sideleg.bits = value; sideleg.bits } /* TODO: does this need legalization? */
 function clause write_CSR(0x104, value) = { mie = legalize_sie(mie, mideleg, value); mie.bits }
 function clause write_CSR(0x105, value) = { set_stvec(value) }
 function clause write_CSR(0x106, value) = { scounteren = legalize_scounteren(scounteren, value); zero_extend(scounteren.bits) }
