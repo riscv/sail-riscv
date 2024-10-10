@@ -17,15 +17,18 @@ bitfield Ustatus : xlenbits = {
 /* This is a view, so there is no register defined. */
 function lower_sstatus(s : Sstatus) -> Ustatus = {
   let u = Mk_Ustatus(zero_extend(0b0));
-  let u = [u with UPIE = s[UPIE]];
-  let u = [u with UIE = s[UIE]];
-  u
+
+  [u with
+    UPIE = s[UPIE],
+    UIE = s[UIE],
+  ]
 }
 
 function lift_ustatus(s : Sstatus, u : Ustatus) -> Sstatus = {
-  let s = [s with UPIE = u[UPIE]];
-  let s = [s with UIE = u[UIE]];
-  s
+  [s with
+    UPIE = u[UPIE],
+    UIE = u[UIE],
+  ]
 }
 
 function legalize_ustatus(m : Mstatus, v : xlenbits) -> Mstatus = {
@@ -45,19 +48,21 @@ bitfield Uinterrupts : xlenbits = {
 /* Provides the uip read view of sip (s) as delegated by sideleg (d). */
 function lower_sip(s : Sinterrupts, d : Sinterrupts) -> Uinterrupts = {
   let u : Uinterrupts = Mk_Uinterrupts(zero_extend(0b0));
-  let u = [u with UEI = s[UEI] & d[UEI]];
-  let u = [u with UTI = s[UTI] & d[UTI]];
-  let u = [u with USI = s[USI] & d[USI]];
-  u
+  [u with
+    UEI = s[UEI] & d[UEI],
+    UTI = s[UTI] & d[UTI],
+    USI = s[USI] & d[USI],
+  ]
 }
 
 /* Provides the uie read view of sie as delegated by sideleg. */
 function lower_sie(s : Sinterrupts, d : Sinterrupts) -> Uinterrupts = {
   let u : Uinterrupts = Mk_Uinterrupts(zero_extend(0b0));
-  let u = [u with UEI = s[UEI] & d[UEI]];
-  let u = [u with UTI = s[UTI] & d[UTI]];
-  let u = [u with USI = s[USI] & d[USI]];
-  u
+  [u with
+    UEI = s[UEI] & d[UEI],
+    UTI = s[UTI] & d[UTI],
+    USI = s[USI] & d[USI],
+  ]
 }
 
 /* Returns the new value of sip from the previous sip (o) and the written uip (u) as delegated by sideleg (d). */
