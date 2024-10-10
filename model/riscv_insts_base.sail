@@ -344,8 +344,8 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
 
           match mem_read(Read(Data), paddr, width_bytes, aq, rl, false) {
             MemValue(result) => {
-              let load_after_match : bool = instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(X(rd)), matchSize_of_wordWidth(width), LOAD_MATCH_AFTER);
               X(rd) = extend_value(is_unsigned, result); 
+              let load_after_match : bool = instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(X(rd)), matchSize_of_wordWidth(width), LOAD_MATCH_AFTER);
               RETIRE_SUCCESS
             },
             MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
