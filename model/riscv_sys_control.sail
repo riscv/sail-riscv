@@ -223,15 +223,18 @@ $endif
 
 /* Disable trigger firing in trap handler */
 function TriggerFireMatch(cur_priv : Privilege) -> bool = {
-  /* Second solution of re-enterancy problem */
+  /* Second solution of reenterancy problem */
   if (sys_reent_opt1()) then {
-    bits_to_bool(tcontrol[mte])
+    match cur_priv {
+      Machine => bits_to_bool(tcontrol[mte]),
+      _       => true
+    }
   }
-  /* First solution of re-enterancy problem */
+  /* First solution of reenterancy problem */
   else {
     match cur_privilege {
       Machine    => bits_to_bool(mstatus[MIE]),
-      Supervisor => bits_to_bool(mstatus[SIE]),
+      Supervisor => if (medeleg[Breakpoint] == 0b1) then { bits_to_bool(mstatus[SIE]) } else { true },
       _          => true
     }
   }
@@ -521,17 +524,6 @@ function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, 
   raise_exception
 }
 
-function checkIE_trigger(cur_priv : Privilege, IEtrigger : InterruptTrigger) -> bool = {
-  let exec_deleg : bool = match (cur_priv) {
-    Machine    => bits_to_bool(medeleg[Breakpoint]),
-    Supervisor => not(bits_to_bool(medeleg[Breakpoint])),
-    _          => true
-  };
-  if ((IEtrigger[hit] == 0b1) & (TriggerFireMatch(cur_priv) | exec_deleg)) then {
-    true
-  } else { false }
-}
-
 /* Check for Etrigger, Icount, Itrigger and Mcontrol6 After, Trigger Firing */
 function check_trigger_firing(cur_priv : Privilege) -> bool = {
   var trigger_fire_match : bool = false;
@@ -552,8 +544,10 @@ function check_trigger_firing(cur_priv : Privilege) -> bool = {
     let trigger_type : bits(4) = tdata1_x.tdata1[i][(xlen - 1) .. (xlen - 4)];
     match triggerType_of_bits(trigger_type) {
       /* Check Exception Trigger Firing */
-      TRIG_ETRIGGER => { 
-        if not(ETrigFired) then { ETrigFired = checkIE_trigger(cur_privilege, IEtrigger); }
+      TRIG_ETRIGGER => {
+        if ((IEtrigger[hit] == 0b1) & (TriggerFireMatch(cur_priv)) & not(ETrigFired)) then {
+          ETrigFired = true;
+        }
       },
       /* Check instruction count trigger firing */
       TRIG_ICOUNT   => {
@@ -566,7 +560,9 @@ function check_trigger_firing(cur_priv : Privilege) -> bool = {
       },
       /* Check interrupt trigger firing */
       TRIG_ITRIGGER  => { 
-        if not(ITrigFired) then { ITrigFired = checkIE_trigger(cur_privilege, IEtrigger); }
+        if ((IEtrigger[hit] == 0b1) & (TriggerFireMatch(cur_priv)) & not(ITrigFired)) then {
+          ITrigFired = true;
+        }
       },
       /* Check Match Control 6 After Trigger Firing */
       TRIG_MCONTROL6 => {
