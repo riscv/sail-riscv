@@ -116,6 +116,9 @@ val sys_enable_bext = pure "sys_enable_bext" : unit -> bool
 val sys_enable_zicbom = pure "sys_enable_zicbom" : unit -> bool
 val sys_enable_zicboz = pure "sys_enable_zicboz" : unit -> bool
 
+// Is the Sstc stimecmp extension supported.
+val sys_enable_sstc = pure "sys_enable_sstc" : unit -> bool
+
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
    unsetting C. If it returns true the write will have no effect. */
@@ -328,11 +331,56 @@ register mip     : Minterrupts /* Pending */
 register mie     : Minterrupts /* Enabled */
 register mideleg : Minterrupts /* Delegation to S-mode */
 
+bitfield MEnvcfg : bits(64) = {
+  // Supervisor TimeCmp Extension
+  STCE   : 63,
+  // Page Based Memory Types Extension
+  PBMTE  : 62,
+  // Reserved WPRI bits.
+  wpri_1 : 61 .. 8,
+  // Cache Block Zero instruction Enable
+  CBZE   : 7,
+  // Cache Block Clean and Flush instruction Enable
+  CBCFE  : 6,
+  // Cache Block Invalidate instruction Enable
+  CBIE   : 5 .. 4,
+  // Reserved WPRI bits.
+  wpri_0 : 3 .. 1,
+  // Fence of I/O implies Memory
+  FIOM   : 0,
+}
+
+bitfield SEnvcfg : xlenbits = {
+  // Cache Block Zero instruction Enable
+  CBZE   : 7,
+  // Cache Block Clean and Flush instruction Enable
+  CBCFE  : 6,
+  // Cache Block Invalidate instruction Enable
+  CBIE   : 5 .. 4,
+  // Reserved WPRI bits.
+  wpri_0 : 3 .. 1,
+  // Fence of I/O implies Memory
+  FIOM   : 0,
+}
+
+register menvcfg : MEnvcfg
+register senvcfg : SEnvcfg
+
+/* Supervisor timecmp */
+enum clause extension = Ext_Sstc
+function clause extensionEnabled(Ext_Sstc) = sys_enable_sstc()
+
 function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   /* The only writable bits are the S-mode bits, and with the 'N'
    * extension, the U-mode bits. */
   let v = Mk_Minterrupts(v);
-  let m = [o with SEI = v[SEI], STI = v[STI], SSI = v[SSI]];
+  let m = [o with
+    SEI = v[SEI],
+    SSI = v[SSI],
+    // STI is read only if Sstc is enabled and STCE is set (it is equal to stimecmp <= mtime).
+    STI = if extensionEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then o[STI] else v[STI],
+  ];
+
   if extensionEnabled(Ext_U) & extensionEnabled(Ext_N) then {
     [m with UEI = v[UEI], UTI = v[UTI], USI = v[USI]]
   } else m
@@ -795,53 +843,21 @@ function read_seed_csr() -> xlenbits = {
 /* Writes to the seed CSR are ignored */
 function write_seed_csr () -> xlenbits = zeros()
 
-bitfield MEnvcfg : bits(64) = {
-  // Supervisor TimeCmp Extension
-  STCE   : 63,
-  // Page Based Memory Types Extension
-  PBMTE  : 62,
-  // Reserved WPRI bits.
-  wpri_1 : 61 .. 8,
-  // Cache Block Zero instruction Enable
-  CBZE   : 7,
-  // Cache Block Clean and Flush instruction Enable
-  CBCFE  : 6,
-  // Cache Block Invalidate instruction Enable
-  CBIE   : 5 .. 4,
-  // Reserved WPRI bits.
-  wpri_0 : 3 .. 1,
-  // Fence of I/O implies Memory
-  FIOM   : 0,
-}
-
-bitfield SEnvcfg : xlenbits = {
-  // Cache Block Zero instruction Enable
-  CBZE   : 7,
-  // Cache Block Clean and Flush instruction Enable
-  CBCFE  : 6,
-  // Cache Block Invalidate instruction Enable
-  CBIE   : 5 .. 4,
-  // Reserved WPRI bits.
-  wpri_0 : 3 .. 1,
-  // Fence of I/O implies Memory
-  FIOM   : 0,
-}
-
-register menvcfg : MEnvcfg
-register senvcfg : SEnvcfg
-
 function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
-  let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
-  // Other extensions are not implemented yet so all other fields are read only zero.
-  o
+  [o with
+    FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0,
+    STCE = if extensionEnabled(Ext_Sstc) then v[STCE] else 0b0,
+    // Other extensions are not implemented yet so all other fields are read only zero.
+  ]
 }
 
 function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
   let v = Mk_SEnvcfg(v);
-  let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
-  // Other extensions are not implemented yet so all other fields are read only zero.
-  o
+  [o with
+    FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0,
+    // Other extensions are not implemented yet so all other fields are read only zero.
+  ];
 }
 
 // Return whether or not FIOM is currently active, based on the current
@@ -936,3 +952,6 @@ function get_vtype_vma() = decode_agtype(vtype[vma])
 
 val get_vtype_vta : unit -> agtype
 function get_vtype_vta() = decode_agtype(vtype[vta])
+
+/* Sstc : Supervisor Timer Register */
+register stimecmp : bits(64)

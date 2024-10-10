@@ -111,6 +111,9 @@ mapping clause csr_name_map = 0x141  <-> "sepc"
 mapping clause csr_name_map = 0x142  <-> "scause"
 mapping clause csr_name_map = 0x143  <-> "stval"
 mapping clause csr_name_map = 0x144  <-> "sip"
+/* Sstc - supervisor timer register */
+mapping clause csr_name_map = 0x14D  <-> "stimecmp"
+mapping clause csr_name_map = 0x15D  <-> "stimecmph"
 /* supervisor protection and translation */
 mapping clause csr_name_map = 0x180  <-> "satp"
 /* supervisor envcfg */
@@ -132,6 +135,7 @@ mapping clause csr_name_map = 0x306  <-> "mcounteren"
 mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
 /* machine envcfg */
 mapping clause csr_name_map = 0x30A  <-> "menvcfg"
+mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
 /* hardware performance counter event selection */
 mapping clause csr_name_map = 0x323  <-> "mhpmevent3"
 mapping clause csr_name_map = 0x324  <-> "mhpmevent4"
