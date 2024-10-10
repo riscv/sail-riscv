@@ -378,9 +378,13 @@ mapping size_enc : word_width <-> bits(2) = {
 }
 
 mapping size_mnemonic : word_width <-> string = {
+  $[name "byte"]
   BYTE   <-> "b",
+  $[name "halfword"]
   HALF   <-> "h",
+  $[name "word"]
   WORD   <-> "w",
+  $[name "doubleword"]
   DOUBLE <-> "d"
 }
 
