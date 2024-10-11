@@ -279,9 +279,7 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
 
   /* Hardwired to zero in the absence of 'U' or 'N'. */
   let m = if not(extensionEnabled(Ext_N)) then {
-             let m = [m with UPIE = 0b0];
-             let m = [m with UIE = 0b0];
-             m
+             [m with UPIE = 0b0, UIE = 0b0]
           } else m;
 
   if not(extensionEnabled(Ext_U)) then {
@@ -577,37 +575,38 @@ function lower_mstatus(m : Mstatus) -> Sstatus = {
   let s = Mk_Sstatus(zero_extend(0b0));
   let s = [s with SD = m[SD]];
   let s = set_sstatus_UXL(s, get_mstatus_UXL(m));
-  let s = [s with MXR = m[MXR]];
-  let s = [s with SUM = m[SUM]];
-  let s = [s with XS = m[XS]];
-  let s = [s with FS = m[FS]];
-  let s = [s with VS = m[VS]];
-  let s = [s with SPP = m[SPP]];
-  let s = [s with SPIE = m[SPIE]];
-  let s = [s with UPIE = m[UPIE]];
-  let s = [s with SIE = m[SIE]];
-  let s = [s with UIE = m[UIE]];
-  s
+
+  [s with
+    MXR = m[MXR],
+    SUM = m[SUM],
+    XS = m[XS],
+    FS = m[FS],
+    VS = m[VS],
+    SPP = m[SPP],
+    SPIE = m[SPIE],
+    UPIE = m[UPIE],
+    SIE = m[SIE],
+    UIE = m[UIE],
+  ]
 }
 
 function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
-  let m = [m with MXR = s[MXR]];
-  let m = [m with SUM = s[SUM]];
+  let dirty = extStatus_of_bits(s[FS]) == Dirty | extStatus_of_bits(s[XS]) == Dirty |
+              extStatus_of_bits(s[VS]) == Dirty;
 
-  let m = [m with XS = s[XS]];
-  // See comment for mstatus.FS.
-  let m = [m with FS = s[FS]];
-  let m = [m with VS = s[VS]];
-  let dirty = extStatus_of_bits(m[FS]) == Dirty | extStatus_of_bits(m[XS]) == Dirty |
-              extStatus_of_bits(m[VS]) == Dirty;
-  let m = [m with SD = bool_to_bits(dirty)];
-
-  let m = [m with SPP = s[SPP]];
-  let m = [m with SPIE = s[SPIE]];
-  let m = [m with UPIE = s[UPIE]];
-  let m = [m with SIE = s[SIE]];
-  let m = [m with UIE = s[UIE]];
-  m
+  [m with
+    SD = bool_to_bits(dirty),
+    MXR = s[MXR],
+    SUM = s[SUM],
+    XS = s[XS],
+    FS = s[FS],
+    VS = s[VS],
+    SPP = s[SPP],
+    SPIE = s[SPIE],
+    UPIE = s[UPIE],
+    SIE = s[SIE],
+    UIE = s[UIE],
+  ]
 }
 
 function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
@@ -645,26 +644,29 @@ bitfield Sinterrupts : xlenbits = {
 /* Provides the sip read view of mip (m) as delegated by mideleg (d). */
 function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   let s : Sinterrupts = Mk_Sinterrupts(zero_extend(0b0));
-  let s = [s with SEI = m[SEI] & d[SEI]];
-  let s = [s with STI = m[STI] & d[STI]];
-  let s = [s with SSI = m[SSI] & d[SSI]];
 
-  let s = [s with UEI = m[UEI] & d[UEI]];
-  let s = [s with UTI = m[UTI] & d[UTI]];
-  let s = [s with USI = m[USI] & d[USI]];
-  s
+  [s with
+    SEI = m[SEI] & d[SEI],
+    STI = m[STI] & d[STI],
+    SSI = m[SSI] & d[SSI],
+    UEI = m[UEI] & d[UEI],
+    UTI = m[UTI] & d[UTI],
+    USI = m[USI] & d[USI],
+  ]
 }
 
 /* Provides the sie read view of mie (m) as delegated by mideleg (d). */
 function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   let s : Sinterrupts = Mk_Sinterrupts(zero_extend(0b0));
-  let s = [s with SEI = m[SEI] & d[SEI]];
-  let s = [s with STI = m[STI] & d[STI]];
-  let s = [s with SSI = m[SSI] & d[SSI]];
-  let s = [s with UEI = m[UEI] & d[UEI]];
-  let s = [s with UTI = m[UTI] & d[UTI]];
-  let s = [s with USI = m[USI] & d[USI]];
-  s
+
+  [s with
+    SEI = m[SEI] & d[SEI],
+    STI = m[STI] & d[STI],
+    SSI = m[SSI] & d[SSI],
+    UEI = m[UEI] & d[UEI],
+    UTI = m[UTI] & d[UTI],
+    USI = m[USI] & d[USI],
+  ]
 }
 
 /* Returns the new value of mip from the previous mip (o) and the written sip (s) as delegated by mideleg (d). */
