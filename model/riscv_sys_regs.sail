@@ -759,6 +759,7 @@ function read_seed_csr() -> xlenbits = {
 /* Writes to the seed CSR are ignored */
 function write_seed_csr () -> xlenbits = zeros()
 
+// envcfg Resisters
 bitfield MEnvcfg : bits(64) = {
   // Supervisor TimeCmp Extension
   STCE   : 63,
@@ -791,9 +792,6 @@ bitfield SEnvcfg : xlenbits = {
   FIOM   : 0,
 }
 
-register menvcfg : MEnvcfg
-register senvcfg : SEnvcfg
-
 function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
@@ -808,6 +806,26 @@ function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
   o
 }
 
+register menvcfg : MEnvcfg
+register senvcfg : SEnvcfg
+
+mapping clause csr_name_map = 0x30A  <-> "menvcfg"
+mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
+mapping clause csr_name_map = 0x10A  <-> "senvcfg"
+
+function clause is_CSR_defined(0x30A) = extensionEnabled(Ext_U) // menvcfg
+function clause is_CSR_defined(0x31A) = extensionEnabled(Ext_U) & (xlen == 32) // menvcfgh
+function clause is_CSR_defined(0x10A) = extensionEnabled(Ext_S) // senvcfg
+
+function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
+function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
+function clause read_CSR(0x10A) = senvcfg.bits[xlen - 1 .. 0]
+
+function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); menvcfg.bits[31 .. 0] }
+function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); menvcfg.bits }
+function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); menvcfg.bits[63 .. 32] }
+function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); senvcfg.bits[xlen - 1 .. 0] }
+
 // Return whether or not FIOM is currently active, based on the current
 // privilege and the menvcfg/senvcfg settings. This means that I/O fences
 // imply memory fence.
@@ -818,6 +836,7 @@ function is_fiom_active() -> bool = {
     User => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
   }
 }
+
 /* vector csrs */
 register vstart : bits(16) /* use the largest possible length of vstart */
 register vl     : xlenbits
