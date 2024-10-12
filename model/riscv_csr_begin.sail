@@ -15,8 +15,6 @@ scattered mapping csr_name_map
 // TODO: These csr_name_map definitions should be moved to the files
 // corresponding to their extensions rather than all be here.
 
-/* user entropy source */
-mapping clause csr_name_map = 0x015  <-> "seed"
 /* counter/timers */
 mapping clause csr_name_map = 0xC00  <-> "cycle"
 mapping clause csr_name_map = 0xC01  <-> "time"

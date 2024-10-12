@@ -8,9 +8,6 @@
 
 /* Machine-mode and supervisor-mode functionality. */
 
-enum clause extension = Ext_Zkr
-function clause extensionEnabled(Ext_Zkr) = true
-
 /* CSR access control */
 
 function csrAccess(csr : csreg) -> csrRW = csr[11..10]
@@ -68,9 +65,6 @@ function clause is_CSR_defined(0xC02) = extensionEnabled(Ext_U) // instret
 function clause is_CSR_defined(0xC80) = extensionEnabled(Ext_U) & (xlen == 32) // cycleh
 function clause is_CSR_defined(0xC81) = extensionEnabled(Ext_U) & (xlen == 32) // timeh
 function clause is_CSR_defined(0xC82) = extensionEnabled(Ext_U) & (xlen == 32) // instreth
-
-/* user mode: Zkr */
-function clause is_CSR_defined(0x015) = extensionEnabled(Ext_Zkr)
 
 
 val check_CSR_access : (csrRW, priv_level, Privilege, bool) -> bool
