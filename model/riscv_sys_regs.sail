@@ -142,10 +142,6 @@ function clause extensionEnabled(Ext_U) = misa[U] == 0b1
 enum clause extension = Ext_S
 function clause extensionEnabled(Ext_S) = misa[S] == 0b1
 
-/* Hardware Performance Monitoring counters */
-enum clause extension = Ext_Zihpm
-function clause extensionEnabled(Ext_Zihpm) = true
-
 /*
  * Illegal values legalized to least privileged mode supported.
  * Note: the only valid combinations of supported modes are M, M+U, M+S+U.

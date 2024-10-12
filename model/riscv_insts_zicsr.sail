@@ -42,9 +42,6 @@ function clause read_CSR(0x310 if xlen == 32) = mstatush.bits
 function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
 function clause read_CSR(0x320) = zero_extend(mcountinhibit.bits)
 
-/* Hardware Performance Monitoring event selection */
-function clause read_CSR(0b0011001 /* 0x320 */ @ index : bits(5) if unsigned(index) >= 3) = read_mhpmevent(hpmidx_from_bits(index))
-
 function clause read_CSR(0x340) = mscratch
 function clause read_CSR(0x341) = get_xret_target(Machine) & pc_alignment_mask()
 function clause read_CSR(0x342) = mcause.bits
@@ -64,10 +61,6 @@ function clause read_CSR(0xB00) = mcycle[(xlen - 1) .. 0]
 function clause read_CSR(0xB02) = minstret[(xlen - 1) .. 0]
 function clause read_CSR(0xB80 if xlen == 32)= mcycle[63 .. 32]
 function clause read_CSR(0xB82 if xlen == 32) = minstret[63 .. 32]
-
-/* Hardware Performance Monitoring machine mode counters */
-function clause read_CSR(0b1011000 /* 0xB00 */ @ index : bits(5) if unsigned(index) >= 3) = read_mhpmcounter(hpmidx_from_bits(index))
-function clause read_CSR(0b1011100 /* 0xB80 */ @ index : bits(5) if xlen == 32 & unsigned(index) >= 3) = read_mhpmcounterh(hpmidx_from_bits(index))
 
 /* trigger/debug */
 function clause read_CSR(0x7a0) = ~(tselect)  /* this indicates we don't have any trigger support */
@@ -92,10 +85,6 @@ function clause read_CSR(0xC02) = minstret[(xlen - 1) .. 0]
 function clause read_CSR(0xC80 if xlen == 32) = mcycle[63 .. 32]
 function clause read_CSR(0xC81 if xlen == 32) = mtime[63 .. 32]
 function clause read_CSR(0xC82 if xlen == 32) = minstret[63 .. 32]
-
-/* Hardware Performance Monitoring user mode counters */
-function clause read_CSR(0b1100000 /* 0xC00 */ @ index : bits(5) if unsigned(index) >= 3) = read_mhpmcounter(hpmidx_from_bits(index))
-function clause read_CSR(0b1100100 /* 0xC80 */ @ index : bits(5) if xlen == 32 & unsigned(index) >= 3) = read_mhpmcounterh(hpmidx_from_bits(index))
 
 /* user mode: Zkr */
 function clause read_CSR(0x015) = read_seed_csr()
@@ -137,23 +126,6 @@ function clause write_CSR(0xB00, value) = { mcycle[(xlen - 1) .. 0] = value; val
 function clause write_CSR(0xB02, value) = { minstret[(xlen - 1) .. 0] = value; minstret_increment = false; value }
 function clause write_CSR((0xB80, value) if xlen == 32) = { mcycle[63 .. 32] = value; value }
 function clause write_CSR((0xB82, value) if xlen == 32) = { minstret[63 .. 32] = value; minstret_increment = false; value }
-
-/* Hardware Performance Monitoring machine mode counters */
-function clause write_CSR((0b0011001 /* 0x320 */ @ index : bits(5), value) if unsigned(index) >= 3) = {
-  let index = hpmidx_from_bits(index);
-  write_mhpmevent(index, value);
-  read_mhpmevent(index)
-}
-function clause write_CSR((0b1011000 /* 0xB00 */ @ index : bits(5), value) if unsigned(index) >= 3) = {
-  let index = hpmidx_from_bits(index);
-  write_mhpmcounter(index, value);
-  read_mhpmcounter(index)
-}
-function clause write_CSR((0b1011100 /* 0xB80 */ @ index : bits(5), value) if xlen == 32 & unsigned(index) >= 3) = {
-  let index = hpmidx_from_bits(index);
-  write_mhpmcounterh(index, value);
-  read_mhpmcounterh(index)
-}
 
 /* trigger/debug */
 function clause write_CSR(0x7a0, value) = { tselect = value; tselect }
