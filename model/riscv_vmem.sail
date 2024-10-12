@@ -177,9 +177,6 @@ function pt_walk(sv_params,
 // ****************************************************************
 // Architectural SATP CSR
 
-// PUBLIC: see also riscv_insts_zicsr.sail and other CSR-related files
-register satp : xlenbits
-
 // See riscv_sys_regs.sail for legalize_satp{32,64}().
 // WARNING: those functions legalize Mode but not ASID?
 // PUBLIC: invoked from writeCSR() to fixup WARL fields
@@ -204,6 +201,13 @@ function legalize_satp(a : Architecture,
   } else
     internal_error(__FILE__, __LINE__, "Unsupported xlen" ^ dec_str(xlen))
 }
+
+// PUBLIC
+register satp : xlenbits
+mapping clause csr_name_map = 0x180  <-> "satp"
+function clause is_CSR_defined(0x180) = extensionEnabled(Ext_S)
+function clause read_CSR(0x180) = satp
+function clause write_CSR(0x180, value) = { satp = legalize_satp(cur_Architecture(), satp, value); satp }
 
 // ----------------
 // Fields of SATP
