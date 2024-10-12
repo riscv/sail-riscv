@@ -35,14 +35,6 @@ function clause is_CSR_defined(0x342) = true // mcause
 function clause is_CSR_defined(0x343) = true // mtval
 function clause is_CSR_defined(0x344) = true // mip
 
-/* counters */
-
-function clause is_CSR_defined(0xB00) = true // mcycle
-function clause is_CSR_defined(0xB02) = true // minstret
-
-function clause is_CSR_defined(0xB80) = xlen == 32 // mcycleh
-function clause is_CSR_defined(0xB82) = xlen == 32 // minstreth
-
 /* supervisor mode: trap setup */
 function clause is_CSR_defined(0x100) = extensionEnabled(Ext_S) // sstatus
 function clause is_CSR_defined(0x104) = extensionEnabled(Ext_S) // sie
@@ -55,16 +47,6 @@ function clause is_CSR_defined(0x141) = extensionEnabled(Ext_S) // sepc
 function clause is_CSR_defined(0x142) = extensionEnabled(Ext_S) // scause
 function clause is_CSR_defined(0x143) = extensionEnabled(Ext_S) // stval
 function clause is_CSR_defined(0x144) = extensionEnabled(Ext_S) // sip
-
-/* user mode: counters */
-function clause is_CSR_defined(0xC00) = extensionEnabled(Ext_U) // cycle
-function clause is_CSR_defined(0xC01) = extensionEnabled(Ext_U) // time
-function clause is_CSR_defined(0xC02) = extensionEnabled(Ext_U) // instret
-
-
-function clause is_CSR_defined(0xC80) = extensionEnabled(Ext_U) & (xlen == 32) // cycleh
-function clause is_CSR_defined(0xC81) = extensionEnabled(Ext_U) & (xlen == 32) // timeh
-function clause is_CSR_defined(0xC82) = extensionEnabled(Ext_U) & (xlen == 32) // instreth
 
 
 val check_CSR_access : (csrRW, priv_level, Privilege, bool) -> bool

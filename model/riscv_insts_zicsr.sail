@@ -41,12 +41,6 @@ function clause read_CSR(0x342) = mcause.bits
 function clause read_CSR(0x343) = mtval
 function clause read_CSR(0x344) = mip.bits
 
-/* machine mode counters */
-function clause read_CSR(0xB00) = mcycle[(xlen - 1) .. 0]
-function clause read_CSR(0xB02) = minstret[(xlen - 1) .. 0]
-function clause read_CSR(0xB80 if xlen == 32)= mcycle[63 .. 32]
-function clause read_CSR(0xB82 if xlen == 32) = minstret[63 .. 32]
-
 /* supervisor mode */
 function clause read_CSR(0x100) = lower_mstatus(mstatus).bits
 function clause read_CSR(0x104) = lower_mie(mie, mideleg).bits
@@ -57,14 +51,6 @@ function clause read_CSR(0x141) = get_xret_target(Supervisor) & pc_alignment_mas
 function clause read_CSR(0x142) = scause.bits
 function clause read_CSR(0x143) = stval
 function clause read_CSR(0x144) = lower_mip(mip, mideleg).bits
-
-/* user mode counters */
-function clause read_CSR(0xC00) = mcycle[(xlen - 1) .. 0]
-function clause read_CSR(0xC01) = mtime[(xlen - 1) .. 0]
-function clause read_CSR(0xC02) = minstret[(xlen - 1) .. 0]
-function clause read_CSR(0xC80 if xlen == 32) = mcycle[63 .. 32]
-function clause read_CSR(0xC81 if xlen == 32) = mtime[63 .. 32]
-function clause read_CSR(0xC82 if xlen == 32) = minstret[63 .. 32]
 
 /* machine mode */
 function clause write_CSR(0x300, value) = { mstatus = legalize_mstatus(mstatus, value); mstatus.bits }
@@ -81,12 +67,6 @@ function clause write_CSR(0x341, value) = { set_xret_target(Machine, value) }
 function clause write_CSR(0x342, value) = { mcause.bits = value; mcause.bits }
 function clause write_CSR(0x343, value) = { mtval = value; mtval }
 function clause write_CSR(0x344, value) = { mip = legalize_mip(mip, value); mip.bits }
-
-/* machine mode counters */
-function clause write_CSR(0xB00, value) = { mcycle[(xlen - 1) .. 0] = value; value }
-function clause write_CSR(0xB02, value) = { minstret[(xlen - 1) .. 0] = value; minstret_increment = false; value }
-function clause write_CSR((0xB80, value) if xlen == 32) = { mcycle[63 .. 32] = value; value }
-function clause write_CSR((0xB82, value) if xlen == 32) = { minstret[63 .. 32] = value; minstret_increment = false; value }
 
 /* supervisor mode */
 function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); mstatus.bits }

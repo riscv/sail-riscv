@@ -75,6 +75,7 @@ SAIL_SYS_SRCS += riscv_sys_exceptions.sail  # default basic helpers for exceptio
 SAIL_SYS_SRCS += riscv_sync_exception.sail  # define the exception structure used in the model
 SAIL_SYS_SRCS += riscv_hpm_control.sail
 SAIL_SYS_SRCS += riscv_zkr_control.sail
+SAIL_SYS_SRCS += riscv_zicntr_control.sail
 SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdext_control.sail
 SAIL_SYS_SRCS += riscv_sys_control.sail     # general exception handling
 
