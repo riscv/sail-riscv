@@ -66,9 +66,6 @@ function clause read_CSR(0xC80 if xlen == 32) = mcycle[63 .. 32]
 function clause read_CSR(0xC81 if xlen == 32) = mtime[63 .. 32]
 function clause read_CSR(0xC82 if xlen == 32) = minstret[63 .. 32]
 
-/* user mode: Zkr */
-function clause read_CSR(0x015) = read_seed_csr()
-
 /* machine mode */
 function clause write_CSR(0x300, value) = { mstatus = legalize_mstatus(mstatus, value); mstatus.bits }
 function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); misa.bits }
@@ -102,8 +99,6 @@ function clause write_CSR(0x142, value) = { scause.bits = value; scause.bits }
 function clause write_CSR(0x143, value) = { stval = value; stval }
 function clause write_CSR(0x144, value) = { mip = legalize_sip(mip, mideleg, value); mip.bits }
 
-/* user mode: seed (entropy source). writes are ignored */
-function clause write_CSR(0x015, value) = write_seed_csr()
 
 function clause execute CSR(csr, rs1, rd, is_imm, op) = {
   let rs1_val : xlenbits = if is_imm then zero_extend(rs1) else X(rs1);
