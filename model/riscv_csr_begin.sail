@@ -15,15 +15,6 @@ scattered mapping csr_name_map
 // TODO: These csr_name_map definitions should be moved to the files
 // corresponding to their extensions rather than all be here.
 
-/* counter/timers */
-mapping clause csr_name_map = 0xC00  <-> "cycle"
-mapping clause csr_name_map = 0xC01  <-> "time"
-mapping clause csr_name_map = 0xC02  <-> "instret"
-
-mapping clause csr_name_map = 0xC80  <-> "cycleh"
-mapping clause csr_name_map = 0xC81  <-> "timeh"
-mapping clause csr_name_map = 0xC82  <-> "instreth"
-
 /* supervisor trap setup */
 mapping clause csr_name_map = 0x100  <-> "sstatus"
 mapping clause csr_name_map = 0x104  <-> "sie"
@@ -50,12 +41,6 @@ mapping clause csr_name_map = 0x341  <-> "mepc"
 mapping clause csr_name_map = 0x342  <-> "mcause"
 mapping clause csr_name_map = 0x343  <-> "mtval"
 mapping clause csr_name_map = 0x344  <-> "mip"
-/* machine counters/timers */
-mapping clause csr_name_map = 0xB00  <-> "mcycle"
-mapping clause csr_name_map = 0xB02  <-> "minstret"
-
-mapping clause csr_name_map = 0xB80  <-> "mcycleh"
-mapping clause csr_name_map = 0xB82  <-> "minstreth"
 
 val csr_name : csreg -> string
 overload to_str = {csr_name}
