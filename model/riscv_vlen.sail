@@ -8,9 +8,13 @@
 
 register elen : bits(1)
 
+val sys_vector_elen_exp = pure "sys_vector_elen_exp" : unit -> bits(1)
+
+function get_elen() -> bits(1) = sys_vector_elen_exp()
+
 val get_elen_pow : unit -> {5, 6}
 
-function get_elen_pow() = match elen {
+function get_elen_pow() = match get_elen() {
     0b0 => 5,
     0b1 => 6
 }
@@ -21,9 +25,13 @@ function get_elen_pow() = match elen {
 
 register vlen : bits(4)
 
+val sys_vector_vlen_exp = pure "sys_vector_vlen_exp" : unit -> bits(4)
+
+function get_vlen() -> bits(4) = sys_vector_vlen_exp()
+
 val get_vlen_pow : unit -> {5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
 
-function get_vlen_pow() = match vlen {
+function get_vlen_pow() = match get_vlen() {
     0b0000 => 5,
     0b0001 => 6,
     0b0010 => 7,

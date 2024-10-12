@@ -6,6 +6,9 @@
 uint64_t rv_pmp_count = 0;
 uint64_t rv_pmp_grain = 0;
 
+uint64_t rv_vector_vlen_exp = 0x4;
+uint64_t rv_vector_elen_exp = 0x1;
+
 bool rv_enable_svinval = false;
 bool rv_enable_zcb = false;
 bool rv_enable_zfinx = false;
