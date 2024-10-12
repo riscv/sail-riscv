@@ -41,12 +41,6 @@ mapping clause csr_name_map = 0x144  <-> "sip"
 mapping clause csr_name_map = 0x180  <-> "satp"
 /* supervisor envcfg */
 mapping clause csr_name_map = 0x10A  <-> "senvcfg"
-/* machine information registers */
-mapping clause csr_name_map = 0xF11  <-> "mvendorid"
-mapping clause csr_name_map = 0xF12  <-> "marchid"
-mapping clause csr_name_map = 0xF13  <-> "mimpid"
-mapping clause csr_name_map = 0xF14  <-> "mhartid"
-mapping clause csr_name_map = 0xF15  <-> "mconfigptr"
 /* machine trap setup */
 mapping clause csr_name_map = 0x300  <-> "mstatus"
 mapping clause csr_name_map = 0x301  <-> "misa"
