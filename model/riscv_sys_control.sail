@@ -59,9 +59,6 @@ function clause is_CSR_defined(0x142) = extensionEnabled(Ext_S) // scause
 function clause is_CSR_defined(0x143) = extensionEnabled(Ext_S) // stval
 function clause is_CSR_defined(0x144) = extensionEnabled(Ext_S) // sip
 
-/* supervisor mode: address translation */
-function clause is_CSR_defined(0x180) = extensionEnabled(Ext_S) // satp
-
 /* user mode: counters */
 function clause is_CSR_defined(0xC00) = extensionEnabled(Ext_U) // cycle
 function clause is_CSR_defined(0xC01) = extensionEnabled(Ext_U) // time

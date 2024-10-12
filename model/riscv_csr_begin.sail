@@ -37,8 +37,6 @@ mapping clause csr_name_map = 0x141  <-> "sepc"
 mapping clause csr_name_map = 0x142  <-> "scause"
 mapping clause csr_name_map = 0x143  <-> "stval"
 mapping clause csr_name_map = 0x144  <-> "sip"
-/* supervisor protection and translation */
-mapping clause csr_name_map = 0x180  <-> "satp"
 /* machine trap setup */
 mapping clause csr_name_map = 0x300  <-> "mstatus"
 mapping clause csr_name_map = 0x301  <-> "misa"
