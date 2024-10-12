@@ -43,14 +43,6 @@ function clause read_CSR(0x342) = mcause.bits
 function clause read_CSR(0x343) = mtval
 function clause read_CSR(0x344) = mip.bits
 
-// pmpcfgN
-function clause read_CSR(0x3A @ idx : bits(4) if idx[0] == bitzero | xlen == 32) = pmpReadCfgReg(unsigned(idx))
-// pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
-function clause read_CSR(0x3B @ idx : bits(4)) = pmpReadAddrReg(unsigned(0b00 @ idx))
-function clause read_CSR(0x3C @ idx : bits(4)) = pmpReadAddrReg(unsigned(0b01 @ idx))
-function clause read_CSR(0x3D @ idx : bits(4)) = pmpReadAddrReg(unsigned(0b10 @ idx))
-function clause read_CSR(0x3E @ idx : bits(4)) = pmpReadAddrReg(unsigned(0b11 @ idx))
-
 /* machine mode counters */
 function clause read_CSR(0xB00) = mcycle[(xlen - 1) .. 0]
 function clause read_CSR(0xB02) = minstret[(xlen - 1) .. 0]
@@ -102,19 +94,6 @@ function clause write_CSR(0x341, value) = { set_xret_target(Machine, value) }
 function clause write_CSR(0x342, value) = { mcause.bits = value; mcause.bits }
 function clause write_CSR(0x343, value) = { mtval = value; mtval }
 function clause write_CSR(0x344, value) = { mip = legalize_mip(mip, value); mip.bits }
-
-// pmpcfgN
-function clause write_CSR((0x3A @ idx : bits(4), value) if idx[0] == bitzero | xlen == 32) = {
-  let idx = unsigned(idx);
-  pmpWriteCfgReg(idx, value);
-  pmpReadCfgReg(idx)
-}
-
-// pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
-function clause write_CSR(0x3B @ idx : bits(4), value) = { let idx = unsigned(0b00 @ idx); pmpWriteAddrReg(idx, value); pmpReadAddrReg(idx) }
-function clause write_CSR(0x3C @ idx : bits(4), value) = { let idx = unsigned(0b01 @ idx); pmpWriteAddrReg(idx, value); pmpReadAddrReg(idx) }
-function clause write_CSR(0x3D @ idx : bits(4), value) = { let idx = unsigned(0b10 @ idx); pmpWriteAddrReg(idx, value); pmpReadAddrReg(idx) }
-function clause write_CSR(0x3E @ idx : bits(4), value) = { let idx = unsigned(0b11 @ idx); pmpWriteAddrReg(idx, value); pmpReadAddrReg(idx) }
 
 /* machine mode counters */
 function clause write_CSR(0xB00, value) = { mcycle[(xlen - 1) .. 0] = value; value }
