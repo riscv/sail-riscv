@@ -40,15 +40,6 @@ function clause is_CSR_defined(0x342) = true // mcause
 function clause is_CSR_defined(0x343) = true // mtval
 function clause is_CSR_defined(0x344) = true // mip
 
-// pmpcfgN
-function clause is_CSR_defined(0x3A) @ idx : bits(4) = sys_pmp_count() > unsigned(idx) & (idx[0] == bitzero | xlen == 32)
-
-// pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
-function clause is_CSR_defined(0x3B) @ idx : bits(4) = sys_pmp_count() > unsigned(0b00 @ idx)
-function clause is_CSR_defined(0x3C) @ idx : bits(4) = sys_pmp_count() > unsigned(0b01 @ idx)
-function clause is_CSR_defined(0x3D) @ idx : bits(4) = sys_pmp_count() > unsigned(0b10 @ idx)
-function clause is_CSR_defined(0x3E) @ idx : bits(4) = sys_pmp_count() > unsigned(0b11 @ idx)
-
 /* counters */
 
 function clause is_CSR_defined(0xB00) = true // mcycle
