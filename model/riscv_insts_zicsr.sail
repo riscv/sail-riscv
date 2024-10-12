@@ -32,9 +32,7 @@ function clause read_CSR(0x303) = mideleg.bits
 function clause read_CSR(0x304) = mie.bits
 function clause read_CSR(0x305) = get_mtvec()
 function clause read_CSR(0x306) = zero_extend(mcounteren.bits)
-function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x310 if xlen == 32) = mstatush.bits
-function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
 function clause read_CSR(0x320) = zero_extend(mcountinhibit.bits)
 
 function clause read_CSR(0x340) = mscratch
@@ -54,7 +52,6 @@ function clause read_CSR(0x100) = lower_mstatus(mstatus).bits
 function clause read_CSR(0x104) = lower_mie(mie, mideleg).bits
 function clause read_CSR(0x105) = get_stvec()
 function clause read_CSR(0x106) = zero_extend(scounteren.bits)
-function clause read_CSR(0x10A) = senvcfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x140) = sscratch
 function clause read_CSR(0x141) = get_xret_target(Supervisor) & pc_alignment_mask()
 function clause read_CSR(0x142) = scause.bits
@@ -81,10 +78,7 @@ function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, 
 function clause write_CSR(0x304, value) = { mie = legalize_mie(mie, value); mie.bits }
 function clause write_CSR(0x305, value) = { set_mtvec(value) }
 function clause write_CSR(0x306, value) = { mcounteren = legalize_mcounteren(mcounteren, value); zero_extend(mcounteren.bits) }
-function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); menvcfg.bits[31 .. 0] }
-function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); menvcfg.bits }
 function clause write_CSR((0x310, value) if xlen == 32) = { mstatush.bits } // ignore writes for now
-function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); menvcfg.bits[63 .. 32] }
 function clause write_CSR(0x320, value) = { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); zero_extend(mcountinhibit.bits) }
 function clause write_CSR(0x340, value) = { mscratch = value; mscratch }
 function clause write_CSR(0x341, value) = { set_xret_target(Machine, value) }
@@ -103,7 +97,6 @@ function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, 
 function clause write_CSR(0x104, value) = { mie = legalize_sie(mie, mideleg, value); mie.bits }
 function clause write_CSR(0x105, value) = { set_stvec(value) }
 function clause write_CSR(0x106, value) = { scounteren = legalize_scounteren(scounteren, value); zero_extend(scounteren.bits) }
-function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); senvcfg.bits[xlen - 1 .. 0] }
 function clause write_CSR(0x140, value) = { sscratch = value; sscratch }
 function clause write_CSR(0x141, value) = { set_xret_target(Supervisor, value) }
 function clause write_CSR(0x142, value) = { scause.bits = value; scause.bits }

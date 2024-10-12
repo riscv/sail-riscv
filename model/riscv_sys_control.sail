@@ -27,9 +27,7 @@ function clause is_CSR_defined(0x303) = extensionEnabled(Ext_S) // mideleg
 function clause is_CSR_defined(0x304) = true // mie
 function clause is_CSR_defined(0x305) = true // mtvec
 function clause is_CSR_defined(0x306) = extensionEnabled(Ext_U) // mcounteren
-function clause is_CSR_defined(0x30A) = extensionEnabled(Ext_U) // menvcfg
 function clause is_CSR_defined(0x310) = xlen == 32 // mstatush
-function clause is_CSR_defined(0x31A) = extensionEnabled(Ext_U) & (xlen == 32) // menvcfgh
 function clause is_CSR_defined(0x320) = true // mcountinhibit
 
 
@@ -53,7 +51,6 @@ function clause is_CSR_defined(0x100) = extensionEnabled(Ext_S) // sstatus
 function clause is_CSR_defined(0x104) = extensionEnabled(Ext_S) // sie
 function clause is_CSR_defined(0x105) = extensionEnabled(Ext_S) // stvec
 function clause is_CSR_defined(0x106) = extensionEnabled(Ext_S) // scounteren
-function clause is_CSR_defined(0x10A) = extensionEnabled(Ext_S) // senvcfg
 
 /* supervisor mode: trap handling */
 function clause is_CSR_defined(0x140) = extensionEnabled(Ext_S) // sscratch
