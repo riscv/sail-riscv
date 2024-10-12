@@ -48,9 +48,6 @@ function clause is_CSR_defined(0xB02) = true // minstret
 function clause is_CSR_defined(0xB80) = xlen == 32 // mcycleh
 function clause is_CSR_defined(0xB82) = xlen == 32 // minstreth
 
-/* disabled trigger/debug module */
-function clause is_CSR_defined(0x7a0) = true
-
 /* supervisor mode: trap setup */
 function clause is_CSR_defined(0x100) = extensionEnabled(Ext_S) // sstatus
 function clause is_CSR_defined(0x104) = extensionEnabled(Ext_S) // sie
