@@ -25,11 +25,6 @@ mapping clause encdec = CSR(csr, rs1, rd, is_imm, op)
 // corresponding to their extensions rather than all be here.
 
 /* machine mode */
-function clause read_CSR(0xF11) = zero_extend(mvendorid)
-function clause read_CSR(0xF12) = marchid
-function clause read_CSR(0xF13) = mimpid
-function clause read_CSR(0xF14) = mhartid
-function clause read_CSR(0xF15) = mconfigptr
 function clause read_CSR(0x300) = mstatus.bits
 function clause read_CSR(0x301) = misa.bits
 function clause read_CSR(0x302) = medeleg.bits

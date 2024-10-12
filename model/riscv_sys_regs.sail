@@ -505,13 +505,31 @@ function write_mhpmcounterh(index : hpmidx, value : bits(32)) -> unit =
 function write_mhpmevent(index : hpmidx, value : xlenbits) -> unit =
   if sys_writable_hpm_counters()[index] == bitone then mhpmevent[index] = value
 
-/* informational registers */
+/* machine information registers */
 register mvendorid : bits(32)
 register mimpid : xlenbits
 register marchid : xlenbits
 /* TODO: this should be readonly, and always 0 for now */
 register mhartid : xlenbits
 register mconfigptr : xlenbits
+
+mapping clause csr_name_map = 0xF11  <-> "mvendorid"
+mapping clause csr_name_map = 0xF12  <-> "marchid"
+mapping clause csr_name_map = 0xF13  <-> "mimpid"
+mapping clause csr_name_map = 0xF14  <-> "mhartid"
+mapping clause csr_name_map = 0xF15  <-> "mconfigptr"
+
+function clause is_CSR_defined(0xf11) = true // mvendorid
+function clause is_CSR_defined(0xf12) = true // marchdid
+function clause is_CSR_defined(0xf13) = true // mimpid
+function clause is_CSR_defined(0xf14) = true // mhartid
+function clause is_CSR_defined(0xf15) = true // mconfigptr
+
+function clause read_CSR(0xF11) = zero_extend(mvendorid)
+function clause read_CSR(0xF12) = marchid
+function clause read_CSR(0xF13) = mimpid
+function clause read_CSR(0xF14) = mhartid
+function clause read_CSR(0xF15) = mconfigptr
 
 /* S-mode registers */
 

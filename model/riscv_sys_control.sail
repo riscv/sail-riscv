@@ -19,12 +19,6 @@ function csrPriv(csr : csreg) -> priv_level = csr[9..8]
 // TODO: These is_CSR_defined definitions should be moved to the files
 // corresponding to their extensions rather than all be here.
 
-/* machine mode: informational */
-function clause is_CSR_defined(0xf11) = true // mvendorid
-function clause is_CSR_defined(0xf12) = true // marchdid
-function clause is_CSR_defined(0xf13) = true // mimpid
-function clause is_CSR_defined(0xf14) = true // mhartid
-function clause is_CSR_defined(0xf15) = true // mconfigptr
 /* machine mode: trap setup */
 function clause is_CSR_defined(0x300) = true // mstatus
 function clause is_CSR_defined(0x301) = true // misa
