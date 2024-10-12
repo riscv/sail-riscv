@@ -698,6 +698,15 @@ function legalize_satp32(a : Architecture, o : bits(32), v : bits(32)) -> bits(3
 /* disabled trigger/debug module */
 register tselect : xlenbits
 
+mapping clause csr_name_map = 0x7a0  <-> "tselect"
+mapping clause csr_name_map = 0x7a1  <-> "tdata1"
+mapping clause csr_name_map = 0x7a2  <-> "tdata2"
+mapping clause csr_name_map = 0x7a3  <-> "tdata3"
+
+function clause is_CSR_defined(0x7a0) = true
+function clause read_CSR(0x7a0) = ~(tselect)  /* this indicates we don't have any trigger support */
+function clause write_CSR(0x7a0, value) = { tselect = value; tselect }
+
 /*
  * The seed CSR (entropy source)
  * ------------------------------------------------------------

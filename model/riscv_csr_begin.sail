@@ -65,11 +65,6 @@ mapping clause csr_name_map = 0xB02  <-> "minstret"
 
 mapping clause csr_name_map = 0xB80  <-> "mcycleh"
 mapping clause csr_name_map = 0xB82  <-> "minstreth"
-/* trigger/debug */
-mapping clause csr_name_map = 0x7a0  <-> "tselect"
-mapping clause csr_name_map = 0x7a1  <-> "tdata1"
-mapping clause csr_name_map = 0x7a2  <-> "tdata2"
-mapping clause csr_name_map = 0x7a3  <-> "tdata3"
 
 val csr_name : csreg -> string
 overload to_str = {csr_name}

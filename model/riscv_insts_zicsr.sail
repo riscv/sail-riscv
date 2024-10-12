@@ -49,9 +49,6 @@ function clause read_CSR(0xB02) = minstret[(xlen - 1) .. 0]
 function clause read_CSR(0xB80 if xlen == 32)= mcycle[63 .. 32]
 function clause read_CSR(0xB82 if xlen == 32) = minstret[63 .. 32]
 
-/* trigger/debug */
-function clause read_CSR(0x7a0) = ~(tselect)  /* this indicates we don't have any trigger support */
-
 /* supervisor mode */
 function clause read_CSR(0x100) = lower_mstatus(mstatus).bits
 function clause read_CSR(0x104) = lower_mie(mie, mideleg).bits
@@ -100,9 +97,6 @@ function clause write_CSR(0xB00, value) = { mcycle[(xlen - 1) .. 0] = value; val
 function clause write_CSR(0xB02, value) = { minstret[(xlen - 1) .. 0] = value; minstret_increment = false; value }
 function clause write_CSR((0xB80, value) if xlen == 32) = { mcycle[63 .. 32] = value; value }
 function clause write_CSR((0xB82, value) if xlen == 32) = { minstret[63 .. 32] = value; minstret_increment = false; value }
-
-/* trigger/debug */
-function clause write_CSR(0x7a0, value) = { tselect = value; tselect }
 
 /* supervisor mode */
 function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); mstatus.bits }
