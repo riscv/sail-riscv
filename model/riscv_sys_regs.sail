@@ -679,6 +679,7 @@ bitfield Sinterrupts : xlenbits = {
   SSI : 1,  /* software interrupts */
 }
 
+// sip
 /* Provides the sip read view of mip (m) as delegated by mideleg (d). */
 function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   let s : Sinterrupts = Mk_Sinterrupts(zeros());
@@ -712,6 +713,13 @@ function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterr
   lift_sip(m, d, Mk_Sinterrupts(v))
 }
 
+mapping clause csr_name_map = 0x144  <-> "sip"
+function clause is_CSR_defined(0x144) = extensionEnabled(Ext_S) // sip
+function clause read_CSR(0x144) = lower_mip(mip, mideleg).bits
+function clause write_CSR(0x144, value) = { mip = legalize_sip(mip, mideleg, value); mip.bits }
+
+
+// sie
 /* Returns the new value of mie from the previous mie (o) and the written sie (s) as delegated by mideleg (d). */
 function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
@@ -727,12 +735,34 @@ function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterr
 }
 
 
+mapping clause csr_name_map = 0x104  <-> "sie"
+function clause is_CSR_defined(0x104) = extensionEnabled(Ext_S) // sie
+function clause read_CSR(0x104) = lower_mie(mie, mideleg).bits
+function clause write_CSR(0x104, value) = { mie = legalize_sie(mie, mideleg, value); mie.bits }
+
+
 /* other non-VM related supervisor state */
 register stvec    : Mtvec
 register sscratch : xlenbits
 register sepc     : xlenbits
 register scause   : Mcause
 register stval    : xlenbits
+
+mapping clause csr_name_map = 0x140  <-> "sscratch"
+mapping clause csr_name_map = 0x142  <-> "scause"
+mapping clause csr_name_map = 0x143  <-> "stval"
+
+function clause is_CSR_defined(0x140) = extensionEnabled(Ext_S) // sscratch
+function clause is_CSR_defined(0x142) = extensionEnabled(Ext_S) // scause
+function clause is_CSR_defined(0x143) = extensionEnabled(Ext_S) // stval
+
+function clause read_CSR(0x140) = sscratch
+function clause read_CSR(0x142) = scause.bits
+function clause read_CSR(0x143) = stval
+
+function clause write_CSR(0x140, value) = { sscratch = value; sscratch }
+function clause write_CSR(0x142, value) = { scause.bits = value; scause.bits }
+function clause write_CSR(0x143, value) = { stval = value; stval }
 
 /*
  * S-mode address translation and protection (satp) layout.

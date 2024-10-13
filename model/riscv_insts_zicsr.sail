@@ -30,13 +30,9 @@ function clause read_CSR(0x305) = get_mtvec()
 function clause read_CSR(0x341) = get_xret_target(Machine) & pc_alignment_mask()
 
 /* supervisor mode */
-function clause read_CSR(0x104) = lower_mie(mie, mideleg).bits
 function clause read_CSR(0x105) = get_stvec()
-function clause read_CSR(0x140) = sscratch
 function clause read_CSR(0x141) = get_xret_target(Supervisor) & pc_alignment_mask()
-function clause read_CSR(0x142) = scause.bits
-function clause read_CSR(0x143) = stval
-function clause read_CSR(0x144) = lower_mip(mip, mideleg).bits
+
 
 /* machine mode */
 function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); misa.bits }
@@ -44,13 +40,9 @@ function clause write_CSR(0x305, value) = { set_mtvec(value) }
 function clause write_CSR(0x341, value) = { set_xret_target(Machine, value) }
 
 /* supervisor mode */
-function clause write_CSR(0x104, value) = { mie = legalize_sie(mie, mideleg, value); mie.bits }
 function clause write_CSR(0x105, value) = { set_stvec(value) }
-function clause write_CSR(0x140, value) = { sscratch = value; sscratch }
 function clause write_CSR(0x141, value) = { set_xret_target(Supervisor, value) }
-function clause write_CSR(0x142, value) = { scause.bits = value; scause.bits }
-function clause write_CSR(0x143, value) = { stval = value; stval }
-function clause write_CSR(0x144, value) = { mip = legalize_sip(mip, mideleg, value); mip.bits }
+
 
 
 function clause execute CSR(csr, rs1, rd, is_imm, op) = {
