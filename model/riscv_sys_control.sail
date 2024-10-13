@@ -25,15 +25,11 @@ function clause is_CSR_defined(0x305) = true // mtvec
 function clause is_CSR_defined(0x341) = true // mepc
 
 /* supervisor mode: trap setup */
-function clause is_CSR_defined(0x104) = extensionEnabled(Ext_S) // sie
 function clause is_CSR_defined(0x105) = extensionEnabled(Ext_S) // stvec
 
 /* supervisor mode: trap handling */
-function clause is_CSR_defined(0x140) = extensionEnabled(Ext_S) // sscratch
 function clause is_CSR_defined(0x141) = extensionEnabled(Ext_S) // sepc
-function clause is_CSR_defined(0x142) = extensionEnabled(Ext_S) // scause
-function clause is_CSR_defined(0x143) = extensionEnabled(Ext_S) // stval
-function clause is_CSR_defined(0x144) = extensionEnabled(Ext_S) // sip
+
 
 
 val check_CSR_access : (csrRW, priv_level, Privilege, bool) -> bool

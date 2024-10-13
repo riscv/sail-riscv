@@ -16,14 +16,9 @@ scattered mapping csr_name_map
 // corresponding to their extensions rather than all be here.
 
 /* supervisor trap setup */
-mapping clause csr_name_map = 0x104  <-> "sie"
 mapping clause csr_name_map = 0x105  <-> "stvec"
 /* supervisor trap handling */
-mapping clause csr_name_map = 0x140  <-> "sscratch"
 mapping clause csr_name_map = 0x141  <-> "sepc"
-mapping clause csr_name_map = 0x142  <-> "scause"
-mapping clause csr_name_map = 0x143  <-> "stval"
-mapping clause csr_name_map = 0x144  <-> "sip"
 /* machine trap setup */
 mapping clause csr_name_map = 0x301  <-> "misa"
 mapping clause csr_name_map = 0x305  <-> "mtvec"
