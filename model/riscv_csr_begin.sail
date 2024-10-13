@@ -19,7 +19,6 @@ scattered mapping csr_name_map
 mapping clause csr_name_map = 0x100  <-> "sstatus"
 mapping clause csr_name_map = 0x104  <-> "sie"
 mapping clause csr_name_map = 0x105  <-> "stvec"
-mapping clause csr_name_map = 0x106  <-> "scounteren"
 /* supervisor trap handling */
 mapping clause csr_name_map = 0x140  <-> "sscratch"
 mapping clause csr_name_map = 0x141  <-> "sepc"
@@ -33,8 +32,6 @@ mapping clause csr_name_map = 0x302  <-> "medeleg"
 mapping clause csr_name_map = 0x303  <-> "mideleg"
 mapping clause csr_name_map = 0x304  <-> "mie"
 mapping clause csr_name_map = 0x305  <-> "mtvec"
-mapping clause csr_name_map = 0x306  <-> "mcounteren"
-mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
 /* machine trap handling */
 mapping clause csr_name_map = 0x340  <-> "mscratch"
 mapping clause csr_name_map = 0x341  <-> "mepc"

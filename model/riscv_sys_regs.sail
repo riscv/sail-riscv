@@ -424,31 +424,49 @@ bitfield Counteren : bits(32) = {
   CY   : 0
 }
 
-register mcounteren : Counteren
-register scounteren : Counteren
-
-function legalize_mcounteren(c : Counteren, v : xlenbits) -> Counteren = {
-  let supported_counters = sys_writable_hpm_counters()[31 .. 3] @ 0b111;
-  Mk_Counteren(v[31 .. 0] & supported_counters)
-}
-
+// scounteren
 function legalize_scounteren(c : Counteren, v : xlenbits) -> Counteren = {
   let supported_counters = sys_writable_hpm_counters()[31 .. 3] @ 0b111;
   Mk_Counteren(v[31 .. 0] & supported_counters)
 }
 
+register scounteren : Counteren
+mapping clause csr_name_map = 0x106  <-> "scounteren"
+function clause is_CSR_defined(0x106) = extensionEnabled(Ext_S) // scounteren
+function clause read_CSR(0x106) = zero_extend(scounteren.bits)
+function clause write_CSR(0x106, value) = { scounteren = legalize_scounteren(scounteren, value); zero_extend(scounteren.bits) }
+
+// mcounteren
+function legalize_mcounteren(c : Counteren, v : xlenbits) -> Counteren = {
+  let supported_counters = sys_writable_hpm_counters()[31 .. 3] @ 0b111;
+  Mk_Counteren(v[31 .. 0] & supported_counters)
+}
+
+register mcounteren : Counteren
+mapping clause csr_name_map = 0x306  <-> "mcounteren"
+function clause is_CSR_defined(0x306) = extensionEnabled(Ext_U) // mcounteren
+function clause read_CSR(0x306) = zero_extend(mcounteren.bits)
+function clause write_CSR(0x306, value) = { mcounteren = legalize_mcounteren(mcounteren, value); zero_extend(mcounteren.bits) }
+
+
+// mcountinhibit
 bitfield Counterin : bits(32) = {
   HPM  : 31 .. 3,
   IR : 2,
   CY : 0
 }
-register mcountinhibit : Counterin
 
 function legalize_mcountinhibit(c : Counterin, v : xlenbits) -> Counterin = {
   // Note the 0 in 0b101 is because the mtimer counter can't be paused.
   let supported_counters = sys_writable_hpm_counters()[31 .. 3] @ 0b101;
   Mk_Counterin(v[31 .. 0] & supported_counters)
 }
+
+register mcountinhibit : Counterin
+mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
+function clause is_CSR_defined(0x320) = true // mcountinhibit
+function clause read_CSR(0x320) = zero_extend(mcountinhibit.bits)
+function clause write_CSR(0x320, value) = { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); zero_extend(mcountinhibit.bits) }
 
 register mcycle : bits(64)
 register mtime : bits(64)
