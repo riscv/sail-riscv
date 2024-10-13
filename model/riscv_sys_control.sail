@@ -17,9 +17,7 @@ function csrPriv(csr : csreg) -> priv_level = csr[9..8]
 // corresponding to their extensions rather than all be here.
 
 /* machine mode: trap setup */
-function clause is_CSR_defined(0x301) = true // misa
 function clause is_CSR_defined(0x305) = true // mtvec
-
 
 /* machine mode: trap handling */
 function clause is_CSR_defined(0x341) = true // mepc

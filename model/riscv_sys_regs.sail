@@ -136,6 +136,11 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   }
 }
 
+mapping clause csr_name_map = 0x301  <-> "misa"
+function clause is_CSR_defined(0x301) = true // misa
+function clause read_CSR(0x301) = misa.bits
+function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); misa.bits }
+
 enum clause extension = Ext_U
 function clause extensionEnabled(Ext_U) = misa[U] == 0b1
 

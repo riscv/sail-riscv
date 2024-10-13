@@ -20,7 +20,6 @@ mapping clause csr_name_map = 0x105  <-> "stvec"
 /* supervisor trap handling */
 mapping clause csr_name_map = 0x141  <-> "sepc"
 /* machine trap setup */
-mapping clause csr_name_map = 0x301  <-> "misa"
 mapping clause csr_name_map = 0x305  <-> "mtvec"
 /* machine trap handling */
 mapping clause csr_name_map = 0x341  <-> "mepc"
