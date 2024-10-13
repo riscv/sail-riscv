@@ -24,22 +24,6 @@ mapping clause encdec = CSR(csr, rs1, rd, is_imm, op)
 // TODO: These read/write_CSR definitions should be moved to the files
 // corresponding to their extensions rather than all be here.
 
-/* machine mode */
-function clause read_CSR(0x305) = get_mtvec()
-function clause read_CSR(0x341) = get_xret_target(Machine) & pc_alignment_mask()
-
-/* supervisor mode */
-function clause read_CSR(0x105) = get_stvec()
-function clause read_CSR(0x141) = get_xret_target(Supervisor) & pc_alignment_mask()
-
-/* machine mode */
-function clause write_CSR(0x305, value) = { set_mtvec(value) }
-function clause write_CSR(0x341, value) = { set_xret_target(Machine, value) }
-
-/* supervisor mode */
-function clause write_CSR(0x105, value) = { set_stvec(value) }
-function clause write_CSR(0x141, value) = { set_xret_target(Supervisor, value) }
-
 
 function clause execute CSR(csr, rs1, rd, is_imm, op) = {
   let rs1_val : xlenbits = if is_imm then zero_extend(rs1) else X(rs1);
