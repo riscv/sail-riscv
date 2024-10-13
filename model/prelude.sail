@@ -12,11 +12,11 @@ $include <smt.sail>
 $include <option.sail>
 $include <arith.sail>
 $include <string.sail>
-$include "mapping.sail"
+$include <mapping.sail>
 $include <vector_dec.sail>
 $include <generic_equality.sail>
-$include "hex_bits.sail"
-$include "hex_bits_signed.sail"
+$include <hex_bits.sail>
+$include <hex_bits_signed.sail>
 
 val not_bit : bit -> bit
 function not_bit(b) = if b == bitone then bitzero else bitone
