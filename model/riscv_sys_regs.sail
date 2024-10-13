@@ -272,6 +272,17 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   } else m
 }
 
+mapping clause csr_name_map = 0x300  <-> "mstatus"
+
+function clause is_CSR_defined(0x300) = true // mstatus
+function clause is_CSR_defined(0x310) = xlen == 32 // mstatush
+
+function clause read_CSR(0x300) = mstatus.bits
+function clause read_CSR(0x310 if xlen == 32) = mstatush.bits
+
+function clause write_CSR(0x300, value) = { mstatus = legalize_mstatus(mstatus, value); mstatus.bits }
+function clause write_CSR((0x310, value) if xlen == 32) = { mstatush.bits } // ignore writes for now
+
 /* architecture and extension checks */
 
 function cur_Architecture() -> Architecture = {
@@ -617,6 +628,10 @@ function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
   legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(v)).bits)
 }
 
+mapping clause csr_name_map = 0x100  <-> "sstatus"
+function clause is_CSR_defined(0x100) = extensionEnabled(Ext_S) // sstatus
+function clause read_CSR(0x100) = lower_mstatus(mstatus).bits
+function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); mstatus.bits }
 
 
 bitfield Sinterrupts : xlenbits = {

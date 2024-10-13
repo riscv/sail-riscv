@@ -25,13 +25,11 @@ mapping clause encdec = CSR(csr, rs1, rd, is_imm, op)
 // corresponding to their extensions rather than all be here.
 
 /* machine mode */
-function clause read_CSR(0x300) = mstatus.bits
 function clause read_CSR(0x301) = misa.bits
 function clause read_CSR(0x302) = medeleg.bits
 function clause read_CSR(0x303) = mideleg.bits
 function clause read_CSR(0x304) = mie.bits
 function clause read_CSR(0x305) = get_mtvec()
-function clause read_CSR(0x310 if xlen == 32) = mstatush.bits
 
 function clause read_CSR(0x340) = mscratch
 function clause read_CSR(0x341) = get_xret_target(Machine) & pc_alignment_mask()
@@ -40,7 +38,6 @@ function clause read_CSR(0x343) = mtval
 function clause read_CSR(0x344) = mip.bits
 
 /* supervisor mode */
-function clause read_CSR(0x100) = lower_mstatus(mstatus).bits
 function clause read_CSR(0x104) = lower_mie(mie, mideleg).bits
 function clause read_CSR(0x105) = get_stvec()
 function clause read_CSR(0x140) = sscratch
@@ -50,13 +47,11 @@ function clause read_CSR(0x143) = stval
 function clause read_CSR(0x144) = lower_mip(mip, mideleg).bits
 
 /* machine mode */
-function clause write_CSR(0x300, value) = { mstatus = legalize_mstatus(mstatus, value); mstatus.bits }
 function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); misa.bits }
 function clause write_CSR(0x302, value) = { medeleg = legalize_medeleg(medeleg, value); medeleg.bits }
 function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, value); mideleg.bits }
 function clause write_CSR(0x304, value) = { mie = legalize_mie(mie, value); mie.bits }
 function clause write_CSR(0x305, value) = { set_mtvec(value) }
-function clause write_CSR((0x310, value) if xlen == 32) = { mstatush.bits } // ignore writes for now
 function clause write_CSR(0x340, value) = { mscratch = value; mscratch }
 function clause write_CSR(0x341, value) = { set_xret_target(Machine, value) }
 function clause write_CSR(0x342, value) = { mcause.bits = value; mcause.bits }
@@ -64,7 +59,6 @@ function clause write_CSR(0x343, value) = { mtval = value; mtval }
 function clause write_CSR(0x344, value) = { mip = legalize_mip(mip, value); mip.bits }
 
 /* supervisor mode */
-function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); mstatus.bits }
 function clause write_CSR(0x104, value) = { mie = legalize_sie(mie, mideleg, value); mie.bits }
 function clause write_CSR(0x105, value) = { set_stvec(value) }
 function clause write_CSR(0x140, value) = { sscratch = value; sscratch }
