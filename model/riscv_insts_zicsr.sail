@@ -8,7 +8,6 @@
 
 /* ****************************************************************** */
 /* This file specifies the instructions in the 'Zicsr' extension.     */
-
 /* ****************************************************************** */
 union clause ast = CSR  : (csreg, regidx, regidx, bool, csrop)
 
@@ -20,10 +19,6 @@ mapping encdec_csrop : csrop <-> bits(2) = {
 
 mapping clause encdec = CSR(csr, rs1, rd, is_imm, op)
   <-> csr @ rs1 @ bool_bits(is_imm) @ encdec_csrop(op) @ rd @ 0b1110011
-
-// TODO: These read/write_CSR definitions should be moved to the files
-// corresponding to their extensions rather than all be here.
-
 
 function clause execute CSR(csr, rs1, rd, is_imm, op) = {
   let rs1_val : xlenbits = if is_imm then zero_extend(rs1) else X(rs1);

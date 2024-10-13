@@ -12,19 +12,8 @@ val csr_name_map : csreg <-> string
 
 scattered mapping csr_name_map
 
-// TODO: These csr_name_map definitions should be moved to the files
-// corresponding to their extensions rather than all be here.
-
 val csr_name : csreg -> string
 overload to_str = {csr_name}
-
-/* Extensions may want to add additional CSR registers to the CSR address map.
- * These scattered functions support access to such registers.
- *
- * The default implementation provides access to the CSRs added by the 'N'
- * extension.
- */
-
 
 /* returns whether a CSR exists
  */
