@@ -18,18 +18,11 @@ function csrPriv(csr : csreg) -> priv_level = csr[9..8]
 
 /* machine mode: trap setup */
 function clause is_CSR_defined(0x301) = true // misa
-function clause is_CSR_defined(0x302) = extensionEnabled(Ext_S) // medeleg
-function clause is_CSR_defined(0x303) = extensionEnabled(Ext_S) // mideleg
-function clause is_CSR_defined(0x304) = true // mie
 function clause is_CSR_defined(0x305) = true // mtvec
 
 
 /* machine mode: trap handling */
-function clause is_CSR_defined(0x340) = true // mscratch
 function clause is_CSR_defined(0x341) = true // mepc
-function clause is_CSR_defined(0x342) = true // mcause
-function clause is_CSR_defined(0x343) = true // mtval
-function clause is_CSR_defined(0x344) = true // mip
 
 /* supervisor mode: trap setup */
 function clause is_CSR_defined(0x104) = extensionEnabled(Ext_S) // sie

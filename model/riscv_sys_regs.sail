@@ -314,9 +314,6 @@ bitfield Minterrupts : xlenbits = {
   MSI : 3,  /* software interrupts */
   SSI : 1,
 }
-register mip     : Minterrupts /* Pending */
-register mie     : Minterrupts /* Enabled */
-register mideleg : Minterrupts /* Delegation to S-mode */
 
 function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   /* The only writable bits are the S-mode bits, and with the 'N'
@@ -361,12 +358,36 @@ bitfield Medeleg : xlenbits = {
   Fetch_Access_Fault: 1,
   Fetch_Addr_Align  : 0
 }
-register medeleg : Medeleg  /* Delegation to S-mode */
 
 function legalize_medeleg(o : Medeleg, v : xlenbits) -> Medeleg = {
   /* M-EnvCalls delegation is not supported */
   [Mk_Medeleg(v) with MEnvCall = 0b0]
 }
+
+register mie     : Minterrupts /* Enabled */
+register mip     : Minterrupts /* Pending */
+register medeleg : Medeleg  /* Delegation to S-mode */
+register mideleg : Minterrupts /* Delegation to S-mode */
+
+mapping clause csr_name_map = 0x304  <-> "mie"
+mapping clause csr_name_map = 0x344  <-> "mip"
+mapping clause csr_name_map = 0x302  <-> "medeleg"
+mapping clause csr_name_map = 0x303  <-> "mideleg"
+
+function clause is_CSR_defined(0x304) = true // mie
+function clause is_CSR_defined(0x344) = true // mip
+function clause is_CSR_defined(0x302) = extensionEnabled(Ext_S) // medeleg
+function clause is_CSR_defined(0x303) = extensionEnabled(Ext_S) // mideleg
+
+function clause read_CSR(0x304) = mie.bits
+function clause read_CSR(0x344) = mip.bits
+function clause read_CSR(0x302) = medeleg.bits
+function clause read_CSR(0x303) = mideleg.bits
+
+function clause write_CSR(0x304, value) = { mie = legalize_mie(mie, value); mie.bits }
+function clause write_CSR(0x344, value) = { mip = legalize_mip(mip, value); mip.bits }
+function clause write_CSR(0x302, value) = { medeleg = legalize_medeleg(medeleg, value); medeleg.bits }
+function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, value); mideleg.bits }
 
 /* registers for trap handling */
 
@@ -390,6 +411,10 @@ bitfield Mcause : xlenbits = {
   Cause       : xlen - 2 .. 0
 }
 register mcause : Mcause
+mapping clause csr_name_map = 0x342  <-> "mcause"
+function clause is_CSR_defined(0x342) = true // mcause
+function clause read_CSR(0x342) = mcause.bits
+function clause write_CSR(0x342, value) = { mcause.bits = value; mcause.bits }
 
 /* Interpreting the trap-vector address */
 function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
@@ -425,6 +450,18 @@ function pc_alignment_mask() -> xlenbits =
 
 register mtval    : xlenbits
 register mscratch : xlenbits
+
+mapping clause csr_name_map = 0x343  <-> "mtval"
+mapping clause csr_name_map = 0x340  <-> "mscratch"
+
+function clause is_CSR_defined(0x343) = true // mtval
+function clause is_CSR_defined(0x340) = true // mscratch
+
+function clause read_CSR(0x343) = mtval
+function clause read_CSR(0x340) = mscratch
+
+function clause write_CSR(0x343, value) = { mtval = value; mtval }
+function clause write_CSR(0x340, value) = { mscratch = value; mscratch }
 
 /* counters */
 
