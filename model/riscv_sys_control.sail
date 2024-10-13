@@ -17,13 +17,11 @@ function csrPriv(csr : csreg) -> priv_level = csr[9..8]
 // corresponding to their extensions rather than all be here.
 
 /* machine mode: trap setup */
-function clause is_CSR_defined(0x300) = true // mstatus
 function clause is_CSR_defined(0x301) = true // misa
 function clause is_CSR_defined(0x302) = extensionEnabled(Ext_S) // medeleg
 function clause is_CSR_defined(0x303) = extensionEnabled(Ext_S) // mideleg
 function clause is_CSR_defined(0x304) = true // mie
 function clause is_CSR_defined(0x305) = true // mtvec
-function clause is_CSR_defined(0x310) = xlen == 32 // mstatush
 
 
 /* machine mode: trap handling */
@@ -34,7 +32,6 @@ function clause is_CSR_defined(0x343) = true // mtval
 function clause is_CSR_defined(0x344) = true // mip
 
 /* supervisor mode: trap setup */
-function clause is_CSR_defined(0x100) = extensionEnabled(Ext_S) // sstatus
 function clause is_CSR_defined(0x104) = extensionEnabled(Ext_S) // sie
 function clause is_CSR_defined(0x105) = extensionEnabled(Ext_S) // stvec
 
