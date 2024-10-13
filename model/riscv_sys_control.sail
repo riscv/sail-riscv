@@ -13,13 +13,6 @@
 function csrAccess(csr : csreg) -> csrRW = csr[11..10]
 function csrPriv(csr : csreg) -> priv_level = csr[9..8]
 
-// TODO: These is_CSR_defined definitions should be moved to the files
-// corresponding to their extensions rather than all be here.
-
-
-
-
-
 val check_CSR_access : (csrRW, priv_level, Privilege, bool) -> bool
 function check_CSR_access(csrrw, csrpr, p, isWrite) =
     not(isWrite == true & csrrw == 0b11)  /* read/write */
