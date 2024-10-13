@@ -77,3 +77,23 @@ function set_stvec(value : xlenbits) -> xlenbits = {
   stvec = legalize_tvec(stvec, value);
   stvec.bits
 }
+
+mapping clause csr_name_map = 0x105  <-> "stvec"
+mapping clause csr_name_map = 0x141  <-> "sepc"
+mapping clause csr_name_map = 0x305  <-> "mtvec"
+mapping clause csr_name_map = 0x341  <-> "mepc"
+
+function clause is_CSR_defined(0x105) = extensionEnabled(Ext_S) // stvec
+function clause is_CSR_defined(0x141) = extensionEnabled(Ext_S) // sepc
+function clause is_CSR_defined(0x305) = true // mtvec
+function clause is_CSR_defined(0x341) = true // mepc
+
+function clause read_CSR(0x105) = get_stvec()
+function clause read_CSR(0x141) = get_xret_target(Supervisor) & pc_alignment_mask()
+function clause read_CSR(0x305) = get_mtvec()
+function clause read_CSR(0x341) = get_xret_target(Machine) & pc_alignment_mask()
+
+function clause write_CSR(0x105, value) = { set_stvec(value) }
+function clause write_CSR(0x141, value) = { set_xret_target(Supervisor, value) }
+function clause write_CSR(0x305, value) = { set_mtvec(value) }
+function clause write_CSR(0x341, value) = { set_xret_target(Machine, value) }

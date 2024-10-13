@@ -15,15 +15,6 @@ scattered mapping csr_name_map
 // TODO: These csr_name_map definitions should be moved to the files
 // corresponding to their extensions rather than all be here.
 
-/* supervisor trap setup */
-mapping clause csr_name_map = 0x105  <-> "stvec"
-/* supervisor trap handling */
-mapping clause csr_name_map = 0x141  <-> "sepc"
-/* machine trap setup */
-mapping clause csr_name_map = 0x305  <-> "mtvec"
-/* machine trap handling */
-mapping clause csr_name_map = 0x341  <-> "mepc"
-
 val csr_name : csreg -> string
 overload to_str = {csr_name}
 
