@@ -85,6 +85,8 @@ function clause read_CSR(0x141) = get_xret_target(Supervisor) & pc_alignment_mas
 function clause read_CSR(0x142) = scause.bits
 function clause read_CSR(0x143) = stval
 function clause read_CSR(0x144) = lower_mip(mip, mideleg).bits
+function clause read_CSR(0x14D) = stimecmp[sizeof(xlen) - 1 .. 0]
+function clause read_CSR(0x15D if xlen == 32) = stimecmp[63 .. 32]
 function clause read_CSR(0x180) = satp
 
 /* user mode counters */
@@ -173,6 +175,8 @@ function clause write_CSR(0x141, value) = { set_xret_target(Supervisor, value) }
 function clause write_CSR(0x142, value) = { scause.bits = value; scause.bits }
 function clause write_CSR(0x143, value) = { stval = value; stval }
 function clause write_CSR(0x144, value) = { mip = legalize_sip(mip, mideleg, value); mip.bits }
+function clause write_CSR(0x14D, value) = { stimecmp[(sizeof(xlen) - 1) .. 0] = value; stimecmp[sizeof(xlen) - 1 ..0] }
+function clause write_CSR((0x15D, value) if xlen == 32) = { stimecmp[63 ..32] = value; stimecmp[63 .. 32] }
 function clause write_CSR(0x180, value) = { satp = legalize_satp(cur_Architecture(), satp, value); satp }
 
 /* user mode: seed (entropy source). writes are ignored */

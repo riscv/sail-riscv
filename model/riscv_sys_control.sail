@@ -87,6 +87,10 @@ function clause is_CSR_defined(0x142) = extensionEnabled(Ext_S) // scause
 function clause is_CSR_defined(0x143) = extensionEnabled(Ext_S) // stval
 function clause is_CSR_defined(0x144) = extensionEnabled(Ext_S) // sip
 
+/* Sstc : supervisor timer register */
+function clause is_CSR_defined(0x14D) = extensionEnabled(Ext_S) & extensionEnabled(Ext_Sstc) // stimecmp
+function clause is_CSR_defined(0x15D) = extensionEnabled(Ext_S) & extensionEnabled(Ext_Sstc) & xlen == 32 // stimecmph
+
 /* supervisor mode: address translation */
 function clause is_CSR_defined(0x180) = extensionEnabled(Ext_S) // satp
 
@@ -134,6 +138,15 @@ function check_Counteren(csr : csreg, p : Privilege) -> bool = {
   feature_enabled_for_priv(p, mcounteren.bits[index], scounteren.bits[index])
 }
 
+// Return true if the stimecmp[h] CSR is accessible OR the CSR is not stimecmp[h].
+function check_Stimecmp(csr : csreg, p : Privilege) -> bool = {
+  // Check if it is not stimecmp.
+  if csr != 0x14D & csr != 0x15D
+  then return true;
+
+  p == Machine | (p == Supervisor & mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1)
+}
+
 /* Seed may only be accessed if we are doing a write, and access has been
  * allowed in the current priv mode
  */
@@ -155,8 +168,12 @@ function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
 function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
     is_CSR_defined(csr)
   & check_CSR_access(csrAccess(csr), csrPriv(csr), p, isWrite)
+  // TODO: If we add `p` back to is_CSR_defined() we could move these three
+  // check_ functions back there. We should also rename is_CSR_defined()
+  // to is_CSR_accessible() or similar.
   & check_TVM_SATP(csr, p)
   & check_Counteren(csr, p)
+  & check_Stimecmp(csr, p)
   & check_seed_CSR(csr, p, isWrite)
 
 /* Reservation handling for LR/SC.
