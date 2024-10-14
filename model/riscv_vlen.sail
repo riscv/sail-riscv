@@ -6,11 +6,12 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-register elen : bits(1)
+val sys_vector_elen_exp = pure "sys_vector_elen_exp" : unit -> range(3, 16)
 
-val sys_vector_elen_exp = pure "sys_vector_elen_exp" : unit -> bits(1)
-
-function get_elen() -> bits(1) = sys_vector_elen_exp()
+function get_elen() -> bits(1) = {
+    let vector_elen_exp = sys_vector_elen_exp();
+    to_bits(1, 2 ^ vector_elen_exp)
+}
 
 val get_elen_pow : unit -> {5, 6}
 
@@ -23,11 +24,12 @@ function get_elen_pow() = match get_elen() {
  * TODO: the configurarion of ELEN and its corresponding vtype implementations.
  */
 
-register vlen : bits(4)
+val sys_vector_vlen_exp = pure "sys_vector_vlen_exp" : unit -> range(3, 16)
 
-val sys_vector_vlen_exp = pure "sys_vector_vlen_exp" : unit -> bits(4)
-
-function get_vlen() -> bits(4) = sys_vector_vlen_exp()
+function get_vlen() -> bits(4) = {
+    let vector_vlen_exp = sys_vector_vlen_exp();
+    to_bits(4, 2 ^ vector_vlen_exp)
+}
 
 val get_vlen_pow : unit -> {5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
 
