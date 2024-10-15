@@ -123,13 +123,14 @@ function loop () : unit -> unit = {
   }
 }
 
-/* initialize model state */
-function init_model () -> unit = {
-  init_platform (); /* devices */
-  init_sys ();      /* processor */
-  init_vmem ();     /* virtual memory */
+// Chip reset. This only does the minimum resets required by the RISC-V spec.
+function reset() -> unit = {
+  reset_sys();
+  reset_vmem();
+}
 
-  /* initialize extensions last */
-  ext_init ();
-  ext_init_regs ();
+// Initialize model state. This is only called once; not for every chip reset.
+function init_model() -> unit = {
+  init_platform();
+  reset();
 }

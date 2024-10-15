@@ -213,35 +213,25 @@ function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv :
   then privLevel_of_bits(m[MPP])
   else priv
 
-function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
+function get_mstatus_SXL(m : Mstatus) -> arch_xlen =
   if   xlen == 32
   then arch_to_bits(RV32)
   else m.bits[35 .. 34]
-}
 
-function set_mstatus_SXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
+function set_mstatus_SXL(m : Mstatus, a : arch_xlen) -> Mstatus =
   if   xlen == 32
   then m
-  else {
-    let m = vector_update_subrange(m.bits, 35, 34,  a);
-    Mk_Mstatus(m)
-  }
-}
+  else Mk_Mstatus([m.bits with 35..34 = a])
 
-function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
+function get_mstatus_UXL(m : Mstatus) -> arch_xlen =
   if   xlen == 32
   then arch_to_bits(RV32)
   else m.bits[33 .. 32]
-}
 
-function set_mstatus_UXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
+function set_mstatus_UXL(m : Mstatus, a : arch_xlen) -> Mstatus =
   if   xlen == 32
   then m
-  else {
-    let m = vector_update_subrange(m.bits, 33, 32,  a);
-    Mk_Mstatus(m)
-  }
-}
+  else Mk_Mstatus([m.bits with 33..32 = a])
 
 function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   /*
@@ -532,12 +522,12 @@ function write_mhpmevent(index : hpmidx, value : xlenbits) -> unit =
   if sys_writable_hpm_counters()[index] == bitone then mhpmevent[index] = value
 
 /* informational registers */
-register mvendorid : bits(32)
-register mimpid : xlenbits
-register marchid : xlenbits
+register mvendorid : bits(32) = zeros()
+register mimpid : xlenbits = zeros()
+register marchid : xlenbits = zeros()
 /* TODO: this should be readonly, and always 0 for now */
-register mhartid : xlenbits
-register mconfigptr : xlenbits
+register mhartid : xlenbits = zeros()
+register mconfigptr : xlenbits = zeros()
 
 /* S-mode registers */
 

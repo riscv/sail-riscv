@@ -491,13 +491,8 @@ function handle_exception(e: ExceptionType) -> unit = {
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
   set_next_pc(trap_handler(del_priv, true, interruptType_to_bits(i), PC, None(), None()))
 
-/* state state initialization */
-
-function init_sys() -> unit = {
-  cur_privilege = Machine;
-
-  mhartid     = zero_extend(0b0);
-  mconfigptr  = zero_extend(0b0);
+function reset_misa() -> unit = {
+  misa.bits = zeros();
 
   misa[MXL] = arch_to_bits(if xlen == 32 then RV32 else RV64);
   misa[A]   = 0b1;                             /* atomics */
@@ -515,40 +510,48 @@ function init_sys() -> unit = {
   /* We currently support both F and D */
   misa[F]   = bool_to_bits(sys_enable_fdext());      /* single-precision */
   misa[D]   = if   flen >= 64
-                then bool_to_bits(sys_enable_fdext())  /* double-precision */
-                else 0b0;
+              then bool_to_bits(sys_enable_fdext())  /* double-precision */
+              else 0b0;
 
-  mstatus = set_mstatus_SXL(mstatus, misa[MXL]);
-  mstatus = set_mstatus_UXL(mstatus, misa[MXL]);
-  mstatus[SD]   = 0b0;
-  mstatus[MPP] = privLevel_to_bits(lowest_supported_privLevel());
+}
 
-  /* set to little-endian mode */
-  if xlen == 64 then {
-    mstatus = Mk_Mstatus([mstatus.bits with 37 .. 36 = 0b00])
-  };
-  mstatush.bits = zero_extend(0b0);
+// This function is called on reset, so it should perform the reset actions
+// described in the "Reset" section of the privileged architecture specification.
+function reset_sys() -> unit = {
 
-  mip.bits     = zero_extend(0b0);
-  mie.bits     = zero_extend(0b0);
-  mideleg.bits = zero_extend(0b0);
-  medeleg.bits = zero_extend(0b0);
-  mtvec.bits   = zero_extend(0b0);
-  mcause.bits  = zero_extend(0b0);
-  mepc            = zero_extend(0b0);
-  mtval           = zero_extend(0b0);
-  mscratch        = zero_extend(0b0);
+  // "Upon reset, a hard's privilege mode is set to M."
+  cur_privilege = Machine;
 
-  mcycle          = zero_extend(0b0);
-  mtime           = zero_extend(0b0);
+  // "The mstatus fields MIE and MPRV are reset to 0."
+  mstatus[MIE] = 0b0;
+  mstatus[MPRV] = 0b0;
 
-  mcounteren.bits = zero_extend(0b0);
+  // "If little-endian memory accesses are supported, the mstatus/mstatush field
+  // MBE is reset to 0."
+  // The model doesn't support little-endian (see legalize_mstatus()).
 
-  minstret           = zero_extend(0b0);
-  minstret_increment = true;
+  // "The misa register is reset to enable the maximal set of supported extensions"
+  reset_misa();
 
-  menvcfg.bits = zero_extend(0b0);
-  senvcfg.bits = zero_extend(0b0);
+  // "For implementations with the "A" standard extension, there is no valid load reservation."
+  cancel_reservation();
+
+  // "The pc is set to an implementation-defined reset vector."
+  // This is outside the scope of this function.
+
+  // "The mcause register is set to a value indicating the cause of the reset."
+  // "The mcause values after reset have implementation-specific interpretation,
+  // but the value 0 should be returned on implementations that do not
+  // distinguish different reset conditions."
+  mcause.bits = zeros();
+
+  // "Writable PMP registers’ A and L fields are set to 0, unless the platform
+  // mandates a different reset value for some PMP registers’ A and L fields."
+  reset_pmp();
+
+  // TODO: Probably need to remove these vector resets too but it needs
+  // refactoring anyway. See https://github.com/riscv/sail-riscv/issues/566 etc.
+
   /* initialize vector csrs */
   elen               = 0b1; /* ELEN=64 as the common case */
   vlen               = 0b0100; /* VLEN=512 as a default value */
@@ -566,9 +569,6 @@ function init_sys() -> unit = {
   vtype[vta]       = 0b0;
   vtype[vsew]      = 0b000;
   vtype[vlmul]     = 0b000;
-
-  // PMP's L and A fields are set to 0 on reset.
-  init_pmp();
 
   // log compatibility with spike
   if   get_config_print_reg()

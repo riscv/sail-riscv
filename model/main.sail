@@ -24,9 +24,6 @@ function get_entry_point() = zero_extend(0x1000)
 $endif
 
 function main() : unit -> unit = {
-  // initialize extensions
-  ext_init();
-
   PC = get_entry_point();
   print_bits("PC = ", PC);
 
