@@ -275,7 +275,7 @@ union ctl_result = {
 function tval(excinfo : option(xlenbits)) -> xlenbits = {
   match (excinfo) {
     Some(e) => e,
-    None()  => zero_extend(0b0)
+    None()  => zeros()
   }
 }
 
@@ -416,8 +416,8 @@ function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
 function init_sys() -> unit = {
   cur_privilege = Machine;
 
-  mhartid     = zero_extend(0b0);
-  mconfigptr  = zero_extend(0b0);
+  mhartid     = zeros();
+  mconfigptr  = zeros();
 
   misa[MXL] = arch_to_bits(if xlen == 32 then RV32 else RV64);
   misa[A]   = 0b1;                             /* atomics */
@@ -447,28 +447,28 @@ function init_sys() -> unit = {
   if xlen == 64 then {
     mstatus = Mk_Mstatus([mstatus.bits with 37 .. 36 = 0b00])
   };
-  mstatush.bits = zero_extend(0b0);
+  mstatush.bits = zeros();
 
-  mip.bits     = zero_extend(0b0);
-  mie.bits     = zero_extend(0b0);
-  mideleg.bits = zero_extend(0b0);
-  medeleg.bits = zero_extend(0b0);
-  mtvec.bits   = zero_extend(0b0);
-  mcause.bits  = zero_extend(0b0);
-  mepc            = zero_extend(0b0);
-  mtval           = zero_extend(0b0);
-  mscratch        = zero_extend(0b0);
+  mip.bits     = zeros();
+  mie.bits     = zeros();
+  mideleg.bits = zeros();
+  medeleg.bits = zeros();
+  mtvec.bits   = zeros();
+  mcause.bits  = zeros();
+  mepc            = zeros();
+  mtval           = zeros();
+  mscratch        = zeros();
 
-  mcycle          = zero_extend(0b0);
-  mtime           = zero_extend(0b0);
+  mcycle          = zeros();
+  mtime           = zeros();
 
-  mcounteren.bits = zero_extend(0b0);
+  mcounteren.bits = zeros();
 
-  minstret           = zero_extend(0b0);
+  minstret           = zeros();
   minstret_increment = true;
 
-  menvcfg.bits = zero_extend(0b0);
-  senvcfg.bits = zero_extend(0b0);
+  menvcfg.bits = zeros();
+  senvcfg.bits = zeros();
   /* initialize vector csrs */
   elen               = 0b1; /* ELEN=64 as the common case */
   vlen               = 0b0100; /* VLEN=512 as a default value */
@@ -476,12 +476,12 @@ function init_sys() -> unit = {
   /* VLEN value needs to be manually changed currently.
    * See riscv_vlen.sail for details.
    */
-  vstart             = zero_extend(0b0);
-  vl                 = zero_extend(0b0);
+  vstart             = zeros();
+  vl                 = zeros();
   vcsr[vxrm]       = 0b00;
   vcsr[vxsat]      = 0b0;
   vtype[vill]      = 0b1;
-  vtype[reserved]  = zero_extend(0b0);
+  vtype[reserved]  = zeros();
   vtype[vma]       = 0b0;
   vtype[vta]       = 0b0;
   vtype[vsew]      = 0b000;
@@ -492,7 +492,7 @@ function init_sys() -> unit = {
 
   // log compatibility with spike
   if   get_config_print_reg()
-  then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits) ^ " (input: " ^ BitStr(zero_extend(0b0) : xlenbits) ^ ")")
+  then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits) ^ " (input: " ^ BitStr(zeros() : xlenbits) ^ ")")
 }
 
 /* memory access exceptions, defined here for use by the platform model. */

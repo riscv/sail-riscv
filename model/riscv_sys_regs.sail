@@ -550,7 +550,7 @@ function set_sstatus_UXL(s : Sstatus, a : arch_xlen) -> Sstatus = {
 }
 
 function lower_mstatus(m : Mstatus) -> Sstatus = {
-  let s = Mk_Sstatus(zero_extend(0b0));
+  let s = Mk_Sstatus(zeros());
   let s = [s with SD = m[SD]];
   let s = set_sstatus_UXL(s, get_mstatus_UXL(m));
 
@@ -599,7 +599,7 @@ bitfield Sinterrupts : xlenbits = {
 
 /* Provides the sip read view of mip (m) as delegated by mideleg (d). */
 function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
-  let s : Sinterrupts = Mk_Sinterrupts(zero_extend(0b0));
+  let s : Sinterrupts = Mk_Sinterrupts(zeros());
 
   [s with
     SEI = m[SEI] & d[SEI],
@@ -610,7 +610,7 @@ function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
 
 /* Provides the sie read view of mie (m) as delegated by mideleg (d). */
 function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
-  let s : Sinterrupts = Mk_Sinterrupts(zero_extend(0b0));
+  let s : Sinterrupts = Mk_Sinterrupts(zeros());
 
   [s with
     SEI = m[SEI] & d[SEI],
