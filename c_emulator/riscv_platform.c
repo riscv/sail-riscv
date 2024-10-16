@@ -86,6 +86,7 @@ uint64_t sys_vector_vlen_exp(unit)
 {
   return rv_vector_vlen_exp;
 }
+
 uint64_t sys_vector_elen_exp(unit)
 {
   return rv_vector_elen_exp;

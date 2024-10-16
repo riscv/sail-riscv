@@ -8,17 +8,8 @@
 
 val sys_vector_elen_exp = pure "sys_vector_elen_exp" : unit -> range(3, 16)
 
-function get_elen() -> bits(1) = {
-    let vector_elen_exp = sys_vector_elen_exp();
-    to_bits(1, 2 ^ vector_elen_exp)
-}
+function get_elen_pow() -> range(3, 16) = sys_vector_elen_exp()
 
-val get_elen_pow : unit -> {5, 6}
-
-function get_elen_pow() = match get_elen() {
-    0b0 => 5,
-    0b1 => 6
-}
 /* Note: ELEN=32 requires a different encoding of the CSR vtype.
  * The current version of vtype implementation corresponds to the ELEN=64 configuration.
  * TODO: the configurarion of ELEN and its corresponding vtype implementations.
@@ -26,29 +17,9 @@ function get_elen_pow() = match get_elen() {
 
 val sys_vector_vlen_exp = pure "sys_vector_vlen_exp" : unit -> range(3, 16)
 
-function get_vlen() -> bits(4) = {
-    let vector_vlen_exp = sys_vector_vlen_exp();
-    to_bits(4, 2 ^ vector_vlen_exp)
-}
+function get_vlen_pow() -> range(3, 16) = sys_vector_vlen_exp()
 
-val get_vlen_pow : unit -> {5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
-
-function get_vlen_pow() = match get_vlen() {
-    0b0000 => 5,
-    0b0001 => 6,
-    0b0010 => 7,
-    0b0011 => 8,
-    0b0100 => 9,
-    0b0101 => 10,
-    0b0110 => 11,
-    0b0111 => 12,
-    0b1000 => 13,
-    0b1001 => 14,
-    0b1010 => 15,
-    _      => 16
-}
-
-type vlenmax : Int = 65536
+type vlenmax : Int = 128
 
 /* Note: At present, the values of elen and vlen need to be manually speficied
  * in the init_sys() function of riscv_sys_control.sail before compiling the emulators,
