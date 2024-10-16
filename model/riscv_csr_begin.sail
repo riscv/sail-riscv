@@ -132,6 +132,7 @@ mapping clause csr_name_map = 0x306  <-> "mcounteren"
 mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
 /* machine envcfg */
 mapping clause csr_name_map = 0x30A  <-> "menvcfg"
+mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
 /* hardware performance counter event selection */
 mapping clause csr_name_map = 0x323  <-> "mhpmevent3"
 mapping clause csr_name_map = 0x324  <-> "mhpmevent4"
