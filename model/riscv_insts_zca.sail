@@ -498,7 +498,7 @@ mapping clause encdec_compressed = C_JR(rs1)
       if rs1 != zreg & extensionEnabled(Ext_Zca)
 
 function clause execute (C_JR(rs1)) =
-  execute(RISCV_JALR(zero_extend(0b0), rs1, zreg))
+  execute(RISCV_JALR(zeros(), rs1, zreg))
 
 mapping clause assembly = C_JR(rs1)
       if rs1 != zreg
@@ -514,7 +514,7 @@ mapping clause encdec_compressed = C_JALR(rs1)
       if rs1 != zreg & extensionEnabled(Ext_Zca)
 
 function clause execute (C_JALR(rs1)) =
-  execute(RISCV_JALR(zero_extend(0b0), rs1, ra))
+  execute(RISCV_JALR(zeros(), rs1, ra))
 
 mapping clause assembly = C_JALR(rs1)
       if rs1 != zreg

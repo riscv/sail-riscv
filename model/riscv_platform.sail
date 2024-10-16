@@ -309,7 +309,7 @@ register htif_payload_writes : bits(4)
 function reset_htif () -> unit = {
   htif_cmd_write = bitzero;
   htif_payload_writes = 0x0;
-  htif_tohost = zero_extend(0b0);
+  htif_tohost = zeros();
 }
 
 /* Since the htif tohost port is only available at a single address,
@@ -437,11 +437,11 @@ function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : xlenbits, widt
 /* Platform initialization and ticking. */
 
 function init_platform() -> unit = {
-  htif_tohost = zero_extend(0b0);
+  htif_tohost = zeros();
   htif_done   = false;
-  htif_exit_code = zero_extend(0b0);
+  htif_exit_code = zeros();
   htif_cmd_write = bitzero;
-  htif_payload_writes = zero_extend(0b0);
+  htif_payload_writes = zeros();
 }
 
 function tick_platform() -> unit = {
