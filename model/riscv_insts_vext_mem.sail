@@ -61,6 +61,13 @@ mapping vlewidth_pow : vlewidth <-> {3, 4, 5, 6} = {
   VLE64     <-> 6
 }
 
+mapping matchSize_of_vlewidth : vlewidth <-> matchSize = {
+  VLE8      <-> BITS_8,
+  VLE16     <-> BITS_16,
+  VLE32     <-> BITS_32,
+  VLE64     <-> BITS_64
+}
+
 /* ******************** Vector Load Unit-Stride Normal & Segment (mop=0b00, lumop=0b00000) ********************* */
 union clause ast = VLSEGTYPE : (bits(3), bits(1), regidx, vlewidth, regidx)
 
@@ -84,13 +91,20 @@ function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) =
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), load_width_bytes) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
           Ext_DataAddr_OK(vaddr) =>
-              if check_misaligned(vaddr, width_type)
+              if (instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(0b0), matchSize_of_wordWidth(width_type), LOAD_MATCH_BEFORE)) 
+              then { return RETIRE_FAIL }
+              else if check_misaligned(vaddr, width_type)
               then { handle_mem_exception(vaddr, E_Load_Addr_Align()); return RETIRE_FAIL }
               else match translateAddr(vaddr, Read(Data)) {
                 TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
                 TR_Address(paddr, _) => {
                   match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
-                    MemValue(elem)   => write_single_element(load_width_bytes * 8, i, vd + to_bits(5, j * EMUL_reg), elem),
+                    MemValue(elem)   => {
+                      if (xlen_bytes >= load_width_bytes) then {
+                        let load_after_match : bool = instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(elem), matchSize_of_wordWidth(width_type), LOAD_MATCH_AFTER);
+                      };
+                      write_single_element(load_width_bytes * 8, i, vd + to_bits(5, j * EMUL_reg), elem)
+                    },
                     MemException(e)  => { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
                   }
                 }
@@ -159,7 +173,9 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
               }
             },
             Ext_DataAddr_OK(vaddr) => {
-              if check_misaligned(vaddr, width_type) then {
+              if (instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(0b0), matchSize_of_wordWidth(width_type), LOAD_MATCH_BEFORE)) 
+              then { return RETIRE_FAIL }
+              else if check_misaligned(vaddr, width_type) then {
                 if i == 0 then { handle_mem_exception(vaddr, E_Load_Addr_Align()); return RETIRE_FAIL }
                 else {
                   vl = to_bits(xlen, i);
@@ -177,7 +193,12 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
                 },
                 TR_Address(paddr, _) => {
                   match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
-                    MemValue(elem)   => write_single_element(load_width_bytes * 8, i, vd + to_bits(5, j * EMUL_reg), elem),
+                    MemValue(elem)   => {
+                      if (xlen_bytes >= load_width_bytes) then {
+                        let load_after_match : bool = instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(elem), matchSize_of_wordWidth(width_type), LOAD_MATCH_AFTER);
+                      };
+                      write_single_element(load_width_bytes * 8, i, vd + to_bits(5, j * EMUL_reg), elem)
+                    },
                     MemException(e)  => {
                       if i == 0 then { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
                       else {
@@ -245,16 +266,23 @@ function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) 
   let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
   let vs3_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
   let mask    : vector('n, bool) = init_masked_source(num_elem, EMUL_pow, vm_val);
+  var trigMatched : bool = false;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then { /* active segments */
       vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
+        let dbg_elem_val : bits('b * 8) = read_single_element(load_width_bytes * 8, i, vs3 + to_bits(5, j * EMUL_reg));
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), load_width_bytes) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
-          Ext_DataAddr_OK(vaddr) =>
-            if check_misaligned(vaddr, width_type)
+          Ext_DataAddr_OK(vaddr) => {
+            if (xlen_bytes >= load_width_bytes) then {
+              trigMatched = instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(dbg_elem_val), matchSize_of_wordWidth(width_type), STORE_MATCH);
+            };
+            if (trigMatched)
+            then { return RETIRE_FAIL }
+            else if check_misaligned(vaddr, width_type)
             then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
             else match translateAddr(vaddr, Write(Data)) {
               TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
@@ -274,6 +302,7 @@ function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) 
                 }
               }
             }
+          }
         }
       }
     }
@@ -325,13 +354,20 @@ function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_e
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), load_width_bytes) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
           Ext_DataAddr_OK(vaddr) =>
-            if check_misaligned(vaddr, width_type)
+            if (instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(0b0), matchSize_of_wordWidth(width_type), LOAD_MATCH_BEFORE)) 
+            then { return RETIRE_FAIL }
+            else if check_misaligned(vaddr, width_type)
             then { handle_mem_exception(vaddr, E_Load_Addr_Align()); return RETIRE_FAIL }
             else match translateAddr(vaddr, Read(Data)) {
               TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
               TR_Address(paddr, _) => {
                 match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
-                  MemValue(elem)   => write_single_element(load_width_bytes * 8, i, vd + to_bits(5, j * EMUL_reg), elem),
+                  MemValue(elem)   => {
+                    if (xlen_bytes >= load_width_bytes) then {
+                      let load_after_match : bool = instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(elem), matchSize_of_wordWidth(width_type), LOAD_MATCH_AFTER);
+                    };
+                    write_single_element(load_width_bytes * 8, i, vd + to_bits(5, j * EMUL_reg), elem)
+                  },
                   MemException(e)  => { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
                 }
               }
@@ -382,16 +418,23 @@ function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_
   let vs3_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
   let rs2_val : int = unsigned(get_scalar(rs2, xlen));
   let mask    : vector('n, bool) = init_masked_source(num_elem, EMUL_pow, vm_val);
+  var trigMatched : bool = false;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then { /* active segments */
       vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
+        let dbg_elem_val : bits('b * 8) = read_single_element(load_width_bytes * 8, i, vs3 + to_bits(5, j * EMUL_reg));
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), load_width_bytes) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
-          Ext_DataAddr_OK(vaddr) =>
-            if check_misaligned(vaddr, width_type)
+          Ext_DataAddr_OK(vaddr) => {
+            if (xlen_bytes >= load_width_bytes) then {
+              trigMatched = instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(dbg_elem_val), matchSize_of_wordWidth(width_type), STORE_MATCH);
+            };
+            if (trigMatched)
+            then { return RETIRE_FAIL }
+            else if check_misaligned(vaddr, width_type)
             then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
             else match translateAddr(vaddr, Write(Data)) {
               TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
@@ -411,6 +454,7 @@ function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_
                 }
               }
             }
+          }
         }
       }
     }
@@ -463,13 +507,20 @@ function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), EEW_data_bytes) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
           Ext_DataAddr_OK(vaddr) =>
-            if check_misaligned(vaddr, width_type)
+            if (instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(0b0), matchSize_of_wordWidth(width_type), LOAD_MATCH_BEFORE)) 
+            then { return RETIRE_FAIL }
+            else if check_misaligned(vaddr, width_type)
             then { handle_mem_exception(vaddr, E_Load_Addr_Align()); return RETIRE_FAIL }
             else match translateAddr(vaddr, Read(Data)) {
               TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
               TR_Address(paddr, _) => {
                 match mem_read(Read(Data), paddr, EEW_data_bytes, false, false, false) {
-                  MemValue(elem)   => write_single_element(EEW_data_bytes * 8, i, vd + to_bits(5, j * EMUL_data_reg), elem),
+                  MemValue(elem)   => {
+                    if (xlen_bytes >= EEW_data_bytes) then {
+                      let load_after_match : bool = instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(elem), matchSize_of_wordWidth(width_type), LOAD_MATCH_AFTER);
+                    };
+                    write_single_element(EEW_data_bytes * 8, i, vd + to_bits(5, j * EMUL_data_reg), elem)
+                  },
                   MemException(e)  => { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
                 }
               }
@@ -544,6 +595,7 @@ function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_inde
   let vs3_seg : vector('n, bits('f * 'db * 8)) = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vs3);
   let vs2_val : vector('n, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
   let mask    : vector('n, bool) = init_masked_source(num_elem, EMUL_data_pow, vm_val);
+  var trigMatched : bool = false;
 
   /* currently mop = 1 (unordered) or 3 (ordered) do the same operations */
   foreach (i from 0 to (num_elem - 1)) {
@@ -551,10 +603,16 @@ function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_inde
       vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
+        let dbg_elem_val : bits('db * 8) = read_single_element(EEW_data_bytes * 8, i, vs3 + to_bits(5, j * EMUL_data_reg));
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), EEW_data_bytes) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
-          Ext_DataAddr_OK(vaddr) =>
-            if check_misaligned(vaddr, width_type)
+          Ext_DataAddr_OK(vaddr) => {
+            if (xlen_bytes >= EEW_data_bytes) then {
+              trigMatched = instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(dbg_elem_val), matchSize_of_wordWidth(width_type), STORE_MATCH);
+            };
+            if (trigMatched)
+            then { return RETIRE_FAIL }
+            else if check_misaligned(vaddr, width_type)
             then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
             else match translateAddr(vaddr, Write(Data)) {
               TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
@@ -574,6 +632,7 @@ function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_inde
                 }
               }
             }
+          }
         }
       }
     }
@@ -647,13 +706,20 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
       match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), load_width_bytes) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
         Ext_DataAddr_OK(vaddr) =>
-          if check_misaligned(vaddr, width_type)
+          if (instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(0b0), matchSize_of_wordWidth(width_type), LOAD_MATCH_BEFORE)) 
+          then { return RETIRE_FAIL }
+          else if check_misaligned(vaddr, width_type)
           then { handle_mem_exception(vaddr, E_Load_Addr_Align()); return RETIRE_FAIL }
           else match translateAddr(vaddr, Read(Data)) {
             TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
             TR_Address(paddr, _) => {
               match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
-                MemValue(elem)   => write_single_element(load_width_bytes * 8, i, vd + to_bits(5, cur_field), elem),
+                MemValue(elem)   => {
+                  if (xlen_bytes >= load_width_bytes) then {
+                    let load_after_match : bool = instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(elem), matchSize_of_wordWidth(width_type), LOAD_MATCH_AFTER);
+                  };
+                  write_single_element(load_width_bytes * 8, i, vd + to_bits(5, cur_field), elem)
+                },
                 MemException(e)  => { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
               }
             }
@@ -671,7 +737,9 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
       match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), load_width_bytes) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
         Ext_DataAddr_OK(vaddr) =>
-          if check_misaligned(vaddr, width_type)
+          if (instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(0b0), matchSize_of_wordWidth(width_type), LOAD_MATCH_BEFORE)) 
+          then { return RETIRE_FAIL }
+          else if check_misaligned(vaddr, width_type)
           then { handle_mem_exception(vaddr, E_Load_Addr_Align()); return RETIRE_FAIL }
           else match translateAddr(vaddr, Read(Data)) {
             TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
@@ -721,15 +789,22 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
   let elem_to_align : int = start_element % elem_per_reg;
   var cur_field : int = start_element / elem_per_reg;
   var cur_elem  : int = start_element;
+  var trigMatched : bool = false;
 
   if elem_to_align > 0 then {
     foreach (i from elem_to_align to (elem_per_reg - 1)) {
       vstart = to_bits(16, cur_elem);
       let elem_offset : int = cur_elem * load_width_bytes;
+      let dbg_elem_val : bits('b * 8) = read_single_element(load_width_bytes * 8, i, vs3 + to_bits(5, cur_field));
       match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), load_width_bytes) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
-        Ext_DataAddr_OK(vaddr) =>
-          if check_misaligned(vaddr, width_type)
+        Ext_DataAddr_OK(vaddr) => {
+          if (xlen_bytes >= load_width_bytes) then {
+            trigMatched = instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(dbg_elem_val), matchSize_of_wordWidth(width_type), STORE_MATCH);
+          };
+          if (trigMatched)
+          then { return RETIRE_FAIL }
+          else if check_misaligned(vaddr, width_type)
           then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
           else match translateAddr(vaddr, Write(Data)) {
             TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
@@ -749,12 +824,14 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
               }
             }
           }
+        }
       };
       cur_elem = cur_elem + 1
     };
     cur_field = cur_field + 1
   };
 
+  trigMatched = false;
   foreach (j from cur_field to (nf - 1)) {
     let vs3_val : vector('n, bits('b * 8)) = read_vreg(elem_per_reg, load_width_bytes * 8, 0, vs3 + to_bits(5, j));
     foreach (i from 0 to (elem_per_reg - 1)) {
@@ -762,8 +839,13 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
       let elem_offset = cur_elem * load_width_bytes;
       match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), load_width_bytes) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
-        Ext_DataAddr_OK(vaddr) =>
-          if check_misaligned(vaddr, width_type)
+        Ext_DataAddr_OK(vaddr) => {
+          if (xlen_bytes >= load_width_bytes) then {
+            trigMatched = instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(vs3_val[i]), matchSize_of_wordWidth(width_type), STORE_MATCH);
+          };
+          if (trigMatched)
+          then { return RETIRE_FAIL }
+          else if check_misaligned(vaddr, width_type)
           then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
           else match translateAddr(vaddr, Write(Data)) {
             TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
@@ -782,6 +864,7 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
               }
             }
           }
+        }
       };
       cur_elem = cur_elem + 1
     }
@@ -831,13 +914,18 @@ function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
         match ext_data_get_addr(rs1, to_bits(xlen, i), Read(Data), 1) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
           Ext_DataAddr_OK(vaddr) =>
-            if check_misaligned(vaddr, width_type)
+            if (instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(0b0), matchSize_of_wordWidth(width_type), LOAD_MATCH_BEFORE)) 
+            then { return RETIRE_FAIL }
+            else if check_misaligned(vaddr, width_type)
             then { handle_mem_exception(vaddr, E_Load_Addr_Align()); return RETIRE_FAIL }
             else match translateAddr(vaddr, Read(Data)) {
               TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
               TR_Address(paddr, _) => {
                 match mem_read(Read(Data), paddr, 1, false, false, false) {
-                  MemValue(elem)   => write_single_element(8, i, vd_or_vs3, elem),
+                  MemValue(elem)   => {
+                    let load_after_match : bool = instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(elem), matchSize_of_wordWidth(width_type), LOAD_MATCH_AFTER);
+                    write_single_element(8, i, vd_or_vs3, elem)
+                  },
                   MemException(e)  => { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
                 }
               }
@@ -847,7 +935,9 @@ function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
         match ext_data_get_addr(rs1, to_bits(xlen, i), Write(Data), 1) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
           Ext_DataAddr_OK(vaddr) =>
-            if check_misaligned(vaddr, width_type)
+            if (instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(vd_or_vs3_val[i]), matchSize_of_wordWidth(width_type), STORE_MATCH))
+            then { return RETIRE_FAIL }
+            else if check_misaligned(vaddr, width_type)
             then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
             else match translateAddr(vaddr, Write(Data)) {
               TR_Failure(e, _)     => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },

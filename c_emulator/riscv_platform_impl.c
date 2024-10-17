@@ -16,6 +16,7 @@ bool rv_enable_fdext = true;
 bool rv_enable_vext = true;
 bool rv_enable_bext = false;
 bool rv_enable_zicbom = false;
+bool rv_reent_opt1 = false;
 bool rv_enable_zicboz = false;
 
 bool rv_enable_dirty_update = false;

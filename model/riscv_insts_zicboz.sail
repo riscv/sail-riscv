@@ -35,22 +35,26 @@ function clause execute(RISCV_ZICBOZ(rs1)) = {
     match ext_data_get_addr(rs1, offset, Write(Data), cache_block_size) {
       Ext_DataAddr_Error(e) => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
-        // "An implementation may update the bytes in any order and with any granularity
-        //  and atomicity, including individual bytes."
-        //
-        // This implementation does a single atomic write.
-        match translateAddr(vaddr, Write(Data)) {
-          TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-          TR_Address(paddr, _) => {
-            let eares : MemoryOpResult(unit) = mem_write_ea(paddr, cache_block_size, false, false, false);
-            match (eares) {
-              MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-              MemValue(_) => {
-                let res : MemoryOpResult(bool) = mem_write_value(paddr, cache_block_size, zeros(), false, false, false);
-                match (res) {
-                  MemValue(true) => RETIRE_SUCCESS,
-                  MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                  MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+        if (instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(0b0), cacheBlockSize_to_matchSize(cache_block_size_exp), STORE_MATCH)) 
+        then { RETIRE_FAIL }
+        else {
+          // "An implementation may update the bytes in any order and with any granularity
+          //  and atomicity, including individual bytes."
+          //
+          // This implementation does a single atomic write.
+          match translateAddr(vaddr, Write(Data)) {
+            TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            TR_Address(paddr, _) => {
+              let eares : MemoryOpResult(unit) = mem_write_ea(paddr, cache_block_size, false, false, false);
+              match (eares) {
+                MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+                MemValue(_) => {
+                  let res : MemoryOpResult(bool) = mem_write_value(paddr, cache_block_size, zeros(), false, false, false);
+                  match (res) {
+                    MemValue(true) => RETIRE_SUCCESS,
+                    MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
+                    MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                  }
                 }
               }
             }
