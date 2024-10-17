@@ -1,0 +1,98 @@
+ARCH ?= RV64
+
+ifeq ($(ARCH),32)
+  override ARCH := RV32
+else ifeq ($(ARCH),64)
+  override ARCH := RV64
+endif
+
+# ##############################################################################
+# Sail setup
+# ##############################################################################
+
+SAIL_PROJECT ?= model/riscv.sail_project
+
+ifneq ($(SAIL_DIR),)
+# Can use sail repo directory as the value SAIL_DIR
+SAIL:=$(SAIL_DIR)/sail
+export SAIL_DIR
+else
+# Use sail from opam package
+SAIL_DIR:=$(shell opam var sail:share)
+SAIL:=sail
+endif
+
+SAIL_LIB_DIR:=$(SAIL_DIR)/lib
+
+SAIL_FLAGS += --require-version 0.18
+SAIL_FLAGS += --memo-z3
+
+# Use all available extensions by default
+EXTENSIONS ?= --all-modules
+
+SAIL_PROJECT_FLAGS := --project $(SAIL_PROJECT) --variable ARCH=$(ARCH)
+SAIL_SRCS := $(shell $(SAIL) $(SAIL_PROJECT_FLAGS) --list-files --all-modules)
+
+SAIL_BUILD := $(SAIL) $(SAIL_PROJECT_FLAGS)
+SAIL_DEPS := $(SAIL_PROJECT) $(SAIL_SRCS)
+
+# ##############################################################################
+# Default target
+# ##############################################################################
+
+.PHONY: all help
+
+all: help
+
+help:
+	@cat help-make
+
+# ##############################################################################
+# Sail C simulator
+# ##############################################################################
+
+# The following ensures empty sail-generated .c files don't hang around and
+# break future builds if sail exits badly
+.DELETE_ON_ERROR: generated_defintions/c/%.c
+
+SOFTFLOAT_DIR    = c_emulator/SoftFloat-3e
+SOFTFLOAT_INCDIR = $(SOFTFLOAT_DIR)/source/include
+SOFTFLOAT_LIBDIR = $(SOFTFLOAT_DIR)/build/Linux-RISCV-GCC
+SOFTFLOAT_FLAGS  = -I $(SOFTFLOAT_INCDIR)
+SOFTFLOAT_LIBS   = $(SOFTFLOAT_LIBDIR)/softfloat.a
+SOFTFLOAT_SPECIALIZE_TYPE = RISCV
+
+$(SOFTFLOAT_LIBS):
+	$(MAKE) SPECIALIZE_TYPE=$(SOFTFLOAT_SPECIALIZE_TYPE) -C $(SOFTFLOAT_LIBDIR)
+
+SAIL_C_FLAGS = --c-no-main \
+        --c-include riscv_prelude.h \
+	--c-include riscv_platform.h \
+        --c-preserve _set_Misa_C \
+	-O \
+	--Oconstant-fold
+
+generated_definitions/c/riscv_model_$(ARCH).c: $(SAIL_DEPS)
+	mkdir -p generated_defintions/c
+	$(SAIL_BUILD) $(SAIL_FLAGS) $(EXTENSIONS) -c $(SAIL_C_FLAGS) -o $(basename $@)
+
+GMP_FLAGS = $(shell pkg-config --cflags gmp)
+# N.B. GMP does not have pkg-config metadata on Ubuntu 18.04 so default to -lgmp
+GMP_LIBS = $(shell pkg-config --libs gmp || echo -lgmp)
+ZLIB_FLAGS = $(shell pkg-config --cflags zlib)
+ZLIB_LIBS = $(shell pkg-config --libs zlib)
+
+C_WARNINGS ?=
+#-Wall -Wextra -Wno-unused-label -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-function
+C_INCS = $(addprefix c_emulator/,riscv_prelude.h riscv_platform_impl.h riscv_platform.h riscv_softfloat.h)
+C_SRCS = $(addprefix c_emulator/,riscv_prelude.c riscv_platform_impl.c riscv_platform.c riscv_softfloat.c riscv_sim.c)
+
+C_FLAGS = -I $(SAIL_LIB_DIR) -I c_emulator $(GMP_FLAGS) $(ZLIB_FLAGS) $(SOFTFLOAT_FLAGS)
+C_LIBS  = $(GMP_LIBS) $(ZLIB_LIBS) $(SOFTFLOAT_LIBS)
+
+c_emulator/riscv_sim_$(ARCH): generated_definitions/c/riscv_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS)
+	gcc -g $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
+
+# Convenience target
+.PHONY: csim
+csim: c_emulator/riscv_sim_$(ARCH)
