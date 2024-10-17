@@ -20,15 +20,3 @@ val sys_vector_vlen_exp = pure "sys_vector_vlen_exp" : unit -> range(3, 16)
 function get_vlen_pow() -> range(3, 16) = sys_vector_vlen_exp()
 
 type vlenmax : Int = 65536
-
-/* Note: At present, the values of elen and vlen need to be manually speficied
- * in the init_sys() function of riscv_sys_control.sail before compiling the emulators,
- * e.g.,
- *  vlen = 0b0101;
- *  elen = 0b1;
- * means VLEN = 1024 and ELEN = 64,
- * They will be configurable when user-specified configuration is supported in Sail.
- *
- * Also, VLEN >= ELEN must be satisfied and this condition check should be added
- * after their initialization.
- */
