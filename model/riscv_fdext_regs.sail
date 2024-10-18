@@ -419,8 +419,8 @@ bitfield Fcsr : bits(32) = {
 
 register fcsr : Fcsr
 
-val ext_write_fcsr : (bits(3), bits(5)) -> unit
-function ext_write_fcsr (frm, fflags) = {
+val write_fcsr : (bits(3), bits(5)) -> unit
+function write_fcsr (frm, fflags) = {
   fcsr[FRM]    = frm;      /* Note: frm can be an illegal value, 101, 110, 111 */
   fcsr[FFLAGS] = fflags;
   dirty_fd_context_if_present();

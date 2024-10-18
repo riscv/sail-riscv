@@ -15,16 +15,6 @@ scattered mapping csr_name_map
 // TODO: These csr_name_map definitions should be moved to the files
 // corresponding to their extensions rather than all be here.
 
-/* user trap setup */
-mapping clause csr_name_map = 0x000  <-> "ustatus"
-mapping clause csr_name_map = 0x004  <-> "uie"
-mapping clause csr_name_map = 0x005  <-> "utvec"
-/* user trap handling */
-mapping clause csr_name_map = 0x040  <-> "uscratch"
-mapping clause csr_name_map = 0x041  <-> "uepc"
-mapping clause csr_name_map = 0x042  <-> "ucause"
-mapping clause csr_name_map = 0x043  <-> "utval"
-mapping clause csr_name_map = 0x044  <-> "uip"
 /* user floating-point context */
 mapping clause csr_name_map = 0x001  <-> "fflags"
 mapping clause csr_name_map = 0x002  <-> "frm"
@@ -100,8 +90,6 @@ mapping clause csr_name_map = 0xC9F  <-> "hpmcounter31h"
 
 /* supervisor trap setup */
 mapping clause csr_name_map = 0x100  <-> "sstatus"
-mapping clause csr_name_map = 0x102  <-> "sedeleg"
-mapping clause csr_name_map = 0x103  <-> "sideleg"
 mapping clause csr_name_map = 0x104  <-> "sie"
 mapping clause csr_name_map = 0x105  <-> "stvec"
 mapping clause csr_name_map = 0x106  <-> "scounteren"
@@ -132,6 +120,7 @@ mapping clause csr_name_map = 0x306  <-> "mcounteren"
 mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
 /* machine envcfg */
 mapping clause csr_name_map = 0x30A  <-> "menvcfg"
+mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
 /* hardware performance counter event selection */
 mapping clause csr_name_map = 0x323  <-> "mhpmevent3"
 mapping clause csr_name_map = 0x324  <-> "mhpmevent4"
