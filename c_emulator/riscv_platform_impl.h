@@ -11,6 +11,9 @@
 extern uint64_t rv_pmp_count;
 extern uint64_t rv_pmp_grain;
 
+extern uint64_t rv_vector_vlen_exp;
+extern uint64_t rv_vector_elen_exp;
+
 extern bool rv_enable_svinval;
 extern bool rv_enable_zcb;
 extern bool rv_enable_zfinx;
