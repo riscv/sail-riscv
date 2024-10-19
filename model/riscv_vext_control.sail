@@ -6,6 +6,14 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
+mapping clause csr_name_map = 0x008  <-> "vstart"
+mapping clause csr_name_map = 0x009  <-> "vxsat"
+mapping clause csr_name_map = 0x00A  <-> "vxrm"
+mapping clause csr_name_map = 0x00F  <-> "vcsr"
+mapping clause csr_name_map = 0xC20  <-> "vl"
+mapping clause csr_name_map = 0xC21  <-> "vtype"
+mapping clause csr_name_map = 0xC22  <-> "vlenb"
+
 function clause is_CSR_defined (0x008) = true
 function clause is_CSR_defined (0x009) = true
 function clause is_CSR_defined (0x00A) = true
