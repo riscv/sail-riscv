@@ -32,18 +32,25 @@
 /* **************************************************************** */
 /* S and D value structure (sign, exponent, mantissa)               */
 
-/* TODO: this should be a 'mapping' */
 val      fsplit_D : bits(64) -> (bits(1), bits(11), bits(52))
 function fsplit_D   x64 = (x64[63..63], x64[62..52], x64[51..0])
 
 val      fmake_D  : (bits(1), bits(11), bits(52)) -> bits(64)
 function fmake_D (sign, exp, mant) = sign @ exp @ mant
 
+val fExtractor_D : bits(64) <-> (bits(1), bits(11), bits(52))
+function fExtractor_D_forwards(x64) = fsplit_D(x64)
+function fExtractor_D_forwards_matches(x64) = true
+function fExtractor_D_backwards(sign, exp, mant) = fmake_D(sign, exp, mant)
+function fExtractor_D_backwards_matches(sign, exp, mant) = true
+
+mapping fstruct_D : bits(64) <-> (bits(1), bits(11), bits(52)) = {fExtractor_D(sign, exp, mant) <-> (sign, exp, mant)}
+
 /* ---- Structure tests */
 
 val      f_is_neg_inf_D : bits(64) -> bool
 function f_is_neg_inf_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
+  let (sign, exp, mant) = fstruct_D (x64);
   (  (sign == 0b1)
    & (exp  == ones())
    & (mant == zeros()))
@@ -51,7 +58,7 @@ function f_is_neg_inf_D   x64 = {
 
 val      f_is_neg_norm_D : bits(64) -> bool
 function f_is_neg_norm_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
+  let (sign, exp, mant) = fstruct_D (x64);
   (  (sign == 0b1)
    & (exp  != zeros())
    & (exp  != ones()))
@@ -59,7 +66,7 @@ function f_is_neg_norm_D   x64 = {
 
 val      f_is_neg_subnorm_D : bits(64) -> bool
 function f_is_neg_subnorm_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
+  let (sign, exp, mant) = fstruct_D (x64);
   (  (sign == 0b1)
    & (exp  == zeros())
    & (mant != zeros()))
@@ -67,7 +74,7 @@ function f_is_neg_subnorm_D   x64 = {
 
 val      f_is_neg_zero_D : bits(64) -> bool
 function f_is_neg_zero_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
+  let (sign, exp, mant) = fstruct_D (x64);
   (  (sign == ones())
    & (exp  == zeros())
    & (mant == zeros()))
@@ -75,7 +82,7 @@ function f_is_neg_zero_D   x64 = {
 
 val      f_is_pos_zero_D : bits(64) -> bool
 function f_is_pos_zero_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
+  let (sign, exp, mant) = fstruct_D (x64);
   (  (sign == zeros())
    & (exp  == zeros())
    & (mant == zeros()))
@@ -83,7 +90,7 @@ function f_is_pos_zero_D   x64 = {
 
 val      f_is_pos_subnorm_D : bits(64) -> bool
 function f_is_pos_subnorm_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
+  let (sign, exp, mant) = fstruct_D (x64);
   (  (sign == zeros())
    & (exp  == zeros())
    & (mant != zeros()))
@@ -91,7 +98,7 @@ function f_is_pos_subnorm_D   x64 = {
 
 val      f_is_pos_norm_D : bits(64) -> bool
 function f_is_pos_norm_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
+  let (sign, exp, mant) = fstruct_D (x64);
   (  (sign == zeros())
    & (exp  != zeros())
    & (exp  != ones()))
@@ -99,7 +106,7 @@ function f_is_pos_norm_D   x64 = {
 
 val      f_is_pos_inf_D : bits(64) -> bool
 function f_is_pos_inf_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
+  let (sign, exp, mant) = fstruct_D (x64);
   (  (sign == zeros())
    & (exp  == ones())
    & (mant == zeros()))
@@ -107,7 +114,7 @@ function f_is_pos_inf_D   x64 = {
 
 val      f_is_SNaN_D : bits(64) -> bool
 function f_is_SNaN_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
+  let (sign, exp, mant) = fstruct_D (x64);
   (  (exp == ones())
    & (mant [51] == bitzero)
    & (mant != zeros()))
@@ -115,7 +122,7 @@ function f_is_SNaN_D   x64 = {
 
 val      f_is_QNaN_D : bits(64) -> bool
 function f_is_QNaN_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
+  let (sign, exp, mant) = fstruct_D (x64);
   (  (exp == ones())
    & (mant [51] == bitone))
 }
@@ -123,7 +130,7 @@ function f_is_QNaN_D   x64 = {
 /* Either QNaN or SNan */
 val      f_is_NaN_D : bits(64) -> bool
 function f_is_NaN_D   x64 = {
-  let (sign, exp, mant) = fsplit_D (x64);
+  let (sign, exp, mant) = fstruct_D (x64);
   (  (exp == ones())
    & (mant != zeros()))
 }
@@ -134,15 +141,15 @@ function f_is_NaN_D   x64 = {
 
 val      negate_D : bits(64) -> bits(64)
 function negate_D (x64) = {
-  let (sign, exp, mant) = fsplit_D (x64);
+  let (sign, exp, mant) = fstruct_D (x64);
   let new_sign = if (sign == 0b0) then 0b1 else 0b0;
   fmake_D (new_sign, exp, mant)
 }
 
 val      feq_quiet_D : (bits(64), bits (64)) -> (bool, bits(5))
 function feq_quiet_D   (v1,       v2) = {
-  let (s1, e1, m1) = fsplit_D (v1);
-  let (s2, e2, m2) = fsplit_D (v2);
+  let (s1, e1, m1) = fstruct_D (v1);
+  let (s2, e2, m2) = fstruct_D (v2);
 
   let v1Is0    = f_is_neg_zero_D(v1) | f_is_pos_zero_D(v1);
   let v2Is0    = f_is_neg_zero_D(v2) | f_is_pos_zero_D(v2);
@@ -158,8 +165,8 @@ function feq_quiet_D   (v1,       v2) = {
 
 val      flt_D : (bits(64), bits (64), bool) -> (bool, bits(5))
 function flt_D   (v1,       v2,        is_quiet) = {
-  let (s1, e1, m1) = fsplit_D (v1);
-  let (s2, e2, m2) = fsplit_D (v2);
+  let (s1, e1, m1) = fstruct_D (v1);
+  let (s2, e2, m2) = fstruct_D (v2);
 
   let result : bool =
     if (s1 == 0b0) & (s2 == 0b0) then
@@ -189,8 +196,8 @@ function flt_D   (v1,       v2,        is_quiet) = {
 
 val      fle_D : (bits(64), bits (64), bool) -> (bool, bits(5))
 function fle_D   (v1,       v2,        is_quiet) = {
-  let (s1, e1, m1) = fsplit_D (v1);
-  let (s2, e2, m2) = fsplit_D (v2);
+  let (s1, e1, m1) = fstruct_D (v1);
+  let (s2, e2, m2) = fstruct_D (v2);
 
   let v1Is0    = f_is_neg_zero_D(v1) | f_is_pos_zero_D(v1);
   let v2Is0    = f_is_neg_zero_D(v2) | f_is_pos_zero_D(v2);
@@ -726,9 +733,9 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJ_D)) = {
   let rs1_val_D    = F_or_X_D(rs1);
   let rs2_val_D    = F_or_X_D(rs2);
 
-  let (s1, e1, m1) = fsplit_D (rs1_val_D);
-  let (s2, e2, m2) = fsplit_D (rs2_val_D);
-  let rd_val_D     = fmake_D (s2, e1, m1);
+  let (s1, e1, m1) = fstruct_D (rs1_val_D);
+  let (s2, e2, m2) = fstruct_D (rs2_val_D);
+  let rd_val_D     = fstruct_D ((s2, e1, m1));
 
   F_or_X_D(rd) = rd_val_D;
   RETIRE_SUCCESS
@@ -737,9 +744,9 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJ_D)) = {
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJN_D)) = {
   let rs1_val_D    = F_or_X_D(rs1);
   let rs2_val_D    = F_or_X_D(rs2);
-  let (s1, e1, m1) = fsplit_D (rs1_val_D);
-  let (s2, e2, m2) = fsplit_D (rs2_val_D);
-  let rd_val_D     = fmake_D (0b1 ^ s2, e1, m1);
+  let (s1, e1, m1) = fstruct_D (rs1_val_D);
+  let (s2, e2, m2) = fstruct_D (rs2_val_D);
+  let rd_val_D     = fstruct_D ((0b1 ^ s2, e1, m1));
 
   F_or_X_D(rd) = rd_val_D;
   RETIRE_SUCCESS
@@ -748,9 +755,9 @@ function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJN_D)) = {
 function clause execute (F_BIN_TYPE_D(rs2, rs1, rd, FSGNJX_D)) = {
   let rs1_val_D    = F_or_X_D(rs1);
   let rs2_val_D    = F_or_X_D(rs2);
-  let (s1, e1, m1) = fsplit_D (rs1_val_D);
-  let (s2, e2, m2) = fsplit_D (rs2_val_D);
-  let rd_val_D     = fmake_D (s1 ^ s2, e1, m1);
+  let (s1, e1, m1) = fstruct_D (rs1_val_D);
+  let (s2, e2, m2) = fstruct_D (rs2_val_D);
+  let rd_val_D     = fstruct_D ((s1 ^ s2, e1, m1));
 
   F_or_X_D(rd) = rd_val_D;
   RETIRE_SUCCESS
