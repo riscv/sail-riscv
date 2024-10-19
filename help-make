@@ -1,0 +1,7 @@
+This Makefile can be used to build several targets, you should choose
+one explicitly, for example:
+
+- 'make csim' to build the C simulator
+
+The variable ARCH controls whether the model is built in RV32 or RV64
+mode. By default it is set to RV64.
