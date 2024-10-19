@@ -246,35 +246,31 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
    */
   let m : Mstatus = Mk_Mstatus(zero_extend(v[22 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
 
-  /* Legalize MPP */
-  let m = [m with MPP = if have_privLevel(m[MPP]) then m[MPP]
-                        else privLevel_to_bits(lowest_supported_privLevel())];
-
-  /* We don't have any extension context yet. */
-  let m = [m with XS = extStatus_to_bits(Off)];
-
   /* FS is WARL, and making FS writable can support the M-mode emulation of an FPU
    * to support code running in S/U-modes.  Spike does this, and for now, we match it,
    * but only if Zfinx isn't enabled.
    * FIXME: This should be made a platform parameter.
    */
-  let m = if sys_enable_zfinx() then [m with FS = extStatus_to_bits(Off)] else m;
   let dirty = extStatus_of_bits(m[FS]) == Dirty | extStatus_of_bits(m[XS]) == Dirty |
               extStatus_of_bits(m[VS]) == Dirty;
-  let m = [m with SD = bool_to_bits(dirty)];
+
+  /* Legalize MPP */
+  let m = [m with
+    MPP = if have_privLevel(m[MPP]) then m[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
+    /* We don't have any extension context yet. */
+    XS = extStatus_to_bits(Off),
+    SD = bool_to_bits(dirty),
+    FS = if sys_enable_zfinx() then extStatus_to_bits(Off) else m[FS],
+    MPRV = if extensionEnabled(Ext_U) then m[MPRV] else 0b0,
+  ];
 
   /* We don't support dynamic changes to SXL and UXL. */
   let m = set_mstatus_SXL(m, get_mstatus_SXL(o));
   let m = set_mstatus_UXL(m, get_mstatus_UXL(o));
 
   /* We don't currently support changing MBE and SBE. */
-  let m = if xlen == 64 then {
-             Mk_Mstatus([m.bits with 37 .. 36 = 0b00])
-          } else m;
-
-  if not(extensionEnabled(Ext_U)) then {
-    let m = [m with MPRV = 0b0];
-    m
+  if xlen == 64 then {
+    Mk_Mstatus([m.bits with 37 .. 36 = 0b00])
   } else m
 }
 
@@ -551,10 +547,10 @@ function set_sstatus_UXL(s : Sstatus, a : arch_xlen) -> Sstatus = {
 
 function lower_mstatus(m : Mstatus) -> Sstatus = {
   let s = Mk_Sstatus(zeros());
-  let s = [s with SD = m[SD]];
   let s = set_sstatus_UXL(s, get_mstatus_UXL(m));
 
   [s with
+    SD = m[SD],
     MXR = m[MXR],
     SUM = m[SUM],
     XS = m[XS],
@@ -633,10 +629,11 @@ function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterr
 /* Returns the new value of mie from the previous mie (o) and the written sie (s) as delegated by mideleg (d). */
 function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
-  let m = if d[SEI] == 0b1 then [m with SEI = s[SEI]] else m;
-  let m = if d[STI] == 0b1 then [m with STI = s[STI]] else m;
-  let m = if d[SSI] == 0b1 then [m with SSI = s[SSI]] else m;
-  m
+  [m with
+    SEI = if d[SEI] == 0b1 then s[SEI] else m[SEI],
+    STI = if d[STI] == 0b1 then s[STI] else m[STI],
+    SSI = if d[SSI] == 0b1 then s[SSI] else m[SSI],
+  ]
 }
 
 function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
