@@ -92,6 +92,11 @@ uint64_t sys_vector_elen_exp(unit)
   return rv_vector_elen_exp;
 }
 
+bool sys_enable_smepmp(unit u)
+{
+  return rv_enable_smepmp;
+}
+
 bool sys_enable_writable_misa(unit u)
 {
   return rv_enable_writable_misa;

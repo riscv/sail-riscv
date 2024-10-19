@@ -51,6 +51,9 @@ function clause read_CSR(0x342) = mcause.bits
 function clause read_CSR(0x343) = mtval
 function clause read_CSR(0x344) = mip.bits
 
+function clause read_CSR(0x747) = mseccfg.bits
+function clause read_CSR(0x757 if xlen == 32) = mseccfgh
+
 // pmpcfgN
 function clause read_CSR(0x3A @ idx : bits(4) if idx[0] == bitzero | xlen == 32) = pmpReadCfgReg(unsigned(idx))
 // pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
@@ -133,6 +136,8 @@ function clause write_CSR(0x3D @ idx : bits(4), value) = { let idx = unsigned(0b
 function clause write_CSR(0x3E @ idx : bits(4), value) = { let idx = unsigned(0b11 @ idx); pmpWriteAddrReg(idx, value); pmpReadAddrReg(idx) }
 
 /* machine mode counters */
+function clause write_CSR(0x747, value) = { mseccfg = mseccfgWrite(mseccfg, value); mseccfg.bits }
+function clause write_CSR((0x757, value) if xlen == 32) = { mseccfgh }
 function clause write_CSR(0xB00, value) = { mcycle[(xlen - 1) .. 0] = value; value }
 function clause write_CSR(0xB02, value) = { minstret[(xlen - 1) .. 0] = value; minstret_increment = false; value }
 function clause write_CSR((0xB80, value) if xlen == 32) = { mcycle[63 .. 32] = value; value }
