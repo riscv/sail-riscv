@@ -173,6 +173,10 @@ val plat_rom_size : forall 'a. Size 'a => unit -> bitvector 'a
 let plat_rom_size () = wordFromInteger 0
 declare ocaml target_rep function plat_rom_size = `Platform.rom_size`
 
+val sys_reent_opt1 : unit -> bool
+let sys_reent_opt1 () = false
+declare ocaml target_rep function sys_reent_opt1 = `Platform.reent_opt1`
+
 val plat_cache_block_size_exp : unit -> integer
 let plat_cache_block_size_exp () = wordFromInteger 0
 declare ocaml target_rep function plat_cache_block_size_exp = `Platform.cache_block_size_exp`

@@ -67,6 +67,11 @@ bool sys_enable_zicbom(unit u)
   return rv_enable_zicbom;
 }
 
+bool sys_reent_opt1(unit u)
+{
+  return rv_reent_opt1;
+}
+
 bool sys_enable_zicboz(unit u)
 {
   return rv_enable_zicboz;
