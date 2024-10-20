@@ -447,6 +447,10 @@ function init_platform() -> unit = {
   htif_exit_code = zero_extend(0b0);
   htif_cmd_write = bitzero;
   htif_payload_writes = zero_extend(0b0);
+
+  priv_spec = priv_spec_lookup();
+  print_platform("priv spec version: " ^ priv_spec_lookup_str(priv_spec));
+
 }
 
 function tick_platform() -> unit = {

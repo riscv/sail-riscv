@@ -59,7 +59,31 @@ enum {
   OPT_ENABLE_ZICBOM,
   OPT_ENABLE_ZICBOZ,
   OPT_CACHE_BLOCK_SIZE,
+  OPT_PRIV_SPEC,
+  OPT_UNPRIV_SPEC,
 };
+
+enum priv_spec_enum {
+  OPT_PRIV_SPEC_UNSPECIFIED,
+  OPT_PRIV_SPEC_1_11,
+  OPT_PRIV_SPEC_1_12,
+  OPT_PRIV_SPEC_1_13,
+} ;
+
+struct priv_spec_enum_str {
+  const enum priv_spec_enum e;
+  const char * str;
+};
+
+static struct priv_spec_enum_str priv_spec_enum_str_lookup [] = {
+    { OPT_PRIV_SPEC_UNSPECIFIED, "unspecified"},
+    { OPT_PRIV_SPEC_1_11, "1.11" },
+    { OPT_PRIV_SPEC_1_12, "1.12" },
+    { OPT_PRIV_SPEC_1_13, "1.13" },
+};
+
+enum priv_spec_enum priv_spec = OPT_PRIV_SPEC_UNSPECIFIED;
+char * _priv_spec_str = "unspecified";
 
 static bool do_dump_dts = false;
 static bool do_show_times = false;
@@ -160,6 +184,8 @@ static struct option options[] = {
     {"enable-zicbom",               no_argument,       0, OPT_ENABLE_ZICBOM       },
     {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
     {"cache-block-size",            required_argument, 0, OPT_CACHE_BLOCK_SIZE    },
+    {"priv-spec",                   required_argument, 0, OPT_PRIV_SPEC           },
+    {"unpriv-spec",                 required_argument, 0, OPT_UNPRIV_SPEC         },
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
@@ -459,6 +485,25 @@ static int process_args(int argc, char **argv)
     case '?':
       print_usage(argv[0], 1);
       break;
+    case OPT_PRIV_SPEC:
+      int found = 0;
+      for (int i = 0; i < sizeof(priv_spec_enum_str_lookup)/sizeof(struct priv_spec_enum_str); i++) {
+        if (strcmp(priv_spec_enum_str_lookup[i].str, optarg) == 0) {
+          priv_spec = priv_spec_enum_str_lookup[i].e;
+          _priv_spec_str = priv_spec_enum_str_lookup[i].str;
+          found = 1;
+          break;
+        }
+      }
+      if (found == 0) {
+        fprintf(stderr, "Invalid setting for option, priv-spec: %s\n", optarg);
+        fprintf(stderr, "   Must be one of: \n");
+        for (int i = 0; i < sizeof(priv_spec_enum_str_lookup)/sizeof(struct priv_spec_enum_str); i++) {
+          fprintf(stderr, "      %s\n", priv_spec_enum_str_lookup[i].str);
+        }
+        exit(1);
+      }
+    break;
     }
   }
   if (do_dump_dts)
@@ -1248,3 +1293,35 @@ int main(int argc, char **argv)
   flush_logs();
   close_logs();
 }
+
+void priv_spec_vers(sail_string * zret_str, unit u)
+    {
+    //=========================
+    //  The following code ......
+    //
+    //    *zret_str =  "i'm baaaack...\n";
+    //
+    //    return;
+    //
+    //  ... yields a segmentation fault when killing
+    //  the sail_string variable (pointed to by zret_str)
+    //  in the calling code.  The calling code assumes that
+    //  memory has been malloc'd for the string,  and when
+    //  it's free'd,  you get a seg fault.  So,  I re-wrote
+    //  the code to do the actual malloc. But note the 
+    //  assymetry of the memory management:  the space is
+    //  allocated here,  but free'd at the calling level.
+    //  This is,  at least,  ugly code.  And,  at worst,
+    //  prone to error.
+    //=========================
+    char *  s;
+
+    // TODO:  Fix this.  this will cause a memory leak.
+    s = malloc(strlen(_priv_spec_str));
+    strcpy(s, _priv_spec_str);
+    *zret_str =  s;
+    return;
+
+    }
+
+

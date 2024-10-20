@@ -79,6 +79,7 @@ function arch_to_bits(a : Architecture) -> arch_xlen =
   }
 
 
+
 /* model-internal exceptions */
 
 union exception = {
@@ -94,6 +95,48 @@ function internal_error(file, line, s) = {
     assert (false, file ^ ":" ^ dec_str(line) ^ ": " ^ s);
     throw Error_internal_error()
 }
+
+/* spec version enumerations, functions and data */
+val priv_spec_str = { c: "priv_spec_vers" } : unit -> string
+
+enum priv_spec_enum = {Priv_unspecified, Priv_1_11, Priv_1_12, Priv_1_13}
+struct priv_spec_enum_str = {
+  e : priv_spec_enum ,
+  str : string 
+}
+
+//let priv_spec_enum_str_lookup : vector(4, dec, priv_spec_enum_str) = [
+//  { Priv_unspecified, "unspecified" },
+//  { Priv_1_11, "1.11" },
+//  { Priv_1_12, "1.12" },
+//  { Priv_1_13, "1.13" },
+//]
+
+register priv_spec : priv_spec_enum
+
+val priv_spec_lookup : unit -> priv_spec_enum
+function priv_spec_lookup(unit) = {
+  let str : string = priv_spec_str();
+  match (str) {
+    "unspecified" => Priv_unspecified, 
+    "1.11"        => Priv_1_11,
+    "1.12"        => Priv_1_12, 
+    "1.13"        => Priv_1_13,
+    _             => { internal_error(__FILE__, __LINE__, "Invalid  priv spec version: " ^ str); Priv_unspecified; }
+  }
+}
+
+val priv_spec_lookup_str : priv_spec_enum -> string
+function priv_spec_lookup_str(e) = {
+  match (e) {
+    Priv_unspecified => "unspecified" ,
+    Priv_1_11 => "1.11" ,
+    Priv_1_12 => "1.12" ,
+    Priv_1_13 => "1.13" ,
+    _         => { internal_error(__FILE__, __LINE__, "Invalid  priv spec version enum") ; ""}
+  }
+}
+
 
 /* privilege levels */
 
