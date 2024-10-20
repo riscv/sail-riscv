@@ -78,6 +78,13 @@ function arch_to_bits(a : Architecture) -> arch_xlen =
     RV128 => 0b11
   }
 
+function arch_xlen_to_int(a : arch_xlen) -> option(int) =
+  match a {
+    0b01 => Some(32),
+    0b10 => Some(64),
+    0b11 => Some(128),
+    0b00 => None()
+  }
 
 /* model-internal exceptions */
 
