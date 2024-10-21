@@ -28,7 +28,7 @@ function step(step_no : int) -> bool = {
       Some(intr, priv) => {
         if   get_config_print_instr()
         then print_bits("Handling interrupt: ", interruptType_to_bits(intr));
-        handle_interrupt(intr, priv);
+        handle_interrupt(intr, priv, V0); // FIXME: Dispatch interrupts to V1
         (RETIRE_FAIL, false)
       },
       None() => {
@@ -51,7 +51,7 @@ function step(step_no : int) -> bool = {
             let ast = ext_decode_compressed(h);
             if   get_config_print_instr()
             then {
-              print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ to_str(ast));
+              print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege, cur_virtualization) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ to_str(ast));
             };
             /* check for RVC once here instead of every RVC execute clause. */
             if extensionEnabled(Ext_Zca) then {
@@ -68,7 +68,7 @@ function step(step_no : int) -> bool = {
             let ast = ext_decode(w);
             if   get_config_print_instr()
             then {
-              print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ to_str(ast));
+              print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege, cur_virtualization) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ to_str(ast));
             };
             nextPC = PC + 4;
             (execute(ast), true)

@@ -450,15 +450,21 @@ function tick_platform() -> unit = {
 
 /* Platform-specific handling of instruction faults */
 
-function handle_illegal() -> unit = {
-  let info = if plat_mtval_has_illegal_inst_bits ()
-             then Some(instbits)
-             else None();
-  let t : sync_exception = struct { trap    = E_Illegal_Instr(),
-                                    excinfo = info,
-                                    ext     = None() };
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
+function handle_instr_fault(e: ExceptionType) -> unit = {
+  /* handle_instr_fault only supports the following exception causes */
+  assert(match e {
+          E_Illegal_Instr() => true,
+          E_Virtual_Instr() => true,
+          _                 => false,
+        }, "exception not supported by current handler");
+  let c = instr_exception_context(zero_extend(instbits), plat_mtval_has_illegal_inst_bits()) in
+  set_next_pc(exception_handler(cur_privilege, cur_virtualization, CTL_TRAP(e, c), PC))
 }
+
+// Note: Would its purpose be clearer if called 'handle_illegal_instr()'?
+function handle_illegal() -> unit = handle_instr_fault(E_Illegal_Instr())
+
+function handle_virtual_instr() -> unit = handle_instr_fault(E_Virtual_Instr())
 
 /* Platform-specific wait-for-interrupt */
 

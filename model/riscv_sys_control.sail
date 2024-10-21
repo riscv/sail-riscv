@@ -178,13 +178,44 @@ val cancel_reservation = impure {interpreter: "Platform.cancel_reservation", c: 
 /* Exception delegation: given an exception and the privilege at which
  * it occured, returns the privilege at which it should be handled.
  */
-function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
-  let idx   = num_of_ExceptionType(e);
-  let super = bit_to_bool(medeleg.bits[idx]);
-  let deleg = if extensionEnabled(Ext_S) & super then Supervisor else Machine;
-  /* We cannot transition to a less-privileged mode. */
-  if   privLevel_to_bits(deleg) <_u privLevel_to_bits(p)
-  then p else deleg
+function exception_delegatee(e : ExceptionType, cur_p : Privilege, cur_v : Virtualization) -> (Privilege, Virtualization) = {
+  /* Determine delegation privilege and virtualization mode based on xedeleg CSRs
+   *
+   * medeleg delegates to HS-mode
+   * hedeleg delegates to VS-mode
+   */
+  let idx       = num_of_ExceptionType(e);
+  let del_to_hs = bit_to_bool(medeleg.bits[idx]);
+  let del_to_vs = bit_to_bool(hedeleg.bits[idx]);
+  let (del_p, del_v): (Privilege, Virtualization) = match (del_to_hs, del_to_vs) {
+      (false, _,)   => (Machine, V0),
+      (true, false) => (Supervisor, V0),
+      (true, true)  => (Supervisor, V1),
+  };
+
+  /* Check if delegation privilege exists:
+   *
+   * delegation to M-mode is unconditionally possible
+   * delegation to HS-mode is only possible if supervisor mode is implemented
+   * delegation to VS-mode is only possible if hypervisor extension is present (its presence implies supervisor mode implemented)
+   */
+  let (del_p, del_v): (Privilege, Virtualization) = match (del_p, del_v) {
+    (Machine, _)     => (Machine, V0),
+    (Supervisor, V0) => if extensionEnabled(Ext_S) then (Supervisor, V0)
+                        else (Machine, V0),
+    (Supervisor, V1) => if extensionEnabled(Ext_H) then (Supervisor, V1)
+                        else if extensionEnabled(Ext_S) then (Supervisor, V0)
+                        else (Machine, V0),
+    (User, _)        => internal_error(__FILE__, __LINE__, "Unreachable: illegal delegation privilege")
+  };
+  /* Check transition to less-privileged mode:
+   *
+   * trap delegation should never cause a transition to a lower privilege mode
+   * trap delegation should never cause a transition to a more virtualized mode
+   */
+  if (privLevel_to_bits(del_p) >=_u privLevel_to_bits(cur_p)) & (virtMode_to_bits(del_v) <=_u virtMode_to_bits(cur_v))
+  then (del_p, del_v)
+  else (cur_p, cur_v)
 }
 
 /* Interrupts are prioritized in privilege order, and for each
@@ -265,7 +296,7 @@ function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege
 /* types of privilege transitions */
 
 union ctl_result = {
-  CTL_TRAP : sync_exception,
+  CTL_TRAP : (ExceptionType, ExceptionContext),
   CTL_SRET : unit,
   CTL_MRET : unit,
 }
@@ -291,125 +322,212 @@ $endif
 
 /* handle exceptional ctl flow by updating nextPC and operating privilege */
 
-function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
+function trap_handler(del_priv : Privilege, del_virt : Virtualization, pc : xlenbits, cause : TrapCause, context : ExceptionContext)
                      -> xlenbits = {
   rvfi_trap();
   if   get_config_print_platform()
-  then print_platform("handling " ^ (if intr then "int#" else "exc#")
-                      ^ BitStr(c) ^ " at priv " ^ to_str(del_priv)
-                      ^ " with tval " ^ BitStr(tval(info)));
+  then print_platform("handling " ^ (if trapCause_is_interrupt(cause) then "int#" else "exc#")
+                      ^ BitStr(trapCause_to_bits(cause)) ^ " at priv " ^ to_str(del_priv, del_virt)
+                      ^ " with tval " ^ BitStr(some_or_zero(context.excinfo))
+                      ^ " and tinst " ^ BitStr(some_or_zero(context.excinst)));
 
   match (del_priv) {
     Machine => {
-       mcause[IsInterrupt] = bool_to_bits(intr);
-       mcause[Cause]       = zero_extend(c);
+       mcause[IsInterrupt] = bool_to_bits(trapCause_is_interrupt(cause));
+       mcause[Cause]       = zero_extend(trapCause_to_bits(cause));
 
        mstatus[MPIE] = mstatus[MIE];
        mstatus[MIE]  = 0b0;
        mstatus[MPP]  = privLevel_to_bits(cur_privilege);
-       mtval           = tval(info);
+       mstatus[MPV]  = virtMode_to_bits(cur_virtualization);
+       mstatus[GVA]  = if context.info_is_gva then 0b1 else 0b0;
        mepc            = pc;
+       mtval           = some_or_zero(context.excinfo);
+       mtval2          = some_or_zero(context.excinfo2);
+       mtinst          = some_or_zero(context.excinst);
 
-       cur_privilege   = del_priv;
+       cur_privilege      = del_priv;
+       cur_virtualization = del_virt;
 
-       handle_trap_extension(del_priv, pc, ext);
+       handle_trap_extension(del_priv, del_virt, pc, context.ext);
 
        if   get_config_print_reg()
        then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
 
-       prepare_trap_vector(del_priv, mcause)
+       prepare_trap_vector(del_priv, del_virt, mcause)
     },
-    Supervisor => {
-       assert (extensionEnabled(Ext_S), "no supervisor mode present for delegation");
+    Supervisor => match (del_virt) {
+      V0 => {
+        assert (extensionEnabled(Ext_S), "no supervisor mode present for delegation");
 
-       scause[IsInterrupt] = bool_to_bits(intr);
-       scause[Cause]       = zero_extend(c);
+        scause[IsInterrupt] = bool_to_bits(trapCause_is_interrupt(cause));
+        scause[Cause]       = zero_extend(trapCause_to_bits(cause));
 
-       mstatus[SPIE] = mstatus[SIE];
-       mstatus[SIE]  = 0b0;
-       mstatus[SPP]  = match cur_privilege {
-                           User => 0b0,
-                           Supervisor => 0b1,
-                           Machine => internal_error(__FILE__, __LINE__, "invalid privilege for s-mode trap")
-                         };
-       stval           = tval(info);
-       sepc            = pc;
+        mstatus[SPIE] = mstatus[SIE];
+        mstatus[SIE]  = 0b0;
+        mstatus[SPP]  = match cur_privilege {
+                            User => 0b0,
+                            Supervisor => 0b1,
+                            Machine => internal_error(__FILE__, __LINE__, "invalid privilege for s-mode trap")
+                          };
+        hstatus[SPV]  = virtMode_to_bits(cur_virtualization);
+        hstatus[GVA]  = bool_to_bits(context.info_is_gva);
+        if cur_virtualization == V1 then hstatus[SPVP] = mstatus[SPP];
+        sepc            = pc;
+        stval           = some_or_zero(context.excinfo);
+        htval           = some_or_zero(context.excinfo2);
+        htinst          = some_or_zero(context.excinst);
 
-       cur_privilege   = del_priv;
+        cur_privilege      = del_priv;
+        cur_virtualization = del_virt;
 
-       handle_trap_extension(del_priv, pc, ext);
+        handle_trap_extension(del_priv, del_virt, pc, context.ext);
 
-       if   get_config_print_reg()
-       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
+        if   get_config_print_reg()
+        then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
 
-       prepare_trap_vector(del_priv, scause)
+        prepare_trap_vector(del_priv, del_virt, scause)
+      },
+      V1 => {
+        assert (extensionEnabled(Ext_S) & extensionEnabled(Ext_H), "no virtual supervisor mode present for delegation");
+
+        vscause[IsInterrupt] = bool_to_bits(trapCause_is_interrupt(cause));
+        vscause[Cause]       = zero_extend(trapCause_to_bits(cause));
+
+        vsstatus[SPIE] = mstatus[SIE];
+        vsstatus[SIE]  = 0b0;
+        vsstatus[SPP]  = match cur_privilege {
+                             User => 0b0,
+                             Supervisor => 0b1,
+                             Machine => internal_error(__FILE__, __LINE__, "invalid privilege for vs-mode trap")
+                           };
+        vsepc  = pc;
+        vstval = some_or_zero(context.excinfo);
+
+        cur_privilege      = del_priv;
+        cur_virtualization = del_virt;
+
+        handle_trap_extension(del_priv, del_virt, pc, context.ext);
+
+        if   get_config_print_reg()
+        then print_reg("CSR vsstatus <- " ^ BitStr(vsstatus.bits));
+
+        prepare_trap_vector(del_priv, del_virt, vscause)
+      }
     },
     User => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
   };
 }
 
-function exception_handler(cur_priv : Privilege, ctl : ctl_result,
+function exception_handler(cur_priv : Privilege,
+                           cur_virt: Virtualization,
+                           ctl : ctl_result,
                            pc: xlenbits) -> xlenbits = {
-  match (cur_priv, ctl) {
-    (_, CTL_TRAP(e)) => {
-      let del_priv = exception_delegatee(e.trap, cur_priv);
+  match (cur_priv, cur_virt, ctl) {
+    (_, _, CTL_TRAP(e, c)) => {
+      let (del_priv, del_virt) = exception_delegatee(e, cur_priv, cur_virt);
       if   get_config_print_platform()
-      then print_platform("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
-                          ^ " to handle " ^ to_str(e.trap));
-      trap_handler(del_priv, false, exceptionType_to_bits(e.trap), pc, e.excinfo, e.ext)
+      then print_platform("trapping from " ^ to_str(cur_priv, cur_virt) ^ " to " ^ to_str(del_priv, del_virt)
+                          ^ " to handle " ^ to_str(e));
+      trap_handler(del_priv, del_virt, pc, E(e), c)
     },
-    (_, CTL_MRET())  => {
+    (_, _, CTL_MRET())  => {
       let prev_priv   = cur_privilege;
+      let prev_virt   = cur_virtualization;
+
       mstatus[MIE]  = mstatus[MPIE];
       mstatus[MPIE] = 0b1;
+
       cur_privilege   = privLevel_of_bits(mstatus[MPP]);
       mstatus[MPP]  = privLevel_to_bits(if extensionEnabled(Ext_U) then User else Machine);
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
+      cur_virtualization = virtMode_of_bits(mstatus[MPV]);
+      mstatus[MPV]       = virtMode_to_bits(V0);
+
       if   get_config_print_reg()
       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
       if   get_config_print_platform()
-      then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
+      then print_platform("ret-ing from " ^ to_str(prev_priv, prev_virt) ^ " to " ^ to_str(cur_privilege, cur_virtualization));
 
-      prepare_xret_target(Machine) & pc_alignment_mask()
+      prepare_xret_target(Machine, prev_virt) & pc_alignment_mask()
     },
-    (_, CTL_SRET())  => {
+    (_, V0, CTL_SRET())  => {
       let prev_priv   = cur_privilege;
+      let prev_virt   = cur_virtualization;
+
       mstatus[SIE]  = mstatus[SPIE];
       mstatus[SPIE] = 0b1;
+
       cur_privilege   = if mstatus[SPP] == 0b1 then Supervisor else User;
-      mstatus[SPP]  = 0b0;
-      if   cur_privilege != Machine
-      then mstatus[MPRV] = 0b0;
+      mstatus[SPP]    = 0b0;
 
-      if   get_config_print_reg()
-      then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
+      cur_virtualization = virtMode_of_bits(hstatus[SPV]);
+      hstatus[SPV]       = virtMode_to_bits(V0);
+
+      if get_config_print_reg() then {
+        print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
+        print_reg("CSR hstatus <- " ^ BitStr(hstatus.bits));
+      };
       if   get_config_print_platform()
-      then print_platform("ret-ing from " ^ to_str(prev_priv)
-                          ^ " to " ^ to_str(cur_privilege));
+      then print_platform("ret-ing from " ^ to_str(prev_priv, prev_virt)
+                          ^ " to " ^ to_str(cur_privilege, cur_virtualization));
 
-      prepare_xret_target(Supervisor) & pc_alignment_mask()
+      prepare_xret_target(Supervisor, prev_virt) & pc_alignment_mask()
+    },
+    (_, V1, CTL_SRET())  => {
+      let prev_priv   = cur_privilege;
+      let prev_virt   = cur_virtualization;
+
+      vsstatus[SIE]  = vsstatus[SPIE];
+      vsstatus[SPIE] = 0b1;
+
+      cur_privilege    = if vsstatus[SPP] == 0b1 then Supervisor else User;
+      vsstatus[SPP]    = 0b0;
+
+      cur_virtualization = V1;
+
+      if get_config_print_reg() then {
+        print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
+        print_reg("CSR hstatus <- " ^ BitStr(hstatus.bits));
+      };
+      if   get_config_print_platform()
+      then print_platform("ret-ing from " ^ to_str(prev_priv, prev_virt)
+                          ^ " to " ^ to_str(cur_privilege, cur_virtualization));
+
+      prepare_xret_target(Supervisor, prev_virt) & pc_alignment_mask()
     },
   }
 }
 
+function handle_exception(e: ExceptionType, c: ExceptionContext) -> unit = {
+  // FIXME: If excinst is None, check if transformed inst should be written
+  // let c = {c with excinst = if c.excinst != None()
+  //                           then c.excinst
+  //                           else if (plat_xtinst_has_transformed_inst() & exc_causes_transformed_inst_in_xtinst(e))
+  //                           then Some(zero_extend(instbits_transformed))
+  //                           else None()} in
+  set_next_pc(exception_handler(cur_privilege, cur_virtualization, CTL_TRAP(e, c), PC))
+}
+
 function handle_mem_exception(addr : xlenbits, e : ExceptionType) -> unit = {
-  let t : sync_exception = struct { trap    = e,
-                                    excinfo = Some(addr),
-                                    ext     = None() } in
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
+  /* handle_mem_exception only supports the following exception causes */
+  assert(match e {
+          E_Breakpoint()         => true,
+          E_Fetch_Addr_Align()   => true,
+          E_Load_Addr_Align()    => true,
+          E_SAMO_Addr_Align()    => true,
+          E_Fetch_Access_Fault() => true,
+          E_Load_Access_Fault()  => true,
+          E_SAMO_Access_Fault()  => true,
+          _                      => false
+        }, "exception not supported by current handler");
+  handle_exception(e, mem_exception_context(addr, cur_virtualization == V1))
 }
 
-function handle_exception(e: ExceptionType) -> unit = {
-  let t : sync_exception = struct { trap    = e,
-                                    excinfo = None(),
-                                    ext     = None() } in
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
-}
-
-function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
-  set_next_pc(trap_handler(del_priv, true, interruptType_to_bits(i), PC, None(), None()))
+function handle_interrupt(i : InterruptType, del_priv : Privilege, del_virt: Virtualization) -> unit =
+  set_next_pc(trap_handler(del_priv, del_virt, PC, I(i), empty_exception_context()))
 
 /* state state initialization */
 

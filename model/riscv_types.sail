@@ -163,39 +163,71 @@ enum InterruptType = {
 val interruptType_to_bits : InterruptType -> exc_code
 function interruptType_to_bits (i) =
   match (i) {
-    I_U_Software => 0x00,
-    I_S_Software => 0x01,
-    I_M_Software => 0x03,
-    I_U_Timer    => 0x04,
-    I_S_Timer    => 0x05,
-    I_M_Timer    => 0x07,
-    I_U_External => 0x08,
-    I_S_External => 0x09,
-    I_M_External => 0x0b
+    I_U_Software  => 0x00,
+    I_S_Software  => 0x01,
+    I_VS_Software => 0x02,
+    I_M_Software  => 0x03,
+    I_U_Timer     => 0x04,
+    I_S_Timer     => 0x05,
+    I_VS_Timer    => 0x06,
+    I_M_Timer     => 0x07,
+    I_U_External  => 0x08,
+    I_S_External  => 0x09,
+    I_VS_External => 0x0a,
+    I_M_External  => 0x0b,
+    I_G_External  => 0x0c
   }
+
+val interruptType_to_str : InterruptType -> string
+function interruptType_to_str (i) =
+  match (i) {
+    I_U_Software  => "user-software-interrupt",
+    I_S_Software  => "supervisor-software-interrupt",
+    I_VS_Software => "virtual-supervisor-software-interrupt",
+    I_M_Software  => "machine-software-interrupt",
+    I_U_Timer     => "user-timer-interrupt",
+    I_S_Timer     => "supervisor-timer-interrupt",
+    I_VS_Timer    => "virtual-supervisor-timer-interrupt",
+    I_M_Timer     => "machine-timer-interrupt",
+    I_U_External  => "user-external-interrupt",
+    I_S_External  => "supervisor-external-interrupt",
+    I_VS_External => "virtual-supervisor-external-interrupt",
+    I_M_External  => "machine-external-interrupt",
+    I_G_External  => "guest-external-interrupt"
+  }
+
+overload to_str = {interruptType_to_str}
 
 /* architectural exception definitions */
 
 union ExceptionType = {
- E_Fetch_Addr_Align   : unit,
- E_Fetch_Access_Fault : unit,
- E_Illegal_Instr      : unit,
- E_Breakpoint         : unit,
- E_Load_Addr_Align    : unit,
- E_Load_Access_Fault  : unit,
- E_SAMO_Addr_Align    : unit,
- E_SAMO_Access_Fault  : unit,
- E_U_EnvCall          : unit,
- E_S_EnvCall          : unit,
- E_Reserved_10        : unit,
- E_M_EnvCall          : unit,
- E_Fetch_Page_Fault   : unit,
- E_Load_Page_Fault    : unit,
- E_Reserved_14        : unit,
- E_SAMO_Page_Fault    : unit,
+  E_Fetch_Addr_Align   : unit,
+  E_Fetch_Access_Fault : unit,
+  E_Illegal_Instr      : unit,
+  E_Breakpoint         : unit,
+  E_Load_Addr_Align    : unit,
+  E_Load_Access_Fault  : unit,
+  E_SAMO_Addr_Align    : unit,
+  E_SAMO_Access_Fault  : unit,
+  E_U_EnvCall          : unit,
+  E_S_EnvCall          : unit,
+  E_VS_EnvCall         : unit,
+  E_M_EnvCall          : unit,
+  E_Fetch_Page_Fault   : unit,
+  E_Load_Page_Fault    : unit,
+  E_Reserved_14        : unit,
+  E_SAMO_Page_Fault    : unit,
+  E_Reserved_16        : unit,
+  E_Reserved_17        : unit,
+  E_Reserved_18        : unit,
+  E_Reserved_19        : unit,
+  E_Fetch_GPage_Fault  : unit,
+  E_Load_GPage_Fault   : unit,
+  E_Virtual_Instr      : unit,
+  E_SAMO_GPage_Fault   : unit,
 
- /* extensions */
- E_Extension          : ext_exc_type
+  /* extensions */
+  E_Extension          : ext_exc_type
 }
 
 val exceptionType_to_bits : ExceptionType -> exc_code
@@ -211,12 +243,20 @@ function exceptionType_to_bits(e) =
     E_SAMO_Access_Fault()  => 0x07,
     E_U_EnvCall()          => 0x08,
     E_S_EnvCall()          => 0x09,
-    E_Reserved_10()        => 0x0a,
+    E_VS_EnvCall()         => 0x0a,
     E_M_EnvCall()          => 0x0b,
     E_Fetch_Page_Fault()   => 0x0c,
     E_Load_Page_Fault()    => 0x0d,
     E_Reserved_14()        => 0x0e,
     E_SAMO_Page_Fault()    => 0x0f,
+    E_Reserved_16()        => 0x10,
+    E_Reserved_17()        => 0x11,
+    E_Reserved_18()        => 0x12,
+    E_Reserved_19()        => 0x13,
+    E_Fetch_GPage_Fault()  => 0x14,
+    E_Load_GPage_Fault()   => 0x15,
+    E_Virtual_Instr()      => 0x16,
+    E_SAMO_GPage_Fault()   => 0x17,
 
     /* extensions */
     E_Extension(e)         => ext_exc_type_to_bits(e)
@@ -235,12 +275,20 @@ function num_of_ExceptionType(e) =
     E_SAMO_Access_Fault()  => 7,
     E_U_EnvCall()          => 8,
     E_S_EnvCall()          => 9,
-    E_Reserved_10()        => 10,
+    E_VS_EnvCall()         => 10,
     E_M_EnvCall()          => 11,
     E_Fetch_Page_Fault()   => 12,
     E_Load_Page_Fault()    => 13,
     E_Reserved_14()        => 14,
     E_SAMO_Page_Fault()    => 15,
+    E_Reserved_16()        => 16,
+    E_Reserved_17()        => 17,
+    E_Reserved_18()        => 18,
+    E_Reserved_19()        => 19,
+    E_Fetch_GPage_Fault()  => 20,
+    E_Load_GPage_Fault()   => 21,
+    E_Virtual_Instr()      => 22,
+    E_SAMO_GPage_Fault()   => 23,
 
     /* extensions */
     E_Extension(e)         => num_of_ext_exc_type(e)
@@ -256,22 +304,117 @@ function exceptionType_to_str(e) =
     E_Breakpoint()         => "breakpoint",
     E_Load_Addr_Align()    => "misaligned-load",
     E_Load_Access_Fault()  => "load-access-fault",
-    E_SAMO_Addr_Align()    => "misaligned-store/amo",
+    E_SAMO_Addr_Align()    => "misaliged-store/amo",
     E_SAMO_Access_Fault()  => "store/amo-access-fault",
     E_U_EnvCall()          => "u-call",
     E_S_EnvCall()          => "s-call",
-    E_Reserved_10()        => "reserved-0",
+    E_VS_EnvCall()         => "vs-call",
     E_M_EnvCall()          => "m-call",
     E_Fetch_Page_Fault()   => "fetch-page-fault",
     E_Load_Page_Fault()    => "load-page-fault",
-    E_Reserved_14()        => "reserved-1",
+    E_Reserved_14()        => "reserved-14",
     E_SAMO_Page_Fault()    => "store/amo-page-fault",
+    E_Reserved_16()        => "reserved-16",
+    E_Reserved_17()        => "reserved-17",
+    E_Reserved_18()        => "reserved-18",
+    E_Reserved_19()        => "reserved-19",
+    E_Fetch_GPage_Fault()  => "fetch-guest-page-fault",
+    E_Load_GPage_Fault()   => "load-guest-page-fault",
+    E_Virtual_Instr()      => "virtual-instruction",
+    E_SAMO_GPage_Fault()   => "store/amo-guest-page-fault",
 
     /* extensions */
     E_Extension(e)         => ext_exc_type_to_str(e)
   }
 
 overload to_str = {exceptionType_to_str}
+
+/*
+ * Update exception type with a given memory access type.
+ *
+ * Note: could probably be modeled in a nicer, more intuitive manner
+ */
+
+val E_Addr_Align_of_AccessType : forall 'a . (AccessType('a)) -> ExceptionType
+function E_Addr_Align_of_AccessType(a) =
+  match a {
+    Read(_)      => E_Load_Addr_Align(),
+    Write(_)     => E_SAMO_Addr_Align(),
+    ReadWrite(_) => E_SAMO_Addr_Align(),
+    Execute(_)   => E_Fetch_Addr_Align(),
+  }
+
+val E_Access_Fault_of_AccessType : forall 'a . (AccessType('a)) -> ExceptionType
+function E_Access_Fault_of_AccessType(a) =
+  match a {
+    Read(_)      => E_Load_Access_Fault(),
+    Write(_)     => E_SAMO_Access_Fault(),
+    ReadWrite(_) => E_SAMO_Access_Fault(),
+    Execute(_)   => E_Fetch_Access_Fault(),
+  }
+
+val E_Page_Fault_of_AccessType : forall 'a . (AccessType('a)) -> ExceptionType
+function E_Page_Fault_of_AccessType(a) =
+  match a {
+    Read(_)      => E_Load_Page_Fault(),
+    Write(_)     => E_SAMO_Page_Fault(),
+    ReadWrite(_) => E_SAMO_Page_Fault(),
+    Execute(_)   => E_Fetch_Page_Fault(),
+  }
+
+val E_GPage_Fault_of_AccessType : forall 'a . (AccessType('a)) -> ExceptionType
+function E_GPage_Fault_of_AccessType(a) =
+  match a {
+    Read(_)      => E_Load_GPage_Fault(),
+    Write(_)     => E_SAMO_GPage_Fault(),
+    ReadWrite(_) => E_SAMO_GPage_Fault(),
+    Execute(_)   => E_Fetch_GPage_Fault(),
+  }
+
+val exceptionType_update_AccessType : forall 'a . (ExceptionType, AccessType('a)) -> ExceptionType
+function exceptionType_update_AccessType(e, a) =
+match(e) {
+  E_Fetch_Addr_Align()   => E_Addr_Align_of_AccessType(a),
+  E_Load_Addr_Align()    => E_Addr_Align_of_AccessType(a),
+  E_SAMO_Addr_Align()    => E_Addr_Align_of_AccessType(a),
+  E_Fetch_Access_Fault() => E_Access_Fault_of_AccessType(a),
+  E_Load_Access_Fault()  => E_Access_Fault_of_AccessType(a),
+  E_SAMO_Access_Fault()  => E_Access_Fault_of_AccessType(a),
+  E_Fetch_Page_Fault()   => E_Page_Fault_of_AccessType(a),
+  E_Load_Page_Fault()    => E_Page_Fault_of_AccessType(a),
+  E_SAMO_Page_Fault()    => E_Page_Fault_of_AccessType(a),
+  E_Fetch_GPage_Fault()  => E_GPage_Fault_of_AccessType(a),
+  E_Load_GPage_Fault()   => E_GPage_Fault_of_AccessType(a),
+  E_SAMO_GPage_Fault()   => E_GPage_Fault_of_AccessType(a),
+  _ => e /* Other exceptions are not access type specific */
+}
+
+/* an architectural trap can be caused by either an interrupt or an exception */
+
+union TrapCause = {
+  I : InterruptType,
+  E : ExceptionType,
+}
+
+val trapCause_to_bits : TrapCause -> exc_code
+function trapCause_to_bits(t) = match t {
+  I(i) => interruptType_to_bits(i),
+  E(e) => exceptionType_to_bits(e),
+}
+
+val trapCause_is_interrupt : TrapCause -> bool
+function trapCause_is_interrupt(t) = match t {
+  I(_) => true,
+  _    => false,
+}
+
+val trapCause_to_str : TrapCause -> string
+function trapCause_to_str(t) = match t {
+  I(i) => interruptType_to_str(i),
+  E(e) => exceptionType_to_str(e),
+}
+
+overload to_str = {trapCause_to_str}
 
 /* trap modes */
 

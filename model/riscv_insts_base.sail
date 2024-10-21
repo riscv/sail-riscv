@@ -625,15 +625,14 @@ mapping clause encdec = ECALL()
   <-> 0b000000000000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute ECALL() = {
-  let t : sync_exception =
-    struct { trap = match (cur_privilege) {
-                      User       => E_U_EnvCall(),
-                      Supervisor => E_S_EnvCall(),
-                      Machine    => E_M_EnvCall()
-                    },
-             excinfo = (None() : option(xlenbits)),
-             ext     = None() };
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC));
+  let e : ExceptionType = match (cur_privilege, cur_virtualization) {
+    (User, _)        => E_U_EnvCall(),
+    (Supervisor, V0) => E_S_EnvCall(),
+    (Supervisor, V1) => E_VS_EnvCall(),
+    (Machine,_)      => E_M_EnvCall()
+  };
+  let c : ExceptionContext = empty_exception_context();
+  set_next_pc(exception_handler(cur_privilege, cur_virtualization, CTL_TRAP(e, c), PC));
   RETIRE_FAIL
 }
 
@@ -651,7 +650,7 @@ function clause execute MRET() = {
   else if not(ext_check_xret_priv (Machine))
   then { ext_fail_xret_priv(); RETIRE_FAIL }
   else {
-    set_next_pc(exception_handler(cur_privilege, CTL_MRET(), PC));
+    set_next_pc(exception_handler(cur_privilege, cur_virtualization, CTL_MRET(), PC));
     RETIRE_SUCCESS
   }
 }
@@ -665,18 +664,26 @@ mapping clause encdec = SRET()
   <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute SRET() = {
-  let sret_illegal : bool = match cur_privilege {
-    User       => true,
-    Supervisor => not(extensionEnabled(Ext_S)) | mstatus[TSR] == 0b1,
-    Machine    => not(extensionEnabled(Ext_S))
+  let sret_exc : option(ExceptionType) = match (cur_privilege, cur_virtualization) {
+    (User, _)        => Some(E_Illegal_Instr()),
+    (Supervisor, V0) => if not(extensionEnabled(Ext_S)) | mstatus[TSR] == 0b1
+                        then Some(E_Illegal_Instr())
+                        else None(),
+    (Supervisor, V1) => if hstatus[VTSR] == 0b1
+                        then Some(E_Virtual_Instr())
+                        else None(),
+    (Machine, _)     => if not(extensionEnabled(Ext_S))
+                        then Some(E_Illegal_Instr())
+                        else None(),
   };
-  if   sret_illegal
-  then { handle_illegal(); RETIRE_FAIL }
-  else if not(ext_check_xret_priv (Supervisor))
-  then { ext_fail_xret_priv(); RETIRE_FAIL }
-  else {
-    set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC));
-    RETIRE_SUCCESS
+  match sret_exc {
+    Some(e) => { handle_instr_fault(e); RETIRE_FAIL },
+    None()  => if not(ext_check_xret_priv (Supervisor))
+               then { ext_fail_xret_priv(); RETIRE_FAIL }
+               else {
+                 set_next_pc(exception_handler(cur_privilege, cur_virtualization, CTL_SRET(), PC));
+                 RETIRE_SUCCESS
+               }
   }
 }
 

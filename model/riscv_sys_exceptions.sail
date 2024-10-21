@@ -15,14 +15,17 @@ function ext_check_xret_priv (p : Privilege) : Privilege -> bool = true
 /* Called if above check fails */
 function ext_fail_xret_priv () : unit -> unit = ()
 
-function handle_trap_extension(p : Privilege, pc : xlenbits, u : option(unit)) -> unit = ()
+function handle_trap_extension(p : Privilege, v : Virtualization, pc : xlenbits, u : option(unit)) -> unit = ()
 
 /* used for traps and ECALL */
-function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
+function prepare_trap_vector(p : Privilege, v : Virtualization, cause : Mcause) -> xlenbits = {
   let tvec : Mtvec = match p {
                        Machine    => mtvec,
-                       Supervisor => stvec,
-                       User       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+                       Supervisor => match v {
+                         V0 => stvec,
+                         V1 => vstvec,
+                       },
+                       User => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
                      };
   match tvec_addr(tvec, cause) {
     Some(epc) => epc,
@@ -37,28 +40,34 @@ function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
  * prepare_xret_target: used to get the value for control transfer to the xret target
  */
 
-val get_xret_target : Privilege -> xlenbits
-function get_xret_target(p) =
+val get_xret_target : (Privilege, Virtualization) -> xlenbits
+function get_xret_target(p, v) =
   match p {
-    Machine    => mepc,
-    Supervisor => sepc,
-    User       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    Machine => mepc,
+    Supervisor => match v {
+      V0 => sepc,
+      V1 => vsepc
+    },
+    User => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
   }
 
-val set_xret_target : (Privilege, xlenbits) -> xlenbits
-function set_xret_target(p, value) = {
+val set_xret_target : (Privilege, Virtualization, xlenbits) -> xlenbits
+function set_xret_target(p, v, value) = {
   let target = legalize_xepc(value);
   match p {
-    Machine    => mepc = target,
-    Supervisor => sepc = target,
-    User       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    Machine => mepc = target,
+    Supervisor => match v {
+      V0 => sepc = target,
+      V1 => vsepc = target
+    },
+    User => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
   };
   target
 }
 
-val prepare_xret_target : (Privilege) -> xlenbits
-function prepare_xret_target(p) =
-  get_xret_target(p)
+val prepare_xret_target : (Privilege, Virtualization) -> xlenbits
+function prepare_xret_target(p, v) =
+  get_xret_target(p, v)
 
 /* other trap-related CSRs */
 
