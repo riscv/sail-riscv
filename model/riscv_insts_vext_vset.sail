@@ -51,8 +51,8 @@ function handle_illegal_vtype() = {
    */
   vtype.bits = 0b1 @ zeros(xlen - 1); /* set vtype.vill */
   vl = zeros();
-  print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
-  print_reg("CSR vl <- " ^ BitStr(vl))
+  csr_write_callback(csr_name_map("vtype"), vtype.bits);
+  csr_write_callback(csr_name_map("vl"), vl);
 }
 
 val calculate_new_vl : (int, int) -> xlenbits
@@ -106,9 +106,9 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   /* reset vstart to 0 */
   vstart = zeros();
 
-  print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
-  print_reg("CSR vl <- " ^ BitStr(vl));
-  print_reg("CSR vstart <- " ^ BitStr(vstart));
+  csr_write_callback(csr_name_map("vtype"), vtype.bits);
+  csr_write_callback(csr_name_map("vl"), vl);
+  csr_write_callback(csr_name_map("vstart"), zero_extend(vstart));
 
   RETIRE_SUCCESS
 }
@@ -157,9 +157,9 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   /* reset vstart to 0 */
   vstart = zeros();
 
-  print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
-  print_reg("CSR vl <- " ^ BitStr(vl));
-  print_reg("CSR vstart <- " ^ BitStr(vstart));
+  csr_write_callback(csr_name_map("vtype"), vtype.bits);
+  csr_write_callback(csr_name_map("vl"), vl);
+  csr_write_callback(csr_name_map("vstart"), zero_extend(vstart));
 
   RETIRE_SUCCESS
 }
@@ -193,9 +193,9 @@ function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   /* reset vstart to 0 */
   vstart = zeros();
 
-  print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
-  print_reg("CSR vl <- " ^ BitStr(vl));
-  print_reg("CSR vstart <- " ^ BitStr(vstart));
+  csr_write_callback(csr_name_map("vtype"), vtype.bits);
+  csr_write_callback(csr_name_map("vl"), vl);
+  csr_write_callback(csr_name_map("vstart"), zero_extend(vstart));
 
   RETIRE_SUCCESS
 }

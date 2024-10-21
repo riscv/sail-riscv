@@ -338,3 +338,4 @@ scattered function read_CSR
 /* returns new value (after legalisation) if the CSR is defined */
 val write_CSR : (csreg, xlenbits) -> xlenbits
 scattered function write_CSR
+
