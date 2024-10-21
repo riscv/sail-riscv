@@ -342,7 +342,7 @@ function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   then [m with
       SGEI = v[SGEI],
       VSEI = v[VSEI],
-      VSTI = v[VSTI], 
+      VSTI = v[VSTI],
       VSSI = v[VSSI]
     ]
   else m
