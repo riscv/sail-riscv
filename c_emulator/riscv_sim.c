@@ -134,6 +134,7 @@ static struct option options[] = {
     {"pmp-count",                   required_argument, 0, OPT_PMP_COUNT           },
     {"pmp-grain",                   required_argument, 0, OPT_PMP_GRAIN           },
     {"enable-next",                 no_argument,       0, 'N'                     },
+    {"enable-hext",                 no_argument,       0, 'H'                     },
     {"ram-size",                    required_argument, 0, 'z'                     },
     {"disable-compressed",          no_argument,       0, 'C'                     },
     {"disable-writable-misa",       no_argument,       0, 'I'                     },
@@ -272,6 +273,7 @@ static int process_args(int argc, char **argv)
     c = getopt_long(argc, argv,
                     "a"
                     "B"
+                    "H"
                     "d"
                     "m"
                     "P"
@@ -309,6 +311,10 @@ static int process_args(int argc, char **argv)
     case 'B':
       fprintf(stderr, "enabling B extension.\n");
       rv_enable_bext = true;
+      break;
+    case 'H':
+      fprintf(stderr, "enabling hypervisor extension.\n");
+      rv_enable_hext = true;
       break;
     case 'd':
       fprintf(stderr, "enabling dirty update.\n");

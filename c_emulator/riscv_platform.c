@@ -72,6 +72,11 @@ bool sys_enable_zicboz(unit u)
   return rv_enable_zicboz;
 }
 
+bool sys_enable_hext(unit u)
+{
+  return rv_enable_hext;
+}
+
 uint64_t sys_pmp_count(unit u)
 {
   return rv_pmp_count;

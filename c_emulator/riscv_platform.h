@@ -13,6 +13,7 @@ bool sys_enable_vext(unit);
 bool sys_enable_bext(unit);
 bool sys_enable_zicbom(unit);
 bool sys_enable_zicboz(unit);
+bool sys_enable_hext(unit);
 
 uint64_t sys_pmp_count(unit);
 uint64_t sys_pmp_grain(unit);

@@ -117,8 +117,7 @@ val sys_enable_zicbom = pure "sys_enable_zicbom" : unit -> bool
 val sys_enable_zicboz = pure "sys_enable_zicboz" : unit -> bool
 
 /* whether misa.h was enabled at boot */
-val sys_enable_hext : unit -> bool
-function sys_enable_hext() = true // TODO: add emulator flag
+val sys_enable_hext = pure "sys_enable_hext" : unit -> bool
 
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
