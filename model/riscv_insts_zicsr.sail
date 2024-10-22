@@ -73,7 +73,7 @@ function clause read_CSR(0b1011100 /* 0xB80 */ @ index : bits(5) if xlen == 32 &
 function clause read_CSR(0x7a0) = ~(tselect)  /* this indicates we don't have any trigger support */
 
 /* supervisor mode */
-function clause read_CSR(0x100) = if cur_virtualization == V1 then vsstatus.bits else lower_mstatus(mstatus).bits[(xlen - 1) .. 0]
+function clause read_CSR(0x100) = (if cur_virtualization == V1 then vsstatus.bits else lower_mstatus(mstatus).bits)[(xlen - 1) .. 0]
 function clause read_CSR(0x104) = if cur_virtualization == V1 then lower_mie_to_vsie(mie, hideleg).bits else lower_mie(mie, mideleg).bits
 function clause read_CSR(0x105) = if cur_virtualization == V1 then get_vstvec() else get_stvec()
 function clause read_CSR(0x106) = zero_extend(scounteren.bits)
@@ -162,7 +162,7 @@ function clause write_CSR(0x7a0, value) = { tselect = value; tselect }
 /* supervisor mode */
 function clause write_CSR(0x100, value) = match cur_virtualization {
                                             V0 => { mstatus = legalize_sstatus(mstatus, value); mstatus.bits[(xlen - 1) .. 0] },
-                                            V1 => { vsstatus = legalize_vsstatus(vsstatus, value); vsstatus.bits },
+                                            V1 => { vsstatus = legalize_vsstatus(vsstatus, value); vsstatus.bits[(xlen - 1) .. 0] },
                                           }
 function clause write_CSR(0x104, value) = match cur_virtualization {
                                             V0 => { mie = legalize_sie(mie, mideleg, value); mie.bits },
