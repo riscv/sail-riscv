@@ -105,10 +105,18 @@ function clause is_CSR_defined(0b1100100 /* 0xC80 */ @ index : bits(5) if unsign
 function clause is_CSR_defined(0x015) = extensionEnabled(Ext_Zkr)
 
 
-val check_CSR_access : (csrRW, priv_level, Privilege, bool) -> bool
-function check_CSR_access(csrrw, csrpr, p, isWrite) =
-    not(isWrite == true & csrrw == 0b11)  /* read/write */
-  & (privLevel_to_bits(p) >=_u csrpr)      /* privilege */
+val check_CSR_access : (csrRW, priv_level, Privilege, Virtualization, bool) -> bool
+function check_CSR_access(csrrw, csrpr, p, v, isWrite) = {
+  let check_priv: bool = match p { /* privilege */
+    Machine => (privLevel_to_bits(Machine) >=_u csrpr),
+    Supervisor => match v {
+      V0 => (0b10>=_u csrpr), /* hypervisor CSRs (0b10) are accessible in HS-mode */
+      V1 => (privLevel_to_bits(Supervisor) >=_u csrpr)},
+    User => (privLevel_to_bits(User) >=_u csrpr),
+  };
+  let check_RW = not(isWrite == true & csrrw == 0b11);  /* read/write */
+  check_priv & check_RW
+}
 
 function check_TVM_SATP(csr : csreg, p : Privilege) -> bool =
   not(csr == 0x180 & p == Supervisor & mstatus[TVM] == 0b1)
@@ -150,9 +158,9 @@ function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
   }
 }
 
-function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
+function check_CSR(csr : csreg, p : Privilege, v : Virtualization, isWrite : bool) -> bool =
     is_CSR_defined(csr)
-  & check_CSR_access(csrAccess(csr), csrPriv(csr), p, isWrite)
+  & check_CSR_access(csrAccess(csr), csrPriv(csr), p, v, isWrite)
   & check_TVM_SATP(csr, p)
   & check_Counteren(csr, p)
   & check_seed_CSR(csr, p, isWrite)

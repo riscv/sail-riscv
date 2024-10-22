@@ -181,7 +181,7 @@ function clause execute CSR(csr, rs1, rd, is_imm, op) = {
     CSRRW  => true,
     _      => if is_imm then unsigned(rs1_val) != 0 else unsigned(rs1) != 0
   };
-  if not(check_CSR(csr, cur_privilege, isWrite))
+  if not(check_CSR(csr, cur_privilege, cur_virtualization, isWrite))
   then { handle_illegal(); RETIRE_FAIL }
   else if not(ext_check_CSR(csr, cur_privilege, isWrite))
   then { ext_check_CSR_fail(); RETIRE_FAIL }
