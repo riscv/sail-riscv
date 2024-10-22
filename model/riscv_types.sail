@@ -151,13 +151,17 @@ enum word_width = {BYTE, HALF, WORD, DOUBLE}
 enum InterruptType = {
   I_U_Software,
   I_S_Software,
+  I_VS_Software,
   I_M_Software,
   I_U_Timer,
   I_S_Timer,
+  I_VS_Timer,
   I_M_Timer,
   I_U_External,
   I_S_External,
-  I_M_External
+  I_VS_External,
+  I_M_External,
+  I_G_External
 }
 
 val interruptType_to_bits : InterruptType -> exc_code
