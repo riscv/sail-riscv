@@ -11,9 +11,9 @@
 enum clause extension = Ext_Zicbom
 function clause extensionEnabled(Ext_Zicbom) = sys_enable_zicbom()
 
-function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], senvcfg[CBCFE][0])
-function cbo_inval_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBIE][0], senvcfg[CBIE][0])
-function cbo_inval_as_inval(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBIE][1], senvcfg[CBIE][1])
+function cbo_clean_flush_enabled(p : Privilege, v : Virtualization) -> bool = feature_enabled_for_priv(p, v, menvcfg[CBCFE][0], henvcfg[CBCFE][0], senvcfg[CBCFE][0])
+function cbo_inval_enabled(p : Privilege, v : Virtualization) -> bool = feature_enabled_for_priv(p, v, menvcfg[CBIE][0], henvcfg[CBIE][0], senvcfg[CBIE][0])
+function cbo_inval_as_inval(p : Privilege, v : Virtualization) -> bool = feature_enabled_for_priv(p, v, menvcfg[CBIE][1], henvcfg[CBIE][1], senvcfg[CBIE][1])
 
 /* ****************************************************************** */
 union clause ast = RISCV_ZICBOM : (cbop_zicbom, regidx)
@@ -101,12 +101,12 @@ function process_clean_inval(rs1, cbop) = {
 
 function clause execute(RISCV_ZICBOM(cbop, rs1)) =
   match cbop {
-    CBO_CLEAN if cbo_clean_flush_enabled(cur_privilege) =>
+    CBO_CLEAN if cbo_clean_flush_enabled(cur_privilege, cur_virtualization) =>
       process_clean_inval(rs1, cbop),
-    CBO_FLUSH if cbo_clean_flush_enabled(cur_privilege) =>
+    CBO_FLUSH if cbo_clean_flush_enabled(cur_privilege, cur_virtualization) =>
       process_clean_inval(rs1, cbop),
-    CBO_INVAL if cbo_inval_enabled(cur_privilege) =>
-      process_clean_inval(rs1, if cbo_inval_as_inval(cur_privilege) then CBO_INVAL else CBO_FLUSH),
+    CBO_INVAL if cbo_inval_enabled(cur_privilege, cur_virtualization) =>
+      process_clean_inval(rs1, if cbo_inval_as_inval(cur_privilege, cur_virtualization) then CBO_INVAL else CBO_FLUSH),
     _ => {
       handle_illegal();
       RETIRE_FAIL

@@ -11,7 +11,7 @@
 enum clause extension = Ext_Zicboz
 function clause extensionEnabled(Ext_Zicboz) = sys_enable_zicboz()
 
-function cbo_zero_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBZE][0], senvcfg[CBZE][0])
+function cbo_zero_enabled(p : Privilege, v : Virtualization) -> bool = feature_enabled_for_priv(p, v, menvcfg[CBZE][0], henvcfg[CBZE][0], senvcfg[CBZE][0])
 
 /* ****************************************************************** */
 union clause ast = RISCV_ZICBOZ : (regidx)
@@ -23,7 +23,7 @@ mapping clause assembly = RISCV_ZICBOZ(rs1)
   <-> "cbo.zero" ^ spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 function clause execute(RISCV_ZICBOZ(rs1)) = {
-  if cbo_zero_enabled(cur_privilege) then {
+  if cbo_zero_enabled(cur_privilege, cur_virtualization) then {
     let rs1_val = X(rs1);
     let cache_block_size_exp = plat_cache_block_size_exp();
     let cache_block_size = 2 ^ cache_block_size_exp;

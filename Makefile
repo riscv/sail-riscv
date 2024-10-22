@@ -76,6 +76,7 @@ SAIL_SYS_SRCS =  riscv_csr_begin.sail       # Start of CSR scattered definitions
 SAIL_SYS_SRCS += riscv_vext_control.sail    # helpers for the 'V' extension
 SAIL_SYS_SRCS += riscv_sys_exceptions.sail  # default basic helpers for exception handling
 SAIL_SYS_SRCS += riscv_sync_exception.sail  # define the exception structure used in the model
+SAIL_SYS_SRCS += riscv_zicsr_control.sail   # helpers for the Zicsr extension
 SAIL_SYS_SRCS += riscv_hext_control.sail    # helpers for the hypervisor extension
 SAIL_SYS_SRCS += riscv_csr_hext.sail        # scattered definition for hypervisor extension CSRs
 SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdext_control.sail
