@@ -64,3 +64,16 @@ function translationException(a : AccessType(ext_access_type),
     (Execute(), _)               => E_Fetch_Page_Fault()
   }
 }
+
+// PRIVATE
+/*! Build architectural exception context for translation/PTW failures */
+function translationExcContext(f     : PTW_Error,
+                               vaddr : bits(64),
+                               gva   : bool)
+                               -> ExceptionContext = {
+  match f {
+    PTW_Ext_Error(e)            => ext_exception_context(e),
+    // TODO: Implicit PTW errors
+    _ => vmem_exception_context(truncate(vaddr, sizeof(xlen)), gva, None(), None()),
+  }
+}

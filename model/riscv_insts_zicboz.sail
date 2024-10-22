@@ -40,7 +40,7 @@ function clause execute(RISCV_ZICBOZ(rs1)) = {
         //
         // This implementation does a single atomic write.
         match translateAddr(vaddr, Write(Data)) {
-          TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+          TR_Failure(e, c, _) => { handle_exception(e, c); RETIRE_FAIL },
           TR_Address(paddr, _) => {
             let eares : MemoryOpResult(unit) = mem_write_ea(paddr, cache_block_size, false, false, false);
             match (eares) {

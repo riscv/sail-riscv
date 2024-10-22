@@ -18,9 +18,9 @@ function fetch() -> FetchResult = {
     Ext_FetchAddr_OK(use_pc) => {
       /* then check PC alignment */
       if   (use_pc[0] != bitzero | (use_pc[1] != bitzero & not(extensionEnabled(Ext_Zca))))
-      then F_Error(E_Fetch_Addr_Align(), PC)
+      then F_Error(E_Fetch_Addr_Align(), mem_exception_context(PC, cur_virtualization == V1))
       else match translateAddr(use_pc, Execute()) {
-        TR_Failure(e, _) => F_Error(e, PC),
+        TR_Failure(e, c, _) => F_Error(e, c),
         TR_Address(_, _) => {
           let i = rvfi_instruction[rvfi_insn];
           rvfi_inst_data[rvfi_insn]   = zero_extend(i);
@@ -33,7 +33,7 @@ function fetch() -> FetchResult = {
               Ext_FetchAddr_Error(e)      => F_Ext_Error(e),
               Ext_FetchAddr_OK(use_pc_hi) =>
                 match translateAddr(use_pc_hi, Execute()) {
-                  TR_Failure(e, _) => F_Error(e, PC),
+                  TR_Failure(e, c, _) => F_Error(e, c),
                   TR_Address(_, _) => F_Base(i)
               }
             }

@@ -89,7 +89,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
       if not(is_aligned(vaddr, width))
       then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+        TR_Failure(e, c, _)    => { handle_exception(e, c); RETIRE_FAIL },
         TR_Address(addr, _) =>
           match mem_read(Read(Data), addr, width_bytes, aq, aq & rl, true) {
             MemValue(result) => { load_reservation(addr); X(rd) = sign_extend(result); RETIRE_SUCCESS },
@@ -136,7 +136,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
         else {
           match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
                                                       * both result in a SAMO exception */
-            TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            TR_Failure(e, c, _) => { handle_exception(e, c); RETIRE_FAIL },
             TR_Address(addr, _) => {
               // Check reservation with physical address.
               if not(match_reservation(addr)) then {
@@ -205,7 +205,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
       if not(is_aligned(vaddr, width))
       then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr, ReadWrite(Data, Data)) {
-        TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+        TR_Failure(e, c, _) => { handle_exception(e, c); RETIRE_FAIL },
         TR_Address(addr, _) => {
           let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
           let rs2_val = X(rs2)[width_bytes * 8 - 1 .. 0];

@@ -456,7 +456,7 @@ function handle_instr_fault(e: ExceptionType) -> unit = {
           E_Illegal_Instr() => true,
           E_Virtual_Instr() => true,
           _                 => false,
-        }, "exception not supported by current handler");
+        }, "exception not supported by current handler: " ^ to_str(e));
   let c = instr_exception_context(zero_extend(instbits), plat_mtval_has_illegal_inst_bits()) in
   set_next_pc(exception_handler(cur_privilege, cur_virtualization, CTL_TRAP(e, c), PC))
 }

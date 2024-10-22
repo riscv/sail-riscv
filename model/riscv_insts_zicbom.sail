@@ -52,7 +52,7 @@ function process_clean_inval(rs1, cbop) = {
   match ext_data_get_addr(rs1, offset, Read(Data), cache_block_size) {
     Ext_DataAddr_Error(e) => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) => {
-      let res: option(ExceptionType) = match translateAddr(vaddr, Read(Data)) {
+      let res: option((ExceptionType, ExceptionContext)) = match translateAddr(vaddr, Read(Data)) {
         TR_Address(paddr, _) => {
           // "A cache-block management instruction is permitted to access the
           // specified cache block whenever a load instruction or store instruction
@@ -68,11 +68,11 @@ function process_clean_inval(rs1, cbop) = {
           match (exc_read, exc_write) {
             // Access is permitted if read OR write are allowed. If neither
             // are allowed then we always report a store exception.
-            (Some(exc_read), Some(exc_write)) => Some(exc_write),
+            (Some(exc_read), Some(exc_write)) => Some((exc_write, mem_exception_context(vaddr, cur_virtualization == V1))),
             _ => None(),
           }
         },
-        TR_Failure(e, _) => Some(e)
+        TR_Failure(e, c, _) => Some((e, c))
       };
       // "If access to the cache block is not permitted, a cache-block management
       //  instruction raises a store page fault or store guest-page fault exception
@@ -81,7 +81,7 @@ function process_clean_inval(rs1, cbop) = {
       match res {
         // The model has no caches so there's no action required.
         None() => RETIRE_SUCCESS,
-        Some(e) => {
+        Some((e, c)) => {
           let e : ExceptionType = match e {
             E_Load_Access_Fault() => E_SAMO_Access_Fault(),
             E_SAMO_Access_Fault() => E_SAMO_Access_Fault(),
@@ -91,7 +91,7 @@ function process_clean_inval(rs1, cbop) = {
             // for fetch access and it's can't be misaligned.
             _ => internal_error(__FILE__, __LINE__, "unexpected exception for cmo.clean/inval"),
           };
-          handle_mem_exception(vaddr, e);
+          handle_exception(e, c);
           RETIRE_FAIL
         }
       }

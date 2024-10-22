@@ -522,7 +522,7 @@ function handle_mem_exception(addr : xlenbits, e : ExceptionType) -> unit = {
           E_Load_Access_Fault()  => true,
           E_SAMO_Access_Fault()  => true,
           _                      => false
-        }, "exception not supported by current handler");
+        }, "exception not supported by current handler: " ^ to_str(e));
   handle_exception(e, mem_exception_context(addr, cur_virtualization == V1))
 }
 

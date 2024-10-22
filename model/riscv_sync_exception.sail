@@ -53,3 +53,14 @@ function instr_exception_context(inst : xlenbits, tval_has_ill_inst_bits : bool)
     excinst     = None(),
     ext         = None(),
   }
+
+// For out-of-tree extensions
+val ext_exception_context : forall ('ext : Type) . ('ext) -> ExceptionContext
+function ext_exception_context(ext) =
+  struct {
+    excinfo     = None(),
+    info_is_gva = false,
+    excinfo2    = None(),
+    excinst     = None(),
+    ext         = None(),
+  }

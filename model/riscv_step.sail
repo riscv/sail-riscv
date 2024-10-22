@@ -40,8 +40,8 @@ function step(step_no : int) -> bool = {
             (RETIRE_FAIL, false)
           },
           /* standard error */
-          F_Error(e, addr) => {
-            handle_mem_exception(addr, e);
+          F_Error(e, c) => {
+            handle_exception(e, c);
             (RETIRE_FAIL, false)
           },
           /* non-error cases: */
