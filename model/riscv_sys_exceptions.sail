@@ -77,6 +77,9 @@ function get_mtvec() -> xlenbits =
 function get_stvec() -> xlenbits =
   stvec.bits
 
+function get_vstvec() -> xlenbits =
+  vstvec.bits
+
 function set_mtvec(value : xlenbits) -> xlenbits = {
   mtvec = legalize_tvec(mtvec, value);
   mtvec.bits
@@ -85,4 +88,9 @@ function set_mtvec(value : xlenbits) -> xlenbits = {
 function set_stvec(value : xlenbits) -> xlenbits = {
   stvec = legalize_tvec(stvec, value);
   stvec.bits
+}
+
+function set_vstvec(value : xlenbits) -> xlenbits = {
+  vstvec = legalize_tvec(vstvec, value);
+  vstvec.bits
 }

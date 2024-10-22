@@ -73,24 +73,24 @@ function clause read_CSR(0b1011100 /* 0xB80 */ @ index : bits(5) if xlen == 32 &
 function clause read_CSR(0x7a0) = ~(tselect)  /* this indicates we don't have any trigger support */
 
 /* supervisor mode */
-function clause read_CSR(0x100) = lower_mstatus(mstatus).bits[(xlen - 1) .. 0]
-function clause read_CSR(0x104) = lower_mie(mie, mideleg).bits
-function clause read_CSR(0x105) = get_stvec()
+function clause read_CSR(0x100) = if cur_virtualization == V1 then vsstatus.bits else lower_mstatus(mstatus).bits[(xlen - 1) .. 0]
+function clause read_CSR(0x104) = if cur_virtualization == V1 then lower_mie_to_vsie(mie, hideleg).bits else lower_mie(mie, mideleg).bits
+function clause read_CSR(0x105) = if cur_virtualization == V1 then get_vstvec() else get_stvec()
 function clause read_CSR(0x106) = zero_extend(scounteren.bits)
 function clause read_CSR(0x10A) = senvcfg.bits[xlen - 1 .. 0]
-function clause read_CSR(0x140) = sscratch
+function clause read_CSR(0x140) = if cur_virtualization == V1 then vsscratch else sscratch
 function clause read_CSR(0x141) = get_xret_target(Supervisor, cur_virtualization) & pc_alignment_mask()
-function clause read_CSR(0x142) = scause.bits
-function clause read_CSR(0x143) = stval
-function clause read_CSR(0x144) = lower_mip(mip, mideleg).bits
-function clause read_CSR(0x180) = satp
+function clause read_CSR(0x142) = if cur_virtualization == V1 then vscause.bits else scause.bits
+function clause read_CSR(0x143) = if cur_virtualization == V1 then vstval else stval
+function clause read_CSR(0x144) = if cur_virtualization == V1 then lower_mip_to_vsip(mip, hideleg).bits else lower_mip(mip, mideleg).bits
+function clause read_CSR(0x180) = if cur_virtualization == V1 then vsatp else satp
 
 /* user mode counters */
 function clause read_CSR(0xC00) = mcycle[(xlen - 1) .. 0]
-function clause read_CSR(0xC01) = mtime[(xlen - 1) .. 0]
+function clause read_CSR(0xC01) = (if cur_virtualization == V0 then mtime else mtime + htimedelta)[(sizeof(xlen) - 1) .. 0]
 function clause read_CSR(0xC02) = minstret[(xlen - 1) .. 0]
 function clause read_CSR(0xC80 if xlen == 32) = mcycle[63 .. 32]
-function clause read_CSR(0xC81 if xlen == 32) = mtime[63 .. 32]
+function clause read_CSR(0xC81 if xlen == 32) = (if cur_virtualization == V0 then mtime else mtime + htimedelta)[63 .. 32]
 function clause read_CSR(0xC82 if xlen == 32) = minstret[63 .. 32]
 
 /* Hardware Performance Monitoring user mode counters */
@@ -160,17 +160,44 @@ function clause write_CSR((0b1011100 /* 0xB80 */ @ index : bits(5), value) if xl
 function clause write_CSR(0x7a0, value) = { tselect = value; tselect }
 
 /* supervisor mode */
-function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); mstatus.bits[(xlen - 1) .. 0] }
-function clause write_CSR(0x104, value) = { mie = legalize_sie(mie, mideleg, value); mie.bits }
-function clause write_CSR(0x105, value) = { set_stvec(value) }
+function clause write_CSR(0x100, value) = match cur_virtualization {
+                                            V0 => { mstatus = legalize_sstatus(mstatus, value); mstatus.bits[(xlen - 1) .. 0] },
+                                            V1 => { vsstatus = legalize_vsstatus(vsstatus, value); vsstatus.bits },
+                                          }
+function clause write_CSR(0x104, value) = match cur_virtualization {
+                                            V0 => { mie = legalize_sie(mie, mideleg, value); mie.bits },
+                                            V1 => { mie = legalize_vsie(mie, hideleg, value); mie.bits },
+                                          }
+function clause write_CSR(0x105, value) = match cur_virtualization {
+                                            V0 => { set_stvec(value) },
+                                            V1 => { set_vstvec(value) },
+                                          }
 function clause write_CSR(0x106, value) = { scounteren = legalize_scounteren(scounteren, value); zero_extend(scounteren.bits) }
 function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); senvcfg.bits[xlen - 1 .. 0] }
-function clause write_CSR(0x140, value) = { sscratch = value; sscratch }
-function clause write_CSR(0x141, value) = { set_xret_target(Supervisor, cur_virtualization, value) }
-function clause write_CSR(0x142, value) = { scause.bits = value; scause.bits }
-function clause write_CSR(0x143, value) = { stval = value; stval }
-function clause write_CSR(0x144, value) = { mip = legalize_sip(mip, mideleg, value); mip.bits }
-function clause write_CSR(0x180, value) = { satp = legalize_satp(cur_Architecture(), satp, value); satp }
+function clause write_CSR(0x140, value) = match cur_virtualization {
+                                            V0 => { sscratch = value; sscratch },
+                                            V1 => { vsscratch = value; vsscratch },
+                                          }
+function clause write_CSR(0x141, value) = match cur_virtualization {
+                                            V0 => { set_xret_target(Supervisor, V0, value) },
+                                            V1 => { set_xret_target(Supervisor, V1, value) },
+                                          }
+function clause write_CSR(0x142, value) = match cur_virtualization {
+                                            V0 => { scause.bits = value; scause.bits },
+                                            V1 => { vscause.bits = value; vscause.bits },
+                                          }
+function clause write_CSR(0x143, value) = match cur_virtualization {
+                                            V0 => { stval = value; stval },
+                                            V1 => { vstval = value; vstval},
+                                          }
+function clause write_CSR(0x144, value) = match cur_virtualization {
+                                            V0 => { mip = legalize_sip(mip, mideleg, value); mip.bits },
+                                            V1 => { mip = legalize_vsip(mip, hideleg, value); mip.bits },
+                                          }
+function clause write_CSR(0x180, value) = match cur_virtualization {
+                                            V0 => { satp = legalize_satp(cur_Architecture(), satp, value); satp },
+                                            V1 => { vsatp = legalize_satp(cur_Architecture(), vsatp, value); vsatp },
+                                          }
 
 /* user mode: seed (entropy source). writes are ignored */
 function clause write_CSR(0x015, value) = write_seed_csr()
