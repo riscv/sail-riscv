@@ -49,7 +49,6 @@ function clause read_CSR(0x64A) = htinst
 function clause read_CSR(0xE12) = hgeip
 function clause read_CSR(0x60A) = henvcfg.bits[sizeof(xlen) - 1 .. 0]
 function clause read_CSR(0x61A if xlen == 32) = henvcfg.bits[63 .. 32]
-// function clause ext_read_CSR(0x680) = Some(hgatp) // TODO: Second Level Address Translation
 function clause read_CSR(0x605) = htimedelta[sizeof(xlen) - 1 .. 0]
 function clause read_CSR(0x615 if xlen == 32) = htimedelta[63 .. 32]
 function clause read_CSR(0x200) = vsstatus.bits[sizeof(xlen) - 1 .. 0]
@@ -77,8 +76,7 @@ function clause write_CSR(0x643, value) = { htval = value; htval }
 function clause write_CSR(0x644, value) = { mip = legalize_hip(mip, value); lower_mip_to_hip(mip).bits }
 function clause write_CSR(0x645, value) = { mip = legalize_hvip(mip, value); lower_mip_to_hvip(mip).bits }
 function clause write_CSR(0x64A, value) = { htinst = value; htinst }
-// function clause ext_write_CSR(0xE12,     _) = None() // hgeip is read-only
-// function clause ext_write_CSR(0x680, value) = { hgatp = legalize_hgatp(cur_Architecture(), hgatp, value); Some(hgatp) } // TODO: Second Level Address Translation
+// function clause write_CSR(0xE12,     _) = { hgeip } // hgeip is read-only
 function clause write_CSR(0x605, value) = { htimedelta[(sizeof(xlen) - 1) .. 0] = value; htimedelta[(sizeof(xlen) - 1) .. 0] }
 function clause write_CSR((0x615, value) if xlen == 32) = {htimedelta[63 .. 32] = value; htimedelta[63 .. 32] }
 function clause write_CSR(0x200, value) = { vsstatus = legalize_vsstatus(vsstatus, value); vsstatus.bits[(sizeof(xlen) - 1) .. 0] }

@@ -83,7 +83,10 @@ function clause read_CSR(0x141) = get_xret_target(Supervisor, cur_virtualization
 function clause read_CSR(0x142) = if cur_virtualization == V1 then vscause.bits else scause.bits
 function clause read_CSR(0x143) = if cur_virtualization == V1 then vstval else stval
 function clause read_CSR(0x144) = if cur_virtualization == V1 then lower_mip_to_vsip(mip, hideleg).bits else lower_mip(mip, mideleg).bits
+
+/* address translation & protection */
 function clause read_CSR(0x180) = if cur_virtualization == V1 then vsatp else satp
+function clause read_CSR(0x680) = hgatp
 
 /* user mode counters */
 function clause read_CSR(0xC00) = mcycle[(xlen - 1) .. 0]
@@ -194,10 +197,13 @@ function clause write_CSR(0x144, value) = match cur_virtualization {
                                             V0 => { mip = legalize_sip(mip, mideleg, value); mip.bits },
                                             V1 => { mip = legalize_vsip(mip, hideleg, value); mip.bits },
                                           }
+
+/* Address translation & protection */
 function clause write_CSR(0x180, value) = match cur_virtualization {
                                             V0 => { satp = legalize_satp(cur_Architecture(), satp, value); satp },
                                             V1 => { vsatp = legalize_satp(cur_Architecture(), vsatp, value); vsatp },
                                           }
+function clause write_CSR(0x680, value) = { hgatp = legalize_hgatp(cur_Architecture(), hgatp, value); hgatp }
 
 /* user mode: seed (entropy source). writes are ignored */
 function clause write_CSR(0x015, value) = write_seed_csr()

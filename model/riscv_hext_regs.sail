@@ -218,7 +218,38 @@ register htval  : xlenbits
 
 /* Hypervisor Guest Address Translation and Protection */
 
-// TODO: Second Level Address Translation
+bitfield Hgatp64 : bits(64) = {
+  Mode : 63 .. 60,
+  Vmid : 57 .. 44,
+  PPN  : 43 .. 0
+}
+
+function legalize_hgatp64(a : Architecture, o : bits(64), v : bits(64)) -> bits(64) = {
+  let h = Mk_Hgatp64(v[63 .. 60] @ 0b00 @ v[57 .. 44] @ v[43 .. 2] @ 0b00);
+  match hgatp64Mode_of_bits(a, h[Mode]) {
+    Some(Bare)   => h[Mode] @ zeros(60), /* remaining fields should be zero when hgatp.Mode is Bare */
+    Some(Sv32x4) => o,                   /* Sv32x4 is currently unsupported for hgatp64 */
+    Some(Sv39x4) => h.bits,
+    Some(Sv48x4) => h.bits,
+    Some(Sv57x4) => o,                   /* Sv57x4 is not yet implemented */
+    _            => o,                   /* (V)S-stage modes are illegal for hgatp */
+  }
+}
+
+bitfield Hgatp32 : bits(32) = {
+  Mode : 31,
+  Vmid : 28 .. 22,
+  PPN  : 21 .. 0
+}
+
+function legalize_hgatp32(a : Architecture, o : bits(32), v : bits(32)) -> bits(32) = {
+  let h = Mk_Hgatp32(v[31 .. 31] @ 0b00 @ v[28 .. 22] @ v[21 .. 2] @ 0b00);
+  match hgatp64Mode_of_bits(a, zero_extend(h[Mode])) {
+    None()     => o,
+    Some(Bare) => h[Mode] @ zeros(31), /* remaining fields should be zero when hgatp.Mode is Bare */
+    Some(_)    => h.bits
+  }
+}
 
 /* Virtual Supervisor Status Register */
 
