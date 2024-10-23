@@ -1056,16 +1056,16 @@ function clause execute (F_UN_TYPE_S(rs1, rd, FCLASS_S)) = {
 }
 
 function clause execute (F_UN_TYPE_S(rs1, rd, FMV_X_W)) = {
-  let rs1_val_S            = F(rs1)[31..0];
-  let rd_val_X  : xlenbits = sign_extend(rs1_val_S);
-  X(rd) = rd_val_X;
+  // A narrower n-bit transfer out of the floating-point registers will
+  // transfer the lower n bits of the register ignoring the upper FLEN-n bits.
+  X(rd) = sign_extend(F(rs1)[31 .. 0]);
   RETIRE_SUCCESS
 }
 
 function clause execute (F_UN_TYPE_S(rs1, rd, FMV_W_X)) = {
-  let rs1_val_X            = X(rs1);
-  let rd_val_S             = rs1_val_X [31..0];
-  F(rd) = nan_box (rd_val_S);
+  // A narrower n-bit transfer, n<FLEN, into the f registers will create a valid
+  // NaN-boxed value.
+  F(rd) = nan_box(X(rs1)[31..0]);
   RETIRE_SUCCESS
 }
 
