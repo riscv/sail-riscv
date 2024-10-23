@@ -702,7 +702,7 @@ function clause execute(RISCV_FLTQ_D(rs2, rs1, rd)) = {
  */
 val      fcvtmod_helper : bits(64) -> (bits(5), bits(32))
 function fcvtmod_helper(x64) = {
-  let (sign, exp, mant) = fsplit_D(x64);
+  let (sign, exp, mant) = fstruct_D(x64);
 
   /* Detect the non-normal cases */
   let is_subnorm    = exp == zeros() & mant != zeros();
