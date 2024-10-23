@@ -59,6 +59,7 @@ enum {
   OPT_ENABLE_ZICBOM,
   OPT_ENABLE_ZICBOZ,
   OPT_CACHE_BLOCK_SIZE,
+  OPT_ENABLE_SMEPMP,
 };
 
 static bool do_dump_dts = false;
@@ -156,6 +157,7 @@ static struct option options[] = {
     {"enable-zfinx",                no_argument,       0, 'x'                     },
     {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
     {"enable-svinval",              no_argument,       0, OPT_ENABLE_SVINVAL      },
+    {"enable-smepmp",               no_argument,       0, OPT_ENABLE_SMEPMP       },
     {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
     {"enable-zicbom",               no_argument,       0, OPT_ENABLE_ZICBOM       },
     {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
@@ -335,6 +337,10 @@ static int process_args(int argc, char **argv)
         exit(1);
       }
       rv_pmp_grain = pmp_grain;
+      break;
+    case OPT_ENABLE_SMEPMP:
+      fprintf(stderr, "enabling Smepmp extension.\n");
+      rv_enable_smepmp = true;
       break;
     case 'C':
       fprintf(stderr, "disabling RVC compressed instructions.\n");

@@ -46,6 +46,8 @@ function clause is_CSR_defined(0x342) = true // mcause
 function clause is_CSR_defined(0x343) = true // mtval
 function clause is_CSR_defined(0x344) = true // mip
 
+function clause is_CSR_defined(0x747) = sys_has_mseccfg() // mseccfg
+function clause is_CSR_defined(0x757) = sys_has_mseccfg() & (xlen == 32) // mseccfgh
 // pmpcfgN
 function clause is_CSR_defined(0x3A) @ idx : bits(4) = sys_pmp_count() > unsigned(idx) & (idx[0] == bitzero | xlen == 32)
 
