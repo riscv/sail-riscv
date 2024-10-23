@@ -33,7 +33,7 @@ type num_tlb_entries : Int = 64
 type tlb_index_range = range(0, num_tlb_entries - 1)
 
 // PRIVATE
-register tlb : vector(num_tlb_entries, option(TLB_Entry)) = [
+register tlb_S : vector(num_tlb_entries, option(TLB_Entry)) = [
   None(), None(), None(), None(), None(), None(), None(), None(),
   None(), None(), None(), None(), None(), None(), None(), None(),
   None(), None(), None(), None(), None(), None(), None(), None(),
@@ -50,14 +50,14 @@ function tlb_hash(vaddr : bits(64)) -> tlb_index_range =
 
 // PUBLIC: invoked in init_vmem() [riscv_vmem.sail]
 function init_TLB() -> unit = {
-  foreach (i from 0 to (length(tlb) - 1)) {
-    tlb[i] = None();
+  foreach (i from 0 to (length(tlb_S) - 1)) {
+    tlb_S[i] = None();
   }
 }
 
 // PUBLIC: invoked in translate_TLB_hit() [riscv_vmem.sail]
 function write_TLB(index : tlb_index_range, ent : TLB_Entry) -> unit =
-  tlb[index] = Some(ent)
+  tlb_S[index] = Some(ent)
 
 // PRIVATE
 function match_TLB_Entry(ent   : TLB_Entry,
@@ -82,7 +82,7 @@ function flush_TLB_Entry(e    : TLB_Entry,
 // PUBLIC: invoked in translate() [riscv_vmem.sail]
 function lookup_TLB (asid : asidbits, vaddr : bits(64)) -> option((tlb_index_range, TLB_Entry)) = {
   let index = tlb_hash(vaddr);
-  match tlb[index] {
+  match tlb_S[index] {
     None() => None(),
     Some(entry) => if match_TLB_Entry(entry, asid, vaddr) then Some((index, entry)) else None(),
   }
@@ -118,12 +118,13 @@ function add_to_TLB(asid          : asidbits,
   // lookup_TLB looks it up. For superpages will just end up with the same
   // TLB entry in multiple slots.
   let index = tlb_hash(vAddr);
-  tlb[index] = Some(entry);
+  tlb_S[index] = Some(entry);
 }
 
 // Top-level TLB flush function
-// PUBLIC: invoked from exec SFENCE_VMA
+// PUBLIC: invoked from exec SFENCE_VMA, HFENCE_VVMA and HFENCE_GVMA
 function flush_TLB(asid_xlen : option(xlenbits),
+                   stage     : AddressTranslationStage, // FIXME: Currently unused
                    addr_xlen : option(xlenbits)) -> unit = {
   let asid : option(asidbits) =
     match asid_xlen {
@@ -135,9 +136,9 @@ function flush_TLB(asid_xlen : option(xlenbits),
       None()  => None(),
       Some(a) => Some(zero_extend(a))
     };
-  foreach (i from 0 to (length(tlb) - 1)) {
-    match tlb[i] {
-      Some(e) => if flush_TLB_Entry(e, asid, addr_64b) then { tlb[i] = None(); },
+  foreach (i from 0 to (length(tlb_S) - 1)) {
+    match tlb_S[i] {
+      Some(e) => if flush_TLB_Entry(e, asid, addr_64b) then { tlb_S[i] = None(); },
       None()  => (),
     }
   }

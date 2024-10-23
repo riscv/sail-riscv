@@ -728,14 +728,20 @@ mapping clause encdec = SFENCE_VMA(rs1, rs2)
 function clause execute SFENCE_VMA(rs1, rs2) = {
   let addr : option(xlenbits) = if rs1 == 0b00000 then None() else Some(X(rs1));
   let asid : option(xlenbits) = if rs2 == 0b00000 then None() else Some(X(rs2));
-  match cur_privilege {
-    User       => { handle_illegal(); RETIRE_FAIL },
-    Supervisor => match (architecture(get_mstatus_SXL(mstatus)), mstatus[TVM]) {
-                    (Some(_), 0b1)  => { handle_illegal(); RETIRE_FAIL },
-                    (Some(_), 0b0) => { flush_TLB(asid, addr); RETIRE_SUCCESS },
-                    (_, _)           => internal_error(__FILE__, __LINE__, "unimplemented sfence architecture")
-                  },
-    Machine    => { flush_TLB(asid, addr); RETIRE_SUCCESS }
+  match (cur_privilege, cur_virtualization) {
+    (User, V0)       => { handle_illegal(); RETIRE_FAIL },
+    (User, V1)       => { handle_virtual_instr(); RETIRE_FAIL },
+    (Supervisor, V0) => match (architecture(get_mstatus_SXL(mstatus)), mstatus[TVM]) {
+                          (Some(_), 0b1) => { handle_illegal(); RETIRE_FAIL },
+                          (Some(_), 0b0) => { flush_TLB(asid, Stage_S, addr); RETIRE_SUCCESS },
+                          (_, _)         => internal_error(__FILE__, __LINE__, "unimplemented sfence architecture")
+                        },
+    (Supervisor, V1) => match (architecture(get_hstatus_VSXL(hstatus)), hstatus[VTVM]) {
+                          (Some(_), 0b1) => { handle_virtual_instr(); RETIRE_FAIL },
+                          (Some(_), 0b0) => { flush_TLB(asid, Stage_VS, addr); RETIRE_SUCCESS },
+                          (_, _)         => internal_error(__FILE__, __LINE__, "unimplemented sfence architecture")
+                        },
+    (Machine, _)     => { flush_TLB(asid, Stage_S, addr); RETIRE_SUCCESS }
   }
 }
 
