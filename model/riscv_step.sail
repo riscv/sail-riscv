@@ -24,11 +24,11 @@ function step(step_no : int) -> bool = {
   minstret_increment = mcountinhibit[IR] == 0b0;
 
   let (retired, stepped) : (Retired, bool) =
-    match dispatchInterrupt(cur_privilege) {
-      Some(intr, priv) => {
+    match dispatchInterrupt(cur_privilege, cur_virtualization) {
+      Some(intr, priv, virt) => {
         if   get_config_print_instr()
         then print_bits("Handling interrupt: ", interruptType_to_bits(intr));
-        handle_interrupt(intr, priv, V0); // FIXME: Dispatch interrupts to V1
+        handle_interrupt(intr, priv, virt);
         (RETIRE_FAIL, false)
       },
       None() => {

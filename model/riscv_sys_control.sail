@@ -167,13 +167,30 @@ function exception_delegatee(e : ExceptionType, cur_p : Privilege, cur_v : Virtu
  */
 function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   let ip = Mk_Minterrupts(ip);
-  if      ip[MEI] == 0b1 then Some(I_M_External)
-  else if ip[MSI] == 0b1 then Some(I_M_Software)
-  else if ip[MTI] == 0b1 then Some(I_M_Timer)
-  else if ip[SEI] == 0b1 then Some(I_S_External)
-  else if ip[SSI] == 0b1 then Some(I_S_Software)
-  else if ip[STI] == 0b1 then Some(I_S_Timer)
+  if      ip[MEI]  == 0b1 then Some(I_M_External)
+  else if ip[MSI]  == 0b1 then Some(I_M_Software)
+  else if ip[MTI]  == 0b1 then Some(I_M_Timer)
+  else if ip[SEI]  == 0b1 then Some(I_S_External)
+  else if ip[SSI]  == 0b1 then Some(I_S_Software)
+  else if ip[STI]  == 0b1 then Some(I_S_Timer)
+  else if ip[SGEI] == 0b1 then Some(I_G_External)
+  else if ip[VSEI] == 0b1 then Some(I_VS_External)
+  else if ip[VSSI] == 0b1 then Some(I_VS_Software)
+  else if ip[VSTI] == 0b1 then Some(I_VS_Timer)
+  else if ip[UEI]  == 0b1 then Some(I_U_External)
+  else if ip[USI]  == 0b1 then Some(I_U_Software)
+  else if ip[UTI]  == 0b1 then Some(I_U_Timer)
   else                        None()
+}
+
+/*! Translate VS-level interrupts to their S-level counterpart */
+function translateVSInterrupts(i : Minterrupts) -> Minterrupts = {
+  let t = i;
+  let t = [[t with SEI = i[VSEI]] with VSEI = 0b0];
+  let t = [[t with SSI = i[VSSI]] with VSSI = 0b0];
+  let t = [[t with STI = i[VSTI]] with VSTI = 0b0];
+  // TODO: add hook for extensions to translate interrupts as well
+  t
 }
 
 /* Process the pending interrupts xip at a privilege according to
@@ -206,7 +223,7 @@ function processPending(xip : Minterrupts, xie : Minterrupts, xideleg : xlenbits
  * We don't use the lowered views of {xie,xip} here, since the spec
  * allows for example the M_Timer to be delegated to the S-mode.
  */
-function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
+function getPendingSet(priv : Privilege, virt : Virtualization) -> option((xlenbits, Privilege, Virtualization)) = {
   let effective_pending = mip.bits & mie.bits;
   if  effective_pending == zeros() then None() /* fast path */
   else {
@@ -216,10 +233,20 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
      */
     let mIE = priv != Machine | (priv == Machine & mstatus[MIE] == 0b1);
     let sIE = extensionEnabled(Ext_S) & (priv == User | (priv == Supervisor & mstatus[SIE] == 0b1));
+    let vsIE = extensionEnabled(Ext_H) & virt == V1 & (priv == User | (priv == Supervisor & vsstatus[SIE] == 0b1)); // Enabled H-ext implies presence of S-mode
+
     match processPending(mip, mie, mideleg.bits, mIE) {
       Ints_Empty()      => None(),
-      Ints_Pending(p)   => Some((p, Machine)),
-      Ints_Delegated(d) => if sIE then Some((d, Supervisor)) else None(),
+      Ints_Pending(p)   => Some((p, Machine, V0)),
+      Ints_Delegated(d) => match processPending(Mk_Minterrupts(d), mie, hideleg.bits, sIE) {
+        Ints_Empty()      => None(),
+        Ints_Pending(p)   => Some((p, Supervisor, V0)),
+        Ints_Delegated(d) => match processPending(Mk_Minterrupts(d), mie, zeros(), vsIE) {
+          Ints_Empty()      => None(),
+          Ints_Pending(p)   => Some(translateVSInterrupts(Mk_Minterrupts(p)).bits, Supervisor, V1),
+          Ints_Delegated(d) => internal_error(__FILE__, __LINE__, "Delegate interrupts beyond VS-mode")
+        }
+      }
     }
   }
 }
@@ -227,12 +254,12 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
 /* Examine the current interrupt state and return an interrupt to be *
  * handled (if any), and the privilege it should be handled at.
  */
-function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege)) = {
-  match getPendingSet(priv) {
+function dispatchInterrupt(priv : Privilege, virt : Virtualization) -> option((InterruptType, Privilege, Virtualization)) = {
+  match getPendingSet(priv, virt) {
     None()       => None(),
-    Some(ip, p)  => match findPendingInterrupt(ip) {
+    Some(ip, p, v)  => match findPendingInterrupt(ip) {
                       None()  => None(),
-                      Some(i) => Some((i, p)),
+                      Some(i) => Some((i, p, v)),
                     }
   }
 }
