@@ -12,6 +12,4 @@ unit print_mem_access(sail_string s);
 unit print_platform(sail_string s);
 
 bool get_config_print_instr(unit u);
-bool get_config_print_reg(unit u);
-bool get_config_print_mem(unit u);
 bool get_config_print_platform(unit u);

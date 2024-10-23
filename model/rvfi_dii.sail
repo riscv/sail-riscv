@@ -325,3 +325,47 @@ function print_rvfi_exec () = {
   print_bits("rvfi_pc_rdata : ", rvfi_pc_data[rvfi_pc_rdata]);
   print_bits("rvfi_order    : ", rvfi_inst_data[rvfi_order]);
 }
+
+/* RVFI records */
+
+val internal_error : forall ('a : Type). (string, int, string) -> 'a
+
+val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, int('n), bits(8 * 'n)) -> unit
+function rvfi_write (addr, width, value) = {
+  rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
+  rvfi_mem_data_present = true;
+  if width <= 16 then {
+    /* TODO: report tag bit for capability writes and extend mask by one bit. */
+    rvfi_mem_data[rvfi_mem_wdata] = sail_zero_extend(value, 256);
+    rvfi_mem_data[rvfi_mem_wmask] = rvfi_encode_width_mask(width);
+  } else {
+    internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!");
+  };
+}
+
+val rvfi_read : forall 'n, 'n > 0. (xlenbits, int('n), bits(8 * 'n)) -> unit
+function rvfi_read (addr, width, value) = {
+  rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
+  rvfi_mem_data_present = true;
+  if width <= 16 then {
+    /* TODO: report tag bit for capability writes and extend mask by one bit. */
+    rvfi_mem_data[rvfi_mem_rdata] = sail_zero_extend(value, 256);
+    rvfi_mem_data[rvfi_mem_rmask] = rvfi_encode_width_mask(width)
+  } else {
+    internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!")
+  };
+}
+
+val rvfi_mem_exception : xlenbits -> unit
+function rvfi_mem_exception (addr) = {
+  /* Log only the memory address (without the value) if the write fails. */
+  rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
+  rvfi_mem_data_present = true;
+}
+
+val rvfi_wX : forall 'n, 0 <= 'n < 32. (int('n), xlenbits) -> unit
+function rvfi_wX (r,v) = {
+  rvfi_int_data[rvfi_rd_wdata] = zero_extend(v);
+  rvfi_int_data[rvfi_rd_addr] = to_bits(8, r);
+  rvfi_int_data_present = true;
+}

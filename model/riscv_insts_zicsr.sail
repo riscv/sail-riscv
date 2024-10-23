@@ -193,11 +193,9 @@ function clause execute CSR(csr, rs1, rd, is_imm, op) = {
         CSRRC => csr_val & ~(rs1_val)
       };
       let final_val = write_CSR(csr, new_val);
-      if get_config_print_reg()
-      then print_reg("CSR " ^ to_str(csr) ^ " <- " ^ bits_str(final_val) ^ " (input: " ^ bits_str(new_val) ^ ")")
+      csr_write_callback(csr, final_val);
     } else {
-      if get_config_print_reg()
-      then print_reg("CSR " ^ to_str(csr) ^ " -> " ^ bits_str(csr_val));
+      csr_read_callback(csr, csr_val);
     };
     X(rd) = csr_val;
     RETIRE_SUCCESS
