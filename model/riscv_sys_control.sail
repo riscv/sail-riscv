@@ -470,7 +470,6 @@ function init_sys() -> unit = {
   menvcfg.bits = zeros();
   senvcfg.bits = zeros();
   /* initialize vector csrs */
-
   vstart             = zeros();
   vl                 = zeros();
   vcsr[vxrm]       = 0b00;
