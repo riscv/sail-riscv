@@ -2,7 +2,6 @@
 #include "sail.h"
 
 bool sys_enable_rvc(unit);
-bool sys_enable_next(unit);
 bool sys_enable_fdext(unit);
 bool sys_enable_svinval(unit);
 bool sys_enable_zcb(unit);
