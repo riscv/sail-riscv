@@ -799,7 +799,10 @@ function is_fiom_active() -> bool = {
 /* vector csrs */
 register vstart : bits(16) /* use the largest possible length of vstart */
 register vl     : xlenbits
-register vlenb  : xlenbits
+
+function get_vlenb() -> xlenbits = {
+  to_bits(xlen, (2 ^ (get_vlen_pow()) / 8))
+}
 
 bitfield Vtype  : xlenbits = {
   vill      : xlen - 1,
