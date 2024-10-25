@@ -13,7 +13,6 @@ bool rv_enable_svinval = false;
 bool rv_enable_zcb = false;
 bool rv_enable_zfinx = false;
 bool rv_enable_rvc = true;
-bool rv_enable_next = false;
 bool rv_enable_writable_misa = true;
 bool rv_enable_fdext = true;
 bool rv_enable_vext = true;

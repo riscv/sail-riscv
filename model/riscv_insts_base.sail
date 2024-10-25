@@ -608,17 +608,6 @@ mapping clause assembly = FENCE_TSO(pred, succ)
   <-> "fence.tso" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ)
 
 /* ****************************************************************** */
-union clause ast = FENCEI : unit
-
-mapping clause encdec = FENCEI()
-  <-> 0b000000000000 @ 0b00000 @ 0b001 @ 0b00000 @ 0b0001111
-
-/* fence.i is a nop for the memory model */
-function clause execute FENCEI() = { /* __barrier(Barrier_RISCV_i); */ RETIRE_SUCCESS }
-
-mapping clause assembly = FENCEI() <-> "fence.i"
-
-/* ****************************************************************** */
 union clause ast = ECALL : unit
 
 mapping clause encdec = ECALL()

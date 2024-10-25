@@ -22,11 +22,6 @@ bool sys_enable_rvc(unit u)
   return rv_enable_rvc;
 }
 
-bool sys_enable_next(unit u)
-{
-  return rv_enable_next;
-}
-
 bool sys_enable_fdext(unit u)
 {
   return rv_enable_fdext;
@@ -82,12 +77,12 @@ uint64_t sys_pmp_grain(unit u)
   return rv_pmp_grain;
 }
 
-uint64_t sys_vector_vlen_exp(unit)
+uint64_t sys_vector_vlen_exp(unit u)
 {
   return rv_vector_vlen_exp;
 }
 
-uint64_t sys_vector_elen_exp(unit)
+uint64_t sys_vector_elen_exp(unit u)
 {
   return rv_vector_elen_exp;
 }
