@@ -2,30 +2,18 @@ RISCV Sail Model
 ================
 
 This repository contains a formal specification of the RISC-V architecture, written in
-[Sail](https://github.com/rems-project/sail).   It has been adopted by the RISC-V Foundation.  As of 2021-08-24, the repo has been moved from <https://github.com/rems-project/sail-riscv> to <https://github.com/riscv/sail-riscv>.
+[Sail](https://github.com/rems-project/sail).   It has been adopted by the RISC-V Foundation.
 
 The model specifies
 assembly language formats of the instructions, the corresponding
 encoders and decoders, and the instruction semantics.
-The current status of its
-coverage of the prose RISC-V specification is summarized
-[here](doc/Status.md).
 A [reading guide](doc/ReadingGuide.md) to the model is provided in the
 [doc/](doc/) subdirectory, along with a guide on [how to
 extend](doc/ExtendingGuide.md) the model.
 
 
-Latex or AsciiDoc definitions can be generated from the model that are suitable
-for inclusion in reference documentation.  Drafts of the RISC-V
-[unprivileged](https://github.com/rems-project/riscv-isa-manual/blob/sail/release/riscv-spec-sail-draft.pdf)
-and [privileged](https://github.com/rems-project/riscv-isa-manual/blob/sail/release/riscv-privileged-sail-draft.pdf)
-specifications that include the Sail formal definitions are available
-in the sail branch of this [risc-v-isa-manual repository](https://github.com/rems-project/riscv-isa-manual/tree/sail).
-The process to perform this inclusion is explained [here](https://github.com/rems-project/riscv-isa-manual/blob/sail/README.SAIL).
+Latex or AsciiDoc definitions can be generated from the model that are suitable for inclusion in reference documentation.
 There is also the newer [Sail AsciiDoctor documentation support for RISC-V](https://github.com/Alasdair/asciidoctor-sail/blob/master/doc/built/sail_to_asciidoc.pdf).
-
-This is one of [several formal models](https://github.com/riscv/ISA_Formal_Spec_Public_Review/blob/master/comparison_table.md) that were compared within the 2019
-[RISC-V ISA Formal Spec Public Review](https://github.com/riscv/ISA_Formal_Spec_Public_Review).
 
 
 What is Sail?
@@ -51,12 +39,118 @@ permission), RISC-V, CHERI-RISC-V, CHERIoT, MIPS, and CHERI-MIPS; all these are 
 enough to boot various operating systems.  There are also Sail models
 for smaller fragments of IBM POWER and x86, including a version of the ACL2 x86 model automatically translated from that.
 
+Getting started
+---------------
 
+### Building the model
+
+Install [Sail](https://github.com/rems-project/sail/). On Linux you can download a [binary release](https://github.com/rems-project/sail/releases) (strongly recommended), or you can install from source [using opam](https://github.com/rems-project/sail/blob/sail2/INSTALL.md). Then:
+
+```
+$ make
+```
+
+will build the simulator in `c_emulator/riscv_sim_RV64`.
+
+If you get an error message saying `sail: unknown option '--require-version'.` it's because your Sail compiler is too old. You need version 0.18 or later.
+
+One can build either the RV32 or the RV64 model by specifying
+`ARCH=RV32` or `ARCH=RV64` on the `make` line, and using the matching
+target suffix.  RV64 is built by default, but the RV32 model can be
+built using:
+
+```
+$ ARCH=RV32 make
+```
+
+which creates the simulator in `c_emulator/riscv_sim_RV32`.
+
+The Makefile targets `riscv_isa_build`, `riscv_coq_build`, and
+`riscv_hol_build` invoke the respective prover to process the
+definitions and produce the Isabelle model in
+`generated_definitions/isabelle/RV64/Riscv.thy`, the Coq model in
+`generated_definitions/coq/RV64/riscv.v`, or the HOL4 model in
+`generated_definitions/hol4/RV64/riscvScript.sml` respectively.
+We have tested Isabelle 2018, Coq 8.8.1, and HOL4
+Kananaskis-12.  When building these targets, please make sure the
+corresponding prover libraries in the Sail directory
+(`$SAIL_DIR/lib/$prover`) are up-to-date and built, e.g. by running
+`make` in those directories.
+
+### Executing test binaries
+
+The simulator can be used to execute small test binaries.
+
+```
+$ ./c_emulator/riscv_sim_<arch> <elf-file>
+```
+
+A suite of RV32 and RV64 test programs derived from the
+[`riscv-tests`](https://github.com/riscv/riscv-tests) test-suite is
+included under [test/riscv-tests/](test/riscv-tests/).  The test-suite
+can be run using `test/run_tests.sh`.
+
+### Configuring platform options
+
+Information on configuration options for the simulator is available from
+`./c_emulator/riscv_sim_<arch> -h`.
+
+Some useful options are: configuring whether misaligned accesses trap
+(`--enable-misaligned`), and
+whether page-table walks update PTE bits (`--enable-dirty-update`).
+
+### Booting OS images
+
+For booting operating system images, see the information under the
+[os-boot/](os-boot/) subdirectory.
+
+### Using development versions of Sail
+
+Rarely, the release version of Sail may not meet your needs. This could happen if you need a bug fix or new feature not yet in the released Sail version, or you are actively working on Sail. In this case you can tell the `sail-riscv` `Makefile` to use a local copy of Sail by setting `SAIL_DIR` to the root of a checkout of the Sail repo when you invoke `make`. Alternatively, you can use `opam pin` to install Sail from a local checkout of the Sail repo as described in the Sail installation instructions.
+
+Supported RISC-V ISA features
+-----------------------------
+#### The Sail specification currently captures the following ISA extensions and features:
+
+- RV32I and RV64I base ISAs, v2.1
+- Zifencei extension for instruction-fetch fence, v2.0
+- Zicsr extension for CSR instructions, v2.0
+- Zicntr and Zihpm extensions for counters, v2.0
+- Zicond extension for integer conditional operations, v1.0
+- Zicbom and Zicboz extensions for cache-block management (Zicbop not currently supported), v1.0
+- M extension for integer multiplication and division, v2.0
+- Zmmul extension for integer multiplication only, v1.0
+- A extension for atomic instructions, v2.1
+- Zalrsc extension for load-reserved and store-conditional operations, v1.0
+- Zaamo extension for atomic memory operations, v1.0
+- Zabha extension for byte and halfword atomic memory operations, v1.0
+- F and D extensions for single and double-precision floating-point, v2.2
+- Zfh extension half-precision floating-point, v1.0
+- Zfa extension for additional floating-point instructions, v1.0
+- Zfinx, Zdinx, and Zhinx extensions for floating-point in integer registers, v1.0
+- C extension for compressed instructions, v2.0
+- Zca, Zcf, Zcd, and Zcb extensions for code size reduction, v1.0
+- B (Zba, Zbb, Zbs) and Zbc extensions for bit manipulation, v1.0
+- Zbkb, Zbkc, and Zbkx extensions for bit manipulation for cryptography, v1.0
+- Zkn (Zknd, Zkne, Zknh) and Zks (Zksed, Zksh) extensions for scalar cryptography, v1.0.1
+- Zkr extension for entropy source, v1.0
+- V extension for vector operations, v1.0
+- Machine, Supervisor, and User modes
+- Svinval extension for fine-grained address-translation cache invalidation, v1.0
+- Sv32, Sv39, and Sv48 page-based virtual-memory systems
+- Physical Memory Protection (PMP)
+
+#### The following features are not currently supported:
+- The Hypervisor Extension.
+- RV32E and RV64E base ISAs
+- Mutable XLEN (UXLEN/SXLEN always equal MXLEN)
+- Big endian
+- Physical Memory Attributes (PMAs)
 
 Example RISC-V instruction specifications
 ----------------------------------
 
-These are verbatim excerpts from the model file containing the base instructions, [riscv_insts_base.sail](https://github.com/riscv/sail-riscv/blob/master/model/riscv_insts_base.sail), with a few comments added.
+These are verbatim excerpts from the model file containing the base instructions, [riscv_insts_base.sail](model/riscv_insts_base.sail), with a few comments added.
 
 ### ITYPE (or ADDI)
 ~~~~~
@@ -250,75 +344,6 @@ sail-riscv
   - riscv-tests           // snapshot of tests from the riscv/riscv-tests github repo
 - os-boot                 // information and sample files for booting OS images
 ```
-
-Getting started
----------------
-
-### Building the model
-
-Install [Sail](https://github.com/rems-project/sail/). On Linux you can download a [binary release](https://github.com/rems-project/sail/releases) (strongly recommended), or you can install from source [using opam](https://github.com/rems-project/sail/blob/sail2/INSTALL.md). Then:
-
-```
-$ make
-```
-
-will build the simulator in `c_emulator/riscv_sim_RV64`.
-
-If you get an error message saying `sail: unknown option '--require-version'.` it's because your Sail compiler is too old. You need version 0.18 or later.
-
-One can build either the RV32 or the RV64 model by specifying
-`ARCH=RV32` or `ARCH=RV64` on the `make` line, and using the matching
-target suffix.  RV64 is built by default, but the RV32 model can be
-built using:
-
-```
-$ ARCH=RV32 make
-```
-
-which creates the simulator in `c_emulator/riscv_sim_RV32`.
-
-The Makefile targets `riscv_isa_build`, `riscv_coq_build`, and
-`riscv_hol_build` invoke the respective prover to process the
-definitions and produce the Isabelle model in
-`generated_definitions/isabelle/RV64/Riscv.thy`, the Coq model in
-`generated_definitions/coq/RV64/riscv.v`, or the HOL4 model in
-`generated_definitions/hol4/RV64/riscvScript.sml` respectively.
-We have tested Isabelle 2018, Coq 8.8.1, and HOL4
-Kananaskis-12.  When building these targets, please make sure the
-corresponding prover libraries in the Sail directory
-(`$SAIL_DIR/lib/$prover`) are up-to-date and built, e.g. by running
-`make` in those directories.
-
-### Executing test binaries
-
-The simulator can be used to execute small test binaries.
-
-```
-$ ./c_emulator/riscv_sim_<arch> <elf-file>
-```
-
-A suite of RV32 and RV64 test programs derived from the
-[`riscv-tests`](https://github.com/riscv/riscv-tests) test-suite is
-included under [test/riscv-tests/](test/riscv-tests/).  The test-suite
-can be run using `test/run_tests.sh`.
-
-### Configuring platform options
-
-Some information on additional configuration options for each
-simulator is available from `./c_emulator/riscv_sim_<arch> -h`.
-
-Some useful options are: configuring whether misaligned accesses trap
-(`--enable-misaligned`), and
-whether page-table walks update PTE bits (`--enable-dirty-update`).
-
-### Booting OS images
-
-For booting operating system images, see the information under the
-[os-boot/](os-boot/) subdirectory.
-
-### Using development versions of Sail
-
-Rarely, the version of Sail packaged in opam may not meet your needs. This could happen if you need a bug fix or new feature not yet in the released Sail version, or you are actively working on Sail. In this case you can tell the `sail-riscv` `Makefile` to use a local copy of Sail by setting `SAIL_DIR` to the root of a checkout of the Sail repo when you invoke `make`. Alternatively, you can use `opam pin` to install Sail from a local checkout of the Sail repo as described in the Sail installation instructions.
 
 Licence
 -------
