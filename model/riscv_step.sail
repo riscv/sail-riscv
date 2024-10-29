@@ -32,7 +32,7 @@ function step(step_no : int) -> bool = {
         (RETIRE_FAIL, false)
       },
       None() => {
-        /* If Etrigger, Icount, Itrigger and mcontrol6 after, matches, fire 
+        /* If Etrigger, Icount, Itrigger and mcontrol6 after, matches, fire
            it before fetching the next instruction */
         if (check_trigger_firing(cur_privilege)) then {
           (RETIRE_FAIL, false)
