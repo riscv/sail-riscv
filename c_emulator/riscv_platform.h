@@ -16,6 +16,7 @@ bool sys_enable_zicboz(unit);
 uint64_t sys_pmp_count(unit);
 uint64_t sys_pmp_grain(unit);
 
+bool sys_vext_vl_use_ceil(unit);
 uint64_t sys_vector_vlen_exp(unit);
 uint64_t sys_vector_elen_exp(unit);
 

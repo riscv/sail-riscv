@@ -38,6 +38,8 @@ extern uint64_t rv_rom_size;
 
 extern uint64_t rv_cache_block_size_exp;
 
+extern bool rv_vext_vl_use_ceil;
+
 // Provides entropy for the scalar cryptography extension.
 extern uint64_t rv_16_random_bits(void);
 
