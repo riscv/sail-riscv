@@ -425,7 +425,7 @@ function find_first_zero(v: xlenbits) -> {'n, (1 <= 'n < xlen). int('n)} = {
 function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, match_size : matchSize, match_type : MatchType) -> bool = {
   var raise_exception : bool = false;
   let half_xlen = sizeof(half_xlen);
-  /* Traverse through all tirggers */
+  /* Traverse through all triggers */
   foreach (i from 0 to (sizeof(N_TRIGGERS) - 1)) {
     let trigger_type : bits(4) = tdata1_x.tdata1[i][(xlen - 1) .. (xlen - 4)];
     var data_matched : bool = false;
