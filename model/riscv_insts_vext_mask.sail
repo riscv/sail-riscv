@@ -31,7 +31,7 @@ mapping clause encdec = MMTYPE(funct6, vs2, vs1, vd) if extensionEnabled(Ext_V)
 function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = unsigned(vlenb) * 8;
+  let num_elem = VLEN;
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
@@ -88,7 +88,7 @@ mapping clause encdec = VCPOP_M(vm, vs2, rd) if extensionEnabled(Ext_V)
 function clause execute(VCPOP_M(vm, vs2, rd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = unsigned(vlenb) * 8;
+  let num_elem = VLEN;
 
   if illegal_vd_unmasked() | not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
 
@@ -122,7 +122,7 @@ mapping clause encdec = VFIRST_M(vm, vs2, rd) if extensionEnabled(Ext_V)
 function clause execute(VFIRST_M(vm, vs2, rd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = unsigned(vlenb) * 8;
+  let num_elem = VLEN;
 
   if illegal_vd_unmasked() | not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
 
@@ -158,7 +158,7 @@ mapping clause encdec = VMSBF_M(vm, vs2, vd) if extensionEnabled(Ext_V)
 function clause execute(VMSBF_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = unsigned(vlenb) * 8;
+  let num_elem = VLEN;
 
   if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
   then { handle_illegal(); return RETIRE_FAIL };
@@ -198,7 +198,7 @@ mapping clause encdec = VMSIF_M(vm, vs2, vd) if extensionEnabled(Ext_V)
 function clause execute(VMSIF_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = unsigned(vlenb) * 8;
+  let num_elem = VLEN;
 
   if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
   then { handle_illegal(); return RETIRE_FAIL };
@@ -238,7 +238,7 @@ mapping clause encdec = VMSOF_M(vm, vs2, vd) if extensionEnabled(Ext_V)
 function clause execute(VMSOF_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = unsigned(vlenb) * 8;
+  let num_elem = VLEN;
 
   if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
   then { handle_illegal(); return RETIRE_FAIL };

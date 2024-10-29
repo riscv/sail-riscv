@@ -20,3 +20,5 @@ val sys_vector_vlen_exp = pure "sys_vector_vlen_exp" : unit -> range(3, 16)
 function get_vlen_pow() -> range(3, 16) = sys_vector_vlen_exp()
 
 type vlenmax : Int = 65536
+
+let VLEN = 2 ^ get_vlen_pow()

@@ -470,10 +470,6 @@ function init_sys() -> unit = {
   menvcfg.bits = zeros();
   senvcfg.bits = zeros();
   /* initialize vector csrs */
-  vlenb              = to_bits(xlen, 2 ^ (get_vlen_pow() - 3)); /* vlenb holds the constant value VLEN/8 */
-  /* VLEN value needs to be manually changed currently.
-   * See riscv_vlen.sail for details.
-   */
   vstart             = zeros();
   vl                 = zeros();
   vcsr[vxrm]       = 0b00;
