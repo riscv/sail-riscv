@@ -997,7 +997,7 @@ bitfield InterruptTrigger : xlenbits = {
   /* Enable Exception/Interrupr trigger from S-mode */
   s      : 7,
   /* Enable Exception/Interrupr trigger from U-mode */
-  u      : 6, 
+  u      : 6,
   /* Trigger Action */
   action : 5 .. 0
 }
@@ -1063,49 +1063,49 @@ function legalize_tdata1(o : xlenbits, v : xlenbits) -> xlenbits = {
     TRIG_DISABLED  => {v},
     _ => { new_value = o; new_value }
   }
-  
+
 }
 
 /* Write tdata1 of current trigger */
 function tdata1_write(tselect_val : xlenbits, o : xlenbits, new_value : xlenbits) -> xlenbits = {
   let index : int = unsigned(tselect[2 .. 0]);
   let v : xlenbits = legalize_tdata1(o, new_value);
-  if ((index >= 0) & (index < vector_length(tdata1_x.tdata1))) then 
+  if ((index >= 0) & (index < vector_length(tdata1_x.tdata1))) then
   { tdata1_x.tdata1[index] = v; v } else { o }
 }
 
 /* Read tdata1 of current trigger */
 function tdata1_read(tselect_val : xlenbits) -> xlenbits = {
   let index : int = unsigned(tselect[2 .. 0]);
-  if ((index >= 0) & (index < vector_length(tdata1_x.tdata1))) then 
+  if ((index >= 0) & (index < vector_length(tdata1_x.tdata1))) then
   { tdata1_x.tdata1[index]; } else { zero_extend(0b0); }
 }
 
 /* Write tdata2 of current trigger */
 function tdata2_write(tselect_val : xlenbits, o : xlenbits, v : xlenbits) -> xlenbits = {
   let index : int = unsigned(tselect[2 .. 0]);
-  if ((index >= 0) & (index < vector_length(tdata2_x.tdata2))) then 
+  if ((index >= 0) & (index < vector_length(tdata2_x.tdata2))) then
   { tdata2_x.tdata2[index] = v; v } else { o }
 }
 
 /* Read TData2 of current trigger */
 function tdata2_read(tselect_val : xlenbits) -> xlenbits = {
   let index : int = unsigned(tselect[2 .. 0]);
-  if ((index >= 0) & (index < vector_length(tdata2_x.tdata2))) then 
+  if ((index >= 0) & (index < vector_length(tdata2_x.tdata2))) then
   { tdata2_x.tdata2[index]; } else { zero_extend(0b0); }
 }
 
 /* Write tdata3 of current trigger */
 function tdata3_write(tselect_val : xlenbits, o : xlenbits, v : xlenbits) -> xlenbits = {
   let index : int = unsigned(tselect[2 .. 0]);
-  if ((index >= 0) & (index < vector_length(tdata3_x.tdata3))) then 
+  if ((index >= 0) & (index < vector_length(tdata3_x.tdata3))) then
   { tdata3_x.tdata3[index] = v; v } else { o }
 }
 
 /* Read TData3 of current trigger */
 function tdata3_read(tselect_val : xlenbits) -> xlenbits = {
   let index : int = unsigned(tselect[2 .. 0]);
-  if ((index >= 0) & (index < vector_length(tdata3_x.tdata3))) then 
+  if ((index >= 0) & (index < vector_length(tdata3_x.tdata3))) then
   { tdata3_x.tdata3[index]; } else { zero_extend(0b0); }
 }
 

@@ -266,13 +266,13 @@ function icount_trigger_match(cur_priv : Privilege) -> unit = {
 }
 
 /* Interrupt/Exception Trigger */
-function IEtrigger_match(cur_priv : Privilege, idx : {'n, (0 <= 'n < xlen). int('n)}) -> unit = {
+function IEtrigger_match(cur_priv : Privilege, idx : {'n, (0 <= 'n < xlen). int('n)}, is_exce : bool) -> unit = {
   /* Traverse through all the triggers */
   foreach (i from 0 to (sizeof(N_TRIGGERS) - 1)) {
     let trigger_type : bits(4) = tdata1_x.tdata1[i][(xlen - 1) .. (xlen - 4)];
     /* If Interrupt / Exception trigger found */
-    if ((trigger_type == triggerType_to_bits(TRIG_ETRIGGER)) |
-        (trigger_type == triggerType_to_bits(TRIG_ITRIGGER))) then {
+    if (((trigger_type == triggerType_to_bits(TRIG_ETRIGGER)) & is_exce) |
+        ((trigger_type == triggerType_to_bits(TRIG_ITRIGGER)) & not(is_exce))) then {
       var IEtrigger : InterruptTrigger  = Mk_InterruptTrigger(tdata1_x.tdata1[i]);
       if ((((IEtrigger[m] == 0b1) & (cur_priv == Machine))     | /* Trigger is enabled in M-mode */
            ((IEtrigger[s] == 0b1) & (cur_priv == Supervisor))  | /* Trigger is enabled in S-mode */
@@ -355,7 +355,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   get_config_print_platform()
       then print_platform("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
                           ^ " to handle " ^ to_str(e.trap));
-      IEtrigger_match(cur_priv, num_of_ExceptionType(e.trap));
+      IEtrigger_match(cur_priv, num_of_ExceptionType(e.trap), true);
       trap_handler(del_priv, false, exceptionType_to_bits(e.trap), pc, e.excinfo, e.ext)
     },
     (_, CTL_MRET())  => {
@@ -410,7 +410,7 @@ function handle_exception(e: ExceptionType) -> unit = {
 }
 
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit = {
-  IEtrigger_match(cur_privilege, num_of_interruptType(i));
+  IEtrigger_match(cur_privilege, num_of_interruptType(i), false);
   set_next_pc(trap_handler(del_priv, true, interruptType_to_bits(i), PC, None(), None()))
 }
 
@@ -491,7 +491,7 @@ function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, 
                 }
               },
               /* Check for Load Address match */
-              LOAD_MATCH_BEFORE => { 
+              LOAD_MATCH_BEFORE => {
                 if (data_matched & size_matched & (MCtrl6[load] == 0b1)) then {
                     MCtrl6[hit0] = 0b1;
                     tdata1_x.tdata1[i][26 .. 0] = MCtrl6.bits;
@@ -514,7 +514,7 @@ function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, 
                 }
               },
             };
-            
+
       }
     }
   };
@@ -536,7 +536,7 @@ function check_trigger_firing(cur_priv : Privilege) -> bool = {
   var IEtrigger          : InterruptTrigger  = Mk_InterruptTrigger(zero_extend(0b0));
   var MCtrl6             : MatchControlType6 = Mk_MatchControlType6(zero_extend(0b0));
   /* Traverse through each trigger */
-  foreach (i from 0 to (sizeof(N_TRIGGERS) - 1)) 
+  foreach (i from 0 to (sizeof(N_TRIGGERS) - 1))
   {
     InstrCount = Mk_InstructionCount(tdata1_x.tdata1[i][26 .. 0]);
     IEtrigger  = Mk_InterruptTrigger(tdata1_x.tdata1[i]);
@@ -559,7 +559,7 @@ function check_trigger_firing(cur_priv : Privilege) -> bool = {
         }
       },
       /* Check interrupt trigger firing */
-      TRIG_ITRIGGER  => { 
+      TRIG_ITRIGGER  => {
         if ((IEtrigger[hit] == 0b1) & (TriggerFireMatch(cur_priv)) & not(ITrigFired)) then {
           ITrigFired = true;
         }
