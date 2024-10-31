@@ -510,13 +510,12 @@ function translate_stage(vAddr,
   match stage {
     Stage_S => {
       let mode = translationMode(priv, stage);
-      // print("[DEBUG] Using " ^ to_str(mode) ^ " for S-stage address translation"); /* Debug: Print address translation mode */
       let (valid_va, sv_params) : (bool, SV_Params) = match mode {
         Bare => return TRi_Address(vAddr, ext_ptw),
         Sv32  => (true,                               sv32_params),
         Sv39  => (is_valid_vAddr(sv39_params, vAddr), sv39_params),
         Sv48  => (is_valid_vAddr(sv48_params, vAddr), sv48_params),
-        // Sv57 => (is_valid_vAddr(sv57_params, vAddr), sv57_params),    // TODO
+        // Sv57 => (is_valid_vAddr(sv57_params, vAddr), sv57_params),    // TODO: Sv57 address translation
         _     => internal_error(__FILE__, __LINE__, "Invalid S-stage address translation mode")
       };
       if not(valid_va) then
@@ -540,13 +539,12 @@ function translate_stage(vAddr,
     },
     Stage_VS => {
       let mode = translationMode(priv, stage);
-      // print("[DEBUG] Using " ^ to_str(mode) ^ " for VS-stage address translation"); /* Debug: Print address translation mode */
       let (valid_va, sv_params) : (bool, SV_Params) = match mode {
         Bare => return TRi_Address(vAddr, ext_ptw),
         Sv32  => (true,                               sv32_params),
         Sv39  => (is_valid_vAddr(sv39_params, vAddr), sv39_params),
         Sv48  => (is_valid_vAddr(sv48_params, vAddr), sv48_params),
-        // Sv57 => (is_valid_vAddr(sv57_params, vAddr), sv57_params),    // TODO
+        // Sv57 => (is_valid_vAddr(sv57_params, vAddr), sv57_params),    // TODO: Sv57 address translation
         _     => internal_error(__FILE__, __LINE__, "Invalid VS-stage address translation mode")
       };
       if not(valid_va) then
@@ -570,13 +568,12 @@ function translate_stage(vAddr,
     },
     Stage_G => {
       let mode = translationMode(priv, stage);
-      // print("[DEBUG] Using " ^ to_str(mode) ^ " for G-stage address translation"); /* Debug: Print address translation mode */
       let (valid_va, sv_params) : (bool, SV_Params) = match mode {
         Bare => return TRi_Address(vAddr, ext_ptw),
         Sv32x4  => (true,                                 sv32x4_params),
         Sv39x4  => (is_valid_vAddr(sv39x4_params, vAddr), sv39x4_params),
         Sv48x4  => (is_valid_vAddr(sv48x4_params, vAddr), sv48x4_params),
-        // Sv57x4  => (is_valid_vAddr(sv57x4_params, vAddr), sv57x4_params), // TODO
+        // Sv57x4  => (is_valid_vAddr(sv57x4_params, vAddr), sv57x4_params), // TODO: Sv57x4 address translation
         _       => internal_error(__FILE__, __LINE__, "Invalid G-stage address translation mode")
       };
       if not(valid_va) then

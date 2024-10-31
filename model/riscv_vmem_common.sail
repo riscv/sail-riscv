@@ -92,7 +92,7 @@ let sv48_params : SV_Params = struct {
        pte_PPN_j_size_bits = 9
 }
 
-// TODO; not currently used
+// TODO: Sv57 address translation
 // PRIVATE
 /*
 let sv57_params : SV_Params = struct {
@@ -166,7 +166,7 @@ let sv48x4_params : SV_Params = struct {
        pte_PPN_j_size_bits = 9
 }
 
-// TODO; not currently used
+// TODO: Sv57x4 address translation
 // PRIVATE
 /*
 let sv57x4_params : SV_Params = struct {
