@@ -44,6 +44,31 @@ register tlb_S : vector(num_tlb_entries, option(TLB_Entry)) = [
   None(), None(), None(), None(), None(), None(), None(), None(),
 ]
 
+// PRIVATE
+register tlb_VS : vector(num_tlb_entries, option(TLB_Entry)) = [
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+]
+
+// PRIVATE
+register tlb_G : vector(num_tlb_entries, option(TLB_Entry)) = [
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+  None(), None(), None(), None(), None(), None(), None(), None(),
+]
+
+
 // Indexed by the lowest bits of the VPN.
 function tlb_hash(vaddr : bits(64)) -> tlb_index_range =
   unsigned(vaddr[17 .. 12])
@@ -57,16 +82,18 @@ function init_TLB() -> unit = {
 
 // PUBLIC: invoked in translate_TLB_hit() [riscv_vmem.sail]
 function write_TLB(index : tlb_index_range, ent : TLB_Entry, stage : AddressTranslationStage) -> unit =
-  // TODO: Update stage specific TLB
-  tlb_S[index] = Some(ent)
+  match stage {
+    Stage_S  => tlb_S[index]  = Some(ent),
+    Stage_G  => tlb_G[index]  = Some(ent),
+    Stage_VS => tlb_VS[index] = Some(ent),
+  }
 
 // PRIVATE
 function match_TLB_Entry(ent   : TLB_Entry,
                          xxid  : xxidbits,
-                         vaddr : bits(64)) -> bool = false
-  // FIXME: TLBs are not yet stage specific, never match is a temporary fix
-  // (ent.global | (ent.xxid == xxid))
-  // & (ent.vAddr == (ent.vMatchMask & vaddr))
+                         vaddr : bits(64)) -> bool =
+  (ent.global | (ent.xxid == xxid))
+  & (ent.vAddr == (ent.vMatchMask & vaddr))
 
 // PRIVATE
 function flush_TLB_Entry(e    : TLB_Entry,
@@ -83,9 +110,13 @@ function flush_TLB_Entry(e    : TLB_Entry,
 
 // PUBLIC: invoked in translate() [riscv_vmem.sail]
 function lookup_TLB (xxid : xxidbits, stage : AddressTranslationStage, vaddr : bits(64)) -> option((tlb_index_range, TLB_Entry)) = {
-  // TODO: Look in stage specific TLB
   let index = tlb_hash(vaddr);
-  match tlb_S[index] {
+  let tlb_slot : option(TLB_Entry) = match stage {
+    Stage_S  => tlb_S[index],
+    Stage_G  => tlb_G[index],
+    Stage_VS => tlb_VS[index],
+  };
+  match tlb_slot {
     None() => None(),
     Some(entry) => if match_TLB_Entry(entry, xxid, vaddr) then Some((index, entry)) else None(),
   }
@@ -117,13 +148,16 @@ function add_to_TLB(xxid          : xxidbits,
                                  pAddr      = pAddr & vMatchMask,
                                  age        = mcycle};
 
-  // TODO: Add to stage specific TLB
   // Add the TLB entry. Note that this may be a super-page, but we still want
   // to add it to the index corresponding to the page because that is how
   // lookup_TLB looks it up. For superpages will just end up with the same
   // TLB entry in multiple slots.
   let index = tlb_hash(vAddr);
-  tlb_S[index] = Some(entry);
+    match stage {
+    Stage_S  => tlb_S[index]  = Some(entry),
+    Stage_VS => tlb_VS[index] = Some(entry),
+    Stage_G  => tlb_G[index]  = Some(entry),
+  }
 }
 
 // Top-level TLB flush function
@@ -141,11 +175,25 @@ function flush_TLB(asid_xlen : option(xlenbits),
       None()  => None(),
       Some(a) => Some(zero_extend(a))
     };
-  // TODO: Flush from stage specific TLB
-  foreach (i from 0 to (length(tlb_S) - 1)) {
-    match tlb_S[i] {
-      Some(e) => if flush_TLB_Entry(e, xxid, addr_64b) then { tlb_S[i] = None(); },
-      None()  => (),
-    }
+
+  match stage {
+    Stage_S  => foreach (i from 0 to (length(tlb_S) - 1)) {
+                  match tlb_S[i] {
+                    Some(e) => if flush_TLB_Entry(e, xxid, addr_64b) then { tlb_S[i] = None(); },
+                    None()  => (),
+                  }
+                },
+    Stage_VS => foreach (i from 0 to (length(tlb_VS) - 1)) {
+                  match tlb_VS[i] {
+                    Some(e) => if flush_TLB_Entry(e, xxid, addr_64b) then { tlb_VS[i] = None(); },
+                    None()  => (),
+                  }
+                },
+    Stage_G  => foreach (i from 0 to (length(tlb_G) - 1)) {
+                  match tlb_G[i] {
+                    Some(e) => if flush_TLB_Entry(e, xxid, addr_64b) then { tlb_G[i] = None(); },
+                    None()  => (),
+                  }
+                }
   }
 }
