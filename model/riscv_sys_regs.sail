@@ -775,8 +775,10 @@ bitfield MEnvcfg : bits(64) = {
   STCE   : 63,
   // Page Based Memory Types Extension
   PBMTE  : 62,
+  // Hardware update of A/D bits Extension
+  ADUE   : 61,
   // Reserved WPRI bits.
-  wpri_1 : 61 .. 8,
+  wpri_1 : 60 .. 8,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable

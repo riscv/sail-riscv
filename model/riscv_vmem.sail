@@ -402,7 +402,10 @@ function translate_TLB_hit(sv_params : SV_Params,
             let n_ent = {ent with pte=pte'};
             write_TLB(tlb_index, n_ent, stage);
             let pte_phys_addr : xlenbits = match stage {
-              Stage_VS => internal_error(__FILE__, __LINE__, "VS-stage address translation is not yet implemented"),
+              Stage_VS => match translate_stage(ent.pteAddr, Write(Data), User, Stage_G, ext_ptw) {
+                            TRi_Address(pte_pa, ext_ptw) => pte_pa[(sizeof(xlen) - 1) .. 0],
+                            TRi_Failure(f, ext_ptw) => return TRi_Failure(PTW_Implicit(ptw_implicit_error(f), ent.pteAddr, Write(Data)), ext_ptw),
+                          },
               _  => ent.pteAddr[(xlen - 1) .. 0],
             };
 
@@ -452,7 +455,13 @@ function translate_TLB_miss(sv_params : SV_Params,
             TRi_Failure(PTW_PTE_Update(), ext_ptw)
           else {
             // Writeback the PTE (which has new A/D bits)
-            let pte_phys_addr = pteAddr[(xlen - 1) .. 0];
+            let pte_phys_addr : xlenbits = match stage {
+              Stage_VS => match translate_stage(pteAddr, Write(Data), User, Stage_G, ext_ptw) {
+                            TRi_Address(pte_pa, ext_ptw) => pte_pa[(sizeof(xlen) - 1) .. 0],
+                            TRi_Failure(f, ext_ptw) => return TRi_Failure(PTW_Implicit(ptw_implicit_error(f), pteAddr, Write(Data)), ext_ptw),
+                          },
+              _  => pteAddr[(xlen - 1) .. 0],
+            };
 
             match write_pte(pte_phys_addr, 2 ^ sv_params.log_pte_size_bytes, pte') {
               MemValue(_) => {
