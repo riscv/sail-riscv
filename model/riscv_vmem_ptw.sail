@@ -109,6 +109,23 @@ function translationException(a : AccessType(ext_access_type),
 }
 
 // PRIVATE
+// TODO: Integrate this fn with `translationException(...)`
+/*!
+ * Convert exceptions resulting from G-stage page walks to the correct architectural exception:
+ *   - Guest-page-fault exceptions are raised instead of regular page-walk exceptions
+ *   - Any exception is always reported for the original access type
+ */
+val GStage_exception : forall 'a . (ExceptionType, AccessType('a)) -> ExceptionType
+function GStage_exception(e, a) = {
+  match exceptionType_update_AccessType(e, a) {
+    E_Fetch_Page_Fault() => E_Fetch_GPage_Fault(),
+    E_Load_Page_Fault()  => E_Load_GPage_Fault(),
+    E_SAMO_Page_Fault()  => E_SAMO_GPage_Fault(),
+    _ => e /* Other exceptions should not be converted */
+  }
+}
+
+// PRIVATE
 /*! Build a pseudoinstruction encoding for a given access type and architecture */
 function pseudoinst(ac : AccessType(ext_access_type), arch : Architecture) -> bits(32) = {
   match (arch, ac) {

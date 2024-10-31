@@ -9,7 +9,7 @@
 // ****************************************************************
 // Virtual memory address translation and memory protection,
 // including PTWs (Page Table Walks) and TLBs (Translation Look-aside Buffers)
-// Supported VM modes: Sv32, Sv39, Sv48.  TODO: Sv57
+// Supported VM modes: Sv32, Sv32x4, Sv39, Sv39x4, Sv48 and Sv48x4. TODO: Sv57 and Sv57x4
 
 // STYLE NOTES:
 //   PRIVATE items are used only within this VM code.
@@ -41,7 +41,9 @@ function vpn_j_of_va(sv_params : SV_Params,
                      level     : PTW_Level) -> bits(64) = {
   let lsb  : range(0,63) = pagesize_bits + level * sv_params.vpn_size_bits;
   assert (lsb < xlen);
-  let mask : bits(64) = zero_extend(ones(sv_params.vpn_size_bits));
+  let mask : bits(64) = if (level == sv_params.levels - 1)
+                        then zero_extend(ones(sv_params.root_vpn_size_bits))
+                        else zero_extend(ones(sv_params.vpn_size_bits));
   ((va >> lsb) & mask)
 }
 
@@ -52,9 +54,34 @@ function offset_of_va(va : bits(64)) -> bits(PAGESIZE_BITS) = va[pagesize_bits -
 // bits equal to the MSB of the virtual address.
 // Virtual address widths depend on the virtual memory mode.
 // PRIVATE
-function is_valid_vAddr(struct { va_size_bits, _ } : SV_Params,
-                        vAddr                      : bits(64)) -> bool =
- vAddr == sign_extend(vAddr[va_size_bits - 1 .. 0])
+function is_valid_vAddr(struct { va_size_bits, va_sign_extends, _ } : SV_Params,
+                        vAddr : bits(64)) -> bool = {
+  if va_sign_extends
+  then vAddr == sign_extend(vAddr[va_size_bits - 1 .. 0])
+  else vAddr == zero_extend(vAddr[va_size_bits - 1 .. 0])
+}
+
+// ****************************************************************
+// Translate VA -> PA (S-stage), VA -> GPA (VS-stage) or GPA -> SPA(G-stage)
+
+// Result of Address Translation (for internal, private functions)
+// PRIVATE
+union TRi_Result = {
+  TRi_Address : (bits(64), ext_ptw),
+  TRi_Failure : (PTW_Error, ext_ptw)
+}
+
+// Note: translate_stage is used for translation of implicit accesses during page walk
+//       => 'val' declaration should occur before 'function' definition of pt_walk,
+//          the 'function' definition of translate_stage is further down in this file
+
+// PRIVATE
+val translate_stage : (bits(64),                    // virtual address
+                       AccessType(ext_access_type), // Read/Write/ReadWrite/Execute
+                       Privilege,                   // Machine/Supervisor/User
+                       AddressTranslationStage,     // S/VS/G
+                       ext_ptw                      // ext_ptw
+                      ) -> TRi_Result
 
 // ****************************************************************
 // Results of Page Table Walk (PTW)
@@ -72,6 +99,7 @@ union PTW_Result = {
 
 // PRIVATE
 val pt_walk : (SV_Params,
+               AddressTranslationStage,      // stage
                bits(64),                     // virtual addr
                AccessType(ext_access_type),  // Read/Write/ReadWrite/Execute
                Privilege,                    // User/Supervisor/Machine
@@ -84,6 +112,7 @@ val pt_walk : (SV_Params,
               -> PTW_Result
 
 function pt_walk(sv_params,
+                 stage,
                  va,
                  ac,
                  priv,
@@ -101,7 +130,13 @@ function pt_walk(sv_params,
   // Below, 'pte_phys_addr' is XLEN bits because it's an arg to
   // 'mem_read_priv()' [riscv_mem.sail] where it's declared as xlenbits.
   // That def and this use need to be fixed together (TODO)
-  let pte_phys_addr : xlenbits = pte_addr[(xlen - 1) .. 0];
+  let pte_phys_addr : xlenbits = match stage {
+    Stage_VS => match translate_stage(pte_addr, Read(Data), User, Stage_G, ext_ptw) {
+      TRi_Address(pte_pa, ext_ptw) => pte_pa[(sizeof(xlen) - 1) .. 0],
+      TRi_Failure(f, ext_ptw)  => return PTW_Failure(PTW_Implicit(ptw_implicit_error(f), pte_addr, Read(Data)), ext_ptw),
+    },
+    _  => pte_addr[(sizeof(xlen) - 1) .. 0]
+  };
 
   // Read this-level PTE from mem
   let mem_result = mem_read_priv(Read(Data),              // AccessType
@@ -130,7 +165,7 @@ function pt_walk(sv_params,
             // follow the pointer to walk next level
             let pt_base' : bits(64) = ppns << pagesize_bits;
             let level'              = level - 1;
-            pt_walk(sv_params, va, ac, priv, mxr, do_sum,
+            pt_walk(sv_params, stage, va, ac, priv, mxr, do_sum,
                     pt_base', level', global', ext_ptw)
           }
           else
@@ -229,39 +264,6 @@ function satp_to_PT_base(satp_val : xlenbits) -> bits(64) = {
   ppn << pagesize_bits
 }
 
-// Compute address translation mode from SATP register
-// PRIVATE
-function translationMode(priv : Privilege) -> AddressTranslationMode = {
-  if priv == Machine then
-    Bare
-  else if xlen == 32 then
-    match Mk_Satp32(satp)[Mode] {
-      0b0 => Bare,
-      0b1  => Sv32
-    }
-  else if xlen == 64 then {
-    // Translation mode is based on mstatus.SXL, which could be RV32 when xlen==64
-    let arch = architecture(get_mstatus_SXL(mstatus));
-    match arch {
-      Some(RV64) => { let mbits : bits(4) = satp[63 .. 60];
-                      match satp64Mode_of_bits(RV64, mbits) {    // see riscv_types.sail
-                        Some(m) => m,
-                        None()  => internal_error(__FILE__, __LINE__,
-                                                  "invalid RV64 translation mode in satp")
-                      }
-                    },
-      Some(RV32) => match Mk_Satp32(satp[31 .. 0])[Mode] {    // Note: satp is 64bits here
-                      // When xlen is 64, mstatus.SXL (for S privilege) can be RV32
-                      0b0 => Bare,
-                      0b1  => Sv32
-                    },
-      _    => internal_error(__FILE__, __LINE__, "unsupported address translation arch")
-    }
-  }
-  else
-    internal_error(__FILE__, __LINE__, "unsupported xlen")
-}
-
 // ****************************************************************
 // Architectural HGATP CSR
 
@@ -318,6 +320,36 @@ function hgatp_to_PT_base(hgatp_val : xlenbits) -> bits(64) = {
   ppn << pagesize_bits
 }
 
+// ****************************************************************
+// Applicable address translation mode
+
+// Compute address translation mode from SATP/HGATP register
+// PRIVATE
+function translationMode(priv : Privilege, stage : AddressTranslationStage) -> AddressTranslationMode = {
+  // For S- & G-stage, translation mode is based on mstatus.SXL
+  // For VS-stage, translation mode is based on hstatus.VSXL
+  let arch : option(Architecture) = match stage {
+    Stage_VS => architecture(get_hstatus_VSXL(hstatus)),
+    _        => architecture(get_mstatus_SXL(mstatus)),
+  };
+
+  let mode = if priv == Machine then
+               Some(Bare)
+             else match (stage, arch) {
+               (Stage_S,  Some(RV32)) => satp64Mode_of_bits(RV32, zero_extend(Mk_Satp32(satp[31 .. 0])[Mode])),
+               (Stage_S,  Some(RV64)) => satp64Mode_of_bits(RV64, Mk_Satp64(satp)[Mode]),
+               (Stage_VS, Some(RV32)) => satp64Mode_of_bits(RV32, zero_extend(Mk_Satp32(vsatp[31 .. 0])[Mode])),
+               (Stage_VS, Some(RV64)) => satp64Mode_of_bits(RV64, Mk_Satp64(vsatp)[Mode]),
+               (Stage_G,  Some(RV32)) => hgatp64Mode_of_bits(RV32, zero_extend(Mk_Hgatp32(hgatp[31 .. 0])[Mode])),
+               (Stage_G,  Some(RV64)) => hgatp64Mode_of_bits(RV64, Mk_Hgatp64(hgatp)[Mode]),
+               (_,  _)          => internal_error(__FILE__, __LINE__, "unsupported address translation arch")
+             };
+
+  match mode {
+      Some(m) => m,
+      None()  => internal_error(__FILE__, __LINE__, "invalid translation mode in xatp")
+  }
+}
 
 // ****************************************************************
 // VA to PA translation
@@ -332,24 +364,11 @@ function write_pte forall 'n, 'n in {4, 8} . (
 ) -> MemoryOpResult(bool) =
   mem_write_value_priv(paddr, pte_size, pte[pte_size * 8 - 1 .. 0], Supervisor, false, false, false)
 
-// Result of address translation
-
-// PUBLIC
-/*! Result of Address Translation (AT) */
-union TR_Result('paddr : Type, 'exception : Type, 'context : Type) = {
-  TR_Address : ('paddr, ext_ptw),
-  TR_Failure : ('exception, 'context, ext_ptw)
-}
-
-// PRIVATE
-union TRi_Result('paddr : Type, 'failure : Type) = {
-  TRi_Address : ('paddr, ext_ptw),
-  TRi_Failure : ('failure, ext_ptw)
-}
 // This function can be ignored on first reading since TLBs are not
 // part of RISC-V architecture spec (see TLB_NOTE above).
 // PRIVATE: translate on TLB hit, and maintenance of PTE in TLB
 function translate_TLB_hit(sv_params : SV_Params,
+                           stage     : AddressTranslationStage,
                            xxid      : xxidbits,
                            ptb       : bits(64),
                            vAddr     : bits(64),
@@ -360,7 +379,7 @@ function translate_TLB_hit(sv_params : SV_Params,
                            ext_ptw   : ext_ptw,
                            tlb_index : tlb_index_range,
                            ent       : TLB_Entry)
-                          -> TRi_Result(bits(64), PTW_Error) = {
+                          -> TRi_Result = {
   let pte       = ent.pte;
   let ext_pte   = msbs_of_PTE(sv_params, pte);
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
@@ -381,8 +400,11 @@ function translate_TLB_hit(sv_params : SV_Params,
           else {
             // Writeback the PTE (which has new A/D bits)
             let n_ent = {ent with pte=pte'};
-            write_TLB(tlb_index, n_ent);
-            let pte_phys_addr = ent.pteAddr[(xlen - 1) .. 0];
+            write_TLB(tlb_index, n_ent, stage);
+            let pte_phys_addr : xlenbits = match stage {
+              Stage_VS => internal_error(__FILE__, __LINE__, "VS-stage address translation is not yet implemented"),
+              _  => ent.pteAddr[(xlen - 1) .. 0],
+            };
 
             match write_pte(pte_phys_addr, 2 ^ sv_params.log_pte_size_bytes, pte') {
               MemValue(_)     => (),
@@ -397,6 +419,7 @@ function translate_TLB_hit(sv_params : SV_Params,
 
 // PRIVATE: translate on TLB miss (do a page-table walk)
 function translate_TLB_miss(sv_params : SV_Params,
+                            stage     : AddressTranslationStage,
                             xxid      : xxidbits,
                             ptb       : bits(64),
                             vAddr     : bits(64),
@@ -404,9 +427,10 @@ function translate_TLB_miss(sv_params : SV_Params,
                             priv      : Privilege,
                             mxr       : bool,
                             do_sum    : bool,
-                            ext_ptw   : ext_ptw) -> TRi_Result(bits(64), PTW_Error) = {
+                            ext_ptw   : ext_ptw)
+                            -> TRi_Result = {
   let initial_level = sv_params.levels - 1;
-  let ptw_result    = pt_walk(sv_params, vAddr, ac, priv, mxr, do_sum,
+  let ptw_result    = pt_walk(sv_params, stage, vAddr, ac, priv, mxr, do_sum,
                               ptb, initial_level, false, ext_ptw);
   match ptw_result {
     PTW_Failure(f, ext_ptw) => TRi_Failure(f, ext_ptw),
@@ -416,7 +440,7 @@ function translate_TLB_miss(sv_params : SV_Params,
       // by: 'TRi_Address(pAddr, ext_ptw)'    (see TLB_NOTE above)
       match update_PTE_Bits(sv_params, pte, ac) {
         None() => {
-          add_to_TLB(xxid, vAddr, pAddr, pte, pteAddr, level, global,
+          add_to_TLB(xxid, stage, vAddr, pAddr, pte, pteAddr, level, global,
                      sv_params.vpn_size_bits,
                      pagesize_bits);
           TRi_Address(pAddr, ext_ptw)
@@ -432,7 +456,7 @@ function translate_TLB_miss(sv_params : SV_Params,
 
             match write_pte(pte_phys_addr, 2 ^ sv_params.log_pte_size_bytes, pte') {
               MemValue(_) => {
-                add_to_TLB(xxid, vAddr, pAddr, pte', pteAddr, level, global,
+                add_to_TLB(xxid, stage, vAddr, pAddr, pte', pteAddr, level, global,
                            sv_params.vpn_size_bits,
                            pagesize_bits);
                 TRi_Address(pAddr, ext_ptw)
@@ -448,6 +472,7 @@ function translate_TLB_miss(sv_params : SV_Params,
 
 // PRIVATE
 function translate(sv_params : SV_Params,
+                   stage     : AddressTranslationStage,
                    xxid      : xxidbits,
                    ptb       : bits(64),
                    vAddr     : bits(64),
@@ -456,15 +481,156 @@ function translate(sv_params : SV_Params,
                    mxr       : bool,
                    do_sum    : bool,
                    ext_ptw   : ext_ptw)
-                  -> TRi_Result(bits(64), PTW_Error) = {
+                  -> TRi_Result = {
   // On first reading, assume lookup_TLB returns None(), since TLBs
   // are not part of RISC-V archticture spec (see TLB_NOTE above)
-  match lookup_TLB(xxid, vAddr) {
-    Some(index, ent) => translate_TLB_hit(sv_params, xxid, ptb, vAddr, ac, priv,
+  match lookup_TLB(xxid, stage, vAddr) {
+    Some(index, ent) => translate_TLB_hit(sv_params, stage, xxid, ptb, vAddr, ac, priv,
                                           mxr, do_sum, ext_ptw, index, ent),
-    None()           => translate_TLB_miss(sv_params, xxid, ptb, vAddr, ac, priv,
+    None()           => translate_TLB_miss(sv_params, stage, xxid, ptb, vAddr, ac, priv,
                                            mxr, do_sum, ext_ptw)
   }
+}
+
+// PRIVATE: perform address translation for a specific stage
+function translate_stage(vAddr,
+                         ac,
+                         priv,
+                         stage,
+                         ext_ptw) = {
+  match stage {
+    Stage_S => {
+      let mode = translationMode(priv, stage);
+      // print("[DEBUG] Using " ^ to_str(mode) ^ " for S-stage address translation"); /* Debug: Print address translation mode */
+      let (valid_va, sv_params) : (bool, SV_Params) = match mode {
+        Bare => return TRi_Address(vAddr, ext_ptw),
+        Sv32  => (true,                               sv32_params),
+        Sv39  => (is_valid_vAddr(sv39_params, vAddr), sv39_params),
+        Sv48  => (is_valid_vAddr(sv48_params, vAddr), sv48_params),
+        // Sv57 => (is_valid_vAddr(sv57_params, vAddr), sv57_params),    // TODO
+        _     => internal_error(__FILE__, __LINE__, "Invalid S-stage address translation mode")
+      };
+      if not(valid_va) then
+        TRi_Failure(PTW_Invalid_Addr(), ext_ptw)
+      else {
+        let mxr    : bool     = mstatus[MXR] == 0b1;
+        let do_sum : bool     = mstatus[SUM] == 0b1;
+        let asid   : bits(16) = satp_to_asid(satp);
+        let ptb    : bits(64) = satp_to_PT_base(satp);
+        translate(sv_params,
+                  Stage_S,
+                  asid,
+                  ptb,
+                  vAddr,
+                  ac,
+                  priv,
+                  mxr,
+                  do_sum,
+                  ext_ptw)
+      }
+    },
+    Stage_VS => {
+      let mode = translationMode(priv, stage);
+      // print("[DEBUG] Using " ^ to_str(mode) ^ " for VS-stage address translation"); /* Debug: Print address translation mode */
+      let (valid_va, sv_params) : (bool, SV_Params) = match mode {
+        Bare => return TRi_Address(vAddr, ext_ptw),
+        Sv32  => (true,                               sv32_params),
+        Sv39  => (is_valid_vAddr(sv39_params, vAddr), sv39_params),
+        Sv48  => (is_valid_vAddr(sv48_params, vAddr), sv48_params),
+        // Sv57 => (is_valid_vAddr(sv57_params, vAddr), sv57_params),    // TODO
+        _     => internal_error(__FILE__, __LINE__, "Invalid VS-stage address translation mode")
+      };
+      if not(valid_va) then
+        TRi_Failure(PTW_Invalid_Addr(), ext_ptw)
+      else {
+        let mxr    : bool     = mstatus[MXR] == 0b1 | vsstatus[MXR] == 0b1; // HS-level MXR overwrites VS-stage page protections
+        let do_sum : bool     = vsstatus[SUM] == 0b1;
+        let asid   : bits(16) = satp_to_asid(vsatp);
+        let ptb    : bits(64) = satp_to_PT_base(vsatp);
+        translate(sv_params,
+                  Stage_VS,
+                  asid,
+                  ptb,
+                  vAddr,
+                  ac,
+                  priv,
+                  mxr,
+                  do_sum,
+                  ext_ptw)
+      }
+    },
+    Stage_G => {
+      let mode = translationMode(priv, stage);
+      // print("[DEBUG] Using " ^ to_str(mode) ^ " for G-stage address translation"); /* Debug: Print address translation mode */
+      let (valid_va, sv_params) : (bool, SV_Params) = match mode {
+        Bare => return TRi_Address(vAddr, ext_ptw),
+        Sv32x4  => (true,                                 sv32x4_params),
+        Sv39x4  => (is_valid_vAddr(sv39x4_params, vAddr), sv39x4_params),
+        Sv48x4  => (is_valid_vAddr(sv48x4_params, vAddr), sv48x4_params),
+        // Sv57x4  => (is_valid_vAddr(sv57x4_params, vAddr), sv57x4_params), // TODO
+        _       => internal_error(__FILE__, __LINE__, "Invalid G-stage address translation mode")
+      };
+      if not(valid_va) then
+        TRi_Failure(PTW_Invalid_Addr(), ext_ptw)
+      else {
+        let mxr    : bool     = mstatus[MXR] == 0b1;
+        let do_sum : bool     = mstatus[SUM] == 0b1;
+        let vmid   : bits(16) = zero_extend(hgatp_to_vmid(hgatp));
+        let ptb    : bits(64) = hgatp_to_PT_base(hgatp);
+        translate(sv_params,
+                  Stage_G,
+                  vmid,
+                  ptb,
+                  vAddr,
+                  ac,
+                  User,                 // All G-stage memory accesses are considered User-level
+                  mxr,
+                  do_sum,
+                  ext_ptw)
+      }
+    },
+  }
+}
+
+// PUBLIC
+/*! Result of Address Translation (AT) */
+union TR_Result('paddr : Type, 'exception : Type, 'context : Type) = {
+  TR_Address : ('paddr, ext_ptw),
+  TR_Failure : ('exception, 'context, ext_ptw)
+}
+
+// Addr-translation function for specific privilege & virtualization mode
+// PUBLIC: invoked from HLV, HSV and HLVX
+function translateAddr_pv(vAddr : xlenbits,
+                          ac    : AccessType(ext_access_type),
+                          priv  : Privilege,
+                          virt  : Virtualization)
+                          -> TR_Result(xlenbits, ExceptionType, ExceptionContext) = {
+  // Internally the vmem code works with 64-bit values, whether xlen==32 or xlen==64
+  // This 'extend' is a no-op when xlen==64 and extends when xlen==32
+  let vAddr_64b : bits(64) = zero_extend(vAddr);
+  // PTW extensions (non-standard): initialize the PTW extension state
+  let ext_ptw   : ext_ptw = init_ext_ptw;
+
+  if virt == V0 then
+    match translate_stage(vAddr_64b, ac, priv, Stage_S, ext_ptw) {
+      TRi_Address(pa, ext_ptw) => TR_Address(truncate(pa, sizeof(xlen)), ext_ptw),
+      TRi_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f),
+                                             translationExcContext(f, vAddr_64b, false),
+                                             ext_ptw)
+    }
+  else
+    match translate_stage(vAddr_64b, ac, priv, Stage_VS, ext_ptw) {
+      TRi_Address(gpa, ext_ptw) => match translate_stage(gpa, ac, priv, Stage_G, ext_ptw){
+        TRi_Address(spa, ext_ptw) => TR_Address(truncate(spa, sizeof(xlen)), ext_ptw),
+        TRi_Failure(f, ext_ptw)  => TR_Failure(GStage_exception(translationException(ac, f), ac),
+                                               {translationExcContext(f, vAddr_64b, true) with excinfo2 = Some(truncate(gpa >> 2, sizeof(xlen)))},
+                                               ext_ptw)
+      },
+      TRi_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f),
+                                             translationExcContext(f, vAddr_64b, true),
+                                             ext_ptw)
+    }
 }
 
 // Top-level addr-translation function
@@ -472,39 +638,13 @@ function translate(sv_params : SV_Params,
 function translateAddr(vAddr   : xlenbits,
                        ac      : AccessType(ext_access_type))
                       -> TR_Result(xlenbits, ExceptionType, ExceptionContext) = {
-  // Internally the vmem code works with 64-bit values, whether xlen==32 or xlen==64
-  // This 'extend' is a no-op when xlen==64 and extends when xlen==32
-  let vAddr_64b : bits(64) = zero_extend(vAddr);
-  // Effective privilege takes into account mstatus.PRV, mstatus.MPP
+  // Effective privilege takes into account mstatus.MPRV, mstatus.MPP
   // See riscv_sys_regs.sail for effectivePrivilege() and cur_privilege
-  let effPriv   : Privilege = effectivePrivilege(ac, mstatus, cur_privilege);
-  let mode      : AddressTranslationMode = translationMode(effPriv);
-  let (valid_va, sv_params) : (bool, SV_Params) = match mode {
-    Bare => return TR_Address(vAddr, init_ext_ptw),
-    Sv32  => (true,                                 sv32_params),
-    Sv39  => (is_valid_vAddr(sv39_params, vAddr_64b), sv39_params),
-    Sv48  => (is_valid_vAddr(sv48_params, vAddr_64b), sv48_params),
-    // Sv57 => (is_valid_vAddr(sv57_params, vAddr_64b), sv57_params),    // TODO
-  };
-  if not(valid_va) then
-    TR_Failure(translationException(ac, PTW_Invalid_Addr()), translationExcContext(PTW_Invalid_Addr(), vAddr_64b, false), init_ext_ptw)
-  else {
-    let mxr               = mstatus[MXR] == 0b1;
-    let do_sum            = mstatus[SUM] == 0b1;
-    let asid   : asidbits = satp_to_asid(satp);
-    let ptb    : bits(64) = satp_to_PT_base(satp);
-    let tr_result1 = translate(sv_params,
-                               asid,
-                               ptb,
-                               vAddr_64b,
-                               ac, effPriv, mxr, do_sum,
-                               init_ext_ptw);
-    // Fixup result PA or exception
-    match tr_result1 {
-      TRi_Address(pa, ext_ptw) => TR_Address(truncate(pa, xlen), ext_ptw),
-      TRi_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), translationExcContext(f, vAddr_64b, false), ext_ptw)
-    }
-  }
+  let effPriv   : Privilege      = effectivePrivilege(ac, mstatus, cur_privilege);
+  // Effective virtualization takes into account mstatus.MPRV, mstatus.MPV
+  let effVirt   : Virtualization = effectiveVirtualization(ac, mstatus, cur_virtualization);
+
+  translateAddr_pv(vAddr, ac, effPriv, effVirt)
 }
 
 // ****************************************************************

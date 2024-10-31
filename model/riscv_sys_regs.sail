@@ -210,6 +210,11 @@ function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv :
   then privLevel_of_bits(m[MPP])
   else priv
 
+function effectiveVirtualization(t : AccessType(ext_access_type), m : Mstatus, virt : Virtualization) -> Virtualization =
+  if   t != Execute() & m[MPRV] == 0b1
+  then virtMode_of_bits(mstatus[MPV])
+  else virt
+
 function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
   if   xlen == 32
   then arch_to_bits(RV32)

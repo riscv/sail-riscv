@@ -56,15 +56,17 @@ function init_TLB() -> unit = {
 }
 
 // PUBLIC: invoked in translate_TLB_hit() [riscv_vmem.sail]
-function write_TLB(index : tlb_index_range, ent : TLB_Entry) -> unit =
+function write_TLB(index : tlb_index_range, ent : TLB_Entry, stage : AddressTranslationStage) -> unit =
+  // TODO: Update stage specific TLB
   tlb_S[index] = Some(ent)
 
 // PRIVATE
 function match_TLB_Entry(ent   : TLB_Entry,
                          xxid  : xxidbits,
-                         vaddr : bits(64)) -> bool =
-  (ent.global | (ent.xxid == xxid))
-  & (ent.vAddr == (ent.vMatchMask & vaddr))
+                         vaddr : bits(64)) -> bool = false
+  // FIXME: TLBs are not yet stage specific, never match is a temporary fix
+  // (ent.global | (ent.xxid == xxid))
+  // & (ent.vAddr == (ent.vMatchMask & vaddr))
 
 // PRIVATE
 function flush_TLB_Entry(e    : TLB_Entry,
@@ -80,7 +82,8 @@ function flush_TLB_Entry(e    : TLB_Entry,
 }
 
 // PUBLIC: invoked in translate() [riscv_vmem.sail]
-function lookup_TLB (xxid : xxidbits, vaddr : bits(64)) -> option((tlb_index_range, TLB_Entry)) = {
+function lookup_TLB (xxid : xxidbits, stage : AddressTranslationStage, vaddr : bits(64)) -> option((tlb_index_range, TLB_Entry)) = {
+  // TODO: Look in stage specific TLB
   let index = tlb_hash(vaddr);
   match tlb_S[index] {
     None() => None(),
@@ -90,6 +93,7 @@ function lookup_TLB (xxid : xxidbits, vaddr : bits(64)) -> option((tlb_index_ran
 
 // PRIVATE
 function add_to_TLB(xxid          : xxidbits,
+                    stage         : AddressTranslationStage,
                     vAddr         : bits(64),
                     pAddr         : bits(64),
                     pte           : bits(64),
@@ -113,6 +117,7 @@ function add_to_TLB(xxid          : xxidbits,
                                  pAddr      = pAddr & vMatchMask,
                                  age        = mcycle};
 
+  // TODO: Add to stage specific TLB
   // Add the TLB entry. Note that this may be a super-page, but we still want
   // to add it to the index corresponding to the page because that is how
   // lookup_TLB looks it up. For superpages will just end up with the same
@@ -124,7 +129,7 @@ function add_to_TLB(xxid          : xxidbits,
 // Top-level TLB flush function
 // PUBLIC: invoked from exec SFENCE_VMA, HFENCE_VVMA and HFENCE_GVMA
 function flush_TLB(asid_xlen : option(xlenbits),
-                   stage     : AddressTranslationStage, // FIXME: Currently unused
+                   stage     : AddressTranslationStage,
                    addr_xlen : option(xlenbits)) -> unit = {
   let xxid : option(xxidbits) =
     match asid_xlen {
@@ -136,6 +141,7 @@ function flush_TLB(asid_xlen : option(xlenbits),
       None()  => None(),
       Some(a) => Some(zero_extend(a))
     };
+  // TODO: Flush from stage specific TLB
   foreach (i from 0 to (length(tlb_S) - 1)) {
     match tlb_S[i] {
       Some(e) => if flush_TLB_Entry(e, xxid, addr_64b) then { tlb_S[i] = None(); },
