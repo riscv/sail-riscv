@@ -83,9 +83,10 @@ function ext_get_ptw_error(eptwf : ext_ptw_fail) -> PTW_Error =
 // PRIVATE
 /*! Convert translation/PTW failures into architectural exceptions */
 function translationException(a : AccessType(ext_access_type),
+                              s : AddressTranslationStage,
                               f : PTW_Error)
                               -> ExceptionType = {
-  match (a, f) {
+  let e : ExceptionType = match (a, f) {
     (_, PTW_Ext_Error(e))         => E_Extension(ext_translate_exception(e)),
     (_, PTW_Implicit(fi, _, _))   => match (a, fi) { // Report exception for the original access type (of explicit page-walk)
                                        (_, PTW_I_Ext_Error(e))         => E_Extension(ext_translate_exception(e)),
@@ -105,24 +106,19 @@ function translationException(a : AccessType(ext_access_type),
     (Write(_), _)                 => E_SAMO_Page_Fault(),
     (Execute(), PTW_Access())     => E_Fetch_Access_Fault(),
     (Execute(), _)                => E_Fetch_Page_Fault()
-  }
-}
+  };
 
-// PRIVATE
-// TODO: Integrate this fn with `translationException(...)`
-/*!
- * Convert exceptions resulting from G-stage page walks to the correct architectural exception:
- *   - Guest-page-fault exceptions are raised instead of regular page-walk exceptions
- *   - Any exception is always reported for the original access type
- */
-val GStage_exception : forall 'a . (ExceptionType, AccessType('a)) -> ExceptionType
-function GStage_exception(e, a) = {
-  match exceptionType_update_AccessType(e, a) {
-    E_Fetch_Page_Fault() => E_Fetch_GPage_Fault(),
-    E_Load_Page_Fault()  => E_Load_GPage_Fault(),
-    E_SAMO_Page_Fault()  => E_SAMO_GPage_Fault(),
-    _ => e /* Other exceptions should not be converted */
-  }
+  /* Convert exceptions resulting from G-stage page walks to the correct architectural exception:
+   *   - Guest-page-fault exceptions are raised instead of regular page-walk exceptions
+   *   - Any exception is always reported for the original access type */
+  if s == Stage_G then
+    match exceptionType_update_AccessType(e, a) {
+      E_Fetch_Page_Fault() => E_Fetch_GPage_Fault(),
+      E_Load_Page_Fault()  => E_Load_GPage_Fault(),
+      E_SAMO_Page_Fault()  => E_SAMO_GPage_Fault(),
+      _ => e /* Other exceptions should not be converted */
+    }
+  else e
 }
 
 // PRIVATE

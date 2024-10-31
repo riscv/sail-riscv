@@ -621,7 +621,7 @@ function translateAddr_pv(vAddr : xlenbits,
   if virt == V0 then
     match translate_stage(vAddr_64b, ac, priv, Stage_S, ext_ptw) {
       TRi_Address(pa, ext_ptw) => TR_Address(truncate(pa, sizeof(xlen)), ext_ptw),
-      TRi_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f),
+      TRi_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, Stage_S, f),
                                              translationExcContext(f, vAddr_64b, false),
                                              ext_ptw)
     }
@@ -629,11 +629,11 @@ function translateAddr_pv(vAddr : xlenbits,
     match translate_stage(vAddr_64b, ac, priv, Stage_VS, ext_ptw) {
       TRi_Address(gpa, ext_ptw) => match translate_stage(gpa, ac, priv, Stage_G, ext_ptw){
         TRi_Address(spa, ext_ptw) => TR_Address(truncate(spa, sizeof(xlen)), ext_ptw),
-        TRi_Failure(f, ext_ptw)  => TR_Failure(GStage_exception(translationException(ac, f), ac),
+        TRi_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, Stage_G, f),
                                                {translationExcContext(f, vAddr_64b, true) with excinfo2 = Some(truncate(gpa >> 2, sizeof(xlen)))},
                                                ext_ptw)
       },
-      TRi_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f),
+      TRi_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, Stage_VS, f),
                                              translationExcContext(f, vAddr_64b, true),
                                              ext_ptw)
     }
