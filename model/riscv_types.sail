@@ -202,7 +202,7 @@ function num_of_interruptType (i) =
     I_M_Timer    => 7,
     I_U_External => 8,
     I_S_External => 9,
-    I_M_External => 10
+    I_M_External => 11
   }
 
 /* architectural exception definitions */
