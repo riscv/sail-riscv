@@ -335,14 +335,14 @@ function translationMode(priv : Privilege, stage : AddressTranslationStage) -> A
 
   let mode = if priv == Machine then
                Some(Bare)
-             else match (stage, arch) {
-               (Stage_S,  Some(RV32)) => satp64Mode_of_bits(RV32, zero_extend(Mk_Satp32(satp[31 .. 0])[Mode])),
-               (Stage_S,  Some(RV64)) => satp64Mode_of_bits(RV64, Mk_Satp64(satp)[Mode]),
-               (Stage_VS, Some(RV32)) => satp64Mode_of_bits(RV32, zero_extend(Mk_Satp32(vsatp[31 .. 0])[Mode])),
-               (Stage_VS, Some(RV64)) => satp64Mode_of_bits(RV64, Mk_Satp64(vsatp)[Mode]),
-               (Stage_G,  Some(RV32)) => hgatp64Mode_of_bits(RV32, zero_extend(Mk_Hgatp32(hgatp[31 .. 0])[Mode])),
-               (Stage_G,  Some(RV64)) => hgatp64Mode_of_bits(RV64, Mk_Hgatp64(hgatp)[Mode]),
-               (_,  _)          => internal_error(__FILE__, __LINE__, "unsupported address translation arch")
+             else match (stage, arch, xlen) {
+               (Stage_S,  Some(RV32),  _) => satp64Mode_of_bits(RV32, zero_extend(Mk_Satp32(satp[31 .. 0])[Mode])),
+               (Stage_S,  Some(RV64), 64) => satp64Mode_of_bits(RV64, Mk_Satp64(satp)[Mode]),
+               (Stage_VS, Some(RV32),  _) => satp64Mode_of_bits(RV32, zero_extend(Mk_Satp32(vsatp[31 .. 0])[Mode])),
+               (Stage_VS, Some(RV64), 64) => satp64Mode_of_bits(RV64, Mk_Satp64(vsatp)[Mode]),
+               (Stage_G,  Some(RV32),  _) => hgatp64Mode_of_bits(RV32, zero_extend(Mk_Hgatp32(hgatp[31 .. 0])[Mode])),
+               (Stage_G,  Some(RV64), 64) => hgatp64Mode_of_bits(RV64, Mk_Hgatp64(hgatp)[Mode]),
+               (_, _, _)                  => internal_error(__FILE__, __LINE__, "unsupported address translation arch")
              };
 
   match mode {
