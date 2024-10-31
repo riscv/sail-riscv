@@ -917,13 +917,20 @@ register tdata3 : xlenbits
 bitfield MatchControlType6 : bits(27) = {
   /* Trigger perfectly satisfied or not */
   uncertain   : 26,
-  /* Sets when mcontrol6 fire after the instruction retires */
+  /* This field combine with hit0 */
   hit1        : 25,
   /* Enable Mcontrol6 trigger in VS-mode */
   vs          : 24,
   /* Enable Mcontrol6 trigger in VU-mode */
   vu          : 23,
-  /* Sets when mcontrol6 fire before the instruction retires */
+  /* 0: Trigger did not fire
+   * 1: Trigger fired before the instruction retires
+   * 2: Trigger fired after the instruction that
+   *    triggered and at least one additional instruction were
+   *    retired.
+   * 3: Trigger fired just after the instruction that
+   *    triggered it was retired, but before any subsequent
+   *    instructions were executed */
   hit0        : 22,
   /* 0: address match, 1: data match */
   select      : 21,
