@@ -25,8 +25,13 @@
 
 /* **************************************************************** */
 
+// TODO: Add config flags to control Zfh and Zfhmin
 enum clause extension = Ext_Zfh
 function clause extensionEnabled(Ext_Zfh) = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
+
+enum clause extension = Ext_Zfhmin
+// Zfhmin is a subset of Zfh. This can be changed to extensionEnabled(Ext_Zfh) | sys_enable_zfhmin() when more configuration is implemented.
+function clause extensionEnabled(Ext_Zfhmin) = extensionEnabled(Ext_Zfh)
 
 mapping encdec_rounding_mode : rounding_mode <-> bits(3) = {
   RM_RNE <-> 0b000,
@@ -274,8 +279,8 @@ union clause ast = LOAD_FP : (bits(12), regidx, regidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, HALF)          if extensionEnabled(Ext_Zfh)
-                    <-> imm @ rs1 @ 0b001 @ rd @ 0b000_0111  if extensionEnabled(Ext_Zfh)
+mapping clause encdec = LOAD_FP(imm, rs1, rd, HALF)          if extensionEnabled(Ext_Zfhmin)
+                    <-> imm @ rs1 @ 0b001 @ rd @ 0b000_0111  if extensionEnabled(Ext_Zfhmin)
 
 mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)          if extensionEnabled(Ext_F)
                     <-> imm @ rs1 @ 0b010 @ rd @ 0b000_0111  if extensionEnabled(Ext_F)
@@ -360,8 +365,8 @@ union clause ast = STORE_FP : (bits(12), regidx, regidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, HALF)                             if extensionEnabled(Ext_Zfh)
-                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b001 @ imm5 : bits(5) @ 0b010_0111  if extensionEnabled(Ext_Zfh)
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, HALF)                             if extensionEnabled(Ext_Zfhmin)
+                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b001 @ imm5 : bits(5) @ 0b010_0111  if extensionEnabled(Ext_Zfhmin)
 
 mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)                             if extensionEnabled(Ext_F)
                     <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b010 @ imm5 : bits(5) @ 0b010_0111  if extensionEnabled(Ext_F)
