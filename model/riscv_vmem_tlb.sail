@@ -12,11 +12,11 @@
 // (2) we can greatly speed up simulation speed (for Linux boot, can
 //     reduce elapsed time from 10s of minutes to few minutes).
 
-type asidbits = bits(16)
+type xxidbits = bits(16)
 
 // PRIVATE
 struct TLB_Entry = {
-  asid       : asidbits,  // address-space id
+  xxid       : xxidbits,  // address-space id / virtual-machine id
   global     : bool,      // global translation
   vAddr      : bits(64),  // VPN
   pAddr      : bits(64),  // ppn
@@ -61,35 +61,35 @@ function write_TLB(index : tlb_index_range, ent : TLB_Entry) -> unit =
 
 // PRIVATE
 function match_TLB_Entry(ent   : TLB_Entry,
-                         asid  : asidbits,
+                         xxid  : xxidbits,
                          vaddr : bits(64)) -> bool =
-  (ent.global | (ent.asid == asid))
+  (ent.global | (ent.xxid == xxid))
   & (ent.vAddr == (ent.vMatchMask & vaddr))
 
 // PRIVATE
 function flush_TLB_Entry(e    : TLB_Entry,
-                         asid : option(asidbits),
+                         xxid : option(xxidbits),
                          addr : option(bits(64))) -> bool = {
-  match (asid, addr) {
+  match (xxid, addr) {
     ( None(),  None()) => true,
     ( None(), Some(a)) => e.vAddr == (e.vMatchMask & a),
-    (Some(i),  None()) => (e.asid == i) & not(e.global),
-    (Some(i), Some(a)) => (  (e.asid == i) & (e.vAddr == (a & e.vMatchMask))
+    (Some(i),  None()) => (e.xxid == i) & not(e.global),
+    (Some(i), Some(a)) => (  (e.xxid == i) & (e.vAddr == (a & e.vMatchMask))
                            & not(e.global))
   }
 }
 
 // PUBLIC: invoked in translate() [riscv_vmem.sail]
-function lookup_TLB (asid : asidbits, vaddr : bits(64)) -> option((tlb_index_range, TLB_Entry)) = {
+function lookup_TLB (xxid : xxidbits, vaddr : bits(64)) -> option((tlb_index_range, TLB_Entry)) = {
   let index = tlb_hash(vaddr);
   match tlb_S[index] {
     None() => None(),
-    Some(entry) => if match_TLB_Entry(entry, asid, vaddr) then Some((index, entry)) else None(),
+    Some(entry) => if match_TLB_Entry(entry, xxid, vaddr) then Some((index, entry)) else None(),
   }
 }
 
 // PRIVATE
-function add_to_TLB(asid          : asidbits,
+function add_to_TLB(xxid          : xxidbits,
                     vAddr         : bits(64),
                     pAddr         : bits(64),
                     pte           : bits(64),
@@ -103,7 +103,7 @@ function add_to_TLB(asid          : asidbits,
   let vAddrMask  : bits(64)  = zero_extend(ones(shift));
   let vMatchMask : bits(64)  = ~ (vAddrMask);
 
-  let entry : TLB_Entry = struct{asid       = asid,
+  let entry : TLB_Entry = struct{xxid       = xxid,
                                  global     = global,
                                  pte        = pte,
                                  pteAddr    = pteAddr,
@@ -126,7 +126,7 @@ function add_to_TLB(asid          : asidbits,
 function flush_TLB(asid_xlen : option(xlenbits),
                    stage     : AddressTranslationStage, // FIXME: Currently unused
                    addr_xlen : option(xlenbits)) -> unit = {
-  let asid : option(asidbits) =
+  let xxid : option(xxidbits) =
     match asid_xlen {
       None()  => None(),
       Some(a) => Some(a[15 .. 0])
@@ -138,7 +138,7 @@ function flush_TLB(asid_xlen : option(xlenbits),
     };
   foreach (i from 0 to (length(tlb_S) - 1)) {
     match tlb_S[i] {
-      Some(e) => if flush_TLB_Entry(e, asid, addr_64b) then { tlb_S[i] = None(); },
+      Some(e) => if flush_TLB_Entry(e, xxid, addr_64b) then { tlb_S[i] = None(); },
       None()  => (),
     }
   }

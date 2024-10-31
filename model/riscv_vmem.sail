@@ -180,6 +180,9 @@ function pt_walk(sv_params,
 // PUBLIC: see also riscv_insts_zicsr.sail and other CSR-related files
 register satp : xlenbits
 
+// PRIVATE
+type asidbits = bits(16)
+
 // See riscv_sys_regs.sail for legalize_satp{32,64}().
 // WARNING: those functions legalize Mode but not ASID?
 // PUBLIC: invoked from writeCSR() to fixup WARL fields
@@ -265,6 +268,9 @@ function translationMode(priv : Privilege) -> AddressTranslationMode = {
 // PUBLIC
 register hgatp : xlenbits
 
+// PRIVATE
+type vmidbits = bits(14)
+
 // See riscv_hext_regs.sail for legalize_hgatp{32,64}().
 // WARNING: those functions legalize Mode but not VMID?
 // PUBLIC: invoked from writeCSR() to fixup WARL fields
@@ -288,6 +294,28 @@ function legalize_hgatp(a : Architecture,
     truncate(new_hgatp, sizeof(xlen))
   } else
     internal_error(__FILE__, __LINE__, "Unsupported xlen")
+}
+
+// ----------------
+// Fields of HGATP
+
+// VMID is 7b in Sv32x4, 14b in Sv39x4/Sv48x4/Sv57x4: we use 14b for both
+// PRIVATE
+function hgatp_to_vmid(hgatp_val : xlenbits) -> vmidbits = {
+   if      xlen == 32 then zero_extend(Mk_Hgatp32(hgatp_val)[Vmid])
+   else if xlen == 64 then Mk_Hgatp64(hgatp_val)[Vmid]
+   else internal_error(__FILE__, __LINE__,
+                       "Unsupported xlen" ^ dec_str(xlen))
+}
+
+// Result is 64b to cover both RV32 and RV64 addresses
+// PRIVATE
+function hgatp_to_PT_base(hgatp_val : xlenbits) -> bits(64) = {
+  let ppn = if      xlen == 32 then zero_extend (64, Mk_Hgatp32(hgatp_val)[PPN])
+            else if xlen == 64 then zero_extend (64, Mk_Hgatp64(hgatp_val)[PPN])
+            else internal_error(__FILE__, __LINE__,
+                                "Unsupported xlen" ^ dec_str(xlen));
+  ppn << pagesize_bits
 }
 
 
@@ -322,7 +350,7 @@ union TRi_Result('paddr : Type, 'failure : Type) = {
 // part of RISC-V architecture spec (see TLB_NOTE above).
 // PRIVATE: translate on TLB hit, and maintenance of PTE in TLB
 function translate_TLB_hit(sv_params : SV_Params,
-                           asid      : asidbits,
+                           xxid      : xxidbits,
                            ptb       : bits(64),
                            vAddr     : bits(64),
                            ac        : AccessType(ext_access_type),
@@ -369,7 +397,7 @@ function translate_TLB_hit(sv_params : SV_Params,
 
 // PRIVATE: translate on TLB miss (do a page-table walk)
 function translate_TLB_miss(sv_params : SV_Params,
-                            asid      : asidbits,
+                            xxid      : xxidbits,
                             ptb       : bits(64),
                             vAddr     : bits(64),
                             ac        : AccessType(ext_access_type),
@@ -388,7 +416,7 @@ function translate_TLB_miss(sv_params : SV_Params,
       // by: 'TRi_Address(pAddr, ext_ptw)'    (see TLB_NOTE above)
       match update_PTE_Bits(sv_params, pte, ac) {
         None() => {
-          add_to_TLB(asid, vAddr, pAddr, pte, pteAddr, level, global,
+          add_to_TLB(xxid, vAddr, pAddr, pte, pteAddr, level, global,
                      sv_params.vpn_size_bits,
                      pagesize_bits);
           TRi_Address(pAddr, ext_ptw)
@@ -404,7 +432,7 @@ function translate_TLB_miss(sv_params : SV_Params,
 
             match write_pte(pte_phys_addr, 2 ^ sv_params.log_pte_size_bytes, pte') {
               MemValue(_) => {
-                add_to_TLB(asid, vAddr, pAddr, pte', pteAddr, level, global,
+                add_to_TLB(xxid, vAddr, pAddr, pte', pteAddr, level, global,
                            sv_params.vpn_size_bits,
                            pagesize_bits);
                 TRi_Address(pAddr, ext_ptw)
@@ -420,7 +448,7 @@ function translate_TLB_miss(sv_params : SV_Params,
 
 // PRIVATE
 function translate(sv_params : SV_Params,
-                   asid      : asidbits,
+                   xxid      : xxidbits,
                    ptb       : bits(64),
                    vAddr     : bits(64),
                    ac        : AccessType(ext_access_type),
@@ -431,10 +459,10 @@ function translate(sv_params : SV_Params,
                   -> TRi_Result(bits(64), PTW_Error) = {
   // On first reading, assume lookup_TLB returns None(), since TLBs
   // are not part of RISC-V archticture spec (see TLB_NOTE above)
-  match lookup_TLB(asid, vAddr) {
-    Some(index, ent) => translate_TLB_hit(sv_params, asid, ptb, vAddr, ac, priv,
+  match lookup_TLB(xxid, vAddr) {
+    Some(index, ent) => translate_TLB_hit(sv_params, xxid, ptb, vAddr, ac, priv,
                                           mxr, do_sum, ext_ptw, index, ent),
-    None()           => translate_TLB_miss(sv_params, asid, ptb, vAddr, ac, priv,
+    None()           => translate_TLB_miss(sv_params, xxid, ptb, vAddr, ac, priv,
                                            mxr, do_sum, ext_ptw)
   }
 }
