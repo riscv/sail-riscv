@@ -223,14 +223,14 @@ $endif
 
 /* Disable trigger firing in trap handler */
 function TriggerFireMatch(cur_priv : Privilege) -> bool = {
-  /* Second solution of reenterancy problem */
+  /* Second solution of reentrancy problem */
   if (sys_reent_opt1()) then {
     match cur_priv {
       Machine => bits_to_bool(tcontrol[mte]),
       _       => true
     }
   }
-  /* First solution of reenterancy problem */
+  /* First solution of reentrancy problem */
   else {
     match cur_privilege {
       Machine    => bits_to_bool(mstatus[MIE]),
@@ -480,7 +480,7 @@ function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, 
       if ((((MCtrl6[m] == 0b1) & (cur_priv == Machine))     | /* Trigger is enabled in M-mode */
            ((MCtrl6[s] == 0b1) & (cur_priv == Supervisor))  | /* Trigger is enabled in S-mode */
            ((MCtrl6[u] == 0b1) & (cur_priv == User)) )      & /* Trigger is enabled in U-mode */
-           (TriggerFireMatch(cur_priv))) then { /* Trigger match valid? check re-enternacy */
+           (TriggerFireMatch(cur_priv))) then { /* Trigger match valid? check reentranacy */
             match match_type {
               /* Check For PC or Instruction Match */
               INSTR_MATCH => {

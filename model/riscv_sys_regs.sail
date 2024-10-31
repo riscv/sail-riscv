@@ -466,8 +466,8 @@ function legalize_medeleg(o : Medeleg, v : xlenbits) -> Medeleg = {
   /* M-EnvCalls delegation is not supported */
   let m = Mk_Medeleg(v);
   let m = [m with MEnvCall = 0b0];
-  /* medeleg[3] <-> Breakpoint Exception is hard-wire to 0 for second solution
-     of re-enterancy problem */
+  /* medeleg[3] <-> Breakpoint Exception is hard-wired to 0 for second solution
+     of reentrancy problem */
   if (sys_reent_opt1()) then { let m = [m with Breakpoint = bool_bits(not(sys_reent_opt1()))]; m } else { m }
 }
 
@@ -885,7 +885,7 @@ mapping clause csr_name_map = 0x7a3  <-> "tdata3"
 /*  Legalize TSELECT */
 function legalize_tselect(o : xlenbits, v : xlenbits) -> xlenbits = {
   let t : xlenbits = o;
-  // TODO: Avoid hardcode value
+  // TODO: Avoid hardcoded value
   if (unsigned(v) <= (sizeof(N_TRIGGERS) - 1)) then { v } else { t }
 }
 
@@ -933,7 +933,7 @@ bitfield MatchControlType6 : bits(27) = {
   size        : 18 .. 16,
   /* Trigger Action */
   action      : 15 .. 12,
-  /* trigger chaning */
+  /* trigger chaining */
   chain       : 11,
   /* Trigger match options */
   match_opt   : 10 .. 7,
@@ -945,13 +945,13 @@ bitfield MatchControlType6 : bits(27) = {
   s           : 4,
   /* Enable Mcontrol6 trigger in U-mode */
   u           : 3,
-  /* Trigger fires on the virtual address or opcode WARL
+  /* Trigger fires on the virtual address or opcode
      of an instruction that is executed */
   execute     : 2,
-  /* Trigger fires on the virtual address or data of WARL
+  /* Trigger fires on the virtual address or data of
      any store */
   store       : 1,
-  /* Trigger fires on the virtual address or data of WARL
+  /* Trigger fires on the virtual address or data of
      any load */
   load        : 0
 }
