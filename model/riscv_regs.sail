@@ -12,7 +12,8 @@ register PC       : xlenbits
 register nextPC   : xlenbits
 
 /* internal state to hold instruction bits for faulting instructions */
-register instbits : xlenbits
+register instbits : ilenbits
+register instbits_transformed : ilenbits
 
 /* register file and accessors */
 

@@ -26,6 +26,11 @@ mapping clause assembly = C_ILLEGAL(s) <-> "c.illegal" ^ spc() ^ hex_bits_16(s)
 
 /* ****************************************************************** */
 
+/* All other instructions transform to zero                           */
+function clause enc_transformed(_,_) = zeros()
+
+/* ****************************************************************** */
+
 /* End definitions */
 end extension
 end extensionEnabled
@@ -34,6 +39,7 @@ end execute
 end assembly
 end encdec
 end encdec_compressed
+end enc_transformed
 
 val print_insn : ast -> string
 function print_insn insn = assembly(insn)

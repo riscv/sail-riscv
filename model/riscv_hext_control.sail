@@ -170,3 +170,21 @@ function csr_access_raises_virtual_instr(csr : csreg, p : Privilege, v: Virtuali
        check_Counteren(csr, Supervisor, V0) &
        check_seed_CSR(csr, Supervisor, isWrite)
 }
+
+/*! Is it legal for mtinst or htinst to hold a tranformed instruction on a given fault */
+function exc_causes_transformed_inst_in_xtinst(e : ExceptionType) -> bool =
+  match e {
+    E_Load_Addr_Align()   => true,
+    E_Load_Access_Fault() => true,
+    E_SAMO_Addr_Align()   => true,
+    E_SAMO_Access_Fault() => true,
+    E_Load_Page_Fault()   => true,
+    E_SAMO_Page_Fault()   => true,
+    E_Load_GPage_Fault()  => true,
+    E_SAMO_GPage_Fault()  => true,
+    _                     => false,
+  }
+
+// FIXME: Define proper platform parameter for this
+val plat_xtinst_has_transformed_inst : unit -> bool
+function plat_xtinst_has_transformed_inst() = extensionEnabled(Ext_H)
