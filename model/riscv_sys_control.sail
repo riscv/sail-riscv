@@ -414,11 +414,11 @@ function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit = {
   set_next_pc(trap_handler(del_priv, true, interruptType_to_bits(i), PC, None(), None()))
 }
 
-function find_first_zero(v: xlenbits) -> {'n, (1 <= 'n < xlen). int('n)} = {
-  foreach (i from 1 to (xlen - 1)) {
+function find_first_zero(v: xlenbits) -> {'n, (0 <= 'n <= xlen). int('n)} = {
+  foreach (i from 0 to (xlen - 1)) {
     if v[i .. i] == 0b0 then return i;
   };
-  return 1;
+  return xlen;
 }
 
 /* Match Control Type 6 Trigger Match */
@@ -449,8 +449,11 @@ function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, 
       data_matched = match (matchOpt_of_bits(matchOption)) {
         MOPT_EQUAL => { (tdata2_x.tdata2[i] == tdata2_content) },
         MOPT_NAPOT => {
-          let idx : {'n, (1 <= 'n < xlen). int('n)} = find_first_zero(tdata2_x.tdata2[i]);
-          tdata2_x.tdata2[i][(xlen - 1) .. idx] == tdata2_content[(xlen - 1) .. idx]
+          let idx : {'n, (0 <= 'n <= xlen). int('n)} = find_first_zero(tdata2_x.tdata2[i]);
+          if ((idx == xlen) | (idx == (xlen - 1))) then { true }
+          else {
+            tdata2_x.tdata2[i][(xlen - 1) .. (idx + 1)] == tdata2_content[(xlen - 1) .. (idx + 1)]
+          }
         },
         MOPT_GE    => { (tdata2_content >=_u tdata2_x.tdata2[i][(xlen - 1) .. 0]) },
         MOPT_LT    => { (tdata2_content <_u  tdata2_x.tdata2[i][(xlen - 1) .. 0]) },
@@ -464,8 +467,11 @@ function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, 
         },
         MOPT_NOT_EQUAL => { (tdata2_x.tdata2[i] != tdata2_content) },
         MOPT_NOT_NAPOT => {
-          let idx : {'n, (1 <= 'n < xlen). int('n)} = find_first_zero(tdata2_x.tdata2[i]);
-          tdata2_x.tdata2[i][(xlen - 1) .. idx] != tdata2_content[(xlen - 1) .. idx]
+          let idx : {'n, (0 <= 'n <= xlen). int('n)} = find_first_zero(tdata2_x.tdata2[i]);
+          if ((idx == xlen) | (idx == (xlen - 1))) then { true }
+          else {
+            tdata2_x.tdata2[i][(xlen - 1) .. (idx + 1)] != tdata2_content[(xlen - 1) .. (idx + 1)]
+          }
         },
         MOPT_NOT_MASK_LOW => {
           let intemrd_cmpr_val : half_xlenbits = tdata2_content[(half_xlen - 1) .. 0] & tdata2_x.tdata2[i][(xlen - 1) .. half_xlen];
@@ -502,6 +508,7 @@ function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, 
               LOAD_MATCH_AFTER => {
                 if (data_matched & size_matched & (MCtrl6[load] == 0b1)) then {
                     MCtrl6[hit1] = 0b1;
+                    MCtrl6[hit0] = 0b1;
                     tdata1_x.tdata1[i][26 .. 0] = MCtrl6.bits;
                 }
               },
