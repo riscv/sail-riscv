@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-mapping zcmp_assembly_mapping_32 : (bits(4), bits(2), string) <-> string = {
+mapping zcmp_assembly_mapping_32 : (bits(4), bits(2)) <-> string = {
   (0x4, 0b00) <-> "{ra}, -16",
   (0x4, 0b01) <-> "{ra}, -32",
   (0x4, 0b10) <-> "{ra}, -48",
@@ -272,9 +272,67 @@ function clause execute (CM_PUSH(rlist, spimm)) = {
     process_cmpush(rlist, spimm, DOUBLE)
 }
 
-
 mapping clause assembly = CM_PUSH(rlist, spimm) if (sizeof(xlen) == 32) <->
   "cm.push" ^ spc() ^ zcmp_assembly_mapping_32(rlist, spimm) if (sizeof(xlen) == 32)
 
 mapping clause assembly = CM_PUSH(rlist, spimm) if (sizeof(xlen) == 64) <->
   "cm.push" ^ spc() ^ zcmp_assembly_mapping_64(rlist, spimm) if (sizeof(xlen) == 64)
+
+
+union clause ast = CM_POP : (bits(4), bits(2))
+
+mapping clause encdec_compressed = CM_POP(rlist, spimm)   if extensionEnabled(Ext_Zcmp)
+  <-> 0b101 @ 0b11010 @ rlist : bits(4) @ spimm : bits(2) @ 0b10    if extensionEnabled(Ext_Zcmp)
+
+val process_cmpop : (bits(4), bits(2), word_width) -> Retired
+function process_cmpop (rlist : bits(4), spimm : bits(2), width : word_width) = {
+  let width_bytes = size_bytes(width);
+
+  let addr = X(sp);
+  let spimm_int = spimm_to_int(spimm);
+  let stack_adj = get_stack_adj_base(rlist) + spimm_int * 16;
+  let new_sp = addr + to_bits(xlen, stack_adj);
+  let mask = zcmp_regmask(rlist);
+  let bytes = if sizeof(xlen) == 32 then 4 else 8;
+
+  X(sp) = new_sp;
+
+  var imm : int = width_bytes;
+
+  foreach (i from 31 downto 1) {
+    if mask[i] then {
+      match ext_data_get_addr(sp, to_bits(xlen, negate_int(imm)), Write(Data), xlen / 8) {
+        Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
+        Ext_DataAddr_OK(vaddr) =>
+        if   check_misaligned(vaddr, width)
+        then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
+        else match translateAddr(vaddr, Write(Data)) {
+            TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
+            TR_Address(paddr, _) => {
+              match mem_read(Read(Data), paddr, width_bytes, false, false, false) {
+                  MemException(e) => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
+                  MemValue(v) => {
+                  X(to_bits(5, i)) = extend_value(true, v);
+                  imm = imm + width_bytes
+                }
+              }
+            }
+        }
+      }
+    }
+  };
+  RETIRE_SUCCESS
+}
+
+function clause execute (CM_POP(rlist, spimm)) = {
+  if (xlen == 32) then
+    process_cmpop(rlist, spimm, WORD)
+  else
+    process_cmpop(rlist, spimm, DOUBLE)
+}
+
+mapping clause assembly = CM_POP(rlist, spimm) if (sizeof(xlen) == 32) <->
+  "cm.pop" ^ spc() ^ zcmp_assembly_mapping_32(rlist, spimm) if (sizeof(xlen) == 32)
+
+mapping clause assembly = CM_POP(rlist, spimm) if (sizeof(xlen) == 64) <->
+  "cm.pop" ^ spc() ^ zcmp_assembly_mapping_64(rlist, spimm) if (sizeof(xlen) == 64)
