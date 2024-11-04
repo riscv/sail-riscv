@@ -326,6 +326,7 @@ mapping clause encdec_compressed = CM_PUSH(rlist, spimm)   if extensionEnabled(E
 val process_cmpush : (bits(4), bits(2), word_width) -> Retired
 function process_cmpush (rlist : bits(4), spimm : bits(2), width : word_width) = {
   let width_bytes = size_bytes(width);
+  assert(width_bytes <= xlen_bytes);
 
   let addr = X(sp);
   let spimm_int = spimm_to_int(spimm);
@@ -389,6 +390,7 @@ mapping clause encdec_compressed = CM_POP(rlist, spimm)   if extensionEnabled(Ex
 val process_cmpop : (bits(4), bits(2), word_width, bool, bool) -> Retired
 function process_cmpop (rlist : bits(4), spimm : bits(2), width : word_width, write_pc : bool, write_a0 : bool) = {
   let width_bytes = size_bytes(width);
+  assert(width_bytes <= xlen_bytes);
 
   let addr = X(sp);
   let spimm_int = spimm_to_int(spimm);
