@@ -6,106 +6,212 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-mapping zcmp_assembly_mapping_32 : (bits(4), bits(2)) <-> string = {
-  (0x4, 0b00) <-> "{ra}, -16",
-  (0x4, 0b01) <-> "{ra}, -32",
-  (0x4, 0b10) <-> "{ra}, -48",
-  (0x4, 0b11) <-> "{ra}, -64",
-  (0x5, 0b00) <-> "{ra, s0}, -16",
-  (0x5, 0b01) <-> "{ra, s0}, -32",
-  (0x5, 0b10) <-> "{ra, s0}, -48",
-  (0x5, 0b11) <-> "{ra, s0}, -64",
-  (0x6, 0b00) <-> "{ra, s0-s1}, -16",
-  (0x6, 0b01) <-> "{ra, s0-s1}, -32",
-  (0x6, 0b10) <-> "{ra, s0-s1}, -48",
-  (0x6, 0b11) <-> "{ra, s0-s1}, -64",
-  (0x7, 0b00) <-> "{ra, s0-s2}, -16",
-  (0x7, 0b01) <-> "{ra, s0-s2}, -32",
-  (0x7, 0b10) <-> "{ra, s0-s2}, -48",
-  (0x7, 0b11) <-> "{ra, s0-s2}, -64",
-  (0x8, 0b00) <-> "{ra, s0-s3}, -32",
-  (0x8, 0b01) <-> "{ra, s0-s3}, -48",
-  (0x8, 0b10) <-> "{ra, s0-s3}, -64",
-  (0x8, 0b11) <-> "{ra, s0-s3}, -80",
-  (0x9, 0b00) <-> "{ra, s0-s4}, -32",
-  (0x9, 0b01) <-> "{ra, s0-s4}, -48",
-  (0x9, 0b10) <-> "{ra, s0-s4}, -64",
-  (0x9, 0b11) <-> "{ra, s0-s4}, -80",
-  (0xa, 0b00) <-> "{ra, s0-s5}, -32",
-  (0xa, 0b01) <-> "{ra, s0-s5}, -48",
-  (0xa, 0b10) <-> "{ra, s0-s5}, -64",
-  (0xa, 0b11) <-> "{ra, s0-s5}, -80",
-  (0xb, 0b00) <-> "{ra, s0-s6}, -32",
-  (0xb, 0b01) <-> "{ra, s0-s6}, -48",
-  (0xb, 0b10) <-> "{ra, s0-s6}, -64",
-  (0xb, 0b11) <-> "{ra, s0-s6}, -80",
-  (0xc, 0b00) <-> "{ra, s0-s7}, -48",
-  (0xc, 0b01) <-> "{ra, s0-s7}, -64",
-  (0xc, 0b10) <-> "{ra, s0-s7}, -80",
-  (0xc, 0b11) <-> "{ra, s0-s7}, -96",
-  (0xd, 0b00) <-> "{ra, s0-s8}, -48",
-  (0xd, 0b01) <-> "{ra, s0-s8}, -64",
-  (0xd, 0b10) <-> "{ra, s0-s8}, -80",
-  (0xd, 0b11) <-> "{ra, s0-s8}, -96",
-  (0xe, 0b00) <-> "{ra, s0-s9}, -48",
-  (0xe, 0b01) <-> "{ra, s0-s9}, -64",
-  (0xe, 0b10) <-> "{ra, s0-s9}, -80",
-  (0xe, 0b11) <-> "{ra, s0-s9}, -96",
-  (0xf, 0b00) <-> "{ra, s0-11}, -64",
-  (0xf, 0b01) <-> "{ra, s0-11}, -80",
-  (0xf, 0b10) <-> "{ra, s0-11}, -96",
-  (0xf, 0b11) <-> "{ra, s0-11}, -112",
-}
+// first bool represent the stack_adi is positive or negative.
+// second bool represent xlen is 32 or 64.
+mapping zcmp_assembly_mapping : (bits(4), bits(2), bool, bool) <-> string = {
+  (0x4, 0b00, true, true)  <-> "{ra}, 16",
+  (0x4, 0b00, true, false) <-> "{ra}, 32",
+  (0x4, 0b00, false,true)  <-> "{ra}, -16",
+  (0x4, 0b00, false,false) <-> "{ra}, -32",
+  (0x4, 0b01, true, true)  <-> "{ra}, 32",
+  (0x4, 0b01, true, false) <-> "{ra}, 48",
+  (0x4, 0b01, false,true)  <-> "{ra}, -32",
+  (0x4, 0b01, false,false) <-> "{ra}, -48",
+  (0x4, 0b10, true, true)  <-> "{ra}, 48",
+  (0x4, 0b10, true, false) <-> "{ra}, 64",
+  (0x4, 0b10, false,true)  <-> "{ra}, -48",
+  (0x4, 0b10, false,false) <-> "{ra}, -64",
+  (0x4, 0b11, true, true)  <-> "{ra}, 64",
+  (0x4, 0b11, true, false) <-> "{ra}, 80",
+  (0x4, 0b11, false,true)  <-> "{ra}, -64",
+  (0x4, 0b11, false,false) <-> "{ra}, -80",
 
-mapping zcmp_assembly_mapping_64 : (bits(4), bits(2)) <-> string = {
-  (0x4, 0b00) <-> "{ra}, -16",
-  (0x4, 0b01) <-> "{ra}, -32",
-  (0x4, 0b10) <-> "{ra}, -48",
-  (0x4, 0b11) <-> "{ra}, -64",
-  (0x5, 0b00) <-> "{ra, s0}, -16",
-  (0x5, 0b01) <-> "{ra, s0}, -32",
-  (0x5, 0b10) <-> "{ra, s0}, -48",
-  (0x5, 0b11) <-> "{ra, s0}, -64",
-  (0x6, 0b00) <-> "{ra, s0-s1}, -32",
-  (0x6, 0b01) <-> "{ra, s0-s1}, -48",
-  (0x6, 0b10) <-> "{ra, s0-s1}, -64",
-  (0x6, 0b11) <-> "{ra, s0-s1}, -80",
-  (0x7, 0b00) <-> "{ra, s0-s2}, -32",
-  (0x7, 0b01) <-> "{ra, s0-s2}, -48",
-  (0x7, 0b10) <-> "{ra, s0-s2}, -64",
-  (0x7, 0b11) <-> "{ra, s0-s2}, -80",
-  (0x8, 0b00) <-> "{ra, s0-s3}, -48",
-  (0x8, 0b01) <-> "{ra, s0-s3}, -64",
-  (0x8, 0b10) <-> "{ra, s0-s3}, -80",
-  (0x8, 0b11) <-> "{ra, s0-s3}, -96",
-  (0x9, 0b00) <-> "{ra, s0-s4}, -48",
-  (0x9, 0b01) <-> "{ra, s0-s4}, -64",
-  (0x9, 0b10) <-> "{ra, s0-s4}, -80",
-  (0x9, 0b11) <-> "{ra, s0-s4}, -96",
-  (0xa, 0b00) <-> "{ra, s0-s5}, -64",
-  (0xa, 0b01) <-> "{ra, s0-s5}, -80",
-  (0xa, 0b10) <-> "{ra, s0-s5}, -96",
-  (0xa, 0b11) <-> "{ra, s0-s5}, -112",
-  (0xb, 0b00) <-> "{ra, s0-s6}, -64",
-  (0xb, 0b01) <-> "{ra, s0-s6}, -80",
-  (0xb, 0b10) <-> "{ra, s0-s6}, -96",
-  (0xb, 0b11) <-> "{ra, s0-s6}, -112",
-  (0xc, 0b00) <-> "{ra, s0-s7}, -80",
-  (0xc, 0b01) <-> "{ra, s0-s7}, -96",
-  (0xc, 0b10) <-> "{ra, s0-s7}, -112",
-  (0xc, 0b11) <-> "{ra, s0-s7}, -128",
-  (0xd, 0b00) <-> "{ra, s0-s8}, -80",
-  (0xd, 0b01) <-> "{ra, s0-s8}, -96",
-  (0xd, 0b10) <-> "{ra, s0-s8}, -112",
-  (0xd, 0b11) <-> "{ra, s0-s8}, -120",
-  (0xe, 0b00) <-> "{ra, s0-s9}, -96",
-  (0xe, 0b01) <-> "{ra, s0-s9}, -112",
-  (0xe, 0b10) <-> "{ra, s0-s9}, -128",
-  (0xe, 0b11) <-> "{ra, s0-s9}, -144",
-  (0xf, 0b00) <-> "{ra, s0-s11}, -112",
-  (0xf, 0b01) <-> "{ra, s0-s11}, -128",
-  (0xf, 0b10) <-> "{ra, s0-s11}, -144",
-  (0xf, 0b11) <-> "{ra, s0-s11}, -160",
+  (0x5, 0b00, true, true)  <-> "{ra, s0}, 16",
+  (0x5, 0b00, true, false) <-> "{ra, s0}, 32",
+  (0x5, 0b00, false,true)  <-> "{ra, s0}, -16",
+  (0x5, 0b00, false,false) <-> "{ra, s0}, -32",
+  (0x5, 0b01, true, true)  <-> "{ra, s0}, 32",
+  (0x5, 0b01, true, false) <-> "{ra, s0}, 48",
+  (0x5, 0b01, false,true)  <-> "{ra, s0}, -32",
+  (0x5, 0b01, false,false) <-> "{ra, s0}, -48",
+  (0x5, 0b10, true, true)  <-> "{ra, s0}, 48",
+  (0x5, 0b10, true, false) <-> "{ra, s0}, 64",
+  (0x5, 0b10, false,true)  <-> "{ra, s0}, -48",
+  (0x5, 0b10, false,false) <-> "{ra, s0}, -64",
+  (0x5, 0b11, true, true)  <-> "{ra, s0}, 64",
+  (0x5, 0b11, true, false) <-> "{ra, s0}, 80",
+  (0x5, 0b11, false,true)  <-> "{ra, s0}, -64",
+  (0x5, 0b11, false,false) <-> "{ra, s0}, -80",
+
+  (0x6, 0b00, true, true)  <-> "{ra, s0-s1}, -16",
+  (0x6, 0b00, true, false) <-> "{ra, s0-s1}, -32",
+  (0x6, 0b00, false,true)  <-> "{ra, s0-s1}, --16",
+  (0x6, 0b00, false,false) <-> "{ra, s0-s1}, --32",
+  (0x6, 0b01, true, true)  <-> "{ra, s0-s1}, -32",
+  (0x6, 0b01, true, false) <-> "{ra, s0-s1}, -48",
+  (0x6, 0b01, false,true)  <-> "{ra, s0-s1}, --32",
+  (0x6, 0b01, false,false) <-> "{ra, s0-s1}, --48",
+  (0x6, 0b10, true, true)  <-> "{ra, s0-s1}, -48",
+  (0x6, 0b10, true, false) <-> "{ra, s0-s1}, -64",
+  (0x6, 0b10, false,true)  <-> "{ra, s0-s1}, --48",
+  (0x6, 0b10, false,false) <-> "{ra, s0-s1}, --64",
+  (0x6, 0b11, true, true)  <-> "{ra, s0-s1}, -64",
+  (0x6, 0b11, true, false) <-> "{ra, s0-s1}, -80",
+  (0x6, 0b11, false,true)  <-> "{ra, s0-s1}, --64",
+  (0x6, 0b11, false,false) <-> "{ra, s0-s1}, --80",
+
+  (0x7, 0b00, true, true)  <-> "{ra, s0-s2}, 16",
+  (0x7, 0b00, true, false) <-> "{ra, s0-s2}, 32",
+  (0x7, 0b00, false,true)  <-> "{ra, s0-s2}, -16",
+  (0x7, 0b00, false,false) <-> "{ra, s0-s2}, -32",
+  (0x7, 0b01, true, true)  <-> "{ra, s0-s2}, 32",
+  (0x7, 0b01, true, false) <-> "{ra, s0-s2}, 48",
+  (0x7, 0b01, false,true)  <-> "{ra, s0-s2}, -32",
+  (0x7, 0b01, false,false) <-> "{ra, s0-s2}, -48",
+  (0x7, 0b10, true, true)  <-> "{ra, s0-s2}, 48",
+  (0x7, 0b10, true, false) <-> "{ra, s0-s2}, 64",
+  (0x7, 0b10, false,true)  <-> "{ra, s0-s2}, -48",
+  (0x7, 0b10, false,false) <-> "{ra, s0-s2}, -64",
+  (0x7, 0b11, true, true)  <-> "{ra, s0-s2}, 64",
+  (0x7, 0b11, true, false) <-> "{ra, s0-s2}, 80",
+  (0x7, 0b11, false,true)  <-> "{ra, s0-s2}, -64",
+  (0x7, 0b11, false,false) <-> "{ra, s0-s2}, -80",
+
+  (0x8, 0b00, true, true)  <-> "{ra, s0-s3}, 32",
+  (0x8, 0b00, true, false) <-> "{ra, s0-s3}, 48",
+  (0x8, 0b00, false,true)  <-> "{ra, s0-s3}, -32",
+  (0x8, 0b00, false,false) <-> "{ra, s0-s3}, -48",
+  (0x8, 0b01, true, true)  <-> "{ra, s0-s3}, 48",
+  (0x8, 0b01, true, false) <-> "{ra, s0-s3}, 64",
+  (0x8, 0b01, false,true)  <-> "{ra, s0-s3}, -48",
+  (0x8, 0b01, false,false) <-> "{ra, s0-s3}, -64",
+  (0x8, 0b10, true, true)  <-> "{ra, s0-s3}, 64",
+  (0x8, 0b10, true, false) <-> "{ra, s0-s3}, 80",
+  (0x8, 0b10, false,true)  <-> "{ra, s0-s3}, -64",
+  (0x8, 0b10, false,false) <-> "{ra, s0-s3}, -80",
+  (0x8, 0b11, true, true)  <-> "{ra, s0-s3}, 80",
+  (0x8, 0b11, true, false) <-> "{ra, s0-s3}, 96",
+  (0x8, 0b11, false,true)  <-> "{ra, s0-s3}, -80",
+  (0x8, 0b11, false,false) <-> "{ra, s0-s3}, -96",
+
+  (0x9, 0b00, true, true)  <-> "{ra, s0-s4}, 32",
+  (0x9, 0b00, true, false) <-> "{ra, s0-s4}, 48",
+  (0x9, 0b00, false,true)  <-> "{ra, s0-s4}, -32",
+  (0x9, 0b00, false,false) <-> "{ra, s0-s4}, -48",
+  (0x9, 0b01, true, true)  <-> "{ra, s0-s4}, 48",
+  (0x9, 0b01, true, false) <-> "{ra, s0-s4}, 64",
+  (0x9, 0b01, false,true)  <-> "{ra, s0-s4}, -48",
+  (0x9, 0b01, false,false) <-> "{ra, s0-s4}, -64",
+  (0x9, 0b10, true, true)  <-> "{ra, s0-s4}, 64",
+  (0x9, 0b10, true, false) <-> "{ra, s0-s4}, 80",
+  (0x9, 0b10, false,true)  <-> "{ra, s0-s4}, -64",
+  (0x9, 0b10, false,false) <-> "{ra, s0-s4}, -80",
+  (0x9, 0b11, true, true)  <-> "{ra, s0-s4}, 80",
+  (0x9, 0b11, true, false) <-> "{ra, s0-s4}, 96",
+  (0x9, 0b11, false,true)  <-> "{ra, s0-s4}, -80",
+  (0x9, 0b11, false,false) <-> "{ra, s0-s4}, -96",
+
+  (0xa, 0b00, true, true)  <-> "{ra, s0-s5}, 32",
+  (0xa, 0b00, true, false) <-> "{ra, s0-s5}, 48",
+  (0xa, 0b00, false,true)  <-> "{ra, s0-s5}, -32",
+  (0xa, 0b00, false,false) <-> "{ra, s0-s5}, -48",
+  (0xa, 0b01, true, true)  <-> "{ra, s0-s5}, 48",
+  (0xa, 0b01, true, false) <-> "{ra, s0-s5}, 64",
+  (0xa, 0b01, false,true)  <-> "{ra, s0-s5}, -48",
+  (0xa, 0b01, false,false) <-> "{ra, s0-s5}, -64",
+  (0xa, 0b10, true, true)  <-> "{ra, s0-s5}, 64",
+  (0xa, 0b10, true, false) <-> "{ra, s0-s5}, 80",
+  (0xa, 0b10, false,true)  <-> "{ra, s0-s5}, -64",
+  (0xa, 0b10, false,false) <-> "{ra, s0-s5}, -80",
+  (0xa, 0b11, true, true)  <-> "{ra, s0-s5}, 80",
+  (0xa, 0b11, true, false) <-> "{ra, s0-s5}, 96",
+  (0xa, 0b11, false,true)  <-> "{ra, s0-s5}, -80",
+  (0xa, 0b11, false,false) <-> "{ra, s0-s5}, -96",
+
+  (0xb, 0b00, true, true)  <-> "{ra, s0-s6}, 32",
+  (0xb, 0b00, true, false) <-> "{ra, s0-s6}, 48",
+  (0xb, 0b00, false,true)  <-> "{ra, s0-s6}, -32",
+  (0xb, 0b00, false,false) <-> "{ra, s0-s6}, -48",
+  (0xb, 0b01, true, true)  <-> "{ra, s0-s6}, 48",
+  (0xb, 0b01, true, false) <-> "{ra, s0-s6}, 64",
+  (0xb, 0b01, false,true)  <-> "{ra, s0-s6}, -48",
+  (0xb, 0b01, false,false) <-> "{ra, s0-s6}, -64",
+  (0xb, 0b10, true, true)  <-> "{ra, s0-s6}, 64",
+  (0xb, 0b10, true, false) <-> "{ra, s0-s6}, 80",
+  (0xb, 0b10, false,true)  <-> "{ra, s0-s6}, -64",
+  (0xb, 0b10, false,false) <-> "{ra, s0-s6}, -80",
+  (0xb, 0b11, true, true)  <-> "{ra, s0-s6}, 80",
+  (0xb, 0b11, true, false) <-> "{ra, s0-s6}, 96",
+  (0xb, 0b11, false,true)  <-> "{ra, s0-s6}, -80",
+  (0xb, 0b11, false,false) <-> "{ra, s0-s6}, -96",
+
+  (0xc, 0b00, true, true)  <-> "{ra, s0-s7}, 48",
+  (0xc, 0b00, true, false) <-> "{ra, s0-s7}, 64",
+  (0xc, 0b00, false,true)  <-> "{ra, s0-s7}, -48",
+  (0xc, 0b00, false,false) <-> "{ra, s0-s7}, -64",
+  (0xc, 0b01, true, true)  <-> "{ra, s0-s7}, 64",
+  (0xc, 0b01, true, false) <-> "{ra, s0-s7}, 80",
+  (0xc, 0b01, false,true)  <-> "{ra, s0-s7}, -64",
+  (0xc, 0b01, false,false) <-> "{ra, s0-s7}, -80",
+  (0xc, 0b10, true, true)  <-> "{ra, s0-s7}, 80",
+  (0xc, 0b10, true, false) <-> "{ra, s0-s7}, 96",
+  (0xc, 0b10, false,true)  <-> "{ra, s0-s7}, -80",
+  (0xc, 0b10, false,false) <-> "{ra, s0-s7}, -96",
+  (0xc, 0b11, true, true)  <-> "{ra, s0-s7}, 96",
+  (0xc, 0b11, true, false) <-> "{ra, s0-s7}, 112",
+  (0xc, 0b11, false,true)  <-> "{ra, s0-s7}, -96",
+  (0xc, 0b11, false,false )<-> "{ra, s0-s7}, -112",
+
+  (0xd, 0b00, true, true)  <-> "{ra, s0-s8}, 48",
+  (0xd, 0b00, true, false) <-> "{ra, s0-s8}, 64",
+  (0xd, 0b00, false,true)  <-> "{ra, s0-s8}, -48",
+  (0xd, 0b00, false,false) <-> "{ra, s0-s8}, -64",
+  (0xd, 0b01, true, true)  <-> "{ra, s0-s8}, 64",
+  (0xd, 0b01, true, false) <-> "{ra, s0-s8}, 80",
+  (0xd, 0b01, false,true)  <-> "{ra, s0-s8}, -64",
+  (0xd, 0b01, false,false) <-> "{ra, s0-s8}, -80",
+  (0xd, 0b10, true, true)  <-> "{ra, s0-s8}, 80",
+  (0xd, 0b10, true, false) <-> "{ra, s0-s8}, 96",
+  (0xd, 0b10, false,true)  <-> "{ra, s0-s8}, -80",
+  (0xd, 0b10, false,false) <-> "{ra, s0-s8}, -96",
+  (0xd, 0b11, true, true)  <-> "{ra, s0-s8}, 96",
+  (0xd, 0b11, true, false) <-> "{ra, s0-s8}, 112",
+  (0xd, 0b11, false,true)  <-> "{ra, s0-s8}, -96",
+  (0xd, 0b11, false,false) <-> "{ra, s0-s8}, -112",
+
+  (0xe, 0b00, true, true)  <-> "{ra, s0-s9}, 48",
+  (0xe, 0b00, true, false) <-> "{ra, s0-s9}, 64",
+  (0xe, 0b00, false,true)  <-> "{ra, s0-s9}, -48",
+  (0xe, 0b00, false,false) <-> "{ra, s0-s9}, -64",
+  (0xe, 0b01, true, true)  <-> "{ra, s0-s9}, 64",
+  (0xe, 0b01, true, false) <-> "{ra, s0-s9}, 80",
+  (0xe, 0b01, false,true)  <-> "{ra, s0-s9}, -64",
+  (0xe, 0b01, false,false) <-> "{ra, s0-s9}, -80",
+  (0xe, 0b10, true, true)  <-> "{ra, s0-s9}, 80",
+  (0xe, 0b10, true, false) <-> "{ra, s0-s9}, 96",
+  (0xe, 0b10, false,true)  <-> "{ra, s0-s9}, -80",
+  (0xe, 0b10, false,false) <-> "{ra, s0-s9}, -96",
+  (0xe, 0b11, true, true)  <-> "{ra, s0-s9}, 96",
+  (0xe, 0b11, true, false) <-> "{ra, s0-s9}, 112",
+  (0xe, 0b11, false,true)  <-> "{ra, s0-s9}, -96",
+  (0xe, 0b11, false,false) <-> "{ra, s0-s9}, -112",
+
+  (0xf, 0b00, true, true)  <-> "{ra, s0-11}, 64",
+  (0xf, 0b00, true, false) <-> "{ra, s0-11}, 80",
+  (0xf, 0b00, false,true)  <-> "{ra, s0-11}, -64",
+  (0xf, 0b00, false,false) <-> "{ra, s0-11}, -80",
+  (0xf, 0b01, true, true)  <-> "{ra, s0-11}, 80",
+  (0xf, 0b01, true, false) <-> "{ra, s0-11}, 96",
+  (0xf, 0b01, false,true)  <-> "{ra, s0-11}, -80",
+  (0xf, 0b01, false,false) <-> "{ra, s0-11}, -96",
+  (0xf, 0b10, true, true)  <-> "{ra, s0-11}, 96",
+  (0xf, 0b10, true, false) <-> "{ra, s0-11}, 112",
+  (0xf, 0b10, false,true)  <-> "{ra, s0-11}, -96",
+  (0xf, 0b10, false,false) <-> "{ra, s0-11}, -112",
+  (0xf, 0b11, true, true)  <-> "{ra, s0-11}, 112",
+  (0xf, 0b11, true, false) <-> "{ra, s0-11}, 128",
+  (0xf, 0b11, false,true)  <-> "{ra, s0-11}, -112",
+  (0xf, 0b11, false,false) <-> "{ra, s0-11}, -128",
 }
 
 function get_stack_adj_base(rlist : bits(4)) -> int = {
@@ -145,10 +251,6 @@ function get_stack_adj_base(rlist : bits(4)) -> int = {
 }
 
 mapping reg_list : bits(4) <-> string = {
-  0b0000     <-> "",
-  0b0001     <-> "",
-  0b0010     <-> "",
-  0b0011     <-> "",
   0b0100     <-> "ra",
   0b0101     <-> "ra, s0",
   0b0110     <-> "ra, s0-s1",
@@ -273,10 +375,10 @@ function clause execute (CM_PUSH(rlist, spimm)) = {
 }
 
 mapping clause assembly = CM_PUSH(rlist, spimm) if (sizeof(xlen) == 32) <->
-  "cm.push" ^ spc() ^ zcmp_assembly_mapping_32(rlist, spimm) if (sizeof(xlen) == 32)
+  "cm.push" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, false, true) if (sizeof(xlen) == 32)
 
 mapping clause assembly = CM_PUSH(rlist, spimm) if (sizeof(xlen) == 64) <->
-  "cm.push" ^ spc() ^ zcmp_assembly_mapping_64(rlist, spimm) if (sizeof(xlen) == 64)
+  "cm.push" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, false, false) if (sizeof(xlen) == 64)
 
 
 union clause ast = CM_POP : (bits(4), bits(2))
@@ -284,8 +386,8 @@ union clause ast = CM_POP : (bits(4), bits(2))
 mapping clause encdec_compressed = CM_POP(rlist, spimm)   if extensionEnabled(Ext_Zcmp)
   <-> 0b101 @ 0b11010 @ rlist : bits(4) @ spimm : bits(2) @ 0b10    if extensionEnabled(Ext_Zcmp)
 
-val process_cmpop : (bits(4), bits(2), word_width) -> Retired
-function process_cmpop (rlist : bits(4), spimm : bits(2), width : word_width) = {
+val process_cmpop : (bits(4), bits(2), word_width, bool, bool) -> Retired
+function process_cmpop (rlist : bits(4), spimm : bits(2), width : word_width, write_pc : bool, write_a0 : bool) = {
   let width_bytes = size_bytes(width);
 
   let addr = X(sp);
@@ -321,18 +423,63 @@ function process_cmpop (rlist : bits(4), spimm : bits(2), width : word_width) = 
       }
     }
   };
+
+  // cm.popret write pc with ra.
+  if write_pc then {
+    let ra_val = X(to_bits(5, 1));
+    set_next_pc(ra_val);
+  };
+
+  // cm.popretz write a0 with zero.
+  if write_a0 then {
+    let a0 : regidx = to_bits(5, 10);
+    X(a0) = to_bits(xlen, 0);
+  };
+
   RETIRE_SUCCESS
 }
 
 function clause execute (CM_POP(rlist, spimm)) = {
   if (xlen == 32) then
-    process_cmpop(rlist, spimm, WORD)
+    process_cmpop(rlist, spimm, WORD, false, false)
   else
-    process_cmpop(rlist, spimm, DOUBLE)
+    process_cmpop(rlist, spimm, DOUBLE, false, false)
 }
 
 mapping clause assembly = CM_POP(rlist, spimm) if (sizeof(xlen) == 32) <->
-  "cm.pop" ^ spc() ^ zcmp_assembly_mapping_32(rlist, spimm) if (sizeof(xlen) == 32)
+  "cm.pop" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true, true) if (sizeof(xlen) == 32)
 
 mapping clause assembly = CM_POP(rlist, spimm) if (sizeof(xlen) == 64) <->
-  "cm.pop" ^ spc() ^ zcmp_assembly_mapping_64(rlist, spimm) if (sizeof(xlen) == 64)
+  "cm.pop" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true, false) if (sizeof(xlen) == 64)
+
+
+union clause ast = CM_POPRET : (bits(4), bits(2))
+
+mapping clause encdec_compressed = CM_POPRET(rlist, spimm)   if extensionEnabled(Ext_Zcmp)
+  <-> 0b101 @ 0b11110 @ rlist : bits(4) @ spimm : bits(2) @ 0b10    if extensionEnabled(Ext_Zcmp)
+
+function clause execute (CM_POPRET(rlist, spimm)) = {
+  if (xlen == 32) then
+    process_cmpop(rlist, spimm, WORD, true, false)
+  else
+    process_cmpop(rlist, spimm, DOUBLE, true, false)
+}
+
+mapping clause assembly = CM_POPRET(rlist, spimm) if (sizeof(xlen) == 32) <->
+  "cm.popret" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true, true) if (sizeof(xlen) == 32)
+
+mapping clause assembly = CM_POPRET(rlist, spimm) if (sizeof(xlen) == 64) <->
+  "cm.popret" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true, false) if (sizeof(xlen) == 64)
+
+
+union clause ast = CM_POPRETZ : (bits(4), bits(2))
+
+mapping clause encdec_compressed = CM_POPRETZ(rlist, spimm)   if extensionEnabled(Ext_Zcmp)
+  <-> 0b101 @ 0b11100 @ rlist : bits(4) @ spimm : bits(2) @ 0b10    if extensionEnabled(Ext_Zcmp)
+
+function clause execute (CM_POPRETZ(rlist, spimm)) = {
+  if (xlen == 32) then
+    process_cmpop(rlist, spimm, WORD, false, true)
+  else
+    process_cmpop(rlist, spimm, DOUBLE, false, true)
+}
