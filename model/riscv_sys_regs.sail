@@ -244,7 +244,9 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
    * that does not have a matching bitfield entry. All bits above 32 are handled
    * explicitly later.
    */
-  let m : Mstatus = Mk_Mstatus(zero_extend(v[22 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
+  // TODO: This method is error prone. We should instead explicitly copy the
+  // fields that are implemented. See legalize_mie() for an example.
+  let m : Mstatus = Mk_Mstatus(zero_extend(v[22 .. 7] @ 0b0 @ v[5 .. 5] @ 0b0 @ v[3 .. 3] @ 0b0 @ v[1 .. 1] @ 0b0));
 
   /* Legalize MPP */
   let m = [m with MPP = if have_privLevel(m[MPP]) then m[MPP]
