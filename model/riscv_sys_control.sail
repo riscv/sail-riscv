@@ -244,7 +244,20 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
     match processPending(mip, mie, mideleg.bits, mIE) {
       Ints_Empty()      => None(),
       Ints_Pending(p)   => Some((p, Machine)),
-      Ints_Delegated(d) => if sIE then Some((d, Supervisor)) else None(),
+      Ints_Delegated(d) => {
+        if not(extensionEnabled(Ext_S)) then {
+          // Can't delegate to user mode. This code is unreachable because
+          // `mideleg.bits` is 0 without supervisor mode.
+          internal_error(__FILE__, __LINE__, "N extension not supported");
+        } else {
+          /* the delegated bits are pending for S-mode */
+          match processPending(Mk_Minterrupts(d), mie, zeros(), sIE) {
+            Ints_Empty()      => None(),
+            Ints_Pending(p)   => Some((p, Supervisor)),
+            Ints_Delegated(d) => internal_error(__FILE__, __LINE__, "N extension not supported"),
+          }
+        }
+      }
     }
   }
 }
