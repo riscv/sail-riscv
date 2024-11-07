@@ -130,7 +130,7 @@ function exception_delegatee(e : ExceptionType, cur_p : Privilege, cur_v : Virtu
    */
   let idx       = num_of_ExceptionType(e);
   let del_to_hs = bit_to_bool(medeleg.bits[idx]);
-  let del_to_vs = bit_to_bool(hedeleg.bits[idx]);
+  let del_to_vs = bit_to_bool(hedeleg.bits[idx]) & (cur_v == V1);
   let (del_p, del_v): (Privilege, Virtualization) = match (del_to_hs, del_to_vs) {
       (false, _,)   => (Machine, V0),
       (true, false) => (Supervisor, V0),
@@ -232,7 +232,7 @@ function getPendingSet(priv : Privilege, virt : Virtualization) -> option((xlenb
      * considered blocked.
      */
     let mIE = priv != Machine | (priv == Machine & mstatus[MIE] == 0b1);
-    let sIE = extensionEnabled(Ext_S) & (priv == User | (priv == Supervisor & mstatus[SIE] == 0b1));
+    let sIE = extensionEnabled(Ext_S) & (virt == V1 | priv == User | (priv == Supervisor & mstatus[SIE] == 0b1));
     let vsIE = extensionEnabled(Ext_H) & virt == V1 & (priv == User | (priv == Supervisor & vsstatus[SIE] == 0b1)); // Enabled H-ext implies presence of S-mode
 
     match processPending(mip, mie, mideleg.bits, mIE) {

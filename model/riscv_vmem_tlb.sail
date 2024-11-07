@@ -77,7 +77,13 @@ function tlb_hash(vaddr : bits(64)) -> tlb_index_range =
 function init_TLB() -> unit = {
   foreach (i from 0 to (length(tlb_S) - 1)) {
     tlb_S[i] = None();
-  }
+  };
+  foreach (i from 0 to (length(tlb_VS) - 1)) {
+    tlb_VS[i] = None();
+  };
+  foreach (i from 0 to (length(tlb_G) - 1)) {
+    tlb_G[i] = None();
+  };
 }
 
 // PUBLIC: invoked in translate_TLB_hit() [riscv_vmem.sail]
