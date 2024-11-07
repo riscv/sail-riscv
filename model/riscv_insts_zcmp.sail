@@ -9,209 +9,209 @@
 // first bool represent the stack_adi is positive or negative.
 // second bool represent xlen is 32 or 64.
 mapping zcmp_assembly_mapping : (bits(4), bits(2), bool, {32, 64}) <-> string = {
-  (0x4, 0b00, true, 32)  <-> "{ra}, 16",
-  (0x4, 0b00, true, 64) <-> "{ra}, 32",
-  (0x4, 0b00, false,32)  <-> "{ra}, -16",
-  (0x4, 0b00, false,64) <-> "{ra}, -32",
-  (0x4, 0b01, true, 32)  <-> "{ra}, 32",
-  (0x4, 0b01, true, 64) <-> "{ra}, 48",
-  (0x4, 0b01, false,32)  <-> "{ra}, -32",
-  (0x4, 0b01, false,64) <-> "{ra}, -48",
-  (0x4, 0b10, true, 32)  <-> "{ra}, 48",
-  (0x4, 0b10, true, 64) <-> "{ra}, 64",
-  (0x4, 0b10, false,32)  <-> "{ra}, -48",
-  (0x4, 0b10, false,64) <-> "{ra}, -64",
-  (0x4, 0b11, true, 32)  <-> "{ra}, 64",
-  (0x4, 0b11, true, 64) <-> "{ra}, 80",
-  (0x4, 0b11, false,32)  <-> "{ra}, -64",
-  (0x4, 0b11, false,64) <-> "{ra}, -80",
+  (0x4, 0b00, true, 32)  <-> "{ra} " ^ sep() ^ "16",
+  (0x4, 0b00, true, 64) <-> "{ra} " ^ sep() ^ "32",
+  (0x4, 0b00, false,32)  <-> "{ra} " ^ sep() ^ "-16",
+  (0x4, 0b00, false,64) <-> "{ra} " ^ sep() ^ "-32",
+  (0x4, 0b01, true, 32)  <-> "{ra} " ^ sep() ^ "32",
+  (0x4, 0b01, true, 64) <-> "{ra} " ^ sep() ^ "48",
+  (0x4, 0b01, false,32)  <-> "{ra} " ^ sep() ^ "-32",
+  (0x4, 0b01, false,64) <-> "{ra} " ^ sep() ^ "-48",
+  (0x4, 0b10, true, 32)  <-> "{ra} " ^ sep() ^ "48",
+  (0x4, 0b10, true, 64) <-> "{ra} " ^ sep() ^ "64",
+  (0x4, 0b10, false,32)  <-> "{ra} " ^ sep() ^ "-48",
+  (0x4, 0b10, false,64) <-> "{ra} " ^ sep() ^ "-64",
+  (0x4, 0b11, true, 32)  <-> "{ra} " ^ sep() ^ "64",
+  (0x4, 0b11, true, 64) <-> "{ra} " ^ sep() ^ "80",
+  (0x4, 0b11, false,32)  <-> "{ra} " ^ sep() ^ "-64",
+  (0x4, 0b11, false,64) <-> "{ra} " ^ sep() ^ "-80",
 
-  (0x5, 0b00, true, 32)  <-> "{ra, s0}, 16",
-  (0x5, 0b00, true, 64) <-> "{ra, s0}, 32",
-  (0x5, 0b00, false,32)  <-> "{ra, s0}, -16",
-  (0x5, 0b00, false,64) <-> "{ra, s0}, -32",
-  (0x5, 0b01, true, 32)  <-> "{ra, s0}, 32",
-  (0x5, 0b01, true, 64) <-> "{ra, s0}, 48",
-  (0x5, 0b01, false,32)  <-> "{ra, s0}, -32",
-  (0x5, 0b01, false,64) <-> "{ra, s0}, -48",
-  (0x5, 0b10, true, 32)  <-> "{ra, s0}, 48",
-  (0x5, 0b10, true, 64) <-> "{ra, s0}, 64",
-  (0x5, 0b10, false,32)  <-> "{ra, s0}, -48",
-  (0x5, 0b10, false,64) <-> "{ra, s0}, -64",
-  (0x5, 0b11, true, 32)  <-> "{ra, s0}, 64",
-  (0x5, 0b11, true, 64) <-> "{ra, s0}, 80",
-  (0x5, 0b11, false,32)  <-> "{ra, s0}, -64",
-  (0x5, 0b11, false,64) <-> "{ra, s0}, -80",
+  (0x5, 0b00, true, 32)  <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "16",
+  (0x5, 0b00, true, 64) <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "32",
+  (0x5, 0b00, false,32)  <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "-16",
+  (0x5, 0b00, false,64) <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "-32",
+  (0x5, 0b01, true, 32)  <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "32",
+  (0x5, 0b01, true, 64) <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "48",
+  (0x5, 0b01, false,32)  <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "-32",
+  (0x5, 0b01, false,64) <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "-48",
+  (0x5, 0b10, true, 32)  <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "48",
+  (0x5, 0b10, true, 64) <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "64",
+  (0x5, 0b10, false,32)  <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "-48",
+  (0x5, 0b10, false,64) <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "-64",
+  (0x5, 0b11, true, 32)  <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "64",
+  (0x5, 0b11, true, 64) <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "80",
+  (0x5, 0b11, false,32)  <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "-64",
+  (0x5, 0b11, false,64) <-> "{ra" ^ sep() ^ "s0}" ^ sep() ^ "-80",
 
-  (0x6, 0b00, true, 32)  <-> "{ra, s0-s1}, -16",
-  (0x6, 0b00, true, 64) <-> "{ra, s0-s1}, -32",
-  (0x6, 0b00, false,32)  <-> "{ra, s0-s1}, --16",
-  (0x6, 0b00, false,64) <-> "{ra, s0-s1}, --32",
-  (0x6, 0b01, true, 32)  <-> "{ra, s0-s1}, -32",
-  (0x6, 0b01, true, 64) <-> "{ra, s0-s1}, -48",
-  (0x6, 0b01, false,32)  <-> "{ra, s0-s1}, --32",
-  (0x6, 0b01, false,64) <-> "{ra, s0-s1}, --48",
-  (0x6, 0b10, true, 32)  <-> "{ra, s0-s1}, -48",
-  (0x6, 0b10, true, 64) <-> "{ra, s0-s1}, -64",
-  (0x6, 0b10, false,32)  <-> "{ra, s0-s1}, --48",
-  (0x6, 0b10, false,64) <-> "{ra, s0-s1}, --64",
-  (0x6, 0b11, true, 32)  <-> "{ra, s0-s1}, -64",
-  (0x6, 0b11, true, 64) <-> "{ra, s0-s1}, -80",
-  (0x6, 0b11, false,32)  <-> "{ra, s0-s1}, --64",
-  (0x6, 0b11, false,64) <-> "{ra, s0-s1}, --80",
+  (0x6, 0b00, true, 32)  <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "-16",
+  (0x6, 0b00, true, 64) <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "-32",
+  (0x6, 0b00, false,32)  <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "--16",
+  (0x6, 0b00, false,64) <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "--32",
+  (0x6, 0b01, true, 32)  <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "-32",
+  (0x6, 0b01, true, 64) <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "-48",
+  (0x6, 0b01, false,32)  <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "--32",
+  (0x6, 0b01, false,64) <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "--48",
+  (0x6, 0b10, true, 32)  <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "-48",
+  (0x6, 0b10, true, 64) <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "-64",
+  (0x6, 0b10, false,32)  <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "--48",
+  (0x6, 0b10, false,64) <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "--64",
+  (0x6, 0b11, true, 32)  <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "-64",
+  (0x6, 0b11, true, 64) <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "-80",
+  (0x6, 0b11, false,32)  <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "--64",
+  (0x6, 0b11, false,64) <-> "{ra" ^ sep() ^ "s0-s1}" ^ sep() ^ "--80",
 
-  (0x7, 0b00, true, 32)  <-> "{ra, s0-s2}, 16",
-  (0x7, 0b00, true, 64) <-> "{ra, s0-s2}, 32",
-  (0x7, 0b00, false,32)  <-> "{ra, s0-s2}, -16",
-  (0x7, 0b00, false,64) <-> "{ra, s0-s2}, -32",
-  (0x7, 0b01, true, 32)  <-> "{ra, s0-s2}, 32",
-  (0x7, 0b01, true, 64) <-> "{ra, s0-s2}, 48",
-  (0x7, 0b01, false,32)  <-> "{ra, s0-s2}, -32",
-  (0x7, 0b01, false,64) <-> "{ra, s0-s2}, -48",
-  (0x7, 0b10, true, 32)  <-> "{ra, s0-s2}, 48",
-  (0x7, 0b10, true, 64) <-> "{ra, s0-s2}, 64",
-  (0x7, 0b10, false,32)  <-> "{ra, s0-s2}, -48",
-  (0x7, 0b10, false,64) <-> "{ra, s0-s2}, -64",
-  (0x7, 0b11, true, 32)  <-> "{ra, s0-s2}, 64",
-  (0x7, 0b11, true, 64) <-> "{ra, s0-s2}, 80",
-  (0x7, 0b11, false,32)  <-> "{ra, s0-s2}, -64",
-  (0x7, 0b11, false,64) <-> "{ra, s0-s2}, -80",
+  (0x7, 0b00, true, 32)  <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "16",
+  (0x7, 0b00, true, 64) <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "32",
+  (0x7, 0b00, false,32)  <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "-16",
+  (0x7, 0b00, false,64) <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "-32",
+  (0x7, 0b01, true, 32)  <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "32",
+  (0x7, 0b01, true, 64) <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "48",
+  (0x7, 0b01, false,32)  <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "-32",
+  (0x7, 0b01, false,64) <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "-48",
+  (0x7, 0b10, true, 32)  <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "48",
+  (0x7, 0b10, true, 64) <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "64",
+  (0x7, 0b10, false,32)  <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "-48",
+  (0x7, 0b10, false,64) <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "-64",
+  (0x7, 0b11, true, 32)  <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "64",
+  (0x7, 0b11, true, 64) <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "80",
+  (0x7, 0b11, false,32)  <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "-64",
+  (0x7, 0b11, false,64) <-> "{ra" ^ sep() ^ "s0-s2}" ^ sep() ^ "-80",
 
-  (0x8, 0b00, true, 32)  <-> "{ra, s0-s3}, 32",
-  (0x8, 0b00, true, 64) <-> "{ra, s0-s3}, 48",
-  (0x8, 0b00, false,32)  <-> "{ra, s0-s3}, -32",
-  (0x8, 0b00, false,64) <-> "{ra, s0-s3}, -48",
-  (0x8, 0b01, true, 32)  <-> "{ra, s0-s3}, 48",
-  (0x8, 0b01, true, 64) <-> "{ra, s0-s3}, 64",
-  (0x8, 0b01, false,32)  <-> "{ra, s0-s3}, -48",
-  (0x8, 0b01, false,64) <-> "{ra, s0-s3}, -64",
-  (0x8, 0b10, true, 32)  <-> "{ra, s0-s3}, 64",
-  (0x8, 0b10, true, 64) <-> "{ra, s0-s3}, 80",
-  (0x8, 0b10, false,32)  <-> "{ra, s0-s3}, -64",
-  (0x8, 0b10, false,64) <-> "{ra, s0-s3}, -80",
-  (0x8, 0b11, true, 32)  <-> "{ra, s0-s3}, 80",
-  (0x8, 0b11, true, 64) <-> "{ra, s0-s3}, 96",
-  (0x8, 0b11, false,32)  <-> "{ra, s0-s3}, -80",
-  (0x8, 0b11, false,64) <-> "{ra, s0-s3}, -96",
+  (0x8, 0b00, true, 32)  <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "32",
+  (0x8, 0b00, true, 64) <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "48",
+  (0x8, 0b00, false,32)  <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "-32",
+  (0x8, 0b00, false,64) <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "-48",
+  (0x8, 0b01, true, 32)  <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "48",
+  (0x8, 0b01, true, 64) <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "64",
+  (0x8, 0b01, false,32)  <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "-48",
+  (0x8, 0b01, false,64) <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "-64",
+  (0x8, 0b10, true, 32)  <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "64",
+  (0x8, 0b10, true, 64) <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "80",
+  (0x8, 0b10, false,32)  <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "-64",
+  (0x8, 0b10, false,64) <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "-80",
+  (0x8, 0b11, true, 32)  <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "80",
+  (0x8, 0b11, true, 64) <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "96",
+  (0x8, 0b11, false,32)  <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "-80",
+  (0x8, 0b11, false,64) <-> "{ra" ^ sep() ^ "s0-s3}" ^ sep() ^ "-96",
 
-  (0x9, 0b00, true, 32)  <-> "{ra, s0-s4}, 32",
-  (0x9, 0b00, true, 64) <-> "{ra, s0-s4}, 48",
-  (0x9, 0b00, false,32)  <-> "{ra, s0-s4}, -32",
-  (0x9, 0b00, false,64) <-> "{ra, s0-s4}, -48",
-  (0x9, 0b01, true, 32)  <-> "{ra, s0-s4}, 48",
-  (0x9, 0b01, true, 64) <-> "{ra, s0-s4}, 64",
-  (0x9, 0b01, false,32)  <-> "{ra, s0-s4}, -48",
-  (0x9, 0b01, false,64) <-> "{ra, s0-s4}, -64",
-  (0x9, 0b10, true, 32)  <-> "{ra, s0-s4}, 64",
-  (0x9, 0b10, true, 64) <-> "{ra, s0-s4}, 80",
-  (0x9, 0b10, false,32)  <-> "{ra, s0-s4}, -64",
-  (0x9, 0b10, false,64) <-> "{ra, s0-s4}, -80",
-  (0x9, 0b11, true, 32)  <-> "{ra, s0-s4}, 80",
-  (0x9, 0b11, true, 64) <-> "{ra, s0-s4}, 96",
-  (0x9, 0b11, false,32)  <-> "{ra, s0-s4}, -80",
-  (0x9, 0b11, false,64) <-> "{ra, s0-s4}, -96",
+  (0x9, 0b00, true, 32)  <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "32",
+  (0x9, 0b00, true, 64) <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "48",
+  (0x9, 0b00, false,32)  <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "-32",
+  (0x9, 0b00, false,64) <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "-48",
+  (0x9, 0b01, true, 32)  <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "48",
+  (0x9, 0b01, true, 64) <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "64",
+  (0x9, 0b01, false,32)  <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "-48",
+  (0x9, 0b01, false,64) <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "-64",
+  (0x9, 0b10, true, 32)  <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "64",
+  (0x9, 0b10, true, 64) <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "80",
+  (0x9, 0b10, false,32)  <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "-64",
+  (0x9, 0b10, false,64) <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "-80",
+  (0x9, 0b11, true, 32)  <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "80",
+  (0x9, 0b11, true, 64) <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "96",
+  (0x9, 0b11, false,32)  <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "-80",
+  (0x9, 0b11, false,64) <-> "{ra" ^ sep() ^ "s0-s4}" ^ sep() ^ "-96",
 
-  (0xa, 0b00, true, 32)  <-> "{ra, s0-s5}, 32",
-  (0xa, 0b00, true, 64) <-> "{ra, s0-s5}, 48",
-  (0xa, 0b00, false,32)  <-> "{ra, s0-s5}, -32",
-  (0xa, 0b00, false,64) <-> "{ra, s0-s5}, -48",
-  (0xa, 0b01, true, 32)  <-> "{ra, s0-s5}, 48",
-  (0xa, 0b01, true, 64) <-> "{ra, s0-s5}, 64",
-  (0xa, 0b01, false,32)  <-> "{ra, s0-s5}, -48",
-  (0xa, 0b01, false,64) <-> "{ra, s0-s5}, -64",
-  (0xa, 0b10, true, 32)  <-> "{ra, s0-s5}, 64",
-  (0xa, 0b10, true, 64) <-> "{ra, s0-s5}, 80",
-  (0xa, 0b10, false,32)  <-> "{ra, s0-s5}, -64",
-  (0xa, 0b10, false,64) <-> "{ra, s0-s5}, -80",
-  (0xa, 0b11, true, 32)  <-> "{ra, s0-s5}, 80",
-  (0xa, 0b11, true, 64) <-> "{ra, s0-s5}, 96",
-  (0xa, 0b11, false,32)  <-> "{ra, s0-s5}, -80",
-  (0xa, 0b11, false,64) <-> "{ra, s0-s5}, -96",
+  (0xa, 0b00, true, 32)  <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "32",
+  (0xa, 0b00, true, 64) <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "48",
+  (0xa, 0b00, false,32)  <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "-32",
+  (0xa, 0b00, false,64) <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "-48",
+  (0xa, 0b01, true, 32)  <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "48",
+  (0xa, 0b01, true, 64) <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "64",
+  (0xa, 0b01, false,32)  <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "-48",
+  (0xa, 0b01, false,64) <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "-64",
+  (0xa, 0b10, true, 32)  <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "64",
+  (0xa, 0b10, true, 64) <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "80",
+  (0xa, 0b10, false,32)  <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "-64",
+  (0xa, 0b10, false,64) <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "-80",
+  (0xa, 0b11, true, 32)  <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "80",
+  (0xa, 0b11, true, 64) <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "96",
+  (0xa, 0b11, false,32)  <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "-80",
+  (0xa, 0b11, false,64) <-> "{ra" ^ sep() ^ "s0-s5} " ^ sep() ^ "-96",
 
-  (0xb, 0b00, true, 32)  <-> "{ra, s0-s6}, 32",
-  (0xb, 0b00, true, 64) <-> "{ra, s0-s6}, 48",
-  (0xb, 0b00, false,32)  <-> "{ra, s0-s6}, -32",
-  (0xb, 0b00, false,64) <-> "{ra, s0-s6}, -48",
-  (0xb, 0b01, true, 32)  <-> "{ra, s0-s6}, 48",
-  (0xb, 0b01, true, 64) <-> "{ra, s0-s6}, 64",
-  (0xb, 0b01, false,32)  <-> "{ra, s0-s6}, -48",
-  (0xb, 0b01, false,64) <-> "{ra, s0-s6}, -64",
-  (0xb, 0b10, true, 32)  <-> "{ra, s0-s6}, 64",
-  (0xb, 0b10, true, 64) <-> "{ra, s0-s6}, 80",
-  (0xb, 0b10, false,32)  <-> "{ra, s0-s6}, -64",
-  (0xb, 0b10, false,64) <-> "{ra, s0-s6}, -80",
-  (0xb, 0b11, true, 32)  <-> "{ra, s0-s6}, 80",
-  (0xb, 0b11, true, 64) <-> "{ra, s0-s6}, 96",
-  (0xb, 0b11, false,32)  <-> "{ra, s0-s6}, -80",
-  (0xb, 0b11, false,64) <-> "{ra, s0-s6}, -96",
+  (0xb, 0b00, true, 32)  <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "32",
+  (0xb, 0b00, true, 64) <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "48",
+  (0xb, 0b00, false,32)  <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "-32",
+  (0xb, 0b00, false,64) <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "-48",
+  (0xb, 0b01, true, 32)  <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "48",
+  (0xb, 0b01, true, 64) <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "64",
+  (0xb, 0b01, false,32)  <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "-48",
+  (0xb, 0b01, false,64) <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "-64",
+  (0xb, 0b10, true, 32)  <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "64",
+  (0xb, 0b10, true, 64) <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "80",
+  (0xb, 0b10, false,32)  <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "-64",
+  (0xb, 0b10, false,64) <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "-80",
+  (0xb, 0b11, true, 32)  <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "80",
+  (0xb, 0b11, true, 64) <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "96",
+  (0xb, 0b11, false,32)  <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "-80",
+  (0xb, 0b11, false,64) <-> "{ra" ^ sep() ^ "s0-s6}" ^ sep() ^ "-96",
 
-  (0xc, 0b00, true, 32)  <-> "{ra, s0-s7}, 48",
-  (0xc, 0b00, true, 64) <-> "{ra, s0-s7}, 64",
-  (0xc, 0b00, false,32)  <-> "{ra, s0-s7}, -48",
-  (0xc, 0b00, false,64) <-> "{ra, s0-s7}, -64",
-  (0xc, 0b01, true, 32)  <-> "{ra, s0-s7}, 64",
-  (0xc, 0b01, true, 64) <-> "{ra, s0-s7}, 80",
-  (0xc, 0b01, false,32)  <-> "{ra, s0-s7}, -64",
-  (0xc, 0b01, false,64) <-> "{ra, s0-s7}, -80",
-  (0xc, 0b10, true, 32)  <-> "{ra, s0-s7}, 80",
-  (0xc, 0b10, true, 64) <-> "{ra, s0-s7}, 96",
-  (0xc, 0b10, false,32)  <-> "{ra, s0-s7}, -80",
-  (0xc, 0b10, false,64) <-> "{ra, s0-s7}, -96",
-  (0xc, 0b11, true, 32)  <-> "{ra, s0-s7}, 96",
-  (0xc, 0b11, true, 64) <-> "{ra, s0-s7}, 112",
-  (0xc, 0b11, false,32)  <-> "{ra, s0-s7}, -96",
-  (0xc, 0b11, false,64 )<-> "{ra, s0-s7}, -112",
+  (0xc, 0b00, true, 32)  <-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "48",
+  (0xc, 0b00, true, 64) <-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "64",
+  (0xc, 0b00, false,32)  <-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "-48",
+  (0xc, 0b00, false,64) <-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "-64",
+  (0xc, 0b01, true, 32)  <-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "64",
+  (0xc, 0b01, true, 64) <-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "80",
+  (0xc, 0b01, false,32)  <-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "-64",
+  (0xc, 0b01, false,64) <-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "-80",
+  (0xc, 0b10, true, 32)  <-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "80",
+  (0xc, 0b10, true, 64) <-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "96",
+  (0xc, 0b10, false,32)  <-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "-80",
+  (0xc, 0b10, false,64) <-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "-96",
+  (0xc, 0b11, true, 32)  <-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "96",
+  (0xc, 0b11, true, 64) <-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "112",
+  (0xc, 0b11, false,32)  <-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "-96",
+  (0xc, 0b11, false,64 )<-> "{ra" ^ sep() ^ "s0-s7}" ^ sep() ^ "-112",
 
-  (0xd, 0b00, true, 32)  <-> "{ra, s0-s8}, 48",
-  (0xd, 0b00, true, 64) <-> "{ra, s0-s8}, 64",
-  (0xd, 0b00, false,32)  <-> "{ra, s0-s8}, -48",
-  (0xd, 0b00, false,64) <-> "{ra, s0-s8}, -64",
-  (0xd, 0b01, true, 32)  <-> "{ra, s0-s8}, 64",
-  (0xd, 0b01, true, 64) <-> "{ra, s0-s8}, 80",
-  (0xd, 0b01, false,32)  <-> "{ra, s0-s8}, -64",
-  (0xd, 0b01, false,64) <-> "{ra, s0-s8}, -80",
-  (0xd, 0b10, true, 32)  <-> "{ra, s0-s8}, 80",
-  (0xd, 0b10, true, 64) <-> "{ra, s0-s8}, 96",
-  (0xd, 0b10, false,32)  <-> "{ra, s0-s8}, -80",
-  (0xd, 0b10, false,64) <-> "{ra, s0-s8}, -96",
-  (0xd, 0b11, true, 32)  <-> "{ra, s0-s8}, 96",
-  (0xd, 0b11, true, 64) <-> "{ra, s0-s8}, 112",
-  (0xd, 0b11, false,32)  <-> "{ra, s0-s8}, -96",
-  (0xd, 0b11, false,64) <-> "{ra, s0-s8}, -112",
+  (0xd, 0b00, true, 32)  <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "48",
+  (0xd, 0b00, true, 64) <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "64",
+  (0xd, 0b00, false,32)  <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "-48",
+  (0xd, 0b00, false,64) <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "-64",
+  (0xd, 0b01, true, 32)  <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "64",
+  (0xd, 0b01, true, 64) <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "80",
+  (0xd, 0b01, false,32)  <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "-64",
+  (0xd, 0b01, false,64) <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "-80",
+  (0xd, 0b10, true, 32)  <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "80",
+  (0xd, 0b10, true, 64) <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "96",
+  (0xd, 0b10, false,32)  <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "-80",
+  (0xd, 0b10, false,64) <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "-96",
+  (0xd, 0b11, true, 32)  <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "96",
+  (0xd, 0b11, true, 64) <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "112",
+  (0xd, 0b11, false,32)  <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "-96",
+  (0xd, 0b11, false,64) <-> "{ra" ^ sep() ^ " s0-s8}" ^ sep() ^ "-112",
 
-  (0xe, 0b00, true, 32)  <-> "{ra, s0-s9}, 48",
-  (0xe, 0b00, true, 64) <-> "{ra, s0-s9}, 64",
-  (0xe, 0b00, false,32)  <-> "{ra, s0-s9}, -48",
-  (0xe, 0b00, false,64) <-> "{ra, s0-s9}, -64",
-  (0xe, 0b01, true, 32)  <-> "{ra, s0-s9}, 64",
-  (0xe, 0b01, true, 64) <-> "{ra, s0-s9}, 80",
-  (0xe, 0b01, false,32)  <-> "{ra, s0-s9}, -64",
-  (0xe, 0b01, false,64) <-> "{ra, s0-s9}, -80",
-  (0xe, 0b10, true, 32)  <-> "{ra, s0-s9}, 80",
-  (0xe, 0b10, true, 64) <-> "{ra, s0-s9}, 96",
-  (0xe, 0b10, false,32)  <-> "{ra, s0-s9}, -80",
-  (0xe, 0b10, false,64) <-> "{ra, s0-s9}, -96",
-  (0xe, 0b11, true, 32)  <-> "{ra, s0-s9}, 96",
-  (0xe, 0b11, true, 64) <-> "{ra, s0-s9}, 112",
-  (0xe, 0b11, false,32)  <-> "{ra, s0-s9}, -96",
-  (0xe, 0b11, false,64) <-> "{ra, s0-s9}, -112",
+  (0xe, 0b00, true, 32)  <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "48",
+  (0xe, 0b00, true, 64) <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "64",
+  (0xe, 0b00, false,32)  <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "-48",
+  (0xe, 0b00, false,64) <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "-64",
+  (0xe, 0b01, true, 32)  <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "64",
+  (0xe, 0b01, true, 64) <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "80",
+  (0xe, 0b01, false,32)  <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "-64",
+  (0xe, 0b01, false,64) <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "-80",
+  (0xe, 0b10, true, 32)  <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "80",
+  (0xe, 0b10, true, 64) <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "96",
+  (0xe, 0b10, false,32)  <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "-80",
+  (0xe, 0b10, false,64) <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "-96",
+  (0xe, 0b11, true, 32)  <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "96",
+  (0xe, 0b11, true, 64) <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "112",
+  (0xe, 0b11, false,32)  <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "-96",
+  (0xe, 0b11, false,64) <-> "{ra" ^ sep() ^ "s0-s9}" ^ sep() ^ "-112",
 
-  (0xf, 0b00, true, 32)  <-> "{ra, s0-11}, 64",
-  (0xf, 0b00, true, 64) <-> "{ra, s0-11}, 80",
-  (0xf, 0b00, false,32)  <-> "{ra, s0-11}, -64",
-  (0xf, 0b00, false,64) <-> "{ra, s0-11}, -80",
-  (0xf, 0b01, true, 32)  <-> "{ra, s0-11}, 80",
-  (0xf, 0b01, true, 64) <-> "{ra, s0-11}, 96",
-  (0xf, 0b01, false,32)  <-> "{ra, s0-11}, -80",
-  (0xf, 0b01, false,64) <-> "{ra, s0-11}, -96",
-  (0xf, 0b10, true, 32)  <-> "{ra, s0-11}, 96",
-  (0xf, 0b10, true, 64) <-> "{ra, s0-11}, 112",
-  (0xf, 0b10, false,32)  <-> "{ra, s0-11}, -96",
-  (0xf, 0b10, false,64) <-> "{ra, s0-11}, -112",
-  (0xf, 0b11, true, 32)  <-> "{ra, s0-11}, 112",
-  (0xf, 0b11, true, 64) <-> "{ra, s0-11}, 128",
-  (0xf, 0b11, false,32)  <-> "{ra, s0-11}, -112",
-  (0xf, 0b11, false,64) <-> "{ra, s0-11}, -128",
+  (0xf, 0b00, true, 32)  <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "64",
+  (0xf, 0b00, true, 64) <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "80",
+  (0xf, 0b00, false,32)  <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "-64",
+  (0xf, 0b00, false,64) <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "-80",
+  (0xf, 0b01, true, 32)  <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "80",
+  (0xf, 0b01, true, 64) <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "96",
+  (0xf, 0b01, false,32)  <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "-80",
+  (0xf, 0b01, false,64) <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "-96",
+  (0xf, 0b10, true, 32)  <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "96",
+  (0xf, 0b10, true, 64) <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "112",
+  (0xf, 0b10, false,32)  <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "-96",
+  (0xf, 0b10, false,64) <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "-112",
+  (0xf, 0b11, true, 32)  <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "112",
+  (0xf, 0b11, true, 64) <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "128",
+  (0xf, 0b11, false,32)  <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "-112",
+  (0xf, 0b11, false,64) <-> "{ra" ^ sep() ^ "s0-11}" ^ sep() ^ "-128",
 }
 
 function get_stack_adj_base(rlist : bits(4)) -> int = {
@@ -235,67 +235,24 @@ function get_stack_adj_base(rlist : bits(4)) -> int = {
   }
 }
 
-mapping reg_list : bits(4) <-> string = {
-  0b0100     <-> "ra",
-  0b0101     <-> "ra, s0",
-  0b0110     <-> "ra, s0-s1",
-  0b0111     <-> "ra, s0-s2",
-  0b1000     <-> "ra, s0-s3",
-  0b1001     <-> "ra, s0-s4",
-  0b1010     <-> "ra, s0-s5",
-  0b1011     <-> "ra, s0-s6",
-  0b1100     <-> "ra, s0-s7",
-  0b1101     <-> "ra, s0-s8",
-  0b1110     <-> "ra, s0-s9",
-  0b1111     <-> "ra, s0-s11",
-}
-
-mapping rlist_to_int : bits(4) <-> int = {
-  0b0000     <-> 0,
-  0b0001     <-> 1,
-  0b0010     <-> 2,
-  0b0011     <-> 3,
-  0b0100     <-> 4,
-  0b0101     <-> 5,
-  0b0110     <-> 6,
-  0b0111     <-> 7,
-  0b1000     <-> 8,
-  0b1001     <-> 9,
-  0b1010     <-> 10,
-  0b1011     <-> 11,
-  0b1100     <-> 12,
-  0b1101     <-> 13,
-  0b1110     <-> 14,
-  0b1111     <-> 15,
-}
-
-mapping spimm_to_int : bits(2) <-> int = {
-  0b00     <-> 0,
-  0b01     <-> 1,
-  0b10     <-> 2,
-  0b11     <-> 3,
-}
-
-function zcmp_regmask(rlist : bits(4)) -> vector(32, bool) = {
-  var mask : vector(32, bool) = undefined;
+function zcmp_regmask(rlist : bits(4)) -> bits(32) = {
+  var mask : bits(32) = zeros();
 
   if rlist >=_u 0b0100 then {
-    mask[1] = true
+    mask[1] = bitone
   };
 
-  let rlist_num = rlist_to_int(rlist);
-
-  foreach (i from 5 to rlist_num) {
+  foreach (i from 5 to unsigned(rlist)) {
     assert(i <= 15);
     if( (i - 5) < 2 ) then
-      mask[3 + i] = true
+      mask[3 + i] = bitone
     else {
-      mask[11 + i] = true
+      mask[11 + i] = bitone
     };
   };
 
   if(rlist == zero_extend(0xf)) then
-    mask[27] = true;
+    mask[27] = bitone;
 
   mask
 }
@@ -308,24 +265,23 @@ union clause ast = CM_PUSH : (bits(4), bits(2))
 mapping clause encdec_compressed = CM_PUSH(rlist, spimm)   if extensionEnabled(Ext_Zcmp)
   <-> 0b101 @ 0b11000 @ rlist : bits(4) @ spimm : bits(2) @ 0b10    if extensionEnabled(Ext_Zcmp)
 
-function process_cmpush (rlist : bits(4), spimm : bits(2), width : word_width) -> Retired = {
-  let width_bytes = size_bytes(width);
+function process_cmpush (rlist : bits(4), spimm : bits(2)) -> Retired = {
+  let width_bytes = xlen_bytes;
   assert(width_bytes <= xlen_bytes);
 
   let addr = X(sp);
-  let spimm_int = spimm_to_int(spimm);
-  let stack_adj = negate_int(get_stack_adj_base(rlist) + spimm_int * 16);
+  let stack_adj = negate_int(get_stack_adj_base(rlist) + unsigned(spimm) * 16);
   let new_sp = addr + to_bits(xlen, stack_adj);
   let mask = zcmp_regmask(rlist);
 
   var offset : int = width_bytes;
 
   foreach (i from 31 downto 1) {
-    if mask[i] then {
+    if mask[i] == bitone then {
       match ext_data_get_addr(sp, to_bits(xlen, negate_int(offset)), Write(Data), xlen / 8) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
         Ext_DataAddr_OK(vaddr) =>
-        if   check_misaligned(vaddr, width)
+        if   check_misaligned(vaddr, size_bytes(xlen_bytes))
         then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
         else match translateAddr(vaddr, Write(Data)) {
             TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
@@ -352,10 +308,12 @@ function process_cmpush (rlist : bits(4), spimm : bits(2), width : word_width) -
 }
 
 function clause execute (CM_PUSH(rlist, spimm)) = {
+  assert(rlist >=_u 0b0100);
+
   if (xlen == 32) then
-    process_cmpush(rlist, spimm, WORD)
+    process_cmpush(rlist, spimm)
   else
-    process_cmpush(rlist, spimm, DOUBLE)
+    process_cmpush(rlist, spimm)
 }
 
 mapping clause assembly = CM_PUSH(rlist, spimm) if (sizeof(xlen) == 32) <->
@@ -370,13 +328,12 @@ union clause ast = CM_POP : (bits(4), bits(2))
 mapping clause encdec_compressed = CM_POP(rlist, spimm)   if extensionEnabled(Ext_Zcmp)
   <-> 0b101 @ 0b11010 @ rlist : bits(4) @ spimm : bits(2) @ 0b10    if extensionEnabled(Ext_Zcmp)
 
-function process_cmpop (rlist : bits(4), spimm : bits(2), width : word_width, write_pc : bool, write_a0 : bool) -> Retired = {
-  let width_bytes = size_bytes(width);
+function process_cmpop (rlist : bits(4), spimm : bits(2), write_pc : bool, write_a0 : bool) -> Retired = {
+  let width_bytes = xlen_bytes;
   assert(width_bytes <= xlen_bytes);
 
   let addr = X(sp);
-  let spimm_int = spimm_to_int(spimm);
-  let stack_adj = get_stack_adj_base(rlist) + spimm_int * 16;
+  let stack_adj = get_stack_adj_base(rlist) + unsigned(spimm) * 16;
   let new_sp = addr + to_bits(xlen, stack_adj);
   let mask = zcmp_regmask(rlist);
   let bytes = if sizeof(xlen) == 32 then 4 else 8;
@@ -386,11 +343,11 @@ function process_cmpop (rlist : bits(4), spimm : bits(2), width : word_width, wr
   var offset : int = width_bytes;
 
   foreach (i from 31 downto 1) {
-    if mask[i] then {
+    if mask[i] == bitone then {
       match ext_data_get_addr(sp, to_bits(xlen, negate_int(offset)), Write(Data), xlen / 8) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
         Ext_DataAddr_OK(vaddr) =>
-        if   check_misaligned(vaddr, width)
+        if   check_misaligned(vaddr, size_bytes(xlen_bytes))
         then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
         else match translateAddr(vaddr, Write(Data)) {
             TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
@@ -422,10 +379,12 @@ function process_cmpop (rlist : bits(4), spimm : bits(2), width : word_width, wr
 }
 
 function clause execute (CM_POP(rlist, spimm)) = {
+  assert(rlist >=_u 0b0100);
+
   if (xlen == 32) then
-    process_cmpop(rlist, spimm, WORD, false, false)
+    process_cmpop(rlist, spimm, false, false)
   else
-    process_cmpop(rlist, spimm, DOUBLE, false, false)
+    process_cmpop(rlist, spimm, false, false)
 }
 
 mapping clause assembly = CM_POP(rlist, spimm) if (sizeof(xlen) == 32) <->
@@ -441,10 +400,12 @@ mapping clause encdec_compressed = CM_POPRET(rlist, spimm)   if extensionEnabled
   <-> 0b101 @ 0b11110 @ rlist : bits(4) @ spimm : bits(2) @ 0b10    if extensionEnabled(Ext_Zcmp)
 
 function clause execute (CM_POPRET(rlist, spimm)) = {
+  assert(rlist >=_u 0b0100);
+
   if (xlen == 32) then
-    process_cmpop(rlist, spimm, WORD, true, false)
+    process_cmpop(rlist, spimm, true, false)
   else
-    process_cmpop(rlist, spimm, DOUBLE, true, false)
+    process_cmpop(rlist, spimm, true, false)
 }
 
 mapping clause assembly = CM_POPRET(rlist, spimm) if (sizeof(xlen) == 32) <->
@@ -460,10 +421,12 @@ mapping clause encdec_compressed = CM_POPRETZ(rlist, spimm)   if extensionEnable
   <-> 0b101 @ 0b11100 @ rlist : bits(4) @ spimm : bits(2) @ 0b10    if extensionEnabled(Ext_Zcmp)
 
 function clause execute (CM_POPRETZ(rlist, spimm)) = {
+  assert(rlist >=_u 0b0100);
+
   if (xlen == 32) then
-    process_cmpop(rlist, spimm, WORD, false, true)
+    process_cmpop(rlist, spimm, false, true)
   else
-    process_cmpop(rlist, spimm, DOUBLE, false, true)
+    process_cmpop(rlist, spimm, false, true)
 }
 
 mapping clause assembly = CM_POPRETZ(rlist, spimm) if (sizeof(xlen) == 32) <->
@@ -516,6 +479,8 @@ mapping clause encdec_compressed = CM_MVSA01(r1s', r2s')   if extensionEnabled(E
   <-> 0b101 @ 0b011 @ r1s' : cregidx @ 0b01 @ r2s' : cregidx @ 0b10    if extensionEnabled(Ext_Zcmp)
 
 function clause execute (CM_MVSA01(r1s', r2s')) = {
+  assert(r1s' != r2s');
+
   X(rns_to_regidx(r1s')) = X(0b01010);
   X(rns_to_regidx(r2s')) = X(0b01011);
 
