@@ -538,7 +538,7 @@ function check_trigger_firing(cur_priv : Privilege) -> bool = {
   var ITrigFired         : bool = false;
   var ETrigFired         : bool = false;
   var MCtrlTrigFired     : bool = false;
-  var fired_trigger_idx  : vector(2, dec, {'n, (0 <= 'n < 7). int('n)}) = [0, 0];
+  var fired_trigger_idx  : vector(2, dec, {'n, (0 <= 'n < N_TRIGGERS). int('n)}) = [0, 0];
   var InstrCount         : InstructionCount  = Mk_InstructionCount(zero_extend(0b0));
   var IEtrigger          : InterruptTrigger  = Mk_InterruptTrigger(zero_extend(0b0));
   var MCtrl6             : MatchControlType6 = Mk_MatchControlType6(zero_extend(0b0));
@@ -668,7 +668,7 @@ function init_sys() -> unit = {
   vtype[vsew]      = 0b000;
   vtype[vlmul]     = 0b000;
 
-  foreach (i from 0 to 6) {
+  foreach (i from 0 to (sizeof(N_TRIGGERS) - 1)) {
     tdata1_x.tdata1[i][(xlen - 1) .. (xlen - 4)] = 0xf;
   };
 

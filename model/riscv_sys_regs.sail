@@ -885,7 +885,6 @@ mapping clause csr_name_map = 0x7a3  <-> "tdata3"
 /*  Legalize TSELECT */
 function legalize_tselect(o : xlenbits, v : xlenbits) -> xlenbits = {
   let t : xlenbits = o;
-  // TODO: Avoid hardcoded value
   if (unsigned(v) <= (sizeof(N_TRIGGERS) - 1)) then { v } else { t }
 }
 
