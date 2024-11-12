@@ -24,7 +24,10 @@ function clause extensionEnabled(Ext_D) = (misa[D] == 0b1) & (mstatus[FS] != 0b0
 enum clause extension = Ext_Zfinx
 function clause extensionEnabled(Ext_Zfinx) = sys_enable_zfinx()
 
-/* val clause is_CSR_defined : (csreg) -> bool */
+/* Floating Point CSRs */
+mapping clause csr_name_map = 0x001  <-> "fflags"
+mapping clause csr_name_map = 0x002  <-> "frm"
+mapping clause csr_name_map = 0x003  <-> "fcsr"
 
 function clause is_CSR_defined (0x001) = extensionEnabled(Ext_F) | extensionEnabled(Ext_Zfinx)
 function clause is_CSR_defined (0x002) = extensionEnabled(Ext_F) | extensionEnabled(Ext_Zfinx)

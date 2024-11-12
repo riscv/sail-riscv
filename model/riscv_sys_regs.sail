@@ -136,15 +136,16 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   }
 }
 
+mapping clause csr_name_map = 0x301  <-> "misa"
+function clause is_CSR_defined(0x301) = true // misa
+function clause read_CSR(0x301) = misa.bits
+function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); misa.bits }
+
 enum clause extension = Ext_U
 function clause extensionEnabled(Ext_U) = misa[U] == 0b1
 
 enum clause extension = Ext_S
 function clause extensionEnabled(Ext_S) = misa[S] == 0b1
-
-/* Hardware Performance Monitoring counters */
-enum clause extension = Ext_Zihpm
-function clause extensionEnabled(Ext_Zihpm) = true
 
 /*
  * Illegal values legalized to least privileged mode supported.
@@ -276,6 +277,17 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   } else m
 }
 
+mapping clause csr_name_map = 0x300  <-> "mstatus"
+
+function clause is_CSR_defined(0x300) = true // mstatus
+function clause is_CSR_defined(0x310) = xlen == 32 // mstatush
+
+function clause read_CSR(0x300) = mstatus.bits
+function clause read_CSR(0x310 if xlen == 32) = mstatush.bits
+
+function clause write_CSR(0x300, value) = { mstatus = legalize_mstatus(mstatus, value); mstatus.bits }
+function clause write_CSR((0x310, value) if xlen == 32) = { mstatush.bits } // ignore writes for now
+
 /* architecture and extension checks */
 
 function cur_Architecture() -> Architecture = {
@@ -307,9 +319,6 @@ bitfield Minterrupts : xlenbits = {
   MSI : 3,  /* software interrupts */
   SSI : 1,
 }
-register mip     : Minterrupts /* Pending */
-register mie     : Minterrupts /* Enabled */
-register mideleg : Minterrupts /* Delegation to S-mode */
 
 function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   /* The only writable bits are the S-mode bits, and with the 'N'
@@ -354,12 +363,36 @@ bitfield Medeleg : xlenbits = {
   Fetch_Access_Fault: 1,
   Fetch_Addr_Align  : 0
 }
-register medeleg : Medeleg  /* Delegation to S-mode */
 
 function legalize_medeleg(o : Medeleg, v : xlenbits) -> Medeleg = {
   /* M-EnvCalls delegation is not supported */
   [Mk_Medeleg(v) with MEnvCall = 0b0]
 }
+
+register mie     : Minterrupts /* Enabled */
+register mip     : Minterrupts /* Pending */
+register medeleg : Medeleg  /* Delegation to S-mode */
+register mideleg : Minterrupts /* Delegation to S-mode */
+
+mapping clause csr_name_map = 0x304  <-> "mie"
+mapping clause csr_name_map = 0x344  <-> "mip"
+mapping clause csr_name_map = 0x302  <-> "medeleg"
+mapping clause csr_name_map = 0x303  <-> "mideleg"
+
+function clause is_CSR_defined(0x304) = true // mie
+function clause is_CSR_defined(0x344) = true // mip
+function clause is_CSR_defined(0x302) = extensionEnabled(Ext_S) // medeleg
+function clause is_CSR_defined(0x303) = extensionEnabled(Ext_S) // mideleg
+
+function clause read_CSR(0x304) = mie.bits
+function clause read_CSR(0x344) = mip.bits
+function clause read_CSR(0x302) = medeleg.bits
+function clause read_CSR(0x303) = mideleg.bits
+
+function clause write_CSR(0x304, value) = { mie = legalize_mie(mie, value); mie.bits }
+function clause write_CSR(0x344, value) = { mip = legalize_mip(mip, value); mip.bits }
+function clause write_CSR(0x302, value) = { medeleg = legalize_medeleg(medeleg, value); medeleg.bits }
+function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, value); mideleg.bits }
 
 /* registers for trap handling */
 
@@ -383,6 +416,10 @@ bitfield Mcause : xlenbits = {
   Cause       : xlen - 2 .. 0
 }
 register mcause : Mcause
+mapping clause csr_name_map = 0x342  <-> "mcause"
+function clause is_CSR_defined(0x342) = true // mcause
+function clause read_CSR(0x342) = mcause.bits
+function clause write_CSR(0x342, value) = { mcause.bits = value; mcause.bits }
 
 /* Interpreting the trap-vector address */
 function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
@@ -419,6 +456,18 @@ function pc_alignment_mask() -> xlenbits =
 register mtval    : xlenbits
 register mscratch : xlenbits
 
+mapping clause csr_name_map = 0x343  <-> "mtval"
+mapping clause csr_name_map = 0x340  <-> "mscratch"
+
+function clause is_CSR_defined(0x343) = true // mtval
+function clause is_CSR_defined(0x340) = true // mscratch
+
+function clause read_CSR(0x343) = mtval
+function clause read_CSR(0x340) = mscratch
+
+function clause write_CSR(0x343, value) = { mtval = value; mtval }
+function clause write_CSR(0x340, value) = { mscratch = value; mscratch }
+
 /* counters */
 
 bitfield Counteren : bits(32) = {
@@ -428,31 +477,49 @@ bitfield Counteren : bits(32) = {
   CY   : 0
 }
 
-register mcounteren : Counteren
-register scounteren : Counteren
-
-function legalize_mcounteren(c : Counteren, v : xlenbits) -> Counteren = {
-  let supported_counters = sys_writable_hpm_counters()[31 .. 3] @ 0b111;
-  Mk_Counteren(v[31 .. 0] & supported_counters)
-}
-
+// scounteren
 function legalize_scounteren(c : Counteren, v : xlenbits) -> Counteren = {
   let supported_counters = sys_writable_hpm_counters()[31 .. 3] @ 0b111;
   Mk_Counteren(v[31 .. 0] & supported_counters)
 }
 
+register scounteren : Counteren
+mapping clause csr_name_map = 0x106  <-> "scounteren"
+function clause is_CSR_defined(0x106) = extensionEnabled(Ext_S) // scounteren
+function clause read_CSR(0x106) = zero_extend(scounteren.bits)
+function clause write_CSR(0x106, value) = { scounteren = legalize_scounteren(scounteren, value); zero_extend(scounteren.bits) }
+
+// mcounteren
+function legalize_mcounteren(c : Counteren, v : xlenbits) -> Counteren = {
+  let supported_counters = sys_writable_hpm_counters()[31 .. 3] @ 0b111;
+  Mk_Counteren(v[31 .. 0] & supported_counters)
+}
+
+register mcounteren : Counteren
+mapping clause csr_name_map = 0x306  <-> "mcounteren"
+function clause is_CSR_defined(0x306) = extensionEnabled(Ext_U) // mcounteren
+function clause read_CSR(0x306) = zero_extend(mcounteren.bits)
+function clause write_CSR(0x306, value) = { mcounteren = legalize_mcounteren(mcounteren, value); zero_extend(mcounteren.bits) }
+
+
+// mcountinhibit
 bitfield Counterin : bits(32) = {
   HPM  : 31 .. 3,
   IR : 2,
   CY : 0
 }
-register mcountinhibit : Counterin
 
 function legalize_mcountinhibit(c : Counterin, v : xlenbits) -> Counterin = {
   // Note the 0 in 0b101 is because the mtimer counter can't be paused.
   let supported_counters = sys_writable_hpm_counters()[31 .. 3] @ 0b101;
   Mk_Counterin(v[31 .. 0] & supported_counters)
 }
+
+register mcountinhibit : Counterin
+mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
+function clause is_CSR_defined(0x320) = true // mcountinhibit
+function clause read_CSR(0x320) = zero_extend(mcountinhibit.bits)
+function clause write_CSR(0x320, value) = { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); zero_extend(mcountinhibit.bits) }
 
 register mcycle : bits(64)
 register mtime : bits(64)
@@ -509,13 +576,31 @@ function write_mhpmcounterh(index : hpmidx, value : bits(32)) -> unit =
 function write_mhpmevent(index : hpmidx, value : xlenbits) -> unit =
   if sys_writable_hpm_counters()[index] == bitone then mhpmevent[index] = value
 
-/* informational registers */
+/* machine information registers */
 register mvendorid : bits(32)
 register mimpid : xlenbits
 register marchid : xlenbits
 /* TODO: this should be readonly, and always 0 for now */
 register mhartid : xlenbits
 register mconfigptr : xlenbits
+
+mapping clause csr_name_map = 0xF11  <-> "mvendorid"
+mapping clause csr_name_map = 0xF12  <-> "marchid"
+mapping clause csr_name_map = 0xF13  <-> "mimpid"
+mapping clause csr_name_map = 0xF14  <-> "mhartid"
+mapping clause csr_name_map = 0xF15  <-> "mconfigptr"
+
+function clause is_CSR_defined(0xf11) = true // mvendorid
+function clause is_CSR_defined(0xf12) = true // marchdid
+function clause is_CSR_defined(0xf13) = true // mimpid
+function clause is_CSR_defined(0xf14) = true // mhartid
+function clause is_CSR_defined(0xf15) = true // mconfigptr
+
+function clause read_CSR(0xF11) = zero_extend(mvendorid)
+function clause read_CSR(0xF12) = marchid
+function clause read_CSR(0xF13) = mimpid
+function clause read_CSR(0xF14) = mhartid
+function clause read_CSR(0xF15) = mconfigptr
 
 /* S-mode registers */
 
@@ -585,6 +670,10 @@ function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
   legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(v)).bits)
 }
 
+mapping clause csr_name_map = 0x100  <-> "sstatus"
+function clause is_CSR_defined(0x100) = extensionEnabled(Ext_S) // sstatus
+function clause read_CSR(0x100) = lower_mstatus(mstatus).bits
+function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); mstatus.bits }
 
 
 bitfield Sinterrupts : xlenbits = {
@@ -595,6 +684,7 @@ bitfield Sinterrupts : xlenbits = {
   SSI : 1,  /* software interrupts */
 }
 
+// sip
 /* Provides the sip read view of mip (m) as delegated by mideleg (d). */
 function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   let s : Sinterrupts = Mk_Sinterrupts(zeros());
@@ -628,6 +718,13 @@ function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterr
   lift_sip(m, d, Mk_Sinterrupts(v))
 }
 
+mapping clause csr_name_map = 0x144  <-> "sip"
+function clause is_CSR_defined(0x144) = extensionEnabled(Ext_S) // sip
+function clause read_CSR(0x144) = lower_mip(mip, mideleg).bits
+function clause write_CSR(0x144, value) = { mip = legalize_sip(mip, mideleg, value); mip.bits }
+
+
+// sie
 /* Returns the new value of mie from the previous mie (o) and the written sie (s) as delegated by mideleg (d). */
 function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
@@ -643,12 +740,34 @@ function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterr
 }
 
 
+mapping clause csr_name_map = 0x104  <-> "sie"
+function clause is_CSR_defined(0x104) = extensionEnabled(Ext_S) // sie
+function clause read_CSR(0x104) = lower_mie(mie, mideleg).bits
+function clause write_CSR(0x104, value) = { mie = legalize_sie(mie, mideleg, value); mie.bits }
+
+
 /* other non-VM related supervisor state */
 register stvec    : Mtvec
 register sscratch : xlenbits
 register sepc     : xlenbits
 register scause   : Mcause
 register stval    : xlenbits
+
+mapping clause csr_name_map = 0x140  <-> "sscratch"
+mapping clause csr_name_map = 0x142  <-> "scause"
+mapping clause csr_name_map = 0x143  <-> "stval"
+
+function clause is_CSR_defined(0x140) = extensionEnabled(Ext_S) // sscratch
+function clause is_CSR_defined(0x142) = extensionEnabled(Ext_S) // scause
+function clause is_CSR_defined(0x143) = extensionEnabled(Ext_S) // stval
+
+function clause read_CSR(0x140) = sscratch
+function clause read_CSR(0x142) = scause.bits
+function clause read_CSR(0x143) = stval
+
+function clause write_CSR(0x140, value) = { sscratch = value; sscratch }
+function clause write_CSR(0x142, value) = { scause.bits = value; scause.bits }
+function clause write_CSR(0x143, value) = { stval = value; stval }
 
 /*
  * S-mode address translation and protection (satp) layout.
@@ -684,26 +803,14 @@ function legalize_satp32(a : Architecture, o : bits(32), v : bits(32)) -> bits(3
 /* disabled trigger/debug module */
 register tselect : xlenbits
 
-/*
- * The seed CSR (entropy source)
- * ------------------------------------------------------------
- */
+mapping clause csr_name_map = 0x7a0  <-> "tselect"
+mapping clause csr_name_map = 0x7a1  <-> "tdata1"
+mapping clause csr_name_map = 0x7a2  <-> "tdata2"
+mapping clause csr_name_map = 0x7a3  <-> "tdata3"
 
-/* Valid return states for reading the seed CSR. */
-enum seed_opst = {
-  BIST, // Built-in-self-test. No randomness sampled.
-  ES16, // Entropy-sample-16. Valid 16-bits of randomness sampled.
-  WAIT, // Device still gathering entropy.
-  DEAD  // Fatal device compromise. No randomness sampled.
-}
-
-/* Mapping of status codes and their actual encodings. */
-mapping opst_code : seed_opst <-> bits(2) = {
-  BIST <-> 0b00,
-  WAIT <-> 0b01,
-  ES16 <-> 0b10,
-  DEAD <-> 0b11
-}
+function clause is_CSR_defined(0x7a0) = true
+function clause read_CSR(0x7a0) = ~(tselect)  /* this indicates we don't have any trigger support */
+function clause write_CSR(0x7a0, value) = { tselect = value; tselect }
 
 /*
  * Entropy Source - Platform access to random bits.
@@ -721,21 +828,7 @@ val get_16_random_bits = impure {
     lem: "plat_get_16_random_bits"
 } : unit -> bits(16)
 
-/* Entropy source spec requires an Illegal opcode exception be raised if the
- * seed register is read without also being written. This function is only
- * called once we know the CSR is being written, and all other access control
- * checks have been done.
- */
-function read_seed_csr() -> xlenbits = {
-  let reserved_bits : bits(6) = 0b000000;
-  let custom_bits : bits(8) = 0x00;
-  let seed : bits(16) = get_16_random_bits();
-  zero_extend(opst_code(ES16) @ reserved_bits @ custom_bits @ seed)
-}
-
-/* Writes to the seed CSR are ignored */
-function write_seed_csr () -> xlenbits = zeros()
-
+// envcfg Resisters
 bitfield MEnvcfg : bits(64) = {
   // Supervisor TimeCmp Extension
   STCE   : 63,
@@ -768,9 +861,6 @@ bitfield SEnvcfg : xlenbits = {
   FIOM   : 0,
 }
 
-register menvcfg : MEnvcfg
-register senvcfg : SEnvcfg
-
 function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
@@ -785,6 +875,26 @@ function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
   o
 }
 
+register menvcfg : MEnvcfg
+register senvcfg : SEnvcfg
+
+mapping clause csr_name_map = 0x30A  <-> "menvcfg"
+mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
+mapping clause csr_name_map = 0x10A  <-> "senvcfg"
+
+function clause is_CSR_defined(0x30A) = extensionEnabled(Ext_U) // menvcfg
+function clause is_CSR_defined(0x31A) = extensionEnabled(Ext_U) & (xlen == 32) // menvcfgh
+function clause is_CSR_defined(0x10A) = extensionEnabled(Ext_S) // senvcfg
+
+function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
+function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
+function clause read_CSR(0x10A) = senvcfg.bits[xlen - 1 .. 0]
+
+function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); menvcfg.bits[31 .. 0] }
+function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); menvcfg.bits }
+function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); menvcfg.bits[63 .. 32] }
+function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); senvcfg.bits[xlen - 1 .. 0] }
+
 // Return whether or not FIOM is currently active, based on the current
 // privilege and the menvcfg/senvcfg settings. This means that I/O fences
 // imply memory fence.
@@ -795,6 +905,7 @@ function is_fiom_active() -> bool = {
     User => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
   }
 }
+
 /* vector csrs */
 register vstart : bits(16) /* use the largest possible length of vstart */
 register vl     : xlenbits

@@ -70,10 +70,12 @@ SAIL_SEQ_INST_SRCS  = riscv_insts_begin.sail $(SAIL_SEQ_INST) riscv_insts_end.sa
 SAIL_RMEM_INST_SRCS = riscv_insts_begin.sail $(SAIL_RMEM_INST) riscv_insts_end.sail riscv_csr_end.sail
 
 # System and platform sources
-SAIL_SYS_SRCS =  riscv_csr_begin.sail       # Start of CSR scattered definitions.
 SAIL_SYS_SRCS += riscv_vext_control.sail    # helpers for the 'V' extension
 SAIL_SYS_SRCS += riscv_sys_exceptions.sail  # default basic helpers for exception handling
 SAIL_SYS_SRCS += riscv_sync_exception.sail  # define the exception structure used in the model
+SAIL_SYS_SRCS += riscv_hpm_control.sail
+SAIL_SYS_SRCS += riscv_zkr_control.sail
+SAIL_SYS_SRCS += riscv_zicntr_control.sail
 SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdext_control.sail
 SAIL_SYS_SRCS += riscv_sys_control.sail     # general exception handling
 
@@ -96,7 +98,8 @@ SAIL_VM_SRCS += riscv_vmem.sail
 # Non-instruction sources
 PRELUDE = prelude.sail riscv_errors.sail $(SAIL_XLEN) $(SAIL_FLEN) $(SAIL_VLEN) prelude_mem_metadata.sail prelude_mem.sail
 
-SAIL_REGS_SRCS = riscv_reg_type.sail riscv_freg_type.sail riscv_regs.sail riscv_pc_access.sail riscv_sys_regs.sail
+SAIL_REGS_SRCS =  riscv_csr_begin.sail       # Start of CSR scattered definitions.
+SAIL_REGS_SRCS += riscv_reg_type.sail riscv_freg_type.sail riscv_regs.sail riscv_pc_access.sail riscv_sys_regs.sail
 SAIL_REGS_SRCS += riscv_pmp_regs.sail riscv_pmp_control.sail
 SAIL_REGS_SRCS += riscv_ext_regs.sail $(SAIL_CHECK_SRCS)
 SAIL_REGS_SRCS += riscv_vreg_type.sail riscv_vext_regs.sail
