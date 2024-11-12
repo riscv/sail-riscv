@@ -394,7 +394,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
   }
 }
 
-function handle_mem_exception(addr : xlenbits, e : ExceptionType) -> unit = {
+function handle_mem_exception(virtaddr(addr) : virtaddr, e : ExceptionType) -> unit = {
   let t : sync_exception = struct { trap    = e,
                                     excinfo = Some(addr),
                                     ext     = None() } in

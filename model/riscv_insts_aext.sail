@@ -86,13 +86,13 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
       /* "LR faults like a normal load, even though it's in the AMO major opcode space."
         * - Andrew Waterman, isa-dev, 10 Jul 2018.
         */
-      if not(is_aligned(vaddr, width))
+      if not(is_aligned(virtaddr_bits(vaddr), width))
       then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr, Read(Data)) {
         TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) =>
           match mem_read(Read(Data), addr, width_bytes, aq, aq & rl, true) {
-            MemValue(result) => { load_reservation(addr); X(rd) = sign_extend(result); RETIRE_SUCCESS },
+            MemValue(result) => { load_reservation(physaddr_bits(addr)); X(rd) = sign_extend(result); RETIRE_SUCCESS },
             MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
           },
       }
@@ -131,7 +131,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
     match ext_data_get_addr(rs1, zeros(), Write(Data), width_bytes) {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
-        if not(is_aligned(vaddr, width))
+        if not(is_aligned(virtaddr_bits(vaddr), width))
         then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
         else {
           match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
@@ -139,7 +139,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
             TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
             TR_Address(addr, _) => {
               // Check reservation with physical address.
-              if not(match_reservation(addr)) then {
+              if not(match_reservation(physaddr_bits(addr))) then {
                 /* cannot happen in rmem */
                 X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS
               } else {
@@ -202,7 +202,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width_bytes) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) => {
-      if not(is_aligned(vaddr, width))
+      if not(is_aligned(virtaddr_bits(vaddr), width))
       then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr, ReadWrite(Data, Data)) {
         TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },

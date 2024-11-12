@@ -101,7 +101,7 @@ function pt_walk(sv_params,
   // Below, 'pte_phys_addr' is XLEN bits because it's an arg to
   // 'mem_read_priv()' [riscv_mem.sail] where it's declared as xlenbits.
   // That def and this use need to be fixed together (TODO)
-  let pte_phys_addr : xlenbits = pte_addr[(xlen - 1) .. 0];
+  let pte_phys_addr : physaddr = physaddr(pte_addr[(xlen - 1) .. 0]);
 
   // Read this-level PTE from mem
   let mem_result = mem_read_priv(Read(Data),              // AccessType
@@ -266,7 +266,7 @@ function translationMode(priv : Privilege) -> SATPMode = {
 // for Sv32 where they are actually 32 bits. `pte_size` is used to indicate
 // the actual size in bytes that we want to write.
 function write_pte forall 'n, 'n in {4, 8} . (
-  paddr    : xlenbits,
+  paddr    : physaddr,
   pte_size : int('n),
   pte      : bits(64),
 ) -> MemoryOpResult(bool) =
@@ -316,7 +316,7 @@ function translate_TLB_hit(sv_params : SV_Params,
             // Writeback the PTE (which has new A/D bits)
             let n_ent = {ent with pte=pte'};
             write_TLB(tlb_index, n_ent);
-            let pte_phys_addr = ent.pteAddr[(xlen - 1) .. 0];
+            let pte_phys_addr = physaddr(ent.pteAddr[(xlen - 1) .. 0]);
 
             match write_pte(pte_phys_addr, 2 ^ sv_params.log_pte_size_bytes, pte') {
               MemValue(_)     => (),
@@ -362,7 +362,7 @@ function translate_TLB_miss(sv_params : SV_Params,
             TR_Failure(PTW_PTE_Update(), ext_ptw)
           else {
             // Writeback the PTE (which has new A/D bits)
-            let pte_phys_addr = pteAddr[(xlen - 1) .. 0];
+            let pte_phys_addr = physaddr(pteAddr[(xlen - 1) .. 0]);
 
             match write_pte(pte_phys_addr, 2 ^ sv_params.log_pte_size_bytes, pte') {
               MemValue(_) => {
@@ -403,18 +403,18 @@ function translate(sv_params : SV_Params,
 
 // Top-level addr-translation function
 // PUBLIC: invoked from instr-fetch and load/store/amo
-function translateAddr(vAddr   : xlenbits,
+function translateAddr(vAddr   : virtaddr,
                        ac      : AccessType(ext_access_type))
-                      -> TR_Result(xlenbits, ExceptionType) = {
+                      -> TR_Result(physaddr, ExceptionType) = {
   // Internally the vmem code works with 64-bit values, whether xlen==32 or xlen==64
   // This 'extend' is a no-op when xlen==64 and extends when xlen==32
-  let vAddr_64b : bits(64) = zero_extend(vAddr);
+  let vAddr_64b : bits(64) = zero_extend(virtaddr_bits(vAddr));
   // Effective privilege takes into account mstatus.PRV, mstatus.MPP
   // See riscv_sys_regs.sail for effectivePrivilege() and cur_privilege
   let effPriv   : Privilege = effectivePrivilege(ac, mstatus, cur_privilege);
   let mode      : SATPMode  = translationMode(effPriv);
   let (valid_va, sv_params) : (bool, SV_Params) = match mode {
-    Sbare => return TR_Address(vAddr, init_ext_ptw),
+    Sbare => return TR_Address(physaddr(virtaddr_bits(vAddr)), init_ext_ptw),
     Sv32  => (true,                                 sv32_params),
     Sv39  => (is_valid_vAddr(sv39_params, vAddr_64b), sv39_params),
     Sv48  => (is_valid_vAddr(sv48_params, vAddr_64b), sv48_params),
@@ -435,7 +435,7 @@ function translateAddr(vAddr   : xlenbits,
                                init_ext_ptw);
     // Fixup result PA or exception
     match tr_result1 {
-      TR_Address(pa, ext_ptw) => TR_Address(truncate(pa, xlen), ext_ptw),
+      TR_Address(pa, ext_ptw) => TR_Address(physaddr(truncate(pa, xlen)), ext_ptw),
       TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
     }
   }

@@ -90,9 +90,9 @@ instantiation sail_mem_write with
    */
 type max_mem_access : Int = 4096
 
-val write_ram : forall 'n, 0 < 'n <= max_mem_access. (write_kind, xlenbits, int('n), bits(8 * 'n), mem_meta) -> bool
+val write_ram : forall 'n, 0 < 'n <= max_mem_access. (write_kind, physaddr, int('n), bits(8 * 'n), mem_meta) -> bool
 
-function write_ram(wk, addr, width, data, meta) = {
+function write_ram(wk, physaddr(addr), width, data, meta) = {
   let request : Mem_write_request('n, 64, xlenbits, unit, RISCV_strong_access) = struct {
     access_kind = match wk {
       Write_plain => AK_explicit(struct { variety = AV_plain, strength = AS_normal }),
@@ -125,14 +125,14 @@ function write_ram(wk, addr, width, data, meta) = {
   }
 }
 
-val write_ram_ea : forall 'n, 0 < 'n <= max_mem_access. (write_kind, xlenbits, int('n)) -> unit
-function write_ram_ea(wk, addr, width) = ()
+val write_ram_ea : forall 'n, 0 < 'n <= max_mem_access. (write_kind, physaddr, int('n)) -> unit
+function write_ram_ea(wk, physaddr(addr), width) = ()
 
 instantiation sail_mem_read with
   pa_bits = xlenbits_identity
 
-val read_ram : forall 'n, 0 < 'n <= max_mem_access.  (read_kind, xlenbits, int('n), bool) -> (bits(8 * 'n), mem_meta)
-function read_ram(rk, addr, width, read_meta) = {
+val read_ram : forall 'n, 0 < 'n <= max_mem_access.  (read_kind, physaddr, int('n), bool) -> (bits(8 * 'n), mem_meta)
+function read_ram(rk, physaddr(addr), width, read_meta) = {
   let meta = if read_meta then __ReadRAM_Meta(addr, width) else default_meta;
   let request : Mem_read_request('n, 64, xlenbits, unit, RISCV_strong_access) = struct {
     access_kind = match rk {
