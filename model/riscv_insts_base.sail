@@ -72,13 +72,14 @@ function clause execute (RISCV_JAL(imm, rd)) = {
     },
     Ext_ControlAddr_OK(target) => {
       /* Perform standard alignment check */
-      if bit_to_bool(target[1]) & not(extensionEnabled(Ext_Zca))
+      let target_bits = virtaddr_bits(target);
+      if bit_to_bool(target_bits[1]) & not(extensionEnabled(Ext_Zca))
       then {
         handle_mem_exception(target, E_Fetch_Addr_Align());
         RETIRE_FAIL
       } else {
         X(rd) = get_next_pc();
-        set_next_pc(target);
+        set_next_pc(target_bits);
         RETIRE_SUCCESS
       }
     }
@@ -136,11 +137,12 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
         RETIRE_FAIL
       },
       Ext_ControlAddr_OK(target) => {
-        if bit_to_bool(target[1]) & not(extensionEnabled(Ext_Zca)) then {
+        let target_bits = virtaddr_bits(target);
+        if bit_to_bool(target_bits[1]) & not(extensionEnabled(Ext_Zca)) then {
           handle_mem_exception(target, E_Fetch_Addr_Align());
           RETIRE_FAIL;
         } else {
-          set_next_pc(target);
+          set_next_pc(target_bits);
           RETIRE_SUCCESS
         }
       }
@@ -317,8 +319,8 @@ function is_aligned(vaddr : xlenbits, width : word_width) -> bool =
   }
 
 // Return true if the address is misaligned and we don't support misaligned access.
-function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
-  not(plat_enable_misaligned_access()) & not(is_aligned(vaddr, width))
+function check_misaligned(vaddr : virtaddr, width : word_width) -> bool =
+  not(plat_enable_misaligned_access()) & not(is_aligned(virtaddr_bits(vaddr), width))
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   let offset : xlenbits = sign_extend(imm);
@@ -678,7 +680,7 @@ mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute EBREAK() = {
-  handle_mem_exception(PC, E_Breakpoint());
+  handle_mem_exception(virtaddr(PC), E_Breakpoint());
   RETIRE_FAIL
 }
 

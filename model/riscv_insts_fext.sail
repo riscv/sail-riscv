@@ -290,7 +290,7 @@ mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if extensionEnabled
 
 /* Execution semantics ================================ */
 
-val process_fload64 : (regidx, xlenbits, MemoryOpResult(bits(64)))
+val process_fload64 : (regidx, virtaddr, MemoryOpResult(bits(64)))
                       -> Retired
 function process_fload64(rd, addr, value) =
   if   flen == 64
@@ -303,7 +303,7 @@ function process_fload64(rd, addr, value) =
     RETIRE_FAIL
   }
 
-val process_fload32 : (regidx, xlenbits, MemoryOpResult(bits(32)))
+val process_fload32 : (regidx, virtaddr, MemoryOpResult(bits(32)))
                       -> Retired
 function process_fload32(rd, addr, value) =
   match value {
@@ -311,7 +311,7 @@ function process_fload32(rd, addr, value) =
     MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
   }
 
-val process_fload16 : (regidx, xlenbits, MemoryOpResult(bits(16)))
+val process_fload16 : (regidx, virtaddr, MemoryOpResult(bits(16)))
                       -> Retired
 function process_fload16(rd, addr, value) =
   match value {
@@ -376,7 +376,7 @@ mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)                 
 
 /* Execution semantics ================================ */
 
-val process_fstore : (xlenbits, MemoryOpResult(bool)) -> Retired
+val process_fstore : (virtaddr, MemoryOpResult(bool)) -> Retired
 function process_fstore(vaddr, value) =
   match value {
     MemValue(true)  => { RETIRE_SUCCESS },

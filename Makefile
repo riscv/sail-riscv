@@ -97,7 +97,7 @@ SAIL_VM_SRCS += riscv_vmem_tlb.sail
 SAIL_VM_SRCS += riscv_vmem.sail
 
 # Non-instruction sources
-PRELUDE = prelude.sail riscv_errors.sail $(SAIL_XLEN) $(SAIL_FLEN) $(SAIL_VLEN) prelude_mem_metadata.sail prelude_mem.sail
+PRELUDE = prelude.sail riscv_errors.sail $(SAIL_XLEN) $(SAIL_FLEN) $(SAIL_VLEN) prelude_mem_addrtype.sail prelude_mem_metadata.sail prelude_mem.sail
 
 SAIL_REGS_SRCS =  riscv_csr_begin.sail       # Start of CSR scattered definitions.
 SAIL_REGS_SRCS += riscv_reg_type.sail riscv_freg_type.sail riscv_regs.sail riscv_pc_access.sail riscv_sys_regs.sail

@@ -18,7 +18,7 @@ type ext_fetch_addr_error = unit
  *           any address translation errors are reported for pc, not the returned value.
  */
 function ext_fetch_check_pc(start_pc : xlenbits, pc : xlenbits) -> Ext_FetchAddr_Check(ext_fetch_addr_error) =
-  Ext_FetchAddr_OK(pc)
+  Ext_FetchAddr_OK(virtaddr(pc))
 
 function ext_handle_fetch_check_error(err : ext_fetch_addr_error) -> unit =
   ()
@@ -38,11 +38,11 @@ type ext_control_addr_error = unit
 
 /* the control address is derived from a non-PC register, e.g. in JALR */
 function ext_control_check_addr(pc : xlenbits) -> Ext_ControlAddr_Check(ext_control_addr_error) =
-  Ext_ControlAddr_OK(pc)
+  Ext_ControlAddr_OK(virtaddr(pc))
 
 /* the control address is derived from the PC register, e.g. in JAL */
 function ext_control_check_pc(pc : xlenbits) -> Ext_ControlAddr_Check(ext_control_addr_error) =
-  Ext_ControlAddr_OK(pc)
+  Ext_ControlAddr_OK(virtaddr(pc))
 
 function ext_handle_control_check_error(err : ext_control_addr_error) -> unit =
   ()
@@ -56,7 +56,7 @@ type ext_data_addr_error = unit
    Extensions might override and add additional checks. */
 function ext_data_get_addr(base : regidx, offset : xlenbits, acc : AccessType(ext_access_type), width : range(1, max_mem_access))
          -> Ext_DataAddr_Check(ext_data_addr_error) =
-  let addr = X(base) + offset in
+  let addr = virtaddr(X(base) + offset) in
   Ext_DataAddr_OK(addr)
 
 function ext_handle_data_check_error(err : ext_data_addr_error) -> unit =
