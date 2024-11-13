@@ -1,6 +1,6 @@
 #include "riscv_platform_impl.h"
-#include <stdio.h>
 #include <unistd.h>
+#include <stdio.h>
 
 /* Settings of the platform implementation, with common defaults. */
 uint64_t rv_pmp_count = 0;
@@ -38,7 +38,8 @@ uint64_t rv_rom_size = UINT64_C(0x100);
 uint64_t rv_cache_block_size_exp = UINT64_C(6);
 
 // Provides entropy for the scalar cryptography extension.
-uint64_t rv_16_random_bits(void) {
+uint64_t rv_16_random_bits(void)
+{
   // This function can be changed to support deterministic sequences of
   // pseudo-random bytes. This is useful for testing.
   const char *name = "/dev/urandom";
@@ -58,7 +59,8 @@ uint64_t rv_htif_tohost = UINT64_C(0x80001000);
 uint64_t rv_insns_per_tick = UINT64_C(100);
 
 int term_fd = 1; // set during startup
-void plat_term_write_impl(char c) {
+void plat_term_write_impl(char c)
+{
   if (write(term_fd, &c, sizeof(c)) < 0) {
     fprintf(stderr, "Unable to write to terminal!\n");
   }

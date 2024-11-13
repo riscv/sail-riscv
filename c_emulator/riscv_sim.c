@@ -1,21 +1,21 @@
-#include <arpa/inet.h>
 #include <ctype.h>
-#include <errno.h>
-#include <fcntl.h>
 #include <getopt.h>
-#include <netinet/ip.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/mman.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
+#include <errno.h>
 #include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <sys/time.h>
+#include <sys/socket.h>
+#include <netinet/ip.h>
+#include <fcntl.h>
 
 #include "elf.h"
-#include "rts.h"
 #include "sail.h"
+#include "rts.h"
 #ifdef SAILCOV
 #include "sail_coverage.h"
 #endif
@@ -96,7 +96,8 @@ bool config_print_platform = true;
 bool config_print_rvfi = false;
 bool config_print_step = false;
 
-void set_config_print(char *var, bool val) {
+void set_config_print(char *var, bool val)
+{
   if (var == NULL || strcmp("all", var) == 0) {
     config_print_instr = val;
     config_print_mem_access = val;
@@ -130,23 +131,23 @@ char *sailcov_file = NULL;
 #endif
 
 static struct option options[] = {
-    {"enable-dirty-update", no_argument, 0, 'd'},
-    {"enable-misaligned", no_argument, 0, 'm'},
-    {"pmp-count", required_argument, 0, OPT_PMP_COUNT},
-    {"pmp-grain", required_argument, 0, OPT_PMP_GRAIN},
-    {"ram-size", required_argument, 0, 'z'},
-    {"disable-compressed", no_argument, 0, 'C'},
-    {"disable-writable-misa", no_argument, 0, 'I'},
-    {"disable-fdext", no_argument, 0, 'F'},
-    {"mtval-has-illegal-inst-bits", no_argument, 0, 'i'},
-    {"device-tree-blob", required_argument, 0, 'b'},
-    {"terminal-log", required_argument, 0, 't'},
-    {"show-times", required_argument, 0, 'p'},
-    {"report-arch", no_argument, 0, 'a'},
-    {"test-signature", required_argument, 0, 'T'},
-    {"signature-granularity", required_argument, 0, 'g'},
+    {"enable-dirty-update",         no_argument,       0, 'd'                     },
+    {"enable-misaligned",           no_argument,       0, 'm'                     },
+    {"pmp-count",                   required_argument, 0, OPT_PMP_COUNT           },
+    {"pmp-grain",                   required_argument, 0, OPT_PMP_GRAIN           },
+    {"ram-size",                    required_argument, 0, 'z'                     },
+    {"disable-compressed",          no_argument,       0, 'C'                     },
+    {"disable-writable-misa",       no_argument,       0, 'I'                     },
+    {"disable-fdext",               no_argument,       0, 'F'                     },
+    {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'                     },
+    {"device-tree-blob",            required_argument, 0, 'b'                     },
+    {"terminal-log",                required_argument, 0, 't'                     },
+    {"show-times",                  required_argument, 0, 'p'                     },
+    {"report-arch",                 no_argument,       0, 'a'                     },
+    {"test-signature",              required_argument, 0, 'T'                     },
+    {"signature-granularity",       required_argument, 0, 'g'                     },
 #ifdef RVFI_DII
-    {"rvfi-dii", required_argument, 0, 'r'},
+    {"rvfi-dii",                    required_argument, 0, 'r'                     },
 #endif
     {"help", no_argument, 0, 'h'},
     {"trace", optional_argument, 0, 'v'},
@@ -163,11 +164,13 @@ static struct option options[] = {
     {"enable-zilsd", no_argument, 0, OPT_ENABLE_ZILSD},
     {"enable-zclsd", no_argument, 0, OPT_ENABLE_ZCLSD},
 #ifdef SAILCOV
-    {"sailcov-file", required_argument, 0, 'c'},
+    {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
-    {0, 0, 0, 0}};
+    {0,                             0,                 0, 0                       }
+};
 
-static void print_usage(const char *argv0, int ec) {
+static void print_usage(const char *argv0, int ec)
+{
   fprintf(stdout, "Usage: %s [options] <elf_file> [<elf_file> ...]\n", argv0);
 #ifdef RVFI_DII
   fprintf(stdout, "       %s [options] -r <port>\n", argv0);
@@ -183,14 +186,19 @@ static void print_usage(const char *argv0, int ec) {
   exit(ec);
 }
 
-static void report_arch(void) {
+static void report_arch(void)
+{
   fprintf(stdout, "RV%" PRIu64 "\n", zxlen_val);
   exit(0);
 }
 
-static bool is_32bit_model(void) { return zxlen_val == 32; }
+static bool is_32bit_model(void)
+{
+  return zxlen_val == 32;
+}
 
-static void dump_dts(void) {
+static void dump_dts(void)
+{
 #ifdef ENABLE_SPIKE
   size_t dts_len = 0;
   const char *isa = is_32bit_model() ? RV32ISA : RV64ISA;
@@ -208,7 +216,8 @@ static void dump_dts(void) {
   exit(0);
 }
 
-static void read_dtb(const char *path) {
+static void read_dtb(const char *path)
+{
   int fd = open(path, O_RDONLY);
   if (fd < 0) {
     fprintf(stderr, "Unable to read DTB file %s: %s\n", path, strerror(errno));
@@ -238,7 +247,8 @@ static void read_dtb(const char *path) {
 }
 
 // Return log2(x), or -1 if x is not a power of 2.
-static int ilog2(uint64_t x) {
+static int ilog2(uint64_t x)
+{
   for (unsigned i = 0; i < sizeof(x) * 8; ++i) {
     if (x == (UINT64_C(1) << i)) {
       return i;
@@ -254,7 +264,8 @@ static int ilog2(uint64_t x) {
  * additional ELF files that should be loaded into memory (but not scanned
  * for the magic tohost/{begin,end}_signature symbols).
  */
-static int process_args(int argc, char **argv) {
+static int process_args(int argc, char **argv)
+{
   int c;
   uint64_t ram_size = 0;
   uint64_t pmp_count = 0;
@@ -481,7 +492,8 @@ static int process_args(int argc, char **argv) {
   return optind;
 }
 
-void check_elf(bool is32bit) {
+void check_elf(bool is32bit)
+{
   if (is32bit) {
     if (zxlen_val != 32) {
       fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n",
@@ -496,7 +508,8 @@ void check_elf(bool is32bit) {
     }
   }
 }
-uint64_t load_sail(char *f, bool main_file) {
+uint64_t load_sail(char *f, bool main_file)
+{
   bool is32bit;
   uint64_t entry;
   uint64_t begin_sig, end_sig;
@@ -525,7 +538,8 @@ uint64_t load_sail(char *f, bool main_file) {
   return entry;
 }
 
-void init_spike(const char *f, uint64_t entry, uint64_t ram_size) {
+void init_spike(const char *f, uint64_t entry, uint64_t ram_size)
+{
 #ifdef ENABLE_SPIKE
   bool mismatch = false;
   const char *isa = is_32bit_model() ? RV32ISA : RV64ISA;
@@ -584,25 +598,27 @@ void init_spike(const char *f, uint64_t entry, uint64_t ram_size) {
 #endif
 }
 
-void tick_spike() {
+void tick_spike()
+{
 #ifdef ENABLE_SPIKE
   tv_tick_clock(s);
   tv_step_io(s);
 #endif
 }
 
-void init_sail_reset_vector(uint64_t entry) {
+void init_sail_reset_vector(uint64_t entry)
+{
 #define RST_VEC_SIZE 8
-  uint32_t reset_vec[RST_VEC_SIZE] = {
-      0x297,                              // auipc  t0,0x0
-      0x28593 + (RST_VEC_SIZE * 4 << 20), // addi   a1, t0, &dtb
-      0xf1402573,                         // csrr   a0, mhartid
-      is_32bit_model() ? 0x0182a283u :    // lw     t0,24(t0)
-          0x0182b283u,                    // ld     t0,24(t0)
-      0x28067,                            // jr     t0
-      0,
-      (uint32_t)(entry & 0xffffffff),
-      (uint32_t)(entry >> 32)};
+  uint32_t reset_vec[RST_VEC_SIZE]
+      = {0x297,                              // auipc  t0,0x0
+         0x28593 + (RST_VEC_SIZE * 4 << 20), // addi   a1, t0, &dtb
+         0xf1402573,                         // csrr   a0, mhartid
+         is_32bit_model() ? 0x0182a283u :    // lw     t0,24(t0)
+             0x0182b283u,                    // ld     t0,24(t0)
+         0x28067,                            // jr     t0
+         0,
+         (uint32_t)(entry & 0xffffffff),
+         (uint32_t)(entry >> 32)};
 
   rv_rom_base = DEFAULT_RSTVEC;
   uint64_t addr = rv_rom_base;
@@ -649,9 +665,13 @@ void init_sail_reset_vector(uint64_t entry) {
   zPC = rv_rom_base;
 }
 
-void preinit_sail() { model_init(); }
+void preinit_sail()
+{
+  model_init();
+}
 
-void init_sail(uint64_t elf_entry) {
+void init_sail(uint64_t elf_entry)
+{
   zinit_model(UNIT);
 #ifdef RVFI_DII
   if (rvfi_dii) {
@@ -674,13 +694,15 @@ void init_sail(uint64_t elf_entry) {
 }
 
 /* reinitialize to clear state and memory, typically across tests runs */
-void reinit_sail(uint64_t elf_entry) {
+void reinit_sail(uint64_t elf_entry)
+{
   model_fini();
   model_init();
   init_sail(elf_entry);
 }
 
-int init_check(struct tv_spike_t *s) {
+int init_check(struct tv_spike_t *s)
+{
   int passed = 1;
 #ifdef ENABLE_SPIKE
   passed &= tv_check_csr(s, CSR_MISA, zmisa.zMisa_chunk_0);
@@ -688,7 +710,8 @@ int init_check(struct tv_spike_t *s) {
   return passed;
 }
 
-void write_signature(const char *file) {
+void write_signature(const char *file)
+{
   if (mem_sig_start >= mem_sig_end) {
     fprintf(stderr,
             "Invalid signature region [0x%0" PRIx64 ",0x%0" PRIx64 "] to %s.\n",
@@ -713,7 +736,8 @@ void write_signature(const char *file) {
   fclose(f);
 }
 
-void close_logs(void) {
+void close_logs(void)
+{
 #ifdef SAILCOV
   if (sail_coverage_exit() != 0) {
     fprintf(stderr, "Could not write coverage information!\n");
@@ -725,7 +749,8 @@ void close_logs(void) {
   }
 }
 
-void finish(int ec) {
+void finish(int ec)
+{
   if (sig_file)
     write_signature(sig_file);
 
@@ -738,10 +763,10 @@ void finish(int ec) {
     exit(1);
   }
   if (do_show_times) {
-    int init_msecs = (init_end.tv_sec - init_start.tv_sec) * 1000 +
-                     (init_end.tv_usec - init_start.tv_usec) / 1000;
-    int exec_msecs = (run_end.tv_sec - init_end.tv_sec) * 1000 +
-                     (run_end.tv_usec - init_end.tv_usec) / 1000;
+    int init_msecs = (init_end.tv_sec - init_start.tv_sec) * 1000
+        + (init_end.tv_usec - init_start.tv_usec) / 1000;
+    int exec_msecs = (run_end.tv_sec - init_end.tv_sec) * 1000
+        + (run_end.tv_usec - init_end.tv_usec) / 1000;
     double Kips = ((double)total_insns) / ((double)exec_msecs);
     fprintf(stderr, "Initialization:   %d msecs\n", init_msecs);
     fprintf(stderr, "Execution:        %d msecs\n", exec_msecs);
@@ -752,7 +777,8 @@ void finish(int ec) {
   exit(ec);
 }
 
-int compare_states(struct tv_spike_t *s) {
+int compare_states(struct tv_spike_t *s)
+{
   int passed = 1;
 
 #ifdef ENABLE_SPIKE
@@ -816,7 +842,8 @@ int compare_states(struct tv_spike_t *s) {
   return passed;
 }
 
-void flush_logs(void) {
+void flush_logs(void)
+{
   if (config_print_instr) {
     fflush(stderr);
     fflush(trace_log);
@@ -826,7 +853,8 @@ void flush_logs(void) {
 #ifdef RVFI_DII
 
 typedef void (*packet_reader_fn)(lbits *rop, unit);
-static void get_and_send_rvfi_packet(packet_reader_fn reader) {
+static void get_and_send_rvfi_packet(packet_reader_fn reader)
+{
   lbits packet;
   CREATE(lbits)(&packet);
   reader(&packet, UNIT);
@@ -860,7 +888,8 @@ static void get_and_send_rvfi_packet(packet_reader_fn reader) {
   KILL(lbits)(&packet);
 }
 
-void rvfi_send_trace(unsigned version) {
+void rvfi_send_trace(unsigned version)
+{
   if (config_print_rvfi) {
     fprintf(stderr, "Sending v%d trace response...\n", version);
   }
@@ -881,7 +910,8 @@ void rvfi_send_trace(unsigned version) {
 
 #endif
 
-void run_sail(void) {
+void run_sail(void)
+{
   bool spike_done;
   bool stepped;
   bool diverged = false;
@@ -970,14 +1000,14 @@ void run_sail(void) {
                   (intmax_t)insn);
           exit(1);
         }
-        rvfi_trace_version =
-            insn; // From now on send traces in the requested format
+        rvfi_trace_version
+            = insn; // From now on send traces in the requested format
         struct {
           char msg[8];
           uint64_t version;
         } version_response = {"version=", rvfi_trace_version};
-        if (write(rvfi_dii_sock, &version_response, sizeof(version_response)) !=
-            sizeof(version_response)) {
+        if (write(rvfi_dii_sock, &version_response, sizeof(version_response))
+            != sizeof(version_response)) {
           fprintf(stderr, "Sending version response failed: %s\n",
                   strerror(errno));
           exit(1);
@@ -1019,14 +1049,14 @@ void run_sail(void) {
     }
 
     if (do_show_times && (total_insns & 0xfffff) == 0) {
-      uint64_t start_us = 1000000 * ((uint64_t)interval_start.tv_sec) +
-                          ((uint64_t)interval_start.tv_usec);
+      uint64_t start_us = 1000000 * ((uint64_t)interval_start.tv_sec)
+          + ((uint64_t)interval_start.tv_usec);
       if (gettimeofday(&interval_start, NULL) < 0) {
         fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
         exit(1);
       }
-      uint64_t end_us = 1000000 * ((uint64_t)interval_start.tv_sec) +
-                        ((uint64_t)interval_start.tv_usec);
+      uint64_t end_us = 1000000 * ((uint64_t)interval_start.tv_sec)
+          + ((uint64_t)interval_start.tv_usec);
       fprintf(stdout, "kips: %" PRIu64 "\n",
               ((uint64_t)1000) * 0x100000 / (end_us - start_us));
     }
@@ -1082,7 +1112,8 @@ step_exception:
   goto dump_state;
 }
 
-void init_logs() {
+void init_logs()
+{
 #ifdef ENABLE_SPIKE
   // The Spike interface uses stdout for terminal output, and stderr for logs.
   // Do the same here.
@@ -1092,9 +1123,10 @@ void init_logs() {
   }
 #endif
 
-  if (term_log != NULL &&
-      (term_fd = open(term_log, O_WRONLY | O_CREAT | O_TRUNC,
-                      S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR)) < 0) {
+  if (term_log != NULL
+      && (term_fd = open(term_log, O_WRONLY | O_CREAT | O_TRUNC,
+                         S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR))
+          < 0) {
     fprintf(stderr, "Cannot create terminal log '%s': %s\n", term_log,
             strerror(errno));
     exit(1);
@@ -1115,7 +1147,8 @@ void init_logs() {
 #endif
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   // Initialize model so that we can check or report its architecture.
   preinit_sail();
 
@@ -1139,7 +1172,8 @@ int main(int argc, char **argv) {
     }
     int reuseaddr = 1;
     if (setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &reuseaddr,
-                   sizeof(reuseaddr)) == -1) {
+                   sizeof(reuseaddr))
+        == -1) {
       fprintf(stderr, "Unable to set reuseaddr on socket: %s\n",
               strerror(errno));
       return 1;
