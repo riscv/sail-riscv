@@ -19,7 +19,7 @@ function pmpAddrRange(cfg: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits
                // NA4 is not selectable when the PMP grain G >= 1. See pmpWriteCfg().
                assert(sys_pmp_grain() < 1, "NA4 cannot be selected when PMP grain G >= 1.");
                let lo = pmpaddr;
-               Some((lo, lo + 4))
+               Some((lo, lo + 1))
              },
     NAPOT => {
                // Example pmpaddr: 0b00010101111
@@ -113,7 +113,7 @@ function accessToFault(acc : AccessType(ext_access_type)) -> ExceptionType =
 
 function pmpCheck forall 'n, 'n > 0. (addr: xlenbits, width: int('n), acc: AccessType(ext_access_type), priv: Privilege)
                   -> option(ExceptionType) = {
-  let width : xlenbits = to_bits(sizeof(xlen), width);
+  let width : xlenbits = to_bits(xlen, width);
 
   foreach (i from 0 to 63) {
     let prev_pmpaddr = (if i > 0 then pmpReadAddrReg(i - 1) else zeros());

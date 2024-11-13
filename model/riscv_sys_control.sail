@@ -8,90 +8,102 @@
 
 /* Machine-mode and supervisor-mode functionality. */
 
+enum clause extension = Ext_Zkr
+function clause extensionEnabled(Ext_Zkr) = true
 
 /* CSR access control */
 
 function csrAccess(csr : csreg) -> csrRW = csr[11..10]
 function csrPriv(csr : csreg) -> priv_level = csr[9..8]
 
-function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
-  match (csr) {
-    /* machine mode: informational */
-    0xf11 => p == Machine, // mvendorid
-    0xf12 => p == Machine, // marchdid
-    0xf13 => p == Machine, // mimpid
-    0xf14 => p == Machine, // mhartid
-    0xf15 => p == Machine, // mconfigptr
-    /* machine mode: trap setup */
-    0x300 => p == Machine, // mstatus
-    0x301 => p == Machine, // misa
-    0x302 => p == Machine & (haveSupMode() | haveNExt()), // medeleg
-    0x303 => p == Machine & (haveSupMode() | haveNExt()), // mideleg
-    0x304 => p == Machine, // mie
-    0x305 => p == Machine, // mtvec
-    0x306 => p == Machine & haveUsrMode(), // mcounteren
-    0x30A => p == Machine & haveUsrMode(), // menvcfg
-    0x310 => p == Machine & (sizeof(xlen) == 32), // mstatush
-    0x31A => p == Machine & haveUsrMode() & (sizeof(xlen) == 32), // menvcfgh
-    0x320 => p == Machine, // mcountinhibit
-    /* machine mode: trap handling */
-    0x340 => p == Machine, // mscratch
-    0x341 => p == Machine, // mepc
-    0x342 => p == Machine, // mcause
-    0x343 => p == Machine, // mtval
-    0x344 => p == Machine, // mip
+// TODO: These is_CSR_defined definitions should be moved to the files
+// corresponding to their extensions rather than all be here.
 
-    // pmpcfgN
-    0x3A @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(idx) & (idx[0] == bitzero | sizeof(xlen) == 32),
+/* machine mode: informational */
+function clause is_CSR_defined(0xf11) = true // mvendorid
+function clause is_CSR_defined(0xf12) = true // marchdid
+function clause is_CSR_defined(0xf13) = true // mimpid
+function clause is_CSR_defined(0xf14) = true // mhartid
+function clause is_CSR_defined(0xf15) = true // mconfigptr
+/* machine mode: trap setup */
+function clause is_CSR_defined(0x300) = true // mstatus
+function clause is_CSR_defined(0x301) = true // misa
+function clause is_CSR_defined(0x302) = extensionEnabled(Ext_S) // medeleg
+function clause is_CSR_defined(0x303) = extensionEnabled(Ext_S) // mideleg
+function clause is_CSR_defined(0x304) = true // mie
+function clause is_CSR_defined(0x305) = true // mtvec
+function clause is_CSR_defined(0x306) = extensionEnabled(Ext_U) // mcounteren
+function clause is_CSR_defined(0x30A) = extensionEnabled(Ext_U) // menvcfg
+function clause is_CSR_defined(0x310) = xlen == 32 // mstatush
+function clause is_CSR_defined(0x31A) = extensionEnabled(Ext_U) & (xlen == 32) // menvcfgh
+function clause is_CSR_defined(0x320) = true // mcountinhibit
 
-    // pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
-    0x3B @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(0b00 @ idx),
-    0x3C @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(0b01 @ idx),
-    0x3D @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(0b10 @ idx),
-    0x3E @ idx : bits(4) => p == Machine & sys_pmp_count() > unsigned(0b11 @ idx),
-    0xB00 => p == Machine, // mcycle
-    0xB02 => p == Machine, // minstret
 
-    0xB80 => p == Machine & (sizeof(xlen) == 32), // mcycleh
-    0xB82 => p == Machine & (sizeof(xlen) == 32), // minstreth
+/* machine mode: trap handling */
+function clause is_CSR_defined(0x340) = true // mscratch
+function clause is_CSR_defined(0x341) = true // mepc
+function clause is_CSR_defined(0x342) = true // mcause
+function clause is_CSR_defined(0x343) = true // mtval
+function clause is_CSR_defined(0x344) = true // mip
 
-    /* disabled trigger/debug module */
-    0x7a0 => p == Machine,
+// pmpcfgN
+function clause is_CSR_defined(0x3A) @ idx : bits(4) = sys_pmp_count() > unsigned(idx) & (idx[0] == bitzero | xlen == 32)
 
-    /* supervisor mode: trap setup */
-    0x100 => haveSupMode() & (p == Machine | p == Supervisor), // sstatus
-    0x102 => haveSupMode() & haveNExt() & (p == Machine | p == Supervisor), // sedeleg
-    0x103 => haveSupMode() & haveNExt() & (p == Machine | p == Supervisor), // sideleg
-    0x104 => haveSupMode() & (p == Machine | p == Supervisor), // sie
-    0x105 => haveSupMode() & (p == Machine | p == Supervisor), // stvec
-    0x106 => haveSupMode() & (p == Machine | p == Supervisor), // scounteren
-    0x10A => haveSupMode() & (p == Machine | p == Supervisor), // senvcfg
+// pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
+function clause is_CSR_defined(0x3B) @ idx : bits(4) = sys_pmp_count() > unsigned(0b00 @ idx)
+function clause is_CSR_defined(0x3C) @ idx : bits(4) = sys_pmp_count() > unsigned(0b01 @ idx)
+function clause is_CSR_defined(0x3D) @ idx : bits(4) = sys_pmp_count() > unsigned(0b10 @ idx)
+function clause is_CSR_defined(0x3E) @ idx : bits(4) = sys_pmp_count() > unsigned(0b11 @ idx)
 
-    /* supervisor mode: trap handling */
-    0x140 => haveSupMode() & (p == Machine | p == Supervisor), // sscratch
-    0x141 => haveSupMode() & (p == Machine | p == Supervisor), // sepc
-    0x142 => haveSupMode() & (p == Machine | p == Supervisor), // scause
-    0x143 => haveSupMode() & (p == Machine | p == Supervisor), // stval
-    0x144 => haveSupMode() & (p == Machine | p == Supervisor), // sip
+/* counters */
+function clause is_CSR_defined(0b0011001 /* 0x320 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) // mhpmevent3..31
 
-    /* supervisor mode: address translation */
-    0x180 => haveSupMode() & (p == Machine | p == Supervisor), // satp
+function clause is_CSR_defined(0xB00) = true // mcycle
+function clause is_CSR_defined(0xB02) = true // minstret
 
-    /* user mode: counters */
-    0xC00 => haveUsrMode(),    // cycle
-    0xC01 => haveUsrMode(),    // time
-    0xC02 => haveUsrMode(),    // instret
+function clause is_CSR_defined(0b1011000 /* 0xB00 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) // mhpmcounter3..31
 
-    0xC80 => haveUsrMode() & (sizeof(xlen) == 32),     // cycleh
-    0xC81 => haveUsrMode() & (sizeof(xlen) == 32),     // timeh
-    0xC82 => haveUsrMode() & (sizeof(xlen) == 32),     // instreth
+function clause is_CSR_defined(0xB80) = xlen == 32 // mcycleh
+function clause is_CSR_defined(0xB82) = xlen == 32 // minstreth
 
-    /* user mode: Zkr */
-    0x015 => haveZkr(),
+function clause is_CSR_defined(0b1011100 /* 0xB80 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) & (xlen == 32) // mhpmcounterh3..31
 
-    /* check extensions */
-    _     => ext_is_CSR_defined(csr, p)
-  }
+/* disabled trigger/debug module */
+function clause is_CSR_defined(0x7a0) = true
+
+/* supervisor mode: trap setup */
+function clause is_CSR_defined(0x100) = extensionEnabled(Ext_S) // sstatus
+function clause is_CSR_defined(0x104) = extensionEnabled(Ext_S) // sie
+function clause is_CSR_defined(0x105) = extensionEnabled(Ext_S) // stvec
+function clause is_CSR_defined(0x106) = extensionEnabled(Ext_S) // scounteren
+function clause is_CSR_defined(0x10A) = extensionEnabled(Ext_S) // senvcfg
+
+/* supervisor mode: trap handling */
+function clause is_CSR_defined(0x140) = extensionEnabled(Ext_S) // sscratch
+function clause is_CSR_defined(0x141) = extensionEnabled(Ext_S) // sepc
+function clause is_CSR_defined(0x142) = extensionEnabled(Ext_S) // scause
+function clause is_CSR_defined(0x143) = extensionEnabled(Ext_S) // stval
+function clause is_CSR_defined(0x144) = extensionEnabled(Ext_S) // sip
+
+/* supervisor mode: address translation */
+function clause is_CSR_defined(0x180) = extensionEnabled(Ext_S) // satp
+
+/* user mode: counters */
+function clause is_CSR_defined(0xC00) = extensionEnabled(Ext_U) // cycle
+function clause is_CSR_defined(0xC01) = extensionEnabled(Ext_U) // time
+function clause is_CSR_defined(0xC02) = extensionEnabled(Ext_U) // instret
+
+function clause is_CSR_defined(0b1100000 /* 0xC00 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) & extensionEnabled(Ext_U) // hpmcounter3..31
+
+function clause is_CSR_defined(0xC80) = extensionEnabled(Ext_U) & (xlen == 32) // cycleh
+function clause is_CSR_defined(0xC81) = extensionEnabled(Ext_U) & (xlen == 32) // timeh
+function clause is_CSR_defined(0xC82) = extensionEnabled(Ext_U) & (xlen == 32) // instreth
+
+function clause is_CSR_defined(0b1100100 /* 0xC80 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) & extensionEnabled(Ext_U) & (xlen == 32) // hpmcounterh3..31
+
+/* user mode: Zkr */
+function clause is_CSR_defined(0x015) = extensionEnabled(Ext_Zkr)
+
 
 val check_CSR_access : (csrRW, priv_level, Privilege, bool) -> bool
 function check_CSR_access(csrrw, csrpr, p, isWrite) =
@@ -101,22 +113,24 @@ function check_CSR_access(csrrw, csrpr, p, isWrite) =
 function check_TVM_SATP(csr : csreg, p : Privilege) -> bool =
   not(csr == 0x180 & p == Supervisor & mstatus[TVM] == 0b1)
 
-function check_Counteren(csr : csreg, p : Privilege) -> bool =
-  match(csr, p) {
-    (0xC00, Supervisor) => mcounteren[CY] == 0b1,
-    (0xC01, Supervisor) => mcounteren[TM] == 0b1,
-    (0xC02, Supervisor) => mcounteren[IR] == 0b1,
+// There are several features that are controlled by machine/supervisor enable
+// bits (m/senvcfg, m/scounteren, etc.). This abstracts that logic.
+function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bit, supervisor_enable_bit : bit) -> bool = match p {
+  Machine => true,
+  Supervisor => machine_enable_bit == bitone,
+  User => machine_enable_bit == bitone & (not(extensionEnabled(Ext_S)) | supervisor_enable_bit == bitone),
+}
 
-    (0xC00, User) => mcounteren[CY] == 0b1 & (not(haveSupMode()) | scounteren[CY] == 0b1),
-    (0xC01, User) => mcounteren[TM] == 0b1 & (not(haveSupMode()) | scounteren[TM] == 0b1),
-    (0xC02, User) => mcounteren[IR] == 0b1 & (not(haveSupMode()) | scounteren[IR] == 0b1),
+// Return true if the counter is enabled OR the CSR is not a counter.
+function check_Counteren(csr : csreg, p : Privilege) -> bool = {
+  // Check if it is not a counter.
+  if csr <_u 0xC00 | 0xC1F <_u csr
+  then return true;
 
-    (_, _) => /* no HPM counters for now */
-              if   0xC03 <=_u csr & csr <=_u 0xC1F
-              then false
-              else true
-  }
-
+  // Check the relevant bit in m/scounteren.
+  let index = unsigned(csr[4 .. 0]);
+  feature_enabled_for_priv(p, mcounteren.bits[index], scounteren.bits[index])
+}
 
 /* Seed may only be accessed if we are doing a write, and access has been
  * allowed in the current priv mode
@@ -137,7 +151,7 @@ function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
 }
 
 function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
-    is_CSR_defined(csr, p)
+    is_CSR_defined(csr)
   & check_CSR_access(csrAccess(csr), csrPriv(csr), p, isWrite)
   & check_TVM_SATP(csr, p)
   & check_Counteren(csr, p)
@@ -155,11 +169,11 @@ function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
  * where cancellation can be performed.
  */
 
-val speculate_conditional = monadic {ocaml: "Platform.speculate_conditional", interpreter: "excl_res", c: "speculate_conditional", lem: "speculate_conditional_success"} : unit -> bool
+val speculate_conditional = impure {interpreter: "excl_res", c: "speculate_conditional", lem: "speculate_conditional_success"} : unit -> bool
 
-val load_reservation = {ocaml: "Platform.load_reservation", interpreter: "Platform.load_reservation", c: "load_reservation", lem: "load_reservation"} : xlenbits -> unit
-val match_reservation = {ocaml: "Platform.match_reservation", interpreter: "Platform.match_reservation", lem: "match_reservation", c: "match_reservation"} : xlenbits -> bool
-val cancel_reservation = {ocaml: "Platform.cancel_reservation", interpreter: "Platform.cancel_reservation", c: "cancel_reservation", lem: "cancel_reservation"} : unit -> unit
+val load_reservation = impure {interpreter: "Platform.load_reservation", c: "load_reservation", lem: "load_reservation"} : xlenbits -> unit
+val match_reservation = pure {interpreter: "Platform.match_reservation", lem: "match_reservation", c: "match_reservation"} : xlenbits -> bool
+val cancel_reservation = impure {interpreter: "Platform.cancel_reservation", c: "cancel_reservation", lem: "cancel_reservation"} : unit -> unit
 
 /* Exception delegation: given an exception and the privilege at which
  * it occured, returns the privilege at which it should be handled.
@@ -167,13 +181,7 @@ val cancel_reservation = {ocaml: "Platform.cancel_reservation", interpreter: "Pl
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let idx   = num_of_ExceptionType(e);
   let super = bit_to_bool(medeleg.bits[idx]);
-  /* if S-mode is absent, medeleg delegates to U-mode if 'N' is supported. */
-  let user  = if   haveSupMode()
-              then super & haveNExt() & bit_to_bool(sedeleg.bits[idx])
-              else super & haveNExt();
-  let deleg = if      haveUsrMode() & user  then User
-              else if haveSupMode() & super then Supervisor
-              else                               Machine;
+  let deleg = if extensionEnabled(Ext_S) & super then Supervisor else Machine;
   /* We cannot transition to a less-privileged mode. */
   if   privLevel_to_bits(deleg) <_u privLevel_to_bits(p)
   then p else deleg
@@ -190,10 +198,7 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   else if ip[SEI] == 0b1 then Some(I_S_External)
   else if ip[SSI] == 0b1 then Some(I_S_Software)
   else if ip[STI] == 0b1 then Some(I_S_Timer)
-  else if ip[UEI] == 0b1 then Some(I_U_External)
-  else if ip[USI] == 0b1 then Some(I_U_Software)
-  else if ip[UTI] == 0b1 then Some(I_U_Timer)
-  else                         None()
+  else                        None()
 }
 
 /* Process the pending interrupts xip at a privilege according to
@@ -209,53 +214,37 @@ union interrupt_set = {
 function processPending(xip : Minterrupts, xie : Minterrupts, xideleg : xlenbits,
                         priv_enabled : bool) -> interrupt_set = {
   /* interrupts that are enabled but not delegated are pending */
-  let  effective_pend = xip.bits & xie.bits & (~ (xideleg));
+  let  effective_pend = xip.bits & xie.bits & ~(xideleg);
   /* the others are delegated */
   let  effective_delg = xip.bits & xideleg;
   /* we have pending interrupts if this privilege is enabled */
-  if      priv_enabled & (effective_pend != zero_extend(0b0))
+  if      priv_enabled & (effective_pend != zeros())
   then    Ints_Pending(effective_pend)
-  else if effective_delg != zero_extend(0b0)
+  else if effective_delg != zeros()
   then    Ints_Delegated(effective_delg)
   else    Ints_Empty()
 }
 
 /* Given the current privilege level, iterate over privileges to get a
- * pending set for an enabled privilege. This is only called for M/U or
- * M/S/U systems.
+ * pending set for an enabled privilege.
  *
  * We don't use the lowered views of {xie,xip} here, since the spec
- * allows for example the M_Timer to be delegated to the U-mode.
+ * allows for example the M_Timer to be delegated to the S-mode.
  */
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
-  assert(haveUsrMode(), "no user mode: M/U or M/S/U system required");
   let effective_pending = mip.bits & mie.bits;
-  if  effective_pending == zero_extend(0b0) then None() /* fast path */
+  if  effective_pending == zeros() then None() /* fast path */
   else {
     /* Higher privileges than the current one are implicitly enabled,
      * while lower privileges are blocked.  An unsupported privilege is
      * considered blocked.
      */
     let mIE = priv != Machine | (priv == Machine & mstatus[MIE] == 0b1);
-    let sIE = haveSupMode() & (priv == User | (priv == Supervisor & mstatus[SIE] == 0b1));
-    let uIE = haveNExt() & (priv == User & mstatus[UIE] == 0b1);
+    let sIE = extensionEnabled(Ext_S) & (priv == User | (priv == Supervisor & mstatus[SIE] == 0b1));
     match processPending(mip, mie, mideleg.bits, mIE) {
       Ints_Empty()      => None(),
-      Ints_Pending(p)   => let r = (p, Machine) in Some(r),
-      Ints_Delegated(d) =>
-        if not(haveSupMode()) then {
-          if uIE then let r = (d, User) in Some(r)
-          else                             None()
-        } else {
-          /* the delegated bits are pending for S-mode */
-          match processPending(Mk_Minterrupts(d), mie, sideleg.bits, sIE) {
-            Ints_Empty()      => None(),
-            Ints_Pending(p)   => let r = (p, Supervisor) in Some(r),
-            Ints_Delegated(d) => if   uIE
-                                 then let r = (d, User) in Some(r)
-                                 else None()
-          }
-        }
+      Ints_Pending(p)   => Some((p, Machine)),
+      Ints_Delegated(d) => if sIE then Some((d, Supervisor)) else None(),
     }
   }
 }
@@ -264,24 +253,12 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
  * handled (if any), and the privilege it should be handled at.
  */
 function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege)) = {
-  /* If we don't have different privilege levels, we don't need to check delegation.
-   * Absence of U-mode implies absence of S-mode.
-   */
-  if not(haveUsrMode()) | (not(haveSupMode()) & not(haveNExt())) then {
-    assert(priv == Machine, "invalid current privilege");
-    let enabled_pending = mip.bits & mie.bits;
-    match findPendingInterrupt(enabled_pending) {
-      Some(i) => let r = (i, Machine) in Some(r),
-      None()  => None()
-    }
-  } else {
-    match getPendingSet(priv) {
-      None()      => None(),
-      Some(ip, p) => match findPendingInterrupt(ip) {
-                       None()  => None(),
-                       Some(i) => let r = (i, p) in Some(r)
-                     }
-    }
+  match getPendingSet(priv) {
+    None()       => None(),
+    Some(ip, p)  => match findPendingInterrupt(ip) {
+                      None()  => None(),
+                      Some(i) => Some((i, p)),
+                    }
   }
 }
 
@@ -291,7 +268,6 @@ union ctl_result = {
   CTL_TRAP : sync_exception,
   CTL_SRET : unit,
   CTL_MRET : unit,
-  CTL_URET : unit
 }
 
 /* trap value */
@@ -299,7 +275,7 @@ union ctl_result = {
 function tval(excinfo : option(xlenbits)) -> xlenbits = {
   match (excinfo) {
     Some(e) => e,
-    None()  => zero_extend(0b0)
+    None()  => zeros()
   }
 }
 
@@ -323,8 +299,6 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
                       ^ BitStr(c) ^ " at priv " ^ to_str(del_priv)
                       ^ " with tval " ^ BitStr(tval(info)));
 
-  cancel_reservation();
-
   match (del_priv) {
     Machine => {
        mcause[IsInterrupt] = bool_to_bits(intr);
@@ -346,7 +320,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        prepare_trap_vector(del_priv, mcause)
     },
     Supervisor => {
-       assert (haveSupMode(), "no supervisor mode present for delegation");
+       assert (extensionEnabled(Ext_S), "no supervisor mode present for delegation");
 
        scause[IsInterrupt] = bool_to_bits(intr);
        scause[Cause]       = zero_extend(c);
@@ -370,26 +344,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        prepare_trap_vector(del_priv, scause)
     },
-    User => {
-       assert(haveUsrMode(), "no user mode present for delegation");
-
-       ucause[IsInterrupt] = bool_to_bits(intr);
-       ucause[Cause]       = zero_extend(c);
-
-       mstatus[UPIE] = mstatus[UIE];
-       mstatus[UIE]  = 0b0;
-       utval           = tval(info);
-       uepc            = pc;
-
-       cur_privilege   = del_priv;
-
-       handle_trap_extension(del_priv, pc, ext);
-
-       if   get_config_print_reg()
-       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
-
-       prepare_trap_vector(del_priv, ucause)
-    }
+    User => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
   };
 }
 
@@ -408,7 +363,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus[MIE]  = mstatus[MPIE];
       mstatus[MPIE] = 0b1;
       cur_privilege   = privLevel_of_bits(mstatus[MPP]);
-      mstatus[MPP]  = privLevel_to_bits(if haveUsrMode() then User else Machine);
+      mstatus[MPP]  = privLevel_to_bits(if extensionEnabled(Ext_U) then User else Machine);
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
@@ -417,7 +372,6 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   get_config_print_platform()
       then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
-      cancel_reservation();
       prepare_xret_target(Machine) & pc_alignment_mask()
     },
     (_, CTL_SRET())  => {
@@ -435,23 +389,8 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       then print_platform("ret-ing from " ^ to_str(prev_priv)
                           ^ " to " ^ to_str(cur_privilege));
 
-      cancel_reservation();
       prepare_xret_target(Supervisor) & pc_alignment_mask()
     },
-    (_, CTL_URET())  => {
-      let prev_priv   = cur_privilege;
-      mstatus[UIE]  = mstatus[UPIE];
-      mstatus[UPIE] = 0b1;
-      cur_privilege   = User;
-
-      if   get_config_print_reg()
-      then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
-      if   get_config_print_platform()
-      then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
-
-      cancel_reservation();
-      prepare_xret_target(User) & pc_alignment_mask()
-    }
   }
 }
 
@@ -477,12 +416,13 @@ function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
 function init_sys() -> unit = {
   cur_privilege = Machine;
 
-  mhartid     = zero_extend(0b0);
-  mconfigptr  = zero_extend(0b0);
+  mhartid     = zeros();
+  mconfigptr  = zeros();
 
-  misa[MXL] = arch_to_bits(if sizeof(xlen) == 32 then RV32 else RV64);
+  misa[MXL] = arch_to_bits(if xlen == 32 then RV32 else RV64);
   misa[A]   = 0b1;                             /* atomics */
   misa[C]   = bool_to_bits(sys_enable_rvc());  /* RVC */
+  misa[B]   = bool_to_bits(sys_enable_bext()); /* Bit-manipulation */
   misa[I]   = 0b1;                             /* base integer ISA */
   misa[M]   = 0b1;                             /* integer multiply/divide */
   misa[U]   = 0b1;                             /* user-mode */
@@ -494,55 +434,48 @@ function init_sys() -> unit = {
 
   /* We currently support both F and D */
   misa[F]   = bool_to_bits(sys_enable_fdext());      /* single-precision */
-  misa[D]   = if   sizeof(flen) >= 64
+  misa[D]   = if   flen >= 64
                 then bool_to_bits(sys_enable_fdext())  /* double-precision */
                 else 0b0;
 
   mstatus = set_mstatus_SXL(mstatus, misa[MXL]);
   mstatus = set_mstatus_UXL(mstatus, misa[MXL]);
   mstatus[SD]   = 0b0;
+  mstatus[MPP] = privLevel_to_bits(lowest_supported_privLevel());
 
   /* set to little-endian mode */
-  if sizeof(xlen) == 64 then {
+  if xlen == 64 then {
     mstatus = Mk_Mstatus([mstatus.bits with 37 .. 36 = 0b00])
   };
-  mstatush.bits = zero_extend(0b0);
+  mstatush.bits = zeros();
 
-  mip.bits     = zero_extend(0b0);
-  mie.bits     = zero_extend(0b0);
-  mideleg.bits = zero_extend(0b0);
-  medeleg.bits = zero_extend(0b0);
-  mtvec.bits   = zero_extend(0b0);
-  mcause.bits  = zero_extend(0b0);
-  mepc            = zero_extend(0b0);
-  mtval           = zero_extend(0b0);
-  mscratch        = zero_extend(0b0);
+  mip.bits     = zeros();
+  mie.bits     = zeros();
+  mideleg.bits = zeros();
+  medeleg.bits = zeros();
+  mtvec.bits   = zeros();
+  mcause.bits  = zeros();
+  mepc            = zeros();
+  mtval           = zeros();
+  mscratch        = zeros();
 
-  mcycle          = zero_extend(0b0);
-  mtime           = zero_extend(0b0);
+  mcycle          = zeros();
+  mtime           = zeros();
 
-  mcounteren.bits = zero_extend(0b0);
+  mcounteren.bits = zeros();
 
-  minstret           = zero_extend(0b0);
+  minstret           = zeros();
   minstret_increment = true;
 
-  menvcfg.bits = zero_extend(0b0);
-  senvcfg.bits = zero_extend(0b0);
+  menvcfg.bits = zeros();
+  senvcfg.bits = zeros();
   /* initialize vector csrs */
-  elen               = 0b1; /* ELEN=64 as the common case */
-  vlen               = 0b0100; /* VLEN=512 as a default value */
-  vlenb              = to_bits(sizeof(xlen), 2 ^ (get_vlen_pow() - 3)); /* vlenb holds the constant value VLEN/8 */
-  /* VLEN value needs to be manually changed currently.
-   * See riscv_vlen.sail for details.
-   */
-  vstart             = zero_extend(0b0);
-  vxsat              = 0b0;
-  vxrm               = 0b00;
-  vcsr[vxrm]       = vxrm;
-  vcsr[vxsat]      = vxsat;
-  vl                 = zero_extend(0b0);
+  vstart             = zeros();
+  vl                 = zeros();
+  vcsr[vxrm]       = 0b00;
+  vcsr[vxsat]      = 0b0;
   vtype[vill]      = 0b1;
-  vtype[reserved]  = zero_extend(0b0);
+  vtype[reserved]  = zeros();
   vtype[vma]       = 0b0;
   vtype[vta]       = 0b0;
   vtype[vsew]      = 0b000;
@@ -553,7 +486,7 @@ function init_sys() -> unit = {
 
   // log compatibility with spike
   if   get_config_print_reg()
-  then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits) ^ " (input: " ^ BitStr(zero_extend(0b0) : xlenbits) ^ ")")
+  then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits) ^ " (input: " ^ BitStr(zeros() : xlenbits) ^ ")")
 }
 
 /* memory access exceptions, defined here for use by the platform model. */

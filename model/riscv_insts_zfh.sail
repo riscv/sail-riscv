@@ -6,6 +6,9 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
+enum clause extension = Ext_Zhinx
+function clause extensionEnabled(Ext_Zhinx) = sys_enable_zfinx()
+
 /* **************************************************************** */
 /* This file specifies the instructions in the Zfh extension        */
 /* (half precision floating point).                                 */
@@ -161,8 +164,11 @@ function fle_H   (v1,       v2,        is_quiet) = {
 
 /* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
-
-function haveHalfFPU() -> bool = haveZfh() | haveZhinx()
+// Full half support.
+function haveHalfFPU() -> bool = extensionEnabled(Ext_Zfh) | extensionEnabled(Ext_Zhinx)
+// Support for conversion of halves to/from single & double, but no actual
+// calculations with halves.
+function haveHalfMin() -> bool = haveHalfFPU() | extensionEnabled(Ext_Zfhmin)
 
 /* ****************************************************************** */
 /* Floating-point loads                                               */
@@ -535,20 +541,20 @@ mapping clause encdec =
 <-> 0b110_1010 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_S)                                     if haveHalfFPU()
-<-> 0b010_0010 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_S)                                     if haveHalfMin()
+<-> 0b010_0010 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfMin()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_D)                                     if haveHalfFPU()
-<-> 0b010_0010 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_D)                                     if haveHalfMin() & (haveDoubleFPU() & validDoubleRegs([rs1]))
+<-> 0b010_0010 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfMin() & (haveDoubleFPU() & validDoubleRegs([rs1]))
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_S_H)                                     if haveHalfFPU()
-<-> 0b010_0000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_S_H)                                     if haveHalfMin()
+<-> 0b010_0000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfMin()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_D_H)                                     if haveHalfFPU()
-<-> 0b010_0001 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_D_H)                                     if haveHalfMin() & (haveDoubleFPU() & validDoubleRegs([rd]))
+<-> 0b010_0001 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfMin() & (haveDoubleFPU() & validDoubleRegs([rd]))
 
 // TODO:
 /* FCVT_H_Q, FCVT_Q_H : Will be added with Q Extension */
@@ -556,20 +562,20 @@ mapping clause encdec =
 /* F instructions, RV64 only */
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_L_H)                                     if haveHalfFPU() & sizeof(xlen) >= 64
-<-> 0b110_0010 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_L_H)                                     if haveHalfFPU() & xlen >= 64
+<-> 0b110_0010 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_LU_H)                                    if haveHalfFPU() & sizeof(xlen) >= 64
-<-> 0b110_0010 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_LU_H)                                    if haveHalfFPU() & xlen >= 64
+<-> 0b110_0010 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_L)                                     if haveHalfFPU() & sizeof(xlen) >= 64
-<-> 0b110_1010 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_L)                                     if haveHalfFPU() & xlen >= 64
+<-> 0b110_1010 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_LU)                                    if haveHalfFPU() & sizeof(xlen) >= 64
-<-> 0b110_1010 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_LU)                                    if haveHalfFPU() & xlen >= 64
+<-> 0b110_1010 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU() & xlen >= 64
 
 /* Execution semantics ================================ */
 
@@ -710,7 +716,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_D_H)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_L_H)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -726,7 +732,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_L_H)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_LU_H)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -742,7 +748,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_LU_H)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_L)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_L = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -758,7 +764,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_L)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_LU)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_LU = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -881,11 +887,11 @@ union clause ast = F_UN_TYPE_H : (regidx, regidx, f_un_op_H)
 mapping clause encdec = F_UN_TYPE_H(rs1, rd, FCLASS_H)                        if haveHalfFPU()
                     <-> 0b111_0010 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveHalfFPU()
 
-mapping clause encdec = F_UN_TYPE_H(rs1, rd, FMV_X_H)                         if haveZfh()
-                    <-> 0b111_0010 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveZfh()
+mapping clause encdec = F_UN_TYPE_H(rs1, rd, FMV_X_H)                         if extensionEnabled(Ext_Zfhmin)
+                    <-> 0b111_0010 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_Zfhmin)
 
-mapping clause encdec = F_UN_TYPE_H(rs1, rd, FMV_H_X)                         if haveZfh()
-                    <-> 0b111_1010 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveZfh()
+mapping clause encdec = F_UN_TYPE_H(rs1, rd, FMV_H_X)                         if extensionEnabled(Ext_Zfhmin)
+                    <-> 0b111_1010 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_Zfhmin)
 
 /* Execution semantics ================================ */
 

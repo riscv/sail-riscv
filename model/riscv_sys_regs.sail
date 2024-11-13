@@ -79,33 +79,45 @@ bitfield Misa : xlenbits = {
 register misa : Misa
 
 /* whether misa is R/W */
-val sys_enable_writable_misa = {c: "sys_enable_writable_misa", ocaml: "Platform.enable_writable_misa", _: "sys_enable_writable_misa"} : unit -> bool
+val sys_enable_writable_misa = pure "sys_enable_writable_misa" : unit -> bool
 /* whether misa.c was enabled at boot */
-val sys_enable_rvc = {c: "sys_enable_rvc", ocaml: "Platform.enable_rvc", _: "sys_enable_rvc"} : unit -> bool
+val sys_enable_rvc = pure "sys_enable_rvc" : unit -> bool
 /* whether misa.{f,d} were enabled at boot */
-val sys_enable_fdext = {c: "sys_enable_fdext", ocaml: "Platform.enable_fdext", _: "sys_enable_fdext"} : unit -> bool
+val sys_enable_fdext = pure "sys_enable_fdext" : unit -> bool
 /* whether Svinval was enabled at boot */
-val sys_enable_svinval = {c: "sys_enable_svinval", ocaml: "Platform.enable_svinval", _: "sys_enable_svinval"} : unit -> bool
+val sys_enable_svinval = pure "sys_enable_svinval" : unit -> bool
 /* whether Zcb was enabled at boot */
-val sys_enable_zcb = {c: "sys_enable_zcb", ocaml: "Platform.enable_zcb", _: "sys_enable_zcb"} : unit -> bool
+val sys_enable_zcb = pure "sys_enable_zcb" : unit -> bool
 /* whether zfinx was enabled at boot */
-val sys_enable_zfinx = {c: "sys_enable_zfinx", ocaml: "Platform.enable_zfinx", _: "sys_enable_zfinx"} : unit -> bool
-val sys_enable_zilsd = {c: "sys_enable_zilsd", ocaml: "Platform.enable_zilsd", _: "sys_enable_zilsd"} : unit -> bool
-val sys_enable_zclsd = {c: "sys_enable_zclsd", ocaml: "Platform.enable_zclsd", _: "sys_enable_zclsd"} : unit -> bool
+val sys_enable_zfinx = pure "sys_enable_zfinx" : unit -> bool
 /* whether the N extension was enabled at boot */
-val sys_enable_next = {c: "sys_enable_next", ocaml: "Platform.enable_next", _: "sys_enable_next"} : unit -> bool
+val sys_enable_next = pure "sys_enable_next" : unit -> bool
+/* whether zilsd/zclsd was enabled at boot */
+val sys_enable_zilsd = pure "sys_enable_zilsd": unit -> bool
+val sys_enable_zclsd = pure "sys_enable_zclsd": unit -> bool
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
-val sys_enable_writable_fiom = {c: "sys_enable_writable_fiom", ocaml: "Platform.enable_writable_fiom", _: "sys_enable_writable_fiom"} : unit -> bool
+val sys_enable_writable_fiom = pure "sys_enable_writable_fiom" : unit -> bool
 
 /* How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime). */
-val sys_pmp_count = {c: "sys_pmp_count", ocaml: "Platform.pmp_count", _: "sys_pmp_count"} : unit -> range(0, 64)
+val sys_pmp_count = pure "sys_pmp_count" : unit -> range(0, 64)
 /* G parameter that specifies the PMP grain size. The grain size is 2^(G+2), e.g.
    G=0 -> 4 bytes, G=10 -> 4096 bytes. */
-val sys_pmp_grain = {c: "sys_pmp_grain", ocaml: "Platform.pmp_grain", _: "sys_pmp_grain"} : unit -> range(0, 63)
+val sys_pmp_grain = pure "sys_pmp_grain" : unit -> range(0, 63)
+
+/* Which HPM counters are supported (as a bit mask). Bits [2 .. 0] are ignored. */
+val sys_writable_hpm_counters = pure "sys_writable_hpm_counters" : unit -> bits(32)
 
 /* whether misa.v was enabled at boot */
-val sys_enable_vext = {c: "sys_enable_vext", ocaml: "Platform.enable_vext", _: "sys_enable_vext"} : unit -> bool
+val sys_enable_vext = pure "sys_enable_vext" : unit -> bool
+
+/* whether misa.b was enabled at boot */
+val sys_enable_bext = pure "sys_enable_bext" : unit -> bool
+
+// CBO extensions. Zicbop cannot be enabled/disabled because it has no effect
+// at all on this model.
+val sys_enable_zicbom = pure "sys_enable_zicbom" : unit -> bool
+val sys_enable_zicboz = pure "sys_enable_zicboz" : unit -> bool
 
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
@@ -127,44 +139,30 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   }
 }
 
-/* helpers to check support for various extensions. */
-/* we currently don't model 'E', so always assume 'I'. */
-function haveAtomics() -> bool = misa[A] == 0b1
-function haveRVC()     -> bool = misa[C] == 0b1
-function haveMulDiv()  -> bool = misa[M] == 0b1
-function haveSupMode() -> bool = misa[S] == 0b1
-function haveUsrMode() -> bool = misa[U] == 0b1
-function haveNExt()    -> bool = misa[N] == 0b1
-/* see below for F and D (and Z*inx counterparts) extension tests */
+enum clause extension = Ext_U
+function clause extensionEnabled(Ext_U) = misa[U] == 0b1
 
-/* BitManip extension support. */
-function haveZba()  -> bool = true
-function haveZbb()  -> bool = true
-function haveZbc()  -> bool = true
-function haveZbs()  -> bool = true
+enum clause extension = Ext_S
+function clause extensionEnabled(Ext_S) = misa[S] == 0b1
 
-/* Zfa (additional FP) extension */
-function haveZfa()  -> bool = true
+/* Hardware Performance Monitoring counters */
+enum clause extension = Ext_Zihpm
+function clause extensionEnabled(Ext_Zihpm) = true
 
-/* Scalar Cryptography extensions support. */
-function haveZbkb() -> bool = true
-function haveZbkc() -> bool = true
-function haveZbkx() -> bool = true
+/*
+ * Illegal values legalized to least privileged mode supported.
+ * Note: the only valid combinations of supported modes are M, M+U, M+S+U.
+ */
+function lowest_supported_privLevel() -> Privilege =
+  if extensionEnabled(Ext_U) then User else Machine
 
-/* Cryptography extension support. Note these will need updating once */
-/* Sail can be dynamically configured with different extension support */
-/* and have dynamic changes of XLEN via S/UXL */
-function haveZkr()    -> bool = true
-function haveZksh()   -> bool = true
-function haveZksed()  -> bool = true
-function haveZknh()   -> bool = true
-function haveZkne()   -> bool = true
-function haveZknd()   -> bool = true
-
-function haveZmmul()  -> bool = true
-
-/* Zicond extension support */
-function haveZicond() -> bool = true
+function have_privLevel(priv : priv_level) -> bool =
+  match priv {
+    0b00 => extensionEnabled(Ext_U),
+    0b01 => extensionEnabled(Ext_S),
+    0b10 => false,
+    0b11 => true,
+  }
 
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
@@ -202,11 +200,9 @@ bitfield Mstatus : xlenbits = {
 
   MPIE : 7,
   SPIE : 5,
-  UPIE : 4,
 
   MIE  : 3,
   SIE  : 1,
-  UIE  : 0
 }
 register mstatus : Mstatus
 
@@ -216,13 +212,13 @@ function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv :
   else priv
 
 function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
-  if   sizeof(xlen) == 32
+  if   xlen == 32
   then arch_to_bits(RV32)
   else m.bits[35 .. 34]
 }
 
 function set_mstatus_SXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
-  if   sizeof(xlen) == 32
+  if   xlen == 32
   then m
   else {
     let m = vector_update_subrange(m.bits, 35, 34,  a);
@@ -231,13 +227,13 @@ function set_mstatus_SXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
 }
 
 function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
-  if   sizeof(xlen) == 32
+  if   xlen == 32
   then arch_to_bits(RV32)
   else m.bits[33 .. 32]
 }
 
 function set_mstatus_UXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
-  if   sizeof(xlen) == 32
+  if   xlen == 32
   then m
   else {
     let m = vector_update_subrange(m.bits, 33, 32,  a);
@@ -252,6 +248,10 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
    * explicitly later.
    */
   let m : Mstatus = Mk_Mstatus(zero_extend(v[22 .. 7] @ 0b0 @ v[5 .. 3] @ 0b0 @ v[1 .. 0]));
+
+  /* Legalize MPP */
+  let m = [m with MPP = if have_privLevel(m[MPP]) then m[MPP]
+                        else privLevel_to_bits(lowest_supported_privLevel())];
 
   /* We don't have any extension context yet. */
   let m = [m with XS = extStatus_to_bits(Off)];
@@ -271,18 +271,11 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
   let m = set_mstatus_UXL(m, get_mstatus_UXL(o));
 
   /* We don't currently support changing MBE and SBE. */
-  let m = if sizeof(xlen) == 64 then {
+  let m = if xlen == 64 then {
              Mk_Mstatus([m.bits with 37 .. 36 = 0b00])
           } else m;
 
-  /* Hardwired to zero in the absence of 'U' or 'N'. */
-  let m = if not(haveNExt()) then {
-             let m = [m with UPIE = 0b0];
-             let m = [m with UIE = 0b0];
-             m
-          } else m;
-
-  if not(haveUsrMode()) then {
+  if not(extensionEnabled(Ext_U)) then {
     let m = [m with MPRV = 0b0];
     m
   } else m
@@ -307,42 +300,17 @@ function in32BitMode() -> bool = {
   cur_Architecture() == RV32
 }
 
-/* F and D extensions have to enabled both via misa.{FD} as well as mstatus.FS */
-function haveFExt()    -> bool = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
-function haveDExt()    -> bool = (misa[D] == 0b1) & (mstatus[FS] != 0b00) & sizeof(flen) >= 64
-/* Zfh (half-precision) extension depends on misa.F and mstatus.FS */
-function haveZfh()     -> bool = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
-/* V extension has to enable both via misa.V as well as mstatus.VS */
-function haveVExt()    -> bool = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
-
-function haveSvinval() -> bool = sys_enable_svinval()
-
-/* Zcb has simple code-size saving instructions. (The Zcb extension depends on the Zca extension.) */
-function haveZcb()     -> bool = sys_enable_zcb()
-
-/* Zhinx, Zfinx and Zdinx extensions (TODO: gate FCSR access on [mhs]stateen0 bit 1 when implemented) */
-function haveZhinx()   -> bool = sys_enable_zfinx()
-function haveZfinx()   -> bool = sys_enable_zfinx()
-function haveZdinx()   -> bool = sys_enable_zfinx() & sizeof(flen) >= 64
-
-/* Zilsd extension support */
-function haveZilsd() ->  bool = sizeof(xlen) == 32 & sys_enable_zilsd() 
-function haveZclsd()   -> bool = sys_enable_rvc() & sys_enable_zilsd() & sys_enable_zclsd() & (haveFExt() == false)
-
 /* interrupt processing state */
 
 bitfield Minterrupts : xlenbits = {
   MEI : 11, /* external interrupts */
   SEI : 9,
-  UEI : 8,
 
   MTI : 7,  /* timers interrupts */
   STI : 5,
-  UTI : 4,
 
   MSI : 3,  /* software interrupts */
   SSI : 1,
-  USI : 0,
 }
 register mip     : Minterrupts /* Pending */
 register mie     : Minterrupts /* Enabled */
@@ -352,26 +320,19 @@ function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   /* The only writable bits are the S-mode bits, and with the 'N'
    * extension, the U-mode bits. */
   let v = Mk_Minterrupts(v);
-  let m = [o with SEI = v[SEI], STI = v[STI], SSI = v[SSI]];
-  if haveUsrMode() & haveNExt() then {
-    [m with UEI = v[UEI], UTI = v[UTI], USI = v[USI]]
-  } else m
+  [o with SEI = v[SEI], STI = v[STI], SSI = v[SSI]]
 }
 
 function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
-  let m = [o with
+  [o with
     MEI = v[MEI],
     MTI = v[MTI],
     MSI = v[MSI],
     SEI = v[SEI],
     STI = v[STI],
     SSI = v[SSI]
-  ];
-  /* The U-mode bits will be modified if we have the 'N' extension. */
-  if haveUsrMode() & haveNExt() then {
-    [m with UEI = v[UEI], UTI = v[UTI], USI = v[USI]]
-  } else m
+  ]
 }
 
 function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
@@ -476,24 +437,26 @@ register mcounteren : Counteren
 register scounteren : Counteren
 
 function legalize_mcounteren(c : Counteren, v : xlenbits) -> Counteren = {
-  /* no HPM counters yet */
-  [c with IR = [v[2]], TM = [v[1]], CY = [v[0]]]
+  let supported_counters = sys_writable_hpm_counters()[31 .. 3] @ 0b111;
+  Mk_Counteren(v[31 .. 0] & supported_counters)
 }
 
 function legalize_scounteren(c : Counteren, v : xlenbits) -> Counteren = {
-  /* no HPM counters yet */
-  [c with IR = [v[2]], TM = [v[1]], CY = [v[0]]]
+  let supported_counters = sys_writable_hpm_counters()[31 .. 3] @ 0b111;
+  Mk_Counteren(v[31 .. 0] & supported_counters)
 }
 
 bitfield Counterin : bits(32) = {
-  /* no HPM counters yet */
+  HPM  : 31 .. 3,
   IR : 2,
   CY : 0
 }
 register mcountinhibit : Counterin
 
 function legalize_mcountinhibit(c : Counterin, v : xlenbits) -> Counterin = {
-  [c with IR = [v[2]], CY = [v[0]]]
+  // Note the 0 in 0b101 is because the mtimer counter can't be paused.
+  let supported_counters = sys_writable_hpm_counters()[31 .. 3] @ 0b101;
+  Mk_Counterin(v[31 .. 0] & supported_counters)
 }
 
 register mcycle : bits(64)
@@ -519,6 +482,38 @@ function retire_instruction() -> unit = {
   if minstret_increment then minstret = minstret + 1;
 }
 
+// HPM (Hardware Performance Monitoring) counters. The lowest three values are
+// not used but they are defined for simplicity.
+register mhpmcounter : vector(32, bits(64))
+
+// HPM events selector. These control what the HPM counters measure. The lowest
+// three values are not used but they are defined for simplicity.
+register mhpmevent : vector(32, xlenbits)
+
+// Valid HPM counter indices. The lowest three are used for mcycle, mtime and minstret.
+type hpmidx = range(3, 31)
+
+// Convert the lowest 5 bits of a CSR index to an hpmidx. Asserts if it is 0..2.
+function hpmidx_from_bits(b : bits(5)) -> hpmidx = {
+  let index = unsigned(b);
+  assert(index >= 3, "unreachable HPM index");
+  index
+}
+
+function read_mhpmcounter(index : hpmidx) -> xlenbits = mhpmcounter[index][(xlen - 1) .. 0]
+function read_mhpmcounterh(index : hpmidx) -> bits(32) = mhpmcounter[index][63 .. 32]
+function read_mhpmevent(index : hpmidx) -> xlenbits = mhpmevent[index]
+
+// Write the HPM CSRs. These return the new value of the CSR, for use in writeCSR.
+function write_mhpmcounter(index : hpmidx, value : xlenbits) -> unit =
+  if sys_writable_hpm_counters()[index] == bitone then mhpmcounter[index][(xlen - 1) .. 0] = value
+
+function write_mhpmcounterh(index : hpmidx, value : bits(32)) -> unit =
+  if sys_writable_hpm_counters()[index] == bitone then mhpmcounter[index][63 .. 32] = value
+
+function write_mhpmevent(index : hpmidx, value : xlenbits) -> unit =
+  if sys_writable_hpm_counters()[index] == bitone then mhpmevent[index] = value
+
 /* informational registers */
 register mvendorid : bits(32)
 register mimpid : xlenbits
@@ -542,9 +537,7 @@ bitfield Sstatus : xlenbits = {
   VS   : 10 .. 9,
   SPP  : 8,
   SPIE : 5,
-  UPIE : 4,
   SIE  : 1,
-  UIE  : 0
 }
 /* sstatus is a view of mstatus, so there is no register defined. */
 
@@ -560,108 +553,80 @@ function set_sstatus_UXL(s : Sstatus, a : arch_xlen) -> Sstatus = {
 }
 
 function lower_mstatus(m : Mstatus) -> Sstatus = {
-  let s = Mk_Sstatus(zero_extend(0b0));
+  let s = Mk_Sstatus(zeros());
   let s = [s with SD = m[SD]];
   let s = set_sstatus_UXL(s, get_mstatus_UXL(m));
-  let s = [s with MXR = m[MXR]];
-  let s = [s with SUM = m[SUM]];
-  let s = [s with XS = m[XS]];
-  let s = [s with FS = m[FS]];
-  let s = [s with VS = m[VS]];
-  let s = [s with SPP = m[SPP]];
-  let s = [s with SPIE = m[SPIE]];
-  let s = [s with UPIE = m[UPIE]];
-  let s = [s with SIE = m[SIE]];
-  let s = [s with UIE = m[UIE]];
-  s
+
+  [s with
+    MXR = m[MXR],
+    SUM = m[SUM],
+    XS = m[XS],
+    FS = m[FS],
+    VS = m[VS],
+    SPP = m[SPP],
+    SPIE = m[SPIE],
+    SIE = m[SIE],
+  ]
 }
 
 function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
-  let m = [m with MXR = s[MXR]];
-  let m = [m with SUM = s[SUM]];
+  let dirty = extStatus_of_bits(s[FS]) == Dirty | extStatus_of_bits(s[XS]) == Dirty |
+              extStatus_of_bits(s[VS]) == Dirty;
 
-  let m = [m with XS = s[XS]];
-  // See comment for mstatus.FS.
-  let m = [m with FS = s[FS]];
-  let m = [m with VS = s[VS]];
-  let dirty = extStatus_of_bits(m[FS]) == Dirty | extStatus_of_bits(m[XS]) == Dirty |
-              extStatus_of_bits(m[VS]) == Dirty;
-  let m = [m with SD = bool_to_bits(dirty)];
-
-  let m = [m with SPP = s[SPP]];
-  let m = [m with SPIE = s[SPIE]];
-  let m = [m with UPIE = s[UPIE]];
-  let m = [m with SIE = s[SIE]];
-  let m = [m with UIE = s[UIE]];
-  m
+  [m with
+    SD = bool_to_bits(dirty),
+    MXR = s[MXR],
+    SUM = s[SUM],
+    XS = s[XS],
+    FS = s[FS],
+    VS = s[VS],
+    SPP = s[SPP],
+    SPIE = s[SPIE],
+    SIE = s[SIE],
+  ]
 }
 
 function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
   legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(v)).bits)
 }
 
-bitfield Sedeleg : xlenbits = {
-  UEnvCall          : 8,
-  SAMO_Access_Fault : 7,
-  SAMO_Addr_Align   : 6,
-  Load_Access_Fault : 5,
-  Load_Addr_Align   : 4,
-  Breakpoint        : 3,
-  Illegal_Instr     : 2,
-  Fetch_Access_Fault: 1,
-  Fetch_Addr_Align  : 0
-}
-register sedeleg : Sedeleg
 
-function legalize_sedeleg(s : Sedeleg, v : xlenbits) -> Sedeleg = {
-  Mk_Sedeleg(zero_extend(v[8..0]))
-}
 
 bitfield Sinterrupts : xlenbits = {
   SEI : 9,  /* external interrupts */
-  UEI : 8,
 
   STI : 5,  /* timers interrupts */
-  UTI : 4,
 
   SSI : 1,  /* software interrupts */
-  USI : 0
 }
 
 /* Provides the sip read view of mip (m) as delegated by mideleg (d). */
 function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
-  let s : Sinterrupts = Mk_Sinterrupts(zero_extend(0b0));
-  let s = [s with SEI = m[SEI] & d[SEI]];
-  let s = [s with STI = m[STI] & d[STI]];
-  let s = [s with SSI = m[SSI] & d[SSI]];
+  let s : Sinterrupts = Mk_Sinterrupts(zeros());
 
-  let s = [s with UEI = m[UEI] & d[UEI]];
-  let s = [s with UTI = m[UTI] & d[UTI]];
-  let s = [s with USI = m[USI] & d[USI]];
-  s
+  [s with
+    SEI = m[SEI] & d[SEI],
+    STI = m[STI] & d[STI],
+    SSI = m[SSI] & d[SSI],
+  ]
 }
 
 /* Provides the sie read view of mie (m) as delegated by mideleg (d). */
 function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
-  let s : Sinterrupts = Mk_Sinterrupts(zero_extend(0b0));
-  let s = [s with SEI = m[SEI] & d[SEI]];
-  let s = [s with STI = m[STI] & d[STI]];
-  let s = [s with SSI = m[SSI] & d[SSI]];
-  let s = [s with UEI = m[UEI] & d[UEI]];
-  let s = [s with UTI = m[UTI] & d[UTI]];
-  let s = [s with USI = m[USI] & d[USI]];
-  s
+  let s : Sinterrupts = Mk_Sinterrupts(zeros());
+
+  [s with
+    SEI = m[SEI] & d[SEI],
+    STI = m[STI] & d[STI],
+    SSI = m[SSI] & d[SSI],
+  ]
 }
 
 /* Returns the new value of mip from the previous mip (o) and the written sip (s) as delegated by mideleg (d). */
 function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
   let m = if d[SSI] == 0b1 then [m with SSI = s[SSI]] else m;
-  if haveNExt() then {
-    let m = if d[UEI] == 0b1 then [m with UEI = s[UEI]] else m;
-    let m = if d[USI] == 0b1 then [m with USI = s[USI]] else m;
-    m
-  } else m
+  m
 }
 
 function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
@@ -674,19 +639,13 @@ function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterru
   let m = if d[SEI] == 0b1 then [m with SEI = s[SEI]] else m;
   let m = if d[STI] == 0b1 then [m with STI = s[STI]] else m;
   let m = if d[SSI] == 0b1 then [m with SSI = s[SSI]] else m;
-  if haveNExt() then {
-    let m = if d[UEI] == 0b1 then [m with UEI = s[UEI]] else m;
-    let m = if d[UTI] == 0b1 then [m with UTI = s[UTI]] else m;
-    let m = if d[USI] == 0b1 then [m with USI = s[USI]] else m;
-    m
-  } else m
+  m
 }
 
 function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
   lift_sie(m, d, Mk_Sinterrupts(v))
 }
 
-register sideleg : Sinterrupts
 
 /* other non-VM related supervisor state */
 register stvec    : Mtvec
@@ -760,8 +719,7 @@ mapping opst_code : seed_opst <-> bits(2) = {
  *       for this function is unavailable when it's first encountered in
  *       read_seed_csr. Hence it appears here.
  */
-val get_16_random_bits = {
-    ocaml: "Platform.get_16_random_bits",
+val get_16_random_bits = impure {
     interpreter: "Platform.get_16_random_bits",
     c: "plat_get_16_random_bits",
     lem: "plat_get_16_random_bits"
@@ -780,7 +738,7 @@ function read_seed_csr() -> xlenbits = {
 }
 
 /* Writes to the seed CSR are ignored */
-function write_seed_csr () -> option(xlenbits) = None()
+function write_seed_csr () -> xlenbits = zeros()
 
 bitfield MEnvcfg : bits(64) = {
   // Supervisor TimeCmp Extension
@@ -843,10 +801,11 @@ function is_fiom_active() -> bool = {
 }
 /* vector csrs */
 register vstart : bits(16) /* use the largest possible length of vstart */
-register vxsat  : bits(1)
-register vxrm   : bits(2)
 register vl     : xlenbits
-register vlenb  : xlenbits
+
+function get_vlenb() -> xlenbits = {
+  to_bits(xlen, (2 ^ (get_vlen_pow()) / 8))
+}
 
 bitfield Vtype  : xlenbits = {
   vill      : xlen - 1,

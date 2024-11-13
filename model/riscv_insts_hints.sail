@@ -97,9 +97,9 @@ mapping clause assembly = C_ADD_HINT(rs2)
 union clause ast = C_SLLI_HINT : (bits(6), regidx)
 
 mapping clause encdec_compressed = C_SLLI_HINT(nzui5 @ nzui40, rsd)
-      if (nzui5 @ nzui40 == 0b000000 | rsd == zreg) & (sizeof(xlen) == 64 | nzui5 == 0b0)
+      if (nzui5 @ nzui40 == 0b000000 | rsd == zreg) & (xlen == 64 | nzui5 == 0b0)
   <-> 0b000 @ nzui5 : bits(1) @ rsd : regidx @ nzui40 : bits(5) @ 0b10
-      if (nzui5 @ nzui40 == 0b000000 | rsd == zreg) & (sizeof(xlen) == 64 | nzui5 == 0b0)
+      if (nzui5 @ nzui40 == 0b000000 | rsd == zreg) & (xlen == 64 | nzui5 == 0b0)
 
 function clause execute (C_SLLI_HINT(shamt, rsd)) = RETIRE_SUCCESS
 

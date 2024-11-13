@@ -15,18 +15,27 @@
 
 /* **************************************************************** */
 
-/* val clause ext_is_CSR_defined : (csreg, Privilege) -> bool */
+enum clause extension = Ext_F
+function clause extensionEnabled(Ext_F) = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
 
-function clause ext_is_CSR_defined (0x001, _) = haveFExt() | haveZfinx()
-function clause ext_is_CSR_defined (0x002, _) = haveFExt() | haveZfinx()
-function clause ext_is_CSR_defined (0x003, _) = haveFExt() | haveZfinx()
+enum clause extension = Ext_D
+function clause extensionEnabled(Ext_D) = (misa[D] == 0b1) & (mstatus[FS] != 0b00) & flen >= 64
 
-function clause ext_read_CSR (0x001) = Some(zero_extend(fcsr[FFLAGS]))
-function clause ext_read_CSR (0x002) = Some(zero_extend(fcsr[FRM]))
-function clause ext_read_CSR (0x003) = Some(zero_extend(fcsr.bits))
+enum clause extension = Ext_Zfinx
+function clause extensionEnabled(Ext_Zfinx) = sys_enable_zfinx()
 
-function clause ext_write_CSR (0x001, value) = { ext_write_fcsr(fcsr[FRM], value[4..0]); Some(zero_extend(fcsr[FFLAGS])) }
-function clause ext_write_CSR (0x002, value) = { ext_write_fcsr(value[2..0], fcsr[FFLAGS]); Some(zero_extend(fcsr[FRM])) }
-function clause ext_write_CSR (0x003, value) = { ext_write_fcsr(value[7..5], value[4..0]); Some(zero_extend(fcsr.bits)) }
+/* val clause is_CSR_defined : (csreg) -> bool */
+
+function clause is_CSR_defined (0x001) = extensionEnabled(Ext_F) | extensionEnabled(Ext_Zfinx)
+function clause is_CSR_defined (0x002) = extensionEnabled(Ext_F) | extensionEnabled(Ext_Zfinx)
+function clause is_CSR_defined (0x003) = extensionEnabled(Ext_F) | extensionEnabled(Ext_Zfinx)
+
+function clause read_CSR (0x001) = zero_extend(fcsr[FFLAGS])
+function clause read_CSR (0x002) = zero_extend(fcsr[FRM])
+function clause read_CSR (0x003) = zero_extend(fcsr.bits)
+
+function clause write_CSR (0x001, value) = { write_fcsr(fcsr[FRM], value[4..0]); zero_extend(fcsr[FFLAGS]) }
+function clause write_CSR (0x002, value) = { write_fcsr(value[2..0], fcsr[FFLAGS]); zero_extend(fcsr[FRM]) }
+function clause write_CSR (0x003, value) = { write_fcsr(value[7..5], value[4..0]); zero_extend(fcsr.bits) }
 
 /* **************************************************************** */

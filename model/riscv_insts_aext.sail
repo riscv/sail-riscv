@@ -10,6 +10,9 @@
 /* This file specifies the atomic instructions in the 'A' extension.  */
 
 /* ****************************************************************** */
+enum clause extension = Ext_Zabha
+function clause extensionEnabled(Ext_Zabha) = true
+
 // Some print utils for lr/sc.
 
 function aqrl_str(aq : bool, rl : bool) -> string =
@@ -21,7 +24,7 @@ function aqrl_str(aq : bool, rl : bool) -> string =
   }
 
 function lrsc_width_str(width : word_width) -> string =
-  match (width) {
+  match width {
     BYTE   => ".b",
     HALF   => ".h",
     WORD   => ".w",
@@ -29,35 +32,50 @@ function lrsc_width_str(width : word_width) -> string =
   }
 
 /**
- * RISC-V only appears to define LR / SC / AMOs for word and double, although
- * there seem to be encodings reserved for other widths.
+ * RISC-V A-extension defines LR / SC / AMOs for word and double
+ * RISC-V Zabha extension defines AMOs for byte and halfword
  */
-function amo_width_valid(size : word_width) -> bool = {
-  match(size) {
+function lrsc_width_valid(size : word_width) -> bool = {
+  match size {
     WORD   => true,
-    DOUBLE => sizeof(xlen) >= 64,
+    DOUBLE => xlen >= 64,
     _      => false
   }
 }
 
+function amo_width_valid(size : word_width) -> bool = {
+  match size {
+    BYTE   => extensionEnabled(Ext_Zabha),
+    HALF   => extensionEnabled(Ext_Zabha),
+    WORD   => true,
+    DOUBLE => xlen >= 64,
+  }
+}
+
 /* ****************************************************************** */
+enum clause extension = Ext_Zalrsc
+function clause extensionEnabled(Ext_Zalrsc) = misa[A] == 0b1
+
 union clause ast = LOADRES : (bool, bool, regidx, word_width, regidx)
 
-mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)                                                if haveAtomics() & amo_width_valid(size)
-  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if haveAtomics() & amo_width_valid(size)
-
+mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)                                                if extensionEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
+  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if extensionEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
 
 /* We could set load-reservations on physical or virtual addresses.
- * For now we set them on virtual addresses, since it makes the
- * sequential model of SC a bit simpler, at the cost of an explicit
- * call to load_reservation in LR and cancel_reservation in SC.
+ * However most chips (especially multi-core) will use physical addresses.
+ * Additionally, matching on physical addresses allows as many SC's to
+ * succeed as the spec allows. This simplifies verification against real chips
+ * since you can force spurious failures from a DUT into the Sail model and
+ * then compare the result (a kind of one-way waiver). Using virtual addresses
+ * requires cancelling the reservation in some additional places, e.g. xRET, and
+ * that will break comparison with a DUT that doesn't require cancellation there.
  */
 
 function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
   let width_bytes = size_bytes(width);
 
   // This is checked during decoding.
-  assert(width_bytes <= sizeof(xlen_bytes));
+  assert(width_bytes <= xlen_bytes);
 
   /* Get the address, X(rs1) (no offset).
     * Extensions might perform additional checks on address validity.
@@ -74,7 +92,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
         TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) =>
           match mem_read(Read(Data), addr, width_bytes, aq, aq & rl, true) {
-            MemValue(result) => { load_reservation(vaddr); X(rd) = sign_extend(result); RETIRE_SUCCESS },
+            MemValue(result) => { load_reservation(addr); X(rd) = sign_extend(result); RETIRE_SUCCESS },
             MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
           },
       }
@@ -88,15 +106,15 @@ mapping clause assembly = LOADRES(aq, rl, rs1, size, rd)
 /* ****************************************************************** */
 union clause ast = STORECON : (bool, bool, regidx, regidx, word_width, regidx)
 
-mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)                                      if haveAtomics() & amo_width_valid(size)
-  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if haveAtomics() & amo_width_valid(size)
+mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)                                      if extensionEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
+  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if extensionEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful. This may need revisiting. */
 function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
   let width_bytes = size_bytes(width);
 
   // This is checked during decoding.
-  assert(width_bytes <= sizeof(xlen_bytes));
+  assert(width_bytes <= xlen_bytes);
 
   if speculate_conditional () == false then {
     /* should only happen in rmem
@@ -116,16 +134,17 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
         if not(is_aligned(vaddr, width))
         then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
         else {
-          if match_reservation(vaddr) == false then {
-            /* cannot happen in rmem */
-            X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS
-          } else {
-            match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
-                                                        * both result in a SAMO exception */
-              TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-              TR_Address(addr, _) => {
+          match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
+                                                      * both result in a SAMO exception */
+            TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            TR_Address(addr, _) => {
+              // Check reservation with physical address.
+              if not(match_reservation(addr)) then {
+                /* cannot happen in rmem */
+                X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS
+              } else {
                 let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
-                match (eares) {
+                match eares {
                   MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                   MemValue(_) => {
                     let rs2_val = X(rs2);
@@ -149,6 +168,9 @@ mapping clause assembly = STORECON(aq, rl, rs2, rs1, size, rd)
   <-> "sc." ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ****************************************************************** */
+enum clause extension = Ext_Zaamo
+function clause extensionEnabled(Ext_Zaamo) = misa[A] == 0b1
+
 union clause ast = AMO : (amoop, bool, bool, regidx, regidx, word_width, regidx)
 
 mapping encdec_amoop : amoop <-> bits(5) = {
@@ -163,8 +185,8 @@ mapping encdec_amoop : amoop <-> bits(5) = {
   AMOMAXU <-> 0b11100
 }
 
-mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)                                                if haveAtomics() & amo_width_valid(size)
-  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if haveAtomics() & amo_width_valid(size)
+mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)                                                if extensionEnabled(Ext_Zaamo) & amo_width_valid(size)
+  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if extensionEnabled(Ext_Zaamo) & amo_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
@@ -172,7 +194,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   let 'width_bytes = size_bytes(width);
 
   // This is checked during decoding.
-  assert(width_bytes <= sizeof(xlen_bytes));
+  assert(width_bytes <= xlen_bytes);
 
   /* Get the address, X(rs1) (no offset).
     * Some extensions perform additional checks on address validity.
@@ -187,7 +209,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
         TR_Address(addr, _) => {
           let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
           let rs2_val = X(rs2)[width_bytes * 8 - 1 .. 0];
-          match (eares) {
+          match eares {
             MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
             MemValue(_) => {
               match mem_read(ReadWrite(Data, Data), addr, width_bytes, aq, aq & rl, true) {

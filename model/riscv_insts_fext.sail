@@ -25,6 +25,14 @@
 
 /* **************************************************************** */
 
+// TODO: Add config flags to control Zfh and Zfhmin
+enum clause extension = Ext_Zfh
+function clause extensionEnabled(Ext_Zfh) = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
+
+enum clause extension = Ext_Zfhmin
+// Zfhmin is a subset of Zfh. This can be changed to extensionEnabled(Ext_Zfh) | sys_enable_zfhmin() when more configuration is implemented.
+function clause extensionEnabled(Ext_Zfhmin) = extensionEnabled(Ext_Zfh)
+
 mapping encdec_rounding_mode : rounding_mode <-> bits(3) = {
   RM_RNE <-> 0b000,
   RM_RTZ <-> 0b001,
@@ -259,7 +267,7 @@ function fle_S   (v1,       v2,        is_quiet) = {
 /* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
 
-function haveSingleFPU() -> bool = haveFExt() | haveZfinx()
+function haveSingleFPU() -> bool = extensionEnabled(Ext_F) | extensionEnabled(Ext_Zfinx)
 
 /* ****************************************************************** */
 /* Floating-point loads                                               */
@@ -271,21 +279,21 @@ union clause ast = LOAD_FP : (bits(12), regidx, regidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, HALF)          if haveZfh()
-                    <-> imm @ rs1 @ 0b001 @ rd @ 0b000_0111  if haveZfh()
+mapping clause encdec = LOAD_FP(imm, rs1, rd, HALF)          if extensionEnabled(Ext_Zfhmin)
+                    <-> imm @ rs1 @ 0b001 @ rd @ 0b000_0111  if extensionEnabled(Ext_Zfhmin)
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)          if haveFExt()
-                    <-> imm @ rs1 @ 0b010 @ rd @ 0b000_0111  if haveFExt()
+mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)          if extensionEnabled(Ext_F)
+                    <-> imm @ rs1 @ 0b010 @ rd @ 0b000_0111  if extensionEnabled(Ext_F)
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if haveDExt()
-                    <-> imm @ rs1 @ 0b011 @ rd @ 0b000_0111  if haveDExt()
+mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if extensionEnabled(Ext_D)
+                    <-> imm @ rs1 @ 0b011 @ rd @ 0b000_0111  if extensionEnabled(Ext_D)
 
 /* Execution semantics ================================ */
 
 val process_fload64 : (regidx, xlenbits, MemoryOpResult(bits(64)))
                       -> Retired
 function process_fload64(rd, addr, value) =
-  if   sizeof(flen) == 64
+  if   flen == 64
   then match value {
          MemValue(result) => { F(rd) = result; RETIRE_SUCCESS },
          MemException(e)  => { handle_mem_exception(addr, e); RETIRE_FAIL }
@@ -330,7 +338,7 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
                process_fload16(rd, vaddr, mem_read(Read(Data), addr, 2, aq, rl, res)),
             WORD =>
                process_fload32(rd, vaddr, mem_read(Read(Data), addr, 4, aq, rl, res)),
-            DOUBLE if sizeof(flen) >= 64 =>
+            DOUBLE if flen >= 64 =>
                process_fload64(rd, vaddr, mem_read(Read(Data), addr, 8, aq, rl, res)),
             _ => report_invalid_width(__FILE__, __LINE__, width, "floating point load"),
           }
@@ -357,14 +365,14 @@ union clause ast = STORE_FP : (bits(12), regidx, regidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, HALF)                             if haveZfh()
-                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b001 @ imm5 : bits(5) @ 0b010_0111  if haveZfh()
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, HALF)                             if extensionEnabled(Ext_Zfhmin)
+                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b001 @ imm5 : bits(5) @ 0b010_0111  if extensionEnabled(Ext_Zfhmin)
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)                             if haveFExt()
-                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b010 @ imm5 : bits(5) @ 0b010_0111  if haveFExt()
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)                             if extensionEnabled(Ext_F)
+                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b010 @ imm5 : bits(5) @ 0b010_0111  if extensionEnabled(Ext_F)
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)                           if haveDExt()
-                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b011 @ imm5 : bits(5) @ 0b010_0111  if haveDExt()
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)                           if extensionEnabled(Ext_D)
+                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b011 @ imm5 : bits(5) @ 0b010_0111  if extensionEnabled(Ext_D)
 
 /* Execution semantics ================================ */
 
@@ -403,7 +411,7 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
                 BYTE => { handle_illegal(); RETIRE_FAIL },
                 HALF => process_fstore (vaddr, mem_write_value(addr, 2, rs2_val[15..0], aq, rl, con)),
                 WORD => process_fstore (vaddr, mem_write_value(addr, 4, rs2_val[31..0], aq, rl, con)),
-                DOUBLE if sizeof(flen) >= 64 =>
+                DOUBLE if flen >= 64 =>
                   process_fstore (vaddr, mem_write_value(addr, 8, rs2_val, aq, rl, con)),
                 _ => report_invalid_width(__FILE__, __LINE__, width, "floating point store"),
               };
@@ -583,20 +591,20 @@ mapping clause encdec =
 /* F instructions, RV64 only */
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)                                     if haveSingleFPU() & sizeof(xlen) >= 64
-<-> 0b110_0000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)                                     if haveSingleFPU() & xlen >= 64
+<-> 0b110_0000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)                                    if haveSingleFPU() & sizeof(xlen) >= 64
-<-> 0b110_0000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)                                    if haveSingleFPU() & xlen >= 64
+<-> 0b110_0000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)                                     if haveSingleFPU() & sizeof(xlen) >= 64
-<-> 0b110_1000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)                                     if haveSingleFPU() & xlen >= 64
+<-> 0b110_1000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)                                    if haveSingleFPU() & sizeof(xlen) >= 64
-<-> 0b110_1000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & sizeof(xlen) >= 64
+    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)                                    if haveSingleFPU() & xlen >= 64
+<-> 0b110_1000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & xlen >= 64
 
 /* Execution semantics ================================ */
 
@@ -676,7 +684,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -692,7 +700,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -708,7 +716,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_L = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -724,7 +732,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
 }
 
 function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
-  assert(sizeof(xlen) >= 64);
+  assert(xlen >= 64);
   let rs1_val_LU = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -1024,11 +1032,11 @@ union clause ast = F_UN_TYPE_S : (regidx, regidx, f_un_op_S)
 mapping clause encdec = F_UN_TYPE_S(rs1, rd, FCLASS_S)                        if haveSingleFPU()
                     <-> 0b111_0000 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveSingleFPU()
 
-mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_X_W)                         if haveFExt()
-                    <-> 0b111_0000 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveFExt()
+mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_X_W)                         if extensionEnabled(Ext_F)
+                    <-> 0b111_0000 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_F)
 
-mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_W_X)                         if haveFExt()
-                    <-> 0b111_1000 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveFExt()
+mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_W_X)                         if extensionEnabled(Ext_F)
+                    <-> 0b111_1000 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_F)
 
 /* Execution semantics ================================ */
 

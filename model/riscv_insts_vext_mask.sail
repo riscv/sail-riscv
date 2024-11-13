@@ -25,26 +25,25 @@ mapping encdec_mmfunct6 : mmfunct6 <-> bits(6) = {
   MM_VMXNOR    <-> 0b011111
 }
 
-mapping clause encdec = MMTYPE(funct6, vs2, vs1, vd) if haveVExt()
-  <-> encdec_mmfunct6(funct6) @ 0b1 @ vs2 @ vs1 @ 0b010 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = MMTYPE(funct6, vs2, vs1, vd) if extensionEnabled(Ext_V)
+  <-> encdec_mmfunct6(funct6) @ 0b1 @ vs2 @ vs1 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = unsigned(vlenb) * 8;
+  let num_elem = VLEN;
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vs1_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs1);
-  let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
-  let vd_val  : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool) = undefined;
-  mask        : vector('n, dec, bool) = undefined;
+  let vs1_val : vector('n, bool) = read_vmask(num_elem, 0b0, vs1);
+  let vs2_val : vector('n, bool) = read_vmask(num_elem, 0b0, vs2);
+  let vd_val  : vector('n, bool) = read_vmask(num_elem, 0b0, vd);
 
-  (result, mask) = init_masked_result_carry(num_elem, SEW, 0, vd_val);
+  let (initial_result, mask) = init_masked_result_carry(num_elem, SEW, 0, vd_val);
+  var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
@@ -83,32 +82,30 @@ mapping clause assembly = MMTYPE(funct6, vs2, vs1, vd)
 /* ************************* OPMVV (vpopc in VWXUNARY0) ************************** */
 union clause ast = VCPOP_M : (bits(1), regidx, regidx)
 
-mapping clause encdec = VCPOP_M(vm, vs2, rd) if haveVExt()
-  <-> 0b010000 @ vm @ vs2 @ 0b10000 @ 0b010 @ rd @ 0b1010111 if haveVExt()
+mapping clause encdec = VCPOP_M(vm, vs2, rd) if extensionEnabled(Ext_V)
+  <-> 0b010000 @ vm @ vs2 @ 0b10000 @ 0b010 @ rd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VCPOP_M(vm, vs2, rd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = unsigned(vlenb) * 8;
+  let num_elem = VLEN;
 
   if illegal_vd_unmasked() | not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
-  let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
-  result      : vector('n, dec, bool) = undefined;
-  mask        : vector('n, dec, bool) = undefined;
+  let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
+  let vs2_val : vector('n, bool) = read_vmask(num_elem, 0b0, vs2);
 
-  (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
+  let (_, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
 
-  count : nat = 0;
+  var count : nat = 0;
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] & vs2_val[i] then count = count + 1;
   };
 
-  X(rd) = to_bits(sizeof(xlen), count);
+  X(rd) = to_bits(xlen, count);
   vstart = zeros();
   RETIRE_SUCCESS
 }
@@ -119,34 +116,32 @@ mapping clause assembly = VCPOP_M(vm, vs2, rd)
 /* ************************* OPMVV (vfirst in VWXUNARY0) ************************* */
 union clause ast = VFIRST_M : (bits(1), regidx, regidx)
 
-mapping clause encdec = VFIRST_M(vm, vs2, rd) if haveVExt()
-  <-> 0b010000 @ vm @ vs2 @ 0b10001 @ 0b010 @ rd @ 0b1010111 if haveVExt()
+mapping clause encdec = VFIRST_M(vm, vs2, rd) if extensionEnabled(Ext_V)
+  <-> 0b010000 @ vm @ vs2 @ 0b10001 @ 0b010 @ rd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VFIRST_M(vm, vs2, rd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = unsigned(vlenb) * 8;
+  let num_elem = VLEN;
 
   if illegal_vd_unmasked() | not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
-  let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
-  result      : vector('n, dec, bool) = undefined;
-  mask        : vector('n, dec, bool) = undefined;
+  let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
+  let vs2_val : vector('n, bool) = read_vmask(num_elem, 0b0, vs2);
 
-  (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
+  let (_, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
 
-  index : int = -1;
+  var index : int = -1;
   foreach (i from 0 to (num_elem - 1)) {
     if index == -1 then {
       if mask[i] & vs2_val[i] then index = i;
     };
   };
 
-  X(rd) = to_bits(sizeof(xlen), index);
+  X(rd) = to_bits(xlen, index);
   vstart = zeros();
   RETIRE_SUCCESS
 }
@@ -157,13 +152,13 @@ mapping clause assembly = VFIRST_M(vm, vs2, rd)
 /* ************************** OPMVV (vmsbf in VMUNARY0) ************************** */
 union clause ast = VMSBF_M : (bits(1), regidx, regidx)
 
-mapping clause encdec = VMSBF_M(vm, vs2, vd) if haveVExt()
-  <-> 0b010100 @ vm @ vs2 @ 0b00001 @ 0b010 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = VMSBF_M(vm, vs2, vd) if extensionEnabled(Ext_V)
+  <-> 0b010100 @ vm @ vs2 @ 0b00001 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VMSBF_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = unsigned(vlenb) * 8;
+  let num_elem = VLEN;
 
   if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
   then { handle_illegal(); return RETIRE_FAIL };
@@ -171,15 +166,14 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
-  let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
-  let vd_val  : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool) = undefined;
-  mask        : vector('n, dec, bool) = undefined;
+  let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
+  let vs2_val : vector('n, bool) = read_vmask(num_elem, 0b0, vs2);
+  let vd_val  : vector('n, bool) = read_vmask(num_elem, 0b0, vd);
 
-  (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
+  let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
+  var result = initial_result;
 
-  found_elem : bool = false;
+  var found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
       if vs2_val[i] then found_elem = true;
@@ -198,13 +192,13 @@ mapping clause assembly = VMSBF_M(vm, vs2, vd)
 /* ************************** OPMVV (vmsif in VMUNARY0) ************************** */
 union clause ast = VMSIF_M : (bits(1), regidx, regidx)
 
-mapping clause encdec = VMSIF_M(vm, vs2, vd) if haveVExt()
-  <-> 0b010100 @ vm @ vs2 @ 0b00011 @ 0b010 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = VMSIF_M(vm, vs2, vd) if extensionEnabled(Ext_V)
+  <-> 0b010100 @ vm @ vs2 @ 0b00011 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VMSIF_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = unsigned(vlenb) * 8;
+  let num_elem = VLEN;
 
   if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
   then { handle_illegal(); return RETIRE_FAIL };
@@ -212,15 +206,14 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
-  let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
-  let vd_val  : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool) = undefined;
-  mask        : vector('n, dec, bool) = undefined;
+  let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
+  let vs2_val : vector('n, bool) = read_vmask(num_elem, 0b0, vs2);
+  let vd_val  : vector('n, bool) = read_vmask(num_elem, 0b0, vd);
 
-  (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
+  let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
+  var result = initial_result;
 
-  found_elem : bool = false;
+  var found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
       result[i] = if found_elem then false else true;
@@ -239,13 +232,13 @@ mapping clause assembly = VMSIF_M(vm, vs2, vd)
 /* ************************** OPMVV (vmsof in VMUNARY0) ************************** */
 union clause ast = VMSOF_M : (bits(1), regidx, regidx)
 
-mapping clause encdec = VMSOF_M(vm, vs2, vd) if haveVExt()
-  <-> 0b010100 @ vm @ vs2 @ 0b00010 @ 0b010 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = VMSOF_M(vm, vs2, vd) if extensionEnabled(Ext_V)
+  <-> 0b010100 @ vm @ vs2 @ 0b00010 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VMSOF_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = unsigned(vlenb) * 8;
+  let num_elem = VLEN;
 
   if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
   then { handle_illegal(); return RETIRE_FAIL };
@@ -253,15 +246,14 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool) = read_vmask(num_elem, vm, 0b00000);
-  let vs2_val : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vs2);
-  let vd_val  : vector('n, dec, bool) = read_vmask(num_elem, 0b0, vd);
-  result      : vector('n, dec, bool) = undefined;
-  mask        : vector('n, dec, bool) = undefined;
+  let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
+  let vs2_val : vector('n, bool) = read_vmask(num_elem, 0b0, vs2);
+  let vd_val  : vector('n, bool) = read_vmask(num_elem, 0b0, vd);
 
-  (result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
+  let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
+  var result = initial_result;
 
-  found_elem : bool = false;
+  var found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
       if vs2_val[i] & not(found_elem) then {
@@ -284,8 +276,8 @@ mapping clause assembly = VMSOF_M(vm, vs2, vd)
 /* ************************** OPMVV (viota in VMUNARY0) ************************** */
 union clause ast = VIOTA_M : (bits(1), regidx, regidx)
 
-mapping clause encdec = VIOTA_M(vm, vs2, vd) if haveVExt()
-  <-> 0b010100 @ vm @ vs2 @ 0b10000 @ 0b010 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = VIOTA_M(vm, vs2, vd) if extensionEnabled(Ext_V)
+  <-> 0b010100 @ vm @ vs2 @ 0b10000 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VIOTA_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
@@ -298,15 +290,14 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let vs2_val : vector('n, dec, bool)     = read_vmask(num_elem, 0b0, vs2);
-  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  result      : vector('n, dec, bits('m)) = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vs2_val : vector('n, bool)     = read_vmask(num_elem, 0b0, vs2);
+  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  var result = initial_result;
 
-  sum : int = 0;
+  var sum : int = 0;
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then {
       result[i] = to_bits(SEW, sum);
@@ -325,8 +316,8 @@ mapping clause assembly = VIOTA_M(vm, vs2, vd)
 /* *************************** OPMVV (vid in VMUNARY0) *************************** */
 union clause ast = VID_V : (bits(1), regidx)
 
-mapping clause encdec = VID_V(vm, vd) if haveVExt()
-  <-> 0b010100 @ vm @ 0b00000 @ 0b10001 @ 0b010 @ vd @ 0b1010111 if haveVExt()
+mapping clause encdec = VID_V(vm, vd) if extensionEnabled(Ext_V)
+  <-> 0b010100 @ vm @ 0b00000 @ 0b10001 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VID_V(vm, vd)) = {
   let SEW      = get_sew();
@@ -338,12 +329,11 @@ function clause execute(VID_V(vm, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, dec, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  result      : vector('n, dec, bits('m)) = undefined;
-  mask        : vector('n, dec, bool)     = undefined;
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  (result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] then result[i] = to_bits(SEW, i)

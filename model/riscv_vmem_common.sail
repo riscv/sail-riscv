@@ -101,14 +101,3 @@ let sv57_params : SV_Params = struct {
        pte_PPN_j_size_bits = 9
 }
 */
-
-// This 'undefined_SV_Params()' function is not used anywhere, but is
-// currently (2023-12) needed to work around an issue where Sail tries
-// to figure out how it could do
-//     let x : SV_Params = undefined
-// even though the code never does this.  This has been fixed in Sail.
-// The fix will become available in a new Sail release, at which point
-// this function can be deleted (TODO).
-// PRIVATE
-val      undefined_SV_Params : unit -> SV_Params
-function undefined_SV_Params() = sv32_params
