@@ -161,7 +161,7 @@ function f_is_NaN(xf) = {
 }
 
 /* Scalar register shaping for floating point operations */
-val get_scalar_fp : forall 'n, 'n in {16, 32, 64}. (regidx, int('n)) -> bits('n)
+val get_scalar_fp : forall 'n, 'n in {16, 32, 64}. (fregidx, int('n)) -> bits('n)
 function get_scalar_fp(rs1, SEW) = {
   assert(flen >= SEW, "invalid vector floating-point type width: FLEN < SEW");
   match SEW {
