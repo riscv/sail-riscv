@@ -806,10 +806,10 @@ mapping clause assembly = VFUNARY1(vm, vs2, vfunary1, vd)
   <-> vfunary1_mnemonic(vfunary1) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ****************************** OPFVV (VWFUNARY0) ****************************** */
-union clause ast = VFMVFS : (vregidx, regidx)
+union clause ast = VFMVFS : (vregidx, fregidx)
 
-mapping clause encdec = VFMVFS(vs2, rd)                                                if extensionEnabled(Ext_V)
-  <-> 0b010000 @ 0b1 @ encdec_vreg(vs2) @ 0b00000 @ 0b001 @ encdec_reg(rd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VFMVFS(vs2, rd)                                                 if extensionEnabled(Ext_V)
+  <-> 0b010000 @ 0b1 @ encdec_vreg(vs2) @ 0b00000 @ 0b001 @ encdec_freg(rd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VFMVFS(vs2, rd)) = {
   let rm_3b    = fcsr[FRM];
@@ -838,7 +838,7 @@ mapping clause assembly = VFMVFS(vs2, rd)
   <-> "vfmv.f.s" ^ spc() ^ freg_name(rd) ^ sep() ^ vreg_name(vs2)
 
 /* ******************************* OPFVF (VFtype) ******************************** */
-union clause ast = FVFTYPE : (fvffunct6, bits(1), vregidx, regidx, vregidx)
+union clause ast = FVFTYPE : (fvffunct6, bits(1), vregidx, fregidx, vregidx)
 
 mapping encdec_fvffunct6 : fvffunct6 <-> bits(6) = {
   VF_VADD          <-> 0b000000,
@@ -856,8 +856,8 @@ mapping encdec_fvffunct6 : fvffunct6 <-> bits(6) = {
   VF_VRSUB         <-> 0b100111
 }
 
-mapping clause encdec = FVFTYPE(funct6, vm, vs2, rs1, vd)                                                      if extensionEnabled(Ext_V)
-  <-> encdec_fvffunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = FVFTYPE(funct6, vm, vs2, rs1, vd)                                                       if extensionEnabled(Ext_V)
+  <-> encdec_fvffunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -928,11 +928,11 @@ mapping fvftype_mnemonic : fvffunct6 <-> string = {
 }
 
 mapping clause assembly = FVFTYPE(funct6, vm, vs2, rs1, vd)
-  <-> fvftype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
+  <-> fvftype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ freg_name(rs1) ^ maybe_vmask(vm)
 
 /* ************************* OPFVF (VFtype Multiply-Add) ************************* */
 /* Multiply-Add instructions switch the order of source operands in assembly (vs1/rs1 before vs2) */
-union clause ast = FVFMATYPE : (fvfmafunct6, bits(1), vregidx, regidx, vregidx)
+union clause ast = FVFMATYPE : (fvfmafunct6, bits(1), vregidx, fregidx, vregidx)
 
 mapping encdec_fvfmafunct6 : fvfmafunct6 <-> bits(6) = {
   VF_VMADD      <-> 0b101000,
@@ -945,8 +945,8 @@ mapping encdec_fvfmafunct6 : fvfmafunct6 <-> bits(6) = {
   VF_VNMSAC     <-> 0b101111
 }
 
-mapping clause encdec = FVFMATYPE(funct6, vm, vs2, rs1, vd)                                                      if extensionEnabled(Ext_V)
-  <-> encdec_fvfmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = FVFMATYPE(funct6, vm, vs2, rs1, vd)                                                       if extensionEnabled(Ext_V)
+  <-> encdec_fvfmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FVFMATYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1000,10 +1000,10 @@ mapping fvfmatype_mnemonic : fvfmafunct6 <-> string = {
 }
 
 mapping clause assembly = FVFMATYPE(funct6, vm, vs2, rs1, vd)
-  <-> fvfmatype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
+  <-> fvfmatype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ freg_name(rs1) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* *************************** OPFVF (VFTYPE Widening) *************************** */
-union clause ast = FWVFTYPE : (fwvffunct6, bits(1), vregidx, regidx, vregidx)
+union clause ast = FWVFTYPE : (fwvffunct6, bits(1), vregidx, fregidx, vregidx)
 
 mapping encdec_fwvffunct6 : fwvffunct6 <-> bits(6) = {
   FWVF_VADD       <-> 0b110000,
@@ -1011,8 +1011,8 @@ mapping encdec_fwvffunct6 : fwvffunct6 <-> bits(6) = {
   FWVF_VMUL       <-> 0b111000
 }
 
-mapping clause encdec = FWVFTYPE(funct6, vm, vs2, rs1, vd)                                                      if extensionEnabled(Ext_V)
-  <-> encdec_fwvffunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = FWVFTYPE(funct6, vm, vs2, rs1, vd)                                                       if extensionEnabled(Ext_V)
+  <-> encdec_fwvffunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FWVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1061,11 +1061,11 @@ mapping fwvftype_mnemonic : fwvffunct6 <-> string = {
 }
 
 mapping clause assembly = FWVFTYPE(funct6, vm, vs2, rs1, vd)
-  <-> fwvftype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
+  <-> fwvftype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ freg_name(rs1) ^ maybe_vmask(vm)
 
 /* ******************** OPFVF (VFtype Widening Multiply-Add) ********************* */
 /* Multiply-Add instructions switch the order of source operands in assembly (vs1/rs1 before vs2) */
-union clause ast = FWVFMATYPE : (fwvfmafunct6, bits(1), regidx, vregidx, vregidx)
+union clause ast = FWVFMATYPE : (fwvfmafunct6, bits(1), fregidx, vregidx, vregidx)
 
 mapping encdec_fwvfmafunct6 : fwvfmafunct6 <-> bits(6) = {
   FWVF_VMACC      <-> 0b111100,
@@ -1074,8 +1074,8 @@ mapping encdec_fwvfmafunct6 : fwvfmafunct6 <-> bits(6) = {
   FWVF_VNMSAC     <-> 0b111111
 }
 
-mapping clause encdec = FWVFMATYPE(funct6, vm, rs1, vs2, vd)                                                      if extensionEnabled(Ext_V)
-  <-> encdec_fwvfmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = FWVFMATYPE(funct6, vm, rs1, vs2, vd)                                                       if extensionEnabled(Ext_V)
+  <-> encdec_fwvfmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FWVFMATYPE(funct6, vm, rs1, vs2, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1126,18 +1126,18 @@ mapping fwvfmatype_mnemonic : fwvfmafunct6 <-> string = {
 }
 
 mapping clause assembly = FWVFMATYPE(funct6, vm, rs1, vs2, vd)
-  <-> fwvfmatype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
+  <-> fwvfmatype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ freg_name(rs1) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* *************************** OPFVF (WFTYPE Widening) *************************** */
-union clause ast = FWFTYPE : (fwffunct6, bits(1), vregidx, regidx, vregidx)
+union clause ast = FWFTYPE : (fwffunct6, bits(1), vregidx, fregidx, vregidx)
 
 mapping encdec_fwffunct6 : fwffunct6 <-> bits(6) = {
   FWF_VADD       <-> 0b110100,
   FWF_VSUB       <-> 0b110110
 }
 
-mapping clause encdec = FWFTYPE(funct6, vm, vs2, rs1, vd)                                                      if extensionEnabled(Ext_V)
-  <-> encdec_fwffunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = FWFTYPE(funct6, vm, vs2, rs1, vd)                                                       if extensionEnabled(Ext_V)
+  <-> encdec_fwffunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FWFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1183,14 +1183,14 @@ mapping fwftype_mnemonic : fwffunct6 <-> string = {
 }
 
 mapping clause assembly = FWFTYPE(funct6, vm, vs2, rs1, vd)
-  <-> fwftype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
+  <-> fwftype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ freg_name(rs1) ^ maybe_vmask(vm)
 
 /* ************************** OPFVF (Merge Instruction) ************************** */
 /* This instruction operates on all body elements regardless of mask value */
-union clause ast = VFMERGE : (vregidx, regidx, vregidx)
+union clause ast = VFMERGE : (vregidx, fregidx, vregidx)
 
-mapping clause encdec = VFMERGE(vs2, rs1, vd)                                                   if extensionEnabled(Ext_V)
-  <-> 0b010111 @ 0b0 @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VFMERGE(vs2, rs1, vd)                                                    if extensionEnabled(Ext_V)
+  <-> 0b010111 @ 0b0 @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VFMERGE(vs2, rs1, vd)) = {
   let rm_3b         = fcsr[FRM];
@@ -1234,14 +1234,14 @@ function clause execute(VFMERGE(vs2, rs1, vd)) = {
 }
 
 mapping clause assembly = VFMERGE(vs2, rs1, vd)
-  <-> "vfmerge.vfm" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ sep() ^ "v0"
+  <-> "vfmerge.vfm" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ freg_name(rs1) ^ sep() ^ "v0"
 
 /* ************************** OPFVF (Move Instruction) *************************** */
 /* This instruction shares the encoding with vfmerge.vfm, but with vm=1 and vs2=v0 */
-union clause ast = VFMV : (regidx, vregidx)
+union clause ast = VFMV : (fregidx, vregidx)
 
-mapping clause encdec = VFMV(rs1, vd)                                                  if extensionEnabled(Ext_V)
-  <-> 0b010111 @ 0b1 @ 0b00000 @ encdec_reg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VFMV(rs1, vd)                                                   if extensionEnabled(Ext_V)
+  <-> 0b010111 @ 0b1 @ 0b00000 @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VFMV(rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1272,13 +1272,13 @@ function clause execute(VFMV(rs1, vd)) = {
 }
 
 mapping clause assembly = VFMV(rs1, vd)
-  <-> "vfmv.v.f" ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1)
+  <-> "vfmv.v.f" ^ spc() ^ vreg_name(vd) ^ sep() ^ freg_name(rs1)
 
 /* ****************************** OPFVF (VRFUNARY0) ****************************** */
-union clause ast = VFMVSF : (regidx, vregidx)
+union clause ast = VFMVSF : (fregidx, vregidx)
 
-mapping clause encdec = VFMVSF(rs1, vd)                                                if extensionEnabled(Ext_V)
-  <-> 0b010000 @ 0b1 @ 0b00000 @ encdec_reg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VFMVSF(rs1, vd)                                                 if extensionEnabled(Ext_V)
+  <-> 0b010000 @ 0b1 @ 0b00000 @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VFMVSF(rs1, vd)) = {
   let rm_3b    = fcsr[FRM];

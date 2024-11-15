@@ -74,7 +74,7 @@ mapping clause assembly = FVVMTYPE(funct6, vm, vs2, vs1, vd)
 
 /* ******************************* OPFVF (VFMTYPE) ******************************* */
 /* VFM instructions' destination is a mask register */
-union clause ast = FVFMTYPE : (fvfmfunct6, bits(1), vregidx, regidx, vregidx)
+union clause ast = FVFMTYPE : (fvfmfunct6, bits(1), vregidx, fregidx, vregidx)
 
 mapping encdec_fvfmfunct6 : fvfmfunct6 <-> bits(6) = {
   VFM_VMFEQ      <-> 0b011000,
@@ -85,8 +85,8 @@ mapping encdec_fvfmfunct6 : fvfmfunct6 <-> bits(6) = {
   VFM_VMFGE      <-> 0b011111
 }
 
-mapping clause encdec = FVFMTYPE(funct6, vm, vs2, rs1, vd)                                                      if extensionEnabled(Ext_V)
-  <-> encdec_fvfmfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = FVFMTYPE(funct6, vm, vs2, rs1, vd)                                                       if extensionEnabled(Ext_V)
+  <-> encdec_fvfmfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -137,4 +137,4 @@ mapping fvfmtype_mnemonic : fvfmfunct6 <-> string = {
 }
 
 mapping clause assembly = FVFMTYPE(funct6, vm, vs2, rs1, vd)
-  <-> fvfmtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
+  <-> fvfmtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ freg_name(rs1) ^ maybe_vmask(vm)
