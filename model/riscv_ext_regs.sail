@@ -20,7 +20,7 @@ to omnipotent instead of null).
  */
 val ext_rvfi_init : unit -> unit
 function ext_rvfi_init () = {
-  x1 = x1 // to avoid hook being optimized out
+  wX(regno(1), rX(regno(1))) // to avoid hook being optimized out
 }
 
 

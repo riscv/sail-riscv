@@ -15,6 +15,8 @@ else
   $(error '$(ARCH)' is not a valid architecture, must be one of: RV32, RV64)
 endif
 
+ARCH_IE ?= i
+
 SAIL_XLEN += riscv_xlen.sail
 SAIL_FLEN := riscv_flen_D.sail
 SAIL_FLEN += riscv_flen.sail
@@ -100,17 +102,21 @@ SAIL_VM_SRCS += riscv_vmem.sail
 PRELUDE = prelude.sail riscv_errors.sail $(SAIL_XLEN) $(SAIL_FLEN) $(SAIL_VLEN) prelude_mem_addrtype.sail prelude_mem_metadata.sail prelude_mem.sail
 
 SAIL_REGS_SRCS =  riscv_csr_begin.sail       # Start of CSR scattered definitions.
-SAIL_REGS_SRCS += riscv_reg_type.sail riscv_freg_type.sail riscv_regs.sail riscv_pc_access.sail riscv_sys_regs.sail
+SAIL_REGS_SRCS += riscv_reg_type.sail riscv_freg_type.sail riscv_regs.sail
+SAIL_REGS_SRCS += riscv_regs_$(ARCH_IE).sail
+SAIL_REGS_SRCS += riscv_pc_access.sail riscv_sys_regs.sail
 SAIL_REGS_SRCS += riscv_pmp_regs.sail riscv_pmp_control.sail
 SAIL_REGS_SRCS += riscv_ext_regs.sail $(SAIL_CHECK_SRCS)
 SAIL_REGS_SRCS += riscv_vreg_type.sail riscv_vext_regs.sail
 
-SAIL_ARCH_SRCS = $(PRELUDE)
-SAIL_ARCH_SRCS += riscv_types_common.sail riscv_types_ext.sail riscv_types.sail
+SAIL_ARCH_SRCS = riscv_types_common.sail riscv_types_ext.sail
+SAIL_ARCH_SRCS += riscv_types_$(ARCH_IE).sail
+SAIL_ARCH_SRCS += riscv_types.sail
 SAIL_ARCH_SRCS += riscv_vmem_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail
 SAIL_ARCH_SRCS += riscv_mem.sail $(SAIL_VM_SRCS)
-SAIL_ARCH_RVFI_SRCS = $(PRELUDE) rvfi_dii.sail riscv_types_common.sail riscv_types_ext.sail riscv_types.sail riscv_vmem_types.sail $(SAIL_REGS_SRCS) $(SAIL_SYS_SRCS) riscv_platform.sail riscv_mem.sail $(SAIL_VM_SRCS) riscv_types_kext.sail
 SAIL_ARCH_SRCS += riscv_types_kext.sail    # Shared/common code for the cryptography extension.
+
+SAIL_ARCH_RVFI_SRCS = rvfi_dii.sail $(SAIL_ARCH_SRCS)
 
 SAIL_STEP_SRCS = riscv_step_common.sail riscv_step_ext.sail riscv_decode_ext.sail riscv_fetch.sail riscv_step.sail
 RVFI_STEP_SRCS = riscv_step_common.sail riscv_step_rvfi.sail riscv_decode_ext.sail riscv_fetch_rvfi.sail riscv_step.sail
@@ -123,10 +129,10 @@ SAIL_OTHER_COQ_SRCS = riscv_termination_common.sail riscv_termination_rv64.sail
 endif
 
 PRELUDE_SRCS   = $(addprefix model/,$(PRELUDE))
-SAIL_SRCS      = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS)  $(SAIL_OTHER_SRCS))
-SAIL_RMEM_SRCS = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_RMEM_INST_SRCS) $(SAIL_OTHER_SRCS))
-SAIL_RVFI_SRCS = $(addprefix model/,$(SAIL_ARCH_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS) $(RVFI_STEP_SRCS))
-SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS) $(SAIL_OTHER_COQ_SRCS))
+SAIL_SRCS      = $(addprefix model/,$(PRELUDE) $(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS)  $(SAIL_OTHER_SRCS))
+SAIL_RMEM_SRCS = $(addprefix model/,$(PRELUDE) $(SAIL_ARCH_SRCS) $(SAIL_RMEM_INST_SRCS) $(SAIL_OTHER_SRCS))
+SAIL_RVFI_SRCS = $(addprefix model/,$(PRELUDE) $(SAIL_ARCH_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS) $(RVFI_STEP_SRCS))
+SAIL_COQ_SRCS  = $(addprefix model/,$(PRELUDE) $(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS) $(SAIL_OTHER_COQ_SRCS))
 
 SAIL_FLAGS += --require-version 0.18
 SAIL_FLAGS += --strict-var
