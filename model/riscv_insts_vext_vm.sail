@@ -23,7 +23,7 @@ mapping encdec_vvmfunct6 : vvmfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = VVMTYPE(funct6, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vvmfunct6(funct6) @ 0b0 @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vvmfunct6(funct6) @ 0b0 @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b000 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VVMTYPE(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -35,7 +35,7 @@ function clause execute(VVMTYPE(funct6, vs2, vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask_carry(num_elem, 0b0, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask_carry(num_elem, 0b0, zreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, vd);
@@ -78,7 +78,7 @@ mapping encdec_vvmcfunct6 : vvmcfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = VVMCTYPE(funct6, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vvmcfunct6(funct6) @ 0b1 @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vvmcfunct6(funct6) @ 0b1 @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b000 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VVMCTYPE(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -132,7 +132,7 @@ mapping encdec_vvmsfunct6 : vvmsfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = VVMSTYPE(funct6, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vvmsfunct6(funct6) @ 0b0 @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vvmsfunct6(funct6) @ 0b0 @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b000 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -150,7 +150,7 @@ function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
     vec_trues[i] = true
   };
 
-  let vm_val  : vector('n, bool)     = read_vmask_carry(num_elem, 0b0, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask_carry(num_elem, 0b0, zreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -194,7 +194,7 @@ mapping encdec_vvcmpfunct6 : vvcmpfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = VVCMPTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vvcmpfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vvcmpfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b000 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VVCMPTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -206,7 +206,7 @@ function clause execute(VVCMPTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, vd);
@@ -257,7 +257,7 @@ mapping encdec_vxmfunct6 : vxmfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = VXMTYPE(funct6, vs2, rs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vxmfunct6(funct6) @ 0b0 @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vxmfunct6(funct6) @ 0b0 @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VXMTYPE(funct6, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -269,8 +269,8 @@ function clause execute(VXMTYPE(funct6, vs2, rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask_carry(num_elem, 0b0, 0b00000);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let vm_val  : vector('n, bool)     = read_vmask_carry(num_elem, 0b0, zreg);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, vd);
 
@@ -312,7 +312,7 @@ mapping encdec_vxmcfunct6 : vxmcfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = VXMCTYPE(funct6, vs2, rs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vxmcfunct6(funct6) @ 0b1 @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vxmcfunct6(funct6) @ 0b1 @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VXMCTYPE(funct6, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -324,7 +324,7 @@ function clause execute(VXMCTYPE(funct6, vs2, rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, vd);
 
@@ -366,7 +366,7 @@ mapping encdec_vxmsfunct6 : vxmsfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = VXMSTYPE(funct6, vs2, rs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vxmsfunct6(funct6) @ 0b0 @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vxmsfunct6(funct6) @ 0b0 @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -384,8 +384,8 @@ function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
     vec_trues[i] = true
   };
 
-  let vm_val  : vector('n, bool)     = read_vmask_carry(num_elem, 0b0, 0b00000);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let vm_val  : vector('n, bool)     = read_vmask_carry(num_elem, 0b0, zreg);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
@@ -430,7 +430,7 @@ mapping encdec_vxcmpfunct6 : vxcmpfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = VXCMPTYPE(funct6, vm, vs2, rs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vxcmpfunct6(funct6) @ vm @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vxcmpfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VXCMPTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -442,8 +442,8 @@ function clause execute(VXCMPTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, vd);
 
@@ -489,14 +489,14 @@ mapping clause assembly = VXCMPTYPE(funct6, vm, vs2, rs1, vd)
 /* VIM instructions' destination is a mask register (e.g. carry out) */
 /* Instructions with no carry out will set mask result to current mask value */
 /* May or may not read from source mask register (e.g. carry in) */
-union clause ast = VIMTYPE : (vimfunct6, regidx, regidx, regidx)
+union clause ast = VIMTYPE : (vimfunct6, regidx, bits(5), regidx)
 
 mapping encdec_vimfunct6 : vimfunct6 <-> bits(6) = {
   VIM_VMADC    <-> 0b010001 /* carry in, carry out */
 }
 
 mapping clause encdec = VIMTYPE(funct6, vs2, simm, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vimfunct6(funct6) @ 0b0 @ vs2 @ simm @ 0b011 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vimfunct6(funct6) @ 0b0 @ encdec_reg(vs2) @ simm @ 0b011 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VIMTYPE(funct6, vs2, simm, vd)) = {
   let SEW      = get_sew();
@@ -508,8 +508,8 @@ function clause execute(VIMTYPE(funct6, vs2, simm, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask_carry(num_elem, 0b0, 0b00000);
-  let imm_val : bits('m)                  = sign_extend(simm);
+  let vm_val  : vector('n, bool)     = read_vmask_carry(num_elem, 0b0, zreg);
+  let imm_val : bits('m)             = sign_extend(simm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, vd);
 
@@ -541,14 +541,14 @@ mapping clause assembly = VIMTYPE(funct6, vs2, simm, vd)
 /* VIMC instructions' destination is a mask register (e.g. carry out) */
 /* Instructions with no carry out will set mask result to current mask value */
 /* May or may not read from source mask register (e.g. carry in) */
-union clause ast = VIMCTYPE : (vimcfunct6, regidx, regidx, regidx)
+union clause ast = VIMCTYPE : (vimcfunct6, regidx, bits(5), regidx)
 
 mapping encdec_vimcfunct6 : vimcfunct6 <-> bits(6) = {
   VIMC_VMADC    <-> 0b010001 /* carry in, carry out */
 }
 
 mapping clause encdec = VIMCTYPE(funct6, vs2, simm, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vimcfunct6(funct6) @ 0b1 @ vs2 @ simm @ 0b011 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vimcfunct6(funct6) @ 0b1 @ encdec_reg(vs2) @ simm @ 0b011 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VIMCTYPE(funct6, vs2, simm, vd)) = {
   let SEW      = get_sew();
@@ -560,7 +560,7 @@ function clause execute(VIMCTYPE(funct6, vs2, simm, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let imm_val : bits('m)                  = sign_extend(simm);
+  let imm_val : bits('m)             = sign_extend(simm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, vd);
 
@@ -592,14 +592,14 @@ mapping clause assembly = VIMCTYPE(funct6, vs2, simm, vd)
 /* VIMS instructions' destination is a vector register (e.g. actual sum) */
 /* Instructions with no carry out will set mask result to current mask value */
 /* May or may not read from source mask register (e.g. carry in) */
-union clause ast = VIMSTYPE : (vimsfunct6, regidx, regidx, regidx)
+union clause ast = VIMSTYPE : (vimsfunct6, regidx, bits(5), regidx)
 
 mapping encdec_vimsfunct6 : vimsfunct6 <-> bits(6) = {
   VIMS_VADC     <-> 0b010000 /* Carry in, no carry out */
 }
 
 mapping clause encdec = VIMSTYPE(funct6, vs2, simm, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vimsfunct6(funct6) @ 0b0 @ vs2 @ simm @ 0b011 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vimsfunct6(funct6) @ 0b0 @ encdec_reg(vs2) @ simm @ 0b011 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
   let SEW      = get_sew();
@@ -617,8 +617,8 @@ function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
     vec_trues[i] = true
   };
 
-  let vm_val  : vector('n, bool)     = read_vmask_carry(num_elem, 0b0, 0b00000);
-  let imm_val : bits('m)                  = sign_extend(simm);
+  let vm_val  : vector('n, bool)     = read_vmask_carry(num_elem, 0b0, zreg);
+  let imm_val : bits('m)             = sign_extend(simm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
@@ -647,7 +647,7 @@ mapping clause assembly = VIMSTYPE(funct6, vs2, simm, vd)
 
 /* ***************** OPIVI (Vector Integer Compare Instructions) ***************** */
 /* VICMP instructions' destination is a mask register */
-union clause ast = VICMPTYPE : (vicmpfunct6, bits(1), regidx, regidx, regidx)
+union clause ast = VICMPTYPE : (vicmpfunct6, bits(1), regidx, bits(5), regidx)
 
 mapping encdec_vicmpfunct6 : vicmpfunct6 <-> bits(6) = {
   VICMP_VMSEQ    <-> 0b011000,
@@ -659,7 +659,7 @@ mapping encdec_vicmpfunct6 : vicmpfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = VICMPTYPE(funct6, vm, vs2, simm, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vicmpfunct6(funct6) @ vm @ vs2 @ simm @ 0b011 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vicmpfunct6(funct6) @ vm @ encdec_reg(vs2) @ simm @ 0b011 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VICMPTYPE(funct6, vm, vs2, simm, vd)) = {
   let SEW      = get_sew();
@@ -671,8 +671,8 @@ function clause execute(VICMPTYPE(funct6, vm, vs2, simm, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let imm_val : bits('m)                  = sign_extend(simm);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
+  let imm_val : bits('m)             = sign_extend(simm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, vd);
 

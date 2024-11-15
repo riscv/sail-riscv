@@ -41,7 +41,7 @@ mapping encdec_vvfunct6 : vvfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = VVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vvfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b000 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW_pow  = get_sew_pow();
@@ -55,7 +55,7 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -174,7 +174,7 @@ mapping encdec_nvsfunct6 : nvsfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = NVSTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_nvsfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_nvsfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b000 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(NVSTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -191,7 +191,7 @@ function clause execute(NVSTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
@@ -240,7 +240,7 @@ mapping encdec_nvfunct6 : nvfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = NVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_nvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_nvfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b000 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(NVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -257,7 +257,7 @@ function clause execute(NVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
@@ -301,7 +301,7 @@ mapping clause assembly = NVTYPE(funct6, vm, vs2, vs1, vd)
 union clause ast = MASKTYPEV : (regidx, regidx, regidx)
 
 mapping clause encdec = MASKTYPEV (vs2, vs1,  vd) if extensionEnabled(Ext_V)
-  <-> 0b010111 @ 0b0 @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> 0b010111 @ 0b0 @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b000 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(MASKTYPEV(vs2, vs1, vd)) = {
   let start_element = get_start_element();
@@ -316,7 +316,7 @@ function clause execute(MASKTYPEV(vs2, vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, zreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -349,7 +349,7 @@ mapping clause assembly = MASKTYPEV(vs2, vs1, vd)
 union clause ast = MOVETYPEV : (regidx, regidx)
 
 mapping clause encdec = MOVETYPEV (vs1, vd) if extensionEnabled(Ext_V)
-  <-> 0b010111 @ 0b1 @ 0b00000 @ vs1 @ 0b000 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> 0b010111 @ 0b1 @ 0b00000 @ encdec_reg(vs1) @ 0b000 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(MOVETYPEV(vs1, vd)) = {
   let SEW      = get_sew();
@@ -361,7 +361,7 @@ function clause execute(MOVETYPEV(vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b1, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b1, zreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
@@ -407,7 +407,7 @@ mapping encdec_vxfunct6 : vxfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = VXTYPE(funct6, vm, vs2, rs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vxfunct6(funct6) @ vm @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vxfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -419,8 +419,8 @@ function clause execute(VXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
@@ -522,7 +522,7 @@ mapping encdec_nxsfunct6 : nxsfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = NXSTYPE(funct6, vm, vs2, rs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_nxsfunct6(funct6) @ vm @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_nxsfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(NXSTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -539,9 +539,9 @@ function clause execute(NXSTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
@@ -588,7 +588,7 @@ mapping encdec_nxfunct6 : nxfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = NXTYPE(funct6, vm, vs2, rs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_nxfunct6(funct6) @ vm @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_nxfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(NXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -605,9 +605,9 @@ function clause execute(NXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
@@ -656,7 +656,7 @@ mapping encdec_vxsgfunct6 : vxsgfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = VXSG(funct6, vm, vs2, rs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vxsgfunct6(funct6) @ vm @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vxsgfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
   let SEW_pow  = get_sew_pow();
@@ -670,7 +670,7 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let rs1_val : nat                       = unsigned(X(rs1));
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -718,7 +718,7 @@ mapping clause assembly = VXSG(funct6, vm, vs2, rs1, vd)
 union clause ast = MASKTYPEX : (regidx, regidx, regidx)
 
 mapping clause encdec = MASKTYPEX(vs2, rs1, vd) if extensionEnabled(Ext_V)
-  <-> 0b010111 @ 0b0 @ vs2 @ rs1 @ 0b100 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> 0b010111 @ 0b0 @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(MASKTYPEX(vs2, rs1, vd)) = {
   let start_element = get_start_element();
@@ -733,8 +733,8 @@ function clause execute(MASKTYPEX(vs2, rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, 0b00000);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, zreg);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   var result  : vector('n, bits('m)) = vector_init(zeros());
@@ -766,7 +766,7 @@ mapping clause assembly = MASKTYPEX(vs2, rs1, vd)
 union clause ast = MOVETYPEX : (regidx, regidx)
 
 mapping clause encdec = MOVETYPEX (rs1, vd) if extensionEnabled(Ext_V)
-  <-> 0b010111 @ 0b1 @ 0b00000 @ rs1 @ 0b100 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> 0b010111 @ 0b1 @ 0b00000 @ encdec_reg(rs1) @ 0b100 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(MOVETYPEX(rs1, vd)) = {
   let SEW      = get_sew();
@@ -778,8 +778,8 @@ function clause execute(MOVETYPEX(rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let rs1_val : bits('m)                  = get_scalar(rs1, 'm);
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b1, 0b00000);
+  let rs1_val : bits('m)             = get_scalar(rs1, 'm);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b1, zreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
@@ -816,7 +816,7 @@ mapping encdec_vifunct6 : vifunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = VITYPE(funct6, vm, vs2, simm, vd) if extensionEnabled(Ext_V)
-  <-> encdec_vifunct6(funct6) @ vm @ vs2 @ simm @ 0b011 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_vifunct6(funct6) @ vm @ encdec_reg(vs2) @ simm @ 0b011 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VITYPE(funct6, vm, vs2, simm, vd)) = {
   let SEW      = get_sew();
@@ -828,8 +828,8 @@ function clause execute(VITYPE(funct6, vm, vs2, simm, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let imm_val : bits('m)                  = sign_extend(simm);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
+  let imm_val : bits('m)             = sign_extend(simm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
@@ -899,7 +899,7 @@ mapping clause assembly = VITYPE(funct6, vm, vs2, simm, vd)
 
 /* ************************** OPIVI (WITYPE Narrowing) *************************** */
 /* ************** Vector Narrowing Integer Right Shift Instructions ************** */
-union clause ast = NISTYPE : (nisfunct6, bits(1), regidx, regidx, regidx)
+union clause ast = NISTYPE : (nisfunct6, bits(1), regidx, bits(5), regidx)
 
 mapping encdec_nisfunct6 : nisfunct6 <-> bits(6) = {
   NIS_VNSRL       <-> 0b101100,
@@ -907,7 +907,7 @@ mapping encdec_nisfunct6 : nisfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = NISTYPE(funct6, vm, vs2, simm, vd) if extensionEnabled(Ext_V)
-  <-> encdec_nisfunct6(funct6) @ vm @ vs2 @ simm @ 0b011 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_nisfunct6(funct6) @ vm @ encdec_reg(vs2) @ simm @ 0b011 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(NISTYPE(funct6, vm, vs2, simm, vd)) = {
   let SEW      = get_sew();
@@ -924,9 +924,9 @@ function clause execute(NISTYPE(funct6, vm, vs2, simm, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let imm_val : bits('m)                  = sign_extend(simm);
+  let imm_val : bits('m)             = sign_extend(simm);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
@@ -965,7 +965,7 @@ mapping clause assembly = NISTYPE(funct6, vm, vs2, simm, vd)
 
 /* ************************** OPIVI (WITYPE Narrowing) *************************** */
 /* *************** Vector Narrowing Fixed-Point Clip Instructions **************** */
-union clause ast = NITYPE : (nifunct6, bits(1), regidx, regidx, regidx)
+union clause ast = NITYPE : (nifunct6, bits(1), regidx, bits(5), regidx)
 
 mapping encdec_nifunct6 : nifunct6 <-> bits(6) = {
   NI_VNCLIPU     <-> 0b101110,
@@ -973,7 +973,7 @@ mapping encdec_nifunct6 : nifunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = NITYPE(funct6, vm, vs2, simm, vd) if extensionEnabled(Ext_V)
-  <-> encdec_nifunct6(funct6) @ vm @ vs2 @ simm @ 0b011 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_nifunct6(funct6) @ vm @ encdec_reg(vs2) @ simm @ 0b011 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(NITYPE(funct6, vm, vs2, simm, vd)) = {
   let SEW      = get_sew();
@@ -990,9 +990,9 @@ function clause execute(NITYPE(funct6, vm, vs2, simm, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let imm_val : bits('m)                  = sign_extend(simm);
+  let imm_val : bits('m)             = sign_extend(simm);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
@@ -1041,7 +1041,7 @@ mapping encdec_visgfunct6 : visgfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = VISG(funct6, vm, vs2, simm, vd) if extensionEnabled(Ext_V)
-  <-> encdec_visgfunct6(funct6) @ vm @ vs2 @ simm @ 0b011 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_visgfunct6(funct6) @ vm @ encdec_reg(vs2) @ simm @ 0b011 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
   let SEW_pow  = get_sew_pow();
@@ -1055,8 +1055,8 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let imm_val : nat                       = unsigned(zero_extend(xlen, simm));
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
+  let imm_val : nat                  = unsigned(zero_extend(xlen, simm));
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
@@ -1097,13 +1097,13 @@ mapping visg_mnemonic : visgfunct6 <-> string = {
 }
 
 mapping clause assembly = VISG(funct6, vm, vs2, simm, vd)
-  <-> visg_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(simm) ^ maybe_vmask(vm)
+  <-> visg_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(simm) ^ maybe_vmask(vm)
 
 /* ********************** OPIVI (Integer Merge Instruction) ********************** */
 union clause ast = MASKTYPEI : (regidx, bits(5), regidx)
 
 mapping clause encdec = MASKTYPEI(vs2, simm, vd) if extensionEnabled(Ext_V)
-  <-> 0b010111 @ 0b0 @ vs2 @ simm @ 0b011 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> 0b010111 @ 0b0 @ encdec_reg(vs2) @ simm @ 0b011 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(MASKTYPEI(vs2, simm, vd)) = {
   let start_element = get_start_element();
@@ -1118,8 +1118,8 @@ function clause execute(MASKTYPEI(vs2, simm, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, 0b00000);
-  let imm_val : bits('m)                  = sign_extend(simm);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b0, zreg);
+  let imm_val : bits('m)             = sign_extend(simm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   var result  : vector('n, bits('m)) = vector_init(zeros());
@@ -1151,7 +1151,7 @@ mapping clause assembly = MASKTYPEI(vs2, simm, vd)
 union clause ast = MOVETYPEI : (regidx, bits(5))
 
 mapping clause encdec = MOVETYPEI (vd, simm) if extensionEnabled(Ext_V)
-  <-> 0b010111 @ 0b1 @ 0b00000 @ simm @ 0b011 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> 0b010111 @ 0b1 @ 0b00000 @ simm @ 0b011 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(MOVETYPEI(vd, simm)) = {
   let SEW      = get_sew();
@@ -1163,8 +1163,8 @@ function clause execute(MOVETYPEI(vd, simm)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b1, 0b00000);
-  let imm_val : bits('m)                  = sign_extend(simm);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b1, zreg);
+  let imm_val : bits('m)             = sign_extend(simm);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
@@ -1186,7 +1186,7 @@ mapping clause assembly = MOVETYPEI(vd, simm)
 union clause ast = VMVRTYPE : (regidx, bits(5), regidx)
 
 mapping clause encdec = VMVRTYPE(vs2, simm, vd) if extensionEnabled(Ext_V)
-  <-> 0b100111 @ 0b1 @ vs2 @ simm @ 0b011 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> 0b100111 @ 0b1 @ encdec_reg(vs2) @ simm @ 0b011 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VMVRTYPE(vs2, simm, vd)) = {
   let start_element = get_start_element();
@@ -1201,7 +1201,7 @@ function clause execute(VMVRTYPE(vs2, simm, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b1, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b1, zreg);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, EMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, EMUL_pow, vd);
   var result  : vector('n, bits('m)) = vector_init(zeros());
@@ -1244,7 +1244,7 @@ mapping encdec_mvvfunct6 : mvvfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = MVVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_mvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_mvvfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b010 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(MVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -1256,7 +1256,7 @@ function clause execute(MVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -1352,7 +1352,7 @@ mapping encdec_mvvmafunct6 : mvvmafunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = MVVMATYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_mvvmafunct6(funct6) @ vm @ vs2 @ vs1 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_mvvmafunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b010 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(MVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -1364,7 +1364,7 @@ function clause execute(MVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -1411,7 +1411,7 @@ mapping encdec_wvvfunct6 : wvvfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = WVVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_wvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_wvvfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b010 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(WVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -1429,7 +1429,7 @@ function clause execute(WVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -1480,7 +1480,7 @@ mapping encdec_wvfunct6 : wvfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = WVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_wvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_wvfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b010 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(WVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -1497,7 +1497,7 @@ function clause execute(WVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
@@ -1542,7 +1542,7 @@ mapping encdec_wmvvfunct6 : wmvvfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec =  WMVVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_wmvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_wmvvfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b010 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(WMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -1560,7 +1560,7 @@ function clause execute(WMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -1602,7 +1602,7 @@ mapping vext2_vs1 : vext2funct6 <-> bits(5) = {
 }
 
 mapping clause encdec = VEXT2TYPE(funct6, vm, vs2, vd) if extensionEnabled(Ext_V)
-  <-> 0b010010 @ vm @ vs2 @ vext2_vs1(funct6) @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> 0b010010 @ vm @ encdec_reg(vs2) @ vext2_vs1(funct6) @ 0b010 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VEXT2TYPE(funct6, vm, vs2, vd)) = {
   let SEW = get_sew();
@@ -1619,7 +1619,7 @@ function clause execute(VEXT2TYPE(funct6, vm, vs2, vd)) = {
   let 'm = SEW;
   let 'o = SEW_half;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_half, LMUL_pow_half, vs2);
 
@@ -1658,7 +1658,7 @@ mapping vext4_vs1 : vext4funct6 <-> bits(5) = {
 }
 
 mapping clause encdec = VEXT4TYPE(funct6, vm, vs2, vd) if extensionEnabled(Ext_V)
-  <-> 0b010010 @ vm @ vs2 @ vext4_vs1(funct6) @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> 0b010010 @ vm @ encdec_reg(vs2) @ vext4_vs1(funct6) @ 0b010 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VEXT4TYPE(funct6, vm, vs2, vd)) = {
   let SEW = get_sew();
@@ -1675,7 +1675,7 @@ function clause execute(VEXT4TYPE(funct6, vm, vs2, vd)) = {
   let 'm = SEW;
   let 'o = SEW_quart;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_quart, LMUL_pow_quart, vs2);
 
@@ -1714,7 +1714,7 @@ mapping vext8_vs1 : vext8funct6 <-> bits(5) = {
 }
 
 mapping clause encdec = VEXT8TYPE(funct6, vm, vs2, vd) if extensionEnabled(Ext_V)
-  <-> 0b010010 @ vm @ vs2 @ vext8_vs1(funct6) @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> 0b010010 @ vm @ encdec_reg(vs2) @ vext8_vs1(funct6) @ 0b010 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VEXT8TYPE(funct6, vm, vs2, vd)) = {
   let SEW = get_sew();
@@ -1731,7 +1731,7 @@ function clause execute(VEXT8TYPE(funct6, vm, vs2, vd)) = {
   let 'm = SEW;
   let 'o = SEW_eighth;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_eighth, LMUL_pow_eighth, vs2);
 
@@ -1765,7 +1765,7 @@ mapping clause assembly = VEXT8TYPE(funct6, vm, vs2, vd)
 union clause ast = VMVXS : (regidx, regidx)
 
 mapping clause encdec = VMVXS(vs2, rd) if extensionEnabled(Ext_V)
-  <-> 0b010000 @ 0b1 @ vs2 @ 0b00000 @ 0b010 @ rd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> 0b010000 @ 0b1 @ encdec_reg(vs2) @ 0b00000 @ 0b010 @ encdec_reg(rd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VMVXS(vs2, rd)) = {
   let SEW      = get_sew();
@@ -1793,7 +1793,7 @@ mapping clause assembly = VMVXS(vs2, rd)
 union clause ast = MVVCOMPRESS : (regidx, regidx, regidx)
 
 mapping clause encdec = MVVCOMPRESS(vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> 0b010111 @ 0b1 @ vs2 @ vs1 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> 0b010111 @ 0b1 @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b010 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(MVVCOMPRESS(vs2, vs1, vd)) = {
   let start_element = get_start_element();
@@ -1867,7 +1867,7 @@ mapping encdec_mvxfunct6 : mvxfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = MVXTYPE(funct6, vm, vs2, rs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_mvxfunct6(funct6) @ vm @ vs2 @ rs1 @ 0b110 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_mvxfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(MVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -1879,8 +1879,8 @@ function clause execute(MVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
@@ -1986,7 +1986,7 @@ mapping encdec_mvxmafunct6 : mvxmafunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = MVXMATYPE(funct6, vm, vs2, rs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_mvxmafunct6(funct6) @ vm @ vs2 @ rs1 @ 0b110 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_mvxmafunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(MVXMATYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -1998,8 +1998,8 @@ function clause execute(MVXMATYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
@@ -2046,7 +2046,7 @@ mapping encdec_wvxfunct6 : wvxfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = WVXTYPE(funct6, vm, vs2, rs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_wvxfunct6(funct6) @ vm @ vs2 @ rs1 @ 0b110 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_wvxfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(WVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -2063,9 +2063,9 @@ function clause execute(WVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
@@ -2114,7 +2114,7 @@ mapping encdec_wxfunct6 : wxfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = WXTYPE(funct6, vm, vs2, rs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_wxfunct6(funct6) @ vm @ vs2 @ rs1 @ 0b110 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_wxfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(WXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -2130,9 +2130,9 @@ function clause execute(WXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
@@ -2176,7 +2176,7 @@ mapping encdec_wmvxfunct6 : wmvxfunct6 <-> bits(6) = {
 }
 
 mapping clause encdec = WMVXTYPE(funct6, vm, vs2, rs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_wmvxfunct6(funct6) @ vm @ vs2 @ rs1 @ 0b110 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> encdec_wmvxfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(WMVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -2193,9 +2193,9 @@ function clause execute(WMVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, zreg);
   let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
@@ -2231,7 +2231,7 @@ mapping clause assembly = WMVXTYPE(funct6, vm, vs2, rs1, vd)
 union clause ast = VMVSX : (regidx, regidx)
 
 mapping clause encdec = VMVSX(rs1, vd) if extensionEnabled(Ext_V)
-  <-> 0b010000 @ 0b1 @ 0b00000 @ rs1 @ 0b110 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+  <-> 0b010000 @ 0b1 @ 0b00000 @ encdec_reg(rs1) @ 0b110 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VMVSX(rs1, vd)) = {
   let SEW      = get_sew();
@@ -2243,8 +2243,8 @@ function clause execute(VMVSX(rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b1, 0b00000);
-  let rs1_val : bits('m)                  = get_scalar(rs1, 'm);
+  let vm_val  : vector('n, bool)     = read_vmask(num_elem, 0b1, zreg);
+  let rs1_val : bits('m)             = get_scalar(rs1, 'm);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, 0, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, 0, vd_val, vm_val);
