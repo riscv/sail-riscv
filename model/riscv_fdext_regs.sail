@@ -96,7 +96,7 @@ function dirty_fd_context_if_present() -> unit = {
   if sys_enable_fdext() then dirty_fd_context()
 }
 
-function rF (r : regno) -> flenbits = {
+function rF (Regno(r) : regno) -> flenbits = {
   assert(sys_enable_fdext());
   let v : fregtype =
     match r {
@@ -137,7 +137,7 @@ function rF (r : regno) -> flenbits = {
   fregval_from_freg(v)
 }
 
-function wF (r : regno, in_v : flenbits) -> unit = {
+function wF (Regno(r) : regno, in_v : flenbits) -> unit = {
   assert(sys_enable_fdext());
   let v = fregval_into_freg(in_v);
   match r {
@@ -184,10 +184,10 @@ function wF (r : regno, in_v : flenbits) -> unit = {
       print_reg("f" ^ dec_str(r) ^ " <- " ^ FRegStr(v));
 }
 
-function rF_bits(i: regidx) -> flenbits = rF(unsigned(i))
+function rF_bits(i: regidx) -> flenbits = rF(regidx_to_regno(i))
 
 function wF_bits(i: regidx, data: flenbits) -> unit = {
-  wF(unsigned(i)) = data
+  wF(regidx_to_regno(i)) = data
 }
 
 overload F = {rF_bits, wF_bits, rF, wF}
@@ -265,8 +265,8 @@ function rF_or_X_D(i) = {
   else if xlen >= 64
   then X(i)[63..0]
   else {
-    assert(i[0] == bitzero);
-    if i == zeros() then zeros() else X(i + 1) @ X(i)
+    assert(regidx_bits(i)[0] == bitzero);
+    if i == zreg then zeros() else X(regidx_offset(i, 0b00001)) @ X(i)
   }
 }
 
@@ -297,10 +297,10 @@ function wF_or_X_D(i, data) = {
   else if xlen >= 64
   then X(i) = sign_extend(data)
   else {
-    assert (i[0] == bitzero);
-    if i != zeros() then {
-      X(i)     = data[31..0];
-      X(i + 1) = data[63..32];
+    assert (regidx_bits(i)[0] == bitzero);
+    if i != zreg then {
+      X(i)                         = data[31..0];
+      X(regidx_offset(i, 0b00001)) = data[63..32];
     }
   }
 }
@@ -311,8 +311,7 @@ overload F_or_X_D = { rF_or_X_D, wF_or_X_D }
 
 /* mappings for assembly */
 
-val freg_name : regidx <-> string
-mapping freg_name = {
+mapping freg_name_raw : bits(5) <-> string = {
     0b00000 <-> "ft0",
     0b00001 <-> "ft1",
     0b00010 <-> "ft2",
@@ -346,6 +345,8 @@ mapping freg_name = {
     0b11110 <-> "ft10",
     0b11111 <-> "ft11"
 }
+
+mapping freg_name : regidx <-> string = { Regidx(i) <-> freg_name_raw(i) }
 
 val freg_or_reg_name : regidx <-> string
 mapping freg_or_reg_name = {

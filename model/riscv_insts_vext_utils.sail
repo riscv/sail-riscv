@@ -49,7 +49,7 @@ function assert_vstart(i) = {
  */
 val valid_rd_mask : (regidx, bits(1)) -> bool
 function valid_rd_mask(rd, vm) = {
-  vm != 0b0 | rd != 0b00000
+  vm != 0b0 | rd != zreg
 }
 
 /* Check for valid register overlap in vector widening/narrowing instructions:
@@ -62,8 +62,8 @@ val valid_reg_overlap : (regidx, regidx, int, int) -> bool
 function valid_reg_overlap(rs, rd, EMUL_pow_rs, EMUL_pow_rd) = {
   let rs_group = if EMUL_pow_rs > 0 then 2 ^ EMUL_pow_rs else 1;
   let rd_group = if EMUL_pow_rd > 0 then 2 ^ EMUL_pow_rd else 1;
-  let rs_int = unsigned(rs);
-  let rd_int = unsigned(rd);
+  let rs_int = unsigned(regidx_bits(rs));
+  let rd_int = unsigned(regidx_bits(rd));
   if EMUL_pow_rs < EMUL_pow_rd then {
     (rs_int + rs_group <= rd_int) | (rs_int >= rd_int + rd_group) |
     ((rs_int + rs_group == rd_int + rd_group) & (EMUL_pow_rs >= 0))
@@ -95,7 +95,7 @@ function illegal_normal(vd, vm) = {
 /* b. Masked check for instructions encoded with vm = 0 */
 val illegal_vd_masked : regidx -> bool
 function illegal_vd_masked(vd) = {
-  not(valid_vtype()) | vd == 0b00000
+  not(valid_vtype()) | vd == zreg
 }
 
 /* c. Unmasked check for:
@@ -375,7 +375,7 @@ function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
   var vreg_list : vector('q, vector('n, bits('m))) = vector_init(vector_init(zeros()));
   var result : vector('n, bits('q * 'm)) = vector_init(zeros());
   foreach (j from 0 to (nf - 1)) {
-    vreg_list[j] = read_vreg(num_elem, SEW, LMUL_pow, vrid + to_bits(5, j * LMUL_reg));
+    vreg_list[j] = read_vreg(num_elem, SEW, LMUL_pow, regidx_offset(vrid, to_bits(5, j * LMUL_reg)));
   };
   foreach (i from 0 to (num_elem - 1)) {
     result[i] = zeros('q * 'm);

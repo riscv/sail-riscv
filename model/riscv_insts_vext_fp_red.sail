@@ -23,8 +23,8 @@ mapping encdec_rfvvfunct6 : rfvvfunct6 <-> bits(6) = {
   FVV_VFWREDUSUM  <-> 0b110001
 }
 
-mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_rfvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd)                                                    if extensionEnabled(Ext_V)
+  <-> encdec_rfvvfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b001 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 val process_rfvv_single: forall 'n 'm 'p, 'n > 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), int('p)) -> Retired
 function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
@@ -40,7 +40,7 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_po
   let 'd = num_elem_vd;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, 0b00000);
+  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, zreg);
   let vd_val  : vector('d, bits('m)) = read_vreg(num_elem_vd, SEW, 0, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
   let mask    : bits('n)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
@@ -83,7 +83,7 @@ function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, 0b00000);
+  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, zreg);
   let vd_val  : vector('d, bits('o)) = read_vreg(num_elem_vd, SEW_widen, 0, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
   let mask    : bits('n)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);

@@ -40,8 +40,7 @@ register vr29 : vregtype
 register vr30 : vregtype
 register vr31 : vregtype
 
-val vreg_name : regidx <-> string
-mapping vreg_name = {
+mapping vreg_name_raw : bits(5) <-> string = {
     0b00000 <-> "v0",
     0b00001 <-> "v1",
     0b00010 <-> "v2",
@@ -76,13 +75,15 @@ mapping vreg_name = {
     0b11111 <-> "v31"
 }
 
+mapping vreg_name : regidx <-> string = { Regidx(i) <-> vreg_name_raw(i) }
+
 function dirty_v_context() -> unit = {
   assert(sys_enable_vext());
   mstatus[VS] = extStatus_to_bits(Dirty);
   mstatus[SD] = 0b1;
 }
 
-function rV (r : regno) -> vregtype = {
+function rV (Regno(r) : regno) -> vregtype = {
   match r {
     0 => vr0,
     1 => vr1,
@@ -119,7 +120,7 @@ function rV (r : regno) -> vregtype = {
   }
 }
 
-function wV (r : regno, v : vregtype) -> unit = {
+function wV (Regno(r) : regno, v : vregtype) -> unit = {
   match r {
     0 => vr0 = v,
     1 => vr1 = v,
@@ -162,10 +163,10 @@ function wV (r : regno, v : vregtype) -> unit = {
   then print_reg("v" ^ dec_str(r) ^ " <- " ^ BitStr(v[VLEN - 1 .. 0]));
 }
 
-function rV_bits(i: regidx) -> vregtype = rV(unsigned(i))
+function rV_bits(i: regidx) -> vregtype = rV(regidx_to_regno(i))
 
 function wV_bits(i: regidx, data: vregtype) -> unit = {
-  wV(unsigned(i)) = data
+  wV(regidx_to_regno(i)) = data
 }
 
 overload V = {rV_bits, wV_bits, rV, wV}
@@ -264,14 +265,15 @@ function write_single_vreg(num_elem, SEW, vrid, v) = {
 /* The general vreg reading operation with num_elem as max(VLMAX,VLEN/SEW)) */
 val read_vreg : forall 'n 'm 'p, 'n >= 0 & 'm >= 0. (int('n), int('m), int('p), regidx) -> vector('n, bits('m))
 function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
+  let vrid_val = unsigned(regidx_bits(vrid));
   var result : vector('n, bits('m)) = vector_init(zeros());
   let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
 
   /* Check for valid vrid */
-  if unsigned(vrid) + 2 ^ LMUL_pow_reg > 32 then {
+  if vrid_val + 2 ^ LMUL_pow_reg > 32 then {
     /* vrid would read past largest vreg (v31) */
     assert(false, "invalid register group: vrid overflow the largest number")
-  } else if unsigned(vrid) % (2 ^ LMUL_pow_reg) != 0 then {
+  } else if vrid_val % (2 ^ LMUL_pow_reg) != 0 then {
     /* vrid must be a multiple of emul */
     assert(false, "invalid register group: vrid is not a multiple of EMUL")
   } else {
@@ -283,7 +285,7 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
       foreach (i_lmul from 0 to (2 ^ LMUL_pow_reg - 1)) {
         let r_start_i : int = i_lmul * 'num_elem_single;
         let r_end_i   : int = r_start_i + 'num_elem_single - 1;
-        let vrid_lmul     : regidx = vrid + to_bits(5, i_lmul);
+        let vrid_lmul     : regidx = regidx_offset(vrid, to_bits(5, i_lmul));
         let single_result : vector('num_elem_single, bits('m)) = read_single_vreg('num_elem_single, SEW, vrid_lmul);
         foreach (r_i from r_start_i to r_end_i) {
           let s_i : int = r_i - r_start_i;
@@ -304,7 +306,7 @@ function read_single_element(EEW, index, vrid) = {
   assert(VLEN >= EEW);
   let 'elem_per_reg : int = VLEN / EEW;
   assert('elem_per_reg >= 0);
-  let real_vrid  : regidx = vrid + to_bits(5, index / 'elem_per_reg);
+  let real_vrid  : regidx = regidx_offset(vrid, to_bits(5, index / 'elem_per_reg));
   let real_index : int    = index % 'elem_per_reg;
   let vrid_val : vector('elem_per_reg, bits('m)) = read_single_vreg('elem_per_reg, EEW, real_vrid);
   assert(0 <= real_index & real_index < 'elem_per_reg);
@@ -320,7 +322,7 @@ function write_vreg(num_elem, SEW, LMUL_pow, vrid, vec) = {
   assert('num_elem_single >= 0);
   foreach (i_lmul from 0 to (2 ^ LMUL_pow_reg - 1)) {
     var single_vec : vector('num_elem_single, bits('m)) = vector_init(zeros());
-    let vrid_lmul  : regidx = vrid + to_bits(5, i_lmul);
+    let vrid_lmul  : regidx = regidx_offset(vrid, to_bits(5, i_lmul));
     let r_start_i  : int = i_lmul * 'num_elem_single;
     let r_end_i    : int = r_start_i + 'num_elem_single - 1;
     foreach (r_i from r_start_i to r_end_i) {
@@ -338,7 +340,7 @@ val write_single_element : forall 'm 'x, 8 <= 'm <= 128. (int('m), int('x), regi
 function write_single_element(EEW, index, vrid, value) = {
   let 'elem_per_reg : int = VLEN / EEW;
   assert('elem_per_reg >= 0);
-  let real_vrid  : regidx = vrid + to_bits(5, index / 'elem_per_reg);
+  let real_vrid  : regidx = regidx_offset(vrid, to_bits(5, index / 'elem_per_reg));
   let real_index : int    = index % 'elem_per_reg;
 
   let vrid_val : vector('elem_per_reg, bits('m)) = read_single_vreg('elem_per_reg, EEW, real_vrid);

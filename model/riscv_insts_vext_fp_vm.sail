@@ -22,8 +22,8 @@ mapping encdec_fvvmfunct6 : fvvmfunct6 <-> bits(6) = {
   FVVM_VMFNE      <-> 0b011100
 }
 
-mapping clause encdec = FVVMTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_fvvmfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = FVVMTYPE(funct6, vm, vs2, vs1, vd)                                                    if extensionEnabled(Ext_V)
+  <-> encdec_fvvmfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b001 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -37,7 +37,7 @@ function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
@@ -85,8 +85,8 @@ mapping encdec_fvfmfunct6 : fvfmfunct6 <-> bits(6) = {
   VFM_VMFGE      <-> 0b011111
 }
 
-mapping clause encdec = FVFMTYPE(funct6, vm, vs2, rs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_fvfmfunct6(funct6) @ vm @ vs2 @ rs1 @ 0b101 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = FVFMTYPE(funct6, vm, vs2, rs1, vd)                                                    if extensionEnabled(Ext_V)
+  <-> encdec_fvfmfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b101 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -100,7 +100,7 @@ function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zreg);
   let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);

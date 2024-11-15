@@ -31,7 +31,7 @@ function illegal_fp_normal(vd, vm, SEW, rm_3b) = {
 /* b. Masked check for floating-point instructions encoded with vm = 0 */
 val illegal_fp_vd_masked : (regidx, {8, 16, 32, 64}, bits(3)) -> bool
 function illegal_fp_vd_masked(vd, SEW, rm_3b) = {
-  not(valid_vtype()) | vd == 0b00000 | not(valid_fp_op(SEW, rm_3b))
+  not(valid_vtype()) | vd == zreg | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* c. Unmasked check for floating-point instructions encoded with vm = 1 */

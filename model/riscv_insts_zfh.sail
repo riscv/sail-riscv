@@ -186,20 +186,20 @@ union clause ast = F_BIN_RM_TYPE_H : (regidx, regidx, rounding_mode, regidx, f_b
 /* AST <-> Binary encoding ================================ */
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, FADD_H)                             if haveHalfFPU()
-<-> 0b000_0010 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
+    F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, FADD_H)                                                                if haveHalfFPU()
+<-> 0b000_0010 @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, FSUB_H)                             if haveHalfFPU()
-<-> 0b000_0110 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
+    F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, FSUB_H)                                                                if haveHalfFPU()
+<-> 0b000_0110 @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, FMUL_H)                             if haveHalfFPU()
-<-> 0b000_1010 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
+    F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, FMUL_H)                                                                if haveHalfFPU()
+<-> 0b000_1010 @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, FDIV_H)                             if haveHalfFPU()
-<-> 0b000_1110 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
+    F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, FDIV_H)                                                                if haveHalfFPU()
+<-> 0b000_1110 @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
 /* Execution semantics ================================ */
 
@@ -249,20 +249,20 @@ union clause ast = F_MADD_TYPE_H : (regidx, regidx, regidx, rounding_mode, regid
 /* AST <-> Binary encoding ================================ */
 
 mapping clause encdec =
-    F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, FMADD_H)                         if haveHalfFPU()
-<-> rs3 @ 0b10 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0011  if haveHalfFPU()
+    F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, FMADD_H)                                                                        if haveHalfFPU()
+<-> encdec_reg(rs3) @ 0b10 @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b100_0011 if haveHalfFPU()
 
 mapping clause encdec =
-    F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, FMSUB_H)                         if haveHalfFPU()
-<-> rs3 @ 0b10 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0111  if haveHalfFPU()
+    F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, FMSUB_H)                                                                        if haveHalfFPU()
+<-> encdec_reg(rs3) @ 0b10 @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b100_0111 if haveHalfFPU()
 
 mapping clause encdec =
-    F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, FNMSUB_H)                        if haveHalfFPU()
-<-> rs3 @ 0b10 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1011  if haveHalfFPU()
+    F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, FNMSUB_H)                                                                       if haveHalfFPU()
+<-> encdec_reg(rs3) @ 0b10 @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b100_1011 if haveHalfFPU()
 
 mapping clause encdec =
-    F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, FNMADD_H)                        if haveHalfFPU()
-<-> rs3 @ 0b10 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1111  if haveHalfFPU()
+    F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, FNMADD_H)                                                                       if haveHalfFPU()
+<-> encdec_reg(rs3) @ 0b10 @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b100_1111 if haveHalfFPU()
 
 /* Execution semantics ================================ */
 
@@ -314,29 +314,29 @@ union clause ast = F_BIN_TYPE_H : (regidx, regidx, regidx, f_bin_op_H)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FSGNJ_H)               if haveHalfFPU()
-                    <-> 0b001_0010 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveHalfFPU()
+mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FSGNJ_H)                                if haveHalfFPU()
+  <-> 0b001_0010 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
-mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FSGNJN_H)              if haveHalfFPU()
-                    <-> 0b001_0010 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveHalfFPU()
+mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FSGNJN_H)                               if haveHalfFPU()
+  <-> 0b001_0010 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
-mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FSGNJX_H)              if haveHalfFPU()
-                    <-> 0b001_0010 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if haveHalfFPU()
+mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FSGNJX_H)                               if haveHalfFPU()
+  <-> 0b001_0010 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
-mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FMIN_H)                if haveHalfFPU()
-                    <-> 0b001_0110 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveHalfFPU()
+mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FMIN_H)                                 if haveHalfFPU()
+  <-> 0b001_0110 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
-mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FMAX_H)                if haveHalfFPU()
-                    <-> 0b001_0110 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveHalfFPU()
+mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FMAX_H)                                 if haveHalfFPU()
+  <-> 0b001_0110 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
-mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FEQ_H)                 if haveHalfFPU()
-                    <-> 0b101_0010 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if haveHalfFPU()
+mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FEQ_H)                                  if haveHalfFPU()
+  <-> 0b101_0010 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
-mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FLT_H)                 if haveHalfFPU()
-                    <-> 0b101_0010 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveHalfFPU()
+mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FLT_H)                                  if haveHalfFPU()
+  <-> 0b101_0010 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
-mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FLE_H)                 if haveHalfFPU()
-                    <-> 0b101_0010 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveHalfFPU()
+mapping clause encdec = F_BIN_TYPE_H(rs2, rs1, rd, FLE_H)                                  if haveHalfFPU()
+  <-> 0b101_0010 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
 /* Execution semantics ================================ */
 
@@ -520,40 +520,40 @@ union clause ast = F_UN_RM_TYPE_H : (regidx, rounding_mode, regidx, f_un_rm_op_H
 /* AST <-> Binary encoding ================================ */
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FSQRT_H)                                      if haveHalfFPU()
-<-> 0b010_1110 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
+    F_UN_RM_TYPE_H(rs1, rm, rd, FSQRT_H)                                                             if haveHalfFPU()
+<-> 0b010_1110 @ 0b00000 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_W_H)                                     if haveHalfFPU()
-<-> 0b110_0010 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_W_H)                                                            if haveHalfFPU()
+<-> 0b110_0010 @ 0b00000 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_WU_H)                                    if haveHalfFPU()
-<-> 0b110_0010 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_WU_H)                                                           if haveHalfFPU()
+<-> 0b110_0010 @ 0b00001 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_W)                                     if haveHalfFPU()
-<-> 0b110_1010 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_W)                                                            if haveHalfFPU()
+<-> 0b110_1010 @ 0b00000 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_WU)                                    if haveHalfFPU()
-<-> 0b110_1010 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU()
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_WU)                                                           if haveHalfFPU()
+<-> 0b110_1010 @ 0b00001 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_S)                                     if haveHalfMin()
-<-> 0b010_0010 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfMin()
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_S)                                                            if haveHalfMin()
+<-> 0b010_0010 @ 0b00000 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfMin()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_D)                                     if haveHalfMin() & (haveDoubleFPU() & validDoubleRegs([rs1]))
-<-> 0b010_0010 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfMin() & (haveDoubleFPU() & validDoubleRegs([rs1]))
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_D)                                                            if haveHalfMin() & (haveDoubleFPU() & validDoubleRegs([rs1]))
+<-> 0b010_0010 @ 0b00001 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfMin() & (haveDoubleFPU() & validDoubleRegs([rs1]))
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_S_H)                                     if haveHalfMin()
-<-> 0b010_0000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfMin()
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_S_H)                                                            if haveHalfMin()
+<-> 0b010_0000 @ 0b00010 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfMin()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_D_H)                                     if haveHalfMin() & (haveDoubleFPU() & validDoubleRegs([rd]))
-<-> 0b010_0001 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfMin() & (haveDoubleFPU() & validDoubleRegs([rd]))
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_D_H)                                                            if haveHalfMin() & (haveDoubleFPU() & validDoubleRegs([rd]))
+<-> 0b010_0001 @ 0b00010 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfMin() & (haveDoubleFPU() & validDoubleRegs([rd]))
 
 // TODO:
 /* FCVT_H_Q, FCVT_Q_H : Will be added with Q Extension */
@@ -561,20 +561,20 @@ mapping clause encdec =
 /* F instructions, RV64 only */
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_L_H)                                     if haveHalfFPU() & xlen >= 64
-<-> 0b110_0010 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU() & xlen >= 64
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_L_H)                                                            if haveHalfFPU() & xlen >= 64
+<-> 0b110_0010 @ 0b00010 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_LU_H)                                    if haveHalfFPU() & xlen >= 64
-<-> 0b110_0010 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU() & xlen >= 64
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_LU_H)                                                           if haveHalfFPU() & xlen >= 64
+<-> 0b110_0010 @ 0b00011 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_L)                                     if haveHalfFPU() & xlen >= 64
-<-> 0b110_1010 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU() & xlen >= 64
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_L)                                                            if haveHalfFPU() & xlen >= 64
+<-> 0b110_1010 @ 0b00010 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_LU)                                    if haveHalfFPU() & xlen >= 64
-<-> 0b110_1010 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveHalfFPU() & xlen >= 64
+    F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_LU)                                                           if haveHalfFPU() & xlen >= 64
+<-> 0b110_1010 @ 0b00011 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU() & xlen >= 64
 
 /* Execution semantics ================================ */
 
@@ -883,14 +883,14 @@ union clause ast = F_UN_TYPE_H : (regidx, regidx, f_un_op_H)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = F_UN_TYPE_H(rs1, rd, FCLASS_H)                        if haveHalfFPU()
-                    <-> 0b111_0010 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveHalfFPU()
+mapping clause encdec = F_UN_TYPE_H(rs1, rd, FCLASS_H)                             if haveHalfFPU()
+  <-> 0b111_0010 @ 0b00000 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b101_0011 if haveHalfFPU()
 
-mapping clause encdec = F_UN_TYPE_H(rs1, rd, FMV_X_H)                         if extensionEnabled(Ext_Zfhmin)
-                    <-> 0b111_0010 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_Zfhmin)
+mapping clause encdec = F_UN_TYPE_H(rs1, rd, FMV_X_H)                              if extensionEnabled(Ext_Zfhmin)
+  <-> 0b111_0010 @ 0b00000 @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011 if extensionEnabled(Ext_Zfhmin)
 
-mapping clause encdec = F_UN_TYPE_H(rs1, rd, FMV_H_X)                         if extensionEnabled(Ext_Zfhmin)
-                    <-> 0b111_1010 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_Zfhmin)
+mapping clause encdec = F_UN_TYPE_H(rs1, rd, FMV_H_X)                              if extensionEnabled(Ext_Zfhmin)
+  <-> 0b111_1010 @ 0b00000 @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011 if extensionEnabled(Ext_Zfhmin)
 
 /* Execution semantics ================================ */
 

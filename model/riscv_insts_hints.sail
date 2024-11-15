@@ -27,7 +27,7 @@ union clause ast = C_ADDI_HINT : (regidx)
 
 mapping clause encdec_compressed = C_ADDI_HINT(rsd)
       if rsd != zreg
-  <-> 0b000 @ 0b0 @ rsd : regidx @ 0b00000 @ 0b01
+  <-> 0b000 @ 0b0 @ encdec_reg(rsd) @ 0b00000 @ 0b01
       if rsd != zreg
 
 function clause execute (C_ADDI_HINT(rsd)) = RETIRE_SUCCESS
@@ -68,7 +68,7 @@ union clause ast = C_MV_HINT : (regidx)
 
 mapping clause encdec_compressed = C_MV_HINT(rs2)
       if rs2 != zreg
-  <-> 0b100 @ 0b0 @ 0b00000 @ rs2 : regidx @ 0b10
+  <-> 0b100 @ 0b0 @ 0b00000 @ encdec_reg(rs2) @ 0b10
       if rs2 != zreg
 
 function clause execute (C_MV_HINT(rs2)) = RETIRE_SUCCESS
@@ -83,7 +83,7 @@ union clause ast = C_ADD_HINT : (regidx)
 
 mapping clause encdec_compressed = C_ADD_HINT(rs2)
       if rs2 != zreg
-  <-> 0b100 @ 0b1 @ 0b00000 @ rs2 : regidx @ 0b10
+  <-> 0b100 @ 0b1 @ 0b00000 @ encdec_reg(rs2) @ 0b10
       if rs2 != zreg
 
 function clause execute (C_ADD_HINT(rs2)) = RETIRE_SUCCESS
@@ -98,7 +98,7 @@ union clause ast = C_SLLI_HINT : (bits(6), regidx)
 
 mapping clause encdec_compressed = C_SLLI_HINT(nzui5 @ nzui40, rsd)
       if (nzui5 @ nzui40 == 0b000000 | rsd == zreg) & (xlen == 64 | nzui5 == 0b0)
-  <-> 0b000 @ nzui5 : bits(1) @ rsd : regidx @ nzui40 : bits(5) @ 0b10
+  <-> 0b000 @ nzui5 : bits(1) @ encdec_reg(rsd) @ nzui40 : bits(5) @ 0b10
       if (nzui5 @ nzui40 == 0b000000 | rsd == zreg) & (xlen == 64 | nzui5 == 0b0)
 
 function clause execute (C_SLLI_HINT(shamt, rsd)) = RETIRE_SUCCESS
@@ -112,7 +112,7 @@ mapping clause assembly = C_SLLI_HINT(shamt, rsd)
 union clause ast = C_SRLI_HINT : (cregidx)
 
 mapping clause encdec_compressed = C_SRLI_HINT(rsd)
-  <-> 0b100 @ 0b0 @ 0b00 @ rsd : cregidx @ 0b00000 @ 0b01
+  <-> 0b100 @ 0b0 @ 0b00 @ encdec_creg(rsd) @ 0b00000 @ 0b01
 
 function clause execute (C_SRLI_HINT(rsd)) = RETIRE_SUCCESS
 
@@ -123,7 +123,7 @@ mapping clause assembly = C_SRLI_HINT(rsd)
 union clause ast = C_SRAI_HINT : (cregidx)
 
 mapping clause encdec_compressed = C_SRAI_HINT(rsd)
-  <-> 0b100 @ 0b0 @ 0b01 @ rsd : cregidx @ 0b00000 @ 0b01
+  <-> 0b100 @ 0b0 @ 0b01 @ encdec_creg(rsd) @ 0b00000 @ 0b01
 
 function clause execute (C_SRAI_HINT(rsd)) = RETIRE_SUCCESS
 
@@ -138,24 +138,24 @@ mapping clause assembly = C_SRAI_HINT(rsd)
 union clause ast = FENCE_RESERVED : (bits(4), bits(4), bits(4), regidx, regidx)
 
 mapping clause encdec = FENCE_RESERVED(fm, pred, succ, rs, rd)
-      if (fm != 0b0000 & fm != 0b1000) | rs != 0b00000 | rd != 0b00000
-  <-> fm : bits(4) @ pred : bits(4) @ succ : bits(4) @ rs : regidx @ 0b000 @ rd : regidx @ 0b0001111
-      if (fm != 0b0000 & fm != 0b1000) | rs != 0b00000 | rd != 0b00000
+      if (fm != 0b0000 & fm != 0b1000) | rs != zreg | rd != zreg
+  <-> fm : bits(4) @ pred : bits(4) @ succ : bits(4) @ encdec_reg(rs) @ 0b000 @ encdec_reg(rd) @ 0b0001111
+      if (fm != 0b0000 & fm != 0b1000) | rs != zreg | rd != zreg
 
 function clause execute (FENCE_RESERVED(fm, pred, succ, rs, rd)) = RETIRE_SUCCESS
 
 mapping clause assembly = FENCE_RESERVED(fm, pred, succ, rs, rd)
-      if (fm != 0b0000 & fm != 0b1000) | rs != 0b00000 | rd != 0b00000
+      if (fm != 0b0000 & fm != 0b1000) | rs != zreg | rd != zreg
   <-> "fence.reserved." ^ fence_bits(pred) ^ "." ^ fence_bits(succ) ^ "."
       ^ reg_name(rs) ^ "." ^ reg_name(rd) ^ "." ^ hex_bits_4(fm)
-      if (fm != 0b0000 & fm != 0b1000) | rs != 0b00000 | rd != 0b00000
+      if (fm != 0b0000 & fm != 0b1000) | rs != zreg | rd != zreg
 
 /* ****************************************************************** */
 union clause ast = FENCEI_RESERVED : (bits(12), regidx, regidx)
 
 mapping clause encdec = FENCEI_RESERVED(imm, rs, rd)
       if imm != 0b000000000000 | rs != zreg | rd != zreg
-  <-> imm : bits(12) @ rs : regidx @ 0b001 @ rd : regidx @ 0b0001111
+  <-> imm : bits(12) @ encdec_reg(rs) @ 0b001 @ encdec_reg(rd) @ 0b0001111
       if imm != 0b000000000000 | rs != zreg | rd != zreg
 
 function clause execute FENCEI_RESERVED(imm, rs, rd) = RETIRE_SUCCESS
