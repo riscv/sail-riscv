@@ -13,7 +13,7 @@
 
 /* ******************************* OPFVV (VVMTYPE) ******************************* */
 /* FVVM instructions' destination is a mask register */
-union clause ast = FVVMTYPE : (fvvmfunct6, bits(1), regidx, regidx, regidx)
+union clause ast = FVVMTYPE : (fvvmfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_fvvmfunct6 : fvvmfunct6 <-> bits(6) = {
   FVVM_VMFEQ      <-> 0b011000,
@@ -22,8 +22,8 @@ mapping encdec_fvvmfunct6 : fvvmfunct6 <-> bits(6) = {
   FVVM_VMFNE      <-> 0b011100
 }
 
-mapping clause encdec = FVVMTYPE(funct6, vm, vs2, vs1, vd)                                                    if extensionEnabled(Ext_V)
-  <-> encdec_fvvmfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(vs1) @ 0b001 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = FVVMTYPE(funct6, vm, vs2, vs1, vd)                                                       if extensionEnabled(Ext_V)
+  <-> encdec_fvvmfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -37,7 +37,7 @@ function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zreg);
+  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
@@ -74,7 +74,7 @@ mapping clause assembly = FVVMTYPE(funct6, vm, vs2, vs1, vd)
 
 /* ******************************* OPFVF (VFMTYPE) ******************************* */
 /* VFM instructions' destination is a mask register */
-union clause ast = FVFMTYPE : (fvfmfunct6, bits(1), regidx, regidx, regidx)
+union clause ast = FVFMTYPE : (fvfmfunct6, bits(1), vregidx, regidx, vregidx)
 
 mapping encdec_fvfmfunct6 : fvfmfunct6 <-> bits(6) = {
   VFM_VMFEQ      <-> 0b011000,
@@ -85,8 +85,8 @@ mapping encdec_fvfmfunct6 : fvfmfunct6 <-> bits(6) = {
   VFM_VMFGE      <-> 0b011111
 }
 
-mapping clause encdec = FVFMTYPE(funct6, vm, vs2, rs1, vd)                                                    if extensionEnabled(Ext_V)
-  <-> encdec_fvfmfunct6(funct6) @ vm @ encdec_reg(vs2) @ encdec_reg(rs1) @ 0b101 @ encdec_reg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = FVFMTYPE(funct6, vm, vs2, rs1, vd)                                                      if extensionEnabled(Ext_V)
+  <-> encdec_fvfmfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -100,7 +100,7 @@ function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zreg);
+  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
   let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
