@@ -1,7 +1,7 @@
 #pragma once
-#include "riscv_softfloat.h"
-#include "rts.h"
 #include "sail.h"
+#include "rts.h"
+#include "riscv_softfloat.h"
 
 unit print_string(sail_string prefix, sail_string msg);
 
