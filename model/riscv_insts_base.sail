@@ -9,7 +9,12 @@
 /* ****************************************************************** */
 /* This file specifies the instructions in the base integer set.      */
 
-/*  Modified by NXP on 06/13/2024 for zilsd support                   */
+enum clause extension = Ext_C
+function clause extensionEnabled(Ext_C) = misa[C] == 0b1
+
+enum clause extension = Ext_Zca
+function clause extensionEnabled(Ext_Zca) = extensionEnabled(Ext_C)
+
 /* ****************************************************************** */
 union clause ast = UTYPE : (bits(20), regidx, uop)
 
@@ -67,7 +72,7 @@ function clause execute (RISCV_JAL(imm, rd)) = {
     },
     Ext_ControlAddr_OK(target) => {
       /* Perform standard alignment check */
-      if bit_to_bool(target[1]) & not(haveRVC())
+      if bit_to_bool(target[1]) & not(extensionEnabled(Ext_Zca))
       then {
         handle_mem_exception(target, E_Fetch_Addr_Align());
         RETIRE_FAIL
@@ -131,7 +136,7 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
         RETIRE_FAIL
       },
       Ext_ControlAddr_OK(target) => {
-        if bit_to_bool(target[1]) & not(haveRVC()) then {
+        if bit_to_bool(target[1]) & not(extensionEnabled(Ext_Zca)) then {
           handle_mem_exception(target, E_Fetch_Addr_Align());
           RETIRE_FAIL;
         } else {
@@ -206,21 +211,21 @@ mapping encdec_sop : sop <-> bits(3) = {
   RISCV_SRAI <-> 0b101
 }
 
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SLLI) <-> 0b000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) <-> 0b000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) <-> 0b010000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if sizeof(xlen) == 64 | shamt[5] == bitzero
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SLLI) <-> 0b000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == bitzero
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) <-> 0b000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == bitzero
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) <-> 0b010000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == bitzero
 
 function clause execute (SHIFTIOP(shamt, rs1, rd, op)) = {
   let rs1_val = X(rs1);
   /* the decoder guard should ensure that shamt[5] = 0 for RV32 */
   let result : xlenbits = match op {
-    RISCV_SLLI => if   sizeof(xlen) == 32
+    RISCV_SLLI => if   xlen == 32
                   then rs1_val << shamt[4..0]
                   else rs1_val << shamt,
-    RISCV_SRLI => if   sizeof(xlen) == 32
+    RISCV_SRLI => if   xlen == 32
                   then rs1_val >> shamt[4..0]
                   else rs1_val >> shamt,
-    RISCV_SRAI => if   sizeof(xlen) == 32
+    RISCV_SRAI => if   xlen == 32
                   then shift_right_arith32(rs1_val, shamt[4..0])
                   else shift_right_arith64(rs1_val, shamt)
   };
@@ -261,14 +266,14 @@ function clause execute (RTYPE(rs2, rs1, rd, op)) = {
     RISCV_AND  => rs1_val & rs2_val,
     RISCV_OR   => rs1_val | rs2_val,
     RISCV_XOR  => rs1_val ^ rs2_val,
-    RISCV_SLL  => if   sizeof(xlen) == 32
+    RISCV_SLL  => if   xlen == 32
                   then rs1_val << (rs2_val[4..0])
                   else rs1_val << (rs2_val[5..0]),
-    RISCV_SRL  => if   sizeof(xlen) == 32
+    RISCV_SRL  => if   xlen == 32
                   then rs1_val >> (rs2_val[4..0])
                   else rs1_val >> (rs2_val[5..0]),
     RISCV_SUB  => rs1_val - rs2_val,
-    RISCV_SRA  => if   sizeof(xlen) == 32
+    RISCV_SRA  => if   xlen == 32
                   then shift_right_arith32(rs1_val, rs2_val[4..0])
                   else shift_right_arith64(rs1_val, rs2_val[5..0])
   };
@@ -297,20 +302,11 @@ union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width, bool, boo
 
 /* unsigned loads are only present for widths strictly less than xlen,
    signed loads also present for widths equal to xlen */
-/* for Zilsd unsigned loads are only present for widths strictly less than xlen_bytes*2,
-   signed loads also present for widths equal to xlen_bytes*2 */
- function load_precond(is_unsigned: bool, size:word_width) -> bool =
-   (size_bytes(size) < sizeof(xlen_bytes)) | 
-   (not(is_unsigned) & size_bytes(size) <= sizeof(xlen_bytes)) |
-   (haveZilsd() & (size_bytes(size) < sizeof(xlen_bytes)*2) |
-   (not(is_unsigned) & size_bytes(size) <= sizeof(xlen_bytes)*2))
-
-mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if load_precond(is_unsigned, size)
-  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_enc(size) @ rd @ 0b0000011  if load_precond(is_unsigned, size)
+mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false) if (size_bytes(size) < xlen_bytes) | (not(is_unsigned) & size_bytes(size) <= xlen_bytes)
+  <-> imm @ rs1 @ bool_bits(is_unsigned) @ size_enc(size) @ rd @ 0b0000011 if (size_bytes(size) < xlen_bytes) | (not(is_unsigned) & size_bytes(size) <= xlen_bytes)
 
 val extend_value : forall 'n, 0 < 'n <= xlen. (bool, bits('n)) -> xlenbits
 function extend_value(is_unsigned, value) = if is_unsigned then zero_extend(value) else sign_extend(value)
-
 
 function is_aligned(vaddr : xlenbits, width : word_width) -> bool =
   match width {
@@ -326,11 +322,10 @@ function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
 
 function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   let offset : xlenbits = sign_extend(imm);
-  let single_transfer = (size_bytes(width) <= sizeof(xlen_bytes));
-  let width_bytes = if single_transfer  then size_bytes(width) else sizeof(xlen_bytes);
+  let width_bytes = size_bytes(width);
 
   // This is checked during decoding.
-  assert(width_bytes <= sizeof(xlen_bytes) & width_bytes >=1);
+  assert(width_bytes <= xlen_bytes);
 
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
@@ -342,21 +337,9 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
       else match translateAddr(vaddr, Read(Data)) {
         TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(paddr, _) =>
+
           match mem_read(Read(Data), paddr, width_bytes, aq, rl, false) {
-            MemValue(result) => 
-                  if (single_transfer) then { 
-                    X(rd) = extend_value(is_unsigned, result); RETIRE_SUCCESS }
-                  else {
-                    if(haveZilsd() & (sizeof(xlen) == 32)) then
-                      match mem_read(Read(Data), paddr+width_bytes, width_bytes, aq, rl, false) {
-                        MemValue(resultl) => { 
-                          let v1:bits(xlen_double) = sail_zero_extend(result, sizeof(xlen_double)) in 
-                            let v2:bits(xlen_double) = sail_zero_extend(resultl, sizeof(xlen_double)) in 
-                                {X_D(rd) = (v2<<sizeof(xlen)) + v1; RETIRE_SUCCESS}
-                        },
-                        MemException(e) => {handle_mem_exception(vaddr, e); RETIRE_FAIL}
-                    } else  internal_error(__FILE__, __LINE__, "invalid configuration")
-                  },
+            MemValue(result) => { X(rd) = extend_value(is_unsigned, result); RETIRE_SUCCESS },
             MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
           },
       }
@@ -388,23 +371,17 @@ mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, size, aq, rl)
 /* ****************************************************************** */
 union clause ast = STORE : (bits(12), regidx, regidx, word_width, bool, bool)
 
-function store_precond(size: word_width) -> bool =
-  size_bytes(size) <= sizeof(xlen_bytes) | 
-  (haveZilsd() & (size_bytes(size) <= sizeof(xlen_bytes)*2))
-
-mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)              if store_precond(size)
-  <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ imm5 : bits(5) @ 0b0100011  if store_precond(size)
+mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, size, false, false)              if size_bytes(size) <= xlen_bytes
+  <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ imm5 : bits(5) @ 0b0100011 if size_bytes(size) <= xlen_bytes
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
 function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
   let offset : xlenbits = sign_extend(imm);
   let width_bytes = size_bytes(width);
-  let single_transfer = width_bytes <= sizeof(xlen_bytes);
 
   // This is checked during decoding.
-  assert(width_bytes >0 & ( single_transfer | 
-  (haveZilsd() & (width_bytes == 2 * sizeof(xlen_bytes)))));
+  assert(width_bytes <= xlen_bytes);
 
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
@@ -420,32 +397,12 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
           match (eares) {
             MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
             MemValue(_) => {
-              if single_transfer then{
-                let rs2_val = X(rs2);
-                assert (width_bytes > 0 & ((width_bytes * 8 - 1 )< sizeof(xlen)));
-                match mem_write_value(paddr, width_bytes, 
-                    rs2_val[width_bytes * 8 - 1 .. 0], aq, rl, false) {
-                  MemValue(true)  => RETIRE_SUCCESS,
-                  MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                  MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
-                }
+              let rs2_val = X(rs2);
+              match mem_write_value(paddr, width_bytes, rs2_val[width_bytes * 8 - 1 .. 0], aq, rl, false) {
+                MemValue(true)  => RETIRE_SUCCESS,
+                MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
+                MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
               }
-              else if haveZilsd() & (sizeof(xlen) == 32) then {
-                let rs21_val:xlenbits_double = X_D(rs2) in{
-                  match mem_write_value(paddr, sizeof(xlen_bytes), 
-                      rs21_val[sizeof(xlen_bytes) * 8 - 1 .. 0], aq, rl, false) {
-                    MemValue(true)  => {
-                      match mem_write_value(paddr+sizeof(xlen_bytes), sizeof(xlen_bytes), rs21_val[((width_bytes * 8)- 1) .. sizeof(xlen_bytes) * 8], aq, rl, false){
-                        MemValue(true) =>  RETIRE_SUCCESS,
-                        MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                        MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
-                      }
-                    },
-                    MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                    MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
-                  }
-                }
-              } else internal_error(__FILE__, __LINE__, "unsupported store data size")
             }
           }
         }
@@ -460,9 +417,9 @@ mapping clause assembly = STORE(imm, rs2, rs1, size, aq, rl)
 union clause ast = ADDIW : (bits(12), regidx, regidx)
 
 mapping clause encdec = ADDIW(imm, rs1, rd)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> imm @ rs1 @ 0b000 @ rd @ 0b0011011
-      if sizeof(xlen) == 64
+      if xlen == 64
 
 function clause execute (ADDIW(imm, rs1, rd)) = {
   let result : xlenbits = sign_extend(imm) + X(rs1);
@@ -471,33 +428,33 @@ function clause execute (ADDIW(imm, rs1, rd)) = {
 }
 
 mapping clause assembly = ADDIW(imm, rs1, rd)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> "addiw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
-      if sizeof(xlen) == 64
+      if xlen == 64
 
 /* ****************************************************************** */
 union clause ast = RTYPEW : (regidx, regidx, regidx, ropw)
 
 mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_ADDW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0000000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
-      if sizeof(xlen) == 64
+      if xlen == 64
 mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SUBW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0100000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b0111011
-      if sizeof(xlen) == 64
+      if xlen == 64
 mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SLLW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0000000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0111011
-      if sizeof(xlen) == 64
+      if xlen == 64
 mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SRLW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0000000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0111011
-      if sizeof(xlen) == 64
+      if xlen == 64
 mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SRAW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0100000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0111011
-      if sizeof(xlen) == 64
+      if xlen == 64
 
 function clause execute (RTYPEW(rs2, rs1, rd, op)) = {
   let rs1_val = (X(rs1))[31..0];
@@ -522,25 +479,25 @@ mapping rtypew_mnemonic : ropw <-> string = {
 }
 
 mapping clause assembly = RTYPEW(rs2, rs1, rd, op)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> rtypew_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
-      if sizeof(xlen) == 64
+      if xlen == 64
 
 /* ****************************************************************** */
 union clause ast = SHIFTIWOP : (bits(5), regidx, regidx, sopw)
 
 mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SLLIW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0011011
-      if sizeof(xlen) == 64
+      if xlen == 64
 mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRLIW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
-      if sizeof(xlen) == 64
+      if xlen == 64
 mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRAIW)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> 0b0100000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0011011
-      if sizeof(xlen) == 64
+      if xlen == 64
 
 function clause execute (SHIFTIWOP(shamt, rs1, rd, op)) = {
   let rs1_val = (X(rs1))[31..0];
@@ -560,9 +517,9 @@ mapping shiftiwop_mnemonic : sopw <-> string = {
 }
 
 mapping clause assembly = SHIFTIWOP(shamt, rs1, rd, op)
-      if sizeof(xlen) == 64
+      if xlen == 64
   <-> shiftiwop_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_5(shamt)
-      if sizeof(xlen) == 64
+      if xlen == 64
 
 /* ****************************************************************** */
 union clause ast = FENCE : (bits(4), bits(4))
@@ -651,17 +608,6 @@ mapping clause assembly = FENCE_TSO(pred, succ)
   <-> "fence.tso" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ)
 
 /* ****************************************************************** */
-union clause ast = FENCEI : unit
-
-mapping clause encdec = FENCEI()
-  <-> 0b000000000000 @ 0b00000 @ 0b001 @ 0b00000 @ 0b0001111
-
-/* fence.i is a nop for the memory model */
-function clause execute FENCEI() = { /* __barrier(Barrier_RISCV_i); */ RETIRE_SUCCESS }
-
-mapping clause assembly = FENCEI() <-> "fence.i"
-
-/* ****************************************************************** */
 union clause ast = ECALL : unit
 
 mapping clause encdec = ECALL()
@@ -710,8 +656,8 @@ mapping clause encdec = SRET()
 function clause execute SRET() = {
   let sret_illegal : bool = match cur_privilege {
     User       => true,
-    Supervisor => not(haveSupMode ()) | mstatus[TSR] == 0b1,
-    Machine    => not(haveSupMode ())
+    Supervisor => not(extensionEnabled(Ext_S)) | mstatus[TSR] == 0b1,
+    Machine    => not(extensionEnabled(Ext_S))
   };
   if   sret_illegal
   then { handle_illegal(); RETIRE_FAIL }

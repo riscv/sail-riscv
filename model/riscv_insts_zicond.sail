@@ -6,12 +6,15 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
+enum clause extension = Ext_Zicond
+function clause extensionEnabled(Ext_Zicond) = true
+
 union clause ast = ZICOND_RTYPE : (regidx, regidx, regidx, zicondop)
 
-mapping clause encdec = ZICOND_RTYPE(rs2, rs1, rd, RISCV_CZERO_EQZ) if haveZicond()
-  <-> 0b0000111 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011 if haveZicond()
-mapping clause encdec = ZICOND_RTYPE(rs2, rs1, rd, RISCV_CZERO_NEZ) if haveZicond()
-  <-> 0b0000111 @ rs2 @ rs1 @ 0b111 @ rd @ 0b0110011 if haveZicond()
+mapping clause encdec = ZICOND_RTYPE(rs2, rs1, rd, RISCV_CZERO_EQZ) if extensionEnabled(Ext_Zicond)
+  <-> 0b0000111 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011 if extensionEnabled(Ext_Zicond)
+mapping clause encdec = ZICOND_RTYPE(rs2, rs1, rd, RISCV_CZERO_NEZ) if extensionEnabled(Ext_Zicond)
+  <-> 0b0000111 @ rs2 @ rs1 @ 0b111 @ rd @ 0b0110011 if extensionEnabled(Ext_Zicond)
 
 mapping zicond_mnemonic : zicondop <-> string = {
   RISCV_CZERO_EQZ <-> "czero.eqz",

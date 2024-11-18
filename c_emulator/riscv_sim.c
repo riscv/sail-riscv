@@ -1,4 +1,4 @@
-#include <ctype.h>	
+#include <ctype.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,14 +49,19 @@ const char *RV32ISA = "RV32IMAC";
 #define CSR_MTVAL 0x343
 #define CSR_MIP 0x344
 
-#define OPT_TRACE_OUTPUT 1000
-#define OPT_ENABLE_WRITABLE_FIOM 1001
-#define OPT_PMP_COUNT 1002
-#define OPT_PMP_GRAIN 1003
-#define OPT_ENABLE_SVINVAL 1004
-#define OPT_ENABLE_ZCB 10014
-#define OPT_ENABLE_ZILSD 10020
-#define OPT_ENABLE_ZCLSD 10021
+enum {
+  OPT_TRACE_OUTPUT = 1000,
+  OPT_ENABLE_WRITABLE_FIOM,
+  OPT_PMP_COUNT,
+  OPT_PMP_GRAIN,
+  OPT_ENABLE_SVINVAL,
+  OPT_ENABLE_ZCB,
+  OPT_ENABLE_ZICBOM,
+  OPT_ENABLE_ZICBOZ,
+  OPT_CACHE_BLOCK_SIZE,
+  OPT_ENABLE_ZILSD,
+  OPT_ENABLE_ZCLSD,
+};
 
 static bool do_dump_dts = false;
 static bool do_show_times = false;
@@ -89,6 +94,7 @@ bool config_print_reg = true;
 bool config_print_mem_access = true;
 bool config_print_platform = true;
 bool config_print_rvfi = false;
+bool config_print_step = false;
 
 void set_config_print(char *var, bool val)
 {
@@ -108,9 +114,11 @@ void set_config_print(char *var, bool val)
     config_print_rvfi = val;
   } else if (strcmp("platform", var) == 0) {
     config_print_platform = val;
+  } else if (strcmp("step", var) == 0) {
+    config_print_step = val;
   } else {
-    fprintf(stderr, "Unknown trace category: '%s' (should be %s)\n",
-            "instr|reg|mem|platform|all", var);
+    fprintf(stderr, "Unknown trace category: '%s' (should be %s)\n", var,
+            "instr|reg|mem|rvfi|platform|step|all");
     exit(1);
   }
 }
@@ -127,7 +135,6 @@ static struct option options[] = {
     {"enable-misaligned",           no_argument,       0, 'm'                     },
     {"pmp-count",                   required_argument, 0, OPT_PMP_COUNT           },
     {"pmp-grain",                   required_argument, 0, OPT_PMP_GRAIN           },
-    {"enable-next",                 no_argument,       0, 'N'                     },
     {"ram-size",                    required_argument, 0, 'z'                     },
     {"disable-compressed",          no_argument,       0, 'C'                     },
     {"disable-writable-misa",       no_argument,       0, 'I'                     },
@@ -142,17 +149,20 @@ static struct option options[] = {
 #ifdef RVFI_DII
     {"rvfi-dii",                    required_argument, 0, 'r'                     },
 #endif
-    {"help",                        no_argument,       0, 'h'                     },
-    {"trace",                       optional_argument, 0, 'v'                     },
-    {"no-trace",                    optional_argument, 0, 'V'                     },
-    {"trace-output",                required_argument, 0, OPT_TRACE_OUTPUT        },
-    {"inst-limit",                  required_argument, 0, 'l'                     },
-    {"enable-zfinx",                no_argument,       0, 'x'                     },
-    {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
-    {"enable-svinval",              no_argument,       0, OPT_ENABLE_SVINVAL      },
-    {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
-    {"enable-zilsd",                no_argument,       0, OPT_ENABLE_ZILSD        },
-    {"enable-zclsd",               no_argument,       0, OPT_ENABLE_ZCLSD       },
+    {"help", no_argument, 0, 'h'},
+    {"trace", optional_argument, 0, 'v'},
+    {"no-trace", optional_argument, 0, 'V'},
+    {"trace-output", required_argument, 0, OPT_TRACE_OUTPUT},
+    {"inst-limit", required_argument, 0, 'l'},
+    {"enable-zfinx", no_argument, 0, 'x'},
+    {"enable-writable-fiom", no_argument, 0, OPT_ENABLE_WRITABLE_FIOM},
+    {"enable-svinval", no_argument, 0, OPT_ENABLE_SVINVAL},
+    {"enable-zcb", no_argument, 0, OPT_ENABLE_ZCB},
+    {"enable-zicbom", no_argument, 0, OPT_ENABLE_ZICBOM},
+    {"enable-zicboz", no_argument, 0, OPT_ENABLE_ZICBOZ},
+    {"cache-block-size", required_argument, 0, OPT_CACHE_BLOCK_SIZE},
+    {"enable-zilsd", no_argument, 0, OPT_ENABLE_ZILSD},
+    {"enable-zclsd", no_argument, 0, OPT_ENABLE_ZCLSD},
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
@@ -236,6 +246,17 @@ static void read_dtb(const char *path)
   fprintf(stdout, "Read %zd bytes of DTB from %s.\n", dtb_len, path);
 }
 
+// Return log2(x), or -1 if x is not a power of 2.
+static int ilog2(uint64_t x)
+{
+  for (unsigned i = 0; i < sizeof(x) * 8; ++i) {
+    if (x == (UINT64_C(1) << i)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 /**
  * Parses the command line arguments and returns the argv index for the first
  * ELF file that should be loaded. As getopt transforms the argv array, all
@@ -249,14 +270,15 @@ static int process_args(int argc, char **argv)
   uint64_t ram_size = 0;
   uint64_t pmp_count = 0;
   uint64_t pmp_grain = 0;
+  uint64_t block_size_exp = 0;
   while (true) {
     c = getopt_long(argc, argv,
                     "a"
+                    "B"
                     "d"
                     "m"
                     "P"
                     "C"
-                    "N"
                     "I"
                     "F"
                     "W"
@@ -285,6 +307,10 @@ static int process_args(int argc, char **argv)
     switch (c) {
     case 'a':
       report_arch();
+      break;
+    case 'B':
+      fprintf(stderr, "enabling B extension.\n");
+      rv_enable_bext = true;
       break;
     case 'd':
       fprintf(stderr, "enabling dirty update.\n");
@@ -315,10 +341,6 @@ static int process_args(int argc, char **argv)
     case 'C':
       fprintf(stderr, "disabling RVC compressed instructions.\n");
       rv_enable_rvc = false;
-      break;
-    case 'N':
-      fprintf(stderr, "enabling N extension.\n");
-      rv_enable_next = true;
       break;
     case 'I':
       fprintf(stderr, "disabling writable misa CSR.\n");
@@ -394,23 +416,47 @@ static int process_args(int argc, char **argv)
     case 'l':
       insn_limit = atoi(optarg);
       break;
+    case OPT_ENABLE_SVINVAL:
+      fprintf(stderr, "enabling svinval extension.\n");
+      rv_enable_svinval = true;
+      break;
     case OPT_ENABLE_ZCB:
       fprintf(stderr, "enabling Zcb extension.\n");
       rv_enable_zcb = true;
-      break;	  
+      break;
+    case OPT_ENABLE_ZICBOM:
+      fprintf(stderr, "enabling Zicbom extension.\n");
+      rv_enable_zicbom = true;
+      break;
+    case OPT_ENABLE_ZICBOZ:
+      fprintf(stderr, "enabling Zicboz extension.\n");
+      rv_enable_zicboz = true;
+      break;
+    case OPT_ENABLE_ZILSD:
+      fprintf(stderr, "enabling Zilsd extension.\n");
+      rv_enable_zilsd = true;
+      break;
+    case OPT_ENABLE_ZCLSD:
+      fprintf(stderr, "enabling Zclsd extension.\n");
+      rv_enable_zclsd = true;
+      break;
+    case OPT_CACHE_BLOCK_SIZE:
+      block_size_exp = ilog2(atol(optarg));
+
+      if (block_size_exp < 0 || block_size_exp > 12) {
+        fprintf(stderr, "invalid cache-block-size '%s' provided.\n", optarg);
+        exit(1);
+      }
+
+      fprintf(stderr, "setting cache-block-size to 2^%" PRIu64 " = %u B\n",
+              block_size_exp, 1 << block_size_exp);
+      rv_cache_block_size_exp = block_size_exp;
+      break;
     case 'x':
       fprintf(stderr, "enabling Zfinx support.\n");
       rv_enable_zfinx = true;
       rv_enable_fdext = false;
       break;
-    case OPT_ENABLE_ZILSD:
-      fprintf(stderr, "enabling Zilsd support.\n");
-      rv_enable_zilsd = true;
-      break;
-    case OPT_ENABLE_ZCLSD:
-      fprintf(stderr, "enabling Zclsd support.\n");
-      rv_enable_zclsd = true;
-      break; 
 #ifdef SAILCOV
     case 'c':
       sailcov_file = strdup(optarg);
@@ -994,6 +1040,9 @@ void run_sail(void)
       KILL(sail_int)(&sail_step);
     }
     if (stepped) {
+      if (config_print_step) {
+        fprintf(trace_log, "\n");
+      }
       step_no++;
       insn_cnt++;
       total_insns++;

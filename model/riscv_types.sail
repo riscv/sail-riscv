@@ -8,14 +8,25 @@
 
 /* Basic type and function definitions used pervasively in the model. */
 
+/* ISA extension names as enums */
+scattered enum extension
+
+// Function used to determine if an extension is enabled in the current configuration.
+// This means an extension is implemented & supported, *and* any necessary bits
+// are set in the relevant CSRs (misa, mstatus, etc.) to enable its use. It is possible
+// for some extensions to be supported in hardware, but temporarily disabled via a CSR,
+// in which case this function should return false.
+val extensionEnabled : extension -> bool
+scattered function extensionEnabled
+
 /* this value is only defined for the runtime platform for ELF loading
  * checks, and not used in the model.
  */
-let xlen_val = sizeof(xlen)
+let xlen_val = xlen
 
-let xlen_max_unsigned = 2 ^ sizeof(xlen) - 1
-let xlen_max_signed = 2 ^ (sizeof(xlen) - 1) - 1
-let xlen_min_signed = 0 - 2 ^ (sizeof(xlen) - 1)
+let xlen_max_unsigned = 2 ^ xlen - 1
+let xlen_max_signed = 2 ^ (xlen - 1) - 1
+let xlen_min_signed = 0 - 2 ^ (xlen - 1)
 
 type half = bits(16)
 type word = bits(32)
@@ -28,10 +39,9 @@ type csreg   = bits(12)   /* CSR addressing */
 
 /* register file indexing */
 
-type regno ('n : Int), 0 <= 'n < 32 = int('n)
+type regno = range(0, 31)
 
-val regidx_to_regno : bits(5) -> {'n, 0 <= 'n < 32. regno('n)}
-function regidx_to_regno b = let 'r = unsigned(b) in r
+function regidx_to_regno (b : regidx) -> regno = unsigned(b)
 
 /* mapping RVC register indices into normal indices */
 val creg2reg_idx : cregidx -> regidx
@@ -67,23 +77,6 @@ function arch_to_bits(a : Architecture) -> arch_xlen =
     RV64  => 0b10,
     RV128 => 0b11
   }
-
-
-/* model-internal exceptions */
-
-union exception = {
-  Error_not_implemented : string,
-  Error_internal_error  : unit
-}
-
-val not_implemented : forall ('a : Type). string -> 'a
-function not_implemented message = throw(Error_not_implemented(message))
-
-val internal_error : forall ('a : Type). (string, int, string) -> 'a
-function internal_error(file, line, s) = {
-    assert (false, file ^ ":" ^ dec_str(line) ^ ": " ^ s);
-    throw Error_internal_error()
-}
 
 /* privilege levels */
 
@@ -336,6 +329,8 @@ enum amoop = {AMOSWAP, AMOADD, AMOXOR, AMOAND, AMOOR,
               AMOMIN, AMOMAX, AMOMINU, AMOMAXU}   /* AMO ops */
 enum csrop = {CSRRW, CSRRS, CSRRC}                /* CSR ops */
 
+enum cbop_zicbom = {CBO_CLEAN, CBO_FLUSH, CBO_INVAL}  /* Zicbom ops */
+
 enum brop_zba = {RISCV_SH1ADD, RISCV_SH2ADD, RISCV_SH3ADD}
 
 enum brop_zbb = {RISCV_ANDN, RISCV_ORN, RISCV_XNOR, RISCV_MAX,
@@ -356,16 +351,6 @@ enum biop_zbs = {RISCV_BCLRI, RISCV_BEXTI, RISCV_BINVI, RISCV_BSETI}
 enum extop_zbb = {RISCV_SEXTB, RISCV_SEXTH, RISCV_ZEXTH}
 
 enum zicondop = {RISCV_CZERO_EQZ, RISCV_CZERO_NEZ}
-
-mapping bool_bits : bool <-> bits(1) = {
-  true   <-> 0b1,
-  false  <-> 0b0
-}
-
-mapping bool_not_bits : bool <-> bits(1) = {
-  true   <-> 0b0,
-  false  <-> 0b1
-}
 
 // Get the bit encoding of word_width.
 mapping size_enc : word_width <-> bits(2) = {
@@ -406,5 +391,5 @@ struct mul_op = {
 val report_invalid_width : forall ('a : Type). (string, int, word_width, string) -> 'a
 function report_invalid_width(f , l, w, k) -> 'a = {
   internal_error(f, l, "Invalid width, " ^ size_mnemonic(w) ^ ", for " ^ k ^
-     " with xlen=" ^ dec_str(sizeof(xlen)))
+     " with xlen=" ^ dec_str(xlen))
 }

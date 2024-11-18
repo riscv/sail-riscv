@@ -9,5 +9,9 @@
 /* Define the FLEN value for the 'D' extension. */
 
 type flen       : Int = 64
-type flen_bytes : Int = 8
 type flenbits         = bits(flen)
+
+// Variable versions of the above types. Variables and types
+// are disjoint in Sail so they are allowed to have the same name.
+// This saves typing `sizeof()` everywhere.
+let flen = sizeof(flen)

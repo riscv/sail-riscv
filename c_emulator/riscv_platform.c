@@ -22,11 +22,6 @@ bool sys_enable_rvc(unit u)
   return rv_enable_rvc;
 }
 
-bool sys_enable_next(unit u)
-{
-  return rv_enable_next;
-}
-
 bool sys_enable_fdext(unit u)
 {
   return rv_enable_fdext;
@@ -47,16 +42,6 @@ bool sys_enable_zfinx(unit u)
   return rv_enable_zfinx;
 }
 
-bool sys_enable_zilsd(unit u)
-{
-  return rv_enable_zilsd;
-}
-
-bool sys_enable_zclsd(unit u)
-{
-  return rv_enable_zclsd;
-}
-
 bool sys_enable_writable_fiom(unit u)
 {
   return rv_enable_writable_fiom;
@@ -65,6 +50,31 @@ bool sys_enable_writable_fiom(unit u)
 bool sys_enable_vext(unit u)
 {
   return rv_enable_vext;
+}
+
+bool sys_enable_bext(unit u)
+{
+  return rv_enable_bext;
+}
+
+bool sys_enable_zicbom(unit u)
+{
+  return rv_enable_zicbom;
+}
+
+bool sys_enable_zicboz(unit u)
+{
+  return rv_enable_zicboz;
+}
+
+bool sys_enable_zilsd(unit u)
+{ 
+  return rv_enable_zilsd;
+}
+
+bool sys_enable_zclsd(unit u)
+{
+  return rv_enable_zclsd;
 }
 
 uint64_t sys_pmp_count(unit u)
@@ -77,9 +87,24 @@ uint64_t sys_pmp_grain(unit u)
   return rv_pmp_grain;
 }
 
+uint64_t sys_vector_vlen_exp(unit u)
+{
+  return rv_vector_vlen_exp;
+}
+
+uint64_t sys_vector_elen_exp(unit u)
+{
+  return rv_vector_elen_exp;
+}
+
 bool sys_enable_writable_misa(unit u)
 {
   return rv_enable_writable_misa;
+}
+
+mach_bits sys_writable_hpm_counters(unit u)
+{
+  return rv_writable_hpm_counters;
 }
 
 bool plat_enable_dirty_update(unit u)
@@ -115,6 +140,11 @@ mach_bits plat_rom_base(unit u)
 mach_bits plat_rom_size(unit u)
 {
   return rv_rom_size;
+}
+
+mach_bits plat_cache_block_size_exp()
+{
+  return rv_cache_block_size_exp;
 }
 
 // Provides entropy for the scalar cryptography extension.
@@ -175,7 +205,7 @@ unit plat_term_write(mach_bits s)
   return UNIT;
 }
 
-void plat_insns_per_tick(sail_int *rop, unit u) { }
+void plat_insns_per_tick(sail_int *rop, unit u) {}
 
 mach_bits plat_htif_tohost(unit u)
 {

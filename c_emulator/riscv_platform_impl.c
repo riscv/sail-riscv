@@ -6,27 +6,36 @@
 uint64_t rv_pmp_count = 0;
 uint64_t rv_pmp_grain = 0;
 
+uint64_t rv_vector_vlen_exp = 0x9;
+uint64_t rv_vector_elen_exp = 0x6;
+
 bool rv_enable_svinval = false;
 bool rv_enable_zcb = false;
 bool rv_enable_zfinx = false;
-bool rv_enable_zilsd = false;
-bool rv_enable_zclsd = false;
 bool rv_enable_rvc = true;
-bool rv_enable_next = false;
 bool rv_enable_writable_misa = true;
 bool rv_enable_fdext = true;
 bool rv_enable_vext = true;
+bool rv_enable_bext = false;
+bool rv_enable_zicbom = false;
+bool rv_enable_zicboz = false;
+bool rv_enable_zilsd = false;
+bool rv_enable_zclsd = false;
 
 bool rv_enable_dirty_update = false;
 bool rv_enable_misaligned = false;
 bool rv_mtval_has_illegal_inst_bits = false;
 bool rv_enable_writable_fiom = true;
+uint64_t rv_writable_hpm_counters = 0xFFFFFFFF;
 
 uint64_t rv_ram_base = UINT64_C(0x80000000);
 uint64_t rv_ram_size = UINT64_C(0x4000000);
 
 uint64_t rv_rom_base = UINT64_C(0x1000);
 uint64_t rv_rom_size = UINT64_C(0x100);
+
+// Default 64, which is mandated by RVA22.
+uint64_t rv_cache_block_size_exp = UINT64_C(6);
 
 // Provides entropy for the scalar cryptography extension.
 uint64_t rv_16_random_bits(void)

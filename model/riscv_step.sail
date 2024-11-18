@@ -54,7 +54,7 @@ function step(step_no : int) -> bool = {
               print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ to_str(ast));
             };
             /* check for RVC once here instead of every RVC execute clause. */
-            if haveRVC() then {
+            if extensionEnabled(Ext_Zca) then {
               nextPC = PC + 2;
               (execute(ast), true)
             } else {
@@ -93,12 +93,15 @@ function step(step_no : int) -> bool = {
 
 function loop () : unit -> unit = {
   let insns_per_tick = plat_insns_per_tick();
-  i : int = 0;
-  step_no : int = 0;
+  var i : int = 0;
+  var step_no : int = 0;
   while not(htif_done) do {
     let stepped = step(step_no);
     if stepped then {
       step_no = step_no + 1;
+      if get_config_print_instr() then {
+        print_step()
+      };
       sail_end_cycle()
     };
 

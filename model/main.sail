@@ -15,7 +15,7 @@ $ifdef SYMBOLIC
 
 $include <elf.sail>
 
-function get_entry_point() = to_bits(sizeof(xlen), elf_entry())
+function get_entry_point() = to_bits(xlen, elf_entry())
 
 $else
 
