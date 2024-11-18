@@ -6,24 +6,18 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* Mapping of csr addresses to their names. */
+/* model-internal exceptions */
 
-val csr_name_map : csreg <-> string
+union exception = {
+  Error_not_implemented : string,
+  Error_internal_error  : unit
+}
 
-scattered mapping csr_name_map
+val not_implemented : forall ('a : Type). string -> 'a
+function not_implemented message = throw(Error_not_implemented(message))
 
-val csr_name : csreg -> string
-overload to_str = {csr_name}
-
-/* returns whether a CSR exists
- */
-val is_CSR_defined : (csreg) -> bool
-scattered function is_CSR_defined
-
-/* returns the value of the CSR if it is defined */
-val read_CSR : csreg -> xlenbits
-scattered function read_CSR
-
-/* returns new value (after legalisation) if the CSR is defined */
-val write_CSR : (csreg, xlenbits) -> xlenbits
-scattered function write_CSR
+val internal_error : forall ('a : Type). (string, int, string) -> 'a
+function internal_error(file, line, s) = {
+    assert (false, file ^ ":" ^ dec_str(line) ^ ": " ^ s);
+    throw Error_internal_error()
+}

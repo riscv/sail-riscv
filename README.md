@@ -125,7 +125,7 @@ Supported RISC-V ISA features
 - Zaamo extension for atomic memory operations, v1.0
 - Zabha extension for byte and halfword atomic memory operations, v1.0
 - F and D extensions for single and double-precision floating-point, v2.2
-- Zfh extension half-precision floating-point, v1.0
+- Zfh and Zfhmin extensions for half-precision floating-point, v1.0
 - Zfa extension for additional floating-point instructions, v1.0
 - Zfinx, Zdinx, and Zhinx extensions for floating-point in integer registers, v1.0
 - C extension for compressed instructions, v2.0

@@ -934,18 +934,14 @@ function clause execute (F_UN_TYPE_D(rs1, rd, FCLASS_D)) = {
 }
 
 function clause execute (F_UN_TYPE_D(rs1, rd, FMV_X_D)) = {
-  assert(xlen >= 64);
-  let rs1_val_D            = F(rs1)[63..0];
-  let rd_val_X  : xlenbits = sign_extend(rs1_val_D);
-  X(rd) = rd_val_X;
+  assert(xlen >= 64 & flen >= 64);
+  X(rd) = sign_extend(F(rs1)[63..0]);
   RETIRE_SUCCESS
 }
 
 function clause execute (F_UN_TYPE_D(rs1, rd, FMV_D_X)) = {
-  assert(xlen >= 64);
-  let rs1_val_X            = X(rs1);
-  let rd_val_D             = rs1_val_X [63..0];
-  F(rd) = rd_val_D;
+  assert(xlen >= 64 & flen >= 64);
+  F(rd) = nan_box(X(rs1)[63..0]);
   RETIRE_SUCCESS
 }
 
