@@ -59,7 +59,7 @@ val sys_vext_vl_use_ceil = pure "sys_vext_vl_use_ceil" : unit -> bool
 
 function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
   // See "Constraints on Setting vl" in the vector spec.
-  let vl =
+  let new_vl =
     if AVL <= VLMAX then AVL
     else if AVL < 2 * VLMAX then {
       // If VLMAX < AVL < 2 * VLMAX then we can use any value
@@ -69,7 +69,7 @@ function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
     }
     else VLMAX;
 
-  to_bits(xlen, vl)
+  to_bits(xlen, new_vl)
 }
 
 /* *********************************** vsetvli *********************************** */
