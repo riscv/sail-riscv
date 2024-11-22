@@ -40,8 +40,8 @@ function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
 val get_xepc : Privilege -> xlenbits
 function get_xepc(p) =
   match p {
-    Machine    => mepc,
-    Supervisor => sepc,
+    Machine    => align_pc(mepc),
+    Supervisor => align_pc(sepc),
     User       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
   }
 
