@@ -47,12 +47,13 @@ function get_xepc(p) =
 
 val set_xepc : (Privilege, xlenbits) -> xlenbits
 function set_xepc(p, value) = {
+  let target = legalize_xepc(value);
   match p {
-    Machine    => mepc = value,
-    Supervisor => sepc = value,
+    Machine    => mepc = target,
+    Supervisor => sepc = target,
     User       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
   };
-  value
+  target
 }
 
 val prepare_xret_target : (Privilege) -> xlenbits
@@ -88,9 +89,9 @@ function clause is_CSR_defined(0x305) = true // mtvec
 function clause is_CSR_defined(0x341) = true // mepc
 
 function clause read_CSR(0x105) = get_stvec()
-function clause read_CSR(0x141) = get_xepc(Supervisor) & pc_alignment_mask()
+function clause read_CSR(0x141) = align_pc(get_xepc(Supervisor))
 function clause read_CSR(0x305) = get_mtvec()
-function clause read_CSR(0x341) = get_xepc(Machine) & pc_alignment_mask()
+function clause read_CSR(0x341) = align_pc(get_xepc(Machine))
 
 function clause write_CSR(0x105, value) = { set_stvec(value) }
 function clause write_CSR(0x141, value) = { set_xepc(Supervisor, value) }

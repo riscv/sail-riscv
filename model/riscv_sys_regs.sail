@@ -437,9 +437,23 @@ function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
 
 register mepc : xlenbits
 
-/* masking for reads to xepc */
-function pc_alignment_mask() -> xlenbits =
-  ~(zero_extend(if misa[C] == 0b1 then 0b00 else 0b10))
+/* The xepc legalization zeroes xepc[1:0] when misa.C is hardwired to 0.
+ * When misa.C is writable, it zeroes only xepc[0].
+ */
+function legalize_xepc(v : xlenbits) -> xlenbits = {
+  // allow writing xepc[1] only if misa.C is enabled or could be enabled.
+  if   sys_enable_rvc()
+  then [v with 0 = bitzero]
+  else [v with 1..0 = zeros()]
+}
+
+// Align value to min supported PC alignment. This is used to
+// legalize xepc reads.
+function align_pc(addr : xlenbits) -> xlenbits = {
+  if misa[C] == 0b1
+  then [addr with 0 = bitzero]
+  else [addr with 1..0 = zeros()]
+}
 
 /* auxiliary exception registers */
 

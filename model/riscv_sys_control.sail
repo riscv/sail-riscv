@@ -293,7 +293,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   get_config_print_platform()
       then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
-      prepare_xret_target(Machine) & pc_alignment_mask()
+      align_pc(prepare_xret_target(Machine))
     },
     (_, CTL_SRET())  => {
       let prev_priv   = cur_privilege;
@@ -310,7 +310,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       then print_platform("ret-ing from " ^ to_str(prev_priv)
                           ^ " to " ^ to_str(cur_privilege));
 
-      prepare_xret_target(Supervisor) & pc_alignment_mask()
+      align_pc(prepare_xret_target(Supervisor))
     },
   }
 }
