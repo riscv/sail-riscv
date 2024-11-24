@@ -118,6 +118,17 @@ function bits_to_bool(x : bits(1)) -> bool = bool_bits(x)
 val to_bits : forall 'l, 'l >= 0.(int('l), int) -> bits('l)
 function to_bits (l, n) = get_slice_int(l, n, 0)
 
+val flip_bits : forall 'n, 'n >= 0. (int('n), bits('n)) -> bits('n)
+function flip_bits (num : int('n), x : bits('n)) -> bits('n) = {
+  var result : bits('n) = zeros();
+  foreach (i from 0 to (num - 1))
+    if x[i] == bitone then
+      result[i] = bitzero
+    else
+      result[i] = bitone;
+  result
+}
+
 infix 4 <_s
 infix 4 >_s
 infix 4 <=_s

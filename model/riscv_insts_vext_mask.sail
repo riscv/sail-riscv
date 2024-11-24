@@ -38,24 +38,24 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vs1_val : vector('n, bool) = read_vmask(num_elem, 0b0, vs1);
-  let vs2_val : vector('n, bool) = read_vmask(num_elem, 0b0, vs2);
-  let vd_val  : vector('n, bool) = read_vmask(num_elem, 0b0, vd);
+  let vs1_val : bits('n) = read_vmask(num_elem, 0b0, vs1);
+  let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
+  let vd_val  : bits('n) = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_carry(num_elem, SEW, 0, vd_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] then {
+    if mask[i] == bitone then {
       result[i] = match funct6 {
-        MM_VMAND     => vs2_val[i] & vs1_val[i],
-        MM_VMNAND    => not(vs2_val[i] & vs1_val[i]),
-        MM_VMANDN    => vs2_val[i] & not(vs1_val[i]),
-        MM_VMXOR     => vs2_val[i] != vs1_val[i],
-        MM_VMOR      => vs2_val[i] | vs1_val[i],
-        MM_VMNOR     => not(vs2_val[i] | vs1_val[i]),
-        MM_VMORN     => vs2_val[i] | not(vs1_val[i]),
-        MM_VMXNOR    => vs2_val[i] == vs1_val[i]
+        MM_VMAND     => (vs2_val & vs1_val)[i],
+        MM_VMNAND    => if (vs2_val & vs1_val)[i] == bitone then bitzero else bitone,
+        MM_VMANDN    => (vs2_val & flip_bits(num_elem, vs1_val))[i],
+        MM_VMXOR     => (vs2_val ^ vs1_val)[i],
+        MM_VMOR      => (vs2_val | vs1_val)[i],
+        MM_VMNOR     => flip_bits(num_elem, vs2_val | vs1_val)[i],
+        MM_VMORN     => (vs2_val | flip_bits(num_elem, vs1_val))[i],
+        MM_VMXNOR    => (vs2_val & vs1_val)[i]
       }
     }
   };
@@ -95,14 +95,14 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
-  let vs2_val : vector('n, bool) = read_vmask(num_elem, 0b0, vs2);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, 0b00000);
+  let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
 
   let (_, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
 
   var count : nat = 0;
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] & vs2_val[i] then count = count + 1;
+    if (mask & vs2_val)[i] == bitone then count = count + 1;
   };
 
   X(rd) = to_bits(xlen, count);
@@ -129,15 +129,15 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
-  let vs2_val : vector('n, bool) = read_vmask(num_elem, 0b0, vs2);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, 0b00000);
+  let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
 
   let (_, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
 
   var index : int = -1;
   foreach (i from 0 to (num_elem - 1)) {
     if index == -1 then {
-      if mask[i] & vs2_val[i] then index = i;
+      if (mask & vs2_val)[i] == bitone then index = i;
     };
   };
 
@@ -166,18 +166,18 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
-  let vs2_val : vector('n, bool) = read_vmask(num_elem, 0b0, vs2);
-  let vd_val  : vector('n, bool) = read_vmask(num_elem, 0b0, vd);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, 0b00000);
+  let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
+  let vd_val  : bits('n) = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
   var result = initial_result;
 
   var found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] then {
-      if vs2_val[i] then found_elem = true;
-      result[i] = if found_elem then false else true
+    if mask[i] == bitone then {
+      if vs2_val[i] == bitone then found_elem = true;
+      result[i] = if found_elem then bitzero else bitone
     }
   };
 
@@ -206,18 +206,18 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
-  let vs2_val : vector('n, bool) = read_vmask(num_elem, 0b0, vs2);
-  let vd_val  : vector('n, bool) = read_vmask(num_elem, 0b0, vd);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, 0b00000);
+  let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
+  let vd_val  : bits('n) = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
   var result = initial_result;
 
   var found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] then {
-      result[i] = if found_elem then false else true;
-      if vs2_val[i] then found_elem = true
+    if mask[i] == bitone then {
+      result[i] = if found_elem then bitzero else bitone;
+      if vs2_val[i] == bitone then found_elem = true
     }
   };
 
@@ -246,21 +246,21 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
-  let vs2_val : vector('n, bool) = read_vmask(num_elem, 0b0, vs2);
-  let vd_val  : vector('n, bool) = read_vmask(num_elem, 0b0, vd);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, 0b00000);
+  let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
+  let vd_val  : bits('n) = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
   var result = initial_result;
 
-  var found_elem : bool = false;
+  var found_elem : bits('n) = zeros();
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] then {
-      if vs2_val[i] & not(found_elem) then {
-        result[i] = true;
-        found_elem = true
+    if mask[i] == bitone then {
+      if (vs2_val & flip_bits('n, found_elem))[i] == bitone then {
+        result[i] = bitone;
+        found_elem = sign_extend(0b1);
       } else {
-        result[i] = false
+        result[i] = bitzero
       }
     }
   };
@@ -290,8 +290,10 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
-  let vs2_val : vector('n, bool)     = read_vmask(num_elem, 0b0, vs2);
+  assert('n > 0);
+
+  let vm_val  : bits('n)     = read_vmask(num_elem, vm, 0b00000);
+  let vs2_val : bits('n)     = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
@@ -299,9 +301,9 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
 
   var sum : int = 0;
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] then {
+    if mask[i] == bitone then {
       result[i] = to_bits(SEW, sum);
-      if vs2_val[i] then sum = sum + 1
+      if vs2_val[i] == bitone then sum = sum + 1
     }
   };
 
@@ -329,14 +331,16 @@ function clause execute(VID_V(vm, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem, vm, 0b00000);
+  assert('n > 0);
+
+  let vm_val  : bits('n)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] then result[i] = to_bits(SEW, i)
+    if mask[i] == bitone then result[i] = to_bits(SEW, i)
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);

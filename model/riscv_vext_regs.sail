@@ -359,43 +359,43 @@ function write_single_element(EEW, index, vrid, value) = {
 }
 
 /* Mask register reading operation with num_elem as max(VLMAX,VLEN/SEW)) */
-val read_vmask : forall 'n, 'n >= 0. (int('n), bits(1), regidx) -> vector('n, bool)
+val read_vmask : forall 'n, 'n > 0. (int('n), bits(1), regidx) -> bits('n)
 function read_vmask(num_elem, vm, vrid) = {
   assert(num_elem <= sizeof(vlenmax));
   let vreg_val : vregtype = V(vrid);
-  var result   : vector('n, bool) = vector_init(true);
+  var result   : bits('n) = sign_extend(0b1);
 
   if vm == 0b1 then {
     return result
   };
 
   foreach (i from 0 to (num_elem - 1)) {
-    result[i] = bit_to_bool(vreg_val[i])
+    result[i] = vreg_val[i]
   };
 
   result
 }
 
 /* This is a special version of read_vmask for carry/borrow instructions, where vm=1 means no carry */
-val read_vmask_carry : forall 'n, 'n >= 0. (int('n), bits(1), regidx) -> vector('n, bool)
+val read_vmask_carry : forall 'n, 'n > 0. (int('n), bits(1), regidx) -> bits('n)
 function read_vmask_carry(num_elem, vm, vrid) = {
   assert(num_elem <= sizeof(vlenmax));
   let vreg_val : vregtype = V(vrid);
-  var result   : vector('n, bool) = vector_init(false);
+  var result   : bits('n) = zeros();
 
   if vm == 0b1 then {
     return result
   };
 
   foreach (i from 0 to (num_elem - 1)) {
-    result[i] = bit_to_bool(vreg_val[i])
+    result[i] = vreg_val[i]
   };
 
   result
 }
 
 /* Mask register writing operation with num_elem as max(VLMAX,VLEN/SEW)) */
-val write_vmask : forall 'n, 'n >= 0. (int('n), regidx, vector('n, bool)) -> unit
+val write_vmask : forall 'n, 'n > 0. (int('n), regidx, bits('n)) -> unit
 function write_vmask(num_elem, vrid, v) = {
   assert(0 < VLEN & VLEN <= sizeof(vlenmax));
   assert(0 < num_elem & num_elem <= VLEN);
@@ -403,7 +403,7 @@ function write_vmask(num_elem, vrid, v) = {
   var result   : vregtype = undefined;
 
   foreach (i from 0 to (num_elem - 1)) {
-    result[i] = bool_to_bit(v[i])
+    result[i] = v[i]
   };
   foreach (i from num_elem to (VLEN - 1)) {
     /* Mask tail is always agnostic */
