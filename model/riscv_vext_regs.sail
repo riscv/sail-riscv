@@ -83,7 +83,7 @@ function dirty_v_context() -> unit = {
 }
 
 function dirty_v_context_if_present() -> unit = {
-  if sys_enable_vext() then dirty_v_context()
+  if sys_enable_vext() | (misa[V] == 0b1) then dirty_v_context()
 }
 
 function rV (r : regno) -> vregtype = {
