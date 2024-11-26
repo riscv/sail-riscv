@@ -12,6 +12,11 @@ bool sys_enable_vext(unit);
 bool sys_enable_bext(unit);
 bool sys_enable_zicbom(unit);
 bool sys_enable_zicboz(unit);
+bool sys_enable_zama16b(unit);
+
+bool sys_misaligned_order_decreasing(unit);
+bool sys_misaligned_to_byte(unit);
+uint64_t sys_misaligned_allowed_within(unit);
 
 uint64_t sys_pmp_count(unit);
 uint64_t sys_pmp_grain(unit);

@@ -9,6 +9,11 @@ uint64_t rv_pmp_grain = 0;
 uint64_t rv_vector_vlen_exp = 0x9;
 uint64_t rv_vector_elen_exp = 0x6;
 
+/* Defaults for misaligned access behavior in the generated simulator */
+bool rv_misaligned_order_decreasing = false;
+bool rv_misaligned_to_byte = false;
+uint64_t rv_misaligned_allowed_within = 0;
+
 bool rv_enable_svinval = false;
 bool rv_enable_zcb = false;
 bool rv_enable_zfinx = false;
@@ -19,6 +24,7 @@ bool rv_enable_vext = true;
 bool rv_enable_bext = false;
 bool rv_enable_zicbom = false;
 bool rv_enable_zicboz = false;
+bool rv_enable_zama16b = false;
 
 bool rv_enable_dirty_update = false;
 bool rv_enable_misaligned = false;

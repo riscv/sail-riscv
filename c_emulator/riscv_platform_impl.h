@@ -14,6 +14,10 @@ extern uint64_t rv_pmp_grain;
 extern uint64_t rv_vector_vlen_exp;
 extern uint64_t rv_vector_elen_exp;
 
+extern bool rv_misaligned_order_decreasing;
+extern bool rv_misaligned_to_byte;
+extern uint64_t rv_misaligned_allowed_within;
+
 extern bool rv_enable_svinval;
 extern bool rv_enable_zcb;
 extern bool rv_enable_zfinx;
@@ -23,6 +27,7 @@ extern bool rv_enable_vext;
 extern bool rv_enable_bext;
 extern bool rv_enable_zicbom;
 extern bool rv_enable_zicboz;
+extern bool rv_enable_zama16b;
 extern bool rv_enable_writable_misa;
 extern bool rv_enable_dirty_update;
 extern bool rv_enable_misaligned;

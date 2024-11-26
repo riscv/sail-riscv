@@ -67,6 +67,26 @@ bool sys_enable_zicboz(unit u)
   return rv_enable_zicboz;
 }
 
+bool sys_enable_zama16b(unit u)
+{
+  return rv_enable_zama16b;
+}
+
+bool sys_misaligned_order_decreasing(unit u)
+{
+  return rv_misaligned_order_decreasing;
+}
+
+bool sys_misaligned_to_byte(unit u)
+{
+  return rv_misaligned_to_byte;
+}
+
+uint64_t sys_misaligned_allowed_within(unit u)
+{
+  return rv_misaligned_allowed_within;
+}
+
 uint64_t sys_pmp_count(unit u)
 {
   return rv_pmp_count;
