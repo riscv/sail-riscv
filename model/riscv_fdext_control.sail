@@ -37,8 +37,8 @@ function clause read_CSR (0x001) = zero_extend(fcsr[FFLAGS])
 function clause read_CSR (0x002) = zero_extend(fcsr[FRM])
 function clause read_CSR (0x003) = zero_extend(fcsr.bits)
 
-function clause write_CSR (0x001, value) = { dirty_fd_context(); write_fcsr(fcsr[FRM], value[4..0]); zero_extend(fcsr[FFLAGS]) }
-function clause write_CSR (0x002, value) = { dirty_fd_context(); write_fcsr(value[2..0], fcsr[FFLAGS]); zero_extend(fcsr[FRM]) }
-function clause write_CSR (0x003, value) = { dirty_fd_context(); write_fcsr(value[7..5], value[4..0]); zero_extend(fcsr.bits) }
+function clause write_CSR (0x001, value) = { write_fcsr(fcsr[FRM], value[4..0]); zero_extend(fcsr[FFLAGS]) }
+function clause write_CSR (0x002, value) = { write_fcsr(value[2..0], fcsr[FFLAGS]); zero_extend(fcsr[FRM]) }
+function clause write_CSR (0x003, value) = { write_fcsr(value[7..5], value[4..0]); zero_extend(fcsr.bits) }
 
 /* **************************************************************** */
