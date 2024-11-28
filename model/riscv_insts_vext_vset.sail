@@ -55,14 +55,21 @@ function handle_illegal_vtype() = {
   print_reg("CSR vl <- " ^ BitStr(vl))
 }
 
-val calculate_new_vl : (int, int) -> xlenbits
-function calculate_new_vl(AVL, VLMAX) = {
-  /* Note: ceil(AVL / 2) ≤ vl ≤ VLMAX when VLMAX < AVL < (2 * VLMAX)
-   * TODO: configuration support for either using ceil(AVL / 2) or VLMAX
-   */
-  if AVL <= VLMAX then to_bits(xlen, AVL)
-  else if AVL < 2 * VLMAX then to_bits(xlen, (AVL + 1) / 2)
-  else to_bits(xlen, VLMAX)
+val sys_vext_vl_use_ceil = pure "sys_vext_vl_use_ceil" : unit -> bool
+
+function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
+  // See "Constraints on Setting vl" in the vector spec.
+  let new_vl =
+    if AVL <= VLMAX then AVL
+    else if AVL < 2 * VLMAX then {
+      // If VLMAX < AVL < 2 * VLMAX then we can use any value
+      // such that ceil(AVL / 2) <= vl <= VLMAX. Here we provide
+      // two options: ceil(AVL / 2) or VLMAX.
+      if sys_vext_vl_use_ceil() then (AVL + 1) / 2 else VLMAX
+    }
+    else VLMAX;
+
+  to_bits(xlen, new_vl)
 }
 
 /* *********************************** vsetvli *********************************** */
