@@ -90,8 +90,6 @@ val sys_enable_svinval = pure "sys_enable_svinval" : unit -> bool
 val sys_enable_zcb = pure "sys_enable_zcb" : unit -> bool
 /* whether zfinx was enabled at boot */
 val sys_enable_zfinx = pure "sys_enable_zfinx" : unit -> bool
-/* whether the N extension was enabled at boot */
-val sys_enable_next = pure "sys_enable_next" : unit -> bool
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
 val sys_enable_writable_fiom = pure "sys_enable_writable_fiom" : unit -> bool

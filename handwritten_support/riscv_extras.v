@@ -198,7 +198,6 @@ Definition string_of_int z := DecimalString.NilZero.string_of_int (Z.to_int z).
 Axiom sys_enable_writable_misa : unit -> bool.
 Axiom sys_enable_rvc : unit -> bool.
 Axiom sys_enable_fdext : unit -> bool.
-Axiom sys_enable_next : unit -> bool.
 Axiom sys_enable_zfinx : unit -> bool.
 Axiom sys_enable_writable_fiom : unit -> bool.
 
