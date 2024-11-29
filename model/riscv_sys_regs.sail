@@ -549,38 +549,6 @@ function retire_instruction() -> unit = {
   if minstret_increment then minstret = minstret + 1;
 }
 
-// HPM (Hardware Performance Monitoring) counters. The lowest three values are
-// not used but they are defined for simplicity.
-register mhpmcounter : vector(32, bits(64))
-
-// HPM events selector. These control what the HPM counters measure. The lowest
-// three values are not used but they are defined for simplicity.
-register mhpmevent : vector(32, xlenbits)
-
-// Valid HPM counter indices. The lowest three are used for mcycle, mtime and minstret.
-type hpmidx = range(3, 31)
-
-// Convert the lowest 5 bits of a CSR index to an hpmidx. Asserts if it is 0..2.
-function hpmidx_from_bits(b : bits(5)) -> hpmidx = {
-  let index = unsigned(b);
-  assert(index >= 3, "unreachable HPM index");
-  index
-}
-
-function read_mhpmcounter(index : hpmidx) -> xlenbits = mhpmcounter[index][(xlen - 1) .. 0]
-function read_mhpmcounterh(index : hpmidx) -> bits(32) = mhpmcounter[index][63 .. 32]
-function read_mhpmevent(index : hpmidx) -> xlenbits = mhpmevent[index]
-
-// Write the HPM CSRs. These return the new value of the CSR, for use in writeCSR.
-function write_mhpmcounter(index : hpmidx, value : xlenbits) -> unit =
-  if sys_writable_hpm_counters()[index] == bitone then mhpmcounter[index][(xlen - 1) .. 0] = value
-
-function write_mhpmcounterh(index : hpmidx, value : bits(32)) -> unit =
-  if sys_writable_hpm_counters()[index] == bitone then mhpmcounter[index][63 .. 32] = value
-
-function write_mhpmevent(index : hpmidx, value : xlenbits) -> unit =
-  if sys_writable_hpm_counters()[index] == bitone then mhpmevent[index] = value
-
 /* machine information registers */
 register mvendorid : bits(32)
 register mimpid : xlenbits
