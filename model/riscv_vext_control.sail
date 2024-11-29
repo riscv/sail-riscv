@@ -6,9 +6,6 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-enum clause extension = Ext_V
-function clause extensionEnabled(Ext_V) = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
-
 mapping clause csr_name_map = 0x008  <-> "vstart"
 mapping clause csr_name_map = 0x009  <-> "vxsat"
 mapping clause csr_name_map = 0x00A  <-> "vxrm"
@@ -17,13 +14,13 @@ mapping clause csr_name_map = 0xC20  <-> "vl"
 mapping clause csr_name_map = 0xC21  <-> "vtype"
 mapping clause csr_name_map = 0xC22  <-> "vlenb"
 
-function clause is_CSR_defined (0x008) = extensionEnabled(Ext_V)
-function clause is_CSR_defined (0x009) = extensionEnabled(Ext_V)
-function clause is_CSR_defined (0x00A) = extensionEnabled(Ext_V)
-function clause is_CSR_defined (0x00F) = extensionEnabled(Ext_V)
-function clause is_CSR_defined (0xC20) = extensionEnabled(Ext_V)
-function clause is_CSR_defined (0xC21) = extensionEnabled(Ext_V)
-function clause is_CSR_defined (0xC22) = extensionEnabled(Ext_V)
+function clause is_CSR_defined (0x008) = true
+function clause is_CSR_defined (0x009) = true
+function clause is_CSR_defined (0x00A) = true
+function clause is_CSR_defined (0x00F) = true
+function clause is_CSR_defined (0xC20) = true
+function clause is_CSR_defined (0xC21) = true
+function clause is_CSR_defined (0xC22) = true
 
 function clause read_CSR(0x008) = zero_extend(vstart)
 function clause read_CSR(0x009) = zero_extend(vcsr[vxsat])

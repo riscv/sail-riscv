@@ -11,6 +11,9 @@
 /* Chapter 6: Configuration-Setting Instructions                                   */
 /* ******************************************************************************* */
 
+enum clause extension = Ext_V
+function clause extensionEnabled(Ext_V) = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
+
 mapping sew_flag : string <-> bits(3) = {
   "e8"    <-> 0b000,
   "e16"   <-> 0b001,
