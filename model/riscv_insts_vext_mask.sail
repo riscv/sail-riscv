@@ -50,11 +50,11 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
       result[i] = match funct6 {
         MM_VMAND     => (vs2_val & vs1_val)[i],
         MM_VMNAND    => if (vs2_val & vs1_val)[i] == bitone then bitzero else bitone,
-        MM_VMANDN    => (vs2_val & flip_bits(num_elem, vs1_val))[i],
+        MM_VMANDN    => (vs2_val & (vs1_val ^ ones()))[i],
         MM_VMXOR     => (vs2_val ^ vs1_val)[i],
         MM_VMOR      => (vs2_val | vs1_val)[i],
-        MM_VMNOR     => flip_bits(num_elem, vs2_val | vs1_val)[i],
-        MM_VMORN     => (vs2_val | flip_bits(num_elem, vs1_val))[i],
+        MM_VMNOR     => ((vs2_val | vs1_val) ^ ones())[i],
+        MM_VMORN     => (vs2_val | (vs1_val ^ ones()))[i],
         MM_VMXNOR    => (vs2_val & vs1_val)[i]
       }
     }
@@ -256,7 +256,7 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
   var found_elem : bits('n) = zeros();
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      if (vs2_val & flip_bits('n, found_elem))[i] == bitone then {
+      if (vs2_val & (found_elem ^ ones()))[i] == bitone then {
         result[i] = bitone;
         found_elem = sign_extend(0b1);
       } else {
