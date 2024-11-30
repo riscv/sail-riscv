@@ -62,11 +62,11 @@ Implementation
 
 * All instructions should be built as part of both the RV32 and RV64 models so
   as to provide a path to supporting mutable MXL/SXL/UXL; if necessary,
-  constructs like `assert(sizeof(xlen) == 32)` at the start of the body can be
+  constructs like `assert(xlen == 32)` at the start of the body can be
   used to suppress any type errors that arise as a result
 
 * Avoid the use of hard-coded constants like 32 even if the instruction is
-  RV32-specific, instead favouring `sizeof(xlen)` or a computed constant to
+  RV32-specific, instead favouring `xlen` or a computed constant to
   more clearly express the underlying intent
 
 * Local variables should be made immutable whenever possible, but short
