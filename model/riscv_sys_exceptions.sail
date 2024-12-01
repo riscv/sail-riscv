@@ -32,8 +32,8 @@ function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
 
 /* xRET handling involves three functions:
  *
- * get_xepc:     used to read the value of the xret target  (no control flow transfer)
- * set_xepc:     used to write a value of the xret target   (no control flow transfer)
+ * get_xepc:            used to read the value of the xret target  (no control flow transfer)
+ * set_xepc:            used to write a value of the xret target   (no control flow transfer)
  * prepare_xret_target: used to get the value for control transfer to the xret target
  */
 
