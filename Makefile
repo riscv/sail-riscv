@@ -202,7 +202,7 @@ ifneq (,$(STATIC))
         GMP_LIBS = $(shell pkg-config --variable=libdir gmp)/libgmp.a
         C_LIBS_WRAPPED = $(C_LIBS)
     else
-        C_LIBS_WRAPPED = -Wl,--push-state,-Bstatic $(C_LIBS) -Wl,--pop-state
+        C_LIBS_WRAPPED = -Wl,--push-state -Wl,-Bstatic $(C_LIBS) -Wl,--pop-state
     endif
 else
     C_LIBS_WRAPPED = $(C_LIBS)
