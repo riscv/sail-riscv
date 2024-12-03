@@ -193,7 +193,7 @@ SAIL_FLAGS += -c_coverage $(ALL_BRANCHES) -c_include sail_coverage.h
 C_LIBS += $(SAIL_LIB_DIR)/coverage/libsail_coverage.a -lm -lpthread -ldl
 endif
 
-# Optional link C_LIBS statically. Unlike -static this will not
+# Optionally link C_LIBS statically. Unlike -static this will not
 # link glibc statically which is generally a bad idea.
 ifneq (,$(STATIC))
     UNAME_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
