@@ -363,7 +363,7 @@ val read_vmask : forall 'n, 'n > 0. (int('n), bits(1), regidx) -> bits('n)
 function read_vmask(num_elem, vm, vrid) = {
   assert(num_elem <= sizeof(vlenmax));
   let vreg_val : vregtype = V(vrid);
-  var result   : bits('n) = sign_extend(0b1);
+  var result   : bits('n) = ones();
 
   if vm == 0b1 then {
     return result
