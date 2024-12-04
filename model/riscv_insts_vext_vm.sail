@@ -482,7 +482,7 @@ function clause execute(VXCMPTYPE(funct6, vm, vs2, rs1, vd)) = {
         VXCMP_VMSGTU   => unsigned(vs2_val[i]) > unsigned(rs1_val),
         VXCMP_VMSGT    => signed(vs2_val[i]) > signed(rs1_val)
       };
-      result[i] = if res then bitone else bitzero
+      result[i] = bool_to_bit(res)
     }
   };
 
