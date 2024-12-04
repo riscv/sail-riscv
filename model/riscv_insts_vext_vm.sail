@@ -151,10 +151,7 @@ function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
   assert('n > 0);
 
   /* for bypassing normal masking in init_masked_result */
-  var vec_trues : bits('n) = undefined;
-  foreach (i from 0 to (num_elem - 1)) {
-    vec_trues[i] = bitone
-  };
+  let vec_trues : bits('n) = ones();
 
   let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, 0b00000);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
@@ -393,10 +390,7 @@ function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
   assert('n > 0);
 
   /* for bypassing normal masking in init_masked_result */
-  var vec_trues : bits('n) = undefined;
-  foreach (i from 0 to (num_elem - 1)) {
-    vec_trues[i] = bitone
-  };
+  let vec_trues : bits('n) = ones();
 
   let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, 0b00000);
   let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
@@ -634,10 +628,7 @@ function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
   assert('n > 0);
 
   /* for bypassing normal masking in init_masked_result */
-  var vec_trues : bits('n) = undefined;
-  foreach (i from 0 to (num_elem - 1)) {
-    vec_trues[i] = bitone
-  };
+  let vec_trues : bits('n) = ones();
 
   let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, 0b00000);
   let imm_val : bits('m)                  = sign_extend(simm);
