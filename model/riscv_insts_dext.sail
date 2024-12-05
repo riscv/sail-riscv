@@ -224,7 +224,6 @@ function fle_D   (v1,       v2,        is_quiet) = {
 /* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
 
-enum clause extension = Ext_Zdinx
 function clause extensionEnabled(Ext_Zdinx) = sys_enable_zfinx() & flen >= 64
 
 function haveDoubleFPU() -> bool = extensionEnabled(Ext_D) | extensionEnabled(Ext_Zdinx)

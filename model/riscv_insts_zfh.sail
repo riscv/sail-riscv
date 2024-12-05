@@ -6,7 +6,6 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-enum clause extension = Ext_Zhinx
 function clause extensionEnabled(Ext_Zhinx) = sys_enable_zfinx()
 
 /* **************************************************************** */

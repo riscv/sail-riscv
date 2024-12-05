@@ -8,7 +8,6 @@
 
 // Cache Block Operations - Zero
 
-enum clause extension = Ext_Zicboz
 function clause extensionEnabled(Ext_Zicboz) = sys_enable_zicboz()
 
 function cbo_zero_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBZE][0], senvcfg[CBZE][0])

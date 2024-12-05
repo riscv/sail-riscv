@@ -118,7 +118,6 @@ val sys_enable_zicboz = pure "sys_enable_zicboz" : unit -> bool
 val sys_enable_sstc = pure "sys_enable_sstc" : unit -> bool
 
 // Supervisor timecmp
-enum clause extension = Ext_Sstc
 function clause extensionEnabled(Ext_Sstc) = sys_enable_sstc()
 
 /* This function allows an extension to veto a write to Misa
@@ -146,10 +145,8 @@ function clause is_CSR_defined(0x301) = true // misa
 function clause read_CSR(0x301) = misa.bits
 function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); misa.bits }
 
-enum clause extension = Ext_U
 function clause extensionEnabled(Ext_U) = misa[U] == 0b1
 
-enum clause extension = Ext_S
 function clause extensionEnabled(Ext_S) = misa[S] == 0b1
 
 /*

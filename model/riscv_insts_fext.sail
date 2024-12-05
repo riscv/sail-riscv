@@ -26,10 +26,8 @@
 /* **************************************************************** */
 
 // TODO: Add config flags to control Zfh and Zfhmin
-enum clause extension = Ext_Zfh
 function clause extensionEnabled(Ext_Zfh) = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
 
-enum clause extension = Ext_Zfhmin
 // Zfhmin is a subset of Zfh. This can be changed to extensionEnabled(Ext_Zfh) | sys_enable_zfhmin() when more configuration is implemented.
 function clause extensionEnabled(Ext_Zfhmin) = extensionEnabled(Ext_Zfh)
 

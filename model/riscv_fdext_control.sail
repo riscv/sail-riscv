@@ -15,13 +15,8 @@
 
 /* **************************************************************** */
 
-enum clause extension = Ext_F
 function clause extensionEnabled(Ext_F) = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
-
-enum clause extension = Ext_D
 function clause extensionEnabled(Ext_D) = (misa[D] == 0b1) & (mstatus[FS] != 0b00) & flen >= 64
-
-enum clause extension = Ext_Zfinx
 function clause extensionEnabled(Ext_Zfinx) = sys_enable_zfinx()
 
 /* Floating Point CSRs */

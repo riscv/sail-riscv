@@ -10,7 +10,7 @@
 /* This file specifies the instructions in the 'Zifencei' extension.     */
 
 /* ****************************************************************** */
-enum clause extension = Ext_Zifencei
+
 function clause extensionEnabled(Ext_Zifencei) = true
 
 union clause ast = FENCEI : unit

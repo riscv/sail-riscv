@@ -7,7 +7,6 @@
 /*=======================================================================================*/
 
 /* Hardware Performance Monitoring counters */
-enum clause extension = Ext_Zihpm
 function clause extensionEnabled(Ext_Zihpm) = true
 
 /* Hardware performance monitoring counters */

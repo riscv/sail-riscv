@@ -8,9 +8,6 @@
 
 /* Basic type and function definitions used pervasively in the model. */
 
-/* ISA extension names as enums */
-scattered enum extension
-
 // Function used to determine if an extension is enabled in the current configuration.
 // This means an extension is implemented & supported, *and* any necessary bits
 // are set in the relevant CSRs (misa, mstatus, etc.) to enable its use. It is possible

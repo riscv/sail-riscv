@@ -6,7 +6,6 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-enum clause extension = Ext_Zcb
 function clause extensionEnabled(Ext_Zcb) = sys_enable_zcb() & extensionEnabled(Ext_Zca)
 
 union clause ast = C_LBU : (bits(2), cregidx, cregidx)

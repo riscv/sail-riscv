@@ -11,9 +11,7 @@
 
 /* ****************************************************************** */
 
-enum clause extension = Ext_M
 function clause extensionEnabled(Ext_M) = misa[M] == 0b1
-enum clause extension = Ext_Zmmul
 function clause extensionEnabled(Ext_Zmmul) = true
 
 

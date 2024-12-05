@@ -7,7 +7,6 @@
 /*=======================================================================================*/
 
 /* Zkr entropy seed source */
-enum clause extension = Ext_Zkr
 function clause extensionEnabled(Ext_Zkr) = true
 
 /* Valid return states for reading the seed CSR. */

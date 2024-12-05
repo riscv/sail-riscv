@@ -6,7 +6,6 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-enum clause extension = Ext_Zbs
 function clause extensionEnabled(Ext_Zbs) = true | extensionEnabled(Ext_B)
 
 /* ****************************************************************** */

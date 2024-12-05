@@ -6,7 +6,6 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-enum clause extension = Ext_Svinval
 function clause extensionEnabled(Ext_Svinval) = sys_enable_svinval()
 
 union clause ast = SINVAL_VMA : (regidx, regidx)
