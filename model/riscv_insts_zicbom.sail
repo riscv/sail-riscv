@@ -8,7 +8,6 @@
 
 // Cache Block Operations - Management
 
-enum clause extension = Ext_Zicbom
 function clause extensionEnabled(Ext_Zicbom) = sys_enable_zicbom()
 
 function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], senvcfg[CBCFE][0])

@@ -6,7 +6,6 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-enum clause extension = Ext_V
 function clause extensionEnabled(Ext_V) = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
 
 mapping clause csr_name_map = 0x008  <-> "vstart"

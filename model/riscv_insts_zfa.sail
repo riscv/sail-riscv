@@ -6,7 +6,6 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-enum clause extension = Ext_Zfa
 function clause extensionEnabled(Ext_Zfa) = true
 
 /* FLI.H */

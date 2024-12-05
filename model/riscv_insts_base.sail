@@ -9,10 +9,7 @@
 /* ****************************************************************** */
 /* This file specifies the instructions in the base integer set.      */
 
-enum clause extension = Ext_C
 function clause extensionEnabled(Ext_C) = misa[C] == 0b1
-
-enum clause extension = Ext_Zca
 function clause extensionEnabled(Ext_Zca) = extensionEnabled(Ext_C)
 
 /* ****************************************************************** */

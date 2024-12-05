@@ -6,10 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-enum clause extension = Ext_B
 function clause extensionEnabled(Ext_B) = misa[B] == 0b1
-
-enum clause extension = Ext_Zba
 function clause extensionEnabled(Ext_Zba) = true | extensionEnabled(Ext_B)
 
 /* ****************************************************************** */

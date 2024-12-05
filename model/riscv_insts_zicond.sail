@@ -6,7 +6,6 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-enum clause extension = Ext_Zicond
 function clause extensionEnabled(Ext_Zicond) = true
 
 union clause ast = ZICOND_RTYPE : (regidx, regidx, regidx, zicondop)

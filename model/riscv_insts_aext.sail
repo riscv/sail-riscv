@@ -10,7 +10,7 @@
 /* This file specifies the atomic instructions in the 'A' extension.  */
 
 /* ****************************************************************** */
-enum clause extension = Ext_Zabha
+
 function clause extensionEnabled(Ext_Zabha) = true
 
 // Some print utils for lr/sc.
@@ -53,7 +53,6 @@ function amo_width_valid(size : word_width) -> bool = {
 }
 
 /* ****************************************************************** */
-enum clause extension = Ext_Zalrsc
 function clause extensionEnabled(Ext_Zalrsc) = misa[A] == 0b1
 
 union clause ast = LOADRES : (bool, bool, regidx, word_width, regidx)
@@ -168,7 +167,6 @@ mapping clause assembly = STORECON(aq, rl, rs2, rs1, size, rd)
   <-> "sc." ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ****************************************************************** */
-enum clause extension = Ext_Zaamo
 function clause extensionEnabled(Ext_Zaamo) = misa[A] == 0b1
 
 union clause ast = AMO : (amoop, bool, bool, regidx, regidx, word_width, regidx)

@@ -11,7 +11,6 @@
  * ----------------------------------------------------------------------
  */
 
-enum clause extension = Ext_Zksh
 function clause extensionEnabled(Ext_Zksh) = true
 
 union clause ast = SM3P0 : (regidx, regidx)
@@ -48,7 +47,6 @@ function clause execute (SM3P1(rs1, rd)) = {
  * ----------------------------------------------------------------------
  */
 
-enum clause extension = Ext_Zksed
 function clause extensionEnabled(Ext_Zksed) = true
 
 union clause ast = SM4ED : (bits(2), regidx, regidx, regidx)
