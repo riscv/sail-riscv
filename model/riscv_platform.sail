@@ -209,7 +209,6 @@ function clint_load(t, addr, width) = {
   }
 }
 
-
 function clint_dispatch() -> unit = {
   mip[MTI] = bool_to_bits(mtimecmp <=_u mtime);
   if get_config_print_platform()
