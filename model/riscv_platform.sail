@@ -212,7 +212,6 @@ function clint_load(t, addr, width) = {
 function clint_dispatch() -> unit = {
   if   get_config_print_platform()
   then print_platform("clint::tick mtime <- " ^ BitStr(mtime));
-<<<<<<< HEAD
   mip[MTI] = bool_to_bits(mtimecmp <=_u mtime);
   
   if get_config_print_platform()
@@ -224,15 +223,7 @@ function clint_dispatch() -> unit = {
     
   if get_config_print_platform()
   then print_platform(" clint mtime " ^ BitStr(mtime) ^ " (mip.STI <- " ^ BitStr(mip[STI]) ^ ")");
-  }; 
-=======
-  mip[MTI] = 0b0;
-  if mtimecmp <=_u mtime then {
-    mip[MTI] = 0b1;
-    if   get_config_print_platform()
-    then print_platform(" clint timer pending at mtime " ^ BitStr(mtime) ^ " (mip.MTI <- " ^ BitStr(mip[MTI]) ^ ")");
-  }
->>>>>>> 25748bd9 (remove problematic  else condition)
+  };
 }
 
 /* The rreg effect is due to checking mtime. */
