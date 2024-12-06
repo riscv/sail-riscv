@@ -60,8 +60,8 @@ function valid_rd_mask(rd, vm) = {
  */
 val valid_reg_overlap : (regidx, regidx, int, int) -> bool
 function valid_reg_overlap(rs, rd, EMUL_pow_rs, EMUL_pow_rd) = {
-  let rs_group = if EMUL_pow_rs > 0 then 2 ^ (EMUL_pow_rs) else 1;
-  let rd_group = if EMUL_pow_rd > 0 then 2 ^ (EMUL_pow_rd) else 1;
+  let rs_group = if EMUL_pow_rs > 0 then 2 ^ EMUL_pow_rs else 1;
+  let rd_group = if EMUL_pow_rd > 0 then 2 ^ EMUL_pow_rd else 1;
   let rs_int = unsigned(rs);
   let rd_int = unsigned(rd);
   if EMUL_pow_rs < EMUL_pow_rd then {
@@ -79,7 +79,7 @@ function valid_reg_overlap(rs, rd, EMUL_pow_rs, EMUL_pow_rd) = {
 val valid_segment : (int, int) -> bool
 function valid_segment(nf, EMUL_pow) = {
   if EMUL_pow < 0 then nf / (2 ^ (0 - EMUL_pow)) <= 8
-  else nf * 2 ^ (EMUL_pow) <= 8
+  else nf * 2 ^ EMUL_pow <= 8
 }
 
 /* ******************************************************************************* */
@@ -371,7 +371,7 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
  */
 val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'm >= 0 & 'q >= 0. (int('n), int('m), int('p), int('q), regidx) -> vector('n, bits('q * 'm))
 function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
-  let LMUL_reg : int = if LMUL_pow <= 0 then 1 else 2 ^ (LMUL_pow);
+  let LMUL_reg : int = if LMUL_pow <= 0 then 1 else 2 ^ LMUL_pow;
   var vreg_list : vector('q, vector('n, bits('m))) = vector_init(vector_init(zeros()));
   var result : vector('n, bits('q * 'm)) = vector_init(zeros());
   foreach (j from 0 to (nf - 1)) {
