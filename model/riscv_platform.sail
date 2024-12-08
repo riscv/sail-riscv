@@ -211,14 +211,12 @@ function clint_load(t, addr, width) = {
 
 function clint_dispatch() -> unit = {
   mip[MTI] = bool_to_bits(mtimecmp <=_u mtime);
-  if get_config_print_platform()
-  then print_platform(" clint mtime " ^ BitStr(mtime) ^ " (mip.MTI <- " ^ BitStr(mip[MTI]) ^ ")");
-  /* Sstc - supervisor timer register */
   if extensionEnabled(Ext_Sstc) then {
     mip[STI] = bool_to_bits(stimecmp <=_u mtime); 
-    if get_config_print_platform()
-    then print_platform(" clint mtime " ^ BitStr(mtime) ^ " (mip.STI <- " ^ BitStr(mip[STI]) ^ ")");
   };
+  if get_config_print_platform()
+  then print_platform(" clint mtime " ^ BitStr(mtime) ^ " (mip.MTI <- " ^ BitStr(mip[MTI]) ^
+    (if extensionEnabled(Ext_Sstc) then ", mip.STI <- " ^ BitStr(mip[STI]) else "") ^ ")");
 }
 
 /* The rreg effect is due to checking mtime. */
