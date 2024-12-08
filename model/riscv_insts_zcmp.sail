@@ -63,86 +63,79 @@ function get_stack_adj_base(rlist : bits(4)) -> int = {
   }
 }
 
-val zcmp_assembly_mapping : (bits(4), bits(2), bool) <-> string
+mapping zcmp_assembly_mapping : (bits(4), bits(2), bool) <-> string = {
+  forwards (rlist, spimm54, is_negative) => {
+    var stack_adj : int = undefined;
+    stack_adj = get_stack_adj_base(rlist) + unsigned(spimm54);
 
-function zcmp_assembly_mapping_forwards (rlist, spimm, is_negative) = {
-  var stack_adj : int = undefined;
-  stack_adj = get_stack_adj_base(rlist) + unsigned(spimm);
+    "{" ^ zcmp_assembly_rlist(rlist) ^ ", " ^ BitStr(to_bits(xlen, stack_adj)) ^ ", " ^ negative_sign(is_negative) ^ "}"
+  },
+  backwards str_input => {
+    var str = str_input;
+    var rlist : bits(4) = undefined;
+    var spimm54 : bits(2) = undefined;
+    var is_negative : bool = false;
 
-  "{" ^ zcmp_assembly_rlist(rlist) ^ ", " ^ BitStr(to_bits(xlen, stack_adj)) ^ ", " ^ negative_sign(is_negative) ^ "}"
-}
-
-function zcmp_assembly_mapping_forwards_matches (rlist, spimm54, is_negative) = true
-
-function zcmp_assembly_mapping_backwards(str_input) = {
-  var str = str_input;
-  var rlist : bits(4) = undefined;
-  var spimm54 : bits(2) = undefined;
-  var is_negative : bool = false;
-
-  if string_take(str, 7) == "cm.push" then {
-    is_negative = true;
-    str = string_drop(str, 9);
-    
-  } else if string_take(str, 6) == "cm.pop" then {
-    is_negative = false;
-    str = string_drop(str, 8);
-  } else if string_take(str, 9) == "cm.popret" then {
-    is_negative = false;
-    str = string_drop(str, 11);
-  } else {
-    is_negative = false;
-    str = string_drop(str, 12);
-  };
-
-  if string_take(str, 3) == "ra," then {
-    if string_take(str, 5) == "ra, s0" then {
-      rlist = zcmp_assembly_rlist(string_take(str, 5));
+    if string_take(str, 7) == "cm.push" then {
+      is_negative = true;
       str = string_drop(str, 9);
+    } else if string_take(str, 6) == "cm.pop" then {
+      is_negative = false;
+      str = string_drop(str, 8);
+    } else if string_take(str, 9) == "cm.popret" then {
+      is_negative = false;
+      str = string_drop(str, 11);
     } else {
-      if string_take(str, 10) == "ra, s0-s11" then {
-        rlist = zcmp_assembly_rlist(string_take(str, 10));
-        str = string_drop(str, 13);
-      } else {
-        rlist = zcmp_assembly_rlist(string_take(str, 9));
-        str = string_drop(str, 12);
-      }
-    }
-  } else {
-    rlist = zcmp_assembly_rlist(string_take(str, 2));
-    str = string_drop(str, 5);
-  };
-
-  if string_take(str, 1) == "-" then {
-    str = string_drop(str, 1);
-  };
-
-  var stack_adj_offset : int = 0;
-
-  foreach (i from string_length(str) downto 1) {
-    let temp_val : int = match string_take(str, 1) {
-      "0" => 0,
-      "1" => 1,
-      "2" => 2,
-      "3" => 3,
-      "4" => 4,
-      "5" => 5,
-      "6" => 6,
-      "7" => 7,
-      "8" => 8,
-      "9" => 9
+      is_negative = false;
+      str = string_drop(str, 12);
     };
-    stack_adj_offset = stack_adj_offset + temp_val;
-    stack_adj_offset = stack_adj_offset * 10;
-  };
 
-  spimm54 = to_bits(2, (stack_adj_offset - get_stack_adj_base(rlist)) / 16);
+    if string_take(str, 3) == "ra," then {
+      if string_take(str, 5) == "ra, s0" then {
+        rlist = zcmp_assembly_rlist(string_take(str, 5));
+        str = string_drop(str, 9);
+      } else {
+        if string_take(str, 10) == "ra, s0-s11" then {
+          rlist = zcmp_assembly_rlist(string_take(str, 10));
+          str = string_drop(str, 13);
+        } else {
+          rlist = zcmp_assembly_rlist(string_take(str, 9));
+          str = string_drop(str, 12);
+        }
+      }
+    } else {
+      rlist = zcmp_assembly_rlist(string_take(str, 2));
+      str = string_drop(str, 5);
+    };
 
-  (rlist, spimm54, is_negative)
+    if string_take(str, 1) == "-" then {
+      str = string_drop(str, 1);
+    };
+
+    var stack_adj_offset : int = 0;
+
+    foreach (i from string_length(str) downto 1) {
+      let temp_val : int = match string_take(str, 1) {
+        "0" => 0,
+        "1" => 1,
+        "2" => 2,
+        "3" => 3,
+        "4" => 4,
+        "5" => 5,
+        "6" => 6,
+        "7" => 7,
+        "8" => 8,
+        "9" => 9
+      };
+      stack_adj_offset = stack_adj_offset + temp_val;
+      stack_adj_offset = stack_adj_offset * 10;
+    };
+
+    spimm54 = to_bits(2, (stack_adj_offset - get_stack_adj_base(rlist)) / 16);
+
+    (rlist, spimm54, is_negative)
+  },
 }
-
-function zcmp_assembly_mapping_backwards_matches (str) = true
-
 
 function zcmp_regmask(rlist : bits(4)) -> bits(32) = {
   var mask : bits(32) = zeros();
@@ -153,7 +146,7 @@ function zcmp_regmask(rlist : bits(4)) -> bits(32) = {
 
   foreach (i from 5 to unsigned(rlist)) {
     assert(i <= 15);
-    if( (i - 5) < 2 ) then 
+    if( (i - 5) < 2 ) then
       mask[3 + i] = bitone
     else {
       mask[11 + i] = bitone
@@ -219,15 +212,14 @@ function process_cmpush (rlist : bits(4), spimm : bits(2)) -> Retired = {
 function clause execute (CM_PUSH(rlist, spimm)) = {
   assert(rlist >=_u 0b0100);
 
-  
   process_cmpush(rlist, spimm)
 }
 
 mapping clause assembly = CM_PUSH(rlist, spimm) if (sizeof(xlen) == 32) <->
-  "cm.push" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, false, 32) if (sizeof(xlen) == 32)
+  "cm.push" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, false) if (sizeof(xlen) == 32)
 
 mapping clause assembly = CM_PUSH(rlist, spimm) if (sizeof(xlen) == 64) <->
-  "cm.push" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, false, 64) if (sizeof(xlen) == 64)
+  "cm.push" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, false) if (sizeof(xlen) == 64)
 
 
 union clause ast = CM_POP : (bits(4), bits(2))
@@ -240,7 +232,7 @@ function process_cmpop (rlist : bits(4), spimm : bits(2), write_pc : bool, write
   assert(width_bytes <= xlen_bytes);
 
   let addr = X(sp);
-  let stack_adj = rlist_stack_adj_base(rlist) + unsigned(spimm) * 16;
+  let stack_adj = get_stack_adj_base(rlist) + unsigned(spimm) * 16;
   let new_sp = addr + to_bits(xlen, stack_adj);
   let mask = zcmp_regmask(rlist);
   let bytes = if sizeof(xlen) == 32 then 4 else 8;
@@ -295,10 +287,10 @@ function clause execute (CM_POP(rlist, spimm)) = {
 }
 
 mapping clause assembly = CM_POP(rlist, spimm) if (sizeof(xlen) == 32) <->
-  "cm.pop" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true, 32) if (sizeof(xlen) == 32)
+  "cm.pop" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true) if (sizeof(xlen) == 32)
 
 mapping clause assembly = CM_POP(rlist, spimm) if (sizeof(xlen) == 64) <->
-  "cm.pop" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true, 64) if (sizeof(xlen) == 64)
+  "cm.pop" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true) if (sizeof(xlen) == 64)
 
 
 union clause ast = CM_POPRET : (bits(4), bits(2))
@@ -316,10 +308,10 @@ function clause execute (CM_POPRET(rlist, spimm)) = {
 }
 
 mapping clause assembly = CM_POPRET(rlist, spimm) if (sizeof(xlen) == 32) <->
-  "cm.popret" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true, 32) if (sizeof(xlen) == 32)
+  "cm.popret" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true) if (sizeof(xlen) == 32)
 
 mapping clause assembly = CM_POPRET(rlist, spimm) if (sizeof(xlen) == 64) <->
-  "cm.popret" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true, 64) if (sizeof(xlen) == 64)
+  "cm.popret" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true) if (sizeof(xlen) == 64)
 
 
 union clause ast = CM_POPRETZ : (bits(4), bits(2))
@@ -337,10 +329,10 @@ function clause execute (CM_POPRETZ(rlist, spimm)) = {
 }
 
 mapping clause assembly = CM_POPRETZ(rlist, spimm) if (sizeof(xlen) == 32) <->
-  "cm.popretz" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true, 32) if (sizeof(xlen) == 32)
+  "cm.popretz" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true) if (sizeof(xlen) == 32)
 
 mapping clause assembly = CM_POPRETZ(rlist, spimm) if (sizeof(xlen) == 64) <->
-  "cm.popretz" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true, 64) if (sizeof(xlen) == 64)
+  "cm.popretz" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true) if (sizeof(xlen) == 64)
 
 // Differ from creg_name.
 mapping rns_name : cregidx <-> string = {
@@ -387,7 +379,7 @@ mapping clause encdec_compressed = CM_MVSA01(r1s', r2s')   if extensionEnabled(E
 
 function clause execute (CM_MVSA01(r1s', r2s')) = {
   assert(r1s' != r2s');
-  
+
   X(rns_to_regidx(r1s')) = X(0b01010);
   X(rns_to_regidx(r2s')) = X(0b01011);
 
