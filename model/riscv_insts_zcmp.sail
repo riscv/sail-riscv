@@ -24,24 +24,7 @@ mapping zcmp_assembly_rlist : bits(4) <-> string = {
 
 mapping negative_sign : bool <-> string = {
   false <-> "",
-  true <-> "-",
-}
-
-// Note for the integer types we deal in 16s, so a value of 1 here means 16 bytes.
-type stack_adj = range(1, if xlen == 32 then 7 else 10)
-type stack_adj_base = range(1, if xlen == 32 then 4 else 7)
-
-mapping stack_adj_str : string <-> stack_adj = {
-  "16" <-> 1,
-  "32" <-> 2,
-  "48" <-> 3,
-  "64" <-> 4,
-  "80" <-> 5,
-  "96" <-> 6,
-  "112" <-> 7,
-  "128" if xlen == 64 <-> 8  if xlen == 64,
-  "144" if xlen == 64 <-> 9  if xlen == 64,
-  "160" if xlen == 64 <-> 10 if xlen == 64,
+  true  <-> "-",
 }
 
 function get_stack_adj_base(rlist : bits(4)) -> int = {
@@ -49,7 +32,7 @@ function get_stack_adj_base(rlist : bits(4)) -> int = {
     match rlist[3 .. 2] {
       0b01 => 16,
       0b10 => 32,
-      0b11 => if rlist == 0b1111 then 64 else 48
+      0b11 => if rlist == 0b1111 then 64 else 48,
     }
   else {
     match rlist[3 .. 1] {
@@ -66,9 +49,9 @@ function get_stack_adj_base(rlist : bits(4)) -> int = {
 mapping zcmp_assembly_mapping : (bits(4), bits(2), bool) <-> string = {
   forwards (rlist, spimm54, is_negative) => {
     var stack_adj : int = undefined;
-    stack_adj = get_stack_adj_base(rlist) + unsigned(spimm54);
+    stack_adj = get_stack_adj_base(rlist) + unsigned(spimm54) * 16;
 
-    "{" ^ zcmp_assembly_rlist(rlist) ^ ", " ^ BitStr(to_bits(xlen, stack_adj)) ^ ", " ^ negative_sign(is_negative) ^ "}"
+    "{" ^ zcmp_assembly_rlist(rlist) ^ "}" ^ sep() ^ negative_sign(is_negative) ^ dec_str(stack_adj)
   },
   backwards str_input => {
     var str = str_input;
@@ -363,8 +346,8 @@ mapping clause encdec_compressed = CM_MVA01S(r1s', r2s')   if extensionEnabled(E
   <-> 0b101 @ 0b011 @ r1s' : cregidx @ 0b11 @ r2s' : cregidx @ 0b10    if extensionEnabled(Ext_Zcmp)
 
 function clause execute (CM_MVA01S(r1s', r2s')) = {
-  X(0b01010) = X(rns_to_regidx(r1s'));
-  X(0b01011) = X(rns_to_regidx(r2s'));
+  X(10) = X(rns_to_regidx(r1s'));
+  X(11) = X(rns_to_regidx(r2s'));
 
   RETIRE_SUCCESS
 }
@@ -380,8 +363,8 @@ mapping clause encdec_compressed = CM_MVSA01(r1s', r2s')   if extensionEnabled(E
 function clause execute (CM_MVSA01(r1s', r2s')) = {
   assert(r1s' != r2s');
 
-  X(rns_to_regidx(r1s')) = X(0b01010);
-  X(rns_to_regidx(r2s')) = X(0b01011);
+  X(rns_to_regidx(r1s')) = X(10);
+  X(rns_to_regidx(r2s')) = X(11);
 
   RETIRE_SUCCESS
 }
