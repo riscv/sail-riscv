@@ -67,6 +67,11 @@ bool sys_enable_zicboz(unit u)
   return rv_enable_zicboz;
 }
 
+bool sys_enable_sstc(unit u)
+{
+  return rv_enable_sstc;
+}
+
 uint64_t sys_pmp_count(unit u)
 {
   return rv_pmp_count;
@@ -100,6 +105,11 @@ bool sys_enable_writable_misa(unit u)
 mach_bits sys_writable_hpm_counters(unit u)
 {
   return rv_writable_hpm_counters;
+}
+
+bool sys_vext_vl_use_ceil(unit u)
+{
+  return rv_vext_vl_use_ceil;
 }
 
 bool plat_enable_dirty_update(unit u)

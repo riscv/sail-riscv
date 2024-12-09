@@ -82,10 +82,6 @@ function dirty_v_context() -> unit = {
   mstatus[SD] = 0b1
 }
 
-function dirty_v_context_if_present() -> unit = {
-  if sys_enable_vext() then dirty_v_context()
-}
-
 function rV (r : regno) -> vregtype = {
   match r {
     0 => vr0,
@@ -222,7 +218,7 @@ val ext_write_vcsr : (bits(2), bits(1)) -> unit
 function ext_write_vcsr (vxrm_val, vxsat_val) = {
   vcsr[vxrm]  = vxrm_val; /* Note: frm can be an illegal value, 101, 110, 111 */
   vcsr[vxsat] = vxsat_val;
-  dirty_v_context_if_present()
+  dirty_v_context()
 }
 
 /* num_elem means max(VLMAX,VLEN/SEW)) according to Section 5.4 of RVV spec */
@@ -231,7 +227,7 @@ function get_num_elem(LMUL_pow, SEW) = {
   let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
   /* Ignore lmul < 1 so that the entire vreg is read, allowing all masking to
    * be handled in init_masked_result */
-  let num_elem = 2 ^ (LMUL_pow_reg) * VLEN / SEW;
+  let num_elem = 2 ^ LMUL_pow_reg * VLEN / SEW;
   assert(num_elem > 0);
   num_elem
 }

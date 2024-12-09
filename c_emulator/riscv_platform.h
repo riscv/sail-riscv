@@ -12,10 +12,12 @@ bool sys_enable_vext(unit);
 bool sys_enable_bext(unit);
 bool sys_enable_zicbom(unit);
 bool sys_enable_zicboz(unit);
+bool sys_enable_sstc(unit);
 
 uint64_t sys_pmp_count(unit);
 uint64_t sys_pmp_grain(unit);
 
+bool sys_vext_vl_use_ceil(unit);
 uint64_t sys_vector_vlen_exp(unit);
 uint64_t sys_vector_elen_exp(unit);
 bool sys_enable_smepmp(unit);

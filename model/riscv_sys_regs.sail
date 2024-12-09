@@ -90,8 +90,6 @@ val sys_enable_svinval = pure "sys_enable_svinval" : unit -> bool
 val sys_enable_zcb = pure "sys_enable_zcb" : unit -> bool
 /* whether zfinx was enabled at boot */
 val sys_enable_zfinx = pure "sys_enable_zfinx" : unit -> bool
-/* whether the N extension was enabled at boot */
-val sys_enable_next = pure "sys_enable_next" : unit -> bool
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
 val sys_enable_writable_fiom = pure "sys_enable_writable_fiom" : unit -> bool
@@ -120,6 +118,13 @@ val sys_enable_bext = pure "sys_enable_bext" : unit -> bool
 // at all on this model.
 val sys_enable_zicbom = pure "sys_enable_zicbom" : unit -> bool
 val sys_enable_zicboz = pure "sys_enable_zicboz" : unit -> bool
+
+// Is the Sstc stimecmp extension supported.
+val sys_enable_sstc = pure "sys_enable_sstc" : unit -> bool
+
+// Supervisor timecmp
+enum clause extension = Ext_Sstc
+function clause extensionEnabled(Ext_Sstc) = sys_enable_sstc()
 
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
@@ -259,17 +264,20 @@ function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
    * but only if Zfinx isn't enabled.
    * FIXME: This should be made a platform parameter.
    */
-  let dirty = extStatus_of_bits(m[FS]) == Dirty | extStatus_of_bits(m[XS]) == Dirty |
-              extStatus_of_bits(m[VS]) == Dirty;
-
-  /* Legalize MPP */
   let m = [m with
+    /* Legalize MPP */
     MPP = if have_privLevel(m[MPP]) then m[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
     /* We don't have any extension context yet. */
     XS = extStatus_to_bits(Off),
-    SD = bool_to_bits(dirty),
     FS = if sys_enable_zfinx() then extStatus_to_bits(Off) else m[FS],
     MPRV = if extensionEnabled(Ext_U) then m[MPRV] else 0b0,
+  ];
+
+  // Set dirty bit to OR of other status bits.
+  let m = [m with
+    SD = bool_to_bits(extStatus_of_bits(m[FS]) == Dirty |
+                      extStatus_of_bits(m[XS]) == Dirty |
+                      extStatus_of_bits(m[VS]) == Dirty),
   ];
 
   /* We don't support dynamic changes to SXL and UXL. */
@@ -312,6 +320,87 @@ function in32BitMode() -> bool = {
   cur_Architecture() == RV32
 }
 
+// envcfg Resisters
+bitfield MEnvcfg : bits(64) = {
+  // Supervisor TimeCmp Extension
+  STCE   : 63,
+  // Page Based Memory Types Extension
+  PBMTE  : 62,
+  // Reserved WPRI bits.
+  wpri_1 : 61 .. 8,
+  // Cache Block Zero instruction Enable
+  CBZE   : 7,
+  // Cache Block Clean and Flush instruction Enable
+  CBCFE  : 6,
+  // Cache Block Invalidate instruction Enable
+  CBIE   : 5 .. 4,
+  // Reserved WPRI bits.
+  wpri_0 : 3 .. 1,
+  // Fence of I/O implies Memory
+  FIOM   : 0,
+}
+
+bitfield SEnvcfg : xlenbits = {
+  // Cache Block Zero instruction Enable
+  CBZE   : 7,
+  // Cache Block Clean and Flush instruction Enable
+  CBCFE  : 6,
+  // Cache Block Invalidate instruction Enable
+  CBIE   : 5 .. 4,
+  // Reserved WPRI bits.
+  wpri_0 : 3 .. 1,
+  // Fence of I/O implies Memory
+  FIOM   : 0,
+}
+
+function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
+  let v = Mk_MEnvcfg(v);
+  [o with
+    FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0,
+    STCE = if extensionEnabled(Ext_Sstc) then v[STCE] else 0b0,
+    // Other extensions are not implemented yet so all other fields are read only zero.
+  ]
+}
+
+function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
+  let v = Mk_SEnvcfg(v);
+  [o with
+    FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0,
+    // Other extensions are not implemented yet so all other fields are read only zero.
+  ];
+}
+
+register menvcfg : MEnvcfg
+register senvcfg : SEnvcfg
+
+mapping clause csr_name_map = 0x30A  <-> "menvcfg"
+mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
+mapping clause csr_name_map = 0x10A  <-> "senvcfg"
+
+function clause is_CSR_defined(0x30A) = extensionEnabled(Ext_U) // menvcfg
+function clause is_CSR_defined(0x31A) = extensionEnabled(Ext_U) & (xlen == 32) // menvcfgh
+function clause is_CSR_defined(0x10A) = extensionEnabled(Ext_S) // senvcfg
+
+function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
+function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
+function clause read_CSR(0x10A) = senvcfg.bits[xlen - 1 .. 0]
+
+function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); menvcfg.bits[31 .. 0] }
+function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); menvcfg.bits }
+function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); menvcfg.bits[63 .. 32] }
+function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); senvcfg.bits[xlen - 1 .. 0] }
+
+// Return whether or not FIOM is currently active, based on the current
+// privilege and the menvcfg/senvcfg settings. This means that I/O fences
+// imply memory fence.
+function is_fiom_active() -> bool = {
+  match cur_privilege {
+    Machine => false,
+    Supervisor => menvcfg[FIOM] == 0b1,
+    User => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
+  }
+}
+
 /* interrupt processing state */
 
 bitfield Minterrupts : xlenbits = {
@@ -329,7 +418,14 @@ function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   /* The only writable bits are the S-mode bits, and with the 'N'
    * extension, the U-mode bits. */
   let v = Mk_Minterrupts(v);
-  [o with SEI = v[SEI], STI = v[STI], SSI = v[SSI]]
+  [o with
+    SEI = if extensionEnabled(Ext_S) then v[SEI] else 0b0,
+    SSI = if extensionEnabled(Ext_S) then v[SSI] else 0b0,
+    STI = if extensionEnabled(Ext_S) then (
+      // STI is read only if Sstc is enabled and STCE is set (it is equal to stimecmp <= mtime).
+      if extensionEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then o[STI] else v[STI]
+    ) else 0b0,
+  ]
 }
 
 function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
@@ -338,9 +434,9 @@ function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
     MEI = v[MEI],
     MTI = v[MTI],
     MSI = v[MSI],
-    SEI = v[SEI],
-    STI = v[STI],
-    SSI = v[SSI]
+    SEI = if extensionEnabled(Ext_S) then v[SEI] else 0b0,
+    STI = if extensionEnabled(Ext_S) then v[STI] else 0b0,
+    SSI = if extensionEnabled(Ext_S) then v[SSI] else 0b0,
   ]
 }
 
@@ -445,16 +541,20 @@ register mepc : xlenbits
 /* The xepc legalization zeroes xepc[1:0] when misa.C is hardwired to 0.
  * When misa.C is writable, it zeroes only xepc[0].
  */
-function legalize_xepc(v : xlenbits) -> xlenbits =
-  /* allow writing xepc[1] only if misa.C is enabled or could be enabled
-     XXX specification says this legalization should be done on read */
-  if   (sys_enable_writable_misa() & sys_enable_rvc()) | misa[C] == 0b1
+function legalize_xepc(v : xlenbits) -> xlenbits = {
+  // allow writing xepc[1] only if misa.C is enabled or could be enabled.
+  if   sys_enable_rvc()
   then [v with 0 = bitzero]
-  else v & sign_extend(0b100)
+  else [v with 1..0 = zeros()]
+}
 
-/* masking for reads to xepc */
-function pc_alignment_mask() -> xlenbits =
-  ~(zero_extend(if misa[C] == 0b1 then 0b00 else 0b10))
+// Align value to min supported PC alignment. This is used to
+// legalize xepc reads.
+function align_pc(addr : xlenbits) -> xlenbits = {
+  if misa[C] == 0b1
+  then [addr with 0 = bitzero]
+  else [addr with 1..0 = zeros()]
+}
 
 /* auxiliary exception registers */
 
@@ -548,38 +648,6 @@ register minstret_increment : bool
 function retire_instruction() -> unit = {
   if minstret_increment then minstret = minstret + 1;
 }
-
-// HPM (Hardware Performance Monitoring) counters. The lowest three values are
-// not used but they are defined for simplicity.
-register mhpmcounter : vector(32, bits(64))
-
-// HPM events selector. These control what the HPM counters measure. The lowest
-// three values are not used but they are defined for simplicity.
-register mhpmevent : vector(32, xlenbits)
-
-// Valid HPM counter indices. The lowest three are used for mcycle, mtime and minstret.
-type hpmidx = range(3, 31)
-
-// Convert the lowest 5 bits of a CSR index to an hpmidx. Asserts if it is 0..2.
-function hpmidx_from_bits(b : bits(5)) -> hpmidx = {
-  let index = unsigned(b);
-  assert(index >= 3, "unreachable HPM index");
-  index
-}
-
-function read_mhpmcounter(index : hpmidx) -> xlenbits = mhpmcounter[index][(xlen - 1) .. 0]
-function read_mhpmcounterh(index : hpmidx) -> bits(32) = mhpmcounter[index][63 .. 32]
-function read_mhpmevent(index : hpmidx) -> xlenbits = mhpmevent[index]
-
-// Write the HPM CSRs. These return the new value of the CSR, for use in writeCSR.
-function write_mhpmcounter(index : hpmidx, value : xlenbits) -> unit =
-  if sys_writable_hpm_counters()[index] == bitone then mhpmcounter[index][(xlen - 1) .. 0] = value
-
-function write_mhpmcounterh(index : hpmidx, value : bits(32)) -> unit =
-  if sys_writable_hpm_counters()[index] == bitone then mhpmcounter[index][63 .. 32] = value
-
-function write_mhpmevent(index : hpmidx, value : xlenbits) -> unit =
-  if sys_writable_hpm_counters()[index] == bitone then mhpmevent[index] = value
 
 /* machine information registers */
 register mvendorid : bits(32)
@@ -832,84 +900,6 @@ val get_16_random_bits = impure {
     c: "plat_get_16_random_bits",
     lem: "plat_get_16_random_bits"
 } : unit -> bits(16)
-
-// envcfg Resisters
-bitfield MEnvcfg : bits(64) = {
-  // Supervisor TimeCmp Extension
-  STCE   : 63,
-  // Page Based Memory Types Extension
-  PBMTE  : 62,
-  // Reserved WPRI bits.
-  wpri_1 : 61 .. 8,
-  // Cache Block Zero instruction Enable
-  CBZE   : 7,
-  // Cache Block Clean and Flush instruction Enable
-  CBCFE  : 6,
-  // Cache Block Invalidate instruction Enable
-  CBIE   : 5 .. 4,
-  // Reserved WPRI bits.
-  wpri_0 : 3 .. 1,
-  // Fence of I/O implies Memory
-  FIOM   : 0,
-}
-
-bitfield SEnvcfg : xlenbits = {
-  // Cache Block Zero instruction Enable
-  CBZE   : 7,
-  // Cache Block Clean and Flush instruction Enable
-  CBCFE  : 6,
-  // Cache Block Invalidate instruction Enable
-  CBIE   : 5 .. 4,
-  // Reserved WPRI bits.
-  wpri_0 : 3 .. 1,
-  // Fence of I/O implies Memory
-  FIOM   : 0,
-}
-
-function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
-  let v = Mk_MEnvcfg(v);
-  let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
-  // Other extensions are not implemented yet so all other fields are read only zero.
-  o
-}
-
-function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
-  let v = Mk_SEnvcfg(v);
-  let o = [o with FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0];
-  // Other extensions are not implemented yet so all other fields are read only zero.
-  o
-}
-
-register menvcfg : MEnvcfg
-register senvcfg : SEnvcfg
-
-mapping clause csr_name_map = 0x30A  <-> "menvcfg"
-mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
-mapping clause csr_name_map = 0x10A  <-> "senvcfg"
-
-function clause is_CSR_defined(0x30A) = extensionEnabled(Ext_U) // menvcfg
-function clause is_CSR_defined(0x31A) = extensionEnabled(Ext_U) & (xlen == 32) // menvcfgh
-function clause is_CSR_defined(0x10A) = extensionEnabled(Ext_S) // senvcfg
-
-function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
-function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
-function clause read_CSR(0x10A) = senvcfg.bits[xlen - 1 .. 0]
-
-function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); menvcfg.bits[31 .. 0] }
-function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); menvcfg.bits }
-function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); menvcfg.bits[63 .. 32] }
-function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); senvcfg.bits[xlen - 1 .. 0] }
-
-// Return whether or not FIOM is currently active, based on the current
-// privilege and the menvcfg/senvcfg settings. This means that I/O fences
-// imply memory fence.
-function is_fiom_active() -> bool = {
-  match cur_privilege {
-    Machine => false,
-    Supervisor => menvcfg[FIOM] == 0b1,
-    User => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
-  }
-}
 
 /* vector csrs */
 register vstart : bits(16) /* use the largest possible length of vstart */

@@ -32,12 +32,19 @@ function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bit, super
 // Return true if the counter is enabled OR the CSR is not a counter.
 function check_Counteren(csr : csreg, p : Privilege) -> bool = {
   // Check if it is not a counter.
-  if csr <_u 0xC00 | 0xC1F <_u csr
-  then return true;
+  if csr <_u 0xC00 | 0xC1F <_u csr then return true;
 
   // Check the relevant bit in m/scounteren.
   let index = unsigned(csr[4 .. 0]);
   feature_enabled_for_priv(p, mcounteren.bits[index], scounteren.bits[index])
+}
+
+// Return true if the stimecmp[h] CSR is accessible OR the CSR is not stimecmp[h].
+function check_Stimecmp(csr : csreg, p : Privilege) -> bool = {
+  // Check if it is not stimecmp.
+  if csr != 0x14D & csr != 0x15D then return true;
+
+  p == Machine | (p == Supervisor & mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1)
 }
 
 /* Seed may only be accessed if we are doing a write, and access has been
@@ -61,8 +68,12 @@ function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
 function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
     is_CSR_defined(csr)
   & check_CSR_access(csrAccess(csr), csrPriv(csr), p, isWrite)
+  // TODO: If we add `p` back to is_CSR_defined() we could move these three
+  // check_ functions back there. We should also rename is_CSR_defined()
+  // to is_CSR_accessible() or similar.
   & check_TVM_SATP(csr, p)
   & check_Counteren(csr, p)
+  & check_Stimecmp(csr, p)
   & check_seed_CSR(csr, p, isWrite)
 
 /* Reservation handling for LR/SC.
@@ -293,7 +304,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   get_config_print_platform()
       then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
-      prepare_xret_target(Machine) & pc_alignment_mask()
+      prepare_xret_target(Machine)
     },
     (_, CTL_SRET())  => {
       let prev_priv   = cur_privilege;
@@ -310,7 +321,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       then print_platform("ret-ing from " ^ to_str(prev_priv)
                           ^ " to " ^ to_str(cur_privilege));
 
-      prepare_xret_target(Supervisor) & pc_alignment_mask()
+      prepare_xret_target(Supervisor)
     },
   }
 }

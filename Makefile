@@ -17,6 +17,7 @@ endif
 
 SAIL_XLEN += riscv_xlen.sail
 SAIL_FLEN := riscv_flen_D.sail
+SAIL_FLEN += riscv_flen.sail
 SAIL_VLEN := riscv_vlen.sail
 
 # Instruction sources, depending on target
@@ -73,7 +74,7 @@ SAIL_RMEM_INST_SRCS = riscv_insts_begin.sail $(SAIL_RMEM_INST) riscv_insts_end.s
 SAIL_SYS_SRCS += riscv_vext_control.sail    # helpers for the 'V' extension
 SAIL_SYS_SRCS += riscv_sys_exceptions.sail  # default basic helpers for exception handling
 SAIL_SYS_SRCS += riscv_sync_exception.sail  # define the exception structure used in the model
-SAIL_SYS_SRCS += riscv_hpm_control.sail
+SAIL_SYS_SRCS += riscv_zihpm.sail
 SAIL_SYS_SRCS += riscv_zkr_control.sail
 SAIL_SYS_SRCS += riscv_zicntr_control.sail
 SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdext_control.sail
@@ -158,6 +159,8 @@ SOFTFLOAT_SPECIALIZE_TYPE = RISCV
 GMP_FLAGS = $(shell pkg-config --cflags gmp)
 # N.B. GMP does not have pkg-config metadata on Ubuntu 18.04 so default to -lgmp
 GMP_LIBS = $(shell pkg-config --libs gmp || echo -lgmp)
+
+# TODO: Remove Zlib when upgrading to Sail 0.19; it is no longer a requirement.
 ZLIB_FLAGS = $(shell pkg-config --cflags zlib)
 ZLIB_LIBS = $(shell pkg-config --libs zlib)
 
@@ -189,6 +192,21 @@ ALL_BRANCHES = generated_definitions/c/all_branches
 C_FLAGS += -DSAILCOV
 SAIL_FLAGS += -c_coverage $(ALL_BRANCHES) -c_include sail_coverage.h
 C_LIBS += $(SAIL_LIB_DIR)/coverage/libsail_coverage.a -lm -lpthread -ldl
+endif
+
+# Optionally link C_LIBS statically. Unlike -static this will not
+# link glibc statically which is generally a bad idea.
+ifneq (,$(STATIC))
+    UNAME_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
+    ifeq ($(UNAME_S),Darwin)
+        # Unfortunately the Mac linker does not support -Bstatic.
+        GMP_LIBS = $(shell pkg-config --variable=libdir gmp)/libgmp.a
+        C_LIBS_WRAPPED = $(C_LIBS)
+    else
+        C_LIBS_WRAPPED = -Wl,--push-state -Wl,-Bstatic $(C_LIBS) -Wl,--pop-state
+    endif
+else
+    C_LIBS_WRAPPED = $(C_LIBS)
 endif
 
 RISCV_EXTRAS_LEM_FILES = riscv_extras.lem mem_metadata.lem riscv_extras_fdext.lem
@@ -244,7 +262,7 @@ csim: c_emulator/riscv_sim_$(ARCH)
 rvfi: c_emulator/riscv_rvfi_$(ARCH)
 
 c_emulator/riscv_sim_$(ARCH): generated_definitions/c/riscv_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile
-	$(CC) -g $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
+	$(CC) -g $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS_WRAPPED) -o $@
 
 # Note: We have to add -c_preserve since the functions might be optimized out otherwise
 rvfi_preserve_fns=-c_preserve rvfi_set_instr_packet \
@@ -269,7 +287,7 @@ generated_definitions/c/riscv_rvfi_model_$(ARCH).c: $(SAIL_RVFI_SRCS) model/main
 	mv $@.new $@
 
 c_emulator/riscv_rvfi_$(ARCH): generated_definitions/c/riscv_rvfi_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile
-	$(CC) -g $(C_WARNINGS) $(C_FLAGS) $< -DRVFI_DII $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS) -o $@
+	$(CC) -g $(C_WARNINGS) $(C_FLAGS) $< -DRVFI_DII $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS_WRAPPED) -o $@
 
 latex: $(SAIL_SRCS) Makefile
 	mkdir -p generated_definitions/latex

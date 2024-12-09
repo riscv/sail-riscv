@@ -6,6 +6,9 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* Define the FLEN value for the 'D' extension. */
+type flenbits = bits(flen)
 
-type flen : Int = 64
+// Variable versions of the above types. Variables and types
+// are disjoint in Sail so they are allowed to have the same name.
+// This saves typing `sizeof()` everywhere.
+let flen = sizeof(flen)

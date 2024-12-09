@@ -121,8 +121,13 @@ function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (addr : xlen
 
 val plat_insns_per_tick = pure {interpreter: "Platform.insns_per_tick", c: "plat_insns_per_tick", lem: "plat_insns_per_tick"} : unit -> int
 
-// assumes a single hart, since this typically is a vector of per-hart registers.
-register mtimecmp : bits(64)  // memory-mapped internal clint register.
+// Each hart has a memory-mapped mtimecmp register. Typically these are
+// exposed as an array in CLINT. The CLINT implementation here is currently
+// hard-coded to use the mtimecmp for hart 0.
+register mtimecmp : bits(64)
+
+// Unlike mtimecmp, stimecmp is a real CSR; not memory mapped.
+register stimecmp : bits(64)
 
 /* CLINT memory-mapped IO */
 
@@ -211,8 +216,17 @@ function clint_dispatch() -> unit = {
   if mtimecmp <=_u mtime then {
     if   get_config_print_platform()
     then print_platform(" clint timer pending at mtime " ^ BitStr(mtime));
-    mip[MTI] = 0b1
-  }
+    mip[MTI] = 0b1;
+  };
+  /* Sstc - supervisor timer register */
+  if extensionEnabled(Ext_Sstc) then {
+    mip[STI] = 0b0;
+    if stimecmp <=_u mtime then {
+      if   get_config_print_platform()
+      then print_platform(" supervisor timer pending at mtime " ^ BitStr(mtime));
+      mip[STI] = 0b1;
+    }
+  };
 }
 
 /* The rreg effect is due to checking mtime. */
@@ -461,13 +475,4 @@ function handle_illegal() -> unit = {
 }
 
 /* Platform-specific wait-for-interrupt */
-
-function platform_wfi() -> unit = {
-  /* speed execution by getting the timer to fire at the next instruction,
-   * since we currently don't have any other devices raising interrupts.
-   */
-  if mtime <_u mtimecmp then {
-    mtime  = mtimecmp;
-    mcycle = mtimecmp;
-  }
-}
+function platform_wfi() -> unit = ()
