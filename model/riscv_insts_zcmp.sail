@@ -33,6 +33,7 @@ function get_stack_adj_base(rlist : bits(4)) -> int = {
       0b01 => 16,
       0b10 => 32,
       0b11 => if rlist == 0b1111 then 64 else 48,
+      _    => 0,
     }
   else {
     match rlist[3 .. 1] {
@@ -42,6 +43,7 @@ function get_stack_adj_base(rlist : bits(4)) -> int = {
       0b101 => 64,
       0b110 => 80,
       0b111 => if rlist == 0b1111 then 112 else 96,
+      _     => 0,
     }
   }
 }
@@ -49,9 +51,14 @@ function get_stack_adj_base(rlist : bits(4)) -> int = {
 mapping zcmp_assembly_mapping : (bits(4), bits(2), bool) <-> string = {
   forwards (rlist, spimm54, is_negative) => {
     var stack_adj : int = undefined;
+    let stack_adj_base = get_stack_adj_base(rlist);
     stack_adj = get_stack_adj_base(rlist) + unsigned(spimm54) * 16;
 
-    "{" ^ zcmp_assembly_rlist(rlist) ^ "}" ^ sep() ^ negative_sign(is_negative) ^ dec_str(stack_adj)
+    if stack_adj_base == 0 then {
+      "unsupport rlist" ^ sep() ^ negative_sign(is_negative) ^ dec_str(stack_adj)
+    } else {
+      "{" ^ zcmp_assembly_rlist(rlist) ^ "}" ^ sep() ^ negative_sign(is_negative) ^ dec_str(stack_adj)
+    }
   },
   backwards str_input => {
     var str = str_input;
