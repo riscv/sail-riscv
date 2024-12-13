@@ -58,15 +58,18 @@ struct RISCV_strong_access = {
 
 /* The Sail concurrency interface lets us have a physical address type
    with additional information, provided we can supply a function that
-   converts it into a bitvector.  Since we are just using xlenbits as a
-   physical address, we need the identity function for xlenbits. */
-val xlenbits_identity : xlenbits -> xlenbits
+   converts it into a bitvector. When in RV32 mode, physaddrbits is
+   bits(34), which needs to be zero-extended to bits(64) for
+   sail_mem_write/read interface. This conversion is necessary because
+   the memory interface only supports 32-bit or 64-bit physical
+   addresses regardless of the actual physical address width. */
+val physaddrbits_zero_extend : physaddrbits -> bits(64)
 
-function xlenbits_identity xs = xs
+function physaddrbits_zero_extend xs = zero_extend(xs)
 
 instantiation sail_mem_write with
-  'pa = xlenbits,
-  pa_bits = xlenbits_identity,
+  'pa = physaddrbits,
+  pa_bits = physaddrbits_zero_extend,
   /* We don't have a relaxed-memory translation model for RISC-V, so
      we just use unit as a dummy type. */
   'translation_summary = unit,
@@ -93,7 +96,7 @@ type max_mem_access : Int = 4096
 val write_ram : forall 'n, 0 < 'n <= max_mem_access. (write_kind, physaddr, int('n), bits(8 * 'n), mem_meta) -> bool
 
 function write_ram(wk, physaddr(addr), width, data, meta) = {
-  let request : Mem_write_request('n, 64, xlenbits, unit, RISCV_strong_access) = struct {
+  let request : Mem_write_request('n, 64, physaddrbits, unit, RISCV_strong_access) = struct {
     access_kind = match wk {
       Write_plain => AK_explicit(struct { variety = AV_plain, strength = AS_normal }),
       Write_RISCV_release => AK_explicit(struct { variety = AV_plain, strength = AS_rel_or_acq }),
@@ -129,12 +132,12 @@ val write_ram_ea : forall 'n, 0 < 'n <= max_mem_access. (write_kind, physaddr, i
 function write_ram_ea(wk, physaddr(addr), width) = ()
 
 instantiation sail_mem_read with
-  pa_bits = xlenbits_identity
+  pa_bits = physaddrbits_zero_extend
 
 val read_ram : forall 'n, 0 < 'n <= max_mem_access.  (read_kind, physaddr, int('n), bool) -> (bits(8 * 'n), mem_meta)
 function read_ram(rk, physaddr(addr), width, read_meta) = {
   let meta = if read_meta then __ReadRAM_Meta(addr, width) else default_meta;
-  let request : Mem_read_request('n, 64, xlenbits, unit, RISCV_strong_access) = struct {
+  let request : Mem_read_request('n, 64, physaddrbits, unit, RISCV_strong_access) = struct {
     access_kind = match rk {
       Read_plain => AK_explicit(struct { variety = AV_plain, strength = AS_normal }),
       Read_ifetch => AK_ifetch(),

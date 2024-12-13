@@ -9,10 +9,13 @@
 /* Note: virtaddr includes physical addresses when address translation is disabled.
  * It is used where the address would be virtual if address translation is active.
  */
+type physaddrbits = bits(physaddrbits_len)
 
-newtype physaddr = physaddr : xlenbits
+let physaddrbits_len = sizeof(physaddrbits_len)
+
+newtype physaddr = physaddr : physaddrbits
 newtype virtaddr = virtaddr : xlenbits
 
-function physaddr_bits(physaddr(paddr) : physaddr) -> xlenbits = paddr
+function physaddr_bits(physaddr(paddr) : physaddr) -> physaddrbits = paddr
 
 function virtaddr_bits(virtaddr(vaddr) : virtaddr) -> xlenbits = vaddr
