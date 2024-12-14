@@ -290,8 +290,6 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  assert('n > 0);
-
   let vm_val  : bits('n)     = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : bits('n)     = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -330,8 +328,6 @@ function clause execute(VID_V(vm, vd)) = {
 
   let 'n = num_elem;
   let 'm = SEW;
-
-  assert('n > 0);
 
   let vm_val  : bits('n)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);

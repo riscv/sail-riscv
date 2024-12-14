@@ -226,7 +226,7 @@ function ext_write_vcsr (vxrm_val, vxsat_val) = {
 }
 
 /* num_elem means max(VLMAX,VLEN/SEW)) according to Section 5.4 of RVV spec */
-val get_num_elem : (int, int) -> nat
+val get_num_elem : (int, int) -> {'n, 'n > 0. int('n)}
 function get_num_elem(LMUL_pow, SEW) = {
   let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
   /* Ignore lmul < 1 so that the entire vreg is read, allowing all masking to

@@ -39,8 +39,6 @@ function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  assert('n > 0);
-
   let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, 0b00000);
   let vd_val  : vector('d, bits('o)) = read_vreg(num_elem_vd, SEW_widen, 0, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
@@ -102,8 +100,6 @@ function clause execute(RMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'n = num_elem_vs;
   let 'd = num_elem_vd;
   let 'm = SEW;
-
-  assert('n > 0);
 
   let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, 0b00000);
   let vd_val  : vector('d, bits('m)) = read_vreg(num_elem_vd, SEW, 0, vd);

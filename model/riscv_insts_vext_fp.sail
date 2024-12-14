@@ -42,8 +42,6 @@ function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  assert('n > 0);
-
   let vm_val  : bits('n)            = read_vmask(num_elem, vm, 0b00000);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -118,8 +116,6 @@ function clause execute(FVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  assert('n > 0);
-
   let vm_val  : bits('n)     = read_vmask(num_elem, vm, 0b00000);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -192,8 +188,6 @@ function clause execute(FWVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  assert('n > 0);
-
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
@@ -258,8 +252,6 @@ function clause execute(FWVVMATYPE(funct6, vm, vs1, vs2, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  assert('n > 0);
-
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
@@ -322,8 +314,6 @@ function clause execute(FWVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  assert('n > 0);
-
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
@@ -380,8 +370,6 @@ function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
 
   let 'n = num_elem;
   let 'm = SEW;
-
-  assert('n > 0);
 
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -500,8 +488,6 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
-
-  assert('n > 0);
 
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -631,8 +617,6 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
-
-  assert('n > 0);
 
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
@@ -764,8 +748,6 @@ function clause execute(VFUNARY1(vm, vs2, vfunary1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  assert('n > 0);
-
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, 0b00000);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -889,8 +871,6 @@ function clause execute(FVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  assert('n > 0);
-
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, 0b00000);
   let rs1_val : bits('m)             = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -980,8 +960,6 @@ function clause execute(FVFMATYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  assert('n > 0);
-
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, 0b00000);
   let rs1_val : bits('m)             = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -1053,8 +1031,6 @@ function clause execute(FWVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  assert('n > 0);
-
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let rs1_val : bits('m)             = get_scalar_fp(rs1, 'm);
@@ -1118,8 +1094,6 @@ function clause execute(FWVFMATYPE(funct6, vm, rs1, vs2, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  assert('n > 0);
-
   let vm_val  : bits('n)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let rs1_val : bits('m)             = get_scalar_fp(rs1, 'm);
@@ -1181,8 +1155,6 @@ function clause execute(FWFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  assert('n > 0);
-
   let vm_val  : bits('n)     = read_vmask(num_elem, vm, 0b00000);
   let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let rs1_val : bits('m)             = get_scalar_fp(rs1, 'm);
@@ -1235,8 +1207,6 @@ function clause execute(VFMERGE(vs2, rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  assert('n > 0);
-
   let vm_val  : bits('n)             = read_vmask(num_elem, 0b0, 0b00000);
   let rs1_val : bits('m)             = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -1285,8 +1255,6 @@ function clause execute(VFMV(rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  assert('n > 0);
-
   let rs1_val : bits('m)             = get_scalar_fp(rs1, 'm);
   let vm_val  : bits('n)             = read_vmask(num_elem, 0b1, 0b00000);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -1322,8 +1290,6 @@ function clause execute(VFMVSF(rs1, vd)) = {
 
   let 'n = num_elem;
   let 'm = SEW;
-
-  assert('n > 0);
 
   let vm_val  : bits('n)             = read_vmask(num_elem, 0b1, 0b00000);
   let rs1_val : bits('m)             = get_scalar_fp(rs1, 'm);

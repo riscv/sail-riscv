@@ -37,8 +37,6 @@ function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  assert('n > 0);
-
   let vm_val  : bits('n)     = read_vmask(num_elem, vm, 0b00000);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -101,8 +99,6 @@ function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
 
   let 'n = num_elem;
   let 'm = SEW;
-
-  assert('n > 0);
 
   let vm_val  : bits('n)     = read_vmask(num_elem, vm, 0b00000);
   let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
