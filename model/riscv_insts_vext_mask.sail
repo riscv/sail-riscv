@@ -50,11 +50,11 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
       result[i] = match funct6 {
         MM_VMAND     => (vs2_val & vs1_val)[i],
         MM_VMNAND    => ~(vs2_val & vs1_val)[i],
-        MM_VMANDN    => (vs2_val & (vs1_val ^ ones()))[i],
+        MM_VMANDN    => (vs2_val & ~(vs1_val))[i],
         MM_VMXOR     => (vs2_val ^ vs1_val)[i],
         MM_VMOR      => (vs2_val | vs1_val)[i],
-        MM_VMNOR     => ((vs2_val | vs1_val) ^ ones())[i],
-        MM_VMORN     => (vs2_val | (vs1_val ^ ones()))[i],
+        MM_VMNOR     => (~(vs2_val | vs1_val))[i],
+        MM_VMORN     => (vs2_val | ~(vs1_val))[i],
         MM_VMXNOR    => (vs2_val & vs1_val)[i]
       }
     }
@@ -177,7 +177,7 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       if vs2_val[i] == bitone then found_elem = true;
-      result[i] = if found_elem then bitzero else bitone
+      result[i] = bool_to_bit(not(found_elem))
     }
   };
 
@@ -216,7 +216,7 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
   var found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      result[i] = if found_elem then bitzero else bitone;
+      result[i] = bool_to_bit(not(found_elem));
       if vs2_val[i] == bitone then found_elem = true
     }
   };
