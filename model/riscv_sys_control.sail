@@ -120,65 +120,25 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   else                        None()
 }
 
-/* Process the pending interrupts xip at a privilege according to
- * the enabled flags xie and the delegation in xideleg. Return
- * either the set of pending interrupts, or the set of interrupts
- * delegated to the next lower privilege.
- */
-union interrupt_set = {
-  Ints_Pending   : xlenbits,
-  Ints_Delegated : xlenbits,
-  Ints_Empty     : unit
-}
-function processPending(xip : Minterrupts, xie : Minterrupts, xideleg : xlenbits,
-                        priv_enabled : bool) -> interrupt_set = {
-  /* interrupts that are enabled but not delegated are pending */
-  let  effective_pend = xip.bits & xie.bits & ~(xideleg);
-  /* the others are delegated */
-  let  effective_delg = xip.bits & xideleg;
-  /* we have pending interrupts if this privilege is enabled */
-  if      priv_enabled & (effective_pend != zeros())
-  then    Ints_Pending(effective_pend)
-  else if effective_delg != zeros()
-  then    Ints_Delegated(effective_delg)
-  else    Ints_Empty()
-}
-
-/* Given the current privilege level, iterate over privileges to get a
- * pending set for an enabled privilege.
+/* Given the current privilege level, return the pending set
+ * of interrupts for the highest privilege that has any pending.
  *
  * We don't use the lowered views of {xie,xip} here, since the spec
  * allows for example the M_Timer to be delegated to the S-mode.
  */
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
-  let effective_pending = mip.bits & mie.bits;
-  if  effective_pending == zeros() then None() /* fast path */
-  else {
-    /* Higher privileges than the current one are implicitly enabled,
-     * while lower privileges are blocked.  An unsupported privilege is
-     * considered blocked.
-     */
-    let mIE = priv != Machine | (priv == Machine & mstatus[MIE] == 0b1);
-    let sIE = extensionEnabled(Ext_S) & (priv == User | (priv == Supervisor & mstatus[SIE] == 0b1));
-    match processPending(mip, mie, mideleg.bits, mIE) {
-      Ints_Empty()      => None(),
-      Ints_Pending(p)   => Some((p, Machine)),
-      Ints_Delegated(d) => {
-        if not(extensionEnabled(Ext_S)) then {
-          // Can't delegate to user mode. This code is unreachable because
-          // `mideleg.bits` is 0 without supervisor mode.
-          internal_error(__FILE__, __LINE__, "N extension not supported");
-        } else {
-          /* the delegated bits are pending for S-mode */
-          match processPending(Mk_Minterrupts(d), mie, zeros(), sIE) {
-            Ints_Empty()      => None(),
-            Ints_Pending(p)   => Some((p, Supervisor)),
-            Ints_Delegated(d) => internal_error(__FILE__, __LINE__, "N extension not supported"),
-          }
-        }
-      }
-    }
-  }
+  // mideleg can only be non-zero if we support Supervisor mode.
+  assert(extensionEnabled(Ext_S) | mideleg.bits == zeros());
+
+  let pending_m = mip.bits & mie.bits & ~(mideleg.bits);
+  let pending_s = mip.bits & mie.bits & mideleg.bits;
+
+  let mIE = (priv == Machine    & mstatus[MIE] == 0b1) | priv == Supervisor | priv == User;
+  let sIE = (priv == Supervisor & mstatus[SIE] == 0b1) | priv == User;
+
+  if      mIE & (pending_m != zeros()) then Some((pending_m, Machine))
+  else if sIE & (pending_s != zeros()) then Some((pending_s, Supervisor))
+  else None()
 }
 
 /* Examine the current interrupt state and return an interrupt to be *
