@@ -212,7 +212,7 @@ function clint_load(t, addr, width) = {
 function clint_dispatch() -> unit = {
   mip[MTI] = bool_to_bits(mtimecmp <=_u mtime);
   if extensionEnabled(Ext_Sstc) then {
-    mip[STI] = bool_to_bits(stimecmp <=_u mtime); 
+    mip[STI] = bool_to_bits(stimecmp <=_u mtime);
   };
   if get_config_print_platform()
   then print_platform("clint mtime " ^ BitStr(mtime) ^ " (mip.MTI <- " ^ BitStr(mip[MTI]) ^
