@@ -680,10 +680,6 @@ void init_sail(uint64_t elf_entry)
   } else
 #endif
     init_sail_reset_vector(elf_entry);
-
-  // this is probably unnecessary now; remove
-  if (!rv_enable_rvc)
-    z_set_Misa_C(&zmisa, 0);
 }
 
 /* reinitialize to clear state and memory, typically across tests runs */
