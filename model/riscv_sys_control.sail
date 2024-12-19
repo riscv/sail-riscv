@@ -351,11 +351,17 @@ function init_sys() -> unit = {
   mhartid     = zeros();
   mconfigptr  = zeros();
 
+  /* base integer ISA flavor */
+  match bitvector_length(let regidx(z) = zreg in z) {
+    4 => { misa[E] = 0b1; misa[I] = 0b0; },
+    5 => { misa[E] = 0b0; misa[I] = 0b1; },
+    _ => { assert(false, "Invalid register index size") }
+  };
+
   misa[MXL] = arch_to_bits(if xlen == 32 then RV32 else RV64);
   misa[A]   = 0b1;                             /* atomics */
   misa[C]   = bool_to_bits(sys_enable_rvc());  /* RVC */
   misa[B]   = bool_to_bits(sys_enable_bext()); /* Bit-manipulation */
-  misa[I]   = 0b1;                             /* base integer ISA */
   misa[M]   = 0b1;                             /* integer multiply/divide */
   misa[U]   = 0b1;                             /* user-mode */
   misa[S]   = 0b1;                             /* supervisor-mode */

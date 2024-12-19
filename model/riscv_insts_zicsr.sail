@@ -18,13 +18,14 @@ mapping encdec_csrop : csrop <-> bits(2) = {
 }
 
 mapping clause encdec = CSR(csr, rs1, rd, is_imm, op)
-  <-> csr @ rs1 @ bool_bits(is_imm) @ encdec_csrop(op) @ rd @ 0b1110011
+  <-> csr @ encdec_reg(rs1) @ bool_bits(is_imm) @ encdec_csrop(op) @ encdec_reg(rd) @ 0b1110011
 
 function clause execute CSR(csr, rs1, rd, is_imm, op) = {
-  let rs1_val : xlenbits = if is_imm then zero_extend(rs1) else X(rs1);
+  let regidx(rs1_bits) = rs1;
+  let rs1_val : xlenbits = if is_imm then zero_extend(rs1_bits) else X(rs1);
   let isWrite : bool = match op {
     CSRRW  => true,
-    _      => if is_imm then unsigned(rs1_val) != 0 else unsigned(rs1) != 0
+    _      => if is_imm then unsigned(rs1_val) != 0 else rs1 != zreg
   };
   if not(check_CSR(csr, cur_privilege, isWrite))
   then { handle_illegal(); RETIRE_FAIL }
@@ -61,7 +62,7 @@ mapping csr_mnemonic : csrop <-> string = {
   CSRRC <-> "csrrc"
 }
 
-mapping clause assembly = CSR(csr, rs1, rd, true, op)
-  <-> csr_mnemonic(op) ^ "i" ^ spc() ^ reg_name(rd)  ^ sep() ^ csr_name_map(csr) ^ sep() ^ hex_bits_5(rs1)
+mapping clause assembly = CSR(csr, regidx(rs1_bits), rd, true, op)
+  <-> csr_mnemonic(op) ^ "i" ^ spc() ^ reg_name(rd)  ^ sep() ^ csr_name_map(csr) ^ sep() ^ hex_bits_5(rs1_bits)
 mapping clause assembly = CSR(csr, rs1, rd, false, op)
   <-> csr_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ csr_name_map(csr) ^ sep() ^ reg_name(rs1)
