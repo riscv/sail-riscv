@@ -234,9 +234,6 @@ sail_doc/riscv_$(ARCH).json: $(SAIL_SRCS) model/main.sail
 riscv.smt_model: $(SAIL_SRCS)
 	$(SAIL) -smt_serialize $(SAIL_FLAGS) $(SAIL_SRCS) -o riscv
 
-cgen: $(SAIL_SRCS) model/main.sail
-	$(SAIL) -cgen $(SAIL_FLAGS) $(SAIL_SRCS) model/main.sail
-
 cloc:
 	cloc --by-file --force-lang C,sail $(SAIL_SRCS)
 
