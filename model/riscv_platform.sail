@@ -30,8 +30,8 @@ val elf_entry = pure {
 val plat_cache_block_size_exp = pure {c: "plat_cache_block_size_exp", interpreter: "Platform.cache_block_size_exp", lem: "plat_cache_block_size_exp"} : unit -> range(0, 12)
 
 /* Main memory */
-val plat_ram_base = pure {c: "plat_ram_base", interpreter: "Platform.dram_base", lem: "plat_ram_base"} : unit -> xlenbits
-val plat_ram_size = pure {c: "plat_ram_size", interpreter: "Platform.dram_size", lem: "plat_ram_size"} : unit -> xlenbits
+val plat_ram_base = pure {c: "plat_ram_base", interpreter: "Platform.dram_base", lem: "plat_ram_base"} : unit -> physaddrbits
+val plat_ram_size = pure {c: "plat_ram_size", interpreter: "Platform.dram_size", lem: "plat_ram_size"} : unit -> physaddrbits
 
 /* whether the MMU should update dirty bits in PTEs */
 val plat_enable_dirty_update = pure {interpreter: "Platform.enable_dirty_update",
@@ -51,19 +51,19 @@ val plat_mtval_has_illegal_inst_bits = pure {interpreter: "Platform.mtval_has_il
                                              lem: "plat_mtval_has_illegal_inst_bits"} : unit -> bool
 
 /* ROM holding reset vector and device-tree DTB */
-val plat_rom_base   = pure {interpreter: "Platform.rom_base", c: "plat_rom_base", lem: "plat_rom_base"} : unit -> xlenbits
-val plat_rom_size   = pure {interpreter: "Platform.rom_size", c: "plat_rom_size", lem: "plat_rom_size"} : unit -> xlenbits
+val plat_rom_base   = pure {interpreter: "Platform.rom_base", c: "plat_rom_base", lem: "plat_rom_base"} : unit -> physaddrbits
+val plat_rom_size   = pure {interpreter: "Platform.rom_size", c: "plat_rom_size", lem: "plat_rom_size"} : unit -> physaddrbits
 
 /* Location of clock-interface, which should match with the spec in the DTB */
-val plat_clint_base = pure {interpreter: "Platform.clint_base", c: "plat_clint_base", lem: "plat_clint_base"} : unit -> xlenbits
-val plat_clint_size = pure {interpreter: "Platform.clint_size", c: "plat_clint_size", lem: "plat_clint_size"} : unit -> xlenbits
+val plat_clint_base = pure {interpreter: "Platform.clint_base", c: "plat_clint_base", lem: "plat_clint_base"} : unit -> physaddrbits
+val plat_clint_size = pure {interpreter: "Platform.clint_size", c: "plat_clint_size", lem: "plat_clint_size"} : unit -> physaddrbits
 
 /* Location of HTIF ports */
-val plat_htif_tohost = pure {c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> xlenbits
-function plat_htif_tohost () = to_bits(xlen, elf_tohost ())
+val plat_htif_tohost = pure {c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> physaddrbits
+function plat_htif_tohost () = to_bits(physaddrbits_len, elf_tohost ())
 // todo: fromhost
 
-val phys_mem_segments : unit -> list((xlenbits, xlenbits))
+val phys_mem_segments : unit -> list((physaddrbits, physaddrbits))
 function phys_mem_segments() =
   (plat_rom_base (), plat_rom_size ()) ::
   (plat_ram_base (), plat_ram_size ()) ::
@@ -143,11 +143,11 @@ register stimecmp : bits(64)
  * bffc mtime hi
  */
 
-let MSIP_BASE        : xlenbits = zero_extend(0x00000)
-let MTIMECMP_BASE    : xlenbits = zero_extend(0x04000)
-let MTIMECMP_BASE_HI : xlenbits = zero_extend(0x04004)
-let MTIME_BASE       : xlenbits = zero_extend(0x0bff8)
-let MTIME_BASE_HI    : xlenbits = zero_extend(0x0bffc)
+let MSIP_BASE        : physaddrbits = zero_extend(0x00000)
+let MTIMECMP_BASE    : physaddrbits = zero_extend(0x04000)
+let MTIMECMP_BASE_HI : physaddrbits = zero_extend(0x04004)
+let MTIME_BASE       : physaddrbits = zero_extend(0x0bff8)
+let MTIME_BASE_HI    : physaddrbits = zero_extend(0x0bffc)
 
 val clint_load : forall 'n, 'n > 0. (AccessType(ext_access_type), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
 function clint_load(t, physaddr(addr), width) = {
