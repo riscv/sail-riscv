@@ -10,6 +10,7 @@ core {
   requires prelude, A_types, Zicbop_types, Zicbom_types
 
   files
+    core/spec_version.sail,
     core/xlen.sail,
     core/flen.sail,
     core/vlen.sail,
