@@ -171,6 +171,7 @@ foreach (xlen IN ITEMS 32 64)
 
             set(sail_arch_srcs
                 ${prelude}
+                "riscv_version.sail"
                 "riscv_extensions.sail"
                 "riscv_types_common.sail"
                 "riscv_types_ext.sail"
