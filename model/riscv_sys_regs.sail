@@ -167,26 +167,25 @@ function have_privLevel(priv : priv_level) -> bool =
     0b11 => true,
   }
 
-bitfield Mstatush : bits(32) = {
-  MBE  : 5,
-  SBE  : 4
-}
-register mstatush : Mstatush
+bitfield Mstatus : bits(64) = {
+  SD_64: 63,
 
-bitfield Mstatus : xlenbits = {
-  SD   : xlen - 1,
+  //MDT  : 42,
+  //MPELP: 41,
 
-  // The MBE and SBE fields are in mstatus in RV64 and absent in RV32.
-  // On RV32, they are in mstatush, which doesn't exist in RV64.  For now,
-  // they are handled in an ad-hoc way.
-  // MBE  : 37
-  // SBE  : 36
+  //MPV  : 39,
+  //GVA  : 38,
 
-  // The SXL and UXL fields don't exist on RV32, so they are modelled
-  // via explicit getters and setters; see below.
-  // SXL  : 35 .. 34,
-  // UXL  : 33 .. 32,
+  MBE  : 37,
+  SBE  : 36,
 
+  SXL  : 35 .. 34,
+  UXL  : 33 .. 32,
+
+  SD_32: 31,
+
+  //SDT  : 24,
+  //SPELP: 23,
   TSR  : 22,
   TW   : 21,
   TVM  : 20,
@@ -217,72 +216,79 @@ function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv :
 function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
   if   xlen == 32
   then arch_to_bits(RV32)
-  else m.bits[35 .. 34]
-}
-
-function set_mstatus_SXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
-  if   xlen == 32
-  then m
-  else {
-    let m = vector_update_subrange(m.bits, 35, 34,  a);
-    Mk_Mstatus(m)
-  }
+  else m[SXL]
 }
 
 function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
   if   xlen == 32
   then arch_to_bits(RV32)
-  else m.bits[33 .. 32]
+  else m[UXL]
 }
 
-function set_mstatus_UXL(m : Mstatus, a : arch_xlen) -> Mstatus = {
+function get_mstatus_SD(m : Mstatus) -> bits(1) = {
+  if   xlen == 32 then m[SD_32]
+  else m[SD_64]
+}
+
+function set_mstatus_SD(m : Mstatus, v : bits(1)) -> Mstatus = {
   if   xlen == 32
-  then m
-  else {
-    let m = vector_update_subrange(m.bits, 33, 32,  a);
-    Mk_Mstatus(m)
-  }
+  then [m with SD_32 = v]
+  else [m with SD_64 = v]
 }
 
-function legalize_mstatus(o : Mstatus, v : xlenbits) -> Mstatus = {
+function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
   /*
    * Populate all defined fields using the bits of v, stripping anything
-   * that does not have a matching bitfield entry. All bits above 32 are handled
-   * explicitly later.
+   * that does not have a matching bitfield entry. The SD bits are handled
+   * explicitly later depending on xlen.
    */
-  // TODO: This method is error prone. We should instead explicitly copy the
-  // fields that are implemented. See legalize_mie() for an example.
-  let m : Mstatus = Mk_Mstatus(zero_extend(v[22 .. 7] @ 0b0 @ v[5 .. 5] @ 0b0 @ v[3 .. 3] @ 0b0 @ v[1 .. 1] @ 0b0));
+  let v = Mk_Mstatus(v);
 
+  let o = [o with
+    // MDT = v[MDT],
+    // MPELP = v[MPELP],
+    // MPV = v[MPV],
+    // GVA = v[GVA],
+    /* We don't currently support changing MBE and SBE. */
+    // MBE = v[MBE],
+    // SBE = v[SBE],
+    /* We don't support dynamic changes to SXL and UXL. */
+    // SXL = if xlen == 64 then v[SXL] else o[SXL],
+    // UXL = if xlen == 64 then v[UXL] else o[UXL],
+    // SDT = v[SDT],
+    // SPELP = v[SPELP],
+    TSR = v[TSR],
+    TW = v[TW],
+    TVM = v[TVM],
+    MXR = v[MXR],
+    SUM = v[SUM],
+    MPRV = if extensionEnabled(Ext_U) then v[MPRV] else 0b0,
+    /* We don't have any extension context yet. */
+    XS = extStatus_to_bits(Off),
   /* FS is WARL, and making FS writable can support the M-mode emulation of an FPU
    * to support code running in S/U-modes.  Spike does this, and for now, we match it,
    * but only if Zfinx isn't enabled.
    * FIXME: This should be made a platform parameter.
    */
-  let m = [m with
-    /* Legalize MPP */
-    MPP = if have_privLevel(m[MPP]) then m[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
-    /* We don't have any extension context yet. */
-    XS = extStatus_to_bits(Off),
-    FS = if sys_enable_zfinx() then extStatus_to_bits(Off) else m[FS],
-    MPRV = if extensionEnabled(Ext_U) then m[MPRV] else 0b0,
+    FS = if sys_enable_zfinx() then extStatus_to_bits(Off) else v[FS],
+    MPP = if have_privLevel(v[MPP]) then v[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
+    VS = v[VS],
+    SPP = v[SPP],
+    MPIE = v[MPIE],
+    SPIE = v[SPIE],
+    MIE = v[MIE],
+    SIE = v[SIE],
   ];
 
   // Set dirty bit to OR of other status bits.
-  let m = [m with
-    SD = bool_to_bits(extStatus_of_bits(m[FS]) == Dirty |
-                      extStatus_of_bits(m[XS]) == Dirty |
-                      extStatus_of_bits(m[VS]) == Dirty),
-  ];
+  let dirty = extStatus_of_bits(o[FS]) == Dirty |
+              extStatus_of_bits(o[XS]) == Dirty |
+              extStatus_of_bits(o[VS]) == Dirty;
 
-  /* We don't support dynamic changes to SXL and UXL. */
-  let m = set_mstatus_SXL(m, get_mstatus_SXL(o));
-  let m = set_mstatus_UXL(m, get_mstatus_UXL(o));
-
-  /* We don't currently support changing MBE and SBE. */
-  if xlen == 64 then {
-    Mk_Mstatus([m.bits with 37 .. 36 = 0b00])
-  } else m
+  [o with
+    SD_64 = if xlen == 64 then bool_to_bits(dirty) else o[SD_64],
+    SD_32 = if xlen == 32 then bool_to_bits(dirty) else o[SD_32],
+  ]
 }
 
 mapping clause csr_name_map = 0x300  <-> "mstatus"
@@ -290,11 +296,12 @@ mapping clause csr_name_map = 0x300  <-> "mstatus"
 function clause is_CSR_defined(0x300) = true // mstatus
 function clause is_CSR_defined(0x310) = xlen == 32 // mstatush
 
-function clause read_CSR(0x300) = mstatus.bits
-function clause read_CSR(0x310 if xlen == 32) = mstatush.bits
+function clause read_CSR(0x300) = mstatus.bits[xlen - 1 .. 0]
+function clause read_CSR(0x310 if xlen == 32) = mstatus.bits[63 .. 32]
 
-function clause write_CSR(0x300, value) = { mstatus = legalize_mstatus(mstatus, value); mstatus.bits }
-function clause write_CSR((0x310, value) if xlen == 32) = { mstatush.bits } // ignore writes for now
+function clause write_CSR((0x300, value) if xlen == 64) = { mstatus = legalize_mstatus(mstatus, value); mstatus.bits }
+function clause write_CSR((0x300, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, mstatus.bits[63 .. 32] @ value); mstatus.bits[31 .. 0] }
+function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, value @ mstatus.bits[31 .. 0]); mstatus.bits[63 .. 32] }
 
 /* architecture and extension checks */
 
@@ -673,39 +680,33 @@ function clause read_CSR(0xF15) = mconfigptr
 /* S-mode registers */
 
 /* sstatus reveals a subset of mstatus */
-bitfield Sstatus : xlenbits = {
-  SD   : xlen - 1,
-  // The UXL field does not exist on RV32, so we define an explicit
-  // getter and setter below.
-  // UXL  : 30 .. 29,
-  MXR  : 19,
-  SUM  : 18,
-  XS   : 16 .. 15,
-  FS   : 14 .. 13,
-  VS   : 10 .. 9,
-  SPP  : 8,
-  SPIE : 5,
-  SIE  : 1,
+bitfield Sstatus : bits(64) = {
+  SD_64 : 63,
+
+  UXL   : 33 .. 32,
+  SD_32 : 31,
+//  SDT   : 24,
+//  SPELP : 23,
+  MXR   : 19,
+  SUM   : 18,
+  XS    : 16 .. 15,
+  FS    : 14 .. 13,
+  VS    : 10 .. 9,
+  SPP   : 8,
+  SPIE  : 5,
+  SIE   : 1,
 }
 /* sstatus is a view of mstatus, so there is no register defined. */
 
-function get_sstatus_UXL(s : Sstatus) -> arch_xlen = {
-  let m = Mk_Mstatus(s.bits);
-  get_mstatus_UXL(m)
-}
-
-function set_sstatus_UXL(s : Sstatus, a : arch_xlen) -> Sstatus = {
-  let m = Mk_Mstatus(s.bits);
-  let m = set_mstatus_UXL(m, a);
-  Mk_Sstatus(m.bits)
-}
-
 function lower_mstatus(m : Mstatus) -> Sstatus = {
   let s = Mk_Sstatus(zeros());
-  let s = set_sstatus_UXL(s, get_mstatus_UXL(m));
 
   [s with
-    SD = m[SD],
+    SD_64 = m[SD_64],
+    UXL = m[UXL],
+    SD_32 = m[SD_32],
+    //SDT = m[SDT],
+    //SPELP = m[SPELP],
     MXR = m[MXR],
     SUM = m[SUM],
     XS = m[XS],
@@ -722,7 +723,11 @@ function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
               extStatus_of_bits(s[VS]) == Dirty;
 
   [m with
-    SD = bool_to_bits(dirty),
+    SD_64 = if xlen == 64 then bool_to_bits(dirty) else m[SD_64],
+    SD_32 = if xlen == 32 then bool_to_bits(dirty) else m[SD_32],
+    UXL = s[UXL],
+    //SDT = s[SDT],
+    //SPELP = s[SPELP],
     MXR = s[MXR],
     SUM = s[SUM],
     XS = s[XS],
@@ -735,13 +740,13 @@ function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
 }
 
 function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
-  legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(v)).bits)
+  legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(zero_extend(v))).bits)
 }
 
 mapping clause csr_name_map = 0x100  <-> "sstatus"
 function clause is_CSR_defined(0x100) = extensionEnabled(Ext_S) // sstatus
-function clause read_CSR(0x100) = lower_mstatus(mstatus).bits
-function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); mstatus.bits }
+function clause read_CSR(0x100) = lower_mstatus(mstatus).bits[xlen - 1 .. 0]
+function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); mstatus.bits[xlen - 1 .. 0] }
 
 
 bitfield Sinterrupts : xlenbits = {

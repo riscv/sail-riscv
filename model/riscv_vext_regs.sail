@@ -79,7 +79,7 @@ mapping vreg_name = {
 function dirty_v_context() -> unit = {
   assert(sys_enable_vext());
   mstatus[VS] = extStatus_to_bits(Dirty);
-  mstatus[SD] = 0b1
+  mstatus = set_mstatus_SD(mstatus, 0b1);
 }
 
 function rV (r : regno) -> vregtype = {

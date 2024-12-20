@@ -370,16 +370,17 @@ function init_sys() -> unit = {
                 then bool_to_bits(sys_enable_fdext())  /* double-precision */
                 else 0b0;
 
-  mstatus = set_mstatus_SXL(mstatus, misa[MXL]);
-  mstatus = set_mstatus_UXL(mstatus, misa[MXL]);
-  mstatus[SD]   = 0b0;
-  mstatus[MPP] = privLevel_to_bits(lowest_supported_privLevel());
-
-  /* set to little-endian mode */
-  if xlen == 64 then {
-    mstatus = Mk_Mstatus([mstatus.bits with 37 .. 36 = 0b00])
-  };
-  mstatush.bits = zeros();
+  mstatus = [mstatus with
+    SD_64 = 0b0,
+    SD_32 = 0b0,
+    /* SXL and UXL is only valid for 64-bit systems and in RV32 WPRI */
+    SXL = misa[MXL],
+    UXL = misa[MXL],
+    MPP = privLevel_to_bits(lowest_supported_privLevel()),
+    /* set to little-endian mode */
+    MBE = 0b0,
+    SBE = 0b0,
+  ];
 
   mip.bits     = zeros();
   mie.bits     = zeros();
