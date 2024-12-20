@@ -17,7 +17,9 @@
       "samo_access_fault": true,
       "fetch_address_misaligned": true,
       "fetch_access_fault": true
-    }
+    },
+    "priv_spec_version": "latest",
+    "unpriv_spec_version": "latest"
   },
   "memory": {
     "pmp": {
