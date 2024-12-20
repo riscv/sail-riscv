@@ -11,6 +11,13 @@ scattered enum extension
 // Note, these are sorted according to the canonical ordering vaguely described
 // in the `Subset Naming Convention` section of the unprivileged spec.
 
+// Machine and Supervisor Architectures v1.11
+enum clause extension = Ext_Sx1p11
+// Machine and Supervisor Architectures v1.12
+enum clause extension = Ext_Sx1p12
+// Machine and Supervisor Architectures v1.13
+enum clause extension = Ext_Sx1p13
+
 // Integer Multiplication and Division; not Machine!
 enum clause extension = Ext_M
 // Single-Precision Floating-Point

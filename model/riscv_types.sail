@@ -16,6 +16,16 @@
 val extensionEnabled : extension -> bool
 scattered function extensionEnabled
 
+// Priv/unpriv spec version.
+// TODO: Replace the `true`s with configuration flags.
+
+// Machine and Supervisor Architectures v1.11
+function clause extensionEnabled(Ext_Sx1p11) = true
+// Machine and Supervisor Architectures v1.12
+function clause extensionEnabled(Ext_Sx1p12) = extensionEnabled(Ext_Sx1p11) | true
+// Machine and Supervisor Architectures v1.13
+function clause extensionEnabled(Ext_Sx1p13) = extensionEnabled(Ext_Sx1p12) | true
+
 /* this value is only defined for the runtime platform for ELF loading
  * checks, and not used in the model.
  */
