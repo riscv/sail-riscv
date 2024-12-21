@@ -86,7 +86,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
       /* "LR faults like a normal load, even though it's in the AMO major opcode space."
         * - Andrew Waterman, isa-dev, 10 Jul 2018.
         */
-      if (instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(0b0), matchSize_of_wordWidth(width), LOAD_MATCH_BEFORE))
+      if (instrDataMatch(cur_privilege, virtaddr_bits(vaddr), zero_extend(0b0), matchSize_of_wordWidth(width), LOAD_MATCH_BEFORE))
       then { RETIRE_FAIL }
       else if not(is_aligned(virtaddr_bits(vaddr), width))
       then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
@@ -97,7 +97,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
             MemValue(result) => { 
               load_reservation(physaddr_bits(addr));
               X(rd) = sign_extend(result); 
-              let load_after_match : bool = instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(X(rd)), matchSize_of_wordWidth(width), LOAD_MATCH_AFTER);
+              let load_after_match : bool = instrDataMatch(cur_privilege, virtaddr_bits(vaddr), zero_extend(X(rd)), matchSize_of_wordWidth(width), LOAD_MATCH_AFTER);
               RETIRE_SUCCESS
             },
             MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
@@ -139,7 +139,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
     match ext_data_get_addr(rs1, zeros(), Write(Data), width_bytes) {
       Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
-        if (instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(dbg_store_data[width_bytes * 8 - 1 .. 0]), matchSize_of_wordWidth(width), STORE_MATCH))
+        if (instrDataMatch(cur_privilege, virtaddr_bits(vaddr), zero_extend(dbg_store_data[width_bytes * 8 - 1 .. 0]), matchSize_of_wordWidth(width), STORE_MATCH))
         then { RETIRE_FAIL }
         else if not(is_aligned(virtaddr_bits(vaddr), width))
         then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }

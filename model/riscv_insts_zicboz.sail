@@ -35,7 +35,7 @@ function clause execute(RISCV_ZICBOZ(rs1)) = {
     match ext_data_get_addr(rs1, offset, Write(Data), cache_block_size) {
       Ext_DataAddr_Error(e) => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
-        if (instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(0b0), cacheBlockSize_to_matchSize(cache_block_size_exp), STORE_MATCH))
+        if (instrDataMatch(cur_privilege, virtaddr_bits(vaddr), zero_extend(0b0), cacheBlockSize_to_matchSize(cache_block_size_exp), STORE_MATCH))
         then { RETIRE_FAIL }
         else {
           // "An implementation may update the bytes in any order and with any granularity

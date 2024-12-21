@@ -334,7 +334,7 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   match ext_data_get_addr(rs1, offset, Read(Data), width_bytes) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) => {
-      if (instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(0b0), matchSize_of_wordWidth(width), LOAD_MATCH_BEFORE))
+      if (instrDataMatch(cur_privilege, virtaddr_bits(vaddr), zero_extend(0b0), matchSize_of_wordWidth(width), LOAD_MATCH_BEFORE))
       then { RETIRE_FAIL }
       else if check_misaligned(vaddr, width)
       then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
@@ -345,7 +345,7 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
           match mem_read(Read(Data), paddr, width_bytes, aq, rl, false) {
             MemValue(result) => {
               X(rd) = extend_value(is_unsigned, result);
-              let load_after_match : bool = instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(X(rd)), matchSize_of_wordWidth(width), LOAD_MATCH_AFTER);
+              let load_after_match : bool = instrDataMatch(cur_privilege, virtaddr_bits(vaddr), zero_extend(X(rd)), matchSize_of_wordWidth(width), LOAD_MATCH_AFTER);
               RETIRE_SUCCESS
             },
             MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
@@ -397,7 +397,7 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
   match ext_data_get_addr(rs1, offset, Write(Data), width_bytes) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
-      if (instrDataMatch(cur_privilege, zero_extend(vaddr), zero_extend(dbg_store_data[width_bytes * 8 - 1 .. 0]), matchSize_of_wordWidth(width), STORE_MATCH))
+      if (instrDataMatch(cur_privilege, virtaddr_bits(vaddr), zero_extend(dbg_store_data[width_bytes * 8 - 1 .. 0]), matchSize_of_wordWidth(width), STORE_MATCH))
       then { RETIRE_FAIL }
       else if check_misaligned(vaddr, width)
       then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }

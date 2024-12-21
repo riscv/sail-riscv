@@ -526,7 +526,7 @@ function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, 
     }
   };
   if (raise_exception) then {
-    handle_mem_exception(zero_extend(addr), E_Breakpoint());
+    handle_mem_exception(virtaddr(addr), E_Breakpoint());
   };
   raise_exception
 }
@@ -583,7 +583,7 @@ function check_trigger_firing(cur_priv : Privilege) -> bool = {
   };
   if (ETrigFired | icountTrigFired | ITrigFired | MCtrlTrigFired) then {
     trigger_fire_match = true;
-    handle_mem_exception(zero_extend(0b0), E_Breakpoint());
+    handle_mem_exception(virtaddr(zero_extend(0b0)), E_Breakpoint());
   };
   if (icountTrigFired) then {
     InstrCount = Mk_InstructionCount(tdata1_x.tdata1[fired_trigger_idx[0]][26 .. 0]);
