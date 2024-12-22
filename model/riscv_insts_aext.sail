@@ -94,9 +94,9 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
         TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) =>
           match mem_read(Read(Data), addr, width_bytes, aq, aq & rl, true) {
-            MemValue(result) => { 
+            MemValue(result) => {
               load_reservation(physaddr_bits(addr));
-              X(rd) = sign_extend(result); 
+              X(rd) = sign_extend(result);
               let load_after_match : bool = instrDataMatch(cur_privilege, virtaddr_bits(vaddr), zero_extend(X(rd)), matchSize_of_wordWidth(width), LOAD_MATCH_AFTER);
               RETIRE_SUCCESS
             },
