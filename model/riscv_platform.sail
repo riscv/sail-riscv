@@ -63,6 +63,8 @@ val plat_htif_tohost = pure {c: "plat_htif_tohost", lem: "plat_htif_tohost"} : u
 function plat_htif_tohost () = to_bits(physaddrbits_len, elf_tohost ())
 // todo: fromhost
 
+val plat_enable_tlb = pure "plat_enable_tlb" : unit -> bool
+
 val phys_mem_segments : unit -> list((physaddrbits, physaddrbits))
 function phys_mem_segments() =
   (plat_rom_base (), plat_rom_size ()) ::
