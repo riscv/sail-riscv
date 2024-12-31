@@ -94,7 +94,14 @@ function pmpMatchEntry(addr: physaddr, width: xlenbits, acc: AccessType(ext_acce
   let rng = pmpAddrRange(ent, pmpaddr, prev_pmpaddr);
   match pmpMatchAddr(addr, width, rng) {
     PMP_NoMatch      => PMP_Continue,
-    PMP_PartialMatch => PMP_Fail,
+    PMP_PartialMatch => {
+                      match priv {
+                        Machine => if   pmpLocked(ent)   /*Only cause a failure when the Lock bit is set in Machine Mode*/
+                                    then PMP_Fail
+                                    else PMP_Success,
+                        _       => PMP_Fail             /*Cause the PMP failure in any other mode*/
+                      }
+                    },
     PMP_Match        => if   pmpCheckPerms(ent, acc, priv)
                         then PMP_Success
                         else PMP_Fail
