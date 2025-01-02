@@ -33,16 +33,7 @@ type num_tlb_entries : Int = 64
 type tlb_index_range = range(0, num_tlb_entries - 1)
 
 // PRIVATE
-register tlb : vector(num_tlb_entries, option(TLB_Entry)) = [
-  None(), None(), None(), None(), None(), None(), None(), None(),
-  None(), None(), None(), None(), None(), None(), None(), None(),
-  None(), None(), None(), None(), None(), None(), None(), None(),
-  None(), None(), None(), None(), None(), None(), None(), None(),
-  None(), None(), None(), None(), None(), None(), None(), None(),
-  None(), None(), None(), None(), None(), None(), None(), None(),
-  None(), None(), None(), None(), None(), None(), None(), None(),
-  None(), None(), None(), None(), None(), None(), None(), None(),
-]
+register tlb : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
 
 // Indexed by the lowest bits of the VPN.
 function tlb_hash(vaddr : bits(64)) -> tlb_index_range =
