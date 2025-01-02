@@ -10,5 +10,5 @@ function test_build () {
     fi
 }
 
-test_build make ARCH=RV32 c_emulator/riscv_sim_RV32
-test_build make ARCH=RV64 c_emulator/riscv_sim_RV64
+test_build make ARCH=RV32 emulator/riscv_sim_RV32
+test_build make ARCH=RV64 emulator/riscv_sim_RV64

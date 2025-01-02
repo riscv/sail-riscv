@@ -50,7 +50,7 @@ Install [Sail](https://github.com/rems-project/sail/). On Linux you can download
 $ make
 ```
 
-will build the simulator in `c_emulator/riscv_sim_RV64`.
+will build the simulator in `emulator/riscv_sim_RV64`.
 
 If you get an error message saying `sail: unknown option '--require-version'.` it's because your Sail compiler is too old. You need version 0.18 or later.
 
@@ -63,7 +63,7 @@ built using:
 $ ARCH=RV32 make
 ```
 
-which creates the simulator in `c_emulator/riscv_sim_RV32`.
+which creates the simulator in `emulator/riscv_sim_RV32`.
 
 The Makefile targets `riscv_isa_build`, `riscv_coq_build`, and
 `riscv_hol_build` invoke the respective prover to process the
@@ -82,7 +82,7 @@ corresponding prover libraries in the Sail directory
 The simulator can be used to execute small test binaries.
 
 ```
-$ ./c_emulator/riscv_sim_<arch> <elf-file>
+$ ./emulator/riscv_sim_<arch> <elf-file>
 ```
 
 A suite of RV32 and RV64 test programs derived from the
@@ -93,7 +93,7 @@ can be run using `test/run_tests.sh`.
 ### Configuring platform options
 
 Information on configuration options for the simulator is available from
-`./c_emulator/riscv_sim_<arch> -h`.
+`./emulator/riscv_sim_<arch> -h`.
 
 Some useful options are: configuring whether misaligned accesses trap
 (`--enable-misaligned`), and
@@ -339,7 +339,7 @@ sail-riscv
   -  latex
 - prover_snapshots        // snapshots of generated theorem prover definitions
 - handwritten_support     // prover support files
-- c_emulator              // supporting platform files for C emulator
+- emulator              // supporting platform files for C emulator
 - doc                     // documentation, including a reading guide
 - test                    // test files
   - riscv-tests           // snapshot of tests from the riscv/riscv-tests github repo

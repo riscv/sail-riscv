@@ -27,7 +27,7 @@ a DTB (device-tree blob) file describing the platform (say in the file
 the model should be run as:
 
 ```
-$ ./c_emulator/riscv_sim_<arch> -t console.log -b spike.dtb bbl > execution-trace.log 2>&1 &
+$ ./emulator/riscv_sim_<arch> -t console.log -b spike.dtb bbl > execution-trace.log 2>&1 &
 $ tail -f console.log
 ```
 The `console.log` file contains the console boot messages. For maximum
@@ -56,6 +56,6 @@ device-tree blob for a 64MB RV64 machine using `dtc`:
 
 ```
 dtc < os-boot/rv64-64mb.dts > os-boot/rv64-64mb.dtb
-./c_emulator/riscv_sim_RV64 -b os-boot/rv64-64mb.dtb -t /tmp/console.log os-boot/rv64-linux-4.15.0-gcc-7.2.0-64mb.bbl > >(gzip -c > execution-trace.log.gz) 2>&1
+./emulator/riscv_sim_RV64 -b os-boot/rv64-64mb.dtb -t /tmp/console.log os-boot/rv64-linux-4.15.0-gcc-7.2.0-64mb.bbl > >(gzip -c > execution-trace.log.gz) 2>&1
 tail -f /tmp/console.log
 ```

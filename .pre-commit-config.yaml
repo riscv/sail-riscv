@@ -1,6 +1,6 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
-exclude: '^(prover_snapshots)|(generated_definitions)|(c_emulator/SoftFloat-3e)'
+exclude: '^(prover_snapshots)|(generated_definitions)|(emulator/SoftFloat-3e)'
 minimum_pre_commit_version: 2.10.0
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks

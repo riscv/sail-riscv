@@ -54,14 +54,14 @@ cd $RISCVDIR
 # Do 'make clean' to avoid cross-arch pollution.
 make clean
 
-if make c_emulator/riscv_sim_RV64;
+if make emulator/riscv_sim_RV64;
 then
     green "Building 64-bit RISCV C emulator" "ok"
 else
     red "Building 64-bit RISCV C emulator" "fail"
 fi
 for test in $DIR/riscv-tests/rv64u{f,d}*.elf $DIR/riscv-tests/rv64mi-p-csr.elf; do
-    if timeout 5 $RISCVDIR/c_emulator/riscv_sim_RV64 -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
+    if timeout 5 $RISCVDIR/emulator/riscv_sim_RV64 -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
     then
 	green "C-64 $(basename $test)" "ok"
     else
@@ -71,14 +71,14 @@ done
 finish_suite "64-bit RISCV C tests"
 
 
-if ARCH=RV32 make c_emulator/riscv_sim_RV32;
+if ARCH=RV32 make emulator/riscv_sim_RV32;
 then
     green "Building 32-bit RISCV C emulator" "ok"
 else
     red "Building 32-bit RISCV C emulator" "fail"
 fi
 for test in $DIR/riscv-tests/rv32u{f,d}*.elf $DIR/riscv-tests/rv32mi-p-csr.elf; do
-    if timeout 5 $RISCVDIR/c_emulator/riscv_sim_RV32 -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
+    if timeout 5 $RISCVDIR/emulator/riscv_sim_RV32 -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
     then
 	green "C-32 $(basename $test)" "ok"
     else

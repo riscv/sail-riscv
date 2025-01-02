@@ -56,14 +56,14 @@ make clean
 
 printf "Building 32-bit RISCV specification...\n"
 
-if ARCH=RV32 make c_emulator/riscv_sim_RV32;
+if ARCH=RV32 make emulator/riscv_sim_RV32;
 then
     green "Building 32-bit RISCV C emulator" "ok"
 else
     red "Building 32-bit RISCV C emulator" "fail"
 fi
 for test in $DIR/riscv-tests/rv32*.elf; do
-    if timeout 5 $RISCVDIR/c_emulator/riscv_sim_RV32 -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
+    if timeout 5 $RISCVDIR/emulator/riscv_sim_RV32 -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
     then
 	green "C-32 $(basename $test)" "ok"
     else
@@ -77,14 +77,14 @@ make clean
 
 printf "Building 64-bit RISCV specification...\n"
 
-if make c_emulator/riscv_sim_RV64;
+if make emulator/riscv_sim_RV64;
 then
     green "Building 64-bit RISCV C emulator" "ok"
 else
     red "Building 64-bit RISCV C emulator" "fail"
 fi
 for test in $DIR/riscv-tests/rv64*.elf; do
-    if timeout 5 $RISCVDIR/c_emulator/riscv_sim_RV64 -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
+    if timeout 5 $RISCVDIR/emulator/riscv_sim_RV64 -p $test > ${test%.elf}.cout 2>&1 && grep -q SUCCESS ${test%.elf}.cout
     then
 	green "C-64 $(basename $test)" "ok"
     else
@@ -96,7 +96,7 @@ finish_suite "64-bit RISCV C tests"
 # Do 'make clean' to avoid cross-arch pollution.
 make clean
 
-if ARCH=RV32 make c_emulator/riscv_rvfi_RV32;
+if ARCH=RV32 make emulator/riscv_rvfi_RV32;
 then
     green "Building 32-bit RISCV RVFI C emulator" "ok"
 else
@@ -107,7 +107,7 @@ finish_suite "32-bit RISCV RVFI C tests"
 # Do 'make clean' to avoid cross-arch pollution.
 make clean
 
-if ARCH=RV64 make c_emulator/riscv_rvfi_RV64;
+if ARCH=RV64 make emulator/riscv_rvfi_RV64;
 then
     green "Building 64-bit RISCV RVFI C emulator" "ok"
 else
