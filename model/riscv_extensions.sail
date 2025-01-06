@@ -32,6 +32,8 @@ enum clause extension = Ext_U
 enum clause extension = Ext_Zicbom
 // Cache-Block Zero Instructions
 enum clause extension = Ext_Zicboz
+// Base Counters and Timers
+enum clause extension = Ext_Zicntr
 // Integer Conditional Operations
 enum clause extension = Ext_Zicond
 // Instruction-Fetch Fence

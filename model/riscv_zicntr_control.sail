@@ -5,6 +5,7 @@
 /*                                                                                       */
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
+function clause extensionEnabled(Ext_Zicntr) = true
 
 /* user counters/timers */
 mapping clause csr_name_map = 0xC00  <-> "cycle"
@@ -14,12 +15,12 @@ mapping clause csr_name_map = 0xC80  <-> "cycleh"
 mapping clause csr_name_map = 0xC81  <-> "timeh"
 mapping clause csr_name_map = 0xC82  <-> "instreth"
 
-function clause is_CSR_defined(0xC00) = extensionEnabled(Ext_U) // cycle
-function clause is_CSR_defined(0xC01) = extensionEnabled(Ext_U) // time
-function clause is_CSR_defined(0xC02) = extensionEnabled(Ext_U) // instret
-function clause is_CSR_defined(0xC80) = extensionEnabled(Ext_U) & (xlen == 32) // cycleh
-function clause is_CSR_defined(0xC81) = extensionEnabled(Ext_U) & (xlen == 32) // timeh
-function clause is_CSR_defined(0xC82) = extensionEnabled(Ext_U) & (xlen == 32) // instreth
+function clause is_CSR_defined(0xC00) = extensionEnabled(Ext_Zicntr) & extensionEnabled(Ext_U) // cycle
+function clause is_CSR_defined(0xC01) = extensionEnabled(Ext_Zicntr) & extensionEnabled(Ext_U) // time
+function clause is_CSR_defined(0xC02) = extensionEnabled(Ext_Zicntr) & extensionEnabled(Ext_U) // instret
+function clause is_CSR_defined(0xC80) = extensionEnabled(Ext_Zicntr) & extensionEnabled(Ext_U) & (xlen == 32) // cycleh
+function clause is_CSR_defined(0xC81) = extensionEnabled(Ext_Zicntr) & extensionEnabled(Ext_U) & (xlen == 32) // timeh
+function clause is_CSR_defined(0xC82) = extensionEnabled(Ext_Zicntr) & extensionEnabled(Ext_U) & (xlen == 32) // instreth
 
 function clause read_CSR(0xC00) = mcycle[(xlen - 1) .. 0]
 function clause read_CSR(0xC01) = mtime[(xlen - 1) .. 0]
@@ -35,10 +36,10 @@ mapping clause csr_name_map = 0xB02  <-> "minstret"
 mapping clause csr_name_map = 0xB80  <-> "mcycleh"
 mapping clause csr_name_map = 0xB82  <-> "minstreth"
 
-function clause is_CSR_defined(0xB00) = true // mcycle
-function clause is_CSR_defined(0xB02) = true // minstret
-function clause is_CSR_defined(0xB80) = xlen == 32 // mcycleh
-function clause is_CSR_defined(0xB82) = xlen == 32 // minstreth
+function clause is_CSR_defined(0xB00) = extensionEnabled(Ext_Zicntr) // mcycle
+function clause is_CSR_defined(0xB02) = extensionEnabled(Ext_Zicntr) // minstret
+function clause is_CSR_defined(0xB80) = extensionEnabled(Ext_Zicntr) & xlen == 32 // mcycleh
+function clause is_CSR_defined(0xB82) = extensionEnabled(Ext_Zicntr) & xlen == 32 // minstreth
 
 function clause read_CSR(0xB00) = mcycle[(xlen - 1) .. 0]
 function clause read_CSR(0xB02) = minstret[(xlen - 1) .. 0]
