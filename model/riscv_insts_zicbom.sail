@@ -90,7 +90,9 @@ function process_clean_inval(rs1, cbop) = {
             // for fetch access and it's can't be misaligned.
             _ => internal_error(__FILE__, __LINE__, "unexpected exception for cmo.clean/inval"),
           };
-          handle_mem_exception(vaddr, e);
+          // Errors report the address that was encoded in the instruction rather
+          // than the address that caused the fault (i.e. the aligned address).
+          handle_mem_exception(virtaddr(virtaddr_bits(vaddr) - offset), e);
           RETIRE_FAIL
         }
       }
