@@ -164,6 +164,9 @@ function have_privLevel(priv : priv_level) -> bool =
     0b11 => true,
   }
 
+/* Zalasr extension support */
+function haveZalasr() -> bool = true
+
 bitfield Mstatush : bits(32) = {
   MBE  : 5,
   SBE  : 4
