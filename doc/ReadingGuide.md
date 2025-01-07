@@ -1,9 +1,14 @@
 A guide to reading the specification
 ------------------------------------
 
+> [!WARNING]
+> This document is undergoing updates and is not fully up to date
+> with the current state of the model. Please refer to the
+> [Sail code](../model/) itself for the most up to date information.
+
 The model is written in the Sail language.  Although specifications in
 Sail are quite readable as pseudocode, it would help to have the [Sail
-manual](https://github.com/rems-project/sail/blob/sail2/manual.pdf) handy.
+manual](https://alasdair.github.io/manual.html) handy.
 
 The Sail modules in the `model` directory have the structure shown
 below.  Arrows indicate a dependency relationship, and _italics_
@@ -12,9 +17,9 @@ such as the platform memory map.
 
 <img src="figs/riscvspecdeps.svg">
 
-- `riscv_xlen32.sail` and `riscv_xlen64.sail` define `xlen` for RV32
-  and RV64.  One of them is chosen during the build using the ARCH
-  variable.
+- `riscv_xlen32.sail` and `riscv_xlen64.sail` define xlen dependent
+  variables (`log2_xlen_bytes` and `physaddrbits_len`) for RV32 and
+  RV64.  One of them is chosen during the build using the ARCH variable.
 
 - `prelude_*.sail` contain useful Sail library functions.  These
   files should be referred to as needed.  The lowest level memory
@@ -77,14 +82,8 @@ such as the platform memory map.
   are used in the weak memory concurrency model.
 
 - The `riscv_vmem_*.sail` files describe the S-mode address
-  translation.  `riscv_vmem_types` and `riscv_vmem_common.sail`
-  contain the definitions and processing of the page-table entries and
-  their various permission and status bits.  `riscv_types_ext`,
-  `riscv_vmem_sv32.sail`, `riscv_vmem_sv39.sail`, and
-  `riscv_vmem_sv48.sail` contain the specifications for the
-  corresponding page-table walks, and `riscv_vmem_rv32.sail` and
-  `riscv_vmem_rv64.sail` describe the top-level address translation
-  for the corresponding architectures.
+  translation. See the [Virtual Memory Notes](./notes_Virtual_Memory.adoc)
+  for details.
 
 - The `riscv_addr_checks_common.sail` and `riscv_addr_checks.sail`
   contain extension hooks to support the checking and transformation
@@ -118,9 +117,6 @@ such as the platform memory map.
   and uses the same HTIF (host-target interface) mechanism as the
   Spike emulator to detect termination of execution.
 
-- `riscv_analysis.sail` is used in the formal operational RVWMO memory
-  model.
-
 Note that the files above are listed in dependency order, i.e. files
 earlier in the order do not depend on later files.
 
@@ -144,7 +140,7 @@ image into raw memory, including any ROM firmware such as the Berkeley
 boot loader and DeviceTree binary blobs, and initializes the memory
 map.
 
-The generated C model `riscv_model_$ARCH` is built from the Sail
+The generated C model `riscv_sim_$ARCH` is built from the Sail
 sources by the Sail compiler for the specified architecture $ARCH,
 either RV32 or RV64.  It contains calls to the platform interface
 `riscv_platform` for platform-specific information; the latter is
