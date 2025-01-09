@@ -91,7 +91,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
         TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) =>
           match mem_read(Read(Data), addr, width_bytes, aq, aq & rl, true) {
-            MemValue(result) => { load_reservation(physaddr_bits(addr)); X(rd) = sign_extend(result); RETIRE_SUCCESS },
+            MemValue(result) => { load_reservation(addr); X(rd) = sign_extend(result); RETIRE_SUCCESS },
             MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
           },
       }
@@ -138,7 +138,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
             TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
             TR_Address(addr, _) => {
               // Check reservation with physical address.
-              if not(match_reservation(physaddr_bits(addr))) then {
+              if not(match_reservation(addr)) then {
                 /* cannot happen in rmem */
                 X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS
               } else {

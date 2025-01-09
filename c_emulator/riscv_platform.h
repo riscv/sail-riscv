@@ -1,6 +1,8 @@
 #pragma once
 #include "sail.h"
 
+struct zphysaddr;
+
 bool sys_enable_rvc(unit);
 bool sys_enable_fdext(unit);
 bool sys_enable_svinval(unit);
@@ -42,8 +44,8 @@ mach_bits plat_clint_base(unit);
 mach_bits plat_clint_size(unit);
 
 bool speculate_conditional(unit);
-unit load_reservation(mach_bits);
-bool match_reservation(mach_bits);
+unit load_reservation(struct zphysaddr);
+bool match_reservation(struct zphysaddr);
 unit cancel_reservation(unit);
 
 void plat_insns_per_tick(sail_int *rop, unit);
