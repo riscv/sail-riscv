@@ -23,8 +23,8 @@ mapping encdec_cbop : cbop_zicbom <-> bits(12) = {
   CBO_INVAL <-> 0b000000000000,
 }
 
-mapping clause encdec = RISCV_ZICBOM(cbop, rs1)             if extensionEnabled(Ext_Zicbom)
-  <-> encdec_cbop(cbop) @ rs1 @ 0b010 @ 0b00000 @ 0b0001111 if extensionEnabled(Ext_Zicbom)
+mapping clause encdec = RISCV_ZICBOM(cbop, rs1)                         if extensionEnabled(Ext_Zicbom)
+  <-> encdec_cbop(cbop) @ encdec_reg(rs1) @ 0b010 @ 0b00000 @ 0b0001111 if extensionEnabled(Ext_Zicbom)
 
 mapping cbop_mnemonic : cbop_zicbom <-> string = {
   CBO_CLEAN <-> "cbo.clean",
