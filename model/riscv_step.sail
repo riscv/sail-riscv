@@ -32,46 +32,68 @@ function step(step_no : int) -> bool = {
         (RETIRE_FAIL, false)
       },
       None() => {
-        /* the extension hook interposes on the fetch result */
-        match ext_fetch_hook(fetch()) {
-          /* extension error */
-          F_Ext_Error(e)   => {
-            ext_handle_fetch_check_error(e);
-            (RETIRE_FAIL, false)
-          },
-          /* standard error */
-          F_Error(e, addr) => {
-            handle_mem_exception(virtaddr(addr), e);
-            (RETIRE_FAIL, false)
-          },
-          /* non-error cases: */
-          F_RVC(h) => {
-            sail_instr_announce(h);
-            instbits = zero_extend(h);
-            let ast = ext_decode_compressed(h);
-            if   get_config_print_instr()
-            then {
-              print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ to_str(ast));
-            };
-            /* check for RVC once here instead of every RVC execute clause. */
-            if extensionEnabled(Ext_Zca) then {
-              nextPC = PC + 2;
-              (execute(ast), true)
-            } else {
-              handle_illegal();
-              (RETIRE_FAIL, true)
+        /* If Etrigger, Icount, Itrigger and mcontrol6 after, matches, fire
+           it before fetching the next instruction */
+        if (check_trigger_firing(cur_privilege)) then {
+          (RETIRE_FAIL, false)
+        }
+        else {
+          /* the extension hook interposes on the fetch result */
+          match ext_fetch_hook(fetch()) {
+            /* extension error */
+            F_Ext_Error(e)   => {
+              if not(instrDataMatch(cur_privilege, PC, zero_extend(0b0), ANY, INSTR_MATCH)) then {
+                ext_handle_fetch_check_error(e);
+              };
+              (RETIRE_FAIL, false)
+            },
+            /* standard error */
+            F_Error(e, addr) => {
+              if not(instrDataMatch(cur_privilege, PC, zero_extend(0b0), ANY, INSTR_MATCH)) then {
+                handle_mem_exception(virtaddr(addr), e);
+              };
+              (RETIRE_FAIL, false)
+            },
+            /* non-error cases: */
+            F_RVC(h) => {
+              sail_instr_announce(h);
+              instbits = zero_extend(h);
+              let ast = ext_decode_compressed(h);
+              if   get_config_print_instr()
+              then {
+                print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ to_str(ast));
+              };
+              /* Check for mcontrol6 Instruction Match */
+              if (instrDataMatch(cur_privilege, PC, zero_extend(h), BITS_16, INSTR_MATCH)) then {
+                (RETIRE_FAIL, true)
+              }
+              /* check for RVC once here instead of every RVC execute clause. */
+              else if extensionEnabled(Ext_Zca) then {
+                nextPC = PC + 2;
+                icount_trigger_match(cur_privilege); /* Decrement instruction count */
+                (execute(ast), true)
+              } else {
+                handle_illegal();
+                (RETIRE_FAIL, true)
+              }
+            },
+            F_Base(w) => {
+              sail_instr_announce(w);
+              instbits = zero_extend(w);
+              let ast = ext_decode(w);
+              if   get_config_print_instr()
+              then {
+                print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ to_str(ast));
+              };
+              nextPC = PC + 4;
+              icount_trigger_match(cur_privilege); /* Decrement instruction count */
+              /* Check for mcontrol6 Instruction Match */
+              if not(instrDataMatch(cur_privilege, PC, zero_extend(w), BITS_32, INSTR_MATCH)) then {
+                (execute(ast), true)
+              } else {
+                (RETIRE_FAIL, true)
+              }
             }
-          },
-          F_Base(w) => {
-            sail_instr_announce(w);
-            instbits = zero_extend(w);
-            let ast = ext_decode(w);
-            if   get_config_print_instr()
-            then {
-              print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ to_str(ast));
-            };
-            nextPC = PC + 4;
-            (execute(ast), true)
           }
         }
       }

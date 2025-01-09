@@ -221,6 +221,71 @@ val rvfi_trap : unit -> unit
 function rvfi_trap () = ()
 $endif
 
+/* Disable trigger firing in trap handler */
+function TriggerFireMatch(cur_priv : Privilege) -> bool = {
+  /* Second solution of reentrancy problem */
+  if (sys_reent_opt1()) then {
+    match cur_priv {
+      Machine => bits_to_bool(tcontrol[mte]),
+      _       => true
+    }
+  }
+  /* First solution of reentrancy problem */
+  else {
+    match cur_privilege {
+      Machine    => bits_to_bool(mstatus[MIE]),
+      Supervisor => if (medeleg[Breakpoint] == 0b1) then { bits_to_bool(mstatus[SIE]) } else { true },
+      _          => true
+    }
+  }
+}
+
+/* Instruction Count Trigger Match */
+function icount_trigger_match(cur_priv : Privilege) -> unit = {
+  /* Traverse through all the triggers */
+  foreach (i from 0 to (sizeof(N_TRIGGERS) - 1)) {
+    let trigger_type : bits(4) = tdata1_x.tdata1[i][(xlen - 1) .. (xlen - 4)];
+    /* If Instruction Count trigger is found */
+    if (trigger_type == triggerType_to_bits(TRIG_ICOUNT)) then {
+      var InstrCount : InstructionCount  = Mk_InstructionCount(tdata1_x.tdata1[i][26 .. 0]);
+      /* Check that trigger matches */
+      if ((((InstrCount[m] == 0b1) & (cur_priv == Machine))     | /* Trigger is enabled in M-mode */
+           ((InstrCount[s] == 0b1) & (cur_priv == Supervisor))  | /* Trigger is enabled in S-mode */
+           ((InstrCount[u] == 0b1) & (cur_priv == User)) )      & /* Trigger is enabled in U-mode */
+          (InstrCount[count] != zero_extend(14, 0b0))           &
+          (TriggerFireMatch(cur_priv))) then { /* Trigger Match valid? check re-enterancy */
+        /* Decrement the counter */
+        if (InstrCount[count] == zero_extend(14, 0b1)) then {
+          InstrCount[pending] = 0b1;
+        };
+        InstrCount[count]           = InstrCount[count] - 1;
+        tdata1_x.tdata1[i][26 .. 0] = InstrCount.bits;
+      }
+    }
+  }
+}
+
+/* Interrupt/Exception Trigger */
+function IEtrigger_match(cur_priv : Privilege, idx : {'n, (0 <= 'n < xlen). int('n)}, is_exce : bool) -> unit = {
+  /* Traverse through all the triggers */
+  foreach (i from 0 to (sizeof(N_TRIGGERS) - 1)) {
+    let trigger_type : bits(4) = tdata1_x.tdata1[i][(xlen - 1) .. (xlen - 4)];
+    /* If Interrupt / Exception trigger found */
+    if (((trigger_type == triggerType_to_bits(TRIG_ETRIGGER)) & is_exce) |
+        ((trigger_type == triggerType_to_bits(TRIG_ITRIGGER)) & not(is_exce))) then {
+      var IEtrigger : InterruptTrigger  = Mk_InterruptTrigger(tdata1_x.tdata1[i]);
+      if ((((IEtrigger[m] == 0b1) & (cur_priv == Machine))     | /* Trigger is enabled in M-mode */
+           ((IEtrigger[s] == 0b1) & (cur_priv == Supervisor))  | /* Trigger is enabled in S-mode */
+           ((IEtrigger[u] == 0b1) & (cur_priv == User)) )      & /* Trigger is enabled in U-mode */
+           (bit_to_bool(tdata2_x.tdata2[i][idx]))              &
+           (TriggerFireMatch(cur_priv))) then { /* Trigger match valid? check re-enterancy */
+            IEtrigger[hit]     = 0b1;
+            tdata1_x.tdata1[i] = IEtrigger.bits;
+      }
+    }
+  }
+}
+
 /* handle exceptional ctl flow by updating nextPC and operating privilege */
 
 function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
@@ -239,6 +304,8 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        mstatus[MPIE] = mstatus[MIE];
        mstatus[MIE]  = 0b0;
        mstatus[MPP]  = privLevel_to_bits(cur_privilege);
+       tcontrol[mpte]  = tcontrol[mte];
+       tcontrol[mte]   = 0b0;
        mtval           = tval(info);
        mepc            = pc;
 
@@ -288,12 +355,14 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   get_config_print_platform()
       then print_platform("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
                           ^ " to handle " ^ to_str(e.trap));
+      IEtrigger_match(cur_priv, num_of_ExceptionType(e.trap), true);
       trap_handler(del_priv, false, exceptionType_to_bits(e.trap), pc, e.excinfo, e.ext)
     },
     (_, CTL_MRET())  => {
       let prev_priv   = cur_privilege;
       mstatus[MIE]  = mstatus[MPIE];
       mstatus[MPIE] = 0b1;
+      tcontrol[mte] = tcontrol[mpte];
       cur_privilege   = privLevel_of_bits(mstatus[MPP]);
       mstatus[MPP]  = privLevel_to_bits(if extensionEnabled(Ext_U) then User else Machine);
       if   cur_privilege != Machine
@@ -340,8 +409,194 @@ function handle_exception(e: ExceptionType) -> unit = {
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }
 
-function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
+function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit = {
+  IEtrigger_match(cur_privilege, num_of_interruptType(i), false);
   set_next_pc(trap_handler(del_priv, true, interruptType_to_bits(i), PC, None(), None()))
+}
+
+function find_first_zero(v: xlenbits) -> {'n, (0 <= 'n <= xlen). int('n)} = {
+  foreach (i from 0 to (xlen - 1)) {
+    if v[i .. i] == 0b0 then return i;
+  };
+  return xlen;
+}
+
+/* Match Control Type 6 Trigger Match */
+function instrDataMatch(cur_priv : Privilege, addr : xlenbits, data : xlenbits, match_size : matchSize, match_type : MatchType) -> bool = {
+  var raise_exception : bool = false;
+  let half_xlen = sizeof(half_xlen);
+  /* Traverse through all triggers */
+  foreach (i from 0 to (sizeof(N_TRIGGERS) - 1)) {
+    let trigger_type : bits(4) = tdata1_x.tdata1[i][(xlen - 1) .. (xlen - 4)];
+    var data_matched : bool = false;
+    var size_matched : bool = false;
+    /* Match Control Type 6 Trigger found */
+    if (trigger_type == triggerType_to_bits(TRIG_MCONTROL6)) then {
+      var MCtrl6 : MatchControlType6  = Mk_MatchControlType6(tdata1_x.tdata1[i][26 .. 0]);
+      let matchOption : bits(4) = MCtrl6[match_opt];
+      /* Decide content to match address/data based on select bit */
+      let tdata2_content : xlenbits = match (MCtrl6[select]) {
+        0b0 => { size_matched = true; addr },
+        0b1 => {
+          size_matched = match matchSize_of_bits(MCtrl6[size]) {
+            ANY => true,
+            _   => (match_size == matchSize_of_bits(MCtrl6[size])),
+          };
+          data
+        }
+      };
+      /* Data matched according to the select match options */
+      data_matched = match (matchOpt_of_bits(matchOption)) {
+        MOPT_EQUAL => { (tdata2_x.tdata2[i] == tdata2_content) },
+        MOPT_NAPOT => {
+          let idx : {'n, (0 <= 'n <= xlen). int('n)} = find_first_zero(tdata2_x.tdata2[i]);
+          if ((idx == xlen) | (idx == (xlen - 1))) then { true }
+          else {
+            tdata2_x.tdata2[i][(xlen - 1) .. (idx + 1)] == tdata2_content[(xlen - 1) .. (idx + 1)]
+          }
+        },
+        MOPT_GE    => { (tdata2_content >=_u tdata2_x.tdata2[i][(xlen - 1) .. 0]) },
+        MOPT_LT    => { (tdata2_content <_u  tdata2_x.tdata2[i][(xlen - 1) .. 0]) },
+        MOPT_MASK_LOW => {
+          let intemrd_cmpr_val : half_xlenbits = tdata2_content[(half_xlen - 1) .. 0] & tdata2_x.tdata2[i][(xlen - 1) .. half_xlen];
+          intemrd_cmpr_val == tdata2_x.tdata2[i][(half_xlen - 1) .. 0]
+        },
+        MOPT_MASK_HIGH => {
+          let intemrd_cmpr_val : half_xlenbits = tdata2_content[(xlen - 1) .. half_xlen] & tdata2_x.tdata2[i][(xlen - 1) .. half_xlen];
+          intemrd_cmpr_val == tdata2_x.tdata2[i][(half_xlen - 1) .. 0]
+        },
+        MOPT_NOT_EQUAL => { (tdata2_x.tdata2[i] != tdata2_content) },
+        MOPT_NOT_NAPOT => {
+          let idx : {'n, (0 <= 'n <= xlen). int('n)} = find_first_zero(tdata2_x.tdata2[i]);
+          if ((idx == xlen) | (idx == (xlen - 1))) then { true }
+          else {
+            tdata2_x.tdata2[i][(xlen - 1) .. (idx + 1)] != tdata2_content[(xlen - 1) .. (idx + 1)]
+          }
+        },
+        MOPT_NOT_MASK_LOW => {
+          let intemrd_cmpr_val : half_xlenbits = tdata2_content[(half_xlen - 1) .. 0] & tdata2_x.tdata2[i][(xlen - 1) .. half_xlen];
+          intemrd_cmpr_val != tdata2_x.tdata2[i][(half_xlen - 1) .. 0]
+        },
+        MOPT_NOT_MASK_HIGH => {
+          let intemrd_cmpr_val : half_xlenbits = tdata2_content[(xlen - 1) .. half_xlen] & tdata2_x.tdata2[i][(xlen - 1) .. half_xlen];
+          intemrd_cmpr_val != tdata2_x.tdata2[i][(half_xlen - 1) .. 0]
+        },
+        _          => false
+      };
+      if ((((MCtrl6[m] == 0b1) & (cur_priv == Machine))     | /* Trigger is enabled in M-mode */
+           ((MCtrl6[s] == 0b1) & (cur_priv == Supervisor))  | /* Trigger is enabled in S-mode */
+           ((MCtrl6[u] == 0b1) & (cur_priv == User)) )      & /* Trigger is enabled in U-mode */
+           (TriggerFireMatch(cur_priv))) then { /* Trigger match valid? check reentranacy */
+            match match_type {
+              /* Check For PC or Instruction Match */
+              INSTR_MATCH => {
+                if (data_matched & size_matched & (MCtrl6[execute] == 0b1)) then {
+                  MCtrl6[hit0] = 0b1;
+                  tdata1_x.tdata1[i][26 .. 0] = MCtrl6.bits;
+                  raise_exception = true;
+                }
+              },
+              /* Check for Load Address match */
+              LOAD_MATCH_BEFORE => {
+                if (data_matched & size_matched & (MCtrl6[load] == 0b1)) then {
+                    MCtrl6[hit0] = 0b1;
+                    tdata1_x.tdata1[i][26 .. 0] = MCtrl6.bits;
+                    raise_exception = true;
+                }
+              },
+              /* Check for load data match */
+              LOAD_MATCH_AFTER => {
+                if (data_matched & size_matched & (MCtrl6[load] == 0b1)) then {
+                    MCtrl6[hit1] = 0b1;
+                    MCtrl6[hit0] = 0b1;
+                    tdata1_x.tdata1[i][26 .. 0] = MCtrl6.bits;
+                }
+              },
+              /* Check for store address and data match */
+              STORE_MATCH => {
+                if (data_matched & size_matched & (MCtrl6[store] == 0b1)) then {
+                    MCtrl6[hit0] = 0b1;
+                    tdata1_x.tdata1[i][26 .. 0] = MCtrl6.bits;
+                    raise_exception = true;
+                }
+              },
+            };
+
+      }
+    }
+  };
+  if (raise_exception) then {
+    handle_mem_exception(virtaddr(addr), E_Breakpoint());
+  };
+  raise_exception
+}
+
+/* Check for Etrigger, Icount, Itrigger and Mcontrol6 After, Trigger Firing */
+function check_trigger_firing(cur_priv : Privilege) -> bool = {
+  var trigger_fire_match : bool = false;
+  var icountTrigFired    : bool = false;
+  var ITrigFired         : bool = false;
+  var ETrigFired         : bool = false;
+  var MCtrlTrigFired     : bool = false;
+  var fired_trigger_idx  : vector(2, dec, {'n, (0 <= 'n < N_TRIGGERS). int('n)}) = [0, 0];
+  var InstrCount         : InstructionCount  = Mk_InstructionCount(zero_extend(0b0));
+  var IEtrigger          : InterruptTrigger  = Mk_InterruptTrigger(zero_extend(0b0));
+  var MCtrl6             : MatchControlType6 = Mk_MatchControlType6(zero_extend(0b0));
+  /* Traverse through each trigger */
+  foreach (i from 0 to (sizeof(N_TRIGGERS) - 1))
+  {
+    InstrCount = Mk_InstructionCount(tdata1_x.tdata1[i][26 .. 0]);
+    IEtrigger  = Mk_InterruptTrigger(tdata1_x.tdata1[i]);
+    MCtrl6     = Mk_MatchControlType6(tdata1_x.tdata1[i][26 .. 0]);
+    let trigger_type : bits(4) = tdata1_x.tdata1[i][(xlen - 1) .. (xlen - 4)];
+    match triggerType_of_bits(trigger_type) {
+      /* Check Exception Trigger Firing */
+      TRIG_ETRIGGER => {
+        if ((IEtrigger[hit] == 0b1) & (TriggerFireMatch(cur_priv)) & not(ETrigFired)) then {
+          ETrigFired = true;
+        }
+      },
+      /* Check instruction count trigger firing */
+      TRIG_ICOUNT   => {
+        if ((InstrCount[pending] == 0b1) & TriggerFireMatch(cur_priv) & not(icountTrigFired)) then {
+          InstrCount[pending] = 0b0;
+          tdata1_x.tdata1[i][26 .. 0] = InstrCount.bits;
+          icountTrigFired     = true;
+          fired_trigger_idx[0] = i;
+        }
+      },
+      /* Check interrupt trigger firing */
+      TRIG_ITRIGGER  => {
+        if ((IEtrigger[hit] == 0b1) & (TriggerFireMatch(cur_priv)) & not(ITrigFired)) then {
+          ITrigFired = true;
+        }
+      },
+      /* Check Match Control 6 After Trigger Firing */
+      TRIG_MCONTROL6 => {
+        if ((MCtrl6[hit1] == 0b1) & TriggerFireMatch(cur_priv) & not(MCtrlTrigFired)) then {
+          MCtrlTrigFired       = true;
+          fired_trigger_idx[1] = i;
+        }
+      },
+      _ => ()
+    }
+  };
+  if (ETrigFired | icountTrigFired | ITrigFired | MCtrlTrigFired) then {
+    trigger_fire_match = true;
+    handle_mem_exception(virtaddr(zero_extend(0b0)), E_Breakpoint());
+  };
+  if (icountTrigFired) then {
+    InstrCount = Mk_InstructionCount(tdata1_x.tdata1[fired_trigger_idx[0]][26 .. 0]);
+    InstrCount[hit] = 0b1;
+    tdata1_x.tdata1[fired_trigger_idx[0]][26 .. 0] = InstrCount.bits;
+  } else if (ETrigFired | ITrigFired) then {
+    MCtrl6 = Mk_MatchControlType6(tdata1_x.tdata1[fired_trigger_idx[1]][26 .. 0]);
+    MCtrl6[hit1] = 0b0;
+    MCtrl6[hit0] = 0b0;
+    tdata1_x.tdata1[fired_trigger_idx[1]][26 .. 0] = MCtrl6.bits;
+  };
+  ETrigFired | icountTrigFired | ITrigFired | MCtrlTrigFired
+}
 
 /* state state initialization */
 
@@ -412,6 +667,10 @@ function init_sys() -> unit = {
   vtype[vta]       = 0b0;
   vtype[vsew]      = 0b000;
   vtype[vlmul]     = 0b000;
+
+  foreach (i from 0 to (sizeof(N_TRIGGERS) - 1)) {
+    tdata1_x.tdata1[i][(xlen - 1) .. (xlen - 4)] = 0xf;
+  };
 
   // PMP's L and A fields are set to 0 on reset.
   init_pmp();

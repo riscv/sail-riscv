@@ -125,6 +125,40 @@ union AccessType ('a : Type) = {
 }
 
 enum word_width = {BYTE, HALF, WORD, DOUBLE}
+enum matchSize = {ANY, BITS_8, BITS_16, BITS_32, BITS_48, BITS_64, BITS_128}
+
+mapping matchSize_of_wordWidth : word_width <-> matchSize = {
+  BYTE   <-> BITS_8,
+  HALF   <-> BITS_16,
+  WORD   <-> BITS_32,
+  DOUBLE <-> BITS_48
+}
+
+mapping matchSize_of_bits : bits(3) <-> matchSize = {
+  0b000 <-> ANY,
+  0b001 <-> BITS_8,
+  0b010 <-> BITS_16,
+  0b011 <-> BITS_32,
+  0b100 <-> BITS_48,
+  0b101 <-> BITS_64,
+  0b110 <-> BITS_128
+}
+
+mapping cacheBlockSize_to_matchSize : int <-> matchSize = {
+  1 <-> ANY,
+  3 <-> BITS_8,
+  4 <-> BITS_16,
+  5 <-> BITS_32,
+  6 <-> BITS_64,
+  7 <-> BITS_128
+}
+
+mapping vlenByteNum_to_matchSize : {1, 2, 4, 8} <-> matchSize = {
+  1 <-> BITS_8,
+  2 <-> BITS_16,
+  4 <-> BITS_32,
+  8 <-> BITS_64
+}
 
 /* architectural interrupt definitions */
 
@@ -152,6 +186,20 @@ function interruptType_to_bits (i) =
     I_U_External => 0x08,
     I_S_External => 0x09,
     I_M_External => 0x0b
+  }
+
+val num_of_interruptType : InterruptType -> {'n, (0 <= 'n < xlen). int('n)}
+function num_of_interruptType (i) =
+  match (i) {
+    I_U_Software => 0,
+    I_S_Software => 1,
+    I_M_Software => 3,
+    I_U_Timer    => 4,
+    I_S_Timer    => 5,
+    I_M_Timer    => 7,
+    I_U_External => 8,
+    I_S_External => 9,
+    I_M_External => 11
   }
 
 /* architectural exception definitions */
@@ -252,6 +300,89 @@ function exceptionType_to_str(e) =
   }
 
 overload to_str = {exceptionType_to_str}
+
+/* debug spec trigger type definition */
+
+type N_TRIGGERS = 7
+let VALID_TRIGGER_TYPES : vector(5, dec, bits(4)) = [0x3, 0x4, 0x5, 0x6, 0xF]
+
+type match_option = bits(4)
+enum MATCH_OPTIONS = {
+  MOPT_EQUAL,
+  MOPT_NAPOT,
+  MOPT_GE,
+  MOPT_LT,
+  MOPT_MASK_LOW,
+  MOPT_MASK_HIGH,
+  MOPT_NOT_EQUAL,
+  MOPT_NOT_NAPOT,
+  MOPT_NOT_MASK_LOW,
+  MOPT_NOT_MASK_HIGH,
+  RSVD
+}
+
+mapping matchOpt_of_bits : bits(4) <-> MATCH_OPTIONS = {
+  0x0 <-> MOPT_EQUAL,
+  0x1 <-> MOPT_NAPOT,
+  0x2 <-> MOPT_GE,
+  0x3 <-> MOPT_LT,
+  0x4 <-> MOPT_MASK_LOW,
+  0x5 <-> MOPT_MASK_HIGH,
+  0x6 <-> RSVD,
+  0x7 <-> RSVD,
+  0x8 <-> MOPT_NOT_EQUAL,
+  0x9 <-> MOPT_NOT_NAPOT,
+  0xA <-> RSVD,
+  0xB <-> RSVD,
+  0xC <-> MOPT_NOT_MASK_LOW,
+  0xD <-> MOPT_NOT_MASK_HIGH,
+  0xE <-> RSVD,
+  0xF <-> RSVD,
+}
+
+enum MatchType = {
+  INSTR_MATCH,
+  LOAD_MATCH_BEFORE,
+  LOAD_MATCH_AFTER,
+  STORE_MATCH
+}
+
+type trig_code = bits(4)
+enum TriggerType = {
+  TRIG_NONE,
+  TRIG_LEGACY,
+  TRIG_MCONTROL,
+  TRIG_ICOUNT,
+  TRIG_ITRIGGER,
+  TRIG_ETRIGGER,
+  TRIG_MCONTROL6,
+  TRIG_TMEXTTRIGGER,
+  TRIG_DISABLED
+}
+
+mapping triggerType_to_bits : TriggerType <-> bits(4) = {
+  TRIG_NONE         <-> 0x0,
+  TRIG_LEGACY       <-> 0x1,
+  TRIG_MCONTROL     <-> 0x2,
+  TRIG_ICOUNT       <-> 0x3,
+  TRIG_ITRIGGER     <-> 0x4,
+  TRIG_ETRIGGER     <-> 0x5,
+  TRIG_MCONTROL6    <-> 0x6,
+  TRIG_TMEXTTRIGGER <-> 0x7,
+  TRIG_DISABLED     <-> 0xF
+}
+
+mapping triggerType_of_bits : bits(4) <-> TriggerType = {
+  0x0 <-> TRIG_NONE,
+  0x1 <-> TRIG_LEGACY,
+  0x2 <-> TRIG_MCONTROL,
+  0x3 <-> TRIG_ICOUNT,
+  0x4 <-> TRIG_ITRIGGER,
+  0x5 <-> TRIG_ETRIGGER,
+  0x6 <-> TRIG_MCONTROL6,
+  0x7 <-> TRIG_TMEXTTRIGGER,
+  0xF <-> TRIG_DISABLED
+}
 
 /* trap modes */
 
