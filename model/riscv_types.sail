@@ -30,24 +30,26 @@ type word = bits(32)
 
 /* register identifiers */
 
-type regidx  = bits(5)
-type cregidx = bits(3)    /* identifiers in RVC instructions */
-type csreg   = bits(12)   /* CSR addressing */
+newtype regidx = regidx : bits(5)  /* uncompressed register identifiers */
+newtype cregidx = cregidx : bits(3) /* identifiers in RVC instructions */
+type csreg = bits(12)  /* CSR addressing */
 
 /* register file indexing */
 
-type regno = range(0, 31)
+newtype regno = regno : range(0, 31)
 
-function regidx_to_regno (b : regidx) -> regno = unsigned(b)
+function regidx_to_regno (regidx(b) : regidx) -> regno = regno(unsigned(b))
+
+function regidx_offset(regidx(r) : regidx, o : bits(5)) -> regidx = regidx(r + o)
 
 /* mapping RVC register indices into normal indices */
 val creg2reg_idx : cregidx -> regidx
-function creg2reg_idx(creg) = 0b01 @ creg
+function creg2reg_idx(cregidx(i)) = regidx(0b01 @ i)
 
 /* some architecture and ABI relevant register identifiers */
-let zreg : regidx = 0b00000  /* x0, zero register  */
-let ra   : regidx = 0b00001  /* x1, return address */
-let sp   : regidx = 0b00010  /* x2, stack pointer  */
+let zreg : regidx = regidx(0b00000) /* x0, zero register  */
+let ra   : regidx = regidx(0b00001) /* x1, return address */
+let sp   : regidx = regidx(0b00010) /* x2, stack pointer  */
 
 /* instruction fields */
 
