@@ -49,7 +49,12 @@ function clause execute(RISCV_ZICBOZ(rs1)) = {
                 match (res) {
                   MemValue(true) => RETIRE_SUCCESS,
                   MemValue(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                  MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                  MemException(e) => {
+                    // Errors report the address that was encoded in the instruction rather
+                    // than the address that caused the fault (i.e. the aligned address).
+                    handle_mem_exception(virtaddr(virtaddr_bits(vaddr) - offset), e);
+                    RETIRE_FAIL
+                  },
                 }
               }
             }
