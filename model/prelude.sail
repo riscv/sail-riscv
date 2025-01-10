@@ -218,3 +218,21 @@ function log2(n) = {
   };
   result
 }
+
+/* This is a slightly arbitrary limit on the maximum number of bytes
+   in a memory access.  It helps to generate slightly better C code
+   because it means width argument can be fast native integer. It
+   would be even better if it could be <= 8 bytes so that data can
+   also be a 64-bit int but CHERI needs 128-bit accesses for
+   capabilities and SIMD / vector instructions will also need more.
+
+   The specific value does not matter (if it is >8) since anything up
+   to 2^64-1 will result in a native int being used for the width type.
+
+   4096 was chosen because it is a page size, and a reasonable maximum
+   for cbo.zero.
+   */
+type max_mem_access : Int = 4096
+
+// Type used for memory access widths. Zero byte accesses are not allowed.
+type mem_access_width = range(1, max_mem_access)
