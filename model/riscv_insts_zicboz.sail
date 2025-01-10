@@ -52,7 +52,7 @@ function clause execute(RISCV_ZICBOZ(rs1)) = {
                   MemException(e) => {
                     // Errors report the address that was encoded in the instruction rather
                     // than the address that caused the fault (i.e. the aligned address).
-                    handle_mem_exception(virtaddr(virtaddr_bits(vaddr) - offset), e);
+                    handle_mem_exception(vaddr - offset, e);
                     RETIRE_FAIL
                   },
                 }
