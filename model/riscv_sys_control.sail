@@ -13,10 +13,13 @@
 function csrAccess(csr : csreg) -> csrRW = csr[11..10]
 function csrPriv(csr : csreg) -> priv_level = csr[9..8]
 
-val check_CSR_access : (csrRW, priv_level, Privilege, bool) -> bool
-function check_CSR_access(csrrw, csrpr, p, isWrite) =
-    not(isWrite == true & csrrw == 0b11)  /* read/write */
-  & (privLevel_to_bits(p) >=_u csrpr)      /* privilege */
+// Check that the CSR access is made with sufficient privilege.
+function check_CSR_priv(csr : csreg, p : Privilege) -> bool =
+  privLevel_to_bits(p) >=_u csrPriv(csr)
+
+// Check that the CSR access isn't a write and read-only.
+function check_CSR_access(csr : csreg, isWrite : bool) -> bool =
+  not(isWrite & (csrAccess(csr) == 0b11))
 
 function check_TVM_SATP(csr : csreg, p : Privilege) -> bool =
   not(csr == 0x180 & p == Supervisor & mstatus[TVM] == 0b1)
@@ -67,7 +70,8 @@ function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
 
 function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
     is_CSR_defined(csr)
-  & check_CSR_access(csrAccess(csr), csrPriv(csr), p, isWrite)
+  & check_CSR_priv(csr, p)
+  & check_CSR_access(csr, isWrite)
   // TODO: If we add `p` back to is_CSR_defined() we could move these three
   // check_ functions back there. We should also rename is_CSR_defined()
   // to is_CSR_accessible() or similar.
