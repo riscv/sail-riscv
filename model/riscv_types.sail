@@ -61,20 +61,12 @@ type amo    = bits(1)  /* amo opcode flags */
 enum Architecture = {RV32, RV64, RV128}
 type arch_xlen = bits(2)
 
-function architecture(a : arch_xlen) -> Architecture =
-  match (a) {
-    0b01 => RV32,
-    0b10 => RV64,
-    0b11 => RV128,
-    _    => internal_error(__FILE__, __LINE__, "architecture(0b00) is invalid")
-  }
-
-function arch_to_bits(a : Architecture) -> arch_xlen =
-  match (a) {
-    RV32  => 0b01,
-    RV64  => 0b10,
-    RV128 => 0b11
-  }
+mapping architecture : Architecture <-> arch_xlen = {
+  RV32  <-> 0b01,
+  RV64  <-> 0b10,
+  RV128 <-> 0b11,
+  backwards 0b00 => internal_error(__FILE__, __LINE__, "architecture(0b00) is invalid")
+}
 
 /* privilege levels */
 

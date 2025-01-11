@@ -315,7 +315,7 @@ function init_sys() -> unit = {
   mhartid     = zeros();
   mconfigptr  = zeros();
 
-  misa[MXL] = arch_to_bits(if xlen == 32 then RV32 else RV64);
+  misa[MXL] = architecture(if xlen == 32 then RV32 else RV64);
   misa[A]   = 0b1;                             /* atomics */
   misa[C]   = bool_to_bits(sys_enable_rvc());  /* RVC */
   misa[B]   = bool_to_bits(sys_enable_bext()); /* Bit-manipulation */

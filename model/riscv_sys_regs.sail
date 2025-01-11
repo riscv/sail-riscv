@@ -212,13 +212,13 @@ function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv :
 
 function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
   if   xlen == 32
-  then arch_to_bits(RV32)
+  then architecture(RV32)
   else m[SXL]
 }
 
 function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
   if   xlen == 32
-  then arch_to_bits(RV32)
+  then architecture(RV32)
   else m[UXL]
 }
 
