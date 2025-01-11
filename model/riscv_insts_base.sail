@@ -714,9 +714,9 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
   let asid = if rs2 != zreg then Some(X(rs2)[asidlen - 1 .. 0]) else None();
   match cur_privilege {
     User       => { handle_illegal(); RETIRE_FAIL },
-    Supervisor => match (architecture(get_mstatus_SXL(mstatus)), mstatus[TVM]) {
-                    (_, 0b1)  => { handle_illegal(); RETIRE_FAIL },
-                    (_, 0b0) => { flush_TLB(asid, addr); RETIRE_SUCCESS },
+    Supervisor => match mstatus[TVM] {
+                    0b1 => { handle_illegal(); RETIRE_FAIL },
+                    0b0 => { flush_TLB(asid, addr); RETIRE_SUCCESS },
                   },
     Machine    => { flush_TLB(asid, addr); RETIRE_SUCCESS }
   }
