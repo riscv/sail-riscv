@@ -304,15 +304,12 @@ function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_m
 
 function cur_architecture() -> Architecture = {
   let a : arch_xlen =
-    match (cur_privilege) {
+    match cur_privilege {
       Machine    => misa[MXL],
       Supervisor => get_mstatus_SXL(mstatus),
       User       => get_mstatus_UXL(mstatus)
     };
-  match architecture(a) {
-    Some(a) => a,
-    None()  => internal_error(__FILE__, __LINE__, "Invalid current architecture")
-  }
+  architecture(a)
 }
 
 function in32BitMode() -> bool = {

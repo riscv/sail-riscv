@@ -240,18 +240,18 @@ function translationMode(priv : Privilege) -> SATPMode = {
     // Translation mode is based on mstatus.SXL, which could be RV32 when xlen==64
     let arch = architecture(get_mstatus_SXL(mstatus));
     match arch {
-      Some(RV64) => { let mbits : bits(4) = satp[63 .. 60];
-                      match satp64Mode_of_bits(RV64, mbits) {    // see riscv_types.sail
-                        Some(m) => m,
-                        None()  => internal_error(__FILE__, __LINE__,
-                                                  "invalid RV64 translation mode in satp")
-                      }
-                    },
-      Some(RV32) => match Mk_Satp32(satp[31 .. 0])[Mode] {    // Note: satp is 64bits here
-                      // When xlen is 64, mstatus.SXL (for S privilege) can be RV32
-                      0b0 => Sbare,
-                      0b1  => Sv32
-                    },
+      RV64 => { let mbits : bits(4) = satp[63 .. 60];
+                match satp64Mode_of_bits(RV64, mbits) {    // see riscv_types.sail
+                  Some(m) => m,
+                  None()  => internal_error(__FILE__, __LINE__,
+                                            "invalid RV64 translation mode in satp")
+                }
+              },
+      RV32 => match Mk_Satp32(satp[31 .. 0])[Mode] {    // Note: satp is 64bits here
+                // When xlen is 64, mstatus.SXL (for S privilege) can be RV32
+                0b0 => Sbare,
+                0b1  => Sv32
+              },
       _    => internal_error(__FILE__, __LINE__, "unsupported address translation arch")
     }
   }
