@@ -70,10 +70,6 @@ then
     done
 else
     red "Building 32-bit RISCV C emulator" "fail"
-
-    for test in $DIR/riscv-tests/rv32*.elf; do
-        red "C-32 $(basename $test)" "fail"
-    done
 fi
 finish_suite "32-bit RISCV C tests"
 
@@ -96,10 +92,6 @@ then
     done
 else
     red "Building 64-bit RISCV C emulator" "fail"
-
-    for test in $DIR/riscv-tests/rv64*.elf; do
-        red "C-64 $(basename $test)" "fail"
-    done
 fi
 finish_suite "64-bit RISCV C tests"
 
