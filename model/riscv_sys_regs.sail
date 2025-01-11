@@ -302,7 +302,7 @@ function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_m
 
 /* architecture and extension checks */
 
-function cur_Architecture() -> Architecture = {
+function cur_architecture() -> Architecture = {
   let a : arch_xlen =
     match (cur_privilege) {
       Machine    => misa[MXL],
@@ -316,7 +316,7 @@ function cur_Architecture() -> Architecture = {
 }
 
 function in32BitMode() -> bool = {
-  cur_Architecture() == RV32
+  cur_architecture() == RV32
 }
 
 // envcfg Resisters
