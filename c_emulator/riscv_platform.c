@@ -117,6 +117,11 @@ bool plat_enable_misaligned_access(unit u)
   return rv_enable_misaligned;
 }
 
+bool plat_enable_tlb(unit u)
+{
+  return rv_enable_tlb;
+}
+
 bool plat_mtval_has_illegal_inst_bits(unit u)
 {
   return rv_mtval_has_illegal_inst_bits;

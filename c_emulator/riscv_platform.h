@@ -24,6 +24,7 @@ uint64_t sys_vector_elen_exp(unit);
 bool plat_enable_dirty_update(unit);
 bool plat_enable_misaligned_access(unit);
 bool plat_mtval_has_illegal_inst_bits(unit);
+bool plat_enable_tlb(unit);
 mach_bits sys_writable_hpm_counters(unit u);
 
 mach_bits plat_ram_base(unit);

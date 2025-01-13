@@ -345,39 +345,44 @@ function translate_TLB_miss(sv_params : SV_Params,
   match ptw_result {
     PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),
     PTW_Success(pAddr, pte, pteAddr, level, global, ext_ptw) => {
-      let ext_pte   = msbs_of_PTE(sv_params, pte);
-      // Without TLBs, this 'match' expression can be replaced simply
-      // by: 'TR_Address(pAddr, ext_ptw)'    (see TLB_NOTE above)
-      match update_PTE_Bits(sv_params, pte, ac) {
-        None() => {
-          add_to_TLB(asid, vAddr, pAddr, pte, pteAddr, level, global,
-                     sv_params.vpn_size_bits,
-                     pagesize_bits);
-          TR_Address(pAddr, ext_ptw)
-        },
-        Some(pte') =>
-          // See riscv_platform.sail
-          if not(plat_enable_dirty_update()) then
-            // pte needs dirty/accessed update but that is not enabled
-            TR_Failure(PTW_PTE_Update(), ext_ptw)
-          else {
-            // Writeback the PTE (which has new A/D bits)
-            let pte_phys_addr = physaddr(pteAddr[(physaddrbits_len - 1) .. 0]);
+      if not(plat_enable_tlb()) then
+        // Without TLBs, this 'match' expression can be replaced simply
+        // by: 'TR_Address(pAddr, ext_ptw)'    (see TLB_NOTE above)
+        TR_Address(pAddr, ext_ptw)
+      else {
+        // Add the new PTE to the TLB
+        let ext_pte   = msbs_of_PTE(sv_params, pte);
+        match update_PTE_Bits(sv_params, pte, ac) {
+          None() => {
+            add_to_TLB(asid, vAddr, pAddr, pte, pteAddr, level, global,
+                       sv_params.vpn_size_bits,
+                       pagesize_bits);
+            TR_Address(pAddr, ext_ptw)
+          },
+          Some(pte') =>
+            // See riscv_platform.sail
+            if not(plat_enable_dirty_update()) then
+              // pte needs dirty/accessed update but that is not enabled
+              TR_Failure(PTW_PTE_Update(), ext_ptw)
+            else {
+              // Writeback the PTE (which has new A/D bits)
+              let pte_phys_addr = physaddr(pteAddr[(physaddrbits_len - 1) .. 0]);
 
-            match write_pte(pte_phys_addr, 2 ^ sv_params.log_pte_size_bytes, pte') {
-              MemValue(_) => {
-                add_to_TLB(asid, vAddr, pAddr, pte', pteAddr, level, global,
-                           sv_params.vpn_size_bits,
-                           pagesize_bits);
-                TR_Address(pAddr, ext_ptw)
-              },
-              MemException(e) =>
-                TR_Failure(PTW_Access(), ext_ptw)
+              match write_pte(pte_phys_addr, 2 ^ sv_params.log_pte_size_bytes, pte') {
+                MemValue(_) => {
+                  add_to_TLB(asid, vAddr, pAddr, pte', pteAddr, level, global,
+                             sv_params.vpn_size_bits,
+                             pagesize_bits);
+                  TR_Address(pAddr, ext_ptw)
+                },
+                MemException(e) =>
+                  TR_Failure(PTW_Access(), ext_ptw)
+              }
             }
-          }
         }
       }
     }
+  }
 }
 
 // PRIVATE

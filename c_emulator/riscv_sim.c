@@ -60,6 +60,7 @@ enum {
   OPT_ENABLE_ZICBOZ,
   OPT_ENABLE_SSTC,
   OPT_CACHE_BLOCK_SIZE,
+  OPT_DISABLE_TLB,
 };
 
 static bool do_dump_dts = false;
@@ -160,6 +161,7 @@ static struct option options[] = {
     {"enable-zicbom",               no_argument,       0, OPT_ENABLE_ZICBOM       },
     {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
     {"cache-block-size",            required_argument, 0, OPT_CACHE_BLOCK_SIZE    },
+    {"disable-tlb",                 no_argument,       0, OPT_DISABLE_TLB         },
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
@@ -449,6 +451,10 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "enabling Zfinx support.\n");
       rv_enable_zfinx = true;
       rv_enable_fdext = false;
+      break;
+    case OPT_DISABLE_TLB:
+      fprintf(stderr, "disabling TLB support.\n");
+      rv_enable_tlb = false;
       break;
 #ifdef SAILCOV
     case 'c':
