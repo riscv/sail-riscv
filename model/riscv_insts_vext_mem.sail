@@ -67,17 +67,17 @@ union clause ast = VLSEGTYPE : (bits(3), bits(1), regidx, vlewidth, regidx)
 mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd) if extensionEnabled(Ext_V)
   <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if extensionEnabled(Ext_V)
 
-val process_vlseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired
+val process_vlseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired
 function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let width_type : word_width = size_bytes(load_width_bytes);
-  let vm_val : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
+  let vm_val : bits('n) = read_vmask(num_elem, vm, 0b00000);
   let vd_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
 
   let (result, mask) = init_masked_result(num_elem, nf * load_width_bytes * 8, EMUL_pow, vd_seg, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] then { /* active segments */
+    if mask[i] == bitone then { /* active segments */
       vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
@@ -119,6 +119,8 @@ function clause execute(VLSEGTYPE(nf, vm, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW); /* # of element of each register group */
   let nf_int = nfields_int(nf);
 
+  assert(num_elem > 0);
+
   if illegal_load(vd, vm, nf_int, EEW, EMUL_pow) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlseg(nf_int, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
@@ -133,11 +135,11 @@ union clause ast = VLSEGFFTYPE : (bits(3), bits(1), regidx, vlewidth, regidx)
 mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd) if extensionEnabled(Ext_V)
   <-> nf @ 0b0 @ 0b00 @ vm @ 0b10000 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if extensionEnabled(Ext_V)
 
-val process_vlsegff : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired
+val process_vlsegff : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired
 function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let width_type : word_width = size_bytes(load_width_bytes);
-  let vm_val : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
+  let vm_val : bits('n) = read_vmask(num_elem, vm, 0b00000);
   let vd_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
   let tail_ag : agtype = get_vtype_vta();
 
@@ -146,7 +148,7 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
   var trimmed : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
     if not(trimmed) then {
-      if mask[i] then { /* active segments */
+      if mask[i] == bitone then { /* active segments */
         foreach (j from 0 to (nf - 1)) {
           let elem_offset = (i * nf + j) * load_width_bytes;
           match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), load_width_bytes) {
@@ -224,6 +226,8 @@ function clause execute(VLSEGFFTYPE(nf, vm, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
 
+  assert(num_elem > 0);
+
   if illegal_load(vd, vm, nf_int, EEW, EMUL_pow) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlsegff(nf_int, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
@@ -238,16 +242,16 @@ union clause ast = VSSEGTYPE : (bits(3), bits(1), regidx, vlewidth, regidx)
 mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3) if extensionEnabled(Ext_V)
   <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ rs1 @ encdec_vlewidth(width) @ vs3 @ 0b0100111 if extensionEnabled(Ext_V)
 
-val process_vsseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired
+val process_vsseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), regidx, int('b), regidx, int('p), int('n)) -> Retired
 function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let width_type : word_width = size_bytes(load_width_bytes);
-  let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, 0b00000);
   let vs3_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
-  let mask    : vector('n, bool) = init_masked_source(num_elem, EMUL_pow, vm_val);
+  let mask    : bits('n) = init_masked_source(num_elem, EMUL_pow, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] then { /* active segments */
+    if mask[i] == bitone then { /* active segments */
       vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
@@ -293,6 +297,8 @@ function clause execute(VSSEGTYPE(nf, vm, rs1, width, vs3)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
 
+  assert(num_elem > 0);
+
   if illegal_store(nf_int, EEW, EMUL_pow) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vsseg(nf_int, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem)
@@ -307,18 +313,18 @@ union clause ast = VLSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, reg
 mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd) if extensionEnabled(Ext_V)
   <-> nf @ 0b0 @ 0b10 @ vm @ rs2 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if extensionEnabled(Ext_V)
 
-val process_vlsseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, regidx, int('p), int('n)) -> Retired
+val process_vlsseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), regidx, int('b), regidx, regidx, int('p), int('n)) -> Retired
 function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let width_type : word_width = size_bytes(load_width_bytes);
-  let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, 0b00000);
   let vd_seg  : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
   let rs2_val : int = unsigned(get_scalar(rs2, xlen));
 
   let (result, mask) = init_masked_result(num_elem, nf * load_width_bytes * 8, EMUL_pow, vd_seg, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] then { /* active segments */
+    if mask[i] == bitone then { /* active segments */
       vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
@@ -360,6 +366,8 @@ function clause execute(VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
 
+  assert(num_elem > 0);
+
   if illegal_load(vd, vm, nf_int, EEW, EMUL_pow) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlsseg(nf_int, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
@@ -374,17 +382,17 @@ union clause ast = VSSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, reg
 mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3) if extensionEnabled(Ext_V)
   <-> nf @ 0b0 @ 0b10 @ vm @ rs2 @ rs1 @ encdec_vlewidth(width) @ vs3 @ 0b0100111 if extensionEnabled(Ext_V)
 
-val process_vssseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('b), regidx, regidx, int('p), int('n)) -> Retired
+val process_vssseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), regidx, int('b), regidx, regidx, int('p), int('n)) -> Retired
 function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let width_type : word_width = size_bytes(load_width_bytes);
-  let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, 0b00000);
   let vs3_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
   let rs2_val : int = unsigned(get_scalar(rs2, xlen));
-  let mask    : vector('n, bool) = init_masked_source(num_elem, EMUL_pow, vm_val);
+  let mask    : bits('n) = init_masked_source(num_elem, EMUL_pow, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] then { /* active segments */
+    if mask[i] == bitone then { /* active segments */
       vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
@@ -430,6 +438,8 @@ function clause execute(VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   let nf_int = nfields_int(nf);
 
+  assert(num_elem > 0);
+
   if illegal_store(nf_int, EEW, EMUL_pow) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vssseg(nf_int, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
@@ -444,11 +454,11 @@ union clause ast = VLUXSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, re
 mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd) if extensionEnabled(Ext_V)
   <-> nf @ 0b0 @ 0b01 @ vm @ vs2 @ rs1 @ encdec_vlewidth(width) @ vd @ 0b0000111 if extensionEnabled(Ext_V)
 
-val process_vlxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('ib), int('db), int('ip), int('dp), regidx, regidx, int('n), int) -> Retired
+val process_vlxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), regidx, int('ib), int('db), int('ip), int('dp), regidx, regidx, int('n), int) -> Retired
 function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
   let EMUL_data_reg : int = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
   let width_type : word_width = size_bytes(EEW_data_bytes);
-  let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, 0b00000);
   let vd_seg  : vector('n, bits('f * 'db * 8)) = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vd);
   let vs2_val : vector('n, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
 
@@ -456,7 +466,7 @@ function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index
 
   /* currently mop = 1 (unordered) or 3 (ordered) do the same operations */
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] then { /* active segments */
+    if mask[i] == bitone then { /* active segments */
       vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
@@ -498,6 +508,8 @@ function clause execute(VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
   let nf_int = nfields_int(nf);
 
+  assert(num_elem > 0);
+
   if illegal_indexed_load(vd, vm, nf_int, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxseg(nf_int, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
@@ -522,6 +534,8 @@ function clause execute(VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
   let nf_int = nfields_int(nf);
 
+  assert(num_elem > 0);
+
   if illegal_indexed_load(vd, vm, nf_int, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vlxseg(nf_int, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
@@ -536,18 +550,18 @@ union clause ast = VSUXSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, re
 mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3) if extensionEnabled(Ext_V)
   <-> nf @ 0b0 @ 0b01 @ vm @ vs2 @ rs1 @ encdec_vlewidth(width) @ vs3 @ 0b0100111 if extensionEnabled(Ext_V)
 
-val process_vsxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n >= 0). (int('f), bits(1), regidx, int('ib), int('db), int('ip), int('dp), regidx, regidx, int('n), int) -> Retired
+val process_vsxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), regidx, int('ib), int('db), int('ip), int('dp), regidx, regidx, int('n), int) -> Retired
 function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
   let EMUL_data_reg : int = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
   let width_type : word_width = size_bytes(EEW_data_bytes);
-  let vm_val  : vector('n, bool) = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, 0b00000);
   let vs3_seg : vector('n, bits('f * 'db * 8)) = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vs3);
   let vs2_val : vector('n, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
-  let mask    : vector('n, bool) = init_masked_source(num_elem, EMUL_data_pow, vm_val);
+  let mask    : bits('n) = init_masked_source(num_elem, EMUL_data_pow, vm_val);
 
   /* currently mop = 1 (unordered) or 3 (ordered) do the same operations */
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] then { /* active segments */
+    if mask[i] == bitone then { /* active segments */
       vstart = to_bits(16, i);
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
@@ -593,6 +607,8 @@ function clause execute(VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
   let nf_int = nfields_int(nf);
 
+  assert(num_elem > 0);
+
   if illegal_indexed_store(nf_int, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow) then { handle_illegal(); return RETIRE_FAIL };
 
   process_vsxseg(nf_int, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
@@ -616,6 +632,8 @@ function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
   let nf_int = nfields_int(nf);
+
+  assert(num_elem > 0);
 
   if illegal_indexed_store(nf_int, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow) then { handle_illegal(); return RETIRE_FAIL };
 

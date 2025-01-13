@@ -199,13 +199,13 @@ function get_end_element() = unsigned(vl) - 1
  *   vector2 is a "mask" vector that is true for an element if the corresponding element
  *     in the result vector should be updated by the calling instruction
  */
-val init_masked_result : forall 'n 'm 'p, 'n >= 0 & 'm >= 0. (int('n), int('m), int('p), vector('n, bits('m)), vector('n, bool)) -> (vector('n, bits('m)), vector('n, bool))
+val init_masked_result : forall 'n 'm 'p, 'n >= 0 & 'm >= 0. (int('n), int('m), int('p), vector('n, bits('m)), bits('n)) -> (vector('n, bits('m)), bits('n))
 function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
   let tail_ag : agtype = get_vtype_vta();
   let mask_ag : agtype = get_vtype_vma();
-  var mask : vector('n, bool) = undefined;
+  var mask : bits('n) = undefined;
   var result : vector('n, bits('m)) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
@@ -216,31 +216,31 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
     if i < start_element then {
       /* Prestart elements defined by vstart */
       result[i] = vd_val[i];
-      mask[i] = false
+      mask[i] = bitzero
     } else if i > end_element then {
       /* Tail elements defined by vl */
       result[i] = match tail_ag {
         UNDISTURBED => vd_val[i],
         AGNOSTIC    => vd_val[i] /* TODO: configuration support */
       };
-      mask[i] = false
+      mask[i] = bitzero
     } else if i >= real_num_elem then {
       /* Tail elements defined by lmul < 1 */
       result[i] = match tail_ag {
         UNDISTURBED => vd_val[i],
         AGNOSTIC    => vd_val[i] /* TODO: configuration support */
       };
-      mask[i] = false
-    } else if not(vm_val[i]) then {
+      mask[i] = bitzero
+    } else if vm_val[i] == bitzero then {
       /* Inactive body elements defined by vm */
       result[i] = match mask_ag {
         UNDISTURBED => vd_val[i],
         AGNOSTIC    => vd_val[i] /* TODO: configuration support */
       };
-      mask[i] = false
+      mask[i] = bitzero
     } else {
       /* Active body elements */
-      mask[i] = true;
+      mask[i] = bitone;
     }
   };
 
@@ -252,11 +252,11 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
  * (vs3 for store and vs2 for reduction). There's no destination register to be masked.
  * In these cases, this function can be called to simply get the mask vector for vs (without the prepared vd result vector).
  */
-val init_masked_source : forall 'n 'p, 'n >= 0. (int('n), int('p), vector('n, bool)) -> vector('n, bool)
+val init_masked_source : forall 'n 'p, 'n > 0. (int('n), int('p), bits('n)) -> bits('n)
 function init_masked_source(num_elem, LMUL_pow, vm_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
-  var mask : vector('n, bool) = undefined;
+  var mask : bits('n) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (2 ^ (0 - LMUL_pow));
@@ -265,19 +265,19 @@ function init_masked_source(num_elem, LMUL_pow, vm_val) = {
   foreach (i from 0 to (num_elem - 1)) {
     if i < start_element then {
       /* Prestart elements defined by vstart */
-      mask[i] = false
+      mask[i] = bitzero
     } else if i > end_element then {
       /* Tail elements defined by vl */
-      mask[i] = false
+      mask[i] = bitzero
     } else if i >= real_num_elem then {
       /* Tail elements defined by lmul < 1 */
-      mask[i] = false
-    } else if not(vm_val[i]) then {
+      mask[i] = bitzero
+    } else if vm_val[i] == bitzero then {
       /* Inactive body elements defined by vm */
-      mask[i] = false
+      mask[i] = bitzero
     } else {
       /* Active body elements */
-      mask[i] = true;
+      mask[i] = bitone;
     }
   };
 
@@ -286,12 +286,12 @@ function init_masked_source(num_elem, LMUL_pow, vm_val) = {
 
 /* Mask handling for carry functions that use masks as input/output */
 /* Only prestart and tail elements are masked in a mask value */
-val init_masked_result_carry : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), vector('n, bool)) -> (vector('n, bool), vector('n, bool))
+val init_masked_result_carry : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), bits('n)) -> (bits('n), bits('n))
 function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
-  var mask : vector('n, bool) = undefined;
-  var result : vector('n, bool) = undefined;
+  var mask : bits('n) = undefined;
+  var result : bits('n) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (2 ^ (0 - LMUL_pow));
@@ -301,20 +301,20 @@ function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
     if i < start_element then {
       /* Prestart elements defined by vstart */
       result[i] = vd_val[i];
-      mask[i] = false
+      mask[i] = bitzero
     } else if i > end_element then {
       /* Tail elements defined by vl */
       /* Mask tail is always agnostic */
       result[i] = vd_val[i]; /* TODO: configuration support */
-      mask[i] = false
+      mask[i] = bitzero
     } else if i >= real_num_elem then {
       /* Tail elements defined by lmul < 1 */
       /* Mask tail is always agnostic */
       result[i] = vd_val[i]; /* TODO: configuration support */
-      mask[i] = false
+      mask[i] = bitzero
     } else {
       /* Active body elements */
-      mask[i] = true
+      mask[i] = bitone
     }
   };
 
@@ -322,13 +322,13 @@ function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
 }
 
 /* Mask handling for cmp functions that use masks as output */
-val init_masked_result_cmp : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), vector('n, bool), vector('n, bool)) -> (vector('n, bool), vector('n, bool))
+val init_masked_result_cmp : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), bits('n), bits('n)) -> (bits('n), bits('n))
 function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
   let mask_ag : agtype = get_vtype_vma();
-  var mask : vector('n, bool) = undefined;
-  var result : vector('n, bool) = undefined;
+  var mask : bits('n) = undefined;
+  var result : bits('n) = undefined;
 
   /* Determine the actual number of elements when lmul < 1 */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (2 ^ (0 - LMUL_pow));
@@ -338,27 +338,27 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
     if i < start_element then {
       /* Prestart elements defined by vstart */
       result[i] = vd_val[i];
-      mask[i] = false
+      mask[i] = bitzero
     } else if i > end_element then {
       /* Tail elements defined by vl */
       /* Mask tail is always agnostic */
       result[i] = vd_val[i]; /* TODO: configuration support */
-      mask[i] = false
+      mask[i] = bitzero
     } else if i >= real_num_elem then {
       /* Tail elements defined by lmul < 1 */
       /* Mask tail is always agnostic */
       result[i] = vd_val[i]; /* TODO: configuration support */
-      mask[i] = false
-    } else if not(vm_val[i]) then {
+      mask[i] = bitzero
+    } else if vm_val[i] == bitzero then {
       /* Inactive body elements defined by vm */
       result[i] = match mask_ag {
         UNDISTURBED => vd_val[i],
         AGNOSTIC    => vd_val[i] /* TODO: configuration support */
       };
-      mask[i] = false
+      mask[i] = bitzero
     } else {
       /* Active body elements */
-      mask[i] = true
+      mask[i] = bitone
     }
   };
 
