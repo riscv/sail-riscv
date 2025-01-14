@@ -303,12 +303,12 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
       if   check_misaligned(vaddr, width)
       then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+        TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) => {
           let (aq, rl, res) = (false, false, false);
           match mem_read(Read(Data), addr, width_bytes, aq, rl, res) {
-            MemValue(result) => { F(rd) = nan_box(result); RETIRE_SUCCESS },
-            MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            Ok(result) => { F(rd) = nan_box(result); RETIRE_SUCCESS },
+            Err(e)     => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
           }
         },
       }
@@ -364,13 +364,13 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
         TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) => {
           match mem_write_ea(addr, width_bytes, aq, rl, false) {
-            MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-            MemValue(_) => {
+            Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            Ok(_)  => {
               let rs2_val = F(rs2);
               match mem_write_value(addr, width_bytes, rs2_val[width_bytes * 8 - 1 .. 0], aq, rl, con) {
-                MemValue(true)  => { RETIRE_SUCCESS },
-                MemValue(false) => { internal_error(__FILE__, __LINE__, "store got false from mem_write_value") },
-                MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                Ok(true)  => { RETIRE_SUCCESS },
+                Ok(false) => { internal_error(__FILE__, __LINE__, "store got false from mem_write_value") },
+                Err(e)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
               }
             },
           }

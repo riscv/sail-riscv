@@ -30,8 +30,8 @@ function fetch() -> FetchResult =
            * exceptions.
            */
           match mem_read(Execute(), ppclo, 2, false, false, false) {
-            MemException(e) => F_Error(e, PC),
-            MemValue(ilo)   => {
+            Err(e)  => F_Error(e, PC),
+            Ok(ilo) => {
               if   isRVC(ilo)
               then F_RVC(ilo)
               else {
@@ -44,8 +44,8 @@ function fetch() -> FetchResult =
                       TR_Failure(e, _)     => F_Error(e, PC_hi),
                       TR_Address(ppchi, _) => {
                         match mem_read(Execute(), ppchi, 2, false, false, false) {
-                          MemException(e) => F_Error(e, PC_hi),
-                          MemValue(ihi)   => F_Base(append(ihi, ilo))
+                          Err(e)  => F_Error(e, PC_hi),
+                          Ok(ihi) => F_Base(append(ihi, ilo))
                         }
                       }
                     }
