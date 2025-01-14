@@ -14,8 +14,6 @@ type mem_meta = unit
 
 let default_meta : mem_meta = ()
 
-val __WriteRAM_Meta : forall 'n. (physaddrbits, int('n), mem_meta) -> unit
-function __WriteRAM_Meta(addr, width, meta) = ()
+function __WriteRAM_Meta(addr : physaddrbits, width : mem_access_width, meta : mem_meta) -> unit = ()
 
-val __ReadRAM_Meta  : forall 'n. (physaddrbits, int('n)) -> mem_meta
-function __ReadRAM_Meta(addr, width) = ()
+function __ReadRAM_Meta(addr : physaddrbits, width : mem_access_width) -> mem_meta = default_meta

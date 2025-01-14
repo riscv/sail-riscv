@@ -54,7 +54,7 @@ type ext_data_addr_error = unit
 
 /* Default data addr is just base register + immediate offset (may be zero).
    Extensions might override and add additional checks. */
-function ext_data_get_addr(base : regidx, offset : xlenbits, acc : AccessType(ext_access_type), width : range(1, max_mem_access))
+function ext_data_get_addr(base : regidx, offset : xlenbits, acc : AccessType(ext_access_type), width : mem_access_width)
          -> Ext_DataAddr_Check(ext_data_addr_error) =
   let addr = virtaddr(X(base) + offset) in
   Ext_DataAddr_OK(addr)
