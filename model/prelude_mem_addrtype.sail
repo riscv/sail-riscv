@@ -19,3 +19,7 @@ newtype virtaddr = virtaddr : xlenbits
 function physaddr_bits(physaddr(paddr) : physaddr) -> physaddrbits = paddr
 
 function virtaddr_bits(virtaddr(vaddr) : virtaddr) -> xlenbits = vaddr
+
+function sub_virtaddr_xlenbits(virtaddr(addr) : virtaddr, offset : xlenbits) -> virtaddr = virtaddr(addr - offset)
+
+overload operator - = { sub_virtaddr_xlenbits }
