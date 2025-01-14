@@ -7,7 +7,7 @@
 /*=======================================================================================*/
 function clause extensionEnabled(Ext_Zicntr) = true
 
-/* user counters/timers */
+/* unprivileged counters/timers */
 mapping clause csr_name_map = 0xC00  <-> "cycle"
 mapping clause csr_name_map = 0xC01  <-> "time"
 mapping clause csr_name_map = 0xC02  <-> "instret"
@@ -15,12 +15,12 @@ mapping clause csr_name_map = 0xC80  <-> "cycleh"
 mapping clause csr_name_map = 0xC81  <-> "timeh"
 mapping clause csr_name_map = 0xC82  <-> "instreth"
 
-function clause is_CSR_defined(0xC00) = extensionEnabled(Ext_Zicntr) & extensionEnabled(Ext_U) // cycle
-function clause is_CSR_defined(0xC01) = extensionEnabled(Ext_Zicntr) & extensionEnabled(Ext_U) // time
-function clause is_CSR_defined(0xC02) = extensionEnabled(Ext_Zicntr) & extensionEnabled(Ext_U) // instret
-function clause is_CSR_defined(0xC80) = extensionEnabled(Ext_Zicntr) & extensionEnabled(Ext_U) & (xlen == 32) // cycleh
-function clause is_CSR_defined(0xC81) = extensionEnabled(Ext_Zicntr) & extensionEnabled(Ext_U) & (xlen == 32) // timeh
-function clause is_CSR_defined(0xC82) = extensionEnabled(Ext_Zicntr) & extensionEnabled(Ext_U) & (xlen == 32) // instreth
+function clause is_CSR_defined(0xC00) = extensionEnabled(Ext_Zicntr) // cycle
+function clause is_CSR_defined(0xC01) = extensionEnabled(Ext_Zicntr) // time
+function clause is_CSR_defined(0xC02) = extensionEnabled(Ext_Zicntr) // instret
+function clause is_CSR_defined(0xC80) = extensionEnabled(Ext_Zicntr) & (xlen == 32) // cycleh
+function clause is_CSR_defined(0xC81) = extensionEnabled(Ext_Zicntr) & (xlen == 32) // timeh
+function clause is_CSR_defined(0xC82) = extensionEnabled(Ext_Zicntr) & (xlen == 32) // instreth
 
 function clause read_CSR(0xC00) = mcycle[(xlen - 1) .. 0]
 function clause read_CSR(0xC01) = mtime[(xlen - 1) .. 0]
