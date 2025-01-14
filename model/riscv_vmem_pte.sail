@@ -117,7 +117,7 @@ function update_PTE_Bits(sv_params : SV_Params,
   let update_d : bool = (pte_flags[D] == 0b0)
                         & (match a {
                              Execute()       => false,
-                             Read()          => false,
+                             Read(_)         => false,
                              Write(_)        => true,
                              ReadWrite(_, _) => true
                            });
