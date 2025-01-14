@@ -67,7 +67,7 @@ function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -140,7 +140,7 @@ function clause execute(FVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -207,7 +207,7 @@ function clause execute(FWVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -272,7 +272,7 @@ function clause execute(FWVVMATYPE(funct6, vm, vs1, vs2, vd)) = {
   };
 
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -332,7 +332,7 @@ function clause execute(FWVTYPE(funct6, vm, vs2, vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -440,7 +440,7 @@ function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -567,7 +567,7 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
   };
 
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -705,7 +705,7 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -791,7 +791,7 @@ function clause execute(VFUNARY1(vm, vs2, vfunary1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -829,7 +829,7 @@ function clause execute(VFMVFS(vs2, rd)) = {
     32 => F_S(rd) = vs2_val[0],
     64 => F_D(rd) = vs2_val[0]
   };
-  vstart = zeros();
+  set_vstart(zeros());
 
   RETIRE_SUCCESS
 }
@@ -907,7 +907,7 @@ function clause execute(FVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -984,7 +984,7 @@ function clause execute(FVFMATYPE(funct6, vm, vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1050,7 +1050,7 @@ function clause execute(FWVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1114,7 +1114,7 @@ function clause execute(FWVFMATYPE(funct6, vm, rs1, vs2, vd)) = {
   };
 
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1173,7 +1173,7 @@ function clause execute(FWFTYPE(funct6, vm, vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1229,7 +1229,7 @@ function clause execute(VFMERGE(vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1267,7 +1267,7 @@ function clause execute(VFMV(rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1311,7 +1311,7 @@ function clause execute(VFMVSF(rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, 0, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 

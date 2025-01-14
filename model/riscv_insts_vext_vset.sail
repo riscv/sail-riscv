@@ -109,7 +109,7 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   };
 
   /* reset vstart to 0 */
-  vstart = zeros();
+  set_vstart(zeros());
 
   print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
   print_reg("CSR vl <- " ^ BitStr(vl));
@@ -160,7 +160,7 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   };
 
   /* reset vstart to 0 */
-  vstart = zeros();
+  set_vstart(zeros());
 
   print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
   print_reg("CSR vl <- " ^ BitStr(vl));
@@ -196,7 +196,7 @@ function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   X(rd) = vl;
 
   /* reset vstart to 0 */
-  vstart = zeros();
+  set_vstart(zeros());
 
   print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
   print_reg("CSR vl <- " ^ BitStr(vl));

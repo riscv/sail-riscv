@@ -54,7 +54,7 @@ function clause execute(VVMTYPE(funct6, vs2, vs1, vd)) = {
   };
 
   write_vmask(num_elem, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -108,7 +108,7 @@ function clause execute(VVMCTYPE(funct6, vs2, vs1, vd)) = {
   };
 
   write_vmask(num_elem, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -165,7 +165,7 @@ function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -226,7 +226,7 @@ function clause execute(VVCMPTYPE(funct6, vm, vs2, vs1, vd)) = {
   };
 
   write_vmask(num_elem, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -285,7 +285,7 @@ function clause execute(VXMTYPE(funct6, vs2, rs1, vd)) = {
   };
 
   write_vmask(num_elem, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -339,7 +339,7 @@ function clause execute(VXMCTYPE(funct6, vs2, rs1, vd)) = {
   };
 
   write_vmask(num_elem, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -396,7 +396,7 @@ function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -461,7 +461,7 @@ function clause execute(VXCMPTYPE(funct6, vm, vs2, rs1, vd)) = {
   };
 
   write_vmask(num_elem, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -520,7 +520,7 @@ function clause execute(VIMTYPE(funct6, vs2, simm, vd)) = {
   };
 
   write_vmask(num_elem, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -571,7 +571,7 @@ function clause execute(VIMCTYPE(funct6, vs2, simm, vd)) = {
   };
 
   write_vmask(num_elem, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -625,7 +625,7 @@ function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -685,7 +685,7 @@ function clause execute(VICMPTYPE(funct6, vm, vs2, simm, vd)) = {
   };
 
   write_vmask(num_elem, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 

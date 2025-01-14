@@ -58,7 +58,7 @@ function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   write_single_element(SEW_widen, 0, vd, sum);
   /* other elements in vd are treated as tail elements, currently remain unchanged */
   /* TODO: configuration support for agnostic behavior */
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -125,7 +125,7 @@ function clause execute(RMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   write_single_element(SEW, 0, vd, sum);
   /* other elements in vd are treated as tail elements, currently remain unchanged */
   /* TODO: configuration support for agnostic behavior */
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 

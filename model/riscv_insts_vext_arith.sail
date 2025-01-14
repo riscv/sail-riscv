@@ -133,7 +133,7 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -218,7 +218,7 @@ function clause execute(NVSTYPE(funct6, vm, vs2, vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -285,7 +285,7 @@ function clause execute(NVTYPE(funct6, vm, vs2, vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -338,7 +338,7 @@ function clause execute(MASKTYPEV(vs2, vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -373,7 +373,7 @@ function clause execute(MOVETYPEV(vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -482,7 +482,7 @@ function clause execute(VXTYPE(funct6, vm, vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -566,7 +566,7 @@ function clause execute(NXSTYPE(funct6, vm, vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -633,7 +633,7 @@ function clause execute(NXTYPE(funct6, vm, vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -701,7 +701,7 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -755,7 +755,7 @@ function clause execute(MASKTYPEX(vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -790,7 +790,7 @@ function clause execute(MOVETYPEX(rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -875,7 +875,7 @@ function clause execute(VITYPE(funct6, vm, vs2, simm, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -951,7 +951,7 @@ function clause execute(NISTYPE(funct6, vm, vs2, simm, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1018,7 +1018,7 @@ function clause execute(NITYPE(funct6, vm, vs2, simm, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1086,7 +1086,7 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1140,7 +1140,7 @@ function clause execute(MASKTYPEI(vs2, simm, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1175,7 +1175,7 @@ function clause execute(MOVETYPEI(vd, simm)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1211,7 +1211,7 @@ function clause execute(VMVRTYPE(vs2, simm, vd)) = {
   };
 
   write_vreg(num_elem, SEW, EMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1318,7 +1318,7 @@ function clause execute(MVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1384,7 +1384,7 @@ function clause execute(MVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1452,7 +1452,7 @@ function clause execute(WVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1517,7 +1517,7 @@ function clause execute(WVTYPE(funct6, vm, vs2, vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1579,7 +1579,7 @@ function clause execute(WMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1636,7 +1636,7 @@ function clause execute(VEXT2TYPE(funct6, vm, vs2, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1692,7 +1692,7 @@ function clause execute(VEXT4TYPE(funct6, vm, vs2, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1749,7 +1749,7 @@ function clause execute(VEXT8TYPE(funct6, vm, vs2, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1781,7 +1781,7 @@ function clause execute(VMVXS(vs2, rd)) = {
   X(rd) = if xlen < SEW then slice(vs2_val[0], 0, xlen)
           else if xlen > SEW then sign_extend(vs2_val[0])
           else vs2_val[0];
-  vstart = zeros();
+  set_vstart(zeros());
 
   RETIRE_SUCCESS
 }
@@ -1839,7 +1839,7 @@ function clause execute(MVVCOMPRESS(vs2, vs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -1950,7 +1950,7 @@ function clause execute(MVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -2018,7 +2018,7 @@ function clause execute(MVXMATYPE(funct6, vm, vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -2086,7 +2086,7 @@ function clause execute(WVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -2150,7 +2150,7 @@ function clause execute(WXTYPE(funct6, vm, vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -2213,7 +2213,7 @@ function clause execute(WMVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -2263,7 +2263,7 @@ function clause execute(VMVSX(rs1, vd)) = {
   };
 
   write_vreg(num_elem, SEW, 0, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 

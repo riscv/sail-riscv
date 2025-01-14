@@ -8,6 +8,10 @@
 
 function clause extensionEnabled(Ext_V) = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
 
+function set_vstart(value : bits(16)) -> unit = {
+  vstart = value
+}
+
 mapping clause csr_name_map = 0x008  <-> "vstart"
 mapping clause csr_name_map = 0x009  <-> "vxsat"
 mapping clause csr_name_map = 0x00A  <-> "vxrm"

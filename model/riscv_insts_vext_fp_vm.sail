@@ -58,7 +58,7 @@ function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
   };
 
   write_vmask(num_elem, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -123,7 +123,7 @@ function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
   };
 
   write_vmask(num_elem, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
