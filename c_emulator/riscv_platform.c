@@ -163,9 +163,9 @@ mach_bits plat_clint_size(unit u)
   return rv_clint_size;
 }
 
-unit load_reservation(mach_bits addr)
+unit load_reservation(struct zphysaddr addr)
 {
-  reservation = addr;
+  reservation = addr.zphysaddr;
   reservation_valid = true;
   RESERVATION_DBG("reservation <- %0" PRIx64 "\n", reservation);
   return UNIT;
@@ -181,10 +181,11 @@ static mach_bits check_mask(void)
   return (zxlen_val == 32) ? 0x00000000FFFFFFFF : -1;
 }
 
-bool match_reservation(mach_bits addr)
+bool match_reservation(struct zphysaddr addr)
 {
   mach_bits mask = check_mask();
-  bool ret = reservation_valid && (reservation & mask) == (addr & mask);
+  bool ret
+      = reservation_valid && (reservation & mask) == (addr.zphysaddr & mask);
   RESERVATION_DBG("reservation(%c): %0" PRIx64 ", key=%0" PRIx64 ": %s\n",
                   reservation_valid ? 'v' : 'i', reservation, addr,
                   ret ? "ok" : "fail");
