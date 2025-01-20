@@ -8,8 +8,10 @@
 
 function clause extensionEnabled(Ext_V) = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
 
-function set_vstart(value : bits(16)) -> unit = {
-  vstart = value
+function set_vstart(value : xlenbits) -> unit = {
+  dirty_v_context();
+  let vstart_length = get_vlen_pow();
+  vstart = zero_extend(16, value[(vstart_length - 1) .. 0]);
 }
 
 mapping clause csr_name_map = 0x008  <-> "vstart"
@@ -36,7 +38,7 @@ function clause read_CSR(0xC20) = vl
 function clause read_CSR(0xC21) = vtype.bits
 function clause read_CSR(0xC22) = get_vlenb()
 
-function clause write_CSR(0x008, value) = { dirty_v_context(); let vstart_length = get_vlen_pow(); vstart = zero_extend(16, value[(vstart_length - 1) .. 0]); zero_extend(vstart) }
+function clause write_CSR(0x008, value) = { set_vstart(value); zero_extend(vstart) }
 function clause write_CSR(0x009, value) = { ext_write_vcsr (vcsr[vxrm], value[0 .. 0]); zero_extend(vcsr[vxsat]) }
 function clause write_CSR(0x00A, value) = { ext_write_vcsr (value[1 .. 0], vcsr[vxsat]); zero_extend(vcsr[vxrm]) }
 function clause write_CSR(0x00F, value) = { ext_write_vcsr (value [2 .. 1], value [0 .. 0]); zero_extend(vcsr.bits) }
