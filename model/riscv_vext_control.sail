@@ -8,6 +8,8 @@
 
 function clause extensionEnabled(Ext_V) = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
 
+// Note: Current implementation does not trap when vstart is out of bounds
+
 function set_vstart(value : bits(16)) -> unit = {
   dirty_v_context();
   let vstart_length = get_vlen_pow();
