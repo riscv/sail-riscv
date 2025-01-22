@@ -27,6 +27,7 @@ extern bool rv_enable_sstc;
 extern bool rv_enable_writable_misa;
 extern bool rv_enable_dirty_update;
 extern bool rv_enable_misaligned;
+extern bool rv_disable_illegal_instr_exp;             // Added disable rv_disable_illegal_instr_exp as an extern variable to be accessible to other sides 
 extern bool rv_mtval_has_illegal_inst_bits;
 extern bool rv_enable_writable_fiom;
 extern uint64_t rv_writable_hpm_counters;

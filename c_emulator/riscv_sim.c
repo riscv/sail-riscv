@@ -132,6 +132,7 @@ char *sailcov_file = NULL;
 static struct option options[] = {
     {"enable-dirty-update",         no_argument,       0, 'd'                     },
     {"enable-misaligned",           no_argument,       0, 'm'                     },
+    {"disable_trap_undef_csr",      no_argument,       0, 'k'                     },
     {"pmp-count",                   required_argument, 0, OPT_PMP_COUNT           },
     {"pmp-grain",                   required_argument, 0, OPT_PMP_GRAIN           },
     {"ram-size",                    required_argument, 0, 'z'                     },
@@ -288,6 +289,7 @@ static int process_args(int argc, char **argv)
                     "T:"
                     "g:"
                     "h"
+                    "k"
 #ifdef RVFI_DII
                     "r:"
 #endif
@@ -316,6 +318,10 @@ static int process_args(int argc, char **argv)
     case 'm':
       fprintf(stderr, "enabling misaligned access.\n");
       rv_enable_misaligned = true;
+      break;
+    case 'k':                                                         // Added for disabling illegal instruction
+      fprintf(stderr, "disabling illegal instruction exception.\n");
+      rv_disable_illegal_instr_exp = true;
       break;
     case OPT_PMP_COUNT:
       pmp_count = atol(optarg);

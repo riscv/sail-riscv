@@ -44,6 +44,15 @@ val plat_enable_dirty_update = pure {interpreter: "Platform.enable_dirty_update"
 val plat_enable_misaligned_access = pure {interpreter: "Platform.enable_misaligned_access",
                                           c: "plat_enable_misaligned_access",
                                           lem: "plat_enable_misaligned_access"} : unit -> bool
+                                          
+                                          
+                                          
+/* illegal instruction disable
+ */
+val plat_disable_illegal_instr_exp_access = pure {interpreter: "Platform.disable_illegal_instr_exp_access",
+                                          c: "plat_disable_illegal_instr_exp_access",
+                                          lem: "plat_disable_illegal_instr_exp_access"} : unit -> bool                                       
+                                          
 
 /* whether mtval stores the bits of a faulting instruction on illegal instruction exceptions */
 val plat_mtval_has_illegal_inst_bits = pure {interpreter: "Platform.mtval_has_illegal_inst_bits",
