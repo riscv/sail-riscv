@@ -11,7 +11,7 @@ function clause extensionEnabled(Ext_V) = (misa[V] == 0b1) & (mstatus[VS] != 0b0
 function set_vstart(value : xlenbits) -> unit = {
   dirty_v_context();
   let vstart_length = get_vlen_pow();
-  vstart = zero_extend(16, value[(vstart_length - 1) .. 0]);
+  vstart = zero_extend(value[(vstart_length - 1) .. 0]);
 }
 
 mapping clause csr_name_map = 0x008  <-> "vstart"
