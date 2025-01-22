@@ -78,7 +78,7 @@ function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) =
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { /* active segments */
-      set_vstart(to_bits(xlen, i));
+      set_vstart(to_bits(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), load_width_bytes) {
@@ -252,7 +252,7 @@ function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) 
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { /* active segments */
-      set_vstart(to_bits(xlen, i));
+      set_vstart(to_bits(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), load_width_bytes) {
@@ -325,7 +325,7 @@ function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_e
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { /* active segments */
-      set_vstart(to_bits(xlen, i));
+      set_vstart(to_bits(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), load_width_bytes) {
@@ -393,7 +393,7 @@ function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { /* active segments */
-      set_vstart(to_bits(xlen, i));
+      set_vstart(to_bits(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), load_width_bytes) {
@@ -467,7 +467,7 @@ function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index
   /* currently mop = 1 (unordered) or 3 (ordered) do the same operations */
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { /* active segments */
-      set_vstart(to_bits(xlen, i));
+      set_vstart(to_bits(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), EEW_data_bytes) {
@@ -562,7 +562,7 @@ function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_inde
   /* currently mop = 1 (unordered) or 3 (ordered) do the same operations */
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { /* active segments */
-      set_vstart(to_bits(xlen, i));
+      set_vstart(to_bits(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
         match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), EEW_data_bytes) {
@@ -660,7 +660,7 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
 
   if elem_to_align > 0 then {
     foreach (i from elem_to_align to (elem_per_reg - 1)) {
-      set_vstart(to_bits(xlen, cur_elem));
+      set_vstart(to_bits(16, cur_elem));
       let elem_offset = cur_elem * load_width_bytes;
       match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), load_width_bytes) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
@@ -684,7 +684,7 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
 
   foreach (j from cur_field to (nf - 1)) {
     foreach (i from 0 to (elem_per_reg - 1)) {
-      set_vstart(to_bits(xlen, cur_elem));
+      set_vstart(to_bits(16, cur_elem));
       let elem_offset = cur_elem * load_width_bytes;
       match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), load_width_bytes) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
@@ -741,7 +741,7 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
 
   if elem_to_align > 0 then {
     foreach (i from elem_to_align to (elem_per_reg - 1)) {
-      set_vstart(to_bits(xlen, cur_elem));
+      set_vstart(to_bits(16, cur_elem));
       let elem_offset : int = cur_elem * load_width_bytes;
       match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), load_width_bytes) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
@@ -775,7 +775,7 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
   foreach (j from cur_field to (nf - 1)) {
     let vs3_val : vector('n, bits('b * 8)) = read_vreg(elem_per_reg, load_width_bytes * 8, 0, vs3 + to_bits(5, j));
     foreach (i from 0 to (elem_per_reg - 1)) {
-      set_vstart(to_bits(xlen, cur_elem));
+      set_vstart(to_bits(16, cur_elem));
       let elem_offset = cur_elem * load_width_bytes;
       match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), load_width_bytes) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
@@ -842,7 +842,7 @@ function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
 
   foreach (i from start_element to (num_elem - 1)) {
     if i < evl then { /* active elements */
-      set_vstart(to_bits(xlen, i));
+      set_vstart(to_bits(16, i));
       if op == VLM then { /* load */
         match ext_data_get_addr(rs1, to_bits(xlen, i), Read(Data), 1) {
           Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
