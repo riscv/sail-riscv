@@ -27,7 +27,7 @@ depends: [
   "ocamlfind"
   "ocamlbuild"
   "sail"
-  "coq-sail"
+  "coq-sail-stdpp"
   "conf-gmp"
   "conf-zlib"
 ]

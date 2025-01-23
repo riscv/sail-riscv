@@ -117,17 +117,15 @@ SAIL_STEP_SRCS = riscv_step_common.sail riscv_step_ext.sail riscv_decode_ext.sai
 RVFI_STEP_SRCS = riscv_step_common.sail riscv_step_rvfi.sail riscv_decode_ext.sail riscv_fetch_rvfi.sail riscv_step.sail
 
 SAIL_OTHER_SRCS     = $(SAIL_STEP_SRCS)
-ifeq ($(ARCH),RV32)
-SAIL_OTHER_COQ_SRCS = riscv_termination_common.sail riscv_termination_rv32.sail
-else
-SAIL_OTHER_COQ_SRCS = riscv_termination_common.sail riscv_termination_rv64.sail
-endif
+
+# For the Coq output we need to know an upper bound on each loop
+SAIL_OTHER_COQ_SRCS = riscv_termination.sail
 
 PRELUDE_SRCS   = $(addprefix model/,$(PRELUDE))
 SAIL_SRCS      = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS)  $(SAIL_OTHER_SRCS))
 SAIL_RMEM_SRCS = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_RMEM_INST_SRCS) $(SAIL_OTHER_SRCS))
 SAIL_RVFI_SRCS = $(addprefix model/,$(SAIL_ARCH_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS) $(RVFI_STEP_SRCS))
-SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS) $(SAIL_OTHER_COQ_SRCS))
+SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS) $(SAIL_OTHER_SRCS) $(SAIL_OTHER_COQ_SRCS))
 
 SAIL_FLAGS += --require-version 0.18
 SAIL_FLAGS += --strict-var
@@ -345,8 +343,6 @@ riscv_hol_build: generated_definitions/hol4/$(ARCH)/riscvTheory.uo
 
 
 COQ_LIBS = -R generated_definitions/coq Riscv -R generated_definitions/coq/$(ARCH) $(ARCH) -R handwritten_support Riscv_common
-COQ_LIBS += -Q $(BBV_DIR)/src/bbv bbv
-COQ_LIBS += -Q $(SAIL_LIB_DIR)/coq Sail
 
 riscv_coq: $(addprefix generated_definitions/coq/$(ARCH)/,riscv.v riscv_types.v)
 riscv_coq_build: generated_definitions/coq/$(ARCH)/riscv.vo
@@ -357,12 +353,6 @@ $(addprefix generated_definitions/coq/$(ARCH)/,riscv.v riscv_types.v): $(SAIL_CO
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq/$(ARCH) -o riscv -coq_lib riscv_extras -coq_lib mem_metadata $(SAIL_COQ_SRCS)
 
 %.vo: %.v
-ifeq ($(wildcard $(BBV_DIR)/src),)
-	$(error BBV directory not found. Please set the BBV_DIR environment variable)
-endif
-ifeq ($(wildcard $(SAIL_LIB_DIR)/coq),)
-	$(error lib directory of Sail not found. Please set the SAIL_LIB_DIR environment variable)
-endif
 	coqc $(COQ_LIBS) $<
 
 generated_definitions/coq/$(ARCH)/riscv.vo: generated_definitions/coq/$(ARCH)/riscv_types.vo handwritten_support/riscv_extras.vo handwritten_support/mem_metadata.vo

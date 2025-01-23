@@ -68,7 +68,7 @@
 (*  SUCH DAMAGE.                                                                         *)
 (*=======================================================================================*)
 
-Require Import Sail.Base.
+Require Import SailStdpp.Base.
 Open Scope Z.
 
 Definition write_ram {rv e a} wk (addr : mword a) size (v : mword (8 * size)) (meta : unit) : monad rv bool e := write_mem wk a addr size v.
