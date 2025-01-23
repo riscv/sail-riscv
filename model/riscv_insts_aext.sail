@@ -91,8 +91,8 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
         TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) =>
           match mem_read(Read(Data), addr, width_bytes, aq, aq & rl, true) {
-            MemValue(result) => { load_reservation(physaddr_bits(addr)); X(rd) = sign_extend(result); RETIRE_SUCCESS },
-            MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+            Ok(result) => { load_reservation(physaddr_bits(addr)); X(rd) = sign_extend(result); RETIRE_SUCCESS },
+            Err(e)     => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
           },
       }
     }
@@ -144,13 +144,13 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
               } else {
                 let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
                 match eares {
-                  MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-                  MemValue(_) => {
+                  Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+                  Ok(_)  => {
                     let rs2_val = X(rs2);
                     match mem_write_value(addr, width_bytes, rs2_val[width_bytes * 8 - 1 .. 0], aq & rl, rl, true) {
-                      MemValue(true)  => { X(rd) = zero_extend(0b0); cancel_reservation(); RETIRE_SUCCESS },
-                      MemValue(false) => { X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS },
-                      MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                      Ok(true)  => { X(rd) = zero_extend(0b0); cancel_reservation(); RETIRE_SUCCESS },
+                      Ok(false) => { X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS },
+                      Err(e)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
                     }
                   }
                 }
@@ -208,11 +208,11 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
           let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
           let rs2_val = X(rs2)[width_bytes * 8 - 1 .. 0];
           match eares {
-            MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-            MemValue(_) => {
+            Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            Ok(_) => {
               match mem_read(ReadWrite(Data, Data), addr, width_bytes, aq, aq & rl, true) {
-                MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
-                MemValue(loaded) => {
+                Err(e)     => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+                Ok(loaded) => {
                   let result : bits('width_bytes * 8) =
                     match op {
                       AMOSWAP => rs2_val,
@@ -226,9 +226,9 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                       AMOMAXU => if rs2_val >_u loaded then rs2_val else loaded,
                     };
                   match mem_write_value(addr, width_bytes, sign_extend(result), aq & rl, rl, true) {
-                    MemValue(true)  => { X(rd) = sign_extend(loaded); RETIRE_SUCCESS },
-                    MemValue(false) => { internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value") },
-                    MemException(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                    Ok(true)  => { X(rd) = sign_extend(loaded); RETIRE_SUCCESS },
+                    Ok(false) => { internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value") },
+                    Err(e)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
                   }
                 }
               }

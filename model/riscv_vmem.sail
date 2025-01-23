@@ -109,8 +109,8 @@ function pt_walk(sv_params,
                                  false);                  // res
 
   match mem_result {
-    MemException(_) => PTW_Failure(PTW_Access(), ext_ptw),
-    MemValue(pte)   => {
+    Err(_)  => PTW_Failure(PTW_Access(), ext_ptw),
+    Ok(pte) => {
       // Extend to 64 bits even on RV32 for simplicity.
       let pte : bits(64) = zero_extend(pte);
 
@@ -319,8 +319,8 @@ function translate_TLB_hit(sv_params : SV_Params,
             let pte_phys_addr = physaddr(ent.pteAddr[(physaddrbits_len - 1) .. 0]);
 
             match write_pte(pte_phys_addr, 2 ^ sv_params.log_pte_size_bytes, pte') {
-              MemValue(_)     => (),
-              MemException(e) => internal_error(__FILE__, __LINE__,
+              Ok(_)  => (),
+              Err(e) => internal_error(__FILE__, __LINE__,
                                                 "invalid physical address in TLB")
             };
             TR_Address(ent.pAddr | (vAddr & ent.vAddrMask), ext_ptw)
@@ -365,13 +365,13 @@ function translate_TLB_miss(sv_params : SV_Params,
             let pte_phys_addr = physaddr(pteAddr[(physaddrbits_len - 1) .. 0]);
 
             match write_pte(pte_phys_addr, 2 ^ sv_params.log_pte_size_bytes, pte') {
-              MemValue(_) => {
+              Ok(_) => {
                 add_to_TLB(asid, vAddr, pAddr, pte', pteAddr, level, global,
                            sv_params.vpn_size_bits,
                            pagesize_bits);
                 TR_Address(pAddr, ext_ptw)
               },
-              MemException(e) =>
+              Err(e) =>
                 TR_Failure(PTW_Access(), ext_ptw)
             }
           }
