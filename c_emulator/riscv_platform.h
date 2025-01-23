@@ -12,7 +12,9 @@ bool sys_enable_vext(unit);
 bool sys_enable_bext(unit);
 bool sys_enable_zicbom(unit);
 bool sys_enable_zicboz(unit);
+bool sys_enable_ssstateen(unit u);
 bool sys_enable_sstc(unit);
+bool sys_enable_smstateen(unit u);
 
 uint64_t sys_pmp_count(unit);
 uint64_t sys_pmp_grain(unit);
