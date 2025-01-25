@@ -8,7 +8,9 @@
 
 function clause extensionEnabled(Ext_V) = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
 
-// Note: Current implementation does not trap when vstart is out of bounds
+// Note: The spec recommends trapping if vstart is out of bounds but the
+// current implementation does not do that because write_CSR() doesn't
+// allow traps.
 
 function set_vstart(value : bits(16)) -> unit = {
   dirty_v_context();
