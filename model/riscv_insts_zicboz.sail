@@ -29,9 +29,9 @@ function clause execute(RISCV_ZICBOZ(rs1)) = {
 
     // Offset from rs1 to the beginning of the cache block. This is 0 if rs1
     // is aligned to the cache block, or negative if rs1 is misaligned.
-    let offset = (rs1_val & ~(zero_extend(ones(cache_block_size_exp)))) - rs1_val;
+    let negative_offset = (rs1_val & ~(zero_extend(ones(cache_block_size_exp)))) - rs1_val;
 
-    match ext_data_get_addr(rs1, offset, Write(Data), cache_block_size) {
+    match ext_data_get_addr(rs1, negative_offset, Write(Data), cache_block_size) {
       Ext_DataAddr_Error(e) => { ext_handle_data_check_error(e); RETIRE_FAIL },
       Ext_DataAddr_OK(vaddr) => {
         // "An implementation may update the bytes in any order and with any granularity
@@ -39,22 +39,19 @@ function clause execute(RISCV_ZICBOZ(rs1)) = {
         //
         // This implementation does a single atomic write.
         match translateAddr(vaddr, Write(Data)) {
-          TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+          // vaddr is the aligned address, but errors report the address that
+          // was encoded in the instruction. We subtract the negative offset
+          // (add the positive offset) to get it. Normally this will be
+          // equal to rs1, but pointer masking can change that.
+          TR_Failure(e, _) => { handle_mem_exception(vaddr - negative_offset, e); RETIRE_FAIL },
           TR_Address(paddr, _) => {
-            let eares : MemoryOpResult(unit) = mem_write_ea(paddr, cache_block_size, false, false, false);
-            match (eares) {
-              Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            match mem_write_ea(paddr, cache_block_size, false, false, false) {
+              Err(e) => { handle_mem_exception(vaddr - negative_offset, e); RETIRE_FAIL },
               Ok(_)  => {
-                let res : MemoryOpResult(bool) = mem_write_value(paddr, cache_block_size, zeros(), false, false, false);
-                match (res) {
+                match mem_write_value(paddr, cache_block_size, zeros(), false, false, false) {
                   Ok(true)  => RETIRE_SUCCESS,
                   Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                  Err(e)    => {
-                    // Errors report the address that was encoded in the instruction rather
-                    // than the address that caused the fault (i.e. the aligned address).
-                    handle_mem_exception(vaddr - offset, e);
-                    RETIRE_FAIL
-                  },
+                  Err(e)    => { handle_mem_exception(vaddr - negative_offset, e); RETIRE_FAIL },
                 }
               }
             }
