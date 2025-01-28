@@ -148,7 +148,7 @@ C_WARNINGS ?=
 C_INCS = $(addprefix c_emulator/,riscv_prelude.h riscv_platform_impl.h riscv_platform.h riscv_softfloat.h)
 C_SRCS = $(addprefix c_emulator/,riscv_prelude.c riscv_platform_impl.c riscv_platform.c riscv_softfloat.c riscv_sim.c)
 
-SOFTFLOAT_DIR    = c_emulator/SoftFloat-3e
+SOFTFLOAT_DIR    = dependencies/softfloat/berkeley-softfloat-3
 SOFTFLOAT_INCDIR = $(SOFTFLOAT_DIR)/source/include
 SOFTFLOAT_LIBDIR = $(SOFTFLOAT_DIR)/build/Linux-RISCV-GCC
 SOFTFLOAT_FLAGS  = -I $(SOFTFLOAT_INCDIR)
