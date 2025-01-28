@@ -376,17 +376,3 @@ struct mul_op = {
   signed_rs1 : bool,
   signed_rs2 : bool
 }
-
-/*!
- * Raise an internal error reporting that width w is invalid for access kind, k,
- * and current xlen. The file name and line number should be passed in as the
- * first two arguments using the __FILE__ and __LINE__ built-in macros.
- * This is mainly used to supress Sail warnings about incomplete matches and
- * should be unreachable. See https://github.com/riscv/sail-riscv/issues/194
- * and https://github.com/riscv/sail-riscv/pull/197 .
- */
-val report_invalid_width : forall ('a : Type). (string, int, word_width, string) -> 'a
-function report_invalid_width(f , l, w, k) -> 'a = {
-  internal_error(f, l, "Invalid width, " ^ size_mnemonic(w) ^ ", for " ^ k ^
-     " with xlen=" ^ dec_str(xlen))
-}
