@@ -125,7 +125,7 @@ function rvfi_read (physaddr(addr), width, result) = {
   match result {
     /* TODO: report tag bit for capability writes and extend mask by one bit. */
     Ok(v, _) => if width <= 16
-                       then { rvfi_mem_data[rvfi_mem_rdata] = sail_zero_extend(v, 256);
+                       then { rvfi_mem_data[rvfi_mem_rdata] = zero_extend(256, v);
                               rvfi_mem_data[rvfi_mem_rmask] = rvfi_encode_width_mask(width) }
                        else { internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!") },
     Err(_)   => ()
@@ -181,7 +181,7 @@ function rvfi_write (physaddr(addr), width, value, meta, result) = {
     /* Log only the memory address (without the value) if the write fails. */
     Ok(_) => if width <= 16 then {
         /* TODO: report tag bit for capability writes and extend mask by one bit. */
-        rvfi_mem_data[rvfi_mem_wdata] = sail_zero_extend(value,256);
+        rvfi_mem_data[rvfi_mem_wdata] = zero_extend(256, value);
         rvfi_mem_data[rvfi_mem_wmask] = rvfi_encode_width_mask(width);
       } else {
         internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!");
