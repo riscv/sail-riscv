@@ -454,7 +454,7 @@ function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
 
 /* exception processing state */
 
-bitfield Medeleg : xlenbits = {
+bitfield Medeleg : bits(64) = {
   SAMO_Page_Fault   : 15,
   Load_Page_Fault   : 13,
   Fetch_Page_Fault  : 12,
@@ -471,34 +471,39 @@ bitfield Medeleg : xlenbits = {
   Fetch_Addr_Align  : 0
 }
 
-function legalize_medeleg(o : Medeleg, v : xlenbits) -> Medeleg = {
+function legalize_medeleg(o : Medeleg, v : bits(64)) -> Medeleg = {
   /* M-EnvCalls delegation is not supported */
   [Mk_Medeleg(v) with MEnvCall = 0b0]
 }
 
 register mie     : Minterrupts /* Enabled */
 register mip     : Minterrupts /* Pending */
-register medeleg : Medeleg  /* Delegation to S-mode */
-register mideleg : Minterrupts /* Delegation to S-mode */
+register medeleg : Medeleg     /* Exception delegation to S-mode */
+register mideleg : Minterrupts /* Interrupt delegation to S-mode */
 
 mapping clause csr_name_map = 0x304  <-> "mie"
 mapping clause csr_name_map = 0x344  <-> "mip"
 mapping clause csr_name_map = 0x302  <-> "medeleg"
+mapping clause csr_name_map = 0x312  <-> "medelegh"
 mapping clause csr_name_map = 0x303  <-> "mideleg"
 
 function clause is_CSR_defined(0x304) = true // mie
 function clause is_CSR_defined(0x344) = true // mip
 function clause is_CSR_defined(0x302) = extensionEnabled(Ext_S) // medeleg
+function clause is_CSR_defined(0x312) = extensionEnabled(Ext_S) & xlen == 32 // medelegh
 function clause is_CSR_defined(0x303) = extensionEnabled(Ext_S) // mideleg
 
 function clause read_CSR(0x304) = mie.bits
 function clause read_CSR(0x344) = mip.bits
-function clause read_CSR(0x302) = medeleg.bits
+function clause read_CSR(0x302) = medeleg.bits[xlen - 1 .. 0]
+function clause read_CSR(0x312 if xlen == 32) = medeleg.bits[63 .. 32]
 function clause read_CSR(0x303) = mideleg.bits
 
 function clause write_CSR(0x304, value) = { mie = legalize_mie(mie, value); mie.bits }
 function clause write_CSR(0x344, value) = { mip = legalize_mip(mip, value); mip.bits }
-function clause write_CSR(0x302, value) = { medeleg = legalize_medeleg(medeleg, value); medeleg.bits }
+function clause write_CSR((0x302, value) if xlen == 64) = { medeleg = legalize_medeleg(medeleg, value); medeleg.bits }
+function clause write_CSR((0x302, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, medeleg.bits[63 .. 32] @ value); medeleg.bits[31 .. 0] }
+function clause write_CSR((0x312, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, value @ medeleg.bits[31 .. 0]); medeleg.bits[63 .. 32] }
 function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, value); mideleg.bits }
 
 /* registers for trap handling */
