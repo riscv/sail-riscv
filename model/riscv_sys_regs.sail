@@ -212,13 +212,13 @@ function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv :
 
 function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
   if   xlen == 32
-  then arch_to_bits(RV32)
+  then architecture(RV32)
   else m[SXL]
 }
 
 function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
   if   xlen == 32
-  then arch_to_bits(RV32)
+  then architecture(RV32)
   else m[UXL]
 }
 
@@ -302,21 +302,18 @@ function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_m
 
 /* architecture and extension checks */
 
-function cur_Architecture() -> Architecture = {
+function cur_architecture() -> Architecture = {
   let a : arch_xlen =
-    match (cur_privilege) {
+    match cur_privilege {
       Machine    => misa[MXL],
       Supervisor => get_mstatus_SXL(mstatus),
       User       => get_mstatus_UXL(mstatus)
     };
-  match architecture(a) {
-    Some(a) => a,
-    None()  => internal_error(__FILE__, __LINE__, "Invalid current architecture")
-  }
+  architecture(a)
 }
 
 function in32BitMode() -> bool = {
-  cur_Architecture() == RV32
+  cur_architecture() == RV32
 }
 
 // envcfg Resisters
