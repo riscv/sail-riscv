@@ -13,6 +13,7 @@ val csr_name_map : csreg <-> string
 scattered mapping csr_name_map
 
 val csr_name : csreg -> string
+function csr_name(csr) = csr_name_map(csr)
 overload to_str = {csr_name}
 
 /* returns whether a CSR exists
