@@ -1,0 +1,30 @@
+name: Generate Doc JSON
+
+on: [workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Install packages
+      run: sudo apt install -y --no-install-recommends zlib1g-dev pkg-config libgmp-dev curl ninja-build
+    - name: Check out repository code
+      uses: actions/checkout@HEAD
+      with:
+        submodules: true
+    - name: Install sail from binary
+      run: |
+        sudo mkdir -p /usr/local
+        curl --location https://github.com/rems-project/sail/releases/download/0.18-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
+    - name: Build JSON doc bundle
+      run: |
+        mkdir build
+        cd build
+        cmake -GNinja -DCMAKE_BUILD_TYPE=Release ..
+        ninja generated_docs_rv64d
+    - name: Upload JSON doc bundle
+      uses: actions/upload-artifact@v4
+      with:
+        name: riscv_model_rv64d.json
+        path: build/model/riscv_model_rv64d.json
+        if-no-files-found: error

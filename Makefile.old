@@ -1,3 +1,9 @@
+# WARNING! This Makefile is deprecated and has been *mostly* replaced by CMake.
+# There are some targets related to formal backends (Coq, Hol4, etc.) that have
+# not been fully transitioned, so this is kept for posterity.
+#
+# To build the emulators you can use the usual CMake flow, or `./build_simulators.sh`.
+
 # Select architecture: RV32 or RV64.
 ARCH ?= RV64
 
@@ -148,7 +154,7 @@ C_WARNINGS ?=
 C_INCS = $(addprefix c_emulator/,riscv_prelude.h riscv_platform_impl.h riscv_platform.h riscv_softfloat.h)
 C_SRCS = $(addprefix c_emulator/,riscv_prelude.c riscv_platform_impl.c riscv_platform.c riscv_softfloat.c riscv_sim.c)
 
-SOFTFLOAT_DIR    = c_emulator/SoftFloat-3e
+SOFTFLOAT_DIR    = dependencies/softfloat/berkeley-softfloat-3
 SOFTFLOAT_INCDIR = $(SOFTFLOAT_DIR)/source/include
 SOFTFLOAT_LIBDIR = $(SOFTFLOAT_DIR)/build/Linux-RISCV-GCC
 SOFTFLOAT_FLAGS  = -I $(SOFTFLOAT_INCDIR)
@@ -220,7 +226,7 @@ all: c_emulator/riscv_sim_$(ARCH)
 # break future builds if sail exits badly
 .DELETE_ON_ERROR: generated_definitions/c/%.c
 
-check: $(SAIL_SRCS) model/main.sail Makefile
+check: $(SAIL_SRCS) model/main.sail Makefile.old
 	$(SAIL) $(SAIL_FLAGS) $(SAIL_SRCS) model/main.sail
 
 interpret: $(SAIL_SRCS) model/main.sail
@@ -230,7 +236,7 @@ sail_doc/riscv_$(ARCH).json: $(SAIL_SRCS) model/main.sail
 	$(SAIL) -doc -doc_bundle riscv_$(ARCH).json -o sail_doc $(SAIL_FLAGS) $(SAIL_DOC_FLAGS) $(SAIL_SRCS) model/main.sail
 
 riscv.smt_model: $(SAIL_SRCS)
-	$(SAIL) -smt_serialize $(SAIL_FLAGS) $(SAIL_SRCS) -o riscv
+	$(SAIL) -smt $(SAIL_FLAGS) $(SAIL_SRCS) -o riscv
 
 cloc:
 	cloc --by-file --force-lang C,sail $(SAIL_SRCS)
@@ -238,7 +244,7 @@ cloc:
 gcovr:
 	gcovr -r . --html --html-detail -o index.html
 
-generated_definitions/c/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile
+generated_definitions/c/riscv_model_$(ARCH).c: $(SAIL_SRCS) model/main.sail Makefile.old
 	mkdir -p generated_definitions/c
 	$(SAIL) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_SRCS) model/main.sail -o $(basename $@)
 
@@ -251,7 +257,7 @@ csim: c_emulator/riscv_sim_$(ARCH)
 .PHONY: rvfi
 rvfi: c_emulator/riscv_rvfi_$(ARCH)
 
-c_emulator/riscv_sim_$(ARCH): generated_definitions/c/riscv_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile
+c_emulator/riscv_sim_$(ARCH): generated_definitions/c/riscv_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile.old
 	$(CC) -g $(C_WARNINGS) $(C_FLAGS) $< $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS_WRAPPED) -o $@
 
 # Note: We have to add -c_preserve since the functions might be optimized out otherwise
@@ -270,16 +276,16 @@ rvfi_preserve_fns=-c_preserve rvfi_set_instr_packet \
   -c_preserve print_rvfi_exec
 
 # sed -i isn't posix compliant, unfortunately
-generated_definitions/c/riscv_rvfi_model_$(ARCH).c: $(SAIL_RVFI_SRCS) model/main.sail Makefile
+generated_definitions/c/riscv_rvfi_model_$(ARCH).c: $(SAIL_RVFI_SRCS) model/main.sail Makefile.old
 	mkdir -p generated_definitions/c
 	$(SAIL) $(rvfi_preserve_fns) $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_RVFI_SRCS) model/main.sail -o $(basename $@)
 	sed -e '/^[[:space:]]*$$/d' $@ > $@.new
 	mv $@.new $@
 
-c_emulator/riscv_rvfi_$(ARCH): generated_definitions/c/riscv_rvfi_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile
+c_emulator/riscv_rvfi_$(ARCH): generated_definitions/c/riscv_rvfi_model_$(ARCH).c $(C_INCS) $(C_SRCS) $(SOFTFLOAT_LIBS) Makefile.old
 	$(CC) -g $(C_WARNINGS) $(C_FLAGS) $< -DRVFI_DII $(C_SRCS) $(SAIL_LIB_DIR)/*.c $(C_LIBS_WRAPPED) -o $@
 
-latex: $(SAIL_SRCS) Makefile
+latex: $(SAIL_SRCS) Makefile.old
 	mkdir -p generated_definitions/latex
 	$(SAIL) -latex -latex_prefix sail -o generated_definitions/latex $(SAIL_SRCS)
 
@@ -299,13 +305,13 @@ endif
 
 .PHONY: riscv_isa riscv_isa_build
 
-generated_definitions/lem/$(ARCH)/riscv.lem: $(SAIL_SRCS) Makefile
+generated_definitions/lem/$(ARCH)/riscv.lem: $(SAIL_SRCS) Makefile.old
 	mkdir -p generated_definitions/lem/$(ARCH) generated_definitions/isabelle/$(ARCH)
 	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem/$(ARCH) -isa_output_dir generated_definitions/isabelle/$(ARCH) -o riscv -lem_lib Riscv_extras -lem_lib Riscv_extras_fdext -lem_lib Mem_metadata $(SAIL_SRCS)
 	echo "declare {isabelle} rename field sync_exception_ext = sync_exception_ext_exception" >> generated_definitions/lem/$(ARCH)/riscv_types.lem
 
 # sed -i isn't posix compliant, unfortunately
-generated_definitions/isabelle/$(ARCH)/Riscv.thy: generated_definitions/isabelle/$(ARCH)/ROOT generated_definitions/lem/$(ARCH)/riscv.lem $(RISCV_EXTRAS_LEM) Makefile
+generated_definitions/isabelle/$(ARCH)/Riscv.thy: generated_definitions/isabelle/$(ARCH)/ROOT generated_definitions/lem/$(ARCH)/riscv.lem $(RISCV_EXTRAS_LEM) Makefile.old
 	lem -wl ign -isa -outdir generated_definitions/isabelle/$(ARCH) -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
 		$(RISCV_EXTRAS_LEM) \
 		generated_definitions/lem/$(ARCH)/riscv_types.lem \
@@ -348,7 +354,7 @@ riscv_coq: $(addprefix generated_definitions/coq/$(ARCH)/,riscv.v riscv_types.v)
 riscv_coq_build: generated_definitions/coq/$(ARCH)/riscv.vo
 .PHONY: riscv_coq riscv_coq_build
 
-$(addprefix generated_definitions/coq/$(ARCH)/,riscv.v riscv_types.v): $(SAIL_COQ_SRCS) Makefile
+$(addprefix generated_definitions/coq/$(ARCH)/,riscv.v riscv_types.v): $(SAIL_COQ_SRCS) Makefile.old
 	mkdir -p generated_definitions/coq/$(ARCH)
 	$(SAIL) $(SAIL_FLAGS) -dcoq_undef_axioms -coq -coq_output_dir generated_definitions/coq/$(ARCH) -o riscv -coq_lib riscv_extras -coq_lib mem_metadata $(SAIL_COQ_SRCS)
 
