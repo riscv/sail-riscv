@@ -126,7 +126,7 @@ function pmpCheck forall 'n, 'n > 0. (addr: physaddr, width: int('n), acc: Acces
   if priv == Machine then None() else Some(accessToFault(acc))
 }
 
-function init_pmp() -> unit = {
+function reset_pmp() -> unit = {
   assert(
     sys_pmp_count() == 0 | sys_pmp_count() == 16 | sys_pmp_count() == 64,
     "sys_pmp_count() must be 0, 16, or 64"

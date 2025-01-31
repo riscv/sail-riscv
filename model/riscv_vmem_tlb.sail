@@ -39,8 +39,8 @@ register tlb : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
 function tlb_hash(vaddr : bits(64)) -> tlb_index_range =
   unsigned(vaddr[17 .. 12])
 
-// PUBLIC: invoked in init_vmem() [riscv_vmem.sail]
-function init_TLB() -> unit = {
+// PUBLIC: invoked in reset_vmem() [riscv_vmem.sail]
+function reset_TLB() -> unit = {
   foreach (i from 0 to (length(tlb) - 1)) {
     tlb[i] = None();
   }

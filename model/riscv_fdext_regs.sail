@@ -353,42 +353,6 @@ mapping freg_or_reg_name = {
   reg if sys_enable_zfinx() <-> reg_name(reg)  if sys_enable_zfinx()
 }
 
-val init_fdext_regs : unit -> unit
-function init_fdext_regs () = {
-  f0  = zero_freg;
-  f1  = zero_freg;
-  f2  = zero_freg;
-  f3  = zero_freg;
-  f4  = zero_freg;
-  f5  = zero_freg;
-  f6  = zero_freg;
-  f7  = zero_freg;
-  f8  = zero_freg;
-  f9  = zero_freg;
-  f10 = zero_freg;
-  f11 = zero_freg;
-  f12 = zero_freg;
-  f13 = zero_freg;
-  f14 = zero_freg;
-  f15 = zero_freg;
-  f16 = zero_freg;
-  f17 = zero_freg;
-  f18 = zero_freg;
-  f19 = zero_freg;
-  f20 = zero_freg;
-  f21 = zero_freg;
-  f22 = zero_freg;
-  f23 = zero_freg;
-  f24 = zero_freg;
-  f25 = zero_freg;
-  f26 = zero_freg;
-  f27 = zero_freg;
-  f28 = zero_freg;
-  f29 = zero_freg;
-  f30 = zero_freg;
-  f31 = zero_freg
-}
-
 /* **************************************************************** */
 /* Floating Point CSR                                               */
 /*     fflags    address 0x001    same as fcrs [4..0]               */

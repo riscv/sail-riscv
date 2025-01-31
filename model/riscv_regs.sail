@@ -198,38 +198,3 @@ mapping creg_name : cregidx <-> string = {
   0b110 <-> "a4",
   0b111 <-> "a5"
 }
-
-val init_base_regs : unit -> unit
-function init_base_regs () = {
-  x1  = zero_reg;
-  x2  = zero_reg;
-  x3  = zero_reg;
-  x4  = zero_reg;
-  x5  = zero_reg;
-  x6  = zero_reg;
-  x7  = zero_reg;
-  x8  = zero_reg;
-  x9  = zero_reg;
-  x10 = zero_reg;
-  x11 = zero_reg;
-  x12 = zero_reg;
-  x13 = zero_reg;
-  x14 = zero_reg;
-  x15 = zero_reg;
-  x16 = zero_reg;
-  x17 = zero_reg;
-  x18 = zero_reg;
-  x19 = zero_reg;
-  x20 = zero_reg;
-  x21 = zero_reg;
-  x22 = zero_reg;
-  x23 = zero_reg;
-  x24 = zero_reg;
-  x25 = zero_reg;
-  x26 = zero_reg;
-  x27 = zero_reg;
-  x28 = zero_reg;
-  x29 = zero_reg;
-  x30 = zero_reg;
-  x31 = zero_reg
-}

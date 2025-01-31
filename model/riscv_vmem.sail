@@ -445,6 +445,6 @@ function translateAddr(vAddr   : virtaddr,
 // Initialize Virtual Memory state
 
 // PUBLIC: invoked from init_model()
-function init_vmem() -> unit = init_TLB()
+function reset_vmem() -> unit = reset_TLB()
 
 // ****************************************************************
