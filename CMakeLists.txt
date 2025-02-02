@@ -65,7 +65,7 @@ if (NOT SAIL_BIN)
     message(FATAL_ERROR "Sail not found. See README.md for installation instructions.")
 endif()
 
-set(DEFAULT_ARCHITECTURES "rv32d;rv64d" CACHE STRING "Architectures to build by default (rv32f|rv64f|rv32d|rv64d)(_rvfi)? " )
+set(DEFAULT_ARCHITECTURES "rv32d;rv64d" CACHE STRING "Architectures to build by default (rv32f|rv64f|rv32d|rv64d|rv32q|rv64q)(_rvfi)? " )
 
 option(COVERAGE "Compile with Sail coverage collection enabled.")
 

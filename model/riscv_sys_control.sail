@@ -328,11 +328,10 @@ function init_sys() -> unit = {
   if   sys_enable_fdext() & sys_enable_zfinx()
   then internal_error(__FILE__, __LINE__, "F and Zfinx cannot both be enabled!");
 
-  /* We currently support both F and D */
-  misa[F]   = bool_to_bits(sys_enable_fdext());      /* single-precision */
-  misa[D]   = if   flen >= 64
-                then bool_to_bits(sys_enable_fdext())  /* double-precision */
-                else 0b0;
+  /* We currently support F, D and Q */
+  misa[F]   = bool_to_bits(sys_enable_fdext());                /* single-precision */
+  misa[D]   = bool_to_bits(sys_enable_fdext() & flen >= 64);   /* double-precision */
+  misa[Q]   = bool_to_bits(sys_enable_fdext() & flen >= 128);  /* quad-precision */
 
   mstatus = [mstatus with
     SD_64 = 0b0,
