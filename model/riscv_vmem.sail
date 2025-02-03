@@ -115,7 +115,9 @@ function pt_walk(sv_params,
       let pte : bits(64) = zero_extend(pte);
 
       let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
-      if pte_is_invalid(pte_flags) then
+      let ext_pte   = ext_bits_of_PTE(sv_params, pte);
+
+      if pte_is_invalid(pte_flags, ext_pte) then
         PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
       else {
         let ppns : bits(64) = PPNs_of_PTE(sv_params, pte);
@@ -135,7 +137,7 @@ function pt_walk(sv_params,
         }
         else {
           // Leaf PTE
-          let ext_pte   = msbs_of_PTE(sv_params, pte);
+          let ext_pte   = ext_bits_of_PTE(sv_params, pte);
           let pte_check = check_PTE_permission(ac, priv, mxr, do_sum, pte_flags,
                                                ext_pte, ext_ptw);
           match pte_check {
@@ -296,7 +298,7 @@ function translate_TLB_hit(sv_params : SV_Params,
                            ent       : TLB_Entry)
                           -> TR_Result(bits(64), PTW_Error) = {
   let pte       = ent.pte;
-  let ext_pte   = msbs_of_PTE(sv_params, pte);
+  let ext_pte   = ext_bits_of_PTE(sv_params, pte);
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
   let pte_check = check_PTE_permission(ac, priv, mxr, do_sum, pte_flags,
                                        ext_pte,
@@ -345,7 +347,7 @@ function translate_TLB_miss(sv_params : SV_Params,
   match ptw_result {
     PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),
     PTW_Success(pAddr, pte, pteAddr, level, global, ext_ptw) => {
-      let ext_pte   = msbs_of_PTE(sv_params, pte);
+      let ext_pte   = ext_bits_of_PTE(sv_params, pte);
       // Without TLBs, this 'match' expression can be replaced simply
       // by: 'TR_Address(pAddr, ext_ptw)'    (see TLB_NOTE above)
       match update_PTE_Bits(sv_params, pte, ac) {
