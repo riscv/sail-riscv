@@ -766,7 +766,7 @@ mapping clause encdec = RISCV_FCVTMOD_W_D(rs1, rd)          if extensionEnabled(
 
 mapping clause assembly = RISCV_FCVTMOD_W_D(rs1, rd)
   <-> "fcvtmod.w.d" ^ spc() ^ reg_name(rd)
-		    ^ sep() ^ freg_name(rs1)
+        ^ sep() ^ freg_name(rs1)
 
 function clause execute(RISCV_FCVTMOD_W_D(rs1, rd)) = {
   let rs1_val_D = F_D(rs1);

@@ -43,8 +43,8 @@ enum clause extension = Ext_Zihpm
 
 // Multiplication and Division: Multiplication only
 enum clause extension = Ext_Zmmul
-// Atomic Memory Operations
 
+// Atomic Memory Operations
 enum clause extension = Ext_Zaamo
 // Byte and Halfword Atomic Memory Operations
 enum clause extension = Ext_Zabha
