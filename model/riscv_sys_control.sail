@@ -307,22 +307,15 @@ function handle_exception(e: ExceptionType) -> unit = {
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
   set_next_pc(trap_handler(del_priv, true, interruptType_to_bits(i), PC, None(), None()))
 
-/* state state initialization */
-
-function init_sys() -> unit = {
-  cur_privilege = Machine;
-
-  mhartid     = zeros();
-  mconfigptr  = zeros();
-
-  misa[MXL] = architecture(if xlen == 32 then RV32 else RV64);
+// Reset misa to enable the maximal set of supported extensions.
+function reset_misa() -> unit = {
   misa[A]   = 0b1;                             /* atomics */
   misa[C]   = bool_to_bits(sys_enable_rvc());  /* RVC */
   misa[B]   = bool_to_bits(sys_enable_bext()); /* Bit-manipulation */
   misa[I]   = 0b1;                             /* base integer ISA */
   misa[M]   = 0b1;                             /* integer multiply/divide */
-  misa[U]   = 0b1;                             /* user-mode */
-  misa[S]   = 0b1;                             /* supervisor-mode */
+  misa[U]   = bool_to_bits(sys_enable_user()); /* user-mode */
+  misa[S]   = bool_to_bits(sys_enable_supervisor()); /* supervisor-mode */
   misa[V]   = bool_to_bits(sys_enable_vext()); /* vector extension */
 
   if   sys_enable_fdext() & sys_enable_zfinx()
@@ -331,41 +324,50 @@ function init_sys() -> unit = {
   /* We currently support both F and D */
   misa[F]   = bool_to_bits(sys_enable_fdext());      /* single-precision */
   misa[D]   = if   flen >= 64
-                then bool_to_bits(sys_enable_fdext())  /* double-precision */
-                else 0b0;
+              then bool_to_bits(sys_enable_fdext())  /* double-precision */
+              else 0b0;
+}
 
-  mstatus = [mstatus with
-    SD_64 = 0b0,
-    SD_32 = 0b0,
-    /* SXL and UXL is only valid for 64-bit systems and in RV32 WPRI */
-    SXL = misa[MXL],
-    UXL = misa[MXL],
-    MPP = privLevel_to_bits(lowest_supported_privLevel()),
-    /* set to little-endian mode */
-    MBE = 0b0,
-    SBE = 0b0,
-  ];
+// This function is called on reset, so it should only perform the reset actions
+// described in the "Reset" section of the privileged architecture specification.
+function reset_sys() -> unit = {
 
-  mip.bits     = zeros();
-  mie.bits     = zeros();
-  mideleg.bits = zeros();
-  medeleg.bits = zeros();
-  mtvec.bits   = zeros();
-  mcause.bits  = zeros();
-  mepc            = zeros();
-  mtval           = zeros();
-  mscratch        = zeros();
+  // "Upon reset, a hart's privilege mode is set to M."
+  cur_privilege = Machine;
 
-  mcycle          = zeros();
-  mtime           = zeros();
+  // "The mstatus fields MIE and MPRV are reset to 0."
+  mstatus[MIE] = 0b0;
+  mstatus[MPRV] = 0b0;
 
-  mcounteren.bits = zeros();
+  // "If little-endian memory accesses are supported, the mstatus/mstatush field
+  // MBE is reset to 0."
+  // TODO: The handling of mstatush is a bit awkward currently, but the model
+  // currently only supports little endian so MBE is always 0.
+  // See https://github.com/riscv/sail-riscv/issues/639
+  // mstatus[MBE] = 0b0;
 
-  minstret           = zeros();
-  minstret_increment = true;
+  // "The misa register is reset to enable the maximal set of supported extensions"
+  reset_misa();
 
-  menvcfg.bits = zeros();
-  senvcfg.bits = zeros();
+  // "For implementations with the "A" standard extension, there is no valid load reservation."
+  cancel_reservation();
+
+  // "The pc is set to an implementation-defined reset vector."
+  // This is outside the scope of this function.
+
+  // "The mcause register is set to a value indicating the cause of the reset."
+  // "The mcause values after reset have implementation-specific interpretation,
+  // but the value 0 should be returned on implementations that do not
+  // distinguish different reset conditions."
+  mcause.bits = zeros();
+
+  // "Writable PMP registers’ A and L fields are set to 0, unless the platform
+  // mandates a different reset value for some PMP registers’ A and L fields."
+  reset_pmp();
+
+  // TODO: Probably need to remove these vector resets too but it needs
+  // refactoring anyway. See https://github.com/riscv/sail-riscv/issues/566 etc.
+
   /* initialize vector csrs */
   vstart             = zeros();
   vl                 = zeros();
@@ -377,9 +379,6 @@ function init_sys() -> unit = {
   vtype[vta]       = 0b0;
   vtype[vsew]      = 0b000;
   vtype[vlmul]     = 0b000;
-
-  // PMP's L and A fields are set to 0 on reset.
-  init_pmp();
 
   // log compatibility with spike
   if   get_config_print_reg()

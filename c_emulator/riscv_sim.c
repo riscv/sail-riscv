@@ -658,17 +658,11 @@ void init_sail_reset_vector(uint64_t entry)
   zPC = rv_rom_base;
 }
 
-void preinit_sail()
-{
-  model_init();
-}
-
 void init_sail(uint64_t elf_entry)
 {
   zinit_model(UNIT);
 #ifdef RVFI_DII
   if (rvfi_dii) {
-    zext_rvfi_init(UNIT);
     rv_ram_base = UINT64_C(0x80000000);
     rv_ram_size = UINT64_C(0x800000);
     rv_rom_base = UINT64_C(0);
@@ -1138,8 +1132,7 @@ void init_logs()
 
 int main(int argc, char **argv)
 {
-  // Initialize model so that we can check or report its architecture.
-  preinit_sail();
+  model_init();
 
   int files_start = process_args(argc, argv);
   char *initial_elf_file = argv[files_start];

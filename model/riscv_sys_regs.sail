@@ -76,7 +76,11 @@ bitfield Misa : xlenbits = {
   B    : 1,
   A    : 0
 }
-register misa : Misa
+register misa : Misa =
+  [ Mk_Misa(zeros()) with
+    // MXL is a read-only field that specifies the native XLEN.
+    MXL = architecture(if xlen == 32 then RV32 else RV64),
+  ]
 
 /* whether misa is R/W */
 val sys_enable_writable_misa = pure "sys_enable_writable_misa" : unit -> bool
@@ -145,8 +149,15 @@ function clause is_CSR_defined(0x301) = true // misa
 function clause read_CSR(0x301) = misa.bits
 function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); misa.bits }
 
-function clause extensionEnabled(Ext_U) = misa[U] == 0b1
+// Are user and supervisor mode supported by the hardware?
+// TODO: Don't hard-code these.
+function sys_enable_user() -> bool = true
+function sys_enable_supervisor() -> bool = true
 
+// Are supervisor/user mode currently enabled? Although
+// unlikely and not currently supported by the model,
+// you are technically allowed to have writable misa[U/S].
+function clause extensionEnabled(Ext_U) = misa[U] == 0b1
 function clause extensionEnabled(Ext_S) = misa[S] == 0b1
 
 /*
@@ -203,7 +214,6 @@ bitfield Mstatus : bits(64) = {
   MIE  : 3,
   SIE  : 1,
 }
-register mstatus : Mstatus
 
 function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
   if   t != Execute() & m[MPRV] == 0b1
@@ -285,6 +295,17 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
   [o with
     SD_64 = if xlen == 64 then bool_to_bits(dirty) else o[SD_64],
     SD_32 = if xlen == 32 then bool_to_bits(dirty) else o[SD_32],
+  ]
+}
+
+register mstatus : Mstatus = {
+  // Initialise SXL and UXL.
+  let mxl = architecture(if xlen == 32 then RV32 else RV64);
+  [ Mk_Mstatus(zeros()) with
+    // These fields do not exist on RV32 and are read-only zero
+    // if the corresponding mode is not supported.
+    SXL = if xlen != 32 & sys_enable_supervisor() then mxl else zeros(),
+    UXL = if xlen != 32 & sys_enable_user() then mxl else zeros(),
   ]
 }
 
@@ -658,12 +679,12 @@ function retire_instruction() -> unit = {
 }
 
 /* machine information registers */
-register mvendorid : bits(32)
-register mimpid : xlenbits
-register marchid : xlenbits
+register mvendorid : bits(32) = zeros()
+register mimpid : xlenbits = zeros()
+register marchid : xlenbits = zeros()
 /* TODO: this should be readonly, and always 0 for now */
-register mhartid : xlenbits
-register mconfigptr : xlenbits
+register mhartid : xlenbits = zeros()
+register mconfigptr : xlenbits = zeros()
 
 mapping clause csr_name_map = 0xF11  <-> "mvendorid"
 mapping clause csr_name_map = 0xF12  <-> "marchid"

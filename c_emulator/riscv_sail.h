@@ -20,7 +20,6 @@ unit ztick_clock(unit);
 unit ztick_platform(unit);
 
 #ifdef RVFI_DII
-unit zext_rvfi_init(unit);
 unit zrvfi_set_instr_packet(mach_bits);
 mach_bits zrvfi_get_cmd(unit);
 mach_bits zrvfi_get_insn(unit);
