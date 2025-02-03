@@ -15,3 +15,6 @@ type xlenbits         = bits(xlen)
 // This saves typing `sizeof()` everywhere.
 let xlen_bytes = sizeof(xlen_bytes)
 let xlen = sizeof(xlen)
+
+let  asidlen          = sizeof(asidlen)
+type asidbits         = bits(asidlen)

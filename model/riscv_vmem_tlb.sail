@@ -12,19 +12,56 @@
 // (2) we can greatly speed up simulation speed (for Linux boot, can
 //     reduce elapsed time from 10s of minutes to few minutes).
 
-type asidbits = bits(16)
+// Maximum number of Virtual/Physical Page Number bits. The same TLB
+// is used for all VM modes so these are the values for Sv57.
+type tlb_vpn_bits : Int = 57 - pagesize_bits
+let  tlb_vpn_bits = sizeof(tlb_vpn_bits)
+type tlb_ppn_bits : Int = 44
+let  tlb_ppn_bits = sizeof(tlb_ppn_bits)
 
 // PRIVATE
+// We use a single TLB for all virtual memory modes, so it can store up to
+// Sv57-sized entries.
 struct TLB_Entry = {
-  asid       : asidbits,  // address-space id
-  global     : bool,      // global translation
-  vAddr      : bits(64),  // VPN
-  pAddr      : bits(64),  // ppn
-  vMatchMask : bits(64),  // matching mask for superpages
-  vAddrMask  : bits(64),  // selection mask for superpages
-  pte        : bits(64),  // PTE
-  pteAddr    : bits(64),  // for dirty writeback
-  age        : bits(64)   // for replacement policy?
+  asid       : asidbits,           // address-space id
+  global     : bool,               // global translation
+  vpn        : bits(tlb_vpn_bits), // Virtual Page Number. SvXX - 12 bits.
+  levelMask  : bits(tlb_vpn_bits), // Mask for superpages. The lowest (level * level_bits) bits are 1s.
+  ppn        : bits(tlb_ppn_bits), // Physical Page Number, 22 (Sv32), or 44 (Sv39+) bits.
+  pte        : bits(64),           // PTE. This is only 32 bits for Sv32 so we zero extend.
+  pteAddr    : physaddr,           // Physical address of PTE, for writing dirty/accessed bits.
+}
+
+// PTE access functions, for reading flags, and for modifying the dirty and
+// accessed bits.
+function tlb_get_pte forall 'n, 'n in {4, 8}. (
+  pte_width : int('n),
+  ent       : TLB_Entry,
+) -> bits('n * 8) = ent.pte['n * 8 - 1 .. 0]
+
+function tlb_set_pte forall 'n, 'n in {4, 8}. (
+  ent : TLB_Entry,
+  pte : bits('n * 8),
+) -> TLB_Entry = { ent with pte=zero_extend(pte) }
+
+function tlb_get_ppn forall 'v, is_sv_mode('v) . (
+  sv_width : int('v),
+  ent      : TLB_Entry,
+  vpn      : vpn_bits('v),
+) -> ppn_bits('v) = {
+  // Sometimes the VPN is longer than the PPN (Sv39) and sometimes it is
+  // shorter. This is ok because the most significant component can never be
+  // included in the levelMask. To avoid complicated truncation and zero
+  // extension we just extend to 64 bits and truncate at the end.
+  let vpn : bits(64) = zero_extend(vpn);
+  let levelMask : bits(64) = zero_extend(ent.levelMask);
+  let ppn : bits(64) = zero_extend(ent.ppn);
+
+  // E.g. if `level = 1` then this is a 2MB superpage. `levelMask` will
+  // be zero_extend(ones(9 or 10)). The lowest 9 or 10 bits will
+  // be taken from the translated vpn. The bits above that from the
+  // cached ppn.
+  truncate(ppn | (vpn & levelMask), if 'v == 32 then 22 else 44)
 }
 
 // 64 entries is based on benchmarks of Linux boots and is where you stop
@@ -36,100 +73,101 @@ type tlb_index_range = range(0, num_tlb_entries - 1)
 register tlb : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
 
 // Indexed by the lowest bits of the VPN.
-function tlb_hash(vaddr : bits(64)) -> tlb_index_range =
-  unsigned(vaddr[17 .. 12])
+function tlb_hash forall 'v, is_sv_mode('v) . (
+  sv_mode : int('v),
+  vpn     : vpn_bits('v),
+) -> tlb_index_range =
+  unsigned(vpn[5 .. 0])
 
-// PUBLIC: invoked in reset_vmem() [riscv_vmem.sail]
-function reset_TLB() -> unit = {
-  foreach (i from 0 to (length(tlb) - 1)) {
-    tlb[i] = None();
-  }
-}
+// PUBLIC: invoked in init_vmem() [riscv_vmem.sail]
+function reset_TLB() -> unit = tlb = vector_init(None())
 
-// PUBLIC: invoked in translate_TLB_hit() [riscv_vmem.sail]
-function write_TLB(index : tlb_index_range, ent : TLB_Entry) -> unit =
-  tlb[index] = Some(ent)
-
-// PRIVATE
-function match_TLB_Entry(ent   : TLB_Entry,
-                         asid  : asidbits,
-                         vaddr : bits(64)) -> bool =
-  (ent.global | (ent.asid == asid))
-  & (ent.vAddr == (ent.vMatchMask & vaddr))
+// PUBLIC: invoked in translate_TLB_hit()
+function write_TLB(index : tlb_index_range, entry : TLB_Entry) -> unit =
+  tlb[index] = Some(entry)
 
 // PRIVATE
-function flush_TLB_Entry(e    : TLB_Entry,
-                         asid : option(asidbits),
-                         addr : option(bits(64))) -> bool = {
-  match (asid, addr) {
-    ( None(),  None()) => true,
-    ( None(), Some(a)) => e.vAddr == (e.vMatchMask & a),
-    (Some(i),  None()) => (e.asid == i) & not(e.global),
-    (Some(i), Some(a)) => (  (e.asid == i) & (e.vAddr == (a & e.vMatchMask))
-                           & not(e.global))
-  }
+function match_TLB_Entry(
+  ent  : TLB_Entry,
+  asid : asidbits,
+  vpn  : bits(tlb_vpn_bits),
+) -> bool =
+  (ent.global | (ent.asid == asid)) & (ent.vpn == (vpn & ~(ent.levelMask)))
+
+// PRIVATE
+function flush_TLB_Entry(ent   : TLB_Entry,
+                         asid  : option(asidbits),
+                         vaddr : option(xlenbits)) -> bool = {
+  let asid_matches : bool = match asid {
+    Some(asid) => ent.asid == asid & not(ent.global),
+    None() => true,
+  };
+  let addr_matches : bool = match vaddr {
+    Some(vaddr) => {
+      let vaddr : bits(64) = zero_extend(vaddr);
+      ent.vpn == (vaddr[56 .. pagesize_bits] & ~(ent.levelMask))
+    },
+    None() => true,
+  };
+  asid_matches & addr_matches
 }
 
-// PUBLIC: invoked in translate() [riscv_vmem.sail]
-function lookup_TLB (asid : asidbits, vaddr : bits(64)) -> option((tlb_index_range, TLB_Entry)) = {
-  let index = tlb_hash(vaddr);
+// PUBLIC: invoked in translate()
+function lookup_TLB forall 'v, is_sv_mode('v) . (
+  sv_width : int('v),
+  asid     : asidbits,
+  vpn      : vpn_bits('v),
+) -> option((tlb_index_range, TLB_Entry)) = {
+  let index = tlb_hash('v, vpn);
   match tlb[index] {
     None() => None(),
-    Some(entry) => if match_TLB_Entry(entry, asid, vaddr) then Some((index, entry)) else None(),
+    Some(entry) => {
+      if match_TLB_Entry(entry, asid, zero_extend(vpn)) then Some((index, entry)) else None()
+    },
   }
 }
 
 // PRIVATE
-function add_to_TLB(asid          : asidbits,
-                    vAddr         : bits(64),
-                    pAddr         : bits(64),
-                    pte           : bits(64),
-                    pteAddr       : bits(64),
-                    level         : nat,
-                    global        : bool,
-                    levelBitSize  : nat,
-                    pagesize_bits : nat) -> unit = {
-  let shift = pagesize_bits + (level * levelBitSize);
-  assert(shift <= 64);
-  let vAddrMask  : bits(64)  = zero_extend(ones(shift));
-  let vMatchMask : bits(64)  = ~ (vAddrMask);
+function add_to_TLB forall 'v, is_sv_mode('v) . (
+  sv_width : int('v),
+  asid     : asidbits,
+  vpn      : vpn_bits('v),
+  ppn      : ppn_bits('v),
+  pte      : pte_bits('v),
+  pteAddr  : physaddr,
+  level    : level_range('v),
+  global   : bool,
+) -> unit = {
+  let shift = level * (if 'v == 32 then 10 else 9);
+  let levelMask = ones(shift);
+  // Clear bits below the level.
+  let vpn = vpn & ~(zero_extend(levelMask));
+  let ppn = ppn & ~(zero_extend(levelMask));
 
-  let entry : TLB_Entry = struct{asid       = asid,
-                                 global     = global,
-                                 pte        = pte,
-                                 pteAddr    = pteAddr,
-                                 vAddrMask  = vAddrMask,
-                                 vMatchMask = vMatchMask,
-                                 vAddr      = vAddr & vMatchMask,
-                                 pAddr      = pAddr & vMatchMask,
-                                 age        = mcycle};
+  let entry : TLB_Entry = struct{asid      = asid,
+                                 global    = global,
+                                 pte       = zero_extend(pte),
+                                 pteAddr   = pteAddr,
+                                 levelMask = zero_extend(levelMask),
+                                 vpn       = zero_extend(vpn),
+                                 ppn       = zero_extend(ppn)};
 
   // Add the TLB entry. Note that this may be a super-page, but we still want
   // to add it to the index corresponding to the page because that is how
   // lookup_TLB looks it up. For superpages will just end up with the same
   // TLB entry in multiple slots.
-  let index = tlb_hash(vAddr);
+  let index = tlb_hash('v, vpn);
   tlb[index] = Some(entry);
 }
 
 // Top-level TLB flush function
 // PUBLIC: invoked from exec SFENCE_VMA
-function flush_TLB(asid_xlen : option(xlenbits),
-                   addr_xlen : option(xlenbits)) -> unit = {
-  let asid : option(asidbits) =
-    match asid_xlen {
-      None()  => None(),
-      Some(a) => Some(a[15 .. 0])
-    };
-  let addr_64b : option(bits(64)) =
-    match addr_xlen {
-      None()  => None(),
-      Some(a) => Some(zero_extend(a))
-    };
+function flush_TLB(asid : option(asidbits),
+                   addr : option(xlenbits)) -> unit = {
   foreach (i from 0 to (length(tlb) - 1)) {
     match tlb[i] {
-      Some(e) => if flush_TLB_Entry(e, asid, addr_64b) then { tlb[i] = None(); },
       None()  => (),
+      Some(entry) => if flush_TLB_Entry(entry, asid, addr) then { tlb[i] = None(); },
     }
   }
 }

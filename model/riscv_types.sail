@@ -28,6 +28,9 @@ let xlen_min_signed = 0 - 2 ^ (xlen - 1)
 type half = bits(16)
 type word = bits(32)
 
+type pagesize_bits : Int = 12
+let  pagesize_bits = sizeof(pagesize_bits)
+
 /* register identifiers */
 
 type regidx  = bits(5)
@@ -285,14 +288,15 @@ function extStatus_of_bits(e) =
 /* supervisor-level address translation modes */
 
 type satp_mode = bits(4)
-enum SATPMode = {Sbare, Sv32, Sv39, Sv48}
+enum SATPMode = {Bare, Sv32, Sv39, Sv48, Sv57}
 
-function satp64Mode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
+function satpMode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
   match (a, m) {
-    (_,    0x0) => Some(Sbare),
+    (_,    0x0) => Some(Bare),
     (RV32, 0x1) => Some(Sv32),
     (RV64, 0x8) => Some(Sv39),
     (RV64, 0x9) => Some(Sv48),
+    (RV64, 0xA) => Some(Sv57),
     (_, _)      => None()
   }
 

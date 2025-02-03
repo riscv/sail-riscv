@@ -12,3 +12,6 @@
 type log2_xlen_bytes : Int = 3
 
 type physaddrbits_len : Int = 64
+
+// This is the maximum; designs can implement shorter ASIDLENs.
+type asidlen    : Int = 16

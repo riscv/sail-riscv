@@ -880,24 +880,31 @@ bitfield Satp64 : bits(64) = {
   PPN  : 43 .. 0
 }
 
-function legalize_satp64(a : Architecture, o : bits(64), v : bits(64)) -> bits(64) = {
-  let s = Mk_Satp64(v);
-  match satp64Mode_of_bits(a, s[Mode]) {
-    None()     => o,
-    Some(Sv32) => o,  /* Sv32 is unsupported for now */
-    Some(_)    => s.bits
-  }
-}
-
 bitfield Satp32 : bits(32) = {
   Mode : 31,
   Asid : 30 .. 22,
   PPN  : 21 .. 0
 }
 
-function legalize_satp32(a : Architecture, o : bits(32), v : bits(32)) -> bits(32) = {
-  /* all 32-bit satp modes are valid */
-  v
+// TODO: This currently assumes all ASID bits are implemented
+// and does not legalize the asid field if asidlen is not the maximum.
+function legalize_satp(
+  arch : Architecture,
+  prev_value : xlenbits,
+  written_value : xlenbits,
+) -> xlenbits = {
+  if xlen == 32 then {
+    /* all 32-bit satp modes are valid */
+    written_value
+  } else if xlen == 64 then {
+    let s = Mk_Satp64(written_value);
+    match satpMode_of_bits(arch, s[Mode]) {
+      None()  => prev_value,
+      Some(_) => s.bits
+    }
+  } else {
+    internal_error(__FILE__, __LINE__, "Unsupported xlen" ^ dec_str(xlen))
+  }
 }
 
 /* disabled trigger/debug module */
