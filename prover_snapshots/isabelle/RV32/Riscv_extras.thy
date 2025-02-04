@@ -293,6 +293,10 @@ definition plat_enable_misaligned_access  :: \<open> unit \<Rightarrow> bool \<c
      \<open> plat_enable_misaligned_access _ = ( False )\<close>
 
 
+\<comment> \<open>\<open>val plat_disable_illegal_instr_exp_access : unit -> bool\<close>\<close>
+definition plat_disable_illegal_instr_exp_access  :: \<open> unit \<Rightarrow> bool \<close>  where 
+     \<open> plat_disable_illegal_instr_exp_access _ = ( False )\<close>
+
 \<comment> \<open>\<open>val plat_enable_pmp : unit -> bool\<close>\<close>
 definition plat_enable_pmp  :: \<open> unit \<Rightarrow> bool \<close>  where 
      \<open> plat_enable_pmp _ = ( False )\<close>

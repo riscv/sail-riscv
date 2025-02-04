@@ -117,6 +117,11 @@ bool plat_enable_misaligned_access(unit u)
   return rv_enable_misaligned;
 }
 
+bool plat_disable_illegal_instr_exp_access(unit u)        // Added this to disable illegal instruction exception
+{
+  return rv_disable_illegal_instr_exp;
+}
+
 bool plat_mtval_has_illegal_inst_bits(unit u)
 {
   return rv_mtval_has_illegal_inst_bits;

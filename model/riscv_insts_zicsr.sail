@@ -26,8 +26,17 @@ function clause execute CSR(csr, rs1, rd, is_imm, op) = {
     CSRRW  => true,
     _      => if is_imm then unsigned(rs1_val) != 0 else unsigned(rs1) != 0
   };
-  if not(check_CSR(csr, cur_privilege, isWrite))
-  then { handle_illegal(); RETIRE_FAIL }
+  
+  if not(check_CSR(csr, cur_privilege, isWrite)) then {
+    /* Only handle illegal instruction if not disabled by platform */
+    if not(is_CSR_defined(csr)) & plat_disable_illegal_instr_exp_access() then {
+        /* Skip the illegal instruction handling */
+        RETIRE_SUCCESS
+    } else {
+        handle_illegal();
+        RETIRE_FAIL
+    }
+} 
   else if not(ext_check_CSR(csr, cur_privilege, isWrite))
   then { ext_check_CSR_fail(); RETIRE_FAIL }
   else {

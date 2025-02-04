@@ -218,6 +218,10 @@ val _ = Define `
 val _ = Define `
  ((plat_enable_misaligned_access:unit -> bool) () =  F)`;
 
+ (*val plat_disable_illegal_instr_exp_access : unit -> bool*)
+val _ = Define `
+ ((plat_disable_illegal_instr_exp_access:unit -> bool) () =  F)`;
+
 
 (*val plat_enable_pmp : unit -> bool*)
 val _ = Define `
