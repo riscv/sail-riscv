@@ -62,8 +62,6 @@ overload max = {max_int}
 val print_string = pure "print_string" : (string, string) -> unit
 
 val print_instr    = pure {interpreter: "print_endline", c: "print_instr", lem: "print_dbg", _: "print_endline"} : string -> unit
-val print_reg      = pure {interpreter: "print_endline", c: "print_reg", lem: "print_dbg", _: "print_endline"} : string -> unit
-val print_mem      = pure {interpreter: "print_endline", c: "print_mem_access", lem: "print_dbg", _: "print_endline"} : string -> unit
 val print_platform = pure {interpreter: "print_endline", c: "print_platform", lem: "print_dbg", _: "print_endline"} : string -> unit
 
 val print_step = pure {c: "print_step"} : unit -> unit
@@ -71,14 +69,9 @@ val print_step = pure {c: "print_step"} : unit -> unit
 function print_step() = ()
 
 val get_config_print_instr = pure {c:"get_config_print_instr"} : unit -> bool
-val get_config_print_reg = pure {c:"get_config_print_reg"} : unit -> bool
-val get_config_print_mem = pure {c:"get_config_print_mem"} : unit -> bool
-
 val get_config_print_platform = pure {c:"get_config_print_platform"} : unit -> bool
 // defaults for other backends
 function get_config_print_instr () = false
-function get_config_print_reg () = false
-function get_config_print_mem () = false
 function get_config_print_platform () = false
 
 val sign_extend : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)

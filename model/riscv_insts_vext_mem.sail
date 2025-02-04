@@ -167,7 +167,7 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
               if i == 0 then return Ext_DataAddr_Check_Failure(e)
               else {
                 vl = to_bits(xlen, i);
-                print_reg("CSR vl <- " ^ BitStr(vl));
+                csr_write_callback("vl", vl);
                 trimmed = true
               }
             },
@@ -176,7 +176,7 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
                 if i == 0 then return Memory_Exception(vaddr, E_Load_Addr_Align())
                 else {
                   vl = to_bits(xlen, i);
-                  print_reg("CSR vl <- " ^ BitStr(vl));
+                  csr_write_callback("vl", vl);
                   trimmed = true
                 }
               } else match translateAddr(vaddr, Read(Data)) {
@@ -184,7 +184,7 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
                   if i == 0 then return Memory_Exception(vaddr, e)
                   else {
                     vl = to_bits(xlen, i);
-                    print_reg("CSR vl <- " ^ BitStr(vl));
+                    csr_write_callback("vl", vl);
                     trimmed = true
                   }
                 },
@@ -195,7 +195,7 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
                       if i == 0 then return Memory_Exception(vaddr, e)
                       else {
                         vl = to_bits(xlen, i);
-                        print_reg("CSR vl <- " ^ BitStr(vl));
+                        csr_write_callback("vl", vl);
                         trimmed = true
                       }
                     }

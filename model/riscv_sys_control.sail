@@ -201,21 +201,27 @@ function tval(excinfo : option(xlenbits)) -> xlenbits = {
   }
 }
 
-$ifdef RVFI_DII
-val rvfi_trap : unit -> unit
-// TODO: record rvfi_trap_data
-function rvfi_trap () =
-  rvfi_inst_data[rvfi_trap] = 0x01
-$else
-val rvfi_trap : unit -> unit
-function rvfi_trap () = ()
-$endif
+function track_trap(p : Privilege) -> unit = {
+  long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+  match (p) {
+    Machine => {
+      csr_write_callback("mcause", mcause.bits);
+      csr_write_callback("mtval", mtval);
+      csr_write_callback("mepc", mepc);
+    },
+    Supervisor => {
+      csr_write_callback("scause", scause.bits);
+      csr_write_callback("stval", stval);
+      csr_write_callback("sepc", sepc);
+    },
+    User => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+  };
+}
 
 /* handle exceptional ctl flow by updating nextPC and operating privilege */
-
 function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
                      -> xlenbits = {
-  rvfi_trap();
+  trap_callback();
   if   get_config_print_platform()
   then print_platform("handling " ^ (if intr then "int#" else "exc#")
                       ^ BitStr(c) ^ " at priv " ^ to_str(del_priv)
@@ -229,15 +235,14 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        mstatus[MPIE] = mstatus[MIE];
        mstatus[MIE]  = 0b0;
        mstatus[MPP]  = privLevel_to_bits(cur_privilege);
-       mtval           = tval(info);
-       mepc            = pc;
+       mtval         = tval(info);
+       mepc          = pc;
 
-       cur_privilege   = del_priv;
+       cur_privilege = del_priv;
 
        handle_trap_extension(del_priv, pc, ext);
 
-       if   get_config_print_reg()
-       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
+       track_trap(del_priv);
 
        prepare_trap_vector(del_priv, mcause)
     },
@@ -261,8 +266,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        handle_trap_extension(del_priv, pc, ext);
 
-       if   get_config_print_reg()
-       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
+       track_trap(del_priv);
 
        prepare_trap_vector(del_priv, scause)
     },
@@ -289,8 +293,8 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
-      if   get_config_print_reg()
-      then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
+      long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+
       if   get_config_print_platform()
       then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
@@ -305,8 +309,8 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
-      if   get_config_print_reg()
-      then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
+      long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+
       if   get_config_print_platform()
       then print_platform("ret-ing from " ^ to_str(prev_priv)
                           ^ " to " ^ to_str(cur_privilege));
@@ -352,6 +356,7 @@ function reset_misa() -> unit = {
   misa[D]   = if   flen >= 64
               then bool_to_bits(hartSupports(Ext_D))  /* double-precision */
               else 0b0;
+  csr_write_callback("misa", misa.bits);
 }
 
 // This function is called on reset, so it should only perform the reset actions
@@ -372,6 +377,8 @@ function reset_sys() -> unit = {
   // See https://github.com/riscv/sail-riscv/issues/639
   // mstatus[MBE] = 0b0;
 
+  long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+
   // "The misa register is reset to enable the maximal set of supported extensions"
   reset_misa();
 
@@ -386,6 +393,7 @@ function reset_sys() -> unit = {
   // but the value 0 should be returned on implementations that do not
   // distinguish different reset conditions."
   mcause.bits = zeros();
+  csr_write_callback("mcause", mcause.bits);
 
   // "Writable PMP registers’ A and L fields are set to 0, unless the platform
   // mandates a different reset value for some PMP registers’ A and L fields."
@@ -393,6 +401,7 @@ function reset_sys() -> unit = {
 
   // TODO: Probably need to remove these vector resets too but it needs
   // refactoring anyway. See https://github.com/riscv/sail-riscv/issues/566 etc.
+  // If they are kept then callbacks need to be added.
 
   /* initialize vector csrs */
   vstart           = zeros();
@@ -405,10 +414,6 @@ function reset_sys() -> unit = {
   vtype[vta]       = 0b0;
   vtype[vsew]      = 0b000;
   vtype[vlmul]     = 0b000;
-
-  // log compatibility with spike
-  if   get_config_print_reg()
-  then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits) ^ " (input: " ^ BitStr(zeros() : xlenbits) ^ ")")
 }
 
 /* memory access exceptions, defined here for use by the platform model. */
