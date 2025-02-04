@@ -152,4 +152,3 @@ enum vmlsop       = { VLM, VSM }
 /* Default for this function in riscv_default_callbacks.c */
 
 val vreg_write_callback = pure {c: "vreg_write_callback"} : (regidx, vregtype) -> unit
-

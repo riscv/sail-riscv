@@ -177,7 +177,7 @@ function wF (r : regno, in_v : flenbits) -> unit = {
   };
 
   dirty_fd_context();
-  
+
   freg_write_callback(regno_to_regidx(r), in_v);
 }
 
