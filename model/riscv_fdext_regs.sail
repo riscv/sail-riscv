@@ -194,11 +194,8 @@ function wF (Fregno(r) : fregno, in_v : flenbits) -> unit = {
   };
 
   dirty_fd_context();
-
-  if   get_config_print_reg()
-  then
-      /* TODO: will only print bits; should we print in floating point format? */
-      print_reg("f" ^ dec_str(r) ^ " <- " ^ FRegStr(v));
+  
+  freg_write_callback(regno_to_regidx(r), in_v);
 }
 
 function rF_bits(i: fregidx) -> flenbits = rF(fregidx_to_fregno(i))

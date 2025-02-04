@@ -169,8 +169,7 @@ function wV (Vregno(r) : vregno, v : vregtype) -> unit = {
   dirty_v_context();
 
   assert(0 < VLEN & VLEN <= sizeof(vlenmax));
-  if   get_config_print_reg()
-  then print_reg("v" ^ dec_str(r) ^ " <- " ^ BitStr(v[VLEN - 1 .. 0]));
+  vreg_write_callback(regno_to_regidx(r), v);
 }
 
 function rV_bits(i: vregidx) -> vregtype = rV(vregidx_to_vregno(i))
