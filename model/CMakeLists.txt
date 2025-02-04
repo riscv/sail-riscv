@@ -105,6 +105,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_sys_exceptions.sail"
                 "riscv_sync_exception.sail"
                 "riscv_zihpm.sail"
+                "riscv_sscofpmf.sail"
                 "riscv_zkr_control.sail"
                 "riscv_zicntr_control.sail"
                 "riscv_softfloat_interface.sail"

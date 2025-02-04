@@ -81,6 +81,7 @@ SAIL_SYS_SRCS += riscv_vext_control.sail    # helpers for the 'V' extension
 SAIL_SYS_SRCS += riscv_sys_exceptions.sail  # default basic helpers for exception handling
 SAIL_SYS_SRCS += riscv_sync_exception.sail  # define the exception structure used in the model
 SAIL_SYS_SRCS += riscv_zihpm.sail
+SAIL_SYS_SRCS += riscv_sscofpmf.sail
 SAIL_SYS_SRCS += riscv_zkr_control.sail
 SAIL_SYS_SRCS += riscv_zicntr_control.sail
 SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdext_control.sail
