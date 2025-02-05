@@ -84,6 +84,9 @@ add_subdirectory("c_emulator")
 # Old pre-compiled riscv-tests.
 add_subdirectory("test/riscv-tests")
 
+# Sail unit tests.
+add_subdirectory("test/unit_tests")
+
 # Convenience targets.
 add_custom_target(csim DEPENDS riscv_sim_rv32d riscv_sim_rv64d)
 add_custom_target(check DEPENDS generated_model_rv32d generated_model_rv64d)
