@@ -43,11 +43,11 @@
     compatible = "ucb,htif0";
   };
   chosen {
-	  #address-cells = <2>;
-	  #size-cells = <2>;
-	  linux,initrd-end = <0 0>;
-	  linux,initrd-start = <0 0>;
-	  bootargs = "rdinit=/sbin/init";
-	  stdout-path = "";
+    #address-cells = <2>;
+    #size-cells = <2>;
+    linux,initrd-end = <0 0>;
+    linux,initrd-start = <0 0>;
+    bootargs = "rdinit=/sbin/init";
+    stdout-path = "";
   };
 };
