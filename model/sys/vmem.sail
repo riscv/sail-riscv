@@ -59,6 +59,33 @@ function read_pte forall 'n, 'n in {4, 8} . (
 ) -> MemoryOpResult(bits(8 * 'n)) =
   mem_read_priv(Read(Data), Supervisor, paddr, pte_size, false, false, false)
 
+// Update a PTE's A/D bits and write it to memory. This returns
+//
+// * Ok(Some(pte)) if a write was needed and was successful. pte is the new value.
+// * Ok(None()) if no write was needed.
+// * Err(e) if a write was needed but there was an error.
+//
+function update_pte forall 'pte_width, 'pte_width in {4, 8} . (
+  pte_width : int('pte_width),
+  pteAddr   : physaddr,
+  pte       : bits('pte_width * 8),
+  ac        : AccessType(ext_access_type),
+) -> result(option(bits('pte_width * 8)), PTW_Error) =
+  match updated_pte_bits(pte, ac) {
+    None() => Ok(None()),
+    Some(pte) =>
+      if not(plat_enable_dirty_update()) then {
+        // PTE needs dirty/accessed update but that is not enabled.
+        Err(PTW_PTE_Update())
+      } else {
+        // Writeback the PTE (which has new A/D bits).
+        match write_pte(pteAddr, pte_width, pte) {
+          Ok(_) => Ok(Some(pte)),
+          Err(_) => Err(PTW_Access()),
+        }
+      },
+  }
+
 // PRIVATE
 // 'v is the virtual address size.
 val pt_walk : forall 'v, is_sv_mode('v) . (
@@ -237,25 +264,17 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
   match pte_check {
     PTE_Check_Failure(ext_ptw, ext_ptw_fail) =>
       Err(ext_get_ptw_error(ext_ptw_fail), ext_ptw),
-    PTE_Check_Success(ext_ptw) =>
-      match update_PTE_Bits(pte, ac) {
-        None()     => Ok(tlb_get_ppn(sv_width, ent, vpn), ext_ptw),
-        Some(pte') =>
-          // Step 9 of VATP. See platform.sail.
-          if not(plat_enable_dirty_update) then
-            // pte needs dirty/accessed update but that is not enabled
-            Err(PTW_PTE_Update(), ext_ptw)
-          else {
-            // Writeback the PTE (which has new A/D bits)
-            write_TLB(tlb_index, tlb_set_pte(ent, pte'));
-            match write_pte(ent.pteAddr, pte_size, pte') {
-              Ok(_)  => (),
-              Err(e) => internal_error(__FILE__, __LINE__,
-                                       "invalid physical address in TLB")
-            };
-            Ok(tlb_get_ppn(sv_width, ent, vpn), ext_ptw)
-          }
+    PTE_Check_Success(ext_ptw) => {
+      let ppn = tlb_get_ppn(sv_width, ent, vpn);
+      match update_pte(pte_width, ent.pteAddr, pte, ac) {
+        Ok(Some(pte)) => {
+          write_TLB(tlb_index, tlb_set_pte(ent, pte));
+          Ok(ppn, ext_ptw)
+        },
+        Ok(None()) => Ok(ppn, ext_ptw),
+        Err(e) => Err(e, ext_ptw),
       }
+    },
   }
 }
 
@@ -281,32 +300,16 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
     Err(f, ext_ptw) => Err(f, ext_ptw),
     Ok(struct {ppn, pte, pteAddr, level, global}, ext_ptw) => {
       let ext_pte = ext_bits_of_PTE(pte);
-      // Without TLBs, this 'match' expression can be replaced simply
-      // by: 'Ok(ppn, ext_ptw)'    (see TLB NOTE above)
-      match update_PTE_Bits(pte, ac) {
-        None() => {
+      match update_pte(pte_width, pteAddr, pte, ac) {
+        Ok(Some(pte)) => {
           add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
           Ok(ppn, ext_ptw)
         },
-        Some(pte) =>
-          // Step 9 of VATP. See platform.sail.
-          if not(plat_enable_dirty_update) then
-            // pte needs dirty/accessed update but that is not enabled
-            Err(PTW_PTE_Update(), ext_ptw)
-          else {
-            // Writeback the PTE (which has new A/D bits)
-            match write_pte(pteAddr, pte_size, pte) {
-              Ok(_) => {
-                add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
-                Ok(ppn, ext_ptw)
-              },
-              Err(e) =>
-                Err(PTW_Access(), ext_ptw)
-            }
-          }
-        }
+        Ok(None()) => Ok(ppn, ext_ptw),
+        Err(e) => Err(e, ext_ptw),
       }
-    }
+    },
+  }
 }
 
 // Mapping the SATPMode to the width integer. Note there is also SvBare
