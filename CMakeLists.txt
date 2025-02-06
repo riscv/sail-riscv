@@ -36,6 +36,20 @@ endif()
 # Extra CMake files.
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
+# This will change how the `find_library` calls work so they find
+# the static version of libraries first. Unlike `-static` it won't
+# link glibc statically, which is generally considered to be a bad idea.
+option(STATIC "Prefer static versions of dependencies.")
+
+if (STATIC)
+    if (WIN32)
+        list(INSERT CMAKE_FIND_LIBRARY_SUFFIXES 0 .lib .a)
+    else()
+        set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+    endif()
+endif()
+
+
 # These are the main requirements.
 # Don't use `REQUIRED` so that we can print custom help messages.
 find_package(ZLIB)
@@ -84,6 +98,22 @@ add_subdirectory("c_emulator")
 
 # Old pre-compiled riscv-tests.
 add_subdirectory("test/riscv-tests")
+
+# Release packaging.
+if (NOT CPACK_GENERATOR)
+    if (WINDOWS)
+        set(CPACK_GENERATOR "ZIP")
+    else()
+        set(CPACK_GENERATOR "TGZ")
+    endif()
+endif()
+if (DARWIN)
+    # ${CMAKE_SYSTEM_NAME} is unfortunately "Darwin", but we want "Mac".
+    set(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-Mac-${CMAKE_HOST_SYSTEM_PROCESSOR}")
+else()
+    set(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${CMAKE_SYSTEM_NAME}-${CMAKE_HOST_SYSTEM_PROCESSOR}")
+endif()
+include(CPack)
 
 # Convenience targets.
 add_custom_target(csim DEPENDS riscv_sim_rv32d riscv_sim_rv64d)

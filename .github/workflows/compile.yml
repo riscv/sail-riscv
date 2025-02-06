@@ -8,16 +8,18 @@ jobs:
     steps:
     - name: Install packages
       run: sudo apt install -y --no-install-recommends zlib1g-dev pkg-config libgmp-dev curl ninja-build
-    - name: Check out repository code
-      uses: actions/checkout@HEAD
-      with:
-        submodules: true
-    - name: Ensure pre-commit checks pass
-      run: python3 -m pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always
+
     - name: Install sail from binary
       run: |
         sudo mkdir -p /usr/local
         curl --location https://github.com/rems-project/sail/releases/download/0.18-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
+
+    - name: Check out repository code
+      uses: actions/checkout@v4
+
+    - name: Ensure pre-commit checks pass
+      run: python3 -m pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always
+
     - name: Build and test simulators
       run: |
         # Ninja is used because the CMake Makefile generator doesn't
@@ -29,6 +31,7 @@ jobs:
         ninja -C build all riscv_sim_rv32d_rvfi generated_smt_rv64f generated_docs_rv64d
         # These targets do not work with Sail 0.18: generated_rmem_rv32d_rmem generated_coq_rv64f_coq
         ctest --test-dir build --output-junit tests.xml
+
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v4
@@ -36,6 +39,7 @@ jobs:
         name: tests.xml
         path: build/tests.xml
         if-no-files-found: error
+
     - name: Upload event payload
       if: always()
       uses: actions/upload-artifact@v4

@@ -61,7 +61,10 @@ foreach (xlen IN ITEMS 32 64)
             #     -Wno-unused-parameter
             # )
 
-            install(TARGETS riscv_sim_${arch} OPTIONAL)
+            install(TARGETS riscv_sim_${arch}
+                OPTIONAL
+                RUNTIME DESTINATION "bin"
+            )
         endforeach()
     endforeach()
 endforeach()
