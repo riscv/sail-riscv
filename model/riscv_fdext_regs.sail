@@ -88,7 +88,7 @@ register f31 : fregtype
 function dirty_fd_context() -> unit = {
   assert(sys_enable_fdext());
   mstatus[FS] = extStatus_to_bits(Dirty);
-  mstatus = set_mstatus_SD(mstatus, 0b1);
+  mstatus[SD] = 0b1;
 }
 
 function dirty_fd_context_if_present() -> unit = {
