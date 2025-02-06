@@ -279,8 +279,8 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
    */
     FS = if sys_enable_zfinx() then extStatus_to_bits(Off) else v[FS],
     MPP = if have_privLevel(v[MPP]) then v[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
+    SPP = if extensionEnabled(Ext_S) then v[SPP] else 0b0,
     VS = v[VS],
-    SPP = v[SPP],
     MPIE = v[MPIE],
     SPIE = v[SPIE],
     MIE = v[MIE],
