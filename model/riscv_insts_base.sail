@@ -23,13 +23,12 @@ mapping encdec_uop : uop <-> bits(7) = {
 mapping clause encdec = UTYPE(imm, rd, op)
   <-> imm @ rd @ encdec_uop(op)
 
-function clause execute UTYPE(imm, rd, op) = {
+function clause execute (UTYPE(imm, rd, op)) = {
   let off : xlenbits = sign_extend(imm @ 0x000);
-  let ret : xlenbits = match op {
+  X(rd) = match op {
     RISCV_LUI   => off,
     RISCV_AUIPC => get_arch_pc() + off
   };
-  X(rd) = ret;
   RETIRE_SUCCESS
 }
 
@@ -60,9 +59,9 @@ but this is difficult
 */
 
 function clause execute (RISCV_JAL(imm, rd)) = {
-  let t : xlenbits = PC + sign_extend(imm);
+  let target = PC + sign_extend(imm);
   /* Extensions get the first checks on the prospective target address. */
-  match ext_control_check_pc(t) {
+  match ext_control_check_pc(target) {
     Ext_ControlAddr_Error(e) => {
       ext_handle_control_check_error(e);
       RETIRE_FAIL
@@ -70,8 +69,7 @@ function clause execute (RISCV_JAL(imm, rd)) = {
     Ext_ControlAddr_OK(target) => {
       /* Perform standard alignment check */
       let target_bits = virtaddr_bits(target);
-      if bit_to_bool(target_bits[1]) & not(extensionEnabled(Ext_Zca))
-      then {
+      if bit_to_bool(target_bits[1]) & not(extensionEnabled(Ext_Zca)) then {
         handle_mem_exception(target, E_Fetch_Addr_Align());
         RETIRE_FAIL
       } else {
@@ -115,20 +113,18 @@ mapping clause encdec = BTYPE(imm7_6 @ imm5_0 @ imm7_5_0 @ imm5_4_1 @ 0b0, rs2, 
   <-> imm7_6 : bits(1) @ imm7_5_0 : bits(6) @ rs2 @ rs1 @ encdec_bop(op) @ imm5_4_1 : bits(4) @ imm5_0 : bits(1) @ 0b1100011
 
 function clause execute (BTYPE(imm, rs2, rs1, op)) = {
-  let rs1_val = X(rs1);
-  let rs2_val = X(rs2);
   let taken : bool = match op {
-    RISCV_BEQ  => rs1_val == rs2_val,
-    RISCV_BNE  => rs1_val != rs2_val,
-    RISCV_BLT  => rs1_val <_s rs2_val,
-    RISCV_BGE  => rs1_val >=_s rs2_val,
-    RISCV_BLTU => rs1_val <_u rs2_val,
-    RISCV_BGEU => rs1_val >=_u rs2_val
+    RISCV_BEQ  => X(rs1) == X(rs2),
+    RISCV_BNE  => X(rs1) != X(rs2),
+    RISCV_BLT  => X(rs1) <_s X(rs2),
+    RISCV_BGE  => X(rs1) >=_s X(rs2),
+    RISCV_BLTU => X(rs1) <_u X(rs2),
+    RISCV_BGEU => X(rs1) >=_u X(rs2)
   };
-  let t : xlenbits = PC + sign_extend(imm);
   if taken then {
+    let target = PC + sign_extend(imm);
     /* Extensions get the first checks on the prospective target address. */
-    match ext_control_check_pc(t) {
+    match ext_control_check_pc(target) {
       Ext_ControlAddr_Error(e) => {
         ext_handle_control_check_error(e);
         RETIRE_FAIL
@@ -137,7 +133,7 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
         let target_bits = virtaddr_bits(target);
         if bit_to_bool(target_bits[1]) & not(extensionEnabled(Ext_Zca)) then {
           handle_mem_exception(target, E_Fetch_Addr_Align());
-          RETIRE_FAIL;
+          RETIRE_FAIL
         } else {
           set_next_pc(target_bits);
           RETIRE_SUCCESS
@@ -175,17 +171,15 @@ mapping clause encdec = ITYPE(imm, rs1, rd, op)
   <-> imm @ rs1 @ encdec_iop(op) @ rd @ 0b0010011
 
 function clause execute (ITYPE (imm, rs1, rd, op)) = {
-  let rs1_val = X(rs1);
   let immext : xlenbits = sign_extend(imm);
-  let result : xlenbits = match op {
-    RISCV_ADDI  => rs1_val + immext,
-    RISCV_SLTI  => zero_extend(bool_to_bits(rs1_val <_s immext)),
-    RISCV_SLTIU => zero_extend(bool_to_bits(rs1_val <_u immext)),
-    RISCV_ANDI  => rs1_val & immext,
-    RISCV_ORI   => rs1_val | immext,
-    RISCV_XORI  => rs1_val ^ immext
+  X(rd) = match op {
+    RISCV_ADDI  => X(rs1) + immext,
+    RISCV_SLTI  => zero_extend(bool_to_bits(X(rs1) <_s immext)),
+    RISCV_SLTIU => zero_extend(bool_to_bits(X(rs1) <_u immext)),
+    RISCV_ANDI  => X(rs1) & immext,
+    RISCV_ORI   => X(rs1) | immext,
+    RISCV_XORI  => X(rs1) ^ immext
   };
-  X(rd) = result;
   RETIRE_SUCCESS
 }
 
@@ -215,20 +209,12 @@ mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) if xlen == 64 | sha
 mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) if xlen == 64 | shamt[5] == bitzero <-> 0b010000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == bitzero
 
 function clause execute (SHIFTIOP(shamt, rs1, rd, op)) = {
-  let rs1_val = X(rs1);
-  /* the decoder guard should ensure that shamt[5] = 0 for RV32 */
-  let result : xlenbits = match op {
-    RISCV_SLLI => if   xlen == 32
-                  then rs1_val << shamt[4..0]
-                  else rs1_val << shamt,
-    RISCV_SRLI => if   xlen == 32
-                  then rs1_val >> shamt[4..0]
-                  else rs1_val >> shamt,
-    RISCV_SRAI => if   xlen == 32
-                  then shift_right_arith32(rs1_val, shamt[4..0])
-                  else shift_right_arith64(rs1_val, shamt)
+  // The decoder guard ensures that shamt[5] = 0 for RV32.
+  X(rd) = match op {
+    RISCV_SLLI => X(rs1) << shamt,
+    RISCV_SRLI => X(rs1) >> shamt,
+    RISCV_SRAI => shift_bits_right_arith(X(rs1), shamt),
   };
-  X(rd) = result;
   RETIRE_SUCCESS
 }
 
@@ -256,27 +242,18 @@ mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SUB)  <-> 0b0100000 @ rs2 @ rs
 mapping clause encdec = RTYPE(rs2, rs1, rd, RISCV_SRA)  <-> 0b0100000 @ rs2 @ rs1 @ 0b101 @ rd @ 0b0110011
 
 function clause execute (RTYPE(rs2, rs1, rd, op)) = {
-  let rs1_val = X(rs1);
-  let rs2_val = X(rs2);
-  let result : xlenbits = match op {
-    RISCV_ADD  => rs1_val + rs2_val,
-    RISCV_SLT  => zero_extend(bool_to_bits(rs1_val <_s rs2_val)),
-    RISCV_SLTU => zero_extend(bool_to_bits(rs1_val <_u rs2_val)),
-    RISCV_AND  => rs1_val & rs2_val,
-    RISCV_OR   => rs1_val | rs2_val,
-    RISCV_XOR  => rs1_val ^ rs2_val,
-    RISCV_SLL  => if   xlen == 32
-                  then rs1_val << (rs2_val[4..0])
-                  else rs1_val << (rs2_val[5..0]),
-    RISCV_SRL  => if   xlen == 32
-                  then rs1_val >> (rs2_val[4..0])
-                  else rs1_val >> (rs2_val[5..0]),
-    RISCV_SUB  => rs1_val - rs2_val,
-    RISCV_SRA  => if   xlen == 32
-                  then shift_right_arith32(rs1_val, rs2_val[4..0])
-                  else shift_right_arith64(rs1_val, rs2_val[5..0])
+  X(rd) = match op {
+    RISCV_ADD  => X(rs1) + X(rs2),
+    RISCV_SLT  => zero_extend(bool_to_bits(X(rs1) <_s X(rs2))),
+    RISCV_SLTU => zero_extend(bool_to_bits(X(rs1) <_u X(rs2))),
+    RISCV_AND  => X(rs1) & X(rs2),
+    RISCV_OR   => X(rs1) | X(rs2),
+    RISCV_XOR  => X(rs1) ^ X(rs2),
+    RISCV_SLL  => X(rs1) << X(rs2)[log2_xlen_bytes + 2 .. 0],
+    RISCV_SRL  => X(rs1) >> X(rs2)[log2_xlen_bytes + 2 .. 0],
+    RISCV_SUB  => X(rs1) - X(rs2),
+    RISCV_SRA  => shift_bits_right_arith(X(rs1), X(rs2)[log2_xlen_bytes + 2 .. 0]),
   };
-  X(rd) = result;
   RETIRE_SUCCESS
 }
 
@@ -319,7 +296,7 @@ function is_aligned(vaddr : xlenbits, width : word_width) -> bool =
 function check_misaligned(vaddr : virtaddr, width : word_width) -> bool =
   not(plat_enable_misaligned_access()) & not(is_aligned(virtaddr_bits(vaddr), width))
 
-function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
+function clause execute (LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   let offset : xlenbits = sign_extend(imm);
   let width_bytes = size_bytes(width);
 
@@ -421,7 +398,7 @@ mapping clause encdec = ADDIW(imm, rs1, rd)
       if xlen == 64
 
 function clause execute (ADDIW(imm, rs1, rd)) = {
-  let result : xlenbits = sign_extend(imm) + X(rs1);
+  let result = X(rs1) + sign_extend(imm);
   X(rd) = sign_extend(result[31..0]);
   RETIRE_SUCCESS
 }
@@ -456,14 +433,14 @@ mapping clause encdec = RTYPEW(rs2, rs1, rd, RISCV_SRAW)
       if xlen == 64
 
 function clause execute (RTYPEW(rs2, rs1, rd, op)) = {
-  let rs1_val = (X(rs1))[31..0];
-  let rs2_val = (X(rs2))[31..0];
+  let rs1_val = X(rs1)[31..0];
+  let rs2_val = X(rs2)[31..0];
   let result : bits(32) = match op {
     RISCV_ADDW => rs1_val + rs2_val,
     RISCV_SUBW => rs1_val - rs2_val,
-    RISCV_SLLW => rs1_val << (rs2_val[4..0]),
-    RISCV_SRLW => rs1_val >> (rs2_val[4..0]),
-    RISCV_SRAW => shift_right_arith32(rs1_val, rs2_val[4..0])
+    RISCV_SLLW => rs1_val << rs2_val[4..0],
+    RISCV_SRLW => rs1_val >> rs2_val[4..0],
+    RISCV_SRAW => shift_bits_right_arith(rs1_val, rs2_val[4..0]),
   };
   X(rd) = sign_extend(result);
   RETIRE_SUCCESS
@@ -499,11 +476,11 @@ mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, RISCV_SRAIW)
       if xlen == 64
 
 function clause execute (SHIFTIWOP(shamt, rs1, rd, op)) = {
-  let rs1_val = (X(rs1))[31..0];
+  let rs1_val = X(rs1)[31..0];
   let result : bits(32) = match op {
     RISCV_SLLIW => rs1_val << shamt,
     RISCV_SRLIW => rs1_val >> shamt,
-    RISCV_SRAIW => shift_right_arith32(rs1_val, shamt)
+    RISCV_SRAIW => shift_bits_right_arith(rs1_val, shamt),
   };
   X(rd) = sign_extend(result);
   RETIRE_SUCCESS

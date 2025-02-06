@@ -157,15 +157,16 @@ val "shiftr" : forall 'm 'n, 'n >= 0. (bits('m), int('n)) -> bits('m)
 overload operator >> = {shift_bits_right, shiftr}
 overload operator << = {shift_bits_left, shiftl}
 
-/* Ideally these would be sail builtin */
+// Ideally this would be sail builtin. This implementation is not efficient for large shifts.
 
-function shift_right_arith64 (v : bits(64), shift : bits(6)) -> bits(64) =
-    let v128 : bits(128) = sign_extend(v) in
-    (v128 >> shift)[63..0]
+// 'n >= 1 is required due to https://github.com/rems-project/sail/issues/471
+val shift_right_arith : forall 'm 'n, 'n >= 1 & 'm >= 0 . (bits('n), int('m)) -> bits('n)
+function shift_right_arith(value, shift) =
+  sign_extend('n + shift, value)[('n - 1 + shift) .. shift]
 
-function shift_right_arith32 (v : bits(32), shift : bits(5)) -> bits(32) =
-    let v64 : bits(64) = sign_extend(v) in
-    (v64 >> shift)[31..0]
+val shift_bits_right_arith : forall 'm 'n, 'n >= 1 . (bits('n), bits('m)) -> bits('n)
+function shift_bits_right_arith(value, shift) =
+  shift_right_arith(value, unsigned(shift))
 
 infix 7 >>>
 infix 7 <<<
