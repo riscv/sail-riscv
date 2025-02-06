@@ -107,3 +107,7 @@ enum clause extension = Ext_Zhinx
 enum clause extension = Ext_Sstc
 // Fine-Grained Address-Translation Cache Invalidation
 enum clause extension = Ext_Svinval
+// NAPOT Translation Contiguity
+enum clause extension = Ext_Svnapot
+// Page-Based Memory Types
+enum clause extension = Ext_Svpbmt

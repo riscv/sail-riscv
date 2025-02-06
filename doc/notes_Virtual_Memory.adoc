@@ -15,14 +15,10 @@ vmem specification code is in file:
 
 Additional files:
 
-    model/riscv_vmem_common.sail
     model/riscv_vmem_pte.sail
     model/riscv_vmem_ptw.sail
     model/riscv_vmem_tlb.sail
     model/riscv_vmem_types.sail
-
-`riscv_vmem_common.sail` contains the parameterization for Sv32, Sv39,
-Sv48 and Sv57.
 
 `riscv_vmem_pte.sail` describes Page Table Entries, checks for
 permission bits, etc.

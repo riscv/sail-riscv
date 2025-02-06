@@ -119,7 +119,7 @@ Supported RISC-V ISA features
 - Machine, Supervisor, and User modes
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
 - Svinval extension for fine-grained address-translation cache invalidation, v1.0
-- Sv32, Sv39, and Sv48 page-based virtual-memory systems
+- Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
 - Physical Memory Protection (PMP)
 
 #### The following features are not currently supported:

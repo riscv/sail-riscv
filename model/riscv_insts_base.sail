@@ -707,8 +707,11 @@ mapping clause encdec = SFENCE_VMA(rs1, rs2)
   <-> 0b0001001 @ rs2 @ rs1 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute SFENCE_VMA(rs1, rs2) = {
-  let addr : option(xlenbits) = if rs1 == 0b00000 then None() else Some(X(rs1));
-  let asid : option(xlenbits) = if rs2 == 0b00000 then None() else Some(X(rs2));
+  let addr = if rs1 != zreg then Some(X(rs1)) else None();
+  // Note, the Sail model does not currently support Sv32 & SXLEN=32 on RV64.
+  // In that case this asidlen would be incorrect because the maximum asidlen
+  // is 9 but we always set it to 16 for RV64.
+  let asid = if rs2 != zreg then Some(X(rs2)[asidlen - 1 .. 0]) else None();
   match cur_privilege {
     User       => { handle_illegal(); RETIRE_FAIL },
     Supervisor => match (architecture(get_mstatus_SXL(mstatus)), mstatus[TVM]) {

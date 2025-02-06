@@ -114,7 +114,6 @@ foreach (xlen IN ITEMS 32 64)
             )
 
             set(sail_vm_srcs
-                "riscv_vmem_common.sail"
                 "riscv_vmem_pte.sail"
                 "riscv_vmem_ptw.sail"
                 "riscv_vmem_tlb.sail"
