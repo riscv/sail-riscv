@@ -22,17 +22,16 @@ mapping clause encdec = CSR(csr, rs1, rd, is_imm, op)
 
 function clause execute CSR(csr, rs1, rd, is_imm, op) = {
   let rs1_val : xlenbits = if is_imm then zero_extend(rs1) else X(rs1);
-  let isWrite : bool = match op {
-    CSRRW  => true,
-    _      => if is_imm then unsigned(rs1_val) != 0 else unsigned(rs1) != 0
-  };
-  if not(check_CSR(csr, cur_privilege, isWrite))
+  let is_CSR_Write = op == CSRRW | rs1 != zeros();
+  if not(check_CSR(csr, cur_privilege, is_CSR_Write))
   then { handle_illegal(); RETIRE_FAIL }
-  else if not(ext_check_CSR(csr, cur_privilege, isWrite))
+  else if not(ext_check_CSR(csr, cur_privilege, is_CSR_Write))
   then { ext_check_CSR_fail(); RETIRE_FAIL }
   else {
-    let csr_val = read_CSR(csr); /* could have side-effects, so technically shouldn't perform for CSRW[I] with rd == 0 */
-    if isWrite then {
+    /* CSRRW should not generate read side-effects if rd == 0 */
+    let is_CSR_Read = not(op == CSRRW & rd == zeros());
+    let csr_val : xlenbits = if is_CSR_Read then read_CSR(csr) else zeros();
+    if is_CSR_Write then {
       let new_val : xlenbits = match op {
         CSRRW => rs1_val,
         CSRRS => csr_val | rs1_val,
@@ -48,11 +47,6 @@ function clause execute CSR(csr, rs1, rd, is_imm, op) = {
     X(rd) = csr_val;
     RETIRE_SUCCESS
   }
-}
-
-mapping maybe_i : bool <-> string = {
-  true  <-> "i",
-  false <-> ""
 }
 
 mapping csr_mnemonic : csrop <-> string = {
