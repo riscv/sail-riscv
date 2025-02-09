@@ -64,6 +64,7 @@ find_program(SAIL_BIN "sail")
 if (NOT SAIL_BIN)
     message(FATAL_ERROR "Sail not found. See README.md for installation instructions.")
 endif()
+message(STATUS "Found sail: ${SAIL_BIN}")
 
 set(DEFAULT_ARCHITECTURES "rv32d;rv64d" CACHE STRING "Architectures to build by default (rv32f|rv64f|rv32d|rv64d)(_rvfi)? " )
 
