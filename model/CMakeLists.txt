@@ -218,7 +218,7 @@ foreach (xlen IN ITEMS 32 64)
                     COMMENT "Building C code from Sail model (${arch})"
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     COMMAND
-                        sail
+                        ${SAIL_BIN}
                         # Output file (without extension).
                         -o ${c_model_no_ext}
                         # Generate a file containing information about all possible branches.
