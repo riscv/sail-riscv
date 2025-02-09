@@ -66,6 +66,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_zbc.sail"
                 "riscv_insts_zbs.sail"
                 "riscv_insts_zcb.sail"
+                "riscv_insts_zcmop.sail"
                 "riscv_insts_zfh.sail"
                 # Zfa needs to be added after fext, dext and Zfh (as it needs
                 # definitions from those)
@@ -75,6 +76,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_zbkb.sail"
                 "riscv_insts_zbkx.sail"
                 "riscv_insts_zicond.sail"
+                "riscv_insts_zimop.sail"
                 ${vext_srcs}
                 "riscv_insts_zicbom.sail"
                 "riscv_insts_zicboz.sail"
