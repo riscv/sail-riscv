@@ -48,14 +48,43 @@ function pmpCheckRWX(ent, acc) = {
   }
 }
 
-// this needs to be called with the effective current privilege.
+/* this needs to be called with the effective current privilege */
 val pmpCheckPerms: (Pmpcfg_ent, AccessType(ext_access_type), Privilege) -> bool
 function pmpCheckPerms(ent, acc, priv) = {
-  match priv {
-    Machine => if   pmpLocked(ent)
-               then pmpCheckRWX(ent, acc)
-               else true,
-    _       => pmpCheckRWX(ent, acc)
+  if sys_has_mseccfg() & mseccfg[MML] == 0b1
+  then {
+    match (ent[L], ent[R], ent[W], ent[X]) {
+      (0b1, 0b0, 0b1, _) =>
+        match acc {
+          Execute(_) => true,
+          Read(_)    => priv == Machine & ent[X] == 0b1,
+          _          => false
+        },
+      (0b0, 0b0, 0b1, _) =>
+        match acc {
+          Read(_)  => true,
+          Write(_) => priv == Machine | ent[X] == 0b1,
+          _        => false
+        },
+      (0b1, 0b1, 0b1, 0b1) =>
+        match acc {
+          Read(_) => true,
+          _       => false
+        },
+      (_, _, _, _) =>
+        if (priv == Machine) == pmpLockBit(ent)
+        then pmpCheckRWX(ent, acc)
+        else false
+    }
+  }
+  else{
+    match priv {
+      Machine =>
+        if pmpLockBit(ent)
+        then pmpCheckRWX(ent, acc)
+        else true,
+      _       => pmpCheckRWX(ent, acc)
+    }
   }
 }
 
@@ -123,7 +152,18 @@ function pmpCheck forall 'n, 'n > 0. (addr: physaddr, width: int('n), acc: Acces
       PMP_Continue => (),
     }
   };
-  if priv == Machine then None() else Some(accessToFault(acc))
+  if priv == Machine
+  then {
+    if sys_has_mseccfg() & mseccfg[MMWP] == 0b1                /* Make Read, Write and execute denied by default, if condition meets for M mode */
+    then Some(accessToFault(acc))
+    else if sys_has_mseccfg() & mseccfg[MML] == 0b1            /* Make execute denied, if condition meets for M mode */
+    then match acc {
+      Execute(_) => Some(accessToFault(acc)),
+      _          => None()
+    }
+    else None()
+  }
+  else Some(accessToFault(acc))
 }
 
 function reset_pmp() -> unit = {
@@ -131,6 +171,9 @@ function reset_pmp() -> unit = {
     sys_pmp_count() == 0 | sys_pmp_count() == 16 | sys_pmp_count() == 64,
     "sys_pmp_count() must be 0, 16, or 64"
   );
+
+  mseccfg = [mseccfg with MML = 0b0, MMWP = 0b0, RLB = 0b0];
+  mseccfgh = zero_extend(0b0);
 
   foreach (i from 0 to 63) {
     // On reset the PMP register's A and L bits are set to 0 unless the plaform

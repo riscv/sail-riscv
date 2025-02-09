@@ -107,6 +107,11 @@ val sys_pmp_grain = pure "sys_pmp_grain" : unit -> range(0, 63)
 /* Which HPM counters are supported (as a bit mask). Bits [2 .. 0] are ignored. */
 val sys_writable_hpm_counters = pure "sys_writable_hpm_counters" : unit -> bits(32)
 
+/* Enable Smepmp */
+val sys_enable_smepmp = pure "sys_enable_smepmp" : unit -> bool
+/* TODO: for extension smmpm and zkr to enable */
+function sys_has_mseccfg() -> bool = sys_enable_smepmp()
+
 /* whether misa.v was enabled at boot */
 val sys_enable_vext = pure "sys_enable_vext" : unit -> bool
 
