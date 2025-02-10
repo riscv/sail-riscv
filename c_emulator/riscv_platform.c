@@ -72,6 +72,11 @@ bool sys_enable_sstc(unit u)
   return rv_enable_sstc;
 }
 
+bool sys_enable_svadu(unit u)
+{
+  return rv_enable_svadu;
+}
+
 uint64_t sys_pmp_count(unit u)
 {
   return rv_pmp_count;
