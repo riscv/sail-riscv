@@ -176,8 +176,6 @@ function have_privLevel(priv : priv_level) -> bool =
   }
 
 bitfield Mstatus : bits(64) = {
-  SD_64: 63,
-
   //MDT  : 42,
   //MPELP: 41,
 
@@ -189,8 +187,6 @@ bitfield Mstatus : bits(64) = {
 
   SXL  : 35 .. 34,
   UXL  : 33 .. 32,
-
-  SD_32: 31,
 
   //SDT  : 24,
   //SPELP: 23,
@@ -220,27 +216,10 @@ function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv :
   then privLevel_of_bits(m[MPP])
   else priv
 
-function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
-  if   xlen == 32
-  then architecture(RV32)
-  else m[SXL]
-}
-
-function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
-  if   xlen == 32
-  then architecture(RV32)
-  else m[UXL]
-}
-
-function get_mstatus_SD(m : Mstatus) -> bits(1) = {
-  if   xlen == 32 then m[SD_32]
-  else m[SD_64]
-}
-
-function set_mstatus_SD(m : Mstatus, v : bits(1)) -> Mstatus = {
-  if   xlen == 32
-  then [m with SD_32 = v]
-  else [m with SD_64 = v]
+function status_dirty(s : Mstatus) -> bits(1) = {
+  bool_to_bits(extStatus_of_bits(s[FS]) == Dirty |
+               extStatus_of_bits(s[XS]) == Dirty |
+               extStatus_of_bits(s[VS]) == Dirty)
 }
 
 function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
@@ -251,7 +230,9 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
    */
   let v = Mk_Mstatus(v);
 
-  let o = [o with
+  [o with
+    /* SD is handled in CSR accessors */
+
     // MDT = v[MDT],
     // MPELP = v[MPELP],
     // MPV = v[MPV],
@@ -285,16 +266,6 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     SPIE = v[SPIE],
     MIE = v[MIE],
     SIE = v[SIE],
-  ];
-
-  // Set dirty bit to OR of other status bits.
-  let dirty = extStatus_of_bits(o[FS]) == Dirty |
-              extStatus_of_bits(o[XS]) == Dirty |
-              extStatus_of_bits(o[VS]) == Dirty;
-
-  [o with
-    SD_64 = if xlen == 64 then bool_to_bits(dirty) else o[SD_64],
-    SD_32 = if xlen == 32 then bool_to_bits(dirty) else o[SD_32],
   ]
 }
 
@@ -314,23 +285,27 @@ mapping clause csr_name_map = 0x300  <-> "mstatus"
 function clause is_CSR_defined(0x300) = true // mstatus
 function clause is_CSR_defined(0x310) = xlen == 32 // mstatush
 
-function clause read_CSR(0x300) = mstatus.bits[xlen - 1 .. 0]
+function clause read_CSR(0x300) = status_dirty(mstatus) @ mstatus.bits[xlen - 2 .. 0]
 function clause read_CSR(0x310 if xlen == 32) = mstatus.bits[63 .. 32]
 
-function clause write_CSR((0x300, value) if xlen == 64) = { mstatus = legalize_mstatus(mstatus, value); mstatus.bits }
-function clause write_CSR((0x300, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, mstatus.bits[63 .. 32] @ value); mstatus.bits[31 .. 0] }
+function clause write_CSR((0x300, value) if xlen == 64) = { mstatus = legalize_mstatus(mstatus, value); status_dirty(mstatus) @ mstatus.bits[62 .. 0] }
+function clause write_CSR((0x300, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, mstatus.bits[63 .. 32] @ value); status_dirty(mstatus) @ mstatus.bits[30 .. 0] }
 function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, value @ mstatus.bits[31 .. 0]); mstatus.bits[63 .. 32] }
 
 /* architecture and extension checks */
 
 function cur_architecture() -> Architecture = {
-  let a : arch_xlen =
-    match cur_privilege {
-      Machine    => misa[MXL],
-      Supervisor => get_mstatus_SXL(mstatus),
-      User       => get_mstatus_UXL(mstatus)
-    };
-  architecture(a)
+  if   xlen == 32
+  then RV32
+  else {
+    let a : arch_xlen =
+      match cur_privilege {
+        Machine    => misa[MXL],
+        Supervisor => mstatus[SXL],
+        User       => mstatus[UXL],
+      };
+    architecture(a)
+  }
 }
 
 function in32BitMode() -> bool = {
@@ -708,10 +683,9 @@ function clause read_CSR(0xF15) = mconfigptr
 
 /* sstatus reveals a subset of mstatus */
 bitfield Sstatus : bits(64) = {
-  SD_64 : 63,
+  /* SD is handled in CSR accessors */
 
   UXL   : 33 .. 32,
-  SD_32 : 31,
 //  SDT   : 24,
 //  SPELP : 23,
   MXR   : 19,
@@ -729,9 +703,7 @@ function lower_mstatus(m : Mstatus) -> Sstatus = {
   let s = Mk_Sstatus(zeros());
 
   [s with
-    SD_64 = m[SD_64],
     UXL = m[UXL],
-    SD_32 = m[SD_32],
     //SDT = m[SDT],
     //SPELP = m[SPELP],
     MXR = m[MXR],
@@ -746,12 +718,7 @@ function lower_mstatus(m : Mstatus) -> Sstatus = {
 }
 
 function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
-  let dirty = extStatus_of_bits(s[FS]) == Dirty | extStatus_of_bits(s[XS]) == Dirty |
-              extStatus_of_bits(s[VS]) == Dirty;
-
   [m with
-    SD_64 = if xlen == 64 then bool_to_bits(dirty) else m[SD_64],
-    SD_32 = if xlen == 32 then bool_to_bits(dirty) else m[SD_32],
     UXL = s[UXL],
     //SDT = s[SDT],
     //SPELP = s[SPELP],
@@ -772,8 +739,8 @@ function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
 
 mapping clause csr_name_map = 0x100  <-> "sstatus"
 function clause is_CSR_defined(0x100) = extensionEnabled(Ext_S) // sstatus
-function clause read_CSR(0x100) = lower_mstatus(mstatus).bits[xlen - 1 .. 0]
-function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); mstatus.bits[xlen - 1 .. 0] }
+function clause read_CSR(0x100) = status_dirty(mstatus) @ lower_mstatus(mstatus).bits[xlen - 2 .. 0]
+function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); status_dirty(mstatus) @ mstatus.bits[xlen - 2 .. 0] }
 
 
 bitfield Sinterrupts : xlenbits = {
