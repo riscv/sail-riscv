@@ -33,11 +33,6 @@ val plat_cache_block_size_exp = pure {c: "plat_cache_block_size_exp", interprete
 val plat_ram_base = pure {c: "plat_ram_base", interpreter: "Platform.dram_base", lem: "plat_ram_base"} : unit -> physaddrbits
 val plat_ram_size = pure {c: "plat_ram_size", interpreter: "Platform.dram_size", lem: "plat_ram_size"} : unit -> physaddrbits
 
-/* whether the MMU should update dirty bits in PTEs */
-val plat_enable_dirty_update = pure {interpreter: "Platform.enable_dirty_update",
-                                     c: "plat_enable_dirty_update",
-                                     lem: "plat_enable_dirty_update"} : unit -> bool
-
 /* whether the platform supports misaligned accesses without trapping to M-mode. if false,
  * misaligned loads/stores are trapped to Machine mode.
  */

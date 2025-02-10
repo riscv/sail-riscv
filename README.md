@@ -121,6 +121,7 @@ Supported RISC-V ISA features
 - Svinval extension for fine-grained address-translation cache invalidation, v1.0
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
 - Physical Memory Protection (PMP)
+- Svadu Extension for Hardware Updating of A/D Bits, Version 1.0
 
 #### The following features are not currently supported:
 - The Hypervisor Extension.
