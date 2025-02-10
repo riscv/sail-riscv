@@ -176,7 +176,7 @@ function have_privLevel(priv : priv_level) -> bool =
   }
 
 bitfield Mstatus : bits(64) = {
-  SD_64: 63,
+  SD   : xlen - 1,
 
   //MDT  : 42,
   //MPELP: 41,
@@ -189,8 +189,6 @@ bitfield Mstatus : bits(64) = {
 
   SXL  : 35 .. 34,
   UXL  : 33 .. 32,
-
-  SD_32: 31,
 
   //SDT  : 24,
   //SPELP: 23,
@@ -230,17 +228,6 @@ function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
   if   xlen == 32
   then architecture(RV32)
   else m[UXL]
-}
-
-function get_mstatus_SD(m : Mstatus) -> bits(1) = {
-  if   xlen == 32 then m[SD_32]
-  else m[SD_64]
-}
-
-function set_mstatus_SD(m : Mstatus, v : bits(1)) -> Mstatus = {
-  if   xlen == 32
-  then [m with SD_32 = v]
-  else [m with SD_64 = v]
 }
 
 function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
@@ -292,10 +279,7 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
               extStatus_of_bits(o[XS]) == Dirty |
               extStatus_of_bits(o[VS]) == Dirty;
 
-  [o with
-    SD_64 = if xlen == 64 then bool_to_bits(dirty) else o[SD_64],
-    SD_32 = if xlen == 32 then bool_to_bits(dirty) else o[SD_32],
-  ]
+  [o with SD = bool_to_bits(dirty)]
 }
 
 register mstatus : Mstatus = {
@@ -708,10 +692,9 @@ function clause read_CSR(0xF15) = mconfigptr
 
 /* sstatus reveals a subset of mstatus */
 bitfield Sstatus : bits(64) = {
-  SD_64 : 63,
+  SD    : xlen - 1,
 
   UXL   : 33 .. 32,
-  SD_32 : 31,
 //  SDT   : 24,
 //  SPELP : 23,
   MXR   : 19,
@@ -729,9 +712,8 @@ function lower_mstatus(m : Mstatus) -> Sstatus = {
   let s = Mk_Sstatus(zeros());
 
   [s with
-    SD_64 = m[SD_64],
+    SD = m[SD],
     UXL = m[UXL],
-    SD_32 = m[SD_32],
     //SDT = m[SDT],
     //SPELP = m[SPELP],
     MXR = m[MXR],
@@ -750,8 +732,7 @@ function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
               extStatus_of_bits(s[VS]) == Dirty;
 
   [m with
-    SD_64 = if xlen == 64 then bool_to_bits(dirty) else m[SD_64],
-    SD_32 = if xlen == 32 then bool_to_bits(dirty) else m[SD_32],
+    SD = bool_to_bits(dirty),
     UXL = s[UXL],
     //SDT = s[SDT],
     //SPELP = s[SPELP],
