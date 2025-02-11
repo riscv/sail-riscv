@@ -61,7 +61,7 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
   };
 
   write_vmask(num_elem, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -106,7 +106,7 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
   };
 
   X(rd) = to_bits(xlen, count);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -142,7 +142,7 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
   };
 
   X(rd) = to_bits(xlen, index);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -182,7 +182,7 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
   };
 
   write_vmask(num_elem, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -222,7 +222,7 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
   };
 
   write_vmask(num_elem, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -266,7 +266,7 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
   };
 
   write_vmask(num_elem, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -306,7 +306,7 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -340,7 +340,7 @@ function clause execute(VID_V(vm, vd)) = {
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
