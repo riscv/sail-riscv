@@ -72,6 +72,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_zbc.sail"
                 "riscv_insts_zbs.sail"
                 "riscv_insts_zcb.sail"
+                "riscv_insts_zcmp.sail"
                 "riscv_insts_zfh.sail"
                 # Zfa needs to be added after fext, dext and Zfh (as it needs
                 # definitions from those)
