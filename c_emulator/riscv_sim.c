@@ -138,8 +138,10 @@ static struct option options[] = {
     {"disable-compressed",          no_argument,       0, 'C'                     },
     {"disable-writable-misa",       no_argument,       0, 'I'                     },
     {"disable-fdext",               no_argument,       0, 'F'                     },
+    {"disable-vector-ext",          no_argument,       0, 'W'                     },
     {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'                     },
     {"device-tree-blob",            required_argument, 0, 'b'                     },
+    {"dump-dts",                    no_argument,       0, 's'                     },
     {"terminal-log",                required_argument, 0, 't'                     },
     {"show-times",                  required_argument, 0, 'p'                     },
     {"report-arch",                 no_argument,       0, 'a'                     },
@@ -154,6 +156,7 @@ static struct option options[] = {
     {"trace-output",                required_argument, 0, OPT_TRACE_OUTPUT        },
     {"inst-limit",                  required_argument, 0, 'l'                     },
     {"enable-zfinx",                no_argument,       0, 'x'                     },
+    {"enable-bitmanip",             no_argument,       0, 'B'                     },
     {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
     {"enable-svinval",              no_argument,       0, OPT_ENABLE_SVINVAL      },
     {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
@@ -274,7 +277,6 @@ static int process_args(int argc, char **argv)
                     "B"
                     "d"
                     "m"
-                    "P"
                     "C"
                     "I"
                     "F"
