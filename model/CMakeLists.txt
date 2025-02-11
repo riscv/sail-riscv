@@ -409,7 +409,7 @@ foreach (xlen IN ITEMS 32 64)
                         --coq-lib mem_metadata
                         --coq-output-dir ${CMAKE_CURRENT_BINARY_DIR}
                         # The prefix of the output files.
-                        -o "riscv_${arch}"
+                        -o "coq_${arch}"
                         # Input files.
                         ${sail_srcs}
                 )
