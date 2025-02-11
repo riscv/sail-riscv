@@ -56,7 +56,13 @@
         "Svinval" : {
             "supported" : false
         },
+        "Zcd" : {
+            "supported" : true
+        },
         "Zcb" : {
+            "supported" : false
+        },
+        "Zcmp" : {
             "supported" : false
         },
         "Zfinx" : {
