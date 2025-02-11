@@ -16,6 +16,8 @@ extern uint64_t rv_vector_elen_exp;
 
 extern bool rv_enable_svinval;
 extern bool rv_enable_zcb;
+extern bool rv_enable_zcd;
+extern bool rv_enable_zcmp;
 extern bool rv_enable_zfinx;
 extern bool rv_enable_rvc;
 extern bool rv_enable_fdext;
