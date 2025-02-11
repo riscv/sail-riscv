@@ -165,6 +165,16 @@ extensions {
       requires exceptions, sys, I, B, M
       files extensions/C/zcb_insts.sail
     }
+    Zcmp {
+      Zcmp_types {
+        before sys
+        files extensions/Zcmp/zcmp_types.sail
+      }
+      Zcmp_insts {
+        requires sys, Zcmp_types
+        files extensions/Zcmp/zcmp_insts.sail
+      }
+    }
   }
 
   // Hypervisor
