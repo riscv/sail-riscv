@@ -1,0 +1,103 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, e.g. 1.0.0'
+        required: true
+      notes:
+        description: 'Release notes'
+        required: false
+      prerelease:
+        description: 'Is this a pre-release (beta, RC, etc.)?'
+        required: false
+        type: boolean
+      draft:
+        description: 'Is this a draft release (not public; you can publish it later)?'
+        required: false
+        type: boolean
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - name: linux-amd64
+            os: ubuntu-latest
+            container: rockylinux:8.9.20231119
+
+          # TODO: Mac. We need a Mac binary release of the Sail compiler first.
+          # - name: mac-arm64
+          #   os: macos-latest
+          #   container: ""
+
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+
+    steps:
+    # This must be before checkout otherwise Github will use a zip of the
+    # code instead of git clone.
+    - name: Install dependencies (Linux)
+      if: startsWith(matrix.os, 'ubuntu')
+      run: |
+        dnf update -y --enablerepo=devel
+        dnf install -y --enablerepo=devel \
+            pkg-config \
+            gmp-static \
+            zlib-static \
+            curl \
+            git \
+            make \
+            gcc \
+            gcc-c++ \
+            cmake \
+            ninja-build
+        curl --location --output sail.tar.gz https://github.com/rems-project/sail/releases/download/0.18-linux-binary/sail.tar.gz
+        tar --directory=/usr/local --strip-components=1 --extract --file sail.tar.gz
+
+    # TODO: Mac
+    # - name: Install dependencies (Mac)
+    #   if: startsWith(matrix.os, 'macos')
+    #   run: |
+    #     brew install --force --overwrite ...
+
+    - uses: actions/checkout@v4
+
+    - name: Build simulators and JSON
+      run: |
+        cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DSTATIC=TRUE
+        cd build
+        ninja all generated_docs_rv64d
+        ctest
+        cpack
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-${{ matrix.name }}
+        path: |
+          build/sail_riscv-*
+          build/model/riscv_model_rv64d.json
+        if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      # Required to create a release.
+      contents: write
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+    - name: Create release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          release-linux-amd64/sail_riscv-Linux-x86_64.tar.gz
+          release-linux-amd64/model/riscv_model_rv64d.json
+        fail_on_unmatched_files: true
+        tag_name: ${{ inputs.version }}
+        body: ${{ inputs.notes }}
+        prerelease: ${{ inputs.prerelease }}
+        draft: ${{ inputs.draft }}
