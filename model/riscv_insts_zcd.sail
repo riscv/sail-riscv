@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause extensionEnabled(Ext_Zcd) = extensionEnabled(Ext_Zca) & extensionEnabled(Ext_D) & (xlen == 32 | xlen == 64)
+function clause extensionEnabled(Ext_Zcd) = extensionEnabled(Ext_Zca) & extensionEnabled(Ext_D) & sys_enable_zcd() & not(sys_enable_zcmp()) & (xlen == 32 | xlen == 64)
 
 union clause ast = C_FLDSP : (bits(6), regidx)
 
