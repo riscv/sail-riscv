@@ -59,6 +59,8 @@ enum {
   OPT_ENABLE_ZICBOM,
   OPT_ENABLE_ZICBOZ,
   OPT_ENABLE_SSTC,
+  OPT_ENABLE_SVADU,
+  OPT_ENABLE_SVADE,
   OPT_CACHE_BLOCK_SIZE,
 };
 
@@ -435,6 +437,14 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "enabling Sstc extension.\n");
       rv_enable_sstc = true;
       break;
+    case OPT_ENABLE_SVADU:
+      fprintf(stderr, "enabling Svadu extension.\n");
+      rv_enable_svadu = true;
+      break;
+    case OPT_ENABLE_SVADE:
+      fprintf(stderr, "enabling Svade extension.\n");
+      rv_enable_svade = true;
+      break;
     case OPT_CACHE_BLOCK_SIZE:
       block_size_exp = ilog2(atol(optarg));
 
@@ -539,7 +549,7 @@ void init_spike(const char *f, uint64_t entry, uint64_t ram_size)
   bool mismatch = false;
   const char *isa = is_32bit_model() ? RV32ISA : RV64ISA;
   s = tv_init(isa, ram_size, 1);
-  if (tv_is_dirty_enabled(s) != rv_enable_dirty_update) {
+  if (tv_is_dirty_enabled(s) != (rv_enable_dirty_update && rv_enable_svadu)) {
     mismatch = true;
     fprintf(stderr,
             "inconsistent enable-dirty-update setting: spike %s, sail %s\n",
