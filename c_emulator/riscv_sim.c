@@ -62,7 +62,6 @@ enum {
   OPT_CACHE_BLOCK_SIZE,
 };
 
-static bool do_dump_dts = false;
 static bool do_show_times = false;
 struct tv_spike_t *s = NULL;
 char *term_log = NULL;
@@ -141,7 +140,6 @@ static struct option options[] = {
     {"disable-vector-ext",          no_argument,       0, 'W'                     },
     {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'                     },
     {"device-tree-blob",            required_argument, 0, 'b'                     },
-    {"dump-dts",                    no_argument,       0, 's'                     },
     {"terminal-log",                required_argument, 0, 't'                     },
     {"show-times",                  required_argument, 0, 'p'                     },
     {"report-arch",                 no_argument,       0, 'a'                     },
@@ -195,25 +193,6 @@ static void report_arch(void)
 static bool is_32bit_model(void)
 {
   return zxlen_val == 32;
-}
-
-static void dump_dts(void)
-{
-#ifdef ENABLE_SPIKE
-  size_t dts_len = 0;
-  const char *isa = is_32bit_model() ? RV32ISA : RV64ISA;
-  struct tv_spike_t *s = tv_init(isa, rv_ram_size, 0);
-  tv_get_dts(s, NULL, &dts_len);
-  if (dts_len > 0) {
-    unsigned char *dts = (unsigned char *)malloc(dts_len + 1);
-    dts[dts_len] = '\0';
-    tv_get_dts(s, dts, &dts_len);
-    fprintf(stdout, "%s\n", dts);
-  }
-#else
-  fprintf(stdout, "Spike linkage is currently needed to generate DTS.\n");
-#endif
-  exit(0);
 }
 
 static void read_dtb(const char *path)
@@ -282,7 +261,6 @@ static int process_args(int argc, char **argv)
                     "F"
                     "W"
                     "i"
-                    "s"
                     "p"
                     "z:"
                     "b:"
@@ -361,9 +339,6 @@ static int process_args(int argc, char **argv)
       fprintf(stderr,
               "enabling FIOM (Fence of I/O implies Memory) bit in menvcfg.\n");
       rv_enable_writable_fiom = true;
-      break;
-    case 's':
-      do_dump_dts = true;
       break;
     case 'p':
       fprintf(stderr, "will show execution times on completion.\n");
@@ -466,8 +441,6 @@ static int process_args(int argc, char **argv)
       break;
     }
   }
-  if (do_dump_dts)
-    dump_dts();
 #ifdef RVFI_DII
   if (optind > argc || (optind == argc && !rvfi_dii))
     print_usage(argv[0], 0);
