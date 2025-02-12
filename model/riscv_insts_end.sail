@@ -6,34 +6,27 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* Put the illegal instructions last to use their wildcard match. */
+/* End scattered definitions and default to illegal instructions if no match */
 
-/* ****************************************************************** */
+end ast
+
+function clause extensionEnabled(_) = false
+end extensionEnabled
+end extension
 
 mapping clause encdec = ILLEGAL(s) <-> s
-
-function clause execute (ILLEGAL(s)) = { handle_illegal(); RETIRE_FAIL }
-
-mapping clause assembly = ILLEGAL(s) <-> "illegal" ^ spc() ^ hex_bits_32(s)
-
-/* ****************************************************************** */
+end encdec
 
 mapping clause encdec_compressed = C_ILLEGAL(s) <-> s
-
-function clause execute C_ILLEGAL(s) = { handle_illegal(); RETIRE_FAIL }
-
-mapping clause assembly = C_ILLEGAL(s) <-> "c.illegal" ^ spc() ^ hex_bits_16(s)
-
-/* ****************************************************************** */
-
-/* End definitions */
-end extension
-end extensionEnabled
-end ast
-end execute
-end assembly
-end encdec
 end encdec_compressed
+
+function clause execute ILLEGAL(s) = { handle_illegal(); RETIRE_FAIL }
+function clause execute C_ILLEGAL(s) = { handle_illegal(); RETIRE_FAIL }
+end execute
+
+mapping clause assembly = ILLEGAL(s) <-> "illegal" ^ spc() ^ hex_bits_32(s)
+mapping clause assembly = C_ILLEGAL(s) <-> "c.illegal" ^ spc() ^ hex_bits_16(s)
+end assembly
 
 val print_insn : ast -> string
 function print_insn insn = assembly(insn)
