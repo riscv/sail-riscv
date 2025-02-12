@@ -7,7 +7,7 @@
 /*=======================================================================================*/
 
 
-function clause extensionEnabled(Ext_Zcmp) = extensionEnabled(Ext_Zca) & not(extensionEnabled(Ext_Zcd)) & (xlen == 32 | xlen == 64)
+function clause extensionEnabled(Ext_Zcmp) = extensionEnabled(Ext_Zca) & sys_enable_zcmp() & not(sys_enable_zcd()) & (xlen == 32 | xlen == 64)
 
 function str_dec(str: string) -> int = {
   let base : int = 10;
