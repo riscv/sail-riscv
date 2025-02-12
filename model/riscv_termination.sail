@@ -56,6 +56,7 @@ function extensionEnabled_measure(ext : extension) -> int =
     Ext_Zcb => 2, // Ext_Zca
     Ext_Zcd => 2, // Ext_Zca, (Ext_D)
     Ext_Zcf => 2, // Ext_Zca, (Ext_F)
+    Ext_Zcmp => 2, // Ext_Zca
     _ => 0
   }
 termination_measure extensionEnabled(ext) = extensionEnabled_measure(ext)
