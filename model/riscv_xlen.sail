@@ -13,6 +13,7 @@ type xlenbits         = bits(xlen)
 // Variable versions of the above types. Variables and types
 // are disjoint in Sail so they are allowed to have the same name.
 // This saves typing `sizeof()` everywhere.
+let log2_xlen_bytes = sizeof(log2_xlen_bytes)
 let xlen_bytes = sizeof(xlen_bytes)
 let xlen = sizeof(xlen)
 
