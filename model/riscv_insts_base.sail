@@ -210,9 +210,9 @@ mapping encdec_sop : sop <-> bits(3) = {
   RISCV_SRAI <-> 0b101
 }
 
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SLLI) <-> 0b000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == bitzero
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) <-> 0b000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == bitzero
-mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) <-> 0b010000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == bitzero
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SLLI) if xlen == 64 | shamt[5] == bitzero <-> 0b000000 @ shamt @ rs1 @ 0b001 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == bitzero
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRLI) if xlen == 64 | shamt[5] == bitzero <-> 0b000000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == bitzero
+mapping clause encdec = SHIFTIOP(shamt, rs1, rd, RISCV_SRAI) if xlen == 64 | shamt[5] == bitzero <-> 0b010000 @ shamt @ rs1 @ 0b101 @ rd @ 0b0010011 if xlen == 64 | shamt[5] == bitzero
 
 function clause execute (SHIFTIOP(shamt, rs1, rd, op)) = {
   let rs1_val = X(rs1);
