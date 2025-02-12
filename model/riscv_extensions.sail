@@ -71,6 +71,8 @@ enum clause extension = Ext_Zcb
 enum clause extension = Ext_Zcd
 // Code Size Reduction: compressed single precision floating point loads and stores
 enum clause extension = Ext_Zcf
+// Code Size Reduction: compressed push/pop and double move instructions
+enum clause extension = Ext_Zcmp
 
 // Bit Manipulation: Address generation
 enum clause extension = Ext_Zba
