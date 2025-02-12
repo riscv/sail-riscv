@@ -103,6 +103,8 @@ enum clause extension = Ext_Zksh
 // Floating-Point in Integer Registers (half precision)
 enum clause extension = Ext_Zhinx
 
+// Count Overflow and Mode-Based Filtering
+enum clause extension = Ext_Sscofpmf
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 // Fine-Grained Address-Translation Cache Invalidation

@@ -117,6 +117,7 @@ Supported RISC-V ISA features
 - Zkr extension for entropy source, v1.0
 - V extension for vector operations, v1.0
 - Machine, Supervisor, and User modes
+- Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
 - Svinval extension for fine-grained address-translation cache invalidation, v1.0
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems

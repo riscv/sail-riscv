@@ -162,13 +162,25 @@ mapping clause csr_name_map = 0xB9D  <-> "mhpmcounter29h"
 mapping clause csr_name_map = 0xB9E  <-> "mhpmcounter30h"
 mapping clause csr_name_map = 0xB9F  <-> "mhpmcounter31h"
 
-// HPM (Hardware Performance Monitoring) counters. The lowest three values are
-// not used but they are defined for simplicity.
-register mhpmcounter : vector(32, bits(64))
+bitfield HpmEvent : bits(64) = {
+  // Sscofpmf fields.
+  OF    : 63,
+  MINH  : 62,
+  SINH  : 61,
+  UINH  : 60,
+  VSINH : 59,
+  VUINH : 58,
+
+  event : 31 .. 0,
+}
 
 // HPM events selector. These control what the HPM counters measure. The lowest
 // three values are not used but they are defined for simplicity.
-register mhpmevent : vector(32, xlenbits)
+register mhpmevent : vector(32, HpmEvent)
+
+// HPM (Hardware Performance Monitoring) counters. The lowest three values are
+// not used but they are defined for simplicity.
+register mhpmcounter : vector(32, bits(64))
 
 // Valid HPM counter indices. The lowest three are used for mcycle, mtime and minstret.
 type hpmidx = range(3, 31)
@@ -180,9 +192,21 @@ function hpmidx_from_bits(b : bits(5)) -> hpmidx = {
   index
 }
 
+function legalize_hpmevent(v : HpmEvent) -> HpmEvent = {
+  [ Mk_HpmEvent(zeros()) with
+    OF = if extensionEnabled(Ext_Sscofpmf) then v[OF] else 0b0,
+    MINH  = if extensionEnabled(Ext_Sscofpmf) then v[MINH] else 0b0,
+    SINH  = if extensionEnabled(Ext_Sscofpmf) & extensionEnabled(Ext_S) then v[SINH] else 0b0,
+    UINH  = if extensionEnabled(Ext_Sscofpmf) & extensionEnabled(Ext_U) then v[UINH] else 0b0,
+    VSINH = 0b0, // Hypervisor not supported
+    VUINH = 0b0, // Hypervisor not supported
+    event = v[event],
+  ]
+}
+
 function read_mhpmcounter(index : hpmidx) -> xlenbits = mhpmcounter[index][(xlen - 1) .. 0]
 function read_mhpmcounterh(index : hpmidx) -> bits(32) = mhpmcounter[index][63 .. 32]
-function read_mhpmevent(index : hpmidx) -> xlenbits = mhpmevent[index]
+function read_mhpmevent(index : hpmidx) -> xlenbits = mhpmevent[index].bits[(xlen - 1) .. 0]
 
 // Write the HPM CSRs. These return the new value of the CSR, for use in writeCSR.
 function write_mhpmcounter(index : hpmidx, value : xlenbits) -> unit =
@@ -192,7 +216,12 @@ function write_mhpmcounterh(index : hpmidx, value : bits(32)) -> unit =
   if sys_writable_hpm_counters()[index] == bitone then mhpmcounter[index][63 .. 32] = value
 
 function write_mhpmevent(index : hpmidx, value : xlenbits) -> unit =
-  if sys_writable_hpm_counters()[index] == bitone then mhpmevent[index] = value
+  if sys_writable_hpm_counters()[index] == bitone then
+  mhpmevent[index] = legalize_hpmevent(Mk_HpmEvent(match xlen {
+    32 => mhpmevent[index].bits[63 .. 32] @ value,
+    64 => value,
+    _ => internal_error(__FILE__, __LINE__, "Unsupported xlen"),
+  }))
 
 /* Hardware Performance Monitoring event selection */
 function clause is_CSR_defined(0b0011001 /* 0x320 */ @ index : bits(5) if unsigned(index) >= 3) = extensionEnabled(Ext_Zihpm) // mhpmevent3..31
