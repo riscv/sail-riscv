@@ -28,6 +28,8 @@ enum clause extension = Ext_S
 // User
 enum clause extension = Ext_U
 
+// Cache blocks must be 64 bytes in size
+enum clause extension = Ext_Zic64b
 // Cache-Block Management Instructions
 enum clause extension = Ext_Zicbom
 // Cache-Block Zero Instructions
