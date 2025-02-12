@@ -51,9 +51,9 @@ function tlb_get_ppn forall 'v, is_sv_mode('v) . (
 ) -> ppn_bits('v) = {
   // Sometimes the VPN is longer than the PPN (Sv39) and sometimes it is
   // shorter. This is ok because the most significant component can never be
-  // included in the levelMask. To avoid complicated truncation and zero
+  // included in the levelMask. To avoid complicated truncation and sign
   // extension we just extend to 64 bits and truncate at the end.
-  let vpn : bits(64) = zero_extend(vpn);
+  let vpn : bits(64) = sign_extend(vpn);
   let levelMask : bits(64) = zero_extend(ent.levelMask);
   let ppn : bits(64) = zero_extend(ent.ppn);
 
@@ -104,7 +104,7 @@ function flush_TLB_Entry(ent   : TLB_Entry,
   };
   let addr_matches : bool = match vaddr {
     Some(vaddr) => {
-      let vaddr : bits(64) = zero_extend(vaddr);
+      let vaddr : bits(64) = sign_extend(vaddr);
       ent.vpn == (vaddr[56 .. pagesize_bits] & ~(ent.levelMask))
     },
     None() => true,
@@ -122,7 +122,7 @@ function lookup_TLB forall 'v, is_sv_mode('v) . (
   match tlb[index] {
     None() => None(),
     Some(entry) => {
-      if match_TLB_Entry(entry, asid, zero_extend(vpn)) then Some((index, entry)) else None()
+      if match_TLB_Entry(entry, asid, sign_extend(vpn)) then Some((index, entry)) else None()
     },
   }
 }
@@ -149,7 +149,7 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
                                  pte       = zero_extend(pte),
                                  pteAddr   = pteAddr,
                                  levelMask = zero_extend(levelMask),
-                                 vpn       = zero_extend(vpn),
+                                 vpn       = sign_extend(vpn),
                                  ppn       = zero_extend(ppn)};
 
   // Add the TLB entry. Note that this may be a super-page, but we still want
