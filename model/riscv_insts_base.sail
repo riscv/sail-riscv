@@ -11,6 +11,7 @@
 
 function clause extensionEnabled(Ext_C) = misa[C] == 0b1
 function clause extensionEnabled(Ext_Zca) = extensionEnabled(Ext_C)
+function clause extensionEnabled(Ext_Zic64b) = plat_cache_block_size_exp() == 6
 
 /* ****************************************************************** */
 union clause ast = UTYPE : (bits(20), regidx, uop)
