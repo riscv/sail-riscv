@@ -249,10 +249,10 @@ function clause execute (RTYPE(rs2, rs1, rd, op)) = {
     RISCV_AND  => X(rs1) & X(rs2),
     RISCV_OR   => X(rs1) | X(rs2),
     RISCV_XOR  => X(rs1) ^ X(rs2),
-    RISCV_SLL  => X(rs1) << X(rs2)[log2_xlen_bytes + 2 .. 0],
-    RISCV_SRL  => X(rs1) >> X(rs2)[log2_xlen_bytes + 2 .. 0],
+    RISCV_SLL  => X(rs1) << X(rs2)[log2_xlen - 1 .. 0],
+    RISCV_SRL  => X(rs1) >> X(rs2)[log2_xlen - 1 .. 0],
     RISCV_SUB  => X(rs1) - X(rs2),
-    RISCV_SRA  => shift_bits_right_arith(X(rs1), X(rs2)[log2_xlen_bytes + 2 .. 0]),
+    RISCV_SRA  => shift_bits_right_arith(X(rs1), X(rs2)[log2_xlen - 1 .. 0]),
   };
   RETIRE_SUCCESS
 }
