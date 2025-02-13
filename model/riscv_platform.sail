@@ -213,7 +213,6 @@ function clint_dispatch() -> unit = {
     (if extensionEnabled(Ext_Sstc) then ", mip.STI <- " ^ BitStr(mip[STI]) else "") ^ ")");
 }
 
-/* The rreg effect is due to checking mtime. */
 val clint_store: forall 'n, 'n > 0. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
 function clint_store(physaddr(addr), width, data) = {
   let addr = addr - plat_clint_base ();
@@ -333,7 +332,6 @@ function htif_load(t, physaddr(paddr), width) = {
   }
 }
 
-/* The rreg,wreg effects are an artifact of using 'register' to implement device state. */
 val htif_store: forall 'n, 0 < 'n <= 8. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
 function htif_store(physaddr(paddr), width, data) = {
   if   get_config_print_platform()
