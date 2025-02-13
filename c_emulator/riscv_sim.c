@@ -23,12 +23,6 @@
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
 
-#ifdef ENABLE_SPIKE
-#include "tv_spike_intf.h"
-#else
-struct tv_spike_t;
-#endif
-
 const char *RV64ISA = "RV64IMAC";
 const char *RV32ISA = "RV32IMAC";
 
@@ -62,9 +56,7 @@ enum {
   OPT_CACHE_BLOCK_SIZE,
 };
 
-static bool do_dump_dts = false;
 static bool do_show_times = false;
-struct tv_spike_t *s = NULL;
 char *term_log = NULL;
 static const char *trace_log_path = NULL;
 FILE *trace_log = NULL;
@@ -79,9 +71,6 @@ static unsigned rvfi_trace_version = 1;
 static int rvfi_dii_port;
 static int rvfi_dii_sock;
 #endif
-
-unsigned char *spike_dtb = NULL;
-size_t spike_dtb_len = 0;
 
 char *sig_file = NULL;
 uint64_t mem_sig_start = 0;
@@ -141,7 +130,6 @@ static struct option options[] = {
     {"disable-vector-ext",          no_argument,       0, 'W'                     },
     {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'                     },
     {"device-tree-blob",            required_argument, 0, 'b'                     },
-    {"dump-dts",                    no_argument,       0, 's'                     },
     {"terminal-log",                required_argument, 0, 't'                     },
     {"show-times",                  required_argument, 0, 'p'                     },
     {"report-arch",                 no_argument,       0, 'a'                     },
@@ -195,25 +183,6 @@ static void report_arch(void)
 static bool is_32bit_model(void)
 {
   return zxlen_val == 32;
-}
-
-static void dump_dts(void)
-{
-#ifdef ENABLE_SPIKE
-  size_t dts_len = 0;
-  const char *isa = is_32bit_model() ? RV32ISA : RV64ISA;
-  struct tv_spike_t *s = tv_init(isa, rv_ram_size, 0);
-  tv_get_dts(s, NULL, &dts_len);
-  if (dts_len > 0) {
-    unsigned char *dts = (unsigned char *)malloc(dts_len + 1);
-    dts[dts_len] = '\0';
-    tv_get_dts(s, dts, &dts_len);
-    fprintf(stdout, "%s\n", dts);
-  }
-#else
-  fprintf(stdout, "Spike linkage is currently needed to generate DTS.\n");
-#endif
-  exit(0);
 }
 
 static void read_dtb(const char *path)
@@ -282,7 +251,6 @@ static int process_args(int argc, char **argv)
                     "F"
                     "W"
                     "i"
-                    "s"
                     "p"
                     "z:"
                     "b:"
@@ -361,9 +329,6 @@ static int process_args(int argc, char **argv)
       fprintf(stderr,
               "enabling FIOM (Fence of I/O implies Memory) bit in menvcfg.\n");
       rv_enable_writable_fiom = true;
-      break;
-    case 's':
-      do_dump_dts = true;
       break;
     case 'p':
       fprintf(stderr, "will show execution times on completion.\n");
@@ -466,8 +431,6 @@ static int process_args(int argc, char **argv)
       break;
     }
   }
-  if (do_dump_dts)
-    dump_dts();
 #ifdef RVFI_DII
   if (optind > argc || (optind == argc && !rvfi_dii))
     print_usage(argv[0], 0);
@@ -533,74 +496,6 @@ uint64_t load_sail(char *f, bool main_file)
   return entry;
 }
 
-void init_spike(const char *f, uint64_t entry, uint64_t ram_size)
-{
-#ifdef ENABLE_SPIKE
-  bool mismatch = false;
-  const char *isa = is_32bit_model() ? RV32ISA : RV64ISA;
-  s = tv_init(isa, ram_size, 1);
-  if (tv_is_dirty_enabled(s) != rv_enable_dirty_update) {
-    mismatch = true;
-    fprintf(stderr,
-            "inconsistent enable-dirty-update setting: spike %s, sail %s\n",
-            tv_is_dirty_enabled(s) ? "on" : "off",
-            rv_enable_dirty_update ? "on" : "off");
-  }
-  if (tv_is_misaligned_enabled(s) != rv_enable_misaligned) {
-    mismatch = true;
-    fprintf(stderr,
-            "inconsistent enable-misaligned-access setting: "
-            "spike %s, sail %s\n",
-            tv_is_misaligned_enabled(s) ? "on" : "off",
-            rv_enable_misaligned ? "on" : "off");
-  }
-  if (tv_ram_size(s) != rv_ram_size) {
-    mismatch = true;
-    fprintf(stderr,
-            "inconsistent ram-size setting: spike 0x%" PRIx64
-            ", sail 0x%" PRIx64 "\n",
-            tv_ram_size(s), rv_ram_size);
-  }
-  if (mismatch)
-    exit(1);
-
-  /* The initialization order below matters. */
-  tv_set_verbose(s, 1);
-  tv_set_dtb_in_rom(s, 1);
-  tv_load_elf(s, f);
-  tv_reset(s);
-
-  /* sync the insns per tick */
-  rv_insns_per_tick = tv_get_insns_per_tick(s);
-
-  /* get DTB from spike */
-  tv_get_dtb(s, NULL, &spike_dtb_len);
-  if (spike_dtb_len > 0) {
-    spike_dtb = (unsigned char *)malloc(spike_dtb_len + 1);
-    spike_dtb[spike_dtb_len] = '\0';
-    if (!tv_get_dtb(s, spike_dtb, &spike_dtb_len)) {
-      fprintf(stderr, "Got %" PRIu64 " bytes of dtb at %p\n", spike_dtb_len,
-              spike_dtb);
-    } else {
-      fprintf(stderr, "Error getting DTB from Spike.\n");
-      exit(1);
-    }
-  } else {
-    fprintf(stderr, "No DTB available from Spike.\n");
-  }
-#else
-  s = NULL;
-#endif
-}
-
-void tick_spike()
-{
-#ifdef ENABLE_SPIKE
-  tv_tick_clock(s);
-  tv_step_io(s);
-#endif
-}
-
 void init_sail_reset_vector(uint64_t entry)
 {
 #define RST_VEC_SIZE 8
@@ -624,29 +519,6 @@ void init_sail_reset_vector(uint64_t entry)
     for (size_t i = 0; i < dtb_len; i++)
       write_mem(addr++, dtb[i]);
   }
-
-#ifdef ENABLE_SPIKE
-  if (dtb && dtb_len) {
-    // Ensure that Spike's DTB matches the one provided.
-    bool matched = dtb_len == spike_dtb_len;
-    if (matched) {
-      for (size_t i = 0; i < dtb_len; i++)
-        matched = matched && (dtb[i] == spike_dtb[i]);
-    }
-    if (!matched) {
-      fprintf(stderr, "Provided DTB does not match Spike's!\n");
-      exit(1);
-    }
-  } else {
-    if (spike_dtb_len > 0) {
-      // Use the DTB from Spike.
-      for (size_t i = 0; i < spike_dtb_len; i++)
-        write_mem(addr++, spike_dtb[i]);
-    } else {
-      fprintf(stderr, "Running without rom device tree.\n");
-    }
-  }
-#endif
 
   /* zero-fill to page boundary */
   const int align = 0x1000;
@@ -684,15 +556,6 @@ void reinit_sail(uint64_t elf_entry)
   model_fini();
   model_init();
   init_sail(elf_entry);
-}
-
-int init_check(struct tv_spike_t *s)
-{
-  int passed = 1;
-#ifdef ENABLE_SPIKE
-  passed &= tv_check_csr(s, CSR_MISA, zmisa.zMisa_chunk_0);
-#endif
-  return passed;
 }
 
 void write_signature(const char *file)
@@ -740,9 +603,6 @@ void finish(int ec)
     write_signature(sig_file);
 
   model_fini();
-#ifdef ENABLE_SPIKE
-  tv_free(s);
-#endif
   if (gettimeofday(&run_end, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
     exit(1);
@@ -760,71 +620,6 @@ void finish(int ec)
   }
   close_logs();
   exit(ec);
-}
-
-int compare_states(struct tv_spike_t *s)
-{
-  int passed = 1;
-
-#ifdef ENABLE_SPIKE
-#define TV_CHECK(reg, spike_reg, sail_reg)                                     \
-  passed &= tv_check_##reg(s, spike_reg, sail_reg);
-
-  // fix default C enum map for cur_privilege
-  uint8_t priv = (zcur_privilege == 2) ? 3 : zcur_privilege;
-  passed &= tv_check_priv(s, priv);
-
-  passed &= tv_check_pc(s, zPC);
-
-  TV_CHECK(gpr, 1, zx1);
-  TV_CHECK(gpr, 2, zx2);
-  TV_CHECK(gpr, 3, zx3);
-  TV_CHECK(gpr, 4, zx4);
-  TV_CHECK(gpr, 5, zx5);
-  TV_CHECK(gpr, 6, zx6);
-  TV_CHECK(gpr, 7, zx7);
-  TV_CHECK(gpr, 8, zx8);
-  TV_CHECK(gpr, 9, zx9);
-  TV_CHECK(gpr, 10, zx10);
-  TV_CHECK(gpr, 11, zx11);
-  TV_CHECK(gpr, 12, zx12);
-  TV_CHECK(gpr, 13, zx13);
-  TV_CHECK(gpr, 14, zx14);
-  TV_CHECK(gpr, 15, zx15);
-  TV_CHECK(gpr, 15, zx15);
-  TV_CHECK(gpr, 16, zx16);
-  TV_CHECK(gpr, 17, zx17);
-  TV_CHECK(gpr, 18, zx18);
-  TV_CHECK(gpr, 19, zx19);
-  TV_CHECK(gpr, 20, zx20);
-  TV_CHECK(gpr, 21, zx21);
-  TV_CHECK(gpr, 22, zx22);
-  TV_CHECK(gpr, 23, zx23);
-  TV_CHECK(gpr, 24, zx24);
-  TV_CHECK(gpr, 25, zx25);
-  TV_CHECK(gpr, 25, zx25);
-  TV_CHECK(gpr, 26, zx26);
-  TV_CHECK(gpr, 27, zx27);
-  TV_CHECK(gpr, 28, zx28);
-  TV_CHECK(gpr, 29, zx29);
-  TV_CHECK(gpr, 30, zx30);
-  TV_CHECK(gpr, 31, zx31);
-
-  /* some selected CSRs for now */
-
-  TV_CHECK(csr, CSR_MCAUSE, zmcause.zMcause_chunk_0);
-  TV_CHECK(csr, CSR_MEPC, zmepc);
-  TV_CHECK(csr, CSR_MTVAL, zmtval);
-  TV_CHECK(csr, CSR_MSTATUS, zmstatus);
-
-  TV_CHECK(csr, CSR_SCAUSE, zscause.zMcause_chunk_0);
-  TV_CHECK(csr, CSR_SEPC, zsepc);
-  TV_CHECK(csr, CSR_STVAL, zstval);
-
-#undef TV_CHECK
-#endif
-
-  return passed;
 }
 
 void flush_logs(void)
@@ -897,7 +692,6 @@ void rvfi_send_trace(unsigned version)
 
 void run_sail(void)
 {
-  bool spike_done;
   bool stepped;
   bool diverged = false;
 
@@ -1045,30 +839,7 @@ void run_sail(void)
       fprintf(stdout, "kips: %" PRIu64 "\n",
               ((uint64_t)1000) * 0x100000 / (end_us - start_us));
     }
-#ifdef ENABLE_SPIKE
-    { /* run a Spike step */
-      tv_step(s);
-      spike_done = tv_is_done(s);
-      flush_logs();
-    }
 
-    if (zhtif_done) {
-      if (!spike_done) {
-        fprintf(stdout, "Sail done (exit-code %" PRIi64 "), but not Spike!\n",
-                zhtif_exit_code);
-        exit(1);
-      }
-    } else {
-      if (spike_done) {
-        fprintf(stdout, "Spike done, but not Sail!\n");
-        exit(1);
-      }
-    }
-    if (!compare_states(s)) {
-      diverged = true;
-      break;
-    }
-#endif
     if (zhtif_done) {
       /* check exit code */
       if (zhtif_exit_code == 0)
@@ -1081,8 +852,6 @@ void run_sail(void)
       insn_cnt = 0;
       ztick_clock(UNIT);
       ztick_platform(UNIT);
-
-      tick_spike();
     }
   }
 
@@ -1099,15 +868,6 @@ step_exception:
 
 void init_logs()
 {
-#ifdef ENABLE_SPIKE
-  // The Spike interface uses stdout for terminal output, and stderr for logs.
-  // Do the same here.
-  if (dup2(1, 2) < 0) {
-    fprintf(stderr, "Unable to dup 1 -> 2: %s\n", strerror(errno));
-    exit(1);
-  }
-#endif
-
   if (term_log != NULL
       && (term_fd = open(term_log, O_WRONLY | O_CREAT | O_TRUNC,
                          S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR))
@@ -1213,14 +973,7 @@ int main(int argc, char **argv)
     (void)load_sail(argv[i], /*main_file=*/false);
   }
 
-  /* initialize spike before sail so that we can access the device-tree blob,
-   * until we roll our own.
-   */
-  init_spike(initial_elf_file, entry, rv_ram_size);
   init_sail(entry);
-
-  if (!init_check(s))
-    finish(1);
 
   if (gettimeofday(&init_end, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));

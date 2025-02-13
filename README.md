@@ -218,7 +218,7 @@ Sequential execution
 
 The model builds a C emulator that can execute RISC-V ELF
 files, and both emulators provide platform support sufficient to boot
-Linux, FreeBSD and seL4. The C emulator can be linked against the Spike emulator for execution with per-instruction tandem-verification.
+Linux, FreeBSD and seL4.
 
 The C emulator, for the Linux boot, currently runs at approximately
 300 KIPS on an Intel i7-7700 (when detailed per-instruction tracing
@@ -247,14 +247,6 @@ directly inject instructions into the C emulator and produce trace
 information in RVFI format.  This has been used for cross testing
 against spike and the [RVBS](https://github.com/CTSRD-CHERI/RVBS)
 specification written in Bluespec SystemVerilog.
-
-The C emulator can also be directly linked to Spike, which provides
-tandem-verification on ELF binaries (including OS boots).  This is
-often useful in debugging OS boot issues in the model when the boot is
-known working on Spike.  It is also useful to detect platform-specific
-implementation choices in Spike that are not mandated by the ISA
-specification.
-
 
 Concurrent execution
 --------------------
