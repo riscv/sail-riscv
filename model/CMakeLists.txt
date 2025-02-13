@@ -433,6 +433,17 @@ foreach (xlen IN ITEMS 32 64)
                         --memo-z3
                         --require-version 0.19
                         --lean-output-dir ${CMAKE_CURRENT_BINARY_DIR}
+                        --lean-force-output
+                        --lean-noncomputable
+                        --lean-noncomputable-function encdec_forwards
+                        --lean-noncomputable-function encdec_backwards
+                        --lean-noncomputable-function encdec_forwards_matches
+                        --lean-noncomputable-function encdec_backwards_matches
+                        --lean-noncomputable-function encdec_compressed_forwards
+                        --lean-noncomputable-function encdec_compressed_backwards
+                        --lean-noncomputable-function encdec_compressed_forwards_matches
+                        --lean-noncomputable-function encdec_compressed_backwards_matches
+                        --lean-import-file ../handwritten_support/RiscvExtras.lean
                         -o "Lean_${arch_uppercase}"
                         ${sail_srcs}
                 )
