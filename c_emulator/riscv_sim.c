@@ -842,10 +842,12 @@ void run_sail(void)
 
     if (zhtif_done) {
       /* check exit code */
-      if (zhtif_exit_code == 0)
+      if (zhtif_exit_code == 0) {
         fprintf(stdout, "SUCCESS\n");
-      else
+      } else {
         fprintf(stdout, "FAILURE: %" PRIi64 "\n", zhtif_exit_code);
+        exit(1);
+      }
     }
 
     if (insn_cnt == rv_insns_per_tick) {
