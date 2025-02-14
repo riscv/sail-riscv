@@ -10,7 +10,7 @@
 
 function clause extensionEnabled(Ext_Zvkned) = true
 
-val	 zvk_check_elements : (int, int, int, int) -> bool
+val      zvk_check_elements : (int, int, int, int) -> bool
 function zvk_check_elements(VLEN, num_elem, LMUL, SEW) = {
   ((unsigned(vl)%num_elem) != 0) | ((unsigned(vstart)%num_elem) != 0) | (LMUL*VLEN) < (num_elem*SEW)
 }
@@ -20,7 +20,7 @@ mapping vv_or_vs : string <-> bits(7) = {
   "vs" <-> 0b1010011,
 }
 
-val	 aes_rotword : bits(32) -> bits(32)
+val      aes_rotword : bits(32) -> bits(32)
 function aes_rotword(x) = {
   let a0 : bits (8) = x[ 7.. 0];
   let a1 : bits (8) = x[15.. 8];
@@ -38,12 +38,12 @@ mapping vaesef_mnemonic : bits(7) <-> string = {
 
 union clause ast = RISCV_VAESEF : (regidx, regidx, string)
 
-mapping clause encdec = RISCV_VAESEF(vs2, vd, suffix)	       if extensionEnabled(Ext_Zvkned)
+mapping clause encdec = RISCV_VAESEF(vs2, vd, suffix)          if extensionEnabled(Ext_Zvkned)
  <-> vv_or_vs(suffix) @ vs2 @ 0b00011 @ 0b010 @ vd @ 0b1110111 if extensionEnabled(Ext_Zvkned)
 
 mapping clause assembly = RISCV_VAESEF(vs2, vd, suffix)
  <-> vaesef_mnemonic(vv_or_vs(suffix)) ^ spc() ^ vreg_name(vd)
-				       ^ spc() ^ vreg_name(vs2)
+                                       ^ spc() ^ vreg_name(vs2)
 
 function clause execute (RISCV_VAESEF(vs2, vd, suffix)) = {
   let SEW      = get_sew();
@@ -79,20 +79,20 @@ function clause execute (RISCV_VAESEF(vs2, vd, suffix)) = {
       vd_state[127..96] = vd_val[i*4+3];
 
       if suffix == "vv" then {
-	vs2_key[31..0]   = vs2_val[i*4+0];
-	vs2_key[63..32]  = vs2_val[i*4+1];
-	vs2_key[95..64]  = vs2_val[i*4+2];
-	vs2_key[127..96] = vs2_val[i*4+3];
+        vs2_key[31..0]   = vs2_val[i*4+0];
+        vs2_key[63..32]  = vs2_val[i*4+1];
+        vs2_key[95..64]  = vs2_val[i*4+2];
+        vs2_key[127..96] = vs2_val[i*4+3];
       } else {
-	vs2_key[31..0]   = vs2_val[0];
-	vs2_key[63..32]  = vs2_val[1];
-	vs2_key[95..64]  = vs2_val[2];
-	vs2_key[127..96] = vs2_val[3];
+        vs2_key[31..0]   = vs2_val[0];
+        vs2_key[63..32]  = vs2_val[1];
+        vs2_key[95..64]  = vs2_val[2];
+        vs2_key[127..96] = vs2_val[3];
       };
 
       let sb       : bitvector(128, dec) = aes_subbytes_fwd(vd_state);
       let sr       : bitvector(128, dec) = aes_shift_rows_fwd(sb);
-      ark		 : bitvector(128, dec) = sr ^ vs2_key;
+      ark                : bitvector(128, dec) = sr ^ vs2_key;
 
       result[i*4+0] = ark[31..0];
       result[i*4+1] = ark[63..32];
@@ -115,12 +115,12 @@ mapping vaesem_mnemonic : bits(7) <-> string = {
 
 union clause ast = RISCV_VAESEM : (regidx, regidx, string)
 
-mapping clause encdec = RISCV_VAESEM(vs2, vd, suffix)	       if extensionEnabled(Ext_Zvkned)
+mapping clause encdec = RISCV_VAESEM(vs2, vd, suffix)          if extensionEnabled(Ext_Zvkned)
  <-> vv_or_vs(suffix) @ vs2 @ 0b00010 @ 0b010 @ vd @ 0b1110111 if extensionEnabled(Ext_Zvkned)
 
 mapping clause assembly = RISCV_VAESEM(vs2, vd, suffix)
  <-> vaesem_mnemonic(vv_or_vs(suffix)) ^ spc() ^ vreg_name(vd)
-				       ^ sep() ^ vreg_name(vs2)
+                                       ^ sep() ^ vreg_name(vs2)
 
 function clause execute (RISCV_VAESEM(vs2, vd, suffix)) = {
   let SEW      = get_sew();
@@ -156,15 +156,15 @@ function clause execute (RISCV_VAESEM(vs2, vd, suffix)) = {
       vd_state[127..96] = vd_val[i*4+3];
 
       if suffix == "vv" then {
-	vs2_key[31..0]   = vs2_val[i*4+0];
-	vs2_key[63..32]  = vs2_val[i*4+1];
-	vs2_key[95..64]  = vs2_val[i*4+2];
-	vs2_key[127..96] = vs2_val[i*4+3];
+        vs2_key[31..0]   = vs2_val[i*4+0];
+        vs2_key[63..32]  = vs2_val[i*4+1];
+        vs2_key[95..64]  = vs2_val[i*4+2];
+        vs2_key[127..96] = vs2_val[i*4+3];
       } else {
-	vs2_key[31..0]   = vs2_val[0];
-	vs2_key[63..32]  = vs2_val[1];
-	vs2_key[95..64]  = vs2_val[2];
-	vs2_key[127..96] = vs2_val[3];
+        vs2_key[31..0]   = vs2_val[0];
+        vs2_key[63..32]  = vs2_val[1];
+        vs2_key[95..64]  = vs2_val[2];
+        vs2_key[127..96] = vs2_val[3];
       };
 
       let sb       : bitvector(128, dec) = aes_subbytes_fwd(vd_state);
@@ -193,12 +193,12 @@ mapping vaesdf_mnemonic : bits(7) <-> string = {
 
 union clause ast = RISCV_VAESDF : (regidx, regidx, string)
 
-mapping clause encdec = RISCV_VAESDF(vs2, vd, suffix)		if extensionEnabled(Ext_Zvkned)
- <-> vv_or_vs(suffix) @ vs2 @ 0b00001 @ 0b010 @ vd @ 0b1110111	if extensionEnabled(Ext_Zvkned)
+mapping clause encdec = RISCV_VAESDF(vs2, vd, suffix)           if extensionEnabled(Ext_Zvkned)
+ <-> vv_or_vs(suffix) @ vs2 @ 0b00001 @ 0b010 @ vd @ 0b1110111  if extensionEnabled(Ext_Zvkned)
 
 mapping clause assembly = RISCV_VAESDF(vs2, vd, suffix)
  <-> vaesdf_mnemonic(vv_or_vs(suffix)) ^ sep() ^ vreg_name(vd)
-				       ^ sep() ^ vreg_name(vs2)
+                                       ^ sep() ^ vreg_name(vs2)
 
 function clause execute (RISCV_VAESDF(vs2, vd, suffix)) = {
   let SEW      = get_sew();
@@ -234,15 +234,15 @@ function clause execute (RISCV_VAESDF(vs2, vd, suffix)) = {
       vd_state[127..96] = vd_val[i*4+3];
 
       if suffix == "vv" then {
-	vs2_key[31..0]   = vs2_val[i*4+0];
-	vs2_key[63..32]  = vs2_val[i*4+1];
-	vs2_key[95..64]  = vs2_val[i*4+2];
-	vs2_key[127..96] = vs2_val[i*4+3];
+        vs2_key[31..0]   = vs2_val[i*4+0];
+        vs2_key[63..32]  = vs2_val[i*4+1];
+        vs2_key[95..64]  = vs2_val[i*4+2];
+        vs2_key[127..96] = vs2_val[i*4+3];
       } else {
-	vs2_key[31..0]   = vs2_val[0];
-	vs2_key[63..32]  = vs2_val[1];
-	vs2_key[95..64]  = vs2_val[2];
-	vs2_key[127..96] = vs2_val[3];
+        vs2_key[31..0]   = vs2_val[0];
+        vs2_key[63..32]  = vs2_val[1];
+        vs2_key[95..64]  = vs2_val[2];
+        vs2_key[127..96] = vs2_val[3];
       };
 
       let sr       : bits(128) = aes_shift_rows_inv(vd_state);
@@ -270,12 +270,12 @@ mapping vaesdm_mnemonic : bits(7) <-> string = {
 
 union clause ast = RISCV_VAESDM : (regidx, regidx, string)
 
-mapping clause encdec = RISCV_VAESDM(vs2, vd, suffix)	       if extensionEnabled(Ext_Zvkned)
+mapping clause encdec = RISCV_VAESDM(vs2, vd, suffix)          if extensionEnabled(Ext_Zvkned)
  <-> vv_or_vs(suffix) @ vs2 @ 0b00000 @ 0b010 @ vd @ 0b1110111 if extensionEnabled(Ext_Zvkned)
 
 mapping clause assembly = RISCV_VAESDM(vs2, vd, suffix)
  <-> vaesdm_mnemonic(vv_or_vs(suffix)) ^ spc() ^ vreg_name(vd)
-				       ^ sep() ^ vreg_name(vs2)
+                                       ^ sep() ^ vreg_name(vs2)
 
 function clause execute (RISCV_VAESDM(vs2, vd, suffix)) = {
   let SEW      = get_sew();
@@ -311,15 +311,15 @@ function clause execute (RISCV_VAESDM(vs2, vd, suffix)) = {
       vd_state[127..96] = vd_val[i*4+3];
 
       if suffix == "vv" then {
-	vs2_key[31..0]   = vs2_val[i*4+0];
-	vs2_key[63..32]  = vs2_val[i*4+1];
-	vs2_key[95..64]  = vs2_val[i*4+2];
-	vs2_key[127..96] = vs2_val[i*4+3];
+        vs2_key[31..0]   = vs2_val[i*4+0];
+        vs2_key[63..32]  = vs2_val[i*4+1];
+        vs2_key[95..64]  = vs2_val[i*4+2];
+        vs2_key[127..96] = vs2_val[i*4+3];
       } else {
-	vs2_key[31..0]   = vs2_val[0];
-	vs2_key[63..32]  = vs2_val[1];
-	vs2_key[95..64]  = vs2_val[2];
-	vs2_key[127..96] = vs2_val[3];
+        vs2_key[31..0]   = vs2_val[0];
+        vs2_key[63..32]  = vs2_val[1];
+        vs2_key[95..64]  = vs2_val[2];
+        vs2_key[127..96] = vs2_val[3];
       };
 
       let sr       : bits(128) = aes_shift_rows_inv(vd_state);
@@ -348,8 +348,8 @@ mapping clause encdec = RISCV_VAESKF1_VI(vs2, rnd, vd) if extensionEnabled(Ext_Z
 
 mapping clause assembly = RISCV_VAESKF1_VI(vs2, rnd, vd)
  <-> "vaeskf1.vi" ^ sep() ^ vreg_name(vd)
-		  ^ sep() ^ vreg_name(vs2)
-		  ^ sep() ^ reg_name(rnd)
+                  ^ sep() ^ vreg_name(vs2)
+                  ^ sep() ^ reg_name(rnd)
 
 function clause execute (RISCV_VAESKF1_VI(vs2, rnd, vd)) = {
   let SEW      = get_sew();
@@ -367,7 +367,7 @@ function clause execute (RISCV_VAESKF1_VI(vs2, rnd, vd)) = {
     let 'm = SEW;
     assert('m == 32);
 
-    rnd_val	: bits(5)		    = rnd;
+    rnd_val     : bits(5)                   = rnd;
     let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
     let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
     result      : vector('n, dec, bits('m)) = undefined;
@@ -378,7 +378,7 @@ function clause execute (RISCV_VAESKF1_VI(vs2, rnd, vd)) = {
     let r : bits(4) = rnd_val[3..0] - 1;
 
     current_round_key : bits(128) = undefined;
-    w		      : bits(128) = undefined;
+    w                 : bits(128) = undefined;
 
     eg_len = (unsigned(vl) / 'n);
     eg_start = (unsigned(vstart) / 'n);
@@ -391,8 +391,8 @@ function clause execute (RISCV_VAESKF1_VI(vs2, rnd, vd)) = {
       current_round_key[127..96] = vs2_val[i*4+3];
 
       w[31..0] = aes_subword_fwd(aes_rotword(current_round_key[127..96]))
-	       ^ aes_decode_rcon(r)
-	       ^ current_round_key[31..0];
+               ^ aes_decode_rcon(r)
+               ^ current_round_key[31..0];
       w[63..32]  = w[31..0]  ^ current_round_key[63..32];
       w[95..64]  = w[63..32] ^ current_round_key[95..64];
       w[127..96] = w[95..64] ^ current_round_key[127..96];
@@ -418,8 +418,8 @@ mapping clause encdec = RISCV_VAESKF2_VI(vs2, rnd, vd) if extensionEnabled(Ext_Z
 
 mapping clause assembly = RISCV_VAESKF2_VI(vs2, rnd, vd)
  <-> "vaeskf2.vi" ^ sep() ^ vreg_name(vd)
-		  ^ sep() ^ vreg_name(vs2)
-		  ^ sep() ^ reg_name(rnd)
+                  ^ sep() ^ vreg_name(vs2)
+                  ^ sep() ^ reg_name(rnd)
 
 function clause execute (RISCV_VAESKF2_VI(vs2, rnd, vd)) = {
   let SEW      = get_sew();
@@ -437,7 +437,7 @@ function clause execute (RISCV_VAESKF2_VI(vs2, rnd, vd)) = {
     let 'm = SEW;
     assert('m == 32);
 
-    rnd_val : bits(4)			    = rnd[3..0];
+    rnd_val : bits(4)                       = rnd[3..0];
     let vs2_val : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
     let vd_val  : vector('n, dec, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
     result      : vector('n, dec, bits('m)) = undefined;
@@ -447,7 +447,7 @@ function clause execute (RISCV_VAESKF2_VI(vs2, rnd, vd)) = {
 
     current_round_key : bits(128) = undefined;
     round_key_b       : bits(128) = undefined;
-    w		      : bits(128) = undefined;
+    w                 : bits(128) = undefined;
 
     eg_len = (unsigned(vl) / 'n);
     eg_start = (unsigned(vstart) / 'n);
@@ -465,12 +465,12 @@ function clause execute (RISCV_VAESKF2_VI(vs2, rnd, vd)) = {
       round_key_b[127..96] = vd_val[i*4+3];
 
       w[31..0] = if (rnd_val[0] == bitone)
-		 then
-		   aes_subword_fwd(current_round_key[127..96]) ^ round_key_b[31..0]
-		 else
-		   aes_subword_fwd(aes_rotword(current_round_key[127..96]))
-		     ^ aes_decode_rcon((rnd_val >> 1) - 1)
-		     ^ round_key_b[31..0];
+                 then
+                   aes_subword_fwd(current_round_key[127..96]) ^ round_key_b[31..0]
+                 else
+                   aes_subword_fwd(aes_rotword(current_round_key[127..96]))
+                     ^ aes_decode_rcon((rnd_val >> 1) - 1)
+                     ^ round_key_b[31..0];
 
       w[63..32]  = w[31..0]  ^ round_key_b[63..32];
       w[95..64]  = w[63..32] ^ round_key_b[95..64];
@@ -492,12 +492,12 @@ function clause execute (RISCV_VAESKF2_VI(vs2, rnd, vd)) = {
 
 union clause ast = RISCV_VAESZ_VS : (regidx, regidx)
 
-mapping clause encdec = RISCV_VAESZ_VS(vs2, vd)		if extensionEnabled(Ext_Zvkned)
+mapping clause encdec = RISCV_VAESZ_VS(vs2, vd)         if extensionEnabled(Ext_Zvkned)
  <-> 0b1010011 @ vs2 @ 0b00111 @ 0b010 @ vd @ 0b1110111 if extensionEnabled(Ext_Zvkned)
 
 mapping clause assembly = RISCV_VAESZ_VS(vs2, vd)
  <-> "vaesz.vs" ^ sep() ^ vreg_name(vd)
-		^ sep() ^ vreg_name(vs2)
+                ^ sep() ^ vreg_name(vs2)
 
 function clause execute (RISCV_VAESZ_VS(vs2, vd)) = {
   let SEW      = get_sew();
