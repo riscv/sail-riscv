@@ -107,9 +107,15 @@ function privLevel_to_str (p) =
 
 overload to_str = {privLevel_to_str}
 
-/* enum denoting whether an executed instruction retires */
+/* Type denoting whether an executed instruction retires
+ * that is generic over the reasons why a retire might
+ * fail or be incomplete.
+ */
 
-enum Retired = {RETIRE_SUCCESS, RETIRE_FAIL}
+union Retired ('a : Type) = {
+  RETIRE_SUCCESS : unit,
+  RETIRE_FAIL    : 'a
+}
 
 /* memory access types */
 

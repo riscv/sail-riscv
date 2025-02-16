@@ -32,7 +32,7 @@ function clause execute(RISCV_ZICBOZ(rs1)) = {
     let negative_offset = (rs1_val & ~(zero_extend(ones(cache_block_size_exp)))) - rs1_val;
 
     match ext_data_get_addr(rs1, negative_offset, Write(Data), cache_block_size) {
-      Ext_DataAddr_Error(e) => { ext_handle_data_check_error(e); RETIRE_FAIL },
+      Ext_DataAddr_Error(e) => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
       Ext_DataAddr_OK(vaddr) => {
         // "An implementation may update the bytes in any order and with any granularity
         //  and atomicity, including individual bytes."
@@ -43,15 +43,15 @@ function clause execute(RISCV_ZICBOZ(rs1)) = {
           // was encoded in the instruction. We subtract the negative offset
           // (add the positive offset) to get it. Normally this will be
           // equal to rs1, but pointer masking can change that.
-          TR_Failure(e, _) => { handle_mem_exception(vaddr - negative_offset, e); RETIRE_FAIL },
+          TR_Failure(e, _) => RETIRE_FAIL(Memory_Exception(vaddr - negative_offset, e)),
           TR_Address(paddr, _) => {
             match mem_write_ea(paddr, cache_block_size, false, false, false) {
-              Err(e) => { handle_mem_exception(vaddr - negative_offset, e); RETIRE_FAIL },
+              Err(e) => RETIRE_FAIL(Memory_Exception(vaddr - negative_offset, e)),
               Ok(_)  => {
                 match mem_write_value(paddr, cache_block_size, zeros(), false, false, false) {
-                  Ok(true)  => RETIRE_SUCCESS,
+                  Ok(true)  => RETIRE_SUCCESS(),
                   Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                  Err(e)    => { handle_mem_exception(vaddr - negative_offset, e); RETIRE_FAIL },
+                  Err(e)    => RETIRE_FAIL(Memory_Exception(vaddr - negative_offset, e))
                 }
               }
             }
@@ -60,7 +60,6 @@ function clause execute(RISCV_ZICBOZ(rs1)) = {
       },
     }
   } else {
-    handle_illegal();
-    RETIRE_FAIL
+    RETIRE_FAIL(Illegal_Instruction())
   }
 }

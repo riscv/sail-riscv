@@ -30,7 +30,7 @@ function clause execute(VVMTYPE(funct6, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then return RETIRE_FAIL(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -40,7 +40,10 @@ function clause execute(VVMTYPE(funct6, vs2, vs1, vd)) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
 
-  let (initial_result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
+  let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) {
+    Ok(v)   => v,
+    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+  };
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -55,7 +58,7 @@ function clause execute(VVMTYPE(funct6, vs2, vs1, vd)) = {
 
   write_vmask(num_elem, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping vvmtype_mnemonic : vvmfunct6 <-> string = {
@@ -85,7 +88,7 @@ function clause execute(VVMCTYPE(funct6, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then return RETIRE_FAIL(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -94,7 +97,10 @@ function clause execute(VVMCTYPE(funct6, vs2, vs1, vd)) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
 
-  let (initial_result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
+  let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) {
+    Ok(v)   => v,
+    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+  };
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -109,7 +115,7 @@ function clause execute(VVMCTYPE(funct6, vs2, vs1, vd)) = {
 
   write_vmask(num_elem, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping vvmctype_mnemonic : vvmcfunct6 <-> string = {
@@ -139,7 +145,7 @@ function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_masked(vd) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_masked(vd) then return RETIRE_FAIL(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -152,7 +158,10 @@ function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vec_trues);
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vec_trues) {
+    Ok(v)   => v,
+    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+  };
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -166,7 +175,7 @@ function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping vvmstype_mnemonic : vvmsfunct6 <-> string = {
@@ -198,7 +207,7 @@ function clause execute(VVCMPTYPE(funct6, vm, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then return RETIRE_FAIL(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -208,7 +217,10 @@ function clause execute(VVCMPTYPE(funct6, vm, vs2, vs1, vd)) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
 
-  let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
+    Ok(v)   => v,
+    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+  };
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -227,7 +239,7 @@ function clause execute(VVCMPTYPE(funct6, vm, vs2, vs1, vd)) = {
 
   write_vmask(num_elem, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping vvcmptype_mnemonic : vvcmpfunct6 <-> string = {
@@ -261,7 +273,7 @@ function clause execute(VXMTYPE(funct6, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then return RETIRE_FAIL(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -271,7 +283,10 @@ function clause execute(VXMTYPE(funct6, vs2, rs1, vd)) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
 
-  let (initial_result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
+  let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) {
+    Ok(v)   => v,
+    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+  };
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -286,7 +301,7 @@ function clause execute(VXMTYPE(funct6, vs2, rs1, vd)) = {
 
   write_vmask(num_elem, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping vxmtype_mnemonic : vxmfunct6 <-> string = {
@@ -316,7 +331,7 @@ function clause execute(VXMCTYPE(funct6, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then return RETIRE_FAIL(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -325,7 +340,10 @@ function clause execute(VXMCTYPE(funct6, vs2, rs1, vd)) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
 
-  let (initial_result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
+  let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) {
+    Ok(v)   => v,
+    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+  };
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -340,7 +358,7 @@ function clause execute(VXMCTYPE(funct6, vs2, rs1, vd)) = {
 
   write_vmask(num_elem, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping vxmctype_mnemonic : vxmcfunct6 <-> string = {
@@ -370,7 +388,7 @@ function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_masked(vd) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_masked(vd) then return RETIRE_FAIL(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -383,7 +401,10 @@ function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vec_trues);
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vec_trues) {
+    Ok(v)   => v,
+    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+  };
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -397,7 +418,7 @@ function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping vxmstype_mnemonic : vxmsfunct6 <-> string = {
@@ -431,7 +452,7 @@ function clause execute(VXCMPTYPE(funct6, vm, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then return RETIRE_FAIL(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -441,7 +462,10 @@ function clause execute(VXCMPTYPE(funct6, vm, vs2, rs1, vd)) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
 
-  let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
+    Ok(v)   => v,
+    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+  };
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -462,7 +486,7 @@ function clause execute(VXCMPTYPE(funct6, vm, vs2, rs1, vd)) = {
 
   write_vmask(num_elem, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping vxcmptype_mnemonic : vxcmpfunct6 <-> string = {
@@ -497,7 +521,7 @@ function clause execute(VIMTYPE(funct6, vs2, simm, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then return RETIRE_FAIL(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -507,7 +531,10 @@ function clause execute(VIMTYPE(funct6, vs2, simm, vd)) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
 
-  let (initial_result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
+  let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) {
+    Ok(v)   => v,
+    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+  };
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -521,7 +548,7 @@ function clause execute(VIMTYPE(funct6, vs2, simm, vd)) = {
 
   write_vmask(num_elem, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping vimtype_mnemonic : vimfunct6 <-> string = {
@@ -549,7 +576,7 @@ function clause execute(VIMCTYPE(funct6, vs2, simm, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then return RETIRE_FAIL(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -558,7 +585,10 @@ function clause execute(VIMCTYPE(funct6, vs2, simm, vd)) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
 
-  let (initial_result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
+  let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) {
+    Ok(v)   => v,
+    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+  };
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -572,7 +602,7 @@ function clause execute(VIMCTYPE(funct6, vs2, simm, vd)) = {
 
   write_vmask(num_elem, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping vimctype_mnemonic : vimcfunct6 <-> string = {
@@ -600,7 +630,7 @@ function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_masked(vd) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_masked(vd) then return RETIRE_FAIL(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -613,7 +643,10 @@ function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vec_trues);
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vec_trues) {
+    Ok(v)   => v,
+    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+  };
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -626,7 +659,7 @@ function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping vimstype_mnemonic : vimsfunct6 <-> string = {
@@ -657,7 +690,7 @@ function clause execute(VICMPTYPE(funct6, vm, vs2, simm, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_vd_unmasked() then return RETIRE_FAIL(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -667,7 +700,10 @@ function clause execute(VICMPTYPE(funct6, vm, vs2, simm, vd)) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
 
-  let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
+  let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
+    Ok(v)   => v,
+    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+  };
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -686,7 +722,7 @@ function clause execute(VICMPTYPE(funct6, vm, vs2, simm, vd)) = {
 
   write_vmask(num_elem, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping vicmptype_mnemonic : vicmpfunct6 <-> string = {

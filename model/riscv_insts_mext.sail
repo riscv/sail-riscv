@@ -14,7 +14,6 @@
 function clause extensionEnabled(Ext_M) = misa[M] == 0b1
 function clause extensionEnabled(Ext_Zmmul) = true
 
-
 union clause ast = MUL : (regidx, regidx, regidx, mul_op)
 
 mapping encdec_mul_op : mul_op <-> bits(3) = {
@@ -37,7 +36,7 @@ function clause execute (MUL(rs2, rs1, rd, mul_op)) = {
                then result_wide[(2 * xlen - 1) .. xlen]
                else result_wide[(xlen - 1) .. 0];
   X(rd) = result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping mul_mnemonic : mul_op <-> string = {
@@ -65,7 +64,7 @@ function clause execute (DIV(rs2, rs1, rd, s)) = {
   /* check for signed overflow */
   let q': int = if s & q > xlen_max_signed then xlen_min_signed else q;
   X(rd) = to_bits(xlen, q');
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping maybe_not_u : bool <-> string = {
@@ -90,7 +89,7 @@ function clause execute (REM(rs2, rs1, rd, s)) = {
   let r : int = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
   /* signed overflow case returns zero naturally as required due to -1 divisor */
   X(rd) = to_bits(xlen, r);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping clause assembly = REM(rs2, rs1, rd, s)
@@ -113,7 +112,7 @@ function clause execute (MULW(rs2, rs1, rd)) = {
   let result32 = to_bits(64, rs1_int * rs2_int)[31..0];
   let result : xlenbits = sign_extend(result32);
   X(rd) = result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping clause assembly = MULW(rs2, rs1, rd)
@@ -138,7 +137,7 @@ function clause execute (DIVW(rs2, rs1, rd, s)) = {
   /* check for signed overflow */
   let q': int = if s & q > (2 ^ 31 - 1) then  (0 - (2 ^ 31)) else q;
   X(rd) = sign_extend(to_bits(32, q'));
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping clause assembly = DIVW(rs2, rs1, rd, s)
@@ -162,7 +161,7 @@ function clause execute (REMW(rs2, rs1, rd, s)) = {
   let r : int = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
   /* signed overflow case returns zero naturally as required due to -1 divisor */
   X(rd) = sign_extend(to_bits(32, r));
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 mapping clause assembly = REMW(rs2, rs1, rd, s)

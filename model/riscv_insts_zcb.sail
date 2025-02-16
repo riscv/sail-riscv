@@ -110,7 +110,7 @@ mapping clause assembly = C_ZEXT_B(rsdc) <->
 function clause execute C_ZEXT_B(rsdc) = {
   let rsd = creg2reg_idx(rsdc);
   X(rsd) = zero_extend(X(rsd)[7..0]);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* ****************************************************************** */
@@ -191,7 +191,7 @@ mapping clause assembly = C_NOT(rsdc) <->
 function clause execute C_NOT(rsdc) = {
   let r = creg2reg_idx(rsdc);
   X(r) = ~(X(r));
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* ****************************************************************** */

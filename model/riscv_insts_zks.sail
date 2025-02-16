@@ -32,14 +32,14 @@ function clause execute (SM3P0(rs1, rd)) = {
   let r1     : bits(32) = X(rs1)[31..0];
   let result : bits(32) =  r1 ^ (r1 <<< 9) ^ (r1 <<< 17);
   X(rd) = sign_extend(result);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (SM3P1(rs1, rd)) = {
   let r1     : bits(32) = X(rs1)[31..0];
   let result : bits(32) =  r1 ^ (r1 <<< 15) ^ (r1 <<< 23);
   X(rd) = sign_extend(result);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /*
@@ -74,7 +74,7 @@ function clause execute (SM4ED (bs, rs2, rs1, rd)) = {
   let z     : bits(32) = (y <<< shamt);
   let result : bits(32) = z ^ X(rs1)[31..0];
   X(rd)                = sign_extend(result);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (SM4KS (bs, rs2, rs1, rd)) = {
@@ -86,5 +86,5 @@ function clause execute (SM4KS (bs, rs2, rs1, rd)) = {
   let z     : bits(32) = (y <<< shamt);
   let result : bits(32) = z ^ X(rs1)[31..0];
   X(rd) = sign_extend(result);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }

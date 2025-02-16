@@ -23,31 +23,23 @@ function step(step_no : int) -> bool = {
    */
   minstret_increment = should_inc_minstret(cur_privilege);
 
-  let (retired, stepped) : (Retired, bool) =
+  /* instruction bits for faulting instructions */
+  var instbits : option(xlenbits) = None();
+
+  let (retired, stepped) : (Retired(Retire_Failure), bool) =
     match dispatchInterrupt(cur_privilege) {
-      Some(intr, priv) => {
-        if   get_config_print_instr()
-        then print_bits("Handling interrupt: ", interruptType_to_bits(intr));
-        handle_interrupt(intr, priv);
-        (RETIRE_FAIL, false)
-      },
+      Some(intr, priv) => (RETIRE_FAIL(Pending_Interrupt(intr, priv)), false),
       None() => {
         /* the extension hook interposes on the fetch result */
         match ext_fetch_hook(fetch()) {
           /* extension error */
-          F_Ext_Error(e)   => {
-            ext_handle_fetch_check_error(e);
-            (RETIRE_FAIL, false)
-          },
+          F_Ext_Error(e)   => (RETIRE_FAIL(Ext_Fetch_Check_Failure(e)), false),
           /* standard error */
-          F_Error(e, addr) => {
-            handle_mem_exception(virtaddr(addr), e);
-            (RETIRE_FAIL, false)
-          },
+          F_Error(e, addr) => (RETIRE_FAIL(Memory_Exception(virtaddr(addr), e)), false),
           /* non-error cases: */
           F_RVC(h) => {
             sail_instr_announce(h);
-            instbits = zero_extend(h);
+            instbits = Some(zero_extend(h));
             let ast = ext_decode_compressed(h);
             if   get_config_print_instr()
             then {
@@ -58,13 +50,12 @@ function step(step_no : int) -> bool = {
               nextPC = PC + 2;
               (execute(ast), true)
             } else {
-              handle_illegal();
-              (RETIRE_FAIL, true)
+              (RETIRE_FAIL(Illegal_Instruction()), true)
             }
           },
           F_Base(w) => {
             sail_instr_announce(w);
-            instbits = zero_extend(w);
+            instbits = Some(zero_extend(w));
             let ast = ext_decode(w);
             if   get_config_print_instr()
             then {
@@ -77,13 +68,38 @@ function step(step_no : int) -> bool = {
       }
     };
 
-  tick_pc();
-
-  /* update minstret */
   match retired {
-    RETIRE_SUCCESS => retire_instruction(),
-    RETIRE_FAIL    => ()
+    RETIRE_SUCCESS()  => retire_instruction(), // update minstret
+    RETIRE_FAIL(fail) => match fail {
+      // standard failures
+      Trap(priv, ctl, pc)           => set_next_pc(exception_handler(priv, ctl, pc)),
+      Memory_Exception(vaddr, exc)  => handle_mem_exception(vaddr, exc),
+      Pending_Interrupt(intr, priv) => {
+        if   get_config_print_instr()
+        then print_bits("Handling interrupt: ", interruptType_to_bits(intr));
+        handle_interrupt(intr, priv)
+      },
+      Illegal_Instruction() => match instbits {
+          None()         => internal_error(__FILE__, __LINE__, "no instruction bits for illegal instruction"),
+          Some(instbits) => handle_illegal(instbits)
+        },
+      Wait_For_Interrupt() => {
+        // This is currently treated as a nop that retires
+        // successfully.
+        platform_wfi();
+        retire_instruction()
+      },
+
+      // failures from extensions
+      Ext_Fetch_Check_Failure(e)       => ext_handle_fetch_check_error(e),
+      Ext_CSR_Check_Failure()          => ext_check_CSR_fail(),
+      Ext_ControlAddr_Check_Failure(e) => ext_handle_control_check_error(e),
+      Ext_DataAddr_Check_Failure(e)    => ext_handle_data_check_error(e),
+      Ext_XRET_Priv_Failure()          => ext_fail_xret_priv ()
+    }
   };
+
+  tick_pc();
 
   /* for step extensions */
   ext_post_step_hook();

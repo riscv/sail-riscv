@@ -19,7 +19,7 @@ union clause ast = C_NOP : unit
 mapping clause encdec_compressed = C_NOP() if extensionEnabled(Ext_Zca)
   <-> 0b000 @ 0b0 @ 0b00000 @ 0b00000 @ 0b01 if extensionEnabled(Ext_Zca)
 
-function clause execute C_NOP() = RETIRE_SUCCESS
+function clause execute C_NOP() = RETIRE_SUCCESS()
 
 mapping clause assembly = C_NOP() <-> "c.nop"
 

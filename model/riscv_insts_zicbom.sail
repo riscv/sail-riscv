@@ -35,7 +35,7 @@ mapping cbop_mnemonic : cbop_zicbom <-> string = {
 mapping clause assembly = RISCV_ZICBOM(cbop, rs1)
   <-> cbop_mnemonic(cbop) ^ spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
-val process_clean_inval : (regidx, cbop_zicbom) -> Retired
+val process_clean_inval : (regidx, cbop_zicbom) -> Retired(Retire_Failure)
 function process_clean_inval(rs1, cbop) = {
   let rs1_val = X(rs1);
   let cache_block_size_exp = plat_cache_block_size_exp();
@@ -49,7 +49,7 @@ function process_clean_inval(rs1, cbop) = {
   // to be in bounds here, whereas `ext_data_get_addr()` checks that all bytes
   // are in bounds. We will need to add a new function, parameter or access type.
   match ext_data_get_addr(rs1, negative_offset, Read(Data), cache_block_size) {
-    Ext_DataAddr_Error(e) => { ext_handle_data_check_error(e); RETIRE_FAIL },
+    Ext_DataAddr_Error(e) => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
     Ext_DataAddr_OK(vaddr) => {
       let res : option(ExceptionType) = match translateAddr(vaddr, Read(Data)) {
         TR_Address(paddr, _) => {
@@ -79,7 +79,7 @@ function process_clean_inval(rs1, cbop) = {
       //  fault exception otherwise."
       match res {
         // The model has no caches so there's no action required.
-        None() => RETIRE_SUCCESS,
+        None() => RETIRE_SUCCESS(),
         Some(e) => {
           let e : ExceptionType = match e {
             E_Load_Access_Fault() => E_SAMO_Access_Fault(),
@@ -94,8 +94,7 @@ function process_clean_inval(rs1, cbop) = {
           // was encoded in the instruction. We subtract the negative offset
           // (add the positive offset) to get it. Normally this will be
           // equal to rs1, but pointer masking can change that.
-          handle_mem_exception(vaddr - negative_offset, e);
-          RETIRE_FAIL
+          RETIRE_FAIL(Memory_Exception(vaddr - negative_offset, e))
         }
       }
     }
@@ -110,8 +109,6 @@ function clause execute(RISCV_ZICBOM(cbop, rs1)) =
       process_clean_inval(rs1, cbop),
     CBO_INVAL if cbo_inval_enabled(cur_privilege) =>
       process_clean_inval(rs1, if cbo_inval_as_inval(cur_privilege) then CBO_INVAL else CBO_FLUSH),
-    _ => {
-      handle_illegal();
-      RETIRE_FAIL
-    },
+    _ =>
+      RETIRE_FAIL(Illegal_Instruction())
   }

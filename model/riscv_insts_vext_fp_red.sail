@@ -26,15 +26,15 @@ mapping encdec_rfvvfunct6 : rfvvfunct6 <-> bits(6) = {
 mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
   <-> encdec_rfvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
 
-val process_rfvv_single: forall 'n 'm 'p, 'n > 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), int('p)) -> Retired
+val process_rfvv_single: forall 'n 'm 'p, 'n > 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), int('p)) -> Retired(Retire_Failure)
 function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
   let rm_3b = fcsr[FRM];
   let num_elem_vd = get_num_elem(0, SEW); /* vd regardless of LMUL setting */
 
-  if illegal_fp_reduction(SEW, rm_3b) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_fp_reduction(SEW, rm_3b) then return RETIRE_FAIL(Illegal_Instruction());
   assert(SEW != 8);
 
-  if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
+  if unsigned(vl) == 0 then return RETIRE_SUCCESS(); /* if vl=0, no operation is performed */
 
   let 'n = num_elem_vs;
   let 'd = num_elem_vd;
@@ -43,7 +43,10 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_po
   let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, 0b00000);
   let vd_val  : vector('d, bits('m)) = read_vreg(num_elem_vd, SEW, 0, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
-  let mask    : bits('n)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
+  let mask    : bits('n)     = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
+    Ok(v)   => v,
+    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+  };
 
   var sum : bits('m) = read_single_element(SEW, 0, vs1); /* vs1 regardless of LMUL setting */
   foreach (i from 0 to (num_elem_vs - 1)) {
@@ -63,20 +66,20 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_po
   /* other elements in vd are treated as tail elements, currently remain unchanged */
   /* TODO: configuration support for agnostic behavior */
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
-val process_rfvv_widen: forall 'n 'm 'p, 'n > 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), int('p)) -> Retired
+val process_rfvv_widen: forall 'n 'm 'p, 'n > 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), int('p)) -> Retired(Retire_Failure)
 function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
   let rm_3b          = fcsr[FRM];
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
   let num_elem_vd = get_num_elem(0, SEW_widen); /* vd regardless of LMUL setting */
 
-  if illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) then { handle_illegal(); return RETIRE_FAIL };
+  if illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) then return RETIRE_FAIL(Illegal_Instruction());
   assert(SEW >= 16 & SEW_widen <= 64);
 
-  if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
+  if unsigned(vl) == 0 then return RETIRE_SUCCESS(); /* if vl=0, no operation is performed */
 
   let 'n = num_elem_vs;
   let 'd = num_elem_vd;
@@ -86,7 +89,10 @@ function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow
   let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, 0b00000);
   let vd_val  : vector('d, bits('o)) = read_vreg(num_elem_vd, SEW_widen, 0, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
-  let mask    : bits('n)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
+  let mask    : bits('n)     = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
+    Ok(v)   => v,
+    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+  };
 
   var sum : bits('o) = read_single_element(SEW_widen, 0, vs1); /* vs1 regardless of LMUL setting */
   foreach (i from 0 to (num_elem_vs - 1)) {
@@ -100,7 +106,7 @@ function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow
   /* other elements in vd are treated as tail elements, currently remain unchanged */
   /* TODO: configuration support for agnostic behavior */
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute(RFVVTYPE(funct6, vm, vs2, vs1, vd)) = {

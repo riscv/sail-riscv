@@ -22,7 +22,7 @@ function clause execute (RISCV_SLLIUW(shamt, rs1, rd)) = {
   let rs1_val = X(rs1);
   let result : xlenbits = zero_extend(rs1_val[31..0]) << shamt;
   X(rd) = result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* ****************************************************************** */
@@ -61,7 +61,7 @@ function clause execute (ZBA_RTYPEUW(rs2, rs1, rd, op)) = {
   };
   let result : xlenbits = (zero_extend(rs1_val[31..0]) << shamt) + rs2_val;
   X(rd) = result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* ****************************************************************** */
@@ -93,5 +93,5 @@ function clause execute (ZBA_RTYPE(rs2, rs1, rd, op)) = {
   };
   let result : xlenbits = (rs1_val << shamt) + rs2_val;
   X(rd) = result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }

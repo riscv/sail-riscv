@@ -46,28 +46,28 @@ function clause execute (SHA256SIG0(rs1, rd)) = {
   let inb    : bits(32) = X(rs1)[31..0];
   let result : bits(32) = (inb >>> 7) ^ (inb >>> 18) ^ (inb >>  3);
   X(rd)      = sign_extend(result);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (SHA256SIG1(rs1, rd)) = {
   let inb    : bits(32) = X(rs1)[31..0];
   let result : bits(32) = (inb >>> 17) ^ (inb >>> 19) ^ (inb >> 10);
   X(rd)      = sign_extend(result);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (SHA256SUM0(rs1, rd)) = {
   let inb    : bits(32) = X(rs1)[31..0];
   let result : bits(32) = (inb >>> 2) ^ (inb >>> 13) ^ (inb >>> 22);
   X(rd)      = sign_extend(result);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (SHA256SUM1(rs1, rd)) = {
   let inb    : bits(32) = X(rs1)[31..0];
   let result : bits(32) = (inb >>> 6) ^ (inb >>> 11) ^ (inb >>> 25);
   X(rd)      = sign_extend(result);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /*
@@ -92,7 +92,7 @@ function clause execute (AES32ESMI (bs, rs2, rs1, rd)) = {
   let mixed   : bits(32) = aes_mixcolumn_byte_fwd(so);
   let result  : bits(32) = X(rs1)[31..0] ^ (mixed <<< shamt);
   X(rd) = sign_extend(result);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 union clause ast = AES32ESI : (bits(2), regidx, regidx, regidx)
@@ -109,7 +109,7 @@ function clause execute (AES32ESI (bs, rs2, rs1, rd)) = {
   let so      : bits(32) = 0x000000 @ aes_sbox_fwd(si);
   let result  : bits(32) = X(rs1)[31..0] ^ (so <<< shamt);
   X(rd) = sign_extend(result);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /*
@@ -134,7 +134,7 @@ function clause execute (AES32DSMI (bs, rs2, rs1, rd)) = {
   let mixed   : bits(32) = aes_mixcolumn_byte_inv(so);
   let result  : bits(32) = X(rs1)[31..0] ^ (mixed <<< shamt);
   X(rd) = sign_extend(result);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 union clause ast = AES32DSI  : (bits(2), regidx, regidx, regidx)
@@ -151,7 +151,7 @@ function clause execute (AES32DSI (bs, rs2, rs1, rd)) = {
   let so      : bits(32) = 0x000000 @ aes_sbox_inv(si);
   let result  : bits(32) = X(rs1)[31..0] ^ (so <<< shamt);
   X(rd) = sign_extend(result);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /*
@@ -205,37 +205,37 @@ mapping clause assembly = SHA512SUM1R (rs2, rs1, rd)
 function clause execute (SHA512SIG0H(rs2, rs1, rd)) = {
   X(rd) = sign_extend((X(rs1) >>  1) ^ (X(rs1) >>  7) ^ (X(rs1) >>  8) ^
                (X(rs2) << 31)                  ^ (X(rs2) << 24));
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (SHA512SIG0L(rs2, rs1, rd)) = {
   X(rd) = sign_extend((X(rs1) >>  1) ^ (X(rs1) >>  7) ^ (X(rs1) >>  8) ^
                (X(rs2) << 31) ^ (X(rs2) << 25) ^ (X(rs2) << 24));
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (SHA512SIG1H(rs2, rs1, rd)) = {
   X(rd) = sign_extend((X(rs1) <<  3) ^ (X(rs1) >>  6) ^ (X(rs1) >> 19) ^
                (X(rs2) >> 29)                  ^ (X(rs2) << 13));
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (SHA512SIG1L(rs2, rs1, rd)) = {
   X(rd) = sign_extend((X(rs1) <<  3) ^ (X(rs1) >>  6) ^ (X(rs1) >> 19) ^
                (X(rs2) >> 29) ^ (X(rs2) << 26) ^ (X(rs2) << 13));
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (SHA512SUM0R(rs2, rs1, rd)) = {
   X(rd) = sign_extend((X(rs1) << 25) ^ (X(rs1) << 30) ^ (X(rs1) >> 28) ^
                (X(rs2) >>  7) ^ (X(rs2) >>  2) ^ (X(rs2) <<  4));
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (SHA512SUM1R(rs2, rs1, rd)) = {
   X(rd) = sign_extend((X(rs1) << 23) ^ (X(rs1) >> 14) ^ (X(rs1) >> 18) ^
                (X(rs2) >>  9) ^ (X(rs2) << 18) ^ (X(rs2) << 14));
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /*
@@ -303,7 +303,7 @@ function clause execute (AES64KS1I(rnum, rs1, rd)) = {
   let result   : bits(32) = if (rnum == 0xA) then subwords
                             else (subwords >>> 8) ^ aes_decode_rcon(rnum);
   X(rd) = result @ result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (AES64KS2(rs2, rs1, rd)) = {
@@ -311,7 +311,7 @@ function clause execute (AES64KS2(rs2, rs1, rd)) = {
   let w0 : bits(32) = X(rs1)[63..32] ^ X(rs2)[31..0];
   let w1 : bits(32) = X(rs1)[63..32] ^ X(rs2)[31..0] ^ X(rs2)[63..32];
   X(rd)  = w1 @ w0;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (AES64IM(rs1, rd)) = {
@@ -319,7 +319,7 @@ function clause execute (AES64IM(rs1, rd)) = {
   let w0 : bits(32) = aes_mixcolumn_inv(X(rs1)[31.. 0]);
   let w1 : bits(32) = aes_mixcolumn_inv(X(rs1)[63..32]);
   X(rd)  = w1 @ w0;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (AES64ESM(rs2, rs1, rd)) = {
@@ -328,7 +328,7 @@ function clause execute (AES64ESM(rs2, rs1, rd)) = {
   let wd : bits(64) = sr[63..0];
   let sb : bits(64) = aes_apply_fwd_sbox_to_each_byte(wd);
   X(rd)  = aes_mixcolumn_fwd(sb[63..32]) @ aes_mixcolumn_fwd(sb[31..0]);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (AES64ES(rs2, rs1, rd)) = {
@@ -336,7 +336,7 @@ function clause execute (AES64ES(rs2, rs1, rd)) = {
   let sr : bits(64) = aes_rv64_shiftrows_fwd(X(rs2), X(rs1));
   let wd : bits(64) = sr[63..0];
   X(rd) = aes_apply_fwd_sbox_to_each_byte(wd);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (AES64DSM(rs2, rs1, rd)) = {
@@ -345,7 +345,7 @@ function clause execute (AES64DSM(rs2, rs1, rd)) = {
   let wd : bits(64) = sr[63..0];
   let sb : bits(64) = aes_apply_inv_sbox_to_each_byte(wd);
   X(rd) = aes_mixcolumn_inv(sb[63..32]) @ aes_mixcolumn_inv(sb[31..0]);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (AES64DS(rs2, rs1, rd)) = {
@@ -353,7 +353,7 @@ function clause execute (AES64DS(rs2, rs1, rd)) = {
   let sr : bits(64) = aes_rv64_shiftrows_inv(X(rs2), X(rs1));
   let wd : bits(64) = sr[63..0];
   X(rd) = aes_apply_inv_sbox_to_each_byte(wd);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /*
@@ -397,7 +397,7 @@ function clause execute (SHA512SIG0(rs1, rd)) = {
   let input  : bits(64) = X(rs1);
   let result : bits(64) = (input >>>  1) ^ (input >>>  8) ^ (input >> 7);
   X(rd) = result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (SHA512SIG1(rs1, rd)) = {
@@ -405,7 +405,7 @@ function clause execute (SHA512SIG1(rs1, rd)) = {
   let input  : bits(64) = X(rs1);
   let result : bits(64) = (input >>> 19) ^ (input >>> 61) ^ (input >> 6);
   X(rd) = result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (SHA512SUM0(rs1, rd)) = {
@@ -413,7 +413,7 @@ function clause execute (SHA512SUM0(rs1, rd)) = {
   let input  : bits(64) = X(rs1);
   let result : bits(64) = (input >>> 28) ^ (input >>> 34) ^ (input >>> 39);
   X(rd) = result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 function clause execute (SHA512SUM1(rs1, rd)) = {
@@ -421,5 +421,5 @@ function clause execute (SHA512SUM1(rs1, rd)) = {
   let input  : bits(64) = X(rs1);
   let result : bits(64) = (input >>> 14) ^ (input >>> 18) ^ (input >>> 41);
   X(rd) = result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }

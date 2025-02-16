@@ -54,7 +54,7 @@ function clause execute (RISCV_FLI_H(constantidx, rd)) = {
     0b11111 => { canonical_NaN_H() },
   };
   F_H(rd) = bits;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FLI.S */
@@ -103,7 +103,7 @@ function clause execute (RISCV_FLI_S(constantidx, rd)) = {
     0b11111 => { canonical_NaN_S() },
   };
   F_S(rd) = bits;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FLI.D */
@@ -152,7 +152,7 @@ function clause execute (RISCV_FLI_D(constantidx, rd)) = {
     0b11111 => { canonical_NaN_D() },
   };
   F_D(rd) = bits;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FMINM.H */
@@ -182,7 +182,7 @@ function clause execute (RISCV_FMINM_H(rs2, rs1, rd)) = {
 
   accrue_fflags(fflags);
   F_H(rd) = rd_val_H;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FMAXM.H */
@@ -212,7 +212,7 @@ function clause execute (RISCV_FMAXM_H(rs2, rs1, rd)) = {
 
   accrue_fflags(fflags);
   F_H(rd) = rd_val_H;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FMINM.S */
@@ -242,7 +242,7 @@ function clause execute (RISCV_FMINM_S(rs2, rs1, rd)) = {
 
   accrue_fflags(fflags);
   F_S(rd) = rd_val_S;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FMAXM.S */
@@ -272,7 +272,7 @@ function clause execute (RISCV_FMAXM_S(rs2, rs1, rd)) = {
 
   accrue_fflags(fflags);
   F_S(rd) = rd_val_S;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FMINM.D */
@@ -302,7 +302,7 @@ function clause execute (RISCV_FMINM_D(rs2, rs1, rd)) = {
 
   accrue_fflags(fflags);
   F_D(rd) = rd_val_D;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FMAXM.D */
@@ -332,7 +332,7 @@ function clause execute (RISCV_FMAXM_D(rs2, rs1, rd)) = {
 
   accrue_fflags(fflags);
   F_D(rd) = rd_val_D;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FROUND.H */
@@ -351,14 +351,14 @@ function clause execute (RISCV_FROUND_H(rs1, rm, rd)) = {
   let rs1_val_H = F_H(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_f16roundToInt(rm_3b, rs1_val_H, false);
 
       accrue_fflags(fflags);
       F_H(rd) = rd_val_H;
-      RETIRE_SUCCESS
+      RETIRE_SUCCESS()
     }
   }
 }
@@ -379,14 +379,14 @@ function clause execute (RISCV_FROUNDNX_H(rs1, rm, rd)) = {
   let rs1_val_H = F_H(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_f16roundToInt(rm_3b, rs1_val_H, true);
 
       accrue_fflags(fflags);
       F_H(rd) = rd_val_H;
-      RETIRE_SUCCESS
+      RETIRE_SUCCESS()
     }
   }
 }
@@ -407,14 +407,14 @@ function clause execute (RISCV_FROUND_S(rs1, rm, rd)) = {
   let rs1_val_S = F_S(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_f32roundToInt(rm_3b, rs1_val_S, false);
 
       accrue_fflags(fflags);
       F_S(rd) = rd_val_S;
-      RETIRE_SUCCESS
+      RETIRE_SUCCESS()
     }
   }
 }
@@ -435,14 +435,14 @@ function clause execute (RISCV_FROUNDNX_S(rs1, rm, rd)) = {
   let rs1_val_S = F_S(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_f32roundToInt(rm_3b, rs1_val_S, true);
 
       accrue_fflags(fflags);
       F_S(rd) = rd_val_S;
-      RETIRE_SUCCESS
+      RETIRE_SUCCESS()
     }
   }
 }
@@ -463,14 +463,14 @@ function clause execute (RISCV_FROUND_D(rs1, rm, rd)) = {
   let rs1_val_D = F_D(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_f64roundToInt(rm_3b, rs1_val_D, false);
 
       accrue_fflags(fflags);
       F_D(rd) = rd_val_D;
-      RETIRE_SUCCESS
+      RETIRE_SUCCESS()
     }
   }
 }
@@ -491,14 +491,14 @@ function clause execute (RISCV_FROUNDNX_D(rs1, rm, rd)) = {
   let rs1_val_D = F_D(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_f64roundToInt(rm_3b, rs1_val_D, true);
 
       accrue_fflags(fflags);
       F_D(rd) = rd_val_D;
-      RETIRE_SUCCESS
+      RETIRE_SUCCESS()
     }
   }
 }
@@ -518,7 +518,7 @@ function clause execute (RISCV_FMVH_X_D(rs1, rd)) = {
   let rs1_val_D           = F_D(rs1)[63..32];
   let rd_val_X : xlenbits = sign_extend(rs1_val_D);
   X(rd)                   = rd_val_X;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FMVP.X.D */
@@ -545,7 +545,7 @@ function clause execute (RISCV_FMVP_D_X(rs2, rs1, rd)) = {
   let rd_val_D      = rs2_val_X @ rs1_val_X;
 
   F_D(rd)           = rd_val_D;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FLEQ.H */
@@ -569,7 +569,7 @@ function clause execute(RISCV_FLEQ_H(rs2, rs1, rd)) = {
 
   accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FLTQ.H */
@@ -593,7 +593,7 @@ function clause execute(RISCV_FLTQ_H(rs2, rs1, rd)) = {
 
   accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FLEQ.S */
@@ -617,7 +617,7 @@ function clause execute(RISCV_FLEQ_S(rs2, rs1, rd)) = {
 
   accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FLTQ.S */
@@ -641,7 +641,7 @@ function clause execute(RISCV_FLTQ_S(rs2, rs1, rd)) = {
 
   accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 
@@ -666,7 +666,7 @@ function clause execute(RISCV_FLEQ_D(rs2, rs1, rd)) = {
 
   accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FLTQ.D */
@@ -690,7 +690,7 @@ function clause execute(RISCV_FLTQ_D(rs2, rs1, rd)) = {
 
   accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* FCVTMOD.W.D */
@@ -772,5 +772,5 @@ function clause execute(RISCV_FCVTMOD_W_D(rs1, rd)) = {
   let (fflags, rd_val) = fcvtmod_helper(rs1_val_D);
   accrue_fflags(fflags);
   X(rd) = sign_extend(rd_val);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }

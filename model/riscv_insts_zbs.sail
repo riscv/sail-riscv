@@ -45,7 +45,7 @@ function clause execute (ZBS_IOP(shamt, rs1, rd, op)) = {
     RISCV_BSETI => rs1_val | mask
   };
   X(rd) = result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* ****************************************************************** */
@@ -86,5 +86,5 @@ function clause execute (ZBS_RTYPE(rs2, rs1, rd, op)) = {
     RISCV_BSET => rs1_val | mask
   };
   X(rd) = result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }

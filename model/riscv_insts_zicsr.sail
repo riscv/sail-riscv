@@ -24,9 +24,9 @@ function clause execute CSR(csr, rs1, rd, is_imm, op) = {
   let rs1_val : xlenbits = if is_imm then zero_extend(rs1) else X(rs1);
   let is_CSR_Write = op == CSRRW | rs1 != zeros();
   if not(check_CSR(csr, cur_privilege, is_CSR_Write))
-  then { handle_illegal(); RETIRE_FAIL }
+  then RETIRE_FAIL(Illegal_Instruction())
   else if not(ext_check_CSR(csr, cur_privilege, is_CSR_Write))
-  then { ext_check_CSR_fail(); RETIRE_FAIL }
+  then RETIRE_FAIL(Ext_CSR_Check_Failure())
   else {
     /* CSRRW should not generate read side-effects if rd == 0 */
     let is_CSR_Read = not(op == CSRRW & rd == zeros());
@@ -45,7 +45,7 @@ function clause execute CSR(csr, rs1, rd, is_imm, op) = {
       then print_reg("CSR " ^ to_str(csr) ^ " -> " ^ bits_str(csr_val));
     };
     X(rd) = csr_val;
-    RETIRE_SUCCESS
+    RETIRE_SUCCESS()
   }
 }
 

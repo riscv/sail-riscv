@@ -31,7 +31,7 @@ function clause execute (ZBKB_RTYPE(rs2, rs1, rd, op)) = {
     RISCV_PACKH => zero_extend(rs2_val[7..0] @ rs1_val[7..0])
   };
   X(rd) = result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* ****************************************************************** */
@@ -49,7 +49,7 @@ function clause execute (ZBKB_PACKW(rs2, rs1, rd)) = {
   let rs2_val = X(rs2);
   let result : bits(32) = rs2_val[15..0] @ rs1_val[15..0];
   X(rd) = sign_extend(result);
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* ****************************************************************** */
@@ -70,7 +70,7 @@ function clause execute (RISCV_ZIP(rs1, rd)) = {
     result[i*2 + 1] = rs1_val[i + xlen_bytes*4];
   };
   X(rd) = result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* ****************************************************************** */
@@ -91,7 +91,7 @@ function clause execute (RISCV_UNZIP(rs1, rd)) = {
     result[i + xlen_bytes*4] = rs1_val[i*2 + 1];
   };
   X(rd) = result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }
 
 /* ****************************************************************** */
@@ -109,5 +109,5 @@ function clause execute (RISCV_BREV8(rs1, rd)) = {
   foreach (i from 0 to (xlen - 8) by 8)
     result[i+7..i] = reverse(rs1_val[i+7..i]);
   X(rd) = result;
-  RETIRE_SUCCESS
+  RETIRE_SUCCESS()
 }

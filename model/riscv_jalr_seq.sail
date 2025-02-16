@@ -18,19 +18,16 @@ function clause execute (RISCV_JALR(imm, rs1, rd)) = {
   let t : xlenbits = X(rs1) + sign_extend(imm);
   /* Extensions get the first checks on the prospective target address. */
   match ext_control_check_addr(t) {
-    Ext_ControlAddr_Error(e) => {
-      ext_handle_control_check_error(e);
-      RETIRE_FAIL
-    },
+    Ext_ControlAddr_Error(e) =>
+      RETIRE_FAIL(Ext_ControlAddr_Check_Failure(e)),
     Ext_ControlAddr_OK(addr) => {
       let target = [virtaddr_bits(addr) with 0 = bitzero];  /* clear addr[0] */
       if bit_to_bool(target[1]) & not(extensionEnabled(Ext_Zca)) then {
-        handle_mem_exception(addr, E_Fetch_Addr_Align());
-        RETIRE_FAIL
+        RETIRE_FAIL(Memory_Exception(addr, E_Fetch_Addr_Align()))
       } else {
         X(rd) = get_next_pc();
         set_next_pc(target);
-        RETIRE_SUCCESS
+        RETIRE_SUCCESS()
       }
     }
   }
