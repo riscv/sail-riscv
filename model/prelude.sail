@@ -41,16 +41,16 @@ overload BitStr = {bits_str, bit_str}
 
 overload operator ^ = {xor_vec, concat_str}
 
-val sub_vec = pure {c: "sub_bits", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
+val sub_vec = pure {c: "sub_bits", lean: "HSub.hSub", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
 
-val sub_vec_int = pure {c: "sub_bits_int", _: "sub_vec_int"} : forall 'n. (bits('n), int) -> bits('n)
+val sub_vec_int = pure {c: "sub_bits_int", lean: "BitVec.subInt", _: "sub_vec_int"} : forall 'n. (bits('n), int) -> bits('n)
 
 overload operator - = {sub_vec, sub_vec_int}
 
-val quot_positive_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot"} : forall 'n 'm, 'n >= 0 & 'm > 0. (int('n), int('m)) -> int(div('n, 'm))
+val quot_positive_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", lean: "Int.tdiv", c: "tdiv_int", coq: "Z.quot"} : forall 'n 'm, 'n >= 0 & 'm > 0. (int('n), int('m)) -> int(div('n, 'm))
 
-val quot_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot"} : (int, int) -> int
-val rem_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", coq: "Z.rem"} : (int, int) -> int
+val quot_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot", lean: "Int.tdiv"} : (int, int) -> int
+val rem_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", coq: "Z.rem", lean: "Int.tmod"} : (int, int) -> int
 
 /* The following defines % as euclidean modulus */
 overload operator % = {emod_int}
