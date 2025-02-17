@@ -1,6 +1,6 @@
 foreach (xlen IN ITEMS 32 64)
     foreach (flen IN ITEMS 32 64)
-        foreach (variant IN ITEMS "" "rvfi" "coq" "rmem")
+        foreach (variant IN ITEMS "" "rvfi" "coq" "rmem" "lean")
             set(arch "rv${xlen}")
             if (flen EQUAL 32)
                 string(APPEND arch "f")
@@ -411,11 +411,33 @@ foreach (xlen IN ITEMS 32 64)
                         --coq-lib mem_metadata
                         --coq-output-dir ${CMAKE_CURRENT_BINARY_DIR}
                         # The prefix of the output files.
-                        -o "riscv_${arch}"
+                        -o "coq_${arch}"
                         # Input files.
                         ${sail_srcs}
                 )
                 add_custom_target(generated_coq_${arch} DEPENDS "coq_${arch}.?")
+            endif()
+
+            # Build Lean definitions
+            if (variant STREQUAL "lean")
+                string(TOUPPER ${arch} arch_uppercase)
+                add_custom_command(
+                    DEPENDS ${sail_srcs}
+                    VERBATIM
+                    OUTPUT "lean_${arch_uppercase}.lean"
+                    COMMENT "Building Lean definitions from Sail model (${arch})"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    COMMAND
+                        ${SAIL_BIN}
+                        --lean
+                        --memo-z3
+                        --require-version 0.19
+                        --lean-output-dir ${CMAKE_CURRENT_BINARY_DIR}
+                        -o "Lean_${arch_uppercase}"
+                        ${sail_srcs}
+                )
+
+                add_custom_target(generated_lean_${arch} DEPENDS "lean_${arch_uppercase}.lean")
             endif()
         endforeach()
     endforeach()
