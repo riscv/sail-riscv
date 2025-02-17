@@ -54,6 +54,7 @@ enum {
   OPT_ENABLE_ZICBOZ,
   OPT_ENABLE_SSTC,
   OPT_CACHE_BLOCK_SIZE,
+  OPT_MAX_WAIT_STEPS,
 };
 
 static bool do_show_times = false;
@@ -71,6 +72,8 @@ static unsigned rvfi_trace_version = 1;
 static int rvfi_dii_port;
 static int rvfi_dii_sock;
 #endif
+
+int max_wait_steps = 0;
 
 char *sig_file = NULL;
 uint64_t mem_sig_start = 0;
@@ -151,6 +154,7 @@ static struct option options[] = {
     {"enable-zicbom",               no_argument,       0, OPT_ENABLE_ZICBOM       },
     {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
     {"cache-block-size",            required_argument, 0, OPT_CACHE_BLOCK_SIZE    },
+    {"max-wait-steps",              required_argument, 0, OPT_MAX_WAIT_STEPS      },
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
@@ -240,6 +244,7 @@ static int process_args(int argc, char **argv)
   uint64_t pmp_count = 0;
   uint64_t pmp_grain = 0;
   uint64_t block_size_exp = 0;
+  int wait_steps = 0;
   while (true) {
     c = getopt_long(argc, argv,
                     "a"
@@ -411,6 +416,15 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "setting cache-block-size to 2^%" PRIu64 " = %u B\n",
               block_size_exp, 1 << block_size_exp);
       rv_cache_block_size_exp = block_size_exp;
+      break;
+    case OPT_MAX_WAIT_STEPS:
+      wait_steps = atoi(optarg);
+      if (wait_steps < 0) {
+        fprintf(stderr, "invalid max-wait-steps '%s' provided.\n", optarg);
+        exit(1);
+      }
+      fprintf(stderr, "setting max-wait-states to %d steps.\n", wait_steps);
+      max_wait_steps = wait_steps;
       break;
     case 'x':
       fprintf(stderr, "enabling Zfinx support.\n");
@@ -693,12 +707,13 @@ void rvfi_send_trace(unsigned version)
 void run_sail(void)
 {
   struct zstep_result step_result;
-  bool exit_wait = true;
+  bool exit_wait = (max_wait_steps > 0) ? false : true;
   bool diverged = false;
 
   /* initialize the step number */
   mach_int step_no = 0;
   int insn_cnt = 0;
+  int wait_steps = 0;
 #ifdef RVFI_DII
   bool need_instr = true;
 #endif
@@ -819,13 +834,23 @@ void run_sail(void)
       flush_logs();
       KILL(sail_int)(&sail_step);
     }
-    if (step_result.zstepped) {
-      if (config_print_step) {
-        fprintf(trace_log, "\n");
+    switch (step_result.zstate) {
+    case zSTEP_WAIT:
+      if (++wait_steps >= max_wait_steps)
+        exit_wait = true;
+      break;
+    case zSTEP_ACTIVE:
+      wait_steps = 0;
+      exit_wait = (max_wait_steps > 0) ? false : true;
+      if (step_result.zstepped) {
+        if (config_print_step) {
+          fprintf(trace_log, "\n");
+        }
+        step_no++;
+        insn_cnt++;
+        total_insns++;
       }
-      step_no++;
-      insn_cnt++;
-      total_insns++;
+      break;
     }
 
     if (do_show_times && (total_insns & 0xfffff) == 0) {
