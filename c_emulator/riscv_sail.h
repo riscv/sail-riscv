@@ -25,7 +25,7 @@ struct zstep_result {
 };
 
 unit zinit_model(unit);
-struct zstep_result zstep(sail_int, bool);
+struct zstep_result zstep(sail_int, bool, bool);
 unit ztick_clock(unit);
 unit ztick_platform(unit);
 

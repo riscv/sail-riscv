@@ -54,6 +54,8 @@ enum {
   OPT_ENABLE_ZVKB,
   OPT_ENABLE_SSTC,
   OPT_CACHE_BLOCK_SIZE,
+  OPT_MAX_WAIT_STEPS,
+  OPT_WAIT_IS_NOP,
 };
 
 static bool do_show_times = false;
@@ -64,6 +66,9 @@ char *dtb_file = NULL;
 unsigned char *dtb = NULL;
 size_t dtb_len = 0;
 std::optional<rvfi_handler> rvfi;
+
+int max_wait_steps = 0;
+bool wait_is_nop = false;
 
 char *sig_file = NULL;
 uint64_t mem_sig_start = 0;
@@ -145,6 +150,8 @@ static struct option options[] = {
     {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
     {"enable-zvkb",                 no_argument,       0, OPT_ENABLE_ZVKB         },
     {"cache-block-size",            required_argument, 0, OPT_CACHE_BLOCK_SIZE    },
+    {"max-wait-steps",              required_argument, 0, OPT_MAX_WAIT_STEPS      },
+    {"wait-is-nop",                 no_argument,       0, OPT_WAIT_IS_NOP         },
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
@@ -234,6 +241,7 @@ static int process_args(int argc, char **argv)
   uint64_t pmp_count = 0;
   uint64_t pmp_grain = 0;
   uint64_t block_size_exp = 0;
+  int wait_steps = 0;
   while (true) {
     c = getopt_long(argc, argv,
                     "a"
@@ -420,6 +428,19 @@ static int process_args(int argc, char **argv)
               block_size_exp, 1 << block_size_exp);
       rv_cache_block_size_exp = block_size_exp;
       break;
+    case OPT_MAX_WAIT_STEPS:
+      wait_steps = atoi(optarg);
+      if (wait_steps < 0) {
+        fprintf(stderr, "invalid max-wait-steps '%s' provided.\n", optarg);
+        exit(1);
+      }
+      fprintf(stderr, "setting max-wait-states to %d steps.\n", wait_steps);
+      max_wait_steps = wait_steps;
+      break;
+    case OPT_WAIT_IS_NOP:
+      fprintf(stderr, "treating wait-states as NOPs.\n");
+      wait_is_nop = true;
+      break;
     case 'x':
       fprintf(stderr, "enabling Zfinx support.\n");
       rv_enable_zfinx = true;
@@ -438,6 +459,10 @@ static int process_args(int argc, char **argv)
       print_usage(argv[0], 1);
       break;
     }
+  }
+  if (wait_is_nop && (max_wait_steps > 0)) {
+    fprintf(stderr, "cannot set max-wait-steps if wait-is-nop is set.\n");
+    exit(1);
   }
 #ifdef RVFI_DII
   if (optind > argc || (optind == argc && !rvfi))
@@ -637,12 +662,12 @@ void flush_logs(void)
 void run_sail(void)
 {
   struct zstep_result step_result;
-  bool exit_wait = true;
   bool diverged = false;
 
   /* initialize the step number */
   mach_int step_no = 0;
   int insn_cnt = 0;
+  int wait_steps = 0;
 
   struct timeval interval_start;
   if (gettimeofday(&interval_start, NULL) < 0) {
@@ -664,11 +689,12 @@ void run_sail(void)
         break;
       }
     }
+    bool exit_wait = wait_steps >= max_wait_steps;
     { /* run a Sail step */
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
-      step_result = zstep(sail_step, exit_wait);
+      step_result = zstep(sail_step, wait_is_nop, exit_wait);
       if (have_exception)
         goto step_exception;
       flush_logs();
@@ -677,13 +703,24 @@ void run_sail(void)
         rvfi->send_trace(config_print_rvfi);
       }
     }
-    if (step_result.zstepped) {
+    switch (step_result.zstate) {
+    case zSTEP_WAIT:
       if (config_print_step) {
-        fprintf(trace_log, "\n");
+        fprintf(trace_log, "entering wait-step %d\n", wait_steps);
       }
-      step_no++;
-      insn_cnt++;
-      total_insns++;
+      ++wait_steps;
+      break;
+    case zSTEP_ACTIVE:
+      wait_steps = 0;
+      if (step_result.zstepped) {
+        if (config_print_step) {
+          fprintf(trace_log, "\n");
+        }
+        step_no++;
+        insn_cnt++;
+        total_insns++;
+      }
+      break;
     }
 
     if (do_show_times && (total_insns & 0xfffff) == 0) {

@@ -10,8 +10,9 @@
 
 register step_state : StepState
 
-// Checks if the retire returned by the execution of an instruction
-// counts as a step.
+// Checks if the retire status returned by the execution of an instruction
+// counts as a step, where a step occurs when instruction retired
+// successfully or it raised an exception.
 function does_executed_retire_step(r : Retired(Retire_Failure)) -> bool =
   match r {
     RETIRE_OK()                        => true,
@@ -22,7 +23,7 @@ function does_executed_retire_step(r : Retired(Retire_Failure)) -> bool =
     // do not step if a wait instruction executed.
     RETIRE_FAIL(Wait_For_Interrupt())  => false,
 
-    // retires from extensions
+    // errors from extensions
     RETIRE_FAIL(Ext_ControlAddr_Check_Failure(_)) => true,
     RETIRE_FAIL(Ext_DataAddr_Check_Failure(_))    => true,
     RETIRE_FAIL(Ext_CSR_Check_Failure())          => true,
@@ -33,7 +34,7 @@ union Step = {
   Step_Pending_Interrupt  : (InterruptType, Privilege),
   Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
   Step_Execute            : Retired(Retire_Failure),
-  Step_Waiting            : unit
+  Step_Waiting            : unit,
 }
 
 function step_wait_state(step_no : int, exit_wait : bool) -> (Step, bool) = {
@@ -114,7 +115,7 @@ function step_active_state(step_no: int, exit_wait : bool) -> ((Step, bool), opt
 // It returns whether the Sail emulator executed a step, and the
 // stepper state at the end of the step.
 
-function step(step_no : int, exit_wait : bool) -> step_result = {
+function step(step_no : int, wait_is_nop : bool, exit_wait : bool) -> step_result = {
   /* for step extensions */
   ext_pre_step_hook();
 
@@ -129,11 +130,13 @@ function step(step_no : int, exit_wait : bool) -> step_result = {
   minstret_write = None();
   minstreth_write = None();
 
-  let ((step_val, stepped), instbits) : ((Step, bool), option(xlenbits)) =
+  let ((step_val, did_step), instbits) : ((Step, bool), option(xlenbits)) =
     match step_state {
       STEP_WAIT   => (step_wait_state(step_no, exit_wait), None()),
       STEP_ACTIVE => step_active_state(step_no, exit_wait)
     };
+
+  var stepped : bool = did_step;
 
   match step_val {
     Step_Pending_Interrupt(intr, priv) => {
@@ -147,6 +150,7 @@ function step(step_no : int, exit_wait : bool) -> step_result = {
       ext_handle_fetch_check_error(e)
     },
     Step_Waiting() => {
+      assert(~(wait_is_nop));
       assert(step_state == STEP_WAIT, "cannot be Waiting in a non-Wait state");
     },
     Step_Execute(RETIRE_OK()) => {
@@ -172,10 +176,18 @@ function step(step_no : int, exit_wait : bool) -> step_result = {
         }
       },
       Wait_For_Interrupt() => {
-        // Transition into the wait state.
-        if   get_config_print_instr()
-        then print_instr("entering WAIT state at PC " ^ BitStr(PC));
-        step_state = STEP_WAIT
+        if wait_is_nop then {
+          // This is the same as RETIRE_OK.
+          assert(step_state == STEP_ACTIVE);
+          // Override the default step for WFI.
+          stepped = true;
+          ()
+        } else {
+          // Transition into the wait state.
+          if   get_config_print_instr()
+          then print_instr("entering WAIT state at PC " ^ BitStr(PC));
+          step_state = STEP_WAIT
+        }
       },
       // failures from extensions
       Ext_CSR_Check_Failure()          => { minstret_increment = false; ext_check_CSR_fail() },
@@ -185,13 +197,22 @@ function step(step_no : int, exit_wait : bool) -> step_result = {
     }
   };
 
-  if step_state != STEP_WAIT then {
-    tick_pc();
-
-    update_minstret();
-
-    /* for step extensions */
-    ext_post_step_hook();
+  // Any execution that results in a STEP_WAIT should not have updated
+  // minstret[h]_write.  Assert this, since the next entry into this function
+  // will clear that write state above, leading to a silent loss of
+  // that state.
+  match step_state {
+    STEP_WAIT => {
+      assert(~(wait_is_nop));
+      assert(minstret_write  == None());
+      assert(minstreth_write == None());
+    },
+    STEP_ACTIVE => {
+      tick_pc();
+      update_minstret();
+      /* for step extensions */
+      ext_post_step_hook();
+    }
   };
 
   struct { state = step_state, stepped }
@@ -202,9 +223,8 @@ function loop () : unit -> unit = {
   var i : int = 0;
   var step_no : int = 0;
   while not(htif_done) do {
-    // This standalone loop always exits immediately out of waiting
-    // states.
-    let step_result = step(step_no, true);
+    // This standalone loop treats instructions that wait as NOPs.
+    let step_result = step(step_no, true, true);
     if step_result.stepped then {
       step_no = step_no + 1;
       if get_config_print_instr() then {
