@@ -195,6 +195,7 @@ Axiom sys_enable_bext : unit -> bool.
 Axiom sys_enable_zicbom : unit -> bool.
 Axiom sys_enable_zicboz : unit -> bool.
 Axiom sys_enable_sstc : unit -> bool.
+Axiom sys_enable_svadu : unit -> bool.
 Axiom sys_writable_hpm_counters : unit -> mword 32.
 
 Axiom sys_vext_vl_use_ceil : unit -> bool.
