@@ -236,11 +236,8 @@ function clause execute (CM_PUSH(rlist, spimm)) = {
   process_cmpush(rlist, spimm)
 }
 
-mapping clause assembly = CM_PUSH(rlist, spimm) if (sizeof(xlen) == 32) <->
-  "cm.push" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, false) if (sizeof(xlen) == 32)
-
-mapping clause assembly = CM_PUSH(rlist, spimm) if (sizeof(xlen) == 64) <->
-  "cm.push" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, false) if (sizeof(xlen) == 64)
+mapping clause assembly = CM_PUSH(rlist, spimm) if (xlen == 32 | xlen == 64) <->
+  "cm.push" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, false) if (xlen == 32 | xlen == 64)
 /* ****************************************************************** */
 union clause ast = CM_POP : (bits(4), bits(2))
 
@@ -255,7 +252,7 @@ function process_cmpop (rlist : bits(4), spimm : bits(2), write_pc : bool, write
   let stack_adj = get_stack_adj_base(rlist) + unsigned(spimm) * 16;
   let new_sp = addr + to_bits(xlen, stack_adj);
   let mask = zcmp_regmask(rlist);
-  let bytes = if sizeof(xlen) == 32 then 4 else 8;
+  let bytes = if xlen == 32 then 4 else 8;
 
   X(sp) = new_sp;
 
@@ -303,11 +300,9 @@ function clause execute (CM_POP(rlist, spimm)) = {
   process_cmpop(rlist, spimm, false, false)
 }
 
-mapping clause assembly = CM_POP(rlist, spimm) if (sizeof(xlen) == 32) <->
-  "cm.pop" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true) if (sizeof(xlen) == 32)
+mapping clause assembly = CM_POP(rlist, spimm) if (xlen == 32 | xlen == 64) <->
+  "cm.pop" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true) if (xlen == 32 | xlen == 64)
 
-mapping clause assembly = CM_POP(rlist, spimm) if (sizeof(xlen) == 64) <->
-  "cm.pop" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true) if (sizeof(xlen) == 64)
 /* ****************************************************************** */
 union clause ast = CM_POPRET : (bits(4), bits(2))
 
@@ -320,11 +315,8 @@ function clause execute (CM_POPRET(rlist, spimm)) = {
   process_cmpop(rlist, spimm, true, false)
 }
 
-mapping clause assembly = CM_POPRET(rlist, spimm) if (sizeof(xlen) == 32) <->
-  "cm.popret" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true) if (sizeof(xlen) == 32)
-
-mapping clause assembly = CM_POPRET(rlist, spimm) if (sizeof(xlen) == 64) <->
-  "cm.popret" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true) if (sizeof(xlen) == 64)
+mapping clause assembly = CM_POPRET(rlist, spimm) if (xlen == 32 | xlen == 64) <->
+  "cm.popret" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true) if (xlen == 32 | xlen == 64)
 /* ****************************************************************** */
 union clause ast = CM_POPRETZ : (bits(4), bits(2))
 
@@ -337,12 +329,8 @@ function clause execute (CM_POPRETZ(rlist, spimm)) = {
   process_cmpop(rlist, spimm, true, true)
 }
 
-mapping clause assembly = CM_POPRETZ(rlist, spimm) if (sizeof(xlen) == 32) <->
-  "cm.popretz" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true) if (sizeof(xlen) == 32)
-
-mapping clause assembly = CM_POPRETZ(rlist, spimm) if (sizeof(xlen) == 64) <->
-  "cm.popretz" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true) if (sizeof(xlen) == 64)
-
+mapping clause assembly = CM_POPRETZ(rlist, spimm) if (xlen == 32 | xlen == 64) <->
+  "cm.popretz" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true) if (xlen == 32 | xlen == 64)
 /* ****************************************************************** */
 union clause ast = CM_MVA01S : (cregidx, cregidx)
 
@@ -379,8 +367,8 @@ function clause execute (CM_MVA01S(r1s', r2s')) = {
   RETIRE_SUCCESS
 }
 
-mapping clause assembly = CM_MVA01S(r1s', r2s') <->
-  "cm.mva01s" ^ spc() ^ rns_name(r1s') ^ sep() ^ rns_name(r2s')
+mapping clause assembly = CM_MVA01S(r1s', r2s') if (xlen == 32 | xlen == 64) <->
+  "cm.mva01s" ^ spc() ^ rns_name(r1s') ^ sep() ^ rns_name(r2s') if (xlen == 32 | xlen == 64)
 /* ****************************************************************** */
 union clause ast = CM_MVSA01 : (cregidx, cregidx)
 
@@ -396,5 +384,5 @@ function clause execute (CM_MVSA01(r1s', r2s')) = {
   RETIRE_SUCCESS
 }
 
-mapping clause assembly = CM_MVSA01(r1s', r2s') <->
-  "cm.mvsa01" ^ spc() ^ rns_name(r1s') ^ sep() ^ rns_name(r2s')
+mapping clause assembly = CM_MVSA01(r1s', r2s') if (xlen == 32 | xlen == 64) <->
+  "cm.mvsa01" ^ spc() ^ rns_name(r1s') ^ sep() ^ rns_name(r2s') if (xlen == 32 | xlen == 64)
