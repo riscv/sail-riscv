@@ -14,8 +14,14 @@ extern struct zMisa zmisa;
 void model_init(void);
 void model_fini(void);
 
+enum zStepState { zSTEP_ACTIVE, zSTEP_WAIT };
+struct zstep_result {
+  enum zStepState zstate;
+  bool zstepped;
+};
+
 unit zinit_model(unit);
-bool zstep(sail_int);
+struct zstep_result zstep(sail_int, bool exit_wait);
 unit ztick_clock(unit);
 unit ztick_platform(unit);
 
