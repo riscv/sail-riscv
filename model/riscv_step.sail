@@ -189,13 +189,21 @@ function step(step_no : int, exit_wait : bool) -> step_result = {
     }
   };
 
-  if step_state != STEP_WAIT then {
-    tick_pc();
-
-    update_minstret();
-
-    /* for step extensions */
-    ext_post_step_hook();
+  // Any execution that results in a STEP_WAIT should not have updated
+  // minstret[h]_write.  Assert this, since the next entry into this function
+  // will clear that write state above, leading to a silent loss of
+  // that state.
+  match step_state {
+    STEP_WAIT => {
+      assert(minstret_write  == None());
+      assert(minstreth_write == None());
+    },
+    STEP_ACTIVE => {
+      tick_pc();
+      update_minstret();
+      /* for step extensions */
+      ext_post_step_hook();
+    }
   };
 
   struct { state = step_state, stepped }
