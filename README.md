@@ -62,6 +62,9 @@ build directory, then e.g.
 $ make -C build riscv_sim_rv64f_rvfi
 ```
 
+By default `build_simulators.sh` will download and build [libgmp](https://gmplib.org/).
+To use a system installation of libgmp, run `env DOWNLOAD_GMP=FALSE ./build_simulators.sh` instead.
+
 ### Executing test binaries
 
 The simulator can be used to execute small test binaries.
