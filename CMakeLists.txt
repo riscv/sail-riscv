@@ -114,6 +114,15 @@ if (NOT SAIL_BIN)
 endif()
 message(STATUS "Found sail: ${SAIL_BIN}")
 
+# Set sail_dir to Sail's library directory for use in build rules
+execute_process(
+    COMMAND ${SAIL_BIN} --dir
+    OUTPUT_VARIABLE sail_dir
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND_ERROR_IS_FATAL ANY
+)
+message(STATUS "Sail library directory: ${sail_dir}")
+
 set(DEFAULT_ARCHITECTURES "rv32d;rv64d" CACHE STRING "Architectures to build by default (rv32f|rv64f|rv32d|rv64d)(_rvfi)? " )
 
 option(COVERAGE "Compile with Sail coverage collection enabled.")

@@ -72,9 +72,6 @@ open import Pervasives
 open import Pervasives_extra
 open import Sail2_instr_kinds
 open import Sail2_values
-open import Sail2_operators_mwords
-open import Sail2_prompt_monad
-open import Sail2_prompt
 
 type bitvector = list Sail2_values.bitU
 
