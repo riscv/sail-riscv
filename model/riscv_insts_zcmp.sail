@@ -189,15 +189,12 @@ mapping clause encdec_compressed = CM_PUSH(rlist, spimm)   if extensionEnabled(E
   <-> 0b101 @ 0b11000 @ rlist : bits(4) @ spimm : bits(2) @ 0b10    if extensionEnabled(Ext_Zcmp)
 
 function process_cmpush (rlist : bits(4), spimm : bits(2)) -> Retired = {
-  let width_bytes = xlen_bytes;
-  assert(width_bytes <= xlen_bytes);
-
   let addr = X(sp);
   let stack_adj = negate_int(get_stack_adj_base(rlist) + unsigned(spimm) * 16);
   let new_sp = addr + to_bits(xlen, stack_adj);
   let mask = zcmp_regmask(rlist);
 
-  var offset : int = width_bytes;
+  var offset : int = xlen_bytes;
 
   foreach (i from 31 downto 1) {
     if mask[i] == bitone then {
@@ -209,13 +206,13 @@ function process_cmpush (rlist : bits(4), spimm : bits(2)) -> Retired = {
         else match translateAddr(vaddr, Write(Data)) {
             TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
             TR_Address(paddr, _) => {
-              let eares = mem_write_ea(paddr, width_bytes, false, false, false);
+              let eares = mem_write_ea(paddr, xlen_bytes, false, false, false);
               match (eares) {
                   Err(e) => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
                   Ok(_) => {
                   let reg_val = X(to_bits(5, i));
-                  match mem_write_value(paddr, width_bytes, reg_val[width_bytes * 8 - 1 .. 0], false, false, false) {
-                      Ok(true)  => { offset = offset + width_bytes },
+                  match mem_write_value(paddr, xlen_bytes, reg_val, false, false, false) {
+                      Ok(true)  => { offset = offset + xlen_bytes },
                       Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                       Err(e) => { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
                     }
@@ -245,18 +242,14 @@ mapping clause encdec_compressed = CM_POP(rlist, spimm)   if extensionEnabled(Ex
   <-> 0b101 @ 0b11010 @ rlist : bits(4) @ spimm : bits(2) @ 0b10    if extensionEnabled(Ext_Zcmp)
 
 function process_cmpop (rlist : bits(4), spimm : bits(2), write_pc : bool, write_a0 : bool) -> Retired = {
-  let width_bytes = xlen_bytes;
-  assert(width_bytes <= xlen_bytes);
-
   let addr = X(sp);
   let stack_adj = get_stack_adj_base(rlist) + unsigned(spimm) * 16;
   let new_sp = addr + to_bits(xlen, stack_adj);
   let mask = zcmp_regmask(rlist);
-  let bytes = if xlen == 32 then 4 else 8;
 
   X(sp) = new_sp;
 
-  var offset : int = width_bytes;
+  var offset : int = xlen_bytes;
 
   foreach (i from 31 downto 1) {
     if mask[i] == bitone then {
@@ -268,10 +261,10 @@ function process_cmpop (rlist : bits(4), spimm : bits(2), write_pc : bool, write
         else match translateAddr(vaddr, Write(Data)) {
             TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
             TR_Address(paddr, _) => {
-              match mem_read(Read(Data), paddr, width_bytes, false, false, false) {
+              match mem_read(Read(Data), paddr, xlen_bytes, false, false, false) {
                 Ok(v) => {
                   X(to_bits(5, i)) = extend_value(true, v);
-                  offset = offset + width_bytes
+                  offset = offset + xlen_bytes
                 },
                 Err(e) => { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
               }
