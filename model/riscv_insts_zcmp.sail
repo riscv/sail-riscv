@@ -201,7 +201,7 @@ function process_cmpush (rlist : bits(4), spimm : bits(2)) -> Retired = {
 
   foreach (i from 31 downto 1) {
     if mask[i] == bitone then {
-      match ext_data_get_addr(sp, to_bits(xlen, negate_int(offset)), Write(Data), xlen / 8) {
+      match ext_data_get_addr(sp, to_bits(xlen, negate_int(offset)), Write(Data), xlen_bytes) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
         Ext_DataAddr_OK(vaddr) =>
         if   check_misaligned(vaddr, size_bytes(xlen_bytes))
@@ -260,7 +260,7 @@ function process_cmpop (rlist : bits(4), spimm : bits(2), write_pc : bool, write
 
   foreach (i from 31 downto 1) {
     if mask[i] == bitone then {
-      match ext_data_get_addr(sp, to_bits(xlen, negate_int(offset)), Write(Data), xlen / 8) {
+      match ext_data_get_addr(sp, to_bits(xlen, negate_int(offset)), Write(Data), xlen_bytes) {
         Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
         Ext_DataAddr_OK(vaddr) =>
         if   check_misaligned(vaddr, size_bytes(xlen_bytes))
