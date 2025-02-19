@@ -339,6 +339,9 @@ function reset_sys() -> unit = {
   mstatus[MIE] = 0b0;
   mstatus[MPRV] = 0b0;
 
+  // If little-endian memory accesses are supported, the mstatus/mstatush field MBE is reset to 0.
+  mstatus[MBE] = 0b0;
+
   // "If little-endian memory accesses are supported, the mstatus/mstatush field
   // MBE is reset to 0."
   // TODO: The handling of mstatush is a bit awkward currently, but the model
