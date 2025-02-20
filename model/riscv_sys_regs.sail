@@ -706,6 +706,7 @@ bitfield Sstatus : bits(64) = {
   FS    : 14 .. 13,
   VS    : 10 .. 9,
   SPP   : 8,
+  UBE   : 6,
   SPIE  : 5,
   SIE   : 1,
 }
@@ -725,6 +726,7 @@ function lower_mstatus(m : Mstatus) -> Sstatus = {
     FS = m[FS],
     VS = m[VS],
     SPP = m[SPP],
+    UBE = m[UBE],
     SPIE = m[SPIE],
     SIE = m[SIE],
   ]
@@ -745,6 +747,7 @@ function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
     FS = s[FS],
     VS = s[VS],
     SPP = s[SPP],
+    UBE = s[UBE],
     SPIE = s[SPIE],
     SIE = s[SIE],
   ]
