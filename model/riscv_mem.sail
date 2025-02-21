@@ -63,8 +63,7 @@ function write_kind_of_flags (aq : bool, rl : bool, con : bool) -> write_kind =
     (true,  false, true)  => throw(Error_not_implemented("sc.aq"))
   }
 
-val check_endianess: (AccessType(ext_access_type)) -> bool
-function check_endianess(typ) = {
+function is_big_endian(typ : AccessType(ext_access_type)) -> bool = {
     match effectivePrivilege(typ, mstatus, cur_privilege) {
       Machine     => bits_to_bool(mstatus[MBE]),
       Supervisor  => bits_to_bool(mstatus[SBE]),
@@ -83,7 +82,7 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
     (Read(Data), None()) => Err(E_Load_Access_Fault()),
     (_,          None()) => Err(E_SAMO_Access_Fault()),
     (_,      Some(v, m)) => {
-                            let temp_var: bits('n * 8) = match (t, check_endianess(t)) {
+                            let temp_var: bits('n * 8) = match (t, is_big_endian(t)) {
                                 (Execute(), _) => (v),
                                 (_, true)      => reverse_endianness(v),
                                 (_, false)     => (v),
@@ -211,7 +210,7 @@ $endif
 
 // only used for actual memory regions, to avoid MMIO effects
 function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : physaddr, width : int('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
-  let temp_var: bits('n * 8) = match (check_endianess(Write())) {
+  let temp_var: bits('n * 8) = match (is_big_endian(Write())) {
       false => data,
       true => reverse_endianness(data),
   };
