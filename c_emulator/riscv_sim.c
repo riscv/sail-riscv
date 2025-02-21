@@ -52,7 +52,9 @@ enum {
   OPT_ENABLE_ZCB,
   OPT_ENABLE_ZICBOM,
   OPT_ENABLE_ZICBOZ,
+  OPT_ENABLE_SSSTATEEN,
   OPT_ENABLE_SSTC,
+  OPT_ENABLE_SMSTATEEN,
   OPT_CACHE_BLOCK_SIZE,
 };
 
@@ -396,9 +398,17 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "enabling Zicboz extension.\n");
       rv_enable_zicboz = true;
       break;
+    case OPT_ENABLE_SSSTATEEN:
+      fprintf(stderr, "enabling Ssstateen extension.\n");
+      rv_enable_ssstateen = true;
+      break;
     case OPT_ENABLE_SSTC:
       fprintf(stderr, "enabling Sstc extension.\n");
       rv_enable_sstc = true;
+      break;
+    case OPT_ENABLE_SMSTATEEN:
+      fprintf(stderr, "enabling Smstateen extension.\n");
+      rv_enable_smstateen = true;
       break;
     case OPT_CACHE_BLOCK_SIZE:
       block_size_exp = ilog2(atol(optarg));
