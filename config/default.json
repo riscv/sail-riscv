@@ -184,6 +184,9 @@
     "Zhinx": {
       "supported": false
     },
+    "Zhinxmin": {
+      "supported": false
+    },
     "Zvbb": {
       "supported": true
     },
