@@ -7,6 +7,7 @@
 /*=======================================================================================*/
 
 function clause currentlyEnabled(Ext_Zhinx) = hartSupports(Ext_Zhinx) & currentlyEnabled(Ext_Zfinx)
+function clause currentlyEnabled(Ext_Zhinxmin) = (hartSupports(Ext_Zhinxmin) & currentlyEnabled(Ext_Zfinx))| currentlyEnabled(Ext_Zhinx)
 
 /* **************************************************************** */
 /* This file specifies the instructions in the Zfh extension        */
@@ -167,7 +168,7 @@ function fle_H   (v1,       v2,        is_quiet) = {
 function haveHalfFPU() -> bool = currentlyEnabled(Ext_Zfh) | currentlyEnabled(Ext_Zhinx)
 // Support for conversion of halves to/from single & double, but no actual
 // calculations with halves.
-function haveHalfMin() -> bool = haveHalfFPU() | currentlyEnabled(Ext_Zfhmin)
+function haveHalfMin() -> bool = haveHalfFPU() | currentlyEnabled(Ext_Zfhmin) | currentlyEnabled(Ext_Zhinxmin)
 
 /* ****************************************************************** */
 /* Floating-point loads                                               */
