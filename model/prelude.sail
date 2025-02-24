@@ -41,7 +41,7 @@ overload BitStr = {bits_str, bit_str}
 
 overload operator ^ = {xor_vec, concat_str}
 
-val sub_vec = pure {c: "sub_bits", lean: "HSub.hSub", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
+val sub_vec = pure {c: "sub_bits", lean: "_lean_sub", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
 
 val sub_vec_int = pure {c: "sub_bits_int", lean: "BitVec.subInt", _: "sub_vec_int"} : forall 'n. (bits('n), int) -> bits('n)
 
