@@ -14,7 +14,6 @@
 function clause extensionEnabled(Ext_M) = misa[M] == 0b1
 function clause extensionEnabled(Ext_Zmmul) = true
 
-
 union clause ast = MUL : (regidx, regidx, regidx, mul_op)
 
 mapping encdec_mul_op : mul_op <-> bits(3) = {
