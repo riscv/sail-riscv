@@ -129,6 +129,8 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
  *
  * We don't use the lowered views of {xie,xip} here, since the spec
  * allows for example the M_Timer to be delegated to the S-mode.
+ *
+ * This is used when the hart is in the Active state.
  */
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   // mideleg can only be non-zero if we support Supervisor mode.
@@ -143,6 +145,18 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   if      mIE & (pending_m != zeros()) then Some((pending_m, Machine))
   else if sIE & (pending_s != zeros()) then Some((pending_s, Supervisor))
   else None()
+}
+
+/* Check if a locally enabled interrupt is pending.
+ *
+ * This does not examine the global enable bits (MIE and SIE in
+ * mstatus) and their delegation in mideleg. It does honor the
+ * local interrupt enables in mie.
+ *
+ * This is used when the hart is in the Waiting state.
+ */
+function wakeForInterrupt() -> bool = {
+  (mip.bits & mie.bits) != zeros()
 }
 
 /* Examine the current interrupt state and return an interrupt to be *
