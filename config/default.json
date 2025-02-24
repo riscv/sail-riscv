@@ -35,7 +35,8 @@
             "base" : 33554432,
             "size" : 786432
         },
-        "instructions_per_tick" : 100
+        "instructions_per_tick" : 100,
+        "wait_is_nop" : true
     },
     "extensions" : {
         "C" : {
