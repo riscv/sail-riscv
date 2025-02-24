@@ -301,17 +301,17 @@ function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
   match ext_data_get_addr(rs1, offset, Read(Data), width_bytes) {
-    Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
+    Ext_DataAddr_Error(e)  => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
     Ext_DataAddr_OK(vaddr) => {
       if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
+      then RETIRE_FAIL(Memory_Exception(vaddr, E_Load_Addr_Align()))
       else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+        TR_Failure(e, _)    => RETIRE_FAIL(Memory_Exception(vaddr, e)),
         TR_Address(addr, _) => {
           let (aq, rl, res) = (false, false, false);
           match mem_read(Read(Data), addr, width_bytes, aq, rl, res) {
             Ok(result) => { F(rd) = nan_box(result); RETIRE_SUCCESS },
-            Err(e)     => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            Err(e)     => RETIRE_FAIL(Memory_Exception(vaddr, e)),
           }
         },
       }
@@ -362,21 +362,21 @@ function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
   match ext_data_get_addr(rs1, offset, Write(Data), width_bytes) {
-    Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
+    Ext_DataAddr_Error(e)  => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
     Ext_DataAddr_OK(vaddr) => {
       if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
+      then RETIRE_FAIL(Memory_Exception(vaddr, E_SAMO_Addr_Align()))
       else match translateAddr(vaddr, Write(Data)) {
-        TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+        TR_Failure(e, _)    => RETIRE_FAIL(Memory_Exception(vaddr, e)),
         TR_Address(addr, _) => {
           match mem_write_ea(addr, width_bytes, aq, rl, false) {
-            Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            Err(e) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
             Ok(_)  => {
               let rs2_val = F(rs2);
               match mem_write_value(addr, width_bytes, rs2_val[width_bytes * 8 - 1 .. 0], aq, rl, con) {
-                Ok(true)  => { RETIRE_SUCCESS },
+                Ok(true)  => RETIRE_SUCCESS,
                 Ok(false) => { internal_error(__FILE__, __LINE__, "store got false from mem_write_value") },
-                Err(e)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                Err(e)    => RETIRE_FAIL(Memory_Exception(vaddr, e))
               }
             },
           }
@@ -426,7 +426,7 @@ function clause execute (F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)) = {
   let rs2_val_32b = F_or_X_S(rs2);
   let rs3_val_32b = F_or_X_S(rs3);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_32b) : (bits(5), bits(32)) =
@@ -491,7 +491,7 @@ function clause execute (F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)) = {
   let rs1_val_32b = F_or_X_S(rs1);
   let rs2_val_32b = F_or_X_S(rs2);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_32b) : (bits(5), bits(32)) = match op {
@@ -577,7 +577,7 @@ mapping clause encdec = F_UN_RM_XF_TYPE_S(rs1, rm, rd, FCVT_S_LU)
 function clause execute (F_UN_RM_FF_TYPE_S(rs1, rm, rd, FSQRT_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_f32Sqrt   (rm_3b, rs1_val_S);
@@ -592,7 +592,7 @@ function clause execute (F_UN_RM_FF_TYPE_S(rs1, rm, rd, FSQRT_S)) = {
 function clause execute (F_UN_RM_FX_TYPE_S(rs1, rm, rd, FCVT_W_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_W) = riscv_f32ToI32 (rm_3b, rs1_val_S);
@@ -607,7 +607,7 @@ function clause execute (F_UN_RM_FX_TYPE_S(rs1, rm, rd, FCVT_W_S)) = {
 function clause execute (F_UN_RM_FX_TYPE_S(rs1, rm, rd, FCVT_WU_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_WU) = riscv_f32ToUi32 (rm_3b, rs1_val_S);
@@ -622,7 +622,7 @@ function clause execute (F_UN_RM_FX_TYPE_S(rs1, rm, rd, FCVT_WU_S)) = {
 function clause execute (F_UN_RM_XF_TYPE_S(rs1, rm, rd, FCVT_S_W)) = {
   let rs1_val_W = X(rs1) [31..0];
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_i32ToF32 (rm_3b, rs1_val_W);
@@ -637,7 +637,7 @@ function clause execute (F_UN_RM_XF_TYPE_S(rs1, rm, rd, FCVT_S_W)) = {
 function clause execute (F_UN_RM_XF_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
   let rs1_val_WU = X(rs1) [31..0];
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_ui32ToF32 (rm_3b, rs1_val_WU);
@@ -653,7 +653,7 @@ function clause execute (F_UN_RM_FX_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
   assert(xlen >= 64);
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_L) = riscv_f32ToI64 (rm_3b, rs1_val_S);
@@ -669,7 +669,7 @@ function clause execute (F_UN_RM_FX_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
   assert(xlen >= 64);
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_LU) = riscv_f32ToUi64 (rm_3b, rs1_val_S);
@@ -685,7 +685,7 @@ function clause execute (F_UN_RM_XF_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
   assert(xlen >= 64);
   let rs1_val_L = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_i64ToF32 (rm_3b, rs1_val_L);
@@ -701,7 +701,7 @@ function clause execute (F_UN_RM_XF_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
   assert(xlen >= 64);
   let rs1_val_LU = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_ui64ToF32 (rm_3b, rs1_val_LU);
