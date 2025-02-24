@@ -692,7 +692,8 @@ void rvfi_send_trace(unsigned version)
 
 void run_sail(void)
 {
-  bool stepped;
+  struct zstep_result step_result;
+  bool exit_wait = true;
   bool diverged = false;
 
   /* initialize the step number */
@@ -800,7 +801,7 @@ void run_sail(void)
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
-      stepped = zstep(sail_step);
+      step_result = zstep(sail_step, exit_wait);
       if (have_exception)
         goto step_exception;
       flush_logs();
@@ -812,13 +813,13 @@ void run_sail(void)
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
-      stepped = zstep(sail_step);
+      step_result = zstep(sail_step, exit_wait);
       if (have_exception)
         goto step_exception;
       flush_logs();
       KILL(sail_int)(&sail_step);
     }
-    if (stepped) {
+    if (step_result.zstepped) {
       if (config_print_step) {
         fprintf(trace_log, "\n");
       }
