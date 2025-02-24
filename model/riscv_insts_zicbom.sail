@@ -63,7 +63,7 @@ function cbop_priv_check(p: Privilege) -> checked_cbop = {
   }
 }
 
-val process_clean_inval : (regidx, cbop_zicbom) -> Retired(Retire_Failure)
+val process_clean_inval : (regidx, cbop_zicbom) -> ExecutionResult(Retire_Failure)
 function process_clean_inval(rs1, cbop) = {
   let rs1_val = X(rs1);
   let cache_block_size_exp = plat_cache_block_size_exp();

@@ -190,10 +190,11 @@ function get_start_element() = {
   let VLEN_pow = get_vlen_pow();
   let SEW_pow = get_sew_pow();
   /* The use of vstart values greater than the largest element
-    index for the current SEW setting is reserved.
-    It is recommended that implementations trap if vstart is out of bounds.
-    It is not required to trap, as a possible future use of upper vstart bits
-    is to store imprecise trap information. */
+   * index for the current SEW setting is reserved.
+   *
+   * TODO: the bound here might be incorrect.
+   * See https://github.com/riscv/sail-riscv/pull/755#discussion_r2035095825
+   */
   if start_element > (2 ^ (3 + VLEN_pow - SEW_pow) - 1)
   then Err(())
   else Ok(start_element)

@@ -264,7 +264,7 @@ foreach (xlen IN ITEMS 32 64)
                         # Don't dead-code eliminate these functions. These should match the
                         # ones used from riscv_sail.h
                         --c-preserve init_model
-                        --c-preserve step
+                        --c-preserve try_step
                         --c-preserve tick_clock
                         --c-preserve tick_platform
                         # Preserve RVFI functions.

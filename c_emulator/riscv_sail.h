@@ -19,7 +19,7 @@ void model_init(void);
 void model_fini(void);
 
 unit zinit_model(unit);
-bool zstep(sail_int);
+bool ztry_step(sail_int, bool);
 unit ztick_clock(unit);
 unit ztick_platform(unit);
 

@@ -102,12 +102,11 @@ function privLevel_to_str (p) =
 
 overload to_str = {privLevel_to_str}
 
-/* Type denoting whether an executed instruction retires
- * that is generic over the reasons why a retire might
- * fail or be incomplete.
+/* Type denoting the result of executing an instruction that
+ * is generic over the reasons why it fails or is incomplete.
  */
 
-union Retired ('a : Type) = {
+union ExecutionResult ('a : Type) = {
   RETIRE_OK      : unit,
   RETIRE_FAIL    : 'a
 }
