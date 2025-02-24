@@ -182,6 +182,7 @@ foreach (xlen IN ITEMS 32 64)
                 # Shared/common code for the cryptography extension.
                 "riscv_types_kext.sail"
                 "riscv_zvk_utils.sail"
+                "riscv_inst_retire.sail"
             )
 
             if (variant STREQUAL "rvfi")

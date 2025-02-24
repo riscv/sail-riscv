@@ -184,7 +184,7 @@ function write_velem_quad(vd, SEW, input, i) = {
 }
 
 /* Get the starting element index from csr vtype */
-val get_start_element : unit -> nat
+val get_start_element : unit -> result(nat, unit)
 function get_start_element() = {
   let start_element = unsigned(vstart);
   let VLEN_pow = get_vlen_pow();
@@ -194,8 +194,9 @@ function get_start_element() = {
     It is recommended that implementations trap if vstart is out of bounds.
     It is not required to trap, as a possible future use of upper vstart bits
     is to store imprecise trap information. */
-  if start_element > (2 ^ (3 + VLEN_pow - SEW_pow) - 1) then handle_illegal();
-  start_element
+  if start_element > (2 ^ (3 + VLEN_pow - SEW_pow) - 1)
+  then Err(())
+  else Ok(start_element)
 }
 
 /* Get the ending element index from csr vl */
@@ -210,9 +211,12 @@ function get_end_element() = unsigned(vl) - 1
  *   vector2 is a "mask" vector that is true for an element if the corresponding element
  *     in the result vector should be updated by the calling instruction
  */
-val init_masked_result : forall 'n 'm 'p, 'n >= 0 & 'm >= 0. (int('n), int('m), int('p), vector('n, bits('m)), bits('n)) -> (vector('n, bits('m)), bits('n))
+val init_masked_result : forall 'n 'm 'p, 'n >= 0 & 'm >= 0. (int('n), int('m), int('p), vector('n, bits('m)), bits('n)) -> result((vector('n, bits('m)), bits('n)), unit)
 function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
-  let start_element = get_start_element();
+  let start_element : nat = match get_start_element() {
+    Ok(v)   => v,
+    Err(()) => return Err(())
+  };
   let end_element   = get_end_element();
   let tail_ag : agtype = get_vtype_vta();
   let mask_ag : agtype = get_vtype_vma();
@@ -255,7 +259,7 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
     }
   };
 
-  (result, mask)
+  Ok((result, mask))
 }
 
 /* For instructions like vector reduction and vector store,
@@ -263,9 +267,12 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
  * (vs3 for store and vs2 for reduction). There's no destination register to be masked.
  * In these cases, this function can be called to simply get the mask vector for vs (without the prepared vd result vector).
  */
-val init_masked_source : forall 'n 'p, 'n > 0. (int('n), int('p), bits('n)) -> bits('n)
+val init_masked_source : forall 'n 'p, 'n > 0. (int('n), int('p), bits('n)) -> result(bits('n), unit)
 function init_masked_source(num_elem, LMUL_pow, vm_val) = {
-  let start_element = get_start_element();
+  let start_element : nat = match get_start_element() {
+    Ok(v)   => v,
+    Err(()) => return Err(())
+  };
   let end_element   = get_end_element();
   var mask : bits('n) = undefined;
 
@@ -292,14 +299,17 @@ function init_masked_source(num_elem, LMUL_pow, vm_val) = {
     }
   };
 
-  mask
+  Ok(mask)
 }
 
 /* Mask handling for carry functions that use masks as input/output */
 /* Only prestart and tail elements are masked in a mask value */
-val init_masked_result_carry : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), bits('n)) -> (bits('n), bits('n))
+val init_masked_result_carry : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), bits('n)) -> result((bits('n), bits('n)), unit)
 function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
-  let start_element = get_start_element();
+  let start_element : nat = match get_start_element() {
+    Ok(v)   => v,
+    Err(()) => return Err(())
+  };
   let end_element   = get_end_element();
   var mask : bits('n) = undefined;
   var result : bits('n) = undefined;
@@ -329,13 +339,16 @@ function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
     }
   };
 
-  (result, mask)
+  Ok(result, mask)
 }
 
 /* Mask handling for cmp functions that use masks as output */
-val init_masked_result_cmp : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), bits('n), bits('n)) -> (bits('n), bits('n))
+val init_masked_result_cmp : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), bits('n), bits('n)) -> result((bits('n), bits('n)), unit)
 function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
-  let start_element = get_start_element();
+  let start_element : nat = match get_start_element() {
+    Ok(v)   => v,
+    Err(()) => return Err(())
+  };
   let end_element   = get_end_element();
   let mask_ag : agtype = get_vtype_vma();
   var mask : bits('n) = undefined;
@@ -373,7 +386,7 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
     }
   };
 
-  (result, mask)
+  Ok(result, mask)
 }
 
 /* For vector load/store segment instructions:
