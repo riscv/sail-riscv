@@ -24,7 +24,7 @@ mapping clause encdec = CSRReg(csr, rs1, rd, op)
 mapping clause encdec = CSRImm(csr, imm, rd, op)
   <-> csr @ imm @ 0b1 @ encdec_csrop(op) @ encdec_reg(rd) @ 0b1110011
 
-function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_CSR_Write: bool) -> Retired(Retire_Failure) = {
+function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_CSR_Write: bool) -> ExecutionResult(Retire_Failure) = {
   if not(check_CSR(csr, cur_privilege, is_CSR_Write))
   then RETIRE_FAIL(Illegal_Instruction())
   else if not(ext_check_CSR(csr, cur_privilege, is_CSR_Write))

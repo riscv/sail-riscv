@@ -14,7 +14,7 @@
 scattered union ast
 
 /* returns whether an instruction was retired, used for computing minstret */
-val execute : ast -> Retired(Retire_Failure)
+val execute : ast -> ExecutionResult(Retire_Failure)
 scattered function execute
 
 val assembly : ast <-> string

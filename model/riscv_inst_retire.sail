@@ -27,4 +27,4 @@ union Retire_Failure = {
 // RETIRE_SUCCESS enum value so that we don't have to immediately
 // update all the places RETIRE_SUCCESS was used.
 
-let RETIRE_SUCCESS : Retired(Retire_Failure) = RETIRE_OK()
+let RETIRE_SUCCESS : ExecutionResult(Retire_Failure) = RETIRE_OK()
