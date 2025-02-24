@@ -14,7 +14,6 @@
 function clause currentlyEnabled(Ext_M) = hartSupports(Ext_M) & misa[M] == 0b1
 function clause currentlyEnabled(Ext_Zmmul) = hartSupports(Ext_Zmmul) | currentlyEnabled(Ext_M)
 
-
 union clause ast = MUL : (regidx, regidx, regidx, mul_op)
 
 mapping encdec_mul_op : mul_op <-> bits(3) = {
