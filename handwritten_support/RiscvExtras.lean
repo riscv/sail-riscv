@@ -1,5 +1,6 @@
 
 import THE_MODULE_NAME.Sail.Sail
+import THE_MODULE_NAME.Defs
 
 open Sail
 
@@ -7,6 +8,7 @@ def print (_ : String) : Unit := ()
 def print_endline (_ : String) : Unit := ()
 def print_bits (_ : String) (_ : BitVec n) : Unit := ()
 def print_string (_ : String) (_ : String) : Unit := ()
+def print_int (_ : String) (_ : Int) : Unit := ()
 def prerr_endline (_: String) : Unit := ()
 def prerr_string (_: String) : Unit := ()
 def putchar {T} (_: T ) : Unit := ()
@@ -53,6 +55,7 @@ axiom plat_htif_tohost : Unit → Arch.pa
 axiom plat_clint_base : Unit → Arch.pa
 axiom plat_clint_size : Unit → Arch.pa
 axiom plat_insns_per_tick : Unit → Int
+axiom plat_cache_block_size_exp : Unit → Int
 
 section Effectful
 
@@ -63,8 +66,8 @@ axiom plat_term_read : Unit → PreSailM RegisterType c ue String
 
 -- Reservations
 axiom load_reservation : Arch.pa → PreSailM RegisterType c ue Unit
-axiom match_reservation : Arch.pa → PreSailM RegisterType c ue Bool
-axiom cancel_reservation : Unit → PreSailM RegisterType c ue Bool
+axiom match_reservation : Arch.pa → Bool
+axiom cancel_reservation : Unit → PreSailM RegisterType c ue Unit
 
 axiom get_16_random_bits : Unit → PreSailM RegisterType c ue (BitVec 16)
 
@@ -139,3 +142,20 @@ axiom extern_f64Eq : BitVec 64 → BitVec 64 → Unit
 axiom extern_f16roundToInt : BitVec 3 → BitVec 16 → Bool → Unit
 axiom extern_f32roundToInt : BitVec 3 → BitVec 32 → Bool → Unit
 axiom extern_f64roundToInt : BitVec 3 → BitVec 64 → Bool → Unit
+
+-- Termination of extensionEnabled
+
+
+instance : SizeOf extension where
+  sizeOf x :=
+    match x with
+    | .Ext_Zihpm => 0
+    | .Ext_B => 0
+    | .Ext_C => 0
+    | .Ext_D => 0
+    | .Ext_F => 0
+    | .Ext_Zfh => 0
+    | .Ext_Zca => 1
+    | _ => 2
+
+macro_rules | `(tactic| decreasing_trivial) => `(tactic| simp [sizeOf])
