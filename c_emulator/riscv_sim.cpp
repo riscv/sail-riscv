@@ -50,6 +50,7 @@ enum {
   OPT_PMP_GRAIN,
   OPT_ENABLE_SVINVAL,
   OPT_ENABLE_ZCB,
+  OPT_ENABLE_ZCMT,
   OPT_ENABLE_ZICBOM,
   OPT_ENABLE_ZICBOZ,
   OPT_ENABLE_SSTC,
@@ -148,6 +149,7 @@ static struct option options[] = {
     {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
     {"enable-svinval",              no_argument,       0, OPT_ENABLE_SVINVAL      },
     {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
+    {"enable-zcmt",                 no_argument,       0, OPT_ENABLE_ZCMT         },
     {"enable-zicbom",               no_argument,       0, OPT_ENABLE_ZICBOM       },
     {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
     {"cache-block-size",            required_argument, 0, OPT_CACHE_BLOCK_SIZE    },
@@ -396,6 +398,10 @@ static int process_args(int argc, char **argv)
     case OPT_ENABLE_ZCB:
       fprintf(stderr, "enabling Zcb extension.\n");
       rv_enable_zcb = true;
+    case OPT_ENABLE_ZCMT:
+      fprintf(stderr, "enabling Zcmt extension.\n");
+      rv_enable_zcd = false;
+      rv_enable_zcmt = true;
       break;
     case OPT_ENABLE_ZICBOM:
       fprintf(stderr, "enabling Zicbom extension.\n");
