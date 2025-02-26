@@ -15,6 +15,7 @@
 
 #include "elf.h"
 #include "sail.h"
+#include "sail_config.h"
 #include "rts.h"
 #ifdef SAILCOV
 #include "sail_coverage.h"
@@ -54,6 +55,7 @@ enum {
   OPT_ENABLE_ZICBOZ,
   OPT_ENABLE_SSTC,
   OPT_CACHE_BLOCK_SIZE,
+  OPT_SAILCOV,
 };
 
 static bool do_show_times = false;
@@ -118,6 +120,8 @@ int insn_limit = 0;
 char *sailcov_file = NULL;
 #endif
 
+int have_config = 0;
+
 static struct option options[] = {
     {"enable-dirty-update",         no_argument,       0, 'd'                     },
     {"enable-misaligned",           no_argument,       0, 'm'                     },
@@ -138,7 +142,8 @@ static struct option options[] = {
 #ifdef RVFI_DII
     {"rvfi-dii",                    required_argument, 0, 'r'                     },
 #endif
-    {"help",                        no_argument,       0, 'h'                     },
+    {"help",                        no_argument,       0, 1                       },
+    {"config",                      required_argument, 0, 'c'                     },
     {"trace",                       optional_argument, 0, 'v'                     },
     {"no-trace",                    optional_argument, 0, 'V'                     },
     {"trace-output",                required_argument, 0, OPT_TRACE_OUTPUT        },
@@ -152,7 +157,7 @@ static struct option options[] = {
     {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
     {"cache-block-size",            required_argument, 0, OPT_CACHE_BLOCK_SIZE    },
 #ifdef SAILCOV
-    {"sailcov-file",                required_argument, 0, 'c'                     },
+    {"sailcov-file",                required_argument, 0, OPT_SAILCOV             },
 #endif
     {0,                             0,                 0, 0                       }
 };
@@ -240,6 +245,7 @@ static int process_args(int argc, char **argv)
   uint64_t pmp_count = 0;
   uint64_t pmp_grain = 0;
   uint64_t block_size_exp = 0;
+  bool have_config = false;
   while (true) {
     c = getopt_long(argc, argv,
                     "a"
@@ -258,11 +264,9 @@ static int process_args(int argc, char **argv)
                     "T:"
                     "g:"
                     "h"
+                    "c:"
 #ifdef RVFI_DII
                     "r:"
-#endif
-#ifdef SAILCOV
-                    "c:"
 #endif
                     "V::"
                     "v::"
@@ -364,6 +368,16 @@ static int process_args(int argc, char **argv)
     case 'h':
       print_usage(argv[0], 0);
       break;
+    case 'c': {
+      if (access(optarg, R_OK) == 0) {
+        sail_config_set_file(optarg);
+        have_config = true;
+      } else {
+        fprintf(stderr, "configuration file '%s' does not exist.\n", optarg);
+        exit(1);
+      }
+      break;
+    }
 #ifdef RVFI_DII
     case 'r':
       rvfi_dii = true;
@@ -418,7 +432,7 @@ static int process_args(int argc, char **argv)
       rv_enable_fdext = false;
       break;
 #ifdef SAILCOV
-    case 'c':
+    case OPT_SAILCOV:
       sailcov_file = strdup(optarg);
       break;
 #endif
@@ -431,6 +445,12 @@ static int process_args(int argc, char **argv)
       break;
     }
   }
+
+  if (!have_config) {
+    fprintf(stderr, "No configuration file provided.\n");
+    print_usage(argv[0], 0);
+  }
+
 #ifdef RVFI_DII
   if (optind > argc || (optind == argc && !rvfi_dii))
     print_usage(argv[0], 0);
