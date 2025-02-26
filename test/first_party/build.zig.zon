@@ -1,0 +1,10 @@
+.{
+    .name = "sail-riscv-first-party-tests",
+    .version = "0.0.0",
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
