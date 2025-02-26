@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Install packages
-      run: sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build
+      run: sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build jq
 
     - name: Install sail from binary
       run: |

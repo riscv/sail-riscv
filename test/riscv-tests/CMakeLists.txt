@@ -12,7 +12,10 @@ foreach (arch IN ITEMS "rv32d" "rv64d")
 
         add_test(
             NAME "${arch}_${elf_name}"
-            COMMAND $<TARGET_FILE:riscv_sim_${arch}> ${elf}
+            COMMAND
+                $<TARGET_FILE:riscv_sim_${arch}>
+                --config "${CMAKE_SOURCE_DIR}/config/default.json"
+                ${elf}
         )
     endforeach()
 endforeach()
