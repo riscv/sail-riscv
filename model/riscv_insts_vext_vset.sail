@@ -53,7 +53,7 @@ function handle_illegal_vtype() = {
   print_reg("CSR vl <- " ^ BitStr(vl))
 }
 
-val sys_vext_vl_use_ceil = pure "sys_vext_vl_use_ceil" : unit -> bool
+function vl_use_ceil() -> bool = config extensions.v.vl_use_ceil
 
 function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
   // See "Constraints on Setting vl" in the vector spec.
@@ -63,7 +63,7 @@ function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
       // If VLMAX < AVL < 2 * VLMAX then we can use any value
       // such that ceil(AVL / 2) <= vl <= VLMAX. Here we provide
       // two options: ceil(AVL / 2) or VLMAX.
-      if sys_vext_vl_use_ceil() then (AVL + 1) / 2 else VLMAX
+      if vl_use_ceil() then (AVL + 1) / 2 else VLMAX
     }
     else VLMAX;
 

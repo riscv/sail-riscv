@@ -1,2 +1,75 @@
 {
+    "base" : {
+        "writable_misa" : true,
+        "writable_fiom" : true,
+        "writable_hpm_counters" : {
+            "len" : 32,
+            "value" : "0xFFFF_FFFF"
+        },
+        "mtval_has_illegal_instruction_bits" : false
+    },
+    "memory" : {
+        "pmp" : {
+            "grain" : 0,
+            "count" : 0
+        },
+        "misaligned" : {
+            "enabled" : false
+        },
+        "translation" : {
+            "dirty_update" : false
+        }
+    },
+    "platform" : {
+        "reset_vector" : 4096,
+        "cache_block_size_exp" : 6,
+        "ram" : {
+            "base" : 2147483648,
+            "size" : 2147483648
+        },
+        "rom" : {
+            "base" : 4096,
+            "size" : 4096
+        },
+        "clint" : {
+            "base" : 33554432,
+            "size" : 786432
+        },
+        "instructions_per_tick" : 100
+    },
+    "extensions" : {
+        "c" : {
+            "enabled" : true
+        },
+        "fd" : {
+            "enabled" : true
+        },
+        "v" : {
+            "enabled" : true,
+            "vlen_exp" : 9,
+            "elen_exp" : 6,
+            "vl_use_ceil" : false
+        },
+        "b" : {
+            "enabled" : false
+        },
+        "Svinval" : {
+            "enabled" : false
+        },
+        "Zcb" : {
+            "enabled" : false
+        },
+        "Zfinx" : {
+            "enabled" : false
+        },
+        "Zicbom" : {
+            "enabled" : false
+        },
+        "Zicboz" : {
+            "enabled" : false
+        },
+        "Sstc" : {
+            "enabled" : false
+        }
+    }
 }
