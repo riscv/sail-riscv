@@ -124,6 +124,9 @@ add_subdirectory("dependencies/softfloat")
 # Sail C runtime.
 add_subdirectory("sail_runtime")
 
+# Sail configuration
+add_subdirectory("config")
+
 # Sail model generated C code.
 add_subdirectory("model")
 
