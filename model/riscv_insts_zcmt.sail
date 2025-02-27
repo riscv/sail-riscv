@@ -63,7 +63,6 @@ mapping clause encdec_compressed = CM_JT(index) if extensionEnabled(Ext_Zcmt) & 
 function clause execute (CM_JT(index)) = {
   let base : bits(xlen) = jvt[base] @ 0b000000;
   let index : bits(xlen) = zero_extend(index);
-  var a : bits(xlen) = zeros();
   if jvt[mode] == 0b000000 then {
     let table_address = base + index << log2_xlen_bytes;
     match fetch_jump_table(table_address) {
