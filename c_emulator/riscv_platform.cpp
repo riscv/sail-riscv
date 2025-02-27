@@ -1,6 +1,7 @@
 #include "sail.h"
 #include "rts.h"
 #include "riscv_prelude.h"
+#include "riscv_platform.h"
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
 
@@ -142,7 +143,7 @@ mach_bits plat_rom_size(unit u)
   return rv_rom_size;
 }
 
-mach_bits plat_cache_block_size_exp()
+mach_bits plat_cache_block_size_exp(unit u)
 {
   return rv_cache_block_size_exp;
 }
