@@ -1,6 +1,10 @@
 #pragma once
 #include "sail.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool sys_enable_rvc(unit);
 bool sys_enable_fdext(unit);
 bool sys_enable_svinval(unit);
@@ -52,3 +56,7 @@ unit plat_term_write(mach_bits);
 mach_bits plat_htif_tohost(unit);
 
 unit memea(mach_bits, sail_int);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

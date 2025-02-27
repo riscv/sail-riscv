@@ -3,6 +3,10 @@
 #include "rts.h"
 #include "riscv_softfloat.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 unit print_string(sail_string prefix, sail_string msg);
 
 unit print_instr(sail_string s);
@@ -15,3 +19,7 @@ bool get_config_print_instr(unit u);
 bool get_config_print_reg(unit u);
 bool get_config_print_mem(unit u);
 bool get_config_print_platform(unit u);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

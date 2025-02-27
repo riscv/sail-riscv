@@ -1,13 +1,13 @@
 set(EMULATOR_COMMON_SRCS
     riscv_config.h
-    riscv_platform.c
+    riscv_platform.cpp
     riscv_platform.h
-    riscv_platform_impl.c
+    riscv_platform_impl.cpp
     riscv_platform_impl.h
-    riscv_prelude.c
+    riscv_prelude.cpp
     riscv_prelude.h
     riscv_sail.h
-    riscv_sim.c
+    riscv_sim.cpp
     riscv_softfloat.c
     riscv_softfloat.h
 )
