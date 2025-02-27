@@ -890,7 +890,7 @@ void init_logs()
 
   if (trace_log_path == NULL) {
     trace_log = stdout;
-  } else if ((trace_log = fopen(trace_log_path, "w+")) < 0) {
+  } else if ((trace_log = fopen(trace_log_path, "w+")) == NULL) {
     fprintf(stderr, "Cannot create trace log '%s': %s\n", trace_log_path,
             strerror(errno));
     exit(1);
