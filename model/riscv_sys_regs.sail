@@ -512,14 +512,25 @@ function clause write_CSR((0x302, value) if xlen == 32) = { medeleg = legalize_m
 function clause write_CSR((0x312, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, value @ medeleg.bits[31 .. 0]); medeleg.bits[63 .. 32] }
 function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, value); mideleg.bits }
 
+/* Zcmt extension */
+
 bitfield Jvt : xlenbits = {
   base : xlen - 1 .. 6,
   mode : 5 .. 0
 }
 register jvt : Jvt
+
+function legalize_jvt(o : Jvt, v : xlenbits) -> Jvt = {
+  let v = Mk_Jvt(v);
+  [o with
+    base = v[base],
+    mode = 0b000000
+  ]
+}
+
 mapping clause csr_name_map = 0x017  <-> "jvt"
 function clause is_CSR_defined (0x017) = sys_enable_zcmt()
-function clause write_CSR(0x017, value) = { jvt.bits = (value >> 6 ) << 6; jvt.bits }
+function clause write_CSR(0x017, value) = { jvt = legalize_jvt(jvt, value); jvt.bits }
 function clause read_CSR(0x017) = jvt.bits
 
 /* registers for trap handling */
@@ -939,9 +950,6 @@ function clause write_CSR(0x7a0, value) = { tselect = value; tselect }
 
 /*
  * Entropy Source - Platform access to random bits.
- * WARNING: This function currently lacks a proper side-effect annotation.
- *          If you are using theorem prover tool flows, you
- *          may need to modify or stub out this function for now.
  * NOTE: This would be better placed in riscv_platform.sail, but that file
  *       appears _after_ this one in the compile order meaning the valspec
  *       for this function is unavailable when it's first encountered in
