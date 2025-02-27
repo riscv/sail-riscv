@@ -61,17 +61,17 @@ section Effectful
 
 variable {Register : Type} {RegisterType : Register → Type} [DecidableEq Register] [Hashable Register]
 
-axiom plat_term_write {α} : α → PreSailM RegisterType c ue Unit
-axiom plat_term_read : Unit → PreSailM RegisterType c ue String
+axiom plat_term_write {α} : α → SailM Unit
+axiom plat_term_read : Unit → SailM String
 
 -- Reservations
-axiom load_reservation : Arch.pa → PreSailM RegisterType c ue Unit
+axiom load_reservation : Arch.pa → SailM Unit
 axiom match_reservation : Arch.pa → Bool
-axiom cancel_reservation : Unit → PreSailM RegisterType c ue Unit
+axiom cancel_reservation : Unit → SailM Unit
 
-axiom get_16_random_bits : Unit → PreSailM RegisterType c ue (BitVec 16)
+axiom get_16_random_bits : Unit → SailM (BitVec 16)
 
-axiom speculate_conditional : Unit → PreSailM RegisterType c ue Bool
+axiom speculate_conditional : Unit → SailM Bool
 
 end Effectful
 
