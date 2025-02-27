@@ -112,8 +112,8 @@ void set_config_print(char *var, bool val)
 }
 
 struct timeval init_start, init_end, run_end;
-int total_insns = 0;
-int insn_limit = 0;
+uint64_t total_insns = 0;
+uint64_t insn_limit = 0;
 #ifdef SAILCOV
 char *sailcov_file = NULL;
 #endif
@@ -377,9 +377,18 @@ static int process_args(int argc, char **argv)
     case 'v':
       set_config_print(optarg, true);
       break;
-    case 'l':
-      insn_limit = atoi(optarg);
+    case 'l': {
+      char *p;
+      unsigned long long val;
+      errno = 0;
+      val = strtoull(optarg, &p, 0);
+      if (*p != '\0' || val > UINT64_MAX
+          || (val == ULLONG_MAX && errno == ERANGE)) {
+        fprintf(stderr, "invalid instruction limit %s\n", optarg);
+        exit(1);
+      }
       break;
+    }
     case OPT_ENABLE_SVINVAL:
       fprintf(stderr, "enabling svinval extension.\n");
       rv_enable_svinval = true;
@@ -615,7 +624,7 @@ void finish(int ec)
     double Kips = ((double)total_insns) / ((double)exec_msecs);
     fprintf(stderr, "Initialization:   %d msecs\n", init_msecs);
     fprintf(stderr, "Execution:        %d msecs\n", exec_msecs);
-    fprintf(stderr, "Instructions:     %d\n", total_insns);
+    fprintf(stderr, "Instructions:     %" PRIu64 "\n", total_insns);
     fprintf(stderr, "Perf:             %.3f Kips\n", Kips);
   }
   close_logs();
