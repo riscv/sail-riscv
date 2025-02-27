@@ -67,6 +67,11 @@ bool sys_enable_zicboz(unit u)
   return rv_enable_zicboz;
 }
 
+bool sys_enable_zicbop(unit u)
+{
+  return rv_enable_zicbop;
+}
+
 bool sys_enable_sstc(unit u)
 {
   return rv_enable_sstc;
