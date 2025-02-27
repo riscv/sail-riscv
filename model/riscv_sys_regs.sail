@@ -92,6 +92,10 @@ val sys_enable_fdext = pure "sys_enable_fdext" : unit -> bool
 val sys_enable_svinval = pure "sys_enable_svinval" : unit -> bool
 /* whether Zcb was enabled at boot */
 val sys_enable_zcb = pure "sys_enable_zcb" : unit -> bool
+/* whether Zcd was enabled at boot */
+val sys_enable_zcd = pure "sys_enable_zcd" : unit -> bool
+/* whether Zcmp was enabled at boot */
+val sys_enable_zcmp = pure "sys_enable_zcmp" : unit -> bool
 /* whether zfinx was enabled at boot */
 val sys_enable_zfinx = pure "sys_enable_zfinx" : unit -> bool
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
