@@ -676,7 +676,7 @@ function update_minstret() -> unit = {
 
   // Then apply explicit writes to minstret (if any).
   match minstret_write {
-    Some(v) => minstret = [minstret with (sizeof(xlen) - 1) .. 0 = v],
+    Some(v) => minstret = [minstret with (xlen - 1) .. 0 = v],
     None() => (),
   };
   match minstreth_write {
