@@ -33,6 +33,11 @@ if (LINKER_SUPPORTS_NO_UNDEFINED)
     add_link_options("-Wl,--no-undefined")
 endif()
 
+add_compile_options(-Wall -Wextra -Wno-sign-compare)
+include(CheckCCompilerFlag)
+check_c_compiler_flag(-Wself-assign HAVE_WSELF_ASSIGN)
+check_c_compiler_flag(-Wimplicit-fallthrough HAVE_WIMPLICIT_FALLTHROUGH)
+
 # Extra CMake files.
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 

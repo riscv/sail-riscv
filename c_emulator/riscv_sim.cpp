@@ -412,7 +412,7 @@ static int process_args(int argc, char **argv)
     case OPT_CACHE_BLOCK_SIZE:
       block_size_exp = ilog2(atol(optarg));
 
-      if (block_size_exp < 0 || block_size_exp > 12) {
+      if (block_size_exp > 12) {
         fprintf(stderr, "invalid cache-block-size '%s' provided.\n", optarg);
         exit(1);
       }
@@ -521,7 +521,7 @@ void init_sail_reset_vector(uint64_t entry)
 
   rv_rom_base = DEFAULT_RSTVEC;
   uint64_t addr = rv_rom_base;
-  for (int i = 0; i < sizeof(reset_vec); i++)
+  for (size_t i = 0; i < sizeof(reset_vec); i++)
     write_mem(addr++, (uint64_t)((char *)reset_vec)[i]);
 
   if (dtb && dtb_len) {
@@ -532,7 +532,7 @@ void init_sail_reset_vector(uint64_t entry)
   /* zero-fill to page boundary */
   const int align = 0x1000;
   uint64_t rom_end = (addr + align - 1) / align * align;
-  for (int i = addr; i < rom_end; i++)
+  for (uint64_t i = addr; i < rom_end; i++)
     write_mem(addr++, 0);
 
   /* set rom size */
