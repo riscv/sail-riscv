@@ -207,7 +207,7 @@ function clause execute (F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, op)) = {
   let rs1_val_16b = F_or_X_H(rs1);
   let rs2_val_16b = F_or_X_H(rs2);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => return RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_16b) : (bits(5), bits(16)) = match op {
@@ -271,7 +271,7 @@ function clause execute (F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, op)) = {
   let rs2_val_16b = F_or_X_H(rs2);
   let rs3_val_16b = F_or_X_H(rs3);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_16b) : (bits(5), bits(16)) =
@@ -581,7 +581,7 @@ mapping clause encdec =
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FSQRT_H)) = {
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_f16Sqrt   (rm_3b, rs1_val_H);
@@ -596,7 +596,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FSQRT_H)) = {
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_W_H)) = {
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_W) = riscv_f16ToI32 (rm_3b, rs1_val_H);
@@ -611,7 +611,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_W_H)) = {
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_WU_H)) = {
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_WU) = riscv_f16ToUi32 (rm_3b, rs1_val_H);
@@ -626,7 +626,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_WU_H)) = {
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_W)) = {
   let rs1_val_W = X(rs1) [31..0];
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_i32ToF16 (rm_3b, rs1_val_W);
@@ -641,7 +641,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_W)) = {
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_WU)) = {
   let rs1_val_WU = X(rs1) [31..0];
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_ui32ToF16 (rm_3b, rs1_val_WU);
@@ -656,7 +656,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_WU)) = {
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_f32ToF16 (rm_3b, rs1_val_S);
@@ -671,7 +671,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_S)) = {
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_D)) = {
   let rs1_val_D = F_or_X_D(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_f64ToF16 (rm_3b, rs1_val_D);
@@ -686,7 +686,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_D)) = {
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_S_H)) = {
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_f16ToF32 (rm_3b, rs1_val_H);
@@ -702,7 +702,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_S_H)) = {
 function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_D_H)) = {
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_f16ToF64 (rm_3b, rs1_val_H);
@@ -718,7 +718,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_L_H)) = {
   assert(xlen >= 64);
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_L) = riscv_f16ToI64 (rm_3b, rs1_val_H);
@@ -734,7 +734,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_LU_H)) = {
   assert(xlen >= 64);
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_LU) = riscv_f16ToUi64 (rm_3b, rs1_val_H);
@@ -750,7 +750,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_L)) = {
   assert(xlen >= 64);
   let rs1_val_L = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_i64ToF16 (rm_3b, rs1_val_L);
@@ -766,7 +766,7 @@ function clause execute (F_UN_RM_TYPE_H(rs1, rm, rd, FCVT_H_LU)) = {
   assert(xlen >= 64);
   let rs1_val_LU = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_ui64ToF16 (rm_3b, rs1_val_LU);
