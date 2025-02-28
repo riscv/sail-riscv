@@ -36,9 +36,14 @@ mapping utype_mnemonic : uop <-> string = {
   RISCV_LUI   <-> "lui",
   RISCV_AUIPC <-> "auipc"
 }
+mapping clause assembly = UTYPE(imm, rd, op)
+  if rd == zreg
+  <-> utype_mnemonic(op) ^ ".hint" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_20(imm)
 
 mapping clause assembly = UTYPE(imm, rd, op)
+  if rd != zreg
   <-> utype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_20(imm)
+
 
 /* ****************************************************************** */
 union clause ast = RISCV_JAL : (bits(21), regidx)
@@ -192,8 +197,16 @@ mapping itype_mnemonic : iop <-> string = {
   RISCV_ANDI  <-> "andi"
 }
 
+
+
 mapping clause assembly = ITYPE(imm, rs1, rd, op)
+  if rd == zreg
+  <-> itype_mnemonic(op) ^ ".hint" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
+
+mapping clause assembly = ITYPE(imm, rs1, rd, op)
+  if rd != zreg
   <-> itype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
+
 
 /* ****************************************************************** */
 union clause ast = SHIFTIOP : (bits(6), regidx, regidx, sop)
@@ -224,8 +237,16 @@ mapping shiftiop_mnemonic : sop <-> string = {
   RISCV_SRAI <-> "srai"
 }
 
+
+
 mapping clause assembly = SHIFTIOP(shamt, rs1, rd, op)
+  if rd == zreg
+  <-> shiftiop_mnemonic(op) ^ ".hint" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_6(shamt)
+
+mapping clause assembly = SHIFTIOP(shamt, rs1, rd, op)
+  if rd != zreg
   <-> shiftiop_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_6(shamt)
+
 
 /* ****************************************************************** */
 union clause ast = RTYPE : (regidx, regidx, regidx, rop)
@@ -270,7 +291,14 @@ mapping rtype_mnemonic : rop <-> string = {
   RISCV_SRA  <-> "sra"
 }
 
+
+
 mapping clause assembly = RTYPE(rs2, rs1, rd, op)
+  if rd == zreg
+  <-> rtype_mnemonic(op) ^ ".hint" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+
+mapping clause assembly = RTYPE(rs2, rs1, rd, op)
+  if rd != zreg
   <-> rtype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
@@ -403,10 +431,20 @@ function clause execute (ADDIW(imm, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
+
+
+
+
 mapping clause assembly = ADDIW(imm, rs1, rd)
-      if xlen == 64
+      if xlen == 64 & rd == zreg
+  <-> "addiw.hint" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
+      if xlen == 64 & rd == zreg
+
+mapping clause assembly = ADDIW(imm, rs1, rd)
+      if xlen == 64 & rd != zreg
   <-> "addiw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
-      if xlen == 64
+      if xlen == 64 & rd != zreg
+
 
 /* ****************************************************************** */
 union clause ast = RTYPEW : (regidx, regidx, regidx, ropw)
@@ -454,10 +492,19 @@ mapping rtypew_mnemonic : ropw <-> string = {
   RISCV_SRAW <-> "sraw"
 }
 
+
+
+
+
 mapping clause assembly = RTYPEW(rs2, rs1, rd, op)
-      if xlen == 64
+      if xlen == 64 & rd == zreg
+  <-> rtypew_mnemonic(op) ^ ".hint" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+      if xlen == 64 & rd == zreg
+
+mapping clause assembly = RTYPEW(rs2, rs1, rd, op)
+      if xlen == 64 & rd != zreg
   <-> rtypew_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
-      if xlen == 64
+      if xlen == 64 & rd != zreg
 
 /* ****************************************************************** */
 union clause ast = SHIFTIWOP : (bits(5), regidx, regidx, sopw)
@@ -492,10 +539,19 @@ mapping shiftiwop_mnemonic : sopw <-> string = {
   RISCV_SRAIW <-> "sraiw"
 }
 
+
+
+
+
 mapping clause assembly = SHIFTIWOP(shamt, rs1, rd, op)
-      if xlen == 64
+      if xlen == 64 & rd == zreg
+  <-> shiftiwop_mnemonic(op) ^ ".hint" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_5(shamt)
+      if xlen == 64 & rd == zreg
+
+mapping clause assembly = SHIFTIWOP(shamt, rs1, rd, op)
+      if xlen == 64 & rd != zreg
   <-> shiftiwop_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_5(shamt)
-      if xlen == 64
+      if xlen == 64 & rd != zreg
 
 /* ****************************************************************** */
 union clause ast = FENCE : (bits(4), bits(4))
