@@ -41,4 +41,10 @@ target_include_directories(softfloat PUBLIC
     "${source_dir}/build/Linux-RISCV-GCC"
 )
 
-target_compile_options(softfloat PRIVATE "-Werror=implicit-function-declaration" "-DSOFTFLOAT_ROUND_ODD")
+target_compile_options(softfloat PRIVATE
+        -Werror=implicit-function-declaration
+        -Wno-unused-parameter
+        -Wno-unused-variable
+        $<$<BOOL:${HAVE_WIMPLICIT_FALLTHROUGH}>:-Wno-implicit-fallthrough>
+)
+target_compile_definitions(softfloat PRIVATE SOFTFLOAT_ROUND_ODD)
