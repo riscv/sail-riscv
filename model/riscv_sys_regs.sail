@@ -685,7 +685,6 @@ function update_minstret() -> unit = {
   };
 }
 
-
 /* machine information registers */
 register mvendorid : bits(32) = zeros()
 register mimpid : xlenbits = zeros()
