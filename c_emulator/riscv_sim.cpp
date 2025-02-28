@@ -685,7 +685,6 @@ void rvfi_send_trace(unsigned version)
   if (version == 1) {
     get_and_send_rvfi_packet(zrvfi_get_exec_packet_v1);
   } else if (version == 2) {
-    mach_bits trace_size = zrvfi_get_v2_trace_sizze(UNIT);
     get_and_send_rvfi_packet(zrvfi_get_exec_packet_v2);
     if (zrvfi_int_data_present)
       get_and_send_rvfi_packet(zrvfi_get_int_data);
@@ -707,9 +706,6 @@ void run_sail(void)
   /* initialize the step number */
   mach_int step_no = 0;
   int insn_cnt = 0;
-#ifdef RVFI_DII
-  bool need_instr = true;
-#endif
 
   struct timeval interval_start;
   if (gettimeofday(&interval_start, NULL) < 0) {
@@ -788,12 +784,15 @@ void run_sail(void)
                   (intmax_t)insn);
           exit(1);
         }
-        rvfi_trace_version
-            = insn; // From now on send traces in the requested format
+        // From now on send traces in the requested format
+        rvfi_trace_version = insn;
         struct {
           char msg[8];
           uint64_t version;
-        } version_response = {"version=", rvfi_trace_version};
+        } version_response = {
+            {'v', 'e', 'r', 's', 'i', 'o', 'n', '='},
+            rvfi_trace_version
+        };
         if (write(rvfi_dii_sock, &version_response, sizeof(version_response))
             != sizeof(version_response)) {
           fprintf(stderr, "Sending version response failed: %s\n",
@@ -933,9 +932,10 @@ int main(int argc, char **argv)
               strerror(errno));
       return 1;
     }
-    struct sockaddr_in addr = {.sin_family = AF_INET,
-                               .sin_addr.s_addr = htonl(INADDR_LOOPBACK),
-                               .sin_port = htons(rvfi_dii_port)};
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_port = htons(rvfi_dii_port);
     if (bind(listen_sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
       fprintf(stderr, "Unable to set bind socket: %s\n", strerror(errno));
       return 1;
