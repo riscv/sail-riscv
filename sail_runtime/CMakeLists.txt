@@ -16,10 +16,15 @@ add_library(sail_runtime
     "${sail_dir}/lib/sail_failure.h"
     "${sail_dir}/lib/sail_coverage.h"
     "${sail_dir}/lib/sail_state.h"
+    "${sail_dir}/lib/json/cJSON.c"
+    "${sail_dir}/lib/json/cJSON.h"
+    "${sail_dir}/lib/json/sail_config.c"
+    "${sail_dir}/lib/json/sail_config.h"
 )
 
 target_include_directories(sail_runtime
     PUBLIC "${sail_dir}/lib"
+    PUBLIC "${sail_dir}/lib/json"
 )
 
 if (COVERAGE)
