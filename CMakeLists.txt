@@ -117,8 +117,8 @@ add_subdirectory("model")
 # Emulator binary.
 add_subdirectory("c_emulator")
 
-# Old pre-compiled riscv-tests.
-add_subdirectory("test/riscv-tests")
+# Old pre-compiled riscv-tests & first-party tests.
+add_subdirectory("test")
 
 # Release packaging.
 if (NOT CPACK_GENERATOR)
