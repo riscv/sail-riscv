@@ -30,6 +30,14 @@ function pmpAddrMatchType_to_bits(bs) = {
   }
 }
 
+bitfield Mseccfg_ent : bits(64) = {
+  RLB  : 2,       /* Rule Locking Bypass */
+  MMWP : 1,       /* Machine Mode Whitelist Policy */
+  MML  : 0        /* Machine Mode Lockdown */
+}
+
+register mseccfg  : Mseccfg_ent
+
 bitfield Pmpcfg_ent : bits(8) = {
   L : 7,        /* locking */
   A : 4 .. 3,   /* address match type, encoded as above */
@@ -89,32 +97,46 @@ function pmpReadAddrReg(n : range(0, 63)) -> xlenbits = {
 }
 
 /* Helpers to handle locked entries */
-function pmpLocked(cfg: Pmpcfg_ent) -> bool =
-   cfg[L] == 0b1
+function pmpLocked(cfg: Pmpcfg_ent) -> bool = (cfg[L] == 0b1) & (mseccfg[RLB] == 0b0)
 
-function pmpTORLocked(cfg: Pmpcfg_ent) -> bool =
-   (cfg[L] == 0b1) & (pmpAddrMatchType_of_bits(cfg[A]) == TOR)
+function pmpTORLocked(cfg: Pmpcfg_ent) -> bool = pmpLocked(cfg) & (pmpAddrMatchType_of_bits(cfg[A]) == TOR)
 
-function pmpWriteCfg(n: range(0, 63), cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
-  if pmpLocked(cfg) then cfg
+function pmpWriteCfg(n: range(0, 63), cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent = {
+  /* If locked then configuration is unchanged */
+  if pmpLocked(cfg)
+  then cfg
+  /* To prevent adding a rule with execution privileges if MML is enabled unless RLB is set */
   else {
-    // Bits 5 and 6 are zero.
-    let cfg = Mk_Pmpcfg_ent(v & 0x9f);
-
+    /* Constructing legal Pmpcfg_ent by making bit 5 and 6 zero */
+    let legal_v : Pmpcfg_ent = Mk_Pmpcfg_ent([v with 6 .. 5 = zeros()]);
     // "The R, W, and X fields form a collective WARL field for which the combinations with R=0 and W=1 are reserved."
     // In this implementation if R=0 and W=1 then R, W and X are all set to 0.
     // This is the least risky option from a security perspective.
-    let cfg = if cfg[W] == 0b1 & cfg[R] == 0b0 then [cfg with X = 0b0, W = 0b0, R = 0b0] else cfg;
+    let legal_v : Pmpcfg_ent = match (mseccfg[MML], legal_v[R], legal_v[W]) {
+      (0b0, 0b0, 0b1) => [legal_v with W = 0b0],
+      (_, _, _)       => legal_v
+    };
+
+    let legal_v : Pmpcfg_ent = if (mseccfg[MML] == 0b1 & mseccfg[RLB] == 0b0 & legal_v[L] == 0b1)
+    then {
+      match (legal_v[R], legal_v[W], legal_v[X]) {
+        (0b0, 0b0, 0b1) => cfg,
+        (0b0, 0b1, 0b0) => cfg,
+        (0b0, 0b1, 0b1) => cfg,
+        (0b1, 0b0, 0b1) => cfg,
+        (_, _, _)       => legal_v
+      }
+    } else legal_v;
 
     // "When G >= 1, the NA4 mode is not selectable."
     // In this implementation we set it to OFF if NA4 is selected.
     // This is the least risky option from a security perspective.
-    let cfg = if sys_pmp_grain() >= 1 & pmpAddrMatchType_of_bits(cfg[A]) == NA4
-              then [cfg with A = pmpAddrMatchType_to_bits(OFF)]
-              else cfg;
-
-    cfg
+    let legal_v = if (sys_pmp_grain() >= 1 & pmpAddrMatchType_of_bits(legal_v[A]) == NA4)
+              then [legal_v with A = pmpAddrMatchType_to_bits(OFF)]
+              else legal_v;
+    legal_v
   }
+}
 
 function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
   if xlen == 32
@@ -254,3 +276,43 @@ function clause write_CSR(0x3B @ idx : bits(4), value) = { let idx = unsigned(0b
 function clause write_CSR(0x3C @ idx : bits(4), value) = { let idx = unsigned(0b01 @ idx); pmpWriteAddrReg(idx, value); pmpReadAddrReg(idx) }
 function clause write_CSR(0x3D @ idx : bits(4), value) = { let idx = unsigned(0b10 @ idx); pmpWriteAddrReg(idx, value); pmpReadAddrReg(idx) }
 function clause write_CSR(0x3E @ idx : bits(4), value) = { let idx = unsigned(0b11 @ idx); pmpWriteAddrReg(idx, value); pmpReadAddrReg(idx) }
+
+function checkPmpNcfgL(n : range(0, 63)) -> bool = {
+  if n == 0
+  then pmpcfg_n[0][L] == 0b1
+  else checkPmpNcfgL(n - 1) | (pmpcfg_n[n][L] == 0b1)
+}
+
+function mseccfgWrite(reg: Mseccfg_ent, v: bits(64)) -> Mseccfg_ent = {
+  let legal_v : Mseccfg_ent = Mk_Mseccfg_ent(zero_extend(v[2 .. 0]));
+  let reg : Mseccfg_ent = match (reg[RLB], legal_v[RLB]) {
+     // to set RLB, need to check PMPCFG_L
+    (0b0, 0b1) =>
+      if (checkPmpNcfgL(63))
+      then reg
+      else update_RLB(reg, legal_v[RLB]),
+    (_, _)     => update_RLB(reg, legal_v[RLB])
+  };
+  let reg : Mseccfg_ent = match (reg[MML], reg[MMWP]) {
+    // Implements stickiness of MML bit, if once set remains set
+    (0b0, 0b0) => [reg with MMWP = legal_v[MMWP], MML = legal_v[MML]],
+    (0b0, 0b1) => [reg with MML = legal_v[MML]],
+    (0b1, 0b0) => [reg with MMWP = legal_v[MMWP]],
+    (0b1, 0b1) => reg
+  };
+  reg
+}
+
+mapping clause csr_name_map = 0x747  <-> "mseccfg"
+mapping clause csr_name_map = 0x757  <-> "mseccfgh"
+
+function clause is_CSR_defined(0x747) = sys_has_mseccfg()
+function clause is_CSR_defined(0x757) = sys_has_mseccfg() & xlen == 32
+
+function clause read_CSR(0x747) = mseccfg.bits[xlen - 1 .. 0]
+function clause read_CSR(0x757 if xlen == 32) = mseccfg.bits[63 .. 32]
+
+// Keep a consistent writing style, as it may be necessary to integrate the ifs process into the writeCSR function body in the future
+function clause write_CSR((0x747, value) if xlen == 64) = { mseccfg = mseccfgWrite(mseccfg, value); mseccfg.bits }
+function clause write_CSR((0x747, value) if xlen == 32) = { mseccfg = mseccfgWrite(mseccfg, mseccfg.bits[63 .. 32] @ value); mseccfg.bits[xlen - 1 .. 0] }
+function clause write_CSR((0x757, value) if xlen == 32) = { mseccfg = mseccfgWrite(mseccfg, value @ mseccfg.bits[31 .. 0]); mseccfg.bits[63 .. 32] }
