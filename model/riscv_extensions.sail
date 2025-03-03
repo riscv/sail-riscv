@@ -6,43 +6,16 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-// Privileged and unprivileged spec versions.
-// These must be listed in order so the comparison operators work as expected.
-enum PrivSpecVersion = {
-    Version_1_11,
-    Version_1_12, // AKA 20211203
-    // ???, // 20240411
-    Version_1_13, // AKA 20241017 ?
-}
-
-enum UnprivSpecVersion = {
-    Version_2_0,
-    Version_2_1,
-    Version_2_2,
-    Version_20190608,
-    Version_20191213,
-}
+// Privileged and unprivileged spec versions. The versioning system for specifications
+// is unclear so we just use the commit date. This also allows versioning for specs changes
+// that are between releases. If there was an official release for this day (for example
+// 20240411) then this is the commit of that release. Otherwise it is for the *last*
+// commit on the given day.
+type SpecVersion = range(20000000, 21000000)
 
 // TODO: Replace with 'config ...priv_version' or similar when the config system is available.
-function privVersion() -> PrivSpecVersion = Version_1_11
-function unprivVersion() -> UnprivSpecVersion = Version_2_1
-
-// For convenience, version comparison operators.
-function priv_version_lt(x : PrivSpecVersion, y : PrivSpecVersion) -> bool = num_of_PrivSpecVersion(x) < num_of_PrivSpecVersion(y)
-function priv_version_gt(x : PrivSpecVersion, y : PrivSpecVersion) -> bool = num_of_PrivSpecVersion(x) > num_of_PrivSpecVersion(y)
-function priv_version_le(x : PrivSpecVersion, y : PrivSpecVersion) -> bool = num_of_PrivSpecVersion(x) <= num_of_PrivSpecVersion(y)
-function priv_version_ge(x : PrivSpecVersion, y : PrivSpecVersion) -> bool = num_of_PrivSpecVersion(x) >= num_of_PrivSpecVersion(y)
-
-function unpriv_version_lt(x : UnprivSpecVersion, y : UnprivSpecVersion) -> bool = num_of_UnprivSpecVersion(x) < num_of_UnprivSpecVersion(y)
-function unpriv_version_gt(x : UnprivSpecVersion, y : UnprivSpecVersion) -> bool = num_of_UnprivSpecVersion(x) > num_of_UnprivSpecVersion(y)
-function unpriv_version_le(x : UnprivSpecVersion, y : UnprivSpecVersion) -> bool = num_of_UnprivSpecVersion(x) <= num_of_UnprivSpecVersion(y)
-function unpriv_version_ge(x : UnprivSpecVersion, y : UnprivSpecVersion) -> bool = num_of_UnprivSpecVersion(x) >= num_of_UnprivSpecVersion(y)
-
-overload operator < = {priv_version_lt, unpriv_version_lt}
-overload operator > = {priv_version_gt, unpriv_version_gt}
-overload operator <= = {priv_version_le, unpriv_version_le}
-overload operator >= = {priv_version_ge, unpriv_version_ge}
-
+let configPrivVersion : SpecVersion = 20240411
+let configUnprivVersion : SpecVersion = 20240411
 
 scattered enum extension
 

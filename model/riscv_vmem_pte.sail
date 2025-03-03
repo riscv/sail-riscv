@@ -77,8 +77,8 @@ function clause extensionEnabled(Ext_Svpbmt) = false
 function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
     pte_flags[V] == 0b0
   | (pte_flags[W] == 0b1 & pte_flags[R] == 0b0)
-  // Since version 1.12 of the spec, reserved bits must be zero.
-  | privVersion() >= Version_1_12 & (
+  // Since spec commit 31bc179b214fc0374075ea9284aa939b8341b843, reserved bits must be zero.
+  | configPrivVersion >= 20211101 & (
     // All bits are currently reserved for non-leaf PTEs.
       pte_is_ptr(pte_flags) & pte_ext.bits != zeros()
     // N/PBMT are reserved if not implemented.
