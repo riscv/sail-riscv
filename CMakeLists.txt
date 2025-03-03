@@ -71,6 +71,11 @@ if (DOWNLOAD_GMP)
         URL https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
         INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/gmp
         CONFIGURE_COMMAND "<SOURCE_DIR>/configure" "--prefix=<INSTALL_DIR>" --disable-shared --enable-static
+        # The libgmp.a output is created by the install step but since GMP::GMP
+        # depends on the entire ExternalProject build, we can pretend it is
+        # created by the build.
+        # TODO: Once we depend on CMake 3.26, use INSTALL_BYPRODUCTS
+        BUILD_BYPRODUCTS "<INSTALL_DIR>/lib/libgmp.a"
     )
     ExternalProject_Get_property(gmp INSTALL_DIR)
     add_library(GMP::GMP STATIC IMPORTED GLOBAL)
