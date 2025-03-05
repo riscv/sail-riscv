@@ -16,12 +16,13 @@ function step(step_no : int) -> bool = {
   /*
    * This records whether or not minstret should be incremented when
    * the instruction is retired. Since retirement occurs before CSR
-   * writes we initialise it based on mcountinhibit here, before it is
-   * potentially changed. This is also set to false if minstret is
-   * written.  See the note near the minstret declaration for more
-   * information.
+   * writes we initialise it based on mcountinhibit here, before
+   * mcountinhibit is potentially changed. We also mark minstret(h) as not
+   * having been explicitly written yet.
    */
   minstret_increment = should_inc_minstret(cur_privilege);
+  minstret_write = None();
+  minstreth_write = None();
 
   let (retired, stepped) : (Retired, bool) =
     match dispatchInterrupt(cur_privilege) {
@@ -79,11 +80,10 @@ function step(step_no : int) -> bool = {
 
   tick_pc();
 
-  /* update minstret */
-  match retired {
-    RETIRE_SUCCESS => retire_instruction(),
-    RETIRE_FAIL    => ()
-  };
+  // Only increment minstret if the instruction retired successfully.
+  if retired != RETIRE_SUCCESS then minstret_increment = false;
+
+  update_minstret();
 
   /* for step extensions */
   ext_post_step_hook();
