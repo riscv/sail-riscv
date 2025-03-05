@@ -193,34 +193,16 @@ function process_cmpush (rlist : bits(4), spimm : bits(2)) -> Retired = {
   let stack_adj = negate_int(get_stack_adj_base(rlist) + unsigned(spimm) * 16);
   let new_sp = addr + to_bits(xlen, stack_adj);
   let mask = zcmp_regmask(rlist);
+  let width = size_bytes(xlen_bytes);
 
-  var offset : int = xlen_bytes;
+  var offset : int = negate_int(xlen_bytes);
 
   foreach (i from 31 downto 1) {
     if mask[i] == bitone then {
-      match ext_data_get_addr(sp, to_bits(xlen, negate_int(offset)), Write(Data), xlen_bytes) {
-        Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
-        Ext_DataAddr_OK(vaddr) =>
-        if   check_misaligned(vaddr, size_bytes(xlen_bytes))
-        then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
-        else match translateAddr(vaddr, Write(Data)) {
-            TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
-            TR_Address(paddr, _) => {
-              let eares = mem_write_ea(paddr, xlen_bytes, false, false, false);
-              match (eares) {
-                  Err(e) => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
-                  Ok(_) => {
-                  let reg_val = X(to_bits(5, i));
-                  match mem_write_value(paddr, xlen_bytes, reg_val, false, false, false) {
-                      Ok(true)  => { offset = offset + xlen_bytes },
-                      Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                      Err(e) => { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
-                    }
-                  }
-              }
-            }
-        }
-      }
+      match execute(STORE(to_bits(12, offset), to_bits(5, i), sp, width, false, false)) {
+        RETIRE_SUCCESS  => { offset = offset - xlen_bytes },
+        RETIRE_FAIL     => { return RETIRE_FAIL }
+      };
     }
   };
   X(sp) = new_sp;
@@ -246,44 +228,27 @@ function process_cmpop (rlist : bits(4), spimm : bits(2), write_pc : bool, write
   let stack_adj = get_stack_adj_base(rlist) + unsigned(spimm) * 16;
   let new_sp = addr + to_bits(xlen, stack_adj);
   let mask = zcmp_regmask(rlist);
+  let width = size_bytes(xlen_bytes);
 
-  X(sp) = new_sp;
-
-  var offset : int = xlen_bytes;
+  var offset : int = stack_adj - xlen_bytes;
 
   foreach (i from 31 downto 1) {
     if mask[i] == bitone then {
-      match ext_data_get_addr(sp, to_bits(xlen, negate_int(offset)), Write(Data), xlen_bytes) {
-        Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); return RETIRE_FAIL },
-        Ext_DataAddr_OK(vaddr) =>
-        if   check_misaligned(vaddr, size_bytes(xlen_bytes))
-        then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); return RETIRE_FAIL }
-        else match translateAddr(vaddr, Write(Data)) {
-            TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
-            TR_Address(paddr, _) => {
-              match mem_read(Read(Data), paddr, xlen_bytes, false, false, false) {
-                Ok(v) => {
-                  X(to_bits(5, i)) = extend_value(true, v);
-                  offset = offset + xlen_bytes
-                },
-                Err(e) => { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
-              }
-            }
-        }
-      }
+      match execute(LOAD(to_bits(12, offset), sp, to_bits(5, i), true, width, false, false)) {
+        RETIRE_SUCCESS  => { offset = offset - xlen_bytes },
+        RETIRE_FAIL     => { return RETIRE_FAIL }
+      };
     }
   };
-
-  // cm.popret or cm.popretz write pc with ra.
-  if write_pc then {
-    set_next_pc(X(0b00001));
-  };
-
   // cm.popretz write a0 with zero.
   if write_a0 then {
-    X(0b01010) = zeros();
+    X(10) = zeros();
   };
-
+  X(sp) = new_sp;
+  // cm.popret or cm.popretz write pc with ra.
+  if write_pc then {
+    set_next_pc(X(1));
+  };
   RETIRE_SUCCESS
 }
 
