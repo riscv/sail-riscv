@@ -10,6 +10,7 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <optional>
+#include <assert.h>
 
 #include "elf.h"
 #include "sail.h"
@@ -53,6 +54,8 @@ enum {
   OPT_ENABLE_ZICBOZ,
   OPT_ENABLE_SSTC,
   OPT_CACHE_BLOCK_SIZE,
+  OPT_VECTOR_VLEN,
+  OPT_VECTOR_ELEN,
 };
 
 static bool do_show_times = false;
@@ -115,6 +118,8 @@ static struct option options[] = {
     {"enable-misaligned",           no_argument,       0, 'm'                     },
     {"pmp-count",                   required_argument, 0, OPT_PMP_COUNT           },
     {"pmp-grain",                   required_argument, 0, OPT_PMP_GRAIN           },
+    {"vector-vlen",                 required_argument, 0, OPT_VECTOR_VLEN         },
+    {"vector-elen",                 required_argument, 0, OPT_VECTOR_ELEN         },
     {"ram-size",                    required_argument, 0, 'z'                     },
     {"disable-compressed",          no_argument,       0, 'C'                     },
     {"disable-writable-misa",       no_argument,       0, 'I'                     },
@@ -218,6 +223,68 @@ static int ilog2(uint64_t x)
   return -1;
 }
 
+// Return 2^n within uint64_t.  This is only called on internal
+// defaults, so it is okay to assert here.
+static uint64_t p2(uint64_t n)
+{
+  assert(n < 64);
+  return (0x1 << n);
+}
+
+static bool check_vector_lens(uint64_t vlen, uint64_t elen)
+{
+  int elen_exp = ilog2(elen);
+  int vlen_exp = ilog2(vlen);
+  if (elen_exp < 0 || elen < 8) {
+    fprintf(stderr,
+            "ELEN (%" PRIu64 ") should be a power of 2 and at least 8.\n",
+            elen);
+    return false;
+  }
+  if (vlen_exp < 0) {
+    fprintf(stderr, "VLEN (%" PRIu64 ") should be a power of 2.\n", vlen);
+    return false;
+  }
+  if (vlen_exp > 16) {
+    fprintf(stderr, "VLEN (2^%d) should be no greater than 2^16.\n", vlen_exp);
+    return false;
+  }
+  if (vlen < elen) {
+    fprintf(stderr,
+            "VLEN (%" PRIu64 ") cannot be less than ELEN (%" PRIu64 ").\n",
+            vlen, elen);
+    return false;
+  }
+  return true;
+}
+// These lengths could be set individually; ensure that they are
+// compatible with any defaults.
+static void set_vector_lens(uint64_t vlen, uint64_t elen)
+{
+  if (vlen > 0 && elen == 0) {
+    assert(ilog2(rv_vector_elen_exp) >= 3);
+    elen = p2(rv_vector_elen_exp);
+    if (!check_vector_lens(vlen, elen)) {
+      exit(1);
+    }
+    rv_vector_vlen_exp = (uint64_t)ilog2(vlen);
+  } else if (vlen == 0 && elen > 0) {
+    assert(ilog2(rv_vector_vlen_exp) > 0);
+    assert(rv_vector_vlen_exp <= 16);
+    vlen = p2(rv_vector_vlen_exp);
+    if (!check_vector_lens(vlen, elen)) {
+      exit(1);
+    }
+    rv_vector_elen_exp = (uint64_t)ilog2(elen);
+  } else {
+    if (!check_vector_lens(vlen, elen)) {
+      exit(1);
+    }
+    rv_vector_vlen_exp = (uint64_t)ilog2(vlen);
+    rv_vector_elen_exp = (uint64_t)ilog2(elen);
+  }
+}
+
 /**
  * Parses the command line arguments and returns the argv index for the first
  * ELF file that should be loaded. As getopt transforms the argv array, all
@@ -232,6 +299,8 @@ static int process_args(int argc, char **argv)
   uint64_t pmp_count = 0;
   uint64_t pmp_grain = 0;
   uint64_t block_size_exp = 0;
+  uint64_t vector_vlen = 0;
+  uint64_t vector_elen = 0;
   while (true) {
     c = getopt_long(argc, argv,
                     "a"
@@ -296,6 +365,14 @@ static int process_args(int argc, char **argv)
         exit(1);
       }
       rv_pmp_grain = pmp_grain;
+      break;
+    case OPT_VECTOR_VLEN:
+      vector_vlen = atol(optarg);
+      fprintf(stderr, "VLEN: %" PRIu64 "\n", vector_vlen);
+      break;
+    case OPT_VECTOR_ELEN:
+      vector_elen = atol(optarg);
+      fprintf(stderr, "ELEN: %" PRIu64 "\n", vector_elen);
       break;
     case 'C':
       fprintf(stderr, "disabling RVC compressed instructions.\n");
@@ -433,6 +510,8 @@ static int process_args(int argc, char **argv)
       break;
     }
   }
+  if (vector_vlen > 0 || vector_elen > 0)
+    set_vector_lens(vector_vlen, vector_elen);
 #ifdef RVFI_DII
   if (optind > argc || (optind == argc && !rvfi))
     print_usage(argv[0], 0);
