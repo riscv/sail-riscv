@@ -78,6 +78,7 @@ set(common_deps
 
 set(tests
     "test_hello_world.c"
+    "test_max_pmp.c"
     "test_minstret.S"
 )
 
