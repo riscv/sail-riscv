@@ -664,8 +664,8 @@ register minstret_increment : bool
 // If there's an explicit write to minstret(h) then it is stored here because
 // it needs to be applied *after* the implicit increment due to instruction
 // retirement.
-register minstret_write : option(bits(xlen))
-register minstreth_write : option(bits(32))
+register minstret_write : option(bits(xlen)) = None()
+register minstreth_write : option(bits(32)) = None()
 
 function update_minstret() -> unit = {
   // First increment minstret due to instruction retirement
