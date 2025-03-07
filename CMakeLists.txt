@@ -69,17 +69,6 @@ endif()
 
 # These are the main requirements.
 # Don't use `REQUIRED` so that we can print custom help messages.
-find_package(ZLIB)
-if (NOT ZLIB_FOUND)
-    if (APPLE)
-        message(FATAL_ERROR "Zlib not found. Try 'brew install zlib'.")
-    elseif (UNIX)
-        message(FATAL_ERROR "Zlib not found. Try 'sudo apt install zlib1g-dev' or 'sudo dnf install zlib-devel'.")
-    else()
-        message(FATAL_ERROR "Zlib not found.")
-    endif()
-endif()
-
 option(DOWNLOAD_GMP "Download libgmp and build the library locally instead of using a system installation" OFF)
 if (DOWNLOAD_GMP)
     include(ExternalProject)

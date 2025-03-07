@@ -156,12 +156,8 @@ GMP_FLAGS = $(shell pkg-config --cflags gmp)
 # N.B. GMP does not have pkg-config metadata on Ubuntu 18.04 so default to -lgmp
 GMP_LIBS = $(shell pkg-config --libs gmp || echo -lgmp)
 
-# TODO: Remove Zlib when upgrading to Sail 0.19; it is no longer a requirement.
-ZLIB_FLAGS = $(shell pkg-config --cflags zlib)
-ZLIB_LIBS = $(shell pkg-config --libs zlib)
-
-C_FLAGS = -I $(SAIL_LIB_DIR) -I c_emulator $(GMP_FLAGS) $(ZLIB_FLAGS) $(SOFTFLOAT_FLAGS)
-C_LIBS  = $(GMP_LIBS) $(ZLIB_LIBS) $(SOFTFLOAT_LIBS)
+C_FLAGS = -I $(SAIL_LIB_DIR) -I c_emulator $(GMP_FLAGS) $(SOFTFLOAT_FLAGS)
+C_LIBS  = $(GMP_LIBS) $(SOFTFLOAT_LIBS)
 
 # SAIL_FLAGS = -dtc_verbose 4
 

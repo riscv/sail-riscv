@@ -48,7 +48,7 @@ foreach (xlen IN ITEMS 32 64)
             add_dependencies(riscv_sim_${arch} generated_model_${arch})
 
             target_link_libraries(riscv_sim_${arch}
-                PRIVATE softfloat sail_runtime GMP::GMP ZLIB::ZLIB
+                PRIVATE softfloat sail_runtime GMP::GMP
             )
 
             target_include_directories(riscv_sim_${arch}

@@ -45,7 +45,6 @@ jobs:
         dnf install -y --enablerepo=devel \
             pkg-config \
             gmp-static \
-            zlib-static \
             curl \
             git \
             make \
