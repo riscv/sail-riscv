@@ -31,14 +31,6 @@ interactive proof (in Isabelle, HOL4, and Coq), support proof about binary code 
   <img width="800" src="https://www.cl.cam.ac.uk/~pes20/sail/overview-sail.png?">
 <p>
 
-Sail is being used for multiple ISA descriptions, including
-essentially complete versions of the sequential behaviour of Arm-A
-(automatically derived from the authoritative Arm-internal
-specification, and released under a BSD Clear licence with Arm's
-permission), RISC-V, CHERI-RISC-V, CHERIoT, MIPS, and CHERI-MIPS; all these are complete
-enough to boot various operating systems.  There are also Sail models
-for smaller fragments of IBM POWER and x86, including a version of the ACL2 x86 model automatically translated from that.
-
 Getting started
 ---------------
 
@@ -120,19 +112,14 @@ Supported RISC-V ISA features
 - Zkr extension for entropy source, v1.0
 - V extension for vector operations, v1.0
 - Machine, Supervisor, and User modes
+- Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
 - Svinval extension for fine-grained address-translation cache invalidation, v1.0
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
 - Physical Memory Protection (PMP)
-- Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 
-#### The following features are not currently supported:
-- The Hypervisor Extension.
-- RV32E and RV64E base ISAs
-- Mutable XLEN (UXLEN/SXLEN always equal MXLEN)
-- Big endian
-- Physical Memory Attributes (PMAs)
+**For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 
 Example RISC-V instruction specifications
 ----------------------------------
@@ -161,17 +148,15 @@ mapping clause encdec = ITYPE(imm, rs1, rd, op) <-> imm @ rs1 @ encdec_iop(op) @
 /* the execution semantics for the ITYPE instructions */
 
 function clause execute (ITYPE (imm, rs1, rd, op)) = {
-  let rs1_val = X(rs1);
   let immext : xlenbits = sign_extend(imm);
-  let result : xlenbits = match op {
-    RISCV_ADDI  => rs1_val + immext,
-    RISCV_SLTI  => zero_extend(bool_to_bits(rs1_val <_s immext)),
-    RISCV_SLTIU => zero_extend(bool_to_bits(rs1_val <_u immext)),
-    RISCV_ANDI  => rs1_val & immext,
-    RISCV_ORI   => rs1_val | immext,
-    RISCV_XORI  => rs1_val ^ immext
+  X(rd) = match op {
+    RISCV_ADDI  => X(rs1) + immext,
+    RISCV_SLTI  => zero_extend(bool_to_bits(X(rs1) <_s immext)),
+    RISCV_SLTIU => zero_extend(bool_to_bits(X(rs1) <_u immext)),
+    RISCV_ANDI  => X(rs1) & immext,
+    RISCV_ORI   => X(rs1) | immext,
+    RISCV_XORI  => X(rs1) ^ immext
   };
-  X(rd) = result;
   RETIRE_SUCCESS
 }
 
@@ -301,7 +286,6 @@ tool.
 The files under `handwritten_support` provide library definitions for
 Coq, Isabelle and HOL4.
 
-
 Directory Structure
 -------------------
 
@@ -311,9 +295,13 @@ sail-riscv
 - prover_snapshots        // snapshots of generated theorem prover definitions
 - handwritten_support     // prover support files
 - c_emulator              // supporting platform files for C emulator
+- cmake                   // extra build system modules
+- dependencies            // external dependencies (currently only SoftFloat)
+- sail_runtime            // build files for sail runtime
 - doc                     // documentation, including a reading guide
 - test                    // test files
   - riscv-tests           // snapshot of tests from the riscv/riscv-tests github repo
+  - first_party           // custom C and assembly tests for the model
 - os-boot                 // information and sample files for booting OS images
 ```
 
