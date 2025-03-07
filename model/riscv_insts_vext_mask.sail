@@ -12,7 +12,7 @@
 /* ******************************************************************************* */
 
 /* ******************************* OPMVV (MMTYPE) ******************************** */
-union clause ast = MMTYPE : (mmfunct6, regidx, regidx, regidx)
+union clause ast = MMTYPE : (mmfunct6, vregidx, vregidx, vregidx)
 
 mapping encdec_mmfunct6 : mmfunct6 <-> bits(6) = {
   MM_VMAND     <-> 0b011001,
@@ -25,8 +25,8 @@ mapping encdec_mmfunct6 : mmfunct6 <-> bits(6) = {
   MM_VMXNOR    <-> 0b011111
 }
 
-mapping clause encdec = MMTYPE(funct6, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_mmfunct6(funct6) @ 0b1 @ vs2 @ vs1 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = MMTYPE(funct6, vs2, vs1, vd)                                                            if extensionEnabled(Ext_V)
+  <-> encdec_mmfunct6(funct6) @ 0b1 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -80,10 +80,10 @@ mapping clause assembly = MMTYPE(funct6, vs2, vs1, vd)
   <-> mmtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
 
 /* ************************* OPMVV (vpopc in VWXUNARY0) ************************** */
-union clause ast = VCPOP_M : (bits(1), regidx, regidx)
+union clause ast = VCPOP_M : (bits(1), vregidx, regidx)
 
-mapping clause encdec = VCPOP_M(vm, vs2, rd) if extensionEnabled(Ext_V)
-  <-> 0b010000 @ vm @ vs2 @ 0b10000 @ 0b010 @ rd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VCPOP_M(vm, vs2, rd)                                          if extensionEnabled(Ext_V)
+  <-> 0b010000 @ vm @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_reg(rd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VCPOP_M(vm, vs2, rd)) = {
   let SEW      = get_sew();
@@ -95,7 +95,7 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
 
   let (_, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
@@ -114,10 +114,10 @@ mapping clause assembly = VCPOP_M(vm, vs2, rd)
   <-> "vpopc.m" ^ spc() ^ reg_name(rd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************* OPMVV (vfirst in VWXUNARY0) ************************* */
-union clause ast = VFIRST_M : (bits(1), regidx, regidx)
+union clause ast = VFIRST_M : (bits(1), vregidx, regidx)
 
-mapping clause encdec = VFIRST_M(vm, vs2, rd) if extensionEnabled(Ext_V)
-  <-> 0b010000 @ vm @ vs2 @ 0b10001 @ 0b010 @ rd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VFIRST_M(vm, vs2, rd)                                         if extensionEnabled(Ext_V)
+  <-> 0b010000 @ vm @ encdec_vreg(vs2) @ 0b10001 @ 0b010 @ encdec_reg(rd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VFIRST_M(vm, vs2, rd)) = {
   let SEW      = get_sew();
@@ -129,7 +129,7 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
 
   let (_, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
@@ -150,10 +150,10 @@ mapping clause assembly = VFIRST_M(vm, vs2, rd)
   <-> "vfirst.m" ^ spc() ^ reg_name(rd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************** OPMVV (vmsbf in VMUNARY0) ************************** */
-union clause ast = VMSBF_M : (bits(1), regidx, regidx)
+union clause ast = VMSBF_M : (bits(1), vregidx, vregidx)
 
-mapping clause encdec = VMSBF_M(vm, vs2, vd) if extensionEnabled(Ext_V)
-  <-> 0b010100 @ vm @ vs2 @ 0b00001 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VMSBF_M(vm, vs2, vd)                                           if extensionEnabled(Ext_V)
+  <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b00001 @ 0b010 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VMSBF_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
@@ -166,7 +166,7 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : bits('n) = read_vmask(num_elem, 0b0, vd);
 
@@ -190,10 +190,10 @@ mapping clause assembly = VMSBF_M(vm, vs2, vd)
   <-> "vmsbf.m" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************** OPMVV (vmsif in VMUNARY0) ************************** */
-union clause ast = VMSIF_M : (bits(1), regidx, regidx)
+union clause ast = VMSIF_M : (bits(1), vregidx, vregidx)
 
-mapping clause encdec = VMSIF_M(vm, vs2, vd) if extensionEnabled(Ext_V)
-  <-> 0b010100 @ vm @ vs2 @ 0b00011 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VMSIF_M(vm, vs2, vd)                                           if extensionEnabled(Ext_V)
+  <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b00011 @ 0b010 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VMSIF_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
@@ -206,7 +206,7 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : bits('n) = read_vmask(num_elem, 0b0, vd);
 
@@ -230,10 +230,10 @@ mapping clause assembly = VMSIF_M(vm, vs2, vd)
   <-> "vmsif.m" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************** OPMVV (vmsof in VMUNARY0) ************************** */
-union clause ast = VMSOF_M : (bits(1), regidx, regidx)
+union clause ast = VMSOF_M : (bits(1), vregidx, vregidx)
 
-mapping clause encdec = VMSOF_M(vm, vs2, vd) if extensionEnabled(Ext_V)
-  <-> 0b010100 @ vm @ vs2 @ 0b00010 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VMSOF_M(vm, vs2, vd)                                           if extensionEnabled(Ext_V)
+  <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b00010 @ 0b010 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VMSOF_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
@@ -246,7 +246,7 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : bits('n) = read_vmask(num_elem, 0b0, vd);
 
@@ -274,10 +274,10 @@ mapping clause assembly = VMSOF_M(vm, vs2, vd)
   <-> "vmsof.m" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************** OPMVV (viota in VMUNARY0) ************************** */
-union clause ast = VIOTA_M : (bits(1), regidx, regidx)
+union clause ast = VIOTA_M : (bits(1), vregidx, vregidx)
 
-mapping clause encdec = VIOTA_M(vm, vs2, vd) if extensionEnabled(Ext_V)
-  <-> 0b010100 @ vm @ vs2 @ 0b10000 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VIOTA_M(vm, vs2, vd)                                           if extensionEnabled(Ext_V)
+  <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VIOTA_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
@@ -290,7 +290,7 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
   let vs2_val : bits('n)     = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
@@ -314,10 +314,10 @@ mapping clause assembly = VIOTA_M(vm, vs2, vd)
   <-> "viota.m" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* *************************** OPMVV (vid in VMUNARY0) *************************** */
-union clause ast = VID_V : (bits(1), regidx)
+union clause ast = VID_V : (bits(1), vregidx)
 
-mapping clause encdec = VID_V(vm, vd) if extensionEnabled(Ext_V)
-  <-> 0b010100 @ vm @ 0b00000 @ 0b10001 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VID_V(vm, vd)                                         if extensionEnabled(Ext_V)
+  <-> 0b010100 @ vm @ 0b00000 @ 0b10001 @ 0b010 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(VID_V(vm, vd)) = {
   let SEW      = get_sew();
@@ -329,7 +329,7 @@ function clause execute(VID_V(vm, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, 0b00000);
+  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
