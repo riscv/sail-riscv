@@ -24,7 +24,7 @@ jobs:
       run: |
         # Ninja is used because the CMake Makefile generator doesn't
         # build top-level targets in parallel unfortunately.
-        cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DFIRST_PARTY_TESTS=TRUE
         # By default only the rv32d and rv64d emulators are build,
         # but we want to build more targets here to ensure they
         # can at least build without errors.
