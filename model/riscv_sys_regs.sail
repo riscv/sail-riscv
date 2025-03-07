@@ -83,43 +83,50 @@ register misa : Misa =
   ]
 
 /* whether misa is R/W */
-val sys_enable_writable_misa = pure "sys_enable_writable_misa" : unit -> bool
+function sys_enable_writable_misa() -> bool = config base.writable_misa
+
 /* whether misa.c was enabled at boot */
-val sys_enable_rvc = pure "sys_enable_rvc" : unit -> bool
+function sys_enable_rvc() -> bool = config extensions.c.enabled
+
 /* whether misa.{f,d} were enabled at boot */
-val sys_enable_fdext = pure "sys_enable_fdext" : unit -> bool
+function sys_enable_fdext() -> bool = config extensions.fd.enabled
+
 /* whether Svinval was enabled at boot */
-val sys_enable_svinval = pure "sys_enable_svinval" : unit -> bool
+function sys_enable_svinval() -> bool = config extensions.Svinval.enabled
+
 /* whether Zcb was enabled at boot */
-val sys_enable_zcb = pure "sys_enable_zcb" : unit -> bool
+function sys_enable_zcb() -> bool = config extensions.Zcb.enabled
+
 /* whether zfinx was enabled at boot */
-val sys_enable_zfinx = pure "sys_enable_zfinx" : unit -> bool
+function sys_enable_zfinx() -> bool = config extensions.Zfinx.enabled
+
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
-val sys_enable_writable_fiom = pure "sys_enable_writable_fiom" : unit -> bool
+function sys_enable_writable_fiom() -> bool = config base.writable_fiom
 
 /* How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime). */
-val sys_pmp_count = pure "sys_pmp_count" : unit -> range(0, 64)
+function sys_pmp_count() -> {0, 16, 64} = config memory.pmp.count
+
 /* G parameter that specifies the PMP grain size. The grain size is 2^(G+2), e.g.
    G=0 -> 4 bytes, G=10 -> 4096 bytes. */
-val sys_pmp_grain = pure "sys_pmp_grain" : unit -> range(0, 63)
+function sys_pmp_grain() -> range(0, 63) = config memory.pmp.grain
 
 /* Which HPM counters are supported (as a bit mask). Bits [2 .. 0] are ignored. */
-val sys_writable_hpm_counters = pure "sys_writable_hpm_counters" : unit -> bits(32)
+function sys_writable_hpm_counters() -> bits(32) = config base.writeable_hpm_counters
 
 /* whether misa.v was enabled at boot */
-val sys_enable_vext = pure "sys_enable_vext" : unit -> bool
+function sys_enable_vext() -> bool = config extensions.v.enabled
 
 /* whether misa.b was enabled at boot */
-val sys_enable_bext = pure "sys_enable_bext" : unit -> bool
+function sys_enable_bext() -> bool = config extensions.b.enabled
 
 // CBO extensions. Zicbop cannot be enabled/disabled because it has no effect
 // at all on this model.
-val sys_enable_zicbom = pure "sys_enable_zicbom" : unit -> bool
-val sys_enable_zicboz = pure "sys_enable_zicboz" : unit -> bool
+function sys_enable_zicbom() -> bool = config extensions.Zicbom.enabled
+function sys_enable_zicboz() -> bool = config extensions.Zicboz.enabled
 
 // Is the Sstc stimecmp extension supported.
-val sys_enable_sstc = pure "sys_enable_sstc" : unit -> bool
+function sys_enable_sstc() -> bool = config extensions.Sstc.enabled
 
 // Supervisor timecmp
 function clause extensionEnabled(Ext_Sstc) = sys_enable_sstc()
