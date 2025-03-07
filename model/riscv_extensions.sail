@@ -50,6 +50,8 @@ enum clause extension = Ext_Zaamo
 enum clause extension = Ext_Zabha
 // Load-Reserved/Store-Conditional Instructions
 enum clause extension = Ext_Zalrsc
+// Wait-on-Reservation-Set
+enum clause extension = Ext_Zawrs
 
 // Additional Floating-Point Instructions
 enum clause extension = Ext_Zfa

@@ -45,6 +45,7 @@ bool speculate_conditional(unit);
 unit load_reservation(mach_bits);
 bool match_reservation(mach_bits);
 unit cancel_reservation(unit);
+bool valid_reservation(unit);
 
 void plat_insns_per_tick(sail_int *rop, unit);
 

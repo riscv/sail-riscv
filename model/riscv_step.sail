@@ -8,10 +8,10 @@
 
 /* The emulator fetch-execute-interrupt dispatch loop. */
 
-register step_state : StepState
+register step_state : StepState = Step_Active()
 
 function init_stepper() -> unit = {
-  step_state = STEP_ACTIVE;
+  step_state = Step_Active();
 }
 
 // Checks if the retire returned by the execution of an instruction
@@ -24,53 +24,83 @@ function does_executed_retire_step(r : Retired(Retire_Failure)) -> bool =
     RETIRE_FAIL(Trap(_))               => true,
 
     // do not step if a wait instruction executed.
-    RETIRE_FAIL(Wait_For_Interrupt())  => false,
+    RETIRE_FAIL(Wait_For_Interrupt())        => false,
+    RETIRE_FAIL(Wait_For_Reservation_Set(_)) => false,
 
     // retires from extensions
     RETIRE_FAIL(Ext_ControlAddr_Check_Failure(_)) => true,
     RETIRE_FAIL(Ext_DataAddr_Check_Failure(_))    => true,
     RETIRE_FAIL(Ext_CSR_Check_Failure())          => true,
     RETIRE_FAIL(Ext_XRET_Priv_Failure(_))         => true,
-}
+  }
 
 union Step = {
   Step_Pending_Interrupt  : (InterruptType, Privilege),
   Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
   Step_Execute            : Retired(Retire_Failure),
-  Step_Waiting            : unit
+  Step_Waiting            : WaitReason
 }
 
-function step_wait_state(step_no : int, exit_wait : bool) -> (Step, bool) = {
-  if wakeForInterrupt() then {
-    if   get_config_print_instr()
-    then print_instr("interrupt exit from WAIT state at PC " ^ BitStr(PC));
+function step_wait_state(step_no : int, wr : WaitReason, exit_wait : bool) -> (Step, bool) =
+  match (wr, wakeForInterrupt(), valid_reservation(), exit_wait) {
+    // successfully interrupted waits
+    (_, true, _, _) => {
+      if   get_config_print_instr()
+      then print_instr("interrupt exit from WAIT state at PC " ^ BitStr(PC));
 
-    step_state = STEP_ACTIVE;
-    // The waiting instruction retires successfully.  The
-    // pending interrupts will be handled in the next step.
-    (Step_Execute(RETIRE_OK()), true)
-  } else if exit_wait then {
-    // There are no pending interrupts; transition out of the Wait
-    // as instructed.
-    if   get_config_print_instr()
-    then print_instr("forced exit from WAIT state at PC " ^ BitStr(PC));
+      (Step_Execute(RETIRE_OK()), true)
+    },
+    (WAIT_WRS_STO, _, false, _) => {
+      if   get_config_print_instr()
+      then print_instr("reservation invalid exit from WRS-STO state at PC " ^ BitStr(PC));
 
-    step_state = STEP_ACTIVE;
-    // "When TW=1, then if WFI is executed in any
-    // less-privileged mode, and it does not complete within an
-    // implementation-specific, bounded time limit, the WFI
-    // instruction causes an illegal-instruction exception."
-    if   (cur_privilege == Machine | mstatus[TW] == 0b0)
-    then (Step_Execute(RETIRE_OK()), true)
-    else (Step_Execute(RETIRE_FAIL(Illegal_Instruction())), true)
-  } else {
-    if   get_config_print_instr()
-    then print_instr("remaining in WAIT state at PC " ^ BitStr(PC));
-    (Step_Waiting(), false)
+      (Step_Execute(RETIRE_OK()), true)
+    },
+    (WAIT_WRS_NTO, _, false, _) => {
+      if   get_config_print_instr()
+      then print_instr("reservation invalid exit from WRS-NTO state at PC " ^ BitStr(PC));
+
+      (Step_Execute(RETIRE_OK()), true)
+    },
+    // timed-out waits
+    (WAIT_WFI, _, _, true) => {
+      if   get_config_print_instr()
+      then print_instr("forced exit from WAIT state at PC " ^ BitStr(PC));
+
+      // "When TW=1, then if WFI is executed in any
+      // less-privileged mode, and it does not complete within an
+      // implementation-specific, bounded time limit, the WFI
+      // instruction causes an illegal-instruction exception."
+      if   (cur_privilege == Machine | mstatus[TW] == 0b0)
+      then (Step_Execute(RETIRE_OK()), true)
+      else (Step_Execute(RETIRE_FAIL(Illegal_Instruction())), true)
+    },
+    (WAIT_WRS_STO, _, _, true) => {
+      if   get_config_print_instr()
+      then print_instr("timed-out exit from WRS-STO state at PC " ^ BitStr(PC));
+
+      (Step_Execute(RETIRE_OK()), true)
+    },
+    (WAIT_WRS_NTO, _, _, true) => {
+      if   get_config_print_instr()
+      then print_instr("timed-out exit from WRS-NTO state at PC " ^ BitStr(PC));
+
+      if   cur_privilege == Machine
+      then (Step_Execute(RETIRE_OK()), true)
+      else if mstatus[TW] == 0b1
+      then (Step_Execute(RETIRE_FAIL(Illegal_Instruction())), true)
+      else // TODO: handle VS/VU modes and hstatus.VTW
+           (Step_Execute(RETIRE_OK()), true)
+    },
+    // remain waiting
+    (_, _, _, false) => {
+      if   get_config_print_instr()
+      then print_instr("remaining in WAIT state at PC " ^ BitStr(PC));
+      (Step_Waiting(wr), false)
+    }
   }
-}
 
-function step_active_state(step_no: int, exit_wait : bool) -> ((Step, bool), option(xlenbits)) = {
+function step_active_state(step_no: int) -> ((Step, bool), option(xlenbits)) =
   match dispatchInterrupt(cur_privilege) {
     Some(intr, priv) => ((Step_Pending_Interrupt(intr, priv), false), None()),
     None() => match ext_fetch_hook(fetch()) {
@@ -110,7 +140,6 @@ function step_active_state(step_no: int, exit_wait : bool) -> ((Step, bool), opt
       }
     }
   }
-}
 
 // The `step` function is the main interface to the non-Sail
 // harness.  It receives the current step number (which numbers the
@@ -134,39 +163,67 @@ function step(step_no : int, exit_wait : bool) -> step_result = {
 
   let ((step_val, stepped), instbits) : ((Step, bool), option(xlenbits)) =
     match step_state {
-      STEP_WAIT   => (step_wait_state(step_no, exit_wait), None()),
-      STEP_ACTIVE => step_active_state(step_no, exit_wait)
+      Step_Wait(w)  => (step_wait_state(step_no, w, exit_wait), None()),
+      Step_Active() => step_active_state(step_no)
     };
 
   match step_val {
     Step_Pending_Interrupt(intr, priv) => {
+      assert(step_state == Step_Active());
       if   get_config_print_instr()
       then print_bits("Handling interrupt: ", interruptType_to_bits(intr));
       handle_interrupt(intr, priv)
     },
     Step_Ext_Fetch_Failure(e) => {
+      assert(step_state == Step_Active());
       ext_handle_fetch_check_error(e)
     },
-    Step_Waiting() => {
-      assert(step_state == STEP_WAIT, "cannot be Waiting in a non-Wait state");
+    Step_Waiting(op) => {
+      assert(step_state == Step_Wait(op), "cannot be waiting in a different state");
     },
     Step_Execute(RETIRE_OK()) => {
-      assert(step_state == STEP_ACTIVE);
+      // We could enter this state from a waiting state.
+      step_state = Step_Active();
       retire_instruction() // update minstret
     },
     Step_Execute(RETIRE_FAIL(failure)) => match failure {
       // standard failures
-      Trap(priv, ctl, pc)           => set_next_pc(exception_handler(priv, ctl, pc)),
-      Memory_Exception(vaddr, exc)  => handle_mem_exception(vaddr, exc),
-      Illegal_Instruction() => match instbits {
+      Trap(priv, ctl, pc) => {
+        assert(step_state == Step_Active());
+        set_next_pc(exception_handler(priv, ctl, pc))
+      },
+      Memory_Exception(vaddr, exc)  => {
+        assert(step_state == Step_Active());
+        handle_mem_exception(vaddr, exc)
+      },
+      Illegal_Instruction() => {
+        // We could enter this state from a waiting state.
+        step_state = Step_Active();
+        match instbits {
           None()         => internal_error(__FILE__, __LINE__, "no instruction bits for illegal instruction"),
           Some(instbits) => handle_illegal(instbits)
-        },
+        }
+      },
       Wait_For_Interrupt() => {
+        assert(step_state == Step_Active());
         // Transition into the wait state.
         if   get_config_print_instr()
-        then print_instr("entering WAIT state at PC " ^ BitStr(PC));
-        step_state = STEP_WAIT
+        then print_instr("entering WAIT-WFI state at PC " ^ BitStr(PC));
+        step_state = Step_Wait(WAIT_WFI)
+      },
+      Wait_For_Reservation_Set(WRS_STO) => {
+        assert(step_state == Step_Active());
+        // Transition into the wait state.
+        if   get_config_print_instr()
+        then print_instr("entering WRS-STO state at PC " ^ BitStr(PC));
+        step_state = Step_Wait(WAIT_WRS_STO)
+      },
+      Wait_For_Reservation_Set(WRS_NTO) => {
+        assert(step_state == Step_Active());
+        // Transition into the wait state.
+        if   get_config_print_instr()
+        then print_instr("entering WRS-NTO state at PC " ^ BitStr(PC));
+        step_state = Step_Wait(WAIT_WRS_NTO)
       },
       // failures from extensions
       Ext_CSR_Check_Failure()          => ext_check_CSR_fail(),
@@ -176,14 +233,14 @@ function step(step_no : int, exit_wait : bool) -> step_result = {
     }
   };
 
-  if step_state != STEP_WAIT then {
+  if step_state == Step_Active() then {
     tick_pc();
 
     /* for step extensions */
     ext_post_step_hook();
   };
 
-  struct { state = step_state, stepped }
+  struct { state = step_result_of(step_state), stepped }
 }
 
 function loop () : unit -> unit = {

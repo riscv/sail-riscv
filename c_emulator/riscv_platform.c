@@ -198,6 +198,11 @@ unit cancel_reservation(unit u)
   return UNIT;
 }
 
+bool valid_reservation(unit u)
+{
+  return reservation_valid;
+}
+
 unit plat_term_write(mach_bits s)
 {
   char c = s & 0xff;

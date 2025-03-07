@@ -14,7 +14,7 @@ extern struct zMisa zmisa;
 void model_init(void);
 void model_fini(void);
 
-enum zStepState { zSTEP_ACTIVE, zSTEP_WAIT };
+enum zStepState { zSTEP_ACTIVE, zSTEP_WAIT_TIMEOUT, zSTEP_WAIT_NOTIMEOUT };
 struct zstep_result {
   enum zStepState zstate;
   bool zstepped;

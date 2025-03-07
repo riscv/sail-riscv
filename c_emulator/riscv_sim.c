@@ -835,7 +835,8 @@ void run_sail(void)
       KILL(sail_int)(&sail_step);
     }
     switch (step_result.zstate) {
-    case zSTEP_WAIT:
+    case zSTEP_WAIT_TIMEOUT:
+    case zSTEP_WAIT_NOTIMEOUT:
       if (++wait_steps >= max_wait_steps)
         exit_wait = true;
       break;

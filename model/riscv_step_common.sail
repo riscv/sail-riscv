@@ -16,12 +16,25 @@
 // harness indicates that the waiting instruction should be retired
 // (as a nop).
 
-enum StepState = {STEP_ACTIVE, STEP_WAIT}
+enum WaitReason = {WAIT_WFI, WAIT_WRS_STO, WAIT_WRS_NTO}
+union StepState = {
+  Step_Active : unit,
+  Step_Wait   : WaitReason
+}
 
-// The return type of the `step` function.
+// The return type of the `step` function.  This is communicated to
+// the C emulator.
+enum StepResult = {STEP_ACTIVE, STEP_WAIT_TIMEOUT, STEP_WAIT_NOTIMEOUT}
 struct step_result = {
-  state   : StepState,
+  state   : StepResult,
   stepped : bool
+}
+
+function step_result_of(state: StepState) -> StepResult = match state {
+  Step_Active()           => STEP_ACTIVE,
+  Step_Wait(WAIT_WFI)     => STEP_WAIT_NOTIMEOUT,
+  Step_Wait(WAIT_WRS_NTO) => STEP_WAIT_NOTIMEOUT,
+  Step_Wait(WAIT_WRS_STO) => STEP_WAIT_TIMEOUT,
 }
 
 /* The result of a fetch, which includes any possible error

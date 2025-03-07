@@ -65,6 +65,7 @@ axiom plat_term_read : Unit → PreSailM RegisterType c ue String
 axiom load_reservation : Arch.pa → PreSailM RegisterType c ue Unit
 axiom match_reservation : Arch.pa → PreSailM RegisterType c ue Bool
 axiom cancel_reservation : Unit → PreSailM RegisterType c ue Bool
+axiom valid_reservation : Unit → PreSailM RegisterType c ue Bool
 
 axiom get_16_random_bits : Unit → PreSailM RegisterType c ue (BitVec 16)
 
