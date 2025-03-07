@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(sail_riscv)
 
+set(SAIL_REQUIRED_VER 0.19)
+
 # Make users explicitly pick a build type so they don't get
 # surprised when the default gives a very slow emulator.
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -160,7 +162,6 @@ include(CPack)
 add_custom_target(csim DEPENDS riscv_sim_rv32d riscv_sim_rv64d)
 add_custom_target(check DEPENDS generated_model_rv32d generated_model_rv64d)
 
-# TODO: Support static linking.
 # TODO: Add `interpret` target.
 # TODO: Add isabelle target.
 # TODO: Add lem target.
