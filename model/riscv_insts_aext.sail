@@ -142,8 +142,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
                 /* cannot happen in rmem */
                 X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS
               } else {
-                let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
-                match eares {
+                match mem_write_ea(addr, width_bytes, aq & rl, rl, true) {
                   Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                   Ok(_)  => {
                     let rs2_val = X(rs2);
@@ -205,9 +204,8 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
       else match translateAddr(vaddr, ReadWrite(Data, Data)) {
         TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) => {
-          let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
           let rs2_val = X(rs2)[width_bytes * 8 - 1 .. 0];
-          match eares {
+          match mem_write_ea(addr, width_bytes, aq & rl, rl, true) {
             Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
             Ok(_) => {
               match mem_read(ReadWrite(Data, Data), addr, width_bytes, aq, aq & rl, true) {

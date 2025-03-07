@@ -369,8 +369,7 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
       else match translateAddr(vaddr, Write(Data)) {
         TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(paddr, _) => {
-          let eares = mem_write_ea(paddr, width_bytes, aq, rl, false);
-          match (eares) {
+          match mem_write_ea(paddr, width_bytes, aq, rl, false) {
             Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
             Ok(_)  => {
               let rs2_val = X(rs2);
