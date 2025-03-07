@@ -21,6 +21,10 @@ target_include_directories(sail_runtime
     PUBLIC "${sail_dir}/lib"
 )
 
+target_link_libraries(sail_runtime
+    PUBLIC softfloat GMP::GMP ZLIB::ZLIB
+)
+
 if (COVERAGE)
     find_package(Threads REQUIRED)
 
