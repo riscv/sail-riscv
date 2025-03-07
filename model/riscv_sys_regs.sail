@@ -121,6 +121,10 @@ val sys_enable_zicboz = pure "sys_enable_zicboz" : unit -> bool
 // Is the Sstc stimecmp extension supported.
 val sys_enable_sstc = pure "sys_enable_sstc" : unit -> bool
 
+// Prevent the use of new user-level CSRs as covert channels
+val sys_enable_smstateen = pure "sys_enable_smstateen" : unit -> bool
+val sys_enable_ssstateen = pure "sys_enable_ssstateen" : unit -> bool
+
 // Supervisor timecmp
 function clause extensionEnabled(Ext_Sstc) = sys_enable_sstc()
 

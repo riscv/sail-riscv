@@ -67,9 +67,19 @@ bool sys_enable_zicboz(unit u)
   return rv_enable_zicboz;
 }
 
+bool sys_enable_ssstateen(unit u)
+{
+  return rv_enable_ssstateen;
+}
+
 bool sys_enable_sstc(unit u)
 {
   return rv_enable_sstc;
+}
+
+bool sys_enable_smstateen(unit u)
+{
+  return rv_enable_smstateen;
 }
 
 uint64_t sys_pmp_count(unit u)

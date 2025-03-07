@@ -19,7 +19,9 @@ bool rv_enable_vext = true;
 bool rv_enable_bext = false;
 bool rv_enable_zicbom = false;
 bool rv_enable_zicboz = false;
+bool rv_enable_ssstateen = false;
 bool rv_enable_sstc = false;
+bool rv_enable_smstateen = false;
 
 bool rv_enable_dirty_update = false;
 bool rv_enable_misaligned = false;
