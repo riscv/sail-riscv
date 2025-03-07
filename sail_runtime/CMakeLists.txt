@@ -15,7 +15,6 @@ add_library(sail_runtime
     "${sail_dir}/lib/sail_failure.c"
     "${sail_dir}/lib/sail_failure.h"
     "${sail_dir}/lib/sail_coverage.h"
-    "${sail_dir}/lib/sail_state.h"
 )
 
 target_include_directories(sail_runtime
