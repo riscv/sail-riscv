@@ -20,6 +20,7 @@ add_library(sail_runtime
 target_include_directories(sail_runtime
     PUBLIC "${sail_dir}/lib"
 )
+target_compile_options(sail_runtime PRIVATE -Wno-extra -Wno-unused)
 
 if (COVERAGE)
     find_package(Threads REQUIRED)
