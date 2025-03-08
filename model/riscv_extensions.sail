@@ -40,6 +40,8 @@ enum clause extension = Ext_Zicond
 enum clause extension = Ext_Zifencei
 // Hardware Performance Counters
 enum clause extension = Ext_Zihpm
+// May-Be-Operations
+enum clause extension = Ext_Zimop
 
 // Multiplication and Division: Multiplication only
 enum clause extension = Ext_Zmmul
@@ -71,6 +73,8 @@ enum clause extension = Ext_Zcb
 enum clause extension = Ext_Zcd
 // Code Size Reduction: compressed single precision floating point loads and stores
 enum clause extension = Ext_Zcf
+// Compressed May-Be-Operations
+enum clause extension = Ext_Zcmop
 
 // Bit Manipulation: Address generation
 enum clause extension = Ext_Zba
