@@ -1,0 +1,254 @@
+variable ARCH = "RV32"
+
+riscv_core {
+  files
+    prelude.sail,
+    if $ARCH == "RV32" then
+      riscv_xlen32.sail
+    else if $ARCH == "RV64" then
+      riscv_xlen64.sail
+    else
+      error("ARCH variable must be either RV32 or RV64"),
+    riscv_xlen.sail,
+    riscv_flen_D.sail,
+    riscv_vlen.sail,
+    prelude_mem_metadata.sail,
+    prelude_mem.sail,
+    riscv_types_common.sail,
+    riscv_types_ext.sail,
+    riscv_types.sail,
+    riscv_vmem_types.sail,
+    riscv_reg_type.sail,
+    riscv_regs.sail,
+    riscv_pc_access.sail,
+    riscv_sys_regs.sail,
+    riscv_ext_regs.sail,
+    riscv_addr_checks_common.sail,
+    riscv_addr_checks.sail,
+    riscv_misa_ext.sail,
+    riscv_csr_begin.sail,
+}
+
+riscv_exceptions {
+  requires riscv_core, N_regs
+
+  files
+    riscv_sys_exceptions.sail,
+    riscv_sync_exception.sail,
+}
+
+pmp {
+  requires riscv_core
+
+  files
+    riscv_pmp_regs.sail,
+    riscv_pmp_control.sail,
+}
+
+riscv {
+  requires riscv_core, riscv_exceptions, pmp, N_regs, V_core
+
+  files
+    riscv_sys_control.sail,
+    riscv_platform.sail,
+    riscv_mem.sail,
+    riscv_vmem_common.sail,
+    riscv_vmem_pte.sail,
+    riscv_vmem_ptw.sail,
+    riscv_vmem_tlb.sail,
+    riscv_vmem.sail,
+    riscv_insts_begin.sail,
+}
+
+extensions {
+  I {
+    requires riscv_core, riscv_exceptions, riscv
+
+    files
+      riscv_insts_base.sail,
+      riscv_jalr_seq.sail
+  }
+
+  N {
+    N_regs {
+      requires riscv_core
+      files riscv_next_regs.sail
+    }
+    N_control {
+      requires riscv_core, riscv_exceptions, riscv, N_regs
+      files riscv_next_control.sail
+    }
+    N_instructions {
+      requires riscv_core, riscv_exceptions, riscv, N_regs, N_control
+      files riscv_insts_next.sail,
+    }
+  }
+
+  A {
+    requires riscv_core, riscv_exceptions, riscv, I
+    files riscv_insts_aext.sail
+  }
+
+  M {
+    requires riscv_core, riscv
+    files riscv_insts_mext.sail
+  }
+
+  // RISC-V Bit manipulation extensions
+  B {
+    requires riscv_core, riscv
+
+    Zba {
+      files riscv_insts_zba.sail
+    }
+    Zbb {
+      files riscv_insts_zbb.sail
+    }
+    Zbc {
+      files riscv_insts_zbc.sail
+    }
+    Zbs {
+      files riscv_insts_zbs.sail
+    }
+  }
+
+  // Compressed instructions
+  C {
+    Zca {
+      requires riscv_core, riscv_exceptions, riscv, I
+      files riscv_insts_zca.sail
+    }
+    Zcb {
+      requires riscv_core, riscv_exceptions, riscv, I, B, M
+      files riscv_insts_zcb.sail
+    }
+  }
+
+  // Floating point (F and D extensions)
+  FD {
+    requires riscv_core
+
+    FD_core {
+      before riscv
+      files
+        riscv_softfloat_interface.sail,
+        riscv_freg_type.sail,
+        riscv_fdext_regs.sail,
+        riscv_fdext_control.sail,
+    }
+
+    FD_instructions {
+      requires riscv, I, FD_core
+      files
+        riscv_insts_fext.sail,
+        riscv_insts_zcf.sail,
+        riscv_insts_dext.sail,
+        riscv_insts_zcd.sail,
+        riscv_insts_zfh.sail,
+        riscv_insts_zfa.sail,
+    }
+  }
+
+  // RISC-V vector extension
+  V {
+    requires riscv_core
+
+    V_core {
+      files
+        riscv_vreg_type.sail,
+        riscv_vext_regs.sail,
+        riscv_vext_control.sail,
+    }
+
+    V_instructions {
+      requires riscv, I, FD, V_core
+      files
+        riscv_insts_vext_utils.sail,
+        riscv_insts_vext_fp_utils.sail,
+        riscv_insts_vext_vset.sail,
+        riscv_insts_vext_arith.sail,
+        riscv_insts_vext_fp.sail,
+        riscv_insts_vext_mem.sail,
+        riscv_insts_vext_mask.sail,
+        riscv_insts_vext_vm.sail,
+        riscv_insts_vext_fp_vm.sail,
+        riscv_insts_vext_red.sail,
+        riscv_insts_vext_fp_red.sail,
+     }
+  }
+
+  // RISC-V Cryptography Extension
+  K {
+    requires riscv_core
+
+    K_core {
+      files riscv_types_kext.sail
+    }
+    Zkn {
+      requires riscv, K_core
+      files riscv_insts_zkn.sail
+    }
+    Zks {
+      requires riscv, K_core
+      files riscv_insts_zks.sail
+    }
+    Zbkb {
+      requires riscv
+      files riscv_insts_zbkb.sail
+    }
+    Zbkx {
+      requires riscv
+      files riscv_insts_zbkx.sail
+    }
+  }
+
+  // Control and Status Register (CSR) Instructions
+  Zicsr {
+    requires riscv_core, riscv, riscv_exceptions, pmp, V_core
+    files riscv_insts_zicsr.sail
+  }
+
+  Svinval {
+    requires riscv_core, riscv, I
+    files riscv_insts_svinval.sail
+  }
+
+  Zicond {
+    requires riscv_core, riscv
+    files riscv_insts_zicond.sail
+  }
+
+  Zicbom {
+    requires riscv_core, riscv
+    files riscv_insts_zicbom.sail
+  }
+
+  Zicboz {
+    requires riscv_core, riscv
+    files riscv_insts_zicboz.sail
+  }
+}
+
+hints {
+  after extensions
+
+  requires riscv_core, riscv, I
+
+  files riscv_insts_hints.sail
+}
+
+riscv_postlude {
+  after extensions, hints
+
+  requires riscv_core, riscv
+
+  files
+    riscv_insts_end.sail,
+    riscv_csr_end.sail,
+    riscv_step_common.sail,
+    riscv_step_ext.sail,
+    riscv_decode_ext.sail,
+    riscv_fetch.sail,
+    riscv_step.sail,
+    main.sail
+}
