@@ -67,6 +67,8 @@ enum clause extension = Ext_Zdinx
 enum clause extension = Ext_Zca
 // Code Size Reduction: additional 16-bit aliases
 enum clause extension = Ext_Zcb
+// Code Size Reduction: compressed table jump instructions
+enum clause extension = Ext_Zcmt
 // Code Size Reduction: compressed double precision floating point loads and stores
 enum clause extension = Ext_Zcd
 // Code Size Reduction: compressed single precision floating point loads and stores

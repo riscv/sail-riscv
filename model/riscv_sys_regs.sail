@@ -92,6 +92,10 @@ val sys_enable_fdext = pure "sys_enable_fdext" : unit -> bool
 val sys_enable_svinval = pure "sys_enable_svinval" : unit -> bool
 /* whether Zcb was enabled at boot */
 val sys_enable_zcb = pure "sys_enable_zcb" : unit -> bool
+/* whether Zcd was enabled at boot */
+val sys_enable_zcd = pure "sys_enable_zcd" : unit -> bool
+/* whether Zcmt was enabled at boot */
+val sys_enable_zcmt = pure "sys_enable_zcmt" : unit -> bool
 /* whether zfinx was enabled at boot */
 val sys_enable_zfinx = pure "sys_enable_zfinx" : unit -> bool
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
@@ -507,6 +511,27 @@ function clause write_CSR((0x302, value) if xlen == 64) = { medeleg = legalize_m
 function clause write_CSR((0x302, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, medeleg.bits[63 .. 32] @ value); medeleg.bits[31 .. 0] }
 function clause write_CSR((0x312, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, value @ medeleg.bits[31 .. 0]); medeleg.bits[63 .. 32] }
 function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, value); mideleg.bits }
+
+/* Zcmt extension */
+
+bitfield Jvt : xlenbits = {
+  base : xlen - 1 .. 6,
+  mode : 5 .. 0
+}
+register jvt : Jvt
+
+function legalize_jvt(o : Jvt, v : xlenbits) -> Jvt = {
+  let v = Mk_Jvt(v);
+  [o with
+    base = v[base],
+    mode = 0b000000
+  ]
+}
+
+mapping clause csr_name_map = 0x017  <-> "jvt"
+function clause is_CSR_defined (0x017) = sys_enable_zcmt()
+function clause write_CSR(0x017, value) = { jvt = legalize_jvt(jvt, value); jvt.bits }
+function clause read_CSR(0x017) = jvt.bits
 
 /* registers for trap handling */
 
