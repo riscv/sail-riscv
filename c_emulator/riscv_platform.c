@@ -37,6 +37,16 @@ bool sys_enable_zcb(unit u)
   return rv_enable_zcb;
 }
 
+bool sys_enable_zcd(unit u)
+{
+  return rv_enable_zcd;
+}
+
+bool sys_enable_zcmp(unit u)
+{
+  return rv_enable_zcmp;
+}
+
 bool sys_enable_zfinx(unit u)
 {
   return rv_enable_zfinx;
