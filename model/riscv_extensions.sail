@@ -105,6 +105,8 @@ enum clause extension = Ext_Zhinx
 
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
+// Supervisor-mode view of the state-enable extension
+enum clause extension = Ext_Ssstateen
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 // Fine-Grained Address-Translation Cache Invalidation
@@ -116,3 +118,5 @@ enum clause extension = Ext_Svpbmt
 
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
+// Machine-mode view of the state-enable extension
+enum clause extension = Ext_Smstateen
