@@ -20,24 +20,23 @@ mapping sew_flag : string <-> bits(3) = {
 }
 
 mapping maybe_lmul_flag : string <-> bits(3) = {
-  ""              <-> 0b000, /* m1 by default */
   sep() ^ "mf8"   <-> 0b101,
   sep() ^ "mf4"   <-> 0b110,
   sep() ^ "mf2"   <-> 0b111,
   sep() ^ "m1"    <-> 0b000,
   sep() ^ "m2"    <-> 0b001,
   sep() ^ "m4"    <-> 0b010,
-  sep() ^ "m8"    <-> 0b011
+  sep() ^ "m8"    <-> 0b011,
+  forwards ""      => 0b000, /* m1 by default */
+
 }
 
-mapping maybe_ta_flag : string <-> bits(1) = {
-  ""           <-> 0b0, /* tu by default */
+mapping ta_flag : string <-> bits(1) = {
   sep() ^ "ta" <-> 0b1,
   sep() ^ "tu" <-> 0b0
 }
 
-mapping maybe_ma_flag : string <-> bits(1) = {
-  ""           <-> 0b0, /* mu by default */
+mapping ma_flag : string <-> bits(1) = {
   sep() ^ "ma" <-> 0b1,
   sep() ^ "mu" <-> 0b0
 }
@@ -119,7 +118,7 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
 }
 
 mapping clause assembly = VSETVLI(ma, ta, sew, lmul, rs1, rd)
-  <-> "vsetvli" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ maybe_ta_flag(ta) ^ maybe_ma_flag(ma)
+  <-> "vsetvli" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ ta_flag(ta) ^ ma_flag(ma)
 
 /* *********************************** vsetvl ************************************ */
 union clause ast = VSETVL : (regidx, regidx, regidx)
@@ -206,4 +205,4 @@ function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
 }
 
 mapping clause assembly = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
-  <-> "vsetivli" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(uimm) ^ sep() ^ sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ maybe_ta_flag(ta) ^ maybe_ma_flag(ma)
+  <-> "vsetivli" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(uimm) ^ sep() ^ sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ ta_flag(ta) ^ ma_flag(ma)
