@@ -117,6 +117,7 @@ val sys_enable_bext = pure "sys_enable_bext" : unit -> bool
 // at all on this model.
 val sys_enable_zicbom = pure "sys_enable_zicbom" : unit -> bool
 val sys_enable_zicboz = pure "sys_enable_zicboz" : unit -> bool
+val sys_enable_zicbop = pure "sys_enable_zicbop" : unit -> bool
 
 // Is the Sstc stimecmp extension supported.
 val sys_enable_sstc = pure "sys_enable_sstc" : unit -> bool
