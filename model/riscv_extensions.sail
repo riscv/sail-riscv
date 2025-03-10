@@ -71,6 +71,10 @@ enum clause extension = Ext_Zcb
 enum clause extension = Ext_Zcd
 // Code Size Reduction: compressed single precision floating point loads and stores
 enum clause extension = Ext_Zcf
+// Load/Store Pair for RV32
+enum clause extension = Ext_Zilsd
+// Compressed Load/Store pair instructions
+enum clause extension = Ext_Zclsd
 
 // Bit Manipulation: Address generation
 enum clause extension = Ext_Zba
