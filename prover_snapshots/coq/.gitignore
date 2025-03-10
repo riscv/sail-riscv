@@ -1,5 +1,0 @@
-*.vo
-*.glob
-.*.aux
-deps
-.*.cache

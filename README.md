@@ -292,7 +292,6 @@ Directory Structure
 ```
 sail-riscv
 - model                   // Sail specification modules
-- prover_snapshots        // snapshots of generated theorem prover definitions
 - handwritten_support     // prover support files
 - c_emulator              // supporting platform files for C emulator
 - cmake                   // extra build system modules
