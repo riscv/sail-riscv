@@ -11,8 +11,6 @@
 function clause extensionEnabled(Ext_Zicbom) = sys_enable_zicbom()
 
 function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], senvcfg[CBCFE][0])
-function cbo_inval_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBIE][0], senvcfg[CBIE][0])
-function cbo_inval_as_inval(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBIE][1], senvcfg[CBIE][1])
 
 /* ****************************************************************** */
 union clause ast = RISCV_ZICBOM : (cbop_zicbom, regidx)
@@ -34,6 +32,35 @@ mapping cbop_mnemonic : cbop_zicbom <-> string = {
 
 mapping clause assembly = RISCV_ZICBOM(cbop, rs1)
   <-> cbop_mnemonic(cbop) ^ spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
+
+/* CBIE from xenvcfg */
+enum cbie = {CBIE_ILLEGAL, CBIE_EXEC_FLUSH, CBIE_EXEC_INVAL}
+
+mapping encdec_cbie : cbie <-> bits(2) = {
+  CBIE_ILLEGAL    <-> 0b00,
+  CBIE_EXEC_FLUSH <-> 0b01,
+  CBIE_EXEC_INVAL <-> 0b11,
+  backwards 0b10   => internal_error(__FILE__, __LINE__, "reserved CBIE"),
+}
+
+// Illegal-Virtual will be needed by the hypervisor mode, but is currently unused.
+enum checked_cbop = {CBOP_ILLEGAL, CBOP_ILLEGAL_VIRTUAL, CBOP_INVAL_FLUSH, CBOP_INVAL_INVAL}
+
+// Select the cbop to perform based on the privilege.
+function cbop_priv_check(p: Privilege) -> checked_cbop = {
+  let mCBIE : cbie = encdec_cbie(menvcfg[CBIE]);
+  let sCBIE : cbie = if   extensionEnabled(Ext_S)
+                     then encdec_cbie(senvcfg[CBIE])
+                     else encdec_cbie(menvcfg[CBIE]);
+  match (p, mCBIE, sCBIE) {
+    (Machine, _,               _              ) => CBOP_INVAL_INVAL,
+    (_,       CBIE_ILLEGAL,    _              ) => CBOP_ILLEGAL,      // (priv_mode != M) && mCBIE == 00
+    (User,    _,               CBIE_ILLEGAL   ) => CBOP_ILLEGAL,      // (priv_mode == U) && sCBIE == 00
+    (_,       CBIE_EXEC_FLUSH, _              ) => CBOP_INVAL_FLUSH,  // (priv_mode != M) && mCBIE == 01
+    (User,    _,               CBIE_EXEC_FLUSH) => CBOP_INVAL_FLUSH,  // (priv_mode == U) && sCBIE == 01
+    _                                           => CBOP_INVAL_INVAL,
+  }
+}
 
 val process_clean_inval : (regidx, cbop_zicbom) -> Retired
 function process_clean_inval(rs1, cbop) = {
@@ -102,16 +129,29 @@ function process_clean_inval(rs1, cbop) = {
   }
 }
 
-function clause execute(RISCV_ZICBOM(cbop, rs1)) =
-  match cbop {
-    CBO_CLEAN if cbo_clean_flush_enabled(cur_privilege) =>
-      process_clean_inval(rs1, cbop),
-    CBO_FLUSH if cbo_clean_flush_enabled(cur_privilege) =>
-      process_clean_inval(rs1, cbop),
-    CBO_INVAL if cbo_inval_enabled(cur_privilege) =>
-      process_clean_inval(rs1, if cbo_inval_as_inval(cur_privilege) then CBO_INVAL else CBO_FLUSH),
-    _ => {
-      handle_illegal();
-      RETIRE_FAIL
-    },
+function clause execute(RISCV_ZICBOM(CBO_CLEAN, rs1)) = {
+  if   cbo_clean_flush_enabled(cur_privilege)
+  then process_clean_inval(rs1, CBO_CLEAN)
+  else {
+    handle_illegal();
+    RETIRE_FAIL
   }
+}
+function clause execute(RISCV_ZICBOM(CBO_FLUSH, rs1)) = {
+  if   cbo_clean_flush_enabled(cur_privilege)
+  then process_clean_inval(rs1, CBO_FLUSH)
+  else {
+    handle_illegal();
+    RETIRE_FAIL
+  }
+}
+
+function clause execute(RISCV_ZICBOM(CBO_INVAL, rs1)) = {
+  match cbop_priv_check(cur_privilege) {
+    CBOP_ILLEGAL         => { handle_illegal();
+                              RETIRE_FAIL },
+    CBOP_ILLEGAL_VIRTUAL => internal_error(__FILE__, __LINE__, "unimplemented"),
+    CBOP_INVAL_INVAL     => process_clean_inval(rs1, CBO_INVAL),
+    CBOP_INVAL_FLUSH     => process_clean_inval(rs1, CBO_FLUSH),
+  }
+}
