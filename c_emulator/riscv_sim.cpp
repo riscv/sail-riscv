@@ -412,7 +412,7 @@ static int process_args(int argc, char **argv)
     case OPT_CACHE_BLOCK_SIZE:
       block_size_exp = ilog2(atol(optarg));
 
-      if (block_size_exp < 0 || block_size_exp > 12) {
+      if (block_size_exp > 12) {
         fprintf(stderr, "invalid cache-block-size '%s' provided.\n", optarg);
         exit(1);
       }
@@ -521,7 +521,7 @@ void init_sail_reset_vector(uint64_t entry)
 
   rv_rom_base = DEFAULT_RSTVEC;
   uint64_t addr = rv_rom_base;
-  for (int i = 0; i < sizeof(reset_vec); i++)
+  for (size_t i = 0; i < sizeof(reset_vec); i++)
     write_mem(addr++, (uint64_t)((char *)reset_vec)[i]);
 
   if (dtb && dtb_len) {
@@ -532,7 +532,7 @@ void init_sail_reset_vector(uint64_t entry)
   /* zero-fill to page boundary */
   const int align = 0x1000;
   uint64_t rom_end = (addr + align - 1) / align * align;
-  for (int i = addr; i < rom_end; i++)
+  for (uint64_t i = addr; i < rom_end; i++)
     write_mem(addr++, 0);
 
   /* set rom size */
@@ -685,7 +685,6 @@ void rvfi_send_trace(unsigned version)
   if (version == 1) {
     get_and_send_rvfi_packet(zrvfi_get_exec_packet_v1);
   } else if (version == 2) {
-    mach_bits trace_size = zrvfi_get_v2_trace_sizze(UNIT);
     get_and_send_rvfi_packet(zrvfi_get_exec_packet_v2);
     if (zrvfi_int_data_present)
       get_and_send_rvfi_packet(zrvfi_get_int_data);
@@ -707,9 +706,6 @@ void run_sail(void)
   /* initialize the step number */
   mach_int step_no = 0;
   int insn_cnt = 0;
-#ifdef RVFI_DII
-  bool need_instr = true;
-#endif
 
   struct timeval interval_start;
   if (gettimeofday(&interval_start, NULL) < 0) {
@@ -788,12 +784,15 @@ void run_sail(void)
                   (intmax_t)insn);
           exit(1);
         }
-        rvfi_trace_version
-            = insn; // From now on send traces in the requested format
+        // From now on send traces in the requested format
+        rvfi_trace_version = insn;
         struct {
           char msg[8];
           uint64_t version;
-        } version_response = {"version=", rvfi_trace_version};
+        } version_response = {
+            {'v', 'e', 'r', 's', 'i', 'o', 'n', '='},
+            rvfi_trace_version
+        };
         if (write(rvfi_dii_sock, &version_response, sizeof(version_response))
             != sizeof(version_response)) {
           fprintf(stderr, "Sending version response failed: %s\n",
@@ -890,7 +889,7 @@ void init_logs()
 
   if (trace_log_path == NULL) {
     trace_log = stdout;
-  } else if ((trace_log = fopen(trace_log_path, "w+")) < 0) {
+  } else if ((trace_log = fopen(trace_log_path, "w+")) == NULL) {
     fprintf(stderr, "Cannot create trace log '%s': %s\n", trace_log_path,
             strerror(errno));
     exit(1);
@@ -933,9 +932,10 @@ int main(int argc, char **argv)
               strerror(errno));
       return 1;
     }
-    struct sockaddr_in addr = {.sin_family = AF_INET,
-                               .sin_addr.s_addr = htonl(INADDR_LOOPBACK),
-                               .sin_port = htons(rvfi_dii_port)};
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_port = htons(rvfi_dii_port);
     if (bind(listen_sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
       fprintf(stderr, "Unable to set bind socket: %s\n", strerror(errno));
       return 1;
