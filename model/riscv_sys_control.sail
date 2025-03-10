@@ -312,11 +312,17 @@ function reset_misa() -> unit = {
   misa[A]   = 0b1;                             /* atomics */
   misa[C]   = bool_to_bits(sys_enable_rvc());  /* RVC */
   misa[B]   = bool_to_bits(sys_enable_bext()); /* Bit-manipulation */
-  misa[I]   = 0b1;                             /* base integer ISA */
   misa[M]   = 0b1;                             /* integer multiply/divide */
   misa[U]   = bool_to_bits(sys_enable_user()); /* user-mode */
   misa[S]   = bool_to_bits(sys_enable_supervisor()); /* supervisor-mode */
   misa[V]   = bool_to_bits(sys_enable_vext()); /* vector extension */
+
+  /* misa[E,I]: base integer ISA flavor */
+  match bitvector_length(let Regidx(z) = zreg in z) {
+    4 => { misa[E] = 0b1; misa[I] = 0b0; },
+    5 => { misa[E] = 0b0; misa[I] = 0b1; },
+    _ => { assert(false, "Invalid register index size") }
+  };
 
   if   sys_enable_fdext() & sys_enable_zfinx()
   then internal_error(__FILE__, __LINE__, "F and Zfinx cannot both be enabled!");

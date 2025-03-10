@@ -47,9 +47,9 @@ function assert_vstart(i) = {
  *  unless the destination vector register is being written with a mask value (e.g., compares)
  *  or the scalar result of a reduction.
  */
-val valid_rd_mask : (regidx, bits(1)) -> bool
+val valid_rd_mask : (vregidx, bits(1)) -> bool
 function valid_rd_mask(rd, vm) = {
-  vm != 0b0 | rd != 0b00000
+  vm != 0b0 | rd != zvreg
 }
 
 /* Check for valid register overlap in vector widening/narrowing instructions:
@@ -58,12 +58,12 @@ function valid_rd_mask(rd, vm) = {
  *  In a narrowing instruction, the overlap is valid only in the lowest-numbered part
  *  of the source register group.
  */
-val valid_reg_overlap : (regidx, regidx, int, int) -> bool
+val valid_reg_overlap : (vregidx, vregidx, int, int) -> bool
 function valid_reg_overlap(rs, rd, EMUL_pow_rs, EMUL_pow_rd) = {
   let rs_group = if EMUL_pow_rs > 0 then 2 ^ EMUL_pow_rs else 1;
   let rd_group = if EMUL_pow_rd > 0 then 2 ^ EMUL_pow_rd else 1;
-  let rs_int = unsigned(rs);
-  let rd_int = unsigned(rd);
+  let rs_int = unsigned(vregidx_bits(rs));
+  let rd_int = unsigned(vregidx_bits(rd));
   if EMUL_pow_rs < EMUL_pow_rd then {
     (rs_int + rs_group <= rd_int) | (rs_int >= rd_int + rd_group) |
     ((rs_int + rs_group == rd_int + rd_group) & (EMUL_pow_rs >= 0))
@@ -87,15 +87,15 @@ function valid_segment(nf, EMUL_pow) = {
 /* ******************************************************************************* */
 
 /* a. Normal check including vtype.vill field and vd/v0 overlap if vm = 0 */
-val illegal_normal : (regidx, bits(1)) -> bool
+val illegal_normal : (vregidx, bits(1)) -> bool
 function illegal_normal(vd, vm) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm))
 }
 
 /* b. Masked check for instructions encoded with vm = 0 */
-val illegal_vd_masked : regidx -> bool
+val illegal_vd_masked : vregidx -> bool
 function illegal_vd_masked(vd) = {
-  not(valid_vtype()) | vd == 0b00000
+  not(valid_vtype()) | vd == zvreg
 }
 
 /* c. Unmasked check for:
@@ -113,7 +113,7 @@ function illegal_vd_unmasked() = {
  *  1. integer/fixed-point widening/narrowing instructions
  *  2. vector integer extension: vzext, vsext
  */
-val illegal_variable_width : (regidx, bits(1), int, int) -> bool
+val illegal_variable_width : (vregidx, bits(1), int, int) -> bool
 function illegal_variable_width(vd, vm, SEW_new, LMUL_pow_new) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_eew_emul(SEW_new, LMUL_pow_new))
 }
@@ -134,7 +134,7 @@ function illegal_reduction_widen(SEW_widen, LMUL_pow_widen) = {
 }
 
 /* g. Non-indexed load instruction check */
-val illegal_load : (regidx, bits(1), int, int, int) -> bool
+val illegal_load : (vregidx, bits(1), int, int, int) -> bool
 function illegal_load(vd, vm, nf, EEW, EMUL_pow) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) |
   not(valid_eew_emul(EEW, EMUL_pow)) | not(valid_segment(nf, EMUL_pow))
@@ -147,7 +147,7 @@ function illegal_store(nf, EEW, EMUL_pow) = {
 }
 
 /* i. Indexed load instruction check */
-val illegal_indexed_load : (regidx, bits(1), int, int, int, int) -> bool
+val illegal_indexed_load : (vregidx, bits(1), int, int, int, int) -> bool
 function illegal_indexed_load(vd, vm, nf, EEW_index, EMUL_pow_index, EMUL_pow_data) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) |
   not(valid_eew_emul(EEW_index, EMUL_pow_index)) | not(valid_segment(nf, EMUL_pow_data))
@@ -369,13 +369,13 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
  *   Read multiple register groups and concatenate them in parallel
  *   The whole segments with the same element index are combined together
  */
-val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'm >= 0 & 'q >= 0. (int('n), int('m), int('p), int('q), regidx) -> vector('n, bits('q * 'm))
+val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'm >= 0 & 'q >= 0. (int('n), int('m), int('p), int('q), vregidx) -> vector('n, bits('q * 'm))
 function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
   let LMUL_reg : int = if LMUL_pow <= 0 then 1 else 2 ^ LMUL_pow;
   var vreg_list : vector('q, vector('n, bits('m))) = vector_init(vector_init(zeros()));
   var result : vector('n, bits('q * 'm)) = vector_init(zeros());
   foreach (j from 0 to (nf - 1)) {
-    vreg_list[j] = read_vreg(num_elem, SEW, LMUL_pow, vrid + to_bits(5, j * LMUL_reg));
+    vreg_list[j] = read_vreg(num_elem, SEW, LMUL_pow, vregidx_offset(vrid, to_bits(5, j * LMUL_reg)));
   };
   foreach (i from 0 to (num_elem - 1)) {
     result[i] = zeros('q * 'm);
