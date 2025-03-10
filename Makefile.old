@@ -86,6 +86,7 @@ SAIL_SYS_SRCS += riscv_zkr_control.sail
 SAIL_SYS_SRCS += riscv_zicntr_control.sail
 SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdext_control.sail
 SAIL_SYS_SRCS += riscv_sys_control.sail     # general exception handling
+SAIL_SYS_SRCS += riscv_smcntrpmf.sail
 
 SAIL_VM_SRCS += riscv_vmem_pte.sail
 SAIL_VM_SRCS += riscv_vmem_ptw.sail
@@ -161,17 +162,6 @@ ZLIB_LIBS = $(shell pkg-config --libs zlib)
 
 C_FLAGS = -I $(SAIL_LIB_DIR) -I c_emulator $(GMP_FLAGS) $(ZLIB_FLAGS) $(SOFTFLOAT_FLAGS)
 C_LIBS  = $(GMP_LIBS) $(ZLIB_LIBS) $(SOFTFLOAT_LIBS)
-
-# The C simulator can be built to be linked against Spike for tandem-verification.
-# This needs the C bindings to Spike from https://github.com/SRI-CSL/l3riscv
-# TV_SPIKE_DIR in the environment should point to the top-level dir of the L3
-# RISC-V, containing the built C bindings to Spike.
-# RISCV should be defined if TV_SPIKE_DIR is.
-ifneq (,$(TV_SPIKE_DIR))
-C_FLAGS += -I $(TV_SPIKE_DIR)/src/cpp -DENABLE_SPIKE
-C_LIBS  += -L $(TV_SPIKE_DIR) -ltv_spike -Wl,-rpath=$(TV_SPIKE_DIR)
-C_LIBS  += -L $(RISCV)/lib -lfesvr -lriscv -Wl,-rpath=$(RISCV)/lib
-endif
 
 # SAIL_FLAGS = -dtc_verbose 4
 

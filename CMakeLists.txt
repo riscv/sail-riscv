@@ -63,14 +63,35 @@ if (NOT ZLIB_FOUND)
     endif()
 endif()
 
-find_package(GMP)
-if (NOT GMP_FOUND)
-    if (APPLE)
-        message(FATAL_ERROR "GMP not found. Try 'brew install gmp'.")
-    elseif (UNIX)
-        message(FATAL_ERROR "GMP not found. Try 'sudo apt install libgmp-dev' or 'sudo dnf install gmp-devel'.")
-    else()
-        message(FATAL_ERROR "GMP not found.")
+option(DOWNLOAD_GMP "Download libgmp and build the library locally instead of using a system installation" OFF)
+if (DOWNLOAD_GMP)
+    include(ExternalProject)
+    ExternalProject_Add(
+        gmp
+        URL https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
+        INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/gmp
+        CONFIGURE_COMMAND "<SOURCE_DIR>/configure" "--prefix=<INSTALL_DIR>" --disable-shared --enable-static
+    )
+    ExternalProject_Get_property(gmp INSTALL_DIR)
+    add_library(GMP::GMP STATIC IMPORTED GLOBAL)
+    # Work around `Imported target "GMP::GMP" includes non-existent path`.
+    # See https://gitlab.kitware.com/cmake/cmake/-/issues/15052
+    file(MAKE_DIRECTORY ${INSTALL_DIR}/include)
+    set_target_properties(GMP::GMP PROPERTIES
+            IMPORTED_LOCATION "${INSTALL_DIR}/lib/libgmp.a"
+            INTERFACE_INCLUDE_DIRECTORIES "${INSTALL_DIR}/include")
+    add_dependencies(GMP::GMP gmp)
+else()
+    find_package(GMP)
+    if (NOT GMP_FOUND)
+        set(download_gmp "setting -DDOWNLOAD_GMP=TRUE to use a local build of GMP instead of a system library")
+        if (APPLE)
+            message(FATAL_ERROR "GMP not found. Try 'brew install gmp' or ${download_gmp}.")
+        elseif (UNIX)
+            message(FATAL_ERROR "GMP not found. Try 'sudo apt install libgmp-dev' or 'sudo dnf install gmp-devel' or ${download_gmp}.")
+        else()
+            message(FATAL_ERROR "GMP not found. Try ${download_gmp}")
+        endif()
     endif()
 endif()
 
@@ -96,8 +117,8 @@ add_subdirectory("model")
 # Emulator binary.
 add_subdirectory("c_emulator")
 
-# Old pre-compiled riscv-tests.
-add_subdirectory("test/riscv-tests")
+# Old pre-compiled riscv-tests & first-party tests.
+add_subdirectory("test")
 
 # Release packaging.
 if (NOT CPACK_GENERATOR)

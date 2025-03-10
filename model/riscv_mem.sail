@@ -253,7 +253,6 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
 /* Memory write with an explicit metadata value.  Metadata writes are
  * currently assumed to have the same alignment constraints as their
  * data.
- * NOTE: The wreg effect is due to MMIO, the rreg is due to checking mtime.
  */
 val mem_write_value_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), AccessType(ext_access_type), Privilege, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
 function mem_write_value_priv_meta (paddr, width, value, typ, priv, meta, aq, rl, con) = {

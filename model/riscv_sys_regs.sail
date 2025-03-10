@@ -647,22 +647,45 @@ register mtime : bits(64)
 
 /* minstret
  *
- * minstret is an architectural register, and can be written to.  The
- * spec says that minstret increments on instruction retires need to
+ * This model-internal register is the full 64 bit minstret counter,
+ * regardless of xlen. For xlen=32, this will be split across minstret
+ * and minstreth CSRs.
+ * The spec says that minstret increments on instruction retires need to
  * occur before any explicit writes to instret.  However, in our
  * simulation loop, we need to execute an instruction to find out
  * whether it retired, and hence can only increment instret after
- * execution.  To avoid doing this in the case minstret was explicitly
+ * execution. To avoid doing this in the case minstret was explicitly
  * written to, we track whether it should increment in a separate
- * model-internal register.
+ * model-internal register. We keep track of any explicit CSR writes in
+ * the registers below and apply them after incrementing.
  */
 register minstret : bits(64)
 
 /* Should minstret be incremented when the instruction is retired. */
 register minstret_increment : bool
 
-function retire_instruction() -> unit = {
-  if minstret_increment then minstret = minstret + 1;
+// If there's an explicit write to minstret(h) then it is stored here because
+// it needs to be applied *after* the implicit increment due to instruction
+// retirement.
+register minstret_write : option(bits(xlen)) = None()
+register minstreth_write : option(bits(32)) = None()
+
+function update_minstret() -> unit = {
+  // First increment minstret due to instruction retirement
+  // if it was not disabled by mcountinhibit.IR.
+  if minstret_increment then {
+    minstret = minstret + 1;
+  };
+
+  // Then apply explicit writes to minstret (if any).
+  match minstret_write {
+    Some(v) => minstret = [minstret with (xlen - 1) .. 0 = v],
+    None() => (),
+  };
+  match minstreth_write {
+    Some(v) => minstret = [minstret with 63 .. 32 = v],
+    None() => (),
+  };
 }
 
 /* machine information registers */
@@ -908,9 +931,6 @@ function clause write_CSR(0x7a0, value) = { tselect = value; tselect }
 
 /*
  * Entropy Source - Platform access to random bits.
- * WARNING: This function currently lacks a proper side-effect annotation.
- *          If you are using theorem prover tool flows, you
- *          may need to modify or stub out this function for now.
  * NOTE: This would be better placed in riscv_platform.sail, but that file
  *       appears _after_ this one in the compile order meaning the valspec
  *       for this function is unavailable when it's first encountered in

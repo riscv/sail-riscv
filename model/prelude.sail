@@ -41,16 +41,16 @@ overload BitStr = {bits_str, bit_str}
 
 overload operator ^ = {xor_vec, concat_str}
 
-val sub_vec = pure {c: "sub_bits", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
+val sub_vec = pure {c: "sub_bits", lean: "_lean_sub", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
 
-val sub_vec_int = pure {c: "sub_bits_int", _: "sub_vec_int"} : forall 'n. (bits('n), int) -> bits('n)
+val sub_vec_int = pure {c: "sub_bits_int", lean: "BitVec.subInt", _: "sub_vec_int"} : forall 'n. (bits('n), int) -> bits('n)
 
 overload operator - = {sub_vec, sub_vec_int}
 
-val quot_positive_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot"} : forall 'n 'm, 'n >= 0 & 'm > 0. (int('n), int('m)) -> int(div('n, 'm))
+val quot_positive_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", lean: "Int.tdiv", c: "tdiv_int", coq: "Z.quot"} : forall 'n 'm, 'n >= 0 & 'm > 0. (int('n), int('m)) -> int(div('n, 'm))
 
-val quot_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot"} : (int, int) -> int
-val rem_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", coq: "Z.rem"} : (int, int) -> int
+val quot_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot", lean: "Int.tdiv"} : (int, int) -> int
+val rem_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", coq: "Z.rem", lean: "Int.tmod"} : (int, int) -> int
 
 /* The following defines % as euclidean modulus */
 overload operator % = {emod_int}
@@ -157,15 +157,16 @@ val "shiftr" : forall 'm 'n, 'n >= 0. (bits('m), int('n)) -> bits('m)
 overload operator >> = {shift_bits_right, shiftr}
 overload operator << = {shift_bits_left, shiftl}
 
-/* Ideally these would be sail builtin */
+// Ideally this would be sail builtin. This implementation is not efficient for large shifts.
 
-function shift_right_arith64 (v : bits(64), shift : bits(6)) -> bits(64) =
-    let v128 : bits(128) = sign_extend(v) in
-    (v128 >> shift)[63..0]
+// 'n >= 1 is required due to https://github.com/rems-project/sail/issues/471
+val shift_right_arith : forall 'm 'n, 'n >= 1 & 'm >= 0 . (bits('n), int('m)) -> bits('n)
+function shift_right_arith(value, shift) =
+  sign_extend('n + shift, value)[('n - 1 + shift) .. shift]
 
-function shift_right_arith32 (v : bits(32), shift : bits(5)) -> bits(32) =
-    let v64 : bits(64) = sign_extend(v) in
-    (v64 >> shift)[31..0]
+val shift_bits_right_arith : forall 'm 'n, 'n >= 1 . (bits('n), bits('m)) -> bits('n)
+function shift_bits_right_arith(value, shift) =
+  shift_right_arith(value, unsigned(shift))
 
 infix 7 >>>
 infix 7 <<<
