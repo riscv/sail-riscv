@@ -273,18 +273,18 @@ function haveSingleFPU() -> bool = extensionEnabled(Ext_F) | extensionEnabled(Ex
 /* AST */
 /* FLH, FLW and FLD; H/W/D is encoded in 'word_width' */
 
-union clause ast = LOAD_FP : (bits(12), regidx, regidx, word_width)
+union clause ast = LOAD_FP : (bits(12), regidx, fregidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, HALF)          if extensionEnabled(Ext_Zfhmin)
-                    <-> imm @ rs1 @ 0b001 @ rd @ 0b000_0111  if extensionEnabled(Ext_Zfhmin)
+mapping clause encdec = LOAD_FP(imm, rs1, rd, HALF)               if extensionEnabled(Ext_Zfhmin)
+  <-> imm @ encdec_reg(rs1) @ 0b001 @ encdec_freg(rd) @ 0b000_0111 if extensionEnabled(Ext_Zfhmin)
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)          if extensionEnabled(Ext_F)
-                    <-> imm @ rs1 @ 0b010 @ rd @ 0b000_0111  if extensionEnabled(Ext_F)
+mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)               if extensionEnabled(Ext_F)
+  <-> imm @ encdec_reg(rs1) @ 0b010 @ encdec_freg(rd) @ 0b000_0111 if extensionEnabled(Ext_F)
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)        if extensionEnabled(Ext_D)
-                    <-> imm @ rs1 @ 0b011 @ rd @ 0b000_0111  if extensionEnabled(Ext_D)
+mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)             if extensionEnabled(Ext_D)
+  <-> imm @ encdec_reg(rs1) @ 0b011 @ encdec_freg(rd) @ 0b000_0111 if extensionEnabled(Ext_D)
 
 /* Execution semantics ================================ */
 
@@ -330,18 +330,18 @@ mapping clause assembly = LOAD_FP(imm, rs1, rd, width)
 /* AST */
 /* FSH, FSW and FSD; H/W/D is encoded in 'word_width' */
 
-union clause ast = STORE_FP : (bits(12), regidx, regidx, word_width)
+union clause ast = STORE_FP : (bits(12), fregidx, regidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, HALF)                             if extensionEnabled(Ext_Zfhmin)
-                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b001 @ imm5 : bits(5) @ 0b010_0111  if extensionEnabled(Ext_Zfhmin)
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, HALF)                                  if extensionEnabled(Ext_Zfhmin)
+  <-> imm7 : bits(7) @ encdec_freg(rs2) @ encdec_reg(rs1) @ 0b001 @ imm5 : bits(5) @ 0b010_0111 if extensionEnabled(Ext_Zfhmin)
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)                             if extensionEnabled(Ext_F)
-                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b010 @ imm5 : bits(5) @ 0b010_0111  if extensionEnabled(Ext_F)
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)                                  if extensionEnabled(Ext_F)
+  <-> imm7 : bits(7) @ encdec_freg(rs2) @ encdec_reg(rs1) @ 0b010 @ imm5 : bits(5) @ 0b010_0111 if extensionEnabled(Ext_F)
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)                           if extensionEnabled(Ext_D)
-                    <-> imm7 : bits(7) @ rs2 @ rs1 @ 0b011 @ imm5 : bits(5) @ 0b010_0111  if extensionEnabled(Ext_D)
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)                                if extensionEnabled(Ext_D)
+  <-> imm7 : bits(7) @ encdec_freg(rs2) @ encdec_reg(rs1) @ 0b011 @ imm5 : bits(5) @ 0b010_0111 if extensionEnabled(Ext_D)
 
 /* Execution semantics ================================ */
 
@@ -393,25 +393,25 @@ mapping clause assembly = STORE_FP(imm, rs2, rs1, width)
 
 /* AST */
 
-union clause ast = F_MADD_TYPE_S : (regidx, regidx, regidx, rounding_mode, regidx, f_madd_op_S)
+union clause ast = F_MADD_TYPE_S : (fregidx, fregidx, fregidx, rounding_mode, fregidx, f_madd_op_S)
 
 /* AST <-> Binary encoding ================================ */
 
 mapping clause encdec =
-    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FMADD_S)                         if haveSingleFPU()
-<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0011  if haveSingleFPU()
+    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FMADD_S)                                                                            if haveSingleFPU()
+<-> encdec_freg(rs3) @ 0b00 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_0011 if haveSingleFPU()
 
 mapping clause encdec =
-    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FMSUB_S)                         if haveSingleFPU()
-<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_0111  if haveSingleFPU()
+    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FMSUB_S)                                                                            if haveSingleFPU()
+<-> encdec_freg(rs3) @ 0b00 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_0111 if haveSingleFPU()
 
 mapping clause encdec =
-    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FNMSUB_S)                        if haveSingleFPU()
-<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1011  if haveSingleFPU()
+    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FNMSUB_S)                                                                           if haveSingleFPU()
+<-> encdec_freg(rs3) @ 0b00 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_1011 if haveSingleFPU()
 
 mapping clause encdec =
-    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FNMADD_S)                        if haveSingleFPU()
-<-> rs3 @ 0b00 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b100_1111  if haveSingleFPU()
+    F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, FNMADD_S)                                                                           if haveSingleFPU()
+<-> encdec_freg(rs3) @ 0b00 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_1111 if haveSingleFPU()
 
 /* Execution semantics ================================ */
 
@@ -459,25 +459,25 @@ mapping clause assembly = F_MADD_TYPE_S(rs3, rs2, rs1, rm, rd, op)
 
 /* AST */
 
-union clause ast = F_BIN_RM_TYPE_S : (regidx, regidx, rounding_mode, regidx, f_bin_rm_op_S)
+union clause ast = F_BIN_RM_TYPE_S : (fregidx, fregidx, rounding_mode, fregidx, f_bin_rm_op_S)
 
 /* AST <-> Binary encoding ================================ */
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FADD_S)                             if haveSingleFPU()
-<-> 0b000_0000 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FADD_S)                                                                   if haveSingleFPU()
+<-> 0b000_0000 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveSingleFPU()
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FSUB_S)                             if haveSingleFPU()
-<-> 0b000_0100 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FSUB_S)                                                                   if haveSingleFPU()
+<-> 0b000_0100 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveSingleFPU()
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FMUL_S)                             if haveSingleFPU()
-<-> 0b000_1000 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FMUL_S)                                                                   if haveSingleFPU()
+<-> 0b000_1000 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveSingleFPU()
 
 mapping clause encdec =
-    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FDIV_S)                             if haveSingleFPU()
-<-> 0b000_1100 @ rs2 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, FDIV_S)                                                                   if haveSingleFPU()
+<-> 0b000_1100 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveSingleFPU()
 
 /* Execution semantics ================================ */
 
@@ -522,51 +522,53 @@ mapping clause assembly = F_BIN_RM_TYPE_S(rs2, rs1, rm, rd, op)
 
 /* AST */
 
-union clause ast = F_UN_RM_TYPE_S : (regidx, rounding_mode, regidx, f_un_rm_op_S)
+union clause ast = F_UN_RM_FF_TYPE_S : (fregidx, rounding_mode, fregidx, f_un_rm_ff_op_S)
+union clause ast = F_UN_RM_FX_TYPE_S : (fregidx, rounding_mode, regidx, f_un_rm_fx_op_S)
+union clause ast = F_UN_RM_XF_TYPE_S : (regidx, rounding_mode, fregidx, f_un_rm_xf_op_S)
 
 /* AST <-> Binary encoding ================================ */
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)                                      if haveSingleFPU()
-<-> 0b010_1100 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_UN_RM_FF_TYPE_S(rs1, rm, rd, FSQRT_S)                                                            if haveSingleFPU()
+<-> 0b010_1100 @ 0b00000 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveSingleFPU()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)                                     if haveSingleFPU()
-<-> 0b110_0000 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_UN_RM_FX_TYPE_S(rs1, rm, rd, FCVT_W_S)                                                          if haveSingleFPU()
+<-> 0b110_0000 @ 0b00000 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveSingleFPU()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)                                    if haveSingleFPU()
-<-> 0b110_0000 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_UN_RM_FX_TYPE_S(rs1, rm, rd, FCVT_WU_S)                                                         if haveSingleFPU()
+<-> 0b110_0000 @ 0b00001 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveSingleFPU()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_W)                                     if haveSingleFPU()
-<-> 0b110_1000 @ 0b00000 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_UN_RM_XF_TYPE_S(rs1, rm, rd, FCVT_S_W)                                                          if haveSingleFPU()
+<-> 0b110_1000 @ 0b00000 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveSingleFPU()
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)                                    if haveSingleFPU()
-<-> 0b110_1000 @ 0b00001 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU()
+    F_UN_RM_XF_TYPE_S(rs1, rm, rd, FCVT_S_WU)                                                         if haveSingleFPU()
+<-> 0b110_1000 @ 0b00001 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveSingleFPU()
 
 /* F instructions, RV64 only */
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)                                     if haveSingleFPU() & xlen >= 64
-<-> 0b110_0000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & xlen >= 64
+    F_UN_RM_FX_TYPE_S(rs1, rm, rd, FCVT_L_S)                                                          if haveSingleFPU() & xlen >= 64
+<-> 0b110_0000 @ 0b00010 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveSingleFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)                                    if haveSingleFPU() & xlen >= 64
-<-> 0b110_0000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & xlen >= 64
+    F_UN_RM_FX_TYPE_S(rs1, rm, rd, FCVT_LU_S)                                                         if haveSingleFPU() & xlen >= 64
+<-> 0b110_0000 @ 0b00011 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveSingleFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)                                     if haveSingleFPU() & xlen >= 64
-<-> 0b110_1000 @ 0b00010 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & xlen >= 64
+    F_UN_RM_XF_TYPE_S(rs1, rm, rd, FCVT_S_L)                                                          if haveSingleFPU() & xlen >= 64
+<-> 0b110_1000 @ 0b00010 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveSingleFPU() & xlen >= 64
 
 mapping clause encdec =
-    F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)                                    if haveSingleFPU() & xlen >= 64
-<-> 0b110_1000 @ 0b00011 @ rs1 @ encdec_rounding_mode (rm) @ rd @ 0b101_0011  if haveSingleFPU() & xlen >= 64
+    F_UN_RM_XF_TYPE_S(rs1, rm, rd, FCVT_S_LU)                                                         if haveSingleFPU() & xlen >= 64
+<-> 0b110_1000 @ 0b00011 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveSingleFPU() & xlen >= 64
 
 /* Execution semantics ================================ */
 
-function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)) = {
+function clause execute (F_UN_RM_FF_TYPE_S(rs1, rm, rd, FSQRT_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -581,7 +583,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)) = {
   }
 }
 
-function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)) = {
+function clause execute (F_UN_RM_FX_TYPE_S(rs1, rm, rd, FCVT_W_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -596,7 +598,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)) = {
   }
 }
 
-function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)) = {
+function clause execute (F_UN_RM_FX_TYPE_S(rs1, rm, rd, FCVT_WU_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -611,7 +613,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)) = {
   }
 }
 
-function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_W)) = {
+function clause execute (F_UN_RM_XF_TYPE_S(rs1, rm, rd, FCVT_S_W)) = {
   let rs1_val_W = X(rs1) [31..0];
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -626,7 +628,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_W)) = {
   }
 }
 
-function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
+function clause execute (F_UN_RM_XF_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
   let rs1_val_WU = X(rs1) [31..0];
   match (select_instr_or_fcsr_rm (rm)) {
     None() => { handle_illegal(); RETIRE_FAIL },
@@ -641,7 +643,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)) = {
   }
 }
 
-function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
+function clause execute (F_UN_RM_FX_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
   assert(xlen >= 64);
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
@@ -657,7 +659,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)) = {
   }
 }
 
-function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
+function clause execute (F_UN_RM_FX_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
   assert(xlen >= 64);
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
@@ -673,7 +675,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)) = {
   }
 }
 
-function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
+function clause execute (F_UN_RM_XF_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
   assert(xlen >= 64);
   let rs1_val_L = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
@@ -689,7 +691,7 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)) = {
   }
 }
 
-function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
+function clause execute (F_UN_RM_XF_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
   assert(xlen >= 64);
   let rs1_val_LU = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
@@ -707,110 +709,76 @@ function clause execute (F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)) = {
 
 /* AST -> Assembly notation ================================ */
 
-mapping f_un_rm_type_mnemonic_S : f_un_rm_op_S <-> string = {
-    FSQRT_S   <-> "fsqrt.s",
+mapping clause assembly = F_UN_RM_FF_TYPE_S(rs1, rm, rd, FSQRT_S)
+                      <-> "fsqrt.s"
+                          ^ spc() ^ freg_or_reg_name(rd)
+                          ^ sep() ^ freg_or_reg_name(rs1)
+                          ^ sep() ^ frm_mnemonic(rm)
+
+
+mapping f_un_rm_fx_type_mnemonic_S : f_un_rm_fx_op_S <-> string = {
     FCVT_W_S  <-> "fcvt.w.s",
     FCVT_WU_S <-> "fcvt.wu.s",
-    FCVT_S_W  <-> "fcvt.s.w",
-    FCVT_S_WU <-> "fcvt.s.wu",
-
     FCVT_L_S  <-> "fcvt.l.s",
     FCVT_LU_S <-> "fcvt.lu.s",
+}
+
+mapping clause assembly = F_UN_RM_FX_TYPE_S(rs1, rm, rd, op)
+                      <-> f_un_rm_fx_type_mnemonic_S(op)
+                          ^ spc() ^ reg_name(rd)
+                          ^ sep() ^ freg_or_reg_name(rs1)
+                          ^ sep() ^ frm_mnemonic(rm)
+
+mapping f_un_rm_xf_type_mnemonic_S : f_un_rm_xf_op_S <-> string = {
+    FCVT_S_W  <-> "fcvt.s.w",
+    FCVT_S_WU <-> "fcvt.s.wu",
     FCVT_S_L  <-> "fcvt.s.l",
     FCVT_S_LU <-> "fcvt.s.lu"
 }
 
-mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FSQRT_S)
-                      <-> f_un_rm_type_mnemonic_S(FSQRT_S)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ frm_mnemonic(rm)
-
-mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_W_S)
-                      <-> f_un_rm_type_mnemonic_S(FCVT_W_S)
-                          ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ frm_mnemonic(rm)
-
-mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_WU_S)
-                      <-> f_un_rm_type_mnemonic_S(FCVT_WU_S)
-                          ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ frm_mnemonic(rm)
-
-mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_W)
-                      <-> f_un_rm_type_mnemonic_S(FCVT_S_W)
+mapping clause assembly = F_UN_RM_XF_TYPE_S(rs1, rm, rd, op)
+                      <-> f_un_rm_xf_type_mnemonic_S(op)
                           ^ spc() ^ freg_or_reg_name(rd)
                           ^ sep() ^ reg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
-
-mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_WU)
-                      <-> f_un_rm_type_mnemonic_S(FCVT_S_WU)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ reg_name(rs1)
-                          ^ sep() ^ frm_mnemonic(rm)
-
-mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_L_S)
-                      <-> f_un_rm_type_mnemonic_S(FCVT_L_S)
-                          ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ frm_mnemonic(rm)
-
-mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_LU_S)
-                      <-> f_un_rm_type_mnemonic_S(FCVT_LU_S)
-                          ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ frm_mnemonic(rm)
-
-mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_L)
-                      <-> f_un_rm_type_mnemonic_S(FCVT_S_L)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ reg_name(rs1)
-                          ^ sep() ^ frm_mnemonic(rm)
-
-mapping clause assembly = F_UN_RM_TYPE_S(rs1, rm, rd, FCVT_S_LU)
-                      <-> f_un_rm_type_mnemonic_S(FCVT_S_LU)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ reg_name(rs1)
-                          ^ sep() ^ frm_mnemonic(rm)
-
 
 /* ****************************************************************** */
 /* Binary, no rounding mode */
 
 /* AST */
 
-union clause ast = F_BIN_TYPE_S : (regidx, regidx, regidx, f_bin_op_S)
+union clause ast = F_BIN_TYPE_F_S : (fregidx, fregidx, fregidx, f_bin_op_f_S)
+union clause ast = F_BIN_TYPE_X_S : (fregidx, fregidx, regidx, f_bin_op_x_S)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)               if haveSingleFPU()
-                    <-> 0b001_0000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_F_S(rs2, rs1, rd, FSGNJ_S)                                                   if haveSingleFPU()
+                    <-> 0b001_0000 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011 if haveSingleFPU()
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)              if haveSingleFPU()
-                    <-> 0b001_0000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_F_S(rs2, rs1, rd, FSGNJN_S)                                                  if haveSingleFPU()
+                    <-> 0b001_0000 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b001 @ encdec_freg(rd) @ 0b101_0011 if haveSingleFPU()
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)              if haveSingleFPU()
-                    <-> 0b001_0000 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_F_S(rs2, rs1, rd, FSGNJX_S)                                                  if haveSingleFPU()
+                    <-> 0b001_0000 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b010 @ encdec_freg(rd) @ 0b101_0011 if haveSingleFPU()
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)                if haveSingleFPU()
-                    <-> 0b001_0100 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_F_S(rs2, rs1, rd, FMIN_S)                                                    if haveSingleFPU()
+                    <-> 0b001_0100 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011 if haveSingleFPU()
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)                if haveSingleFPU()
-                    <-> 0b001_0100 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_F_S(rs2, rs1, rd, FMAX_S)                                                    if haveSingleFPU()
+                    <-> 0b001_0100 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b001 @ encdec_freg(rd) @ 0b101_0011 if haveSingleFPU()
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)                 if haveSingleFPU()
-                    <-> 0b101_0000 @ rs2 @ rs1 @ 0b010 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_X_S(rs2, rs1, rd, FEQ_S)                                                    if haveSingleFPU()
+                    <-> 0b101_0000 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b010 @ encdec_reg(rd) @ 0b101_0011 if haveSingleFPU()
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)                 if haveSingleFPU()
-                    <-> 0b101_0000 @ rs2 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_X_S(rs2, rs1, rd, FLT_S)                                                    if haveSingleFPU()
+                    <-> 0b101_0000 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b101_0011 if haveSingleFPU()
 
-mapping clause encdec = F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)                 if haveSingleFPU()
-                    <-> 0b101_0000 @ rs2 @ rs1 @ 0b000 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_BIN_TYPE_X_S(rs2, rs1, rd, FLE_S)                                                    if haveSingleFPU()
+                    <-> 0b101_0000 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011 if haveSingleFPU()
 
 /* Execution semantics ================================ */
 
-function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)) = {
+function clause execute (F_BIN_TYPE_F_S(rs2, rs1, rd, FSGNJ_S)) = {
   let rs1_val_S    = F_or_X_S(rs1);
   let rs2_val_S    = F_or_X_S(rs2);
   let (s1, e1, m1) = fsplit_S (rs1_val_S);
@@ -821,7 +789,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)) = {
+function clause execute (F_BIN_TYPE_F_S(rs2, rs1, rd, FSGNJN_S)) = {
   let rs1_val_S    = F_or_X_S(rs1);
   let rs2_val_S    = F_or_X_S(rs2);
   let (s1, e1, m1) = fsplit_S (rs1_val_S);
@@ -832,7 +800,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)) = {
+function clause execute (F_BIN_TYPE_F_S(rs2, rs1, rd, FSGNJX_S)) = {
   let rs1_val_S    = F_or_X_S(rs1);
   let rs2_val_S    = F_or_X_S(rs2);
   let (s1, e1, m1) = fsplit_S (rs1_val_S);
@@ -843,7 +811,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)) = {
+function clause execute (F_BIN_TYPE_F_S(rs2, rs1, rd, FMIN_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   let rs2_val_S = F_or_X_S(rs2);
 
@@ -863,7 +831,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)) = {
+function clause execute (F_BIN_TYPE_F_S(rs2, rs1, rd, FMAX_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   let rs2_val_S = F_or_X_S(rs2);
 
@@ -883,7 +851,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
+function clause execute (F_BIN_TYPE_X_S(rs2, rs1, rd, FEQ_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   let rs2_val_S = F_or_X_S(rs2);
 
@@ -895,7 +863,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)) = {
+function clause execute (F_BIN_TYPE_X_S(rs2, rs1, rd, FLT_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   let rs2_val_S = F_or_X_S(rs2);
 
@@ -907,7 +875,7 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)) = {
+function clause execute (F_BIN_TYPE_X_S(rs2, rs1, rd, FLE_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   let rs2_val_S = F_or_X_S(rs2);
 
@@ -921,61 +889,28 @@ function clause execute (F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)) = {
 
 /* AST -> Assembly notation ================================ */
 
-mapping f_bin_type_mnemonic_S : f_bin_op_S <-> string = {
+mapping f_bin_type_mnemonic_f_S : f_bin_op_f_S <-> string = {
     FSGNJ_S  <-> "fsgnj.s",
     FSGNJN_S <-> "fsgnjn.s",
     FSGNJX_S <-> "fsgnjx.s",
     FMIN_S   <-> "fmin.s",
-    FMAX_S   <-> "fmax.s",
+    FMAX_S   <-> "fmax.s"
+}
+
+mapping clause assembly = F_BIN_TYPE_F_S(rs2, rs1, rd, op)
+                      <-> f_bin_type_mnemonic_f_S(op)
+                          ^ spc() ^ freg_or_reg_name(rd)
+                          ^ sep() ^ freg_or_reg_name(rs1)
+                          ^ sep() ^ freg_or_reg_name(rs2)
+
+mapping f_bin_type_mnemonic_x_S : f_bin_op_x_S <-> string = {
     FEQ_S    <-> "feq.s",
     FLT_S    <-> "flt.s",
     FLE_S    <-> "fle.s"
 }
 
-mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FSGNJ_S)
-                      <-> f_bin_type_mnemonic_S(FSGNJ_S)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
-
-mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FSGNJN_S)
-                      <-> f_bin_type_mnemonic_S(FSGNJN_S)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
-
-mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FSGNJX_S)
-                      <-> f_bin_type_mnemonic_S(FSGNJX_S)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
-
-mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FMIN_S)
-                      <-> f_bin_type_mnemonic_S(FMIN_S)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
-
-mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FMAX_S)
-                      <-> f_bin_type_mnemonic_S(FMAX_S)
-                          ^ spc() ^ freg_or_reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
-
-mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FEQ_S)
-                      <-> f_bin_type_mnemonic_S(FEQ_S)
-                          ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
-
-mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FLT_S)
-                      <-> f_bin_type_mnemonic_S(FLT_S)
-                          ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
-                          ^ sep() ^ freg_or_reg_name(rs2)
-
-mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)
-                      <-> f_bin_type_mnemonic_S(FLE_S)
+mapping clause assembly = F_BIN_TYPE_X_S(rs2, rs1, rd, op)
+                      <-> f_bin_type_mnemonic_x_S(op)
                           ^ spc() ^ reg_name(rd)
                           ^ sep() ^ freg_or_reg_name(rs1)
                           ^ sep() ^ freg_or_reg_name(rs2)
@@ -983,22 +918,23 @@ mapping clause assembly = F_BIN_TYPE_S(rs2, rs1, rd, FLE_S)
 /* ****************************************************************** */
 /* Unary, no rounding mode */
 
-union clause ast = F_UN_TYPE_S : (regidx, regidx, f_un_op_S)
+union clause ast = F_UN_TYPE_F_S : (regidx, fregidx, f_un_op_f_S)
+union clause ast = F_UN_TYPE_X_S : (fregidx, regidx, f_un_op_x_S)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = F_UN_TYPE_S(rs1, rd, FCLASS_S)                        if haveSingleFPU()
-                    <-> 0b111_0000 @ 0b00000 @ rs1 @ 0b001 @ rd @ 0b101_0011  if haveSingleFPU()
+mapping clause encdec = F_UN_TYPE_X_S(rs1, rd, FCLASS_S)                                              if haveSingleFPU()
+                    <-> 0b111_0000 @ 0b00000 @ encdec_freg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b101_0011 if haveSingleFPU()
 
-mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_X_W)                         if extensionEnabled(Ext_F)
-                    <-> 0b111_0000 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_F)
+mapping clause encdec = F_UN_TYPE_X_S(rs1, rd, FMV_X_W)                                               if extensionEnabled(Ext_F)
+                    <-> 0b111_0000 @ 0b00000 @ encdec_freg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011 if extensionEnabled(Ext_F)
 
-mapping clause encdec = F_UN_TYPE_S(rs1, rd, FMV_W_X)                         if extensionEnabled(Ext_F)
-                    <-> 0b111_1000 @ 0b00000 @ rs1 @ 0b000 @ rd @ 0b101_0011  if extensionEnabled(Ext_F)
+mapping clause encdec = F_UN_TYPE_F_S(rs1, rd, FMV_W_X)                                               if extensionEnabled(Ext_F)
+                    <-> 0b111_1000 @ 0b00000 @ encdec_reg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011 if extensionEnabled(Ext_F)
 
 /* Execution semantics ================================ */
 
-function clause execute (F_UN_TYPE_S(rs1, rd, FCLASS_S)) = {
+function clause execute (F_UN_TYPE_X_S(rs1, rd, FCLASS_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
 
   let rd_val_10b : bits (10) =
@@ -1018,37 +954,37 @@ function clause execute (F_UN_TYPE_S(rs1, rd, FCLASS_S)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_UN_TYPE_S(rs1, rd, FMV_X_W)) = {
+function clause execute (F_UN_TYPE_X_S(rs1, rd, FMV_X_W)) = {
   X(rd) = sign_extend(F(rs1)[31..0]);
   RETIRE_SUCCESS
 }
 
-function clause execute (F_UN_TYPE_S(rs1, rd, FMV_W_X)) = {
+function clause execute (F_UN_TYPE_F_S(rs1, rd, FMV_W_X)) = {
   F(rd) = nan_box(X(rs1)[31..0]);
   RETIRE_SUCCESS
 }
 
 /* AST -> Assembly notation ================================ */
 
-mapping f_un_type_mnemonic_S : f_un_op_S <-> string = {
-    FMV_X_W  <-> "fmv.x.w",
+mapping f_un_type_mnemonic_x_S : f_un_op_x_S <-> string = {
     FCLASS_S <-> "fclass.s",
-    FMV_W_X  <-> "fmv.w.x"
+    FMV_X_W  <-> "fmv.x.w",
 }
 
-mapping clause assembly = F_UN_TYPE_S(rs1, rd, FMV_X_W)
-                      <-> f_un_type_mnemonic_S(FMV_X_W)
+mapping clause assembly = F_UN_TYPE_X_S(rs1, rd, op)
+                      <-> f_un_type_mnemonic_x_S(op)
                           ^ spc() ^ reg_name(rd)
                           ^ sep() ^ freg_name(rs1)
 
-mapping clause assembly = F_UN_TYPE_S(rs1, rd, FMV_W_X)
-                      <-> f_un_type_mnemonic_S(FMV_W_X)
+mapping f_un_type_mnemonic_f_S : f_un_op_f_S <-> string = {
+    FMV_W_X  <-> "fmv.w.x"
+}
+
+mapping clause assembly = F_UN_TYPE_F_S(rs1, rd, op)
+                      <-> f_un_type_mnemonic_f_S(op)
                           ^ spc() ^ freg_name(rd)
                           ^ sep() ^ reg_name(rs1)
 
-mapping clause assembly = F_UN_TYPE_S(rs1, rd, FCLASS_S)
-                      <-> f_un_type_mnemonic_S(FCLASS_S)
-                          ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_or_reg_name(rs1)
+
 
 /* ****************************************************************** */

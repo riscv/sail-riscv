@@ -37,13 +37,21 @@ enum f_madd_op_H = {FMADD_H, FMSUB_H, FNMSUB_H, FNMADD_H}
 
 enum f_bin_rm_op_H = {FADD_H, FSUB_H, FMUL_H, FDIV_H}
 
-enum f_un_rm_op_H = {FSQRT_H, FCVT_W_H, FCVT_WU_H, FCVT_H_W, FCVT_H_WU,    // RV32 and RV64
-                     FCVT_H_S, FCVT_H_D, FCVT_S_H, FCVT_D_H,
-                     FCVT_L_H, FCVT_LU_H, FCVT_H_L, FCVT_H_LU}             // RV64 only
+enum f_un_rm_ff_op_H = {FSQRT_H, FCVT_H_S, FCVT_H_D, FCVT_S_H, FCVT_D_H}
 
-enum f_un_op_H = {FCLASS_H, FMV_X_H, FMV_H_X}    /* RV32 and RV64 */
+enum f_un_rm_fx_op_H = { FCVT_W_H, FCVT_WU_H, // RV32 and RV64
+                         FCVT_L_H, FCVT_LU_H} // RV64 only
 
-enum f_bin_op_H = {FSGNJ_H, FSGNJN_H, FSGNJX_H, FMIN_H, FMAX_H, FEQ_H, FLT_H, FLE_H}
+enum f_un_rm_xf_op_H = { FCVT_H_W, FCVT_H_WU, // RV32 and RV64
+                         FCVT_H_L, FCVT_H_LU} // RV64 only
+
+enum f_un_x_op_H = {FCLASS_H, FMV_X_H}
+
+enum f_un_f_op_H = {FMV_H_X}
+
+enum f_bin_f_op_H = {FSGNJ_H, FSGNJN_H, FSGNJX_H, FMIN_H, FMAX_H}
+
+enum f_bin_x_op_H = {FEQ_H, FLT_H, FLE_H}
 
 enum rounding_mode = {RM_RNE, RM_RTZ, RM_RDN, RM_RUP, RM_RMM, RM_DYN}
 
@@ -51,22 +59,39 @@ enum f_madd_op_S = {FMADD_S, FMSUB_S, FNMSUB_S, FNMADD_S}
 
 enum f_bin_rm_op_S = {FADD_S, FSUB_S, FMUL_S, FDIV_S}
 
-enum f_un_rm_op_S = {FSQRT_S, FCVT_W_S, FCVT_WU_S, FCVT_S_W, FCVT_S_WU,    // RV32 and RV64
-                     FCVT_L_S, FCVT_LU_S, FCVT_S_L, FCVT_S_LU}             // RV64 only
+enum f_un_rm_ff_op_S = {FSQRT_S}
 
-enum f_un_op_S = {FCLASS_S, FMV_X_W, FMV_W_X}    /* RV32 and RV64 */
+enum f_un_rm_fx_op_S = { FCVT_W_S, FCVT_WU_S, // RV32 and RV64
+                         FCVT_L_S, FCVT_LU_S } // RV64 only
 
-enum f_bin_op_S = {FSGNJ_S, FSGNJN_S, FSGNJX_S, FMIN_S, FMAX_S, FEQ_S, FLT_S, FLE_S}
+enum f_un_rm_xf_op_S = { FCVT_S_W, FCVT_S_WU, // RV32 and RV64
+                         FCVT_S_L, FCVT_S_LU } // RV64 only
+
+enum f_un_op_f_S = {FMV_W_X}    /* RV32 and RV64 */
+
+enum f_un_op_x_S = {FCLASS_S, FMV_X_W}    /* RV32 and RV64 */
+
+enum f_bin_op_f_S = {FSGNJ_S, FSGNJN_S, FSGNJX_S, FMIN_S, FMAX_S}
+
+enum f_bin_op_x_S = {FEQ_S, FLT_S, FLE_S}
 
 enum f_madd_op_D = {FMADD_D, FMSUB_D, FNMSUB_D, FNMADD_D}
 
 enum f_bin_rm_op_D = {FADD_D, FSUB_D, FMUL_D, FDIV_D}
 
-enum f_un_rm_op_D = {FSQRT_D, FCVT_W_D, FCVT_WU_D, FCVT_D_W, FCVT_D_WU,    // RV32 and RV64
-                     FCVT_S_D, FCVT_D_S,
-                     FCVT_L_D, FCVT_LU_D, FCVT_D_L, FCVT_D_LU}             // RV64 only
+enum f_un_rm_ff_op_D = {FSQRT_D, FCVT_S_D, FCVT_D_S}
 
-enum f_bin_op_D = {FSGNJ_D, FSGNJN_D, FSGNJX_D, FMIN_D, FMAX_D, FEQ_D, FLT_D, FLE_D}
+enum f_un_rm_fx_op_D = {FCVT_W_D, FCVT_WU_D,    // RV32 and RV64
+                        FCVT_L_D, FCVT_LU_D}    // RV64 only
 
-enum f_un_op_D = {FCLASS_D,            /* RV32 and RV64 */
-                  FMV_X_D, FMV_D_X}    /* RV64 only */
+enum f_un_rm_xf_op_D = {FCVT_D_W, FCVT_D_WU,    // RV32 and RV64
+                        FCVT_D_L, FCVT_D_LU}    // RV64 only
+
+enum f_bin_f_op_D = {FSGNJ_D, FSGNJN_D, FSGNJX_D, FMIN_D, FMAX_D}
+
+enum f_bin_x_op_D = {FEQ_D, FLT_D, FLE_D}
+
+enum f_un_x_op_D = {FCLASS_D,   /* RV32 and RV64 */
+                    FMV_X_D}    /* RV64 only */
+
+enum f_un_f_op_D = {FMV_D_X}

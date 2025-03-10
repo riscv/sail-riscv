@@ -48,7 +48,7 @@ register x29 : regtype
 register x30 : regtype
 register x31 : regtype
 
-function rX (r : regno) -> xlenbits = {
+function rX (Regno(r) : regno) -> xlenbits = {
   let v : regtype =
     match r {
       0 => zero_reg,
@@ -89,7 +89,7 @@ function rX (r : regno) -> xlenbits = {
 }
 
 $ifdef RVFI_DII
-function rvfi_wX (r : regno, v : xlenbits) -> unit = {
+function rvfi_wX (Regno(r) : regno, v : xlenbits) -> unit = {
   rvfi_int_data[rvfi_rd_wdata] = zero_extend(v);
   rvfi_int_data[rvfi_rd_addr] = to_bits(8,r);
   rvfi_int_data_present = true;
@@ -98,7 +98,7 @@ $else
 function rvfi_wX (r : regno, v : xlenbits) -> unit = ()
 $endif
 
-function wX (r : regno, in_v : xlenbits) -> unit = {
+function wX (Regno(r) : regno, in_v : xlenbits) -> unit = {
   let v = regval_into_reg(in_v);
   match r {
     0  => (),
@@ -136,24 +136,23 @@ function wX (r : regno, in_v : xlenbits) -> unit = {
     _  => assert(false, "invalid register number")
   };
   if (r != 0) then {
-     rvfi_wX(r, in_v);
+     rvfi_wX(Regno(r), in_v);
      if   get_config_print_reg()
      then print_reg("x" ^ dec_str(r) ^ " <- " ^ RegStr(v));
   }
 }
 
-function rX_bits(i: regidx) -> xlenbits = rX(unsigned(i))
+function rX_bits(i: regidx) -> xlenbits = rX(regidx_to_regno(i))
 
 function wX_bits(i: regidx, data: xlenbits) -> unit = {
-  wX(unsigned(i)) = data
+  wX(regidx_to_regno(i)) = data
 }
 
 overload X = {rX_bits, wX_bits, rX, wX}
 
 /* mappings for assembly */
 
-val reg_name : regidx <-> string
-mapping reg_name = {
+mapping reg_name_raw : bits(5) <-> string = {
     0b00000 <-> "zero",
     0b00001 <-> "ra",
     0b00010 <-> "sp",
@@ -188,7 +187,9 @@ mapping reg_name = {
     0b11111 <-> "t6"
 }
 
-mapping creg_name : cregidx <-> string = {
+mapping reg_name : regidx <-> string = { Regidx(i) <-> reg_name_raw(i) }
+
+mapping creg_name_raw : bits(3) <-> string = {
   0b000 <-> "s0",
   0b001 <-> "s1",
   0b010 <-> "a0",
@@ -198,3 +199,11 @@ mapping creg_name : cregidx <-> string = {
   0b110 <-> "a4",
   0b111 <-> "a5"
 }
+
+mapping creg_name : cregidx <-> string = { Cregidx(i) <-> creg_name_raw(i) }
+
+/* Mappings for encoding */
+
+mapping encdec_reg : regidx <-> bits(5) = { Regidx(r) <-> r }
+
+mapping encdec_creg : cregidx <-> bits(3) = { Cregidx(r) <-> r }
