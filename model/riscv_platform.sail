@@ -446,7 +446,7 @@ function tick_platform() -> unit = {
 
 /* Platform-specific handling of instruction faults */
 
-function handle_illegal() -> unit = {
+function handle_illegal(instbits: xlenbits) -> unit = {
   let info = if plat_mtval_has_illegal_inst_bits ()
              then Some(instbits)
              else None();
