@@ -244,7 +244,6 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // MPELP = v[MPELP],
     // MPV = v[MPV],
     // GVA = v[GVA],
-    /* We don't currently support changing MBE and SBE. */
     MBE = v[MBE],
     SBE = if extensionEnabled(Ext_S) then v[SBE] else 0b0,
     /* We don't support dynamic changes to SXL and UXL. */
