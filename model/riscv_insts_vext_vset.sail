@@ -73,8 +73,8 @@ function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
 /* *********************************** vsetvli *********************************** */
 union clause ast = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
 
-mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd) if extensionEnabled(Ext_V)
-  <-> 0b0000 @ ma @ ta @ sew @ lmul @ rs1 @ 0b111 @ rd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd)                                if extensionEnabled(Ext_V)
+  <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   let LMUL_pow_ori  = get_lmul_pow();
@@ -93,12 +93,12 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   let VLMAX = 2 ^ (VLEN_pow + LMUL_pow_new - SEW_pow_new);
 
   /* set vl according to VLMAX and AVL */
-  if (rs1 != 0b00000) then { /* normal stripmining */
+  if (rs1 != zreg) then { /* normal stripmining */
     let rs1_val = X(rs1);
     let AVL = unsigned(rs1_val);
     vl = calculate_new_vl(AVL, VLMAX);
     X(rd) = vl;
-  } else if (rd != 0b00000) then { /* set vl to VLMAX */
+  } else if (rd != zreg) then { /* set vl to VLMAX */
     let AVL = unsigned(ones(xlen));
     vl = to_bits(xlen, VLMAX);
     X(rd) = vl;
@@ -124,8 +124,8 @@ mapping clause assembly = VSETVLI(ma, ta, sew, lmul, rs1, rd)
 /* *********************************** vsetvl ************************************ */
 union clause ast = VSETVL : (regidx, regidx, regidx)
 
-mapping clause encdec = VSETVL(rs2, rs1, rd) if extensionEnabled(Ext_V)
-  <-> 0b1000000 @ rs2 @ rs1 @ 0b111 @ rd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VSETVL(rs2, rs1, rd)                                             if extensionEnabled(Ext_V)
+  <-> 0b1000000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute VSETVL(rs2, rs1, rd) = {
   let LMUL_pow_ori  = get_lmul_pow();
@@ -144,12 +144,12 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   let VLMAX = 2 ^ (VLEN_pow + LMUL_pow_new - SEW_pow_new);
 
   /* set vl according to VLMAX and AVL */
-  if (rs1 != 0b00000) then { /* normal stripmining */
+  if (rs1 != zreg) then { /* normal stripmining */
     let rs1_val = X(rs1);
     let AVL = unsigned(rs1_val);
     vl = calculate_new_vl(AVL, VLMAX);
     X(rd) = vl;
-  } else if (rd != 0b00000) then { /* set vl to VLMAX */
+  } else if (rd != zreg) then { /* set vl to VLMAX */
     let AVL = unsigned(ones(xlen));
     vl = to_bits(xlen, VLMAX);
     X(rd) = vl;
@@ -173,10 +173,10 @@ mapping clause assembly = VSETVL(rs2, rs1, rd)
   <-> "vsetvl" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ********************************** vsetivli *********************************** */
-union clause ast = VSETIVLI : ( bits(1), bits(1), bits(3), bits(3), regidx, regidx)
+union clause ast = VSETIVLI : ( bits(1), bits(1), bits(3), bits(3), bits(5), regidx)
 
-mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd) if extensionEnabled(Ext_V)
-  <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ rd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd)                   if extensionEnabled(Ext_V)
+  <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ encdec_reg(rd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   /* set vtype */

@@ -33,24 +33,27 @@ let  pagesize_bits = sizeof(pagesize_bits)
 
 /* register identifiers */
 
-type regidx  = bits(5)
-type cregidx = bits(3)    /* identifiers in RVC instructions */
-type csreg   = bits(12)   /* CSR addressing */
+newtype regidx = Regidx : bits(5)  /* uncompressed register identifiers */
+newtype cregidx = Cregidx : bits(3) /* identifiers in RVC instructions */
+type csreg = bits(12)  /* CSR addressing */
+
+function regidx_offset(Regidx(r) : regidx, o : bits(5)) -> regidx = Regidx(r + o)
+function regidx_bits (Regidx(b) : regidx) -> bits(5) = b
 
 /* register file indexing */
 
-type regno = range(0, 31)
+newtype regno = Regno : range(0, 31)
 
-function regidx_to_regno (b : regidx) -> regno = unsigned(b)
+function regidx_to_regno (Regidx(b) : regidx) -> regno = Regno(unsigned(b))
 
 /* mapping RVC register indices into normal indices */
 val creg2reg_idx : cregidx -> regidx
-function creg2reg_idx(creg) = 0b01 @ creg
+function creg2reg_idx(Cregidx(i)) = Regidx(0b01 @ i)
 
 /* some architecture and ABI relevant register identifiers */
-let zreg : regidx = 0b00000  /* x0, zero register  */
-let ra   : regidx = 0b00001  /* x1, return address */
-let sp   : regidx = 0b00010  /* x2, stack pointer  */
+let zreg : regidx = Regidx(0b00000) /* x0, zero register  */
+let ra   : regidx = Regidx(0b00001) /* x1, return address */
+let sp   : regidx = Regidx(0b00010) /* x2, stack pointer  */
 
 /* instruction fields */
 

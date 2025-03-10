@@ -12,15 +12,15 @@
 /* ******************************************************************************* */
 
 /* ********************* OPIVV (Widening Integer Reduction) ********************** */
-union clause ast = RIVVTYPE : (rivvfunct6, bits(1), regidx, regidx, regidx)
+union clause ast = RIVVTYPE : (rivvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_rivvfunct6 : rivvfunct6 <-> bits(6) = {
   IVV_VWREDSUMU   <-> 0b110000,
   IVV_VWREDSUM    <-> 0b110001
 }
 
-mapping clause encdec = RIVVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_rivvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b000 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = RIVVTYPE(funct6, vm, vs2, vs1, vd)                                                       if extensionEnabled(Ext_V)
+  <-> encdec_rivvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -39,7 +39,7 @@ function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, 0b00000);
+  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, zvreg);
   let vd_val  : vector('d, bits('o)) = read_vreg(num_elem_vd, SEW_widen, 0, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
   let mask    : bits('n)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
@@ -71,7 +71,7 @@ mapping clause assembly = RIVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> rivvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
 /* ******************* OPMVV (Single-Width Integer Reduction) ******************** */
-union clause ast = RMVVTYPE : (rmvvfunct6, bits(1), regidx, regidx, regidx)
+union clause ast = RMVVTYPE : (rmvvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_rmvvfunct6 : rmvvfunct6 <-> bits(6) = {
   MVV_VREDSUM     <-> 0b000000,
@@ -84,8 +84,8 @@ mapping encdec_rmvvfunct6 : rmvvfunct6 <-> bits(6) = {
   MVV_VREDMAX     <-> 0b000111
 }
 
-mapping clause encdec = RMVVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_rmvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = RMVVTYPE(funct6, vm, vs2, vs1, vd)                                                       if extensionEnabled(Ext_V)
+  <-> encdec_rmvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
 function clause execute(RMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -101,7 +101,7 @@ function clause execute(RMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'd = num_elem_vd;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, 0b00000);
+  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, zvreg);
   let vd_val  : vector('d, bits('m)) = read_vreg(num_elem_vd, SEW, 0, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
   let mask    : bits('n)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
