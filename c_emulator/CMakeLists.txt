@@ -62,15 +62,16 @@ foreach (xlen IN ITEMS 32 64)
                 )
             endif()
 
-            # TODO: Enable warnings when we use the #include trick
-            # to include the generated Sail code. Currently it
-            # generates too many warnings to turn these on globally.
+            target_compile_options(riscv_sim_${arch} PRIVATE
+                $<$<CXX_COMPILER_ID:Clang,AppleClang>:-fbracket-depth=1024>
 
-            # target_compile_options(riscv_sim_${arch} PRIVATE
-            #     -Wall -Wextra
-            #     # Too annoying at the moment.
-            #     -Wno-unused-parameter
-            # )
+                # TODO: Enable warnings when we use the #include trick
+                # to include the generated Sail code. Currently it
+                # generates too many warnings to turn these on globally.
+                # -Wall -Wextra
+                # # Too annoying at the moment.
+                # -Wno-unused-parameter
+            )
 
             install(TARGETS riscv_sim_${arch}
                 OPTIONAL
