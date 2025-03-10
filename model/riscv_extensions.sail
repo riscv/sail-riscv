@@ -6,6 +6,17 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
+// Privileged and unprivileged spec versions. The versioning system for specifications
+// is unclear so we just use the commit date. This also allows versioning for specs changes
+// that are between releases. If there was an official release for this day (for example
+// 20240411) then this is the commit of that release. Otherwise it is for the *last*
+// commit on the given day.
+type SpecVersion = range(20000000, 21000000)
+
+// TODO: Replace with 'config ...priv_version' or similar when the config system is available.
+let configPrivVersion : SpecVersion = 20240411
+let configUnprivVersion : SpecVersion = 20240411
+
 scattered enum extension
 
 // Note, these are sorted according to the canonical ordering vaguely described
