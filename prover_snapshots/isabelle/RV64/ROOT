@@ -1,4 +1,0 @@
-session "Sail-RV64" = "Sail" +
-  options [document = false]
-  theories
-    "Riscv_lemmas"
