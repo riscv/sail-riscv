@@ -7,6 +7,8 @@ set(EMULATOR_COMMON_SRCS
     riscv_prelude.cpp
     riscv_prelude.h
     riscv_sail.h
+    rvfi_dii.h
+    rvfi_dii.cpp
     riscv_sim.cpp
     riscv_softfloat.c
     riscv_softfloat.h
