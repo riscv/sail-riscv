@@ -103,6 +103,11 @@ enum clause extension = Ext_Zksh
 // Floating-Point in Integer Registers (half precision)
 enum clause extension = Ext_Zhinx
 
+// Vector Basic Bit-manipulation
+enum clause extension = Ext_Zvbb
+// Vector Cryptography Bit-manipulation
+enum clause extension = Ext_Zvkb
+
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
 // Supervisor-mode Timer Interrupts

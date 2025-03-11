@@ -16,6 +16,7 @@ bool sys_enable_vext(unit);
 bool sys_enable_bext(unit);
 bool sys_enable_zicbom(unit);
 bool sys_enable_zicboz(unit);
+bool sys_enable_zvkb(unit);
 bool sys_enable_sstc(unit);
 
 uint64_t sys_pmp_count(unit);
