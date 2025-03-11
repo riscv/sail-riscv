@@ -116,3 +116,8 @@ enum clause extension = Ext_Svpbmt
 
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
+
+//  Vector Extension for Half-Precision Floating-Point
+enum clause extension = Ext_Zvfh
+// Vector Extension for Minimal Half-Precision Floating-Point
+enum clause extension = Ext_Zvfhmin

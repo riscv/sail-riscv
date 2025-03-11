@@ -10,14 +10,45 @@
 /* This file implements functions used by vector instructions.                     */
 /* ******************************************************************************* */
 
-/* Check for valid floating-point operation types
+/* TODO: need config flags to control zvfh/zvfhmin */
+function clause extensionEnabled(Ext_Zvfh) = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
+function clause extensionEnabled(Ext_Zvfhmin) = extensionEnabled(Ext_Zvfh) | extensionEnabled(Ext_V)
+
+/* Helper functions for 'encdec()' */
+function have_vext_fp() -> bool = extensionEnabled(Ext_V) | extensionEnabled(Ext_Zvfh)
+
+/* Check for valid floating-point operation types for standard floating-point instructions.
  *  1. Valid element width of floating-point numbers
  *  2. Valid floating-point rounding mode
  */
 val valid_fp_op : ({8, 16, 32, 64}, bits(3)) -> bool
 function valid_fp_op(SEW, rm_3b) = {
-  /* 128-bit floating-point values will be supported in future extensions */
-  let valid_sew = (SEW >= 16 & SEW <= 128);
+  /* SEW=16 is supported by Zvfh, SEW=32/64 is supported by V extension. */
+  let valid_sew : bool = match SEW {
+    8 => false,
+    16 => extensionEnabled(Ext_Zvfh),
+    32 => extensionEnabled(Ext_V),
+    64 => extensionEnabled(Ext_V)
+  };
+  let valid_rm = not(rm_3b == 0b101 | rm_3b == 0b110 | rm_3b == 0b111);
+  valid_sew & valid_rm
+}
+
+/* Check for valid floating-point operation types for floating-point widening/narrowing instructions.
+ *  1. Valid element width of floating-point numbers
+ *  2. Valid floating-point rounding mode
+ */
+val valid_fp_op_variable_width : ({8, 16, 32, 64}, bits(3)) -> bool
+function valid_fp_op_variable_width(SEW, rm_3b) = {
+  /* 1. SEW=8 is allowed in conversions between 8-bit integers and binary16 values supported by Zvfh. 
+     2. SEW=64 is not supported yet, since it causes EEW=128.
+  */
+  let valid_sew : bool = match SEW {
+    8 => extensionEnabled(Ext_Zvfh),
+    16 => extensionEnabled(Ext_V) | extensionEnabled(Ext_Zvfh) | extensionEnabled(Ext_Zvfhmin),
+    32 => extensionEnabled(Ext_V),
+    64 => false
+  };
   let valid_rm = not(rm_3b == 0b101 | rm_3b == 0b110 | rm_3b == 0b111);
   valid_sew & valid_rm
 }
@@ -43,7 +74,7 @@ function illegal_fp_vd_unmasked(SEW, rm_3b) = {
 /* d. Variable width check for floating-point widening/narrowing instructions */
 val illegal_fp_variable_width : (vregidx, bits(1), {8, 16, 32, 64}, bits(3), int, int) -> bool
 function illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_new, LMUL_pow_new) = {
-  not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) |
+  not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op_variable_width(SEW, rm_3b)) |
   not(valid_eew_emul(SEW_new, LMUL_pow_new))
 }
 
@@ -56,7 +87,7 @@ function illegal_fp_reduction(SEW, rm_3b) = {
 /* f. Variable width check for floating-point widening reduction instructions */
 val illegal_fp_reduction_widen : ({8, 16, 32, 64}, bits(3), int, int) -> bool
 function illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) = {
-  not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b)) |
+  not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op_variable_width(SEW, rm_3b)) |
   not(valid_eew_emul(SEW_widen, LMUL_pow_widen))
 }
 
