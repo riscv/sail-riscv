@@ -111,6 +111,8 @@ Supported RISC-V ISA features
 - Zkn (Zknd, Zkne, Zknh) and Zks (Zksed, Zksh) extensions for scalar cryptography, v1.0.1
 - Zkr extension for entropy source, v1.0
 - V extension for vector operations, v1.0
+- Zvbb extension for vector basic bit-manipulation, v1.0
+- Zvkb extension for vector cryptography bit-manipulation, v1.0
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
