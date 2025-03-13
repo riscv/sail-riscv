@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(sail_riscv)
 
+set(SAIL_REQUIRED_VER 0.19)
+
 # Make users explicitly pick a build type so they don't get
 # surprised when the default gives a very slow emulator.
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -67,17 +69,6 @@ endif()
 
 # These are the main requirements.
 # Don't use `REQUIRED` so that we can print custom help messages.
-find_package(ZLIB)
-if (NOT ZLIB_FOUND)
-    if (APPLE)
-        message(FATAL_ERROR "Zlib not found. Try 'brew install zlib'.")
-    elseif (UNIX)
-        message(FATAL_ERROR "Zlib not found. Try 'sudo apt install zlib1g-dev' or 'sudo dnf install zlib-devel'.")
-    else()
-        message(FATAL_ERROR "Zlib not found.")
-    endif()
-endif()
-
 option(DOWNLOAD_GMP "Download libgmp and build the library locally instead of using a system installation" OFF)
 if (DOWNLOAD_GMP)
     include(ExternalProject)
@@ -160,7 +151,6 @@ include(CPack)
 add_custom_target(csim DEPENDS riscv_sim_rv32d riscv_sim_rv64d)
 add_custom_target(check DEPENDS generated_model_rv32d generated_model_rv64d)
 
-# TODO: Support static linking.
 # TODO: Add `interpret` target.
 # TODO: Add isabelle target.
 # TODO: Add lem target.
