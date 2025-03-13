@@ -6,6 +6,7 @@
 uint64_t rv_pmp_count = 0;
 uint64_t rv_pmp_grain = 0;
 
+// These should be less than 0x10 (16) according to the "V" 1.0 spec.
 uint64_t rv_vector_vlen_exp = 0x9;
 uint64_t rv_vector_elen_exp = 0x6;
 
