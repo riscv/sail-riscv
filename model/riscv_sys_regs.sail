@@ -207,6 +207,7 @@ bitfield Mstatus : bits(64) = {
   SPP  : 8,
 
   MPIE : 7,
+  UBE  : 6,
   SPIE : 5,
 
   MIE  : 3,
@@ -243,9 +244,8 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // MPELP = v[MPELP],
     // MPV = v[MPV],
     // GVA = v[GVA],
-    /* We don't currently support changing MBE and SBE. */
-    // MBE = v[MBE],
-    // SBE = v[SBE],
+    MBE = v[MBE],
+    SBE = if extensionEnabled(Ext_S) then v[SBE] else 0b0,
     /* We don't support dynamic changes to SXL and UXL. */
     // SXL = if xlen == 64 then v[SXL] else o[SXL],
     // UXL = if xlen == 64 then v[UXL] else o[UXL],
@@ -269,6 +269,7 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     SPP = if extensionEnabled(Ext_S) then v[SPP] else 0b0,
     VS = v[VS],
     MPIE = v[MPIE],
+    UBE = if extensionEnabled(Ext_U) then v[UBE] else 0b0,
     SPIE = v[SPIE],
     MIE = v[MIE],
     SIE = v[SIE],
@@ -294,6 +295,7 @@ register mstatus : Mstatus = {
 }
 
 mapping clause csr_name_map = 0x300  <-> "mstatus"
+mapping clause csr_name_map = 0x310  <-> "mstatush"
 
 function clause is_CSR_defined(0x300) = true // mstatus
 function clause is_CSR_defined(0x310) = xlen == 32 // mstatush
@@ -726,6 +728,7 @@ bitfield Sstatus : bits(64) = {
   FS    : 14 .. 13,
   VS    : 10 .. 9,
   SPP   : 8,
+  UBE   : 6,
   SPIE  : 5,
   SIE   : 1,
 }
@@ -745,6 +748,7 @@ function lower_mstatus(m : Mstatus) -> Sstatus = {
     FS = m[FS],
     VS = m[VS],
     SPP = m[SPP],
+    UBE = m[UBE],
     SPIE = m[SPIE],
     SIE = m[SIE],
   ]
@@ -765,6 +769,7 @@ function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
     FS = s[FS],
     VS = s[VS],
     SPP = s[SPP],
+    UBE = s[UBE],
     SPIE = s[SPIE],
     SIE = s[SIE],
   ]
