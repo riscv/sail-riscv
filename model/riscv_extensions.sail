@@ -116,3 +116,8 @@ enum clause extension = Ext_Svpbmt
 
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
+
+// Vector Basic Bit-manipulation
+enum clause extension = Ext_Zvbb
+// Vector Cryptography Bit-manipulation
+enum clause extension = Ext_Zvkb
