@@ -52,19 +52,19 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   /* Get the address, X(rs1) (no offset).
     * Some extensions perform additional checks on address validity.
     */
-  match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width_bytes) {
+  match ext_data_get_addr(rs1, zeros(), AMOAccess(op, aq, rl, Data, Data), width_bytes) {
     Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
       if not(is_aligned_addr(bits_of(vaddr), width))
       then Memory_Exception(vaddr, E_SAMO_Addr_Align())
-      else match translateAddr(vaddr, ReadWrite(Data, Data)) {
+      else match translateAddr(vaddr, AMOAccess(op, aq, rl, Data, Data)) {
         Err(e, _) => Memory_Exception(vaddr, e),
         Ok(addr, _) => {
           let rs2_val = X(rs2)[width_bytes * 8 - 1 .. 0];
           match mem_write_ea(addr, width_bytes, aq & rl, rl, true) {
             Err(e) => Memory_Exception(vaddr, e),
             Ok(_) => {
-              match mem_read(ReadWrite(Data, Data), addr, width_bytes, aq, aq & rl, true) {
+              match mem_read(AMOAccess(op, aq, rl, Data, Data), addr, width_bytes, aq, aq & rl, true) {
                 Err(e)     => Memory_Exception(vaddr, e),
                 Ok(loaded) => {
                   let result : bits('width_bytes * 8) =

@@ -78,15 +78,6 @@ function privLevel_to_str (p : Privilege) -> string =
 
 overload to_str = {privLevel_to_str}
 
-/* memory access types */
-
-union AccessType ('a : Type) = {
-  Read      : 'a,
-  Write     : 'a,
-  ReadWrite : ('a, 'a),
-  InstructionFetch : unit
-}
-
 enum word_width = {BYTE, HALF, WORD, DOUBLE}
 
 type is_mem_width('w) = 'w in {1, 2, 4, 8}
@@ -336,4 +327,23 @@ struct mul_op = {
   high       : bool,
   signed_rs1 : bool,
   signed_rs2 : bool
+}
+
+/* memory access types */
+
+enum CacheAccessType = {
+  CleanFlush,
+  Inval,
+  Zero,
+}
+
+union AccessType ('a : Type) = {
+  Read      : 'a,
+  Write     : 'a,
+  AMOAccess       : (amoop, bool, bool, 'a, 'a),
+  LoadReserved     : (bool, bool, 'a),
+  StoreConditional : (bool, bool, 'a),
+  InstructionFetch : unit,
+  Cache     : CacheAccessType,
+  ExecutableDataFetch : unit,
 }
