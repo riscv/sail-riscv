@@ -55,7 +55,7 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
         MM_VMOR      => (vs2_val | vs1_val)[i],
         MM_VMNOR     => (~(vs2_val | vs1_val))[i],
         MM_VMORN     => (vs2_val | ~(vs1_val))[i],
-        MM_VMXNOR    => (vs2_val & vs1_val)[i]
+        MM_VMXNOR    => (~(vs2_val ^ vs1_val))[i]
       }
     }
   };
@@ -256,7 +256,7 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
   var found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      if (vs2_val[i] == bitone) & found_elem then {
+      if (vs2_val[i] == bitone) & not(found_elem) then {
         result[i] = bitone;
         found_elem = true
       } else {
