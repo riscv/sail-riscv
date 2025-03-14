@@ -53,14 +53,20 @@ function translationException(a : AccessType(ext_access_type),
                               f : PTW_Error)
                              -> ExceptionType = {
   match (a, f) {
-    (_, PTW_Ext_Error(e))        => E_Extension(ext_translate_exception(e)),
-    (ReadWrite(_), PTW_Access()) => E_SAMO_Access_Fault(),
-    (ReadWrite(_), _)            => E_SAMO_Page_Fault(),
-    (Read(_), PTW_Access())      => E_Load_Access_Fault(),
-    (Read(_), _)                 => E_Load_Page_Fault(),
-    (Write(_), PTW_Access())     => E_SAMO_Access_Fault(),
-    (Write(_), _)                => E_SAMO_Page_Fault(),
-    (InstructionFetch(), PTW_Access()) => E_Fetch_Access_Fault(),
-    (InstructionFetch(), _)            => E_Fetch_Page_Fault()
+    (_, PTW_Ext_Error(e))                     => E_Extension(ext_translate_exception(e)),
+    (AMOAccess(_, _, _, _, _), PTW_Access())  => E_SAMO_Access_Fault(),
+    (AMOAccess(_, _, _, _, _), _)             => E_SAMO_Page_Fault(),
+    (Read(_), PTW_Access())                   => E_Load_Access_Fault(),
+    (Read(_), _)                              => E_Load_Page_Fault(),
+    (Write(_), PTW_Access())                  => E_SAMO_Access_Fault(),
+    (Write(_), _)                             => E_SAMO_Page_Fault(),
+    (LoadReserved(_, _, _), PTW_Access())     => E_Load_Access_Fault(),
+    (LoadReserved(_, _, _), _)                => E_Load_Page_Fault(),
+    (StoreConditional(_, _, _), PTW_Access()) => E_SAMO_Access_Fault(),
+    (StoreConditional(_, _, _), _)            => E_SAMO_Page_Fault(),
+    (InstructionFetch(), PTW_Access())        => E_Fetch_Access_Fault(),
+    (InstructionFetch(), _)                   => E_Fetch_Page_Fault(),
+    (Cache(_), PTW_Access())                  => E_SAMO_Access_Fault(),
+    (Cache(_), _)                             => E_SAMO_Page_Fault(),
   }
 }

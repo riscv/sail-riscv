@@ -115,9 +115,25 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
   // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
   let access_ok : bool = match ac {
     Read(_)             => pte_R | (pte_X & mxr),
+    LoadReserved(_)     => pte_R | (pte_X & mxr),
     Write(_)            => pte_W,
-    ReadWrite(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
+    StoreConditional(_) => pte_W,
+    // AMO does not require read access, but write-only permissions are reserved.
+    AMOAccess(_)        => pte_W,
     InstructionFetch(_) => pte_X,
+    // Permissions for CMOs are not very clear. See https://github.com/riscv/riscv-isa-manual/issues/2243
+    //
+    // "A cache-block zero instruction is permitted to access the specified cache block
+    // whenever a store instruction is permitted to access the corresponding physical addresses..."
+    Cache(Zero)         => pte_W,
+    // "A cache-block management instruction is permitted to access the specified cache block
+    // whenever a load instruction or store instruction is permitted to access the corresponding physical addresses.
+    // If neither a load instruction nor store instruction is permitted to access the physical addresses,
+    // but an instruction fetch is permitted to access the physical addresses, whether a cache-block management
+    // instruction is permitted to access the cache block is UNSPECIFIED."
+    //
+    // Here we disallow it.
+    Cache(_)            => pte_W | pte_R | (pte_X & mxr),
   };
 
   let priv_ok : bool = match priv {
@@ -142,10 +158,13 @@ function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
   // Update 'dirty' bit?
   let update_d : bool = (pte_flags[D] == 0b0)
                         & (match a {
-                             InstructionFetch() => false,
-                             Read(_)         => false,
-                             Write(_)        => true,
-                             ReadWrite(_, _) => true
+                             InstructionFetch()        => false,
+                             Read(_)                   => false,
+                             Write(_)                  => true,
+                             AMOAccess(_, _, _, _, _)  => true,
+                             LoadReserved(_, _, _)     => false,
+                             StoreConditional(_, _, _) => true,
+                             Cache(_)                  => false,
                            });
   // Update 'accessed'-bit?
   let update_a = (pte_flags[A] == 0b0);

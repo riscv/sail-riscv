@@ -31,6 +31,28 @@ function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(rs2) : r
     width <= xlen_bytes | (op == AMOCAS & width <= xlen_bytes * 2 & rs2[0] == bitzero & rd[0] == bitzero)
   ))
 
+function amo_level(op : amoop, width : word_width_wide) -> AmoLevel =
+  match op {
+    AMOSWAP => AMOSwap,
+    AMOXOR => AMOLogical,
+    AMOAND => AMOLogical,
+    AMOOR => AMOLogical,
+    AMOADD => AMOArithmetic,
+    AMOMIN => AMOArithmetic,
+    AMOMAX => AMOArithmetic,
+    AMOMINU => AMOArithmetic,
+    AMOMAXU => AMOArithmetic,
+    AMOCAS => match width {
+      // There's no PMA defined for byte/half CAS with Zabha, but
+      // AMOCASW seems reasonable since it is a prerequisite.
+      1 => AMOCASW,
+      2 => AMOCASW,
+      4 => AMOCASW,
+      8 => AMOCASD,
+      16 => AMOCASQ,
+    },
+  }
+
 /* ****************************************************************** */
 
 union clause instruction = AMO : (amoop, bool, bool, regidx, regidx, word_width_wide, regidx)
@@ -60,15 +82,17 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   // This is checked during decoding.
   assert(width <= xlen_bytes * 2);
 
+  let level = amo_level(op, width);
+
   /* Get the address, X(rs1) (no offset).
     * Some extensions perform additional checks on address validity.
     */
-  match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width) {
+  match ext_data_get_addr(rs1, zeros(), AMOAccess(level, aq, rl, Data, Data), width) {
     Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
       if not(is_aligned_addr(vaddr, width))
       then Memory_Exception(vaddr, E_SAMO_Addr_Align())
-      else match translateAddr(vaddr, ReadWrite(Data, Data)) {
+      else match translateAddr(vaddr, AMOAccess(level, aq, rl, Data, Data)) {
         Err(e, _) => Memory_Exception(vaddr, e),
         Ok(addr, _) => {
           // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
@@ -78,7 +102,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
           match mem_write_ea(addr, width, aq & rl, rl, true) {
             Err(e) => Memory_Exception(vaddr, e),
             Ok(_) => {
-              match mem_read(ReadWrite(Data, Data), addr, width, aq, aq & rl, true) {
+              match mem_read(AMOAccess(level, aq, rl, Data, Data), addr, width, aq, aq & rl, true) {
                 Err(e)     => Memory_Exception(vaddr, e),
                 Ok(loaded) => {
                   let result : bits('width * 8) =

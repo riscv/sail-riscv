@@ -42,8 +42,11 @@ function accessType_to_str (a) =
   match (a) {
     Read(_)            => "R",
     Write(_)           => "W",
-    ReadWrite(_, _)    => "RW",
+    AMOAccess(_)       => "A",
     InstructionFetch() => "X",
+    Cache(_)           => "C",
+    LoadReserved(_)    => "LR",
+    StoreConditional(_) => "SC",
   }
 
 overload to_str = {accessType_to_str}
