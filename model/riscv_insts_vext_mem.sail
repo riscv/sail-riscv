@@ -11,7 +11,8 @@
 /* Chapter 7: Vector Loads and Stores                                              */
 /* ******************************************************************************* */
 
-mapping nfields_int : bits(3) <-> {1, 2, 3, 4, 5, 6, 7, 8} = {
+
+mapping nfields_int : bits(3) <-> nf_t = {
   0b000     <-> 1,
   0b001     <-> 2,
   0b010     <-> 3,
@@ -67,12 +68,12 @@ union clause ast = VLSEGTYPE : (bits(3), bits(1), regidx, vlewidth, vregidx)
 mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd)                                                     if extensionEnabled(Ext_V)
   <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111 if extensionEnabled(Ext_V)
 
-val process_vlseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, int('p), int('n)) -> Retired
+val process_vlseg : forall 'b 'n 'p, ('b in {1, 2, 4, 8}) & ('n > 0). (nf_t, bits(1), vregidx, int('b), regidx, int('p), int('n)) -> Retired
 function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
-  let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
-  let width_type : word_width = size_bytes(load_width_bytes);
-  let vm_val : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vd_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
+  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+  let width_type = size_bytes(load_width_bytes);
+  let vm_val = read_vmask(num_elem, vm, zvreg);
+  let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
 
   let (result, mask) = init_masked_result(num_elem, nf * load_width_bytes * 8, EMUL_pow, vd_seg, vm_val);
 
@@ -135,13 +136,13 @@ union clause ast = VLSEGFFTYPE : (bits(3), bits(1), regidx, vlewidth, vregidx)
 mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd)                                                   if extensionEnabled(Ext_V)
   <-> nf @ 0b0 @ 0b00 @ vm @ 0b10000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111 if extensionEnabled(Ext_V)
 
-val process_vlsegff : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, int('p), int('n)) -> Retired
+val process_vlsegff : forall 'b 'n 'p, ('b in {1, 2, 4, 8}) & ('n > 0). (nf_t, bits(1), vregidx, int('b), regidx, int('p), int('n)) -> Retired
 function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
-  let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
-  let width_type : word_width = size_bytes(load_width_bytes);
-  let vm_val : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vd_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
-  let tail_ag : agtype = get_vtype_vta();
+  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+  let width_type = size_bytes(load_width_bytes);
+  let vm_val = read_vmask(num_elem, vm, zvreg);
+  let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
+  let tail_ag = get_vtype_vta();
 
   let (result, mask) = init_masked_result(num_elem, nf * load_width_bytes * 8, EMUL_pow, vd_seg, vm_val);
 
@@ -242,13 +243,13 @@ union clause ast = VSSEGTYPE : (bits(3), bits(1), regidx, vlewidth, vregidx)
 mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3)                                                     if extensionEnabled(Ext_V)
   <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111 if extensionEnabled(Ext_V)
 
-val process_vsseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, int('p), int('n)) -> Retired
+val process_vsseg : forall 'b 'n 'p, ('b in {1, 2, 4, 8}) & ('n > 0). (nf_t, bits(1), vregidx, int('b), regidx, int('p), int('n)) -> Retired
 function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) = {
-  let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let width_type : word_width = size_bytes(load_width_bytes);
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs3_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
-  let mask    : bits('n) = init_masked_source(num_elem, EMUL_pow, vm_val);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs3_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
+  let mask    = init_masked_source(num_elem, EMUL_pow, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { /* active segments */
@@ -311,13 +312,13 @@ union clause ast = VLSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, vre
 mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)                                                       if extensionEnabled(Ext_V)
   <-> nf @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111 if extensionEnabled(Ext_V)
 
-val process_vlsseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, regidx, int('p), int('n)) -> Retired
+val process_vlsseg : forall 'b 'n 'p, ('b in {1, 2, 4, 8}) & ('n > 0). (nf_t, bits(1), vregidx, int('b), regidx, regidx, int('p), int('n)) -> Retired
 function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
-  let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
-  let width_type : word_width = size_bytes(load_width_bytes);
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vd_seg  : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
-  let rs2_val : int = unsigned(get_scalar(rs2, xlen));
+  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+  let width_type = size_bytes(load_width_bytes);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_seg  = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
+  let rs2_val = unsigned(get_scalar(rs2, xlen));
 
   let (result, mask) = init_masked_result(num_elem, nf * load_width_bytes * 8, EMUL_pow, vd_seg, vm_val);
 
@@ -380,14 +381,14 @@ union clause ast = VSSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, vre
 mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)                                                       if extensionEnabled(Ext_V)
   <-> nf @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111 if extensionEnabled(Ext_V)
 
-val process_vssseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, regidx, int('p), int('n)) -> Retired
+val process_vssseg : forall 'b 'n 'p, ('b in {1, 2, 4, 8}) & ('n > 0). (nf_t, bits(1), vregidx, int('b), regidx, regidx, int('p), int('n)) -> Retired
 function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
-  let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let width_type : word_width = size_bytes(load_width_bytes);
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs3_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
-  let rs2_val : int = unsigned(get_scalar(rs2, xlen));
-  let mask    : bits('n) = init_masked_source(num_elem, EMUL_pow, vm_val);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs3_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
+  let rs2_val = unsigned(get_scalar(rs2, xlen));
+  let mask    = init_masked_source(num_elem, EMUL_pow, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { /* active segments */
@@ -450,13 +451,13 @@ union clause ast = VLUXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, v
 mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)                                                       if extensionEnabled(Ext_V)
   <-> nf @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111 if extensionEnabled(Ext_V)
 
-val process_vlxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), vregidx, int('ib), int('db), int('ip), int('dp), regidx, vregidx, int('n), int) -> Retired
+val process_vlxseg : forall 'ib 'db 'ip 'dp 'n, ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n > 0). (nf_t, bits(1), vregidx, int('ib), int('db), int('ip), int('dp), regidx, vregidx, int('n), int) -> Retired
 function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
-  let EMUL_data_reg : int = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
-  let width_type : word_width = size_bytes(EEW_data_bytes);
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vd_seg  : vector('n, bits('f * 'db * 8)) = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vd);
-  let vs2_val : vector('n, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
+  let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
+  let width_type = size_bytes(EEW_data_bytes);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_seg  = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vd);
+  let vs2_val = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
 
   let (result, mask) = init_masked_result(num_elem, nf * EEW_data_bytes * 8, EMUL_data_pow, vd_seg, vm_val);
 
@@ -546,14 +547,14 @@ union clause ast = VSUXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, v
 mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)                                                       if extensionEnabled(Ext_V)
   <-> nf @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111 if extensionEnabled(Ext_V)
 
-val process_vsxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), vregidx, int('ib), int('db), int('ip), int('dp), regidx, vregidx, int('n), int) -> Retired
+val process_vsxseg : forall 'ib 'db 'ip 'dp 'n, ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n > 0). (nf_t, bits(1), vregidx, int('ib), int('db), int('ip), int('dp), regidx, vregidx, int('n), int) -> Retired
 function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
-  let EMUL_data_reg : int = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
-  let width_type : word_width = size_bytes(EEW_data_bytes);
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs3_seg : vector('n, bits('f * 'db * 8)) = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vs3);
-  let vs2_val : vector('n, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
-  let mask    : bits('n) = init_masked_source(num_elem, EMUL_data_pow, vm_val);
+  let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
+  let width_type    = size_bytes(EEW_data_bytes);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs3_seg = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vs3);
+  let vs2_val = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
+  let mask    = init_masked_source(num_elem, EMUL_data_pow, vm_val);
 
   /* currently mop = 1 (unordered) or 3 (ordered) do the same operations */
   foreach (i from 0 to (num_elem - 1)) {
