@@ -9,3 +9,4 @@ IndentWidth: 2
 PointerAlignment: Right
 SortIncludes: Never
 AlignTrailingComments: true
+AccessModifierOffset: -2
