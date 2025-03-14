@@ -1,14 +1,7 @@
 #!/bin/bash
 
-function test_build () {
-    declare -i rc=0
-    eval $*
-    rc=$?
-    if [ $rc -ne 0 ]; then
-        echo "Failure to execute: $*"
-        exit $rc
-    fi
-}
-
-test_build make ARCH=RV32 c_emulator/riscv_sim_RV32
-test_build make ARCH=RV64 c_emulator/riscv_sim_RV64
+set -e
+: "${DOWNLOAD_GMP:=TRUE}"
+cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDOWNLOAD_GMP="${DOWNLOAD_GMP}"
+jobs=$( (nproc || sysctl -n hw.ncpu || echo 2) 2>/dev/null)
+cmake --build build -j${jobs}

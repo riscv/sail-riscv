@@ -149,10 +149,6 @@ val sys_enable_zfinx : unit -> bool
 let sys_enable_zfinx () = false
 declare ocaml target_rep function sys_enable_zfinx = `Platform.enable_zfinx`
 
-val sys_enable_next : unit -> bool
-let sys_enable_next () = true
-declare ocaml target_rep function sys_enable_next = `Platform.enable_next`
-
 val sys_enable_writable_fiom : unit -> bool
 let sys_enable_writable_fiom () = true
 declare ocaml target_rep function sys_enable_writable_fiom = `Platform.enable_writable_fiom`

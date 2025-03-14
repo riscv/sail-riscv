@@ -149,10 +149,6 @@ val sys_enable_rvc : unit -> bool
 let sys_enable_rvc () = true
 declare ocaml target_rep function sys_enable_rvc = `Platform.enable_rvc`
 
-val sys_enable_next : unit -> bool
-let sys_enable_next () = true
-declare ocaml target_rep function sys_enable_next = `Platform.enable_next`
-
 val sys_enable_fdext : unit -> bool
 let sys_enable_fdext () = true
 declare ocaml target_rep function sys_enable_fdext = `Platform.enable_fdext`
@@ -161,17 +157,17 @@ val sys_enable_zfinx : unit -> bool
 let sys_enable_zfinx () = false
 declare ocaml target_rep function sys_enable_zfinx = `Platform.enable_zfinx`
 
-val sys_enable_zilsd : unit -> bool
-let sys_enable_zilsd () = false
-declare ocaml target_rep function sys_enable_zilsd = `Platform.enable_zilsd`
-
-val sys_enable_zclsd : unit -> bool
-let sys_enable_zclsd () = false
-declare ocaml target_rep function sys_enable_zclsd = `Platform.enable_zclsd`
-
 val sys_enable_vext : unit -> bool
 let sys_enable_vext () = true
 declare ocaml target_rep function sys_enable_vext = `Platform.enable_vext`
+
+val sys_enable_zilsd : unit -> bool
+let sys_enable_zilsd () = true
+declare ocaml target_rep function sys_enable_zilsd = 'Platform.enable_zilsd'
+
+val sys_enable_zclsd : unit -> bool
+let sys_enable_zclsd () = true
+declare ocaml target_rep function sys_enable_zclsd = 'Platform.enable_zclsd'
 
 val sys_enable_writable_fiom : unit -> bool
 let sys_enable_writable_fiom () = true

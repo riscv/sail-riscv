@@ -12,7 +12,7 @@
 /* ******************************************************************************* */
 
 /* ********************** OPFVV (Floating-Point Reduction) *********************** */
-union clause ast = RFVVTYPE : (rfvvfunct6, bits(1), regidx, regidx, regidx)
+union clause ast = RFVVTYPE : (rfvvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_rfvvfunct6 : rfvvfunct6 <-> bits(6) = {
   FVV_VFREDOSUM   <-> 0b000011,
@@ -23,10 +23,10 @@ mapping encdec_rfvvfunct6 : rfvvfunct6 <-> bits(6) = {
   FVV_VFWREDUSUM  <-> 0b110001
 }
 
-mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd) if extensionEnabled(Ext_V)
-  <-> encdec_rfvvfunct6(funct6) @ vm @ vs2 @ vs1 @ 0b001 @ vd @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd)                                                       if extensionEnabled(Ext_V)
+  <-> encdec_rfvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
 
-val process_rfvv_single: forall 'n 'm 'p, 'n >= 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), int('p)) -> Retired
+val process_rfvv_single: forall 'n 'm 'p, 'n > 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), vregidx, vregidx, vregidx, int('n), int('m), int('p)) -> Retired
 function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
   let rm_3b = fcsr[FRM];
   let num_elem_vd = get_num_elem(0, SEW); /* vd regardless of LMUL setting */
@@ -40,14 +40,14 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_po
   let 'd = num_elem_vd;
   let 'm = SEW;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem_vs, vm, 0b00000);
+  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, zvreg);
   let vd_val  : vector('d, bits('m)) = read_vreg(num_elem_vd, SEW, 0, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
-  let mask    : vector('n, bool)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
+  let mask    : bits('n)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
 
   var sum : bits('m) = read_single_element(SEW, 0, vs1); /* vs1 regardless of LMUL setting */
   foreach (i from 0 to (num_elem_vs - 1)) {
-    if mask[i] then {
+    if mask[i] == bitone then {
       sum = match funct6 {
         /* currently ordered/unordered sum reductions do the same operations */
         FVV_VFREDOSUM   => fp_add(rm_3b, sum, vs2_val[i]),
@@ -62,11 +62,11 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_po
   write_single_element(SEW, 0, vd, sum);
   /* other elements in vd are treated as tail elements, currently remain unchanged */
   /* TODO: configuration support for agnostic behavior */
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
-val process_rfvv_widen: forall 'n 'm 'p, 'n >= 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), regidx, regidx, regidx, int('n), int('m), int('p)) -> Retired
+val process_rfvv_widen: forall 'n 'm 'p, 'n > 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), vregidx, vregidx, vregidx, int('n), int('m), int('p)) -> Retired
 function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
   let rm_3b          = fcsr[FRM];
   let SEW_widen      = SEW * 2;
@@ -83,14 +83,14 @@ function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : vector('n, bool)     = read_vmask(num_elem_vs, vm, 0b00000);
+  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, zvreg);
   let vd_val  : vector('d, bits('o)) = read_vreg(num_elem_vd, SEW_widen, 0, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
-  let mask    : vector('n, bool)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
+  let mask    : bits('n)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
 
   var sum : bits('o) = read_single_element(SEW_widen, 0, vs1); /* vs1 regardless of LMUL setting */
   foreach (i from 0 to (num_elem_vs - 1)) {
-    if mask[i] then {
+    if mask[i] == bitone then {
       /* currently ordered/unordered sum reductions do the same operations */
       sum = fp_add(rm_3b, sum, fp_widen(vs2_val[i]))
     }
@@ -99,7 +99,7 @@ function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow
   write_single_element(SEW_widen, 0, vd, sum);
   /* other elements in vd are treated as tail elements, currently remain unchanged */
   /* TODO: configuration support for agnostic behavior */
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 

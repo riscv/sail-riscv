@@ -6,17 +6,14 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-enum clause extension = Ext_Zbc
 function clause extensionEnabled(Ext_Zbc) = true
-
-enum clause extension = Ext_Zbkc
 function clause extensionEnabled(Ext_Zbkc) = true
 
 /* ****************************************************************** */
 union clause ast = RISCV_CLMUL : (regidx, regidx, regidx)
 
-mapping clause encdec = RISCV_CLMUL(rs2, rs1, rd) if extensionEnabled(Ext_Zbc) | extensionEnabled(Ext_Zbkc)
-  <-> 0b0000101 @ rs2 @ rs1 @ 0b001 @ rd @ 0b0110011 if extensionEnabled(Ext_Zbc) | extensionEnabled(Ext_Zbkc)
+mapping clause encdec = RISCV_CLMUL(rs2, rs1, rd)                                        if extensionEnabled(Ext_Zbc) | extensionEnabled(Ext_Zbkc)
+  <-> 0b0000101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011 if extensionEnabled(Ext_Zbc) | extensionEnabled(Ext_Zbkc)
 
 mapping clause assembly = RISCV_CLMUL(rs2, rs1, rd)
   <-> "clmul" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
@@ -34,8 +31,8 @@ function clause execute (RISCV_CLMUL(rs2, rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_CLMULH : (regidx, regidx, regidx)
 
-mapping clause encdec = RISCV_CLMULH(rs2, rs1, rd) if extensionEnabled(Ext_Zbc) | extensionEnabled(Ext_Zbkc)
-  <-> 0b0000101 @ rs2 @ rs1 @ 0b011 @ rd @ 0b0110011 if extensionEnabled(Ext_Zbc) | extensionEnabled(Ext_Zbkc)
+mapping clause encdec = RISCV_CLMULH(rs2, rs1, rd)                                       if extensionEnabled(Ext_Zbc) | extensionEnabled(Ext_Zbkc)
+  <-> 0b0000101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b011 @ encdec_reg(rd) @ 0b0110011 if extensionEnabled(Ext_Zbc) | extensionEnabled(Ext_Zbkc)
 
 mapping clause assembly = RISCV_CLMULH(rs2, rs1, rd)
   <-> "clmulh" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
@@ -53,8 +50,8 @@ function clause execute (RISCV_CLMULH(rs2, rs1, rd)) = {
 /* ****************************************************************** */
 union clause ast = RISCV_CLMULR : (regidx, regidx, regidx)
 
-mapping clause encdec = RISCV_CLMULR(rs2, rs1, rd) if extensionEnabled(Ext_Zbc)
-  <-> 0b0000101 @ rs2 @ rs1 @ 0b010 @ rd @ 0b0110011 if extensionEnabled(Ext_Zbc)
+mapping clause encdec = RISCV_CLMULR(rs2, rs1, rd)                                       if extensionEnabled(Ext_Zbc)
+  <-> 0b0000101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(rd) @ 0b0110011 if extensionEnabled(Ext_Zbc)
 
 mapping clause assembly = RISCV_CLMULR(rs2, rs1, rd)
   <-> "clmulr" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)

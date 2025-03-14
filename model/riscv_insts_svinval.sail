@@ -6,14 +6,13 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-enum clause extension = Ext_Svinval
 function clause extensionEnabled(Ext_Svinval) = sys_enable_svinval()
 
 union clause ast = SINVAL_VMA : (regidx, regidx)
 
 mapping clause encdec =
-      SINVAL_VMA(rs1, rs2)                                                  if extensionEnabled(Ext_Svinval)
-  <-> 0b0001011 @ rs2 : regidx @ rs1 : regidx @ 0b000 @ 0b00000 @ 0b1110011 if extensionEnabled(Ext_Svinval)
+      SINVAL_VMA(rs1, rs2)                                                        if extensionEnabled(Ext_Svinval)
+  <-> 0b0001011 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ 0b00000 @ 0b1110011 if extensionEnabled(Ext_Svinval)
 
 function clause execute SINVAL_VMA(rs1, rs2) = {
   execute(SFENCE_VMA(rs1, rs2))

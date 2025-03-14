@@ -23,6 +23,7 @@ extern bool rv_enable_vext;
 extern bool rv_enable_bext;
 extern bool rv_enable_zicbom;
 extern bool rv_enable_zicboz;
+extern bool rv_enable_sstc;
 extern bool rv_enable_zilsd;
 extern bool rv_enable_zclsd;
 extern bool rv_enable_writable_misa;
@@ -39,6 +40,8 @@ extern uint64_t rv_rom_base;
 extern uint64_t rv_rom_size;
 
 extern uint64_t rv_cache_block_size_exp;
+
+extern bool rv_vext_vl_use_ceil;
 
 // Provides entropy for the scalar cryptography extension.
 extern uint64_t rv_16_random_bits(void);

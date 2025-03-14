@@ -8,7 +8,6 @@
 
 // Cache Block Operations - Management
 
-enum clause extension = Ext_Zicbom
 function clause extensionEnabled(Ext_Zicbom) = sys_enable_zicbom()
 
 function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], senvcfg[CBCFE][0])
@@ -24,8 +23,8 @@ mapping encdec_cbop : cbop_zicbom <-> bits(12) = {
   CBO_INVAL <-> 0b000000000000,
 }
 
-mapping clause encdec = RISCV_ZICBOM(cbop, rs1)             if extensionEnabled(Ext_Zicbom)
-  <-> encdec_cbop(cbop) @ rs1 @ 0b010 @ 0b00000 @ 0b0001111 if extensionEnabled(Ext_Zicbom)
+mapping clause encdec = RISCV_ZICBOM(cbop, rs1)                         if extensionEnabled(Ext_Zicbom)
+  <-> encdec_cbop(cbop) @ encdec_reg(rs1) @ 0b010 @ 0b00000 @ 0b0001111 if extensionEnabled(Ext_Zicbom)
 
 mapping cbop_mnemonic : cbop_zicbom <-> string = {
   CBO_CLEAN <-> "cbo.clean",
@@ -44,15 +43,15 @@ function process_clean_inval(rs1, cbop) = {
 
   // Offset from rs1 to the beginning of the cache block. This is 0 if rs1
   // is aligned to the cache block, or negative if rs1 is misaligned.
-  let offset = (rs1_val & ~(zero_extend(ones(cache_block_size_exp)))) - rs1_val;
+  let negative_offset = (rs1_val & ~(zero_extend(ones(cache_block_size_exp)))) - rs1_val;
 
   // TODO: This is incorrect since CHERI only requires at least one byte
   // to be in bounds here, whereas `ext_data_get_addr()` checks that all bytes
   // are in bounds. We will need to add a new function, parameter or access type.
-  match ext_data_get_addr(rs1, offset, Read(Data), cache_block_size) {
+  match ext_data_get_addr(rs1, negative_offset, Read(Data), cache_block_size) {
     Ext_DataAddr_Error(e) => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) => {
-      let res: option(ExceptionType) = match translateAddr(vaddr, Read(Data)) {
+      let res : option(ExceptionType) = match translateAddr(vaddr, Read(Data)) {
         TR_Address(paddr, _) => {
           // "A cache-block management instruction is permitted to access the
           // specified cache block whenever a load instruction or store instruction
@@ -91,7 +90,11 @@ function process_clean_inval(rs1, cbop) = {
             // for fetch access and it's can't be misaligned.
             _ => internal_error(__FILE__, __LINE__, "unexpected exception for cmo.clean/inval"),
           };
-          handle_mem_exception(vaddr, e);
+          // vaddr is the aligned address, but errors report the address that
+          // was encoded in the instruction. We subtract the negative offset
+          // (add the positive offset) to get it. Normally this will be
+          // equal to rs1, but pointer masking can change that.
+          handle_mem_exception(vaddr - negative_offset, e);
           RETIRE_FAIL
         }
       }

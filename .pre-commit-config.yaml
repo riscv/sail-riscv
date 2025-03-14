@@ -1,0 +1,28 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+exclude: '^(prover_snapshots)|(generated_definitions)|(dependencies/[^/]+/)'
+minimum_pre_commit_version: 3.2.0
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+    -   id: trailing-whitespace
+        # Do not strip trailing whitespace from patches or SVG images.
+        # TODO: the objdump outputs should probably not be part of the repo.
+        exclude: '.*\.(diff|dump|patch|svg)'
+    -   id: end-of-file-fixer
+        # Do not strip trailing newlines from patches or SVG images.
+        # TODO: the objdump outputs should probably not be part of the repo.
+        exclude: '.*\.(diff|dump|patch|svg)'
+    -   id: check-yaml
+    -   id: check-added-large-files
+-   repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: 'v19.1.7'
+    hooks:
+    -   id: clang-format
+        types_or: [c, c++]  # Don't try running clang-format on .json files
+-   repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+    -   id: forbid-tabs
+        exclude: '.*\.(diff|dump|patch|svg|S|old)|Makefile*'

@@ -9,30 +9,47 @@
 // ****************************************************************
 // PTE (Page Table Entry) in PTN (Page Table Node)
 
-// PTE      MSBs      PPNs      RSW    BITs
-// Sv32      -       31..10    9..8    7..0
-// Sv39    63..54    53..10    9..8    7..0
-// Sv48    63..54    53..10    9..8    7..0
+// PTE            EXT       PPNs      RSW   FLAGS
+// Sv32            -       31..10    9..8    7..0
+// Sv39/48/57    63..54    53..10    9..8    7..0
 
-// MSBs of PTE are reserved for RV64 extensions.
-// There are not available bits on RV32, so these bits will be zeros on RV32.
+// The EXT bits of PTE are only present on RV64. They are not available on RV32
+// however their default value on RV32 is not necessarily zero.
 
 type pte_flags_bits = bits(8)
 
-// For PTW extensions (non-standard)
-type extPte = bits(64)
+// Reserved PTE bits could be used by extensions on RV64. There are
+// no such available bits on RV32.
+type pte_ext_bits = bits(10)
 
-// PRIVATE: extract msbs of PTE above the PPN
-function msbs_of_PTE(sv_params : SV_Params, pte : bits(64)) -> bits(64) = {
-  let mask : bits(64) = zero_extend(ones(sv_params.pte_msbs_size_bits));
-  (pte >> sv_params.pte_msbs_lsb_index) & mask
+bitfield PTE_Ext : pte_ext_bits = {
+  // NAPOT page table entry
+  N         : 9,
+  // Page based memory types
+  PBMT      : 8 .. 7,
+  reserved  : 6 .. 0,
 }
 
-// PRIVATE: extract PPNs of PTE
-function PPNs_of_PTE(sv_params : SV_Params, pte : bits(64)) -> bits(64) = {
-  let mask : bits(64) = zero_extend(ones(sv_params.pte_PPNs_size_bits));
-  (pte >> sv_params.pte_PPNs_lsb_index) & mask
-}
+/*
+ * On SV32, there are no reserved bits available to extensions. Therefore, by
+ * default, we initialize the PTE extension field with all zeros. However,
+ * extensions may wish, on SV39/48/56, to put flags in the reserved region of
+ * those PTEs. To avoid the need for "inhibit" bits in extensions (i.e., so
+ * that extensions can use the more common and more RISC-V flavored "enable"
+ * disposition), we allow extensions to use any constant value by overriding
+ * this default_sv32_ext_pte value.
+ */
+let default_sv32_ext_pte : pte_ext_bits = zeros()
+
+// PRIVATE: extract ext bits of PTE above the PPN.
+val ext_bits_of_PTE : forall 'pte_size, 'pte_size in {32, 64}. bits('pte_size) -> PTE_Ext
+function ext_bits_of_PTE(pte) =
+  Mk_PTE_Ext(if 'pte_size == 64 then pte[63 .. 54] else default_sv32_ext_pte)
+
+// PRIVATE: extract full PPN from a PTE
+val PPN_of_PTE : forall 'pte_size, 'pte_size in {32, 64}.
+  bits('pte_size) -> bits(if 'pte_size == 32 then 22 else 44)
+function PPN_of_PTE(pte) = if 'pte_size == 32 then pte[31 .. 10] else pte[53 .. 10]
 
 // PRIVATE: 8 LSBs of PTEs in Sv32, Sv39, Sv48 and Sv57
 bitfield PTE_Flags : pte_flags_bits = {
@@ -47,14 +64,25 @@ bitfield PTE_Flags : pte_flags_bits = {
 }
 
 // PRIVATE: check if a PTE is a pointer to next level (non-leaf)
-function pte_is_ptr(pte_flags : PTE_Flags) -> bool = (pte_flags[X] == 0b0)
-                                                      & (pte_flags[W] == 0b0)
-                                                      & (pte_flags[R] == 0b0)
+function pte_is_ptr(pte_flags : PTE_Flags) -> bool =
+    pte_flags[X] == 0b0
+  & pte_flags[W] == 0b0
+  & pte_flags[R] == 0b0
+
+// Not supported in the model yet.
+function clause extensionEnabled(Ext_Svnapot) = false
+function clause extensionEnabled(Ext_Svpbmt) = false
 
 // PRIVATE: check if a PTE is valid
-function pte_is_invalid(pte_flags : PTE_Flags) -> bool = (pte_flags[V] == 0b0)
-                                                         | ((pte_flags[W] == 0b1)
-                                                            & (pte_flags[R] == 0b0))
+function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
+    pte_flags[V] == 0b0
+  | (pte_flags[W] == 0b1 & pte_flags[R] == 0b0)
+  // Note, the following requirements depend on the privileged spec version.
+  // Early versions do not require this check. This will need to be behind
+  // a flag when the Sail model allows specifying the spec version.
+  | (pte_ext[N] != 0b0 & not(extensionEnabled(Ext_Svnapot)))
+  | (pte_ext[PBMT] != zeros() & not(extensionEnabled(Ext_Svpbmt)))
+  | pte_ext[reserved] != zeros()
 
 // ----------------
 // Check access permissions in PTE
@@ -74,7 +102,7 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
                               mxr       : bool,
                               do_sum    : bool,
                               pte_flags : PTE_Flags,
-                              ext       : extPte,
+                              ext       : PTE_Ext,
                               ext_ptw   : ext_ptw) -> PTE_Check = {
   let pte_U = pte_flags[U];
   let pte_R = pte_flags[R];
@@ -107,17 +135,17 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
 
 // Update PTE bits if needed; return new PTE if updated
 // PRIVATE
-function update_PTE_Bits(sv_params : SV_Params,
-                         pte       : bits(64),
-                         a         : AccessType(ext_access_type))
-                        -> option(bits(64)) = {
-  let pte_flags = Mk_PTE_Flags(pte [7 .. 0]);
+function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
+  pte : bits('pte_size),
+  a   : AccessType(ext_access_type),
+) -> option(bits('pte_size)) = {
+  let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
 
   // Update 'dirty' bit?
   let update_d : bool = (pte_flags[D] == 0b0)
                         & (match a {
                              Execute()       => false,
-                             Read()          => false,
+                             Read(_)         => false,
                              Write(_)        => true,
                              ReadWrite(_, _) => true
                            });
@@ -128,8 +156,8 @@ function update_PTE_Bits(sv_params : SV_Params,
     let pte_flags = [pte_flags with
                       A = 0b1,
                       D = (if update_d then 0b1 else pte_flags[D])];
-    Some(pte[63 .. 8] @ pte_flags.bits)
-  }
-  else
+    Some([pte with 7 .. 0 = pte_flags.bits])
+  } else {
     None()
+  }
 }

@@ -16,12 +16,13 @@ function step(step_no : int) -> bool = {
   /*
    * This records whether or not minstret should be incremented when
    * the instruction is retired. Since retirement occurs before CSR
-   * writes we initialise it based on mcountinhibit here, before it is
-   * potentially changed. This is also set to false if minstret is
-   * written.  See the note near the minstret declaration for more
-   * information.
+   * writes we initialise it based on mcountinhibit here, before
+   * mcountinhibit is potentially changed. We also mark minstret(h) as not
+   * having been explicitly written yet.
    */
-  minstret_increment = mcountinhibit[IR] == 0b0;
+  minstret_increment = should_inc_minstret(cur_privilege);
+  minstret_write = None();
+  minstreth_write = None();
 
   let (retired, stepped) : (Retired, bool) =
     match dispatchInterrupt(cur_privilege) {
@@ -41,7 +42,7 @@ function step(step_no : int) -> bool = {
           },
           /* standard error */
           F_Error(e, addr) => {
-            handle_mem_exception(addr, e);
+            handle_mem_exception(virtaddr(addr), e);
             (RETIRE_FAIL, false)
           },
           /* non-error cases: */
@@ -79,11 +80,10 @@ function step(step_no : int) -> bool = {
 
   tick_pc();
 
-  /* update minstret */
-  match retired {
-    RETIRE_SUCCESS => retire_instruction(),
-    RETIRE_FAIL    => ()
-  };
+  // Only increment minstret if the instruction retired successfully.
+  if retired != RETIRE_SUCCESS then minstret_increment = false;
+
+  update_minstret();
 
   /* for step extensions */
   ext_post_step_hook();
@@ -123,13 +123,17 @@ function loop () : unit -> unit = {
   }
 }
 
-/* initialize model state */
-function init_model () -> unit = {
-  init_platform (); /* devices */
-  init_sys ();      /* processor */
-  init_vmem ();     /* virtual memory */
+// Chip reset. This only does the minimum resets required by the RISC-V spec.
+function reset() -> unit = {
+  reset_sys();
+  reset_vmem();
 
-  /* initialize extensions last */
-  ext_init ();
-  ext_init_regs ();
+  // To allow model extensions (code outside this repo) to perform additional reset.
+  ext_reset();
+}
+
+// Initialize model state. This is only called once; not for every chip reset.
+function init_model() -> unit = {
+  init_platform();
+  reset();
 }

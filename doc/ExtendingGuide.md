@@ -1,6 +1,11 @@
 Extending the model
 ===================
 
+> [!WARNING]
+> This document is undergoing updates and is not fully up to date
+> with the current state of the model. Please refer to the
+> [Sail code](../model/) itself for the most up to date information.
+
 Changing the register representation
 ------------------------------------
 

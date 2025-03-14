@@ -8,9 +8,6 @@
 
 /* Basic type and function definitions used pervasively in the model. */
 
-/* ISA extension names as enums */
-scattered enum extension
-
 // Function used to determine if an extension is enabled in the current configuration.
 // This means an extension is implemented & supported, *and* any necessary bits
 // are set in the relevant CSRs (misa, mstatus, etc.) to enable its use. It is possible
@@ -31,26 +28,32 @@ let xlen_min_signed = 0 - 2 ^ (xlen - 1)
 type half = bits(16)
 type word = bits(32)
 
+type pagesize_bits : Int = 12
+let  pagesize_bits = sizeof(pagesize_bits)
+
 /* register identifiers */
 
-type regidx  = bits(5)
-type cregidx = bits(3)    /* identifiers in RVC instructions */
-type csreg   = bits(12)   /* CSR addressing */
+newtype regidx = Regidx : bits(5)  /* uncompressed register identifiers */
+newtype cregidx = Cregidx : bits(3) /* identifiers in RVC instructions */
+type csreg = bits(12)  /* CSR addressing */
+
+function regidx_offset(Regidx(r) : regidx, o : bits(5)) -> regidx = Regidx(r + o)
+function regidx_bits (Regidx(b) : regidx) -> bits(5) = b
 
 /* register file indexing */
 
-type regno = range(0, 31)
+newtype regno = Regno : range(0, 31)
 
-function regidx_to_regno (b : regidx) -> regno = unsigned(b)
+function regidx_to_regno (Regidx(b) : regidx) -> regno = Regno(unsigned(b))
 
 /* mapping RVC register indices into normal indices */
 val creg2reg_idx : cregidx -> regidx
-function creg2reg_idx(creg) = 0b01 @ creg
+function creg2reg_idx(Cregidx(i)) = Regidx(0b01 @ i)
 
 /* some architecture and ABI relevant register identifiers */
-let zreg : regidx = 0b00000  /* x0, zero register  */
-let ra   : regidx = 0b00001  /* x1, return address */
-let sp   : regidx = 0b00010  /* x2, stack pointer  */
+let zreg : regidx = Regidx(0b00000) /* x0, zero register  */
+let ra   : regidx = Regidx(0b00001) /* x1, return address */
+let sp   : regidx = Regidx(0b00010) /* x2, stack pointer  */
 
 /* instruction fields */
 
@@ -63,20 +66,13 @@ type amo    = bits(1)  /* amo opcode flags */
 
 enum Architecture = {RV32, RV64, RV128}
 type arch_xlen = bits(2)
-function architecture(a : arch_xlen) -> option(Architecture) =
-  match (a) {
-    0b01 => Some(RV32),
-    0b10 => Some(RV64),
-    0b11 => Some(RV128),
-    _    => None()
-  }
 
-function arch_to_bits(a : Architecture) -> arch_xlen =
-  match (a) {
-    RV32  => 0b01,
-    RV64  => 0b10,
-    RV128 => 0b11
-  }
+mapping architecture : Architecture <-> arch_xlen = {
+  RV32  <-> 0b01,
+  RV64  <-> 0b10,
+  RV128 <-> 0b11,
+  backwards 0b00 => internal_error(__FILE__, __LINE__, "architecture(0b00) is invalid")
+}
 
 /* privilege levels */
 
@@ -295,14 +291,15 @@ function extStatus_of_bits(e) =
 /* supervisor-level address translation modes */
 
 type satp_mode = bits(4)
-enum SATPMode = {Sbare, Sv32, Sv39, Sv48}
+enum SATPMode = {Bare, Sv32, Sv39, Sv48, Sv57}
 
-function satp64Mode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
+function satpMode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
   match (a, m) {
-    (_,    0x0) => Some(Sbare),
+    (_,    0x0) => Some(Bare),
     (RV32, 0x1) => Some(Sv32),
     (RV64, 0x8) => Some(Sv39),
     (RV64, 0x9) => Some(Sv48),
+    (RV64, 0xA) => Some(Sv57),
     (_, _)      => None()
   }
 
@@ -378,18 +375,4 @@ struct mul_op = {
   high       : bool,
   signed_rs1 : bool,
   signed_rs2 : bool
-}
-
-/*!
- * Raise an internal error reporting that width w is invalid for access kind, k,
- * and current xlen. The file name and line number should be passed in as the
- * first two arguments using the __FILE__ and __LINE__ built-in macros.
- * This is mainly used to supress Sail warnings about incomplete matches and
- * should be unreachable. See https://github.com/riscv/sail-riscv/issues/194
- * and https://github.com/riscv/sail-riscv/pull/197 .
- */
-val report_invalid_width : forall ('a : Type). (string, int, word_width, string) -> 'a
-function report_invalid_width(f , l, w, k) -> 'a = {
-  internal_error(f, l, "Invalid width, " ^ size_mnemonic(w) ^ ", for " ^ k ^
-     " with xlen=" ^ dec_str(xlen))
 }

@@ -30,8 +30,8 @@ val elf_entry = pure {
 val plat_cache_block_size_exp = pure {c: "plat_cache_block_size_exp", interpreter: "Platform.cache_block_size_exp", lem: "plat_cache_block_size_exp"} : unit -> range(0, 12)
 
 /* Main memory */
-val plat_ram_base = pure {c: "plat_ram_base", interpreter: "Platform.dram_base", lem: "plat_ram_base"} : unit -> xlenbits
-val plat_ram_size = pure {c: "plat_ram_size", interpreter: "Platform.dram_size", lem: "plat_ram_size"} : unit -> xlenbits
+val plat_ram_base = pure {c: "plat_ram_base", interpreter: "Platform.dram_base", lem: "plat_ram_base"} : unit -> physaddrbits
+val plat_ram_size = pure {c: "plat_ram_size", interpreter: "Platform.dram_size", lem: "plat_ram_size"} : unit -> physaddrbits
 
 /* whether the MMU should update dirty bits in PTEs */
 val plat_enable_dirty_update = pure {interpreter: "Platform.enable_dirty_update",
@@ -51,27 +51,21 @@ val plat_mtval_has_illegal_inst_bits = pure {interpreter: "Platform.mtval_has_il
                                              lem: "plat_mtval_has_illegal_inst_bits"} : unit -> bool
 
 /* ROM holding reset vector and device-tree DTB */
-val plat_rom_base   = pure {interpreter: "Platform.rom_base", c: "plat_rom_base", lem: "plat_rom_base"} : unit -> xlenbits
-val plat_rom_size   = pure {interpreter: "Platform.rom_size", c: "plat_rom_size", lem: "plat_rom_size"} : unit -> xlenbits
+val plat_rom_base   = pure {interpreter: "Platform.rom_base", c: "plat_rom_base", lem: "plat_rom_base"} : unit -> physaddrbits
+val plat_rom_size   = pure {interpreter: "Platform.rom_size", c: "plat_rom_size", lem: "plat_rom_size"} : unit -> physaddrbits
 
 /* Location of clock-interface, which should match with the spec in the DTB */
-val plat_clint_base = pure {interpreter: "Platform.clint_base", c: "plat_clint_base", lem: "plat_clint_base"} : unit -> xlenbits
-val plat_clint_size = pure {interpreter: "Platform.clint_size", c: "plat_clint_size", lem: "plat_clint_size"} : unit -> xlenbits
+val plat_clint_base = pure {interpreter: "Platform.clint_base", c: "plat_clint_base", lem: "plat_clint_base"} : unit -> physaddrbits
+val plat_clint_size = pure {interpreter: "Platform.clint_size", c: "plat_clint_size", lem: "plat_clint_size"} : unit -> physaddrbits
 
 /* Location of HTIF ports */
-val plat_htif_tohost = pure {c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> xlenbits
-function plat_htif_tohost () = to_bits(xlen, elf_tohost ())
+val plat_htif_tohost = pure {c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> physaddrbits
+function plat_htif_tohost () = to_bits(physaddrbits_len, elf_tohost ())
 // todo: fromhost
-
-val phys_mem_segments : unit -> list((xlenbits, xlenbits))
-function phys_mem_segments() =
-  (plat_rom_base (), plat_rom_size ()) ::
-  (plat_ram_base (), plat_ram_size ()) ::
-  [||]
 
 /* Physical memory map predicates */
 
-function within_phys_mem forall 'n, 'n <= max_mem_access. (addr : xlenbits, width : int('n)) -> bool = {
+function within_phys_mem forall 'n, 'n <= max_mem_access. (physaddr(addr) : physaddr, width : int('n)) -> bool = {
   /* To avoid overflow issues when physical memory extends to the end
    * of the addressable range, we need to perform address bound checks
    * on unsigned unbounded integers.
@@ -99,7 +93,7 @@ function within_phys_mem forall 'n, 'n <= max_mem_access. (addr : xlenbits, widt
   }
 }
 
-function within_clint forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : int('n)) -> bool = {
+function within_clint forall 'n, 0 < 'n <= max_mem_access . (physaddr(addr) : physaddr, width : int('n)) -> bool = {
   /* To avoid overflow issues when physical memory extends to the end
    * of the addressable range, we need to perform address bound checks
    * on unsigned unbounded integers.
@@ -111,18 +105,23 @@ function within_clint forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, wi
   & (addr_int + sizeof('n)) <= (clint_base_int + clint_size_int)
 }
 
-function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : int('n)) -> bool =
+function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (physaddr(addr) : physaddr, width : int('n)) -> bool =
     plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4)
 
-function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : int('n)) -> bool =
+function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (physaddr(addr) : physaddr, width : int('n)) -> bool =
     plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4)
 
 /* CLINT (Core Local Interruptor), based on Spike. */
 
 val plat_insns_per_tick = pure {interpreter: "Platform.insns_per_tick", c: "plat_insns_per_tick", lem: "plat_insns_per_tick"} : unit -> int
 
-// assumes a single hart, since this typically is a vector of per-hart registers.
-register mtimecmp : bits(64)  // memory-mapped internal clint register.
+// Each hart has a memory-mapped mtimecmp register. Typically these are
+// exposed as an array in CLINT. The CLINT implementation here is currently
+// hard-coded to use the mtimecmp for hart 0.
+register mtimecmp : bits(64)
+
+// Unlike mtimecmp, stimecmp is a real CSR; not memory mapped.
+register stimecmp : bits(64)
 
 /* CLINT memory-mapped IO */
 
@@ -138,139 +137,137 @@ register mtimecmp : bits(64)  // memory-mapped internal clint register.
  * bffc mtime hi
  */
 
-let MSIP_BASE        : xlenbits = zero_extend(0x00000)
-let MTIMECMP_BASE    : xlenbits = zero_extend(0x04000)
-let MTIMECMP_BASE_HI : xlenbits = zero_extend(0x04004)
-let MTIME_BASE       : xlenbits = zero_extend(0x0bff8)
-let MTIME_BASE_HI    : xlenbits = zero_extend(0x0bffc)
+let MSIP_BASE        : physaddrbits = zero_extend(0x00000)
+let MTIMECMP_BASE    : physaddrbits = zero_extend(0x04000)
+let MTIMECMP_BASE_HI : physaddrbits = zero_extend(0x04004)
+let MTIME_BASE       : physaddrbits = zero_extend(0x0bff8)
+let MTIME_BASE_HI    : physaddrbits = zero_extend(0x0bffc)
 
-val clint_load : forall 'n, 'n > 0. (AccessType(ext_access_type), xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n))
-function clint_load(t, addr, width) = {
+val clint_load : forall 'n, 'n > 0. (AccessType(ext_access_type), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
+function clint_load(t, physaddr(addr), width) = {
   let addr = addr - plat_clint_base ();
   /* FIXME: For now, only allow exact aligned access. */
   if addr == MSIP_BASE & ('n == 8 | 'n == 4)
   then {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mip[MSI]));
-    MemValue(sail_zero_extend(mip[MSI], sizeof(8 * 'n)))
+    Ok(zero_extend(sizeof(8 * 'n), mip[MSI]))
   }
   else if addr == MTIMECMP_BASE & ('n == 4)
   then {
     if   get_config_print_platform()
     then print_platform("clint<4>[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtimecmp[31..0]));
     /* FIXME: Redundant zero_extend currently required by Lem backend */
-    MemValue(sail_zero_extend(mtimecmp[31..0], 32))
+    Ok(zero_extend(32, mtimecmp[31..0]))
   }
   else if addr == MTIMECMP_BASE & ('n == 8)
   then {
     if   get_config_print_platform()
     then print_platform("clint<8>[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtimecmp));
     /* FIXME: Redundant zero_extend currently required by Lem backend */
-    MemValue(sail_zero_extend(mtimecmp, 64))
+    Ok(zero_extend(64, mtimecmp))
   }
   else if addr == MTIMECMP_BASE_HI & ('n == 4)
   then {
     if   get_config_print_platform()
     then print_platform("clint-hi<4>[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtimecmp[63..32]));
     /* FIXME: Redundant zero_extend currently required by Lem backend */
-    MemValue(sail_zero_extend(mtimecmp[63..32], 32))
+    Ok(zero_extend(32, mtimecmp[63..32]))
   }
   else if addr == MTIME_BASE & ('n == 4)
   then {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtime));
-    MemValue(sail_zero_extend(mtime[31..0], 32))
+    Ok(zero_extend(32, mtime[31..0]))
   }
   else if addr == MTIME_BASE & ('n == 8)
   then {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtime));
-    MemValue(sail_zero_extend(mtime, 64))
+    Ok(zero_extend(64, mtime))
   }
   else if addr == MTIME_BASE_HI & ('n == 4)
   then {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] -> " ^ BitStr(mtime));
-    MemValue(sail_zero_extend(mtime[63..32], 32))
+    Ok(zero_extend(32, mtime[63..32]))
   }
   else {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] -> <not-mapped>");
     match t {
-      Execute()  => MemException(E_Fetch_Access_Fault()),
-      Read(Data) => MemException(E_Load_Access_Fault()),
-      _          => MemException(E_SAMO_Access_Fault())
+      Execute()  => Err(E_Fetch_Access_Fault()),
+      Read(Data) => Err(E_Load_Access_Fault()),
+      _          => Err(E_SAMO_Access_Fault())
     }
   }
 }
 
 function clint_dispatch() -> unit = {
-  if   get_config_print_platform()
-  then print_platform("clint::tick mtime <- " ^ BitStr(mtime));
-  mip[MTI] = 0b0;
-  if mtimecmp <=_u mtime then {
-    if   get_config_print_platform()
-    then print_platform(" clint timer pending at mtime " ^ BitStr(mtime));
-    mip[MTI] = 0b1
-  }
+  mip[MTI] = bool_to_bits(mtimecmp <=_u mtime);
+  if extensionEnabled(Ext_Sstc) then {
+    mip[STI] = bool_to_bits(stimecmp <=_u mtime);
+  };
+  if get_config_print_platform()
+  then print_platform("clint mtime " ^ BitStr(mtime) ^ " (mip.MTI <- " ^ BitStr(mip[MTI]) ^
+    (if extensionEnabled(Ext_Sstc) then ", mip.STI <- " ^ BitStr(mip[STI]) else "") ^ ")");
 }
 
-/* The rreg effect is due to checking mtime. */
-val clint_store: forall 'n, 'n > 0. (xlenbits, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
-function clint_store(addr, width, data) = {
+val clint_store: forall 'n, 'n > 0. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
+function clint_store(physaddr(addr), width, data) = {
   let addr = addr - plat_clint_base ();
   if addr == MSIP_BASE & ('n == 8 | 'n == 4) then {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mip.MSI <- " ^ BitStr(data[0]) ^ ")");
     mip[MSI] = [data[0]];
     clint_dispatch();
-    MemValue(true)
+    Ok(true)
   } else if addr == MTIMECMP_BASE & 'n == 8 then {
     if   get_config_print_platform()
     then print_platform("clint<8>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtimecmp)");
-    mtimecmp = sail_zero_extend(data, 64); /* FIXME: Redundant zero_extend currently required by Lem backend */
+    mtimecmp = zero_extend(64, data); /* FIXME: Redundant zero_extend currently required by Lem backend */
     clint_dispatch();
-    MemValue(true)
+    Ok(true)
   } else if addr == MTIMECMP_BASE & 'n == 4 then {
     if   get_config_print_platform()
     then print_platform("clint<4>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtimecmp)");
-    mtimecmp = vector_update_subrange(mtimecmp, 31, 0, sail_zero_extend(data, 32));  /* FIXME: Redundant zero_extend currently required by Lem backend */
+    mtimecmp = vector_update_subrange(mtimecmp, 31, 0, zero_extend(32, data));  /* FIXME: Redundant zero_extend currently required by Lem backend */
     clint_dispatch();
-    MemValue(true)
+    Ok(true)
   } else if addr == MTIMECMP_BASE_HI & 'n == 4 then {
     if   get_config_print_platform()
     then print_platform("clint<4>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtimecmp)");
-    mtimecmp = vector_update_subrange(mtimecmp, 63, 32, sail_zero_extend(data, 32)); /* FIXME: Redundant zero_extend currently required by Lem backend */
+    mtimecmp = vector_update_subrange(mtimecmp, 63, 32, zero_extend(32, data)); /* FIXME: Redundant zero_extend currently required by Lem backend */
     clint_dispatch();
-    MemValue(true)
+    Ok(true)
   } else if addr == MTIME_BASE & 'n == 8 then {
     if   get_config_print_platform()
     then print_platform("clint<8>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtime)");
     mtime = data;
     clint_dispatch();
-    MemValue(true)
+    Ok(true)
   } else if addr == MTIME_BASE & 'n == 4 then {
     if   get_config_print_platform()
     then print_platform("clint<4>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtime)");
     mtime[31 .. 0] = data;
     clint_dispatch();
-    MemValue(true)
+    Ok(true)
   } else if addr == MTIME_BASE_HI & 'n == 4 then {
     if   get_config_print_platform()
     then print_platform("clint<4>[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (mtime)");
     mtime[63 .. 32] = data;
     clint_dispatch();
-    MemValue(true)
+    Ok(true)
   } else {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] <- " ^ BitStr(data) ^ " (<unmapped>)");
-    MemException(E_SAMO_Access_Fault())
+    Err(E_SAMO_Access_Fault())
   }
 }
 
 val tick_clock : unit -> unit
 function tick_clock() = {
-  if   mcountinhibit[CY] == 0b0
+  if   should_inc_mcycle(cur_privilege)
   then mcycle = mcycle + 1;
 
   mtime  = mtime  + 1;
@@ -317,27 +314,26 @@ function reset_htif () -> unit = {
  * dispatched the address.
  */
 
-val htif_load : forall 'n, 'n > 0. (AccessType(ext_access_type), xlenbits, int('n)) -> MemoryOpResult(bits(8 * 'n))
-function htif_load(t, paddr, width) = {
+val htif_load : forall 'n, 'n > 0. (AccessType(ext_access_type), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
+function htif_load(t, physaddr(paddr), width) = {
   if   get_config_print_platform()
   then print_platform("htif[" ^ BitStr(paddr) ^ "] -> " ^ BitStr(htif_tohost));
   /* FIXME: For now, only allow the expected access widths. */
   if      width == 8 & (paddr == plat_htif_tohost())
-  then    MemValue(sail_zero_extend(htif_tohost, 64))         /* FIXME: Redundant zero_extend currently required by Lem backend */
+  then    Ok(zero_extend(64, htif_tohost))         /* FIXME: Redundant zero_extend currently required by Lem backend */
   else if width == 4 & paddr == plat_htif_tohost()
-  then    MemValue(sail_zero_extend(htif_tohost[31..0], 32))  /* FIXME: Redundant zero_extend currently required by Lem backend */
+  then    Ok(zero_extend(32, htif_tohost[31..0]))  /* FIXME: Redundant zero_extend currently required by Lem backend */
   else if width == 4 & paddr == plat_htif_tohost() + 4
-  then    MemValue(sail_zero_extend(htif_tohost[63..32], 32)) /* FIXME: Redundant zero_extend currently required by Lem backend */
+  then    Ok(zero_extend(32, htif_tohost[63..32])) /* FIXME: Redundant zero_extend currently required by Lem backend */
   else match t {
-    Execute()  => MemException(E_Fetch_Access_Fault()),
-    Read(Data) => MemException(E_Load_Access_Fault()),
-    _          => MemException(E_SAMO_Access_Fault())
+    Execute()  => Err(E_Fetch_Access_Fault()),
+    Read(Data) => Err(E_Load_Access_Fault()),
+    _          => Err(E_SAMO_Access_Fault())
   }
 }
 
-/* The rreg,wreg effects are an artifact of using 'register' to implement device state. */
-val htif_store: forall 'n, 0 < 'n <= 8. (xlenbits, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
-function htif_store(paddr, width, data) = {
+val htif_store: forall 'n, 0 < 'n <= 8. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
+function htif_store(physaddr(paddr), width, data) = {
   if   get_config_print_platform()
   then print_platform("htif[" ^ BitStr(paddr) ^ "] <- " ^ BitStr(data));
   /* Store the written value so that we can ack it later. */
@@ -373,7 +369,7 @@ function htif_store(paddr, width, data) = {
         if   cmd[payload][0] == bitone
         then {
              htif_done = true;
-             htif_exit_code = (sail_zero_extend(cmd[payload], 64) >> 1)
+             htif_exit_code = (zero_extend(64, cmd[payload]) >> 1)
         }
         else ()
       },
@@ -391,7 +387,7 @@ function htif_store(paddr, width, data) = {
       d => print("htif-???? cmd: " ^ BitStr(data))
     }
   };
-  MemValue(true)
+  Ok(true)
 }
 
 val htif_tick : unit -> unit
@@ -403,36 +399,36 @@ function htif_tick() = {
 
 /* Top-level MMIO dispatch */
 $ifndef RVFI_DII
-function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : int('n)) -> bool =
+function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
   within_clint(addr, width) | (within_htif_readable(addr, width) & 1 <= 'n)
 $else
-function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : int('n)) -> bool = false
+function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool = false
 $endif
 
 $ifndef RVFI_DII
-function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : int('n)) -> bool =
+function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
   within_clint(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
 $else
-function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : xlenbits, width : int('n)) -> bool = false
+function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool = false
 $endif
 
-function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : xlenbits, width : int('n)) -> MemoryOpResult(bits(8 * 'n)) =
+function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : physaddr, width : int('n)) -> MemoryOpResult(bits(8 * 'n)) =
   if   within_clint(paddr, width)
   then clint_load(t, paddr, width)
   else if within_htif_readable(paddr, width) & (1 <= 'n)
   then htif_load(t, paddr, width)
   else match t {
-    Execute()  => MemException(E_Fetch_Access_Fault()),
-    Read(Data) => MemException(E_Load_Access_Fault()),
-    _          => MemException(E_SAMO_Access_Fault())
+    Execute()  => Err(E_Fetch_Access_Fault()),
+    Read(Data) => Err(E_Load_Access_Fault()),
+    _          => Err(E_SAMO_Access_Fault())
   }
 
-function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : xlenbits, width : int('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
+function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : physaddr, width : int('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
   if   within_clint(paddr, width)
   then clint_store(paddr, width, data)
   else if within_htif_writable(paddr, width) & 'n <= 8
   then htif_store(paddr, width, data)
-  else MemException(E_SAMO_Access_Fault())
+  else Err(E_SAMO_Access_Fault())
 
 /* Platform initialization and ticking. */
 
@@ -461,13 +457,4 @@ function handle_illegal() -> unit = {
 }
 
 /* Platform-specific wait-for-interrupt */
-
-function platform_wfi() -> unit = {
-  /* speed execution by getting the timer to fire at the next instruction,
-   * since we currently don't have any other devices raising interrupts.
-   */
-  if mtime <_u mtimecmp then {
-    mtime  = mtimecmp;
-    mcycle = mtimecmp;
-  }
-}
+function platform_wfi() -> unit = ()
