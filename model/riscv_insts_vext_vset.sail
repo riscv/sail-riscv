@@ -73,8 +73,9 @@ function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
 /* *********************************** vsetvli *********************************** */
 union clause ast = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
 
-mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd)                                if extensionEnabled(Ext_V)
-  <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd)
+  <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
+  when extensionEnabled(Ext_V)
 
 function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   let LMUL_pow_ori  = get_lmul_pow();
@@ -124,8 +125,9 @@ mapping clause assembly = VSETVLI(ma, ta, sew, lmul, rs1, rd)
 /* *********************************** vsetvl ************************************ */
 union clause ast = VSETVL : (regidx, regidx, regidx)
 
-mapping clause encdec = VSETVL(rs2, rs1, rd)                                             if extensionEnabled(Ext_V)
-  <-> 0b1000000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VSETVL(rs2, rs1, rd)
+  <-> 0b1000000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
+  when extensionEnabled(Ext_V)
 
 function clause execute VSETVL(rs2, rs1, rd) = {
   let LMUL_pow_ori  = get_lmul_pow();
@@ -175,8 +177,9 @@ mapping clause assembly = VSETVL(rs2, rs1, rd)
 /* ********************************** vsetivli *********************************** */
 union clause ast = VSETIVLI : ( bits(1), bits(1), bits(3), bits(3), bits(5), regidx)
 
-mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd)                   if extensionEnabled(Ext_V)
-  <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ encdec_reg(rd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
+  <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ encdec_reg(rd) @ 0b1010111
+  when extensionEnabled(Ext_V)
 
 function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   /* set vtype */

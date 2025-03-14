@@ -19,8 +19,9 @@ mapping encdec_rivvfunct6 : rivvfunct6 <-> bits(6) = {
   IVV_VWREDSUM    <-> 0b110001
 }
 
-mapping clause encdec = RIVVTYPE(funct6, vm, vs2, vs1, vd)                                                       if extensionEnabled(Ext_V)
-  <-> encdec_rivvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = RIVVTYPE(funct6, vm, vs2, vs1, vd)
+  <-> encdec_rivvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
+  when extensionEnabled(Ext_V)
 
 function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -84,8 +85,9 @@ mapping encdec_rmvvfunct6 : rmvvfunct6 <-> bits(6) = {
   MVV_VREDMAX     <-> 0b000111
 }
 
-mapping clause encdec = RMVVTYPE(funct6, vm, vs2, vs1, vd)                                                       if extensionEnabled(Ext_V)
-  <-> encdec_rmvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = RMVVTYPE(funct6, vm, vs2, vs1, vd)
+  <-> encdec_rmvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
+  when extensionEnabled(Ext_V)
 
 function clause execute(RMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();

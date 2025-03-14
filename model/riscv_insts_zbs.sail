@@ -11,17 +11,21 @@ function clause extensionEnabled(Ext_Zbs) = true | extensionEnabled(Ext_B)
 /* ****************************************************************** */
 union clause ast = ZBS_IOP : (bits(6), regidx, regidx, biop_zbs)
 
-mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BCLRI)                  if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
-  <-> 0b010010 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011 if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
+mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BCLRI)
+  <-> 0b010010 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
+  when extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
 
-mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BEXTI)                  if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
-  <-> 0b010010 @ shamt @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011 if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
+mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BEXTI)
+  <-> 0b010010 @ shamt @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
+  when extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
 
-mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BINVI)                  if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
-  <-> 0b011010 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011 if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
+mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BINVI)
+  <-> 0b011010 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
+  when extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
 
-mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BSETI)                  if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
-  <-> 0b001010 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011 if extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
+mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BSETI)
+  <-> 0b001010 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
+  when extensionEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
 
 mapping zbs_iop_mnemonic : biop_zbs <-> string = {
   RISCV_BCLRI <-> "bclri",
@@ -51,17 +55,21 @@ function clause execute (ZBS_IOP(shamt, rs1, rd, op)) = {
 /* ****************************************************************** */
 union clause ast = ZBS_RTYPE : (regidx, regidx, regidx, brop_zbs)
 
-mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BCLR)                              if extensionEnabled(Ext_Zbs)
-  <-> 0b0100100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011 if extensionEnabled(Ext_Zbs)
+mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BCLR)
+  <-> 0b0100100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011
+  when extensionEnabled(Ext_Zbs)
 
-mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BEXT)                              if extensionEnabled(Ext_Zbs)
-  <-> 0b0100100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0110011 if extensionEnabled(Ext_Zbs)
+mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BEXT)
+  <-> 0b0100100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0110011
+  when extensionEnabled(Ext_Zbs)
 
-mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BINV)                              if extensionEnabled(Ext_Zbs)
-  <-> 0b0110100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011 if extensionEnabled(Ext_Zbs)
+mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BINV)
+  <-> 0b0110100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011
+  when extensionEnabled(Ext_Zbs)
 
-mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BSET)                              if extensionEnabled(Ext_Zbs)
-  <-> 0b0010100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011 if extensionEnabled(Ext_Zbs)
+mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BSET)
+  <-> 0b0010100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011
+  when extensionEnabled(Ext_Zbs)
 
 mapping zbs_rtype_mnemonic : brop_zbs <-> string = {
   RISCV_BCLR    <-> "bclr",
