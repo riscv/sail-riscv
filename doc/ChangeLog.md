@@ -9,6 +9,7 @@
 
   - Zihintntl
   - Zihintpause
+  - Svrsw60t59b
 
 - Switch to ELFIO for ELF parsing, and add symbolization in the
   instruction log output. Each instruction will print

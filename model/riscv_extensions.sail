@@ -348,18 +348,6 @@ function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supporte
 enum clause extension = Ext_Sstc
 mapping clause extensionName = Ext_Sstc <-> "sstc"
 function clause hartSupports(Ext_Sstc) = config extensions.Sstc.supported
-// Fine-Grained Address-Translation Cache Invalidation
-enum clause extension = Ext_Svinval
-mapping clause extensionName = Ext_Svinval <-> "svinval"
-function clause hartSupports(Ext_Svinval) = config extensions.Svinval.supported
-// NAPOT Translation Contiguity
-enum clause extension = Ext_Svnapot
-mapping clause extensionName = Ext_Svnapot <-> "svnapot"
-function clause hartSupports(Ext_Svnapot) = false // Not supported yet
-// Page-Based Memory Types
-enum clause extension = Ext_Svpbmt
-mapping clause extensionName = Ext_Svpbmt <-> "svpbmt"
-function clause hartSupports(Ext_Svpbmt) = false // Not supported yet
 
 // Supervisor-Level Address Translation Modes
 enum clause extension = Ext_Svbare
@@ -377,6 +365,23 @@ function clause hartSupports(Ext_Sv48) = config extensions.Sv48.supported : bool
 enum clause extension = Ext_Sv57
 mapping clause extensionName = Ext_Sv57 <-> "sv57"
 function clause hartSupports(Ext_Sv57) = config extensions.Sv57.supported : bool & (xlen == 64)
+
+// Fine-Grained Address-Translation Cache Invalidation
+enum clause extension = Ext_Svinval
+mapping clause extensionName = Ext_Svinval <-> "svinval"
+function clause hartSupports(Ext_Svinval) = config extensions.Svinval.supported
+// NAPOT Translation Contiguity
+enum clause extension = Ext_Svnapot
+mapping clause extensionName = Ext_Svnapot <-> "svnapot"
+function clause hartSupports(Ext_Svnapot) = false // Not supported yet
+// Page-Based Memory Types
+enum clause extension = Ext_Svpbmt
+mapping clause extensionName = Ext_Svpbmt <-> "svpbmt"
+function clause hartSupports(Ext_Svpbmt) = false // Not supported yet
+// PTE Reserved-for-Software Bits 60-59
+enum clause extension = Ext_Svrsw60t59b
+mapping clause extensionName = Ext_Svrsw60t59b <-> "svrsw60t59b"
+function clause hartSupports(Ext_Svrsw60t59b) = config extensions.Svrsw60t59b.supported
 
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
@@ -481,6 +486,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Svinval,
   Ext_Svnapot,
   Ext_Svpbmt,
+  Ext_Svrsw60t59b,
 
   // Hypervisor extensions, ordered alphabetically.
 
