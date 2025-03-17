@@ -57,8 +57,8 @@ function clause extensionEnabled(Ext_Zalrsc) = misa[A] == 0b1
 
 union clause ast = LOADRES : (bool, bool, regidx, word_width, regidx)
 
-mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)                                                if extensionEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
-  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if extensionEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
+mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)                                                                        if extensionEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
+  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111 if extensionEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
 
 /* We could set load-reservations on physical or virtual addresses.
  * However most chips (especially multi-core) will use physical addresses.
@@ -105,8 +105,8 @@ mapping clause assembly = LOADRES(aq, rl, rs1, size, rd)
 /* ****************************************************************** */
 union clause ast = STORECON : (bool, bool, regidx, regidx, word_width, regidx)
 
-mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)                                      if extensionEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
-  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if extensionEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
+mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)                                                                          if extensionEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
+  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111 if extensionEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful. This may need revisiting. */
 function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
@@ -142,8 +142,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
                 /* cannot happen in rmem */
                 X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS
               } else {
-                let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
-                match eares {
+                match mem_write_ea(addr, width_bytes, aq & rl, rl, true) {
                   Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
                   Ok(_)  => {
                     let rs2_val = X(rs2);
@@ -183,8 +182,8 @@ mapping encdec_amoop : amoop <-> bits(5) = {
   AMOMAXU <-> 0b11100
 }
 
-mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)                                                if extensionEnabled(Ext_Zaamo) & amo_width_valid(size)
-  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ rs2 @ rs1 @ 0b0 @ size_enc(size) @ rd @ 0b0101111 if extensionEnabled(Ext_Zaamo) & amo_width_valid(size)
+mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)                                                                                    if extensionEnabled(Ext_Zaamo) & amo_width_valid(size)
+  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111 if extensionEnabled(Ext_Zaamo) & amo_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
@@ -205,9 +204,8 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
       else match translateAddr(vaddr, ReadWrite(Data, Data)) {
         TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, _) => {
-          let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
           let rs2_val = X(rs2)[width_bytes * 8 - 1 .. 0];
-          match eares {
+          match mem_write_ea(addr, width_bytes, aq & rl, rl, true) {
             Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
             Ok(_) => {
               match mem_read(ReadWrite(Data, Data), addr, width_bytes, aq, aq & rl, true) {

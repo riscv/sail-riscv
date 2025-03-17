@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(sail_riscv)
 
+set(SAIL_REQUIRED_VER 0.19)
+
 # Make users explicitly pick a build type so they don't get
 # surprised when the default gives a very slow emulator.
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -33,6 +35,11 @@ if (LINKER_SUPPORTS_NO_UNDEFINED)
     add_link_options("-Wl,--no-undefined")
 endif()
 
+add_compile_options(-Wall -Wextra -Wno-sign-compare)
+include(CheckCCompilerFlag)
+check_c_compiler_flag(-Wself-assign HAVE_WSELF_ASSIGN)
+check_c_compiler_flag(-Wimplicit-fallthrough HAVE_WIMPLICIT_FALLTHROUGH)
+
 # Extra CMake files.
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
@@ -46,23 +53,22 @@ if (STATIC)
         list(INSERT CMAKE_FIND_LIBRARY_SUFFIXES 0 .lib .a)
     else()
         set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+        check_linker_flag(CXX "-static-libstdc++" HAVE_STATIC_LIBSTDCXX)
+        if (NOT HAVE_STATIC_LIBSTDCXX)
+            message(FATAL_ERROR "Building with -DSTATIC=TRUE requires static C++ std library installation")
+        endif()
+        add_link_options(-static-libstdc++)
+        check_linker_flag(CXX "-static-libgcc" HAVE_STATIC_LIBGCC)
+        if (NOT HAVE_STATIC_LIBGCC)
+            message(FATAL_ERROR "Building with -DSTATIC=TRUE requires static libgcc installation")
+        endif()
+        add_link_options(-static-libgcc)
     endif()
 endif()
 
 
 # These are the main requirements.
 # Don't use `REQUIRED` so that we can print custom help messages.
-find_package(ZLIB)
-if (NOT ZLIB_FOUND)
-    if (APPLE)
-        message(FATAL_ERROR "Zlib not found. Try 'brew install zlib'.")
-    elseif (UNIX)
-        message(FATAL_ERROR "Zlib not found. Try 'sudo apt install zlib1g-dev' or 'sudo dnf install zlib-devel'.")
-    else()
-        message(FATAL_ERROR "Zlib not found.")
-    endif()
-endif()
-
 option(DOWNLOAD_GMP "Download libgmp and build the library locally instead of using a system installation" OFF)
 if (DOWNLOAD_GMP)
     include(ExternalProject)
@@ -71,6 +77,11 @@ if (DOWNLOAD_GMP)
         URL https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
         INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/gmp
         CONFIGURE_COMMAND "<SOURCE_DIR>/configure" "--prefix=<INSTALL_DIR>" --disable-shared --enable-static
+        # The libgmp.a output is created by the install step but since GMP::GMP
+        # depends on the entire ExternalProject build, we can pretend it is
+        # created by the build.
+        # TODO: Once we depend on CMake 3.26, use INSTALL_BYPRODUCTS
+        BUILD_BYPRODUCTS "<INSTALL_DIR>/lib/libgmp.a"
     )
     ExternalProject_Get_property(gmp INSTALL_DIR)
     add_library(GMP::GMP STATIC IMPORTED GLOBAL)
@@ -140,7 +151,6 @@ include(CPack)
 add_custom_target(csim DEPENDS riscv_sim_rv32d riscv_sim_rv64d)
 add_custom_target(check DEPENDS generated_model_rv32d generated_model_rv64d)
 
-# TODO: Support static linking.
 # TODO: Add `interpret` target.
 # TODO: Add isabelle target.
 # TODO: Add lem target.

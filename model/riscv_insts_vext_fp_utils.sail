@@ -23,15 +23,15 @@ function valid_fp_op(SEW, rm_3b) = {
 }
 
 /* a. Normal check for floating-point instructions */
-val illegal_fp_normal : (regidx, bits(1), {8, 16, 32, 64}, bits(3)) -> bool
+val illegal_fp_normal : (vregidx, bits(1), {8, 16, 32, 64}, bits(3)) -> bool
 function illegal_fp_normal(vd, vm, SEW, rm_3b) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* b. Masked check for floating-point instructions encoded with vm = 0 */
-val illegal_fp_vd_masked : (regidx, {8, 16, 32, 64}, bits(3)) -> bool
+val illegal_fp_vd_masked : (vregidx, {8, 16, 32, 64}, bits(3)) -> bool
 function illegal_fp_vd_masked(vd, SEW, rm_3b) = {
-  not(valid_vtype()) | vd == 0b00000 | not(valid_fp_op(SEW, rm_3b))
+  not(valid_vtype()) | vd == zvreg | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* c. Unmasked check for floating-point instructions encoded with vm = 1 */
@@ -41,7 +41,7 @@ function illegal_fp_vd_unmasked(SEW, rm_3b) = {
 }
 
 /* d. Variable width check for floating-point widening/narrowing instructions */
-val illegal_fp_variable_width : (regidx, bits(1), {8, 16, 32, 64}, bits(3), int, int) -> bool
+val illegal_fp_variable_width : (vregidx, bits(1), {8, 16, 32, 64}, bits(3), int, int) -> bool
 function illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_new, LMUL_pow_new) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) |
   not(valid_eew_emul(SEW_new, LMUL_pow_new))
@@ -161,7 +161,7 @@ function f_is_NaN(xf) = {
 }
 
 /* Scalar register shaping for floating point operations */
-val get_scalar_fp : forall 'n, 'n in {16, 32, 64}. (regidx, int('n)) -> bits('n)
+val get_scalar_fp : forall 'n, 'n in {16, 32, 64}. (fregidx, int('n)) -> bits('n)
 function get_scalar_fp(rs1, SEW) = {
   assert(flen >= SEW, "invalid vector floating-point type width: FLEN < SEW");
   match SEW {

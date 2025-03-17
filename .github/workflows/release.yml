@@ -45,7 +45,6 @@ jobs:
         dnf install -y --enablerepo=devel \
             pkg-config \
             gmp-static \
-            zlib-static \
             curl \
             git \
             make \
@@ -53,7 +52,7 @@ jobs:
             gcc-c++ \
             cmake \
             ninja-build
-        curl --location --output sail.tar.gz https://github.com/rems-project/sail/releases/download/0.18-linux-binary/sail.tar.gz
+        curl --location --output sail.tar.gz https://github.com/rems-project/sail/releases/download/0.19-linux-binary/sail.tar.gz
         tar --directory=/usr/local --strip-components=1 --extract --file sail.tar.gz
 
     # TODO: Mac

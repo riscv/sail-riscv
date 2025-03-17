@@ -18,18 +18,18 @@ mapping encdec_csrop : csrop <-> bits(2) = {
 }
 
 mapping clause encdec = CSR(csr, rs1, rd, is_imm, op)
-  <-> csr @ rs1 @ bool_bits(is_imm) @ encdec_csrop(op) @ rd @ 0b1110011
+  <-> csr @ encdec_reg(rs1) @ bool_bits(is_imm) @ encdec_csrop(op) @ encdec_reg(rd) @ 0b1110011
 
 function clause execute CSR(csr, rs1, rd, is_imm, op) = {
-  let rs1_val : xlenbits = if is_imm then zero_extend(rs1) else X(rs1);
-  let is_CSR_Write = op == CSRRW | rs1 != zeros();
+  let rs1_val : xlenbits =  if is_imm then zero_extend(regidx_bits(rs1)) else X(rs1);
+  let is_CSR_Write = op == CSRRW | rs1 != zreg;
   if not(check_CSR(csr, cur_privilege, is_CSR_Write))
   then { handle_illegal(); RETIRE_FAIL }
   else if not(ext_check_CSR(csr, cur_privilege, is_CSR_Write))
   then { ext_check_CSR_fail(); RETIRE_FAIL }
   else {
     /* CSRRW should not generate read side-effects if rd == 0 */
-    let is_CSR_Read = not(op == CSRRW & rd == zeros());
+    let is_CSR_Read = not(op == CSRRW & rd == zreg);
     let csr_val : xlenbits = if is_CSR_Read then read_CSR(csr) else zeros();
     if is_CSR_Write then {
       let new_val : xlenbits = match op {
@@ -55,7 +55,7 @@ mapping csr_mnemonic : csrop <-> string = {
   CSRRC <-> "csrrc"
 }
 
-mapping clause assembly = CSR(csr, rs1, rd, true, op)
-  <-> csr_mnemonic(op) ^ "i" ^ spc() ^ reg_name(rd)  ^ sep() ^ csr_name_map(csr) ^ sep() ^ hex_bits_5(rs1)
+mapping clause assembly = CSR(csr, Regidx(rs1_bits), rd, true, op)
+  <-> csr_mnemonic(op) ^ "i" ^ spc() ^ reg_name(rd)  ^ sep() ^ csr_name_map(csr) ^ sep() ^ hex_bits_5(rs1_bits)
 mapping clause assembly = CSR(csr, rs1, rd, false, op)
   <-> csr_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ csr_name_map(csr) ^ sep() ^ reg_name(rs1)

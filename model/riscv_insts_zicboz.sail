@@ -15,8 +15,8 @@ function cbo_zero_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, m
 /* ****************************************************************** */
 union clause ast = RISCV_ZICBOZ : (regidx)
 
-mapping clause encdec = RISCV_ZICBOZ(rs1)                if extensionEnabled(Ext_Zicboz)
-  <-> 0b000000000100 @ rs1 @ 0b010 @ 0b00000 @ 0b0001111 if extensionEnabled(Ext_Zicboz)
+mapping clause encdec = RISCV_ZICBOZ(rs1)                            if extensionEnabled(Ext_Zicboz)
+  <-> 0b000000000100 @ encdec_reg(rs1) @ 0b010 @ 0b00000 @ 0b0001111 if extensionEnabled(Ext_Zicboz)
 
 mapping clause assembly = RISCV_ZICBOZ(rs1)
   <-> "cbo.zero" ^ spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"

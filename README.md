@@ -44,7 +44,7 @@ $ ./build_simulators.sh
 
 will build the simulators in `build/c_emulator/riscv_sim_rv{32,64}d`.
 
-If you get an error message saying `sail: unknown option '--require-version'.` it's because your Sail compiler is too old. You need version 0.18 or later.
+If you get an error message saying `sail: unknown option '--require-version'.` it's because your Sail compiler is too old. You need version 0.19 or later.
 
 By default the RV32D and RV64D emulators are built, without RVFI-DII support.
 You can see a complete list of targets by running `make help` in the
@@ -293,7 +293,6 @@ Directory Structure
 ```
 sail-riscv
 - model                   // Sail specification modules
-- prover_snapshots        // snapshots of generated theorem prover definitions
 - handwritten_support     // prover support files
 - c_emulator              // supporting platform files for C emulator
 - cmake                   // extra build system modules

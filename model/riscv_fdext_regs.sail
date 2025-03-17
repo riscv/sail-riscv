@@ -52,6 +52,23 @@ function nan_unbox(m, x) = if 'n == 'm then x else (
 /* **************************************************************** */
 /* Floating point register file                                     */
 
+newtype fregidx = Fregidx : bits(5)
+newtype fregno = Fregno : range(0, 31)
+function fregidx_to_fregno (Fregidx(b) : fregidx) -> fregno = Fregno(unsigned(b))
+function fregidx_offset(Fregidx(r) : fregidx, o : bits(5)) -> fregidx = Fregidx(r + o)
+function fregidx_bits(Fregidx(r) : fregidx) -> bits(5) = r
+
+function cregidx_to_fregidx (Cregidx(b) : cregidx) -> fregidx = Fregidx(0b01 @ b)
+
+/*
+ * TODO: This is not quite right for having both Zfinx and E, but at least it
+ * marks the places we need to consider it
+ */
+function fregidx_to_regidx (Fregidx(b) : fregidx) -> regidx =
+  Regidx(truncate(b, let Regidx(zreg_bits) = zreg in length(zreg_bits)))
+
+mapping encdec_freg : fregidx <-> bits(5) = { Fregidx(r) <-> r }
+
 register f0  : fregtype
 register f1  : fregtype
 register f2  : fregtype
@@ -96,7 +113,7 @@ function dirty_fd_context_if_present() -> unit = {
   if sys_enable_fdext() then dirty_fd_context()
 }
 
-function rF (r : regno) -> flenbits = {
+function rF (Fregno(r) : fregno) -> flenbits = {
   assert(sys_enable_fdext());
   let v : fregtype =
     match r {
@@ -137,7 +154,7 @@ function rF (r : regno) -> flenbits = {
   fregval_from_freg(v)
 }
 
-function wF (r : regno, in_v : flenbits) -> unit = {
+function wF (Fregno(r) : fregno, in_v : flenbits) -> unit = {
   assert(sys_enable_fdext());
   let v = fregval_into_freg(in_v);
   match r {
@@ -184,50 +201,50 @@ function wF (r : regno, in_v : flenbits) -> unit = {
       print_reg("f" ^ dec_str(r) ^ " <- " ^ FRegStr(v));
 }
 
-function rF_bits(i: regidx) -> flenbits = rF(unsigned(i))
+function rF_bits(i: fregidx) -> flenbits = rF(fregidx_to_fregno(i))
 
-function wF_bits(i: regidx, data: flenbits) -> unit = {
-  wF(unsigned(i)) = data
+function wF_bits(i: fregidx, data: flenbits) -> unit = {
+  wF(fregidx_to_fregno(i)) = data
 }
 
 overload F = {rF_bits, wF_bits, rF, wF}
 
-val rF_H : regidx -> bits(16)
+val rF_H : fregidx -> bits(16)
 function rF_H(i) = {
   assert(flen >= 16);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   nan_unbox(F(i))
 }
 
-val wF_H : (regidx, bits(16)) -> unit
+val wF_H : (fregidx, bits(16)) -> unit
 function wF_H(i, data) = {
   assert(flen >= 16);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i) = nan_box(data)
 }
 
-val rF_S : regidx -> bits(32)
+val rF_S : fregidx -> bits(32)
 function rF_S(i) = {
   assert(flen >= 32);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   nan_unbox(F(i))
 }
 
-val wF_S : (regidx, bits(32)) -> unit
+val wF_S : (fregidx, bits(32)) -> unit
 function wF_S(i, data) = {
   assert(flen >= 32);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i) = nan_box(data)
 }
 
-val rF_D : regidx -> bits(64)
+val rF_D : fregidx -> bits(64)
 function rF_D(i) = {
   assert(flen >= 64);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
   F(i)
 }
 
-val wF_D : (regidx, bits(64)) -> unit
+val wF_D : (fregidx, bits(64)) -> unit
 function wF_D(i, data) = {
   assert(flen >= 64);
   assert(sys_enable_fdext() & not(sys_enable_zfinx()));
@@ -238,69 +255,71 @@ overload F_H = { rF_H, wF_H }
 overload F_S = { rF_S, wF_S }
 overload F_D = { rF_D, wF_D }
 
-val rF_or_X_H : regidx -> bits(16)
+val rF_or_X_H : fregidx -> bits(16)
 function rF_or_X_H(i) = {
   assert(flen >= 16);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_H(i)
-  else X(i)[15..0]
+  else X(fregidx_to_regidx(i))[15..0]
 }
 
-val rF_or_X_S : regidx -> bits(32)
+val rF_or_X_S : fregidx -> bits(32)
 function rF_or_X_S(i) = {
   assert(flen >= 32);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_S(i)
-  else X(i)[31..0]
+  else X(fregidx_to_regidx(i))[31..0]
 }
 
-val rF_or_X_D : regidx -> bits(64)
+val rF_or_X_D : fregidx -> bits(64)
 function rF_or_X_D(i) = {
   assert(flen >= 64);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_D(i)
   else if xlen >= 64
-  then X(i)[63..0]
+  then X(fregidx_to_regidx(i))[63..0]
   else {
-    assert(i[0] == bitzero);
-    if i == zeros() then zeros() else X(i + 1) @ X(i)
+    let ridx = fregidx_to_regidx(i);
+    assert(regidx_bits(ridx)[0] == bitzero);
+    if ridx == zreg then zeros() else X(regidx_offset(ridx, 0b00001)) @ X(ridx)
   }
 }
 
-val wF_or_X_H : (regidx, bits(16)) -> unit
+val wF_or_X_H : (fregidx, bits(16)) -> unit
 function wF_or_X_H(i, data) = {
   assert(flen >= 16);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_H(i) = data
-  else X(i) = sign_extend(data)
+  else X(fregidx_to_regidx(i)) = sign_extend(data)
 }
 
-val wF_or_X_S : (regidx, bits(32)) -> unit
+val wF_or_X_S : (fregidx, bits(32)) -> unit
 function wF_or_X_S(i, data) = {
   assert(flen >= 32);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_S(i) = data
-  else X(i) = sign_extend(data)
+  else X(fregidx_to_regidx(i)) = sign_extend(data)
 }
 
-val wF_or_X_D : (regidx, bits(64)) -> unit
+val wF_or_X_D : (fregidx, bits(64)) -> unit
 function wF_or_X_D(i, data) = {
   assert (flen >= 64);
   assert(sys_enable_fdext() != sys_enable_zfinx());
   if   sys_enable_fdext()
   then F_D(i) = data
   else if xlen >= 64
-  then X(i) = sign_extend(data)
+  then X(fregidx_to_regidx(i)) = sign_extend(data)
   else {
-    assert (i[0] == bitzero);
-    if i != zeros() then {
-      X(i)     = data[31..0];
-      X(i + 1) = data[63..32];
+    let ridx = fregidx_to_regidx(i);
+    assert (regidx_bits(ridx)[0] == bitzero);
+    if ridx != zreg then {
+      X(ridx)                         = data[31..0];
+      X(regidx_offset(ridx, 0b00001)) = data[63..32];
     }
   }
 }
@@ -311,8 +330,7 @@ overload F_or_X_D = { rF_or_X_D, wF_or_X_D }
 
 /* mappings for assembly */
 
-val freg_name : regidx <-> string
-mapping freg_name = {
+mapping freg_name_raw : bits(5) <-> string = {
     0b00000 <-> "ft0",
     0b00001 <-> "ft1",
     0b00010 <-> "ft2",
@@ -347,10 +365,12 @@ mapping freg_name = {
     0b11111 <-> "ft11"
 }
 
-val freg_or_reg_name : regidx <-> string
-mapping freg_or_reg_name = {
-  reg if sys_enable_fdext() <-> freg_name(reg) if sys_enable_fdext(),
-  reg if sys_enable_zfinx() <-> reg_name(reg)  if sys_enable_zfinx()
+mapping freg_name : fregidx <-> string = { Fregidx(i) <-> freg_name_raw(i) }
+
+mapping freg_or_reg_name : fregidx <-> string = {
+  forwards f if sys_enable_zfinx() => reg_name(fregidx_to_regidx(f)),
+  backwards reg_name(Regidx(i)) if sys_enable_zfinx() => Fregidx(zero_extend(i)),
+  f <-> freg_name(f)
 }
 
 /* **************************************************************** */

@@ -7,12 +7,12 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Install packages
-      run: sudo apt install -y --no-install-recommends zlib1g-dev pkg-config libgmp-dev curl ninja-build
+      run: sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build
 
     - name: Install sail from binary
       run: |
         sudo mkdir -p /usr/local
-        curl --location https://github.com/rems-project/sail/releases/download/0.18-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
+        curl --location https://github.com/rems-project/sail/releases/download/0.19-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
 
     - name: Check out repository code
       uses: actions/checkout@v4
