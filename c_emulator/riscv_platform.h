@@ -17,6 +17,8 @@ unit plat_term_write(mach_bits);
 
 mach_bits plat_htif_tohost(unit);
 
+bool sys_enable_experimental_extensions(unit);
+
 unit memea(mach_bits, sail_int);
 
 #ifdef __cplusplus

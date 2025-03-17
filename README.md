@@ -127,6 +127,10 @@ Supported RISC-V ISA features
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
 - Physical Memory Protection (PMP)
 
+<!-- Uncomment the following section when unratified extensions are added
+The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
+-  -->
+
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 
 Example RISC-V instruction specifications

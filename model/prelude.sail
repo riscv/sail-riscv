@@ -238,3 +238,6 @@ type max_mem_access : Int = 4096
 
 // Type used for memory access widths. Zero byte accesses are not allowed.
 type mem_access_width = range(1, max_mem_access)
+
+// Enable unratified extensions
+val sys_enable_experimental_extensions = pure "sys_enable_experimental_extensions" : unit -> bool
