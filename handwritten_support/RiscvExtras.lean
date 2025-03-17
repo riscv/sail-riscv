@@ -4,12 +4,8 @@ import THE_MODULE_NAME.Defs
 
 open Sail
 
-def print (_ : String) : Unit := ()
-def print_endline (_ : String) : Unit := ()
 def print_bits (_ : String) (_ : BitVec n) : Unit := ()
 def print_string (_ : String) (_ : String) : Unit := ()
-def print_int (_ : String) (_ : Int) : Unit := ()
-def prerr_endline (_: String) : Unit := ()
 def prerr_string (_: String) : Unit := ()
 def putchar {T} (_: T ) : Unit := ()
 def string_of_int (z : Int) := s!"{z}"
