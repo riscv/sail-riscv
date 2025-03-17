@@ -54,6 +54,7 @@ enum {
   OPT_ENABLE_ZVKB,
   OPT_ENABLE_SSTC,
   OPT_CACHE_BLOCK_SIZE,
+  OPT_ENABLE_EXPERIMENTAL_EXTENSIONS,
 };
 
 static bool do_show_times = false;
@@ -112,43 +113,45 @@ char *sailcov_file = NULL;
 #endif
 
 static struct option options[] = {
-    {"enable-dirty-update",         no_argument,       0, 'd'                     },
-    {"enable-misaligned",           no_argument,       0, 'm'                     },
-    {"pmp-count",                   required_argument, 0, OPT_PMP_COUNT           },
-    {"pmp-grain",                   required_argument, 0, OPT_PMP_GRAIN           },
-    {"ram-size",                    required_argument, 0, 'z'                     },
-    {"disable-compressed",          no_argument,       0, 'C'                     },
-    {"disable-writable-misa",       no_argument,       0, 'I'                     },
-    {"disable-fdext",               no_argument,       0, 'F'                     },
-    {"disable-vector-ext",          no_argument,       0, 'W'                     },
-    {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'                     },
-    {"device-tree-blob",            required_argument, 0, 'b'                     },
-    {"terminal-log",                required_argument, 0, 't'                     },
-    {"show-times",                  required_argument, 0, 'p'                     },
-    {"report-arch",                 no_argument,       0, 'a'                     },
-    {"test-signature",              required_argument, 0, 'T'                     },
-    {"signature-granularity",       required_argument, 0, 'g'                     },
+    {"enable-dirty-update",            no_argument,       0, 'd'                     },
+    {"enable-misaligned",              no_argument,       0, 'm'                     },
+    {"pmp-count",                      required_argument, 0, OPT_PMP_COUNT           },
+    {"pmp-grain",                      required_argument, 0, OPT_PMP_GRAIN           },
+    {"ram-size",                       required_argument, 0, 'z'                     },
+    {"disable-compressed",             no_argument,       0, 'C'                     },
+    {"disable-writable-misa",          no_argument,       0, 'I'                     },
+    {"disable-fdext",                  no_argument,       0, 'F'                     },
+    {"disable-vector-ext",             no_argument,       0, 'W'                     },
+    {"mtval-has-illegal-inst-bits",    no_argument,       0, 'i'                     },
+    {"device-tree-blob",               required_argument, 0, 'b'                     },
+    {"terminal-log",                   required_argument, 0, 't'                     },
+    {"show-times",                     required_argument, 0, 'p'                     },
+    {"report-arch",                    no_argument,       0, 'a'                     },
+    {"test-signature",                 required_argument, 0, 'T'                     },
+    {"signature-granularity",          required_argument, 0, 'g'                     },
 #ifdef RVFI_DII
-    {"rvfi-dii",                    required_argument, 0, 'r'                     },
+    {"rvfi-dii",                       required_argument, 0, 'r'                     },
 #endif
-    {"help",                        no_argument,       0, 'h'                     },
-    {"trace",                       optional_argument, 0, 'v'                     },
-    {"no-trace",                    optional_argument, 0, 'V'                     },
-    {"trace-output",                required_argument, 0, OPT_TRACE_OUTPUT        },
-    {"inst-limit",                  required_argument, 0, 'l'                     },
-    {"enable-zfinx",                no_argument,       0, 'x'                     },
-    {"enable-bitmanip",             no_argument,       0, 'B'                     },
-    {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
-    {"enable-svinval",              no_argument,       0, OPT_ENABLE_SVINVAL      },
-    {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
-    {"enable-zicbom",               no_argument,       0, OPT_ENABLE_ZICBOM       },
-    {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
-    {"enable-zvkb",                 no_argument,       0, OPT_ENABLE_ZVKB         },
-    {"cache-block-size",            required_argument, 0, OPT_CACHE_BLOCK_SIZE    },
+    {"help",                           no_argument,       0, 'h'                     },
+    {"trace",                          optional_argument, 0, 'v'                     },
+    {"no-trace",                       optional_argument, 0, 'V'                     },
+    {"trace-output",                   required_argument, 0, OPT_TRACE_OUTPUT        },
+    {"inst-limit",                     required_argument, 0, 'l'                     },
+    {"enable-zfinx",                   no_argument,       0, 'x'                     },
+    {"enable-bitmanip",                no_argument,       0, 'B'                     },
+    {"enable-writable-fiom",           no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
+    {"enable-svinval",                 no_argument,       0, OPT_ENABLE_SVINVAL      },
+    {"enable-zcb",                     no_argument,       0, OPT_ENABLE_ZCB          },
+    {"enable-zicbom",                  no_argument,       0, OPT_ENABLE_ZICBOM       },
+    {"enable-zicboz",                  no_argument,       0, OPT_ENABLE_ZICBOZ       },
+    {"enable-zvkb",                    no_argument,       0, OPT_ENABLE_ZVKB         },
+    {"cache-block-size",               required_argument, 0, OPT_CACHE_BLOCK_SIZE    },
+    {"enable-experimental-extensions", no_argument,       0,
+     OPT_ENABLE_EXPERIMENTAL_EXTENSIONS                                              },
 #ifdef SAILCOV
-    {"sailcov-file",                required_argument, 0, 'c'                     },
+    {"sailcov-file",                   required_argument, 0, 'c'                     },
 #endif
-    {0,                             0,                 0, 0                       }
+    {0,                                0,                 0, 0                       }
 };
 
 static void print_usage(const char *argv0, int ec)
@@ -424,6 +427,10 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "enabling Zfinx support.\n");
       rv_enable_zfinx = true;
       rv_enable_fdext = false;
+      break;
+    case OPT_ENABLE_EXPERIMENTAL_EXTENSIONS:
+      fprintf(stderr, "enabling unratified extensions.\n");
+      rv_enable_experimental_extensions = true;
       break;
 #ifdef SAILCOV
     case 'c':
