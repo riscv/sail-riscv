@@ -251,11 +251,11 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // UXL = if xlen == 64 then v[UXL] else o[UXL],
     // SDT = v[SDT],
     // SPELP = v[SPELP],
-    TSR = v[TSR],
-    TW = v[TW],
-    TVM = v[TVM],
-    MXR = v[MXR],
-    SUM = v[SUM],
+    TSR = if extensionEnabled(Ext_S) then v[TSR] else 0b0,
+    TW = if extensionEnabled(Ext_U) then v[TW] else 0b0,
+    TVM = if extensionEnabled(Ext_S) then v[TVM] else 0b0,
+    MXR = if extensionEnabled(Ext_S) then v[MXR] else 0b0,
+    SUM = if extensionEnabled(Ext_S) then v[SUM] else 0b0, // TODO: Should also be disabled if satp.MODE is read-only 0
     MPRV = if extensionEnabled(Ext_U) then v[MPRV] else 0b0,
     /* We don't have any extension context yet. */
     XS = extStatus_to_bits(Off),
@@ -269,9 +269,9 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     SPP = if extensionEnabled(Ext_S) then v[SPP] else 0b0,
     VS = v[VS],
     MPIE = v[MPIE],
-    SPIE = v[SPIE],
+    SPIE = if extensionEnabled(Ext_S) then v[SPIE] else 0b0,
     MIE = v[MIE],
-    SIE = v[SIE],
+    SIE = if extensionEnabled(Ext_S) then v[SIE] else 0b0,
   ];
 
   // Set dirty bit to OR of other status bits.
