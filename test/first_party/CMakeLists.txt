@@ -66,6 +66,9 @@ if (NOT CROSS_COMPILER_COMMAND_RV32 OR NOT CROSS_COMPILER_COMMAND_RV64)
     message(FATAL_ERROR "No suitable cross-compiler found. We recommend downloading Clang from https://github.com/llvm/llvm-project/releases")
 endif()
 
+message(STATUS "Compiling RV32 tests with: ${CROSS_COMPILER_COMMAND_RV32}")
+message(STATUS "Compiling RV64 tests with: ${CROSS_COMPILER_COMMAND_RV64}")
+
 set(common_deps
     "src/common/crt0.S"
     "src/common/encoding.h"
