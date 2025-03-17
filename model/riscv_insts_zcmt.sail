@@ -16,7 +16,7 @@ union FJT_Result = {
 }
 
 function fetch_jump_table(table_address : bits(xlen)) -> FJT_Result = {
-  /* Fetching jump table address needs execute permission */
+  /* Executable permission required to fetch jump table address */
   match ext_data_get_addr_from_bits(table_address, Execute(), xlen_bytes) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); FJT_Failure() },
     Ext_DataAddr_OK(vaddr) => {
@@ -36,41 +36,56 @@ function fetch_jump_table(table_address : bits(xlen)) -> FJT_Result = {
 
 union clause ast = CM_JALT : (bits(8))
 
-mapping clause encdec_compressed = CM_JALT(index) if extensionEnabled(Ext_Zcmt) & 32 <= unsigned(index)
-  <-> 0b101 @ 0b000 @ index : bits(8) @ 0b10 if extensionEnabled(Ext_Zcmt) & 32 <= unsigned(index)
+mapping clause encdec_compressed = CM_JALT(index)
+  <-> 0b101 @ 0b000 @ index : bits(8) @ 0b10
+  when extensionEnabled(Ext_Zcmt) & 32 <= unsigned(index)
 
 function clause execute (CM_JALT(index)) = {
-  let base : bits(xlen) = jvt[base] @ 0b000000;
+  let base  : bits(xlen) = jvt[base] @ 0b000000;
   let index : bits(xlen) = zero_extend(index);
   if jvt[mode] == 0b000000 then {
     let table_address = base + index << log2_xlen_bytes;
     match fetch_jump_table(table_address) {
         FJT_Failure(_) => { RETIRE_FAIL },
-        FJT_Success(target_address) => { X(1) = get_next_pc(); set_next_pc(target_address & ~(zero_extend(0x1))); RETIRE_SUCCESS }
+        FJT_Success(target_address) => {
+          X(ra) = get_next_pc();
+          set_next_pc(target_address & ~(zero_extend(0x1)));
+          RETIRE_SUCCESS
+        }
     };
-  } else { handle_illegal(); RETIRE_FAIL };
+  } else {
+    handle_illegal();
+    RETIRE_FAIL
+  };
 }
 
-mapping clause assembly = CM_JALT(index) if (xlen == 32 | xlen == 64) <->
-  "cm.jalt" ^ spc() ^ hex_bits_8(index) if (xlen == 32 | xlen == 64)
+mapping clause assembly = CM_JALT(index)
+   <-> "cm.jalt" ^ spc() ^ hex_bits_8(index)
 
 /* ****************************************************************** */
 union clause ast = CM_JT : (bits(8))
 
-mapping clause encdec_compressed = CM_JT(index) if extensionEnabled(Ext_Zcmt) & unsigned(index) < 32
-  <-> 0b101 @ 0b000 @ index : bits(8) @ 0b10 if extensionEnabled(Ext_Zcmt) & unsigned(index) < 32
+mapping clause encdec_compressed = CM_JT(index)
+  <-> 0b101 @ 0b000 @ index : bits(8) @ 0b10
+  when extensionEnabled(Ext_Zcmt) & unsigned(index) < 32
 
 function clause execute (CM_JT(index)) = {
-  let base : bits(xlen) = jvt[base] @ 0b000000;
+  let base  : bits(xlen) = jvt[base] @ 0b000000;
   let index : bits(xlen) = zero_extend(index);
   if jvt[mode] == 0b000000 then {
     let table_address = base + index << log2_xlen_bytes;
     match fetch_jump_table(table_address) {
         FJT_Failure(_) => { RETIRE_FAIL },
-        FJT_Success(target_address) => { set_next_pc(target_address & ~(zero_extend(0x1))); RETIRE_SUCCESS }
+        FJT_Success(target_address) => {
+          set_next_pc(target_address & ~(zero_extend(0x1)));
+          RETIRE_SUCCESS
+        }
     };
-  } else { handle_illegal(); RETIRE_FAIL };
+  } else {
+      handle_illegal();
+      RETIRE_FAIL
+    };
 }
 
-mapping clause assembly = CM_JT(index) if (xlen == 32 | xlen == 64) <->
-  "cm.jt" ^ spc() ^ hex_bits_8(index) if (xlen == 32 | xlen == 64)
+mapping clause assembly = CM_JT(index)
+  <-> "cm.jt" ^ spc() ^ hex_bits_8(index)
