@@ -13,9 +13,9 @@ MEMORY
 
 SECTIONS
 {
-  /* MMIO devices. PMA must make this uncacheable (doesn't
-     matter in Sail because there are no caches). */
-  .bss.mmio : { *(.bss.mmio) } >if_mmio
+  /* Go to the start of memory, otherwise GNU ld (but not lld) will
+  try to start allocating at 0. */
+  . = ORIGIN(if_ram);
 
   /* Stack first so in theory we get stack overlow detection. */
   .stack ALIGN(16) (NOLOAD) : {
@@ -47,4 +47,8 @@ SECTIONS
   /* Thread-local data */
   .tdata : { *(.tdata) } >if_ram
   .tbss : { *(.tbss) } >if_ram
+
+  /* MMIO devices. PMA must make this uncacheable (doesn't
+     matter in Sail because there are no caches). */
+  .bss.mmio : { *(.bss.mmio) } >if_mmio
 }
