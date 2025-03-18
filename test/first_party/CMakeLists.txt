@@ -82,6 +82,7 @@ set(common_deps
 set(tests
     "test_hello_world.c"
     "test_minstret.S"
+    "test_jal_misaligned.S"
 )
 
 foreach (xlen IN ITEMS 32 64)
