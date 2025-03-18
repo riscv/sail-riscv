@@ -229,6 +229,8 @@ foreach (xlen IN ITEMS 32 64)
                         # Don't allow implicit var declaration (like Python). This is
                         # deprecated because it is error-prone.
                         --strict-var
+                        # bits('n) is only well-formed if 'n >= 0.
+                        --strict-bitvector
                         # Minimum required Sail compiler version.
                         --require-version ${SAIL_REQUIRED_VER}
                         # Optimisations.
