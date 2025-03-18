@@ -387,6 +387,7 @@ static int process_args(int argc, char **argv)
         fprintf(stderr, "invalid instruction limit %s\n", optarg);
         exit(1);
       }
+      insn_limit = val;
       break;
     }
     case OPT_ENABLE_SVINVAL:
