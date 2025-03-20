@@ -113,6 +113,8 @@ enum clause extension = Ext_Svinval
 enum clause extension = Ext_Svnapot
 // Page-Based Memory Types
 enum clause extension = Ext_Svpbmt
+// Reserved-for-software bits 60-59
+enum clause extension = Ext_Svrsw60t59b
 
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf

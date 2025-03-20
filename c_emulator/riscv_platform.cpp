@@ -32,6 +32,10 @@ bool sys_enable_svinval(unit)
 {
   return rv_enable_svinval;
 }
+bool sys_enable_svrsw60t59b(unit)
+{
+  return rv_enable_svrsw60t59b;
+}
 
 bool sys_enable_zcb(unit)
 {

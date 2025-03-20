@@ -90,6 +90,8 @@ val sys_enable_rvc = pure "sys_enable_rvc" : unit -> bool
 val sys_enable_fdext = pure "sys_enable_fdext" : unit -> bool
 /* whether Svinval was enabled at boot */
 val sys_enable_svinval = pure "sys_enable_svinval" : unit -> bool
+/* whether Svrsw60t59b was enabled at boot */
+val sys_enable_svrsw60t59b = pure "sys_enable_svrsw60t59b" : unit -> bool
 /* whether Zcb was enabled at boot */
 val sys_enable_zcb = pure "sys_enable_zcb" : unit -> bool
 /* whether zfinx was enabled at boot */

@@ -8,6 +8,7 @@ extern "C" {
 bool sys_enable_rvc(unit);
 bool sys_enable_fdext(unit);
 bool sys_enable_svinval(unit);
+bool sys_enable_svrsw60t59b(unit);
 bool sys_enable_zcb(unit);
 bool sys_enable_zfinx(unit);
 bool sys_enable_writable_misa(unit);
