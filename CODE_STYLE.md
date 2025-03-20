@@ -80,6 +80,10 @@ Implementation
   needed to be interpreted as integers (see the implementation of `MUL` as an
   example)
 
+* Use Sail's `newtype` constructs to differentiate between types with
+  the same underlying representation (e.g. they are bitvectors of the
+  same length) for added type safety
+
 * Prefer `bool` over `bits(1)` when a value logically represents true or false
   rather than being a single bit with a numeric meaning, and vice-versa
 
