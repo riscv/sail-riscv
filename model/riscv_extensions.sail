@@ -113,6 +113,11 @@ enum clause extension = Ext_Svinval
 enum clause extension = Ext_Svnapot
 // Page-Based Memory Types
 enum clause extension = Ext_Svpbmt
-
+// Supervisor-Level Address Translation Modes
+enum clause extension = Ext_Svbare
+enum clause extension = Ext_Sv32
+enum clause extension = Ext_Sv39
+enum clause extension = Ext_Sv48
+enum clause extension = Ext_Sv57
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
