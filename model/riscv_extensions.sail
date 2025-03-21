@@ -121,3 +121,9 @@ enum clause extension = Ext_Svpbmt
 
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
+
+// supervisor-level address translation modes
+enum clause extension = Ext_Sv32
+enum clause extension = Ext_Sv39
+enum clause extension = Ext_Sv48
+enum clause extension = Ext_Sv57
