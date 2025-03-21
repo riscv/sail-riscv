@@ -52,6 +52,23 @@ Formatting
 
 * Files should have suitable copyright headers.
 
+* Some mapping clauses, especially for instruction decoding (`encdec`)
+  clauses, can be quite long.  Unless these clauses appear in a group
+  (see below), conditional mapping clauses should use the `when`
+  construct if both sides of the mapping are conditioned on the same
+  predicate expression; the two sides of the mapping and the `when`
+  should be on separate lines.
+
+```
+mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false)
+  <-> imm @ encdec_reg(rs1) @ bool_bits(is_unsigned) @ size_enc(size) @ encdec_reg(rd) @ 0b0000011
+  when (size_bytes(size) < xlen_bytes) | (not(is_unsigned) & size_bytes(size) <= xlen_bytes)
+```
+
+  If these mapping clauses appear in a group (e.g., see `SHIFTIOP`),
+  they should preferably be each on a single line, with their
+  corresponding elements vertically aligned.
+
 Implementation
 --------------
 
