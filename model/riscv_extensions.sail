@@ -100,6 +100,9 @@ enum clause extension = Ext_Zksed
 // Scalar & Entropy Source Instructions: ShangMi Suite: SM3 Hash Cipher Instructions
 enum clause extension = Ext_Zksh
 
+// Vector Instructions: NIST Suite: Vector AES Block Cipher
+enum clause extension = Ext_Zvkned
+
 // Floating-Point in Integer Registers (half precision)
 enum clause extension = Ext_Zhinx
 
