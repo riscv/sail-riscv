@@ -102,6 +102,8 @@ enum clause extension = Ext_Zksh
 
 // Floating-Point in Integer Registers (half precision)
 enum clause extension = Ext_Zhinx
+// Floating-Point in Integer Registers (minimal half precision)
+enum clause extension = Ext_Zhinxmin
 
 // Vector Basic Bit-manipulation
 enum clause extension = Ext_Zvbb
