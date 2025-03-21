@@ -15,7 +15,7 @@
 
 /* ****************************************************************** */
 
-function clause extensionEnabled(Ext_Zcf) = extensionEnabled(Ext_Zca) & extensionEnabled(Ext_F) & xlen == 32
+function clause extensionEnabled(Ext_Zcf) = extensionEnabled(Ext_Zca) & extensionEnabled(Ext_F) & not(extensionEnabled(Ext_Zclsd)) & xlen == 32
 
 union clause ast = C_FLWSP : (bits(6), fregidx)
 
