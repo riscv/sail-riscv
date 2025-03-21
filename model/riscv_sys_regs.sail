@@ -160,6 +160,19 @@ function sys_enable_supervisor() -> bool = true
 function clause extensionEnabled(Ext_U) = misa[U] == 0b1
 function clause extensionEnabled(Ext_S) = misa[S] == 0b1
 
+// TODO: Make configurable
+function clause extensionEnabled(Ext_Svbare) = extensionEnabled(Ext_S)
+function clause extensionEnabled(Ext_Sv32) = extensionEnabled(Ext_S) & (xlen == 32)
+function clause extensionEnabled(Ext_Sv39) = extensionEnabled(Ext_S) & (xlen == 64)
+function clause extensionEnabled(Ext_Sv48) = extensionEnabled(Ext_S) & (xlen == 64)
+function clause extensionEnabled(Ext_Sv57) = extensionEnabled(Ext_S) & (xlen == 64)
+
+function satp_writable() -> bool = {
+  extensionEnabled(Ext_S) &
+  ((xlen == 32 & extensionEnabled(Ext_Sv32)) |
+  (xlen == 64 & (extensionEnabled(Ext_Sv39) | extensionEnabled(Ext_Sv48) | extensionEnabled(Ext_Sv57))))
+}
+
 /*
  * Illegal values legalized to least privileged mode supported.
  * Note: the only valid combinations of supported modes are M, M+U, M+S+U.
@@ -255,7 +268,7 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     TW = if extensionEnabled(Ext_U) then v[TW] else 0b0,
     TVM = if extensionEnabled(Ext_S) then v[TVM] else 0b0,
     MXR = if extensionEnabled(Ext_S) then v[MXR] else 0b0,
-    SUM = if extensionEnabled(Ext_S) then v[SUM] else 0b0, // TODO: Should also be disabled if satp.MODE is read-only 0
+    SUM = if extensionEnabled(Ext_S) & satp_writable() then v[SUM] else 0b0,
     MPRV = if extensionEnabled(Ext_U) then v[MPRV] else 0b0,
     /* We don't have any extension context yet. */
     XS = extStatus_to_bits(Off),
@@ -898,13 +911,26 @@ function legalize_satp(
   written_value : xlenbits,
 ) -> xlenbits = {
   if xlen == 32 then {
-    /* all 32-bit satp modes are valid */
-    written_value
+    let s = Mk_Satp32(written_value);
+    match satpMode_of_bits(arch, 0b000 @ s[Mode]) {
+      None()  => prev_value,
+      Some(Sv_mode) => match Sv_mode {
+        Bare if extensionEnabled(Ext_Svbare) => s.bits,
+        Sv32 if extensionEnabled(Ext_Sv32) => s.bits,
+        _ => prev_value,
+      }
+    }
   } else if xlen == 64 then {
     let s = Mk_Satp64(written_value);
     match satpMode_of_bits(arch, s[Mode]) {
       None()  => prev_value,
-      Some(_) => s.bits
+      Some(Sv_mode) =>  match Sv_mode {
+        Bare if extensionEnabled(Ext_Svbare) => s.bits,
+        Sv39 if extensionEnabled(Ext_Sv39) => s.bits,
+        Sv48 if extensionEnabled(Ext_Sv48) => s.bits,
+        Sv57 if extensionEnabled(Ext_Sv57) => s.bits,
+        _ => prev_value,
+      }
     }
   } else {
     internal_error(__FILE__, __LINE__, "Unsupported xlen" ^ dec_str(xlen))
