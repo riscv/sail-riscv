@@ -63,6 +63,17 @@ function write_kind_of_flags (aq : bool, rl : bool, con : bool) -> write_kind =
     (true,  false, true)  => throw(Error_not_implemented("sc.aq"))
   }
 
+function is_big_endian(typ : AccessType(ext_access_type)) -> bool = {
+    match effectivePrivilege(typ, mstatus, cur_privilege) {
+      Machine     => bits_to_bool(mstatus[MBE]),
+      Supervisor  => bits_to_bool(mstatus[SBE]),
+      User        => bits_to_bool(mstatus[UBE]),
+    }
+}
+
+function endianness_conversion forall 'n, 0 < 'n <= max_mem_access . (data : bits(8 * 'n), ac : AccessType(ext_access_type)) -> bits(8 * 'n) =
+  if is_big_endian(ac) & not(ac == Execute()) then reverse_endianness(data) else data
+
 // only used for actual memory regions, to avoid MMIO effects
 function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : physaddr, width : int('n), aq : bool, rl: bool, res : bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
   let result = (match read_kind_of_flags(aq, rl, res) {
@@ -73,9 +84,11 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
     (Execute(),  None()) => Err(E_Fetch_Access_Fault()),
     (Read(Data), None()) => Err(E_Load_Access_Fault()),
     (_,          None()) => Err(E_SAMO_Access_Fault()),
-    (_,      Some(v, m)) => { if   get_config_print_mem()
-                              then print_mem("mem[" ^ to_str(t) ^ "," ^ BitStr(physaddr_bits(paddr)) ^ "] -> " ^ BitStr(v));
-                              Ok(v, m) }
+    (_,      Some(v, m)) => {
+                        let v = endianness_conversion(v, t);
+                        if   get_config_print_mem()
+                        then print_mem("mem[" ^ to_str(t) ^ "," ^ BitStr(physaddr_bits(paddr)) ^ "] -> " ^ BitStr(v));
+                        Ok(v, m) }
   }
 }
 
@@ -196,6 +209,7 @@ $endif
 
 // only used for actual memory regions, to avoid MMIO effects
 function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : physaddr, width : int('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
+  let data = endianness_conversion(data, Write());
   let result = write_ram(wk, paddr, width, data, meta);
   if   get_config_print_mem()
   then print_mem("mem[" ^ BitStr(physaddr_bits(paddr)) ^ "] <- " ^ BitStr(data));
