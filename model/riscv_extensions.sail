@@ -17,6 +17,8 @@ enum clause extension = Ext_M
 enum clause extension = Ext_F
 // Double-Precision Floating-Point
 enum clause extension = Ext_D
+// Quad-Precision Floating-Point
+enum clause extension = Ext_Q
 // Compressed Instructions
 enum clause extension = Ext_C
 // Bit Manipulation
