@@ -54,6 +54,7 @@ enum {
   OPT_ENABLE_ZVKB,
   OPT_ENABLE_SSTC,
   OPT_CACHE_BLOCK_SIZE,
+  OPT_ENABLE_EXPERIMENTAL,
 };
 
 static bool do_show_times = false;
@@ -145,6 +146,7 @@ static struct option options[] = {
     {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
     {"enable-zvkb",                 no_argument,       0, OPT_ENABLE_ZVKB         },
     {"cache-block-size",            required_argument, 0, OPT_CACHE_BLOCK_SIZE    },
+    {"enable-experimental",         no_argument,       0, OPT_ENABLE_EXPERIMENTAL },
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
@@ -424,6 +426,10 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "enabling Zfinx support.\n");
       rv_enable_zfinx = true;
       rv_enable_fdext = false;
+      break;
+    case OPT_ENABLE_EXPERIMENTAL:
+      fprintf(stderr, "enabling unratified extensions.\n");
+      rv_enable_experimental = true;
       break;
 #ifdef SAILCOV
     case 'c':
