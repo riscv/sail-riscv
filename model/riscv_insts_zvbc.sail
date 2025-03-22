@@ -17,7 +17,7 @@ mapping vm_name : bits(1) <-> string = {
 union clause ast = VCLMUL_VV : (bits(1), regidx, regidx, regidx)
 
 mapping clause encdec = VCLMUL_VV (vm, vs2, vs1, vd) if extensionEnabled(Ext_Zvbc)
-  <-> 0b001100 @ vm @ vs2 @ vs1 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_Zvbc)
+  <-> 0b001100 @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_Zvbc)
 
 mapping clause assembly = VCLMUL_VV (vm, vs2, vs1, vd)
   <-> "vclmul.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ sep() ^ vm_name(vm)
@@ -54,7 +54,7 @@ function clause execute (VCLMUL_VV(vm, vs2, vs1, vd)) = {
 union clause ast = VCLMUL_VX : (bits(1), regidx, regidx, regidx)
 
 mapping clause encdec = VCLMUL_VX (vm, vs2, rs1, vd) if extensionEnabled(Ext_Zvbc)
-  <-> 0b001100 @ vm @ vs2 @ rs1 @ 0b110 @ vd @ 0b1010111 if extensionEnabled(Ext_Zvbc)
+  <-> 0b001100 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_Zvbc)
 
 mapping clause assembly = VCLMUL_VX (vm, vs2, rs1, vd)
   <-> "vclmul.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ sep() ^ vm_name(vm)
@@ -91,7 +91,7 @@ function clause execute (VCLMUL_VX(vm, vs2, rs1, vd)) = {
 union clause ast = VCLMULH_VV : (bits(1), regidx, regidx, regidx)
 
 mapping clause encdec = VCLMULH_VV (vm, vs2, vs1, vd) if extensionEnabled(Ext_Zvbc)
-  <-> 0b001101 @ vm @ vs2 @ vs1 @ 0b010 @ vd @ 0b1010111 if extensionEnabled(Ext_Zvbc)
+  <-> 0b001101 @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_Zvbc)
 
 mapping clause assembly = VCLMULH_VV (vm, vs2, vs1, vd)
   <-> "vclmulh.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ sep() ^ vm_name(vm)
@@ -128,7 +128,7 @@ function clause execute (VCLMULH_VV(vm, vs2, vs1, vd)) = {
 union clause ast = VCLMULH_VX : (bits(1), regidx, regidx, regidx)
 
 mapping clause encdec = VCLMULH_VX (vm, vs2, rs1, vd) if extensionEnabled(Ext_Zvbc)
-  <-> 0b001101 @ vm @ vs2 @ rs1 @ 0b110 @ vd @ 0b1010111 if extensionEnabled(Ext_Zvbc)
+  <-> 0b001101 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_Zvbc)
 
 mapping clause assembly = VCLMULH_VX (vm, vs2, rs1, vd)
   <-> "vclmulh.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ sep() ^ vm_name(vm)
