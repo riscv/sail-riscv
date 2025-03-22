@@ -112,6 +112,7 @@ Supported RISC-V ISA features
 - Zkr extension for entropy source, v1.0
 - V extension for vector operations, v1.0
 - Zvbb extension for vector basic bit-manipulation, v1.0
+- Zvbc extension for vector carryless multiplication, v1.0
 - Zvkb extension for vector cryptography bit-manipulation, v1.0
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0

@@ -73,6 +73,11 @@ bool sys_enable_zvkb(unit)
   return rv_enable_zvkb;
 }
 
+bool sys_enable_zvbc(unit)
+{
+  return rv_enable_zvbc;
+}
+
 bool sys_enable_sstc(unit)
 {
   return rv_enable_sstc;
