@@ -23,6 +23,7 @@ axiom sys_enable_zicbom : Unit → Bool
 axiom sys_enable_zicboz : Unit → Bool
 axiom sys_enable_sstc : Unit → Bool
 axiom sys_writable_hpm_counters : Unit → BitVec 32
+axiom sys_enable_zvkb : Unit → Bool
 
 axiom sys_vext_vl_use_ceil : Unit → Bool
 axiom sys_vector_elen_exp : Unit → Nat
