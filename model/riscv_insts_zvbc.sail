@@ -37,9 +37,9 @@ function clause execute (VCLMUL_VV(vm, vs2, vs1, vd)) = {
     if mask[i] == bitone then {
       foreach (n from 0 to (SEW - 1))
         if vs2_val[i][n] == bitone then result[i] = result[i] ^ (vs1_val[i] << n);
-      write_vreg(num_elem, SEW, LMUL_pow, vd, result);
     };
-};
+  };
+  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   vstart = zeros();
   RETIRE_SUCCESS
 }
