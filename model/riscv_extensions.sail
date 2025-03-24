@@ -112,6 +112,9 @@ enum clause extension = Ext_Zvkb
 enum clause extension = Ext_Sscofpmf
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
+// Hardware Updating of A/D Bits
+enum clause extension = Ext_Svadu
+enum clause extension = Ext_Svade
 // Fine-Grained Address-Translation Cache Invalidation
 enum clause extension = Ext_Svinval
 // NAPOT Translation Contiguity

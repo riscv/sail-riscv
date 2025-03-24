@@ -239,10 +239,11 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
       match update_PTE_Bits(pte, ac) {
         None()     => TR_Address(tlb_get_ppn(sv_width, ent, vpn), ext_ptw),
         Some(pte') =>
-          if not(plat_enable_dirty_update()) then
-            // pte needs dirty/accessed update but that is not enabled
-            TR_Failure(PTW_PTE_Update(), ext_ptw)
-          else {
+          if not(extensionEnabled(Ext_Svadu)) & not(plat_enable_dirty_update()) then {
+              TR_Failure(PTW_PTE_Update(), ext_ptw)
+          } else if extensionEnabled(Ext_Svadu) & extensionEnabled(Ext_Svade) then {
+              TR_Failure(PTW_Access(), ext_ptw)
+          } else {
             // Writeback the PTE (which has new A/D bits)
             write_TLB(tlb_index, tlb_set_pte(ent, pte'));
             match write_pte(ent.pteAddr, pte_width, pte') {
@@ -276,7 +277,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
   match ptw_result {
     PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),
     PTW_Success(struct {ppn, pte, pteAddr, level, global}, ext_ptw) => {
-      let ext_pte   = ext_bits_of_PTE(pte);
+      let ext_pte = ext_bits_of_PTE(pte);
       // Without TLBs, this 'match' expression can be replaced simply
       // by: 'TR_Address(ppn, ext_ptw)'    (see TLB NOTE above)
       match update_PTE_Bits(pte, ac) {
@@ -285,11 +286,11 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
           TR_Address(ppn, ext_ptw)
         },
         Some(pte) =>
-          // See riscv_platform.sail
-          if not(plat_enable_dirty_update()) then
-            // pte needs dirty/accessed update but that is not enabled
-            TR_Failure(PTW_PTE_Update(), ext_ptw)
-          else {
+          if not(extensionEnabled(Ext_Svadu)) & not(plat_enable_dirty_update()) then {
+              TR_Failure(PTW_PTE_Update(), ext_ptw)
+          } else if extensionEnabled(Ext_Svadu) & extensionEnabled(Ext_Svade) then {
+              TR_Failure(PTW_Access(), ext_ptw)
+          } else {
             // Writeback the PTE (which has new A/D bits)
             match write_pte(pteAddr, pte_width, pte) {
               Ok(_) => {
