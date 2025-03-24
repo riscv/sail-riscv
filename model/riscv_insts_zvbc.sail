@@ -11,7 +11,8 @@ function clause extensionEnabled(Ext_Zvbc) = true
 union clause ast = VCLMUL_VV : (bits(1), vregidx, vregidx, vregidx)
 
 mapping clause encdec = VCLMUL_VV (vm, vs2, vs1, vd)
-  <-> 0b001100 @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111 when extensionEnabled(Ext_Zvbc)
+  <-> 0b001100 @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
+  when extensionEnabled(Ext_Zvbc)
 
 mapping clause assembly = VCLMUL_VV (vm, vs2, vs1, vd)
   <-> "vclmul.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
