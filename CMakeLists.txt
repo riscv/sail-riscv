@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(sail_riscv)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED  ON)
 set(SAIL_REQUIRED_VER 0.19)
 
 # Make users explicitly pick a build type so they don't get
