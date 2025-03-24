@@ -18,6 +18,7 @@ mapping clause assembly = VCLMUL_VV (vm, vs2, vs1, vd)
 
 function clause execute (VCLMUL_VV(vm, vs2, vs1, vd)) = {
   let SEW                     = get_sew();
+  assert(SEW == 64, "Only SEW=64 supported for zvbc");
   let LMUL_pow                = get_lmul_pow();
   let num_elem                = get_num_elem(LMUL_pow, SEW);
 
@@ -54,6 +55,7 @@ mapping clause assembly = VCLMUL_VX (vm, vs2, rs1, vd)
 
 function clause execute (VCLMUL_VX(vm, vs2, rs1, vd)) = {
   let SEW                     = get_sew();
+  assert(SEW == 64, "Only SEW=64 supported for zvbc");
   let LMUL_pow                = get_lmul_pow();
   let num_elem                = get_num_elem(LMUL_pow, SEW);
 
@@ -90,6 +92,7 @@ mapping clause assembly = VCLMULH_VV (vm, vs2, vs1, vd)
 
 function clause execute (VCLMULH_VV(vm, vs2, vs1, vd)) = {
   let SEW                     = get_sew();
+  assert(SEW == 64, "Only SEW=64 supported for zvbc");
   let LMUL_pow                = get_lmul_pow();
   let num_elem                = get_num_elem(LMUL_pow, SEW);
 
@@ -126,6 +129,7 @@ mapping clause assembly = VCLMULH_VX (vm, vs2, rs1, vd)
 
 function clause execute (VCLMULH_VX(vm, vs2, rs1, vd)) = {
   let SEW                     = get_sew();
+  assert(SEW == 64, "Only SEW=64 supported for zvbc");
   let LMUL_pow                = get_lmul_pow();
   let num_elem                = get_num_elem(LMUL_pow, SEW);
 
