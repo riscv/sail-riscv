@@ -41,7 +41,7 @@ function clause execute (VCLMUL_VV(vm, vs2, vs1, vd)) = {
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -78,7 +78,7 @@ function clause execute (VCLMUL_VX(vm, vs2, rs1, vd)) = {
       write_vreg(num_elem, SEW, LMUL_pow, vd, result);
     };
   };
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -115,7 +115,7 @@ function clause execute (VCLMULH_VV(vm, vs2, vs1, vd)) = {
       write_vreg(num_elem, SEW, LMUL_pow, vd, result);
     };
   };
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -152,6 +152,6 @@ function clause execute (VCLMULH_VX(vm, vs2, rs1, vd)) = {
       write_vreg(num_elem, SEW, LMUL_pow, vd, result);
     };
   };
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
