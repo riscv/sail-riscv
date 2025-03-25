@@ -45,6 +45,7 @@ jobs:
         dnf install -y --enablerepo=devel \
             pkg-config \
             gmp-static \
+            libstdc++-static \
             curl \
             git \
             make \
