@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* Definitions for floating point registers (F and D extensions) */
+/* Definitions for floating point registers (F, D and Q extensions) */
 
 /* default register type */
 type fregtype = flenbits
@@ -37,7 +37,7 @@ enum f_madd_op_H = {FMADD_H, FMSUB_H, FNMSUB_H, FNMADD_H}
 
 enum f_bin_rm_op_H = {FADD_H, FSUB_H, FMUL_H, FDIV_H}
 
-enum f_un_rm_ff_op_H = {FSQRT_H, FCVT_H_S, FCVT_H_D, FCVT_S_H, FCVT_D_H}
+enum f_un_rm_ff_op_H = {FSQRT_H, FCVT_H_S, FCVT_H_D, FCVT_H_Q, FCVT_S_H, FCVT_D_H, FCVT_Q_H}
 
 enum f_un_rm_fx_op_H = { FCVT_W_H, FCVT_WU_H, // RV32 and RV64
                          FCVT_L_H, FCVT_LU_H} // RV64 only
@@ -95,3 +95,21 @@ enum f_un_x_op_D = {FCLASS_D,   /* RV32 and RV64 */
                     FMV_X_D}    /* RV64 only */
 
 enum f_un_f_op_D = {FMV_D_X}
+
+enum f_madd_op_Q = {FMADD_Q, FMSUB_Q, FNMSUB_Q, FNMADD_Q}
+
+enum f_bin_rm_op_Q = {FADD_Q, FSUB_Q, FMUL_Q, FDIV_Q}
+
+enum f_un_rm_ff_op_Q = {FSQRT_Q, FCVT_S_Q, FCVT_D_Q, FCVT_Q_S, FCVT_Q_D}
+
+enum f_un_rm_fx_op_Q = {FCVT_W_Q, FCVT_WU_Q,    // RV32 and RV64
+                        FCVT_L_Q, FCVT_LU_Q}    // RV64 only
+
+enum f_un_rm_xf_op_Q = {FCVT_Q_W, FCVT_Q_WU,    // RV32 and RV64
+                        FCVT_Q_L, FCVT_Q_LU}    // RV64 only
+
+enum f_bin_f_op_Q = {FSGNJ_Q, FSGNJN_Q, FSGNJX_Q, FMIN_Q, FMAX_Q,}
+
+enum f_bin_x_op_Q = {FEQ_Q, FLT_Q, FLE_Q}
+
+enum f_un_x_op_Q = {FCLASS_Q}
