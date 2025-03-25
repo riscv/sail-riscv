@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause extensionEnabled(Ext_Zvbc) = sys_enable_zvbc()
+function clause extensionEnabled(Ext_Zvbc) = sys_enable_zvbc() & extensionEnabled(Ext_V)
 
 union clause ast = VCLMUL_VV : (bits(1), vregidx, vregidx, vregidx)
 
@@ -18,16 +18,15 @@ mapping clause assembly = VCLMUL_VV (vm, vs2, vs1, vd)
   <-> "vclmul.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
 function clause execute (VCLMUL_VV(vm, vs2, vs1, vd)) = {
-  let SEW                     = get_sew();
-  let LMUL_pow                = get_lmul_pow();
-  let num_elem                = get_num_elem(LMUL_pow, SEW);
+  let SEW       = get_sew();
+  let LMUL_pow  = get_lmul_pow();
+  let num_elem  = get_num_elem(LMUL_pow, SEW);
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)                  = read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
@@ -55,17 +54,17 @@ mapping clause assembly = VCLMUL_VX (vm, vs2, rs1, vd)
   <-> "vclmul.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
 
 function clause execute (VCLMUL_VX(vm, vs2, rs1, vd)) = {
-  let SEW                     = get_sew();
-  let LMUL_pow                = get_lmul_pow();
-  let num_elem                = get_num_elem(LMUL_pow, SEW);
+  let SEW       = get_sew();
+  let LMUL_pow  = get_lmul_pow();
+  let num_elem  = get_num_elem(LMUL_pow, SEW);
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)                  = read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let rs1_val : bits('m) = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
@@ -92,16 +91,15 @@ mapping clause assembly = VCLMULH_VV (vm, vs2, vs1, vd)
   <-> "vclmulh.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
 function clause execute (VCLMULH_VV(vm, vs2, vs1, vd)) = {
-  let SEW                     = get_sew();
-  let LMUL_pow                = get_lmul_pow();
-  let num_elem                = get_num_elem(LMUL_pow, SEW);
+  let SEW       = get_sew();
+  let LMUL_pow  = get_lmul_pow();
+  let num_elem  = get_num_elem(LMUL_pow, SEW);
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)                  = read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
@@ -112,9 +110,9 @@ function clause execute (VCLMULH_VV(vm, vs2, vs1, vd)) = {
     if mask[i] == bitone then {
       foreach (n from 0 to (SEW - 1))
         if vs2_val[i][n] == bitone then result[i] = result[i] ^ (vs1_val[i] >> (SEW - n));
-      write_vreg(num_elem, SEW, LMUL_pow, vd, result);
     };
   };
+  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
   RETIRE_SUCCESS
 }
@@ -129,17 +127,17 @@ mapping clause assembly = VCLMULH_VX (vm, vs2, rs1, vd)
   <-> "vclmulh.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
 
 function clause execute (VCLMULH_VX(vm, vs2, rs1, vd)) = {
-  let SEW                     = get_sew();
-  let LMUL_pow                = get_lmul_pow();
-  let num_elem                = get_num_elem(LMUL_pow, SEW);
+  let SEW       = get_sew();
+  let LMUL_pow  = get_lmul_pow();
+  let num_elem  = get_num_elem(LMUL_pow, SEW);
 
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)                  = read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let rs1_val : bits('m) = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
@@ -149,9 +147,9 @@ function clause execute (VCLMULH_VX(vm, vs2, rs1, vd)) = {
     if mask[i] == bitone then {
       foreach (n from 0 to (SEW - 1))
         if vs2_val[i][n] == bitone then result[i] = result[i] ^ (rs1_val >> (SEW - n));
-      write_vreg(num_elem, SEW, LMUL_pow, vd, result);
     };
   };
+  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
   RETIRE_SUCCESS
 }
