@@ -54,6 +54,7 @@ enum {
   OPT_ENABLE_ZVKB,
   OPT_ENABLE_SSTC,
   OPT_CACHE_BLOCK_SIZE,
+  OPT_ENABLE_SVRSW60T59B,
 };
 
 static bool do_show_times = false;
@@ -140,6 +141,7 @@ static struct option options[] = {
     {"enable-bitmanip",             no_argument,       0, 'B'                     },
     {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
     {"enable-svinval",              no_argument,       0, OPT_ENABLE_SVINVAL      },
+    {"enable-svrsw60t59b",          no_argument,       0, OPT_ENABLE_SVRSW60T59B  },
     {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
     {"enable-zicbom",               no_argument,       0, OPT_ENABLE_ZICBOM       },
     {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
@@ -387,6 +389,10 @@ static int process_args(int argc, char **argv)
     case OPT_ENABLE_SVINVAL:
       fprintf(stderr, "enabling svinval extension.\n");
       rv_enable_svinval = true;
+      break;
+    case OPT_ENABLE_SVRSW60T59B:
+      fprintf(stderr, "enabling svrsw60t59b extension.\n");
+      rv_enable_svrsw60t59b = true;
       break;
     case OPT_ENABLE_ZCB:
       fprintf(stderr, "enabling Zcb extension.\n");

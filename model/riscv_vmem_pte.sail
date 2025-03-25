@@ -27,7 +27,9 @@ bitfield PTE_Ext : pte_ext_bits = {
   N         : 9,
   // Page based memory types
   PBMT      : 8 .. 7,
-  reserved  : 6 .. 0,
+  // Svrsw60t59b: Additional reserved-for-software bits
+  EXT_RSW   : 6 .. 5,
+  reserved  : 4 .. 0,
 }
 
 /*
@@ -73,6 +75,9 @@ function pte_is_ptr(pte_flags : PTE_Flags) -> bool =
 function clause extensionEnabled(Ext_Svnapot) = false
 function clause extensionEnabled(Ext_Svpbmt) = false
 
+// Svrsw60t59b: PTE Reserved for software bits 60-59
+function clause extensionEnabled(Ext_Svrsw60t59b) = sys_enable_svrsw60t59b()
+
 // PRIVATE: check if a PTE is valid
 function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
     pte_flags[V] == 0b0
@@ -82,6 +87,7 @@ function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
   // a flag when the Sail model allows specifying the spec version.
   | (pte_ext[N] != 0b0 & not(extensionEnabled(Ext_Svnapot)))
   | (pte_ext[PBMT] != zeros() & not(extensionEnabled(Ext_Svpbmt)))
+  | (pte_ext[EXT_RSW] != zeros() & not(extensionEnabled(Ext_Svrsw60t59b)))
   | pte_ext[reserved] != zeros()
 
 // ----------------
