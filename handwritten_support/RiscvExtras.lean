@@ -141,18 +141,57 @@ axiom extern_f32roundToInt : BitVec 3 → BitVec 32 → Bool → Unit
 axiom extern_f64roundToInt : BitVec 3 → BitVec 64 → Bool → Unit
 
 -- Termination of extensionEnabled
-
-
 instance : SizeOf extension where
   sizeOf x :=
     match x with
-    | .Ext_Zihpm => 0
-    | .Ext_B => 0
-    | .Ext_C => 0
-    | .Ext_D => 0
-    | .Ext_F => 0
-    | .Ext_Zfh => 0
-    | .Ext_Zca => 1
-    | _ => 2
+    | .Ext_M => 0
+    | .Ext_F => 1
+    | .Ext_D => 2
+    | .Ext_C => 3
+    | .Ext_B => 4
+    | .Ext_V => 5
+    | .Ext_S => 6
+    | .Ext_U => 7
+    | .Ext_Zicbom => 8
+    | .Ext_Zicboz => 9
+    | .Ext_Zicntr => 10
+    | .Ext_Zicond => 11
+    | .Ext_Zifencei => 12
+    | .Ext_Zihpm => 13
+    | .Ext_Zmmul => 14
+    | .Ext_Zaamo => 15
+    | .Ext_Zabha => 16
+    | .Ext_Zalrsc => 17
+    | .Ext_Zfa => 18
+    | .Ext_Zfh => 19
+    | .Ext_Zfhmin => 20
+    | .Ext_Zfinx => 21
+    | .Ext_Zdinx => 22
+    | .Ext_Zca => 23
+    | .Ext_Zcb => 24
+    | .Ext_Zcd => 25
+    | .Ext_Zcf => 26
+    | .Ext_Zba => 27
+    | .Ext_Zbb => 28
+    | .Ext_Zbc => 29
+    | .Ext_Zbkb => 30
+    | .Ext_Zbkc => 31
+    | .Ext_Zbkx => 32
+    | .Ext_Zbs => 33
+    | .Ext_Zknd => 34
+    | .Ext_Zkne => 35
+    | .Ext_Zknh => 36
+    | .Ext_Zkr => 37
+    | .Ext_Zksed => 38
+    | .Ext_Zksh => 39
+    | .Ext_Zhinx => 40
+    | .Ext_Zvbb => 41
+    | .Ext_Zvkb => 42
+    | .Ext_Sscofpmf => 43
+    | .Ext_Sstc => 44
+    | .Ext_Svinval => 45
+    | .Ext_Svnapot => 46
+    | .Ext_Svpbmt => 47
+    | _ => 48
 
 macro_rules | `(tactic| decreasing_trivial) => `(tactic| simp [sizeOf])
