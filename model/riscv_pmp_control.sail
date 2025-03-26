@@ -6,35 +6,6 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* address ranges */
-
-// [min, max) of the matching range, in units of 4 bytes.
-type pmp_addr_range_in_words = option((xlenbits, xlenbits))
-
-function pmpAddrRange(cfg: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits) -> pmp_addr_range_in_words = {
-  match pmpAddrMatchType_of_bits(cfg[A]) {
-    OFF   => None(),
-    TOR   => { Some ((prev_pmpaddr, pmpaddr)) },
-    NA4   => {
-               // NA4 is not selectable when the PMP grain G >= 1. See pmpWriteCfg().
-               assert(sys_pmp_grain() < 1, "NA4 cannot be selected when PMP grain G >= 1.");
-               let lo = pmpaddr;
-               Some((lo, lo + 1))
-             },
-    NAPOT => {
-               // Example pmpaddr: 0b00010101111
-               //                          ^--- last 0 dictates region size & alignment
-               let mask = pmpaddr ^ (pmpaddr + 1);
-               // pmpaddr + 1:     0b00010110000
-               // mask:            0b00000011111
-               // ~mask:           0b11111100000
-               let lo   = pmpaddr & (~ (mask));
-               // mask + 1:        0b00000100000
-               let len  = mask + 1;
-               Some((lo, (lo + len)))
-             }
-  }
-}
 
 /* permission checks */
 
@@ -52,26 +23,58 @@ function pmpCheckRWX(ent, acc) =
 
 enum pmpAddrMatch = {PMP_NoMatch, PMP_PartialMatch, PMP_Match}
 
-function pmpMatchAddr(physaddr(addr): physaddr, width: xlenbits, rng: pmp_addr_range_in_words) -> pmpAddrMatch = {
-  match rng {
-    None()         => PMP_NoMatch,
-    Some((lo, hi)) => {
-      // Convert to integers.
-      let addr  = unsigned(addr);
-      let width = unsigned(width);
-      // These are in units of 4 bytes.
-      let lo = unsigned(lo) * 4;
-      let hi = unsigned(hi) * 4;
+// Given a right-open interval [begin, end_), return whether [addr, addr+width)
+// is contained fully within it (PMP_Match), doesn't overlap at all (PMP_NoMatch)
+// or partially intersects it (PMP_PartialMatch).
+function pmpRangeMatch(
+  begin : nat,
+  end_ : nat,
+  addr : nat,
+  width : nat,
+) -> pmpAddrMatch =
+  if      (addr + width <= begin) | (end_ <= addr)
+  then    PMP_NoMatch
+  else if (begin <= addr) & (addr + width <= end_)
+  then    PMP_Match
+  else    PMP_PartialMatch
 
-      if   hi <= lo   /* to handle mis-configuration */
+function pmpMatchAddr(
+  physaddr(addr) : physaddr,
+  width : xlenbits,
+  ent : Pmpcfg_ent,
+  pmpaddr : xlenbits,
+  prev_pmpaddr : xlenbits,
+) -> pmpAddrMatch = {
+  let addr = unsigned(addr);
+  let width = unsigned(width);
+  match pmpAddrMatchType_of_bits(ent[A]) {
+    OFF => PMP_NoMatch,
+    TOR => {
+      // "If PMP entry [i]'s A field is set to TOR, the entry matches
+      //  any address y such that pmpaddr[i-1] <= y < pmpaddr[i]"
+      // "If pmpaddr[i-1] >= pmpaddr[i] and pmpcfg[i].A=TOR, then PMP entry i matches no addresses."
+      if prev_pmpaddr >=_u pmpaddr
       then PMP_NoMatch
-      else {
-        if      (addr + width <= lo) | (hi <= addr)
-        then    PMP_NoMatch
-        else if (lo <= addr) & (addr + width <= hi)
-        then    PMP_Match
-        else    PMP_PartialMatch
-      }
+      else pmpRangeMatch(unsigned(prev_pmpaddr), unsigned(pmpaddr), addr, width)
+    },
+    NA4 => {
+      // NA4 is not selectable when the PMP grain G >= 1. See pmpWriteCfg().
+      assert(sys_pmp_grain() < 1, "NA4 cannot be selected when PMP grain G >= 1.");
+      // Match a 4-byte region.
+      let begin = unsigned(pmpaddr @ 0b00);
+      pmpRangeMatch(begin, begin + 4, addr, width)
+    },
+    NAPOT => {
+      // Example pmpaddr: 0b00010101111
+      //                          ^--- last 0 dictates region size & alignment
+      let mask = pmpaddr ^ (pmpaddr + 1);
+      // pmpaddr + 1:     0b00010110000
+      // mask:            0b00000011111
+      // ~mask:           0b11111100000
+      let begin = unsigned(pmpaddr & (~(mask)));
+      // mask + 1:        0b00000100000
+      let end_ = begin + unsigned(mask) + 1;
+      pmpRangeMatch(begin, end_, addr, width)
     },
   }
 }
@@ -80,8 +83,7 @@ enum pmpMatch = {PMP_Success, PMP_Continue, PMP_Fail}
 
 function pmpMatchEntry(addr: physaddr, width: xlenbits, acc: AccessType(ext_access_type), priv: Privilege,
                        ent: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits) -> pmpMatch = {
-  let rng = pmpAddrRange(ent, pmpaddr, prev_pmpaddr);
-  match pmpMatchAddr(addr, width, rng) {
+  match pmpMatchAddr(addr, width, ent, pmpaddr, prev_pmpaddr) {
     PMP_NoMatch      => PMP_Continue,
     PMP_PartialMatch => PMP_Fail,
     PMP_Match        => if pmpCheckRWX(ent, acc) | (priv == Machine & not(pmpLocked(ent)))
