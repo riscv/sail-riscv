@@ -6,22 +6,4 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* Reverse bits in each byte */
-val brev8 : forall 'm, 'm >= 0 & mod('m, 8) == 0. (bits('m)) -> bits('m)
-function brev8(input) = {
-  var output : bits('m) = zeros();
-  foreach (i from 0 to ('m - 8) by 8)
-    output[i+7..i] = reverse(input[i+7..i]);
-  output
-}
-
-/* Carry-less multiply. */
-val carryless_mul : forall 'n, 'n > 0. (bits('n), bits('n)) -> bits(2 * 'n)
-function carryless_mul(a, b) = {
-  var result : bits(2 * 'n) = zeros();
-  foreach (i from 0 to ('n - 1)) {
-    if   a[i] == bitone
-    then result = result ^ (zero_extend(b) << i);
-  };
-  result
-}
+function zvk_check_encdec(EGW: int, EGS: {4}) -> bool = (unsigned(vl) % EGS == 0) & (unsigned(vstart) % EGS == 0) & (2 ^ get_lmul_pow() * VLEN) >= EGW
