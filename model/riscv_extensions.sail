@@ -113,6 +113,8 @@ enum clause extension = Ext_Zvbb
 enum clause extension = Ext_Zvkb
 // Vector Carryless Multiplication
 enum clause extension = Ext_Zvbc
+// Vector GCM/GMAC
+enum clause extension = Ext_Zvkg
 
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
