@@ -184,10 +184,13 @@
     "Zvbb": {
       "supported": true
     },
+    "Zvbc": {
+      "supported": true
+    },
     "Zvkb": {
       "supported": false
     },
-    "Zvbc": {
+    "Zvkg": {
       "supported": true
     },
     "Zvkned": {
