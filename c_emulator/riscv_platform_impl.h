@@ -24,7 +24,6 @@ extern bool rv_enable_bext;
 extern bool rv_enable_zicbom;
 extern bool rv_enable_zicboz;
 extern bool rv_enable_zvkb;
-extern bool rv_enable_zvbc;
 extern bool rv_enable_sstc;
 extern bool rv_enable_writable_misa;
 extern bool rv_enable_dirty_update;

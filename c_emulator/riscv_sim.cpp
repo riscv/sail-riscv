@@ -408,7 +408,6 @@ static int process_args(int argc, char **argv)
       break;
     case OPT_ENABLE_ZVBC:
       fprintf(stderr, "enabling Zvbc extension.\n");
-      rv_enable_zvbc = true;
       break;
     case OPT_ENABLE_SSTC:
       fprintf(stderr, "enabling Sstc extension.\n");

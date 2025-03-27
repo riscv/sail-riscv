@@ -20,7 +20,6 @@ bool rv_enable_bext = false;
 bool rv_enable_zicbom = false;
 bool rv_enable_zicboz = false;
 bool rv_enable_zvkb = false;
-bool rv_enable_zvbc = false;
 bool rv_enable_sstc = false;
 
 bool rv_enable_dirty_update = false;
