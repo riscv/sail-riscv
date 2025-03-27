@@ -23,6 +23,7 @@ enum clause extension = Ext_C
 enum clause extension = Ext_B
 // Vector Operations
 enum clause extension = Ext_V
+enum clause extension = Ext_Zvkned
 // Supervisor
 enum clause extension = Ext_S
 // User
