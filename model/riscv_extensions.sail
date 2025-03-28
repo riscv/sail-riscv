@@ -107,6 +107,8 @@ enum clause extension = Ext_Zhinx
 enum clause extension = Ext_Zvbb
 // Vector Cryptography Bit-manipulation
 enum clause extension = Ext_Zvkb
+// Vector Instructions: NIST Suite: Vector AES Block Cipher
+enum clause extension = Ext_Zvkned
 
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
