@@ -121,6 +121,8 @@ val sys_enable_zicboz = pure "sys_enable_zicboz" : unit -> bool
 // Is the Zvkb extension supported.
 val sys_enable_zvkb = pure "sys_enable_zvkb" : unit -> bool
 
+// Is the Zvbc extension supported.
+function sys_enable_zvbc() -> bool = true
 // Is the Sstc stimecmp extension supported.
 val sys_enable_sstc = pure "sys_enable_sstc" : unit -> bool
 
