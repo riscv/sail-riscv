@@ -10,9 +10,9 @@ function clause extensionEnabled(Ext_Svinval) = sys_enable_svinval()
 
 union clause ast = SINVAL_VMA : (regidx, regidx)
 
-mapping clause encdec =
-      SINVAL_VMA(rs1, rs2)                                                        if extensionEnabled(Ext_Svinval)
-  <-> 0b0001011 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ 0b00000 @ 0b1110011 if extensionEnabled(Ext_Svinval)
+mapping clause encdec = SINVAL_VMA(rs1, rs2)
+  <-> 0b0001011 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ 0b00000 @ 0b1110011
+  when extensionEnabled(Ext_Svinval)
 
 function clause execute SINVAL_VMA(rs1, rs2) = {
   execute(SFENCE_VMA(rs1, rs2))
@@ -25,9 +25,9 @@ mapping clause assembly = SINVAL_VMA(rs1, rs2)
 
 union clause ast = SFENCE_W_INVAL : unit
 
-mapping clause encdec =
-      SFENCE_W_INVAL()                                            if extensionEnabled(Ext_Svinval)
-  <-> 0b0001100 @ 0b00000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011 if extensionEnabled(Ext_Svinval)
+mapping clause encdec = SFENCE_W_INVAL()
+  <-> 0b0001100 @ 0b00000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
+  when extensionEnabled(Ext_Svinval)
 
 function clause execute SFENCE_W_INVAL() = {
   if cur_privilege == User
@@ -41,9 +41,9 @@ mapping clause assembly = SFENCE_W_INVAL() <-> "sfence.w.inval"
 
 union clause ast = SFENCE_INVAL_IR : unit
 
-mapping clause encdec =
-      SFENCE_INVAL_IR()                                           if extensionEnabled(Ext_Svinval)
-  <-> 0b0001100 @ 0b00001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011 if extensionEnabled(Ext_Svinval)
+mapping clause encdec = SFENCE_INVAL_IR()
+  <-> 0b0001100 @ 0b00001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
+  when extensionEnabled(Ext_Svinval)
 
 function clause execute SFENCE_INVAL_IR() = {
   if cur_privilege == User
