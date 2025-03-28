@@ -127,6 +127,17 @@ val sys_enable_sstc = pure "sys_enable_sstc" : unit -> bool
 // Supervisor timecmp
 function clause extensionEnabled(Ext_Sstc) = sys_enable_sstc()
 
+/* whether hardware updating of A/D bits was enabled at boot */
+val plat_enable_dirty_update = pure {interpreter: "Platform.enable_dirty_update",
+                                     c: "plat_enable_dirty_update",
+                                     lem: "plat_enable_dirty_update"} : unit -> bool
+
+/* whether Svadu was enabled at boot */
+val sys_enable_svadu = pure "sys_enable_svadu" : unit -> bool
+
+/* whether Svadu was enabled at boot */
+val sys_enable_svade = pure "sys_enable_svade" : unit -> bool
+
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
    unsetting C. If it returns true the write will have no effect. */
@@ -330,8 +341,10 @@ bitfield MEnvcfg : bits(64) = {
   STCE   : 63,
   // Page Based Memory Types Extension
   PBMTE  : 62,
+  // Svadu extension
+  ADUE   : 61,
   // Reserved WPRI bits.
-  wpri_1 : 61 .. 8,
+  wpri_1 : 60 .. 8,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable
@@ -365,6 +378,7 @@ function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
     CBCFE = if extensionEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if extensionEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
     STCE = if extensionEnabled(Ext_Sstc) then v[STCE] else 0b0,
+    ADUE = if sys_enable_svadu() then v[ADUE] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
   ]
 }
@@ -381,7 +395,10 @@ function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
 }
 
 // Initialised to legal values in case some bits are hard-coded to 1.
-register menvcfg : MEnvcfg = legalize_menvcfg(Mk_MEnvcfg(zeros()), zeros())
+register menvcfg : MEnvcfg = legalize_menvcfg(
+  Mk_MEnvcfg(zeros()),
+  [Mk_MEnvcfg(zeros()) with ADUE = bool_to_bits(sys_enable_svadu() & plat_enable_dirty_update())].bits
+)
 register senvcfg : SEnvcfg = legalize_senvcfg(Mk_SEnvcfg(zeros()), zeros())
 
 mapping clause csr_name_map = 0x30A  <-> "menvcfg"
@@ -400,6 +417,11 @@ function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_m
 function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); menvcfg.bits }
 function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); menvcfg.bits[63 .. 32] }
 function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); senvcfg.bits[xlen - 1 .. 0] }
+
+/* whether hardware updating of A/D bits is enabled */
+function clause extensionEnabled(Ext_Svadu) = sys_enable_svadu()
+/* whether Svade takes effect */
+function clause extensionEnabled(Ext_Svade) = sys_enable_svade() & menvcfg[ADUE] == 0b0
 
 // Return whether or not FIOM is currently active, based on the current
 // privilege and the menvcfg/senvcfg settings. This means that I/O fences
