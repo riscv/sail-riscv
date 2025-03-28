@@ -45,6 +45,7 @@ function pmpCheckRWX(ent, acc) =
     Write(_)     => ent[W] == 0b1,
     ReadWrite(_) => ent[R] == 0b1 & ent[W] == 0b1,
     Execute()    => ent[X] == 0b1,
+    Cache(_)     => ent[R] == 0b1 & ent[W] == 0b1,
   }
 
 
@@ -98,6 +99,7 @@ function accessToFault(acc : AccessType(ext_access_type)) -> ExceptionType =
     Write(_)     => E_SAMO_Access_Fault(),
     ReadWrite(_) => E_SAMO_Access_Fault(),
     Execute()    => E_Fetch_Access_Fault(),
+    Cache(_)     => E_SAMO_Access_Fault(),
   }
 
 function pmpCheck forall 'n, 'n > 0. (addr: physaddr, width: int('n), acc: AccessType(ext_access_type), priv: Privilege)
