@@ -141,18 +141,7 @@ axiom extern_f32roundToInt : BitVec 3 → BitVec 32 → Bool → Unit
 axiom extern_f64roundToInt : BitVec 3 → BitVec 64 → Bool → Unit
 
 -- Termination of extensionEnabled
-
-
 instance : SizeOf extension where
-  sizeOf x :=
-    match x with
-    | .Ext_Zihpm => 0
-    | .Ext_B => 0
-    | .Ext_C => 0
-    | .Ext_D => 0
-    | .Ext_F => 0
-    | .Ext_Zfh => 0
-    | .Ext_Zca => 1
-    | _ => 2
+  sizeOf := extension.toCtorIdx
 
-macro_rules | `(tactic| decreasing_trivial) => `(tactic| simp [sizeOf])
+macro_rules | `(tactic| decreasing_trivial) => `(tactic| decide)
