@@ -144,4 +144,4 @@ axiom extern_f64roundToInt : BitVec 3 → BitVec 64 → Bool → Unit
 instance : SizeOf extension where
   sizeOf := extension.toCtorIdx
 
-macro_rules | `(tactic| decreasing_trivial) => `(tactic| simp [sizeOf])
+macro_rules | `(tactic| decreasing_trivial) => `(tactic| decide)
