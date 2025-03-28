@@ -60,6 +60,8 @@ uint64_t rv_clint_size = UINT64_C(0xc0000);
 uint64_t rv_htif_tohost = UINT64_C(0x80001000);
 uint64_t rv_insns_per_tick = UINT64_C(100);
 
+bool rv_enable_experimental_extensions = false;
+
 int term_fd = 1; // set during startup
 void plat_term_write_impl(char c)
 {
