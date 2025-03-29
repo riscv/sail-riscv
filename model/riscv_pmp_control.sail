@@ -52,7 +52,7 @@ function pmpCheckRWX(ent, acc) =
 
 enum pmpAddrMatch = {PMP_NoMatch, PMP_PartialMatch, PMP_Match}
 
-function pmpMatchAddr(physaddr(addr): physaddr, width: xlenbits, rng: pmp_addr_range_in_words) -> pmpAddrMatch = {
+function pmpMatchAddr(Physaddr(addr): physaddr, width: xlenbits, rng: pmp_addr_range_in_words) -> pmpAddrMatch = {
   match rng {
     None()         => PMP_NoMatch,
     Some((lo, hi)) => {
