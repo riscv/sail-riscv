@@ -35,7 +35,7 @@
  * per the platform memory map.
  */
 
-function is_aligned_addr forall 'n. (physaddr(addr) : physaddr, width : int('n)) -> bool =
+function is_aligned_addr forall 'n. (Physaddr(addr) : physaddr, width : int('n)) -> bool =
   unsigned(addr) % width == 0
 
 function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> option(read_kind) =
@@ -119,7 +119,7 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
 
 $ifdef RVFI_DII
 val rvfi_read : forall 'n, 'n > 0. (physaddr, int('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit
-function rvfi_read (physaddr(addr), width, result) = {
+function rvfi_read (Physaddr(addr), width, result) = {
   rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
   rvfi_mem_data_present = true;
   match result {
@@ -133,7 +133,7 @@ function rvfi_read (physaddr(addr), width, result) = {
 }
 $else
 val rvfi_read : forall 'n, 'n > 0. (physaddr, int('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit
-function rvfi_read (physaddr(addr), width, result) = ()
+function rvfi_read (Physaddr(addr), width, result) = ()
 $endif
 
 val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
@@ -174,7 +174,7 @@ function mem_write_ea (addr, width, aq, rl, con) =
 
 $ifdef RVFI_DII
 val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit
-function rvfi_write (physaddr(addr), width, value, meta, result) = {
+function rvfi_write (Physaddr(addr), width, value, meta, result) = {
   rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
   rvfi_mem_data_present = true;
   match result {
@@ -191,7 +191,7 @@ function rvfi_write (physaddr(addr), width, value, meta, result) = {
 }
 $else
 val rvfi_write : forall 'n, 'n > 0. (physaddr, int('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit
-function rvfi_write (physaddr(addr), width, value, meta, result) = ()
+function rvfi_write (Physaddr(addr), width, value, meta, result) = ()
 $endif
 
 // only used for actual memory regions, to avoid MMIO effects

@@ -13,13 +13,13 @@ type physaddrbits = bits(physaddrbits_len)
 
 let physaddrbits_len = sizeof(physaddrbits_len)
 
-newtype physaddr = physaddr : physaddrbits
-newtype virtaddr = virtaddr : xlenbits
+newtype physaddr = Physaddr : physaddrbits
+newtype virtaddr = Virtaddr : xlenbits
 
-function physaddr_bits(physaddr(paddr) : physaddr) -> physaddrbits = paddr
+function physaddr_bits(Physaddr(paddr) : physaddr) -> physaddrbits = paddr
 
-function virtaddr_bits(virtaddr(vaddr) : virtaddr) -> xlenbits = vaddr
+function virtaddr_bits(Virtaddr(vaddr) : virtaddr) -> xlenbits = vaddr
 
-function sub_virtaddr_xlenbits(virtaddr(addr) : virtaddr, offset : xlenbits) -> virtaddr = virtaddr(addr - offset)
+function sub_virtaddr_xlenbits(Virtaddr(addr) : virtaddr, offset : xlenbits) -> virtaddr = Virtaddr(addr - offset)
 
 overload operator - = { sub_virtaddr_xlenbits }
