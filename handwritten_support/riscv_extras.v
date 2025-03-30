@@ -178,6 +178,7 @@ Definition mult_vec {n} (l : mword n) (r : mword n) : mword (2 * n) := mult_vec 
 
 Definition print_endline (_:string) : unit := tt.
 Definition prerr_endline (_:string) : unit := tt.
+Definition print_string (_ _:string) : unit := tt.
 Definition prerr_string (_:string) : unit := tt.
 Definition putchar {T} (_:T) : unit := tt.
 Require DecimalString.
@@ -195,6 +196,7 @@ Axiom sys_enable_bext : unit -> bool.
 Axiom sys_enable_zicbom : unit -> bool.
 Axiom sys_enable_zicboz : unit -> bool.
 Axiom sys_enable_sstc : unit -> bool.
+Axiom sys_enable_zvkb : unit -> bool.
 Axiom sys_writable_hpm_counters : unit -> mword 32.
 
 Axiom sys_vext_vl_use_ceil : unit -> bool.
