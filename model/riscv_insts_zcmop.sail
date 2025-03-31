@@ -6,20 +6,17 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* ****************************************************************** */
-/* This file specifies the instructions in the 'Zifencei' extension.     */
+function clause extensionEnabled(Ext_Zcmop) = true & extensionEnabled(Ext_Zca) // TODO: add configuration
 
-/* ****************************************************************** */
+union clause ast = ZCMOP : (bits(3))
 
-function clause extensionEnabled(Ext_Zifencei) = true
+mapping clause encdec_compressed = ZCMOP(mop)
+  <-> 0b01100 @ mop : bits(3) @ 0b100000 @ 0b01
+  when extensionEnabled(Ext_Zcmop)
 
-union clause ast = FENCEI : unit
+mapping clause assembly = ZCMOP(mop)
+  <-> "c.mop." ^ dec_bits_4(mop @ 0b1)
 
-mapping clause encdec = FENCEI()
-  <-> 0b000000000000 @ 0b00000 @ 0b001 @ 0b00000 @ 0b0001111
-  when extensionEnabled(Ext_Zifencei)
-
-/* fence.i is a nop for the memory model */
-function clause execute FENCEI() = { /* __barrier(Barrier_RISCV_i); */ RETIRE_SUCCESS }
-
-mapping clause assembly = FENCEI() <-> "fence.i"
+function clause execute ZCMOP(mop) = {
+  RETIRE_SUCCESS
+}

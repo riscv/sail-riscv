@@ -23,8 +23,9 @@ mapping encdec_rfvvfunct6 : rfvvfunct6 <-> bits(6) = {
   FVV_VFWREDUSUM  <-> 0b110001
 }
 
-mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd)                                                       if extensionEnabled(Ext_V)
-  <-> encdec_rfvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd)
+  <-> encdec_rfvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
+  when extensionEnabled(Ext_V)
 
 val process_rfvv_single: forall 'n 'm 'p, 'n > 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), vregidx, vregidx, vregidx, int('n), int('m), int('p)) -> Retired
 function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {

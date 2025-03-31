@@ -257,21 +257,21 @@ union clause ast = F_MADD_TYPE_D : (fregidx, fregidx, fregidx, rounding_mode, fr
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec =
-    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FMADD_D)                                                                            if haveDoubleFPU() & validDoubleRegs([rs3, rs2, rs1, rd])
-<-> encdec_freg(rs3) @ 0b01 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_0011 if haveDoubleFPU() & validDoubleRegs([rs3, rs2, rs1, rd])
+mapping clause encdec = F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FMADD_D)
+  <-> encdec_freg(rs3) @ 0b01 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_0011
+  when haveDoubleFPU() & validDoubleRegs([rs3, rs2, rs1, rd])
 
-mapping clause encdec =
-    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FMSUB_D)                                                                            if haveDoubleFPU() & validDoubleRegs([rs3, rs2, rs1, rd])
-<-> encdec_freg(rs3) @ 0b01 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_0111 if haveDoubleFPU() & validDoubleRegs([rs3, rs2, rs1, rd])
+mapping clause encdec = F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FMSUB_D)
+  <-> encdec_freg(rs3) @ 0b01 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_0111
+  when haveDoubleFPU() & validDoubleRegs([rs3, rs2, rs1, rd])
 
-mapping clause encdec =
-    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FNMSUB_D)                                                                           if haveDoubleFPU() & validDoubleRegs([rs3, rs2, rs1, rd])
-<-> encdec_freg(rs3) @ 0b01 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_1011 if haveDoubleFPU() & validDoubleRegs([rs3, rs2, rs1, rd])
+mapping clause encdec = F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FNMSUB_D)
+  <-> encdec_freg(rs3) @ 0b01 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_1011
+  when haveDoubleFPU() & validDoubleRegs([rs3, rs2, rs1, rd])
 
-mapping clause encdec =
-    F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FNMADD_D)                                                                           if haveDoubleFPU() & validDoubleRegs([rs3, rs2, rs1, rd])
-<-> encdec_freg(rs3) @ 0b01 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_1111 if haveDoubleFPU() & validDoubleRegs([rs3, rs2, rs1, rd])
+mapping clause encdec = F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FNMADD_D)
+  <-> encdec_freg(rs3) @ 0b01 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_1111
+  when haveDoubleFPU() & validDoubleRegs([rs3, rs2, rs1, rd])
 
 /* Execution semantics ================================ */
 
@@ -324,21 +324,21 @@ union clause ast = F_BIN_RM_TYPE_D : (fregidx, fregidx, rounding_mode, fregidx, 
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec =
-    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FADD_D)                                                                   if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
-<-> 0b000_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
+mapping clause encdec = F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FADD_D)
+  <-> 0b000_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
+  when haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
 
-mapping clause encdec =
-    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FSUB_D)                                                                   if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
-<-> 0b000_0101 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
+mapping clause encdec = F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FSUB_D)
+  <-> 0b000_0101 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
+  when haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
 
-mapping clause encdec =
-    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FMUL_D)                                                                   if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
-<-> 0b000_1001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
+mapping clause encdec = F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FMUL_D)
+  <-> 0b000_1001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
+  when haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
 
-mapping clause encdec =
-    F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FDIV_D)                                                                   if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
-<-> 0b000_1101 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
+mapping clause encdec = F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FDIV_D)
+  <-> 0b000_1101 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
+  when haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
 
 /* Execution semantics ================================ */
 
@@ -389,51 +389,51 @@ union clause ast = F_UN_RM_FX_TYPE_D : (fregidx, rounding_mode, regidx, f_un_rm_
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec =
-    F_UN_RM_FF_TYPE_D(rs1, rm, rd, FSQRT_D)                                                            if haveDoubleFPU() & validDoubleRegs([rs1, rd])
-<-> 0b010_1101 @ 0b00000 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs1, rd])
+mapping clause encdec = F_UN_RM_FF_TYPE_D(rs1, rm, rd, FSQRT_D)
+  <-> 0b010_1101 @ 0b00000 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
+  when haveDoubleFPU() & validDoubleRegs([rs1, rd])
 
-mapping clause encdec =
-    F_UN_RM_FX_TYPE_D(rs1, rm, rd, FCVT_W_D)                                                          if haveDoubleFPU() & validDoubleRegs([rs1])
-<-> 0b110_0001 @ 0b00000 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs1])
+mapping clause encdec = F_UN_RM_FX_TYPE_D(rs1, rm, rd, FCVT_W_D)
+  <-> 0b110_0001 @ 0b00000 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011
+  when haveDoubleFPU() & validDoubleRegs([rs1])
 
-mapping clause encdec =
-    F_UN_RM_FX_TYPE_D(rs1, rm, rd, FCVT_WU_D)                                                         if haveDoubleFPU() & validDoubleRegs([rs1])
-<-> 0b110_0001 @ 0b00001 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs1])
+mapping clause encdec = F_UN_RM_FX_TYPE_D(rs1, rm, rd, FCVT_WU_D)
+  <-> 0b110_0001 @ 0b00001 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011
+  when haveDoubleFPU() & validDoubleRegs([rs1])
 
-mapping clause encdec =
-    F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_W)                                                          if haveDoubleFPU() & validDoubleRegs([rd])
-<-> 0b110_1001 @ 0b00000 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rd])
+mapping clause encdec = F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_W)
+  <-> 0b110_1001 @ 0b00000 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
+  when haveDoubleFPU() & validDoubleRegs([rd])
 
-mapping clause encdec =
-    F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_WU)                                                         if haveDoubleFPU() & validDoubleRegs([rd])
-<-> 0b110_1001 @ 0b00001 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rd])
+mapping clause encdec = F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_WU)
+  <-> 0b110_1001 @ 0b00001 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
+  when haveDoubleFPU() & validDoubleRegs([rd])
 
-mapping clause encdec =
-    F_UN_RM_FF_TYPE_D(rs1, rm, rd, FCVT_S_D)                                                           if haveDoubleFPU() & validDoubleRegs([rs1])
-<-> 0b010_0000 @ 0b00001 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs1])
+mapping clause encdec = F_UN_RM_FF_TYPE_D(rs1, rm, rd, FCVT_S_D)
+  <-> 0b010_0000 @ 0b00001 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
+  when haveDoubleFPU() & validDoubleRegs([rs1])
 
-mapping clause encdec =
-    F_UN_RM_FF_TYPE_D(rs1, rm, rd, FCVT_D_S)                                                           if haveDoubleFPU() & validDoubleRegs([rd])
-<-> 0b010_0001 @ 0b00000 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rd])
+mapping clause encdec = F_UN_RM_FF_TYPE_D(rs1, rm, rd, FCVT_D_S)
+  <-> 0b010_0001 @ 0b00000 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
+  when haveDoubleFPU() & validDoubleRegs([rd])
 
 /* D instructions, RV64 only */
 
-mapping clause encdec =
-    F_UN_RM_FX_TYPE_D(rs1, rm, rd, FCVT_L_D)                                                          if haveDoubleFPU() & xlen >= 64
-<-> 0b110_0001 @ 0b00010 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveDoubleFPU() & xlen >= 64
+mapping clause encdec = F_UN_RM_FX_TYPE_D(rs1, rm, rd, FCVT_L_D)
+  <-> 0b110_0001 @ 0b00010 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011
+  when haveDoubleFPU() & xlen >= 64
 
-mapping clause encdec =
-    F_UN_RM_FX_TYPE_D(rs1, rm, rd, FCVT_LU_D)                                                         if haveDoubleFPU() & xlen >= 64
-<-> 0b110_0001 @ 0b00011 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011 if haveDoubleFPU() & xlen >= 64
+mapping clause encdec = F_UN_RM_FX_TYPE_D(rs1, rm, rd, FCVT_LU_D)
+  <-> 0b110_0001 @ 0b00011 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011
+  when haveDoubleFPU() & xlen >= 64
 
-mapping clause encdec =
-    F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_L)                                                          if haveDoubleFPU() & xlen >= 64
-<-> 0b110_1001 @ 0b00010 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & xlen >= 64
+mapping clause encdec = F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_L)
+  <-> 0b110_1001 @ 0b00010 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
+  when haveDoubleFPU() & xlen >= 64
 
-mapping clause encdec =
-    F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_LU)                                                         if haveDoubleFPU() & xlen >= 64
-<-> 0b110_1001 @ 0b00011 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & xlen >= 64
+mapping clause encdec = F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_LU)
+  <-> 0b110_1001 @ 0b00011 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
+  when haveDoubleFPU() & xlen >= 64
 
 /* Execution semantics ================================ */
 
@@ -656,29 +656,37 @@ union clause ast = F_BIN_X_TYPE_D : (fregidx, fregidx, regidx, f_bin_x_op_D)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = F_BIN_F_TYPE_D(rs2, rs1, rd, FSGNJ_D)                                                   if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
-                    <-> 0b001_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
+mapping clause encdec = F_BIN_F_TYPE_D(rs2, rs1, rd, FSGNJ_D)
+                    <-> 0b001_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011
+                    when haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
 
-mapping clause encdec = F_BIN_F_TYPE_D(rs2, rs1, rd, FSGNJN_D)                                                  if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
-                    <-> 0b001_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b001 @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
+mapping clause encdec = F_BIN_F_TYPE_D(rs2, rs1, rd, FSGNJN_D)
+                    <-> 0b001_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b001 @ encdec_freg(rd) @ 0b101_0011
+                    when haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
 
-mapping clause encdec = F_BIN_F_TYPE_D(rs2, rs1, rd, FSGNJX_D)                                                  if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
-                    <-> 0b001_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b010 @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
+mapping clause encdec = F_BIN_F_TYPE_D(rs2, rs1, rd, FSGNJX_D)
+                    <-> 0b001_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b010 @ encdec_freg(rd) @ 0b101_0011
+                    when haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
 
-mapping clause encdec = F_BIN_F_TYPE_D(rs2, rs1, rd, FMIN_D)                                                    if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
-                    <-> 0b001_0101 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
+mapping clause encdec = F_BIN_F_TYPE_D(rs2, rs1, rd, FMIN_D)
+                    <-> 0b001_0101 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011
+                    when haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
 
-mapping clause encdec = F_BIN_F_TYPE_D(rs2, rs1, rd, FMAX_D)                                                    if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
-                    <-> 0b001_0101 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b001 @ encdec_freg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
+mapping clause encdec = F_BIN_F_TYPE_D(rs2, rs1, rd, FMAX_D)
+                    <-> 0b001_0101 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b001 @ encdec_freg(rd) @ 0b101_0011
+                    when haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
 
-mapping clause encdec = F_BIN_X_TYPE_D(rs2, rs1, rd, FEQ_D)                                                    if haveDoubleFPU() & validDoubleRegs([rs2, rs1])
-                    <-> 0b101_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b010 @ encdec_reg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs2, rs1])
+mapping clause encdec = F_BIN_X_TYPE_D(rs2, rs1, rd, FEQ_D)
+                    <-> 0b101_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b010 @ encdec_reg(rd) @ 0b101_0011
+                    when haveDoubleFPU() & validDoubleRegs([rs2, rs1])
 
-mapping clause encdec = F_BIN_X_TYPE_D(rs2, rs1, rd, FLT_D)                                                    if haveDoubleFPU() & validDoubleRegs([rs2, rs1])
-                    <-> 0b101_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs2, rs1])
+mapping clause encdec = F_BIN_X_TYPE_D(rs2, rs1, rd, FLT_D)
+                    <-> 0b101_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b101_0011
+                    when haveDoubleFPU() & validDoubleRegs([rs2, rs1])
 
-mapping clause encdec = F_BIN_X_TYPE_D(rs2, rs1, rd, FLE_D)                                                    if haveDoubleFPU() & validDoubleRegs([rs2, rs1])
-                    <-> 0b101_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs2, rs1])
+mapping clause encdec = F_BIN_X_TYPE_D(rs2, rs1, rd, FLE_D)
+                    <-> 0b101_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011
+                    when haveDoubleFPU() & validDoubleRegs([rs2, rs1])
 
 /* Execution semantics ================================ */
 
@@ -828,16 +836,19 @@ union clause ast = F_UN_F_TYPE_D : (regidx, fregidx, f_un_f_op_D)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = F_UN_X_TYPE_D(rs1, rd, FCLASS_D)                                              if haveDoubleFPU() & validDoubleRegs([rs1])
-                    <-> 0b111_0001 @ 0b00000 @ encdec_freg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b101_0011 if haveDoubleFPU() & validDoubleRegs([rs1])
+mapping clause encdec = F_UN_X_TYPE_D(rs1, rd, FCLASS_D)
+                    <-> 0b111_0001 @ 0b00000 @ encdec_freg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b101_0011
+                    when haveDoubleFPU() & validDoubleRegs([rs1])
 
 /* D instructions, RV64 only */
 
-mapping clause encdec = F_UN_X_TYPE_D(rs1, rd, FMV_X_D)                                               if extensionEnabled(Ext_D) & xlen >= 64
-                    <-> 0b111_0001 @ 0b00000 @ encdec_freg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011 if extensionEnabled(Ext_D) & xlen >= 64
+mapping clause encdec = F_UN_X_TYPE_D(rs1, rd, FMV_X_D)
+                    <-> 0b111_0001 @ 0b00000 @ encdec_freg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011
+                    when extensionEnabled(Ext_D) & xlen >= 64
 
-mapping clause encdec = F_UN_F_TYPE_D(rs1, rd, FMV_D_X)                                               if extensionEnabled(Ext_D) & xlen >= 64
-                    <-> 0b111_1001 @ 0b00000 @ encdec_reg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011 if extensionEnabled(Ext_D) & xlen >= 64
+mapping clause encdec = F_UN_F_TYPE_D(rs1, rd, FMV_D_X)
+                    <-> 0b111_1001 @ 0b00000 @ encdec_reg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011
+                    when extensionEnabled(Ext_D) & xlen >= 64
 
 /* Execution semantics ================================ */
 

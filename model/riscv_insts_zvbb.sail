@@ -40,7 +40,7 @@ function clause execute (VANDN_VV(vm, vs1, vs2, vd)) = {
       result[i] = ~(vs1_val[i]) & vs2_val[i];
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -74,7 +74,7 @@ function clause execute (VANDN_VX(vm, vs2, rs1, vd)) = {
       result[i] = ~(rs1_val) & vs2_val[i];
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -111,7 +111,7 @@ function clause execute (VBREV_V(vm, vs2, vd)) = {
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -148,7 +148,7 @@ function clause execute (VBREV8_V(vm, vs2, vd)) = {
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -185,7 +185,7 @@ function clause execute (VREV8_V(vm, vs2, vd)) = {
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -220,7 +220,7 @@ function clause execute (VCLZ_V(vm, vs2, vd)) = {
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -255,7 +255,7 @@ function clause execute (VCTZ_V(vm, vs2, vd)) = {
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -293,7 +293,7 @@ function clause execute (VCPOP_V(vm, vs2, vd)) = {
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -327,7 +327,7 @@ function clause execute (VROL_VV(vm, vs1, vs2, vd)) = {
       result[i] = vs2_val[i] <<< (vs1_val[i] & to_bits('m, SEW - 1));
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -361,7 +361,7 @@ function clause execute (VROL_VX(vm, vs2, rs1, vd)) = {
       result[i] = vs2_val[i] <<< (rs1_val & to_bits('m, SEW - 1));
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -395,7 +395,7 @@ function clause execute (VROR_VV(vm, vs1, vs2, vd)) = {
       result[i] = vs2_val[i] >>> (vs1_val[i] & to_bits('m, SEW - 1));
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -429,7 +429,7 @@ function clause execute (VROR_VX(vm, vs2, rs1, vd)) = {
       result[i] = vs2_val[i] >>> (rs1_val & to_bits('m, SEW - 1));
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -463,7 +463,7 @@ function clause execute (VROR_VI(vm, vs2, uimm, vd)) = {
       result[i] = vs2_val[i] >>> (uimm_val & to_bits('m, SEW - 1));
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -504,7 +504,7 @@ function clause execute (VWSLL_VV(vm, vs2, vs1, vd)) = {
     };
   };
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -544,7 +544,7 @@ function clause execute (VWSLL_VX(vm, vs2, rs1, vd)) = {
     };
   };
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
 
@@ -584,6 +584,6 @@ function clause execute (VWSLL_VI(vm, vs2, uimm, vd)) = {
     };
   };
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
-  vstart = zeros();
+  set_vstart(zeros());
   RETIRE_SUCCESS
 }
