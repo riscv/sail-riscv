@@ -105,7 +105,7 @@ function clause execute (VCLMULH_VV(vm, vs2, vs1, vd)) = {
 
   foreach (i from 0 to ('n - 1)) {
     if mask[i] == bitone then {
-      foreach (n from 0 to (SEW - 1))
+      foreach (n from 1 to (SEW - 1))
         if vs2_val[i][n] == bitone then result[i] = result[i] ^ (vs1_val[i] >> (SEW - n));
     };
   };
@@ -141,7 +141,7 @@ function clause execute (VCLMULH_VX(vm, vs2, rs1, vd)) = {
 
   foreach (i from 0 to ('n - 1)) {
     if mask[i] == bitone then {
-      foreach (n from 0 to (SEW - 1))
+      foreach (n from 1 to (SEW - 1))
         if vs2_val[i][n] == bitone then result[i] = result[i] ^ (rs1_val >> (SEW - n));
     };
   };
