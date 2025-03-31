@@ -22,26 +22,6 @@
 #include "riscv_sail.h"
 #include "rvfi_dii.h"
 
-const char *RV64ISA = "RV64IMAC";
-const char *RV32ISA = "RV32IMAC";
-
-/* Selected CSRs from riscv-isa-sim/riscv/encoding.h */
-#define CSR_STVEC 0x105
-#define CSR_SEPC 0x141
-#define CSR_SCAUSE 0x142
-#define CSR_STVAL 0x143
-
-#define CSR_MSTATUS 0x300
-#define CSR_MISA 0x301
-#define CSR_MEDELEG 0x302
-#define CSR_MIDELEG 0x303
-#define CSR_MIE 0x304
-#define CSR_MTVEC 0x305
-#define CSR_MEPC 0x341
-#define CSR_MCAUSE 0x342
-#define CSR_MTVAL 0x343
-#define CSR_MIP 0x344
-
 enum {
   OPT_TRACE_OUTPUT = 1000,
   OPT_ENABLE_WRITABLE_FIOM,
