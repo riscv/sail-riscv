@@ -45,8 +45,7 @@ function regidx_bits (Regidx(b) : regidx) -> bits(5) = b
 newtype regno = Regno : range(0, 31)
 
 function regidx_to_regno (Regidx(b) : regidx) -> regno = Regno(unsigned(b))
-
-function regno_to_regidx (b : regno) -> regidx = to_bits(5, b)
+function regno_to_regidx (Regno(b) : regno) -> regidx = Regidx(to_bits(5, b))
 
 /* mapping RVC register indices into normal indices */
 val creg2reg_idx : cregidx -> regidx
@@ -382,12 +381,10 @@ struct mul_op = {
 /* Callbacks for state-changing events */
 
 /* Defaults for these functions in riscv_default_callbacks.c */
-
 val mem_write_callback = pure {c: "mem_write_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
 val mem_read_callback = pure {c: "mem_read_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* access type */ string, /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
 val mem_exception_callback = pure {c: "mem_exception_callback"} : forall 'n, 0 <= 'n < xlen . (/* addr */ physaddrbits, /* num_of_ExceptionType */ int('n)) -> unit
 val pc_write_callback = pure {c: "pc_write_callback"} : xlenbits -> unit
 val xreg_write_callback = pure {c: "xreg_write_callback"} : (regidx, xlenbits) -> unit
-val freg_write_callback = pure {c: "freg_write_callback"} : (regidx, flenbits) -> unit
 val csr_write_callback = pure {c: "csr_write_callback"} : (csreg, xlenbits) -> unit
 val csr_read_callback = pure {c: "csr_read_callback"} : (csreg, xlenbits) -> unit

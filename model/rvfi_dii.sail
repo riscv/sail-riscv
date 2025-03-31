@@ -327,9 +327,6 @@ function print_rvfi_exec () = {
 }
 
 /* RVFI records */
-
-val internal_error : forall ('a : Type). (string, int, string) -> 'a
-
 val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, int('n), bits(8 * 'n)) -> unit
 function rvfi_write (addr, width, value) = {
   rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);

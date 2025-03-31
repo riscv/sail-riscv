@@ -62,8 +62,6 @@ overload max = {max_int}
 val print_string = pure "print_string" : (string, string) -> unit
 
 val print_instr    = pure {interpreter: "print_endline", c: "print_instr", lem: "print_dbg", _: "print_endline"} : string -> unit
-val print_reg      = pure {interpreter: "print_endline", c: "print_reg", lem: "print_dbg", _: "print_endline"} : string -> unit
-val print_mem      = pure {interpreter: "print_endline", c: "print_mem_access", lem: "print_dbg", _: "print_endline"} : string -> unit
 val print_platform = pure {interpreter: "print_endline", c: "print_platform", lem: "print_dbg", _: "print_endline"} : string -> unit
 
 val print_step = pure {c: "print_step"} : unit -> unit

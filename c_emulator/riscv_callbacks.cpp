@@ -11,8 +11,6 @@ unit zrvfi_mem_exception(uint64_t addr);
 unit zrvfi_wX(int64_t reg, uint64_t value);
 #endif
 
-void zcsr_name_map_forwards(sail_string *rop, uint64_t);
-
 static uint8_t *get_lbits_data(lbits val)
 {
   uint8_t *data = (uint8_t *)calloc(val.len, sizeof(uint8_t));
