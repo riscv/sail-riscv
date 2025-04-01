@@ -10,6 +10,7 @@ uint64_t rv_vector_vlen_exp = 0x9;
 uint64_t rv_vector_elen_exp = 0x6;
 
 bool rv_enable_svinval = false;
+bool rv_enable_svrsw60t59b = false;
 bool rv_enable_zcb = false;
 bool rv_enable_zfinx = false;
 bool rv_enable_rvc = true;
