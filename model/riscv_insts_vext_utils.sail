@@ -172,6 +172,17 @@ function get_scalar(rs1, SEW) = {
   }
 }
 
+/* Extracts 4 consecutive vector elements starting from index 4*i */
+val get_velem_quad : forall 'n 'm 'p, 'n > 0 & 'm > 0 & 'p >= 0 & 4 * 'p + 3 < 'n. (vector('n, bits('m)), int('p)) -> bits(4 * 'm)
+function get_velem_quad(v, i) = v[4 * i + 3] @ v[4 * i + 2] @ v[4 * i + 1] @ v[4 * i]
+
+/* Divide the input bitvector into 4 equal slices and store them in vd starting at position 4*i */
+val write_velem_quad : forall 'p 'n 'm, 8 <= 'n <= 64 & 'm > 0 & 'p >= 0. (vregidx, int('n), bits('m), int('p)) -> unit
+function write_velem_quad(vd, SEW, input, i) = {
+  foreach(j from 0 to 3)
+    write_single_element(SEW, 4 * i + j, vd, slice(input, j * SEW, SEW));
+}
+
 /* Get the starting element index from csr vtype */
 val get_start_element : unit -> nat
 function get_start_element() = {
