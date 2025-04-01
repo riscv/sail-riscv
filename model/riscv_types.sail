@@ -56,9 +56,8 @@ function creg2reg_idx(Cregidx(i)) = Regidx(0b01 @ i)
 let zreg : regidx = Regidx(0b00000) /* x0, zero register                     */
 let ra   : regidx = Regidx(0b00001) /* x1, return address                    */
 let sp   : regidx = Regidx(0b00010) /* x2, stack pointer                     */
-let a0   : regidx = Regidx(0b01010) /* a0, function argument / return value  */
-let a1   : regidx = Regidx(0b01011) /* a1, function argument / return value  */
-
+let a0   : regidx = Regidx(0b01010) /* x10, function argument / return value */
+let a1   : regidx = Regidx(0b01011) /* x11, function argument / return value */
 
 /* instruction fields */
 
