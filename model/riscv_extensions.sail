@@ -75,6 +75,8 @@ enum clause extension = Ext_Zcd
 enum clause extension = Ext_Zcf
 // Compressed May-Be-Operations
 enum clause extension = Ext_Zcmop
+// Code Size Reduction: compressed push/pop and double move instructions
+enum clause extension = Ext_Zcmp
 
 // Bit Manipulation: Address generation
 enum clause extension = Ext_Zba
