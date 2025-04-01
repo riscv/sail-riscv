@@ -18,6 +18,8 @@ bool sys_enable_zicbom(unit);
 bool sys_enable_zicboz(unit);
 bool sys_enable_zvkb(unit);
 bool sys_enable_sstc(unit);
+bool sys_enable_svadu(unit u);
+bool sys_enable_svade(unit u);
 
 uint64_t sys_pmp_count(unit);
 uint64_t sys_pmp_grain(unit);

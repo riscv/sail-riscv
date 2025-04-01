@@ -33,6 +33,7 @@ enum {
   OPT_ENABLE_ZICBOZ,
   OPT_ENABLE_ZVKB,
   OPT_ENABLE_SSTC,
+  OPT_ENABLE_SVADU,
   OPT_CACHE_BLOCK_SIZE,
 };
 
@@ -387,6 +388,10 @@ static int process_args(int argc, char **argv)
     case OPT_ENABLE_SSTC:
       fprintf(stderr, "enabling Sstc extension.\n");
       rv_enable_sstc = true;
+      break;
+    case OPT_ENABLE_SVADU:
+      fprintf(stderr, "enabling Svadu extension.\n");
+      rv_enable_svadu = true;
       break;
     case OPT_CACHE_BLOCK_SIZE:
       block_size_exp = ilog2(atol(optarg));
