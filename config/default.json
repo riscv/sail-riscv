@@ -14,7 +14,7 @@
             "count" : 16
         },
         "misaligned" : {
-            "enabled" : false
+            "supported" : false
         },
         "translation" : {
             "dirty_update" : false
@@ -39,40 +39,40 @@
     },
     "extensions" : {
         "C" : {
-            "enabled" : true
+            "supported" : true
         },
         "FD" : {
-            "enabled" : true
+            "supported" : true
         },
         "V" : {
-            "enabled" : true,
+            "supported" : true,
             "vlen_exp" : 9,
             "elen_exp" : 6,
             "vl_use_ceil" : false
         },
         "B" : {
-            "enabled" : false
+            "supported" : false
         },
         "Svinval" : {
-            "enabled" : false
+            "supported" : false
         },
         "Zcb" : {
-            "enabled" : false
+            "supported" : false
         },
         "Zfinx" : {
-            "enabled" : false
+            "supported" : false
         },
         "Zicbom" : {
-            "enabled" : false
+            "supported" : false
         },
         "Zicboz" : {
-            "enabled" : false
+            "supported" : false
         },
         "Zvkb" : {
-            "enabled" : false
+            "supported" : false
         },
         "Sstc" : {
-            "enabled" : false
+            "supported" : false
         }
     }
 }

@@ -86,19 +86,19 @@ register misa : Misa =
 function sys_enable_writable_misa() -> bool = config base.writable_misa
 
 /* whether misa.c was enabled at boot */
-function sys_enable_rvc() -> bool = config extensions.C.enabled
+function sys_enable_rvc() -> bool = config extensions.C.supported
 
 /* whether misa.{f,d} were enabled at boot */
-function sys_enable_fdext() -> bool = config extensions.FD.enabled
+function sys_enable_fdext() -> bool = config extensions.FD.supported
 
 /* whether Svinval was enabled at boot */
-function sys_enable_svinval() -> bool = config extensions.Svinval.enabled
+function sys_enable_svinval() -> bool = config extensions.Svinval.supported
 
 /* whether Zcb was enabled at boot */
-function sys_enable_zcb() -> bool = config extensions.Zcb.enabled
+function sys_enable_zcb() -> bool = config extensions.Zcb.supported
 
 /* whether zfinx was enabled at boot */
-function sys_enable_zfinx() -> bool = config extensions.Zfinx.enabled
+function sys_enable_zfinx() -> bool = config extensions.Zfinx.supported
 
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
@@ -115,23 +115,23 @@ function sys_pmp_grain() -> range(0, 63) = config memory.pmp.grain
 function sys_writable_hpm_counters() -> bits(32) = config base.writable_hpm_counters
 
 /* whether misa.v was enabled at boot */
-function sys_enable_vext() -> bool = config extensions.V.enabled
+function sys_enable_vext() -> bool = config extensions.V.supported
 
 /* whether misa.b was enabled at boot */
-function sys_enable_bext() -> bool = config extensions.B.enabled
+function sys_enable_bext() -> bool = config extensions.B.supported
 
 // CBO extensions. Zicbop cannot be enabled/disabled because it has no effect
 // at all on this model.
-function sys_enable_zicbom() -> bool = config extensions.Zicbom.enabled
-function sys_enable_zicboz() -> bool = config extensions.Zicboz.enabled
+function sys_enable_zicbom() -> bool = config extensions.Zicbom.supported
+function sys_enable_zicboz() -> bool = config extensions.Zicboz.supported
 
 // Is the Zvkb extension supported.
-function sys_enable_zvkb() -> bool = config extensions.Zvkb.enabled
+function sys_enable_zvkb() -> bool = config extensions.Zvkb.supported
 
 // Is the Zvbc extension supported.
 function sys_enable_zvbc() -> bool = true
 // Is the Sstc stimecmp extension supported.
-function sys_enable_sstc() -> bool = config extensions.Sstc.enabled
+function sys_enable_sstc() -> bool = config extensions.Sstc.supported
 
 // Supervisor timecmp
 function clause extensionEnabled(Ext_Sstc) = sys_enable_sstc()
