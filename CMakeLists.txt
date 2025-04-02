@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(sail_riscv)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(SAIL_REQUIRED_VER 0.19)
 
 # Make users explicitly pick a build type so they don't get
@@ -122,6 +124,9 @@ add_subdirectory("dependencies/softfloat")
 # Sail C runtime.
 add_subdirectory("sail_runtime")
 
+# Sail configuration
+add_subdirectory("config")
+
 # Sail model generated C code.
 add_subdirectory("model")
 
@@ -130,6 +135,9 @@ add_subdirectory("c_emulator")
 
 # Old pre-compiled riscv-tests & first-party tests.
 add_subdirectory("test")
+
+# Handwritten support files for provers
+add_subdirectory("handwritten_support")
 
 # Release packaging.
 if (NOT CPACK_GENERATOR)

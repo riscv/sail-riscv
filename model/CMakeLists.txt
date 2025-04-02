@@ -1,13 +1,13 @@
 foreach (xlen IN ITEMS 32 64)
     foreach (flen IN ITEMS 32 64)
-        foreach (variant IN ITEMS "" "rvfi" "coq" "rmem" "lean")
+        foreach (variant IN ITEMS "" "rvfi" "rocq" "rmem" "lean")
             set(arch "rv${xlen}")
             if (flen EQUAL 32)
                 string(APPEND arch "f")
             else()
                 string(APPEND arch "d")
             endif()
-            if (variant)
+            if (variant STREQUAL "rvfi")
                 string(APPEND arch "_${variant}")
             endif()
 
@@ -78,6 +78,11 @@ foreach (xlen IN ITEMS 32 64)
                 ${vext_srcs}
                 "riscv_insts_zicbom.sail"
                 "riscv_insts_zicboz.sail"
+                "riscv_insts_zvbb.sail"
+                "riscv_insts_zvbc.sail"
+                # Zimop and Zcmop should be at the end so they can be overridden by earlier extensions
+                "riscv_insts_zimop.sail"
+                "riscv_insts_zcmop.sail"
             )
 
             if (variant STREQUAL "rmem")
@@ -184,7 +189,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_step.sail"
             )
 
-            if (variant STREQUAL "coq")
+            if (variant STREQUAL "rocq")
                 list(APPEND sail_step_srcs
                     "riscv_termination.sail"
                 )
@@ -327,6 +332,7 @@ foreach (xlen IN ITEMS 32 64)
                         -o "${CMAKE_CURRENT_BINARY_DIR}/model"
                         # Minimum required Sail compiler version.
                         --require-version ${SAIL_REQUIRED_VER}
+                        --config ${CMAKE_SOURCE_DIR}/config/default.json
                         # Input files.
                         ${sail_srcs}
                     COMMAND ${CMAKE_COMMAND} -E touch ${smt_stamp_file}
@@ -407,29 +413,45 @@ foreach (xlen IN ITEMS 32 64)
                 )
             endif()
 
-            # Build Coq definitions.
-            if (variant STREQUAL "coq")
+            # Build Rocq (formerly Coq) definitions.
+            if (variant STREQUAL "rocq")
                 add_custom_command(
                     DEPENDS ${sail_srcs}
                     VERBATIM
-                    OUTPUT "coq_${arch}.?"
-                    COMMENT "Building Coq definitions from Sail model (${arch})"
+                    OUTPUT "${CMAKE_BINARY_DIR}/rocq/${arch}.v" "${CMAKE_BINARY_DIR}/rocq/${arch}_types.v"
+                    COMMENT "Building Rocq definitions from Sail model (${arch})"
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     COMMAND
                         ${SAIL_BIN}
-                        -dcoq_undef_axioms
+                        --dcoq-undef-axioms
                         --coq
                         --coq-lib riscv_extras
                         --coq-lib mem_metadata
-                        --coq-output-dir ${CMAKE_CURRENT_BINARY_DIR}
+                        --coq-output-dir "${CMAKE_BINARY_DIR}/rocq"
                         # The prefix of the output files.
-                        -o "coq_${arch}"
+                        -o "${arch}"
                         # Minimum required Sail compiler version.
                         --require-version ${SAIL_REQUIRED_VER}
                         # Input files.
                         ${sail_srcs}
                 )
-                add_custom_target(generated_coq_${arch} DEPENDS "coq_${arch}.?")
+                add_custom_command(
+                    DEPENDS build_rocq_common "${CMAKE_BINARY_DIR}/rocq/${arch}.v" "${CMAKE_BINARY_DIR}/rocq/${arch}_types.v"
+                    VERBATIM
+                    OUTPUT "${CMAKE_BINARY_DIR}/rocq/${arch}.vo" "${CMAKE_BINARY_DIR}/rocq/${arch}_types.vo"
+                    COMMENT "Building Rocq definitions from Sail model (${arch})"
+                    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/rocq"
+                    COMMAND
+                        coqc
+                        -R . Riscv
+                        "${arch}_types.v"
+                    COMMAND
+                        coqc
+                        -R . Riscv
+                        "${arch}.v"
+                )
+                add_custom_target(generated_rocq_${arch} DEPENDS "${CMAKE_BINARY_DIR}/rocq/${arch}.v")
+                add_custom_target(build_rocq_${arch} DEPENDS "${CMAKE_BINARY_DIR}/rocq/${arch}.vo")
             endif()
 
             # Build Lean definitions

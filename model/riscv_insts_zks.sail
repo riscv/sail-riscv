@@ -16,11 +16,13 @@ function clause extensionEnabled(Ext_Zksh) = true
 union clause ast = SM3P0 : (regidx, regidx)
 union clause ast = SM3P1 : (regidx, regidx)
 
-mapping clause encdec = SM3P0 (rs1, rd)                                               if extensionEnabled(Ext_Zksh)
-  <-> 0b00 @ 0b01000 @ 0b01000 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011 if extensionEnabled(Ext_Zksh)
+mapping clause encdec = SM3P0 (rs1, rd)
+  <-> 0b00 @ 0b01000 @ 0b01000 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
+  when extensionEnabled(Ext_Zksh)
 
-mapping clause encdec = SM3P1 (rs1, rd)                                               if extensionEnabled(Ext_Zksh)
-  <-> 0b00 @ 0b01000 @ 0b01001 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011 if extensionEnabled(Ext_Zksh)
+mapping clause encdec = SM3P1 (rs1, rd)
+  <-> 0b00 @ 0b01000 @ 0b01001 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
+  when extensionEnabled(Ext_Zksh)
 
 mapping clause assembly = SM3P0 (rs1, rd) <->
   "sm3p0" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
@@ -52,11 +54,13 @@ function clause extensionEnabled(Ext_Zksed) = true
 union clause ast = SM4ED : (bits(2), regidx, regidx, regidx)
 union clause ast = SM4KS : (bits(2), regidx, regidx, regidx)
 
-mapping clause encdec = SM4ED (bs, rs2, rs1, rd)                                            if extensionEnabled(Ext_Zksed)
-  <-> bs @ 0b11000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011 if extensionEnabled(Ext_Zksed)
+mapping clause encdec = SM4ED (bs, rs2, rs1, rd)
+  <-> bs @ 0b11000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
+  when extensionEnabled(Ext_Zksed)
 
-mapping clause encdec = SM4KS (bs, rs2, rs1, rd)                                            if extensionEnabled(Ext_Zksed)
-  <-> bs @ 0b11010 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011 if extensionEnabled(Ext_Zksed)
+mapping clause encdec = SM4KS (bs, rs2, rs1, rd)
+  <-> bs @ 0b11010 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
+  when extensionEnabled(Ext_Zksed)
 
 mapping clause assembly = SM4ED (bs, rs2, rs1, rd) <->
     "sm4ed" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)

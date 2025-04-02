@@ -94,6 +94,7 @@ Supported RISC-V ISA features
 - Zicntr and Zihpm extensions for counters, v2.0
 - Zicond extension for integer conditional operations, v1.0
 - Zicbom and Zicboz extensions for cache-block management (Zicbop not currently supported), v1.0
+- Zimop extension for May-Be-Operations, v1.0
 - M extension for integer multiplication and division, v2.0
 - Zmmul extension for integer multiplication only, v1.0
 - A extension for atomic instructions, v2.1
@@ -106,11 +107,15 @@ Supported RISC-V ISA features
 - Zfinx, Zdinx, and Zhinx extensions for floating-point in integer registers, v1.0
 - C extension for compressed instructions, v2.0
 - Zca, Zcf, Zcd, and Zcb extensions for code size reduction, v1.0
+- Zcmop extension for compressed May-Be-Operations, v1.0
 - B (Zba, Zbb, Zbs) and Zbc extensions for bit manipulation, v1.0
 - Zbkb, Zbkc, and Zbkx extensions for bit manipulation for cryptography, v1.0
 - Zkn (Zknd, Zkne, Zknh) and Zks (Zksed, Zksh) extensions for scalar cryptography, v1.0.1
 - Zkr extension for entropy source, v1.0
 - V extension for vector operations, v1.0
+- Zvbb extension for vector basic bit-manipulation, v1.0
+- Zvbc extension for vector carryless multiplication, v1.0
+- Zvkb extension for vector cryptography bit-manipulation, v1.0
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0

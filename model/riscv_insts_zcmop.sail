@@ -6,15 +6,17 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function get_elen_pow() -> range(3, 16) = config extensions.V.elen_exp
+function clause extensionEnabled(Ext_Zcmop) = true & extensionEnabled(Ext_Zca) // TODO: add configuration
 
-/* Note: ELEN=32 requires a different encoding of the CSR vtype.
- * The current version of vtype implementation corresponds to the ELEN=64 configuration.
- * TODO: the configurarion of ELEN and its corresponding vtype implementations.
- */
+union clause ast = ZCMOP : (bits(3))
 
-function get_vlen_pow() -> range(3, 16) = config extensions.V.vlen_exp
+mapping clause encdec_compressed = ZCMOP(mop)
+  <-> 0b01100 @ mop : bits(3) @ 0b100000 @ 0b01
+  when extensionEnabled(Ext_Zcmop)
 
-type vlenmax : Int = 65536
+mapping clause assembly = ZCMOP(mop)
+  <-> "c.mop." ^ dec_bits_4(mop @ 0b1)
 
-let VLEN = 2 ^ get_vlen_pow()
+function clause execute ZCMOP(mop) = {
+  RETIRE_SUCCESS
+}

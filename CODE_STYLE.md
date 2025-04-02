@@ -52,6 +52,23 @@ Formatting
 
 * Files should have suitable copyright headers.
 
+* Some mapping clauses, especially for instruction decoding (`encdec`)
+  clauses, can be quite long.  Unless these clauses appear in a group
+  (see below), conditional mapping clauses should use the `when`
+  construct if both sides of the mapping are conditioned on the same
+  predicate expression; the two sides of the mapping and the `when`
+  should be on separate lines.
+
+```
+mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false)
+  <-> imm @ encdec_reg(rs1) @ bool_bits(is_unsigned) @ size_enc(size) @ encdec_reg(rd) @ 0b0000011
+  when (size_bytes(size) < xlen_bytes) | (not(is_unsigned) & size_bytes(size) <= xlen_bytes)
+```
+
+  If these mapping clauses appear in a group (e.g., see `SHIFTIOP`),
+  they should preferably be each on a single line, with their
+  corresponding elements vertically aligned.
+
 Implementation
 --------------
 
@@ -79,6 +96,10 @@ Implementation
   in a register, but keep register source values as bitvectors until they are
   needed to be interpreted as integers (see the implementation of `MUL` as an
   example)
+
+* Use Sail's `newtype` constructs to differentiate between types with
+  the same underlying representation (e.g. they are bitvectors of the
+  same length) for added type safety
 
 * Prefer `bool` over `bits(1)` when a value logically represents true or false
   rather than being a single bit with a numeric meaning, and vice-versa

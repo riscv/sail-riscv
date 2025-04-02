@@ -366,8 +366,8 @@ function reset_sys() -> unit = {
   // refactoring anyway. See https://github.com/riscv/sail-riscv/issues/566 etc.
 
   /* initialize vector csrs */
-  vstart             = zeros();
-  vl                 = zeros();
+  vstart           = zeros();
+  vl               = zeros();
   vcsr[vxrm]       = 0b00;
   vcsr[vxsat]      = 0b0;
   vtype[vill]      = 0b1;

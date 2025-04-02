@@ -81,6 +81,7 @@ set(common_deps
 
 set(tests
     "test_hello_world.c"
+    "test_max_pmp.c"
     "test_minstret.S"
 )
 
@@ -94,6 +95,7 @@ foreach (xlen IN ITEMS 32 64)
         endif()
 
         set(elf "${arch}_${test_source}.elf")
+        set(config "${arch}_${test_source}.json")
 
         add_custom_command(
             OUTPUT ${elf}
@@ -136,11 +138,36 @@ foreach (xlen IN ITEMS 32 64)
             COMMENT "Compiling ${test_source}"
         )
 
-        add_custom_target(build_${arch}_${test_source} ALL DEPENDS ${elf})
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}.filter")
+            add_custom_command(
+                OUTPUT ${config}
+                DEPENDS
+                    "${CMAKE_SOURCE_DIR}/config/default.json"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}.filter"
+                COMMAND jq
+                    -f "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}.filter"
+                    "${CMAKE_SOURCE_DIR}/config/default.json"
+                    > ${config}
+                VERBATIM
+                COMMENT "Creating ${config}"
+            )
+        else()
+            add_custom_command(
+                OUTPUT ${config}
+                DEPENDS
+                    "${CMAKE_SOURCE_DIR}/config/default.json"
+                COMMAND ${CMAKE_COMMAND} -E copy
+                    "${CMAKE_SOURCE_DIR}/config/default.json"
+                    "${config}"
+                VERBATIM
+            )
+        endif()
+
+        add_custom_target(build_${arch}_${test_source} ALL DEPENDS ${elf} ${config})
 
         add_test(
             NAME "first_party_${arch}_${test_source}"
-            COMMAND $<TARGET_FILE:riscv_sim_${arch}> --pmp-count 16 ${elf}
+            COMMAND $<TARGET_FILE:riscv_sim_${arch}> --config ${config} ${elf}
         )
     endforeach()
 endforeach()
