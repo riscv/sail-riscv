@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_B) = misa[B] == 0b1
+function clause currentlyEnabled(Ext_B) = misa[B] == 0b1 & hartSupports(Ext_B)
 function clause currentlyEnabled(Ext_Zba) = true | currentlyEnabled(Ext_B)
 
 /* ****************************************************************** */

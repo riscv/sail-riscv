@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Svinval) = sys_enable_svinval()
+function clause currentlyEnabled(Ext_Svinval) = hartSupports(Ext_Svinval)
 
 union clause ast = SINVAL_VMA : (regidx, regidx)
 

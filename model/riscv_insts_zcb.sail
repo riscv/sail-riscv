@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Zcb) = sys_enable_zcb() & currentlyEnabled(Ext_Zca)
+function clause currentlyEnabled(Ext_Zcb) = hartSupports(Ext_Zcb) & currentlyEnabled(Ext_Zca)
 
 union clause ast = C_LBU : (bits(2), cregidx, cregidx)
 

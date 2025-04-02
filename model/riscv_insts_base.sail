@@ -9,7 +9,7 @@
 /* ****************************************************************** */
 /* This file specifies the instructions in the base integer set.      */
 
-function clause currentlyEnabled(Ext_C) = misa[C] == 0b1
+function clause currentlyEnabled(Ext_C) = misa[C] == 0b1 & hartSupports(Ext_C)
 function clause currentlyEnabled(Ext_Zca) = currentlyEnabled(Ext_C)
 
 /* ****************************************************************** */

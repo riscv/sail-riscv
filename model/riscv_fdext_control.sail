@@ -15,9 +15,9 @@
 
 /* **************************************************************** */
 
-function clause currentlyEnabled(Ext_F) = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
-function clause currentlyEnabled(Ext_D) = (misa[D] == 0b1) & (mstatus[FS] != 0b00) & flen >= 64
-function clause currentlyEnabled(Ext_Zfinx) = sys_enable_zfinx()
+function clause currentlyEnabled(Ext_F) = (misa[F] == 0b1) & (mstatus[FS] != 0b00) & hartSupports(Ext_F)
+function clause currentlyEnabled(Ext_D) = (misa[D] == 0b1) & (mstatus[FS] != 0b00) & hartSupports(Ext_D) & flen >= 64
+function clause currentlyEnabled(Ext_Zfinx) = hartSupports(Ext_Zfinx)
 
 /* Floating Point CSRs */
 mapping clause csr_name_map = 0x001  <-> "fflags"

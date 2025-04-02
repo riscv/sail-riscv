@@ -8,7 +8,7 @@
 
 // Cache Block Operations - Management
 
-function clause currentlyEnabled(Ext_Zicbom) = sys_enable_zicbom()
+function clause currentlyEnabled(Ext_Zicbom) = hartSupports(Ext_Zicbom)
 
 function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], senvcfg[CBCFE][0])
 

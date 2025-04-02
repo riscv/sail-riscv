@@ -85,21 +85,6 @@ register misa : Misa =
 /* whether misa is R/W */
 function sys_enable_writable_misa() -> bool = config base.writable_misa
 
-/* whether misa.c was enabled at boot */
-function sys_enable_rvc() -> bool = config extensions.C.supported
-
-/* whether misa.{f,d} were enabled at boot */
-function sys_enable_fdext() -> bool = config extensions.FD.supported
-
-/* whether Svinval was enabled at boot */
-function sys_enable_svinval() -> bool = config extensions.Svinval.supported
-
-/* whether Zcb was enabled at boot */
-function sys_enable_zcb() -> bool = config extensions.Zcb.supported
-
-/* whether zfinx was enabled at boot */
-function sys_enable_zfinx() -> bool = config extensions.Zfinx.supported
-
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
 function sys_enable_writable_fiom() -> bool = config base.writable_fiom
@@ -114,27 +99,8 @@ function sys_pmp_grain() -> range(0, 63) = config memory.pmp.grain
 /* Which HPM counters are supported (as a bit mask). Bits [2 .. 0] are ignored. */
 function sys_writable_hpm_counters() -> bits(32) = config base.writable_hpm_counters
 
-/* whether misa.v was enabled at boot */
-function sys_enable_vext() -> bool = config extensions.V.supported
-
-/* whether misa.b was enabled at boot */
-function sys_enable_bext() -> bool = config extensions.B.supported
-
-// CBO extensions. Zicbop cannot be enabled/disabled because it has no effect
-// at all on this model.
-function sys_enable_zicbom() -> bool = config extensions.Zicbom.supported
-function sys_enable_zicboz() -> bool = config extensions.Zicboz.supported
-
-// Is the Zvkb extension supported.
-function sys_enable_zvkb() -> bool = config extensions.Zvkb.supported
-
-// Is the Zvbc extension supported.
-function sys_enable_zvbc() -> bool = true
-// Is the Sstc stimecmp extension supported.
-function sys_enable_sstc() -> bool = config extensions.Sstc.supported
-
 // Supervisor timecmp
-function clause currentlyEnabled(Ext_Sstc) = sys_enable_sstc()
+function clause currentlyEnabled(Ext_Sstc) = hartSupports(Ext_Sstc)
 
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
@@ -148,9 +114,9 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   then m
   else {
     /* Suppress enabling C if C was disabled at boot (i.e. not supported) */
-    let m = if not(sys_enable_rvc()) then m else [m with C = v[C]];
+    let m = if not(hartSupports(Ext_C)) then m else [m with C = v[C]];
     /* Suppress updates to misa.{f,d} if disabled at boot */
-    if   not(sys_enable_fdext())
+    if   not(hartSupports(Ext_F))
     then m
     else [m with F = v[F], D = v[D] & v[F]]
   }
@@ -276,7 +242,7 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
    * but only if Zfinx isn't enabled.
    * FIXME: This should be made a platform parameter.
    */
-    FS = if sys_enable_zfinx() then extStatus_to_bits(Off) else v[FS],
+    FS = if hartSupports(Ext_Zfinx) then extStatus_to_bits(Off) else v[FS],
     MPP = if have_privLevel(v[MPP]) then v[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
     SPP = if currentlyEnabled(Ext_S) then v[SPP] else 0b0,
     VS = v[VS],
@@ -568,7 +534,7 @@ register mepc : xlenbits
  */
 function legalize_xepc(v : xlenbits) -> xlenbits = {
   // allow writing xepc[1] only if misa.C is enabled or could be enabled.
-  if   sys_enable_rvc()
+  if   hartSupports(Ext_C)
   then [v with 0 = bitzero]
   else [v with 1..0 = zeros()]
 }

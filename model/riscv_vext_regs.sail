@@ -88,7 +88,7 @@ mapping vreg_name_raw : bits(5) <-> string = {
 mapping vreg_name : vregidx <-> string = { Vregidx(i) <-> vreg_name_raw(i) }
 
 function dirty_v_context() -> unit = {
-  assert(sys_enable_vext());
+  assert(hartSupports(Ext_V));
   mstatus[VS] = extStatus_to_bits(Dirty);
   mstatus[SD] = 0b1;
 }

@@ -8,7 +8,7 @@
 
 function clause currentlyEnabled(Ext_Zvbb) = true
 
-function clause currentlyEnabled(Ext_Zvkb) = sys_enable_zvkb() | currentlyEnabled(Ext_Zvbb)
+function clause currentlyEnabled(Ext_Zvkb) = hartSupports(Ext_Zvkb) | currentlyEnabled(Ext_Zvbb)
 
 union clause ast = VANDN_VV : (bits(1), vregidx, vregidx, vregidx)
 

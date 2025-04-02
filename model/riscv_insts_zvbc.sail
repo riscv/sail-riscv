@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Zvbc) = sys_enable_zvbc() & currentlyEnabled(Ext_V)
+function clause currentlyEnabled(Ext_Zvbc) = hartSupports(Ext_Zvbc) & currentlyEnabled(Ext_V)
 
 union clause ast = VCLMUL_VV : (bits(1), vregidx, vregidx, vregidx)
 

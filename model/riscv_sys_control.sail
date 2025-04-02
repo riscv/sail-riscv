@@ -309,22 +309,22 @@ function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
 
 // Reset misa to enable the maximal set of supported extensions.
 function reset_misa() -> unit = {
-  misa[A]   = 0b1;                             /* atomics */
-  misa[C]   = bool_to_bits(sys_enable_rvc());  /* RVC */
-  misa[B]   = bool_to_bits(sys_enable_bext()); /* Bit-manipulation */
-  misa[I]   = 0b1;                             /* base integer ISA */
-  misa[M]   = 0b1;                             /* integer multiply/divide */
-  misa[U]   = bool_to_bits(sys_enable_user()); /* user-mode */
-  misa[S]   = bool_to_bits(sys_enable_supervisor()); /* supervisor-mode */
-  misa[V]   = bool_to_bits(sys_enable_vext()); /* vector extension */
+  misa[A]   = 0b1;                                     /* atomics */
+  misa[C]   = bool_to_bits(hartSupports(Ext_C));       /* RVC */
+  misa[B]   = bool_to_bits(hartSupports(Ext_B));       /* Bit-manipulation */
+  misa[I]   = 0b1;                                     /* base integer ISA */
+  misa[M]   = 0b1;                                     /* integer multiply/divide */
+  misa[U]   = bool_to_bits(sys_enable_user());         /* user-mode */
+  misa[S]   = bool_to_bits(sys_enable_supervisor());   /* supervisor-mode */
+  misa[V]   = bool_to_bits(hartSupports(Ext_V));       /* vector extension */
 
-  if   sys_enable_fdext() & sys_enable_zfinx()
+  if   hartSupports(Ext_F) & hartSupports(Ext_Zfinx)
   then internal_error(__FILE__, __LINE__, "F and Zfinx cannot both be enabled!");
 
   /* We currently support both F and D */
-  misa[F]   = bool_to_bits(sys_enable_fdext());      /* single-precision */
+  misa[F]   = bool_to_bits(hartSupports(Ext_F));      /* single-precision */
   misa[D]   = if   flen >= 64
-              then bool_to_bits(sys_enable_fdext())  /* double-precision */
+              then bool_to_bits(hartSupports(Ext_D))  /* double-precision */
               else 0b0;
 }
 

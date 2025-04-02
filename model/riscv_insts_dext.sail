@@ -224,7 +224,7 @@ function fle_D   (v1,       v2,        is_quiet) = {
 /* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
 
-function clause currentlyEnabled(Ext_Zdinx) = sys_enable_zfinx() & flen >= 64
+function clause currentlyEnabled(Ext_Zdinx) = hartSupports(Ext_Zfinx) & flen >= 64
 
 function haveDoubleFPU() -> bool = currentlyEnabled(Ext_D) | currentlyEnabled(Ext_Zdinx)
 
