@@ -133,6 +133,9 @@ add_subdirectory("c_emulator")
 # Old pre-compiled riscv-tests & first-party tests.
 add_subdirectory("test")
 
+# Handwritten support files for provers
+add_subdirectory("handwritten_support")
+
 # Release packaging.
 if (NOT CPACK_GENERATOR)
     if (WINDOWS)
