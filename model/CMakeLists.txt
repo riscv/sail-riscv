@@ -332,6 +332,7 @@ foreach (xlen IN ITEMS 32 64)
                         -o "${CMAKE_CURRENT_BINARY_DIR}/model"
                         # Minimum required Sail compiler version.
                         --require-version ${SAIL_REQUIRED_VER}
+                        --config ${CMAKE_SOURCE_DIR}/config/default.json
                         # Input files.
                         ${sail_srcs}
                     COMMAND ${CMAKE_COMMAND} -E touch ${smt_stamp_file}

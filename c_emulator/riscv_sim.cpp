@@ -10,9 +10,15 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <optional>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <vector>
 
 #include "elf.h"
 #include "sail.h"
+#include "sail_config.h"
 #include "rts.h"
 #ifdef SAILCOV
 #include "sail_coverage.h"
@@ -21,22 +27,16 @@
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
 #include "rvfi_dii.h"
+#include "default_config.h"
 
 enum {
   OPT_TRACE_OUTPUT = 1000,
-  OPT_ENABLE_WRITABLE_FIOM,
-  OPT_PMP_COUNT,
-  OPT_PMP_GRAIN,
-  OPT_ENABLE_SVINVAL,
-  OPT_ENABLE_ZCB,
-  OPT_ENABLE_ZICBOM,
-  OPT_ENABLE_ZICBOZ,
-  OPT_ENABLE_ZVKB,
-  OPT_ENABLE_SSTC,
-  OPT_CACHE_BLOCK_SIZE,
+  OPT_PRINT_CONFIG,
+  OPT_SAILCOV,
 };
 
 static bool do_show_times = false;
+bool do_report_arch = false;
 char *term_log = NULL;
 static const char *trace_log_path = NULL;
 FILE *trace_log = NULL;
@@ -92,43 +92,26 @@ char *sailcov_file = NULL;
 #endif
 
 static struct option options[] = {
-    {"enable-dirty-update",         no_argument,       0, 'd'                     },
-    {"enable-misaligned",           no_argument,       0, 'm'                     },
-    {"pmp-count",                   required_argument, 0, OPT_PMP_COUNT           },
-    {"pmp-grain",                   required_argument, 0, OPT_PMP_GRAIN           },
-    {"ram-size",                    required_argument, 0, 'z'                     },
-    {"disable-compressed",          no_argument,       0, 'C'                     },
-    {"disable-writable-misa",       no_argument,       0, 'I'                     },
-    {"disable-fdext",               no_argument,       0, 'F'                     },
-    {"disable-vector-ext",          no_argument,       0, 'W'                     },
-    {"mtval-has-illegal-inst-bits", no_argument,       0, 'i'                     },
-    {"device-tree-blob",            required_argument, 0, 'b'                     },
-    {"terminal-log",                required_argument, 0, 't'                     },
-    {"show-times",                  required_argument, 0, 'p'                     },
-    {"report-arch",                 no_argument,       0, 'a'                     },
-    {"test-signature",              required_argument, 0, 'T'                     },
-    {"signature-granularity",       required_argument, 0, 'g'                     },
+    {"device-tree-blob",      required_argument, 0, 'b'             },
+    {"terminal-log",          required_argument, 0, 't'             },
+    {"show-times",            required_argument, 0, 'p'             },
+    {"report-arch",           no_argument,       0, 'a'             },
+    {"test-signature",        required_argument, 0, 'T'             },
+    {"signature-granularity", required_argument, 0, 'g'             },
 #ifdef RVFI_DII
-    {"rvfi-dii",                    required_argument, 0, 'r'                     },
+    {"rvfi-dii",              required_argument, 0, 'r'             },
 #endif
-    {"help",                        no_argument,       0, 'h'                     },
-    {"trace",                       optional_argument, 0, 'v'                     },
-    {"no-trace",                    optional_argument, 0, 'V'                     },
-    {"trace-output",                required_argument, 0, OPT_TRACE_OUTPUT        },
-    {"inst-limit",                  required_argument, 0, 'l'                     },
-    {"enable-zfinx",                no_argument,       0, 'x'                     },
-    {"enable-bitmanip",             no_argument,       0, 'B'                     },
-    {"enable-writable-fiom",        no_argument,       0, OPT_ENABLE_WRITABLE_FIOM},
-    {"enable-svinval",              no_argument,       0, OPT_ENABLE_SVINVAL      },
-    {"enable-zcb",                  no_argument,       0, OPT_ENABLE_ZCB          },
-    {"enable-zicbom",               no_argument,       0, OPT_ENABLE_ZICBOM       },
-    {"enable-zicboz",               no_argument,       0, OPT_ENABLE_ZICBOZ       },
-    {"enable-zvkb",                 no_argument,       0, OPT_ENABLE_ZVKB         },
-    {"cache-block-size",            required_argument, 0, OPT_CACHE_BLOCK_SIZE    },
+    {"help",                  no_argument,       0, 1               },
+    {"config",                required_argument, 0, 'c'             },
+    {"print-default-config",  no_argument,       0, OPT_PRINT_CONFIG},
+    {"trace",                 optional_argument, 0, 'v'             },
+    {"no-trace",              optional_argument, 0, 'V'             },
+    {"trace-output",          required_argument, 0, OPT_TRACE_OUTPUT},
+    {"inst-limit",            required_argument, 0, 'l'             },
 #ifdef SAILCOV
-    {"sailcov-file",                required_argument, 0, 'c'                     },
+    {"sailcov-file",          required_argument, 0, OPT_SAILCOV     },
 #endif
-    {0,                             0,                 0, 0                       }
+    {0,                       0,                 0, 0               }
 };
 
 static void print_usage(const char *argv0, int ec)
@@ -189,17 +172,6 @@ static void read_dtb(const char *path)
   fprintf(stdout, "Read %zd bytes of DTB from %s.\n", dtb_len, path);
 }
 
-// Return log2(x), or -1 if x is not a power of 2.
-static int ilog2(uint64_t x)
-{
-  for (unsigned i = 0; i < sizeof(x) * 8; ++i) {
-    if (x == (UINT64_C(1) << i)) {
-      return i;
-    }
-  }
-  return -1;
-}
-
 /**
  * Parses the command line arguments and returns the argv index for the first
  * ELF file that should be loaded. As getopt transforms the argv array, all
@@ -210,20 +182,12 @@ static int ilog2(uint64_t x)
 static int process_args(int argc, char **argv)
 {
   int c;
-  uint64_t ram_size = 0;
-  uint64_t pmp_count = 0;
-  uint64_t pmp_grain = 0;
-  uint64_t block_size_exp = 0;
+  bool have_config = false;
   while (true) {
     c = getopt_long(argc, argv,
                     "a"
-                    "B"
                     "d"
                     "m"
-                    "C"
-                    "I"
-                    "F"
-                    "W"
                     "i"
                     "p"
                     "z:"
@@ -232,91 +196,23 @@ static int process_args(int argc, char **argv)
                     "T:"
                     "g:"
                     "h"
+                    "c:"
 #ifdef RVFI_DII
                     "r:"
 #endif
-#ifdef SAILCOV
-                    "c:"
-#endif
                     "V::"
                     "v::"
-                    "l:"
-                    "x",
+                    "l:",
                     options, NULL);
     if (c == -1)
       break;
     switch (c) {
     case 'a':
-      report_arch();
-      break;
-    case 'B':
-      fprintf(stderr, "enabling B extension.\n");
-      rv_enable_bext = true;
-      break;
-    case 'd':
-      fprintf(stderr, "enabling dirty update.\n");
-      rv_enable_dirty_update = true;
-      break;
-    case 'm':
-      fprintf(stderr, "enabling misaligned access.\n");
-      rv_enable_misaligned = true;
-      break;
-    case OPT_PMP_COUNT:
-      pmp_count = atol(optarg);
-      fprintf(stderr, "PMP count: %" PRIu64 "\n", pmp_count);
-      if (pmp_count != 0 && pmp_count != 16 && pmp_count != 64) {
-        fprintf(stderr, "invalid PMP count: must be 0, 16 or 64");
-        exit(1);
-      }
-      rv_pmp_count = pmp_count;
-      break;
-    case OPT_PMP_GRAIN:
-      pmp_grain = atol(optarg);
-      fprintf(stderr, "PMP grain: %" PRIu64 "\n", pmp_grain);
-      if (pmp_grain >= 64) {
-        fprintf(stderr, "invalid PMP grain: must less than 64");
-        exit(1);
-      }
-      rv_pmp_grain = pmp_grain;
-      break;
-    case 'C':
-      fprintf(stderr, "disabling RVC compressed instructions.\n");
-      rv_enable_rvc = false;
-      break;
-    case 'I':
-      fprintf(stderr, "disabling writable misa CSR.\n");
-      rv_enable_writable_misa = false;
-      break;
-    case 'F':
-      fprintf(stderr, "disabling floating point (F and D extensions).\n");
-      rv_enable_fdext = false;
-      break;
-    case 'W':
-      fprintf(stderr, "disabling RVV vector instructions.\n");
-      rv_enable_vext = false;
-      break;
-    case 'i':
-      fprintf(stderr, "enabling storing illegal instruction bits in mtval.\n");
-      rv_mtval_has_illegal_inst_bits = true;
-      break;
-    case OPT_ENABLE_WRITABLE_FIOM:
-      fprintf(stderr,
-              "enabling FIOM (Fence of I/O implies Memory) bit in menvcfg.\n");
-      rv_enable_writable_fiom = true;
+      do_report_arch = true;
       break;
     case 'p':
       fprintf(stderr, "will show execution times on completion.\n");
       do_show_times = true;
-      break;
-    case 'z':
-      ram_size = atol(optarg);
-      if (ram_size) {
-        fprintf(stderr, "setting ram-size to %" PRIu64 " MB\n", ram_size);
-        rv_ram_size = ram_size << 20;
-      } else {
-        fprintf(stderr, "invalid ram-size '%s' provided.\n", optarg);
-        exit(1);
-      }
       break;
     case 'b':
       dtb_file = strdup(optarg);
@@ -338,6 +234,19 @@ static int process_args(int argc, char **argv)
     case 'h':
       print_usage(argv[0], 0);
       break;
+    case 'c': {
+      if (access(optarg, R_OK) == 0) {
+        sail_config_set_file(optarg);
+        have_config = true;
+      } else {
+        fprintf(stderr, "configuration file '%s' does not exist.\n", optarg);
+        exit(1);
+      }
+      break;
+    }
+    case OPT_PRINT_CONFIG:
+      printf("%s", DEFAULT_JSON);
+      exit(0);
 #ifdef RVFI_DII
     case 'r': {
       int rvfi_dii_port = atoi(optarg);
@@ -364,49 +273,8 @@ static int process_args(int argc, char **argv)
       insn_limit = val;
       break;
     }
-    case OPT_ENABLE_SVINVAL:
-      fprintf(stderr, "enabling svinval extension.\n");
-      rv_enable_svinval = true;
-      break;
-    case OPT_ENABLE_ZCB:
-      fprintf(stderr, "enabling Zcb extension.\n");
-      rv_enable_zcb = true;
-      break;
-    case OPT_ENABLE_ZICBOM:
-      fprintf(stderr, "enabling Zicbom extension.\n");
-      rv_enable_zicbom = true;
-      break;
-    case OPT_ENABLE_ZICBOZ:
-      fprintf(stderr, "enabling Zicboz extension.\n");
-      rv_enable_zicboz = true;
-      break;
-    case OPT_ENABLE_ZVKB:
-      fprintf(stderr, "enabling Zvkb extension.\n");
-      rv_enable_zvkb = true;
-      break;
-    case OPT_ENABLE_SSTC:
-      fprintf(stderr, "enabling Sstc extension.\n");
-      rv_enable_sstc = true;
-      break;
-    case OPT_CACHE_BLOCK_SIZE:
-      block_size_exp = ilog2(atol(optarg));
-
-      if (block_size_exp > 12) {
-        fprintf(stderr, "invalid cache-block-size '%s' provided.\n", optarg);
-        exit(1);
-      }
-
-      fprintf(stderr, "setting cache-block-size to 2^%" PRIu64 " = %u B\n",
-              block_size_exp, 1 << block_size_exp);
-      rv_cache_block_size_exp = block_size_exp;
-      break;
-    case 'x':
-      fprintf(stderr, "enabling Zfinx support.\n");
-      rv_enable_zfinx = true;
-      rv_enable_fdext = false;
-      break;
 #ifdef SAILCOV
-    case 'c':
+    case OPT_SAILCOV:
       sailcov_file = strdup(optarg);
       break;
 #endif
@@ -419,6 +287,21 @@ static int process_args(int argc, char **argv)
       break;
     }
   }
+
+  if (!have_config) {
+    std::filesystem::path path = std::filesystem::temp_directory_path();
+    pid_t pid = getpid();
+    std::ostringstream filename;
+    filename << "default_config" << pid << ".json";
+    path = path / filename.str();
+    std::ofstream tmp(path);
+    tmp << DEFAULT_JSON;
+    tmp.close();
+
+    sail_config_set_file(path.c_str());
+    std::filesystem::remove(path);
+  }
+
 #ifdef RVFI_DII
   if (optind > argc || (optind == argc && !rvfi))
     print_usage(argv[0], 0);
@@ -431,7 +314,7 @@ static int process_args(int argc, char **argv)
   if (dtb_file)
     read_dtb(dtb_file);
 
-  if (!rvfi)
+  if (!rvfi && !do_report_arch)
     fprintf(stdout, "Running file %s.\n", argv[optind]);
   return optind;
 }
@@ -482,6 +365,38 @@ uint64_t load_sail(char *f, bool main_file)
   return entry;
 }
 
+uint64_t get_config_uint64(std::vector<const char *> keypath)
+{
+  sail_config_json json = sail_config_get(keypath.size(), keypath.data());
+
+  if (!json) {
+    std::cerr << "Failed to find configuration option '";
+    for (auto part : keypath) {
+      std::cerr << "." << part;
+    }
+    std::cerr << "'.\n";
+    exit(1);
+  }
+
+  sail_int big_n;
+  uint64_t n;
+
+  if (!sail_config_is_int(json)) {
+    std::cerr << "Configuration option '";
+    for (auto part : keypath) {
+      std::cerr << "." << part;
+    }
+    std::cerr << "' could not be parsed as an integer.\n";
+    exit(1);
+  }
+
+  CREATE(sail_int)(&big_n);
+  sail_config_unwrap_int(&big_n, json);
+  n = sail_int_get_ui(big_n);
+  KILL(sail_int)(&big_n);
+  return n;
+}
+
 void init_sail_reset_vector(uint64_t entry)
 {
 #define RST_VEC_SIZE 8
@@ -496,9 +411,10 @@ void init_sail_reset_vector(uint64_t entry)
          (uint32_t)(entry & 0xffffffff),
          (uint32_t)(entry >> 32)};
 
-  rv_rom_base = DEFAULT_RSTVEC;
-  uint64_t addr = rv_rom_base;
-  for (size_t i = 0; i < sizeof(reset_vec); i++)
+  uint64_t rom_base = get_config_uint64({"platform", "reset_vector"});
+  uint64_t addr = rom_base;
+
+  for (int i = 0; i < sizeof(reset_vec); i++)
     write_mem(addr++, (uint64_t)((char *)reset_vec)[i]);
 
   if (dtb && dtb_len) {
@@ -512,16 +428,32 @@ void init_sail_reset_vector(uint64_t entry)
   for (uint64_t i = addr; i < rom_end; i++)
     write_mem(addr++, 0);
 
-  /* set rom size */
-  rv_rom_size = rom_end - rv_rom_base;
+  /* calculate rom size */
+  uint64_t rom_size = rom_end - rom_base;
+
+  /* check calculated rom values match configuration */
+  if (rom_base != get_config_uint64({"platform", "rom", "base"})) {
+    fprintf(stderr,
+            "Configuration value platform.rom.base does not match %" PRIu64
+            ".\n",
+            rom_base);
+  }
+  if (rom_size != get_config_uint64({"platform", "rom", "size"})) {
+    fprintf(stderr,
+            "Configuration value platform.rom.size does not match %" PRIu64
+            ".\n",
+            rom_size);
+  }
+
   /* boot at reset vector */
-  zPC = rv_rom_base;
+  zPC = rom_base;
 }
 
 void init_sail(uint64_t elf_entry)
 {
   zinit_model(UNIT);
   if (rvfi) {
+    /*
     rv_ram_base = UINT64_C(0x80000000);
     rv_ram_size = UINT64_C(0x800000);
     rv_rom_base = UINT64_C(0);
@@ -529,6 +461,7 @@ void init_sail(uint64_t elf_entry)
     rv_clint_base = UINT64_C(0);
     rv_clint_size = UINT64_C(0);
     rv_htif_tohost = UINT64_C(0);
+    */
     zPC = elf_entry;
   } else
     init_sail_reset_vector(elf_entry);
@@ -621,7 +554,10 @@ void run_sail(void)
 
   /* initialize the step number */
   mach_int step_no = 0;
-  int insn_cnt = 0;
+  uint64_t insn_cnt = 0;
+
+  uint64_t insns_per_tick
+      = get_config_uint64({"platform", "instructions_per_tick"});
 
   struct timeval interval_start;
   if (gettimeofday(&interval_start, NULL) < 0) {
@@ -688,7 +624,7 @@ void run_sail(void)
       }
     }
 
-    if (insn_cnt == rv_insns_per_tick) {
+    if (insn_cnt == insns_per_tick) {
       insn_cnt = 0;
       ztick_clock(UNIT);
       ztick_platform(UNIT);
@@ -734,9 +670,14 @@ void init_logs()
 
 int main(int argc, char **argv)
 {
+  int files_start = process_args(argc, argv);
+
   model_init();
 
-  int files_start = process_args(argc, argv);
+  if (do_report_arch) {
+    report_arch();
+  }
+
   char *initial_elf_file = argv[files_start];
   init_logs();
 
