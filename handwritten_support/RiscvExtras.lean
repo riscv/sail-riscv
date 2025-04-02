@@ -140,7 +140,7 @@ axiom extern_f16roundToInt : BitVec 3 → BitVec 16 → Bool → Unit
 axiom extern_f32roundToInt : BitVec 3 → BitVec 32 → Bool → Unit
 axiom extern_f64roundToInt : BitVec 3 → BitVec 64 → Bool → Unit
 
--- Termination of extensionEnabled
+-- Termination of currentlyEnabled
 instance : SizeOf extension where
   sizeOf := extension.toCtorIdx
 

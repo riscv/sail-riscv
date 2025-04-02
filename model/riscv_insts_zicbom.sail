@@ -8,7 +8,7 @@
 
 // Cache Block Operations - Management
 
-function clause extensionEnabled(Ext_Zicbom) = sys_enable_zicbom()
+function clause currentlyEnabled(Ext_Zicbom) = sys_enable_zicbom()
 
 function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], senvcfg[CBCFE][0])
 
@@ -23,7 +23,7 @@ mapping encdec_cbop : cbop_zicbom <-> bits(12) = {
 
 mapping clause encdec = RISCV_ZICBOM(cbop, rs1)
   <-> encdec_cbop(cbop) @ encdec_reg(rs1) @ 0b010 @ 0b00000 @ 0b0001111
-  when extensionEnabled(Ext_Zicbom)
+  when currentlyEnabled(Ext_Zicbom)
 
 mapping cbop_mnemonic : cbop_zicbom <-> string = {
   CBO_CLEAN <-> "cbo.clean",
@@ -50,7 +50,7 @@ enum checked_cbop = {CBOP_ILLEGAL, CBOP_ILLEGAL_VIRTUAL, CBOP_INVAL_FLUSH, CBOP_
 // Select the cbop to perform based on the privilege.
 function cbop_priv_check(p: Privilege) -> checked_cbop = {
   let mCBIE : cbie = encdec_cbie(menvcfg[CBIE]);
-  let sCBIE : cbie = if   extensionEnabled(Ext_S)
+  let sCBIE : cbie = if   currentlyEnabled(Ext_S)
                      then encdec_cbie(senvcfg[CBIE])
                      else encdec_cbie(menvcfg[CBIE]);
   match (p, mCBIE, sCBIE) {

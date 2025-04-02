@@ -11,8 +11,8 @@
 
 /* ****************************************************************** */
 
-function clause extensionEnabled(Ext_M) = misa[M] == 0b1
-function clause extensionEnabled(Ext_Zmmul) = true
+function clause currentlyEnabled(Ext_M) = misa[M] == 0b1
+function clause currentlyEnabled(Ext_Zmmul) = true
 
 
 union clause ast = MUL : (regidx, regidx, regidx, mul_op)
@@ -26,7 +26,7 @@ mapping encdec_mul_op : mul_op <-> bits(3) = {
 
 mapping clause encdec = MUL(rs2, rs1, rd, mul_op)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_mul_op(mul_op) @ encdec_reg(rd) @ 0b0110011
-  when extensionEnabled(Ext_M) | extensionEnabled(Ext_Zmmul)
+  when currentlyEnabled(Ext_M) | currentlyEnabled(Ext_Zmmul)
 
 function clause execute (MUL(rs2, rs1, rd, mul_op)) = {
   let rs1_val = X(rs1);
@@ -56,7 +56,7 @@ union clause ast = DIV : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = DIV(rs2, rs1, rd, s)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b10 @ bool_not_bits(s) @ encdec_reg(rd) @ 0b0110011
-  when extensionEnabled(Ext_M)
+  when currentlyEnabled(Ext_M)
 
 function clause execute (DIV(rs2, rs1, rd, s)) = {
   let rs1_val = X(rs1);
@@ -83,7 +83,7 @@ union clause ast = REM : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = REM(rs2, rs1, rd, s)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b11 @ bool_not_bits(s) @ encdec_reg(rd) @ 0b0110011
-  when extensionEnabled(Ext_M)
+  when currentlyEnabled(Ext_M)
 
 function clause execute (REM(rs2, rs1, rd, s)) = {
   let rs1_val = X(rs1);
@@ -104,7 +104,7 @@ union clause ast = MULW : (regidx, regidx, regidx)
 
 mapping clause encdec = MULW(rs2, rs1, rd)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0111011
-  when xlen == 64 & (extensionEnabled(Ext_M) | extensionEnabled(Ext_Zmmul))
+  when xlen == 64 & (currentlyEnabled(Ext_M) | currentlyEnabled(Ext_Zmmul))
 
 function clause execute (MULW(rs2, rs1, rd)) = {
   let rs1_val = X(rs1)[31..0];
@@ -127,7 +127,7 @@ union clause ast = DIVW : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = DIVW(rs2, rs1, rd, s)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b10 @ bool_not_bits(s) @ encdec_reg(rd) @ 0b0111011
-  when xlen == 64 & extensionEnabled(Ext_M)
+  when xlen == 64 & currentlyEnabled(Ext_M)
 
 function clause execute (DIVW(rs2, rs1, rd, s)) = {
   let rs1_val = X(rs1)[31..0];
@@ -150,7 +150,7 @@ union clause ast = REMW : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = REMW(rs2, rs1, rd, s)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b11 @ bool_not_bits(s) @ encdec_reg(rd) @ 0b0111011
-  when xlen == 64 & extensionEnabled(Ext_M)
+  when xlen == 64 & currentlyEnabled(Ext_M)
 
 function clause execute (REMW(rs2, rs1, rd, s)) = {
   let rs1_val = X(rs1)[31..0];

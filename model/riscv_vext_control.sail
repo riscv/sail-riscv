@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause extensionEnabled(Ext_V) = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
+function clause currentlyEnabled(Ext_V) = (misa[V] == 0b1) & (mstatus[VS] != 0b00)
 
 // Note: The spec recommends trapping if vstart is out of bounds but the
 // current implementation does not do that because write_CSR() doesn't
@@ -26,13 +26,13 @@ mapping clause csr_name_map = 0xC20  <-> "vl"
 mapping clause csr_name_map = 0xC21  <-> "vtype"
 mapping clause csr_name_map = 0xC22  <-> "vlenb"
 
-function clause is_CSR_defined (0x008) = extensionEnabled(Ext_V) // vstart
-function clause is_CSR_defined (0x009) = extensionEnabled(Ext_V) // vxsat
-function clause is_CSR_defined (0x00A) = extensionEnabled(Ext_V) // vxrm
-function clause is_CSR_defined (0x00F) = extensionEnabled(Ext_V) // vcsr
-function clause is_CSR_defined (0xC20) = extensionEnabled(Ext_V) // vl
-function clause is_CSR_defined (0xC21) = extensionEnabled(Ext_V) // vtype
-function clause is_CSR_defined (0xC22) = extensionEnabled(Ext_V) // vlenb
+function clause is_CSR_defined (0x008) = currentlyEnabled(Ext_V) // vstart
+function clause is_CSR_defined (0x009) = currentlyEnabled(Ext_V) // vxsat
+function clause is_CSR_defined (0x00A) = currentlyEnabled(Ext_V) // vxrm
+function clause is_CSR_defined (0x00F) = currentlyEnabled(Ext_V) // vcsr
+function clause is_CSR_defined (0xC20) = currentlyEnabled(Ext_V) // vl
+function clause is_CSR_defined (0xC21) = currentlyEnabled(Ext_V) // vtype
+function clause is_CSR_defined (0xC22) = currentlyEnabled(Ext_V) // vlenb
 
 function clause read_CSR(0x008) = zero_extend(vstart)
 function clause read_CSR(0x009) = zero_extend(vcsr[vxsat])

@@ -15,18 +15,18 @@
 
 /* **************************************************************** */
 
-function clause extensionEnabled(Ext_F) = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
-function clause extensionEnabled(Ext_D) = (misa[D] == 0b1) & (mstatus[FS] != 0b00) & flen >= 64
-function clause extensionEnabled(Ext_Zfinx) = sys_enable_zfinx()
+function clause currentlyEnabled(Ext_F) = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
+function clause currentlyEnabled(Ext_D) = (misa[D] == 0b1) & (mstatus[FS] != 0b00) & flen >= 64
+function clause currentlyEnabled(Ext_Zfinx) = sys_enable_zfinx()
 
 /* Floating Point CSRs */
 mapping clause csr_name_map = 0x001  <-> "fflags"
 mapping clause csr_name_map = 0x002  <-> "frm"
 mapping clause csr_name_map = 0x003  <-> "fcsr"
 
-function clause is_CSR_defined (0x001) = extensionEnabled(Ext_F) | extensionEnabled(Ext_Zfinx)
-function clause is_CSR_defined (0x002) = extensionEnabled(Ext_F) | extensionEnabled(Ext_Zfinx)
-function clause is_CSR_defined (0x003) = extensionEnabled(Ext_F) | extensionEnabled(Ext_Zfinx)
+function clause is_CSR_defined (0x001) = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)
+function clause is_CSR_defined (0x002) = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)
+function clause is_CSR_defined (0x003) = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)
 
 function clause read_CSR (0x001) = zero_extend(fcsr[FFLAGS])
 function clause read_CSR (0x002) = zero_extend(fcsr[FRM])

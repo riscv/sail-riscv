@@ -46,7 +46,7 @@ function compressed_measure(instr) =
 termination_measure execute(i) = compressed_measure(i)
 termination_measure pt_walk(_,_,_,_,_,_,_,level,_, _) = level
 
-function extensionEnabled_measure(ext : extension) -> int =
+function currentlyEnabled_measure(ext : extension) -> int =
   match ext {
     Ext_Zca => 1, // Ext_C
     Ext_Zfhmin => 1, // Ext_Zfh
@@ -58,7 +58,7 @@ function extensionEnabled_measure(ext : extension) -> int =
     Ext_Zcf => 2, // Ext_Zca, (Ext_F)
     _ => 0
   }
-termination_measure extensionEnabled(ext) = extensionEnabled_measure(ext)
+termination_measure currentlyEnabled(ext) = currentlyEnabled_measure(ext)
 
 // The top-level loop isn't terminating, but we put a limit so that it can still be included in the Coq output
 termination_measure loop while 100

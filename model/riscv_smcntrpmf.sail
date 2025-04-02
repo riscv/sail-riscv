@@ -1,4 +1,4 @@
-function clause extensionEnabled(Ext_Smcntrpmf) = true
+function clause currentlyEnabled(Ext_Smcntrpmf) = true
 
 bitfield CountSmcntrpmf : bits(64) = {
   MINH  : 62,
@@ -13,8 +13,8 @@ function legalize_smcntrpmf(c : CountSmcntrpmf, value : bits(64)) -> CountSmcntr
   // For each bit in 61:58, if the associated privilege mode is not implemented, the bit is read-only zero.
   [ c with
     MINH  = v[MINH],
-    SINH  = if extensionEnabled(Ext_S) then v[SINH] else 0b0,
-    UINH  = if extensionEnabled(Ext_U) then v[UINH] else 0b0,
+    SINH  = if currentlyEnabled(Ext_S) then v[SINH] else 0b0,
+    UINH  = if currentlyEnabled(Ext_U) then v[UINH] else 0b0,
     // VSINH = v[VSINH],
     // VUINH = v[VUINH],
   ]
@@ -28,10 +28,10 @@ mapping clause csr_name_map = 0x721  <-> "mcyclecfgh"
 mapping clause csr_name_map = 0x322  <-> "minstretcfg"
 mapping clause csr_name_map = 0x722  <-> "minstretcfgh"
 
-function clause is_CSR_defined(0x321) = extensionEnabled(Ext_Smcntrpmf) // mcyclecfg
-function clause is_CSR_defined(0x721) = extensionEnabled(Ext_Smcntrpmf) & xlen == 32 // mcyclecfgh
-function clause is_CSR_defined(0x322) = extensionEnabled(Ext_Smcntrpmf) // minstretcfg
-function clause is_CSR_defined(0x722) = extensionEnabled(Ext_Smcntrpmf) & xlen == 32 // minstretcfgh
+function clause is_CSR_defined(0x321) = currentlyEnabled(Ext_Smcntrpmf) // mcyclecfg
+function clause is_CSR_defined(0x721) = currentlyEnabled(Ext_Smcntrpmf) & xlen == 32 // mcyclecfgh
+function clause is_CSR_defined(0x322) = currentlyEnabled(Ext_Smcntrpmf) // minstretcfg
+function clause is_CSR_defined(0x722) = currentlyEnabled(Ext_Smcntrpmf) & xlen == 32 // minstretcfgh
 
 function clause read_CSR(0x321) = mcyclecfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x721 if xlen == 32) = mcyclecfg.bits[63 .. 32]

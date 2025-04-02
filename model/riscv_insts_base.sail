@@ -9,8 +9,8 @@
 /* ****************************************************************** */
 /* This file specifies the instructions in the base integer set.      */
 
-function clause extensionEnabled(Ext_C) = misa[C] == 0b1
-function clause extensionEnabled(Ext_Zca) = extensionEnabled(Ext_C)
+function clause currentlyEnabled(Ext_C) = misa[C] == 0b1
+function clause currentlyEnabled(Ext_Zca) = currentlyEnabled(Ext_C)
 
 /* ****************************************************************** */
 union clause ast = UTYPE : (bits(20), regidx, uop)
@@ -69,7 +69,7 @@ function clause execute (RISCV_JAL(imm, rd)) = {
     Ext_ControlAddr_OK(target) => {
       /* Perform standard alignment check */
       let target_bits = virtaddr_bits(target);
-      if bit_to_bool(target_bits[1]) & not(extensionEnabled(Ext_Zca)) then {
+      if bit_to_bool(target_bits[1]) & not(currentlyEnabled(Ext_Zca)) then {
         handle_mem_exception(target, E_Fetch_Addr_Align());
         RETIRE_FAIL
       } else {
@@ -131,7 +131,7 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
       },
       Ext_ControlAddr_OK(target) => {
         let target_bits = virtaddr_bits(target);
-        if bit_to_bool(target_bits[1]) & not(extensionEnabled(Ext_Zca)) then {
+        if bit_to_bool(target_bits[1]) & not(currentlyEnabled(Ext_Zca)) then {
           handle_mem_exception(target, E_Fetch_Addr_Align());
           RETIRE_FAIL
         } else {
@@ -627,8 +627,8 @@ mapping clause encdec = SRET()
 function clause execute SRET() = {
   let sret_illegal : bool = match cur_privilege {
     User       => true,
-    Supervisor => not(extensionEnabled(Ext_S)) | mstatus[TSR] == 0b1,
-    Machine    => not(extensionEnabled(Ext_S))
+    Supervisor => not(currentlyEnabled(Ext_S)) | mstatus[TSR] == 0b1,
+    Machine    => not(currentlyEnabled(Ext_S))
   };
   if   sret_illegal
   then { handle_illegal(); RETIRE_FAIL }

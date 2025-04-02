@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause extensionEnabled(Ext_Zhinx) = sys_enable_zfinx()
+function clause currentlyEnabled(Ext_Zhinx) = sys_enable_zfinx()
 
 /* **************************************************************** */
 /* This file specifies the instructions in the Zfh extension        */
@@ -164,10 +164,10 @@ function fle_H   (v1,       v2,        is_quiet) = {
 /* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
 // Full half support.
-function haveHalfFPU() -> bool = extensionEnabled(Ext_Zfh) | extensionEnabled(Ext_Zhinx)
+function haveHalfFPU() -> bool = currentlyEnabled(Ext_Zfh) | currentlyEnabled(Ext_Zhinx)
 // Support for conversion of halves to/from single & double, but no actual
 // calculations with halves.
-function haveHalfMin() -> bool = haveHalfFPU() | extensionEnabled(Ext_Zfhmin)
+function haveHalfMin() -> bool = haveHalfFPU() | currentlyEnabled(Ext_Zfhmin)
 
 /* ****************************************************************** */
 /* Floating-point loads                                               */
@@ -811,11 +811,11 @@ mapping clause encdec = F_UN_X_TYPE_H(rs1, rd, FCLASS_H)
 
 mapping clause encdec = F_UN_X_TYPE_H(rs1, rd, FMV_X_H)
   <-> 0b111_0010 @ 0b00000 @ encdec_freg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfhmin)
+  when currentlyEnabled(Ext_Zfhmin)
 
 mapping clause encdec = F_UN_F_TYPE_H(rs1, rd, FMV_H_X)
   <-> 0b111_1010 @ 0b00000 @ encdec_reg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfhmin)
+  when currentlyEnabled(Ext_Zfhmin)
 
 /* Execution semantics ================================ */
 
