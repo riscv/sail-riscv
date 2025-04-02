@@ -141,7 +141,9 @@ foreach (xlen IN ITEMS 32 64)
         if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}.filter")
             add_custom_command(
                 OUTPUT ${config}
-                DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}.filter"
+                DEPENDS
+                    "${CMAKE_SOURCE_DIR}/config/default.json"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}.filter"
                 COMMAND jq
                     -f "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}.filter"
                     "${CMAKE_SOURCE_DIR}/config/default.json"
@@ -152,9 +154,12 @@ foreach (xlen IN ITEMS 32 64)
         else()
             add_custom_command(
                 OUTPUT ${config}
+                DEPENDS
+                    "${CMAKE_SOURCE_DIR}/config/default.json"
                 COMMAND ${CMAKE_COMMAND} -E copy
                     "${CMAKE_SOURCE_DIR}/config/default.json"
                     "${config}"
+                VERBATIM
             )
         endif()
 
