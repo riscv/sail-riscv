@@ -65,16 +65,18 @@ enum clause extension = Ext_Zfinx
 // Floating-Point in Integer Registers (double precision)
 enum clause extension = Ext_Zdinx
 
-// Code Size Reduction: compressed instructions excluding floating point loads and stores
-enum clause extension = Ext_Zca
-// Code Size Reduction: additional 16-bit aliases
-enum clause extension = Ext_Zcb
-// Code Size Reduction: compressed double precision floating point loads and stores
-enum clause extension = Ext_Zcd
-// Code Size Reduction: compressed single precision floating point loads and stores
-enum clause extension = Ext_Zcf
 // Compressed May-Be-Operations
 enum clause extension = Ext_Zcmop
+// Code Size Reduction: compressed instructions excluding floating point loads and stores
+enum clause extension = Ext_Zca
+// Code Size Reduction: compressed single precision floating point loads and stores
+enum clause extension = Ext_Zcf
+// Code Size Reduction: compressed double precision floating point loads and stores
+enum clause extension = Ext_Zcd
+// Code Size Reduction: additional 16-bit aliases
+enum clause extension = Ext_Zcb
+// Code Size Reduction: compressed table jump instructions
+enum clause extension = Ext_Zcmt
 
 // Bit Manipulation: Address generation
 enum clause extension = Ext_Zba

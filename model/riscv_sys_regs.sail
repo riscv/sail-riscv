@@ -97,6 +97,12 @@ function sys_enable_svinval() -> bool = config extensions.Svinval.enabled
 /* whether Zcb was enabled at boot */
 function sys_enable_zcb() -> bool = config extensions.Zcb.enabled
 
+/* whether Zcd was enabled at boot */
+function sys_enable_zcd() -> bool = config extensions.Zcd.enabled
+
+/* whether Zcmt was enabled at boot */
+function sys_enable_zcmt() -> bool = config extensions.Zcmt.enabled
+
 /* whether zfinx was enabled at boot */
 function sys_enable_zfinx() -> bool = config extensions.Zfinx.enabled
 
@@ -722,6 +728,27 @@ function clause read_CSR(0xF12) = marchid
 function clause read_CSR(0xF13) = mimpid
 function clause read_CSR(0xF14) = mhartid
 function clause read_CSR(0xF15) = mconfigptr
+
+/* Zcmt extension */
+
+bitfield Jvt : xlenbits = {
+  base : xlen - 1 .. 6,
+  mode : 5 .. 0
+}
+register jvt : Jvt
+
+function legalize_jvt(o : Jvt, v : xlenbits) -> Jvt = {
+  let v = Mk_Jvt(v);
+  [o with
+    base = v[base],
+    mode = 0b000000
+  ]
+}
+
+mapping clause csr_name_map = 0x017  <-> "jvt"
+function clause is_CSR_defined (0x017) = sys_enable_zcmt()
+function clause write_CSR(0x017, value) = { jvt = legalize_jvt(jvt, value); jvt.bits }
+function clause read_CSR(0x017) = jvt.bits
 
 /* S-mode registers */
 

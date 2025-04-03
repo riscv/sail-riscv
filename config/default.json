@@ -56,7 +56,13 @@
         "Svinval" : {
             "enabled" : false
         },
+        "Zcd" : {
+            "enabled" : true
+        },
         "Zcb" : {
+            "enabled" : false
+        },
+        "Zcmt" : {
             "enabled" : false
         },
         "Zfinx" : {
