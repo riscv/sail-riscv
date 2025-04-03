@@ -22,12 +22,12 @@ register cur_inst : xlenbits
  * views from lower privilege levels.  So, for e.g. when mstatus is read from
  * lower privilege levels, we use 'lowering_' projections:
  *
- *   mstatus  ->  sstatus  ->  ustatus
+ *   mstatus  ->  sstatus
  *
  * Similarly, when machine state is written from lower privileges, that state is
  * lifted into the appropriate value for the machine-mode state.
  *
- *   ustatus  ->  sstatus  ->  mstatus
+ *   sstatus  ->  mstatus
  *
  * In addition, several fields in machine state registers are WARL or WLRL,
  * requiring that values written to the registers be legalized.  For each such

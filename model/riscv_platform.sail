@@ -62,7 +62,7 @@ function plat_htif_tohost () = to_bits(physaddrbits_len, elf_tohost ())
 
 /* Physical memory map predicates */
 
-function within_phys_mem forall 'n, 'n <= max_mem_access. (physaddr(addr) : physaddr, width : int('n)) -> bool = {
+function within_phys_mem forall 'n, 'n <= max_mem_access. (Physaddr(addr) : physaddr, width : int('n)) -> bool = {
   /* To avoid overflow issues when physical memory extends to the end
    * of the addressable range, we need to perform address bound checks
    * on unsigned unbounded integers.
@@ -90,7 +90,7 @@ function within_phys_mem forall 'n, 'n <= max_mem_access. (physaddr(addr) : phys
   }
 }
 
-function within_clint forall 'n, 0 < 'n <= max_mem_access . (physaddr(addr) : physaddr, width : int('n)) -> bool = {
+function within_clint forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool = {
   /* To avoid overflow issues when physical memory extends to the end
    * of the addressable range, we need to perform address bound checks
    * on unsigned unbounded integers.
@@ -102,10 +102,10 @@ function within_clint forall 'n, 0 < 'n <= max_mem_access . (physaddr(addr) : ph
   & (addr_int + sizeof('n)) <= (clint_base_int + clint_size_int)
 }
 
-function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (physaddr(addr) : physaddr, width : int('n)) -> bool =
+function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool =
     plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4)
 
-function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (physaddr(addr) : physaddr, width : int('n)) -> bool =
+function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool =
     plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4)
 
 /* CLINT (Core Local Interruptor), based on Spike. */
@@ -141,7 +141,7 @@ let MTIME_BASE       : physaddrbits = zero_extend(0x0bff8)
 let MTIME_BASE_HI    : physaddrbits = zero_extend(0x0bffc)
 
 val clint_load : forall 'n, 'n > 0. (AccessType(ext_access_type), physaddr, int('n), bool) -> MemoryOpResult(bits(8 * 'n))
-function clint_load(t, physaddr(addr), width, to_be) = {
+function clint_load(t, Physaddr(addr), width, to_be) = {
   //these two registers are 64 bits, so simple conversion is not accurate.
   //consider 0x78563412 stored at mtime/cmp and when reading in big endian format,
   //we change it to 0x1234567800000000. So position for mtime and mtime_hi are reversed. (not for ld)
@@ -219,7 +219,7 @@ function clint_dispatch() -> unit = {
 }
 
 val clint_store: forall 'n, 'n > 0. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
-function clint_store(physaddr(addr), width, data) = {
+function clint_store(Physaddr(addr), width, data) = {
   let addr = addr - plat_clint_base ();
   if addr == MSIP_BASE & ('n == 8 | 'n == 4) then {
     if   get_config_print_platform()
@@ -320,7 +320,7 @@ function reset_htif () -> unit = {
  */
 
 val htif_load : forall 'n, 'n > 0. (AccessType(ext_access_type), physaddr, int('n), bool) -> MemoryOpResult(bits(8 * 'n))
-function htif_load(t, physaddr(paddr), width, to_be) = {
+function htif_load(t, Physaddr(paddr), width, to_be) = {
   var converted_htif_tohost = endianness_conversion(htif_tohost, to_be);
   //htif_tohost is a 64 bit register, same logic as of mtime, mtimecmp for handling big endianness conversion.
   if (to_be & width == 4) then converted_htif_tohost = converted_htif_tohost[31..0] @ converted_htif_tohost[63..32];
@@ -341,7 +341,7 @@ function htif_load(t, physaddr(paddr), width, to_be) = {
 }
 
 val htif_store: forall 'n, 0 < 'n <= 8. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
-function htif_store(physaddr(paddr), width, data) = {
+function htif_store(Physaddr(paddr), width, data) = {
   if   get_config_print_platform()
   then print_platform("htif[" ^ BitStr(paddr) ^ "] <- " ^ BitStr(data));
   /* Store the written value so that we can ack it later. */

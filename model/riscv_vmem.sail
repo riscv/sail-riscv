@@ -98,7 +98,7 @@ function pt_walk(
   // pte_addr of 56 bits and physaddr of 34 bits (because you can't
   // use Sv39+ on RV32).
   assert(sv_width == 32 | xlen == 64);
-  let pte_addr = physaddr(zero_extend(pte_addr));
+  let pte_addr = Physaddr(zero_extend(pte_addr));
 
   // Read this-level PTE from mem
   match read_pte(pte_addr, 2 ^ log_pte_size_bytes) {
@@ -112,7 +112,7 @@ function pt_walk(
       else {
         let ppn = PPN_of_PTE(pte); // 22 or 44.
         let global = global | (pte_flags[G] == 0b1);
-        if pte_is_ptr(pte_flags) then {
+        if pte_is_non_leaf(pte_flags) then {
           // Non-Leaf PTE
           if level > 0 then
             // follow the pointer to walk next level
@@ -360,7 +360,7 @@ function translateAddr(
 
   let mode = translationMode(effPriv);
 
-  if mode == Bare then return TR_Address(physaddr(zero_extend(virtaddr_bits(vAddr))), init_ext_ptw);
+  if mode == Bare then return TR_Address(Physaddr(zero_extend(virtaddr_bits(vAddr))), init_ext_ptw);
 
   // Sv39 -> 39, etc.
   let sv_width = satp_mode_width(mode);
@@ -394,7 +394,7 @@ function translateAddr(
         // On RV64 paddr can be 34 or 56 bits, so we zero extend to 64.
         // On RV32 paddr can only be 34 bits. Sail knows this due to
         // the assertion above.
-        TR_Address(physaddr(zero_extend(paddr)), ext_ptw)
+        TR_Address(Physaddr(zero_extend(paddr)), ext_ptw)
       },
       TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
     }

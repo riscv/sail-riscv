@@ -136,6 +136,7 @@ foreach (xlen IN ITEMS 32 64)
                 "prelude_mem_addrtype.sail"
                 "prelude_mem_metadata.sail"
                 "prelude_mem.sail"
+                "arithmetic.sail"
             )
 
             if (variant STREQUAL "rvfi")

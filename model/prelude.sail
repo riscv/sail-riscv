@@ -191,14 +191,15 @@ function rotatel (v, n) =
 overload operator >>> = {rotate_bits_right, rotater}
 overload operator <<< = {rotate_bits_left, rotatel}
 
-function reverse_bits_in_byte (xs : bits(8)) -> bits(8) = {
-  var ys : bits(8) = zeros();
-  foreach (i from 0 to 7)
-    ys[i] = xs[7-i];
+val reverse_bits : forall 'n, 'n > 0. bits('n) -> bits('n)
+function reverse_bits (xs)  = {
+  var ys : bits('n) = zeros();
+  foreach (i from 0 to ('n - 1))
+    ys[i] = xs['n - 1 - i];
   ys
 }
 
-overload reverse = {reverse_bits_in_byte}
+overload reverse = {reverse_bits}
 
 overload operator / = {quot_positive_round_zero, quot_round_zero}
 overload operator * = {mult_atom, mult_int}

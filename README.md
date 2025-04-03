@@ -72,12 +72,15 @@ can be run using `make test` or `ctest` in the build directory.
 
 ### Configuring platform options
 
-Information on configuration options for the simulator is available from
-`build/c_emulator/riscv_sim_<arch> -h`.
+The model is configured using a JSON file specifying various tunable
+options.  The default configuration used for the model can be examined
+using `build/c_emulator/riscv_sim_<arch> --print-default-config`.  To
+use a custom configuration, save the default configuration into a
+file, edit it as needed, and pass it to the simulator using the
+`--config` option.
 
-Some useful options are: configuring whether misaligned accesses trap
-(`--enable-misaligned`), and
-whether page-table walks update PTE bits (`--enable-dirty-update`).
+Information on other options for the simulator is available from
+`build/c_emulator/riscv_sim_<arch> -h`.
 
 ### Booting OS images
 
