@@ -997,3 +997,24 @@ function get_vtype_vma() = decode_agtype(vtype[vma])
 
 val get_vtype_vta : unit -> agtype
 function get_vtype_vta() = decode_agtype(vtype[vta])
+
+/* Zcmt register */
+
+bitfield Jvt : xlenbits = {
+  base : xlen - 1 .. 6,
+  mode : 5 .. 0
+}
+register jvt : Jvt
+
+function legalize_jvt(o : Jvt, v : xlenbits) -> Jvt = {
+  let v = Mk_Jvt(v);
+  [o with
+    base = v[base],
+    mode = 0b000000
+  ]
+}
+
+mapping clause csr_name_map = 0x017  <-> "jvt"
+function clause is_CSR_defined (0x017) = currentlyEnabled(Ext_Zcmt)
+function clause write_CSR(0x017, value) = { jvt = legalize_jvt(jvt, value); jvt.bits }
+function clause read_CSR(0x017) = jvt.bits

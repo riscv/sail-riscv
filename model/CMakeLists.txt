@@ -69,6 +69,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_zba.sail"
                 "riscv_insts_zbb.sail"
                 "riscv_insts_zbc.sail"
+                "riscv_insts_zcmt.sail"
                 "riscv_insts_zbs.sail"
                 "riscv_insts_zcb.sail"
                 "riscv_insts_zfh.sail"

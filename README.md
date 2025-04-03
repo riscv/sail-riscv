@@ -98,7 +98,7 @@ For booting operating system images, see the information under the
 - Zfa extension for additional floating-point instructions, v1.0
 - Zfinx, Zdinx, and Zhinx extensions for floating-point in integer registers, v1.0
 - C extension for compressed instructions, v2.0
-- Zca, Zcf, Zcd, and Zcb extensions for code size reduction, v1.0
+- Zca, Zcf, Zcd, Zcb, and Zcmt extensions for code size reduction, v1.0
 - Zcmop extension for compressed May-Be-Operations, v1.0
 - B (Zba, Zbb, Zbs) and Zbc extensions for bit manipulation, v1.0
 - Zbkb, Zbkc, and Zbkx extensions for bit manipulation for cryptography, v1.0

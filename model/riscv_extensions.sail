@@ -114,6 +114,9 @@ function clause hartSupports(Ext_Zca) = config extensions.Zca.supported
 // Code Size Reduction: additional 16-bit aliases
 enum clause extension = Ext_Zcb
 function clause hartSupports(Ext_Zcb) = config extensions.Zcb.supported
+// Code Size Reduction: compressed table jump instructions
+enum clause extension = Ext_Zcmt
+function clause hartSupports(Ext_Zcmt) = config extensions.Zcmt.supported
 // Code Size Reduction: compressed double precision floating point loads and stores
 enum clause extension = Ext_Zcd
 function clause hartSupports(Ext_Zcd) = config extensions.Zcd.supported
