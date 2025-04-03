@@ -186,11 +186,7 @@ static int process_args(int argc, char **argv)
   while (true) {
     c = getopt_long(argc, argv,
                     "a"
-                    "d"
-                    "m"
-                    "i"
                     "p"
-                    "z:"
                     "b:"
                     "t:"
                     "T:"
