@@ -24,18 +24,15 @@ function clause execute (VGHSH_VV(vs2, vs1, vd)) = {
 
   assert(SEW == 32);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let eg_len   = (unsigned(vl) / 4);
   let eg_start = (unsigned(vstart) / 4);
 
   foreach (i from eg_start to (eg_len - 1)) {
-    assert(0 <= i & ((i * 4) + 3) < 'n);
+    assert(0 <= i & ((i * 4) + 3) < num_elem);
 
     let Y : bits(128) = get_velem_4(vd_val, i);
     let X : bits(128) = get_velem_4(vs1_val, i);
@@ -75,17 +72,14 @@ function clause execute (VGMUL_VV(vs2, vd)) = {
 
   assert(SEW == 32);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let eg_len   = (unsigned(vl) / 4);
   let eg_start = (unsigned(vstart) / 4);
 
   foreach (i from eg_start to (eg_len - 1)) {
-    assert(0 <= i & ((i * 4) + 3) < 'n);
+    assert(0 <= i & ((i * 4) + 3) < num_elem);
 
     let Y : bits(128) = brev8(get_velem_4(vd_val, i));
     var H : bits(128) = brev8(get_velem_4(vs2_val, i));
