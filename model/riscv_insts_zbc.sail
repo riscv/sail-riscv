@@ -52,7 +52,6 @@ mapping clause assembly = RISCV_CLMULR(rs2, rs1, rd)
   <-> "clmulr" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 function clause execute (RISCV_CLMULR(rs2, rs1, rd)) = {
-  let prod = carryless_mul(reverse(X(rs1)), reverse(X(rs2)));
-  X(rd) = reverse(prod[xlen - 1 .. 0]);
+  X(rd) = carryless_mulr(X(rs1), X(rs2));
   RETIRE_SUCCESS
 }
