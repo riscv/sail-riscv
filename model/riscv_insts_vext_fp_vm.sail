@@ -35,13 +35,10 @@ function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
   if illegal_fp_vd_unmasked(SEW, rm_3b) then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -99,13 +96,10 @@ function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
   if illegal_fp_vd_unmasked(SEW, rm_3b) then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let rs1_val = get_scalar_fp(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;

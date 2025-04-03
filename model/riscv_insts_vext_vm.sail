@@ -33,13 +33,10 @@ function clause execute(VVMTYPE(funct6, vs2, vs1, vd)) = {
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, zvreg);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vm_val  = read_vmask_carry(num_elem, 0b0, zvreg);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
   var result = initial_result;
@@ -89,12 +86,9 @@ function clause execute(VVMCTYPE(funct6, vs2, vs1, vd)) = {
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
   var result = initial_result;
@@ -140,20 +134,17 @@ mapping clause encdec = VVMSTYPE(funct6, vs2, vs1, vd)
 function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let 'num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_vd_masked(vd) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
   /* for bypassing normal masking in init_masked_result */
-  let vec_trues : bits('n) = ones();
+  let vec_trues : bits('num_elem) = ones();
 
-  let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, zvreg);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask_carry(num_elem, 0b0, zvreg);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vec_trues);
   var result = initial_result;
@@ -204,13 +195,10 @@ function clause execute(VVCMPTYPE(funct6, vm, vs2, vs1, vd)) = {
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -268,13 +256,10 @@ function clause execute(VXMTYPE(funct6, vs2, rs1, vd)) = {
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, zvreg);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vm_val  = read_vmask_carry(num_elem, 0b0, zvreg);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
   var result = initial_result;
@@ -324,12 +309,9 @@ function clause execute(VXMCTYPE(funct6, vs2, rs1, vd)) = {
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
   var result = initial_result;
@@ -375,20 +357,17 @@ mapping clause encdec = VXMSTYPE(funct6, vs2, rs1, vd)
 function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let 'num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_vd_masked(vd) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
   /* for bypassing normal masking in init_masked_result */
-  let vec_trues : bits('n) = ones();
+  let vec_trues : bits('num_elem) = ones();
 
-  let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, zvreg);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask_carry(num_elem, 0b0, zvreg);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vec_trues);
   var result = initial_result;
@@ -441,13 +420,10 @@ function clause execute(VXCMPTYPE(funct6, vm, vs2, rs1, vd)) = {
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -502,19 +478,16 @@ mapping clause encdec = VIMTYPE(funct6, vs2, simm, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(VIMTYPE(funct6, vs2, simm, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, zvreg);
-  let imm_val : bits('m)                  = sign_extend(simm);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vm_val  = read_vmask_carry(num_elem, 0b0, zvreg);
+  let imm_val : bits('SEW) = sign_extend(simm);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
   var result = initial_result;
@@ -555,18 +528,15 @@ mapping clause encdec = VIMCTYPE(funct6, vs2, simm, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(VIMCTYPE(funct6, vs2, simm, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let imm_val : bits('m)             = sign_extend(simm);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let imm_val : bits('SEW) = sign_extend(simm);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val);
   var result = initial_result;
@@ -607,22 +577,19 @@ mapping clause encdec = VIMSTYPE(funct6, vs2, simm, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let 'num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_vd_masked(vd) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
   /* for bypassing normal masking in init_masked_result */
-  let vec_trues : bits('n) = ones();
+  let vec_trues : bits('num_elem) = ones();
 
-  let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, zvreg);
-  let imm_val : bits('m)                  = sign_extend(simm);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask_carry(num_elem, 0b0, zvreg);
+  let imm_val : bits('SEW) = sign_extend(simm);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vec_trues);
   var result = initial_result;
@@ -665,19 +632,16 @@ mapping clause encdec = VICMPTYPE(funct6, vm, vs2, simm, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(VICMPTYPE(funct6, vm, vs2, simm, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let imm_val : bits('m)                  = sign_extend(simm);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let imm_val : bits('SEW) = sign_extend(simm);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;

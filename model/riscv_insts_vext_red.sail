@@ -26,7 +26,7 @@ mapping clause encdec = RIVVTYPE(funct6, vm, vs2, vs1, vd)
 function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
   let num_elem_vs = get_num_elem(LMUL_pow, SEW);
   let num_elem_vd = get_num_elem(0, SEW_widen); /* vd regardless of LMUL setting */
@@ -35,20 +35,15 @@ function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
 
   if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
 
-  let 'n = num_elem_vs;
-  let 'd = num_elem_vd;
-  let 'm = SEW;
-  let 'o = SEW_widen;
+  let vm_val  = read_vmask(num_elem_vs, vm, zvreg);
+  let vd_val  = read_vreg(num_elem_vd, SEW_widen, 0, vd);
+  let vs2_val = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
+  let mask    = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
 
-  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, zvreg);
-  let vd_val  : vector('d, bits('o)) = read_vreg(num_elem_vd, SEW_widen, 0, vd);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
-  let mask    : bits('n)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
-
-  var sum : bits('o) = read_single_element(SEW_widen, 0, vs1); /* vs1 regardless of LMUL setting */
+  var sum = read_single_element(SEW_widen, 0, vs1); /* vs1 regardless of LMUL setting */
   foreach (i from 0 to (num_elem_vs - 1)) {
     if mask[i] == bitone then {
-      let elem : bits('o) = match funct6 {
+      let elem : bits('SEW_widen) = match funct6 {
         IVV_VWREDSUMU  => to_bits(SEW_widen, unsigned(vs2_val[i])),
         IVV_VWREDSUM   => to_bits(SEW_widen, signed(vs2_val[i]))
       };
@@ -99,16 +94,12 @@ function clause execute(RMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
 
   if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
 
-  let 'n = num_elem_vs;
-  let 'd = num_elem_vd;
-  let 'm = SEW;
+  let vm_val  = read_vmask(num_elem_vs, vm, zvreg);
+  let vd_val  = read_vreg(num_elem_vd, SEW, 0, vd);
+  let vs2_val = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
+  let mask    = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
 
-  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, zvreg);
-  let vd_val  : vector('d, bits('m)) = read_vreg(num_elem_vd, SEW, 0, vd);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
-  let mask    : bits('n)     = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
-
-  var sum : bits('m) = read_single_element(SEW, 0, vs1); /* vs1 regardless of LMUL setting */
+  var sum = read_single_element(SEW, 0, vs1); /* vs1 regardless of LMUL setting */
   foreach (i from 0 to (num_elem_vs - 1)) {
     if mask[i] == bitone then {
       sum = match funct6 {

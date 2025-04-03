@@ -36,12 +36,9 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vs1_val : bits('n) = read_vmask(num_elem, 0b0, vs1);
-  let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
-  let vd_val  : bits('n) = read_vmask(num_elem, 0b0, vd);
+  let vs1_val = read_vmask(num_elem, 0b0, vs1);
+  let vs2_val = read_vmask(num_elem, 0b0, vs2);
+  let vd_val  = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_carry(num_elem, SEW, 0, vd_val);
   var result = initial_result;
@@ -94,11 +91,8 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
 
   if illegal_vd_unmasked() | not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs2_val = read_vmask(num_elem, 0b0, vs2);
 
   let (_, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
 
@@ -129,11 +123,8 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
 
   if illegal_vd_unmasked() | not(assert_vstart(0)) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs2_val = read_vmask(num_elem, 0b0, vs2);
 
   let (_, mask) = init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val);
 
@@ -167,12 +158,9 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
   if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
-  let vd_val  : bits('n) = read_vmask(num_elem, 0b0, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs2_val = read_vmask(num_elem, 0b0, vs2);
+  let vd_val  = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
   var result = initial_result;
@@ -208,12 +196,9 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
   if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
-  let vd_val  : bits('n) = read_vmask(num_elem, 0b0, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs2_val = read_vmask(num_elem, 0b0, vs2);
+  let vd_val  = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
   var result = initial_result;
@@ -249,12 +234,9 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
   if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
-  let vd_val  : bits('n) = read_vmask(num_elem, 0b0, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs2_val = read_vmask(num_elem, 0b0, vs2);
+  let vd_val  = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
   var result = initial_result;
@@ -294,12 +276,9 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
   if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let vs2_val : bits('n)     = read_vmask(num_elem, 0b0, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs2_val = read_vmask(num_elem, 0b0, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -334,11 +313,8 @@ function clause execute(VID_V(vm, vd)) = {
 
   if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val = read_vmask(num_elem, vm, zvreg);
+  let vd_val = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
