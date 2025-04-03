@@ -340,7 +340,9 @@ bitfield MEnvcfg : bits(64) = {
   // Page Based Memory Types Extension
   PBMTE  : 62,
   // Reserved WPRI bits.
-  wpri_1 : 61 .. 8,
+  wpri_1 : 61 .. 9,
+  // Dynamic TSO Enable
+  DTSO   : 8,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable
