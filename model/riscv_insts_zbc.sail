@@ -20,12 +20,8 @@ mapping clause assembly = RISCV_CLMUL(rs2, rs1, rd)
   <-> "clmul" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 function clause execute (RISCV_CLMUL(rs2, rs1, rd)) = {
-  let rs1_val = X(rs1);
-  let rs2_val = X(rs2);
-  var result : xlenbits = zeros();
-  foreach (i from 0 to (xlen_val - 1))
-    if rs2_val[i] == bitone then result = result ^ (rs1_val << i);
-  X(rd) = result;
+  let prod = carryless_mul(X(rs1), X(rs2));
+  X(rd) = prod[xlen - 1 .. 0];
   RETIRE_SUCCESS
 }
 
@@ -40,12 +36,8 @@ mapping clause assembly = RISCV_CLMULH(rs2, rs1, rd)
   <-> "clmulh" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 function clause execute (RISCV_CLMULH(rs2, rs1, rd)) = {
-  let rs1_val = X(rs1);
-  let rs2_val = X(rs2);
-  var result : xlenbits = zeros();
-  foreach (i from 0 to (xlen_val - 1))
-    if rs2_val[i] == bitone then result = result ^ (rs1_val >> (xlen_val - i));
-  X(rd) = result;
+  let prod = carryless_mul(X(rs1), X(rs2));
+  X(rd) = prod[2 * xlen - 1 .. xlen];
   RETIRE_SUCCESS
 }
 
@@ -60,11 +52,7 @@ mapping clause assembly = RISCV_CLMULR(rs2, rs1, rd)
   <-> "clmulr" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 function clause execute (RISCV_CLMULR(rs2, rs1, rd)) = {
-  let rs1_val = X(rs1);
-  let rs2_val = X(rs2);
-  var result : xlenbits = zeros();
-  foreach (i from 0 to (xlen_val - 1))
-    if rs2_val[i] == bitone then result = result ^ (rs1_val >> (xlen_val - i - 1));
-  X(rd) = result;
+  let prod = carryless_mul(reverse(X(rs1)), reverse(X(rs2)));
+  X(rd) = reverse(prod[xlen - 1 .. 0]);
   RETIRE_SUCCESS
 }
