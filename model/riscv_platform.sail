@@ -323,7 +323,7 @@ val htif_load : forall 'n, 'n > 0. (AccessType(ext_access_type), physaddr, int('
 function htif_load(t, physaddr(paddr), width, to_be) = {
   var converted_htif_tohost = endianness_conversion(htif_tohost, to_be);
   //htif_tohost is a 64 bit register, same logic as of mtime, mtimecmp for handling big endianness conversion.
-  if to_be then converted_htif_tohost = converted_htif_tohost[31..0] @ converted_htif_tohost[63..32];
+  if (to_be & width == 4) then converted_htif_tohost = converted_htif_tohost[31..0] @ converted_htif_tohost[63..32];
   if   get_config_print_platform()
   then print_platform("htif[" ^ BitStr(paddr) ^ "] -> " ^ BitStr(converted_htif_tohost));
   /* FIXME: For now, only allow the expected access widths. */
@@ -439,6 +439,7 @@ function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : physaddr, widt
   then htif_store(paddr, width, data)
   else Err(E_SAMO_Access_Fault())
 
+}
 /* Platform initialization and ticking. */
 
 function init_platform() -> unit = {
