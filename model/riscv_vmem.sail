@@ -112,7 +112,7 @@ function pt_walk(
       else {
         let ppn = PPN_of_PTE(pte); // 22 or 44.
         let global = global | (pte_flags[G] == 0b1);
-        if pte_is_ptr(pte_flags) then {
+        if pte_is_non_leaf(pte_flags) then {
           // Non-Leaf PTE
           if level > 0 then
             // follow the pointer to walk next level

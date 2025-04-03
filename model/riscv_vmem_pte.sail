@@ -64,7 +64,7 @@ bitfield PTE_Flags : pte_flags_bits = {
 }
 
 // PRIVATE: check if a PTE is a pointer to next level (non-leaf)
-function pte_is_ptr(pte_flags : PTE_Flags) -> bool =
+function pte_is_non_leaf(pte_flags : PTE_Flags) -> bool =
     pte_flags[X] == 0b0
   & pte_flags[W] == 0b0
   & pte_flags[R] == 0b0
