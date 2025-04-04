@@ -22,20 +22,6 @@ unit print_step(unit)
   return UNIT;
 }
 
-unit print_reg(sail_string s)
-{
-  if (config_print_reg)
-    fprintf(trace_log, "%s\n", s);
-  return UNIT;
-}
-
-unit print_mem_access(sail_string s)
-{
-  if (config_print_mem_access)
-    fprintf(trace_log, "%s\n", s);
-  return UNIT;
-}
-
 unit print_platform(sail_string s)
 {
   if (config_print_platform)
