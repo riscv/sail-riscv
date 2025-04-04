@@ -46,20 +46,17 @@ mapping clause encdec = VVTYPE(funct6, vm, vs2, vs1, vd)
 
 function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW_pow  = get_sew_pow();
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let VLEN_pow = get_vlen_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -72,18 +69,18 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
         VV_VAND          => vs2_val[i] & vs1_val[i],
         VV_VOR           => vs2_val[i] | vs1_val[i],
         VV_VXOR          => vs2_val[i] ^ vs1_val[i],
-        VV_VSADDU        => unsigned_saturation('m, zero_extend('m + 1, vs2_val[i]) + zero_extend('m + 1, vs1_val[i])),
-        VV_VSADD         => signed_saturation('m, sign_extend('m + 1, vs2_val[i]) + sign_extend('m + 1, vs1_val[i])),
+        VV_VSADDU        => unsigned_saturation(SEW, zero_extend(SEW + 1, vs2_val[i]) + zero_extend(SEW + 1, vs1_val[i])),
+        VV_VSADD         => signed_saturation(SEW, sign_extend(SEW + 1, vs2_val[i]) + sign_extend(SEW + 1, vs1_val[i])),
         VV_VSSUBU        => {
                               if unsigned(vs2_val[i]) < unsigned(vs1_val[i]) then zeros()
-                              else unsigned_saturation('m, zero_extend('m + 1, vs2_val[i]) - zero_extend('m + 1, vs1_val[i]))
+                              else unsigned_saturation(SEW, zero_extend(SEW + 1, vs2_val[i]) - zero_extend(SEW + 1, vs1_val[i]))
                             },
-        VV_VSSUB         => signed_saturation('m, sign_extend('m + 1, vs2_val[i]) - sign_extend('m + 1, vs1_val[i])),
+        VV_VSSUB         => signed_saturation(SEW, sign_extend(SEW + 1, vs2_val[i]) - sign_extend(SEW + 1, vs1_val[i])),
         VV_VSMUL         => {
-                              let result_mul = to_bits('m * 2, signed(vs2_val[i]) * signed(vs1_val[i]));
-                              let rounding_incr = get_fixed_rounding_incr(result_mul, 'm - 1);
-                              let result_wide = (result_mul >> ('m - 1)) + zero_extend('m * 2, rounding_incr);
-                              signed_saturation('m, result_wide['m..0])
+                              let result_mul = to_bits(SEW * 2, signed(vs2_val[i]) * signed(vs1_val[i]));
+                              let rounding_incr = get_fixed_rounding_incr(result_mul, SEW - 1);
+                              let result_wide = (result_mul >> (SEW - 1)) + zero_extend(SEW * 2, rounding_incr);
+                              signed_saturation(SEW, result_wide[SEW..0])
                             },
         VV_VSLL          => {
                               let shift_amount = get_shift_amount(vs1_val[i], SEW);
@@ -95,19 +92,19 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
                             },
         VV_VSRA          => {
                               let shift_amount = get_shift_amount(vs1_val[i], SEW);
-                              let v_double : bits('m * 2) = sign_extend(vs2_val[i]);
+                              let v_double : bits('SEW * 2) = sign_extend(vs2_val[i]);
                               slice(v_double >> shift_amount, 0, SEW)
                             },
         VV_VSSRL         => {
                               let shift_amount = get_shift_amount(vs1_val[i], SEW);
                               let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
-                              (vs2_val[i] >> shift_amount) + zero_extend('m, rounding_incr)
+                              (vs2_val[i] >> shift_amount) + zero_extend(SEW, rounding_incr)
                             },
         VV_VSSRA         => {
                               let shift_amount = get_shift_amount(vs1_val[i], SEW);
                               let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
-                              let v_double : bits('m * 2) = sign_extend(vs2_val[i]);
-                              slice(v_double >> shift_amount, 0, SEW) + zero_extend('m, rounding_incr)
+                              let v_double : bits('SEW * 2) = sign_extend(vs2_val[i]);
+                              slice(v_double >> shift_amount, 0, SEW) + zero_extend(SEW, rounding_incr)
                             },
         VV_VMINU         => to_bits(SEW, min(unsigned(vs2_val[i]), unsigned(vs1_val[i]))),
         VV_VMIN          => to_bits(SEW, min(signed(vs2_val[i]), signed(vs1_val[i]))),
@@ -117,16 +114,16 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
                               if (vs1 == vd | vs2 == vd) then { handle_illegal(); return RETIRE_FAIL };
                               let idx = unsigned(vs1_val[i]);
                               let VLMAX = 2 ^ (LMUL_pow + VLEN_pow - SEW_pow);
-                              assert(VLMAX <= 'n);
+                              assert(VLMAX <= num_elem);
                               if idx < VLMAX then vs2_val[idx] else zeros()
                             },
         VV_VRGATHEREI16  => {
                               if (vs1 == vd | vs2 == vd) then { handle_illegal(); return RETIRE_FAIL };
                               /* vrgatherei16.vv uses SEW/LMUL for the data in vs2 but EEW=16 and EMUL = (16/SEW)*LMUL for the indices in vs1 */
-                              let vs1_new : vector('n, bits(16)) = read_vreg(num_elem, 16, 4 + LMUL_pow - SEW_pow, vs1);
+                              let vs1_new = read_vreg(num_elem, 16, 4 + LMUL_pow - SEW_pow, vs1);
                               let idx = unsigned(vs1_new[i]);
                               let VLMAX = 2 ^ (LMUL_pow + VLEN_pow - SEW_pow);
-                              assert(VLMAX <= 'n);
+                              assert(VLMAX <= num_elem);
                               if idx < VLMAX then vs2_val[idx] else zeros()
                             }
       }
@@ -179,24 +176,20 @@ mapping clause encdec = NVSTYPE(funct6, vm, vs2, vs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(NVSTYPE(funct6, vm, vs2, vs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_widen;
-
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -211,8 +204,8 @@ function clause execute(NVSTYPE(funct6, vm, vs2, vs1, vd)) = {
                       },
         NVS_VNSRA  => {
                         let shift_amount = get_shift_amount(vs1_val[i], SEW_widen);
-                        let v_double : bits('o * 2) = sign_extend(vs2_val[i]);
-                        let arith_shifted : bits('o) = slice(v_double >> shift_amount, 0, SEW_widen);
+                        let v_double : bits('SEW_widen * 2) = sign_extend(vs2_val[i]);
+                        let arith_shifted : bits('SEW_widen) = slice(v_double >> shift_amount, 0, SEW_widen);
                         slice(arith_shifted, 0, SEW)
                       }
       }
@@ -246,24 +239,20 @@ mapping clause encdec = NVTYPE(funct6, vm, vs2, vs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(NVTYPE(funct6, vm, vs2, vs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_widen;
-
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -275,13 +264,13 @@ function clause execute(NVTYPE(funct6, vm, vs2, vs1, vd)) = {
       let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
       result[i] = match funct6 {
         NV_VNCLIPU => {
-                        let result_wide = (vs2_val[i] >> shift_amount) + zero_extend('o, rounding_incr);
-                        unsigned_saturation('m, result_wide);
+                        let result_wide = (vs2_val[i] >> shift_amount) + zero_extend(SEW_widen, rounding_incr);
+                        unsigned_saturation(SEW, result_wide);
                       },
         NV_VNCLIP  => {
-                        let v_double : bits('m * 4) = sign_extend(vs2_val[i]);
-                        let result_wide = slice(v_double >> shift_amount, 0, 'o) + zero_extend('o, rounding_incr);
-                        signed_saturation('m, result_wide);
+                        let v_double : bits('SEW * 4) = sign_extend(vs2_val[i]);
+                        let result_wide = slice(v_double >> shift_amount, 0, SEW_widen) + zero_extend(SEW_widen, rounding_incr);
+                        signed_saturation(SEW, result_wide);
                       }
       }
     }
@@ -310,21 +299,19 @@ mapping clause encdec = MASKTYPEV (vs2, vs1,  vd)
 function clause execute(MASKTYPEV(vs2, vs1, vd)) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
-  let SEW           = get_sew();
+  let 'SEW          = get_sew();
   let LMUL_pow      = get_lmul_pow();
-  let num_elem      = get_num_elem(LMUL_pow, SEW); /* max(VLMAX,VLEN/SEW)) */
+  let 'num_elem     = get_num_elem(LMUL_pow, SEW); /* max(VLMAX,VLEN/SEW)) */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow); /* VLMAX */
 
   if illegal_vd_masked(vd) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, 0b0, zvreg);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  var result  : vector('n, bits('m)) = vector_init(zeros());
+  let vm_val  = read_vmask(num_elem, 0b0, zvreg);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  var result : vector('num_elem, bits('SEW)) = vector_init(zeros());
 
   let tail_ag : agtype = get_vtype_vta();
   foreach (i from 0 to (num_elem - 1)) {
@@ -357,18 +344,16 @@ mapping clause encdec = MOVETYPEV (vs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(MOVETYPEV(vs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, 0b1, zvreg);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, 0b1, zvreg);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -416,19 +401,17 @@ mapping clause encdec = VXTYPE(funct6, vm, vs2, rs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(VXTYPE(funct6, vm, vs2, rs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -442,18 +425,18 @@ function clause execute(VXTYPE(funct6, vm, vs2, rs1, vd)) = {
         VX_VAND    => vs2_val[i] & rs1_val,
         VX_VOR     => vs2_val[i] | rs1_val,
         VX_VXOR    => vs2_val[i] ^ rs1_val,
-        VX_VSADDU  => unsigned_saturation('m, zero_extend('m + 1, vs2_val[i]) + zero_extend('m + 1, rs1_val) ),
-        VX_VSADD   => signed_saturation('m, sign_extend('m + 1, vs2_val[i]) + sign_extend('m + 1, rs1_val) ),
+        VX_VSADDU  => unsigned_saturation(SEW, zero_extend(SEW + 1, vs2_val[i]) + zero_extend(SEW + 1, rs1_val) ),
+        VX_VSADD   => signed_saturation(SEW, sign_extend(SEW + 1, vs2_val[i]) + sign_extend(SEW + 1, rs1_val) ),
         VX_VSSUBU  => {
                         if unsigned(vs2_val[i]) < unsigned(rs1_val) then zeros()
-                        else unsigned_saturation('m, zero_extend('m + 1, vs2_val[i]) - zero_extend('m + 1, rs1_val) )
+                        else unsigned_saturation(SEW, zero_extend(SEW + 1, vs2_val[i]) - zero_extend(SEW + 1, rs1_val) )
                       },
-        VX_VSSUB   => signed_saturation('m, sign_extend('m + 1, vs2_val[i]) - sign_extend('m + 1, rs1_val) ),
+        VX_VSSUB   => signed_saturation(SEW, sign_extend(SEW + 1, vs2_val[i]) - sign_extend(SEW + 1, rs1_val) ),
         VX_VSMUL   => {
-                        let result_mul = to_bits('m * 2, signed(vs2_val[i]) * signed(rs1_val));
-                        let rounding_incr = get_fixed_rounding_incr(result_mul, 'm - 1);
-                        let result_wide = (result_mul >> ('m - 1)) + zero_extend('m * 2, rounding_incr);
-                        signed_saturation('m, result_wide['m..0])
+                        let result_mul = to_bits(SEW * 2, signed(vs2_val[i]) * signed(rs1_val));
+                        let rounding_incr = get_fixed_rounding_incr(result_mul, SEW - 1);
+                        let result_wide = (result_mul >> (SEW - 1)) + zero_extend(SEW * 2, rounding_incr);
+                        signed_saturation(SEW, result_wide[SEW..0])
                       },
         VX_VSLL    => {
                         let shift_amount = get_shift_amount(rs1_val, SEW);
@@ -465,19 +448,19 @@ function clause execute(VXTYPE(funct6, vm, vs2, rs1, vd)) = {
                       },
         VX_VSRA    => {
                         let shift_amount = get_shift_amount(rs1_val, SEW);
-                        let v_double : bits('m * 2) = sign_extend(vs2_val[i]);
+                        let v_double : bits('SEW * 2) = sign_extend(vs2_val[i]);
                         slice(v_double >> shift_amount, 0, SEW)
                       },
         VX_VSSRL   => {
                         let shift_amount = get_shift_amount(rs1_val, SEW);
                         let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
-                        (vs2_val[i] >> shift_amount) + zero_extend('m, rounding_incr)
+                        (vs2_val[i] >> shift_amount) + zero_extend(SEW, rounding_incr)
                       },
         VX_VSSRA   => {
                         let shift_amount = get_shift_amount(rs1_val, SEW);
                         let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
-                        let v_double : bits('m * 2) = sign_extend(vs2_val[i]);
-                        slice(v_double >> shift_amount, 0, SEW) + zero_extend('m, rounding_incr)
+                        let v_double : bits('SEW * 2) = sign_extend(vs2_val[i]);
+                        slice(v_double >> shift_amount, 0, SEW) + zero_extend(SEW, rounding_incr)
                       },
         VX_VMINU   => to_bits(SEW, min(unsigned(vs2_val[i]), unsigned(rs1_val))),
         VX_VMIN    => to_bits(SEW, min(signed(vs2_val[i]), signed(rs1_val))),
@@ -532,24 +515,20 @@ mapping clause encdec = NXSTYPE(funct6, vm, vs2, rs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(NXSTYPE(funct6, vm, vs2, rs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_widen;
-
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -564,8 +543,8 @@ function clause execute(NXSTYPE(funct6, vm, vs2, rs1, vd)) = {
                       },
         NXS_VNSRA  => {
                         let shift_amount = get_shift_amount(rs1_val, SEW_widen);
-                        let v_double : bits('o * 2) = sign_extend(vs2_val[i]);
-                        let arith_shifted : bits('o) = slice(v_double >> shift_amount, 0, SEW_widen);
+                        let v_double : bits('SEW_widen * 2) = sign_extend(vs2_val[i]);
+                        let arith_shifted : bits('SEW_widen) = slice(v_double >> shift_amount, 0, SEW_widen);
                         slice(arith_shifted, 0, SEW)
                       }
       }
@@ -599,24 +578,20 @@ mapping clause encdec = NXTYPE(funct6, vm, vs2, rs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(NXTYPE(funct6, vm, vs2, rs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_widen;
-
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -628,13 +603,13 @@ function clause execute(NXTYPE(funct6, vm, vs2, rs1, vd)) = {
       let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
       result[i] = match funct6 {
         NX_VNCLIPU => {
-                        let result_wide = (vs2_val[i] >> shift_amount) + zero_extend('o, rounding_incr);
-                        unsigned_saturation('m, result_wide)
+                        let result_wide = (vs2_val[i] >> shift_amount) + zero_extend(SEW_widen, rounding_incr);
+                        unsigned_saturation(SEW, result_wide)
                       },
         NX_VNCLIP  => {
-                        let v_double : bits('m * 4) = sign_extend(vs2_val[i]);
-                        let result_wide = slice(v_double >> shift_amount, 0, 'o) + zero_extend('o, rounding_incr);
-                        signed_saturation('m, result_wide)
+                        let v_double : bits('SEW * 4) = sign_extend(vs2_val[i]);
+                        let result_wide = slice(v_double >> shift_amount, 0, SEW_widen) + zero_extend(SEW_widen, rounding_incr);
+                        signed_saturation(SEW, result_wide)
                       }
       }
     }
@@ -669,20 +644,18 @@ mapping clause encdec = VXSG(funct6, vm, vs2, rs1, vd)
 
 function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
   let SEW_pow  = get_sew_pow();
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let VLEN_pow = get_vlen_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
   let rs1_val : nat                  = unsigned(X(rs1));
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -696,13 +669,13 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
                           },
         VX_VSLIDEDOWN  => {
                             let VLMAX = 2 ^ (LMUL_pow + VLEN_pow - SEW_pow);
-                            assert(VLMAX > 0 & VLMAX <= 'n);
+                            assert(VLMAX > 0 & VLMAX <= num_elem);
                             if i + rs1_val < VLMAX then vs2_val[i + rs1_val] else zeros()
                           },
         VX_VRGATHER    => {
                             if (vs2 == vd) then { handle_illegal(); return RETIRE_FAIL };
                             let VLMAX = 2 ^ (LMUL_pow + VLEN_pow - SEW_pow);
-                            assert(VLMAX > 0 & VLMAX <= 'n);
+                            assert(VLMAX > 0 & VLMAX <= num_elem);
                             if rs1_val < VLMAX then vs2_val[rs1_val] else zeros()
                           }
       }
@@ -733,21 +706,19 @@ mapping clause encdec = MASKTYPEX(vs2, rs1, vd)
 function clause execute(MASKTYPEX(vs2, rs1, vd)) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
-  let SEW           = get_sew();
+  let 'SEW          = get_sew();
   let LMUL_pow      = get_lmul_pow();
-  let num_elem      = get_num_elem(LMUL_pow, SEW); /* max(VLMAX,VLEN/SEW)) */
+  let 'num_elem     = get_num_elem(LMUL_pow, SEW); /* max(VLMAX,VLEN/SEW)) */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow); /* VLMAX */
 
   if illegal_vd_masked(vd) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vm_val  : bits('n)             = read_vmask(num_elem, 0b0, zvreg);
-  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  var result  : vector('n, bits('m)) = vector_init(zeros());
+  let vm_val  = read_vmask(num_elem, 0b0, zvreg);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  var result : vector('num_elem, bits('SEW)) = vector_init(zeros());
 
   let tail_ag : agtype = get_vtype_vta();
   foreach (i from 0 to (num_elem - 1)) {
@@ -780,18 +751,16 @@ mapping clause encdec = MOVETYPEX (rs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(MOVETYPEX(rs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let rs1_val : bits('m)             = get_scalar(rs1, 'm);
-  let vm_val  : bits('n)             = read_vmask(num_elem, 0b1, zvreg);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vm_val  = read_vmask(num_elem, 0b1, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -831,19 +800,17 @@ mapping clause encdec = VITYPE(funct6, vm, vs2, simm, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(VITYPE(funct6, vm, vs2, simm, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let imm_val : bits('m)             = sign_extend(simm);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val = read_vmask(num_elem, vm, zvreg);
+  let imm_val : bits('SEW) = sign_extend(simm);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -856,31 +823,31 @@ function clause execute(VITYPE(funct6, vm, vs2, simm, vd)) = {
         VI_VAND    => vs2_val[i] & imm_val,
         VI_VOR     => vs2_val[i] | imm_val,
         VI_VXOR    => vs2_val[i] ^ imm_val,
-        VI_VSADDU  => unsigned_saturation('m, zero_extend('m + 1, vs2_val[i]) + zero_extend('m + 1, imm_val) ),
-        VI_VSADD   => signed_saturation('m, sign_extend('m + 1, vs2_val[i]) + sign_extend('m + 1, imm_val) ),
+        VI_VSADDU  => unsigned_saturation(SEW, zero_extend(SEW + 1, vs2_val[i]) + zero_extend(SEW + 1, imm_val) ),
+        VI_VSADD   => signed_saturation(SEW, sign_extend(SEW + 1, vs2_val[i]) + sign_extend(SEW + 1, imm_val) ),
         VI_VSLL    => {
-                        let shift_amount = get_shift_amount(zero_extend('m, simm), SEW);
+                        let shift_amount = get_shift_amount(zero_extend(SEW, simm), SEW);
                         vs2_val[i] << shift_amount
                       },
         VI_VSRL    => {
-                        let shift_amount = get_shift_amount(zero_extend('m, simm), SEW);
+                        let shift_amount = get_shift_amount(zero_extend(SEW, simm), SEW);
                         vs2_val[i] >> shift_amount
                       },
         VI_VSRA    => {
-                        let shift_amount = get_shift_amount(zero_extend('m, simm), SEW);
-                        let v_double : bits('m * 2) = sign_extend(vs2_val[i]);
+                        let shift_amount = get_shift_amount(zero_extend(SEW, simm), SEW);
+                        let v_double : bits('SEW * 2) = sign_extend(vs2_val[i]);
                         slice(v_double >> shift_amount, 0, SEW)
                       },
         VI_VSSRL   => {
-                        let shift_amount = get_shift_amount(zero_extend('m, simm), SEW);
+                        let shift_amount = get_shift_amount(zero_extend(SEW, simm), SEW);
                         let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
-                        (vs2_val[i] >> shift_amount) + zero_extend('m, rounding_incr)
+                        (vs2_val[i] >> shift_amount) + zero_extend(SEW, rounding_incr)
                       },
         VI_VSSRA   => {
-                        let shift_amount = get_shift_amount(zero_extend('m, simm), SEW);
+                        let shift_amount = get_shift_amount(zero_extend(SEW, simm), SEW);
                         let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
-                        let v_double : bits('m * 2) = sign_extend(vs2_val[i]);
-                        slice(v_double >> shift_amount, 0, SEW) + zero_extend('m, rounding_incr)
+                        let v_double : bits('SEW * 2) = sign_extend(vs2_val[i]);
+                        slice(v_double >> shift_amount, 0, SEW) + zero_extend(SEW, rounding_incr)
                       }
       }
     }
@@ -923,24 +890,20 @@ mapping clause encdec = NISTYPE(funct6, vm, vs2, simm, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(NISTYPE(funct6, vm, vs2, simm, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_widen;
-
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let imm_val : bits('m)             = sign_extend(simm);
-  let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let imm_val : bits('SEW) = sign_extend(simm);
+  let vs2_val = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -955,8 +918,8 @@ function clause execute(NISTYPE(funct6, vm, vs2, simm, vd)) = {
                       },
         NIS_VNSRA  => {
                         let shift_amount = get_shift_amount(imm_val, SEW_widen);
-                        let v_double : bits('o * 2) = sign_extend(vs2_val[i]);
-                        let arith_shifted : bits('o) = slice(v_double >> shift_amount, 0, SEW_widen);
+                        let v_double : bits('SEW_widen * 2) = sign_extend(vs2_val[i]);
+                        let arith_shifted : bits('SEW_widen) = slice(v_double >> shift_amount, 0, SEW_widen);
                         slice(arith_shifted, 0, SEW)
                       }
       }
@@ -990,24 +953,20 @@ mapping clause encdec = NITYPE(funct6, vm, vs2, simm, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(NITYPE(funct6, vm, vs2, simm, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_widen;
-
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let imm_val : bits('m)             = sign_extend(simm);
-  let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let imm_val : bits('SEW) = sign_extend(simm);
+  let vs2_val = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -1019,13 +978,13 @@ function clause execute(NITYPE(funct6, vm, vs2, simm, vd)) = {
       let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
       result[i] = match funct6 {
         NI_VNCLIPU => {
-                        let result_wide = (vs2_val[i] >> shift_amount) + zero_extend('o, rounding_incr);
-                        unsigned_saturation('m, result_wide)
+                        let result_wide = (vs2_val[i] >> shift_amount) + zero_extend(SEW_widen, rounding_incr);
+                        unsigned_saturation(SEW, result_wide)
                       },
         NI_VNCLIP  => {
-                        let v_double : bits('m * 4) = sign_extend(vs2_val[i]);
-                        let result_wide = slice(v_double >> shift_amount, 0, 'o) + zero_extend('o, rounding_incr);
-                        signed_saturation('m, result_wide)
+                        let v_double : bits('SEW * 4) = sign_extend(vs2_val[i]);
+                        let result_wide = slice(v_double >> shift_amount, 0, SEW_widen) + zero_extend(SEW_widen, rounding_incr);
+                        signed_saturation(SEW, result_wide)
                       }
       }
     }
@@ -1060,20 +1019,18 @@ mapping clause encdec = VISG(funct6, vm, vs2, simm, vd)
 
 function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
   let SEW_pow  = get_sew_pow();
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let VLEN_pow = get_vlen_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let imm_val : nat                  = unsigned(zero_extend(xlen, simm));
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let imm_val = unsigned(zero_extend(xlen, simm));
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -1087,13 +1044,13 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
                           },
         VI_VSLIDEDOWN  => {
                             let VLMAX = 2 ^ (LMUL_pow + VLEN_pow - SEW_pow);
-                            assert(VLMAX > 0 & VLMAX <= 'n);
+                            assert(VLMAX > 0 & VLMAX <= num_elem);
                             if i + imm_val < VLMAX then vs2_val[i + imm_val] else zeros()
                           },
         VI_VRGATHER    => {
                             if (vs2 == vd) then { handle_illegal(); return RETIRE_FAIL };
                             let VLMAX = 2 ^ (LMUL_pow + VLEN_pow - SEW_pow);
-                            assert(VLMAX > 0 & VLMAX <= 'n);
+                            assert(VLMAX > 0 & VLMAX <= num_elem);
                             if imm_val < VLMAX then vs2_val[imm_val] else zeros()
                           }
       }
@@ -1124,21 +1081,19 @@ mapping clause encdec = MASKTYPEI(vs2, simm, vd)
 function clause execute(MASKTYPEI(vs2, simm, vd)) = {
   let start_element = get_start_element();
   let end_element   = get_end_element();
-  let SEW           = get_sew();
+  let 'SEW          = get_sew();
   let LMUL_pow      = get_lmul_pow();
-  let num_elem      = get_num_elem(LMUL_pow, SEW); /* max(VLMAX,VLEN/SEW)) */
+  let 'num_elem     = get_num_elem(LMUL_pow, SEW); /* max(VLMAX,VLEN/SEW)) */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow); /* VLMAX */
 
   if illegal_vd_masked(vd) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vm_val  : bits('n)             = read_vmask(num_elem, 0b0, zvreg);
-  let imm_val : bits('m)             = sign_extend(simm);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  var result  : vector('n, bits('m)) = vector_init(zeros());
+  let vm_val = read_vmask(num_elem, 0b0, zvreg);
+  let imm_val : bits('SEW) = sign_extend(simm);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  var result : vector('num_elem, bits('SEW)) = vector_init(zeros());
 
   let tail_ag : agtype = get_vtype_vta();
   foreach (i from 0 to (num_elem - 1)) {
@@ -1171,18 +1126,16 @@ mapping clause encdec = MOVETYPEI (vd, simm)
   when extensionEnabled(Ext_V)
 
 function clause execute(MOVETYPEI(vd, simm)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vm_val  : bits('n)             = read_vmask(num_elem, 0b1, zvreg);
-  let imm_val : bits('m)             = sign_extend(simm);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val = read_vmask(num_elem, 0b1, zvreg);
+  let imm_val : bits('SEW) = sign_extend(simm);
+  let vd_val = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -1208,21 +1161,19 @@ mapping clause encdec = VMVRTYPE(vs2, simm, vd)
 
 function clause execute(VMVRTYPE(vs2, simm, vd)) = {
   let start_element = get_start_element();
-  let SEW     = get_sew();
+  let 'SEW    = get_sew();
   let imm_val = unsigned(zero_extend(xlen, simm));
   let EMUL    = imm_val + 1;
 
   if not(EMUL == 1 | EMUL == 2 | EMUL == 4 | EMUL == 8) then { handle_illegal(); return RETIRE_FAIL };
 
   let EMUL_pow = log2(EMUL);
-  let num_elem = get_num_elem(EMUL_pow, SEW);
-  let 'n = num_elem;
-  let 'm = SEW;
+  let 'num_elem = get_num_elem(EMUL_pow, SEW);
 
-  let vm_val  : bits('n)             = read_vmask(num_elem, 0b1, zvreg);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, EMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, EMUL_pow, vd);
-  var result  : vector('n, bits('m)) = vector_init(zeros());
+  let vm_val  = read_vmask(num_elem, 0b1, zvreg);
+  let vs2_val = read_vreg(num_elem, SEW, EMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, EMUL_pow, vd);
+  var result : vector('num_elem, bits('SEW)) = vector_init(zeros());
 
   foreach (i from 0 to (num_elem - 1)) {
     result[i] = if i < start_element then vd_val[i] else vs2_val[i]
@@ -1266,19 +1217,17 @@ mapping clause encdec = MVVTYPE(funct6, vm, vs2, vs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(MVVTYPE(funct6, vm, vs2, vs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -1287,24 +1236,24 @@ function clause execute(MVVTYPE(funct6, vm, vs2, vs1, vd)) = {
     if mask[i] == bitone then {
       result[i] = match funct6 {
         MVV_VAADDU   => {
-                          let result_add = zero_extend('m + 1, vs2_val[i]) + zero_extend('m + 1, vs1_val[i]);
+                          let result_add = zero_extend(SEW + 1, vs2_val[i]) + zero_extend(SEW + 1, vs1_val[i]);
                           let rounding_incr = get_fixed_rounding_incr(result_add, 1);
-                          slice(result_add >> 1, 0, 'm) + zero_extend('m, rounding_incr)
+                          slice(result_add >> 1, 0, SEW) + zero_extend(SEW, rounding_incr)
                         },
         MVV_VAADD    => {
-                          let result_add = sign_extend('m + 1, vs2_val[i]) + sign_extend('m + 1, vs1_val[i]);
+                          let result_add = sign_extend(SEW + 1, vs2_val[i]) + sign_extend(SEW + 1, vs1_val[i]);
                           let rounding_incr = get_fixed_rounding_incr(result_add, 1);
-                          slice(result_add >> 1, 0, 'm) + zero_extend('m, rounding_incr)
+                          slice(result_add >> 1, 0, SEW) + zero_extend(SEW, rounding_incr)
                         },
         MVV_VASUBU   => {
-                          let result_sub = zero_extend('m + 1, vs2_val[i]) - zero_extend('m + 1, vs1_val[i]);
+                          let result_sub = zero_extend(SEW + 1, vs2_val[i]) - zero_extend(SEW + 1, vs1_val[i]);
                           let rounding_incr = get_fixed_rounding_incr(result_sub, 1);
-                          slice(result_sub >> 1, 0, 'm) + zero_extend('m, rounding_incr)
+                          slice(result_sub >> 1, 0, SEW) + zero_extend(SEW, rounding_incr)
                         },
         MVV_VASUB    => {
-                          let result_sub = sign_extend('m + 1, vs2_val[i]) - sign_extend('m + 1, vs1_val[i]);
+                          let result_sub = sign_extend(SEW + 1, vs2_val[i]) - sign_extend(SEW + 1, vs1_val[i]);
                           let rounding_incr = get_fixed_rounding_incr(result_sub, 1);
-                          slice(result_sub >> 1, 0, 'm) + zero_extend('m, rounding_incr)
+                          slice(result_sub >> 1, 0, SEW) + zero_extend(SEW, rounding_incr)
                         },
         MVV_VMUL     => get_slice_int(SEW, signed(vs2_val[i]) * signed(vs1_val[i]), 0),
         MVV_VMULH    => get_slice_int(SEW, signed(vs2_val[i]) * signed(vs1_val[i]), SEW),
@@ -1375,19 +1324,17 @@ mapping clause encdec = MVVMATYPE(funct6, vm, vs2, vs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(MVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -1435,10 +1382,10 @@ mapping clause encdec = WVVTYPE(funct6, vm, vs2, vs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(WVVTYPE(funct6, vm, vs2, vs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
@@ -1446,14 +1393,10 @@ function clause execute(WVVTYPE(funct6, vm, vs2, vs1, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_widen;
-
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
@@ -1505,24 +1448,20 @@ mapping clause encdec = WVTYPE(funct6, vm, vs2, vs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(WVTYPE(funct6, vm, vs2, vs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen))
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_widen;
-
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
@@ -1568,10 +1507,10 @@ mapping clause encdec =  WMVVTYPE(funct6, vm, vs2, vs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(WMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
@@ -1579,14 +1518,10 @@ function clause execute(WMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_widen;
-
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
@@ -1639,13 +1574,9 @@ function clause execute(VEXT2TYPE(funct6, vm, vs2, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow_half, LMUL_pow))
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_half;
-
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_half, LMUL_pow_half, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vs2_val = read_vreg(num_elem, SEW_half, LMUL_pow_half, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -1696,13 +1627,9 @@ function clause execute(VEXT4TYPE(funct6, vm, vs2, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow_quart, LMUL_pow))
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_quart;
-
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_quart, LMUL_pow_quart, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vs2_val = read_vreg(num_elem, SEW_quart, LMUL_pow_quart, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -1753,13 +1680,9 @@ function clause execute(VEXT8TYPE(funct6, vm, vs2, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow_eighth, LMUL_pow))
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_eighth;
-
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_eighth, LMUL_pow_eighth, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vs2_val = read_vreg(num_elem, SEW_eighth, LMUL_pow_eighth, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -1795,16 +1718,14 @@ mapping clause encdec = VMVXS(vs2, rd)
   when extensionEnabled(Ext_V)
 
 function clause execute(VMVXS(vs2, rd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let num_elem = get_num_elem(0, SEW);
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
   assert(num_elem > 0);
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, 0, vs2);
+  let vs2_val = read_vreg(num_elem, SEW, 0, vs2);
   X(rd) = if xlen < SEW then slice(vs2_val[0], 0, xlen)
           else if xlen > SEW then sign_extend(vs2_val[0])
           else vs2_val[0];
@@ -1826,21 +1747,19 @@ mapping clause encdec = MVVCOMPRESS(vs2, vs1, vd)
 function clause execute(MVVCOMPRESS(vs2, vs1, vd)) = {
   let start_element = get_start_element();
   let end_element = get_end_element();
-  let SEW = get_sew();
+  let 'SEW = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let 'num_elem = get_num_elem(LMUL_pow, SEW);
 
   /* vcompress should always be executed with a vstart of 0 */
   if start_element != 0 | vs1 == vd | vs2 == vd | illegal_vd_unmasked()
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vs1_val : bits('n)             = read_vmask(num_elem, 0b0, vs1);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  var result  : vector('n, bits('m)) = vector_init(zeros());
+  let vs1_val = read_vmask(num_elem, 0b0, vs1);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  var result : vector('num_elem, bits('SEW)) = vector_init(zeros());
 
   /* body elements */
   var vd_idx : nat = 0;
@@ -1848,7 +1767,7 @@ function clause execute(MVVCOMPRESS(vs2, vs1, vd)) = {
     if i <= end_element then {
       if vs1_val[i] == bitone then {
         let 'p = vd_idx;
-        assert('p < 'n);
+        assert('p < num_elem);
         result['p] = vs2_val[i];
         vd_idx = vd_idx + 1;
       }
@@ -1899,19 +1818,17 @@ mapping clause encdec = MVXTYPE(funct6, vm, vs2, rs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(MVXTYPE(funct6, vm, vs2, rs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -1920,24 +1837,24 @@ function clause execute(MVXTYPE(funct6, vm, vs2, rs1, vd)) = {
     if mask[i] == bitone then {
       result[i] = match funct6 {
         MVX_VAADDU       => {
-                              let result_add = zero_extend('m + 1, vs2_val[i]) + zero_extend('m + 1, rs1_val);
+                              let result_add = zero_extend(SEW + 1, vs2_val[i]) + zero_extend(SEW + 1, rs1_val);
                               let rounding_incr = get_fixed_rounding_incr(result_add, 1);
-                              slice(result_add >> 1, 0, 'm) + zero_extend('m, rounding_incr)
+                              slice(result_add >> 1, 0, SEW) + zero_extend(SEW, rounding_incr)
                             },
         MVX_VAADD        => {
-                              let result_add = sign_extend('m + 1, vs2_val[i]) + sign_extend('m + 1, rs1_val);
+                              let result_add = sign_extend(SEW + 1, vs2_val[i]) + sign_extend(SEW + 1, rs1_val);
                               let rounding_incr = get_fixed_rounding_incr(result_add, 1);
-                              slice(result_add >> 1, 0, 'm) + zero_extend('m, rounding_incr)
+                              slice(result_add >> 1, 0, SEW) + zero_extend(SEW, rounding_incr)
                             },
         MVX_VASUBU       => {
-                              let result_sub = zero_extend('m + 1, vs2_val[i]) - zero_extend('m + 1, rs1_val);
+                              let result_sub = zero_extend(SEW + 1, vs2_val[i]) - zero_extend(SEW + 1, rs1_val);
                               let rounding_incr = get_fixed_rounding_incr(result_sub, 1);
-                              slice(result_sub >> 1, 0, 'm) + zero_extend('m, rounding_incr)
+                              slice(result_sub >> 1, 0, SEW) + zero_extend(SEW, rounding_incr)
                             },
         MVX_VASUB        => {
-                              let result_sub = sign_extend('m + 1, vs2_val[i]) - sign_extend('m + 1, rs1_val);
+                              let result_sub = sign_extend(SEW + 1, vs2_val[i]) - sign_extend(SEW + 1, rs1_val);
                               let rounding_incr = get_fixed_rounding_incr(result_sub, 1);
-                              slice(result_sub >> 1, 0, 'm) + zero_extend('m, rounding_incr)
+                              slice(result_sub >> 1, 0, SEW) + zero_extend(SEW, rounding_incr)
                             },
         MVX_VSLIDE1UP    => {
                               if (vs2 == vd) then { handle_illegal(); return RETIRE_FAIL };
@@ -2019,19 +1936,17 @@ mapping clause encdec = MVXMATYPE(funct6, vm, vs2, rs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(MVXMATYPE(funct6, vm, vs2, rs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_normal(vd, vm) then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -2080,24 +1995,20 @@ mapping clause encdec = WVXTYPE(funct6, vm, vs2, rs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(WVXTYPE(funct6, vm, vs2, rs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_widen;
-
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
-  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
@@ -2149,23 +2060,19 @@ mapping clause encdec = WXTYPE(funct6, vm, vs2, rs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(WXTYPE(funct6, vm, vs2, rs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen)
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_widen;
-
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
-  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
@@ -2212,24 +2119,20 @@ mapping clause encdec = WMVXTYPE(funct6, vm, vs2, rs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(WMVXTYPE(funct6, vm, vs2, rs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then { handle_illegal(); return RETIRE_FAIL };
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_widen;
-
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
-  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_val  = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
@@ -2268,18 +2171,16 @@ mapping clause encdec = VMVSX(rs1, vd)
   when extensionEnabled(Ext_V)
 
 function clause execute(VMVSX(rs1, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let num_elem = get_num_elem(0, SEW);
 
   if illegal_vd_unmasked() then { handle_illegal(); return RETIRE_FAIL };
 
   assert(num_elem > 0);
-  let 'n = num_elem;
-  let 'm = SEW;
 
-  let vm_val  : bits('n)             = read_vmask(num_elem, 0b1, zvreg);
-  let rs1_val : bits('m)             = get_scalar(rs1, 'm);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, 0, vd);
+  let vm_val  = read_vmask(num_elem, 0b1, zvreg);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vd_val  = read_vreg(num_elem, SEW, 0, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, 0, vd_val, vm_val);
   var result = initial_result;
