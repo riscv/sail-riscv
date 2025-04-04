@@ -6,14 +6,14 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause extensionEnabled(Ext_Zbkx) = true
+function clause currentlyEnabled(Ext_Zbkx) = true
 
 /* ****************************************************************** */
 union clause ast = RISCV_XPERM8 : (regidx, regidx, regidx)
 
 mapping clause encdec = RISCV_XPERM8(rs2, rs1, rd)
   <-> 0b0010100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0110011
-  when extensionEnabled(Ext_Zbkx)
+  when currentlyEnabled(Ext_Zbkx)
 
 mapping clause assembly = RISCV_XPERM8(rs2, rs1, rd)
   <-> "xperm8" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
@@ -37,7 +37,7 @@ union clause ast = RISCV_XPERM4 : (regidx, regidx, regidx)
 
 mapping clause encdec = RISCV_XPERM4(rs2, rs1, rd)
   <-> 0b0010100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(rd) @ 0b0110011
-  when extensionEnabled(Ext_Zbkx)
+  when currentlyEnabled(Ext_Zbkx)
 
 mapping clause assembly = RISCV_XPERM4(rs2, rs1, rd)
   <-> "xperm4" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)

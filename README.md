@@ -193,8 +193,8 @@ mapping clause encdec = SRET() <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b000
 function clause execute SRET() = {
   let sret_illegal : bool = match cur_privilege {
     User       => true,
-    Supervisor => not(extensionEnabled(Ext_S)) | mstatus[TSR] == 0b1,
-    Machine    => not(extensionEnabled(Ext_S))
+    Supervisor => not(currentlyEnabled(Ext_S)) | mstatus[TSR] == 0b1,
+    Machine    => not(currentlyEnabled(Ext_S))
   };
   if   sret_illegal
   then { handle_illegal(); RETIRE_FAIL }

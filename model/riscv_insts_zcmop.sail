@@ -6,13 +6,13 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause extensionEnabled(Ext_Zcmop) = true & extensionEnabled(Ext_Zca) // TODO: add configuration
+function clause currentlyEnabled(Ext_Zcmop) = true & currentlyEnabled(Ext_Zca) // TODO: add configuration
 
 union clause ast = ZCMOP : (bits(3))
 
 mapping clause encdec_compressed = ZCMOP(mop)
   <-> 0b01100 @ mop : bits(3) @ 0b100000 @ 0b01
-  when extensionEnabled(Ext_Zcmop)
+  when currentlyEnabled(Ext_Zcmop)
 
 mapping clause assembly = ZCMOP(mop)
   <-> "c.mop." ^ dec_bits_4(mop @ 0b1)

@@ -18,7 +18,7 @@ function fetch() -> FetchResult = {
     Ext_FetchAddr_OK(use_pc) => {
       /* then check PC alignment */
       let use_pc_bits = virtaddr_bits(use_pc);
-      if   (use_pc_bits[0] != bitzero | (use_pc_bits[1] != bitzero & not(extensionEnabled(Ext_Zca))))
+      if   (use_pc_bits[0] != bitzero | (use_pc_bits[1] != bitzero & not(currentlyEnabled(Ext_Zca))))
       then F_Error(E_Fetch_Addr_Align(), PC)
       else match translateAddr(use_pc, Execute()) {
         TR_Failure(e, _) => F_Error(e, PC),

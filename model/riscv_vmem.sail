@@ -156,7 +156,7 @@ function pt_walk(
 // PUBLIC: see also riscv_insts_zicsr.sail and other CSR-related files
 register satp : xlenbits
 mapping clause csr_name_map = 0x180  <-> "satp"
-function clause is_CSR_defined(0x180) = extensionEnabled(Ext_S)
+function clause is_CSR_defined(0x180) = currentlyEnabled(Ext_S)
 function clause read_CSR(0x180) = satp
 function clause write_CSR(0x180, value) = { satp = legalize_satp(cur_architecture(), satp, value); satp }
 

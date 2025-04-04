@@ -11,13 +11,13 @@
 
 /* ****************************************************************** */
 
-function clause extensionEnabled(Ext_Zifencei) = true
+function clause currentlyEnabled(Ext_Zifencei) = true
 
 union clause ast = FENCEI : unit
 
 mapping clause encdec = FENCEI()
   <-> 0b000000000000 @ 0b00000 @ 0b001 @ 0b00000 @ 0b0001111
-  when extensionEnabled(Ext_Zifencei)
+  when currentlyEnabled(Ext_Zifencei)
 
 /* fence.i is a nop for the memory model */
 function clause execute FENCEI() = { /* __barrier(Barrier_RISCV_i); */ RETIRE_SUCCESS }
