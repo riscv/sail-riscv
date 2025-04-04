@@ -38,7 +38,10 @@
         "instructions_per_tick" : 100
     },
     "extensions" : {
-        "C" : {
+        "M" : {
+            "supported" : true
+        },
+        "A" : {
             "supported" : true
         },
         "FD" : {
@@ -51,22 +54,121 @@
             "vl_use_ceil" : false
         },
         "B" : {
+            "supported" : true
+        },
+        "S" : {
+            "supported" : true
+        },
+        "U" : {
+            "supported" : true
+        },
+        "Zicbom" : {
+            "supported" : true
+        },
+        "Zicboz" : {
+            "supported" : true
+        },
+        "Zicond" : {
+            "supported" : true
+        },
+        "Zicsr" : {
+            "supported" : true
+        },
+        "Zicntr" : {
+            "supported" : true
+        },
+        "Zifencei" : {
+            "supported" : true
+        },
+        "Zihpm" : {
+            "supported" : true
+        },
+        "Zimop" : {
+            "supported" : true
+        },
+        "Zmmul" : {
             "supported" : false
         },
-        "Svinval" : {
+        "Zaamo" : {
             "supported" : false
         },
-        "Zcb" : {
+        "Zabha" : {
+            "supported" : true
+        },
+        "Zalrsc" : {
+            "supported" : false
+        },
+        "Zfa" : {
+            "supported" : true
+        },
+        "Zfh" : {
+            "supported" : true
+        },
+        "Zfhmin" : {
             "supported" : false
         },
         "Zfinx" : {
             "supported" : false
         },
-        "Zicbom" : {
+        "Zca" : {
+            "supported" : true
+        },
+        "Zcf" : {
+            "supported" : true
+        },
+        "Zcd" : {
+            "supported" : true
+        },
+        "Zcb" : {
+            "supported" : true
+        },
+        "Zcmop" : {
+            "supported" : true
+        },
+        "Zba" : {
             "supported" : false
         },
-        "Zicboz" : {
+        "Zbb" : {
             "supported" : false
+        },
+        "Zbs" : {
+            "supported" : false
+        },
+        "Zbc" : {
+            "supported" : true
+        },
+        "Zbkb" : {
+            "supported" : true
+        },
+        "Zbkc" : {
+            "supported" : true
+        },
+        "Zbkx" : {
+            "supported" : true
+        },
+        "Zknd" : {
+            "supported" : true
+        },
+        "Zkne" : {
+            "supported" : true
+        },
+        "Zknh" : {
+            "supported" : true
+        },
+        "Zkr" : {
+            "supported" : true
+        },
+        "Zksed" : {
+            "supported" : true
+        },
+        "Zksh" : {
+            "supported" : true
+        },
+        "Zhinx" : {
+            "supported" : false
+        },
+        "Zvbb" : {
+            "supported" : true
         },
         "Zvkb" : {
             "supported" : false
@@ -74,8 +176,17 @@
         "Zvbc" : {
             "supported" : true
         },
+        "Sscofpmf" : {
+            "supported" : true
+        },
+        "Smcntrpmf" : {
+            "supported" : true
+        },
         "Sstc" : {
-            "supported" : false
+            "supported" : true
+        },
+        "Svinval" : {
+            "supported" : true
         }
     }
 }
