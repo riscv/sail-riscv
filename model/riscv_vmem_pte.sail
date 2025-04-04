@@ -110,6 +110,8 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
   let pte_X = pte_flags[X];
   let success : bool =
     match (ac, priv) {
+      // Steps 6 and 8 of VATP, roughly (see riscv_vmem.sail).
+      // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
       (Read(_),         User)       => (pte_U == 0b1)
                                        & ((pte_R == 0b1)
                                           | ((pte_X == 0b1 & mxr))),

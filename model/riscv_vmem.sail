@@ -11,6 +11,11 @@
 // including PTWs (Page Table Walks) and TLBs (Translation Look-aside Buffers)
 // Supported VM modes: Sv32, Sv39, Sv48, Sv57
 
+// The code below implements the steps in the "Virtual Address
+// Translation Process" (abbreviated here to VATP) section of the
+// Privileged Architecture specification.  Code locations
+// corresponding to these steps are marked in the comments.
+
 // STYLE NOTES:
 //   PRIVATE items are used only within this VM code.
 //   PUBLIC  items are invoked from other parts of sail-riscv.
@@ -72,6 +77,7 @@ val pt_walk : forall 'v, is_sv_mode('v) . (
   ext_ptw                       // ext_ptw
 ) -> PTW_Result('v)
 
+// Steps 2-8 of the VATP.
 function pt_walk(
   sv_width,
   vpn,
@@ -100,7 +106,7 @@ function pt_walk(
   assert(sv_width == 32 | xlen == 64);
   let pte_addr = Physaddr(zero_extend(pte_addr));
 
-  // Read this-level PTE from mem
+  // Read this-level PTE from mem (Step 2 of VATP)
   match read_pte(pte_addr, 2 ^ log_pte_size_bytes) {
     Err(_)  => PTW_Failure(PTW_Access(), ext_ptw),
     Ok(pte) => {
@@ -108,41 +114,44 @@ function pt_walk(
       let pte_ext   = ext_bits_of_PTE(pte);
 
       if pte_is_invalid(pte_flags, pte_ext) then
+        // Step 3 of VATP.
         PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
       else {
+        // Step 4 of VATP.
         let ppn = PPN_of_PTE(pte); // 22 or 44.
         let global = global | (pte_flags[G] == 0b1);
         if pte_is_non_leaf(pte_flags) then {
           // Non-Leaf PTE
           if level > 0 then
-            // follow the pointer to walk next level
+            // follow the pointer to walk next level (i.e., go to Step 2)
             pt_walk(sv_width, vpn, ac, priv, mxr, do_sum, ppn, level - 1, global, ext_ptw)
           else
             // level 0 PTE, but contains a pointer instead of a leaf
             PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
         } else {
-          // Leaf PTE
-          let pte_check = check_PTE_permission(ac, priv, mxr, do_sum, pte_flags,
-                                               pte_ext, ext_ptw);
-          match pte_check {
+          // Leaf PTE (Step 5 of VATP).
+          let ppn_size_bits = if 'v == 32 then 10 else 9;
+          if level > 0 then {
+            // Check for misaligned superpage.
+            let low_bits = ppn_size_bits * level;
+            if   ppn[low_bits - 1 .. 0] != zeros()
+            then return PTW_Failure(PTW_Misaligned(), ext_ptw);
+          };
+          // Steps 6, 7 (TODO: shadow stack protection), 8 of VATP.
+          match check_PTE_permission(ac, priv, mxr, do_sum, pte_flags, pte_ext, ext_ptw) {
             PTE_Check_Failure(ext_ptw, ext_ptw_fail) =>
               PTW_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw),
-            PTE_Check_Success(ext_ptw) =>
-              if level > 0 then {
-                // Superpage. Check it is correctly aligned.
-                let ppn_size_bits = if 'v == 32 then 10 else 9;
+            PTE_Check_Success(ext_ptw) => {
+              let ppn = if level > 0 then {
+                // Compose final PA in superpage:
+                // Superpage PPN @ lower VPNs @ page-offset
                 let low_bits = ppn_size_bits * level;
-                if ppn[low_bits - 1 .. 0] != zeros() then
-                  PTW_Failure(PTW_Misaligned(), ext_ptw)
-                else {
-                  // Compose final PA in superpage:
-                  // Superpage PPN @ lower VPNs @ page-offset
-                  let ppn = ppn[length(ppn) - 1 .. low_bits] @ vpn[low_bits - 1 .. 0];
-                  PTW_Success(struct { ppn=ppn, pte=pte, pteAddr=pte_addr, level=level, global=global}, ext_ptw)
-                }
+                ppn[length(ppn) - 1 .. low_bits] @ vpn[low_bits - 1 .. 0]
               } else {
-                PTW_Success(struct { ppn=ppn, pte=pte, pteAddr=pte_addr, level=level, global=global}, ext_ptw)
-              }
+                ppn
+              };
+              PTW_Success(struct {ppn=ppn, pte=pte, pteAddr=pte_addr, level=level, global=global}, ext_ptw)
+            }
           }
         }
       }
@@ -225,12 +234,11 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
 ) -> TR_Result(ppn_bits('v), PTW_Error) = {
 
   let pte_width = if sv_width == 32 then 4 else 8;
-  let pte       = tlb_get_pte(pte_width, ent);
+  let pte       = tlb_get_pte(pte_width, ent);  // Step 2 of VATP.
   let ext_pte   = ext_bits_of_PTE(pte);
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
   let pte_check = check_PTE_permission(ac, priv, mxr, do_sum, pte_flags,
-                                       ext_pte,
-                                       ext_ptw);
+                                       ext_pte, ext_ptw);
 
   match pte_check {
     PTE_Check_Failure(ext_ptw, ext_ptw_fail) =>
@@ -239,6 +247,7 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
       match update_PTE_Bits(pte, ac) {
         None()     => TR_Address(tlb_get_ppn(sv_width, ent, vpn), ext_ptw),
         Some(pte') =>
+          // Step 9 of VATP. See riscv_platform.sail.
           if not(plat_enable_dirty_update()) then
             // pte needs dirty/accessed update but that is not enabled
             TR_Failure(PTW_PTE_Update(), ext_ptw)
@@ -248,7 +257,7 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
             match write_pte(ent.pteAddr, pte_width, pte') {
               Ok(_)  => (),
               Err(e) => internal_error(__FILE__, __LINE__,
-                                                "invalid physical address in TLB")
+                                       "invalid physical address in TLB")
             };
             TR_Address(tlb_get_ppn(sv_width, ent, vpn), ext_ptw)
           }
@@ -270,13 +279,14 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
 ) -> TR_Result(ppn_bits('v), PTW_Error) = {
   let initial_level = if 'v == 32 then 1 else (if 'v == 39 then 2 else (if 'v == 48 then 3 else 4));
 
+  // Step 2 of VATP occurs in pt_walk().
   let 'pte_width = if sv_width == 32 then 4 else 8;
   let ptw_result = pt_walk(sv_width, vpn, ac, priv, mxr, do_sum,
                            base_ppn, initial_level, false, ext_ptw);
   match ptw_result {
     PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),
     PTW_Success(struct {ppn, pte, pteAddr, level, global}, ext_ptw) => {
-      let ext_pte   = ext_bits_of_PTE(pte);
+      let ext_pte = ext_bits_of_PTE(pte);
       // Without TLBs, this 'match' expression can be replaced simply
       // by: 'TR_Address(ppn, ext_ptw)'    (see TLB NOTE above)
       match update_PTE_Bits(pte, ac) {
@@ -285,7 +295,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
           TR_Address(ppn, ext_ptw)
         },
         Some(pte) =>
-          // See riscv_platform.sail
+          // Step 9 of VATP. See riscv_platform.sail.
           if not(plat_enable_dirty_update()) then
             // pte needs dirty/accessed update but that is not enabled
             TR_Failure(PTW_PTE_Update(), ext_ptw)
@@ -377,8 +387,11 @@ function translateAddr(
   } else {
     let mxr    = mstatus[MXR] == 0b1;
     let do_sum = mstatus[SUM] == 0b1;
-    let asid = satp_to_asid(satp_sxlen);
+    let asid   = satp_to_asid(satp_sxlen);
+
+    // Step 1 of VATP.
     let base_ppn = satp_to_ppn(satp_sxlen);
+
     let res = translate(sv_width,
                         zero_extend(asid),
                         base_ppn,
@@ -388,6 +401,7 @@ function translateAddr(
     // Fixup result PA or exception
     match res {
       TR_Address(ppn, ext_ptw) => {
+        // Step 10 of VATP.
         // Append the page offset. This is now a 34 or 56 bit address.
         let paddr = ppn @ virtaddr_bits(vAddr)[pagesize_bits - 1 .. 0];
 
