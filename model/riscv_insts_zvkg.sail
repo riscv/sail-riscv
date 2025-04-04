@@ -32,7 +32,7 @@ function clause execute (VGHSH_VV(vs2, vs1, vd)) = {
   let eg_start = (unsigned(vstart) / 4);
 
   foreach (i from eg_start to (eg_len - 1)) {
-    assert(0 <= i & ((i * 4) + 3) < num_elem);
+    assert(i * 4 + 3 < num_elem);
 
     let Y : bits(128) = get_velem_4(vd_val, i);
     let X : bits(128) = get_velem_4(vs1_val, i);
@@ -79,7 +79,7 @@ function clause execute (VGMUL_VV(vs2, vd)) = {
   let eg_start = (unsigned(vstart) / 4);
 
   foreach (i from eg_start to (eg_len - 1)) {
-    assert(0 <= i & ((i * 4) + 3) < num_elem);
+    assert(i * 4 + 3 < num_elem);
 
     let Y : bits(128) = brev8(get_velem_4(vd_val, i));
     var H : bits(128) = brev8(get_velem_4(vs2_val, i));
