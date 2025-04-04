@@ -16,3 +16,26 @@ function carryless_mul(a, b) = {
   };
   result
 }
+
+/* Reverse carry-less multiply. */
+val carryless_mulr : forall 'n, 'n > 0. (bits('n), bits('n)) -> bits('n)
+function carryless_mulr(a, b) = {
+  var result : bits('n) = zeros();
+  foreach (i from 0 to ('n - 1)) {
+    if   a[i] == bitone
+    then result = result ^ (b >> ('n - i - 1));
+  };
+  result
+}
+
+/* Equivalent reverse carry-less multiply. */
+val carryless_mul_reversed : forall 'n, 'n > 0. (bits('n), bits('n)) -> bits('n)
+function carryless_mul_reversed(a, b) = {
+  let prod = carryless_mul(reverse(a), reverse(b));
+  reverse(prod['n - 1 .. 0])
+}
+
+$[property]
+function cmulr_equivalence(a : bits(16), b : bits(16)) -> bool = {
+  carryless_mul_reversed(a, b) == carryless_mulr(a, b)
+}
