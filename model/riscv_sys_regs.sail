@@ -127,16 +127,11 @@ function clause is_CSR_defined(0x301) = true // misa
 function clause read_CSR(0x301) = misa.bits
 function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); misa.bits }
 
-// Are user and supervisor mode supported by the hardware?
-// TODO: Don't hard-code these.
-function sys_enable_user() -> bool = true
-function sys_enable_supervisor() -> bool = true
-
 // Are supervisor/user mode currently enabled? Although
 // unlikely and not currently supported by the model,
 // you are technically allowed to have writable misa[U/S].
-function clause currentlyEnabled(Ext_U) = misa[U] == 0b1
-function clause currentlyEnabled(Ext_S) = misa[S] == 0b1
+function clause currentlyEnabled(Ext_U) = hartSupports(Ext_U) & misa[U] == 0b1
+function clause currentlyEnabled(Ext_S) = hartSupports(Ext_S) & misa[S] == 0b1
 
 /*
  * Illegal values legalized to least privileged mode supported.
@@ -266,8 +261,8 @@ register mstatus : Mstatus = {
   [ Mk_Mstatus(zeros()) with
     // These fields do not exist on RV32 and are read-only zero
     // if the corresponding mode is not supported.
-    SXL = if xlen != 32 & sys_enable_supervisor() then mxl else zeros(),
-    UXL = if xlen != 32 & sys_enable_user() then mxl else zeros(),
+    SXL = if xlen != 32 & hartSupports(Ext_S) then mxl else zeros(),
+    UXL = if xlen != 32 & hartSupports(Ext_U) then mxl else zeros(),
   ]
 }
 

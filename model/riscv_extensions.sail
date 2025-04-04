@@ -113,7 +113,7 @@ enum clause extension = Ext_Zcd
 function clause hartSupports(Ext_Zcd) = config extensions.Zcd.supported
 // Code Size Reduction: compressed single precision floating point loads and stores
 enum clause extension = Ext_Zcf
-function clause hartSupports(Ext_Zcf) = config extensions.Zcf.supported
+function clause hartSupports(Ext_Zcf) = config extensions.Zcf.supported : bool & (xlen == 32)
 // Compressed May-Be-Operations
 enum clause extension = Ext_Zcmop
 function clause hartSupports(Ext_Zcmop) = config extensions.Zcmop.supported
@@ -123,7 +123,7 @@ function clause hartSupports(Ext_Zcmop) = config extensions.Zcmop.supported
 //   - Zcf is supported if F is supported (on rv32)
 //   - Zcd is supported if D is supported
 enum clause extension = Ext_C
-function clause hartSupports(Ext_C) = hartSupports(Ext_Zca) & (hartSupports(Ext_Zcf) | ~(hartSupports(Ext_F)) | xlen != 32) & (hartSupports(Ext_Zcd) | ~(hartSupports(Ext_D)))
+function clause hartSupports(Ext_C) = hartSupports(Ext_Zca) & (hartSupports(Ext_Zcf) | not(hartSupports(Ext_F)) | xlen != 32) & (hartSupports(Ext_Zcd) | not(hartSupports(Ext_D)))
 
 // Bit Manipulation: Address generation
 enum clause extension = Ext_Zba

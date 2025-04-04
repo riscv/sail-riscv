@@ -6,8 +6,8 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Zbb) = true | currentlyEnabled(Ext_B)
-function clause currentlyEnabled(Ext_Zbkb) = true
+function clause currentlyEnabled(Ext_Zbb) = hartSupports(Ext_Zbb) | currentlyEnabled(Ext_B)
+function clause currentlyEnabled(Ext_Zbkb) = hartSupports(Ext_Zbkb)
 
 /* ****************************************************************** */
 union clause ast = RISCV_RORIW : (bits(5), regidx, regidx)

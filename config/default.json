@@ -71,9 +71,6 @@
         "Zicond" : {
             "supported" : true
         },
-        "Zicsr" : {
-            "supported" : true
-        },
         "Zicntr" : {
             "supported" : true
         },
