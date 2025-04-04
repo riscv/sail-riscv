@@ -87,12 +87,11 @@ val zero_extend : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
 function sign_extend(m, v) = sail_sign_extend(v, m)
 function zero_extend(m, v) = sail_zero_extend(v, m)
 
-val zeros_implicit : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
-function zeros_implicit (n) = sail_zeros(n)
-overload zeros = {zeros_implicit}
+val zeros : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
+function zeros (n) = sail_zeros(n)
 
 val ones : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
-function ones (n) = sail_ones (n)
+function ones (n) = sail_ones(n)
 
 mapping bool_bit : bool <-> bit = {
   true <-> bitone,
