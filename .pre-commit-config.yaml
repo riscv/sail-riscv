@@ -16,6 +16,8 @@ repos:
         exclude: '.*\.(diff|dump|patch|svg)'
     -   id: check-yaml
     -   id: check-added-large-files
+    -   id: check-executables-have-shebangs
+    -   id: check-shebang-scripts-are-executable
 -   repo: https://github.com/pre-commit/mirrors-clang-format
     rev: 'v19.1.7'
     hooks:
