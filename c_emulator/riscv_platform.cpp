@@ -71,6 +71,11 @@ mach_bits plat_htif_tohost(unit)
   return rv_htif_tohost;
 }
 
+bool sys_enable_experimental_extensions(unit)
+{
+  return rv_enable_experimental_extensions;
+}
+
 unit memea(mach_bits, sail_int)
 {
   return UNIT;

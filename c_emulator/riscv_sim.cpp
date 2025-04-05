@@ -33,6 +33,7 @@ enum {
   OPT_TRACE_OUTPUT = 1000,
   OPT_PRINT_CONFIG,
   OPT_SAILCOV,
+  OPT_ENABLE_EXPERIMENTAL_EXTENSIONS,
 };
 
 static bool do_show_times = false;
@@ -92,26 +93,28 @@ char *sailcov_file = NULL;
 #endif
 
 static struct option options[] = {
-    {"device-tree-blob",      required_argument, 0, 'b'             },
-    {"terminal-log",          required_argument, 0, 't'             },
-    {"show-times",            required_argument, 0, 'p'             },
-    {"report-arch",           no_argument,       0, 'a'             },
-    {"test-signature",        required_argument, 0, 'T'             },
-    {"signature-granularity", required_argument, 0, 'g'             },
+    {"device-tree-blob",               required_argument, 0, 'b'             },
+    {"terminal-log",                   required_argument, 0, 't'             },
+    {"show-times",                     required_argument, 0, 'p'             },
+    {"report-arch",                    no_argument,       0, 'a'             },
+    {"test-signature",                 required_argument, 0, 'T'             },
+    {"signature-granularity",          required_argument, 0, 'g'             },
 #ifdef RVFI_DII
-    {"rvfi-dii",              required_argument, 0, 'r'             },
+    {"rvfi-dii",                       required_argument, 0, 'r'             },
 #endif
-    {"help",                  no_argument,       0, 1               },
-    {"config",                required_argument, 0, 'c'             },
-    {"print-default-config",  no_argument,       0, OPT_PRINT_CONFIG},
-    {"trace",                 optional_argument, 0, 'v'             },
-    {"no-trace",              optional_argument, 0, 'V'             },
-    {"trace-output",          required_argument, 0, OPT_TRACE_OUTPUT},
-    {"inst-limit",            required_argument, 0, 'l'             },
+    {"help",                           no_argument,       0, 1               },
+    {"config",                         required_argument, 0, 'c'             },
+    {"print-default-config",           no_argument,       0, OPT_PRINT_CONFIG},
+    {"trace",                          optional_argument, 0, 'v'             },
+    {"no-trace",                       optional_argument, 0, 'V'             },
+    {"trace-output",                   required_argument, 0, OPT_TRACE_OUTPUT},
+    {"inst-limit",                     required_argument, 0, 'l'             },
+    {"enable-experimental-extensions", no_argument,       0,
+     OPT_ENABLE_EXPERIMENTAL_EXTENSIONS                                      },
 #ifdef SAILCOV
-    {"sailcov-file",          required_argument, 0, OPT_SAILCOV     },
+    {"sailcov-file",                   required_argument, 0, OPT_SAILCOV     },
 #endif
-    {0,                       0,                 0, 0               }
+    {0,                                0,                 0, 0               }
 };
 
 static void print_usage(const char *argv0, int ec)
@@ -269,6 +272,10 @@ static int process_args(int argc, char **argv)
       insn_limit = val;
       break;
     }
+    case OPT_ENABLE_EXPERIMENTAL_EXTENSIONS:
+      fprintf(stderr, "enabling unratified extensions.\n");
+      rv_enable_experimental_extensions = true;
+      break;
 #ifdef SAILCOV
     case OPT_SAILCOV:
       sailcov_file = strdup(optarg);
