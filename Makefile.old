@@ -67,6 +67,10 @@ SAIL_DEFAULT_INST += riscv_insts_vext_red.sail
 SAIL_DEFAULT_INST += riscv_insts_vext_fp_red.sail
 SAIL_DEFAULT_INST += riscv_insts_zicbom.sail
 SAIL_DEFAULT_INST += riscv_insts_zicboz.sail
+SAIL_DEFAULT_INST += riscv_insts_zvbb.sail
+SAIL_DEFAULT_INST += riscv_insts_zvbc.sail
+SAIL_DEFAULT_INST += riscv_insts_zimop.sail
+SAIL_DEFAULT_INST += riscv_insts_zcmop.sail
 
 SAIL_SEQ_INST  = $(SAIL_DEFAULT_INST) riscv_jalr_seq.sail
 SAIL_RMEM_INST = $(SAIL_DEFAULT_INST) riscv_jalr_rmem.sail riscv_insts_rmem.sail
@@ -94,7 +98,7 @@ SAIL_VM_SRCS += riscv_vmem_tlb.sail
 SAIL_VM_SRCS += riscv_vmem.sail
 
 # Non-instruction sources
-PRELUDE = prelude.sail riscv_errors.sail $(SAIL_XLEN) $(SAIL_FLEN) $(SAIL_VLEN) prelude_mem_addrtype.sail prelude_mem_metadata.sail prelude_mem.sail
+PRELUDE = prelude.sail riscv_errors.sail $(SAIL_XLEN) $(SAIL_FLEN) $(SAIL_VLEN) prelude_mem_addrtype.sail prelude_mem_metadata.sail prelude_mem.sail arithmetic.sail
 
 SAIL_REGS_SRCS =  riscv_csr_begin.sail       # Start of CSR scattered definitions.
 SAIL_REGS_SRCS += riscv_reg_type.sail riscv_freg_type.sail riscv_regs.sail riscv_pc_access.sail riscv_sys_regs.sail
@@ -125,6 +129,7 @@ SAIL_RVFI_SRCS = $(addprefix model/,$(SAIL_ARCH_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS)
 SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS) $(SAIL_OTHER_SRCS) $(SAIL_OTHER_COQ_SRCS))
 
 SAIL_FLAGS += --require-version 0.19
+SAIL_FLAGS += --config config/default.json
 SAIL_FLAGS += --strict-var
 SAIL_FLAGS += -dno_cast
 SAIL_DOC_FLAGS ?= -doc_embed plain
@@ -142,8 +147,8 @@ export LEM_DIR
 
 C_WARNINGS ?=
 #-Wall -Wextra -Wno-unused-label -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-function
-C_INCS = $(addprefix c_emulator/,riscv_prelude.h riscv_platform_impl.h riscv_platform.h riscv_softfloat.h)
-C_SRCS = $(addprefix c_emulator/,riscv_prelude.c riscv_platform_impl.c riscv_platform.c riscv_softfloat.c riscv_sim.c)
+C_INCS = $(addprefix c_emulator/,riscv_prelude.h riscv_sail.h riscv_config.h riscv_platform_impl.h riscv_platform.h riscv_softfloat.h rvfi_dii.h)
+C_SRCS = $(addprefix c_emulator/,riscv_prelude.cpp riscv_platform_impl.cpp riscv_platform.cpp riscv_softfloat.c rvfi_dii.cpp riscv_sim.cpp)
 
 SOFTFLOAT_DIR    = dependencies/softfloat/berkeley-softfloat-3
 SOFTFLOAT_INCDIR = $(SOFTFLOAT_DIR)/source/include
@@ -204,6 +209,9 @@ all: c_emulator/riscv_sim_$(ARCH)
 
 check: $(SAIL_SRCS) model/main.sail Makefile.old
 	$(SAIL) $(SAIL_FLAGS) $(SAIL_SRCS) model/main.sail
+
+check_properties: $(SAIL_SRCS) Makefile.old
+	$(SAIL) --smt --smt-auto --smt-auto-solver z3 $(SAIL_FLAGS) $(SAIL_SRCS)
 
 interpret: $(SAIL_SRCS) model/main.sail
 	$(SAIL) -i $(SAIL_FLAGS) $(SAIL_SRCS) model/main.sail
