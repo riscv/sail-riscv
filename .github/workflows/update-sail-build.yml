@@ -18,10 +18,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Checkout SAIL
-      run: |
-        git clone https://github.com/rems-project/sail.git
-
     - name: System dependencies (ubuntu)
       if: startsWith(matrix.os, 'ubuntu')
       run: |
@@ -48,6 +44,10 @@ jobs:
         path: ~/.opam
         key: ${{ steps.cache-opam-restore.outputs.cache-primary-key }}
 
+    - name: Checkout SAIL
+      run: |
+        git clone https://github.com/rems-project/sail.git
+
     - name: Install Sail
       run: |
         eval $(opam env)
@@ -56,23 +56,18 @@ jobs:
 
     - name: Build the Sail RISCV Model for Lean
       run: |
-        git clone https://github.com/riscv/sail-riscv.git
-        cd sail-riscv
         eval $(opam config env)
         cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
         # This patch is needed to work around https://github.com/rems-project/sail/issues/1003.
-        patch -p1 < ../.github/workflows/build-riscv-lean-workaround-riscv.patch
+        patch -p1 < .github/workflows/build-riscv-lean-workaround-riscv.patch
         cmake --build build/ --target generated_lean_rv64d
-        cd ..
 
     - name: Use Lean to build the model and report errors
       run: |
         wget -q https://raw.githubusercontent.com/leanprover-community/mathlib4/master/scripts/install_debian.sh
         bash install_debian.sh ; rm -f install_debian.sh
         source ~/.profile
-        cp README.md.template sail-riscv/build/model/Lean_RV64D_LEAN/
-        cp report.py sail-riscv/build/model/Lean_RV64D_LEAN/
-        cd sail-riscv/build/model/Lean_RV64D_LEAN/
+        cd build/model/Lean_RV64D_LEAN/
         echo "Set ulimit"
         ulimit -s unlimited
         ulimit -s
