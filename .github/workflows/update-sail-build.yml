@@ -48,7 +48,6 @@ jobs:
       run: |
         wget -q https://raw.githubusercontent.com/leanprover-community/mathlib4/master/scripts/install_debian.sh
         bash install_debian.sh ; rm -f install_debian.sh
-        source ~/.profile
 
     - name: Checkout SAIL
       run: |
@@ -70,6 +69,7 @@ jobs:
 
     - name: Use Lean to build the model and report errors
       run: |
+        source ~/.profile
         cd build/model/Lean_RV64D/
         echo "Set ulimit"
         ulimit -s unlimited
