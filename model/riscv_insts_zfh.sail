@@ -8,6 +8,9 @@
 
 function clause extensionEnabled(Ext_Zhinx) = sys_enable_zfinx()
 
+// Zhinxmin is a subset of Zhinx. This can be changed to extensionEnabled(Ext_Zhinx) | sys_enable_zhinxmin() when more configuration is implemented.
+function clause extensionEnabled(Ext_Zhinxmin) = extensionEnabled(Ext_Zhinx)
+
 /* **************************************************************** */
 /* This file specifies the instructions in the Zfh extension        */
 /* (half precision floating point).                                 */
@@ -167,7 +170,7 @@ function fle_H   (v1,       v2,        is_quiet) = {
 function haveHalfFPU() -> bool = extensionEnabled(Ext_Zfh) | extensionEnabled(Ext_Zhinx)
 // Support for conversion of halves to/from single & double, but no actual
 // calculations with halves.
-function haveHalfMin() -> bool = haveHalfFPU() | extensionEnabled(Ext_Zfhmin)
+function haveHalfMin() -> bool = haveHalfFPU() | extensionEnabled(Ext_Zfhmin) | extensionEnabled(Ext_Zhinxmin)
 
 /* ****************************************************************** */
 /* Floating-point loads                                               */
