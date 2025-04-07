@@ -119,7 +119,7 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
       (ReadWrite(_, _), User)       => (pte_U == 0b1)
                                        & (pte_W == 0b1)
                                        & ((pte_R == 0b1) | ((pte_X == 0b1) & mxr)),
-      (Execute(),       User)       => (pte_U == 0b1) & (pte_X == 0b1),
+      (InstructionFetch(),    User) => (pte_U == 0b1) & (pte_X == 0b1),
       (Read(_),         Supervisor) => ((pte_U == 0b0) | do_sum)
                                        & ((pte_R == 0b1) | ((pte_X == 0b1) & mxr)),
       (Write(_),        Supervisor) => ((pte_U == 0b0) | do_sum)
@@ -128,7 +128,7 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
                                        & (pte_W == 0b1)
                                        & ((pte_R == 0b1)
                                           | ((pte_X == 0b1) & mxr)),
-      (Execute(),       Supervisor) => (pte_U == 0b0) & (pte_X == 0b1),
+      (InstructionFetch(),Supervisor) => (pte_U == 0b0) & (pte_X == 0b1),
       (_,               Machine)    => internal_error(__FILE__, __LINE__,
                                                       "m-mode mem perm check")};
   if success then PTE_Check_Success(())
@@ -146,7 +146,7 @@ function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
   // Update 'dirty' bit?
   let update_d : bool = (pte_flags[D] == 0b0)
                         & (match a {
-                             Execute()       => false,
+                             InstructionFetch()       => false,
                              Read(_)         => false,
                              Write(_)        => true,
                              ReadWrite(_, _) => true

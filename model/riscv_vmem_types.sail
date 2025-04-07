@@ -43,7 +43,7 @@ function accessType_to_str (a) =
     Read(_)            => "R",
     Write(_)           => "W",
     ReadWrite(_, _)    => "RW",
-    Execute()          => "X"
+    InstructionFetch() => "X",
   }
 
 overload to_str = {accessType_to_str}

@@ -194,7 +194,7 @@ bitfield Mstatus : bits(64) = {
 }
 
 function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
-  if   t != Execute() & m[MPRV] == 0b1
+  if   t != InstructionFetch() & m[MPRV] == 0b1
   then privLevel_of_bits(m[MPP])
   else priv
 
