@@ -118,6 +118,8 @@ set(DEFAULT_ARCHITECTURES "rv32d;rv64d" CACHE STRING "Architectures to build by 
 
 option(COVERAGE "Compile with Sail coverage collection enabled.")
 
+option(RVE "Build for RV32E/RV64E as the base isa instead of RV32I/RV64I" OFF)
+
 # Softfloat support.
 add_subdirectory("dependencies/softfloat")
 

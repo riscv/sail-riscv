@@ -148,6 +148,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_reg_type.sail"
                 "riscv_freg_type.sail"
                 "riscv_regs.sail"
+                "riscv_regs_$<IF:$<BOOL:${RVE}>,e,i>.sail"
                 "riscv_pc_access.sail"
                 "riscv_sys_regs.sail"
                 "riscv_pmp_regs.sail"
@@ -163,6 +164,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_extensions.sail"
                 "riscv_types_common.sail"
                 "riscv_types_ext.sail"
+                "riscv_types_$<IF:$<BOOL:${RVE}>,e,i>.sail"
                 "riscv_types.sail"
                 "riscv_vmem_types.sail"
                 ${sail_regs_srcs}
