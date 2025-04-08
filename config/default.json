@@ -68,6 +68,12 @@
         "Zicboz" : {
             "enabled" : false
         },
+        "Zilsd": {
+            "enabled": true
+        },
+        "Zclsd": {
+            "enabled": true
+        },
         "Zvkb" : {
             "enabled" : false
         },
