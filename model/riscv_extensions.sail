@@ -55,6 +55,9 @@ function clause hartSupports(Ext_Zicbom) = config extensions.Zicbom.supported
 // Cache-Block Zero Instructions
 enum clause extension = Ext_Zicboz
 function clause hartSupports(Ext_Zicboz) = config extensions.Zicboz.supported
+// Cache-Block Prefetch Instructions
+enum clause extension = Ext_Zicbop
+function clause hartSupports(Ext_Zicbop) = config extensions.Zicbop.supported
 // Base Counters and Timers
 enum clause extension = Ext_Zicntr
 function clause hartSupports(Ext_Zicntr) = config extensions.Zicntr.supported
