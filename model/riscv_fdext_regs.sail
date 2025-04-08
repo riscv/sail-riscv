@@ -103,18 +103,18 @@ register f30 : fregtype
 register f31 : fregtype
 
 function dirty_fd_context() -> unit = {
-  assert(sys_enable_fdext());
+  assert(hartSupports(Ext_F));
   mstatus[FS] = extStatus_to_bits(Dirty);
   mstatus[SD] = 0b1;
 }
 
 function dirty_fd_context_if_present() -> unit = {
-  assert(sys_enable_fdext() != sys_enable_zfinx());
-  if sys_enable_fdext() then dirty_fd_context()
+  assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
+  if hartSupports(Ext_F) then dirty_fd_context()
 }
 
 function rF (Fregno(r) : fregno) -> flenbits = {
-  assert(sys_enable_fdext());
+  assert(hartSupports(Ext_F));
   let v : fregtype =
     match r {
       0 => f0,
@@ -155,7 +155,7 @@ function rF (Fregno(r) : fregno) -> flenbits = {
 }
 
 function wF (Fregno(r) : fregno, in_v : flenbits) -> unit = {
-  assert(sys_enable_fdext());
+  assert(hartSupports(Ext_F));
   let v = fregval_into_freg(in_v);
   match r {
     0  => f0 = v,
@@ -212,42 +212,42 @@ overload F = {rF_bits, wF_bits, rF, wF}
 val rF_H : fregidx -> bits(16)
 function rF_H(i) = {
   assert(flen >= 16);
-  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
   nan_unbox(F(i))
 }
 
 val wF_H : (fregidx, bits(16)) -> unit
 function wF_H(i, data) = {
   assert(flen >= 16);
-  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
   F(i) = nan_box(data)
 }
 
 val rF_S : fregidx -> bits(32)
 function rF_S(i) = {
   assert(flen >= 32);
-  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
   nan_unbox(F(i))
 }
 
 val wF_S : (fregidx, bits(32)) -> unit
 function wF_S(i, data) = {
   assert(flen >= 32);
-  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
   F(i) = nan_box(data)
 }
 
 val rF_D : fregidx -> bits(64)
 function rF_D(i) = {
   assert(flen >= 64);
-  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
   F(i)
 }
 
 val wF_D : (fregidx, bits(64)) -> unit
 function wF_D(i, data) = {
   assert(flen >= 64);
-  assert(sys_enable_fdext() & not(sys_enable_zfinx()));
+  assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
   F(i) = data
 }
 
@@ -258,8 +258,8 @@ overload F_D = { rF_D, wF_D }
 val rF_or_X_H : fregidx -> bits(16)
 function rF_or_X_H(i) = {
   assert(flen >= 16);
-  assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
+  assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
+  if   hartSupports(Ext_F)
   then F_H(i)
   else X(fregidx_to_regidx(i))[15..0]
 }
@@ -267,8 +267,8 @@ function rF_or_X_H(i) = {
 val rF_or_X_S : fregidx -> bits(32)
 function rF_or_X_S(i) = {
   assert(flen >= 32);
-  assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
+  assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
+  if   hartSupports(Ext_F)
   then F_S(i)
   else X(fregidx_to_regidx(i))[31..0]
 }
@@ -276,8 +276,8 @@ function rF_or_X_S(i) = {
 val rF_or_X_D : fregidx -> bits(64)
 function rF_or_X_D(i) = {
   assert(flen >= 64);
-  assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
+  assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
+  if   hartSupports(Ext_F)
   then F_D(i)
   else if xlen >= 64
   then X(fregidx_to_regidx(i))[63..0]
@@ -291,8 +291,8 @@ function rF_or_X_D(i) = {
 val wF_or_X_H : (fregidx, bits(16)) -> unit
 function wF_or_X_H(i, data) = {
   assert(flen >= 16);
-  assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
+  assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
+  if   hartSupports(Ext_F)
   then F_H(i) = data
   else X(fregidx_to_regidx(i)) = sign_extend(data)
 }
@@ -300,8 +300,8 @@ function wF_or_X_H(i, data) = {
 val wF_or_X_S : (fregidx, bits(32)) -> unit
 function wF_or_X_S(i, data) = {
   assert(flen >= 32);
-  assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
+  assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
+  if   hartSupports(Ext_F)
   then F_S(i) = data
   else X(fregidx_to_regidx(i)) = sign_extend(data)
 }
@@ -309,8 +309,8 @@ function wF_or_X_S(i, data) = {
 val wF_or_X_D : (fregidx, bits(64)) -> unit
 function wF_or_X_D(i, data) = {
   assert (flen >= 64);
-  assert(sys_enable_fdext() != sys_enable_zfinx());
-  if   sys_enable_fdext()
+  assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
+  if   hartSupports(Ext_F)
   then F_D(i) = data
   else if xlen >= 64
   then X(fregidx_to_regidx(i)) = sign_extend(data)
@@ -368,8 +368,8 @@ mapping freg_name_raw : bits(5) <-> string = {
 mapping freg_name : fregidx <-> string = { Fregidx(i) <-> freg_name_raw(i) }
 
 mapping freg_or_reg_name : fregidx <-> string = {
-  forwards f if sys_enable_zfinx() => reg_name(fregidx_to_regidx(f)),
-  backwards reg_name(Regidx(i)) if sys_enable_zfinx() => Fregidx(zero_extend(i)),
+  forwards f if hartSupports(Ext_Zfinx) => reg_name(fregidx_to_regidx(f)),
+  backwards reg_name(Regidx(i)) if hartSupports(Ext_Zfinx) => Fregidx(zero_extend(i)),
   f <-> freg_name(f)
 }
 

@@ -6,16 +6,16 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause extensionEnabled(Ext_Zicond) = true
+function clause currentlyEnabled(Ext_Zicond) = true
 
 union clause ast = ZICOND_RTYPE : (regidx, regidx, regidx, zicondop)
 
 mapping clause encdec = ZICOND_RTYPE(rs2, rs1, rd, RISCV_CZERO_EQZ)
   <-> 0b0000111 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0110011
-  when extensionEnabled(Ext_Zicond)
+  when currentlyEnabled(Ext_Zicond)
 mapping clause encdec = ZICOND_RTYPE(rs2, rs1, rd, RISCV_CZERO_NEZ)
   <-> 0b0000111 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b0110011
-  when extensionEnabled(Ext_Zicond)
+  when currentlyEnabled(Ext_Zicond)
 
 mapping zicond_mnemonic : zicondop <-> string = {
   RISCV_CZERO_EQZ <-> "czero.eqz",

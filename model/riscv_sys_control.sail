@@ -29,7 +29,7 @@ function check_TVM_SATP(csr : csreg, p : Privilege) -> bool =
 function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bit, supervisor_enable_bit : bit) -> bool = match p {
   Machine => true,
   Supervisor => machine_enable_bit == bitone,
-  User => machine_enable_bit == bitone & (not(extensionEnabled(Ext_S)) | supervisor_enable_bit == bitone),
+  User => machine_enable_bit == bitone & (not(currentlyEnabled(Ext_S)) | supervisor_enable_bit == bitone),
 }
 
 // Return true if the counter is enabled OR the CSR is not a counter.
@@ -104,7 +104,7 @@ val cancel_reservation = impure {interpreter: "Platform.cancel_reservation", c: 
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let idx   = num_of_ExceptionType(e);
   let super = bit_to_bool(medeleg.bits[idx]);
-  let deleg = if extensionEnabled(Ext_S) & super then Supervisor else Machine;
+  let deleg = if currentlyEnabled(Ext_S) & super then Supervisor else Machine;
   /* We cannot transition to a less-privileged mode. */
   if   privLevel_to_bits(deleg) <_u privLevel_to_bits(p)
   then p else deleg
@@ -132,7 +132,7 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
  */
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   // mideleg can only be non-zero if we support Supervisor mode.
-  assert(extensionEnabled(Ext_S) | mideleg.bits == zeros());
+  assert(currentlyEnabled(Ext_S) | mideleg.bits == zeros());
 
   let pending_m = mip.bits & mie.bits & ~(mideleg.bits);
   let pending_s = mip.bits & mie.bits & mideleg.bits;
@@ -216,7 +216,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        prepare_trap_vector(del_priv, mcause)
     },
     Supervisor => {
-       assert (extensionEnabled(Ext_S), "no supervisor mode present for delegation");
+       assert (currentlyEnabled(Ext_S), "no supervisor mode present for delegation");
 
        scause[IsInterrupt] = bool_to_bits(intr);
        scause[Cause]       = zero_extend(c);
@@ -259,7 +259,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       mstatus[MIE]  = mstatus[MPIE];
       mstatus[MPIE] = 0b1;
       cur_privilege   = privLevel_of_bits(mstatus[MPP]);
-      mstatus[MPP]  = privLevel_to_bits(if extensionEnabled(Ext_U) then User else Machine);
+      mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
@@ -309,22 +309,22 @@ function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
 
 // Reset misa to enable the maximal set of supported extensions.
 function reset_misa() -> unit = {
-  misa[A]   = 0b1;                             /* atomics */
-  misa[C]   = bool_to_bits(sys_enable_rvc());  /* RVC */
-  misa[B]   = bool_to_bits(sys_enable_bext()); /* Bit-manipulation */
-  misa[I]   = 0b1;                             /* base integer ISA */
-  misa[M]   = 0b1;                             /* integer multiply/divide */
-  misa[U]   = bool_to_bits(sys_enable_user()); /* user-mode */
-  misa[S]   = bool_to_bits(sys_enable_supervisor()); /* supervisor-mode */
-  misa[V]   = bool_to_bits(sys_enable_vext()); /* vector extension */
+  misa[A]   = 0b1;                                     /* atomics */
+  misa[C]   = bool_to_bits(hartSupports(Ext_C));       /* RVC */
+  misa[B]   = bool_to_bits(hartSupports(Ext_B));       /* Bit-manipulation */
+  misa[I]   = 0b1;                                     /* base integer ISA */
+  misa[M]   = 0b1;                                     /* integer multiply/divide */
+  misa[U]   = bool_to_bits(sys_enable_user());         /* user-mode */
+  misa[S]   = bool_to_bits(sys_enable_supervisor());   /* supervisor-mode */
+  misa[V]   = bool_to_bits(hartSupports(Ext_V));       /* vector extension */
 
-  if   sys_enable_fdext() & sys_enable_zfinx()
+  if   hartSupports(Ext_F) & hartSupports(Ext_Zfinx)
   then internal_error(__FILE__, __LINE__, "F and Zfinx cannot both be enabled!");
 
   /* We currently support both F and D */
-  misa[F]   = bool_to_bits(sys_enable_fdext());      /* single-precision */
+  misa[F]   = bool_to_bits(hartSupports(Ext_F));      /* single-precision */
   misa[D]   = if   flen >= 64
-              then bool_to_bits(sys_enable_fdext())  /* double-precision */
+              then bool_to_bits(hartSupports(Ext_D))  /* double-precision */
               else 0b0;
 }
 

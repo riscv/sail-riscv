@@ -83,8 +83,8 @@ mapping clause csr_name_map = 0x141  <-> "sepc"
 mapping clause csr_name_map = 0x305  <-> "mtvec"
 mapping clause csr_name_map = 0x341  <-> "mepc"
 
-function clause is_CSR_defined(0x105) = extensionEnabled(Ext_S) // stvec
-function clause is_CSR_defined(0x141) = extensionEnabled(Ext_S) // sepc
+function clause is_CSR_defined(0x105) = currentlyEnabled(Ext_S) // stvec
+function clause is_CSR_defined(0x141) = currentlyEnabled(Ext_S) // sepc
 function clause is_CSR_defined(0x305) = true // mtvec
 function clause is_CSR_defined(0x341) = true // mepc
 

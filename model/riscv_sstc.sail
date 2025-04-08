@@ -10,8 +10,8 @@
 mapping clause csr_name_map = 0x14D  <-> "stimecmp"
 mapping clause csr_name_map = 0x15D  <-> "stimecmph"
 
-function clause is_CSR_defined(0x14D) = extensionEnabled(Ext_S) & extensionEnabled(Ext_Sstc)
-function clause is_CSR_defined(0x15D) = extensionEnabled(Ext_S) & extensionEnabled(Ext_Sstc) & xlen == 32
+function clause is_CSR_defined(0x14D) = currentlyEnabled(Ext_S) & currentlyEnabled(Ext_Sstc)
+function clause is_CSR_defined(0x15D) = currentlyEnabled(Ext_S) & currentlyEnabled(Ext_Sstc) & xlen == 32
 
 function clause read_CSR(0x14D) = stimecmp[xlen - 1 .. 0]
 function clause read_CSR(0x15D if xlen == 32) = stimecmp[63 .. 32]

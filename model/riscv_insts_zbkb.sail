@@ -11,11 +11,11 @@ union clause ast = ZBKB_RTYPE : (regidx, regidx, regidx, brop_zbkb)
 
 mapping clause encdec = ZBKB_RTYPE(rs2, rs1, rd, RISCV_PACK)
   <-> 0b0000100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0110011
-  when extensionEnabled(Ext_Zbkb)
+  when currentlyEnabled(Ext_Zbkb)
 
 mapping clause encdec = ZBKB_RTYPE(rs2, rs1, rd, RISCV_PACKH)
   <-> 0b0000100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b0110011
-  when extensionEnabled(Ext_Zbkb)
+  when currentlyEnabled(Ext_Zbkb)
 
 mapping zbkb_rtype_mnemonic : brop_zbkb <-> string = {
   RISCV_PACK  <-> "pack",
@@ -41,7 +41,7 @@ union clause ast = ZBKB_PACKW : (regidx, regidx, regidx)
 
 mapping clause encdec = ZBKB_PACKW(rs2, rs1, rd)
   <-> 0b0000100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0111011
-  when extensionEnabled(Ext_Zbkb) & xlen == 64
+  when currentlyEnabled(Ext_Zbkb) & xlen == 64
 
 mapping clause assembly = ZBKB_PACKW(rs2, rs1, rd)
   <-> "packw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
@@ -60,7 +60,7 @@ union clause ast = RISCV_ZIP : (regidx, regidx)
 
 mapping clause encdec = RISCV_ZIP(rs1, rd)
   <-> 0b000010001111 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
-  when extensionEnabled(Ext_Zbkb) & xlen == 32
+  when currentlyEnabled(Ext_Zbkb) & xlen == 32
 
 mapping clause assembly = RISCV_ZIP(rs1, rd)
   <-> "zip" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
@@ -82,7 +82,7 @@ union clause ast = RISCV_UNZIP : (regidx, regidx)
 
 mapping clause encdec = RISCV_UNZIP(rs1, rd)
   <-> 0b000010001111 @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
-  when extensionEnabled(Ext_Zbkb) & xlen == 32
+  when currentlyEnabled(Ext_Zbkb) & xlen == 32
 
 mapping clause assembly = RISCV_UNZIP(rs1, rd)
   <-> "unzip" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
@@ -104,7 +104,7 @@ union clause ast = RISCV_BREV8 : (regidx, regidx)
 
 mapping clause encdec = RISCV_BREV8(rs1, rd)
   <-> 0b011010000111 @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
-  when extensionEnabled(Ext_Zbkb)
+  when currentlyEnabled(Ext_Zbkb)
 
 mapping clause assembly = RISCV_BREV8(rs1, rd)
   <-> "brev8" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)

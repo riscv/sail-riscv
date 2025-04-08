@@ -70,8 +70,8 @@ function pte_is_non_leaf(pte_flags : PTE_Flags) -> bool =
   & pte_flags[R] == 0b0
 
 // Not supported in the model yet.
-function clause extensionEnabled(Ext_Svnapot) = false
-function clause extensionEnabled(Ext_Svpbmt) = false
+function clause currentlyEnabled(Ext_Svnapot) = false
+function clause currentlyEnabled(Ext_Svpbmt) = false
 
 // PRIVATE: check if a PTE is valid
 function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
@@ -80,8 +80,8 @@ function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
   // Note, the following requirements depend on the privileged spec version.
   // Early versions do not require this check. This will need to be behind
   // a flag when the Sail model allows specifying the spec version.
-  | (pte_ext[N] != 0b0 & not(extensionEnabled(Ext_Svnapot)))
-  | (pte_ext[PBMT] != zeros() & not(extensionEnabled(Ext_Svpbmt)))
+  | (pte_ext[N] != 0b0 & not(currentlyEnabled(Ext_Svnapot)))
+  | (pte_ext[PBMT] != zeros() & not(currentlyEnabled(Ext_Svpbmt)))
   | pte_ext[reserved] != zeros()
 
 // ----------------
