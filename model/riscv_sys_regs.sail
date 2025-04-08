@@ -124,6 +124,7 @@ function sys_enable_bext() -> bool = config extensions.B.enabled
 // at all on this model.
 function sys_enable_zicbom() -> bool = config extensions.Zicbom.enabled
 function sys_enable_zicboz() -> bool = config extensions.Zicboz.enabled
+function sys_enable_zicbop() -> bool = config extensions.Zicbop.enabled
 
 // Is the Zvkb extension supported.
 function sys_enable_zvkb() -> bool = config extensions.Zvkb.enabled
