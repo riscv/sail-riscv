@@ -4,7 +4,6 @@ on: [push, pull_request, workflow_dispatch]
 
 env:
   OPAMVERBOSE: 1
-  CLEAR_GLOBS_FILE: .github/workflows/clear-globs.txt
 
 jobs:
   build:
@@ -36,6 +35,14 @@ jobs:
         opam init --yes --no-setup --shell=sh --compiler=${{ matrix.version }}
         opam install dune
 
+    - name: Install Sail
+      if: steps.cache-opam-restore.outputs.cache-hit != 'true'
+      run: |
+        git clone https://github.com/rems-project/sail.git
+        eval $(opam env)
+        (cd sail; opam install sail --deps-only --yes)
+        (cd sail; make install)
+
     - name: Save cached opam
       if: steps.cache-opam-restore.outputs.cache-hit != 'true'
       id: cache-opam-save
@@ -49,29 +56,14 @@ jobs:
         wget -q https://raw.githubusercontent.com/leanprover-community/mathlib4/master/scripts/install_debian.sh
         bash install_debian.sh ; rm -f install_debian.sh
 
-    - name: Checkout SAIL
-      run: |
-        git clone https://github.com/rems-project/sail.git
-
-    - name: Install Sail
-      run: |
-        eval $(opam env)
-        (cd sail; opam install sail --deps-only --yes)
-        (cd sail; make install)
-
     - name: Build the Sail RISCV Model for Lean
       run: |
         eval $(opam config env)
         cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
-        # This patch is needed to work around https://github.com/rems-project/sail/issues/1003.
-        patch -p1 < .github/workflows/build-riscv-lean-workaround-riscv.patch
         cmake --build build/ --target generated_lean_rv64d
 
     - name: Use Lean to build the model and report errors
       run: |
         source ~/.profile
         cd build/model/Lean_RV64D/
-        echo "Set ulimit"
-        ulimit -s unlimited
-        ulimit -s
         lake build

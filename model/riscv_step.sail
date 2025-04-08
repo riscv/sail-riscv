@@ -118,6 +118,7 @@ function loop () : unit -> unit = {
         /* for now, we drive the platform i/o at every clock tick. */
         tick_platform();
         i = 0;
+        ()
       }
     }
   }
