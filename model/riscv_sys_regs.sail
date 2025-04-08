@@ -125,6 +125,10 @@ function sys_enable_bext() -> bool = config extensions.B.enabled
 function sys_enable_zicbom() -> bool = config extensions.Zicbom.enabled
 function sys_enable_zicboz() -> bool = config extensions.Zicboz.enabled
 
+// "Zilsd", "Zclsd" Extensions for Load/Store pair for RV32
+function sys_enable_zilsd() -> bool = config extensions.Zilsd.enabled
+function sys_enable_zclsd() -> bool = config extensions.Zclsd.enabled
+
 // Is the Zvkb extension supported.
 function sys_enable_zvkb() -> bool = config extensions.Zvkb.enabled
 
