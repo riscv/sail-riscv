@@ -1,4 +1,6 @@
 set(EMULATOR_COMMON_SRCS
+    riscv_callbacks.cpp
+    riscv_callbacks.h
     riscv_config.h
     riscv_platform.cpp
     riscv_platform.h
