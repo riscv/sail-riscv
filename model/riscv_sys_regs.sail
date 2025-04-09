@@ -108,18 +108,25 @@ function clause currentlyEnabled(Ext_Sstc) = hartSupports(Ext_Sstc)
 val ext_veto_disable_C : unit -> bool
 
 function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
-  let  v = Mk_Misa(v);
+  let v = Mk_Misa(v);
   /* Suppress updates to MISA if MISA is not writable or if by disabling C next PC would become misaligned or an extension vetoes */
   if   not(sys_enable_writable_misa()) | (v[C] == 0b0 & (nextPC[1] == bitone | ext_veto_disable_C()))
   then m
-  else {
-    /* Suppress enabling C if C was disabled at boot (i.e. not supported) */
-    let m = if not(hartSupports(Ext_C)) then m else [m with C = v[C]];
-    /* Suppress updates to misa.{f,d} if disabled at boot */
-    if   not(hartSupports(Ext_F))
-    then m
-    else [m with F = v[F], D = v[D] & v[F]]
-  }
+  else [m with
+    A = if hartSupports(Ext_A) then v[A] else 0b0,
+    B = if hartSupports(Ext_B) then v[B] else 0b0,
+    C = if hartSupports(Ext_C) then v[C] else 0b0,
+    D = if hartSupports(Ext_D) & v[F] == 0b1 then v[D] else 0b0,
+    F = if hartSupports(Ext_F) then v[F] else 0b0,
+    // H = if hartSupports(Ext_H) then v[H] else 0b0, TODO: Not supported yet
+    I = 0b1, // I is currently always supported
+    M = if hartSupports(Ext_M) then v[M] else 0b0,
+    // Q = if hartSupports(Ext_Q) then v[Q] else 0b0, TODO: Not supported yet
+    S = if hartSupports(Ext_S) & v[U] == 0b1 then v[S] else 0b0,
+    U = if hartSupports(Ext_U) then v[U] else 0b0,
+    V = if hartSupports(Ext_V) & v[F] == 0b1 & v[D] == 0b1 then v[V] else 0b0,
+    // X = ... TODO: If custom extensions are present this should be 1
+  ]
 }
 
 mapping clause csr_name_map = 0x301  <-> "misa"
