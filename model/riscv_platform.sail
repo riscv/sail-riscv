@@ -24,8 +24,11 @@ val elf_entry = pure {
   c: "elf_entry"
 } : unit -> int
 
-function endianness_conversion forall 'n, 0 < 'n <= max_mem_access . (data : bits(8 * 'n), to_be: bool) -> bits(8 * 'n) =
-  if to_be then reverse_endianness(data) else data
+function endianness_conversion forall 'n, 0 < 'n <= max_mem_access . (data : bits(8 * 'n), current_endianness: Endianness) -> bits(8 * 'n) =
+  match current_endianness {
+    LittleEndian => data,
+    BigEndian => reverse_endianness(data),
+  }
 
 // Cache block size is 2^cache_block_size_exp. Max is `max_mem_access` (4096)
 // because this model performs `cbo.zero` with a single write, and the behaviour
@@ -140,15 +143,16 @@ let MTIMECMP_BASE_HI : physaddrbits = zero_extend(0x04004)
 let MTIME_BASE       : physaddrbits = zero_extend(0x0bff8)
 let MTIME_BASE_HI    : physaddrbits = zero_extend(0x0bffc)
 
-val clint_load : forall 'n, 'n > 0. (AccessType(ext_access_type), physaddr, int('n), bool) -> MemoryOpResult(bits(8 * 'n))
-function clint_load(t, Physaddr(addr), width, to_be) = {
+val clint_load : forall 'n, 'n > 0. (AccessType(ext_access_type), physaddr, int('n), Endianness) -> MemoryOpResult(bits(8 * 'n))
+function clint_load(t, Physaddr(addr), width, current_endianness) = {
   //these two registers are 64 bits, so simple conversion is not accurate.
   //consider 0x78563412 stored at mtime/cmp and when reading in big endian format,
   //we change it to 0x1234567800000000. So position for mtime and mtime_hi are reversed. (not for ld)
-  var converted_mtime    = endianness_conversion(mtime, to_be);
-  var converted_mtimecmp = endianness_conversion(mtimecmp, to_be);
-  if (to_be & 'n == 4) then { converted_mtime = converted_mtime[31..0] @ converted_mtime[63..32];
-                  converted_mtimecmp = converted_mtimecmp[31..0] @ converted_mtimecmp[63..32];
+  var converted_mtime    = endianness_conversion(mtime, current_endianness);
+  var converted_mtimecmp = endianness_conversion(mtimecmp, current_endianness);
+  if ((current_endianness == BigEndian) & 'n == 4) then {
+                converted_mtime    = converted_mtime[31..0] @ converted_mtime[63..32];
+                converted_mtimecmp = converted_mtimecmp[31..0] @ converted_mtimecmp[63..32];
                 };
   let addr = addr - plat_clint_base ();
   /* FIXME: For now, only allow exact aligned access. */
@@ -319,11 +323,11 @@ function reset_htif () -> unit = {
  * dispatched the address.
  */
 
-val htif_load : forall 'n, 'n > 0. (AccessType(ext_access_type), physaddr, int('n), bool) -> MemoryOpResult(bits(8 * 'n))
-function htif_load(t, Physaddr(paddr), width, to_be) = {
-  var converted_htif_tohost = endianness_conversion(htif_tohost, to_be);
+val htif_load : forall 'n, 'n > 0. (AccessType(ext_access_type), physaddr, int('n), Endianness) -> MemoryOpResult(bits(8 * 'n))
+function htif_load(t, Physaddr(paddr), width, current_endianness) = {
+  var converted_htif_tohost = endianness_conversion(htif_tohost, current_endianness);
   //htif_tohost is a 64 bit register, same logic as of mtime, mtimecmp for handling big endianness conversion.
-  if (to_be & width == 4) then converted_htif_tohost = converted_htif_tohost[31..0] @ converted_htif_tohost[63..32];
+  if ((current_endianness == BigEndian) & width == 4) then converted_htif_tohost = converted_htif_tohost[31..0] @ converted_htif_tohost[63..32];
   if   get_config_print_platform()
   then print_platform("htif[" ^ BitStr(paddr) ^ "] -> " ^ BitStr(converted_htif_tohost));
   /* FIXME: For now, only allow the expected access widths. */
@@ -420,19 +424,18 @@ $else
 function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool = false
 $endif
 
-function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : physaddr, width : int('n), to_be : bool) -> MemoryOpResult(bits(8 * 'n)) =
+function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : physaddr, width : int('n), current_endianness : Endianness) -> MemoryOpResult(bits(8 * 'n)) =
   if   within_clint(paddr, width)
-  then clint_load(t, paddr, width, to_be)
+  then clint_load(t, paddr, width, current_endianness)
   else if within_htif_readable(paddr, width) & (1 <= 'n)
-  then htif_load(t, paddr, width, to_be)
+  then htif_load(t, paddr, width, current_endianness)
   else match t {
     Execute()  => Err(E_Fetch_Access_Fault()),
     Read(Data) => Err(E_Load_Access_Fault()),
     _          => Err(E_SAMO_Access_Fault())
   }
 
-function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : physaddr, width : int('n), data: bits(8 * 'n), to_be : bool) -> MemoryOpResult(bool) = {
-  let data = endianness_conversion(data, to_be);
+function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : physaddr, width : int('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) = {
   if   within_clint(paddr, width)
   then clint_store(paddr, width, data)
   else if within_htif_writable(paddr, width) & 'n <= 8

@@ -72,7 +72,7 @@ function is_big_endian(typ : AccessType(ext_access_type)) -> bool = {
 }
 
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : physaddr, width : int('n), aq : bool, rl: bool, res : bool, meta : bool, to_be: bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
+function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : physaddr, width : int('n), aq : bool, rl: bool, res : bool, meta : bool, current_endianness: Endianness) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
   let result = (match read_kind_of_flags(aq, rl, res) {
     Some(rk) => Some(read_ram(rk, paddr, width, meta)),
     None()   => None()
@@ -82,10 +82,11 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
     (Read(Data), None()) => Err(E_Load_Access_Fault()),
     (_,          None()) => Err(E_SAMO_Access_Fault()),
     (_,      Some(v, m)) => {
-                        let v = endianness_conversion(v, to_be);
-                        if   get_config_print_mem()
-                        then print_mem("mem[" ^ to_str(t) ^ "," ^ BitStr(physaddr_bits(paddr)) ^ "] -> " ^ BitStr(v));
-                        Ok(v, m) }
+      let v = endianness_conversion(v, current_endianness);
+      if   get_config_print_mem()
+      then print_mem("mem[" ^ to_str(t) ^ "," ^ BitStr(physaddr_bits(paddr)) ^ "] -> " ^ BitStr(v));
+      Ok(v, m)
+    },
   }
 }
 
@@ -111,11 +112,12 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   match phys_access_check(t, priv, paddr, width) {
     Some(e) => Err(e),
     None() => {
+      let current_endianness: Endianness = if is_big_endian(t) & t != Execute() then BigEndian else LittleEndian;
       if   within_mmio_readable(paddr, width)
-      then MemoryOpResult_add_meta(mmio_read(t, paddr, width, is_big_endian(t) & not(t == Execute())), default_meta)
+      then MemoryOpResult_add_meta(mmio_read(t, paddr, width, current_endianness), default_meta)
       else if within_phys_mem(paddr, width)
       then match ext_check_phys_mem_read(t, paddr, width, aq, rl, res, meta) {
-        Ext_PhysAddr_OK()     => phys_mem_read(t, paddr, width, aq, rl, res, meta, is_big_endian(t) & not(t == Execute())),
+        Ext_PhysAddr_OK()     => phys_mem_read(t, paddr, width, aq, rl, res, meta, current_endianness),
         Ext_PhysAddr_Error(e) => Err(e)
       } else match t {
         Execute()  => Err(E_Fetch_Access_Fault()),
@@ -205,8 +207,7 @@ function rvfi_write (Physaddr(addr), width, value, meta, result) = ()
 $endif
 
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : physaddr, width : int('n), data : bits(8 * 'n), meta : mem_meta, to_be: bool) -> MemoryOpResult(bool) = {
-  let data = endianness_conversion(data, to_be);
+function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : physaddr, width : int('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
   let result = write_ram(wk, paddr, width, data, meta);
   if   get_config_print_mem()
   then print_mem("mem[" ^ BitStr(physaddr_bits(paddr)) ^ "] <- " ^ BitStr(data));
@@ -228,13 +229,15 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   match phys_access_check(typ, priv, paddr, width) {
     Some(e) => Err(e),
     None() => {
+      let current_endianness: Endianness = if is_big_endian(typ) & typ != Execute() then BigEndian else LittleEndian;
+      let data = endianness_conversion(data, current_endianness);
       if   within_mmio_writable(paddr, width)
-      then mmio_write(paddr, width, data, is_big_endian(typ) & not(typ == Execute()))
+      then mmio_write(paddr, width, data)
       else if within_phys_mem(paddr, width)
       then {
         let wk = write_kind_of_flags(aq, rl, con);
         match ext_check_phys_mem_write (wk, paddr, width, data, meta) {
-          Ext_PhysAddr_OK() => phys_mem_write(wk, paddr, width, data, meta, is_big_endian(typ) & not(typ == Execute())),
+          Ext_PhysAddr_OK() => phys_mem_write(wk, paddr, width, data, meta),
           Ext_PhysAddr_Error(e)  => Err(e),
         }
       } else Err(E_SAMO_Access_Fault())
