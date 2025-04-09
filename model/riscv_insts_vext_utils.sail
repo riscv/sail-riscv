@@ -180,7 +180,7 @@ function get_scalar(rs1, SEW) = {
   }
 }
 
-/* Extracts 4 consecutive vector elements starting from index 4*i */
+/* Extracts 4 consecutive vector elements starting from index 4*i and returns a bitvector */
 val get_velem_quad : forall 'n 'm 'p, 'n > 0 & 'm > 0 & 'p >= 0 & 4 * 'p + 3 < 'n. (vector('n, bits('m)), int('p)) -> bits(4 * 'm)
 function get_velem_quad(v, i) = v[4 * i + 3] @ v[4 * i + 2] @ v[4 * i + 1] @ v[4 * i]
 
@@ -189,6 +189,17 @@ val write_velem_quad : forall 'p 'n 'm, 8 <= 'n <= 64 & 'm > 0 & 'p >= 0. (vregi
 function write_velem_quad(vd, SEW, input, i) = {
   foreach(j from 0 to 3)
     write_single_element(SEW, 4 * i + j, vd, slice(input, j * SEW, SEW));
+}
+
+/* Extracts 8 consecutive vector elements starting from index 8*i and returns a vector */
+val get_velem_oct_vec : forall 'n 'm 'p, 'n > 0 & 8 <= 'm <= 64 & 'p >= 0 & 8 * 'p + 7 < 'n. (vector('n, bits('m)), int('p)) -> vector(8, bits('m))
+function get_velem_oct_vec(v, i) = [ v[8 * i + 7], v[8 * i + 6], v[8 * i + 5], v[8 * i + 4], v[8 * i + 3], v[8 * i + 2], v[8 * i + 1], v[8 * i] ]
+
+/* Writes each of the 8 elements from the input vector to the vector register vd, starting at position 8 * i */
+val write_velem_oct_vec : forall 'p 'n, 8 <= 'n <= 64 & 'p >= 0. (vregidx, int('n), vector(8, bits('n)), int('p)) -> unit
+function write_velem_oct_vec(vd, SEW, input, i) = {
+  foreach(j from 0 to 7)
+    write_single_element(SEW, 8 * i + j, vd, input[j]);
 }
 
 /* Get the starting element index from csr vtype */
@@ -477,4 +488,13 @@ function count_leadingzeros (sig, len) = {
     if sig[i] == bitone then idx = i;
   };
   len - idx - 1
+}
+
+val vrev8 : forall 'n 'm, 'n >= 0 & 'm >= 0. (vector('n, bits('m * 8))) -> vector('n, bits('m * 8))
+function vrev8(input) = {
+  var output : vector('n, bits('m * 8)) = input;
+  foreach (i from 0 to ('n - 1)) {
+    output[i] = rev8(input[i]);
+  };
+  output
 }
