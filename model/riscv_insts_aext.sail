@@ -11,7 +11,7 @@
 
 /* ****************************************************************** */
 
-function clause extensionEnabled(Ext_Zabha) = true
+function clause currentlyEnabled(Ext_Zabha) = true
 
 // Some print utils for lr/sc.
 
@@ -45,21 +45,21 @@ function lrsc_width_valid(size : word_width) -> bool = {
 
 function amo_width_valid(size : word_width) -> bool = {
   match size {
-    BYTE   => extensionEnabled(Ext_Zabha),
-    HALF   => extensionEnabled(Ext_Zabha),
+    BYTE   => currentlyEnabled(Ext_Zabha),
+    HALF   => currentlyEnabled(Ext_Zabha),
     WORD   => true,
     DOUBLE => xlen >= 64,
   }
 }
 
 /* ****************************************************************** */
-function clause extensionEnabled(Ext_Zalrsc) = misa[A] == 0b1
+function clause currentlyEnabled(Ext_Zalrsc) = misa[A] == 0b1
 
 union clause ast = LOADRES : (bool, bool, regidx, word_width, regidx)
 
 mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)
   <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111
-  when extensionEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
+  when currentlyEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
 
 /* We could set load-reservations on physical or virtual addresses.
  * However most chips (especially multi-core) will use physical addresses.
@@ -108,7 +108,7 @@ union clause ast = STORECON : (bool, bool, regidx, regidx, word_width, regidx)
 
 mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)
   <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111
-  when extensionEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
+  when currentlyEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful. This may need revisiting. */
 function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
@@ -168,7 +168,7 @@ mapping clause assembly = STORECON(aq, rl, rs2, rs1, size, rd)
   <-> "sc." ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ****************************************************************** */
-function clause extensionEnabled(Ext_Zaamo) = misa[A] == 0b1
+function clause currentlyEnabled(Ext_Zaamo) = misa[A] == 0b1
 
 union clause ast = AMO : (amoop, bool, bool, regidx, regidx, word_width, regidx)
 
@@ -186,7 +186,7 @@ mapping encdec_amoop : amoop <-> bits(5) = {
 
 mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)
   <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111
-  when extensionEnabled(Ext_Zaamo) & amo_width_valid(size)
+  when currentlyEnabled(Ext_Zaamo) & amo_width_valid(size)
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */

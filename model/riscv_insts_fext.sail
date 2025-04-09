@@ -26,10 +26,10 @@
 /* **************************************************************** */
 
 // TODO: Add config flags to control Zfh and Zfhmin
-function clause extensionEnabled(Ext_Zfh) = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
+function clause currentlyEnabled(Ext_Zfh) = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
 
-// Zfhmin is a subset of Zfh. This can be changed to extensionEnabled(Ext_Zfh) | sys_enable_zfhmin() when more configuration is implemented.
-function clause extensionEnabled(Ext_Zfhmin) = extensionEnabled(Ext_Zfh)
+// Zfhmin is a subset of Zfh. This can be changed to currentlyEnabled(Ext_Zfh) | sys_enable_zfhmin() when more configuration is implemented.
+function clause currentlyEnabled(Ext_Zfhmin) = currentlyEnabled(Ext_Zfh)
 
 mapping encdec_rounding_mode : rounding_mode <-> bits(3) = {
   RM_RNE <-> 0b000,
@@ -265,7 +265,7 @@ function fle_S   (v1,       v2,        is_quiet) = {
 /* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
 
-function haveSingleFPU() -> bool = extensionEnabled(Ext_F) | extensionEnabled(Ext_Zfinx)
+function haveSingleFPU() -> bool = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)
 
 /* ****************************************************************** */
 /* Floating-point loads                                               */
@@ -279,15 +279,15 @@ union clause ast = LOAD_FP : (bits(12), regidx, fregidx, word_width)
 
 mapping clause encdec = LOAD_FP(imm, rs1, rd, HALF)
   <-> imm @ encdec_reg(rs1) @ 0b001 @ encdec_freg(rd) @ 0b000_0111
-  when extensionEnabled(Ext_Zfhmin)
+  when currentlyEnabled(Ext_Zfhmin)
 
 mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)
   <-> imm @ encdec_reg(rs1) @ 0b010 @ encdec_freg(rd) @ 0b000_0111
-  when extensionEnabled(Ext_F)
+  when currentlyEnabled(Ext_F)
 
 mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)
   <-> imm @ encdec_reg(rs1) @ 0b011 @ encdec_freg(rd) @ 0b000_0111
-  when extensionEnabled(Ext_D)
+  when currentlyEnabled(Ext_D)
 
 /* Execution semantics ================================ */
 
@@ -339,15 +339,15 @@ union clause ast = STORE_FP : (bits(12), fregidx, regidx, word_width)
 
 mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, HALF)
   <-> imm7 : bits(7) @ encdec_freg(rs2) @ encdec_reg(rs1) @ 0b001 @ imm5 : bits(5) @ 0b010_0111
-  when extensionEnabled(Ext_Zfhmin)
+  when currentlyEnabled(Ext_Zfhmin)
 
 mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)
   <-> imm7 : bits(7) @ encdec_freg(rs2) @ encdec_reg(rs1) @ 0b010 @ imm5 : bits(5) @ 0b010_0111
-  when extensionEnabled(Ext_F)
+  when currentlyEnabled(Ext_F)
 
 mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)
   <-> imm7 : bits(7) @ encdec_freg(rs2) @ encdec_reg(rs1) @ 0b011 @ imm5 : bits(5) @ 0b010_0111
-  when extensionEnabled(Ext_D)
+  when currentlyEnabled(Ext_D)
 
 /* Execution semantics ================================ */
 
@@ -943,11 +943,11 @@ mapping clause encdec = F_UN_TYPE_X_S(rs1, rd, FCLASS_S)
 
 mapping clause encdec = F_UN_TYPE_X_S(rs1, rd, FMV_X_W)
                     <-> 0b111_0000 @ 0b00000 @ encdec_freg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011
-                    when extensionEnabled(Ext_F)
+                    when currentlyEnabled(Ext_F)
 
 mapping clause encdec = F_UN_TYPE_F_S(rs1, rd, FMV_W_X)
                     <-> 0b111_1000 @ 0b00000 @ encdec_reg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011
-                    when extensionEnabled(Ext_F)
+                    when currentlyEnabled(Ext_F)
 
 /* Execution semantics ================================ */
 

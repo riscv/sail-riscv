@@ -224,15 +224,15 @@ function fle_D   (v1,       v2,        is_quiet) = {
 /* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
 
-function clause extensionEnabled(Ext_Zdinx) = sys_enable_zfinx() & flen >= 64
+function clause currentlyEnabled(Ext_Zdinx) = hartSupports(Ext_Zfinx) & flen >= 64
 
-function haveDoubleFPU() -> bool = extensionEnabled(Ext_D) | extensionEnabled(Ext_Zdinx)
+function haveDoubleFPU() -> bool = currentlyEnabled(Ext_D) | currentlyEnabled(Ext_Zdinx)
 
 /* RV32Zdinx requires even register pairs; can be omitted for code  */
 /* not used for RV32Zdinx (i.e. RV64-only or D-only).               */
 val validDoubleRegs : forall 'n, 'n > 0. (implicit('n), vector('n, fregidx)) -> bool
 function validDoubleRegs(n, regs) = {
-  if extensionEnabled(Ext_Zdinx) & xlen == 32 then {
+  if currentlyEnabled(Ext_Zdinx) & xlen == 32 then {
     foreach (i from 0 to (n - 1)) {
       if (fregidx_bits(regs[i])[0] == bitone) then return false;
     }
@@ -844,11 +844,11 @@ mapping clause encdec = F_UN_X_TYPE_D(rs1, rd, FCLASS_D)
 
 mapping clause encdec = F_UN_X_TYPE_D(rs1, rd, FMV_X_D)
                     <-> 0b111_0001 @ 0b00000 @ encdec_freg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011
-                    when extensionEnabled(Ext_D) & xlen >= 64
+                    when currentlyEnabled(Ext_D) & xlen >= 64
 
 mapping clause encdec = F_UN_F_TYPE_D(rs1, rd, FMV_D_X)
                     <-> 0b111_1001 @ 0b00000 @ encdec_reg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011
-                    when extensionEnabled(Ext_D) & xlen >= 64
+                    when currentlyEnabled(Ext_D) & xlen >= 64
 
 /* Execution semantics ================================ */
 

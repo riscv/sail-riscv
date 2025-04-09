@@ -24,7 +24,7 @@ function clause execute (RISCV_JALR(imm, rs1, rd)) = {
     },
     Ext_ControlAddr_OK(addr) => {
       let target = [virtaddr_bits(addr) with 0 = bitzero];  /* clear addr[0] */
-      if bit_to_bool(target[1]) & not(extensionEnabled(Ext_Zca)) then {
+      if bit_to_bool(target[1]) & not(currentlyEnabled(Ext_Zca)) then {
         handle_mem_exception(addr, E_Fetch_Addr_Align());
         RETIRE_FAIL
       } else {

@@ -66,7 +66,7 @@ union clause ast = VLSEGTYPE : (bits(3), bits(1), regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd)
   <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 val process_vlseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, int('p), int('n)) -> Retired
 function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
@@ -135,7 +135,7 @@ union clause ast = VLSEGFFTYPE : (bits(3), bits(1), regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd)
   <-> nf @ 0b0 @ 0b00 @ vm @ 0b10000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 val process_vlsegff : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, int('p), int('n)) -> Retired
 function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
@@ -243,7 +243,7 @@ union clause ast = VSSEGTYPE : (bits(3), bits(1), regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3)
   <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 val process_vsseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, int('p), int('n)) -> Retired
 function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) = {
@@ -313,7 +313,7 @@ union clause ast = VLSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, vre
 
 mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
   <-> nf @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 val process_vlsseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, regidx, int('p), int('n)) -> Retired
 function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
@@ -383,7 +383,7 @@ union clause ast = VSSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, vre
 
 mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
   <-> nf @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 val process_vssseg : forall 'f 'b 'n 'p, (0 < 'f & 'f <= 8) & ('b in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, regidx, int('p), int('n)) -> Retired
 function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
@@ -454,7 +454,7 @@ union clause ast = VLUXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, v
 
 mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> nf @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 val process_vlxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), vregidx, int('ib), int('db), int('ip), int('dp), regidx, vregidx, int('n), int) -> Retired
 function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
@@ -525,7 +525,7 @@ union clause ast = VLOXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, v
 
 mapping clause encdec = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> nf @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 function clause execute(VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let EEW_index_pow = vlewidth_pow(width);
@@ -552,7 +552,7 @@ union clause ast = VSUXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, v
 
 mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> nf @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 val process_vsxseg : forall 'f 'ib 'db 'ip 'dp 'n, (0 < 'f & 'f <= 8) & ('ib in {1, 2, 4, 8}) & ('db in {1, 2, 4, 8}) & ('n > 0). (int('f), bits(1), vregidx, int('ib), int('db), int('ip), int('dp), regidx, vregidx, int('n), int) -> Retired
 function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
@@ -624,7 +624,7 @@ union clause ast = VSOXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, v
 
 mapping clause encdec = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> nf @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let EEW_index_pow = vlewidth_pow(width);
@@ -651,7 +651,7 @@ union clause ast = VLRETYPE : (bits(3), regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLRETYPE(nf, rs1, width, vd)
   <-> nf @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 val process_vlre : forall 'f 'b 'n, ('f in {1, 2, 4, 8}) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), vregidx, int('b), regidx, int('n)) -> Retired
 function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
@@ -733,7 +733,7 @@ union clause ast = VSRETYPE : (bits(3), regidx, vregidx)
 
 mapping clause encdec = VSRETYPE(nf, rs1, vs3)
   <-> nf @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vs3) @ 0b0100111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 val process_vsre : forall 'f 'b 'n, ('f in {1, 2, 4, 8}) & ('b in {1, 2, 4, 8}) & ('n >= 0). (int('f), int('b), regidx, vregidx, int('n)) -> Retired
 function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
@@ -834,7 +834,7 @@ mapping encdec_lsop : vmlsop <-> bits(7) = {
 
 mapping clause encdec = VMTYPE(rs1, vd_or_vs3, op)
   <-> 0b000 @ 0b0 @ 0b00 @ 0b1 @ 0b01011 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vd_or_vs3) @ encdec_lsop(op)
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 val process_vm : forall 'n 'l, ('n >= 0 & 'l >= 0). (vregidx, regidx, int('n), int('l), vmlsop) -> Retired
 function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {

@@ -7,7 +7,7 @@
 /*=======================================================================================*/
 
 /* Zkr entropy seed source */
-function clause extensionEnabled(Ext_Zkr) = true
+function clause currentlyEnabled(Ext_Zkr) = true
 
 /* Valid return states for reading the seed CSR. */
 enum seed_opst = {
@@ -42,6 +42,6 @@ function write_seed_csr () -> xlenbits = zeros()
 
 /* CSR mapping */
 mapping clause csr_name_map = 0x015  <-> "seed"
-function clause is_CSR_defined(0x015) = extensionEnabled(Ext_Zkr)
+function clause is_CSR_defined(0x015) = currentlyEnabled(Ext_Zkr)
 function clause read_CSR(0x015) = read_seed_csr()
 function clause write_CSR(0x015, value) = write_seed_csr()

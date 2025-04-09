@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause extensionEnabled(Ext_Zfa) = true
+function clause currentlyEnabled(Ext_Zfa) = true
 
 /* FLI.H */
 
@@ -14,7 +14,7 @@ union clause ast = RISCV_FLI_H : (bits(5), fregidx)
 
 mapping clause encdec = RISCV_FLI_H(rs1, rd)
   <-> 0b111_1010 @ 0b00001 @ rs1 @ 0b000 @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfh) & extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_Zfh) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FLI_H(constantidx, rd)
   <-> "fli.h" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_5(constantidx)
@@ -64,7 +64,7 @@ union clause ast = RISCV_FLI_S : (bits(5), fregidx)
 
 mapping clause encdec = RISCV_FLI_S(rs1, rd)
   <-> 0b111_1000 @ 0b00001 @ rs1 @ 0b000 @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FLI_S(constantidx, rd)
   <-> "fli.s" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_5(constantidx)
@@ -114,7 +114,7 @@ union clause ast = RISCV_FLI_D : (bits(5), fregidx)
 
 mapping clause encdec = RISCV_FLI_D(rs1, rd)
   <-> 0b111_1001 @ 0b00001 @ rs1 @ 0b000 @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_D) & extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_D) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FLI_D(constantidx, rd)
   <-> "fli.d" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_5(constantidx)
@@ -164,7 +164,7 @@ union clause ast = RISCV_FMINM_H : (fregidx, fregidx, fregidx)
 
 mapping clause encdec = RISCV_FMINM_H(rs2, rs1, rd)
   <-> 0b001_0110 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b010 @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfh) & extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_Zfh) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FMINM_H(rs2, rs1, rd)
   <-> "fminm.h" ^ spc() ^ freg_name(rd)
@@ -195,7 +195,7 @@ union clause ast = RISCV_FMAXM_H : (fregidx, fregidx, fregidx)
 
 mapping clause encdec = RISCV_FMAXM_H(rs2, rs1, rd)
   <-> 0b001_0110 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b011 @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfh) & extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_Zfh) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FMAXM_H(rs2, rs1, rd)
   <-> "fmaxm.h" ^ spc() ^ freg_name(rd)
@@ -226,7 +226,7 @@ union clause ast = RISCV_FMINM_S : (fregidx, fregidx, fregidx)
 
 mapping clause encdec = RISCV_FMINM_S(rs2, rs1, rd)
   <-> 0b001_0100 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b010 @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FMINM_S(rs2, rs1, rd)
   <-> "fminm.s" ^ spc() ^ freg_name(rd)
@@ -257,7 +257,7 @@ union clause ast = RISCV_FMAXM_S : (fregidx, fregidx, fregidx)
 
 mapping clause encdec = RISCV_FMAXM_S(rs2, rs1, rd)
   <-> 0b001_0100 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b011 @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FMAXM_S(rs2, rs1, rd)
   <-> "fmaxm.s" ^ spc() ^ freg_name(rd)
@@ -288,7 +288,7 @@ union clause ast = RISCV_FMINM_D : (fregidx, fregidx, fregidx)
 
 mapping clause encdec = RISCV_FMINM_D(rs2, rs1, rd)
   <-> 0b001_0101 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b010 @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_D) & extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_D) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FMINM_D(rs2, rs1, rd)
   <-> "fminm.d" ^ spc() ^ freg_name(rd)
@@ -319,7 +319,7 @@ union clause ast = RISCV_FMAXM_D : (fregidx, fregidx, fregidx)
 
 mapping clause encdec = RISCV_FMAXM_D(rs2, rs1, rd)
   <-> 0b001_0101 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b011 @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_D) & extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_D) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FMAXM_D(rs2, rs1, rd)
   <-> "fmaxm.d" ^ spc() ^ freg_name(rd)
@@ -350,7 +350,7 @@ union clause ast = RISCV_FROUND_H : (fregidx, rounding_mode, fregidx)
 
 mapping clause encdec = RISCV_FROUND_H(rs1, rm, rd)
   <-> 0b010_0010 @ 0b00100 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfh) & extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_Zfh) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FROUND_H(rs1, rm, rd)
   <-> "fround.h" ^ spc() ^ freg_name(rd)
@@ -379,7 +379,7 @@ union clause ast = RISCV_FROUNDNX_H : (fregidx, rounding_mode, fregidx)
 
 mapping clause encdec = RISCV_FROUNDNX_H(rs1, rm, rd)
   <-> 0b010_0010 @ 0b00101 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfh) & extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_Zfh) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FROUNDNX_H(rs1, rm, rd)
   <-> "froundnx.h" ^ spc() ^ freg_name(rd)
@@ -408,7 +408,7 @@ union clause ast = RISCV_FROUND_S : (fregidx, rounding_mode, fregidx)
 
 mapping clause encdec = RISCV_FROUND_S(rs1, rm, rd)
   <-> 0b010_0000 @ 0b00100 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FROUND_S(rs1, rm, rd)
   <-> "fround.s" ^ spc() ^ freg_name(rd)
@@ -437,7 +437,7 @@ union clause ast = RISCV_FROUNDNX_S : (fregidx, rounding_mode, fregidx)
 
 mapping clause encdec = RISCV_FROUNDNX_S(rs1, rm, rd)
   <-> 0b010_0000 @ 0b00101 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FROUNDNX_S(rs1, rm, rd)
   <-> "froundnx.s" ^ spc() ^ freg_name(rd)
@@ -466,7 +466,7 @@ union clause ast = RISCV_FROUND_D : (fregidx, rounding_mode, fregidx)
 
 mapping clause encdec = RISCV_FROUND_D(rs1, rm, rd)
   <-> 0b010_0001 @ 0b00100 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_D) & extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_D) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FROUND_D(rs1, rm, rd)
   <-> "fround.d" ^ spc() ^ freg_name(rd)
@@ -495,7 +495,7 @@ union clause ast = RISCV_FROUNDNX_D : (fregidx, rounding_mode, fregidx)
 
 mapping clause encdec = RISCV_FROUNDNX_D(rs1, rm, rd)
   <-> 0b010_0001 @ 0b00101 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_D) & extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_D) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FROUNDNX_D(rs1, rm, rd)
   <-> "froundnx.d" ^ spc() ^ freg_name(rd)
@@ -524,7 +524,7 @@ union clause ast = RISCV_FMVH_X_D : (fregidx, regidx)
 
 mapping clause encdec   = RISCV_FMVH_X_D(rs1, rd)
   <-> 0b111_0001 @ 0b00001 @ encdec_freg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_D) & extensionEnabled(Ext_Zfa) & in32BitMode()
+  when currentlyEnabled(Ext_D) & currentlyEnabled(Ext_Zfa) & in32BitMode()
 
 mapping clause assembly = RISCV_FMVH_X_D(rs1, rd)
   <-> "fmvh.x.d" ^ spc() ^ reg_name(rd)
@@ -543,7 +543,7 @@ union clause ast = RISCV_FMVP_D_X : (regidx, regidx, fregidx)
 
 mapping clause encdec = RISCV_FMVP_D_X(rs2, rs1, rd)
   <-> 0b101_1001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_D) & extensionEnabled(Ext_Zfa) & in32BitMode()
+  when currentlyEnabled(Ext_D) & currentlyEnabled(Ext_Zfa) & in32BitMode()
 
 mapping clause assembly = RISCV_FMVP_D_X(rs2, rs1, rd)
   <-> "fmvp.d.x" ^ spc() ^ freg_name(rd)
@@ -571,7 +571,7 @@ union clause ast = RISCV_FLEQ_H : (fregidx, fregidx, regidx)
 
 mapping clause encdec = RISCV_FLEQ_H(rs2, rs1, rd)
   <-> 0b101_0010 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfh) & extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_Zfh) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FLEQ_H(rs2, rs1, rd)
   <-> "fleq.h" ^ spc() ^ reg_name(rd)
@@ -596,7 +596,7 @@ union clause ast = RISCV_FLTQ_H : (fregidx, fregidx, regidx)
 
 mapping clause encdec = RISCV_FLTQ_H(rs2, rs1, rd)
   <-> 0b101_0010 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfh) & extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_Zfh) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FLTQ_H(rs2, rs1, rd)
   <-> "fltq.h" ^ spc() ^ reg_name(rd)
@@ -621,7 +621,7 @@ union clause ast = RISCV_FLEQ_S : (fregidx, fregidx, regidx)
 
 mapping clause encdec = RISCV_FLEQ_S(rs2, rs1, rd)
   <-> 0b101_0000 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FLEQ_S(rs2, rs1, rd)
   <-> "fleq.s" ^ spc() ^ reg_name(rd)
@@ -646,7 +646,7 @@ union clause ast = RISCV_FLTQ_S : (fregidx, fregidx, regidx)
 
 mapping clause encdec = RISCV_FLTQ_S(rs2, rs1, rd)
   <-> 0b101_0000 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FLTQ_S(rs2, rs1, rd)
   <-> "fltq.s" ^ spc() ^ reg_name(rd)
@@ -672,7 +672,7 @@ union clause ast = RISCV_FLEQ_D : (fregidx, fregidx, regidx)
 
 mapping clause encdec = RISCV_FLEQ_D(rs2, rs1, rd)
   <-> 0b101_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_D) & extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_D) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FLEQ_D(rs2, rs1, rd)
   <-> "fleq.d" ^ spc() ^ reg_name(rd)
@@ -697,7 +697,7 @@ union clause ast = RISCV_FLTQ_D : (fregidx, fregidx, regidx)
 
 mapping clause encdec = RISCV_FLTQ_D(rs2, rs1, rd)
   <-> 0b101_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_D) & extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_D) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FLTQ_D(rs2, rs1, rd)
   <-> "fltq.d" ^ spc() ^ reg_name(rd)
@@ -786,7 +786,7 @@ union clause ast = RISCV_FCVTMOD_W_D : (fregidx, regidx)
 /* We need rounding mode to be explicitly specified to RTZ(0b001) */
 mapping clause encdec = RISCV_FCVTMOD_W_D(rs1, rd)
   <-> 0b110_0001 @ 0b01000 @ encdec_freg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b101_0011
-  when extensionEnabled(Ext_D) & extensionEnabled(Ext_Zfa)
+  when currentlyEnabled(Ext_D) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FCVTMOD_W_D(rs1, rd)
   <-> "fcvtmod.w.d" ^ spc() ^ reg_name(rd) ^ sep() ^ freg_name(rs1)

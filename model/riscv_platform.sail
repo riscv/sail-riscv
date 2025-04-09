@@ -45,7 +45,7 @@ function plat_enable_dirty_update() -> bool = config memory.translation.dirty_up
 /* whether the platform supports misaligned accesses without trapping to M-mode. if false,
  * misaligned loads/stores are trapped to Machine mode.
  */
-function plat_enable_misaligned_access() -> bool = config memory.misaligned.enabled
+function plat_enable_misaligned_access() -> bool = config memory.misaligned.supported
 
 /* whether mtval stores the bits of a faulting instruction on illegal instruction exceptions */
 function plat_mtval_has_illegal_inst_bits() -> bool = config base.mtval_has_illegal_instruction_bits
@@ -214,12 +214,12 @@ function clint_load(t, Physaddr(addr), width, current_endianness) = {
 
 function clint_dispatch() -> unit = {
   mip[MTI] = bool_to_bits(mtimecmp <=_u mtime);
-  if extensionEnabled(Ext_Sstc) then {
+  if currentlyEnabled(Ext_Sstc) then {
     mip[STI] = bool_to_bits(stimecmp <=_u mtime);
   };
   if get_config_print_platform()
   then print_platform("clint mtime " ^ BitStr(mtime) ^ " (mip.MTI <- " ^ BitStr(mip[MTI]) ^
-    (if extensionEnabled(Ext_Sstc) then ", mip.STI <- " ^ BitStr(mip[STI]) else "") ^ ")");
+    (if currentlyEnabled(Ext_Sstc) then ", mip.STI <- " ^ BitStr(mip[STI]) else "") ^ ")");
 }
 
 val clint_store: forall 'n, 'n > 0. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
