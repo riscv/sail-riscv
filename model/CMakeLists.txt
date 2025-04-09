@@ -439,6 +439,7 @@ foreach (xlen IN ITEMS 32 64)
                         --coq-output-dir "${CMAKE_BINARY_DIR}/rocq"
                         # The prefix of the output files.
                         -o "${arch}"
+                        --config ${CMAKE_SOURCE_DIR}/config/default.json
                         # Minimum required Sail compiler version.
                         --require-version ${SAIL_REQUIRED_VER}
                         # Input files.
