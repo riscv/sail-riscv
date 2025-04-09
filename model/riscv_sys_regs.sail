@@ -223,7 +223,7 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // MPV = v[MPV],
     // GVA = v[GVA],
     MBE = v[MBE],
-    SBE = if extensionEnabled(Ext_S) then v[SBE] else 0b0,
+    SBE = if currentlyEnabled(Ext_S) then v[SBE] else 0b0,
     /* We don't support dynamic changes to SXL and UXL. */
     // SXL = if xlen == 64 then v[SXL] else o[SXL],
     // UXL = if xlen == 64 then v[UXL] else o[UXL],
@@ -247,7 +247,7 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     SPP = if currentlyEnabled(Ext_S) then v[SPP] else 0b0,
     VS = v[VS],
     MPIE = v[MPIE],
-    UBE = if extensionEnabled(Ext_U) then v[UBE] else 0b0,
+    UBE = if currentlyEnabled(Ext_U) then v[UBE] else 0b0,
     SPIE = if currentlyEnabled(Ext_S) then v[SPIE] else 0b0,
     MIE = v[MIE],
     SIE = if currentlyEnabled(Ext_S) then v[SIE] else 0b0,

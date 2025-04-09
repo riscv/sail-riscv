@@ -63,11 +63,12 @@ function write_kind_of_flags (aq : bool, rl : bool, con : bool) -> write_kind =
     (true,  false, true)  => throw(Error_not_implemented("sc.aq"))
   }
 
-function is_big_endian(typ : AccessType(ext_access_type)) -> bool = {
-    match effectivePrivilege(typ, mstatus, cur_privilege) {
-      Machine     => bits_to_bool(mstatus[MBE]),
-      Supervisor  => bits_to_bool(mstatus[SBE]),
-      User        => bits_to_bool(mstatus[UBE]),
+function get_endianness(typ : AccessType(ext_access_type)) -> Endianness = {
+    match (typ, effectivePrivilege(typ, mstatus, cur_privilege)) {
+      (Execute(), _)   => LittleEndian,
+      (_, Machine)     => if bits_to_bool(mstatus[MBE]) then BigEndian else LittleEndian,
+      (_, Supervisor)  => if bits_to_bool(mstatus[SBE]) then BigEndian else LittleEndian,
+      (_, User)        => if bits_to_bool(mstatus[UBE]) then BigEndian else LittleEndian,
     }
 }
 
@@ -112,12 +113,11 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   match phys_access_check(t, priv, paddr, width) {
     Some(e) => Err(e),
     None() => {
-      let current_endianness: Endianness = if is_big_endian(t) & t != Execute() then BigEndian else LittleEndian;
       if   within_mmio_readable(paddr, width)
-      then MemoryOpResult_add_meta(mmio_read(t, paddr, width, current_endianness), default_meta)
+      then MemoryOpResult_add_meta(mmio_read(t, paddr, width, get_endianness(t)), default_meta)
       else if within_phys_mem(paddr, width)
       then match ext_check_phys_mem_read(t, paddr, width, aq, rl, res, meta) {
-        Ext_PhysAddr_OK()     => phys_mem_read(t, paddr, width, aq, rl, res, meta, current_endianness),
+        Ext_PhysAddr_OK()     => phys_mem_read(t, paddr, width, aq, rl, res, meta, get_endianness(t)),
         Ext_PhysAddr_Error(e) => Err(e)
       } else match t {
         Execute()  => Err(E_Fetch_Access_Fault()),
@@ -229,8 +229,7 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   match phys_access_check(typ, priv, paddr, width) {
     Some(e) => Err(e),
     None() => {
-      let current_endianness: Endianness = if is_big_endian(typ) & typ != Execute() then BigEndian else LittleEndian;
-      let data = endianness_conversion(data, current_endianness);
+      let data = endianness_conversion(data, get_endianness(typ));
       if   within_mmio_writable(paddr, width)
       then mmio_write(paddr, width, data)
       else if within_phys_mem(paddr, width)
