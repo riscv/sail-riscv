@@ -38,7 +38,7 @@ main:
     csrw minstreth, zero
     csrw minstret, t0
     # Minstret should be 0x00000000FFFFFFFF now.
-    # Write 2 to minstreth. instret should now be 0x0000000200000000
+    # Write 2 to minstreth. instret should now be 0x00000002FFFFFFFF
     csrwi minstreth, 2
     csrr t1, minstreth
 
@@ -50,12 +50,11 @@ main:
     csrw minstreth, zero
     csrw minstret, t0
     # Minstret should be 0x00000000FFFFFFFF now.
-    # Write 2 to minstret. instret should now be 0x0000000100000002
+    # Write 2 to minstret. instret should now be 0x0000000000000002
     csrwi minstret, 2
     csrr t1, minstreth
 
-    li t2, 1
-    bne t1, t2, fail
+    bnez t1, fail
 
 #endif
 
