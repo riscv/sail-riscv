@@ -169,6 +169,4 @@ add_custom_target(csim DEPENDS riscv_sim_rv32d riscv_sim_rv64d)
 add_custom_target(check DEPENDS generated_model_rv32d generated_model_rv64d)
 
 # TODO: Add `interpret` target.
-# TODO: Add isabelle target.
-# TODO: Add lem target.
 # TODO: Add hol4 target.
