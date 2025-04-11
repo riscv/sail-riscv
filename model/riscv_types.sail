@@ -32,6 +32,8 @@ type csreg = bits(12)  /* CSR addressing */
 function regidx_offset(Regidx(r) : regidx, o : bits(5)) -> regidx = Regidx(r + o)
 function regidx_bits (Regidx(b) : regidx) -> bits(5) = b
 
+function bits_regidx (b : bits(5)) -> regidx = Regidx(b)
+
 /* register file indexing */
 
 newtype regno = Regno : range(0, 31)
@@ -43,9 +45,11 @@ val creg2reg_idx : cregidx -> regidx
 function creg2reg_idx(Cregidx(i)) = Regidx(0b01 @ i)
 
 /* some architecture and ABI relevant register identifiers */
-let zreg : regidx = Regidx(0b00000) /* x0, zero register  */
-let ra   : regidx = Regidx(0b00001) /* x1, return address */
-let sp   : regidx = Regidx(0b00010) /* x2, stack pointer  */
+let zreg : regidx = Regidx(0b00000) /* x0, zero register                     */
+let ra   : regidx = Regidx(0b00001) /* x1, return address                    */
+let sp   : regidx = Regidx(0b00010) /* x2, stack pointer                     */
+let a0   : regidx = Regidx(0b01010) /* x10, function argument / return value */
+let a1   : regidx = Regidx(0b01011) /* x11, function argument / return value */
 
 /* instruction fields */
 
@@ -340,6 +344,8 @@ enum biop_zbs = {RISCV_BCLRI, RISCV_BEXTI, RISCV_BINVI, RISCV_BSETI}
 enum extop_zbb = {RISCV_SEXTB, RISCV_SEXTH, RISCV_ZEXTH}
 
 enum zicondop = {RISCV_CZERO_EQZ, RISCV_CZERO_NEZ}
+
+enum cmop_zcmp = {RISCV_CM_POP, RISCV_CM_POPRET, RISCV_CM_POPRETZ}
 
 // Get the bit encoding of word_width.
 mapping size_enc : word_width <-> bits(2) = {
