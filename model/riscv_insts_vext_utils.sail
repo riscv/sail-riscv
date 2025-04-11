@@ -191,6 +191,17 @@ function write_velem_quad(vd, SEW, input, i) = {
     write_single_element(SEW, 4 * i + j, vd, slice(input, j * SEW, SEW));
 }
 
+/* Extracts 4 consecutive vector elements starting from index 4*i and returns a vector */
+val get_velem_quad_vec : forall 'n 'm 'p, 'n > 0 & 8 <= 'm <= 64  & 'p >= 0 & 4 * 'p + 3 < 'n. (vector('n, bits('m)), int('p)) -> vector(4, bits('m))
+function get_velem_quad_vec(v, i) = [ v[4 * i + 3], v[4 * i + 2], v[4 * i + 1], v[4 * i] ]
+
+/* Writes each of the 4 elements from the input vector to the vector register vd, starting at position 4 * i */
+val write_velem_quad_vec : forall 'p 'n, 8 <= 'n <= 64 & 'p >= 0. (vregidx, int('n), vector(4, bits('n)), int('p)) -> unit
+function write_velem_quad_vec(vd, SEW, input, i) = {
+  foreach(j from 0 to 3)
+    write_single_element(SEW, 4 * i + j, vd, input[j]);
+}
+
 /* Extracts 8 consecutive vector elements starting from index 8*i and returns a
  * vector. The parameter n is implicit to help proof the proof assistant
  * backends infer its value. */

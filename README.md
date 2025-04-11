@@ -110,6 +110,7 @@ For booting operating system images, see the information under the
 - Zvkb extension for vector cryptography bit-manipulation, v1.0
 - Zvkned extension for vector cryptography NIST Suite: Vector AES Block Cipher, v1.0
 - Zvknha and Zvknhb extensions for vector cryptography NIST Suite: Vector SHA-2 Secure Hash, v1.0
+- Zvksed extension for vector cryptography ShangMi Suite: SM4 Block Cipher, v1.0
 - Zvksh extension for vector cryptography ShangMi Suite: SM3 Secure Hash, v1.0
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
