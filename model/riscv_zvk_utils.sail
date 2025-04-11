@@ -29,46 +29,40 @@ function zvknhab_check_encdec(vs2: vregidx, vs1: vregidx, vd: vregidx) -> bool =
   zvk_check_encdec(SEW, 4) & zvk_valid_reg_overlap(vs1, vd, LMUL_pow) & zvk_valid_reg_overlap(vs2, vd, LMUL_pow);
 }
 
-val ROTR : forall 'n 'm 'p, 'n >= 0. (bits('n), int('m), int('p)) -> bits('n)
-function ROTR (x, n, SEW) = (x >> to_bits('n, n)) | (x << (to_bits('n, SEW) - to_bits('n, n)))
-
-val SHR : forall 'n 'm, 'n >= 0. (bits('n), int('m)) -> bits('n)
-function SHR (x, n) = x >> to_bits('n, n)
-
-val sig0 : forall 'n 'm, 'n >= 0 & ('m == 32 | 'm == 64). (bits('n), int('m)) -> bits('n)
-function sig0 (x, SEW) = {
+val zvk_sig0 : forall 'n 'm, 'n == 'm & ('m == 32 | 'm == 64). (bits('n), int('m)) -> bits('n)
+function zvk_sig0(x, SEW) = {
   match SEW {
-    32 => (ROTR(x, 7, SEW) ^ ROTR(x, 18, SEW) ^ SHR(x, 3)),
-    64 => (ROTR(x, 1, SEW) ^ ROTR(x,  8, SEW) ^ SHR(x, 7)),
+    32 => ((x >>> 7) ^ (x >>> 18) ^ (x >> to_bits('n, 3))),
+    64 => ((x >>> 1) ^ (x >>>  8) ^ (x >> to_bits('n, 7))),
   }
 }
 
-val sig1 : forall 'n 'm, 'n >= 0 & ('m == 32 | 'm == 64). (bits('n), int('m)) -> bits('n)
-function sig1 (x, SEW) = {
+val zvk_sig1 : forall 'n 'm, 'n == 'm & ('m == 32 | 'm == 64). (bits('n), int('m)) -> bits('n)
+function zvk_sig1(x, SEW) = {
   match SEW {
-    32 => (ROTR(x, 17, SEW) ^ ROTR(x, 19, SEW) ^ SHR(x, 10)),
-    64 => (ROTR(x, 19, SEW) ^ ROTR(x, 61, SEW) ^ SHR(x,  6)),
+    32 => ((x >>> 17) ^ (x >>> 19) ^ (x >> to_bits('n, 10))),
+    64 => ((x >>> 19) ^ (x >>> 61) ^ (x >> to_bits('n,  6))),
   }
 }
 
-val sum0 : forall 'n 'm, 'n >= 0 & ('m == 32 | 'm == 64). (bits('n), int('m)) -> bits('n)
-function sum0 (x, SEW) = {
+val zvk_sum0 : forall 'n 'm, 'n == 'm & ('m == 32 | 'm == 64). (bits('n), int('m)) -> bits('n)
+function zvk_sum0(x, SEW) = {
   match SEW {
-    32 => (ROTR(x,  2, SEW) ^ ROTR(x, 13, SEW) ^ ROTR(x, 22, SEW)),
-    64 => (ROTR(x, 28, SEW) ^ ROTR(x, 34, SEW) ^ ROTR(x, 39, SEW)),
+    32 => ((x >>>  2) ^ (x >>> 13) ^ (x >>> 22)),
+    64 => ((x >>> 28) ^ (x >>> 34) ^ (x >>> 39)),
   }
 }
 
-val sum1 : forall 'n 'm, 'n >= 0 & ('m == 32 | 'm == 64). (bits('n), int('m)) -> bits('n)
-function sum1 (x, SEW) = {
+val zvk_sum1 : forall 'n 'm, 'n == 'm & ('m == 32 | 'm == 64). (bits('n), int('m)) -> bits('n)
+function zvk_sum1(x, SEW) = {
   match SEW {
-    32 => (ROTR(x,  6, SEW) ^ ROTR(x, 11, SEW) ^ ROTR(x, 25, SEW)),
-    64 => (ROTR(x, 14, SEW) ^ ROTR(x, 18, SEW) ^ ROTR(x, 41, SEW)),
+    32 => ((x >>>  6) ^ (x >>> 11) ^ (x >>> 25)),
+    64 => ((x >>> 14) ^ (x >>> 18) ^ (x >>> 41)),
   }
 }
 
-val ch : forall 'n, 'n >= 0. (bits('n), bits('n), bits('n)) -> bits('n)
-function ch (x, y, z) = (x & y) ^ (~(x) & z)
+val zvk_ch : forall 'n, 'n >= 0. (bits('n), bits('n), bits('n)) -> bits('n)
+function zvk_ch(x, y, z) = (x & y) ^ (~(x) & z)
 
-val maj : forall 'n, 'n >= 0. (bits('n), bits('n), bits('n)) -> bits('n)
-function maj (x, y, z) = (x & y) ^ (x & z) ^ (y & z)
+val zvk_maj : forall 'n, 'n >= 0. (bits('n), bits('n), bits('n)) -> bits('n)
+function zvk_maj(x, y, z) = (x & y) ^ (x & z) ^ (y & z)
