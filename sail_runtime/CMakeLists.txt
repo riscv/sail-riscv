@@ -1,10 +1,3 @@
-execute_process(
-    COMMAND ${SAIL_BIN} --dir
-    OUTPUT_VARIABLE sail_dir
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    COMMAND_ERROR_IS_FATAL ANY
-)
-
 add_library(sail_runtime
     "${sail_dir}/lib/elf.c"
     "${sail_dir}/lib/elf.h"
