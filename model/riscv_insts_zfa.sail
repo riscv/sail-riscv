@@ -361,7 +361,7 @@ function clause execute (RISCV_FROUND_H(rs1, rm, rd)) = {
   let rs1_val_H = F_H(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_f16roundToInt(rm_3b, rs1_val_H, false);
@@ -390,7 +390,7 @@ function clause execute (RISCV_FROUNDNX_H(rs1, rm, rd)) = {
   let rs1_val_H = F_H(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_H) = riscv_f16roundToInt(rm_3b, rs1_val_H, true);
@@ -419,7 +419,7 @@ function clause execute (RISCV_FROUND_S(rs1, rm, rd)) = {
   let rs1_val_S = F_S(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_f32roundToInt(rm_3b, rs1_val_S, false);
@@ -448,7 +448,7 @@ function clause execute (RISCV_FROUNDNX_S(rs1, rm, rd)) = {
   let rs1_val_S = F_S(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_f32roundToInt(rm_3b, rs1_val_S, true);
@@ -477,7 +477,7 @@ function clause execute (RISCV_FROUND_D(rs1, rm, rd)) = {
   let rs1_val_D = F_D(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_f64roundToInt(rm_3b, rs1_val_D, false);
@@ -506,7 +506,7 @@ function clause execute (RISCV_FROUNDNX_D(rs1, rm, rd)) = {
   let rs1_val_D = F_D(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
-    None() => { handle_illegal(); RETIRE_FAIL },
+    None() => RETIRE_FAIL(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b =  encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_f64roundToInt(rm_3b, rs1_val_D, true);

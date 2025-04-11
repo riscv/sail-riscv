@@ -62,16 +62,12 @@ function clause execute (RISCV_JAL(imm, rd)) = {
   let target = PC + sign_extend(imm);
   /* Extensions get the first checks on the prospective target address. */
   match ext_control_check_pc(target) {
-    Ext_ControlAddr_Error(e) => {
-      ext_handle_control_check_error(e);
-      RETIRE_FAIL
-    },
+    Ext_ControlAddr_Error(e) => RETIRE_FAIL(Ext_ControlAddr_Check_Failure(e)),
     Ext_ControlAddr_OK(target) => {
       /* Perform standard alignment check */
       let target_bits = virtaddr_bits(target);
       if bit_to_bool(target_bits[1]) & not(currentlyEnabled(Ext_Zca)) then {
-        handle_mem_exception(target, E_Fetch_Addr_Align());
-        RETIRE_FAIL
+        RETIRE_FAIL(Memory_Exception(target, E_Fetch_Addr_Align()))
       } else {
         X(rd) = get_next_pc();
         set_next_pc(target_bits);
@@ -125,15 +121,11 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
     let target = PC + sign_extend(imm);
     /* Extensions get the first checks on the prospective target address. */
     match ext_control_check_pc(target) {
-      Ext_ControlAddr_Error(e) => {
-        ext_handle_control_check_error(e);
-        RETIRE_FAIL
-      },
+      Ext_ControlAddr_Error(e) => RETIRE_FAIL(Ext_ControlAddr_Check_Failure(e)),
       Ext_ControlAddr_OK(target) => {
         let target_bits = virtaddr_bits(target);
         if bit_to_bool(target_bits[1]) & not(currentlyEnabled(Ext_Zca)) then {
-          handle_mem_exception(target, E_Fetch_Addr_Align());
-          RETIRE_FAIL
+          RETIRE_FAIL(Memory_Exception(target, E_Fetch_Addr_Align()))
         } else {
           set_next_pc(target_bits);
           RETIRE_SUCCESS
@@ -313,17 +305,16 @@ function clause execute (LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
   match ext_data_get_addr(rs1, offset, Read(Data), width_bytes) {
-    Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
+    Ext_DataAddr_Error(e)  => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
     Ext_DataAddr_OK(vaddr) => {
       if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
+      then RETIRE_FAIL(Memory_Exception(vaddr, E_Load_Addr_Align()))
       else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+        TR_Failure(e, _) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
         TR_Address(paddr, _) =>
-
           match mem_read(Read(Data), paddr, width_bytes, aq, rl, false) {
             Ok(result) => { X(rd) = extend_value(is_unsigned, result); RETIRE_SUCCESS },
-            Err(e)     => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            Err(e)     => RETIRE_FAIL(Memory_Exception(vaddr, e)),
           },
       }
     },
@@ -370,21 +361,21 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
   match ext_data_get_addr(rs1, offset, Write(Data), width_bytes) {
-    Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
+    Ext_DataAddr_Error(e)  => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
+      then RETIRE_FAIL(Memory_Exception(vaddr, E_SAMO_Addr_Align()))
       else match translateAddr(vaddr, Write(Data)) {
-        TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+        TR_Failure(e, _)    => RETIRE_FAIL(Memory_Exception(vaddr, e)),
         TR_Address(paddr, _) => {
           match mem_write_ea(paddr, width_bytes, aq, rl, false) {
-            Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            Err(e) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
             Ok(_)  => {
               let rs2_val = X(rs2);
               match mem_write_value(paddr, width_bytes, rs2_val[width_bytes * 8 - 1 .. 0], aq, rl, false) {
                 Ok(true)  => RETIRE_SUCCESS,
                 Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                Err(e)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                Err(e)    => RETIRE_FAIL(Memory_Exception(vaddr, e))
               }
             }
           }
@@ -593,8 +584,7 @@ function clause execute ECALL() = {
                     },
              excinfo = (None() : option(xlenbits)),
              ext     = None() };
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC));
-  RETIRE_FAIL
+  RETIRE_FAIL(Trap(cur_privilege, CTL_TRAP(t), PC))
 }
 
 mapping clause assembly = ECALL() <-> "ecall"
@@ -607,9 +597,9 @@ mapping clause encdec = MRET()
 
 function clause execute MRET() = {
   if   cur_privilege != Machine
-  then { handle_illegal(); RETIRE_FAIL }
-  else if not(ext_check_xret_priv (Machine))
-  then { ext_fail_xret_priv(); RETIRE_FAIL }
+  then RETIRE_FAIL(Illegal_Instruction())
+  else if not(ext_check_xret_priv(Machine))
+  then RETIRE_FAIL(Ext_XRET_Priv_Failure())
   else {
     set_next_pc(exception_handler(cur_privilege, CTL_MRET(), PC));
     RETIRE_SUCCESS
@@ -631,9 +621,9 @@ function clause execute SRET() = {
     Machine    => not(currentlyEnabled(Ext_S))
   };
   if   sret_illegal
-  then { handle_illegal(); RETIRE_FAIL }
+  then RETIRE_FAIL(Illegal_Instruction())
   else if not(ext_check_xret_priv (Supervisor))
-  then { ext_fail_xret_priv(); RETIRE_FAIL }
+  then RETIRE_FAIL(Ext_XRET_Priv_Failure())
   else {
     set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC));
     RETIRE_SUCCESS
@@ -648,10 +638,8 @@ union clause ast = EBREAK : unit
 mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
-function clause execute EBREAK() = {
-  handle_mem_exception(Virtaddr(PC), E_Breakpoint());
-  RETIRE_FAIL
-}
+function clause execute EBREAK() =
+  RETIRE_FAIL(Memory_Exception(Virtaddr(PC), E_Breakpoint()))
 
 mapping clause assembly = EBREAK() <-> "ebreak"
 
@@ -663,11 +651,11 @@ mapping clause encdec = WFI()
 
 function clause execute WFI() =
   match cur_privilege {
-    Machine    => { platform_wfi(); RETIRE_SUCCESS },
+    Machine    => RETIRE_FAIL(Wait_For_Interrupt()),
     Supervisor => if   mstatus[TW] == 0b1
-                  then { handle_illegal(); RETIRE_FAIL }
-                  else { platform_wfi(); RETIRE_SUCCESS },
-    User       => { handle_illegal(); RETIRE_FAIL }
+                  then RETIRE_FAIL(Illegal_Instruction())
+                  else RETIRE_FAIL(Wait_For_Interrupt()),
+    User       => RETIRE_FAIL(Illegal_Instruction())
   }
 
 mapping clause assembly = WFI() <-> "wfi"
@@ -685,9 +673,9 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
   // is 9 but we always set it to 16 for RV64.
   let asid = if rs2 != zreg then Some(X(rs2)[asidlen - 1 .. 0]) else None();
   match cur_privilege {
-    User       => { handle_illegal(); RETIRE_FAIL },
+    User       => RETIRE_FAIL(Illegal_Instruction()),
     Supervisor => match mstatus[TVM] {
-                    0b1 => { handle_illegal(); RETIRE_FAIL },
+                    0b1 => RETIRE_FAIL(Illegal_Instruction()),
                     0b0 => { flush_TLB(asid, addr); RETIRE_SUCCESS },
                   },
     Machine    => { flush_TLB(asid, addr); RETIRE_SUCCESS }

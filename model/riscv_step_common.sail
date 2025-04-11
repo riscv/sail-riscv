@@ -6,6 +6,26 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
+// The state of the emulator.
+//
+// The RISC-V hart could either be active (fetching and executing
+// instructions) or waiting (e.g. for an interrupt).  The transition
+// from `active` to `wait` occurs on instructions such as WFI and
+// WRS.{NTO,STO}. The transition from `wait` to `active` can occur
+// if (i) the hart detects an interrupt or (in the case of
+// WRS.{NTO,STO}) a reservation set is invalidated, or (ii) if the
+// external non-Sail emulator harness indicates that the waiting
+// instruction should finish execution.  Note that in the latter
+// case, the platform can decide to end the stall for any reason,
+// even if there are no interrupts or invalidated reservation set.
+
+type instbits = xlenbits
+
+union HartState = {
+  HART_ACTIVE  : unit,
+  HART_WAITING : instbits, // the instruction that caused the wait
+}
+
 /* The result of a fetch, which includes any possible error
  * from an extension that interposes on the fetch operation.
  */
@@ -16,3 +36,17 @@ union FetchResult = {
   F_RVC       : half,                      /* Compressed ISA */
   F_Error     : (ExceptionType, xlenbits)  /* standard exception and PC */
 }
+
+// utility predicates
+
+function hart_is_active(s : HartState) -> bool =
+  match s {
+    HART_ACTIVE()   => true,
+    HART_WAITING(_) => false,
+  }
+
+function hart_is_waiting(s : HartState) -> bool =
+  match s {
+    HART_ACTIVE()   => false,
+    HART_WAITING(_) => true,
+  }
