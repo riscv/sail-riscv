@@ -11,7 +11,7 @@
  * ----------------------------------------------------------------------
  */
 
-function clause currentlyEnabled(Ext_Zknh) = true
+function clause currentlyEnabled(Ext_Zknh) = hartSupports(Ext_Zknh)
 
 union clause ast = SHA256SIG0 : (regidx, regidx)
 union clause ast = SHA256SIG1 : (regidx, regidx)
@@ -79,7 +79,7 @@ function clause execute (SHA256SUM1(rs1, rd)) = {
  * ----------------------------------------------------------------------
  */
 
-function clause currentlyEnabled(Ext_Zkne) = true
+function clause currentlyEnabled(Ext_Zkne) = hartSupports(Ext_Zkne)
 
 union clause ast = AES32ESMI : (bits(2), regidx, regidx, regidx)
 
@@ -123,7 +123,7 @@ function clause execute (AES32ESI (bs, rs2, rs1, rd)) = {
  * ----------------------------------------------------------------------
  */
 
-function clause currentlyEnabled(Ext_Zknd) = true
+function clause currentlyEnabled(Ext_Zknd) = hartSupports(Ext_Zknd)
 
 union clause ast = AES32DSMI : (bits(2), regidx, regidx, regidx)
 

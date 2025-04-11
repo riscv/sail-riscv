@@ -309,14 +309,14 @@ function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
 
 // Reset misa to enable the maximal set of supported extensions.
 function reset_misa() -> unit = {
-  misa[A]   = 0b1;                                     /* atomics */
-  misa[C]   = bool_to_bits(hartSupports(Ext_C));       /* RVC */
-  misa[B]   = bool_to_bits(hartSupports(Ext_B));       /* Bit-manipulation */
-  misa[I]   = 0b1;                                     /* base integer ISA */
-  misa[M]   = 0b1;                                     /* integer multiply/divide */
-  misa[U]   = bool_to_bits(sys_enable_user());         /* user-mode */
-  misa[S]   = bool_to_bits(sys_enable_supervisor());   /* supervisor-mode */
-  misa[V]   = bool_to_bits(hartSupports(Ext_V));       /* vector extension */
+  misa[A]   = bool_to_bits(hartSupports(Ext_A));   /* atomics */
+  misa[C]   = bool_to_bits(hartSupports(Ext_C));   /* RVC */
+  misa[B]   = bool_to_bits(hartSupports(Ext_B));   /* Bit-manipulation */
+  misa[I]   = 0b1;                                 /* base integer ISA */
+  misa[M]   = bool_to_bits(hartSupports(Ext_M));   /* integer multiply/divide */
+  misa[U]   = bool_to_bits(hartSupports(Ext_U));   /* user-mode */
+  misa[S]   = bool_to_bits(hartSupports(Ext_S));   /* supervisor-mode */
+  misa[V]   = bool_to_bits(hartSupports(Ext_V));   /* vector extension */
 
   if   hartSupports(Ext_F) & hartSupports(Ext_Zfinx)
   then internal_error(__FILE__, __LINE__, "F and Zfinx cannot both be enabled!");

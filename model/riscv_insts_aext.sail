@@ -11,7 +11,8 @@
 
 /* ****************************************************************** */
 
-function clause currentlyEnabled(Ext_Zabha) = true
+function clause currentlyEnabled(Ext_A) = hartSupports(Ext_A) & misa[A] == 0b1
+function clause currentlyEnabled(Ext_Zabha) = hartSupports(Ext_Zabha) & currentlyEnabled(Ext_Zaamo)
 
 // Some print utils for lr/sc.
 
@@ -53,7 +54,7 @@ function amo_width_valid(size : word_width) -> bool = {
 }
 
 /* ****************************************************************** */
-function clause currentlyEnabled(Ext_Zalrsc) = misa[A] == 0b1
+function clause currentlyEnabled(Ext_Zalrsc) = hartSupports(Ext_Zalrsc) | currentlyEnabled(Ext_A)
 
 union clause ast = LOADRES : (bool, bool, regidx, word_width, regidx)
 
@@ -168,7 +169,7 @@ mapping clause assembly = STORECON(aq, rl, rs2, rs1, size, rd)
   <-> "sc." ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ****************************************************************** */
-function clause currentlyEnabled(Ext_Zaamo) = misa[A] == 0b1
+function clause currentlyEnabled(Ext_Zaamo) = hartSupports(Ext_Zaamo) | currentlyEnabled(Ext_A)
 
 union clause ast = AMO : (amoop, bool, bool, regidx, regidx, word_width, regidx)
 

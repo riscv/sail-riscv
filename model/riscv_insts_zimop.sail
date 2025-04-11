@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Zimop) = true // TODO: add configuration
+function clause currentlyEnabled(Ext_Zimop) = hartSupports(Ext_Zimop)
 
 union clause ast = ZIMOP_MOP_R : (bits(5), regidx, regidx)
 union clause ast = ZIMOP_MOP_RR : (bits(3), regidx, regidx, regidx)

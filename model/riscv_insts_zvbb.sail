@@ -6,9 +6,8 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Zvbb) = true
-
-function clause currentlyEnabled(Ext_Zvkb) = hartSupports(Ext_Zvkb) | currentlyEnabled(Ext_Zvbb)
+function clause currentlyEnabled(Ext_Zvbb) = hartSupports(Ext_Zvbb) & currentlyEnabled(Ext_V)
+function clause currentlyEnabled(Ext_Zvkb) = (hartSupports(Ext_Zvkb) | currentlyEnabled(Ext_Zvbb)) & currentlyEnabled(Ext_V)
 
 union clause ast = VANDN_VV : (bits(1), vregidx, vregidx, vregidx)
 

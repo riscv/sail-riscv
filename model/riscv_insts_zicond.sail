@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Zicond) = true
+function clause currentlyEnabled(Ext_Zicond) = hartSupports(Ext_Zicond)
 
 union clause ast = ZICOND_RTYPE : (regidx, regidx, regidx, zicondop)
 

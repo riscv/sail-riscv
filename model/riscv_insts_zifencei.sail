@@ -11,7 +11,7 @@
 
 /* ****************************************************************** */
 
-function clause currentlyEnabled(Ext_Zifencei) = true
+function clause currentlyEnabled(Ext_Zifencei) = hartSupports(Ext_Zifencei)
 
 union clause ast = FENCEI : unit
 

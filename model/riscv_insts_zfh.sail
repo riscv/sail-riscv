@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Zhinx) = hartSupports(Ext_Zfinx)
+function clause currentlyEnabled(Ext_Zhinx) = hartSupports(Ext_Zhinx) & currentlyEnabled(Ext_Zfinx)
 
 /* **************************************************************** */
 /* This file specifies the instructions in the Zfh extension        */

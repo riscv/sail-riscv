@@ -6,8 +6,8 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Zbc) = true
-function clause currentlyEnabled(Ext_Zbkc) = true
+function clause currentlyEnabled(Ext_Zbc) = hartSupports(Ext_Zbc)
+function clause currentlyEnabled(Ext_Zbkc) = hartSupports(Ext_Zbkc)
 
 /* ****************************************************************** */
 union clause ast = RISCV_CLMUL : (regidx, regidx, regidx)

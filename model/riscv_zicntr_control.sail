@@ -5,7 +5,7 @@
 /*                                                                                       */
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
-function clause currentlyEnabled(Ext_Zicntr) = true
+function clause currentlyEnabled(Ext_Zicntr) = hartSupports(Ext_Zicntr)
 
 /* unprivileged counters/timers */
 mapping clause csr_name_map = 0xC00  <-> "cycle"

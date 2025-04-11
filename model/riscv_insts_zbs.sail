@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Zbs) = true | currentlyEnabled(Ext_B)
+function clause currentlyEnabled(Ext_Zbs) = hartSupports(Ext_Zbs) | currentlyEnabled(Ext_B)
 
 /* ****************************************************************** */
 union clause ast = ZBS_IOP : (bits(6), regidx, regidx, biop_zbs)

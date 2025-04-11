@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Zfa) = true
+function clause currentlyEnabled(Ext_Zfa) = hartSupports(Ext_Zfa) & currentlyEnabled(Ext_F)
 
 /* FLI.H */
 
