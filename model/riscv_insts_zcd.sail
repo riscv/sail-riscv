@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Zcd) = currentlyEnabled(Ext_Zca) & currentlyEnabled(Ext_D) & (xlen == 32 | xlen == 64)
+function clause currentlyEnabled(Ext_Zcd) = hartSupports(Ext_Zcd) & currentlyEnabled(Ext_Zca) & currentlyEnabled(Ext_D) & not(currentlyEnabled(Ext_Zcmp)) & (xlen == 32 | xlen == 64)
 
 union clause ast = C_FLDSP : (bits(6), fregidx)
 
