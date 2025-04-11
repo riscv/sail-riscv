@@ -74,6 +74,9 @@
         "Zvbc" : {
             "supported" : true
         },
+        "Zvksed" : {
+            "supported" : true
+        },
         "Sstc" : {
             "supported" : false
         }

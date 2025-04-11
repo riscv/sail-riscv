@@ -119,6 +119,7 @@ Supported RISC-V ISA features
 - Zvbb extension for vector basic bit-manipulation, v1.0
 - Zvbc extension for vector carryless multiplication, v1.0
 - Zvkb extension for vector cryptography bit-manipulation, v1.0
+- Zvksed extension for vector cryptography ShangMi Suite: SM4 Block Cipher, v1.0
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0

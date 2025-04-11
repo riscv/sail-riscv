@@ -137,6 +137,9 @@ function clause hartSupports(Ext_Zvkb) = config extensions.Zvkb.supported
 // Vector Carryless Multiplication
 enum clause extension = Ext_Zvbc
 function clause hartSupports(Ext_Zvbc) = config extensions.Zvbc.supported
+// ShangMi Suite: SM4 Block Cipher
+enum clause extension = Ext_Zvksed
+function clause hartSupports(Ext_Zvksed) = config extensions.Zvksed.supported
 
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
