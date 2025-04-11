@@ -89,56 +89,6 @@ function zcmp_regmask(rlist : bits(4)) -> bits(32) = {
   mask
 }
 
-union clause ast = CMPP : (cmop_zcmp, bits(4), bits(2))
-
-mapping clause encdec_compressed = CMPP(RISCV_CM_POP, rlist, spimm)
-  <-> 0b101 @ 0b11010 @ rlist : bits(4) @ spimm : bits(2) @ 0b10
-  when currentlyEnabled(Ext_Zcmp) & rlist >=_u 0b0100
-
-mapping clause encdec_compressed = CMPP(RISCV_CM_POPRET, rlist, spimm)
-  <-> 0b101 @ 0b11110 @ rlist : bits(4) @ spimm : bits(2) @ 0b10
-  when currentlyEnabled(Ext_Zcmp) & rlist >=_u 0b0100
-
-mapping clause encdec_compressed = CMPP(RISCV_CM_POPRETZ, rlist, spimm)
-  <-> 0b101 @ 0b11100 @ rlist : bits(4) @ spimm : bits(2) @ 0b10
-  when currentlyEnabled(Ext_Zcmp) & rlist >=_u 0b0100
-
-mapping zcmp_mnemonic : cmop_zcmp <-> string = {
-  RISCV_CM_POP     <-> "cm.pop",
-  RISCV_CM_POPRET  <-> "cm.popret",
-  RISCV_CM_POPRETZ <-> "cm.popretz",
-}
-
-mapping clause assembly = CMPP(op, rlist, spimm)
-  <->  zcmp_mnemonic(op) ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, false)
-
-function clause execute (CMPP(op, rlist, spimm)) = {
-  let addr         = X(sp);
-  let stack_adj    = get_stack_adj_base(rlist) + unsigned(spimm) * 16;
-  let new_sp       = addr + to_bits(xlen, stack_adj);
-
-  let mask         = zcmp_regmask(rlist);
-  let width        = size_bytes(xlen_bytes);
-  var offset : int = stack_adj - xlen_bytes;
-
-  foreach (i from 31 downto 1) {
-    if mask[i] == bitone then {
-      let imm = to_bits(12, offset);
-      let rd  = bits_regidx(to_bits(5, i));
-      match execute(LOAD(imm, sp, rd, true, width, false, false)) {
-        RETIRE_SUCCESS => { offset = offset - xlen_bytes },
-        RETIRE_FAIL    => { return RETIRE_FAIL }
-      };
-    }
-  };
-
-  if op == RISCV_CM_POPRETZ then X(a0) = zeros();
-  X(sp) = new_sp;
-  if op == RISCV_CM_POPRET | op == RISCV_CM_POPRETZ then set_next_pc(X(ra));
-  RETIRE_SUCCESS
-}
-
-/* ****************************************************************** */
 union clause ast = CM_PUSH : (bits(4), bits(2))
 
 mapping clause encdec_compressed = CM_PUSH(rlist, spimm)
@@ -170,7 +120,54 @@ function clause execute (CM_PUSH(rlist, spimm)) = {
 }
 
 mapping clause assembly = CM_PUSH(rlist, spimm)
-  <-> "cm.push" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, false)
+  <-> "cm.push" ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, true)
+/* ****************************************************************** */
+union clause ast = CMPP : (cmop_zcmp, bits(4), bits(2))
+
+mapping encdec_cmop : cmop_zcmp <-> bits(5) = {
+  RISCV_CM_POP     <-> 0b11010,
+  RISCV_CM_POPRET  <-> 0b11110,
+  RISCV_CM_POPRETZ <-> 0b11100
+}
+
+mapping clause encdec_compressed = CMPP(cmop, rlist, spimm)
+  <-> 0b101 @ encdec_cmop(cmop) @ rlist : bits(4) @ spimm : bits(2) @ 0b10
+  when currentlyEnabled(Ext_Zcmp) & rlist >=_u 0b0100
+
+function clause execute (CMPP(cmop, rlist, spimm)) = {
+  let addr         = X(sp);
+  let stack_adj    = get_stack_adj_base(rlist) + unsigned(spimm) * 16;
+  let new_sp       = addr + to_bits(xlen, stack_adj);
+
+  let mask         = zcmp_regmask(rlist);
+  let width        = size_bytes(xlen_bytes);
+  var offset : int = stack_adj - xlen_bytes;
+
+  foreach (i from 31 downto 1) {
+    if mask[i] == bitone then {
+      let imm = to_bits(12, offset);
+      let rd  = bits_regidx(to_bits(5, i));
+      match execute(LOAD(imm, sp, rd, true, width, false, false)) {
+        RETIRE_SUCCESS => { offset = offset - xlen_bytes },
+        RETIRE_FAIL    => { return RETIRE_FAIL }
+      };
+    }
+  };
+
+  if cmop == RISCV_CM_POPRETZ then X(a0) = zeros();
+  X(sp) = new_sp;
+  if cmop == RISCV_CM_POPRET | cmop == RISCV_CM_POPRETZ then set_next_pc(X(ra));
+  RETIRE_SUCCESS
+}
+
+mapping zcmp_mnemonic : cmop_zcmp <-> string = {
+  RISCV_CM_POP     <-> "cm.pop",
+  RISCV_CM_POPRET  <-> "cm.popret",
+  RISCV_CM_POPRETZ <-> "cm.popretz",
+}
+
+mapping clause assembly = CMPP(cmop, rlist, spimm)
+  <->  zcmp_mnemonic(cmop) ^ spc() ^ zcmp_assembly_mapping(rlist, spimm, false)
 /* ****************************************************************** */
 
 mapping rns_name : bits(3) <-> string = {
@@ -197,21 +194,6 @@ mapping rns_to_regidx : cregidx <-> regidx = {
 
 mapping creg_zcmp_name : cregidx <-> string = { Cregidx(i) <-> rns_name(i) }
 
-union clause ast = CM_MVA01S : (cregidx, cregidx)
-
-mapping clause encdec_compressed = CM_MVA01S(r1s', r2s')
-  <-> 0b101 @ 0b011 @ encdec_creg(r1s') @ 0b11 @ encdec_creg(r2s') @ 0b10
-  when currentlyEnabled(Ext_Zcmp)
-
-function clause execute (CM_MVA01S(r1s', r2s')) = {
-  X(a0) = X(rns_to_regidx(r1s'));
-  X(a1) = X(rns_to_regidx(r2s'));
-  RETIRE_SUCCESS
-}
-
-mapping clause assembly = CM_MVA01S(r1s', r2s')
-  <-> "cm.mva01s" ^ spc() ^ creg_zcmp_name(r1s') ^ sep() ^ creg_zcmp_name(r2s')
-/* ****************************************************************** */
 union clause ast = CM_MVSA01 : (cregidx, cregidx)
 
 mapping clause encdec_compressed = CM_MVSA01(r1s', r2s')
@@ -226,3 +208,18 @@ function clause execute (CM_MVSA01(r1s', r2s')) = {
 
 mapping clause assembly = CM_MVSA01(r1s', r2s')
   <-> "cm.mvsa01" ^ spc() ^ creg_zcmp_name(r1s') ^ sep() ^ creg_zcmp_name(r2s')
+/* ****************************************************************** */
+union clause ast = CM_MVA01S : (cregidx, cregidx)
+
+mapping clause encdec_compressed = CM_MVA01S(r1s', r2s')
+  <-> 0b101 @ 0b011 @ encdec_creg(r1s') @ 0b11 @ encdec_creg(r2s') @ 0b10
+  when currentlyEnabled(Ext_Zcmp)
+
+function clause execute (CM_MVA01S(r1s', r2s')) = {
+  X(a0) = X(rns_to_regidx(r1s'));
+  X(a1) = X(rns_to_regidx(r2s'));
+  RETIRE_SUCCESS
+}
+
+mapping clause assembly = CM_MVA01S(r1s', r2s')
+  <-> "cm.mva01s" ^ spc() ^ creg_zcmp_name(r1s') ^ sep() ^ creg_zcmp_name(r2s')
