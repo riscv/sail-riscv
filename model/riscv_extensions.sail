@@ -150,6 +150,15 @@ function clause hartSupports(Ext_Svinval) = config extensions.Svinval.supported
 enum clause extension = Ext_Svnapot
 // Page-Based Memory Types
 enum clause extension = Ext_Svpbmt
-
+// Supervisor-Level Address Translation Modes
+enum clause extension = Ext_Svbare
+enum clause extension = Ext_Sv32
+function clause hartSupports(Ext_Sv32) = config extensions.Sv32.supported
+enum clause extension = Ext_Sv39
+function clause hartSupports(Ext_Sv39) = config extensions.Sv39.supported
+enum clause extension = Ext_Sv48
+function clause hartSupports(Ext_Sv48) = config extensions.Sv48.supported
+enum clause extension = Ext_Sv57
+function clause hartSupports(Ext_Sv57) = config extensions.Sv57.supported
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
