@@ -198,8 +198,6 @@ function reverse_bits (xs)  = {
   ys
 }
 
-overload reverse = {reverse_bits}
-
 overload operator / = {quot_positive_round_zero, quot_round_zero}
 overload operator * = {mult_atom, mult_int}
 

@@ -142,7 +142,7 @@ function clause execute (VBREV8_V(vm, vs2, vd)) = {
     if mask[i] == bitone then {
       var output : bits('m) = zeros();
       foreach (j from 0 to (SEW - 8) by 8)
-        output[j+7..j] = reverse(vs2_val[i][j+7..j]);
+        output[j+7..j] = reverse_bits(vs2_val[i][j+7..j]);
       result[i] = output;
     };
   };
