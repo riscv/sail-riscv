@@ -14,7 +14,10 @@
             "count" : 16
         },
         "misaligned" : {
-            "supported" : true
+            "supported" : true,
+            "to_byte" : false,
+            "order_decreasing" : false,
+            "allowed_within" : 0
         },
         "translation" : {
             "dirty_update" : false
@@ -61,6 +64,9 @@
             "supported" : true
         },
         "U" : {
+            "supported" : true
+        },
+        "Zama16b" : {
             "supported" : true
         },
         "Zicbom" : {
