@@ -14,7 +14,10 @@
       "count": 16
     },
     "misaligned": {
-      "supported": true
+      "supported": true,
+      "byte_by_byte": false,
+      "order_decreasing": false,
+      "allowed_within_exp": 0
     },
     "translation": {
       "dirty_update": false
