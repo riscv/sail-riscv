@@ -85,6 +85,7 @@ set(tests
     "test_hello_world.c"
     "test_max_pmp.c"
     "test_minstret.S"
+    "test_pmp_access.c"
 )
 
 foreach (xlen IN ITEMS 32 64)
