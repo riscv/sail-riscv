@@ -14,7 +14,7 @@
             "count" : 16
         },
         "misaligned" : {
-            "supported" : false
+            "supported" : true
         },
         "translation" : {
             "dirty_update" : false
