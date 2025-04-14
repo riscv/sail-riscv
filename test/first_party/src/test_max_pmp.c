@@ -37,6 +37,11 @@ int main()
 
   asm volatile("csrw pmpcfg0, %[cfg]" : : [cfg] "r"(pmpcfg_napot));
 
+  // PMP changes require an SFENCE.VMA on any hart that implements
+  // page-based virtual memory, even if VM is not currently enabled.
+  // (Doesn't actually affect the Sail model.)
+  asm volatile("sfence.vma");
+
   // Access memory to test loads/stores.
   GLOBAL += 2;
   if (GLOBAL != 3) {
