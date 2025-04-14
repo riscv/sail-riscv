@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Zcmop) = true & currentlyEnabled(Ext_Zca) // TODO: add configuration
+function clause currentlyEnabled(Ext_Zcmop) = hartSupports(Ext_Zcmop) & currentlyEnabled(Ext_Zca)
 
 union clause ast = ZCMOP : (bits(3))
 

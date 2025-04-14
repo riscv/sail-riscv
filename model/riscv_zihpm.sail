@@ -7,7 +7,7 @@
 /*=======================================================================================*/
 
 /* Hardware Performance Monitoring counters */
-function clause currentlyEnabled(Ext_Zihpm) = true
+function clause currentlyEnabled(Ext_Zihpm) = hartSupports(Ext_Zihpm) & currentlyEnabled(Ext_Zicntr)
 
 /* Hardware performance monitoring counters */
 mapping clause csr_name_map = 0xC03  <-> "hpmcounter3"

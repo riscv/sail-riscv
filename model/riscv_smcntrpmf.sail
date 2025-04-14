@@ -1,4 +1,4 @@
-function clause currentlyEnabled(Ext_Smcntrpmf) = true
+function clause currentlyEnabled(Ext_Smcntrpmf) = hartSupports(Ext_Smcntrpmf) & currentlyEnabled(Ext_Zicntr)
 
 bitfield CountSmcntrpmf : bits(64) = {
   MINH  : 62,

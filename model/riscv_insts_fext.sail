@@ -25,11 +25,8 @@
 
 /* **************************************************************** */
 
-// TODO: Add config flags to control Zfh and Zfhmin
-function clause currentlyEnabled(Ext_Zfh) = (misa[F] == 0b1) & (mstatus[FS] != 0b00)
-
-// Zfhmin is a subset of Zfh. This can be changed to currentlyEnabled(Ext_Zfh) | sys_enable_zfhmin() when more configuration is implemented.
-function clause currentlyEnabled(Ext_Zfhmin) = currentlyEnabled(Ext_Zfh)
+function clause currentlyEnabled(Ext_Zfh) =  hartSupports(Ext_Zfh) & currentlyEnabled(Ext_F)
+function clause currentlyEnabled(Ext_Zfhmin) =  (hartSupports(Ext_Zfhmin) & currentlyEnabled(Ext_F)) | currentlyEnabled(Ext_Zfh)
 
 mapping encdec_rounding_mode : rounding_mode <-> bits(3) = {
   RM_RNE <-> 0b000,

@@ -15,7 +15,7 @@
 
 /* ****************************************************************** */
 
-function clause currentlyEnabled(Ext_Zcf) = currentlyEnabled(Ext_Zca) & currentlyEnabled(Ext_F) & xlen == 32
+function clause currentlyEnabled(Ext_Zcf) = hartSupports(Ext_Zcf) & currentlyEnabled(Ext_F) & currentlyEnabled(Ext_Zca) & (currentlyEnabled(Ext_C) | not(hartSupports(Ext_C)))
 
 union clause ast = C_FLWSP : (bits(6), fregidx)
 
