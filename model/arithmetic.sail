@@ -31,8 +31,8 @@ function carryless_mulr(a, b) = {
 /* Equivalent reverse carry-less multiply. */
 val carryless_mul_reversed : forall 'n, 'n > 0. (bits('n), bits('n)) -> bits('n)
 function carryless_mul_reversed(a, b) = {
-  let prod = carryless_mul(reverse(a), reverse(b));
-  reverse(prod['n - 1 .. 0])
+  let prod = carryless_mul(reverse_bits(a), reverse_bits(b));
+  reverse_bits(prod['n - 1 .. 0])
 }
 
 $[property]
