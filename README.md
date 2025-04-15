@@ -126,6 +126,7 @@ Supported RISC-V ISA features
 - Svinval extension for fine-grained address-translation cache invalidation, v1.0
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
 - Physical Memory Protection (PMP)
+- Endianness control
 
 <!-- Uncomment the following section when unratified extensions are added
 The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:

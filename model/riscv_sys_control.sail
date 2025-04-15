@@ -341,10 +341,7 @@ function reset_sys() -> unit = {
 
   // "If little-endian memory accesses are supported, the mstatus/mstatush field
   // MBE is reset to 0."
-  // TODO: The handling of mstatush is a bit awkward currently, but the model
-  // currently only supports little endian so MBE is always 0.
-  // See https://github.com/riscv/sail-riscv/issues/639
-  // mstatus[MBE] = 0b0;
+  mstatus[MBE] = 0b0;
 
   // "The misa register is reset to enable the maximal set of supported extensions"
   reset_misa();
