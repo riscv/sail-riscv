@@ -370,7 +370,7 @@ function translateAddr(
 
   let mode = translationMode(effPriv);
 
-  if mode == Bare then return TR_Address(Physaddr(zero_extend(virtaddr_bits(vAddr))), init_ext_ptw);
+  if mode == Bare then return TR_Address(Physaddr(zero_extend(bits_of(vAddr))), init_ext_ptw);
 
   // Sv39 -> 39, etc.
   let sv_width = satp_mode_width(mode);
@@ -381,8 +381,8 @@ function translateAddr(
   // Cannot use Sv39+ on RV32.
   assert(sv_width == 32 | xlen == 64);
 
-  let svAddr = virtaddr_bits(vAddr)[sv_width - 1 .. 0];
-  if virtaddr_bits(vAddr) != sign_extend(svAddr) then {
+  let svAddr = bits_of(vAddr)[sv_width - 1 .. 0];
+  if bits_of(vAddr) != sign_extend(svAddr) then {
     TR_Failure(translationException(ac, PTW_Invalid_Addr()), init_ext_ptw)
   } else {
     let mxr    = mstatus[MXR] == 0b1;
@@ -403,7 +403,7 @@ function translateAddr(
       TR_Address(ppn, ext_ptw) => {
         // Step 10 of VATP.
         // Append the page offset. This is now a 34 or 56 bit address.
-        let paddr = ppn @ virtaddr_bits(vAddr)[pagesize_bits - 1 .. 0];
+        let paddr = ppn @ bits_of(vAddr)[pagesize_bits - 1 .. 0];
 
         // On RV64 paddr can be 34 or 56 bits, so we zero extend to 64.
         // On RV32 paddr can only be 34 bits. Sail knows this due to
