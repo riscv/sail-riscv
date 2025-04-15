@@ -9,8 +9,8 @@
 /* ****************************************************************** */
 /* This file specifies the instructions in the base integer set.      */
 
-function clause currentlyEnabled(Ext_C) = misa[C] == 0b1 & hartSupports(Ext_C)
-function clause currentlyEnabled(Ext_Zca) = currentlyEnabled(Ext_C)
+function clause currentlyEnabled(Ext_C) = hartSupports(Ext_C) & misa[C] == 0b1
+function clause currentlyEnabled(Ext_Zca) = hartSupports(Ext_Zca) & (currentlyEnabled(Ext_C) | not(hartSupports(Ext_C)))
 
 /* ****************************************************************** */
 union clause ast = UTYPE : (bits(20), regidx, uop)

@@ -25,7 +25,7 @@ engineer-friendly language, much like earlier vendor pseudocode, but more precis
 <p>
 
 Given a Sail specification, the tool can type-check it, generate documentation snippets (in LaTeX or AsciiDoc), generate executable emulators, show specification coverage, generate versions of the ISA for relaxed memory model tools, support automated instruction-sequence test generation, generate  theorem-prover definitions for
-interactive proof (in Isabelle, HOL4, and Coq), support proof about binary code (in Islaris), and (in progress) generate a reference ISA model in SystemVerilog that can be used for formal hardware verification.
+interactive proof (in Isabelle, Rocq, and Lean), support proof about binary code (in Islaris), and (in progress) generate a reference ISA model in SystemVerilog that can be used for formal hardware verification.
 <p>
 
   <img width="800" src="https://www.cl.cam.ac.uk/~pes20/sail/overview-sail.png?">
@@ -127,6 +127,10 @@ Supported RISC-V ISA features
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
 - Physical Memory Protection (PMP)
 - Endianness control
+
+<!-- Uncomment the following section when unratified extensions are added
+The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
+-  -->
 
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 
@@ -276,8 +280,7 @@ Generating theorem-prover definitions
 
 Sail aims to support the generation of idiomatic theorem prover
 definitions across multiple tools. At present it supports Isabelle,
-HOL4 and Coq, and the `prover_snapshots` directory provides snapshots of the generated theorem prover
-definitions.
+Rocq, and Lean.
 
 These theorem-prover translations can target multiple monads for
 different purposes. The first is a state monad with nondeterminism and
@@ -293,7 +296,7 @@ tool.
 
 
 The files under `handwritten_support` provide library definitions for
-Coq, Isabelle and HOL4.
+each prover.
 
 Directory Structure
 -------------------

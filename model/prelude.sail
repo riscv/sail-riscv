@@ -242,3 +242,7 @@ type mem_access_width = range(1, max_mem_access)
 // Function to reverse endianness.
 // Currently, not able to import reverse_endianness.sail library because of type compatibility issue.
 val reverse_endianness = pure {c: "reverse_endianness"} : forall 'n . bits(8 * 'n) -> bits(8 * 'n)
+
+// Enable unratified extensions
+val sys_enable_experimental_extensions = pure "sys_enable_experimental_extensions" : unit -> bool
+

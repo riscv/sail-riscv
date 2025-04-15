@@ -5,7 +5,7 @@
 /*                                                                                       */
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
-function clause currentlyEnabled(Ext_Zicntr) = true
+function clause currentlyEnabled(Ext_Zicntr) = hartSupports(Ext_Zicntr)
 
 /* unprivileged counters/timers */
 mapping clause csr_name_map = 0xC00  <-> "cycle"
@@ -47,6 +47,6 @@ function clause read_CSR(0xB80 if xlen == 32)= mcycle[63 .. 32]
 function clause read_CSR(0xB82 if xlen == 32) = minstret[63 .. 32]
 
 function clause write_CSR(0xB00, value) = { mcycle[(xlen - 1) .. 0] = value; value }
-function clause write_CSR(0xB02, value) = { minstret_write = Some(value); value }
+function clause write_CSR(0xB02, value) = { minstret[(xlen - 1) .. 0] = value; minstret_increment = false; value }
 function clause write_CSR((0xB80, value) if xlen == 32) = { mcycle[63 .. 32] = value; value }
-function clause write_CSR((0xB82, value) if xlen == 32) = { minstreth_write = Some(value); value }
+function clause write_CSR((0xB82, value) if xlen == 32) = { minstret[63 .. 32] = value; minstret_increment = false; value }

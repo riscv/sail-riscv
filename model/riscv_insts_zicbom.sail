@@ -90,8 +90,14 @@ function process_clean_inval(rs1, cbop) = {
           // instruction is permitted to access the cache block is UNSPECIFIED."
           //
           // In this implementation we currently don't allow access for fetches.
-          let exc_read = phys_access_check(Read(Data), cur_privilege, paddr, cache_block_size);
-          let exc_write = phys_access_check(Write(Data), cur_privilege, paddr, cache_block_size);
+
+          // effectivePrivilege() only cares if access type is Execute or not
+          // so it doesn't matter that we use Read here. In future we will use
+          // the proper Cache access type when it is available. See
+          // https://github.com/riscv/sail-riscv/pull/792
+          let ep = effectivePrivilege(Read(Data), mstatus, cur_privilege);
+          let exc_read = phys_access_check(Read(Data), ep, paddr, cache_block_size);
+          let exc_write = phys_access_check(Write(Data), ep, paddr, cache_block_size);
           match (exc_read, exc_write) {
             // Access is permitted if read OR write are allowed. If neither
             // are allowed then we always report a store exception.

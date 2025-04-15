@@ -195,7 +195,7 @@ else
     C_LIBS_WRAPPED = $(C_LIBS)
 endif
 
-RISCV_EXTRAS_LEM_FILES = riscv_extras.lem mem_metadata.lem riscv_extras_fdext.lem
+RISCV_EXTRAS_LEM_FILES = riscv_extras.lem riscv_extras_fdext.lem
 RISCV_EXTRAS_LEM = $(addprefix handwritten_support/,$(RISCV_EXTRAS_LEM_FILES))
 
 .PHONY:
@@ -291,12 +291,12 @@ endif
 
 generated_definitions/lem/$(ARCH)/riscv.lem: $(SAIL_SRCS) Makefile.old
 	mkdir -p generated_definitions/lem/$(ARCH) generated_definitions/isabelle/$(ARCH)
-	$(SAIL) $(SAIL_FLAGS) -lem -lem_output_dir generated_definitions/lem/$(ARCH) -isa_output_dir generated_definitions/isabelle/$(ARCH) -o riscv -lem_lib Riscv_extras -lem_lib Riscv_extras_fdext -lem_lib Mem_metadata $(SAIL_SRCS)
+	$(SAIL) $(SAIL_FLAGS) --config config/default.json -lem -lem_output_dir generated_definitions/lem/$(ARCH) -isa_output_dir generated_definitions/isabelle/$(ARCH) -o riscv -lem_lib Riscv_extras -lem_lib Riscv_extras_fdext $(SAIL_SRCS)
 	echo "declare {isabelle} rename field sync_exception_ext = sync_exception_ext_exception" >> generated_definitions/lem/$(ARCH)/riscv_types.lem
 
 # sed -i isn't posix compliant, unfortunately
 generated_definitions/isabelle/$(ARCH)/Riscv.thy: generated_definitions/isabelle/$(ARCH)/ROOT generated_definitions/lem/$(ARCH)/riscv.lem $(RISCV_EXTRAS_LEM) Makefile.old
-	lem -wl ign -isa -outdir generated_definitions/isabelle/$(ARCH) -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
+	lem -no_lifting_toplevel_match_for Riscv_types.ast -wl ign -isa -outdir generated_definitions/isabelle/$(ARCH) -lib Sail=$(SAIL_SRC_DIR)/lem_interp -lib Sail=$(SAIL_SRC_DIR)/gen_lib \
 		$(RISCV_EXTRAS_LEM) \
 		generated_definitions/lem/$(ARCH)/riscv_types.lem \
 		generated_definitions/lem/$(ARCH)/riscv.lem
@@ -304,7 +304,9 @@ generated_definitions/isabelle/$(ARCH)/Riscv.thy: generated_definitions/isabelle
 	mv  generated_definitions/isabelle/$(ARCH)/Riscv_types.thy.new generated_definitions/isabelle/$(ARCH)/Riscv_types.thy
 	sed "s/record( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/record (overloaded) ( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/" generated_definitions/isabelle/$(ARCH)/Riscv_types.thy > generated_definitions/isabelle/$(ARCH)/Riscv_types.thy.new
 	mv generated_definitions/isabelle/$(ARCH)/Riscv_types.thy.new generated_definitions/isabelle/$(ARCH)/Riscv_types.thy
-	sed "s/by pat_completeness auto/by pat_completeness (auto intro!: let_cong bind_cong MemoryOpResult.case_cong)/" generated_definitions/isabelle/$(ARCH)/Riscv.thy > generated_definitions/isabelle/$(ARCH)/Riscv.thy.new
+	sed "s/by pat_completeness auto/by pat_completeness (auto intro!: let_cong bind_cong result.case_cong)/" generated_definitions/isabelle/$(ARCH)/Riscv.thy > generated_definitions/isabelle/$(ARCH)/Riscv.thy.new
+	mv generated_definitions/isabelle/$(ARCH)/Riscv.thy.new generated_definitions/isabelle/$(ARCH)/Riscv.thy
+	sed "s/WriteRAM_Meta addr width meta/WriteRAM_Meta addr width ()/" generated_definitions/isabelle/$(ARCH)/Riscv.thy > generated_definitions/isabelle/$(ARCH)/Riscv.thy.new
 	mv generated_definitions/isabelle/$(ARCH)/Riscv.thy.new generated_definitions/isabelle/$(ARCH)/Riscv.thy
 
 generated_definitions/hol4/$(ARCH)/Holmakefile: handwritten_support/Holmakefile
@@ -368,7 +370,7 @@ riscv_rmem: generated_definitions/for-rmem/riscv_toFromInterp2.ml
 riscv_rmem: generated_definitions/for-rmem/riscv.defs
 .PHONY: riscv_rmem
 
-generated_definitions/for-rmem/riscv.lem: SAIL_FLAGS += -lem_lib Riscv_extras -lem_lib Riscv_extras_fdext -lem_lib Mem_metadata
+generated_definitions/for-rmem/riscv.lem: SAIL_FLAGS += -lem_lib Riscv_extras -lem_lib Riscv_extras_fdext
 generated_definitions/for-rmem/riscv.lem: $(SAIL_RMEM_SRCS)
 	mkdir -p $(dir $@)
 #	We do not need the isabelle .thy files, but sail always generates them

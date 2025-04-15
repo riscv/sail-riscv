@@ -1,6 +1,14 @@
+function(string_upper_initial s result)
+    string(SUBSTRING ${s} 0 1 initial)
+    string(SUBSTRING ${s} 1 -1 remainder)
+    string(TOUPPER ${initial} new_initial)
+    string(CONCAT new ${new_initial} ${remainder})
+    set("${result}" "${new}" PARENT_SCOPE)
+endfunction()
+
 foreach (xlen IN ITEMS 32 64)
     foreach (flen IN ITEMS 32 64)
-        foreach (variant IN ITEMS "" "rvfi" "rocq" "rmem" "lean")
+        foreach (variant IN ITEMS "" "rvfi" "rocq" "rmem" "lean" "lem" "isabelle")
             set(arch "rv${xlen}")
             if (flen EQUAL 32)
                 string(APPEND arch "f")
@@ -431,6 +439,7 @@ foreach (xlen IN ITEMS 32 64)
                         --coq-output-dir "${CMAKE_BINARY_DIR}/rocq"
                         # The prefix of the output files.
                         -o "${arch}"
+                        --config ${CMAKE_SOURCE_DIR}/config/default.json
                         # Minimum required Sail compiler version.
                         --require-version ${SAIL_REQUIRED_VER}
                         # Input files.
@@ -481,11 +490,99 @@ foreach (xlen IN ITEMS 32 64)
                         --lean-noncomputable-function encdec_compressed_forwards_matches
                         --lean-noncomputable-function encdec_compressed_backwards_matches
                         --lean-import-file ../handwritten_support/RiscvExtras.lean
+                        --config ${CMAKE_SOURCE_DIR}/config/default.json
                         -o "Lean_${arch_uppercase}"
                         ${sail_srcs}
                 )
 
                 add_custom_target(generated_lean_${arch} DEPENDS "lean_${arch_uppercase}.lean")
+            endif()
+
+            # Build Lem definitions, en route to Isabelle or HOL4.
+            if (variant STREQUAL "lem")
+                string_upper_initial("${arch}" arch_thy)
+                add_custom_command(
+                    DEPENDS ${sail_srcs} ${CMAKE_SOURCE_DIR}/config/default.json
+                    VERBATIM
+                    OUTPUT "${arch}.lem" "${arch}_types.lem" "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_lemmas.thy"
+                    COMMENT "Building Lem definitions from Sail model (${arch})"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    COMMAND
+                        ${SAIL_BIN}
+                        --lem
+                        --lem-lib Riscv_extras
+                        --lem-lib Riscv_extras_fdext
+                        --lem-output-dir ${CMAKE_CURRENT_BINARY_DIR}
+                        # Sail also produces a lemmas file just for Isabelle
+                        --isa-output-dir "${CMAKE_BINARY_DIR}/isabelle/${arch}"
+                        # The prefix of the output files.
+                        -o "${arch}"
+                        # Minimum required Sail compiler version.
+                        --require-version ${SAIL_REQUIRED_VER}
+                        --config ${CMAKE_SOURCE_DIR}/config/default.json
+                        # Input files.
+                        ${sail_srcs}
+                    COMMAND
+                        echo
+                        "declare {isabelle} rename field sync_exception_ext = sync_exception_ext_exception"
+                        >>
+                        ${CMAKE_CURRENT_BINARY_DIR}/${arch}_types.lem
+
+                )
+                add_custom_target(generated_lem_${arch} DEPENDS "${arch}.lem")
+            endif()
+
+            # Build Isabelle definitions from Lem
+            if (variant STREQUAL "isabelle")
+                string_upper_initial("${arch}" arch_thy)
+                file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/isabelle/${arch}")
+                add_custom_command(
+                    DEPENDS "${arch}.lem" "${arch}_types.lem"
+                    VERBATIM
+                    OUTPUT "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy" "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy"
+                    COMMENT "Building Isabelle definitions from Lem definitions (${arch})"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                    COMMAND
+                        lem
+                        -no_lifting_toplevel_match_for ${arch_thy}_types.ast
+                        -wl ign
+                        -isa
+                        -outdir ${CMAKE_BINARY_DIR}/isabelle/${arch}
+                        -lib Sail=${sail_dir}/src/gen_lib
+                        ${CMAKE_SOURCE_DIR}/handwritten_support/riscv_extras.lem
+                        ${CMAKE_SOURCE_DIR}/handwritten_support/riscv_extras_fdext.lem
+                        ${arch}_types.lem
+                        ${arch}.lem
+                    COMMAND
+                        sed
+                        -e "s/datatype ast/datatype (plugins only: size) ast/"
+                        -e "s/record( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/record (overloaded) ( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/"
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy"
+                        >
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy.new"
+                    COMMAND
+                        mv
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy.new"
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy"
+                    COMMAND
+                        sed
+                        -e "s/by pat_completeness auto/by pat_completeness (auto intro!: let_cong bind_cong result.case_cong)/"
+                        -e "s/WriteRAM_Meta addr width meta/WriteRAM_Meta addr width ()/"
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy"
+                        >
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy.new"
+                    COMMAND
+                        mv
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy.new"
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy"
+                    COMMAND
+                        sed
+                        "s/%ARCH%/${arch_thy}/"
+                        "${CMAKE_SOURCE_DIR}/handwritten_support/ROOT.in"
+                        >
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/ROOT"
+                )
+                add_custom_target(generated_isabelle_${arch} DEPENDS "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy")
             endif()
         endforeach()
     endforeach()

@@ -6,8 +6,8 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_B) = misa[B] == 0b1 & hartSupports(Ext_B)
-function clause currentlyEnabled(Ext_Zba) = true | currentlyEnabled(Ext_B)
+function clause currentlyEnabled(Ext_B) = hartSupports(Ext_B) & misa[B] == 0b1
+function clause currentlyEnabled(Ext_Zba) = hartSupports(Ext_Zba) | currentlyEnabled(Ext_B)
 
 /* ****************************************************************** */
 union clause ast = RISCV_SLLIUW : (bits(6), regidx, regidx)

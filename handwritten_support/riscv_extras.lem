@@ -73,164 +73,35 @@ open import Pervasives_extra
 open import Sail2_instr_kinds
 open import Sail2_values
 open import Sail2_operators_bitlists
-open import Sail2_prompt_monad
-open import Sail2_prompt
+open import Sail2_concurrency_interface
+open import Sail2_monadic_combinators
 
 type bitvector = list Sail2_values.bitU
 
-let MEM_fence_rw_rw () = barrier (Barrier_RISCV_rw_rw ())
-let MEM_fence_r_rw  () = barrier (Barrier_RISCV_r_rw ())
-let MEM_fence_r_r   () = barrier (Barrier_RISCV_r_r ())
-let MEM_fence_rw_w  () = barrier (Barrier_RISCV_rw_w ())
-let MEM_fence_w_w   () = barrier (Barrier_RISCV_w_w ())
-let MEM_fence_w_rw  () = barrier (Barrier_RISCV_w_rw ())
-let MEM_fence_rw_r  () = barrier (Barrier_RISCV_rw_r ())
-let MEM_fence_r_w   () = barrier (Barrier_RISCV_r_w ())
-let MEM_fence_w_r   () = barrier (Barrier_RISCV_w_r ())
-let MEM_fence_tso   () = barrier (Barrier_RISCV_tso ())
-let MEM_fence_i     () = barrier (Barrier_RISCV_i ())
+val load_reservation : forall 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv 'e. bitvector -> monad 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv unit 'e
+let load_reservation addr = return ()
 
-val MEMea                            : forall 'rv 'e. bitvector -> integer -> monad 'rv unit 'e
-val MEMea_release                    : forall 'rv 'e. bitvector -> integer -> monad 'rv unit 'e
-val MEMea_strong_release             : forall 'rv 'e. bitvector -> integer -> monad 'rv unit 'e
-val MEMea_conditional                : forall 'rv 'e. bitvector -> integer -> monad 'rv unit 'e
-val MEMea_conditional_release        : forall 'rv 'e. bitvector -> integer -> monad 'rv unit 'e
-val MEMea_conditional_strong_release : forall 'rv 'e. bitvector -> integer -> monad 'rv unit 'e
-
-let MEMea addr size                      = write_mem_ea Write_plain () addr size
-let MEMea_release addr size              = write_mem_ea Write_RISCV_release () addr size
-let MEMea_strong_release addr size       = write_mem_ea Write_RISCV_strong_release () addr size
-let MEMea_conditional addr size          = write_mem_ea Write_RISCV_conditional () addr size
-let MEMea_conditional_release addr size  = write_mem_ea Write_RISCV_conditional_release () addr size
-let MEMea_conditional_strong_release addr size
-                                         = write_mem_ea Write_RISCV_conditional_strong_release () addr size
-
-val MEMr                         : forall 'rv 'a 'b 'e. integer -> integer -> bitvector -> bitvector -> monad 'rv bitvector 'e
-val MEMr_acquire                 : forall 'rv 'a 'b 'e. integer -> integer -> bitvector -> bitvector -> monad 'rv bitvector 'e
-val MEMr_strong_acquire          : forall 'rv 'a 'b 'e. integer -> integer -> bitvector -> bitvector -> monad 'rv bitvector 'e
-val MEMr_reserved                : forall 'rv 'a 'b 'e. integer -> integer -> bitvector -> bitvector -> monad 'rv bitvector 'e
-val MEMr_reserved_acquire        : forall 'rv 'a 'b 'e. integer -> integer -> bitvector -> bitvector -> monad 'rv bitvector 'e
-val MEMr_reserved_strong_acquire : forall 'rv 'a 'b 'e. integer -> integer -> bitvector -> bitvector -> monad 'rv bitvector 'e
-
-let MEMr addrsize size hexRAM addr                         = read_mem Read_plain addrsize addr size
-let MEMr_acquire addrsize size hexRAM addr                 = read_mem Read_RISCV_acquire addrsize addr size
-let MEMr_strong_acquire addrsize size hexRAM addr          = read_mem Read_RISCV_strong_acquire addrsize addr size
-let MEMr_reserved addrsize size hexRAM addr                = read_mem Read_RISCV_reserved addrsize addr size
-let MEMr_reserved_acquire addrsize size hexRAM addr        = read_mem Read_RISCV_reserved_acquire addrsize addr size
-let MEMr_reserved_strong_acquire addrsize size hexRAM addr = read_mem Read_RISCV_reserved_strong_acquire addrsize addr size
-
-val MEMw                            : forall 'rv 'a 'b 'e. integer -> integer -> bitvector -> bitvector -> bitvector -> monad 'rv bool 'e
-val MEMw_release                    : forall 'rv 'a 'b 'e. integer -> integer -> bitvector -> bitvector -> bitvector -> monad 'rv bool 'e
-val MEMw_strong_release             : forall 'rv 'a 'b 'e. integer -> integer -> bitvector -> bitvector -> bitvector -> monad 'rv bool 'e
-val MEMw_conditional                : forall 'rv 'a 'b 'e. integer -> integer -> bitvector -> bitvector -> bitvector -> monad 'rv bool 'e
-val MEMw_conditional_release        : forall 'rv 'a 'b 'e. integer -> integer -> bitvector -> bitvector -> bitvector -> monad 'rv bool 'e
-val MEMw_conditional_strong_release : forall 'rv 'a 'b 'e. integer -> integer -> bitvector -> bitvector -> bitvector -> monad 'rv bool 'e
-
-let MEMw addrsize size hexRAM addr                            = write_mem Write_plain addrsize addr size
-let MEMw_release addrsize size hexRAM addr                    = write_mem Write_RISCV_release addrsize addr size
-let MEMw_strong_release addrsize size hexRAM addr             = write_mem Write_RISCV_strong_release addrsize addr size
-let MEMw_conditional addrsize size hexRAM addr                = write_mem Write_RISCV_conditional addrsize addr size
-let MEMw_conditional_release addrsize size hexRAM addr        = write_mem Write_RISCV_conditional_release addrsize addr size
-let MEMw_conditional_strong_release addrsize size hexRAM addr = write_mem Write_RISCV_conditional_strong_release addrsize addr size
-
-val load_reservation : bitvector -> unit
-let load_reservation addr = ()
-
-let speculate_conditional_success () = excl_result ()
+val speculate_conditional_success : forall 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv 'e. unit -> monad 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv bool 'e
+let speculate_conditional_success () = return true
 
 let match_reservation _ = true
-let cancel_reservation () = ()
-
-val sys_enable_writable_misa : unit -> bool
-let sys_enable_writable_misa () = true
-declare ocaml target_rep function sys_enable_writable_misa = `Platform.enable_writable_misa`
-
-val sys_enable_rvc : unit -> bool
-let sys_enable_rvc () = true
-declare ocaml target_rep function sys_enable_rvc = `Platform.enable_rvc`
-
-val sys_enable_fdext : unit -> bool
-let sys_enable_fdext () = true
-declare ocaml target_rep function sys_enable_fdext = `Platform.enable_fdext`
-
-val sys_enable_zfinx : unit -> bool
-let sys_enable_zfinx () = false
-declare ocaml target_rep function sys_enable_zfinx = `Platform.enable_zfinx`
-
-val sys_enable_vext : unit -> bool
-let sys_enable_vext () = true
-declare ocaml target_rep function sys_enable_vext = `Platform.enable_vext`
-
-val sys_enable_writable_fiom : unit -> bool
-let sys_enable_writable_fiom () = true
-declare ocaml target_rep function sys_enable_writable_fiom = `Platform.enable_writable_fiom`
-
-val sys_pmp_grain : unit -> integer
-let sys_pmp_grain () = 0
-declare ocaml target_rep function sys_pmp_grain = `Platform.sys_pmp_grain`
-
-val sys_pmp_count : unit -> integer
-let sys_pmp_count () = 0
-declare ocaml target_rep function sys_pmp_count = `Platform.sys_pmp_count`
-
-val plat_ram_base : unit -> bitvector
-let plat_ram_base () = []
-declare ocaml target_rep function plat_ram_base = `Platform.dram_base`
-
-val plat_ram_size : unit -> bitvector
-let plat_ram_size () = []
-declare ocaml target_rep function plat_ram_size = `Platform.dram_size`
-
-val plat_rom_base : unit -> bitvector
-let plat_rom_base () = []
-declare ocaml target_rep function plat_rom_base = `Platform.rom_base`
-
-val plat_rom_size : unit -> bitvector
-let plat_rom_size () = []
-declare ocaml target_rep function plat_rom_size = `Platform.rom_size`
-
-val plat_cache_block_size_exp : unit -> bitvector
-let plat_cache_block_size_exp () = []
-declare ocaml target_rep function plat_cache_block_size_exp = `Platform.cache_block_size_exp`
-
-val plat_clint_base : unit -> bitvector
-let plat_clint_base () = []
-declare ocaml target_rep function plat_clint_base = `Platform.clint_base`
-
-val plat_clint_size : unit -> bitvector
-let plat_clint_size () = []
-declare ocaml target_rep function plat_clint_size = `Platform.clint_size`
-
-val plat_enable_dirty_update : unit -> bool
-let plat_enable_dirty_update () = false
-declare ocaml target_rep function plat_enable_dirty_update = `Platform.enable_dirty_update`
-
-val plat_enable_misaligned_access : unit -> bool
-let plat_enable_misaligned_access () = false
-declare ocaml target_rep function plat_enable_misaligned_access = `Platform.enable_misaligned_access`
-
-val plat_mtval_has_illegal_inst_bits : unit -> bool
-let plat_mtval_has_illegal_inst_bits () = false
-declare ocaml target_rep function plat_mtval_has_illegal_inst_bits = `Platform.mtval_has_illegal_inst_bits`
-
-val plat_insns_per_tick : unit -> integer
-let plat_insns_per_tick () = 1
-declare ocaml target_rep function plat_insns_per_tick = `Platform.insns_per_tick`
+let cancel_reservation () = return ()
 
 val plat_htif_tohost : unit -> bitvector
 let plat_htif_tohost () = []
 declare ocaml target_rep function plat_htif_tohost = `Platform.htif_tohost`
 
-val plat_term_write : bitvector -> unit
-let plat_term_write _ = ()
+val plat_term_write : forall 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv 'e. bitvector -> monad 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv unit 'e
+let plat_term_write _ = return ()
 declare ocaml target_rep function plat_term_write = `Platform.term_write`
 
-val plat_term_read : unit -> bitvector
-let plat_term_read () = []
+val plat_term_read : forall 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv 'e. unit -> monad 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv bitvector 'e
+let plat_term_read () = return []
 declare ocaml target_rep function plat_term_read = `Platform.term_read`
 
-val plat_get_16_random_bits : unit -> bitvector
-let plat_get_16_random_bits () = []
+val plat_get_16_random_bits : forall 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv 'e. Register_Value 'rv =>
+  unit -> monad 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv bitvector 'e
+let plat_get_16_random_bits () = choose_bitvector "plat_get_16_random_bits" 16
 declare ocaml target_rep function plat_get_16_random_bits = `Platform.get_16_random_bits`
 
 val shift_bits_right : bitvector -> bitvector -> bitvector

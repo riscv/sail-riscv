@@ -6,11 +6,8 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-// TODO: Make configurable.
-function sys_enable_sscofpmf() -> bool = true
-
 /* Counter OverFlow and Privilege Mode Filtering */
-function clause currentlyEnabled(Ext_Sscofpmf) = sys_enable_sscofpmf() & currentlyEnabled(Ext_Zihpm)
+function clause currentlyEnabled(Ext_Sscofpmf) = hartSupports(Ext_Sscofpmf) & currentlyEnabled(Ext_Zihpm)
 
 mapping clause csr_name_map = 0xB83  <-> "mhpmcounter3h"
 mapping clause csr_name_map = 0xB84  <-> "mhpmcounter4h"
