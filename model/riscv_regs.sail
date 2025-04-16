@@ -85,16 +85,6 @@ function rX (Regno(r) : regno) -> xlenbits = {
   regval_from_reg(v)
 }
 
-$ifdef RVFI_DII
-function rvfi_wX (Regno(r) : regno, v : xlenbits) -> unit = {
-  rvfi_int_data[rvfi_rd_wdata] = zero_extend(v);
-  rvfi_int_data[rvfi_rd_addr] = to_bits(8,r);
-  rvfi_int_data_present = true;
-}
-$else
-function rvfi_wX (r : regno, v : xlenbits) -> unit = ()
-$endif
-
 function wX (Regno(r) : regno, in_v : xlenbits) -> unit = {
   let v = regval_into_reg(in_v);
   match r {
@@ -132,11 +122,7 @@ function wX (Regno(r) : regno, in_v : xlenbits) -> unit = {
     31 => x31 = v,
     _  => assert(false, "invalid register number")
   };
-  if (r != 0) then {
-     rvfi_wX(Regno(r), in_v);
-     if   get_config_print_reg()
-     then print_reg("x" ^ dec_str(r) ^ " <- " ^ RegStr(v));
-  }
+  if (r != 0) then xreg_write_callback(regno_to_regidx(Regno(r)), in_v)
 }
 
 function rX_bits(i: regidx) -> xlenbits = rX(regidx_to_regno(i))

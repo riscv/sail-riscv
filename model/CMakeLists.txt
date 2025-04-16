@@ -261,6 +261,7 @@ foreach (xlen IN ITEMS 32 64)
                         # Extra #include's.
                         --c-include riscv_prelude.h
                         --c-include riscv_platform.h
+                        --c-include riscv_callbacks.h
                         # Don't dead-code eliminate these functions. These should match the
                         # ones used from riscv_sail.h
                         --c-preserve init_model
