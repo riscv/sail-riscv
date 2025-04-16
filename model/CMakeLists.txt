@@ -164,6 +164,7 @@ foreach (xlen IN ITEMS 32 64)
                 ${sail_check_srcs}
                 "riscv_vreg_type.sail"
                 "riscv_vext_regs.sail"
+                "riscv_stateen_regs.sail"
             )
 
             set(sail_arch_srcs
