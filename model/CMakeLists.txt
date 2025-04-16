@@ -146,6 +146,7 @@ foreach (xlen IN ITEMS 32 64)
                 "prelude_mem_metadata.sail"
                 "prelude_mem.sail"
                 "arithmetic.sail"
+                "range_util.sail"
             )
 
             if (variant STREQUAL "rvfi")
@@ -178,6 +179,7 @@ foreach (xlen IN ITEMS 32 64)
                 ${sail_sys_srcs}
                 "riscv_inst_retire.sail"
                 "riscv_platform.sail"
+                "riscv_pma.sail"
                 "riscv_mem.sail"
                 ${sail_vm_srcs}
                 # Shared/common code for the cryptography extension.

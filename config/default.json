@@ -13,28 +13,77 @@
       "grain": 0,
       "count": 16
     },
+    // This controls global support for misaligned access so it is
+    // checked before address translation. "misalignedFault" in
+    // "regions" is checked after address translation.
     "misaligned": {
       "supported": true
     },
     "translation": {
       "dirty_update": false
-    }
+    },
+    "regions": [
+      // ROM
+      {
+        "base": {
+          "len": 34,
+          "value": "0x0000"
+        },
+        "size": {
+          "len": 34,
+          "value": "0x1000"
+        },
+        "attributes": {
+          "cacheable": true,
+          "coherent": true,
+          "executable": true,
+          "readable": true,
+          "writable": false,
+          "readIdempotent": true,
+          "writeIdempotent": true,
+          "misalignedFault": "NoFault",
+          "atomicSupport": "AMONone",
+          "reservability": "RsrvNone",
+          "supportsCboZero": false
+        }
+      },
+      // RAM
+      {
+        "base": {
+          "len": 34,
+          "value": "0x80000000"
+        },
+        "size": {
+          "len": 34,
+          "value": "0x80000000"
+        },
+        "attributes": {
+          "cacheable": true,
+          "coherent": true,
+          "executable": true,
+          "readable": true,
+          "writable": true,
+          "readIdempotent": true,
+          "writeIdempotent": true,
+          "misalignedFault": "NoFault",
+          "atomicSupport": "AMOArithmetic",
+          "reservability": "RsrvEventual",
+          "supportsCboZero": true
+        }
+      }
+    ]
   },
   "platform": {
     "vendorid": 0,
     "archid": 0,
     "impid": 0,
     "hartid": 0,
-    "reset_vector": 4096,
+    // Address to boot from. A reset vector (small program fragment) that initialises
+    // m0 to the hart ID and m1 to the address of a the DTB. If a DTB is used it is
+    // written immediately after the reset vector. At the end of the reset vector
+    // it jumps to the entry point of the ELF.
+    "reset_vector": 0,
     "cache_block_size_exp": 6,
-    "ram": {
-      "base": 2147483648,
-      "size": 2147483648
-    },
-    "rom": {
-      "base": 4096,
-      "size": 4096
-    },
     "clint": {
       "base": 33554432,
       "size": 786432
