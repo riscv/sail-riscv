@@ -108,11 +108,18 @@ enum Retired = {RETIRE_SUCCESS, RETIRE_FAIL}
 
 /* memory access types */
 
+enum CacheAccessType = {
+  CleanFlush,
+  Inval,
+  Zero,
+}
+
 union AccessType ('a : Type) = {
   Read      : 'a,
   Write     : 'a,
   ReadWrite : ('a, 'a),
-  Execute   : unit
+  Execute   : unit,
+  Cache     : CacheAccessType,
 }
 
 enum word_width = {BYTE, HALF, WORD, DOUBLE}
