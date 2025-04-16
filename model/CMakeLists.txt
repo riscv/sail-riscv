@@ -139,6 +139,7 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
         "prelude_mem_metadata.sail"
         "prelude_mem.sail"
         "arithmetic.sail"
+        "range_util.sail"
         "rvfi_dii.sail"
         "rvfi_dii_v1.sail"
         "rvfi_dii_v2.sail"
@@ -170,6 +171,7 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
         ${sail_regs_srcs}
         ${sail_sys_srcs}
         "riscv_platform.sail"
+        "riscv_pma.sail"
         "riscv_sstc.sail"
         "riscv_mem.sail"
         "riscv_inst_retire.sail"
