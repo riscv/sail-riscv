@@ -78,6 +78,7 @@ if (DOWNLOAD_GMP)
     ExternalProject_Add(
         gmp
         URL https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
+        URL_HASH SHA256=a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898
         INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/gmp
         CONFIGURE_COMMAND "<SOURCE_DIR>/configure" "--prefix=<INSTALL_DIR>" --disable-shared --enable-static
         # The libgmp.a output is created by the install step but since GMP::GMP
