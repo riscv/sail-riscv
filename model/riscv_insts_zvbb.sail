@@ -23,13 +23,10 @@ function clause execute (VANDN_VV(vm, vs1, vs2, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -57,13 +54,10 @@ function clause execute (VANDN_VX(vm, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let rs1_val : bits('m) = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -87,23 +81,20 @@ mapping clause assembly = VBREV_V(vm, vs2, vd)
   <-> "vbrev.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 function clause execute (VBREV_V(vm, vs2, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      var output : bits('m) = zeros();
+      var output : bits('SEW) = zeros();
       foreach (j from 0 to (SEW - 1))
         output[SEW - 1 - j] = vs2_val[i][j];
       result[i] = output;
@@ -124,23 +115,20 @@ mapping clause assembly = VBREV8_V(vm, vs2, vd)
   <-> "vbrev8.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 function clause execute (VBREV8_V(vm, vs2, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n)= read_vmask(num_elem, vm, zvreg);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      var output : bits('m) = zeros();
+      var output : bits('SEW) = zeros();
       foreach (j from 0 to (SEW - 8) by 8)
         output[j+7..j] = reverse_bits(vs2_val[i][j+7..j]);
       result[i] = output;
@@ -161,23 +149,20 @@ mapping clause assembly = VREV8_V(vm, vs2, vd)
   <-> "vrev8.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 function clause execute (VREV8_V(vm, vs2, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      var output : bits('m) = zeros();
+      var output : bits('SEW) = zeros();
       foreach (j from 0 to (SEW - 8) by 8)
         output[(j + 7)..j] = vs2_val[i][(SEW - j - 1) .. (SEW - j - 8)];
       result[i] = output;
@@ -202,12 +187,9 @@ function clause execute (VCLZ_V(vm, vs2, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -215,7 +197,7 @@ function clause execute (VCLZ_V(vm, vs2, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       let clz = count_leading_zeros(vs2_val[i]);
-      result[i] = to_bits('m, clz);
+      result[i] = to_bits(SEW, clz);
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -237,12 +219,9 @@ function clause execute (VCTZ_V(vm, vs2, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -250,7 +229,7 @@ function clause execute (VCTZ_V(vm, vs2, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       let ctz = count_trailing_zeros(vs2_val[i]);
-      result[i] = to_bits('m, ctz);
+      result[i] = to_bits(SEW, ctz);
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -272,12 +251,9 @@ function clause execute (VCPOP_V(vm, vs2, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -310,20 +286,17 @@ function clause execute (VROL_VV(vm, vs1, vs2, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then
-      result[i] = vs2_val[i] <<< (vs1_val[i] & to_bits('m, SEW - 1));
+      result[i] = vs2_val[i] <<< (vs1_val[i] & to_bits(SEW, SEW - 1));
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
@@ -344,20 +317,17 @@ function clause execute (VROL_VX(vm, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let rs1_val : bits('m) = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then
-      result[i] = vs2_val[i] <<< (rs1_val & to_bits('m, SEW - 1));
+      result[i] = vs2_val[i] <<< (rs1_val & to_bits(SEW, SEW - 1));
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
@@ -378,20 +348,17 @@ function clause execute (VROR_VV(vm, vs1, vs2, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vs1_val = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then
-      result[i] = vs2_val[i] >>> (vs1_val[i] & to_bits('m, SEW - 1));
+      result[i] = vs2_val[i] >>> (vs1_val[i] & to_bits(SEW, SEW - 1));
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
@@ -412,20 +379,17 @@ function clause execute (VROR_VX(vm, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let rs1_val : bits('m) = get_scalar(rs1, SEW);
-  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let rs1_val = get_scalar(rs1, SEW);
+  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then
-      result[i] = vs2_val[i] >>> (rs1_val & to_bits('m, SEW - 1));
+      result[i] = vs2_val[i] >>> (rs1_val & to_bits(SEW, SEW - 1));
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
@@ -442,24 +406,21 @@ mapping clause assembly = VROR_VI(vm, vs2, uimm, vd)
  <-> "vror.vi" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(uimm) ^ maybe_vmask(vm)
 
 function clause execute (VROR_VI(vm, vs2, uimm, vd)) = {
-  let SEW      = get_sew();
+  let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  let 'n = num_elem;
-  let 'm = SEW;
-
-  let vm_val   : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let uimm_val : bits('m) = zero_extend(uimm);
-  let vs2_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val   : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vm_val   = read_vmask(num_elem, vm, zvreg);
+  let uimm_val : bits('SEW) = zero_extend(uimm);
+  let vs2_val  = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val   = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then
-      result[i] = vs2_val[i] >>> (uimm_val & to_bits('m, SEW - 1));
+      result[i] = vs2_val[i] >>> (uimm_val & to_bits(SEW, SEW - 1));
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
@@ -479,26 +440,22 @@ function clause execute (VWSLL_VV(vm, vs2, vs1, vd)) = {
   let SEW            = get_sew();
   let LMUL_pow       = get_lmul_pow();
   let num_elem       = get_num_elem(LMUL_pow, SEW);
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_widen;
+  let vm_val      = read_vmask(num_elem, vm, zvreg);
+  let vs1_val_vec = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val_vec = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val      = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
 
-  let vm_val      : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs1_val_vec : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  let vs2_val_vec : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val      : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
-
-  let SEW_widen_bits = to_bits(SEW_widen, 'o);
+  let SEW_widen_bits = to_bits(SEW_widen, SEW_widen);
   let (initial_result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      let vs1_val : bits('o) = zero_extend(vs1_val_vec[i]);
-      let vs2_val : bits('o) = zero_extend(vs2_val_vec[i]);
+      let vs1_val : bits('SEW_widen) = zero_extend(vs1_val_vec[i]);
+      let vs2_val : bits('SEW_widen) = zero_extend(vs2_val_vec[i]);
       result[i] = vs2_val << (vs1_val & zero_extend(SEW_widen_bits - 1));
     };
   };
@@ -520,25 +477,21 @@ function clause execute (VWSLL_VX(vm, vs2, rs1, vd)) = {
   let SEW            = get_sew();
   let LMUL_pow       = get_lmul_pow();
   let num_elem       = get_num_elem(LMUL_pow, SEW);
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_widen;
+  let vm_val      = read_vmask(num_elem, vm, zvreg);
+  let rs1_val : bits('SEW_widen) = zero_extend(get_scalar(rs1, SEW));
+  let vs2_val_vec = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val      = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
 
-  let vm_val      : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let rs1_val     : bits('o) = zero_extend(get_scalar(rs1, SEW));
-  let vs2_val_vec : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val      : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
-
-  let SEW_widen_bits = to_bits(SEW_widen, 'o);
+  let SEW_widen_bits = to_bits(SEW_widen, SEW_widen);
   let (initial_result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      let vs2_val : bits('o) = zero_extend(vs2_val_vec[i]);
+      let vs2_val : bits('SEW_widen) = zero_extend(vs2_val_vec[i]);
       result[i] = vs2_val << (rs1_val & zero_extend(SEW_widen_bits - 1));
     };
   };
@@ -560,25 +513,21 @@ function clause execute (VWSLL_VI(vm, vs2, uimm, vd)) = {
   let SEW            = get_sew();
   let LMUL_pow       = get_lmul_pow();
   let num_elem       = get_num_elem(LMUL_pow, SEW);
-  let SEW_widen      = SEW * 2;
+  let 'SEW_widen     = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_widen;
+  let vm_val      = read_vmask(num_elem, vm, zvreg);
+  let uimm_val : bits('SEW_widen) = zero_extend(uimm);
+  let vs2_val_vec = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val      = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
 
-  let vm_val      : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let uimm_val    : bits('o) = zero_extend(uimm);
-  let vs2_val_vec : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val      : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
-
-  let SEW_widen_bits = to_bits(SEW_widen, 'o);
+  let SEW_widen_bits = to_bits(SEW_widen, SEW_widen);
   let (initial_result, mask) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-        let vs2_val : bits('o) = zero_extend(vs2_val_vec[i]);
+        let vs2_val : bits('SEW_widen) = zero_extend(vs2_val_vec[i]);
         result[i] = vs2_val << (uimm_val & zero_extend(SEW_widen_bits - 1));
     };
   };
