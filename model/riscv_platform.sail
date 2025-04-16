@@ -29,24 +29,11 @@ val elf_entry = pure {
 // with cache blocks larger than a page is not clearly defined.
 function plat_cache_block_size_exp() -> range(0, 12) = config platform.cache_block_size_exp
 
-/* Main memory */
-function plat_ram_base() -> physaddrbits = to_bits(physaddrbits_len, config platform.ram.base : int)
-function plat_ram_size() -> physaddrbits = to_bits(physaddrbits_len, config platform.ram.size : int)
-
 /* whether the MMU should update dirty bits in PTEs */
 function plat_enable_dirty_update() -> bool = config memory.translation.dirty_update
 
-/* whether the platform supports misaligned accesses without trapping to M-mode. if false,
- * misaligned loads/stores are trapped to Machine mode.
- */
-function plat_enable_misaligned_access() -> bool = config memory.misaligned.supported
-
 /* whether mtval stores the bits of a faulting instruction on illegal instruction exceptions */
 function plat_mtval_has_illegal_inst_bits() -> bool = config base.mtval_has_illegal_instruction_bits
-
-/* ROM holding reset vector and device-tree DTB */
-function plat_rom_base() -> physaddrbits = to_bits(physaddrbits_len, config platform.rom.base : int)
-function plat_rom_size() -> physaddrbits = to_bits(physaddrbits_len, config platform.rom.size : int)
 
 /* Location of clock-interface, which should match with the spec in the DTB */
 function plat_clint_base() -> physaddrbits = to_bits(physaddrbits_len, config platform.clint.base : int)
@@ -56,36 +43,6 @@ function plat_clint_size() -> physaddrbits = to_bits(physaddrbits_len, config pl
 val plat_htif_tohost = pure {c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> physaddrbits
 function plat_htif_tohost () = to_bits(physaddrbits_len, elf_tohost ())
 // todo: fromhost
-
-/* Physical memory map predicates */
-
-function within_phys_mem forall 'n, 'n <= max_mem_access. (Physaddr(addr) : physaddr, width : int('n)) -> bool = {
-  /* To avoid overflow issues when physical memory extends to the end
-   * of the addressable range, we need to perform address bound checks
-   * on unsigned unbounded integers.
-   */
-  let addr_int     = unsigned(addr);
-  let ram_base_int = unsigned(plat_ram_base ());
-  let rom_base_int = unsigned(plat_rom_base ());
-  let ram_size_int = unsigned(plat_ram_size ());
-  let rom_size_int = unsigned(plat_rom_size ());
-
-  /* todo: iterate over segment list */
-  if      (  ram_base_int <= addr_int
-           & (addr_int + sizeof('n)) <= (ram_base_int + ram_size_int))
-  then    true
-  else if (  rom_base_int <= addr_int
-           & (addr_int + sizeof('n)) <= (rom_base_int + rom_size_int))
-  then    true
-  else {
-    print_platform("within_phys_mem: " ^ BitStr(addr) ^ " not within phys-mem:");
-    print_platform("  plat_rom_base: " ^ BitStr(plat_rom_base ()));
-    print_platform("  plat_rom_size: " ^ BitStr(plat_rom_size ()));
-    print_platform("  plat_ram_base: " ^ BitStr(plat_ram_base ()));
-    print_platform("  plat_ram_size: " ^ BitStr(plat_ram_size ()));
-    false
-  }
-}
 
 function within_clint forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool = {
   /* To avoid overflow issues when physical memory extends to the end
