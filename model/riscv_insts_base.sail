@@ -299,9 +299,12 @@ function is_aligned(vaddr : xlenbits, width : word_width) -> bool =
     DOUBLE => vaddr[2..0] == zeros(),
   }
 
-// Return true if the address is misaligned and we don't support misaligned access.
+// Return true if the address is misaligned and the global option to support
+// misaligned access is off. Note that physical memory regions can also
+// not support misaligned access via PMAs, but this is checked elsewhere
+// after translation.
 function check_misaligned(vaddr : virtaddr, width : word_width) -> bool =
-  not(plat_enable_misaligned_access()) & not(is_aligned(virtaddr_bits(vaddr), width))
+  not(config memory.misaligned.supported : bool) & not(is_aligned(virtaddr_bits(vaddr), width))
 
 function clause execute (LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   let offset : xlenbits = sign_extend(imm);
