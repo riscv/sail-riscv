@@ -133,31 +133,30 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
   else            PTE_Check_Failure((), ())
 }
 
-// Update PTE bits if needed; return new PTE if updated
-// PRIVATE
-function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
+// Return the updated the PTE with A/D set, if needed.
+function updated_pte_bits forall 'pte_size, 'pte_size in {32, 64} . (
   pte : bits('pte_size),
   a   : AccessType(ext_access_type),
 ) -> option(bits('pte_size)) = {
+
+  let is_write : bool = match a {
+    Execute()       => false,
+    Read(_)         => false,
+    Write(_)        => true,
+    ReadWrite(_, _) => true,
+  };
+
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
 
-  // Update 'dirty' bit?
-  let update_d : bool = (pte_flags[D] == 0b0)
-                        & (match a {
-                             Execute()       => false,
-                             Read(_)         => false,
-                             Write(_)        => true,
-                             ReadWrite(_, _) => true
-                           });
-  // Update 'accessed'-bit?
-  let update_a = (pte_flags[A] == 0b0);
+  let new_pte_flags = [
+    pte_flags with
+    // Accessed
+    A = 0b1,
+    // Dirty
+    D = pte_flags[D] | bool_to_bits(is_write),
+  ];
 
-  if update_d | update_a then {
-    let pte_flags = [pte_flags with
-                      A = 0b1,
-                      D = (if update_d then 0b1 else pte_flags[D])];
-    Some([pte with 7 .. 0 = pte_flags.bits])
-  } else {
-    None()
-  }
+  let new_pte = [pte with 7 .. 0 = new_pte_flags.bits];
+
+  if new_pte != pte then Some(new_pte) else None()
 }
