@@ -18,6 +18,7 @@ target_include_directories(sail_runtime
     PUBLIC "${sail_dir}/lib"
 )
 target_compile_options(sail_runtime PRIVATE -Wno-extra -Wno-unused)
+target_link_libraries(sail_runtime PUBLIC GMP::GMP)
 
 if (COVERAGE)
     find_package(Threads REQUIRED)
