@@ -10,6 +10,9 @@ jobs:
         os: [ubuntu-22.04, macos-latest]
 
     steps:
+    - name: Check out repository code
+      uses: actions/checkout@v4
+
     - name: Install packages (Linux)
       if: startsWith(matrix.os, 'ubuntu-')
       run: |
@@ -19,7 +22,7 @@ jobs:
       if: startsWith(matrix.os, 'macos-')
       run: |
         brew install opam llvm lld
-        echo "$(brew --prefix)/opt/llvm/bin" >> $GITHUB_PATH
+        echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
     - name: Install Sail (Linux)
       if: startsWith(matrix.os, 'ubuntu-')
@@ -27,16 +30,28 @@ jobs:
         sudo mkdir -p /usr/local
         curl --location https://github.com/rems-project/sail/releases/download/0.19-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
 
-    - name: Install Sail (macOS)
+    - name: Restore OPAM cache (macOS)
       if: startsWith(matrix.os, 'macos-')
+      uses: actions/cache@v3
+      id: opam-cache
+      with:
+        path: ~/.opam
+        key: opam-${{ runner.os }}-${{ hashFiles('*.opam', 'opam.locked') }}
+        restore-keys: |
+          opam-${{ runner.os }}-
+
+    - name: Set up OPAM if cache miss (macOS)
+      if: startsWith(matrix.os, 'macos-') && steps.opam-cache.outputs.cache-hit != 'true'
       run: |
-        opam init --auto-setup
+        opam init --auto-setup --bare
+        opam switch create default 4.14.1
+        eval $(opam env)
         opam update
         opam install -y sail
-        echo "$HOME/.opam/default/bin" >> $GITHUB_PATH
 
-    - name: Check out repository code
-      uses: actions/checkout@v4
+    - name: Load OPAM environment (macOS)
+      if: startsWith(matrix.os, 'macos-' )
+      run: echo "$HOME/.opam/default/bin" >> $GITHUB_PATH
 
     - name: Ensure pre-commit checks pass
       if: startsWith(matrix.os, 'ubuntu-')
