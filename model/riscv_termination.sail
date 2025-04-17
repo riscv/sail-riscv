@@ -91,5 +91,7 @@ function hartSupports_measure(ext : extension) -> int =
 
 termination_measure hartSupports(ext) = hartSupports_measure(ext)
 
+$iftarget coq
 // The top-level loop isn't terminating, but we put a limit so that it can still be included in the Coq output
 termination_measure loop while 100
+$endif
