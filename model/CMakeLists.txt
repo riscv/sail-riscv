@@ -227,6 +227,7 @@ foreach (xlen IN ITEMS 32 64)
             if (NOT variant)
                 set(c_model_no_ext "${CMAKE_BINARY_DIR}/riscv_model_${arch}")
                 set(c_model "${c_model_no_ext}.c")
+                set(c_model_header "${c_model_no_ext}.h")
 
                 if (COVERAGE)
                     set(branch_info_file "${c_model_no_ext}.branch_info")
@@ -238,7 +239,7 @@ foreach (xlen IN ITEMS 32 64)
 
                 add_custom_command(
                     DEPENDS ${sail_srcs}
-                    OUTPUT ${c_model} ${branch_info_file}
+                    OUTPUT ${c_model} ${c_model_header} ${branch_info_file}
                     VERBATIM
                     COMMENT "Building C code from Sail model (${arch})"
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -262,14 +263,15 @@ foreach (xlen IN ITEMS 32 64)
                         --memo-z3
                         # Output C code.
                         -c
+                        # Generate a C header too.
+                        --c-generate-header
                         # Don't generate a main() function.
                         --c-no-main
                         # Extra #include's.
                         --c-include riscv_prelude.h
                         --c-include riscv_platform.h
                         --c-include riscv_callbacks.h
-                        # Don't dead-code eliminate these functions. These should match the
-                        # ones used from riscv_sail.h
+                        # Don't dead-code eliminate these functions.
                         --c-preserve init_model
                         --c-preserve try_step
                         --c-preserve tick_clock
@@ -298,7 +300,7 @@ foreach (xlen IN ITEMS 32 64)
                         ${sail_srcs}
                 )
 
-                add_custom_target(generated_model_${arch} DEPENDS ${c_model})
+                add_custom_target(generated_model_${arch} DEPENDS ${c_model} ${c_model_header})
             endif()
 
             if (NOT variant)
