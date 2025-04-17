@@ -97,6 +97,7 @@ val speculate_conditional = impure {interpreter: "excl_res", c: "speculate_condi
 val load_reservation = impure {interpreter: "Platform.load_reservation", c: "load_reservation", lem: "load_reservation"} : physaddrbits -> unit
 val match_reservation = pure {interpreter: "Platform.match_reservation", lem: "match_reservation", c: "match_reservation"} : physaddrbits -> bool
 val cancel_reservation = impure {interpreter: "Platform.cancel_reservation", c: "cancel_reservation", lem: "cancel_reservation"} : unit -> unit
+val valid_reservation = pure {interpreter: "Platform.valid_reservation", c: "valid_reservation", lem: "valid_reservation"} : unit -> bool
 
 /* Exception delegation: given an exception and the privilege at which
  * it occurred, returns the privilege at which it should be handled.
