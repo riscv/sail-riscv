@@ -8,7 +8,7 @@ jobs:
     env:
       OPAMROOT: /home/rocq/.opam
     container:
-      image: rocq/rocq-prover:9.0
+      image: rocq/rocq-prover:9.0.0
       # github requires root to access some resources from outside the container
       # (e.g. https://github.com/actions/checkout/issues/47)
       options: --user root
@@ -19,7 +19,7 @@ jobs:
         apt install -y --no-install-recommends cmake
         eval `opam env --safe`
         # We're still using Rocq's old name for compatibility with versions < 9
-        opam install -y coq coq-sail-stdpp
+        opam install -y coq=9.0.0 coq-sail-stdpp=0.19
 
     - name: Install sail from binary
       run: |
