@@ -16,6 +16,7 @@ function compressed_measure(instr) =
     C_SD (uimm,rsc1,rsc2) => 1,
     C_ADDI (nzi,rsd) => 1,
     C_JAL (imm) => 1,
+    C_ADDIW (imm,rsd) => 1,
     C_LI (imm,rd) => 1,
     C_ADDI16SP (imm) => 1,
     C_LUI (imm,rd) => 1,
@@ -41,6 +42,14 @@ function compressed_measure(instr) =
     C_MV (rd,rs2) => 1,
     C_EBREAK (tt) => 1,
     C_ADD (rsd,rs2) => 1,
+    C_FLDSP(uimm, rd) => 1,
+    C_FSDSP(uimm, rs2) => 1,
+    C_FLD(uimm, rsc, rdc) => 1,
+    C_FSD(uimm, rsc1, rsc2) => 1,
+    C_FLWSP(imm, rd) => 1,
+    C_FSWSP(uimm, rs2) => 1,
+    C_FLW(uimm, rsc, rdc) => 1,
+    C_FSW(uimm, rsc1, rsc2) => 1,
     _ => 0
   }
 termination_measure execute(i) = compressed_measure(i)
@@ -49,16 +58,40 @@ termination_measure pt_walk(_,_,_,_,_,_,_,level,_, _) = level
 function currentlyEnabled_measure(ext : extension) -> int =
   match ext {
     Ext_Zca => 1, // Ext_C
-    Ext_Zfhmin => 1, // Ext_Zfh
     Ext_Zba => 1, // Ext_B
     Ext_Zbb => 1, // Ext_B
     Ext_Zbs => 1, // Ext_B
     Ext_Zcb => 2, // Ext_Zca
     Ext_Zcd => 2, // Ext_Zca, (Ext_D)
     Ext_Zcf => 2, // Ext_Zca, (Ext_F)
+    Ext_Zabha => 2, // Ext_Zaamo
+    Ext_Zalrsc => 1, // Ext_A
+    Ext_Zaamo => 1, // Ext_A
+    Ext_Zfh => 1, // Ext_F
+    Ext_Zfhmin => 2, // Ext_F, Ext_Zfh
+    Ext_Zmmul => 1, // Ext_M
+    Ext_Zcmop => 2, // Ext_Zca
+    Ext_Zfa => 1, // Ext_F
+    Ext_Zhinx => 1, // Ext_Zfinx
+    Ext_Zvbb => 1, // Ext_V
+    Ext_Zvkb => 2, // Ext_Zvbb, Ext_V
+    Ext_Zvbc => 1, // Ext_V
+    Ext_Smcntrpmf => 1, // Ext_Zicntr
+    Ext_Sscofpmf => 2, // Ext_Zihpm
+    Ext_Zihpm => 1, // Ext_Zicntr
     _ => 0
   }
 termination_measure currentlyEnabled(ext) = currentlyEnabled_measure(ext)
 
+function hartSupports_measure(ext : extension) -> int =
+  match ext {
+    Ext_C => 1,
+    _ => 0,
+  }
+
+termination_measure hartSupports(ext) = hartSupports_measure(ext)
+
+$iftarget coq
 // The top-level loop isn't terminating, but we put a limit so that it can still be included in the Coq output
 termination_measure loop while 100
+$endif
