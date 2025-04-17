@@ -48,17 +48,32 @@ termination_measure pt_walk(_,_,_,_,_,_,_,level,_, _) = level
 
 function currentlyEnabled_measure(ext : extension) -> int =
   match ext {
-    Ext_Zca => 1, // Ext_C
-    Ext_Zfhmin => 1, // Ext_Zfh
-    Ext_Zba => 1, // Ext_B
-    Ext_Zbb => 1, // Ext_B
-    Ext_Zbs => 1, // Ext_B
-    Ext_Zcb => 2, // Ext_Zca
-    Ext_Zcd => 2, // Ext_Zca, (Ext_D)
-    Ext_Zcf => 2, // Ext_Zca, (Ext_F)
-    _ => 0
+    Ext_Smcntrpmf => 4,
+    Ext_Sscofpmf => 4,
+    Ext_V => 1,
+    Ext_Zaamo => 1,
+    Ext_Zabha => 2,
+    Ext_Zalrsc => 1,
+    Ext_Zba => 1,
+    Ext_Zbb => 1,
+    Ext_Zbs => 1,
+    Ext_Zca => 2,
+    Ext_Zcb => 3,
+    Ext_Zcd => 3,
+    Ext_Zcf => 3,
+    Ext_Zcmop => 3,
+    Ext_Zfa => 1,
+    Ext_Zfh => 1,
+    Ext_Zfhmin => 2,
+    Ext_Zhinx => 1,
+    Ext_Zihpm => 2,
+    Ext_Zmmul => 1,
+    Ext_Zvbb => 2,
+    Ext_Zvbc => 2,
+    Ext_Zvkb => 3,
+    Ext_Zvknha => 2,
+    Ext_Zvknhb => 2,
+    _ => 0,
   }
-termination_measure currentlyEnabled(ext) = currentlyEnabled_measure(ext)
 
-// The top-level loop isn't terminating, but we put a limit so that it can still be included in the Coq output
-termination_measure loop while 100
+termination_measure currentlyEnabled(ext) = currentlyEnabled_measure(ext)

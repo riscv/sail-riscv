@@ -201,9 +201,14 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_step.sail"
             )
 
-            if (variant STREQUAL "rocq")
+            if (variant STREQUAL "rocq" OR variant STREQUAL "lean")
                 list(APPEND sail_step_srcs
                     "riscv_termination.sail"
+                )
+            endif()
+            if (variant STREQUAL "rocq")
+                list(APPEND sail_step_srcs
+                    "riscv_termination_rocq.sail"
                 )
             endif()
 
