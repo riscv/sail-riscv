@@ -9,8 +9,8 @@ extern "C" {
 mach_bits plat_get_16_random_bits(unit);
 
 bool speculate_conditional(unit);
-unit load_reservation(mach_bits);
-bool match_reservation(mach_bits);
+unit load_reservation(sbits);
+bool match_reservation(sbits);
 unit cancel_reservation(unit);
 
 unit plat_term_write(mach_bits);

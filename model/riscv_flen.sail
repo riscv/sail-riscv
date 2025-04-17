@@ -6,6 +6,10 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
+type flen_bytes : Int = config base.flen_bytes
+
+constraint flen_bytes in {4, 8}
+
 type flen       : Int = flen_bytes * 8
 type flenbits         = bits(flen)
 

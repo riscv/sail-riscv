@@ -1,5 +1,7 @@
 {
     "base" : {
+        "log2_xlen_bytes": 3,
+        "flen_bytes": 4,
         "writable_misa" : true,
         "writable_fiom" : true,
         "writable_hpm_counters" : {
