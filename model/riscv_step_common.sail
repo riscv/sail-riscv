@@ -24,7 +24,7 @@ union HartState = {
   // because WFI and WRS can time out and cause an illegal
   // instruction exception so we need to know what to write
   // to mtval.
-  HART_WAITING : instbits,
+  HART_WAITING : (WaitReason, instbits),
 }
 
 // utility predicates

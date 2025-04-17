@@ -86,6 +86,7 @@ let speculate_conditional_success () = return true
 
 let match_reservation _ = true
 let cancel_reservation () = return ()
+let valid_reservation () = false
 
 val plat_enable_htif : unit -> bool
 let plat_enable_htif () = false
