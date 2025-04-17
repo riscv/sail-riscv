@@ -4,17 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release, e.g. 1.0.0'
+        description: "Version to release, e.g. 1.0.0"
         required: true
       notes:
-        description: 'Release notes'
+        description: "Release notes"
         required: false
       prerelease:
-        description: 'Is this a pre-release (beta, RC, etc.)?'
+        description: "Is this a pre-release (beta, RC, etc.)?"
         required: false
         type: boolean
       draft:
-        description: 'Is this a draft release (not public; you can publish it later)?'
+        description: "Is this a draft release (not public; you can publish it later)?"
         required: false
         type: boolean
 
@@ -36,50 +36,50 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
-    # This must be before checkout otherwise Github will use a zip of the
-    # code instead of git clone.
-    - name: Install dependencies (Linux)
-      if: startsWith(matrix.os, 'ubuntu')
-      run: |
-        dnf update -y --enablerepo=devel
-        dnf install -y --enablerepo=devel \
-            pkg-config \
-            gmp-static \
-            libstdc++-static \
-            curl \
-            git \
-            make \
-            gcc \
-            gcc-c++ \
-            cmake \
-            ninja-build
-        curl --location --output sail.tar.gz https://github.com/rems-project/sail/releases/download/0.19-linux-binary/sail.tar.gz
-        tar --directory=/usr/local --strip-components=1 --extract --file sail.tar.gz
+      # This must be before checkout otherwise Github will use a zip of the
+      # code instead of git clone.
+      - name: Install dependencies (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          dnf update -y --enablerepo=devel
+          dnf install -y --enablerepo=devel \
+              pkg-config \
+              gmp-static \
+              libstdc++-static \
+              curl \
+              git \
+              make \
+              gcc \
+              gcc-c++ \
+              cmake \
+              ninja-build
+          curl --location --output sail.tar.gz https://github.com/rems-project/sail/releases/download/0.19-linux-binary/sail.tar.gz
+          tar --directory=/usr/local --strip-components=1 --extract --file sail.tar.gz
 
-    # TODO: Mac
-    # - name: Install dependencies (Mac)
-    #   if: startsWith(matrix.os, 'macos')
-    #   run: |
-    #     brew install --force --overwrite ...
+      # TODO: Mac
+      # - name: Install dependencies (Mac)
+      #   if: startsWith(matrix.os, 'macos')
+      #   run: |
+      #     brew install --force --overwrite ...
 
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Build simulators and JSON
-      run: |
-        cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DSTATIC=TRUE
-        cd build
-        ninja all generated_docs_rv64d
-        ctest
-        cpack
+      - name: Build simulators and JSON
+        run: |
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DSTATIC=TRUE
+          cd build
+          ninja all generated_docs_rv64d
+          ctest
+          cpack
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-${{ matrix.name }}
-        path: |
-          build/sail_riscv-*
-          build/model/riscv_model_rv64d.json
-        if-no-files-found: error
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.name }}
+          path: |
+            build/sail_riscv-*
+            build/model/riscv_model_rv64d.json
+          if-no-files-found: error
 
   release:
     needs: build
@@ -88,16 +88,16 @@ jobs:
       # Required to create a release.
       contents: write
     steps:
-    - name: Download artifacts
-      uses: actions/download-artifact@v4
-    - name: Create release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          release-linux-amd64/sail_riscv-Linux-x86_64.tar.gz
-          release-linux-amd64/model/riscv_model_rv64d.json
-        fail_on_unmatched_files: true
-        tag_name: ${{ inputs.version }}
-        body: ${{ inputs.notes }}
-        prerelease: ${{ inputs.prerelease }}
-        draft: ${{ inputs.draft }}
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-linux-amd64/sail_riscv-Linux-x86_64.tar.gz
+            release-linux-amd64/model/riscv_model_rv64d.json
+          fail_on_unmatched_files: true
+          tag_name: ${{ inputs.version }}
+          body: ${{ inputs.notes }}
+          prerelease: ${{ inputs.prerelease }}
+          draft: ${{ inputs.draft }}
