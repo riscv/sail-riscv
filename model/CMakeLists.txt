@@ -357,6 +357,34 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
                 )
 
                 add_custom_target(generated_smt_${arch} DEPENDS ${smt_stamp_file})
+
+                # Add a test for the SMT properties. Use --auto-smt is a bit
+                # nicer than just running the generated SMT files through Z3
+                # because Sail will convert counter-examples into nice Sail
+                # values instead of raw SMT2. Or it will try to at least.
+                # TODO: Currently we'll only test this on RV64D. It's quite
+                # slow and there aren't any properties that depend on XLEN/FLEN
+                # currently.
+                if (arch STREQUAL rv64d)
+                    add_test(
+                        NAME smt_properties_${arch}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        COMMAND
+                            ${SAIL_BIN}
+                            ${sail_common}
+                            # Generate SMT files.
+                            --smt
+                            # Also prove them.
+                            --smt-auto
+                            # Use Z3 rather than CBMC since we have it installed.
+                            --smt-auto-solver z3
+                            # The prefix of the output files.
+                            -o "${CMAKE_CURRENT_BINARY_DIR}/model"
+                            --config ${config_file}
+                            # Input files.
+                            ${sail_srcs}
+                    )
+                endif()
             endif()
 
             if (variant STREQUAL "rmem")
