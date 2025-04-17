@@ -1,5 +1,4 @@
-Code Style
-==========
+# Code Style
 
 This document is an incomplete description of the predominant style used in the
 RISC-V Sail model.
@@ -10,50 +9,49 @@ For C the formatting rules should be followed where applicable.
 For other languages, follow the standard style for that language if it exists;
 for example, Python should follow the standard PEP-8 style.
 
-Formatting
-----------
+## Formatting
 
-* Block-level indentation uses two spaces
+- Block-level indentation uses two spaces
 
-* Tabs should not be used
+- Tabs should not be used
 
-* There should be no trailing spaces on any lines
+- There should be no trailing spaces on any lines
 
-* All files should end with a newline character
+- All files should end with a newline character
 
-* Unix-style line endings should be used
+- Unix-style line endings should be used
 
-* Files should be free from leading, trailing and double blank lines
+- Files should be free from leading, trailing and double blank lines
 
-* There should be one space either side of operators such as `=` and `+`
+- There should be one space either side of operators such as `=` and `+`
 
-* There should be no spaces before and one space after `,`
+- There should be no spaces before and one space after `,`
 
-* There should be one space after control flow keywords such as `if`, `foreach`
+- There should be one space after control flow keywords such as `if`, `foreach`
   and `match`
 
-* There should be no spaces between a function name and its arguments, for both
+- There should be no spaces between a function name and its arguments, for both
   definitions (valspecs, function definitions and function clauses) and calls,
   nor should there be any spaces immediately within the parentheses
 
-* There should be no spaces between a vector and the opening square bracket for
+- There should be no spaces between a vector and the opening square bracket for
   indexing or slicing, nor should there be any spaces immediately within the
   square brackets
 
-* For large blocks of code with repetitive structure where it improves
+- For large blocks of code with repetitive structure where it improves
   readability, additional whitespace may be inserted to align corresponding
   elements horizontally with each other, within reason
 
-* Avoid unnecessary parentheses and curly braces unless doing so seriously
+- Avoid unnecessary parentheses and curly braces unless doing so seriously
   hurts readability
 
-* When modifying existing code that does not conform to this style, prefer
+- When modifying existing code that does not conform to this style, prefer
   matching the existing style
 
-* Files should have suitable copyright headers.
+- Files should have suitable copyright headers.
 
-* Some mapping clauses, especially for instruction decoding (`encdec`)
-  clauses, can be quite long.  Unless these clauses appear in a group
+- Some mapping clauses, especially for instruction decoding (`encdec`)
+  clauses, can be quite long. Unless these clauses appear in a group
   (see below), conditional mapping clauses should use the `when`
   construct if both sides of the mapping are conditioned on the same
   predicate expression; the two sides of the mapping and the `when`
@@ -65,51 +63,50 @@ mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false)
   when (size_bytes(size) < xlen_bytes) | (not(is_unsigned) & size_bytes(size) <= xlen_bytes)
 ```
 
-  If these mapping clauses appear in a group (e.g., see `SHIFTIOP`),
-  they should preferably be each on a single line, with their
-  corresponding elements vertically aligned.
+If these mapping clauses appear in a group (e.g., see `SHIFTIOP`),
+they should preferably be each on a single line, with their
+corresponding elements vertically aligned.
 
-Implementation
---------------
+## Implementation
 
-* Since this is the official model intended to be included as part of the
+- Since this is the official model intended to be included as part of the
   RISC-V specifications, readability is paramount, including to those not
   already familiar with the details of that field of Computer Science (e.g.
   floating-point or cryptography)
 
-* All instructions should be built as part of both the RV32 and RV64 models so
+- All instructions should be built as part of both the RV32 and RV64 models so
   as to provide a path to supporting mutable MXL/SXL/UXL; if necessary,
   constructs like `assert(xlen == 32)` at the start of the body can be
   used to suppress any type errors that arise as a result
 
-* Avoid the use of hard-coded constants like 32 even if the instruction is
+- Avoid the use of hard-coded constants like 32 even if the instruction is
   RV32-specific, instead favouring `xlen` or a computed constant to
   more clearly express the underlying intent
 
-* Local variables should be made immutable whenever possible, but short
+- Local variables should be made immutable whenever possible, but short
   imperative loops with a small amount of local mutable state are preferred
   over less-readable functional-style recursive equivalents
 
-* Choose carefully between integer and bitvector types, and avoid multiple
+- Choose carefully between integer and bitvector types, and avoid multiple
   round-trips between the two; for example, if counting something, use a `nat`
   and convert it to an appropriately-sized bitvector at the point it is stored
   in a register, but keep register source values as bitvectors until they are
   needed to be interpreted as integers (see the implementation of `MUL` as an
   example)
 
-* Use Sail's `newtype` constructs to differentiate between types with
+- Use Sail's `newtype` constructs to differentiate between types with
   the same underlying representation (e.g. they are bitvectors of the
   same length) for added type safety
 
-* Prefer `bool` over `bits(1)` when a value logically represents true or false
+- Prefer `bool` over `bits(1)` when a value logically represents true or false
   rather than being a single bit with a numeric meaning, and vice-versa
 
-* Do not use strings for anything that is not text
+- Do not use strings for anything that is not text
 
-* No new compile-time warnings from the Sail compiler should be introduced
+- No new compile-time warnings from the Sail compiler should be introduced
   (this does not include C warnings for the code generated by the Sail
   compiler)
 
-* Do not use the `ext*` types and hooks for standard extensions unless
+- Do not use the `ext*` types and hooks for standard extensions unless
   providing a stub implementation; these are reserved for use by out-of-tree
   extensions that provide their own non-stub implementations

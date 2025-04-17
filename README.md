@@ -1,8 +1,7 @@
-RISCV Sail Model
-================
+# RISCV Sail Model
 
 This repository contains a formal specification of the RISC-V architecture, written in
-[Sail](https://github.com/rems-project/sail).   It has been adopted by the RISC-V Foundation.
+[Sail](https://github.com/rems-project/sail). It has been adopted by the RISC-V Foundation.
 
 The model specifies
 assembly language formats of the instructions, the corresponding
@@ -11,28 +10,21 @@ A [reading guide](doc/ReadingGuide.md) to the model is provided in the
 [doc/](doc/) subdirectory, along with a guide on [how to
 extend](doc/ExtendingGuide.md) the model.
 
-
 Latex or AsciiDoc definitions can be generated from the model that are suitable for inclusion in reference documentation.
 There is also the newer [Sail AsciiDoctor documentation support for RISC-V](https://github.com/Alasdair/asciidoctor-sail/blob/master/doc/built/sail_to_asciidoc.pdf).
 
-
-What is Sail?
--------------
+## What is Sail?
 
 [Sail](https://github.com/rems-project/sail) is a language for describing the instruction-set architecture
 (ISA) semantics of processors: the architectural specification of the behaviour of machine instructions. Sail is an
 engineer-friendly language, much like earlier vendor pseudocode, but more precisely defined and with tooling to support a wide range of use-cases.
-<p>
 
-Given a Sail specification, the tool can type-check it, generate documentation snippets (in LaTeX or AsciiDoc), generate executable emulators, show specification coverage, generate versions of the ISA for relaxed memory model tools, support automated instruction-sequence test generation, generate  theorem-prover definitions for
+Given a Sail specification, the tool can type-check it, generate documentation snippets (in LaTeX or AsciiDoc), generate executable emulators, show specification coverage, generate versions of the ISA for relaxed memory model tools, support automated instruction-sequence test generation, generate theorem-prover definitions for
 interactive proof (in Isabelle, Rocq, and Lean), support proof about binary code (in Islaris), and (in progress) generate a reference ISA model in SystemVerilog that can be used for formal hardware verification.
-<p>
 
-  <img width="800" src="https://www.cl.cam.ac.uk/~pes20/sail/overview-sail.png?">
-<p>
+<img width="800" src="https://www.cl.cam.ac.uk/~pes20/sail/overview-sail.png?">
 
-Getting started
----------------
+## Getting started
 
 ### Building the model
 
@@ -67,14 +59,14 @@ $ build/c_emulator/riscv_sim_<arch> <elf-file>
 
 A suite of RV32 and RV64 test programs derived from the
 [`riscv-tests`](https://github.com/riscv/riscv-tests) test-suite is
-included under [test/riscv-tests/](test/riscv-tests/).  The test-suite
+included under [test/riscv-tests/](test/riscv-tests/). The test-suite
 can be run using `make test` or `ctest` in the build directory.
 
 ### Configuring platform options
 
 The model is configured using a JSON file specifying various tunable
-options.  The default configuration used for the model can be examined
-using `build/c_emulator/riscv_sim_<arch> --print-default-config`.  To
+options. The default configuration used for the model can be examined
+using `build/c_emulator/riscv_sim_<arch> --print-default-config`. To
 use a custom configuration, save the default configuration into a
 file, edit it as needed, and pass it to the simulator using the
 `--config` option.
@@ -87,9 +79,9 @@ Information on other options for the simulator is available from
 For booting operating system images, see the information under the
 [os-boot/](os-boot/) subdirectory.
 
-Supported RISC-V ISA features
------------------------------
-#### The Sail specification currently captures the following ISA extensions and features:
+## Supported RISC-V ISA features
+
+### The Sail specification currently captures the following ISA extensions and features:
 
 - RV32I and RV64I base ISAs, v2.1
 - Zifencei extension for instruction-fetch fence, v2.0
@@ -134,13 +126,13 @@ The following unratified extensions are supported and can be enabled using the `
 
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 
-Example RISC-V instruction specifications
-----------------------------------
+## Example RISC-V instruction specifications
 
 These are verbatim excerpts from the model file containing the base instructions, [riscv_insts_base.sail](model/riscv_insts_base.sail), with a few comments added.
 
 ### ITYPE (or ADDI)
-~~~~~
+
+```
 /* the assembly abstract syntax tree (AST) clause for the ITYPE instructions */
 
 union clause ast = ITYPE : (bits(12), regidx, regidx, iop)
@@ -186,11 +178,11 @@ mapping itype_mnemonic : iop <-> string = {
 
 mapping clause assembly = ITYPE(imm, rs1, rd, op)
                       <-> itype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
-~~~~~~
+```
 
 ### SRET
 
-~~~~~
+```
 union clause ast = SRET : unit
 
 mapping clause encdec = SRET() <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
@@ -212,11 +204,9 @@ function clause execute SRET() = {
 }
 
 mapping clause assembly = SRET() <-> "sret"
-~~~~~
+```
 
-
-Sequential execution
-----------
+## Sequential execution
 
 The model builds a C emulator that can execute RISC-V ELF
 files, and both emulators provide platform support sufficient to boot
@@ -233,25 +223,22 @@ The files in the C emulator directory implements ELF loading and the
 platform devices, defines the physical memory map, and usees command-line
 options to select implementation-specific ISA choices.
 
-
 ### Use for specification coverage measurement in testing
 
 The Sail-generated C emulator can measure specification branch
 coverage of any executed tests, displaying the results as per-file
 tables and as html-annotated versions of the model source.
 
-
 ### Use as test oracle in tandem verification
 
 For tandem verification of random instruction streams, the tools support the
 protocols used in [TestRIG](https://github.com/CTSRD-CHERI/TestRIG) to
 directly inject instructions into the C emulator and produce trace
-information in RVFI format.  This has been used for cross testing
+information in RVFI format. This has been used for cross testing
 against spike and the [RVBS](https://github.com/CTSRD-CHERI/RVBS)
 specification written in Bluespec SystemVerilog.
 
-Concurrent execution
---------------------
+## Concurrent execution
 
 The ISA model is integrated with the operational model of the RISC-V
 relaxed memory model, RVWMO (as described in an appendix of the [RISC-V
@@ -259,14 +246,13 @@ user-level specification](https://github.com/riscv/riscv-isa-manual/releases/tag
 in the development of the RISC-V concurrency architecture; this is
 part of the [RMEM](http://www.cl.cam.ac.uk/users/pes20/rmem) tool.
 It is also integrated with the RISC-V axiomatic concurrency model
- as part of the [isla-axiomatic](https://isla-axiomatic.cl.cam.ac.uk/) tool.
+as part of the [isla-axiomatic](https://isla-axiomatic.cl.cam.ac.uk/) tool.
 
 ### Concurrent testing
 
-
 As part of the University of Cambridge/ INRIA concurrency architecture work, those groups produced and
 released a library of approximately 7000 [litmus
-tests](https://github.com/litmus-tests/litmus-tests-riscv).  The
+tests](https://github.com/litmus-tests/litmus-tests-riscv). The
 operational and axiomatic RISC-V concurrency models are in sync for
 these tests, and they moreover agree with the corresponding ARM
 architected behaviour for the tests in common.
@@ -275,8 +261,7 @@ Those tests have also been run on RISC-V hardware, on a SiFive RISC-V
 FU540 multicore proto board (Freedom Unleashed), kindly on loan from
 Imperas. To date, only sequentially consistent behaviour was observed there.
 
-Generating theorem-prover definitions
---------------------------------------
+## Generating theorem-prover definitions
 
 Sail aims to support the generation of idiomatic theorem prover
 definitions across multiple tools. At present it supports Isabelle,
@@ -294,12 +279,10 @@ monad over an effect datatype of memory actions. This monad is also
 used as part of the aforementioned concurrency support via the RMEM
 tool.
 
-
 The files under `handwritten_support` provide library definitions for
 each prover.
 
-Directory Structure
--------------------
+## Directory Structure
 
 ```
 sail-riscv
@@ -316,20 +299,17 @@ sail-riscv
 - os-boot                 // information and sample files for booting OS images
 ```
 
-Licence
--------
+## Licence
 
 The model is made available under the BSD two-clause licence in LICENCE.
 
-Authors
--------
+## Authors
 
 Originally written by Prashanth Mundkur at SRI International, and further developed by others, especially researchers at the University of Cambridge.
 
 See `LICENCE` and Git blame for a complete list of authors.
 
-Funding
--------
+## Funding
 
 This software was developed by the above within the Rigorous
 Engineering of Mainstream Systems (REMS) project, partly funded by
