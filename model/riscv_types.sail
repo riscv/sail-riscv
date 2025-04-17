@@ -346,6 +346,15 @@ enum extop_zbb = {RISCV_SEXTB, RISCV_SEXTH, RISCV_ZEXTH}
 
 enum zicondop = {RISCV_CZERO_EQZ, RISCV_CZERO_NEZ}
 
+enum wrsop = {WRS_STO, WRS_NTO}
+
+enum WaitReason = {WAIT_WFI, WAIT_WRS_STO, WAIT_WRS_NTO}
+mapping wait_name : WaitReason <-> string = {
+  WAIT_WFI     <-> "WAIT-WFI",
+  WAIT_WRS_STO <-> "WAIT-WRS-STO",
+  WAIT_WRS_NTO <-> "WAIT-WRS-NTO",
+}
+
 // Get the bit encoding of word_width.
 mapping size_enc : word_width <-> bits(2) = {
   BYTE   <-> 0b00,

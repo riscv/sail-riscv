@@ -86,6 +86,7 @@ let speculate_conditional_success () = return true
 
 let match_reservation _ = true
 let cancel_reservation () = return ()
+let reservation_valid () = false
 
 val plat_htif_tohost : unit -> bitvector
 let plat_htif_tohost () = []

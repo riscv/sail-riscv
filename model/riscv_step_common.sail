@@ -23,7 +23,7 @@ type instbits = xlenbits
 
 union HartState = {
   HART_ACTIVE  : unit,
-  HART_WAITING : instbits, // the instruction that caused the wait
+  HART_WAITING : (WaitReason, instbits),
 }
 
 /* The result of a fetch, which includes any possible error

@@ -11,9 +11,9 @@
 union Retire_Failure = {
   // standard reasons
   Illegal_Instruction            : unit,
-  Wait_For_Interrupt             : unit,
   Trap                           : (Privilege, ctl_result, xlenbits),
   Memory_Exception               : (virtaddr, ExceptionType),
+  Enter_Wait                     : WaitReason,
 
   // reasons from external extensions
   Ext_CSR_Check_Failure          : unit,

@@ -651,10 +651,10 @@ mapping clause encdec = WFI()
 
 function clause execute WFI() =
   match cur_privilege {
-    Machine    => RETIRE_FAIL(Wait_For_Interrupt()),
+    Machine    => RETIRE_FAIL(Enter_Wait(WAIT_WFI)),
     Supervisor => if   mstatus[TW] == 0b1
                   then RETIRE_FAIL(Illegal_Instruction())
-                  else RETIRE_FAIL(Wait_For_Interrupt()),
+                  else RETIRE_FAIL(Enter_Wait(WAIT_WFI)),
     User       => RETIRE_FAIL(Illegal_Instruction())
   }
 
