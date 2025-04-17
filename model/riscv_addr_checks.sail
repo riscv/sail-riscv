@@ -59,6 +59,11 @@ function ext_data_get_addr(base : regidx, offset : xlenbits, acc : AccessType(ex
   let addr = Virtaddr(X(base) + offset) in
   Ext_DataAddr_OK(addr)
 
+function ext_data_get_addr_from_bits(addr_ext : xlenbits, acc : AccessType(ext_access_type), width : mem_access_width)
+         -> Ext_DataAddr_Check(ext_data_addr_error) =
+  let addr = Virtaddr(addr_ext) in
+  Ext_DataAddr_OK(addr)
+
 function ext_handle_data_check_error(err : ext_data_addr_error) -> unit =
   ()
 
