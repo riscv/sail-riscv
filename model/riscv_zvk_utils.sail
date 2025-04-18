@@ -21,7 +21,7 @@ function zvk_check_encdec(EGW: int, EGS: int) -> bool = (unsigned(vl) % EGS == 0
  * ----------------------------------------------------------------------
  */
 
-enum zvkfunct6 = {ZVK_VSHA2CH, ZVK_VSHA2CL}
+enum zvkfunct6 = {ZVK_VAESDFVV, ZVK_VAESDFVS, ZVK_VAESDMVV, ZVK_VAESDMVS, ZVK_VAESEFVV, ZVK_VAESEFVS, ZVK_VAESEMVV, ZVK_VAESEMVS, ZVK_VSHA2CH, ZVK_VSHA2CL}
 
 function zvknhab_check_encdec(vs2: vregidx, vs1: vregidx, vd: vregidx) -> bool = {
   let SEW      = get_sew();
@@ -66,3 +66,10 @@ function zvk_ch(x, y, z) = (x & y) ^ (~(x) & z)
 
 val zvk_maj : forall 'n, 'n >= 0. (bits('n), bits('n), bits('n)) -> bits('n)
 function zvk_maj(x, y, z) = (x & y) ^ (x & z) ^ (y & z)
+
+/*
+ * Utility functions for Zvkned
+ * ----------------------------------------------------------------------
+ */
+
+function aes_rotword(x : bits(32)) -> bits(32) = x[7.. 0] @ x[31..24] @ x[23..16] @ x[15.. 8]
