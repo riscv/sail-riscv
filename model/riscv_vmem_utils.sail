@@ -9,15 +9,26 @@
 /* This file implements utility functions for accessing memory that
  * can be used by instruction definitions.
  *
+ * These memory accessors performs address translation and return a
+ * Retire_Failure on error.  In order to support RVWMO memory model,
+ * address and when possible data arguments are passed as their source
+ * registers.  The `vmem_read` read accessor uses Read(Data) accesses,
+ * while the `vmem_write_*` variants use Write(Data) accesses.
+ *
+ * All addresses are provided in integer source register arguments.
+ * For write accessors, there are functions for each kind of source
+ * data register type (integer, floating point, vector).
+ *
  * The external API of this module is:
  *
  *   check_misaligned - checks for the alignment of a virtual address given platform settings
  *
- *  These memory accessors take arguments specifying the registers containing the data and
- *  address values:
+ *   vmem_read  - reads data of the specified width
  *
- *   vmem_read -  performs address translation and retrieves data using Read(Data) accesses
- *   vmem_write - performs address translation and writes data using Write(Data) accesses
+ *   vmem_write       - writes data of the specified width from an integer register
+ *   vmem_write_fp    - writes data of the specified width from a floating point register
+ *   vmem_write_velem - writes an element of specified element index and width from a vector register
+ *   vmem_write_data  - writes a specified data payload
  */
 
 /* This is a external option that controls the order in which the model
@@ -119,6 +130,57 @@ function misaligned_order(n) = {
   }
 }
 
+val vmem_write_addr : forall 'width, 'width in {1, 2, 4, 8} & ('width <= xlen_bytes | 'width <= flen_bytes).
+  (virtaddr, int('width), bits(8 * 'width), bool, bool, bool) -> result(bool, Retire_Failure)
+
+function vmem_write_addr(vaddr, width, data, aq, rl, res) = {
+  /* If the store is misaligned, split into `n` (single-copy-atomic) memory operations,
+     each of `bytes` width. If the store is aligned, then `n` = 1 and bytes will remain
+     unchanged. */
+  let ('n, bytes) = split_misaligned(vaddr, width);
+
+  let (first, last, step) = misaligned_order(n);
+  var i : range(0, 'n - 1) = first;
+  var finished : bool = false;
+
+  var write_success : bool = true;
+  let vaddr = virtaddr_bits(vaddr);
+  repeat {
+    let offset = i;
+    let vaddr = vaddr + (offset * bytes);
+    match translateAddr(Virtaddr(vaddr), Write(Data)) {
+      TR_Failure(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+
+      /* NOTE: Currently, we only announce the effective address if address translation is successful.
+         This may need revisiting, particularly in the misaligned case. */
+      TR_Address(paddr, _) => {
+        /* If res is true, the load should be aligned, and this loop should only execute once */
+        if res & not(match_reservation(physaddr_bits(paddr))) then {
+          write_success = false
+        } else match mem_write_ea(paddr, bytes, aq, rl, res) {
+          Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+
+          Ok(()) => {
+            let write_value = data[(8 * (offset + 1) * bytes) - 1 .. 8 * offset * bytes];
+            match mem_write_value(paddr, bytes, write_value, aq, rl, res) {
+              Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+              Ok(s)  => write_success = write_success & s,
+            }
+          }
+        }
+      }
+    };
+
+    if offset == last then {
+      finished = true
+    } else {
+      i = offset + step
+    }
+  } until finished;
+
+  Ok(write_success)
+}
+
 /* External API */
 
 function check_misaligned(vaddr : virtaddr, width : word_width) -> bool = {
@@ -129,7 +191,7 @@ function check_misaligned(vaddr : virtaddr, width : word_width) -> bool = {
   }
 }
 
-val vmem_read : forall 'width, 'width in {1, 2, 4, 8} & 'width <= xlen_bytes.
+val vmem_read : forall 'width, 'width in {1, 2, 4, 8} & ('width <= xlen_bytes | 'width <= flen_bytes).
   (regidx, xlenbits, int('width), bool, bool, bool) -> result(bits(8 * 'width), Retire_Failure)
 
 function vmem_read(rs, offset, width, aq, rl, res) = {
@@ -193,57 +255,6 @@ function vmem_read(rs, offset, width, aq, rl, res) = {
   Ok(data)
 }
 
-val vmem_write_addr : forall 'width, 'width in {1, 2, 4, 8} & 'width <= xlen_bytes.
-  (virtaddr, int('width), bits(8 * 'width), bool, bool, bool) -> result(bool, Retire_Failure)
-
-function vmem_write_addr(vaddr, width, data, aq, rl, res) = {
-  /* If the store is misaligned, split into `n` (single-copy-atomic) memory operations,
-     each of `bytes` width. If the store is aligned, then `n` = 1 and bytes will remain
-     unchanged. */
-  let ('n, bytes) = split_misaligned(vaddr, width);
-
-  let (first, last, step) = misaligned_order(n);
-  var i : range(0, 'n - 1) = first;
-  var finished : bool = false;
-
-  var write_success : bool = true;
-  let vaddr = virtaddr_bits(vaddr);
-  repeat {
-    let offset = i;
-    let vaddr = vaddr + (offset * bytes);
-    match translateAddr(Virtaddr(vaddr), Write(Data)) {
-      TR_Failure(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
-
-      /* NOTE: Currently, we only announce the effective address if address translation is successful.
-         This may need revisiting, particularly in the misaligned case. */
-      TR_Address(paddr, _) => {
-        /* If res is true, the load should be aligned, and this loop should only execute once */
-        if res & not(match_reservation(physaddr_bits(paddr))) then {
-          write_success = false
-        } else match mem_write_ea(paddr, bytes, aq, rl, res) {
-          Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
-
-          Ok(()) => {
-            let write_value = data[(8 * (offset + 1) * bytes) - 1 .. 8 * offset * bytes];
-            match mem_write_value(paddr, bytes, write_value, aq, rl, res) {
-              Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
-              Ok(s)  => write_success = write_success & s,
-            }
-          }
-        }
-      }
-    };
-
-    if offset == last then {
-      finished = true
-    } else {
-      i = offset + step
-    }
-  } until finished;
-
-  Ok(write_success)
-}
-
 /* Currently this function takes the X register index as an argument.
  * It does this so the register access only occurs after the effective
  * address for the access has been announced. This is for the RVWMO
@@ -265,6 +276,7 @@ function vmem_write(rs_addr, offset, width, rs_data, aq, rl, res) = {
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
   };
 
+  // TODO: Rationalize to use a single alignment definition if possible.
   if res then {
     if not(is_aligned_addr(vaddr, width))
     then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
@@ -276,4 +288,61 @@ function vmem_write(rs_addr, offset, width, rs_data, aq, rl, res) = {
   let data = X(rs_data)[width * 8 - 1 .. 0];
 
   vmem_write_addr(vaddr, width, data, aq, rl, res)
+}
+
+val vmem_write_fp : forall 'width, 'width in {1, 2, 4, 8} & 'width <= flen_bytes.
+  (regidx, xlenbits, int('width), fregidx) -> result(bool, Retire_Failure)
+
+function vmem_write_fp(rs_addr, offset, width, rs_data) = {
+  /* Get the address, X(rs1) (no offset).
+   * Extensions might perform additional checks on address validity.
+   */
+  let vaddr : virtaddr = match ext_data_get_addr(rs_addr, offset, Write(Data), width) {
+    Ext_DataAddr_OK(vaddr) => vaddr,
+    Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
+  };
+
+  if   check_misaligned(vaddr, size_bytes(width))
+  then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
+
+  let data = F(rs_data)[width * 8 - 1 .. 0];
+
+  vmem_write_addr(vaddr, width, data, false, false, false)
+}
+
+val vmem_write_velem : forall 'width 'x, 'width in {1, 2, 4, 8} & ('width <= xlen_bytes | 'width <= flen_bytes).
+  (regidx, xlenbits, int('width), vregidx, int('x)) -> result(bool, Retire_Failure)
+
+function vmem_write_velem(rs_addr, offset, width, rs_data, index) = {
+  /* Get the address, X(rs1) (no offset).
+   * Extensions might perform additional checks on address validity.
+   */
+  let vaddr : virtaddr = match ext_data_get_addr(rs_addr, offset, Write(Data), width) {
+    Ext_DataAddr_OK(vaddr) => vaddr,
+    Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
+  };
+
+  if   check_misaligned(vaddr, size_bytes(width))
+  then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
+
+  let data = read_single_element(width * 8, index, rs_data);
+  vmem_write_addr(vaddr, width, data, false, false, false)
+}
+
+val vmem_write_data : forall 'width, 'width in {1, 2, 4, 8} & ('width <= xlen_bytes | 'width <= flen_bytes).
+  (regidx, xlenbits, int('width), bits(8 * 'width)) -> result(bool, Retire_Failure)
+
+function vmem_write_data(rs_addr, offset, width, data) = {
+  /* Get the address, X(rs1) (no offset).
+   * Extensions might perform additional checks on address validity.
+   */
+  let vaddr : virtaddr = match ext_data_get_addr(rs_addr, offset, Write(Data), width) {
+    Ext_DataAddr_OK(vaddr) => vaddr,
+    Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
+  };
+
+  if   check_misaligned(vaddr, size_bytes(width))
+  then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
+
+  vmem_write_addr(vaddr, width, data, false, false, false)
 }
