@@ -70,7 +70,7 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
     None()   => None()
   }) : option((bits(8 * 'n), mem_meta));
   match (t, result) {
-    (Execute(),  None()) => Err(E_Fetch_Access_Fault()),
+    (InstructionFetch(), None()) => Err(E_Fetch_Access_Fault()),
     (Read(Data), None()) => Err(E_Load_Access_Fault()),
     (_,          None()) => Err(E_SAMO_Access_Fault()),
     (_,      Some(v, m)) => { if   get_config_print_mem()
@@ -108,7 +108,7 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
         Ext_PhysAddr_OK()     => phys_mem_read(t, paddr, width, aq, rl, res, meta),
         Ext_PhysAddr_Error(e) => Err(e)
       } else match t {
-        Execute()  => Err(E_Fetch_Access_Fault()),
+        InstructionFetch() => Err(E_Fetch_Access_Fault()),
         Read(Data) => Err(E_Load_Access_Fault()),
         _          => Err(E_SAMO_Access_Fault())
       }

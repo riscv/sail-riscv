@@ -67,7 +67,7 @@ function read_pte forall 'n, 'n in {4, 8} . (
 val pt_walk : forall 'v, is_sv_mode('v) . (
   int('v),                      // Sv32, Sv39, Sv48, Sv57
   vpn_bits('v),                 // Virtual Page Number
-  AccessType(ext_access_type),  // Read/Write/ReadWrite/Execute
+  AccessType(ext_access_type),  // Read/Write/ReadWrite/InstructionFetch
   Privilege,                    // User/Supervisor/Machine
   bool,                         // mstatus.MXR
   bool,                         // do_sum
