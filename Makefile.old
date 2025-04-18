@@ -92,6 +92,7 @@ SAIL_SYS_SRCS += riscv_zicntr_control.sail
 SAIL_SYS_SRCS += riscv_softfloat_interface.sail riscv_fdext_regs.sail riscv_fdext_control.sail
 SAIL_SYS_SRCS += riscv_sys_control.sail     # general exception handling
 SAIL_SYS_SRCS += riscv_smcntrpmf.sail
+SAIL_SYS_SRCS += riscv_inst_retire.sail
 
 SAIL_VM_SRCS += riscv_vmem_pte.sail
 SAIL_VM_SRCS += riscv_vmem_ptw.sail

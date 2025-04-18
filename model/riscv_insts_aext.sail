@@ -107,7 +107,8 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
   /* normal non-rmem case
    * RMEM: SC is allowed to succeed (but might fail later)
    */
-  match vmem_write(rs1, zeros(), width_bytes, rs2, aq & rl, rl, true) {
+  let data = X(rs2)[width_bytes * 8 - 1 .. 0];
+  match vmem_write(rs1, zeros(), width_bytes, data, aq & rl, rl, true) {
     Ok(b) => {
       X(rd) = zero_extend(bool_bits(~(b)));
       cancel_reservation();
