@@ -29,7 +29,7 @@ function clause execute (RISCV_XPERM8(rs2, rs1, rd)) = {
                      else zeros()
   };
   X(rd) = result;
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* ****************************************************************** */
@@ -53,5 +53,5 @@ function clause execute (RISCV_XPERM4(rs2, rs1, rd)) = {
                      else zeros()
   };
   X(rd) = result;
-  RETIRE_SUCCESS
+  Exec_Success
 }

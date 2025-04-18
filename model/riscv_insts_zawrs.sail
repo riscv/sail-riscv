@@ -23,11 +23,7 @@ mapping clause encdec = WRS(op)
   when currentlyEnabled(Ext_Zawrs)
 
 function clause execute (WRS(WRS_STO)) =
-  return RETIRE_FAIL(Enter_Wait(WAIT_WRS_STO))
-
-mapping clause encdec = WRS(WRS_NTO)
-  <-> 0b000000001101 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
-  when currentlyEnabled(Ext_Zawrs)
+  return Exec_Incomplete(Enter_Wait(WAIT_WRS_STO))
 
 function clause execute (WRS(WRS_NTO)) =
-  return RETIRE_FAIL(Enter_Wait(WAIT_WRS_NTO))
+  return Exec_Incomplete(Enter_Wait(WAIT_WRS_NTO))

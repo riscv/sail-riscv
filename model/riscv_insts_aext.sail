@@ -82,19 +82,19 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
     * Extensions might perform additional checks on address validity.
     */
   match ext_data_get_addr(rs1, zeros(), Read(Data), width_bytes) {
-    Ext_DataAddr_Error(e)  => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
+    Ext_DataAddr_Error(e)  => Exec_Incomplete(Ext_DataAddr_Check_Failure(e)),
     Ext_DataAddr_OK(vaddr) => {
       /* "LR faults like a normal load, even though it's in the AMO major opcode space."
         * - Andrew Waterman, isa-dev, 10 Jul 2018.
         */
       if not(is_aligned(virtaddr_bits(vaddr), width))
-      then RETIRE_FAIL(Memory_Exception(vaddr, E_Load_Addr_Align()))
+      then Exec_Incomplete(Memory_Exception(vaddr, E_Load_Addr_Align()))
       else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, _)    => RETIRE_FAIL(Memory_Exception(vaddr, e)),
+        TR_Failure(e, _)    => Exec_Incomplete(Memory_Exception(vaddr, e)),
         TR_Address(addr, _) =>
           match mem_read(Read(Data), addr, width_bytes, aq, aq & rl, true) {
-            Ok(result) => { load_reservation(physaddr_bits(addr)); X(rd) = sign_extend(result); RETIRE_SUCCESS },
-            Err(e)     => RETIRE_FAIL(Memory_Exception(vaddr, e)),
+            Ok(result) => { load_reservation(physaddr_bits(addr)); X(rd) = sign_extend(result); Exec_Success },
+            Err(e)     => Exec_Incomplete(Memory_Exception(vaddr, e)),
           },
       }
     }
@@ -122,7 +122,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
     /* should only happen in rmem
      * rmem: allow SC to fail very early
      */
-    X(rd) = zero_extend(0b1); RETIRE_SUCCESS
+    X(rd) = zero_extend(0b1); Exec_Success
   } else {
     /* normal non-rmem case
       * rmem: SC is allowed to succeed (but might fail later)
@@ -131,28 +131,28 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
       * Extensions might perform additional checks on address validity.
       */
     match ext_data_get_addr(rs1, zeros(), Write(Data), width_bytes) {
-      Ext_DataAddr_Error(e)  => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
+      Ext_DataAddr_Error(e)  => Exec_Incomplete(Ext_DataAddr_Check_Failure(e)),
       Ext_DataAddr_OK(vaddr) => {
         if not(is_aligned(virtaddr_bits(vaddr), width))
-        then RETIRE_FAIL(Memory_Exception(vaddr, E_SAMO_Addr_Align()))
+        then Exec_Incomplete(Memory_Exception(vaddr, E_SAMO_Addr_Align()))
         else {
           match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
                                                       * both result in a SAMO exception */
-            TR_Failure(e, _) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
+            TR_Failure(e, _) => Exec_Incomplete(Memory_Exception(vaddr, e)),
             TR_Address(addr, _) => {
               // Check reservation with physical address.
               if not(match_reservation(physaddr_bits(addr))) then {
                 /* cannot happen in rmem */
-                X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS
+                X(rd) = zero_extend(0b1); cancel_reservation(); Exec_Success
               } else {
                 match mem_write_ea(addr, width_bytes, aq & rl, rl, true) {
-                  Err(e) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
+                  Err(e) => Exec_Incomplete(Memory_Exception(vaddr, e)),
                   Ok(_)  => {
                     let rs2_val = X(rs2);
                     match mem_write_value(addr, width_bytes, rs2_val[width_bytes * 8 - 1 .. 0], aq & rl, rl, true) {
-                      Ok(true)  => { X(rd) = zero_extend(0b0); cancel_reservation(); RETIRE_SUCCESS },
-                      Ok(false) => { X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS },
-                      Err(e)    => RETIRE_FAIL(Memory_Exception(vaddr, e)),
+                      Ok(true)  => { X(rd) = zero_extend(0b0); cancel_reservation(); Exec_Success },
+                      Ok(false) => { X(rd) = zero_extend(0b1); cancel_reservation(); Exec_Success },
+                      Err(e)    => Exec_Incomplete(Memory_Exception(vaddr, e)),
                     }
                   }
                 }
@@ -201,19 +201,19 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
     * Some extensions perform additional checks on address validity.
     */
   match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width_bytes) {
-    Ext_DataAddr_Error(e)  => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
+    Ext_DataAddr_Error(e)  => Exec_Incomplete(Ext_DataAddr_Check_Failure(e)),
     Ext_DataAddr_OK(vaddr) => {
       if not(is_aligned(virtaddr_bits(vaddr), width))
-      then RETIRE_FAIL(Memory_Exception(vaddr, E_SAMO_Addr_Align()))
+      then Exec_Incomplete(Memory_Exception(vaddr, E_SAMO_Addr_Align()))
       else match translateAddr(vaddr, ReadWrite(Data, Data)) {
-        TR_Failure(e, _) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
+        TR_Failure(e, _) => Exec_Incomplete(Memory_Exception(vaddr, e)),
         TR_Address(addr, _) => {
           let rs2_val = X(rs2)[width_bytes * 8 - 1 .. 0];
           match mem_write_ea(addr, width_bytes, aq & rl, rl, true) {
-            Err(e) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
+            Err(e) => Exec_Incomplete(Memory_Exception(vaddr, e)),
             Ok(_) => {
               match mem_read(ReadWrite(Data, Data), addr, width_bytes, aq, aq & rl, true) {
-                Err(e)     => RETIRE_FAIL(Memory_Exception(vaddr, e)),
+                Err(e)     => Exec_Incomplete(Memory_Exception(vaddr, e)),
                 Ok(loaded) => {
                   let result : bits('width_bytes * 8) =
                     match op {
@@ -228,9 +228,9 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                       AMOMAXU => if rs2_val >_u loaded then rs2_val else loaded,
                     };
                   match mem_write_value(addr, width_bytes, sign_extend(result), aq & rl, rl, true) {
-                    Ok(true)  => { X(rd) = sign_extend(loaded); RETIRE_SUCCESS },
+                    Ok(true)  => { X(rd) = sign_extend(loaded); Exec_Success },
                     Ok(false) => { internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value") },
-                    Err(e)    => RETIRE_FAIL(Memory_Exception(vaddr, e)),
+                    Err(e)    => Exec_Incomplete(Memory_Exception(vaddr, e)),
                   }
                 }
               }

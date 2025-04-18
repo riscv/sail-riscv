@@ -20,6 +20,6 @@ mapping clause encdec = FENCEI()
   when currentlyEnabled(Ext_Zifencei)
 
 /* fence.i is a nop for the memory model */
-function clause execute FENCEI() = { /* __barrier(Barrier_RISCV_i); */ RETIRE_SUCCESS }
+function clause execute FENCEI() = { /* __barrier(Barrier_RISCV_i); */ Exec_Success }
 
 mapping clause assembly = FENCEI() <-> "fence.i"

@@ -30,7 +30,7 @@ function clause execute (ZICOND_RTYPE(rs2, rs1, rd, RISCV_CZERO_EQZ)) = {
   let condition = X(rs2);
   let result : xlenbits = if condition == zeros() then zeros() else value;
   X(rd) = result;
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 function clause execute (ZICOND_RTYPE(rs2, rs1, rd, RISCV_CZERO_NEZ)) = {
@@ -38,5 +38,5 @@ function clause execute (ZICOND_RTYPE(rs2, rs1, rd, RISCV_CZERO_NEZ)) = {
   let condition = X(rs2);
   let result : xlenbits = if condition != zeros() then zeros() else value;
   X(rd) = result;
-  RETIRE_SUCCESS
+  Exec_Success
 }

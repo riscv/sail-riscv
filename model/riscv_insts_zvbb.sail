@@ -33,7 +33,7 @@ function clause execute (VANDN_VV(vm, vs1, vs2, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -43,7 +43,7 @@ function clause execute (VANDN_VV(vm, vs1, vs2, vd)) = {
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VANDN_VX : (bits(1), vregidx, regidx, vregidx)
@@ -70,7 +70,7 @@ function clause execute (VANDN_VX(vm, vs2, rs1, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -80,7 +80,7 @@ function clause execute (VANDN_VX(vm, vs2, rs1, vd)) = {
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VBREV_V : (bits(1), vregidx, vregidx)
@@ -106,7 +106,7 @@ function clause execute (VBREV_V(vm, vs2, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -120,7 +120,7 @@ function clause execute (VBREV_V(vm, vs2, vd)) = {
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VBREV8_V : (bits(1), vregidx, vregidx)
@@ -146,7 +146,7 @@ function clause execute (VBREV8_V(vm, vs2, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -160,7 +160,7 @@ function clause execute (VBREV8_V(vm, vs2, vd)) = {
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VREV8_V : (bits(1), vregidx, vregidx)
@@ -186,7 +186,7 @@ function clause execute (VREV8_V(vm, vs2, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -200,7 +200,7 @@ function clause execute (VREV8_V(vm, vs2, vd)) = {
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VCLZ_V : (bits(1), vregidx, vregidx)
@@ -226,7 +226,7 @@ function clause execute (VCLZ_V(vm, vs2, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -238,7 +238,7 @@ function clause execute (VCLZ_V(vm, vs2, vd)) = {
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VCTZ_V : (bits(1), vregidx, vregidx)
@@ -264,7 +264,7 @@ function clause execute (VCTZ_V(vm, vs2, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -276,7 +276,7 @@ function clause execute (VCTZ_V(vm, vs2, vd)) = {
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VCPOP_V : (bits(1), vregidx, vregidx)
@@ -302,7 +302,7 @@ function clause execute (VCPOP_V(vm, vs2, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -317,7 +317,7 @@ function clause execute (VCPOP_V(vm, vs2, vd)) = {
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VROL_VV : (bits(1), vregidx, vregidx, vregidx)
@@ -344,7 +344,7 @@ function clause execute (VROL_VV(vm, vs1, vs2, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -354,7 +354,7 @@ function clause execute (VROL_VV(vm, vs1, vs2, vd)) = {
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VROL_VX : (bits(1), vregidx, regidx, vregidx)
@@ -381,7 +381,7 @@ function clause execute (VROL_VX(vm, vs2, rs1, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -391,7 +391,7 @@ function clause execute (VROL_VX(vm, vs2, rs1, vd)) = {
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VROR_VV : (bits(1), vregidx, vregidx, vregidx)
@@ -418,7 +418,7 @@ function clause execute (VROR_VV(vm, vs1, vs2, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -428,7 +428,7 @@ function clause execute (VROR_VV(vm, vs1, vs2, vd)) = {
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VROR_VX : (bits(1), vregidx, regidx, vregidx)
@@ -455,7 +455,7 @@ function clause execute (VROR_VX(vm, vs2, rs1, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -465,7 +465,7 @@ function clause execute (VROR_VX(vm, vs2, rs1, vd)) = {
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VROR_VI : (bits(1), vregidx, bits(5), vregidx)
@@ -492,7 +492,7 @@ function clause execute (VROR_VI(vm, vs2, uimm, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -502,7 +502,7 @@ function clause execute (VROR_VI(vm, vs2, uimm, vd)) = {
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VWSLL_VV : (bits(1), vregidx, vregidx, vregidx)
@@ -533,7 +533,7 @@ function clause execute (VWSLL_VV(vm, vs2, vs1, vd)) = {
   let SEW_widen_bits = to_bits(SEW_widen, 'o);
   let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = match init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -546,7 +546,7 @@ function clause execute (VWSLL_VV(vm, vs2, vs1, vd)) = {
   };
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VWSLL_VX : (bits(1), vregidx, regidx, vregidx)
@@ -577,7 +577,7 @@ function clause execute (VWSLL_VX(vm, vs2, rs1, vd)) = {
   let SEW_widen_bits = to_bits(SEW_widen, 'o);
   let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = match init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -589,7 +589,7 @@ function clause execute (VWSLL_VX(vm, vs2, rs1, vd)) = {
   };
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VWSLL_VI : (bits(1), vregidx, bits(5), vregidx)
@@ -620,7 +620,7 @@ function clause execute (VWSLL_VI(vm, vs2, uimm, vd)) = {
   let SEW_widen_bits = to_bits(SEW_widen, 'o);
   let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = match init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -632,5 +632,5 @@ function clause execute (VWSLL_VI(vm, vs2, uimm, vd)) = {
   };
   write_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }

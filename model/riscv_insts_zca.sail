@@ -20,7 +20,7 @@ mapping clause encdec_compressed = C_NOP()
   <-> 0b000 @ 0b0 @ 0b00000 @ 0b00000 @ 0b01
   when currentlyEnabled(Ext_Zca)
 
-function clause execute C_NOP() = RETIRE_SUCCESS
+function clause execute C_NOP() = Exec_Success
 
 mapping clause assembly = C_NOP() <-> "c.nop"
 

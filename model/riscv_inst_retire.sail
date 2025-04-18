@@ -24,7 +24,7 @@ union Retire_Failure = {
 
 // To ease the introduction of `Retire_Failure`, this global
 // definition is temporarily used instead of the previous
-// RETIRE_SUCCESS enum value so that we don't have to immediately
-// update all the places RETIRE_SUCCESS was used.
+// Exec_Success enum value so that we don't have to immediately
+// update all the places Exec_Success was used.
 
-let RETIRE_SUCCESS : ExecutionResult(Retire_Failure) = RETIRE_OK()
+let Exec_Success : ExecutionResult(Retire_Failure) = Exec_Complete()

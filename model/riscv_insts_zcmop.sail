@@ -18,5 +18,5 @@ mapping clause assembly = ZCMOP(mop)
   <-> "c.mop." ^ dec_bits_4(mop @ 0b1)
 
 function clause execute ZCMOP(mop) = {
-  RETIRE_SUCCESS
+  Exec_Success
 }

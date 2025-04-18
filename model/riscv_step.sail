@@ -17,20 +17,20 @@ register hart_state : HartState = HART_ACTIVE()
 // not step.
 function retires_or_traps(r : ExecutionResult(Retire_Failure)) -> bool =
   match r {
-    RETIRE_OK()                        => true,
-    RETIRE_FAIL(Illegal_Instruction()) => true,
-    RETIRE_FAIL(Memory_Exception(_))   => true,
-    RETIRE_FAIL(Trap(_))               => true,
+    Exec_Complete()                        => true,
+    Exec_Incomplete(Illegal_Instruction()) => true,
+    Exec_Incomplete(Memory_Exception(_))   => true,
+    Exec_Incomplete(Trap(_))               => true,
 
     // Do not step if a wait instruction executed.  This gets
     // overridden in `try_step()` if these instructions are nops.
-    RETIRE_FAIL(Enter_Wait(_))         => false,
+    Exec_Incomplete(Enter_Wait(_))         => false,
 
     // errors from extensions
-    RETIRE_FAIL(Ext_ControlAddr_Check_Failure(_)) => true,
-    RETIRE_FAIL(Ext_DataAddr_Check_Failure(_))    => true,
-    RETIRE_FAIL(Ext_CSR_Check_Failure())          => true,
-    RETIRE_FAIL(Ext_XRET_Priv_Failure(_))         => true,
+    Exec_Incomplete(Ext_ControlAddr_Check_Failure(_)) => true,
+    Exec_Incomplete(Ext_DataAddr_Check_Failure(_))    => true,
+    Exec_Incomplete(Ext_CSR_Check_Failure())          => true,
+    Exec_Incomplete(Ext_XRET_Priv_Failure(_))         => true,
 }
 
 union Step = {
@@ -51,21 +51,21 @@ function run_hart_waiting(step_no : int, wr: WaitReason, instbits : instbits, ex
       // The waiting instruction retires successfully.  The
       // pending interrupts will be handled in the next step.
       hart_state = HART_ACTIVE();
-      (Step_Execute(RETIRE_OK(), instbits), true)
+      (Step_Execute(Exec_Complete(), instbits), true)
     },
     (_, WAIT_WRS_STO, false, _) => {
       if   get_config_print_instr()
       then print_instr("reservation invalid exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ BitStr(PC));
 
       hart_state = HART_ACTIVE();
-      (Step_Execute(RETIRE_OK(), instbits), true)
+      (Step_Execute(Exec_Complete(), instbits), true)
     },
     (_, WAIT_WRS_NTO, false, _) => {
       if   get_config_print_instr()
       then print_instr("reservation invalid exit from " ^ wait_name(WAIT_WRS_NTO) ^ " state at PC " ^ BitStr(PC));
 
       hart_state = HART_ACTIVE();
-      (Step_Execute(RETIRE_OK(), instbits), true)
+      (Step_Execute(Exec_Complete(), instbits), true)
     },
     // Transition out of waiting states as instructed.
     (_, WAIT_WFI, _, true) => {
@@ -78,15 +78,15 @@ function run_hart_waiting(step_no : int, wr: WaitReason, instbits : instbits, ex
       // implementation-specific, bounded time limit, the WFI
       // instruction causes an illegal-instruction exception."
       if   (cur_privilege == Machine | mstatus[TW] == 0b0)
-      then (Step_Execute(RETIRE_OK(), instbits), true)
-      else (Step_Execute(RETIRE_FAIL(Illegal_Instruction()), instbits), true)
+      then (Step_Execute(Exec_Complete(), instbits), true)
+      else (Step_Execute(Exec_Incomplete(Illegal_Instruction()), instbits), true)
     },
     (_, WAIT_WRS_STO, _, true) => {
       if   get_config_print_instr()
       then print_instr("timed-out exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ BitStr(PC));
 
       hart_state = HART_ACTIVE();
-      (Step_Execute(RETIRE_OK(), instbits), true)
+      (Step_Execute(Exec_Complete(), instbits), true)
     },
     (_, WAIT_WRS_NTO, _, true) => {
       if   get_config_print_instr()
@@ -94,11 +94,11 @@ function run_hart_waiting(step_no : int, wr: WaitReason, instbits : instbits, ex
 
       hart_state = HART_ACTIVE();
       if   cur_privilege == Machine
-      then (Step_Execute(RETIRE_OK(), instbits), true)
+      then (Step_Execute(Exec_Complete(), instbits), true)
       else if mstatus[TW] == 0b1
-      then (Step_Execute(RETIRE_FAIL(Illegal_Instruction()), instbits), true)
+      then (Step_Execute(Exec_Incomplete(Illegal_Instruction()), instbits), true)
       else // TODO: handle VS/VU modes and hstatus.VTW
-           (Step_Execute(RETIRE_OK(), instbits), true)
+           (Step_Execute(Exec_Complete(), instbits), true)
     },
     // remain waiting
     (_, _, _, false) => {
@@ -132,7 +132,7 @@ function run_hart_active(step_no: int, exit_wait : bool) -> (Step, bool) = {
           let r = execute(ast);
           (Step_Execute(r, instbits), retires_or_traps(r))
         } else {
-          (Step_Execute(RETIRE_FAIL(Illegal_Instruction()), instbits), true)
+          (Step_Execute(Exec_Incomplete(Illegal_Instruction()), instbits), true)
         }
       },
       F_Base(w) => {
@@ -202,30 +202,30 @@ function try_step(step_no : int, exit_wait : bool) -> bool = {
     Step_Waiting(wr) => {
       assert(hart_is_waiting(hart_state), "cannot be Waiting in a non-Wait state")
     },
-    Step_Execute(RETIRE_OK(), _) => {
+    Step_Execute(Exec_Complete(), _) => {
       assert(hart_is_active(hart_state))
     },
     // standard errors
-    Step_Execute(RETIRE_FAIL(Trap(priv, ctl, pc)), _) => {
+    Step_Execute(Exec_Incomplete(Trap(priv, ctl, pc)), _) => {
       minstret_increment = false;
       set_next_pc(exception_handler(priv, ctl, pc))
     },
-    Step_Execute(RETIRE_FAIL(Memory_Exception(vaddr, e)), _) => {
+    Step_Execute(Exec_Incomplete(Memory_Exception(vaddr, e)), _) => {
       minstret_increment = false;
       handle_mem_exception(vaddr, e)
     },
-    Step_Execute(RETIRE_FAIL(Illegal_Instruction()), instbits) => {
+    Step_Execute(Exec_Incomplete(Illegal_Instruction()), instbits) => {
       minstret_increment = false;
       handle_illegal(instbits)
     },
-    Step_Execute(RETIRE_FAIL(Enter_Wait(wr)), instbits) => {
+    Step_Execute(Exec_Incomplete(Enter_Wait(wr)), instbits) => {
       let wait_is_nop : bool = match wr {
         WAIT_WFI     => wfi_is_nop(),
         WAIT_WRS_STO => wrs_sto_is_nop(),
         WAIT_WRS_NTO => wrs_nto_is_nop(),
       };
       if wait_is_nop then {
-        // This is the same as the RETIRE_OK case.
+        // This is the same as the Exec_Complete case.
         assert(hart_is_active(hart_state));
         // Override the default step for the wait.
         stepped = true;
@@ -238,19 +238,19 @@ function try_step(step_no : int, exit_wait : bool) -> bool = {
       }
     },
     // errors from extensions
-    Step_Execute(RETIRE_FAIL(Ext_CSR_Check_Failure()), _) => {
+    Step_Execute(Exec_Incomplete(Ext_CSR_Check_Failure()), _) => {
       minstret_increment = false;
       ext_check_CSR_fail()
     },
-    Step_Execute(RETIRE_FAIL(Ext_ControlAddr_Check_Failure(e)), _) => {
+    Step_Execute(Exec_Incomplete(Ext_ControlAddr_Check_Failure(e)), _) => {
       minstret_increment = false;
       ext_handle_control_check_error(e)
     },
-    Step_Execute(RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)), _) => {
+    Step_Execute(Exec_Incomplete(Ext_DataAddr_Check_Failure(e)), _) => {
       minstret_increment = false;
       ext_handle_data_check_error(e)
     },
-    Step_Execute(RETIRE_FAIL(Ext_XRET_Priv_Failure()), _) => {
+    Step_Execute(Exec_Incomplete(Ext_XRET_Priv_Failure()), _) => {
       minstret_increment = false;
       ext_fail_xret_priv ()
     },

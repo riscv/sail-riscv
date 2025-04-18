@@ -29,7 +29,7 @@ function clause execute (UTYPE(imm, rd, op)) = {
     RISCV_LUI   => off,
     RISCV_AUIPC => get_arch_pc() + off
   };
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping utype_mnemonic : uop <-> string = {
@@ -62,16 +62,16 @@ function clause execute (RISCV_JAL(imm, rd)) = {
   let target = PC + sign_extend(imm);
   /* Extensions get the first checks on the prospective target address. */
   match ext_control_check_pc(target) {
-    Ext_ControlAddr_Error(e) => RETIRE_FAIL(Ext_ControlAddr_Check_Failure(e)),
+    Ext_ControlAddr_Error(e) => Exec_Incomplete(Ext_ControlAddr_Check_Failure(e)),
     Ext_ControlAddr_OK(target) => {
       /* Perform standard alignment check */
       let target_bits = virtaddr_bits(target);
       if bit_to_bool(target_bits[1]) & not(currentlyEnabled(Ext_Zca)) then {
-        RETIRE_FAIL(Memory_Exception(target, E_Fetch_Addr_Align()))
+        Exec_Incomplete(Memory_Exception(target, E_Fetch_Addr_Align()))
       } else {
         X(rd) = get_next_pc();
         set_next_pc(target_bits);
-        RETIRE_SUCCESS
+        Exec_Success
       }
     }
   }
@@ -121,18 +121,18 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
     let target = PC + sign_extend(imm);
     /* Extensions get the first checks on the prospective target address. */
     match ext_control_check_pc(target) {
-      Ext_ControlAddr_Error(e) => RETIRE_FAIL(Ext_ControlAddr_Check_Failure(e)),
+      Ext_ControlAddr_Error(e) => Exec_Incomplete(Ext_ControlAddr_Check_Failure(e)),
       Ext_ControlAddr_OK(target) => {
         let target_bits = virtaddr_bits(target);
         if bit_to_bool(target_bits[1]) & not(currentlyEnabled(Ext_Zca)) then {
-          RETIRE_FAIL(Memory_Exception(target, E_Fetch_Addr_Align()))
+          Exec_Incomplete(Memory_Exception(target, E_Fetch_Addr_Align()))
         } else {
           set_next_pc(target_bits);
-          RETIRE_SUCCESS
+          Exec_Success
         }
       }
     }
-  } else RETIRE_SUCCESS
+  } else Exec_Success
 }
 
 mapping btype_mnemonic : bop <-> string = {
@@ -172,7 +172,7 @@ function clause execute (ITYPE (imm, rs1, rd, op)) = {
     RISCV_ORI   => X(rs1) | immext,
     RISCV_XORI  => X(rs1) ^ immext
   };
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping itype_mnemonic : iop <-> string = {
@@ -213,7 +213,7 @@ function clause execute (SHIFTIOP(shamt, rs1, rd, op)) = {
     RISCV_SRLI => X(rs1) >> shamt,
     RISCV_SRAI => shift_bits_right_arith(X(rs1), shamt),
   };
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping shiftiop_mnemonic : sop <-> string = {
@@ -252,7 +252,7 @@ function clause execute (RTYPE(rs2, rs1, rd, op)) = {
     RISCV_SUB  => X(rs1) - X(rs2),
     RISCV_SRA  => shift_bits_right_arith(X(rs1), X(rs2)[log2_xlen - 1 .. 0]),
   };
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping rtype_mnemonic : rop <-> string = {
@@ -305,16 +305,16 @@ function clause execute (LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
   match ext_data_get_addr(rs1, offset, Read(Data), width_bytes) {
-    Ext_DataAddr_Error(e)  => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
+    Ext_DataAddr_Error(e)  => Exec_Incomplete(Ext_DataAddr_Check_Failure(e)),
     Ext_DataAddr_OK(vaddr) => {
       if   check_misaligned(vaddr, width)
-      then RETIRE_FAIL(Memory_Exception(vaddr, E_Load_Addr_Align()))
+      then Exec_Incomplete(Memory_Exception(vaddr, E_Load_Addr_Align()))
       else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, _) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
+        TR_Failure(e, _) => Exec_Incomplete(Memory_Exception(vaddr, e)),
         TR_Address(paddr, _) =>
           match mem_read(Read(Data), paddr, width_bytes, aq, rl, false) {
-            Ok(result) => { X(rd) = extend_value(is_unsigned, result); RETIRE_SUCCESS },
-            Err(e)     => RETIRE_FAIL(Memory_Exception(vaddr, e)),
+            Ok(result) => { X(rd) = extend_value(is_unsigned, result); Exec_Success },
+            Err(e)     => Exec_Incomplete(Memory_Exception(vaddr, e)),
           },
       }
     },
@@ -361,21 +361,21 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
   /* Get the address, X(rs1) + offset.
      Some extensions perform additional checks on address validity. */
   match ext_data_get_addr(rs1, offset, Write(Data), width_bytes) {
-    Ext_DataAddr_Error(e)  => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
+    Ext_DataAddr_Error(e)  => Exec_Incomplete(Ext_DataAddr_Check_Failure(e)),
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
-      then RETIRE_FAIL(Memory_Exception(vaddr, E_SAMO_Addr_Align()))
+      then Exec_Incomplete(Memory_Exception(vaddr, E_SAMO_Addr_Align()))
       else match translateAddr(vaddr, Write(Data)) {
-        TR_Failure(e, _)    => RETIRE_FAIL(Memory_Exception(vaddr, e)),
+        TR_Failure(e, _)    => Exec_Incomplete(Memory_Exception(vaddr, e)),
         TR_Address(paddr, _) => {
           match mem_write_ea(paddr, width_bytes, aq, rl, false) {
-            Err(e) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
+            Err(e) => Exec_Incomplete(Memory_Exception(vaddr, e)),
             Ok(_)  => {
               let rs2_val = X(rs2);
               match mem_write_value(paddr, width_bytes, rs2_val[width_bytes * 8 - 1 .. 0], aq, rl, false) {
-                Ok(true)  => RETIRE_SUCCESS,
+                Ok(true)  => Exec_Success,
                 Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                Err(e)    => RETIRE_FAIL(Memory_Exception(vaddr, e))
+                Err(e)    => Exec_Incomplete(Memory_Exception(vaddr, e))
               }
             }
           }
@@ -397,7 +397,7 @@ mapping clause encdec = ADDIW(imm, rs1, rd)
 function clause execute (ADDIW(imm, rs1, rd)) = {
   let result = X(rs1) + sign_extend(imm);
   X(rd) = sign_extend(result[31..0]);
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping clause assembly = ADDIW(imm, rs1, rd)
@@ -434,7 +434,7 @@ function clause execute (RTYPEW(rs2, rs1, rd, op)) = {
     RISCV_SRAW => shift_bits_right_arith(rs1_val, rs2_val[4..0]),
   };
   X(rd) = sign_extend(result);
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping rtypew_mnemonic : ropw <-> string = {
@@ -470,7 +470,7 @@ function clause execute (SHIFTIWOP(shamt, rs1, rd, op)) = {
     RISCV_SRAIW => shift_bits_right_arith(rs1_val, shamt),
   };
   X(rd) = sign_extend(result);
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping shiftiwop_mnemonic : sopw <-> string = {
@@ -519,7 +519,7 @@ function clause execute (FENCE(pred, succ)) = {
     _ => { print("FIXME: unsupported fence");
            () }
   };
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping bit_maybe_r : bits(1) <-> string = {
@@ -563,7 +563,7 @@ function clause execute (FENCE_TSO(pred, succ)) = {
     _ => { print("FIXME: unsupported fence");
            () }
   };
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping clause assembly = FENCE_TSO(pred, succ)
@@ -584,7 +584,7 @@ function clause execute ECALL() = {
                     },
              excinfo = (None() : option(xlenbits)),
              ext     = None() };
-  RETIRE_FAIL(Trap(cur_privilege, CTL_TRAP(t), PC))
+  Exec_Incomplete(Trap(cur_privilege, CTL_TRAP(t), PC))
 }
 
 mapping clause assembly = ECALL() <-> "ecall"
@@ -597,12 +597,12 @@ mapping clause encdec = MRET()
 
 function clause execute MRET() = {
   if   cur_privilege != Machine
-  then RETIRE_FAIL(Illegal_Instruction())
+  then Exec_Incomplete(Illegal_Instruction())
   else if not(ext_check_xret_priv(Machine))
-  then RETIRE_FAIL(Ext_XRET_Priv_Failure())
+  then Exec_Incomplete(Ext_XRET_Priv_Failure())
   else {
     set_next_pc(exception_handler(cur_privilege, CTL_MRET(), PC));
-    RETIRE_SUCCESS
+    Exec_Success
   }
 }
 
@@ -621,12 +621,12 @@ function clause execute SRET() = {
     Machine    => not(currentlyEnabled(Ext_S))
   };
   if   sret_illegal
-  then RETIRE_FAIL(Illegal_Instruction())
+  then Exec_Incomplete(Illegal_Instruction())
   else if not(ext_check_xret_priv (Supervisor))
-  then RETIRE_FAIL(Ext_XRET_Priv_Failure())
+  then Exec_Incomplete(Ext_XRET_Priv_Failure())
   else {
     set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC));
-    RETIRE_SUCCESS
+    Exec_Success
   }
 }
 
@@ -639,7 +639,7 @@ mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute EBREAK() =
-  RETIRE_FAIL(Memory_Exception(Virtaddr(PC), E_Breakpoint()))
+  Exec_Incomplete(Memory_Exception(Virtaddr(PC), E_Breakpoint()))
 
 mapping clause assembly = EBREAK() <-> "ebreak"
 
@@ -651,11 +651,11 @@ mapping clause encdec = WFI()
 
 function clause execute WFI() =
   match cur_privilege {
-    Machine    => RETIRE_FAIL(Enter_Wait(WAIT_WFI)),
+    Machine    => Exec_Incomplete(Enter_Wait(WAIT_WFI)),
     Supervisor => if   mstatus[TW] == 0b1
-                  then RETIRE_FAIL(Illegal_Instruction())
-                  else RETIRE_FAIL(Enter_Wait(WAIT_WFI)),
-    User       => RETIRE_FAIL(Illegal_Instruction())
+                  then Exec_Incomplete(Illegal_Instruction())
+                  else Exec_Incomplete(Enter_Wait(WAIT_WFI)),
+    User       => Exec_Incomplete(Illegal_Instruction())
   }
 
 mapping clause assembly = WFI() <-> "wfi"
@@ -673,12 +673,12 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
   // is 9 but we always set it to 16 for RV64.
   let asid = if rs2 != zreg then Some(X(rs2)[asidlen - 1 .. 0]) else None();
   match cur_privilege {
-    User       => RETIRE_FAIL(Illegal_Instruction()),
+    User       => Exec_Incomplete(Illegal_Instruction()),
     Supervisor => match mstatus[TVM] {
-                    0b1 => RETIRE_FAIL(Illegal_Instruction()),
-                    0b0 => { flush_TLB(asid, addr); RETIRE_SUCCESS },
+                    0b1 => Exec_Incomplete(Illegal_Instruction()),
+                    0b0 => { flush_TLB(asid, addr); Exec_Success },
                   },
-    Machine    => { flush_TLB(asid, addr); RETIRE_SUCCESS }
+    Machine    => { flush_TLB(asid, addr); Exec_Success }
   }
 }
 

@@ -102,13 +102,16 @@ function privLevel_to_str (p) =
 
 overload to_str = {privLevel_to_str}
 
-/* Type denoting the result of executing an instruction that
- * is generic over the reasons why it fails or is incomplete.
- */
+// Type denoting the result of executing an instruction that is
+// generic over the reasons why it fails or is incomplete.
+//
+// The minstret handling is handled separately for internal reasons
+// (see the note accompanying the register definition), and is not
+// included as part of the completion of an instruction's execution.
 
 union ExecutionResult ('a : Type) = {
-  RETIRE_OK      : unit,
-  RETIRE_FAIL    : 'a
+  Exec_Complete   : unit,
+  Exec_Incomplete : 'a
 }
 
 /* memory access types */

@@ -31,7 +31,7 @@ function clause execute (VCLMUL_VV(vm, vs2, vs1, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -43,7 +43,7 @@ function clause execute (VCLMUL_VV(vm, vs2, vs1, vd)) = {
   };
   write_vreg('n, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VCLMUL_VX : (bits(1), vregidx, regidx, vregidx)
@@ -70,7 +70,7 @@ function clause execute (VCLMUL_VX(vm, vs2, rs1, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -82,7 +82,7 @@ function clause execute (VCLMUL_VX(vm, vs2, rs1, vd)) = {
   };
   write_vreg('n, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VCLMULH_VV : (bits(1), vregidx, vregidx, vregidx)
@@ -108,7 +108,7 @@ function clause execute (VCLMULH_VV(vm, vs2, vs1, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -120,7 +120,7 @@ function clause execute (VCLMULH_VV(vm, vs2, vs1, vd)) = {
   };
   write_vreg('n, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = VCLMULH_VX : (bits(1), vregidx, regidx, vregidx)
@@ -147,7 +147,7 @@ function clause execute (VCLMULH_VX(vm, vs2, rs1, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -159,5 +159,5 @@ function clause execute (VCLMULH_VX(vm, vs2, rs1, vd)) = {
   };
   write_vreg('n, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }

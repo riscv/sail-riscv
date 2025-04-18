@@ -63,7 +63,7 @@ function clause execute (VSHA2MS_VV(vs2, vs1, vd)) = {
   };
 
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 union clause ast = ZVKSHA2TYPE : (zvkfunct6, vregidx, vregidx, vregidx)
@@ -149,5 +149,5 @@ function clause execute (ZVKSHA2TYPE(funct6, vs2, vs1, vd)) = {
   };
 
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
