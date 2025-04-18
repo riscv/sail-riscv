@@ -74,7 +74,7 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
     (Read(Data), None()) => Err(E_Load_Access_Fault()),
     (_,          None()) => Err(E_SAMO_Access_Fault()),
     (_,      Some(v, m)) => { if   get_config_print_mem()
-                              then print_mem("mem[" ^ to_str(t) ^ "," ^ BitStr(bits_of(paddr)) ^ "] -> " ^ BitStr(v));
+                              then print_mem("mem[" ^ to_str(t) ^ "," ^ hex_bits_str(bits_of(paddr)) ^ "] -> " ^ BitStr(v));
                               Ok(v, m) }
   }
 }

@@ -24,6 +24,7 @@ val elf_entry = pure {
   c: "elf_entry"
 } : unit -> int
 
+
 // Cache block size is 2^cache_block_size_exp. Max is `max_mem_access` (4096)
 // because this model performs `cbo.zero` with a single write, and the behaviour
 // with cache blocks larger than a page is not clearly defined.
@@ -311,7 +312,7 @@ function reset_htif () -> unit = {
 val htif_load : forall 'n, 'n > 0. (AccessType(ext_access_type), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
 function htif_load(t, Physaddr(paddr), width) = {
   if   get_config_print_platform()
-  then print_platform("htif[" ^ BitStr(paddr) ^ "] -> " ^ BitStr(htif_tohost));
+  then print_platform("htif[" ^ hex_bits_str(paddr) ^ "] -> " ^ BitStr(htif_tohost));
   /* FIXME: For now, only allow the expected access widths. */
   if      width == 8 & (paddr == plat_htif_tohost())
   then    Ok(zero_extend(64, htif_tohost))         /* FIXME: Redundant zero_extend currently required by Lem backend */
@@ -329,7 +330,7 @@ function htif_load(t, Physaddr(paddr), width) = {
 val htif_store: forall 'n, 0 < 'n <= 8. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
 function htif_store(Physaddr(paddr), width, data) = {
   if   get_config_print_platform()
-  then print_platform("htif[" ^ BitStr(paddr) ^ "] <- " ^ BitStr(data));
+  then print_platform("htif[" ^ hex_bits_str(paddr) ^ "] <- " ^ BitStr(data));
   /* Store the written value so that we can ack it later. */
   if      width == 8
   then    { htif_cmd_write = bitone;
