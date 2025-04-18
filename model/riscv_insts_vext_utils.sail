@@ -10,6 +10,14 @@
 /* This file implements functions used by vector instructions.                     */
 /* ******************************************************************************* */
 
+/* NFIELDS Encoding
+ * typically, nf is in range 1 to 8, but for 'Vector Load/Store Whole Register Instructions',
+ * only NFIELDS values of 1, 2, 4, 8 are supported, with other values reserved.
+ */
+type nfields_range('q) = 'q > 0 & 'q <= 8
+type nfields_range_pow2('q) = 'q in { 1, 2, 4, 8 }
+type nfields = { 'q, nfields_range('q). int('q) }
+
 /* Vector mask mapping */
 mapping maybe_vmask : string <-> bits(1) = {
   ""              <-> 0b1, /* unmasked by default */
@@ -76,7 +84,7 @@ function valid_reg_overlap(rs, rd, EMUL_pow_rs, EMUL_pow_rd) = {
  *  The EMUL of load vd or store vs3 times the number of fields per segment
  *  must not be larger than 8. (EMUL * NFIELDS <= 8)
  */
-val valid_segment : (int, int) -> bool
+val valid_segment : (nfields, int) -> bool
 function valid_segment(nf, EMUL_pow) = {
   if EMUL_pow < 0 then nf / (2 ^ (0 - EMUL_pow)) <= 8
   else nf * 2 ^ EMUL_pow <= 8
@@ -134,27 +142,27 @@ function illegal_reduction_widen(SEW_widen, LMUL_pow_widen) = {
 }
 
 /* g. Non-indexed load instruction check */
-val illegal_load : (vregidx, bits(1), int, int, int) -> bool
+val illegal_load : (vregidx, bits(1), nfields, int, int) -> bool
 function illegal_load(vd, vm, nf, EEW, EMUL_pow) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) |
   not(valid_eew_emul(EEW, EMUL_pow)) | not(valid_segment(nf, EMUL_pow))
 }
 
 /* h. Non-indexed store instruction check (with vs3 rather than vd) */
-val illegal_store : (int, int, int) -> bool
+val illegal_store : (nfields, int, int) -> bool
 function illegal_store(nf, EEW, EMUL_pow) = {
   not(valid_vtype()) | not(valid_eew_emul(EEW, EMUL_pow)) | not(valid_segment(nf, EMUL_pow))
 }
 
 /* i. Indexed load instruction check */
-val illegal_indexed_load : (vregidx, bits(1), int, int, int, int) -> bool
+val illegal_indexed_load : (vregidx, bits(1), nfields, int, int, int) -> bool
 function illegal_indexed_load(vd, vm, nf, EEW_index, EMUL_pow_index, EMUL_pow_data) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) |
   not(valid_eew_emul(EEW_index, EMUL_pow_index)) | not(valid_segment(nf, EMUL_pow_data))
 }
 
 /* j. Indexed store instruction check (with vs3 rather than vd) */
-val illegal_indexed_store : (int, int, int, int) -> bool
+val illegal_indexed_store : (nfields, int, int, int) -> bool
 function illegal_indexed_store(nf, EEW_index, EMUL_pow_index, EMUL_pow_data) = {
   not(valid_vtype()) | not(valid_eew_emul(EEW_index, EMUL_pow_index)) |
   not(valid_segment(nf, EMUL_pow_data))
@@ -394,7 +402,7 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
  *   Read multiple register groups and concatenate them in parallel
  *   The whole segments with the same element index are combined together
  */
-val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'm >= 0 & 'q >= 0. (int('n), int('m), int('p), int('q), vregidx) -> vector('n, bits('q * 'm))
+val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'm >= 0 & nfields_range('q). (int('n), int('m), int('p), int('q), vregidx) -> vector('n, bits('q * 'm))
 function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
   let LMUL_reg : int = if LMUL_pow <= 0 then 1 else 2 ^ LMUL_pow;
   var vreg_list : vector('q, vector('n, bits('m))) = vector_init(vector_init(zeros()));
