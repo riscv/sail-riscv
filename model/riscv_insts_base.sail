@@ -65,7 +65,7 @@ function clause execute (RISCV_JAL(imm, rd)) = {
     Ext_ControlAddr_Error(e) => RETIRE_FAIL(Ext_ControlAddr_Check_Failure(e)),
     Ext_ControlAddr_OK(target) => {
       /* Perform standard alignment check */
-      let target_bits = virtaddr_bits(target);
+      let target_bits = bits_of(target);
       if bit_to_bool(target_bits[1]) & not(currentlyEnabled(Ext_Zca)) then {
         RETIRE_FAIL(Memory_Exception(target, E_Fetch_Addr_Align()))
       } else {
@@ -123,7 +123,7 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
     match ext_control_check_pc(target) {
       Ext_ControlAddr_Error(e) => RETIRE_FAIL(Ext_ControlAddr_Check_Failure(e)),
       Ext_ControlAddr_OK(target) => {
-        let target_bits = virtaddr_bits(target);
+        let target_bits = bits_of(target);
         if bit_to_bool(target_bits[1]) & not(currentlyEnabled(Ext_Zca)) then {
           RETIRE_FAIL(Memory_Exception(target, E_Fetch_Addr_Align()))
         } else {
@@ -293,7 +293,7 @@ function is_aligned(vaddr : xlenbits, width : word_width) -> bool =
 
 // Return true if the address is misaligned and we don't support misaligned access.
 function check_misaligned(vaddr : virtaddr, width : word_width) -> bool =
-  not(plat_enable_misaligned_access()) & not(is_aligned(virtaddr_bits(vaddr), width))
+  not(plat_enable_misaligned_access()) & not(is_aligned(bits_of(vaddr), width))
 
 function clause execute (LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   let offset : xlenbits = sign_extend(imm);

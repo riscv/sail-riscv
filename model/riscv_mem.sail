@@ -74,7 +74,7 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
     (Read(Data), None()) => Err(E_Load_Access_Fault()),
     (_,          None()) => Err(E_SAMO_Access_Fault()),
     (_,      Some(v, m)) => { if   get_config_print_mem()
-                              then print_mem("mem[" ^ to_str(t) ^ "," ^ BitStr(physaddr_bits(paddr)) ^ "] -> " ^ BitStr(v));
+                              then print_mem("mem[" ^ to_str(t) ^ "," ^ BitStr(bits_of(paddr)) ^ "] -> " ^ BitStr(v));
                               Ok(v, m) }
   }
 }
@@ -198,7 +198,7 @@ $endif
 function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : physaddr, width : int('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
   let result = write_ram(wk, paddr, width, data, meta);
   if   get_config_print_mem()
-  then print_mem("mem[" ^ BitStr(physaddr_bits(paddr)) ^ "] <- " ^ BitStr(data));
+  then print_mem("mem[" ^ BitStr(bits_of(paddr)) ^ "] <- " ^ BitStr(data));
   Ok(result)
 }
 
