@@ -66,3 +66,54 @@ function zvk_ch(x, y, z) = (x & y) ^ (~(x) & z)
 
 val zvk_maj : forall 'n, 'n >= 0. (bits('n), bits('n), bits('n)) -> bits('n)
 function zvk_maj(x, y, z) = (x & y) ^ (x & z) ^ (y & z)
+
+/*
+ * Utility functions for Zvksh
+ * ----------------------------------------------------------------------
+ */
+
+val zvk_p0 : bits(32) -> bits(32)
+function zvk_p0(X) = X ^ (X <<<  9) ^ (X <<< 17)
+
+val zvk_p1 : bits(32) -> bits(32)
+function zvk_p1(X) = X ^ (X <<< 15) ^ (X <<< 23)
+
+val zvk_sh_w : (bits(32), bits(32), bits(32), bits(32), bits(32)) -> bits(32)
+function zvk_sh_w(A, B, C, D, E) = zvk_p1(A ^ B ^ (C <<< 15)) ^ (D <<< 7) ^ E
+
+val zvk_ff1 : (bits(32), bits(32), bits(32)) -> bits(32)
+function zvk_ff1(X, Y, Z) = X ^ Y ^ Z
+
+val zvk_ff2 : (bits(32), bits(32), bits(32)) -> bits(32)
+function zvk_ff2(X, Y, Z) = (X & Y) | (X & Z) | (Y & Z)
+
+val zvk_ff_j : (bits(32), bits(32), bits(32), int) -> bits(32)
+function zvk_ff_j(X, Y, Z, J) = if J <= 15 then zvk_ff1(X, Y, Z) else zvk_ff2(X, Y, Z)
+
+val zvk_gg1 : (bits(32), bits(32), bits(32)) -> bits(32)
+function zvk_gg1(X, Y, Z) = X ^ Y ^ Z
+
+val zvk_gg2 : (bits(32), bits(32), bits(32)) -> bits(32)
+function zvk_gg2(X, Y, Z) = (X & Y) | (~(X) & Z)
+
+val zvk_gg_j : (bits(32), bits(32), bits(32), int) -> bits(32)
+function zvk_gg_j(X, Y, Z, J) = if J <= 15 then zvk_gg1(X, Y, Z) else zvk_gg2(X, Y, Z)
+
+val zvk_t_j : int -> bits(32)
+function zvk_t_j(J) = if J <= 15 then 0x79CC4519 else 0x7A879D8A
+
+function zvk_sm3_round(A_H : vector(8, bits(32)), w : bits(32), x : bits(32), j : int) -> vector(8, bits(32)) = {
+  let t_j = zvk_t_j(j) <<< (j % 32);
+  let ss1 = ((A_H[0] <<< 12) + A_H[4] + t_j) <<< 7;
+  let ss2 = ss1 ^ (A_H[0] <<< 12);
+
+  let tt1 = zvk_ff_j(A_H[0], A_H[1], A_H[2], j) + A_H[3] + ss2 + x;
+  let tt2 = zvk_gg_j(A_H[4], A_H[5], A_H[6], j) + A_H[7] + ss1 + w;
+
+  let A1 = tt1;
+  let C1 = A_H[1] <<< 9;
+  let E1 = zvk_p0(tt2);
+  let G1 = A_H[5] <<< 19;
+
+  [ A_H[6], G1, A_H[4], E1, A_H[2], C1, A_H[0], A1 ]
+}
