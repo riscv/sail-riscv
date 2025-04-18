@@ -84,6 +84,11 @@ function clause hartSupports(Ext_Zabha) = config extensions.Zabha.supported
 // Load-Reserved/Store-Conditional Instructions
 enum clause extension = Ext_Zalrsc
 function clause hartSupports(Ext_Zalrsc) = config extensions.Zalrsc.supported
+// The Zama16b extensions implies that misaligned loads, stores, and
+// AMOs to main memory regions that do not cross a naturally aligned
+// 16-byte boundary are atomic.
+enum clause extension = Ext_Zama16b
+function clause hartSupports(Ext_Zama16b) = config extensions.Zama16b.supported
 
 // Additional Floating-Point Instructions
 enum clause extension = Ext_Zfa

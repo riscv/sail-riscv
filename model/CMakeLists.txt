@@ -134,6 +134,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_vmem_ptw.sail"
                 "riscv_vmem_tlb.sail"
                 "riscv_vmem.sail"
+                "riscv_vmem_utils.sail"
             )
 
             set(prelude
@@ -178,11 +179,11 @@ foreach (xlen IN ITEMS 32 64)
                 ${sail_sys_srcs}
                 "riscv_platform.sail"
                 "riscv_mem.sail"
+                "riscv_inst_retire.sail"
                 ${sail_vm_srcs}
                 # Shared/common code for the cryptography extension.
                 "riscv_types_kext.sail"
                 "riscv_zvk_utils.sail"
-                "riscv_inst_retire.sail"
             )
 
             if (variant STREQUAL "rvfi")
