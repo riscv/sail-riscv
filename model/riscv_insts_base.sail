@@ -161,6 +161,7 @@ mapping encdec_iop : iop <-> bits(3) = {
 
 mapping clause encdec = ITYPE(imm, rs1, rd, op)
   <-> imm @ encdec_reg(rs1) @ encdec_iop(op) @ encdec_reg(rd) @ 0b0010011
+  when not(currentlyEnabled(Ext_Zicbop) & op == RISCV_ORI & encdec_reg(rd) == zeros())
 
 function clause execute (ITYPE (imm, rs1, rd, op)) = {
   let immext : xlenbits = sign_extend(imm);
