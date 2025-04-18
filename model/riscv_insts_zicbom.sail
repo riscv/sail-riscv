@@ -77,7 +77,7 @@ function process_clean_inval(rs1, cbop) = {
   // to be in bounds here, whereas `ext_data_get_addr()` checks that all bytes
   // are in bounds. We will need to add a new function, parameter or access type.
   match ext_data_get_addr(rs1, negative_offset, Read(Data), cache_block_size) {
-    Ext_DataAddr_Error(e) => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
+    Ext_DataAddr_Error(e) => Exec_Incomplete(Ext_DataAddr_Check_Failure(e)),
     Ext_DataAddr_OK(vaddr) => {
       let res : option(ExceptionType) = match translateAddr(vaddr, Read(Data)) {
         TR_Address(paddr, _) => {
@@ -113,7 +113,7 @@ function process_clean_inval(rs1, cbop) = {
       //  fault exception otherwise."
       match res {
         // The model has no caches so there's no action required.
-        None() => RETIRE_SUCCESS,
+        None() => Exec_Success,
         Some(e) => {
           let e : ExceptionType = match e {
             E_Load_Access_Fault() => E_SAMO_Access_Fault(),
@@ -128,7 +128,7 @@ function process_clean_inval(rs1, cbop) = {
           // was encoded in the instruction. We subtract the negative offset
           // (add the positive offset) to get it. Normally this will be
           // equal to rs1, but pointer masking can change that.
-          RETIRE_FAIL(Memory_Exception(vaddr - negative_offset, e))
+          Exec_Incomplete(Memory_Exception(vaddr - negative_offset, e))
         }
       }
     }
@@ -138,16 +138,16 @@ function process_clean_inval(rs1, cbop) = {
 function clause execute(RISCV_ZICBOM(CBO_CLEAN, rs1)) =
   if   cbo_clean_flush_enabled(cur_privilege)
   then process_clean_inval(rs1, CBO_CLEAN)
-  else RETIRE_FAIL(Illegal_Instruction())
+  else Exec_Incomplete(Illegal_Instruction())
 
 function clause execute(RISCV_ZICBOM(CBO_FLUSH, rs1)) =
   if   cbo_clean_flush_enabled(cur_privilege)
   then process_clean_inval(rs1, CBO_FLUSH)
-  else RETIRE_FAIL(Illegal_Instruction())
+  else Exec_Incomplete(Illegal_Instruction())
 
 function clause execute(RISCV_ZICBOM(CBO_INVAL, rs1)) =
   match cbop_priv_check(cur_privilege) {
-    CBOP_ILLEGAL         => RETIRE_FAIL(Illegal_Instruction()),
+    CBOP_ILLEGAL         => Exec_Incomplete(Illegal_Instruction()),
     CBOP_ILLEGAL_VIRTUAL => internal_error(__FILE__, __LINE__, "unimplemented"),
     CBOP_INVAL_INVAL     => process_clean_inval(rs1, CBO_INVAL),
     CBOP_INVAL_FLUSH     => process_clean_inval(rs1, CBO_FLUSH),

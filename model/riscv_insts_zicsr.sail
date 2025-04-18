@@ -26,9 +26,9 @@ mapping clause encdec = CSRImm(csr, imm, rd, op)
 
 function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_CSR_Write: bool) -> ExecutionResult(Retire_Failure) = {
   if not(check_CSR(csr, cur_privilege, is_CSR_Write))
-  then RETIRE_FAIL(Illegal_Instruction())
+  then Exec_Incomplete(Illegal_Instruction())
   else if not(ext_check_CSR(csr, cur_privilege, is_CSR_Write))
-  then RETIRE_FAIL(Ext_CSR_Check_Failure())
+  then Exec_Incomplete(Ext_CSR_Check_Failure())
   else {
     /* CSRRW should not generate read side-effects if rd == 0 */
     let is_CSR_Read = not(op == CSRRW & rd == zreg);
@@ -47,7 +47,7 @@ function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_CSR_
       then print_reg("CSR " ^ to_str(csr) ^ " -> " ^ bits_str(csr_val));
     };
     X(rd) = csr_val;
-    RETIRE_SUCCESS
+    Exec_Success
   }
 }
 

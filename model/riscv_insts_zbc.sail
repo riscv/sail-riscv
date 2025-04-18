@@ -22,7 +22,7 @@ mapping clause assembly = RISCV_CLMUL(rs2, rs1, rd)
 function clause execute (RISCV_CLMUL(rs2, rs1, rd)) = {
   let prod = carryless_mul(X(rs1), X(rs2));
   X(rd) = prod[xlen - 1 .. 0];
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* ****************************************************************** */
@@ -38,7 +38,7 @@ mapping clause assembly = RISCV_CLMULH(rs2, rs1, rd)
 function clause execute (RISCV_CLMULH(rs2, rs1, rd)) = {
   let prod = carryless_mul(X(rs1), X(rs2));
   X(rd) = prod[2 * xlen - 1 .. xlen];
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* ****************************************************************** */
@@ -53,5 +53,5 @@ mapping clause assembly = RISCV_CLMULR(rs2, rs1, rd)
 
 function clause execute (RISCV_CLMULR(rs2, rs1, rd)) = {
   X(rd) = carryless_mulr(X(rs1), X(rs2));
-  RETIRE_SUCCESS
+  Exec_Success
 }

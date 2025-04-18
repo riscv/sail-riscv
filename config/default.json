@@ -90,6 +90,15 @@
         "Zaamo" : {
             "supported" : false
         },
+        "Zawrs" : {
+            "supported" : true,
+            "nto" : {
+                "is_nop" : false
+            },
+            "sto" : {
+                "is_nop" : false
+            }
+        },
         "Zabha" : {
             "supported" : true
         },

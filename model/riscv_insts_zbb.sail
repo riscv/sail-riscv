@@ -23,7 +23,7 @@ function clause execute (RISCV_RORIW(shamt, rs1, rd)) = {
   let rs1_val = (X(rs1))[31..0];
   let result : xlenbits = sign_extend(rs1_val >>> shamt);
   X(rd) = result;
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* ****************************************************************** */
@@ -42,7 +42,7 @@ function clause execute (RISCV_RORI(shamt, rs1, rd)) = {
                           then rs1_val >>> shamt[4..0]
                           else rs1_val >>> shamt;
   X(rd) = result;
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* ****************************************************************** */
@@ -72,7 +72,7 @@ function clause execute (ZBB_RTYPEW(rs2, rs1, rd, op)) = {
     RISCV_RORW => rs1_val >>> shamt
   };
   X(rd) = sign_extend(result);
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* ****************************************************************** */
@@ -148,7 +148,7 @@ function clause execute (ZBB_RTYPE(rs2, rs1, rd, op)) = {
                   else rs1_val >>> rs2_val[5..0]
   };
   X(rd) = result;
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* ****************************************************************** */
@@ -187,7 +187,7 @@ function clause execute (ZBB_EXTOP(rs1, rd, op)) = {
     RISCV_ZEXTH => zero_extend(rs1_val[15..0])
   };
   X(rd) = result;
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* ****************************************************************** */
@@ -210,7 +210,7 @@ function clause execute (RISCV_REV8(rs1, rd)) = {
   foreach (i from 0 to (xlen - 8) by 8)
     result[(i + 7) .. i] = rs1_val[(xlen - i - 1) .. (xlen - i - 8)];
   X(rd) = result;
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* ****************************************************************** */
@@ -231,7 +231,7 @@ function clause execute (RISCV_ORCB(rs1, rd)) = {
                            then 0x00
                            else 0xFF;
   X(rd) = result;
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* ****************************************************************** */
@@ -250,7 +250,7 @@ function clause execute (RISCV_CPOP(rs1, rd)) = {
   foreach (i from 0 to (xlen_val - 1))
     if rs1_val[i] == bitone then result = result + 1;
   X(rd) = to_bits(xlen, result);
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* ****************************************************************** */
@@ -269,7 +269,7 @@ function clause execute (RISCV_CPOPW(rs1, rd)) = {
   foreach (i from 0 to 31)
     if rs1_val[i] == bitone then result = result + 1;
   X(rd) = to_bits(xlen, result);
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* ****************************************************************** */
@@ -291,7 +291,7 @@ function clause execute (RISCV_CLZ(rs1, rd)) = {
                     then result = result + 1
                     else done = true;
   X(rd) = to_bits(xlen, result);
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* ****************************************************************** */
@@ -313,7 +313,7 @@ function clause execute (RISCV_CLZW(rs1, rd)) = {
                     then result = result + 1
                     else done = true;
   X(rd) = to_bits(xlen, result);
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* ****************************************************************** */
@@ -335,7 +335,7 @@ function clause execute (RISCV_CTZ(rs1, rd)) = {
                     then result = result + 1
                     else done = true;
   X(rd) = to_bits(xlen, result);
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* ****************************************************************** */
@@ -357,5 +357,5 @@ function clause execute (RISCV_CTZW(rs1, rd)) = {
                     then result = result + 1
                     else done = true;
   X(rd) = to_bits(xlen, result);
-  RETIRE_SUCCESS
+  Exec_Success
 }

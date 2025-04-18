@@ -89,7 +89,7 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   let ELEN_pow     = get_elen_pow();
   let LMUL_pow_new = get_lmul_pow();
   let SEW_pow_new  = get_sew_pow();
-  if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
+  if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return Exec_Success };
   let VLMAX = 2 ^ (VLEN_pow + LMUL_pow_new - SEW_pow_new);
 
   /* set vl according to VLMAX and AVL */
@@ -105,7 +105,7 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   } else { /* keep existing vl */
     let AVL = unsigned(vl);
     let ratio_pow_new = SEW_pow_new - LMUL_pow_new;
-    if (ratio_pow_new != ratio_pow_ori) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
+    if (ratio_pow_new != ratio_pow_ori) then { handle_illegal_vtype(); return Exec_Success }
   };
 
   /* reset vstart to 0 */
@@ -115,7 +115,7 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   print_reg("CSR vl <- " ^ BitStr(vl));
   print_reg("CSR vstart <- " ^ BitStr(vstart));
 
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping clause assembly = VSETVLI(ma, ta, sew, lmul, rs1, rd)
@@ -141,7 +141,7 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   let ELEN_pow     = get_elen_pow();
   let LMUL_pow_new = get_lmul_pow();
   let SEW_pow_new  = get_sew_pow();
-  if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
+  if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return Exec_Success };
   let VLMAX = 2 ^ (VLEN_pow + LMUL_pow_new - SEW_pow_new);
 
   /* set vl according to VLMAX and AVL */
@@ -157,7 +157,7 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   } else { /* keep existing vl */
     let AVL = unsigned(vl);
     let ratio_pow_new = SEW_pow_new - LMUL_pow_new;
-    if (ratio_pow_new != ratio_pow_ori) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
+    if (ratio_pow_new != ratio_pow_ori) then { handle_illegal_vtype(); return Exec_Success }
   };
 
   /* reset vstart to 0 */
@@ -167,7 +167,7 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   print_reg("CSR vl <- " ^ BitStr(vl));
   print_reg("CSR vstart <- " ^ BitStr(vstart));
 
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping clause assembly = VSETVL(rs2, rs1, rd)
@@ -189,7 +189,7 @@ function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   let ELEN_pow     = get_elen_pow();
   let LMUL_pow_new = get_lmul_pow();
   let SEW_pow_new  = get_sew_pow();
-  if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
+  if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return Exec_Success };
   let VLMAX = 2 ^ (VLEN_pow + LMUL_pow_new - SEW_pow_new);
 
   /* set vl according to VLMAX and AVL */
@@ -204,7 +204,7 @@ function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   print_reg("CSR vl <- " ^ BitStr(vl));
   print_reg("CSR vstart <- " ^ BitStr(vstart));
 
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping clause assembly = VSETIVLI(ma, ta, sew, lmul, uimm, rd)

@@ -281,7 +281,7 @@ function clause execute (F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)) = {
   let rs3_val_64b = F_or_X_D(rs3);
 
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => RETIRE_FAIL(Illegal_Instruction()),
+    None() => Exec_Incomplete(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_64b) : (bits(5), bits(64)) =
@@ -293,7 +293,7 @@ function clause execute (F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)) = {
         };
       accrue_fflags(fflags);
       F_or_X_D(rd) = rd_val_64b;
-      RETIRE_SUCCESS
+      Exec_Success
     }
   }
 }
@@ -346,7 +346,7 @@ function clause execute (F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op)) = {
   let rs1_val_64b = F_or_X_D(rs1);
   let rs2_val_64b = F_or_X_D(rs2);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => RETIRE_FAIL(Illegal_Instruction()),
+    None() => Exec_Incomplete(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_64b) : (bits(5), bits(64)) = match op {
@@ -357,7 +357,7 @@ function clause execute (F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op)) = {
       };
       accrue_fflags(fflags);
       F_or_X_D(rd) = rd_val_64b;
-      RETIRE_SUCCESS
+      Exec_Success
     }
   }
 }
@@ -440,14 +440,14 @@ mapping clause encdec = F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_LU)
 function clause execute (F_UN_RM_FF_TYPE_D(rs1, rm, rd, FSQRT_D)) = {
   let rs1_val_D = F_or_X_D(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => RETIRE_FAIL(Illegal_Instruction()),
+    None() => Exec_Incomplete(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_f64Sqrt   (rm_3b, rs1_val_D);
 
       accrue_fflags(fflags);
       F_or_X_D(rd) = rd_val_D;
-      RETIRE_SUCCESS
+      Exec_Success
     }
   }
 }
@@ -455,14 +455,14 @@ function clause execute (F_UN_RM_FF_TYPE_D(rs1, rm, rd, FSQRT_D)) = {
 function clause execute (F_UN_RM_FX_TYPE_D(rs1, rm, rd, FCVT_W_D)) = {
   let rs1_val_D = F_or_X_D(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => RETIRE_FAIL(Illegal_Instruction()),
+    None() => Exec_Incomplete(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_W) = riscv_f64ToI32 (rm_3b, rs1_val_D);
 
       accrue_fflags(fflags);
       X(rd) = sign_extend (rd_val_W);
-      RETIRE_SUCCESS
+      Exec_Success
     }
   }
 }
@@ -470,14 +470,14 @@ function clause execute (F_UN_RM_FX_TYPE_D(rs1, rm, rd, FCVT_W_D)) = {
 function clause execute (F_UN_RM_FX_TYPE_D(rs1, rm, rd, FCVT_WU_D)) = {
   let rs1_val_D = F_or_X_D(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => RETIRE_FAIL(Illegal_Instruction()),
+    None() => Exec_Incomplete(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_WU) = riscv_f64ToUi32 (rm_3b, rs1_val_D);
 
       accrue_fflags(fflags);
       X(rd) = sign_extend (rd_val_WU);
-      RETIRE_SUCCESS
+      Exec_Success
     }
   }
 }
@@ -485,14 +485,14 @@ function clause execute (F_UN_RM_FX_TYPE_D(rs1, rm, rd, FCVT_WU_D)) = {
 function clause execute (F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_W)) = {
   let rs1_val_W = X(rs1) [31..0];
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => RETIRE_FAIL(Illegal_Instruction()),
+    None() => Exec_Incomplete(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_i32ToF64 (rm_3b, rs1_val_W);
 
       accrue_fflags(fflags);
       F_or_X_D(rd) = rd_val_D;
-      RETIRE_SUCCESS
+      Exec_Success
     }
   }
 }
@@ -500,14 +500,14 @@ function clause execute (F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_W)) = {
 function clause execute (F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_WU)) = {
   let rs1_val_WU = X(rs1) [31..0];
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => RETIRE_FAIL(Illegal_Instruction()),
+    None() => Exec_Incomplete(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_ui32ToF64 (rm_3b, rs1_val_WU);
 
       accrue_fflags(fflags);
       F_or_X_D(rd) = rd_val_D;
-      RETIRE_SUCCESS
+      Exec_Success
     }
   }
 }
@@ -515,14 +515,14 @@ function clause execute (F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_WU)) = {
 function clause execute (F_UN_RM_FF_TYPE_D(rs1, rm, rd, FCVT_S_D)) = {
   let rs1_val_D = F_or_X_D(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => RETIRE_FAIL(Illegal_Instruction()),
+    None() => Exec_Incomplete(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_S) = riscv_f64ToF32 (rm_3b, rs1_val_D);
 
       accrue_fflags(fflags);
       F_or_X_S(rd) = rd_val_S;
-      RETIRE_SUCCESS
+      Exec_Success
     }
   }
 }
@@ -530,14 +530,14 @@ function clause execute (F_UN_RM_FF_TYPE_D(rs1, rm, rd, FCVT_S_D)) = {
 function clause execute (F_UN_RM_FF_TYPE_D(rs1, rm, rd, FCVT_D_S)) = {
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => RETIRE_FAIL(Illegal_Instruction()),
+    None() => Exec_Incomplete(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_f32ToF64 (rm_3b, rs1_val_S);
 
       accrue_fflags(fflags);
       F_or_X_D(rd) = rd_val_D;
-      RETIRE_SUCCESS
+      Exec_Success
     }
   }
 }
@@ -546,14 +546,14 @@ function clause execute (F_UN_RM_FX_TYPE_D(rs1, rm, rd, FCVT_L_D)) = {
   assert(xlen >= 64);
   let rs1_val_D = F_or_X_D(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => RETIRE_FAIL(Illegal_Instruction()),
+    None() => Exec_Incomplete(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_L) = riscv_f64ToI64 (rm_3b, rs1_val_D);
 
       accrue_fflags(fflags);
       X(rd) = sign_extend(rd_val_L);
-      RETIRE_SUCCESS
+      Exec_Success
     }
   }
 }
@@ -562,14 +562,14 @@ function clause execute (F_UN_RM_FX_TYPE_D(rs1, rm, rd, FCVT_LU_D)) = {
   assert(xlen >= 64);
   let rs1_val_D = F_or_X_D(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => RETIRE_FAIL(Illegal_Instruction()),
+    None() => Exec_Incomplete(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_LU) = riscv_f64ToUi64 (rm_3b, rs1_val_D);
 
       accrue_fflags(fflags);
       X(rd) = sign_extend(rd_val_LU);
-      RETIRE_SUCCESS
+      Exec_Success
     }
   }
 }
@@ -578,14 +578,14 @@ function clause execute (F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_L)) = {
   assert(xlen >= 64);
   let rs1_val_L = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => RETIRE_FAIL(Illegal_Instruction()),
+    None() => Exec_Incomplete(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_i64ToF64 (rm_3b, rs1_val_L);
 
       accrue_fflags(fflags);
       F_or_X_D(rd) = rd_val_D;
-      RETIRE_SUCCESS
+      Exec_Success
     }
   }
 }
@@ -594,14 +594,14 @@ function clause execute (F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_LU)) = {
   assert(xlen >= 64);
   let rs1_val_LU = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => RETIRE_FAIL(Illegal_Instruction()),
+    None() => Exec_Incomplete(Illegal_Instruction()),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_D) = riscv_ui64ToF64 (rm_3b, rs1_val_LU);
 
       accrue_fflags(fflags);
       F_or_X_D(rd) = rd_val_D;
-      RETIRE_SUCCESS
+      Exec_Success
     }
   }
 }
@@ -699,7 +699,7 @@ function clause execute (F_BIN_F_TYPE_D(rs2, rs1, rd, FSGNJ_D)) = {
   let rd_val_D     = fmake_D (s2, e1, m1);
 
   F_or_X_D(rd) = rd_val_D;
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 function clause execute (F_BIN_F_TYPE_D(rs2, rs1, rd, FSGNJN_D)) = {
@@ -710,7 +710,7 @@ function clause execute (F_BIN_F_TYPE_D(rs2, rs1, rd, FSGNJN_D)) = {
   let rd_val_D     = fmake_D (0b1 ^ s2, e1, m1);
 
   F_or_X_D(rd) = rd_val_D;
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 function clause execute (F_BIN_F_TYPE_D(rs2, rs1, rd, FSGNJX_D)) = {
@@ -721,7 +721,7 @@ function clause execute (F_BIN_F_TYPE_D(rs2, rs1, rd, FSGNJX_D)) = {
   let rd_val_D     = fmake_D (s1 ^ s2, e1, m1);
 
   F_or_X_D(rd) = rd_val_D;
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 function clause execute (F_BIN_F_TYPE_D(rs2, rs1, rd, FMIN_D)) = {
@@ -741,7 +741,7 @@ function clause execute (F_BIN_F_TYPE_D(rs2, rs1, rd, FMIN_D)) = {
 
   accrue_fflags(fflags);
   F_or_X_D(rd) = rd_val_D;
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 function clause execute (F_BIN_F_TYPE_D(rs2, rs1, rd, FMAX_D)) = {
@@ -761,7 +761,7 @@ function clause execute (F_BIN_F_TYPE_D(rs2, rs1, rd, FMAX_D)) = {
 
   accrue_fflags(fflags);
   F_or_X_D(rd) = rd_val_D;
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 function clause execute (F_BIN_X_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
@@ -773,7 +773,7 @@ function clause execute (F_BIN_X_TYPE_D(rs2, rs1, rd, FEQ_D)) = {
 
   accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 function clause execute (F_BIN_X_TYPE_D(rs2, rs1, rd, FLT_D)) = {
@@ -785,7 +785,7 @@ function clause execute (F_BIN_X_TYPE_D(rs2, rs1, rd, FLT_D)) = {
 
   accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 function clause execute (F_BIN_X_TYPE_D(rs2, rs1, rd, FLE_D)) = {
@@ -797,7 +797,7 @@ function clause execute (F_BIN_X_TYPE_D(rs2, rs1, rd, FLE_D)) = {
 
   accrue_fflags(fflags);
   X(rd) = zero_extend(bool_to_bits(rd_val));
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* AST -> Assembly notation ================================ */
@@ -869,19 +869,19 @@ function clause execute (F_UN_X_TYPE_D(rs1, rd, FCLASS_D)) = {
     else zeros();
 
   X(rd) = zero_extend (rd_val_10b);
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 function clause execute (F_UN_X_TYPE_D(rs1, rd, FMV_X_D)) = {
   assert(xlen >= 64 & flen >= 64);
   X(rd) = sign_extend(F(rs1)[63..0]);
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 function clause execute (F_UN_F_TYPE_D(rs1, rd, FMV_D_X)) = {
   assert(xlen >= 64 & flen >= 64);
   F(rd) = nan_box(X(rs1)[63..0]);
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 /* AST -> Assembly notation ================================ */

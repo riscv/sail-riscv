@@ -34,7 +34,7 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = VLEN;
 
-  if illegal_vd_unmasked() then return RETIRE_FAIL(Illegal_Instruction());
+  if illegal_vd_unmasked() then return Exec_Incomplete(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -45,7 +45,7 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_carry(num_elem, SEW, 0, vd_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -66,7 +66,7 @@ function clause execute(MMTYPE(funct6, vs2, vs1, vd)) = {
 
   write_vmask(num_elem, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping mmtype_mnemonic : mmfunct6 <-> string = {
@@ -95,7 +95,7 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = VLEN;
 
-  if illegal_vd_unmasked() | not(assert_vstart(0)) then return RETIRE_FAIL(Illegal_Instruction());
+  if illegal_vd_unmasked() | not(assert_vstart(0)) then return Exec_Incomplete(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -105,7 +105,7 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
 
   let (_, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
 
   var count : nat = 0;
@@ -115,7 +115,7 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
 
   X(rd) = to_bits(xlen, count);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping clause assembly = VCPOP_M(vm, vs2, rd)
@@ -133,7 +133,7 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = VLEN;
 
-  if illegal_vd_unmasked() | not(assert_vstart(0)) then return RETIRE_FAIL(Illegal_Instruction());
+  if illegal_vd_unmasked() | not(assert_vstart(0)) then return Exec_Incomplete(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -143,7 +143,7 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
 
   let (_, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, 0, vs2_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
 
   var index : int = -1;
@@ -155,7 +155,7 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
 
   X(rd) = to_bits(xlen, index);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping clause assembly = VFIRST_M(vm, vs2, rd)
@@ -174,7 +174,7 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
   let num_elem = VLEN;
 
   if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
-  then return RETIRE_FAIL(Illegal_Instruction());
+  then return Exec_Incomplete(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -185,7 +185,7 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -199,7 +199,7 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
 
   write_vmask(num_elem, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping clause assembly = VMSBF_M(vm, vs2, vd)
@@ -218,7 +218,7 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
   let num_elem = VLEN;
 
   if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
-  then return RETIRE_FAIL(Illegal_Instruction());
+  then return Exec_Incomplete(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -229,7 +229,7 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -243,7 +243,7 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
 
   write_vmask(num_elem, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping clause assembly = VMSIF_M(vm, vs2, vd)
@@ -262,7 +262,7 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
   let num_elem = VLEN;
 
   if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
-  then return RETIRE_FAIL(Illegal_Instruction());
+  then return Exec_Incomplete(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -273,7 +273,7 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -291,7 +291,7 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
 
   write_vmask(num_elem, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping clause assembly = VMSOF_M(vm, vs2, vd)
@@ -310,7 +310,7 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
-  then return RETIRE_FAIL(Illegal_Instruction());
+  then return Exec_Incomplete(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -321,7 +321,7 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -335,7 +335,7 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping clause assembly = VIOTA_M(vm, vs2, vd)
@@ -353,7 +353,7 @@ function clause execute(VID_V(vm, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) then return RETIRE_FAIL(Illegal_Instruction());
+  if illegal_normal(vd, vm) then return Exec_Incomplete(Illegal_Instruction());
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -363,7 +363,7 @@ function clause execute(VID_V(vm, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)    => v,
-    Err(())  => return RETIRE_FAIL(Illegal_Instruction())
+    Err(())  => return Exec_Incomplete(Illegal_Instruction())
   };
   var result = initial_result;
 
@@ -373,7 +373,7 @@ function clause execute(VID_V(vm, vd)) = {
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
-  RETIRE_SUCCESS
+  Exec_Success
 }
 
 mapping clause assembly = VID_V(vm, vd)

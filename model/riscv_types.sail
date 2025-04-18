@@ -102,13 +102,16 @@ function privLevel_to_str (p) =
 
 overload to_str = {privLevel_to_str}
 
-/* Type denoting the result of executing an instruction that
- * is generic over the reasons why it fails or is incomplete.
- */
+// Type denoting the result of executing an instruction that is
+// generic over the reasons why it fails or is incomplete.
+//
+// The minstret handling is handled separately for internal reasons
+// (see the note accompanying the register definition), and is not
+// included as part of the completion of an instruction's execution.
 
 union ExecutionResult ('a : Type) = {
-  RETIRE_OK      : unit,
-  RETIRE_FAIL    : 'a
+  Exec_Complete   : unit,
+  Exec_Incomplete : 'a
 }
 
 /* memory access types */
@@ -345,6 +348,15 @@ enum biop_zbs = {RISCV_BCLRI, RISCV_BEXTI, RISCV_BINVI, RISCV_BSETI}
 enum extop_zbb = {RISCV_SEXTB, RISCV_SEXTH, RISCV_ZEXTH}
 
 enum zicondop = {RISCV_CZERO_EQZ, RISCV_CZERO_NEZ}
+
+enum wrsop = {WRS_STO, WRS_NTO}
+
+enum WaitReason = {WAIT_WFI, WAIT_WRS_STO, WAIT_WRS_NTO}
+mapping wait_name : WaitReason <-> string = {
+  WAIT_WFI     <-> "WAIT-WFI",
+  WAIT_WRS_STO <-> "WAIT-WRS-STO",
+  WAIT_WRS_NTO <-> "WAIT-WRS-NTO",
+}
 
 // Get the bit encoding of word_width.
 mapping size_enc : word_width <-> bits(2) = {
