@@ -185,6 +185,9 @@ function clause hartSupports(Ext_Zvknha) = config extensions.Zvknha.supported
 
 enum clause extension = Ext_Zvknhb
 function clause hartSupports(Ext_Zvknhb) = config extensions.Zvknhb.supported
+// NIST Suite: Vector AES Block Cipher
+enum clause extension = Ext_Zvkned
+function clause hartSupports(Ext_Zvkned) = config extensions.Zvkned.supported
 
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
