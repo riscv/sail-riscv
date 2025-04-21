@@ -114,6 +114,7 @@ For booting operating system images, see the information under the
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
 - Svinval extension for fine-grained address-translation cache invalidation, v1.0
+- Smstateen/Ssstateen extensions for fine-grained privileged state access control, v1.0
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
 - Svbare extension for Bare mode virtual-memory translation
 - Physical Memory Protection (PMP)

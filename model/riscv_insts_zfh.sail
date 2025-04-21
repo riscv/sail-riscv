@@ -164,7 +164,7 @@ function fle_H   (v1,       v2,        is_quiet) = {
 /* **************************************************************** */
 /* Helper functions for 'encdec()'                                  */
 // Full half support.
-function haveHalfFPU() -> bool = currentlyEnabled(Ext_Zfh) | currentlyEnabled(Ext_Zhinx)
+function haveHalfFPU() -> bool = currentlyEnabled(Ext_Zfh) | (currentlyEnabled(Ext_Zhinx) & not(stateen_fp_trap_illegal()))
 // Support for conversion of halves to/from single & double, but no actual
 // calculations with halves.
 function haveHalfMin() -> bool = haveHalfFPU() | currentlyEnabled(Ext_Zfhmin)
