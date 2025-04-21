@@ -97,6 +97,7 @@ Supported RISC-V ISA features
 - Zicntr and Zihpm extensions for counters, v2.0
 - Zicond extension for integer conditional operations, v1.0
 - Zicbom and Zicboz extensions for cache-block management (Zicbop not currently supported), v1.0
+- Zic64b: Cache block size is 64 bytes, v1.0
 - Zimop extension for May-Be-Operations, v1.0
 - M extension for integer multiplication and division, v2.0
 - Zmmul extension for integer multiplication only, v1.0

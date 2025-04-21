@@ -27,7 +27,7 @@ val elf_entry = pure {
 // Cache block size is 2^cache_block_size_exp. Max is `max_mem_access` (4096)
 // because this model performs `cbo.zero` with a single write, and the behaviour
 // with cache blocks larger than a page is not clearly defined.
-function plat_cache_block_size_exp() -> range(0, 12) = config platform.cache_block_size_exp
+function plat_cache_block_size_exp() -> range(0, 12) = if config extensions.Zic64b.supported then 6 else config platform.cache_block_size_exp
 
 /* Main memory */
 function plat_ram_base() -> physaddrbits = to_bits(physaddrbits_len, config platform.ram.base : int)

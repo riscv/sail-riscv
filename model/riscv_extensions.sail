@@ -49,6 +49,9 @@ function clause hartSupports(Ext_S) = config extensions.S.supported
 enum clause extension = Ext_U
 function clause hartSupports(Ext_U) = config extensions.U.supported
 
+// Cache blocks must be 64 bytes in size
+enum clause extension = Ext_Zic64b
+function clause hartSupports(Ext_Zic64b) = config extensions.Zic64b.supported
 // Cache-Block Management Instructions
 enum clause extension = Ext_Zicbom
 function clause hartSupports(Ext_Zicbom) = config extensions.Zicbom.supported

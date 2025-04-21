@@ -63,6 +63,9 @@
         "U" : {
             "supported" : true
         },
+        "Zic64b" : {
+            "supported" : true
+        },
         "Zicbom" : {
             "supported" : true
         },
