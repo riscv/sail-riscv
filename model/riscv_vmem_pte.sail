@@ -146,7 +146,7 @@ function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
   // Update 'dirty' bit?
   let update_d : bool = (pte_flags[D] == 0b0)
                         & (match a {
-                             InstructionFetch()       => false,
+                             InstructionFetch() => false,
                              Read(_)         => false,
                              Write(_)        => true,
                              ReadWrite(_, _) => true
