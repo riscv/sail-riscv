@@ -170,6 +170,7 @@ For booting operating system images, see the information under the
 - Zvkt extension for vector data independent execution latency, v1.0 (no impact on model)
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
+- Smstateen/Ssstateen extensions for fine-grained privileged state access control, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
 - Sstvala extension for `stval` provides all needed values, v1.0
