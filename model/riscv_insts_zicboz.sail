@@ -13,16 +13,16 @@ function clause currentlyEnabled(Ext_Zicboz) = hartSupports(Ext_Zicboz)
 function cbo_zero_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBZE][0], senvcfg[CBZE][0])
 
 /* ****************************************************************** */
-union clause ast = RISCV_ZICBOZ : (regidx)
+union clause ast = ZICBOZ : (regidx)
 
-mapping clause encdec = RISCV_ZICBOZ(rs1)
+mapping clause encdec = ZICBOZ(rs1)
   <-> 0b000000000100 @ encdec_reg(rs1) @ 0b010 @ 0b00000 @ 0b0001111
   when currentlyEnabled(Ext_Zicboz)
 
-mapping clause assembly = RISCV_ZICBOZ(rs1)
+mapping clause assembly = ZICBOZ(rs1)
   <-> "cbo.zero" ^ spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
-function clause execute(RISCV_ZICBOZ(rs1)) = {
+function clause execute(ZICBOZ(rs1)) = {
   if cbo_zero_enabled(cur_privilege) then {
     let rs1_val = X(rs1);
     let cache_block_size_exp = plat_cache_block_size_exp();

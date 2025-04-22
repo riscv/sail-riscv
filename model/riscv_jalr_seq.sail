@@ -8,7 +8,7 @@
 
 /* The definition for the sequential model. */
 
-function clause execute (RISCV_JALR(imm, rs1, rd)) = {
+function clause execute (JALR(imm, rs1, rd)) = {
 /* For the sequential model, the memory-model definition doesn't work directly
  * if rs1 = rd.  We would effectively have to keep a regfile for reads and another for
  * writes, and swap on instruction completion.  This could perhaps be optimized in

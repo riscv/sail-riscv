@@ -11,27 +11,27 @@ function clause currentlyEnabled(Ext_Zbs) = hartSupports(Ext_Zbs) | currentlyEna
 /* ****************************************************************** */
 union clause ast = ZBS_IOP : (bits(6), regidx, regidx, biop_zbs)
 
-mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BCLRI)
+mapping clause encdec = ZBS_IOP(shamt, rs1, rd, BCLRI)
   <-> 0b010010 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
 
-mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BEXTI)
+mapping clause encdec = ZBS_IOP(shamt, rs1, rd, BEXTI)
   <-> 0b010010 @ shamt @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
 
-mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BINVI)
+mapping clause encdec = ZBS_IOP(shamt, rs1, rd, BINVI)
   <-> 0b011010 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
 
-mapping clause encdec = ZBS_IOP(shamt, rs1, rd, RISCV_BSETI)
+mapping clause encdec = ZBS_IOP(shamt, rs1, rd, BSETI)
   <-> 0b001010 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
 
 mapping zbs_iop_mnemonic : biop_zbs <-> string = {
-  RISCV_BCLRI <-> "bclri",
-  RISCV_BEXTI <-> "bexti",
-  RISCV_BINVI <-> "binvi",
-  RISCV_BSETI <-> "bseti"
+  BCLRI <-> "bclri",
+  BEXTI <-> "bexti",
+  BINVI <-> "binvi",
+  BSETI <-> "bseti"
 }
 
 mapping clause assembly = ZBS_IOP(shamt, rs1, rd, op)
@@ -43,10 +43,10 @@ function clause execute (ZBS_IOP(shamt, rs1, rd, op)) = {
                         then zero_extend(0b1) << shamt[4..0]
                         else zero_extend(0b1) << shamt;
   let result : xlenbits = match op {
-    RISCV_BCLRI => rs1_val & ~(mask),
-    RISCV_BEXTI => zero_extend(bool_to_bits((rs1_val & mask) != zeros())),
-    RISCV_BINVI => rs1_val ^ mask,
-    RISCV_BSETI => rs1_val | mask
+    BCLRI => rs1_val & ~(mask),
+    BEXTI => zero_extend(bool_to_bits((rs1_val & mask) != zeros())),
+    BINVI => rs1_val ^ mask,
+    BSETI => rs1_val | mask
   };
   X(rd) = result;
   RETIRE_SUCCESS
@@ -55,27 +55,27 @@ function clause execute (ZBS_IOP(shamt, rs1, rd, op)) = {
 /* ****************************************************************** */
 union clause ast = ZBS_RTYPE : (regidx, regidx, regidx, brop_zbs)
 
-mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BCLR)
+mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, BCLR)
   <-> 0b0100100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbs)
 
-mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BEXT)
+mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, BEXT)
   <-> 0b0100100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbs)
 
-mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BINV)
+mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, BINV)
   <-> 0b0110100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbs)
 
-mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, RISCV_BSET)
+mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, BSET)
   <-> 0b0010100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbs)
 
 mapping zbs_rtype_mnemonic : brop_zbs <-> string = {
-  RISCV_BCLR    <-> "bclr",
-  RISCV_BEXT    <-> "bext",
-  RISCV_BINV    <-> "binv",
-  RISCV_BSET    <-> "bset"
+  BCLR    <-> "bclr",
+  BEXT    <-> "bext",
+  BINV    <-> "binv",
+  BSET    <-> "bset"
 }
 
 mapping clause assembly = ZBS_RTYPE(rs2, rs1, rd, op)
@@ -88,10 +88,10 @@ function clause execute (ZBS_RTYPE(rs2, rs1, rd, op)) = {
                         then zero_extend(0b1) << rs2_val[4..0]
                         else zero_extend(0b1) << rs2_val[5..0];
   let result : xlenbits = match op {
-    RISCV_BCLR => rs1_val & ~(mask),
-    RISCV_BEXT => zero_extend(bool_to_bits((rs1_val & mask) != zeros())),
-    RISCV_BINV => rs1_val ^ mask,
-    RISCV_BSET => rs1_val | mask
+    BCLR => rs1_val & ~(mask),
+    BEXT => zero_extend(bool_to_bits((rs1_val & mask) != zeros())),
+    BINV => rs1_val ^ mask,
+    BSET => rs1_val | mask
   };
   X(rd) = result;
   RETIRE_SUCCESS

@@ -9,16 +9,16 @@
 function clause currentlyEnabled(Ext_Zbkx) = hartSupports(Ext_Zbkx)
 
 /* ****************************************************************** */
-union clause ast = RISCV_XPERM8 : (regidx, regidx, regidx)
+union clause ast = XPERM8 : (regidx, regidx, regidx)
 
-mapping clause encdec = RISCV_XPERM8(rs2, rs1, rd)
+mapping clause encdec = XPERM8(rs2, rs1, rd)
   <-> 0b0010100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbkx)
 
-mapping clause assembly = RISCV_XPERM8(rs2, rs1, rd)
+mapping clause assembly = XPERM8(rs2, rs1, rd)
   <-> "xperm8" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute (RISCV_XPERM8(rs2, rs1, rd)) = {
+function clause execute (XPERM8(rs2, rs1, rd)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   var result : xlenbits = zeros();
@@ -33,16 +33,16 @@ function clause execute (RISCV_XPERM8(rs2, rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = RISCV_XPERM4 : (regidx, regidx, regidx)
+union clause ast = XPERM4 : (regidx, regidx, regidx)
 
-mapping clause encdec = RISCV_XPERM4(rs2, rs1, rd)
+mapping clause encdec = XPERM4(rs2, rs1, rd)
   <-> 0b0010100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbkx)
 
-mapping clause assembly = RISCV_XPERM4(rs2, rs1, rd)
+mapping clause assembly = XPERM4(rs2, rs1, rd)
   <-> "xperm4" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute (RISCV_XPERM4(rs2, rs1, rd)) = {
+function clause execute (XPERM4(rs2, rs1, rd)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   var result : xlenbits = zeros();
