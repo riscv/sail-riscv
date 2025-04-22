@@ -117,7 +117,7 @@ union AccessType ('a : Type) = {
   Read      : 'a,
   Write     : 'a,
   ReadWrite : ('a, 'a),
-  Execute   : unit
+  InstructionFetch : unit
 }
 
 enum word_width = {BYTE, HALF, WORD, DOUBLE}
