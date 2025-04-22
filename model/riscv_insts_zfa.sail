@@ -12,8 +12,8 @@ function clause currentlyEnabled(Ext_Zfa) = hartSupports(Ext_Zfa) & currentlyEna
 
 union clause ast = RISCV_FLI_H : (bits(5), fregidx)
 
-mapping clause encdec = RISCV_FLI_H(rs1, rd)
-  <-> 0b111_1010 @ 0b00001 @ rs1 @ 0b000 @ encdec_freg(rd) @ 0b101_0011
+mapping clause encdec = RISCV_FLI_H(constantidx, rd)
+  <-> 0b111_1010 @ 0b00001 @ constantidx @ 0b000 @ encdec_freg(rd) @ 0b101_0011
   when currentlyEnabled(Ext_Zfh) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FLI_H(constantidx, rd)
@@ -62,8 +62,8 @@ function clause execute (RISCV_FLI_H(constantidx, rd)) = {
 
 union clause ast = RISCV_FLI_S : (bits(5), fregidx)
 
-mapping clause encdec = RISCV_FLI_S(rs1, rd)
-  <-> 0b111_1000 @ 0b00001 @ rs1 @ 0b000 @ encdec_freg(rd) @ 0b101_0011
+mapping clause encdec = RISCV_FLI_S(constantidx, rd)
+  <-> 0b111_1000 @ 0b00001 @ constantidx @ 0b000 @ encdec_freg(rd) @ 0b101_0011
   when currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FLI_S(constantidx, rd)
@@ -112,8 +112,8 @@ function clause execute (RISCV_FLI_S(constantidx, rd)) = {
 
 union clause ast = RISCV_FLI_D : (bits(5), fregidx)
 
-mapping clause encdec = RISCV_FLI_D(rs1, rd)
-  <-> 0b111_1001 @ 0b00001 @ rs1 @ 0b000 @ encdec_freg(rd) @ 0b101_0011
+mapping clause encdec = RISCV_FLI_D(constantidx, rd)
+  <-> 0b111_1001 @ 0b00001 @ constantidx @ 0b000 @ encdec_freg(rd) @ 0b101_0011
   when currentlyEnabled(Ext_D) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = RISCV_FLI_D(constantidx, rd)
