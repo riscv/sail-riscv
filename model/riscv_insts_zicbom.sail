@@ -13,7 +13,7 @@ function clause currentlyEnabled(Ext_Zicbom) = hartSupports(Ext_Zicbom)
 function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], senvcfg[CBCFE][0])
 
 /* ****************************************************************** */
-union clause ast = RISCV_ZICBOM : (cbop_zicbom, regidx)
+union clause ast = ZICBOM : (cbop_zicbom, regidx)
 
 mapping encdec_cbop : cbop_zicbom <-> bits(12) = {
   CBO_CLEAN <-> 0b000000000001,
@@ -21,7 +21,7 @@ mapping encdec_cbop : cbop_zicbom <-> bits(12) = {
   CBO_INVAL <-> 0b000000000000,
 }
 
-mapping clause encdec = RISCV_ZICBOM(cbop, rs1)
+mapping clause encdec = ZICBOM(cbop, rs1)
   <-> encdec_cbop(cbop) @ encdec_reg(rs1) @ 0b010 @ 0b00000 @ 0b0001111
   when currentlyEnabled(Ext_Zicbom)
 
@@ -31,7 +31,7 @@ mapping cbop_mnemonic : cbop_zicbom <-> string = {
   CBO_INVAL <-> "cbo.inval"
 }
 
-mapping clause assembly = RISCV_ZICBOM(cbop, rs1)
+mapping clause assembly = ZICBOM(cbop, rs1)
   <-> cbop_mnemonic(cbop) ^ spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 /* CBIE from xenvcfg */
@@ -135,17 +135,17 @@ function process_clean_inval(rs1, cbop) = {
   }
 }
 
-function clause execute(RISCV_ZICBOM(CBO_CLEAN, rs1)) =
+function clause execute(ZICBOM(CBO_CLEAN, rs1)) =
   if   cbo_clean_flush_enabled(cur_privilege)
   then process_clean_inval(rs1, CBO_CLEAN)
   else RETIRE_FAIL(Illegal_Instruction())
 
-function clause execute(RISCV_ZICBOM(CBO_FLUSH, rs1)) =
+function clause execute(ZICBOM(CBO_FLUSH, rs1)) =
   if   cbo_clean_flush_enabled(cur_privilege)
   then process_clean_inval(rs1, CBO_FLUSH)
   else RETIRE_FAIL(Illegal_Instruction())
 
-function clause execute(RISCV_ZICBOM(CBO_INVAL, rs1)) =
+function clause execute(ZICBOM(CBO_INVAL, rs1)) =
   match cbop_priv_check(cur_privilege) {
     CBOP_ILLEGAL         => RETIRE_FAIL(Illegal_Instruction()),
     CBOP_ILLEGAL_VIRTUAL => internal_error(__FILE__, __LINE__, "unimplemented"),

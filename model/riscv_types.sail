@@ -305,46 +305,38 @@ function satpMode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
 type csrRW = bits(2)  /* read/write */
 
 /* instruction opcode grouping */
-enum uop = {RISCV_LUI, RISCV_AUIPC}               /* upper immediate ops */
-enum bop = {RISCV_BEQ, RISCV_BNE, RISCV_BLT,
-            RISCV_BGE, RISCV_BLTU, RISCV_BGEU}    /* branch ops */
-enum iop = {RISCV_ADDI, RISCV_SLTI, RISCV_SLTIU,
-            RISCV_XORI, RISCV_ORI, RISCV_ANDI}    /* immediate ops */
-enum sop = {RISCV_SLLI, RISCV_SRLI, RISCV_SRAI}   /* shift ops */
-enum rop = {RISCV_ADD, RISCV_SUB, RISCV_SLL, RISCV_SLT,
-            RISCV_SLTU, RISCV_XOR, RISCV_SRL, RISCV_SRA,
-            RISCV_OR, RISCV_AND}                  /* reg-reg ops */
+enum uop = {LUI, AUIPC}                          /* upper immediate ops */
+enum bop = {BEQ, BNE, BLT, BGE, BLTU, BGEU}      /* branch ops */
+enum iop = {ADDI, SLTI, SLTIU, XORI, ORI, ANDI}  /* immediate ops */
+enum sop = {SLLI, SRLI, SRAI}                    /* shift ops */
+enum rop = {ADD, SUB, SLL, SLT, SLTU, XOR,
+            SRL, SRA, OR, AND}                   /* reg-reg ops */
 
-enum ropw  = {RISCV_ADDW, RISCV_SUBW, RISCV_SLLW,
-              RISCV_SRLW, RISCV_SRAW}             /* reg-reg 32-bit ops */
-enum sopw = {RISCV_SLLIW, RISCV_SRLIW,
-             RISCV_SRAIW}                         /* RV64-only shift ops */
+enum ropw  = {ADDW, SUBW, SLLW, SRLW, SRAW}           /* reg-reg 32-bit ops */
+enum sopw  = {SLLIW, SRLIW, SRAIW}                    /* RV64-only shift ops */
 enum amoop = {AMOSWAP, AMOADD, AMOXOR, AMOAND, AMOOR,
-              AMOMIN, AMOMAX, AMOMINU, AMOMAXU}   /* AMO ops */
-enum csrop = {CSRRW, CSRRS, CSRRC}                /* CSR ops */
+              AMOMIN, AMOMAX, AMOMINU, AMOMAXU}       /* AMO ops */
+enum csrop = {CSRRW, CSRRS, CSRRC}                    /* CSR ops */
 
 enum cbop_zicbom = {CBO_CLEAN, CBO_FLUSH, CBO_INVAL}  /* Zicbom ops */
 
-enum brop_zba = {RISCV_SH1ADD, RISCV_SH2ADD, RISCV_SH3ADD}
+enum brop_zba = {SH1ADD, SH2ADD, SH3ADD}
 
-enum brop_zbb = {RISCV_ANDN, RISCV_ORN, RISCV_XNOR, RISCV_MAX,
-                 RISCV_MAXU, RISCV_MIN, RISCV_MINU, RISCV_ROL,
-                 RISCV_ROR}
+enum brop_zbb = {ANDN, ORN, XNOR, MAX, MAXU, MIN, MINU, ROL, ROR}
 
-enum brop_zbkb = {RISCV_PACK, RISCV_PACKH}
+enum brop_zbkb = {PACK, PACKH}
 
-enum brop_zbs = {RISCV_BCLR, RISCV_BEXT, RISCV_BINV, RISCV_BSET}
+enum brop_zbs = {BCLR, BEXT, BINV, BSET}
 
-enum bropw_zba = {RISCV_ADDUW, RISCV_SH1ADDUW, RISCV_SH2ADDUW,
-                  RISCV_SH3ADDUW}
+enum bropw_zba = {ADDUW, SH1ADDUW, SH2ADDUW, SH3ADDUW}
 
-enum bropw_zbb = {RISCV_ROLW, RISCV_RORW}
+enum bropw_zbb = {ROLW, RORW}
 
-enum biop_zbs = {RISCV_BCLRI, RISCV_BEXTI, RISCV_BINVI, RISCV_BSETI}
+enum biop_zbs = {BCLRI, BEXTI, BINVI, BSETI}
 
-enum extop_zbb = {RISCV_SEXTB, RISCV_SEXTH, RISCV_ZEXTH}
+enum extop_zbb = {SEXTB, SEXTH, ZEXTH}
 
-enum zicondop = {RISCV_CZERO_EQZ, RISCV_CZERO_NEZ}
+enum zicondop = {CZERO_EQZ, CZERO_NEZ}
 
 // Get the bit encoding of word_width.
 mapping size_enc : word_width <-> bits(2) = {
