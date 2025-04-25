@@ -33,7 +33,7 @@ function clause execute(ZICBOZ(rs1)) = {
     let negative_offset = (rs1_val & ~(zero_extend(ones(cache_block_size_exp)))) - rs1_val;
 
     match ext_data_get_addr(rs1, negative_offset, Write(Data), cache_block_size) {
-      Ext_DataAddr_Error(e) => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
+      Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
       Ext_DataAddr_OK(vaddr) => {
         // "An implementation may update the bytes in any order and with any granularity
         //  and atomicity, including individual bytes."
@@ -44,15 +44,15 @@ function clause execute(ZICBOZ(rs1)) = {
           // was encoded in the instruction. We subtract the negative offset
           // (add the positive offset) to get it. Normally this will be
           // equal to rs1, but pointer masking can change that.
-          TR_Failure(e, _) => RETIRE_FAIL(Memory_Exception(vaddr - negative_offset, e)),
+          TR_Failure(e, _) => Memory_Exception(vaddr - negative_offset, e),
           TR_Address(paddr, _) => {
             match mem_write_ea(paddr, cache_block_size, false, false, false) {
-              Err(e) => RETIRE_FAIL(Memory_Exception(vaddr - negative_offset, e)),
+              Err(e) => Memory_Exception(vaddr - negative_offset, e),
               Ok(_)  => {
                 match mem_write_value(paddr, cache_block_size, zeros(), false, false, false) {
                   Ok(true)  => RETIRE_SUCCESS,
                   Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                  Err(e)    => RETIRE_FAIL(Memory_Exception(vaddr - negative_offset, e))
+                  Err(e)    => Memory_Exception(vaddr - negative_offset, e)
                 }
               }
             }
@@ -61,6 +61,6 @@ function clause execute(ZICBOZ(rs1)) = {
       },
     }
   } else {
-    RETIRE_FAIL(Illegal_Instruction())
+    Illegal_Instruction()
   }
 }

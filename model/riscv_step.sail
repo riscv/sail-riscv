@@ -14,7 +14,7 @@ union Step = {
   Step_Pending_Interrupt  : (InterruptType, Privilege),
   Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
   Step_Fetch_Failure      : (virtaddr, ExceptionType),
-  Step_Execute            : (ExecutionResult(Retire_Failure), instbits),
+  Step_Execute            : (ExecutionResult, instbits),
   Step_Waiting            : unit,
 }
 
@@ -26,7 +26,7 @@ function run_hart_waiting(step_no : nat, exit_wait : bool, instbits : instbits) 
     hart_state = HART_ACTIVE();
     // The waiting instruction retires successfully.  The
     // pending interrupts will be handled in the next step.
-    Step_Execute(RETIRE_OK(), instbits)
+    Step_Execute(Retire_Success(), instbits)
   } else if exit_wait then {
     // There are no pending interrupts; transition out of the Wait
     // as instructed.
@@ -39,8 +39,8 @@ function run_hart_waiting(step_no : nat, exit_wait : bool, instbits : instbits) 
     // implementation-specific, bounded time limit, the WFI
     // instruction causes an illegal-instruction exception."
     if   (cur_privilege == Machine | mstatus[TW] == 0b0)
-    then Step_Execute(RETIRE_OK(), instbits)
-    else Step_Execute(RETIRE_FAIL(Illegal_Instruction()), instbits)
+    then Step_Execute(Retire_Success(), instbits)
+    else Step_Execute(Illegal_Instruction(), instbits)
   } else {
     if   get_config_print_instr()
     then print_instr("remaining in WAIT state at PC " ^ BitStr(PC));
@@ -71,7 +71,7 @@ function run_hart_active(step_no: nat) -> Step = {
           let r = execute(ast);
           Step_Execute(r, instbits)
         } else {
-          Step_Execute(RETIRE_FAIL(Illegal_Instruction()), instbits)
+          Step_Execute(Illegal_Instruction(), instbits)
         }
       },
       F_Base(w) => {
@@ -144,12 +144,12 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     Step_Ext_Fetch_Failure(e) => ext_handle_fetch_check_error(e),
     Step_Fetch_Failure(vaddr, e) => handle_mem_exception(vaddr, e),
     Step_Waiting() => assert(hart_is_waiting(hart_state), "cannot be Waiting in a non-Wait state"),
-    Step_Execute(RETIRE_OK(), _) => assert(hart_is_active(hart_state)),
+    Step_Execute(Retire_Success(), _) => assert(hart_is_active(hart_state)),
     // standard errors
-    Step_Execute(RETIRE_FAIL(Trap(priv, ctl, pc)), _) => set_next_pc(exception_handler(priv, ctl, pc)),
-    Step_Execute(RETIRE_FAIL(Memory_Exception(vaddr, e)), _) => handle_mem_exception(vaddr, e),
-    Step_Execute(RETIRE_FAIL(Illegal_Instruction()), instbits) => handle_illegal(instbits),
-    Step_Execute(RETIRE_FAIL(Wait_For_Interrupt()), instbits) =>
+    Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
+    Step_Execute(Memory_Exception(vaddr, e), _) => handle_mem_exception(vaddr, e),
+    Step_Execute(Illegal_Instruction(), instbits) => handle_illegal(instbits),
+    Step_Execute(Wait_For_Interrupt(), instbits) =>
       if wfi_is_nop() then {
         // This is the same as the RETIRE_OK case.
         assert(hart_is_active(hart_state));
@@ -160,10 +160,10 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
         hart_state = HART_WAITING(instbits);
       },
     // errors from extensions
-    Step_Execute(RETIRE_FAIL(Ext_CSR_Check_Failure()), _) => ext_check_CSR_fail(),
-    Step_Execute(RETIRE_FAIL(Ext_ControlAddr_Check_Failure(e)), _) => ext_handle_control_check_error(e),
-    Step_Execute(RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)), _) => ext_handle_data_check_error(e),
-    Step_Execute(RETIRE_FAIL(Ext_XRET_Priv_Failure()), _) => ext_fail_xret_priv(),
+    Step_Execute(Ext_CSR_Check_Failure(), _) => ext_check_CSR_fail(),
+    Step_Execute(Ext_ControlAddr_Check_Failure(e), _) => ext_handle_control_check_error(e),
+    Step_Execute(Ext_DataAddr_Check_Failure(e), _) => ext_handle_data_check_error(e),
+    Step_Execute(Ext_XRET_Priv_Failure(), _) => ext_fail_xret_priv(),
   };
 
   match hart_state {
@@ -172,10 +172,10 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       tick_pc();
 
       let retired : bool = match step_val {
-        Step_Execute(RETIRE_OK(), _) => true,
+        Step_Execute(Retire_Success(), _) => true,
         // WFI retires immediately if the model is configured to treat it as a nop.
         // Otherwise it always waits for at least one call of `try_step()`.
-        Step_Execute(RETIRE_FAIL(Wait_For_Interrupt()), _) if wfi_is_nop() => true,
+        Step_Execute(Wait_For_Interrupt(), _) if wfi_is_nop() => true,
         _ => false,
       };
 

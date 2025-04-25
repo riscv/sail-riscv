@@ -105,15 +105,6 @@ function privLevel_to_str (p) =
 
 overload to_str = {privLevel_to_str}
 
-/* Type denoting the result of executing an instruction that
- * is generic over the reasons why it fails or is incomplete.
- */
-
-union ExecutionResult ('a : Type) = {
-  RETIRE_OK      : unit,
-  RETIRE_FAIL    : 'a
-}
-
 /* memory access types */
 
 union AccessType ('a : Type) = {

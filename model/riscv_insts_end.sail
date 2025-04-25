@@ -12,7 +12,7 @@
 
 mapping clause encdec = ILLEGAL(s) <-> s
 
-function clause execute (ILLEGAL(s)) = RETIRE_FAIL(Illegal_Instruction())
+function clause execute (ILLEGAL(s)) = Illegal_Instruction()
 
 mapping clause assembly = ILLEGAL(s) <-> "illegal" ^ spc() ^ hex_bits_32(s)
 
@@ -20,7 +20,7 @@ mapping clause assembly = ILLEGAL(s) <-> "illegal" ^ spc() ^ hex_bits_32(s)
 
 mapping clause encdec_compressed = C_ILLEGAL(s) <-> s
 
-function clause execute C_ILLEGAL(s) = RETIRE_FAIL(Illegal_Instruction())
+function clause execute C_ILLEGAL(s) = Illegal_Instruction()
 
 mapping clause assembly = C_ILLEGAL(s) <-> "c.illegal" ^ spc() ^ hex_bits_16(s)
 
