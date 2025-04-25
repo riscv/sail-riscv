@@ -102,7 +102,7 @@ static struct option options[] = {
 #ifdef RVFI_DII
     {"rvfi-dii",                       required_argument, 0, 'r'             },
 #endif
-    {"help",                           no_argument,       0, 1               },
+    {"help",                           no_argument,       0, 'h'             },
     {"config",                         required_argument, 0, 'c'             },
     {"print-default-config",           no_argument,       0, OPT_PRINT_CONFIG},
     {"trace",                          optional_argument, 0, 'v'             },
