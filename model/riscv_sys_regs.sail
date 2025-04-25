@@ -638,10 +638,6 @@ register minstret : bits(64)
 /* Should minstret be incremented when the instruction is retired. */
 register minstret_increment : bool
 
-function update_minstret() -> unit = {
-  if minstret_increment then minstret = minstret + 1;
-}
-
 /* machine information registers */
 register mvendorid : bits(32) = zeros()
 register mimpid : xlenbits = zeros()

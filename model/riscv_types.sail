@@ -20,6 +20,9 @@ let xlen_min_signed = 0 - 2 ^ (xlen - 1)
 type half = bits(16)
 type word = bits(32)
 
+// Bit-vector of an uncompressed instruction.
+type instbits = bits(32)
+
 type pagesize_bits : Int = 12
 let  pagesize_bits = sizeof(pagesize_bits)
 
