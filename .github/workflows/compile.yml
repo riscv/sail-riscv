@@ -16,6 +16,9 @@ jobs:
 
       - name: Check out repository code
         uses: actions/checkout@v4
+        with:
+          # Needed for `git describe` in the build to work.
+          fetch-depth: 0
 
       - name: Ensure pre-commit checks pass
         run: python3 -m pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always

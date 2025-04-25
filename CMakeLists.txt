@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 cmake_policy(VERSION 3.20...3.31)
 
-project(sail_riscv)
+include(cmake/project_version.cmake)
+project(sail_riscv VERSION ${sail_riscv_cmake_version})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
