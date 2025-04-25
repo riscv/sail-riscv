@@ -31,7 +31,7 @@ function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let num_elem_vs = get_num_elem(LMUL_pow, SEW);
   let num_elem_vd = get_num_elem(0, SEW_widen); /* vd regardless of LMUL setting */
 
-  if illegal_reduction_widen(SEW_widen, LMUL_pow_widen) then return RETIRE_FAIL(Illegal_Instruction());
+  if illegal_reduction_widen(SEW_widen, LMUL_pow_widen) then return Illegal_Instruction();
 
   if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
 
@@ -45,7 +45,7 @@ function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
   let mask    : bits('n)     = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Illegal_Instruction()
   };
 
   var sum : bits('o) = read_single_element(SEW_widen, 0, vs1); /* vs1 regardless of LMUL setting */
@@ -98,7 +98,7 @@ function clause execute(RMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let num_elem_vs = get_num_elem(LMUL_pow, SEW);
   let num_elem_vd = get_num_elem(0, SEW); /* vd regardless of LMUL setting */
 
-  if illegal_reduction() then return RETIRE_FAIL(Illegal_Instruction());
+  if illegal_reduction() then return Illegal_Instruction();
 
   if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
 
@@ -111,7 +111,7 @@ function clause execute(RMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
   let mask    : bits('n)     = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Illegal_Instruction()
   };
 
   var sum : bits('m) = read_single_element(SEW, 0, vs1); /* vs1 regardless of LMUL setting */

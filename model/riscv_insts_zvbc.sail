@@ -31,7 +31,7 @@ function clause execute (VCLMUL_VV(vm, vs2, vs1, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Illegal_Instruction()
   };
   var result = initial_result;
 
@@ -70,7 +70,7 @@ function clause execute (VCLMUL_VX(vm, vs2, rs1, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Illegal_Instruction()
   };
   var result = initial_result;
 
@@ -108,7 +108,7 @@ function clause execute (VCLMULH_VV(vm, vs2, vs1, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Illegal_Instruction()
   };
   var result = initial_result;
 
@@ -147,7 +147,7 @@ function clause execute (VCLMULH_VX(vm, vs2, rs1, vd)) = {
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Illegal_Instruction()
   };
   var result = initial_result;
 
