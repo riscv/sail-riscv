@@ -1,0 +1,141 @@
+name: Build Linux and openSBI in os-boot
+permissions:
+  id-token: write
+  attestations: write
+  contents: read
+
+on:
+  push:
+    paths:
+      - ".github/workflows/linux.yml"
+      - "os-boot/linux/**"
+      - "!os-boot/**.md"
+  pull_request:
+    paths:
+      - ".github/workflows/linux.yml"
+      - "os-boot/linux/**"
+      - "!os-boot/**.md"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install packages
+        run: sudo apt install -y build-essential curl device-tree-compiler ccache
+
+      - name: Check out Repository Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 5
+
+      - name: Restore Cache Linux Sources
+        uses: actions/cache/restore@v4
+        id: linux-cache
+        with:
+          key: os-boot-linux-${{ hashFiles('os-boot/linux/Makefile') }}
+          path: |
+            os-boot/linux/src/
+            os-boot/linux/build/
+
+      - name: Make ELF
+        if: steps.linux-cache.outputs.cache-hit != 'true'
+        working-directory: os-boot/linux
+        run: make -j$(nproc)
+
+      - name: Save Cache Linux Sources
+        if: steps.linux-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          key: ${{ hashFiles('os-boot/linux/Makefile') }}
+          path: |
+            os-boot/linux/src/
+            os-boot/linux/build/
+
+      - name: Make dtb
+        working-directory: os-boot/linux
+        run: make -j$(nproc) sail.dtb
+
+      - name: Upload ELF
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-opensbi-${{ github.run_id }}
+          path: |
+            os-boot/linux/build/fw_payload.elf
+            os-boot/linux/sail.dtb
+
+      - name: Generate ELF Attestation
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@v2
+        id: attest
+        with:
+          subject-path: |
+            os-boot/linux/build/fw_payload.elf
+            os-boot/linux/sail.dtb
+          show-summary: false
+
+      - name: Upload Paper Work of ELF
+        working-directory: os-boot
+        env:
+          ELFURL: ${{ steps.upload.outputs.artifact-url }}
+          ATTESTURL: ${{ steps.attest.outputs.attestation-url }}
+        run: |
+          echo "# Linux + openSBI ELF" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The generated [ELF file]("$ELFURL") can be verified from [here]("$ATTESTURL")." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Header" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          readelf -h linux/build/fw_payload.elf >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check Sail Model ID
+        id: sail-id
+        run: echo "commitid=$(git log --pretty=format:"%H" -1 -- . ':(exclude)os-boot' ':(exclude).github')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Sail Binary
+        uses: actions/cache/restore@v4
+        id: sail-cache
+        with:
+          key: sail-riscv-${{ steps.sail-id.outputs.commitid }}
+          path: build
+
+      - name: Install Sail from Binary
+        if: steps.sail-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo mkdir -p /usr/local
+          curl --location https://github.com/rems-project/sail/releases/download/0.19-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
+
+      - name: Build Simulator
+        if: steps.sail-cache.outputs.cache-hit != 'true'
+        run: ./build_simulators.sh
+
+      - name: Save Sail Binary
+        uses: actions/cache/save@v4
+        if: steps.sail-cache.outputs.cache-hit != 'true'
+        with:
+          key: sail-riscv-${{ steps.sail-id.outputs.commitid }}
+          path: build
+
+      - name: Test ELF File
+        working-directory: os-boot/linux
+        timeout-minutes: 2
+        run: make sail 2>&1 | tee linux.log
+
+      - name: Upload Paper Work of Test
+        working-directory: os-boot
+        env:
+          ELFURL: ${{ steps.upload.outputs.artifact-url }}
+          COMMITID: ${{ steps.sail-id.outputs.commitid }}
+        run: |
+          echo "## ELF Test with Sail" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The generated [ELF file]("$ELFURL") is tested based on [$COMMITID]("$GITHUB_SERVER_URL"/"$GITHUB_REPOSITORY"/commit/"$COMMITID")." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat linux/linux.log >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
