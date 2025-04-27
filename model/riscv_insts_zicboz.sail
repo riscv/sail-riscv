@@ -44,8 +44,8 @@ function clause execute(ZICBOZ(rs1)) = {
           // was encoded in the instruction. We subtract the negative offset
           // (add the positive offset) to get it. Normally this will be
           // equal to rs1, but pointer masking can change that.
-          TR_Failure(e, _) => Memory_Exception(vaddr - negative_offset, e),
-          TR_Address(paddr, _) => {
+          Err(e, _) => Memory_Exception(vaddr - negative_offset, e),
+          Ok(paddr, _) => {
             match mem_write_ea(paddr, cache_block_size, false, false, false) {
               Err(e) => Memory_Exception(vaddr - negative_offset, e),
               Ok(_)  => {

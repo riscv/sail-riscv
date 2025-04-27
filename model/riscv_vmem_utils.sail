@@ -131,11 +131,11 @@ function vmem_write_addr(vaddr, width, data, acc, aq, rl, res) = {
     let offset = i;
     let vaddr = vaddr + (offset * bytes);
     match translateAddr(Virtaddr(vaddr), acc) {
-      TR_Failure(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+      Err(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
 
       /* NOTE: Currently, we only announce the effective address if address translation is successful.
          This may need revisiting, particularly in the misaligned case. */
-      TR_Address(paddr, _) => {
+      Ok(paddr, _) => {
         /* If res is true, the load should be aligned, and this loop should only execute once */
         if res & not(match_reservation(bits_of(paddr))) then {
           write_success = false
@@ -213,9 +213,9 @@ function vmem_read(rs, offset, width, acc, aq, rl, res) = {
     let offset = i;
     let vaddr = vaddr + (offset * bytes);
     match translateAddr(Virtaddr(vaddr), acc) {
-      TR_Failure(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+      Err(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
 
-      TR_Address(paddr, _) => match mem_read(acc, paddr, bytes, aq, rl, res) {
+      Ok(paddr, _) => match mem_read(acc, paddr, bytes, aq, rl, res) {
         Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
 
         Ok(v) => {
