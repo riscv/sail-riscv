@@ -79,6 +79,8 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Smcntrpmf => 1, // Ext_Zicntr
     Ext_Sscofpmf => 2, // Ext_Zihpm
     Ext_Zihpm => 1, // Ext_Zicntr
+    Ext_Zvknha => 1, // Ext_V
+    Ext_Zvknhb => 1, // Ext_V
     _ => 0
   }
 termination_measure currentlyEnabled(ext) = currentlyEnabled_measure(ext)
