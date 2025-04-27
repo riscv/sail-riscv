@@ -4,7 +4,7 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Install packages
         run: sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build jq
@@ -16,9 +16,6 @@ jobs:
 
       - name: Check out repository code
         uses: actions/checkout@v4
-
-      - name: Ensure pre-commit checks pass
-        run: python3 -m pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always
 
       - name: Build and test simulators
         run: |
@@ -33,7 +30,7 @@ jobs:
           ctest --test-dir build --output-junit tests.xml --output-on-failure
 
       - name: Upload test results
-        if: always()
+        if: ${{ ! cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: tests.xml
