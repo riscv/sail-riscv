@@ -247,7 +247,7 @@ mapping clause assembly = CPOP(rs1, rd)
 function clause execute (CPOP(rs1, rd)) = {
   let rs1_val = X(rs1);
   var result : nat = 0;
-  foreach (i from 0 to (xlen_val - 1))
+  foreach (i from 0 to (xlen - 1))
     if rs1_val[i] == bitone then result = result + 1;
   X(rd) = to_bits(xlen, result);
   RETIRE_SUCCESS
