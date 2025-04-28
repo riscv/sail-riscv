@@ -34,16 +34,14 @@ Install [Sail](https://github.com/rems-project/sail/). On Linux you can download
 $ ./build_simulators.sh
 ```
 
-will build the simulators in `build/c_emulator/riscv_sim_rv{32,64}d`.
+will build the simulator at `build/c_emulator/riscv_sim_rv`.
 
 If you get an error message saying `sail: unknown option '--require-version'.` it's because your Sail compiler is too old. You need version 0.19 or later.
 
-By default the RV32D and RV64D emulators are built, without RVFI-DII support.
-You can see a complete list of targets by running `make help` in the
-build directory, then e.g.
+By default the emulator is built without RVFI-DII support. For RVFI support run
 
 ```
-$ make -C build riscv_sim_rv64f_rvfi
+$ make -C build riscv_sim_rv_rvfi
 ```
 
 By default `build_simulators.sh` will download and build [libgmp](https://gmplib.org/).
@@ -54,7 +52,7 @@ To use a system installation of libgmp, run `env DOWNLOAD_GMP=FALSE ./build_simu
 The simulator can be used to execute small test binaries.
 
 ```
-$ build/c_emulator/riscv_sim_<arch> <elf-file>
+$ build/c_emulator/riscv_sim_rv <elf-file>
 ```
 
 A suite of RV32 and RV64 test programs derived from the
@@ -66,13 +64,13 @@ can be run using `make test` or `ctest` in the build directory.
 
 The model is configured using a JSON file specifying various tunable
 options. The default configuration used for the model can be examined
-using `build/c_emulator/riscv_sim_<arch> --print-default-config`. To
+using `build/c_emulator/riscv_sim_rv --print-default-config`. To
 use a custom configuration, save the default configuration into a
 file, edit it as needed, and pass it to the simulator using the
 `--config` option.
 
 Information on other options for the simulator is available from
-`build/c_emulator/riscv_sim_<arch> -h`.
+`build/c_emulator/riscv_sim_rv -h`.
 
 ### Booting OS images
 

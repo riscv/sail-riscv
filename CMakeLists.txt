@@ -125,8 +125,6 @@ execute_process(
 )
 message(STATUS "Sail library directory: ${sail_dir}")
 
-set(DEFAULT_ARCHITECTURES "rv32d;rv64d" CACHE STRING "Architectures to build by default (rv32f|rv64f|rv32d|rv64d)(_rvfi)? " )
-
 option(COVERAGE "Compile with Sail coverage collection enabled.")
 
 # Softfloat support.
@@ -167,8 +165,8 @@ endif()
 include(CPack)
 
 # Convenience targets.
-add_custom_target(csim DEPENDS riscv_sim_rv32d riscv_sim_rv64d)
-add_custom_target(check DEPENDS generated_model_rv32d generated_model_rv64d)
+add_custom_target(csim DEPENDS riscv_sim_rv)
+add_custom_target(check DEPENDS generated_model_rv)
 
 # TODO: Add `interpret` target.
 # TODO: Add hol4 target.

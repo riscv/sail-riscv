@@ -89,16 +89,18 @@ set(tests
 )
 
 foreach (xlen IN ITEMS 32 64)
+    set(default_config "${CMAKE_SOURCE_DIR}/config/rv${xlen}d.json")
+
     foreach (test_source IN LISTS tests)
-        set(arch "rv${xlen}d")
+        set(arch "rv")
         if (xlen EQUAL 32)
             set(mabi "ilp32")
         else()
             set(mabi "lp64")
         endif()
 
-        set(elf "${arch}_${test_source}.elf")
-        set(config "${arch}_${test_source}.json")
+        set(elf "${arch}_${xlen}_${test_source}.elf")
+        set(config "${arch}_${xlen}_${test_source}.json")
 
         add_custom_command(
             OUTPUT ${elf}
@@ -145,11 +147,11 @@ foreach (xlen IN ITEMS 32 64)
             add_custom_command(
                 OUTPUT ${config}
                 DEPENDS
-                    "${CMAKE_SOURCE_DIR}/config/default.json"
+                    ${default_config}
                     "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}.filter"
                 COMMAND jq
                     -f "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}.filter"
-                    "${CMAKE_SOURCE_DIR}/config/default.json"
+                    ${default_config}
                     > ${config}
                 VERBATIM
                 COMMENT "Creating ${config}"
@@ -158,18 +160,18 @@ foreach (xlen IN ITEMS 32 64)
             add_custom_command(
                 OUTPUT ${config}
                 DEPENDS
-                    "${CMAKE_SOURCE_DIR}/config/default.json"
+                    ${default_config}
                 COMMAND ${CMAKE_COMMAND} -E copy
-                    "${CMAKE_SOURCE_DIR}/config/default.json"
+                    ${default_config}
                     "${config}"
                 VERBATIM
             )
         endif()
 
-        add_custom_target(build_${arch}_${test_source} ALL DEPENDS ${elf} ${config})
+        add_custom_target(build_${arch}_${xlen}_${test_source} ALL DEPENDS ${elf} ${config})
 
         add_test(
-            NAME "first_party_${arch}_${test_source}"
+            NAME "first_party_${arch}_${xlen}_${test_source}"
             COMMAND $<TARGET_FILE:riscv_sim_${arch}> --config ${config} ${elf}
         )
     endforeach()

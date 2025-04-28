@@ -1,6 +1,6 @@
 {
   "base": {
-    "xlen": 64,
+    "xlen": 32,
     "writable_misa": true,
     "writable_fiom": true,
     "writable_hpm_counters": {
@@ -22,10 +22,6 @@
     }
   },
   "platform": {
-    "vendorid": 0,
-    "archid": 0,
-    "impid": 0,
-    "hartid": 0,
     "reset_vector": 4096,
     "cache_block_size_exp": 6,
     "ram": {
@@ -40,7 +36,7 @@
       "base": 33554432,
       "size": 786432
     },
-    "instructions_per_tick": 2,
+    "instructions_per_tick": 100,
     "wfi_is_nop": true
   },
   "extensions": {
