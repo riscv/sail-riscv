@@ -17,28 +17,37 @@ type instbits = bits(32)
 type pagesize_bits : Int = 12
 let  pagesize_bits = sizeof(pagesize_bits)
 
+// RV32E and RV64E Base Integer Instruction Sets. If this enabled then
+// the model will only support E (16 integer registers). It is allowed
+// to have a design where `misa[I]` is writable to turn E on and off,
+// but this model does not support that.
+type base_E_enabled : Bool = config base.E
+let base_E_enabled = constraint(base_E_enabled)
+
 /* register identifiers */
 
-newtype regidx = Regidx : bits(5)  /* uncompressed register identifiers */
+type regidx_bit_width = if base_E_enabled then 4 else 5
+let regidx_bit_width = sizeof(regidx_bit_width)
+
+newtype regidx = Regidx : bits(regidx_bit_width)  /* uncompressed register identifiers */
 newtype cregidx = Cregidx : bits(3) /* identifiers in RVC instructions */
 type csreg = bits(12)  /* CSR addressing */
 
-function regidx_offset(Regidx(r) : regidx, o : bits(5)) -> regidx = Regidx(r + o)
+function regidx_offset(Regidx(r) : regidx, o : bits(regidx_bit_width)) -> regidx = Regidx(r + o)
 function regidx_offset_range(Regidx(r) : regidx, o : range(0, 31)) -> regidx = Regidx(r + o)
-function regidx_bits(Regidx(b) : regidx) -> bits(5) = b
+function regidx_bits(Regidx(b) : regidx) -> bits(regidx_bit_width) = b
 overload operator + = { regidx_offset, regidx_offset_range }
 /* register file indexing */
 
-newtype regno = Regno : range(0, 31)
+newtype regno = Regno : range(0, 2 ^ regidx_bit_width - 1)
 
 /* mapping RVC register indices into normal indices */
-val creg2reg_idx : cregidx -> regidx
-function creg2reg_idx(Cregidx(i)) = Regidx(0b01 @ i)
+function creg2reg_idx(Cregidx(i) : cregidx) -> regidx = Regidx(zero_extend(0b1 @ i))
 
 /* some architecture and ABI relevant register identifiers */
-let zreg : regidx = Regidx(0b00000) /* x0, zero register  */
-let ra   : regidx = Regidx(0b00001) /* x1, return address */
-let sp   : regidx = Regidx(0b00010) /* x2, stack pointer  */
+let zreg : regidx = Regidx(zero_extend(0b00)) /* x0, zero register  */
+let ra   : regidx = Regidx(zero_extend(0b01)) /* x1, return address */
+let sp   : regidx = Regidx(zero_extend(0b10)) /* x2, stack pointer  */
 
 /* base architecture definitions */
 

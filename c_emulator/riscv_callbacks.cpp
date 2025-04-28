@@ -62,7 +62,7 @@ unit mem_exception_callback(sbits paddr, uint64_t num_of_exception)
   return UNIT;
 }
 
-unit xreg_full_write_callback(const_sail_string abi_name, unsigned reg,
+unit xreg_full_write_callback(const_sail_string abi_name, sbits reg,
                               sbits value)
 {
   if (config_print_reg) {
@@ -70,12 +70,12 @@ unit xreg_full_write_callback(const_sail_string abi_name, unsigned reg,
       fprintf(trace_log, "%s <- 0x%0*" PRIX64 "\n", abi_name,
               static_cast<int>(zxlen / 4), value.bits);
     } else {
-      fprintf(trace_log, "x%d <- 0x%0*" PRIX64 "\n", reg,
+      fprintf(trace_log, "x%lu <- 0x%0*" PRIX64 "\n", reg.bits,
               static_cast<int>(zxlen / 4), value.bits);
     }
   }
   if (config_enable_rvfi) {
-    zrvfi_wX(reg, value);
+    zrvfi_wX(reg.bits, value);
   }
   return UNIT;
 }
