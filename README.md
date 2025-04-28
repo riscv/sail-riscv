@@ -1,17 +1,12 @@
 # RISCV Sail Model
 
 This repository contains a formal specification of the RISC-V architecture, written in
-[Sail](https://github.com/rems-project/sail). It has been adopted by the RISC-V Foundation.
+[Sail](https://github.com/rems-project/sail). It has been adopted by RISC-V International.
 
-The model specifies
-assembly language formats of the instructions, the corresponding
-encoders and decoders, and the instruction semantics.
-A [reading guide](doc/ReadingGuide.md) to the model is provided in the
-[doc/](doc/) subdirectory, along with a guide on [how to
+The model specifies assembly language formats of the instructions, the corresponding
+encoders and decoders, and the instruction semantics. A [reading guide](doc/ReadingGuide.md)
+to the model is provided in the [doc/](doc/) subdirectory, along with a guide on [how to
 extend](doc/ExtendingGuide.md) the model.
-
-Latex or AsciiDoc definitions can be generated from the model that are suitable for inclusion in reference documentation.
-There is also the newer [Sail AsciiDoctor documentation support for RISC-V](https://github.com/Alasdair/asciidoctor-sail/blob/master/doc/built/sail_to_asciidoc.pdf).
 
 ## What is Sail?
 
@@ -43,6 +38,7 @@ You can see a complete list of targets by running `make help` in the
 build directory, then e.g.
 
 ```
+$ cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDOWNLOAD_GMP=TRUE
 $ make -C build riscv_sim_rv64f_rvfi
 ```
 
