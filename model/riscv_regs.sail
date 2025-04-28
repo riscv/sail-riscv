@@ -80,7 +80,6 @@ function rX (Regno(r) : regno) -> xlenbits = {
       29 => x29,
       30 => x30,
       31 => x31,
-      _  => {assert(false, "invalid register number"); zero_reg}
     };
   regval_from_reg(v)
 }
@@ -130,7 +129,6 @@ function wX (Regno(r) : regno, in_v : xlenbits) -> unit = {
     29 => x29 = v,
     30 => x30 = v,
     31 => x31 = v,
-    _  => assert(false, "invalid register number")
   };
   if (r != 0) then {
      rvfi_wX(Regno(r), in_v);
@@ -146,6 +144,15 @@ function wX_bits(i: regidx, data: xlenbits) -> unit = {
 }
 
 overload X = {rX_bits, wX_bits, rX, wX}
+
+/* Mappings for encoding */
+
+mapping encdec_reg : regidx <-> bits(5) = {
+  forwards Regidx(r) => zero_extend(r),
+  backwards r if not(base_E_enabled) | r[4] == bitzero => Regidx(r[regidx_bit_width - 1 .. 0]),
+}
+
+mapping encdec_creg : cregidx <-> bits(3) = { Cregidx(r) <-> r }
 
 /* mappings for assembly */
 
@@ -181,10 +188,12 @@ mapping reg_name_raw : bits(5) <-> string = {
     0b11100 <-> "t3",
     0b11101 <-> "t4",
     0b11110 <-> "t5",
-    0b11111 <-> "t6"
+    0b11111 <-> "t6",
 }
 
-mapping reg_name : regidx <-> string = { Regidx(i) <-> reg_name_raw(i) }
+// Mapping from 4/5 back to 5 bits here makes the name mapping much easier.
+// If you call `reg_name("t6")` on an E hart you'll get a mapping failure.
+mapping reg_name : regidx <-> string = { encdec_reg(i) <-> reg_name_raw(i) }
 
 mapping creg_name_raw : bits(3) <-> string = {
   0b000 <-> "s0",
@@ -198,9 +207,3 @@ mapping creg_name_raw : bits(3) <-> string = {
 }
 
 mapping creg_name : cregidx <-> string = { Cregidx(i) <-> creg_name_raw(i) }
-
-/* Mappings for encoding */
-
-mapping encdec_reg : regidx <-> bits(5) = { Regidx(r) <-> r }
-
-mapping encdec_creg : cregidx <-> bits(3) = { Cregidx(r) <-> r }
