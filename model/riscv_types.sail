@@ -32,8 +32,11 @@ newtype regidx = Regidx : bits(5)  /* uncompressed register identifiers */
 newtype cregidx = Cregidx : bits(3) /* identifiers in RVC instructions */
 type csreg = bits(12)  /* CSR addressing */
 
-function regidx_offset(Regidx(r) : regidx, o : bits(5)) -> regidx = Regidx(r + o)
-function regidx_bits (Regidx(b) : regidx) -> bits(5) = b
+function regidx_offset(Regidx(r) : regidx
+                      , o : {'n, (1 <= 'n <= 5). bits('n)}
+                      ) -> regidx
+  = Regidx(r + zero_extend(o))
+function regidx_bits(Regidx(r) : regidx) -> bits(5) = r
 
 /* register file indexing */
 

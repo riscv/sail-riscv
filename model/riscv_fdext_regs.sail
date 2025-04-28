@@ -284,7 +284,7 @@ function rF_or_X_D(i) = {
   else {
     let ridx = fregidx_to_regidx(i);
     assert(regidx_bits(ridx)[0] == bitzero);
-    if ridx == zreg then zeros() else X(regidx_offset(ridx, 0b00001)) @ X(ridx)
+    if ridx == zreg then zeros() else X(regidx_offset(ridx, 0b1)) @ X(ridx)
   }
 }
 
@@ -318,8 +318,8 @@ function wF_or_X_D(i, data) = {
     let ridx = fregidx_to_regidx(i);
     assert (regidx_bits(ridx)[0] == bitzero);
     if ridx != zreg then {
-      X(ridx)                         = data[31..0];
-      X(regidx_offset(ridx, 0b00001)) = data[63..32];
+      X(ridx)                     = data[31..0];
+      X(regidx_offset(ridx, 0b1)) = data[63..32];
     }
   }
 }
