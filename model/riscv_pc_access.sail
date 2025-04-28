@@ -30,3 +30,8 @@ val tick_pc : unit -> unit
 function tick_pc() = {
   PC = nextPC
 }
+
+// For forcing PC from C. This is ugly.
+function force_pc(pc : bits(64)) -> unit = {
+  PC = truncate(pc, xlen);
+}
