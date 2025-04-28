@@ -136,7 +136,7 @@
       "supported": true
     },
     "Zcf": {
-      "supported": true
+      "supported": false
     },
     "Zcd": {
       "supported": true
@@ -239,7 +239,7 @@
       "sfence_vma_illegal_if_svbare_only": true
     },
     "Sv32": {
-      "supported": true
+      "supported": false
     },
     "Sv39": {
       "supported": true

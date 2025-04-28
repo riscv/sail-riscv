@@ -21,12 +21,12 @@ void print_lbits_hex(lbits val, int length = 0)
 
 // Implementations of default callbacks for trace printing and RVFI.
 // The model assumes that these functions do not change the state of the model.
-unit mem_write_callback(const char *type, uint64_t paddr, uint64_t width,
+unit mem_write_callback(const char *type, sbits paddr, uint64_t width,
                         lbits value)
 {
   if (config_print_mem_access) {
     fprintf(trace_log, "mem[%s,0x%0*" PRIX64 "] <- 0x", type,
-            static_cast<int>((zphysaddrbits_len + 3) / 4), paddr);
+            static_cast<int>((zphysaddrbits_len + 3) / 4), paddr.bits);
     print_lbits_hex(value, width);
   }
   if (config_enable_rvfi) {
@@ -35,12 +35,12 @@ unit mem_write_callback(const char *type, uint64_t paddr, uint64_t width,
   return UNIT;
 }
 
-unit mem_read_callback(const char *type, uint64_t paddr, uint64_t width,
+unit mem_read_callback(const char *type, sbits paddr, uint64_t width,
                        lbits value)
 {
   if (config_print_mem_access) {
     fprintf(trace_log, "mem[%s,0x%0*" PRIX64 "] -> 0x", type,
-            static_cast<int>((zphysaddrbits_len + 3) / 4), paddr);
+            static_cast<int>((zphysaddrbits_len + 3) / 4), paddr.bits);
     print_lbits_hex(value, width);
   }
   if (config_enable_rvfi) {
@@ -53,7 +53,7 @@ unit mem_read_callback(const char *type, uint64_t paddr, uint64_t width,
   return UNIT;
 }
 
-unit mem_exception_callback(uint64_t paddr, uint64_t num_of_exception)
+unit mem_exception_callback(sbits paddr, uint64_t num_of_exception)
 {
   (void)num_of_exception;
   if (config_enable_rvfi) {
@@ -63,15 +63,15 @@ unit mem_exception_callback(uint64_t paddr, uint64_t num_of_exception)
 }
 
 unit xreg_full_write_callback(const_sail_string abi_name, unsigned reg,
-                              uint64_t value)
+                              sbits value)
 {
   if (config_print_reg) {
     if (config_use_abi_names) {
       fprintf(trace_log, "%s <- 0x%0*" PRIX64 "\n", abi_name,
-              static_cast<int>(zxlen / 4), value);
+              static_cast<int>(zxlen / 4), value.bits);
     } else {
       fprintf(trace_log, "x%d <- 0x%0*" PRIX64 "\n", reg,
-              static_cast<int>(zxlen / 4), value);
+              static_cast<int>(zxlen / 4), value.bits);
     }
   }
   if (config_enable_rvfi) {
@@ -80,34 +80,34 @@ unit xreg_full_write_callback(const_sail_string abi_name, unsigned reg,
   return UNIT;
 }
 
-unit freg_write_callback(unsigned reg, uint64_t value)
+unit freg_write_callback(unsigned reg, sbits value)
 {
   // TODO: will only print bits; should we print in floating point format?
   if (config_print_reg) {
     // TODO: Might need to change from PRIX64 to PRIX128 once the "Q" extension
     // is supported
     fprintf(trace_log, "f%d <- 0x%0*" PRIX64 "\n", reg,
-            static_cast<int>(zflen / 4), value);
+            static_cast<int>(zflen / 4), value.bits);
   }
   return UNIT;
 }
 
 unit csr_full_write_callback(const_sail_string csr_name, unsigned reg,
-                             uint64_t value)
+                             sbits value)
 {
   if (config_print_reg) {
     fprintf(trace_log, "CSR %s (0x%03X) <- 0x%016" PRIX64 "\n", csr_name, reg,
-            value);
+            value.bits);
   }
   return UNIT;
 }
 
 unit csr_full_read_callback(const_sail_string csr_name, unsigned reg,
-                            uint64_t value)
+                            sbits value)
 {
   if (config_print_reg) {
     fprintf(trace_log, "CSR %s (0x%03X) -> 0x%016" PRIX64 "\n", csr_name, reg,
-            value);
+            value.bits);
   }
   return UNIT;
 }
@@ -124,7 +124,7 @@ unit vreg_write_callback(unsigned reg, lbits value)
   return UNIT;
 }
 
-unit pc_write_callback(uint64_t value)
+unit pc_write_callback(sbits value)
 {
   (void)value;
   return UNIT;
