@@ -1,6 +1,6 @@
 {
   "base": {
-    "xlen": 64,
+    "xlen": 32,
     "writable_misa": true,
     "writable_fiom": true,
     "writable_hpm_counters": {
@@ -15,20 +15,13 @@
       "count": 16
     },
     "misaligned": {
-      "supported": true,
-      "byte_by_byte": false,
-      "order_decreasing": false,
-      "allowed_within_exp": 0
+      "supported": true
     },
     "translation": {
       "dirty_update": false
     }
   },
   "platform": {
-    "vendorid": 0,
-    "archid": 0,
-    "impid": 0,
-    "hartid": 0,
     "reset_vector": 4096,
     "cache_block_size_exp": 6,
     "ram": {
@@ -43,7 +36,7 @@
       "base": 33554432,
       "size": 786432
     },
-    "instructions_per_tick": 2,
+    "instructions_per_tick": 100,
     "wfi_is_nop": true
   },
   "extensions": {
@@ -106,15 +99,6 @@
     },
     "Zalrsc": {
       "supported": false
-    },
-    "Zawrs": {
-      "supported": true,
-      "nto": {
-        "is_nop": false
-      },
-      "sto": {
-        "is_nop": false
-      }
     },
     "Zfa": {
       "supported": true
@@ -194,16 +178,10 @@
     "Zvbc": {
       "supported": true
     },
-    "Zvkned": {
-      "supported": true
-    },
     "Zvknha": {
       "supported": true
     },
     "Zvknhb": {
-      "supported": true
-    },
-    "Zvksh": {
       "supported": true
     },
     "Sscofpmf": {
@@ -216,22 +194,6 @@
       "supported": true
     },
     "Svinval": {
-      "supported": true
-    },
-    "Svbare": {
-      "supported": true,
-      "sfence_vma_illegal_if_svbare_only": true
-    },
-    "Sv32": {
-      "supported": true
-    },
-    "Sv39": {
-      "supported": true
-    },
-    "Sv48": {
-      "supported": true
-    },
-    "Sv57": {
       "supported": true
     }
   }
