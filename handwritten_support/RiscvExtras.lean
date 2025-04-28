@@ -48,6 +48,7 @@ axiom plat_enable_misaligned_access : Unit → Bool
 axiom plat_mtval_has_illegal_inst_bits  : Unit → Bool
 axiom plat_rom_base : Unit → Arch.pa
 axiom plat_rom_size : Unit → Arch.pa
+axiom plat_enable_htif : Unit → Bool
 axiom plat_htif_tohost : Unit → Arch.pa
 axiom plat_clint_base : Unit → Arch.pa
 axiom plat_clint_size : Unit → Arch.pa

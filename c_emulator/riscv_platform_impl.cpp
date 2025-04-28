@@ -18,6 +18,7 @@ uint64_t rv_16_random_bits(void)
 }
 
 uint64_t rv_htif_tohost = UINT64_C(0x80001000);
+bool rv_enable_htif = true;
 
 bool rv_enable_experimental_extensions = false;
 

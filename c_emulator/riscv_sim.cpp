@@ -352,10 +352,11 @@ uint64_t load_sail(char *f, bool main_file)
   fprintf(stdout, "ELF Entry @ 0x%" PRIx64 "\n", entry);
   /* locate htif ports */
   if (lookup_sym(f, "tohost", &rv_htif_tohost) < 0) {
-    fprintf(stderr, "Unable to locate htif tohost port.\n");
-    exit(1);
+    fprintf(stderr, "Unable to locate tohost symbol; disabling HTIF.\n");
+    rv_enable_htif = false;
+  } else {
+    fprintf(stdout, "HTIF located at 0x%0" PRIx64 "\n", rv_htif_tohost);
   }
-  fprintf(stderr, "tohost located at 0x%0" PRIx64 "\n", rv_htif_tohost);
   /* locate test-signature locations if any */
   if (!lookup_sym(f, "begin_signature", &begin_sig)) {
     fprintf(stdout, "begin_signature: 0x%0" PRIx64 "\n", begin_sig);
