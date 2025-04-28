@@ -7,12 +7,6 @@
 /*=======================================================================================*/
 
 /* Basic type and function definitions used pervasively in the model. */
-
-/* this value is only defined for the runtime platform for ELF loading
- * checks, and not used in the model.
- */
-let xlen_val = xlen
-
 let xlen_max_unsigned = 2 ^ xlen - 1
 let xlen_max_signed = 2 ^ (xlen - 1) - 1
 let xlen_min_signed = 0 - 2 ^ (xlen - 1)
