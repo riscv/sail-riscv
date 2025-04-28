@@ -183,9 +183,9 @@ function clause execute(FWVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
@@ -251,9 +251,9 @@ function clause execute(FWVVMATYPE(funct6, vm, vs1, vs2, vd)) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
@@ -318,9 +318,9 @@ function clause execute(FWVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen))
@@ -501,9 +501,9 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
@@ -634,9 +634,9 @@ function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
@@ -1064,9 +1064,9 @@ function clause execute(FWVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
@@ -1131,9 +1131,9 @@ function clause execute(FWVFMATYPE(funct6, vm, rs1, vs2, vd)) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
@@ -1197,9 +1197,9 @@ function clause execute(FWFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen)
   then return RETIRE_FAIL(Illegal_Instruction());

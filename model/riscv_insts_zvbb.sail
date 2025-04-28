@@ -517,9 +517,9 @@ mapping clause assembly = VWSLL_VV (vm, vs2, vs1, vd)
 function clause execute (VWSLL_VV(vm, vs2, vs1, vd)) = {
   let SEW            = get_sew();
   let LMUL_pow       = get_lmul_pow();
-  let num_elem       = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+  let num_elem       = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -561,9 +561,9 @@ mapping clause assembly = VWSLL_VX (vm, vs2, rs1, vd)
 function clause execute (VWSLL_VX(vm, vs2, rs1, vd)) = {
   let SEW            = get_sew();
   let LMUL_pow       = get_lmul_pow();
-  let num_elem       = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+  let num_elem       = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -604,9 +604,9 @@ mapping clause assembly = VWSLL_VI (vm, vs2, uimm, vd)
 function clause execute (VWSLL_VI(vm, vs2, uimm, vd)) = {
   let SEW            = get_sew();
   let LMUL_pow       = get_lmul_pow();
-  let num_elem       = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+  let num_elem       = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   let 'n = num_elem;
   let 'm = SEW;
