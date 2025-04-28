@@ -72,6 +72,7 @@ For booting operating system images, see the information under the
 ### The Sail specification currently captures the following ISA extensions and features:
 
 - RV32I and RV64I base ISAs, v2.1
+- RV32E and RV64E base ISAs, v2.0
 - Zifencei extension for instruction-fetch fence, v2.0
 - Zicsr extension for CSR instructions, v2.0
 - Zicntr and Zihpm extensions for counters, v2.0

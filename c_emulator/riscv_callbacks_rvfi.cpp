@@ -33,11 +33,11 @@ void rvfi_callbacks::mem_exception_callback(sbits paddr, uint64_t)
   }
 }
 
-void rvfi_callbacks::xreg_full_write_callback(const_sail_string, unsigned reg,
+void rvfi_callbacks::xreg_full_write_callback(const_sail_string, sbits reg,
                                               sbits value)
 {
   if (config_enable_rvfi) {
-    zrvfi_wX(reg, value);
+    zrvfi_wX(reg.bits, value);
   }
 }
 
