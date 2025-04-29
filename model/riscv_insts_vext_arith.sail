@@ -83,7 +83,7 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
                             },
         VV_VSSUB         => signed_saturation('m, sign_extend('m + 1, vs2_val[i]) - sign_extend('m + 1, vs1_val[i])),
         VV_VSMUL         => {
-                              let result_mul = to_bits('m * 2, signed(vs2_val[i]) * signed(vs1_val[i]));
+                              let result_mul = to_bits_unsafe('m * 2, signed(vs2_val[i]) * signed(vs1_val[i]));
                               let rounding_incr = get_fixed_rounding_incr(result_mul, 'm - 1);
                               let result_wide = (result_mul >> ('m - 1)) + zero_extend('m * 2, rounding_incr);
                               signed_saturation('m, result_wide['m..0])
@@ -112,10 +112,10 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
                               let v_double : bits('m * 2) = sign_extend(vs2_val[i]);
                               slice(v_double >> shift_amount, 0, SEW) + zero_extend('m, rounding_incr)
                             },
-        VV_VMINU         => to_bits(SEW, min(unsigned(vs2_val[i]), unsigned(vs1_val[i]))),
-        VV_VMIN          => to_bits(SEW, min(signed(vs2_val[i]), signed(vs1_val[i]))),
-        VV_VMAXU         => to_bits(SEW, max(unsigned(vs2_val[i]), unsigned(vs1_val[i]))),
-        VV_VMAX          => to_bits(SEW, max(signed(vs2_val[i]), signed(vs1_val[i]))),
+        VV_VMINU         => to_bits_unsafe(SEW, min(unsigned(vs2_val[i]), unsigned(vs1_val[i]))),
+        VV_VMIN          => to_bits_unsafe(SEW, min(signed(vs2_val[i]), signed(vs1_val[i]))),
+        VV_VMAXU         => to_bits_unsafe(SEW, max(unsigned(vs2_val[i]), unsigned(vs1_val[i]))),
+        VV_VMAX          => to_bits_unsafe(SEW, max(signed(vs2_val[i]), signed(vs1_val[i]))),
         VV_VRGATHER      => {
                               if (vs1 == vd | vs2 == vd) then return Illegal_Instruction();
                               let idx = unsigned(vs1_val[i]);
@@ -468,7 +468,7 @@ function clause execute(VXTYPE(funct6, vm, vs2, rs1, vd)) = {
                       },
         VX_VSSUB   => signed_saturation('m, sign_extend('m + 1, vs2_val[i]) - sign_extend('m + 1, rs1_val) ),
         VX_VSMUL   => {
-                        let result_mul = to_bits('m * 2, signed(vs2_val[i]) * signed(rs1_val));
+                        let result_mul = to_bits_unsafe('m * 2, signed(vs2_val[i]) * signed(rs1_val));
                         let rounding_incr = get_fixed_rounding_incr(result_mul, 'm - 1);
                         let result_wide = (result_mul >> ('m - 1)) + zero_extend('m * 2, rounding_incr);
                         signed_saturation('m, result_wide['m..0])
@@ -497,10 +497,10 @@ function clause execute(VXTYPE(funct6, vm, vs2, rs1, vd)) = {
                         let v_double : bits('m * 2) = sign_extend(vs2_val[i]);
                         slice(v_double >> shift_amount, 0, SEW) + zero_extend('m, rounding_incr)
                       },
-        VX_VMINU   => to_bits(SEW, min(unsigned(vs2_val[i]), unsigned(rs1_val))),
-        VX_VMIN    => to_bits(SEW, min(signed(vs2_val[i]), signed(rs1_val))),
-        VX_VMAXU   => to_bits(SEW, max(unsigned(vs2_val[i]), unsigned(rs1_val))),
-        VX_VMAX    => to_bits(SEW, max(signed(vs2_val[i]), signed(rs1_val)))
+        VX_VMINU   => to_bits_unsafe(SEW, min(unsigned(vs2_val[i]), unsigned(rs1_val))),
+        VX_VMIN    => to_bits_unsafe(SEW, min(signed(vs2_val[i]), signed(rs1_val))),
+        VX_VMAXU   => to_bits_unsafe(SEW, max(unsigned(vs2_val[i]), unsigned(rs1_val))),
+        VX_VMAX    => to_bits_unsafe(SEW, max(signed(vs2_val[i]), signed(rs1_val)))
       }
     }
   };
@@ -1369,7 +1369,7 @@ function clause execute(MVVTYPE(funct6, vm, vs2, vs1, vd)) = {
         MVV_VMULHSU  => get_slice_int(SEW, signed(vs2_val[i]) * unsigned(vs1_val[i]), SEW),
         MVV_VDIVU    => {
                           let q : int = if unsigned(vs1_val[i]) == 0 then -1 else quot_round_zero(unsigned(vs2_val[i]), unsigned(vs1_val[i]));
-                          to_bits(SEW, q)
+                          to_bits_unsafe(SEW, q)
                         },
         MVV_VDIV     => {
                           let elem_max : int = 2 ^ (SEW - 1) - 1;
@@ -1377,17 +1377,17 @@ function clause execute(MVVTYPE(funct6, vm, vs2, vs1, vd)) = {
                           let q : int = if signed(vs1_val[i]) == 0 then -1 else quot_round_zero(signed(vs2_val[i]), signed(vs1_val[i]));
                           /* check for signed overflow */
                           let q' : int = if q > elem_max then elem_min else q;
-                          to_bits(SEW, q')
+                          to_bits_unsafe(SEW, q')
                         },
         MVV_VREMU    => {
                           let r : int = if unsigned(vs1_val[i]) == 0 then unsigned(vs2_val[i]) else rem_round_zero(unsigned(vs2_val[i]), unsigned(vs1_val[i]));
                           /* signed overflow case returns zero naturally as required due to -1 divisor */
-                          to_bits(SEW, r)
+                          to_bits_unsafe(SEW, r)
                         },
         MVV_VREM     => {
                           let r : int = if signed(vs1_val[i]) == 0 then signed(vs2_val[i]) else rem_round_zero(signed(vs2_val[i]), signed(vs1_val[i]));
                           /* signed overflow case returns zero naturally as required due to -1 divisor */
-                          to_bits(SEW, r)
+                          to_bits_unsafe(SEW, r)
                         }
       }
     }
@@ -1524,13 +1524,13 @@ function clause execute(WVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       result[i] = match funct6 {
-        WVV_VADD    => to_bits(SEW_widen, signed(vs2_val[i]) + signed(vs1_val[i])),
-        WVV_VSUB    => to_bits(SEW_widen, signed(vs2_val[i]) - signed(vs1_val[i])),
-        WVV_VADDU   => to_bits(SEW_widen, unsigned(vs2_val[i]) + unsigned(vs1_val[i])),
-        WVV_VSUBU   => to_bits(SEW_widen, unsigned(vs2_val[i]) - unsigned(vs1_val[i])),
-        WVV_VWMUL   => to_bits(SEW_widen, signed(vs2_val[i]) * signed(vs1_val[i])),
-        WVV_VWMULU  => to_bits(SEW_widen, unsigned(vs2_val[i]) * unsigned(vs1_val[i])),
-        WVV_VWMULSU => to_bits(SEW_widen, signed(vs2_val[i]) * unsigned(vs1_val[i]))
+        WVV_VADD    => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) + signed(vs1_val[i])),
+        WVV_VSUB    => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) - signed(vs1_val[i])),
+        WVV_VADDU   => to_bits_unsafe(SEW_widen, unsigned(vs2_val[i]) + unsigned(vs1_val[i])),
+        WVV_VSUBU   => to_bits_unsafe(SEW_widen, unsigned(vs2_val[i]) - unsigned(vs1_val[i])),
+        WVV_VWMUL   => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) * signed(vs1_val[i])),
+        WVV_VWMULU  => to_bits_unsafe(SEW_widen, unsigned(vs2_val[i]) * unsigned(vs1_val[i])),
+        WVV_VWMULSU => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) * unsigned(vs1_val[i]))
       }
     }
   };
@@ -1596,10 +1596,10 @@ function clause execute(WVTYPE(funct6, vm, vs2, vs1, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       result[i] = match funct6 {
-        WV_VADD  => to_bits(SEW_widen, signed(vs2_val[i]) + signed(vs1_val[i])),
-        WV_VSUB  => to_bits(SEW_widen, signed(vs2_val[i]) - signed(vs1_val[i])),
-        WV_VADDU => to_bits(SEW_widen, unsigned(vs2_val[i]) + unsigned(vs1_val[i])),
-        WV_VSUBU => to_bits(SEW_widen, unsigned(vs2_val[i]) - unsigned(vs1_val[i]))
+        WV_VADD  => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) + signed(vs1_val[i])),
+        WV_VSUB  => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) - signed(vs1_val[i])),
+        WV_VADDU => to_bits_unsafe(SEW_widen, unsigned(vs2_val[i]) + unsigned(vs1_val[i])),
+        WV_VSUBU => to_bits_unsafe(SEW_widen, unsigned(vs2_val[i]) - unsigned(vs1_val[i]))
       }
     }
   };
@@ -1663,9 +1663,9 @@ function clause execute(WMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       result[i] = match funct6 {
-        WMVV_VWMACC   => to_bits(SEW_widen, signed(vs1_val[i]) * signed(vs2_val[i])) + vd_val[i],
-        WMVV_VWMACCU  => to_bits(SEW_widen, unsigned(vs1_val[i]) * unsigned(vs2_val[i])) + vd_val[i],
-        WMVV_VWMACCSU => to_bits(SEW_widen, signed(vs1_val[i]) * unsigned(vs2_val[i]))+ vd_val[i]
+        WMVV_VWMACC   => to_bits_unsafe(SEW_widen, signed(vs1_val[i]) * signed(vs2_val[i])) + vd_val[i],
+        WMVV_VWMACCU  => to_bits_unsafe(SEW_widen, unsigned(vs1_val[i]) * unsigned(vs2_val[i])) + vd_val[i],
+        WMVV_VWMACCSU => to_bits_unsafe(SEW_widen, signed(vs1_val[i]) * unsigned(vs2_val[i]))+ vd_val[i]
       }
     }
   };
@@ -2038,7 +2038,7 @@ function clause execute(MVXTYPE(funct6, vm, vs2, rs1, vd)) = {
         MVX_VMULHSU      => get_slice_int(SEW, signed(vs2_val[i]) * unsigned(rs1_val), SEW),
         MVX_VDIVU        => {
                               let q : int = if unsigned(rs1_val) == 0 then -1 else quot_round_zero(unsigned(vs2_val[i]), unsigned(rs1_val));
-                              to_bits(SEW, q)
+                              to_bits_unsafe(SEW, q)
                             },
         MVX_VDIV         => {
                               let elem_max : int = 2 ^ (SEW - 1) - 1;
@@ -2046,17 +2046,17 @@ function clause execute(MVXTYPE(funct6, vm, vs2, rs1, vd)) = {
                               let q : int = if signed(rs1_val) == 0 then -1 else quot_round_zero(signed(vs2_val[i]), signed(rs1_val));
                               /* check for signed overflow */
                               let q' : int = if q > elem_max then elem_min else q;
-                              to_bits(SEW, q')
+                              to_bits_unsafe(SEW, q')
                             },
         MVX_VREMU        => {
                               let r : int = if unsigned(rs1_val) == 0 then unsigned(vs2_val[i]) else rem_round_zero(unsigned(vs2_val[i]), unsigned (rs1_val));
                               /* signed overflow case returns zero naturally as required due to -1 divisor */
-                              to_bits(SEW, r)
+                              to_bits_unsafe(SEW, r)
                             },
         MVX_VREM         => {
                               let r : int = if signed(rs1_val) == 0 then signed(vs2_val[i]) else rem_round_zero(signed(vs2_val[i]), signed(rs1_val));
                               /* signed overflow case returns zero naturally as required due to -1 divisor */
-                              to_bits(SEW, r)
+                              to_bits_unsafe(SEW, r)
                             }
       }
     }
@@ -2195,13 +2195,13 @@ function clause execute(WVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       result[i] = match funct6 {
-        WVX_VADD    => to_bits(SEW_widen, signed(vs2_val[i]) + signed(rs1_val)),
-        WVX_VSUB    => to_bits(SEW_widen, signed(vs2_val[i]) - signed(rs1_val)),
-        WVX_VADDU   => to_bits(SEW_widen, unsigned(vs2_val[i]) + unsigned(rs1_val)),
-        WVX_VSUBU   => to_bits(SEW_widen, unsigned(vs2_val[i]) - unsigned(rs1_val)),
-        WVX_VWMUL   => to_bits(SEW_widen, signed(vs2_val[i]) * signed(rs1_val)),
-        WVX_VWMULU  => to_bits(SEW_widen, unsigned(vs2_val[i]) * unsigned(rs1_val)),
-        WVX_VWMULSU => to_bits(SEW_widen, signed(vs2_val[i]) * unsigned(rs1_val))
+        WVX_VADD    => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) + signed(rs1_val)),
+        WVX_VSUB    => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) - signed(rs1_val)),
+        WVX_VADDU   => to_bits_unsafe(SEW_widen, unsigned(vs2_val[i]) + unsigned(rs1_val)),
+        WVX_VSUBU   => to_bits_unsafe(SEW_widen, unsigned(vs2_val[i]) - unsigned(rs1_val)),
+        WVX_VWMUL   => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) * signed(rs1_val)),
+        WVX_VWMULU  => to_bits_unsafe(SEW_widen, unsigned(vs2_val[i]) * unsigned(rs1_val)),
+        WVX_VWMULSU => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) * unsigned(rs1_val))
       }
     }
   };
@@ -2266,10 +2266,10 @@ function clause execute(WXTYPE(funct6, vm, vs2, rs1, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       result[i] = match funct6 {
-        WX_VADD  => to_bits(SEW_widen, signed(vs2_val[i]) + signed(rs1_val)),
-        WX_VSUB  => to_bits(SEW_widen, signed(vs2_val[i]) - signed(rs1_val)),
-        WX_VADDU => to_bits(SEW_widen, unsigned(vs2_val[i]) + unsigned(rs1_val)),
-        WX_VSUBU => to_bits(SEW_widen, unsigned(vs2_val[i]) - unsigned(rs1_val))
+        WX_VADD  => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) + signed(rs1_val)),
+        WX_VSUB  => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) - signed(rs1_val)),
+        WX_VADDU => to_bits_unsafe(SEW_widen, unsigned(vs2_val[i]) + unsigned(rs1_val)),
+        WX_VSUBU => to_bits_unsafe(SEW_widen, unsigned(vs2_val[i]) - unsigned(rs1_val))
       }
     }
   };
@@ -2333,10 +2333,10 @@ function clause execute(WMVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       result[i] = match funct6 {
-        WMVX_VWMACCU  => (to_bits(SEW_widen, unsigned(rs1_val) * unsigned(vs2_val[i]) )) + vd_val[i],
-        WMVX_VWMACC   => (to_bits(SEW_widen, signed(rs1_val) * signed(vs2_val[i]) )) + vd_val[i],
-        WMVX_VWMACCUS => (to_bits(SEW_widen, unsigned(rs1_val) * signed(vs2_val[i]) ))+ vd_val[i],
-        WMVX_VWMACCSU => (to_bits(SEW_widen, signed(rs1_val) * unsigned(vs2_val[i]) ))+ vd_val[i]
+        WMVX_VWMACCU  => (to_bits_unsafe(SEW_widen, unsigned(rs1_val) * unsigned(vs2_val[i]) )) + vd_val[i],
+        WMVX_VWMACC   => (to_bits_unsafe(SEW_widen, signed(rs1_val) * signed(vs2_val[i]) )) + vd_val[i],
+        WMVX_VWMACCUS => (to_bits_unsafe(SEW_widen, unsigned(rs1_val) * signed(vs2_val[i]) ))+ vd_val[i],
+        WMVX_VWMACCSU => (to_bits_unsafe(SEW_widen, signed(rs1_val) * unsigned(vs2_val[i]) ))+ vd_val[i]
       }
     }
   };

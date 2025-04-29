@@ -191,11 +191,11 @@ infix 7 <<<
 
 val rotate_bits_right : forall 'n 'm, 'm >= 0. (bits('n), bits('m)) -> bits('n)
 function rotate_bits_right (v, n) =
-    (v >> n) | (v << (to_bits(length(n), length(v)) - n))
+    (v >> n) | (v << (to_bits_unsafe(length(n), length(v)) - n))
 
 val rotate_bits_left : forall 'n 'm, 'm >= 0. (bits('n), bits('m)) -> bits('n)
 function rotate_bits_left (v, n) =
-    (v << n) | (v >> (to_bits(length(n), length(v)) - n))
+    (v << n) | (v >> (to_bits_unsafe(length(n), length(v)) - n))
 
 val rotater : forall 'm 'n, 'm >= 'n >= 0. (bits('m), int('n)) -> bits('m)
 function rotater (v, n) =
