@@ -639,11 +639,11 @@ register minstret : bits(64)
 register minstret_increment : bool
 
 /* machine information registers */
-register mvendorid : bits(32) = zeros()
-register mimpid : xlenbits = zeros()
-register marchid : xlenbits = zeros()
-/* TODO: this should be readonly, and always 0 for now */
-register mhartid : xlenbits = zeros()
+register mvendorid : bits(32) = to_bits(32,   (config platform.vendorid : int))
+register mimpid    : xlenbits = to_bits(xlen, (config platform.impid : int))
+register marchid   : xlenbits = to_bits(xlen, (config platform.archid : int))
+register mhartid   : xlenbits = to_bits(xlen, (config platform.hartid : int))
+
 register mconfigptr : xlenbits = zeros()
 
 mapping clause csr_name_map = 0xF11  <-> "mvendorid"
