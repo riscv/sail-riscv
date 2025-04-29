@@ -65,7 +65,7 @@ function cregidx_to_fregidx (Cregidx(b) : cregidx) -> fregidx = Fregidx(0b01 @ b
  * marks the places we need to consider it
  */
 function fregidx_to_regidx (Fregidx(b) : fregidx) -> regidx =
-  Regidx(truncate(b, let Regidx(zreg_bits) = zreg in length(zreg_bits)))
+  Regidx(trunc(b))
 
 mapping encdec_freg : fregidx <-> bits(5) = { Fregidx(r) <-> r }
 

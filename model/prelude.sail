@@ -93,6 +93,11 @@ function zeros (n) = sail_zeros(n)
 val ones : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
 function ones (n) = sail_ones(n)
 
+// Implicit version of truncate. Unfortunately the non-implicit version
+// isn't called `sail_truncate()` by Sail so we can't name this `truncate()`.
+val trunc : forall 'm 'n, 'm >= 0 & 'm <= 'n. (implicit('m), bits('n)) -> bits('m)
+function trunc(m, v) = truncate(v, m)
+
 mapping bool_bit : bool <-> bit = {
   true <-> bitone,
   false <-> bitzero,
