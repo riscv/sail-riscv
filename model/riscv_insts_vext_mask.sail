@@ -113,7 +113,7 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
     if (mask & vs2_val)[i] == bitone then count = count + 1;
   };
 
-  X(rd) = to_bits(xlen, count);
+  X(rd) = to_bits_unsafe(xlen, count);
   set_vstart(zeros());
   RETIRE_SUCCESS
 }
@@ -153,7 +153,7 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
     };
   };
 
-  X(rd) = to_bits(xlen, index);
+  X(rd) = to_bits_unsafe(xlen, index);
   set_vstart(zeros());
   RETIRE_SUCCESS
 }
@@ -328,7 +328,7 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
   var sum : int = 0;
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      result[i] = to_bits(SEW, sum);
+      result[i] = to_bits_unsafe(SEW, sum);
       if vs2_val[i] == bitone then sum = sum + 1
     }
   };
@@ -368,7 +368,7 @@ function clause execute(VID_V(vm, vd)) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then result[i] = to_bits(SEW, i)
+    if mask[i] == bitone then result[i] = to_bits_unsafe(SEW, i)
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);

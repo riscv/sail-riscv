@@ -233,7 +233,7 @@ function clause execute (VCLZ_V(vm, vs2, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       let clz = count_leading_zeros(vs2_val[i]);
-      result[i] = to_bits('m, clz);
+      result[i] = to_bits_unsafe('m, clz);
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -271,7 +271,7 @@ function clause execute (VCTZ_V(vm, vs2, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       let ctz = count_trailing_zeros(vs2_val[i]);
-      result[i] = to_bits('m, ctz);
+      result[i] = to_bits_unsafe('m, ctz);
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -350,7 +350,7 @@ function clause execute (VROL_VV(vm, vs1, vs2, vd)) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then
-      result[i] = vs2_val[i] <<< (vs1_val[i] & to_bits('m, SEW - 1));
+      result[i] = vs2_val[i] <<< (vs1_val[i] & to_bits_unsafe('m, SEW - 1));
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
@@ -387,7 +387,7 @@ function clause execute (VROL_VX(vm, vs2, rs1, vd)) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then
-      result[i] = vs2_val[i] <<< (rs1_val & to_bits('m, SEW - 1));
+      result[i] = vs2_val[i] <<< (rs1_val & to_bits_unsafe('m, SEW - 1));
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
@@ -424,7 +424,7 @@ function clause execute (VROR_VV(vm, vs1, vs2, vd)) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then
-      result[i] = vs2_val[i] >>> (vs1_val[i] & to_bits('m, SEW - 1));
+      result[i] = vs2_val[i] >>> (vs1_val[i] & to_bits_unsafe('m, SEW - 1));
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
@@ -461,7 +461,7 @@ function clause execute (VROR_VX(vm, vs2, rs1, vd)) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then
-      result[i] = vs2_val[i] >>> (rs1_val & to_bits('m, SEW - 1));
+      result[i] = vs2_val[i] >>> (rs1_val & to_bits_unsafe('m, SEW - 1));
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
@@ -498,7 +498,7 @@ function clause execute (VROR_VI(vm, vs2, uimm, vd)) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then
-      result[i] = vs2_val[i] >>> (uimm_val & to_bits('m, SEW - 1));
+      result[i] = vs2_val[i] >>> (uimm_val & to_bits_unsafe('m, SEW - 1));
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
@@ -530,7 +530,7 @@ function clause execute (VWSLL_VV(vm, vs2, vs1, vd)) = {
   let vs2_val_vec : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val      : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
 
-  let SEW_widen_bits = to_bits(SEW_widen, 'o);
+  let SEW_widen_bits = to_bits_unsafe(SEW_widen, 'o);
   let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = match init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -574,7 +574,7 @@ function clause execute (VWSLL_VX(vm, vs2, rs1, vd)) = {
   let vs2_val_vec : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val      : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
 
-  let SEW_widen_bits = to_bits(SEW_widen, 'o);
+  let SEW_widen_bits = to_bits_unsafe(SEW_widen, 'o);
   let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = match init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -617,7 +617,7 @@ function clause execute (VWSLL_VI(vm, vs2, uimm, vd)) = {
   let vs2_val_vec : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val      : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
 
-  let SEW_widen_bits = to_bits(SEW_widen, 'o);
+  let SEW_widen_bits = to_bits_unsafe(SEW_widen, 'o);
   let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = match init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()

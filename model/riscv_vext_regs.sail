@@ -299,7 +299,7 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
       foreach (i_lmul from 0 to (2 ^ LMUL_pow_reg - 1)) {
         let r_start_i : int = i_lmul * 'num_elem_single;
         let r_end_i   : int = r_start_i + 'num_elem_single - 1;
-        let vrid_lmul     : vregidx = vregidx_offset(vrid, to_bits(5, i_lmul));
+        let vrid_lmul     : vregidx = vregidx_offset(vrid, to_bits_unsafe(5, i_lmul));
         let single_result : vector('num_elem_single, bits('m)) = read_single_vreg('num_elem_single, SEW, vrid_lmul);
         foreach (r_i from r_start_i to r_end_i) {
           let s_i : int = r_i - r_start_i;
@@ -320,7 +320,7 @@ function read_single_element(EEW, index, vrid) = {
   assert(VLEN >= EEW);
   let 'elem_per_reg : int = VLEN / EEW;
   assert('elem_per_reg >= 0);
-  let real_vrid  : vregidx = vregidx_offset(vrid, to_bits(5, index / 'elem_per_reg));
+  let real_vrid  : vregidx = vregidx_offset(vrid, to_bits_unsafe(5, index / 'elem_per_reg));
   let real_index : int    = index % 'elem_per_reg;
   let vrid_val : vector('elem_per_reg, bits('m)) = read_single_vreg('elem_per_reg, EEW, real_vrid);
   assert(0 <= real_index & real_index < 'elem_per_reg);
@@ -336,7 +336,7 @@ function write_vreg(num_elem, SEW, LMUL_pow, vrid, vec) = {
   assert('num_elem_single >= 0);
   foreach (i_lmul from 0 to (2 ^ LMUL_pow_reg - 1)) {
     var single_vec : vector('num_elem_single, bits('m)) = vector_init(zeros());
-    let vrid_lmul  : vregidx = vregidx_offset(vrid, to_bits(5, i_lmul));
+    let vrid_lmul  : vregidx = vregidx_offset(vrid, to_bits_unsafe(5, i_lmul));
     let r_start_i  : int = i_lmul * 'num_elem_single;
     let r_end_i    : int = r_start_i + 'num_elem_single - 1;
     foreach (r_i from r_start_i to r_end_i) {
@@ -354,7 +354,7 @@ val write_single_element : forall 'm 'x, 8 <= 'm <= 128. (int('m), int('x), vreg
 function write_single_element(EEW, index, vrid, value) = {
   let 'elem_per_reg : int = VLEN / EEW;
   assert('elem_per_reg >= 0);
-  let real_vrid  : vregidx = vregidx_offset(vrid, to_bits(5, index / 'elem_per_reg));
+  let real_vrid  : vregidx = vregidx_offset(vrid, to_bits_unsafe(5, index / 'elem_per_reg));
   let real_index : int    = index % 'elem_per_reg;
 
   let vrid_val : vector('elem_per_reg, bits('m)) = read_single_vreg('elem_per_reg, EEW, real_vrid);
