@@ -233,7 +233,7 @@ function clause execute (VCLZ_V(vm, vs2, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       let clz = count_leading_zeros(vs2_val[i]);
-      result[i] = to_bits('m, clz);
+      result[i] = to_bits(clz);
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -271,7 +271,7 @@ function clause execute (VCTZ_V(vm, vs2, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       let ctz = count_trailing_zeros(vs2_val[i]);
-      result[i] = to_bits('m, ctz);
+      result[i] = to_bits(ctz);
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);

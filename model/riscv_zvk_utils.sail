@@ -32,16 +32,16 @@ function zvknhab_check_encdec(vs2: vregidx, vs1: vregidx, vd: vregidx) -> bool =
 val zvk_sig0 : forall 'n 'm, 'n == 'm & ('m == 32 | 'm == 64). (bits('n), int('m)) -> bits('n)
 function zvk_sig0(x, SEW) = {
   match SEW {
-    32 => ((x >>> 7) ^ (x >>> 18) ^ (x >> to_bits('n, 3))),
-    64 => ((x >>> 1) ^ (x >>>  8) ^ (x >> to_bits('n, 7))),
+    32 => ((x >>> 7) ^ (x >>> 18) ^ (x >> 3)),
+    64 => ((x >>> 1) ^ (x >>>  8) ^ (x >> 7)),
   }
 }
 
 val zvk_sig1 : forall 'n 'm, 'n == 'm & ('m == 32 | 'm == 64). (bits('n), int('m)) -> bits('n)
 function zvk_sig1(x, SEW) = {
   match SEW {
-    32 => ((x >>> 17) ^ (x >>> 19) ^ (x >> to_bits('n, 10))),
-    64 => ((x >>> 19) ^ (x >>> 61) ^ (x >> to_bits('n,  6))),
+    32 => ((x >>> 17) ^ (x >>> 19) ^ (x >> 10)),
+    64 => ((x >>> 19) ^ (x >>> 61) ^ (x >>  6)),
   }
 }
 

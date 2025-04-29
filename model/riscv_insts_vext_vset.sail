@@ -66,7 +66,7 @@ function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
     }
     else VLMAX;
 
-  to_bits(xlen, new_vl)
+  to_bits(new_vl)
 }
 
 /* *********************************** vsetvli *********************************** */
@@ -100,7 +100,7 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
     X(rd) = vl;
   } else if (rd != zreg) then { /* set vl to VLMAX */
     let AVL = unsigned(ones(xlen));
-    vl = to_bits(xlen, VLMAX);
+    vl = to_bits(VLMAX);
     X(rd) = vl;
   } else { /* keep existing vl */
     let AVL = unsigned(vl);
@@ -152,7 +152,7 @@ function clause execute VSETVL(rs2, rs1, rd) = {
     X(rd) = vl;
   } else if (rd != zreg) then { /* set vl to VLMAX */
     let AVL = unsigned(ones(xlen));
-    vl = to_bits(xlen, VLMAX);
+    vl = to_bits(VLMAX);
     X(rd) = vl;
   } else { /* keep existing vl */
     let AVL = unsigned(vl);

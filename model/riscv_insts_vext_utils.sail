@@ -408,7 +408,7 @@ function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
   var vreg_list : vector('q, vector('n, bits('m))) = vector_init(vector_init(zeros()));
   var result : vector('n, bits('q * 'm)) = vector_init(zeros());
   foreach (j from 0 to (nf - 1)) {
-    vreg_list[j] = read_vreg(num_elem, SEW, LMUL_pow, vregidx_offset(vrid, to_bits(5, j * LMUL_reg)));
+    vreg_list[j] = read_vreg(num_elem, SEW, LMUL_pow, vregidx_offset(vrid, to_bits(j * LMUL_reg)));
   };
   foreach (i from 0 to (num_elem - 1)) {
     result[i] = zeros('q * 'm);
