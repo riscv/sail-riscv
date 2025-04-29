@@ -132,6 +132,7 @@ function to_bits_truncate(l, n) = get_slice_int(l, n, 0)
 
 // This version should never be used. It is only for migrating code from
 // when there was no distinction between checked and truncating to_bits.
+// TODO: Remove this when migration is complete.
 val to_bits_unsafe : forall 'l, 'l >= 0 . (implicit('l), int) -> bits('l)
 function to_bits_unsafe(l, n) = get_slice_int(l, n, 0)
 
@@ -188,21 +189,19 @@ function shift_bits_right_arith(value, shift) =
 infix 7 >>>
 infix 7 <<<
 
-val rotate_bits_right : forall 'n 'm, 'm >= 0. (bits('n), bits('m)) -> bits('n)
-function rotate_bits_right (v, n) =
-    (v >> n) | (v << (to_bits_unsafe(length(n), length(v)) - n))
-
-val rotate_bits_left : forall 'n 'm, 'm >= 0. (bits('n), bits('m)) -> bits('n)
-function rotate_bits_left (v, n) =
-    (v << n) | (v >> (to_bits_unsafe(length(n), length(v)) - n))
-
 val rotater : forall 'm 'n, 'm >= 'n >= 0. (bits('m), int('n)) -> bits('m)
-function rotater (v, n) =
-    (v >> n) | (v << (length(v) - n))
+function rotater(value, shift) =
+  (value >> shift) | (value << ('m - shift))
 
 val rotatel : forall 'm 'n, 'm >= 'n >= 0. (bits('m), int('n)) -> bits('m)
-function rotatel (v, n) =
-    (v << n) | (v >> (length(v) - n))
+function rotatel(value, shift) =
+  (value << shift) | (value >> ('m - shift))
+
+val rotate_bits_right : forall 'm 'n, 'n >= 0 & 'm >= 2 ^ 'n . (bits('m), bits('n)) -> bits('m)
+function rotate_bits_right(value, shift) = rotater(value, unsigned(shift))
+
+val rotate_bits_left : forall 'm 'n, 'n >= 0 & 'm >= 2 ^ 'n . (bits('m), bits('n)) -> bits('m)
+function rotate_bits_left (value, shift) = rotatel(value, unsigned(shift))
 
 overload operator >>> = {rotate_bits_right, rotater}
 overload operator <<< = {rotate_bits_left, rotatel}

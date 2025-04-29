@@ -15,7 +15,7 @@ $ifdef SYMBOLIC
 
 $include <elf.sail>
 
-function get_entry_point() = to_bits_unsafe(xlen, elf_entry())
+function get_entry_point() = to_bits_checked(elf_entry())
 
 $else
 

@@ -31,8 +31,8 @@ val elf_entry = pure {
 function plat_cache_block_size_exp() -> range(0, 12) = config platform.cache_block_size_exp
 
 /* Main memory */
-function plat_ram_base() -> physaddrbits = to_bits_unsafe(physaddrbits_len, config platform.ram.base : int)
-function plat_ram_size() -> physaddrbits = to_bits_unsafe(physaddrbits_len, config platform.ram.size : int)
+function plat_ram_base() -> physaddrbits = to_bits_checked(config platform.ram.base : int)
+function plat_ram_size() -> physaddrbits = to_bits_checked(config platform.ram.size : int)
 
 /* whether the MMU should update dirty bits in PTEs */
 function plat_enable_dirty_update() -> bool = config memory.translation.dirty_update
@@ -46,12 +46,12 @@ function plat_enable_misaligned_access() -> bool = config memory.misaligned.supp
 function plat_mtval_has_illegal_inst_bits() -> bool = config base.mtval_has_illegal_instruction_bits
 
 /* ROM holding reset vector and device-tree DTB */
-function plat_rom_base() -> physaddrbits = to_bits_unsafe(physaddrbits_len, config platform.rom.base : int)
-function plat_rom_size() -> physaddrbits = to_bits_unsafe(physaddrbits_len, config platform.rom.size : int)
+function plat_rom_base() -> physaddrbits = to_bits_checked(config platform.rom.base : int)
+function plat_rom_size() -> physaddrbits = to_bits_checked(config platform.rom.size : int)
 
 /* Location of clock-interface, which should match with the spec in the DTB */
-function plat_clint_base() -> physaddrbits = to_bits_unsafe(physaddrbits_len, config platform.clint.base : int)
-function plat_clint_size() -> physaddrbits = to_bits_unsafe(physaddrbits_len, config platform.clint.size : int)
+function plat_clint_base() -> physaddrbits = to_bits_checked(config platform.clint.base : int)
+function plat_clint_size() -> physaddrbits = to_bits_checked(config platform.clint.size : int)
 
 // Whether HTIF (Host Target InterFace) is enabled. This is used for
 // console output and signalling the end of tests.
@@ -59,7 +59,7 @@ val plat_enable_htif = pure "plat_enable_htif" : unit -> bool
 
 /* Location of HTIF ports */
 val plat_htif_tohost = pure {c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> physaddrbits
-function plat_htif_tohost () = to_bits_unsafe(physaddrbits_len, elf_tohost ())
+function plat_htif_tohost () = to_bits_checked(elf_tohost())
 // todo: fromhost
 
 /* Physical memory map predicates */

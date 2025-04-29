@@ -233,7 +233,7 @@ function clause execute (VCLZ_V(vm, vs2, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       let clz = count_leading_zeros(vs2_val[i]);
-      result[i] = to_bits_unsafe('m, clz);
+      result[i] = to_bits(clz);
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -271,7 +271,7 @@ function clause execute (VCTZ_V(vm, vs2, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       let ctz = count_trailing_zeros(vs2_val[i]);
-      result[i] = to_bits_unsafe('m, ctz);
+      result[i] = to_bits(ctz);
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -330,7 +330,8 @@ mapping clause assembly = VROL_VV(vm, vs1, vs2, vd)
  <-> "vrol.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
 function clause execute (VROL_VV(vm, vs1, vs2, vd)) = {
-  let SEW      = get_sew();
+  let SEW_pow  = get_sew_pow();
+  let SEW      = 2 ^ SEW_pow;
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
@@ -350,7 +351,7 @@ function clause execute (VROL_VV(vm, vs1, vs2, vd)) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then
-      result[i] = vs2_val[i] <<< (vs1_val[i] & to_bits_unsafe('m, SEW - 1));
+      result[i] = vs2_val[i] <<< vs1_val[i][SEW_pow - 1 .. 0];
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
@@ -367,7 +368,8 @@ mapping clause assembly = VROL_VX(vm, vs2, rs1, vd)
  <-> "vrol.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
 
 function clause execute (VROL_VX(vm, vs2, rs1, vd)) = {
-  let SEW      = get_sew();
+  let SEW_pow  = get_sew_pow();
+  let SEW      = 2 ^ SEW_pow;
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
@@ -387,7 +389,7 @@ function clause execute (VROL_VX(vm, vs2, rs1, vd)) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then
-      result[i] = vs2_val[i] <<< (rs1_val & to_bits_unsafe('m, SEW - 1));
+      result[i] = vs2_val[i] <<< rs1_val[SEW_pow - 1 .. 0];
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
@@ -404,7 +406,8 @@ mapping clause assembly = VROR_VV(vm, vs1, vs2, vd)
  <-> "vror.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
 function clause execute (VROR_VV(vm, vs1, vs2, vd)) = {
-  let SEW      = get_sew();
+  let SEW_pow  = get_sew_pow();
+  let SEW      = 2 ^ SEW_pow;
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
@@ -424,7 +427,7 @@ function clause execute (VROR_VV(vm, vs1, vs2, vd)) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then
-      result[i] = vs2_val[i] >>> (vs1_val[i] & to_bits_unsafe('m, SEW - 1));
+      result[i] = vs2_val[i] >>> vs1_val[i][SEW_pow - 1 .. 0];
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
@@ -441,7 +444,8 @@ mapping clause assembly = VROR_VX(vm, vs2, rs1, vd)
  <-> "vror.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1)^ maybe_vmask(vm)
 
 function clause execute (VROR_VX(vm, vs2, rs1, vd)) = {
-  let SEW      = get_sew();
+  let SEW_pow  = get_sew_pow();
+  let SEW      = 2 ^ SEW_pow;
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
@@ -461,7 +465,7 @@ function clause execute (VROR_VX(vm, vs2, rs1, vd)) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then
-      result[i] = vs2_val[i] >>> (rs1_val & to_bits_unsafe('m, SEW - 1));
+      result[i] = vs2_val[i] >>> rs1_val[SEW_pow - 1 .. 0];
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
@@ -478,7 +482,8 @@ mapping clause assembly = VROR_VI(vm, vs2, uimm, vd)
  <-> "vror.vi" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(uimm) ^ maybe_vmask(vm)
 
 function clause execute (VROR_VI(vm, vs2, uimm, vd)) = {
-  let SEW      = get_sew();
+  let SEW_pow  = get_sew_pow();
+  let SEW      = 2 ^ SEW_pow;
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
@@ -498,7 +503,7 @@ function clause execute (VROR_VI(vm, vs2, uimm, vd)) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then
-      result[i] = vs2_val[i] >>> (uimm_val & to_bits_unsafe('m, SEW - 1));
+      result[i] = vs2_val[i] >>> uimm_val[SEW_pow - 1 .. 0];
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
