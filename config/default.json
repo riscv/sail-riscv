@@ -79,6 +79,9 @@
     "Zicntr": {
       "supported": true
     },
+    "Zicsr": {
+      "supported": true
+    },
     "Zifencei": {
       "supported": true
     },
