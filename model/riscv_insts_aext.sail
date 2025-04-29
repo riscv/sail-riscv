@@ -24,14 +24,6 @@ function aqrl_str(aq : bool, rl : bool) -> string =
     (true, true)   => ".aqrl"
   }
 
-function lrsc_width_str(width : word_width) -> string =
-  match width {
-    BYTE   => ".b",
-    HALF   => ".h",
-    WORD   => ".w",
-    DOUBLE => ".d"
-  }
-
 /**
  * RISC-V A-extension defines LR / SC / AMOs for word and double
  * RISC-V Zabha extension defines AMOs for byte and halfword
