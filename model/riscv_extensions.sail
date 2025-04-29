@@ -64,6 +64,9 @@ function clause hartSupports(Ext_Zicntr) = config extensions.Zicntr.supported
 // Integer Conditional Operations
 enum clause extension = Ext_Zicond
 function clause hartSupports(Ext_Zicond) = config extensions.Zicond.supported
+// Extension for Control and Status Register (CSR) Instructions
+enum clause extension = Ext_Zicsr
+function clause hartSupports(Ext_Zicsr) = config extensions.Zicsr.supported
 // Instruction-Fetch Fence
 enum clause extension = Ext_Zifencei
 function clause hartSupports(Ext_Zifencei) = config extensions.Zifencei.supported
