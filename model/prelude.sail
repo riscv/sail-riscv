@@ -113,9 +113,28 @@ function bit_to_bool(x : bit) -> bool = bool_bit(x)
 function bool_to_bits(x : bool) -> bits(1) = bool_bits(x)
 function bits_to_bool(x : bits(1)) -> bool = bool_bits(x)
 
+// Convert an integer to bits. This requires that the integer is known to fit
+// inside the resulting bit vector. Note this only admits non-negative numbers.
+val to_bits : forall 'l 'x, 'l >= 0 & 0 <= 'x < 2 ^ 'l . (implicit('l), int('x)) -> bits('l)
+function to_bits(l, n) = get_slice_int(l, n, 0)
 
-val to_bits : forall 'l, 'l >= 0.(int('l), int) -> bits('l)
-function to_bits (l, n) = get_slice_int(l, n, 0)
+// The same as to_bits() but the value is checked at runtime since we can't check
+// it at compile-time. The number is assumed to be unsigned.
+val to_bits_checked : forall 'l, 'l >= 0 . (implicit('l), int) -> bits('l)
+function to_bits_checked(l, n) = {
+  let bv = get_slice_int(l, n, 0);
+  assert(unsigned(bv) == n, "Couldn't convert integer " ^ dec_str(n) ^ " to " ^ dec_str(l) ^ " bits without overflow.");
+  bv
+}
+
+// This version allows any integer as input (including negative) but it will truncate the result.
+val to_bits_truncate : forall 'l, 'l >= 0 . (implicit('l), int) -> bits('l)
+function to_bits_truncate(l, n) = get_slice_int(l, n, 0)
+
+// This version should never be used. It is only for migrating code from
+// when there was no distinction between checked and truncating to_bits.
+val to_bits_unsafe : forall 'l, 'l >= 0 . (implicit('l), int) -> bits('l)
+function to_bits_unsafe(l, n) = get_slice_int(l, n, 0)
 
 infix 4 <_s
 infix 4 >_s
