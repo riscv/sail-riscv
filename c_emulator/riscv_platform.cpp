@@ -39,7 +39,7 @@ bool speculate_conditional(unit)
 
 static mach_bits check_mask()
 {
-  return (zxlen_val == 32) ? 0x00000000FFFFFFFF : -1;
+  return (zxlen == 32) ? 0x00000000FFFFFFFF : -1;
 }
 
 bool match_reservation(mach_bits addr)

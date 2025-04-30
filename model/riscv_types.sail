@@ -7,12 +7,6 @@
 /*=======================================================================================*/
 
 /* Basic type and function definitions used pervasively in the model. */
-
-/* this value is only defined for the runtime platform for ELF loading
- * checks, and not used in the model.
- */
-let xlen_val = xlen
-
 let xlen_max_unsigned = 2 ^ xlen - 1
 let xlen_max_signed = 2 ^ (xlen - 1) - 1
 let xlen_min_signed = 0 - 2 ^ (xlen - 1)
@@ -50,13 +44,6 @@ let zreg : regidx = Regidx(0b00000) /* x0, zero register  */
 let ra   : regidx = Regidx(0b00001) /* x1, return address */
 let sp   : regidx = Regidx(0b00010) /* x2, stack pointer  */
 
-/* instruction fields */
-
-type opcode = bits(7)
-type imm12  = bits(12)
-type imm20  = bits(20)
-type amo    = bits(1)  /* amo opcode flags */
-
 /* base architecture definitions */
 
 enum Architecture = {RV32, RV64, RV128}
@@ -74,29 +61,17 @@ mapping architecture : Architecture <-> arch_xlen = {
 type priv_level = bits(2)
 enum Privilege  = {User, Supervisor, Machine}
 
-val privLevel_to_bits : Privilege -> priv_level
-function privLevel_to_bits (p) =
-  match (p) {
-    User       => 0b00,
-    Supervisor => 0b01,
-    Machine    => 0b11
-  }
+mapping privLevel_bits : Privilege <-> priv_level = {
+  User       <-> 0b00,
+  Supervisor <-> 0b01,
+  Machine    <-> 0b11,
+  backwards 0b10 => internal_error(__FILE__, __LINE__, "Invalid privilege level: " ^ BitStr(0b10))
+}
 
-/*!
- * Converts the given 2-bit privilege level code to the [Privilege] enum.
- * Calling with a reserved code will result in an internal error.
- */
-val privLevel_of_bits : priv_level -> Privilege
-function privLevel_of_bits (p) =
-  match (p) {
-    0b00 => User,
-    0b01 => Supervisor,
-    0b11 => Machine,
-    0b10 => internal_error(__FILE__, __LINE__, "Invalid privilege level: " ^ BitStr(p))
-  }
+function privLevel_to_bits(p : Privilege) -> priv_level = privLevel_bits(p)
+function privLevel_of_bits(b : priv_level) -> Privilege = privLevel_bits(b)
 
-val privLevel_to_str : Privilege -> string
-function privLevel_to_str (p) =
+function privLevel_to_str (p : Privilege) -> string =
   match (p) {
     User       => "U",
     Supervisor => "S",
@@ -147,25 +122,25 @@ function interruptType_to_bits (i) =
 /* architectural exception definitions */
 
 union ExceptionType = {
- E_Fetch_Addr_Align   : unit,
- E_Fetch_Access_Fault : unit,
- E_Illegal_Instr      : unit,
- E_Breakpoint         : unit,
- E_Load_Addr_Align    : unit,
- E_Load_Access_Fault  : unit,
- E_SAMO_Addr_Align    : unit,
- E_SAMO_Access_Fault  : unit,
- E_U_EnvCall          : unit,
- E_S_EnvCall          : unit,
- E_Reserved_10        : unit,
- E_M_EnvCall          : unit,
- E_Fetch_Page_Fault   : unit,
- E_Load_Page_Fault    : unit,
- E_Reserved_14        : unit,
- E_SAMO_Page_Fault    : unit,
+  E_Fetch_Addr_Align   : unit,
+  E_Fetch_Access_Fault : unit,
+  E_Illegal_Instr      : unit,
+  E_Breakpoint         : unit,
+  E_Load_Addr_Align    : unit,
+  E_Load_Access_Fault  : unit,
+  E_SAMO_Addr_Align    : unit,
+  E_SAMO_Access_Fault  : unit,
+  E_U_EnvCall          : unit,
+  E_S_EnvCall          : unit,
+  E_Reserved_10        : unit,
+  E_M_EnvCall          : unit,
+  E_Fetch_Page_Fault   : unit,
+  E_Load_Page_Fault    : unit,
+  E_Reserved_14        : unit,
+  E_SAMO_Page_Fault    : unit,
 
- /* extensions */
- E_Extension          : ext_exc_type
+  /* extensions */
+  E_Extension          : ext_exc_type
 }
 
 val exceptionType_to_bits : ExceptionType -> exc_code
@@ -261,23 +236,15 @@ function trapVectorMode_of_bits (m) =
 type ext_status = bits(2)
 enum ExtStatus = {Off, Initial, Clean, Dirty}
 
-val extStatus_to_bits : ExtStatus -> ext_status
-function extStatus_to_bits(e) =
-  match (e) {
-    Off     => 0b00,
-    Initial => 0b01,
-    Clean   => 0b10,
-    Dirty   => 0b11
-  }
+mapping extStatus_bits : ExtStatus <-> ext_status = {
+  Off     <-> 0b00,
+  Initial <-> 0b01,
+  Clean   <-> 0b10,
+  Dirty   <-> 0b11
+}
 
-val extStatus_of_bits : ext_status -> ExtStatus
-function extStatus_of_bits(e) =
-  match (e) {
-    0b00 => Off,
-    0b01 => Initial,
-    0b10 => Clean,
-    0b11 => Dirty
-  }
+function extStatus_to_bits(e : ExtStatus) -> ext_status = extStatus_bits(e)
+function extStatus_of_bits(b : ext_status) -> ExtStatus = extStatus_bits(b)
 
 /* supervisor-level address translation modes */
 

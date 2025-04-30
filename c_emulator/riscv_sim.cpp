@@ -136,13 +136,13 @@ static void print_usage(const char *argv0, int ec)
 
 static void report_arch(void)
 {
-  fprintf(stdout, "RV%" PRIu64 "\n", zxlen_val);
+  fprintf(stdout, "RV%" PRIu64 "\n", zxlen);
   exit(0);
 }
 
 static bool is_32bit_model(void)
 {
-  return zxlen_val == 32;
+  return zxlen == 32;
 }
 
 static void read_dtb(const char *path)
@@ -325,15 +325,15 @@ static int process_args(int argc, char **argv)
 void check_elf(bool is32bit)
 {
   if (is32bit) {
-    if (zxlen_val != 32) {
+    if (zxlen != 32) {
       fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n",
-              zxlen_val);
+              zxlen);
       exit(1);
     }
   } else {
-    if (zxlen_val != 64) {
+    if (zxlen != 64) {
       fprintf(stderr, "64-bit ELF not supported by RV%" PRIu64 " model.\n",
-              zxlen_val);
+              zxlen);
       exit(1);
     }
   }

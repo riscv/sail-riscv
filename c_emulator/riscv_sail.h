@@ -43,7 +43,7 @@ unit zprint_rvfi_exec(unit);
 unit zprint_instr_packet(uint64_t);
 #endif
 
-extern mach_bits zxlen_val;
+extern mach_bits zxlen;
 extern bool zhtif_done;
 extern mach_bits zhtif_exit_code;
 extern bool have_exception;
