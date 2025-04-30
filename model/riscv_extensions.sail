@@ -204,6 +204,7 @@ function clause hartSupports(Ext_Svpbmt) = false // Not supported yet
 
 // Supervisor-Level Address Translation Modes
 enum clause extension = Ext_Svbare
+function clause hartSupports(Ext_Svbare) = config extensions.Svbare.supported
 enum clause extension = Ext_Sv32
 function clause hartSupports(Ext_Sv32) = config extensions.Sv32.supported : bool & (xlen == 32)
 enum clause extension = Ext_Sv39
