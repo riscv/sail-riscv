@@ -87,6 +87,9 @@ let speculate_conditional_success () = return true
 let match_reservation _ = true
 let cancel_reservation () = return ()
 
+val plat_enable_htif : unit -> bool
+let plat_enable_htif () = false
+
 val plat_htif_tohost : unit -> bitvector
 let plat_htif_tohost () = []
 declare ocaml target_rep function plat_htif_tohost = `Platform.htif_tohost`

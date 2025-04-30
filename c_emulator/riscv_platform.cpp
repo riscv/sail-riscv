@@ -66,6 +66,11 @@ unit plat_term_write(mach_bits s)
   return UNIT;
 }
 
+bool plat_enable_htif()
+{
+  return rv_enable_htif;
+}
+
 mach_bits plat_htif_tohost(unit)
 {
   return rv_htif_tohost;
