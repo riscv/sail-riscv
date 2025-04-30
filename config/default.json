@@ -195,6 +195,18 @@
     },
     "Svinval": {
       "supported": true
+    },
+    "Sv32": {
+      "supported": true
+    },
+    "Sv39": {
+      "supported": true
+    },
+    "Sv48": {
+      "supported": true
+    },
+    "Sv57": {
+      "supported": true
     }
   }
 }
