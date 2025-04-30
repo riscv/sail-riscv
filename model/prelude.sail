@@ -115,8 +115,8 @@ function bool_to_bits(x : bool) -> bits(1) = bool_bits(x)
 function bits_to_bool(x : bits(1)) -> bool = bool_bits(x)
 
 
-val to_bits : forall 'l, 'l >= 0.(int('l), int) -> bits('l)
-function to_bits (l, n) = get_slice_int(l, n, 0)
+val to_bits : forall 'l, 'l >= 0 . (implicit('l), int) -> bits('l)
+function to_bits(l, n) = get_slice_int(l, n, 0)
 
 infix 4 <_s
 infix 4 >_s
@@ -173,11 +173,11 @@ infix 7 <<<
 
 val rotate_bits_right : forall 'n 'm, 'm >= 0. (bits('n), bits('m)) -> bits('n)
 function rotate_bits_right (v, n) =
-    (v >> n) | (v << (to_bits(length(n), length(v)) - n))
+    (v >> n) | (v << (to_bits(length(v)) - n))
 
 val rotate_bits_left : forall 'n 'm, 'm >= 0. (bits('n), bits('m)) -> bits('n)
 function rotate_bits_left (v, n) =
-    (v << n) | (v >> (to_bits(length(n), length(v)) - n))
+    (v << n) | (v >> (to_bits(length(v)) - n))
 
 val rotater : forall 'm 'n, 'm >= 'n >= 0. (bits('m), int('n)) -> bits('m)
 function rotater (v, n) =

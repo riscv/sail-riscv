@@ -32,7 +32,7 @@ function clause execute (MUL(rs2, rs1, rd, mul_op)) = {
   let rs2_val = X(rs2);
   let rs1_int : int = if mul_op.signed_rs1 then signed(rs1_val) else unsigned(rs1_val);
   let rs2_int : int = if mul_op.signed_rs2 then signed(rs2_val) else unsigned(rs2_val);
-  let result_wide = to_bits(2 * xlen, rs1_int * rs2_int);
+  let result_wide : bits(2 * xlen) = to_bits(rs1_int * rs2_int);
   let result = if   mul_op.high
                then result_wide[(2 * xlen - 1) .. xlen]
                else result_wide[(xlen - 1) .. 0];
@@ -65,7 +65,7 @@ function clause execute (DIV(rs2, rs1, rd, s)) = {
   let q : int = if rs2_int == 0 then -1 else quot_round_zero(rs1_int, rs2_int);
   /* check for signed overflow */
   let q': int = if s & q > xlen_max_signed then xlen_min_signed else q;
-  X(rd) = to_bits(xlen, q');
+  X(rd) = to_bits(q');
   RETIRE_SUCCESS
 }
 
@@ -91,7 +91,7 @@ function clause execute (REM(rs2, rs1, rd, s)) = {
   let rs2_int : int = if s then signed(rs2_val) else unsigned(rs2_val);
   let r : int = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
   /* signed overflow case returns zero naturally as required due to -1 divisor */
-  X(rd) = to_bits(xlen, r);
+  X(rd) = to_bits(r);
   RETIRE_SUCCESS
 }
 
@@ -108,12 +108,7 @@ mapping clause encdec = MULW(rs2, rs1, rd)
 function clause execute (MULW(rs2, rs1, rd)) = {
   let rs1_val = X(rs1)[31..0];
   let rs2_val = X(rs2)[31..0];
-  let rs1_int : int = signed(rs1_val);
-  let rs2_int : int = signed(rs2_val);
-  /* to_bits requires expansion to 64 bits followed by truncation */
-  let result32 = to_bits(64, rs1_int * rs2_int)[31..0];
-  let result : xlenbits = sign_extend(result32);
-  X(rd) = result;
+  X(rd) = sign_extend(to_bits(32, signed(rs1_val) * signed(rs2_val)));
   RETIRE_SUCCESS
 }
 

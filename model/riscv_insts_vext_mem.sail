@@ -84,10 +84,10 @@ function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) =
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { /* active segments */
-      set_vstart(to_bits(16, i));
+      set_vstart(to_bits(i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
-        match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), load_width_bytes) {
+        match ext_data_get_addr(rs1, to_bits(elem_offset), Read(Data), load_width_bytes) {
           Ext_DataAddr_Error(e)  => return RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
           Ext_DataAddr_OK(vaddr) =>
               if check_misaligned(vaddr, width_type)
@@ -96,7 +96,7 @@ function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) =
                 TR_Failure(e, _)     => return RETIRE_FAIL(Memory_Exception(vaddr, e)),
                 TR_Address(paddr, _) => {
                   match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
-                    Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(5, j * EMUL_reg)), elem),
+                    Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(j * EMUL_reg)), elem),
                     Err(e)   => return RETIRE_FAIL(Memory_Exception(vaddr, e))
                   }
                 }
@@ -106,7 +106,7 @@ function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) =
     } else { /* prestart, masked or tail segments */
       foreach (j from 0 to (nf - 1)) {
         let skipped_elem = (result[i] >> (j * load_width_bytes * 8))[(load_width_bytes * 8 - 1) .. 0];
-        write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(5, j * EMUL_reg)), skipped_elem)
+        write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(j * EMUL_reg)), skipped_elem)
       }
     }
   };
@@ -162,11 +162,11 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
       if mask[i] == bitone then { /* active segments */
         foreach (j from 0 to (nf - 1)) {
           let elem_offset = (i * nf + j) * load_width_bytes;
-          match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), load_width_bytes) {
+          match ext_data_get_addr(rs1, to_bits(elem_offset), Read(Data), load_width_bytes) {
             Ext_DataAddr_Error(e)  => {
               if i == 0 then return RETIRE_FAIL(Ext_DataAddr_Check_Failure(e))
               else {
-                vl = to_bits(xlen, i);
+                vl = to_bits(i);
                 print_reg("CSR vl <- " ^ BitStr(vl));
                 trimmed = true
               }
@@ -175,7 +175,7 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
               if check_misaligned(vaddr, width_type) then {
                 if i == 0 then return RETIRE_FAIL(Memory_Exception(vaddr, E_Load_Addr_Align()))
                 else {
-                  vl = to_bits(xlen, i);
+                  vl = to_bits(i);
                   print_reg("CSR vl <- " ^ BitStr(vl));
                   trimmed = true
                 }
@@ -183,18 +183,18 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
                 TR_Failure(e, _)     => {
                   if i == 0 then return RETIRE_FAIL(Memory_Exception(vaddr, e))
                   else {
-                    vl = to_bits(xlen, i);
+                    vl = to_bits(i);
                     print_reg("CSR vl <- " ^ BitStr(vl));
                     trimmed = true
                   }
                 },
                 TR_Address(paddr, _) => {
                   match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
-                    Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(5, j * EMUL_reg)), elem),
+                    Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(j * EMUL_reg)), elem),
                     Err(e)   => {
                       if i == 0 then return RETIRE_FAIL(Memory_Exception(vaddr, e))
                       else {
-                        vl = to_bits(xlen, i);
+                        vl = to_bits(i);
                         print_reg("CSR vl <- " ^ BitStr(vl));
                         trimmed = true
                       }
@@ -208,7 +208,7 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
       } else { /* prestart, masked or tail segments */
         foreach (j from 0 to (nf - 1)) {
           let skipped_elem = (result[i] >> (j * load_width_bytes * 8))[(load_width_bytes * 8 - 1) .. 0];
-          write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(5, j * EMUL_reg)), skipped_elem)
+          write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(j * EMUL_reg)), skipped_elem)
         }
       }
     } else {
@@ -216,7 +216,7 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
       if tail_ag == AGNOSTIC then {
         foreach (j from 0 to (nf - 1)) {
           let skipped_elem = (vd_seg[i] >> (j * load_width_bytes * 8))[(load_width_bytes * 8 - 1) .. 0];
-          write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(5, j * EMUL_reg)), skipped_elem)
+          write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(j * EMUL_reg)), skipped_elem)
         }
         /* TODO: configuration support for agnostic behavior */
       }
@@ -268,10 +268,10 @@ function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) 
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { /* active segments */
-      set_vstart(to_bits(16, i));
+      set_vstart(to_bits(i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
-        match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), load_width_bytes) {
+        match ext_data_get_addr(rs1, to_bits(elem_offset), Write(Data), load_width_bytes) {
           Ext_DataAddr_Error(e)  => return RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
           Ext_DataAddr_OK(vaddr) =>
             if check_misaligned(vaddr, width_type)
@@ -282,7 +282,7 @@ function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) 
                 match mem_write_ea(paddr, load_width_bytes, false, false, false) {
                   Err(e) => return RETIRE_FAIL(Memory_Exception(vaddr, e)),
                   Ok(_)  => {
-                    let elem_val : bits('b * 8) = read_single_element(load_width_bytes * 8, i, vregidx_offset(vs3, to_bits(5, j * EMUL_reg)));
+                    let elem_val : bits('b * 8) = read_single_element(load_width_bytes * 8, i, vregidx_offset(vs3, to_bits(j * EMUL_reg)));
                     match mem_write_value(paddr, load_width_bytes, elem_val, false, false, false) {
                       Ok(true)  => (),
                       Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
@@ -344,10 +344,10 @@ function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_e
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { /* active segments */
-      set_vstart(to_bits(16, i));
+      set_vstart(to_bits(i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
-        match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), load_width_bytes) {
+        match ext_data_get_addr(rs1, to_bits(elem_offset), Read(Data), load_width_bytes) {
           Ext_DataAddr_Error(e)  => return RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
           Ext_DataAddr_OK(vaddr) =>
             if check_misaligned(vaddr, width_type)
@@ -356,7 +356,7 @@ function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_e
               TR_Failure(e, _)     => return RETIRE_FAIL(Memory_Exception(vaddr, e)),
               TR_Address(paddr, _) => {
                 match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
-                  Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(5, j * EMUL_reg)), elem),
+                  Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(j * EMUL_reg)), elem),
                   Err(e)   => return RETIRE_FAIL(Memory_Exception(vaddr, e))
                 }
               }
@@ -366,7 +366,7 @@ function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_e
     } else { /* prestart, masked or tail segments */
       foreach (j from 0 to (nf - 1)) {
         let skipped_elem = (result[i] >> (j * load_width_bytes * 8))[(load_width_bytes * 8 - 1) .. 0];
-        write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(5, j * EMUL_reg)), skipped_elem)
+        write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(j * EMUL_reg)), skipped_elem)
       }
     }
   };
@@ -417,10 +417,10 @@ function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { /* active segments */
-      set_vstart(to_bits(16, i));
+      set_vstart(to_bits(i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
-        match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), load_width_bytes) {
+        match ext_data_get_addr(rs1, to_bits(elem_offset), Write(Data), load_width_bytes) {
           Ext_DataAddr_Error(e)  => return RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
           Ext_DataAddr_OK(vaddr) =>
             if check_misaligned(vaddr, width_type)
@@ -431,7 +431,7 @@ function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_
                 match mem_write_ea(paddr, load_width_bytes, false, false, false) {
                   Err(e) => return RETIRE_FAIL(Memory_Exception(vaddr, e)),
                   Ok(_)  => {
-                    let elem_val : bits('b * 8) = read_single_element(load_width_bytes * 8, i, vregidx_offset(vs3, to_bits(5, j * EMUL_reg)));
+                    let elem_val : bits('b * 8) = read_single_element(load_width_bytes * 8, i, vregidx_offset(vs3, to_bits(j * EMUL_reg)));
                     match mem_write_value(paddr, load_width_bytes, elem_val, false, false, false) {
                       Ok(true)  => (),
                       Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
@@ -494,10 +494,10 @@ function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index
   /* currently mop = 1 (unordered) or 3 (ordered) do the same operations */
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { /* active segments */
-      set_vstart(to_bits(16, i));
+      set_vstart(to_bits(i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
-        match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), EEW_data_bytes) {
+        match ext_data_get_addr(rs1, to_bits(elem_offset), Read(Data), EEW_data_bytes) {
           Ext_DataAddr_Error(e)  => return RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
           Ext_DataAddr_OK(vaddr) =>
             if check_misaligned(vaddr, width_type)
@@ -506,7 +506,7 @@ function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index
               TR_Failure(e, _)     => return RETIRE_FAIL(Memory_Exception(vaddr, e)),
               TR_Address(paddr, _) => {
                 match mem_read(Read(Data), paddr, EEW_data_bytes, false, false, false) {
-                  Ok(elem) => write_single_element(EEW_data_bytes * 8, i, vregidx_offset(vd, to_bits(5, j * EMUL_data_reg)), elem),
+                  Ok(elem) => write_single_element(EEW_data_bytes * 8, i, vregidx_offset(vd, to_bits(j * EMUL_data_reg)), elem),
                   Err(e)   => return RETIRE_FAIL(Memory_Exception(vaddr, e))
                 }
               }
@@ -516,7 +516,7 @@ function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index
     } else { /* prestart, masked or tail segments */
       foreach (j from 0 to (nf - 1)) {
         let skipped_elem = (result[i] >> (j * EEW_data_bytes * 8))[(EEW_data_bytes * 8 - 1) .. 0];
-        write_single_element(EEW_data_bytes * 8, i, vregidx_offset(vd, to_bits(5, j * EMUL_data_reg)), skipped_elem)
+        write_single_element(EEW_data_bytes * 8, i, vregidx_offset(vd, to_bits(j * EMUL_data_reg)), skipped_elem)
       }
     }
   };
@@ -597,10 +597,10 @@ function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_inde
   /* currently mop = 1 (unordered) or 3 (ordered) do the same operations */
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { /* active segments */
-      set_vstart(to_bits(16, i));
+      set_vstart(to_bits(i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
-        match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), EEW_data_bytes) {
+        match ext_data_get_addr(rs1, to_bits(elem_offset), Write(Data), EEW_data_bytes) {
           Ext_DataAddr_Error(e)  => return RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
           Ext_DataAddr_OK(vaddr) =>
             if check_misaligned(vaddr, width_type)
@@ -611,7 +611,7 @@ function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_inde
                 match mem_write_ea(paddr, EEW_data_bytes, false, false, false) {
                   Err(e) => return RETIRE_FAIL(Memory_Exception(vaddr, e)),
                   Ok(_)  => {
-                    let elem_val : bits('db * 8) = read_single_element(EEW_data_bytes * 8, i, vregidx_offset(vs3, to_bits(5, j * EMUL_data_reg)));
+                    let elem_val : bits('db * 8) = read_single_element(EEW_data_bytes * 8, i, vregidx_offset(vs3, to_bits(j * EMUL_data_reg)));
                     match mem_write_value(paddr, EEW_data_bytes, elem_val, false, false, false) {
                       Ok(true)  => (),
                       Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
@@ -700,9 +700,9 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
 
   if elem_to_align > 0 then {
     foreach (i from elem_to_align to (elem_per_reg - 1)) {
-      set_vstart(to_bits(16, cur_elem));
+      set_vstart(to_bits(cur_elem));
       let elem_offset = cur_elem * load_width_bytes;
-      match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), load_width_bytes) {
+      match ext_data_get_addr(rs1, to_bits(elem_offset), Read(Data), load_width_bytes) {
         Ext_DataAddr_Error(e)  => return RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
         Ext_DataAddr_OK(vaddr) =>
           if check_misaligned(vaddr, width_type)
@@ -711,7 +711,7 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
             TR_Failure(e, _)     => return RETIRE_FAIL(Memory_Exception(vaddr, e)),
             TR_Address(paddr, _) => {
               match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
-                Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(5, cur_field)), elem),
+                Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(cur_field)), elem),
                 Err(e)   => return RETIRE_FAIL(Memory_Exception(vaddr, e))
               }
             }
@@ -724,9 +724,9 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
 
   foreach (j from cur_field to (nf - 1)) {
     foreach (i from 0 to (elem_per_reg - 1)) {
-      set_vstart(to_bits(16, cur_elem));
+      set_vstart(to_bits(cur_elem));
       let elem_offset = cur_elem * load_width_bytes;
-      match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Read(Data), load_width_bytes) {
+      match ext_data_get_addr(rs1, to_bits(elem_offset), Read(Data), load_width_bytes) {
         Ext_DataAddr_Error(e)  => return RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
         Ext_DataAddr_OK(vaddr) =>
           if check_misaligned(vaddr, width_type)
@@ -735,7 +735,7 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
             TR_Failure(e, _)     => return RETIRE_FAIL(Memory_Exception(vaddr, e)),
             TR_Address(paddr, _) => {
               match mem_read(Read(Data), paddr, load_width_bytes, false, false, false) {
-                Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(5, j)), elem),
+                Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(j)), elem),
                 Err(e)   => return RETIRE_FAIL(Memory_Exception(vaddr, e))
               }
             }
@@ -785,9 +785,9 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
 
   if elem_to_align > 0 then {
     foreach (i from elem_to_align to (elem_per_reg - 1)) {
-      set_vstart(to_bits(16, cur_elem));
+      set_vstart(to_bits(cur_elem));
       let elem_offset : int = cur_elem * load_width_bytes;
-      match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), load_width_bytes) {
+      match ext_data_get_addr(rs1, to_bits(elem_offset), Write(Data), load_width_bytes) {
         Ext_DataAddr_Error(e)  => return RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
         Ext_DataAddr_OK(vaddr) =>
           if check_misaligned(vaddr, width_type)
@@ -798,7 +798,7 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
               match mem_write_ea(paddr, load_width_bytes, false, false, false) {
                 Err(e) => return RETIRE_FAIL(Memory_Exception(vaddr, e)),
                 Ok(_)  => {
-                  let elem : bits('b * 8) = read_single_element(load_width_bytes * 8, i, vregidx_offset(vs3, to_bits(5, cur_field)));
+                  let elem : bits('b * 8) = read_single_element(load_width_bytes * 8, i, vregidx_offset(vs3, to_bits(cur_field)));
                   match mem_write_value(paddr, load_width_bytes, elem, false, false, false) {
                     Ok(true)  => (),
                     Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
@@ -815,11 +815,11 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
   };
 
   foreach (j from cur_field to (nf - 1)) {
-    let vs3_val : vector('n, bits('b * 8)) = read_vreg(elem_per_reg, load_width_bytes * 8, 0, vregidx_offset(vs3, to_bits(5, j)));
+    let vs3_val : vector('n, bits('b * 8)) = read_vreg(elem_per_reg, load_width_bytes * 8, 0, vregidx_offset(vs3, to_bits(j)));
     foreach (i from 0 to (elem_per_reg - 1)) {
-      set_vstart(to_bits(16, cur_elem));
+      set_vstart(to_bits(cur_elem));
       let elem_offset = cur_elem * load_width_bytes;
-      match ext_data_get_addr(rs1, to_bits(xlen, elem_offset), Write(Data), load_width_bytes) {
+      match ext_data_get_addr(rs1, to_bits(elem_offset), Write(Data), load_width_bytes) {
         Ext_DataAddr_Error(e)  => return RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
         Ext_DataAddr_OK(vaddr) =>
           if check_misaligned(vaddr, width_type)
@@ -886,9 +886,9 @@ function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
 
   foreach (i from start_element to (num_elem - 1)) {
     if i < evl then { /* active elements */
-      set_vstart(to_bits(16, i));
+      set_vstart(to_bits(i));
       if op == VLM then { /* load */
-        match ext_data_get_addr(rs1, to_bits(xlen, i), Read(Data), 1) {
+        match ext_data_get_addr(rs1, to_bits(i), Read(Data), 1) {
           Ext_DataAddr_Error(e)  => return RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
           Ext_DataAddr_OK(vaddr) =>
             if check_misaligned(vaddr, width_type)
@@ -904,7 +904,7 @@ function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
             }
         }
       } else if op == VSM then { /* store */
-        match ext_data_get_addr(rs1, to_bits(xlen, i), Write(Data), 1) {
+        match ext_data_get_addr(rs1, to_bits(i), Write(Data), 1) {
           Ext_DataAddr_Error(e)  => return RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
           Ext_DataAddr_OK(vaddr) =>
             if check_misaligned(vaddr, width_type)
