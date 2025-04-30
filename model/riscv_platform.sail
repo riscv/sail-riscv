@@ -428,11 +428,6 @@ function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : physaddr, widt
 /* Platform initialization and ticking. */
 
 function init_platform() -> unit = {
-  mvendorid = to_bits(32,   (config platform.vendorid : int));
-  marchid   = to_bits(xlen, (config platform.archid : int));
-  mimpid    = to_bits(xlen, (config platform.impid : int));
-  mhartid   = to_bits(xlen, (config platform.hartid : int));
-
   htif_tohost = zeros();
   htif_done   = false;
   htif_exit_code = zeros();
