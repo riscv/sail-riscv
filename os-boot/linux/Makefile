@@ -1,3 +1,5 @@
+##### Compilation #####
+
 RISCV_COMPILER_PREFIX := riscv64-buildroot-linux-gnu-
 
 # This is the final bootable OpenSBI + Linux image.
@@ -24,9 +26,6 @@ build/opensbi/Makefile: downloads/opensbi.tar.xz
 
 CROSS_COMPILE := $(shell pwd)/build/riscv/bin/$(RISCV_COMPILER_PREFIX)
 
-# Number of instructions to run.
-LIMIT_INSTRUCTIONS := 1500000
-
 build/linux-$(LINUX_VERSION)/arch/riscv/boot/Image: build/linux-$(LINUX_VERSION)/Makefile build/riscv/bin/$(RISCV_COMPILER_PREFIX)gcc
 	$(MAKE) -C build/linux-$(LINUX_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) ARCH=riscv defconfig
 	$(MAKE) -C build/linux-$(LINUX_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) CONFIG_HVC_RISCV_SBI=y ARCH=riscv Image
@@ -42,6 +41,22 @@ $(elf): build/opensbi-$(OPENSBI_VERSION)/build/platform/generic/firmware/fw_payl
 sail.dtb: sail.dts
 	dtc < sail.dts -o sail.dtb
 
+.PHONY: clean
+clean:
+	rm -rf build
+	rm -f sail.dtb
+
+.PHONY: dist-clean
+dist-clean:
+	rm -rf build
+	rm -f sail.dtb
+	rm -rf downloads
+
+##### Running #####
+
+# Number of instructions to run.
+LIMIT_INSTRUCTIONS := 1500000
+
 .PHONY: sail
 sail: sail.dtb $(elf)
 	../../build/c_emulator/riscv_sim_rv64d --no-trace -p -l $(LIMIT_INSTRUCTIONS) --device-tree-blob sail.dtb -t /dev/stdout $(elf)
@@ -53,14 +68,3 @@ spike: $(elf)
 .PHONY: qemu
 qemu: $(elf)
 	qemu-system-riscv64 -M virt -m 256M -nographic -bios $(elf)
-
-.PHONY: clean
-clean:
-	rm -rf build
-	rm -f sail.dtb
-
-.PHONY: dist-clean
-dist-clean:
-	rm -rf build
-	rm -f sail.dtb
-	rm -rf downloads
