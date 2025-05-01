@@ -32,11 +32,11 @@ build/linux-$(LINUX_VERSION)/arch/riscv/boot/Image: build/linux-$(LINUX_VERSION)
 
 # FW_TEXT_START is 0 by default which doesn't leave space for the emulator bootloader.
 # 0x80000000 is the default start of Spike's memory.
-build/opensbi-$(OPENSBI_VERSION)/build/platform/generic/firmware/fw_payload.elf: build/opensbi-$(OPENSBI_VERSION)/Makefile build/linux-$(LINUX_VERSION)/arch/riscv/boot/Image build/riscv/bin/$(RISCV_COMPILER_PREFIX)gcc
-	$(MAKE) -C build/opensbi-$(OPENSBI_VERSION) FW_TEXT_START=0x80000000 FW_PAYLOAD=y FW_PAYLOAD_PATH=../linux-$(LINUX_VERSION)/arch/riscv/boot/Image PLATFORM=generic CROSS_COMPILE=$(CROSS_COMPILE)
+build/opensbi/build/platform/generic/firmware/fw_payload.elf: build/opensbi/Makefile build/linux-$(LINUX_VERSION)/arch/riscv/boot/Image build/riscv/bin/$(RISCV_COMPILER_PREFIX)gcc
+	$(MAKE) -C build/opensbi FW_TEXT_START=0x80000000 FW_PAYLOAD=y FW_PAYLOAD_PATH=../linux-$(LINUX_VERSION)/arch/riscv/boot/Image PLATFORM=generic CROSS_COMPILE=$(CROSS_COMPILE)
 
-$(elf): build/opensbi-$(OPENSBI_VERSION)/build/platform/generic/firmware/fw_payload.elf
-	cp build/opensbi-$(OPENSBI_VERSION)/build/platform/generic/firmware/fw_payload.elf $(elf)
+$(elf): build/opensbi/build/platform/generic/firmware/fw_payload.elf
+	cp build/opensbi/build/platform/generic/firmware/fw_payload.elf $(elf)
 
 build/sail.dtb: sail.dts
 	dtc < sail.dts -o build/sail.dtb
