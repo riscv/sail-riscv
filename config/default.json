@@ -196,6 +196,9 @@
     "Svinval": {
       "supported": true
     },
+    "Svbare": {
+      "supported": true
+    },
     "Sv32": {
       "supported": true
     },
