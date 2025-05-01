@@ -33,9 +33,9 @@ jobs:
         uses: actions/cache/restore@v4
         id: linux-cache
         with:
-          key: os-boot-linux-${{ hashFiles('os-boot/linux/Makefile') }}
+          key: os-boot-linux-${{ hashFiles('os-boot/linux/Makefile', 'os-boot/linux/*.url') }}
           path: |
-            os-boot/linux/src/
+            os-boot/linux/downloads/
             os-boot/linux/build/
 
       - name: Make ELF
@@ -47,14 +47,14 @@ jobs:
         if: steps.linux-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          key: ${{ hashFiles('os-boot/linux/Makefile') }}
+          key: ${{ hashFiles('os-boot/linux/Makefile', 'os-boot/linux/*.url') }}
           path: |
-            os-boot/linux/src/
+            os-boot/linux/downloads/
             os-boot/linux/build/
 
       - name: Make dtb
         working-directory: os-boot/linux
-        run: make -j$(nproc) sail.dtb
+        run: make -j$(nproc) build/sail.dtb
 
       - name: Upload ELF
         id: upload
@@ -63,7 +63,7 @@ jobs:
           name: linux-opensbi-${{ github.run_id }}
           path: |
             os-boot/linux/build/fw_payload.elf
-            os-boot/linux/sail.dtb
+            os-boot/linux/build/sail.dtb
 
       - name: Generate ELF Attestation
         if: github.event_name != 'pull_request'
@@ -72,7 +72,7 @@ jobs:
         with:
           subject-path: |
             os-boot/linux/build/fw_payload.elf
-            os-boot/linux/sail.dtb
+            os-boot/linux/build/sail.dtb
           show-summary: false
 
       - name: Upload Paper Work of ELF
