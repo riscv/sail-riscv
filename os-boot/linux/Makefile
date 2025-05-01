@@ -12,9 +12,9 @@ downloads/%.tar.xz: %.url
 	mkdir -p downloads
 	curl --location '$(shell cat $<)' --output $@
 
-build/riscv/bin/$(RISCV_COMPILER_PREFIX)gcc: downloads/gcc.tar.xz
-	mkdir -p build/riscv
-	tar --touch --directory build/riscv --strip-components=1 --extract --file downloads/gcc.tar.xz
+build/gcc/bin/$(RISCV_COMPILER_PREFIX)gcc: downloads/gcc.tar.xz
+	mkdir -p build/gcc
+	tar --touch --directory build/gcc --strip-components=1 --extract --file downloads/gcc.tar.xz
 
 build/linux/Makefile: downloads/linux.tar.xz
 	mkdir -p build/linux
@@ -24,15 +24,15 @@ build/opensbi/Makefile: downloads/opensbi.tar.xz
 	mkdir -p build/opensbi
 	tar --touch --directory build/opensbi --strip-components=1 --extract --file downloads/opensbi.tar.xz
 
-CROSS_COMPILE := $(shell pwd)/build/riscv/bin/$(RISCV_COMPILER_PREFIX)
+CROSS_COMPILE := $(shell pwd)/build/gcc/bin/$(RISCV_COMPILER_PREFIX)
 
-build/linux-$(LINUX_VERSION)/arch/riscv/boot/Image: build/linux-$(LINUX_VERSION)/Makefile build/riscv/bin/$(RISCV_COMPILER_PREFIX)gcc
+build/linux-$(LINUX_VERSION)/arch/riscv/boot/Image: build/linux-$(LINUX_VERSION)/Makefile build/gcc/bin/$(RISCV_COMPILER_PREFIX)gcc
 	$(MAKE) -C build/linux-$(LINUX_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) ARCH=riscv defconfig
 	$(MAKE) -C build/linux-$(LINUX_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) CONFIG_HVC_RISCV_SBI=y ARCH=riscv Image
 
 # FW_TEXT_START is 0 by default which doesn't leave space for the emulator bootloader.
 # 0x80000000 is the default start of Spike's memory.
-build/opensbi/build/platform/generic/firmware/fw_payload.elf: build/opensbi/Makefile build/linux-$(LINUX_VERSION)/arch/riscv/boot/Image build/riscv/bin/$(RISCV_COMPILER_PREFIX)gcc
+build/opensbi/build/platform/generic/firmware/fw_payload.elf: build/opensbi/Makefile build/linux-$(LINUX_VERSION)/arch/riscv/boot/Image build/gcc/bin/$(RISCV_COMPILER_PREFIX)gcc
 	$(MAKE) -C build/opensbi FW_TEXT_START=0x80000000 FW_PAYLOAD=y FW_PAYLOAD_PATH=../linux-$(LINUX_VERSION)/arch/riscv/boot/Image PLATFORM=generic CROSS_COMPILE=$(CROSS_COMPILE)
 
 $(elf): build/opensbi/build/platform/generic/firmware/fw_payload.elf
