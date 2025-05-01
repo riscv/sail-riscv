@@ -42,7 +42,8 @@ $(elf): build/opensbi/Makefile build/linux/arch/riscv/boot/Image build/gcc/bin/$
 	cp build/opensbi/build/platform/generic/firmware/fw_payload.elf $(elf)
 
 build/sail.dtb: sail.dts
-	dtc -out $@ < $<
+	mkdir -p build
+	dtc $< -o $@
 
 .PHONY: clean
 clean:
