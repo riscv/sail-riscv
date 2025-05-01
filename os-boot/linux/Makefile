@@ -16,7 +16,7 @@ endif
 
 build/riscv/bin/riscv64-unknown-linux-gnu-gcc: src/gcc.tar.xz
 	mkdir -p build
-	tar -m -C build -xf src/gcc.tar.xz
+	tar --touch --directory build --extract --file src/gcc.tar.xz
 
 src/linux.tar.xz:
 	mkdir -p src
@@ -26,7 +26,7 @@ endif
 
 build/linux-$(LINUX_VERSION)/Makefile: src/linux.tar.xz
 	mkdir -p build
-	tar -m -C build -xf src/linux.tar.xz
+	tar --touch --directory build --extract --file src/linux.tar.xz
 
 src/opensbi.tar.xz:
 	mkdir -p src
@@ -36,7 +36,7 @@ endif
 
 build/opensbi-$(OPENSBI_VERSION)/Makefile: src/opensbi.tar.xz
 	mkdir -p build
-	tar -m -C build -xf src/opensbi.tar.xz
+	tar --touch --directory build --extract --file src/opensbi.tar.xz
 
 CROSS_COMPILE := $(shell pwd)/build/riscv/bin/riscv64-unknown-linux-gnu-
 
