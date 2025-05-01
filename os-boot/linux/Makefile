@@ -59,7 +59,7 @@ LIMIT_INSTRUCTIONS := 1500000
 
 .PHONY: sail
 sail: sail.dtb $(elf)
-	../../build/c_emulator/riscv_sim_rv64d --no-trace -p -l $(LIMIT_INSTRUCTIONS) --device-tree-blob sail.dtb -t /dev/stdout $(elf)
+	../../build/c_emulator/riscv_sim_rv64d --no-trace -p -l $(LIMIT_INSTRUCTIONS) --device-tree-blob sail.dtb $(elf)
 
 .PHONY: spike
 spike: $(elf)
