@@ -7,7 +7,7 @@ The Sail model implements a very simple platform based on the one implemented by
 ## Build your own ELF
 
 ```bash
-make -C linux
+make -j4 -C linux
 ```
 
 This will generate `os-boot/linux/build/fw_payload.elf`.
