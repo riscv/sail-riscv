@@ -25,7 +25,7 @@ build/opensbi/Makefile: downloads/opensbi.tar.xz
 CROSS_COMPILE := $(shell pwd)/build/riscv/bin/$(RISCV_COMPILER_PREFIX)
 
 # Number of instructions to run.
-LIMIT_INSTRUCTIONS ?= 1500000
+LIMIT_INSTRUCTIONS := 1500000
 
 build/linux-$(LINUX_VERSION)/arch/riscv/boot/Image: build/linux-$(LINUX_VERSION)/Makefile build/riscv/bin/$(RISCV_COMPILER_PREFIX)gcc
 	$(MAKE) -C build/linux-$(LINUX_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) ARCH=riscv defconfig
