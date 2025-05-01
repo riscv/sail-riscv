@@ -26,14 +26,14 @@ build/opensbi/Makefile: downloads/opensbi.tar.xz
 
 CROSS_COMPILE := $(shell pwd)/build/gcc/bin/$(RISCV_COMPILER_PREFIX)
 
-build/linux-$(LINUX_VERSION)/arch/riscv/boot/Image: build/linux-$(LINUX_VERSION)/Makefile build/gcc/bin/$(RISCV_COMPILER_PREFIX)gcc
-	$(MAKE) -C build/linux-$(LINUX_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) ARCH=riscv defconfig
-	$(MAKE) -C build/linux-$(LINUX_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) CONFIG_HVC_RISCV_SBI=y ARCH=riscv Image
+build/linux/arch/riscv/boot/Image: build/linux/Makefile build/gcc/bin/$(RISCV_COMPILER_PREFIX)gcc
+	$(MAKE) -C build/linux CROSS_COMPILE=$(CROSS_COMPILE) ARCH=riscv defconfig
+	$(MAKE) -C build/linux CROSS_COMPILE=$(CROSS_COMPILE) CONFIG_HVC_RISCV_SBI=y ARCH=riscv Image
 
 # FW_TEXT_START is 0 by default which doesn't leave space for the emulator bootloader.
 # 0x80000000 is the default start of Spike's memory.
-build/opensbi/build/platform/generic/firmware/fw_payload.elf: build/opensbi/Makefile build/linux-$(LINUX_VERSION)/arch/riscv/boot/Image build/gcc/bin/$(RISCV_COMPILER_PREFIX)gcc
-	$(MAKE) -C build/opensbi FW_TEXT_START=0x80000000 FW_PAYLOAD=y FW_PAYLOAD_PATH=../linux-$(LINUX_VERSION)/arch/riscv/boot/Image PLATFORM=generic CROSS_COMPILE=$(CROSS_COMPILE)
+build/opensbi/build/platform/generic/firmware/fw_payload.elf: build/opensbi/Makefile build/linux/arch/riscv/boot/Image build/gcc/bin/$(RISCV_COMPILER_PREFIX)gcc
+	$(MAKE) -C build/opensbi FW_TEXT_START=0x80000000 FW_PAYLOAD=y FW_PAYLOAD_PATH=../linux/arch/riscv/boot/Image PLATFORM=generic CROSS_COMPILE=$(CROSS_COMPILE)
 
 $(elf): build/opensbi/build/platform/generic/firmware/fw_payload.elf
 	cp build/opensbi/build/platform/generic/firmware/fw_payload.elf $(elf)
