@@ -33,13 +33,13 @@ will build the simulators in `build/c_emulator/riscv_sim_rv{32,64}d`.
 
 If you get an error message saying `sail: unknown option '--require-version'.` it's because your Sail compiler is too old. You need version 0.19 or later.
 
-By default the RV32D and RV64D emulators are built, without RVFI-DII support.
+By default the RV32D and RV64D emulators are built.
 You can see a complete list of targets by running `make help` in the
 build directory, then e.g.
 
 ```
 $ cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDOWNLOAD_GMP=TRUE
-$ make -C build riscv_sim_rv64f_rvfi
+$ make -C build riscv_sim_rv64f
 ```
 
 By default `build_simulators.sh` will download and build [libgmp](https://gmplib.org/).

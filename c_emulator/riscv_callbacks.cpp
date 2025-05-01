@@ -5,8 +5,6 @@
 #include <vector>
 #include <inttypes.h>
 
-bool config_enable_rvfi = true; // Only used if RVFI_DII is defined
-
 void print_lbits_hex(lbits val, int length = 0)
 {
   if (length == 0) {
@@ -28,11 +26,9 @@ unit mem_write_callback(uint64_t paddr, uint64_t width, lbits value)
     fprintf(trace_log, "mem[0x%016" PRIX64 "] <- 0x", paddr);
     print_lbits_hex(value, width);
   }
-#ifdef RVFI_DII
   if (config_enable_rvfi) {
     zrvfi_write(paddr, width, value);
   }
-#endif
   return UNIT;
 }
 
@@ -43,7 +39,6 @@ unit mem_read_callback(const char *type, uint64_t paddr, uint64_t width,
     fprintf(trace_log, "mem[%s,0x%016" PRIX64 "] -> 0x", type, paddr);
     print_lbits_hex(value, width);
   }
-#ifdef RVFI_DII
   if (config_enable_rvfi) {
     sail_int len;
     CREATE(sail_int)(&len);
@@ -51,20 +46,15 @@ unit mem_read_callback(const char *type, uint64_t paddr, uint64_t width,
     zrvfi_read(paddr, len, value);
     KILL(sail_int)(&len);
   }
-#endif
   return UNIT;
 }
 
 unit mem_exception_callback(uint64_t paddr, uint64_t num_of_exception)
 {
   (void)num_of_exception;
-#ifdef RVFI_DII
   if (config_enable_rvfi) {
     zrvfi_mem_exception(paddr);
   }
-#else
-  (void)paddr;
-#endif
   return UNIT;
 }
 
@@ -73,11 +63,9 @@ unit xreg_write_callback(unsigned reg, uint64_t value)
   if (config_print_reg) {
     fprintf(trace_log, "x%d <- 0x%016" PRIX64 "\n", reg, value);
   }
-#ifdef RVFI_DII
   if (config_enable_rvfi) {
     zrvfi_wX(reg, value);
   }
-#endif
   return UNIT;
 }
 
@@ -127,10 +115,8 @@ unit pc_write_callback(uint64_t value)
 
 unit trap_callback(unit)
 {
-#ifdef RVFI_DII
   if (config_enable_rvfi) {
     zrvfi_trap();
   }
-#endif
   return UNIT;
 }

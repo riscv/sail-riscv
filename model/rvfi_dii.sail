@@ -9,8 +9,6 @@
 // "RISC-V Formal Interface - Direct Instruction Injection" support
 // For use with https://github.com/CTSRD-CHERI/TestRIG
 
-$define RVFI_DII
-
 bitfield RVFI_DII_Instruction_Packet : bits(64) = {
    padding   : 63 .. 56, // [7]
    rvfi_cmd  : 55 .. 48, // [6] This token is a trace command.  For example, reset device under test.

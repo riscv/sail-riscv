@@ -125,7 +125,7 @@ execute_process(
 )
 message(STATUS "Sail library directory: ${sail_dir}")
 
-set(DEFAULT_ARCHITECTURES "rv32d;rv64d" CACHE STRING "Architectures to build by default (rv32f|rv64f|rv32d|rv64d)(_rvfi)? " )
+set(DEFAULT_ARCHITECTURES "rv32d;rv64d" CACHE STRING "Architectures to build by default (rv32f|rv64f|rv32d|rv64d)? " )
 
 option(COVERAGE "Compile with Sail coverage collection enabled.")
 

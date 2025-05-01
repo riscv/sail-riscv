@@ -22,7 +22,6 @@ unit zinit_model(unit);
 bool ztry_step(sail_int, bool);
 unit ztick_clock(unit);
 
-#ifdef RVFI_DII
 unit zrvfi_set_instr_packet(mach_bits);
 mach_bits zrvfi_get_cmd(unit);
 mach_bits zrvfi_get_insn(unit);
@@ -40,7 +39,6 @@ void zrvfi_get_v2_support_packet(sail_bits *rop, unit);
 // Debugging prints
 unit zprint_rvfi_exec(unit);
 unit zprint_instr_packet(uint64_t);
-#endif
 
 extern mach_bits zxlen;
 extern bool zhtif_done;

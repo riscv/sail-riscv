@@ -184,7 +184,13 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       // mcountinhibit[IR] or minstretcfg.
       if retired & minstret_increment then minstret = minstret + 1;
 
-      /* for step extensions */
+      // Record the next PC for RVFI.
+      // TODO: Remove this and implement it in C.
+      if get_config_rvfi() then {
+        rvfi_pc_data[rvfi_pc_wdata] = zero_extend(get_arch_pc())
+      };
+
+      // For step extensions
       ext_post_step_hook();
       // Return that we have stepped and are active.
       true
