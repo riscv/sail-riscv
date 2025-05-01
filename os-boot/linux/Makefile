@@ -9,35 +9,35 @@ elf := build/fw_payload.elf
 .PHONY: all
 all: $(elf)
 
-src/gcc.tar.xz:
-	mkdir -p src
-ifeq (, $(wildcard src/gcc.tar.xz))
-	curl -L $(RISCV_COMPILER_URL) -o src/gcc.tar.xz
+downloads/gcc.tar.xz:
+	mkdir -p downloads
+ifeq (, $(wildcard downloads/gcc.tar.xz))
+	curl -L $(RISCV_COMPILER_URL) -o downloads/gcc.tar.xz
 endif
 
-build/riscv/bin/$(RISCV_COMPILER_PREFIX)gcc: src/gcc.tar.xz
+build/riscv/bin/$(RISCV_COMPILER_PREFIX)gcc: downloads/gcc.tar.xz
 	mkdir -p build/riscv
-	tar --touch --directory build/riscv --strip-components=1 --extract --file src/gcc.tar.xz
+	tar --touch --directory build/riscv --strip-components=1 --extract --file downloads/gcc.tar.xz
 
-src/linux.tar.xz:
-	mkdir -p src
-ifeq (, $(wildcard src/linux.tar.xz))
-	curl -L https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$(LINUX_VERSION).tar.xz -o src/linux.tar.xz
+downloads/linux.tar.xz:
+	mkdir -p downloads
+ifeq (, $(wildcard downloads/linux.tar.xz))
+	curl -L https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$(LINUX_VERSION).tar.xz -o downloads/linux.tar.xz
 endif
 
-build/linux-$(LINUX_VERSION)/Makefile: src/linux.tar.xz
+build/linux-$(LINUX_VERSION)/Makefile: downloads/linux.tar.xz
 	mkdir -p build
-	tar --touch --directory build --extract --file src/linux.tar.xz
+	tar --touch --directory build --extract --file downloads/linux.tar.xz
 
-src/opensbi.tar.xz:
-	mkdir -p src
-ifeq (, $(wildcard src/opensbi.tar.xz))
-	curl -L https://github.com/riscv-software-src/opensbi/archive/refs/tags/v$(OPENSBI_VERSION).tar.gz -o src/opensbi.tar.xz
+downloads/opensbi.tar.xz:
+	mkdir -p downloads
+ifeq (, $(wildcard downloads/opensbi.tar.xz))
+	curl -L https://github.com/riscv-software-downloads/opensbi/archive/refs/tags/v$(OPENSBI_VERSION).tar.gz -o downloads/opensbi.tar.xz
 endif
 
-build/opensbi-$(OPENSBI_VERSION)/Makefile: src/opensbi.tar.xz
+build/opensbi-$(OPENSBI_VERSION)/Makefile: downloads/opensbi.tar.xz
 	mkdir -p build
-	tar --touch --directory build --extract --file src/opensbi.tar.xz
+	tar --touch --directory build --extract --file downloads/opensbi.tar.xz
 
 CROSS_COMPILE := $(shell pwd)/build/riscv/bin/$(RISCV_COMPILER_PREFIX)
 
@@ -80,4 +80,4 @@ clean:
 dist-clean:
 	rm -rf build
 	rm -f sail.dtb
-	rm -rf src
+	rm -rf downloads
