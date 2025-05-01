@@ -46,8 +46,8 @@ clean:
 	rm -rf build
 	rm -f sail.dtb
 
-.PHONY: dist-clean
-dist-clean:
+.PHONY: distclean
+distclean:
 	rm -rf build
 	rm -f sail.dtb
 	rm -rf downloads
