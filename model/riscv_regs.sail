@@ -11,6 +11,101 @@
 register PC       : xlenbits
 register nextPC   : xlenbits
 
+/* mappings for assembly */
+
+mapping reg_abi_name_raw : bits(5) <-> string = {
+    0b00000 <-> "zero",
+    0b00001 <-> "ra",
+    0b00010 <-> "sp",
+    0b00011 <-> "gp",
+    0b00100 <-> "tp",
+    0b00101 <-> "t0",
+    0b00110 <-> "t1",
+    0b00111 <-> "t2",
+    0b01000 <-> "fp",
+    0b01001 <-> "s1",
+    0b01010 <-> "a0",
+    0b01011 <-> "a1",
+    0b01100 <-> "a2",
+    0b01101 <-> "a3",
+    0b01110 <-> "a4",
+    0b01111 <-> "a5",
+    0b10000 <-> "a6",
+    0b10001 <-> "a7",
+    0b10010 <-> "s2",
+    0b10011 <-> "s3",
+    0b10100 <-> "s4",
+    0b10101 <-> "s5",
+    0b10110 <-> "s6",
+    0b10111 <-> "s7",
+    0b11000 <-> "s8",
+    0b11001 <-> "s9",
+    0b11010 <-> "s10",
+    0b11011 <-> "s11",
+    0b11100 <-> "t3",
+    0b11101 <-> "t4",
+    0b11110 <-> "t5",
+    0b11111 <-> "t6",
+}
+
+mapping reg_arch_name_raw : bits(5) <-> string = {
+    0b00000 <-> "x0",
+    0b00001 <-> "x1",
+    0b00010 <-> "x2",
+    0b00011 <-> "x3",
+    0b00100 <-> "x4",
+    0b00101 <-> "x5",
+    0b00110 <-> "x6",
+    0b00111 <-> "x7",
+    0b01000 <-> "x8",
+    0b01001 <-> "x9",
+    0b01010 <-> "x10",
+    0b01011 <-> "x11",
+    0b01100 <-> "x12",
+    0b01101 <-> "x13",
+    0b01110 <-> "x14",
+    0b01111 <-> "x15",
+    0b10000 <-> "x16",
+    0b10001 <-> "x17",
+    0b10010 <-> "x18",
+    0b10011 <-> "x19",
+    0b10100 <-> "x20",
+    0b10101 <-> "x21",
+    0b10110 <-> "x22",
+    0b10111 <-> "x23",
+    0b11000 <-> "x24",
+    0b11001 <-> "x25",
+    0b11010 <-> "x26",
+    0b11011 <-> "x27",
+    0b11100 <-> "x28",
+    0b11101 <-> "x29",
+    0b11110 <-> "x30",
+    0b11111 <-> "x31",
+}
+
+mapping reg_name : regidx <-> string = {
+  Regidx(i) if get_config_use_abi_names()      <-> reg_abi_name_raw(i),
+  Regidx(i) if not(get_config_use_abi_names()) <-> reg_arch_name_raw(i),
+}
+
+mapping creg_name_raw : bits(3) <-> string = {
+  0b000 <-> "s0",
+  0b001 <-> "s1",
+  0b010 <-> "a0",
+  0b011 <-> "a1",
+  0b100 <-> "a2",
+  0b101 <-> "a3",
+  0b110 <-> "a4",
+  0b111 <-> "a5",
+}
+
+mapping creg_name : cregidx <-> string = { Cregidx(i) <-> creg_name_raw(i) }
+
+function xreg_write_callback(reg: regidx, value : xlenbits) -> unit = {
+  let name = reg_name(reg);
+  xreg_full_write_callback(name, reg, value);
+}
+
 /* register file and accessors */
 
 register x1  : regtype
@@ -132,58 +227,6 @@ function wX_bits(i: regidx, data: xlenbits) -> unit = {
 }
 
 overload X = {rX_bits, wX_bits, rX, wX}
-
-/* mappings for assembly */
-
-mapping reg_name_raw : bits(5) <-> string = {
-    0b00000 <-> "zero",
-    0b00001 <-> "ra",
-    0b00010 <-> "sp",
-    0b00011 <-> "gp",
-    0b00100 <-> "tp",
-    0b00101 <-> "t0",
-    0b00110 <-> "t1",
-    0b00111 <-> "t2",
-    0b01000 <-> "fp",
-    0b01001 <-> "s1",
-    0b01010 <-> "a0",
-    0b01011 <-> "a1",
-    0b01100 <-> "a2",
-    0b01101 <-> "a3",
-    0b01110 <-> "a4",
-    0b01111 <-> "a5",
-    0b10000 <-> "a6",
-    0b10001 <-> "a7",
-    0b10010 <-> "s2",
-    0b10011 <-> "s3",
-    0b10100 <-> "s4",
-    0b10101 <-> "s5",
-    0b10110 <-> "s6",
-    0b10111 <-> "s7",
-    0b11000 <-> "s8",
-    0b11001 <-> "s9",
-    0b11010 <-> "s10",
-    0b11011 <-> "s11",
-    0b11100 <-> "t3",
-    0b11101 <-> "t4",
-    0b11110 <-> "t5",
-    0b11111 <-> "t6"
-}
-
-mapping reg_name : regidx <-> string = { Regidx(i) <-> reg_name_raw(i) }
-
-mapping creg_name_raw : bits(3) <-> string = {
-  0b000 <-> "s0",
-  0b001 <-> "s1",
-  0b010 <-> "a0",
-  0b011 <-> "a1",
-  0b100 <-> "a2",
-  0b101 <-> "a3",
-  0b110 <-> "a4",
-  0b111 <-> "a5"
-}
-
-mapping creg_name : cregidx <-> string = { Cregidx(i) <-> creg_name_raw(i) }
 
 /* Mappings for encoding */
 
