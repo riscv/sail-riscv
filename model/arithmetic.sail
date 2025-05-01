@@ -39,3 +39,12 @@ $[property]
 function cmulr_equivalence(a : bits(16), b : bits(16)) -> bool = {
   carryless_mul_reversed(a, b) == carryless_mulr(a, b)
 }
+
+val rev8 : forall 'm, 'm >= 0 & mod('m, 8) == 0. (bits('m)) -> bits('m)
+function rev8(input) = {
+  var output : bits('m) = zeros();
+  foreach (i from 0 to ('m - 8) by 8) {
+    output[(i + 7)..i] = input[('m - i - 1) .. ('m - i - 8)];
+  };
+  output
+}
