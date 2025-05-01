@@ -55,6 +55,7 @@ bool config_print_instr = true;
 bool config_print_reg = true;
 bool config_print_mem_access = true;
 bool config_print_platform = true;
+bool config_use_abi_names = false;
 bool config_print_rvfi = false;
 bool config_print_step = false;
 bool config_enable_rvfi = false;
@@ -71,6 +72,8 @@ void set_config_print(char *var, bool val)
     config_print_instr = val;
   } else if (strcmp("reg", var) == 0) {
     config_print_reg = val;
+  } else if (strcmp("abi", var) == 0) {
+    config_use_abi_names = val;
   } else if (strcmp("mem", var) == 0) {
     config_print_mem_access = val;
   } else if (strcmp("rvfi", var) == 0) {
