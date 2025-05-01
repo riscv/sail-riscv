@@ -4,6 +4,7 @@ RISCV_COMPILER_URL ?= https://toolchains.bootlin.com/downloads/releases/toolchai
 LINUX_VERSION ?= 6.14.4
 OPENSBI_VERSION ?= 1.6
 
+# This is the final bootable OpenSBI + Linux image.
 elf := build/fw_payload.elf
 
 .PHONY: all
