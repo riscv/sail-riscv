@@ -4,7 +4,9 @@ elf := build/fw_payload.elf
 
 all: $(elf)
 
-RISCV_COMPILER_URL ?= https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2025.01.20/riscv64-glibc-ubuntu-24.04-gcc-nightly-2025.01.20-nightly.tar.xz
+RISCV_COMPILER_PREFIX := riscv64-buildroot-linux-gnu-
+RISCV_COMPILER_URL ?= https://toolchains.bootlin.com/downloads/releases/toolchains/riscv64-lp64d/tarballs/riscv64-lp64d--glibc--stable-2024.05-1.tar.xz
+
 LINUX_VERSION ?= 6.14.4
 OPENSBI_VERSION ?= 1.6
 
@@ -14,9 +16,9 @@ ifeq (, $(wildcard src/gcc.tar.xz))
 	curl -L $(RISCV_COMPILER_URL) -o src/gcc.tar.xz
 endif
 
-build/riscv/bin/riscv64-unknown-linux-gnu-gcc: src/gcc.tar.xz
-	mkdir -p build
-	tar --touch --directory build --extract --file src/gcc.tar.xz
+build/riscv/bin/$(RISCV_COMPILER_PREFIX)gcc: src/gcc.tar.xz
+	mkdir -p build/riscv
+	tar --touch --directory build/riscv --strip-components=1 --extract --file src/gcc.tar.xz
 
 src/linux.tar.xz:
 	mkdir -p src
@@ -38,18 +40,18 @@ build/opensbi-$(OPENSBI_VERSION)/Makefile: src/opensbi.tar.xz
 	mkdir -p build
 	tar --touch --directory build --extract --file src/opensbi.tar.xz
 
-CROSS_COMPILE := $(shell pwd)/build/riscv/bin/riscv64-unknown-linux-gnu-
+CROSS_COMPILE := $(shell pwd)/build/riscv/bin/$(RISCV_COMPILER_PREFIX)
 
 # Number of instructions to run.
 LIMIT_INSTRUCTIONS ?= 1500000
 
-build/linux-$(LINUX_VERSION)/arch/riscv/boot/Image: build/linux-$(LINUX_VERSION)/Makefile build/riscv/bin/riscv64-unknown-linux-gnu-gcc
+build/linux-$(LINUX_VERSION)/arch/riscv/boot/Image: build/linux-$(LINUX_VERSION)/Makefile build/riscv/bin/$(RISCV_COMPILER_PREFIX)gcc
 	$(MAKE) -C build/linux-$(LINUX_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) ARCH=riscv defconfig
 	$(MAKE) -C build/linux-$(LINUX_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) CONFIG_HVC_RISCV_SBI=y ARCH=riscv Image
 
 # FW_TEXT_START is 0 by default which doesn't leave space for the emulator bootloader.
 # 0x80000000 is the default start of Spike's memory.
-build/opensbi-$(OPENSBI_VERSION)/build/platform/generic/firmware/fw_payload.elf: build/opensbi-$(OPENSBI_VERSION)/Makefile build/linux-$(LINUX_VERSION)/arch/riscv/boot/Image build/riscv/bin/riscv64-unknown-linux-gnu-gcc
+build/opensbi-$(OPENSBI_VERSION)/build/platform/generic/firmware/fw_payload.elf: build/opensbi-$(OPENSBI_VERSION)/Makefile build/linux-$(LINUX_VERSION)/arch/riscv/boot/Image build/riscv/bin/$(RISCV_COMPILER_PREFIX)gcc
 	$(MAKE) -C build/opensbi-$(OPENSBI_VERSION) FW_TEXT_START=0x80000000 FW_PAYLOAD=y FW_PAYLOAD_PATH=../linux-$(LINUX_VERSION)/arch/riscv/boot/Image PLATFORM=generic CROSS_COMPILE=$(CROSS_COMPILE)
 
 $(elf): build/opensbi-$(OPENSBI_VERSION)/build/platform/generic/firmware/fw_payload.elf
