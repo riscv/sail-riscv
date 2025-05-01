@@ -1,14 +1,13 @@
-.PHONY: clean all dist-clean spike sail qemu
-
-elf := build/fw_payload.elf
-
-all: $(elf)
-
 RISCV_COMPILER_PREFIX := riscv64-buildroot-linux-gnu-
 RISCV_COMPILER_URL ?= https://toolchains.bootlin.com/downloads/releases/toolchains/riscv64-lp64d/tarballs/riscv64-lp64d--glibc--stable-2024.05-1.tar.xz
 
 LINUX_VERSION ?= 6.14.4
 OPENSBI_VERSION ?= 1.6
+
+elf := build/fw_payload.elf
+
+.PHONY: all
+all: $(elf)
 
 src/gcc.tar.xz:
 	mkdir -p src
@@ -60,20 +59,24 @@ $(elf): build/opensbi-$(OPENSBI_VERSION)/build/platform/generic/firmware/fw_payl
 sail.dtb: sail.dts
 	dtc < sail.dts -o sail.dtb
 
-spike: $(elf)
-	spike --instructions=$(LIMIT_INSTRUCTIONS) $(elf)
-
-# Run on Sail.
+.PHONY: sail
 sail: sail.dtb $(elf)
 	../../build/c_emulator/riscv_sim_rv64d --no-trace -p -l $(LIMIT_INSTRUCTIONS) --device-tree-blob sail.dtb -t /dev/stdout $(elf)
 
+.PHONY: spike
+spike: $(elf)
+	spike --instructions=$(LIMIT_INSTRUCTIONS) $(elf)
+
+.PHONY: qemu
 qemu: $(elf)
 	qemu-system-riscv64 -M virt -m 256M -nographic -bios $(elf)
 
+.PHONY: clean
 clean:
 	rm -rf build
 	rm -f sail.dtb
 
+.PHONY: dist-clean
 dist-clean:
 	rm -rf build
 	rm -f sail.dtb
