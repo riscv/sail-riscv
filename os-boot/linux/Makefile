@@ -38,18 +38,16 @@ build/opensbi-$(OPENSBI_VERSION)/build/platform/generic/firmware/fw_payload.elf:
 $(elf): build/opensbi-$(OPENSBI_VERSION)/build/platform/generic/firmware/fw_payload.elf
 	cp build/opensbi-$(OPENSBI_VERSION)/build/platform/generic/firmware/fw_payload.elf $(elf)
 
-sail.dtb: sail.dts
-	dtc < sail.dts -o sail.dtb
+build/sail.dtb: sail.dts
+	dtc < sail.dts -o build/sail.dtb
 
 .PHONY: clean
 clean:
 	rm -rf build
-	rm -f sail.dtb
 
 .PHONY: distclean
 distclean:
 	rm -rf build
-	rm -f sail.dtb
 	rm -rf downloads
 
 ##### Running #####
@@ -58,8 +56,8 @@ distclean:
 LIMIT_INSTRUCTIONS := 1500000
 
 .PHONY: sail
-sail: sail.dtb $(elf)
-	../../build/c_emulator/riscv_sim_rv64d --no-trace -p -l $(LIMIT_INSTRUCTIONS) --device-tree-blob sail.dtb $(elf)
+sail: build/sail.dtb $(elf)
+	../../build/c_emulator/riscv_sim_rv64d --no-trace -p -l $(LIMIT_INSTRUCTIONS) --device-tree-blob build/sail.dtb $(elf)
 
 .PHONY: spike
 spike: $(elf)
