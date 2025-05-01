@@ -1,8 +1,4 @@
 RISCV_COMPILER_PREFIX := riscv64-buildroot-linux-gnu-
-RISCV_COMPILER_URL ?= https://toolchains.bootlin.com/downloads/releases/toolchains/riscv64-lp64d/tarballs/riscv64-lp64d--glibc--stable-2024.05-1.tar.xz
-
-LINUX_VERSION ?= 6.14.4
-OPENSBI_VERSION ?= 1.6
 
 # This is the final bootable OpenSBI + Linux image.
 elf := build/fw_payload.elf
@@ -10,35 +6,21 @@ elf := build/fw_payload.elf
 .PHONY: all
 all: $(elf)
 
-downloads/gcc.tar.xz:
+downloads/%.tar.xz: %.url
 	mkdir -p downloads
-ifeq (, $(wildcard downloads/gcc.tar.xz))
-	curl -L $(RISCV_COMPILER_URL) -o downloads/gcc.tar.xz
-endif
+	curl --location '$(shell cat $<)' --output $@
 
 build/riscv/bin/$(RISCV_COMPILER_PREFIX)gcc: downloads/gcc.tar.xz
 	mkdir -p build/riscv
 	tar --touch --directory build/riscv --strip-components=1 --extract --file downloads/gcc.tar.xz
 
-downloads/linux.tar.xz:
-	mkdir -p downloads
-ifeq (, $(wildcard downloads/linux.tar.xz))
-	curl -L https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$(LINUX_VERSION).tar.xz -o downloads/linux.tar.xz
-endif
+build/linux/Makefile: downloads/linux.tar.xz
+	mkdir -p build/linux
+	tar --touch --directory build/linux --strip-components=1 --extract --file downloads/linux.tar.xz
 
-build/linux-$(LINUX_VERSION)/Makefile: downloads/linux.tar.xz
-	mkdir -p build
-	tar --touch --directory build --extract --file downloads/linux.tar.xz
-
-downloads/opensbi.tar.xz:
-	mkdir -p downloads
-ifeq (, $(wildcard downloads/opensbi.tar.xz))
-	curl -L https://github.com/riscv-software-downloads/opensbi/archive/refs/tags/v$(OPENSBI_VERSION).tar.gz -o downloads/opensbi.tar.xz
-endif
-
-build/opensbi-$(OPENSBI_VERSION)/Makefile: downloads/opensbi.tar.xz
-	mkdir -p build
-	tar --touch --directory build --extract --file downloads/opensbi.tar.xz
+build/opensbi/Makefile: downloads/opensbi.tar.xz
+	mkdir -p build/opensbi
+	tar --touch --directory build/opensbi --strip-components=1 --extract --file downloads/opensbi.tar.xz
 
 CROSS_COMPILE := $(shell pwd)/build/riscv/bin/$(RISCV_COMPILER_PREFIX)
 
