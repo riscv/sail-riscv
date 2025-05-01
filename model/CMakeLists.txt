@@ -179,6 +179,7 @@ foreach (xlen IN ITEMS 32 64)
                 ${sail_sys_srcs}
                 "riscv_inst_retire.sail"
                 "riscv_platform.sail"
+                "riscv_sstc.sail"
                 "riscv_mem.sail"
                 ${sail_vm_srcs}
                 # Shared/common code for the cryptography extension.
