@@ -13,7 +13,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <vector>
 
 #include "elf.h"
@@ -28,16 +27,20 @@
 #include "riscv_sail.h"
 #include "rvfi_dii.h"
 #include "default_config.h"
+#include "config_utils.h"
+#include "dts.h"
 
 enum {
   OPT_TRACE_OUTPUT = 1000,
   OPT_PRINT_CONFIG,
   OPT_SAILCOV,
   OPT_ENABLE_EXPERIMENTAL_EXTENSIONS,
+  OPT_PRINT_DTS,
 };
 
 static bool do_show_times = false;
 bool do_report_arch = false;
+bool do_print_dts = false;
 char *term_log = NULL;
 static const char *trace_log_path = NULL;
 FILE *trace_log = NULL;
@@ -107,6 +110,7 @@ static struct option options[] = {
     {"help",                           no_argument,       0, 'h'             },
     {"config",                         required_argument, 0, 'c'             },
     {"print-default-config",           no_argument,       0, OPT_PRINT_CONFIG},
+    {"print-device-tree",              no_argument,       0, OPT_PRINT_DTS   },
     {"trace",                          optional_argument, 0, 'v'             },
     {"no-trace",                       optional_argument, 0, 'V'             },
     {"trace-output",                   required_argument, 0, OPT_TRACE_OUTPUT},
@@ -244,6 +248,9 @@ static int process_args(int argc, char **argv)
     case OPT_PRINT_CONFIG:
       printf("%s", DEFAULT_JSON);
       exit(0);
+    case OPT_PRINT_DTS:
+      do_print_dts = true;
+      break;
     case 'r': {
       config_enable_rvfi = true;
       int rvfi_dii_port = atoi(optarg);
@@ -302,14 +309,14 @@ static int process_args(int argc, char **argv)
     std::filesystem::remove(path);
   }
 
-  if (optind > argc || (optind == argc && !rvfi)) {
+  if (optind > argc || (optind == argc && !rvfi && !do_print_dts)) {
     fprintf(stderr, "No elf file provided.\n");
     print_usage(argv[0], 0);
   }
   if (dtb_file)
     read_dtb(dtb_file);
 
-  if (!rvfi && !do_report_arch)
+  if (!rvfi && !do_report_arch && !do_print_dts)
     fprintf(stdout, "Running file %s.\n", argv[optind]);
   return optind;
 }
@@ -359,38 +366,6 @@ uint64_t load_sail(char *f, bool main_file)
     mem_sig_end = end_sig;
   }
   return entry;
-}
-
-uint64_t get_config_uint64(std::vector<const char *> keypath)
-{
-  sail_config_json json = sail_config_get(keypath.size(), keypath.data());
-
-  if (!json) {
-    std::cerr << "Failed to find configuration option '";
-    for (auto part : keypath) {
-      std::cerr << "." << part;
-    }
-    std::cerr << "'.\n";
-    exit(1);
-  }
-
-  sail_int big_n;
-  uint64_t n;
-
-  if (!sail_config_is_int(json)) {
-    std::cerr << "Configuration option '";
-    for (auto part : keypath) {
-      std::cerr << "." << part;
-    }
-    std::cerr << "' could not be parsed as an integer.\n";
-    exit(1);
-  }
-
-  CREATE(sail_int)(&big_n);
-  sail_config_unwrap_int(&big_n, json);
-  n = sail_int_get_ui(big_n);
-  KILL(sail_int)(&big_n);
-  return n;
 }
 
 void init_sail_reset_vector(uint64_t entry)
@@ -672,6 +647,10 @@ int main(int argc, char **argv)
 
   if (do_report_arch) {
     report_arch();
+  }
+
+  if (do_print_dts) {
+    print_dts(zxlen);
   }
 
   char *initial_elf_file = argv[files_start];

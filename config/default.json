@@ -32,7 +32,7 @@
     "cache_block_size_exp": 6,
     "ram": {
       "base": 2147483648,
-      "size": 2147483648
+      "size": 67108864
     },
     "rom": {
       "base": 4096,
