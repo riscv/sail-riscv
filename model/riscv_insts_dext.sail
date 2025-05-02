@@ -226,7 +226,7 @@ function fle_D   (v1,       v2,        is_quiet) = {
 
 function clause currentlyEnabled(Ext_Zdinx) = hartSupports(Ext_Zdinx) & flen >= 64 // TODO: Separate Zfinx and Zdinx
 
-function haveDoubleFPU() -> bool = currentlyEnabled(Ext_D) | (currentlyEnabled(Ext_Zdinx) & not(stateen_fp_trap_illegal()))
+function haveDoubleFPU() -> bool = currentlyEnabled(Ext_D) | currentlyEnabled(Ext_Zdinx)
 
 /* RV32Zdinx requires even register pairs; can be omitted for code  */
 /* not used for RV32Zdinx (i.e. RV64-only or D-only).               */

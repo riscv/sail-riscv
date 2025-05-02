@@ -69,28 +69,12 @@ function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
 }
 
 /*
- * This function checks whether the current privilege mode is either:
- * (1) accessing its corresponding stateen register with the appropriate access rights, or
- * (2) accessing an extension-related CSR for which it has permission.
+ * Checks whether the given privilege mode has permission to access the specified CSR.
  */
-function check_Stateen(csr : csreg, p : Privilege) -> bool = {
-  // mstateen* CSRs are implicitly handled and are always accessible in machine mode.
-  // TODO: Add (hstateen0, hstateen1, etc.) once Hypervisor is implemented
-  if ( csr == 0x10C /* stateen0 */ | csr == 0x10D /* stateen1 */ | csr == 0x10E /* stateen2 */ | csr == 0x10F /* stateen3 */ ) then {
-    match (p) {
-        Machine    => true,
-        Supervisor => check_stateen_access_permission(csr),
-        User       => false,
-      };
-  }
-  // Check if a CSR access is granted
-  else {
-    match (p) {
-      Machine    => true,
-      Supervisor => check_CSR_access_permission(csr),
-      User       => check_CSR_access_permission(csr),
-    };
-  }
+function check_Stateen(csr : csreg, p : Privilege) -> bool = match (p) {
+  Machine    => true,
+  Supervisor => check_CSR_stateen_permission(csr),
+  User       => check_CSR_stateen_permission(csr),
 }
 
 function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =

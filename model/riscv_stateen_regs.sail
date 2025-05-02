@@ -11,7 +11,7 @@ function clause currentlyEnabled(Ext_Ssstateen) = hartSupports(Ext_Ssstateen)
 
 function enable_mstateen() -> bool = hartSupports(Ext_Smstateen)
 function enable_sstateen() -> bool = currentlyEnabled(Ext_S) & (currentlyEnabled(Ext_Smstateen) | currentlyEnabled(Ext_Ssstateen))
-function enable_hstateen() -> bool = false /* TODO currentlyEnabled(Ext_H) */ & (currentlyEnabled(Ext_Smstateen) | currentlyEnabled(Ext_Ssstateen))
+function enable_hstateen() -> bool = false & (currentlyEnabled(Ext_Smstateen) | currentlyEnabled(Ext_Ssstateen))
 
 bitfield Mstateen0 : bits(64) = {
   SE0     : 63,
@@ -30,12 +30,16 @@ bitfield Mstateen0 : bits(64) = {
   C       : 0,
 }
 
+// TODO: This needs to be modified once support Hypervisor is added
+// see https://github.com/riscv/sail-riscv/pull/910#discussion_r2070685435
+function enable_SE0() -> bool = currentlyEnabled(Ext_S) | misa[F] == 0b0
+
 function legalize_mstateen0(m : Mstateen0, v : bits(64)) -> Mstateen0 = {
   let v = Mk_Mstateen0(v);
 
   [m with
-    SE0     = v[SE0],
-    ENVCFG  = if currentlyEnabled(Ext_S) /* TODO | currentlyEnabled(Ext_H) */ then v[ENVCFG] else 0b0,
+    SE0     = if enable_SE0() then v[SE0] else 0b0,
+    ENVCFG  = if currentlyEnabled(Ext_S) then v[ENVCFG] else 0b0,
 
     CSRIND  = 0b0, // Not implemented yet
     AIA     = 0b0, // Not implemented yet
@@ -74,7 +78,7 @@ function legalize_mstateen1(m : Mstateen1, v : bits(64)) -> Mstateen1 = {
   let v = Mk_Mstateen1(v);
 
   [m with
-    SE1 = v[SE1]
+    SE1 = 0b0
   ];
 }
 
@@ -101,7 +105,7 @@ function legalize_mstateen2(m : Mstateen2, v : bits(64)) -> Mstateen2 = {
   let v = Mk_Mstateen2(v);
 
   [m with
-    SE2 = v[SE2]
+    SE2 = 0b0
   ];
 }
 
@@ -128,7 +132,7 @@ function legalize_mstateen3(m : Mstateen3, v : bits(64)) -> Mstateen3 = {
   let v = Mk_Mstateen3(v);
 
   [m with
-    SE3 = v[SE3]
+    SE3 = 0b0
   ];
 }
 
@@ -180,7 +184,7 @@ function legalize_hstateen0(h : Hstateen0, v : bits(64)) -> Hstateen0 = {
 
   [h with
     SE0     = if permission_mask[63] == bitone then v[SE0] else h[SE0],
-    ENVCFG  = if currentlyEnabled(Ext_S) /* currentlyEnabled(Ext_H) */ then (if permission_mask[62] == bitone then v[ENVCFG] else h[ENVCFG]) else 0b0,
+    ENVCFG  = if currentlyEnabled(Ext_S) then (if permission_mask[62] == bitone then v[ENVCFG] else h[ENVCFG]) else 0b0,
 
     CSRIND  = 0b0, // Not implemented yet
     AIA     = 0b0, // Not implemented yet
@@ -316,6 +320,10 @@ bitfield Sstateen0 : bits(32) = {
 function legalize_sstateen0(s : Sstateen0, v : bits(32)) -> Sstateen0 = {
   let v = Mk_Sstateen0(v);
 
+  /* TODO: The current handling of hstateen is incorrect.
+   * This will need to be addressed when Hypervisor support is implemented.
+   * For now, it effectively does nothing and has no impact on masking.
+   */
   let permission_mask : bits(64) = get_mstateen(0) & get_hstateen(0);
 
   [s with
@@ -371,13 +379,11 @@ function get_sstateen(idx : {0, 1, 2, 3}) -> bits(64) = {
   if not(enable_sstateen()) then 0xFFFFFFFFFFFFFFFF
   else match idx {
     // Expanding sstateen from 32 to 64 bits simplifies permission mask handling.
-    // Since some supervisor CSRs are managed in higher privilege modes, we set the prefix to 1's
-    // to prevent these permission bits from being modified during the bitwise AND.
     0 => 0xFFFFFFFF @ sstateen0.bits,
     // sstateen1, stateen2 and sstateen3 are read-only zero for now
-    1 => zeros(),
-    2 => zeros(),
-    3 => zeros(),
+    1 => 0xFFFFFFFF @ 0x00000000,
+    2 => 0xFFFFFFFF @ 0x00000000,
+    3 => 0xFFFFFFFF @ 0x00000000,
   }
 }
 
@@ -392,7 +398,7 @@ enum stateen_control_bits = {STATEEN_FCSR, STATEEN_ENVCFG, STATEEN_SE}
 
 mapping csr_permission_idx : stateen_control_bits <-> {1, 62, 63} = {
   STATEEN_SE     <-> 63,
-  //stateen0
+  /* stateen0 */
   STATEEN_ENVCFG <-> 62,
   STATEEN_FCSR   <-> 1,
 }
@@ -414,27 +420,6 @@ function get_stateen_permission_mask (idx : {0, 1, 2, 3}) -> bits(64) = {
 }
 
 /*
- * Allows access to the corresponding *stateen register at the current privilege level,
- * provided that *stateen[SE] is set to 1 in all higher privilege levels.
-*/
-function check_stateen_access_permission(csr : csreg) -> bool = {
-  let idx  = stateen_idx(csr[3..0]);
-  let mask = get_stateen_permission_mask(idx);
-  match cur_privilege {
-    Machine    => true,
-    Supervisor => mask[csr_permission_idx(STATEEN_SE)] == bitone,
-    User       => false,
-  }
-}
-
-/*
- * Checks whether floating-point instructions use X (integer) registers.
- * TODO: Add currentlyEnabled(Ext_Zhinxmin)
- */
-function fp_in_x_registers_active() -> bool =
-  misa[F] == 0b0 & (currentlyEnabled(Ext_Zfinx) | currentlyEnabled(Ext_Zdinx) | currentlyEnabled(Ext_Zhinx))
-
-/*
  * Maps a CSR address to the corresponding stateen permission bit and stateen id
  *
  * Returns an optional tuple:
@@ -444,11 +429,23 @@ function fp_in_x_registers_active() -> bool =
  */
 function csr_to_stateen_bit(csr : csreg) -> option((stateen_control_bits, {0, 1, 2, 3})) = {
   match csr {
-    0x10A /* senvcfg */ => Some((STATEEN_ENVCFG, 0)),
-    0x001 /* fflags  */ => if fp_in_x_registers_active() then Some((STATEEN_FCSR, 0)) else None(),
-    0x002 /* frm     */ => if fp_in_x_registers_active() then Some((STATEEN_FCSR, 0)) else None(),
-    0x003 /* fcsr    */ => if fp_in_x_registers_active() then Some((STATEEN_FCSR, 0)) else None(),
-    _     => None(),
+    /* stateen0 */
+    0x10C /* sstateen0 */ => Some((STATEEN_SE, 0)),
+    0x10A /* senvcfg   */ => Some((STATEEN_ENVCFG, 0)),
+    0x001 /* fflags    */ => if currentlyEnabled(Ext_Zfinx) then Some((STATEEN_FCSR, 0)) else None(),
+    0x002 /* frm       */ => if currentlyEnabled(Ext_Zfinx) then Some((STATEEN_FCSR, 0)) else None(),
+    0x003 /* fcsr      */ => if currentlyEnabled(Ext_Zfinx) then Some((STATEEN_FCSR, 0)) else None(),
+
+    /* stateen1 */
+    0x10D /* sstateen1 */ => Some((STATEEN_SE, 1)),
+
+    /* stateen2 */
+    0x10E /* sstateen2 */ => Some((STATEEN_SE, 2)),
+
+    /* stateen3 */
+    0x10F /* sstateen3 */ => Some((STATEEN_SE, 3)),
+
+    _ => None(),
   }
 }
 
@@ -456,7 +453,7 @@ function csr_to_stateen_bit(csr : csreg) -> option((stateen_control_bits, {0, 1,
  * Verifies whether access to CSRs protected by the Smstateen or Ssstateen
  * extensions is allowed at the current privilege level.
  */
-function check_CSR_access_permission(csr : csreg) -> bool = {
+function check_CSR_stateen_permission(csr : csreg) -> bool = {
   match csr_to_stateen_bit(csr) {
     Some((bit_idx, stateen_register_index)) => {
       let mask = get_stateen_permission_mask(stateen_register_index);
@@ -467,21 +464,21 @@ function check_CSR_access_permission(csr : csreg) -> bool = {
 }
 
 /*
- * Triggers an illegal instruction exception if a floating-point instruction
- * using X registers is executed without the required stateen0 CSR permission.
+ * Check if floating-point instructions using X registers
+ * are permitted in the given privilege mode.
  *
  * Note: Machine mode can always perform floating-point instructions
  */
-function stateen_fp_trap_illegal() -> bool = {
+function check_fp_stateen() -> bool = {
   let mask = get_stateen_permission_mask(0);
-  fp_in_x_registers_active() & mask[csr_permission_idx(STATEEN_FCSR)] == bitzero
+  mask[csr_permission_idx(STATEEN_FCSR)] == bitone
 }
 
 function reset_stateen() -> unit = {
   if enable_mstateen() then {
-    mstateen0.bits = zeros();
-    mstateen1.bits = zeros();
-    mstateen2.bits = zeros();
-    mstateen3.bits = zeros();
+    mstateen0 = Mk_Mstateen0(zeros());
+    mstateen1 = Mk_Mstateen1(zeros());
+    mstateen2 = Mk_Mstateen2(zeros());
+    mstateen3 = Mk_Mstateen3(zeros());
   }
 }

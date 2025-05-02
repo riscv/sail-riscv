@@ -196,6 +196,9 @@ function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supporte
 // Supervisor-mode view of the state-enable extension
 enum clause extension = Ext_Ssstateen
 function clause hartSupports(Ext_Ssstateen) = config extensions.Ssstateen.supported
+// Machine-mode view of the state-enable extension
+enum clause extension = Ext_Smstateen
+function clause hartSupports(Ext_Smstateen) = config extensions.Smstateen.supported
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 function clause hartSupports(Ext_Sstc) = config extensions.Sstc.supported
@@ -223,6 +226,3 @@ function clause hartSupports(Ext_Sv57) = config extensions.Sv57.supported : bool
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
-// Machine-mode view of the state-enable extension
-enum clause extension = Ext_Smstateen
-function clause hartSupports(Ext_Smstateen) = config extensions.Smstateen.supported
