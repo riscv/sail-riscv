@@ -18,6 +18,9 @@ scattered function hartSupports
 // relevant CSRs (misa, mstatus, etc.) to enable its use. It is possible for some
 // extensions to be supported in hardware, but temporarily disabled via a CSR, in
 // which case this function should return false.
+// Note: when adding a new extension, adjust the associated termination measure
+// in the file riscv_terminiation.sail, as explained in the comment in
+// that file.
 val currentlyEnabled : extension -> bool
 scattered function currentlyEnabled
 

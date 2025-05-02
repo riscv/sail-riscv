@@ -55,33 +55,33 @@ function compressed_measure(instr) =
 termination_measure execute(i) = compressed_measure(i)
 termination_measure pt_walk(_,_,_,_,_,_,_,level,_, _) = level
 
+// When adding a new extension X, we need to make sure that if X being enabled
+// depends on Y being enabled, then the value associated to X is _greater_ than
+// the value associated to Y. The default value is 1, so that if it does not
+// depend on anything or only on extensions A, B, C, D, F, M, S, or V, nothing
+// needs to be done.
 function currentlyEnabled_measure(ext : extension) -> int =
   match ext {
-    Ext_Zca => 1, // Ext_C
-    Ext_Zba => 1, // Ext_B
-    Ext_Zbb => 1, // Ext_B
-    Ext_Zbs => 1, // Ext_B
-    Ext_Zcb => 2, // Ext_Zca
-    Ext_Zcd => 2, // Ext_Zca, (Ext_D)
-    Ext_Zcf => 2, // Ext_Zca, (Ext_F)
-    Ext_Zabha => 2, // Ext_Zaamo
-    Ext_Zalrsc => 1, // Ext_A
-    Ext_Zaamo => 1, // Ext_A
-    Ext_Zfh => 1, // Ext_F
-    Ext_Zfhmin => 2, // Ext_F, Ext_Zfh
-    Ext_Zmmul => 1, // Ext_M
-    Ext_Zcmop => 2, // Ext_Zca
-    Ext_Zfa => 1, // Ext_F
-    Ext_Zhinx => 1, // Ext_Zfinx
-    Ext_Zvbb => 1, // Ext_V
-    Ext_Zvkb => 2, // Ext_Zvbb, Ext_V
-    Ext_Zvbc => 1, // Ext_V
-    Ext_Smcntrpmf => 1, // Ext_Zicntr
-    Ext_Sscofpmf => 2, // Ext_Zihpm
-    Ext_Zihpm => 1, // Ext_Zicntr
-    Ext_Zvknha => 1, // Ext_V
-    Ext_Zvknhb => 1, // Ext_V
-    _ => 0
+    Ext_A => 0,
+    Ext_B => 0,
+    Ext_C => 0,
+    Ext_D => 0,
+    Ext_F => 0,
+    Ext_M => 0,
+    Ext_S => 0,
+    Ext_V => 0,
+    Ext_Smcntrpmf => 2,
+    Ext_Zabha => 2,
+    Ext_Zcb => 2,
+    Ext_Zcd => 2,
+    Ext_Zcf => 2,
+    Ext_Zcmop => 2,
+    Ext_Zfhmin => 2,
+    Ext_Zhinx => 2,
+    Ext_Zihpm => 2,
+    Ext_Zvkb => 2,
+    Ext_Sscofpmf => 3,
+    _ => 1
   }
 termination_measure currentlyEnabled(ext) = currentlyEnabled_measure(ext)
 
