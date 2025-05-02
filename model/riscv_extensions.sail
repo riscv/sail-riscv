@@ -19,7 +19,7 @@ scattered function hartSupports
 // extensions to be supported in hardware, but temporarily disabled via a CSR, in
 // which case this function should return false.
 // Note: when adding a new extension, adjust the associated termination measure
-// in the file riscv_terminiation_measure.sail, as explained in the comment in
+// in the file riscv_terminiation.sail, as explained in the comment in
 // that file.
 val currentlyEnabled : extension -> bool
 scattered function currentlyEnabled
