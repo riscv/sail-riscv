@@ -291,6 +291,34 @@ foreach (xlen IN ITEMS 32 64)
             endif()
 
             if (NOT variant)
+                # Generate the schema for the config file.  This should be target
+                # independent, so generate it only for the most common target.
+                if (xlen EQUAL 64 AND flen EQUAL 64)
+                    set(schema_file "${CMAKE_BINARY_DIR}/riscv_config_schema.json")
+
+                    add_custom_command(
+                        DEPENDS ${sail_srcs}
+                        OUTPUT ${schema_file}
+                        VERBATIM
+                        COMMENT "Building JSON schema for configuration file."
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        COMMAND
+                            ${SAIL_BIN}
+                            # Minimum required Sail compiler version.
+                            --require-version ${SAIL_REQUIRED_VER}
+                            # Schema file.
+                            --output-schema ${schema_file}
+                            # Input files.
+                            ${sail_srcs}
+                    )
+
+                    add_custom_target(config_schema DEPENDS ${schema_file})
+
+                    install(FILES ${schema_file}
+                        DESTINATION "${CMAKE_INSTALL_DATADIR}/sail-riscv"
+                    )
+                endif()
+
                 # Generate JSON snippets file.
                 set(model_doc "riscv_model_${arch}.json")
 
