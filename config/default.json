@@ -52,6 +52,9 @@
     "FD": {
       "supported": true
     },
+    "Q": {
+      "supported": true
+    },
     "V": {
       "supported": true,
       "vlen_exp": 9,

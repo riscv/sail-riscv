@@ -39,6 +39,9 @@ function clause hartSupports(Ext_F) = config extensions.FD.supported
 // Double-Precision Floating-Point
 enum clause extension = Ext_D
 function clause hartSupports(Ext_D) = config extensions.FD.supported // TODO: Separate F and D supported flags
+// Quad-Precision Floating-Point
+enum clause extension = Ext_Q
+function clause hartSupports(Ext_Q) = config extensions.Q.supported
 // Bit Manipulation
 enum clause extension = Ext_B
 function clause hartSupports(Ext_B) = config extensions.B.supported

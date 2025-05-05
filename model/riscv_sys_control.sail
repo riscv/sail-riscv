@@ -352,6 +352,9 @@ function reset_misa() -> unit = {
   misa[D]   = if   flen >= 64
               then bool_to_bits(hartSupports(Ext_D))  /* double-precision */
               else 0b0;
+  misa[Q]   = if   flen >= 128
+              then bool_to_bits(hartSupports(Ext_Q))  /* quad-precision */
+              else 0b0;
 }
 
 // This function is called on reset, so it should only perform the reset actions

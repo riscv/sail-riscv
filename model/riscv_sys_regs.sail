@@ -311,6 +311,10 @@ function in32BitMode() -> bool = {
   cur_architecture() == RV32
 }
 
+function in64BitMode() -> bool = {
+  cur_architecture() == RV64
+}
+
 // envcfg Resisters
 bitfield MEnvcfg : bits(64) = {
   // Supervisor TimeCmp Extension

@@ -18,9 +18,9 @@ function clause currentlyEnabled(Ext_Zhinx) = hartSupports(Ext_Zhinx) & currentl
 
 /* **************************************************************** */
 /* IMPORTANT!                                                       */
-/* The files 'riscv_insts_fext.sail', 'riscv_insts_dext.sail' and   */
-/* 'riscv_insts_zfh.sail' define the F, D and Zfh extensions,       */
-/* respectively.                                                    */
+/* The files 'riscv_insts_fext.sail', 'riscv_insts_dext.sail',      */
+/* 'riscv_insts_qext.sail' and 'riscv_insts_zfh.sail' define the    */
+/* F, D, Q and Zfh extensions, respectively.                        */
 /* The texts follow each other very closely; please try to maintain */
 /* this correspondence as the files are maintained for bug-fixes,   */
 /* improvements, and version updates.                               */
@@ -525,6 +525,10 @@ mapping clause encdec = F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_H_D)
 <-> 0b010_0010 @ 0b00001 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
   when haveHalfMin() & (haveDoubleFPU() & validDoubleRegs([rs1]))
 
+mapping clause encdec = F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_H_Q)
+<-> 0b010_0010 @ 0b00011 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
+  when haveHalfMin() & currentlyEnabled(Ext_Q)
+
 mapping clause encdec = F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_S_H)
 <-> 0b010_0000 @ 0b00010 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
   when haveHalfMin()
@@ -533,8 +537,9 @@ mapping clause encdec = F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_D_H)
 <-> 0b010_0001 @ 0b00010 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
   when haveHalfMin() & (haveDoubleFPU() & validDoubleRegs([rd]))
 
-// TODO:
-/* FCVT_H_Q, FCVT_Q_H : Will be added with Q Extension */
+mapping clause encdec = F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_Q_H)
+<-> 0b010_0011 @ 0b00010 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
+  when haveHalfMin() & currentlyEnabled(Ext_Q)
 
 /* F instructions, RV64 only */
 
@@ -661,6 +666,21 @@ function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_H_D)) = {
   }
 }
 
+function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_H_Q)) = {
+  let rs1_val_Q = F_Q(rs1);
+  match (select_instr_or_fcsr_rm (rm)) {
+    None()    => RETIRE_FAIL(Illegal_Instruction()),
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_H) = riscv_f128ToF16 (rm_3b, rs1_val_Q);
+
+      accrue_fflags(fflags);
+      F_or_X_H(rd) = rd_val_H;
+      RETIRE_SUCCESS
+    }
+  }
+}
+
 function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_S_H)) = {
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
@@ -686,6 +706,21 @@ function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_D_H)) = {
 
       accrue_fflags(fflags);
       F_or_X_D(rd) = rd_val_D;
+      RETIRE_SUCCESS
+    }
+  }
+}
+
+function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_Q_H)) = {
+  let rs1_val_H = F_or_X_H(rs1);
+  match (select_instr_or_fcsr_rm (rm)) {
+    None()    => RETIRE_FAIL(Illegal_Instruction()),
+    Some(rm') => {
+      let rm_3b = encdec_rounding_mode(rm');
+      let (fflags, rd_val_Q) = riscv_f16ToF128 (rm_3b, rs1_val_H);
+
+      accrue_fflags(fflags);
+      F_Q(rd) = rd_val_Q;
       RETIRE_SUCCESS
     }
   }
@@ -761,8 +796,10 @@ mapping f_un_rm_ff_type_mnemonic_H : f_un_rm_ff_op_H <-> string = {
     FSQRT_H   <-> "fsqrt.h",
     FCVT_H_S  <-> "fcvt.h.s",
     FCVT_H_D  <-> "fcvt.h.d",
+    FCVT_H_Q  <-> "fcvt.h.q",
     FCVT_S_H  <-> "fcvt.s.h",
     FCVT_D_H  <-> "fcvt.d.h",
+    FCVT_Q_H  <-> "fcvt.q.h",
 }
 
 mapping clause assembly = F_UN_RM_FF_TYPE_H(rs1, rm, rd, op)
