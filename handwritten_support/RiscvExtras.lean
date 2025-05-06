@@ -73,6 +73,19 @@ axiom speculate_conditional : Unit → SailM Bool
 
 end Effectful
 
+-- Callbacks
+
+axiom mem_write_callback : Arch.pa → (n : Nat) → BitVec (8 * n) → Unit 
+axiom mem_read_callback : String → Arch.pa → (n : Nat) → BitVec (8 * n) → Unit 
+axiom mem_exception_callback : Arch.pa → Nat → Unit
+axiom pc_write_callback : xlenbits → Unit
+axiom xreg_write_callback : regidx → xlenbits → Unit
+axiom csr_full_write_callback : String → csreg → xlenbits → Unit
+axiom csr_full_read_callback : String → csreg → xlenbits → Unit
+axiom trap_callback : Unit → Unit
+axiom vreg_write_callback : vregidx → vregtype → Unit
+axiom freg_write_callback : fregidx → flenbits → Unit
+
 -- Floats
 axiom extern_f16Add : BitVec 3 → BitVec 16 → BitVec 16 → Unit
 axiom extern_f16Sub : BitVec 3 → BitVec 16 → BitVec 16 → Unit
