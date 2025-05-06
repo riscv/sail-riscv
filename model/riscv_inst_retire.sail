@@ -20,6 +20,9 @@ union ExecutionResult = {
   Illegal_Instruction            : unit,
   Trap                           : (Privilege, ctl_result, xlenbits),
   Memory_Exception               : (virtaddr, ExceptionType),
+  Enter_Debug_Mode               : debug_entry_cause,
+  Exit_Debug_Abstract_Command    : unit,
+  Exit_Debug_Mode                : unit,
 
   // Did not retire for custom reason.
   Ext_CSR_Check_Failure          : unit,
