@@ -27,12 +27,12 @@ mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_rfvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_V)
 
-val process_rfvv_single: forall 'n 'm 'p, 'n > 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), vregidx, vregidx, vregidx, int('n), int('m), int('p)) -> ExecutionResult(Retire_Failure)
+val process_rfvv_single: forall 'n 'm 'p, 'n > 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), vregidx, vregidx, vregidx, int('n), int('m), int('p)) -> ExecutionResult
 function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
   let rm_3b = fcsr[FRM];
   let num_elem_vd = get_num_elem(0, SEW); /* vd regardless of LMUL setting */
 
-  if illegal_fp_reduction(SEW, rm_3b) then return RETIRE_FAIL(Illegal_Instruction());
+  if illegal_fp_reduction(SEW, rm_3b) then return Illegal_Instruction();
   assert(SEW != 8);
 
   if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
@@ -46,7 +46,7 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_po
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
   let mask    : bits('n)     = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Illegal_Instruction()
   };
 
   var sum : bits('m) = read_single_element(SEW, 0, vs1); /* vs1 regardless of LMUL setting */
@@ -70,14 +70,14 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_po
   RETIRE_SUCCESS
 }
 
-val process_rfvv_widen: forall 'n 'm 'p, 'n > 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), vregidx, vregidx, vregidx, int('n), int('m), int('p)) -> ExecutionResult(Retire_Failure)
+val process_rfvv_widen: forall 'n 'm 'p, 'n > 0 & 'm in {8, 16, 32, 64}. (rfvvfunct6, bits(1), vregidx, vregidx, vregidx, int('n), int('m), int('p)) -> ExecutionResult
 function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
   let rm_3b          = fcsr[FRM];
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
   let num_elem_vd = get_num_elem(0, SEW_widen); /* vd regardless of LMUL setting */
 
-  if illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) then return RETIRE_FAIL(Illegal_Instruction());
+  if illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) then return Illegal_Instruction();
   assert(SEW >= 16 & SEW_widen <= 64);
 
   if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
@@ -92,7 +92,7 @@ function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
   let mask    : bits('n)     = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Illegal_Instruction()
   };
 
   var sum : bits('o) = read_single_element(SEW_widen, 0, vs1); /* vs1 regardless of LMUL setting */

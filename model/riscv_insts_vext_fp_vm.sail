@@ -32,7 +32,7 @@ function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_fp_vd_unmasked(SEW, rm_3b) then return RETIRE_FAIL(Illegal_Instruction());
+  if illegal_fp_vd_unmasked(SEW, rm_3b) then return Illegal_Instruction();
   assert(SEW != 8);
 
   let 'n = num_elem;
@@ -45,7 +45,7 @@ function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Illegal_Instruction()
   };
   var result = initial_result;
 
@@ -99,7 +99,7 @@ function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_fp_vd_unmasked(SEW, rm_3b) then return RETIRE_FAIL(Illegal_Instruction());
+  if illegal_fp_vd_unmasked(SEW, rm_3b) then return Illegal_Instruction();
   assert(SEW != 8);
 
   let 'n = num_elem;
@@ -112,7 +112,7 @@ function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
-    Err(()) => return RETIRE_FAIL(Illegal_Instruction())
+    Err(()) => return Illegal_Instruction()
   };
   var result = initial_result;
 

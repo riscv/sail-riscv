@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
 : "${DOWNLOAD_GMP:=TRUE}"

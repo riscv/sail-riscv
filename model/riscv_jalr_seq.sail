@@ -19,11 +19,11 @@ function clause execute (JALR(imm, rs1, rd)) = {
   /* Extensions get the first checks on the prospective target address. */
   match ext_control_check_addr(t) {
     Ext_ControlAddr_Error(e) =>
-      RETIRE_FAIL(Ext_ControlAddr_Check_Failure(e)),
+      Ext_ControlAddr_Check_Failure(e),
     Ext_ControlAddr_OK(addr) => {
       let target = [bits_of(addr) with 0 = bitzero];  /* clear addr[0] */
       if bit_to_bool(target[1]) & not(currentlyEnabled(Ext_Zca)) then {
-        RETIRE_FAIL(Memory_Exception(addr, E_Fetch_Addr_Align()))
+        Memory_Exception(addr, E_Fetch_Addr_Align())
       } else {
         X(rd) = get_next_pc();
         set_next_pc(target);

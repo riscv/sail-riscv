@@ -53,6 +53,10 @@ function plat_rom_size() -> physaddrbits = to_bits(physaddrbits_len, config plat
 function plat_clint_base() -> physaddrbits = to_bits(physaddrbits_len, config platform.clint.base : int)
 function plat_clint_size() -> physaddrbits = to_bits(physaddrbits_len, config platform.clint.size : int)
 
+// Whether HTIF (Host Target InterFace) is enabled. This is used for
+// console output and signalling the end of tests.
+val plat_enable_htif = pure "plat_enable_htif" : unit -> bool
+
 /* Location of HTIF ports */
 val plat_htif_tohost = pure {c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> physaddrbits
 function plat_htif_tohost () = to_bits(physaddrbits_len, elf_tohost ())
@@ -101,10 +105,10 @@ function within_clint forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : ph
 }
 
 function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool =
-    plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4)
+    plat_enable_htif() & (plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4))
 
 function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool =
-    plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4)
+    plat_enable_htif() & (plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4))
 
 /* CLINT (Core Local Interruptor), based on Spike. */
 
@@ -428,11 +432,6 @@ function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : physaddr, widt
 /* Platform initialization and ticking. */
 
 function init_platform() -> unit = {
-  mvendorid = to_bits(32,   (config platform.vendorid : int));
-  marchid   = to_bits(xlen, (config platform.archid : int));
-  mimpid    = to_bits(xlen, (config platform.impid : int));
-  mhartid   = to_bits(xlen, (config platform.hartid : int));
-
   htif_tohost = zeros();
   htif_done   = false;
   htif_exit_code = zeros();

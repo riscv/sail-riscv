@@ -18,6 +18,9 @@ scattered function hartSupports
 // relevant CSRs (misa, mstatus, etc.) to enable its use. It is possible for some
 // extensions to be supported in hardware, but temporarily disabled via a CSR, in
 // which case this function should return false.
+// Note: when adding a new extension, adjust the associated termination measure
+// in the file riscv_terminiation.sail, as explained in the comment in
+// that file.
 val currentlyEnabled : extension -> bool
 scattered function currentlyEnabled
 
@@ -185,6 +188,10 @@ function clause hartSupports(Ext_Zvknha) = config extensions.Zvknha.supported
 
 enum clause extension = Ext_Zvknhb
 function clause hartSupports(Ext_Zvknhb) = config extensions.Zvknhb.supported
+// ShangMi Suite: SM3 Secure Hash
+enum clause extension = Ext_Zvksh
+function clause hartSupports(Ext_Zvksh) = config extensions.Zvksh.supported
+
 
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
@@ -202,6 +209,17 @@ function clause hartSupports(Ext_Svnapot) = false // Not supported yet
 enum clause extension = Ext_Svpbmt
 function clause hartSupports(Ext_Svpbmt) = false // Not supported yet
 
+// Supervisor-Level Address Translation Modes
+enum clause extension = Ext_Svbare
+function clause hartSupports(Ext_Svbare) = config extensions.Svbare.supported
+enum clause extension = Ext_Sv32
+function clause hartSupports(Ext_Sv32) = config extensions.Sv32.supported : bool & (xlen == 32)
+enum clause extension = Ext_Sv39
+function clause hartSupports(Ext_Sv39) = config extensions.Sv39.supported : bool & (xlen == 64)
+enum clause extension = Ext_Sv48
+function clause hartSupports(Ext_Sv48) = config extensions.Sv48.supported : bool & (xlen == 64)
+enum clause extension = Ext_Sv57
+function clause hartSupports(Ext_Sv57) = config extensions.Sv57.supported : bool & (xlen == 64)
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported

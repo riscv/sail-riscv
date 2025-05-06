@@ -1,17 +1,12 @@
 # RISCV Sail Model
 
 This repository contains a formal specification of the RISC-V architecture, written in
-[Sail](https://github.com/rems-project/sail). It has been adopted by the RISC-V Foundation.
+[Sail](https://github.com/rems-project/sail). It has been adopted by RISC-V International.
 
-The model specifies
-assembly language formats of the instructions, the corresponding
-encoders and decoders, and the instruction semantics.
-A [reading guide](doc/ReadingGuide.md) to the model is provided in the
-[doc/](doc/) subdirectory, along with a guide on [how to
+The model specifies assembly language formats of the instructions, the corresponding
+encoders and decoders, and the instruction semantics. A [reading guide](doc/ReadingGuide.md)
+to the model is provided in the [doc/](doc/) subdirectory, along with a guide on [how to
 extend](doc/ExtendingGuide.md) the model.
-
-Latex or AsciiDoc definitions can be generated from the model that are suitable for inclusion in reference documentation.
-There is also the newer [Sail AsciiDoctor documentation support for RISC-V](https://github.com/Alasdair/asciidoctor-sail/blob/master/doc/built/sail_to_asciidoc.pdf).
 
 ## What is Sail?
 
@@ -43,6 +38,7 @@ You can see a complete list of targets by running `make help` in the
 build directory, then e.g.
 
 ```
+$ cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDOWNLOAD_GMP=TRUE
 $ make -C build riscv_sim_rv64f_rvfi
 ```
 
@@ -112,12 +108,14 @@ For booting operating system images, see the information under the
 - Zvbc extension for vector carryless multiplication, v1.0
 - Zvkb extension for vector cryptography bit-manipulation, v1.0
 - Zvknha and Zvknhb extensions for vector cryptography NIST Suite: Vector SHA-2 Secure Hash, v1.0
+- Zvksh extension for vector cryptography ShangMi Suite: SM3 Secure Hash, v1.0
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
 - Svinval extension for fine-grained address-translation cache invalidation, v1.0
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
+- Svbare extension for Bare mode virtual-memory translation
 - Physical Memory Protection (PMP)
 
 <!-- Uncomment the following section when unratified extensions are added
@@ -140,12 +138,12 @@ union clause ast = ITYPE : (bits(12), regidx, regidx, iop)
 /* the encode/decode mapping between AST elements and 32-bit words */
 
 mapping encdec_iop : iop <-> bits(3) = {
-  RISCV_ADDI  <-> 0b000,
-  RISCV_SLTI  <-> 0b010,
-  RISCV_SLTIU <-> 0b011,
-  RISCV_ANDI  <-> 0b111,
-  RISCV_ORI   <-> 0b110,
-  RISCV_XORI  <-> 0b100
+  ADDI  <-> 0b000,
+  SLTI  <-> 0b010,
+  SLTIU <-> 0b011,
+  ANDI  <-> 0b111,
+  ORI   <-> 0b110,
+  XORI  <-> 0b100
 }
 
 mapping clause encdec = ITYPE(imm, rs1, rd, op) <-> imm @ rs1 @ encdec_iop(op) @ rd @ 0b0010011
@@ -155,12 +153,12 @@ mapping clause encdec = ITYPE(imm, rs1, rd, op) <-> imm @ rs1 @ encdec_iop(op) @
 function clause execute (ITYPE (imm, rs1, rd, op)) = {
   let immext : xlenbits = sign_extend(imm);
   X(rd) = match op {
-    RISCV_ADDI  => X(rs1) + immext,
-    RISCV_SLTI  => zero_extend(bool_to_bits(X(rs1) <_s immext)),
-    RISCV_SLTIU => zero_extend(bool_to_bits(X(rs1) <_u immext)),
-    RISCV_ANDI  => X(rs1) & immext,
-    RISCV_ORI   => X(rs1) | immext,
-    RISCV_XORI  => X(rs1) ^ immext
+    ADDI  => X(rs1) + immext,
+    SLTI  => zero_extend(bool_to_bits(X(rs1) <_s immext)),
+    SLTIU => zero_extend(bool_to_bits(X(rs1) <_u immext)),
+    ANDI  => X(rs1) & immext,
+    ORI   => X(rs1) | immext,
+    XORI  => X(rs1) ^ immext
   };
   RETIRE_SUCCESS
 }
@@ -168,12 +166,12 @@ function clause execute (ITYPE (imm, rs1, rd, op)) = {
 /* the assembly/disassembly mapping between AST elements and strings */
 
 mapping itype_mnemonic : iop <-> string = {
-  RISCV_ADDI  <-> "addi",
-  RISCV_SLTI  <-> "slti",
-  RISCV_SLTIU <-> "sltiu",
-  RISCV_XORI  <-> "xori",
-  RISCV_ORI   <-> "ori",
-  RISCV_ANDI  <-> "andi"
+  ADDI  <-> "addi",
+  SLTI  <-> "slti",
+  SLTIU <-> "sltiu",
+  XORI  <-> "xori",
+  ORI   <-> "ori",
+  ANDI  <-> "andi"
 }
 
 mapping clause assembly = ITYPE(imm, rs1, rd, op)
@@ -185,7 +183,8 @@ mapping clause assembly = ITYPE(imm, rs1, rd, op)
 ```
 union clause ast = SRET : unit
 
-mapping clause encdec = SRET() <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
+mapping clause encdec = SRET()
+  <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute SRET() = {
   let sret_illegal : bool = match cur_privilege {
@@ -194,9 +193,9 @@ function clause execute SRET() = {
     Machine    => not(currentlyEnabled(Ext_S))
   };
   if   sret_illegal
-  then { handle_illegal(); RETIRE_FAIL }
+  then Illegal_Instruction()
   else if not(ext_check_xret_priv (Supervisor))
-  then { ext_fail_xret_priv(); RETIRE_FAIL }
+  then Ext_XRET_Priv_Failure()
   else {
     set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC));
     RETIRE_SUCCESS

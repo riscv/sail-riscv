@@ -184,6 +184,9 @@
     "Zvknhb": {
       "supported": true
     },
+    "Zvksh": {
+      "supported": true
+    },
     "Sscofpmf": {
       "supported": true
     },
@@ -194,6 +197,21 @@
       "supported": true
     },
     "Svinval": {
+      "supported": true
+    },
+    "Svbare": {
+      "supported": true
+    },
+    "Sv32": {
+      "supported": true
+    },
+    "Sv39": {
+      "supported": true
+    },
+    "Sv48": {
+      "supported": true
+    },
+    "Sv57": {
       "supported": true
     }
   }
