@@ -25,6 +25,9 @@ function clause execute (JALR(imm, rs1, rd)) = {
       if bit_to_bool(target[1]) & not(currentlyEnabled(Ext_Zca)) then {
         Memory_Exception(addr, E_Fetch_Addr_Align())
       } else {
+        if   in_debug_abstract_command() & ~(debug_is_legal_ct_target(Virtaddr(target)))
+        then return Illegal_Instruction();
+
         X(rd) = get_next_pc();
         set_next_pc(target);
         RETIRE_SUCCESS

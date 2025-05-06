@@ -53,9 +53,3 @@ function counter_priv_filter_bit(reg : CountSmcntrpmf, priv : Privilege) -> bits
     User       => reg[UINH],
     // TODO: VSINH, VUINH when those modes are defined
   }
-
-function should_inc_mcycle(priv : Privilege) -> bool =
-  mcountinhibit[CY] == 0b0 & counter_priv_filter_bit(mcyclecfg, priv) == 0b0
-
-function should_inc_minstret(priv : Privilege) -> bool =
-  mcountinhibit[IR] == 0b0 & counter_priv_filter_bit(minstretcfg, priv) == 0b0
