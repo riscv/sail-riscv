@@ -196,11 +196,6 @@ bitfield Mstatus : bits(64) = {
   SIE  : 1,
 }
 
-function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
-  if   t != InstructionFetch() & m[MPRV] == 0b1
-  then privLevel_of_bits(m[MPP])
-  else priv
-
 function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
   if   xlen == 32
   then architecture(RV32)

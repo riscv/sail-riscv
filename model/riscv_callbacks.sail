@@ -31,6 +31,12 @@ function csr_full_read_callback(_) = ()
 val trap_callback = pure {c: "trap_callback"} : unit -> unit
 function trap_callback(_) = ()
 
+val debug_entry_callback = pure {c: "debug_entry_callback"} : unit -> unit
+function debug_entry_callback(_) = ()
+
+val debug_exit_callback = pure {c: "debug_exit_callback"} : unit -> unit
+function debug_exit_callback(_) = ()
+
 // Overloads for easier use of callbacks
 function csr_name_write_callback(name : string, value : xlenbits) -> unit = {
   let csr = csr_name_map(name);
