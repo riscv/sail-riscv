@@ -16,6 +16,7 @@ function set_vstart(value : bits(16)) -> unit = {
   dirty_v_context();
   let vstart_length = get_vlen_pow();
   vstart = zero_extend(value[(vstart_length - 1) .. 0]);
+  csr_write_callback("vstart", zero_extend(vstart));
 }
 
 mapping clause csr_name_map = 0x008  <-> "vstart"

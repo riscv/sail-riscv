@@ -34,6 +34,7 @@ function regidx_bits (Regidx(b) : regidx) -> bits(5) = b
 newtype regno = Regno : range(0, 31)
 
 function regidx_to_regno (Regidx(b) : regidx) -> regno = Regno(unsigned(b))
+function regno_to_regidx (Regno(b) : regno) -> regidx = Regidx(to_bits(5, b))
 
 /* mapping RVC register indices into normal indices */
 val creg2reg_idx : cregidx -> regidx
