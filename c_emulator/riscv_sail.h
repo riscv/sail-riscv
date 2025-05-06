@@ -18,8 +18,15 @@ extern struct zMisa zmisa;
 void model_init(void);
 void model_fini(void);
 
+struct zstep_result {
+  bool zdebug_cmd_error;
+  bool zin_debug_cmd;
+  bool zin_debug_mode;
+  bool zin_wait;
+};
+enum zdebug_request { zDR_None, zDR_Halt, zDR_Resume };
 unit zinit_model(unit);
-bool ztry_step(sail_int, bool);
+struct zstep_result ztry_step(sail_int, bool, enum zdebug_request);
 unit ztick_clock(unit);
 
 unit zrvfi_set_instr_packet(mach_bits);
