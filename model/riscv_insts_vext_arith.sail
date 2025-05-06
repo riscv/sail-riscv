@@ -184,9 +184,9 @@ mapping clause encdec = NVSTYPE(funct6, vm, vs2, vs1, vd)
 function clause execute(NVSTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
@@ -254,9 +254,9 @@ mapping clause encdec = NVTYPE(funct6, vm, vs2, vs1, vd)
 function clause execute(NVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
@@ -552,9 +552,9 @@ mapping clause encdec = NXSTYPE(funct6, vm, vs2, rs1, vd)
 function clause execute(NXSTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
@@ -622,9 +622,9 @@ mapping clause encdec = NXTYPE(funct6, vm, vs2, rs1, vd)
 function clause execute(NXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
@@ -961,9 +961,9 @@ mapping clause encdec = NISTYPE(funct6, vm, vs2, simm, vd)
 function clause execute(NISTYPE(funct6, vm, vs2, simm, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
@@ -1031,9 +1031,9 @@ mapping clause encdec = NITYPE(funct6, vm, vs2, simm, vd)
 function clause execute(NITYPE(funct6, vm, vs2, simm, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
@@ -1497,9 +1497,9 @@ mapping clause encdec = WVVTYPE(funct6, vm, vs2, vs1, vd)
 function clause execute(WVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
@@ -1570,9 +1570,9 @@ mapping clause encdec = WVTYPE(funct6, vm, vs2, vs1, vd)
 function clause execute(WVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen))
@@ -1636,9 +1636,9 @@ mapping clause encdec =  WMVVTYPE(funct6, vm, vs2, vs1, vd)
 function clause execute(WMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
@@ -2169,9 +2169,9 @@ mapping clause encdec = WVXTYPE(funct6, vm, vs2, rs1, vd)
 function clause execute(WVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
@@ -2241,9 +2241,9 @@ mapping clause encdec = WXTYPE(funct6, vm, vs2, rs1, vd)
 function clause execute(WXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen)
   then return RETIRE_FAIL(Illegal_Instruction());
@@ -2307,9 +2307,9 @@ mapping clause encdec = WMVXTYPE(funct6, vm, vs2, rs1, vd)
 function clause execute(WMVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
-  let num_elem = get_num_elem(LMUL_pow_widen, SEW_widen);
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
