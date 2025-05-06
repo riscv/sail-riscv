@@ -288,7 +288,20 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
     assert(false, "invalid register group: vrid is not a multiple of EMUL")
   } else {
     if LMUL_pow < 0 then {
-      result = read_single_vreg('n, SEW, vrid);
+      let 'num_elem_single : int = VLEN / SEW;
+      if 'n <= 'num_elem_single then {
+        result = read_single_vreg('n, SEW, vrid);
+      } else {
+        assert('num_elem_single >= 0);
+        let single_result : vector('num_elem_single, bits('m)) = read_single_vreg('num_elem_single, SEW, vrid);
+        foreach (i from 0 to ('num_elem_single - 1)) {
+          result[i] = single_result[i];
+        };
+        foreach (i from 'num_elem_single to ('n - 1)) {
+          assert(0 <= i & i < 'n);
+          result[i] = zeros();
+        }
+      }
     } else {
       let 'num_elem_single : int = VLEN / SEW;
       assert('num_elem_single >= 0);
