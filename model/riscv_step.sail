@@ -16,6 +16,7 @@ union Step = {
   Step_Fetch_Failure      : (virtaddr, ExceptionType),
   Step_Execute            : (ExecutionResult, instbits),
   Step_Waiting            : WaitReason,
+  Step_Debug_HaltReq      : unit,
 }
 
 function run_hart_waiting(step_no : int, wr: WaitReason, instbits : instbits, exit_wait : bool) -> Step = {
@@ -135,16 +136,55 @@ function wait_is_nop(wr : WaitReason) -> bool =
     WAIT_WRS_NTO => config extensions.Zawrs.nto.is_nop,
   }
 
+// The `debug_request` argument to the `try_step` function below
+// provides a mechanism to the external harness to control entry and
+// exit into Debug Mode.  DR_Halt requests the model to enter Debug
+// Mode, while DR_Resume requests the model to exit it.  DR_Halt is
+// ignored when the model is already in Debug Mode, and DR_Resume is
+// ignored when it is not.  DR_None does not request any change to the
+// current debug mode.
+enum debug_request = {DR_None, DR_Halt, DR_Resume}
+
+// `step_result` is the type of the return value of the `try_step`
+// function.
+// `step_result.in_wait` indicates whether the hart is in a waiting
+// state.  It is set to true when the `hart_state` is `HART_WAITING`
+// at the end of `try_step`.
+// `.in_debug_mode` indicates whether the hart is in Debug Mode at the
+// end of `try_step` (i.e. `debug_mode_active` is true).
+// `.in_debug_cmd` indicates whether the model is in Debug mode and
+// executing an abstract command (such as instructions from a program
+// buffer).
+// `.debug_cmd_error` indicates whether an exception was encountered
+// when executing an abstract command.
+
+struct step_result = {
+  in_wait         : bool,
+  in_debug_mode   : bool,
+  in_debug_cmd    : bool,
+  debug_cmd_error : bool,
+}
+
 // The `try_step` function is the main internal driver of the Sail
 // model. It performs the fetch-decode-execute for an instruction. It
 // is also the primary interface to the non-Sail execution harness.
 //
 // A "step" is a full execution of an instruction, resulting either
-// in its retirement or a trap. WFI and WRS instructions can cause
-// the model to wait (hart_state is HART_WAITING), in which case
-// a step has not happened and `try_step()` returns true. Otherwise
-// it returns false. Equivalently, it returns whether the model is now
-// in a waiting state (HART_WAITING).
+// in its retirement or a trap.  It returns a step_result value
+// indicating the current model state.
+//
+// WFI and WRS instructions can cause the model to wait (hart_state is
+// HART_WAITING), in which case a step has not happened and
+// step_result.in_wait is set to true. Otherwise step_result.in_wait
+// is set to false.
+//
+// step_result.in_debug_mode is set to true when the hart is in Debug Mode.
+//
+// step_result.in_debug_cmd is set to true when the hart is in Debug
+// Mode and executing a debug abstract command.
+//
+// step_result.debug_cmd_error is set to true if the hart experienced
+// an exception when executing a debug abstract command.
 //
 // * step_no: the current step number; this is maintained by by the
 //            non-Sail harness and is incremented when `try_step()`
@@ -153,15 +193,27 @@ function wait_is_nop(wr : WaitReason) -> bool =
 //              then it will wake up (switch to HART_ACTIVE) and
 //              complete the WFI/WRS instruction, either successfully
 //              retiring it or causing an illegal instruction
-//              exception depending on mstatus[TW]. `exit_wait`
+//              exception depending on `mstatus[TW]`. `exit_wait`
 //              only affects the behaviour if the model is already
 //              waiting from a previous WFI/WRS. It doesn't affect
 //              WFI/WRS instructions executed in the same call of
 //              `try_step()` (but see `wait_is_nop()`).
-//
-function try_step(step_no : nat, exit_wait : bool) -> bool = {
+// * debug_request: controls entry into and exit from Debug Mode as
+//              described above. `exit_wait` is ignored when
+//              `debug_request` is either `DR_Halt` or `DR_Resume`.
+//              When single-stepping is set, DR_Resume should be specified.
+
+function try_step(step_no : nat, exit_wait : bool, dr : debug_request) -> step_result = {
   /* for step extensions */
   ext_pre_step_hook();
+
+  // Leave Debug mode if a resume is requested.
+  if   dr == DR_Resume & currentlyEnabled(Ext_Sdext)
+  then {
+    if   in_debug_abstract_command()
+    then end_debug_abstract_command();
+    exit_debug_mode();
+  };
 
   /*
    * This records whether or not minstret should be incremented when
@@ -173,9 +225,14 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
    */
   minstret_increment = should_inc_minstret(cur_privilege);
 
+  // When halting to enter Debug mode, any waiting instructions should
+  // complete execution, but other instructions should not execute.
+  let exit_wait = exit_wait | (hartSupports(Ext_Sdext) & dr == DR_Halt);
   let step_val : Step = match hart_state {
-      HART_WAITING(wr, instbits) => run_hart_waiting(step_no, wr, instbits, exit_wait),
-      HART_ACTIVE()              => run_hart_active(step_no),
+      HART_WAITING(wr, instbits)     => run_hart_waiting(step_no, wr, instbits, exit_wait),
+      HART_ACTIVE() if dr == DR_Halt => Step_Debug_HaltReq(),
+      HART_ACTIVE()                  => run_hart_active(step_no),
+
     };
 
   match step_val {
@@ -192,7 +249,7 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
     Step_Execute(Memory_Exception(vaddr, e), _) => handle_mem_exception(vaddr, e),
     Step_Execute(Illegal_Instruction(), instbits) => handle_illegal(instbits),
-    Step_Execute(Enter_Wait(wr), instbits) => {
+    Step_Execute(Enter_Wait(wr), instbits) =>
       if wait_is_nop(wr) then {
         // This is the same as the RETIRE_OK case.
         assert(hart_is_active(hart_state));
@@ -202,7 +259,22 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
         then print_log("entering " ^ wait_name(wr) ^ " state at PC " ^ bits_str(PC));
 
         hart_state = HART_WAITING(wr, instbits);
-      }
+      },
+    Step_Debug_HaltReq() => {
+      // When entering Debug via a halt request, DPC is set to the address
+      // of the next instruction to be executed at the time of entry.
+      enter_debug_mode(DBGEntry_HaltReq, zeros(), get_arch_pc())
+    },
+    Step_Execute(Enter_Debug_Mode(cause), _) => {
+      // When entering Debug via an execution of `ebreak`, DPC is set
+      // to the address of the `ebreak`.
+      enter_debug_mode(cause, zeros(), get_arch_pc())
+    },
+    Step_Execute(Exit_Debug_Abstract_Command(), _) => {
+      end_debug_abstract_command()
+    },
+    Step_Execute(Exit_Debug_Mode(), _) => {
+      exit_debug_mode()
     },
     // errors from extensions
     Step_Execute(Ext_CSR_Check_Failure(), _) => ext_check_CSR_fail(),
@@ -211,9 +283,12 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     Step_Execute(Ext_XRET_Priv_Failure(), _) => ext_fail_xret_priv(),
   };
 
-  match hart_state {
+  let in_wait : bool = match hart_state {
     HART_WAITING(_) => true,
     HART_ACTIVE() => {
+      // The hart might have entered Debug mode during this
+      // `try_step()`.  The value of the PC on entry is not specified
+      // (unlike that of DPC).  For now, we just tick the pc as usual.
       tick_pc();
 
       let retired : bool = match step_val {
@@ -241,7 +316,17 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       // Return that we have stepped and are not waiting.
       false
     }
-  }
+  };
+
+  // When entering Debug via single step, DPC is set to the address of
+  // the next instruction to be executed.
+  if   in_single_step() & not(debug_mode_active)
+  then enter_debug_mode(DBGEntry_Step, zeros(), get_arch_pc());
+
+  struct { in_wait,
+           in_debug_mode   = debug_mode_active,
+           in_debug_cmd    = debug_abstract_command_active,
+           debug_cmd_error = debug_abstract_command_error }
 }
 
 function loop () : unit -> unit = {
@@ -250,8 +335,8 @@ function loop () : unit -> unit = {
   while not(htif_done) do {
     // This standalone loop always exits immediately out of waiting
     // states.
-    let stepped = try_step(step_no, true);
-    if stepped then {
+    let stepped = try_step(step_no, true, DR_None);
+    if not(stepped.in_wait) then {
       step_no = step_no + 1;
       if get_config_print_instr() then {
         print_step()
