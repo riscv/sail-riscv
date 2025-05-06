@@ -87,7 +87,7 @@ function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) =
       set_vstart(to_bits(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
-        match vmem_read(rs1, to_bits(xlen, elem_offset), load_width_bytes, false, false, false) {
+        match vmem_read(rs1, to_bits(xlen, elem_offset), load_width_bytes, Read(Data), false, false, false) {
           Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(5, j * EMUL_reg)), elem),
           Err(e)   => return e,
         }
@@ -151,7 +151,7 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
       if mask[i] == bitone then { /* active segments */
         foreach (j from 0 to (nf - 1)) {
           let elem_offset = (i * nf + j) * load_width_bytes;
-          match vmem_read(rs1, to_bits(xlen, elem_offset), load_width_bytes, false, false, false) {
+          match vmem_read(rs1, to_bits(xlen, elem_offset), load_width_bytes, Read(Data), false, false, false) {
             Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(5, j * EMUL_reg)), elem),
             Err(e)   => if i == 0 then return e
                         else {
@@ -229,7 +229,7 @@ function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) 
         let elem_offset = (i * nf + j) * load_width_bytes;
         let vs = vregidx_offset(vs3, to_bits(5, j * EMUL_reg));
         let data = read_single_element(load_width_bytes * 8, i, vs);
-        match vmem_write(rs1, to_bits(xlen, elem_offset), load_width_bytes, data, false, false, false) {
+        match vmem_write(rs1, to_bits(xlen, elem_offset), load_width_bytes, data, Write(Data), false, false, false) {
           Ok(true)  => (),
           Ok(false) => internal_error(__FILE__, __LINE__, "store got false from vmem_write"),
           Err(e)    => return e,
@@ -288,7 +288,7 @@ function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_e
       set_vstart(to_bits(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
-        match vmem_read(rs1, to_bits(xlen, elem_offset), load_width_bytes, false, false, false) {
+        match vmem_read(rs1, to_bits(xlen, elem_offset), load_width_bytes, Read(Data), false, false, false) {
           Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(5, j * EMUL_reg)), elem),
           Err(e)   => return e,
         }
@@ -352,7 +352,7 @@ function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_
         let elem_offset = i * rs2_val + j * load_width_bytes;
         let vs = vregidx_offset(vs3, to_bits(5, j * EMUL_reg));
         let data = read_single_element(load_width_bytes * 8, i, vs);
-        match vmem_write(rs1, to_bits(xlen, elem_offset), load_width_bytes, data, false, false, false) {
+        match vmem_write(rs1, to_bits(xlen, elem_offset), load_width_bytes, data, Write(Data), false, false, false) {
           Ok(true)  => (),
           Ok(false) => internal_error(__FILE__, __LINE__, "store got false from vmem_write"),
           Err(e)    => return e,
@@ -412,7 +412,7 @@ function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index
       set_vstart(to_bits(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
-        match vmem_read(rs1, to_bits(xlen, elem_offset), EEW_data_bytes, false, false, false) {
+        match vmem_read(rs1, to_bits(xlen, elem_offset), EEW_data_bytes, Read(Data), false, false, false) {
           Ok(elem) => write_single_element(EEW_data_bytes * 8, i, vregidx_offset(vd, to_bits(5, j * EMUL_data_reg)), elem),
           Err(e)   => return e,
         }
@@ -506,7 +506,7 @@ function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_inde
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
         let vs = vregidx_offset(vs3, to_bits(5, j * EMUL_data_reg));
         let data = read_single_element(EEW_data_bytes * 8, i, vs);
-        match vmem_write(rs1, to_bits(xlen, elem_offset), EEW_data_bytes, data, false, false, false) {
+        match vmem_write(rs1, to_bits(xlen, elem_offset), EEW_data_bytes, data, Write(Data), false, false, false) {
           Ok(true)  => (),
           Ok(false) => internal_error(__FILE__, __LINE__, "store got false from vmem_write"),
           Err(e)    => return e,
@@ -591,7 +591,7 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
     foreach (i from elem_to_align to (elem_per_reg - 1)) {
       set_vstart(to_bits(16, cur_elem));
       let elem_offset = cur_elem * load_width_bytes;
-      match vmem_read(rs1, to_bits(xlen, elem_offset), load_width_bytes, false, false, false) {
+      match vmem_read(rs1, to_bits(xlen, elem_offset), load_width_bytes, Read(Data), false, false, false) {
         Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(5, cur_field)), elem),
         Err(e)   => return e,
       };
@@ -604,7 +604,7 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
     foreach (i from 0 to (elem_per_reg - 1)) {
       set_vstart(to_bits(16, cur_elem));
       let elem_offset = cur_elem * load_width_bytes;
-      match vmem_read(rs1, to_bits(xlen, elem_offset), load_width_bytes, false, false, false) {
+      match vmem_read(rs1, to_bits(xlen, elem_offset), load_width_bytes, Read(Data), false, false, false) {
         Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits(5, j)), elem),
         Err(e)   => return e,
       };
@@ -656,7 +656,7 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
       let elem_offset : int = cur_elem * load_width_bytes;
       let vs = vregidx_offset(vs3, to_bits(5, cur_field));
       let data = read_single_element(load_width_bytes * 8, i, vs);
-      match vmem_write(rs1, to_bits(xlen, elem_offset), load_width_bytes, data, false, false, false) {
+      match vmem_write(rs1, to_bits(xlen, elem_offset), load_width_bytes, data, Write(Data), false, false, false) {
         Ok(true)  => (),
         Ok(false) => internal_error(__FILE__, __LINE__, "store got false from vmem_write"),
         Err(e)    => return e,
@@ -671,7 +671,7 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
     foreach (i from 0 to (elem_per_reg - 1)) {
       set_vstart(to_bits(16, cur_elem));
       let elem_offset = cur_elem * load_width_bytes;
-      match vmem_write(rs1, to_bits(xlen, elem_offset), load_width_bytes, vs3_val[i], false, false, false) {
+      match vmem_write(rs1, to_bits(xlen, elem_offset), load_width_bytes, vs3_val[i], Write(Data), false, false, false) {
         Ok(true)  => (),
         Ok(false) => internal_error(__FILE__, __LINE__, "store got false from vmem_write"),
         Err(e)    => return e,
@@ -724,12 +724,12 @@ function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
     if i < evl then { /* active elements */
       set_vstart(to_bits(16, i));
       if op == VLM then { /* load */
-        match vmem_read(rs1, to_bits(xlen, i), 1, false, false, false) {
+        match vmem_read(rs1, to_bits(xlen, i), 1, Read(Data), false, false, false) {
           Ok(elem) => write_single_element(8, i, vd_or_vs3, elem),
           Err(e)   => return e,
         }
       } else if op == VSM then { /* store */
-        match vmem_write(rs1, to_bits(xlen, i), 1, vd_or_vs3_val[i], false, false, false) {
+        match vmem_write(rs1, to_bits(xlen, i), 1, vd_or_vs3_val[i], Write(Data), false, false, false) {
           Ok(true)  => (),
           Ok(false) => internal_error(__FILE__, __LINE__, "store got false from vmem_write"),
           Err(e)    => return e,

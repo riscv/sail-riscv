@@ -293,7 +293,7 @@ function clause execute (LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   // This is checked during decoding.
   assert(width_bytes <= xlen_bytes);
 
-  match vmem_read(rs1, offset, width_bytes, aq, rl, false) {
+  match vmem_read(rs1, offset, width_bytes, Read(Data), aq, rl, false) {
     Ok(data) => {
       X(rd) = extend_value(is_unsigned, data);
       RETIRE_SUCCESS
@@ -338,7 +338,7 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
   assert(width_bytes <= xlen_bytes);
 
   let data = X(rs2)[width_bytes * 8 - 1 .. 0];
-  match vmem_write(rs1, offset, width_bytes, data, aq, rl, false) {
+  match vmem_write(rs1, offset, width_bytes, data, Write(Data), aq, rl, false) {
     Ok(_) => RETIRE_SUCCESS,
     Err(e) => e,
   }

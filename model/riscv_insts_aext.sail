@@ -70,7 +70,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
   // This is checked during decoding.
   assert(width_bytes <= xlen_bytes);
 
-  match vmem_read(rs1, zeros(), width_bytes, aq, aq & rl, true) {
+  match vmem_read(rs1, zeros(), width_bytes, Read(Data), aq, aq & rl, true) {
     Ok(data) => {
       X(rd) = sign_extend(data);
       RETIRE_SUCCESS
@@ -108,7 +108,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
    * RMEM: SC is allowed to succeed (but might fail later)
    */
   let data = X(rs2)[width_bytes * 8 - 1 .. 0];
-  match vmem_write(rs1, zeros(), width_bytes, data, aq & rl, rl, true) {
+  match vmem_write(rs1, zeros(), width_bytes, data, Write(Data), aq & rl, rl, true) {
     Ok(b) => {
       X(rd) = zero_extend(bool_bits(~(b)));
       cancel_reservation();
