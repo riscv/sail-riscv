@@ -16,6 +16,7 @@ function vregidx_bits (Vregidx(b) : vregidx) -> bits(5) = b
 mapping encdec_vreg : vregidx <-> bits(5) = { Vregidx(r) <-> r }
 
 val vreg_write_callback = pure {c: "vreg_write_callback"} : (vregidx, vregtype) -> unit
+function vreg_write_callback(_) = ()
 
 let zvreg : vregidx = Vregidx(0b00000) /* v0, zero register  */
 
