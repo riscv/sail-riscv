@@ -80,9 +80,15 @@ such as the platform memory map.
   appropriate access fault. This file also contains definitions that
   are used in the weak memory concurrency model.
 
-- The `riscv_vmem_*.sail` files describe the S-mode address
-  translation. See the [Virtual Memory Notes](./notes_Virtual_Memory.adoc)
-  for details.
+- The `riscv_vmem_{types,pte,ptw,tlb}.sail` and `riscv_vmem.sail`
+  files describe the S-mode address translation.
+  See the [Virtual Memory Notes](./notes_Virtual_Memory.adoc) for
+  details.
+
+- The `riscv_vmem_utils.sail` file provides a higher level interface
+  to virtual memory for load/store style instructions that handles
+  address translation and accesses to misaligned addresses taking
+  platform configuration options into account.
 
 - The `riscv_addr_checks_common.sail` and `riscv_addr_checks.sail`
   contain extension hooks to support the checking and transformation

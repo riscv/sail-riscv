@@ -33,10 +33,27 @@
  * The internal implementation first performs a PMP check (if PMP is
  * enabled), and then dispatches to MMIO regions or physical memory as
  * per the platform memory map.
+ *
+ * A helper to check address alignment is also provided in the external API.
+ *
+ *   is_aligned_addr - checks for alignment of a physical or virtual address
  */
 
-function is_aligned_addr forall 'n. (Physaddr(addr) : physaddr, width : int('n)) -> bool =
+function is_aligned_paddr forall 'n. (Physaddr(addr) : physaddr, width : int('n)) -> bool =
   unsigned(addr) % width == 0
+
+function is_aligned_vaddr forall 'n. (Virtaddr(addr) : virtaddr, width : int('n)) -> bool =
+  unsigned(addr) % width == 0
+
+function is_aligned_bits(vaddr : xlenbits, width : word_width) -> bool =
+  match width {
+    BYTE   => true,
+    HALF   => vaddr[0..0] == zeros(),
+    WORD   => vaddr[1..0] == zeros(),
+    DOUBLE => vaddr[2..0] == zeros(),
+  }
+
+overload is_aligned_addr = {is_aligned_paddr, is_aligned_vaddr, is_aligned_bits}
 
 function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> option(read_kind) =
   match (aq, rl, res) {

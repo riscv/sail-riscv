@@ -70,26 +70,12 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
   // This is checked during decoding.
   assert(width_bytes <= xlen_bytes);
 
-  /* Get the address, X(rs1) (no offset).
-    * Extensions might perform additional checks on address validity.
-    */
-  match ext_data_get_addr(rs1, zeros(), Read(Data), width_bytes) {
-    Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
-    Ext_DataAddr_OK(vaddr) => {
-      /* "LR faults like a normal load, even though it's in the AMO major opcode space."
-        * - Andrew Waterman, isa-dev, 10 Jul 2018.
-        */
-      if not(is_aligned(bits_of(vaddr), width))
-      then Memory_Exception(vaddr, E_Load_Addr_Align())
-      else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, _)    => Memory_Exception(vaddr, e),
-        TR_Address(addr, _) =>
-          match mem_read(Read(Data), addr, width_bytes, aq, aq & rl, true) {
-            Ok(result) => { load_reservation(bits_of(addr)); X(rd) = sign_extend(result); RETIRE_SUCCESS },
-            Err(e)     => Memory_Exception(vaddr, e),
-          },
-      }
-    }
+  match vmem_read(rs1, zeros(), width_bytes, Read(Data), aq, aq & rl, true) {
+    Ok(data) => {
+      X(rd) = sign_extend(data);
+      RETIRE_SUCCESS
+    },
+    Err(e) => e,
   }
 }
 
@@ -110,50 +96,25 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
   // This is checked during decoding.
   assert(width_bytes <= xlen_bytes);
 
-  if speculate_conditional () == false then {
-    /* should only happen in rmem
-     * rmem: allow SC to fail very early
+  if speculate_conditional() == false then {
+    /* should only happen in RMEM
+     * RMEM: allow SC to fail very early
      */
-    X(rd) = zero_extend(0b1); RETIRE_SUCCESS
-  } else {
-    /* normal non-rmem case
-      * rmem: SC is allowed to succeed (but might fail later)
-      */
-    /* Get the address, X(rs1) (no offset).
-      * Extensions might perform additional checks on address validity.
-      */
-    match ext_data_get_addr(rs1, zeros(), Write(Data), width_bytes) {
-      Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
-      Ext_DataAddr_OK(vaddr) => {
-        if not(is_aligned(bits_of(vaddr), width))
-        then Memory_Exception(vaddr, E_SAMO_Addr_Align())
-        else {
-          match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
-                                                      * both result in a SAMO exception */
-            TR_Failure(e, _) => Memory_Exception(vaddr, e),
-            TR_Address(addr, _) => {
-              // Check reservation with physical address.
-              if not(match_reservation(bits_of(addr))) then {
-                /* cannot happen in rmem */
-                X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS
-              } else {
-                match mem_write_ea(addr, width_bytes, aq & rl, rl, true) {
-                  Err(e) => Memory_Exception(vaddr, e),
-                  Ok(_)  => {
-                    let rs2_val = X(rs2);
-                    match mem_write_value(addr, width_bytes, rs2_val[width_bytes * 8 - 1 .. 0], aq & rl, rl, true) {
-                      Ok(true)  => { X(rd) = zero_extend(0b0); cancel_reservation(); RETIRE_SUCCESS },
-                      Ok(false) => { X(rd) = zero_extend(0b1); cancel_reservation(); RETIRE_SUCCESS },
-                      Err(e)    => Memory_Exception(vaddr, e),
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+    X(rd) = zero_extend(0b1);
+    return RETIRE_SUCCESS
+  };
+
+  /* normal non-rmem case
+   * RMEM: SC is allowed to succeed (but might fail later)
+   */
+  let data = X(rs2)[width_bytes * 8 - 1 .. 0];
+  match vmem_write(rs1, zeros(), width_bytes, data, Write(Data), aq & rl, rl, true) {
+    Ok(b) => {
+      X(rd) = zero_extend(bool_bits(~(b)));
+      cancel_reservation();
+      RETIRE_SUCCESS
+    },
+    Err(e) => e,
   }
 }
 
@@ -195,7 +156,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width_bytes) {
     Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
-      if not(is_aligned(bits_of(vaddr), width))
+      if not(is_aligned_addr(bits_of(vaddr), width))
       then Memory_Exception(vaddr, E_SAMO_Addr_Align())
       else match translateAddr(vaddr, ReadWrite(Data, Data)) {
         TR_Failure(e, _) => Memory_Exception(vaddr, e),

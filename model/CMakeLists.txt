@@ -135,6 +135,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_vmem_ptw.sail"
                 "riscv_vmem_tlb.sail"
                 "riscv_vmem.sail"
+                "riscv_vmem_utils.sail"
             )
 
             set(prelude
@@ -178,10 +179,10 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_vmem_types.sail"
                 ${sail_regs_srcs}
                 ${sail_sys_srcs}
-                "riscv_inst_retire.sail"
                 "riscv_platform.sail"
                 "riscv_sstc.sail"
                 "riscv_mem.sail"
+                "riscv_inst_retire.sail"
                 ${sail_vm_srcs}
                 # Shared/common code for the cryptography extension.
                 "riscv_types_kext.sail"
