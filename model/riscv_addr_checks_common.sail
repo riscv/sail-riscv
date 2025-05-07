@@ -36,7 +36,7 @@ union Ext_PhysAddr_Check = {
 
 /*!
  * Validate a read from physical memory.
- * THIS(access_type, paddr, size, aquire, release, reserved, read_meta) should
+ * THIS(access_type, paddr, size, acquire, release, reserved, read_meta) should
  * return Some(exception) to abort the read or None to allow it to proceed. The
  * check is performed after PMP checks and does not apply to MMIO memory.
  */

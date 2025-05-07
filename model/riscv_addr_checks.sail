@@ -63,7 +63,7 @@ function ext_handle_data_check_error(err : ext_data_addr_error) -> unit =
   ()
 
 /* Default implementations of these hooks permit all accesses.  */
-function ext_check_phys_mem_read (access_type, paddr, size, aquire, release, reserved, read_meta) =
+function ext_check_phys_mem_read (access_type, paddr, size, acquire, release, reserved, read_meta) =
   Ext_PhysAddr_OK ()
 
 function ext_check_phys_mem_write(write_kind, paddr, size, data, metadata) =

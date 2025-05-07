@@ -124,7 +124,7 @@ function reset_pmp() -> unit = {
   );
 
   foreach (i from 0 to 63) {
-    // On reset the PMP register's A and L bits are set to 0 unless the plaform
+    // On reset the PMP register's A and L bits are set to 0 unless the platform
     // mandates a different value.
     pmpcfg_n[i] = [pmpcfg_n[i] with A = pmpAddrMatchType_to_bits(OFF), L = 0b0];
   };

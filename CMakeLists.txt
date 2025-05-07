@@ -27,7 +27,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 # Always use Position Independent Code. By default it is only used for
 # shared libraries (which require it), but you also need it for static
 # libraries if you link them into shared libraries.
-# Generally it just simplifies everything for a negligable performance cost.
+# Generally it just simplifies everything for a negligible performance cost.
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
 # Don't allow undefined symbols. This is generally a pain.

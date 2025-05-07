@@ -739,7 +739,7 @@ function fcvtmod_helper(x64) = {
    * Detect the trivial cases for normal numbers.
    *
    * While is_too_large could subsume is_nan_or_inf, and is_too_small
-   * cound subsume is_subnorm, we deliberately enumerate these
+   * could subsume is_subnorm, we deliberately enumerate these
    * separately as is_too_large/is_too_small operate on normal
    * numbers.
    */
@@ -759,7 +759,7 @@ function fcvtmod_helper(x64) = {
      * to be raised.
      */
 
-    /* Perform the exponentation on the fixed-point mantissa and
+    /* Perform the exponentiation on the fixed-point mantissa and
        extract the integer part */
     let fixedpoint : bits(84) = zero_extend(true_mant) << true_exp;
     let integer    = fixedpoint[83..52];

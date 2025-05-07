@@ -219,7 +219,7 @@ boot Linux in about 4 minutes, and FreeBSD in about 2 minutes. Memory
 usage for the C emulator when booting Linux is approximately 140MB.
 
 The files in the C emulator directory implements ELF loading and the
-platform devices, defines the physical memory map, and usees command-line
+platform devices, defines the physical memory map, and uses command-line
 options to select implementation-specific ISA choices.
 
 ### Use for specification coverage measurement in testing

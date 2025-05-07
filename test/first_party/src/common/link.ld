@@ -17,7 +17,7 @@ SECTIONS
   try to start allocating at 0. */
   . = ORIGIN(if_ram);
 
-  /* Stack first so in theory we get stack overlow detection. */
+  /* Stack first so in theory we get stack overflow detection. */
   .stack ALIGN(16) (NOLOAD) : {
     _stack_end = .;
     . += __STACK_SIZE;

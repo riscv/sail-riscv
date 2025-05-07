@@ -99,7 +99,7 @@ val match_reservation = pure {interpreter: "Platform.match_reservation", lem: "m
 val cancel_reservation = impure {interpreter: "Platform.cancel_reservation", c: "cancel_reservation", lem: "cancel_reservation"} : unit -> unit
 
 /* Exception delegation: given an exception and the privilege at which
- * it occured, returns the privilege at which it should be handled.
+ * it occurred, returns the privilege at which it should be handled.
  */
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let idx   = num_of_ExceptionType(e);
