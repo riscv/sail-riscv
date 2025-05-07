@@ -678,7 +678,7 @@ mapping clause assembly = NXTYPE(funct6, vm, vs2, rs1, vd)
   <-> nxtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
 
 /* ***************** OPIVX (Vector Slide & Gather Instructions) ****************** */
-/* Slide and gather instructions extend rs1/imm to XLEN intead of SEW bits */
+/* Slide and gather instructions extend rs1/imm to XLEN instead of SEW bits */
 union clause ast = VXSG : (vxsgfunct6, bits(1), vregidx, regidx, vregidx)
 
 mapping encdec_vxsgfunct6 : vxsgfunct6 <-> bits(6) = {
@@ -1087,7 +1087,7 @@ mapping clause assembly = NITYPE(funct6, vm, vs2, simm, vd)
   <-> nitype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(simm) ^ maybe_vmask(vm)
 
 /* ***************** OPIVI (Vector Slide & Gather Instructions) ****************** */
-/* Slide and gather instructions extend rs1/imm to XLEN intead of SEW bits */
+/* Slide and gather instructions extend rs1/imm to XLEN instead of SEW bits */
 union clause ast = VISG : (visgfunct6, bits(1), vregidx, bits(5), vregidx)
 
 mapping encdec_visgfunct6 : visgfunct6 <-> bits(6) = {

@@ -1,5 +1,5 @@
 # From https://github.com/Z3Prover/z3/blob/7f8e2a9f75f6c8b4b8ab05b87ea6a343d9a0b88d/cmake/modules/FindGMP.cmake
-# with minor simplication to remove gmp++ and try pkg-config.
+# with minor simplification to remove gmp++ and try pkg-config.
 
 # Tries to find an install of the GNU multiple precision library
 #

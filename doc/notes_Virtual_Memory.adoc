@@ -5,7 +5,7 @@ NOTE: this is an AsciiDoc document and can be processed into
       `asciidoctor`.
 
 NOTE: If you are a code maintainer, kindly update this document if
-      there are any significant developements in vmem code.
+      there are any significant developments in vmem code.
 
 This is a commentary/reader's guide to the virtual memory ("vmem")
 code in the Sail RISC-V Formal Spec ("Golden Model").  The primary

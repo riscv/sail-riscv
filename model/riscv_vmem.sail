@@ -23,7 +23,7 @@
 // TLB NOTE:
 // TLBs are not part of the RISC-V architecture specification.
 // However, we model a simple TLB so that
-// (1) we can meaningfully test SFENCE.VMA which is a no-op wihout TLBs;
+// (1) we can meaningfully test SFENCE.VMA which is a no-op without TLBs;
 // (2) we can greatly speed up simulation speed
 //     (e.g., from 10s of minutes to few minutes for Linux boot)
 // The TLB implementation is in a separate file: riscv_vmem_tlb.sail
