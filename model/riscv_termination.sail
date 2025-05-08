@@ -93,10 +93,14 @@ function hartSupports_measure(ext : extension) -> int =
 
 termination_measure hartSupports(ext) = hartSupports_measure(ext)
 
+// Termination measures for loops are not supported by the Lean backend, so they
+// should be guarded by this condition:
+$iftarget coq
+
 termination_measure vmem_write_addr repeat n
 termination_measure vmem_read repeat n
 
-$iftarget coq
 // The top-level loop isn't terminating, but we put a limit so that it can still be included in the Coq output
 termination_measure loop while 100
+
 $endif
