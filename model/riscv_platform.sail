@@ -383,77 +383,8 @@ function htif_store(Physaddr(paddr), width, data) = {
         /* reset to ack */
         reset_htif()
       },
-      d => print("htif-???? cmd: " ^ BitStr(data))
+      d => print("htif")
     }
   };
   Ok(true)
 }
-
-val htif_tick : unit -> unit
-function htif_tick() = {
-  if   get_config_print_platform()
-  then print_platform("htif::tick " ^ BitStr(htif_tohost));
-  htif_tohost = htif_tohost /* prevent this function being optimized out */
-}
-
-/* Top-level MMIO dispatch */
-$ifndef RVFI_DII
-function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
-  within_clint(addr, width) | (within_htif_readable(addr, width) & 1 <= 'n)
-$else
-function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool = false
-$endif
-
-$ifndef RVFI_DII
-function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
-  within_clint(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
-$else
-function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool = false
-$endif
-
-function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : physaddr, width : int('n)) -> MemoryOpResult(bits(8 * 'n)) =
-  if   within_clint(paddr, width)
-  then clint_load(t, paddr, width)
-  else if within_htif_readable(paddr, width) & (1 <= 'n)
-  then htif_load(t, paddr, width)
-  else match t {
-    InstructionFetch() => Err(E_Fetch_Access_Fault()),
-    Read(Data) => Err(E_Load_Access_Fault()),
-    _          => Err(E_SAMO_Access_Fault())
-  }
-
-function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : physaddr, width : int('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
-  if   within_clint(paddr, width)
-  then clint_store(paddr, width, data)
-  else if within_htif_writable(paddr, width) & 'n <= 8
-  then htif_store(paddr, width, data)
-  else Err(E_SAMO_Access_Fault())
-
-/* Platform initialization and ticking. */
-
-function init_platform() -> unit = {
-  htif_tohost = zeros();
-  htif_done   = false;
-  htif_exit_code = zeros();
-  htif_cmd_write = bitzero;
-  htif_payload_writes = zeros();
-}
-
-function tick_platform() -> unit = {
-  htif_tick();
-}
-
-/* Platform-specific handling of instruction faults */
-
-function handle_illegal(instbits : instbits) -> unit = {
-  let info = if plat_mtval_has_illegal_inst_bits()
-             then Some(zero_extend(xlen, instbits))
-             else None();
-  let t : sync_exception = struct { trap    = E_Illegal_Instr(),
-                                    excinfo = info,
-                                    ext     = None() };
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
-}
-
-/* Platform-specific wait-for-interrupt */
-function platform_wfi() -> unit = ()
