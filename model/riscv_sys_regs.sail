@@ -413,8 +413,7 @@ bitfield Minterrupts : xlenbits = {
 }
 
 function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
-  /* The only writable bits are the S-mode bits, and with the 'N'
-   * extension, the U-mode bits. */
+  // The only writable bits are the S-mode bits.
   let v = Mk_Minterrupts(v);
   [o with
     SEI = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
