@@ -68,8 +68,10 @@ function run_hart_active(step_no: nat) -> Step = {
         /* check for RVC once here instead of every RVC execute clause. */
         if currentlyEnabled(Ext_Zca) then {
           nextPC = PC + 2;
-          let r = execute(ast);
-          Step_Execute(r, instbits)
+          match execute(ast) {
+            Decompress(ast) => Step_Execute(execute(ast), instbits),
+            r => Step_Execute(r, instbits)
+          }
         } else {
           Step_Execute(Illegal_Instruction(), instbits)
         }
@@ -145,6 +147,7 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     Step_Fetch_Failure(vaddr, e) => handle_mem_exception(vaddr, e),
     Step_Waiting() => assert(hart_is_waiting(hart_state), "cannot be Waiting in a non-Wait state"),
     Step_Execute(Retire_Success(), _) => assert(hart_is_active(hart_state)),
+    Step_Execute(Decompress(_), _) => assert(false),
     // standard errors
     Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
     Step_Execute(Memory_Exception(vaddr, e), _) => handle_mem_exception(vaddr, e),
