@@ -91,6 +91,7 @@ For booting operating system images, see the information under the
 - A extension for atomic instructions, v2.1
 - Zalrsc extension for load-reserved and store-conditional operations, v1.0
 - Zaamo extension for atomic memory operations, v1.0
+- Zawrs extension for Wait-on-Reservation-Set instructions, v1.01
 - Zabha extension for byte and halfword atomic memory operations, v1.0
 - F and D extensions for single and double-precision floating-point, v2.2
 - Zfh and Zfhmin extensions for half-precision floating-point, v1.0

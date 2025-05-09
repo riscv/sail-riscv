@@ -87,6 +87,9 @@ function clause hartSupports(Ext_Zabha) = config extensions.Zabha.supported
 // Load-Reserved/Store-Conditional Instructions
 enum clause extension = Ext_Zalrsc
 function clause hartSupports(Ext_Zalrsc) = config extensions.Zalrsc.supported
+// Wait-On-Reservation-Set
+enum clause extension = Ext_Zawrs
+function clause hartSupports(Ext_Zawrs) = config extensions.Zawrs.supported
 
 // Additional Floating-Point Instructions
 enum clause extension = Ext_Zfa
