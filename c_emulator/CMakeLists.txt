@@ -1,3 +1,12 @@
+# make version available to emulator
+configure_file(version.h.in version.h @ONLY)
+add_library(version
+  INTERFACE "version.h"
+)
+target_include_directories(version
+  INTERFACE "${CMAKE_CURRENT_BINARY_DIR}"
+)
+
 set(EMULATOR_COMMON_SRCS
     riscv_callbacks.cpp
     riscv_callbacks.h
@@ -52,7 +61,7 @@ foreach (xlen IN ITEMS 32 64)
             add_dependencies(riscv_sim_${arch} generated_model_${arch})
 
             target_link_libraries(riscv_sim_${arch}
-                PRIVATE softfloat sail_runtime default_config GMP::GMP
+                PRIVATE softfloat sail_runtime default_config version GMP::GMP
             )
 
             target_include_directories(riscv_sim_${arch}
