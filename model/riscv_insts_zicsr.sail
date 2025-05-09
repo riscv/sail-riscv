@@ -9,6 +9,8 @@
 /* ****************************************************************** */
 /* This file specifies the instructions in the 'Zicsr' extension.     */
 /* ****************************************************************** */
+function clause currentlyEnabled(Ext_Zicsr) = hartSupports(Ext_Zicsr)
+
 union clause ast = CSRReg  : (csreg, regidx, regidx, csrop)
 union clause ast = CSRImm  : (csreg, bits(5), regidx, csrop)
 
@@ -20,9 +22,11 @@ mapping encdec_csrop : csrop <-> bits(2) = {
 
 mapping clause encdec = CSRReg(csr, rs1, rd, op)
   <-> csr @ encdec_reg(rs1) @ 0b0 @ encdec_csrop(op) @ encdec_reg(rd) @ 0b1110011
+  when currentlyEnabled(Ext_Zicsr)
 
 mapping clause encdec = CSRImm(csr, imm, rd, op)
   <-> csr @ imm @ 0b1 @ encdec_csrop(op) @ encdec_reg(rd) @ 0b1110011
+  when currentlyEnabled(Ext_Zicsr)
 
 function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_CSR_Write: bool) -> ExecutionResult = {
   if not(check_CSR(csr, cur_privilege, is_CSR_Write))
