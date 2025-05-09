@@ -389,13 +389,6 @@ function htif_store(Physaddr(paddr), width, data) = {
   Ok(true)
 }
 
-val htif_tick : unit -> unit
-function htif_tick() = {
-  if   get_config_print_platform()
-  then print_platform("htif::tick " ^ BitStr(htif_tohost));
-  htif_tohost = htif_tohost /* prevent this function being optimized out */
-}
-
 /* Top-level MMIO dispatch */
 $ifndef RVFI_DII
 function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
@@ -437,10 +430,6 @@ function init_platform() -> unit = {
   htif_exit_code = zeros();
   htif_cmd_write = bitzero;
   htif_payload_writes = zeros();
-}
-
-function tick_platform() -> unit = {
-  htif_tick();
 }
 
 /* Platform-specific handling of instruction faults */
