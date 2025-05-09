@@ -196,6 +196,12 @@ function clause hartSupports(Ext_Zvksh) = config extensions.Zvksh.supported
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
 function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supported
+// Supervisor-mode view of the state-enable extension
+enum clause extension = Ext_Ssstateen
+function clause hartSupports(Ext_Ssstateen) = config extensions.Ssstateen.supported
+// Machine-mode view of the state-enable extension
+enum clause extension = Ext_Smstateen
+function clause hartSupports(Ext_Smstateen) = config extensions.Smstateen.supported
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 function clause hartSupports(Ext_Sstc) = config extensions.Sstc.supported
