@@ -38,3 +38,8 @@ bool get_config_print_platform(unit)
 {
   return config_print_platform;
 }
+
+bool get_config_use_abi_names(unit)
+{
+  return config_use_abi_names;
+}
