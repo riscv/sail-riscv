@@ -46,6 +46,9 @@ check_c_compiler_flag(-Wimplicit-fallthrough HAVE_WIMPLICIT_FALLTHROUGH)
 # Extra CMake files.
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
+# Installation directories.
+include(GNUInstallDirs)
+
 # This will change how the `find_library` calls work so they find
 # the static version of libraries first. Unlike `-static` it won't
 # link glibc statically, which is generally considered to be a bad idea.
@@ -168,7 +171,7 @@ include(CPack)
 
 # Convenience targets.
 add_custom_target(csim DEPENDS riscv_sim_rv32d riscv_sim_rv64d)
-add_custom_target(check DEPENDS generated_model_rv32d generated_model_rv64d)
+add_custom_target(check DEPENDS generated_model_rv32d generated_model_rv64d config_schema)
 
 # TODO: Add `interpret` target.
 # TODO: Add hol4 target.

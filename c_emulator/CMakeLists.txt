@@ -78,7 +78,7 @@ foreach (xlen IN ITEMS 32 64)
 
             install(TARGETS riscv_sim_${arch}
                 OPTIONAL
-                RUNTIME DESTINATION "bin"
+                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             )
         endforeach()
     endforeach()
