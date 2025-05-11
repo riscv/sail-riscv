@@ -66,7 +66,7 @@ unit plat_term_write(mach_bits s)
   return UNIT;
 }
 
-bool plat_enable_htif()
+bool plat_enable_htif(unit)
 {
   return rv_enable_htif;
 }
