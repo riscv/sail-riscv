@@ -632,7 +632,6 @@ void run_sail(void)
     if (insn_cnt == insns_per_tick) {
       insn_cnt = 0;
       ztick_clock(UNIT);
-      ztick_platform(UNIT);
     }
   }
 

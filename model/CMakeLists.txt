@@ -271,7 +271,6 @@ foreach (xlen IN ITEMS 32 64)
                         --c-preserve init_model
                         --c-preserve try_step
                         --c-preserve tick_clock
-                        --c-preserve tick_platform
                         # Preserve RVFI functions.
                         --c-preserve rvfi_set_instr_packet
                         --c-preserve rvfi_get_cmd
