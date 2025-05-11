@@ -198,6 +198,10 @@ function clause hartSupports(Ext_Zvknhb) = config extensions.Zvknhb.supported
 enum clause extension = Ext_Zvksh
 function clause hartSupports(Ext_Zvksh) = config extensions.Zvksh.supported
 
+// Vector Carryless Multiplication (SEW <= 32-bit)
+enum clause extension = Ext_Zvbc32e
+function clause hartSupports(Ext_Zvbc32e) = config extensions.Zvbc32e.supported
+
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
 function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supported
