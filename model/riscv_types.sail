@@ -306,7 +306,7 @@ enum extop_zbb = {SEXTB, SEXTH, ZEXTH}
 
 enum zicondop = {CZERO_EQZ, CZERO_NEZ}
 
-enum cmop_zcmp = {RISCV_CM_POP, RISCV_CM_POPRET, RISCV_CM_POPRETZ}
+enum cmop_zcmp = {CM_POP, CM_POPRET, CM_POPRETZ}
 
 enum wrsop = {WRS_STO, WRS_NTO}
 
