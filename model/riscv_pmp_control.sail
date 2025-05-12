@@ -15,7 +15,7 @@ function pmpCheckRWX(ent, acc) =
     Read(_)      => ent[R] == 0b1,
     Write(_)     => ent[W] == 0b1,
     ReadWrite(_) => ent[R] == 0b1 & ent[W] == 0b1,
-    Execute()    => ent[X] == 0b1,
+    InstructionFetch() => ent[X] == 0b1,
   }
 
 
@@ -55,13 +55,13 @@ function pmpMatchAddr(
       // "If pmpaddr[i-1] >= pmpaddr[i] and pmpcfg[i].A=TOR, then PMP entry i matches no addresses."
       if prev_pmpaddr >=_u pmpaddr
       then PMP_NoMatch
-      else pmpRangeMatch(unsigned(prev_pmpaddr), unsigned(pmpaddr), addr, width)
+      else pmpRangeMatch(unsigned(prev_pmpaddr) * 4, unsigned(pmpaddr) * 4, addr, width)
     },
     NA4 => {
       // NA4 is not selectable when the PMP grain G >= 1. See pmpWriteCfg().
       assert(sys_pmp_grain() < 1, "NA4 cannot be selected when PMP grain G >= 1.");
       // Match a 4-byte region.
-      let begin = unsigned(pmpaddr @ 0b00);
+      let begin = unsigned(pmpaddr) * 4;
       pmpRangeMatch(begin, begin + 4, addr, width)
     },
     NAPOT => {
@@ -71,10 +71,10 @@ function pmpMatchAddr(
       // pmpaddr + 1:     0b00010110000
       // mask:            0b00000011111
       // ~mask:           0b11111100000
-      let begin = unsigned(pmpaddr & (~(mask)));
+      let begin_words = unsigned(pmpaddr & (~(mask)));
       // mask + 1:        0b00000100000
-      let end_ = begin + unsigned(mask) + 1;
-      pmpRangeMatch(begin, end_, addr, width)
+      let end_words = begin_words + unsigned(mask) + 1;
+      pmpRangeMatch(begin_words * 4, end_words * 4, addr, width)
     },
   }
 }
@@ -99,7 +99,7 @@ function accessToFault(acc : AccessType(ext_access_type)) -> ExceptionType =
     Read(_)      => E_Load_Access_Fault(),
     Write(_)     => E_SAMO_Access_Fault(),
     ReadWrite(_) => E_SAMO_Access_Fault(),
-    Execute()    => E_Fetch_Access_Fault(),
+    InstructionFetch() => E_Fetch_Access_Fault(),
   }
 
 function pmpCheck forall 'n, 'n > 0. (addr: physaddr, width: int('n), acc: AccessType(ext_access_type), priv: Privilege)
@@ -124,7 +124,7 @@ function reset_pmp() -> unit = {
   );
 
   foreach (i from 0 to 63) {
-    // On reset the PMP register's A and L bits are set to 0 unless the plaform
+    // On reset the PMP register's A and L bits are set to 0 unless the platform
     // mandates a different value.
     pmpcfg_n[i] = [pmpcfg_n[i] with A = pmpAddrMatchType_to_bits(OFF), L = 0b0];
   };

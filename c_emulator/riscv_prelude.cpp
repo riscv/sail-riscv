@@ -22,20 +22,6 @@ unit print_step(unit)
   return UNIT;
 }
 
-unit print_reg(sail_string s)
-{
-  if (config_print_reg)
-    fprintf(trace_log, "%s\n", s);
-  return UNIT;
-}
-
-unit print_mem_access(sail_string s)
-{
-  if (config_print_mem_access)
-    fprintf(trace_log, "%s\n", s);
-  return UNIT;
-}
-
 unit print_platform(sail_string s)
 {
   if (config_print_platform)
@@ -45,20 +31,10 @@ unit print_platform(sail_string s)
 
 bool get_config_print_instr(unit)
 {
-  return (config_print_instr) ? true : false;
-}
-
-bool get_config_print_reg(unit)
-{
-  return (config_print_reg) ? true : false;
-}
-
-bool get_config_print_mem(unit)
-{
-  return (config_print_mem_access) ? true : false;
+  return config_print_instr;
 }
 
 bool get_config_print_platform(unit)
 {
-  return (config_print_platform) ? true : false;
+  return config_print_platform;
 }

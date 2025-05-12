@@ -62,8 +62,6 @@ overload max = {max_int}
 val print_string = pure "print_string" : (string, string) -> unit
 
 val print_instr    = pure {interpreter: "print_endline", c: "print_instr", lem: "print_dbg", _: "print_endline"} : string -> unit
-val print_reg      = pure {interpreter: "print_endline", c: "print_reg", lem: "print_dbg", _: "print_endline"} : string -> unit
-val print_mem      = pure {interpreter: "print_endline", c: "print_mem_access", lem: "print_dbg", _: "print_endline"} : string -> unit
 val print_platform = pure {interpreter: "print_endline", c: "print_platform", lem: "print_dbg", _: "print_endline"} : string -> unit
 
 val print_step = pure {c: "print_step"} : unit -> unit
@@ -71,14 +69,9 @@ val print_step = pure {c: "print_step"} : unit -> unit
 function print_step() = ()
 
 val get_config_print_instr = pure {c:"get_config_print_instr"} : unit -> bool
-val get_config_print_reg = pure {c:"get_config_print_reg"} : unit -> bool
-val get_config_print_mem = pure {c:"get_config_print_mem"} : unit -> bool
-
 val get_config_print_platform = pure {c:"get_config_print_platform"} : unit -> bool
 // defaults for other backends
 function get_config_print_instr () = false
-function get_config_print_reg () = false
-function get_config_print_mem () = false
 function get_config_print_platform () = false
 
 val sign_extend : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
@@ -92,6 +85,11 @@ function zeros (n) = sail_zeros(n)
 
 val ones : forall 'n, 'n >= 0 . implicit('n) -> bits('n)
 function ones (n) = sail_ones(n)
+
+// Implicit version of truncate. Unfortunately the non-implicit version
+// isn't called `sail_truncate()` by Sail so we can't name this `truncate()`.
+val trunc : forall 'm 'n, 'm >= 0 & 'm <= 'n. (implicit('m), bits('n)) -> bits('m)
+function trunc(m, v) = truncate(v, m)
 
 mapping bool_bit : bool <-> bit = {
   true <-> bitone,
@@ -198,8 +196,6 @@ function reverse_bits (xs)  = {
   ys
 }
 
-overload reverse = {reverse_bits}
-
 overload operator / = {quot_positive_round_zero, quot_round_zero}
 overload operator * = {mult_atom, mult_int}
 
@@ -246,3 +242,8 @@ val reverse_endianness = pure {c: "reverse_endianness"} : forall 'n . bits(8 * '
 // Enable unratified extensions
 val sys_enable_experimental_extensions = pure "sys_enable_experimental_extensions" : unit -> bool
 
+// Print a bit vector in hex. If it is not a multiple of 4
+// bits in length zero extend it so it is (bits_str() prints
+// bit vectors that aren't a multiple of 4 bits in binary).
+function hex_bits_str forall 'n . (x : bits('n)) -> string =
+  bits_str(zero_extend((3 - (('n + 3) % 4)) + 'n, x))

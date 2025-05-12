@@ -9,10 +9,14 @@
 newtype vregidx = Vregidx : bits(5)
 newtype vregno = Vregno : range(0, 31)
 function vregidx_to_vregno (Vregidx(b) : vregidx) -> vregno = Vregno(unsigned(b))
+function vregno_to_vregidx (Vregno(b) : vregno) -> vregidx = Vregidx(to_bits(5, b))
 function vregidx_offset(Vregidx(r) : vregidx, o : bits(5)) -> vregidx = Vregidx(r + o)
 function vregidx_bits (Vregidx(b) : vregidx) -> bits(5) = b
 
 mapping encdec_vreg : vregidx <-> bits(5) = { Vregidx(r) <-> r }
+
+val vreg_write_callback = pure {c: "vreg_write_callback"} : (vregidx, vregtype) -> unit
+function vreg_write_callback(_) = ()
 
 let zvreg : vregidx = Vregidx(0b00000) /* v0, zero register  */
 
@@ -91,6 +95,7 @@ function dirty_v_context() -> unit = {
   assert(hartSupports(Ext_V));
   mstatus[VS] = extStatus_to_bits(Dirty);
   mstatus[SD] = 0b1;
+  long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 }
 
 function rV (Vregno(r) : vregno) -> vregtype = {
@@ -169,8 +174,7 @@ function wV (Vregno(r) : vregno, v : vregtype) -> unit = {
   dirty_v_context();
 
   assert(0 < VLEN & VLEN <= sizeof(vlenmax));
-  if   get_config_print_reg()
-  then print_reg("v" ^ dec_str(r) ^ " <- " ^ BitStr(v[VLEN - 1 .. 0]));
+  vreg_write_callback(vregno_to_vregidx(Vregno(r)), v);
 }
 
 function rV_bits(i: vregidx) -> vregtype = rV(vregidx_to_vregno(i))

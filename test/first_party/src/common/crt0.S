@@ -15,7 +15,7 @@ init_pmp:
     la t0, 1f
     csrw mtvec, t0
     // Set a full match pmp address
-    li t0, (1 << (31 + (__riscv_xlen / 64) * (53 - 31))) - 1
+    li t0, -1
     csrw pmpaddr0, t0
     // Configure the above pmp to have full access
     li t0, PMP_NAPOT | PMP_R | PMP_W | PMP_X

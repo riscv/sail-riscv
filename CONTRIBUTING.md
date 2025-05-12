@@ -1,5 +1,4 @@
-Contributing
-============
+# Contributing
 
 When contributing, please follow the [code style](CODE_STYLE.md) in use.
 

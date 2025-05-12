@@ -103,3 +103,4 @@ Definition get_time_ns (_:unit) : Z := 0.
 Definition mults_vec {n} (l : mword n) (r : mword n) : mword (2 * n) := mults_vec l r.
 Definition mult_vec {n} (l : mword n) (r : mword n) : mword (2 * n) := mult_vec l r.
 Definition print_string (_ _:string) : unit := tt.
+Definition plat_enable_htif (_:unit) : bool := false.

@@ -39,7 +39,7 @@ bool speculate_conditional(unit)
 
 static mach_bits check_mask()
 {
-  return (zxlen_val == 32) ? 0x00000000FFFFFFFF : -1;
+  return (zxlen == 32) ? 0x00000000FFFFFFFF : -1;
 }
 
 bool match_reservation(mach_bits addr)
@@ -64,6 +64,11 @@ unit plat_term_write(mach_bits s)
   char c = s & 0xff;
   plat_term_write_impl(c);
   return UNIT;
+}
+
+bool plat_enable_htif()
+{
+  return rv_enable_htif;
 }
 
 mach_bits plat_htif_tohost(unit)

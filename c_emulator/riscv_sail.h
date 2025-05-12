@@ -19,9 +19,8 @@ void model_init(void);
 void model_fini(void);
 
 unit zinit_model(unit);
-bool zstep(sail_int);
+bool ztry_step(sail_int, bool);
 unit ztick_clock(unit);
-unit ztick_platform(unit);
 
 #ifdef RVFI_DII
 unit zrvfi_set_instr_packet(mach_bits);
@@ -43,7 +42,7 @@ unit zprint_rvfi_exec(unit);
 unit zprint_instr_packet(uint64_t);
 #endif
 
-extern mach_bits zxlen_val;
+extern mach_bits zxlen;
 extern bool zhtif_done;
 extern mach_bits zhtif_exit_code;
 extern bool have_exception;

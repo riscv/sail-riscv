@@ -55,6 +55,7 @@ function nan_unbox(m, x) = if 'n == 'm then x else (
 newtype fregidx = Fregidx : bits(5)
 newtype fregno = Fregno : range(0, 31)
 function fregidx_to_fregno (Fregidx(b) : fregidx) -> fregno = Fregno(unsigned(b))
+function fregno_to_fregidx (Fregno(b) : fregno) -> fregidx = Fregidx(to_bits(5, b))
 function fregidx_offset(Fregidx(r) : fregidx, o : bits(5)) -> fregidx = Fregidx(r + o)
 function fregidx_bits(Fregidx(r) : fregidx) -> bits(5) = r
 
@@ -65,9 +66,12 @@ function cregidx_to_fregidx (Cregidx(b) : cregidx) -> fregidx = Fregidx(0b01 @ b
  * marks the places we need to consider it
  */
 function fregidx_to_regidx (Fregidx(b) : fregidx) -> regidx =
-  Regidx(truncate(b, let Regidx(zreg_bits) = zreg in length(zreg_bits)))
+  Regidx(trunc(b))
 
 mapping encdec_freg : fregidx <-> bits(5) = { Fregidx(r) <-> r }
+
+val freg_write_callback = pure {c: "freg_write_callback"} : (fregidx, flenbits) -> unit
+function freg_write_callback(_) = ()
 
 register f0  : fregtype
 register f1  : fregtype
@@ -106,6 +110,7 @@ function dirty_fd_context() -> unit = {
   assert(hartSupports(Ext_F));
   mstatus[FS] = extStatus_to_bits(Dirty);
   mstatus[SD] = 0b1;
+  long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 }
 
 function dirty_fd_context_if_present() -> unit = {
@@ -193,12 +198,8 @@ function wF (Fregno(r) : fregno, in_v : flenbits) -> unit = {
     _  => assert(false, "invalid floating point register number")
   };
 
+  freg_write_callback(fregno_to_fregidx(Fregno(r)), in_v);
   dirty_fd_context();
-
-  if   get_config_print_reg()
-  then
-      /* TODO: will only print bits; should we print in floating point format? */
-      print_reg("f" ^ dec_str(r) ^ " <- " ^ FRegStr(v));
 }
 
 function rF_bits(i: fregidx) -> flenbits = rF(fregidx_to_fregno(i))

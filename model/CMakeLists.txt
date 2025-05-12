@@ -88,6 +88,8 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_zicboz.sail"
                 "riscv_insts_zvbb.sail"
                 "riscv_insts_zvbc.sail"
+                "riscv_insts_zvknhab.sail"
+                "riscv_insts_zvksh.sail"
                 # Zimop and Zcmop should be at the end so they can be overridden by earlier extensions
                 "riscv_insts_zimop.sail"
                 "riscv_insts_zcmop.sail"
@@ -133,6 +135,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_vmem_ptw.sail"
                 "riscv_vmem_tlb.sail"
                 "riscv_vmem.sail"
+                "riscv_vmem_utils.sail"
             )
 
             set(prelude
@@ -153,6 +156,7 @@ foreach (xlen IN ITEMS 32 64)
 
             set(sail_regs_srcs
                 "riscv_csr_begin.sail"
+                "riscv_callbacks.sail"
                 "riscv_reg_type.sail"
                 "riscv_freg_type.sail"
                 "riscv_regs.sail"
@@ -176,10 +180,13 @@ foreach (xlen IN ITEMS 32 64)
                 ${sail_regs_srcs}
                 ${sail_sys_srcs}
                 "riscv_platform.sail"
+                "riscv_sstc.sail"
                 "riscv_mem.sail"
+                "riscv_inst_retire.sail"
                 ${sail_vm_srcs}
                 # Shared/common code for the cryptography extension.
                 "riscv_types_kext.sail"
+                "riscv_zvk_utils.sail"
             )
 
             if (variant STREQUAL "rvfi")
@@ -198,7 +205,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_step.sail"
             )
 
-            if (variant STREQUAL "rocq")
+            if (variant STREQUAL "rocq" OR variant STREQUAL "lean")
                 list(APPEND sail_step_srcs
                     "riscv_termination.sail"
                 )
@@ -258,12 +265,12 @@ foreach (xlen IN ITEMS 32 64)
                         # Extra #include's.
                         --c-include riscv_prelude.h
                         --c-include riscv_platform.h
+                        --c-include riscv_callbacks.h
                         # Don't dead-code eliminate these functions. These should match the
                         # ones used from riscv_sail.h
                         --c-preserve init_model
-                        --c-preserve step
+                        --c-preserve try_step
                         --c-preserve tick_clock
-                        --c-preserve tick_platform
                         # Preserve RVFI functions.
                         --c-preserve rvfi_set_instr_packet
                         --c-preserve rvfi_get_cmd
@@ -278,6 +285,11 @@ foreach (xlen IN ITEMS 32 64)
                         --c-preserve rvfi_halt_exec_packet
                         --c-preserve print_instr_packet
                         --c-preserve print_rvfi_exec
+                        --c-preserve rvfi_write
+                        --c-preserve rvfi_read
+                        --c-preserve rvfi_mem_exception
+                        --c-preserve rvfi_wX
+                        --c-preserve rvfi_trap
                         # Input files.
                         ${sail_srcs}
                 )

@@ -24,11 +24,11 @@ mapping clause encdec = CSRReg(csr, rs1, rd, op)
 mapping clause encdec = CSRImm(csr, imm, rd, op)
   <-> csr @ imm @ 0b1 @ encdec_csrop(op) @ encdec_reg(rd) @ 0b1110011
 
-function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_CSR_Write: bool) -> Retired = {
+function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_CSR_Write: bool) -> ExecutionResult = {
   if not(check_CSR(csr, cur_privilege, is_CSR_Write))
-  then { handle_illegal(); RETIRE_FAIL }
+  then Illegal_Instruction()
   else if not(ext_check_CSR(csr, cur_privilege, is_CSR_Write))
-  then { ext_check_CSR_fail(); RETIRE_FAIL }
+  then Ext_CSR_Check_Failure()
   else {
     /* CSRRW should not generate read side-effects if rd == 0 */
     let is_CSR_Read = not(op == CSRRW & rd == zreg);
@@ -40,11 +40,9 @@ function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_CSR_
         CSRRC => csr_val & ~(rs1_val)
       };
       let final_val = write_CSR(csr, new_val);
-      if get_config_print_reg()
-      then print_reg("CSR " ^ to_str(csr) ^ " <- " ^ bits_str(final_val) ^ " (input: " ^ bits_str(new_val) ^ ")")
+      csr_write_callback(csr, final_val);
     } else {
-      if get_config_print_reg()
-      then print_reg("CSR " ^ to_str(csr) ^ " -> " ^ bits_str(csr_val));
+      csr_read_callback(csr, csr_val);
     };
     X(rd) = csr_val;
     RETIRE_SUCCESS

@@ -99,7 +99,7 @@ val match_reservation = pure {interpreter: "Platform.match_reservation", lem: "m
 val cancel_reservation = impure {interpreter: "Platform.cancel_reservation", c: "cancel_reservation", lem: "cancel_reservation"} : unit -> unit
 
 /* Exception delegation: given an exception and the privilege at which
- * it occured, returns the privilege at which it should be handled.
+ * it occurred, returns the privilege at which it should be handled.
  */
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let idx   = num_of_ExceptionType(e);
@@ -129,6 +129,8 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
  *
  * We don't use the lowered views of {xie,xip} here, since the spec
  * allows for example the M_Timer to be delegated to the S-mode.
+ *
+ * This is used when the hart is in the Active state.
  */
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   // mideleg can only be non-zero if we support Supervisor mode.
@@ -143,6 +145,30 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   if      mIE & (pending_m != zeros()) then Some((pending_m, Machine))
   else if sIE & (pending_s != zeros()) then Some((pending_s, Supervisor))
   else None()
+}
+
+/* Check if a locally enabled interrupt is pending.
+ *
+ * This does not examine the global enable bits (MIE and SIE in
+ * mstatus) and their delegation in mideleg. It does honor the
+ * local interrupt enables in mie.
+ *
+ * This is used when the hart is in the Waiting state, caused by
+ * instructions such as WFI and WRS.{NTO,STO}.
+ *
+ * The relevant detail in the privileged spec is:
+ * https://riscv.github.io/riscv-isa-manual/snapshot/privileged/#wfi
+ *
+ * "The operation of WFI must be unaffected by the global interrupt
+ * bits in mstatus (MIE and SIE) and the delegation register mideleg
+ * (i.e., the hart must resume if a locally enabled interrupt becomes
+ * pending, even if it has been delegated to a less-privileged mode),
+ * but should honor the individual interrupt enables (e.g, MTIE)
+ * (i.e., implementations should avoid resuming the hart if the
+ * interrupt is pending but not individually enabled)."
+ */
+function shouldWakeForInterrupt() -> bool = {
+  (mip.bits & mie.bits) != zeros()
 }
 
 /* Examine the current interrupt state and return an interrupt to be *
@@ -175,21 +201,27 @@ function tval(excinfo : option(xlenbits)) -> xlenbits = {
   }
 }
 
-$ifdef RVFI_DII
-val rvfi_trap : unit -> unit
-// TODO: record rvfi_trap_data
-function rvfi_trap () =
-  rvfi_inst_data[rvfi_trap] = 0x01
-$else
-val rvfi_trap : unit -> unit
-function rvfi_trap () = ()
-$endif
+function track_trap(p : Privilege) -> unit = {
+  long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+  match (p) {
+    Machine => {
+      csr_write_callback("mcause", mcause.bits);
+      csr_write_callback("mtval", mtval);
+      csr_write_callback("mepc", mepc);
+    },
+    Supervisor => {
+      csr_write_callback("scause", scause.bits);
+      csr_write_callback("stval", stval);
+      csr_write_callback("sepc", sepc);
+    },
+    User => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+  };
+}
 
 /* handle exceptional ctl flow by updating nextPC and operating privilege */
-
 function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
                      -> xlenbits = {
-  rvfi_trap();
+  trap_callback();
   if   get_config_print_platform()
   then print_platform("handling " ^ (if intr then "int#" else "exc#")
                       ^ BitStr(c) ^ " at priv " ^ to_str(del_priv)
@@ -203,15 +235,14 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        mstatus[MPIE] = mstatus[MIE];
        mstatus[MIE]  = 0b0;
        mstatus[MPP]  = privLevel_to_bits(cur_privilege);
-       mtval           = tval(info);
-       mepc            = pc;
+       mtval         = tval(info);
+       mepc          = pc;
 
-       cur_privilege   = del_priv;
+       cur_privilege = del_priv;
 
        handle_trap_extension(del_priv, pc, ext);
 
-       if   get_config_print_reg()
-       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
+       track_trap(del_priv);
 
        prepare_trap_vector(del_priv, mcause)
     },
@@ -235,8 +266,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
        handle_trap_extension(del_priv, pc, ext);
 
-       if   get_config_print_reg()
-       then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
+       track_trap(del_priv);
 
        prepare_trap_vector(del_priv, scause)
     },
@@ -263,8 +293,8 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
-      if   get_config_print_reg()
-      then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
+      long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+
       if   get_config_print_platform()
       then print_platform("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
@@ -279,8 +309,8 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
-      if   get_config_print_reg()
-      then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits));
+      long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+
       if   get_config_print_platform()
       then print_platform("ret-ing from " ^ to_str(prev_priv)
                           ^ " to " ^ to_str(cur_privilege));
@@ -326,6 +356,7 @@ function reset_misa() -> unit = {
   misa[D]   = if   flen >= 64
               then bool_to_bits(hartSupports(Ext_D))  /* double-precision */
               else 0b0;
+  csr_write_callback("misa", misa.bits);
 }
 
 // This function is called on reset, so it should only perform the reset actions
@@ -343,6 +374,8 @@ function reset_sys() -> unit = {
   // MBE is reset to 0."
   mstatus[MBE] = 0b0;
 
+  long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+
   // "The misa register is reset to enable the maximal set of supported extensions"
   reset_misa();
 
@@ -357,6 +390,7 @@ function reset_sys() -> unit = {
   // but the value 0 should be returned on implementations that do not
   // distinguish different reset conditions."
   mcause.bits = zeros();
+  csr_write_callback("mcause", mcause.bits);
 
   // "Writable PMP registers’ A and L fields are set to 0, unless the platform
   // mandates a different reset value for some PMP registers’ A and L fields."
@@ -364,6 +398,7 @@ function reset_sys() -> unit = {
 
   // TODO: Probably need to remove these vector resets too but it needs
   // refactoring anyway. See https://github.com/riscv/sail-riscv/issues/566 etc.
+  // If they are kept then callbacks need to be added.
 
   /* initialize vector csrs */
   vstart           = zeros();
@@ -376,10 +411,6 @@ function reset_sys() -> unit = {
   vtype[vta]       = 0b0;
   vtype[vsew]      = 0b000;
   vtype[vlmul]     = 0b000;
-
-  // log compatibility with spike
-  if   get_config_print_reg()
-  then print_reg("CSR mstatus <- " ^ BitStr(mstatus.bits) ^ " (input: " ^ BitStr(zeros() : xlenbits) ^ ")")
 }
 
 /* memory access exceptions, defined here for use by the platform model. */

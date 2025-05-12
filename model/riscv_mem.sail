@@ -33,10 +33,27 @@
  * The internal implementation first performs a PMP check (if PMP is
  * enabled), and then dispatches to MMIO regions or physical memory as
  * per the platform memory map.
+ *
+ * A helper to check address alignment is also provided in the external API.
+ *
+ *   is_aligned_addr - checks for alignment of a physical or virtual address
  */
 
-function is_aligned_addr forall 'n. (Physaddr(addr) : physaddr, width : int('n)) -> bool =
+function is_aligned_paddr forall 'n. (Physaddr(addr) : physaddr, width : int('n)) -> bool =
   unsigned(addr) % width == 0
+
+function is_aligned_vaddr forall 'n. (Virtaddr(addr) : virtaddr, width : int('n)) -> bool =
+  unsigned(addr) % width == 0
+
+function is_aligned_bits(vaddr : xlenbits, width : word_width) -> bool =
+  match width {
+    BYTE   => true,
+    HALF   => vaddr[0..0] == zeros(),
+    WORD   => vaddr[1..0] == zeros(),
+    DOUBLE => vaddr[2..0] == zeros(),
+  }
+
+overload is_aligned_addr = {is_aligned_paddr, is_aligned_vaddr, is_aligned_bits}
 
 function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> option(read_kind) =
   match (aq, rl, res) {
@@ -79,13 +96,11 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
     None()   => None()
   }) : option((bits(8 * 'n), mem_meta));
   match (t, result) {
-    (Execute(),  None()) => Err(E_Fetch_Access_Fault()),
+    (InstructionFetch(), None()) => Err(E_Fetch_Access_Fault()),
     (Read(Data), None()) => Err(E_Load_Access_Fault()),
     (_,          None()) => Err(E_SAMO_Access_Fault()),
     (_,      Some(v, m)) => {
       let v = endianness_conversion(v, current_endianness);
-      if   get_config_print_mem()
-      then print_mem("mem[" ^ to_str(t) ^ "," ^ BitStr(physaddr_bits(paddr)) ^ "] -> " ^ BitStr(v));
       Ok(v, m)
     },
   }
@@ -120,7 +135,7 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
         Ext_PhysAddr_OK()     => phys_mem_read(t, paddr, width, aq, rl, res, meta, get_endianness(t)),
         Ext_PhysAddr_Error(e) => Err(e)
       } else match t {
-        Execute()  => Err(E_Fetch_Access_Fault()),
+        InstructionFetch() => Err(E_Fetch_Access_Fault()),
         Read(Data) => Err(E_Load_Access_Fault()),
         _          => Err(E_SAMO_Access_Fault())
       }
@@ -128,25 +143,6 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   }
 
 /* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
-
-$ifdef RVFI_DII
-val rvfi_read : forall 'n, 'n > 0. (physaddr, int('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit
-function rvfi_read (Physaddr(addr), width, result) = {
-  rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
-  rvfi_mem_data_present = true;
-  match result {
-    /* TODO: report tag bit for capability writes and extend mask by one bit. */
-    Ok(v, _) => if width <= 16
-                       then { rvfi_mem_data[rvfi_mem_rdata] = zero_extend(256, v);
-                              rvfi_mem_data[rvfi_mem_rmask] = rvfi_encode_width_mask(width) }
-                       else { internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!") },
-    Err(_)   => ()
-  };
-}
-$else
-val rvfi_read : forall 'n, 'n > 0. (physaddr, int('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit
-function rvfi_read (Physaddr(addr), width, result) = ()
-$endif
 
 val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
 val mem_read_priv : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), Privilege, physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
@@ -163,7 +159,10 @@ function mem_read_priv_meta (typ, priv, paddr, width, aq, rl, res, meta) = {
       (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
       (_, _, _)             => checked_mem_read(typ, priv, paddr, width, aq, rl, res, meta)
     };
-  rvfi_read(paddr, width, result);
+  match result {
+    Ok(value, _) => mem_read_callback(to_str(typ), bits_of(paddr), width, value),
+    Err(e) => mem_exception_callback(bits_of(paddr), num_of_ExceptionType(e)),
+  };
   result
 }
 
@@ -184,35 +183,9 @@ function mem_write_ea (addr, width, aq, rl, con) =
   then Err(E_SAMO_Addr_Align())
   else Ok(write_ram_ea(write_kind_of_flags(aq, rl, con), addr, width))
 
-$ifdef RVFI_DII
-val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit
-function rvfi_write (Physaddr(addr), width, value, meta, result) = {
-  rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
-  rvfi_mem_data_present = true;
-  match result {
-    /* Log only the memory address (without the value) if the write fails. */
-    Ok(_) => if width <= 16 then {
-        /* TODO: report tag bit for capability writes and extend mask by one bit. */
-        rvfi_mem_data[rvfi_mem_wdata] = zero_extend(256, value);
-        rvfi_mem_data[rvfi_mem_wmask] = rvfi_encode_width_mask(width);
-      } else {
-        internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!");
-      },
-    Err(_) => ()
-  }
-}
-$else
-val rvfi_write : forall 'n, 'n > 0. (physaddr, int('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit
-function rvfi_write (Physaddr(addr), width, value, meta, result) = ()
-$endif
-
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : physaddr, width : int('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
-  let result = write_ram(wk, paddr, width, data, meta);
-  if   get_config_print_mem()
-  then print_mem("mem[" ^ BitStr(physaddr_bits(paddr)) ^ "] <- " ^ BitStr(data));
-  Ok(result)
-}
+function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : physaddr, width : int('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) =
+  Ok(write_ram(wk, paddr, width, data, meta))
 
 /* dispatches to MMIO regions or physical memory regions depending on physical memory map */
 function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
@@ -255,7 +228,10 @@ function mem_write_value_priv_meta (paddr, width, value, typ, priv, meta, aq, rl
   then Err(E_SAMO_Addr_Align())
   else {
     let result = checked_mem_write(paddr, width, value, typ, priv, meta, aq, rl, con);
-    rvfi_write(paddr, width, value, meta, result);
+    match result {
+      Ok(_) => mem_write_callback(bits_of(paddr), width, value),
+      Err(e) => mem_exception_callback(bits_of(paddr), num_of_ExceptionType(e)),
+    };
     result
   }
 }

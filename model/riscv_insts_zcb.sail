@@ -126,7 +126,7 @@ mapping clause assembly = C_SEXT_B(rsdc) <->
 
 function clause execute C_SEXT_B(rsdc) = {
   let rsd = creg2reg_idx(rsdc);
-  execute(ZBB_EXTOP(rsd, rsd, RISCV_SEXTB))
+  execute(ZBB_EXTOP(rsd, rsd, SEXTB))
 }
 
 /* ****************************************************************** */
@@ -142,7 +142,7 @@ mapping clause assembly = C_ZEXT_H(rsdc) <->
 
 function clause execute C_ZEXT_H(rsdc) = {
   let rsd = creg2reg_idx(rsdc);
-  execute(ZBB_EXTOP(rsd, rsd, RISCV_ZEXTH))
+  execute(ZBB_EXTOP(rsd, rsd, ZEXTH))
 }
 
 /* ****************************************************************** */
@@ -158,7 +158,7 @@ mapping clause assembly = C_SEXT_H(rsdc) <->
 
 function clause execute C_SEXT_H(rsdc) = {
   let rsd = creg2reg_idx(rsdc);
-  execute(ZBB_EXTOP(rsd, rsd,  RISCV_SEXTH))
+  execute(ZBB_EXTOP(rsd, rsd,  SEXTH))
 }
 
 /* ****************************************************************** */
@@ -174,7 +174,7 @@ mapping clause assembly = C_ZEXT_W(rsdc) <->
 
 function clause execute C_ZEXT_W(rsdc) = {
   let rsd = creg2reg_idx(rsdc);
-  execute (ZBA_RTYPEUW(zreg, rsd, rsd, RISCV_ADDUW))
+  execute (ZBA_RTYPEUW(zreg, rsd, rsd, ADDUW))
 }
 
 /* ****************************************************************** */

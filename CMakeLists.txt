@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
+cmake_policy(VERSION 3.20...3.31)
 
 project(sail_riscv)
 
@@ -26,7 +27,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 # Always use Position Independent Code. By default it is only used for
 # shared libraries (which require it), but you also need it for static
 # libraries if you link them into shared libraries.
-# Generally it just simplifies everything for a negligable performance cost.
+# Generally it just simplifies everything for a negligible performance cost.
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
 # Don't allow undefined symbols. This is generally a pain.
@@ -76,7 +77,8 @@ if (DOWNLOAD_GMP)
     include(ExternalProject)
     ExternalProject_Add(
         gmp
-        URL https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
+        URL https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz https://ftpmirror.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
+        URL_HASH SHA256=a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898
         INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/gmp
         CONFIGURE_COMMAND "<SOURCE_DIR>/configure" "--prefix=<INSTALL_DIR>" --disable-shared --enable-static
         # The libgmp.a output is created by the install step but since GMP::GMP

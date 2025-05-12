@@ -29,7 +29,10 @@ function clause execute (VCLMUL_VV(vm, vs2, vs1, vd)) = {
   let vs1_val : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vs2);
 
-  let (initial_result, mask) = init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val);
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
+    Ok(v)   => v,
+    Err(()) => return Illegal_Instruction()
+  };
   var result = initial_result;
 
   foreach (i from 0 to ('n - 1)) {
@@ -65,7 +68,10 @@ function clause execute (VCLMUL_VX(vm, vs2, rs1, vd)) = {
   let rs1_val : bits('m) = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vs2);
 
-  let (initial_result, mask) = init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val);
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
+    Ok(v)   => v,
+    Err(()) => return Illegal_Instruction()
+  };
   var result = initial_result;
 
   foreach (i from 0 to ('n - 1)) {
@@ -100,7 +106,10 @@ function clause execute (VCLMULH_VV(vm, vs2, vs1, vd)) = {
   let vs1_val : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vs2);
 
-  let (initial_result, mask) = init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val);
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
+    Ok(v)   => v,
+    Err(()) => return Illegal_Instruction()
+  };
   var result = initial_result;
 
   foreach (i from 0 to ('n - 1)) {
@@ -136,7 +145,10 @@ function clause execute (VCLMULH_VX(vm, vs2, rs1, vd)) = {
   let rs1_val : bits('m) = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vs2);
 
-  let (initial_result, mask) = init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val);
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
+    Ok(v)   => v,
+    Err(()) => return Illegal_Instruction()
+  };
   var result = initial_result;
 
   foreach (i from 0 to ('n - 1)) {

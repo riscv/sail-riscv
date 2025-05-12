@@ -10,6 +10,14 @@
 /* This file implements functions used by vector instructions.                     */
 /* ******************************************************************************* */
 
+/* NFIELDS Encoding
+ * typically, nf is in range 1 to 8, but for 'Vector Load/Store Whole Register Instructions',
+ * only NFIELDS values of 1, 2, 4, 8 are supported, with other values reserved.
+ */
+type nfields_range('q) = 'q > 0 & 'q <= 8
+type nfields_range_pow2('q) = 'q in { 1, 2, 4, 8 }
+type nfields = { 'q, nfields_range('q). int('q) }
+
 /* Vector mask mapping */
 mapping maybe_vmask : string <-> bits(1) = {
   ""              <-> 0b1, /* unmasked by default */
@@ -76,7 +84,7 @@ function valid_reg_overlap(rs, rd, EMUL_pow_rs, EMUL_pow_rd) = {
  *  The EMUL of load vd or store vs3 times the number of fields per segment
  *  must not be larger than 8. (EMUL * NFIELDS <= 8)
  */
-val valid_segment : (int, int) -> bool
+val valid_segment : (nfields, int) -> bool
 function valid_segment(nf, EMUL_pow) = {
   if EMUL_pow < 0 then nf / (2 ^ (0 - EMUL_pow)) <= 8
   else nf * 2 ^ EMUL_pow <= 8
@@ -134,27 +142,27 @@ function illegal_reduction_widen(SEW_widen, LMUL_pow_widen) = {
 }
 
 /* g. Non-indexed load instruction check */
-val illegal_load : (vregidx, bits(1), int, int, int) -> bool
+val illegal_load : (vregidx, bits(1), nfields, int, int) -> bool
 function illegal_load(vd, vm, nf, EEW, EMUL_pow) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) |
   not(valid_eew_emul(EEW, EMUL_pow)) | not(valid_segment(nf, EMUL_pow))
 }
 
 /* h. Non-indexed store instruction check (with vs3 rather than vd) */
-val illegal_store : (int, int, int) -> bool
+val illegal_store : (nfields, int, int) -> bool
 function illegal_store(nf, EEW, EMUL_pow) = {
   not(valid_vtype()) | not(valid_eew_emul(EEW, EMUL_pow)) | not(valid_segment(nf, EMUL_pow))
 }
 
 /* i. Indexed load instruction check */
-val illegal_indexed_load : (vregidx, bits(1), int, int, int, int) -> bool
+val illegal_indexed_load : (vregidx, bits(1), nfields, int, int, int) -> bool
 function illegal_indexed_load(vd, vm, nf, EEW_index, EMUL_pow_index, EMUL_pow_data) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) |
   not(valid_eew_emul(EEW_index, EMUL_pow_index)) | not(valid_segment(nf, EMUL_pow_data))
 }
 
 /* j. Indexed store instruction check (with vs3 rather than vd) */
-val illegal_indexed_store : (int, int, int, int) -> bool
+val illegal_indexed_store : (nfields, int, int, int) -> bool
 function illegal_indexed_store(nf, EEW_index, EMUL_pow_index, EMUL_pow_data) = {
   not(valid_vtype()) | not(valid_eew_emul(EEW_index, EMUL_pow_index)) |
   not(valid_segment(nf, EMUL_pow_data))
@@ -172,19 +180,45 @@ function get_scalar(rs1, SEW) = {
   }
 }
 
+/* Extracts 4 consecutive vector elements starting from index 4*i and returns a bitvector */
+val get_velem_quad : forall 'n 'm 'p, 'n > 0 & 'm > 0 & 'p >= 0 & 4 * 'p + 3 < 'n. (vector('n, bits('m)), int('p)) -> bits(4 * 'm)
+function get_velem_quad(v, i) = v[4 * i + 3] @ v[4 * i + 2] @ v[4 * i + 1] @ v[4 * i]
+
+/* Divide the input bitvector into 4 equal slices and store them in vd starting at position 4*i */
+val write_velem_quad : forall 'p 'n 'm, 8 <= 'n <= 64 & 'm > 0 & 'p >= 0. (vregidx, int('n), bits('m), int('p)) -> unit
+function write_velem_quad(vd, SEW, input, i) = {
+  foreach(j from 0 to 3)
+    write_single_element(SEW, 4 * i + j, vd, slice(input, j * SEW, SEW));
+}
+
+/* Extracts 8 consecutive vector elements starting from index 8*i and returns a
+ * vector. The parameter n is implicit to help proof the proof assistant
+ * backends infer its value. */
+val get_velem_oct_vec : forall 'n 'm 'p, 'n > 0 & 8 <= 'm <= 64 & 'p >= 0 & 8 * 'p + 7 < 'n. (implicit('n), vector('n, bits('m)), int('p)) -> vector(8, bits('m))
+function get_velem_oct_vec(n, v, i) = [ v[8 * i + 7], v[8 * i + 6], v[8 * i + 5], v[8 * i + 4], v[8 * i + 3], v[8 * i + 2], v[8 * i + 1], v[8 * i] ]
+
+/* Writes each of the 8 elements from the input vector to the vector register vd, starting at position 8 * i */
+val write_velem_oct_vec : forall 'p 'n, 8 <= 'n <= 64 & 'p >= 0. (vregidx, int('n), vector(8, bits('n)), int('p)) -> unit
+function write_velem_oct_vec(vd, SEW, input, i) = {
+  foreach(j from 0 to 7)
+    write_single_element(SEW, 8 * i + j, vd, input[j]);
+}
+
 /* Get the starting element index from csr vtype */
-val get_start_element : unit -> nat
+val get_start_element : unit -> result(nat, unit)
 function get_start_element() = {
   let start_element = unsigned(vstart);
   let VLEN_pow = get_vlen_pow();
   let SEW_pow = get_sew_pow();
   /* The use of vstart values greater than the largest element
-    index for the current SEW setting is reserved.
-    It is recommended that implementations trap if vstart is out of bounds.
-    It is not required to trap, as a possible future use of upper vstart bits
-    is to store imprecise trap information. */
-  if start_element > (2 ^ (3 + VLEN_pow - SEW_pow) - 1) then handle_illegal();
-  start_element
+   * index for the current SEW setting is reserved.
+   *
+   * TODO: the bound here might be incorrect.
+   * See https://github.com/riscv/sail-riscv/pull/755#discussion_r2035095825
+   */
+  if start_element > (2 ^ (3 + VLEN_pow - SEW_pow) - 1)
+  then Err(())
+  else Ok(start_element)
 }
 
 /* Get the ending element index from csr vl */
@@ -199,9 +233,12 @@ function get_end_element() = unsigned(vl) - 1
  *   vector2 is a "mask" vector that is true for an element if the corresponding element
  *     in the result vector should be updated by the calling instruction
  */
-val init_masked_result : forall 'n 'm 'p, 'n >= 0 & 'm >= 0. (int('n), int('m), int('p), vector('n, bits('m)), bits('n)) -> (vector('n, bits('m)), bits('n))
+val init_masked_result : forall 'n 'm 'p, 'n >= 0 & 'm >= 0. (int('n), int('m), int('p), vector('n, bits('m)), bits('n)) -> result((vector('n, bits('m)), bits('n)), unit)
 function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
-  let start_element = get_start_element();
+  let start_element : nat = match get_start_element() {
+    Ok(v)   => v,
+    Err(()) => return Err(())
+  };
   let end_element   = get_end_element();
   let tail_ag : agtype = get_vtype_vta();
   let mask_ag : agtype = get_vtype_vma();
@@ -244,7 +281,7 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
     }
   };
 
-  (result, mask)
+  Ok((result, mask))
 }
 
 /* For instructions like vector reduction and vector store,
@@ -252,9 +289,12 @@ function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
  * (vs3 for store and vs2 for reduction). There's no destination register to be masked.
  * In these cases, this function can be called to simply get the mask vector for vs (without the prepared vd result vector).
  */
-val init_masked_source : forall 'n 'p, 'n > 0. (int('n), int('p), bits('n)) -> bits('n)
+val init_masked_source : forall 'n 'p, 'n > 0. (int('n), int('p), bits('n)) -> result(bits('n), unit)
 function init_masked_source(num_elem, LMUL_pow, vm_val) = {
-  let start_element = get_start_element();
+  let start_element : nat = match get_start_element() {
+    Ok(v)   => v,
+    Err(()) => return Err(())
+  };
   let end_element   = get_end_element();
   var mask : bits('n) = undefined;
 
@@ -281,14 +321,17 @@ function init_masked_source(num_elem, LMUL_pow, vm_val) = {
     }
   };
 
-  mask
+  Ok(mask)
 }
 
 /* Mask handling for carry functions that use masks as input/output */
 /* Only prestart and tail elements are masked in a mask value */
-val init_masked_result_carry : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), bits('n)) -> (bits('n), bits('n))
+val init_masked_result_carry : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), bits('n)) -> result((bits('n), bits('n)), unit)
 function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
-  let start_element = get_start_element();
+  let start_element : nat = match get_start_element() {
+    Ok(v)   => v,
+    Err(()) => return Err(())
+  };
   let end_element   = get_end_element();
   var mask : bits('n) = undefined;
   var result : bits('n) = undefined;
@@ -318,13 +361,16 @@ function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
     }
   };
 
-  (result, mask)
+  Ok(result, mask)
 }
 
 /* Mask handling for cmp functions that use masks as output */
-val init_masked_result_cmp : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), bits('n), bits('n)) -> (bits('n), bits('n))
+val init_masked_result_cmp : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), bits('n), bits('n)) -> result((bits('n), bits('n)), unit)
 function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
-  let start_element = get_start_element();
+  let start_element : nat = match get_start_element() {
+    Ok(v)   => v,
+    Err(()) => return Err(())
+  };
   let end_element   = get_end_element();
   let mask_ag : agtype = get_vtype_vma();
   var mask : bits('n) = undefined;
@@ -362,14 +408,14 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
     }
   };
 
-  (result, mask)
+  Ok(result, mask)
 }
 
 /* For vector load/store segment instructions:
  *   Read multiple register groups and concatenate them in parallel
  *   The whole segments with the same element index are combined together
  */
-val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'm >= 0 & 'q >= 0. (int('n), int('m), int('p), int('q), vregidx) -> vector('n, bits('q * 'm))
+val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'm >= 0 & nfields_range('q). (int('n), int('m), int('p), int('q), vregidx) -> vector('n, bits('q * 'm))
 function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
   let LMUL_reg : int = if LMUL_pow <= 0 then 1 else 2 ^ LMUL_pow;
   var vreg_list : vector('q, vector('n, bits('m))) = vector_init(vector_init(zeros()));
@@ -444,4 +490,14 @@ function count_leadingzeros (sig, len) = {
     if sig[i] == bitone then idx = i;
   };
   len - idx - 1
+}
+
+/* The parameter m is implicit to help proof the proof assistant backends infer its value. */
+val vrev8 : forall 'n 'm, 'n >= 0 & 'm >= 0. (implicit('m), vector('n, bits('m * 8))) -> vector('n, bits('m * 8))
+function vrev8(m, input) = {
+  var output : vector('n, bits('m * 8)) = input;
+  foreach (i from 0 to ('n - 1)) {
+    output[i] = rev8(input[i]);
+  };
+  output
 }

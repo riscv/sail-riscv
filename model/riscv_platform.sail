@@ -58,6 +58,10 @@ function plat_rom_size() -> physaddrbits = to_bits(physaddrbits_len, config plat
 function plat_clint_base() -> physaddrbits = to_bits(physaddrbits_len, config platform.clint.base : int)
 function plat_clint_size() -> physaddrbits = to_bits(physaddrbits_len, config platform.clint.size : int)
 
+// Whether HTIF (Host Target InterFace) is enabled. This is used for
+// console output and signalling the end of tests.
+val plat_enable_htif = pure "plat_enable_htif" : unit -> bool
+
 /* Location of HTIF ports */
 val plat_htif_tohost = pure {c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> physaddrbits
 function plat_htif_tohost () = to_bits(physaddrbits_len, elf_tohost ())
@@ -106,10 +110,10 @@ function within_clint forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : ph
 }
 
 function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool =
-    plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4)
+    plat_enable_htif() & (plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4))
 
 function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool =
-    plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4)
+    plat_enable_htif() & (plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4))
 
 /* CLINT (Core Local Interruptor), based on Spike. */
 
@@ -205,7 +209,7 @@ function clint_load(t, Physaddr(addr), width, current_endianness) = {
     if   get_config_print_platform()
     then print_platform("clint[" ^ BitStr(addr) ^ "] -> <not-mapped>");
     match t {
-      Execute()  => Err(E_Fetch_Access_Fault()),
+      InstructionFetch() => Err(E_Fetch_Access_Fault()),
       Read(Data) => Err(E_Load_Access_Fault()),
       _          => Err(E_SAMO_Access_Fault())
     }
@@ -329,7 +333,7 @@ function htif_load(t, Physaddr(paddr), width, current_endianness) = {
   //htif_tohost is a 64 bit register, same logic as of mtime, mtimecmp for handling big endianness conversion.
   if ((current_endianness == BigEndian) & width == 4) then converted_htif_tohost = converted_htif_tohost[31..0] @ converted_htif_tohost[63..32];
   if   get_config_print_platform()
-  then print_platform("htif[" ^ BitStr(paddr) ^ "] -> " ^ BitStr(converted_htif_tohost));
+  then print_platform("htif[" ^ hex_bits_str(paddr) ^ "] -> " ^ BitStr(converted_htif_tohost));
   /* FIXME: For now, only allow the expected access widths. */
   if      width == 8 & (paddr == plat_htif_tohost())
   then    Ok(zero_extend(64, converted_htif_tohost))         /* FIXME: Redundant zero_extend currently required by Lem backend */
@@ -338,7 +342,7 @@ function htif_load(t, Physaddr(paddr), width, current_endianness) = {
   else if width == 4 & paddr == plat_htif_tohost() + 4
   then    Ok(zero_extend(32, converted_htif_tohost[63..32])) /* FIXME: Redundant zero_extend currently required by Lem backend */
   else match t {
-    Execute()  => Err(E_Fetch_Access_Fault()),
+    InstructionFetch() => Err(E_Fetch_Access_Fault()),
     Read(Data) => Err(E_Load_Access_Fault()),
     _          => Err(E_SAMO_Access_Fault())
   }
@@ -347,7 +351,7 @@ function htif_load(t, Physaddr(paddr), width, current_endianness) = {
 val htif_store: forall 'n, 0 < 'n <= 8. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
 function htif_store(Physaddr(paddr), width, data) = {
   if   get_config_print_platform()
-  then print_platform("htif[" ^ BitStr(paddr) ^ "] <- " ^ BitStr(data));
+  then print_platform("htif[" ^ hex_bits_str(paddr) ^ "] <- " ^ BitStr(data));
   /* Store the written value so that we can ack it later. */
   if      width == 8
   then    { htif_cmd_write = bitone;
@@ -402,13 +406,6 @@ function htif_store(Physaddr(paddr), width, data) = {
   Ok(true)
 }
 
-val htif_tick : unit -> unit
-function htif_tick() = {
-  if   get_config_print_platform()
-  then print_platform("htif::tick " ^ BitStr(htif_tohost));
-  htif_tohost = htif_tohost /* prevent this function being optimized out */
-}
-
 /* Top-level MMIO dispatch */
 $ifndef RVFI_DII
 function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
@@ -430,7 +427,7 @@ function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_acc
   else if within_htif_readable(paddr, width) & (1 <= 'n)
   then htif_load(t, paddr, width, current_endianness)
   else match t {
-    Execute()  => Err(E_Fetch_Access_Fault()),
+    InstructionFetch() => Err(E_Fetch_Access_Fault()),
     Read(Data) => Err(E_Load_Access_Fault()),
     _          => Err(E_SAMO_Access_Fault())
   }
@@ -453,15 +450,11 @@ function init_platform() -> unit = {
   htif_payload_writes = zeros();
 }
 
-function tick_platform() -> unit = {
-  htif_tick();
-}
-
 /* Platform-specific handling of instruction faults */
 
-function handle_illegal() -> unit = {
-  let info = if plat_mtval_has_illegal_inst_bits ()
-             then Some(instbits)
+function handle_illegal(instbits : instbits) -> unit = {
+  let info = if plat_mtval_has_illegal_inst_bits()
+             then Some(zero_extend(xlen, instbits))
              else None();
   let t : sync_exception = struct { trap    = E_Illegal_Instr(),
                                     excinfo = info,

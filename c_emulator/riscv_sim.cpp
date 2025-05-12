@@ -102,7 +102,7 @@ static struct option options[] = {
 #ifdef RVFI_DII
     {"rvfi-dii",                       required_argument, 0, 'r'             },
 #endif
-    {"help",                           no_argument,       0, 1               },
+    {"help",                           no_argument,       0, 'h'             },
     {"config",                         required_argument, 0, 'c'             },
     {"print-default-config",           no_argument,       0, OPT_PRINT_CONFIG},
     {"trace",                          optional_argument, 0, 'v'             },
@@ -136,13 +136,13 @@ static void print_usage(const char *argv0, int ec)
 
 static void report_arch(void)
 {
-  fprintf(stdout, "RV%" PRIu64 "\n", zxlen_val);
+  fprintf(stdout, "RV%" PRIu64 "\n", zxlen);
   exit(0);
 }
 
 static bool is_32bit_model(void)
 {
-  return zxlen_val == 32;
+  return zxlen == 32;
 }
 
 static void read_dtb(const char *path)
@@ -325,15 +325,15 @@ static int process_args(int argc, char **argv)
 void check_elf(bool is32bit)
 {
   if (is32bit) {
-    if (zxlen_val != 32) {
+    if (zxlen != 32) {
       fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n",
-              zxlen_val);
+              zxlen);
       exit(1);
     }
   } else {
-    if (zxlen_val != 64) {
+    if (zxlen != 64) {
       fprintf(stderr, "64-bit ELF not supported by RV%" PRIu64 " model.\n",
-              zxlen_val);
+              zxlen);
       exit(1);
     }
   }
@@ -352,10 +352,11 @@ uint64_t load_sail(char *f, bool main_file)
   fprintf(stdout, "ELF Entry @ 0x%" PRIx64 "\n", entry);
   /* locate htif ports */
   if (lookup_sym(f, "tohost", &rv_htif_tohost) < 0) {
-    fprintf(stderr, "Unable to locate htif tohost port.\n");
-    exit(1);
+    fprintf(stderr, "Unable to locate tohost symbol; disabling HTIF.\n");
+    rv_enable_htif = false;
+  } else {
+    fprintf(stdout, "HTIF located at 0x%0" PRIx64 "\n", rv_htif_tohost);
   }
-  fprintf(stderr, "tohost located at 0x%0" PRIx64 "\n", rv_htif_tohost);
   /* locate test-signature locations if any */
   if (!lookup_sym(f, "begin_signature", &begin_sig)) {
     fprintf(stdout, "begin_signature: 0x%0" PRIx64 "\n", begin_sig);
@@ -553,6 +554,7 @@ void flush_logs(void)
 void run_sail(void)
 {
   bool stepped;
+  bool exit_wait = true;
   bool diverged = false;
 
   /* initialize the step number */
@@ -586,7 +588,7 @@ void run_sail(void)
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
-      stepped = zstep(sail_step);
+      stepped = ztry_step(sail_step, exit_wait);
       if (have_exception)
         goto step_exception;
       flush_logs();
@@ -630,7 +632,6 @@ void run_sail(void)
     if (insn_cnt == insns_per_tick) {
       insn_cnt = 0;
       ztick_clock(UNIT);
-      ztick_platform(UNIT);
     }
   }
 

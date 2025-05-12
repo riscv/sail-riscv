@@ -8,7 +8,7 @@
 
 // Although a TLB is not part of the RISC-V Architecture
 // specification, we model a simple TLB so that
-// (1) we can meaningfully test SFENCE.VMA which would be a no-op wihout a TLB;
+// (1) we can meaningfully test SFENCE.VMA which would be a no-op without a TLB;
 // (2) we can greatly speed up simulation speed (for Linux boot, can
 //     reduce elapsed time from 10s of minutes to few minutes).
 
@@ -61,7 +61,7 @@ function tlb_get_ppn forall 'v, is_sv_mode('v) . (
   // be zero_extend(ones(9 or 10)). The lowest 9 or 10 bits will
   // be taken from the translated vpn. The bits above that from the
   // cached ppn.
-  truncate(ppn | (vpn & levelMask), if 'v == 32 then 22 else 44)
+  trunc(ppn | (vpn & levelMask))
 }
 
 // 64 entries is based on benchmarks of Linux boots and is where you stop

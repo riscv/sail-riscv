@@ -7,18 +7,15 @@
 /*=======================================================================================*/
 
 /* Basic type and function definitions used pervasively in the model. */
-
-/* this value is only defined for the runtime platform for ELF loading
- * checks, and not used in the model.
- */
-let xlen_val = xlen
-
 let xlen_max_unsigned = 2 ^ xlen - 1
 let xlen_max_signed = 2 ^ (xlen - 1) - 1
 let xlen_min_signed = 0 - 2 ^ (xlen - 1)
 
 type half = bits(16)
 type word = bits(32)
+
+// Bit-vector of an uncompressed instruction.
+type instbits = bits(32)
 
 type pagesize_bits : Int = 12
 let  pagesize_bits = sizeof(pagesize_bits)
@@ -37,6 +34,7 @@ function regidx_bits (Regidx(b) : regidx) -> bits(5) = b
 newtype regno = Regno : range(0, 31)
 
 function regidx_to_regno (Regidx(b) : regidx) -> regno = Regno(unsigned(b))
+function regno_to_regidx (Regno(b) : regno) -> regidx = Regidx(to_bits(5, b))
 
 /* mapping RVC register indices into normal indices */
 val creg2reg_idx : cregidx -> regidx
@@ -46,13 +44,6 @@ function creg2reg_idx(Cregidx(i)) = Regidx(0b01 @ i)
 let zreg : regidx = Regidx(0b00000) /* x0, zero register  */
 let ra   : regidx = Regidx(0b00001) /* x1, return address */
 let sp   : regidx = Regidx(0b00010) /* x2, stack pointer  */
-
-/* instruction fields */
-
-type opcode = bits(7)
-type imm12  = bits(12)
-type imm20  = bits(20)
-type amo    = bits(1)  /* amo opcode flags */
 
 /* base architecture definitions */
 
@@ -71,29 +62,17 @@ mapping architecture : Architecture <-> arch_xlen = {
 type priv_level = bits(2)
 enum Privilege  = {User, Supervisor, Machine}
 
-val privLevel_to_bits : Privilege -> priv_level
-function privLevel_to_bits (p) =
-  match (p) {
-    User       => 0b00,
-    Supervisor => 0b01,
-    Machine    => 0b11
-  }
+mapping privLevel_bits : Privilege <-> priv_level = {
+  User       <-> 0b00,
+  Supervisor <-> 0b01,
+  Machine    <-> 0b11,
+  backwards 0b10 => internal_error(__FILE__, __LINE__, "Invalid privilege level: " ^ BitStr(0b10))
+}
 
-/*!
- * Converts the given 2-bit privilege level code to the [Privilege] enum.
- * Calling with a reserved code will result in an internal error.
- */
-val privLevel_of_bits : priv_level -> Privilege
-function privLevel_of_bits (p) =
-  match (p) {
-    0b00 => User,
-    0b01 => Supervisor,
-    0b11 => Machine,
-    0b10 => internal_error(__FILE__, __LINE__, "Invalid privilege level: " ^ BitStr(p))
-  }
+function privLevel_to_bits(p : Privilege) -> priv_level = privLevel_bits(p)
+function privLevel_of_bits(b : priv_level) -> Privilege = privLevel_bits(b)
 
-val privLevel_to_str : Privilege -> string
-function privLevel_to_str (p) =
+function privLevel_to_str (p : Privilege) -> string =
   match (p) {
     User       => "U",
     Supervisor => "S",
@@ -102,17 +81,13 @@ function privLevel_to_str (p) =
 
 overload to_str = {privLevel_to_str}
 
-/* enum denoting whether an executed instruction retires */
-
-enum Retired = {RETIRE_SUCCESS, RETIRE_FAIL}
-
 /* memory access types */
 
 union AccessType ('a : Type) = {
   Read      : 'a,
   Write     : 'a,
   ReadWrite : ('a, 'a),
-  Execute   : unit
+  InstructionFetch : unit
 }
 
 enum word_width = {BYTE, HALF, WORD, DOUBLE}
@@ -148,25 +123,25 @@ function interruptType_to_bits (i) =
 /* architectural exception definitions */
 
 union ExceptionType = {
- E_Fetch_Addr_Align   : unit,
- E_Fetch_Access_Fault : unit,
- E_Illegal_Instr      : unit,
- E_Breakpoint         : unit,
- E_Load_Addr_Align    : unit,
- E_Load_Access_Fault  : unit,
- E_SAMO_Addr_Align    : unit,
- E_SAMO_Access_Fault  : unit,
- E_U_EnvCall          : unit,
- E_S_EnvCall          : unit,
- E_Reserved_10        : unit,
- E_M_EnvCall          : unit,
- E_Fetch_Page_Fault   : unit,
- E_Load_Page_Fault    : unit,
- E_Reserved_14        : unit,
- E_SAMO_Page_Fault    : unit,
+  E_Fetch_Addr_Align   : unit,
+  E_Fetch_Access_Fault : unit,
+  E_Illegal_Instr      : unit,
+  E_Breakpoint         : unit,
+  E_Load_Addr_Align    : unit,
+  E_Load_Access_Fault  : unit,
+  E_SAMO_Addr_Align    : unit,
+  E_SAMO_Access_Fault  : unit,
+  E_U_EnvCall          : unit,
+  E_S_EnvCall          : unit,
+  E_Reserved_10        : unit,
+  E_M_EnvCall          : unit,
+  E_Fetch_Page_Fault   : unit,
+  E_Load_Page_Fault    : unit,
+  E_Reserved_14        : unit,
+  E_SAMO_Page_Fault    : unit,
 
- /* extensions */
- E_Extension          : ext_exc_type
+  /* extensions */
+  E_Extension          : ext_exc_type
 }
 
 val exceptionType_to_bits : ExceptionType -> exc_code
@@ -262,23 +237,15 @@ function trapVectorMode_of_bits (m) =
 type ext_status = bits(2)
 enum ExtStatus = {Off, Initial, Clean, Dirty}
 
-val extStatus_to_bits : ExtStatus -> ext_status
-function extStatus_to_bits(e) =
-  match (e) {
-    Off     => 0b00,
-    Initial => 0b01,
-    Clean   => 0b10,
-    Dirty   => 0b11
-  }
+mapping extStatus_bits : ExtStatus <-> ext_status = {
+  Off     <-> 0b00,
+  Initial <-> 0b01,
+  Clean   <-> 0b10,
+  Dirty   <-> 0b11
+}
 
-val extStatus_of_bits : ext_status -> ExtStatus
-function extStatus_of_bits(e) =
-  match (e) {
-    0b00 => Off,
-    0b01 => Initial,
-    0b10 => Clean,
-    0b11 => Dirty
-  }
+function extStatus_to_bits(e : ExtStatus) -> ext_status = extStatus_bits(e)
+function extStatus_of_bits(b : ext_status) -> ExtStatus = extStatus_bits(b)
 
 /* supervisor-level address translation modes */
 
@@ -300,46 +267,38 @@ function satpMode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
 type csrRW = bits(2)  /* read/write */
 
 /* instruction opcode grouping */
-enum uop = {RISCV_LUI, RISCV_AUIPC}               /* upper immediate ops */
-enum bop = {RISCV_BEQ, RISCV_BNE, RISCV_BLT,
-            RISCV_BGE, RISCV_BLTU, RISCV_BGEU}    /* branch ops */
-enum iop = {RISCV_ADDI, RISCV_SLTI, RISCV_SLTIU,
-            RISCV_XORI, RISCV_ORI, RISCV_ANDI}    /* immediate ops */
-enum sop = {RISCV_SLLI, RISCV_SRLI, RISCV_SRAI}   /* shift ops */
-enum rop = {RISCV_ADD, RISCV_SUB, RISCV_SLL, RISCV_SLT,
-            RISCV_SLTU, RISCV_XOR, RISCV_SRL, RISCV_SRA,
-            RISCV_OR, RISCV_AND}                  /* reg-reg ops */
+enum uop = {LUI, AUIPC}                          /* upper immediate ops */
+enum bop = {BEQ, BNE, BLT, BGE, BLTU, BGEU}      /* branch ops */
+enum iop = {ADDI, SLTI, SLTIU, XORI, ORI, ANDI}  /* immediate ops */
+enum sop = {SLLI, SRLI, SRAI}                    /* shift ops */
+enum rop = {ADD, SUB, SLL, SLT, SLTU, XOR,
+            SRL, SRA, OR, AND}                   /* reg-reg ops */
 
-enum ropw  = {RISCV_ADDW, RISCV_SUBW, RISCV_SLLW,
-              RISCV_SRLW, RISCV_SRAW}             /* reg-reg 32-bit ops */
-enum sopw = {RISCV_SLLIW, RISCV_SRLIW,
-             RISCV_SRAIW}                         /* RV64-only shift ops */
+enum ropw  = {ADDW, SUBW, SLLW, SRLW, SRAW}           /* reg-reg 32-bit ops */
+enum sopw  = {SLLIW, SRLIW, SRAIW}                    /* RV64-only shift ops */
 enum amoop = {AMOSWAP, AMOADD, AMOXOR, AMOAND, AMOOR,
-              AMOMIN, AMOMAX, AMOMINU, AMOMAXU}   /* AMO ops */
-enum csrop = {CSRRW, CSRRS, CSRRC}                /* CSR ops */
+              AMOMIN, AMOMAX, AMOMINU, AMOMAXU}       /* AMO ops */
+enum csrop = {CSRRW, CSRRS, CSRRC}                    /* CSR ops */
 
 enum cbop_zicbom = {CBO_CLEAN, CBO_FLUSH, CBO_INVAL}  /* Zicbom ops */
 
-enum brop_zba = {RISCV_SH1ADD, RISCV_SH2ADD, RISCV_SH3ADD}
+enum brop_zba = {SH1ADD, SH2ADD, SH3ADD}
 
-enum brop_zbb = {RISCV_ANDN, RISCV_ORN, RISCV_XNOR, RISCV_MAX,
-                 RISCV_MAXU, RISCV_MIN, RISCV_MINU, RISCV_ROL,
-                 RISCV_ROR}
+enum brop_zbb = {ANDN, ORN, XNOR, MAX, MAXU, MIN, MINU, ROL, ROR}
 
-enum brop_zbkb = {RISCV_PACK, RISCV_PACKH}
+enum brop_zbkb = {PACK, PACKH}
 
-enum brop_zbs = {RISCV_BCLR, RISCV_BEXT, RISCV_BINV, RISCV_BSET}
+enum brop_zbs = {BCLR, BEXT, BINV, BSET}
 
-enum bropw_zba = {RISCV_ADDUW, RISCV_SH1ADDUW, RISCV_SH2ADDUW,
-                  RISCV_SH3ADDUW}
+enum bropw_zba = {ADDUW, SH1ADDUW, SH2ADDUW, SH3ADDUW}
 
-enum bropw_zbb = {RISCV_ROLW, RISCV_RORW}
+enum bropw_zbb = {ROLW, RORW}
 
-enum biop_zbs = {RISCV_BCLRI, RISCV_BEXTI, RISCV_BINVI, RISCV_BSETI}
+enum biop_zbs = {BCLRI, BEXTI, BINVI, BSETI}
 
-enum extop_zbb = {RISCV_SEXTB, RISCV_SEXTH, RISCV_ZEXTH}
+enum extop_zbb = {SEXTB, SEXTH, ZEXTH}
 
-enum zicondop = {RISCV_CZERO_EQZ, RISCV_CZERO_NEZ}
+enum zicondop = {CZERO_EQZ, CZERO_NEZ}
 
 //Endianness type.
 enum Endianness = { BigEndian, LittleEndian }
