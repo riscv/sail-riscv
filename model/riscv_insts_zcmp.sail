@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Zcmp) = hartSupports(Ext_Zcmp) & currentlyEnabled(Ext_Zca) & not(currentlyEnabled(Ext_Zcd)) & (xlen == 32 | xlen == 64)
+function clause currentlyEnabled(Ext_Zcmp) = hartSupports(Ext_Zcmp) & currentlyEnabled(Ext_Zca) & not(currentlyEnabled(Ext_Zcd))
 
 mapping zcmp_assembly_rlist : bits(4) <-> string = {
   0x4 <-> "ra",
@@ -66,9 +66,9 @@ mapping zcmp_assembly_mapping : (bits(4), bits(2), bool) <-> string = {
     "{" ^ zcmp_assembly_rlist(rlist) ^ "}" ^ sep() ^ sign ^ dec_str(stack_adj)
   },
   backwards str_input => {
-    /* Backward mapping for cm.push, cm.pop, cm.popret, and cm.popretz */
+    /* Backwards mapping for cm.push, cm.pop, cm.popret, and cm.popretz */
     /* is not implemented due to the complexity of parsing these instructions. */
-    not_implemented("Backward mapping for (cm.push/cm.pop/cm.popret/cm.popretz) is not implemented.");
+    not_implemented("Backwards mapping for (cm.push/cm.pop/cm.popret/cm.popretz) is not implemented.");
   },
 }
 
@@ -101,16 +101,16 @@ function clause execute (CM_PUSH(rlist, spimm)) = {
   let new_sp    = addr + to_bits(xlen, stack_adj);
 
   let mask      = zcmp_regmask(rlist);
-  let width     = size_bytes(xlen_bytes);
   var offset    = negate_int(xlen_bytes);
 
   foreach (i from 31 downto 1) {
     if mask[i] == bitone then {
-      let imm = to_bits(12, offset);
-      let rs2 = bits_regidx(to_bits(5, i));
-      match execute(STORE(imm, rs2, sp, width, false, false)) {
-        RETIRE_SUCCESS => { offset = offset - xlen_bytes },
-        RETIRE_FAIL    => { return RETIRE_FAIL }
+      let sp_offset = to_bits(xlen, offset);
+      let rs2       = bits_regidx(to_bits(5, i));
+      let data      = X(rs2);
+      match vmem_write(sp, sp_offset, xlen_bytes, data, Write(Data), false, false, false) {
+        Err(e) => ( return e ),
+        Ok(_)  => { offset = offset - xlen_bytes }
       };
     }
   };
@@ -125,9 +125,9 @@ mapping clause assembly = CM_PUSH(rlist, spimm)
 union clause ast = CMPP : (cmop_zcmp, bits(4), bits(2))
 
 mapping encdec_cmop : cmop_zcmp <-> bits(5) = {
-  RISCV_CM_POP     <-> 0b11010,
-  RISCV_CM_POPRET  <-> 0b11110,
-  RISCV_CM_POPRETZ <-> 0b11100
+  CM_POP     <-> 0b11010,
+  CM_POPRET  <-> 0b11110,
+  CM_POPRETZ <-> 0b11100
 }
 
 mapping clause encdec_compressed = CMPP(cmop, rlist, spimm)
@@ -140,30 +140,29 @@ function clause execute (CMPP(cmop, rlist, spimm)) = {
   let new_sp       = addr + to_bits(xlen, stack_adj);
 
   let mask         = zcmp_regmask(rlist);
-  let width        = size_bytes(xlen_bytes);
   var offset : int = stack_adj - xlen_bytes;
 
   foreach (i from 31 downto 1) {
     if mask[i] == bitone then {
-      let imm = to_bits(12, offset);
-      let rd  = bits_regidx(to_bits(5, i));
-      match execute(LOAD(imm, sp, rd, true, width, false, false)) {
-        RETIRE_SUCCESS => { offset = offset - xlen_bytes },
-        RETIRE_FAIL    => { return RETIRE_FAIL }
+      let sp_offset = to_bits(xlen, offset);
+      let rd        = bits_regidx(to_bits(5, i));
+      match vmem_read(sp, sp_offset, xlen_bytes, Read(Data), false, false, false) {
+        Err(e)   => { return e },
+        Ok(data) => { X(rd) = data; offset = offset - xlen_bytes }
       };
     }
   };
 
-  if cmop == RISCV_CM_POPRETZ then X(a0) = zeros();
+  if cmop == CM_POPRETZ then X(a0) = zeros();
   X(sp) = new_sp;
-  if cmop == RISCV_CM_POPRET | cmop == RISCV_CM_POPRETZ then set_next_pc(X(ra));
+  if cmop == CM_POPRET | cmop == CM_POPRETZ then set_next_pc(X(ra));
   RETIRE_SUCCESS
 }
 
 mapping zcmp_mnemonic : cmop_zcmp <-> string = {
-  RISCV_CM_POP     <-> "cm.pop",
-  RISCV_CM_POPRET  <-> "cm.popret",
-  RISCV_CM_POPRETZ <-> "cm.popretz",
+  CM_POP     <-> "cm.pop",
+  CM_POPRET  <-> "cm.popret",
+  CM_POPRETZ <-> "cm.popretz",
 }
 
 mapping clause assembly = CMPP(cmop, rlist, spimm)
