@@ -92,6 +92,8 @@ union AccessType ('a : Type) = {
 
 enum word_width = {BYTE, HALF, WORD, DOUBLE}
 
+type is_mem_width('w) = 'w in {1, 2, 4, 8}
+
 /* architectural interrupt definitions */
 
 enum InterruptType = {
