@@ -82,7 +82,7 @@ function write_kind_of_flags (aq : bool, rl : bool, con : bool) -> write_kind =
 
 function get_endianness(typ : AccessType(ext_access_type)) -> Endianness = {
     match (typ, effectivePrivilege(typ, mstatus, cur_privilege)) {
-      (Execute(), _)   => LittleEndian,
+      (InstructionFetch(), _)   => LittleEndian,
       (_, Machine)     => if bits_to_bool(mstatus[MBE]) then BigEndian else LittleEndian,
       (_, Supervisor)  => if bits_to_bool(mstatus[SBE]) then BigEndian else LittleEndian,
       (_, User)        => if bits_to_bool(mstatus[UBE]) then BigEndian else LittleEndian,
