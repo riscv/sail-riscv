@@ -954,7 +954,7 @@ function get_sew() = {
   }
 }
 /* this returns the value of SEW in bytes */
-val get_sew_bytes : unit -> {1, 2, 4, 8}
+val get_sew_bytes : unit -> {'width, is_mem_width('width). int('width)}
 function get_sew_bytes() = {
   match get_sew_pow() {
     3 => 1,
