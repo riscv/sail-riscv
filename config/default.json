@@ -217,5 +217,10 @@
     "Sv57": {
       "supported": true
     }
+  },
+  "endianness": {
+    "BigEndian": {
+      "supported": false
+    }
   }
 }
