@@ -52,8 +52,8 @@ function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   foreach (i from 0 to (num_elem_vs - 1)) {
     if mask[i] == bitone then {
       let elem : bits('o) = match funct6 {
-        IVV_VWREDSUMU  => to_bits(SEW_widen, unsigned(vs2_val[i])),
-        IVV_VWREDSUM   => to_bits(SEW_widen, signed(vs2_val[i]))
+        IVV_VWREDSUMU  => to_bits_unsafe(SEW_widen, unsigned(vs2_val[i])),
+        IVV_VWREDSUM   => to_bits_unsafe(SEW_widen, signed(vs2_val[i]))
       };
       sum = sum + elem
     }
@@ -122,10 +122,10 @@ function clause execute(RMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
         MVV_VREDAND   => sum & vs2_val[i],
         MVV_VREDOR    => sum | vs2_val[i],
         MVV_VREDXOR   => sum ^ vs2_val[i],
-        MVV_VREDMIN   => to_bits(SEW, min(signed(vs2_val[i]), signed(sum))),
-        MVV_VREDMINU  => to_bits(SEW, min(unsigned(vs2_val[i]), unsigned(sum))),
-        MVV_VREDMAX   => to_bits(SEW, max(signed(vs2_val[i]), signed(sum))),
-        MVV_VREDMAXU  => to_bits(SEW, max(unsigned(vs2_val[i]), unsigned(sum)))
+        MVV_VREDMIN   => to_bits_unsafe(SEW, min(signed(vs2_val[i]), signed(sum))),
+        MVV_VREDMINU  => to_bits_unsafe(SEW, min(unsigned(vs2_val[i]), unsigned(sum))),
+        MVV_VREDMAX   => to_bits_unsafe(SEW, max(signed(vs2_val[i]), signed(sum))),
+        MVV_VREDMAXU  => to_bits_unsafe(SEW, max(unsigned(vs2_val[i]), unsigned(sum)))
       }
     }
   };

@@ -136,10 +136,10 @@ function clause execute (ZBB_RTYPE(rs2, rs1, rd, op)) = {
     ANDN => rs1_val & ~(rs2_val),
     ORN  => rs1_val | ~(rs2_val),
     XNOR => ~(rs1_val ^ rs2_val),
-    MAX  => to_bits(xlen, max(signed(rs1_val),   signed(rs2_val))),
-    MAXU => to_bits(xlen, max(unsigned(rs1_val), unsigned(rs2_val))),
-    MIN  => to_bits(xlen, min(signed(rs1_val),   signed(rs2_val))),
-    MINU => to_bits(xlen, min(unsigned(rs1_val), unsigned(rs2_val))),
+    MAX  => if rs1_val >_s rs2_val then rs1_val else rs2_val,
+    MAXU => if rs1_val >_u rs2_val then rs1_val else rs2_val,
+    MIN  => if rs1_val <_s rs2_val then rs1_val else rs2_val,
+    MINU => if rs1_val <_u rs2_val then rs1_val else rs2_val,
     ROL  => if xlen == 32
                   then rs1_val <<< rs2_val[4..0]
                   else rs1_val <<< rs2_val[5..0],
@@ -246,10 +246,10 @@ mapping clause assembly = CPOP(rs1, rd)
 
 function clause execute (CPOP(rs1, rd)) = {
   let rs1_val = X(rs1);
-  var result : nat = 0;
+  var result : xlenbits = zeros();
   foreach (i from 0 to (xlen - 1))
     if rs1_val[i] == bitone then result = result + 1;
-  X(rd) = to_bits(xlen, result);
+  X(rd) = result;
   RETIRE_SUCCESS
 }
 
@@ -265,10 +265,10 @@ mapping clause assembly = CPOPW(rs1, rd)
 
 function clause execute (CPOPW(rs1, rd)) = {
   let rs1_val = X(rs1);
-  var result : nat = 0;
+  var result : xlenbits = zeros();
   foreach (i from 0 to 31)
     if rs1_val[i] == bitone then result = result + 1;
-  X(rd) = to_bits(xlen, result);
+  X(rd) = result;
   RETIRE_SUCCESS
 }
 
@@ -284,13 +284,13 @@ mapping clause assembly = CLZ(rs1, rd)
 
 function clause execute (CLZ(rs1, rd)) = {
   let rs1_val = X(rs1);
-  var result : nat = 0;
+  var result : xlenbits = zeros();
   var done : bool = false;
   foreach (i from (xlen - 1) downto 0)
     if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1
                     else done = true;
-  X(rd) = to_bits(xlen, result);
+  X(rd) = result;
   RETIRE_SUCCESS
 }
 
@@ -306,13 +306,13 @@ mapping clause assembly = CLZW(rs1, rd)
 
 function clause execute (CLZW(rs1, rd)) = {
   let rs1_val = X(rs1);
-  var result : nat = 0;
+  var result : xlenbits = zeros();
   var done : bool = false;
   foreach (i from 31 downto 0)
     if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1
                     else done = true;
-  X(rd) = to_bits(xlen, result);
+  X(rd) = result;
   RETIRE_SUCCESS
 }
 
@@ -328,13 +328,13 @@ mapping clause assembly = CTZ(rs1, rd)
 
 function clause execute (CTZ(rs1, rd)) = {
   let rs1_val = X(rs1);
-  var result : nat = 0;
+  var result : xlenbits = zeros();
   var done : bool = false;
   foreach (i from 0 to (xlen - 1))
     if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1
                     else done = true;
-  X(rd) = to_bits(xlen, result);
+  X(rd) = result;
   RETIRE_SUCCESS
 }
 
@@ -350,12 +350,12 @@ mapping clause assembly = CTZW(rs1, rd)
 
 function clause execute (CTZW(rs1, rd)) = {
   let rs1_val = X(rs1);
-  var result : nat = 0;
+  var result : xlenbits = zeros();
   var done : bool = false;
   foreach (i from 0 to 31)
     if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1
                     else done = true;
-  X(rd) = to_bits(xlen, result);
+  X(rd) = result;
   RETIRE_SUCCESS
 }

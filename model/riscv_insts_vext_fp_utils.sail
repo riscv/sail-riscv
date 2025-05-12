@@ -478,7 +478,7 @@ function rsqrt7 (v, sub) = {
       if sub then {
         let nr_leadingzeros = count_leadingzeros(sig, s);
         assert(nr_leadingzeros >= 0);
-        (to_bits(64, (0 - nr_leadingzeros)), zero_extend(64, sig[(s - 1) .. 0] << (1 + nr_leadingzeros)))
+        (to_bits_unsafe(64, (0 - nr_leadingzeros)), zero_extend(64, sig[(s - 1) .. 0] << (1 + nr_leadingzeros)))
       } else {
         (exp, sig)
       };
@@ -489,8 +489,8 @@ function rsqrt7 (v, sub) = {
     64 => unsigned([normalized_exp[0]] @ normalized_sig[51 .. 46])
   };
   assert(idx >= 0 & idx < 128);
-  let out_sig = to_bits(s, table[(127 - idx)]) << (s - 7);
-  let out_exp = to_bits(e, (3 * (2 ^ (e - 1) - 1) - 1 - signed(normalized_exp)) / 2);
+  let out_sig = to_bits_unsafe(s, table[(127 - idx)]) << (s - 7);
+  let out_exp = to_bits_unsafe(e, (3 * (2 ^ (e - 1) - 1) - 1 - signed(normalized_exp)) / 2);
   zero_extend(64, sign @ out_exp @ out_sig)
 }
 
@@ -572,7 +572,7 @@ function recip7 (v, rm_3b, sub) = {
   assert(nr_leadingzeros >= 0);
   let (normalized_exp, normalized_sig) =
       if sub then {
-        (to_bits(64, (0 - nr_leadingzeros)), zero_extend(64, sig[(s - 1) .. 0] << (1 + nr_leadingzeros)))
+        (to_bits_unsafe(64, (0 - nr_leadingzeros)), zero_extend(64, sig[(s - 1) .. 0] << (1 + nr_leadingzeros)))
       } else {
         (exp, sig)
       };
@@ -583,8 +583,8 @@ function recip7 (v, rm_3b, sub) = {
     64 => unsigned(normalized_sig[51 .. 45])
   };
   assert(idx >= 0 & idx < 128);
-  let mid_exp = to_bits(e, 2 * (2 ^ (e - 1) - 1) - 1 - signed(normalized_exp));
-  let mid_sig = to_bits(s, table[(127 - idx)]) << (s - 7);
+  let mid_exp = to_bits_unsafe(e, 2 * (2 ^ (e - 1) - 1) - 1 - signed(normalized_exp));
+  let mid_sig = to_bits_unsafe(s, table[(127 - idx)]) << (s - 7);
 
   let (out_exp, out_sig)=
       if mid_exp == zeros(e) then {
