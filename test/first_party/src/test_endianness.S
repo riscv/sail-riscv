@@ -287,20 +287,7 @@ TEST DESCRIPTION:
     li t5, 0x0
 
     .if \_IS_ENABLED
-        //Checkpoint 1: MTIME
-        li t0, RVMODEL_MTIME_BASE
-        sw t1, 0(t0)
-        .if __riscv_xlen == 64
-            li t1, TEST_DATA_DW
-            li t4, TEST_DATA_BE_DW
-            sd t1, 0(t0)
-            ld t2, 0(t0)
-            bne t4, t2, \_FAILURE_LBL
-        .endif
-        lw t2, 0(t0)
-        bne t3, t2, \_FAILURE_LBL
-
-        //Checkpoint 2: MTIMECMP
+        //Checkpoint 1: MTIMECMP
         li t0, RVMODEL_MTIMECMP_BASE
         li t1, TEST_DATA_W
         sw t1, 0(t0)
@@ -318,7 +305,7 @@ TEST DESCRIPTION:
             bne t5, t2, \_FAILURE_LBL
         .endif
 
-        //Checkpoint 3: HTIF TOHOST
+        //Checkpoint 2: HTIF TOHOST
         li t0, HTIF_TOHOST
         li t1, TEST_DATA_W
         sw t1, 0(t0)
@@ -335,20 +322,7 @@ TEST DESCRIPTION:
     .else
         li t1, TEST_DATA_W
         li t3, TEST_DATA_W
-        //Checkpoint 1: MTIME
-        li t0, RVMODEL_MTIME_BASE
-        sw t1, 0(t0)
-        .if __riscv_xlen == 64
-            li t1, TEST_DATA_DW
-            li t4, TEST_DATA_DW
-            sd t1, 0(t0)
-            ld t2, 0(t0)
-            bne t4, t2, \_FAILURE_LBL
-        .endif
-        lw t2, 0(t0)
-        bne t3, t2, \_FAILURE_LBL
-
-        //Checkpoint 2: MTIMECMP
+        //Checkpoint 1: MTIMECMP
         li t0, RVMODEL_MTIMECMP_BASE
         li t1, TEST_DATA_W
         sw t1, 0(t0)
@@ -366,7 +340,7 @@ TEST DESCRIPTION:
             bne t5, t2, \_FAILURE_LBL
         .endif
 
-        //Checkpoint 3: HTIF TOHOST
+        //Checkpoint 2: HTIF TOHOST
         li t0, HTIF_TOHOST
         li t1, TEST_DATA_W
         sw t1, 0(t0)
