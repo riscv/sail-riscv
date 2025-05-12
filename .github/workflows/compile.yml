@@ -81,7 +81,7 @@ jobs:
   # to work if you just specify the job ID of the matrix itself).
   ci_pass:
     runs-on: ubuntu-latest
-    needs: [build_matrix]
+    needs: [build]
     steps:
       - name: Dummy
         run: echo 'Jobs need at least one step.'
