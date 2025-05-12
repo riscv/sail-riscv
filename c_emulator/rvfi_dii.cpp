@@ -126,7 +126,6 @@ void rvfi_handler::get_and_send_packet(packet_reader_fn reader,
 
 void rvfi_handler::send_trace(bool config_print)
 {
-#ifdef RVFI_DII
   if (config_print) {
     fprintf(stderr, "Sending v%d trace response...\n", trace_version);
   }
@@ -143,14 +142,10 @@ void rvfi_handler::send_trace(bool config_print)
             trace_version);
     abort();
   }
-#else
-  UNUSED(config_print);
-#endif
 }
 
 rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
 {
-#ifdef RVFI_DII
   mach_bits instr_bits;
   if (config_print) {
     fprintf(stderr, "Waiting for cmd packet... ");
@@ -237,8 +232,5 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
     fprintf(stderr, "Unknown RVFI-DII command: %#02x\n", (int)cmd);
     exit(1);
   }
-#else
-  UNUSED(config_print);
-#endif
   return RVFI_prestep_ok;
 }

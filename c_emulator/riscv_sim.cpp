@@ -57,6 +57,7 @@ bool config_print_mem_access = true;
 bool config_print_platform = true;
 bool config_print_rvfi = false;
 bool config_print_step = false;
+bool config_enable_rvfi = false;
 
 void set_config_print(char *var, bool val)
 {
@@ -99,9 +100,7 @@ static struct option options[] = {
     {"report-arch",                    no_argument,       0, 'a'             },
     {"test-signature",                 required_argument, 0, 'T'             },
     {"signature-granularity",          required_argument, 0, 'g'             },
-#ifdef RVFI_DII
     {"rvfi-dii",                       required_argument, 0, 'r'             },
-#endif
     {"help",                           no_argument,       0, 'h'             },
     {"config",                         required_argument, 0, 'c'             },
     {"print-default-config",           no_argument,       0, OPT_PRINT_CONFIG},
@@ -120,9 +119,7 @@ static struct option options[] = {
 static void print_usage(const char *argv0, int ec)
 {
   fprintf(stdout, "Usage: %s [options] <elf_file> [<elf_file> ...]\n", argv0);
-#ifdef RVFI_DII
   fprintf(stdout, "       %s [options] -r <port>\n", argv0);
-#endif
   struct option *opt = options;
   while (opt->name) {
     if (isprint(opt->val))
@@ -196,9 +193,7 @@ static int process_args(int argc, char **argv)
                     "g:"
                     "h"
                     "c:"
-#ifdef RVFI_DII
                     "r:"
-#endif
                     "V::"
                     "v::"
                     "l:",
@@ -246,13 +241,12 @@ static int process_args(int argc, char **argv)
     case OPT_PRINT_CONFIG:
       printf("%s", DEFAULT_JSON);
       exit(0);
-#ifdef RVFI_DII
     case 'r': {
+      config_enable_rvfi = true;
       int rvfi_dii_port = atoi(optarg);
       rvfi = rvfi_handler(rvfi_dii_port);
       break;
     }
-#endif
     case 'V':
       set_config_print(optarg, false);
       break;
@@ -305,15 +299,10 @@ static int process_args(int argc, char **argv)
     std::filesystem::remove(path);
   }
 
-#ifdef RVFI_DII
-  if (optind > argc || (optind == argc && !rvfi))
-    print_usage(argv[0], 0);
-#else
-  if (optind >= argc) {
+  if (optind > argc || (optind == argc && !rvfi)) {
     fprintf(stderr, "No elf file provided.\n");
     print_usage(argv[0], 0);
   }
-#endif
   if (dtb_file)
     read_dtb(dtb_file);
 
