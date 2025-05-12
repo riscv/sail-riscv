@@ -28,12 +28,14 @@
 #include "riscv_sail.h"
 #include "rvfi_dii.h"
 #include "default_config.h"
+#include "version.h"
 
 enum {
   OPT_TRACE_OUTPUT = 1000,
   OPT_PRINT_CONFIG,
   OPT_SAILCOV,
   OPT_ENABLE_EXPERIMENTAL_EXTENSIONS,
+  OPT_VERSION,
 };
 
 static bool do_show_times = false;
@@ -93,6 +95,7 @@ char *sailcov_file = NULL;
 #endif
 
 static struct option options[] = {
+    {"version",                        no_argument,       0, OPT_VERSION     },
     {"device-tree-blob",               required_argument, 0, 'b'             },
     {"terminal-log",                   required_argument, 0, 't'             },
     {"show-times",                     required_argument, 0, 'p'             },
@@ -243,6 +246,9 @@ static int process_args(int argc, char **argv)
       }
       break;
     }
+    case OPT_VERSION:
+      printf("%s\n", SAIL_RISCV_VERSION);
+      exit(0);
     case OPT_PRINT_CONFIG:
       printf("%s", DEFAULT_JSON);
       exit(0);
