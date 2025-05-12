@@ -66,6 +66,7 @@ axiom plat_term_read : Unit → SailM String
 axiom load_reservation : Arch.pa → SailM Unit
 axiom match_reservation : Arch.pa → Bool
 axiom cancel_reservation : Unit → SailM Unit
+axiom valid_reservation : Unit → Bool
 
 axiom get_16_random_bits : Unit → SailM (BitVec 16)
 
