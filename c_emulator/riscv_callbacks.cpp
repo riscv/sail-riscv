@@ -1,6 +1,7 @@
 #include "riscv_callbacks.h"
 #include "riscv_config.h"
 #include "riscv_platform_impl.h"
+#include "riscv_sail.h"
 #include <stdlib.h>
 #include <vector>
 #include <inttypes.h>
@@ -98,11 +99,11 @@ unit csr_full_read_callback(const_sail_string csr_name, unsigned reg,
   return UNIT;
 }
 
-unit vreg_write_callback(unsigned reg, lbits value, uint64_t vlenb)
+unit vreg_write_callback(unsigned reg, lbits value)
 {
   if (config_print_reg) {
     fprintf(trace_log, "v%d <- ", reg);
-    print_lbits_hex(value, vlenb);
+    print_lbits_hex(value, zVLEN / 8);
   }
   return UNIT;
 }

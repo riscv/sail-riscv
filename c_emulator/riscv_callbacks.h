@@ -18,7 +18,7 @@ unit csr_full_write_callback(const_sail_string csr_name, unsigned reg,
                              uint64_t value);
 unit csr_full_read_callback(const_sail_string csr_name, unsigned reg,
                             uint64_t value);
-unit vreg_write_callback(unsigned reg, lbits value, uint64_t vlenb);
+unit vreg_write_callback(unsigned reg, lbits value);
 unit pc_write_callback(uint64_t value);
 unit trap_callback(unit);
 

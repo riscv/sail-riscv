@@ -68,6 +68,8 @@ extern struct zMcause zmcause, zscause;
 
 extern mach_bits zminstret;
 
+extern mach_bits zVLEN;
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
