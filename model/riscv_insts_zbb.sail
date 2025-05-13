@@ -245,11 +245,7 @@ mapping clause assembly = CPOP(rs1, rd)
   <-> "cpop" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (CPOP(rs1, rd)) = {
-  let rs1_val = X(rs1);
-  var result : nat = 0;
-  foreach (i from 0 to (xlen - 1))
-    if rs1_val[i] == bitone then result = result + 1;
-  X(rd) = to_bits_unsafe(xlen, result);
+  X(rd) = to_bits(count_ones(X(rs1)));
   RETIRE_SUCCESS
 }
 
@@ -264,11 +260,7 @@ mapping clause assembly = CPOPW(rs1, rd)
   <-> "cpopw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (CPOPW(rs1, rd)) = {
-  let rs1_val = X(rs1);
-  var result : nat = 0;
-  foreach (i from 0 to 31)
-    if rs1_val[i] == bitone then result = result + 1;
-  X(rd) = to_bits_unsafe(xlen, result);
+  X(rd) = to_bits(count_ones(X(rs1)[31 .. 0]));
   RETIRE_SUCCESS
 }
 
@@ -283,14 +275,7 @@ mapping clause assembly = CLZ(rs1, rd)
   <-> "clz" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (CLZ(rs1, rd)) = {
-  let rs1_val = X(rs1);
-  var result : nat = 0;
-  var done : bool = false;
-  foreach (i from (xlen - 1) downto 0)
-    if not(done) then if rs1_val[i] == bitzero
-                    then result = result + 1
-                    else done = true;
-  X(rd) = to_bits_unsafe(xlen, result);
+  X(rd) = to_bits(count_leading_zeros(X(rs1)));
   RETIRE_SUCCESS
 }
 
@@ -305,14 +290,7 @@ mapping clause assembly = CLZW(rs1, rd)
   <-> "clzw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (CLZW(rs1, rd)) = {
-  let rs1_val = X(rs1);
-  var result : nat = 0;
-  var done : bool = false;
-  foreach (i from 31 downto 0)
-    if not(done) then if rs1_val[i] == bitzero
-                    then result = result + 1
-                    else done = true;
-  X(rd) = to_bits_unsafe(xlen, result);
+  X(rd) = to_bits(count_leading_zeros(X(rs1)[31 .. 0]));
   RETIRE_SUCCESS
 }
 
@@ -327,14 +305,7 @@ mapping clause assembly = CTZ(rs1, rd)
   <-> "ctz" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (CTZ(rs1, rd)) = {
-  let rs1_val = X(rs1);
-  var result : nat = 0;
-  var done : bool = false;
-  foreach (i from 0 to (xlen - 1))
-    if not(done) then if rs1_val[i] == bitzero
-                    then result = result + 1
-                    else done = true;
-  X(rd) = to_bits_unsafe(xlen, result);
+  X(rd) = to_bits(count_trailing_zeros(X(rs1)));
   RETIRE_SUCCESS
 }
 
@@ -349,13 +320,6 @@ mapping clause assembly = CTZW(rs1, rd)
   <-> "ctzw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (CTZW(rs1, rd)) = {
-  let rs1_val = X(rs1);
-  var result : nat = 0;
-  var done : bool = false;
-  foreach (i from 0 to 31)
-    if not(done) then if rs1_val[i] == bitzero
-                    then result = result + 1
-                    else done = true;
-  X(rd) = to_bits_unsafe(xlen, result);
+  X(rd) = to_bits(count_trailing_zeros(X(rs1)[31 .. 0]));
   RETIRE_SUCCESS
 }

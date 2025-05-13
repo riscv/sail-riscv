@@ -476,7 +476,7 @@ function rsqrt7 (v, sub) = {
 
   let (normalized_exp, normalized_sig) =
       if sub then {
-        let nr_leadingzeros = count_leadingzeros(sig, s);
+        let nr_leadingzeros = count_leading_zeros(sig[s - 1 .. 0]);
         assert(nr_leadingzeros >= 0);
         (to_bits_unsafe(64, (0 - nr_leadingzeros)), zero_extend(64, sig[(s - 1) .. 0] << (1 + nr_leadingzeros)))
       } else {
@@ -544,12 +544,11 @@ function riscv_f64Rsqrte7 (rm, v) = {
 
 val recip7 : forall 'm, 'm in {16, 32, 64}. (bits('m), bits(3), bool) -> (bool, bits_D)
 function recip7 (v, rm_3b, sub) = {
-  let (sig, exp, sign, e, s) : (bits(64), bits(64), bits(1), nat, nat) = match 'm {
+  let (sig, exp, sign, e, s) : (bits(64), bits(64), bits(1), {5, 8, 11}, {10, 23, 52}) = match 'm {
     16 => (zero_extend(64, v[9 .. 0]), zero_extend(64, v[14 .. 10]), [v[15]], 5, 10),
     32 => (zero_extend(64, v[22 .. 0]), zero_extend(64, v[30 .. 23]), [v[31]], 8, 23),
     64 => (zero_extend(64, v[51 .. 0]), zero_extend(64, v[62 .. 52]), [v[63]], 11, 52)
   };
-  assert(s == 10 & e == 5 | s == 23 & e == 8 | s == 52 & e == 11);
   let table : vector(128, int) = [
       127, 125, 123, 121, 119, 117, 116, 114,
       112, 110, 109, 107, 105, 104, 102, 100,
@@ -568,7 +567,7 @@ function recip7 (v, rm_3b, sub) = {
       8, 8, 7, 7, 6, 5, 5, 4,
       4, 3, 3, 2, 2, 1, 1, 0];
 
-  let nr_leadingzeros = count_leadingzeros(sig, s);
+  let nr_leadingzeros = count_leading_zeros(sig[s - 1 .. 0]);
   assert(nr_leadingzeros >= 0);
   let (normalized_exp, normalized_sig) =
       if sub then {
