@@ -27,7 +27,7 @@ unit zrvfi_write(uint64_t paddr, int64_t width, lbits value);
 unit zrvfi_read(uint64_t paddr, sail_int width, lbits value);
 unit zrvfi_mem_exception(uint64_t paddr);
 unit zrvfi_wX(int64_t reg, uint64_t value);
-unit zrvfi_trap();
+unit zrvfi_trap(unit);
 
 #ifdef __cplusplus
 }
