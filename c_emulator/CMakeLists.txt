@@ -1,4 +1,4 @@
-set(EMULATOR_COMMON_SRCS
+add_library(riscv_platform
     riscv_callbacks.cpp
     riscv_callbacks.h
     riscv_config.h
@@ -9,11 +9,17 @@ set(EMULATOR_COMMON_SRCS
     riscv_prelude.cpp
     riscv_prelude.h
     riscv_sail.h
-    rvfi_dii.h
-    rvfi_dii.cpp
-    riscv_sim.cpp
     riscv_softfloat.c
     riscv_softfloat.h
+)
+
+target_include_directories(riscv_platform
+    # So the generated C can find riscv_platform/prelude.h"
+    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+target_link_libraries(riscv_platform
+    PUBLIC softfloat sail_runtime
 )
 
 foreach (xlen IN ITEMS 32 64)
@@ -27,7 +33,9 @@ foreach (xlen IN ITEMS 32 64)
 
         add_executable(riscv_sim_${arch}
             "${CMAKE_BINARY_DIR}/riscv_model_${arch}.c"
-            ${EMULATOR_COMMON_SRCS}
+            "riscv_sim.cpp"
+            "rvfi_dii.h"
+            "rvfi_dii.cpp"
         )
         # The generated model is not warnings-clean, silence them.
         set(_generated_c_warning_opt_out
@@ -45,12 +53,7 @@ foreach (xlen IN ITEMS 32 64)
         add_dependencies(riscv_sim_${arch} generated_model_${arch})
 
         target_link_libraries(riscv_sim_${arch}
-            PRIVATE softfloat sail_runtime default_config
-        )
-
-        target_include_directories(riscv_sim_${arch}
-            # So the generated C can find riscv_platform/prelude.h"
-            PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}"
+            PRIVATE riscv_platform default_config
         )
 
         # TODO: Enable warnings when we use the #include trick
