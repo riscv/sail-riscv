@@ -10,8 +10,8 @@ unit mem_write_callback(const char *type, uint64_t paddr, uint64_t width,
 unit mem_read_callback(const char *type, uint64_t paddr, uint64_t width,
                        lbits value);
 unit mem_exception_callback(uint64_t paddr, uint64_t num_of_exception);
-unit xreg_write_callback(unsigned reg, uint64_t value, uint64_t xlen);
-unit freg_write_callback(unsigned reg, uint64_t value, uint64_t flen);
+unit xreg_write_callback(unsigned reg, uint64_t value);
+unit freg_write_callback(unsigned reg, uint64_t value);
 // `full` indicates that the name and index of the CSR are provided.
 // 64 bit CSRs use a long_csr_write_callback Sail function that automatically
 // makes two csr_full_write_callback calls on RV32.

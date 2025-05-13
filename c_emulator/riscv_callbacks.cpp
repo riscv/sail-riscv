@@ -62,10 +62,10 @@ unit mem_exception_callback(uint64_t paddr, uint64_t num_of_exception)
   return UNIT;
 }
 
-unit xreg_write_callback(unsigned reg, uint64_t value, uint64_t xlen)
+unit xreg_write_callback(unsigned reg, uint64_t value)
 {
   if (config_print_reg) {
-    if (xlen == 32)
+    if (zxlen == 32)
       fprintf(trace_log, "x%d <- 0x%08" PRIX32 "\n", reg, (uint32_t)value);
     else
       fprintf(trace_log, "x%d <- 0x%016" PRIX64 "\n", reg, value);
@@ -76,11 +76,11 @@ unit xreg_write_callback(unsigned reg, uint64_t value, uint64_t xlen)
   return UNIT;
 }
 
-unit freg_write_callback(unsigned reg, uint64_t value, uint64_t flen)
+unit freg_write_callback(unsigned reg, uint64_t value)
 {
   // TODO: will only print bits; should we print in floating point format?
   if (config_print_reg) {
-    if (flen == 32)
+    if (zflen == 32)
       fprintf(trace_log, "f%d <- 0x%08" PRIX32 "\n", reg, (uint32_t)value);
     else
       fprintf(trace_log, "f%d <- 0x%016" PRIX64 "\n", reg, value);

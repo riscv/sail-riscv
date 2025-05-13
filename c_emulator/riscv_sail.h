@@ -41,6 +41,7 @@ unit zprint_rvfi_exec(unit);
 unit zprint_instr_packet(uint64_t);
 
 extern mach_bits zxlen;
+extern mach_bits zflen;
 extern mach_bits zphysaddrbits_len;
 extern mach_bits zVLEN;
 extern bool zhtif_done;
