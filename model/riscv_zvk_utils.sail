@@ -21,7 +21,7 @@ function zvk_check_encdec(EGW: int, EGS: int) -> bool = (unsigned(vl) % EGS == 0
  * ----------------------------------------------------------------------
  */
 
-enum zvkfunct6 = {ZVK_VSHA2CH, ZVK_VSHA2CL, ZVK_VSM4RVV, ZVK_VSM4RVS}
+enum zvk_vsha2_funct6 = {ZVK_VSHA2CH_VV, ZVK_VSHA2CL_VV}
 
 function zvknhab_check_encdec(vs2: vregidx, vs1: vregidx, vd: vregidx) -> bool = {
   let SEW      = get_sew();
@@ -71,6 +71,8 @@ function zvk_maj(x, y, z) = (x & y) ^ (x & z) ^ (y & z)
  * Utility functions for Zvksed
  * ----------------------------------------------------------------------
  */
+
+enum zvk_vsm4r_funct6 = {ZVK_VSM4R_VV, ZVK_VSM4R_VS}
 
 val zvk_round_key : (bits(32), bits(32)) -> bits(32)
 function zvk_round_key(X, S) = X ^ (S ^ (S <<< 13) ^ (S <<< 23))

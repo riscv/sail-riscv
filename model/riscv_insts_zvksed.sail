@@ -60,13 +60,13 @@ function clause execute (VSM4K_VI(vs2, uimm, vd)) = {
 mapping clause assembly = VSM4K_VI(vs2, uimm, vd)
   <-> "vsm4k.vi" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(uimm)
 
-union clause ast = ZVKSM4RTYPE : (zvkfunct6, vregidx, vregidx)
+union clause ast = ZVKSM4RTYPE : (zvk_vsm4r_funct6, vregidx, vregidx)
 
-mapping clause encdec = ZVKSM4RTYPE(ZVK_VSM4RVV, vs2, vd)
+mapping clause encdec = ZVKSM4RTYPE(ZVK_VSM4R_VV, vs2, vd)
   <-> 0b1010001 @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvksed) & get_sew() == 32 & zvk_check_encdec(128, 4)
 
-mapping clause encdec = ZVKSM4RTYPE(ZVK_VSM4RVS, vs2, vd)
+mapping clause encdec = ZVKSM4RTYPE(ZVK_VSM4R_VS, vs2, vd)
   <-> 0b1010011 @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvksed) & get_sew() == 32 & zvk_check_encdec(128, 4) & zvk_valid_reg_overlap(vs2, vd, get_lmul_pow())
 
@@ -86,7 +86,7 @@ function clause execute (ZVKSM4RTYPE(funct6, vs2, vd)) = {
   foreach (i from eg_start to (eg_len - 1)) {
     assert(i * 4 + 3 < num_elem);
 
-    let rk_in : vector(4, bits(32)) = if funct6 == ZVK_VSM4RVV
+    let rk_in : vector(4, bits(32)) = if funct6 == ZVK_VSM4R_VV
                                       then get_velem_quad_vec(vs2_val, i)
                                       else get_velem_quad_vec(vs2_val, 0);
 
@@ -116,9 +116,9 @@ function clause execute (ZVKSM4RTYPE(funct6, vs2, vd)) = {
   RETIRE_SUCCESS
 }
 
-mapping vsm4r_mnemonic : zvkfunct6 <-> string = {
-   ZVK_VSM4RVV <-> "vsm4r.vv",
-   ZVK_VSM4RVS <-> "vsm4r.vs",
+mapping vsm4r_mnemonic : zvk_vsm4r_funct6 <-> string = {
+   ZVK_VSM4R_VV <-> "vsm4r.vv",
+   ZVK_VSM4R_VS <-> "vsm4r.vs",
 }
 
 mapping clause assembly = ZVKSM4RTYPE(funct6, vs2, vd)
