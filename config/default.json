@@ -21,6 +21,9 @@
     },
     "translation": {
       "dirty_update": false
+    },
+    "endianness": {
+      "big_endian": true
     }
   },
   "platform": {
@@ -227,11 +230,6 @@
       "supported": true
     },
     "Sv57": {
-      "supported": true
-    }
-  },
-  "endianness": {
-    "BigEndian": {
       "supported": true
     }
   }
