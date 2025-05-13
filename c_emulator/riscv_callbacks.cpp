@@ -102,7 +102,7 @@ unit vreg_write_callback(unsigned reg, lbits value, uint64_t vlen)
 {
   if (config_print_reg) {
     fprintf(trace_log, "v%d <- ", reg);
-    print_lbits_hex(value, vlen / 8);
+    print_lbits_hex(value, vlen);
   }
   return UNIT;
 }

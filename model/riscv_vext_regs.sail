@@ -15,7 +15,7 @@ function vregidx_bits (Vregidx(b) : vregidx) -> bits(5) = b
 
 mapping encdec_vreg : vregidx <-> bits(5) = { Vregidx(r) <-> r }
 
-val vreg_write_callback = pure {c: "vreg_write_callback"} : (vregidx, vregtype, vlen_bits) -> unit
+val vreg_write_callback = pure {c: "vreg_write_callback"} : (vregidx, vregtype, xlenbits) -> unit
 function vreg_write_callback(_) = ()
 
 let zvreg : vregidx = Vregidx(0b00000) /* v0, zero register  */
@@ -174,7 +174,7 @@ function wV (Vregno(r) : vregno, v : vregtype) -> unit = {
   dirty_v_context();
 
   assert(0 < VLEN & VLEN <= sizeof(vlenmax));
-  vreg_write_callback(vregno_to_vregidx(Vregno(r)), v, to_bits(16, VLEN));
+  vreg_write_callback(vregno_to_vregidx(Vregno(r)), v, get_vlenb());
 }
 
 function rV_bits(i: vregidx) -> vregtype = rV(vregidx_to_vregno(i))
