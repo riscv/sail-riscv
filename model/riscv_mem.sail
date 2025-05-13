@@ -226,7 +226,6 @@ function mem_write_value_priv_meta (paddr, width, value, typ, priv, meta, aq, rl
   if (rl | con) & not(is_aligned_addr(paddr, width))
   then Err(E_SAMO_Addr_Align())
   else {
-    let value = endianness_conversion(value, get_endianness(typ));
     let result = checked_mem_write(paddr, width, value, typ, priv, meta, aq, rl, con);
     match result {
       Ok(_) => mem_write_callback(bits_of(paddr), width, value),

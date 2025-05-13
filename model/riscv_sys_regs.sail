@@ -86,7 +86,7 @@ register misa : Misa =
 function sys_enable_writable_misa() -> bool = config base.writable_misa
 
 /* Whether Endianness Control is supported or not*/
-function big_endianness() -> bool = config endianness.BigEndian.supported
+function big_endian_supported() -> bool = config memory.endianness.big_endian
 
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
@@ -237,8 +237,8 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // MPELP = v[MPELP],
     // MPV = v[MPV],
     // GVA = v[GVA],
-    MBE = if big_endianness() then v[MBE] else 0b0,
-    SBE = if (big_endianness() & currentlyEnabled(Ext_S)) then v[SBE] else 0b0,
+    MBE = if big_endian_supported() then v[MBE] else 0b0,
+    SBE = if (big_endian_supported() & currentlyEnabled(Ext_S)) then v[SBE] else 0b0,
     /* We don't support dynamic changes to SXL and UXL. */
     // SXL = if xlen == 64 then v[SXL] else o[SXL],
     // UXL = if xlen == 64 then v[UXL] else o[UXL],
@@ -262,7 +262,7 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     SPP = if currentlyEnabled(Ext_S) then v[SPP] else 0b0,
     VS = v[VS],
     MPIE = v[MPIE],
-    UBE = if (big_endianness() & currentlyEnabled(Ext_U)) then v[UBE] else 0b0,
+    UBE = if (big_endian_supported() & currentlyEnabled(Ext_U)) then v[UBE] else 0b0,
     SPIE = if currentlyEnabled(Ext_S) then v[SPIE] else 0b0,
     MIE = v[MIE],
     SIE = if currentlyEnabled(Ext_S) then v[SIE] else 0b0,
