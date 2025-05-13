@@ -65,10 +65,7 @@ unit mem_exception_callback(uint64_t paddr, uint64_t num_of_exception)
 unit xreg_write_callback(unsigned reg, uint64_t value)
 {
   if (config_print_reg) {
-    if (zxlen == 32)
-      fprintf(trace_log, "x%d <- 0x%08" PRIX32 "\n", reg, (uint32_t)value);
-    else
-      fprintf(trace_log, "x%d <- 0x%016" PRIX64 "\n", reg, value);
+    fprintf(trace_log, "x%d <- 0x%0*" PRIX64 "\n", reg, (int)zxlen / 4, value);
   }
   if (config_enable_rvfi) {
     zrvfi_wX(reg, value);
@@ -80,11 +77,8 @@ unit freg_write_callback(unsigned reg, uint64_t value)
 {
   // TODO: will only print bits; should we print in floating point format?
   if (config_print_reg) {
-    if (zflen == 32)
-      fprintf(trace_log, "f%d <- 0x%08" PRIX32 "\n", reg, (uint32_t)value);
-    else
-      fprintf(trace_log, "f%d <- 0x%016" PRIX64 "\n", reg, value);
-    // TODO: add PRIX128 once "Q" Extension is supported
+    // TODO: once the "Q" extension is supported change PRIX64 to PRIX128
+    fprintf(trace_log, "x%d <- 0x%0*" PRIX64 "\n", reg, (int)zflen / 4, value);
   }
   return UNIT;
 }
