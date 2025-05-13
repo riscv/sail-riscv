@@ -33,13 +33,13 @@ will build the simulators in `build/c_emulator/riscv_sim_rv{32,64}d`.
 
 If you get an error message saying `sail: unknown option '--require-version'.` it's because your Sail compiler is too old. You need version 0.19 or later.
 
-By default the RV32D and RV64D emulators are built, without RVFI-DII support.
+By default the RV32D and RV64D emulators are built.
 You can see a complete list of targets by running `make help` in the
 build directory, then e.g.
 
 ```
 $ cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDOWNLOAD_GMP=TRUE
-$ make -C build riscv_sim_rv64f_rvfi
+$ make -C build riscv_sim_rv64f
 ```
 
 By default `build_simulators.sh` will download and build [libgmp](https://gmplib.org/).
@@ -91,6 +91,7 @@ For booting operating system images, see the information under the
 - A extension for atomic instructions, v2.1
 - Zalrsc extension for load-reserved and store-conditional operations, v1.0
 - Zaamo extension for atomic memory operations, v1.0
+- Zawrs extension for Wait-on-Reservation-Set instructions, v1.01
 - Zabha extension for byte and halfword atomic memory operations, v1.0
 - F and D extensions for single and double-precision floating-point, v2.2
 - Zfh and Zfhmin extensions for half-precision floating-point, v1.0
@@ -107,6 +108,7 @@ For booting operating system images, see the information under the
 - Zvbb extension for vector basic bit-manipulation, v1.0
 - Zvbc extension for vector carryless multiplication, v1.0
 - Zvkb extension for vector cryptography bit-manipulation, v1.0
+- Zvkned extension for vector cryptography NIST Suite: Vector AES Block Cipher, v1.0
 - Zvknha and Zvknhb extensions for vector cryptography NIST Suite: Vector SHA-2 Secure Hash, v1.0
 - Zvksh extension for vector cryptography ShangMi Suite: SM3 Secure Hash, v1.0
 - Machine, Supervisor, and User modes

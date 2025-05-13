@@ -117,3 +117,13 @@ function zvk_sm3_round(A_H : vector(8, bits(32)), w : bits(32), x : bits(32), j 
 
   [ A_H[6], G1, A_H[4], E1, A_H[2], C1, A_H[0], A1 ]
 }
+
+/*
+ * Utility functions for Zvkned
+ * ----------------------------------------------------------------------
+ */
+
+enum zvk_vaesdf_funct6 = {ZVK_VAESDF_VV, ZVK_VAESDF_VS}
+enum zvk_vaesdm_funct6 = {ZVK_VAESDM_VV, ZVK_VAESDM_VS}
+enum zvk_vaesef_funct6 = {ZVK_VAESEF_VV, ZVK_VAESEF_VS}
+enum zvk_vaesem_funct6 = {ZVK_VAESEM_VV, ZVK_VAESEM_VS}

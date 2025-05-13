@@ -87,6 +87,9 @@ function clause hartSupports(Ext_Zabha) = config extensions.Zabha.supported
 // Load-Reserved/Store-Conditional Instructions
 enum clause extension = Ext_Zalrsc
 function clause hartSupports(Ext_Zalrsc) = config extensions.Zalrsc.supported
+// Wait-On-Reservation-Set
+enum clause extension = Ext_Zawrs
+function clause hartSupports(Ext_Zawrs) = config extensions.Zawrs.supported
 
 // Additional Floating-Point Instructions
 enum clause extension = Ext_Zfa
@@ -182,6 +185,9 @@ function clause hartSupports(Ext_Zvkb) = config extensions.Zvkb.supported
 // Vector Carryless Multiplication
 enum clause extension = Ext_Zvbc
 function clause hartSupports(Ext_Zvbc) = config extensions.Zvbc.supported
+// NIST Suite: Vector AES Block Cipher
+enum clause extension = Ext_Zvkned
+function clause hartSupports(Ext_Zvkned) = config extensions.Zvkned.supported
 // NIST Suite: Vector SHA-2 Secure Hash
 enum clause extension = Ext_Zvknha
 function clause hartSupports(Ext_Zvknha) = config extensions.Zvknha.supported
@@ -191,7 +197,6 @@ function clause hartSupports(Ext_Zvknhb) = config extensions.Zvknhb.supported
 // ShangMi Suite: SM3 Secure Hash
 enum clause extension = Ext_Zvksh
 function clause hartSupports(Ext_Zvksh) = config extensions.Zvksh.supported
-
 
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf

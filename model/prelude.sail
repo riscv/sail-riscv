@@ -65,14 +65,15 @@ val print_instr    = pure {interpreter: "print_endline", c: "print_instr", lem: 
 val print_platform = pure {interpreter: "print_endline", c: "print_platform", lem: "print_dbg", _: "print_endline"} : string -> unit
 
 val print_step = pure {c: "print_step"} : unit -> unit
-
 function print_step() = ()
 
 val get_config_print_instr = pure {c:"get_config_print_instr"} : unit -> bool
 val get_config_print_platform = pure {c:"get_config_print_platform"} : unit -> bool
+val get_config_rvfi = pure {c:"get_config_rvfi"} : unit -> bool
 // defaults for other backends
 function get_config_print_instr () = false
 function get_config_print_platform () = false
+function get_config_rvfi () = false
 
 val sign_extend : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
 val zero_extend : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)

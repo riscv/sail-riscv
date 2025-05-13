@@ -407,19 +407,15 @@ function htif_store(Physaddr(paddr), width, data) = {
 }
 
 /* Top-level MMIO dispatch */
-$ifndef RVFI_DII
 function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
-  within_clint(addr, width) | (within_htif_readable(addr, width) & 1 <= 'n)
-$else
-function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool = false
-$endif
+  if get_config_rvfi()
+  then false
+  else within_clint(addr, width) | (within_htif_readable(addr, width) & 1 <= 'n)
 
-$ifndef RVFI_DII
 function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
-  within_clint(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
-$else
-function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool = false
-$endif
+  if get_config_rvfi()
+  then false
+  else within_clint(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
 
 function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : physaddr, width : int('n), current_endianness : Endianness) -> MemoryOpResult(bits(8 * 'n)) =
   if   within_clint(paddr, width)

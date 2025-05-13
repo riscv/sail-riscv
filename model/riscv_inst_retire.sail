@@ -11,9 +11,10 @@ union ExecutionResult = {
   // Successfully retired.
   Retire_Success                 : unit,
 
-  // WFI executed, which may or may not retire
-  // depending on the configuration.
-  Wait_For_Interrupt             : unit,
+  // An instruction such as WFI, WRS.{STO,NTO}
+  // entered a wait state, which may or may not
+  // retire depending on the configuration.
+  Enter_Wait                     : WaitReason,
 
   // Did not retire for a standard reason.
   Illegal_Instruction            : unit,
@@ -27,7 +28,7 @@ union ExecutionResult = {
   Ext_XRET_Priv_Failure          : unit,
 }
 
-// To ease the introduction of `Retire_Failure`, this global
+// To ease the introduction of `ExecutionResult`, this global
 // definition is temporarily used instead of the previous
 // RETIRE_SUCCESS enum value so that we don't have to immediately
 // update all the places RETIRE_SUCCESS was used.

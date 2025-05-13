@@ -111,7 +111,7 @@ function misaligned_order(n) = {
   }
 }
 
-val vmem_write_addr : forall 'width, 'width in {1, 2, 4, 8} & ('width <= xlen_bytes | 'width <= flen_bytes).
+val vmem_write_addr : forall 'width, is_mem_width('width).
   (virtaddr, int('width), bits(8 * 'width), AccessType(ext_access_type), bool, bool, bool)
   -> result(bool, ExecutionResult)
 
@@ -173,7 +173,7 @@ function check_misaligned(vaddr : virtaddr, width : word_width) -> bool = {
   }
 }
 
-val vmem_read : forall 'width, 'width in {1, 2, 4, 8} & ('width <= xlen_bytes | 'width <= flen_bytes).
+val vmem_read : forall 'width, is_mem_width('width).
   (regidx, xlenbits, int('width), AccessType(ext_access_type), bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
 
@@ -238,7 +238,7 @@ function vmem_read(rs, offset, width, acc, aq, rl, res) = {
   Ok(data)
 }
 
-val vmem_write : forall 'width, 'width in {1, 2, 4, 8} & ('width <= xlen_bytes | 'width <= flen_bytes).
+val vmem_write : forall 'width, is_mem_width('width).
   (regidx, xlenbits, int('width), bits(8 * 'width), AccessType(ext_access_type), bool, bool, bool)
   -> result(bool, ExecutionResult)
 

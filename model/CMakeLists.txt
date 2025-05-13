@@ -8,15 +8,12 @@ endfunction()
 
 foreach (xlen IN ITEMS 32 64)
     foreach (flen IN ITEMS 32 64)
-        foreach (variant IN ITEMS "" "rvfi" "rocq" "rmem" "lean" "lem" "isabelle")
+        foreach (variant IN ITEMS "" "rocq" "rmem" "lean" "lem" "isabelle")
             set(arch "rv${xlen}")
             if (flen EQUAL 32)
                 string(APPEND arch "f")
             else()
                 string(APPEND arch "d")
-            endif()
-            if (variant STREQUAL "rvfi")
-                string(APPEND arch "_${variant}")
             endif()
 
             set(sail_xlen
@@ -86,8 +83,10 @@ foreach (xlen IN ITEMS 32 64)
                 ${vext_srcs}
                 "riscv_insts_zicbom.sail"
                 "riscv_insts_zicboz.sail"
+                "riscv_insts_zawrs.sail"
                 "riscv_insts_zvbb.sail"
                 "riscv_insts_zvbc.sail"
+                "riscv_insts_zvkned.sail"
                 "riscv_insts_zvknhab.sail"
                 "riscv_insts_zvksh.sail"
                 # Zimop and Zcmop should be at the end so they can be overridden by earlier extensions
@@ -148,11 +147,8 @@ foreach (xlen IN ITEMS 32 64)
                 "prelude_mem_metadata.sail"
                 "prelude_mem.sail"
                 "arithmetic.sail"
+                "rvfi_dii.sail"
             )
-
-            if (variant STREQUAL "rvfi")
-                list(APPEND prelude "rvfi_dii.sail")
-            endif()
 
             set(sail_regs_srcs
                 "riscv_csr_begin.sail"
@@ -189,19 +185,12 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_zvk_utils.sail"
             )
 
-            if (variant STREQUAL "rvfi")
-                set(riscv_step_ext "riscv_step_rvfi.sail")
-                set(riscv_fetch "riscv_fetch_rvfi.sail")
-            else()
-                set(riscv_step_ext "riscv_step_ext.sail")
-                set(riscv_fetch "riscv_fetch.sail")
-            endif()
-
             set(sail_step_srcs
                 "riscv_step_common.sail"
-                ${riscv_step_ext}
+                "riscv_step_ext.sail"
                 "riscv_decode_ext.sail"
-                ${riscv_fetch}
+                "riscv_fetch_rvfi.sail"
+                "riscv_fetch.sail"
                 "riscv_step.sail"
             )
 
@@ -221,8 +210,8 @@ foreach (xlen IN ITEMS 32 64)
 
             # Convert to absolute paths, so we can run
 
-            # Generate C code from Sail model with & without RVFI-DII support.
-            if (NOT variant OR variant STREQUAL "rvfi")
+            # Generate C code from Sail model
+            if (NOT variant)
                 set(c_model_no_ext "${CMAKE_BINARY_DIR}/riscv_model_${arch}")
                 set(c_model "${c_model_no_ext}.c")
 

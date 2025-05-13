@@ -38,3 +38,8 @@ bool get_config_print_platform(unit)
 {
   return config_print_platform;
 }
+
+bool get_config_rvfi(unit)
+{
+  return config_enable_rvfi;
+}

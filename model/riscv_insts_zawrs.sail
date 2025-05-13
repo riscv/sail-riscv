@@ -6,15 +6,24 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* Step hooks for rvfi. */
+/* This file specifies the instructions in the 'Zawrs' extension.  */
 
-function ext_fetch_hook(f : FetchResult) -> FetchResult = f
+function clause currentlyEnabled(Ext_Zawrs) = hartSupports(Ext_Zawrs)
 
-function ext_pre_step_hook()  -> unit = ()
+/* ****************************************************************** */
 
-function ext_post_step_hook() -> unit = {
-  /* record the next pc */
-  rvfi_pc_data[rvfi_pc_wdata] = zero_extend(get_arch_pc())
+union clause ast = WRS : (wrsop)
+mapping encdec_wrsop : wrsop <-> bits(12) = {
+  WRS_STO <-> 0b000000011101,
+  WRS_NTO <-> 0b000000001101,
 }
 
-function ext_reset() -> unit = ()
+mapping clause encdec = WRS(op)
+  <-> encdec_wrsop(op) @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
+  when currentlyEnabled(Ext_Zawrs)
+
+function clause execute (WRS(WRS_STO)) =
+  Enter_Wait(WAIT_WRS_STO)
+
+function clause execute (WRS(WRS_NTO)) =
+  Enter_Wait(WAIT_WRS_NTO)

@@ -15,36 +15,74 @@ union Step = {
   Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
   Step_Fetch_Failure      : (virtaddr, ExceptionType),
   Step_Execute            : (ExecutionResult, instbits),
-  Step_Waiting            : unit,
+  Step_Waiting            : WaitReason,
 }
 
-function run_hart_waiting(step_no : nat, exit_wait : bool, instbits : instbits) -> Step = {
+function run_hart_waiting(step_no : int, wr: WaitReason, instbits : instbits, exit_wait : bool) -> Step = {
+  // successfully interrupted waits
   if shouldWakeForInterrupt() then {
     if   get_config_print_instr()
-    then print_instr("interrupt exit from WAIT state at PC " ^ BitStr(PC));
+    then print_instr("interrupt exit from " ^ wait_name(wr) ^ " state at PC " ^ BitStr(PC));
 
-    hart_state = HART_ACTIVE();
     // The waiting instruction retires successfully.  The
     // pending interrupts will be handled in the next step.
-    Step_Execute(Retire_Success(), instbits)
-  } else if exit_wait then {
-    // There are no pending interrupts; transition out of the Wait
-    // as instructed.
-    if   get_config_print_instr()
-    then print_instr("forced exit from WAIT state at PC " ^ BitStr(PC));
-
     hart_state = HART_ACTIVE();
-    // "When TW=1, then if WFI is executed in any
-    // less-privileged mode, and it does not complete within an
-    // implementation-specific, bounded time limit, the WFI
-    // instruction causes an illegal-instruction exception."
-    if   (cur_privilege == Machine | mstatus[TW] == 0b0)
-    then Step_Execute(Retire_Success(), instbits)
-    else Step_Execute(Illegal_Instruction(), instbits)
-  } else {
-    if   get_config_print_instr()
-    then print_instr("remaining in WAIT state at PC " ^ BitStr(PC));
-    Step_Waiting()
+    return Step_Execute(Retire_Success(), instbits)
+  };
+
+  match (wr, valid_reservation(), exit_wait) {
+    (WAIT_WRS_STO, false, _) => {
+      if   get_config_print_instr()
+      then print_instr("reservation invalid exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ BitStr(PC));
+
+      hart_state = HART_ACTIVE();
+      Step_Execute(Retire_Success(), instbits)
+    },
+    (WAIT_WRS_NTO, false, _) => {
+      if   get_config_print_instr()
+      then print_instr("reservation invalid exit from " ^ wait_name(WAIT_WRS_NTO) ^ " state at PC " ^ BitStr(PC));
+
+      hart_state = HART_ACTIVE();
+      Step_Execute(Retire_Success(), instbits)
+    },
+    // Transition out of waiting states as instructed.
+    (WAIT_WFI, _, true) => {
+      if   get_config_print_instr()
+      then print_instr("forced exit from " ^ wait_name(WAIT_WFI) ^ " state at PC " ^ BitStr(PC));
+
+      hart_state = HART_ACTIVE();
+      // "When TW=1, then if WFI is executed in any
+      // less-privileged mode, and it does not complete within an
+      // implementation-specific, bounded time limit, the WFI
+      // instruction causes an illegal-instruction exception."
+      if   (cur_privilege == Machine | mstatus[TW] == 0b0)
+      then Step_Execute(Retire_Success(), instbits)
+      else Step_Execute(Illegal_Instruction(), instbits)
+    },
+    (WAIT_WRS_STO, _, true) => {
+      if   get_config_print_instr()
+      then print_instr("timed-out exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ BitStr(PC));
+
+      hart_state = HART_ACTIVE();
+      Step_Execute(Retire_Success(), instbits)
+    },
+    (WAIT_WRS_NTO, _, true) => {
+      if   get_config_print_instr()
+      then print_instr("timed-out exit from " ^ wait_name(WAIT_WRS_NTO) ^ " state at PC " ^ BitStr(PC));
+
+      hart_state = HART_ACTIVE();
+      // TODO: This is similar to WFI above for now, but will change to handle
+      // VS/VU modes and hstatus.VTW.
+      if   (cur_privilege == Machine | mstatus[TW] == 0b0)
+      then Step_Execute(Retire_Success(), instbits)
+      else Step_Execute(Illegal_Instruction(), instbits)
+    },
+    // remain waiting
+    (_, _, false) => {
+      if   get_config_print_instr()
+      then print_instr("remaining in " ^ wait_name(wr) ^ " state at PC " ^ BitStr(PC));
+      Step_Waiting(wr)
+    }
   }
 }
 
@@ -90,7 +128,12 @@ function run_hart_active(step_no: nat) -> Step = {
   }
 }
 
-function wfi_is_nop() -> bool = config platform.wfi_is_nop
+function wait_is_nop(wr : WaitReason) -> bool =
+  match wr {
+    WAIT_WFI     => config platform.wfi_is_nop,
+    WAIT_WRS_STO => config extensions.Zawrs.sto.is_nop,
+    WAIT_WRS_NTO => config extensions.Zawrs.nto.is_nop,
+  }
 
 // The `try_step` function is the main internal driver of the Sail
 // model. It performs the fetch-decode-execute for an instruction. It
@@ -114,7 +157,7 @@ function wfi_is_nop() -> bool = config platform.wfi_is_nop
 //              only affects the behaviour if the model is already
 //              waiting from a previous WFI/WRS. It doesn't affect
 //              WFI/WRS instructions executed in the same call of
-//              `try_step()` (but see `wfi_is_nop()`).
+//              `try_step()` (but see `wait_is_nop()`).
 //
 function try_step(step_no : nat, exit_wait : bool) -> bool = {
   /* for step extensions */
@@ -131,8 +174,8 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
   minstret_increment = should_inc_minstret(cur_privilege);
 
   let step_val : Step = match hart_state {
-      HART_WAITING(instbits) => run_hart_waiting(step_no, exit_wait, instbits),
-      HART_ACTIVE()          => run_hart_active(step_no),
+      HART_WAITING(wr, instbits) => run_hart_waiting(step_no, wr, instbits, exit_wait),
+      HART_ACTIVE()              => run_hart_active(step_no),
     };
 
   match step_val {
@@ -143,22 +186,24 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     },
     Step_Ext_Fetch_Failure(e) => ext_handle_fetch_check_error(e),
     Step_Fetch_Failure(vaddr, e) => handle_mem_exception(vaddr, e),
-    Step_Waiting() => assert(hart_is_waiting(hart_state), "cannot be Waiting in a non-Wait state"),
+    Step_Waiting(_) => assert(hart_is_waiting(hart_state), "cannot be Waiting in a non-Wait state"),
     Step_Execute(Retire_Success(), _) => assert(hart_is_active(hart_state)),
     // standard errors
     Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
     Step_Execute(Memory_Exception(vaddr, e), _) => handle_mem_exception(vaddr, e),
     Step_Execute(Illegal_Instruction(), instbits) => handle_illegal(instbits),
-    Step_Execute(Wait_For_Interrupt(), instbits) =>
-      if wfi_is_nop() then {
+    Step_Execute(Enter_Wait(wr), instbits) => {
+      if wait_is_nop(wr) then {
         // This is the same as the RETIRE_OK case.
         assert(hart_is_active(hart_state));
       } else {
         // Transition into the wait state.
         if   get_config_print_instr()
-        then print_instr("entering WAIT state at PC " ^ BitStr(PC));
-        hart_state = HART_WAITING(instbits);
-      },
+        then print_instr("entering " ^ wait_name(wr) ^ " state at PC " ^ BitStr(PC));
+
+        hart_state = HART_WAITING(wr, instbits);
+      }
+    },
     // errors from extensions
     Step_Execute(Ext_CSR_Check_Failure(), _) => ext_check_CSR_fail(),
     Step_Execute(Ext_ControlAddr_Check_Failure(e), _) => ext_handle_control_check_error(e),
@@ -173,9 +218,10 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
 
       let retired : bool = match step_val {
         Step_Execute(Retire_Success(), _) => true,
-        // WFI retires immediately if the model is configured to treat it as a nop.
-        // Otherwise it always waits for at least one call of `try_step()`.
-        Step_Execute(Wait_For_Interrupt(), _) if wfi_is_nop() => true,
+        // WFI, WRS.{STO, NTO} retire immediately if the model is configured
+        // to treat them as a nop.  Otherwise they always wait for at least
+        // one call of `try_step()`.
+        Step_Execute(Enter_Wait(wr), _) if wait_is_nop(wr) => true,
         _ => false,
       };
 
@@ -184,7 +230,13 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       // mcountinhibit[IR] or minstretcfg.
       if retired & minstret_increment then minstret = minstret + 1;
 
-      /* for step extensions */
+      // Record the next PC for RVFI.
+      // TODO: Remove this and implement it in C.
+      if get_config_rvfi() then {
+        rvfi_pc_data[rvfi_pc_wdata] = zero_extend(get_arch_pc())
+      };
+
+      // For step extensions
       ext_post_step_hook();
       // Return that we have stepped and are active.
       true

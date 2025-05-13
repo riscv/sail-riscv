@@ -611,10 +611,10 @@ mapping clause encdec = WFI()
 
 function clause execute WFI() =
   match cur_privilege {
-    Machine    => Wait_For_Interrupt(),
+    Machine    => Enter_Wait(WAIT_WFI),
     Supervisor => if   mstatus[TW] == 0b1
                   then Illegal_Instruction()
-                  else Wait_For_Interrupt(),
+                  else Enter_Wait(WAIT_WFI),
     User       => Illegal_Instruction()
   }
 
