@@ -16,12 +16,12 @@ function zvk_valid_reg_overlap(rs, rd, emul_pow) = {
 
 function zvk_check_encdec(EGW: int, EGS: int) -> bool = (unsigned(vl) % EGS == 0) & (unsigned(vstart) % EGS == 0) & (2 ^ get_lmul_pow() * VLEN) >= EGW
 
-enum zvkfunct6 = {ZVK_VSHA2CH, ZVK_VSHA2CL, ZVK_VSM4RVV, ZVK_VSM4RVS}
-
 /*
  * Utility functions for Zvknh[ab]
  * ----------------------------------------------------------------------
  */
+
+enum zvkfunct6 = {ZVK_VSHA2CH, ZVK_VSHA2CL, ZVK_VSM4RVV, ZVK_VSM4RVS}
 
 function zvknhab_check_encdec(vs2: vregidx, vs1: vregidx, vd: vregidx) -> bool = {
   let SEW      = get_sew();
