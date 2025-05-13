@@ -11,10 +11,7 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <optional>
-#include <filesystem>
-#include <fstream>
 #include <iostream>
-#include <sstream>
 #include <vector>
 
 #include "elf.h"
@@ -325,17 +322,7 @@ static int process_args(int argc, char **argv)
   }
 
   if (!have_config) {
-    std::filesystem::path path = std::filesystem::temp_directory_path();
-    pid_t pid = getpid();
-    std::ostringstream filename;
-    filename << "default_config" << pid << ".json";
-    path = path / filename.str();
-    std::ofstream tmp(path);
-    tmp << DEFAULT_JSON;
-    tmp.close();
-
-    sail_config_set_file(path.c_str());
-    std::filesystem::remove(path);
+    sail_config_set_string(DEFAULT_JSON);
   }
 
   if (optind > argc
