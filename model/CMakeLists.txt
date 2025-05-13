@@ -200,12 +200,17 @@ foreach (xlen IN ITEMS 32 64)
                 )
             endif()
 
+            set(test_srcs
+                "unit_tests/test_mstatus.sail"
+            )
+
             # Final file list.
             set(sail_srcs
                 ${sail_arch_srcs}
                 ${sail_seq_inst_srcs}
                 ${sail_step_srcs}
                 "main.sail"
+                ${test_srcs}
             )
 
             # Convert to absolute paths, so we can run
