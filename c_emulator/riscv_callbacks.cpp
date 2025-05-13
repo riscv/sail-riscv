@@ -116,7 +116,7 @@ unit pc_write_callback(uint64_t value)
 unit trap_callback(unit)
 {
   if (config_enable_rvfi) {
-    zrvfi_trap();
+    zrvfi_trap(UNIT);
   }
   return UNIT;
 }
