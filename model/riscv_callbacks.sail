@@ -19,7 +19,7 @@ function mem_exception_callback(_) = ()
 val pc_write_callback = pure {c: "pc_write_callback"} : xlenbits -> unit
 function pc_write_callback(_) = ()
 
-val xreg_write_callback = pure {c: "xreg_write_callback"} : (regidx, xlenbits) -> unit
+val xreg_write_callback = pure {c: "xreg_write_callback"} : forall 'n, 'n == xlen . (regidx, xlenbits, int('n)) -> unit
 function xreg_write_callback(_) = ()
 
 val csr_full_write_callback = pure {c: "csr_full_write_callback"} : (string, csreg, xlenbits) -> unit

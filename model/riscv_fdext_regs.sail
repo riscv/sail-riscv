@@ -70,7 +70,7 @@ function fregidx_to_regidx (Fregidx(b) : fregidx) -> regidx =
 
 mapping encdec_freg : fregidx <-> bits(5) = { Fregidx(r) <-> r }
 
-val freg_write_callback = pure {c: "freg_write_callback"} : (fregidx, flenbits) -> unit
+val freg_write_callback = pure {c: "freg_write_callback"} : forall 'n, 'n == flen .  (fregidx, flenbits, int('n)) -> unit
 function freg_write_callback(_) = ()
 
 register f0  : fregtype
@@ -198,7 +198,7 @@ function wF (Fregno(r) : fregno, in_v : flenbits) -> unit = {
     _  => assert(false, "invalid floating point register number")
   };
 
-  freg_write_callback(fregno_to_fregidx(Fregno(r)), in_v);
+  freg_write_callback(fregno_to_fregidx(Fregno(r)), in_v, flen);
   dirty_fd_context();
 }
 
