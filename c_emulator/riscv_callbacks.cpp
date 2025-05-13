@@ -98,11 +98,11 @@ unit csr_full_read_callback(const_sail_string csr_name, unsigned reg,
   return UNIT;
 }
 
-unit vreg_write_callback(unsigned reg, lbits value)
+unit vreg_write_callback(unsigned reg, lbits value, uint64_t vlen)
 {
   if (config_print_reg) {
     fprintf(trace_log, "v%d <- ", reg);
-    print_lbits_hex(value);
+    print_lbits_hex(value, vlen / 8);
   }
   return UNIT;
 }
