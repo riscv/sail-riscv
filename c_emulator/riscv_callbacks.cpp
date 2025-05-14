@@ -26,7 +26,8 @@ unit mem_write_callback(const char *type, uint64_t paddr, uint64_t width,
 {
   if (config_print_mem_access) {
     fprintf(trace_log, "mem[%s,0x%0*" PRIX64 "] <- 0x", type,
-            zxlen == 64 ? 16 : 9, paddr);
+            (int)zphysaddrbits_len / 4 + ((int)zphysaddrbits_len % 4 != 0),
+            paddr);
     print_lbits_hex(value, width);
   }
   if (config_enable_rvfi) {
@@ -40,7 +41,8 @@ unit mem_read_callback(const char *type, uint64_t paddr, uint64_t width,
 {
   if (config_print_mem_access) {
     fprintf(trace_log, "mem[%s,0x%0*" PRIX64 "] -> 0x", type,
-            zxlen == 64 ? 16 : 9, paddr);
+            (int)zphysaddrbits_len / 4 + ((int)zphysaddrbits_len % 4 != 0),
+            paddr);
     print_lbits_hex(value, width);
   }
   if (config_enable_rvfi) {
