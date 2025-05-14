@@ -57,9 +57,9 @@ function check_mmu_config() -> bool = {
 
 function check_vlen_elen() -> bool = {
   // Should this be conditioned on a vector extension being enabled?
-  if VLEN_pow < ELEN_pow
+  if vlen_exp < elen_exp
   then {
-    print_endline("VLEN (set to 2^" ^ dec_str(VLEN_pow) ^ ") cannot be less than ELEN (set to 2^" ^ dec_str(ELEN_pow) ^ ").");
+    print_endline("VLEN (set to 2^" ^ dec_str(vlen_exp) ^ ") cannot be less than ELEN (set to 2^" ^ dec_str(elen_exp) ^ ").");
     return false;
   };
   true
