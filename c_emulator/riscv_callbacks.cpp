@@ -103,6 +103,9 @@ unit vreg_write_callback(unsigned reg, lbits value)
 {
   if (config_print_reg) {
     fprintf(trace_log, "v%d <- ", reg);
+    // TODO: `value` is currently `vlenmax` which can be much greater than
+    // VLEN. In future we will remove `vlenmax`, then we can
+    // remove the `zVLEN / 8` argument here.
     print_lbits_hex(value, zVLEN / 8);
   }
   return UNIT;
