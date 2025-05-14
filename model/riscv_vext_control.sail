@@ -14,7 +14,7 @@ function clause currentlyEnabled(Ext_V) = hartSupports(Ext_V) & (misa[V] == 0b1)
 
 function set_vstart(value : bits(16)) -> unit = {
   dirty_v_context();
-  let vstart_length = get_vlen_pow();
+  let vstart_length = vlen_exp;
   vstart = zero_extend(value[(vstart_length - 1) .. 0]);
   csr_write_callback("vstart", zero_extend(vstart));
 }
