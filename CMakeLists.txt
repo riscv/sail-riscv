@@ -8,7 +8,9 @@ cmake_policy(VERSION 3.20...3.31)
 # this requires `makeinfo` which we don't want to require.
 # TODO: Remove this when we bump the minimum CMake version to 3.24 and
 # instead add DOWNLOAD_EXTRACT_TIMESTAMP TRUE to ExternalProject_Add().
-cmake_policy(SET CMP0135 OLD)
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 OLD)
+endif()
 
 project(sail_riscv)
 
