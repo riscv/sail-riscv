@@ -21,10 +21,12 @@ void print_lbits_hex(lbits val, int length = 0)
 
 // Implementations of default callbacks for trace printing and RVFI.
 // The model assumes that these functions do not change the state of the model.
-unit mem_write_callback(uint64_t paddr, uint64_t width, lbits value)
+unit mem_write_callback(const char *type, uint64_t paddr, uint64_t width,
+                        lbits value)
 {
   if (config_print_mem_access) {
-    fprintf(trace_log, "mem[0x%016" PRIX64 "] <- 0x", paddr);
+    fprintf(trace_log, "mem[%s,0x%0*" PRIX64 "] <- 0x", type,
+            zxlen == 64 ? 16 : 9, paddr);
     print_lbits_hex(value, width);
   }
   if (config_enable_rvfi) {
@@ -37,7 +39,8 @@ unit mem_read_callback(const char *type, uint64_t paddr, uint64_t width,
                        lbits value)
 {
   if (config_print_mem_access) {
-    fprintf(trace_log, "mem[%s,0x%016" PRIX64 "] -> 0x", type, paddr);
+    fprintf(trace_log, "mem[%s,0x%0*" PRIX64 "] -> 0x", type,
+            zxlen == 64 ? 16 : 9, paddr);
     print_lbits_hex(value, width);
   }
   if (config_enable_rvfi) {

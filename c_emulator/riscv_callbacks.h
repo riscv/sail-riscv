@@ -5,7 +5,8 @@
 extern "C" {
 #endif
 
-unit mem_write_callback(uint64_t paddr, uint64_t width, lbits value);
+unit mem_write_callback(const char *type, uint64_t paddr, uint64_t width,
+                        lbits value);
 unit mem_read_callback(const char *type, uint64_t paddr, uint64_t width,
                        lbits value);
 unit mem_exception_callback(uint64_t paddr, uint64_t num_of_exception);
