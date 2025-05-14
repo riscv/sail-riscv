@@ -625,6 +625,7 @@ union clause ast = SFENCE_VMA : (regidx, regidx)
 
 mapping clause encdec = SFENCE_VMA(rs1, rs2)
   <-> 0b0001001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ 0b00000 @ 0b1110011
+  when virtual_memory_supported() | not(config extensions.Svbare.sfence_vma_illegal_if_svbare_only : bool)
 
 function clause execute SFENCE_VMA(rs1, rs2) = {
   let addr = if rs1 != zreg then Some(X(rs1)) else None();
