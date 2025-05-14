@@ -284,6 +284,7 @@ register mstatus : Mstatus = {
 }
 
 mapping clause csr_name_map = 0x300  <-> "mstatus"
+mapping clause csr_name_map = 0x310  <-> "mstatush"
 
 function clause is_CSR_defined(0x300) = true // mstatus
 function clause is_CSR_defined(0x310) = xlen == 32 // mstatush
