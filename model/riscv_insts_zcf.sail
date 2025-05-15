@@ -6,15 +6,6 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* ********************************************************************* */
-/* This file specifies the compressed floating-point instructions.
- *
- * These instructions are only legal if misa[C] and misa[F]
- * are set.
- */
-
-/* ****************************************************************** */
-
 function clause currentlyEnabled(Ext_Zcf) = hartSupports(Ext_Zcf) & currentlyEnabled(Ext_F) & currentlyEnabled(Ext_Zca) & (currentlyEnabled(Ext_C) | not(hartSupports(Ext_C)))
 
 union clause ast = C_FLWSP : (bits(6), fregidx)
