@@ -68,6 +68,15 @@ function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
   }
 }
 
+/*
+ * Checks whether the given privilege mode has permission to access the specified CSR.
+ */
+function check_Stateen(csr : csreg, p : Privilege) -> bool = match (p) {
+  Machine    => true,
+  Supervisor => check_CSR_stateen_permission(csr),
+  User       => check_CSR_stateen_permission(csr),
+}
+
 function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
     is_CSR_defined(csr)
   & check_CSR_priv(csr, p)
@@ -79,6 +88,7 @@ function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
   & check_Counteren(csr, p)
   & check_Stimecmp(csr, p)
   & check_seed_CSR(csr, p, isWrite)
+  & check_Stateen(csr, p)
 
 /* Reservation handling for LR/SC.
  *
@@ -399,6 +409,9 @@ function reset_sys() -> unit = {
   // "Writable PMP registers’ A and L fields are set to 0, unless the platform
   // mandates a different reset value for some PMP registers’ A and L fields."
   reset_pmp();
+
+  // "On reset, all writable mstateen bits are initialized by the hardware to zeros."
+  reset_stateen();
 
   // TODO: Probably need to remove these vector resets too but it needs
   // refactoring anyway. See https://github.com/riscv/sail-riscv/issues/566 etc.
