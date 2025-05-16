@@ -104,6 +104,16 @@ function accessToFault(acc : AccessType(ext_access_type)) -> ExceptionType =
 
 function pmpCheck forall 'n, 'n > 0. (addr: physaddr, width: int('n), acc: AccessType(ext_access_type), priv: Privilege)
                   -> option(ExceptionType) = {
+
+  // In debug mode, allow all access to debug memory range.
+  if currentlyEnabled(Ext_Sdext) then {
+    let Physaddr(addr) = addr;
+    let debug_base = unsigned(debug_mem_base);
+    let debug_end  = debug_base + debug_mem_size;
+    if   pmpRangeMatch(debug_base, debug_end, unsigned(addr), width) == PMP_Match
+    then return None();
+  };
+
   let width : xlenbits = to_bits(xlen, width);
 
   foreach (i from 0 to 63) {
