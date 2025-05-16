@@ -185,6 +185,9 @@ function clause hartSupports(Ext_Zvkb) = config extensions.Zvkb.supported
 // Vector Carryless Multiplication
 enum clause extension = Ext_Zvbc
 function clause hartSupports(Ext_Zvbc) = config extensions.Zvbc.supported
+// Vector GCM/GMAC
+enum clause extension = Ext_Zvkg
+function clause hartSupports(Ext_Zvkg) = config extensions.Zvkg.supported
 // NIST Suite: Vector AES Block Cipher
 enum clause extension = Ext_Zvkned
 function clause hartSupports(Ext_Zvkned) = config extensions.Zvkned.supported

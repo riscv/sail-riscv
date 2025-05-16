@@ -108,6 +108,7 @@ For booting operating system images, see the information under the
 - Zvbb extension for vector basic bit-manipulation, v1.0
 - Zvbc extension for vector carryless multiplication, v1.0
 - Zvkb extension for vector cryptography bit-manipulation, v1.0
+- Zvkg extension for vector GCM/GMAC, v1.0
 - Zvkned extension for vector cryptography NIST Suite: Vector AES Block Cipher, v1.0
 - Zvknha and Zvknhb extensions for vector cryptography NIST Suite: Vector SHA-2 Secure Hash, v1.0
 - Zvksh extension for vector cryptography ShangMi Suite: SM3 Secure Hash, v1.0
