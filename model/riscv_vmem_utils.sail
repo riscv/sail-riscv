@@ -246,6 +246,8 @@ function vmem_write(rs_addr, offset, width, data, acc, aq, rl, res) = {
   /* Get the address, X(rs_addr) (no offset).
    * Extensions might perform additional checks on address validity.
    */
+  let data = endianness_conversion(data, get_endianness(acc));
+
   let vaddr : virtaddr = match ext_data_get_addr(rs_addr, offset, acc, width) {
     Ext_DataAddr_OK(vaddr) => vaddr,
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
