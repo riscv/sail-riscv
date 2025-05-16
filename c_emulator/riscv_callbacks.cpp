@@ -1,6 +1,7 @@
 #include "riscv_callbacks.h"
 #include "riscv_config.h"
 #include "riscv_platform_impl.h"
+#include "riscv_sail.h"
 #include <stdlib.h>
 #include <vector>
 #include <inttypes.h>
@@ -20,10 +21,12 @@ void print_lbits_hex(lbits val, int length = 0)
 
 // Implementations of default callbacks for trace printing and RVFI.
 // The model assumes that these functions do not change the state of the model.
-unit mem_write_callback(uint64_t paddr, uint64_t width, lbits value)
+unit mem_write_callback(const char *type, uint64_t paddr, uint64_t width,
+                        lbits value)
 {
   if (config_print_mem_access) {
-    fprintf(trace_log, "mem[0x%016" PRIX64 "] <- 0x", paddr);
+    fprintf(trace_log, "mem[%s,0x%0*" PRIX64 "] <- 0x", type,
+            static_cast<int>((zphysaddrbits_len + 3) / 4), paddr);
     print_lbits_hex(value, width);
   }
   if (config_enable_rvfi) {
@@ -36,7 +39,8 @@ unit mem_read_callback(const char *type, uint64_t paddr, uint64_t width,
                        lbits value)
 {
   if (config_print_mem_access) {
-    fprintf(trace_log, "mem[%s,0x%016" PRIX64 "] -> 0x", type, paddr);
+    fprintf(trace_log, "mem[%s,0x%0*" PRIX64 "] -> 0x", type,
+            static_cast<int>((zphysaddrbits_len + 3) / 4), paddr);
     print_lbits_hex(value, width);
   }
   if (config_enable_rvfi) {
@@ -102,7 +106,10 @@ unit vreg_write_callback(unsigned reg, lbits value)
 {
   if (config_print_reg) {
     fprintf(trace_log, "v%d <- ", reg);
-    print_lbits_hex(value);
+    // TODO: the width of `value` is currently `vlenmax` bits which can be much
+    // greater than VLEN. In future we will remove `vlenmax`, then we can remove
+    // the `zVLEN / 8` argument here.
+    print_lbits_hex(value, zVLEN / 8);
   }
   return UNIT;
 }
@@ -116,7 +123,7 @@ unit pc_write_callback(uint64_t value)
 unit trap_callback(unit)
 {
   if (config_enable_rvfi) {
-    zrvfi_trap();
+    zrvfi_trap(UNIT);
   }
   return UNIT;
 }

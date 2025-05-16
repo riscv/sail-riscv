@@ -1,6 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
 cmake_policy(VERSION 3.20...3.31)
 
+# CMake 3.24 and newer don't use the mtimes from archives when extracting
+# GMP in ExternalProject_Add(). This reverts that behaviour so that the
+# mtimes in the archive are used. This is necessary because otherwise
+# Make tries to rebuild the documentation that is already built, and
+# this requires `makeinfo` which we don't want to require.
+# TODO: Remove this when we bump the minimum CMake version to 3.24 and
+# instead add DOWNLOAD_EXTRACT_TIMESTAMP TRUE to ExternalProject_Add().
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 OLD)
+endif()
+
 project(sail_riscv)
 
 set(CMAKE_CXX_STANDARD 17)
