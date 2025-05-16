@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.20)
-cmake_policy(VERSION 3.20...3.31)
+cmake_minimum_required(VERSION 3.21)
+cmake_policy(VERSION 3.21...3.31)
 
 # CMake 3.24 and newer don't use the mtimes from archives when extracting
 # GMP in ExternalProject_Add(). This reverts that behaviour so that the
