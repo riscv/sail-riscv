@@ -194,6 +194,9 @@ function clause hartSupports(Ext_Zvknha) = config extensions.Zvknha.supported
 
 enum clause extension = Ext_Zvknhb
 function clause hartSupports(Ext_Zvknhb) = config extensions.Zvknhb.supported
+// ShangMi Suite: SM4 Block Cipher
+enum clause extension = Ext_Zvksed
+function clause hartSupports(Ext_Zvksed) = config extensions.Zvksed.supported
 // ShangMi Suite: SM3 Secure Hash
 enum clause extension = Ext_Zvksh
 function clause hartSupports(Ext_Zvksh) = config extensions.Zvksh.supported
