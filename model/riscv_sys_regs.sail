@@ -1015,6 +1015,7 @@ function legalize_jvt(o : Jvt, v : xlenbits) -> Jvt = {
 }
 
 mapping clause csr_name_map = 0x017  <-> "jvt"
+
 function clause is_CSR_defined (0x017) = currentlyEnabled(Ext_Zcmt)
 function clause write_CSR(0x017, value) = { jvt = legalize_jvt(jvt, value); jvt.bits }
 function clause read_CSR(0x017) = jvt.bits

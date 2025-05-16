@@ -10,19 +10,19 @@ function clause currentlyEnabled(Ext_Zcmt) = hartSupports(Ext_Zcmt) & currentlyE
 
 type target_address = xlenbits
 
-function fetch_jump_table(table_address : xlenbits) -> result(target_address, unit) = {
+function fetch_jump_table(table_address : xlenbits) -> result(target_address, ExecutionResult) = {
   /* Executable permission required to fetch jump table address */
-  match ext_data_get_addr_from_bits(table_address, Execute(), xlen_bytes) {
-    Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); Err() },
+  match ext_data_get_addr_from_bits(table_address, InstructionFetch(), xlen_bytes) {
+    Ext_DataAddr_Error(e)  => { Err(Ext_DataAddr_Check_Failure(e)) },
     Ext_DataAddr_OK(vaddr) => {
       if   check_misaligned(vaddr, size_bytes(xlen_bytes))
-      then { handle_mem_exception(vaddr, E_Load_Addr_Align()); Err() }
-      else match translateAddr(vaddr, Execute()) {
-        TR_Failure(e, _) => { handle_mem_exception(vaddr, e); Err() },
+      then { Err(Memory_Exception(vaddr, E_Load_Addr_Align())) }
+      else match translateAddr(vaddr, InstructionFetch()) {
+        TR_Failure(e, _) => { Err(Memory_Exception(vaddr, e)) },
         TR_Address(paddr, _) =>
-          match mem_read(Execute(), paddr, xlen_bytes, false, false, false) {
+          match mem_read(InstructionFetch(), paddr, xlen_bytes, false, false, false) {
+            Err(e)     => { Err(Memory_Exception(vaddr, e)) },
             Ok(result) => { Ok(result) },
-            Err(e)     => { handle_mem_exception(vaddr, e); Err() },
           }
       }
     }
@@ -41,7 +41,7 @@ function clause execute (CM_JALT(index)) = {
   if jvt[mode] == 0b000000 then {
     let table_address = base + (index << log2_xlen_bytes);
     match fetch_jump_table(table_address) {
-        Err(_) => { RETIRE_FAIL },
+        Err(e) => { e },
         Ok(target_address) => {
           X(ra) = get_next_pc();
           set_next_pc([target_address with 0 = bitzero]);
@@ -49,8 +49,7 @@ function clause execute (CM_JALT(index)) = {
         }
     };
   } else {
-    handle_illegal();
-    RETIRE_FAIL
+    Illegal_Instruction()
   };
 }
 
@@ -70,15 +69,14 @@ function clause execute (CM_JT(index)) = {
   if jvt[mode] == 0b000000 then {
     let table_address = base + (index << log2_xlen_bytes);
     match fetch_jump_table(table_address) {
-        Err(_) => { RETIRE_FAIL },
+        Err(e) => { e },
         Ok(target_address) => {
           set_next_pc([target_address with 0 = bitzero]);
           RETIRE_SUCCESS
         }
     };
   } else {
-      handle_illegal();
-      RETIRE_FAIL
+      Illegal_Instruction()
     };
 }
 
