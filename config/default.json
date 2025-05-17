@@ -190,6 +190,9 @@
     "Zvbc": {
       "supported": true
     },
+    "Zvbc32e": {
+      "supported": true
+    },
     "Zvkned": {
       "supported": true
     },
