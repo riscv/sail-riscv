@@ -314,10 +314,9 @@ mapping maybe_rl = {
   false <-> ""
 }
 
-val maybe_u : bool <-> string
-mapping maybe_u = {
+mapping maybe_u : bool <-> string = {
   true  <-> "u",
-  false <-> ""
+  false <-> "",
 }
 
 mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)
