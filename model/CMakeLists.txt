@@ -56,7 +56,8 @@ foreach (xlen IN ITEMS 32 64)
             set(sail_default_inst
                 "riscv_insts_base.sail"
                 "riscv_insts_zifencei.sail"
-                "riscv_insts_aext.sail"
+                "riscv_insts_zaamo.sail"
+                "riscv_insts_zalrsc.sail"
                 "riscv_insts_zca.sail"
                 "riscv_insts_mext.sail"
                 "riscv_insts_zicsr.sail"
