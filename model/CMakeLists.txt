@@ -127,6 +127,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_softfloat_interface.sail"
                 "riscv_fdext_regs.sail"
                 "riscv_fdext_control.sail"
+                "riscv_csrind_regs.sail"
                 "riscv_smcntrpmf.sail"
                 "riscv_sys_control.sail"
             )
