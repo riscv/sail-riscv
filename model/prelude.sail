@@ -70,10 +70,12 @@ function print_step() = ()
 val get_config_print_instr = pure {c:"get_config_print_instr"} : unit -> bool
 val get_config_print_platform = pure {c:"get_config_print_platform"} : unit -> bool
 val get_config_rvfi = pure {c:"get_config_rvfi"} : unit -> bool
+val get_config_use_abi_names = pure {c:"get_config_use_abi_names"} : unit -> bool
 // defaults for other backends
 function get_config_print_instr () = false
 function get_config_print_platform () = false
 function get_config_rvfi () = false
+function get_config_use_abi_names () = false
 
 val sign_extend : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
 val zero_extend : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)

@@ -16,6 +16,7 @@ unit print_platform(sail_string s);
 bool get_config_print_instr(unit);
 bool get_config_print_platform(unit);
 bool get_config_rvfi(unit);
+bool get_config_use_abi_names(unit);
 
 #ifdef __cplusplus
 } // extern "C"
