@@ -914,9 +914,8 @@ val get_16_random_bits = impure {
 register vstart : bits(16) /* use the largest possible length of vstart */
 register vl     : xlenbits
 
-function get_vlenb() -> xlenbits = {
-  to_bits_unsafe(xlen, (2 ^ (get_vlen_pow()) / 8))
-}
+function get_vlenb() -> xlenbits =
+  to_bits(2 ^ (get_vlen_pow()) / 8)
 
 bitfield Vtype  : xlenbits = {
   vill      : xlen - 1,
@@ -930,39 +929,22 @@ register vtype : Vtype
 
 /* the dynamic selected element width (SEW) */
 /* this returns the power of 2 for SEW */
-val get_sew_pow : unit -> {3, 4, 5, 6}
-function get_sew_pow() = {
-  let SEW_pow : {3, 4, 5, 6} = match vtype[vsew] {
+function get_sew_pow() -> {3, 4, 5, 6} =
+  match vtype[vsew] {
     0b000 => 3,
     0b001 => 4,
     0b010 => 5,
     0b011 => 6,
     _     => {assert(false, "invalid vsew field in vtype"); 0}
-  };
-  SEW_pow
-}
+  }
+
 /* this returns the actual value of SEW */
-val get_sew : unit -> {8, 16, 32, 64}
-function get_sew() = {
-  match get_sew_pow() {
-    3 => 8,
-    4 => 16,
-    5 => 32,
-    6 => 64,
-    _ => {internal_error(__FILE__, __LINE__, "invalid SEW"); 8}
-  }
-}
+function get_sew() -> {8, 16, 32, 64} =
+  2 ^ get_sew_pow()
+
 /* this returns the value of SEW in bytes */
-val get_sew_bytes : unit -> {'width, is_mem_width('width). int('width)}
-function get_sew_bytes() = {
-  match get_sew_pow() {
-    3 => 1,
-    4 => 2,
-    5 => 4,
-    6 => 8,
-    _ => {internal_error(__FILE__, __LINE__, "invalid SEW"); 1}
-  }
-}
+function get_sew_bytes() -> {1, 2, 4, 8} =
+  get_sew() / 8
 
 /* the vector register group multiplier (LMUL) */
 /* this returns the power of 2 for LMUL */
