@@ -29,8 +29,6 @@ type csreg = bits(12)  /* CSR addressing */
 function regidx_offset(Regidx(r) : regidx, o : bits(5)) -> regidx = Regidx(r + o)
 function regidx_bits (Regidx(b) : regidx) -> bits(5) = b
 
-function bits_regidx (b : bits(5)) -> regidx = Regidx(b)
-
 /* register file indexing */
 
 newtype regno = Regno : range(0, 31)
