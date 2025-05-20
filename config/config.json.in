@@ -381,6 +381,15 @@
     "Svinval": {
       "supported": true
     },
+    "Ssnpm": {
+      "supported": false
+    },
+    "Smnpm": {
+      "supported": false
+    },
+    "Smmpm": {
+      "supported": false
+    },
     "Svrsw60t59b": {
       "supported": @CONFIG_XLEN_IS_64@
     },

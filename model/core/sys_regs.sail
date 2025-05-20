@@ -241,6 +241,12 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     SIE = if currentlyEnabled(Ext_S) then v[SIE] else 0b0,
   ];
 
+  // TODO: When dynamic SXL/UXL changes are supported,
+  // make sure PMM bits in menvcfg and senvcfg are
+  // cleared (0b00) when switching from 64-bit to 32-bit.
+  // menvcfg[PMM] = if .. 0b00 else menvcfg[PMM]
+  // senvcfg[PMM] = if .. 0b00 else senvcfg[PMM]
+
   // Set dirty bit to OR of other status bits.
   let dirty = extStatus_of_bits(o[FS]) == Dirty |
               extStatus_of_bits(o[XS]) == Dirty |
@@ -292,6 +298,15 @@ function in32BitMode() -> bool = {
   architecture(cur_privilege) == RV32
 }
 
+// Pointer Masking
+
+function clause currentlyEnabled(Ext_Ssnpm) = hartSupports(Ext_Ssnpm)
+function clause currentlyEnabled(Ext_Smnpm) = hartSupports(Ext_Smnpm)
+function clause currentlyEnabled(Ext_Smmpm) = hartSupports(Ext_Smmpm)
+function clause currentlyEnabled(Ext_Sspm) = hartSupports(Ext_Sspm)
+function clause currentlyEnabled(Ext_Supm) = hartSupports(Ext_Supm)
+
+// envcfg Registers
 bitfield Seccfg : bits(64) = {
   // Enable Zicfilp in M-mode
   MLPE   : 10,
@@ -351,6 +366,8 @@ bitfield MEnvcfg : bits(64) = {
   STCE   : 63,
   // Page Based Memory Types Extension
   PBMTE  : 62,
+  // Reserved WPRI bits.
+  wpri_1 : 61 .. 8,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable
@@ -363,7 +380,38 @@ bitfield MEnvcfg : bits(64) = {
   FIOM   : 0,
 }
 
-bitfield SEnvcfg : xlenbits = {
+enum PointerMaskingMode = {
+  PMM_Disabled,  // Pointer Masking Disabled
+  PMM_Reserved,  // Reserved Encoding for Pointer Masking
+  PMM_Enabled7,  // Pointer Masking Enabled with PMM = 7
+  PMM_Enabled16, // Pointer Masking Enabled with PMM = 16
+}
+
+mapping pmm_mode : PointerMaskingMode <-> bits(2) = {
+  PMM_Disabled  <-> 0b00,
+  PMM_Reserved  <-> 0b01,
+  PMM_Enabled7  <-> 0b10,
+  PMM_Enabled16 <-> 0b11,
+}
+
+bitfield MSeccfg : bits(64) = {
+  // Reserved WPRI bits.
+  wpri_2 : 63 .. 34,
+  // PMM bits of Pointer Masking Extension
+  PMM    : 33 .. 32,
+  // Reserved WPRI bits.
+  wpri_1 : 31 .. 10,
+  // Supervisor SEED bits
+  SSEED  : 9,
+  // User SEED bits
+  USEED  : 8,
+  // Reserved WPRI bits.
+  wpri_0 : 7 .. 0,
+}
+
+bitfield SEnvcfg : bits(64) = {
+  // Pointer Masking Extension
+  PMM    : 33 .. 32,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable
@@ -379,48 +427,70 @@ bitfield SEnvcfg : xlenbits = {
 function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   [o with
-    FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
+    PMM   = if currentlyEnabled(Ext_Smnpm) & xlen != 32 & v[PMM] != pmm_mode(PMM_Reserved) then v[PMM] else o[PMM],
     LPE  = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
-    CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
+    CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
-    CBIE = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
-    STCE = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
+    CBIE  = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
+    STCE  = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
+    FIOM  = if sys_enable_writable_fiom() then v[FIOM] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
   ]
 }
 
-function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
+function legalize_mseccfg(o : MSeccfg, v : bits(64)) -> MSeccfg = {
+  let v = Mk_MSeccfg(v);
+
+  [o with
+    PMM   = if currentlyEnabled(Ext_Smmpm) & xlen != 32 & v[PMM] != pmm_mode(PMM_Reserved) then v[PMM] else o[PMM],
+    SSEED = if currentlyEnabled(Ext_Zkr) then v[SSEED] else 0b0,
+    USEED = if currentlyEnabled(Ext_Zkr) then v[USEED] else 0b0,
+  ];
+}
+
+// PMM, should the esle case be o[PMM] or else 0b00?
+function legalize_senvcfg(o : SEnvcfg, v : bits(64)) -> SEnvcfg = {
   let v = Mk_SEnvcfg(v);
   [o with
     FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
-    LPE = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
-    CBIE = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
+    CBIE  = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
+    FIOM  = if sys_enable_writable_fiom() then v[FIOM] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
   ]
 }
 
 // Initialised to legal values in case some bits are hard-coded to 1.
 register menvcfg : MEnvcfg = legalize_menvcfg(Mk_MEnvcfg(zeros()), zeros())
+register mseccfg : MSeccfg = legalize_mseccfg(Mk_MSeccfg(zeros()), zeros())
 register senvcfg : SEnvcfg = legalize_senvcfg(Mk_SEnvcfg(zeros()), zeros())
 
 mapping clause csr_name_map = 0x30A  <-> "menvcfg"
 mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
+mapping clause csr_name_map = 0x747  <-> "mseccfg"
+mapping clause csr_name_map = 0x757  <-> "mseccfgh"
 mapping clause csr_name_map = 0x10A  <-> "senvcfg"
 
-function clause is_CSR_accessible(0x30A, _, _) = currentlyEnabled(Ext_U) // menvcfg
-function clause is_CSR_accessible(0x31A, _, _) = currentlyEnabled(Ext_U) & (xlen == 32) // menvcfgh
-function clause is_CSR_accessible(0x10A, _, _) = currentlyEnabled(Ext_S) // senvcfg
+function clause is_CSR_defined(0x30A) = true // menvcfg
+function clause is_CSR_defined(0x31A) = true & (xlen == 32) // menvcfgh
+function clause is_CSR_defined(0x747) = true // mseccfg
+function clause is_CSR_defined(0x757) = true & (xlen == 32) // mseccfgh
+function clause is_CSR_defined(0x10A) = currentlyEnabled(Ext_S) // senvcfg
 
 function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
+function clause read_CSR(0x747) = mseccfg.bits[xlen - 1 .. 0]
+function clause read_CSR(0x757 if xlen == 32) = mseccfg.bits[63 .. 32]
 function clause read_CSR(0x10A) = senvcfg.bits[xlen - 1 .. 0]
 
-function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); Ok(menvcfg.bits[31 .. 0]) }
-function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); Ok(menvcfg.bits) }
-function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); Ok(menvcfg.bits[63 .. 32]) }
-function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); Ok(senvcfg.bits[xlen - 1 .. 0]) }
+function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); menvcfg.bits[31 .. 0] }
+function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); menvcfg.bits }
+function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); menvcfg.bits[63 .. 32] }
+function clause write_CSR((0x747, value) if xlen == 32) = { mseccfg = legalize_mseccfg(mseccfg, mseccfg.bits[63 .. 32] @ value); mseccfg.bits[31 .. 0] }
+function clause write_CSR((0x747, value) if xlen == 64) = { mseccfg = legalize_mseccfg(mseccfg, value); mseccfg.bits }
+function clause write_CSR((0x757, value) if xlen == 32) = { mseccfg = legalize_mseccfg(mseccfg, value @ mseccfg.bits[31 .. 0]); mseccfg.bits[63 .. 32] }
+function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); senvcfg.bits[xlen - 1 .. 0] }
 
 // Return whether or not FIOM is currently active, based on the current
 // privilege and the menvcfg/senvcfg settings. This means that I/O fences

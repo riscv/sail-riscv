@@ -424,6 +424,18 @@ enum clause extension = Ext_Sstvecd
 mapping clause extensionName = Ext_Sstvecd <-> "sstvecd"
 function clause hartSupports(Ext_Sstvecd) = hartSupports(Ext_S)
 
+// Pointer Masking
+enum clause extension = Ext_Ssnpm
+function clause hartSupports(Ext_Ssnpm) = config extensions.Ssnpm.supported
+enum clause extension = Ext_Smnpm
+function clause hartSupports(Ext_Smnpm) = config extensions.Smnpm.supported
+enum clause extension = Ext_Smmpm
+function clause hartSupports(Ext_Smmpm) = config extensions.Smmpm.supported
+enum clause extension = Ext_Sspm
+function clause hartSupports(Ext_Sspm) = hartSupports(Ext_S) & hartSupports(Ext_Smnpm)
+enum clause extension = Ext_Supm
+function clause hartSupports(Ext_Supm) = (hartSupports(Ext_S) & hartSupports(Ext_Ssnpm)) | (not(hartSupports(Ext_S)) & hartSupports(Ext_Smnpm))
+
 // Supervisor-Level Address Translation Modes
 enum clause extension = Ext_Svbare
 mapping clause extensionName = Ext_Svbare <-> "svbare"
