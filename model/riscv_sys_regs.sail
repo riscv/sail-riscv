@@ -647,10 +647,10 @@ register minstret : bits(64)
 register minstret_increment : bool
 
 /* machine information registers */
-register mvendorid : bits(32) = to_bits(32,   (config platform.vendorid : int))
-register mimpid    : xlenbits = to_bits(xlen, (config platform.impid : int))
-register marchid   : xlenbits = to_bits(xlen, (config platform.archid : int))
-register mhartid   : xlenbits = to_bits(xlen, (config platform.hartid : int))
+register mvendorid : bits(32) = to_bits_unsafe(32,   (config platform.vendorid : int))
+register mimpid    : xlenbits = to_bits_unsafe(xlen, (config platform.impid : int))
+register marchid   : xlenbits = to_bits_unsafe(xlen, (config platform.archid : int))
+register mhartid   : xlenbits = to_bits_unsafe(xlen, (config platform.hartid : int))
 
 register mconfigptr : xlenbits = zeros()
 
@@ -915,7 +915,7 @@ register vstart : bits(16) /* use the largest possible length of vstart */
 register vl     : xlenbits
 
 function get_vlenb() -> xlenbits = {
-  to_bits(xlen, (2 ^ (get_vlen_pow()) / 8))
+  to_bits_unsafe(xlen, (2 ^ (get_vlen_pow()) / 8))
 }
 
 bitfield Vtype  : xlenbits = {

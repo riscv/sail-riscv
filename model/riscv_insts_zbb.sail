@@ -136,10 +136,10 @@ function clause execute (ZBB_RTYPE(rs2, rs1, rd, op)) = {
     ANDN => rs1_val & ~(rs2_val),
     ORN  => rs1_val | ~(rs2_val),
     XNOR => ~(rs1_val ^ rs2_val),
-    MAX  => to_bits(xlen, max(signed(rs1_val),   signed(rs2_val))),
-    MAXU => to_bits(xlen, max(unsigned(rs1_val), unsigned(rs2_val))),
-    MIN  => to_bits(xlen, min(signed(rs1_val),   signed(rs2_val))),
-    MINU => to_bits(xlen, min(unsigned(rs1_val), unsigned(rs2_val))),
+    MAX  => to_bits_unsafe(xlen, max(signed(rs1_val),   signed(rs2_val))),
+    MAXU => to_bits_unsafe(xlen, max(unsigned(rs1_val), unsigned(rs2_val))),
+    MIN  => to_bits_unsafe(xlen, min(signed(rs1_val),   signed(rs2_val))),
+    MINU => to_bits_unsafe(xlen, min(unsigned(rs1_val), unsigned(rs2_val))),
     ROL  => if xlen == 32
                   then rs1_val <<< rs2_val[4..0]
                   else rs1_val <<< rs2_val[5..0],
@@ -249,7 +249,7 @@ function clause execute (CPOP(rs1, rd)) = {
   var result : nat = 0;
   foreach (i from 0 to (xlen - 1))
     if rs1_val[i] == bitone then result = result + 1;
-  X(rd) = to_bits(xlen, result);
+  X(rd) = to_bits_unsafe(xlen, result);
   RETIRE_SUCCESS
 }
 
@@ -268,7 +268,7 @@ function clause execute (CPOPW(rs1, rd)) = {
   var result : nat = 0;
   foreach (i from 0 to 31)
     if rs1_val[i] == bitone then result = result + 1;
-  X(rd) = to_bits(xlen, result);
+  X(rd) = to_bits_unsafe(xlen, result);
   RETIRE_SUCCESS
 }
 
@@ -290,7 +290,7 @@ function clause execute (CLZ(rs1, rd)) = {
     if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1
                     else done = true;
-  X(rd) = to_bits(xlen, result);
+  X(rd) = to_bits_unsafe(xlen, result);
   RETIRE_SUCCESS
 }
 
@@ -312,7 +312,7 @@ function clause execute (CLZW(rs1, rd)) = {
     if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1
                     else done = true;
-  X(rd) = to_bits(xlen, result);
+  X(rd) = to_bits_unsafe(xlen, result);
   RETIRE_SUCCESS
 }
 
@@ -334,7 +334,7 @@ function clause execute (CTZ(rs1, rd)) = {
     if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1
                     else done = true;
-  X(rd) = to_bits(xlen, result);
+  X(rd) = to_bits_unsafe(xlen, result);
   RETIRE_SUCCESS
 }
 
@@ -356,6 +356,6 @@ function clause execute (CTZW(rs1, rd)) = {
     if not(done) then if rs1_val[i] == bitzero
                     then result = result + 1
                     else done = true;
-  X(rd) = to_bits(xlen, result);
+  X(rd) = to_bits_unsafe(xlen, result);
   RETIRE_SUCCESS
 }

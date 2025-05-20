@@ -261,7 +261,7 @@ function rvfi_get_exec_packet_v1 () = {
 
 val rvfi_get_v2_trace_size : unit -> bits(64)
 function rvfi_get_v2_trace_size () = {
-  let trace_size : bits(64) = to_bits(64, 512);
+  let trace_size : bits(64) = to_bits_unsafe(64, 512);
   let trace_size = if (rvfi_int_data_present) then trace_size + 320 else trace_size;
   let trace_size = if (rvfi_mem_data_present) then trace_size + 704 else trace_size;
   return trace_size >> 3; // we have to return bytes not bits
