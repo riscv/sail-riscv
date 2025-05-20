@@ -224,6 +224,15 @@
     "Svinval": {
       "supported": true
     },
+    "Ssnpm": {
+      "supported": false
+    },
+    "Smnpm": {
+      "supported": false
+    },
+    "Smmpm": {
+      "supported": false
+    },
     "Svbare": {
       "supported": true,
       "sfence_vma_illegal_if_svbare_only": true
