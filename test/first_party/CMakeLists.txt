@@ -88,19 +88,19 @@ set(tests
     "test_pmp_access.c"
 )
 
+
 foreach (xlen IN ITEMS 32 64)
-    set(default_config "${CMAKE_SOURCE_DIR}/config/rv${xlen}d.json")
+    set(arch "rv${xlen}d")
+    if (xlen EQUAL 32)
+        set(mabi "ilp32")
+    else()
+        set(mabi "lp64")
+    endif()
+    set(default_config "${CMAKE_SOURCE_DIR}/config/${arch}.json")
 
     foreach (test_source IN LISTS tests)
-        set(arch "rv")
-        if (xlen EQUAL 32)
-            set(mabi "ilp32")
-        else()
-            set(mabi "lp64")
-        endif()
-
-        set(elf "${arch}_${xlen}_${test_source}.elf")
-        set(config "${arch}_${xlen}_${test_source}.json")
+        set(elf "${arch}_${test_source}.elf")
+        set(config "${arch}_${test_source}.json")
 
         add_custom_command(
             OUTPUT ${elf}
@@ -168,11 +168,11 @@ foreach (xlen IN ITEMS 32 64)
             )
         endif()
 
-        add_custom_target(build_${arch}_${xlen}_${test_source} ALL DEPENDS ${elf} ${config})
+        add_custom_target(build_${arch}_${test_source} ALL DEPENDS ${elf} ${config})
 
         add_test(
-            NAME "first_party_${arch}_${xlen}_${test_source}"
-            COMMAND $<TARGET_FILE:riscv_sim_${arch}> --config ${config} ${elf}
+            NAME "first_party_${arch}_${test_source}"
+            COMMAND $<TARGET_FILE:sail_riscv_sim> --config ${config} ${elf}
         )
     endforeach()
 endforeach()

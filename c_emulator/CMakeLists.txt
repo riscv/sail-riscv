@@ -18,10 +18,8 @@ set(EMULATOR_COMMON_SRCS
     config_utils.cpp
 )
 
-set(arch "rv")
-
-add_executable(riscv_sim_${arch}
-    "${CMAKE_BINARY_DIR}/riscv_model_${arch}.c"
+add_executable(sail_riscv_sim
+    "${CMAKE_BINARY_DIR}/sail_riscv_model.c"
     ${EMULATOR_COMMON_SRCS}
 )
 # The generated model is not warnings-clean, silence them.
@@ -33,16 +31,16 @@ set(_generated_c_warning_opt_out
     -Wno-uninitialized
     $<$<BOOL:${HAVE_WSELF_ASSIGN}>:-Wno-self-assign>
 )
-set_source_files_properties("${CMAKE_BINARY_DIR}/riscv_model_${arch}.c"
+set_source_files_properties("${CMAKE_BINARY_DIR}/sail_riscv_model.c"
                             PROPERTIES COMPILE_OPTIONS "${_generated_c_warning_opt_out}")
 
-add_dependencies(riscv_sim_${arch} generated_model_${arch})
+add_dependencies(sail_riscv_sim generated_sail_riscv_model)
 
-target_link_libraries(riscv_sim_${arch}
+target_link_libraries(sail_riscv_sim
     PRIVATE softfloat sail_runtime default_config
 )
 
-target_include_directories(riscv_sim_${arch}
+target_include_directories(sail_riscv_sim
     # So the generated C can find riscv_platform/prelude.h"
     PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}"
 )
@@ -51,13 +49,13 @@ target_include_directories(riscv_sim_${arch}
 # to include the generated Sail code. Currently it
 # generates too many warnings to turn these on globally.
 
-# target_compile_options(riscv_sim_${arch} PRIVATE
+# target_compile_options(sail_riscv_sim PRIVATE
 #     -Wall -Wextra
 #     # Too annoying at the moment.
 #     -Wno-unused-parameter
 # )
 
-install(TARGETS riscv_sim_${arch}
+install(TARGETS sail_riscv_sim
     OPTIONAL
     RUNTIME DESTINATION "bin"
 )
