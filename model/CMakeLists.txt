@@ -6,8 +6,7 @@ function(string_upper_initial s result)
     set("${result}" "${new}" PARENT_SCOPE)
 endfunction()
 
-foreach (variant IN ITEMS "" "rocq" "rmem" "lean" "lem" "isabelle")
-    set(arch "rv")
+foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
 
     # Instruction sources, depending on target
     set(sail_check_srcs
@@ -192,7 +191,7 @@ foreach (variant IN ITEMS "" "rocq" "rmem" "lean" "lem" "isabelle")
 
     # Generate C code from Sail model with & without RVFI-DII support.
     if (NOT variant)
-        set(c_model_no_ext "${CMAKE_BINARY_DIR}/riscv_model_${arch}")
+        set(c_model_no_ext "${CMAKE_BINARY_DIR}/sail_riscv_model")
         set(c_model "${c_model_no_ext}.c")
 
         if (COVERAGE)
@@ -207,7 +206,7 @@ foreach (variant IN ITEMS "" "rocq" "rmem" "lean" "lem" "isabelle")
             DEPENDS ${sail_srcs}
             OUTPUT ${c_model} ${branch_info_file}
             VERBATIM
-            COMMENT "Building C code from Sail model (${arch})"
+            COMMENT "Building C code from Sail model"
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMAND
                 ${SAIL_BIN}
@@ -265,18 +264,18 @@ foreach (variant IN ITEMS "" "rocq" "rmem" "lean" "lem" "isabelle")
                 ${sail_srcs}
         )
 
-        add_custom_target(generated_model_${arch} DEPENDS ${c_model})
+        add_custom_target(generated_sail_riscv_model DEPENDS ${c_model})
     endif()
 
     if (NOT variant)
         # Generate JSON snippets file.
-        set(model_doc "riscv_model_${arch}.json")
+        set(model_doc "sail_riscv_model.json")
 
         add_custom_command(
             DEPENDS ${sail_srcs}
             OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${model_doc}"
             VERBATIM
-            COMMENT "Building documentation JSON from Sail model (${arch})"
+            COMMENT "Building documentation JSON from Sail model"
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMAND
                 ${SAIL_BIN}
@@ -303,268 +302,280 @@ foreach (variant IN ITEMS "" "rocq" "rmem" "lean" "lem" "isabelle")
                 ${sail_srcs}
         )
 
-        add_custom_target(generated_docs_${arch} DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${model_doc}")
-
-        # Generate smtlib2 code from the Sail code.
-        # A separate .smt2 file is created for each $property or $counterexample.
-        # Since the true output files are unknown we need to manually
-        # generate a file to indicate that we have run this command.
-        set(smt_stamp_file "${CMAKE_CURRENT_BINARY_DIR}/smt_${arch}.stamp")
-        add_custom_command(
-            DEPENDS ${sail_srcs}
-            VERBATIM
-            OUTPUT ${smt_stamp_file}
-            COMMENT "Building smtlib2 from Sail model (${arch})"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMAND
-                ${SAIL_BIN}
-                # Generate SMT files.
-                --smt
-                # The prefix of the output files.
-                -o "${CMAKE_CURRENT_BINARY_DIR}/model"
-                # Minimum required Sail compiler version.
-                --require-version ${SAIL_REQUIRED_VER}
-                --config ${CMAKE_SOURCE_DIR}/config/default.json
-                # Input files.
-                ${sail_srcs}
-            COMMAND ${CMAKE_COMMAND} -E touch ${smt_stamp_file}
-        )
-
-        add_custom_target(generated_smt_${arch} DEPENDS ${smt_stamp_file})
+        add_custom_target(generated_sail_riscv_docs DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${model_doc}")
     endif()
 
-    if (variant STREQUAL "rmem")
-        # Generate riscv.lem, riscv_toFromInterp2.ml and riscv.defs
-        # These are used for "rmem".
-        add_custom_command(
-            DEPENDS ${sail_srcs}
-            VERBATIM
-            OUTPUT "rmem_${arch}.lem"
-            COMMENT "Building rmem lem from Sail model (${arch})"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMAND
-                ${SAIL_BIN}
-                # Generate lem files.
-                --lem
-                --lem-mwords
-                --lem-lib Riscv_extras
-                --lem-lib Riscv_extras_fdext
-                --lem-lib Mem_metadata
-                # Output dir for Lem.
-                --lem-output-dir ${CMAKE_CURRENT_BINARY_DIR}
-                # Output dir for ISabelle auxiliary theories.
-                # We do not need the Isabelle .thy files, but sail always generates them.
-                --isa-output-dir ${CMAKE_CURRENT_BINARY_DIR}
-                # The prefix of the output files.
-                -o "lem_${arch}"
-                # Minimum required Sail compiler version.
-                --require-version ${SAIL_REQUIRED_VER}
-                # Input files.
-                ${sail_srcs}
-        )
-        add_custom_command(
-            DEPENDS ${sail_srcs}
-            VERBATIM
-            OUTPUT "rmem_${arch}_toFromInterp2.ml"
-            COMMENT "Building rmem toFromInterp2.ml from Sail model (${arch})"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMAND
-                ${SAIL_BIN}
-                --tofrominterp
-                --tofrominterp-lem
-                --tofrominterp-mwords
-                --tofrominterp-output-dir ${CMAKE_CURRENT_BINARY_DIR}
-                # The prefix of the output files.
-                -o "rmem_${arch}"
-                # Minimum required Sail compiler version.
-                --require-version ${SAIL_REQUIRED_VER}
-                # Input files.
-                ${sail_srcs}
-        )
-        add_custom_command(
-            DEPENDS ${sail_srcs}
-            VERBATIM
-            OUTPUT "rmem_${arch}.defs"
-            COMMENT "Building rmem defs from Sail model (${arch})"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMAND
-                ${SAIL_BIN}
-                --marshal
-                # The prefix of the output files.
-                -o "rmem_${arch}"
-                # Minimum required Sail compiler version.
-                --require-version ${SAIL_REQUIRED_VER}
-                # Input files.
-                ${sail_srcs}
-        )
+    if (variant)
+        # Theorem prover backends require compile time configuration.
+        foreach (arch IN ITEMS "rv32d" "rv64d")
+            set(config_file "${CMAKE_SOURCE_DIR}/config/${arch}.json")
 
-        add_custom_target(generated_rmem_${arch} DEPENDS
-            "rmem_${arch}.lem"
-            "rmem_${arch}_toFromInterp2.ml"
-            "rmem_${arch}.defs"
-        )
-    endif()
+            if (variant STREQUAL "smt")
+                # Generate smtlib2 code from the Sail code.
+                # A separate .smt2 file is created for each $property or $counterexample.
+                # Since the true output files are unknown we need to manually
+                # generate a file to indicate that we have run this command.
+                set(smt_stamp_file "${CMAKE_CURRENT_BINARY_DIR}/smt_${arch}.stamp")
+                add_custom_command(
+                    DEPENDS ${sail_srcs}
+                    VERBATIM
+                    OUTPUT ${smt_stamp_file}
+                    COMMENT "Building smtlib2 from Sail model (${arch})"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    COMMAND
+                        ${SAIL_BIN}
+                        # Generate SMT files.
+                        --smt
+                        # The prefix of the output files.
+                        -o "${CMAKE_CURRENT_BINARY_DIR}/model"
+                        # Minimum required Sail compiler version.
+                        --require-version ${SAIL_REQUIRED_VER}
+                        --config ${config_file}
+                        # Input files.
+                        ${sail_srcs}
+                    COMMAND ${CMAKE_COMMAND} -E touch ${smt_stamp_file}
+                )
 
-    # Build Rocq (formerly Coq) definitions.
-    if (variant STREQUAL "rocq")
-        add_custom_command(
-            DEPENDS ${sail_srcs}
-            VERBATIM
-            OUTPUT "${CMAKE_BINARY_DIR}/rocq/${arch}.v" "${CMAKE_BINARY_DIR}/rocq/${arch}_types.v"
-            COMMENT "Building Rocq definitions from Sail model (${arch})"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMAND
-                ${SAIL_BIN}
-                --dcoq-undef-axioms
-                --coq
-                --coq-lib riscv_extras
-                --coq-lib mem_metadata
-                --coq-output-dir "${CMAKE_BINARY_DIR}/rocq"
-                # The prefix of the output files.
-                -o "${arch}"
-                --config ${CMAKE_SOURCE_DIR}/config/default.json
-                # Minimum required Sail compiler version.
-                --require-version ${SAIL_REQUIRED_VER}
-                # Input files.
-                ${sail_srcs}
-        )
-        add_custom_command(
-            DEPENDS build_rocq_common "${CMAKE_BINARY_DIR}/rocq/${arch}.v" "${CMAKE_BINARY_DIR}/rocq/${arch}_types.v"
-            VERBATIM
-            OUTPUT "${CMAKE_BINARY_DIR}/rocq/${arch}.vo" "${CMAKE_BINARY_DIR}/rocq/${arch}_types.vo"
-            COMMENT "Building Rocq definitions from Sail model (${arch})"
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/rocq"
-            COMMAND
-                coqc
-                -R . Riscv
-                "${arch}_types.v"
-            COMMAND
-                coqc
-                -R . Riscv
-                "${arch}.v"
-        )
-        add_custom_target(generated_rocq_${arch} DEPENDS "${CMAKE_BINARY_DIR}/rocq/${arch}.v")
-        add_custom_target(build_rocq_${arch} DEPENDS "${CMAKE_BINARY_DIR}/rocq/${arch}.vo")
-    endif()
+                add_custom_target(generated_smt_${arch} DEPENDS ${smt_stamp_file})
+            endif()
 
-    # Build Lean definitions
-    if (variant STREQUAL "lean")
-        string(TOUPPER ${arch} arch_uppercase)
-        add_custom_command(
-            DEPENDS ${sail_srcs}
-            VERBATIM
-            OUTPUT "lean_${arch_uppercase}.lean"
-            COMMENT "Building Lean definitions from Sail model (${arch})"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMAND
-                ${SAIL_BIN}
-                --lean
-                --memo-z3
-                --require-version ${SAIL_REQUIRED_VER}
-                --lean-output-dir ${CMAKE_CURRENT_BINARY_DIR}
-                --lean-force-output
-                --lean-noncomputable
-                --lean-noncomputable-function encdec_forwards
-                --lean-noncomputable-function encdec_backwards
-                --lean-noncomputable-function encdec_forwards_matches
-                --lean-noncomputable-function encdec_backwards_matches
-                --lean-noncomputable-function encdec_compressed_forwards
-                --lean-noncomputable-function encdec_compressed_backwards
-                --lean-noncomputable-function encdec_compressed_forwards_matches
-                --lean-noncomputable-function encdec_compressed_backwards_matches
-                --lean-import-file ../handwritten_support/RiscvExtras.lean
-                --config ${CMAKE_SOURCE_DIR}/config/default.json
-                -o "Lean_${arch_uppercase}"
-                ${sail_srcs}
-        )
+            if (variant STREQUAL "rmem")
+                # Generate riscv.lem, riscv_toFromInterp2.ml and riscv.defs
+                # These are used for "rmem".
+                add_custom_command(
+                    DEPENDS ${sail_srcs}
+                    VERBATIM
+                    OUTPUT "rmem_${arch}.lem"
+                    COMMENT "Building rmem lem from Sail model (${arch})"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    COMMAND
+                        ${SAIL_BIN}
+                        # Generate lem files.
+                        --lem
+                        --lem-mwords
+                        --lem-lib Riscv_extras
+                        --lem-lib Riscv_extras_fdext
+                        --lem-lib Mem_metadata
+                        # Output dir for Lem.
+                        --lem-output-dir ${CMAKE_CURRENT_BINARY_DIR}
+                        # Output dir for ISabelle auxiliary theories.
+                        # We do not need the Isabelle .thy files, but sail always generates them.
+                        --isa-output-dir ${CMAKE_CURRENT_BINARY_DIR}
+                        # The prefix of the output files.
+                        -o "lem_${arch}"
+                        # Minimum required Sail compiler version.
+                        --require-version ${SAIL_REQUIRED_VER}
+                        --config ${config_file}
+                        # Input files.
+                        ${sail_srcs}
+                )
+                add_custom_command(
+                    DEPENDS ${sail_srcs}
+                    VERBATIM
+                    OUTPUT "rmem_${arch}_toFromInterp2.ml"
+                    COMMENT "Building rmem toFromInterp2.ml from Sail model (${arch})"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    COMMAND
+                        ${SAIL_BIN}
+                        --tofrominterp
+                        --tofrominterp-lem
+                        --tofrominterp-mwords
+                        --tofrominterp-output-dir ${CMAKE_CURRENT_BINARY_DIR}
+                        # The prefix of the output files.
+                        -o "rmem_${arch}"
+                        # Minimum required Sail compiler version.
+                        --require-version ${SAIL_REQUIRED_VER}
+                        --config ${config_file}
+                        # Input files.
+                        ${sail_srcs}
+                )
+                add_custom_command(
+                    DEPENDS ${sail_srcs}
+                    VERBATIM
+                    OUTPUT "rmem_${arch}.defs"
+                    COMMENT "Building rmem defs from Sail model (${arch})"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    COMMAND
+                        ${SAIL_BIN}
+                        --marshal
+                        # The prefix of the output files.
+                        -o "rmem_${arch}"
+                        # Minimum required Sail compiler version.
+                        --require-version ${SAIL_REQUIRED_VER}
+                        --config ${config_file}
+                        # Input files.
+                        ${sail_srcs}
+                )
 
-        add_custom_target(generated_lean_${arch} DEPENDS "lean_${arch_uppercase}.lean")
-    endif()
+                add_custom_target(generated_rmem_${arch} DEPENDS
+                    "rmem_${arch}.lem"
+                    "rmem_${arch}_toFromInterp2.ml"
+                    "rmem_${arch}.defs"
+                )
+            endif()
 
-    # Build Lem definitions, en route to Isabelle or HOL4.
-    if (variant STREQUAL "lem")
-        string_upper_initial("${arch}" arch_thy)
-        add_custom_command(
-            DEPENDS ${sail_srcs} ${CMAKE_SOURCE_DIR}/config/default.json
-            VERBATIM
-            OUTPUT "${arch}.lem" "${arch}_types.lem" "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_lemmas.thy"
-            COMMENT "Building Lem definitions from Sail model (${arch})"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMAND
-                ${SAIL_BIN}
-                --lem
-                --lem-lib Riscv_extras
-                --lem-lib Riscv_extras_fdext
-                --lem-output-dir ${CMAKE_CURRENT_BINARY_DIR}
-                # Sail also produces a lemmas file just for Isabelle
-                --isa-output-dir "${CMAKE_BINARY_DIR}/isabelle/${arch}"
-                # The prefix of the output files.
-                -o "${arch}"
-                # Minimum required Sail compiler version.
-                --require-version ${SAIL_REQUIRED_VER}
-                --config ${CMAKE_SOURCE_DIR}/config/default.json
-                # Input files.
-                ${sail_srcs}
-            COMMAND
-                echo
-                "declare {isabelle} rename field sync_exception_ext = sync_exception_ext_exception"
-                >>
-                ${CMAKE_CURRENT_BINARY_DIR}/${arch}_types.lem
+            # Build Rocq (formerly Coq) definitions.
+            if (variant STREQUAL "rocq")
+                add_custom_command(
+                    DEPENDS ${sail_srcs}
+                    VERBATIM
+                    OUTPUT "${CMAKE_BINARY_DIR}/rocq/${arch}.v" "${CMAKE_BINARY_DIR}/rocq/${arch}_types.v"
+                    COMMENT "Building Rocq definitions from Sail model (${arch})"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    COMMAND
+                        ${SAIL_BIN}
+                        --dcoq-undef-axioms
+                        --coq
+                        --coq-lib riscv_extras
+                        --coq-lib mem_metadata
+                        --coq-output-dir "${CMAKE_BINARY_DIR}/rocq"
+                        # The prefix of the output files.
+                        -o "${arch}"
+                        --config ${config_file}
+                        # Minimum required Sail compiler version.
+                        --require-version ${SAIL_REQUIRED_VER}
+                        # Input files.
+                        ${sail_srcs}
+                )
+                add_custom_command(
+                    DEPENDS build_rocq_common "${CMAKE_BINARY_DIR}/rocq/${arch}.v" "${CMAKE_BINARY_DIR}/rocq/${arch}_types.v"
+                    VERBATIM
+                    OUTPUT "${CMAKE_BINARY_DIR}/rocq/${arch}.vo" "${CMAKE_BINARY_DIR}/rocq/${arch}_types.vo"
+                    COMMENT "Building Rocq definitions from Sail model (${arch})"
+                    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/rocq"
+                    COMMAND
+                        coqc
+                        -R . Riscv
+                        "${arch}_types.v"
+                    COMMAND
+                        coqc
+                        -R . Riscv
+                        "${arch}.v"
+                )
+                add_custom_target(generated_rocq_${arch} DEPENDS "${CMAKE_BINARY_DIR}/rocq/${arch}.v")
+                add_custom_target(build_rocq_${arch} DEPENDS "${CMAKE_BINARY_DIR}/rocq/${arch}.vo")
+            endif()
 
-        )
-        add_custom_target(generated_lem_${arch} DEPENDS "${arch}.lem")
-    endif()
+            # Build Lean definitions
+            if (variant STREQUAL "lean")
+                string(TOUPPER ${arch} arch_uppercase)
+                add_custom_command(
+                    DEPENDS ${sail_srcs}
+                    VERBATIM
+                    OUTPUT "lean_${arch_uppercase}.lean"
+                    COMMENT "Building Lean definitions from Sail model (${arch})"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    COMMAND
+                        ${SAIL_BIN}
+                        --lean
+                        --memo-z3
+                        --require-version ${SAIL_REQUIRED_VER}
+                        --lean-output-dir ${CMAKE_CURRENT_BINARY_DIR}
+                        --lean-force-output
+                        --lean-noncomputable
+                        --lean-noncomputable-function encdec_forwards
+                        --lean-noncomputable-function encdec_backwards
+                        --lean-noncomputable-function encdec_forwards_matches
+                        --lean-noncomputable-function encdec_backwards_matches
+                        --lean-noncomputable-function encdec_compressed_forwards
+                        --lean-noncomputable-function encdec_compressed_backwards
+                        --lean-noncomputable-function encdec_compressed_forwards_matches
+                        --lean-noncomputable-function encdec_compressed_backwards_matches
+                        --lean-import-file ../handwritten_support/RiscvExtras.lean
+                        --config ${config_file}
+                        -o "Lean_${arch_uppercase}"
+                        ${sail_srcs}
+                )
 
-    # Build Isabelle definitions from Lem
-    if (variant STREQUAL "isabelle")
-        string_upper_initial("${arch}" arch_thy)
-        file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/isabelle/${arch}")
-        add_custom_command(
-            DEPENDS "${arch}.lem" "${arch}_types.lem"
-            VERBATIM
-            OUTPUT "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy" "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy"
-            COMMENT "Building Isabelle definitions from Lem definitions (${arch})"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-            COMMAND
-                lem
-                -no_lifting_toplevel_match_for ${arch_thy}_types.ast
-                -wl ign
-                -isa
-                -outdir ${CMAKE_BINARY_DIR}/isabelle/${arch}
-                -lib Sail=${sail_dir}/src/gen_lib
-                ${CMAKE_SOURCE_DIR}/handwritten_support/riscv_extras.lem
-                ${CMAKE_SOURCE_DIR}/handwritten_support/riscv_extras_fdext.lem
-                ${arch}_types.lem
-                ${arch}.lem
-            COMMAND
-                sed
-                -e "s/datatype ast/datatype (plugins only: size) ast/"
-                -e "s/record( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/record (overloaded) ( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/"
-                "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy"
-                >
-                "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy.new"
-            COMMAND
-                mv
-                "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy.new"
-                "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy"
-            COMMAND
-                sed
-                -e "s/by pat_completeness auto/by pat_completeness (auto intro!: let_cong bind_cong result.case_cong)/"
-                -e "s/WriteRAM_Meta addr width meta/WriteRAM_Meta addr width ()/"
-                "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy"
-                >
-                "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy.new"
-            COMMAND
-                mv
-                "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy.new"
-                "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy"
-            COMMAND
-                sed
-                "s/%ARCH%/${arch_thy}/"
-                "${CMAKE_SOURCE_DIR}/handwritten_support/ROOT.in"
-                >
-                "${CMAKE_BINARY_DIR}/isabelle/${arch}/ROOT"
-        )
-        add_custom_target(generated_isabelle_${arch} DEPENDS "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy")
+                add_custom_target(generated_lean_${arch} DEPENDS "lean_${arch_uppercase}.lean")
+            endif()
+
+            # Build Lem definitions, en route to Isabelle or HOL4.
+            if (variant STREQUAL "lem")
+                string_upper_initial("${arch}" arch_thy)
+                add_custom_command(
+                    DEPENDS ${sail_srcs} ${CMAKE_SOURCE_DIR}/config/default.json
+                    VERBATIM
+                    OUTPUT "${arch}.lem" "${arch}_types.lem" "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_lemmas.thy"
+                    COMMENT "Building Lem definitions from Sail model (${arch})"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    COMMAND
+                        ${SAIL_BIN}
+                        --lem
+                        --lem-lib Riscv_extras
+                        --lem-lib Riscv_extras_fdext
+                        --lem-output-dir ${CMAKE_CURRENT_BINARY_DIR}
+                        # Sail also produces a lemmas file just for Isabelle
+                        --isa-output-dir "${CMAKE_BINARY_DIR}/isabelle/${arch}"
+                        # The prefix of the output files.
+                        -o "${arch}"
+                        # Minimum required Sail compiler version.
+                        --require-version ${SAIL_REQUIRED_VER}
+                        --config ${config_file}
+                        # Input files.
+                        ${sail_srcs}
+                    COMMAND
+                        echo
+                        "declare {isabelle} rename field sync_exception_ext = sync_exception_ext_exception"
+                        >>
+                        ${CMAKE_CURRENT_BINARY_DIR}/${arch}_types.lem
+
+                )
+                add_custom_target(generated_lem_${arch} DEPENDS "${arch}.lem")
+            endif()
+
+            # Build Isabelle definitions from Lem
+            if (variant STREQUAL "isabelle")
+                string_upper_initial("${arch}" arch_thy)
+                file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/isabelle/${arch}")
+                add_custom_command(
+                    DEPENDS "${arch}.lem" "${arch}_types.lem"
+                    VERBATIM
+                    OUTPUT "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy" "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy"
+                    COMMENT "Building Isabelle definitions from Lem definitions (${arch})"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                    COMMAND
+                        lem
+                        -no_lifting_toplevel_match_for ${arch_thy}_types.ast
+                        -wl ign
+                        -isa
+                        -outdir ${CMAKE_BINARY_DIR}/isabelle/${arch}
+                        -lib Sail=${sail_dir}/src/gen_lib
+                        ${CMAKE_SOURCE_DIR}/handwritten_support/riscv_extras.lem
+                        ${CMAKE_SOURCE_DIR}/handwritten_support/riscv_extras_fdext.lem
+                        ${arch}_types.lem
+                        ${arch}.lem
+                    COMMAND
+                        sed
+                        -e "s/datatype ast/datatype (plugins only: size) ast/"
+                        -e "s/record( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/record (overloaded) ( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/"
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy"
+                        >
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy.new"
+                    COMMAND
+                        mv
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy.new"
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy"
+                    COMMAND
+                        sed
+                        -e "s/by pat_completeness auto/by pat_completeness (auto intro!: let_cong bind_cong result.case_cong)/"
+                        -e "s/WriteRAM_Meta addr width meta/WriteRAM_Meta addr width ()/"
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy"
+                        >
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy.new"
+                    COMMAND
+                        mv
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy.new"
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy"
+                    COMMAND
+                        sed
+                        "s/%ARCH%/${arch_thy}/"
+                        "${CMAKE_SOURCE_DIR}/handwritten_support/ROOT.in"
+                        >
+                        "${CMAKE_BINARY_DIR}/isabelle/${arch}/ROOT"
+                )
+                add_custom_target(generated_isabelle_${arch} DEPENDS "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy")
+            endif()
+        endforeach()
     endif()
 endforeach()

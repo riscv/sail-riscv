@@ -13,7 +13,7 @@ foreach (arch IN ITEMS "rv32d" "rv64d")
         add_test(
             NAME "${arch}_${elf_name}"
             COMMAND
-                $<TARGET_FILE:riscv_sim_rv>
+                $<TARGET_FILE:sail_riscv_sim>
                 --config "${CMAKE_SOURCE_DIR}/config/${arch}.json"
                 ${elf}
         )
