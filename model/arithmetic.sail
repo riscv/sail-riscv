@@ -48,3 +48,16 @@ function rev8(input) = {
   };
   output
 }
+
+val count_ones : forall 'n, 'n >= 0. (bits('n)) -> range(0, 'n)
+function count_ones(x) = {
+  var count : range(0, 'n) = 0;
+  foreach (i from 0 to ('n - 1)) {
+    if x[i] == bitone then {
+      let new_count = count + 1;
+      assert(new_count <= 'n);
+      count = new_count;
+    }
+  };
+  count
+}

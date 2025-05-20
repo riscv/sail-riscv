@@ -493,16 +493,6 @@ function signed_saturation(len, elem) = {
   };
 }
 
-val count_leadingzeros : (bits(64), int) -> int
-function count_leadingzeros (sig, len) = {
-  var idx : int = -1;
-  assert(len == 10 | len == 23 | len == 52);
-  foreach (i from 0 to (len - 1)) {
-    if sig[i] == bitone then idx = i;
-  };
-  len - idx - 1
-}
-
 /* The parameter m is implicit to help proof the proof assistant backends infer its value. */
 val vrev8 : forall 'n 'm, 'n >= 0 & 'm >= 0. (implicit('m), vector('n, bits('m * 8))) -> vector('n, bits('m * 8))
 function vrev8(m, input) = {
