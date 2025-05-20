@@ -29,7 +29,7 @@ Install [Sail](https://github.com/rems-project/sail/). On Linux you can download
 $ ./build_simulators.sh
 ```
 
-will build the simulator at `build/c_emulator/riscv_sim_rv`.
+will build the simulator at `build/c_emulator/sail_riscv_sim`.
 
 If you get an error message saying `sail: unknown option '--require-version'.` it's because your Sail compiler is too old. You need version 0.19 or later.
 
@@ -41,7 +41,7 @@ To use a system installation of libgmp, run `env DOWNLOAD_GMP=FALSE ./build_simu
 The simulator can be used to execute small test binaries.
 
 ```
-$ build/c_emulator/riscv_sim_rv <elf-file>
+$ build/c_emulator/sail_riscv_sim <elf-file>
 ```
 
 A suite of RV32 and RV64 test programs derived from the
@@ -53,13 +53,13 @@ can be run using `make test` or `ctest` in the build directory.
 
 The model is configured using a JSON file specifying various tunable
 options. The default configuration used for the model can be examined
-using `build/c_emulator/riscv_sim_rv --print-default-config`. To
+using `build/c_emulator/sail_riscv_sim --print-default-config`. To
 use a custom configuration, save the default configuration into a
 file, edit it as needed, and pass it to the simulator using the
 `--config` option.
 
 Information on other options for the simulator is available from
-`build/c_emulator/riscv_sim_rv -h`.
+`build/c_emulator/sail_riscv_sim -h`.
 
 ### Booting OS images
 
