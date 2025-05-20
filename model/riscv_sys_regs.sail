@@ -647,10 +647,10 @@ register minstret : bits(64)
 register minstret_increment : bool
 
 /* machine information registers */
-register mvendorid : bits(32) = to_bits_unsafe(32,   (config platform.vendorid : int))
-register mimpid    : xlenbits = to_bits_unsafe(xlen, (config platform.impid : int))
-register marchid   : xlenbits = to_bits_unsafe(xlen, (config platform.archid : int))
-register mhartid   : xlenbits = to_bits_unsafe(xlen, (config platform.hartid : int))
+register mvendorid : bits(32) = to_bits_checked(config platform.vendorid : int)
+register mimpid    : xlenbits = to_bits_checked(config platform.impid : int)
+register marchid   : xlenbits = to_bits_checked(config platform.archid : int)
+register mhartid   : xlenbits = to_bits_checked(config platform.hartid : int)
 
 register mconfigptr : xlenbits = zeros()
 
