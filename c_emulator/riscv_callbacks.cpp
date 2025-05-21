@@ -86,7 +86,7 @@ unit freg_write_callback(unsigned reg, uint64_t value)
   if (config_print_reg) {
     // TODO: Might need to change from PRIX64 to PRIX128 once the "Q" extension
     // is supported
-    fprintf(trace_log, "x%d <- 0x%0*" PRIX64 "\n", reg,
+    fprintf(trace_log, "f%d <- 0x%0*" PRIX64 "\n", reg,
             static_cast<int>(zflen / 4), value);
   }
   return UNIT;
