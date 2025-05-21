@@ -907,8 +907,8 @@ val get_16_random_bits = impure {
 register vstart : bits(16) /* use the largest possible length of vstart */
 register vl     : xlenbits
 
-let get_vlenb : xlenbits =
-  to_bits(2 ^ get_vlen_pow / 8)
+let VLENB : xlenbits =
+  to_bits(2 ^ VLEN_pow / 8)
 
 bitfield Vtype  : xlenbits = {
   vill      : xlen - 1,
