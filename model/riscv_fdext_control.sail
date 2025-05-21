@@ -17,7 +17,7 @@
 
 function clause currentlyEnabled(Ext_F) = hartSupports(Ext_F) & (misa[F] == 0b1) & (mstatus[FS] != 0b00)
 function clause currentlyEnabled(Ext_D) = hartSupports(Ext_D) & (misa[D] == 0b1) & (mstatus[FS] != 0b00) & flen >= 64
-function clause currentlyEnabled(Ext_Zfinx) = hartSupports(Ext_Zfinx)
+function clause currentlyEnabled(Ext_Zfinx) = hartSupports(Ext_Zfinx) & check_fp_stateen()
 
 /* Floating Point CSRs */
 mapping clause csr_name_map = 0x001  <-> "fflags"
