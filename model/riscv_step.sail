@@ -245,7 +245,6 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
 }
 
 function loop () : unit -> unit = {
-  let insns_per_tick = plat_insns_per_tick();
   var i : nat = 0;
   var step_no : nat = 0;
   while not(htif_done) do {
@@ -268,7 +267,7 @@ function loop () : unit -> unit = {
     } else {
       /* update time */
       i = i + 1;
-      if i == insns_per_tick then {
+      if i == plat_insns_per_tick then {
         tick_clock();
         i = 0;
       }

@@ -59,7 +59,7 @@ function pmpMatchAddr(
     },
     NA4 => {
       // NA4 is not selectable when the PMP grain G >= 1. See pmpWriteCfg().
-      assert(sys_pmp_grain() < 1, "NA4 cannot be selected when PMP grain G >= 1.");
+      assert(sys_pmp_grain < 1, "NA4 cannot be selected when PMP grain G >= 1.");
       // Match a 4-byte region.
       let begin = unsigned(pmpaddr) * 4;
       pmpRangeMatch(begin, begin + 4, addr, width)
@@ -123,11 +123,6 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
 }
 
 function reset_pmp() -> unit = {
-  assert(
-    sys_pmp_count() == 0 | sys_pmp_count() == 16 | sys_pmp_count() == 64,
-    "sys_pmp_count() must be 0, 16, or 64"
-  );
-
   foreach (i from 0 to 63) {
     // On reset the PMP register's A and L bits are set to 0 unless the platform
     // mandates a different value.

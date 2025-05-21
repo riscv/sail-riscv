@@ -30,7 +30,7 @@ mapping maybe_vmask : string <-> bits(1) = {
  */
 val valid_eew_emul : (int, int) -> bool
 function valid_eew_emul(EEW, EMUL_pow) = {
-  let ELEN = 2 ^ get_elen_pow();
+  let ELEN = 2 ^ get_elen_pow;
   EEW >= 8 & EEW <= ELEN & EMUL_pow >= -3 & EMUL_pow <= 3
 }
 
@@ -219,7 +219,7 @@ function write_velem_quad_vec(vd, SEW, input, i) = {
 val get_start_element : unit -> result(nat, unit)
 function get_start_element() = {
   let start_element = unsigned(vstart);
-  let VLEN_pow = get_vlen_pow();
+  let VLEN_pow = get_vlen_pow;
   let SEW_pow = get_sew_pow();
   /* The use of vstart values greater than the largest element
    * index for the current SEW setting is reserved.

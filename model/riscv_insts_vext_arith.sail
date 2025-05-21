@@ -48,7 +48,7 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW_pow  = get_sew_pow();
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let VLEN_pow = get_vlen_pow();
+  let VLEN_pow = get_vlen_pow;
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_normal(vd, vm) then return Illegal_Instruction();
@@ -695,7 +695,7 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
   let SEW_pow  = get_sew_pow();
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let VLEN_pow = get_vlen_pow();
+  let VLEN_pow = get_vlen_pow;
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_normal(vd, vm) then return Illegal_Instruction();
@@ -1104,7 +1104,7 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
   let SEW_pow  = get_sew_pow();
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let VLEN_pow = get_vlen_pow();
+  let VLEN_pow = get_vlen_pow;
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_normal(vd, vm) then return Illegal_Instruction();

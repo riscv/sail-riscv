@@ -52,7 +52,7 @@ function handle_illegal_vtype() = {
   csr_write_callback("vl", vl);
 }
 
-function vl_use_ceil() -> bool = config extensions.V.vl_use_ceil
+let vl_use_ceil : bool = config extensions.V.vl_use_ceil
 
 function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
   // See "Constraints on Setting vl" in the vector spec.
@@ -62,7 +62,7 @@ function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
       // If VLMAX < AVL < 2 * VLMAX then we can use any value
       // such that ceil(AVL / 2) <= vl <= VLMAX. Here we provide
       // two options: ceil(AVL / 2) or VLMAX.
-      if vl_use_ceil() then (AVL + 1) / 2 else VLMAX
+      if vl_use_ceil then (AVL + 1) / 2 else VLMAX
     }
     else VLMAX;
 
@@ -85,8 +85,8 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   vtype.bits = 0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul;
 
   /* check new SEW and LMUL are legal and calculate VLMAX */
-  let VLEN_pow     = get_vlen_pow();
-  let ELEN_pow     = get_elen_pow();
+  let VLEN_pow     = get_vlen_pow;
+  let ELEN_pow     = get_elen_pow;
   let LMUL_pow_new = get_lmul_pow();
   let SEW_pow_new  = get_sew_pow();
   if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
@@ -137,8 +137,8 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   vtype.bits = X(rs2);
 
   /* check new SEW and LMUL are legal and calculate VLMAX */
-  let VLEN_pow     = get_vlen_pow();
-  let ELEN_pow     = get_elen_pow();
+  let VLEN_pow     = get_vlen_pow;
+  let ELEN_pow     = get_elen_pow;
   let LMUL_pow_new = get_lmul_pow();
   let SEW_pow_new  = get_sew_pow();
   if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
@@ -185,8 +185,8 @@ function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   vtype.bits = 0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul;
 
   /* check new SEW and LMUL are legal and calculate VLMAX */
-  let VLEN_pow     = get_vlen_pow();
-  let ELEN_pow     = get_elen_pow();
+  let VLEN_pow     = get_vlen_pow;
+  let ELEN_pow     = get_elen_pow;
   let LMUL_pow_new = get_lmul_pow();
   let SEW_pow_new  = get_sew_pow();
   if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };

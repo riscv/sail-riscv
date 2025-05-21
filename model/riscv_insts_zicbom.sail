@@ -66,12 +66,11 @@ function cbop_priv_check(p: Privilege) -> checked_cbop = {
 val process_clean_inval : (regidx, cbop_zicbom) -> ExecutionResult
 function process_clean_inval(rs1, cbop) = {
   let rs1_val = X(rs1);
-  let cache_block_size_exp = plat_cache_block_size_exp();
-  let cache_block_size = 2 ^ cache_block_size_exp;
+  let cache_block_size = 2 ^ plat_cache_block_size_exp;
 
   // Offset from rs1 to the beginning of the cache block. This is 0 if rs1
   // is aligned to the cache block, or negative if rs1 is misaligned.
-  let negative_offset = (rs1_val & ~(zero_extend(ones(cache_block_size_exp)))) - rs1_val;
+  let negative_offset = (rs1_val & ~(zero_extend(ones(plat_cache_block_size_exp)))) - rs1_val;
 
   // TODO: This is incorrect since CHERI only requires at least one byte
   // to be in bounds here, whereas `ext_data_get_addr()` checks that all bytes
