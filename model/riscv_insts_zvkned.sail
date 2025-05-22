@@ -163,7 +163,7 @@ mapping vaesef_mnemonic : zvk_vaesef_funct6 <-> string = {
 }
 
 mapping clause assembly = VAESEF(funct6, vs2, vd)
-  <-> vaesef_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ spc() ^ vreg_name(vs2)
+  <-> vaesef_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2)
 
 union clause ast = VAESEM : (zvk_vaesem_funct6, vregidx, vregidx)
 
@@ -265,7 +265,7 @@ function clause execute (VAESKF1_VI(vs2, rnd, vd)) = {
 }
 
 mapping clause assembly = VAESKF1_VI(vs2, rnd, vd)
-  <-> "vaeskf1.vi" ^ sep() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(rnd)
+  <-> "vaeskf1.vi" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(rnd)
 
 union clause ast = VAESKF2_VI : (vregidx, bits(5), vregidx)
 
@@ -315,7 +315,7 @@ function clause execute (VAESKF2_VI(vs2, rnd, vd)) = {
 }
 
 mapping clause assembly = VAESKF2_VI(vs2, rnd, vd)
-  <-> "vaeskf2.vi" ^ sep() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(rnd)
+  <-> "vaeskf2.vi" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(rnd)
 
 union clause ast = VAESZ_VS : (vregidx, vregidx)
 
@@ -351,4 +351,4 @@ function clause execute (VAESZ_VS(vs2, vd)) = {
 }
 
 mapping clause assembly = VAESZ_VS(vs2, vd)
-  <-> "vaesz.vs" ^ sep() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2)
+  <-> "vaesz.vs" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2)
