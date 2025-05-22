@@ -80,7 +80,7 @@ function process_clean_inval(rs1, cbop) = {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
       let res : option(ExceptionType) = match translateAddr(vaddr, Read(Data)) {
-        TR_Address(paddr, _) => {
+        Ok(paddr, _) => {
           // "A cache-block management instruction is permitted to access the
           // specified cache block whenever a load instruction or store instruction
           // is permitted to access the corresponding physical addresses. If
@@ -105,7 +105,7 @@ function process_clean_inval(rs1, cbop) = {
             _ => None(),
           }
         },
-        TR_Failure(e, _) => Some(e)
+        Err(e, _) => Some(e)
       };
       // "If access to the cache block is not permitted, a cache-block management
       //  instruction raises a store page fault or store guest-page fault exception

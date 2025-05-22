@@ -209,10 +209,7 @@ function translationMode(priv : Privilege) -> SATPMode = {
 // Result of address translation
 
 // PUBLIC
-union TR_Result('paddr : Type, 'failure : Type) = {
-  TR_Address : ('paddr, ext_ptw),
-  TR_Failure : ('failure, ext_ptw)
-}
+type TR_Result('paddr : Type, 'failure : Type) = result(('paddr, ext_ptw), ('failure, ext_ptw))
 
 // This function can be ignored on first reading since TLBs are not
 // part of RISC-V architecture spec (see TLB NOTE above).
@@ -239,15 +236,15 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
 
   match pte_check {
     PTE_Check_Failure(ext_ptw, ext_ptw_fail) =>
-      TR_Failure(ext_get_ptw_error(ext_ptw_fail), ext_ptw),
+      Err(ext_get_ptw_error(ext_ptw_fail), ext_ptw),
     PTE_Check_Success(ext_ptw) =>
       match update_PTE_Bits(pte, ac) {
-        None()     => TR_Address(tlb_get_ppn(sv_width, ent, vpn), ext_ptw),
+        None()     => Ok(tlb_get_ppn(sv_width, ent, vpn), ext_ptw),
         Some(pte') =>
           // Step 9 of VATP. See riscv_platform.sail.
           if not(plat_enable_dirty_update()) then
             // pte needs dirty/accessed update but that is not enabled
-            TR_Failure(PTW_PTE_Update(), ext_ptw)
+            Err(PTW_PTE_Update(), ext_ptw)
           else {
             // Writeback the PTE (which has new A/D bits)
             write_TLB(tlb_index, tlb_set_pte(ent, pte'));
@@ -256,7 +253,7 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
               Err(e) => internal_error(__FILE__, __LINE__,
                                        "invalid physical address in TLB")
             };
-            TR_Address(tlb_get_ppn(sv_width, ent, vpn), ext_ptw)
+            Ok(tlb_get_ppn(sv_width, ent, vpn), ext_ptw)
           }
       }
   }
@@ -281,30 +278,30 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
   let ptw_result = pt_walk(sv_width, vpn, ac, priv, mxr, do_sum,
                            base_ppn, initial_level, false, ext_ptw);
   match ptw_result {
-    Err(f, ext_ptw) => TR_Failure(f, ext_ptw),
+    Err(f, ext_ptw) => Err(f, ext_ptw),
     Ok(struct {ppn, pte, pteAddr, level, global}, ext_ptw) => {
       let ext_pte = ext_bits_of_PTE(pte);
       // Without TLBs, this 'match' expression can be replaced simply
-      // by: 'TR_Address(ppn, ext_ptw)'    (see TLB NOTE above)
+      // by: 'Ok(ppn, ext_ptw)'    (see TLB NOTE above)
       match update_PTE_Bits(pte, ac) {
         None() => {
           add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
-          TR_Address(ppn, ext_ptw)
+          Ok(ppn, ext_ptw)
         },
         Some(pte) =>
           // Step 9 of VATP. See riscv_platform.sail.
           if not(plat_enable_dirty_update()) then
             // pte needs dirty/accessed update but that is not enabled
-            TR_Failure(PTW_PTE_Update(), ext_ptw)
+            Err(PTW_PTE_Update(), ext_ptw)
           else {
             // Writeback the PTE (which has new A/D bits)
             match write_pte(pteAddr, pte_width, pte) {
               Ok(_) => {
                 add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
-                TR_Address(ppn, ext_ptw)
+                Ok(ppn, ext_ptw)
               },
               Err(e) =>
-                TR_Failure(PTW_Access(), ext_ptw)
+                Err(PTW_Access(), ext_ptw)
             }
           }
         }
@@ -367,7 +364,7 @@ function translateAddr(
 
   let mode = translationMode(effPriv);
 
-  if mode == Bare then return TR_Address(Physaddr(zero_extend(bits_of(vAddr))), init_ext_ptw);
+  if mode == Bare then return Ok(Physaddr(zero_extend(bits_of(vAddr))), init_ext_ptw);
 
   // Sv39 -> 39, etc.
   let sv_width = satp_mode_width(mode);
@@ -380,7 +377,7 @@ function translateAddr(
 
   let svAddr = bits_of(vAddr)[sv_width - 1 .. 0];
   if bits_of(vAddr) != sign_extend(svAddr) then {
-    TR_Failure(translationException(ac, PTW_Invalid_Addr()), init_ext_ptw)
+    Err(translationException(ac, PTW_Invalid_Addr()), init_ext_ptw)
   } else {
     let mxr    = mstatus[MXR] == 0b1;
     let do_sum = mstatus[SUM] == 0b1;
@@ -397,7 +394,7 @@ function translateAddr(
                         init_ext_ptw);
     // Fixup result PA or exception
     match res {
-      TR_Address(ppn, ext_ptw) => {
+      Ok(ppn, ext_ptw) => {
         // Step 10 of VATP.
         // Append the page offset. This is now a 34 or 56 bit address.
         let paddr = ppn @ bits_of(vAddr)[pagesize_bits - 1 .. 0];
@@ -405,9 +402,9 @@ function translateAddr(
         // On RV64 paddr can be 34 or 56 bits, so we zero extend to 64.
         // On RV32 paddr can only be 34 bits. Sail knows this due to
         // the assertion above.
-        TR_Address(Physaddr(zero_extend(paddr)), ext_ptw)
+        Ok(Physaddr(zero_extend(paddr)), ext_ptw)
       },
-      TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
+      Err(f, ext_ptw)  => Err(translationException(ac, f), ext_ptw)
     }
   }
 }

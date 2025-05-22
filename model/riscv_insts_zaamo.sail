@@ -58,8 +58,8 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
       if not(is_aligned_addr(bits_of(vaddr), width))
       then Memory_Exception(vaddr, E_SAMO_Addr_Align())
       else match translateAddr(vaddr, ReadWrite(Data, Data)) {
-        TR_Failure(e, _) => Memory_Exception(vaddr, e),
-        TR_Address(addr, _) => {
+        Err(e, _) => Memory_Exception(vaddr, e),
+        Ok(addr, _) => {
           let rs2_val = X(rs2)[width_bytes * 8 - 1 .. 0];
           match mem_write_ea(addr, width_bytes, aq & rl, rl, true) {
             Err(e) => Memory_Exception(vaddr, e),
