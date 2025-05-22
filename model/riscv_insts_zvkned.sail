@@ -163,7 +163,7 @@ mapping vaesef_mnemonic : zvk_vaesef_funct6 <-> string = {
 }
 
 mapping clause assembly = VAESEF(funct6, vs2, vd)
-  <-> vaesef_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ spc() ^ vreg_name(vs2)
+  <-> vaesef_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2)
 
 union clause ast = VAESEM : (zvk_vaesem_funct6, vregidx, vregidx)
 
