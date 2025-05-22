@@ -116,35 +116,42 @@ function get_pmm(eff_privilege : Privilege) -> bits(2) = match eff_privilege {
   User       => if currentlyEnabled(Ext_S) then senvcfg[PMM] else menvcfg[PMM],
 }
 
-/* Check whether PMM is currently active.
+/* Check whether PMM is applicable.
  * NOTE: mstatus[MXR] == 1'b1 disables pointer masking in S and U mode, but not in M-mode.
  */
-function is_pmm_active(typ : AccessType(ext_access_type), pmm : bits(2), eff_privilege : Privilege) -> bool = typ != InstructionFetch() & pmm != pmm_mode(PMM_Disabled) & (eff_privilege == Machine | mstatus[MXR] == 0b0)
+function is_pmm_applicable(typ : AccessType(ext_access_type), eff_privilege : Privilege) -> bool = typ != InstructionFetch() & (eff_privilege == Machine | mstatus[MXR] == 0b0)
+
+/* Get the effective PMLEN value */
+function get_pmlen(typ : AccessType(ext_access_type), eff_privilege : Privilege) -> {0, 7, 16} = {
+  let pmm = get_pmm(eff_privilege);
+  if is_pmm_applicable(typ, eff_privilege) then {
+    match pmm {
+      pmm_mode(PMM_Enabled7)  => 7,
+      pmm_mode(PMM_Enabled16) => 16,
+      pmm_mode(PMM_Disabled)  => 0,
+    }
+  } else {
+    0  /* PMM not active */
+  }
+}
 
 /* Transforms a virtual address by sign-extending the relevant upper bits. */
-function transform_VA (effective_address : xlenbits, pmlen : {7, 16}) -> xlenbits = {
+function transform_VA (effective_address : xlenbits, pmlen : {0, 7, 16}) -> xlenbits = {
   sign_extend(effective_address[xlen - pmlen - 1 .. 0])
 }
 
 /* Transforms a physical address by zero-extending the relevant upper bits. */
-function transform_PA (effective_address : xlenbits, pmlen : {7, 16}) -> xlenbits = {
+function transform_PA (effective_address : xlenbits, pmlen : {0, 7, 16}) -> xlenbits = {
   zero_extend(effective_address[xlen - pmlen - 1 .. 0])
 }
 
-/* Applies pointer masking to the effective address based on PMM settings and current translation mode. */
+/* Transforms the effective address based on PMM settings and the current translation mode. */
 function transform_effective_address(Virtaddr(vaddr) : virtaddr, typ : AccessType(ext_access_type)) -> virtaddr = {
   let eff_privilege = effectivePrivilege(typ, mstatus, cur_privilege);
-  let pmm = get_pmm(eff_privilege);
-  if is_pmm_active(typ, pmm, eff_privilege) then {
-    let mode = translationMode(cur_privilege);
-    let vaddr_masked : xlenbits = match pmm {
-      pmm_mode(PMM_Enabled7)  => if mode == Bare then transform_PA(vaddr, 7)  else transform_VA(vaddr, 7),
-      pmm_mode(PMM_Enabled16) => if mode == Bare then transform_PA(vaddr, 16) else transform_VA(vaddr, 16),
-    };
-    Virtaddr(vaddr_masked)
-  } else {
-    Virtaddr(vaddr)
-  }
+  let pmlen = get_pmlen(typ, eff_privilege);
+  let mode = translationMode(eff_privilege);
+  let vaddr_masked = if mode == Bare then transform_PA(vaddr, pmlen) else transform_VA(vaddr, pmlen);
+  Virtaddr(vaddr)
 }
 
 /****    External API    ****/

@@ -382,13 +382,19 @@
       "supported": true
     },
     "Ssnpm": {
-      "supported": false
+      "supported": @CONFIG_XLEN_IS_64@,
+      "enabled7": true,
+      "enabled16": true
     },
     "Smnpm": {
-      "supported": false
+      "supported": @CONFIG_XLEN_IS_64@,
+      "enabled7": true,
+      "enabled16": true
     },
     "Smmpm": {
-      "supported": false
+      "supported": @CONFIG_XLEN_IS_64@,
+      "enabled7": true,
+      "enabled16": true
     },
     "Svrsw60t59b": {
       "supported": @CONFIG_XLEN_IS_64@
