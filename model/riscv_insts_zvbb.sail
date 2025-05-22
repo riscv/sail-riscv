@@ -210,7 +210,7 @@ mapping clause encdec = VCLZ_V (vm, vs2, vd)
   when currentlyEnabled(Ext_Zvbb)
 
 mapping clause assembly = VCLZ_V (vm, vs2, vd)
-  <-> "vclz.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vclz.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 function clause execute (VCLZ_V(vm, vs2, vd)) = {
   let SEW      = get_sew();
@@ -248,7 +248,7 @@ mapping clause encdec = VCTZ_V (vm, vs2, vd)
   when currentlyEnabled(Ext_Zvbb)
 
 mapping clause assembly = VCTZ_V (vm, vs2, vd)
-  <-> "vctz.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vctz.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 function clause execute (VCTZ_V(vm, vs2, vd)) = {
   let SEW      = get_sew();
@@ -286,7 +286,7 @@ mapping clause encdec = VCPOP_V (vm, vs2, vd)
   when currentlyEnabled(Ext_Zvbb)
 
 mapping clause assembly = VCPOP_V (vm, vs2, vd)
-  <-> "vcpop.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vcpop.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 function clause execute (VCPOP_V(vm, vs2, vd)) = {
   let SEW      = get_sew();
@@ -517,7 +517,7 @@ mapping clause encdec = VWSLL_VV (vm, vs2, vs1, vd)
   when currentlyEnabled(Ext_Zvbb)
 
 mapping clause assembly = VWSLL_VV (vm, vs2, vs1, vd)
-  <-> "vwsll.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ sep() ^ maybe_vmask(vm)
+  <-> "vwsll.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
 function clause execute (VWSLL_VV(vm, vs2, vs1, vd)) = {
   let SEW            = get_sew();
@@ -561,7 +561,7 @@ mapping clause encdec = VWSLL_VX (vm, vs2, rs1, vd)
   when currentlyEnabled(Ext_Zvbb)
 
 mapping clause assembly = VWSLL_VX (vm, vs2, rs1, vd)
-  <-> "vwsll.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ sep() ^ maybe_vmask(vm)
+  <-> "vwsll.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
 
 function clause execute (VWSLL_VX(vm, vs2, rs1, vd)) = {
   let SEW            = get_sew();
@@ -604,7 +604,7 @@ mapping clause encdec = VWSLL_VI (vm, vs2, uimm, vd)
   when currentlyEnabled(Ext_Zvbb)
 
 mapping clause assembly = VWSLL_VI (vm, vs2, uimm, vd)
-  <-> "vwsll.vi" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(uimm) ^ sep() ^ maybe_vmask(vm)
+  <-> "vwsll.vi" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(uimm) ^ maybe_vmask(vm)
 
 function clause execute (VWSLL_VI(vm, vs2, uimm, vd)) = {
   let SEW            = get_sew();
