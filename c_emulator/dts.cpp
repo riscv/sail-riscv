@@ -19,7 +19,7 @@ void print_dts(mach_bits xlen)
   uint64_t clint_size = get_config_uint64({"platform", "clint", "size"});
 
   // Default, should be adjusted based on config.
-  const char *isa_string = "rv64imafdc_zicntr_zihpm";
+  const char *isa_string = "imafdc_zicntr_zihpm";
   std::stringstream s;
   s << std::dec
     << "/dts-v1/;\n"
@@ -41,7 +41,7 @@ void print_dts(mach_bits xlen)
        "      status = \"okay\";\n"
        "      compatible = \"riscv\";\n"
        "      riscv,isa = \""
-    << isa_string
+    << "rv" << (xlen == 32 ? "32" : "64") << isa_string
     << "\";\n"
        "      mmu-type = \"riscv,"
     << (xlen == 32 ? "sv32" : "sv39")
