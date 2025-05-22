@@ -31,6 +31,8 @@ val elf_entry = pure {
 let plat_cache_block_size_exp : range(0, 12) = config platform.cache_block_size_exp
 
 /* Main memory */
+// Use `register` instead of `let` since `to_bits_checked` is not a pure initializer
+// due to its use of `assert`.
 register plat_ram_base : physaddrbits = to_bits_checked(config platform.ram.base : int)
 register plat_ram_size : physaddrbits = to_bits_checked(config platform.ram.size : int)
 
@@ -46,10 +48,14 @@ let plat_enable_misaligned_access : bool = config memory.misaligned.supported
 let plat_mtval_has_illegal_inst_bits : bool = config base.mtval_has_illegal_instruction_bits
 
 /* ROM holding reset vector and device-tree DTB */
+// Use `register` instead of `let` since `to_bits_checked` is not a pure initializer
+// due to its use of `assert`.
 register plat_rom_base : physaddrbits = to_bits_checked(config platform.rom.base : int)
 register plat_rom_size : physaddrbits = to_bits_checked(config platform.rom.size : int)
 
 /* Location of clock-interface, which should match with the spec in the DTB */
+// Use `register` instead of `let` since `to_bits_checked` is not a pure initializer
+// due to its use of `assert`.
 register plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
 register plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.size : int)
 
