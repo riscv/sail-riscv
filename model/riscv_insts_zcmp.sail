@@ -8,34 +8,41 @@
 
 function clause currentlyEnabled(Ext_Zcmp) = hartSupports(Ext_Zcmp) & currentlyEnabled(Ext_Zca) & not(currentlyEnabled(Ext_Zcd))
 
-mapping zcmp_assembly_rlist : bits(4) <-> string = {
-  0x4 if get_config_use_abi_names() <-> "ra",
-  0x5 if get_config_use_abi_names() <-> "ra" ^ sep() ^ "s0",
-  0x6 if get_config_use_abi_names() <-> "ra" ^ sep() ^ "s0-s1",
-  0x7 if get_config_use_abi_names() <-> "ra" ^ sep() ^ "s0-s2",
-  0x8 if get_config_use_abi_names() <-> "ra" ^ sep() ^ "s0-s3",
-  0x9 if get_config_use_abi_names() <-> "ra" ^ sep() ^ "s0-s4",
-  0xa if get_config_use_abi_names() <-> "ra" ^ sep() ^ "s0-s5",
-  0xb if get_config_use_abi_names() <-> "ra" ^ sep() ^ "s0-s6",
-  0xc if get_config_use_abi_names() <-> "ra" ^ sep() ^ "s0-s7",
-  0xd if get_config_use_abi_names() <-> "ra" ^ sep() ^ "s0-s8",
-  0xe if get_config_use_abi_names() <-> "ra" ^ sep() ^ "s0-s9",
-  0xf if get_config_use_abi_names() <-> "ra" ^ sep() ^ "s0-s11",
-  // Using X names instead of ABI names.
-  0x4 if not(get_config_use_abi_names()) <-> "x1",
-  0x5 if not(get_config_use_abi_names()) <-> "x1" ^ sep() ^ "x8",
-  0x6 if not(get_config_use_abi_names()) <-> "x1" ^ sep() ^ "x8-x9",
-  0x7 if not(get_config_use_abi_names()) <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18",
-  0x8 if not(get_config_use_abi_names()) <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x19",
-  0x9 if not(get_config_use_abi_names()) <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x20",
-  0xa if not(get_config_use_abi_names()) <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x21",
-  0xb if not(get_config_use_abi_names()) <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x22",
-  0xc if not(get_config_use_abi_names()) <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x23",
-  0xd if not(get_config_use_abi_names()) <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x24",
-  0xe if not(get_config_use_abi_names()) <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x25",
-  0xf if not(get_config_use_abi_names()) <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x27",
+
+mapping zcmp_abi_assembly_rlist : bits(4) <-> string = {
+  0x4 <-> "ra",
+  0x5 <-> "ra" ^ sep() ^ "s0",
+  0x6 <-> "ra" ^ sep() ^ "s0-s1",
+  0x7 <-> "ra" ^ sep() ^ "s0-s2",
+  0x8 <-> "ra" ^ sep() ^ "s0-s3",
+  0x9 <-> "ra" ^ sep() ^ "s0-s4",
+  0xa <-> "ra" ^ sep() ^ "s0-s5",
+  0xb <-> "ra" ^ sep() ^ "s0-s6",
+  0xc <-> "ra" ^ sep() ^ "s0-s7",
+  0xd <-> "ra" ^ sep() ^ "s0-s8",
+  0xe <-> "ra" ^ sep() ^ "s0-s9",
+  0xf <-> "ra" ^ sep() ^ "s0-s11",
 }
 
+mapping zcmp_arch_assembly_rlist : bits(4) <-> string = {
+  0x4 <-> "x1",
+  0x5 <-> "x1" ^ sep() ^ "x8",
+  0x6 <-> "x1" ^ sep() ^ "x8-x9",
+  0x7 <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18",
+  0x8 <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x19",
+  0x9 <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x20",
+  0xa <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x21",
+  0xb <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x22",
+  0xc <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x23",
+  0xd <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x24",
+  0xe <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x25",
+  0xf <-> "x1" ^ sep() ^ "x8-x9" ^ sep() ^ "x18-x27",
+}
+
+mapping zcmp_assembly_rlist : bits(4) <-> string = {
+  i if get_config_use_abi_names()      <-> zcmp_abi_assembly_rlist(i),
+  i if not(get_config_use_abi_names()) <-> zcmp_arch_assembly_rlist(i),
+}
 
 mapping zcmp_rlist_regmask : bits(4) <-> bits(32) = {
   0x4 <-> 0b00000000000000000000000000000010,
