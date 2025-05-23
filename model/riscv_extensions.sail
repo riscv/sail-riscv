@@ -231,3 +231,7 @@ function clause hartSupports(Ext_Sv57) = config extensions.Sv57.supported : bool
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
+
+// Debug
+enum clause extension = Ext_Sdext
+function clause hartSupports(Ext_Sdext) = config extensions.Sdext.supported
