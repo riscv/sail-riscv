@@ -85,6 +85,9 @@ register misa : Misa =
 /* whether misa is R/W */
 function sys_enable_writable_misa() -> bool = config base.writable_misa
 
+/* Whether Endianness Control is supported or not*/
+function big_endian_supported() -> bool = config memory.endianness.big_endian
+
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
 function sys_enable_writable_fiom() -> bool = config base.writable_fiom
@@ -197,6 +200,7 @@ bitfield Mstatus : bits(64) = {
   SPP  : 8,
 
   MPIE : 7,
+  UBE  : 6,
   SPIE : 5,
 
   MIE  : 3,
@@ -233,9 +237,8 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // MPELP = v[MPELP],
     // MPV = v[MPV],
     // GVA = v[GVA],
-    /* We don't currently support changing MBE and SBE. */
-    // MBE = v[MBE],
-    // SBE = v[SBE],
+    MBE = if big_endian_supported() then v[MBE] else 0b0,
+    SBE = if (big_endian_supported() & currentlyEnabled(Ext_S)) then v[SBE] else 0b0,
     /* We don't support dynamic changes to SXL and UXL. */
     // SXL = if xlen == 64 then v[SXL] else o[SXL],
     // UXL = if xlen == 64 then v[UXL] else o[UXL],
@@ -259,6 +262,7 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     SPP = if currentlyEnabled(Ext_S) then v[SPP] else 0b0,
     VS = v[VS],
     MPIE = v[MPIE],
+    UBE = if (big_endian_supported() & currentlyEnabled(Ext_U)) then v[UBE] else 0b0,
     SPIE = if currentlyEnabled(Ext_S) then v[SPIE] else 0b0,
     MIE = v[MIE],
     SIE = if currentlyEnabled(Ext_S) then v[SIE] else 0b0,
@@ -687,6 +691,7 @@ bitfield Sstatus : bits(64) = {
   FS    : 14 .. 13,
   VS    : 10 .. 9,
   SPP   : 8,
+  UBE   : 6,
   SPIE  : 5,
   SIE   : 1,
 }
@@ -706,6 +711,7 @@ function lower_mstatus(m : Mstatus) -> Sstatus = {
     FS = m[FS],
     VS = m[VS],
     SPP = m[SPP],
+    UBE = m[UBE],
     SPIE = m[SPIE],
     SIE = m[SIE],
   ]
@@ -726,6 +732,7 @@ function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
     FS = s[FS],
     VS = s[VS],
     SPP = s[SPP],
+    UBE = s[UBE],
     SPIE = s[SPIE],
     SIE = s[SIE],
   ]

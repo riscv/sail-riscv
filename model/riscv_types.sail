@@ -302,6 +302,9 @@ enum extop_zbb = {SEXTB, SEXTH, ZEXTH}
 
 enum zicondop = {CZERO_EQZ, CZERO_NEZ}
 
+//Endianness type.
+enum Endianness = { BigEndian, LittleEndian }
+
 enum wrsop = {WRS_STO, WRS_NTO}
 
 enum WaitReason = {WAIT_WFI, WAIT_WRS_STO, WAIT_WRS_NTO}

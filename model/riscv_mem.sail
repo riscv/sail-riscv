@@ -80,8 +80,17 @@ function write_kind_of_flags (aq : bool, rl : bool, con : bool) -> write_kind =
     (true,  false, true)  => throw(Error_not_implemented("sc.aq"))
   }
 
+function get_endianness(typ : AccessType(ext_access_type)) -> Endianness = {
+    match (typ, effectivePrivilege(typ, mstatus, cur_privilege)) {
+      (InstructionFetch(), _)   => LittleEndian,
+      (_, Machine)     => if bits_to_bool(mstatus[MBE]) then BigEndian else LittleEndian,
+      (_, Supervisor)  => if bits_to_bool(mstatus[SBE]) then BigEndian else LittleEndian,
+      (_, User)        => if bits_to_bool(mstatus[UBE]) then BigEndian else LittleEndian,
+    }
+}
+
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : physaddr, width : int('n), aq : bool, rl: bool, res : bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
+function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : physaddr, width : int('n), aq : bool, rl: bool, res : bool, meta : bool, current_endianness: Endianness) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
   let result = (match read_kind_of_flags(aq, rl, res) {
     Some(rk) => Some(read_ram(rk, paddr, width, meta)),
     None()   => None()
@@ -90,7 +99,10 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
     (InstructionFetch(), None()) => Err(E_Fetch_Access_Fault()),
     (Read(Data), None()) => Err(E_Load_Access_Fault()),
     (_,          None()) => Err(E_SAMO_Access_Fault()),
-    (_,      Some(v, m)) => Ok(v, m),
+    (_,      Some(v, m)) => {
+      let v = endianness_conversion(v, current_endianness);
+      Ok(v, m)
+    },
   }
 }
 
@@ -117,10 +129,10 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
     Some(e) => Err(e),
     None() => {
       if   within_mmio_readable(paddr, width)
-      then MemoryOpResult_add_meta(mmio_read(t, paddr, width), default_meta)
+      then MemoryOpResult_add_meta(mmio_read(t, paddr, width, get_endianness(t)), default_meta)
       else if within_phys_mem(paddr, width)
       then match ext_check_phys_mem_read(t, paddr, width, aq, rl, res, meta) {
-        Ext_PhysAddr_OK()     => phys_mem_read(t, paddr, width, aq, rl, res, meta),
+        Ext_PhysAddr_OK()     => phys_mem_read(t, paddr, width, aq, rl, res, meta, get_endianness(t)),
         Ext_PhysAddr_Error(e) => Err(e)
       } else match t {
         InstructionFetch() => Err(E_Fetch_Access_Fault()),
