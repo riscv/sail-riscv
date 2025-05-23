@@ -407,42 +407,22 @@ void init_sail_reset_vector(uint64_t entry)
          (uint32_t)(entry & 0xffffffff),
          (uint32_t)(entry >> 32)};
 
-  uint64_t rom_base = get_config_uint64({"platform", "reset_vector"});
-  uint64_t addr = rom_base;
+  uint64_t addr = get_config_uint64({"platform", "reset_vector"});
 
-  for (int i = 0; i < sizeof(reset_vec); i++)
+  // Boot at reset vector.
+  zPC = addr;
+
+  // Write reset vector to memory.
+  for (int i = 0; i < sizeof(reset_vec); i++) {
     write_mem(addr++, (uint64_t)((char *)reset_vec)[i]);
+  }
 
+  // Write DTB to memory immediately after the reset vector.
   if (dtb && dtb_len) {
-    for (size_t i = 0; i < dtb_len; i++)
+    for (size_t i = 0; i < dtb_len; i++) {
       write_mem(addr++, dtb[i]);
+    }
   }
-
-  /* zero-fill to page boundary */
-  const int align = 0x1000;
-  uint64_t rom_end = (addr + align - 1) / align * align;
-  for (uint64_t i = addr; i < rom_end; i++)
-    write_mem(addr++, 0);
-
-  /* calculate rom size */
-  uint64_t rom_size = rom_end - rom_base;
-
-  /* check calculated rom values match configuration */
-  if (rom_base != get_config_uint64({"platform", "rom", "base"})) {
-    fprintf(stderr,
-            "Configuration value platform.rom.base does not match %" PRIu64
-            ".\n",
-            rom_base);
-  }
-  if (rom_size != get_config_uint64({"platform", "rom", "size"})) {
-    fprintf(stderr,
-            "Configuration value platform.rom.size does not match %" PRIu64
-            ".\n",
-            rom_size);
-  }
-
-  /* boot at reset vector */
-  zPC = rom_base;
 }
 
 void init_sail(uint64_t elf_entry)

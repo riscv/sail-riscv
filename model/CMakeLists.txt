@@ -148,6 +148,7 @@ foreach (xlen IN ITEMS 32 64)
                 "prelude_mem_metadata.sail"
                 "prelude_mem.sail"
                 "arithmetic.sail"
+                "range_util.sail"
                 "rvfi_dii.sail"
             )
 
@@ -177,6 +178,7 @@ foreach (xlen IN ITEMS 32 64)
                 ${sail_regs_srcs}
                 ${sail_sys_srcs}
                 "riscv_platform.sail"
+                "riscv_pma.sail"
                 "riscv_sstc.sail"
                 "riscv_mem.sail"
                 "riscv_inst_retire.sail"
