@@ -83,21 +83,14 @@ register misa : Misa =
   ]
 
 /* whether misa is R/W */
-function sys_enable_writable_misa() -> bool = config base.writable_misa
+let sys_enable_writable_misa : bool = config base.writable_misa
 
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
-function sys_enable_writable_fiom() -> bool = config base.writable_fiom
-
-/* How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime). */
-function sys_pmp_count() -> {0, 16, 64} = config memory.pmp.count
-
-/* G parameter that specifies the PMP grain size. The grain size is 2^(G+2), e.g.
-   G=0 -> 4 bytes, G=10 -> 4096 bytes. */
-function sys_pmp_grain() -> range(0, 63) = config memory.pmp.grain
+let sys_enable_writable_fiom : bool = config base.writable_fiom
 
 /* Which HPM counters are supported (as a bit mask). Bits [2 .. 0] are ignored. */
-function sys_writable_hpm_counters() -> bits(32) = config base.writable_hpm_counters
+let sys_writable_hpm_counters : bits(32) = config base.writable_hpm_counters
 
 // Supervisor timecmp
 function clause currentlyEnabled(Ext_Sstc) = hartSupports(Ext_Sstc)
@@ -110,7 +103,7 @@ val ext_veto_disable_C : unit -> bool
 function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   let v = Mk_Misa(v);
   /* Suppress updates to MISA if MISA is not writable or if by disabling C next PC would become misaligned or an extension vetoes */
-  if   not(sys_enable_writable_misa()) | (v[C] == 0b0 & (nextPC[1] == bitone | ext_veto_disable_C()))
+  if   not(sys_enable_writable_misa) | (v[C] == 0b0 & (nextPC[1] == bitone | ext_veto_disable_C()))
   then m
   else [m with
     A = if hartSupports(Ext_A) then v[A] else 0b0,
@@ -348,7 +341,7 @@ bitfield SEnvcfg : xlenbits = {
 function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   [o with
-    FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0,
+    FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
@@ -360,7 +353,7 @@ function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
 function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
   let v = Mk_SEnvcfg(v);
   [o with
-    FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0,
+    FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
@@ -585,7 +578,7 @@ bitfield Counteren : bits(32) = {
 
 // scounteren
 function legalize_scounteren(c : Counteren, v : xlenbits) -> Counteren = {
-  let supported_counters = sys_writable_hpm_counters()[31 .. 3] @ 0b111;
+  let supported_counters = sys_writable_hpm_counters[31 .. 3] @ 0b111;
   Mk_Counteren(v[31 .. 0] & supported_counters)
 }
 
@@ -597,7 +590,7 @@ function clause write_CSR(0x106, value) = { scounteren = legalize_scounteren(sco
 
 // mcounteren
 function legalize_mcounteren(c : Counteren, v : xlenbits) -> Counteren = {
-  let supported_counters = sys_writable_hpm_counters()[31 .. 3] @ 0b111;
+  let supported_counters = sys_writable_hpm_counters[31 .. 3] @ 0b111;
   Mk_Counteren(v[31 .. 0] & supported_counters)
 }
 
@@ -617,7 +610,7 @@ bitfield Counterin : bits(32) = {
 
 function legalize_mcountinhibit(c : Counterin, v : xlenbits) -> Counterin = {
   // Note the 0 in 0b101 is because the mtimer counter can't be paused.
-  let supported_counters = sys_writable_hpm_counters()[31 .. 3] @ 0b101;
+  let supported_counters = sys_writable_hpm_counters[31 .. 3] @ 0b101;
   Mk_Counterin(v[31 .. 0] & supported_counters)
 }
 
@@ -914,8 +907,8 @@ val get_16_random_bits = impure {
 register vstart : bits(16) /* use the largest possible length of vstart */
 register vl     : xlenbits
 
-function get_vlenb() -> xlenbits =
-  to_bits(2 ^ (get_vlen_pow()) / 8)
+let VLENB : xlenbits =
+  to_bits(2 ^ VLEN_pow / 8)
 
 bitfield Vtype  : xlenbits = {
   vill      : xlen - 1,

@@ -97,7 +97,7 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
 // Check if access is permitted according to PMPs and PMAs.
 val phys_access_check : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), Privilege, physaddr, int('n)) -> option(ExceptionType)
 function phys_access_check (t, p, paddr, width) = {
-  let pmpError : option(ExceptionType) = if sys_pmp_count() == 0 then None() else pmpCheck(paddr, width, t, p);
+  let pmpError : option(ExceptionType) = if sys_pmp_count == 0 then None() else pmpCheck(paddr, width, t, p);
   // TODO: Also check PMAs and select the highest priority fault.
   pmpError
 }

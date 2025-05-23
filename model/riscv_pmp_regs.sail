@@ -6,6 +6,15 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
+/* Platform configuration */
+
+/* How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime). */
+let sys_pmp_count : {0, 16, 64} = config memory.pmp.count
+
+/* G parameter that specifies the PMP grain size. The grain size is 2^(G+2), e.g.
+   G=0 -> 4 bytes, G=10 -> 4096 bytes. */
+let sys_pmp_grain : range(0, 63) = config memory.pmp.grain
+
 /* PMP configuration entries */
 
 enum PmpAddrMatchType = {OFF, TOR, NA4, NAPOT}
@@ -67,7 +76,7 @@ function pmpReadCfgReg(n : range(0, 15)) -> xlenbits = {
 }
 
 function pmpReadAddrReg(n : range(0, 63)) -> xlenbits = {
-  let G = sys_pmp_grain();
+  let G = sys_pmp_grain;
   let match_type = pmpcfg_n[n][A];
   let addr = pmpaddr_n[n];
 
@@ -109,7 +118,7 @@ function pmpWriteCfg(n: range(0, 63), cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent
     // "When G >= 1, the NA4 mode is not selectable."
     // In this implementation we set it to OFF if NA4 is selected.
     // This is the least risky option from a security perspective.
-    let cfg = if sys_pmp_grain() >= 1 & pmpAddrMatchType_of_bits(cfg[A]) == NA4
+    let cfg = if sys_pmp_grain >= 1 & pmpAddrMatchType_of_bits(cfg[A]) == NA4
               then [cfg with A = pmpAddrMatchType_to_bits(OFF)]
               else cfg;
 
@@ -231,7 +240,7 @@ mapping clause csr_name_map = 0x3EE  <-> "pmpaddr62"
 mapping clause csr_name_map = 0x3EF  <-> "pmpaddr63"
 
 // pmpcfgN
-function clause is_CSR_defined(0x3A) @ idx : bits(4) = sys_pmp_count() > unsigned(idx) & (idx[0] == bitzero | xlen == 32)
+function clause is_CSR_defined(0x3A) @ idx : bits(4) = sys_pmp_count > unsigned(idx) & (idx[0] == bitzero | xlen == 32)
 function clause read_CSR(0x3A @ idx : bits(4) if idx[0] == bitzero | xlen == 32) = pmpReadCfgReg(unsigned(idx))
 function clause write_CSR((0x3A @ idx : bits(4), value) if idx[0] == bitzero | xlen == 32) = {
   let idx = unsigned(idx);
@@ -240,10 +249,10 @@ function clause write_CSR((0x3A @ idx : bits(4), value) if idx[0] == bitzero | x
 }
 
 // pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
-function clause is_CSR_defined(0x3B) @ idx : bits(4) = sys_pmp_count() > unsigned(0b00 @ idx)
-function clause is_CSR_defined(0x3C) @ idx : bits(4) = sys_pmp_count() > unsigned(0b01 @ idx)
-function clause is_CSR_defined(0x3D) @ idx : bits(4) = sys_pmp_count() > unsigned(0b10 @ idx)
-function clause is_CSR_defined(0x3E) @ idx : bits(4) = sys_pmp_count() > unsigned(0b11 @ idx)
+function clause is_CSR_defined(0x3B) @ idx : bits(4) = sys_pmp_count > unsigned(0b00 @ idx)
+function clause is_CSR_defined(0x3C) @ idx : bits(4) = sys_pmp_count > unsigned(0b01 @ idx)
+function clause is_CSR_defined(0x3D) @ idx : bits(4) = sys_pmp_count > unsigned(0b10 @ idx)
+function clause is_CSR_defined(0x3E) @ idx : bits(4) = sys_pmp_count > unsigned(0b11 @ idx)
 
 function clause read_CSR(0x3B @ idx : bits(4)) = pmpReadAddrReg(unsigned(0b00 @ idx))
 function clause read_CSR(0x3C @ idx : bits(4)) = pmpReadAddrReg(unsigned(0b01 @ idx))

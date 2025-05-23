@@ -29,14 +29,14 @@
 /* This is a external option that controls the order in which the model
  * performs misaligned accesses.
  */
-function sys_misaligned_order_decreasing() -> bool = config memory.misaligned.order_decreasing
+let sys_misaligned_order_decreasing : bool = config memory.misaligned.order_decreasing
 
 /* This is an external option that, when true, causes all misaligned accesses
  * to be split into single byte operations.  Otherwise, misaligned accesses
  * are split into multiple accesses of smaller widths such that each of the latter
  * accesses is aligned.
  */
-function sys_misaligned_byte_by_byte() -> bool = config memory.misaligned.byte_by_byte
+let sys_misaligned_byte_by_byte : bool = config memory.misaligned.byte_by_byte
 
 /* This is an external option that returns an integer N, such that
  * when N is greater than zero, misaligned accesses to physical memory
@@ -44,7 +44,7 @@ function sys_misaligned_byte_by_byte() -> bool = config memory.misaligned.byte_b
  * naturally aligned 2^N byte region.  This region must be smaller than
  * the page size (i.e. 2^12 = 4096 bytes).
  */
-function sys_misaligned_allowed_within_exp() -> range(0, 11) = config memory.misaligned.allowed_within_exp
+let sys_misaligned_allowed_within_exp : range(0, 11) = config memory.misaligned.allowed_within_exp
 
 /* Check if an 'n byte access for an address is within an aligned 2^'r byte region */
 val access_within : forall 'width 'n 'r, 0 <= 'r <= 'width & 1 <= 'n <= 2^'r.
@@ -73,7 +73,7 @@ function prop_access_within_single(addr : bits(32)) -> bool = {
 val allowed_misaligned : forall 'width, 'width > 0. (xlenbits, int('width)) -> bool
 
 function allowed_misaligned(vaddr, width) = {
-  let region_width_exp = sys_misaligned_allowed_within_exp();
+  let region_width_exp = sys_misaligned_allowed_within_exp;
   let region_width = 2 ^ region_width_exp;
 
   if width > region_width then return false;
@@ -87,7 +87,7 @@ val split_misaligned : forall 'width, 'width > 0.
 function split_misaligned(vaddr, width) = {
   let vaddr_bits = bits_of(vaddr);
   if is_aligned_addr(vaddr, width) | allowed_misaligned(vaddr_bits, width) then (1, width)
-  else if sys_misaligned_byte_by_byte() then (width, 1)
+  else if sys_misaligned_byte_by_byte then (width, 1)
   else {
     let bytes_per_access = 2 ^ count_trailing_zeros(vaddr_bits);
     let num_accesses = width / bytes_per_access;
@@ -104,7 +104,7 @@ val misaligned_order : forall 'n.
   int('n) -> {'first 'last 'step, valid_misaligned_order('n, 'first, 'last, 'step). (int('first), int('last), int('step))}
 
 function misaligned_order(n) = {
-  if sys_misaligned_order_decreasing() then {
+  if sys_misaligned_order_decreasing then {
     (n - 1, 0, -1)
   } else {
     (0, n - 1, 1)
@@ -166,7 +166,7 @@ function vmem_write_addr(vaddr, width, data, acc, aq, rl, res) = {
 /****    External API    ****/
 
 function check_misaligned(vaddr : virtaddr, width : word_width) -> bool = {
-  if plat_enable_misaligned_access() then {
+  if plat_enable_misaligned_access then {
     false
   } else {
     not(is_aligned_addr(vaddr, size_bytes(width)))

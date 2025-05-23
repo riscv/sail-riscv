@@ -242,7 +242,7 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
         None()     => Ok(tlb_get_ppn(sv_width, ent, vpn), ext_ptw),
         Some(pte') =>
           // Step 9 of VATP. See riscv_platform.sail.
-          if not(plat_enable_dirty_update()) then
+          if not(plat_enable_dirty_update) then
             // pte needs dirty/accessed update but that is not enabled
             Err(PTW_PTE_Update(), ext_ptw)
           else {
@@ -290,7 +290,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
         },
         Some(pte) =>
           // Step 9 of VATP. See riscv_platform.sail.
-          if not(plat_enable_dirty_update()) then
+          if not(plat_enable_dirty_update) then
             // pte needs dirty/accessed update but that is not enabled
             Err(PTW_PTE_Update(), ext_ptw)
           else {
