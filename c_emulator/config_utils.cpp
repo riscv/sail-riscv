@@ -1,7 +1,6 @@
 #include "config_utils.h"
 
 #include <iostream>
-#include <sstream>
 
 uint64_t get_config_uint64(std::vector<const char *> keypath)
 {
