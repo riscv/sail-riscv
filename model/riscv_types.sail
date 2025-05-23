@@ -27,14 +27,11 @@ newtype cregidx = Cregidx : bits(3) /* identifiers in RVC instructions */
 type csreg = bits(12)  /* CSR addressing */
 
 function regidx_offset(Regidx(r) : regidx, o : bits(5)) -> regidx = Regidx(r + o)
-function regidx_bits (Regidx(b) : regidx) -> bits(5) = b
+function regidx_bits(Regidx(b) : regidx) -> bits(5) = b
 
 /* register file indexing */
 
 newtype regno = Regno : range(0, 31)
-
-function regidx_to_regno (Regidx(b) : regidx) -> regno = Regno(unsigned(b))
-function regno_to_regidx (Regno(b) : regno) -> regidx = Regidx(to_bits(5, b))
 
 /* mapping RVC register indices into normal indices */
 val creg2reg_idx : cregidx -> regidx
