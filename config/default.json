@@ -232,6 +232,21 @@
     },
     "Sv57": {
       "supported": true
+    },
+    "Ssnpm": {
+      "supported": false,
+      "supported_pmlen_7": true,
+      "supported_pmlem_16": true
+    },
+    "Smnpm": {
+      "supported": false,
+      "supported_pmlen_7": true,
+      "supported_pmlem_16": true
+    },
+    "Smmpm": {
+      "supported": false,
+      "supported_pmlen_7": true,
+      "supported_pmlem_16": true
     }
   }
 }
