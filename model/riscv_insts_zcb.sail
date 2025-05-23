@@ -87,7 +87,7 @@ mapping clause encdec_compressed = C_SH(uimm1 @ 0b0, rs1c, rs2c)
   when currentlyEnabled(Ext_Zcb)
 
 mapping clause assembly = C_SH(uimm, rs1c, rs2c) <->
-  "c.sh" ^ spc() ^ creg_name(rs1c) ^ sep() ^ hex_bits_2(uimm) ^ opt_spc() ^ "(" ^ opt_spc() ^ creg_name(rs2c) ^ opt_spc() ^ ")"
+  "c.sh" ^ spc() ^ creg_name(rs2c) ^ sep() ^ hex_bits_2(uimm) ^ opt_spc() ^ "(" ^ opt_spc() ^ creg_name(rs1c) ^ opt_spc() ^ ")"
 
 function clause execute C_SH(uimm, rs1c, rs2c) = {
   let imm : bits(12) = zero_extend(uimm);
