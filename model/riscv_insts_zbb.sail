@@ -136,10 +136,10 @@ function clause execute (ZBB_RTYPE(rs2, rs1, rd, op)) = {
     ANDN => rs1_val & ~(rs2_val),
     ORN  => rs1_val | ~(rs2_val),
     XNOR => ~(rs1_val ^ rs2_val),
-    MAX  => to_bits_unsafe(xlen, max(signed(rs1_val),   signed(rs2_val))),
-    MAXU => to_bits_unsafe(xlen, max(unsigned(rs1_val), unsigned(rs2_val))),
-    MIN  => to_bits_unsafe(xlen, min(signed(rs1_val),   signed(rs2_val))),
-    MINU => to_bits_unsafe(xlen, min(unsigned(rs1_val), unsigned(rs2_val))),
+    MAX  => if rs1_val >_s rs2_val then rs1_val else rs2_val,
+    MAXU => if rs1_val >_u rs2_val then rs1_val else rs2_val,
+    MIN  => if rs1_val <_s rs2_val then rs1_val else rs2_val,
+    MINU => if rs1_val <_u rs2_val then rs1_val else rs2_val,
     ROL  => if xlen == 32
                   then rs1_val <<< rs2_val[4..0]
                   else rs1_val <<< rs2_val[5..0],
