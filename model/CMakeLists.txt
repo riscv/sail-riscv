@@ -482,6 +482,7 @@ foreach (xlen IN ITEMS 32 64)
                         --require-version ${SAIL_REQUIRED_VER}
                         --lean-output-dir ${CMAKE_CURRENT_BINARY_DIR}
                         --lean-force-output
+                        --lean-matchbv
                         --lean-noncomputable
                         --lean-noncomputable-function encdec_forwards
                         --lean-noncomputable-function encdec_backwards
