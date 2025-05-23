@@ -915,7 +915,7 @@ register vstart : bits(16) /* use the largest possible length of vstart */
 register vl     : xlenbits
 
 function get_vlenb() -> xlenbits =
-  to_bits(2 ^ (get_vlen_pow()) / 8)
+  to_bits(xlen, vlen / 8)
 
 bitfield Vtype  : xlenbits = {
   vill      : xlen - 1,
