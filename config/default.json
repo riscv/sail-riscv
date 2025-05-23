@@ -139,6 +139,9 @@
     "Zcb": {
       "supported": true
     },
+    "Zcmp": {
+      "supported": false
+    },
     "Zcmop": {
       "supported": true
     },
