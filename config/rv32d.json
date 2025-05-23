@@ -1,6 +1,6 @@
 {
   "base": {
-    "xlen": 64,
+    "xlen": 32,
     "writable_misa": true,
     "writable_fiom": true,
     "writable_hpm_counters": {
@@ -84,9 +84,6 @@
       "supported": true
     },
     "Zicntr": {
-      "supported": true
-    },
-    "Zicsr": {
       "supported": true
     },
     "Zifencei": {
