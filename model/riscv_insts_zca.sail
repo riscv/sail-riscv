@@ -58,7 +58,7 @@ function clause execute (C_LW(uimm, rsc, rdc)) = {
 }
 
 mapping clause assembly = C_LW(uimm, rsc, rdc)
-  <-> "c.lw" ^ spc() ^ creg_name(rdc) ^ sep() ^ creg_name(rsc) ^ sep() ^ hex_bits_7(uimm @ 0b00)
+  <-> "c.lw" ^ spc() ^ creg_name(rdc) ^ sep() ^ hex_bits_7(uimm @ 0b00) ^ "(" ^ creg_name(rsc) ^ ")"
 
 /* ****************************************************************** */
 union clause ast = C_LD : (bits(5), cregidx, cregidx)
@@ -75,7 +75,7 @@ function clause execute (C_LD(uimm, rsc, rdc)) = {
 }
 
 mapping clause assembly = C_LD(uimm, rsc, rdc)
-  <-> "c.ld" ^ spc() ^ creg_name(rdc) ^ sep() ^ creg_name(rsc) ^ sep() ^ hex_bits_8(uimm @ 0b000)
+  <-> "c.ld" ^ spc() ^ creg_name(rdc) ^ sep() ^ hex_bits_8(uimm @ 0b000) ^ "(" ^ creg_name(rsc) ^ ")"
   when xlen == 64
 
 /* ****************************************************************** */
@@ -93,7 +93,7 @@ function clause execute (C_SW(uimm, rsc1, rsc2)) = {
 }
 
 mapping clause assembly = C_SW(uimm, rsc1, rsc2)
-  <-> "c.sw" ^ spc() ^ creg_name(rsc1) ^ sep() ^ creg_name(rsc2) ^ sep() ^ hex_bits_7(uimm @ 0b00)
+  <-> "c.sw" ^ spc() ^ creg_name(rsc2) ^ sep() ^ hex_bits_7(uimm @ 0b00) ^ "(" ^ creg_name(rsc1) ^ ")"
 
 /* ****************************************************************** */
 union clause ast = C_SD : (bits(5), cregidx, cregidx)
@@ -112,7 +112,7 @@ function clause execute (C_SD(uimm, rsc1, rsc2)) = {
 
 mapping clause assembly = C_SD(uimm, rsc1, rsc2)
       if xlen == 64
-  <-> "c.sd" ^ spc() ^ creg_name(rsc1) ^ sep() ^ creg_name(rsc2) ^ sep() ^ hex_bits_8(uimm @ 0b000)
+  <-> "c.sd" ^ spc() ^ creg_name(rsc2) ^ sep() ^ hex_bits_8(uimm @ 0b000) ^ "(" ^ creg_name(rsc1) ^ ")"
       if xlen == 64
 
 /* ****************************************************************** */
