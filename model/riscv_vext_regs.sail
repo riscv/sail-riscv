@@ -301,7 +301,6 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
         result[i] = single_result[i];
       };
     } else {
-      let 'num_elem_single : int = VLEN / SEW;
       assert('num_elem_single >= 0);
       foreach (i_lmul from 0 to (2 ^ LMUL_pow_reg - 1)) {
         let r_start_i : int = i_lmul * 'num_elem_single;
