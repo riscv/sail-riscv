@@ -291,11 +291,20 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
     /* vrid must be a multiple of emul */
     assert(false, "invalid register group: vrid is not a multiple of EMUL")
   } else {
+    let 'num_elem_single : int = VLEN / SEW;
+    assert('num_elem_single >= 0);
     if LMUL_pow < 0 then {
-      result = read_single_vreg('n, SEW, vrid);
+      /* Use num_elem_single to call read_single_vreg.
+       * When n is greater than num_elem_single, we will get a out-of-bounds access if we try to read n elements.
+       * Take vwadd.vv (VLEN=128, SEW=8, and LMUL_pow=-3) as an example, we have num_elem=16. When we perform read_vreg
+       * on the destination reg, we have SEW = 16, and then num_elem_single = 8.
+       * (See https://github.com/riscv/sail-riscv/pull/894) */
+      let single_result : vector('num_elem_single, bits('m)) = read_single_vreg('num_elem_single, SEW, vrid);
+      foreach (i from 0 to ('num_elem_single - 1)) {
+        assert(0 <= i & i < 'n);
+        result[i] = single_result[i];
+      };
     } else {
-      let 'num_elem_single : int = VLEN / SEW;
-      assert('num_elem_single >= 0);
       foreach (i_lmul from 0 to (2 ^ LMUL_pow_reg - 1)) {
         let r_start_i : int = i_lmul * 'num_elem_single;
         let r_end_i   : int = r_start_i + 'num_elem_single - 1;
