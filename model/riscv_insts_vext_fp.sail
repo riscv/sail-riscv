@@ -491,11 +491,11 @@ mapping encdec_vfwunary0_vs1 : vfwunary0 <-> bits(5) = {
   FWV_CVT_RTZ_XU_F  <-> 0b01110,
   FWV_CVT_RTZ_X_F   <-> 0b01111
 }
-
+// FP16 to FP32, FP32 to FP64
 mapping clause encdec = VFWUNARY0(vm, vs2, FWV_CVT_F_F, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b01100 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when ((currentlyEnabled(Ext_Zvfh) | currentlyEnabled(Ext_Zvfhmin)) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
-
+// INT8 to FP16, INT16 to FP32, INT32 to FP64
 mapping clause encdec = VFWUNARY0(vm, vs2, FWV_CVT_F_XU, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b01010 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
@@ -628,14 +628,17 @@ union clause ast = VFNUNARY0 : (bits(1), vregidx, vfnunary0, vregidx)
 
 mapping encdec_vfnunary0_vs1 : vfnunary0 <-> bits(5) = {
   FNV_CVT_F_XU      <-> 0b10010,
-  FNV_CVT_F_X       <-> 0b10011,
-  FNV_CVT_ROD_F_F   <-> 0b10101
+  FNV_CVT_F_X       <-> 0b10011
 }
-
+// FP32 to FP16, FP64 to FP32
 mapping clause encdec = VFNUNARY0(vm, vs2, FNV_CVT_F_F, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b10100 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when ((currentlyEnabled(Ext_Zvfh) | currentlyEnabled(Ext_Zvfhmin)) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
 
+mapping clause encdec = VFNUNARY0(vm, vs2, FNV_CVT_ROD_F_F, vd)
+  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b10101 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
+// FP16 to INT8, FP32 to INT16, FP64 to INT32
 mapping clause encdec = VFNUNARY0(vm, vs2, FNV_CVT_XU_F, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b10000 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
@@ -654,7 +657,7 @@ mapping clause encdec = VFNUNARY0(vm, vs2,FNV_CVT_RTZ_X_F, vd)
 
 mapping clause encdec = VFNUNARY0(vm, vs2, vfnunary0, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ encdec_vfnunary0_vs1(vfnunary0) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zve32f)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64f) & get_sew() == 32)
 
 function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
   let rm_3b    = fcsr[FRM];
