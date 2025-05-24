@@ -229,6 +229,45 @@
     },
     "Sv57": {
       "supported": true
+    },
+    "Zvl32b": {
+      "supported": true
+    },
+    "Zvl64b": {
+      "supported": true
+    },
+    "Zvl128b": {
+      "supported": true
+    },
+    "Zvl256b": {
+      "supported": true
+    },
+    "Zvl512b": {
+      "supported": true
+    },
+    "Zvl1024b": {
+      "supported": true
+    },
+    "Zve32x": {
+      "supported": true
+    },
+    "Zve32f": {
+      "supported": true
+    },
+    "Zve64x": {
+      "supported": true
+    },
+    "Zve64f": {
+      "supported": true
+    },
+    "Zve64d": {
+      "supported": true
+    },
+    "Zvfhmin": {
+      "supported": true
+    },
+    "Zvfh": {
+      "supported": true
     }
   }
 }

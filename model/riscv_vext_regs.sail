@@ -92,7 +92,7 @@ mapping vreg_name_raw : bits(5) <-> string = {
 mapping vreg_name : vregidx <-> string = { Vregidx(i) <-> vreg_name_raw(i) }
 
 function dirty_v_context() -> unit = {
-  assert(hartSupports(Ext_V));
+  assert(hartSupports(Ext_Zvl32b));
   mstatus[VS] = extStatus_to_bits(Dirty);
   mstatus[SD] = 0b1;
   long_csr_write_callback("mstatus", "mstatush", mstatus.bits);

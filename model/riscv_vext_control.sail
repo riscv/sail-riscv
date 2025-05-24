@@ -6,7 +6,23 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_V) = hartSupports(Ext_V) & (misa[V] == 0b1) & (mstatus[VS] != 0b00)
+function clause currentlyEnabled(Ext_Zvl32b)   = hartSupports(Ext_Zvl32b)   & (VLEN >= 32)
+function clause currentlyEnabled(Ext_Zvl64b)   = hartSupports(Ext_Zvl64b)   & (VLEN >= 64)
+function clause currentlyEnabled(Ext_Zvl128b)  = hartSupports(Ext_Zvl128b)  & (VLEN >= 128)
+function clause currentlyEnabled(Ext_Zvl256b)  = hartSupports(Ext_Zvl256b)  & (VLEN >= 256)
+function clause currentlyEnabled(Ext_Zvl512b)  = hartSupports(Ext_Zvl512b)  & (VLEN >= 512)
+function clause currentlyEnabled(Ext_Zvl1024b) = hartSupports(Ext_Zvl1024b) & (VLEN >= 1024)
+
+function clause currentlyEnabled(Ext_Zve32x)   = hartSupports(Ext_Zve32x)   & currentlyEnabled(Ext_Zvl32b)
+function clause currentlyEnabled(Ext_Zve32f)   = hartSupports(Ext_Zve32f)   & currentlyEnabled(Ext_Zve32x)   & currentlyEnabled(Ext_F)
+function clause currentlyEnabled(Ext_Zve64x)   = hartSupports(Ext_Zve64x)   & currentlyEnabled(Ext_Zve32x)   & currentlyEnabled(Ext_Zvl64b)
+function clause currentlyEnabled(Ext_Zve64f)   = hartSupports(Ext_Zve64f)   & currentlyEnabled(Ext_Zve64x)   & currentlyEnabled(Ext_Zve32f)
+function clause currentlyEnabled(Ext_Zve64d)   = hartSupports(Ext_Zve64d)   & currentlyEnabled(Ext_Zve64f)   & currentlyEnabled(Ext_D)
+
+function clause currentlyEnabled(Ext_V) = hartSupports(Ext_V) & (misa[V] == 0b1) & (mstatus[VS] != 0b00) & currentlyEnabled(Ext_Zvl128b) & currentlyEnabled(Ext_Zve64d)
+
+function clause currentlyEnabled(Ext_Zvfhmin)  = hartSupports(Ext_Zvfhmin)  & (misa[V] == 0b1) & (mstatus[VS] != 0b00) & currentlyEnabled(Ext_Zve32f)
+function clause currentlyEnabled(Ext_Zvfh)     = hartSupports(Ext_Zvfh)     & (misa[V] == 0b1) & (mstatus[VS] != 0b00) & currentlyEnabled(Ext_Zve32f) & currentlyEnabled(Ext_Zfhmin)
 
 // Note: The spec recommends trapping if vstart is out of bounds but the
 // current implementation does not do that because write_CSR() doesn't
@@ -27,13 +43,13 @@ mapping clause csr_name_map = 0xC20  <-> "vl"
 mapping clause csr_name_map = 0xC21  <-> "vtype"
 mapping clause csr_name_map = 0xC22  <-> "vlenb"
 
-function clause is_CSR_defined (0x008) = currentlyEnabled(Ext_V) // vstart
-function clause is_CSR_defined (0x009) = currentlyEnabled(Ext_V) // vxsat
-function clause is_CSR_defined (0x00A) = currentlyEnabled(Ext_V) // vxrm
-function clause is_CSR_defined (0x00F) = currentlyEnabled(Ext_V) // vcsr
-function clause is_CSR_defined (0xC20) = currentlyEnabled(Ext_V) // vl
-function clause is_CSR_defined (0xC21) = currentlyEnabled(Ext_V) // vtype
-function clause is_CSR_defined (0xC22) = currentlyEnabled(Ext_V) // vlenb
+function clause is_CSR_defined (0x008) = currentlyEnabled(Ext_Zvl32b) // vstart
+function clause is_CSR_defined (0x009) = currentlyEnabled(Ext_Zvl32b) // vxsat
+function clause is_CSR_defined (0x00A) = currentlyEnabled(Ext_Zvl32b) // vxrm
+function clause is_CSR_defined (0x00F) = currentlyEnabled(Ext_Zvl32b) // vcsr
+function clause is_CSR_defined (0xC20) = currentlyEnabled(Ext_Zvl32b) // vl
+function clause is_CSR_defined (0xC21) = currentlyEnabled(Ext_Zvl32b) // vtype
+function clause is_CSR_defined (0xC22) = currentlyEnabled(Ext_Zvl32b) // vlenb
 
 function clause read_CSR(0x008) = zero_extend(vstart)
 function clause read_CSR(0x009) = zero_extend(vcsr[vxsat])

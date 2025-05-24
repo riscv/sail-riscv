@@ -48,9 +48,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_vext_mem.sail"
                 "riscv_insts_vext_mask.sail"
                 "riscv_insts_vext_vm.sail"
-                "riscv_insts_vext_fp_vm.sail"
                 "riscv_insts_vext_red.sail"
-                "riscv_insts_vext_fp_red.sail"
             )
 
             set(sail_default_inst
@@ -115,7 +113,6 @@ foreach (xlen IN ITEMS 32 64)
             )
 
             set(sail_sys_srcs
-                "riscv_vext_control.sail"
                 "riscv_sys_exceptions.sail"
                 "riscv_sync_exception.sail"
                 "riscv_zihpm.sail"
@@ -125,6 +122,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_softfloat_interface.sail"
                 "riscv_fdext_regs.sail"
                 "riscv_fdext_control.sail"
+                "riscv_vext_control.sail"
                 "riscv_smcntrpmf.sail"
                 "riscv_sys_control.sail"
             )

@@ -7,9 +7,11 @@
 /*=======================================================================================*/
 
 /* ******************************************************************************* */
-/* This file implements part of the vector extension.                              */
-/* Chapter 13: Vector Floating-Point Instructions                                  */
-/* Chapter 16: Vector Permutation Instructions (floating-point part)               */
+/* This file implements floating-point part of the vector extension.               */
+/* 13.   Vector Floating-Point Instructions                                        */
+/* 14.3. Vector Single-Width Floating-Point Reduction Instructions                 */
+/* 14.4. Vector Widening Floating-Point Reduction Instructions,                    */                         
+/* 16.   Vector Permutation Instructions (floating-point part)                     */
 /* ******************************************************************************* */
 
 /* ******************************* OPFVV (VVTYPE) ******************************** */
@@ -29,7 +31,7 @@ mapping encdec_fvvfunct6 : fvvfunct6 <-> bits(6) = {
 
 mapping clause encdec = FVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_fvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
 
 function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -107,7 +109,7 @@ mapping encdec_fvvmafunct6 : fvvmafunct6 <-> bits(6) = {
 
 mapping clause encdec = FVVMATYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_fvvmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
 
 function clause execute(FVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -177,7 +179,7 @@ mapping encdec_fwvvfunct6 : fwvvfunct6 <-> bits(6) = {
 
 mapping clause encdec = FWVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_fwvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
 
 function clause execute(FWVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -245,7 +247,7 @@ mapping encdec_fwvvmafunct6 : fwvvmafunct6 <-> bits(6) = {
 
 mapping clause encdec = FWVVMATYPE(funct6, vm, vs1, vs2, vd)
   <-> encdec_fwvvmafunct6(funct6) @ vm @ encdec_vreg(vs1) @ encdec_vreg(vs2) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
 
 function clause execute(FWVVMATYPE(funct6, vm, vs1, vs2, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -312,7 +314,7 @@ mapping encdec_fwvfunct6 : fwvfunct6 <-> bits(6) = {
 
 mapping clause encdec = FWVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_fwvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
 
 function clause execute(FWVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -378,7 +380,7 @@ mapping encdec_vfunary0_vs1 : vfunary0 <-> bits(5) = {
 
 mapping clause encdec = VFUNARY0(vm, vs2, vfunary0, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ encdec_vfunary0_vs1(vfunary0) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
 
 function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -486,16 +488,25 @@ union clause ast = VFWUNARY0 : (bits(1), vregidx, vfwunary0, vregidx)
 mapping encdec_vfwunary0_vs1 : vfwunary0 <-> bits(5) = {
   FWV_CVT_XU_F      <-> 0b01000,
   FWV_CVT_X_F       <-> 0b01001,
-  FWV_CVT_F_XU      <-> 0b01010,
-  FWV_CVT_F_X       <-> 0b01011,
-  FWV_CVT_F_F       <-> 0b01100,
   FWV_CVT_RTZ_XU_F  <-> 0b01110,
   FWV_CVT_RTZ_X_F   <-> 0b01111
 }
 
+mapping clause encdec = VFWUNARY0(vm, vs2, FWV_CVT_F_F, vd)
+  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b01100 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
+  when ((currentlyEnabled(Ext_Zvfh) | currentlyEnabled(Ext_Zvfhmin)) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
+
+mapping clause encdec = VFWUNARY0(vm, vs2, FWV_CVT_F_XU, vd)
+  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b01010 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
+
+mapping clause encdec = VFWUNARY0(vm, vs2, FWV_CVT_F_X, vd)
+  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b01011 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
+
 mapping clause encdec = VFWUNARY0(vm, vs2, vfwunary0, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ encdec_vfwunary0_vs1(vfwunary0) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64f) & get_sew() == 32)
 
 function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -616,19 +627,34 @@ mapping clause assembly = VFWUNARY0(vm, vs2, vfwunary0, vd)
 union clause ast = VFNUNARY0 : (bits(1), vregidx, vfnunary0, vregidx)
 
 mapping encdec_vfnunary0_vs1 : vfnunary0 <-> bits(5) = {
-  FNV_CVT_XU_F      <-> 0b10000,
-  FNV_CVT_X_F       <-> 0b10001,
   FNV_CVT_F_XU      <-> 0b10010,
   FNV_CVT_F_X       <-> 0b10011,
-  FNV_CVT_F_F       <-> 0b10100,
-  FNV_CVT_ROD_F_F   <-> 0b10101,
-  FNV_CVT_RTZ_XU_F  <-> 0b10110,
-  FNV_CVT_RTZ_X_F   <-> 0b10111
+  FNV_CVT_ROD_F_F   <-> 0b10101
 }
+
+mapping clause encdec = VFNUNARY0(vm, vs2, FNV_CVT_F_F, vd)
+  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b10100 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
+  when ((currentlyEnabled(Ext_Zvfh) | currentlyEnabled(Ext_Zvfhmin)) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
+
+mapping clause encdec = VFNUNARY0(vm, vs2, FNV_CVT_XU_F, vd)
+  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b10000 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
+
+mapping clause encdec = VFNUNARY0(vm, vs2, FNV_CVT_X_F, vd)
+  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b10001 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
+
+mapping clause encdec = VFNUNARY0(vm, vs2, FNV_CVT_RTZ_XU_F, vd)
+  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b10110 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
+
+mapping clause encdec = VFNUNARY0(vm, vs2,FNV_CVT_RTZ_X_F, vd)
+  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b10111 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
 
 mapping clause encdec = VFNUNARY0(vm, vs2, vfnunary0, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ encdec_vfnunary0_vs1(vfnunary0) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -767,7 +793,7 @@ mapping encdec_vfunary1_vs1 : vfunary1 <-> bits(5) = {
 
 mapping clause encdec = VFUNARY1(vm, vs2, vfunary1, vd)
   <-> 0b010011 @ vm @ encdec_vreg(vs2) @ encdec_vfunary1_vs1(vfunary1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
 
 function clause execute(VFUNARY1(vm, vs2, vfunary1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -846,7 +872,7 @@ union clause ast = VFMVFS : (vregidx, fregidx)
 
 mapping clause encdec = VFMVFS(vs2, rd)
   <-> 0b010000 @ 0b1 @ encdec_vreg(vs2) @ 0b00000 @ 0b001 @ encdec_freg(rd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
 
 function clause execute(VFMVFS(vs2, rd)) = {
   let rm_3b    = fcsr[FRM];
@@ -895,7 +921,7 @@ mapping encdec_fvffunct6 : fvffunct6 <-> bits(6) = {
 
 mapping clause encdec = FVFTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_fvffunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
 
 function clause execute(FVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -988,7 +1014,7 @@ mapping encdec_fvfmafunct6 : fvfmafunct6 <-> bits(6) = {
 
 mapping clause encdec = FVFMATYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_fvfmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
 
 function clause execute(FVFMATYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1058,7 +1084,7 @@ mapping encdec_fwvffunct6 : fwvffunct6 <-> bits(6) = {
 
 mapping clause encdec = FWVFTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_fwvffunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
 
 function clause execute(FWVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1125,7 +1151,7 @@ mapping encdec_fwvfmafunct6 : fwvfmafunct6 <-> bits(6) = {
 
 mapping clause encdec = FWVFMATYPE(funct6, vm, rs1, vs2, vd)
   <-> encdec_fwvfmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
 
 function clause execute(FWVFMATYPE(funct6, vm, rs1, vs2, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1191,7 +1217,7 @@ mapping encdec_fwffunct6 : fwffunct6 <-> bits(6) = {
 
 mapping clause encdec = FWFTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_fwffunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
 
 function clause execute(FWFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1248,7 +1274,7 @@ union clause ast = VFMERGE : (vregidx, fregidx, vregidx)
 
 mapping clause encdec = VFMERGE(vs2, rs1, vd)
   <-> 0b010111 @ 0b0 @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
 
 function clause execute(VFMERGE(vs2, rs1, vd)) = {
   let rm_3b         = fcsr[FRM];
@@ -1303,7 +1329,7 @@ union clause ast = VFMV : (fregidx, vregidx)
 
 mapping clause encdec = VFMV(rs1, vd)
   <-> 0b010111 @ 0b1 @ 0b00000 @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
 
 function clause execute(VFMV(rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1344,7 +1370,7 @@ union clause ast = VFMVSF : (fregidx, vregidx)
 
 mapping clause encdec = VFMVSF(rs1, vd)
   <-> 0b010000 @ 0b1 @ 0b00000 @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
 
 function clause execute(VFMVSF(rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1386,3 +1412,277 @@ function clause execute(VFMVSF(rs1, vd)) = {
 
 mapping clause assembly = VFMVSF(rs1, vd)
   <-> "vfmv.s.f" ^ spc() ^ vreg_name(vd) ^ sep() ^ freg_name(rs1)
+
+
+/* Mask instructions from Chap 13 (floating-point)                                 */
+/* ******************************************************************************* */
+
+/* ******************************* OPFVV (VVMTYPE) ******************************* */
+/* FVVM instructions' destination is a mask register */
+union clause ast = FVVMTYPE : (fvvmfunct6, bits(1), vregidx, vregidx, vregidx)
+
+mapping encdec_fvvmfunct6 : fvvmfunct6 <-> bits(6) = {
+  FVVM_VMFEQ      <-> 0b011000,
+  FVVM_VMFLE      <-> 0b011001,
+  FVVM_VMFLT      <-> 0b011011,
+  FVVM_VMFNE      <-> 0b011100
+}
+
+mapping clause encdec = FVVMTYPE(funct6, vm, vs2, vs1, vd)
+  <-> encdec_fvvmfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
+
+function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
+  let rm_3b    = fcsr[FRM];
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if illegal_fp_vd_unmasked(SEW, rm_3b) then return Illegal_Instruction();
+  assert(SEW != 8);
+
+  let 'n = num_elem;
+  let 'm = SEW;
+
+  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
+  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+
+  let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
+    Ok(v)   => v,
+    Err(()) => return Illegal_Instruction()
+  };
+  var result = initial_result;
+
+  foreach (i from 0 to (num_elem - 1)) {
+    if mask[i] == bitone then {
+      let res : bool = match funct6 {
+        FVVM_VMFEQ    => fp_eq(vs2_val[i], vs1_val[i]),
+        FVVM_VMFNE    => ~(fp_eq(vs2_val[i], vs1_val[i])),
+        FVVM_VMFLE    => fp_le(vs2_val[i], vs1_val[i]),
+        FVVM_VMFLT    => fp_lt(vs2_val[i], vs1_val[i])
+      };
+      result[i] = bool_to_bit(res)
+    }
+  };
+
+  write_vmask(num_elem, vd, result);
+  set_vstart(zeros());
+  RETIRE_SUCCESS
+}
+
+mapping fvvmtype_mnemonic : fvvmfunct6 <-> string = {
+  FVVM_VMFEQ      <-> "vmfeq.vv",
+  FVVM_VMFLE      <-> "vmfle.vv",
+  FVVM_VMFLT      <-> "vmflt.vv",
+  FVVM_VMFNE      <-> "vmfne.vv"
+}
+
+mapping clause assembly = FVVMTYPE(funct6, vm, vs2, vs1, vd)
+  <-> fvvmtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
+
+/* ******************************* OPFVF (VFMTYPE) ******************************* */
+/* VFM instructions' destination is a mask register */
+union clause ast = FVFMTYPE : (fvfmfunct6, bits(1), vregidx, fregidx, vregidx)
+
+mapping encdec_fvfmfunct6 : fvfmfunct6 <-> bits(6) = {
+  VFM_VMFEQ      <-> 0b011000,
+  VFM_VMFLE      <-> 0b011001,
+  VFM_VMFLT      <-> 0b011011,
+  VFM_VMFNE      <-> 0b011100,
+  VFM_VMFGT      <-> 0b011101,
+  VFM_VMFGE      <-> 0b011111
+}
+
+mapping clause encdec = FVFMTYPE(funct6, vm, vs2, rs1, vd)
+  <-> encdec_fvfmfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
+
+function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
+  let rm_3b    = fcsr[FRM];
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if illegal_fp_vd_unmasked(SEW, rm_3b) then return Illegal_Instruction();
+  assert(SEW != 8);
+
+  let 'n = num_elem;
+  let 'm = SEW;
+
+  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
+  let rs1_val : bits('m)                  = get_scalar_fp(rs1, 'm);
+  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
+  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+
+  let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
+    Ok(v)   => v,
+    Err(()) => return Illegal_Instruction()
+  };
+  var result = initial_result;
+
+  foreach (i from 0 to (num_elem - 1)) {
+    if mask[i] == bitone then {
+      let res : bool = match funct6 {
+        VFM_VMFEQ    => fp_eq(vs2_val[i], rs1_val),
+        VFM_VMFNE    => ~(fp_eq(vs2_val[i], rs1_val)),
+        VFM_VMFLE    => fp_le(vs2_val[i], rs1_val),
+        VFM_VMFLT    => fp_lt(vs2_val[i], rs1_val),
+        VFM_VMFGE    => fp_ge(vs2_val[i], rs1_val),
+        VFM_VMFGT    => fp_gt(vs2_val[i], rs1_val)
+      };
+      result[i] = bool_to_bit(res)
+    }
+  };
+
+  write_vmask(num_elem, vd, result);
+  set_vstart(zeros());
+  RETIRE_SUCCESS
+}
+
+mapping fvfmtype_mnemonic : fvfmfunct6 <-> string = {
+  VFM_VMFEQ      <-> "vmfeq.vf",
+  VFM_VMFLE      <-> "vmfle.vf",
+  VFM_VMFLT      <-> "vmflt.vf",
+  VFM_VMFNE      <-> "vmfne.vf",
+  VFM_VMFGT      <-> "vmfgt.vf",
+  VFM_VMFGE      <-> "vmfge.vf"
+}
+
+mapping clause assembly = FVFMTYPE(funct6, vm, vs2, rs1, vd)
+  <-> fvfmtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ freg_name(rs1) ^ maybe_vmask(vm)
+
+
+/* Chapter 14: Vector Reduction Instructions                                       */
+/* ******************************************************************************* */
+
+/* ********************** OPFVV (Single-Width Floating-Point Reduction) *********************** */
+union clause ast = RFVVTYPE : (rfvvfunct6, bits(1), vregidx, vregidx, vregidx)
+
+mapping encdec_rfvvfunct6 : rfvvfunct6 <-> bits(6) = {
+  FVV_VFREDOSUM   <-> 0b000011,
+  FVV_VFREDUSUM   <-> 0b000001,
+  FVV_VFREDMAX    <-> 0b000111,
+  FVV_VFREDMIN    <-> 0b000101
+}
+
+mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd)
+  <-> encdec_rfvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
+
+function clause execute(RFVVTYPE(funct6, vm, vs2, vs1, vd)) = {
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let num_elem_vs = get_num_elem(LMUL_pow, SEW);
+  let rm_3b = fcsr[FRM];
+  let num_elem_vd = get_num_elem(0, SEW); /* vd regardless of LMUL setting */
+
+  if illegal_fp_reduction(SEW, rm_3b) then return Illegal_Instruction();
+  assert(SEW != 8);
+
+  if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
+
+  let 'n = num_elem_vs;
+  let 'd = num_elem_vd;
+  let 'm = SEW;
+
+  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, zvreg);
+  let vd_val  : vector('d, bits('m)) = read_vreg(num_elem_vd, SEW, 0, vd);
+  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
+  let mask    : bits('n)     = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
+    Ok(v)   => v,
+    Err(()) => return Illegal_Instruction()
+  };
+
+  var sum : bits('m) = read_single_element(SEW, 0, vs1); /* vs1 regardless of LMUL setting */
+  foreach (i from 0 to (num_elem_vs - 1)) {
+    if mask[i] == bitone then {
+      sum = match funct6 {
+        /* currently ordered/unordered sum reductions do the same operations */
+        FVV_VFREDOSUM   => fp_add(rm_3b, sum, vs2_val[i]),
+        FVV_VFREDUSUM   => fp_add(rm_3b, sum, vs2_val[i]),
+        FVV_VFREDMAX    => fp_max(sum, vs2_val[i]),
+        FVV_VFREDMIN    => fp_min(sum, vs2_val[i])
+      }
+    }
+  };
+
+  write_single_element(SEW, 0, vd, sum);
+  /* other elements in vd are treated as tail elements, currently remain unchanged */
+  /* TODO: configuration support for agnostic behavior */
+  set_vstart(zeros());
+  RETIRE_SUCCESS
+}
+
+mapping rfvvtype_mnemonic : rfvvfunct6 <-> string = {
+  FVV_VFREDOSUM   <-> "vfredosum.vs",
+  FVV_VFREDUSUM   <-> "vfredusum.vs",
+  FVV_VFREDMAX    <-> "vfredmax.vs",
+  FVV_VFREDMIN    <-> "vfredmin.vs"
+}
+
+mapping clause assembly = RFVVTYPE(funct6, vm, vs2, vs1, vd)
+  <-> rfvvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
+
+/* ********************** OPFVV (Widening Floating-Point Reduction) *********************** */
+union clause ast = RFWVVTYPE : (rfwvvfunct6, bits(1), vregidx, vregidx, vregidx)
+
+mapping encdec_rfwvvfunct6 : rfwvvfunct6 <-> bits(6) = {
+  FVV_VFWREDOSUM  <-> 0b110011,
+  FVV_VFWREDUSUM  <-> 0b110001
+}
+
+mapping clause encdec = RFWVVTYPE(funct6, vm, vs2, vs1, vd)
+  <-> encdec_rfwvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
+  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
+
+function clause execute(RFWVVTYPE(funct6, vm, vs2, vs1, vd)) = {
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let num_elem_vs = get_num_elem(LMUL_pow, SEW);
+  let rm_3b          = fcsr[FRM];
+  let SEW_widen      = SEW * 2;
+  let LMUL_pow_widen = LMUL_pow + 1;
+  let num_elem_vd = get_num_elem(0, SEW_widen); /* vd regardless of LMUL setting */
+
+  if illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) then return Illegal_Instruction();
+  assert(SEW >= 16 & SEW_widen <= 64);
+
+  if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
+
+  let 'n = num_elem_vs;
+  let 'd = num_elem_vd;
+  let 'm = SEW;
+  let 'o = SEW_widen;
+
+  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, zvreg);
+  let vd_val  : vector('d, bits('o)) = read_vreg(num_elem_vd, SEW_widen, 0, vd);
+  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
+  let mask    : bits('n)     = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
+    Ok(v)   => v,
+    Err(()) => return Illegal_Instruction()
+  };
+
+  var sum : bits('o) = read_single_element(SEW_widen, 0, vs1); /* vs1 regardless of LMUL setting */
+  foreach (i from 0 to (num_elem_vs - 1)) {
+    if mask[i] == bitone then {
+      /* currently ordered/unordered sum reductions do the same operations */
+      sum = fp_add(rm_3b, sum, fp_widen(vs2_val[i]))
+    }
+  };
+
+  write_single_element(SEW_widen, 0, vd, sum);
+  /* other elements in vd are treated as tail elements, currently remain unchanged */
+  /* TODO: configuration support for agnostic behavior */
+  set_vstart(zeros());
+  RETIRE_SUCCESS
+}
+
+mapping rfwvvtype_mnemonic : rfwvvfunct6 <-> string = {
+  FVV_VFWREDOSUM  <-> "vfwredosum.vs",
+  FVV_VFWREDUSUM  <-> "vfwredusum.vs"
+}
+
+mapping clause assembly = RFWVVTYPE(funct6, vm, vs2, vs1, vd)
+  <-> rfwvvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)

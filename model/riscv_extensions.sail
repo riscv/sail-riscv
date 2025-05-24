@@ -228,3 +228,34 @@ function clause hartSupports(Ext_Sv57) = config extensions.Sv57.supported : bool
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
+
+// Minimum Vector Length Standard Extensions
+enum clause extension = Ext_Zvl32b
+function clause hartSupports(Ext_Zvl32b) = config extensions.Zvl32b.supported
+enum clause extension = Ext_Zvl64b
+function clause hartSupports(Ext_Zvl64b)   = config extensions.Zvl64b.supported
+enum clause extension = Ext_Zvl128b
+function clause hartSupports(Ext_Zvl128b)  = config extensions.Zvl128b.supported
+enum clause extension = Ext_Zvl256b
+function clause hartSupports(Ext_Zvl256b)  = config extensions.Zvl256b.supported
+enum clause extension = Ext_Zvl512b
+function clause hartSupports(Ext_Zvl512b)  = config extensions.Zvl512b.supported
+enum clause extension = Ext_Zvl1024b
+function clause hartSupports(Ext_Zvl1024b) = config extensions.Zvl1024b.supported
+// Vector Extensions for Embedded Processors
+enum clause extension = Ext_Zve32x
+function clause hartSupports(Ext_Zve32x) = config extensions.Zve32x.supported
+enum clause extension = Ext_Zve32f
+function clause hartSupports(Ext_Zve32f) = config extensions.Zve32f.supported
+enum clause extension = Ext_Zve64x
+function clause hartSupports(Ext_Zve64x) = config extensions.Zve64x.supported
+enum clause extension = Ext_Zve64f
+function clause hartSupports(Ext_Zve64f) = config extensions.Zve64f.supported
+enum clause extension = Ext_Zve64d
+function clause hartSupports(Ext_Zve64d) = config extensions.Zve64d.supported
+// Vector Extension for Minimal Half-Precision Floating-Point
+enum clause extension = Ext_Zvfhmin
+function clause hartSupports(Ext_Zvfhmin) = config extensions.Zvfhmin.supported
+// Vector Extension for Half-Precision Floating-Point
+enum clause extension = Ext_Zvfh
+function clause hartSupports(Ext_Zvfh)    = config extensions.Zvfh.supported
