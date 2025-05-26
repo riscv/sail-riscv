@@ -21,8 +21,8 @@ function clause currentlyEnabled(Ext_Zve64d)   = hartSupports(Ext_Zve64d)   & cu
 
 function clause currentlyEnabled(Ext_V) = hartSupports(Ext_V) & (misa[V] == 0b1) & (mstatus[VS] != 0b00) & currentlyEnabled(Ext_Zvl128b) & currentlyEnabled(Ext_Zve64d)
 
-function clause currentlyEnabled(Ext_Zvfhmin)  = hartSupports(Ext_Zvfhmin)  & (misa[V] == 0b1) & (mstatus[VS] != 0b00) & currentlyEnabled(Ext_Zve32f)
-function clause currentlyEnabled(Ext_Zvfh)     = hartSupports(Ext_Zvfh)     & (misa[V] == 0b1) & (mstatus[VS] != 0b00) & currentlyEnabled(Ext_Zve32f) & currentlyEnabled(Ext_Zfhmin)
+function clause currentlyEnabled(Ext_Zvfhmin)  = hartSupports(Ext_Zvfhmin)  & currentlyEnabled(Ext_Zve32f)
+function clause currentlyEnabled(Ext_Zvfh)     = hartSupports(Ext_Zvfh)     & currentlyEnabled(Ext_Zve32f) & currentlyEnabled(Ext_Zfhmin)
 
 // Note: The spec recommends trapping if vstart is out of bounds but the
 // current implementation does not do that because write_CSR() doesn't
