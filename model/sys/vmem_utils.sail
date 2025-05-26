@@ -126,9 +126,9 @@ function get_pmlen(typ : AccessType(ext_access_type), eff_privilege : Privilege)
   let pmm = get_pmm(eff_privilege);
   if is_pmm_applicable(typ, eff_privilege) then {
     match pmm {
-      pmm_mode(PMM_Disabled)  => 0,
-      pmm_mode(PMM_Enabled7)  => 7,
-      pmm_mode(PMM_Enabled16) => 16,
+      pmm_mode(PMM_Disabled) => 0,
+      pmm_mode(PMM_XLEN_57)  => 7,
+      pmm_mode(PMM_XLEN_48)  => 16,
     }
   } else {
     0  /* PMM not active */
@@ -141,13 +141,12 @@ function transform_VA (Virtaddr(effective_address) : virtaddr, pmlen : {0, 7, 16
 /* Transforms a physical address by zero-extending the relevant upper bits. */
 function transform_PA (Virtaddr(effective_address) : virtaddr, pmlen : {0, 7, 16}) -> virtaddr = Virtaddr(zero_extend(effective_address[xlen - pmlen - 1 .. 0]))
 
-
 /* Transforms the effective address based on PMM settings and the current translation mode. */
-function transform_effective_address(Virtaddr(vaddr) : virtaddr, typ : AccessType(ext_access_type)) -> virtaddr = {
+function transform_effective_address(vaddr : virtaddr, typ : AccessType(ext_access_type)) -> virtaddr = {
   let eff_privilege = effectivePrivilege(typ, mstatus, cur_privilege);
   let pmlen = get_pmlen(typ, eff_privilege);
   let mode = translationMode(eff_privilege);
-  let vaddr_masked = if mode == Bare then transform_PA(Virtaddr(vaddr), pmlen) else transform_VA(Virtaddr(vaddr), pmlen);
+  let vaddr_masked = if mode == Bare then transform_PA(vaddr, pmlen) else transform_VA(vaddr, pmlen);
   vaddr_masked
 }
 
