@@ -242,18 +242,18 @@
     },
     "Ssnpm": {
       "supported": false,
-      "supported_pmlen_7": true,
-      "supported_pmlem_16": true
+      "supported_xlen_57": true,
+      "supported_xlen_48": true
     },
     "Smnpm": {
       "supported": false,
-      "supported_pmlen_7": true,
-      "supported_pmlem_16": true
+      "supported_xlen_57": true,
+      "supported_xlen_48": true
     },
     "Smmpm": {
       "supported": false,
-      "supported_pmlen_7": true,
-      "supported_pmlem_16": true
+      "supported_xlen_57": true,
+      "supported_xlen_48": true
     }
   }
 }
