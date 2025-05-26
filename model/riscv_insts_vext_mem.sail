@@ -394,10 +394,10 @@ mapping clause assembly = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
 
 /* ************************* Vector Load Indexed Unordered Normal & Segment (mop=0b01) ************************* */
 union clause ast = VLUXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
-
+// Zve64* extensions do not support EEW=64 for index values when XLEN=32.
 mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> nf @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when (currentlyEnabled(Ext_Zve32x) & vlewidth_bitsnumber(width) <= 32) | (currentlyEnabled(Ext_Zve64x) & vlewidth_bitsnumber(width) <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & vlewidth_bitsnumber(width) <= 32) | (currentlyEnabled(Ext_Zve64x) & vlewidth_bitsnumber(width) == 64 & xlen == 64)
 
 val process_vlxseg : forall 'f 'ib 'db 'ip 'dp 'n, nfields_range('f) & is_mem_width('ib) & is_mem_width('db) & ('n > 0). (int('f), bits(1), vregidx, int('ib), int('db), int('ip), int('dp), regidx, vregidx, int('n), int) -> ExecutionResult
 function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
@@ -459,10 +459,10 @@ mapping clause assembly = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
 
 /* ************************** Vector Load Indexed Ordered Normal & Segment (mop=0b11) ************************** */
 union clause ast = VLOXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
-
+// Zve64* extensions do not support EEW=64 for index values when XLEN=32.
 mapping clause encdec = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> nf @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when (currentlyEnabled(Ext_Zve32x) & vlewidth_bitsnumber(width) <= 32) | (currentlyEnabled(Ext_Zve64x) & vlewidth_bitsnumber(width) <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & vlewidth_bitsnumber(width) <= 32) | (currentlyEnabled(Ext_Zve64x) & vlewidth_bitsnumber(width) == 64 & xlen == 64)
 
 function clause execute(VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let EEW_index_pow = vlewidth_pow(width);
@@ -487,10 +487,10 @@ mapping clause assembly = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
 
 /* ************************ Vector Store Indexed Unordered Normal & Segment (mop=0b01) ************************* */
 union clause ast = VSUXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
-
+// Zve64* extensions do not support EEW=64 for index values when XLEN=32.
 mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> nf @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
-  when (currentlyEnabled(Ext_Zve32x) & vlewidth_bitsnumber(width) <= 32) | (currentlyEnabled(Ext_Zve64x) & vlewidth_bitsnumber(width) <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & vlewidth_bitsnumber(width) <= 32) | (currentlyEnabled(Ext_Zve64x) & vlewidth_bitsnumber(width) == 64 & xlen == 64)
 
 val process_vsxseg : forall 'f 'ib 'db 'ip 'dp 'n, nfields_range('f) & is_mem_width('ib) & is_mem_width('db) & ('n > 0). (int('f), bits(1), vregidx, int('ib), int('db), int('ip), int('dp), regidx, vregidx, int('n), int) -> ExecutionResult
 function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
@@ -549,10 +549,10 @@ mapping clause assembly = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
 
 /* ************************* Vector Store Indexed Ordered Normal & Segment (mop=0b11) ************************** */
 union clause ast = VSOXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
-
+// Zve64* extensions do not support EEW=64 for index values when XLEN=32.
 mapping clause encdec = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> nf @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
-  when (currentlyEnabled(Ext_Zve32x) & vlewidth_bitsnumber(width) <= 32) | (currentlyEnabled(Ext_Zve64x) & vlewidth_bitsnumber(width) <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & vlewidth_bitsnumber(width) <= 32) | (currentlyEnabled(Ext_Zve64x) & vlewidth_bitsnumber(width) == 64 & xlen == 64)
 
 function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let EEW_index_pow = vlewidth_pow(width);
