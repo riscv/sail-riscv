@@ -510,24 +510,18 @@ mapping clause assembly = FENCE(pred, succ)
   <-> "fence" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ)
 
 /* ****************************************************************** */
-union clause ast = FENCE_TSO : (bits(4), bits(4))
+union clause ast = FENCE_TSO : unit
 
-mapping clause encdec = FENCE_TSO(pred, succ)
-  <-> 0b1000 @ pred @ succ @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
+mapping clause encdec = FENCE_TSO()
+  <-> 0b1000 @ 0b0011 @ 0b0011 @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
 
-function clause execute (FENCE_TSO(pred, succ)) = {
-  match (pred, succ) {
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => sail_barrier(Barrier_RISCV_tso),
-    (_ : bits(2) @ 0b00, _ : bits(2) @ 0b00) => (),
-
-    _ => { print("FIXME: unsupported fence");
-           () }
-  };
+function clause execute (FENCE_TSO()) = {
+  sail_barrier(Barrier_RISCV_tso);
   RETIRE_SUCCESS
 }
 
-mapping clause assembly = FENCE_TSO(pred, succ)
-  <-> "fence.tso" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ)
+mapping clause assembly = FENCE_TSO()
+  <-> "fence.tso"
 
 /* ****************************************************************** */
 union clause ast = ECALL : unit
