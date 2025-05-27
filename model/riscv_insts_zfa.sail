@@ -789,7 +789,7 @@ mapping clause encdec = FCVTMOD_W_D(rs1, rd)
   when currentlyEnabled(Ext_D) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = FCVTMOD_W_D(rs1, rd)
-  <-> "fcvtmod.w.d" ^ spc() ^ reg_name(rd) ^ sep() ^ freg_name(rs1)
+  <-> "fcvtmod.w.d" ^ spc() ^ reg_name(rd) ^ sep() ^ freg_name(rs1) ^ sep() ^ "rtz"
 
 function clause execute(FCVTMOD_W_D(rs1, rd)) = {
   let rs1_val_D = F_D(rs1);
