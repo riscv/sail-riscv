@@ -491,6 +491,7 @@ foreach (xlen IN ITEMS 32 64)
                         --lean-noncomputable-function encdec_compressed_backwards
                         --lean-noncomputable-function encdec_compressed_forwards_matches
                         --lean-noncomputable-function encdec_compressed_backwards_matches
+                        --lean-non-beq-type ast
                         --lean-import-file ../handwritten_support/RiscvExtras.lean
                         --config ${CMAKE_SOURCE_DIR}/config/default.json
                         -o "Lean_${arch_uppercase}"
