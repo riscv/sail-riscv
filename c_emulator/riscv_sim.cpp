@@ -148,6 +148,7 @@ static void print_dts(void)
   char *dts = NULL;
   zgenerate_dts(&dts, UNIT);
   fprintf(stdout, "%s", dts);
+  KILL(sail_string)(&dts);
   exit(0);
 }
 
