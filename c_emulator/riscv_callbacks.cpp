@@ -1,10 +1,24 @@
 #include "riscv_callbacks.h"
+#include "riscv_callbacks_if.h"
 #include "riscv_config.h"
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
 #include <stdlib.h>
 #include <vector>
+#include <set>
 #include <inttypes.h>
+
+std::set<callbacks_if *> callbacks;
+
+void register_callback_if(callbacks_if *cbi)
+{
+  callbacks.insert(cbi);
+}
+
+void remove_callback_if(callbacks_if *cbi)
+{
+  callbacks.erase(cbi);
+}
 
 void print_lbits_hex(lbits val, int length = 0)
 {
@@ -32,6 +46,9 @@ unit mem_write_callback(const char *type, uint64_t paddr, uint64_t width,
   if (config_enable_rvfi) {
     zrvfi_write(paddr, width, value);
   }
+  for (auto c : callbacks) {
+    c->mem_write_callback(type, paddr, width, value);
+  }
   return UNIT;
 }
 
@@ -50,6 +67,9 @@ unit mem_read_callback(const char *type, uint64_t paddr, uint64_t width,
     zrvfi_read(paddr, len, value);
     KILL(sail_int)(&len);
   }
+  for (auto c : callbacks) {
+    c->mem_read_callback(type, paddr, width, value);
+  }
   return UNIT;
 }
 
@@ -58,6 +78,9 @@ unit mem_exception_callback(uint64_t paddr, uint64_t num_of_exception)
   (void)num_of_exception;
   if (config_enable_rvfi) {
     zrvfi_mem_exception(paddr);
+  }
+  for (auto c : callbacks) {
+    c->mem_exception_callback(paddr, num_of_exception);
   }
   return UNIT;
 }
@@ -77,6 +100,9 @@ unit xreg_full_write_callback(const_sail_string abi_name, unsigned reg,
   if (config_enable_rvfi) {
     zrvfi_wX(reg, value);
   }
+  for (auto c : callbacks) {
+    c->xreg_full_write_callback(abi_name, reg, value);
+  }
   return UNIT;
 }
 
@@ -89,6 +115,9 @@ unit freg_write_callback(unsigned reg, uint64_t value)
     fprintf(trace_log, "f%d <- 0x%0*" PRIX64 "\n", reg,
             static_cast<int>(zflen / 4), value);
   }
+  for (auto c : callbacks) {
+    c->freg_write_callback(reg, value);
+  }
   return UNIT;
 }
 
@@ -99,6 +128,9 @@ unit csr_full_write_callback(const_sail_string csr_name, unsigned reg,
     fprintf(trace_log, "CSR %s (0x%03X) <- 0x%016" PRIX64 "\n", csr_name, reg,
             value);
   }
+  for (auto c : callbacks) {
+    c->csr_full_write_callback(csr_name, reg, value);
+  }
   return UNIT;
 }
 
@@ -108,6 +140,9 @@ unit csr_full_read_callback(const_sail_string csr_name, unsigned reg,
   if (config_print_reg) {
     fprintf(trace_log, "CSR %s (0x%03X) -> 0x%016" PRIX64 "\n", csr_name, reg,
             value);
+  }
+  for (auto c : callbacks) {
+    c->csr_full_read_callback(csr_name, reg, value);
   }
   return UNIT;
 }
@@ -121,12 +156,18 @@ unit vreg_write_callback(unsigned reg, lbits value)
     // the `zVLEN / 8` argument here.
     print_lbits_hex(value, zVLEN / 8);
   }
+  for (auto c : callbacks) {
+    c->vreg_write_callback(reg, value);
+  }
   return UNIT;
 }
 
 unit pc_write_callback(uint64_t value)
 {
   (void)value;
+  for (auto c : callbacks) {
+    c->pc_write_callback(value);
+  }
   return UNIT;
 }
 
