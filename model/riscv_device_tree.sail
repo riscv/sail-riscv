@@ -1,6 +1,5 @@
 function generate_dts() -> string = {
   let clock_freq : int = config platform.clock_frequency;
-  let pmp_grain : int = 2 ^ (sys_pmp_grain + 2);
   let ram_base_hi = unsigned(plat_ram_base >> 32);
   let ram_base_lo = unsigned(plat_ram_base[31 .. 0]);
   let ram_size_hi = unsigned(plat_ram_size >> 32);
@@ -28,8 +27,6 @@ function generate_dts() -> string = {
 ^ "      compatible = \"riscv\";\n"
 ^ "      riscv,isa = \"" ^ "rv" ^ dec_str(xlen) ^ isa_string ^ "\";\n"
 ^ "      mmu-type = \"riscv," ^ (if xlen == 32 then "sv32" else "sv39") ^ "\";\n"
-^ "      riscv,pmpregions = <" ^ dec_str(sys_pmp_count) ^ ">;\n"
-^ "      riscv,pmpgranularity = <" ^ dec_str(pmp_grain) ^ ">;\n"
 ^ "      clock-frequency = <" ^ dec_str(clock_freq) ^ ">;\n"
 ^ "      CPU0_intc: interrupt-controller {\n"
 ^ "        #address-cells = <2>;\n"
