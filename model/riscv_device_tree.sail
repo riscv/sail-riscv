@@ -1,5 +1,5 @@
 function generate_dts() -> string = {
-  let hart_hz : int = config platform.hart_hz;
+  let clock_freq : int = config platform.clock_frequency;
   let pmp_grain : int = 2 ^ (sys_pmp_grain + 2);
   let ram_base_hi = unsigned(plat_ram_base >> 32);
   let ram_base_lo = unsigned(plat_ram_base[31 .. 0]);
@@ -20,7 +20,7 @@ function generate_dts() -> string = {
 ^ "  cpus {\n"
 ^ "    #address-cells = <1>;\n"
 ^ "    #size-cells = <0>;\n"
-^ "    timebase-frequency = <" ^ dec_str(hart_hz / plat_insns_per_tick) ^ ">;\n"
+^ "    timebase-frequency = <" ^ dec_str(clock_freq / plat_insns_per_tick) ^ ">;\n"
 ^ "    CPU0: cpu@0 {\n"
 ^ "      device_type = \"cpu\";\n"
 ^ "      reg = <0>;\n"
@@ -30,7 +30,7 @@ function generate_dts() -> string = {
 ^ "      mmu-type = \"riscv," ^ (if xlen == 32 then "sv32" else "sv39") ^ "\";\n"
 ^ "      riscv,pmpregions = <" ^ dec_str(sys_pmp_count) ^ ">;\n"
 ^ "      riscv,pmpgranularity = <" ^ dec_str(pmp_grain) ^ ">;\n"
-^ "      clock-frequency = <" ^ dec_str(hart_hz) ^ ">;\n"
+^ "      clock-frequency = <" ^ dec_str(clock_freq) ^ ">;\n"
 ^ "      CPU0_intc: interrupt-controller {\n"
 ^ "        #address-cells = <2>;\n"
 ^ "        #interrupt-cells = <1>;\n"
