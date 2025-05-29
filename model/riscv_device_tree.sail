@@ -9,6 +9,11 @@ function generate_dts() -> string = {
   let clint_size_hi = unsigned(plat_clint_size >> 32);
   let clint_size_lo = unsigned(plat_clint_size[31 .. 0]);
   let isa_string : string = "imafdc_zicntr_zihpm"; // Default, should be adjusted based on config.
+
+  // `hex_str` is used for the unit-addresses of the `memory@` and `clint@` nodes
+  // instead of `hex_bits_str` since they cannot have leading zeros.  These addresses
+  // also cannot have a '0x' prefix which explains the `string_drop(., 2)`.
+
   "/dts-v1/;\n"
 ^ "\n"
 ^ "/ {\n"
