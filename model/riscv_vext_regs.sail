@@ -290,11 +290,20 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
     let 'num_elem_single : int = VLEN / SEW;
     assert('num_elem_single >= 0);
     if LMUL_pow < 0 then {
-      /* Use num_elem_single to call read_single_vreg.
-       * When n is greater than num_elem_single, we will get a out-of-bounds access if we try to read n elements.
-       * Take vwadd.vv (VLEN=128, SEW=8, and LMUL_pow=-3) as an example, we have num_elem=16. When we perform read_vreg
-       * on the destination reg, we have SEW = 16, and then num_elem_single = 8.
-       * (See https://github.com/riscv/sail-riscv/pull/894) */
+      /* Use num_elem_single with read_single_vreg instead of n to prevent out-of-bounds access.
+       * 
+       * For widening instructions with LMUL < 1, the destination has EEW = 2×SEW and EMUL = 2xLMUL, which reduces
+       * the number of elements that fit in a single vector register compared to the source operands.
+       * Using the source's element count (n) when accessing the destination register can cause
+       * out-of-bounds access since fewer elements fit due to the doubled element width.
+       *
+       * Example: vwadd.vv with VLEN=128, SEW=8, LMUL=1/8 (LMUL_pow=-3):
+       * - Source operands: EEW=8, EMUL=1/8, 128/8=16 elements per source register
+       * - Destination: EEW=16, EMUL=1/4, 128/16=8 elements per destination register
+       * - Using n=16 for destination access would exceed the 8-element capacity
+       *
+       * See: https://github.com/riscv/sail-riscv/pull/894
+       */```
       let single_result : vector('num_elem_single, bits('m)) = read_single_vreg('num_elem_single, SEW, vrid);
       foreach (i from 0 to ('num_elem_single - 1)) {
         assert(0 <= i & i < 'n);
