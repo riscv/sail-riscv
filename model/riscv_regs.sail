@@ -101,7 +101,7 @@ mapping creg_name_raw : bits(3) <-> string = {
 
 mapping creg_name : cregidx <-> string = { Cregidx(i) <-> creg_name_raw(i) }
 
-function xreg_write_callback(reg: regidx, value : xlenbits) -> unit = {
+function xreg_write_callback(reg : regidx, value : xlenbits) -> unit = {
   let name = reg_name(reg);
   xreg_full_write_callback(name, reg, value);
 }
@@ -175,7 +175,6 @@ function rX (Regno(r) : regno) -> xlenbits = {
       29 => x29,
       30 => x30,
       31 => x31,
-      _  => {assert(false, "invalid register number"); zero_reg}
     };
   regval_from_reg(v)
 }
@@ -215,15 +214,14 @@ function wX (Regno(r) : regno, in_v : xlenbits) -> unit = {
     29 => x29 = v,
     30 => x30 = v,
     31 => x31 = v,
-    _  => assert(false, "invalid register number")
   };
-  if (r != 0) then xreg_write_callback(regno_to_regidx(Regno(r)), in_v)
+  if r != 0 then xreg_write_callback(Regidx(to_bits(r)), in_v)
 }
 
-function rX_bits(i: regidx) -> xlenbits = rX(regidx_to_regno(i))
+function rX_bits(Regidx(i) : regidx) -> xlenbits = rX(Regno(unsigned(i)))
 
-function wX_bits(i: regidx, data: xlenbits) -> unit = {
-  wX(regidx_to_regno(i)) = data
+function wX_bits(Regidx(i) : regidx, data : xlenbits) -> unit = {
+  wX(Regno(unsigned(i))) = data
 }
 
 overload X = {rX_bits, wX_bits, rX, wX}
