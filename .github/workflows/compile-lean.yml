@@ -30,6 +30,7 @@ jobs:
           key: ${{ matrix.os }}-${{ matrix.version }}
 
       - name: Setup opam
+        if: steps.cache-opam-restore.outputs.cache-hit != 'true'
         run: |
           opam init --yes --no-setup --shell=sh --compiler=${{ matrix.version }}
           opam install dune
