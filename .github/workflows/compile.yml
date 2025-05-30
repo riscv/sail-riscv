@@ -4,10 +4,16 @@ on: [push, pull_request, workflow_dispatch, merge_group]
 
 jobs:
   build:
+    name: "Build and test model (OS: ${{ matrix.os }}, CMake Version: ${{ matrix.cmake_version }})"
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-22.04, macos-latest]
+        cmake_version: ["3.20", latest]
+        include:
+          - os: ubuntu-22.04
+            cmake_version: latest
+            run_all_steps: true
     env:
       SAIL_VERSION: "0.19"
 
@@ -25,6 +31,11 @@ jobs:
         run: |
           brew install opam llvm lld
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+
+      - name: Install CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "${{ matrix.cmake_version }}"
 
       - name: Install Sail (Linux)
         if: startsWith(matrix.os, 'ubuntu-')
@@ -46,7 +57,7 @@ jobs:
         run: echo "$HOME/.opam/default/bin" >> $GITHUB_PATH
 
       - name: Ensure pre-commit checks pass
-        if: startsWith(matrix.os, 'ubuntu-')
+        if: ${{ matrix.run_all_steps}}
         run: python3 -m pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always
 
       - name: Build and test simulators
@@ -62,7 +73,7 @@ jobs:
           ctest --test-dir build --output-junit tests.xml --output-on-failure
 
       - name: Upload test results
-        if: startsWith(matrix.os, 'ubuntu-')
+        if: ${{ matrix.run_all_steps}}
         uses: actions/upload-artifact@v4
         with:
           name: tests.xml
@@ -70,7 +81,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload event payload
-        if: startsWith(matrix.os, 'ubuntu-')
+        if: ${{ matrix.run_all_steps}}
         uses: actions/upload-artifact@v4
         with:
           name: event.json

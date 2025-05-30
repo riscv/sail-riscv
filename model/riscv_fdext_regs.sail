@@ -54,9 +54,7 @@ function nan_unbox(m, x) = if 'n == 'm then x else (
 
 newtype fregidx = Fregidx : bits(5)
 newtype fregno = Fregno : range(0, 31)
-function fregidx_to_fregno (Fregidx(b) : fregidx) -> fregno = Fregno(unsigned(b))
-function fregno_to_fregidx (Fregno(b) : fregno) -> fregidx = Fregidx(to_bits(5, b))
-function fregidx_offset(Fregidx(r) : fregidx, o : bits(5)) -> fregidx = Fregidx(r + o)
+
 function fregidx_bits(Fregidx(r) : fregidx) -> bits(5) = r
 
 function cregidx_to_fregidx (Cregidx(b) : cregidx) -> fregidx = Fregidx(0b01 @ b)
@@ -195,17 +193,16 @@ function wF (Fregno(r) : fregno, in_v : flenbits) -> unit = {
     29 => f29 = v,
     30 => f30 = v,
     31 => f31 = v,
-    _  => assert(false, "invalid floating point register number")
   };
 
-  freg_write_callback(fregno_to_fregidx(Fregno(r)), in_v);
+  freg_write_callback(Fregidx(to_bits(r)), in_v);
   dirty_fd_context();
 }
 
-function rF_bits(i: fregidx) -> flenbits = rF(fregidx_to_fregno(i))
+function rF_bits(Fregidx(i) : fregidx) -> flenbits = rF(Fregno(unsigned(i)))
 
-function wF_bits(i: fregidx, data: flenbits) -> unit = {
-  wF(fregidx_to_fregno(i)) = data
+function wF_bits(Fregidx(i) : fregidx, data: flenbits) -> unit = {
+  wF(Fregno(unsigned(i))) = data
 }
 
 overload F = {rF_bits, wF_bits, rF, wF}
