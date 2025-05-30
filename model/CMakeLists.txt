@@ -470,36 +470,62 @@ foreach (xlen IN ITEMS 32 64)
             # Build Lean definitions
             if (variant STREQUAL "lean")
                 string(TOUPPER ${arch} arch_uppercase)
+                set(lean_sail_common
+                        --config ${CMAKE_SOURCE_DIR}/config/default.json
+                        --lean
+                        --memo-z3
+                        --require-version ${SAIL_REQUIRED_VER}
+                        --lean-output-dir ${CMAKE_CURRENT_BINARY_DIR}
+                        --lean-force-output
+                        --lean-non-beq-type ast)
+                set(lean_sail_default
+                    --lean-noncomputable
+                    --lean-noncomputable-function encdec_forwards
+                    --lean-noncomputable-function encdec_backwards
+                    --lean-noncomputable-function encdec_forwards_matches
+                    --lean-noncomputable-function encdec_backwards_matches
+                    --lean-noncomputable-function encdec_compressed_forwards
+                    --lean-noncomputable-function encdec_compressed_backwards
+                    --lean-noncomputable-function encdec_compressed_forwards_matches
+                    --lean-noncomputable-function encdec_compressed_backwards_matches
+                    --lean-import-file ../handwritten_support/RiscvExtras.lean
+                    -o "Lean_${arch_uppercase}")
+                set(lean_sail_executable
+                    --lean-import-file ../handwritten_support/RiscvExtrasExecutable.lean
+                    -o "Lean_${arch_uppercase}_executable")
                 add_custom_command(
-                    DEPENDS ${sail_srcs}
+                    DEPENDS
+                        ${sail_srcs}
+                        ${CMAKE_SOURCE_DIR}/config/default.json
+                        ${CMAKE_SOURCE_DIR}/handwritten_support/RiscvExtrasExecutable.lean
                     VERBATIM
                     OUTPUT "lean_${arch_uppercase}.lean"
                     COMMENT "Building Lean definitions from Sail model (${arch})"
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     COMMAND
                         ${SAIL_BIN}
-                        --lean
-                        --memo-z3
-                        --require-version ${SAIL_REQUIRED_VER}
-                        --lean-output-dir ${CMAKE_CURRENT_BINARY_DIR}
-                        --lean-force-output
-                        --lean-noncomputable
-                        --lean-noncomputable-function encdec_forwards
-                        --lean-noncomputable-function encdec_backwards
-                        --lean-noncomputable-function encdec_forwards_matches
-                        --lean-noncomputable-function encdec_backwards_matches
-                        --lean-noncomputable-function encdec_compressed_forwards
-                        --lean-noncomputable-function encdec_compressed_backwards
-                        --lean-noncomputable-function encdec_compressed_forwards_matches
-                        --lean-noncomputable-function encdec_compressed_backwards_matches
-                        --lean-non-beq-type ast
-                        --lean-import-file ../handwritten_support/RiscvExtras.lean
-                        --config ${CMAKE_SOURCE_DIR}/config/default.json
-                        -o "Lean_${arch_uppercase}"
+                        ${lean_sail_common}
+                        ${lean_sail_default}
+                        ${sail_srcs}
+                )
+                add_custom_command(
+                    DEPENDS
+                        ${sail_srcs}
+                        ${CMAKE_SOURCE_DIR}/config/default.json
+                        ${CMAKE_SOURCE_DIR}/handwritten_support/RiscvExtras.lean
+                    VERBATIM
+                    OUTPUT "lean_executable_${arch_uppercase}.lean"
+                    COMMENT "Building executable Lean definitions from Sail model (${arch})"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    COMMAND
+                        ${SAIL_BIN}
+                        ${lean_sail_common}
+                        ${lean_sail_executable}
                         ${sail_srcs}
                 )
 
                 add_custom_target(generated_lean_${arch} DEPENDS "lean_${arch_uppercase}.lean")
+                add_custom_target(generated_lean_executable_${arch} DEPENDS "lean_executable_${arch_uppercase}.lean")
             endif()
 
             # Build Lem definitions, en route to Isabelle or HOL4.
