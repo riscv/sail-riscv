@@ -1,6 +1,6 @@
 name: Build and test Lean backend
 
-on: [pull_request, workflow_dispatch]
+on: [push, pull_request, workflow_dispatch]
 
 env:
   OPAMVERBOSE: 1
