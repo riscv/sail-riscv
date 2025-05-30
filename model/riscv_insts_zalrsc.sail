@@ -51,7 +51,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
 }
 
 mapping clause assembly = LOADRES(aq, rl, rs1, size, rd)
-  <-> "lr." ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
+  <-> "lr." ^ size_mnemonic(size) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ****************************************************************** */
 
@@ -91,4 +91,4 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
 }
 
 mapping clause assembly = STORECON(aq, rl, rs2, rs1, size, rd)
-  <-> "sc." ^ size_mnemonic(size) ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
+  <-> "sc." ^ size_mnemonic(size) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
