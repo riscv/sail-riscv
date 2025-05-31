@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <climits>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
