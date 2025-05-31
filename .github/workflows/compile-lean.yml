@@ -36,7 +36,6 @@ jobs:
           opam install dune
 
       - name: Install Sail
-        if: steps.cache-opam-restore.outputs.cache-hit != 'true'
         run: |
           git clone https://github.com/rems-project/sail.git
           eval $(opam env)
@@ -44,7 +43,6 @@ jobs:
           (cd sail; make install)
 
       - name: Save cached opam
-        if: steps.cache-opam-restore.outputs.cache-hit != 'true'
         id: cache-opam-save
         uses: actions/cache/save@v4
         with:
