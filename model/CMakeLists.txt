@@ -202,11 +202,16 @@ foreach (xlen IN ITEMS 32 64)
                 )
             endif()
 
+            set(sail_cfg_srcs
+                "riscv_device_tree.sail"
+            )
+
             # Final file list.
             set(sail_srcs
                 ${sail_arch_srcs}
                 ${sail_seq_inst_srcs}
                 ${sail_step_srcs}
+                ${sail_cfg_srcs}
                 "main.sail"
             )
 
@@ -262,6 +267,7 @@ foreach (xlen IN ITEMS 32 64)
                         --c-preserve init_model
                         --c-preserve try_step
                         --c-preserve tick_clock
+                        --c-preserve generate_dts
                         # Preserve RVFI functions.
                         --c-preserve rvfi_set_instr_packet
                         --c-preserve rvfi_get_cmd

@@ -36,10 +36,12 @@ enum {
   OPT_PRINT_CONFIG,
   OPT_SAILCOV,
   OPT_ENABLE_EXPERIMENTAL_EXTENSIONS,
+  OPT_PRINT_DTS,
 };
 
 static bool do_show_times = false;
 bool do_report_arch = false;
+bool do_print_dts = false;
 char *term_log = NULL;
 static const char *trace_log_path = NULL;
 FILE *trace_log = NULL;
@@ -118,6 +120,7 @@ static struct option options[] = {
 #ifdef SAILCOV
     {"sailcov-file",                   required_argument, 0, OPT_SAILCOV     },
 #endif
+    {"print-device-tree",              no_argument,       0, OPT_PRINT_DTS   },
     {0,                                0,                 0, 0               }
 };
 
@@ -139,6 +142,15 @@ static void print_usage(const char *argv0, int ec)
 static void report_arch(void)
 {
   fprintf(stdout, "RV%" PRIu64 "\n", zxlen);
+  exit(0);
+}
+
+static void print_dts(void)
+{
+  char *dts = NULL;
+  zgenerate_dts(&dts, UNIT);
+  fprintf(stdout, "%s", dts);
+  KILL(sail_string)(&dts);
   exit(0);
 }
 
@@ -246,6 +258,9 @@ static int process_args(int argc, char **argv)
     case OPT_PRINT_CONFIG:
       printf("%s", DEFAULT_JSON);
       exit(0);
+    case OPT_PRINT_DTS:
+      do_print_dts = true;
+      break;
     case 'r': {
       config_enable_rvfi = true;
       int rvfi_dii_port = atoi(optarg);
@@ -304,14 +319,14 @@ static int process_args(int argc, char **argv)
     std::filesystem::remove(path);
   }
 
-  if (optind > argc || (optind == argc && !rvfi)) {
+  if (optind > argc || (optind == argc && !rvfi && !do_print_dts)) {
     fprintf(stderr, "No elf file provided.\n");
     print_usage(argv[0], 0);
   }
   if (dtb_file)
     read_dtb(dtb_file);
 
-  if (!rvfi && !do_report_arch)
+  if (!rvfi && !do_report_arch && !do_print_dts)
     fprintf(stdout, "Running file %s.\n", argv[optind]);
   return optind;
 }
@@ -642,6 +657,9 @@ int main(int argc, char **argv)
 
   if (do_report_arch) {
     report_arch();
+  }
+  if (do_print_dts) {
+    print_dts();
   }
 
   char *initial_elf_file = argv[files_start];
