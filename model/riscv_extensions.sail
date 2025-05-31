@@ -178,6 +178,9 @@ function clause hartSupports(Ext_Zksh) = config extensions.Zksh.supported
 // Floating-Point in Integer Registers (half precision)
 enum clause extension = Ext_Zhinx
 function clause hartSupports(Ext_Zhinx) = config extensions.Zhinx.supported
+// Floating-Point in Integer Registers (minimal half precision)
+enum clause extension = Ext_Zhinxmin
+function clause hartSupports(Ext_Zhinxmin) = config extensions.Zhinxmin.supported
 
 // Vector Basic Bit-manipulation
 enum clause extension = Ext_Zvbb
