@@ -217,6 +217,12 @@
     "Sstc": {
       "supported": true
     },
+    "Smcsrind": {
+      "supported": true
+    },
+    "Sscsrind": {
+      "supported": true
+    },
     "Svinval": {
       "supported": true
     },
