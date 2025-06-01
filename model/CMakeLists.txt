@@ -87,6 +87,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_zawrs.sail"
                 "riscv_insts_zvbb.sail"
                 "riscv_insts_zvbc.sail"
+                "riscv_insts_zvkg.sail"
                 "riscv_insts_zvkned.sail"
                 "riscv_insts_zvknhab.sail"
                 "riscv_insts_zvksh.sail"
@@ -491,6 +492,7 @@ foreach (xlen IN ITEMS 32 64)
                         --lean-noncomputable-function encdec_compressed_backwards
                         --lean-noncomputable-function encdec_compressed_forwards_matches
                         --lean-noncomputable-function encdec_compressed_backwards_matches
+                        --lean-non-beq-type ast
                         --lean-import-file ../handwritten_support/RiscvExtras.lean
                         --config ${CMAKE_SOURCE_DIR}/config/default.json
                         -o "Lean_${arch_uppercase}"
