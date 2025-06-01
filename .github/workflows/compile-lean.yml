@@ -66,7 +66,9 @@ jobs:
         id: cache-lake-restore
         uses: actions/cache/restore@v4
         with:
-          path: build/model/Lean_RV64D/.lake
+          path: |
+            build/model/Lean_RV64D/.lake
+            build/model/Lean_RV64D_executable/.lake
           key: ${{ matrix.os }}-${{ matrix.version }}
 
       - name: Use Lean to build the model and report errors
@@ -79,5 +81,7 @@ jobs:
         id: cache-lake-save
         uses: actions/cache/save@v4
         with:
-          path: build/model/Lean_RV64D/.lake
+          path: |
+            build/model/Lean_RV64D/.lake
+            build/model/Lean_RV64D_executable/.lake
           key: ${{ steps.cache-lake-restore.outputs.cache-primary-key }}
