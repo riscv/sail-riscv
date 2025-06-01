@@ -75,7 +75,7 @@ jobs:
           cd build/model/Lean_RV64D/
           lake build
 
-      - name: Save cached .lake directory
+      - name: Save cached .lake directory after lean build finished
         id: cache-lake-save
         uses: actions/cache/save@v4
         with:
