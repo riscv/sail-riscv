@@ -152,10 +152,7 @@ function clause execute (VBREV8_V(vm, vs2, vd)) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      var output : bits('m) = zeros();
-      foreach (j from 0 to (SEW - 8) by 8)
-        output[j+7..j] = reverse_bits(vs2_val[i][j+7..j]);
-      result[i] = output;
+      result[i] = brev8(vs2_val[i]);
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -192,10 +189,7 @@ function clause execute (VREV8_V(vm, vs2, vd)) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      var output : bits('m) = zeros();
-      foreach (j from 0 to (SEW - 8) by 8)
-        output[(j + 7)..j] = vs2_val[i][(SEW - j - 1) .. (SEW - j - 8)];
-      result[i] = output;
+      result[i] = rev8(vs2_val[i]);
     };
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);

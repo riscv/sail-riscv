@@ -110,10 +110,6 @@ mapping clause assembly = BREV8(rs1, rd)
   <-> "brev8" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
 function clause execute (BREV8(rs1, rd)) = {
-  let rs1_val = X(rs1);
-  var result : xlenbits = zeros();
-  foreach (i from 0 to (xlen - 8) by 8)
-    result[i+7..i] = reverse_bits(rs1_val[i+7..i]);
-  X(rd) = result;
+  X(rd) = brev8(X(rs1));
   RETIRE_SUCCESS
 }
