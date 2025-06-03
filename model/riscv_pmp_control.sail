@@ -79,19 +79,6 @@ function pmpMatchAddr(
   }
 }
 
-enum pmpMatch = {PMP_Success, PMP_Continue, PMP_Fail}
-
-function pmpMatchEntry(addr: physaddr, width: xlenbits, acc: AccessType(ext_access_type), priv: Privilege,
-                       ent: Pmpcfg_ent, pmpaddr: xlenbits, prev_pmpaddr: xlenbits) -> pmpMatch = {
-  match pmpMatchAddr(addr, width, ent, pmpaddr, prev_pmpaddr) {
-    PMP_NoMatch      => PMP_Continue,
-    PMP_PartialMatch => PMP_Fail,
-    PMP_Match        => if pmpCheckRWX(ent, acc) | (priv == Machine & not(pmpLocked(ent)))
-                        then PMP_Success
-                        else PMP_Fail
-  }
-}
-
 /* priority checks */
 
 function accessToFault(acc : AccessType(ext_access_type)) -> ExceptionType =
@@ -112,12 +99,18 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   let width : xlenbits = to_bits(width);
 
   foreach (i from 0 to 63) {
-    let prev_pmpaddr = (if i > 0 then pmpReadAddrReg(i - 1) else zeros());
-    match pmpMatchEntry(addr, width, acc, priv, pmpcfg_n[i], pmpReadAddrReg(i), prev_pmpaddr) {
-      PMP_Success  => { return None(); },
-      PMP_Fail     => { return Some(accessToFault(acc)); },
-      PMP_Continue => (),
-    }
+    let prev_pmpaddr = if i > 0 then pmpReadAddrReg(i - 1) else zeros();
+    let cfg = pmpcfg_n[i];
+
+    match pmpMatchAddr(addr, width, cfg, pmpReadAddrReg(i), prev_pmpaddr) {
+      PMP_NoMatch      => (),
+      PMP_PartialMatch => return Some(accessToFault(acc)),
+      PMP_Match        => return (
+        if pmpCheckRWX(cfg, acc) | (priv == Machine & not(pmpLocked(cfg)))
+        then None()
+        else Some(accessToFault(acc))
+      ),
+    };
   };
   if priv == Machine then None() else Some(accessToFault(acc))
 }
