@@ -185,22 +185,22 @@ function clause hartSupports(Ext_Zhinxmin) = config extensions.Zhinxmin.supporte
 // Vector Basic Bit-manipulation
 enum clause extension = Ext_Zvbb
 function clause hartSupports(Ext_Zvbb) = config extensions.Zvbb.supported
-// Vector Cryptography Bit-manipulation
-enum clause extension = Ext_Zvkb
-function clause hartSupports(Ext_Zvkb) = config extensions.Zvkb.supported
 // Vector Carryless Multiplication
 enum clause extension = Ext_Zvbc
 function clause hartSupports(Ext_Zvbc) = config extensions.Zvbc.supported
+// Vector Cryptography Bit-manipulation
+enum clause extension = Ext_Zvkb
+function clause hartSupports(Ext_Zvkb) = config extensions.Zvkb.supported
 // Vector GCM/GMAC
 enum clause extension = Ext_Zvkg
 function clause hartSupports(Ext_Zvkg) = config extensions.Zvkg.supported
 // NIST Suite: Vector AES Block Cipher
 enum clause extension = Ext_Zvkned
 function clause hartSupports(Ext_Zvkned) = config extensions.Zvkned.supported
-// NIST Suite: Vector SHA-2 Secure Hash
+// NIST Suite: Vector SHA-2 Secure Hash (SHA-256 only)
 enum clause extension = Ext_Zvknha
 function clause hartSupports(Ext_Zvknha) = config extensions.Zvknha.supported
-
+// NIST Suite: Vector SHA-2 Secure Hash (SHA-256 and SHA-512)
 enum clause extension = Ext_Zvknhb
 function clause hartSupports(Ext_Zvknhb) = config extensions.Zvknhb.supported
 // ShangMi Suite: SM3 Secure Hash
@@ -234,6 +234,7 @@ enum clause extension = Ext_Sv48
 function clause hartSupports(Ext_Sv48) = config extensions.Sv48.supported : bool & (xlen == 64)
 enum clause extension = Ext_Sv57
 function clause hartSupports(Ext_Sv57) = config extensions.Sv57.supported : bool & (xlen == 64)
+
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
