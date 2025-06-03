@@ -1,0 +1,11 @@
+name: Weekly rvv test
+on:
+  schedule:
+    - cron: "0 0 * * 0" # Every Sunday at 0:00 UTC
+  workflow_dispatch:
+
+jobs:
+  run_rvv_test:
+    uses: ./.github/workflows/compile.yml
+    with:
+      enable_rvv_test: true
