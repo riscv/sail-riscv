@@ -87,7 +87,8 @@ termination_measure currentlyEnabled(ext) = currentlyEnabled_measure(ext)
 
 function hartSupports_measure(ext : extension) -> int =
   match ext {
-    Ext_C => 1,
+    Ext_C => 2,
+    Ext_D => 1,
     _ => 0,
   }
 
