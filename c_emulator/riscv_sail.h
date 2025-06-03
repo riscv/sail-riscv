@@ -8,12 +8,6 @@ extern "C" {
 
 typedef int unit;
 #define UNIT 0
-typedef uint64_t mach_bits;
-
-struct zMisa {
-  mach_bits zMisa_chunk_0;
-};
-extern struct zMisa zmisa;
 
 void model_init(void);
 void model_fini(void);
@@ -22,9 +16,9 @@ unit zinit_model(unit);
 bool ztry_step(sail_int, bool);
 unit ztick_clock(unit);
 
-unit zrvfi_set_instr_packet(mach_bits);
-mach_bits zrvfi_get_cmd(unit);
-mach_bits zrvfi_get_insn(unit);
+unit zrvfi_set_instr_packet(uint64_t);
+uint64_t zrvfi_get_cmd(unit);
+uint64_t zrvfi_get_insn(unit);
 bool zrvfi_step(sail_int);
 unit zrvfi_zzero_exec_packet(unit);
 unit zrvfi_halt_exec_packet(unit);
@@ -40,36 +34,23 @@ void zrvfi_get_v2_support_packet(sail_bits *rop, unit);
 unit zprint_rvfi_exec(unit);
 unit zprint_instr_packet(uint64_t);
 
-extern mach_bits zxlen;
-extern mach_bits zflen;
-extern mach_bits zphysaddrbits_len;
-extern mach_bits zVLEN;
+extern uint64_t zxlen;
+extern uint64_t zflen;
+extern uint64_t zphysaddrbits_len;
+extern uint64_t zVLEN;
 extern bool zhtif_done;
-extern mach_bits zhtif_exit_code;
+extern uint64_t zhtif_exit_code;
 extern bool have_exception;
 
 /* machine state */
 
-extern uint32_t zcur_privilege;
+unit zforce_pc(uint64_t pc);
 
-extern mach_bits zPC;
+extern uint64_t zfloat_result, zfloat_fflags;
 
-extern mach_bits zx1, zx2, zx3, zx4, zx5, zx6, zx7, zx8, zx9, zx10, zx11, zx12,
-    zx13, zx14, zx15, zx16, zx17, zx18, zx19, zx20, zx21, zx22, zx23, zx24,
-    zx25, zx26, zx27, zx28, zx29, zx30, zx31;
-
-extern mach_bits zmstatus;
-extern mach_bits zmepc, zmtval;
-extern mach_bits zsepc, zstval;
-
-extern mach_bits zfloat_result, zfloat_fflags;
-
-struct zMcause {
-  mach_bits zMcause_chunk_0;
-};
-extern struct zMcause zmcause, zscause;
-
-extern mach_bits zminstret;
+// Initialise types based on config values.
+void sail_set_abstract_xlen(void);
+void sail_set_abstract_ext_d_supported(void);
 
 #ifdef __cplusplus
 } // extern "C"

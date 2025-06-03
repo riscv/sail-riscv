@@ -88,15 +88,17 @@ set(tests
     "test_pmp_access.c"
 )
 
-foreach (xlen IN ITEMS 32 64)
-    foreach (test_source IN LISTS tests)
-        set(arch "rv${xlen}d")
-        if (xlen EQUAL 32)
-            set(mabi "ilp32")
-        else()
-            set(mabi "lp64")
-        endif()
 
+foreach (xlen IN ITEMS 32 64)
+    set(arch "rv${xlen}d")
+    if (xlen EQUAL 32)
+        set(mabi "ilp32")
+    else()
+        set(mabi "lp64")
+    endif()
+    set(default_config "${CMAKE_SOURCE_DIR}/config/${arch}.json")
+
+    foreach (test_source IN LISTS tests)
         set(elf "${arch}_${test_source}.elf")
         set(config "${arch}_${test_source}.json")
 
@@ -145,11 +147,11 @@ foreach (xlen IN ITEMS 32 64)
             add_custom_command(
                 OUTPUT ${config}
                 DEPENDS
-                    "${CMAKE_SOURCE_DIR}/config/default.json"
+                    ${default_config}
                     "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}.filter"
                 COMMAND jq
                     -f "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}.filter"
-                    "${CMAKE_SOURCE_DIR}/config/default.json"
+                    ${default_config}
                     > ${config}
                 VERBATIM
                 COMMENT "Creating ${config}"
@@ -158,9 +160,9 @@ foreach (xlen IN ITEMS 32 64)
             add_custom_command(
                 OUTPUT ${config}
                 DEPENDS
-                    "${CMAKE_SOURCE_DIR}/config/default.json"
+                    ${default_config}
                 COMMAND ${CMAKE_COMMAND} -E copy
-                    "${CMAKE_SOURCE_DIR}/config/default.json"
+                    ${default_config}
                     "${config}"
                 VERBATIM
             )
@@ -170,7 +172,7 @@ foreach (xlen IN ITEMS 32 64)
 
         add_test(
             NAME "first_party_${arch}_${test_source}"
-            COMMAND $<TARGET_FILE:riscv_sim_${arch}> --config ${config} ${elf}
+            COMMAND $<TARGET_FILE:sail_riscv_sim> --config ${config} ${elf}
         )
     endforeach()
 endforeach()
