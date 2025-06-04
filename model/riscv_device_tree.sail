@@ -69,7 +69,9 @@ function generate_isa_base() -> string = {
 // NOTE: The "riscv,isa" property is marked deprecated but is probably
 // still widely used.
 
-function dt_wrap(s : string, as_isa_ext : bool) -> string = {
+function dt_wrap(ext : extension, as_isa_ext : bool) -> string = {
+  if not(hartSupports(ext)) then return "";
+  let s = extensionName(ext);
   if   as_isa_ext
   then ", \"" ^ s ^ "\""
   // In "riscv,isa", single letter extensions are concatenated
@@ -86,79 +88,79 @@ function generate_isa_string(as_isa_ext : bool) -> string = {
 
 // First append the single letter extensions.
 
-^ (if hartSupports(Ext_M) then dt_wrap("m", as_isa_ext) else "")
-^ (if hartSupports(Ext_A) then dt_wrap("a", as_isa_ext) else "")
-^ (if hartSupports(Ext_F) then dt_wrap("f", as_isa_ext) else "")
-^ (if hartSupports(Ext_D) then dt_wrap("d", as_isa_ext) else "")
-^ (if hartSupports(Ext_C) then dt_wrap("c", as_isa_ext) else "")
+^ dt_wrap(Ext_M, as_isa_ext)
+^ dt_wrap(Ext_A, as_isa_ext)
+^ dt_wrap(Ext_F, as_isa_ext)
+^ dt_wrap(Ext_D, as_isa_ext)
+^ dt_wrap(Ext_C, as_isa_ext)
   // 'b' does not appear in the above device-tree spec for "riscv,isa-extensions".
-^ (if hartSupports(Ext_B) & not(as_isa_ext) then "b"   else "")
-^ (if hartSupports(Ext_V) then dt_wrap("v", as_isa_ext) else "")
+^ (if as_isa_ext then "" else dt_wrap(Ext_B, false))
+^ dt_wrap(Ext_V, as_isa_ext)
 // S and U are not valid extensions in the device-tree, whereas H is.
 
 // Append the Z extensions, ordered by category and then alphabetically.
 
-^ (if hartSupports(Ext_Zicbom) then dt_wrap("zicbom", as_isa_ext) else "")
-^ (if hartSupports(Ext_Zicboz) then dt_wrap("zicboz", as_isa_ext) else "")
-^ (if hartSupports(Ext_Zicntr) then dt_wrap("zicntr", as_isa_ext) else "")
-^ (if hartSupports(Ext_Zicond) then dt_wrap("zicond", as_isa_ext) else "")
-^ (if hartSupports(Ext_Zicsr)  then dt_wrap("zicsr", as_isa_ext)  else "")
-^ (if hartSupports(Ext_Zifencei) then dt_wrap("zifencei", as_isa_ext)  else "")
-^ (if hartSupports(Ext_Zihpm)  then dt_wrap("zihpm", as_isa_ext)  else "")
-^ (if hartSupports(Ext_Zimop)  then dt_wrap("zimop", as_isa_ext)  else "")
+^ dt_wrap(Ext_Zicbom, as_isa_ext)
+^ dt_wrap(Ext_Zicboz, as_isa_ext)
+^ dt_wrap(Ext_Zicntr, as_isa_ext)
+^ dt_wrap(Ext_Zicond, as_isa_ext)
+^ dt_wrap(Ext_Zicsr, as_isa_ext)
+^ dt_wrap(Ext_Zifencei, as_isa_ext)
+^ dt_wrap(Ext_Zihpm, as_isa_ext)
+^ dt_wrap(Ext_Zimop, as_isa_ext)
 
 // Zmmul is not a device-tree extension.
 
-^ (if hartSupports(Ext_Zaamo)  then dt_wrap("zaamo", as_isa_ext)  else "")
-^ (if hartSupports(Ext_Zabha)  then dt_wrap("zabha", as_isa_ext)  else "")
-^ (if hartSupports(Ext_Zalrsc) then dt_wrap("zalrsc", as_isa_ext) else "")
-^ (if hartSupports(Ext_Zawrs)  then dt_wrap("zawrs", as_isa_ext)  else "")
+^ dt_wrap(Ext_Zaamo, as_isa_ext)
+^ dt_wrap(Ext_Zabha, as_isa_ext)
+^ dt_wrap(Ext_Zalrsc, as_isa_ext)
+^ dt_wrap(Ext_Zawrs, as_isa_ext)
 
-^ (if hartSupports(Ext_Zfa)    then dt_wrap("zfa", as_isa_ext)    else "")
-^ (if hartSupports(Ext_Zfh)    then dt_wrap("zfh", as_isa_ext)    else "")
-^ (if hartSupports(Ext_Zfhmin) then dt_wrap("zfhmin", as_isa_ext) else "")
-^ (if hartSupports(Ext_Zfinx)  then dt_wrap("zfinx", as_isa_ext)  else "")
+^ dt_wrap(Ext_Zfa, as_isa_ext)
+^ dt_wrap(Ext_Zfh, as_isa_ext)
+^ dt_wrap(Ext_Zfhmin, as_isa_ext)
+^ dt_wrap(Ext_Zfinx, as_isa_ext)
 
 // Zdinx and Zhinx{,min} are not extensions in device-tree.
 
-^ (if hartSupports(Ext_Zca)    then dt_wrap("zca", as_isa_ext)    else "")
-^ (if hartSupports(Ext_Zcb)    then dt_wrap("zcb", as_isa_ext)    else "")
-^ (if hartSupports(Ext_Zcd)    then dt_wrap("zcd", as_isa_ext)    else "")
-^ (if hartSupports(Ext_Zcf)    then dt_wrap("zcf", as_isa_ext)    else "")
-^ (if hartSupports(Ext_Zcmop)  then dt_wrap("zcmop", as_isa_ext)  else "")
+^ dt_wrap(Ext_Zca, as_isa_ext)
+^ dt_wrap(Ext_Zcb, as_isa_ext)
+^ dt_wrap(Ext_Zcd, as_isa_ext)
+^ dt_wrap(Ext_Zcf, as_isa_ext)
+^ dt_wrap(Ext_Zcmop, as_isa_ext)
 
-^ (if hartSupports(Ext_Zba)    then dt_wrap("zba", as_isa_ext)    else "")
-^ (if hartSupports(Ext_Zbb)    then dt_wrap("zbb", as_isa_ext)    else "")
-^ (if hartSupports(Ext_Zbc)    then dt_wrap("zbc", as_isa_ext)    else "")
-^ (if hartSupports(Ext_Zbkb)   then dt_wrap("zbkb", as_isa_ext)   else "")
-^ (if hartSupports(Ext_Zbkc)   then dt_wrap("zbkc", as_isa_ext)   else "")
-^ (if hartSupports(Ext_Zbkx)   then dt_wrap("zbkx", as_isa_ext)   else "")
-^ (if hartSupports(Ext_Zbs)    then dt_wrap("zbs", as_isa_ext)    else "")
+^ dt_wrap(Ext_Zba, as_isa_ext)
+^ dt_wrap(Ext_Zbb, as_isa_ext)
+^ dt_wrap(Ext_Zbc, as_isa_ext)
+^ dt_wrap(Ext_Zbkb, as_isa_ext)
+^ dt_wrap(Ext_Zbkc, as_isa_ext)
+^ dt_wrap(Ext_Zbkx, as_isa_ext)
+^ dt_wrap(Ext_Zbs, as_isa_ext)
 
-^ (if hartSupports(Ext_Zknd)   then dt_wrap("zknd", as_isa_ext)   else "")
-^ (if hartSupports(Ext_Zkne)   then dt_wrap("zkne", as_isa_ext)   else "")
-^ (if hartSupports(Ext_Zknh)   then dt_wrap("zknh", as_isa_ext)   else "")
-^ (if hartSupports(Ext_Zkr)    then dt_wrap("zkr", as_isa_ext)    else "")
-^ (if hartSupports(Ext_Zksed)  then dt_wrap("zksed", as_isa_ext)  else "")
-^ (if hartSupports(Ext_Zksh)   then dt_wrap("zksh", as_isa_ext)   else "")
+^ dt_wrap(Ext_Zknd, as_isa_ext)
+^ dt_wrap(Ext_Zkne, as_isa_ext)
+^ dt_wrap(Ext_Zknh, as_isa_ext)
+^ dt_wrap(Ext_Zkr, as_isa_ext)
+^ dt_wrap(Ext_Zksed, as_isa_ext)
+^ dt_wrap(Ext_Zksh, as_isa_ext)
 
-^ (if hartSupports(Ext_Zvbb)   then dt_wrap("zvbb", as_isa_ext)   else "")
-^ (if hartSupports(Ext_Zvbc)   then dt_wrap("zvbc", as_isa_ext)   else "")
-^ (if hartSupports(Ext_Zvkb)   then dt_wrap("zvkb", as_isa_ext)   else "")
-^ (if hartSupports(Ext_Zvkg)   then dt_wrap("zvkg", as_isa_ext)   else "")
-^ (if hartSupports(Ext_Zvkned) then dt_wrap("zvkned", as_isa_ext) else "")
-^ (if hartSupports(Ext_Zvknha) then dt_wrap("zvknha", as_isa_ext) else "")
-^ (if hartSupports(Ext_Zvknhb) then dt_wrap("zvknhb", as_isa_ext) else "")
-^ (if hartSupports(Ext_Zvksh)  then dt_wrap("zvksh", as_isa_ext)  else "")
+^ dt_wrap(Ext_Zvbb, as_isa_ext)
+^ dt_wrap(Ext_Zvbc, as_isa_ext)
+^ dt_wrap(Ext_Zvkb, as_isa_ext)
+^ dt_wrap(Ext_Zvkg, as_isa_ext)
+^ dt_wrap(Ext_Zvkned, as_isa_ext)
+^ dt_wrap(Ext_Zvknha, as_isa_ext)
+^ dt_wrap(Ext_Zvknhb, as_isa_ext)
+^ dt_wrap(Ext_Zvksh, as_isa_ext)
 
 // Append the Supervisor extensions, ordered alphabetically.
 
-^ (if hartSupports(Ext_Sscofpmf)  then dt_wrap("sscofpmf", as_isa_ext)  else "")
-^ (if hartSupports(Ext_Sstc)      then dt_wrap("sstc", as_isa_ext)      else "")
+^ dt_wrap(Ext_Sscofpmf, as_isa_ext)
+^ dt_wrap(Ext_Sstc, as_isa_ext)
 // Handle svade and svadu here when ready.
-^ (if hartSupports(Ext_Svinval)   then dt_wrap("svinval", as_isa_ext)   else "")
-^ (if hartSupports(Ext_Svnapot)   then dt_wrap("svnapot", as_isa_ext)   else "")
-^ (if hartSupports(Ext_Svpbmt)    then dt_wrap("svpbmt", as_isa_ext)    else "")
+^ dt_wrap(Ext_Svinval, as_isa_ext)
+^ dt_wrap(Ext_Svnapot, as_isa_ext)
+^ dt_wrap(Ext_Svpbmt, as_isa_ext)
 
 // Append the Hypervisor extensions, ordered alphabetically.
 
