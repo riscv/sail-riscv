@@ -22,6 +22,7 @@ unit zinit_model(unit);
 bool ztry_step(sail_int, bool);
 unit ztick_clock(unit);
 
+bool zvalidate_config(unit);
 void zgenerate_dts(sail_string *out, unit);
 
 unit zrvfi_set_instr_packet(mach_bits);

@@ -42,6 +42,7 @@ enum {
 static bool do_show_times = false;
 bool do_report_arch = false;
 bool do_print_dts = false;
+char *config_file = NULL;
 char *term_log = NULL;
 static const char *trace_log_path = NULL;
 FILE *trace_log = NULL;
@@ -143,6 +144,19 @@ static void report_arch(void)
 {
   fprintf(stdout, "RV%" PRIu64 "\n", zxlen);
   exit(0);
+}
+
+static void validate_config(const char *conf_file)
+{
+  if (!zvalidate_config(UNIT)) {
+    if (conf_file) {
+      fprintf(stderr, "Configuration in %s is invalid.\n", conf_file);
+    } else {
+      fprintf(stderr, "Default configuration is invalid.\n");
+      // Should abort here?
+    }
+    exit(1);
+  }
 }
 
 static void print_dts(void)
@@ -248,6 +262,7 @@ static int process_args(int argc, char **argv)
     case 'c': {
       if (access(optarg, R_OK) == 0) {
         sail_config_set_file(optarg);
+        config_file = strdup(optarg);
         have_config = true;
       } else {
         fprintf(stderr, "configuration file '%s' does not exist.\n", optarg);
@@ -654,6 +669,7 @@ int main(int argc, char **argv)
   int files_start = process_args(argc, argv);
 
   model_init();
+  validate_config(config_file);
 
   if (do_report_arch) {
     report_arch();
