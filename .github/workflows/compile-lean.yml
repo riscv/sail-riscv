@@ -57,8 +57,8 @@ jobs:
       - name: Build the Sail RISCV Model for Lean
         run: |
           eval $(opam config env)
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
-          cmake --build build/ --target generated_lean_rv64d
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -G Ninja
+          cmake --build build/ --target generated_lean_rv64d generated_lean_executable_rv64d
 
       - name: Restore cached .lake directory
         id: cache-lake-restore
