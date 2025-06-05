@@ -148,12 +148,13 @@ static void report_arch(void)
 
 static void validate_config(const char *conf_file)
 {
-  if (!zvalidate_config(UNIT)) {
+  if (!zconfig_is_valid(UNIT)) {
     if (conf_file) {
       fprintf(stderr, "Configuration in %s is invalid.\n", conf_file);
     } else {
-      fprintf(stderr, "Default configuration is invalid.\n");
-      // Should abort here?
+      fprintf(stderr,
+              "Default configuration is invalid.\nThis is a bug; please report "
+              "it to the sail-riscv developers.\n");
     }
     exit(1);
   }

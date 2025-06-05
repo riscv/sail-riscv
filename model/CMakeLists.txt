@@ -269,7 +269,7 @@ foreach (xlen IN ITEMS 32 64)
                         --c-preserve try_step
                         --c-preserve tick_clock
                         --c-preserve generate_dts
-                        --c-preserve validate_config
+                        --c-preserve config_is_valid
                         # Preserve RVFI functions.
                         --c-preserve rvfi_set_instr_packet
                         --c-preserve rvfi_get_cmd

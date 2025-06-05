@@ -109,7 +109,7 @@ function check_mem_layout() -> bool = {
   valid
 }
 
-function validate_config() -> bool = {
+function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
   & check_mem_layout()
