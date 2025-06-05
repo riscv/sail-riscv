@@ -9,15 +9,13 @@
 // Identifies the largest MMU address translation mode supported by this hart.
 function mmu_type() -> string = {
   if xlen == 32 then {
-    assert(hartSupports(Ext_Sv32), "Cannot generate RV32 device-tree without Sv32 support.");
-    return "sv32"
-  };
-  if hartSupports(Ext_Sv57) then return "sv57"
-  else if hartSupports(Ext_Sv48) then return "sv48"
-  else if hartSupports(Ext_Sv39) then return "sv39"
-  else {
-    assert(false, "No MMU types supported for RV64 device-tree.");
-    "" // to satisfy the type-checker
+    if hartSupports(Ext_Sv32) then "sv32" else "none"
+  } else {
+    assert(xlen == 64);
+    if hartSupports(Ext_Sv57) then "sv57"
+    else if hartSupports(Ext_Sv48) then "sv48"
+    else if hartSupports(Ext_Sv39) then "sv39"
+    else "none"
   }
 }
 
