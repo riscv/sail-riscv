@@ -28,6 +28,12 @@ function generate_isa_base() -> string = {
   "rv" ^ dec_str(xlen) ^ "i"
 }
 
+// Generates an ISA string in the appropriate format.
+
+// NOTE: The "riscv,isa" property is marked deprecated but is probably
+// still widely used.
+enum ISA_Format = {DeviceTree_ISA, DeviceTree_ISA_Extensions}
+
 /* Some notes from the "ISA Extension Naming Convections" section of
    the manual:
 
@@ -64,109 +70,120 @@ function generate_isa_base() -> string = {
   As the above document uses lower-case, the generator below does too.
 */
 
-// Generates the value for the "riscv,isa-extensions" property
-// (if `as_isa_ext == false`) or the "riscv,isa" property (otherwise).
-// NOTE: The "riscv,isa" property is marked deprecated but is probably
-// still widely used.
-
-function dt_wrap(ext : extension, as_isa_ext : bool) -> string = {
+function ext_wrap(ext : extension, fmt : ISA_Format) -> string = {
   if not(hartSupports(ext)) then return "";
   let s = extensionName(ext);
-  if   as_isa_ext
-  then ", \"" ^ s ^ "\""
-  // In "riscv,isa", single letter extensions are concatenated
-  // without a separator.
-  else if string_length(s) == 1
-  then s
-  else "_" ^ s
+  match fmt {
+    DeviceTree_ISA =>
+      // In "riscv,isa", single letter extensions are concatenated
+      // without a separator.
+      if string_length(s) == 1 then s else "_" ^ s,
+    DeviceTree_ISA_Extensions =>
+      ", \"" ^ s ^ "\"",
+  }
 }
 
-function generate_isa_string(as_isa_ext : bool) -> string = {
-  (if   as_isa_ext
-   then "\"i\""
-   else "rv" ^ dec_str(xlen) ^ "i")
+function generate_isa_string(fmt : ISA_Format) -> string = {
+  // The Sail compiler blows up if this string is constructed in one go.
+  // Build it up in pieces.
+  let prefix : string = match fmt {
+    DeviceTree_ISA => "rv" ^ dec_str(xlen) ^ "i",
+    DeviceTree_ISA_Extensions => "\"i\"",
+   };
 
-// First append the single letter extensions.
+  // First append the single letter extensions.
 
-^ dt_wrap(Ext_M, as_isa_ext)
-^ dt_wrap(Ext_A, as_isa_ext)
-^ dt_wrap(Ext_F, as_isa_ext)
-^ dt_wrap(Ext_D, as_isa_ext)
-^ dt_wrap(Ext_C, as_isa_ext)
-  // 'b' does not appear in the above device-tree spec for "riscv,isa-extensions".
-^ (if as_isa_ext then "" else dt_wrap(Ext_B, false))
-^ dt_wrap(Ext_V, as_isa_ext)
-// S and U are not valid extensions in the device-tree, whereas H is.
+  let singles = ""
+  ^ ext_wrap(Ext_M, fmt)
+  ^ ext_wrap(Ext_A, fmt)
+  ^ ext_wrap(Ext_F, fmt)
+  ^ ext_wrap(Ext_D, fmt)
+  ^ ext_wrap(Ext_C, fmt)
+  ^ ext_wrap(Ext_B, fmt)
+  ^ ext_wrap(Ext_V, fmt);
+  // S and U are not valid extensions in the device-tree, whereas H is.
 
-// Append the Z extensions, ordered by category and then alphabetically.
+  // Append the Z extensions, ordered by category and then alphabetically.
+  let zi_exts = ""
+  ^ ext_wrap(Ext_Zicbom, fmt)
+  ^ ext_wrap(Ext_Zicboz, fmt)
+  ^ ext_wrap(Ext_Zicntr, fmt)
+  ^ ext_wrap(Ext_Zicond, fmt)
+  ^ ext_wrap(Ext_Zicsr, fmt)
+  ^ ext_wrap(Ext_Zifencei, fmt)
+  ^ ext_wrap(Ext_Zihpm, fmt)
+  ^ ext_wrap(Ext_Zimop, fmt)
 
-^ dt_wrap(Ext_Zicbom, as_isa_ext)
-^ dt_wrap(Ext_Zicboz, as_isa_ext)
-^ dt_wrap(Ext_Zicntr, as_isa_ext)
-^ dt_wrap(Ext_Zicond, as_isa_ext)
-^ dt_wrap(Ext_Zicsr, as_isa_ext)
-^ dt_wrap(Ext_Zifencei, as_isa_ext)
-^ dt_wrap(Ext_Zihpm, as_isa_ext)
-^ dt_wrap(Ext_Zimop, as_isa_ext)
+  ^ ext_wrap(Ext_Zmmul, fmt);
 
-// Zmmul is not a device-tree extension.
+  let za_exts = ""
+  ^ ext_wrap(Ext_Zaamo, fmt)
+  ^ ext_wrap(Ext_Zabha, fmt)
+  ^ ext_wrap(Ext_Zalrsc, fmt)
+  ^ ext_wrap(Ext_Zawrs, fmt);
 
-^ dt_wrap(Ext_Zaamo, as_isa_ext)
-^ dt_wrap(Ext_Zabha, as_isa_ext)
-^ dt_wrap(Ext_Zalrsc, as_isa_ext)
-^ dt_wrap(Ext_Zawrs, as_isa_ext)
+  let zf_exts = ""
+  ^ ext_wrap(Ext_Zfa, fmt)
+  ^ ext_wrap(Ext_Zfh, fmt)
+  ^ ext_wrap(Ext_Zfhmin, fmt)
+  ^ ext_wrap(Ext_Zfinx, fmt);
 
-^ dt_wrap(Ext_Zfa, as_isa_ext)
-^ dt_wrap(Ext_Zfh, as_isa_ext)
-^ dt_wrap(Ext_Zfhmin, as_isa_ext)
-^ dt_wrap(Ext_Zfinx, as_isa_ext)
+  // Zdinx and Zhinx{,min} are not extensions in device-tree.
 
-// Zdinx and Zhinx{,min} are not extensions in device-tree.
+  let zc_exts = ""
+  ^ ext_wrap(Ext_Zca, fmt)
+  ^ ext_wrap(Ext_Zcb, fmt)
+  ^ ext_wrap(Ext_Zcd, fmt)
+  ^ ext_wrap(Ext_Zcf, fmt)
+  ^ ext_wrap(Ext_Zcmop, fmt);
 
-^ dt_wrap(Ext_Zca, as_isa_ext)
-^ dt_wrap(Ext_Zcb, as_isa_ext)
-^ dt_wrap(Ext_Zcd, as_isa_ext)
-^ dt_wrap(Ext_Zcf, as_isa_ext)
-^ dt_wrap(Ext_Zcmop, as_isa_ext)
+  let zb_exts = ""
+  ^ ext_wrap(Ext_Zba, fmt)
+  ^ ext_wrap(Ext_Zbb, fmt)
+  ^ ext_wrap(Ext_Zbc, fmt)
+  ^ ext_wrap(Ext_Zbkb, fmt)
+  ^ ext_wrap(Ext_Zbkc, fmt)
+  ^ ext_wrap(Ext_Zbkx, fmt)
+  ^ ext_wrap(Ext_Zbs, fmt);
 
-^ dt_wrap(Ext_Zba, as_isa_ext)
-^ dt_wrap(Ext_Zbb, as_isa_ext)
-^ dt_wrap(Ext_Zbc, as_isa_ext)
-^ dt_wrap(Ext_Zbkb, as_isa_ext)
-^ dt_wrap(Ext_Zbkc, as_isa_ext)
-^ dt_wrap(Ext_Zbkx, as_isa_ext)
-^ dt_wrap(Ext_Zbs, as_isa_ext)
+  let zk_exts = ""
+  ^ ext_wrap(Ext_Zknd, fmt)
+  ^ ext_wrap(Ext_Zkne, fmt)
+  ^ ext_wrap(Ext_Zknh, fmt)
+  ^ ext_wrap(Ext_Zkr, fmt)
+  ^ ext_wrap(Ext_Zksed, fmt)
+  ^ ext_wrap(Ext_Zksh, fmt);
 
-^ dt_wrap(Ext_Zknd, as_isa_ext)
-^ dt_wrap(Ext_Zkne, as_isa_ext)
-^ dt_wrap(Ext_Zknh, as_isa_ext)
-^ dt_wrap(Ext_Zkr, as_isa_ext)
-^ dt_wrap(Ext_Zksed, as_isa_ext)
-^ dt_wrap(Ext_Zksh, as_isa_ext)
+  let zv_exts = ""
+  ^ ext_wrap(Ext_Zvbb, fmt)
+  ^ ext_wrap(Ext_Zvbc, fmt)
+  ^ ext_wrap(Ext_Zvkb, fmt)
+  ^ ext_wrap(Ext_Zvkg, fmt)
+  ^ ext_wrap(Ext_Zvkned, fmt)
+  ^ ext_wrap(Ext_Zvknha, fmt)
+  ^ ext_wrap(Ext_Zvknhb, fmt)
+  ^ ext_wrap(Ext_Zvksh, fmt);
 
-^ dt_wrap(Ext_Zvbb, as_isa_ext)
-^ dt_wrap(Ext_Zvbc, as_isa_ext)
-^ dt_wrap(Ext_Zvkb, as_isa_ext)
-^ dt_wrap(Ext_Zvkg, as_isa_ext)
-^ dt_wrap(Ext_Zvkned, as_isa_ext)
-^ dt_wrap(Ext_Zvknha, as_isa_ext)
-^ dt_wrap(Ext_Zvknhb, as_isa_ext)
-^ dt_wrap(Ext_Zvksh, as_isa_ext)
+  // Append the Supervisor extensions, ordered alphabetically.
 
-// Append the Supervisor extensions, ordered alphabetically.
+  let s_exts = ""
+  ^ ext_wrap(Ext_Sscofpmf, fmt)
+  ^ ext_wrap(Ext_Sstc, fmt)
+  // Handle svade and svadu here when ready.
+  ^ ext_wrap(Ext_Svinval, fmt)
+  ^ ext_wrap(Ext_Svnapot, fmt)
+  ^ ext_wrap(Ext_Svpbmt, fmt);
 
-^ dt_wrap(Ext_Sscofpmf, as_isa_ext)
-^ dt_wrap(Ext_Sstc, as_isa_ext)
-// Handle svade and svadu here when ready.
-^ dt_wrap(Ext_Svinval, as_isa_ext)
-^ dt_wrap(Ext_Svnapot, as_isa_ext)
-^ dt_wrap(Ext_Svpbmt, as_isa_ext)
+  // Append the Hypervisor extensions, ordered alphabetically.
 
-// Append the Hypervisor extensions, ordered alphabetically.
+  // Append the Machine mode extensions, ordered alphabetically.
 
-// Append the Machine mode extensions, ordered alphabetically.
+  let m_exts = ""
+  ^ ext_wrap(Ext_Smcntrpmf, fmt);
 
-// Smcntrpmf is not a device-tree extension.
+  prefix ^ singles
+  ^ zi_exts ^ za_exts ^ zf_exts ^ zc_exts ^ zb_exts ^ zk_exts ^ zv_exts
+  ^ s_exts ^ m_exts
 }
 
 // Generates the full Device-Tree configuration for the model.
@@ -203,8 +220,8 @@ function generate_dts() -> string = {
 ^ "      status = \"okay\";\n"
 ^ "      compatible = \"riscv\";\n"
 ^ "      riscv,isa-base = \"" ^ generate_isa_base() ^ "\";\n"
-^ "      riscv,isa = \"" ^ generate_isa_string(false) ^ "\";\n"
-^ "      riscv,isa-extensions = " ^ generate_isa_string(true) ^ ";\n"
+^ "      riscv,isa = \"" ^ generate_isa_string(DeviceTree_ISA) ^ "\";\n"
+^ "      riscv,isa-extensions = " ^ generate_isa_string(DeviceTree_ISA_Extensions) ^ ";\n"
 ^ "      mmu-type = \"riscv," ^ mmu_type() ^ "\";\n"
 ^ "      clock-frequency = <" ^ dec_str(clock_freq) ^ ">;\n"
 ^ "      CPU0_intc: interrupt-controller {\n"
