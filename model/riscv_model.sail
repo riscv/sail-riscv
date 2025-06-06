@@ -16,8 +16,10 @@ function reset() -> unit = {
 }
 
 // Initialize model state. This is only called once; not for every chip reset.
-function init_model(src: string) -> unit = {
-  assert(config_is_valid(), (if string_length(src) == 0 then "Default config" else "Config in " ^ src)
+function init_model(config_filename : string) -> unit = {
+  assert(config_is_valid(), (if   config_filename == ""
+                             then "Default config"
+                             else "Config in " ^ config_filename)
                              ^ " is invalid.");
   hart_state = HART_ACTIVE();
   init_platform();

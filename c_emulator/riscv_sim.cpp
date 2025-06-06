@@ -434,7 +434,7 @@ void init_sail_reset_vector(uint64_t entry)
 
 void init_sail(uint64_t elf_entry, const char *config_file)
 {
-  zinit_model(config_file ? config_file : "");
+  zinit_model(config_file != nullptr ? config_file : "");
   if (rvfi) {
     /*
     rv_ram_base = UINT64_C(0x80000000);
