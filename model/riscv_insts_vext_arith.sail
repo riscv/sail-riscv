@@ -1248,22 +1248,32 @@ mapping clause assembly = MOVETYPEI(vd, simm)
   <-> "vmv.v.i" ^ spc() ^ vreg_name(vd) ^ sep() ^ hex_bits_5(simm)
 
 /* ********************* OPIVI (Whole Vector Register Move) ********************** */
-union clause ast = VMVRTYPE : (vregidx, bits(5), vregidx)
+union clause ast = VMVRTYPE : (vregidx, {1, 2, 4, 8}, vregidx)
 
-mapping clause encdec = VMVRTYPE(vs2, simm, vd)
-  <-> 0b100111 @ 0b1 @ encdec_vreg(vs2) @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
+// "The number of vector registers to copy is encoded in the low three
+// bits of the simm field (simm[2:0]) using the same encoding as the nf[2:0]
+// field for memory instructions, i.e., simm[2:0] = NREG-1.
+//
+// The value of NREG must be 1, 2, 4, or 8, and values of simm[4:0] other
+// than 0, 1, 3, and 7 are reserved."
+mapping encdec_nreg : bits(5) <-> {1, 2, 4, 8} = {
+  0b00000 <-> 1,
+  0b00001 <-> 2,
+  0b00011 <-> 4,
+  0b00111 <-> 8,
+}
+
+mapping clause encdec = VMVRTYPE(vs2, nreg, vd)
+  <-> 0b100111 @ 0b1 @ encdec_vreg(vs2) @ encdec_nreg(nreg) @ 0b011 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_V)
 
-function clause execute(VMVRTYPE(vs2, simm, vd)) = {
+function clause execute(VMVRTYPE(vs2, nreg, vd)) = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
   };
   let SEW     = get_sew();
-  let imm_val = unsigned(zero_extend(xlen, simm));
-  let EMUL    = imm_val + 1;
-
-  if not(EMUL == 1 | EMUL == 2 | EMUL == 4 | EMUL == 8) then return Illegal_Instruction();
+  let EMUL    = nreg;
 
   let EMUL_pow = log2(EMUL);
   let num_elem = get_num_elem(EMUL_pow, SEW);
@@ -1284,15 +1294,16 @@ function clause execute(VMVRTYPE(vs2, simm, vd)) = {
   RETIRE_SUCCESS
 }
 
-mapping simm_string : bits(5) <-> string = {
-  0b00000 <-> "1",
-  0b00001 <-> "2",
-  0b00011 <-> "4",
-  0b00111 <-> "8"
+// This is unfortunate. See https://github.com/rems-project/sail/issues/768
+mapping nreg_string : {1, 2, 4, 8} <-> string = {
+  1 <-> "1",
+  2 <-> "2",
+  4 <-> "4",
+  8 <-> "8",
 }
 
-mapping clause assembly = VMVRTYPE(vs2, simm, vd)
-  <-> "vmv" ^ simm_string(simm) ^ "r.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2)
+mapping clause assembly = VMVRTYPE(vs2, nreg, vd)
+  <-> "vmv" ^ nreg_string(nreg) ^ "r.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2)
 
 /* ******************************* OPMVV (VVTYPE) ******************************** */
 union clause ast = MVVTYPE : (mvvfunct6, bits(1), vregidx, vregidx, vregidx)
