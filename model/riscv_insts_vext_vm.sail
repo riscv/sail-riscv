@@ -565,7 +565,7 @@ mapping vimtype_mnemonic : vimfunct6 <-> string = {
 }
 
 mapping clause assembly = VIMTYPE(funct6, vs2, simm, vd)
-  <-> vimtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(simm) ^ sep() ^ "v0"
+  <-> vimtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm) ^ sep() ^ "v0"
 
 /* ****************************** OPIVI (VIMCTYPE) ******************************* */
 /* VIMC instructions' destination is a mask register (e.g. carry out) */
@@ -620,7 +620,7 @@ mapping vimctype_mnemonic : vimcfunct6 <-> string = {
 }
 
 mapping clause assembly = VIMCTYPE(funct6, vs2, simm, vd)
-  <-> vimctype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(simm)
+  <-> vimctype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm)
 
 /* ****************************** OPIVI (VIMSTYPE) ******************************* */
 /* VIMS instructions' destination is a vector register (e.g. actual sum) */
@@ -678,7 +678,7 @@ mapping vimstype_mnemonic : vimsfunct6 <-> string = {
 }
 
 mapping clause assembly = VIMSTYPE(funct6, vs2, simm, vd)
-  <-> vimstype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(simm) ^ sep() ^ "v0"
+  <-> vimstype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm) ^ sep() ^ "v0"
 
 /* ***************** OPIVI (Vector Integer Compare Instructions) ***************** */
 /* VICMP instructions' destination is a mask register */
@@ -747,4 +747,4 @@ mapping vicmptype_mnemonic : vicmpfunct6 <-> string = {
 }
 
 mapping clause assembly = VICMPTYPE(funct6, vm, vs2, simm, vd)
-  <-> vicmptype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(simm) ^ maybe_vmask(vm)
+  <-> vicmptype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm) ^ maybe_vmask(vm)

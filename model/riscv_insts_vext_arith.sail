@@ -941,7 +941,7 @@ mapping vitype_mnemonic : vifunct6 <-> string = {
 }
 
 mapping clause assembly = VITYPE(funct6, vm, vs2, simm, vd)
-  <-> vitype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(simm) ^ maybe_vmask(vm)
+  <-> vitype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm) ^ maybe_vmask(vm)
 
 /* ************************** OPIVI (WITYPE Narrowing) *************************** */
 /* ************** Vector Narrowing Integer Right Shift Instructions ************** */
@@ -1011,7 +1011,7 @@ mapping nistype_mnemonic : nisfunct6 <-> string = {
 }
 
 mapping clause assembly = NISTYPE(funct6, vm, vs2, simm, vd)
-  <-> nistype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(simm) ^ maybe_vmask(vm)
+  <-> nistype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm) ^ maybe_vmask(vm)
 
 /* ************************** OPIVI (WITYPE Narrowing) *************************** */
 /* *************** Vector Narrowing Fixed-Point Clip Instructions **************** */
@@ -1082,7 +1082,7 @@ mapping nitype_mnemonic : nifunct6 <-> string = {
 }
 
 mapping clause assembly = NITYPE(funct6, vm, vs2, simm, vd)
-  <-> nitype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(simm) ^ maybe_vmask(vm)
+  <-> nitype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm) ^ maybe_vmask(vm)
 
 /* ***************** OPIVI (Vector Slide & Gather Instructions) ****************** */
 /* Slide and gather instructions extend rs1/imm to XLEN instead of SEW bits */
@@ -1154,7 +1154,7 @@ mapping visg_mnemonic : visgfunct6 <-> string = {
 }
 
 mapping clause assembly = VISG(funct6, vm, vs2, simm, vd)
-  <-> visg_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(simm) ^ maybe_vmask(vm)
+  <-> visg_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm) ^ maybe_vmask(vm)
 
 /* ********************** OPIVI (Integer Merge Instruction) ********************** */
 union clause ast = MASKTYPEI : (vregidx, bits(5), vregidx)
@@ -1206,7 +1206,7 @@ function clause execute(MASKTYPEI(vs2, simm, vd)) = {
 }
 
 mapping clause assembly = MASKTYPEI(vs2, simm, vd)
-  <-> "vmerge.vim" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(simm) ^ sep() ^ "v0"
+  <-> "vmerge.vim" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm) ^ sep() ^ "v0"
 
 /* ********************** OPIVI (Integer Move Instruction) *********************** */
 union clause ast = MOVETYPEI : (vregidx, bits(5))
@@ -1245,7 +1245,7 @@ function clause execute(MOVETYPEI(vd, simm)) = {
 }
 
 mapping clause assembly = MOVETYPEI(vd, simm)
-  <-> "vmv.v.i" ^ spc() ^ vreg_name(vd) ^ sep() ^ hex_bits_5(simm)
+  <-> "vmv.v.i" ^ spc() ^ vreg_name(vd) ^ sep() ^ hex_bits_signed_5(simm)
 
 /* ********************* OPIVI (Whole Vector Register Move) ********************** */
 union clause ast = VMVRTYPE : (vregidx, bits(5), vregidx)
