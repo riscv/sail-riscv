@@ -18,7 +18,7 @@ extern struct zMisa zmisa;
 void model_init(void);
 void model_fini(void);
 
-unit zinit_model(unit);
+unit zinit_model(const_sail_string);
 bool ztry_step(sail_int, bool);
 unit ztick_clock(unit);
 

@@ -207,12 +207,17 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_device_tree.sail"
             )
 
+            set(sail_model_srcs
+                "riscv_model.sail"
+            )
+
             # Final file list.
             set(sail_srcs
                 ${sail_arch_srcs}
                 ${sail_seq_inst_srcs}
                 ${sail_step_srcs}
                 ${sail_cfg_srcs}
+                ${sail_model_srcs}
                 "main.sail"
             )
 

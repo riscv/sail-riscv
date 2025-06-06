@@ -146,20 +146,6 @@ static void report_arch(void)
   exit(0);
 }
 
-static void validate_config(const char *conf_file)
-{
-  if (!zconfig_is_valid(UNIT)) {
-    if (conf_file) {
-      fprintf(stderr, "Configuration in %s is invalid.\n", conf_file);
-    } else {
-      fprintf(stderr,
-              "Default configuration is invalid.\nThis is a bug; please report "
-              "it to the sail-riscv developers.\n");
-    }
-    exit(1);
-  }
-}
-
 static void print_dts(void)
 {
   char *dts = NULL;
@@ -446,9 +432,9 @@ void init_sail_reset_vector(uint64_t entry)
   zPC = rom_base;
 }
 
-void init_sail(uint64_t elf_entry)
+void init_sail(uint64_t elf_entry, const char *config_file)
 {
-  zinit_model(UNIT);
+  zinit_model(config_file ? config_file : "default");
   if (rvfi) {
     /*
     rv_ram_base = UINT64_C(0x80000000);
@@ -465,11 +451,11 @@ void init_sail(uint64_t elf_entry)
 }
 
 /* reinitialize to clear state and memory, typically across tests runs */
-void reinit_sail(uint64_t elf_entry)
+void reinit_sail(uint64_t elf_entry, const char *config_file)
 {
   model_fini();
   model_init();
-  init_sail(elf_entry);
+  init_sail(elf_entry, config_file);
 }
 
 void write_signature(const char *file)
@@ -670,7 +656,6 @@ int main(int argc, char **argv)
   int files_start = process_args(argc, argv);
 
   model_init();
-  validate_config(config_file);
 
   if (do_report_arch) {
     report_arch();
@@ -701,7 +686,7 @@ int main(int argc, char **argv)
     (void)load_sail(argv[i], /*main_file=*/false);
   }
 
-  init_sail(entry);
+  init_sail(entry, config_file);
 
   if (gettimeofday(&init_end, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
@@ -712,7 +697,7 @@ int main(int argc, char **argv)
     run_sail();
     if (rvfi) {
       /* Reset for next test */
-      reinit_sail(entry);
+      reinit_sail(entry, config_file);
     }
   } while (rvfi);
 
