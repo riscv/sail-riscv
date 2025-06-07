@@ -27,3 +27,6 @@ function clause execute (WRS(WRS_STO)) =
 
 function clause execute (WRS(WRS_NTO)) =
   Enter_Wait(WAIT_WRS_NTO)
+
+mapping clause assembly = WRS(WRS_STO) <-> "wrs.sto"
+mapping clause assembly = WRS(WRS_NTO) <-> "wrs.nto"
