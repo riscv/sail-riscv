@@ -206,6 +206,9 @@ function clause hartSupports(Ext_Zvknhb) = config extensions.Zvknhb.supported
 // ShangMi Suite: SM3 Secure Hash
 enum clause extension = Ext_Zvksh
 function clause hartSupports(Ext_Zvksh) = config extensions.Zvksh.supported
+// Vector-Scalar GCM/GMAC
+enum clause extension = Ext_Zvkgs
+function clause hartSupports(Ext_Zvkgs) = config extensions.Zvkgs.supported
 
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
