@@ -274,19 +274,3 @@ function loop () : unit -> unit = {
     }
   }
 }
-
-// Chip reset. This only does the minimum resets required by the RISC-V spec.
-function reset() -> unit = {
-  reset_sys();
-  reset_vmem();
-
-  // To allow model extensions (code outside this repo) to perform additional reset.
-  ext_reset();
-}
-
-// Initialize model state. This is only called once; not for every chip reset.
-function init_model() -> unit = {
-  hart_state = HART_ACTIVE();
-  init_platform();
-  reset();
-}
