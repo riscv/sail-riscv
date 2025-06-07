@@ -46,20 +46,10 @@ function check_mmu_config() -> bool = {
       valid = false;
       print_endline("Supervisor mode (S) is disabled but Sv32 is enabled: cannot support address translation without supervisor mode.");
     };
-    if hartSupports(Ext_Sv39)
+    if hartSupports(Ext_Sv39) | hartSupports(Ext_Sv48) |  hartSupports(Ext_Sv57)
     then {
       valid = false;
-      print_endline("Sv39 is enabled: Sv39 is not supported on RV32.");
-    };
-    if hartSupports(Ext_Sv48)
-    then {
-      valid = false;
-      print_endline("Sv48 is enabled: Sv48 is not supported on RV32.");
-    };
-    if hartSupports(Ext_Sv57)
-    then {
-      valid = false;
-      print_endline("Sv57 is enabled: Sv57 is not supported on RV32.");
+      print_endline("One or more of Sv39/Sv48/Sv57 is enabled: these are not supported on RV32.");
     };
   };
   valid
