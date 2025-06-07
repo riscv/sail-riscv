@@ -30,9 +30,7 @@ function generate_isa_base() -> string = {
 
 // Generates an ISA string in the appropriate format.
 
-// NOTE: The "riscv,isa" property is marked deprecated but is probably
-// still widely used.
-enum ISA_Format = {DeviceTree_ISA, DeviceTree_ISA_Extensions}
+enum ISA_Format = {Canonical_Lowercase, DeviceTree_ISA_Extensions}
 
 /* Some notes from the "ISA Extension Naming Convections" section of
    the manual:
@@ -74,9 +72,8 @@ function ext_wrap(ext : extension, fmt : ISA_Format) -> string = {
   if not(hartSupports(ext)) then return "";
   let s = extensionName(ext);
   match fmt {
-    DeviceTree_ISA =>
-      // In "riscv,isa", single letter extensions are concatenated
-      // without a separator.
+    Canonical_Lowercase =>
+      // Single letter extensions are concatenated without a separator.
       if string_length(s) == 1 then s else "_" ^ s,
     DeviceTree_ISA_Extensions =>
       ", \"" ^ s ^ "\"",
@@ -87,9 +84,9 @@ function generate_isa_string(fmt : ISA_Format) -> string = {
   // The Sail compiler blows up if this string is constructed in one go.
   // Build it up in pieces.
   let prefix : string = match fmt {
-    DeviceTree_ISA => "rv" ^ dec_str(xlen) ^ "i",
+    Canonical_Lowercase => "rv" ^ dec_str(xlen) ^ "i",
     DeviceTree_ISA_Extensions => "\"i\"",
-   };
+  };
 
   // First append the single letter extensions.
 
@@ -126,9 +123,10 @@ function generate_isa_string(fmt : ISA_Format) -> string = {
   ^ ext_wrap(Ext_Zfa, fmt)
   ^ ext_wrap(Ext_Zfh, fmt)
   ^ ext_wrap(Ext_Zfhmin, fmt)
-  ^ ext_wrap(Ext_Zfinx, fmt);
-
-  // Zdinx and Zhinx{,min} are not extensions in device-tree.
+  ^ ext_wrap(Ext_Zfinx, fmt)
+  ^ ext_wrap(Ext_Zdinx, fmt)
+  ^ ext_wrap(Ext_Zhinx, fmt)
+  ^ ext_wrap(Ext_Zhinxmin, fmt);
 
   let zc_exts = ""
   ^ ext_wrap(Ext_Zca, fmt)
@@ -220,7 +218,9 @@ function generate_dts() -> string = {
 ^ "      status = \"okay\";\n"
 ^ "      compatible = \"riscv\";\n"
 ^ "      riscv,isa-base = \"" ^ generate_isa_base() ^ "\";\n"
-^ "      riscv,isa = \"" ^ generate_isa_string(DeviceTree_ISA) ^ "\";\n"
+         // NOTE: The "riscv,isa" property is marked deprecated but is
+         // probably still widely used.
+^ "      riscv,isa = \"" ^ generate_isa_string(Canonical_Lowercase) ^ "\";\n"
 ^ "      riscv,isa-extensions = " ^ generate_isa_string(DeviceTree_ISA_Extensions) ^ ";\n"
 ^ "      mmu-type = \"riscv," ^ mmu_type() ^ "\";\n"
 ^ "      clock-frequency = <" ^ dec_str(clock_freq) ^ ">;\n"
