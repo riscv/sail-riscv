@@ -34,6 +34,7 @@
 enum {
   OPT_TRACE_OUTPUT = 1000,
   OPT_PRINT_CONFIG,
+  OPT_VALIDATE_CONFIG,
   OPT_SAILCOV,
   OPT_ENABLE_EXPERIMENTAL_EXTENSIONS,
   OPT_PRINT_DTS,
@@ -43,6 +44,7 @@ static bool do_show_times = false;
 bool do_report_arch = false;
 bool do_print_dts = false;
 char *config_file = NULL;
+bool do_validate_config = false;
 char *term_log = NULL;
 static const char *trace_log_path = NULL;
 FILE *trace_log = NULL;
@@ -102,27 +104,28 @@ char *sailcov_file = NULL;
 #endif
 
 static struct option options[] = {
-    {"device-tree-blob",               required_argument, 0, 'b'             },
-    {"terminal-log",                   required_argument, 0, 't'             },
-    {"show-times",                     required_argument, 0, 'p'             },
-    {"report-arch",                    no_argument,       0, 'a'             },
-    {"test-signature",                 required_argument, 0, 'T'             },
-    {"signature-granularity",          required_argument, 0, 'g'             },
-    {"rvfi-dii",                       required_argument, 0, 'r'             },
-    {"help",                           no_argument,       0, 'h'             },
-    {"config",                         required_argument, 0, 'c'             },
-    {"print-default-config",           no_argument,       0, OPT_PRINT_CONFIG},
-    {"trace",                          optional_argument, 0, 'v'             },
-    {"no-trace",                       optional_argument, 0, 'V'             },
-    {"trace-output",                   required_argument, 0, OPT_TRACE_OUTPUT},
-    {"inst-limit",                     required_argument, 0, 'l'             },
+    {"device-tree-blob",               required_argument, 0, 'b'                },
+    {"terminal-log",                   required_argument, 0, 't'                },
+    {"show-times",                     required_argument, 0, 'p'                },
+    {"report-arch",                    no_argument,       0, 'a'                },
+    {"test-signature",                 required_argument, 0, 'T'                },
+    {"signature-granularity",          required_argument, 0, 'g'                },
+    {"rvfi-dii",                       required_argument, 0, 'r'                },
+    {"help",                           no_argument,       0, 'h'                },
+    {"config",                         required_argument, 0, 'c'                },
+    {"print-default-config",           no_argument,       0, OPT_PRINT_CONFIG   },
+    {"validate-config",                no_argument,       0, OPT_VALIDATE_CONFIG},
+    {"trace",                          optional_argument, 0, 'v'                },
+    {"no-trace",                       optional_argument, 0, 'V'                },
+    {"trace-output",                   required_argument, 0, OPT_TRACE_OUTPUT   },
+    {"inst-limit",                     required_argument, 0, 'l'                },
     {"enable-experimental-extensions", no_argument,       0,
-     OPT_ENABLE_EXPERIMENTAL_EXTENSIONS                                      },
+     OPT_ENABLE_EXPERIMENTAL_EXTENSIONS                                         },
 #ifdef SAILCOV
-    {"sailcov-file",                   required_argument, 0, OPT_SAILCOV     },
+    {"sailcov-file",                   required_argument, 0, OPT_SAILCOV        },
 #endif
-    {"print-device-tree",              no_argument,       0, OPT_PRINT_DTS   },
-    {0,                                0,                 0, 0               }
+    {"print-device-tree",              no_argument,       0, OPT_PRINT_DTS      },
+    {0,                                0,                 0, 0                  }
 };
 
 static void print_usage(const char *argv0, int ec)
@@ -138,6 +141,17 @@ static void print_usage(const char *argv0, int ec)
     opt++;
   }
   exit(ec);
+}
+
+static void validate_config(const char *conf_file)
+{
+  const char *s = zconfig_is_valid(UNIT) ? "valid" : "invalid";
+  if (conf_file) {
+    fprintf(stdout, "Configuration in %s is %s.\n", conf_file, s);
+  } else {
+    fprintf(stdout, "Default configuration is %s.\n", s);
+  }
+  exit(0);
 }
 
 static void report_arch(void)
@@ -260,6 +274,9 @@ static int process_args(int argc, char **argv)
     case OPT_PRINT_CONFIG:
       printf("%s", DEFAULT_JSON);
       exit(0);
+    case OPT_VALIDATE_CONFIG:
+      do_validate_config = true;
+      break;
     case OPT_PRINT_DTS:
       do_print_dts = true;
       break;
@@ -321,14 +338,15 @@ static int process_args(int argc, char **argv)
     std::filesystem::remove(path);
   }
 
-  if (optind > argc || (optind == argc && !rvfi && !do_print_dts)) {
+  if (optind > argc
+      || (optind == argc && !rvfi && !do_print_dts && !do_validate_config)) {
     fprintf(stderr, "No elf file provided.\n");
     print_usage(argv[0], 0);
   }
   if (dtb_file)
     read_dtb(dtb_file);
 
-  if (!rvfi && !do_report_arch && !do_print_dts)
+  if (!rvfi && !do_report_arch && !do_print_dts && !do_validate_config)
     fprintf(stdout, "Running file %s.\n", argv[optind]);
   return optind;
 }
@@ -659,6 +677,9 @@ int main(int argc, char **argv)
 
   if (do_report_arch) {
     report_arch();
+  }
+  if (do_validate_config) {
+    validate_config(config_file);
   }
   if (do_print_dts) {
     print_dts();
