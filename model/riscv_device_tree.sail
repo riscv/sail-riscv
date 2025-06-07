@@ -6,6 +6,19 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
+// Identifies the largest MMU address translation mode supported by this hart.
+function mmu_type() -> string = {
+  if xlen == 32 then {
+    if hartSupports(Ext_Sv32) then "sv32" else "none"
+  } else {
+    assert(xlen == 64);
+    if hartSupports(Ext_Sv57) then "sv57"
+    else if hartSupports(Ext_Sv48) then "sv48"
+    else if hartSupports(Ext_Sv39) then "sv39"
+    else "none"
+  }
+}
+
 function generate_dts() -> string = {
   let clock_freq : int = config platform.clock_frequency;
   let ram_base_hi = unsigned(plat_ram_base >> 32);
@@ -39,7 +52,7 @@ function generate_dts() -> string = {
 ^ "      status = \"okay\";\n"
 ^ "      compatible = \"riscv\";\n"
 ^ "      riscv,isa = \"" ^ "rv" ^ dec_str(xlen) ^ isa_string ^ "\";\n"
-^ "      mmu-type = \"riscv," ^ (if xlen == 32 then "sv32" else "sv39") ^ "\";\n"
+^ "      mmu-type = \"riscv," ^ mmu_type() ^ "\";\n"
 ^ "      clock-frequency = <" ^ dec_str(clock_freq) ^ ">;\n"
 ^ "      CPU0_intc: interrupt-controller {\n"
 ^ "        #address-cells = <2>;\n"
