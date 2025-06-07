@@ -127,3 +127,11 @@ enum zvk_vaesdf_funct6 = {ZVK_VAESDF_VV, ZVK_VAESDF_VS}
 enum zvk_vaesdm_funct6 = {ZVK_VAESDM_VV, ZVK_VAESDM_VS}
 enum zvk_vaesef_funct6 = {ZVK_VAESEF_VV, ZVK_VAESEF_VS}
 enum zvk_vaesem_funct6 = {ZVK_VAESEM_VV, ZVK_VAESEM_VS}
+
+/*
+ * Utility function for Zvkg/Zvkgs
+ * ----------------------------------------------------------------------
+ */
+ enum zvk_vghsh_funct6 = {ZVKG_VGHSH_VV, ZVKGS_VGHSH_VS}
+
+ enum zvk_vgmul_funct6 = {ZVKG_VGMUL_VV, ZVKGS_VGMUL_VS}

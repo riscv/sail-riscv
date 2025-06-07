@@ -8,13 +8,21 @@
 
 function clause currentlyEnabled(Ext_Zvkg) = hartSupports(Ext_Zvkg) & currentlyEnabled(Ext_V)
 
-union clause ast = VGHSH_VV : (vregidx, vregidx, vregidx)
+function clause currentlyEnabled(Ext_Zvkgs) = hartSupports(Ext_Zvkgs) & currentlyEnabled(Ext_V)
 
-mapping clause encdec = VGHSH_VV(vs2, vs1, vd)
-  <-> 0b1011001 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
-  when currentlyEnabled(Ext_Zvkg) & get_sew() == 32 & zvk_check_encdec(128, 4)
+union clause ast = VGHSH : (zvk_vghsh_funct6, vregidx, vregidx, vregidx)
 
-function clause execute (VGHSH_VV(vs2, vs1, vd)) = {
+mapping encdec_vghsh : zvk_vghsh_funct6 <-> bits(6) = {
+  ZVKG_VGHSH_VV <-> 0b101100,
+  ZVKGS_VGHSH_VS <-> 0b100011,
+}
+
+mapping clause encdec = VGHSH(funct6, vs2, vs1, vd)
+  <-> encdec_vghsh(funct6) @ 0b1 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
+  when (currentlyEnabled(Ext_Zvkg) & funct6 == ZVKG_VGHSH_VV | currentlyEnabled(Ext_Zvkgs) & funct6 == ZVKGS_VGHSH_VS) &
+   get_sew() == 32 & zvk_check_encdec(128, 4)
+
+function clause execute (VGHSH(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -33,7 +41,10 @@ function clause execute (VGHSH_VV(vs2, vs1, vd)) = {
 
     let Y : bits(128) = get_velem_quad(vd_val, i);
     let X : bits(128) = get_velem_quad(vs1_val, i);
-    var H : bits(128) = brev8(get_velem_quad(vs2_val, i));
+    var H : bits(128) = match funct6 {
+      ZVKG_VGHSH_VV => brev8(get_velem_quad(vs2_val, i)),
+      ZVKGS_VGHSH_VS => brev8(get_velem_quad(vs2_val, 0)),
+    };
 
     var Z : bits(128) = zeros();
     let S : bits(128) = brev8(Y ^ X);
@@ -53,16 +64,27 @@ function clause execute (VGHSH_VV(vs2, vs1, vd)) = {
   RETIRE_SUCCESS
 }
 
-mapping clause assembly = VGHSH_VV(vs2, vs1, vd)
-  <-> "vghsh.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
+mapping vghsh_mnemonic : zvk_vghsh_funct6 <-> string = {
+  ZVKG_VGHSH_VV <-> "vghsh.vv",
+  ZVKGS_VGHSH_VS <-> "vghsh.vs", 
+}
 
-union clause ast = VGMUL_VV : (vregidx, vregidx)
+mapping clause assembly = VGHSH(funct6, vs2, vs1, vd)
+  <-> vghsh_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
 
-mapping clause encdec = VGMUL_VV(vs2, vd)
-  <-> 0b1010001 @ encdec_vreg(vs2) @ 0b10001 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
-  when currentlyEnabled(Ext_Zvkg) & get_sew() == 32 & zvk_check_encdec(128, 4)
+union clause ast = VGMUL : (zvk_vgmul_funct6, vregidx, vregidx)
 
-function clause execute (VGMUL_VV(vs2, vd)) = {
+mapping encdec_vgmul : zvk_vgmul_funct6 <-> bits(6) = {
+  ZVKG_VGMUL_VV <-> 0b101000,
+  ZVKGS_VGMUL_VS <-> 0b101001,
+}
+
+mapping clause encdec = VGMUL(funct6, vs2, vd)
+  <-> encdec_vgmul(funct6) @ 0b1 @ encdec_vreg(vs2) @ 0b10001 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
+  when (currentlyEnabled(Ext_Zvkg) & funct6 == ZVKG_VGMUL_VV | currentlyEnabled(Ext_Zvkgs) & funct6 == ZVKGS_VGMUL_VS) &
+   get_sew() == 32 & zvk_check_encdec(128, 4)
+
+function clause execute (VGMUL(funct6, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -79,7 +101,10 @@ function clause execute (VGMUL_VV(vs2, vd)) = {
     assert(i * 4 + 3 < num_elem);
 
     let Y : bits(128) = brev8(get_velem_quad(vd_val, i));
-    var H : bits(128) = brev8(get_velem_quad(vs2_val, i));
+    var H : bits(128) = match funct6 {
+      ZVKG_VGMUL_VV => brev8(get_velem_quad(vs2_val, i)),
+      ZVKGS_VGMUL_VS => brev8(get_velem_quad(vs2_val, 0)),
+    };
     var Z : bits(128) = zeros();
 
     foreach (b from 0 to 127) {
@@ -97,5 +122,10 @@ function clause execute (VGMUL_VV(vs2, vd)) = {
   RETIRE_SUCCESS
 }
 
-mapping clause assembly = VGMUL_VV(vs2, vd)
-  <-> "vgmul.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2)
+mapping vgmul_mnemonic : zvk_vgmul_funct6 <-> string = {
+  ZVKG_VGMUL_VV <-> "vgmul.vv",
+  ZVKGS_VGMUL_VS <-> "vgmul.vs",
+}
+
+mapping clause assembly = VGMUL(funct6, vs2, vd)
+  <-> vgmul_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2)
