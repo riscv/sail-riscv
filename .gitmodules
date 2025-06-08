@@ -1,4 +1,0 @@
-[submodule "test/rvv-tests"]
-	path = test/rvv-tests
-	url = https://github.com/nadime15/rvv-tests.git
-	branch = master

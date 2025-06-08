@@ -19,3 +19,4 @@ foreach (arch IN ITEMS "rv32d" "rv64d")
         )
     endforeach()
 endforeach()
+
