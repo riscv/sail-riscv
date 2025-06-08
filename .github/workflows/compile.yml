@@ -1,15 +1,6 @@
 name: CI
 
-on:
-  push:
-  pull_request:
-  workflow_dispatch:
-  merge_group:
-  workflow_call:
-    inputs:
-      enable_rvv_test:
-        required: false
-        type: boolean
+on: [push, pull_request, workflow_dispatch, merge_group]
 
 jobs:
   build:
@@ -29,8 +20,6 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install packages (Linux)
         if: startsWith(matrix.os, 'ubuntu-')
@@ -73,13 +62,9 @@ jobs:
 
       - name: Build and test simulators
         run: |
-          FLAGS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DFIRST_PARTY_TESTS=TRUE"
-          if [ "${{ inputs.enable_rvv_test }}" = "true" ]; then
-            FLAGS="$FLAGS -DRVV_TESTS=TRUE"
-          fi
           # Ninja is used because the CMake Makefile generator doesn't
           # build top-level targets in parallel unfortunately.
-          cmake -S . -B build -GNinja $FLAGS
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DFIRST_PARTY_TESTS=TRUE
           # By default only the rv32d and rv64d emulators are built,
           # but we want to build more targets here to ensure they
           # can at least build without errors.
