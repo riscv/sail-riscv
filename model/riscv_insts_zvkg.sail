@@ -20,7 +20,7 @@ mapping encdec_vghsh : zvk_vghsh_funct6 <-> bits(6) = {
 mapping clause encdec = VGHSH(funct6, vs2, vs1, vd)
   <-> encdec_vghsh(funct6) @ 0b1 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when (currentlyEnabled(Ext_Zvkg) & funct6 == ZVKG_VGHSH_VV | currentlyEnabled(Ext_Zvkgs) & funct6 == ZVKGS_VGHSH_VS) &
-   get_sew() == 32 & zvk_check_encdec(128, 4)
+   get_sew() == 32 & zvk_check_encdec(128, 4) & (funct6 != ZVKG_VGHSH_VV | zvk_valid_reg_overlap(vs2, vd, get_lmul_pow()))
 
 function clause execute (VGHSH(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -82,7 +82,7 @@ mapping encdec_vgmul : zvk_vgmul_funct6 <-> bits(6) = {
 mapping clause encdec = VGMUL(funct6, vs2, vd)
   <-> encdec_vgmul(funct6) @ 0b1 @ encdec_vreg(vs2) @ 0b10001 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when (currentlyEnabled(Ext_Zvkg) & funct6 == ZVKG_VGMUL_VV | currentlyEnabled(Ext_Zvkgs) & funct6 == ZVKGS_VGMUL_VS) &
-   get_sew() == 32 & zvk_check_encdec(128, 4)
+   get_sew() == 32 & zvk_check_encdec(128, 4) & (funct6 != ZVKGS_VGMUL_VS & zvk_valid_reg_overlap(vs2, vd, get_lmul_pow()))
 
 function clause execute (VGMUL(funct6, vs2, vd)) = {
   let SEW      = get_sew();
