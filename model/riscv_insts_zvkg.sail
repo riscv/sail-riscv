@@ -66,7 +66,7 @@ function clause execute (VGHSH(funct6, vs2, vs1, vd)) = {
 
 mapping vghsh_mnemonic : zvk_vghsh_funct6 <-> string = {
   ZVKG_VGHSH_VV <-> "vghsh.vv",
-  ZVKGS_VGHSH_VS <-> "vghsh.vs", 
+  ZVKGS_VGHSH_VS <-> "vghsh.vs",
 }
 
 mapping clause assembly = VGHSH(funct6, vs2, vs1, vd)
