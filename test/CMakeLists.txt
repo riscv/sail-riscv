@@ -1,9 +1,15 @@
 file(GLOB elfs_rv32d CONFIGURE_DEPENDS LIST_DIRECTORIES false
     "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests/rv32*"
+    "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v128x32/rv32*"
+    "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v256x32/rv32*"
+    "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v512x32/rv32*"
 )
+
 file(GLOB elfs_rv64d CONFIGURE_DEPENDS LIST_DIRECTORIES false
     "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests/rv64*"
-    "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests/v512x64/rv64*"
+    "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v128x64/rv64*"
+    "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v256x64/rv64*"
+    "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v512x64/rv64*"
 )
 
 foreach (arch IN ITEMS "rv32d" "rv64d")

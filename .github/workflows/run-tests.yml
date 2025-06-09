@@ -1,13 +1,68 @@
 name: Run risc-v tests
 on:
   workflow_dispatch:
+env:
+  SAIL_VERSION: "0.19"
+  CMAKE_VERSION: "3.20"
 
 jobs:
-  download-riscv-tests:
-    env:
-      SAIL_VERSION: "0.19"
-      CMAKE_VERSION: "3.20"
+  run-riscv-vector-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        VLEN: [128, 256, 512]
+        # NOTE: ELEN == XLEN
+        XLEN: [32, 64]
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
 
+      - name: Install packages (Linux)
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build jq
+
+      - name: Install CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "${{ env.CMAKE_VERSION }}"
+
+      - name: Download latest release
+        uses: robinraju/release-downloader@v1.12
+        with:
+          repository: "nadime15/riscv-test-generator"
+          latest: true
+          fileName: riscv-vector-tests-v${{ matrix.VLEN }}x${{ matrix.XLEN }}.tar.gz
+          out-file-path: "download"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract tarball contents to test/
+        run: |
+          f=$(echo download/*.tar.gz)
+          dirname=$(basename "$f" .tar.gz)
+          mkdir -p "test/$dirname"
+          tar -xzf "$f" -C "test/$dirname"
+
+      - name: Set VLEN and ELEN
+        run: |
+          echo "VLEN=$(echo ${{ matrix.VLEN }} | awk '{print int(log($1)/log(2))}')" >> $GITHUB_ENV
+          echo "ELEN=$(echo ${{ matrix.XLEN }} | awk '{print int(log($1)/log(2))}')" >> $GITHUB_ENV
+
+      - name: Modify default Sail config file
+        run: |
+          jq --argjson vlen "$VLEN" --argjson elen "$ELEN" \
+          '.extensions.V.vlen_exp = $vlen | .extensions.V.elen_exp = $elen' \
+          config/default.json > tmp.json && mv tmp.json config/default.json
+
+      - name: Install Sail (Linux)
+        run: |
+          sudo mkdir -p /usr/local
+          curl --location https://github.com/rems-project/sail/releases/download/$SAIL_VERSION-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
+
+          ./build_simulators.sh
+          ctest --test-dir build --output-junit tests.xml --output-on-failure
+
+  run-riscv-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -18,27 +73,26 @@ jobs:
           sudo apt update
           sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build jq
 
-      - name: Download latest release
-        uses: robinraju/release-downloader@v1.12
-        with:
-          repository: "nadime15/riscv-test-generator"
-          latest: true
-          fileName: "*.parta*"
-          out-file-path: "download"
-          token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Install CMake
         uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: "${{ env.CMAKE_VERSION }}"
 
-      - name: Combine downloaded chunks
-        run: |
-          cat download/*.parta* > download/riscv-tests.tar.gz
-          ls download/
+      - name: Download latest release
+        uses: robinraju/release-downloader@v1.12
+        with:
+          repository: "nadime15/riscv-test-generator"
+          latest: true
+          fileName: riscv-tests.tar.gz
+          out-file-path: "download"
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-          tar -xzf download/riscv-tests.tar.gz -C test/
-          rm download/*.part*
+      - name: Extract tarball contents to test/
+        run: |
+          f=$(echo download/*.tar.gz)
+          dirname=$(basename "$f" .tar.gz)
+          mkdir -p "test/$dirname"
+          tar -xzf "$f" -C "test/$dirname"
 
       - name: Install Sail (Linux)
         run: |
