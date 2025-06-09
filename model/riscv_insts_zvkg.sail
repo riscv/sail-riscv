@@ -8,7 +8,7 @@
 
 function clause currentlyEnabled(Ext_Zvkg) = hartSupports(Ext_Zvkg) & currentlyEnabled(Ext_V)
 
-function clause currentlyEnabled(Ext_Zvkgs) = hartSupports(Ext_Zvkgs) & currentlyEnabled(Ext_V)
+function clause currentlyEnabled(Ext_Zvkgs) = hartSupports(Ext_Zvkgs) & currentlyEnabled(Ext_V) & currentlyEnabled(Ext_Zvkg)
 
 union clause ast = VGHSH : (zvk_vghsh_funct6, vregidx, vregidx, vregidx)
 
