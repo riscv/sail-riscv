@@ -262,3 +262,7 @@ function generate_dts() -> string = {
 ^ "  };\n"
 ^ "};\n"
 }
+
+// Generate a canonical ISA string for the configuration.
+function generate_canonical_isa_string() -> string =
+  generate_isa_string(Canonical_Lowercase)

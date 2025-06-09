@@ -35,13 +35,16 @@ enum {
   OPT_SAILCOV,
   OPT_ENABLE_EXPERIMENTAL_EXTENSIONS,
   OPT_PRINT_DTS,
+  OPT_PRINT_ISA,
 };
 
 static bool do_show_times = false;
 bool do_report_arch = false;
 bool do_print_dts = false;
-char *config_file = NULL;
 bool do_validate_config = false;
+bool do_print_isa = false;
+
+char *config_file = NULL;
 char *term_log = NULL;
 static const char *trace_log_path = NULL;
 FILE *trace_log = NULL;
@@ -122,6 +125,7 @@ static struct option options[] = {
     {"sailcov-file",                   required_argument, 0, OPT_SAILCOV        },
 #endif
     {"print-device-tree",              no_argument,       0, OPT_PRINT_DTS      },
+    {"print-isa-string",               no_argument,       0, OPT_PRINT_ISA      },
     {0,                                0,                 0, 0                  }
 };
 
@@ -163,6 +167,15 @@ static void print_dts(void)
   zgenerate_dts(&dts, UNIT);
   fprintf(stdout, "%s", dts);
   KILL(sail_string)(&dts);
+  exit(0);
+}
+
+static void print_isa(void)
+{
+  char *isa = NULL;
+  zgenerate_canonical_isa_string(&isa, UNIT);
+  fprintf(stdout, "%s\n", isa);
+  KILL(sail_string)(&isa);
   exit(0);
 }
 
@@ -277,6 +290,9 @@ static int process_args(int argc, char **argv)
     case OPT_PRINT_DTS:
       do_print_dts = true;
       break;
+    case OPT_PRINT_ISA:
+      do_print_isa = true;
+      break;
     case 'r': {
       config_enable_rvfi = true;
       int rvfi_dii_port = atoi(optarg);
@@ -325,15 +341,16 @@ static int process_args(int argc, char **argv)
     sail_config_set_string(DEFAULT_JSON);
   }
 
-  if (optind > argc
-      || (optind == argc && !rvfi && !do_print_dts && !do_validate_config)) {
-    fprintf(stderr, "No elf file provided.\n");
-    print_usage(argv[0], 0);
-  }
   if (dtb_file)
     read_dtb(dtb_file);
 
-  if (!rvfi && !do_report_arch && !do_print_dts && !do_validate_config)
+  bool no_elf_file_arg = rvfi || do_report_arch || do_print_dts || do_print_isa
+      || do_validate_config;
+  if (optind > argc || (optind == argc && !no_elf_file_arg)) {
+    fprintf(stderr, "No elf file provided.\n");
+    print_usage(argv[0], 0);
+  }
+  if (!no_elf_file_arg)
     fprintf(stdout, "Running file %s.\n", argv[optind]);
   return optind;
 }
@@ -670,6 +687,9 @@ int main(int argc, char **argv)
   }
   if (do_print_dts) {
     print_dts();
+  }
+  if (do_print_isa) {
+    print_isa();
   }
 
   char *initial_elf_file = argv[files_start];
