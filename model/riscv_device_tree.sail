@@ -81,107 +81,109 @@ function ext_wrap(ext : extension, fmt : ISA_Format) -> string = {
 }
 
 function generate_isa_string(fmt : ISA_Format) -> string = {
-  // The Sail compiler blows up if this string is constructed in one go.
-  // Build it up in pieces.
   let prefix : string = match fmt {
     Canonical_Lowercase => "rv" ^ dec_str(xlen) ^ "i",
     DeviceTree_ISA_Extensions => "\"i\"",
   };
 
+  let extensions = [
   // First append the single letter extensions.
-
-  let singles = ""
-  ^ ext_wrap(Ext_M, fmt)
-  ^ ext_wrap(Ext_A, fmt)
-  ^ ext_wrap(Ext_F, fmt)
-  ^ ext_wrap(Ext_D, fmt)
-  ^ ext_wrap(Ext_C, fmt)
-  ^ ext_wrap(Ext_B, fmt)
-  ^ ext_wrap(Ext_V, fmt);
+    Ext_M,
+    Ext_A,
+    Ext_F,
+    Ext_D,
+    // Ext_G,
+    // Ext_Q,
+    Ext_C,
+    Ext_B,
+    // Ext_P,
+    Ext_V,
+    //Ext_H,
   // S and U are not valid extensions in the device-tree, whereas H is.
 
   // Append the Z extensions, ordered by category and then alphabetically.
-  let zi_exts = ""
-  ^ ext_wrap(Ext_Zicbom, fmt)
-  ^ ext_wrap(Ext_Zicboz, fmt)
-  ^ ext_wrap(Ext_Zicntr, fmt)
-  ^ ext_wrap(Ext_Zicond, fmt)
-  ^ ext_wrap(Ext_Zicsr, fmt)
-  ^ ext_wrap(Ext_Zifencei, fmt)
-  ^ ext_wrap(Ext_Zihpm, fmt)
-  ^ ext_wrap(Ext_Zimop, fmt)
+  // Zi
+    Ext_Zicbom,
+    Ext_Zicboz,
+    Ext_Zicntr,
+    Ext_Zicond,
+    Ext_Zicsr,
+    Ext_Zifencei,
+    Ext_Zihpm,
+    Ext_Zimop,
 
-  ^ ext_wrap(Ext_Zmmul, fmt);
+  // Zm
+    Ext_Zmmul,
 
-  let za_exts = ""
-  ^ ext_wrap(Ext_Zaamo, fmt)
-  ^ ext_wrap(Ext_Zabha, fmt)
-  ^ ext_wrap(Ext_Zalrsc, fmt)
-  ^ ext_wrap(Ext_Zawrs, fmt);
+  // Za
+    Ext_Zaamo,
+    Ext_Zabha,
+    Ext_Zalrsc,
+    Ext_Zawrs,
 
-  let zf_exts = ""
-  ^ ext_wrap(Ext_Zfa, fmt)
-  ^ ext_wrap(Ext_Zfh, fmt)
-  ^ ext_wrap(Ext_Zfhmin, fmt)
-  ^ ext_wrap(Ext_Zfinx, fmt)
-  ^ ext_wrap(Ext_Zdinx, fmt)
-  ^ ext_wrap(Ext_Zhinx, fmt)
-  ^ ext_wrap(Ext_Zhinxmin, fmt);
+  // Zf, Zd, and Zq
+    Ext_Zfa,
+    Ext_Zfh,
+    Ext_Zfhmin,
+    Ext_Zfinx,
+    Ext_Zdinx,
+    Ext_Zhinx,
+    Ext_Zhinxmin,
 
-  let zc_exts = ""
-  ^ ext_wrap(Ext_Zca, fmt)
-  ^ ext_wrap(Ext_Zcb, fmt)
-  ^ ext_wrap(Ext_Zcd, fmt)
-  ^ ext_wrap(Ext_Zcf, fmt)
-  ^ ext_wrap(Ext_Zcmop, fmt);
+  // Zc
+    Ext_Zca,
+    Ext_Zcb,
+    Ext_Zcd,
+    Ext_Zcf,
+    Ext_Zcmop,
 
-  let zb_exts = ""
-  ^ ext_wrap(Ext_Zba, fmt)
-  ^ ext_wrap(Ext_Zbb, fmt)
-  ^ ext_wrap(Ext_Zbc, fmt)
-  ^ ext_wrap(Ext_Zbkb, fmt)
-  ^ ext_wrap(Ext_Zbkc, fmt)
-  ^ ext_wrap(Ext_Zbkx, fmt)
-  ^ ext_wrap(Ext_Zbs, fmt);
+  // Zb
+    Ext_Zba,
+    Ext_Zbb,
+    Ext_Zbc,
+    Ext_Zbkb,
+    Ext_Zbkc,
+    Ext_Zbkx,
+    Ext_Zbs,
 
-  let zk_exts = ""
-  ^ ext_wrap(Ext_Zknd, fmt)
-  ^ ext_wrap(Ext_Zkne, fmt)
-  ^ ext_wrap(Ext_Zknh, fmt)
-  ^ ext_wrap(Ext_Zkr, fmt)
-  ^ ext_wrap(Ext_Zksed, fmt)
-  ^ ext_wrap(Ext_Zksh, fmt);
+  // Zk
+    Ext_Zknd,
+    Ext_Zkne,
+    Ext_Zknh,
+    Ext_Zkr,
+    Ext_Zksed,
+    Ext_Zksh,
 
-  let zv_exts = ""
-  ^ ext_wrap(Ext_Zvbb, fmt)
-  ^ ext_wrap(Ext_Zvbc, fmt)
-  ^ ext_wrap(Ext_Zvkb, fmt)
-  ^ ext_wrap(Ext_Zvkg, fmt)
-  ^ ext_wrap(Ext_Zvkned, fmt)
-  ^ ext_wrap(Ext_Zvknha, fmt)
-  ^ ext_wrap(Ext_Zvknhb, fmt)
-  ^ ext_wrap(Ext_Zvksh, fmt);
+  // Zv
+    Ext_Zvbb,
+    Ext_Zvbc,
+    Ext_Zvkb,
+    Ext_Zvkg,
+    Ext_Zvkned,
+    Ext_Zvknha,
+    Ext_Zvknhb,
+    Ext_Zvksh,
 
   // Append the Supervisor extensions, ordered alphabetically.
-
-  let s_exts = ""
-  ^ ext_wrap(Ext_Sscofpmf, fmt)
-  ^ ext_wrap(Ext_Sstc, fmt)
-  // Handle svade and svadu here when ready.
-  ^ ext_wrap(Ext_Svinval, fmt)
-  ^ ext_wrap(Ext_Svnapot, fmt)
-  ^ ext_wrap(Ext_Svpbmt, fmt);
+    Ext_Sscofpmf,
+    Ext_Sstc,
+    // Ext_svade
+    // Ext_svadu
+    Ext_Svinval,
+    Ext_Svnapot,
+    Ext_Svpbmt,
 
   // Append the Hypervisor extensions, ordered alphabetically.
 
   // Append the Machine mode extensions, ordered alphabetically.
+    Ext_Smcntrpmf,
+  ];
 
-  let m_exts = ""
-  ^ ext_wrap(Ext_Smcntrpmf, fmt);
-
-  prefix ^ singles
-  ^ zi_exts ^ za_exts ^ zf_exts ^ zc_exts ^ zb_exts ^ zk_exts ^ zv_exts
-  ^ s_exts ^ m_exts
+  var isa_string : string = prefix;
+  foreach (i from (length(extensions) - 1) downto 0) {
+    isa_string = isa_string ^ ext_wrap(extensions[i], fmt);
+  };
+  isa_string
 }
 
 // Generates the full Device-Tree configuration for the model.
