@@ -15,7 +15,7 @@ jobs:
             cmake_version: latest
             run_all_steps: true
     env:
-      SAIL_VERSION: "0.19"
+      SAIL_VERSION: "0.19.1"
 
     steps:
       - name: Check out repository code
