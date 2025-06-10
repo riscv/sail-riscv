@@ -118,7 +118,7 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
         VV_VRGATHER      => {
                               if (vs1 == vd | vs2 == vd) then return Illegal_Instruction();
                               let idx = unsigned(vs1_val[i]);
-                              let VLMAX = 2 ^ (LMUL_pow + vlen_exp - SEW_pow);
+                              let VLMAX = 2 ^ max(0, LMUL_pow + vlen_exp - SEW_pow);
                               assert(VLMAX <= 'n);
                               if idx < VLMAX then vs2_val[idx] else zeros()
                             },
@@ -127,7 +127,7 @@ function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
                               /* vrgatherei16.vv uses SEW/LMUL for the data in vs2 but EEW=16 and EMUL = (16/SEW)*LMUL for the indices in vs1 */
                               let vs1_new : vector('n, bits(16)) = read_vreg(num_elem, 16, 4 + LMUL_pow - SEW_pow, vs1);
                               let idx = unsigned(vs1_new[i]);
-                              let VLMAX = 2 ^ (LMUL_pow + vlen_exp - SEW_pow);
+                              let VLMAX = 2 ^ max(0, LMUL_pow + vlen_exp - SEW_pow);
                               assert(VLMAX <= 'n);
                               if idx < VLMAX then vs2_val[idx] else zeros()
                             }
@@ -723,13 +723,13 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
                             if i >= rs1_val then vs2_val[i - rs1_val] else vd_val[i]
                           },
         VX_VSLIDEDOWN  => {
-                            let VLMAX = 2 ^ (LMUL_pow + vlen_exp - SEW_pow);
+                            let VLMAX = 2 ^ max(0, LMUL_pow + vlen_exp - SEW_pow);
                             assert(VLMAX > 0 & VLMAX <= 'n);
                             if i + rs1_val < VLMAX then vs2_val[i + rs1_val] else zeros()
                           },
         VX_VRGATHER    => {
                             if (vs2 == vd) then return Illegal_Instruction();
-                            let VLMAX = 2 ^ (LMUL_pow + vlen_exp - SEW_pow);
+                            let VLMAX = 2 ^ max(0, LMUL_pow + vlen_exp - SEW_pow);
                             assert(VLMAX > 0 & VLMAX <= 'n);
                             if rs1_val < VLMAX then vs2_val[rs1_val] else zeros()
                           }
@@ -1132,13 +1132,13 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
                             if i >= imm_val then vs2_val[i - imm_val] else vd_val[i]
                           },
         VI_VSLIDEDOWN  => {
-                            let VLMAX = 2 ^ (LMUL_pow + vlen_exp - SEW_pow);
+                            let VLMAX = 2 ^ max(0, LMUL_pow + vlen_exp - SEW_pow);
                             assert(VLMAX > 0 & VLMAX <= 'n);
                             if i + imm_val < VLMAX then vs2_val[i + imm_val] else zeros()
                           },
         VI_VRGATHER    => {
                             if (vs2 == vd) then return Illegal_Instruction();
-                            let VLMAX = 2 ^ (LMUL_pow + vlen_exp - SEW_pow);
+                            let VLMAX = 2 ^ max(0, LMUL_pow + vlen_exp - SEW_pow);
                             assert(VLMAX > 0 & VLMAX <= 'n);
                             if imm_val < VLMAX then vs2_val[imm_val] else zeros()
                           }
