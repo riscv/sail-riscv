@@ -59,7 +59,8 @@ jobs:
           sudo mkdir -p /usr/local
           curl --location https://github.com/rems-project/sail/releases/download/$SAIL_VERSION-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
 
-          ./build_simulators.sh
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDOWNLOAD_LOCALLY=FALSE
+          ninja -C build all riscv_sim_rv32f riscv_sim_rv64f generated_smt_rv64f generated_docs_rv64d
           ctest --test-dir build --output-junit tests.xml --output-on-failure
 
   run-riscv-tests:
@@ -99,5 +100,6 @@ jobs:
           sudo mkdir -p /usr/local
           curl --location https://github.com/rems-project/sail/releases/download/$SAIL_VERSION-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
 
-          ./build_simulators.sh
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDOWNLOAD_LOCALLY=FALSE
+          ninja -C build all riscv_sim_rv32f riscv_sim_rv64f generated_smt_rv64f generated_docs_rv64d
           ctest --test-dir build --output-junit tests.xml --output-on-failure
