@@ -5,9 +5,45 @@
 # vector tests as well, because they are missing locally.
 option(DOWNLOAD_LOCALLY "Download test files locally if needed" ON)
 
-find_program(JQ_EXECUTABLE jq REQUIRED)
+# Function to download and extract test files
+function(download_riscv_tests DOWNLOAD_PATH ARCHIVE_NAME DOWNLOAD_URL)
+    if(NOT EXISTS "${DOWNLOAD_PATH}/${ARCHIVE_NAME}" AND DOWNLOAD_LOCALLY)
+        message(STATUS "${ARCHIVE_NAME} directory not found, downloading...")
 
-message(STATUS "JQ_EXECUTABLE=${JQ_EXECUTABLE}")
+        # Download the tar.gz file
+        file(DOWNLOAD
+            "${DOWNLOAD_URL}"
+            "${DOWNLOAD_PATH}/${ARCHIVE_NAME}.tar.gz"
+            SHOW_PROGRESS
+            STATUS download_status
+        )
+
+        # Check download status
+        list(GET download_status 0 status_code)
+        if(NOT status_code EQUAL 0)
+            list(GET download_status 1 error_message)
+            message(FATAL_ERROR "Failed to download ${ARCHIVE_NAME}: ${error_message}")
+        endif()
+
+        # Create directory and extract the tar.gz file into it
+        file(MAKE_DIRECTORY "${DOWNLOAD_PATH}/${ARCHIVE_NAME}")
+        execute_process(
+            COMMAND ${CMAKE_COMMAND} -E tar xzf "${DOWNLOAD_PATH}/${ARCHIVE_NAME}.tar.gz"
+            WORKING_DIRECTORY "${DOWNLOAD_PATH}/${ARCHIVE_NAME}"
+            RESULT_VARIABLE extract_result
+        )
+
+        if(NOT extract_result EQUAL 0)
+            message(FATAL_ERROR "Failed to extract ${ARCHIVE_NAME}")
+        endif()
+
+        # Clean up the tar.gz file
+        file(REMOVE "${DOWNLOAD_PATH}/${ARCHIVE_NAME}.tar.gz")
+        message(STATUS "${ARCHIVE_NAME} downloaded and extracted successfully")
+    endif()
+endfunction()
+
+find_program(JQ_EXECUTABLE jq REQUIRED)
 
 execute_process(
     COMMAND ${JQ_EXECUTABLE} -r .extensions.V.vlen_exp "${CMAKE_CURRENT_SOURCE_DIR}/../config/default.json"
@@ -26,83 +62,23 @@ math(EXPR elen "1 << ${elen_exp}")  # 2^elen_exp
 
 message(STATUS "Config: VLEN=${vlen}, ELEN=${elen}")
 
-# Check if riscv-vector-v${vlen}x${elen} directory exists
+# Download riscv-vector-tests
 # Only attempt to download vector test files if both vlen and elen are within valid ranges
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v${vlen}x${elen}" AND
-   (vlen EQUAL 128 OR vlen EQUAL 256 OR vlen EQUAL 512) AND
-   (elen EQUAL 32 OR elen EQUAL 64) AND DOWNLOAD_LOCALLY)
-
-    message(STATUS "riscv-vector-tests-v${vlen}x${elen} directory not found, downloading...")
-
-    # Download the tar.gz file
-    file(DOWNLOAD
+if((vlen EQUAL 128 OR vlen EQUAL 256 OR vlen EQUAL 512) AND
+   (elen EQUAL 32 OR elen EQUAL 64))
+    download_riscv_tests(
+        "${CMAKE_CURRENT_SOURCE_DIR}"
+        "riscv-vector-tests-v${vlen}x${elen}"
         "https://github.com/nadime15/riscv-test-generator/releases/latest/download/riscv-vector-tests-v${vlen}x${elen}.tar.gz"
-        "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v${vlen}x${elen}.tar.gz"
-        SHOW_PROGRESS
-        STATUS download_status
     )
-
-    # Check download status
-    list(GET download_status 0 status_code)
-    if(NOT status_code EQUAL 0)
-        list(GET download_status 1 error_message)
-        message(FATAL_ERROR "Failed to download riscv-vector-tests-v${vlen}x${elen}: ${error_message}")
-    endif()
-
-    # Create riscv-vector-tests-v${vlen}x${elen} directory and extract the tar.gz file into it
-    file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v${vlen}x${elen}")
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -E tar xzf "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v${vlen}x${elen}.tar.gz"
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v${vlen}x${elen}"
-        RESULT_VARIABLE extract_result
-    )
-
-    if(NOT extract_result EQUAL 0)
-        message(FATAL_ERROR "Failed to extract riscv-vector-tests-v${vlen}x${elen}")
-    endif()
-
-    # Clean up the tar.gz file
-    file(REMOVE "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v${vlen}x${elen}.tar.gz")
-
-    message(STATUS "riscv-vector-tests-v${vlen}x${elen} downloaded and extracted successfully")
 endif()
 
-# Check if riscv-tests directory exists
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests" AND DOWNLOAD_LOCALLY)
-    message(STATUS "riscv-tests directory not found, downloading...")
-
-    # Download the tar.gz file
-    file(DOWNLOAD
-        "https://github.com/nadime15/riscv-test-generator/releases/latest/download/riscv-tests.tar.gz"
-        "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests.tar.gz"
-        SHOW_PROGRESS
-        STATUS download_status
-    )
-
-    # Check download status
-    list(GET download_status 0 status_code)
-    if(NOT status_code EQUAL 0)
-        list(GET download_status 1 error_message)
-        message(FATAL_ERROR "Failed to download riscv-tests.tar.gz: ${error_message}")
-    endif()
-
-    # Create riscv-tests directory and extract the tar.gz file into it
-    file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests")
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -E tar xzf "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests.tar.gz"
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests"
-        RESULT_VARIABLE extract_result
-    )
-
-    if(NOT extract_result EQUAL 0)
-        message(FATAL_ERROR "Failed to extract riscv-tests.tar.gz")
-    endif()
-
-    # Clean up the tar.gz file
-    file(REMOVE "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests.tar.gz")
-
-    message(STATUS "riscv-tests downloaded and extracted successfully")
-endif()
+# Download riscv-tests
+download_riscv_tests(
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "riscv-tests"
+    "https://github.com/nadime15/riscv-test-generator/releases/latest/download/riscv-tests.tar.gz"
+)
 
 file(GLOB elfs_rv32d CONFIGURE_DEPENDS LIST_DIRECTORIES false
     "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests/rv32*"
@@ -127,7 +103,6 @@ foreach (arch IN ITEMS "rv32d" "rv64d")
         )
     endforeach()
 endforeach()
-
 
 # This is off by default so we don't require people who
 # just want to build the model to have Clang or RISC-V GCC
