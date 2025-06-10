@@ -97,8 +97,8 @@ function zvksed_box_lookup(x, table) = {
   table[31 - unsigned(x)]
 }
 
-val zvk_sm4_sbox : (int) -> bits(32)
-function zvk_sm4_sbox(x) = zvksed_box_lookup(to_bits_truncate(5, x), zvksed_ck)
+val zvk_sm4_sbox : (bits(5)) -> bits(32)
+function zvk_sm4_sbox(x) = zvksed_box_lookup(x, zvksed_ck)
 
 val zvk_sm4_subword : bits(32) -> bits(32)
 function zvk_sm4_subword(x) = {
