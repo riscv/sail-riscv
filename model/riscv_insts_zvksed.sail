@@ -23,7 +23,7 @@ function clause execute (VSM4K_VI(vs2, uimm, vd)) = {
 
   let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
-  let rnd : bits(5) = zero_extend(uimm[2..0]);
+  let rnd = 0b00 @ uimm[2..0];
 
   let eg_len   = (unsigned(vl) / 4);
   let eg_start = (unsigned(vstart) / 4);
