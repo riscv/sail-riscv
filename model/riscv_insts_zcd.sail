@@ -21,7 +21,7 @@ function clause execute (C_FLDSP(uimm, rd)) = {
 
 mapping clause assembly = C_FLDSP(uimm, rd)
       if (xlen == 32 | xlen == 64)
-  <-> "c.fldsp" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_6(uimm)
+  <-> "c.fldsp" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_6(uimm) ^ "(" ^ reg_name(Regidx(0b00010)) ^ ")"
       if (xlen == 32 | xlen == 64)
 
 /* ****************************************************************** */
@@ -38,7 +38,7 @@ function clause execute (C_FSDSP(uimm, rs2)) = {
 
 mapping clause assembly = C_FSDSP(uimm, rs2)
       if (xlen == 32 | xlen == 64)
-  <-> "c.fsdsp" ^ spc() ^ freg_name(rs2) ^ sep() ^ hex_bits_6(uimm)
+  <-> "c.fsdsp" ^ spc() ^ freg_name(rs2) ^ sep() ^ hex_bits_6(uimm) ^ "(" ^ reg_name(Regidx(0b00010)) ^ ")"
       if (xlen == 32 | xlen == 64)
 
 /* ****************************************************************** */
@@ -57,7 +57,7 @@ function clause execute (C_FLD(uimm, rsc, rdc)) = {
 
 mapping clause assembly = C_FLD(uimm, rsc, rdc)
       if (xlen == 32 | xlen == 64)
-  <-> "c.fld" ^ spc() ^ creg_name(rdc) ^ sep() ^ creg_name(rsc) ^ sep() ^ hex_bits_8(uimm @ 0b000)
+  <-> "c.fld" ^ spc() ^ creg_name(rdc) ^ sep() ^ hex_bits_8(uimm @ 0b000) ^ "(" ^ creg_name(rsc) ^ ")"
       if (xlen == 32 | xlen == 64)
 
 /* ****************************************************************** */
@@ -76,5 +76,5 @@ function clause execute (C_FSD(uimm, rsc1, rsc2)) = {
 
 mapping clause assembly = C_FSD(uimm, rsc1, rsc2)
       if (xlen == 32 | xlen == 64)
-  <-> "c.fsd" ^ spc() ^ creg_name(rsc1) ^ sep() ^ creg_name(rsc2) ^ sep() ^ hex_bits_8(uimm @ 0b000)
+  <-> "c.fsd" ^ spc() ^ creg_name(rsc1) ^ sep() ^ hex_bits_8(uimm @ 0b000) ^ "(" ^ creg_name(rsc2) ^ ")"
       if (xlen == 32 | xlen == 64)

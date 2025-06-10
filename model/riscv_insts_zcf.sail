@@ -20,7 +20,7 @@ function clause execute (C_FLWSP(imm, rd)) = {
 }
 
 mapping clause assembly = C_FLWSP(imm, rd)
-  <-> "c.flwsp" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_6(imm)
+  <-> "c.flwsp" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_6(imm) ^ "(" ^ reg_name(Regidx(0b00010)) ^ ")"
   when xlen == 32
 
 /* ****************************************************************** */
@@ -36,7 +36,7 @@ function clause execute (C_FSWSP(uimm, rs2)) = {
 }
 
 mapping clause assembly = C_FSWSP(uimm, rs2)
-  <-> "c.fswsp" ^ spc() ^ freg_name(rs2) ^ sep() ^ hex_bits_6(uimm)
+  <-> "c.fswsp" ^ spc() ^ freg_name(rs2) ^ sep() ^ hex_bits_6(uimm) ^ "(" ^ reg_name(Regidx(0b00010)) ^ ")"
   when xlen == 32
 
 /* ****************************************************************** */
@@ -54,7 +54,7 @@ function clause execute (C_FLW(uimm, rsc, rdc)) = {
 }
 
 mapping clause assembly = C_FLW(uimm, rsc, rdc)
-  <-> "c.flw" ^ spc() ^ creg_name(rdc) ^ sep() ^ creg_name(rsc) ^ sep() ^ hex_bits_7(uimm @ 0b00)
+  <-> "c.flw" ^ spc() ^ creg_name(rdc) ^ sep() ^ hex_bits_7(uimm @ 0b00) ^ "(" ^ creg_name(rsc) ^ ")"
   when xlen == 32
 
 /* ****************************************************************** */
@@ -72,5 +72,5 @@ function clause execute (C_FSW(uimm, rsc1, rsc2)) = {
 }
 
 mapping clause assembly = C_FSW(uimm, rsc1, rsc2)
-  <-> "c.fsw" ^ spc() ^ creg_name(rsc1) ^ sep() ^ creg_name(rsc2) ^ sep() ^ hex_bits_7(uimm @ 0b00)
+  <-> "c.fsw" ^ spc() ^ creg_name(rsc1) ^ sep() ^ hex_bits_7(uimm @ 0b00) ^ "(" ^ creg_name(rsc2) ^ ")"
   when xlen == 32
