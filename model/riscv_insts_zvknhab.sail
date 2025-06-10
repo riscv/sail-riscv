@@ -83,7 +83,7 @@ mapping vsha2_mnemonic : zvk_vsha2_funct6 <-> string = {
 }
 
 mapping clause assembly = ZVKSHA2TYPE(funct6, vs2, vs1, vd)
-  <-> vsha2c_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
+  <-> vsha2_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
 
 function clause execute (ZVKSHA2TYPE(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
