@@ -167,6 +167,7 @@ function generate_isa_string(fmt : ISA_Format) -> string = {
   ^ ext_wrap(Ext_Zvkned, fmt)
   ^ ext_wrap(Ext_Zvknha, fmt)
   ^ ext_wrap(Ext_Zvknhb, fmt)
+  ^ ext_wrap(Ext_Zvksed, fmt)
   ^ ext_wrap(Ext_Zvksh, fmt)
   ^ ext_wrap(Ext_Zvkt, fmt);
 
