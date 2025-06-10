@@ -23,7 +23,7 @@ function clause execute (VSM4K_VI(vs2, uimm, vd)) = {
 
   let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
-  let rnd = unsigned(uimm[2..0]);
+  let rnd : bits(5) = zero_extend(uimm[2..0]);
 
   let eg_len   = (unsigned(vl) / 4);
   let eg_start = (unsigned(vstart) / 4);
@@ -34,19 +34,19 @@ function clause execute (VSM4K_VI(vs2, uimm, vd)) = {
     let rk_in  : vector(4, bits(32)) = get_velem_quad_vec(vs2_val, i);
     var rk_out : vector(4, bits(32)) = vector_init(zeros());
 
-    var B = rk_in[1] ^ rk_in[2] ^ rk_in[3] ^ zvk_sm4_sbox(4 * rnd);
+    var B = rk_in[1] ^ rk_in[2] ^ rk_in[3] ^ zvk_sm4_sbox(rnd << 2);
     var S = zvk_sm4_subword(B);
     rk_out[0] = zvk_round_key(rk_in[0], S);
 
-    B = rk_in[2]  ^ rk_in[3]  ^ rk_out[0] ^ zvk_sm4_sbox(4 * rnd + 1);
+    B = rk_in[2]  ^ rk_in[3]  ^ rk_out[0] ^ zvk_sm4_sbox(rnd << 2 + 1);
     S = zvk_sm4_subword(B);
     rk_out[1] = zvk_round_key(rk_in[1], S);
 
-    B = rk_in[3]  ^ rk_out[0] ^ rk_out[1] ^ zvk_sm4_sbox(4 * rnd + 2);
+    B = rk_in[3]  ^ rk_out[0] ^ rk_out[1] ^ zvk_sm4_sbox(rnd << 2 + 2);
     S = zvk_sm4_subword(B);
     rk_out[2] = zvk_round_key(rk_in[2], S);
 
-    B = rk_out[0] ^ rk_out[1] ^ rk_out[2] ^ zvk_sm4_sbox(4 * rnd + 3);
+    B = rk_out[0] ^ rk_out[1] ^ rk_out[2] ^ zvk_sm4_sbox(rnd << 2 + 3);
     S = zvk_sm4_subword(B);
     rk_out[3] = zvk_round_key(rk_in[3], S);
 
