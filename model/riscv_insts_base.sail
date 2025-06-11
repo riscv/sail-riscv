@@ -272,7 +272,7 @@ mapping clause assembly = RTYPE(rs2, rs1, rd, op)
   <-> rtype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
-union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width, bool, bool)
+union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width)
 
 /* unsigned loads are only present for widths strictly less than xlen,
    signed loads also present for widths equal to xlen */
@@ -282,18 +282,18 @@ function valid_load_encdec(width : word_width, is_unsigned : bool) -> bool =
 val extend_value : forall 'n, 0 < 'n <= xlen. (bool, bits('n)) -> xlenbits
 function extend_value(is_unsigned, value) = if is_unsigned then zero_extend(value) else sign_extend(value)
 
-mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, width, false, false)
+mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, width)
   <-> imm @ encdec_reg(rs1) @ bool_bits(is_unsigned) @ size_enc(width) @ encdec_reg(rd) @ 0b0000011
   when valid_load_encdec(width, is_unsigned)
 
-function clause execute (LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
+function clause execute (LOAD(imm, rs1, rd, is_unsigned, width)) = {
   let offset : xlenbits = sign_extend(imm);
   let width_bytes = size_bytes(width);
 
   // This is checked during decoding.
   assert(width_bytes <= xlen_bytes);
 
-  match vmem_read(rs1, offset, width_bytes, Read(Data), aq, rl, false) {
+  match vmem_read(rs1, offset, width_bytes, Read(Data), false, false, false) {
     Ok(data) => {
       X(rd) = extend_value(is_unsigned, data);
       RETIRE_SUCCESS
@@ -302,29 +302,22 @@ function clause execute (LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   }
 }
 
-mapping maybe_aqrl : (bool, bool) <-> string = {
-  (true, true)   <-> ".aqrl",
-  (true, false)  <-> ".aq",
-  (false, true)  <-> ".rl",
-  (false, false) <-> "",
-}
-
 mapping maybe_u : bool <-> string = {
   true  <-> "u",
   false <-> ""
 }
 
-mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)
-  <-> "l" ^ size_mnemonic(width) ^ maybe_u(is_unsigned) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
+mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, width)
+  <-> "l" ^ size_mnemonic(width) ^ maybe_u(is_unsigned) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ****************************************************************** */
-union clause ast = STORE : (bits(12), regidx, regidx, word_width, bool, bool)
+union clause ast = STORE : (bits(12), regidx, regidx, word_width)
 
-mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, width, false, false)
+mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, width)
   <-> imm7 : bits(7) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(width) @ imm5 : bits(5) @ 0b0100011
   when size_bytes(width) <= xlen_bytes
 
-function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
+function clause execute (STORE(imm, rs2, rs1, width)) = {
   let offset : xlenbits = sign_extend(imm);
   let width_bytes = size_bytes(width);
 
@@ -332,14 +325,14 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
   assert(width_bytes <= xlen_bytes);
 
   let data = X(rs2)[width_bytes * 8 - 1 .. 0];
-  match vmem_write(rs1, offset, width_bytes, data, Write(Data), aq, rl, false) {
+  match vmem_write(rs1, offset, width_bytes, data, Write(Data), false, false, false) {
     Ok(_) => RETIRE_SUCCESS,
     Err(e) => e,
   }
 }
 
-mapping clause assembly = STORE(imm, rs2, rs1, width, aq, rl)
-  <-> "s" ^ size_mnemonic(width) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_signed_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
+mapping clause assembly = STORE(imm, rs2, rs1, width)
+  <-> "s" ^ size_mnemonic(width) ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_signed_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 /* ****************************************************************** */
 union clause ast = ADDIW : (bits(12), regidx, regidx)

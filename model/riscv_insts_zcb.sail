@@ -21,7 +21,7 @@ function clause execute C_LBU(uimm, rdc, rsc1) = {
   let imm : bits(12) = zero_extend(uimm);
   let rd = creg2reg_idx(rdc);
   let rs1 = creg2reg_idx(rsc1);
-  execute(LOAD(imm, rs1, rd, true, BYTE, false, false))
+  execute(LOAD(imm, rs1, rd, true, BYTE))
 }
 
 /* ****************************************************************** */
@@ -39,7 +39,7 @@ function clause execute C_LHU(uimm, rdc, rsc1) = {
   let imm : bits(12) = zero_extend(uimm);
   let rd = creg2reg_idx(rdc);
   let rs1 = creg2reg_idx(rsc1);
-  execute(LOAD(imm, rs1, rd, true, HALF, false, false))
+  execute(LOAD(imm, rs1, rd, true, HALF))
 }
 
 /* ****************************************************************** */
@@ -57,7 +57,7 @@ function clause execute C_LH(uimm, rdc, rsc1) = {
   let imm : bits(12) = zero_extend(uimm);
   let rd = creg2reg_idx(rdc);
   let rs1 = creg2reg_idx(rsc1);
-  execute(LOAD(imm, rs1, rd, false, HALF, false, false))
+  execute(LOAD(imm, rs1, rd, false, HALF))
 }
 
 /* ****************************************************************** */
@@ -75,7 +75,7 @@ function clause execute C_SB(uimm, rsc1, rsc2) = {
   let imm : bits(12) = zero_extend(uimm);
   let rs1 = creg2reg_idx(rsc1);
   let rs2 = creg2reg_idx(rsc2);
-  execute(STORE(imm, rs2, rs1, BYTE, false, false))
+  execute(STORE(imm, rs2, rs1, BYTE))
 }
 
 /* ****************************************************************** */
@@ -93,7 +93,7 @@ function clause execute C_SH(uimm, rsc1, rsc2) = {
   let imm : bits(12) = zero_extend(uimm);
   let rs1 = creg2reg_idx(rsc1);
   let rs2 = creg2reg_idx(rsc2);
-  execute(STORE(imm, rs2, rs1, HALF, false, false))
+  execute(STORE(imm, rs2, rs1, HALF))
 }
 
 /* ****************************************************************** */

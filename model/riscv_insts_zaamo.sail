@@ -106,5 +106,12 @@ mapping amo_mnemonic : amoop <-> string = {
   AMOMAXU <-> "amomaxu"
 }
 
+mapping maybe_aqrl : (bool, bool) <-> string = {
+  (true, true)   <-> ".aqrl",
+  (true, false)  <-> ".aq",
+  (false, true)  <-> ".rl",
+  (false, false) <-> "",
+}
+
 mapping clause assembly = AMO(op, aq, rl, rs2, rs1, width, rd)
   <-> amo_mnemonic(op) ^ "." ^ size_mnemonic(width) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
