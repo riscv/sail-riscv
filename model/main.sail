@@ -28,7 +28,7 @@ function main() : unit -> unit = {
   print_bits("PC = ", PC);
 
   try {
-    init_model();
+    init_model("");
     sail_end_cycle();
     loop()
   } catch {
