@@ -120,7 +120,7 @@ For booting operating system images, see the information under the
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
 - Svbare extension for Bare mode virtual-memory translation
 - Physical Memory Protection (PMP)
-- Ssnpm, Smnpm and Smmpm extensions for pointer masking, v1.0
+- Ssnpm, Smmpm and Smnpm extensions for pointer masking, v1.0
 
 <!-- Uncomment the following section when unratified extensions are added
 The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:

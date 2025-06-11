@@ -78,7 +78,7 @@ function process_clean_inval(rs1, cbop) = {
   match ext_data_get_addr(rs1, negative_offset, Read(Data), cache_block_size) {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
-      let vaddr : virtaddr = transform_effective_address(vaddr, Read(Data));
+      let vaddr = transform_effective_address(vaddr, Read(Data));
       let res : option(ExceptionType) = match translateAddr(vaddr, Read(Data)) {
         Ok(paddr, _) => {
           // "A cache-block management instruction is permitted to access the

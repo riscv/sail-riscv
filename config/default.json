@@ -215,8 +215,10 @@
     "Sscofpmf": {
       "supported": true
     },
-    "Smcntrpmf": {
-      "supported": true
+    "Ssnpm": {
+      "supported": false,
+      "supported_xlen_57": true,
+      "supported_xlen_48": true
     },
     "Sstc": {
       "supported": true
@@ -240,17 +242,15 @@
     "Sv57": {
       "supported": true
     },
-    "Ssnpm": {
+    "Smcntrpmf": {
+      "supported": true
+    },
+    "Smmpm": {
       "supported": false,
       "supported_xlen_57": true,
       "supported_xlen_48": true
     },
     "Smnpm": {
-      "supported": false,
-      "supported_xlen_57": true,
-      "supported_xlen_48": true
-    },
-    "Smmpm": {
       "supported": false,
       "supported_xlen_57": true,
       "supported_xlen_48": true
