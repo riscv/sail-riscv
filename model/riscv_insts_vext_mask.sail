@@ -83,7 +83,7 @@ mapping mmtype_mnemonic : mmfunct6 <-> string = {
 mapping clause assembly = MMTYPE(funct6, vs2, vs1, vd)
   <-> mmtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
 
-/* ************************* OPMVV (vpopc in VWXUNARY0) ************************** */
+/* ************************* OPMVV (vcpop in VWXUNARY0) ************************** */
 union clause ast = VCPOP_M : (bits(1), vregidx, regidx)
 
 mapping clause encdec = VCPOP_M(vm, vs2, rd)
@@ -119,7 +119,7 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
 }
 
 mapping clause assembly = VCPOP_M(vm, vs2, rd)
-  <-> "vpopc.m" ^ spc() ^ reg_name(rd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
+  <-> "vcpop.m" ^ spc() ^ reg_name(rd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************* OPMVV (vfirst in VWXUNARY0) ************************* */
 union clause ast = VFIRST_M : (bits(1), vregidx, regidx)
