@@ -418,7 +418,7 @@ function clause execute (C_LWSP(uimm, rd)) = {
 }
 
 mapping clause assembly = C_LWSP(uimm, rd)
-  <-> "c.lwsp" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_6(uimm) ^ "(" ^ reg_name(Regidx(0b00010)) ^ ")"
+  <-> "c.lwsp" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_6(uimm) ^ "(" ^ reg_name_func(sp) ^ ")"
   when rd != zreg
 
 /* ****************************************************************** */
@@ -434,7 +434,7 @@ function clause execute (C_LDSP(uimm, rd)) = {
 }
 
 mapping clause assembly = C_LDSP(uimm, rd)
-  <-> "c.ldsp" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_6(uimm) ^ "(" ^ reg_name(Regidx(0b00010)) ^ ")"
+  <-> "c.ldsp" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_6(uimm) ^ "(" ^ reg_name_func(sp) ^ ")"
   when rd != zreg & xlen == 64
 
 /* ****************************************************************** */
@@ -450,7 +450,7 @@ function clause execute (C_SWSP(uimm, rs2)) = {
 }
 
 mapping clause assembly = C_SWSP(uimm, rs2)
-  <-> "c.swsp" ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_6(uimm) ^ "(" ^ reg_name(Regidx(0b00010)) ^ ")"
+  <-> "c.swsp" ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_6(uimm) ^ "(" ^ reg_name_func(sp) ^ ")"
 
 /* ****************************************************************** */
 union clause ast = C_SDSP : (bits(6), regidx)
@@ -465,7 +465,7 @@ function clause execute (C_SDSP(uimm, rs2)) = {
 }
 
 mapping clause assembly = C_SDSP(uimm, rs2)
-  <-> "c.sdsp" ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_6(uimm) ^ "(" ^ reg_name(Regidx(0b00010)) ^ ")"
+  <-> "c.sdsp" ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_6(uimm) ^ "(" ^ reg_name_func(sp) ^ ")"
   when xlen == 64
 
 /* ****************************************************************** */

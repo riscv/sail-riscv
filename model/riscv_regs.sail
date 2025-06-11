@@ -88,6 +88,8 @@ mapping reg_name : regidx <-> string = {
   Regidx(i) if not(get_config_use_abi_names()) <-> reg_arch_name_raw(i),
 }
 
+function reg_name_func(reg: regidx) -> string = reg_name(reg)
+
 mapping creg_name_raw : bits(3) <-> string = {
   0b000 <-> "s0",
   0b001 <-> "s1",
