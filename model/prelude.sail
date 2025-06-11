@@ -263,3 +263,15 @@ val sys_enable_experimental_extensions = pure "sys_enable_experimental_extension
 // bit vectors that aren't a multiple of 4 bits in binary).
 function hex_bits_str forall 'n . (x : bits('n)) -> string =
   bits_str(zero_extend((3 - (('n + 3) % 4)) + 'n, x))
+
+val concat_strs : forall 'n. vector('n, string) -> string
+
+function concat_strs(strs) = {
+  var result = "";
+
+  foreach (n from 0 to (length(strs) - 1)) {
+    result = concat_str(strs[n], result)
+  };
+
+  result
+}
