@@ -131,7 +131,7 @@ function get_pmlen(typ : AccessType(ext_access_type), eff_privilege : Privilege)
       PMM_Disabled => 0,
       PMM_XLEN_57  => xlen - 57,
       PMM_XLEN_48  => xlen - 48,
-      PMM_Reserved => { assert(false, "Invalid pointer masking mode"); 0}
+      PMM_Reserved => { internal_error(__FILE__, __LINE__, "Invalid pointer masking mode"); 0}
     }
   } else {
     /* PMM not active */
