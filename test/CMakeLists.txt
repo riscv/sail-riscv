@@ -1,13 +1,9 @@
-# This option is required for the GitHub CI to prevent parallel
-# jobs from building both riscv-tests and riscv-vector-tests.
-# For example, if the `run-riscv-tests` job runs and DOWNLOAD_LOCALLY
-# is not set to FALSE, it would automatically download and run the
-# vector tests as well, because they are missing locally.
-option(DOWNLOAD_LOCALLY "Download test files locally if needed" ON)
+option(RUN_RISCV_VECTOR_TESTS "Run the riscv-vector-tests" OFF)
+option(RUN_RISCV_TESTS "Run the riscv-tests" ON)
 
 # Function to download and extract test files
 function(download_riscv_tests DOWNLOAD_PATH ARCHIVE_NAME DOWNLOAD_URL)
-    if(NOT EXISTS "${DOWNLOAD_PATH}/${ARCHIVE_NAME}" AND DOWNLOAD_LOCALLY)
+    if(NOT EXISTS "${DOWNLOAD_PATH}/${ARCHIVE_NAME}")
         message(STATUS "${ARCHIVE_NAME} directory not found, downloading...")
 
         # Download the tar.gz file
@@ -43,29 +39,26 @@ function(download_riscv_tests DOWNLOAD_PATH ARCHIVE_NAME DOWNLOAD_URL)
     endif()
 endfunction()
 
-find_program(JQ_EXECUTABLE jq REQUIRED)
+# Extracting vlen_exp and elen_exp
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../config/default.json" json)
 
-execute_process(
-    COMMAND ${JQ_EXECUTABLE} -r .extensions.V.vlen_exp "${CMAKE_CURRENT_SOURCE_DIR}/../config/default.json"
-    OUTPUT_VARIABLE vlen_exp
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+string(REGEX MATCH "\"vlen_exp\"[ \t]*:[ \t]*([0-9]+)" _ "${json}")
+set(vlen_exp "${CMAKE_MATCH_1}")
 
-execute_process(
-    COMMAND ${JQ_EXECUTABLE} -r .extensions.V.elen_exp "${CMAKE_CURRENT_SOURCE_DIR}/../config/default.json"
-    OUTPUT_VARIABLE elen_exp
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+string(REGEX MATCH "\"elen_exp\"[ \t]*:[ \t]*([0-9]+)" _ "${json}")
+set(elen_exp "${CMAKE_MATCH_1}")
 
-math(EXPR vlen "1 << ${vlen_exp}")  # 2^vlen_exp
-math(EXPR elen "1 << ${elen_exp}")  # 2^elen_exp
+# Should I add more error handling in case elen_exp or vlen_exp are missing (Sail should catch it anyway)?
+
+math(EXPR vlen "1 << ${vlen_exp}")
+math(EXPR elen "1 << ${elen_exp}")
 
 message(STATUS "Config: VLEN=${vlen}, ELEN=${elen}")
 
 # Download riscv-vector-tests
 # Only attempt to download vector test files if both vlen and elen are within valid ranges
 if((vlen EQUAL 128 OR vlen EQUAL 256 OR vlen EQUAL 512) AND
-   (elen EQUAL 32 OR elen EQUAL 64))
+   (elen EQUAL 32 OR elen EQUAL 64) AND RUN_RISCV_VECTOR_TESTS)
     download_riscv_tests(
         "${CMAKE_CURRENT_SOURCE_DIR}"
         "riscv-vector-tests-v${vlen}x${elen}"
@@ -74,11 +67,13 @@ if((vlen EQUAL 128 OR vlen EQUAL 256 OR vlen EQUAL 512) AND
 endif()
 
 # Download riscv-tests
-download_riscv_tests(
-    "${CMAKE_CURRENT_SOURCE_DIR}"
-    "riscv-tests"
-    "https://github.com/nadime15/riscv-test-generator/releases/latest/download/riscv-tests.tar.gz"
-)
+if(RUN_RISCV_TESTS)
+    download_riscv_tests(
+        "${CMAKE_CURRENT_SOURCE_DIR}"
+        "riscv-tests"
+        "https://github.com/nadime15/riscv-test-generator/releases/latest/download/riscv-tests.tar.gz"
+    )
+endif()
 
 file(GLOB elfs_rv32d CONFIGURE_DEPENDS LIST_DIRECTORIES false
     "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests/rv32*"
