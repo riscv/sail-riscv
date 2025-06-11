@@ -81,108 +81,15 @@ function ext_wrap(ext : extension, fmt : ISA_Format) -> string = {
 }
 
 function generate_isa_string(fmt : ISA_Format) -> string = {
-  let prefix : string = match fmt {
+  var isa_string : string = match fmt {
     Canonical_Lowercase => "rv" ^ dec_str(xlen) ^ "i",
     DeviceTree_ISA_Extensions => "\"i\"",
   };
 
-  let extensions = [
-  // First append the single letter extensions.
-    Ext_M,
-    Ext_A,
-    Ext_F,
-    Ext_D,
-    // Ext_G,
-    // Ext_Q,
-    Ext_C,
-    Ext_B,
-    // Ext_P,
-    Ext_V,
-    //Ext_H,
-  // S and U are not valid extensions in the device-tree, whereas H is.
+  // The default Order dec means we start from the end
+  foreach (i from (length(extensions_ordered_for_isa_string) - 1) downto 0)
+    isa_string = isa_string ^ ext_wrap(extensions_ordered_for_isa_string[i], fmt);
 
-  // Append the Z extensions, ordered by category and then alphabetically.
-  // Zi
-    Ext_Zicbom,
-    Ext_Zicboz,
-    Ext_Zicntr,
-    Ext_Zicond,
-    Ext_Zicsr,
-    Ext_Zifencei,
-    Ext_Zihpm,
-    Ext_Zimop,
-
-  // Zm
-    Ext_Zmmul,
-
-  // Za
-    Ext_Zaamo,
-    Ext_Zabha,
-    Ext_Zalrsc,
-    Ext_Zawrs,
-
-  // Zf, Zd, and Zq
-    Ext_Zfa,
-    Ext_Zfh,
-    Ext_Zfhmin,
-    Ext_Zfinx,
-    Ext_Zdinx,
-    Ext_Zhinx,
-    Ext_Zhinxmin,
-
-  // Zc
-    Ext_Zca,
-    Ext_Zcb,
-    Ext_Zcd,
-    Ext_Zcf,
-    Ext_Zcmop,
-
-  // Zb
-    Ext_Zba,
-    Ext_Zbb,
-    Ext_Zbc,
-    Ext_Zbkb,
-    Ext_Zbkc,
-    Ext_Zbkx,
-    Ext_Zbs,
-
-  // Zk
-    Ext_Zknd,
-    Ext_Zkne,
-    Ext_Zknh,
-    Ext_Zkr,
-    Ext_Zksed,
-    Ext_Zksh,
-
-  // Zv
-    Ext_Zvbb,
-    Ext_Zvbc,
-    Ext_Zvkb,
-    Ext_Zvkg,
-    Ext_Zvkned,
-    Ext_Zvknha,
-    Ext_Zvknhb,
-    Ext_Zvksh,
-
-  // Append the Supervisor extensions, ordered alphabetically.
-    Ext_Sscofpmf,
-    Ext_Sstc,
-    // Ext_svade
-    // Ext_svadu
-    Ext_Svinval,
-    Ext_Svnapot,
-    Ext_Svpbmt,
-
-  // Append the Hypervisor extensions, ordered alphabetically.
-
-  // Append the Machine mode extensions, ordered alphabetically.
-    Ext_Smcntrpmf,
-  ];
-
-  var isa_string : string = prefix;
-  foreach (i from (length(extensions) - 1) downto 0) {
-    isa_string = isa_string ^ ext_wrap(extensions[i], fmt);
-  };
   isa_string
 }
 
