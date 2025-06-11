@@ -91,8 +91,8 @@ mapping reg_name : regidx <-> string = {
 // Special mapping for the sp register for use in assembly for sp-relative
 // instructions where the argument *must* be `sp` (or `x2`).
 mapping sp_reg_name : unit <-> string = {
-  () if get_config_use_abi_names() <-> "sp" ,
-  () if not(get_config_use_abi_names()) <-> "x2" ,
+  () if get_config_use_abi_names() <-> "sp",
+  () if not(get_config_use_abi_names()) <-> "x2",
 }
 
 mapping creg_name_raw : bits(3) <-> string = {
