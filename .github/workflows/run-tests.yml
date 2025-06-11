@@ -28,22 +28,6 @@ jobs:
         with:
           cmake-version: "${{ env.CMAKE_VERSION }}"
 
-      - name: Download latest release
-        uses: robinraju/release-downloader@v1.12
-        with:
-          repository: "nadime15/riscv-test-generator"
-          latest: true
-          fileName: riscv-vector-tests-v${{ matrix.VLEN }}x${{ matrix.XLEN }}.tar.gz
-          out-file-path: "download"
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract tarball contents to test/
-        run: |
-          f=$(echo download/*.tar.gz)
-          dirname=$(basename "$f" .tar.gz)
-          mkdir -p "test/$dirname"
-          tar -xzf "$f" -C "test/$dirname"
-
       - name: Set VLEN and ELEN
         run: |
           echo "VLEN=$(echo ${{ matrix.VLEN }} | awk '{print int(log($1)/log(2))}')" >> $GITHUB_ENV
@@ -60,7 +44,7 @@ jobs:
           sudo mkdir -p /usr/local
           curl --location https://github.com/rems-project/sail/releases/download/$SAIL_VERSION-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
 
-          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDOWNLOAD_LOCALLY=FALSE
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DRUN_RISCV_TESTS=FALSE -DRUN_RISCV_VECTOR_TESTS=TRUE
           ninja -C build all riscv_sim_rv32f riscv_sim_rv64f generated_smt_rv64f generated_docs_rv64d
           ctest --test-dir build --output-junit tests.xml --quiet
 
@@ -80,27 +64,11 @@ jobs:
         with:
           cmake-version: "${{ env.CMAKE_VERSION }}"
 
-      - name: Download latest release
-        uses: robinraju/release-downloader@v1.12
-        with:
-          repository: "nadime15/riscv-test-generator"
-          latest: true
-          fileName: riscv-tests.tar.gz
-          out-file-path: "download"
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract tarball contents to test/
-        run: |
-          f=$(echo download/*.tar.gz)
-          dirname=$(basename "$f" .tar.gz)
-          mkdir -p "test/$dirname"
-          tar -xzf "$f" -C "test/$dirname"
-
       - name: Install Sail (Linux)
         run: |
           sudo mkdir -p /usr/local
           curl --location https://github.com/rems-project/sail/releases/download/$SAIL_VERSION-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
 
-          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDOWNLOAD_LOCALLY=FALSE
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo
           ninja -C build all riscv_sim_rv32f riscv_sim_rv64f generated_smt_rv64f generated_docs_rv64d
           ctest --test-dir build --output-junit tests.xml --quiet
