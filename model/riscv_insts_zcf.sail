@@ -72,5 +72,5 @@ function clause execute (C_FSW(uimm, rsc1, rsc2)) = {
 }
 
 mapping clause assembly = C_FSW(uimm, rsc1, rsc2)
-  <-> "c.fsw" ^ spc() ^ creg_name(rsc1) ^ sep() ^ hex_bits_7(uimm @ 0b00) ^ "(" ^ creg_name(rsc2) ^ ")"
+  <-> "c.fsw" ^ spc() ^ creg_name(rsc2) ^ sep() ^ hex_bits_7(uimm @ 0b00) ^ "(" ^ creg_name(rsc1) ^ ")"
   when xlen == 32
