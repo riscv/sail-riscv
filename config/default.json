@@ -182,6 +182,9 @@
     "Zksh": {
       "supported": true
     },
+    "Zkt": {
+      "supported": true
+    },
     "Zhinx": {
       "supported": false
     },
@@ -210,6 +213,9 @@
       "supported": true
     },
     "Zvksh": {
+      "supported": true
+    },
+    "Zvkt": {
       "supported": true
     },
     "Sscofpmf": {

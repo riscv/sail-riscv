@@ -104,6 +104,7 @@ For booting operating system images, see the information under the
 - Zbkb, Zbkc, and Zbkx extensions for bit manipulation for cryptography, v1.0
 - Zkn (Zknd, Zkne, Zknh) and Zks (Zksed, Zksh) extensions for scalar cryptography, v1.0.1
 - Zkr extension for entropy source, v1.0
+- Zkt extension for data independent execution latency, v1.0 (no impact on model)
 - V extension for vector operations, v1.0
 - Zvbb extension for vector basic bit-manipulation, v1.0
 - Zvbc extension for vector carryless multiplication, v1.0
@@ -112,6 +113,7 @@ For booting operating system images, see the information under the
 - Zvkned extension for vector cryptography NIST Suite: Vector AES Block Cipher, v1.0
 - Zvknha and Zvknhb extensions for vector cryptography NIST Suite: Vector SHA-2 Secure Hash, v1.0
 - Zvksh extension for vector cryptography ShangMi Suite: SM3 Secure Hash, v1.0
+- Zvkt extension for vector data independent execution latency, v1.0 (no impact on model)
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0

@@ -225,6 +225,11 @@ function clause hartSupports(Ext_Zksed) = config extensions.Zksed.supported
 enum clause extension = Ext_Zksh
 mapping clause extensionName = Ext_Zksh <-> "zksh"
 function clause hartSupports(Ext_Zksh) = config extensions.Zksh.supported
+// Data Independent Execution Latency
+enum clause extension = Ext_Zkt
+mapping clause extensionName = Ext_Zkt <-> "zkt"
+function clause hartSupports(Ext_Zkt) = config extensions.Zkt.supported
+function clause currentlyEnabled(Ext_Zkt) = hartSupports(Ext_Zkt)
 
 // Floating-Point in Integer Registers (half precision)
 enum clause extension = Ext_Zhinx
@@ -267,6 +272,11 @@ function clause hartSupports(Ext_Zvknhb) = config extensions.Zvknhb.supported
 enum clause extension = Ext_Zvksh
 mapping clause extensionName = Ext_Zvksh <-> "zvksh"
 function clause hartSupports(Ext_Zvksh) = config extensions.Zvksh.supported
+// Vector Data Independent Execution Latency
+enum clause extension = Ext_Zvkt
+mapping clause extensionName = Ext_Zkt <-> "zvkt"
+function clause hartSupports(Ext_Zvkt) = config extensions.Zvkt.supported
+function clause currentlyEnabled(Ext_Zvkt) = hartSupports(Ext_Zvkt)
 
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
