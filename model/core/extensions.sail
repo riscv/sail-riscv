@@ -414,6 +414,10 @@ function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg)
 enum clause extension = Ext_Sscofpmf
 mapping clause extensionName = Ext_Sscofpmf <-> "sscofpmf"
 function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supported
+// Supervisor-Level pointer masking for next lower privilege mode
+enum clause extension = Ext_Ssnpm
+mapping clause extensionName = Ext_Ssnpm <-> "ssnpm"
+function clause hartSupports(Ext_Ssnpm) = config extensions.Ssnpm.supported
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 mapping clause extensionName = Ext_Sstc <-> "sstc"
@@ -423,14 +427,6 @@ function clause hartSupports(Ext_Sstc) = config extensions.Sstc.supported
 enum clause extension = Ext_Sstvecd
 mapping clause extensionName = Ext_Sstvecd <-> "sstvecd"
 function clause hartSupports(Ext_Sstvecd) = hartSupports(Ext_S)
-
-// Pointer Masking
-enum clause extension = Ext_Ssnpm
-function clause hartSupports(Ext_Ssnpm) = config extensions.Ssnpm.supported
-enum clause extension = Ext_Smnpm
-function clause hartSupports(Ext_Smnpm) = config extensions.Smnpm.supported
-enum clause extension = Ext_Smmpm
-function clause hartSupports(Ext_Smmpm) = config extensions.Smmpm.supported
 
 // Supervisor-Level Address Translation Modes
 enum clause extension = Ext_Svbare
@@ -470,6 +466,14 @@ function clause hartSupports(Ext_Svrsw60t59b) = config extensions.Svrsw60t59b.su
 enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
+// Machine-Level pointer masking for machine mode
+enum clause extension = Ext_Smmpm
+mapping clause extensionName = Ext_Smmpm <-> "smmpm"
+function clause hartSupports(Ext_Smmpm) = config extensions.Smmpm.supported
+// Machine-Level pointer masking for next lower privilege mode
+enum clause extension = Ext_Smnpm
+mapping clause extensionName = Ext_Smnpm <-> "smnpm"
+function clause hartSupports(Ext_Smnpm) = config extensions.Smnpm.supported
 
 let extensions_ordered_for_isa_string = [
   // Single letter extensions.

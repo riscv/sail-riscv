@@ -372,8 +372,10 @@
     "Sscofpmf": {
       "supported": true
     },
-    "Smcntrpmf": {
-      "supported": true
+    "Ssnpm": {
+      "supported": false,
+      "supported_xlen_57": true,
+      "supported_xlen_48": true
     },
     "Sstc": {
       "supported": true

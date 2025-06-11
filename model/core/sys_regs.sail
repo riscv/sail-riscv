@@ -301,14 +301,14 @@ function in32BitMode() -> bool = {
 // Pointer Masking
 
 function clause currentlyEnabled(Ext_Ssnpm) = hartSupports(Ext_Ssnpm) & currentlyEnabled(Ext_S) & (xlen != 32)
-function clause currentlyEnabled(Ext_Smnpm) = hartSupports(Ext_Smnpm) & (xlen != 32)
 function clause currentlyEnabled(Ext_Smmpm) = hartSupports(Ext_Smmpm) & (xlen != 32)
+function clause currentlyEnabled(Ext_Smnpm) = hartSupports(Ext_Smnpm) & (xlen != 32)
 
 enum PointerMaskingMode = {
-  PMM_Disabled,  // Pointer Masking Disabled
-  PMM_Reserved,  // Reserved Encoding for Pointer Masking
-  PMM_XLEN_57,  // Pointer Masking Enabled with PMM = 7
-  PMM_XLEN_48, // Pointer Masking Enabled with PMM = 16
+  PMM_Disabled,
+  PMM_Reserved,
+  PMM_XLEN_57,
+  PMM_XLEN_48,
 }
 
 mapping pmm_mode : PointerMaskingMode <-> bits(2) = {
@@ -318,34 +318,18 @@ mapping pmm_mode : PointerMaskingMode <-> bits(2) = {
   PMM_XLEN_48  <-> 0b11,
 }
 
-/* For Ssnpm extension (senvcfg[PMM]) */
-function is_valid_ssnpm_pmm(pmm : PointerMaskingMode) -> bool = {
-  match pmm {
-    PMM_Disabled => true,  /* Always supported */
-    PMM_Reserved => false, /* Never supported  */
-    PMM_XLEN_57  => config extensions.Ssnpm.supported_xlen_57,
-    PMM_XLEN_48  => config extensions.Ssnpm.supported_xlen_48
-  }
-}
-
-/* For Smnpm extension (menvcfg[PMM]) */
-function is_valid_smnpm_pmm(pmm: PointerMaskingMode) -> bool = {
-  match pmm {
-    PMM_Disabled => true,
-    PMM_Reserved => false,
-    PMM_XLEN_57  => config extensions.Smnpm.supported_xlen_57,
-    PMM_XLEN_48  => config extensions.Smnpm.supported_xlen_48
-  }
-}
-
-/* For Smmpm extension (mseccfg[PMM]) */
-function is_valid_smmpm_pmm(pmm : PointerMaskingMode) -> bool = {
-  match pmm {
-    PMM_Disabled => true,
-    PMM_Reserved => false,
-    PMM_XLEN_57  => config extensions.Smmpm.supported_xlen_57,
-    PMM_XLEN_48  => config extensions.Smmpm.supported_xlen_48
-  }
+function is_valid_pmm(ext : PM_Ext, pmm : PointerMaskingMode) -> bool = match (ext, pmm) {
+    (_, PMM_Disabled) => true,
+    (_, PMM_Reserved) => false,
+    /* SSNPM */
+    (PM_SSNPM, PMM_XLEN_57) => config extensions.Ssnpm.supported_xlen_57,
+    (PM_SSNPM, PMM_XLEN_48) => config extensions.Ssnpm.supported_xlen_48,
+    /* SMMPM */
+    (PM_SMMPM, PMM_XLEN_57) => config extensions.Smmpm.supported_xlen_57,
+    (PM_SMMPM, PMM_XLEN_48) => config extensions.Smmpm.supported_xlen_48,
+    /* SMNPM */
+    (PM_SMNPM, PMM_XLEN_57) => config extensions.Smnpm.supported_xlen_57,
+    (PM_SMNPM, PMM_XLEN_48) => config extensions.Smnpm.supported_xlen_48,
 }
 
 // envcfg Registers
@@ -443,10 +427,14 @@ function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   [o with
 <<<<<<< HEAD:model/core/sys_regs.sail
+<<<<<<< HEAD:model/core/sys_regs.sail
     PMM   = if currentlyEnabled(Ext_Smnpm) & xlen != 32 & is_valid_smnpm_pmm(v[PMM]) then v[PMM] else o[PMM],
 =======
     PMM   = if currentlyEnabled(Ext_Smnpm) & is_valid_smnpm_pmm(pmm_mode(v[PMM])) then v[PMM] else o[PMM],
 >>>>>>> e52f98b (Multiple minor changes:):model/riscv_sys_regs.sail
+=======
+    PMM   = if currentlyEnabled(Ext_Smnpm) & is_valid_pmm(PM_SMNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
+>>>>>>> f3343ed (Multiple adjustments:):model/riscv_sys_regs.sail
     CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE  = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
@@ -460,10 +448,14 @@ function legalize_senvcfg(o : SEnvcfg, v : bits(64)) -> SEnvcfg = {
   let v = Mk_SEnvcfg(v);
   [o with
 <<<<<<< HEAD:model/core/sys_regs.sail
+<<<<<<< HEAD:model/core/sys_regs.sail
     PMM   = if currentlyEnabled(Ext_Ssnpm) & xlen != 32 & is_valid_ssnpm_pmm(v[PMM]) then v[PMM] else o[PMM],
 =======
     PMM   = if currentlyEnabled(Ext_Ssnpm) & is_valid_ssnpm_pmm(pmm_mode(v[PMM])) then v[PMM] else o[PMM],
 >>>>>>> e52f98b (Multiple minor changes:):model/riscv_sys_regs.sail
+=======
+    PMM   = if currentlyEnabled(Ext_Ssnpm) & is_valid_pmm(PM_SSNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
+>>>>>>> f3343ed (Multiple adjustments:):model/riscv_sys_regs.sail
     CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE  = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
@@ -502,7 +494,7 @@ function legalize_mseccfg(o : MSeccfg, v : bits(64)) -> MSeccfg = {
   let v = Mk_MSeccfg(v);
 
   [o with
-    PMM = if currentlyEnabled(Ext_Smmpm) & is_valid_smmpm_pmm(pmm_mode(v[PMM])) then v[PMM] else o[PMM],
+    PMM = if currentlyEnabled(Ext_Smmpm) & is_valid_pmm(PM_SMMPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
   ];
 }
 
