@@ -167,7 +167,9 @@ function generate_isa_string(fmt : ISA_Format) -> string = {
   let s_exts = ""
   ^ ext_wrap(Ext_Sscofpmf, fmt)
   ^ ext_wrap(Ext_Ssnpm, fmt)
+  ^ ext_wrap(Ext_Sspm, fmt)
   ^ ext_wrap(Ext_Sstc, fmt)
+  ^ ext_wrap(Ext_Supm, fmt)
   // Handle svade and svadu here when ready.
   ^ ext_wrap(Ext_Svinval, fmt)
   ^ ext_wrap(Ext_Svnapot, fmt)
