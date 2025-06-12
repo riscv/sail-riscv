@@ -54,7 +54,7 @@ function clause execute (C_LW(uimm, rsc, rdc)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
   let rd = creg2reg_idx(rdc);
   let rs = creg2reg_idx(rsc);
-  execute(LOAD(imm, rs, rd, false, WORD, false, false))
+  execute(LOAD(imm, rs, rd, false, WORD))
 }
 
 mapping clause assembly = C_LW(uimm, rsc, rdc)
@@ -71,7 +71,7 @@ function clause execute (C_LD(uimm, rsc, rdc)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
   let rd = creg2reg_idx(rdc);
   let rs = creg2reg_idx(rsc);
-  execute(LOAD(imm, rs, rd, false, DOUBLE, false, false))
+  execute(LOAD(imm, rs, rd, false, DOUBLE))
 }
 
 mapping clause assembly = C_LD(uimm, rsc, rdc)
@@ -89,7 +89,7 @@ function clause execute (C_SW(uimm, rsc1, rsc2)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
   let rs1 = creg2reg_idx(rsc1);
   let rs2 = creg2reg_idx(rsc2);
-  execute(STORE(imm, rs2, rs1, WORD, false, false))
+  execute(STORE(imm, rs2, rs1, WORD))
 }
 
 mapping clause assembly = C_SW(uimm, rsc1, rsc2)
@@ -107,7 +107,7 @@ function clause execute (C_SD(uimm, rsc1, rsc2)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
   let rs1 = creg2reg_idx(rsc1);
   let rs2 = creg2reg_idx(rsc2);
-  execute(STORE(imm, rs2, rs1, DOUBLE, false, false))
+  execute(STORE(imm, rs2, rs1, DOUBLE))
 }
 
 mapping clause assembly = C_SD(uimm, rsc1, rsc2)
@@ -414,7 +414,7 @@ mapping clause encdec_compressed = C_LWSP(ui76 @ ui5 @ ui42, rd)
 
 function clause execute (C_LWSP(uimm, rd)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
-  execute(LOAD(imm, sp, rd, false, WORD, false, false))
+  execute(LOAD(imm, sp, rd, false, WORD))
 }
 
 mapping clause assembly = C_LWSP(uimm, rd)
@@ -430,7 +430,7 @@ mapping clause encdec_compressed = C_LDSP(ui86 @ ui5 @ ui43, rd)
 
 function clause execute (C_LDSP(uimm, rd)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
-  execute(LOAD(imm, sp, rd, false, DOUBLE, false, false))
+  execute(LOAD(imm, sp, rd, false, DOUBLE))
 }
 
 mapping clause assembly = C_LDSP(uimm, rd)
@@ -446,7 +446,7 @@ mapping clause encdec_compressed = C_SWSP(ui76 @ ui52, rs2)
 
 function clause execute (C_SWSP(uimm, rs2)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
-  execute(STORE(imm, rs2, sp, WORD, false, false))
+  execute(STORE(imm, rs2, sp, WORD))
 }
 
 mapping clause assembly = C_SWSP(uimm, rs2)
@@ -461,7 +461,7 @@ mapping clause encdec_compressed = C_SDSP(ui86 @ ui53, rs2)
 
 function clause execute (C_SDSP(uimm, rs2)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
-  execute(STORE(imm, rs2, sp, DOUBLE, false, false))
+  execute(STORE(imm, rs2, sp, DOUBLE))
 }
 
 mapping clause assembly = C_SDSP(uimm, rs2)
