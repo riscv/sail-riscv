@@ -267,6 +267,9 @@ function clause hartSupports(Ext_Zvknhb) = config extensions.Zvknhb.supported
 enum clause extension = Ext_Zvksh
 mapping clause extensionName = Ext_Zvksh <-> "zvksh"
 function clause hartSupports(Ext_Zvksh) = config extensions.Zvksh.supported
+// Vector-Scalar GCM/GMAC
+enum clause extension = Ext_Zvkgs
+function clause hartSupports(Ext_Zvkgs) = config extensions.Zvkgs.supported
 
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
