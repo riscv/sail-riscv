@@ -10,17 +10,17 @@ function clause currentlyEnabled(Ext_Zcb) = hartSupports(Ext_Zcb) & currentlyEna
 
 union clause ast = C_LBU : (bits(2), cregidx, cregidx)
 
-mapping clause encdec_compressed = C_LBU(uimm1 @ uimm0, rdc, rs1c)
-  <-> 0b100 @ 0b000 @ encdec_creg(rs1c) @ uimm0 : bits(1) @ uimm1 : bits(1) @ encdec_creg(rdc) @ 0b00
+mapping clause encdec_compressed = C_LBU(uimm1 @ uimm0, rdc, rsc1)
+  <-> 0b100 @ 0b000 @ encdec_creg(rsc1) @ uimm0 : bits(1) @ uimm1 : bits(1) @ encdec_creg(rdc) @ 0b00
   when currentlyEnabled(Ext_Zcb)
 
-mapping clause assembly = C_LBU(uimm, rdc, rs1c) <->
-  "c.lbu" ^ spc() ^ creg_name(rdc) ^ sep() ^ hex_bits_2(uimm) ^ opt_spc() ^ "(" ^ opt_spc() ^ creg_name(rs1c) ^ opt_spc() ^ ")"
+mapping clause assembly = C_LBU(uimm, rdc, rsc1) <->
+  "c.lbu" ^ spc() ^ creg_name(rdc) ^ sep() ^ hex_bits_2(uimm) ^ opt_spc() ^ "(" ^ opt_spc() ^ creg_name(rsc1) ^ opt_spc() ^ ")"
 
-function clause execute C_LBU(uimm, rdc, rs1c) = {
+function clause execute C_LBU(uimm, rdc, rsc1) = {
   let imm : bits(12) = zero_extend(uimm);
   let rd = creg2reg_idx(rdc);
-  let rs1 = creg2reg_idx(rs1c);
+  let rs1 = creg2reg_idx(rsc1);
   execute(LOAD(imm, rs1, rd, true, BYTE, false, false))
 }
 
@@ -28,17 +28,17 @@ function clause execute C_LBU(uimm, rdc, rs1c) = {
 
 union clause ast = C_LHU : (bits(2), cregidx, cregidx)
 
-mapping clause encdec_compressed = C_LHU(uimm1 @ 0b0, rdc, rs1c)
-  <-> 0b100 @ 0b001 @ encdec_creg(rs1c) @ 0b0 @ uimm1 : bits(1) @ encdec_creg(rdc) @ 0b00
+mapping clause encdec_compressed = C_LHU(uimm1 @ 0b0, rdc, rsc1)
+  <-> 0b100 @ 0b001 @ encdec_creg(rsc1) @ 0b0 @ uimm1 : bits(1) @ encdec_creg(rdc) @ 0b00
   when currentlyEnabled(Ext_Zcb)
 
-mapping clause assembly = C_LHU(uimm, rdc, rs1c) <->
-  "c.lhu" ^ spc() ^ creg_name(rdc) ^ sep() ^ hex_bits_2(uimm) ^ opt_spc() ^ "(" ^ opt_spc() ^ creg_name(rs1c) ^ opt_spc() ^ ")"
+mapping clause assembly = C_LHU(uimm, rdc, rsc1) <->
+  "c.lhu" ^ spc() ^ creg_name(rdc) ^ sep() ^ hex_bits_2(uimm) ^ opt_spc() ^ "(" ^ opt_spc() ^ creg_name(rsc1) ^ opt_spc() ^ ")"
 
-function clause execute C_LHU(uimm, rdc, rs1c) = {
+function clause execute C_LHU(uimm, rdc, rsc1) = {
   let imm : bits(12) = zero_extend(uimm);
   let rd = creg2reg_idx(rdc);
-  let rs1 = creg2reg_idx(rs1c);
+  let rs1 = creg2reg_idx(rsc1);
   execute(LOAD(imm, rs1, rd, true, HALF, false, false))
 }
 
@@ -46,17 +46,17 @@ function clause execute C_LHU(uimm, rdc, rs1c) = {
 
 union clause ast = C_LH : (bits(2), cregidx, cregidx)
 
-mapping clause encdec_compressed = C_LH(uimm1 @ 0b0, rdc, rs1c)
-  <-> 0b100 @ 0b001 @ encdec_creg(rs1c) @ 0b1 @ uimm1 : bits(1) @ encdec_creg(rdc) @ 0b00
+mapping clause encdec_compressed = C_LH(uimm1 @ 0b0, rdc, rsc1)
+  <-> 0b100 @ 0b001 @ encdec_creg(rsc1) @ 0b1 @ uimm1 : bits(1) @ encdec_creg(rdc) @ 0b00
   when currentlyEnabled(Ext_Zcb)
 
-mapping clause assembly = C_LH(uimm, rdc, rs1c) <->
-  "c.lh" ^ spc() ^ creg_name(rdc) ^ sep() ^ hex_bits_2(uimm) ^ opt_spc() ^ "(" ^ opt_spc() ^ creg_name(rs1c) ^ opt_spc() ^ ")"
+mapping clause assembly = C_LH(uimm, rdc, rsc1) <->
+  "c.lh" ^ spc() ^ creg_name(rdc) ^ sep() ^ hex_bits_2(uimm) ^ opt_spc() ^ "(" ^ opt_spc() ^ creg_name(rsc1) ^ opt_spc() ^ ")"
 
-function clause execute C_LH(uimm, rdc, rs1c) = {
+function clause execute C_LH(uimm, rdc, rsc1) = {
   let imm : bits(12) = zero_extend(uimm);
   let rd = creg2reg_idx(rdc);
-  let rs1 = creg2reg_idx(rs1c);
+  let rs1 = creg2reg_idx(rsc1);
   execute(LOAD(imm, rs1, rd, false, HALF, false, false))
 }
 
@@ -64,17 +64,17 @@ function clause execute C_LH(uimm, rdc, rs1c) = {
 
 union clause ast = C_SB : (bits(2), cregidx, cregidx)
 
-mapping clause encdec_compressed = C_SB(uimm1 @ uimm0, rs1c, rs2c)
-  <-> 0b100 @ 0b010 @ encdec_creg(rs1c) @ uimm0 : bits(1) @ uimm1 : bits(1) @ encdec_creg(rs2c) @ 0b00
+mapping clause encdec_compressed = C_SB(uimm1 @ uimm0, rsc1, rsc2)
+  <-> 0b100 @ 0b010 @ encdec_creg(rsc1) @ uimm0 : bits(1) @ uimm1 : bits(1) @ encdec_creg(rsc2) @ 0b00
   when currentlyEnabled(Ext_Zcb)
 
-mapping clause assembly = C_SB(uimm, rs1c, rs2c) <->
-  "c.sb" ^ spc() ^ creg_name(rs2c) ^ sep() ^ hex_bits_2(uimm) ^ opt_spc() ^ "(" ^ opt_spc() ^ creg_name(rs1c) ^ opt_spc() ^ ")"
+mapping clause assembly = C_SB(uimm, rsc1, rsc2) <->
+  "c.sb" ^ spc() ^ creg_name(rsc2) ^ sep() ^ hex_bits_2(uimm) ^ opt_spc() ^ "(" ^ opt_spc() ^ creg_name(rsc1) ^ opt_spc() ^ ")"
 
-function clause execute C_SB(uimm, rs1c, rs2c) = {
+function clause execute C_SB(uimm, rsc1, rsc2) = {
   let imm : bits(12) = zero_extend(uimm);
-  let rs1 = creg2reg_idx(rs1c);
-  let rs2 = creg2reg_idx(rs2c);
+  let rs1 = creg2reg_idx(rsc1);
+  let rs2 = creg2reg_idx(rsc2);
   execute(STORE(imm, rs2, rs1, BYTE, false, false))
 }
 
@@ -82,17 +82,17 @@ function clause execute C_SB(uimm, rs1c, rs2c) = {
 
 union clause ast = C_SH : (bits(2), cregidx, cregidx)
 
-mapping clause encdec_compressed = C_SH(uimm1 @ 0b0, rs1c, rs2c)
-  <-> 0b100 @ 0b011 @ encdec_creg(rs1c) @ 0b0 @ uimm1 : bits(1) @ encdec_creg(rs2c) @ 0b00
+mapping clause encdec_compressed = C_SH(uimm1 @ 0b0, rsc1, rsc2)
+  <-> 0b100 @ 0b011 @ encdec_creg(rsc1) @ 0b0 @ uimm1 : bits(1) @ encdec_creg(rsc2) @ 0b00
   when currentlyEnabled(Ext_Zcb)
 
-mapping clause assembly = C_SH(uimm, rs1c, rs2c) <->
-  "c.sh" ^ spc() ^ creg_name(rs2c) ^ sep() ^ hex_bits_2(uimm) ^ opt_spc() ^ "(" ^ opt_spc() ^ creg_name(rs1c) ^ opt_spc() ^ ")"
+mapping clause assembly = C_SH(uimm, rsc1, rsc2) <->
+  "c.sh" ^ spc() ^ creg_name(rsc2) ^ sep() ^ hex_bits_2(uimm) ^ opt_spc() ^ "(" ^ opt_spc() ^ creg_name(rsc1) ^ opt_spc() ^ ")"
 
-function clause execute C_SH(uimm, rs1c, rs2c) = {
+function clause execute C_SH(uimm, rsc1, rsc2) = {
   let imm : bits(12) = zero_extend(uimm);
-  let rs1 = creg2reg_idx(rs1c);
-  let rs2 = creg2reg_idx(rs2c);
+  let rs1 = creg2reg_idx(rsc1);
+  let rs2 = creg2reg_idx(rsc2);
   execute(STORE(imm, rs2, rs1, HALF, false, false))
 }
 
@@ -198,15 +198,15 @@ function clause execute C_NOT(rsdc) = {
 
 union clause ast = C_MUL : (cregidx, cregidx)
 
-mapping clause encdec_compressed = C_MUL(rsdc, rs2c)
-  <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b10 @ encdec_creg(rs2c) @ 0b01
+mapping clause encdec_compressed = C_MUL(rsdc, rsc2)
+  <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b10 @ encdec_creg(rsc2) @ 0b01
   when currentlyEnabled(Ext_Zcb) & (currentlyEnabled(Ext_M) | currentlyEnabled(Ext_Zmmul))
 
-mapping clause assembly = C_MUL(rsdc, rs2c) <->
-  "c.mul" ^ spc() ^ creg_name(rsdc) ^ sep() ^ creg_name(rs2c)
+mapping clause assembly = C_MUL(rsdc, rsc2) <->
+  "c.mul" ^ spc() ^ creg_name(rsdc) ^ sep() ^ creg_name(rsc2)
 
-function clause execute C_MUL(rsdc, rs2c) = {
+function clause execute C_MUL(rsdc, rsc2) = {
   let rd = creg2reg_idx(rsdc);
-  let rs = creg2reg_idx(rs2c);
+  let rs = creg2reg_idx(rsc2);
   execute(MUL(rs, rd, rd, struct { high = false, signed_rs1 = true, signed_rs2 = true }))
 }
