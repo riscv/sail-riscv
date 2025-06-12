@@ -16,8 +16,8 @@ install: [
   ["sh" "-c" "install build/rocq/* `coqc -where`/user-contrib/Riscv"]
 ]
 depends: [
-  "sail" {>= "0.19"}
-  "coq-sail-stdpp" {>= "0.19"}
+  "sail" {>= "0.19.1"}
+  "coq-sail-stdpp" {>= "0.19.1"}
   "conf-cmake"
 ]
 synopsis:
