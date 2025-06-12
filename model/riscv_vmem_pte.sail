@@ -112,23 +112,46 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
     match (ac, priv) {
       // Steps 6 and 8 of VATP, roughly (see riscv_vmem.sail).
       // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
-      (Read(_),         User)       => (pte_U == 0b1)
+      (Read(_), User)                => (pte_U == 0b1)
                                        & ((pte_R == 0b1)
-                                          | ((pte_X == 0b1 & mxr))),
-      (Write(_),        User)       => (pte_U == 0b1) & (pte_W == 0b1),
-      (ReadWrite(_, _), User)       => (pte_U == 0b1)
+                                       | ((pte_X == 0b1 & mxr))),
+      (Write(_), User)               => (pte_U == 0b1)
+                                       & (pte_W == 0b1),
+      (AMOAccess(_, _, _, _, _), User)       => (pte_U == 0b1)
                                        & (pte_W == 0b1)
+                                       & ((pte_R == 0b1) | ((pte_X == 0b1) & mxr)),
+      (LoadReserved(_, _, _), User)  => (pte_U == 0b1)
+                                       & ((pte_R == 0b1) | ((pte_X == 0b1) & mxr)),
+      (StoreConditional(_, _, _), User) => (pte_U == 0b1)
+                                       & (pte_W == 0b1),
+      (ExecutableDataFetch(), User) => (pte_U == 0b1)
                                        & ((pte_R == 0b1) | ((pte_X == 0b1) & mxr)),
       (InstructionFetch(),    User) => (pte_U == 0b1) & (pte_X == 0b1),
-      (Read(_),         Supervisor) => ((pte_U == 0b0) | do_sum)
-                                       & ((pte_R == 0b1) | ((pte_X == 0b1) & mxr)),
-      (Write(_),        Supervisor) => ((pte_U == 0b0) | do_sum)
+      (Cache(Zero),  User)       => (pte_U == 0b1) & (pte_W == 0b1),
+      (Cache(_),     User)       => internal_error(__FILE__, __LINE__,
+                                        "Invalid CacheAccessType; Inval, Clean and Flush check Read/Write permissions."),
+      (Read(_), Supervisor)         => ((pte_U == 0b0) | do_sum)
+                                       & ((pte_R == 0b1)
+                                       | ((pte_X == 0b1) & mxr)),
+      (Write(_), Supervisor)        => ((pte_U == 0b0) | do_sum)
                                        & (pte_W == 0b1),
-      (ReadWrite(_, _), Supervisor) => ((pte_U == 0b0) | do_sum)
+      (AMOAccess(_, _, _, _, _), Supervisor) => ((pte_U == 0b0) | do_sum)
                                        & (pte_W == 0b1)
                                        & ((pte_R == 0b1)
-                                          | ((pte_X == 0b1) & mxr)),
+                                       | ((pte_X == 0b1) & mxr)),
+      (LoadReserved(_, _, _), Supervisor) => ((pte_U == 0b0) | do_sum)
+                                       & ((pte_R == 0b1)
+                                       | ((pte_X == 0b1) & mxr)),
+      (StoreConditional(_, _, _), Supervisor) => ((pte_U == 0b0) | do_sum)
+                                        & (pte_W == 0b1),
       (InstructionFetch(),Supervisor) => (pte_U == 0b0) & (pte_X == 0b1),
+      (Cache(Zero),  Supervisor) => ((pte_U == 0b0) | do_sum)
+                                  & (pte_W == 0b1),
+      (Cache(_),     _)          => internal_error(__FILE__, __LINE__,
+                                        "Invalid CacheAccessType; Inval, Clean and Flush check Read/Write permissions."),
+      (ExecutableDataFetch(), Supervisor) => ((pte_U == 0b0) | do_sum)
+                                       & ((pte_R == 0b1)
+                                       | ((pte_X == 0b1) & mxr)),
       (_,               Machine)    => internal_error(__FILE__, __LINE__,
                                                       "m-mode mem perm check")};
   if success then PTE_Check_Success(())
@@ -149,7 +172,11 @@ function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
                              InstructionFetch() => false,
                              Read(_)         => false,
                              Write(_)        => true,
-                             ReadWrite(_, _) => true
+                             AMOAccess(_, _, _, _, _) => true,
+                             LoadReserved(_, _, _) => false,
+                             StoreConditional(_, _, _) => true,
+                             Cache(_)        => false,
+                             ExecutableDataFetch() => false,
                            });
   // Update 'accessed'-bit?
   let update_a = (pte_flags[A] == 0b0);
