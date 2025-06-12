@@ -497,7 +497,11 @@ mapping bit_maybe_o : bits(1) <-> string = {
 }
 
 mapping fence_bits : bits(4) <-> string = {
-  i : bits(1) @ o : bits(1) @ r : bits(1) @ w : bits(1) <-> bit_maybe_i(i) ^ bit_maybe_o(o) ^ bit_maybe_r(r) ^ bit_maybe_w(w)
+  // Fences with empty predecessor or successor sets are nops.
+  // Clang/LLVM's assembly supports using `0` for these.
+  // Binutils/GAS does not so you would have to use `.insn` to encode these.
+  0b0000 <-> "0",
+  i : bits(1) @ o : bits(1) @ r : bits(1) @ w : bits(1) <-> bit_maybe_i(i) ^ bit_maybe_o(o) ^ bit_maybe_r(r) ^ bit_maybe_w(w),
 }
 
 mapping clause assembly = FENCE(pred, succ)
