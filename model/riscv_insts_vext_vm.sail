@@ -141,14 +141,12 @@ mapping encdec_vvmsfunct6 : vvmsfunct6 <-> bits(6) = {
 
 mapping clause encdec = VVMSTYPE(funct6, vs2, vs1, vd)
   <-> encdec_vvmsfunct6(funct6) @ 0b0 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_vd_masked(vd))
 
 function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
-  if illegal_vd_masked(vd) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -388,14 +386,12 @@ mapping encdec_vxmsfunct6 : vxmsfunct6 <-> bits(6) = {
 
 mapping clause encdec = VXMSTYPE(funct6, vs2, rs1, vd)
   <-> encdec_vxmsfunct6(funct6) @ 0b0 @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_vd_masked(vd))
 
 function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
-  if illegal_vd_masked(vd) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -634,14 +630,12 @@ mapping encdec_vimsfunct6 : vimsfunct6 <-> bits(6) = {
 
 mapping clause encdec = VIMSTYPE(funct6, vs2, simm, vd)
   <-> encdec_vimsfunct6(funct6) @ 0b0 @ encdec_vreg(vs2) @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_vd_masked(vd))
 
 function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
-  if illegal_vd_masked(vd) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
