@@ -107,7 +107,7 @@ function clause execute (MULW(rs2, rs1, rd)) = {
   let rs1_int = signed(rs1_bits);
   let rs2_int = signed(rs2_bits);
 
-  let result32 = to_bits_truncate(32, rs1_int * rs2_int);
+  let result32 : bits(32) = to_bits_truncate(rs1_int * rs2_int);
   X(rd) = sign_extend(result32);
   RETIRE_SUCCESS
 }
