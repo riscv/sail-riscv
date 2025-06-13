@@ -920,15 +920,37 @@ bitfield Vtype  : xlenbits = {
 }
 register vtype : Vtype
 
+type SEW_pow = range(3, 6)
+
+function sew_pow_of_bits(sew : bits(3)) -> option(SEW_pow) =
+  match sew {
+    0b000 => Some(3),
+    0b001 => Some(4),
+    0b010 => Some(5),
+    0b011 => Some(6),
+    _     => None(),
+  }
+
+type LMUL_pow = range(-3, 3)
+
+function lmul_pow_of_bits(lmul : bits(3)) -> option(LMUL_pow) =
+  match lmul {
+    0b101 => Some(-3),
+    0b110 => Some(-2),
+    0b111 => Some(-1),
+    0b000 => Some(0),
+    0b001 => Some(1),
+    0b010 => Some(2),
+    0b011 => Some(3),
+    _     => None(),
+  }
+
 /* the dynamic selected element width (SEW) */
 /* this returns the power of 2 for SEW */
-function get_sew_pow() -> {3, 4, 5, 6} =
-  match vtype[vsew] {
-    0b000 => 3,
-    0b001 => 4,
-    0b010 => 5,
-    0b011 => 6,
-    _     => {assert(false, "invalid vsew field in vtype"); 0}
+function get_sew_pow() -> SEW_pow =
+  match sew_pow_of_bits(vtype[vsew]) {
+    Some(p) => p,
+    None()  => {assert(false, "invalid vsew field in vtype"); 0}
   }
 
 /* this returns the actual value of SEW */
@@ -941,19 +963,12 @@ function get_sew_bytes() -> {1, 2, 4, 8} =
 
 /* the vector register group multiplier (LMUL) */
 /* this returns the power of 2 for LMUL */
-val get_lmul_pow : unit -> {-3, -2, -1, 0, 1, 2, 3}
-function get_lmul_pow() = {
-  match vtype[vlmul] {
-    0b101 => -3,
-    0b110 => -2,
-    0b111 => -1,
-    0b000 => 0,
-    0b001 => 1,
-    0b010 => 2,
-    0b011 => 3,
-    _     => {assert(false, "invalid vlmul field in vtype"); 0}
+val get_lmul_pow : unit -> LMUL_pow
+function get_lmul_pow() =
+  match lmul_pow_of_bits(vtype[vlmul]) {
+    Some(p) => p,
+    None()  => {assert(false, "invalid vlmul field in vtype"); 0},
   }
-}
 
 enum agtype = { UNDISTURBED, AGNOSTIC }
 
