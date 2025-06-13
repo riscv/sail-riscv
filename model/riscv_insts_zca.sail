@@ -40,7 +40,7 @@ function clause execute (C_ADDI4SPN(rdc, nzimm)) = {
 
 mapping clause assembly = C_ADDI4SPN(rdc, nzimm)
       if nzimm != 0b00000000
-  <-> "c.addi4spn" ^ spc() ^ creg_name(rdc) ^ sep() ^ hex_bits_10(nzimm @ 0b00)
+  <-> "c.addi4spn" ^ spc() ^ creg_name(rdc) ^ sep() ^ sp_reg_name() ^ sep() ^ hex_bits_10(nzimm @ 0b00)
       if nzimm != 0b00000000
 
 /* ****************************************************************** */
@@ -188,7 +188,7 @@ function clause execute (C_ADDI16SP(imm)) = {
 }
 
 mapping clause assembly = C_ADDI16SP(imm)
-  <-> "c.addi16sp" ^ spc() ^ hex_bits_signed_6(imm)
+  <-> "c.addi16sp" ^ spc() ^ sp_reg_name() ^ sep() ^ hex_bits_signed_6(imm)
   when imm != 0b000000
 
 /* ****************************************************************** */
