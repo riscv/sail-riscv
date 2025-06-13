@@ -33,7 +33,8 @@ function generate_isa_base() -> string = {
 enum ISA_Format = {Canonical_Lowercase, DeviceTree_ISA_Extensions}
 
 /* Some notes from the "ISA Extension Naming Convections" section of
-   the manual:
+   the manual; some aspects do not apply to the
+   DeviceTree_ISA_Extensions generator.
 
   . The first letter following the "Z" conventionally indicates the
     most closely related alphabetical extension category,
@@ -43,7 +44,11 @@ enum ISA_Format = {Canonical_Lowercase, DeviceTree_ISA_Extensions}
 
   . All multi-letter extensions, including those with the "Z" prefix, must be
     separated from other multi-letter extensions by an underscore, e.g.,
-    "RV32IMACZicsr_Zifencei".
+    "RV32IMACZicsr_Zifencei" (but see the next point).
+
+  . An underscore between the single letter extensions and the first
+    multi-letter extension is optional, e.g., "RV32IMAC_Zicsr_Zifencei".
+    The canonical generator below includes it.
 
   . Standard supervisor-level extensions (prefixed with either 'Ss' or
     'Sv') should be listed after standard unprivileged extensions, and
