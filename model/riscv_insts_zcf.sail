@@ -54,7 +54,7 @@ function clause execute (C_FLW(uimm, rsc, rdc)) = {
 }
 
 mapping clause assembly = C_FLW(uimm, rsc, rdc)
-  <-> "c.flw" ^ spc() ^ creg_name(rdc) ^ sep() ^ hex_bits_7(uimm @ 0b00) ^ "(" ^ creg_name(rsc) ^ ")"
+  <-> "c.flw" ^ spc() ^ cfreg_name(rdc) ^ sep() ^ hex_bits_7(uimm @ 0b00) ^ "(" ^ creg_name(rsc) ^ ")"
   when xlen == 32
 
 /* ****************************************************************** */
@@ -72,5 +72,5 @@ function clause execute (C_FSW(uimm, rsc1, rsc2)) = {
 }
 
 mapping clause assembly = C_FSW(uimm, rsc1, rsc2)
-  <-> "c.fsw" ^ spc() ^ creg_name(rsc2) ^ sep() ^ hex_bits_7(uimm @ 0b00) ^ "(" ^ creg_name(rsc1) ^ ")"
+  <-> "c.fsw" ^ spc() ^ cfreg_name(rsc2) ^ sep() ^ hex_bits_7(uimm @ 0b00) ^ "(" ^ creg_name(rsc1) ^ ")"
   when xlen == 32

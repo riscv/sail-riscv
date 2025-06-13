@@ -57,7 +57,7 @@ function clause execute (C_FLD(uimm, rsc, rdc)) = {
 
 mapping clause assembly = C_FLD(uimm, rsc, rdc)
       if (xlen == 32 | xlen == 64)
-  <-> "c.fld" ^ spc() ^ creg_name(rdc) ^ sep() ^ hex_bits_8(uimm @ 0b000) ^ "(" ^ creg_name(rsc) ^ ")"
+  <-> "c.fld" ^ spc() ^ cfreg_name(rdc) ^ sep() ^ hex_bits_8(uimm @ 0b000) ^ "(" ^ creg_name(rsc) ^ ")"
       if (xlen == 32 | xlen == 64)
 
 /* ****************************************************************** */
@@ -76,5 +76,5 @@ function clause execute (C_FSD(uimm, rsc1, rsc2)) = {
 
 mapping clause assembly = C_FSD(uimm, rsc1, rsc2)
       if (xlen == 32 | xlen == 64)
-  <-> "c.fsd" ^ spc() ^ creg_name(rsc2) ^ sep() ^ hex_bits_8(uimm @ 0b000) ^ "(" ^ creg_name(rsc1) ^ ")"
+  <-> "c.fsd" ^ spc() ^ cfreg_name(rsc2) ^ sep() ^ hex_bits_8(uimm @ 0b000) ^ "(" ^ creg_name(rsc1) ^ ")"
       if (xlen == 32 | xlen == 64)
