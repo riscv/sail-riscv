@@ -151,7 +151,8 @@ function generate_isa_string(fmt : ISA_Format) -> string = {
   ^ ext_wrap(Ext_Zknh, fmt)
   ^ ext_wrap(Ext_Zkr, fmt)
   ^ ext_wrap(Ext_Zksed, fmt)
-  ^ ext_wrap(Ext_Zksh, fmt);
+  ^ ext_wrap(Ext_Zksh, fmt)
+  ^ ext_wrap(Ext_Zkt, fmt);
 
   let zv_exts = ""
   ^ ext_wrap(Ext_Zvbb, fmt)
@@ -161,7 +162,8 @@ function generate_isa_string(fmt : ISA_Format) -> string = {
   ^ ext_wrap(Ext_Zvkned, fmt)
   ^ ext_wrap(Ext_Zvknha, fmt)
   ^ ext_wrap(Ext_Zvknhb, fmt)
-  ^ ext_wrap(Ext_Zvksh, fmt);
+  ^ ext_wrap(Ext_Zvksh, fmt)
+  ^ ext_wrap(Ext_Zvkt, fmt);
 
   // Append the Supervisor extensions, ordered alphabetically.
 
