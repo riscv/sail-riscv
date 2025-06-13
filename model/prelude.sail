@@ -255,5 +255,5 @@ val sys_enable_experimental_extensions = pure "sys_enable_experimental_extension
 // Print a bit vector in hex. If it is not a multiple of 4
 // bits in length zero extend it so it is (bits_str() prints
 // bit vectors that aren't a multiple of 4 bits in binary).
-function hex_bits_str forall 'n . (x : bits('n)) -> string =
+function hex_bits_str forall 'n, 'n >= 0 . (x : bits('n)) -> string =
   bits_str(zero_extend((3 - (('n + 3) % 4)) + 'n, x))
