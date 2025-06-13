@@ -278,7 +278,7 @@ mapping clause extensionName = Ext_Zvksh <-> "zvksh"
 function clause hartSupports(Ext_Zvksh) = config extensions.Zvksh.supported
 // Vector Data Independent Execution Latency
 enum clause extension = Ext_Zvkt
-mapping clause extensionName = Ext_Zkt <-> "zvkt"
+mapping clause extensionName = Ext_Zvkt <-> "zvkt"
 function clause hartSupports(Ext_Zvkt) = config extensions.Zvkt.supported
 function clause currentlyEnabled(Ext_Zvkt) = hartSupports(Ext_Zvkt)
 
