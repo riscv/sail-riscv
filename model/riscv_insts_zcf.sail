@@ -36,7 +36,7 @@ function clause execute (C_FSWSP(uimm, rs2)) = {
 }
 
 mapping clause assembly = C_FSWSP(uimm, rs2)
-  <-> "c.fswsp" ^ spc() ^ freg_name(rs2) ^ sep() ^ hex_bits_6(uimm) ^ "(" ^ sp_reg_name() ^ ")"
+  <-> "c.fswsp" ^ spc() ^ freg_name(rs2) ^ sep() ^ hex_bits_8(uimm @ 0b00) ^ "(" ^ sp_reg_name() ^ ")"
   when xlen == 32
 
 /* ****************************************************************** */

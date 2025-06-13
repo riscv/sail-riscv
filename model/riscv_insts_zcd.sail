@@ -21,7 +21,7 @@ function clause execute (C_FLDSP(uimm, rd)) = {
 
 mapping clause assembly = C_FLDSP(uimm, rd)
       if (xlen == 32 | xlen == 64)
-  <-> "c.fldsp" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_6(uimm) ^ "(" ^ sp_reg_name() ^ ")"
+  <-> "c.fldsp" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_9(uimm @ 0b000) ^ "(" ^ sp_reg_name() ^ ")"
       if (xlen == 32 | xlen == 64)
 
 /* ****************************************************************** */
@@ -38,7 +38,7 @@ function clause execute (C_FSDSP(uimm, rs2)) = {
 
 mapping clause assembly = C_FSDSP(uimm, rs2)
       if (xlen == 32 | xlen == 64)
-  <-> "c.fsdsp" ^ spc() ^ freg_name(rs2) ^ sep() ^ hex_bits_6(uimm) ^ "(" ^ sp_reg_name() ^ ")"
+  <-> "c.fsdsp" ^ spc() ^ freg_name(rs2) ^ sep() ^ hex_bits_9(uimm @ 0b000) ^ "(" ^ sp_reg_name() ^ ")"
       if (xlen == 32 | xlen == 64)
 
 /* ****************************************************************** */
