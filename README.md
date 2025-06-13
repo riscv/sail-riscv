@@ -112,6 +112,7 @@ For booting operating system images, see the information under the
 - Zvkg extension for vector GCM/GMAC, v1.0
 - Zvkned extension for vector cryptography NIST Suite: Vector AES Block Cipher, v1.0
 - Zvknha and Zvknhb extensions for vector cryptography NIST Suite: Vector SHA-2 Secure Hash, v1.0
+- Zvksed extension for vector cryptography ShangMi Suite: SM4 Block Cipher, v1.0
 - Zvksh extension for vector cryptography ShangMi Suite: SM3 Secure Hash, v1.0
 - Zvkt extension for vector data independent execution latency, v1.0 (no impact on model)
 - Machine, Supervisor, and User modes
