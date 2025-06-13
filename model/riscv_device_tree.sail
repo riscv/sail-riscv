@@ -97,8 +97,9 @@ function generate_isa_string(fmt : ISA_Format) -> string = {
   ^ ext_wrap(Ext_D, fmt)
   ^ ext_wrap(Ext_C, fmt)
   ^ ext_wrap(Ext_B, fmt)
-  ^ ext_wrap(Ext_V, fmt);
+  ^ ext_wrap(Ext_V, fmt)
   // S and U are not valid extensions in the device-tree, whereas H is.
+  ^ ext_wrap(Ext_H, fmt);
 
   // Append the Z extensions, ordered by category and then alphabetically.
   let zi_exts = ""

@@ -71,6 +71,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_M => 1,
     Ext_S => 1,
     Ext_V => 1,
+    Ext_H => 4,
     Ext_Smcntrpmf => 3,
     Ext_Zabha => 3,
     Ext_Zcb => 3,
@@ -84,7 +85,9 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zhinxmin => 4,
     _ => 2
   }
+
 termination_measure currentlyEnabled(ext) = currentlyEnabled_measure(ext)
+termination_measure virtual_memory_supported(_) = 3
 
 function hartSupports_measure(ext : extension) -> int =
   match ext {
