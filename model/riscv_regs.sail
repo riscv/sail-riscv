@@ -95,18 +95,7 @@ mapping sp_reg_name : unit <-> string = {
   () if not(get_config_use_abi_names()) <-> "x2",
 }
 
-mapping creg_name_raw : bits(3) <-> string = {
-  0b000 <-> "s0",
-  0b001 <-> "s1",
-  0b010 <-> "a0",
-  0b011 <-> "a1",
-  0b100 <-> "a2",
-  0b101 <-> "a3",
-  0b110 <-> "a4",
-  0b111 <-> "a5",
-}
-
-mapping creg_name : cregidx <-> string = { Cregidx(i) <-> creg_name_raw(i) }
+mapping creg_name : cregidx <-> string = { Cregidx(i) <-> reg_name(Regidx(0b01 @ i)) }
 
 function xreg_write_callback(reg : regidx, value : xlenbits) -> unit = {
   let name = reg_name(reg);
