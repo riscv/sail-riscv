@@ -24,6 +24,7 @@ unit ztick_clock(unit);
 
 bool zconfig_is_valid(unit);
 void zgenerate_dts(sail_string *out, unit);
+void zgenerate_canonical_isa_string(sail_string *out, unit);
 
 unit zrvfi_set_instr_packet(mach_bits);
 mach_bits zrvfi_get_cmd(unit);
