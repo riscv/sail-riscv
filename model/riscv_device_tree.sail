@@ -174,7 +174,10 @@ function generate_isa_string(fmt : ISA_Format) -> string = {
 
   let s_exts = ""
   ^ ext_wrap(Ext_Sscofpmf, fmt)
+  ^ ext_wrap(Ext_Ssnpm, fmt)
+  ^ ext_wrap(Ext_Sspm, fmt)
   ^ ext_wrap(Ext_Sstc, fmt)
+  ^ ext_wrap(Ext_Supm, fmt)
   // Handle svade and svadu here when ready.
   ^ ext_wrap(Ext_Svinval, fmt)
   ^ ext_wrap(Ext_Svnapot, fmt)
@@ -185,7 +188,9 @@ function generate_isa_string(fmt : ISA_Format) -> string = {
   // Append the Machine mode extensions, ordered alphabetically.
 
   let m_exts = ""
-  ^ ext_wrap(Ext_Smcntrpmf, fmt);
+  ^ ext_wrap(Ext_Smcntrpmf, fmt)
+  ^ ext_wrap(Ext_Smmpm, fmt)
+  ^ ext_wrap(Ext_Smnpm, fmt);
 
   prefix ^ singles
   ^ zi_exts ^ za_exts ^ zf_exts ^ zc_exts ^ zb_exts ^ zk_exts ^ zv_exts

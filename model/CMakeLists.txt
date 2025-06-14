@@ -160,6 +160,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_freg_type.sail"
                 "riscv_regs.sail"
                 "riscv_pc_access.sail"
+                "riscv_zpm.sail"
                 "riscv_sys_regs.sail"
                 "riscv_pmp_regs.sail"
                 "riscv_pmp_control.sail"
