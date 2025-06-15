@@ -20,9 +20,7 @@ mapping clause assembly = RORIW(shamt, rs1, rd)
   <-> "roriw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_5(shamt)
 
 function clause execute (RORIW(shamt, rs1, rd)) = {
-  let rs1_val = (X(rs1))[31..0];
-  let result : xlenbits = sign_extend(rs1_val >>> shamt);
-  X(rd) = result;
+  X(rd) = sign_extend(X(rs1)[31..0] >>> shamt);
   RETIRE_SUCCESS
 }
 
@@ -37,11 +35,8 @@ mapping clause assembly = RORI(shamt, rs1, rd)
   <-> "rori" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_6(shamt)
 
 function clause execute (RORI(shamt, rs1, rd)) = {
-  let rs1_val = X(rs1);
-  let result : xlenbits = if xlen == 32
-                          then rs1_val >>> shamt[4..0]
-                          else rs1_val >>> shamt;
-  X(rd) = result;
+  let shamt = shamt[log2_xlen - 1 .. 0];
+  X(rd) = X(rs1) >>> shamt;
   RETIRE_SUCCESS
 }
 
@@ -65,11 +60,11 @@ mapping clause assembly = ZBB_RTYPEW(rs2, rs1, rd, op)
   <-> zbb_rtypew_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 function clause execute (ZBB_RTYPEW(rs2, rs1, rd, op)) = {
-  let rs1_val = (X(rs1))[31..0];
-  let shamt = (X(rs2))[4..0];
+  let rs1_val = X(rs1)[31..0];
+  let shamt = X(rs2)[4..0];
   let result : bits(32) = match op {
     ROLW => rs1_val <<< shamt,
-    RORW => rs1_val >>> shamt
+    RORW => rs1_val >>> shamt,
   };
   X(rd) = sign_extend(result);
   RETIRE_SUCCESS
@@ -140,12 +135,8 @@ function clause execute (ZBB_RTYPE(rs2, rs1, rd, op)) = {
     MAXU => if rs1_val >_u rs2_val then rs1_val else rs2_val,
     MIN  => if rs1_val <_s rs2_val then rs1_val else rs2_val,
     MINU => if rs1_val <_u rs2_val then rs1_val else rs2_val,
-    ROL  => if xlen == 32
-                  then rs1_val <<< rs2_val[4..0]
-                  else rs1_val <<< rs2_val[5..0],
-    ROR  => if xlen == 32
-                  then rs1_val >>> rs2_val[4..0]
-                  else rs1_val >>> rs2_val[5..0]
+    ROL  => rs1_val <<< rs2_val[log2_xlen - 1 .. 0],
+    ROR  => rs1_val >>> rs2_val[log2_xlen - 1 .. 0],
   };
   X(rd) = result;
   RETIRE_SUCCESS
@@ -184,7 +175,7 @@ function clause execute (ZBB_EXTOP(rs1, rd, op)) = {
   let result : xlenbits = match op {
     SEXTB => sign_extend(rs1_val[7..0]),
     SEXTH => sign_extend(rs1_val[15..0]),
-    ZEXTH => zero_extend(rs1_val[15..0])
+    ZEXTH => zero_extend(rs1_val[15..0]),
   };
   X(rd) = result;
   RETIRE_SUCCESS
