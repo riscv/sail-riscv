@@ -57,6 +57,7 @@ newtype fregno = Fregno : range(0, 31)
 
 function fregidx_bits(Fregidx(r) : fregidx) -> bits(5) = r
 
+// TODO: We should have a separate Cfregidx type for compressed float registers.
 function cregidx_to_fregidx (Cregidx(b) : cregidx) -> fregidx = Fregidx(0b01 @ b)
 
 /*
@@ -328,7 +329,7 @@ overload F_or_X_D = { rF_or_X_D, wF_or_X_D }
 
 /* mappings for assembly */
 
-mapping freg_name_raw : bits(5) <-> string = {
+mapping freg_abi_name_raw : bits(5) <-> string = {
     0b00000 <-> "ft0",
     0b00001 <-> "ft1",
     0b00010 <-> "ft2",
@@ -363,13 +364,53 @@ mapping freg_name_raw : bits(5) <-> string = {
     0b11111 <-> "ft11"
 }
 
-mapping freg_name : fregidx <-> string = { Fregidx(i) <-> freg_name_raw(i) }
+mapping freg_arch_name_raw : bits(5) <-> string = {
+    0b00000 <-> "f0",
+    0b00001 <-> "f1",
+    0b00010 <-> "f2",
+    0b00011 <-> "f3",
+    0b00100 <-> "f4",
+    0b00101 <-> "f5",
+    0b00110 <-> "f6",
+    0b00111 <-> "f7",
+    0b01000 <-> "f8",
+    0b01001 <-> "f9",
+    0b01010 <-> "f10",
+    0b01011 <-> "f11",
+    0b01100 <-> "f12",
+    0b01101 <-> "f13",
+    0b01110 <-> "f14",
+    0b01111 <-> "f15",
+    0b10000 <-> "f16",
+    0b10001 <-> "f17",
+    0b10010 <-> "f18",
+    0b10011 <-> "f19",
+    0b10100 <-> "f20",
+    0b10101 <-> "f21",
+    0b10110 <-> "f22",
+    0b10111 <-> "f23",
+    0b11000 <-> "f24",
+    0b11001 <-> "f25",
+    0b11010 <-> "f26",
+    0b11011 <-> "f27",
+    0b11100 <-> "f28",
+    0b11101 <-> "f29",
+    0b11110 <-> "f30",
+    0b11111 <-> "f31",
+}
+
+mapping freg_name : fregidx <-> string = {
+  Fregidx(i) if get_config_use_abi_names()      <-> freg_abi_name_raw(i),
+  Fregidx(i) if not(get_config_use_abi_names()) <-> freg_arch_name_raw(i),
+}
 
 mapping freg_or_reg_name : fregidx <-> string = {
   forwards f if hartSupports(Ext_Zfinx) => reg_name(fregidx_to_regidx(f)),
   backwards reg_name(Regidx(i)) if hartSupports(Ext_Zfinx) => Fregidx(zero_extend(i)),
   f <-> freg_name(f)
 }
+
+mapping cfreg_name : cregidx <-> string = { Cregidx(i) <-> freg_name(Fregidx(0b01 @ i)) }
 
 /* **************************************************************** */
 /* Floating Point CSR                                               */

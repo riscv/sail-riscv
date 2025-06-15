@@ -29,6 +29,7 @@ foreach (xlen IN ITEMS 32 64)
 
         add_executable(riscv_sim_${arch}
             "${CMAKE_BINARY_DIR}/riscv_model_${arch}.c"
+            "${CMAKE_BINARY_DIR}/riscv_model_${arch}.h"
             ${EMULATOR_COMMON_SRCS}
         )
         # The generated model is not warnings-clean, silence them.
@@ -53,6 +54,15 @@ foreach (xlen IN ITEMS 32 64)
         target_include_directories(riscv_sim_${arch}
             # So the generated C can find riscv_platform/prelude.h"
             PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}"
+            # So we can find riscv_model_${arch}.h
+                    "${CMAKE_BINARY_DIR}"
+        )
+
+        # This is necessary so it can pick the right riscv_model_${arch}.h
+        # to #include. We can remove it when there is a single model with
+        # runtime xlen and flen.
+        target_compile_definitions(riscv_sim_${arch}
+            PRIVATE "RISCV_MODEL_HEADER=<riscv_model_${arch}.h>"
         )
 
         # TODO: Enable warnings when we use the #include trick
