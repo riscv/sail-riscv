@@ -159,6 +159,9 @@ function clause hartSupports(Ext_Zcb) = config extensions.Zcb.supported
 enum clause extension = Ext_Zcd
 mapping clause extensionName = Ext_Zcd <-> "zcd"
 function clause hartSupports(Ext_Zcd) = config extensions.Zcd.supported
+// Code Size Reduction: compressed push/pop and double move instructions
+enum clause extension = Ext_Zcmp
+function clause hartSupports(Ext_Zcmp) = config extensions.Zcmp.supported
 // Code Size Reduction: compressed single precision floating point loads and stores
 enum clause extension = Ext_Zcf
 mapping clause extensionName = Ext_Zcf <-> "zcf"
