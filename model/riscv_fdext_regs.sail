@@ -410,6 +410,8 @@ mapping freg_or_reg_name : fregidx <-> string = {
   f <-> freg_name(f)
 }
 
+mapping cfreg_name : cregidx <-> string = { Cregidx(i) <-> freg_name(Fregidx(0b01 @ i)) }
+
 /* **************************************************************** */
 /* Floating Point CSR                                               */
 /*     fflags    address 0x001    same as fcrs [4..0]               */
