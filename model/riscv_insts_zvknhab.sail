@@ -66,24 +66,24 @@ function clause execute (VSHA2MS_VV(vs2, vs1, vd)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = ZVKSHA2TYPE : (zvkfunct6, vregidx, vregidx, vregidx)
+union clause ast = ZVKSHA2TYPE : (zvk_vsha2_funct6, vregidx, vregidx, vregidx)
 
-mapping encdec_zvkfunct6 : zvkfunct6 <-> bits(6) = {
-  ZVK_VSHA2CH <-> 0b101110,
-  ZVK_VSHA2CL <-> 0b101111,
+mapping encdec_vsha2 : zvk_vsha2_funct6 <-> bits(6) = {
+  ZVK_VSHA2CH_VV <-> 0b101110,
+  ZVK_VSHA2CL_VV <-> 0b101111,
 }
 
 mapping clause encdec = ZVKSHA2TYPE(funct6, vs2, vs1, vd)
-  <-> encdec_zvkfunct6(funct6) @ 0b1 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
+  <-> encdec_vsha2(funct6) @ 0b1 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when (currentlyEnabled(Ext_Zvknha) & get_sew() == 32) | (currentlyEnabled(Ext_Zvknhb) & (get_sew() == 32 | get_sew() == 64)) & zvknhab_check_encdec(vs2, vs1, vd)
 
-mapping vsha2c_mnemonic : zvkfunct6 <-> string = {
-  ZVK_VSHA2CH <-> "vsha2ch.vv",
-  ZVK_VSHA2CL <-> "vsha2cl.vv",
+mapping vsha2_mnemonic : zvk_vsha2_funct6 <-> string = {
+  ZVK_VSHA2CH_VV <-> "vsha2ch.vv",
+  ZVK_VSHA2CL_VV <-> "vsha2cl.vv",
 }
 
 mapping clause assembly = ZVKSHA2TYPE(funct6, vs2, vs1, vd)
-  <-> vsha2c_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
+  <-> vsha2_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
 
 function clause execute (ZVKSHA2TYPE(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -114,11 +114,11 @@ function clause execute (ZVKSHA2TYPE(funct6, vs2, vs1, vd)) = {
 
     let message_sched_plus_c = get_velem_quad(vs1_val, i);
 
-    let w0 = if funct6 == ZVK_VSHA2CL
+    let w0 = if funct6 == ZVK_VSHA2CL_VV
              then message_sched_plus_c[(SEW * 1) - 1 .. 0]
              else message_sched_plus_c[(SEW * 3) - 1 .. (SEW * 2)];
 
-    let w1 = if funct6 == ZVK_VSHA2CL
+    let w1 = if funct6 == ZVK_VSHA2CL_VV
              then message_sched_plus_c[(SEW * 2) - 1 .. SEW]
              else message_sched_plus_c[(SEW * 4) - 1 .. (SEW * 3)];
 
