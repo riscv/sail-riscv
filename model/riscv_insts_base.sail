@@ -207,7 +207,7 @@ mapping clause encdec = SHIFTIOP(shamt, rs1, rd, SRAI)
   when xlen == 64 | shamt[5] == bitzero
 
 function clause execute (SHIFTIOP(shamt, rs1, rd, op)) = {
-  // The decoder guard ensures that shamt[5] = 0 for RV32.
+  let shamt = shamt[log2_xlen - 1 .. 0];
   X(rd) = match op {
     SLLI => X(rs1) << shamt,
     SRLI => X(rs1) >> shamt,
