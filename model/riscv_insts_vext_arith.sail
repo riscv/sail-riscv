@@ -42,15 +42,13 @@ mapping encdec_vvfunct6 : vvfunct6 <-> bits(6) = {
 
 mapping clause encdec = VVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_vvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_normal(vd, vm))
 
 function clause execute(VVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW_pow  = get_sew_pow();
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -313,7 +311,7 @@ union clause ast = MASKTYPEV : (vregidx, vregidx, vregidx)
 
 mapping clause encdec = MASKTYPEV (vs2, vs1,  vd)
   <-> 0b010111 @ 0b0 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_vd_masked(vd))
 
 function clause execute(MASKTYPEV(vs2, vs1, vd)) = {
   let start_element : nat = match get_start_element() {
@@ -325,8 +323,6 @@ function clause execute(MASKTYPEV(vs2, vs1, vd)) = {
   let LMUL_pow      = get_lmul_pow();
   let num_elem      = get_num_elem(LMUL_pow, SEW); /* max(VLMAX,VLEN/SEW)) */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow); /* VLMAX */
-
-  if illegal_vd_masked(vd) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -427,14 +423,12 @@ mapping encdec_vxfunct6 : vxfunct6 <-> bits(6) = {
 
 mapping clause encdec = VXTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_vxfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_normal(vd, vm))
 
 function clause execute(VXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -688,15 +682,13 @@ mapping encdec_vxsgfunct6 : vxsgfunct6 <-> bits(6) = {
 
 mapping clause encdec = VXSG(funct6, vm, vs2, rs1, vd)
   <-> encdec_vxsgfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_normal(vd, vm))
 
 function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
   let SEW_pow  = get_sew_pow();
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -753,7 +745,7 @@ union clause ast = MASKTYPEX : (vregidx, regidx, vregidx)
 
 mapping clause encdec = MASKTYPEX(vs2, rs1, vd)
   <-> 0b010111 @ 0b0 @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_vd_masked(vd))
 
 function clause execute(MASKTYPEX(vs2, rs1, vd)) = {
   let start_element : nat = match get_start_element() {
@@ -765,8 +757,6 @@ function clause execute(MASKTYPEX(vs2, rs1, vd)) = {
   let LMUL_pow      = get_lmul_pow();
   let num_elem      = get_num_elem(LMUL_pow, SEW); /* max(VLMAX,VLEN/SEW)) */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow); /* VLMAX */
-
-  if illegal_vd_masked(vd) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -859,14 +849,12 @@ mapping encdec_vifunct6 : vifunct6 <-> bits(6) = {
 
 mapping clause encdec = VITYPE(funct6, vm, vs2, simm, vd)
   <-> encdec_vifunct6(funct6) @ vm @ encdec_vreg(vs2) @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_normal(vd, vm))
 
 function clause execute(VITYPE(funct6, vm, vs2, simm, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1096,15 +1084,13 @@ mapping encdec_visgfunct6 : visgfunct6 <-> bits(6) = {
 
 mapping clause encdec = VISG(funct6, vm, vs2, simm, vd)
   <-> encdec_visgfunct6(funct6) @ vm @ encdec_vreg(vs2) @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_normal(vd, vm))
 
 function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
   let SEW_pow  = get_sew_pow();
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1161,7 +1147,7 @@ union clause ast = MASKTYPEI : (vregidx, bits(5), vregidx)
 
 mapping clause encdec = MASKTYPEI(vs2, simm, vd)
   <-> 0b010111 @ 0b0 @ encdec_vreg(vs2) @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_vd_masked(vd))
 
 function clause execute(MASKTYPEI(vs2, simm, vd)) = {
   let start_element : nat = match get_start_element() {
@@ -1173,8 +1159,6 @@ function clause execute(MASKTYPEI(vs2, simm, vd)) = {
   let LMUL_pow      = get_lmul_pow();
   let num_elem      = get_num_elem(LMUL_pow, SEW); /* max(VLMAX,VLEN/SEW)) */
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow); /* VLMAX */
-
-  if illegal_vd_masked(vd) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1325,14 +1309,12 @@ mapping encdec_mvvfunct6 : mvvfunct6 <-> bits(6) = {
 
 mapping clause encdec = MVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_mvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_normal(vd, vm))
 
 function clause execute(MVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1437,14 +1419,12 @@ mapping encdec_mvvmafunct6 : mvvmafunct6 <-> bits(6) = {
 
 mapping clause encdec = MVVMATYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_mvvmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_normal(vd, vm))
 
 function clause execute(MVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1985,14 +1965,12 @@ mapping encdec_mvxfunct6 : mvxfunct6 <-> bits(6) = {
 
 mapping clause encdec = MVXTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_mvxfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_normal(vd, vm))
 
 function clause execute(MVXTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -2108,14 +2086,12 @@ mapping encdec_mvxmafunct6 : mvxmafunct6 <-> bits(6) = {
 
 mapping clause encdec = MVXMATYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_mvxmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_normal(vd, vm))
 
 function clause execute(MVXMATYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
