@@ -304,7 +304,7 @@ function clause execute (LOAD(imm, rs1, rd, is_unsigned, width)) = {
 
 mapping maybe_u : bool <-> string = {
   true  <-> "u",
-  false <-> ""
+  false <-> "",
 }
 
 mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, width)

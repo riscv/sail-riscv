@@ -87,7 +87,7 @@ function zvk_ff1(X, Y, Z) = X ^ Y ^ Z
 val zvk_ff2 : (bits(32), bits(32), bits(32)) -> bits(32)
 function zvk_ff2(X, Y, Z) = (X & Y) | (X & Z) | (Y & Z)
 
-val zvk_ff_j : (bits(32), bits(32), bits(32), int) -> bits(32)
+val zvk_ff_j : (bits(32), bits(32), bits(32), nat) -> bits(32)
 function zvk_ff_j(X, Y, Z, J) = if J <= 15 then zvk_ff1(X, Y, Z) else zvk_ff2(X, Y, Z)
 
 val zvk_gg1 : (bits(32), bits(32), bits(32)) -> bits(32)
@@ -96,13 +96,13 @@ function zvk_gg1(X, Y, Z) = X ^ Y ^ Z
 val zvk_gg2 : (bits(32), bits(32), bits(32)) -> bits(32)
 function zvk_gg2(X, Y, Z) = (X & Y) | (~(X) & Z)
 
-val zvk_gg_j : (bits(32), bits(32), bits(32), int) -> bits(32)
+val zvk_gg_j : (bits(32), bits(32), bits(32), nat) -> bits(32)
 function zvk_gg_j(X, Y, Z, J) = if J <= 15 then zvk_gg1(X, Y, Z) else zvk_gg2(X, Y, Z)
 
-val zvk_t_j : int -> bits(32)
+val zvk_t_j : nat -> bits(32)
 function zvk_t_j(J) = if J <= 15 then 0x79CC4519 else 0x7A879D8A
 
-function zvk_sm3_round(A_H : vector(8, bits(32)), w : bits(32), x : bits(32), j : int) -> vector(8, bits(32)) = {
+function zvk_sm3_round(A_H : vector(8, bits(32)), w : bits(32), x : bits(32), j : nat) -> vector(8, bits(32)) = {
   let t_j = zvk_t_j(j) <<< (j % 32);
   let ss1 = ((A_H[0] <<< 12) + A_H[4] + t_j) <<< 7;
   let ss2 = ss1 ^ (A_H[0] <<< 12);
