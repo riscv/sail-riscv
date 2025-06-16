@@ -96,13 +96,12 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
     vl = calculate_new_vl(AVL, VLMAX);
     X(rd) = vl;
   } else if (rd != zreg) then { /* set vl to VLMAX */
-    let AVL = unsigned(ones(xlen));
     vl = to_bits_unsafe(xlen, VLMAX);
     X(rd) = vl;
-  } else { /* keep existing vl */
-    let AVL = unsigned(vl);
+  } else { /* keep existing vl if it is compatible and vtype.ill is valid */
     let ratio_pow_new = SEW_pow_new - LMUL_pow_new;
-    if (ratio_pow_new != ratio_pow_ori) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
+    let is_legal_vset = ratio_pow_new == ratio_pow_ori & valid_vtype();
+    if not(is_legal_vset) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
   };
 
   /* set vtype */
@@ -154,13 +153,12 @@ function clause execute VSETVL(rs2, rs1, rd) = {
     vl = calculate_new_vl(AVL, VLMAX);
     X(rd) = vl;
   } else if (rd != zreg) then { /* set vl to VLMAX */
-    let AVL = unsigned(ones(xlen));
     vl = to_bits_unsafe(xlen, VLMAX);
     X(rd) = vl;
-  } else { /* keep existing vl */
-    let AVL = unsigned(vl);
+  } else { /* keep existing vl if it is compatible and vtype.ill is valid */
     let ratio_pow_new = SEW_pow_new - LMUL_pow_new;
-    if (ratio_pow_new != ratio_pow_ori) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
+    let is_legal_vset = ratio_pow_new == ratio_pow_ori & valid_vtype();
+    if not(is_legal_vset) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
   };
 
   /* set vtype */
