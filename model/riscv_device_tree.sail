@@ -86,110 +86,16 @@ function ext_wrap(ext : extension, fmt : ISA_Format) -> string = {
 }
 
 function generate_isa_string(fmt : ISA_Format) -> string = {
-  // The Sail compiler blows up if this string is constructed in one go.
-  // Build it up in pieces.
-  let prefix : string = match fmt {
+  var isa_string : string = match fmt {
     Canonical_Lowercase => "rv" ^ dec_str(xlen) ^ "i",
     DeviceTree_ISA_Extensions => "\"i\"",
   };
 
-  // First append the single letter extensions.
+  // The default Order dec means we start from the end
+  foreach (i from (length(extensions_ordered_for_isa_string) - 1) downto 0)
+    isa_string = isa_string ^ ext_wrap(extensions_ordered_for_isa_string[i], fmt);
 
-  let singles = ""
-  ^ ext_wrap(Ext_M, fmt)
-  ^ ext_wrap(Ext_A, fmt)
-  ^ ext_wrap(Ext_F, fmt)
-  ^ ext_wrap(Ext_D, fmt)
-  ^ ext_wrap(Ext_C, fmt)
-  ^ ext_wrap(Ext_B, fmt)
-  ^ ext_wrap(Ext_V, fmt)
-  // S and U are not valid extensions in the device-tree, whereas H is.
-  ^ ext_wrap(Ext_H, fmt);
-
-  // Append the Z extensions, ordered by category and then alphabetically.
-  let zi_exts = ""
-  ^ ext_wrap(Ext_Zicbom, fmt)
-  ^ ext_wrap(Ext_Zicboz, fmt)
-  ^ ext_wrap(Ext_Zicntr, fmt)
-  ^ ext_wrap(Ext_Zicond, fmt)
-  ^ ext_wrap(Ext_Zicsr, fmt)
-  ^ ext_wrap(Ext_Zifencei, fmt)
-  ^ ext_wrap(Ext_Zihpm, fmt)
-  ^ ext_wrap(Ext_Zimop, fmt)
-
-  ^ ext_wrap(Ext_Zmmul, fmt);
-
-  let za_exts = ""
-  ^ ext_wrap(Ext_Zaamo, fmt)
-  ^ ext_wrap(Ext_Zabha, fmt)
-  ^ ext_wrap(Ext_Zalrsc, fmt)
-  ^ ext_wrap(Ext_Zawrs, fmt);
-
-  let zf_exts = ""
-  ^ ext_wrap(Ext_Zfa, fmt)
-  ^ ext_wrap(Ext_Zfh, fmt)
-  ^ ext_wrap(Ext_Zfhmin, fmt)
-  ^ ext_wrap(Ext_Zfinx, fmt)
-  ^ ext_wrap(Ext_Zdinx, fmt)
-  ^ ext_wrap(Ext_Zhinx, fmt)
-  ^ ext_wrap(Ext_Zhinxmin, fmt);
-
-  let zc_exts = ""
-  ^ ext_wrap(Ext_Zca, fmt)
-  ^ ext_wrap(Ext_Zcb, fmt)
-  ^ ext_wrap(Ext_Zcd, fmt)
-  ^ ext_wrap(Ext_Zcf, fmt)
-  ^ ext_wrap(Ext_Zcmop, fmt);
-
-  let zb_exts = ""
-  ^ ext_wrap(Ext_Zba, fmt)
-  ^ ext_wrap(Ext_Zbb, fmt)
-  ^ ext_wrap(Ext_Zbc, fmt)
-  ^ ext_wrap(Ext_Zbkb, fmt)
-  ^ ext_wrap(Ext_Zbkc, fmt)
-  ^ ext_wrap(Ext_Zbkx, fmt)
-  ^ ext_wrap(Ext_Zbs, fmt);
-
-  let zk_exts = ""
-  ^ ext_wrap(Ext_Zknd, fmt)
-  ^ ext_wrap(Ext_Zkne, fmt)
-  ^ ext_wrap(Ext_Zknh, fmt)
-  ^ ext_wrap(Ext_Zkr, fmt)
-  ^ ext_wrap(Ext_Zksed, fmt)
-  ^ ext_wrap(Ext_Zksh, fmt)
-  ^ ext_wrap(Ext_Zkt, fmt);
-
-  let zv_exts = ""
-  ^ ext_wrap(Ext_Zvbb, fmt)
-  ^ ext_wrap(Ext_Zvbc, fmt)
-  ^ ext_wrap(Ext_Zvkb, fmt)
-  ^ ext_wrap(Ext_Zvkg, fmt)
-  ^ ext_wrap(Ext_Zvkned, fmt)
-  ^ ext_wrap(Ext_Zvknha, fmt)
-  ^ ext_wrap(Ext_Zvknhb, fmt)
-  ^ ext_wrap(Ext_Zvksh, fmt)
-  ^ ext_wrap(Ext_Zvkt, fmt);
-
-  // Append the Supervisor extensions, ordered alphabetically.
-
-  let s_exts = ""
-  ^ ext_wrap(Ext_Sscofpmf, fmt)
-  ^ ext_wrap(Ext_Sstc, fmt)
-  // Handle svade and svadu here when ready.
-  ^ ext_wrap(Ext_Svinval, fmt)
-  ^ ext_wrap(Ext_Svnapot, fmt)
-  ^ ext_wrap(Ext_Svpbmt, fmt);
-
-  // Append the Hypervisor extensions, ordered alphabetically.
-
-  // Append the Machine mode extensions, ordered alphabetically.
-
-  let m_exts = ""
-  ^ ext_wrap(Ext_Smcntrpmf, fmt);
-
-  prefix ^ singles
-  ^ zi_exts ^ za_exts ^ zf_exts ^ zc_exts ^ zb_exts ^ zk_exts ^ zv_exts
-  ^ s_exts ^ m_exts
+  isa_string
 }
 
 // Generates the full Device-Tree configuration for the model.

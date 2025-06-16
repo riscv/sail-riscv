@@ -324,3 +324,98 @@ function clause hartSupports(Ext_Sv57) = config extensions.Sv57.supported : bool
 enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
+
+let extensions_ordered_for_isa_string = [
+  // Single letter extensions.
+  Ext_M,
+  Ext_A,
+  Ext_F,
+  Ext_D,
+  // Ext_G,
+  // Ext_Q,
+  Ext_C,
+  Ext_B,
+  // Ext_P,
+  Ext_V,
+  Ext_H,
+  // S and U are not valid extensions in the device-tree, whereas H is.
+
+  // Z extensions, ordered by category and then alphabetically.
+  // Zi
+  Ext_Zicbom,
+  Ext_Zicboz,
+  Ext_Zicntr,
+  Ext_Zicond,
+  Ext_Zicsr,
+  Ext_Zifencei,
+  Ext_Zihpm,
+  Ext_Zimop,
+
+  // Zm
+  Ext_Zmmul,
+
+  // Za
+  Ext_Zaamo,
+  Ext_Zabha,
+  Ext_Zalrsc,
+  Ext_Zawrs,
+
+  // Zf, Zd, and Zq
+  Ext_Zfa,
+  Ext_Zfh,
+  Ext_Zfhmin,
+  Ext_Zfinx,
+  Ext_Zdinx,
+  Ext_Zhinx,
+  Ext_Zhinxmin,
+
+  // Zc
+  Ext_Zca,
+  Ext_Zcb,
+  Ext_Zcd,
+  Ext_Zcf,
+  Ext_Zcmop,
+
+  // Zb
+  Ext_Zba,
+  Ext_Zbb,
+  Ext_Zbc,
+  Ext_Zbkb,
+  Ext_Zbkc,
+  Ext_Zbkx,
+  Ext_Zbs,
+
+  // Zk
+  Ext_Zknd,
+  Ext_Zkne,
+  Ext_Zknh,
+  Ext_Zkr,
+  Ext_Zksed,
+  Ext_Zksh,
+  Ext_Zkt,
+
+  // Zv
+  Ext_Zvbb,
+  Ext_Zvbc,
+  Ext_Zvkb,
+  Ext_Zvkg,
+  Ext_Zvkned,
+  Ext_Zvknha,
+  Ext_Zvknhb,
+  Ext_Zvksh,
+  Ext_Zvkt,
+
+  // Supervisor extensions, ordered alphabetically.
+  Ext_Sscofpmf,
+  Ext_Sstc,
+  // Ext_Svade,
+  // Ext_Svadu,
+  Ext_Svinval,
+  Ext_Svnapot,
+  Ext_Svpbmt,
+
+  // Hypervisor extensions, ordered alphabetically.
+
+  // Machine mode extensions, ordered alphabetically.
+  Ext_Smcntrpmf,
+]
