@@ -81,9 +81,6 @@ type bitvector = list Sail2_values.bitU
 val load_reservation : forall 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv 'e. bitvector -> monad 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv unit 'e
 let load_reservation addr = return ()
 
-val speculate_conditional_success : forall 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv 'e. unit -> monad 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv bool 'e
-let speculate_conditional_success () = return true
-
 let match_reservation _ = true
 let cancel_reservation () = return ()
 let valid_reservation () = false
