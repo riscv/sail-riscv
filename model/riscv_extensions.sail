@@ -406,6 +406,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvkned,
   Ext_Zvknha,
   Ext_Zvknhb,
+  Ext_Zvksed,
   Ext_Zvksh,
   Ext_Zvkt,
 
