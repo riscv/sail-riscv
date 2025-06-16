@@ -256,6 +256,8 @@ foreach (xlen IN ITEMS 32 64)
                         --strict-var
                         # bits('n) is only well-formed if 'n >= 0.
                         --strict-bitvector
+                        # 2 ^ 'n is only well-formed if 'n >= 0.
+                        --strict-exponentials
                         # Minimum required Sail compiler version.
                         --require-version ${SAIL_REQUIRED_VER}
                         # Optimisations.
