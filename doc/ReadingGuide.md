@@ -106,8 +106,6 @@ such as the platform memory map.
   are represented as a clause of the `execute` function. `mapping`
   clauses specify the encoding and decoding of each instruction to and
   from their binary representations and assembly language formats.
-  Hint instructions that are not implicitly handled elsewhere are
-  explicitly handled in `riscv_insts_hints.sail`.
 
 - `riscv_fetch.sail` contains the instruction fetch function. It
   supports checking and transformation of the fetch address as
