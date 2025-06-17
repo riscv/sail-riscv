@@ -155,6 +155,9 @@ function clause hartSupports(Ext_Zca) = config extensions.Zca.supported
 enum clause extension = Ext_Zcb
 mapping clause extensionName = Ext_Zcb <-> "zcb"
 function clause hartSupports(Ext_Zcb) = config extensions.Zcb.supported
+// Code Size Reduction: compressed table jump instructions
+enum clause extension = Ext_Zcmt
+function clause hartSupports(Ext_Zcmt) = config extensions.Zcmt.supported
 // Code Size Reduction: compressed double precision floating point loads and stores
 enum clause extension = Ext_Zcd
 mapping clause extensionName = Ext_Zcd <-> "zcd"
