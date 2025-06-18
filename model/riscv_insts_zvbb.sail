@@ -520,6 +520,10 @@ function clause execute (VWSLL_VV(vm, vs2, vs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
+  if illegal_reduction_widen(SEW_widen, LMUL_pow_widen) then return Illegal_Instruction();
+
+  assert(SEW_widen <= 64);
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -564,6 +568,10 @@ function clause execute (VWSLL_VX(vm, vs2, rs1, vd)) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
+  if illegal_reduction_widen(SEW_widen, LMUL_pow_widen) then return Illegal_Instruction();
+
+  assert(SEW_widen <= 64);
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -606,6 +614,10 @@ function clause execute (VWSLL_VI(vm, vs2, uimm, vd)) = {
   let num_elem       = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+
+  if illegal_reduction_widen(SEW_widen, LMUL_pow_widen) then return Illegal_Instruction();
+
+  assert(SEW_widen <= 64);
 
   let 'n = num_elem;
   let 'm = SEW;
