@@ -151,6 +151,8 @@ foreach (xlen IN ITEMS 32 64)
                 "prelude_mem.sail"
                 "arithmetic.sail"
                 "rvfi_dii.sail"
+                "rvfi_dii_v1.sail"
+                "rvfi_dii_v2.sail"
             )
 
             set(sail_regs_srcs

@@ -43,30 +43,6 @@ function print_instr_packet(bs) = {
   print_bits("instruction ", p[rvfi_insn])
 }
 
-bitfield RVFI_DII_Execution_Packet_V1 : bits(704) = {
-   rvfi_intr      : 703 .. 696, // [87] Trap handler:            Set for first instruction in trap handler.
-   rvfi_halt      : 695 .. 688, // [86] Halt indicator:          Marks the last instruction retired
-                                //                                      before halting execution.
-   rvfi_trap      : 687 .. 680, // [85] Trap indicator:          Invalid decode, misaligned access or
-                                //                                      jump command to misaligned address.
-   rvfi_rd_addr   : 679 .. 672, // [84]      Write register address:  MUST be 0 if not used.
-   rvfi_rs2_addr  : 671 .. 664, // [83]                          otherwise set as decoded.
-   rvfi_rs1_addr  : 663 .. 656, // [82]      Read register addresses: Can be arbitrary when not used,
-   rvfi_mem_wmask : 655 .. 648, // [81]      Write mask:              Indicates valid bytes written. 0 if unused.
-   rvfi_mem_rmask : 647 .. 640, // [80]      Read mask:               Indicates valid bytes read. 0 if unused.
-   rvfi_mem_wdata : 639 .. 576, // [72 - 79] Write data:              Data written to memory by this command.
-   rvfi_mem_rdata : 575 .. 512, // [64 - 71] Read data:               Data read from mem_addr (i.e. before write)
-   rvfi_mem_addr  : 511 .. 448, // [56 - 63] Memory access addr:      Points to byte address (aligned if define
-                                //                                      is set). *Should* be straightforward.
-                                //                                      0 if unused.
-   rvfi_rd_wdata  : 447 .. 384, // [48 - 55] Write register value:    MUST be 0 if rd_ is 0.
-   rvfi_rs2_data  : 383 .. 320, // [40 - 47]                          above. Must be 0 if register ID is 0.
-   rvfi_rs1_data  : 319 .. 256, // [32 - 39] Read register values:    Values as read from registers named
-   rvfi_insn      : 255 .. 192, // [24 - 31] Instruction word:        32-bit command value.
-   rvfi_pc_wdata  : 191 .. 128, // [16 - 23] PC after instr:          Following PC - either PC + 4 or jump/trap target.
-   rvfi_pc_rdata  : 127 ..  64, // [08 - 15] PC before instr:         PC for current instruction
-   rvfi_order     :  63 ..   0, // [00 - 07] Instruction number:      INSTRET value after completion.
-}
 
 bitfield RVFI_DII_Execution_Packet_InstMetaData : bits(192) = {
   /// The rvfi_order field must be set to the instruction index. No indices
@@ -173,22 +149,6 @@ bitfield RVFI_DII_Execution_Packet_Ext_MemAccess : bits(704) = {
   rvfi_mem_addr : 703 .. 640,
 }
 
-bitfield RVFI_DII_Execution_PacketV2 : bits(512) = {
-  magic : 63 .. 0,         // must be set to 'trace-v2'
-  trace_size : 127 .. 64,  // total size of the trace packet + extensions
-  basic_data : 319 .. 128, // RVFI_DII_Execution_Packet_InstMetaData
-  pc_data : 447 .. 320,    // RVFI_DII_Execution_Packet_PC
-  // available_fields : 511 .. 448,
-  integer_data_available: 448, // Followed by RVFI_DII_Execution_Packet_Ext_Integer if set
-  memory_access_data_available: 449, // Followed by R VFI_DII_Execution_Packet_Ext_MemAccess if set
-  floating_point_data_available: 450, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_FP if set
-  csr_read_write_data_available: 451, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_CSR if set
-  cheri_data_available: 452, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_CHERI if set
-  cheri_scr_read_write_data_available: 453, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_CHERI_SCR if set
-  trap_data_available: 454, // TODO: Followed by RVFI_DII_Execution_Packet_Ext_Trap if set
-  unused_data_available_fields : 511 .. 455, // To be used for additional RVFI_DII_Execution_Packet_Ext_* structs
-}
-
 register rvfi_inst_data : RVFI_DII_Execution_Packet_InstMetaData
 register rvfi_pc_data : RVFI_DII_Execution_Packet_PC
 register rvfi_int_data : RVFI_DII_Execution_Packet_Ext_Integer
@@ -218,71 +178,6 @@ val rvfi_halt_exec_packet : unit -> unit
 
 function rvfi_halt_exec_packet () =
   rvfi_inst_data[rvfi_halt] = 0x01
-
-val rvfi_get_v2_support_packet : unit -> bits(704)
-function rvfi_get_v2_support_packet () = {
-  let rvfi_exec = Mk_RVFI_DII_Execution_Packet_V1(zeros());
-  // Returning 0x3 (using the unused high bits) in halt instead of 0x1 means
-  // that we support the version 2 wire format. This is required to keep
-  // backwards compatibility with old implementations that do not support
-  // the new trace format.
-  let rvfi_exec = update_rvfi_halt(rvfi_exec, 0x03);
-  return rvfi_exec.bits;
-}
-
-val rvfi_get_exec_packet_v1 : unit -> bits(704)
-function rvfi_get_exec_packet_v1 () = {
-  let v1_packet = Mk_RVFI_DII_Execution_Packet_V1(zeros());
-  // Convert the v2 packet to a v1 packet
-  let v1_packet = update_rvfi_intr(v1_packet, rvfi_inst_data[rvfi_intr]);
-  let v1_packet = update_rvfi_halt(v1_packet, rvfi_inst_data[rvfi_halt]);
-  let v1_packet = update_rvfi_trap(v1_packet, rvfi_inst_data[rvfi_trap]);
-  let v1_packet = update_rvfi_insn(v1_packet, rvfi_inst_data[rvfi_insn]);
-  let v1_packet = update_rvfi_order(v1_packet, rvfi_inst_data[rvfi_order]);
-
-  let v1_packet = update_rvfi_pc_wdata(v1_packet, rvfi_pc_data[rvfi_pc_wdata]);
-  let v1_packet = update_rvfi_pc_rdata(v1_packet, rvfi_pc_data[rvfi_pc_rdata]);
-
-  let v1_packet = update_rvfi_rd_addr(v1_packet, rvfi_int_data[rvfi_rd_addr]);
-  let v1_packet = update_rvfi_rs2_addr(v1_packet, rvfi_int_data[rvfi_rs2_addr]);
-  let v1_packet = update_rvfi_rs1_addr(v1_packet, rvfi_int_data[rvfi_rs1_addr]);
-  let v1_packet = update_rvfi_rd_wdata(v1_packet, rvfi_int_data[rvfi_rd_wdata]);
-  let v1_packet = update_rvfi_rs2_data(v1_packet, rvfi_int_data[rvfi_rs2_rdata]);
-  let v1_packet = update_rvfi_rs1_data(v1_packet, rvfi_int_data[rvfi_rs1_rdata]);
-
-  let v1_packet = update_rvfi_mem_wmask(v1_packet, truncate(rvfi_mem_data[rvfi_mem_wmask], 8));
-  let v1_packet = update_rvfi_mem_rmask(v1_packet, truncate(rvfi_mem_data[rvfi_mem_rmask], 8));
-  let v1_packet = update_rvfi_mem_wdata(v1_packet, truncate(rvfi_mem_data[rvfi_mem_wdata], 64));
-  let v1_packet = update_rvfi_mem_rdata(v1_packet, truncate(rvfi_mem_data[rvfi_mem_rdata], 64));
-  let v1_packet = update_rvfi_mem_addr(v1_packet, rvfi_mem_data[rvfi_mem_addr]);
-
-  return v1_packet.bits;
-}
-
-val rvfi_get_v2_trace_size : unit -> bits(64)
-function rvfi_get_v2_trace_size () = {
-  let trace_size : bits(64) = to_bits(512);
-  let trace_size = if (rvfi_int_data_present) then trace_size + 320 else trace_size;
-  let trace_size = if (rvfi_mem_data_present) then trace_size + 704 else trace_size;
-  return trace_size >> 3; // we have to return bytes not bits
-}
-
-val rvfi_get_exec_packet_v2 : unit -> bits(512)
-function rvfi_get_exec_packet_v2 () = {
-  // TODO: add the other data
-  // TODO: find a way to return a variable-length bitvector
-  let packet = Mk_RVFI_DII_Execution_PacketV2(zeros());
-  let packet = update_magic(packet, 0x32762d6563617274); // ASCII "trace-v2" (BE)
-  let packet = update_basic_data(packet, rvfi_inst_data.bits);
-  let packet = update_pc_data(packet, rvfi_pc_data.bits);
-  let packet = update_integer_data_available(packet, bool_to_bits(rvfi_int_data_present));
-  let packet = update_memory_access_data_available(packet, bool_to_bits(rvfi_mem_data_present));
-  // To simplify the implementation (so that we can return a fixed-size vector)
-  // we always return a max-size packet from this function, and the C emulator
-  // ensures that only trace_size bits are sent over the socket.
-  let packet = update_trace_size(packet, rvfi_get_v2_trace_size());
-  return packet.bits;
-}
 
 val rvfi_get_int_data : unit -> bits(320)
 function rvfi_get_int_data () = {
