@@ -136,7 +136,7 @@ function clause execute (C_ADDI(imm, rsd)) = {
 
 mapping clause assembly = C_ADDI(imm, rsd)
   <-> "c.addi" ^ spc() ^ reg_name(rsd) ^ sep() ^ hex_bits_signed_6(imm)
-  when not(imm == zeros() & rsd == zreg)
+  when rsd != zreg
 
 /* ****************************************************************** */
 union clause ast = C_JAL : (bits(11))
