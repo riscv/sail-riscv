@@ -102,7 +102,7 @@ extensions {
       files extensions/A/aext_types.sail
     }
     Zaamo {
-      requires sys, A_types
+      requires sys, A_types, exceptions
       files extensions/A/zaamo_insts.sail
     }
     Zalrsc {
@@ -159,12 +159,6 @@ extensions {
     }
   }
 
-  // Hypervisor
-  H {
-    files
-      extensions/H/hext_insts.sail
-  }
-
   // Floating point (F and D extensions)
   FD {
     FD_core {
@@ -184,6 +178,22 @@ extensions {
         extensions/FD/zcd_insts.sail,
         extensions/FD/zfh_insts.sail,
         extensions/FD/zfa_insts.sail,
+    }
+  }
+
+  // Hypervisor
+  H {
+    H_core {
+      requires exceptions, core
+      before sys
+      files
+        extensions/H/hext_regs.sail,
+        extensions/H/hext_control.sail,
+    }
+    H_insts {
+      requires sys, H_core, exceptions, I_insts, Zca, FD, Zalrsc, Zaamo
+      files
+        extensions/H/hext_insts.sail,
     }
   }
 
@@ -351,7 +361,7 @@ extensions {
       files extensions/Zicbom/zicbom_types.sail
     }
     Zicbom_insts {
-      requires sys, Zicbom_types
+      requires sys, Zicbom_types, exceptions
       files extensions/Zicbom/zicbom_insts.sail
     }
   }
@@ -370,7 +380,7 @@ extensions {
   }
 
   Zicboz {
-    requires sys
+    requires sys, exceptions
     files extensions/Zicboz/zicboz_insts.sail
   }
 
