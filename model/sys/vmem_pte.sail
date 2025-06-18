@@ -129,8 +129,8 @@ function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
     // loads and stores; not instruction fetch.
     Supervisor => not(pte_U) | (do_sum & is_load_store(ac)),
     Machine    => internal_error(__FILE__, __LINE__, "m-mode mem perm check"),
-    VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser => pte_U,
+    VirtualSupervisor => not(pte_U) | (do_sum & is_load_store(ac)),
   };
   if not(priv_ok) then return PTE_Check_Failure((), PTE_No_Permission());
 

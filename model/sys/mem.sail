@@ -37,7 +37,6 @@
 // A helper to check address alignment is also provided in the external API.
 //
 //   is_aligned_addr - checks for alignment of a physical or virtual address
-
 function is_aligned_paddr(Physaddr(addr) : physaddr, width : nat1) -> bool =
   unsigned(addr) % width == 0
 

@@ -67,19 +67,19 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
       if not(is_aligned_addr(vaddr, width))
-      then Memory_Exception(vaddr, E_SAMO_Addr_Align())
+      then memory_exception_with_gva(E_SAMO_Addr_Align(), vaddr)
       else match translateAddr(vaddr, LoadStore(Data, Data)) {
-        Err(e, _) => Memory_Exception(vaddr, e),
+        Err((e, c), _) => Memory_Exception(e, c),
         Ok(addr, _) => {
           // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
           // registers. When the first register of a register pair is
           // x0, then both halves of the pair read/write as zero.
           let rs2_val : bits('width * 8) = if width <= xlen_bytes then trunc(X(rs2)) else trunc(X_pair(rs2));
           match mem_write_ea(addr, width, aq & rl, rl, true) {
-            Err(e) => Memory_Exception(vaddr, e),
+            Err(e) => memory_exception_with_gva(e, vaddr),
             Ok(_) => {
               match mem_read(LoadStore(Data, Data), addr, width, aq, aq & rl, true) {
-                Err(e)     => Memory_Exception(vaddr, e),
+                Err(e)     => memory_exception_with_gva(e, vaddr),
                 Ok(loaded) => {
                   let result : bits('width * 8) =
                     match op {
@@ -112,7 +112,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
                         RETIRE_SUCCESS
                       },
                       Ok(false) => { internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value") },
-                      Err(e)    => Memory_Exception(vaddr, e),
+                      Err(e)    => memory_exception_with_gva(e, vaddr),
                     }
                   }
                 }

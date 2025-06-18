@@ -10,7 +10,7 @@
 
 function clause currentlyEnabled(Ext_Zicbom) = hartSupports(Ext_Zicbom)
 
-function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], senvcfg[CBCFE][0])
+function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], senvcfg[CBCFE][0], henvcfg[CBCFE][0])
 
 // *****************************************************************
 union clause instruction = ZICBOM : (cbop_zicbom, regidx)
@@ -51,19 +51,30 @@ enum checked_cbop = {CBOP_ILLEGAL, CBOP_ILLEGAL_VIRTUAL, CBOP_INVAL_FLUSH, CBOP_
 // Select the cbop to perform based on the privilege.
 function cbop_priv_check(p: Privilege) -> checked_cbop = {
   let mCBIE : cbie = encdec_cbie(menvcfg[CBIE]);
-  // TODO: check henvcfg after hypervisor is implemented
   let sCBIE : cbie = if   currentlyEnabled(Ext_S)
                      then encdec_cbie(senvcfg[CBIE])
                      else encdec_cbie(menvcfg[CBIE]);
-  match (p, mCBIE, sCBIE) {
-    (VirtualUser, _, _)       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    (VirtualSupervisor, _, _) => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    (Machine, _,               _              ) => CBOP_INVAL_INVAL,
-    (_,       CBIE_ILLEGAL,    _              ) => CBOP_ILLEGAL,      // (priv_mode != M) && mCBIE == 00
-    (User,    _,               CBIE_ILLEGAL   ) => CBOP_ILLEGAL,      // (priv_mode == U) && sCBIE == 00
-    (_,       CBIE_EXEC_FLUSH, _              ) => CBOP_INVAL_FLUSH,  // (priv_mode != M) && mCBIE == 01
-    (User,    _,               CBIE_EXEC_FLUSH) => CBOP_INVAL_FLUSH,  // (priv_mode == U) && sCBIE == 01
-    _                                           => CBOP_INVAL_INVAL,
+  let hCBIE : cbie = if   currentlyEnabled(Ext_H)
+                     then encdec_cbie(henvcfg[CBIE])
+                     else encdec_cbie(menvcfg[CBIE]);
+  match (p, mCBIE, sCBIE, hCBIE) {
+    (Machine, _, _ , _) => CBOP_INVAL_INVAL,
+
+    (_   , CBIE_ILLEGAL, _, _) => CBOP_ILLEGAL, // (priv_mode != M) && mCBIE == 00
+    (User, _, CBIE_ILLEGAL, _) => CBOP_ILLEGAL, // (priv_mode == U) && sCBIE == 00
+
+    (VirtualSupervisor, _, _, CBIE_ILLEGAL) => CBOP_ILLEGAL_VIRTUAL, // (priv_mode == VS) && hCBIE == 00
+    (VirtualUser      , _, _, CBIE_ILLEGAL) => CBOP_ILLEGAL_VIRTUAL, // (priv_mode == VU) && hCBIE == 00
+    (VirtualUser      , _, CBIE_ILLEGAL, _) => CBOP_ILLEGAL_VIRTUAL, // (priv_mode == VU) && sCBIE == 00
+
+    (_   , CBIE_EXEC_FLUSH, _, _) => CBOP_INVAL_FLUSH,  // (priv_mode != M) && mCBIE == 01
+    (User, _, CBIE_EXEC_FLUSH, _) => CBOP_INVAL_FLUSH,  // (priv_mode == U) && sCBIE == 01
+
+    (VirtualSupervisor, _, _, CBIE_EXEC_FLUSH) => CBOP_INVAL_FLUSH, // (priv_mode == VS) && hCBIE == 01
+    (VirtualUser      , _, _, CBIE_EXEC_FLUSH) => CBOP_INVAL_FLUSH, // (priv_mode == VU) && hCBIE == 01
+    (VirtualUser      , _, CBIE_EXEC_FLUSH, _) => CBOP_INVAL_FLUSH, // (priv_mode == VU) && sCBIE == 01
+
+    _ => CBOP_INVAL_INVAL,
   }
 }
 
@@ -107,7 +118,7 @@ function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> ExecutionResul
             _ => None(),
           }
         },
-        Err(e, _) => Some(e)
+        Err((e, _), _) => Some(e)
       };
       // "If access to the cache block is not permitted, a cache-block management
       //  instruction raises a store page fault or store guest-page fault exception
@@ -130,7 +141,7 @@ function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> ExecutionResul
           // was encoded in the instruction. We subtract the negative offset
           // (add the positive offset) to get it. Normally this will be
           // equal to rs1, but pointer masking can change that.
-          Memory_Exception(vaddr - negative_offset, e)
+          memory_exception_with_gva(e, vaddr - negative_offset)
         }
       }
     }
@@ -150,7 +161,7 @@ function clause execute ZICBOM(CBO_FLUSH, rs1) =
 function clause execute ZICBOM(CBO_INVAL, rs1) =
   match cbop_priv_check(cur_privilege) {
     CBOP_ILLEGAL         => Illegal_Instruction(),
-    CBOP_ILLEGAL_VIRTUAL => internal_error(__FILE__, __LINE__, "unimplemented"),
+    CBOP_ILLEGAL_VIRTUAL => Virtual_Instruction(),
     CBOP_INVAL_INVAL     => process_clean_inval(rs1, CBO_INVAL),
     CBOP_INVAL_FLUSH     => process_clean_inval(rs1, CBO_FLUSH),
   }
