@@ -164,8 +164,8 @@ bitfield Mstatus : bits(64) = {
   //MDT  : 42,
   //MPELP: 41,
 
-  //MPV  : 39,
-  //GVA  : 38,
+  MPV  : 39,
+  GVA  : 38,
 
   MBE  : 37,
   SBE  : 36,
@@ -205,8 +205,8 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
   let o = [o with
     // MDT = v[MDT],
     // MPELP = v[MPELP],
-    // MPV = v[MPV],
-    // GVA = v[GVA],
+    MPV = if currentlyEnabled(Ext_H) then v[MPV] else 0b0,
+    GVA = if currentlyEnabled(Ext_H) then v[GVA] else 0b0,
     // We don't currently support changing MBE and SBE.
     // MBE = v[MBE],
     // SBE = v[SBE],
@@ -435,14 +435,18 @@ function is_fiom_active() -> bool = {
 // interrupt processing state
 
 bitfield Minterrupts : xlenbits = {
-  MEI : 11, // external interrupts
-  SEI : 9,
+  SGEI : 12, // guest external interrupts
+  MEI   : 11, // external interrupts
+  VSEI : 10,
+  SEI   : 9,
 
-  MTI : 7,  // timers interrupts
-  STI : 5,
+  MTI   : 7,  // timers interrupts
+  VSTI : 6,
+  STI   : 5,
 
-  MSI : 3,  // software interrupts
-  SSI : 1,
+  MSI   : 3,  // software interrupts
+  VSSI : 2,
+  SSI   : 1,
 }
 
 function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
@@ -479,10 +483,15 @@ function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
 // exception processing state
 
 bitfield Medeleg : bits(64) = {
+  SAMO_GPage_Fault  : 23,
+  Virtual_Instr     : 22,
+  Load_GPage_Fault  : 21,
+  Fetch_GPage_Fault : 20,
   SAMO_Page_Fault   : 15,
   Load_Page_Fault   : 13,
   Fetch_Page_Fault  : 12,
   MEnvCall          : 11,
+  VSEnvCall         : 10,
   SEnvCall          : 9,
   UEnvCall          : 8,
   SAMO_Access_Fault : 7,
@@ -766,11 +775,40 @@ function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
   legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(zero_extend(v))).bits)
 }
 
+function legalize_vsstatus(o : Sstatus, v : bits(64)) -> Sstatus = {
+  let dirty = extStatus_of_bits(o[FS]) == Dirty | extStatus_of_bits(o[XS]) == Dirty |
+              extStatus_of_bits(o[VS]) == Dirty;
+  let s = Mk_Sstatus(v);
+  [o with
+    SD = bool_to_bits(dirty),
+    UXL = s[UXL],
+    //SDT = s[SDT],
+    //SPELP = s[SPELP],
+    MXR = s[MXR],
+    SUM = s[SUM],
+    XS = s[XS],
+    FS = s[FS],
+    VS = s[VS],
+    SPP = s[SPP],
+    SPIE = s[SPIE],
+    SIE = s[SIE],
+  ]
+}
+
+register vsstatus : Sstatus // Virtual Supervisor Status Register
+register vscause : Mcause // Virtual Supervisor Cause Register
+register vsepc   : xlenbits // Virtual Supervisor Exception Program Counter
+register vstval  : xlenbits // Virtual Supervisor Trap Value Register
+register vstvec  : Mtvec  // Virtual Supervisor Trap Vector Base Address Register
+
 mapping clause csr_name_map = 0x100  <-> "sstatus"
 function clause is_CSR_accessible(0x100, _, _) = currentlyEnabled(Ext_S) // sstatus
-function clause read_CSR(0x100) = lower_mstatus(mstatus).bits[xlen - 1 .. 0]
-function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); Ok(lower_mstatus(mstatus).bits[xlen - 1 .. 0]) }
-
+function clause read_CSR(0x100) = if privLevel_is_virtual(cur_privilege) then vsstatus.bits[xlen - 1 .. 0]
+                                  else lower_mstatus(mstatus).bits[xlen - 1 .. 0]
+function clause write_CSR(0x100, value) = if privLevel_is_virtual(cur_privilege) then
+  { vsstatus = legalize_vsstatus(vsstatus, zero_extend(value)); Ok(vsstatus.bits[xlen - 1 .. 0]) }
+  else
+  { mstatus = legalize_sstatus(mstatus, value); Ok(lower_mstatus(mstatus).bits[xlen - 1 .. 0]) }
 
 bitfield Sinterrupts : xlenbits = {
   SEI : 9,  // external interrupts
