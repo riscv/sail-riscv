@@ -731,7 +731,7 @@ function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
 mapping clause csr_name_map = 0x100  <-> "sstatus"
 function clause is_CSR_defined(0x100) = currentlyEnabled(Ext_S) // sstatus
 function clause read_CSR(0x100) = lower_mstatus(mstatus).bits[xlen - 1 .. 0]
-function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); mstatus.bits[xlen - 1 .. 0] }
+function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); lower_mstatus(mstatus).bits[xlen - 1 .. 0] }
 
 
 bitfield Sinterrupts : xlenbits = {
