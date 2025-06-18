@@ -95,6 +95,11 @@ mapping sp_reg_name : unit <-> string = {
   () if not(get_config_use_abi_names()) <-> "x2",
 }
 
+mapping zero_reg_name : unit <-> string = {
+  () if get_config_use_abi_names() <-> "zero",
+  () if not(get_config_use_abi_names()) <-> "x0",
+}
+
 mapping creg_name : cregidx <-> string = { Cregidx(i) <-> reg_name(Regidx(0b01 @ i)) }
 
 function xreg_write_callback(reg : regidx, value : xlenbits) -> unit = {

@@ -14,7 +14,23 @@
  */
 
 /* ****************************************************************** */
+union clause ast = C_NOP : (bits(6))
 
+mapping clause encdec_compressed = C_NOP(imm5 @ imm40)
+  <-> 0b000 @ imm5 : bits(1) @ 0b00000 @ imm40 : bits(5) @ 0b01
+  when currentlyEnabled(Ext_Zca)
+
+function clause execute C_NOP(_) = RETIRE_SUCCESS
+
+// imm=0 corresponds to `c.nop` without an argument (`c.nop 0` is not legal).
+mapping clause assembly = C_NOP(0b000000)
+  <-> "c.nop"
+
+mapping clause assembly = C_NOP(imm)
+  <-> "c.nop" ^ spc() ^ hex_bits_signed_6(imm)
+  when imm != zeros()
+
+/* ****************************************************************** */
 union clause ast = C_ADDI4SPN : (cregidx, bits(8))
 
 mapping clause encdec_compressed = C_ADDI4SPN(rd, nz96 @ nz54 @ nz3 @ nz2)
@@ -107,24 +123,20 @@ mapping clause assembly = C_SD(uimm, rsc1, rsc2)
 /* ****************************************************************** */
 union clause ast = C_ADDI : (bits(6), regidx)
 
-// c.addi with rd=x0 is c.nop.
+// Code points with rd=x0 are c.nop.
 // c.addi with imm=0 are hints.
-mapping clause encdec_compressed = C_ADDI(nzi5 @ nzi40, rsd)
-  <-> 0b000 @ nzi5 : bits(1) @ encdec_reg(rsd) @ nzi40 : bits(5) @ 0b01
-  when currentlyEnabled(Ext_Zca)
+mapping clause encdec_compressed = C_ADDI(imm5 @ imm40, rsd)
+  <-> 0b000 @ imm5 : bits(1) @ encdec_reg(rsd) @ imm40 : bits(5) @ 0b01
+  when rsd != zreg & currentlyEnabled(Ext_Zca)
 
-function clause execute (C_ADDI(nzi, rsd)) = {
-  let imm : bits(12) = sign_extend(nzi);
+function clause execute (C_ADDI(imm, rsd)) = {
+  let imm : bits(12) = sign_extend(imm);
   execute(ITYPE(imm, rsd, rsd, ADDI))
 }
 
-mapping clause assembly = C_ADDI(nzi, rsd)
-  <-> "c.addi" ^ spc() ^ reg_name(rsd) ^ sep() ^ hex_bits_signed_6(nzi)
-  when not(nzi == zeros() & rsd == zreg)
-
-// If imm=0 and rd=x0 then this has special assembly `c.nop`.
-mapping clause assembly = C_ADDI(0b000000, Regidx(0b00000))
-  <-> "c.nop"
+mapping clause assembly = C_ADDI(imm, rsd)
+  <-> "c.addi" ^ spc() ^ reg_name(rsd) ^ sep() ^ hex_bits_signed_6(imm)
+  when not(imm == zeros() & rsd == zreg)
 
 /* ****************************************************************** */
 union clause ast = C_JAL : (bits(11))
@@ -190,8 +202,8 @@ mapping clause assembly = C_ADDI16SP(imm)
 union clause ast = C_LUI : (bits(6), regidx)
 
 // c.lui with rd=x0 are hints.
-// c.lui with rd=x2 are c.addi16sp.
-// c.lui with imm=0 are reserved.
+// Code points with rd=x2 are c.addi16sp.
+// Code points with imm=0 are reserved.
 mapping clause encdec_compressed = C_LUI(imm17 @ imm1612, rd)
   <-> 0b011 @ imm17 : bits(1) @ encdec_reg(rd) @ imm1612 : bits(5) @ 0b01
   when rd != sp & imm17 @ imm1612 != 0b000000 & currentlyEnabled(Ext_Zca)
@@ -497,7 +509,7 @@ mapping clause assembly = C_JALR(rs1)
 /* ****************************************************************** */
 union clause ast = C_MV : (regidx, regidx)
 
-// c.mv with rs2=0 are c.jr.
+// Code points with rs2=0 are c.jr.
 // c.mv with rd=x0 are hints.
 mapping clause encdec_compressed = C_MV(rd, rs2)
   <-> 0b100 @ 0b0 @ encdec_reg(rd) @ encdec_reg(rs2) @ 0b10
@@ -525,8 +537,8 @@ mapping clause assembly = C_EBREAK() <-> "c.ebreak"
 /* ****************************************************************** */
 union clause ast = C_ADD : (regidx, regidx)
 
-// `c.add` with rs2=x0 are `c.jalr`/`c.ebreak`.
-// `c.add` with rd=x0 are hints.
+// Code points with rs2=x0 are c.jalr/c.ebreak.
+// c.add with rd=x0 are hints.
 mapping clause encdec_compressed = C_ADD(rsd, rs2)
   <-> 0b100 @ 0b1 @ encdec_reg(rsd) @ encdec_reg(rs2) @ 0b10
   when rs2 != zreg & currentlyEnabled(Ext_Zca)
