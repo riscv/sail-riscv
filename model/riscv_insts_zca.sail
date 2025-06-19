@@ -404,7 +404,7 @@ mapping clause assembly = C_BNEZ(imm, rs)
 /* ****************************************************************** */
 union clause ast = C_SLLI : (bits(6), regidx)
 
-// c.slli with shamt=0 or rd=x0 are hints.
+// c.slli with shamt=0 or rsd=x0 are hints.
 mapping clause encdec_compressed = C_SLLI(nzui5 @ nzui40, rsd)
   <-> 0b000 @ nzui5 : bits(1) @ encdec_reg(rsd) @ nzui40 : bits(5) @ 0b10
   when (xlen == 64 | nzui5 == 0b0) & currentlyEnabled(Ext_Zca)
