@@ -150,7 +150,7 @@ function virtual_memory_supported() -> bool = {
 function lowest_supported_privLevel() -> Privilege =
   if currentlyEnabled(Ext_U) then User else Machine
 
-function have_privLevel(priv : priv_level) -> bool =
+function have_privLevel(priv : nom_priv_bits) -> bool =
   match priv {
     0b00 => currentlyEnabled(Ext_U),
     0b01 => currentlyEnabled(Ext_S),
@@ -198,7 +198,7 @@ bitfield Mstatus : bits(64) = {
 
 function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
   if   t != InstructionFetch() & m[MPRV] == 0b1
-  then privLevel_of_bits(m[MPP])
+  then privLevel_of_bits(m[MPP], bitzero) // TODO: use m[MPP] if hypervisor enabled
   else priv
 
 function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
@@ -294,9 +294,11 @@ function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_m
 function cur_architecture() -> Architecture = {
   let a : arch_xlen =
     match cur_privilege {
-      Machine    => misa[MXL],
-      Supervisor => get_mstatus_SXL(mstatus),
-      User       => get_mstatus_UXL(mstatus)
+      Machine           => misa[MXL],
+      Supervisor        => get_mstatus_SXL(mstatus),
+      User              => get_mstatus_UXL(mstatus),
+      VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+      VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     };
   architecture(a)
 }
@@ -387,9 +389,11 @@ function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, 
 // imply memory fence.
 function is_fiom_active() -> bool = {
   match cur_privilege {
-    Machine => false,
-    Supervisor => menvcfg[FIOM] == 0b1,
-    User => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
+    Machine           => false,
+    Supervisor        => menvcfg[FIOM] == 0b1,
+    User              => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   }
 }
 
