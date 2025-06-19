@@ -538,7 +538,7 @@ mapping clause assembly = C_EBREAK() <-> "c.ebreak"
 union clause ast = C_ADD : (regidx, regidx)
 
 // Code points with rs2=x0 are c.jalr/c.ebreak.
-// c.add with rd=x0 are hints.
+// c.add with rsd=x0 are hints.
 mapping clause encdec_compressed = C_ADD(rsd, rs2)
   <-> 0b100 @ 0b1 @ encdec_reg(rsd) @ encdec_reg(rs2) @ 0b10
   when rs2 != zreg & currentlyEnabled(Ext_Zca)
