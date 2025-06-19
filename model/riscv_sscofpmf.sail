@@ -69,9 +69,11 @@ function get_scountovf(priv : Privilege) -> bits(32) = {
     mhpmevent[ 3][OF] @ 0b000;
 
   match priv {
-    Machine => overflow,
-    Supervisor => overflow & mcounteren.bits,
-    User => internal_error(__FILE__, __LINE__, "scountovf not readable from User mode"),
+    Machine           => overflow,
+    Supervisor        => overflow & mcounteren.bits,
+    User              => internal_error(__FILE__, __LINE__, "scountovf not readable from User mode"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   }
 }
 

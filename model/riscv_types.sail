@@ -61,26 +61,33 @@ mapping architecture : Architecture <-> arch_xlen = {
   backwards 0b00 => internal_error(__FILE__, __LINE__, "architecture(0b00) is invalid")
 }
 
-// privilege levels
+// nominal privilege levels
+type nom_priv_bits = bits(2)
 
-type priv_level = bits(2)
-enum Privilege  = {User, Supervisor, Machine}
+// virtualization modes
+type virt_mode_bit = bit
 
-mapping privLevel_bits : Privilege <-> priv_level = {
-  User       <-> 0b00,
-  Supervisor <-> 0b01,
-  Machine    <-> 0b11,
-  backwards 0b10 => internal_error(__FILE__, __LINE__, "Invalid privilege level: " ^ bits_str(0b10))
+enum Privilege  = {User, VirtualUser, Supervisor, VirtualSupervisor, Machine}
+
+mapping privLevel_bits : (nom_priv_bits, virt_mode_bit) <-> Privilege = {
+  (0b00, bitzero) <-> User,
+  (0b00, bitone ) <-> VirtualUser,
+  (0b01, bitzero) <-> Supervisor,
+  (0b01, bitone ) <-> VirtualSupervisor,
+  (0b11, bitzero) <-> Machine,
+  forwards _       => internal_error(__FILE__, __LINE__, "Invalid privilege level or virtual mode"),
 }
 
-function privLevel_to_bits(p : Privilege) -> priv_level = privLevel_bits(p)
-function privLevel_of_bits(b : priv_level) -> Privilege = privLevel_bits(b)
+function privLevel_to_bits(p : Privilege) -> nom_priv_bits = { let (p, _) = privLevel_bits(p); p }
+function privLevel_of_bits(p : nom_priv_bits, v : virt_mode_bit) -> Privilege = privLevel_bits((p, v))
 
 function privLevel_to_str (p : Privilege) -> string =
   match (p) {
-    User       => "U",
-    Supervisor => "S",
-    Machine    => "M"
+    User              => "U",
+    VirtualUser       => "VU",
+    Supervisor        => if currentlyEnabled(Ext_H) then "HS" else "S",
+    VirtualSupervisor => "VS",
+    Machine           => "M"
   }
 
 overload to_str = {privLevel_to_str}
