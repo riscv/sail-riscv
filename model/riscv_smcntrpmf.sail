@@ -15,8 +15,8 @@ function legalize_smcntrpmf(c : CountSmcntrpmf, value : bits(64)) -> CountSmcntr
     MINH  = v[MINH],
     SINH  = if currentlyEnabled(Ext_S) then v[SINH] else 0b0,
     UINH  = if currentlyEnabled(Ext_U) then v[UINH] else 0b0,
-    // VSINH = v[VSINH],
-    // VUINH = v[VUINH],
+    VSINH = if currentlyEnabled(Ext_S) & currentlyEnabled(Ext_H) then v[VSINH] else 0b0,
+    VUINH = if currentlyEnabled(Ext_U) & currentlyEnabled(Ext_H) then v[VUINH] else 0b0,
   ]
 }
 
@@ -48,10 +48,11 @@ function clause write_CSR((0x722, value) if xlen == 32) = { minstretcfg = legali
 function counter_priv_filter_bit(reg : CountSmcntrpmf, priv : Privilege) -> bits(1) =
   // When all xINH bits are zero, event counting is enabled in all modes.
   match priv {
-    Machine    => reg[MINH],
-    Supervisor => reg[SINH],
-    User       => reg[UINH],
-    // TODO: VSINH, VUINH when those modes are defined
+    Machine           => reg[MINH],
+    Supervisor        => reg[SINH],
+    VirtualSupervisor => reg[VSINH],
+    User              => reg[UINH],
+    VirtualUser       => reg[VUINH],
   }
 
 function should_inc_mcycle(priv : Privilege) -> bool =

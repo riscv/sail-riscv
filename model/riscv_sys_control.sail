@@ -30,6 +30,7 @@ function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bit, super
   Machine => true,
   Supervisor => machine_enable_bit == bitone,
   User => machine_enable_bit == bitone & (not(currentlyEnabled(Ext_S)) | supervisor_enable_bit == bitone),
+  _ => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported yet"),
 }
 
 // Return true if the counter is enabled OR the CSR is not a counter.
@@ -64,6 +65,7 @@ function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
       Machine => true,
       Supervisor => false, /* TODO: base this on mseccfg */
       User => false, /* TODO: base this on mseccfg */
+      _ => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported yet"),
     }
   }
 }
@@ -216,6 +218,7 @@ function track_trap(p : Privilege) -> unit = {
       csr_write_callback("sepc", sepc);
     },
     User => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    _ => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported yet"),
   };
 }
 
@@ -258,7 +261,8 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        mstatus[SPP]  = match cur_privilege {
                            User => 0b0,
                            Supervisor => 0b1,
-                           Machine => internal_error(__FILE__, __LINE__, "invalid privilege for s-mode trap")
+                           Machine => internal_error(__FILE__, __LINE__, "invalid privilege for s-mode trap"),
+                           _ => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported yet"),
                          };
        stval           = tval(info);
        sepc            = pc;
@@ -272,6 +276,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        prepare_trap_vector(del_priv, scause)
     },
     User => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    _    => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported yet"),
   };
 }
 

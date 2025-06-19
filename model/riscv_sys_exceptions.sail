@@ -23,6 +23,7 @@ function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
                        Machine    => mtvec,
                        Supervisor => stvec,
                        User       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+                       _          => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported yet"),
                      };
   match tvec_addr(tvec, cause) {
     Some(epc) => epc,
@@ -43,6 +44,7 @@ function get_xepc(p) =
     Machine    => align_pc(mepc),
     Supervisor => align_pc(sepc),
     User       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    _          => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported yet"),
   }
 
 val set_xepc : (Privilege, xlenbits) -> xlenbits
@@ -52,6 +54,7 @@ function set_xepc(p, value) = {
     Machine    => mepc = target,
     Supervisor => sepc = target,
     User       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    _          => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported yet"),
   };
   target
 }

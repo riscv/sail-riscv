@@ -296,7 +296,8 @@ function cur_architecture() -> Architecture = {
     match cur_privilege {
       Machine    => misa[MXL],
       Supervisor => get_mstatus_SXL(mstatus),
-      User       => get_mstatus_UXL(mstatus)
+      User       => get_mstatus_UXL(mstatus),
+      _          => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported yet"),
     };
   architecture(a)
 }
@@ -390,6 +391,7 @@ function is_fiom_active() -> bool = {
     Machine => false,
     Supervisor => menvcfg[FIOM] == 0b1,
     User => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
+    _ => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported yet"),
   }
 }
 

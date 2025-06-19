@@ -525,7 +525,8 @@ function clause execute ECALL() = {
     struct { trap = match (cur_privilege) {
                       User       => E_U_EnvCall(),
                       Supervisor => E_S_EnvCall(),
-                      Machine    => E_M_EnvCall()
+                      Machine    => E_M_EnvCall(),
+                      _          => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported yet"),
                     },
              excinfo = (None() : option(xlenbits)),
              ext     = None() };
@@ -563,7 +564,8 @@ function clause execute SRET() = {
   let sret_illegal : bool = match cur_privilege {
     User       => true,
     Supervisor => not(currentlyEnabled(Ext_S)) | mstatus[TSR] == 0b1,
-    Machine    => not(currentlyEnabled(Ext_S))
+    Machine    => not(currentlyEnabled(Ext_S)),
+    _          => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported yet"),
   };
   if   sret_illegal
   then Illegal_Instruction()
@@ -600,7 +602,8 @@ function clause execute WFI() =
     Supervisor => if   mstatus[TW] == 0b1
                   then Illegal_Instruction()
                   else Enter_Wait(WAIT_WFI),
-    User       => Illegal_Instruction()
+    User       => Illegal_Instruction(),
+    _          => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported yet"),
   }
 
 mapping clause assembly = WFI() <-> "wfi"
@@ -624,7 +627,8 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
                     0b1 => Illegal_Instruction(),
                     0b0 => { flush_TLB(asid, addr); RETIRE_SUCCESS },
                   },
-    Machine    => { flush_TLB(asid, addr); RETIRE_SUCCESS }
+    Machine    => { flush_TLB(asid, addr); RETIRE_SUCCESS },
+    _          => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported yet"),
   }
 }
 

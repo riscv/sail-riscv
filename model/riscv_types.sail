@@ -58,23 +58,27 @@ mapping architecture : Architecture <-> arch_xlen = {
 /* privilege levels */
 
 type priv_level = bits(2)
-enum Privilege  = {User, Supervisor, Machine}
+enum Privilege  = {User, VirtualUser, Supervisor, VirtualSupervisor, Machine}
 
-mapping privLevel_bits : Privilege <-> priv_level = {
-  User       <-> 0b00,
-  Supervisor <-> 0b01,
-  Machine    <-> 0b11,
+mapping nominalPrivLevel_bits : Privilege <-> priv_level = {
+  User                       <-> 0b00,
+  forwards VirtualUser        => 0b00,
+  Supervisor                 <-> 0b01,
+  forwards VirtualSupervisor  => 0b01,
+  Machine                    <-> 0b11,
   backwards 0b10 => internal_error(__FILE__, __LINE__, "Invalid privilege level: " ^ BitStr(0b10))
 }
 
-function privLevel_to_bits(p : Privilege) -> priv_level = privLevel_bits(p)
-function privLevel_of_bits(b : priv_level) -> Privilege = privLevel_bits(b)
+function privLevel_to_bits(p : Privilege) -> priv_level = nominalPrivLevel_bits(p)
+function privLevel_of_bits(b : priv_level) -> Privilege = nominalPrivLevel_bits(b)
 
 function privLevel_to_str (p : Privilege) -> string =
   match (p) {
-    User       => "U",
-    Supervisor => "S",
-    Machine    => "M"
+    User              => "U",
+    VirtualUser       => "VU",
+    Supervisor        => "HS",
+    VirtualSupervisor => "VS",
+    Machine           => "M"
   }
 
 overload to_str = {privLevel_to_str}
