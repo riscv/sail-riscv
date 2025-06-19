@@ -123,7 +123,7 @@ mapping clause assembly = C_SD(uimm, rsc1, rsc2)
 /* ****************************************************************** */
 union clause ast = C_ADDI : (bits(6), regidx)
 
-// Code points with rd=x0 are c.nop.
+// Code points with rsd=x0 are c.nop.
 // c.addi with imm=0 are hints.
 mapping clause encdec_compressed = C_ADDI(imm5 @ imm40, rsd)
   <-> 0b000 @ imm5 : bits(1) @ encdec_reg(rsd) @ imm40 : bits(5) @ 0b01
