@@ -130,7 +130,10 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
                                           | ((pte_X == 0b1) & mxr)),
       (InstructionFetch(),Supervisor) => (pte_U == 0b0) & (pte_X == 0b1),
       (_,               Machine)    => internal_error(__FILE__, __LINE__,
-                                                      "m-mode mem perm check")};
+                                                      "m-mode mem perm check"),
+      (_, VirtualUser)       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+      (_, VirtualSupervisor) => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    };
   if success then PTE_Check_Success(())
   else            PTE_Check_Failure((), ())
 }
