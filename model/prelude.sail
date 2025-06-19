@@ -104,11 +104,6 @@ mapping bool_bits : bool <-> bits(1) = {
   false  <-> 0b0,
 }
 
-mapping bool_not_bits : bool <-> bits(1) = {
-  true   <-> 0b0,
-  false  <-> 0b1,
-}
-
 // These aliases make the conversion direction a bit clearer.
 function bool_to_bit(x : bool) -> bit = bool_bit(x)
 function bit_to_bool(x : bit) -> bool = bool_bit(x)

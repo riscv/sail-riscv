@@ -8,7 +8,6 @@
 
 /* ****************************************************************** */
 /* This file specifies the instructions in the 'M' extension.         */
-
 /* ****************************************************************** */
 
 function clause currentlyEnabled(Ext_M) = hartSupports(Ext_M) & misa[M] == 0b1
@@ -20,7 +19,7 @@ mapping encdec_mul_op : mul_op <-> bits(3) = {
   struct { high = false, signed_rs1 = true,  signed_rs2 = true  } <-> 0b000,
   struct { high = true,  signed_rs1 = true,  signed_rs2 = true  } <-> 0b001,
   struct { high = true,  signed_rs1 = true,  signed_rs2 = false } <-> 0b010,
-  struct { high = true,  signed_rs1 = false, signed_rs2 = false } <-> 0b011
+  struct { high = true,  signed_rs1 = false, signed_rs2 = false } <-> 0b011,
 }
 
 mapping clause encdec = MUL(rs2, rs1, rd, mul_op)
@@ -53,50 +52,45 @@ mapping clause assembly = MUL(rs2, rs1, rd, mul_op)
 /* ****************************************************************** */
 union clause ast = DIV : (regidx, regidx, regidx, bool)
 
-mapping clause encdec = DIV(rs2, rs1, rd, s)
-  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b10 @ bool_not_bits(s) @ encdec_reg(rd) @ 0b0110011
+mapping clause encdec = DIV(rs2, rs1, rd, is_unsigned)
+  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b10 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_M)
 
-function clause execute (DIV(rs2, rs1, rd, s)) = {
+function clause execute (DIV(rs2, rs1, rd, is_unsigned)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
-  let rs1_int = if s then signed(rs1_val) else unsigned(rs1_val);
-  let rs2_int = if s then signed(rs2_val) else unsigned(rs2_val);
+  let rs1_int = if is_unsigned then unsigned(rs1_val) else signed(rs1_val);
+  let rs2_int = if is_unsigned then unsigned(rs2_val) else signed(rs2_val);
   let q = if rs2_int == 0 then -1 else quot_round_zero(rs1_int, rs2_int);
   /* check for signed overflow */
-  let q' = if s & q >= 2 ^ (xlen - 1) then negate(2 ^ (xlen - 1)) else q;
+  let q' = if not(is_unsigned) & q >= 2 ^ (xlen - 1) then negate(2 ^ (xlen - 1)) else q;
   X(rd) = to_bits_unsafe(xlen, q');
   RETIRE_SUCCESS
 }
 
-mapping maybe_not_u : bool <-> string = {
-  false <-> "u",
-  true  <-> ""
-}
-
-mapping clause assembly = DIV(rs2, rs1, rd, s)
-  <-> "div" ^ maybe_not_u(s) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+mapping clause assembly = DIV(rs2, rs1, rd, is_unsigned)
+  <-> "div" ^ maybe_u(is_unsigned) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
 union clause ast = REM : (regidx, regidx, regidx, bool)
 
-mapping clause encdec = REM(rs2, rs1, rd, s)
-  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b11 @ bool_not_bits(s) @ encdec_reg(rd) @ 0b0110011
+mapping clause encdec = REM(rs2, rs1, rd, is_unsigned)
+  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b11 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_M)
 
-function clause execute (REM(rs2, rs1, rd, s)) = {
+function clause execute (REM(rs2, rs1, rd, is_unsigned)) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
-  let rs1_int = if s then signed(rs1_val) else unsigned(rs1_val);
-  let rs2_int = if s then signed(rs2_val) else unsigned(rs2_val);
+  let rs1_int = if is_unsigned then unsigned(rs1_val) else signed(rs1_val);
+  let rs2_int = if is_unsigned then unsigned(rs2_val) else signed(rs2_val);
   let r = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
   /* signed overflow case returns zero naturally as required due to -1 divisor */
   X(rd) = to_bits_unsafe(xlen, r);
   RETIRE_SUCCESS
 }
 
-mapping clause assembly = REM(rs2, rs1, rd, s)
-  <-> "rem" ^ maybe_not_u(s) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+mapping clause assembly = REM(rs2, rs1, rd, is_unsigned)
+  <-> "rem" ^ maybe_u(is_unsigned) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
 union clause ast = MULW : (regidx, regidx, regidx)
@@ -124,44 +118,44 @@ mapping clause assembly = MULW(rs2, rs1, rd)
 /* ****************************************************************** */
 union clause ast = DIVW : (regidx, regidx, regidx, bool)
 
-mapping clause encdec = DIVW(rs2, rs1, rd, s)
-  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b10 @ bool_not_bits(s) @ encdec_reg(rd) @ 0b0111011
+mapping clause encdec = DIVW(rs2, rs1, rd, is_unsigned)
+  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b10 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0111011
   when xlen == 64 & currentlyEnabled(Ext_M)
 
-function clause execute (DIVW(rs2, rs1, rd, s)) = {
+function clause execute (DIVW(rs2, rs1, rd, is_unsigned)) = {
   let rs1_val = X(rs1)[31..0];
   let rs2_val = X(rs2)[31..0];
-  let rs1_int = if s then signed(rs1_val) else unsigned(rs1_val);
-  let rs2_int = if s then signed(rs2_val) else unsigned(rs2_val);
+  let rs1_int = if is_unsigned then unsigned(rs1_val) else signed(rs1_val);
+  let rs2_int = if is_unsigned then unsigned(rs2_val) else signed(rs2_val);
   let q = if rs2_int == 0 then -1 else quot_round_zero(rs1_int, rs2_int);
   /* check for signed overflow */
-  let q' = if s & q > (2 ^ 31 - 1) then  (0 - (2 ^ 31)) else q;
+  let q' = if not(is_unsigned) & q > (2 ^ 31 - 1) then negate(2 ^ 31) else q;
   X(rd) = sign_extend(to_bits_unsafe(32, q'));
   RETIRE_SUCCESS
 }
 
-mapping clause assembly = DIVW(rs2, rs1, rd, s)
-  <-> "div" ^ maybe_not_u(s) ^ "w" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+mapping clause assembly = DIVW(rs2, rs1, rd, is_unsigned)
+  <-> "div" ^ maybe_u(is_unsigned) ^ "w" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
   when xlen == 64
 
 /* ****************************************************************** */
 union clause ast = REMW : (regidx, regidx, regidx, bool)
 
-mapping clause encdec = REMW(rs2, rs1, rd, s)
-  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b11 @ bool_not_bits(s) @ encdec_reg(rd) @ 0b0111011
+mapping clause encdec = REMW(rs2, rs1, rd, is_unsigned)
+  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b11 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0111011
   when xlen == 64 & currentlyEnabled(Ext_M)
 
-function clause execute (REMW(rs2, rs1, rd, s)) = {
+function clause execute (REMW(rs2, rs1, rd, is_unsigned)) = {
   let rs1_val = X(rs1)[31..0];
   let rs2_val = X(rs2)[31..0];
-  let rs1_int = if s then signed(rs1_val) else unsigned(rs1_val);
-  let rs2_int = if s then signed(rs2_val) else unsigned(rs2_val);
+  let rs1_int = if is_unsigned then unsigned(rs1_val) else signed(rs1_val);
+  let rs2_int = if is_unsigned then unsigned(rs2_val) else signed(rs2_val);
   let r = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
   /* signed overflow case returns zero naturally as required due to -1 divisor */
   X(rd) = sign_extend(to_bits_unsafe(32, r));
   RETIRE_SUCCESS
 }
 
-mapping clause assembly = REMW(rs2, rs1, rd, s)
-  <-> "rem" ^ maybe_not_u(s) ^ "w" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+mapping clause assembly = REMW(rs2, rs1, rd, is_unsigned)
+  <-> "rem" ^ maybe_u(is_unsigned) ^ "w" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
   when xlen == 64
