@@ -43,13 +43,17 @@ mapping ma_flag : string <-> bits(1) = {
 
 val handle_illegal_vtype : unit -> unit
 function handle_illegal_vtype() = {
-  /* Note: Implementations can set vill or trap if the vtype setting is not supported.
-   * TODO: configuration support for both solutions
+  /* Note: Implementations can set vill or trap with an illegal
+   * instruction if the vtype setting is not supported.
+   * TODO: configuration support for both solutions.
+   * NOTE: vstart should NOT be zeroed out if trapping.
    */
+
   vtype.bits = 0b1 @ zeros(xlen - 1); /* set vtype.vill */
   vl = zeros();
   csr_write_callback("vtype", vtype.bits);
   csr_write_callback("vl", vl);
+  set_vstart(zeros());
 }
 
 let vl_use_ceil : bool = config extensions.V.vl_use_ceil
