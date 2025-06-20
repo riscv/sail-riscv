@@ -92,6 +92,9 @@ let sys_enable_writable_fiom : bool = config base.writable_fiom
 /* Which HPM counters are supported (as a bit mask). Bits [2 .. 0] are ignored. */
 let sys_writable_hpm_counters : bits(32) = config base.writable_hpm_counters
 
+// Supervisor timecmp
+function clause currentlyEnabled(Ext_Sstc) = hartSupports(Ext_Sstc)
+
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
    unsetting C. If it returns true the write will have no effect. */
@@ -342,7 +345,7 @@ function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
-    STCE = if hartSupports(Ext_Sstc) then v[STCE] else 0b0,
+    STCE = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
   ]
 }
@@ -379,9 +382,6 @@ function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_m
 function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); menvcfg.bits[63 .. 32] }
 function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); senvcfg.bits[xlen - 1 .. 0] }
 
-// Supervisor timecmp
-function clause currentlyEnabled(Ext_Sstc) = hartSupports(Ext_Sstc) & menvcfg[STCE] == 0b1
-
 // Return whether or not FIOM is currently active, based on the current
 // privilege and the menvcfg/senvcfg settings. This means that I/O fences
 // imply memory fence.
@@ -413,8 +413,8 @@ function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
     SEI = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
     SSI = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
     STI = if currentlyEnabled(Ext_S) then (
-      // STI is read only if Sstc is enabled (it is equal to stimecmp <= mtime).
-      if currentlyEnabled(Ext_Sstc) then o[STI] else v[STI]
+      // STI is read only if Sstc is enabled and STCE is set (it is equal to stimecmp <= mtime).
+      if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then o[STI] else v[STI]
     ) else 0b0,
   ]
 }
