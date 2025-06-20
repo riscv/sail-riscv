@@ -118,7 +118,7 @@ function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(ad
 
 /* CLINT (Core Local Interruptor), based on Spike. */
 
-let plat_insns_per_tick : int = config platform.instructions_per_tick
+let plat_insns_per_tick : nat1 = config platform.instructions_per_tick
 
 // Each hart has a memory-mapped mtimecmp register. Typically these are
 // exposed as an array in CLINT. The CLINT implementation here is currently

@@ -101,7 +101,7 @@ function generate_isa_string(fmt : ISA_Format) -> string = {
 // Generates the full Device-Tree configuration for the model.
 
 function generate_dts() -> string = {
-  let clock_freq : int = config platform.clock_frequency;
+  let clock_freq : nat = config platform.clock_frequency;
   let ram_base_hi = unsigned(plat_ram_base >> 32);
   let ram_base_lo = unsigned(plat_ram_base[31 .. 0]);
   let ram_size_hi = unsigned(plat_ram_size >> 32);

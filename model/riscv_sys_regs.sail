@@ -931,8 +931,11 @@ function get_sew_pow() -> {3, 4, 5, 6} =
     _     => {assert(false, "invalid vsew field in vtype"); 0}
   }
 
+// Valid SEW sizes in bits.
+type sew_bitsize = {8, 16, 32, 64}
+
 /* this returns the actual value of SEW */
-function get_sew() -> {8, 16, 32, 64} =
+function get_sew() -> sew_bitsize =
   2 ^ get_sew_pow()
 
 /* this returns the value of SEW in bytes */
