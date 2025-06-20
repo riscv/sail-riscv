@@ -27,10 +27,10 @@ mapping clause encdec = MUL(rs2, rs1, rd, mul_op)
   when currentlyEnabled(Ext_M) | currentlyEnabled(Ext_Zmmul)
 
 function clause execute (MUL(rs2, rs1, rd, mul_op)) = {
-  let rs1_val = X(rs1);
-  let rs2_val = X(rs2);
-  let rs1_int = if mul_op.signed_rs1 then signed(rs1_val) else unsigned(rs1_val);
-  let rs2_int = if mul_op.signed_rs2 then signed(rs2_val) else unsigned(rs2_val);
+  let rs1_bits = X(rs1);
+  let rs2_bits = X(rs2);
+  let rs1_int = if mul_op.signed_rs1 then signed(rs1_bits) else unsigned(rs1_bits);
+  let rs2_int = if mul_op.signed_rs2 then signed(rs2_bits) else unsigned(rs2_bits);
   let result_wide = to_bits_unsafe(2 * xlen, rs1_int * rs2_int);
   let result = if   mul_op.high
                then result_wide[(2 * xlen - 1) .. xlen]
@@ -57,14 +57,14 @@ mapping clause encdec = DIV(rs2, rs1, rd, is_unsigned)
   when currentlyEnabled(Ext_M)
 
 function clause execute (DIV(rs2, rs1, rd, is_unsigned)) = {
-  let rs1_val = X(rs1);
-  let rs2_val = X(rs2);
-  let rs1_int = if is_unsigned then unsigned(rs1_val) else signed(rs1_val);
-  let rs2_int = if is_unsigned then unsigned(rs2_val) else signed(rs2_val);
-  let q = if rs2_int == 0 then -1 else quot_round_zero(rs1_int, rs2_int);
+  let rs1_bits = X(rs1);
+  let rs2_bits = X(rs2);
+  let rs1_int = if is_unsigned then unsigned(rs1_bits) else signed(rs1_bits);
+  let rs2_int = if is_unsigned then unsigned(rs2_bits) else signed(rs2_bits);
+  let quotient = if rs2_int == 0 then -1 else quot_round_zero(rs1_int, rs2_int);
   /* check for signed overflow */
-  let q' = if not(is_unsigned) & q >= 2 ^ (xlen - 1) then negate(2 ^ (xlen - 1)) else q;
-  X(rd) = to_bits_unsafe(xlen, q');
+  let quotient = if not(is_unsigned) & quotient >= 2 ^ (xlen - 1) then negate(2 ^ (xlen - 1)) else quotient;
+  X(rd) = to_bits_unsafe(xlen, quotient);
   RETIRE_SUCCESS
 }
 
@@ -79,13 +79,13 @@ mapping clause encdec = REM(rs2, rs1, rd, is_unsigned)
   when currentlyEnabled(Ext_M)
 
 function clause execute (REM(rs2, rs1, rd, is_unsigned)) = {
-  let rs1_val = X(rs1);
-  let rs2_val = X(rs2);
-  let rs1_int = if is_unsigned then unsigned(rs1_val) else signed(rs1_val);
-  let rs2_int = if is_unsigned then unsigned(rs2_val) else signed(rs2_val);
-  let r = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
+  let rs1_bits = X(rs1);
+  let rs2_bits = X(rs2);
+  let rs1_int = if is_unsigned then unsigned(rs1_bits) else signed(rs1_bits);
+  let rs2_int = if is_unsigned then unsigned(rs2_bits) else signed(rs2_bits);
+  let remainder = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
   /* signed overflow case returns zero naturally as required due to -1 divisor */
-  X(rd) = to_bits_unsafe(xlen, r);
+  X(rd) = to_bits_unsafe(xlen, remainder);
   RETIRE_SUCCESS
 }
 
@@ -100,10 +100,10 @@ mapping clause encdec = MULW(rs2, rs1, rd)
   when xlen == 64 & (currentlyEnabled(Ext_M) | currentlyEnabled(Ext_Zmmul))
 
 function clause execute (MULW(rs2, rs1, rd)) = {
-  let rs1_val = X(rs1)[31..0];
-  let rs2_val = X(rs2)[31..0];
-  let rs1_int = signed(rs1_val);
-  let rs2_int = signed(rs2_val);
+  let rs1_bits = X(rs1)[31..0];
+  let rs2_bits = X(rs2)[31..0];
+  let rs1_int = signed(rs1_bits);
+  let rs2_int = signed(rs2_bits);
   /* to_bits_unsafe requires expansion to 64 bits followed by truncation */
   let result32 = to_bits_unsafe(64, rs1_int * rs2_int)[31..0];
   let result : xlenbits = sign_extend(result32);
@@ -123,14 +123,14 @@ mapping clause encdec = DIVW(rs2, rs1, rd, is_unsigned)
   when xlen == 64 & currentlyEnabled(Ext_M)
 
 function clause execute (DIVW(rs2, rs1, rd, is_unsigned)) = {
-  let rs1_val = X(rs1)[31..0];
-  let rs2_val = X(rs2)[31..0];
-  let rs1_int = if is_unsigned then unsigned(rs1_val) else signed(rs1_val);
-  let rs2_int = if is_unsigned then unsigned(rs2_val) else signed(rs2_val);
-  let q = if rs2_int == 0 then -1 else quot_round_zero(rs1_int, rs2_int);
+  let rs1_bits = X(rs1)[31..0];
+  let rs2_bits = X(rs2)[31..0];
+  let rs1_int = if is_unsigned then unsigned(rs1_bits) else signed(rs1_bits);
+  let rs2_int = if is_unsigned then unsigned(rs2_bits) else signed(rs2_bits);
+  let quotient = if rs2_int == 0 then -1 else quot_round_zero(rs1_int, rs2_int);
   /* check for signed overflow */
-  let q' = if not(is_unsigned) & q > (2 ^ 31 - 1) then negate(2 ^ 31) else q;
-  X(rd) = sign_extend(to_bits_unsafe(32, q'));
+  let quotient = if not(is_unsigned) & quotient > (2 ^ 31 - 1) then negate(2 ^ 31) else quotient;
+  X(rd) = sign_extend(to_bits_unsafe(32, quotient));
   RETIRE_SUCCESS
 }
 
@@ -146,13 +146,13 @@ mapping clause encdec = REMW(rs2, rs1, rd, is_unsigned)
   when xlen == 64 & currentlyEnabled(Ext_M)
 
 function clause execute (REMW(rs2, rs1, rd, is_unsigned)) = {
-  let rs1_val = X(rs1)[31..0];
-  let rs2_val = X(rs2)[31..0];
-  let rs1_int = if is_unsigned then unsigned(rs1_val) else signed(rs1_val);
-  let rs2_int = if is_unsigned then unsigned(rs2_val) else signed(rs2_val);
-  let r = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
+  let rs1_bits = X(rs1)[31..0];
+  let rs2_bits = X(rs2)[31..0];
+  let rs1_int = if is_unsigned then unsigned(rs1_bits) else signed(rs1_bits);
+  let rs2_int = if is_unsigned then unsigned(rs2_bits) else signed(rs2_bits);
+  let remainder = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
   /* signed overflow case returns zero naturally as required due to -1 divisor */
-  X(rd) = sign_extend(to_bits_unsafe(32, r));
+  X(rd) = sign_extend(to_bits_unsafe(32, remainder));
   RETIRE_SUCCESS
 }
 
