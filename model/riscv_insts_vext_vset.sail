@@ -133,6 +133,10 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
 
   let vtype_new = Mk_Vtype(X(rs2));
+
+  if   vtype_new[vill] == 0b1 | vtype[reserved] != zeros()
+  then { handle_illegal_vtype(); return RETIRE_SUCCESS };
+
   let ma   = vtype_new[vma];
   let ta   = vtype_new[vta];
   let sew  = vtype_new[vsew];
