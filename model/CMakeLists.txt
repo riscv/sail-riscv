@@ -535,7 +535,7 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
             if (variant STREQUAL "lem")
                 string_upper_initial("${arch}" arch_thy)
                 add_custom_command(
-                    DEPENDS ${sail_srcs} ${CMAKE_SOURCE_DIR}/config/default.json
+                    DEPENDS ${sail_srcs} ${config_file}
                     VERBATIM
                     OUTPUT "${arch}.lem" "${arch}_types.lem" "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_lemmas.thy"
                     COMMENT "Building Lem definitions from Sail model (${arch})"
