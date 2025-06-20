@@ -210,7 +210,7 @@ function clint_load(t, Physaddr(addr), width) = {
 
 function clint_dispatch() -> unit = {
   mip[MTI] = bool_to_bits(mtimecmp <=_u mtime);
-  if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then {
+  if currentlyEnabled(Ext_Sstc) then {
     mip[STI] = bool_to_bits(stimecmp <=_u mtime);
   };
   if get_config_print_platform()
