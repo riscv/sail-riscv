@@ -543,7 +543,7 @@ void flush_logs(void)
 
 void run_sail(void)
 {
-  bool stepped;
+  struct zstep_result step_result = {false, false, false, false};
   bool exit_wait = true;
   bool diverged = false;
 
@@ -578,7 +578,12 @@ void run_sail(void)
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
-      stepped = ztry_step(sail_step, exit_wait);
+
+      // If the model is in Debug mode, request an exit, else request
+      // no change.
+      enum zdebug_request dr
+          = step_result.zin_debug_mode ? zDR_Resume : zDR_None;
+      step_result = ztry_step(sail_step, exit_wait, dr);
       if (have_exception)
         goto step_exception;
       flush_logs();
@@ -587,7 +592,10 @@ void run_sail(void)
         rvfi->send_trace(config_print_rvfi);
       }
     }
-    if (stepped) {
+    // TODO: better handling of entry into debug mode (step_result.zin_debug),
+    // e.g, by connecting to a debugger interface.
+    // For now, we just request an immediate resume above.
+    if (!step_result.zin_wait) {
       if (config_print_step) {
         fprintf(trace_log, "\n");
       }
