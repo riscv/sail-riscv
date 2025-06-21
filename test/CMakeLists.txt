@@ -7,3 +7,5 @@ option(FIRST_PARTY_TESTS "Compile & run first party tests (requires Clang or RIS
 if (FIRST_PARTY_TESTS)
     add_subdirectory("first_party")
 endif()
+
+add_subdirectory("unit_tests")

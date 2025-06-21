@@ -214,6 +214,10 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_model.sail"
             )
 
+            set(test_srcs
+                "unit_tests/test_mstatus.sail"
+            )
+
             # Final file list.
             set(sail_srcs
                 ${sail_arch_srcs}
@@ -222,6 +226,7 @@ foreach (xlen IN ITEMS 32 64)
                 ${sail_cfg_srcs}
                 ${sail_model_srcs}
                 "main.sail"
+                ${test_srcs}
             )
 
             # Convert to absolute paths, so we can run
