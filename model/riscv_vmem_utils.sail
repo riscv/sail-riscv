@@ -47,7 +47,7 @@ let sys_misaligned_byte_by_byte : bool = config memory.misaligned.byte_by_byte
 let sys_misaligned_allowed_within_exp : range(0, 11) = config memory.misaligned.allowed_within_exp
 
 /* Check if an 'n byte access for an address is within an aligned 2^'r byte region */
-val access_within : forall 'width 'n 'r, 0 <= 'r <= 'width & 1 <= 'n <= 2^'r.
+val access_within : forall 'width 'n ('r : Nat), 'r <= 'width & 1 <= 'n <= 2^'r.
   (bits('width), int('n), int('r)) -> bool
 function access_within(addr, bytes, region_width_exp) = {
   let mask : bits('width) = ~(zero_extend(ones(region_width_exp)));
