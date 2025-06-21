@@ -71,8 +71,6 @@ def valid_reservation : Unit → Bool := λ _ => false
 
 def get_16_random_bits : Unit → SailM (BitVec 16) := λ _ => panic "TODO"
 
-def speculate_conditional : Unit → SailM Bool := λ _ => panic "TODO"
-
 end Effectful
 
 -- Floats

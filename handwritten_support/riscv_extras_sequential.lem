@@ -132,8 +132,6 @@ let read_ram addrsize size hexRAM address =
 val load_reservation : forall 'a. Size 'a => bitvector 'a -> unit
 let load_reservation addr = ()
 
-let speculate_conditional_success () = excl_result ()
-
 let match_reservation _ = true
 let cancel_reservation () = ()
 let valid_reservation () = false

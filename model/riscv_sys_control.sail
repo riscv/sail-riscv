@@ -92,8 +92,6 @@ function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
  * where cancellation can be performed.
  */
 
-val speculate_conditional = impure {interpreter: "excl_res", c: "speculate_conditional", lem: "speculate_conditional_success"} : unit -> bool
-
 val load_reservation = impure {interpreter: "Platform.load_reservation", c: "load_reservation", lem: "load_reservation"} : physaddrbits -> unit
 val match_reservation = pure {interpreter: "Platform.match_reservation", lem: "match_reservation", c: "match_reservation"} : physaddrbits -> bool
 val cancel_reservation = impure {interpreter: "Platform.cancel_reservation", c: "cancel_reservation", lem: "cancel_reservation"} : unit -> unit

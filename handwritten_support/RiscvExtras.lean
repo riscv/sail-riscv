@@ -70,8 +70,6 @@ axiom valid_reservation : Unit → Bool
 
 axiom get_16_random_bits : Unit → SailM (BitVec 16)
 
-axiom speculate_conditional : Unit → SailM Bool
-
 end Effectful
 
 -- Floats
