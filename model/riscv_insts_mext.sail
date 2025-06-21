@@ -31,11 +31,11 @@ function clause execute (MUL(rs2, rs1, rd, mul_op)) = {
   let rs2_bits = X(rs2);
   let rs1_int = if mul_op.signed_rs1 then signed(rs1_bits) else unsigned(rs1_bits);
   let rs2_int = if mul_op.signed_rs2 then signed(rs2_bits) else unsigned(rs2_bits);
-  let result_wide = to_bits_unsafe(2 * xlen, rs1_int * rs2_int);
-  let result = if   mul_op.high
-               then result_wide[(2 * xlen - 1) .. xlen]
-               else result_wide[(xlen - 1) .. 0];
-  X(rd) = result;
+
+  let result_wide = to_bits_truncate(2 * xlen, rs1_int * rs2_int);
+  X(rd) = if   mul_op.high
+          then result_wide[(2 * xlen - 1) .. xlen]
+          else result_wide[(xlen - 1) .. 0];
   RETIRE_SUCCESS
 }
 
@@ -43,7 +43,7 @@ mapping mul_mnemonic : mul_op <-> string = {
   struct { high = false, signed_rs1 = true,  signed_rs2 = true  } <-> "mul",
   struct { high = true,  signed_rs1 = true,  signed_rs2 = true  } <-> "mulh",
   struct { high = true,  signed_rs1 = true,  signed_rs2 = false } <-> "mulhsu",
-  struct { high = true,  signed_rs1 = false, signed_rs2 = false } <-> "mulhu"
+  struct { high = true,  signed_rs1 = false, signed_rs2 = false } <-> "mulhu",
 }
 
 mapping clause assembly = MUL(rs2, rs1, rd, mul_op)
@@ -61,10 +61,11 @@ function clause execute (DIV(rs2, rs1, rd, is_unsigned)) = {
   let rs2_bits = X(rs2);
   let rs1_int = if is_unsigned then unsigned(rs1_bits) else signed(rs1_bits);
   let rs2_int = if is_unsigned then unsigned(rs2_bits) else signed(rs2_bits);
+
   let quotient = if rs2_int == 0 then -1 else quot_round_zero(rs1_int, rs2_int);
-  /* check for signed overflow */
+  // Check for signed overflow.
   let quotient = if not(is_unsigned) & quotient >= 2 ^ (xlen - 1) then negate(2 ^ (xlen - 1)) else quotient;
-  X(rd) = to_bits_unsafe(xlen, quotient);
+  X(rd) = to_bits_truncate(quotient);
   RETIRE_SUCCESS
 }
 
@@ -83,9 +84,10 @@ function clause execute (REM(rs2, rs1, rd, is_unsigned)) = {
   let rs2_bits = X(rs2);
   let rs1_int = if is_unsigned then unsigned(rs1_bits) else signed(rs1_bits);
   let rs2_int = if is_unsigned then unsigned(rs2_bits) else signed(rs2_bits);
+
   let remainder = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
-  /* signed overflow case returns zero naturally as required due to -1 divisor */
-  X(rd) = to_bits_unsafe(xlen, remainder);
+  // Signed overflow case returns zero naturally as required due to -1 divisor.
+  X(rd) = to_bits_truncate(remainder);
   RETIRE_SUCCESS
 }
 
@@ -104,10 +106,9 @@ function clause execute (MULW(rs2, rs1, rd)) = {
   let rs2_bits = X(rs2)[31..0];
   let rs1_int = signed(rs1_bits);
   let rs2_int = signed(rs2_bits);
-  /* to_bits_unsafe requires expansion to 64 bits followed by truncation */
-  let result32 = to_bits_unsafe(64, rs1_int * rs2_int)[31..0];
-  let result : xlenbits = sign_extend(result32);
-  X(rd) = result;
+
+  let result32 : bits(32) = to_bits_truncate(rs1_int * rs2_int);
+  X(rd) = sign_extend(result32);
   RETIRE_SUCCESS
 }
 
@@ -127,10 +128,11 @@ function clause execute (DIVW(rs2, rs1, rd, is_unsigned)) = {
   let rs2_bits = X(rs2)[31..0];
   let rs1_int = if is_unsigned then unsigned(rs1_bits) else signed(rs1_bits);
   let rs2_int = if is_unsigned then unsigned(rs2_bits) else signed(rs2_bits);
+
   let quotient = if rs2_int == 0 then -1 else quot_round_zero(rs1_int, rs2_int);
-  /* check for signed overflow */
-  let quotient = if not(is_unsigned) & quotient > (2 ^ 31 - 1) then negate(2 ^ 31) else quotient;
-  X(rd) = sign_extend(to_bits_unsafe(32, quotient));
+  // Check for signed overflow.
+  let quotient = if not(is_unsigned) & quotient >= 2 ^ 31 then negate(2 ^ 31) else quotient;
+  X(rd) = sign_extend(to_bits_truncate(32, quotient));
   RETIRE_SUCCESS
 }
 
@@ -150,9 +152,10 @@ function clause execute (REMW(rs2, rs1, rd, is_unsigned)) = {
   let rs2_bits = X(rs2)[31..0];
   let rs1_int = if is_unsigned then unsigned(rs1_bits) else signed(rs1_bits);
   let rs2_int = if is_unsigned then unsigned(rs2_bits) else signed(rs2_bits);
+
   let remainder = if rs2_int == 0 then rs1_int else rem_round_zero(rs1_int, rs2_int);
-  /* signed overflow case returns zero naturally as required due to -1 divisor */
-  X(rd) = sign_extend(to_bits_unsafe(32, remainder));
+  // Signed overflow case returns zero naturally as required due to -1 divisor.
+  X(rd) = sign_extend(to_bits_truncate(32, remainder));
   RETIRE_SUCCESS
 }
 
