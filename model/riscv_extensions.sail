@@ -44,11 +44,13 @@ function clause hartSupports(Ext_A) = config extensions.A.supported
 // Single-Precision Floating-Point
 enum clause extension = Ext_F
 mapping clause extensionName = Ext_F <-> "f"
-function clause hartSupports(Ext_F) = config extensions.FD.supported
+function clause hartSupports(Ext_F) = config extensions.F.supported
 // Double-Precision Floating-Point
+// TODO: Ideally we'd use `config extensions.D.supported` here but it doesn't
+// work due to https://github.com/rems-project/sail/issues/1255
 enum clause extension = Ext_D
 mapping clause extensionName = Ext_D <-> "d"
-function clause hartSupports(Ext_D) = config extensions.FD.supported // TODO: Separate F and D supported flags
+function clause hartSupports(Ext_D) = constraint(ext_d_supported) & hartSupports(Ext_F)
 // Bit Manipulation
 enum clause extension = Ext_B
 mapping clause extensionName = Ext_B <-> "b"

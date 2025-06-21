@@ -31,3 +31,8 @@ function tick_pc() = {
   PC = nextPC;
   pc_write_callback(PC);
 }
+
+// For forcing PC from C. This is ugly.
+function force_pc(pc : bits(64)) -> unit = {
+  PC = truncate(pc, xlen);
+}
