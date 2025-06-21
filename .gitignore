@@ -12,3 +12,5 @@ z3_problems
 /build
 # CMake build directories used by CLion.
 /cmake-build-*
+
+test/riscv-*/
