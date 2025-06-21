@@ -6,7 +6,6 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-// Enum with all extensions possibly supported by the model.
 scattered enum extension
 
 // Name of extension.  The current primary consumer of these names is
