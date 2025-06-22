@@ -62,7 +62,7 @@ if((vlen EQUAL 128 OR vlen EQUAL 256 OR vlen EQUAL 512) AND
     download_riscv_tests(
         "${CMAKE_CURRENT_SOURCE_DIR}"
         "riscv-vector-tests-v${vlen}x${elen}"
-        "https://github.com/nadime15/riscv-test-generator/releases/latest/download/riscv-vector-tests-v${vlen}x${elen}.tar.gz"
+        "https://github.com/nadime15/riscv-sail-tests/releases/download/2025-06-22/riscv-vector-tests-v${vlen}x${elen}.tar.gz"
     )
 endif()
 
@@ -71,7 +71,7 @@ if(RUN_RISCV_TESTS)
     download_riscv_tests(
         "${CMAKE_CURRENT_SOURCE_DIR}"
         "riscv-tests"
-        "https://github.com/nadime15/riscv-test-generator/releases/latest/download/riscv-tests.tar.gz"
+        "https://github.com/nadime15/riscv-sail-tests/releases/download/2025-06-22/riscv-tests.tar.gz"
     )
 endif()
 
