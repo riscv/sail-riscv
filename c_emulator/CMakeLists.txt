@@ -65,6 +65,13 @@ foreach (xlen IN ITEMS 32 64)
             PRIVATE "RISCV_MODEL_HEADER=<riscv_model_${arch}.h>"
         )
 
+        # Enable Sail coverage collection.
+        if (COVERAGE)
+            target_compile_definitions(riscv_sim_${arch}
+                PRIVATE "SAILCOV"
+            )
+        endif()
+
         # TODO: Enable warnings when we use the #include trick
         # to include the generated Sail code. Currently it
         # generates too many warnings to turn these on globally.
