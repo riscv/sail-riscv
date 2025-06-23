@@ -16,7 +16,7 @@ mapping clause encdec = VSHA2MS_VV(vs2, vs1, vd)
   when (currentlyEnabled(Ext_Zvknha) & get_sew() == 32) | (currentlyEnabled(Ext_Zvknhb) & (get_sew() == 32 | get_sew() == 64)) & zvknhab_check_encdec(vs2, vs1, vd)
 
 mapping clause assembly = VSHA2MS_VV(vs2, vs1, vd)
-  <-> "vsha2ms.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ vreg_name(vs1)
+  <-> "vsha2ms.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
 
 function clause execute (VSHA2MS_VV(vs2, vs1, vd)) = {
   let 'SEW     = get_sew();
