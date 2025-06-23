@@ -62,8 +62,8 @@ function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
   } else {
     match (p) {
       Machine => true,
-      Supervisor => false, /* TODO: base this on mseccfg */
-      User => false, /* TODO: base this on mseccfg */
+      Supervisor => mseccfg[SSEED] == 0b1,
+      User => mseccfg[USEED] == 0b1,
     }
   }
 }
