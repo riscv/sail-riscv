@@ -34,6 +34,13 @@ mapping nfields_string : bits(3) <-> string = {
   0b111     <-> "seg8"
 }
 
+mapping nfields_int_string : bits(3) <-> string = {
+  0b000 <-> "1",
+  0b001 <-> "2",
+  0b011 <-> "4",
+  0b111 <-> "8",
+}
+
 mapping vlewidth_bitsnumberstr : vlewidth <-> string = {
   VLE8      <-> "8",
   VLE16     <-> "16",
@@ -629,7 +636,7 @@ function clause execute(VLRETYPE(nf, rs1, width, vd)) = {
 }
 
 mapping clause assembly = VLRETYPE(nf, rs1, width, vd)
-  <-> "vl" ^ nfields_string(nf) ^ "re" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
+  <-> "vl" ^ nfields_int_string(nf) ^ "re" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ***************** Vector Store Unit-Stride Whole Register (vm=0b1, mop=0b00, lumop=0b01000) ***************** */
 union clause ast = VSRETYPE : (bits(3), regidx, vregidx)
@@ -697,7 +704,7 @@ function clause execute(VSRETYPE(nf, rs1, vs3)) = {
 }
 
 mapping clause assembly = VSRETYPE(nf, rs1, vs3)
-  <-> "vs" ^ nfields_string(nf) ^ "r.v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
+  <-> "vs" ^ nfields_int_string(nf) ^ "r.v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ************** Vector Mask Load/Store Unit-Stride (nf=0b000, mop=0b00, lumop or sumop=0b01011) ************** */
 union clause ast = VMTYPE : (regidx, vregidx, vmlsop)
