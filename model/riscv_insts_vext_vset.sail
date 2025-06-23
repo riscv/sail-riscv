@@ -86,10 +86,13 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
 
   /* check new SEW and LMUL are legal and calculate VLMAX */
-  let (LMUL_pow_new, SEW_pow_new) : (LMUL_pow, SEW_pow) = match (lmul_pow_of_bits(lmul), sew_pow_of_bits(sew)) {
-    (Some(lmul_pow), Some(sew_pow)) => (lmul_pow, sew_pow),
-    (_, _) => { handle_illegal_vtype(); return RETIRE_SUCCESS },
+  if not(lmul_pow_val_forwards_matches(lmul)) | not(sew_pow_val_forwards_matches(sew)) then {
+    handle_illegal_vtype();
+    return RETIRE_SUCCESS
   };
+  let LMUL_pow_new = lmul_pow_val(lmul);
+  let SEW_pow_new = sew_pow_val(sew);
+
   if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
   let VLMAX = 2 ^ (VLEN_pow + LMUL_pow_new - SEW_pow_new);
 
@@ -147,10 +150,13 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   let lmul = vtype_new[vlmul];
 
   /* check new SEW and LMUL are legal and calculate VLMAX */
-  let (LMUL_pow_new, SEW_pow_new) : (LMUL_pow, SEW_pow) = match (lmul_pow_of_bits(lmul), sew_pow_of_bits(sew)) {
-    (Some(lmul_pow), Some(sew_pow)) => (lmul_pow, sew_pow),
-    (_, _) => { handle_illegal_vtype(); return RETIRE_SUCCESS },
+  if not(lmul_pow_val_forwards_matches(lmul)) | not(sew_pow_val_forwards_matches(sew)) then {
+    handle_illegal_vtype();
+    return RETIRE_SUCCESS
   };
+  let LMUL_pow_new = lmul_pow_val(lmul);
+  let SEW_pow_new = sew_pow_val(sew);
+
   if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
   let VLMAX = 2 ^ (VLEN_pow + LMUL_pow_new - SEW_pow_new);
 
@@ -194,10 +200,13 @@ mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
 
 function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   /* check new SEW and LMUL are legal and calculate VLMAX */
-  let (LMUL_pow_new, SEW_pow_new) : (LMUL_pow, SEW_pow) = match (lmul_pow_of_bits(lmul), sew_pow_of_bits(sew)) {
-    (Some(lmul_pow), Some(sew_pow)) => (lmul_pow, sew_pow),
-    (_, _) => { handle_illegal_vtype(); return RETIRE_SUCCESS },
+  if not(lmul_pow_val_forwards_matches(lmul)) | not(sew_pow_val_forwards_matches(sew)) then {
+    handle_illegal_vtype();
+    return RETIRE_SUCCESS
   };
+  let LMUL_pow_new = lmul_pow_val(lmul);
+  let SEW_pow_new = sew_pow_val(sew);
+
   if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
   let VLMAX = 2 ^ (VLEN_pow + LMUL_pow_new - SEW_pow_new);
 
