@@ -31,7 +31,8 @@ function clause execute (VSM4K_VI(vs2, uimm, vd)) = {
   foreach (i from eg_start to (eg_len - 1)) {
     assert(i * 4 + 3 < num_elem);
 
-    let rk_in  : vector(4, bits(32)) = get_velem_quad_vec(vs2_val, i);
+    let rk_in = get_velem_quad_vec(vs2_val, i);
+
     var rk_out : vector(4, bits(32)) = vector_init(zeros());
 
     var B = rk_in[1] ^ rk_in[2] ^ rk_in[3] ^ zvk_sm4_sbox(rnd << 2);
@@ -86,11 +87,12 @@ function clause execute (ZVKSM4RTYPE(funct6, vs2, vd)) = {
   foreach (i from eg_start to (eg_len - 1)) {
     assert(i * 4 + 3 < num_elem);
 
-    let rk_in : vector(4, bits(32)) = if funct6 == ZVK_VSM4R_VV
-                                      then get_velem_quad_vec(vs2_val, i)
-                                      else get_velem_quad_vec(vs2_val, 0);
+    let rk_in = if funct6 == ZVK_VSM4R_VV
+                then get_velem_quad_vec(vs2_val, i)
+                else get_velem_quad_vec(vs2_val, 0);
 
-    let x_in  : vector(4, bits(32)) = get_velem_quad_vec(vd_val, i);
+    let x_in  = get_velem_quad_vec(vd_val, i);
+
     var x_out : vector(4, bits(32)) = vector_init(zeros());
 
     var B = x_in[1] ^ x_in[2] ^ x_in[3] ^ rk_in[0];
