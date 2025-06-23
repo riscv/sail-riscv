@@ -272,6 +272,10 @@ function clause hartSupports(Ext_Zvknha) = config extensions.Zvknha.supported
 enum clause extension = Ext_Zvknhb
 mapping clause extensionName = Ext_Zvknhb <-> "zvknhb"
 function clause hartSupports(Ext_Zvknhb) = config extensions.Zvknhb.supported
+// ShangMi Suite: SM4 Block Cipher
+enum clause extension = Ext_Zvksed
+mapping clause extensionName = Ext_Zvksed <-> "zvksed"
+function clause hartSupports(Ext_Zvksed) = config extensions.Zvksed.supported
 // ShangMi Suite: SM3 Secure Hash
 enum clause extension = Ext_Zvksh
 mapping clause extensionName = Ext_Zvksh <-> "zvksh"
@@ -402,6 +406,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvkned,
   Ext_Zvknha,
   Ext_Zvknhb,
+  Ext_Zvksed,
   Ext_Zvksh,
   Ext_Zvkt,
 
