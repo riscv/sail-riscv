@@ -68,14 +68,6 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
   // This is checked during decoding.
   assert(width_bytes <= xlen_bytes);
 
-  if speculate_conditional() == false then {
-    /* should only happen in RMEM
-     * RMEM: allow SC to fail very early
-     */
-    X(rd) = zero_extend(0b1);
-    return RETIRE_SUCCESS
-  };
-
   /* normal non-rmem case
    * RMEM: SC is allowed to succeed (but might fail later)
    */

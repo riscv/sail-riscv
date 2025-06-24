@@ -24,17 +24,17 @@ mach_bits plat_get_16_random_bits(unit)
   return rv_16_random_bits();
 }
 
+// Note: Store-Conditionals are allowed to spuriously fail. If you want
+// that to happen you can spuriously set `reservation_valid = false`
+// either directly in `load_reservation()` or by callling
+// `cancel_reservation()`.
+
 unit load_reservation(mach_bits addr)
 {
   reservation = addr;
   reservation_valid = true;
   RESERVATION_DBG("reservation <- %0" PRIx64 "\n", reservation);
   return UNIT;
-}
-
-bool speculate_conditional(unit)
-{
-  return true;
 }
 
 static mach_bits check_mask()
