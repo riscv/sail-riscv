@@ -543,7 +543,7 @@ void flush_logs(void)
 
 void run_sail(void)
 {
-  bool stepped;
+  bool is_waiting;
   bool exit_wait = true;
   bool diverged = false;
 
@@ -578,7 +578,7 @@ void run_sail(void)
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
-      stepped = ztry_step(sail_step, exit_wait);
+      is_waiting = ztry_step(sail_step, exit_wait);
       if (have_exception)
         goto step_exception;
       flush_logs();
@@ -587,7 +587,7 @@ void run_sail(void)
         rvfi->send_trace(config_print_rvfi);
       }
     }
-    if (stepped) {
+    if (!is_waiting) {
       if (config_print_step) {
         fprintf(trace_log, "\n");
       }

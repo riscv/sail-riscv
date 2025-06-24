@@ -142,9 +142,9 @@ function wait_is_nop(wr : WaitReason) -> bool =
 // A "step" is a full execution of an instruction, resulting either
 // in its retirement or a trap. WFI and WRS instructions can cause
 // the model to wait (hart_state is HART_WAITING), in which case
-// a step has not happened and `try_step()` returns false. Otherwise
-// it returns true. Equivalently, it returns whether the model is now
-// in an active state (HART_ACTIVE).
+// a step has not happened and `try_step()` returns true. Otherwise
+// it returns false. Equivalently, it returns whether the model is now
+// in a waiting state (HART_WAITING).
 //
 // * step_no: the current step number; this is maintained by by the
 //            non-Sail harness and is incremented when `try_step()`
@@ -212,7 +212,7 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
   };
 
   match hart_state {
-    HART_WAITING(_) => false,
+    HART_WAITING(_) => true,
     HART_ACTIVE() => {
       tick_pc();
 
@@ -238,8 +238,8 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
 
       // For step extensions
       ext_post_step_hook();
-      // Return that we have stepped and are active.
-      true
+      // Return that we have stepped and are not waiting.
+      false
     }
   }
 }
