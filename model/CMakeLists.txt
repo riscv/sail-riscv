@@ -130,7 +130,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_fdext_regs.sail"
                 "riscv_fdext_control.sail"
                 "riscv_smcntrpmf.sail"
-                "riscv_sys_reservations.sail"
+                "riscv_sys_reservation.sail"
                 "riscv_sys_control.sail"
             )
 
