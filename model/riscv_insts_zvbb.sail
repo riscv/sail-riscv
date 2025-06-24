@@ -466,14 +466,14 @@ function clause execute (VROR_VX(vm, vs2, rs1, vd)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = VROR_VI : (bits(1), vregidx, bits(5), vregidx)
+union clause ast = VROR_VI : (bits(1), vregidx, bits(6), vregidx)
 
-mapping clause encdec = VROR_VI(vm, vs2, uimm, vd)
-  <-> 0b010100 @ vm @ encdec_vreg(vs2) @ uimm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
+mapping clause encdec = VROR_VI(vm, vs2, uimm5 @ uimm40, vd)
+  <-> 0b01010 @ uimm5 @ vm @ encdec_vreg(vs2) @ uimm40 : bits(5) @ 0b011 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvkb)
 
 mapping clause assembly = VROR_VI(vm, vs2, uimm, vd)
- <-> "vror.vi" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(uimm) ^ maybe_vmask(vm)
+ <-> "vror.vi" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_6(uimm) ^ maybe_vmask(vm)
 
 function clause execute (VROR_VI(vm, vs2, uimm, vd)) = {
   let SEW_pow  = get_sew_pow();
