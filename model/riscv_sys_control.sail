@@ -80,23 +80,6 @@ function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
   & check_Stimecmp(csr, p)
   & check_seed_CSR(csr, p, isWrite)
 
-/* Reservation handling for LR/SC.
- *
- * The reservation state is maintained external to the model since the
- * reservation behavior is platform-specific anyway and maintaining
- * this state outside the model simplifies the concurrency analysis.
- *
- * These are externs are defined here in the system module since
- * we currently perform reservation cancellation on privilege level
- * transition.  Ideally, the platform should get more visibility into
- * where cancellation can be performed.
- */
-
-val load_reservation = impure {interpreter: "Platform.load_reservation", c: "load_reservation", lem: "load_reservation"} : physaddrbits -> unit
-val match_reservation = pure {interpreter: "Platform.match_reservation", lem: "match_reservation", c: "match_reservation"} : physaddrbits -> bool
-val cancel_reservation = impure {interpreter: "Platform.cancel_reservation", c: "cancel_reservation", lem: "cancel_reservation"} : unit -> unit
-val valid_reservation = pure {interpreter: "Platform.valid_reservation", c: "valid_reservation", lem: "valid_reservation"} : unit -> bool
-
 /* Exception delegation: given an exception and the privilege at which
  * it occurred, returns the privilege at which it should be handled.
  */
