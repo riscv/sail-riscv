@@ -20,7 +20,7 @@ function clause execute (C_FLWSP(imm, rd)) = {
 }
 
 mapping clause assembly = C_FLWSP(imm, rd)
-  <-> "c.flwsp" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_6(imm) ^ "(" ^ sp_reg_name() ^ ")"
+  <-> "c.flwsp" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_8(imm @ 0b00) ^ "(" ^ sp_reg_name() ^ ")"
   when xlen == 32
 
 /* ****************************************************************** */
