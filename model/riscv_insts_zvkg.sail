@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Zvkg) = hartSupports(Ext_Zvkg) & currentlyEnabled(Ext_V)
+function clause currentlyEnabled(Ext_Zvkg) = (hartSupports(Ext_Zvkg) | currentlyEnabled(Ext_Zvkng) | currentlyEnabled(Ext_Zvksg)) & currentlyEnabled(Ext_V)
 
 union clause instruction = VGHSH_VV : (vregidx, vregidx, vregidx)
 

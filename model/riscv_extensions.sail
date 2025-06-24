@@ -262,10 +262,20 @@ function clause hartSupports(Ext_Zvkb) = config extensions.Zvkb.supported
 enum clause extension = Ext_Zvkg
 mapping clause extensionName = Ext_Zvkg <-> "zvkg"
 function clause hartSupports(Ext_Zvkg) = config extensions.Zvkg.supported
+// NIST Algorithm Suite with carryless multiply
+enum clause extension = Ext_Zvknc
+mapping clause extensionName = Ext_Zvknc <-> "zvknc"
+function clause hartSupports(Ext_Zvknc) = config extensions.Zvknc.supported
+function clause currentlyEnabled(Ext_Zvknc) = hartSupports(Ext_Zvknc)
 // NIST Suite: Vector AES Block Cipher
 enum clause extension = Ext_Zvkned
 mapping clause extensionName = Ext_Zvkned <-> "zvkned"
 function clause hartSupports(Ext_Zvkned) = config extensions.Zvkned.supported
+// NIST Algorithm Suite with GCM
+enum clause extension = Ext_Zvkng
+mapping clause extensionName = Ext_Zvkng <-> "zvkng"
+function clause hartSupports(Ext_Zvkng) = config extensions.Zvkng.supported
+function clause currentlyEnabled(Ext_Zvkng) = hartSupports(Ext_Zvkng)
 // NIST Suite: Vector SHA-2 Secure Hash (SHA-256 only)
 enum clause extension = Ext_Zvknha
 mapping clause extensionName = Ext_Zvknha <-> "zvknha"
@@ -274,19 +284,42 @@ function clause hartSupports(Ext_Zvknha) = config extensions.Zvknha.supported
 enum clause extension = Ext_Zvknhb
 mapping clause extensionName = Ext_Zvknhb <-> "zvknhb"
 function clause hartSupports(Ext_Zvknhb) = config extensions.Zvknhb.supported
+// ShangMi Algorithm Suite with carryless multiplication
+enum clause extension = Ext_Zvksc
+mapping clause extensionName = Ext_Zvksc <-> "zvksc"
+function clause hartSupports(Ext_Zvksc) = config extensions.Zvksc.supported
+function clause currentlyEnabled(Ext_Zvksc) = hartSupports(Ext_Zvksc)
 // ShangMi Suite: SM4 Block Cipher
 enum clause extension = Ext_Zvksed
 mapping clause extensionName = Ext_Zvksed <-> "zvksed"
 function clause hartSupports(Ext_Zvksed) = config extensions.Zvksed.supported
+// ShangMi Algorithm Suite with GCM
+enum clause extension = Ext_Zvksg
+mapping clause extensionName = Ext_Zvksg <-> "zvksg"
+function clause hartSupports(Ext_Zvksg) = config extensions.Zvksg.supported
+function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg)
 // ShangMi Suite: SM3 Secure Hash
 enum clause extension = Ext_Zvksh
 mapping clause extensionName = Ext_Zvksh <-> "zvksh"
 function clause hartSupports(Ext_Zvksh) = config extensions.Zvksh.supported
+// Zvkn and Zvks are intentionally not in alphabetical order.
+// Otherwise, we cannot check whether Zvkn or Zvks are implicitly supported
+// via Zvknc or Zvkng and Zvksc or Zvksg, respectively.
+// NIST Algorithm Suite
+enum clause extension = Ext_Zvkn
+mapping clause extensionName = Ext_Zvkn <-> "zvkn"
+function clause hartSupports(Ext_Zvkn) = config extensions.Zvkn.supported
+function clause currentlyEnabled(Ext_Zvkn) = hartSupports(Ext_Zvkn) | currentlyEnabled(Ext_Zvknc) | currentlyEnabled(Ext_Zvkng)
+// ShangMi Algorithm Suite
+enum clause extension = Ext_Zvks
+mapping clause extensionName = Ext_Zvks <-> "zvks"
+function clause hartSupports(Ext_Zvks) = config extensions.Zvks.supported
+function clause currentlyEnabled(Ext_Zvks) = hartSupports(Ext_Zvks) | currentlyEnabled(Ext_Zvksc) | currentlyEnabled(Ext_Zvksg)
 // Vector Data Independent Execution Latency
 enum clause extension = Ext_Zvkt
 mapping clause extensionName = Ext_Zvkt <-> "zvkt"
 function clause hartSupports(Ext_Zvkt) = config extensions.Zvkt.supported
-function clause currentlyEnabled(Ext_Zvkt) = hartSupports(Ext_Zvkt)
+function clause currentlyEnabled(Ext_Zvkt) = hartSupports(Ext_Zvkt) | currentlyEnabled(Ext_Zvkn) | currentlyEnabled(Ext_Zvks)
 
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
@@ -405,10 +438,16 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvbc,
   Ext_Zvkb,
   Ext_Zvkg,
+  Ext_Zvkn,
+  Ext_Zvknc,
   Ext_Zvkned,
+  Ext_Zvkng,
   Ext_Zvknha,
   Ext_Zvknhb,
+  Ext_Zvks,
+  Ext_Zvksc,
   Ext_Zvksed,
+  Ext_Zvksg,
   Ext_Zvksh,
   Ext_Zvkt,
 

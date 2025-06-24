@@ -7,7 +7,7 @@
 /*=======================================================================================*/
 
 function clause currentlyEnabled(Ext_Zvknha) = hartSupports(Ext_Zvknha) & currentlyEnabled(Ext_V)
-function clause currentlyEnabled(Ext_Zvknhb) = hartSupports(Ext_Zvknhb) & currentlyEnabled(Ext_V)
+function clause currentlyEnabled(Ext_Zvknhb) = (hartSupports(Ext_Zvknhb) | currentlyEnabled(Ext_Zvkn)) & currentlyEnabled(Ext_V)
 
 union clause instruction = VSHA2MS_VV : (vregidx, vregidx, vregidx)
 

@@ -7,7 +7,7 @@
 /*=======================================================================================*/
 
 function clause currentlyEnabled(Ext_Zvbb) = hartSupports(Ext_Zvbb) & currentlyEnabled(Ext_V)
-function clause currentlyEnabled(Ext_Zvkb) = (hartSupports(Ext_Zvkb) | currentlyEnabled(Ext_Zvbb)) & currentlyEnabled(Ext_V)
+function clause currentlyEnabled(Ext_Zvkb) = (hartSupports(Ext_Zvkb) | currentlyEnabled(Ext_Zvbb) | currentlyEnabled(Ext_Zvkn) | currentlyEnabled(Ext_Zvks)) & currentlyEnabled(Ext_V)
 
 union clause instruction = VANDN_VV : (bits(1), vregidx, vregidx, vregidx)
 
