@@ -1,5 +1,20 @@
 ## A library that contains the C model and support code.
 
+add_library(rvfi_dii
+    rvfi_dii.h
+    rvfi_dii.cpp
+)
+
+target_include_directories(rvfi_dii
+    PUBLIC
+        # So `callbacks.cpp` can find `sail.h`.
+        "${CMAKE_BINARY_DIR}"
+)
+
+target_link_libraries(rvfi_dii
+    PUBLIC sail_runtime
+)
+
 add_library(riscv_model
     riscv_callbacks.cpp
     riscv_callbacks.h
@@ -15,6 +30,7 @@ add_library(riscv_model
     riscv_softfloat.h
     config_utils.h
     config_utils.cpp
+    rvfi_dii_sail.h
     "${CMAKE_BINARY_DIR}/sail_riscv_model.c"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.h"
 )
@@ -28,7 +44,7 @@ target_include_directories(riscv_model
 )
 
 target_link_libraries(riscv_model
-    PUBLIC softfloat sail_runtime
+    PUBLIC softfloat sail_runtime rvfi_dii
 )
 
 add_dependencies(riscv_model generated_sail_riscv_model)
@@ -37,8 +53,6 @@ add_dependencies(riscv_model generated_sail_riscv_model)
 
 add_executable(sail_riscv_sim
     "riscv_sim.cpp"
-    "rvfi_dii.h"
-    "rvfi_dii.cpp"
 )
 
 # The generated C model is not warnings-clean, silence them.
