@@ -174,7 +174,11 @@
       "supported": true
     },
     "Zkr": {
-      "supported": true
+      "supported": true,
+      "sseed_reset_value": false,
+      "useed_reset_value": false,
+      "sseed_read_only_zero": false,
+      "useed_read_only_zero": false
     },
     "Zksed": {
       "supported": true

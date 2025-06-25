@@ -381,6 +381,11 @@ function reset_sys() -> unit = {
   // mandates a different reset value for some PMP registers’ A and L fields."
   reset_pmp();
 
+  // "The [s,u]seed bits must have a defined reset value. The system must
+  // not allow them to be in an undefined state after a reset."
+  mseccfg[SSEED] = bool_to_bits(config extensions.Zkr.sseed_reset_value : bool);
+  mseccfg[USEED] = bool_to_bits(config extensions.Zkr.useed_reset_value : bool);
+
   // TODO: Probably need to remove these vector resets too but it needs
   // refactoring anyway. See https://github.com/riscv/sail-riscv/issues/566 etc.
   // If they are kept then callbacks need to be added.

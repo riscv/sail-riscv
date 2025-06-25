@@ -313,10 +313,19 @@ bitfield Seccfg : bits(64) = {
 }
 
 function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
+  let sseed_read_only_zero =
+      (config extensions.Zkr.sseed_read_only_zero : bool)
+    | not(currentlyEnabled(Ext_S))
+    | not(currentlyEnabled(Ext_Zkr));
+  let useed_read_only_zero =
+      (config extensions.Zkr.useed_read_only_zero : bool)
+    | not(currentlyEnabled(Ext_U))
+    | not(currentlyEnabled(Ext_Zkr));
+
   let v = Mk_Seccfg(v);
   [o with
-    SSEED = if currentlyEnabled(Ext_Zkr) then v[SSEED] else 0b0,
-    USEED = if currentlyEnabled(Ext_Zkr) then v[USEED] else 0b0,
+    SSEED = if sseed_read_only_zero then 0b0 else v[SSEED],
+    USEED = if useed_read_only_zero then 0b0 else v[USEED],
   ]
 }
 
@@ -332,13 +341,18 @@ function clause is_CSR_defined(0x757) = currentlyEnabled(Ext_Zkr) & xlen == 32 /
 function clause read_CSR(0x747) = mseccfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x757 if xlen == 32) = mseccfg.bits[63 .. 32]
 
-function set_mseccfg(v : bits(64)) -> unit = {
-  mseccfg = legalize_mseccfg(mseccfg, v);
+function clause write_CSR((0x747, value) if xlen == 32) = {
+  mseccfg = legalize_mseccfg(mseccfg, mseccfg.bits[63 .. 32] @ value);
+  mseccfg.bits[31 .. 0]
 }
-
-function clause write_CSR((0x747, value) if xlen == 32) = { set_mseccfg(mseccfg.bits[63 .. 32] @ value); mseccfg.bits[31 .. 0] }
-function clause write_CSR((0x747, value) if xlen == 64) = { set_mseccfg(value); mseccfg.bits }
-function clause write_CSR((0x757, value) if xlen == 32) = { set_mseccfg(value @ mseccfg.bits[31 .. 0]); mseccfg.bits[63 .. 32] }
+function clause write_CSR((0x747, value) if xlen == 64) = {
+  mseccfg = legalize_mseccfg(mseccfg, value);
+  mseccfg.bits
+}
+function clause write_CSR((0x757, value) if xlen == 32) = {
+  mseccfg = legalize_mseccfg(mseccfg, value @ mseccfg.bits[31 .. 0]);
+  mseccfg.bits[63 .. 32]
+}
 
 
 // envcfg Resisters
