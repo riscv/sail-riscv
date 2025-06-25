@@ -29,9 +29,9 @@
 #include "default_config.h"
 #include "config_utils.h"
 #include "sail_riscv_version.h"
+#include "rvfi_dii_sail.h"
 #include "riscv_callbacks_if.h"
 #include "riscv_callbacks_log.h"
-#include "riscv_callbacks_rvfi.h"
 
 bool do_show_times = false;
 bool do_print_version = false;
@@ -49,10 +49,8 @@ std::string dtb_file;
 unsigned char *dtb = NULL;
 size_t dtb_len = 0;
 int rvfi_dii_port = 0;
-std::optional<rvfi_handler> rvfi;
+extern std::optional<rvfi_handler> rvfi;
 std::vector<std::string> elfs;
-
-rvfi_callbacks rvfi_cbs;
 
 std::string sig_file;
 uint64_t mem_sig_start = 0;
@@ -636,37 +634,34 @@ int main(int argc, char **argv)
     print_isa();
   }
 
-  // If we get here, we need to have ELF files to run.
-  if (elfs.empty()) {
-    fprintf(stderr, "No elf file provided.\n");
-    exit(EXIT_FAILURE);
-  }
-
   init_logs();
-  log_callbacks log_cbs(config_print_reg, config_print_mem_access,
-                        config_use_abi_names, trace_log);
-  register_callback(&log_cbs);
+  log_callbacks log_cb(config_print_reg, config_print_mem_access,
+                       config_use_abi_names, trace_log);
+  register_callback(&log_cb);
 
   if (gettimeofday(&init_start, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
     exit(EXIT_FAILURE);
   }
 
+  uint64_t entry;
   if (rvfi) {
     if (!rvfi->setup_socket(config_print_rvfi))
       return 1;
-    register_callback(&rvfi_cbs);
-  }
-
-  const std::string &initial_elf_file = elfs[0];
-  uint64_t entry = rvfi
-      ? rvfi->get_entry()
-      : load_sail(initial_elf_file.c_str(), /*main_file=*/true);
-
-  /* Load any additional ELF files into memory */
-  for (auto it = elfs.cbegin() + 1; it != elfs.cend(); it++) {
-    fprintf(stdout, "Loading additional ELF file %s.\n", it->c_str());
-    (void)load_sail(it->c_str(), /*main_file=*/false);
+    register_callback(&rvfi.value());
+    entry = rvfi->get_entry();
+  } else {
+    // If we get here, we need to have ELF files to run.
+    if (elfs.empty()) {
+      fprintf(stderr, "No elf file provided.\n");
+      exit(EXIT_FAILURE);
+    }
+    entry = load_sail(elfs[0].c_str(), /*main_file=*/true);
+    /* Load any additional ELF files into memory */
+    for (auto it = elfs.cbegin() + 1; it != elfs.cend(); it++) {
+      fprintf(stdout, "Loading additional ELF file %s.\n", it->c_str());
+      (void)load_sail(it->c_str(), /*main_file=*/false);
+    }
   }
 
   init_sail(entry, config_file.c_str());
