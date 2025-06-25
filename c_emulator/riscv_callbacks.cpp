@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <inttypes.h>
+#include "rvfi_dii.h"
 
 void print_lbits_hex(lbits val, int length = 0)
 {
@@ -30,7 +31,7 @@ unit mem_write_callback(const char *type, sbits paddr, uint64_t width,
     print_lbits_hex(value, width);
   }
   if (config_enable_rvfi) {
-    zrvfi_write(paddr, width, value);
+    rvfi_write(paddr, width, value);
   }
   return UNIT;
 }
@@ -44,11 +45,7 @@ unit mem_read_callback(const char *type, sbits paddr, uint64_t width,
     print_lbits_hex(value, width);
   }
   if (config_enable_rvfi) {
-    sail_int len;
-    CREATE(sail_int)(&len);
-    CONVERT_OF(sail_int, mach_int)(&len, width);
-    zrvfi_read(paddr, len, value);
-    KILL(sail_int)(&len);
+    rvfi_read(paddr, width, value);
   }
   return UNIT;
 }
@@ -57,7 +54,7 @@ unit mem_exception_callback(sbits paddr, uint64_t num_of_exception)
 {
   (void)num_of_exception;
   if (config_enable_rvfi) {
-    zrvfi_mem_exception(paddr);
+    rvfi_mem_exception(paddr);
   }
   return UNIT;
 }
@@ -75,7 +72,7 @@ unit xreg_full_write_callback(const_sail_string abi_name, unsigned reg,
     }
   }
   if (config_enable_rvfi) {
-    zrvfi_wX(reg, value);
+    rvfi_wX(reg, value);
   }
   return UNIT;
 }
@@ -133,7 +130,7 @@ unit pc_write_callback(sbits value)
 unit trap_callback(unit)
 {
   if (config_enable_rvfi) {
-    zrvfi_trap(UNIT);
+    rvfi_trap();
   }
   return UNIT;
 }
