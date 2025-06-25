@@ -174,7 +174,7 @@ mapping clause assembly = C_ZEXT_W(rsdc) <->
 
 function clause execute C_ZEXT_W(rsdc) = {
   let rsd = creg2reg_idx(rsdc);
-  execute (ZBA_RTYPEUW(zreg, rsd, rsd, ADDUW))
+  execute (ZBA_RTYPEUW(zreg, rsd, rsd, 0b00))
 }
 
 /* ****************************************************************** */

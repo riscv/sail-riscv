@@ -279,15 +279,13 @@ enum csrop = {CSRRW, CSRRS, CSRRC}                    /* CSR ops */
 
 enum cbop_zicbom = {CBO_CLEAN, CBO_FLUSH, CBO_INVAL}  /* Zicbom ops */
 
-enum brop_zba = {SH1ADD, SH2ADD, SH3ADD}
+type shamt_zba = bits(2)
 
 enum brop_zbb = {ANDN, ORN, XNOR, MAX, MAXU, MIN, MINU, ROL, ROR}
 
 enum brop_zbkb = {PACK, PACKH}
 
 enum brop_zbs = {BCLR, BEXT, BINV, BSET}
-
-enum bropw_zba = {ADDUW, SH1ADDUW, SH2ADDUW, SH3ADDUW}
 
 enum bropw_zbb = {ROLW, RORW}
 
