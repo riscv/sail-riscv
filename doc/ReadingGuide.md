@@ -142,7 +142,7 @@ image into raw memory, including any ROM firmware such as the Berkeley
 boot loader and DeviceTree binary blobs, and initializes the memory
 map.
 
-The generated C model `riscv_sim_$ARCH` is built from the Sail
+The generated C model `sail_riscv_sim` is built from the Sail
 sources by the Sail compiler for the specified architecture $ARCH,
 either RV32 or RV64. It contains calls to the platform interface
 `riscv_platform` for platform-specific information; the latter is

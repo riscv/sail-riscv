@@ -440,7 +440,7 @@ void init_sail_reset_vector(uint64_t entry)
   }
 
   /* boot at reset vector */
-  zPC = rom_base;
+  zforce_pc(rom_base);
 }
 
 void init_sail(uint64_t elf_entry, const char *config_file)
@@ -456,15 +456,18 @@ void init_sail(uint64_t elf_entry, const char *config_file)
     rv_clint_size = UINT64_C(0);
     rv_htif_tohost = UINT64_C(0);
     */
-    zPC = elf_entry;
-  } else
+    zforce_pc(elf_entry);
+  } else {
     init_sail_reset_vector(elf_entry);
+  }
 }
 
 /* reinitialize to clear state and memory, typically across tests runs */
 void reinit_sail(uint64_t elf_entry, const char *config_file)
 {
   model_fini();
+  sail_set_abstract_xlen();
+  sail_set_abstract_ext_d_supported();
   model_init();
   init_sail(elf_entry, config_file);
 }
@@ -666,6 +669,8 @@ int main(int argc, char **argv)
 {
   int files_start = process_args(argc, argv);
 
+  sail_set_abstract_xlen();
+  sail_set_abstract_ext_d_supported();
   model_init();
 
   if (do_validate_config) {
