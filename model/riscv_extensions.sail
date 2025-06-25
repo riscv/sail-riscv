@@ -287,41 +287,49 @@ enum clause extension = Ext_Zvkt
 mapping clause extensionName = Ext_Zvkt <-> "zvkt"
 function clause hartSupports(Ext_Zvkt) = config extensions.Zvkt.supported
 function clause currentlyEnabled(Ext_Zvkt) = hartSupports(Ext_Zvkt)
-// The following extensions are superset/shorthand extensions that cannot be directly
-// configured in the config file and are not part of the device-tree. These extensions
-// are automatically enabled when all their required component extensions are enabled.
-// This approach simplifies checking for support of subset extensions
+// The following extensions are superset/shorthand extensions. They cannot be directly
+// configured in the config file, aren't part of the device-tree and shouldn't be
+// added to the extension list. These extensions are automatically enabled when all
+// their required subset extensions are enabled.
 enum clause extension = Ext_Zvkn
 mapping clause extensionName = Ext_Zvkn <-> "zvkn"
+function clause hartSupports(Ext_Zvkn) = true
 function clause currentlyEnabled(Ext_Zvkn) =
-currentlyEnabled(Ext_Zvkned) &
-currentlyEnabled(Ext_Zvknhb) &
-currentlyEnabled(Ext_Zvkb)   &
-currentlyEnabled(Ext_Zvkt)
+hartSupports(Ext_Zvkn)   &
+hartSupports(Ext_Zvkned) &
+hartSupports(Ext_Zvknhb) &
+hartSupports(Ext_Zvkb)   &
+hartSupports(Ext_Zvkt)
 // NIST Algorithm Suite with carryless multiply
 enum clause extension = Ext_Zvknc
 mapping clause extensionName = Ext_Zvknc <-> "zvknc"
-function clause currentlyEnabled(Ext_Zvknc) = currentlyEnabled(Ext_Zvkn) & currentlyEnabled(Ext_Zvbc)
+function clause hartSupports(Ext_Zvknc) = true
+function clause currentlyEnabled(Ext_Zvknc) = hartSupports(Ext_Zvknc) & currentlyEnabled(Ext_Zvkn) & hartSupports(Ext_Zvbc)
 // NIST Algorithm Suite with GCM
 enum clause extension = Ext_Zvkng
 mapping clause extensionName = Ext_Zvkng <-> "zvkng"
-function clause currentlyEnabled(Ext_Zvkng) = currentlyEnabled(Ext_Zvkn) & currentlyEnabled(Ext_Zvkg)
+function clause hartSupports(Ext_Zvkng) = true
+function clause currentlyEnabled(Ext_Zvkng) = hartSupports(Ext_Zvkng) & currentlyEnabled(Ext_Zvkn) & hartSupports(Ext_Zvkg)
 // ShangMi Algorithm Suite
 enum clause extension = Ext_Zvks
 mapping clause extensionName = Ext_Zvks <-> "zvks"
+function clause hartSupports(Ext_Zvks) = true
 function clause currentlyEnabled(Ext_Zvks) =
-currentlyEnabled(Ext_Zvksed) &
-currentlyEnabled(Ext_Zvksh)  &
-currentlyEnabled(Ext_Zvkb)   &
-currentlyEnabled(Ext_Zvkt)
+hartSupports(Ext_Zvks)   &
+hartSupports(Ext_Zvksed) &
+hartSupports(Ext_Zvksh)  &
+hartSupports(Ext_Zvkb)   &
+hartSupports(Ext_Zvkt)
 // ShangMi Algorithm Suite with carryless multiplication
 enum clause extension = Ext_Zvksc
 mapping clause extensionName = Ext_Zvksc <-> "zvksc"
-function clause currentlyEnabled(Ext_Zvksc) = currentlyEnabled(Ext_Zvks) & currentlyEnabled(Ext_Zvbc)
+function clause hartSupports(Ext_Zvksc) = true
+function clause currentlyEnabled(Ext_Zvksc) = hartSupports(Ext_Zvksc) & currentlyEnabled(Ext_Zvks) & hartSupports(Ext_Zvbc)
 // ShangMi Algorithm Suite with GCM
 enum clause extension = Ext_Zvksg
 mapping clause extensionName = Ext_Zvksg <-> "zvksg"
-function clause currentlyEnabled(Ext_Zvksg) = currentlyEnabled(Ext_Zvks) & currentlyEnabled(Ext_Zvkg)
+function clause hartSupports(Ext_Zvksg) = true
+function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg) & currentlyEnabled(Ext_Zvks) & hartSupports(Ext_Zvkg)
 
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
