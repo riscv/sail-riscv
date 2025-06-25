@@ -86,7 +86,7 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
 
   /* check new SEW and LMUL are legal and calculate VLMAX */
-  if not(lmul_pow_val_forwards_matches(lmul)) | not(sew_pow_val_forwards_matches(sew)) then {
+  if is_invalid_lmul_pow(lmul) | is_invalid_sew_pow(sew) then {
     handle_illegal_vtype();
     return RETIRE_SUCCESS
   };
@@ -150,7 +150,7 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   let lmul = vtype_new[vlmul];
 
   /* check new SEW and LMUL are legal and calculate VLMAX */
-  if not(lmul_pow_val_forwards_matches(lmul)) | not(sew_pow_val_forwards_matches(sew)) then {
+  if is_invalid_lmul_pow(lmul) | is_invalid_sew_pow(sew) then {
     handle_illegal_vtype();
     return RETIRE_SUCCESS
   };
@@ -200,7 +200,7 @@ mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
 
 function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   /* check new SEW and LMUL are legal and calculate VLMAX */
-  if not(lmul_pow_val_forwards_matches(lmul)) | not(sew_pow_val_forwards_matches(sew)) then {
+  if is_invalid_lmul_pow(lmul) | is_invalid_sew_pow(sew) then {
     handle_illegal_vtype();
     return RETIRE_SUCCESS
   };

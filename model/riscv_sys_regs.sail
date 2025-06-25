@@ -941,11 +941,16 @@ mapping lmul_pow_val : bits(3) <-> LMUL_pow = {
   0b011 <-> 3,
 }
 
+function is_invalid_sew_pow(v : bits(3)) -> bool =
+  v >_u 0b011
+
+function is_invalid_lmul_pow(v : bits(3)) -> bool =
+  v == 0b100
+
 /* the dynamic selected element width (SEW) */
 /* this returns the power of 2 for SEW */
 function get_sew_pow() -> SEW_pow = {
   let sew_pow = vtype[vsew];
-  assert(sew_pow_val_forwards_matches(sew_pow), "invalid vsew field in vtype");
   sew_pow_val(sew_pow)
 }
 
@@ -962,7 +967,6 @@ function get_sew_bytes() -> {1, 2, 4, 8} =
 val get_lmul_pow : unit -> LMUL_pow
 function get_lmul_pow() = {
   let lmul_pow = vtype[vlmul];
-  assert(lmul_pow_val_forwards_matches(lmul_pow), "invalid vlmul field in vtype");
   lmul_pow_val(lmul_pow)
 }
 
