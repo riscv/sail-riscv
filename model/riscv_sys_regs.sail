@@ -904,7 +904,7 @@ val get_16_random_bits = impure {
 } : unit -> bits(16)
 
 /* vector csrs */
-register vstart : bits(16) /* use the largest possible length of vstart */
+register vstart : xlenbits
 register vl     : xlenbits
 
 let VLENB : xlenbits =
