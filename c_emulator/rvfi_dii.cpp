@@ -34,6 +34,7 @@ RVFI_DII_Instruction_Packet::from_u64(uint64_t value)
 }
 
 // ****************************************************************************
+// Global Variables
 
 static RVFI_DII_Instruction_Packet rvfi_instruction = {};
 static RVFI_DII_Execution_Packet_PC rvfi_pc_data = {};
@@ -44,7 +45,7 @@ static bool rvfi_mem_data_present = false;
 static bool rvfi_int_data_present = false;
 
 // ****************************************************************************
-
+// RVFI Handler Functions
 RVFI_DII_Execution_Packet_V1 rvfi_get_exec_packet_v1()
 {
   return RVFI_DII_Execution_Packet_V1 {
@@ -158,114 +159,8 @@ void print_rvfi_exec()
   print_sbits("rvfi_order    : ", sbits {64, rvfi_inst_data.rvfi_order});
 }
 
-// ***************************************************************************
-// Callbacks API
-
-uint32_t rvfi_encode_width_mask(uint8_t width)
-{
-  return (0xFFFFFFFF >> (32 - width));
-}
-
-void rvfi_write(uint64_t paddr, uint64_t width, lbits value)
-{
-  rvfi_mem_data.rvfi_mem_addr = paddr;
-  rvfi_mem_data_present = true;
-  if (width <= 16) {
-    // TODO: report tag bit for capability writes and extend mask by one bit. */
-    convert_lbits_to_u8s(value, (uint8_t *)rvfi_mem_data.rvfi_mem_wdata);
-    rvfi_mem_data.rvfi_mem_wmask = rvfi_encode_width_mask(width);
-  } else {
-    fprintf(stderr, "Expected at most 16 bytes here!\n");
-    exit(1);
-  };
-}
-
-void rvfi_read(uint64_t paddr, uint64_t width, lbits value)
-{
-  rvfi_mem_data.rvfi_mem_addr = paddr;
-  rvfi_mem_data_present = true;
-  if (width <= 16) {
-    // TODO: report tag bit for capability writes and extend mask by one bit.
-    convert_lbits_to_u8s(value, (uint8_t *)rvfi_mem_data.rvfi_mem_wdata);
-    rvfi_mem_data.rvfi_mem_rmask = rvfi_encode_width_mask(width);
-  } else {
-    fprintf(stderr, "Expected at most 16 bytes here!\n");
-    exit(1);
-  };
-}
-
-void rvfi_mem_exception(uint64_t paddr)
-{
-  /* Log only the memory address (without the value) if the write fails. */
-  rvfi_mem_data.rvfi_mem_addr = paddr;
-  rvfi_mem_data_present = true;
-  return;
-}
-
-void rvfi_wX(unsigned r, uint64_t v)
-{
-  rvfi_int_data.rvfi_rd_wdata = v;
-  rvfi_int_data.rvfi_rd_addr = r;
-  rvfi_int_data_present = true;
-  return;
-}
-
-void rvfi_trap()
-{
-  rvfi_inst_data.rvfi_trap = 0x01;
-  return;
-}
-
-// ***************************************************************************
-// Sail API
-
-unit rvfi_set_inst_data_insn(uint64_t insn)
-{
-  rvfi_inst_data.rvfi_insn = insn;
-  return UNIT;
-}
-
-unit rvfi_set_inst_data_order(uint64_t order)
-{
-  rvfi_inst_data.rvfi_order = order;
-  return UNIT;
-}
-
-unit rvfi_set_inst_data_mode(uint8_t mode)
-{
-  rvfi_inst_data.rvfi_mode = mode;
-  return UNIT;
-}
-
-unit rvfi_set_inst_data_ixl(uint8_t ixl)
-{
-  rvfi_inst_data.rvfi_ixl = ixl;
-  return UNIT;
-}
-
-uint64_t rvfi_get_insn(unit)
-{
-  return (uint64_t)rvfi_instruction.rvfi_insn;
-}
-
-uint64_t rvfi_get_cmd(unit)
-{
-  return (uint64_t)rvfi_instruction.rvfi_cmd;
-}
-
-unit rvfi_set_pc_data_rdata(uint64_t rdata)
-{
-  rvfi_pc_data.rvfi_pc_rdata = rdata;
-  return UNIT;
-}
-
-unit rvfi_set_pc_data_wdata(uint64_t wdata)
-{
-  rvfi_pc_data.rvfi_pc_wdata = wdata;
-  return UNIT;
-}
-
 // ****************************************************************************
+// RVFI Handler
 
 #define UNUSED(var) (void)(var)
 
@@ -418,15 +313,6 @@ void rvfi_handler::send_trace(bool config_print)
   }
 }
 
-RVFI_DII_Instruction_Packet RVFI_DII_Instruction_Packet_from_u64(uint64_t value)
-{
-  return RVFI_DII_Instruction_Packet {
-      .rvfi_insn = (uint32_t)(value & 0xFFFFFFFF),
-      .rvfi_time = (uint16_t)((value >> 32) & 0xFFFF),
-      .rvfi_cmd = (uint8_t)((value >> 48) & 0xFF),
-      .padding = (uint8_t)((value >> 56) & 0xFF),
-  };
-}
 rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
 {
   mach_bits instr_bits;
@@ -452,7 +338,7 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
     fprintf(stderr, "Reading RVFI DII command failed: insufficient input");
     exit(EXIT_FAILURE);
   }
-  rvfi_instruction = RVFI_DII_Instruction_Packet_from_u64(instr_bits);
+  rvfi_instruction = RVFI_DII_Instruction_Packet::from_u64(instr_bits);
   rvfi_zero_exec_packet();
   mach_bits cmd = rvfi_instruction.rvfi_cmd;
   switch (cmd) {
@@ -517,4 +403,111 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
     exit(EXIT_FAILURE);
   }
   return RVFI_prestep_ok;
+}
+
+// ***************************************************************************
+// Callbacks API
+
+uint32_t rvfi_encode_width_mask(uint8_t width)
+{
+  return (0xFFFFFFFF >> (32 - width));
+}
+
+void rvfi_write(uint64_t paddr, uint64_t width, lbits value)
+{
+  rvfi_mem_data.rvfi_mem_addr = paddr;
+  rvfi_mem_data_present = true;
+  if (width <= 16) {
+    // TODO: report tag bit for capability writes and extend mask by one bit. */
+    convert_lbits_to_u8s(value, (uint8_t *)rvfi_mem_data.rvfi_mem_wdata);
+    rvfi_mem_data.rvfi_mem_wmask = rvfi_encode_width_mask(width);
+  } else {
+    fprintf(stderr, "Expected at most 16 bytes here!\n");
+    exit(1);
+  };
+}
+
+void rvfi_read(uint64_t paddr, uint64_t width, lbits value)
+{
+  rvfi_mem_data.rvfi_mem_addr = paddr;
+  rvfi_mem_data_present = true;
+  if (width <= 16) {
+    // TODO: report tag bit for capability writes and extend mask by one bit.
+    convert_lbits_to_u8s(value, (uint8_t *)rvfi_mem_data.rvfi_mem_wdata);
+    rvfi_mem_data.rvfi_mem_rmask = rvfi_encode_width_mask(width);
+  } else {
+    fprintf(stderr, "Expected at most 16 bytes here!\n");
+    exit(1);
+  };
+}
+
+void rvfi_mem_exception(uint64_t paddr)
+{
+  /* Log only the memory address (without the value) if the write fails. */
+  rvfi_mem_data.rvfi_mem_addr = paddr;
+  rvfi_mem_data_present = true;
+  return;
+}
+
+void rvfi_wX(unsigned r, uint64_t v)
+{
+  rvfi_int_data.rvfi_rd_wdata = v;
+  rvfi_int_data.rvfi_rd_addr = r;
+  rvfi_int_data_present = true;
+  return;
+}
+
+void rvfi_trap()
+{
+  rvfi_inst_data.rvfi_trap = 0x01;
+  return;
+}
+
+// ***************************************************************************
+// Sail API
+
+unit rvfi_set_inst_data_insn(uint64_t insn)
+{
+  rvfi_inst_data.rvfi_insn = insn;
+  return UNIT;
+}
+
+unit rvfi_set_inst_data_order(uint64_t order)
+{
+  rvfi_inst_data.rvfi_order = order;
+  return UNIT;
+}
+
+unit rvfi_set_inst_data_mode(uint8_t mode)
+{
+  rvfi_inst_data.rvfi_mode = mode;
+  return UNIT;
+}
+
+unit rvfi_set_inst_data_ixl(uint8_t ixl)
+{
+  rvfi_inst_data.rvfi_ixl = ixl;
+  return UNIT;
+}
+
+uint64_t rvfi_get_insn(unit)
+{
+  return (uint64_t)rvfi_instruction.rvfi_insn;
+}
+
+uint64_t rvfi_get_cmd(unit)
+{
+  return (uint64_t)rvfi_instruction.rvfi_cmd;
+}
+
+unit rvfi_set_pc_data_rdata(uint64_t rdata)
+{
+  rvfi_pc_data.rvfi_pc_rdata = rdata;
+  return UNIT;
+}
+
+unit rvfi_set_pc_data_wdata(uint64_t wdata)
+{
+  rvfi_pc_data.rvfi_pc_wdata = wdata;
+  return UNIT;
 }
