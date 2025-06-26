@@ -119,7 +119,7 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
 
   csr_write_callback("vtype", vtype.bits);
   csr_write_callback("vl", vl);
-  csr_write_callback("vstart", zero_extend(vstart));
+  csr_write_callback("vstart", vstart);
 
   RETIRE_SUCCESS
 }
@@ -183,7 +183,7 @@ function clause execute VSETVL(rs2, rs1, rd) = {
 
   csr_write_callback("vtype", vtype.bits);
   csr_write_callback("vl", vl);
-  csr_write_callback("vstart", zero_extend(vstart));
+  csr_write_callback("vstart", vstart);
 
   RETIRE_SUCCESS
 }
@@ -223,7 +223,7 @@ function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
 
   csr_write_callback("vtype", vtype.bits);
   csr_write_callback("vl", vl);
-  csr_write_callback("vstart", zero_extend(vstart));
+  csr_write_callback("vstart", vstart);
 
   RETIRE_SUCCESS
 }
