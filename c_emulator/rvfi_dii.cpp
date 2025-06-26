@@ -73,14 +73,14 @@ RVFI_DII_Execution_Packet_V1 rvfi_get_v2_support_packet()
 
 uint64_t rvfi_get_v2_trace_size()
 {
-  uint64_t trace_size = 512;
+  uint64_t trace_size = sizeof(RVFI_DII_Execution_Packet_V2);
   if (rvfi_int_data_present) {
     trace_size = trace_size + sizeof(RVFI_DII_Execution_Packet_Ext_Integer);
   }
   if (rvfi_mem_data_present) {
     trace_size = trace_size + sizeof(RVFI_DII_Execution_Packet_Ext_MemAccess);
   }
-  return trace_size >> 3; // we have to return bytes not bits
+  return trace_size;
 }
 
 RVFI_DII_Execution_Packet_V2 rvfi_get_exec_packet_v2()
