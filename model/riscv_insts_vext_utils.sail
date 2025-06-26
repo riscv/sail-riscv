@@ -198,7 +198,7 @@ val get_velem_oct_vec : forall 'n 'm 'p, 'n > 0 & 8 <= 'm <= 64 & 'p >= 0 & 8 * 
 function get_velem_oct_vec(n, v, i) = [ v[8 * i + 7], v[8 * i + 6], v[8 * i + 5], v[8 * i + 4], v[8 * i + 3], v[8 * i + 2], v[8 * i + 1], v[8 * i] ]
 
 /* Writes each of the 8 elements from the input vector to the vector register vd, starting at position 8 * i */
-val write_velem_oct_vec : forall 'n, 'n in {8, 16, 32, 64}. (vregidx, int('n), vector(8, bits('n)), nat) -> unit
+val write_velem_oct_vec : forall 'n, is_sew_bitsize('n) . (vregidx, int('n), vector(8, bits('n)), nat) -> unit
 function write_velem_oct_vec(vd, SEW, input, i) = {
   foreach(j from 0 to 7)
     write_single_element(SEW, 8 * i + j, vd, input[j]);
@@ -209,7 +209,7 @@ val get_velem_quad_vec : forall 'n 'm 'p, 'n > 0 & 8 <= 'm <= 64  & 'p >= 0 & 4 
 function get_velem_quad_vec(v, i) = [ v[4 * i + 3], v[4 * i + 2], v[4 * i + 1], v[4 * i] ]
 
 /* Writes each of the 4 elements from the input vector to the vector register vd, starting at position 4 * i */
-val write_velem_quad_vec : forall 'p 'n, 'n in {8, 16, 32, 64} & 'p >= 0. (vregidx, int('n), vector(4, bits('n)), int('p)) -> unit
+val write_velem_quad_vec : forall 'p 'n, is_sew_bitsize('n) & 'p >= 0. (vregidx, int('n), vector(4, bits('n)), int('p)) -> unit
 function write_velem_quad_vec(vd, SEW, input, i) = {
   foreach(j from 0 to 3)
     write_single_element(SEW, 4 * i + j, vd, input[j]);
@@ -425,7 +425,7 @@ function init_masked_result_cmp(num_elem, EEW, LMUL_pow, vd_val, vm_val) = {
  *   Read multiple register groups and concatenate them in parallel
  *   The whole segments with the same element index are combined together
  */
-val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'm in {8, 16, 32, 64} & nfields_range('q). (int('n), int('m), int('p), int('q), vregidx) -> vector('n, bits('q * 'm))
+val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & is_sew_bitsize('m) & nfields_range('q). (int('n), int('m), int('p), int('q), vregidx) -> vector('n, bits('q * 'm))
 function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
   let LMUL_reg : int = if LMUL_pow <= 0 then 1 else 2 ^ LMUL_pow;
   var vreg_list : vector('q, vector('n, bits('m))) = vector_init(vector_init(zeros()));

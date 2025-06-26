@@ -1006,6 +1006,7 @@ function get_sew_pow() -> SEW_pow = {
 
 // Valid SEW sizes in bits.
 type sew_bitsize = {8, 16, 32, 64}
+type is_sew_bitsize('n) -> Bool = 'n in {8, 16, 32, 64}
 
 /* this returns the actual value of SEW */
 function get_sew() -> sew_bitsize =
