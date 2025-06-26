@@ -31,7 +31,7 @@ private:
 
 // ****************************************************************************
 
-typedef struct {
+struct RVFI_DII_Instruction_Packet {
   uint32_t rvfi_insn = 0; // 31 ..  0, Instruction word: 32-bit instruction
                           // or command. The lower 16-bits may decode to a
                           // 16-bit compressed instruction.
@@ -44,9 +44,10 @@ typedef struct {
   uint8_t rvfi_cmd = 0; // 55 .. 48, This token is a trace command. For example,
                         // reset device under test.
   uint8_t padding = 0;  // 63 .. 56
-} RVFI_DII_Instruction_Packet;
+  static RVFI_DII_Instruction_Packet from_u64(uint64_t value);
+};
 
-typedef struct {
+struct RVFI_DII_Execution_Packet_InstMetadata {
   /// The rvfi_order field must be set to the instruction index. No indices
   /// must be used twice and there must be no gaps. Instructions may be
   /// retired in a reordered fashion, as long as causality is preserved
@@ -93,7 +94,7 @@ typedef struct {
   // omit the valid signal, but we need 3 bytes of padding after ixl anyway
   // so we might as well include it
   uint16_t padding = 0; // 191 ..  176
-} RVFI_DII_Execution_Packet_InstMetadata;
+};
 
 typedef struct {
   /// This is the program counter (pc) before (rvfi_pc_rdata) and after
@@ -105,7 +106,7 @@ typedef struct {
 
 #define MAGIC_INT_DATA {'i', 'n', 't', '-', 'd', 'a', 't', 'a'}
 
-typedef struct {
+struct RVFI_DII_Execution_Packet_Ext_Integer {
   char magic[8] = MAGIC_INT_DATA; // 63 .. 0, must be "int-data"
   /// rvfi_rd_wdata is the value of the x register addressed by rd after
   /// execution of this instruction. This output must be zero when rd is zero.
@@ -127,11 +128,11 @@ typedef struct {
   uint8_t rvfi_rs1_addr = 0; // 271 .. 264
   uint8_t rvfi_rs2_addr = 0; // 279 .. 272
   uint8_t padding[5] = {};
-} RVFI_DII_Execution_Packet_Ext_Integer;
+};
 
 #define MAGIC_MEM_DATA {'m', 'e', 'm', '-', 'd', 'a', 't', 'a'}
 
-typedef struct {
+struct RVFI_DII_Execution_Packet_Ext_MemAccess {
   char magic[8] = MAGIC_MEM_DATA; // 63 .. 0, must be "mem-data"
   /// rvfi_mem_rdata is the pre-state data read from rvfi_mem_addr.
   /// rvfi_mem_rmask specifies which bytes are valid.
@@ -153,11 +154,11 @@ typedef struct {
   /// For memory operations (rvfi_mem_rmask and/or rvfi_mem_wmask are
   /// non-zero), rvfi_mem_addr holds the accessed memory location.
   uint64_t rvfi_mem_addr = 0; // 703 .. 640
-} RVFI_DII_Execution_Packet_Ext_MemAccess;
+};
 
 // ****************************************************************************
 
-typedef struct {
+struct RVFI_DII_Execution_Packet_V1 {
   uint64_t rvfi_order = 0; //  63 ..   0, [00 - 07] Instruction number: INSTRET
                            //  value after completion.
   uint64_t rvfi_pc_rdata = 0; // 127 ..  64, [08 - 15] PC before instr: PC for
@@ -193,11 +194,11 @@ typedef struct {
                          // last instruction retired before halting execution.
   uint8_t rvfi_intr = 0; // 703 .. 696, [87] Trap handler: Set for
                          // first instruction in trap handler.
-} RVFI_DII_Execution_Packet_V1;
+};
 
 #define MAGIC_TRACE_V2 {'t', 'r', 'a', 'c', 'e', '-', 'v', '2'}
 
-typedef struct /* bits(512) */ {
+struct RVFI_DII_Execution_Packet_V2 {
   char magic[8] = MAGIC_TRACE_V2; // 63 .. 0, must be set to 'trace-v2'
   uint64_t trace_size
       = 0; // 127 .. 64, total size of the trace packet + extensions
@@ -220,7 +221,7 @@ typedef struct /* bits(512) */ {
   // trap_data_available: 454,
   // To be used for additional RVFI_DII_Execution_Packet_Ext_* structs
   // unused_data_available_fields : 511 .. 455
-} RVFI_DII_Execution_Packet_V2;
+};
 
 enum RVFI_DII_Execution_Available_Field {
   RVFI_INST_DATA = 0, // Must always be present
