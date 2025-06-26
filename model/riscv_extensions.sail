@@ -293,10 +293,10 @@ function clause currentlyEnabled(Ext_Zvkt) = hartSupports(Ext_Zvkt)
 enum clause extension = Ext_Zvkn
 mapping clause extensionName = Ext_Zvkn <-> "zvkn"
 function clause hartSupports(Ext_Zvkn) =
-hartSupports(Ext_Zvkned) &
-hartSupports(Ext_Zvknhb) &
-hartSupports(Ext_Zvkb)   &
-hartSupports(Ext_Zvkt)
+  hartSupports(Ext_Zvkned) &
+  hartSupports(Ext_Zvknhb) &
+  hartSupports(Ext_Zvkb)   &
+  hartSupports(Ext_Zvkt)
 function clause currentlyEnabled(Ext_Zvkn) = hartSupports(Ext_Zvkn)
 // NIST Algorithm Suite with carryless multiply
 enum clause extension = Ext_Zvknc
@@ -312,10 +312,10 @@ function clause currentlyEnabled(Ext_Zvkng) = hartSupports(Ext_Zvkng)
 enum clause extension = Ext_Zvks
 mapping clause extensionName = Ext_Zvks <-> "zvks"
 function clause hartSupports(Ext_Zvks) =
-hartSupports(Ext_Zvksed) &
-hartSupports(Ext_Zvksh)  &
-hartSupports(Ext_Zvkb)   &
-hartSupports(Ext_Zvkt)
+  hartSupports(Ext_Zvksed) &
+  hartSupports(Ext_Zvksh)  &
+  hartSupports(Ext_Zvkb)   &
+  hartSupports(Ext_Zvkt)
 function clause currentlyEnabled(Ext_Zvks) = hartSupports(Ext_Zvks)
 // ShangMi Algorithm Suite with carryless multiplication
 enum clause extension = Ext_Zvksc
