@@ -39,10 +39,10 @@
  *   is_aligned_addr - checks for alignment of a physical or virtual address
  */
 
-function is_aligned_paddr forall 'n. (Physaddr(addr) : physaddr, width : int('n)) -> bool =
+function is_aligned_paddr(Physaddr(addr) : physaddr, width : nat1) -> bool =
   unsigned(addr) % width == 0
 
-function is_aligned_vaddr forall 'n. (Virtaddr(addr) : virtaddr, width : int('n)) -> bool =
+function is_aligned_vaddr(Virtaddr(addr) : virtaddr, width : nat1) -> bool =
   unsigned(addr) % width == 0
 
 function is_aligned_bits(vaddr : xlenbits, width : word_width) -> bool =

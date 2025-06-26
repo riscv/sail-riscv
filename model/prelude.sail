@@ -49,12 +49,14 @@ val sub_vec_int = pure {c: "sub_bits_int", lean: "BitVec.subInt", _: "sub_vec_in
 overload operator - = {sub_vec, sub_vec_int}
 
 val quot_positive_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", lean: "Int.tdiv", c: "tdiv_int", coq: "Z.quot"} : forall 'n 'm, 'n >= 0 & 'm > 0. (int('n), int('m)) -> int(div('n, 'm))
+val quot_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot", lean: "Int.tdiv"} : forall 'm, 'm != 0 . (int, int('m)) -> int
 
-val quot_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot", lean: "Int.tdiv"} : (int, int) -> int
-val rem_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", coq: "Z.rem", lean: "Int.tmod"} : (int, int) -> int
+val rem_positive_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", coq: "Z.rem", lean: "Int.tmod"} : forall 'n 'm, 'n >= 0 & 'm > 0. (int('n), int('m)) -> int(mod('n, 'm))
+val rem_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", coq: "Z.rem", lean: "Int.tmod"} : forall 'm, 'm != 0 . (int, int('m)) -> int
 
-/* The following defines % as euclidean modulus */
-overload operator % = {emod_int}
+// For working with division / modulus we require the divisor to be >= 1.
+// This type describes that.
+type nat1 = {'n, 'n > 0. int('n)}
 
 overload min = {min_int}
 overload max = {max_int}
@@ -211,8 +213,13 @@ function reverse_bits (xs)  = {
   ys
 }
 
-overload operator / = {quot_positive_round_zero, quot_round_zero}
 overload operator * = {mult_atom, mult_int}
+// quot_round_zero and rem_round_zero are deliberately not
+// added to these overloads to avoid accidentally doing
+// division or modulo with negative numbers which is almost
+// always a mistake in this context.
+overload operator / = {quot_positive_round_zero}
+overload operator % = {rem_positive_round_zero}
 
 /* helper for vector extension
  * 1. EEW between 8 and 64
@@ -256,5 +263,5 @@ val sys_enable_experimental_extensions = pure "sys_enable_experimental_extension
 // Print a bit vector in hex. If it is not a multiple of 4
 // bits in length zero extend it so it is (bits_str() prints
 // bit vectors that aren't a multiple of 4 bits in binary).
-function hex_bits_str forall 'n . (x : bits('n)) -> string =
+function hex_bits_str forall 'n, 'n >= 0 . (x : bits('n)) -> string =
   bits_str(zero_extend((3 - (('n + 3) % 4)) + 'n, x))

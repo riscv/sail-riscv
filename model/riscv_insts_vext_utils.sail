@@ -185,7 +185,7 @@ val get_velem_quad : forall 'n 'm 'p, 'n > 0 & 'm > 0 & 'p >= 0 & 4 * 'p + 3 < '
 function get_velem_quad(v, i) = v[4 * i + 3] @ v[4 * i + 2] @ v[4 * i + 1] @ v[4 * i]
 
 /* Divide the input bitvector into 4 equal slices and store them in vd starting at position 4*i */
-val write_velem_quad : forall 'p 'n 'm, 8 <= 'n <= 64 & 'm > 0 & 'p >= 0. (vregidx, int('n), bits('m), int('p)) -> unit
+val write_velem_quad : forall 'n, 'n > 0 . (vregidx, sew_bitsize, bits('n), nat) -> unit
 function write_velem_quad(vd, SEW, input, i) = {
   foreach(j from 0 to 3)
     write_single_element(SEW, 4 * i + j, vd, slice(input, j * SEW, SEW));
@@ -198,7 +198,7 @@ val get_velem_oct_vec : forall 'n 'm 'p, 'n > 0 & 8 <= 'm <= 64 & 'p >= 0 & 8 * 
 function get_velem_oct_vec(n, v, i) = [ v[8 * i + 7], v[8 * i + 6], v[8 * i + 5], v[8 * i + 4], v[8 * i + 3], v[8 * i + 2], v[8 * i + 1], v[8 * i] ]
 
 /* Writes each of the 8 elements from the input vector to the vector register vd, starting at position 8 * i */
-val write_velem_oct_vec : forall 'p 'n, 8 <= 'n <= 64 & 'p >= 0. (vregidx, int('n), vector(8, bits('n)), int('p)) -> unit
+val write_velem_oct_vec : forall 'n, 'n in {8, 16, 32, 64}. (vregidx, int('n), vector(8, bits('n)), nat) -> unit
 function write_velem_oct_vec(vd, SEW, input, i) = {
   foreach(j from 0 to 7)
     write_single_element(SEW, 8 * i + j, vd, input[j]);
@@ -209,7 +209,7 @@ val get_velem_quad_vec : forall 'n 'm 'p, 'n > 0 & 8 <= 'm <= 64  & 'p >= 0 & 4 
 function get_velem_quad_vec(v, i) = [ v[4 * i + 3], v[4 * i + 2], v[4 * i + 1], v[4 * i] ]
 
 /* Writes each of the 4 elements from the input vector to the vector register vd, starting at position 4 * i */
-val write_velem_quad_vec : forall 'p 'n, 8 <= 'n <= 64 & 'p >= 0. (vregidx, int('n), vector(4, bits('n)), int('p)) -> unit
+val write_velem_quad_vec : forall 'p 'n, 'n in {8, 16, 32, 64} & 'p >= 0. (vregidx, int('n), vector(4, bits('n)), int('p)) -> unit
 function write_velem_quad_vec(vd, SEW, input, i) = {
   foreach(j from 0 to 3)
     write_single_element(SEW, 4 * i + j, vd, input[j]);
@@ -243,8 +243,8 @@ function get_end_element() = unsigned(vl) - 1
  *   vector2 is a "mask" vector that is true for an element if the corresponding element
  *     in the result vector should be updated by the calling instruction
  */
-val init_masked_result : forall 'n 'm 'p, 'n >= 0 & 'm >= 0. (int('n), int('m), int('p), vector('n, bits('m)), bits('n)) -> result((vector('n, bits('m)), bits('n)), unit)
-function init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
+val init_masked_result : forall 'n 'm 'p, 'n >= 0 . (int('n), int('m), int('p), vector('n, bits('m)), bits('n)) -> result((vector('n, bits('m)), bits('n)), unit)
+function init_masked_result(num_elem, EEW, LMUL_pow, vd_val, vm_val) = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Err(())
@@ -336,8 +336,8 @@ function init_masked_source(num_elem, LMUL_pow, vm_val) = {
 
 /* Mask handling for carry functions that use masks as input/output */
 /* Only prestart and tail elements are masked in a mask value */
-val init_masked_result_carry : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), bits('n)) -> result((bits('n), bits('n)), unit)
-function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
+val init_masked_result_carry : forall 'n, 'n >= 0 . (int('n), sew_bitsize, int, bits('n)) -> result((bits('n), bits('n)), unit)
+function init_masked_result_carry(num_elem, EEW, LMUL_pow, vd_val) = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Err(())
@@ -375,8 +375,8 @@ function init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) = {
 }
 
 /* Mask handling for cmp functions that use masks as output */
-val init_masked_result_cmp : forall 'n 'm 'p, 'n >= 0. (int('n), int('m), int('p), bits('n), bits('n)) -> result((bits('n), bits('n)), unit)
-function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
+val init_masked_result_cmp : forall 'n, 'n >= 0 . (int('n), sew_bitsize, int, bits('n), bits('n)) -> result((bits('n), bits('n)), unit)
+function init_masked_result_cmp(num_elem, EEW, LMUL_pow, vd_val, vm_val) = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Err(())
@@ -425,7 +425,7 @@ function init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) = {
  *   Read multiple register groups and concatenate them in parallel
  *   The whole segments with the same element index are combined together
  */
-val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'm >= 0 & nfields_range('q). (int('n), int('m), int('p), int('q), vregidx) -> vector('n, bits('q * 'm))
+val read_vreg_seg : forall 'n 'm 'p 'q, 'n >= 0 & 'm in {8, 16, 32, 64} & nfields_range('q). (int('n), int('m), int('p), int('q), vregidx) -> vector('n, bits('q * 'm))
 function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
   let LMUL_reg : int = if LMUL_pow <= 0 then 1 else 2 ^ LMUL_pow;
   var vreg_list : vector('q, vector('n, bits('m))) = vector_init(vector_init(zeros()));
@@ -443,7 +443,7 @@ function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
 }
 
 /* Shift amounts */
-val get_shift_amount : forall 'n 'm, 0 <= 'n & 'm in {8, 16, 32, 64}. (bits('n), int('m)) -> nat
+val get_shift_amount : forall 'n, 0 <= 'n . (bits('n), sew_bitsize) -> nat
 function get_shift_amount(bit_val, SEW) = {
   let lowlog2bits = log2(SEW);
   assert(0 < lowlog2bits & lowlog2bits < 'n);
