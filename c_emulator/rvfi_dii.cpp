@@ -17,6 +17,7 @@
 #include "riscv_sail.h"
 #include "rvfi_dii.h"
 #include "rvfi_dii_sail.h"
+#include "sail_utils.h"
 
 // ****************************************************************************
 
@@ -117,56 +118,6 @@ void rvfi_halt_exec_packet()
   return;
 }
 
-void fprint_bits_sbits(const char *pre, const sbits op, const char *post,
-                       FILE *stream)
-{
-  fputs(pre, stream);
-  if (op.len == 0) {
-  } else if (op.len % 4 == 0) {
-    fputs("0x", stream);
-    int num_hex_digits = op.len / 4;
-    for (int i = num_hex_digits - 1; i >= 0; --i) {
-      unsigned nibble = (op.bits >> (i * 4)) & 0xF;
-      char hex_char
-          = (nibble < 10) ? (char)(nibble + '0') : (char)(nibble - 10 + 'a');
-      fputc(hex_char, stream);
-    }
-  } else {
-    fputs("0b", stream);
-    for (int i = op.len - 1; i >= 0; --i) {
-      fputc(((op.bits >> i) & 1) + '0', stream);
-    }
-  }
-  fputs(post, stream);
-}
-
-unit print_sbits(const_sail_string str, const sbits op)
-{
-  fprint_bits_sbits(str, op, "\n", stdout);
-  return UNIT;
-}
-
-unit prerr_sbits(const_sail_string str, const sbits op)
-{
-  fprint_bits_sbits(str, op, "\n", stderr);
-  return UNIT;
-}
-
-lbits convert_u8s_to_lbits(const uint8_t *arr, unsigned int num_bits)
-{
-  lbits result;
-  result.len = num_bits;
-  result.bits = (mpz_t *)malloc(sizeof(mpz_t));
-  mpz_init(*result.bits);
-  mpz_import(*result.bits, num_bits, -1, 1, 0, 0, arr);
-  return result;
-}
-
-void export_lbits_to_u8s(lbits val, uint8_t *arr)
-{
-  mpz_export(arr, NULL, -1, 1, 0, 0, *val.bits);
-}
-
 void print_rvfi_exec()
 {
   print_sbits("rvfi_intr     : ", sbits {8, rvfi_inst_data.rvfi_intr});
@@ -207,7 +158,7 @@ void rvfi_write(uint64_t paddr, uint64_t width, lbits value)
   rvfi_mem_data_present = true;
   if (width <= 16) {
     // TODO: report tag bit for capability writes and extend mask by one bit. */
-    export_lbits_to_u8s(value, (uint8_t *)rvfi_mem_data.rvfi_mem_wdata);
+    convert_lbits_to_u8s(value, (uint8_t *)rvfi_mem_data.rvfi_mem_wdata);
     rvfi_mem_data.rvfi_mem_wmask = rvfi_encode_width_mask(width);
   } else {
     fprintf(stderr, "Expected at most 16 bytes here!\n");
@@ -221,7 +172,7 @@ void rvfi_read(uint64_t paddr, uint64_t width, lbits value)
   rvfi_mem_data_present = true;
   if (width <= 16) {
     // TODO: report tag bit for capability writes and extend mask by one bit.
-    export_lbits_to_u8s(value, (uint8_t *)rvfi_mem_data.rvfi_mem_wdata);
+    convert_lbits_to_u8s(value, (uint8_t *)rvfi_mem_data.rvfi_mem_wdata);
     rvfi_mem_data.rvfi_mem_rmask = rvfi_encode_width_mask(width);
   } else {
     fprintf(stderr, "Expected at most 16 bytes here!\n");
