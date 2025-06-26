@@ -65,6 +65,7 @@ foreach (xlen IN ITEMS 32 64)
             )
 
             set(sail_default_inst
+                "riscv_sdext_inst_hooks.sail"
                 "riscv_insts_base.sail"
                 "riscv_insts_zifencei.sail"
                 "riscv_insts_zaamo.sail"
@@ -79,6 +80,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_dext.sail"
                 "riscv_insts_zcd.sail"
                 "riscv_insts_svinval.sail"
+                "riscv_insts_sdext.sail"
                 "riscv_insts_zba.sail"
                 "riscv_insts_zbb.sail"
                 "riscv_insts_zbc.sail"
@@ -142,6 +144,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_fdext_control.sail"
                 "riscv_smcntrpmf.sail"
                 "riscv_sys_reservation.sail"
+                "riscv_sdext_control.sail"
                 "riscv_sys_control.sail"
             )
 
@@ -176,6 +179,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_regs.sail"
                 "riscv_pc_access.sail"
                 "riscv_sys_regs.sail"
+                "riscv_sdext_regs.sail"
                 "riscv_pmp_regs.sail"
                 "riscv_pmp_control.sail"
                 "riscv_ext_regs.sail"
