@@ -30,6 +30,8 @@ add_library(riscv_model
     riscv_softfloat.h
     config_utils.h
     config_utils.cpp
+    sail_utils.h
+    sail_utils.cpp
     rvfi_dii_sail.h
     "${CMAKE_BINARY_DIR}/sail_riscv_model.c"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.h"
