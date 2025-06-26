@@ -20,103 +20,13 @@
 
 // ****************************************************************************
 
-RVFI_DII_Instruction_Packet rvfi_instruction = Mk_RVFI_DII_Instruction_Packet();
-RVFI_DII_Execution_Packet_PC rvfi_pc_data = Mk_RVFI_DII_Execution_Packet_PC();
-RVFI_DII_Execution_Packet_InstMetadata rvfi_inst_data
-    = Mk_RVFI_DII_Execution_Packet_InstMetaData();
-RVFI_DII_Execution_Packet_Ext_Integer rvfi_int_data
-    = Mk_RVFI_DII_Execution_Packet_Ext_Integer();
-RVFI_DII_Execution_Packet_Ext_MemAccess rvfi_mem_data
-    = Mk_RVFI_DII_Execution_Packet_Ext_MemAccess();
-bool rvfi_mem_data_present = false;
-bool rvfi_int_data_present = false;
-
-// ***************************************************************************
-
-RVFI_DII_Instruction_Packet Mk_RVFI_DII_Instruction_Packet()
-{
-  return RVFI_DII_Instruction_Packet {
-      .rvfi_insn = 0,
-      .rvfi_time = 0,
-      .rvfi_cmd = 0,
-      .padding = 0,
-  };
-}
-
-RVFI_DII_Execution_Packet_PC Mk_RVFI_DII_Execution_Packet_PC()
-{
-  return RVFI_DII_Execution_Packet_PC {
-      .rvfi_pc_rdata = 0,
-      .rvfi_pc_wdata = 0,
-  };
-}
-
-RVFI_DII_Execution_Packet_InstMetadata
-Mk_RVFI_DII_Execution_Packet_InstMetaData()
-{
-  return RVFI_DII_Execution_Packet_InstMetadata {
-      .rvfi_order = 0,
-      .rvfi_insn = 0,
-      .rvfi_trap = 0,
-      .rvfi_halt = 0,
-      .rvfi_intr = 0,
-      .rvfi_mode = 0,
-      .rvfi_ixl = 0,
-      .rvfi_valid = 0,
-      .padding = 0,
-  };
-}
-
-RVFI_DII_Execution_Packet_Ext_Integer Mk_RVFI_DII_Execution_Packet_Ext_Integer()
-{
-  return RVFI_DII_Execution_Packet_Ext_Integer {
-      .magic = 0,
-      .rvfi_rd_wdata = 0,
-      .rvfi_rs1_rdata = 0,
-      .rvfi_rs2_rdata = 0,
-      .rvfi_rd_addr = 0,
-      .rvfi_rs1_addr = 0,
-      .rvfi_rs2_addr = 0,
-      .padding = 0,
-  };
-}
-
-RVFI_DII_Execution_Packet_Ext_MemAccess
-Mk_RVFI_DII_Execution_Packet_Ext_MemAccess()
-{
-  return RVFI_DII_Execution_Packet_Ext_MemAccess {
-      .magic = 0,
-      .rvfi_mem_rdata = 0,
-      .rvfi_mem_wdata = 0,
-      .rvfi_mem_rmask = 0,
-      .rvfi_mem_wmask = 0,
-      .rvfi_mem_addr = 0,
-  };
-}
-
-RVFI_DII_Execution_Packet_V1 Mk_RVFI_DII_Execution_Packet_V1()
-{
-  return RVFI_DII_Execution_Packet_V1 {
-      .rvfi_order = 0,
-      .rvfi_pc_rdata = 0,
-      .rvfi_pc_wdata = 0,
-      .rvfi_insn = 0,
-      .rvfi_rs1_data = 0,
-      .rvfi_rs2_data = 0,
-      .rvfi_rd_wdata = 0,
-      .rvfi_mem_addr = 0,
-      .rvfi_mem_rdata = 0,
-      .rvfi_mem_wdata = 0,
-      .rvfi_mem_rmask = 0,
-      .rvfi_mem_wmask = 0,
-      .rvfi_rs1_addr = 0,
-      .rvfi_rs2_addr = 0,
-      .rvfi_rd_addr = 0,
-      .rvfi_trap = 0,
-      .rvfi_halt = 0,
-      .rvfi_intr = 0,
-  };
-}
+static RVFI_DII_Instruction_Packet rvfi_instruction = {};
+static RVFI_DII_Execution_Packet_PC rvfi_pc_data = {};
+static RVFI_DII_Execution_Packet_InstMetadata rvfi_inst_data = {};
+static RVFI_DII_Execution_Packet_Ext_Integer rvfi_int_data = {};
+static RVFI_DII_Execution_Packet_Ext_MemAccess rvfi_mem_data = {};
+static bool rvfi_mem_data_present = false;
+static bool rvfi_int_data_present = false;
 
 // ****************************************************************************
 
@@ -154,19 +64,20 @@ RVFI_DII_Execution_Packet_V1 rvfi_get_v2_support_packet()
   // that we support the version 2 wire format. This is required to keep
   // backwards compatibility with old implementations that do not support
   // the new trace format.
-  RVFI_DII_Execution_Packet_V1 res = Mk_RVFI_DII_Execution_Packet_V1();
-  res.rvfi_halt = 0x03;
-  return res;
+  //  res = {};
+  return RVFI_DII_Execution_Packet_V1 {
+      .rvfi_halt = 0x03,
+  };
 }
 
 uint64_t rvfi_get_v2_trace_size()
 {
   uint64_t trace_size = 512;
   if (rvfi_int_data_present) {
-    trace_size = trace_size + 320;
+    trace_size = trace_size + sizeof(RVFI_DII_Execution_Packet_Ext_Integer);
   }
   if (rvfi_mem_data_present) {
-    trace_size = trace_size + 704;
+    trace_size = trace_size + sizeof(RVFI_DII_Execution_Packet_Ext_MemAccess);
   }
   return trace_size >> 3; // we have to return bytes not bits
 }
@@ -181,7 +92,6 @@ RVFI_DII_Execution_Packet_V2 rvfi_get_exec_packet_v2()
     available_fields |= RVFI_MEM_DATA;
   }
   return RVFI_DII_Execution_Packet_V2 {
-      .magic = 0x32762d6563617274,
       .trace_size = rvfi_get_v2_trace_size(),
       .basic_data = rvfi_inst_data,
       .pc_data = rvfi_pc_data,
@@ -191,11 +101,11 @@ RVFI_DII_Execution_Packet_V2 rvfi_get_exec_packet_v2()
 
 void rvfi_zero_exec_packet()
 {
-  rvfi_instruction = Mk_RVFI_DII_Instruction_Packet();
-  rvfi_pc_data = Mk_RVFI_DII_Execution_Packet_PC();
-  rvfi_int_data = Mk_RVFI_DII_Execution_Packet_Ext_Integer();
-  rvfi_inst_data = Mk_RVFI_DII_Execution_Packet_InstMetaData();
-  rvfi_mem_data = Mk_RVFI_DII_Execution_Packet_Ext_MemAccess();
+  rvfi_instruction = {};
+  rvfi_pc_data = {};
+  rvfi_int_data = {};
+  rvfi_inst_data = {};
+  rvfi_mem_data = {};
   rvfi_int_data_present = false;
   rvfi_mem_data_present = false;
   return;
