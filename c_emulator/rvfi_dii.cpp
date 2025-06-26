@@ -20,6 +20,20 @@
 #include "sail_utils.h"
 
 // ****************************************************************************
+// Struct Member Functions
+
+RVFI_DII_Instruction_Packet
+RVFI_DII_Instruction_Packet::from_u64(uint64_t value)
+{
+  return RVFI_DII_Instruction_Packet {
+      .rvfi_insn = (uint32_t)(value & 0xFFFFFFFF),
+      .rvfi_time = (uint16_t)((value >> 32) & 0xFFFF),
+      .rvfi_cmd = (uint8_t)((value >> 48) & 0xFF),
+      .padding = (uint8_t)((value >> 56) & 0xFF),
+  };
+}
+
+// ****************************************************************************
 
 static RVFI_DII_Instruction_Packet rvfi_instruction = {};
 static RVFI_DII_Execution_Packet_PC rvfi_pc_data = {};
