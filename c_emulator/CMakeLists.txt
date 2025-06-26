@@ -9,6 +9,8 @@ set(EMULATOR_COMMON_SRCS
     riscv_prelude.cpp
     riscv_prelude.h
     riscv_sail.h
+    sail_utils.h
+    sail_utils.cpp
     rvfi_dii.h
     rvfi_dii_sail.h
     rvfi_dii.cpp
