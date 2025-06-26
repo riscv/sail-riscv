@@ -8,6 +8,11 @@
 
 /* Machine-mode and supervisor-mode functionality. */
 
+function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
+  if   t != InstructionFetch() & m[MPRV] == 0b1
+  then privLevel_of_bits(m[MPP])
+  else priv
+
 /* CSR access control */
 
 function csrAccess(csr : csreg) -> csrRW = csr[11..10]
