@@ -9,16 +9,16 @@ extern "C" {
 // ****************************************************************************
 // Sail API
 
-mach_bits rvfi_get_cmd(unit);
-mach_bits rvfi_get_insn(unit);
+uint64_t rvfi_get_cmd(unit);
+uint64_t rvfi_get_insn(unit);
 
-unit rvfi_set_pc_data_rdata(mach_bits data);
-unit rvfi_set_pc_data_wdata(mach_bits data);
+unit rvfi_set_pc_data_rdata(uint64_t data);
+unit rvfi_set_pc_data_wdata(uint64_t data);
 
-unit rvfi_set_inst_data_insn(mach_bits insn);
-unit rvfi_set_inst_data_order(mach_bits);
-unit rvfi_set_inst_data_mode(mach_bits);
-unit rvfi_set_inst_data_ixl(mach_bits);
+unit rvfi_set_inst_data_insn(uint64_t insn);
+unit rvfi_set_inst_data_order(uint64_t);
+unit rvfi_set_inst_data_mode(uint8_t);
+unit rvfi_set_inst_data_ixl(uint8_t);
 
 // ****************************************************************************
 

@@ -205,44 +205,49 @@ void rvfi_trap()
 // ***************************************************************************
 // Sail API
 
-unit rvfi_set_inst_data_insn(mach_bits insn)
+unit rvfi_set_inst_data_insn(uint64_t insn)
 {
   rvfi_inst_data.rvfi_insn = insn;
   return UNIT;
 }
 
-unit rvfi_set_inst_data_order(mach_bits order)
+unit rvfi_set_inst_data_order(uint64_t order)
 {
   rvfi_inst_data.rvfi_order = order;
   return UNIT;
 }
-unit rvfi_set_inst_data_mode(mach_bits mode)
+
+unit rvfi_set_inst_data_mode(uint8_t mode)
 {
-  rvfi_inst_data.rvfi_mode = (uint8_t)mode;
-  return UNIT;
-}
-unit rvfi_set_inst_data_ixl(mach_bits ixl)
-{
-  rvfi_inst_data.rvfi_ixl = (uint8_t)ixl;
+  rvfi_inst_data.rvfi_mode = mode;
   return UNIT;
 }
 
-mach_bits rvfi_get_insn(unit)
+unit rvfi_set_inst_data_ixl(uint8_t ixl)
 {
-  return (mach_bits)rvfi_instruction.rvfi_insn;
-}
-mach_bits rvfi_get_cmd(unit)
-{
-  return (mach_bits)rvfi_instruction.rvfi_cmd;
-}
-unit rvfi_set_pc_data_rdata(mach_bits rdata)
-{
-  rvfi_pc_data.rvfi_pc_rdata = (mach_bits)rdata;
+  rvfi_inst_data.rvfi_ixl = ixl;
   return UNIT;
 }
-unit rvfi_set_pc_data_wdata(mach_bits wdata)
+
+uint64_t rvfi_get_insn(unit)
 {
-  rvfi_pc_data.rvfi_pc_wdata = (mach_bits)wdata;
+  return (uint64_t)rvfi_instruction.rvfi_insn;
+}
+
+uint64_t rvfi_get_cmd(unit)
+{
+  return (uint64_t)rvfi_instruction.rvfi_cmd;
+}
+
+unit rvfi_set_pc_data_rdata(uint64_t rdata)
+{
+  rvfi_pc_data.rvfi_pc_rdata = rdata;
+  return UNIT;
+}
+
+unit rvfi_set_pc_data_wdata(uint64_t wdata)
+{
+  rvfi_pc_data.rvfi_pc_wdata = wdata;
   return UNIT;
 }
 
