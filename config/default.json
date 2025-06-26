@@ -140,6 +140,9 @@
     "Zcb": {
       "supported": true
     },
+        "Zcmt" : {
+            "supported" : false
+        },
     "Zcmop": {
       "supported": true
     },
