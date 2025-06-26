@@ -305,6 +305,56 @@ function in32BitMode() -> bool = {
   cur_architecture() == RV32
 }
 
+bitfield Seccfg : bits(64) = {
+  // Enable access to SEED in S-mode
+  SSEED  : 9,
+  // Enable access to SEED in U-mode
+  USEED  : 8,
+}
+
+function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
+  let sseed_read_only_zero =
+      (config extensions.Zkr.sseed_read_only_zero : bool)
+    | not(currentlyEnabled(Ext_S))
+    | not(currentlyEnabled(Ext_Zkr));
+  let useed_read_only_zero =
+      (config extensions.Zkr.useed_read_only_zero : bool)
+    | not(currentlyEnabled(Ext_U))
+    | not(currentlyEnabled(Ext_Zkr));
+
+  let v = Mk_Seccfg(v);
+  [o with
+    SSEED = if sseed_read_only_zero then 0b0 else v[SSEED],
+    USEED = if useed_read_only_zero then 0b0 else v[USEED],
+  ]
+}
+
+register mseccfg : Seccfg = legalize_mseccfg(Mk_Seccfg(zeros()), zeros())
+
+mapping clause csr_name_map = 0x747  <-> "mseccfg"
+mapping clause csr_name_map = 0x757  <-> "mseccfgh"
+
+// "mseccfg exists if Zkr is implemented, or if it is required by other processor features."
+function clause is_CSR_defined(0x747) = currentlyEnabled(Ext_Zkr) // mseccfg
+function clause is_CSR_defined(0x757) = currentlyEnabled(Ext_Zkr) & xlen == 32 // mseccfgh
+
+function clause read_CSR(0x747) = mseccfg.bits[xlen - 1 .. 0]
+function clause read_CSR(0x757 if xlen == 32) = mseccfg.bits[63 .. 32]
+
+function clause write_CSR((0x747, value) if xlen == 32) = {
+  mseccfg = legalize_mseccfg(mseccfg, mseccfg.bits[63 .. 32] @ value);
+  mseccfg.bits[31 .. 0]
+}
+function clause write_CSR((0x747, value) if xlen == 64) = {
+  mseccfg = legalize_mseccfg(mseccfg, value);
+  mseccfg.bits
+}
+function clause write_CSR((0x757, value) if xlen == 32) = {
+  mseccfg = legalize_mseccfg(mseccfg, value @ mseccfg.bits[31 .. 0]);
+  mseccfg.bits[63 .. 32]
+}
+
+
 // envcfg Resisters
 bitfield MEnvcfg : bits(64) = {
   // Supervisor TimeCmp Extension

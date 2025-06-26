@@ -62,8 +62,8 @@ function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
   } else {
     match (p) {
       Machine => true,
-      Supervisor => false, /* TODO: base this on mseccfg */
-      User => false, /* TODO: base this on mseccfg */
+      Supervisor => mseccfg[SSEED] == 0b1,
+      User => mseccfg[USEED] == 0b1,
     }
   }
 }
@@ -380,6 +380,11 @@ function reset_sys() -> unit = {
   // "Writable PMP registers’ A and L fields are set to 0, unless the platform
   // mandates a different reset value for some PMP registers’ A and L fields."
   reset_pmp();
+
+  // "The [s,u]seed bits must have a defined reset value. The system must
+  // not allow them to be in an undefined state after a reset."
+  mseccfg[SSEED] = bool_to_bits(config extensions.Zkr.sseed_reset_value : bool);
+  mseccfg[USEED] = bool_to_bits(config extensions.Zkr.useed_reset_value : bool);
 
   // TODO: Probably need to remove these vector resets too but it needs
   // refactoring anyway. See https://github.com/riscv/sail-riscv/issues/566 etc.
