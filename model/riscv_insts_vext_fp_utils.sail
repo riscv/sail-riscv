@@ -14,7 +14,7 @@
  *  1. Valid element width of floating-point numbers
  *  2. Valid floating-point rounding mode
  */
-val valid_fp_op : ({8, 16, 32, 64}, bits(3)) -> bool
+val valid_fp_op : (sew_bitsize, bits(3)) -> bool
 function valid_fp_op(SEW, rm_3b) = {
   /* 128-bit floating-point values will be supported in future extensions */
   let valid_sew = (SEW >= 16 & SEW <= 128);
@@ -23,38 +23,38 @@ function valid_fp_op(SEW, rm_3b) = {
 }
 
 /* a. Normal check for floating-point instructions */
-val illegal_fp_normal : (vregidx, bits(1), {8, 16, 32, 64}, bits(3)) -> bool
+val illegal_fp_normal : (vregidx, bits(1), sew_bitsize, bits(3)) -> bool
 function illegal_fp_normal(vd, vm, SEW, rm_3b) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* b. Masked check for floating-point instructions encoded with vm = 0 */
-val illegal_fp_vd_masked : (vregidx, {8, 16, 32, 64}, bits(3)) -> bool
+val illegal_fp_vd_masked : (vregidx, sew_bitsize, bits(3)) -> bool
 function illegal_fp_vd_masked(vd, SEW, rm_3b) = {
   not(valid_vtype()) | vd == zvreg | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* c. Unmasked check for floating-point instructions encoded with vm = 1 */
-val illegal_fp_vd_unmasked : ({8, 16, 32, 64}, bits(3)) -> bool
+val illegal_fp_vd_unmasked : (sew_bitsize, bits(3)) -> bool
 function illegal_fp_vd_unmasked(SEW, rm_3b) = {
   not(valid_vtype()) | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* d. Variable width check for floating-point widening/narrowing instructions */
-val illegal_fp_variable_width : (vregidx, bits(1), {8, 16, 32, 64}, bits(3), int, int) -> bool
+val illegal_fp_variable_width : (vregidx, bits(1), sew_bitsize, bits(3), int, int) -> bool
 function illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_new, LMUL_pow_new) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) |
   not(valid_eew_emul(SEW_new, LMUL_pow_new))
 }
 
 /* e. Normal check for floating-point reduction instructions */
-val illegal_fp_reduction : ({8, 16, 32, 64}, bits(3)) -> bool
+val illegal_fp_reduction : (sew_bitsize, bits(3)) -> bool
 function illegal_fp_reduction(SEW, rm_3b) = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b))
 }
 
 /* f. Variable width check for floating-point widening reduction instructions */
-val illegal_fp_reduction_widen : ({8, 16, 32, 64}, bits(3), int, int) -> bool
+val illegal_fp_reduction_widen : (sew_bitsize, bits(3), int, int) -> bool
 function illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b)) |
   not(valid_eew_emul(SEW_widen, LMUL_pow_widen))
@@ -450,12 +450,11 @@ function riscv_f32ToUi16 (rm, v) = {
 
 val rsqrt7 : forall 'm, 'm in {16, 32, 64}. (bits('m), bool) -> bits_D
 function rsqrt7 (v, sub) = {
-  let (sig, exp, sign, e, s) : (bits(64), bits(64), bits(1), nat, nat) = match 'm {
+  let (sig, exp, sign, e, s) : (bits(64), bits(64), bits(1), {5, 8, 11}, {10, 23, 52}) = match 'm {
     16 => (zero_extend(64, v[9 .. 0]), zero_extend(64, v[14 .. 10]), [v[15]], 5, 10),
     32 => (zero_extend(64, v[22 .. 0]), zero_extend(64, v[30 .. 23]), [v[31]], 8, 23),
     64 => (zero_extend(64, v[51 .. 0]), zero_extend(64, v[62 .. 52]), [v[63]], 11, 52)
   };
-  assert(s == 10 & e == 5 | s == 23 & e == 8 | s == 52 & e == 11);
   let table : vector(128, int) = [
       52, 51, 50, 48, 47, 46, 44, 43,
       42, 41, 40, 39, 38, 36, 35, 34,
@@ -490,7 +489,7 @@ function rsqrt7 (v, sub) = {
   };
   assert(idx >= 0 & idx < 128);
   let out_sig = to_bits_unsafe(s, table[(127 - idx)]) << (s - 7);
-  let out_exp = to_bits_unsafe(e, (3 * (2 ^ (e - 1) - 1) - 1 - signed(normalized_exp)) / 2);
+  let out_exp = to_bits_unsafe(e, quot_round_zero(3 * (2 ^ (e - 1) - 1) - 1 - signed(normalized_exp), 2));
   zero_extend(64, sign @ out_exp @ out_sig)
 }
 

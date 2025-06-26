@@ -237,23 +237,22 @@ function ext_write_vcsr (vxrm_val, vxsat_val) = {
 }
 
 /* num_elem means max(VLMAX,VLEN/SEW)) according to Section 5.4 of RVV spec */
-val get_num_elem : (int, int) -> {'n, 'n > 0. int('n)}
+val get_num_elem : (int, sew_bitsize) -> nat1
 function get_num_elem(LMUL_pow, SEW) = {
   let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
   /* Ignore lmul < 1 so that the entire vreg is read, allowing all masking to
    * be handled in init_masked_result */
-  let num_elem = 2 ^ LMUL_pow_reg * VLEN / SEW;
+  let num_elem = (2 ^ LMUL_pow_reg) * VLEN / SEW;
   assert(num_elem > 0);
   num_elem
 }
 
 /* Reads a single vreg into multiple elements */
-val read_single_vreg : forall 'n 'm, 'n >= 0 & 'm >= 0. (int('n), int('m), vregidx) -> vector('n, bits('m))
+val read_single_vreg : forall 'n 'm, 'n >= 0 & is_sew_bitsize('m) . (int('n), int('m), vregidx) -> vector('n, bits('m))
 function read_single_vreg(num_elem, SEW, vrid) = {
   let bv     : vregtype                  = V(vrid);
   var result : vector('n, bits('m)) = vector_init(zeros());
 
-  assert(8 <= SEW & SEW <= 64);
   foreach (i from 0 to (num_elem - 1)) {
     let start_index = i * SEW;
     result[i] = slice(bv, start_index, SEW);
@@ -263,11 +262,10 @@ function read_single_vreg(num_elem, SEW, vrid) = {
 }
 
 /* Writes multiple elements into a single vreg */
-val write_single_vreg : forall 'n 'm, 'n >= 0. (int('n), int('m), vregidx, vector('n, bits('m))) -> unit
+val write_single_vreg : forall 'n 'm, 'n >= 0 & is_sew_bitsize('m) . (int('n), int('m), vregidx, vector('n, bits('m))) -> unit
 function write_single_vreg(num_elem, SEW, vrid, v) = {
   var r : vregtype = zeros();
 
-  assert(8 <= SEW & SEW <= 64);
   foreach (i from (num_elem - 1) downto 0) {
     r = r << SEW;
     r = r | zero_extend(v[i]);
@@ -277,7 +275,7 @@ function write_single_vreg(num_elem, SEW, vrid, v) = {
 }
 
 /* The general vreg reading operation with num_elem as max(VLMAX,VLEN/SEW)) */
-val read_vreg : forall 'n 'm 'p, 'n >= 0 & 'm >= 0. (int('n), int('m), int('p), vregidx) -> vector('n, bits('m))
+val read_vreg : forall 'n 'm 'p, 'n >= 0 & is_sew_bitsize('m) . (int('n), int('m), int('p), vregidx) -> vector('n, bits('m))
 function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
   let vrid_val = unsigned(vregidx_bits(vrid));
   var result : vector('n, bits('m)) = vector_init(zeros());
@@ -294,7 +292,7 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
     if LMUL_pow < 0 then {
       result = read_single_vreg('n, SEW, vrid);
     } else {
-      let 'num_elem_single : int = VLEN / SEW;
+      let 'num_elem_single = VLEN / SEW;
       assert('num_elem_single >= 0);
       foreach (i_lmul from 0 to (2 ^ LMUL_pow_reg - 1)) {
         let r_start_i : int = i_lmul * 'num_elem_single;
@@ -315,11 +313,11 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
 }
 
 /* Single element reading operation */
-val read_single_element : forall 'm 'x, 8 <= 'm <= 128. (int('m), int('x), vregidx) -> bits('m)
+val read_single_element : forall 'm, is_sew_bitsize('m) . (int('m), nat, vregidx) -> bits('m)
 function read_single_element(EEW, index, vrid) = {
   assert(VLEN >= EEW);
-  let 'elem_per_reg : int = VLEN / EEW;
-  assert('elem_per_reg >= 0);
+  let 'elem_per_reg = VLEN / EEW;
+  assert('elem_per_reg > 0);
   let real_vrid  : vregidx = vregidx_offset(vrid, to_bits_unsafe(5, index / 'elem_per_reg));
   let real_index : int    = index % 'elem_per_reg;
   let vrid_val : vector('elem_per_reg, bits('m)) = read_single_vreg('elem_per_reg, EEW, real_vrid);
@@ -328,7 +326,7 @@ function read_single_element(EEW, index, vrid) = {
 }
 
 /* The general vreg writing operation with num_elem as max(VLMAX,VLEN/SEW)) */
-val write_vreg : forall 'n 'm 'p, 'n >= 0 & 'm >= 0. (int('n), int('m), int('p), vregidx, vector('n, bits('m))) -> unit
+val write_vreg : forall 'n 'm 'p, 'n >= 0 & is_sew_bitsize('m) . (int('n), int('m), int('p), vregidx, vector('n, bits('m))) -> unit
 function write_vreg(num_elem, SEW, LMUL_pow, vrid, vec) = {
   let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
 
@@ -350,10 +348,10 @@ function write_vreg(num_elem, SEW, LMUL_pow, vrid, vec) = {
 }
 
 /* Single element writing operation */
-val write_single_element : forall 'm 'x, 8 <= 'm <= 128. (int('m), int('x), vregidx, bits('m)) -> unit
+val write_single_element : forall 'm, is_sew_bitsize('m) . (int('m), nat, vregidx, bits('m)) -> unit
 function write_single_element(EEW, index, vrid, value) = {
-  let 'elem_per_reg : int = VLEN / EEW;
-  assert('elem_per_reg >= 0);
+  let 'elem_per_reg = VLEN / EEW;
+  assert('elem_per_reg > 0);
   let real_vrid  : vregidx = vregidx_offset(vrid, to_bits_unsafe(5, index / 'elem_per_reg));
   let real_index : int    = index % 'elem_per_reg;
 
