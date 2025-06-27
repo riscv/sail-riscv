@@ -35,3 +35,28 @@ uint64_t get_config_uint64(const std::vector<const char *> &keypath)
   KILL(sail_int)(&big_n);
   return n;
 }
+
+bool get_config_bool(const std::vector<const char *> &keypath)
+{
+  sail_config_json json = sail_config_get(keypath.size(), keypath.data());
+
+  if (!json) {
+    std::cerr << "Failed to find configuration option '";
+    for (auto part : keypath) {
+      std::cerr << "." << part;
+    }
+    std::cerr << "'.\n";
+    exit(1);
+  }
+
+  if (!sail_config_is_bool(json)) {
+    std::cerr << "Configuration option '";
+    for (auto part : keypath) {
+      std::cerr << "." << part;
+    }
+    std::cerr << "' could not be parsed as a boolean.\n";
+    exit(1);
+  }
+
+  return sail_config_unwrap_bool(json);
+}

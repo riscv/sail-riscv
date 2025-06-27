@@ -139,9 +139,13 @@ message(STATUS "Sail library directory: ${sail_dir}")
 set(DEFAULT_ARCHITECTURES "rv32d;rv64d" CACHE STRING "Architectures to build by default (rv32f|rv64f|rv32d|rv64d)? " )
 
 option(COVERAGE "Compile with Sail coverage collection enabled.")
+option(USE_SPIKE "Compile with Spike lockstep support.")
 
 # Softfloat support.
 add_subdirectory("dependencies/softfloat")
+
+# Spike wrapper.
+add_subdirectory(libspike)
 
 # Sail C runtime.
 add_subdirectory("sail_runtime")

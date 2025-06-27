@@ -1,6 +1,7 @@
 set(EMULATOR_COMMON_SRCS
     riscv_callbacks.cpp
     riscv_callbacks.h
+    riscv_callbacks_if.h
     riscv_config.h
     riscv_platform.cpp
     riscv_platform.h
@@ -16,7 +17,17 @@ set(EMULATOR_COMMON_SRCS
     riscv_softfloat.h
     config_utils.h
     config_utils.cpp
+    sim_utils.h
+    sim_utils.cpp
+    cosimulator.h
+    cosimulator.cpp
 )
+if (USE_SPIKE)
+  list(APPEND EMULATOR_COMMON_SRCS
+    spike.h
+    spike.cpp
+  )
+endif()
 
 foreach (xlen IN ITEMS 32 64)
     foreach (flen IN ITEMS 32 64)
@@ -48,7 +59,7 @@ foreach (xlen IN ITEMS 32 64)
         add_dependencies(riscv_sim_${arch} generated_model_${arch})
 
         target_link_libraries(riscv_sim_${arch}
-            PRIVATE softfloat sail_runtime default_config
+            PRIVATE softfloat $<$<BOOL:${USE_SPIKE}>:spike> sail_runtime default_config
         )
 
         target_include_directories(riscv_sim_${arch}

@@ -27,12 +27,15 @@
 #include "rvfi_dii.h"
 #include "default_config.h"
 #include "config_utils.h"
+#include "sim_utils.h"
+#include "cosimulator.h"
 
 enum {
   OPT_TRACE_OUTPUT = 1000,
   OPT_PRINT_CONFIG,
   OPT_VALIDATE_CONFIG,
   OPT_SAILCOV,
+  OPT_ENABLE_SPIKE,
   OPT_ENABLE_EXPERIMENTAL_EXTENSIONS,
   OPT_PRINT_DTS,
   OPT_PRINT_ISA,
@@ -65,6 +68,8 @@ bool config_use_abi_names = false;
 bool config_print_rvfi = false;
 bool config_print_step = false;
 bool config_enable_rvfi = false;
+
+Cosim_type cosim_type = Cosim_type::NOP;
 
 void set_config_print(char *var, bool val)
 {
@@ -122,6 +127,9 @@ static struct option options[] = {
 #ifdef SAILCOV
     {"sailcov-file",                   required_argument, 0, OPT_SAILCOV        },
 #endif
+#ifdef USE_SPIKE
+    {"enable-spike",                   no_argument,       0, OPT_ENABLE_SPIKE   },
+#endif
     {"print-device-tree",              no_argument,       0, OPT_PRINT_DTS      },
     {"print-isa-string",               no_argument,       0, OPT_PRINT_ISA      },
     {0,                                0,                 0, 0                  }
@@ -169,11 +177,6 @@ static void print_isa(void)
   fprintf(stdout, "%s\n", isa);
   KILL(sail_string)(&isa);
   exit(0);
-}
-
-static bool is_32bit_model(void)
-{
-  return zxlen == 32;
 }
 
 static void read_dtb(const char *path)
@@ -316,6 +319,11 @@ static int process_args(int argc, char **argv)
       sailcov_file = strdup(optarg);
       break;
 #endif
+#ifdef USE_SPIKE
+    case OPT_ENABLE_SPIKE:
+      cosim_type = Cosim_type::SPIKE;
+      break;
+#endif
     case OPT_TRACE_OUTPUT:
       trace_log_path = optarg;
       fprintf(stderr, "using %s for trace output.\n", trace_log_path);
@@ -393,37 +401,13 @@ uint64_t load_sail(char *f, bool main_file)
 
 void init_sail_reset_vector(uint64_t entry)
 {
-#define RST_VEC_SIZE 8
-  uint32_t reset_vec[RST_VEC_SIZE]
-      = {0x297,                              // auipc  t0,0x0
-         0x28593 + (RST_VEC_SIZE * 4 << 20), // addi   a1, t0, &dtb
-         0xf1402573,                         // csrr   a0, mhartid
-         is_32bit_model() ? 0x0182a283u :    // lw     t0,24(t0)
-             0x0182b283u,                    // ld     t0,24(t0)
-         0x28067,                            // jr     t0
-         0,
-         (uint32_t)(entry & 0xffffffff),
-         (uint32_t)(entry >> 32)};
-
+  std::vector<char> rom = make_reset_rom(is_32bit_model(), entry, dtb, dtb_len);
   uint64_t rom_base = get_config_uint64({"platform", "reset_vector"});
+
   uint64_t addr = rom_base;
-
-  for (int i = 0; i < sizeof(reset_vec); i++)
-    write_mem(addr++, (uint64_t)((char *)reset_vec)[i]);
-
-  if (dtb && dtb_len) {
-    for (size_t i = 0; i < dtb_len; i++)
-      write_mem(addr++, dtb[i]);
+  for (size_t i = 0; i < rom.size(); i++) {
+    write_mem(addr++, static_cast<uint64_t>(rom[i]));
   }
-
-  /* zero-fill to page boundary */
-  const int align = 0x1000;
-  uint64_t rom_end = (addr + align - 1) / align * align;
-  for (uint64_t i = addr; i < rom_end; i++)
-    write_mem(addr++, 0);
-
-  /* calculate rom size */
-  uint64_t rom_size = rom_end - rom_base;
 
   /* check calculated rom values match configuration */
   if (rom_base != get_config_uint64({"platform", "rom", "base"})) {
@@ -432,11 +416,11 @@ void init_sail_reset_vector(uint64_t entry)
             ".\n",
             rom_base);
   }
-  if (rom_size != get_config_uint64({"platform", "rom", "size"})) {
+  if (rom.size() != get_config_uint64({"platform", "rom", "size"})) {
     fprintf(stderr,
             "Configuration value platform.rom.size does not match %" PRIu64
             ".\n",
-            rom_size);
+            rom.size());
   }
 
   /* boot at reset vector */
@@ -541,7 +525,7 @@ void flush_logs(void)
   }
 }
 
-void run_sail(void)
+void run_sail(cosimulator &cosim)
 {
   bool is_waiting;
   bool exit_wait = true;
@@ -557,6 +541,13 @@ void run_sail(void)
   struct timeval interval_start;
   if (gettimeofday(&interval_start, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
+    exit(1);
+  }
+
+  if (!cosim.check_init()) {
+    fprintf(
+        stderr,
+        "Mismatch in initial state between model and cosimulator, exiting.\n");
     exit(1);
   }
 
@@ -586,6 +577,11 @@ void run_sail(void)
       if (rvfi) {
         rvfi->send_trace(config_print_rvfi);
       }
+      cosim.step();
+      if (!cosim.check_state()) {
+        fprintf(stderr, "Mismatch between model and cosimulator, exiting.\n");
+        exit(1);
+      }
     }
     if (!is_waiting) {
       if (config_print_step) {
@@ -594,6 +590,16 @@ void run_sail(void)
       step_no++;
       insn_cnt++;
       total_insns++;
+    }
+    {
+      std::optional<int> exit_check = cosim.has_exited();
+      if (!zhtif_done && exit_check.has_value()) {
+        fprintf(stderr,
+                "Exit mismatch: model is running, but cosimulator has exited "
+                "with code %d.\n",
+                exit_check.value());
+        exit(1);
+      }
     }
 
     if (do_show_times && (total_insns & 0xfffff) == 0) {
@@ -622,6 +628,7 @@ void run_sail(void)
     if (insn_cnt == insns_per_tick) {
       insn_cnt = 0;
       ztick_clock(UNIT);
+      cosim.tick();
     }
   }
 
@@ -691,13 +698,23 @@ int main(int argc, char **argv)
       return 1;
   }
 
-  uint64_t entry = rvfi ? rvfi->get_entry()
-                        : load_sail(initial_elf_file, /*main_file=*/true);
+  cosimulator cosim(cosim_type, is_32bit_model());
 
+  cosim.set_dtb(dtb, dtb_len);
+  cosim.set_verbose(true);
+
+  uint64_t entry;
+  if (rvfi) {
+    entry = rvfi->get_entry();
+  } else {
+    entry = load_sail(initial_elf_file, /*main_file=*/true);
+    cosim.init_elf(initial_elf_file, entry);
+  }
   /* Load any additional ELF files into memory */
   for (int i = files_start + 1; i < argc; i++) {
     fprintf(stdout, "Loading additional ELF file %s.\n", argv[i]);
-    (void)load_sail(argv[i], /*main_file=*/false);
+    uint64_t entry_chk = load_sail(argv[i], /*main_file=*/false);
+    cosim.init_elf(argv[i], entry_chk);
   }
 
   init_sail(entry, config_file);
@@ -708,7 +725,7 @@ int main(int argc, char **argv)
   }
 
   do {
-    run_sail();
+    run_sail(cosim);
     if (rvfi) {
       /* Reset for next test */
       reinit_sail(entry, config_file);
