@@ -66,11 +66,7 @@ enum wvxfunct6    = { WVX_VADD, WVX_VSUB, WVX_VADDU, WVX_VSUBU, WVX_VWMUL, WVX_V
 
 enum wxfunct6     = { WX_VADD, WX_VSUB, WX_VADDU, WX_VSUBU }
 
-enum vext2funct6  = { VEXT2_ZVF2, VEXT2_SVF2 }
-
-enum vext4funct6  = { VEXT4_ZVF4, VEXT4_SVF4 }
-
-enum vext8funct6  = { VEXT8_ZVF8, VEXT8_SVF8 }
+enum vextfunct6   = { VEXT2_ZVF2, VEXT2_SVF2, VEXT4_ZVF4, VEXT4_SVF4, VEXT8_ZVF8, VEXT8_SVF8 }
 
 enum vxfunct6     = { VX_VADD, VX_VSUB, VX_VRSUB, VX_VMINU, VX_VMIN, VX_VMAXU, VX_VMAX,
   VX_VAND, VX_VOR, VX_VXOR, VX_VSADDU, VX_VSADD, VX_VSSUBU, VX_VSSUB,
