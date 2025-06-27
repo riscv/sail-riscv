@@ -77,18 +77,22 @@ function clause currentlyEnabled(Ext_Svpbmt) = false
 function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
     pte_flags[V] == 0b0
   | (pte_flags[W] == 0b1 & pte_flags[R] == 0b0)
-  // Note, the following requirements depend on the privileged spec version.
-  // Early versions do not require this check. This will need to be behind
-  // a flag when the Sail model allows specifying the spec version.
-  | (pte_ext[N] != 0b0 & not(currentlyEnabled(Ext_Svnapot)))
-  | (pte_ext[PBMT] != zeros() & not(currentlyEnabled(Ext_Svpbmt)))
-  | pte_ext[reserved] != zeros()
+  // Early versions of the spec did not require reserved bits to be zero.
+  | pte_reserved_bits_must_be_zero & (
+    // All bits are currently reserved for non-leaf PTEs.
+      pte_is_non_leaf(pte_flags) & pte_ext.bits != zeros()
+    // N/PBMT are reserved if not implemented.
+    | pte_ext[N]        != zeros() & not(currentlyEnabled(Ext_Svnapot))
+    | pte_ext[PBMT]     != zeros() & not(currentlyEnabled(Ext_Svpbmt))
+    // Other bits are reserved even for leaf PTEs.
+    | pte_ext[reserved] != zeros()
+  )
 
 // ----------------
 // Check access permissions in PTE
 
 // For (non-standard) extensions: this function gets the extension-available bits
-// of the PTE in extPte, and the accumulated information of the page-table-walk
+// of the PTE in PTE_Ext, and the accumulated information of the page-table-walk
 // in ext_ptw. It should return the updated ext_ptw in both success and failure cases.
 
 union PTE_Check = {
