@@ -139,7 +139,7 @@ SAIL_RVFI_SRCS = $(addprefix model/,$(SAIL_ARCH_RVFI_SRCS) $(SAIL_SEQ_INST_SRCS)
 SAIL_COQ_SRCS  = $(addprefix model/,$(SAIL_ARCH_SRCS) $(SAIL_SEQ_INST_SRCS) $(SAIL_OTHER_SRCS) $(SAIL_OTHER_COQ_SRCS))
 
 SAIL_FLAGS += --require-version 0.19.1
-SAIL_FLAGS += --config config/default.json
+SAIL_FLAGS += --config config/rv64d.json
 SAIL_FLAGS += --strict-var
 SAIL_FLAGS += -dno_cast
 SAIL_DOC_FLAGS ?= -doc_embed plain
@@ -301,7 +301,7 @@ endif
 
 generated_definitions/lem/$(ARCH)/riscv.lem: $(SAIL_SRCS) Makefile.old
 	mkdir -p generated_definitions/lem/$(ARCH) generated_definitions/isabelle/$(ARCH)
-	$(SAIL) $(SAIL_FLAGS) --config config/default.json -lem -lem_output_dir generated_definitions/lem/$(ARCH) -isa_output_dir generated_definitions/isabelle/$(ARCH) -o riscv -lem_lib Riscv_extras -lem_lib Riscv_extras_fdext $(SAIL_SRCS)
+	$(SAIL) $(SAIL_FLAGS) --config config/rv64d.json -lem -lem_output_dir generated_definitions/lem/$(ARCH) -isa_output_dir generated_definitions/isabelle/$(ARCH) -o riscv -lem_lib Riscv_extras -lem_lib Riscv_extras_fdext $(SAIL_SRCS)
 	echo "declare {isabelle} rename field sync_exception_ext = sync_exception_ext_exception" >> generated_definitions/lem/$(ARCH)/riscv_types.lem
 
 # sed -i isn't posix compliant, unfortunately

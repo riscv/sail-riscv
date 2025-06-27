@@ -64,8 +64,9 @@ register plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.
 val plat_enable_htif = pure "plat_enable_htif" : unit -> bool
 
 /* Location of HTIF ports */
-val plat_htif_tohost = pure {c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> physaddrbits
-function plat_htif_tohost () = zeros()
+val plat_htif_tohost = pure {c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> bits(64)
+function htif_tohost_base() -> physaddrbits = trunc(plat_htif_tohost())
+
 // todo: fromhost
 
 /* Physical memory map predicates */
@@ -111,10 +112,10 @@ function within_clint forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : ph
 }
 
 function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool =
-    plat_enable_htif() & (plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4))
+    plat_enable_htif() & (htif_tohost_base() == addr | (htif_tohost_base() + 4 == addr & width == 4))
 
 function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool =
-    plat_enable_htif() & (plat_htif_tohost() == addr | (plat_htif_tohost() + 4 == addr & width == 4))
+    plat_enable_htif() & (htif_tohost_base() == addr | (htif_tohost_base() + 4 == addr & width == 4))
 
 /* CLINT (Core Local Interruptor), based on Spike. */
 
@@ -332,11 +333,11 @@ function htif_load(t, Physaddr(paddr), width) = {
   if   get_config_print_platform()
   then print_platform("htif[" ^ hex_bits_str(paddr) ^ "] -> " ^ BitStr(htif_tohost));
   /* FIXME: For now, only allow the expected access widths. */
-  if      width == 8 & (paddr == plat_htif_tohost())
+  if      width == 8 & (paddr == htif_tohost_base())
   then    Ok(zero_extend(64, htif_tohost))         /* FIXME: Redundant zero_extend currently required by Lem backend */
-  else if width == 4 & paddr == plat_htif_tohost()
+  else if width == 4 & paddr == htif_tohost_base()
   then    Ok(zero_extend(32, htif_tohost[31..0]))  /* FIXME: Redundant zero_extend currently required by Lem backend */
-  else if width == 4 & paddr == plat_htif_tohost() + 4
+  else if width == 4 & paddr == htif_tohost_base() + 4
   then    Ok(zero_extend(32, htif_tohost[63..32])) /* FIXME: Redundant zero_extend currently required by Lem backend */
   else match t {
     InstructionFetch() => Err(E_Fetch_Access_Fault()),
@@ -354,12 +355,12 @@ function htif_store(Physaddr(paddr), width, data) = {
   then    { htif_cmd_write = bitone;
             htif_payload_writes = htif_payload_writes + 1;
             htif_tohost = zero_extend(data) }
-  else if width == 4 & paddr == plat_htif_tohost()
+  else if width == 4 & paddr == htif_tohost_base()
   then    { if   data == htif_tohost[31 .. 0]
             then htif_payload_writes = htif_payload_writes + 1
             else htif_payload_writes = 0x1;
             htif_tohost = vector_update_subrange(htif_tohost, 31, 0, data) }
-  else if width == 4 & paddr == plat_htif_tohost() + 4
+  else if width == 4 & paddr == htif_tohost_base() + 4
   then    { if   data[15 .. 0] == htif_tohost[47 .. 32]
             then htif_payload_writes = htif_payload_writes + 1
             else htif_payload_writes = 0x1;

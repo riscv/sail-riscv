@@ -8,8 +8,8 @@ extern "C" {
 // Provides entropy for the scalar cryptography extension.
 mach_bits plat_get_16_random_bits(unit);
 
-unit load_reservation(mach_bits);
-bool match_reservation(mach_bits);
+unit load_reservation(sbits);
+bool match_reservation(sbits);
 unit cancel_reservation(unit);
 bool valid_reservation(unit);
 

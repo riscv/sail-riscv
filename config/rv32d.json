@@ -1,5 +1,6 @@
 {
   "base": {
+    "xlen": 32,
     "writable_misa": true,
     "writable_fiom": true,
     "writable_hpm_counters": {
@@ -53,7 +54,10 @@
     "A": {
       "supported": true
     },
-    "FD": {
+    "F": {
+      "supported": true
+    },
+    "D": {
       "supported": true
     },
     "V": {
@@ -245,13 +249,13 @@
       "supported": true
     },
     "Sv39": {
-      "supported": true
+      "supported": false
     },
     "Sv48": {
-      "supported": true
+      "supported": false
     },
     "Sv57": {
-      "supported": true
+      "supported": false
     }
   }
 }
