@@ -286,6 +286,10 @@ mapping clause extensionName = Ext_Zvkt <-> "zvkt"
 function clause hartSupports(Ext_Zvkt) = config extensions.Zvkt.supported
 function clause currentlyEnabled(Ext_Zvkt) = hartSupports(Ext_Zvkt)
 
+// Vector Carryless Multiplication (SEW <= 32-bit)
+enum clause extension = Ext_Zvbc32e
+function clause hartSupports(Ext_Zvbc32e) = config extensions.Zvbc32e.supported
+
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
 mapping clause extensionName = Ext_Sscofpmf <-> "sscofpmf"
