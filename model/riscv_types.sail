@@ -36,9 +36,11 @@ val creg2reg_idx : cregidx -> regidx
 function creg2reg_idx(Cregidx(i)) = Regidx(0b01 @ i)
 
 /* some architecture and ABI relevant register identifiers */
-let zreg : regidx = Regidx(0b00000) /* x0, zero register  */
-let ra   : regidx = Regidx(0b00001) /* x1, return address */
-let sp   : regidx = Regidx(0b00010) /* x2, stack pointer  */
+let zreg : regidx = Regidx(0b00000) /* x0, zero register                     */
+let ra   : regidx = Regidx(0b00001) /* x1, return address                    */
+let sp   : regidx = Regidx(0b00010) /* x2, stack pointer                     */
+let a0   : regidx = Regidx(0b01010) /* x10, function argument / return value */
+let a1   : regidx = Regidx(0b01011) /* x11, function argument / return value */
 
 /* base architecture definitions */
 
@@ -296,6 +298,8 @@ enum biop_zbs = {BCLRI, BEXTI, BINVI, BSETI}
 enum extop_zbb = {SEXTB, SEXTH, ZEXTH}
 
 enum zicondop = {CZERO_EQZ, CZERO_NEZ}
+
+enum cmop_zcmp = {CM_POP, CM_POPRET, CM_POPRETZ}
 
 enum wrsop = {WRS_STO, WRS_NTO}
 
