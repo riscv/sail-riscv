@@ -21,7 +21,6 @@
 #ifdef SAILCOV
 #include "sail_coverage.h"
 #endif
-#include "riscv_platform.h"
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
 #include "rvfi_dii.h"
