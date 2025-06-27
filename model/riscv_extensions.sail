@@ -290,6 +290,14 @@ function clause currentlyEnabled(Ext_Zvkt) = hartSupports(Ext_Zvkt)
 enum clause extension = Ext_Sscofpmf
 mapping clause extensionName = Ext_Sscofpmf <-> "sscofpmf"
 function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supported
+
+// Machine-mode view of the Indirect CSR Access
+enum clause extension = Ext_Smcsrind
+function clause hartSupports(Ext_Smcsrind) = config extensions.Smcsrind.supported
+// Supervisor-mode view of the Indirect CSR Access
+enum clause extension = Ext_Sscsrind
+function clause hartSupports(Ext_Sscsrind) = config extensions.Sscsrind.supported
+
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 mapping clause extensionName = Ext_Sstc <-> "sstc"
