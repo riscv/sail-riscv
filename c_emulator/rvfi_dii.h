@@ -2,6 +2,9 @@
 
 #include "sail.h"
 
+// "RISC-V Formal Interface - Direct Instruction Injection" support
+// For use with https://github.com/CTSRD-CHERI/TestRIG
+
 enum rvfi_prestep_t {
   RVFI_prestep_continue,  // continue loop
   RVFI_prestep_eof,       // Got EOF, delete rvfi and return
@@ -45,6 +48,7 @@ struct RVFI_DII_Instruction_Packet {
   uint8_t rvfi_cmd = 0;
   // 63 .. 56
   uint8_t padding = 0;
+
   static RVFI_DII_Instruction_Packet from_u64(uint64_t value);
 };
 
