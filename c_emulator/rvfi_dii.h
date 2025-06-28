@@ -161,6 +161,16 @@ struct RVFI_DII_Execution_Packet_Ext_MemAccess {
   // For memory operations (rvfi_mem_rmask and/or rvfi_mem_wmask are non-zero),
   // rvfi_mem_addr holds the accessed memory location.
   uint64_t rvfi_mem_addr = 0;
+
+  void clear_rdata()
+  {
+    memset(rvfi_mem_rdata, 0, sizeof(rvfi_mem_rdata));
+  }
+
+  void clear_wdata()
+  {
+    memset(rvfi_mem_wdata, 0, sizeof(rvfi_mem_wdata));
+  }
 };
 
 // ****************************************************************************

@@ -419,6 +419,7 @@ void rvfi_write(uint64_t paddr, uint64_t width, lbits value)
   rvfi_mem_data_present = true;
   if (width <= 16) {
     // TODO: report tag bit for capability writes and extend mask by one bit. */
+    rvfi_mem_data.clear_wdata();
     convert_lbits_to_u8s(value, (uint8_t *)rvfi_mem_data.rvfi_mem_wdata);
     rvfi_mem_data.rvfi_mem_wmask = rvfi_encode_width_mask(width);
   } else {
@@ -433,7 +434,8 @@ void rvfi_read(uint64_t paddr, uint64_t width, lbits value)
   rvfi_mem_data_present = true;
   if (width <= 16) {
     // TODO: report tag bit for capability writes and extend mask by one bit.
-    convert_lbits_to_u8s(value, (uint8_t *)rvfi_mem_data.rvfi_mem_wdata);
+    rvfi_mem_data.clear_rdata();
+    convert_lbits_to_u8s(value, (uint8_t *)rvfi_mem_data.rvfi_mem_rdata);
     rvfi_mem_data.rvfi_mem_rmask = rvfi_encode_width_mask(width);
   } else {
     fprintf(stderr, "Expected at most 16 bytes here!\n");
