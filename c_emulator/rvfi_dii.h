@@ -26,7 +26,7 @@ public:
 private:
   void get_and_send_packet(packet_reader_fn reader, bool config_print);
 
-  void send_packet_raw(const void *data, size_t len, bool config_print);
+  template <typename T> void send_packet_raw(const T *data, bool config_print);
   unsigned trace_version = 1;
   int dii_port = -1;
   int dii_sock = -1;
