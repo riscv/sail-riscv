@@ -12,8 +12,9 @@ set(EMULATOR_COMMON_SRCS
     sail_utils.h
     sail_utils.cpp
     rvfi_dii.h
-    rvfi_dii_sail.h
     rvfi_dii.cpp
+    rvfi_dii_sail.h
+    rvfi_dii_sail.cpp
     riscv_sim.cpp
     riscv_softfloat.c
     riscv_softfloat.h
