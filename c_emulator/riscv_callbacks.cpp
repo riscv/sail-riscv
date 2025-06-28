@@ -31,7 +31,7 @@ unit mem_write_callback(const char *type, sbits paddr, uint64_t width,
     print_lbits_hex(value, width);
   }
   if (config_enable_rvfi) {
-    rvfi_handler::rvfi_write(paddr, width, value);
+    rvfi_handler::rvfi_write(paddr.bits, width, value);
   }
   return UNIT;
 }
@@ -45,7 +45,7 @@ unit mem_read_callback(const char *type, sbits paddr, uint64_t width,
     print_lbits_hex(value, width);
   }
   if (config_enable_rvfi) {
-    rvfi_handler::rvfi_read(paddr, width, value);
+    rvfi_handler::rvfi_read(paddr.bits, width, value);
   }
   return UNIT;
 }
@@ -54,7 +54,7 @@ unit mem_exception_callback(sbits paddr, uint64_t num_of_exception)
 {
   (void)num_of_exception;
   if (config_enable_rvfi) {
-    rvfi_handler::rvfi_mem_exception(paddr);
+    rvfi_handler::rvfi_mem_exception(paddr.bits);
   }
   return UNIT;
 }
@@ -72,7 +72,7 @@ unit xreg_full_write_callback(const_sail_string abi_name, unsigned reg,
     }
   }
   if (config_enable_rvfi) {
-    rvfi_handler::rvfi_wX(reg, value);
+    rvfi_handler::rvfi_wX(reg, value.bits);
   }
   return UNIT;
 }
