@@ -16,8 +16,18 @@
 #include "sail.h"
 #include "riscv_sail.h"
 #include "rvfi_dii.h"
-#include "rvfi_dii_sail.h"
 #include "sail_utils.h"
+
+// ****************************************************************************
+// Init Static Members
+
+RVFI_DII_Instruction_Packet rvfi_handler::rvfi_instruction = {};
+RVFI_DII_Execution_Packet_PC rvfi_handler::rvfi_pc_data = {};
+RVFI_DII_Execution_Packet_InstMetadata rvfi_handler::rvfi_inst_data = {};
+RVFI_DII_Execution_Packet_Ext_Integer rvfi_handler::rvfi_int_data = {};
+RVFI_DII_Execution_Packet_Ext_MemAccess rvfi_handler::rvfi_mem_data = {};
+bool rvfi_handler::rvfi_mem_data_present = false;
+bool rvfi_handler::rvfi_int_data_present = false;
 
 // ****************************************************************************
 // Struct Member Functions
@@ -33,20 +43,23 @@ RVFI_DII_Instruction_Packet::from_u64(uint64_t value)
   };
 }
 
-// ****************************************************************************
-// Global Variables
+RVFI_DII_Execution_Packet_V1
+RVFI_DII_Execution_Packet_V1::rvfi_get_v2_support_packet()
+{
+  // Returning 0x3 (using the unused high bits) in halt instead of 0x1 means
+  // that we support the version 2 wire format. This is required to keep
+  // backwards compatibility with old implementations that do not support
+  // the new trace format.
+  //  res = {};
+  return RVFI_DII_Execution_Packet_V1 {
+      .rvfi_halt = 0x03,
+  };
+}
 
-static RVFI_DII_Instruction_Packet rvfi_instruction = {};
-static RVFI_DII_Execution_Packet_PC rvfi_pc_data = {};
-static RVFI_DII_Execution_Packet_InstMetadata rvfi_inst_data = {};
-static RVFI_DII_Execution_Packet_Ext_Integer rvfi_int_data = {};
-static RVFI_DII_Execution_Packet_Ext_MemAccess rvfi_mem_data = {};
-static bool rvfi_mem_data_present = false;
-static bool rvfi_int_data_present = false;
-
 // ****************************************************************************
-// RVFI Handler Functions
-RVFI_DII_Execution_Packet_V1 rvfi_get_exec_packet_v1()
+// RVFI Handler Implementation
+
+RVFI_DII_Execution_Packet_V1 rvfi_handler::rvfi_get_exec_packet_v1()
 {
   return RVFI_DII_Execution_Packet_V1 {
       .rvfi_order = rvfi_inst_data.rvfi_order,
@@ -74,19 +87,7 @@ RVFI_DII_Execution_Packet_V1 rvfi_get_exec_packet_v1()
   };
 }
 
-RVFI_DII_Execution_Packet_V1 rvfi_get_v2_support_packet()
-{
-  // Returning 0x3 (using the unused high bits) in halt instead of 0x1 means
-  // that we support the version 2 wire format. This is required to keep
-  // backwards compatibility with old implementations that do not support
-  // the new trace format.
-  //  res = {};
-  return RVFI_DII_Execution_Packet_V1 {
-      .rvfi_halt = 0x03,
-  };
-}
-
-uint64_t rvfi_get_v2_trace_size()
+uint64_t rvfi_handler::rvfi_get_v2_trace_size()
 {
   uint64_t trace_size = sizeof(RVFI_DII_Execution_Packet_V2);
   if (rvfi_int_data_present) {
@@ -98,7 +99,7 @@ uint64_t rvfi_get_v2_trace_size()
   return trace_size;
 }
 
-RVFI_DII_Execution_Packet_V2 rvfi_get_exec_packet_v2()
+RVFI_DII_Execution_Packet_V2 rvfi_handler::rvfi_get_exec_packet_v2()
 {
   uint64_t available_fields = 0;
   if (rvfi_int_data_present) {
@@ -115,7 +116,7 @@ RVFI_DII_Execution_Packet_V2 rvfi_get_exec_packet_v2()
   };
 }
 
-void rvfi_zero_exec_packet()
+void rvfi_handler::rvfi_zero_exec_packet()
 {
   rvfi_inst_data = {};
   rvfi_pc_data = {};
@@ -126,13 +127,13 @@ void rvfi_zero_exec_packet()
   return;
 }
 
-void rvfi_halt_exec_packet()
+void rvfi_handler::rvfi_halt_exec_packet()
 {
   rvfi_inst_data.rvfi_halt = 0x01;
   return;
 }
 
-void print_rvfi_exec()
+void rvfi_handler::print_rvfi_exec()
 {
   print_sbits("rvfi_intr     : ", make_sbits(rvfi_inst_data.rvfi_intr));
   print_sbits("rvfi_halt     : ", make_sbits(rvfi_inst_data.rvfi_halt));
@@ -280,6 +281,7 @@ void rvfi_handler::send_packet_raw(const T *data, bool config_print)
 {
   const size_t send_size = sizeof(T);
   if (config_print) {
+    print_any("packet = ", data);
     fprintf(stderr, "Sending packet with length %zd... ", send_size);
   }
   if (send_size > 4096) {
@@ -364,7 +366,7 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
         fprintf(stderr,
                 "EndOfTrace was actually a version negotiation packet.\n");
       }
-      auto pkg = rvfi_get_v2_support_packet();
+      auto pkg = RVFI_DII_Execution_Packet_V1::rvfi_get_v2_support_packet();
       send_packet_raw(&pkg, config_print);
       return RVFI_prestep_continue;
     } else {
@@ -420,7 +422,7 @@ uint32_t rvfi_encode_width_mask(uint8_t width)
   return (0xFFFFFFFF >> (32 - width));
 }
 
-void rvfi_write(uint64_t paddr, uint64_t width, lbits value)
+void rvfi_handler::rvfi_write(uint64_t paddr, uint64_t width, lbits value)
 {
   rvfi_mem_data.rvfi_mem_addr = paddr;
   rvfi_mem_data_present = true;
@@ -435,7 +437,7 @@ void rvfi_write(uint64_t paddr, uint64_t width, lbits value)
   };
 }
 
-void rvfi_read(uint64_t paddr, uint64_t width, lbits value)
+void rvfi_handler::rvfi_read(uint64_t paddr, uint64_t width, lbits value)
 {
   rvfi_mem_data.rvfi_mem_addr = paddr;
   rvfi_mem_data_present = true;
@@ -450,7 +452,7 @@ void rvfi_read(uint64_t paddr, uint64_t width, lbits value)
   };
 }
 
-void rvfi_mem_exception(uint64_t paddr)
+void rvfi_handler::rvfi_mem_exception(uint64_t paddr)
 {
   /* Log only the memory address (without the value) if the write fails. */
   rvfi_mem_data.rvfi_mem_addr = paddr;
@@ -458,7 +460,7 @@ void rvfi_mem_exception(uint64_t paddr)
   return;
 }
 
-void rvfi_wX(unsigned r, uint64_t v)
+void rvfi_handler::rvfi_wX(unsigned r, uint64_t v)
 {
   rvfi_int_data.rvfi_rd_wdata = v;
   rvfi_int_data.rvfi_rd_addr = r;
@@ -466,7 +468,7 @@ void rvfi_wX(unsigned r, uint64_t v)
   return;
 }
 
-void rvfi_trap()
+void rvfi_handler::rvfi_trap()
 {
   rvfi_inst_data.rvfi_trap = 0x01;
   return;
@@ -475,48 +477,44 @@ void rvfi_trap()
 // ***************************************************************************
 // Sail API
 
-unit rvfi_set_inst_data_insn(uint64_t insn)
+void rvfi_handler::rvfi_set_inst_data_insn(uint64_t insn)
 {
   rvfi_inst_data.rvfi_insn = insn;
-  return UNIT;
+  return;
 }
 
-unit rvfi_set_inst_data_order(uint64_t order)
+void rvfi_handler::rvfi_set_inst_data_order(uint64_t order)
 {
   rvfi_inst_data.rvfi_order = order;
-  return UNIT;
+  return;
 }
 
-unit rvfi_set_inst_data_mode(uint8_t mode)
+void rvfi_handler::rvfi_set_inst_data_mode(uint8_t mode)
 {
   rvfi_inst_data.rvfi_mode = mode;
-  return UNIT;
+  return;
 }
 
-unit rvfi_set_inst_data_ixl(uint8_t ixl)
+void rvfi_handler::rvfi_set_inst_data_ixl(uint8_t ixl)
 {
   rvfi_inst_data.rvfi_ixl = ixl;
-  return UNIT;
+  return;
 }
 
-uint64_t rvfi_get_insn(unit)
+uint64_t rvfi_handler::rvfi_get_insn(void)
 {
+  rvfi_handler::rvfi_mem_data_present = false;
   return (uint64_t)rvfi_instruction.rvfi_insn;
 }
 
-uint64_t rvfi_get_cmd(unit)
-{
-  return (uint64_t)rvfi_instruction.rvfi_cmd;
-}
-
-unit rvfi_set_pc_data_rdata(uint64_t rdata)
+void rvfi_handler::rvfi_set_pc_data_rdata(uint64_t rdata)
 {
   rvfi_pc_data.rvfi_pc_rdata = rdata;
-  return UNIT;
+  return;
 }
 
-unit rvfi_set_pc_data_wdata(uint64_t wdata)
+void rvfi_handler::rvfi_set_pc_data_wdata(uint64_t wdata)
 {
   rvfi_pc_data.rvfi_pc_wdata = wdata;
-  return UNIT;
+  return;
 }

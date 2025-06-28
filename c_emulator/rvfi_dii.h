@@ -1,36 +1,10 @@
 #pragma once
 
 #include "sail.h"
+#include "string.h"
 
 // "RISC-V Formal Interface - Direct Instruction Injection" support
 // For use with https://github.com/CTSRD-CHERI/TestRIG
-
-enum rvfi_prestep_t {
-  RVFI_prestep_continue,  // continue loop
-  RVFI_prestep_eof,       // Got EOF, delete rvfi and return
-  RVFI_prestep_end_trace, // Got EndOfTrace
-  RVFI_prestep_ok,        // Ready for step
-};
-
-typedef void (*packet_reader_fn)(lbits *rop, unit);
-
-class rvfi_handler {
-public:
-  explicit rvfi_handler(int port);
-
-  bool setup_socket(bool config_print);
-  uint64_t get_entry();
-  void send_trace(bool config_print);
-  rvfi_prestep_t pre_step(bool config_print);
-
-private:
-  void get_and_send_packet(packet_reader_fn reader, bool config_print);
-
-  template <typename T> void send_packet_raw(const T *data, bool config_print);
-  unsigned trace_version = 1;
-  int dii_port = -1;
-  int dii_sock = -1;
-};
 
 // ****************************************************************************
 
@@ -219,6 +193,8 @@ struct RVFI_DII_Execution_Packet_V1 {
   uint8_t rvfi_halt = 0;
   // [87] Trap handler: Set for first instruction in trap handler.
   uint8_t rvfi_intr = 0;
+
+  static RVFI_DII_Execution_Packet_V1 rvfi_get_v2_support_packet();
 };
 
 #define MAGIC_TRACE_V2 {'t', 'r', 'a', 'c', 'e', '-', 'v', '2'}
@@ -265,10 +241,65 @@ enum RVFI_DII_Execution_Available_Field {
 };
 
 // ****************************************************************************
-// Callback API
 
-void rvfi_write(uint64_t paddr, uint64_t width, lbits value);
-void rvfi_read(uint64_t paddr, uint64_t width, lbits value);
-void rvfi_mem_exception(uint64_t paddr);
-void rvfi_trap();
-void rvfi_wX(unsigned r, uint64_t v);
+enum rvfi_prestep_t {
+  RVFI_prestep_continue,  // continue loop
+  RVFI_prestep_eof,       // Got EOF, delete rvfi and return
+  RVFI_prestep_end_trace, // Got EndOfTrace
+  RVFI_prestep_ok,        // Ready for step
+};
+
+typedef void (*packet_reader_fn)(lbits *rop, unit);
+
+class rvfi_handler {
+public:
+  explicit rvfi_handler(int port);
+
+  bool setup_socket(bool config_print);
+  uint64_t get_entry();
+  void send_trace(bool config_print);
+  rvfi_prestep_t pre_step(bool config_print);
+
+  // Callback API
+  static void rvfi_write(uint64_t paddr, uint64_t width, lbits value);
+  static void rvfi_read(uint64_t paddr, uint64_t width, lbits value);
+  static void rvfi_mem_exception(uint64_t paddr);
+  static void rvfi_wX(unsigned r, uint64_t v);
+  static void rvfi_trap();
+
+  // Sail API
+  static uint64_t rvfi_get_insn();
+  static void rvfi_set_pc_data_rdata(uint64_t data);
+  static void rvfi_set_pc_data_wdata(uint64_t data);
+  static void rvfi_set_inst_data_insn(uint64_t insn);
+  static void rvfi_set_inst_data_order(uint64_t);
+  static void rvfi_set_inst_data_mode(uint8_t);
+  static void rvfi_set_inst_data_ixl(uint8_t);
+
+private:
+  void get_and_send_packet(packet_reader_fn reader, bool config_print);
+  template <typename T> void send_packet_raw(const T *data, bool config_print);
+
+  RVFI_DII_Execution_Packet_V1 rvfi_get_exec_packet_v1();
+  uint64_t rvfi_get_v2_trace_size();
+  RVFI_DII_Execution_Packet_V2 rvfi_get_exec_packet_v2();
+  void rvfi_zero_exec_packet();
+  void rvfi_halt_exec_packet();
+  void print_rvfi_exec();
+
+  int dii_port = -1;
+  int dii_sock = -1;
+
+  // Trace States
+  unsigned trace_version = 1;
+
+  static RVFI_DII_Instruction_Packet rvfi_instruction;
+  static RVFI_DII_Execution_Packet_PC rvfi_pc_data;
+  static RVFI_DII_Execution_Packet_InstMetadata rvfi_inst_data;
+  static RVFI_DII_Execution_Packet_Ext_Integer rvfi_int_data;
+  static RVFI_DII_Execution_Packet_Ext_MemAccess rvfi_mem_data;
+  static bool rvfi_mem_data_present;
+  static bool rvfi_int_data_present;
+};
+
+void print_instr_packet(RVFI_DII_Instruction_Packet p);
