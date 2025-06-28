@@ -90,10 +90,10 @@ uint64_t rvfi_get_v2_trace_size()
 {
   uint64_t trace_size = sizeof(RVFI_DII_Execution_Packet_V2);
   if (rvfi_int_data_present) {
-    trace_size = trace_size + sizeof(RVFI_DII_Execution_Packet_Ext_Integer);
+    trace_size += sizeof(RVFI_DII_Execution_Packet_Ext_Integer);
   }
   if (rvfi_mem_data_present) {
-    trace_size = trace_size + sizeof(RVFI_DII_Execution_Packet_Ext_MemAccess);
+    trace_size += sizeof(RVFI_DII_Execution_Packet_Ext_MemAccess);
   }
   return trace_size;
 }
