@@ -117,10 +117,9 @@ RVFI_DII_Execution_Packet_V2 rvfi_get_exec_packet_v2()
 
 void rvfi_zero_exec_packet()
 {
-  rvfi_instruction = {};
+  rvfi_inst_data = {};
   rvfi_pc_data = {};
   rvfi_int_data = {};
-  rvfi_inst_data = {};
   rvfi_mem_data = {};
   rvfi_int_data_present = false;
   rvfi_mem_data_present = false;
@@ -320,6 +319,7 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
     fprintf(stderr, "Waiting for cmd packet... ");
   }
   int res = read(dii_sock, &instr_bits, sizeof(instr_bits));
+  rvfi_instruction = RVFI_DII_Instruction_Packet::from_u64(instr_bits);
   if (config_print) {
     fprintf(stderr, "Read cmd packet: %016jx\n", (intmax_t)instr_bits);
     print_rvfi_exec();
@@ -338,7 +338,6 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
     fprintf(stderr, "Reading RVFI DII command failed: insufficient input");
     exit(EXIT_FAILURE);
   }
-  rvfi_instruction = RVFI_DII_Instruction_Packet::from_u64(instr_bits);
   rvfi_zero_exec_packet();
   mach_bits cmd = rvfi_instruction.rvfi_cmd;
   switch (cmd) {
