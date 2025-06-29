@@ -54,12 +54,14 @@ function nan_unbox(m, x) = if 'n == 'm then x else (
 
 newtype fregidx = Fregidx : bits(5)
 newtype fregno = Fregno : range(0, 31)
+// identifiers in RVC floating-point instructions
+newtype cfregidx = Cfregidx : bits(3)
 
 function fregidx_bits(Fregidx(r) : fregidx) -> bits(5) = r
 
-// TODO: We should have a separate Cfregidx type for compressed float registers.
-function cregidx_to_fregidx (Cregidx(b) : cregidx) -> fregidx = Fregidx(0b01 @ b)
+function cfregidx_to_fregidx (Cfregidx(b) : cfregidx) -> fregidx = Fregidx(0b01 @ b)
 
+mapping encdec_cfreg : cfregidx <-> bits(3) = { Cfregidx(r) <-> r }
 /*
  * TODO: This is not quite right for having both Zfinx and E, but at least it
  * marks the places we need to consider it
@@ -410,7 +412,7 @@ mapping freg_or_reg_name : fregidx <-> string = {
   f <-> freg_name(f)
 }
 
-mapping cfreg_name : cregidx <-> string = { Cregidx(i) <-> freg_name(Fregidx(0b01 @ i)) }
+mapping cfreg_name : cfregidx <-> string = { Cfregidx(i) <-> freg_name(Fregidx(0b01 @ i)) }
 
 /* **************************************************************** */
 /* Floating Point CSR                                               */
