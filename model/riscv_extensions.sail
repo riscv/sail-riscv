@@ -118,6 +118,10 @@ function clause hartSupports(Ext_Zaamo) = config extensions.Zaamo.supported
 enum clause extension = Ext_Zabha
 mapping clause extensionName = Ext_Zabha <-> "zabha"
 function clause hartSupports(Ext_Zabha) = config extensions.Zabha.supported
+// Atomic Compare-and-Swap (CAS) Instructions
+enum clause extension = Ext_Zacas
+mapping clause extensionName = Ext_Zacas <-> "zacas"
+function clause hartSupports(Ext_Zacas) = config extensions.Zacas.supported
 // Load-Reserved/Store-Conditional Instructions
 enum clause extension = Ext_Zalrsc
 mapping clause extensionName = Ext_Zalrsc <-> "zalrsc"

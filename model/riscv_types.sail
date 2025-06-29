@@ -273,8 +273,9 @@ enum rop = {ADD, SUB, SLL, SLT, SLTU, XOR,
 
 enum ropw  = {ADDW, SUBW, SLLW, SRLW, SRAW}           /* reg-reg 32-bit ops */
 enum sopw  = {SLLIW, SRLIW, SRAIW}                    /* RV64-only shift ops */
-enum amoop = {AMOSWAP, AMOADD, AMOXOR, AMOAND, AMOOR,
-              AMOMIN, AMOMAX, AMOMINU, AMOMAXU}       /* AMO ops */
+enum amoop = {AMOSWAP, AMOADD, AMOXOR, AMOAND, AMOOR, /* AMO ops */
+              AMOMIN, AMOMAX, AMOMINU, AMOMAXU,
+              AMOCAS}
 enum csrop = {CSRRW, CSRRS, CSRRC}                    /* CSR ops */
 
 enum cbop_zicbom = {CBO_CLEAN, CBO_FLUSH, CBO_INVAL}  /* Zicbom ops */
@@ -328,6 +329,32 @@ mapping size_bytes : word_width <-> {1, 2, 4, 8} = {
   HALF   <-> 2,
   WORD   <-> 4,
   DOUBLE <-> 8,
+}
+
+enum amo_word_width = {AMO_BYTE, AMO_HALF, AMO_WORD, AMO_DOUBLE, AMO_QUAD}
+
+mapping amo_size_enc : amo_word_width <-> bits(3) = {
+  AMO_BYTE   <-> 0b000,
+  AMO_HALF   <-> 0b001,
+  AMO_WORD   <-> 0b010,
+  AMO_DOUBLE <-> 0b011,
+  AMO_QUAD   <-> 0b100,
+}
+
+mapping amo_size_mnemonic : amo_word_width <-> string = {
+  AMO_BYTE   <-> "b",
+  AMO_HALF   <-> "h",
+  AMO_WORD   <-> "w",
+  AMO_DOUBLE <-> "d",
+  AMO_QUAD   <-> "q",
+}
+
+mapping amo_size_bytes : amo_word_width <-> {1, 2, 4, 8, 16} = {
+  AMO_BYTE   <-> 1,
+  AMO_HALF   <-> 2,
+  AMO_WORD   <-> 4,
+  AMO_DOUBLE <-> 8,
+  AMO_QUAD   <-> 16,
 }
 
 struct mul_op = {
