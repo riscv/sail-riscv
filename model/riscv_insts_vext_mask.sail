@@ -166,15 +166,12 @@ union clause ast = VMSBF_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VMSBF_M(vm, vs2, vd)
   <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b00001 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_normal(vd, vm)) & assert_vstart(0) & (vd != vs2)
 
 function clause execute(VMSBF_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = VLEN;
-
-  if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
-  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -210,15 +207,12 @@ union clause ast = VMSIF_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VMSIF_M(vm, vs2, vd)
   <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b00011 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_normal(vd, vm)) & assert_vstart(0) & (vd != vs2)
 
 function clause execute(VMSIF_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = VLEN;
-
-  if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
-  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -254,15 +248,12 @@ union clause ast = VMSOF_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VMSOF_M(vm, vs2, vd)
   <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b00010 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_normal(vd, vm)) & assert_vstart(0) & (vd != vs2)
 
 function clause execute(VMSOF_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = VLEN;
-
-  if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
-  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -302,15 +293,12 @@ union clause ast = VIOTA_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VIOTA_M(vm, vs2, vd)
   <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_normal(vd, vm)) & assert_vstart(0) & (vd != vs2)
 
 function clause execute(VIOTA_M(vm, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
-  if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
-  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -346,14 +334,12 @@ union clause ast = VID_V : (bits(1), vregidx)
 
 mapping clause encdec = VID_V(vm, vd)
   <-> 0b010100 @ vm @ 0b00000 @ 0b10001 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_V) & not(illegal_normal(vd, vm))
 
 function clause execute(VID_V(vm, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
