@@ -8,7 +8,7 @@
 
 function clause currentlyEnabled(Ext_Zvkg) = hartSupports(Ext_Zvkg) & currentlyEnabled(Ext_V)
 
-union clause ast = VGHSH_VV : (vregidx, vregidx, vregidx)
+union clause instruction = VGHSH_VV : (vregidx, vregidx, vregidx)
 
 mapping clause encdec = VGHSH_VV(vs2, vs1, vd)
   <-> 0b1011001 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
@@ -56,7 +56,7 @@ function clause execute (VGHSH_VV(vs2, vs1, vd)) = {
 mapping clause assembly = VGHSH_VV(vs2, vs1, vd)
   <-> "vghsh.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
 
-union clause ast = VGMUL_VV : (vregidx, vregidx)
+union clause instruction = VGMUL_VV : (vregidx, vregidx)
 
 mapping clause encdec = VGMUL_VV(vs2, vd)
   <-> 0b1010001 @ encdec_vreg(vs2) @ 0b10001 @ 0b010 @ encdec_vreg(vd) @ 0b1110111

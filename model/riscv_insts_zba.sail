@@ -10,7 +10,7 @@ function clause currentlyEnabled(Ext_B) = hartSupports(Ext_B) & misa[B] == 0b1
 function clause currentlyEnabled(Ext_Zba) = hartSupports(Ext_Zba) | currentlyEnabled(Ext_B)
 
 /* ****************************************************************** */
-union clause ast = SLLIUW : (bits(6), regidx, regidx)
+union clause instruction = SLLIUW : (bits(6), regidx, regidx)
 
 mapping clause encdec = SLLIUW(shamt, rs1, rd)
   <-> 0b000010 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0011011
@@ -25,7 +25,7 @@ function clause execute (SLLIUW(shamt, rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBA_RTYPEUW : (regidx, regidx, regidx, bropw_zba)
+union clause instruction = ZBA_RTYPEUW : (regidx, regidx, regidx, bropw_zba)
 
 mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, ADDUW)
   <-> 0b0000100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0111011
@@ -65,7 +65,7 @@ function clause execute (ZBA_RTYPEUW(rs2, rs1, rd, op)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBA_RTYPE : (regidx, regidx, regidx, brop_zba)
+union clause instruction = ZBA_RTYPE : (regidx, regidx, regidx, brop_zba)
 
 mapping clause encdec = ZBA_RTYPE(rs2, rs1, rd, SH1ADD)
   <-> 0b0010000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(rd) @ 0b0110011

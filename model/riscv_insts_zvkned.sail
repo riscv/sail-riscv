@@ -8,7 +8,7 @@
 
 function clause currentlyEnabled(Ext_Zvkned) = hartSupports(Ext_Zvkned) & currentlyEnabled(Ext_V)
 
-union clause ast = VAESDF : (zvk_vaesdf_funct6, vregidx, vregidx)
+union clause instruction = VAESDF : (zvk_vaesdf_funct6, vregidx, vregidx)
 
 mapping encdec_vaesdf : zvk_vaesdf_funct6 <-> bits(6) = {
   ZVK_VAESDF_VV <-> 0b101000,
@@ -60,7 +60,7 @@ mapping vaesdf_mnemonic : zvk_vaesdf_funct6 <-> string = {
 mapping clause assembly = VAESDF(funct6, vs2, vd)
   <-> vaesdf_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2)
 
-union clause ast = VAESDM : (zvk_vaesdm_funct6, vregidx, vregidx)
+union clause instruction = VAESDM : (zvk_vaesdm_funct6, vregidx, vregidx)
 
 mapping encdec_vaesdm : zvk_vaesdm_funct6 <-> bits(6) = {
   ZVK_VAESDM_VV <-> 0b101000,
@@ -113,7 +113,7 @@ mapping vaesdm_mnemonic : zvk_vaesdm_funct6 <-> string = {
 mapping clause assembly = VAESDM(funct6, vs2, vd)
   <-> vaesdm_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2)
 
-union clause ast = VAESEF : (zvk_vaesef_funct6, vregidx, vregidx)
+union clause instruction = VAESEF : (zvk_vaesef_funct6, vregidx, vregidx)
 
 mapping encdec_vaesef : zvk_vaesef_funct6 <-> bits(6) = {
   ZVK_VAESEF_VV <-> 0b101000,
@@ -165,7 +165,7 @@ mapping vaesef_mnemonic : zvk_vaesef_funct6 <-> string = {
 mapping clause assembly = VAESEF(funct6, vs2, vd)
   <-> vaesef_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2)
 
-union clause ast = VAESEM : (zvk_vaesem_funct6, vregidx, vregidx)
+union clause instruction = VAESEM : (zvk_vaesem_funct6, vregidx, vregidx)
 
 mapping encdec_vaesem : zvk_vaesem_funct6 <-> bits(6) = {
   ZVK_VAESEM_VV <-> 0b101000,
@@ -218,7 +218,7 @@ mapping vaesem_mnemonic : zvk_vaesem_funct6 <-> string = {
 mapping clause assembly = VAESEM(funct6, vs2, vd)
   <-> vaesem_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2)
 
-union clause ast = VAESKF1_VI : (vregidx, bits(5), vregidx)
+union clause instruction = VAESKF1_VI : (vregidx, bits(5), vregidx)
 
 mapping clause encdec = VAESKF1_VI(vs2, rnd, vd)
   <-> 0b1000101 @ encdec_vreg(vs2) @ rnd @ 0b010 @ encdec_vreg(vd) @ 0b1110111
@@ -267,7 +267,7 @@ function clause execute (VAESKF1_VI(vs2, rnd, vd)) = {
 mapping clause assembly = VAESKF1_VI(vs2, rnd, vd)
   <-> "vaeskf1.vi" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(rnd)
 
-union clause ast = VAESKF2_VI : (vregidx, bits(5), vregidx)
+union clause instruction = VAESKF2_VI : (vregidx, bits(5), vregidx)
 
 mapping clause encdec = VAESKF2_VI(vs2, rnd, vd)
   <-> 0b1010101 @ encdec_vreg(vs2) @ rnd @ 0b010 @ encdec_vreg(vd) @ 0b1110111
@@ -317,7 +317,7 @@ function clause execute (VAESKF2_VI(vs2, rnd, vd)) = {
 mapping clause assembly = VAESKF2_VI(vs2, rnd, vd)
   <-> "vaeskf2.vi" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(rnd)
 
-union clause ast = VAESZ_VS : (vregidx, vregidx)
+union clause instruction = VAESZ_VS : (vregidx, vregidx)
 
 mapping clause encdec = VAESZ_VS(vs2, vd)
   <-> 0b1010011 @ encdec_vreg(vs2) @ 0b00111 @ 0b010 @ encdec_vreg(vd) @ 0b1110111

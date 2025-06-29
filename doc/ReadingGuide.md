@@ -102,7 +102,7 @@ such as the platform memory map.
   definitions and their assembly language formats. Each file contains
   the instructions for an extension, with `riscv_insts_base.sail` containing
   the base integer instruction set. Each instruction is represented
-  as a variant clause of the `ast` type, and its execution semantics
+  as a variant clause of the `instruction` type, and its execution semantics
   are represented as a clause of the `execute` function. `mapping`
   clauses specify the encoding and decoding of each instruction to and
   from their binary representations and assembly language formats.

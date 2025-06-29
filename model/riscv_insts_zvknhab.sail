@@ -9,7 +9,7 @@
 function clause currentlyEnabled(Ext_Zvknha) = hartSupports(Ext_Zvknha) & currentlyEnabled(Ext_V)
 function clause currentlyEnabled(Ext_Zvknhb) = hartSupports(Ext_Zvknhb) & currentlyEnabled(Ext_V)
 
-union clause ast = VSHA2MS_VV : (vregidx, vregidx, vregidx)
+union clause instruction = VSHA2MS_VV : (vregidx, vregidx, vregidx)
 
 mapping clause encdec = VSHA2MS_VV(vs2, vs1, vd)
   <-> 0b1011011 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
@@ -66,7 +66,7 @@ function clause execute (VSHA2MS_VV(vs2, vs1, vd)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = ZVKSHA2TYPE : (zvk_vsha2_funct6, vregidx, vregidx, vregidx)
+union clause instruction = ZVKSHA2TYPE : (zvk_vsha2_funct6, vregidx, vregidx, vregidx)
 
 mapping encdec_vsha2 : zvk_vsha2_funct6 <-> bits(6) = {
   ZVK_VSHA2CH_VV <-> 0b101110,

@@ -8,7 +8,7 @@
 
 function clause currentlyEnabled(Ext_Zcb) = hartSupports(Ext_Zcb) & currentlyEnabled(Ext_Zca)
 
-union clause ast = C_LBU : (bits(2), cregidx, cregidx)
+union clause instruction = C_LBU : (bits(2), cregidx, cregidx)
 
 mapping clause encdec_compressed = C_LBU(uimm1 @ uimm0, rdc, rsc1)
   <-> 0b100 @ 0b000 @ encdec_creg(rsc1) @ uimm0 : bits(1) @ uimm1 : bits(1) @ encdec_creg(rdc) @ 0b00
@@ -26,7 +26,7 @@ function clause execute C_LBU(uimm, rdc, rsc1) = {
 
 /* ****************************************************************** */
 
-union clause ast = C_LHU : (bits(2), cregidx, cregidx)
+union clause instruction = C_LHU : (bits(2), cregidx, cregidx)
 
 mapping clause encdec_compressed = C_LHU(uimm1 @ 0b0, rdc, rsc1)
   <-> 0b100 @ 0b001 @ encdec_creg(rsc1) @ 0b0 @ uimm1 : bits(1) @ encdec_creg(rdc) @ 0b00
@@ -44,7 +44,7 @@ function clause execute C_LHU(uimm, rdc, rsc1) = {
 
 /* ****************************************************************** */
 
-union clause ast = C_LH : (bits(2), cregidx, cregidx)
+union clause instruction = C_LH : (bits(2), cregidx, cregidx)
 
 mapping clause encdec_compressed = C_LH(uimm1 @ 0b0, rdc, rsc1)
   <-> 0b100 @ 0b001 @ encdec_creg(rsc1) @ 0b1 @ uimm1 : bits(1) @ encdec_creg(rdc) @ 0b00
@@ -62,7 +62,7 @@ function clause execute C_LH(uimm, rdc, rsc1) = {
 
 /* ****************************************************************** */
 
-union clause ast = C_SB : (bits(2), cregidx, cregidx)
+union clause instruction = C_SB : (bits(2), cregidx, cregidx)
 
 mapping clause encdec_compressed = C_SB(uimm1 @ uimm0, rsc1, rsc2)
   <-> 0b100 @ 0b010 @ encdec_creg(rsc1) @ uimm0 : bits(1) @ uimm1 : bits(1) @ encdec_creg(rsc2) @ 0b00
@@ -80,7 +80,7 @@ function clause execute C_SB(uimm, rsc1, rsc2) = {
 
 /* ****************************************************************** */
 
-union clause ast = C_SH : (bits(2), cregidx, cregidx)
+union clause instruction = C_SH : (bits(2), cregidx, cregidx)
 
 mapping clause encdec_compressed = C_SH(uimm1 @ 0b0, rsc1, rsc2)
   <-> 0b100 @ 0b011 @ encdec_creg(rsc1) @ 0b0 @ uimm1 : bits(1) @ encdec_creg(rsc2) @ 0b00
@@ -98,7 +98,7 @@ function clause execute C_SH(uimm, rsc1, rsc2) = {
 
 /* ****************************************************************** */
 
-union clause ast = C_ZEXT_B : (cregidx)
+union clause instruction = C_ZEXT_B : (cregidx)
 
 mapping clause encdec_compressed = C_ZEXT_B(rsdc)
   <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b11 @ 0b000 @ 0b01
@@ -115,7 +115,7 @@ function clause execute C_ZEXT_B(rsdc) = {
 
 /* ****************************************************************** */
 
-union clause ast = C_SEXT_B : (cregidx)
+union clause instruction = C_SEXT_B : (cregidx)
 
 mapping clause encdec_compressed = C_SEXT_B(rsdc)
   <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b11 @ 0b001 @ 0b01
@@ -131,7 +131,7 @@ function clause execute C_SEXT_B(rsdc) = {
 
 /* ****************************************************************** */
 
-union clause ast = C_ZEXT_H : (cregidx)
+union clause instruction = C_ZEXT_H : (cregidx)
 
 mapping clause encdec_compressed = C_ZEXT_H(rsdc)
   <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b11 @ 0b010 @ 0b01
@@ -147,7 +147,7 @@ function clause execute C_ZEXT_H(rsdc) = {
 
 /* ****************************************************************** */
 
-union clause ast = C_SEXT_H : (cregidx)
+union clause instruction = C_SEXT_H : (cregidx)
 
 mapping clause encdec_compressed = C_SEXT_H(rsdc)
   <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b11 @ 0b011 @ 0b01
@@ -163,7 +163,7 @@ function clause execute C_SEXT_H(rsdc) = {
 
 /* ****************************************************************** */
 
-union clause ast = C_ZEXT_W : (cregidx)
+union clause instruction = C_ZEXT_W : (cregidx)
 
 mapping clause encdec_compressed = C_ZEXT_W(rsdc)
   <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b11 @ 0b100 @ 0b01
@@ -179,7 +179,7 @@ function clause execute C_ZEXT_W(rsdc) = {
 
 /* ****************************************************************** */
 
-union clause ast = C_NOT : (cregidx)
+union clause instruction = C_NOT : (cregidx)
 
 mapping clause encdec_compressed = C_NOT(rsdc)
   <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b11 @ 0b101 @ 0b01
@@ -196,7 +196,7 @@ function clause execute C_NOT(rsdc) = {
 
 /* ****************************************************************** */
 
-union clause ast = C_MUL : (cregidx, cregidx)
+union clause instruction = C_MUL : (cregidx, cregidx)
 
 mapping clause encdec_compressed = C_MUL(rsdc, rsc2)
   <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b10 @ encdec_creg(rsc2) @ 0b01

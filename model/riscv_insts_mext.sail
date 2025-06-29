@@ -13,7 +13,7 @@
 function clause currentlyEnabled(Ext_M) = hartSupports(Ext_M) & misa[M] == 0b1
 function clause currentlyEnabled(Ext_Zmmul) = hartSupports(Ext_Zmmul) | currentlyEnabled(Ext_M)
 
-union clause ast = MUL : (regidx, regidx, regidx, mul_op)
+union clause instruction = MUL : (regidx, regidx, regidx, mul_op)
 
 mapping encdec_mul_op : mul_op <-> bits(3) = {
   struct { high = false, signed_rs1 = true,  signed_rs2 = true  } <-> 0b000,
@@ -50,7 +50,7 @@ mapping clause assembly = MUL(rs2, rs1, rd, mul_op)
   <-> mul_mnemonic(mul_op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
-union clause ast = DIV : (regidx, regidx, regidx, bool)
+union clause instruction = DIV : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = DIV(rs2, rs1, rd, is_unsigned)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b10 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0110011
@@ -73,7 +73,7 @@ mapping clause assembly = DIV(rs2, rs1, rd, is_unsigned)
   <-> "div" ^ maybe_u(is_unsigned) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
-union clause ast = REM : (regidx, regidx, regidx, bool)
+union clause instruction = REM : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = REM(rs2, rs1, rd, is_unsigned)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b11 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0110011
@@ -95,7 +95,7 @@ mapping clause assembly = REM(rs2, rs1, rd, is_unsigned)
   <-> "rem" ^ maybe_u(is_unsigned) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
-union clause ast = MULW : (regidx, regidx, regidx)
+union clause instruction = MULW : (regidx, regidx, regidx)
 
 mapping clause encdec = MULW(rs2, rs1, rd)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0111011
@@ -117,7 +117,7 @@ mapping clause assembly = MULW(rs2, rs1, rd)
   when xlen == 64
 
 /* ****************************************************************** */
-union clause ast = DIVW : (regidx, regidx, regidx, bool)
+union clause instruction = DIVW : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = DIVW(rs2, rs1, rd, is_unsigned)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b10 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0111011
@@ -141,7 +141,7 @@ mapping clause assembly = DIVW(rs2, rs1, rd, is_unsigned)
   when xlen == 64
 
 /* ****************************************************************** */
-union clause ast = REMW : (regidx, regidx, regidx, bool)
+union clause instruction = REMW : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = REMW(rs2, rs1, rd, is_unsigned)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b11 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0111011

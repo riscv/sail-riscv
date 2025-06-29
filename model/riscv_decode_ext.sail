@@ -11,8 +11,8 @@
   hooks, the default implementation of which is provided below.
  */
 
-val ext_decode_compressed : bits(16) -> ast
+val ext_decode_compressed : bits(16) -> instruction
 function ext_decode_compressed(bv) = encdec_compressed(bv)
 
-val ext_decode : bits(32) -> ast
+val ext_decode : bits(32) -> instruction
 function ext_decode(bv) = encdec(bv)

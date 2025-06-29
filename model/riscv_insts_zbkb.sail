@@ -7,7 +7,7 @@
 /*=======================================================================================*/
 
 /* ****************************************************************** */
-union clause ast = ZBKB_RTYPE : (regidx, regidx, regidx, brop_zbkb)
+union clause instruction = ZBKB_RTYPE : (regidx, regidx, regidx, brop_zbkb)
 
 mapping clause encdec = ZBKB_RTYPE(rs2, rs1, rd, PACK)
   <-> 0b0000100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0110011
@@ -37,7 +37,7 @@ function clause execute (ZBKB_RTYPE(rs2, rs1, rd, op)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBKB_PACKW : (regidx, regidx, regidx)
+union clause instruction = ZBKB_PACKW : (regidx, regidx, regidx)
 
 mapping clause encdec = ZBKB_PACKW(rs2, rs1, rd)
   <-> 0b0000100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0111011
@@ -56,7 +56,7 @@ function clause execute (ZBKB_PACKW(rs2, rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZIP : (regidx, regidx)
+union clause instruction = ZIP : (regidx, regidx)
 
 mapping clause encdec = ZIP(rs1, rd)
   <-> 0b000010001111 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
@@ -78,7 +78,7 @@ function clause execute (ZIP(rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = UNZIP : (regidx, regidx)
+union clause instruction = UNZIP : (regidx, regidx)
 
 mapping clause encdec = UNZIP(rs1, rd)
   <-> 0b000010001111 @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
@@ -100,7 +100,7 @@ function clause execute (UNZIP(rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = BREV8 : (regidx, regidx)
+union clause instruction = BREV8 : (regidx, regidx)
 
 mapping clause encdec = BREV8(rs1, rd)
   <-> 0b011010000111 @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
