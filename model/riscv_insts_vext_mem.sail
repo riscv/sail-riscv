@@ -70,7 +70,7 @@ mapping vlewidth_pow : vlewidth <-> {3, 4, 5, 6} = {
 }
 
 /* ******************** Vector Load Unit-Stride Normal & Segment (mop=0b00, lumop=0b00000) ********************* */
-union clause ast = VLSEGTYPE : (bits(3), bits(1), regidx, vlewidth, vregidx)
+union clause instruction = VLSEGTYPE : (bits(3), bits(1), regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd)
   <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
@@ -131,7 +131,7 @@ mapping clause assembly = VLSEGTYPE(nf, vm, rs1, width, vd)
   <-> "vl" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
 /* ************ Vector Load Unit-Stride Normal & Segment Fault-Only-First (mop=0b00, lumop=0b10000) ************ */
-union clause ast = VLSEGFFTYPE : (bits(3), bits(1), regidx, vlewidth, vregidx)
+union clause instruction = VLSEGFFTYPE : (bits(3), bits(1), regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd)
   <-> nf @ 0b0 @ 0b00 @ vm @ 0b10000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
@@ -209,7 +209,7 @@ mapping clause assembly = VLSEGFFTYPE(nf, vm, rs1, width, vd)
   <-> "vl" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ "ff.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
 /* ******************** Vector Store Unit-Stride Normal & Segment (mop=0b00, sumop=0b00000) ******************** */
-union clause ast = VSSEGTYPE : (bits(3), bits(1), regidx, vlewidth, vregidx)
+union clause instruction = VSSEGTYPE : (bits(3), bits(1), regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3)
   <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
@@ -267,7 +267,7 @@ mapping clause assembly = VSSEGTYPE(nf, vm, rs1, width, vs3)
   <-> "vs" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
 /* ****************************** Vector Load Strided Normal & Segment (mop=0b10) ****************************** */
-union clause ast = VLSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, vregidx)
+union clause instruction = VLSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
   <-> nf @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
@@ -329,7 +329,7 @@ mapping clause assembly = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
   <-> "vls" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(rs2) ^ maybe_vmask(vm)
 
 /* ***************************** Vector Store Strided Normal & Segment (mop=0b10) ****************************** */
-union clause ast = VSSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, vregidx)
+union clause instruction = VSSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
   <-> nf @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
@@ -388,7 +388,7 @@ mapping clause assembly = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
   <-> "vss" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(rs2) ^ maybe_vmask(vm)
 
 /* ************************* Vector Load Indexed Unordered Normal & Segment (mop=0b01) ************************* */
-union clause ast = VLUXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
+union clause instruction = VLUXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> nf @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
@@ -452,7 +452,7 @@ mapping clause assembly = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> "vlux" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************** Vector Load Indexed Ordered Normal & Segment (mop=0b11) ************************** */
-union clause ast = VLOXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
+union clause instruction = VLOXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> nf @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
@@ -480,7 +480,7 @@ mapping clause assembly = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> "vlox" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************ Vector Store Indexed Unordered Normal & Segment (mop=0b01) ************************* */
-union clause ast = VSUXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
+union clause instruction = VSUXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> nf @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
@@ -541,7 +541,7 @@ mapping clause assembly = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> "vsux" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************* Vector Store Indexed Ordered Normal & Segment (mop=0b11) ************************** */
-union clause ast = VSOXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
+union clause instruction = VSOXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> nf @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
@@ -569,7 +569,7 @@ mapping clause assembly = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> "vsox" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ***************** Vector Load Unit-Stride Whole Register (vm=0b1, mop=0b00, lumop=0b01000) ****************** */
-union clause ast = VLRETYPE : (bits(3), regidx, vlewidth, vregidx)
+union clause instruction = VLRETYPE : (bits(3), regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLRETYPE(nf, rs1, width, vd)
   <-> nf @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
@@ -631,7 +631,7 @@ mapping clause assembly = VLRETYPE(nf, rs1, width, vd)
   <-> "vl" ^ nfields_int_string(nf) ^ "re" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ***************** Vector Store Unit-Stride Whole Register (vm=0b1, mop=0b00, lumop=0b01000) ***************** */
-union clause ast = VSRETYPE : (bits(3), regidx, vregidx)
+union clause instruction = VSRETYPE : (bits(3), regidx, vregidx)
 
 mapping clause encdec = VSRETYPE(nf, rs1, vs3)
   <-> nf @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vs3) @ 0b0100111
@@ -698,7 +698,7 @@ mapping clause assembly = VSRETYPE(nf, rs1, vs3)
   <-> "vs" ^ nfields_int_string(nf) ^ "r.v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ************** Vector Mask Load/Store Unit-Stride (nf=0b000, mop=0b00, lumop or sumop=0b01011) ************** */
-union clause ast = VMTYPE : (regidx, vregidx, vmlsop)
+union clause instruction = VMTYPE : (regidx, vregidx, vmlsop)
 
 mapping encdec_lsop : vmlsop <-> bits(7) = {
   VLM      <-> 0b0000111,

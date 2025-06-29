@@ -11,8 +11,8 @@
 /* ****************************************************************** */
 function clause currentlyEnabled(Ext_Zicsr) = hartSupports(Ext_Zicsr)
 
-union clause ast = CSRReg  : (csreg, regidx, regidx, csrop)
-union clause ast = CSRImm  : (csreg, bits(5), regidx, csrop)
+union clause instruction = CSRReg  : (csreg, regidx, regidx, csrop)
+union clause instruction = CSRImm  : (csreg, bits(5), regidx, csrop)
 
 mapping encdec_csrop : csrop <-> bits(2) = {
   CSRRW <-> 0b01,

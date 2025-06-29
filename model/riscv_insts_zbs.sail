@@ -9,7 +9,7 @@
 function clause currentlyEnabled(Ext_Zbs) = hartSupports(Ext_Zbs) | currentlyEnabled(Ext_B)
 
 /* ****************************************************************** */
-union clause ast = ZBS_IOP : (bits(6), regidx, regidx, biop_zbs)
+union clause instruction = ZBS_IOP : (bits(6), regidx, regidx, biop_zbs)
 
 mapping clause encdec = ZBS_IOP(shamt, rs1, rd, BCLRI)
   <-> 0b010010 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
@@ -53,7 +53,7 @@ function clause execute (ZBS_IOP(shamt, rs1, rd, op)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBS_RTYPE : (regidx, regidx, regidx, brop_zbs)
+union clause instruction = ZBS_RTYPE : (regidx, regidx, regidx, brop_zbs)
 
 mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, BCLR)
   <-> 0b0100100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011

@@ -13,7 +13,7 @@ function clause currentlyEnabled(Ext_C) = hartSupports(Ext_C) & misa[C] == 0b1
 function clause currentlyEnabled(Ext_Zca) = hartSupports(Ext_Zca) & (currentlyEnabled(Ext_C) | not(hartSupports(Ext_C)))
 
 /* ****************************************************************** */
-union clause ast = UTYPE : (bits(20), regidx, uop)
+union clause instruction = UTYPE : (bits(20), regidx, uop)
 
 mapping encdec_uop : uop <-> bits(7) = {
   LUI   <-> 0b0110111,
@@ -41,7 +41,7 @@ mapping clause assembly = UTYPE(imm, rd, op)
   <-> utype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_20(imm)
 
 /* ****************************************************************** */
-union clause ast = JAL : (bits(21), regidx)
+union clause instruction = JAL : (bits(21), regidx)
 
 mapping clause encdec = JAL(imm_19 @ imm_7_0 @ imm_8 @ imm_18_13 @ imm_12_9 @ 0b0, rd)
   <-> imm_19 : bits(1) @ imm_18_13 : bits(6) @ imm_12_9 : bits(4) @ imm_8 : bits(1) @ imm_7_0 : bits(8) @ encdec_reg(rd) @ 0b1101111
@@ -83,7 +83,7 @@ mapping clause assembly = JAL(imm, rd)
   <-> "jal" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_21(imm)
 
 /* ****************************************************************** */
-union clause ast = JALR : (bits(12), regidx, regidx)
+union clause instruction = JALR : (bits(12), regidx, regidx)
 
 mapping clause encdec = JALR(imm, rs1, rd)
   <-> imm @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b1100111
@@ -94,7 +94,7 @@ mapping clause assembly = JALR(imm, rs1, rd)
 /* see riscv_jalr_seq.sail or riscv_jalr_rmem.sail for the execute clause. */
 
 /* ****************************************************************** */
-union clause ast = BTYPE : (bits(13), regidx, regidx, bop)
+union clause instruction = BTYPE : (bits(13), regidx, regidx, bop)
 
 mapping encdec_bop : bop <-> bits(3) = {
   BEQ  <-> 0b000,
@@ -148,7 +148,7 @@ mapping clause assembly = BTYPE(imm, rs2, rs1, op)
   <-> btype_mnemonic(op) ^ spc() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_signed_13(imm)
 
 /* ****************************************************************** */
-union clause ast = ITYPE : (bits(12), regidx, regidx, iop)
+union clause instruction = ITYPE : (bits(12), regidx, regidx, iop)
 
 mapping encdec_iop : iop <-> bits(3) = {
   ADDI  <-> 0b000,
@@ -188,7 +188,7 @@ mapping clause assembly = ITYPE(imm, rs1, rd, op)
   <-> itype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_12(imm)
 
 /* ****************************************************************** */
-union clause ast = SHIFTIOP : (bits(6), regidx, regidx, sop)
+union clause instruction = SHIFTIOP : (bits(6), regidx, regidx, sop)
 
 mapping encdec_sop : sop <-> bits(3) = {
   SLLI <-> 0b001,
@@ -226,7 +226,7 @@ mapping clause assembly = SHIFTIOP(shamt, rs1, rd, op)
   <-> shiftiop_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_6(shamt)
 
 /* ****************************************************************** */
-union clause ast = RTYPE : (regidx, regidx, regidx, rop)
+union clause instruction = RTYPE : (regidx, regidx, regidx, rop)
 
 mapping clause encdec = RTYPE(rs2, rs1, rd, ADD)  <-> 0b0000000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
 mapping clause encdec = RTYPE(rs2, rs1, rd, SLT)  <-> 0b0000000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(rd) @ 0b0110011
@@ -272,7 +272,7 @@ mapping clause assembly = RTYPE(rs2, rs1, rd, op)
   <-> rtype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************************************************** */
-union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width)
+union clause instruction = LOAD : (bits(12), regidx, regidx, bool, word_width)
 
 /* unsigned loads are only present for widths strictly less than xlen,
    signed loads also present for widths equal to xlen */
@@ -310,7 +310,7 @@ mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, width)
   <-> "l" ^ size_mnemonic(width) ^ maybe_u(is_unsigned) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ****************************************************************** */
-union clause ast = STORE : (bits(12), regidx, regidx, word_width)
+union clause instruction = STORE : (bits(12), regidx, regidx, word_width)
 
 mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, width)
   <-> imm7 : bits(7) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(width) @ imm5 : bits(5) @ 0b0100011
@@ -333,7 +333,7 @@ mapping clause assembly = STORE(imm, rs2, rs1, width)
   <-> "s" ^ size_mnemonic(width) ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_signed_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 /* ****************************************************************** */
-union clause ast = ADDIW : (bits(12), regidx, regidx)
+union clause instruction = ADDIW : (bits(12), regidx, regidx)
 
 mapping clause encdec = ADDIW(imm, rs1, rd)
   <-> imm @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0011011
@@ -350,7 +350,7 @@ mapping clause assembly = ADDIW(imm, rs1, rd)
   when xlen == 64
 
 /* ****************************************************************** */
-union clause ast = RTYPEW : (regidx, regidx, regidx, ropw)
+union clause instruction = RTYPEW : (regidx, regidx, regidx, ropw)
 
 mapping clause encdec = RTYPEW(rs2, rs1, rd, ADDW)
   <-> 0b0000000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0111011
@@ -395,7 +395,7 @@ mapping clause assembly = RTYPEW(rs2, rs1, rd, op)
   when xlen == 64
 
 /* ****************************************************************** */
-union clause ast = SHIFTIWOP : (bits(5), regidx, regidx, sopw)
+union clause instruction = SHIFTIWOP : (bits(5), regidx, regidx, sopw)
 
 mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, SLLIW)
   <-> 0b0000000 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0011011
@@ -429,7 +429,7 @@ mapping clause assembly = SHIFTIWOP(shamt, rs1, rd, op)
   when xlen == 64
 
 /* ****************************************************************** */
-union clause ast = FENCE : (bits(4), bits(4))
+union clause instruction = FENCE : (bits(4), bits(4))
 
 mapping clause encdec = FENCE(pred, succ)
   <-> 0b0000 @ pred @ succ @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
@@ -499,7 +499,7 @@ mapping clause assembly = FENCE(pred, succ)
   <-> "fence" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ)
 
 /* ****************************************************************** */
-union clause ast = FENCE_TSO : unit
+union clause instruction = FENCE_TSO : unit
 
 mapping clause encdec = FENCE_TSO()
   <-> 0b1000 @ 0b0011 @ 0b0011 @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
@@ -513,7 +513,7 @@ mapping clause assembly = FENCE_TSO()
   <-> "fence.tso"
 
 /* ****************************************************************** */
-union clause ast = ECALL : unit
+union clause instruction = ECALL : unit
 
 mapping clause encdec = ECALL()
   <-> 0b000000000000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
@@ -533,7 +533,7 @@ function clause execute ECALL() = {
 mapping clause assembly = ECALL() <-> "ecall"
 
 /* ****************************************************************** */
-union clause ast = MRET : unit
+union clause instruction = MRET : unit
 
 mapping clause encdec = MRET()
   <-> 0b0011000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
@@ -552,7 +552,7 @@ function clause execute MRET() = {
 mapping clause assembly = MRET() <-> "mret"
 
 /* ****************************************************************** */
-union clause ast = SRET : unit
+union clause instruction = SRET : unit
 
 mapping clause encdec = SRET()
   <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
@@ -576,7 +576,7 @@ function clause execute SRET() = {
 mapping clause assembly = SRET() <-> "sret"
 
 /* ****************************************************************** */
-union clause ast = EBREAK : unit
+union clause instruction = EBREAK : unit
 
 mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
@@ -587,7 +587,7 @@ function clause execute EBREAK() =
 mapping clause assembly = EBREAK() <-> "ebreak"
 
 /* ****************************************************************** */
-union clause ast = WFI : unit
+union clause instruction = WFI : unit
 
 mapping clause encdec = WFI()
   <-> 0b000100000101 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
@@ -604,7 +604,7 @@ function clause execute WFI() =
 mapping clause assembly = WFI() <-> "wfi"
 
 /* ****************************************************************** */
-union clause ast = SFENCE_VMA : (regidx, regidx)
+union clause instruction = SFENCE_VMA : (regidx, regidx)
 
 mapping clause encdec = SFENCE_VMA(rs1, rs2)
   <-> 0b0001001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ 0b00000 @ 0b1110011

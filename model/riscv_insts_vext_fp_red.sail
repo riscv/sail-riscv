@@ -12,7 +12,7 @@
 /* ******************************************************************************* */
 
 /* ********************** OPFVV (Floating-Point Reduction) *********************** */
-union clause ast = RFVVTYPE : (rfvvfunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = RFVVTYPE : (rfvvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_rfvvfunct6 : rfvvfunct6 <-> bits(6) = {
   FVV_VFREDOSUM   <-> 0b000011,

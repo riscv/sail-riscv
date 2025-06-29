@@ -14,7 +14,7 @@
 /* ******************************************************************************* */
 
 /* ******************************* OPIVV (VVTYPE) ******************************** */
-union clause ast = VVTYPE : (vvfunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = VVTYPE : (vvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_vvfunct6 : vvfunct6 <-> bits(6) = {
   VV_VADD          <-> 0b000000,
@@ -169,7 +169,7 @@ mapping clause assembly = VVTYPE(funct6, vm, vs2, vs1, vd)
 
 /* ************************** OPIVV (WVTYPE Narrowing) *************************** */
 /* ************** Vector Narrowing Integer Right Shift Instructions ************** */
-union clause ast = NVSTYPE : (nvsfunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = NVSTYPE : (nvsfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_nvsfunct6 : nvsfunct6 <-> bits(6) = {
   NVS_VNSRL       <-> 0b101100,
@@ -240,7 +240,7 @@ mapping clause assembly = NVSTYPE(funct6, vm, vs2, vs1, vd)
 
 /* ************************** OPIVV (WVTYPE Narrowing) *************************** */
 /* *************** Vector Narrowing Fixed-Point Clip Instructions **************** */
-union clause ast = NVTYPE : (nvfunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = NVTYPE : (nvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_nvfunct6 : nvfunct6 <-> bits(6) = {
   NV_VNCLIPU     <-> 0b101110,
@@ -311,7 +311,7 @@ mapping clause assembly = NVTYPE(funct6, vm, vs2, vs1, vd)
   <-> nvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
 /* ********************** OPIVV (Integer Merge Instruction) ********************** */
-union clause ast = MASKTYPEV : (vregidx, vregidx, vregidx)
+union clause instruction = MASKTYPEV : (vregidx, vregidx, vregidx)
 
 mapping clause encdec = MASKTYPEV (vs2, vs1,  vd)
   <-> 0b010111 @ 0b0 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
@@ -363,7 +363,7 @@ mapping clause assembly = MASKTYPEV(vs2, vs1, vd)
 <-> "vmerge.vvm" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ sep() ^ "v0"
 
 /* ********************** OPIVV (Integer Move Instruction) *********************** */
-union clause ast = MOVETYPEV : (vregidx, vregidx)
+union clause instruction = MOVETYPEV : (vregidx, vregidx)
 
 mapping clause encdec = MOVETYPEV (vs1, vd)
   <-> 0b010111 @ 0b1 @ 0b00000 @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
@@ -402,7 +402,7 @@ mapping clause assembly = MOVETYPEV(vs1, vd)
   <-> "vmv.v.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs1)
 
 /* ******************************* OPIVX (VXTYPE) ******************************** */
-union clause ast = VXTYPE : (vxfunct6, bits(1), vregidx, regidx, vregidx)
+union clause instruction = VXTYPE : (vxfunct6, bits(1), vregidx, regidx, vregidx)
 
 mapping encdec_vxfunct6 : vxfunct6 <-> bits(6) = {
   VX_VADD       <-> 0b000000,
@@ -539,7 +539,7 @@ mapping clause assembly = VXTYPE(funct6, vm, vs2, rs1, vd)
 
 /* ************************** OPIVX (WXTYPE Narrowing) *************************** */
 /* ************** Vector Narrowing Integer Right Shift Instructions ************** */
-union clause ast = NXSTYPE : (nxsfunct6, bits(1), vregidx, regidx, vregidx)
+union clause instruction = NXSTYPE : (nxsfunct6, bits(1), vregidx, regidx, vregidx)
 
 mapping encdec_nxsfunct6 : nxsfunct6 <-> bits(6) = {
   NXS_VNSRL       <-> 0b101100,
@@ -610,7 +610,7 @@ mapping clause assembly = NXSTYPE(funct6, vm, vs2, rs1, vd)
 
 /* ************************** OPIVX (WXTYPE Narrowing) *************************** */
 /* *************** Vector Narrowing Fixed-Point Clip Instructions **************** */
-union clause ast = NXTYPE : (nxfunct6, bits(1), vregidx, regidx, vregidx)
+union clause instruction = NXTYPE : (nxfunct6, bits(1), vregidx, regidx, vregidx)
 
 mapping encdec_nxfunct6 : nxfunct6 <-> bits(6) = {
   NX_VNCLIPU     <-> 0b101110,
@@ -682,7 +682,7 @@ mapping clause assembly = NXTYPE(funct6, vm, vs2, rs1, vd)
 
 /* ***************** OPIVX (Vector Slide & Gather Instructions) ****************** */
 /* Slide and gather instructions extend rs1/imm to XLEN instead of SEW bits */
-union clause ast = VXSG : (vxsgfunct6, bits(1), vregidx, regidx, vregidx)
+union clause instruction = VXSG : (vxsgfunct6, bits(1), vregidx, regidx, vregidx)
 
 mapping encdec_vxsgfunct6 : vxsgfunct6 <-> bits(6) = {
   VX_VSLIDEUP     <-> 0b001110,
@@ -753,7 +753,7 @@ mapping clause assembly = VXSG(funct6, vm, vs2, rs1, vd)
   <-> vxsg_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
 
 /* ********************** OPIVX (Integer Merge Instruction) ********************** */
-union clause ast = MASKTYPEX : (vregidx, regidx, vregidx)
+union clause instruction = MASKTYPEX : (vregidx, regidx, vregidx)
 
 mapping clause encdec = MASKTYPEX(vs2, rs1, vd)
   <-> 0b010111 @ 0b0 @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
@@ -805,7 +805,7 @@ mapping clause assembly = MASKTYPEX(vs2, rs1, vd)
   <-> "vmerge.vxm" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ sep() ^ "v0"
 
 /* ********************** OPIVX (Integer Move Instruction) *********************** */
-union clause ast = MOVETYPEX : (regidx, vregidx)
+union clause instruction = MOVETYPEX : (regidx, vregidx)
 
 mapping clause encdec = MOVETYPEX (rs1, vd)
   <-> 0b010111 @ 0b1 @ 0b00000 @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
@@ -844,7 +844,7 @@ mapping clause assembly = MOVETYPEX(rs1, vd)
   <-> "vmv.v.x" ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1)
 
 /* ******************************* OPIVI (VITYPE) ******************************** */
-union clause ast = VITYPE : (vifunct6, bits(1), vregidx, bits(5), vregidx)
+union clause instruction = VITYPE : (vifunct6, bits(1), vregidx, bits(5), vregidx)
 
 mapping encdec_vifunct6 : vifunct6 <-> bits(6) = {
   VI_VADD       <-> 0b000000,
@@ -949,7 +949,7 @@ mapping clause assembly = VITYPE(funct6, vm, vs2, simm, vd)
 
 /* ************************** OPIVI (WITYPE Narrowing) *************************** */
 /* ************** Vector Narrowing Integer Right Shift Instructions ************** */
-union clause ast = NISTYPE : (nisfunct6, bits(1), vregidx, bits(5), vregidx)
+union clause instruction = NISTYPE : (nisfunct6, bits(1), vregidx, bits(5), vregidx)
 
 mapping encdec_nisfunct6 : nisfunct6 <-> bits(6) = {
   NIS_VNSRL       <-> 0b101100,
@@ -1020,7 +1020,7 @@ mapping clause assembly = NISTYPE(funct6, vm, vs2, simm, vd)
 
 /* ************************** OPIVI (WITYPE Narrowing) *************************** */
 /* *************** Vector Narrowing Fixed-Point Clip Instructions **************** */
-union clause ast = NITYPE : (nifunct6, bits(1), vregidx, bits(5), vregidx)
+union clause instruction = NITYPE : (nifunct6, bits(1), vregidx, bits(5), vregidx)
 
 mapping encdec_nifunct6 : nifunct6 <-> bits(6) = {
   NI_VNCLIPU     <-> 0b101110,
@@ -1092,7 +1092,7 @@ mapping clause assembly = NITYPE(funct6, vm, vs2, simm, vd)
 
 /* ***************** OPIVI (Vector Slide & Gather Instructions) ****************** */
 /* Slide and gather instructions extend rs1/imm to XLEN instead of SEW bits */
-union clause ast = VISG : (visgfunct6, bits(1), vregidx, bits(5), vregidx)
+union clause instruction = VISG : (visgfunct6, bits(1), vregidx, bits(5), vregidx)
 
 mapping encdec_visgfunct6 : visgfunct6 <-> bits(6) = {
   VI_VSLIDEUP     <-> 0b001110,
@@ -1163,7 +1163,7 @@ mapping clause assembly = VISG(funct6, vm, vs2, simm, vd)
   <-> visg_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm) ^ maybe_vmask(vm)
 
 /* ********************** OPIVI (Integer Merge Instruction) ********************** */
-union clause ast = MASKTYPEI : (vregidx, bits(5), vregidx)
+union clause instruction = MASKTYPEI : (vregidx, bits(5), vregidx)
 
 mapping clause encdec = MASKTYPEI(vs2, simm, vd)
   <-> 0b010111 @ 0b0 @ encdec_vreg(vs2) @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
@@ -1215,7 +1215,7 @@ mapping clause assembly = MASKTYPEI(vs2, simm, vd)
   <-> "vmerge.vim" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm) ^ sep() ^ "v0"
 
 /* ********************** OPIVI (Integer Move Instruction) *********************** */
-union clause ast = MOVETYPEI : (vregidx, bits(5))
+union clause instruction = MOVETYPEI : (vregidx, bits(5))
 
 mapping clause encdec = MOVETYPEI (vd, simm)
   <-> 0b010111 @ 0b1 @ 0b00000 @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
@@ -1254,7 +1254,7 @@ mapping clause assembly = MOVETYPEI(vd, simm)
   <-> "vmv.v.i" ^ spc() ^ vreg_name(vd) ^ sep() ^ hex_bits_signed_5(simm)
 
 /* ********************* OPIVI (Whole Vector Register Move) ********************** */
-union clause ast = VMVRTYPE : (vregidx, {1, 2, 4, 8}, vregidx)
+union clause instruction = VMVRTYPE : (vregidx, {1, 2, 4, 8}, vregidx)
 
 // "The number of vector registers to copy is encoded in the low three
 // bits of the simm field (simm[2:0]) using the same encoding as the nf[2:0]
@@ -1312,7 +1312,7 @@ mapping clause assembly = VMVRTYPE(vs2, nreg, vd)
   <-> "vmv" ^ nreg_string(nreg) ^ "r.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2)
 
 /* ******************************* OPMVV (VVTYPE) ******************************** */
-union clause ast = MVVTYPE : (mvvfunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = MVVTYPE : (mvvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_mvvfunct6 : mvvfunct6 <-> bits(6) = {
   MVV_VAADDU      <-> 0b001000,
@@ -1440,7 +1440,7 @@ mapping clause assembly = MVVTYPE(funct6, vm, vs2, vs1, vd)
 
 /* ************************* OPMVV (VVtype Multiply-Add) ************************* */
 /* Multiply-Add instructions switch the order of source operands in assembly (vs1/rs1 before vs2) */
-union clause ast = MVVMATYPE : (mvvmafunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = MVVMATYPE : (mvvmafunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_mvvmafunct6 : mvvmafunct6 <-> bits(6) = {
   MVV_VMACC       <-> 0b101101,
@@ -1501,7 +1501,7 @@ mapping clause assembly = MVVMATYPE(funct6, vm, vs2, vs1, vd)
   <-> mvvmatype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs1) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* *************************** OPMVV (VVTYPE Widening) *************************** */
-union clause ast = WVVTYPE : (wvvfunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = WVVTYPE : (wvvfunct6, bits(1), vregidx, vregidx, vregidx)
 mapping encdec_wvvfunct6 : wvvfunct6 <-> bits(6) = {
   WVV_VADD       <-> 0b110001,
   WVV_VSUB       <-> 0b110011,
@@ -1578,7 +1578,7 @@ mapping clause assembly = WVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> wvvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
 /* *************************** OPMVV (WVTYPE Widening) *************************** */
-union clause ast = WVTYPE : (wvfunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = WVTYPE : (wvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_wvfunct6 : wvfunct6 <-> bits(6) = {
   WV_VADD       <-> 0b110101,
@@ -1647,7 +1647,7 @@ mapping clause assembly = WVTYPE(funct6, vm, vs2, vs1, vd)
 
 /* ******************** OPMVV (VVtype Widening Multiply-Add) ********************* */
 /* Multiply-Add instructions switch the order of source operands in assembly (vs1/rs1 before vs2) */
-union clause ast = WMVVTYPE : (wmvvfunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = WMVVTYPE : (wmvvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_wmvvfunct6 : wmvvfunct6 <-> bits(6) = {
   WMVV_VWMACCU   <-> 0b111100,
@@ -1714,7 +1714,7 @@ mapping clause assembly = WMVVTYPE(funct6, vm, vs2, vs1, vd)
 
 /* ****************************** OPMVV (VXUNARY0) ******************************* */
 /* ******************* Vector Integer Extension (SEW/2 source) ******************* */
-union clause ast = VEXTTYPE : (vextfunct6, bits(1), vregidx, vregidx)
+union clause instruction = VEXTTYPE : (vextfunct6, bits(1), vregidx, vregidx)
 
 mapping vext_vs1 : vextfunct6 <-> bits(5) = {
   VEXT2_ZVF2  <-> 0b00110,
@@ -1795,7 +1795,7 @@ mapping clause assembly = VEXTTYPE(funct6, vm, vs2, vd)
   <-> vexttype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************ OPMVV (vmv.x.s in VWXUNARY0) ************************* */
-union clause ast = VMVXS : (vregidx, regidx)
+union clause instruction = VMVXS : (vregidx, regidx)
 
 mapping clause encdec = VMVXS(vs2, rd)
   <-> 0b010000 @ 0b1 @ encdec_vreg(vs2) @ 0b00000 @ 0b010 @ encdec_reg(rd) @ 0b1010111
@@ -1824,7 +1824,7 @@ mapping clause assembly = VMVXS(vs2, rd)
   <-> "vmv.x.s" ^ spc() ^ reg_name(rd) ^ sep() ^ vreg_name(vs2)
 
 /* ********************* OPMVV (Vector Compress Instruction) ********************* */
-union clause ast = MVVCOMPRESS : (vregidx, vregidx, vregidx)
+union clause instruction = MVVCOMPRESS : (vregidx, vregidx, vregidx)
 
 mapping clause encdec = MVVCOMPRESS(vs2, vs1, vd)
   <-> 0b010111 @ 0b1 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
@@ -1885,7 +1885,7 @@ mapping clause assembly = MVVCOMPRESS(vs2, vs1, vd)
   <-> "vcompress.vm" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
 
 /* ******************************* OPMVX (VXTYPE) ******************************** */
-union clause ast = MVXTYPE : (mvxfunct6, bits(1), vregidx, regidx, vregidx)
+union clause instruction = MVXTYPE : (mvxfunct6, bits(1), vregidx, regidx, vregidx)
 
 mapping encdec_mvxfunct6 : mvxfunct6 <-> bits(6) = {
   MVX_VAADDU        <-> 0b001000,
@@ -2026,7 +2026,7 @@ mapping clause assembly = MVXTYPE(funct6, vm, vs2, rs1, vd)
 
 /* ************************* OPMVX (VXtype Multiply-Add) ************************* */
 /* Multiply-Add instructions switch the order of source operands in assembly (vs1/rs1 before vs2) */
-union clause ast = MVXMATYPE : (mvxmafunct6, bits(1), vregidx, regidx, vregidx)
+union clause instruction = MVXMATYPE : (mvxmafunct6, bits(1), vregidx, regidx, vregidx)
 
 mapping encdec_mvxmafunct6 : mvxmafunct6 <-> bits(6) = {
   MVX_VMACC         <-> 0b101101,
@@ -2087,7 +2087,7 @@ mapping clause assembly = MVXMATYPE(funct6, vm, vs2, rs1, vd)
   <-> mvxmatype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* *************************** OPMVX (VXTYPE Widening) *************************** */
-union clause ast = WVXTYPE : (wvxfunct6, bits(1), vregidx, regidx, vregidx)
+union clause instruction = WVXTYPE : (wvxfunct6, bits(1), vregidx, regidx, vregidx)
 
 mapping encdec_wvxfunct6 : wvxfunct6 <-> bits(6) = {
   WVX_VADD       <-> 0b110001,
@@ -2164,7 +2164,7 @@ mapping clause assembly = WVXTYPE(funct6, vm, vs2, rs1, vd)
   <-> wvxtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
 
 /* *************************** OPMVX (WXTYPE Widening) *************************** */
-union clause ast = WXTYPE : (wxfunct6, bits(1), vregidx, regidx, vregidx)
+union clause instruction = WXTYPE : (wxfunct6, bits(1), vregidx, regidx, vregidx)
 
 mapping encdec_wxfunct6 : wxfunct6 <-> bits(6) = {
   WX_VADD       <-> 0b110101,
@@ -2232,7 +2232,7 @@ mapping clause assembly = WXTYPE(funct6, vm, vs2, rs1, vd)
 
 /* ******************** OPMVX (VXtype Widening Multiply-Add) ********************* */
 /* Multiply-Add instructions switch the order of source operands in assembly (vs1/rs1 before vs2) */
-union clause ast =  WMVXTYPE : (wmvxfunct6, bits(1), vregidx, regidx, vregidx)
+union clause instruction =  WMVXTYPE : (wmvxfunct6, bits(1), vregidx, regidx, vregidx)
 
 mapping encdec_wmvxfunct6 : wmvxfunct6 <-> bits(6) = {
   WMVX_VWMACCU    <-> 0b111100,
@@ -2300,7 +2300,7 @@ mapping clause assembly = WMVXTYPE(funct6, vm, vs2, rs1, vd)
   <-> wmvxtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ reg_name(rs1) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ****************************** OPMVX (VRXUNARY0) ****************************** */
-union clause ast = VMVSX : (regidx, vregidx)
+union clause instruction = VMVSX : (regidx, vregidx)
 
 mapping clause encdec = VMVSX(rs1, vd)
   <-> 0b010000 @ 0b1 @ 0b00000 @ encdec_reg(rs1) @ 0b110 @ encdec_vreg(vd) @ 0b1010111

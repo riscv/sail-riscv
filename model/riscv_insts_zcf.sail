@@ -8,7 +8,7 @@
 
 function clause currentlyEnabled(Ext_Zcf) = hartSupports(Ext_Zcf) & currentlyEnabled(Ext_F) & currentlyEnabled(Ext_Zca) & (currentlyEnabled(Ext_C) | not(hartSupports(Ext_C)))
 
-union clause ast = C_FLWSP : (bits(6), fregidx)
+union clause instruction = C_FLWSP : (bits(6), fregidx)
 
 mapping clause encdec_compressed = C_FLWSP(ui76 @ ui5 @ ui42, rd)
   <-> 0b011 @ ui5 : bits(1) @ encdec_freg(rd) @ ui42 : bits(3) @ ui76 : bits(2) @ 0b10
@@ -24,7 +24,7 @@ mapping clause assembly = C_FLWSP(imm, rd)
   when xlen == 32
 
 /* ****************************************************************** */
-union clause ast = C_FSWSP : (bits(6), fregidx)
+union clause instruction = C_FSWSP : (bits(6), fregidx)
 
 mapping clause encdec_compressed = C_FSWSP(ui76 @ ui52, rs2)
   <-> 0b111 @ ui52 : bits(4) @ ui76 : bits(2) @ encdec_freg(rs2) @ 0b10
@@ -40,7 +40,7 @@ mapping clause assembly = C_FSWSP(uimm, rs2)
   when xlen == 32
 
 /* ****************************************************************** */
-union clause ast = C_FLW : (bits(5), cregidx, cregidx)
+union clause instruction = C_FLW : (bits(5), cregidx, cregidx)
 
 mapping clause encdec_compressed = C_FLW(ui6 @ ui53 @ ui2, rs1, rd)
   <-> 0b011 @ ui53 : bits(3) @ encdec_creg(rs1) @ ui2 : bits(1) @ ui6 : bits(1) @ encdec_creg(rd) @ 0b00
@@ -58,7 +58,7 @@ mapping clause assembly = C_FLW(uimm, rsc, rdc)
   when xlen == 32
 
 /* ****************************************************************** */
-union clause ast = C_FSW : (bits(5), cregidx, cregidx)
+union clause instruction = C_FSW : (bits(5), cregidx, cregidx)
 
 mapping clause encdec_compressed = C_FSW(ui6 @ ui53 @ ui2, rs1, rs2)
   <-> 0b111 @ ui53 : bits(3) @ encdec_creg(rs1) @ ui2 : bits(1) @ ui6 : bits(1) @ encdec_creg(rs2) @ 0b00

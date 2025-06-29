@@ -11,26 +11,26 @@
  * This includes decoding, execution, and assembly parsing and printing.
  */
 
-scattered union ast
+scattered union instruction
 
 /* returns whether an instruction was retired, used for computing minstret */
-val execute : ast -> ExecutionResult
+val execute : instruction -> ExecutionResult
 scattered function execute
 
-val assembly : ast <-> string
+val assembly : instruction <-> string
 scattered mapping assembly
 
-val encdec : ast <-> bits(32)
+val encdec : instruction <-> bits(32)
 scattered mapping encdec
 
-val encdec_compressed : ast <-> bits(16)
+val encdec_compressed : instruction <-> bits(16)
 scattered mapping encdec_compressed
 
 /*
- * We declare the ILLEGAL/C_ILLEGAL ast clauses here instead of in
+ * We declare the ILLEGAL/C_ILLEGAL instruction clauses here instead of in
  * riscv_insts_end, so that model extensions can make use of them.
  * However, the encdec mapping must come last to ensure that all
  * unmatched encodings decode to an illegal instruction.
  */
-union clause ast = ILLEGAL : word
-union clause ast = C_ILLEGAL : half
+union clause instruction = ILLEGAL : word
+union clause instruction = C_ILLEGAL : half

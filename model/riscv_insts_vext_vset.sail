@@ -74,7 +74,7 @@ function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
 }
 
 /* *********************************** vsetvli *********************************** */
-union clause ast = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
+union clause instruction = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
 
 mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd)
   <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
@@ -128,7 +128,7 @@ mapping clause assembly = VSETVLI(ma, ta, sew, lmul, rs1, rd)
   <-> "vsetvli" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ ta_flag(ta) ^ ma_flag(ma)
 
 /* *********************************** vsetvl ************************************ */
-union clause ast = VSETVL : (regidx, regidx, regidx)
+union clause instruction = VSETVL : (regidx, regidx, regidx)
 
 mapping clause encdec = VSETVL(rs2, rs1, rd)
   <-> 0b1000000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
@@ -192,7 +192,7 @@ mapping clause assembly = VSETVL(rs2, rs1, rd)
   <-> "vsetvl" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ********************************** vsetivli *********************************** */
-union clause ast = VSETIVLI : ( bits(1), bits(1), bits(3), bits(3), bits(5), regidx)
+union clause instruction = VSETIVLI : ( bits(1), bits(1), bits(3), bits(3), bits(5), regidx)
 
 mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
   <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ encdec_reg(rd) @ 0b1010111
