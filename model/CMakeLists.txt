@@ -481,7 +481,7 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
                     --memo-z3
                     --lean-output-dir ${CMAKE_CURRENT_BINARY_DIR}
                     --lean-force-output
-                    --lean-non-beq-type ast
+                    --lean-non-beq-type instruction
                 )
                 set(lean_sail_default
                     --lean-noncomputable

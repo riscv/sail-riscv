@@ -10,7 +10,7 @@ function clause currentlyEnabled(Ext_Zfa) = hartSupports(Ext_Zfa) & currentlyEna
 
 /* FLI.H */
 
-union clause ast = FLI_H : (bits(5), fregidx)
+union clause instruction = FLI_H : (bits(5), fregidx)
 
 mapping clause encdec = FLI_H(constantidx, rd)
   <-> 0b111_1010 @ 0b00001 @ constantidx @ 0b000 @ encdec_freg(rd) @ 0b101_0011
@@ -60,7 +60,7 @@ function clause execute (FLI_H(constantidx, rd)) = {
 
 /* FLI.S */
 
-union clause ast = FLI_S : (bits(5), fregidx)
+union clause instruction = FLI_S : (bits(5), fregidx)
 
 mapping clause encdec = FLI_S(constantidx, rd)
   <-> 0b111_1000 @ 0b00001 @ constantidx @ 0b000 @ encdec_freg(rd) @ 0b101_0011
@@ -110,7 +110,7 @@ function clause execute (FLI_S(constantidx, rd)) = {
 
 /* FLI.D */
 
-union clause ast = FLI_D : (bits(5), fregidx)
+union clause instruction = FLI_D : (bits(5), fregidx)
 
 mapping clause encdec = FLI_D(constantidx, rd)
   <-> 0b111_1001 @ 0b00001 @ constantidx @ 0b000 @ encdec_freg(rd) @ 0b101_0011
@@ -160,7 +160,7 @@ function clause execute (FLI_D(constantidx, rd)) = {
 
 /* FMINM.H */
 
-union clause ast = FMINM_H : (fregidx, fregidx, fregidx)
+union clause instruction = FMINM_H : (fregidx, fregidx, fregidx)
 
 mapping clause encdec = FMINM_H(rs2, rs1, rd)
   <-> 0b001_0110 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b010 @ encdec_freg(rd) @ 0b101_0011
@@ -191,7 +191,7 @@ function clause execute (FMINM_H(rs2, rs1, rd)) = {
 
 /* FMAXM.H */
 
-union clause ast = FMAXM_H : (fregidx, fregidx, fregidx)
+union clause instruction = FMAXM_H : (fregidx, fregidx, fregidx)
 
 mapping clause encdec = FMAXM_H(rs2, rs1, rd)
   <-> 0b001_0110 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b011 @ encdec_freg(rd) @ 0b101_0011
@@ -222,7 +222,7 @@ function clause execute (FMAXM_H(rs2, rs1, rd)) = {
 
 /* FMINM.S */
 
-union clause ast = FMINM_S : (fregidx, fregidx, fregidx)
+union clause instruction = FMINM_S : (fregidx, fregidx, fregidx)
 
 mapping clause encdec = FMINM_S(rs2, rs1, rd)
   <-> 0b001_0100 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b010 @ encdec_freg(rd) @ 0b101_0011
@@ -253,7 +253,7 @@ function clause execute (FMINM_S(rs2, rs1, rd)) = {
 
 /* FMAXM.S */
 
-union clause ast = FMAXM_S : (fregidx, fregidx, fregidx)
+union clause instruction = FMAXM_S : (fregidx, fregidx, fregidx)
 
 mapping clause encdec = FMAXM_S(rs2, rs1, rd)
   <-> 0b001_0100 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b011 @ encdec_freg(rd) @ 0b101_0011
@@ -284,7 +284,7 @@ function clause execute (FMAXM_S(rs2, rs1, rd)) = {
 
 /* FMINM.D */
 
-union clause ast = FMINM_D : (fregidx, fregidx, fregidx)
+union clause instruction = FMINM_D : (fregidx, fregidx, fregidx)
 
 mapping clause encdec = FMINM_D(rs2, rs1, rd)
   <-> 0b001_0101 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b010 @ encdec_freg(rd) @ 0b101_0011
@@ -315,7 +315,7 @@ function clause execute (FMINM_D(rs2, rs1, rd)) = {
 
 /* FMAXM.D */
 
-union clause ast = FMAXM_D : (fregidx, fregidx, fregidx)
+union clause instruction = FMAXM_D : (fregidx, fregidx, fregidx)
 
 mapping clause encdec = FMAXM_D(rs2, rs1, rd)
   <-> 0b001_0101 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b011 @ encdec_freg(rd) @ 0b101_0011
@@ -346,7 +346,7 @@ function clause execute (FMAXM_D(rs2, rs1, rd)) = {
 
 /* FROUND.H */
 
-union clause ast = FROUND_H : (fregidx, rounding_mode, fregidx)
+union clause instruction = FROUND_H : (fregidx, rounding_mode, fregidx)
 
 mapping clause encdec = FROUND_H(rs1, rm, rd)
   <-> 0b010_0010 @ 0b00100 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b101_0011
@@ -375,7 +375,7 @@ function clause execute (FROUND_H(rs1, rm, rd)) = {
 
 /* FROUNDNX.H */
 
-union clause ast = FROUNDNX_H : (fregidx, rounding_mode, fregidx)
+union clause instruction = FROUNDNX_H : (fregidx, rounding_mode, fregidx)
 
 mapping clause encdec = FROUNDNX_H(rs1, rm, rd)
   <-> 0b010_0010 @ 0b00101 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b101_0011
@@ -404,7 +404,7 @@ function clause execute (FROUNDNX_H(rs1, rm, rd)) = {
 
 /* FROUND.S */
 
-union clause ast = FROUND_S : (fregidx, rounding_mode, fregidx)
+union clause instruction = FROUND_S : (fregidx, rounding_mode, fregidx)
 
 mapping clause encdec = FROUND_S(rs1, rm, rd)
   <-> 0b010_0000 @ 0b00100 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b101_0011
@@ -433,7 +433,7 @@ function clause execute (FROUND_S(rs1, rm, rd)) = {
 
 /* FROUNDNX.S */
 
-union clause ast = FROUNDNX_S : (fregidx, rounding_mode, fregidx)
+union clause instruction = FROUNDNX_S : (fregidx, rounding_mode, fregidx)
 
 mapping clause encdec = FROUNDNX_S(rs1, rm, rd)
   <-> 0b010_0000 @ 0b00101 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b101_0011
@@ -462,7 +462,7 @@ function clause execute (FROUNDNX_S(rs1, rm, rd)) = {
 
 /* FROUND.D */
 
-union clause ast = FROUND_D : (fregidx, rounding_mode, fregidx)
+union clause instruction = FROUND_D : (fregidx, rounding_mode, fregidx)
 
 mapping clause encdec = FROUND_D(rs1, rm, rd)
   <-> 0b010_0001 @ 0b00100 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b101_0011
@@ -491,7 +491,7 @@ function clause execute (FROUND_D(rs1, rm, rd)) = {
 
 /* FROUNDNX.D */
 
-union clause ast = FROUNDNX_D : (fregidx, rounding_mode, fregidx)
+union clause instruction = FROUNDNX_D : (fregidx, rounding_mode, fregidx)
 
 mapping clause encdec = FROUNDNX_D(rs1, rm, rd)
   <-> 0b010_0001 @ 0b00101 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b101_0011
@@ -520,7 +520,7 @@ function clause execute (FROUNDNX_D(rs1, rm, rd)) = {
 
 /* FMVH.X.D */
 
-union clause ast = FMVH_X_D : (fregidx, regidx)
+union clause instruction = FMVH_X_D : (fregidx, regidx)
 
 mapping clause encdec   = FMVH_X_D(rs1, rd)
   <-> 0b111_0001 @ 0b00001 @ encdec_freg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011
@@ -539,7 +539,7 @@ function clause execute (FMVH_X_D(rs1, rd)) = {
 
 /* FMVP.X.D */
 
-union clause ast = FMVP_D_X : (regidx, regidx, fregidx)
+union clause instruction = FMVP_D_X : (regidx, regidx, fregidx)
 
 mapping clause encdec = FMVP_D_X(rs2, rs1, rd)
   <-> 0b101_1001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011
@@ -567,7 +567,7 @@ function clause execute (FMVP_D_X(rs2, rs1, rd)) = {
 
 /* FLEQ.H */
 
-union clause ast = FLEQ_H : (fregidx, fregidx, regidx)
+union clause instruction = FLEQ_H : (fregidx, fregidx, regidx)
 
 mapping clause encdec = FLEQ_H(rs2, rs1, rd)
   <-> 0b101_0010 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b101_0011
@@ -592,7 +592,7 @@ function clause execute(FLEQ_H(rs2, rs1, rd)) = {
 
 /* FLTQ.H */
 
-union clause ast = FLTQ_H : (fregidx, fregidx, regidx)
+union clause instruction = FLTQ_H : (fregidx, fregidx, regidx)
 
 mapping clause encdec = FLTQ_H(rs2, rs1, rd)
   <-> 0b101_0010 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b101_0011
@@ -617,7 +617,7 @@ function clause execute(FLTQ_H(rs2, rs1, rd)) = {
 
 /* FLEQ.S */
 
-union clause ast = FLEQ_S : (fregidx, fregidx, regidx)
+union clause instruction = FLEQ_S : (fregidx, fregidx, regidx)
 
 mapping clause encdec = FLEQ_S(rs2, rs1, rd)
   <-> 0b101_0000 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b101_0011
@@ -642,7 +642,7 @@ function clause execute(FLEQ_S(rs2, rs1, rd)) = {
 
 /* FLTQ.S */
 
-union clause ast = FLTQ_S : (fregidx, fregidx, regidx)
+union clause instruction = FLTQ_S : (fregidx, fregidx, regidx)
 
 mapping clause encdec = FLTQ_S(rs2, rs1, rd)
   <-> 0b101_0000 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b101_0011
@@ -668,7 +668,7 @@ function clause execute(FLTQ_S(rs2, rs1, rd)) = {
 
 /* FLEQ.D */
 
-union clause ast = FLEQ_D : (fregidx, fregidx, regidx)
+union clause instruction = FLEQ_D : (fregidx, fregidx, regidx)
 
 mapping clause encdec = FLEQ_D(rs2, rs1, rd)
   <-> 0b101_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b101_0011
@@ -693,7 +693,7 @@ function clause execute(FLEQ_D(rs2, rs1, rd)) = {
 
 /* FLTQ.D */
 
-union clause ast = FLTQ_D : (fregidx, fregidx, regidx)
+union clause instruction = FLTQ_D : (fregidx, fregidx, regidx)
 
 mapping clause encdec = FLTQ_D(rs2, rs1, rd)
   <-> 0b101_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b101_0011
@@ -781,7 +781,7 @@ function fcvtmod_helper(x64) = {
   }
 }
 
-union clause ast = FCVTMOD_W_D : (fregidx, regidx)
+union clause instruction = FCVTMOD_W_D : (fregidx, regidx)
 
 /* We need rounding mode to be explicitly specified to RTZ(0b001) */
 mapping clause encdec = FCVTMOD_W_D(rs1, rd)

@@ -8,7 +8,7 @@
 
 function clause currentlyEnabled(Ext_Zvksh) = hartSupports(Ext_Zvksh) & currentlyEnabled(Ext_V)
 
-union clause ast = VSM3ME_VV : (vregidx, vregidx, vregidx)
+union clause instruction = VSM3ME_VV : (vregidx, vregidx, vregidx)
 
 mapping clause encdec = VSM3ME_VV(vs2, vs1, vd)
   <-> 0b1000001 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
@@ -51,7 +51,7 @@ function clause execute (VSM3ME_VV(vs2, vs1, vd)) = {
 mapping clause assembly = VSM3ME_VV(vs2, vs1, vd)
   <-> "vsm3me.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
 
-union clause ast = VSM3C_VI : (vregidx, bits(5), vregidx)
+union clause instruction = VSM3C_VI : (vregidx, bits(5), vregidx)
 
 mapping clause encdec = VSM3C_VI(vs2, uimm, vd)
   <-> 0b1010111 @ encdec_vreg(vs2) @ uimm @ 0b010 @ encdec_vreg(vd) @ 0b1110111

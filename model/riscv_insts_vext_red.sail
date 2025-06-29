@@ -12,7 +12,7 @@
 /* ******************************************************************************* */
 
 /* ********************* OPIVV (Widening Integer Reduction) ********************** */
-union clause ast = RIVVTYPE : (rivvfunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = RIVVTYPE : (rivvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_rivvfunct6 : rivvfunct6 <-> bits(6) = {
   IVV_VWREDSUMU   <-> 0b110000,
@@ -78,7 +78,7 @@ mapping clause assembly = RIVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> rivvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
 /* ******************* OPMVV (Single-Width Integer Reduction) ******************** */
-union clause ast = RMVVTYPE : (rmvvfunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = RMVVTYPE : (rmvvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_rmvvfunct6 : rmvvfunct6 <-> bits(6) = {
   MVV_VREDSUM     <-> 0b000000,

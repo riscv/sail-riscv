@@ -128,11 +128,11 @@ These are verbatim excerpts from the model file containing the base instructions
 ### ITYPE (or ADDI)
 
 ```
-/* the assembly abstract syntax tree (AST) clause for the ITYPE instructions */
+/* the instruction clause for the ITYPE instructions */
 
-union clause ast = ITYPE : (bits(12), regidx, regidx, iop)
+union clause instruction = ITYPE : (bits(12), regidx, regidx, iop)
 
-/* the encode/decode mapping between AST elements and 32-bit words */
+/* the encode/decode mapping between instruction elements and 32-bit words */
 
 mapping encdec_iop : iop <-> bits(3) = {
   ADDI  <-> 0b000,
@@ -160,7 +160,7 @@ function clause execute (ITYPE (imm, rs1, rd, op)) = {
   RETIRE_SUCCESS
 }
 
-/* the assembly/disassembly mapping between AST elements and strings */
+/* the assembly/disassembly mapping between instruction elements and strings */
 
 mapping itype_mnemonic : iop <-> string = {
   ADDI  <-> "addi",
@@ -178,7 +178,7 @@ mapping clause assembly = ITYPE(imm, rs1, rd, op)
 ### SRET
 
 ```
-union clause ast = SRET : unit
+union clause instruction = SRET : unit
 
 mapping clause encdec = SRET()
   <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011

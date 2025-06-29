@@ -13,7 +13,7 @@
 
 function clause currentlyEnabled(Ext_Zifencei) = hartSupports(Ext_Zifencei)
 
-union clause ast = FENCEI : unit
+union clause instruction = FENCEI : unit
 
 mapping clause encdec = FENCEI()
   <-> 0b000000000000 @ 0b00000 @ 0b001 @ 0b00000 @ 0b0001111

@@ -8,7 +8,7 @@
 
 function clause currentlyEnabled(Ext_Zicond) = hartSupports(Ext_Zicond)
 
-union clause ast = ZICOND_RTYPE : (regidx, regidx, regidx, zicondop)
+union clause instruction = ZICOND_RTYPE : (regidx, regidx, regidx, zicondop)
 
 mapping clause encdec = ZICOND_RTYPE(rs2, rs1, rd, CZERO_EQZ)
   <-> 0b0000111 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0110011

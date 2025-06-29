@@ -13,7 +13,7 @@
 /* ******************************************************************************* */
 
 /* ******************************* OPFVV (VVTYPE) ******************************** */
-union clause ast = FVVTYPE : (fvvfunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = FVVTYPE : (fvvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_fvvfunct6 : fvvfunct6 <-> bits(6) = {
   FVV_VADD       <-> 0b000000,
@@ -92,7 +92,7 @@ mapping clause assembly = FVVTYPE(funct6, vm, vs2, vs1, vd)
 
 /* ************************* OPFVV (VVtype Multiply-Add) ************************* */
 /* Multiply-Add instructions switch the order of source operands in assembly (vs1/rs1 before vs2) */
-union clause ast = FVVMATYPE : (fvvmafunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = FVVMATYPE : (fvvmafunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_fvvmafunct6 : fvvmafunct6 <-> bits(6) = {
   FVV_VMADD      <-> 0b101000,
@@ -167,7 +167,7 @@ mapping clause assembly = FVVMATYPE(funct6, vm, vs2, vs1, vd)
   <-> fvvmatype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs1) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* *************************** OPFVV (VVTYPE Widening) *************************** */
-union clause ast = FWVVTYPE : (fwvvfunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = FWVVTYPE : (fwvvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_fwvvfunct6 : fwvvfunct6 <-> bits(6) = {
   FWVV_VADD       <-> 0b110000,
@@ -234,7 +234,7 @@ mapping clause assembly = FWVVTYPE(funct6, vm, vs2, vs1, vd)
 
 /* ******************** OPFVV (VVtype Widening Multiply-Add) ********************* */
 /* Multiply-Add instructions switch the order of source operands in assembly (vs1/rs1 before vs2) */
-union clause ast = FWVVMATYPE : (fwvvmafunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = FWVVMATYPE : (fwvvmafunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_fwvvmafunct6 : fwvvmafunct6 <-> bits(6) = {
   FWVV_VMACC      <-> 0b111100,
@@ -303,7 +303,7 @@ mapping clause assembly = FWVVMATYPE(funct6, vm, vs1, vs2, vd)
   <-> fwvvmatype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs1) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* *************************** OPFVV (WVTYPE Widening) *************************** */
-union clause ast = FWVTYPE : (fwvfunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = FWVTYPE : (fwvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_fwvfunct6 : fwvfunct6 <-> bits(6) = {
   FWV_VADD       <-> 0b110100,
@@ -365,7 +365,7 @@ mapping clause assembly = FWVTYPE(funct6, vm, vs2, vs1, vd)
   <-> fwvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
 /* ****************************** OPFVV (VFUNARY0) ******************************* */
-union clause ast = VFUNARY0 : (bits(1), vregidx, vfunary0, vregidx)
+union clause instruction = VFUNARY0 : (bits(1), vregidx, vfunary0, vregidx)
 
 mapping encdec_vfunary0_vs1 : vfunary0 <-> bits(5) = {
   FV_CVT_XU_F       <-> 0b00000,
@@ -481,7 +481,7 @@ mapping clause assembly = VFUNARY0(vm, vs2, vfunary0, vd)
   <-> vfunary0_mnemonic(vfunary0) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************** OPFVV (VFUNARY0 Widening) ************************** */
-union clause ast = VFWUNARY0 : (bits(1), vregidx, vfwunary0, vregidx)
+union clause instruction = VFWUNARY0 : (bits(1), vregidx, vfwunary0, vregidx)
 
 mapping encdec_vfwunary0_vs1 : vfwunary0 <-> bits(5) = {
   FWV_CVT_XU_F      <-> 0b01000,
@@ -613,7 +613,7 @@ mapping clause assembly = VFWUNARY0(vm, vs2, vfwunary0, vd)
   <-> vfwunary0_mnemonic(vfwunary0) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************* OPFVV (VFUNARY0 Narrowing) ************************** */
-union clause ast = VFNUNARY0 : (bits(1), vregidx, vfnunary0, vregidx)
+union clause instruction = VFNUNARY0 : (bits(1), vregidx, vfnunary0, vregidx)
 
 mapping encdec_vfnunary0_vs1 : vfnunary0 <-> bits(5) = {
   FNV_CVT_XU_F      <-> 0b10000,
@@ -756,7 +756,7 @@ mapping clause assembly = VFNUNARY0(vm, vs2, vfnunary0, vd)
   <-> vfnunary0_mnemonic(vfnunary0) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ****************************** OPFVV (VFUNARY1) ******************************* */
-union clause ast = VFUNARY1 : (bits(1), vregidx, vfunary1, vregidx)
+union clause instruction = VFUNARY1 : (bits(1), vregidx, vfunary1, vregidx)
 
 mapping encdec_vfunary1_vs1 : vfunary1 <-> bits(5) = {
   FVV_VSQRT       <-> 0b00000,
@@ -842,7 +842,7 @@ mapping clause assembly = VFUNARY1(vm, vs2, vfunary1, vd)
   <-> vfunary1_mnemonic(vfunary1) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ****************************** OPFVV (VWFUNARY0) ****************************** */
-union clause ast = VFMVFS : (vregidx, fregidx)
+union clause instruction = VFMVFS : (vregidx, fregidx)
 
 mapping clause encdec = VFMVFS(vs2, rd)
   <-> 0b010000 @ 0b1 @ encdec_vreg(vs2) @ 0b00000 @ 0b001 @ encdec_freg(rd) @ 0b1010111
@@ -875,7 +875,7 @@ mapping clause assembly = VFMVFS(vs2, rd)
   <-> "vfmv.f.s" ^ spc() ^ freg_name(rd) ^ sep() ^ vreg_name(vs2)
 
 /* ******************************* OPFVF (VFtype) ******************************** */
-union clause ast = FVFTYPE : (fvffunct6, bits(1), vregidx, fregidx, vregidx)
+union clause instruction = FVFTYPE : (fvffunct6, bits(1), vregidx, fregidx, vregidx)
 
 mapping encdec_fvffunct6 : fvffunct6 <-> bits(6) = {
   VF_VADD          <-> 0b000000,
@@ -973,7 +973,7 @@ mapping clause assembly = FVFTYPE(funct6, vm, vs2, rs1, vd)
 
 /* ************************* OPFVF (VFtype Multiply-Add) ************************* */
 /* Multiply-Add instructions switch the order of source operands in assembly (vs1/rs1 before vs2) */
-union clause ast = FVFMATYPE : (fvfmafunct6, bits(1), vregidx, fregidx, vregidx)
+union clause instruction = FVFMATYPE : (fvfmafunct6, bits(1), vregidx, fregidx, vregidx)
 
 mapping encdec_fvfmafunct6 : fvfmafunct6 <-> bits(6) = {
   VF_VMADD      <-> 0b101000,
@@ -1048,7 +1048,7 @@ mapping clause assembly = FVFMATYPE(funct6, vm, vs2, rs1, vd)
   <-> fvfmatype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ freg_name(rs1) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* *************************** OPFVF (VFTYPE Widening) *************************** */
-union clause ast = FWVFTYPE : (fwvffunct6, bits(1), vregidx, fregidx, vregidx)
+union clause instruction = FWVFTYPE : (fwvffunct6, bits(1), vregidx, fregidx, vregidx)
 
 mapping encdec_fwvffunct6 : fwvffunct6 <-> bits(6) = {
   FWVF_VADD       <-> 0b110000,
@@ -1114,7 +1114,7 @@ mapping clause assembly = FWVFTYPE(funct6, vm, vs2, rs1, vd)
 
 /* ******************** OPFVF (VFtype Widening Multiply-Add) ********************* */
 /* Multiply-Add instructions switch the order of source operands in assembly (vs1/rs1 before vs2) */
-union clause ast = FWVFMATYPE : (fwvfmafunct6, bits(1), fregidx, vregidx, vregidx)
+union clause instruction = FWVFMATYPE : (fwvfmafunct6, bits(1), fregidx, vregidx, vregidx)
 
 mapping encdec_fwvfmafunct6 : fwvfmafunct6 <-> bits(6) = {
   FWVF_VMACC      <-> 0b111100,
@@ -1182,7 +1182,7 @@ mapping clause assembly = FWVFMATYPE(funct6, vm, rs1, vs2, vd)
   <-> fwvfmatype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ freg_name(rs1) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* *************************** OPFVF (WFTYPE Widening) *************************** */
-union clause ast = FWFTYPE : (fwffunct6, bits(1), vregidx, fregidx, vregidx)
+union clause instruction = FWFTYPE : (fwffunct6, bits(1), vregidx, fregidx, vregidx)
 
 mapping encdec_fwffunct6 : fwffunct6 <-> bits(6) = {
   FWF_VADD       <-> 0b110100,
@@ -1244,7 +1244,7 @@ mapping clause assembly = FWFTYPE(funct6, vm, vs2, rs1, vd)
 
 /* ************************** OPFVF (Merge Instruction) ************************** */
 /* This instruction operates on all body elements regardless of mask value */
-union clause ast = VFMERGE : (vregidx, fregidx, vregidx)
+union clause instruction = VFMERGE : (vregidx, fregidx, vregidx)
 
 mapping clause encdec = VFMERGE(vs2, rs1, vd)
   <-> 0b010111 @ 0b0 @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
@@ -1299,7 +1299,7 @@ mapping clause assembly = VFMERGE(vs2, rs1, vd)
 
 /* ************************** OPFVF (Move Instruction) *************************** */
 /* This instruction shares the encoding with vfmerge.vfm, but with vm=1 and vs2=v0 */
-union clause ast = VFMV : (fregidx, vregidx)
+union clause instruction = VFMV : (fregidx, vregidx)
 
 mapping clause encdec = VFMV(rs1, vd)
   <-> 0b010111 @ 0b1 @ 0b00000 @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
@@ -1340,7 +1340,7 @@ mapping clause assembly = VFMV(rs1, vd)
   <-> "vfmv.v.f" ^ spc() ^ vreg_name(vd) ^ sep() ^ freg_name(rs1)
 
 /* ****************************** OPFVF (VRFUNARY0) ****************************** */
-union clause ast = VFMVSF : (fregidx, vregidx)
+union clause instruction = VFMVSF : (fregidx, vregidx)
 
 mapping clause encdec = VFMVSF(rs1, vd)
   <-> 0b010000 @ 0b1 @ 0b00000 @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111

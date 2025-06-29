@@ -8,7 +8,7 @@
 
 function clause currentlyEnabled(Ext_Zvksed) = hartSupports(Ext_Zvksed) & currentlyEnabled(Ext_V)
 
-union clause ast = VSM4K_VI : (vregidx, bits(5), vregidx)
+union clause instruction = VSM4K_VI : (vregidx, bits(5), vregidx)
 
 mapping clause encdec = VSM4K_VI(vs2, uimm, vd)
   <-> 0b1000011 @ encdec_vreg(vs2) @ uimm @ 0b010 @ encdec_vreg(vd) @ 0b1110111
@@ -61,7 +61,7 @@ function clause execute (VSM4K_VI(vs2, uimm, vd)) = {
 mapping clause assembly = VSM4K_VI(vs2, uimm, vd)
   <-> "vsm4k.vi" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(uimm)
 
-union clause ast = ZVKSM4RTYPE : (zvk_vsm4r_funct6, vregidx, vregidx)
+union clause instruction = ZVKSM4RTYPE : (zvk_vsm4r_funct6, vregidx, vregidx)
 
 mapping clause encdec = ZVKSM4RTYPE(ZVK_VSM4R_VV, vs2, vd)
   <-> 0b1010001 @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_vreg(vd) @ 0b1110111

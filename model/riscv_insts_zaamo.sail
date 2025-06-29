@@ -23,7 +23,7 @@ function amo_width_valid(size : word_width) -> bool = {
 
 /* ****************************************************************** */
 
-union clause ast = AMO : (amoop, bool, bool, regidx, regidx, word_width, regidx)
+union clause instruction = AMO : (amoop, bool, bool, regidx, regidx, word_width, regidx)
 
 mapping encdec_amoop : amoop <-> bits(5) = {
   AMOSWAP <-> 0b00001,

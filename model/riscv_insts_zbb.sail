@@ -10,7 +10,7 @@ function clause currentlyEnabled(Ext_Zbb) = hartSupports(Ext_Zbb) | currentlyEna
 function clause currentlyEnabled(Ext_Zbkb) = hartSupports(Ext_Zbkb)
 
 /* ****************************************************************** */
-union clause ast = RORIW : (bits(5), regidx, regidx)
+union clause instruction = RORIW : (bits(5), regidx, regidx)
 
 mapping clause encdec = RORIW(shamt, rs1, rd)
   <-> 0b0110000 @ shamt @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0011011
@@ -25,7 +25,7 @@ function clause execute (RORIW(shamt, rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = RORI : (bits(6), regidx, regidx)
+union clause instruction = RORI : (bits(6), regidx, regidx)
 
 mapping clause encdec = RORI(shamt, rs1, rd)
   <-> 0b011000 @ shamt @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
@@ -41,7 +41,7 @@ function clause execute (RORI(shamt, rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBB_RTYPEW : (regidx, regidx, regidx, bropw_zbb)
+union clause instruction = ZBB_RTYPEW : (regidx, regidx, regidx, bropw_zbb)
 
 mapping clause encdec = ZBB_RTYPEW(rs2, rs1, rd, ROLW)
   <-> 0b0110000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0111011
@@ -71,7 +71,7 @@ function clause execute (ZBB_RTYPEW(rs2, rs1, rd, op)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBB_RTYPE : (regidx, regidx, regidx, brop_zbb)
+union clause instruction = ZBB_RTYPE : (regidx, regidx, regidx, brop_zbb)
 
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, ANDN)
   <-> 0b0100000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b0110011
@@ -143,7 +143,7 @@ function clause execute (ZBB_RTYPE(rs2, rs1, rd, op)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBB_EXTOP : (regidx, regidx, extop_zbb)
+union clause instruction = ZBB_EXTOP : (regidx, regidx, extop_zbb)
 
 mapping clause encdec = ZBB_EXTOP(rs1, rd, SEXTB)
   <-> 0b0110000 @ 0b00100 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
@@ -182,7 +182,7 @@ function clause execute (ZBB_EXTOP(rs1, rd, op)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = REV8 : (regidx, regidx)
+union clause instruction = REV8 : (regidx, regidx)
 
 mapping clause encdec = REV8(rs1, rd)
   <-> 0b011010011000 @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
@@ -201,7 +201,7 @@ function clause execute (REV8(rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ORCB : (regidx, regidx)
+union clause instruction = ORCB : (regidx, regidx)
 
 mapping clause encdec = ORCB(rs1, rd)
   <-> 0b001010000111 @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
@@ -222,7 +222,7 @@ function clause execute (ORCB(rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = CPOP : (regidx, regidx)
+union clause instruction = CPOP : (regidx, regidx)
 
 mapping clause encdec = CPOP(rs1, rd)
   <-> 0b011000000010 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
@@ -237,7 +237,7 @@ function clause execute (CPOP(rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = CPOPW : (regidx, regidx)
+union clause instruction = CPOPW : (regidx, regidx)
 
 mapping clause encdec = CPOPW(rs1, rd)
   <-> 0b011000000010 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0011011
@@ -252,7 +252,7 @@ function clause execute (CPOPW(rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = CLZ : (regidx, regidx)
+union clause instruction = CLZ : (regidx, regidx)
 
 mapping clause encdec = CLZ(rs1, rd)
   <-> 0b011000000000 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
@@ -267,7 +267,7 @@ function clause execute (CLZ(rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = CLZW : (regidx, regidx)
+union clause instruction = CLZW : (regidx, regidx)
 
 mapping clause encdec = CLZW(rs1, rd)
   <-> 0b011000000000 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0011011
@@ -282,7 +282,7 @@ function clause execute (CLZW(rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = CTZ : (regidx, regidx)
+union clause instruction = CTZ : (regidx, regidx)
 
 mapping clause encdec = CTZ(rs1, rd)
   <-> 0b011000000001 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
@@ -297,7 +297,7 @@ function clause execute (CTZ(rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = CTZW : (regidx, regidx)
+union clause instruction = CTZW : (regidx, regidx)
 
 mapping clause encdec = CTZW(rs1, rd)
   <-> 0b011000000001 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0011011

@@ -13,8 +13,8 @@
 
 function clause currentlyEnabled(Ext_Zksh) = hartSupports(Ext_Zksh)
 
-union clause ast = SM3P0 : (regidx, regidx)
-union clause ast = SM3P1 : (regidx, regidx)
+union clause instruction = SM3P0 : (regidx, regidx)
+union clause instruction = SM3P1 : (regidx, regidx)
 
 mapping clause encdec = SM3P0 (rs1, rd)
   <-> 0b00 @ 0b01000 @ 0b01000 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
@@ -51,8 +51,8 @@ function clause execute (SM3P1(rs1, rd)) = {
 
 function clause currentlyEnabled(Ext_Zksed) = hartSupports(Ext_Zksed)
 
-union clause ast = SM4ED : (bits(2), regidx, regidx, regidx)
-union clause ast = SM4KS : (bits(2), regidx, regidx, regidx)
+union clause instruction = SM4ED : (bits(2), regidx, regidx, regidx)
+union clause instruction = SM4KS : (bits(2), regidx, regidx, regidx)
 
 mapping clause encdec = SM4ED (bs, rs2, rs1, rd)
   <-> bs @ 0b11000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
