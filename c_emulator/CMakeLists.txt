@@ -1,3 +1,6 @@
+# make version available to emulator
+configure_file(version.h.in version.h @ONLY)
+
 set(EMULATOR_COMMON_SRCS
     riscv_callbacks.cpp
     riscv_callbacks.h
@@ -16,6 +19,7 @@ set(EMULATOR_COMMON_SRCS
     riscv_softfloat.h
     config_utils.h
     config_utils.cpp
+    version.h
 )
 
 add_executable(sail_riscv_sim
@@ -51,6 +55,8 @@ target_include_directories(sail_riscv_sim
         "${CMAKE_CURRENT_SOURCE_DIR}"
         # So `riscv_sail.h` can find `sail_riscv_model.h`.
         "${CMAKE_BINARY_DIR}"
+        # So `riscv_sim.cpp` can find `version.h`.
+        "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
 # TODO: Enable warnings when we use the #include trick
