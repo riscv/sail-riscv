@@ -501,10 +501,9 @@ void rvfi_handler::rvfi_set_inst_data_ixl(uint8_t ixl)
   return;
 }
 
-uint64_t rvfi_handler::rvfi_get_insn(void)
+uint32_t rvfi_handler::rvfi_get_insn(void)
 {
-  rvfi_handler::rvfi_mem_data_present = false;
-  return (uint64_t)rvfi_instruction.rvfi_insn;
+  return rvfi_instruction.rvfi_insn;
 }
 
 void rvfi_handler::rvfi_set_pc_data_rdata(uint64_t rdata)
