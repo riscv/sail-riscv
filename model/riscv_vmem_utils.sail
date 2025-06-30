@@ -169,7 +169,7 @@ function check_misaligned(vaddr : virtaddr, width : word_width) -> bool = {
   if plat_enable_misaligned_access then {
     false
   } else {
-    not(is_aligned_addr(vaddr, size_bytes(width)))
+    not(is_aligned_addr(vaddr, width))
   }
 }
 
@@ -194,7 +194,7 @@ function vmem_read(rs, offset, width, acc, aq, rl, res) = {
     if   not(is_aligned_addr(vaddr, width))
     then return Err(Memory_Exception(vaddr, E_Load_Addr_Align()));
   } else {
-    if check_misaligned(vaddr, size_bytes(width))
+    if check_misaligned(vaddr, width)
     then return Err(Memory_Exception(vaddr, E_Load_Addr_Align()));
   };
 
@@ -251,7 +251,7 @@ function vmem_write(rs_addr, offset, width, data, acc, aq, rl, res) = {
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
   };
 
-  if   check_misaligned(vaddr, size_bytes(width))
+  if   check_misaligned(vaddr, width)
   then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
 
   vmem_write_addr(vaddr, width, data, acc, aq, rl, res)

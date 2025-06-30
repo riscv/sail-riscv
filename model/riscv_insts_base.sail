@@ -277,7 +277,7 @@ union clause ast = LOAD : (bits(12), regidx, regidx, bool, word_width)
 /* unsigned loads are only present for widths strictly less than xlen,
    signed loads also present for widths equal to xlen */
 function valid_load_encdec(width : word_width, is_unsigned : bool) -> bool =
-  (size_bytes(width) < xlen_bytes) | (not(is_unsigned) & size_bytes(width) <= xlen_bytes)
+  (width < xlen_bytes) | (not(is_unsigned) & width <= xlen_bytes)
 
 val extend_value : forall 'n, 0 < 'n <= xlen. (bool, bits('n)) -> xlenbits
 function extend_value(is_unsigned, value) = if is_unsigned then zero_extend(value) else sign_extend(value)
@@ -288,12 +288,11 @@ mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, width)
 
 function clause execute (LOAD(imm, rs1, rd, is_unsigned, width)) = {
   let offset : xlenbits = sign_extend(imm);
-  let width_bytes = size_bytes(width);
 
   // This is checked during decoding.
-  assert(width_bytes <= xlen_bytes);
+  assert(width <= xlen_bytes);
 
-  match vmem_read(rs1, offset, width_bytes, Read(Data), false, false, false) {
+  match vmem_read(rs1, offset, width, Read(Data), false, false, false) {
     Ok(data) => {
       X(rd) = extend_value(is_unsigned, data);
       RETIRE_SUCCESS
@@ -315,17 +314,16 @@ union clause ast = STORE : (bits(12), regidx, regidx, word_width)
 
 mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, width)
   <-> imm7 : bits(7) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(width) @ imm5 : bits(5) @ 0b0100011
-  when size_bytes(width) <= xlen_bytes
+  when width <= xlen_bytes
 
 function clause execute (STORE(imm, rs2, rs1, width)) = {
   let offset : xlenbits = sign_extend(imm);
-  let width_bytes = size_bytes(width);
 
   // This is checked during decoding.
-  assert(width_bytes <= xlen_bytes);
+  assert(width <= xlen_bytes);
 
-  let data = X(rs2)[width_bytes * 8 - 1 .. 0];
-  match vmem_write(rs1, offset, width_bytes, data, Write(Data), false, false, false) {
+  let data = X(rs2)[width * 8 - 1 .. 0];
+  match vmem_write(rs1, offset, width, data, Write(Data), false, false, false) {
     Ok(_) => RETIRE_SUCCESS,
     Err(e) => e,
   }

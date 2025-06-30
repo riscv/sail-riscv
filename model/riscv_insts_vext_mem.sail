@@ -79,7 +79,6 @@ mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd)
 val process_vlseg : forall 'f 'b 'n 'p, nfields_range('f) & is_mem_width('b) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, int('p), int('n)) -> ExecutionResult
 function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
-  let width_type : word_width = size_bytes(load_width_bytes);
   let vm_val : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vd_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
 
@@ -141,7 +140,6 @@ mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd)
 val process_vlsegff : forall 'f 'b 'n 'p, nfields_range('f) & is_mem_width('b) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, int('p), int('n)) -> ExecutionResult
 function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
-  let width_type : word_width = size_bytes(load_width_bytes);
   let vm_val : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vd_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
   let tail_ag : agtype = get_vtype_vta();
@@ -220,7 +218,6 @@ mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3)
 val process_vsseg : forall 'f 'b 'n 'p, nfields_range('f) & is_mem_width('b) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, int('p), int('n)) -> ExecutionResult
 function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
-  let width_type : word_width = size_bytes(load_width_bytes);
   let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vs3_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
 
@@ -279,7 +276,6 @@ mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
 val process_vlsseg : forall 'f 'b 'n 'p, nfields_range('f) & is_mem_width('b) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, regidx, int('p), int('n)) -> ExecutionResult
 function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
-  let width_type : word_width = size_bytes(load_width_bytes);
   let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vd_seg  : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
   let rs2_val : int = unsigned(get_scalar(rs2, xlen));
@@ -342,7 +338,6 @@ mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
 val process_vssseg : forall 'f 'b 'n 'p, nfields_range('f) & is_mem_width('b) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, regidx, int('p), int('n)) -> ExecutionResult
 function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
   let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
-  let width_type : word_width = size_bytes(load_width_bytes);
   let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vs3_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
   let rs2_val : int = unsigned(get_scalar(rs2, xlen));
@@ -402,7 +397,6 @@ mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
 val process_vlxseg : forall 'f 'ib 'db 'ip 'dp 'n, nfields_range('f) & is_mem_width('ib) & is_mem_width('db) & ('n > 0). (int('f), bits(1), vregidx, int('ib), int('db), int('ip), int('dp), regidx, vregidx, int('n), int) -> ExecutionResult
 function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
   let EMUL_data_reg : int = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
-  let width_type : word_width = size_bytes(EEW_data_bytes);
   let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vd_seg  : vector('n, bits('f * 'db * 8)) = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vd);
   let vs2_val : vector('n, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
@@ -495,7 +489,6 @@ mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
 val process_vsxseg : forall 'f 'ib 'db 'ip 'dp 'n, nfields_range('f) & is_mem_width('ib) & is_mem_width('db) & ('n > 0). (int('f), bits(1), vregidx, int('ib), int('db), int('ip), int('dp), regidx, vregidx, int('n), int) -> ExecutionResult
 function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
   let EMUL_data_reg : int = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
-  let width_type : word_width = size_bytes(EEW_data_bytes);
   let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vs3_seg : vector('n, bits('f * 'db * 8)) = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vs3);
   let vs2_val : vector('n, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
@@ -584,7 +577,6 @@ mapping clause encdec = VLRETYPE(nf, rs1, width, vd)
 
 val process_vlre : forall 'f 'b 'n, nfields_range_pow2('f) & is_mem_width('b) & ('n >= 0). (int('f), vregidx, int('b), regidx, int('n)) -> ExecutionResult
 function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
-  let width_type : word_width = size_bytes(load_width_bytes);
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -647,7 +639,6 @@ mapping clause encdec = VSRETYPE(nf, rs1, vs3)
 
 val process_vsre : forall 'f 'b 'n, nfields_range_pow2('f) & is_mem_width('b) & ('n >= 0). (int('f), int('b), regidx, vregidx, int('n)) -> ExecutionResult
 function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
-  let width_type : word_width = BYTE;
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -720,7 +711,6 @@ mapping clause encdec = VMTYPE(rs1, vd_or_vs3, op)
 
 val process_vm : forall 'n 'l, ('n >= 0 & 'l >= 0). (vregidx, regidx, int('n), int('l), vmlsop) -> ExecutionResult
 function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
-  let width_type : word_width = BYTE;
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()

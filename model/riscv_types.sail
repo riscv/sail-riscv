@@ -85,7 +85,7 @@ union AccessType ('a : Type) = {
   InstructionFetch : unit
 }
 
-enum word_width = {BYTE, HALF, WORD, DOUBLE}
+type word_width = {1, 2, 4, 8}
 
 type is_mem_width('w) = 'w in {1, 2, 4, 8}
 
@@ -310,24 +310,17 @@ overload to_str = {wait_name}
 
 // Get the bit encoding of word_width.
 mapping size_enc : word_width <-> bits(2) = {
-  BYTE   <-> 0b00,
-  HALF   <-> 0b01,
-  WORD   <-> 0b10,
-  DOUBLE <-> 0b11
+  1 <-> 0b00,
+  2 <-> 0b01,
+  4 <-> 0b10,
+  8 <-> 0b11,
 }
 
 mapping size_mnemonic : word_width <-> string = {
-  BYTE   <-> "b",
-  HALF   <-> "h",
-  WORD   <-> "w",
-  DOUBLE <-> "d"
-}
-
-mapping size_bytes : word_width <-> {1, 2, 4, 8} = {
-  BYTE   <-> 1,
-  HALF   <-> 2,
-  WORD   <-> 4,
-  DOUBLE <-> 8,
+  1 <-> "b",
+  2 <-> "h",
+  4 <-> "w",
+  8 <-> "d",
 }
 
 struct mul_op = {
