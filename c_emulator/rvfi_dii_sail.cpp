@@ -29,7 +29,7 @@ unit rvfi_set_inst_data_ixl(uint8_t ixl)
   return UNIT;
 }
 
-uint64_t rvfi_get_insn(unit)
+uint32_t rvfi_get_insn(unit)
 {
   return rvfi_handler::rvfi_get_insn();
 }

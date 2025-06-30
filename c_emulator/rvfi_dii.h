@@ -268,7 +268,7 @@ public:
   static void rvfi_trap();
 
   // Sail API
-  static uint64_t rvfi_get_insn();
+  static uint32_t rvfi_get_insn();
   static void rvfi_set_pc_data_rdata(uint64_t data);
   static void rvfi_set_pc_data_wdata(uint64_t data);
   static void rvfi_set_inst_data_insn(uint64_t insn);

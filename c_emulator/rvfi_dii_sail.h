@@ -9,7 +9,7 @@ extern "C" {
 // ****************************************************************************
 // Sail API
 
-uint64_t rvfi_get_insn(unit);
+uint32_t rvfi_get_insn(unit);
 
 unit rvfi_set_pc_data_rdata(uint64_t data);
 unit rvfi_set_pc_data_wdata(uint64_t data);
