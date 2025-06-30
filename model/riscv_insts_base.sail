@@ -508,14 +508,15 @@ mapping clause encdec = ECALL()
   <-> 0b000000000000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute ECALL() = {
+  let trap : ExceptionType = match (cur_privilege) {
+    User              => E_U_EnvCall(),
+    Supervisor        => E_S_EnvCall(),
+    Machine           => E_M_EnvCall(),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+  };
   let t : sync_exception = struct {
-    trap = match (cur_privilege) {
-      User              => E_U_EnvCall(),
-      Supervisor        => E_S_EnvCall(),
-      Machine           => E_M_EnvCall(),
-      VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-      VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    },
+    trap    = trap,
     excinfo = (None() : option(xlenbits)),
     ext     = None(),
   };
