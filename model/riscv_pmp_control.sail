@@ -47,7 +47,7 @@ function pmpMatchAddr(
 ) -> pmpAddrMatch = {
   let addr = unsigned(addr);
   let width = unsigned(width);
-  match pmpAddrMatchType_of_bits(ent[A]) {
+  match pmpAddrMatchType_encdec(ent[A]) {
     OFF => PMP_NoMatch,
     TOR => {
       // "If PMP entry [i]'s A field is set to TOR, the entry matches
@@ -119,6 +119,6 @@ function reset_pmp() -> unit = {
   foreach (i from 0 to 63) {
     // On reset the PMP register's A and L bits are set to 0 unless the platform
     // mandates a different value.
-    pmpcfg_n[i] = [pmpcfg_n[i] with A = pmpAddrMatchType_to_bits(OFF), L = 0b0];
+    pmpcfg_n[i] = [pmpcfg_n[i] with A = pmpAddrMatchType_encdec(OFF), L = 0b0];
   };
 }

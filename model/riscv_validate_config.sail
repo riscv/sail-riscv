@@ -99,9 +99,20 @@ function check_mem_layout() -> bool = {
   valid
 }
 
+function check_pmp() -> bool = {
+  var valid : bool = true;
+  if (config memory.pmp.na4_supported : bool) & sys_pmp_grain != 0
+  then {
+    valid = false;
+    print_endline("NA4 is not supported if the PMP grain G is non-zero.");
+  };
+  valid
+}
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
   & check_mem_layout()
   & check_vlen_elen()
+  & check_pmp()
 }
