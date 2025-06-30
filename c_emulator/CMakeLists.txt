@@ -1,3 +1,26 @@
+# Extract version and build info.
+execute_process(
+    COMMAND ${SAIL_BIN} --version
+    OUTPUT_VARIABLE sail_version
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND_ERROR_IS_FATAL ANY
+)
+message(STATUS "Sail version: ${sail_version}")
+
+execute_process(
+    COMMAND ${CMAKE_CXX_COMPILER} --version
+    OUTPUT_VARIABLE compiler_version_blob
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND_ERROR_IS_FATAL ANY
+)
+# This is usually a multiline output; the first line is the most useful.
+string(REGEX MATCHALL "[^\n\r]+" compiler_version_strings ${compiler_version_blob})
+list(GET compiler_version_strings 0 cxx_compiler_version)
+message(STATUS "CXX compiler version: ${cxx_compiler_version}")
+
+# make version available to emulator
+configure_file(sail_riscv_version.cpp.in sail_riscv_version.cpp @ONLY)
+
 ## A library that contains the C model and support code.
 
 add_library(riscv_model
@@ -15,6 +38,8 @@ add_library(riscv_model
     riscv_softfloat.h
     config_utils.h
     config_utils.cpp
+    sail_riscv_version.h
+    "${CMAKE_CURRENT_BINARY_DIR}/sail_riscv_version.cpp"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.c"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.h"
 )

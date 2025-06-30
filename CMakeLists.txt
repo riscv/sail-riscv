@@ -12,7 +12,8 @@ if(POLICY CMP0135)
     cmake_policy(SET CMP0135 OLD)
 endif()
 
-project(sail_riscv)
+include(cmake/project_version.cmake)
+project(sail_riscv VERSION ${sail_riscv_release_version})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
