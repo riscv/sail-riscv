@@ -91,7 +91,7 @@ void set_config_print(char *var, bool val)
   } else {
     fprintf(stderr, "Unknown trace category: '%s' (should be %s)\n", var,
             "instr|reg|mem|rvfi|platform|step|all");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 }
 
@@ -150,7 +150,7 @@ static void validate_config(const char *conf_file)
   } else {
     fprintf(stdout, "Default configuration is %s.\n", s);
   }
-  exit(0);
+  exit(EXIT_SUCCESS);
 }
 
 static void print_dts(void)
@@ -159,7 +159,7 @@ static void print_dts(void)
   zgenerate_dts(&dts, UNIT);
   fprintf(stdout, "%s", dts);
   KILL(sail_string)(&dts);
-  exit(0);
+  exit(EXIT_SUCCESS);
 }
 
 static void print_isa(void)
@@ -168,7 +168,7 @@ static void print_isa(void)
   zgenerate_canonical_isa_string(&isa, UNIT);
   fprintf(stdout, "%s\n", isa);
   KILL(sail_string)(&isa);
-  exit(0);
+  exit(EXIT_SUCCESS);
 }
 
 static bool is_32bit_model(void)
@@ -181,22 +181,22 @@ static void read_dtb(const char *path)
   int fd = open(path, O_RDONLY);
   if (fd < 0) {
     fprintf(stderr, "Unable to read DTB file %s: %s\n", path, strerror(errno));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   struct stat st;
   if (fstat(fd, &st) < 0) {
     fprintf(stderr, "Unable to stat DTB file %s: %s\n", path, strerror(errno));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   char *m = (char *)mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
   if (m == MAP_FAILED) {
     fprintf(stderr, "Unable to map DTB file %s: %s\n", path, strerror(errno));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   dtb = (unsigned char *)malloc(st.st_size);
   if (dtb == NULL) {
     fprintf(stderr, "Cannot allocate DTB from file %s!\n", path);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   memcpy(dtb, m, st.st_size);
   dtb_len = st.st_size;
@@ -257,7 +257,7 @@ static int process_args(int argc, char **argv)
               signature_granularity);
       break;
     case 'h':
-      print_usage(argv[0], 0);
+      print_usage(argv[0], EXIT_SUCCESS);
       break;
     case 'c': {
       if (access(optarg, R_OK) == 0) {
@@ -266,13 +266,13 @@ static int process_args(int argc, char **argv)
         have_config = true;
       } else {
         fprintf(stderr, "configuration file '%s' does not exist.\n", optarg);
-        exit(1);
+        exit(EXIT_FAILURE);
       }
       break;
     }
     case OPT_PRINT_CONFIG:
       printf("%s", DEFAULT_JSON);
-      exit(0);
+      exit(EXIT_SUCCESS);
     case OPT_VALIDATE_CONFIG:
       do_validate_config = true;
       break;
@@ -302,7 +302,7 @@ static int process_args(int argc, char **argv)
       if (*p != '\0' || val > UINT64_MAX
           || (val == ULLONG_MAX && errno == ERANGE)) {
         fprintf(stderr, "invalid instruction limit %s\n", optarg);
-        exit(1);
+        exit(EXIT_FAILURE);
       }
       insn_limit = val;
       break;
@@ -321,7 +321,7 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "using %s for trace output.\n", trace_log_path);
       break;
     case '?':
-      print_usage(argv[0], 1);
+      print_usage(argv[0], EXIT_FAILURE);
       break;
     }
   }
@@ -337,7 +337,7 @@ static int process_args(int argc, char **argv)
       = rvfi || do_print_dts || do_print_isa || do_validate_config;
   if (optind > argc || (optind == argc && !no_elf_file_arg)) {
     fprintf(stderr, "No elf file provided.\n");
-    print_usage(argv[0], 0);
+    print_usage(argv[0], EXIT_SUCCESS);
   }
   if (!no_elf_file_arg)
     fprintf(stdout, "Running file %s.\n", argv[optind]);
@@ -350,13 +350,13 @@ void check_elf(bool is32bit)
     if (zxlen != 32) {
       fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n",
               zxlen);
-      exit(1);
+      exit(EXIT_FAILURE);
     }
   } else {
     if (zxlen != 64) {
       fprintf(stderr, "64-bit ELF not supported by RV%" PRIu64 " model.\n",
               zxlen);
-      exit(1);
+      exit(EXIT_FAILURE);
     }
   }
 }
@@ -519,7 +519,7 @@ void finish(int ec)
   model_fini();
   if (gettimeofday(&run_end, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   if (do_show_times) {
     int init_msecs = (init_end.tv_sec - init_start.tv_sec) * 1000
@@ -560,7 +560,7 @@ void run_sail(void)
   struct timeval interval_start;
   if (gettimeofday(&interval_start, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   while (!zhtif_done && (insn_limit == 0 || total_insns < insn_limit)) {
@@ -604,7 +604,7 @@ void run_sail(void)
           + ((uint64_t)interval_start.tv_usec);
       if (gettimeofday(&interval_start, NULL) < 0) {
         fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-        exit(1);
+        exit(EXIT_FAILURE);
       }
       uint64_t end_us = 1000000 * ((uint64_t)interval_start.tv_sec)
           + ((uint64_t)interval_start.tv_usec);
@@ -618,7 +618,7 @@ void run_sail(void)
         fprintf(stdout, "SUCCESS\n");
       } else {
         fprintf(stdout, "FAILURE: %" PRIi64 "\n", zhtif_exit_code);
-        exit(1);
+        exit(EXIT_FAILURE);
       }
     }
 
@@ -647,7 +647,7 @@ void init_logs()
           < 0) {
     fprintf(stderr, "Cannot create terminal log '%s': %s\n", term_log,
             strerror(errno));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   if (trace_log_path == NULL) {
@@ -655,7 +655,7 @@ void init_logs()
   } else if ((trace_log = fopen(trace_log_path, "w+")) == NULL) {
     fprintf(stderr, "Cannot create trace log '%s': %s\n", trace_log_path,
             strerror(errno));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
 #ifdef SAILCOV
@@ -688,7 +688,7 @@ int main(int argc, char **argv)
 
   if (gettimeofday(&init_start, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   if (rvfi) {
@@ -709,7 +709,7 @@ int main(int argc, char **argv)
 
   if (gettimeofday(&init_end, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   do {

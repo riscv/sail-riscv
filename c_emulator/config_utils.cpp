@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string>
 #include <iostream>
 
@@ -14,7 +15,7 @@ uint64_t get_config_uint64(const std::vector<const char *> &keypath)
       std::cerr << "." << part;
     }
     std::cerr << "'.\n";
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   sail_int big_n;
@@ -26,7 +27,7 @@ uint64_t get_config_uint64(const std::vector<const char *> &keypath)
       std::cerr << "." << part;
     }
     std::cerr << "' could not be parsed as an integer.\n";
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   CREATE(sail_int)(&big_n);
