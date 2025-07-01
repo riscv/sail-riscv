@@ -49,6 +49,8 @@ function clause is_CSR_accessible(0x015, priv, is_write) =
     Machine => true,
     Supervisor => mseccfg[SSEED] == 0b1,
     User => mseccfg[USEED] == 0b1,
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   })
 
 function clause read_CSR(0x015) = read_seed_csr()

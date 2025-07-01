@@ -508,7 +508,7 @@ mapping clause encdec = ECALL()
   <-> 0b000000000000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute ECALL() = {
-  let trap : ExceptionType = match (cur_privilege) {
+  let trap : ExceptionType = match cur_privilege {
     User              => E_U_EnvCall(),
     Supervisor        => E_S_EnvCall(),
     Machine           => E_M_EnvCall(),

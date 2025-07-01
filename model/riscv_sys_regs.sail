@@ -150,7 +150,7 @@ function virtual_memory_supported() -> bool = {
 function lowest_supported_privLevel() -> Privilege =
   if currentlyEnabled(Ext_U) then User else Machine
 
-function have_privLevel(priv : nom_priv_bits) -> bool =
+function have_nominal_privLevel(priv : nom_priv_bits) -> bool =
   match priv {
     0b00 => currentlyEnabled(Ext_U),
     0b01 => currentlyEnabled(Ext_S),
@@ -240,7 +240,7 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // but only if Zfinx isn't enabled.
     // FIXME: This should be made a platform parameter.
     FS = if hartSupports(Ext_Zfinx) then extStatus_to_bits(Off) else v[FS],
-    MPP = if have_privLevel(v[MPP]) then v[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
+    MPP = if have_nominal_privLevel(v[MPP]) then v[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
     SPP = if currentlyEnabled(Ext_S) then v[SPP] else 0b0,
     // TODO: make this configurable
     // If neither the v registers nor S-mode is implemented, then VS is
@@ -957,6 +957,8 @@ function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bit, super
   Machine => true,
   Supervisor => machine_enable_bit == bitone,
   User => machine_enable_bit == bitone & (not(currentlyEnabled(Ext_S)) | supervisor_enable_bit == bitone),
+  VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+  VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
 }
 
 // Return true if the counter is enabled.

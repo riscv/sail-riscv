@@ -10,7 +10,7 @@
 
 function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
   if   t != InstructionFetch() & m[MPRV] == 0b1
-  then privLevel_of_bits(m[MPP], bitzero) // TODO: use m[MPV] if hypervisor enabled
+  then privLevel_bits(m[MPP], bitzero) // TODO: use m[MPV] if hypervisor enabled
   else priv
 
 // CSR access control
@@ -213,10 +213,8 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
 function exception_handler(cur_priv : Privilege, ctl : ctl_result,
                            pc: xlenbits) -> xlenbits = {
-  match (cur_priv, ctl) {
-    (VirtualUser, _)       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    (VirtualSupervisor, _) => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    (_, CTL_TRAP(e)) => {
+  match ctl {
+    CTL_TRAP(e) => {
       let del_priv = exception_delegatee(e.trap, cur_priv);
       if   get_config_print_platform()
       then print_log("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
@@ -227,7 +225,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       let prev_priv = cur_privilege;
       mstatus[MIE]  = mstatus[MPIE];
       mstatus[MPIE] = 0b1;
-      cur_privilege   = privLevel_of_bits(mstatus[MPP], bitzero); // TODO: use mstatus[MPV] if hypervisor enabled
+      cur_privilege = privLevel_bits(mstatus[MPP], bitzero); // TODO: use mstatus[MPV] if hypervisor enabled
       mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
