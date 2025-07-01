@@ -91,176 +91,177 @@ extensions {
     requires riscv_core, riscv_exceptions, riscv
     files 
       riscv_insts_base.sail,
+      if $ARCH == RV64 then riscv_insts_base_64.sail else [],
       riscv_jalr_seq.sail,
   }
 
-  M {
-    requires riscv_core, riscv, I
-    files riscv_insts_mext.sail
-  }
+  // M {
+  //   requires riscv_core, riscv, I
+  //   files riscv_insts_mext.sail
+  // }
 
-  A {
-    requires riscv_core, riscv_exceptions, riscv, I
-    files
-      riscv_insts_zaamo.sail,
-      riscv_insts_zalrsc.sail,
-  }
+  // A {
+  //   requires riscv_core, riscv_exceptions, riscv, I
+  //   files
+  //     riscv_insts_zaamo.sail,
+  //     riscv_insts_zalrsc.sail,
+  // }
 
-  C {
-    Zca {
-      requires riscv_core, riscv_exceptions, riscv, I
-      files riscv_insts_zca.sail
-    }
-    Zcb {
-      requires riscv_core, riscv_exceptions, riscv, I, B, M
-      files riscv_insts_zcb.sail
-    }
-    Zcf {
-      requires riscv_core, riscv, I, FD_core, FD_instructions
-      files riscv_insts_zcf.sail
-    }
-    Zcd {
-      requires riscv_core, riscv, I, FD_core, FD_instructions
-      files riscv_insts_zcd.sail
-    }
-    Zcmop {
-      requires riscv_core, riscv, I
-      files riscv_insts_zcmop.sail
-    }
-  }
+  // C {
+  //   Zca {
+  //     requires riscv_core, riscv_exceptions, riscv, I
+  //     files riscv_insts_zca.sail
+  //   }
+  //   Zcb {
+  //     requires riscv_core, riscv_exceptions, riscv, I, B, M
+  //     files riscv_insts_zcb.sail
+  //   }
+  //   Zcf {
+  //     requires riscv_core, riscv, I, FD_core, FD_instructions
+  //     files riscv_insts_zcf.sail
+  //   }
+  //   Zcd {
+  //     requires riscv_core, riscv, I, FD_core, FD_instructions
+  //     files riscv_insts_zcd.sail
+  //   }
+  //   Zcmop {
+  //     requires riscv_core, riscv, I
+  //     files riscv_insts_zcmop.sail
+  //   }
+  // }
 
-  FD {
-    FD_instructions {
-      requires riscv_core, riscv, I, FD_core
-      files
-        riscv_insts_fext.sail,
-        riscv_insts_dext.sail,
-    }
-  }
+  // FD {
+  //   FD_instructions {
+  //     requires riscv_core, riscv, I, FD_core
+  //     files
+  //       riscv_insts_fext.sail,
+  //       riscv_insts_dext.sail,
+  //   }
+  // }
 
-  Zfh {
-    requires riscv_core, riscv, I, FD_core, FD_instructions
-    files riscv_insts_zfh.sail
-  }
+  // Zfh {
+  //   requires riscv_core, riscv, I, FD_core, FD_instructions
+  //   files riscv_insts_zfh.sail
+  // }
 
-  Zfa {
-    requires riscv_core, riscv, I, FD_core, FD_instructions, Zfh
-    files riscv_insts_zfa.sail
-  }
+  // Zfa {
+  //   requires riscv_core, riscv, I, FD_core, FD_instructions, Zfh
+  //   files riscv_insts_zfa.sail
+  // }
 
-  V {
-    V_instructions {
-      requires riscv_core, riscv, I, FD_core, FD_instructions, V_core, Zfh
-      files
-        riscv_insts_vext_utils.sail,
-        riscv_insts_vext_fp_utils.sail,
-        riscv_insts_vext_vset.sail,
-        riscv_insts_vext_arith.sail,
-        riscv_insts_vext_fp.sail,
-        riscv_insts_vext_mem.sail,
-        riscv_insts_vext_mask.sail,
-        riscv_insts_vext_vm.sail,
-        riscv_insts_vext_fp_vm.sail,
-        riscv_insts_vext_red.sail,
-        riscv_insts_vext_fp_red.sail,
-    }
-  }
+  // V {
+  //   V_instructions {
+  //     requires riscv_core, riscv, I, FD_core, FD_instructions, V_core, Zfh
+  //     files
+  //       riscv_insts_vext_utils.sail,
+  //       riscv_insts_vext_fp_utils.sail,
+  //       riscv_insts_vext_vset.sail,
+  //       riscv_insts_vext_arith.sail,
+  //       riscv_insts_vext_fp.sail,
+  //       riscv_insts_vext_mem.sail,
+  //       riscv_insts_vext_mask.sail,
+  //       riscv_insts_vext_vm.sail,
+  //       riscv_insts_vext_fp_vm.sail,
+  //       riscv_insts_vext_red.sail,
+  //       riscv_insts_vext_fp_red.sail,
+  //   }
+  // }
 
-  B {
-    requires riscv_core, riscv
-    files
-      riscv_insts_zba.sail,
-      riscv_insts_zbb.sail,
-      riscv_insts_zbc.sail,
-      riscv_insts_zbs.sail,
-  }
+  // B {
+  //   requires riscv_core, riscv
+  //   files
+  //     riscv_insts_zba.sail,
+  //     riscv_insts_zbb.sail,
+  //     riscv_insts_zbc.sail,
+  //     riscv_insts_zbs.sail,
+  // }
 
-  K {
-    requires riscv_core, riscv
-    files
-      riscv_insts_zkn.sail,
-      riscv_insts_zks.sail,
-      riscv_insts_zbkb.sail,
-      riscv_insts_zbkx.sail,
-  }
+  // K {
+  //   requires riscv_core, riscv
+  //   files
+  //     riscv_insts_zkn.sail,
+  //     riscv_insts_zks.sail,
+  //     riscv_insts_zbkb.sail,
+  //     riscv_insts_zbkx.sail,
+  // }
 
-  Zvk {
-    requires riscv_core, riscv, I, V_core, V_instructions
-    files
-      riscv_insts_zvbb.sail,
-      riscv_insts_zvbc.sail,
-      riscv_insts_zvkg.sail,
-      riscv_insts_zvkned.sail,
-      riscv_insts_zvknhab.sail,
-      riscv_insts_zvksed.sail,
-      riscv_insts_zvksh.sail,
-  }
+  // Zvk {
+  //   requires riscv_core, riscv, I, V_core, V_instructions
+  //   files
+  //     riscv_insts_zvbb.sail,
+  //     riscv_insts_zvbc.sail,
+  //     riscv_insts_zvkg.sail,
+  //     riscv_insts_zvkned.sail,
+  //     riscv_insts_zvknhab.sail,
+  //     riscv_insts_zvksed.sail,
+  //     riscv_insts_zvksh.sail,
+  // }
 
-  Zicsr {
-    requires riscv_core, riscv, riscv_exceptions, pmp, V_core
-    files riscv_insts_zicsr.sail
-  }
+  // Zicsr {
+  //   requires riscv_core, riscv, riscv_exceptions, pmp, V_core
+  //   files riscv_insts_zicsr.sail
+  // }
 
-  Zifencei {
-    requires riscv_core, riscv, I
-    files
-      riscv_insts_zifencei.sail,
-      riscv_insts_reserved_fence.sail,
-  }
+  // Zifencei {
+  //   requires riscv_core, riscv, I
+  //   files
+  //     riscv_insts_zifencei.sail,
+  //     riscv_insts_reserved_fence.sail,
+  // }
 
-  H {
-    requires riscv_core, riscv, I
-    files riscv_insts_hext.sail
-  }
+  // H {
+  //   requires riscv_core, riscv, I
+  //   files riscv_insts_hext.sail
+  // }
 
-  Svinval {
-    requires riscv_core, riscv, I
-    files riscv_insts_svinval.sail
-  }
+  // Svinval {
+  //   requires riscv_core, riscv, I
+  //   files riscv_insts_svinval.sail
+  // }
 
-  Zicond {
-    requires riscv_core, riscv
-    files riscv_insts_zicond.sail
-  }
+  // Zicond {
+  //   requires riscv_core, riscv
+  //   files riscv_insts_zicond.sail
+  // }
 
-  Zicbom {
-    requires riscv_core, riscv
-    files riscv_insts_zicbom.sail
-  }
+  // Zicbom {
+  //   requires riscv_core, riscv
+  //   files riscv_insts_zicbom.sail
+  // }
 
-  Zicboz {
-    requires riscv_core, riscv
-    files riscv_insts_zicboz.sail
-  }
+  // Zicboz {
+  //   requires riscv_core, riscv
+  //   files riscv_insts_zicboz.sail
+  // }
 
-  Zawrs {
-    requires riscv_core, riscv
-    files riscv_insts_zawrs.sail
-  }
+  // Zawrs {
+  //   requires riscv_core, riscv
+  //   files riscv_insts_zawrs.sail
+  // }
 
-  Zimop {
-    requires riscv_core, riscv
-    files riscv_insts_zimop.sail
-  }
+  // Zimop {
+  //   requires riscv_core, riscv
+  //   files riscv_insts_zimop.sail
+  // }
 }
 
-riscv_postlude {
-  after extensions
-
-  requires riscv_core, riscv, riscv_exceptions, pmp, V_core, FD_core, I, A, B, C, FD, V, M, Zicsr, Zfh, Zfa, K, Zvk, Zifencei, H, Svinval, Zicond, Zicbom, Zicboz, Zawrs, Zimop
-
-  files
-    riscv_insts_end.sail,
-    riscv_csr_end.sail,
-    riscv_step_common.sail,
-    riscv_step_ext.sail,
-    riscv_decode_ext.sail,
-    riscv_fetch_rvfi.sail,
-    riscv_fetch.sail,
-    riscv_step.sail,
-    riscv_termination.sail,
-    riscv_validate_config.sail,
-    riscv_device_tree.sail,
-    riscv_model.sail,
-    main.sail,
-}
+// riscv_postlude {
+//   after extensions
+// 
+//   requires riscv_core, riscv, riscv_exceptions, pmp, V_core, FD_core, I, A, B, C, FD, V, M, Zicsr, Zfh, Zfa, K, Zvk, Zifencei, H, Svinval, Zicond, Zicbom, Zicboz, Zawrs, Zimop
+// 
+//   files
+//     riscv_insts_end.sail,
+//     riscv_csr_end.sail,
+//     riscv_step_common.sail,
+//     riscv_step_ext.sail,
+//     riscv_decode_ext.sail,
+//     riscv_fetch_rvfi.sail,
+//     riscv_fetch.sail,
+//     riscv_step.sail,
+//     riscv_termination.sail,
+//     riscv_validate_config.sail,
+//     riscv_device_tree.sail,
+//     riscv_model.sail,
+//     main.sail,
+// }
