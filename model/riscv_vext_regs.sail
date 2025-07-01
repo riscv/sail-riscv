@@ -342,6 +342,10 @@ function clause read_CSR(0xC20) = vl
 function clause read_CSR(0xC21) = vtype.bits
 function clause read_CSR(0xC22) = VLENB
 
+// Note: The spec recommends trapping if vstart is out of bounds but the
+// current implementation does not do that because write_CSR() doesn't
+// allow traps.
+
 function set_vstart(value : bits(16)) -> unit = {
   dirty_v_context();
   vstart = zero_extend(value[(VLEN_pow - 1) .. 0]);
