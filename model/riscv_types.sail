@@ -79,7 +79,6 @@ mapping privLevel_bits : (nom_priv_bits, virt_mode_bit) <-> Privilege = {
 }
 
 function privLevel_to_bits(p : Privilege) -> nom_priv_bits = { let (p, _) = privLevel_bits(p); p }
-function privLevel_of_bits(p : nom_priv_bits, v : virt_mode_bit) -> Privilege = privLevel_bits((p, v))
 
 function privLevel_to_str (p : Privilege) -> string =
   match (p) {
