@@ -90,7 +90,7 @@ sail: build/sail.dtb $(elf) $(SAIL_SIM)
 .PHONY: sail_profile
 sail_profile: build/sail.dtb $(elf) $(SAIL_SIM)
 	rm -f build/prof.out
-	CPUPROFILE=build/prof.out LD_PRELOAD=/usr/local/lib/libtcmalloc_and_profiler.so $(SAIL_SIM) --no-trace -p -l 2000000 --device-tree-blob build/sail.dtb $(elf)
+	CPUPROFILE=build/prof.out LD_PRELOAD=/usr/local/lib/libtcmalloc_and_profiler.so $(SAIL_SIM) --no-trace -p -l $(LIMIT_INSTRUCTIONS) --device-tree-blob build/sail.dtb $(elf)
 	pprof -http : build/prof.out
 
 # Run with Spike: https://github.com/riscv-software-src/riscv-isa-sim
