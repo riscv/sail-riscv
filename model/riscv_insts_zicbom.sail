@@ -50,7 +50,7 @@ enum checked_cbop = {CBOP_ILLEGAL, CBOP_ILLEGAL_VIRTUAL, CBOP_INVAL_FLUSH, CBOP_
 // Select the cbop to perform based on the privilege.
 function cbop_priv_check(p: Privilege) -> checked_cbop = {
   let mCBIE : cbie = encdec_cbie(menvcfg[CBIE]);
-  // TODO: check henvcfg after hyppervisor is implemented
+  // TODO: check henvcfg after hypervisor is implemented
   let sCBIE : cbie = if   currentlyEnabled(Ext_S)
                      then encdec_cbie(senvcfg[CBIE])
                      else encdec_cbie(menvcfg[CBIE]);
