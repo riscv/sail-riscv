@@ -98,7 +98,7 @@ void rvfi_handler::get_and_send_packet(packet_reader_fn reader,
   if (packet.len % 8 != 0) {
     fprintf(stderr, "RVFI-DII trace packet not byte aligned: %d\n",
             (int)packet.len);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   const size_t send_size = packet.len / 8;
   if (config_print) {
@@ -107,7 +107,7 @@ void rvfi_handler::get_and_send_packet(packet_reader_fn reader,
   }
   if (send_size > 4096) {
     fprintf(stderr, "Unexpected large packet size (> 4KB): %zd\n", send_size);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   unsigned char bytes[send_size];
   /* mpz_export might not write all of the null bytes */
@@ -116,7 +116,7 @@ void rvfi_handler::get_and_send_packet(packet_reader_fn reader,
   /* Ensure that we can send a full packet */
   if (write(dii_sock, bytes, send_size) != send_size) {
     fprintf(stderr, "Writing RVFI DII trace failed: %s\n", strerror(errno));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   if (config_print) {
     fprintf(stderr, "Wrote %zd byte response to socket.\n", send_size);
@@ -163,11 +163,11 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
   }
   if (res == -1) {
     fprintf(stderr, "Reading RVFI DII command failed: %s", strerror(errno));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   if (res < sizeof(instr_bits)) {
     fprintf(stderr, "Reading RVFI DII command failed: insufficient input");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   zrvfi_set_instr_packet(instr_bits);
   zrvfi_zzero_exec_packet(UNIT);
@@ -210,7 +210,7 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
     } else {
       fprintf(stderr, "Requested trace in unsupported format %jd!\n",
               (intmax_t)insn);
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     // From now on send traces in the requested format
     trace_version = insn;
@@ -224,13 +224,13 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
     if (write(dii_sock, &version_response, sizeof(version_response))
         != sizeof(version_response)) {
       fprintf(stderr, "Sending version response failed: %s\n", strerror(errno));
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     return RVFI_prestep_continue;
   }
   default:
     fprintf(stderr, "Unknown RVFI-DII command: %#02x\n", (int)cmd);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   return RVFI_prestep_ok;
 }
