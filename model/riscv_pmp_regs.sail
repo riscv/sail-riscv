@@ -19,24 +19,11 @@ let sys_pmp_grain : range(0, 63) = config memory.pmp.grain
 
 enum PmpAddrMatchType = {OFF, TOR, NA4, NAPOT}
 
-val pmpAddrMatchType_of_bits : bits(2) -> PmpAddrMatchType
-function pmpAddrMatchType_of_bits(bs) = {
-  match bs {
-    0b00 => OFF,
-    0b01 => TOR,
-    0b10 => NA4,
-    0b11 => NAPOT
-  }
-}
-
-val pmpAddrMatchType_to_bits : PmpAddrMatchType -> bits(2)
-function pmpAddrMatchType_to_bits(bs) = {
-  match bs {
-    OFF   => 0b00,
-    TOR   => 0b01,
-    NA4   => 0b10,
-    NAPOT => 0b11
-  }
+mapping pmpAddrMatchType_encdec : PmpAddrMatchType <-> bits(2) = {
+  OFF   <-> 0b00,
+  TOR   <-> 0b01,
+  NA4   <-> 0b10,
+  NAPOT <-> 0b11,
 }
 
 bitfield Pmpcfg_ent : bits(8) = {
@@ -102,7 +89,7 @@ function pmpLocked(cfg: Pmpcfg_ent) -> bool =
    cfg[L] == 0b1
 
 function pmpTORLocked(cfg: Pmpcfg_ent) -> bool =
-   (cfg[L] == 0b1) & (pmpAddrMatchType_of_bits(cfg[A]) == TOR)
+   (cfg[L] == 0b1) & (pmpAddrMatchType_encdec(cfg[A]) == TOR)
 
 function pmpWriteCfg(n: range(0, 63), cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
   if pmpLocked(cfg) then cfg
@@ -115,12 +102,21 @@ function pmpWriteCfg(n: range(0, 63), cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent
     // This is the least risky option from a security perspective.
     let cfg = if cfg[W] == 0b1 & cfg[R] == 0b0 then [cfg with X = 0b0, W = 0b0, R = 0b0] else cfg;
 
-    // "When G >= 1, the NA4 mode is not selectable."
-    // In this implementation we set it to OFF if NA4 is selected.
+    // We support disabling all modes globally, which is allowed since this
+    // is a WARL field.
+    let mode_supported : bool = match pmpAddrMatchType_encdec(cfg[A]) {
+      OFF   => true,
+      TOR   => config memory.pmp.tor_supported,
+      // "When G >= 1, the NA4 mode is not selectable."
+      NA4   => (config memory.pmp.na4_supported : bool) & sys_pmp_grain == 0,
+      NAPOT => config memory.pmp.napot_supported,
+    };
+
+    // In this implementation we set the mode to OFF if an unsupported mode is selected.
     // This is the least risky option from a security perspective.
-    let cfg = if sys_pmp_grain >= 1 & pmpAddrMatchType_of_bits(cfg[A]) == NA4
-              then [cfg with A = pmpAddrMatchType_to_bits(OFF)]
-              else cfg;
+    let cfg = if mode_supported
+              then cfg
+              else [cfg with A = pmpAddrMatchType_encdec(OFF)];
 
     cfg
   }
