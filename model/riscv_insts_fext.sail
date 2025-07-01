@@ -274,28 +274,26 @@ union clause ast = LOAD_FP : (bits(12), regidx, fregidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, HALF)
+mapping clause encdec = LOAD_FP(imm, rs1, rd, 2)
   <-> imm @ encdec_reg(rs1) @ 0b001 @ encdec_freg(rd) @ 0b000_0111
   when currentlyEnabled(Ext_Zfhmin)
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, WORD)
+mapping clause encdec = LOAD_FP(imm, rs1, rd, 4)
   <-> imm @ encdec_reg(rs1) @ 0b010 @ encdec_freg(rd) @ 0b000_0111
   when currentlyEnabled(Ext_F)
 
-mapping clause encdec = LOAD_FP(imm, rs1, rd, DOUBLE)
+mapping clause encdec = LOAD_FP(imm, rs1, rd, 8)
   <-> imm @ encdec_reg(rs1) @ 0b011 @ encdec_freg(rd) @ 0b000_0111
   when currentlyEnabled(Ext_D)
 
 /* Execution semantics ================================ */
 
 function clause execute(LOAD_FP(imm, rs1, rd, width)) = {
-  let width_bytes = size_bytes(width);
-
   // This is checked during decoding.
-  assert(width_bytes <= flen_bytes);
+  assert(width <= flen_bytes);
 
   let offset : xlenbits = sign_extend(imm);
-  match vmem_read(rs1, offset, width_bytes, Read(Data), false, false, false) {
+  match vmem_read(rs1, offset, width, Read(Data), false, false, false) {
     Ok(result) => { F(rd) = nan_box(result); RETIRE_SUCCESS },
     Err(e)     => e,
   }
@@ -319,29 +317,27 @@ union clause ast = STORE_FP : (bits(12), fregidx, regidx, word_width)
 
 /* AST <-> Binary encoding ================================ */
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, HALF)
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, 2)
   <-> imm7 : bits(7) @ encdec_freg(rs2) @ encdec_reg(rs1) @ 0b001 @ imm5 : bits(5) @ 0b010_0111
   when currentlyEnabled(Ext_Zfhmin)
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, WORD)
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, 4)
   <-> imm7 : bits(7) @ encdec_freg(rs2) @ encdec_reg(rs1) @ 0b010 @ imm5 : bits(5) @ 0b010_0111
   when currentlyEnabled(Ext_F)
 
-mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, DOUBLE)
+mapping clause encdec = STORE_FP(imm7 @ imm5, rs2, rs1, 8)
   <-> imm7 : bits(7) @ encdec_freg(rs2) @ encdec_reg(rs1) @ 0b011 @ imm5 : bits(5) @ 0b010_0111
   when currentlyEnabled(Ext_D)
 
 /* Execution semantics ================================ */
 
 function clause execute (STORE_FP(imm, rs2, rs1, width)) = {
-  let width_bytes = size_bytes(width);
-
   // This is checked during decoding.
-  assert(width_bytes <= flen_bytes);
+  assert(width <= flen_bytes);
 
   let offset : xlenbits = sign_extend(imm);
-  let data = F(rs2)[width_bytes * 8 - 1 ..  0];
-  match vmem_write(rs1, offset, width_bytes, data, Write(Data), false, false, false) {
+  let data = F(rs2)[width * 8 - 1 ..  0];
+  match vmem_write(rs1, offset, width, data, Write(Data), false, false, false) {
     Ok(true)  => RETIRE_SUCCESS,
     Ok(false) => internal_error(__FILE__, __LINE__, "store got false from vmem_write"),
     Err(e)    => e,

@@ -11,9 +11,9 @@ function clause currentlyEnabled(Ext_Zalrsc) = hartSupports(Ext_Zalrsc) | curren
 // Zalrsc defines LR/SC for word and double
 function lrsc_width_valid(size : word_width) -> bool = {
   match size {
-    WORD   => true,
-    DOUBLE => xlen >= 64,
-    _      => false
+    4 => true,
+    8 => xlen >= 64,
+    _ => false,
   }
 }
 
@@ -36,12 +36,10 @@ mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)
  */
 
 function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
-  let width_bytes = size_bytes(width);
-
   // This is checked during decoding.
-  assert(width_bytes <= xlen_bytes);
+  assert(width <= xlen_bytes);
 
-  match vmem_read(rs1, zeros(), width_bytes, Read(Data), aq, aq & rl, true) {
+  match vmem_read(rs1, zeros(), width, Read(Data), aq, aq & rl, true) {
     Ok(data) => {
       X(rd) = sign_extend(data);
       RETIRE_SUCCESS
@@ -63,16 +61,14 @@ mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)
 
 /* NOTE: Currently, we only EA if address translation is successful. This may need revisiting. */
 function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
-  let width_bytes = size_bytes(width);
-
   // This is checked during decoding.
-  assert(width_bytes <= xlen_bytes);
+  assert(width <= xlen_bytes);
 
   /* normal non-rmem case
    * RMEM: SC is allowed to succeed (but might fail later)
    */
-  let data = X(rs2)[width_bytes * 8 - 1 .. 0];
-  match vmem_write(rs1, zeros(), width_bytes, data, Write(Data), aq & rl, rl, true) {
+  let data = X(rs2)[width * 8 - 1 .. 0];
+  match vmem_write(rs1, zeros(), width, data, Write(Data), aq & rl, rl, true) {
     Ok(b) => {
       X(rd) = zero_extend(bool_bits(~(b)));
       cancel_reservation();

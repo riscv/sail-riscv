@@ -47,10 +47,10 @@ function is_aligned_vaddr(Virtaddr(addr) : virtaddr, width : nat1) -> bool =
 
 function is_aligned_bits(vaddr : xlenbits, width : word_width) -> bool =
   match width {
-    BYTE   => true,
-    HALF   => vaddr[0..0] == zeros(),
-    WORD   => vaddr[1..0] == zeros(),
-    DOUBLE => vaddr[2..0] == zeros(),
+    1 => true,
+    2 => vaddr[0..0] == zeros(),
+    4 => vaddr[1..0] == zeros(),
+    8 => vaddr[2..0] == zeros(),
   }
 
 overload is_aligned_addr = {is_aligned_paddr, is_aligned_vaddr, is_aligned_bits}
