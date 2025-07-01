@@ -8,9 +8,6 @@
 
 function clause currentlyEnabled(Ext_V) = hartSupports(Ext_V) & (misa[V] == 0b1) & (mstatus[VS] != 0b00) & currentlyEnabled(Ext_Zicsr)
 
-// Note: The spec recommends trapping if vstart is out of bounds but the
-// current implementation does yet do that.
-
 /* num_elem means max(VLMAX,VLEN/SEW)) according to Section 5.4 of RVV spec */
 val get_num_elem : (int, sew_bitsize) -> nat1
 function get_num_elem(LMUL_pow, SEW) = {
