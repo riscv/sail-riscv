@@ -1714,37 +1714,49 @@ mapping clause assembly = WMVVTYPE(funct6, vm, vs2, vs1, vd)
 
 /* ****************************** OPMVV (VXUNARY0) ******************************* */
 /* ******************* Vector Integer Extension (SEW/2 source) ******************* */
-union clause ast = VEXT2TYPE : (vext2funct6, bits(1), vregidx, vregidx)
+union clause ast = VEXTTYPE : (vextfunct6, bits(1), vregidx, vregidx)
 
-mapping vext2_vs1 : vext2funct6 <-> bits(5) = {
+mapping vext_vs1 : vextfunct6 <-> bits(5) = {
   VEXT2_ZVF2  <-> 0b00110,
-  VEXT2_SVF2  <-> 0b00111
+  VEXT2_SVF2  <-> 0b00111,
+  VEXT4_ZVF4  <-> 0b00100,
+  VEXT4_SVF4  <-> 0b00101,
+  VEXT8_ZVF8  <-> 0b00010,
+  VEXT8_SVF8  <-> 0b00011,
 }
 
-mapping clause encdec = VEXT2TYPE(funct6, vm, vs2, vd)
-  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ vext2_vs1(funct6) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
+mapping clause encdec = VEXTTYPE(funct6, vm, vs2, vd)
+  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ vext_vs1(funct6) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_V)
 
-function clause execute(VEXT2TYPE(funct6, vm, vs2, vd)) = {
+function clause execute(VEXTTYPE(funct6, vm, vs2, vd)) = {
   let SEW = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
-  let SEW_half = SEW / 2;
-  let LMUL_pow_half = LMUL_pow - 1;
+  let SEW_frac_pow : {1, 2, 3} = match funct6 {
+    VEXT2_ZVF2  =>  1,
+    VEXT2_SVF2  =>  1,
+    VEXT4_ZVF4  =>  2,
+    VEXT4_SVF4  =>  2,
+    VEXT8_ZVF8  =>  3,
+    VEXT8_SVF8  =>  3,
+  };
+  let LMUL_pow_div = LMUL_pow - SEW_frac_pow;
+  let SEW_div = SEW / (2 ^ SEW_frac_pow);
 
-  if  illegal_variable_width(vd, vm, SEW_half, LMUL_pow_half) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow_half, LMUL_pow))
+  if  illegal_variable_width(vd, vm, SEW_div, LMUL_pow_div) |
+      not(valid_reg_overlap(vs2, vd, LMUL_pow_div, LMUL_pow))
   then return Illegal_Instruction();
 
-  assert(SEW_half >= 8);
+  assert(SEW_div >= 8);
 
   let 'n = num_elem;
   let 'm = SEW;
-  let 'o = SEW_half;
+  let 'o = SEW_div;
 
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_half, LMUL_pow_half, vs2);
+  let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_div, LMUL_pow_div, vs2);
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
@@ -1756,132 +1768,11 @@ function clause execute(VEXT2TYPE(funct6, vm, vs2, vd)) = {
     if mask[i] == bitone then {
       result[i] = match funct6 {
         VEXT2_ZVF2 => zero_extend(vs2_val[i]),
-        VEXT2_SVF2 => sign_extend(vs2_val[i])
-      }
-    }
-  };
-
-  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  set_vstart(zeros());
-  RETIRE_SUCCESS
-}
-
-mapping vext2type_mnemonic : vext2funct6 <-> string = {
-  VEXT2_ZVF2  <-> "vzext.vf2",
-  VEXT2_SVF2  <-> "vsext.vf2"
-}
-
-mapping clause assembly = VEXT2TYPE(funct6, vm, vs2, vd)
-  <-> vext2type_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
-
-/* ****************************** OPMVV (VXUNARY0) ******************************* */
-/* ******************* Vector Integer Extension (SEW/4 source) ******************* */
-union clause ast = VEXT4TYPE : (vext4funct6, bits(1), vregidx, vregidx)
-
-mapping vext4_vs1 : vext4funct6 <-> bits(5) = {
-  VEXT4_ZVF4  <-> 0b00100,
-  VEXT4_SVF4  <-> 0b00101
-}
-
-mapping clause encdec = VEXT4TYPE(funct6, vm, vs2, vd)
-  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ vext4_vs1(funct6) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
-
-function clause execute(VEXT4TYPE(funct6, vm, vs2, vd)) = {
-  let SEW = get_sew();
-  let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
-  let SEW_quart = SEW / 4;
-  let LMUL_pow_quart = LMUL_pow - 2;
-
-  if  illegal_variable_width(vd, vm, SEW_quart, LMUL_pow_quart) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow_quart, LMUL_pow))
-  then return Illegal_Instruction();
-
-  assert(SEW_quart >= 8);
-
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_quart;
-
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_quart, LMUL_pow_quart, vs2);
-
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
-  var result = initial_result;
-
-  foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
-      result[i] = match funct6 {
+        VEXT2_SVF2 => sign_extend(vs2_val[i]),
         VEXT4_ZVF4 => zero_extend(vs2_val[i]),
-        VEXT4_SVF4 => sign_extend(vs2_val[i])
-      }
-    }
-  };
-
-  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
-  set_vstart(zeros());
-  RETIRE_SUCCESS
-}
-
-mapping vext4type_mnemonic : vext4funct6 <-> string = {
-  VEXT4_ZVF4  <-> "vzext.vf4",
-  VEXT4_SVF4  <-> "vsext.vf4"
-}
-
-mapping clause assembly = VEXT4TYPE(funct6, vm, vs2, vd)
-  <-> vext4type_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
-
-/* ****************************** OPMVV (VXUNARY0) ******************************* */
-/* ******************* Vector Integer Extension (SEW/8 source) ******************* */
-union clause ast = VEXT8TYPE : (vext8funct6, bits(1), vregidx, vregidx)
-
-mapping vext8_vs1 : vext8funct6 <-> bits(5) = {
-  VEXT8_ZVF8  <-> 0b00010,
-  VEXT8_SVF8  <-> 0b00011
-}
-
-mapping clause encdec = VEXT8TYPE(funct6, vm, vs2, vd)
-  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ vext8_vs1(funct6) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
-
-function clause execute(VEXT8TYPE(funct6, vm, vs2, vd)) = {
-  let SEW = get_sew();
-  let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
-  let SEW_eighth = SEW / 8;
-  let LMUL_pow_eighth = LMUL_pow - 3;
-
-  if  illegal_variable_width(vd, vm, SEW_eighth, LMUL_pow_eighth) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow_eighth, LMUL_pow))
-  then return Illegal_Instruction();
-
-  assert(SEW_eighth >= 8);
-
-  let 'n = num_elem;
-  let 'm = SEW;
-  let 'o = SEW_eighth;
-
-  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_eighth, LMUL_pow_eighth, vs2);
-
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
-  var result = initial_result;
-
-  assert(SEW > SEW_eighth);
-  foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
-      result[i] = match funct6 {
+        VEXT4_SVF4 => sign_extend(vs2_val[i]),
         VEXT8_ZVF8 => zero_extend(vs2_val[i]),
-        VEXT8_SVF8 => sign_extend(vs2_val[i])
+        VEXT8_SVF8 => sign_extend(vs2_val[i]),
       }
     }
   };
@@ -1891,13 +1782,17 @@ function clause execute(VEXT8TYPE(funct6, vm, vs2, vd)) = {
   RETIRE_SUCCESS
 }
 
-mapping vext8type_mnemonic : vext8funct6 <-> string = {
+mapping vexttype_mnemonic : vextfunct6 <-> string = {
+  VEXT2_ZVF2  <-> "vzext.vf2",
+  VEXT2_SVF2  <-> "vsext.vf2",
+  VEXT4_ZVF4  <-> "vzext.vf4",
+  VEXT4_SVF4  <-> "vsext.vf4",
   VEXT8_ZVF8  <-> "vzext.vf8",
-  VEXT8_SVF8  <-> "vsext.vf8"
+  VEXT8_SVF8  <-> "vsext.vf8",
 }
 
-mapping clause assembly = VEXT8TYPE(funct6, vm, vs2, vd)
-  <-> vext8type_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
+mapping clause assembly = VEXTTYPE(funct6, vm, vs2, vd)
+  <-> vexttype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************ OPMVV (vmv.x.s in VWXUNARY0) ************************* */
 union clause ast = VMVXS : (vregidx, regidx)
