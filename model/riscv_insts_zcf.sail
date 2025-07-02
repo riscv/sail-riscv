@@ -40,15 +40,15 @@ mapping clause assembly = C_FSWSP(uimm, rs2)
   when xlen == 32
 
 /* ****************************************************************** */
-union clause instruction = C_FLW : (bits(5), cregidx, cregidx)
+union clause instruction = C_FLW : (bits(5), cregidx, cfregidx)
 
 mapping clause encdec_compressed = C_FLW(ui6 @ ui53 @ ui2, rs1, rd)
-  <-> 0b011 @ ui53 : bits(3) @ encdec_creg(rs1) @ ui2 : bits(1) @ ui6 : bits(1) @ encdec_creg(rd) @ 0b00
+  <-> 0b011 @ ui53 : bits(3) @ encdec_creg(rs1) @ ui2 : bits(1) @ ui6 : bits(1) @ encdec_cfreg(rd) @ 0b00
   when currentlyEnabled(Ext_Zcf)
 
 function clause execute (C_FLW(uimm, rsc, rdc)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
-  let rd = cregidx_to_fregidx(rdc);
+  let rd = cfregidx_to_fregidx(rdc);
   let rs = creg2reg_idx(rsc);
   execute(LOAD_FP(imm, rs, rd, 4))
 }
@@ -58,16 +58,16 @@ mapping clause assembly = C_FLW(uimm, rsc, rdc)
   when xlen == 32
 
 /* ****************************************************************** */
-union clause instruction = C_FSW : (bits(5), cregidx, cregidx)
+union clause instruction = C_FSW : (bits(5), cregidx, cfregidx)
 
 mapping clause encdec_compressed = C_FSW(ui6 @ ui53 @ ui2, rs1, rs2)
-  <-> 0b111 @ ui53 : bits(3) @ encdec_creg(rs1) @ ui2 : bits(1) @ ui6 : bits(1) @ encdec_creg(rs2) @ 0b00
+  <-> 0b111 @ ui53 : bits(3) @ encdec_creg(rs1) @ ui2 : bits(1) @ ui6 : bits(1) @ encdec_cfreg(rs2) @ 0b00
   when currentlyEnabled(Ext_Zcf)
 
 function clause execute (C_FSW(uimm, rsc1, rsc2)) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
   let rs1 = creg2reg_idx(rsc1);
-  let rs2 = cregidx_to_fregidx(rsc2);
+  let rs2 = cfregidx_to_fregidx(rsc2);
   execute(STORE_FP(imm, rs2, rs1, 4))
 }
 
