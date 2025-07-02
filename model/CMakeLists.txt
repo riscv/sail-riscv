@@ -218,6 +218,8 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
         set(c_model_no_ext "${CMAKE_BINARY_DIR}/sail_riscv_model")
         set(c_model "${c_model_no_ext}.c")
         set(c_model_header "${c_model_no_ext}.h")
+        # JSON schema for configuration file.
+        set(schema_file "${CMAKE_BINARY_DIR}/sail_riscv_config_schema.json")
 
         if (COVERAGE)
             set(branch_info_file "${c_model_no_ext}.branch_info")
@@ -229,7 +231,7 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
 
         add_custom_command(
             DEPENDS ${sail_srcs}
-            OUTPUT ${c_model} ${c_model_header} ${branch_info_file}
+            OUTPUT ${c_model} ${c_model_header} ${branch_info_file} ${schema_file}
             VERBATIM
             COMMENT "Building C code from Sail model"
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -241,6 +243,9 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
                 # Generate a file containing information about all possible branches.
                 # See https://github.com/rems-project/sail/blob/sail2/sailcov/README.md
                 ${coverage_args}
+                # Generate schema for configuration.
+                --output-schema ${schema_file}
+
                 # Optimisations.
                 -O --Oconstant-fold
                 # Cache Z3 results in z3_problems file to speed up incremental compilation.
