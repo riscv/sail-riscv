@@ -27,6 +27,7 @@
 #include "rvfi_dii.h"
 #include "default_config.h"
 #include "config_utils.h"
+#include "version.h"
 
 enum {
   OPT_TRACE_OUTPUT = 1000,
@@ -34,6 +35,7 @@ enum {
   OPT_VALIDATE_CONFIG,
   OPT_SAILCOV,
   OPT_ENABLE_EXPERIMENTAL_EXTENSIONS,
+  OPT_PRINT_VERSION,
   OPT_PRINT_DTS,
   OPT_PRINT_ISA,
 };
@@ -111,6 +113,7 @@ static struct option options[] = {
     {"rvfi-dii",                       required_argument, 0, 'r'                },
     {"help",                           no_argument,       0, 'h'                },
     {"config",                         required_argument, 0, 'c'                },
+    {"version",                        no_argument,       0, OPT_PRINT_VERSION  },
     {"print-default-config",           no_argument,       0, OPT_PRINT_CONFIG   },
     {"validate-config",                no_argument,       0, OPT_VALIDATE_CONFIG},
     {"trace",                          optional_argument, 0, 'v'                },
@@ -270,6 +273,9 @@ static int process_args(int argc, char **argv)
       }
       break;
     }
+    case OPT_PRINT_VERSION:
+      printf("%s\n", SAIL_RISCV_VERSION);
+      exit(0);
     case OPT_PRINT_CONFIG:
       printf("%s", DEFAULT_JSON);
       exit(EXIT_SUCCESS);
