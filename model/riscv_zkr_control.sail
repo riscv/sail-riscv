@@ -44,4 +44,4 @@ function write_seed_csr () -> xlenbits = zeros()
 mapping clause csr_name_map = 0x015  <-> "seed"
 function clause is_CSR_defined(0x015) = currentlyEnabled(Ext_Zkr)
 function clause read_CSR(0x015) = read_seed_csr()
-function clause write_CSR(0x015, value) = write_seed_csr()
+function clause write_CSR(0x015, value) = Ok(write_seed_csr())
