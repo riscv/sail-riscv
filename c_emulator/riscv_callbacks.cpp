@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <vector>
 #include <inttypes.h>
+#include "jtag_dtm.h"
+#include "remote_bitbang.h"
 
 void print_lbits_hex(lbits val, int length = 0)
 {
@@ -134,6 +136,23 @@ unit trap_callback(unit)
 {
   if (config_enable_rvfi) {
     zrvfi_trap(UNIT);
+  }
+  return UNIT;
+}
+
+unit jtag_dtm_tick(unit)
+{
+  if (is_debug_enabled()) {
+    // NOTE: This is a temporary solution and needs to be redone
+    // we want to avoid the simulation ending too early
+    // so we keep polling to see if the debugger has sent more data
+    int max_ticks = 10000000;
+    int ticks = 0;
+    auto remote_bitbang = get_remote_bitbang();
+    while (ticks < max_ticks) {
+      remote_bitbang->tick();
+      ticks++;
+    }
   }
   return UNIT;
 }

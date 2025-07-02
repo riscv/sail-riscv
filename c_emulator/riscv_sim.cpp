@@ -27,6 +27,7 @@
 #include "rvfi_dii.h"
 #include "default_config.h"
 #include "config_utils.h"
+#include "jtag_dtm.h"
 
 enum {
   OPT_TRACE_OUTPUT = 1000,
@@ -220,6 +221,7 @@ static int process_args(int argc, char **argv)
   while (true) {
     c = getopt_long(argc, argv,
                     "a"
+                    "d:"
                     "p"
                     "b:"
                     "t:"
@@ -235,6 +237,15 @@ static int process_args(int argc, char **argv)
     if (c == -1)
       break;
     switch (c) {
+    case 'd': {
+      fprintf(
+          stderr,
+          "Enable debugging and waits for OpenOCD to connect, opens port at "
+          "provided argument\n");
+      uint16_t rbb_port = atoi(optarg);
+      init_debug_interface(rbb_port);
+      break;
+    }
     case 'p':
       fprintf(stderr, "will show execution times on completion.\n");
       do_show_times = true;
@@ -445,6 +456,7 @@ void init_sail_reset_vector(uint64_t entry)
 
 void init_sail(uint64_t elf_entry, const char *config_file)
 {
+
   zinit_model(config_file != nullptr ? config_file : "");
   if (rvfi) {
     /*
