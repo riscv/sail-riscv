@@ -52,29 +52,6 @@ mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)
   <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ size_enc_wide(size) @ encdec_reg(rd) @ 0b0101111
   when amo_encoding_valid(size, op, rs2, rd)
 
-// AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
-// registers. When the first register of a source register pair is
-// x0, then both halves of the pair read as zero.
-
-val rX_amo_bits : forall 'w, 'w in {1, 2, 4, 8, 16} & 'w <= xlen_bytes * 2 . (regidx, int('w)) -> bits('w * 8)
-function rX_amo_bits(i, width_bytes) =
-  if i != zreg then {
-    if width_bytes <= xlen_bytes then X(i)[width_bytes * 8 - 1 .. 0] else X(i + 1) @ X(i)
-  } else zeros()
-
-val wX_amo_bits : forall 'w, 'w in {1, 2, 4, 8, 16} & 'w <= xlen_bytes * 2 . (regidx, int('w), bits('w * 8)) -> unit
-function wX_amo_bits(i, width_bytes, data) =
-  if i != zreg then {
-    if width_bytes <= xlen_bytes then X(i) = sign_extend(data) else {
-      X(i) = data[xlen - 1 .. 0];
-      X(i + 1) = data[xlen * 2 - 1 .. xlen];
-    }
-  }
-
-// X_amo allows accessing parts of registers (writes are sign-extended),
-// or register pairs for AMOCAS.
-overload X_amo = {rX_amo_bits, wX_amo_bits}
-
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
 function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
@@ -94,7 +71,10 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
       else match translateAddr(vaddr, ReadWrite(Data, Data)) {
         Err(e, _) => Memory_Exception(vaddr, e),
         Ok(addr, _) => {
-          let rs2_val = X_amo(rs2, width);
+          // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
+          // registers. When the first register of a register pair is
+          // x0, then both halves of the pair read/write as zero.
+          let rs2_val = X_pair(rs2, width)[width * 8 - 1 .. 0];
           match mem_write_ea(addr, width, aq & rl, rl, true) {
             Err(e) => Memory_Exception(vaddr, e),
             Ok(_) => {
@@ -117,13 +97,13 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                     };
 
                   // All operations except CAS where loaded != X(rd) write their value back.
-                  if op == AMOCAS & loaded != X_amo(rd, width) then {
+                  if op == AMOCAS & loaded != X_pair(rd, width)[width * 8 - 1 .. 0] then {
                     // Compared, but didn't swap.
                     RETIRE_SUCCESS
                   } else {
                     match mem_write_value(addr, width, sign_extend(result), aq & rl, rl, true) {
                       Ok(true)  => {
-                        X_amo(rd, width) = loaded;
+                        X_pair(rd, width) = sign_extend(loaded);
                         RETIRE_SUCCESS
                       },
                       Ok(false) => { internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value") },

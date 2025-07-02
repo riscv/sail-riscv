@@ -223,6 +223,30 @@ function wX_bits(Regidx(i) : regidx, data : xlenbits) -> unit = {
 
 overload X = {rX_bits, wX_bits, rX, wX}
 
+// X_pair allows accessing a single register or a pair of registers for
+// XLEN*2 accesses. When accessing (x0, x1) then the entire access
+// is read-only zero. This is used for Zacas and Zilsd.
+
+// `width_bytes` is the access width. If it is greater than XLEN then
+// a 2*XLEN bit vector will be returned.
+val rX_pair_bits : forall 'w, 'w <= xlen_bytes * 2 . (regidx, int('w)) -> bits((if 'w <= xlen_bytes then xlen_bytes else xlen_bytes * 2) * 8)
+function rX_pair_bits(i, width_bytes) =
+  if i != zreg then {
+    if width_bytes <= xlen_bytes then X(i) else X(i + 1) @ X(i)
+  } else zeros()
+
+val wX_pair_bits : forall 'w, 'w <= xlen_bytes * 2 . (regidx, int('w), bits((if 'w <= xlen_bytes then xlen_bytes else xlen_bytes * 2) * 8)) -> unit
+function wX_pair_bits(i, width_bytes, data) =
+  if i != zreg then {
+    if width_bytes <= xlen_bytes then X(i) = data else {
+      X(i) = data[xlen - 1 .. 0];
+      X(i + 1) = data[xlen * 2 - 1 .. xlen];
+    }
+  }
+
+overload X_pair = {rX_pair_bits, wX_pair_bits}
+
+
 /* Mappings for encoding */
 
 mapping encdec_reg : regidx <-> bits(5) = { Regidx(r) <-> r }
