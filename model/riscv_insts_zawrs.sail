@@ -12,7 +12,7 @@ function clause currentlyEnabled(Ext_Zawrs) = hartSupports(Ext_Zawrs)
 
 /* ****************************************************************** */
 
-union clause ast = WRS : (wrsop)
+union clause instruction = WRS : (wrsop)
 mapping encdec_wrsop : wrsop <-> bits(12) = {
   WRS_STO <-> 0b000000011101,
   WRS_NTO <-> 0b000000001101,

@@ -8,7 +8,7 @@
 
 function clause currentlyEnabled(Ext_Svinval) = hartSupports(Ext_Svinval)
 
-union clause ast = SINVAL_VMA : (regidx, regidx)
+union clause instruction = SINVAL_VMA : (regidx, regidx)
 
 mapping clause encdec = SINVAL_VMA(rs1, rs2)
   <-> 0b0001011 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ 0b00000 @ 0b1110011
@@ -23,7 +23,7 @@ mapping clause assembly = SINVAL_VMA(rs1, rs2)
 
 /* ****************************************************************** */
 
-union clause ast = SFENCE_W_INVAL : unit
+union clause instruction = SFENCE_W_INVAL : unit
 
 mapping clause encdec = SFENCE_W_INVAL()
   <-> 0b0001100 @ 0b00000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
@@ -39,7 +39,7 @@ mapping clause assembly = SFENCE_W_INVAL() <-> "sfence.w.inval"
 
 /* ****************************************************************** */
 
-union clause ast = SFENCE_INVAL_IR : unit
+union clause instruction = SFENCE_INVAL_IR : unit
 
 mapping clause encdec = SFENCE_INVAL_IR()
   <-> 0b0001100 @ 0b00001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011

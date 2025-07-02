@@ -11,7 +11,7 @@
 
 /* ****************************************************************** */
 
-union clause ast = STOP_FETCHING : unit
+union clause instruction = STOP_FETCHING : unit
 
 /* RMEM stop fetching sentinel, using RISCV encoding space custom-0 */
 mapping clause encdec = STOP_FETCHING()
@@ -21,7 +21,7 @@ function clause execute (STOP_FETCHING()) = RETIRE_SUCCESS
 
 mapping clause assembly = STOP_FETCHING() <-> "stop_fetching"
 
-union clause ast = THREAD_START : unit
+union clause instruction = THREAD_START : unit
 
 /* RMEM thread start sentinel, using RISCV encoding space custom-0 */
 mapping clause encdec = THREAD_START()

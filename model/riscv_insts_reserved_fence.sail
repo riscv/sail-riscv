@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-union clause ast = FENCE_RESERVED : (bits(4), bits(4), bits(4), regidx, regidx)
+union clause instruction = FENCE_RESERVED : (bits(4), bits(4), bits(4), regidx, regidx)
 
 mapping clause encdec = FENCE_RESERVED(fm, pred, succ, rs, rd)
   <-> fm : bits(4) @ pred : bits(4) @ succ : bits(4) @ encdec_reg(rs) @ 0b000 @ encdec_reg(rd) @ 0b0001111
@@ -20,7 +20,7 @@ mapping clause assembly = FENCE_RESERVED(fm, pred, succ, rs, rd)
       when (fm != 0b0000 & fm != 0b1000) | rs != zreg | rd != zreg
 
 /* ****************************************************************** */
-union clause ast = FENCEI_RESERVED : (bits(12), regidx, regidx)
+union clause instruction = FENCEI_RESERVED : (bits(12), regidx, regidx)
 
 mapping clause encdec = FENCEI_RESERVED(imm, rs, rd)
   <-> imm : bits(12) @ encdec_reg(rs) @ 0b001 @ encdec_reg(rd) @ 0b0001111

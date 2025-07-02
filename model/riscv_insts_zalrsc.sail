@@ -19,7 +19,7 @@ function lrsc_width_valid(size : word_width) -> bool = {
 
 /* ****************************************************************** */
 
-union clause ast = LOADRES : (bool, bool, regidx, word_width, regidx)
+union clause instruction = LOADRES : (bool, bool, regidx, word_width, regidx)
 
 mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)
   <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111
@@ -53,7 +53,7 @@ mapping clause assembly = LOADRES(aq, rl, rs1, size, rd)
 
 /* ****************************************************************** */
 
-union clause ast = STORECON : (bool, bool, regidx, regidx, word_width, regidx)
+union clause instruction = STORECON : (bool, bool, regidx, regidx, word_width, regidx)
 
 mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)
   <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111

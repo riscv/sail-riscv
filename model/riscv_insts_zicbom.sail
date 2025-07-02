@@ -13,7 +13,7 @@ function clause currentlyEnabled(Ext_Zicbom) = hartSupports(Ext_Zicbom)
 function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], senvcfg[CBCFE][0])
 
 /* ****************************************************************** */
-union clause ast = ZICBOM : (cbop_zicbom, regidx)
+union clause instruction = ZICBOM : (cbop_zicbom, regidx)
 
 mapping encdec_cbop : cbop_zicbom <-> bits(12) = {
   CBO_CLEAN <-> 0b000000000001,

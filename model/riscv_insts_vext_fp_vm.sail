@@ -13,7 +13,7 @@
 
 /* ******************************* OPFVV (VVMTYPE) ******************************* */
 /* FVVM instructions' destination is a mask register */
-union clause ast = FVVMTYPE : (fvvmfunct6, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = FVVMTYPE : (fvvmfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_fvvmfunct6 : fvvmfunct6 <-> bits(6) = {
   FVVM_VMFEQ      <-> 0b011000,
@@ -78,7 +78,7 @@ mapping clause assembly = FVVMTYPE(funct6, vm, vs2, vs1, vd)
 
 /* ******************************* OPFVF (VFMTYPE) ******************************* */
 /* VFM instructions' destination is a mask register */
-union clause ast = FVFMTYPE : (fvfmfunct6, bits(1), vregidx, fregidx, vregidx)
+union clause instruction = FVFMTYPE : (fvfmfunct6, bits(1), vregidx, fregidx, vregidx)
 
 mapping encdec_fvfmfunct6 : fvfmfunct6 <-> bits(6) = {
   VFM_VMFEQ      <-> 0b011000,

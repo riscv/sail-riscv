@@ -13,10 +13,10 @@
 
 function clause currentlyEnabled(Ext_Zknh) = hartSupports(Ext_Zknh)
 
-union clause ast = SHA256SIG0 : (regidx, regidx)
-union clause ast = SHA256SIG1 : (regidx, regidx)
-union clause ast = SHA256SUM0 : (regidx, regidx)
-union clause ast = SHA256SUM1 : (regidx, regidx)
+union clause instruction = SHA256SIG0 : (regidx, regidx)
+union clause instruction = SHA256SIG1 : (regidx, regidx)
+union clause instruction = SHA256SUM0 : (regidx, regidx)
+union clause instruction = SHA256SUM1 : (regidx, regidx)
 
 mapping clause encdec = SHA256SUM0 (rs1, rd)
   <-> 0b00 @ 0b01000 @ 0b00000 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
@@ -81,7 +81,7 @@ function clause execute (SHA256SUM1(rs1, rd)) = {
 
 function clause currentlyEnabled(Ext_Zkne) = hartSupports(Ext_Zkne)
 
-union clause ast = AES32ESMI : (bits(2), regidx, regidx, regidx)
+union clause instruction = AES32ESMI : (bits(2), regidx, regidx, regidx)
 
 mapping clause encdec = AES32ESMI (bs, rs2, rs1, rd)
   <-> bs @ 0b10011 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
@@ -100,7 +100,7 @@ function clause execute (AES32ESMI (bs, rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = AES32ESI : (bits(2), regidx, regidx, regidx)
+union clause instruction = AES32ESI : (bits(2), regidx, regidx, regidx)
 
 mapping clause encdec = AES32ESI (bs, rs2, rs1, rd)
   <-> bs @ 0b10001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
@@ -125,7 +125,7 @@ function clause execute (AES32ESI (bs, rs2, rs1, rd)) = {
 
 function clause currentlyEnabled(Ext_Zknd) = hartSupports(Ext_Zknd)
 
-union clause ast = AES32DSMI : (bits(2), regidx, regidx, regidx)
+union clause instruction = AES32DSMI : (bits(2), regidx, regidx, regidx)
 
 mapping clause encdec = AES32DSMI (bs, rs2, rs1, rd)
   <-> bs @ 0b10111 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
@@ -144,7 +144,7 @@ function clause execute (AES32DSMI (bs, rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = AES32DSI  : (bits(2), regidx, regidx, regidx)
+union clause instruction = AES32DSI  : (bits(2), regidx, regidx, regidx)
 
 mapping clause encdec = AES32DSI (bs, rs2, rs1, rd)
   <-> bs @ 0b10101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
@@ -167,12 +167,12 @@ function clause execute (AES32DSI (bs, rs2, rs1, rd)) = {
  * ----------------------------------------------------------------------
  */
 
-union clause ast = SHA512SIG0L : (regidx, regidx, regidx)
-union clause ast = SHA512SIG0H : (regidx, regidx, regidx)
-union clause ast = SHA512SIG1L : (regidx, regidx, regidx)
-union clause ast = SHA512SIG1H : (regidx, regidx, regidx)
-union clause ast = SHA512SUM0R : (regidx, regidx, regidx)
-union clause ast = SHA512SUM1R : (regidx, regidx, regidx)
+union clause instruction = SHA512SIG0L : (regidx, regidx, regidx)
+union clause instruction = SHA512SIG0H : (regidx, regidx, regidx)
+union clause instruction = SHA512SIG1L : (regidx, regidx, regidx)
+union clause instruction = SHA512SIG1H : (regidx, regidx, regidx)
+union clause instruction = SHA512SUM0R : (regidx, regidx, regidx)
+union clause instruction = SHA512SUM1R : (regidx, regidx, regidx)
 
 mapping clause encdec = SHA512SUM0R (rs2, rs1, rd)
   <-> 0b01 @ 0b01000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
@@ -257,13 +257,13 @@ function clause execute (SHA512SUM1R(rs2, rs1, rd)) = {
  * ----------------------------------------------------------------------
  */
 
-union clause ast = AES64KS1I : (bits(4), regidx, regidx)
-union clause ast = AES64KS2  : (regidx, regidx, regidx)
-union clause ast = AES64IM   : (regidx, regidx)
-union clause ast = AES64ESM  : (regidx, regidx, regidx)
-union clause ast = AES64ES   : (regidx, regidx, regidx)
-union clause ast = AES64DSM  : (regidx, regidx, regidx)
-union clause ast = AES64DS   : (regidx, regidx, regidx)
+union clause instruction = AES64KS1I : (bits(4), regidx, regidx)
+union clause instruction = AES64KS2  : (regidx, regidx, regidx)
+union clause instruction = AES64IM   : (regidx, regidx)
+union clause instruction = AES64ESM  : (regidx, regidx, regidx)
+union clause instruction = AES64ES   : (regidx, regidx, regidx)
+union clause instruction = AES64DSM  : (regidx, regidx, regidx)
+union clause instruction = AES64DS   : (regidx, regidx, regidx)
 
 mapping clause encdec = AES64KS1I (rnum, rs1, rd)
   <-> 0b00 @ 0b11000 @ 0b1 @ rnum @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
@@ -382,10 +382,10 @@ function clause execute (AES64DS(rs2, rs1, rd)) = {
  * ----------------------------------------------------------------------
  */
 
-union clause ast = SHA512SIG0 : (regidx, regidx)
-union clause ast = SHA512SIG1 : (regidx, regidx)
-union clause ast = SHA512SUM0 : (regidx, regidx)
-union clause ast = SHA512SUM1 : (regidx, regidx)
+union clause instruction = SHA512SIG0 : (regidx, regidx)
+union clause instruction = SHA512SIG1 : (regidx, regidx)
+union clause instruction = SHA512SUM0 : (regidx, regidx)
+union clause instruction = SHA512SUM1 : (regidx, regidx)
 
 mapping clause encdec = SHA512SUM0 (rs1, rd)
   <-> 0b00 @ 0b01000 @ 0b00100 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011

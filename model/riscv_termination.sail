@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-val compressed_measure : ast -> int
+val compressed_measure : instruction -> int
 function compressed_measure(instr) =
   match instr {
     C_ADDI4SPN (rdc,nzimm) => 1,

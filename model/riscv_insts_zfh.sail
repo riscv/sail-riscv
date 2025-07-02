@@ -180,11 +180,11 @@ function haveHalfMin() -> bool = haveHalfFPU() | currentlyEnabled(Ext_Zfhmin) | 
 
 /* Binary ops with rounding mode */
 
-/* AST */
+/* instruction */
 
-union clause ast = F_BIN_RM_TYPE_H : (fregidx, fregidx, rounding_mode, fregidx, f_bin_rm_op_H)
+union clause instruction = F_BIN_RM_TYPE_H : (fregidx, fregidx, rounding_mode, fregidx, f_bin_rm_op_H)
 
-/* AST <-> Binary encoding ================================ */
+/* instruction <-> Binary encoding ================================ */
 
 mapping clause encdec = F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, FADD_H)
 <-> 0b000_0010 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
@@ -224,7 +224,7 @@ function clause execute (F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, op)) = {
   }
 }
 
-/* AST -> Assembly notation ================================ */
+/* instruction -> Assembly notation ================================ */
 
 mapping f_bin_rm_type_mnemonic_H : f_bin_rm_op_H <-> string = {
   FADD_H  <-> "fadd.h",
@@ -243,11 +243,11 @@ mapping clause assembly = F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, op)
 /* ****************************************************************** */
 /* Fused multiply-add */
 
-/* AST */
+/* instruction */
 
-union clause ast = F_MADD_TYPE_H : (fregidx, fregidx, fregidx, rounding_mode, fregidx, f_madd_op_H)
+union clause instruction = F_MADD_TYPE_H : (fregidx, fregidx, fregidx, rounding_mode, fregidx, f_madd_op_H)
 
-/* AST <-> Binary encoding ================================ */
+/* instruction <-> Binary encoding ================================ */
 
 mapping clause encdec = F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, FMADD_H)
 <-> encdec_freg(rs3) @ 0b10 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_0011
@@ -289,7 +289,7 @@ function clause execute (F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, op)) = {
   }
 }
 
-/* AST -> Assembly notation ================================ */
+/* instruction -> Assembly notation ================================ */
 
 mapping f_madd_type_mnemonic_H : f_madd_op_H <-> string = {
     FMADD_H  <-> "fmadd.h",
@@ -309,12 +309,12 @@ mapping clause assembly = F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, op)
 /* ****************************************************************** */
 /* Binary, no rounding mode */
 
-/* AST */
+/* instruction */
 
-union clause ast = F_BIN_F_TYPE_H : (fregidx, fregidx, fregidx, f_bin_f_op_H)
-union clause ast = F_BIN_X_TYPE_H : (fregidx, fregidx, regidx, f_bin_x_op_H)
+union clause instruction = F_BIN_F_TYPE_H : (fregidx, fregidx, fregidx, f_bin_f_op_H)
+union clause instruction = F_BIN_X_TYPE_H : (fregidx, fregidx, regidx, f_bin_x_op_H)
 
-/* AST <-> Binary encoding ================================ */
+/* instruction <-> Binary encoding ================================ */
 
 mapping clause encdec = F_BIN_F_TYPE_H(rs2, rs1, rd, FSGNJ_H)
   <-> 0b001_0010 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011
@@ -459,7 +459,7 @@ function clause execute (F_BIN_X_TYPE_H(rs2, rs1, rd, FLE_H)) = {
   RETIRE_SUCCESS
 }
 
-/* AST -> Assembly notation ================================ */
+/* instruction -> Assembly notation ================================ */
 
 mapping f_bin_f_type_mnemonic_H : f_bin_f_op_H <-> string = {
     FSGNJ_H  <-> "fsgnj.h",
@@ -490,13 +490,13 @@ mapping clause assembly = F_BIN_X_TYPE_H(rs2, rs1, rd, op)
 /* ****************************************************************** */
 /* Unary with rounding mode */
 
-/* AST */
+/* instruction */
 
-union clause ast = F_UN_RM_FF_TYPE_H : (fregidx, rounding_mode, fregidx, f_un_rm_ff_op_H)
-union clause ast = F_UN_RM_FX_TYPE_H : (fregidx, rounding_mode, regidx, f_un_rm_fx_op_H)
-union clause ast = F_UN_RM_XF_TYPE_H : (regidx, rounding_mode, fregidx, f_un_rm_xf_op_H)
+union clause instruction = F_UN_RM_FF_TYPE_H : (fregidx, rounding_mode, fregidx, f_un_rm_ff_op_H)
+union clause instruction = F_UN_RM_FX_TYPE_H : (fregidx, rounding_mode, regidx, f_un_rm_fx_op_H)
+union clause instruction = F_UN_RM_XF_TYPE_H : (regidx, rounding_mode, fregidx, f_un_rm_xf_op_H)
 
-/* AST <-> Binary encoding ================================ */
+/* instruction <-> Binary encoding ================================ */
 
 mapping clause encdec = F_UN_RM_FF_TYPE_H(rs1, rm, rd, FSQRT_H)
 <-> 0b010_1110 @ 0b00000 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
@@ -756,7 +756,7 @@ function clause execute (F_UN_RM_XF_TYPE_H(rs1, rm, rd, FCVT_H_LU)) = {
   }
 }
 
-/* AST -> Assembly notation ================================ */
+/* instruction -> Assembly notation ================================ */
 
 mapping f_un_rm_ff_type_mnemonic_H : f_un_rm_ff_op_H <-> string = {
     FSQRT_H   <-> "fsqrt.h",
@@ -801,10 +801,10 @@ mapping clause assembly = F_UN_RM_XF_TYPE_H(rs1, rm, rd, op)
 /* ****************************************************************** */
 /* Unary, no rounding mode */
 
-union clause ast = F_UN_F_TYPE_H : (regidx, fregidx, f_un_f_op_H)
-union clause ast = F_UN_X_TYPE_H : (fregidx, regidx, f_un_x_op_H)
+union clause instruction = F_UN_F_TYPE_H : (regidx, fregidx, f_un_f_op_H)
+union clause instruction = F_UN_X_TYPE_H : (fregidx, regidx, f_un_x_op_H)
 
-/* AST <-> Binary encoding ================================ */
+/* instruction <-> Binary encoding ================================ */
 
 mapping clause encdec = F_UN_X_TYPE_H(rs1, rd, FCLASS_H)
   <-> 0b111_0010 @ 0b00000 @ encdec_freg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b101_0011
@@ -854,7 +854,7 @@ function clause execute (F_UN_F_TYPE_H(rs1, rd, FMV_H_X)) = {
   RETIRE_SUCCESS
 }
 
-/* AST -> Assembly notation ================================ */
+/* instruction -> Assembly notation ================================ */
 
 mapping f_un_f_type_mnemonic_H : f_un_f_op_H <-> string = {
     FMV_H_X  <-> "fmv.h.x"

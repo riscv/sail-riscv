@@ -8,7 +8,7 @@
 
 function clause currentlyEnabled(Ext_Zcmop) = hartSupports(Ext_Zcmop) & currentlyEnabled(Ext_Zca)
 
-union clause ast = ZCMOP : (bits(3))
+union clause instruction = ZCMOP : (bits(3))
 
 mapping clause encdec_compressed = ZCMOP(mop)
   <-> 0b01100 @ mop : bits(3) @ 0b100000 @ 0b01

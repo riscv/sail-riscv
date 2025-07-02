@@ -12,7 +12,7 @@
 /* ******************************************************************************* */
 
 /* ******************************* OPMVV (MMTYPE) ******************************** */
-union clause ast = MMTYPE : (mmfunct6, vregidx, vregidx, vregidx)
+union clause instruction = MMTYPE : (mmfunct6, vregidx, vregidx, vregidx)
 
 mapping encdec_mmfunct6 : mmfunct6 <-> bits(6) = {
   MM_VMAND     <-> 0b011001,
@@ -84,7 +84,7 @@ mapping clause assembly = MMTYPE(funct6, vs2, vs1, vd)
   <-> mmtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
 
 /* ************************* OPMVV (vcpop in VWXUNARY0) ************************** */
-union clause ast = VCPOP_M : (bits(1), vregidx, regidx)
+union clause instruction = VCPOP_M : (bits(1), vregidx, regidx)
 
 mapping clause encdec = VCPOP_M(vm, vs2, rd)
   <-> 0b010000 @ vm @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_reg(rd) @ 0b1010111
@@ -122,7 +122,7 @@ mapping clause assembly = VCPOP_M(vm, vs2, rd)
   <-> "vcpop.m" ^ spc() ^ reg_name(rd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************* OPMVV (vfirst in VWXUNARY0) ************************* */
-union clause ast = VFIRST_M : (bits(1), vregidx, regidx)
+union clause instruction = VFIRST_M : (bits(1), vregidx, regidx)
 
 mapping clause encdec = VFIRST_M(vm, vs2, rd)
   <-> 0b010000 @ vm @ encdec_vreg(vs2) @ 0b10001 @ 0b010 @ encdec_reg(rd) @ 0b1010111
@@ -162,7 +162,7 @@ mapping clause assembly = VFIRST_M(vm, vs2, rd)
   <-> "vfirst.m" ^ spc() ^ reg_name(rd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************** OPMVV (vmsbf in VMUNARY0) ************************** */
-union clause ast = VMSBF_M : (bits(1), vregidx, vregidx)
+union clause instruction = VMSBF_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VMSBF_M(vm, vs2, vd)
   <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b00001 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
@@ -206,7 +206,7 @@ mapping clause assembly = VMSBF_M(vm, vs2, vd)
   <-> "vmsbf.m" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************** OPMVV (vmsif in VMUNARY0) ************************** */
-union clause ast = VMSIF_M : (bits(1), vregidx, vregidx)
+union clause instruction = VMSIF_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VMSIF_M(vm, vs2, vd)
   <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b00011 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
@@ -250,7 +250,7 @@ mapping clause assembly = VMSIF_M(vm, vs2, vd)
   <-> "vmsif.m" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************** OPMVV (vmsof in VMUNARY0) ************************** */
-union clause ast = VMSOF_M : (bits(1), vregidx, vregidx)
+union clause instruction = VMSOF_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VMSOF_M(vm, vs2, vd)
   <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b00010 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
@@ -298,7 +298,7 @@ mapping clause assembly = VMSOF_M(vm, vs2, vd)
   <-> "vmsof.m" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************** OPMVV (viota in VMUNARY0) ************************** */
-union clause ast = VIOTA_M : (bits(1), vregidx, vregidx)
+union clause instruction = VIOTA_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VIOTA_M(vm, vs2, vd)
   <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
@@ -342,7 +342,7 @@ mapping clause assembly = VIOTA_M(vm, vs2, vd)
   <-> "viota.m" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* *************************** OPMVV (vid in VMUNARY0) *************************** */
-union clause ast = VID_V : (bits(1), vregidx)
+union clause instruction = VID_V : (bits(1), vregidx)
 
 mapping clause encdec = VID_V(vm, vd)
   <-> 0b010100 @ vm @ 0b00000 @ 0b10001 @ 0b010 @ encdec_vreg(vd) @ 0b1010111

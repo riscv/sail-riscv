@@ -10,7 +10,7 @@ function clause currentlyEnabled(Ext_Zbc) = hartSupports(Ext_Zbc)
 function clause currentlyEnabled(Ext_Zbkc) = hartSupports(Ext_Zbkc)
 
 /* ****************************************************************** */
-union clause ast = CLMUL : (regidx, regidx, regidx)
+union clause instruction = CLMUL : (regidx, regidx, regidx)
 
 mapping clause encdec = CLMUL(rs2, rs1, rd)
   <-> 0b0000101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011
@@ -26,7 +26,7 @@ function clause execute (CLMUL(rs2, rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = CLMULH : (regidx, regidx, regidx)
+union clause instruction = CLMULH : (regidx, regidx, regidx)
 
 mapping clause encdec = CLMULH(rs2, rs1, rd)
   <-> 0b0000101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b011 @ encdec_reg(rd) @ 0b0110011
@@ -42,7 +42,7 @@ function clause execute (CLMULH(rs2, rs1, rd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = CLMULR : (regidx, regidx, regidx)
+union clause instruction = CLMULR : (regidx, regidx, regidx)
 
 mapping clause encdec = CLMULR(rs2, rs1, rd)
   <-> 0b0000101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(rd) @ 0b0110011
