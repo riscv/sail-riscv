@@ -1,5 +1,7 @@
 #include "riscv_callbacks_if.h"
 #include "riscv_callbacks.h"
+#include "jtag_dtm.h"
+#include "remote_bitbang.h"
 #include <vector>
 #include <algorithm>
 

@@ -1,0 +1,31 @@
+#ifndef REMOTE_BITBANG_H
+#define REMOTE_BITBANG_H
+
+#include <stdint.h>
+
+class jtag_dtm_t;
+
+class remote_bitbang_t {
+public:
+  remote_bitbang_t(uint16_t port, jtag_dtm_t *tap);
+
+  void tick();
+
+private:
+  jtag_dtm_t *tap;
+
+  int socket_fd;
+  int client_fd;
+
+  static const ssize_t buf_size = 64 * 1024;
+  char send_buf[buf_size];
+  char recv_buf[buf_size];
+  ssize_t recv_start, recv_end;
+
+  // Check for a client connecting, and accept if there is one.
+  void accept();
+  // Execute any commands the client has for us.
+  void execute_commands();
+};
+
+#endif

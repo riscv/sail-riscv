@@ -31,6 +31,9 @@ function csr_full_read_callback(_) = ()
 val trap_callback = pure {c: "trap_callback"} : unit -> unit
 function trap_callback(_) = ()
 
+val jtag_dtm_tick = pure {c: "jtag_dtm_tick"} : unit -> unit
+function jtag_dtm_tick(_) = ()
+
 // Overloads for easier use of callbacks
 function csr_name_write_callback(name : string, value : xlenbits) -> unit = {
   let csr = csr_name_map(name);

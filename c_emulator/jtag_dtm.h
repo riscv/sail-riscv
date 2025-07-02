@@ -1,0 +1,79 @@
+#ifndef JTAG_DTM_H
+#define JTAG_DTM_H
+
+#include <stdint.h>
+
+typedef enum {
+  TEST_LOGIC_RESET,
+  RUN_TEST_IDLE,
+  SELECT_DR_SCAN,
+  CAPTURE_DR,
+  SHIFT_DR,
+  EXIT1_DR,
+  PAUSE_DR,
+  EXIT2_DR,
+  UPDATE_DR,
+  SELECT_IR_SCAN,
+  CAPTURE_IR,
+  SHIFT_IR,
+  EXIT1_IR,
+  PAUSE_IR,
+  EXIT2_IR,
+  UPDATE_IR
+} jtag_state_t;
+
+class jtag_dtm_t {
+  static const unsigned idcode = 0xdeadbeef;
+
+public:
+  jtag_dtm_t(unsigned required_rti_cycles);
+  void reset();
+
+  void set_pins(bool tck, bool tms, bool tdi);
+
+  bool tdo() const
+  {
+    return _tdo;
+  }
+
+  jtag_state_t state() const
+  {
+    return _state;
+  }
+
+private:
+  // The number of Run-Test/Idle cycles required
+  // before a DMI access is complete.
+  unsigned required_rti_cycles;
+  bool _tck, _tms, _tdi, _tdo;
+  uint32_t ir;
+  const unsigned ir_length = 5;
+  uint64_t dr;
+  unsigned dr_length;
+
+  // abits must come before dtmcontrol so it can
+  // easily be used in the constructor.
+  // From RISC-V Debug Spec (both 0.13.2 and 1.0):
+  // The DMI uses between 7 and 32 address bits.
+  const unsigned abits = 7;
+  uint32_t dtmcontrol;
+  uint64_t dmi;
+  unsigned bypass;
+  // Number of Run-Test/Idle cycles needed before
+  // we call this access complete.
+  unsigned rti_remaining;
+  bool busy_stuck;
+
+  jtag_state_t _state;
+
+  void capture_dr();
+  void update_dr();
+};
+
+class remote_bitbang_t;
+
+void init_debug_interface(uint16_t rbb_port);
+bool is_debug_enabled();
+remote_bitbang_t *get_remote_bitbang();
+
+#endif

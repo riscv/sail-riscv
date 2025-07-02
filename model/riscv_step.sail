@@ -163,6 +163,10 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
   /* for step extensions */
   ext_pre_step_hook();
 
+  // If enabled, advances the bitbanging protocol and sends
+  // data to the debugger (over OpenOCD) or reads from it
+  jtag_dtm_tick();
+
   /*
    * This records whether or not minstret should be incremented when
    * the instruction is retired. Since retirement occurs before CSR
