@@ -33,6 +33,8 @@
 #include "riscv_callbacks_if.h"
 #include "riscv_callbacks_log.h"
 #include "riscv_callbacks_rvfi.h"
+#include "jtag_dtm.h"
+#include "remote_bitbang.h"
 
 bool do_show_times = false;
 bool do_print_version = false;
@@ -500,7 +502,7 @@ void run_sail(void)
       }
     }
     { /* run a Sail step */
-      if (app.get_option("--debug"->count() > 0)) {
+      if (rbb_port != 0) {
         // If enabled, advances the bit banging protocol and sends
         // data to the debugger (over OpenOCD) or reads from it
         // NOTE: This is a temporary solution and needs to be redone

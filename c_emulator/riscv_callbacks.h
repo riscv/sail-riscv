@@ -23,7 +23,6 @@ unit csr_full_read_callback(const_sail_string csr_name, unsigned reg,
 unit vreg_write_callback(unsigned reg, lbits value);
 unit pc_write_callback(sbits value);
 unit trap_callback(unit);
-unit jtag_dtm_tick(unit);
 
 #ifdef __cplusplus
 }
