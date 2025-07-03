@@ -152,6 +152,7 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
         "riscv_regs.sail"
         "riscv_pc_access.sail"
         "riscv_sys_regs.sail"
+        "riscv_hext_control.sail"
         "riscv_pmp_regs.sail"
         "riscv_pmp_control.sail"
         "riscv_ext_regs.sail"
