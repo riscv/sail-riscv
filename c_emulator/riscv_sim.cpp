@@ -28,6 +28,7 @@
 #include "default_config.h"
 #include "config_utils.h"
 #include "jtag_dtm.h"
+#include "remote_bitbang.h"
 
 enum {
   OPT_TRACE_OUTPUT = 1000,
@@ -66,6 +67,11 @@ bool config_use_abi_names = false;
 bool config_print_rvfi = false;
 bool config_print_step = false;
 bool config_enable_rvfi = false;
+
+bool debug_enabled = false;
+uint16_t rbb_port = 0;
+// TODO: Add command-line option to set required_rti_cycles at runtime
+uint64_t required_rti_cycles = 0;
 
 void set_config_print(char *var, bool val)
 {
@@ -242,8 +248,8 @@ static int process_args(int argc, char **argv)
           stderr,
           "Enable debugging and waits for OpenOCD to connect, opens port at "
           "provided argument\n");
-      uint16_t rbb_port = atoi(optarg);
-      init_debug_interface(rbb_port);
+      rbb_port = atoi(optarg);
+      debug_enabled = true;
       break;
     }
     case 'p':
@@ -562,6 +568,10 @@ void run_sail(void)
   bool exit_wait = true;
   bool diverged = false;
 
+  std::shared_ptr<jtag_dtm_t> jtag_dtm(new jtag_dtm_t(required_rti_cycles));
+  std::shared_ptr<remote_bitbang_t> remote_bitbang
+      = remote_bitbang_t::make(rbb_port, jtag_dtm.get());
+
   /* initialize the step number */
   mach_int step_no = 0;
   uint64_t insn_cnt = 0;
@@ -590,6 +600,19 @@ void run_sail(void)
       }
     }
     { /* run a Sail step */
+      if (debug_enabled) {
+        // If enabled, advances the bit banging protocol and sends
+        // data to the debugger (over OpenOCD) or reads from it
+        // NOTE: This is a temporary solution and needs to be redone
+        // we want to avoid the simulation ending too early
+        // so we keep polling to see if the debugger has sent more data
+        int max_ticks = 10000000;
+        int ticks = 0;
+        while (ticks < max_ticks) {
+          remote_bitbang->tick();
+          ticks++;
+        }
+      }
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);

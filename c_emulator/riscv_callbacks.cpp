@@ -139,20 +139,3 @@ unit trap_callback(unit)
   }
   return UNIT;
 }
-
-unit jtag_dtm_tick(unit)
-{
-  if (is_debug_enabled()) {
-    // NOTE: This is a temporary solution and needs to be redone
-    // we want to avoid the simulation ending too early
-    // so we keep polling to see if the debugger has sent more data
-    int max_ticks = 10000000;
-    int ticks = 0;
-    auto remote_bitbang = get_remote_bitbang();
-    while (ticks < max_ticks) {
-      remote_bitbang->tick();
-      ticks++;
-    }
-  }
-  return UNIT;
-}
