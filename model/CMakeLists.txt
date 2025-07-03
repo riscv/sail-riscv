@@ -214,8 +214,8 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
         ${sail_step_srcs}
         ${sail_cfg_srcs}
         ${sail_model_srcs}
-        "main.sail"
         ${test_srcs}
+        "main.sail"
     )
 
     # Generate C code from Sail model
