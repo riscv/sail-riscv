@@ -95,10 +95,12 @@ extensions {
       riscv_jalr_seq.sail,
   }
 
-  // M {
-  //   requires riscv_core, riscv, I
-  //   files riscv_insts_mext.sail
-  // }
+  M {
+    requires riscv_core, riscv, I
+    files
+      riscv_insts_mext.sail,
+      if $ARCH == RV64 then riscv_insts_base_64.sail else [],
+  }
 
   // A {
   //   requires riscv_core, riscv_exceptions, riscv, I
