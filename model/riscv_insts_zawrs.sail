@@ -23,10 +23,14 @@ mapping clause encdec = WRS(op)
   when currentlyEnabled(Ext_Zawrs)
 
 function clause execute (WRS(WRS_STO)) =
-  Enter_Wait(WAIT_WRS_STO)
+  if   in_debug_abstract_command() | in_single_step()
+  then RETIRE_SUCCESS
+  else Enter_Wait(WAIT_WRS_STO)
 
 function clause execute (WRS(WRS_NTO)) =
-  Enter_Wait(WAIT_WRS_NTO)
+  if   in_debug_abstract_command() | in_single_step()
+  then RETIRE_SUCCESS
+  else Enter_Wait(WAIT_WRS_NTO)
 
 mapping clause assembly = WRS(WRS_STO) <-> "wrs.sto"
 mapping clause assembly = WRS(WRS_NTO) <-> "wrs.nto"
