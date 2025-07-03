@@ -229,7 +229,7 @@ function clause read_CSR(0b0011001 /* 0x320 */ @ index : bits(5) if unsigned(ind
 function clause write_CSR((0b0011001 /* 0x320 */ @ index : bits(5), value) if unsigned(index) >= 3) = {
   let index = hpmidx_from_bits(index);
   write_mhpmevent(index, value);
-  read_mhpmevent(index)
+  Ok(read_mhpmevent(index))
 }
 
 /* Hardware Performance Monitoring machine mode counters */
@@ -242,12 +242,12 @@ function clause read_CSR(0b1011100 /* 0xB80 */ @ index : bits(5) if xlen == 32 &
 function clause write_CSR((0b1011000 /* 0xB00 */ @ index : bits(5), value) if unsigned(index) >= 3) = {
   let index = hpmidx_from_bits(index);
   write_mhpmcounter(index, value);
-  read_mhpmcounter(index)
+  Ok(read_mhpmcounter(index))
 }
 function clause write_CSR((0b1011100 /* 0xB80 */ @ index : bits(5), value) if xlen == 32 & unsigned(index) >= 3) = {
   let index = hpmidx_from_bits(index);
   write_mhpmcounterh(index, value);
-  read_mhpmcounterh(index)
+  Ok(read_mhpmcounterh(index))
 }
 
 /* Hardware Performance Monitoring user mode counters */
