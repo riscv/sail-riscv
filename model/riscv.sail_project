@@ -84,6 +84,7 @@ riscv {
     riscv_vmem.sail,
     riscv_vmem_utils.sail,
     riscv_insts_begin.sail,
+    riscv_termination_begin.sail,
 }
 
 extensions {
@@ -247,23 +248,23 @@ extensions {
   // }
 }
 
-// riscv_postlude {
-//   after extensions
-// 
-//   requires riscv_core, riscv, riscv_exceptions, pmp, V_core, FD_core, I, A, B, C, FD, V, M, Zicsr, Zfh, Zfa, K, Zvk, Zifencei, H, Svinval, Zicond, Zicbom, Zicboz, Zawrs, Zimop
-// 
-//   files
-//     riscv_insts_end.sail,
-//     riscv_csr_end.sail,
-//     riscv_step_common.sail,
-//     riscv_step_ext.sail,
-//     riscv_decode_ext.sail,
-//     riscv_fetch_rvfi.sail,
-//     riscv_fetch.sail,
-//     riscv_step.sail,
-//     riscv_termination.sail,
-//     riscv_validate_config.sail,
-//     riscv_device_tree.sail,
-//     riscv_model.sail,
-//     main.sail,
-// }
+riscv_postlude {
+  after extensions
+
+  requires riscv_core, riscv, riscv_exceptions // , pmp, V_core, FD_core, I, A, B, C, FD, V, M, Zicsr, Zfh, Zfa, K, Zvk, Zifencei, H, Svinval, Zicond, Zicbom, Zicboz, Zawrs, Zimop
+
+  files
+    riscv_insts_end.sail,
+    // riscv_csr_end.sail,
+    // riscv_step_common.sail,
+    // riscv_step_ext.sail,
+    // riscv_decode_ext.sail,
+    // riscv_fetch_rvfi.sail,
+    // riscv_fetch.sail,
+    // riscv_step.sail,
+    riscv_termination_end.sail,
+    // riscv_validate_config.sail,
+    // riscv_device_tree.sail,
+    // riscv_model.sail,
+    // main.sail,
+}
