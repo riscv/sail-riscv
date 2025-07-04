@@ -1,0 +1,64 @@
+name: Run risc-v tests
+on:
+  workflow_dispatch:
+env:
+  SAIL_VERSION: "0.19.1"
+  CMAKE_VERSION: "3.20"
+
+jobs:
+  run-riscv-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - test_suite: riscv
+            VLEN: ""
+            XLEN: ""
+          - test_suite: riscv-vector
+            VLEN: 128
+            XLEN: 32
+          - test_suite: riscv-vector
+            VLEN: 128
+            XLEN: 64
+          - test_suite: riscv-vector
+            VLEN: 256
+            XLEN: 32
+          - test_suite: riscv-vector
+            VLEN: 256
+            XLEN: 64
+          - test_suite: riscv-vector
+            VLEN: 512
+            XLEN: 32
+          - test_suite: riscv-vector
+            VLEN: 512
+            XLEN: 64
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Install packages (Linux)
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build jq
+
+      - name: Install CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "${{ env.CMAKE_VERSION }}"
+
+      - name: Install Sail (Linux)
+        run: |
+          sudo mkdir -p /usr/local
+          curl --location https://github.com/rems-project/sail/releases/download/$SAIL_VERSION-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
+
+      - name: Build and test simulator
+        run: |
+          if [[ "${{ matrix.test_suite }}" == "riscv" ]]; then
+            cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_RISCV_TESTS=TRUE
+          else
+            cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_RISCV_VECTOR_TESTS_V${{ matrix.VLEN }}_E${{ matrix.XLEN }}=TRUE
+          fi
+          ninja -C build all
+          ctest --test-dir build --output-on-failure
