@@ -1,6 +1,3 @@
-option(RUN_RISCV_VECTOR_TESTS "Run the riscv-vector-tests" OFF)
-option(RUN_RISCV_TESTS "Run the riscv-tests" ON)
-
 # Function to download and extract test files
 function(download_riscv_tests DOWNLOAD_PATH ARCHIVE_NAME DOWNLOAD_URL)
     if(NOT EXISTS "${DOWNLOAD_PATH}/${ARCHIVE_NAME}")
@@ -39,35 +36,67 @@ function(download_riscv_tests DOWNLOAD_PATH ARCHIVE_NAME DOWNLOAD_URL)
     endif()
 endfunction()
 
-# Extracting vlen_exp and elen_exp
-file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../config/default.json" json)
+# Download and add RVV tests.
+# NOTE: Setting XLEN independently of ELEN is not
+# supported by the RISC-V Vector Test suite.
+foreach(vlen IN ITEMS 128 256 512)
+    foreach(elen IN ITEMS 32 64)
+        option(ENABLE_RISCV_VECTOR_TESTS_V${vlen}_E${elen}
+            "Enable the riscv-vector-tests with vlen=${vlen}, elen=${elen}"
+            OFF)
 
-string(REGEX MATCH "\"vlen_exp\"[ \t]*:[ \t]*([0-9]+)" _ "${json}")
-set(vlen_exp "${CMAKE_MATCH_1}")
+        if(ENABLE_RISCV_VECTOR_TESTS_V${vlen}_E${elen})
+            download_riscv_tests(
+                "${CMAKE_CURRENT_SOURCE_DIR}"
+                "riscv-vector-tests-v${vlen}x${elen}"
+                "https://github.com/nadime15/riscv-sail-tests/releases/download/2025-06-22/riscv-vector-tests-v${vlen}x${elen}.tar.gz"
+            )
 
-string(REGEX MATCH "\"elen_exp\"[ \t]*:[ \t]*([0-9]+)" _ "${json}")
-set(elen_exp "${CMAKE_MATCH_1}")
+            file(GLOB elfs_rv32d CONFIGURE_DEPENDS LIST_DIRECTORIES false
+                "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v${vlen}x${elen}/rv32*"
+            )
+            file(GLOB elfs_rv64d CONFIGURE_DEPENDS LIST_DIRECTORIES false
+                "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v${vlen}x${elen}/rv64*"
+            )
 
-# Should I add more error handling in case elen_exp or vlen_exp are missing (Sail should catch it anyway)?
+            add_custom_command(
+                OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
+                COMMAND jq
+                    '.base.xlen = ${elen} |
+                     .extensions.V.vlen_exp = (${vlen} | log2) |
+                     .extensions.V.elen_exp = (${elen} | log2) '
+                    "${CMAKE_CURRENT_SOURCE_DIR}/../config/rv${elen}d.json"
+                    > "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
+                DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../config/rv${elen}d.json"
+                COMMENT "Generating config for vlen=${vlen}, elen=${elen}, xlen=${elen}"
+            )
 
-math(EXPR vlen "1 << ${vlen_exp}")
-math(EXPR elen "1 << ${elen_exp}")
+            add_custom_target(config_rv${elen}d_v${vlen}_e${elen} ALL
+                DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
+            )
 
-message(STATUS "Config: VLEN=${vlen}, ELEN=${elen}")
+            foreach(arch IN ITEMS "rv32d" "rv64d")
+                foreach(elf IN LISTS elfs_${arch})
+                    file(RELATIVE_PATH elf_name "${CMAKE_CURRENT_SOURCE_DIR}" ${elf})
+                    add_test(
+                        NAME "${arch}_${elf_name}"
+                        COMMAND
+                            $<TARGET_FILE:sail_riscv_sim>
+                            --no-trace
+                            --config "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
+                            ${elf}
+                    )
+                endforeach()
+            endforeach()
+        endif()
+    endforeach()
+endforeach()
 
-# Download riscv-vector-tests
-# Only attempt to download vector test files if both vlen and elen are within valid ranges
-if((vlen EQUAL 128 OR vlen EQUAL 256 OR vlen EQUAL 512) AND
-   (elen EQUAL 32 OR elen EQUAL 64) AND RUN_RISCV_VECTOR_TESTS)
-    download_riscv_tests(
-        "${CMAKE_CURRENT_SOURCE_DIR}"
-        "riscv-vector-tests-v${vlen}x${elen}"
-        "https://github.com/nadime15/riscv-sail-tests/releases/download/2025-06-22/riscv-vector-tests-v${vlen}x${elen}.tar.gz"
-    )
-endif()
 
-# Download riscv-tests
-if(RUN_RISCV_TESTS)
+# Download and add RISC-V tests.
+option(ENABLE_RISCV_TESTS "Run the riscv-tests" OFF)
+
+if(ENABLE_RISCV_TESTS)
     download_riscv_tests(
         "${CMAKE_CURRENT_SOURCE_DIR}"
         "riscv-tests"
@@ -77,23 +106,22 @@ endif()
 
 file(GLOB elfs_rv32d CONFIGURE_DEPENDS LIST_DIRECTORIES false
     "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests/rv32*"
-    "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v${vlen}x${elen}/rv32*"
 )
 
 file(GLOB elfs_rv64d CONFIGURE_DEPENDS LIST_DIRECTORIES false
     "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests/rv64*"
-    "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v${vlen}x${elen}/rv64*"
 )
 
-foreach (arch IN ITEMS "rv32d" "rv64d")
+foreach(arch IN ITEMS "rv32d" "rv64d")
     foreach(elf IN LISTS elfs_${arch})
         file(RELATIVE_PATH elf_name "${CMAKE_CURRENT_SOURCE_DIR}" ${elf})
 
         add_test(
             NAME "${arch}_${elf_name}"
             COMMAND
-                $<TARGET_FILE:riscv_sim_${arch}>
-                --config "${CMAKE_SOURCE_DIR}/config/default.json"
+                $<TARGET_FILE:sail_riscv_sim>
+                --no-trace
+                --config "${CMAKE_SOURCE_DIR}/config/${arch}.json"
                 ${elf}
         )
     endforeach()
