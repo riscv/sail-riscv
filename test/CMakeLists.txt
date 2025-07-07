@@ -42,21 +42,21 @@ endfunction()
 foreach(vlen IN ITEMS 128 256 512)
     foreach(elen IN ITEMS 32 64)
         option(ENABLE_RISCV_VECTOR_TESTS_V${vlen}_E${elen}
-            "Enable the riscv-vector-tests with vlen=${vlen}, elen=${elen}"
+            "Enable riscv-vector-tests with vlen=${vlen}, elen=${elen}"
             OFF)
 
         if(ENABLE_RISCV_VECTOR_TESTS_V${vlen}_E${elen})
             download_riscv_tests(
-                "${CMAKE_CURRENT_SOURCE_DIR}"
+                "${CMAKE_CURRENT_BINARY_DIR}"
                 "riscv-vector-tests-v${vlen}x${elen}"
                 "https://github.com/nadime15/riscv-sail-tests/releases/download/2025-06-22/riscv-vector-tests-v${vlen}x${elen}.tar.gz"
             )
 
             file(GLOB elfs_rv32d CONFIGURE_DEPENDS LIST_DIRECTORIES false
-                "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v${vlen}x${elen}/rv32*"
+                "${CMAKE_CURRENT_BINARY_DIR}/riscv-vector-tests-v${vlen}x${elen}/rv32*"
             )
             file(GLOB elfs_rv64d CONFIGURE_DEPENDS LIST_DIRECTORIES false
-                "${CMAKE_CURRENT_SOURCE_DIR}/riscv-vector-tests-v${vlen}x${elen}/rv64*"
+                "${CMAKE_CURRENT_BINARY_DIR}/riscv-vector-tests-v${vlen}x${elen}/rv64*"
             )
 
             add_custom_command(
@@ -77,7 +77,7 @@ foreach(vlen IN ITEMS 128 256 512)
 
             foreach(arch IN ITEMS "rv32d" "rv64d")
                 foreach(elf IN LISTS elfs_${arch})
-                    file(RELATIVE_PATH elf_name "${CMAKE_CURRENT_SOURCE_DIR}" ${elf})
+                    file(RELATIVE_PATH elf_name "${CMAKE_CURRENT_BINARY_DIR}" ${elf})
                     add_test(
                         NAME "${arch}_${elf_name}"
                         COMMAND
@@ -86,46 +86,53 @@ foreach(vlen IN ITEMS 128 256 512)
                             --config "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
                             ${elf}
                     )
+
+                    # Mark larger VLEN and ELEN as too slow for CI
+                    if(vlen GREATER 128 OR elen GREATER 32)
+                        set_tests_properties(
+                            "${arch}_${elf_name}"
+                            PROPERTIES LABELS "too_slow_for_ci"
+                        )
+                    endif()
                 endforeach()
             endforeach()
         endif()
     endforeach()
 endforeach()
 
-
 # Download and add RISC-V tests.
-option(ENABLE_RISCV_TESTS "Run the riscv-tests" OFF)
+option(ENABLE_RISCV_TESTS "Enable riscv-tests" ON)
 
 if(ENABLE_RISCV_TESTS)
     download_riscv_tests(
-        "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_BINARY_DIR}"
         "riscv-tests"
         "https://github.com/nadime15/riscv-sail-tests/releases/download/2025-06-22/riscv-tests.tar.gz"
     )
-endif()
 
-file(GLOB elfs_rv32d CONFIGURE_DEPENDS LIST_DIRECTORIES false
-    "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests/rv32*"
-)
+    file(GLOB elfs_rv32d CONFIGURE_DEPENDS LIST_DIRECTORIES false
+        "${CMAKE_CURRENT_BINARY_DIR}/riscv-tests/rv32*"
+    )
 
-file(GLOB elfs_rv64d CONFIGURE_DEPENDS LIST_DIRECTORIES false
-    "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests/rv64*"
-)
+    file(GLOB elfs_rv64d CONFIGURE_DEPENDS LIST_DIRECTORIES false
+        "${CMAKE_CURRENT_BINARY_DIR}/riscv-tests/rv64*"
+    )
 
-foreach(arch IN ITEMS "rv32d" "rv64d")
-    foreach(elf IN LISTS elfs_${arch})
-        file(RELATIVE_PATH elf_name "${CMAKE_CURRENT_SOURCE_DIR}" ${elf})
+    foreach(arch IN ITEMS "rv32d" "rv64d")
+        foreach(elf IN LISTS elfs_${arch})
+            file(RELATIVE_PATH elf_name "${CMAKE_CURRENT_BINARY_DIR}" ${elf})
 
-        add_test(
-            NAME "${arch}_${elf_name}"
-            COMMAND
-                $<TARGET_FILE:sail_riscv_sim>
-                --no-trace
-                --config "${CMAKE_SOURCE_DIR}/config/${arch}.json"
-                ${elf}
-        )
+            add_test(
+                NAME "${arch}_${elf_name}"
+                COMMAND
+                    $<TARGET_FILE:sail_riscv_sim>
+                    --no-trace
+                    --config "${CMAKE_SOURCE_DIR}/config/${arch}.json"
+                    ${elf}
+            )
+        endforeach()
     endforeach()
-endforeach()
+endif()
 
 # This is off by default so we don't require people who
 # just want to build the model to have Clang or RISC-V GCC

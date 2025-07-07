@@ -44,10 +44,11 @@ The simulator can be used to execute small test binaries.
 $ build/c_emulator/sail_riscv_sim <elf-file>
 ```
 
-A suite of RV32 and RV64 test programs derived from the
-[`riscv-tests`](https://github.com/riscv/riscv-tests) test-suite is
-included under [test/riscv-tests/](test/riscv-tests/). The test-suite
-can be run using `make test` or `ctest` in the build directory.
+Test suites targeting RV32, RV64, and RVV (RISC-V Vector Extension) are downloaded automatically when enabled.
+The standard `riscv-tests` suite is enabled by default, while vector extension tests
+can be enabled via CMake options such as `-DENABLE_RISCV_VECTOR_TESTS_V128_E32=ON`.
+All enabled test suites can be executed using `make test` or `ctest` in the build directory
+(see `test/README.md` for more information).
 
 ### Configuring platform options
 
