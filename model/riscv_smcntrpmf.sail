@@ -38,12 +38,12 @@ function clause read_CSR(0x721 if xlen == 32) = mcyclecfg.bits[63 .. 32]
 function clause read_CSR(0x322) = minstretcfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x722 if xlen == 32) = minstretcfg.bits[63 .. 32]
 
-function clause write_CSR((0x321, value) if xlen == 64) = { mcyclecfg = legalize_smcntrpmf(mcyclecfg, value); mcyclecfg.bits }
-function clause write_CSR((0x321, value) if xlen == 32) = { mcyclecfg = legalize_smcntrpmf(mcyclecfg, mcyclecfg.bits[63 .. 32] @ value); mcyclecfg.bits[xlen - 1 .. 0] }
-function clause write_CSR((0x721, value) if xlen == 32) = { mcyclecfg = legalize_smcntrpmf(mcyclecfg, value @ mcyclecfg.bits[31 .. 0]); mcyclecfg.bits[63 .. 32] }
-function clause write_CSR((0x322, value) if xlen == 64) = { minstretcfg = legalize_smcntrpmf(minstretcfg, value); minstretcfg.bits[xlen - 1 .. 0] }
-function clause write_CSR((0x322, value) if xlen == 32) = { minstretcfg = legalize_smcntrpmf(minstretcfg, minstretcfg.bits[63 .. 32] @ value); minstretcfg.bits[xlen - 1 .. 0] }
-function clause write_CSR((0x722, value) if xlen == 32) = { minstretcfg = legalize_smcntrpmf(minstretcfg, value @ minstretcfg.bits[31 .. 0]); minstretcfg.bits[63 .. 32] }
+function clause write_CSR((0x321, value) if xlen == 64) = { mcyclecfg = legalize_smcntrpmf(mcyclecfg, value); Ok(mcyclecfg.bits) }
+function clause write_CSR((0x321, value) if xlen == 32) = { mcyclecfg = legalize_smcntrpmf(mcyclecfg, mcyclecfg.bits[63 .. 32] @ value); Ok(mcyclecfg.bits[xlen - 1 .. 0]) }
+function clause write_CSR((0x721, value) if xlen == 32) = { mcyclecfg = legalize_smcntrpmf(mcyclecfg, value @ mcyclecfg.bits[31 .. 0]); Ok(mcyclecfg.bits[63 .. 32]) }
+function clause write_CSR((0x322, value) if xlen == 64) = { minstretcfg = legalize_smcntrpmf(minstretcfg, value); Ok(minstretcfg.bits[xlen - 1 .. 0]) }
+function clause write_CSR((0x322, value) if xlen == 32) = { minstretcfg = legalize_smcntrpmf(minstretcfg, minstretcfg.bits[63 .. 32] @ value); Ok(minstretcfg.bits[xlen - 1 .. 0]) }
+function clause write_CSR((0x722, value) if xlen == 32) = { minstretcfg = legalize_smcntrpmf(minstretcfg, value @ minstretcfg.bits[31 .. 0]); Ok(minstretcfg.bits[63 .. 32]) }
 
 function counter_priv_filter_bit(reg : CountSmcntrpmf, priv : Privilege) -> bits(1) =
   // When all xINH bits are zero, event counting is enabled in all modes.

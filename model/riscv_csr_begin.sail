@@ -16,15 +16,15 @@ val csr_name : csreg -> string
 function csr_name(csr) = csr_name_map(csr)
 overload to_str = {csr_name}
 
-/* returns whether a CSR exists
- */
+// returns whether a CSR exists
 val is_CSR_defined : (csreg) -> bool
 scattered function is_CSR_defined
 
-/* returns the value of the CSR if it is defined */
+// returns the value of the CSR if it is defined
 val read_CSR : csreg -> xlenbits
 scattered function read_CSR
 
-/* returns new value (after legalisation) if the CSR is defined */
-val write_CSR : (csreg, xlenbits) -> xlenbits
+// returns new value (after legalisation) if the CSR is defined,
+// otherwise a unit value indicating an illegal instruction.
+val write_CSR : (csreg, xlenbits) -> result(xlenbits, unit)
 scattered function write_CSR
