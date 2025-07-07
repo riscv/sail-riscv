@@ -54,17 +54,17 @@ V_core {
     riscv_vext_control.sail,
 }
 
-FD_core {
-  requires riscv_core
-  files
-    riscv_softfloat_interface.sail,
-    riscv_freg_type.sail,
-    riscv_fdext_regs.sail,
-    riscv_fdext_control.sail,
-}
+// FD_core {
+//   requires riscv_core
+//   files
+//     riscv_softfloat_interface.sail,
+//     riscv_freg_type.sail,
+//     riscv_fdext_regs.sail,
+//     riscv_fdext_control.sail,
+// }
 
 riscv {
-  requires riscv_core, riscv_exceptions, pmp, V_core, FD_core
+  requires riscv_core, riscv_exceptions, pmp, V_core, // FD_core
   files
     riscv_zihpm.sail,
     riscv_sscofpmf.sail,
