@@ -97,7 +97,7 @@ unit csr_full_write_callback(const_sail_string csr_name, unsigned reg,
 {
   if (config_print_reg) {
     fprintf(trace_log, "CSR %s (0x%03X) <- 0x%0*" PRIX64 "\n", csr_name, reg,
-            static_cast<int>(zxlen / 4), value.bits);
+            static_cast<int>(value.len / 4), value.bits);
   }
   return UNIT;
 }
@@ -107,7 +107,7 @@ unit csr_full_read_callback(const_sail_string csr_name, unsigned reg,
 {
   if (config_print_reg) {
     fprintf(trace_log, "CSR %s (0x%03X) -> 0x%0*" PRIX64 "\n", csr_name, reg,
-            static_cast<int>(zxlen / 4), value.bits);
+            static_cast<int>(value.len / 4), value.bits);
   }
   return UNIT;
 }
