@@ -107,7 +107,7 @@ char *sailcov_file = NULL;
 static struct option options[] = {
     {"device-tree-blob",               required_argument, 0, 'b'                },
     {"terminal-log",                   required_argument, 0, 't'                },
-    {"show-times",                     required_argument, 0, 'p'                },
+    {"show-times",                     no_argument,       0, 'p'                },
     {"test-signature",                 required_argument, 0, 'T'                },
     {"signature-granularity",          required_argument, 0, 'g'                },
     {"rvfi-dii",                       required_argument, 0, 'r'                },
@@ -134,13 +134,58 @@ static struct option options[] = {
 static void print_usage(const char *argv0, int ec)
 {
   fprintf(stdout, "Usage: %s [options] <elf_file> [<elf_file> ...]\n", argv0);
-  fprintf(stdout, "       %s [options] -r <port>\n", argv0);
+  fprintf(stdout, "\nOptions:\n");
+
   struct option *opt = options;
   while (opt->name) {
-    if (isprint(opt->val))
-      fprintf(stdout, "\t -%c\t --%s\n", (char)opt->val, opt->name);
+    if (isprint(opt->val)) {
+      fprintf(stdout, "  -%c, --%-30s", (char)opt->val, opt->name);
+    } else {
+      fprintf(stdout, "      --%-30s", opt->name);
+    }
+
+    if (opt->val == 'b')
+      fprintf(stdout, " <file>     Device tree blob file");
+    else if (opt->val == 't')
+      fprintf(stdout, " <file>     Terminal log output file");
+    else if (opt->val == 'p')
+      fprintf(stdout, "            Show execution times");
+    else if (opt->val == 'T')
+      fprintf(stdout, " <file>     Test signature file");
+    else if (opt->val == 'g')
+      fprintf(stdout, " <size>     Signature granularity");
+    else if (opt->val == 'r')
+      fprintf(stdout, " <port>     RVFI DII port");
+    else if (opt->val == 'h')
+      fprintf(stdout, "            Show this help message");
+    else if (opt->val == 'c')
+      fprintf(stdout, " <file>     Configuration file");
+    else if (opt->val == 'v')
+      fprintf(stdout, " [file]     Enable tracing");
+    else if (opt->val == 'V')
+      fprintf(stdout, " [file]     Disable tracing");
+    else if (opt->val == 'l')
+      fprintf(stdout, " <count>    Instruction limit");
+    else if (strcmp(opt->name, "print-default-config") == 0)
+      fprintf(stdout, "            Print default configuration");
+    else if (strcmp(opt->name, "validate-config") == 0)
+      fprintf(stdout, "            Validate configuration");
+    else if (strcmp(opt->name, "trace-output") == 0)
+      fprintf(stdout, " <file>     Trace output file");
+    else if (strcmp(opt->name, "enable-experimental-extensions") == 0)
+      fprintf(stdout, "            Enable experimental extensions");
+    else if (strcmp(opt->name, "print-device-tree") == 0)
+      fprintf(stdout, "            Print device tree");
+    else if (strcmp(opt->name, "print-isa-string") == 0)
+      fprintf(stdout, "            Print ISA string");
+#ifdef SAILCOV
+    else if (strcmp(opt->name, "sailcov-file") == 0)
+      fprintf(stdout, " <file>     Sailcov output file");
+#endif
     else
-      fprintf(stdout, "\t   \t --%s\n", opt->name);
+      fprintf(stdout, "Unknown argument");
+
+    fprintf(stdout, "\n");
     opt++;
   }
   exit(ec);
@@ -265,11 +310,20 @@ static int process_args(int argc, char **argv)
       sig_file = strdup(optarg);
       fprintf(stderr, "using %s for test-signature output.\n", sig_file);
       break;
-    case 'g':
-      signature_granularity = atoi(optarg);
+    case 'g': {
+      char *p;
+      long val = strtol(optarg, &p, 10);
+      if (*p != '\0' || val <= 0 || val > INT_MAX) {
+        fprintf(stderr,
+                "Error: signature-granularity must be a positive number, got "
+                "'%s'\n",
+                optarg);
+        exit(EXIT_FAILURE);
+      }
+      signature_granularity = static_cast<int>(val);
       fprintf(stderr, "setting signature-granularity to %d bytes\n",
               signature_granularity);
-      break;
+    } break;
     case 'h':
       print_usage(argv[0], EXIT_SUCCESS);
       break;
@@ -303,8 +357,16 @@ static int process_args(int argc, char **argv)
       do_print_isa = true;
       break;
     case 'r': {
+      char *p;
+      long val = strtol(optarg, &p, 10);
+      if (*p != '\0' || val <= 0 || val > 65535) {
+        fprintf(stderr,
+                "Error: port number must be between 1 and 65535, got '%s'\n",
+                optarg);
+        exit(EXIT_FAILURE);
+      }
       config_enable_rvfi = true;
-      int rvfi_dii_port = atoi(optarg);
+      int rvfi_dii_port = static_cast<int>(val);
       rvfi = rvfi_handler(rvfi_dii_port);
       break;
     }
@@ -337,11 +399,54 @@ static int process_args(int argc, char **argv)
       break;
 #endif
     case OPT_TRACE_OUTPUT:
+      if (optarg == NULL || strlen(optarg) == 0) {
+        fprintf(stderr,
+                "Error: option '--trace-output' requires an argument <file>\n");
+        fprintf(stderr, "Try '%s --help' for more information.\n", argv[0]);
+        exit(EXIT_FAILURE);
+      }
       trace_log_path = optarg;
       fprintf(stderr, "using %s for trace output.\n", trace_log_path);
       break;
     case '?':
-      print_usage(argv[0], EXIT_FAILURE);
+      if (optopt == 'b') {
+        fprintf(stderr,
+                "Error: option '-%c/--device-tree-blob' requires an argument "
+                "<file>\n",
+                optopt);
+      } else if (optopt == 't') {
+        fprintf(
+            stderr,
+            "Error: option '-%c/--terminal-log' requires an argument <file>\n",
+            optopt);
+      } else if (optopt == 'T') {
+        fprintf(stderr,
+                "Error: option '-%c/--test-signature' requires an argument "
+                "<file>\n",
+                optopt);
+      } else if (optopt == 'g') {
+        fprintf(stderr,
+                "Error: option '-%c/--signature-granularity' requires an "
+                "argument <size>\n",
+                optopt);
+      } else if (optopt == 'r') {
+        fprintf(stderr,
+                "Error: option '-%c/--rvfi-dii' requires an argument <port>\n",
+                optopt);
+      } else if (optopt == 'c') {
+        fprintf(stderr,
+                "Error: option '-%c/--config' requires an argument <file>\n",
+                optopt);
+      } else if (optopt == 'l') {
+        fprintf(
+            stderr,
+            "Error: option '-%c/--inst-limit' requires an argument <count>\n",
+            optopt);
+      } else {
+        fprintf(stderr, "Error: unknown option '-%c'\n", optopt);
+      }
+      fprintf(stderr, "Try '%s --help' for more information.\n", argv[0]);
+      exit(EXIT_FAILURE);
       break;
     }
   }
