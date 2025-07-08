@@ -1,12 +1,16 @@
-# Function to download and extract test files
-function(download_riscv_tests DOWNLOAD_PATH ARCHIVE_NAME DOWNLOAD_URL)
-    if(NOT EXISTS "${DOWNLOAD_PATH}/${ARCHIVE_NAME}")
-        message(STATUS "${ARCHIVE_NAME} directory not found, downloading...")
+# Function to download and extract test files from .url file
+function(download_riscv_tests DOWNLOAD_PATH TARBALL_NAME URL_FILE_PATH)
+    if(NOT EXISTS "${DOWNLOAD_PATH}/${TARBALL_NAME}")
+        message(STATUS "${TARBALL_NAME} directory not found, downloading...")
+
+        # Read URL from .url file
+        file(READ "${URL_FILE_PATH}" DOWNLOAD_URL)
+        string(STRIP "${DOWNLOAD_URL}" DOWNLOAD_URL)
 
         # Download the tar.gz file
         file(DOWNLOAD
             "${DOWNLOAD_URL}"
-            "${DOWNLOAD_PATH}/${ARCHIVE_NAME}.tar.gz"
+            "${DOWNLOAD_PATH}/${TARBALL_NAME}.tar.gz"
             SHOW_PROGRESS
             STATUS download_status
         )
@@ -15,24 +19,24 @@ function(download_riscv_tests DOWNLOAD_PATH ARCHIVE_NAME DOWNLOAD_URL)
         list(GET download_status 0 status_code)
         if(NOT status_code EQUAL 0)
             list(GET download_status 1 error_message)
-            message(FATAL_ERROR "Failed to download ${ARCHIVE_NAME}: ${error_message}")
+            message(FATAL_ERROR "Failed to download ${TARBALL_NAME}: ${error_message}")
         endif()
 
         # Create directory and extract the tar.gz file into it
-        file(MAKE_DIRECTORY "${DOWNLOAD_PATH}/${ARCHIVE_NAME}")
+        file(MAKE_DIRECTORY "${DOWNLOAD_PATH}/${TARBALL_NAME}")
         execute_process(
-            COMMAND ${CMAKE_COMMAND} -E tar xzf "${DOWNLOAD_PATH}/${ARCHIVE_NAME}.tar.gz"
-            WORKING_DIRECTORY "${DOWNLOAD_PATH}/${ARCHIVE_NAME}"
+            COMMAND ${CMAKE_COMMAND} -E tar xzf "${DOWNLOAD_PATH}/${TARBALL_NAME}.tar.gz"
+            WORKING_DIRECTORY "${DOWNLOAD_PATH}/${TARBALL_NAME}"
             RESULT_VARIABLE extract_result
         )
 
         if(NOT extract_result EQUAL 0)
-            message(FATAL_ERROR "Failed to extract ${ARCHIVE_NAME}")
+            message(FATAL_ERROR "Failed to extract ${TARBALL_NAME}")
         endif()
 
         # Clean up the tar.gz file
-        file(REMOVE "${DOWNLOAD_PATH}/${ARCHIVE_NAME}.tar.gz")
-        message(STATUS "${ARCHIVE_NAME} downloaded and extracted successfully")
+        file(REMOVE "${DOWNLOAD_PATH}/${TARBALL_NAME}.tar.gz")
+        message(STATUS "${TARBALL_NAME} downloaded and extracted successfully")
     endif()
 endfunction()
 
@@ -46,10 +50,13 @@ foreach(vlen IN ITEMS 128 256 512)
             OFF)
 
         if(ENABLE_RISCV_VECTOR_TESTS_V${vlen}_E${elen})
+            set(TARBALL_NAME "riscv-vector-tests-v${vlen}x${elen}")
+            set(URL_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${TARBALL_NAME}.url")
+
             download_riscv_tests(
                 "${CMAKE_CURRENT_BINARY_DIR}"
-                "riscv-vector-tests-v${vlen}x${elen}"
-                "https://github.com/nadime15/riscv-sail-tests/releases/download/2025-06-22/riscv-vector-tests-v${vlen}x${elen}.tar.gz"
+                "${TARBALL_NAME}"
+                "${URL_FILE}"
             )
 
             file(GLOB elfs_rv32d CONFIGURE_DEPENDS LIST_DIRECTORIES false
@@ -99,7 +106,7 @@ if(ENABLE_RISCV_TESTS)
     download_riscv_tests(
         "${CMAKE_CURRENT_BINARY_DIR}"
         "riscv-tests"
-        "https://github.com/nadime15/riscv-sail-tests/releases/download/2025-06-22/riscv-tests.tar.gz"
+        "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests.url"
     )
 
     file(GLOB elfs_rv32d CONFIGURE_DEPENDS LIST_DIRECTORIES false
