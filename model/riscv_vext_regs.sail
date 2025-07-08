@@ -8,6 +8,7 @@
 
 newtype vregidx = Vregidx : bits(5)
 newtype vregno = Vregno : range(0, 31)
+
 function vregidx_to_vregno (Vregidx(b) : vregidx) -> vregno = Vregno(unsigned(b))
 function vregno_to_vregidx (Vregno(b) : vregno) -> vregidx = Vregidx(to_bits(5, b))
 function vregidx_offset(Vregidx(r) : vregidx, o : bits(5)) -> vregidx = Vregidx(r + o)
@@ -21,6 +22,7 @@ function vreg_write_callback(_) = ()
 let zvreg : vregidx = Vregidx(0b00000) /* v0, zero register  */
 
 /* vector registers */
+
 register vr0 : vregtype
 register vr1 : vregtype
 register vr2 : vregtype
@@ -91,13 +93,6 @@ mapping vreg_name_raw : bits(5) <-> string = {
 
 mapping vreg_name : vregidx <-> string = { Vregidx(i) <-> vreg_name_raw(i) }
 
-function dirty_v_context() -> unit = {
-  assert(hartSupports(Ext_V));
-  mstatus[VS] = extStatus_to_bits(Dirty);
-  mstatus[SD] = 0b1;
-  long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
-}
-
 function rV (Vregno(r) : vregno) -> vregtype = {
   match r {
     0 => vr0,
@@ -133,6 +128,13 @@ function rV (Vregno(r) : vregno) -> vregtype = {
     30 => vr30,
     31 => vr31,
   }
+}
+
+function dirty_v_context() -> unit = {
+  assert(hartSupports(Ext_V));
+  mstatus[VS] = extStatus_to_bits(Dirty);
+  mstatus[SD] = 0b1;
+  long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 }
 
 function wV (Vregno(r) : vregno, v : vregtype) -> unit = {
@@ -222,12 +224,132 @@ function init_vregs () = {
   vr31 = zero_vreg
 }
 
-/* Vector CSR */
+/* vector csrs */
+
+register vstart : xlenbits
+register vl     : xlenbits
+
+let VLENB : xlenbits =
+  to_bits(2 ^ VLEN_pow / 8)
+
+bitfield Vtype  : xlenbits = {
+  vill      : xlen - 1,
+  reserved  : xlen - 2 .. 8,
+  vma       : 7,
+  vta       : 6,
+  vsew      : 5 .. 3,
+  vlmul     : 2 .. 0
+}
+register vtype : Vtype
+
+type SEW_pow = range(3, 6)
+
+mapping sew_pow_val : bits(3) <-> SEW_pow = {
+  0b000 <-> 3,
+  0b001 <-> 4,
+  0b010 <-> 5,
+  0b011 <-> 6,
+}
+
+type LMUL_pow = range(-3, 3)
+
+mapping lmul_pow_val : bits(3) <-> LMUL_pow = {
+  0b101 <-> -3,
+  0b110 <-> -2,
+  0b111 <-> -1,
+  0b000 <-> 0,
+  0b001 <-> 1,
+  0b010 <-> 2,
+  0b011 <-> 3,
+}
+
+function is_invalid_sew_pow(v : bits(3)) -> bool =
+  v >_u 0b011
+
+function is_invalid_lmul_pow(v : bits(3)) -> bool =
+  v == 0b100
+
+/* the dynamic selected element width (SEW) */
+/* this returns the power of 2 for SEW */
+function get_sew_pow() -> SEW_pow = {
+  let sew_pow = vtype[vsew];
+  sew_pow_val(sew_pow)
+}
+
+// Valid SEW sizes in bits.
+type sew_bitsize = {8, 16, 32, 64}
+type is_sew_bitsize('n) -> Bool = 'n in {8, 16, 32, 64}
+
+/* this returns the actual value of SEW */
+function get_sew() -> sew_bitsize =
+  2 ^ get_sew_pow()
+
+/* this returns the value of SEW in bytes */
+function get_sew_bytes() -> {1, 2, 4, 8} =
+  get_sew() / 8
+
+/* the vector register group multiplier (LMUL) */
+/* this returns the power of 2 for LMUL */
+val get_lmul_pow : unit -> LMUL_pow
+function get_lmul_pow() = {
+  let lmul_pow = vtype[vlmul];
+  lmul_pow_val(lmul_pow)
+}
+
+enum agtype = { UNDISTURBED, AGNOSTIC }
+
+val decode_agtype : bits(1) -> agtype
+function decode_agtype(ag) = {
+  match ag {
+    0b0 => UNDISTURBED,
+    0b1 => AGNOSTIC
+  }
+}
+
+val get_vtype_vma : unit -> agtype
+function get_vtype_vma() = decode_agtype(vtype[vma])
+
+val get_vtype_vta : unit -> agtype
+function get_vtype_vta() = decode_agtype(vtype[vta])
+
 bitfield Vcsr : bits(3) = {
   vxrm  : 2 .. 1,
   vxsat : 0
 }
 register vcsr : Vcsr
+
+mapping clause csr_name_map = 0x008  <-> "vstart"
+mapping clause csr_name_map = 0x009  <-> "vxsat"
+mapping clause csr_name_map = 0x00A  <-> "vxrm"
+mapping clause csr_name_map = 0x00F  <-> "vcsr"
+mapping clause csr_name_map = 0xC20  <-> "vl"
+mapping clause csr_name_map = 0xC21  <-> "vtype"
+mapping clause csr_name_map = 0xC22  <-> "vlenb"
+
+function clause is_CSR_defined (0x008) = currentlyEnabled(Ext_V) // vstart
+function clause is_CSR_defined (0x009) = currentlyEnabled(Ext_V) // vxsat
+function clause is_CSR_defined (0x00A) = currentlyEnabled(Ext_V) // vxrm
+function clause is_CSR_defined (0x00F) = currentlyEnabled(Ext_V) // vcsr
+function clause is_CSR_defined (0xC20) = currentlyEnabled(Ext_V) // vl
+function clause is_CSR_defined (0xC21) = currentlyEnabled(Ext_V) // vtype
+function clause is_CSR_defined (0xC22) = currentlyEnabled(Ext_V) // vlenb
+
+function clause read_CSR(0x008) = vstart
+function clause read_CSR(0x009) = zero_extend(vcsr[vxsat])
+function clause read_CSR(0x00A) = zero_extend(vcsr[vxrm])
+function clause read_CSR(0x00F) = zero_extend(vcsr.bits)
+function clause read_CSR(0xC20) = vl
+function clause read_CSR(0xC21) = vtype.bits
+function clause read_CSR(0xC22) = VLENB
+
+// Note: The spec recommends trapping if vstart is out of bounds but the
+// current implementation does not yet do that.
+
+function set_vstart(value : bits(16)) -> unit = {
+  dirty_v_context();
+  vstart = zero_extend(value[(VLEN_pow - 1) .. 0]);
+  csr_write_callback("vstart", vstart);
+}
 
 val ext_write_vcsr : (bits(2), bits(1)) -> unit
 function ext_write_vcsr (vxrm_val, vxsat_val) = {
@@ -236,191 +358,7 @@ function ext_write_vcsr (vxrm_val, vxsat_val) = {
   dirty_v_context()
 }
 
-/* num_elem means max(VLMAX,VLEN/SEW)) according to Section 5.4 of RVV spec */
-val get_num_elem : (int, sew_bitsize) -> nat1
-function get_num_elem(LMUL_pow, SEW) = {
-  let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
-  /* Ignore lmul < 1 so that the entire vreg is read, allowing all masking to
-   * be handled in init_masked_result */
-  let num_elem = (2 ^ LMUL_pow_reg) * VLEN / SEW;
-  assert(num_elem > 0);
-  num_elem
-}
-
-/* Reads a single vreg into multiple elements */
-val read_single_vreg : forall 'n 'm, 'n >= 0 & is_sew_bitsize('m) . (int('n), int('m), vregidx) -> vector('n, bits('m))
-function read_single_vreg(num_elem, SEW, vrid) = {
-  let bv     : vregtype                  = V(vrid);
-  var result : vector('n, bits('m)) = vector_init(zeros());
-
-  foreach (i from 0 to (num_elem - 1)) {
-    let start_index = i * SEW;
-    result[i] = slice(bv, start_index, SEW);
-  };
-
-  result
-}
-
-/* Writes multiple elements into a single vreg */
-val write_single_vreg : forall 'n 'm, 'n >= 0 & is_sew_bitsize('m) . (int('n), int('m), vregidx, vector('n, bits('m))) -> unit
-function write_single_vreg(num_elem, SEW, vrid, v) = {
-  var r : vregtype = zeros();
-
-  foreach (i from (num_elem - 1) downto 0) {
-    r = r << SEW;
-    r = r | zero_extend(v[i]);
-  };
-
-  V(vrid) = r
-}
-
-/* The general vreg reading operation with num_elem as max(VLMAX,VLEN/SEW)) */
-val read_vreg : forall 'n 'm 'p, 'n >= 0 & is_sew_bitsize('m) . (int('n), int('m), int('p), vregidx) -> vector('n, bits('m))
-function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
-  let vrid_val = unsigned(vregidx_bits(vrid));
-  var result : vector('n, bits('m)) = vector_init(zeros());
-  let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
-
-  /* Check for valid vrid */
-  if vrid_val + 2 ^ LMUL_pow_reg > 32 then {
-    /* vrid would read past largest vreg (v31) */
-    assert(false, "invalid register group: vrid overflow the largest number")
-  } else if vrid_val % (2 ^ LMUL_pow_reg) != 0 then {
-    /* vrid must be a multiple of emul */
-    assert(false, "invalid register group: vrid is not a multiple of EMUL")
-  } else {
-    if LMUL_pow < 0 then {
-      result = read_single_vreg('n, SEW, vrid);
-    } else {
-      let 'num_elem_single = VLEN / SEW;
-      assert('num_elem_single >= 0);
-      foreach (i_lmul from 0 to (2 ^ LMUL_pow_reg - 1)) {
-        let r_start_i : int = i_lmul * 'num_elem_single;
-        let r_end_i   : int = r_start_i + 'num_elem_single - 1;
-        let vrid_lmul     : vregidx = vregidx_offset(vrid, to_bits_unsafe(5, i_lmul));
-        let single_result : vector('num_elem_single, bits('m)) = read_single_vreg('num_elem_single, SEW, vrid_lmul);
-        foreach (r_i from r_start_i to r_end_i) {
-          let s_i : int = r_i - r_start_i;
-          assert(0 <= r_i & r_i < num_elem);
-          assert(0 <= s_i & s_i < 'num_elem_single);
-          result[r_i] = single_result[s_i];
-        }
-      }
-    }
-  };
-
-  result
-}
-
-/* Single element reading operation */
-val read_single_element : forall 'm, is_sew_bitsize('m) . (int('m), nat, vregidx) -> bits('m)
-function read_single_element(EEW, index, vrid) = {
-  assert(VLEN >= EEW);
-  let 'elem_per_reg = VLEN / EEW;
-  assert('elem_per_reg > 0);
-  let real_vrid  : vregidx = vregidx_offset(vrid, to_bits_unsafe(5, index / 'elem_per_reg));
-  let real_index : int    = index % 'elem_per_reg;
-  let vrid_val : vector('elem_per_reg, bits('m)) = read_single_vreg('elem_per_reg, EEW, real_vrid);
-  assert(0 <= real_index & real_index < 'elem_per_reg);
-  vrid_val[real_index]
-}
-
-/* The general vreg writing operation with num_elem as max(VLMAX,VLEN/SEW)) */
-val write_vreg : forall 'n 'm 'p, 'n >= 0 & is_sew_bitsize('m) . (int('n), int('m), int('p), vregidx, vector('n, bits('m))) -> unit
-function write_vreg(num_elem, SEW, LMUL_pow, vrid, vec) = {
-  let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
-
-  let 'num_elem_single  : int = VLEN / SEW;
-  assert('num_elem_single >= 0);
-  foreach (i_lmul from 0 to (2 ^ LMUL_pow_reg - 1)) {
-    var single_vec : vector('num_elem_single, bits('m)) = vector_init(zeros());
-    let vrid_lmul  : vregidx = vregidx_offset(vrid, to_bits_unsafe(5, i_lmul));
-    let r_start_i  : int = i_lmul * 'num_elem_single;
-    let r_end_i    : int = r_start_i + 'num_elem_single - 1;
-    foreach (r_i from r_start_i to r_end_i) {
-      let s_i : int = r_i - r_start_i;
-      assert(0 <= r_i & r_i < num_elem);
-      assert(0 <= s_i & s_i < 'num_elem_single);
-      single_vec[s_i] = vec[r_i]
-    };
-    write_single_vreg('num_elem_single, SEW, vrid_lmul, single_vec)
-  }
-}
-
-/* Single element writing operation */
-val write_single_element : forall 'm, is_sew_bitsize('m) . (int('m), nat, vregidx, bits('m)) -> unit
-function write_single_element(EEW, index, vrid, value) = {
-  let 'elem_per_reg = VLEN / EEW;
-  assert('elem_per_reg > 0);
-  let real_vrid  : vregidx = vregidx_offset(vrid, to_bits_unsafe(5, index / 'elem_per_reg));
-  let real_index : int    = index % 'elem_per_reg;
-
-  let vrid_val : vector('elem_per_reg, bits('m)) = read_single_vreg('elem_per_reg, EEW, real_vrid);
-  var r : vregtype = zeros();
-  foreach (i from ('elem_per_reg - 1) downto 0) {
-    r = r << EEW;
-    if i == real_index then {
-      r = r | zero_extend(value);
-    } else {
-      r = r | zero_extend(vrid_val[i]);
-    }
-  };
-  V(real_vrid) = r;
-}
-
-/* Mask register reading operation with num_elem as max(VLMAX,VLEN/SEW)) */
-val read_vmask : forall 'n, 'n > 0. (int('n), bits(1), vregidx) -> bits('n)
-function read_vmask(num_elem, vm, vrid) = {
-  assert(num_elem <= sizeof(vlenmax));
-  let vreg_val : vregtype = V(vrid);
-  var result   : bits('n) = ones();
-
-  if vm == 0b1 then {
-    return result
-  };
-
-  foreach (i from 0 to (num_elem - 1)) {
-    result[i] = vreg_val[i]
-  };
-
-  result
-}
-
-/* This is a special version of read_vmask for carry/borrow instructions, where vm=1 means no carry */
-val read_vmask_carry : forall 'n, 'n > 0. (int('n), bits(1), vregidx) -> bits('n)
-function read_vmask_carry(num_elem, vm, vrid) = {
-  assert(num_elem <= sizeof(vlenmax));
-  let vreg_val : vregtype = V(vrid);
-  var result   : bits('n) = zeros();
-
-  if vm == 0b1 then {
-    return result
-  };
-
-  foreach (i from 0 to (num_elem - 1)) {
-    result[i] = vreg_val[i]
-  };
-
-  result
-}
-
-/* Mask register writing operation with num_elem as max(VLMAX,VLEN/SEW)) */
-val write_vmask : forall 'n, 'n > 0. (int('n), vregidx, bits('n)) -> unit
-function write_vmask(num_elem, vrid, v) = {
-  assert(0 < VLEN & VLEN <= sizeof(vlenmax));
-  assert(0 < num_elem & num_elem <= VLEN);
-  let vreg_val : vregtype = V(vrid);
-  var result   : vregtype = undefined;
-
-  foreach (i from 0 to (num_elem - 1)) {
-    result[i] = v[i]
-  };
-  foreach (i from num_elem to (VLEN - 1)) {
-    /* Mask tail is always agnostic */
-    result[i] = vreg_val[i] /* TODO: configuration support */
-  };
-
-  V(vrid) = result
-}
-
-/* end vector register */
+function clause write_CSR(0x008, value) = { set_vstart(value[15 .. 0]); Ok(vstart) }
+function clause write_CSR(0x009, value) = { ext_write_vcsr (vcsr[vxrm], value[0 .. 0]); Ok(zero_extend(vcsr[vxsat])) }
+function clause write_CSR(0x00A, value) = { ext_write_vcsr (value[1 .. 0], vcsr[vxsat]); Ok(zero_extend(vcsr[vxrm])) }
+function clause write_CSR(0x00F, value) = { ext_write_vcsr (value [2 .. 1], value [0 .. 0]); Ok(zero_extend(vcsr.bits)) }
