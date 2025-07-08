@@ -66,7 +66,7 @@ val isla_footprint : forall 'n, 'n in {16, 32}. bits('n) -> bool
 
 function isla_footprint(opcode) = {
   try {
-    init_model();
+    init_model("");
     isla_footprint_no_init(opcode)
   } catch {
     _ => false
