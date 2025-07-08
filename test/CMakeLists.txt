@@ -86,14 +86,6 @@ foreach(vlen IN ITEMS 128 256 512)
                             --config "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
                             ${elf}
                     )
-
-                    # Mark larger VLEN and ELEN as too slow for CI
-                    if(vlen GREATER 128 OR elen GREATER 32)
-                        set_tests_properties(
-                            "${arch}_${elf_name}"
-                            PROPERTIES LABELS "too_slow_for_ci"
-                        )
-                    endif()
                 endforeach()
             endforeach()
         endif()
