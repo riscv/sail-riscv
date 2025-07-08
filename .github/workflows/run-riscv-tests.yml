@@ -1,6 +1,8 @@
 name: Run risc-v tests
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 0"
 env:
   SAIL_VERSION: "0.19.1"
   CMAKE_VERSION: "3.20"
