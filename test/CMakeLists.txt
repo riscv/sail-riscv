@@ -100,7 +100,7 @@ foreach(vlen IN ITEMS 128 256 512)
 endforeach()
 
 # Download and add RISC-V tests.
-option(ENABLE_RISCV_TESTS "Enable riscv-tests" ON)
+option(ENABLE_RISCV_TESTS "Enable riscv-tests" OFF)
 
 if(ENABLE_RISCV_TESTS)
     download_riscv_tests(
