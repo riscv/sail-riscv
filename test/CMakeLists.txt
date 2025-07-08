@@ -1,11 +1,18 @@
-# Function to download and extract test files from .url file
-function(download_riscv_tests DOWNLOAD_PATH TARBALL_NAME URL_FILE_PATH)
+# Function to extract version from URL
+function(extract_version_from_url DOWNLOAD_URL VERSION_VAR)
+    string(REGEX MATCH "download/([^/]+)" VERSION_MATCH "${DOWNLOAD_URL}")
+    if(VERSION_MATCH)
+        string(REGEX REPLACE ".*download/([^/]+).*" "\\1" VERSION "${DOWNLOAD_URL}")
+        set(${VERSION_VAR} "${VERSION}" PARENT_SCOPE)
+    else()
+        message(FATAL_ERROR "Could not extract version from URL: ${DOWNLOAD_URL}")
+    endif()
+endfunction()
+
+# Function to download and extract test files
+function(download_riscv_tests DOWNLOAD_PATH TARBALL_NAME DOWNLOAD_URL)
     if(NOT EXISTS "${DOWNLOAD_PATH}/${TARBALL_NAME}")
         message(STATUS "${TARBALL_NAME} directory not found, downloading...")
-
-        # Read URL from .url file
-        file(READ "${URL_FILE_PATH}" DOWNLOAD_URL)
-        string(STRIP "${DOWNLOAD_URL}" DOWNLOAD_URL)
 
         # Download the tar.gz file
         file(DOWNLOAD
@@ -53,17 +60,23 @@ foreach(vlen IN ITEMS 128 256 512)
             set(TARBALL_NAME "riscv-vector-tests-v${vlen}x${elen}")
             set(URL_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${TARBALL_NAME}.url")
 
+            # Read URL and extract version, then build path
+            file(READ "${URL_FILE}" DOWNLOAD_URL)
+            string(STRIP "${DOWNLOAD_URL}" DOWNLOAD_URL)
+            extract_version_from_url("${DOWNLOAD_URL}" VERSION)
+            set(DOWNLOAD_PATH "${CMAKE_CURRENT_BINARY_DIR}/${VERSION}")
+
             download_riscv_tests(
-                "${CMAKE_CURRENT_BINARY_DIR}"
+                "${DOWNLOAD_PATH}"
                 "${TARBALL_NAME}"
-                "${URL_FILE}"
+                "${DOWNLOAD_URL}"
             )
 
             file(GLOB elfs_rv32d CONFIGURE_DEPENDS LIST_DIRECTORIES false
-                "${CMAKE_CURRENT_BINARY_DIR}/riscv-vector-tests-v${vlen}x${elen}/rv32*"
+                "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv32*"
             )
             file(GLOB elfs_rv64d CONFIGURE_DEPENDS LIST_DIRECTORIES false
-                "${CMAKE_CURRENT_BINARY_DIR}/riscv-vector-tests-v${vlen}x${elen}/rv64*"
+                "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv64*"
             )
 
             add_custom_command(
@@ -103,24 +116,32 @@ endforeach()
 option(ENABLE_RISCV_TESTS "Enable riscv-tests" OFF)
 
 if(ENABLE_RISCV_TESTS)
+    set(URL_FILE "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests.url")
+    set(TARBALL_NAME "riscv-tests")
+
+    # Read URL and extract version, then build path
+    file(READ "${URL_FILE}" DOWNLOAD_URL)
+    string(STRIP "${DOWNLOAD_URL}" DOWNLOAD_URL)
+    extract_version_from_url("${DOWNLOAD_URL}" VERSION)
+    set(DOWNLOAD_PATH "${CMAKE_CURRENT_BINARY_DIR}/${VERSION}")
+
     download_riscv_tests(
-        "${CMAKE_CURRENT_BINARY_DIR}"
-        "riscv-tests"
-        "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests.url"
+        "${DOWNLOAD_PATH}"
+        "${TARBALL_NAME}"
+        "${DOWNLOAD_URL}"
     )
 
     file(GLOB elfs_rv32d CONFIGURE_DEPENDS LIST_DIRECTORIES false
-        "${CMAKE_CURRENT_BINARY_DIR}/riscv-tests/rv32*"
+        "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv32*"
     )
 
     file(GLOB elfs_rv64d CONFIGURE_DEPENDS LIST_DIRECTORIES false
-        "${CMAKE_CURRENT_BINARY_DIR}/riscv-tests/rv64*"
+        "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv64*"
     )
 
     foreach(arch IN ITEMS "rv32d" "rv64d")
         foreach(elf IN LISTS elfs_${arch})
             file(RELATIVE_PATH elf_name "${CMAKE_CURRENT_BINARY_DIR}" ${elf})
-
             add_test(
                 NAME "${arch}_${elf_name}"
                 COMMAND
