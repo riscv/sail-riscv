@@ -10,7 +10,7 @@
 
 // The specification denotes a hart's entry into Debug mode as the hart "halting".
 function enter_debug_mode(cause : debug_entry_cause, extcause : bits(3), pc : xlenbits) -> unit = {
-  assert(~(debug_mode_active), "enter_debug_mode: already in Debug mode.");
+  assert(not(debug_mode_active), "enter_debug_mode: already in Debug mode.");
   dpc = pc;
   dcsr = [dcsr with
            Prv = privLevel_bits(cur_privilege),

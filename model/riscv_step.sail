@@ -320,7 +320,7 @@ function try_step(step_no : nat, exit_wait : bool, dr : debug_request) -> step_r
 
   // When entering Debug via single step, DPC is set to the address of
   // the next instruction to be executed.
-  if   in_single_step() & ~(debug_mode_active)
+  if   in_single_step() & not(debug_mode_active)
   then enter_debug_mode(DBGEntry_Step, zeros(), get_arch_pc());
 
   struct { in_wait,
@@ -336,7 +336,7 @@ function loop () : unit -> unit = {
     // This standalone loop always exits immediately out of waiting
     // states.
     let stepped = try_step(step_no, true, DR_None);
-    if ~(stepped.in_wait) then {
+    if not(stepped.in_wait) then {
       step_no = step_no + 1;
       if get_config_print_instr() then {
         print_step()

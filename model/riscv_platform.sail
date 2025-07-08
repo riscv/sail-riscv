@@ -278,11 +278,11 @@ function clint_store(Physaddr(addr), width, data) = {
 // StopCount condition would need to change.
 function should_inc_mcycle(priv : Privilege) -> bool =
   (mcountinhibit[CY] == 0b0 & counter_priv_filter_bit(mcyclecfg, priv) == 0b0)
-  & ~(currentlyEnabled(Ext_Sdext) & bool_bits(dcsr[StopCount]))
+  & not(currentlyEnabled(Ext_Sdext) & bool_bits(dcsr[StopCount]))
 
 function should_inc_minstret(priv : Privilege) -> bool =
   (mcountinhibit[IR] == 0b0 & counter_priv_filter_bit(minstretcfg, priv) == 0b0)
-  & ~(currentlyEnabled(Ext_Sdext) & bool_bits(dcsr[StopCount]))
+  & not(currentlyEnabled(Ext_Sdext) & bool_bits(dcsr[StopCount]))
 
 val tick_clock : unit -> unit
 function tick_clock() = {

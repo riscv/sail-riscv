@@ -40,27 +40,20 @@ function init_sdext() -> unit =
   }
 
 // Other configuration elements.
-let writable_dcsr_stepie : bool =
-  if   hartSupports(Ext_Sdext)
-  then config extensions.Sdext.writable_stepie
-  else false
-let preset_dcsr_stopcount : bool =
-  if   hartSupports(Ext_Sdext)
-  then config extensions.Sdext.stopcount.preset_value
-  else false
-let writable_dcsr_stopcount : bool =
-  if   hartSupports(Ext_Sdext)
-  then config extensions.Sdext.stopcount.writable
-  else false
-let preset_dcsr_mprven : bool =
-  if   hartSupports(Ext_Sdext)
-  then config extensions.Sdext.mprven.preset_value
-  else false
-let writable_dcsr_mprven : bool =
-  if   hartSupports(Ext_Sdext)
-  then config extensions.Sdext.mprven.writable
-  else false
+let dcsr_stepie_writable : bool =
+  hartSupports(Ext_Sdext) & config extensions.Sdext.writable_stepie
 
+let dcsr_stopcount_preset_enabled : bool =
+  hartSupports(Ext_Sdext) & config extensions.Sdext.stopcount.preset_value
+
+let dcsr_stopcount_writable : bool =
+  hartSupports(Ext_Sdext) & config extensions.Sdext.stopcount.writable
+
+let dcsr_mprven_preset_enabled : bool =
+  hartSupports(Ext_Sdext) & config extensions.Sdext.mprven.preset_value
+
+let dcsr_mprven_writable : bool =
+  hartSupports(Ext_Sdext) & config extensions.Sdext.mprven.writable
 
 mapping clause csr_name_map = 0x7b0  <-> "dcsr"
 mapping clause csr_name_map = 0x7b1  <-> "dpc"
@@ -100,11 +93,11 @@ function reset_Dcsr() -> Dcsr = {
     EBreakS   = 0b0,
     EBreakU   = 0b0,
     StepIE    = 0b0,
-    StopCount = bool_bits(preset_dcsr_stopcount),
+    StopCount = bool_bits(dcsr_stopcount_preset_enabled),
     StopTime  = 0b0, // TODO: add config for this
     Cause     = debug_cause_bits(DBGEntry_None),
     V         = 0b0,
-    MPRVEn    = bool_bits(preset_dcsr_mprven),
+    MPRVEn    = bool_bits(dcsr_mprven_preset_enabled),
     NMIP      = 0b0,
     Step      = 0b0,
     Prv       = privLevel_bits(Machine),
@@ -144,10 +137,10 @@ function legalize_dcsr(d : Dcsr, v : xlenbits) -> Dcsr = {
    EBreakM   = v[EBreakM],
    EBreakS   = if hartSupports(Ext_S) then v[EBreakS] else 0b0,
    EBreakU   = if hartSupports(Ext_U) then v[EBreakU] else 0b0,
-   StepIE    = if writable_dcsr_stepie then v[StepIE] else d[StepIE],
-   StopCount = if writable_dcsr_stopcount then v[StopCount] else d[StopCount],
+   StepIE    = if dcsr_stepie_writable then v[StepIE] else d[StepIE],
+   StopCount = if dcsr_stopcount_writable then v[StopCount] else d[StopCount],
    // V = ...
-   MPRVEn    = if writable_dcsr_mprven then v[MPRVEn] else d[MPRVEn],
+   MPRVEn    = if dcsr_mprven_writable then v[MPRVEn] else d[MPRVEn],
    Step      = v[Step],
    Prv       = if have_privLevel(v[Prv]) then v[Prv] else d[Prv],
   ]

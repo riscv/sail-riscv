@@ -28,7 +28,7 @@ function clause execute (UTYPE(imm, rd, op)) = {
   match op {
     LUI   => { X(rd) = off; RETIRE_SUCCESS },
     AUIPC => {
-      if   in_debug_abstract_command() & ~(debug_is_pc_instr_legal())
+      if   in_debug_abstract_command() & not(debug_is_pc_instr_legal())
       then return Illegal_Instruction();
 
       X(rd) = get_arch_pc() + off;
@@ -69,7 +69,7 @@ function clause execute (JAL(imm, rd)) = {
   match ext_control_check_pc(target) {
     Ext_ControlAddr_Error(e) => Ext_ControlAddr_Check_Failure(e),
     Ext_ControlAddr_OK(target) => {
-      if   in_debug_abstract_command() & ~(debug_is_legal_ct_target(target))
+      if   in_debug_abstract_command() & not(debug_is_legal_ct_target(target))
       then return Illegal_Instruction();
       /* Perform standard alignment check */
       let target_bits = bits_of(target);
@@ -130,7 +130,7 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
     match ext_control_check_pc(target) {
       Ext_ControlAddr_Error(e) => Ext_ControlAddr_Check_Failure(e),
       Ext_ControlAddr_OK(target) => {
-        if   in_debug_abstract_command() & ~(debug_is_legal_ct_target(target))
+        if   in_debug_abstract_command() & not(debug_is_legal_ct_target(target))
         then return Illegal_Instruction();
 
         let target_bits = bits_of(target);

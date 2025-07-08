@@ -584,8 +584,7 @@ void run_sail(void)
 
       // If the model is in Debug mode, request an exit, else request
       // no change.
-      enum zdebug_request dr
-          = step_result.zin_debug_mode ? zDR_Resume : zDR_None;
+      zdebug_request dr = step_result.zin_debug_mode ? zDR_Resume : zDR_None;
       step_result = ztry_step(sail_step, exit_wait, dr);
       if (have_exception)
         goto step_exception;
