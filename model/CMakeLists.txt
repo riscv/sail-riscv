@@ -140,8 +140,6 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
         "prelude_mem.sail"
         "arithmetic.sail"
         "rvfi_dii.sail"
-        "rvfi_dii_v1.sail"
-        "rvfi_dii_v2.sail"
     )
 
     set(sail_regs_srcs
@@ -260,6 +258,7 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
                 --c-include riscv_prelude.h
                 --c-include riscv_platform.h
                 --c-include riscv_callbacks.h
+                --c-include rvfi_dii_sail.h
                 # Don't dead-code eliminate these functions.
                 --c-preserve init_model
                 --c-preserve try_step
@@ -268,25 +267,6 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
                 --c-preserve generate_dts
                 --c-preserve config_is_valid
                 --c-preserve generate_canonical_isa_string
-                # Preserve RVFI functions.
-                --c-preserve rvfi_set_instr_packet
-                --c-preserve rvfi_get_cmd
-                --c-preserve rvfi_get_insn
-                --c-preserve rvfi_get_v2_trace_size
-                --c-preserve rvfi_get_v2_support_packet
-                --c-preserve rvfi_get_exec_packet_v1
-                --c-preserve rvfi_get_exec_packet_v2
-                --c-preserve rvfi_get_mem_data
-                --c-preserve rvfi_get_int_data
-                --c-preserve rvfi_zero_exec_packet
-                --c-preserve rvfi_halt_exec_packet
-                --c-preserve print_instr_packet
-                --c-preserve print_rvfi_exec
-                --c-preserve rvfi_write
-                --c-preserve rvfi_read
-                --c-preserve rvfi_mem_exception
-                --c-preserve rvfi_wX
-                --c-preserve rvfi_trap
                 # Input files.
                 ${sail_srcs}
         )

@@ -24,13 +24,6 @@ unit vreg_write_callback(unsigned reg, lbits value);
 unit pc_write_callback(sbits value);
 unit trap_callback(unit);
 
-// TODO: Move these implementations to C.
-unit zrvfi_write(sbits paddr, int64_t width, lbits value);
-unit zrvfi_read(sbits paddr, sail_int width, lbits value);
-unit zrvfi_mem_exception(sbits paddr);
-unit zrvfi_wX(int64_t reg, sbits value);
-unit zrvfi_trap(unit);
-
 #ifdef __cplusplus
 }
 #endif
