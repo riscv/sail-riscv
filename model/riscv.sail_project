@@ -100,7 +100,7 @@ extensions {
     requires riscv_core, riscv, I
     files
       riscv_insts_mext.sail,
-      if $ARCH == RV64 then riscv_insts_base_64.sail else [],
+      if $ARCH == RV64 then riscv_insts_mext_64.sail else [],
   }
 
   // A {
