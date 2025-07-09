@@ -203,6 +203,10 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
         "riscv_model.sail"
     )
 
+    set(test_srcs
+        "unit_tests/test_mstatus.sail"
+    )
+
     # Final file list.
     set(sail_srcs
         ${sail_arch_srcs}
@@ -210,6 +214,7 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
         ${sail_step_srcs}
         ${sail_cfg_srcs}
         ${sail_model_srcs}
+        ${test_srcs}
         "main.sail"
     )
 
