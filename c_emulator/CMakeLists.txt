@@ -16,6 +16,10 @@ set(EMULATOR_COMMON_SRCS
     riscv_softfloat.h
     config_utils.h
     config_utils.cpp
+    jtag_dtm.cpp
+    jtag_dtm.h
+    remote_bitbang.cpp
+    remote_bitbang.h
 )
 
 add_executable(sail_riscv_sim

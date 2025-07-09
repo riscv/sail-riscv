@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <vector>
 #include <inttypes.h>
+#include "jtag_dtm.h"
+#include "remote_bitbang.h"
 
 void print_lbits_hex(lbits val, int length = 0)
 {
