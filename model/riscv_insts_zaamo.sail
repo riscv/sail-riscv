@@ -74,7 +74,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
           // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
           // registers. When the first register of a register pair is
           // x0, then both halves of the pair read/write as zero.
-          let rs2_val = X_pair(rs2, width)[width * 8 - 1 .. 0];
+          let rs2_val : bits('width * 8) = if width <= xlen_bytes then trunc(X(rs2)) else trunc(X_pair(rs2));
           match mem_write_ea(addr, width, aq & rl, rl, true) {
             Err(e) => Memory_Exception(vaddr, e),
             Ok(_) => {
@@ -97,13 +97,15 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                     };
 
                   // All operations except CAS where loaded != X(rd) write their value back.
-                  if op == AMOCAS & loaded != X_pair(rd, width)[width * 8 - 1 .. 0] then {
+                  if op == AMOCAS & loaded != (if width <= xlen_bytes then trunc(X(rd)) else trunc(X_pair(rd))) then {
                     // Compared, but didn't swap.
                     RETIRE_SUCCESS
                   } else {
                     match mem_write_value(addr, width, sign_extend(result), aq & rl, rl, true) {
                       Ok(true)  => {
-                        X_pair(rd, width) = sign_extend(loaded);
+                        if width <= xlen_bytes
+                        then X(rd) = sign_extend(loaded)
+                        else X_pair(rd) = sign_extend(loaded);
                         RETIRE_SUCCESS
                       },
                       Ok(false) => { internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value") },
