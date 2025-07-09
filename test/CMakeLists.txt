@@ -1,13 +1,6 @@
-# Function to extract version from URL
-function(extract_version_from_url DOWNLOAD_URL VERSION_VAR)
-    string(REGEX MATCH "download/([^/]+)" VERSION_MATCH "${DOWNLOAD_URL}")
-    if(VERSION_MATCH)
-        string(REGEX REPLACE ".*download/([^/]+).*" "\\1" VERSION "${DOWNLOAD_URL}")
-        set(${VERSION_VAR} "${VERSION}" PARENT_SCOPE)
-    else()
-        message(FATAL_ERROR "Could not extract version from URL: ${DOWNLOAD_URL}")
-    endif()
-endfunction()
+# CMake options for test downloads
+set(TEST_DOWNLOAD_URL "https://github.com/nadime15/riscv-sail-tests/releases/download" CACHE STRING "Base URL to download precompiled riscv-tests and riscv-vector-tests from")
+set(TEST_DOWNLOAD_VERSION "2025-06-22" CACHE STRING "Version of precompiled tests to download")
 
 # Function to download and extract test files
 function(download_riscv_tests DOWNLOAD_PATH TARBALL_NAME DOWNLOAD_URL)
@@ -58,13 +51,8 @@ foreach(vlen IN ITEMS 128 256 512)
 
         if(ENABLE_RISCV_VECTOR_TESTS_V${vlen}_E${elen})
             set(TARBALL_NAME "riscv-vector-tests-v${vlen}x${elen}")
-            set(URL_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${TARBALL_NAME}.url")
-
-            # Read URL and extract version, then build path
-            file(READ "${URL_FILE}" DOWNLOAD_URL)
-            string(STRIP "${DOWNLOAD_URL}" DOWNLOAD_URL)
-            extract_version_from_url("${DOWNLOAD_URL}" VERSION)
-            set(DOWNLOAD_PATH "${CMAKE_CURRENT_BINARY_DIR}/${VERSION}")
+            set(DOWNLOAD_PATH "${CMAKE_CURRENT_BINARY_DIR}/${TEST_DOWNLOAD_VERSION}")
+            set(DOWNLOAD_URL "${TEST_DOWNLOAD_URL}/${TEST_DOWNLOAD_VERSION}/${TARBALL_NAME}.tar.gz")
 
             download_riscv_tests(
                 "${DOWNLOAD_PATH}"
@@ -116,14 +104,9 @@ endforeach()
 option(ENABLE_RISCV_TESTS "Enable riscv-tests" OFF)
 
 if(ENABLE_RISCV_TESTS)
-    set(URL_FILE "${CMAKE_CURRENT_SOURCE_DIR}/riscv-tests.url")
     set(TARBALL_NAME "riscv-tests")
-
-    # Read URL and extract version, then build path
-    file(READ "${URL_FILE}" DOWNLOAD_URL)
-    string(STRIP "${DOWNLOAD_URL}" DOWNLOAD_URL)
-    extract_version_from_url("${DOWNLOAD_URL}" VERSION)
-    set(DOWNLOAD_PATH "${CMAKE_CURRENT_BINARY_DIR}/${VERSION}")
+    set(DOWNLOAD_PATH "${CMAKE_CURRENT_BINARY_DIR}/${TEST_DOWNLOAD_VERSION}")
+    set(DOWNLOAD_URL "${TEST_DOWNLOAD_URL}/${TEST_DOWNLOAD_VERSION}/${TARBALL_NAME}.tar.gz")
 
     download_riscv_tests(
         "${DOWNLOAD_PATH}"
