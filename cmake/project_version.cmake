@@ -6,8 +6,9 @@ find_package(Git)
 
 if (Git_FOUND)
   # We could remove --tags if we started annotating the release tags.
+  # --broken allows building in a corrupt git repo.
   execute_process(
-    COMMAND ${GIT_EXECUTABLE} describe --tags HEAD
+    COMMAND ${GIT_EXECUTABLE} describe --tags --dirty --broken
     RESULT_VARIABLE git_error
     OUTPUT_VARIABLE git_describe
     OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -18,7 +19,6 @@ endif()
 
 if (git_error)
   message(STATUS "Failed to run git describe: ${git_error}")
-
   set(sail_riscv_git_version   "unknown commit")
 else()
   set(sail_riscv_git_version   ${git_describe})
