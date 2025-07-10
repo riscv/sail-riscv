@@ -1,12 +1,12 @@
 #pragma once
 
-#include <string>
+#include <string_view>
 
 namespace version_info {
 
-static const std::string release_version;
-static const std::string git_version;
-static const std::string sail_version;
-static const std::string cxx_compiler_version;
+extern const std::string_view release_version;
+extern const std::string_view git_version;
+extern const std::string_view sail_version;
+extern const std::string_view cxx_compiler_version;
 
 };

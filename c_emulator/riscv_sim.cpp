@@ -177,10 +177,17 @@ static void print_isa(void)
 
 static void print_build_info(void)
 {
-  printf("Sail RISC-V release: %s\n", version_info::release_version.c_str());
-  printf("Sail RISC-V git: %s\n", version_info::git_version.c_str());
-  printf("Sail: %s\n", version_info::sail_version.c_str());
-  printf("C++ compiler: %s\n", version_info::cxx_compiler_version.c_str());
+  printf("Sail RISC-V release: %.*s\n",
+         static_cast<int>(version_info::release_version.length()),
+         version_info::release_version.data());
+  printf("Sail RISC-V git: %.*s\n",
+         static_cast<int>(version_info::git_version.length()),
+         version_info::git_version.data());
+  printf("Sail: %.*s\n", static_cast<int>(version_info::sail_version.length()),
+         version_info::sail_version.data());
+  printf("C++ compiler: %.*s\n",
+         static_cast<int>(version_info::cxx_compiler_version.length()),
+         version_info::cxx_compiler_version.data());
 }
 
 static bool is_32bit_model(void)
@@ -283,7 +290,8 @@ static int process_args(int argc, char **argv)
       break;
     }
     case OPT_PRINT_VERSION:
-      printf("%s\n", version_info::release_version.c_str());
+      printf("%.*s\n", static_cast<int>(version_info::release_version.length()),
+             version_info::release_version.data());
       exit(EXIT_SUCCESS);
     case OPT_BUILD_INFO:
       print_build_info();
