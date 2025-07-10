@@ -9,8 +9,8 @@
 function clause currentlyEnabled(Ext_Zalrsc) = hartSupports(Ext_Zalrsc) | currentlyEnabled(Ext_A)
 
 // Zalrsc defines LR/SC for word and double
-function lrsc_width_valid(size : word_width) -> bool = {
-  match size {
+function lrsc_width_valid(width : word_width) -> bool = {
+  match width {
     4 => true,
     8 => xlen >= 64,
     _ => false,
@@ -21,9 +21,9 @@ function lrsc_width_valid(size : word_width) -> bool = {
 
 union clause instruction = LOADRES : (bool, bool, regidx, word_width, regidx)
 
-mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)
-  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111
-  when currentlyEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
+mapping clause encdec = LOADRES(aq, rl, rs1, width, rd)
+  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ encdec_reg(rd) @ 0b0101111
+  when currentlyEnabled(Ext_Zalrsc) & lrsc_width_valid(width)
 
 /* We could set load-reservations on physical or virtual addresses.
  * However most chips (especially multi-core) will use physical addresses.
@@ -48,16 +48,16 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
   }
 }
 
-mapping clause assembly = LOADRES(aq, rl, rs1, size, rd)
-  <-> "lr." ^ size_mnemonic(size) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
+mapping clause assembly = LOADRES(aq, rl, rs1, width, rd)
+  <-> "lr." ^ width_mnemonic(width) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ****************************************************************** */
 
 union clause instruction = STORECON : (bool, bool, regidx, regidx, word_width, regidx)
 
-mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)
-  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111
-  when currentlyEnabled(Ext_Zalrsc) & lrsc_width_valid(size)
+mapping clause encdec = STORECON(aq, rl, rs2, rs1, width, rd)
+  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ encdec_reg(rd) @ 0b0101111
+  when currentlyEnabled(Ext_Zalrsc) & lrsc_width_valid(width)
 
 /* NOTE: Currently, we only EA if address translation is successful. This may need revisiting. */
 function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
@@ -78,5 +78,5 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
   }
 }
 
-mapping clause assembly = STORECON(aq, rl, rs2, rs1, size, rd)
-  <-> "sc." ^ size_mnemonic(size) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
+mapping clause assembly = STORECON(aq, rl, rs2, rs1, width, rd)
+  <-> "sc." ^ width_mnemonic(width) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"

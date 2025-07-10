@@ -307,14 +307,14 @@ mapping wait_name : WaitReason <-> string = {
 overload to_str = {wait_name}
 
 // Get the bit encoding of word_width.
-mapping size_enc : word_width <-> bits(2) = {
+mapping width_enc : word_width <-> bits(2) = {
   1 <-> 0b00,
   2 <-> 0b01,
   4 <-> 0b10,
   8 <-> 0b11,
 }
 
-mapping size_mnemonic : word_width <-> string = {
+mapping width_mnemonic : word_width <-> string = {
   1 <-> "b",
   2 <-> "h",
   4 <-> "w",

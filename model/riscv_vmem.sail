@@ -47,17 +47,17 @@ type PTW_Result('v : Int), is_sv_mode('v) = result((PTW_Output('v), ext_ptw), (P
 // Write a Page Table Entry.
 function write_pte forall 'n, 'n in {4, 8} . (
   paddr    : physaddr,
-  pte_size : int('n),
+  pte_width : int('n),
   pte      : bits('n * 8),
 ) -> MemoryOpResult(bool) =
-  mem_write_value_priv(paddr, pte_size, pte, Supervisor, false, false, false)
+  mem_write_value_priv(paddr, pte_width, pte, Supervisor, false, false, false)
 
 // Read a Page Table Entry.
 function read_pte forall 'n, 'n in {4, 8} . (
   paddr    : physaddr,
-  pte_size : int('n),
+  pte_width : int('n),
 ) -> MemoryOpResult(bits(8 * 'n)) =
-  mem_read_priv(Read(Data), Supervisor, paddr, pte_size, false, false, false)
+  mem_read_priv(Read(Data), Supervisor, paddr, pte_width, false, false, false)
 
 // PRIVATE
 // 'v is the virtual address size.
@@ -88,12 +88,12 @@ function pt_walk(
   ext_ptw,
 ) = {
   // Extract the PPN component for this level; 10 bits on Sv32, otherwise 9.
-  let 'vpn_i_size = if 'v == 32 then 10 else 9;
-  let vpn_i = vpn[(level + 1) * vpn_i_size - 1 .. level * vpn_i_size];
-  let 'log_pte_size_bytes = if 'v == 32 then 2 else 3;
+  let 'vpn_i_width = if 'v == 32 then 10 else 9;
+  let vpn_i = vpn[(level + 1) * vpn_i_width - 1 .. level * vpn_i_width];
+  let 'log_pte_width_bytes = if 'v == 32 then 2 else 3;
 
   // Address of PTE in page table. This is 34 bits for Sv32, otherwise 56 bits.
-  let pte_addr = pt_base @ vpn_i @ zeros('log_pte_size_bytes);
+  let pte_addr = pt_base @ vpn_i @ zeros('log_pte_width_bytes);
 
 
   // Convert to a physical address (34 bits for RV32, 64 bits to RV64).
@@ -104,7 +104,7 @@ function pt_walk(
   let pte_addr = Physaddr(zero_extend(pte_addr));
 
   // Read this-level PTE from mem (Step 2 of VATP)
-  match read_pte(pte_addr, 2 ^ log_pte_size_bytes) {
+  match read_pte(pte_addr, 2 ^ log_pte_width_bytes) {
     Err(_)  => Err(PTW_Access(), ext_ptw),
     Ok(pte) => {
       let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
@@ -127,10 +127,10 @@ function pt_walk(
             Err(PTW_Invalid_PTE(), ext_ptw)
         } else {
           // Leaf PTE (Step 5 of VATP).
-          let ppn_size_bits = if 'v == 32 then 10 else 9;
+          let ppn_width_bits = if 'v == 32 then 10 else 9;
           if level > 0 then {
             // Check for misaligned superpage.
-            let low_bits = ppn_size_bits * level;
+            let low_bits = ppn_width_bits * level;
             if   ppn[low_bits - 1 .. 0] != zeros()
             then return Err(PTW_Misaligned(), ext_ptw);
           };
@@ -142,7 +142,7 @@ function pt_walk(
               let ppn = if level > 0 then {
                 // Compose final PA in superpage:
                 // Superpage PPN @ lower VPNs @ page-offset
-                let low_bits = ppn_size_bits * level;
+                let low_bits = ppn_width_bits * level;
                 ppn[length(ppn) - 1 .. low_bits] @ vpn[low_bits - 1 .. 0]
               } else {
                 ppn
