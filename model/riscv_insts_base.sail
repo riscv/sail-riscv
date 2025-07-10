@@ -283,7 +283,7 @@ val extend_value : forall 'n, 0 < 'n <= xlen. (bool, bits('n)) -> xlenbits
 function extend_value(is_unsigned, value) = if is_unsigned then zero_extend(value) else sign_extend(value)
 
 mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, width)
-  <-> imm @ encdec_reg(rs1) @ bool_bits(is_unsigned) @ size_enc(width) @ encdec_reg(rd) @ 0b0000011
+  <-> imm @ encdec_reg(rs1) @ bool_bits(is_unsigned) @ width_enc(width) @ encdec_reg(rd) @ 0b0000011
   when valid_load_encdec(width, is_unsigned)
 
 function clause execute (LOAD(imm, rs1, rd, is_unsigned, width)) = {
@@ -307,13 +307,13 @@ mapping maybe_u : bool <-> string = {
 }
 
 mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, width)
-  <-> "l" ^ size_mnemonic(width) ^ maybe_u(is_unsigned) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
+  <-> "l" ^ width_mnemonic(width) ^ maybe_u(is_unsigned) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ****************************************************************** */
 union clause instruction = STORE : (bits(12), regidx, regidx, word_width)
 
 mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, width)
-  <-> imm7 : bits(7) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(width) @ imm5 : bits(5) @ 0b0100011
+  <-> imm7 : bits(7) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ imm5 : bits(5) @ 0b0100011
   when width <= xlen_bytes
 
 function clause execute (STORE(imm, rs2, rs1, width)) = {
@@ -330,7 +330,7 @@ function clause execute (STORE(imm, rs2, rs1, width)) = {
 }
 
 mapping clause assembly = STORE(imm, rs2, rs1, width)
-  <-> "s" ^ size_mnemonic(width) ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_signed_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
+  <-> "s" ^ width_mnemonic(width) ^ spc() ^ reg_name(rs2) ^ sep() ^ hex_bits_signed_12(imm) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 /* ****************************************************************** */
 union clause instruction = ADDIW : (bits(12), regidx, regidx)

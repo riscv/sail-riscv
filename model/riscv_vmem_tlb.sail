@@ -35,9 +35,9 @@ struct TLB_Entry = {
 // PTE access functions, for reading flags, and for modifying the dirty and
 // accessed bits.
 function tlb_get_pte forall 'n, 'n in {4, 8}. (
-  pte_width : int('n),
+  pte_size  : int('n),
   ent       : TLB_Entry,
-) -> bits('n * 8) = ent.pte['n * 8 - 1 .. 0]
+) -> bits('n * 8) = ent.pte[pte_size * 8 - 1 .. 0]
 
 function tlb_set_pte forall 'n, 'n in {4, 8}. (
   ent : TLB_Entry,

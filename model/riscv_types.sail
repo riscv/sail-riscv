@@ -311,14 +311,14 @@ type word_width = {1, 2, 4, 8}
 type word_width_wide = {1, 2, 4, 8, 16}
 
 // Get the bit encoding of word_width.
-mapping size_enc : word_width <-> bits(2) = {
+mapping width_enc : word_width <-> bits(2) = {
   1 <-> 0b00,
   2 <-> 0b01,
   4 <-> 0b10,
   8 <-> 0b11,
 }
 
-mapping size_mnemonic : word_width <-> string = {
+mapping width_mnemonic : word_width <-> string = {
   1 <-> "b",
   2 <-> "h",
   4 <-> "w",
@@ -326,7 +326,7 @@ mapping size_mnemonic : word_width <-> string = {
 }
 
 // Get the bit encoding of word_width.
-mapping size_enc_wide : word_width_wide <-> bits(3) = {
+mapping width_enc_wide : word_width_wide <-> bits(3) = {
   1  <-> 0b000,
   2  <-> 0b001,
   4  <-> 0b010,
@@ -334,7 +334,7 @@ mapping size_enc_wide : word_width_wide <-> bits(3) = {
   16 <-> 0b100,
 }
 
-mapping size_mnemonic_wide : word_width_wide <-> string = {
+mapping width_mnemonic_wide : word_width_wide <-> string = {
   1  <-> "b",
   2  <-> "h",
   4  <-> "w",
