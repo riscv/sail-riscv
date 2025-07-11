@@ -120,6 +120,7 @@ function illegal_vd_unmasked() = {
 /* d. Variable width check for:
  *  1. integer/fixed-point widening/narrowing instructions
  *  2. vector integer extension: vzext, vsext
+ *  3. vector crypto extension: zvbb
  */
 val illegal_variable_width : (vregidx, bits(1), int, int) -> bool
 function illegal_variable_width(vd, vm, SEW_new, LMUL_pow_new) = {
@@ -136,9 +137,10 @@ function illegal_reduction() = {
 }
 
 /* f. Variable width check for widening reduction instructions */
-val illegal_reduction_widen : (int, int) -> bool
-function illegal_reduction_widen(SEW_widen, LMUL_pow_widen) = {
-  not(valid_vtype()) | not(assert_vstart(0)) | not(valid_eew_emul(SEW_widen, LMUL_pow_widen))
+val illegal_widening_reduction : (int) -> bool
+function illegal_widening_reduction(EEW) = {
+  let ELEN = 2 ^ ELEN_pow;
+  not(valid_vtype()) | not(assert_vstart(0)) | not(EEW >= 8 & EEW <= ELEN)
 }
 
 /* g. Non-indexed load instruction check */
