@@ -70,13 +70,12 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_po
   RETIRE_SUCCESS
 }
 
-val process_rfvv_widen : (rfvvfunct6, bits(1), vregidx, vregidx, vregidx, nat1, sew_bitsize, range(-3, 3)) -> ExecutionResult
-function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
+val process_rfvv_widening_reduction : (rfvvfunct6, bits(1), vregidx, vregidx, vregidx, nat1, sew_bitsize, range(-3, 3)) -> ExecutionResult
+function process_rfvv_widening_reduction(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
   let rm_3b          = fcsr[FRM];
   let SEW_widen      = SEW * 2;
-  let LMUL_pow_widen = LMUL_pow + 1;
 
-  if illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) then return Illegal_Instruction();
+  if illegal_fp_widening_reduction(SEW, rm_3b, SEW_widen) then return Illegal_Instruction();
   assert(SEW >= 16 & SEW_widen <= 64);
 
   let num_elem_vd = get_num_elem(0, SEW_widen); /* vd regardless of LMUL setting */
@@ -117,7 +116,7 @@ function clause execute(RFVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let num_elem_vs = get_num_elem(LMUL_pow, SEW);
 
   if funct6 == FVV_VFWREDOSUM | funct6 == FVV_VFWREDUSUM then
-    process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow)
+    process_rfvv_widening_reduction(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow)
   else
     process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow)
 }

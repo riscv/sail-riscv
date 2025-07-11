@@ -54,10 +54,11 @@ function illegal_fp_reduction(SEW, rm_3b) = {
 }
 
 /* f. Variable width check for floating-point widening reduction instructions */
-val illegal_fp_reduction_widen : (sew_bitsize, bits(3), int, int) -> bool
-function illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen, LMUL_pow_widen) = {
+val illegal_fp_widening_reduction : (sew_bitsize, bits(3), int) -> bool
+function illegal_fp_widening_reduction(SEW, rm_3b, EEW) = {
+  let ELEN = 2 ^ ELEN_pow;
   not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b)) |
-  not(valid_eew_emul(SEW_widen, LMUL_pow_widen))
+  not(EEW >= 8 & EEW <= ELEN)
 }
 
 /* Floating point classification functions */

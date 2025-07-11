@@ -26,10 +26,9 @@ mapping clause encdec = RIVVTYPE(funct6, vm, vs2, vs1, vd)
 function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let SEW_widen      = SEW * 2;
-  let LMUL_pow_widen = LMUL_pow + 1;
+  let SEW_widen = SEW * 2;
 
-  if illegal_reduction_widen(SEW_widen, LMUL_pow_widen) then return Illegal_Instruction();
+  if illegal_widening_reduction(SEW_widen) then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
 
