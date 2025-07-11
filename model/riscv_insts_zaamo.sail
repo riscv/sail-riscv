@@ -131,7 +131,8 @@ mapping amo_mnemonic : amoop <-> string = {
   AMOMIN  <-> "amomin",
   AMOMAX  <-> "amomax",
   AMOMINU <-> "amominu",
-  AMOMAXU <-> "amomaxu"
+  AMOMAXU <-> "amomaxu",
+  AMOCAS  <-> "amocas",
 }
 
 mapping maybe_aqrl : (bool, bool) <-> string = {
