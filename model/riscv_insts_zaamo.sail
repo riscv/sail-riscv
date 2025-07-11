@@ -12,8 +12,8 @@ function clause currentlyEnabled(Ext_Zabha) = hartSupports(Ext_Zabha) & currentl
 
 // Zaamo defines AMOs for word and double
 // Zabha defines AMOs for byte and halfword
-function amo_width_valid(size : word_width) -> bool = {
-  match size {
+function amo_width_valid(width : word_width) -> bool = {
+  match width {
     1 => currentlyEnabled(Ext_Zabha),
     2 => currentlyEnabled(Ext_Zabha),
     4 => true,
@@ -37,9 +37,9 @@ mapping encdec_amoop : amoop <-> bits(5) = {
   AMOMAXU <-> 0b11100
 }
 
-mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)
-  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111
-  when currentlyEnabled(Ext_Zaamo) & amo_width_valid(size)
+mapping clause encdec = AMO(op, aq, rl, rs2, rs1, width, rd)
+  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ encdec_reg(rd) @ 0b0101111
+  when currentlyEnabled(Ext_Zaamo) & amo_width_valid(width)
 
 /* NOTE: Currently, we only EA if address translation is successful.
    This may need revisiting. */
@@ -114,4 +114,4 @@ mapping maybe_aqrl : (bool, bool) <-> string = {
 }
 
 mapping clause assembly = AMO(op, aq, rl, rs2, rs1, width, rd)
-  <-> amo_mnemonic(op) ^ "." ^ size_mnemonic(width) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
+  <-> amo_mnemonic(op) ^ "." ^ width_mnemonic(width) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"

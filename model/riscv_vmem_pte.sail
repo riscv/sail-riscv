@@ -42,14 +42,14 @@ bitfield PTE_Ext : pte_ext_bits = {
 let default_sv32_ext_pte : pte_ext_bits = zeros()
 
 // PRIVATE: extract ext bits of PTE above the PPN.
-val ext_bits_of_PTE : forall 'pte_size, 'pte_size in {32, 64}. bits('pte_size) -> PTE_Ext
+val ext_bits_of_PTE : forall 'pte_width, 'pte_width in {32, 64}. bits('pte_width) -> PTE_Ext
 function ext_bits_of_PTE(pte) =
-  Mk_PTE_Ext(if 'pte_size == 64 then pte[63 .. 54] else default_sv32_ext_pte)
+  Mk_PTE_Ext(if 'pte_width == 64 then pte[63 .. 54] else default_sv32_ext_pte)
 
 // PRIVATE: extract full PPN from a PTE
-val PPN_of_PTE : forall 'pte_size, 'pte_size in {32, 64}.
-  bits('pte_size) -> bits(if 'pte_size == 32 then 22 else 44)
-function PPN_of_PTE(pte) = if 'pte_size == 32 then pte[31 .. 10] else pte[53 .. 10]
+val PPN_of_PTE : forall 'pte_width, 'pte_width in {32, 64}.
+  bits('pte_width) -> bits(if 'pte_width == 32 then 22 else 44)
+function PPN_of_PTE(pte) = if 'pte_width == 32 then pte[31 .. 10] else pte[53 .. 10]
 
 // PRIVATE: 8 LSBs of PTEs in Sv32, Sv39, Sv48 and Sv57
 bitfield PTE_Flags : pte_flags_bits = {
@@ -137,10 +137,10 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
 
 // Update PTE bits if needed; return new PTE if updated
 // PRIVATE
-function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
-  pte : bits('pte_size),
+function update_PTE_Bits forall 'pte_width, 'pte_width in {32, 64} . (
+  pte : bits('pte_width),
   a   : AccessType(ext_access_type),
-) -> option(bits('pte_size)) = {
+) -> option(bits('pte_width)) = {
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
 
   // Update 'dirty' bit?
