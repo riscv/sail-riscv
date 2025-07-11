@@ -223,6 +223,21 @@ function wX_bits(Regidx(i) : regidx, data : xlenbits) -> unit = {
 
 overload X = {rX_bits, wX_bits, rX, wX}
 
+// X_pair accesses a pair of registers. If the index is x0 then
+// it acts as if both registers in the pair are x0.
+
+function rX_pair_bits(i : regidx) -> bits(xlen * 2) =
+  if i != zreg then X(i + 1) @ X(i) else zeros()
+
+function wX_pair_bits(i : regidx, data : bits(xlen * 2)) -> unit =
+  if i != zreg then {
+    X(i) = data[xlen - 1 .. 0];
+    X(i + 1) = data[xlen * 2 - 1 .. xlen];
+  }
+
+overload X_pair = {rX_pair_bits, wX_pair_bits}
+
+
 /* Mappings for encoding */
 
 mapping encdec_reg : regidx <-> bits(5) = { Regidx(r) <-> r }

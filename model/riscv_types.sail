@@ -85,8 +85,6 @@ union AccessType ('a : Type) = {
   InstructionFetch : unit
 }
 
-type word_width = {1, 2, 4, 8}
-
 type is_mem_width('w) = 'w in {1, 2, 4, 8}
 
 /* architectural interrupt definitions */
@@ -273,8 +271,9 @@ enum rop = {ADD, SUB, SLL, SLT, SLTU, XOR,
 
 enum ropw  = {ADDW, SUBW, SLLW, SRLW, SRAW}           /* reg-reg 32-bit ops */
 enum sopw  = {SLLIW, SRLIW, SRAIW}                    /* RV64-only shift ops */
-enum amoop = {AMOSWAP, AMOADD, AMOXOR, AMOAND, AMOOR,
-              AMOMIN, AMOMAX, AMOMINU, AMOMAXU}       /* AMO ops */
+enum amoop = {AMOSWAP, AMOADD, AMOXOR, AMOAND, AMOOR, /* AMO ops */
+              AMOMIN, AMOMAX, AMOMINU, AMOMAXU,
+              AMOCAS}
 enum csrop = {CSRRW, CSRRS, CSRRC}                    /* CSR ops */
 
 enum cbop_zicbom = {CBO_CLEAN, CBO_FLUSH, CBO_INVAL}  /* Zicbom ops */
@@ -306,6 +305,11 @@ mapping wait_name : WaitReason <-> string = {
 
 overload to_str = {wait_name}
 
+// Width of access for most instructions (load/store, etc.).
+type word_width = {1, 2, 4, 8}
+// Some instructions allow 128-bit accesses.
+type word_width_wide = {1, 2, 4, 8, 16}
+
 // Get the bit encoding of word_width.
 mapping size_enc : word_width <-> bits(2) = {
   1 <-> 0b00,
@@ -319,6 +323,23 @@ mapping size_mnemonic : word_width <-> string = {
   2 <-> "h",
   4 <-> "w",
   8 <-> "d",
+}
+
+// Get the bit encoding of word_width.
+mapping size_enc_wide : word_width_wide <-> bits(3) = {
+  1  <-> 0b000,
+  2  <-> 0b001,
+  4  <-> 0b010,
+  8  <-> 0b011,
+  16 <-> 0b100,
+}
+
+mapping size_mnemonic_wide : word_width_wide <-> string = {
+  1  <-> "b",
+  2  <-> "h",
+  4  <-> "w",
+  8  <-> "d",
+  16 <-> "q",
 }
 
 struct mul_op = {
