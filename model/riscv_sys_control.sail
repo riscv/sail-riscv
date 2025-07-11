@@ -26,64 +26,10 @@ function check_CSR_priv(csr : csreg, p : Privilege) -> bool =
 function check_CSR_access(csr : csreg, isWrite : bool) -> bool =
   not(isWrite & (csrAccess(csr) == 0b11))
 
-function check_TVM_SATP(csr : csreg, p : Privilege) -> bool =
-  not(csr == 0x180 & p == Supervisor & mstatus[TVM] == 0b1)
-
-// There are several features that are controlled by machine/supervisor enable
-// bits (m/senvcfg, m/scounteren, etc.). This abstracts that logic.
-function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bit, supervisor_enable_bit : bit) -> bool = match p {
-  Machine => true,
-  Supervisor => machine_enable_bit == bitone,
-  User => machine_enable_bit == bitone & (not(currentlyEnabled(Ext_S)) | supervisor_enable_bit == bitone),
-}
-
-// Return true if the counter is enabled OR the CSR is not a counter.
-function check_Counteren(csr : csreg, p : Privilege) -> bool = {
-  // Check if it is not a counter.
-  if csr <_u 0xC00 | 0xC1F <_u csr then return true;
-
-  // Check the relevant bit in m/scounteren.
-  let index = unsigned(csr[4 .. 0]);
-  feature_enabled_for_priv(p, mcounteren.bits[index], scounteren.bits[index])
-}
-
-// Return true if the stimecmp[h] CSR is accessible OR the CSR is not stimecmp[h].
-function check_Stimecmp(csr : csreg, p : Privilege) -> bool = {
-  // Check if it is not stimecmp.
-  if csr != 0x14D & csr != 0x15D then return true;
-
-  p == Machine | (p == Supervisor & mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1)
-}
-
-/* Seed may only be accessed if we are doing a write, and access has been
- * allowed in the current priv mode
- */
-function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
-  if not(csr == 0x015) then {
-    true
-  } else if not(isWrite) then {
-    /* Read-only access to the seed CSR is not allowed */
-    false
-  } else {
-    match (p) {
-      Machine => true,
-      Supervisor => mseccfg[SSEED] == 0b1,
-      User => mseccfg[USEED] == 0b1,
-    }
-  }
-}
-
 function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
-    is_CSR_defined(csr)
-  & check_CSR_priv(csr, p)
+    check_CSR_priv(csr, p)
   & check_CSR_access(csr, isWrite)
-  // TODO: If we add `p` back to is_CSR_defined() we could move these three
-  // check_ functions back there. We should also rename is_CSR_defined()
-  // to is_CSR_accessible() or similar.
-  & check_TVM_SATP(csr, p)
-  & check_Counteren(csr, p)
-  & check_Stimecmp(csr, p)
-  & check_seed_CSR(csr, p, isWrite)
+  & is_CSR_accessible(csr, p, isWrite)
 
 /* Exception delegation: given an exception and the privilege at which
  * it occurred, returns the privilege at which it should be handled.

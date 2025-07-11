@@ -326,13 +326,13 @@ mapping clause csr_name_map = 0xC20  <-> "vl"
 mapping clause csr_name_map = 0xC21  <-> "vtype"
 mapping clause csr_name_map = 0xC22  <-> "vlenb"
 
-function clause is_CSR_defined (0x008) = currentlyEnabled(Ext_V) // vstart
-function clause is_CSR_defined (0x009) = currentlyEnabled(Ext_V) // vxsat
-function clause is_CSR_defined (0x00A) = currentlyEnabled(Ext_V) // vxrm
-function clause is_CSR_defined (0x00F) = currentlyEnabled(Ext_V) // vcsr
-function clause is_CSR_defined (0xC20) = currentlyEnabled(Ext_V) // vl
-function clause is_CSR_defined (0xC21) = currentlyEnabled(Ext_V) // vtype
-function clause is_CSR_defined (0xC22) = currentlyEnabled(Ext_V) // vlenb
+function clause is_CSR_accessible(0x008, _, _) = currentlyEnabled(Ext_V) // vstart
+function clause is_CSR_accessible(0x009, _, _) = currentlyEnabled(Ext_V) // vxsat
+function clause is_CSR_accessible(0x00A, _, _) = currentlyEnabled(Ext_V) // vxrm
+function clause is_CSR_accessible(0x00F, _, _) = currentlyEnabled(Ext_V) // vcsr
+function clause is_CSR_accessible(0xC20, _, _) = currentlyEnabled(Ext_V) // vl
+function clause is_CSR_accessible(0xC21, _, _) = currentlyEnabled(Ext_V) // vtype
+function clause is_CSR_accessible(0xC22, _, _) = currentlyEnabled(Ext_V) // vlenb
 
 function clause read_CSR(0x008) = vstart
 function clause read_CSR(0x009) = zero_extend(vcsr[vxsat])
