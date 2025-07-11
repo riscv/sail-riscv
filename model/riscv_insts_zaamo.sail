@@ -99,6 +99,9 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
                   // All operations except CAS where loaded != X(rd) write their value back.
                   if op == AMOCAS & loaded != (if width <= xlen_bytes then trunc(X(rd)) else trunc(X_pair(rd))) then {
                     // Compared, but didn't swap.
+                    if width <= xlen_bytes
+                    then X(rd) = sign_extend(loaded)
+                    else X_pair(rd) = sign_extend(loaded);
                     RETIRE_SUCCESS
                   } else {
                     match mem_write_value(addr, width, sign_extend(result), aq & rl, rl, true) {
