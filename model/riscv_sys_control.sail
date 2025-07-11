@@ -10,13 +10,13 @@
 
 function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
   if   t != InstructionFetch() & m[MPRV] == 0b1
-  then privLevel_of_bits(m[MPP])
+  then privLevel_bits(m[MPP], bitzero) // TODO: use m[MPV] if hypervisor enabled
   else priv
 
 /* CSR access control */
 
 function csrAccess(csr : csreg) -> csrRW = csr[11..10]
-function csrPriv(csr : csreg) -> priv_level = csr[9..8]
+function csrPriv(csr : csreg) -> nom_priv_bits = csr[9..8]
 
 // Check that the CSR access is made with sufficient privilege.
 function check_CSR_priv(csr : csreg, p : Privilege) -> bool =
@@ -26,15 +26,19 @@ function check_CSR_priv(csr : csreg, p : Privilege) -> bool =
 function check_CSR_access(csr : csreg, isWrite : bool) -> bool =
   not(isWrite & (csrAccess(csr) == 0b11))
 
+// TODO: check VS/VU-mode if hypervisor enabled
 function check_TVM_SATP(csr : csreg, p : Privilege) -> bool =
   not(csr == 0x180 & p == Supervisor & mstatus[TVM] == 0b1)
 
 // There are several features that are controlled by machine/supervisor enable
 // bits (m/senvcfg, m/scounteren, etc.). This abstracts that logic.
+// TODO: check hcounteren if hypervisor enabled
 function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bit, supervisor_enable_bit : bit) -> bool = match p {
-  Machine => true,
-  Supervisor => machine_enable_bit == bitone,
-  User => machine_enable_bit == bitone & (not(currentlyEnabled(Ext_S)) | supervisor_enable_bit == bitone),
+  Machine           => true,
+  Supervisor        => machine_enable_bit == bitone,
+  User              => machine_enable_bit == bitone & (not(currentlyEnabled(Ext_S)) | supervisor_enable_bit == bitone),
+  VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+  VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
 }
 
 // Return true if the counter is enabled OR the CSR is not a counter.
@@ -51,8 +55,13 @@ function check_Counteren(csr : csreg, p : Privilege) -> bool = {
 function check_Stimecmp(csr : csreg, p : Privilege) -> bool = {
   // Check if it is not stimecmp.
   if csr != 0x14D & csr != 0x15D then return true;
-
-  p == Machine | (p == Supervisor & mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1)
+  match p {
+    Machine           => true,
+    Supervisor        => mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1,
+    User              => false,
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+  }
 }
 
 /* Seed may only be accessed if we are doing a write, and access has been
@@ -66,9 +75,11 @@ function check_seed_CSR (csr : csreg, p : Privilege, isWrite : bool) -> bool = {
     false
   } else {
     match (p) {
-      Machine => true,
-      Supervisor => mseccfg[SSEED] == 0b1,
-      User => mseccfg[USEED] == 0b1,
+      Machine           => true,
+      Supervisor        => mseccfg[SSEED] == 0b1, /* TODO: base this on mseccfg */
+      User              => mseccfg[USEED] == 0b1, /* TODO: base this on mseccfg */
+      VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+      VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     }
   }
 }
@@ -91,6 +102,7 @@ function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let idx   = num_of_ExceptionType(e);
   let super = bit_to_bool(medeleg.bits[idx]);
+  // TODO: check VS/VU-mode if hypervisor extension enabled
   let deleg = if currentlyEnabled(Ext_S) & super then Supervisor else Machine;
   /* We cannot transition to a less-privileged mode. */
   if   privLevel_to_bits(deleg) <_u privLevel_to_bits(p)
@@ -119,6 +131,7 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
  *
  * This is used when the hart is in the Active state.
  */
+// TODO: check hip/hie if hypervisor enabled.
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   // mideleg can only be non-zero if we support Supervisor mode.
   assert(currentlyEnabled(Ext_S) | mideleg.bits == zeros());
@@ -201,7 +214,9 @@ function track_trap(p : Privilege) -> unit = {
       csr_write_callback("stval", stval);
       csr_write_callback("sepc", sepc);
     },
-    User => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   };
 }
 
@@ -216,54 +231,60 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
   match (del_priv) {
     Machine => {
-       mcause[IsInterrupt] = bool_to_bits(intr);
-       mcause[Cause]       = zero_extend(c);
+      mcause[IsInterrupt] = bool_to_bits(intr);
+      mcause[Cause]       = zero_extend(c);
 
-       mstatus[MPIE] = mstatus[MIE];
-       mstatus[MIE]  = 0b0;
-       mstatus[MPP]  = privLevel_to_bits(cur_privilege);
-       mtval         = tval(info);
-       mepc          = pc;
+      mstatus[MPIE] = mstatus[MIE];
+      mstatus[MIE]  = 0b0;
+      mstatus[MPP]  = privLevel_to_bits(cur_privilege);
+      mtval         = tval(info);
+      mepc          = pc;
 
-       cur_privilege = del_priv;
+      cur_privilege = del_priv;
 
-       handle_trap_extension(del_priv, pc, ext);
+      handle_trap_extension(del_priv, pc, ext);
 
-       track_trap(del_priv);
+      track_trap(del_priv);
 
-       prepare_trap_vector(del_priv, mcause)
+      prepare_trap_vector(del_priv, mcause)
     },
     Supervisor => {
-       assert (currentlyEnabled(Ext_S), "no supervisor mode present for delegation");
+      assert (currentlyEnabled(Ext_S), "no supervisor mode present for delegation");
 
-       scause[IsInterrupt] = bool_to_bits(intr);
-       scause[Cause]       = zero_extend(c);
+      scause[IsInterrupt] = bool_to_bits(intr);
+      scause[Cause]       = zero_extend(c);
 
-       mstatus[SPIE] = mstatus[SIE];
-       mstatus[SIE]  = 0b0;
-       mstatus[SPP]  = match cur_privilege {
-                           User => 0b0,
-                           Supervisor => 0b1,
-                           Machine => internal_error(__FILE__, __LINE__, "invalid privilege for s-mode trap")
-                         };
-       stval           = tval(info);
-       sepc            = pc;
+      mstatus[SPIE] = mstatus[SIE];
+      mstatus[SIE]  = 0b0;
+      mstatus[SPP]  = match cur_privilege {
+        User              => 0b0,
+        Supervisor        => 0b1,
+        Machine           => internal_error(__FILE__, __LINE__, "invalid privilege for s-mode trap"),
+        VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+        VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+      };
+      stval           = tval(info);
+      sepc            = pc;
 
-       cur_privilege   = del_priv;
+      cur_privilege   = del_priv;
 
-       handle_trap_extension(del_priv, pc, ext);
+      handle_trap_extension(del_priv, pc, ext);
 
-       track_trap(del_priv);
+      track_trap(del_priv);
 
-       prepare_trap_vector(del_priv, scause)
+      prepare_trap_vector(del_priv, scause)
     },
-    User => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   };
 }
 
 function exception_handler(cur_priv : Privilege, ctl : ctl_result,
                            pc: xlenbits) -> xlenbits = {
   match (cur_priv, ctl) {
+    (VirtualUser, _)       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    (VirtualSupervisor, _) => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     (_, CTL_TRAP(e)) => {
       let del_priv = exception_delegatee(e.trap, cur_priv);
       if   get_config_print_platform()
@@ -275,7 +296,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       let prev_priv   = cur_privilege;
       mstatus[MIE]  = mstatus[MPIE];
       mstatus[MPIE] = 0b1;
-      cur_privilege   = privLevel_of_bits(mstatus[MPP]);
+      cur_privilege   = privLevel_bits(mstatus[MPP], bitzero); // TODO: use mstatus[MPV] if hypervisor enabled
       mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
