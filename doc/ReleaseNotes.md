@@ -1,4 +1,4 @@
-# Release notes for the upcoming 0.8 release:
+# Release notes for the upcoming 0.8 release
 
 This is a major release with some backwards-incompatible changes.
 
@@ -84,3 +84,24 @@ the suite of vector extensions needed to pass the
   This should be used when reporting issues in the model.
 
 - The CLI help message for the simulator has been improved.
+
+# Release notes for version 0.7
+
+This is the first binary release of the emulators, currently for Linux
+x86_64 only. These are statically compiled on Rocky 8 with only glibc
+2.17 (from 2012) as a dependency so they should run on most distros.
+
+The tarball includes emulators for RV32D and RV64D. If you need RV32F
+or RV64F you must still compile from source.
+
+The JSON file is intended for use with asciidoctor-sail to allow
+inclusion of Sail code snippets in documentation.
+
+# Release notes for version 0.6
+
+Currently we do not release binaries for the emulator (it is planned),
+so if you are using the emulator we recommend you compile it from the
+latest `master`.
+
+This release exists to provide the JSON bundle, which can be used to
+embed Sail code into [the ISA manual](https://github.com/riscv/riscv-isa-manual).
