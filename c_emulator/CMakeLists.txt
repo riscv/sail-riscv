@@ -14,8 +14,7 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
     COMMAND_ERROR_IS_FATAL ANY
 )
-string(REGEX MATCHALL "[^\n\r]+" compiler_version_strings ${compiler_version_blob})
-list(GET compiler_version_strings 0 cxx_compiler_version)
+string(REGEX MATCH "[^\n\r]*" cxx_compiler_version ${compiler_version_blob})
 message(STATUS "CXX compiler version: ${cxx_compiler_version}")
 
 # make version available to emulator
