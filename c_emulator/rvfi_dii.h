@@ -123,12 +123,12 @@ struct RVFI_DII_Execution_Packet_Ext_MemAccess {
   // rvfi_mem_rdata is the pre-state data read from rvfi_mem_addr.
   // rvfi_mem_rmask specifies which bytes are valid.
   // CHERI-extension: widened to 32 bytes to allow reporting 129 bits
-  uint64_t rvfi_mem_rdata[4] = {};
+  uint8_t rvfi_mem_rdata[32] = {};
   // [71 - 40]
   // rvfi_mem_wdata is the post-state data written to rvfi_mem_addr.
   // rvfi_mem_wmask specifies which bytes are valid.
   // CHERI-extension: widened to 32 bytes to allow reporting 129 bits
-  uint64_t rvfi_mem_wdata[4] = {};
+  uint8_t rvfi_mem_wdata[32] = {};
   // [75 - 72]
   // rvfi_mem_rmask is a bitmask that specifies which bytes in rvfi_mem_rdata
   // contain valid read data from rvfi_mem_addr.

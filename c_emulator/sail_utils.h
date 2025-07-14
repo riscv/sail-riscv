@@ -27,7 +27,7 @@ template <typename T> void print_any(const_sail_string str, const T *data)
   return;
 }
 
-void convert_lbits_to_u8s(lbits val, uint8_t *arr);
+void convert_lbits_to_u8s(lbits val, uint8_t *arr, size_t len);
 lbits convert_u8s_to_lbits(const uint8_t *arr, unsigned int num_bits);
 
 unit print_sbits(const_sail_string str, const sbits op);
