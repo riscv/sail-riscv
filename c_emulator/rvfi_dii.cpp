@@ -124,13 +124,11 @@ void rvfi_handler::rvfi_zero_exec_packet()
   rvfi_mem_data = {};
   rvfi_int_data_present = false;
   rvfi_mem_data_present = false;
-  return;
 }
 
 void rvfi_handler::rvfi_halt_exec_packet()
 {
   rvfi_inst_data.rvfi_halt = 0x01;
-  return;
 }
 
 void rvfi_handler::print_rvfi_exec()
@@ -163,7 +161,6 @@ void print_instr_packet(RVFI_DII_Instruction_Packet p)
 {
   print_sbits("command     : ", make_sbits(p.rvfi_cmd));
   print_sbits("instruction : ", make_sbits(p.rvfi_insn));
-  return;
 }
 
 // ****************************************************************************
@@ -295,7 +292,6 @@ void rvfi_handler::send_packet_raw(const T *data, bool config_print)
   if (config_print) {
     fprintf(stderr, "Wrote %zd byte response to socket.\n", send_size);
   }
-  return;
 }
 
 void rvfi_handler::send_trace(bool config_print)
@@ -434,7 +430,7 @@ void rvfi_handler::rvfi_write(uint64_t paddr, uint64_t width, lbits value)
   } else {
     fprintf(stderr, "Expected at most 16 bytes here!\n");
     exit(1);
-  };
+  }
 }
 
 void rvfi_handler::rvfi_read(uint64_t paddr, uint64_t width, lbits value)
@@ -449,7 +445,7 @@ void rvfi_handler::rvfi_read(uint64_t paddr, uint64_t width, lbits value)
   } else {
     fprintf(stderr, "Expected at most 16 bytes here!\n");
     exit(1);
-  };
+  }
 }
 
 void rvfi_handler::rvfi_mem_exception(uint64_t paddr)
@@ -457,7 +453,6 @@ void rvfi_handler::rvfi_mem_exception(uint64_t paddr)
   /* Log only the memory address (without the value) if the write fails. */
   rvfi_mem_data.rvfi_mem_addr = paddr;
   rvfi_mem_data_present = true;
-  return;
 }
 
 void rvfi_handler::rvfi_wX(unsigned r, uint64_t v)
@@ -465,13 +460,11 @@ void rvfi_handler::rvfi_wX(unsigned r, uint64_t v)
   rvfi_int_data.rvfi_rd_wdata = v;
   rvfi_int_data.rvfi_rd_addr = r;
   rvfi_int_data_present = true;
-  return;
 }
 
 void rvfi_handler::rvfi_trap()
 {
   rvfi_inst_data.rvfi_trap = 0x01;
-  return;
 }
 
 // ***************************************************************************
@@ -480,25 +473,21 @@ void rvfi_handler::rvfi_trap()
 void rvfi_handler::rvfi_set_inst_data_insn(uint64_t insn)
 {
   rvfi_inst_data.rvfi_insn = insn;
-  return;
 }
 
 void rvfi_handler::rvfi_set_inst_data_order(uint64_t order)
 {
   rvfi_inst_data.rvfi_order = order;
-  return;
 }
 
 void rvfi_handler::rvfi_set_inst_data_mode(uint8_t mode)
 {
   rvfi_inst_data.rvfi_mode = mode;
-  return;
 }
 
 void rvfi_handler::rvfi_set_inst_data_ixl(uint8_t ixl)
 {
   rvfi_inst_data.rvfi_ixl = ixl;
-  return;
 }
 
 uint32_t rvfi_handler::rvfi_get_insn()
@@ -509,11 +498,9 @@ uint32_t rvfi_handler::rvfi_get_insn()
 void rvfi_handler::rvfi_set_pc_data_rdata(uint64_t rdata)
 {
   rvfi_pc_data.rvfi_pc_rdata = rdata;
-  return;
 }
 
 void rvfi_handler::rvfi_set_pc_data_wdata(uint64_t wdata)
 {
   rvfi_pc_data.rvfi_pc_wdata = wdata;
-  return;
 }
