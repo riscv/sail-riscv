@@ -10,11 +10,12 @@ message(STATUS "Sail version: ${sail_version}")
 # The --version is is usually a multiline output; the first line is the most useful.
 execute_process(
     COMMAND ${CMAKE_CXX_COMPILER} --version
-    COMMAND head -n 1
-    OUTPUT_VARIABLE cxx_compiler_version
+    OUTPUT_VARIABLE compiler_version_blob
     OUTPUT_STRIP_TRAILING_WHITESPACE
     COMMAND_ERROR_IS_FATAL ANY
 )
+string(REGEX MATCHALL "[^\n\r]+" compiler_version_strings ${compiler_version_blob})
+list(GET compiler_version_strings 0 cxx_compiler_version)
 message(STATUS "CXX compiler version: ${cxx_compiler_version}")
 
 # make version available to emulator
