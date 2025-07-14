@@ -501,7 +501,7 @@ void rvfi_handler::rvfi_set_inst_data_ixl(uint8_t ixl)
   return;
 }
 
-uint32_t rvfi_handler::rvfi_get_insn(void)
+uint32_t rvfi_handler::rvfi_get_insn()
 {
   return rvfi_instruction.rvfi_insn;
 }
