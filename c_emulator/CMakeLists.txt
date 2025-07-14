@@ -3,11 +3,13 @@
 add_library(rvfi_dii
     rvfi_dii.h
     rvfi_dii.cpp
+    sail_utils.h
+    sail_utils.cpp
 )
 
 target_include_directories(rvfi_dii
     PUBLIC
-        # So `callbacks.cpp` can find `sail.h`.
+        # find `sail.h`.
         "${CMAKE_BINARY_DIR}"
 )
 
@@ -18,6 +20,8 @@ target_link_libraries(rvfi_dii
 add_library(riscv_model
     riscv_callbacks.cpp
     riscv_callbacks.h
+    rvfi_dii_sail.h
+    rvfi_dii_sail.cpp
     riscv_config.h
     riscv_platform.cpp
     riscv_platform.h
@@ -30,9 +34,6 @@ add_library(riscv_model
     riscv_softfloat.h
     config_utils.h
     config_utils.cpp
-    sail_utils.h
-    sail_utils.cpp
-    rvfi_dii_sail.h
     "${CMAKE_BINARY_DIR}/sail_riscv_model.c"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.h"
 )

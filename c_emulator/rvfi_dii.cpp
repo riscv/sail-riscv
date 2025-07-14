@@ -14,7 +14,6 @@
 #include <string.h>
 
 #include "sail.h"
-#include "riscv_sail.h"
 #include "rvfi_dii.h"
 #include "sail_utils.h"
 
