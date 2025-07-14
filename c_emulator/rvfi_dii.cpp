@@ -140,12 +140,8 @@ void rvfi_handler::print_rvfi_exec()
   print_sbits("rvfi_rs1_addr : ", make_sbits(rvfi_int_data.rvfi_rs1_addr));
   print_sbits("rvfi_mem_wmask: ", make_sbits(rvfi_mem_data.rvfi_mem_wmask));
   print_sbits("rvfi_mem_rmask: ", make_sbits(rvfi_mem_data.rvfi_mem_rmask));
-  print_bits(
-      "rvfi_mem_wdata: ",
-      convert_u8s_to_lbits((uint8_t *)&rvfi_mem_data.rvfi_mem_wdata, 256));
-  print_bits(
-      "rvfi_mem_rdata: ",
-      convert_u8s_to_lbits((uint8_t *)&rvfi_mem_data.rvfi_mem_rdata, 256));
+  print_bits("rvfi_mem_wdata: ", make_lbits(rvfi_mem_data.rvfi_mem_wdata));
+  print_bits("rvfi_mem_rdata: ", make_lbits(rvfi_mem_data.rvfi_mem_rdata));
   print_sbits("rvfi_mem_addr : ", make_sbits(rvfi_mem_data.rvfi_mem_addr));
   print_sbits("rvfi_rd_wdata : ", make_sbits(rvfi_int_data.rvfi_rd_wdata));
   print_sbits("rvfi_rs2_data : ", make_sbits(rvfi_int_data.rvfi_rs2_rdata));
@@ -424,7 +420,8 @@ void rvfi_handler::rvfi_write(uint64_t paddr, uint64_t width, lbits value)
   if (width <= 16) {
     // TODO: report tag bit for capability writes and extend mask by one bit. */
     rvfi_mem_data.clear_wdata();
-    convert_lbits_to_u8s(value, rvfi_mem_data.rvfi_mem_wdata, sizeof(rvfi_mem_data.rvfi_mem_wdata));
+    convert_lbits_to_u8s(value, rvfi_mem_data.rvfi_mem_wdata,
+                         sizeof(rvfi_mem_data.rvfi_mem_wdata));
     rvfi_mem_data.rvfi_mem_wmask = rvfi_encode_width_mask(width);
   } else {
     fprintf(stderr, "Expected at most 16 bytes here!\n");
@@ -439,7 +436,8 @@ void rvfi_handler::rvfi_read(uint64_t paddr, uint64_t width, lbits value)
   if (width <= 16) {
     // TODO: report tag bit for capability writes and extend mask by one bit.
     rvfi_mem_data.clear_rdata();
-    convert_lbits_to_u8s(value, rvfi_mem_data.rvfi_mem_rdata, sizeof(rvfi_mem_data.rvfi_mem_rdata));
+    convert_lbits_to_u8s(value, rvfi_mem_data.rvfi_mem_rdata,
+                         sizeof(rvfi_mem_data.rvfi_mem_rdata));
     rvfi_mem_data.rvfi_mem_rmask = rvfi_encode_width_mask(width);
   } else {
     fprintf(stderr, "Expected at most 16 bytes here!\n");
