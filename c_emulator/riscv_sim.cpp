@@ -26,6 +26,7 @@
 #include "rvfi_dii.h"
 #include "default_config.h"
 #include "config_utils.h"
+#include "sail_riscv_version.h"
 
 enum {
   OPT_TRACE_OUTPUT = 1000,
@@ -33,6 +34,8 @@ enum {
   OPT_VALIDATE_CONFIG,
   OPT_SAILCOV,
   OPT_ENABLE_EXPERIMENTAL_EXTENSIONS,
+  OPT_PRINT_VERSION,
+  OPT_BUILD_INFO,
   OPT_PRINT_DTS,
   OPT_PRINT_ISA,
 };
@@ -110,6 +113,8 @@ static struct option options[] = {
     {"rvfi-dii",                       required_argument, 0, 'r'                },
     {"help",                           no_argument,       0, 'h'                },
     {"config",                         required_argument, 0, 'c'                },
+    {"version",                        no_argument,       0, OPT_PRINT_VERSION  },
+    {"build-info",                     no_argument,       0, OPT_BUILD_INFO     },
     {"print-default-config",           no_argument,       0, OPT_PRINT_CONFIG   },
     {"validate-config",                no_argument,       0, OPT_VALIDATE_CONFIG},
     {"trace",                          optional_argument, 0, 'v'                },
@@ -168,6 +173,16 @@ static void print_isa(void)
   fprintf(stdout, "%s\n", isa);
   KILL(sail_string)(&isa);
   exit(EXIT_SUCCESS);
+}
+
+static void print_build_info(void)
+{
+  std::cout << "Sail RISC-V release: " << version_info::release_version
+            << std::endl;
+  std::cout << "Sail RISC-V git: " << version_info::git_version << std::endl;
+  std::cout << "Sail: " << version_info::sail_version << std::endl;
+  std::cout << "C++ compiler: " << version_info::cxx_compiler_version
+            << std::endl;
 }
 
 static bool is_32bit_model(void)
@@ -269,6 +284,12 @@ static int process_args(int argc, char **argv)
       }
       break;
     }
+    case OPT_PRINT_VERSION:
+      std::cout << version_info::release_version << std::endl;
+      exit(EXIT_SUCCESS);
+    case OPT_BUILD_INFO:
+      print_build_info();
+      exit(EXIT_SUCCESS);
     case OPT_PRINT_CONFIG:
       printf("%s", DEFAULT_JSON);
       exit(EXIT_SUCCESS);
