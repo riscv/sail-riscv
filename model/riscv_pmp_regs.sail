@@ -236,7 +236,7 @@ mapping clause csr_name_map = 0x3EE  <-> "pmpaddr62"
 mapping clause csr_name_map = 0x3EF  <-> "pmpaddr63"
 
 // pmpcfgN
-function clause is_CSR_defined(0x3A) @ idx : bits(4) = sys_pmp_count > unsigned(idx) & (idx[0] == bitzero | xlen == 32)
+function clause is_CSR_defined(0x3A) @ idx : bits(4) = sys_pmp_count > 4 * unsigned(idx) & (idx[0] == bitzero | xlen == 32)
 function clause read_CSR(0x3A @ idx : bits(4) if idx[0] == bitzero | xlen == 32) = pmpReadCfgReg(unsigned(idx))
 function clause write_CSR((0x3A @ idx : bits(4), value) if idx[0] == bitzero | xlen == 32) = {
   let idx = unsigned(idx);
