@@ -12,8 +12,8 @@ The highlights of the release are:
 - The use of the Sail module system to provide a modular structure
   to the RISC-V model.
 
-- Many new extensions, including complete coverage of the RVA23 vector
-  and vector crypto extensions.
+- Many new extensions, including almost complete coverage of the RVA23
+  vector crypto extensions.
 
 - The removal of obsolete in-tree ELF tests in favor of more recent
   upstream tests (currently from `riscv-software-src/riscv-tests` and
@@ -30,7 +30,7 @@ Releases of previous versions of the model had two executable binaries
 ISAs respectively, that each integrated support for the F and D
 extensions. This release provides a single binary (`sail_riscv_sim`)
 that can be configured to implement either RV32 or RV64, and either
-the F or D extensions, or both.
+the F or D extensions.
 
 ## JSON-based configuration system
 
