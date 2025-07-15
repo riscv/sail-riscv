@@ -13,13 +13,10 @@ if(POLICY CMP0135)
 endif()
 
 include(cmake/project_version.cmake)
-project(sail_riscv
+project(sail-riscv
   VERSION ${sail_riscv_release_version}
   HOMEPAGE_URL "https://github.com/riscv/sail-riscv"
 )
-# To conform with Debian naming standards.
-# https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-source
-set(CPACK_PACKAGE_NAME "sail-riscv")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)

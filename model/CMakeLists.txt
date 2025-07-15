@@ -298,7 +298,7 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
 
         add_custom_target(generated_sail_riscv_model DEPENDS ${c_model} ${c_model_header})
         install(FILES ${schema_file}
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/${CPACK_PACKAGE_NAME}
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}
         )
     endif()
 
@@ -338,7 +338,7 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
 
         add_custom_target(generated_sail_riscv_docs DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${model_doc}")
         install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${model_doc}"
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/${CPACK_PACKAGE_NAME}
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}
         )
     endif()
 

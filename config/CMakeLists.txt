@@ -11,5 +11,5 @@ add_library(default_config INTERFACE
 target_include_directories(default_config INTERFACE "${CMAKE_BINARY_DIR}/config")
 
 install(FILES "rv64d.json" "rv32d.json"
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/${CPACK_PACKAGE_NAME}/config
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/config
 )
