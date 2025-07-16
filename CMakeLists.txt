@@ -52,7 +52,6 @@ endif()
 
 add_compile_options(-Wall -Wextra -Wno-sign-compare)
 include(CheckCCompilerFlag)
-check_c_compiler_flag(-Wself-assign HAVE_WSELF_ASSIGN)
 check_c_compiler_flag(-Wimplicit-fallthrough HAVE_WIMPLICIT_FALLTHROUGH)
 
 # Extra CMake files.
