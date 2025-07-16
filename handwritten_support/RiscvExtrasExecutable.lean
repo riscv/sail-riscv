@@ -69,6 +69,15 @@ def match_reservation : Arch.pa → Bool := λ _ => panic "TODO"
 def cancel_reservation : Unit → SailM Unit := λ _ => panic "TODO"
 def valid_reservation : Unit → Bool := λ _ => false
 
+-- RVFI
+def rvfi_set_pc_data_rdata : BitVec 64 → SailM Unit := λ _ => panic "TODO"
+def rvfi_set_pc_data_wdata : BitVec 64 → SailM Unit := λ _ => panic "TODO"
+def rvfi_set_inst_data_order : BitVec 64 → SailM Unit := λ _ => panic "TODO"
+def rvfi_set_inst_data_mode : BitVec 8 → SailM Unit := λ _ => panic "TODO"
+def rvfi_set_inst_data_ixl : BitVec 8 → SailM Unit := λ _ => panic "TODO"
+def rvfi_set_inst_data_insn : BitVec 64 → SailM Unit := λ _ => panic "TODO"
+def rvfi_get_insn : Unit → SailM (BitVec 32) := λ _ => panic "TODO"
+
 def get_16_random_bits : Unit → SailM (BitVec 16) := λ _ => panic "TODO"
 
 end Effectful
