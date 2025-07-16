@@ -127,22 +127,6 @@ function clause is_CSR_defined(0x301) = true // misa
 function clause read_CSR(0x301) = misa.bits
 function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); Ok(misa.bits) }
 
-// Are supervisor/user mode currently enabled? Although
-// unlikely and not currently supported by the model,
-// you are technically allowed to have writable misa[U/S].
-function clause currentlyEnabled(Ext_U) = hartSupports(Ext_U) & misa[U] == 0b1 & currentlyEnabled(Ext_Zicsr)
-function clause currentlyEnabled(Ext_S) = hartSupports(Ext_S) & misa[S] == 0b1 & currentlyEnabled(Ext_Zicsr)
-
-function clause currentlyEnabled(Ext_Svbare) = currentlyEnabled(Ext_S)
-function clause currentlyEnabled(Ext_Sv32) = hartSupports(Ext_Sv32) &  currentlyEnabled(Ext_S)
-function clause currentlyEnabled(Ext_Sv39) = hartSupports(Ext_Sv39) &  currentlyEnabled(Ext_S)
-function clause currentlyEnabled(Ext_Sv48) = hartSupports(Ext_Sv48) &  currentlyEnabled(Ext_S)
-function clause currentlyEnabled(Ext_Sv57) = hartSupports(Ext_Sv57) &  currentlyEnabled(Ext_S)
-
-function virtual_memory_supported() -> bool = {
-  currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39) | currentlyEnabled(Ext_Sv48) | currentlyEnabled(Ext_Sv57)
-}
-
 /*
  * Illegal values legalized to least privileged mode supported.
  * Note: the only valid combinations of supported modes are M, M+U, M+S+U.
@@ -196,6 +180,17 @@ bitfield Mstatus : bits(64) = {
   SIE  : 1,
 }
 
+register mstatus : Mstatus = {
+  // Initialise SXL and UXL.
+  let mxl = architecture(if xlen == 32 then RV32 else RV64);
+  [ Mk_Mstatus(zeros()) with
+    // These fields do not exist on RV32 and are read-only zero
+    // if the corresponding mode is not supported.
+    SXL = if xlen != 32 & hartSupports(Ext_S) then mxl else zeros(),
+    UXL = if xlen != 32 & hartSupports(Ext_U) then mxl else zeros(),
+  ]
+}
+
 function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
   if   xlen == 32
   then architecture(RV32)
@@ -206,6 +201,42 @@ function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
   if   xlen == 32
   then architecture(RV32)
   else m[UXL]
+}
+
+/* architecture and extension checks */
+
+function cur_architecture() -> Architecture = {
+  let a : arch_xlen =
+    match cur_privilege {
+      Machine    => misa[MXL],
+      Supervisor => get_mstatus_SXL(mstatus),
+      User       => get_mstatus_UXL(mstatus)
+    };
+  architecture(a)
+}
+
+function in32BitMode() -> bool = {
+  cur_architecture() == RV32
+}
+
+function in64BitMode() -> bool = {
+  cur_architecture() == RV64
+}
+
+// Are supervisor/user mode currently enabled? Although
+// unlikely and not currently supported by the model,
+// you are technically allowed to have writable misa[U/S].
+function clause currentlyEnabled(Ext_U) = hartSupports(Ext_U) & misa[U] == 0b1 & currentlyEnabled(Ext_Zicsr)
+function clause currentlyEnabled(Ext_S) = hartSupports(Ext_S) & misa[S] == 0b1 & currentlyEnabled(Ext_Zicsr)
+
+function clause currentlyEnabled(Ext_Svbare) = currentlyEnabled(Ext_S)
+function clause currentlyEnabled(Ext_Sv32) = hartSupports(Ext_Sv32) & currentlyEnabled(Ext_S) & in32BitMode()
+function clause currentlyEnabled(Ext_Sv39) = hartSupports(Ext_Sv39) & currentlyEnabled(Ext_S) & in64BitMode()
+function clause currentlyEnabled(Ext_Sv48) = hartSupports(Ext_Sv48) & currentlyEnabled(Ext_S) & in64BitMode()
+function clause currentlyEnabled(Ext_Sv57) = hartSupports(Ext_Sv57) & currentlyEnabled(Ext_S) & in64BitMode()
+
+function virtual_memory_supported() -> bool = {
+  currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39) | currentlyEnabled(Ext_Sv48) | currentlyEnabled(Ext_Sv57)
 }
 
 function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
@@ -260,17 +291,6 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
   [o with SD = bool_to_bits(dirty)]
 }
 
-register mstatus : Mstatus = {
-  // Initialise SXL and UXL.
-  let mxl = architecture(if xlen == 32 then RV32 else RV64);
-  [ Mk_Mstatus(zeros()) with
-    // These fields do not exist on RV32 and are read-only zero
-    // if the corresponding mode is not supported.
-    SXL = if xlen != 32 & hartSupports(Ext_S) then mxl else zeros(),
-    UXL = if xlen != 32 & hartSupports(Ext_U) then mxl else zeros(),
-  ]
-}
-
 mapping clause csr_name_map = 0x300  <-> "mstatus"
 mapping clause csr_name_map = 0x310  <-> "mstatush"
 
@@ -283,22 +303,6 @@ function clause read_CSR(0x310 if xlen == 32) = mstatus.bits[63 .. 32]
 function clause write_CSR((0x300, value) if xlen == 64) = { mstatus = legalize_mstatus(mstatus, value); Ok(mstatus.bits) }
 function clause write_CSR((0x300, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, mstatus.bits[63 .. 32] @ value); Ok(mstatus.bits[31 .. 0]) }
 function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, value @ mstatus.bits[31 .. 0]); Ok(mstatus.bits[63 .. 32]) }
-
-/* architecture and extension checks */
-
-function cur_architecture() -> Architecture = {
-  let a : arch_xlen =
-    match cur_privilege {
-      Machine    => misa[MXL],
-      Supervisor => get_mstatus_SXL(mstatus),
-      User       => get_mstatus_UXL(mstatus)
-    };
-  architecture(a)
-}
-
-function in32BitMode() -> bool = {
-  cur_architecture() == RV32
-}
 
 bitfield Seccfg : bits(64) = {
   // Enable access to SEED in S-mode
