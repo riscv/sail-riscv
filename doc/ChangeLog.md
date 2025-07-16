@@ -12,7 +12,7 @@ The highlights of the release are:
 - The use of the Sail module system to provide a modular structure
   to the RISC-V model.
 
-- Many new extensions, including almost complete coverage of the RVA23
+- Many new extensions, including complete coverage of the RVA23
   vector crypto extensions.
 
 - The removal of obsolete in-tree ELF tests in favor of more recent
