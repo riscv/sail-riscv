@@ -13,6 +13,7 @@
 #include <optional>
 #include <iostream>
 #include <vector>
+#include <cstring>
 
 #include "elf.h"
 #include "sail.h"
@@ -27,6 +28,9 @@
 #include "default_config.h"
 #include "config_utils.h"
 #include "sail_riscv_version.h"
+#include "riscv_callbacks_if.h"
+#include "riscv_callbacks_log.h"
+#include "riscv_callbacks_rvfi.h"
 
 enum {
   OPT_TRACE_OUTPUT = 1000,
@@ -53,6 +57,7 @@ char *dtb_file = NULL;
 unsigned char *dtb = NULL;
 size_t dtb_len = 0;
 std::optional<rvfi_handler> rvfi;
+rvfi_callbacks rvfi_cbs;
 
 char *sig_file = NULL;
 uint64_t mem_sig_start = 0;
@@ -703,8 +708,10 @@ int main(int argc, char **argv)
     print_isa();
   }
 
-  char *initial_elf_file = argv[files_start];
   init_logs();
+  log_callbacks log_cbs(config_print_reg, config_print_mem_access,
+                        config_use_abi_names, trace_log);
+  register_callback(&log_cbs);
 
   if (gettimeofday(&init_start, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
@@ -714,8 +721,10 @@ int main(int argc, char **argv)
   if (rvfi) {
     if (!rvfi->setup_socket(config_print_rvfi))
       return 1;
+    register_callback(&rvfi_cbs);
   }
 
+  char *initial_elf_file = argv[files_start];
   uint64_t entry = rvfi ? rvfi->get_entry()
                         : load_sail(initial_elf_file, /*main_file=*/true);
 
