@@ -12,6 +12,10 @@ install(FILES "${CMAKE_SOURCE_DIR}/LICENCE"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/${CMAKE_PROJECT_NAME}"
     RENAME "copyright"
 )
+install(FILES "${CMAKE_SOURCE_DIR}/dependencies/softfloat/berkeley-softfloat-3/COPYING.txt"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/${CMAKE_PROJECT_NAME}"
+    RENAME "Berkeley-SoftFloat-LICENSE.txt"
+)
 
 # CPack configuration
 
