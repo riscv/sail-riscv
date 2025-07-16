@@ -14,6 +14,7 @@
 #include <optional>
 #include <iostream>
 #include <vector>
+#include <cstring>
 
 #include "CLI11.hpp"
 #include "elf.h"
@@ -29,6 +30,9 @@
 #include "default_config.h"
 #include "config_utils.h"
 #include "sail_riscv_version.h"
+#include "riscv_callbacks_if.h"
+#include "riscv_callbacks_log.h"
+#include "riscv_callbacks_rvfi.h"
 
 enum {
   OPT_TRACE_OUTPUT = 1000,
@@ -60,6 +64,8 @@ size_t dtb_len = 0;
 int rvfi_dii_port = 0;
 std::optional<rvfi_handler> rvfi;
 std::vector<std::string> elfs;
+
+rvfi_callbacks rvfi_cbs;
 
 std::string sig_file;
 uint64_t mem_sig_start = 0;
@@ -643,6 +649,9 @@ int main(int argc, char **argv)
   }
 
   init_logs();
+  log_callbacks log_cbs(config_print_reg, config_print_mem_access,
+                        config_use_abi_names, trace_log);
+  register_callback(&log_cbs);
 
   if (gettimeofday(&init_start, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
@@ -652,6 +661,7 @@ int main(int argc, char **argv)
   if (rvfi) {
     if (!rvfi->setup_socket(config_print_rvfi))
       return 1;
+    register_callback(&rvfi_cbs);
   }
 
   const std::string &initial_elf_file = elfs[0];

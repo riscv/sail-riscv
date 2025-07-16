@@ -16,7 +16,6 @@ void model_fini(void);
 extern uint64_t zxlen;
 extern uint64_t zflen;
 extern uint64_t zphysaddrbits_len;
-extern uint64_t zVLEN;
 
 #ifdef __cplusplus
 }
