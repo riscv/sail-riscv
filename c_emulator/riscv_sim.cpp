@@ -27,6 +27,8 @@
 #include "default_config.h"
 #include "config_utils.h"
 #include "sail_riscv_version.h"
+#include "riscv_callbacks_if.h"
+#include "riscv_callbacks_impl.h"
 
 enum {
   OPT_TRACE_OUTPUT = 1000,
@@ -53,6 +55,7 @@ char *dtb_file = NULL;
 unsigned char *dtb = NULL;
 size_t dtb_len = 0;
 std::optional<rvfi_handler> rvfi;
+callbacks_if *callbacks_impl = new callbacks_if_impl();
 
 char *sig_file = NULL;
 uint64_t mem_sig_start = 0;
@@ -306,6 +309,7 @@ static int process_args(int argc, char **argv)
       config_enable_rvfi = true;
       int rvfi_dii_port = atoi(optarg);
       rvfi = rvfi_handler(rvfi_dii_port);
+      register_callback_if(callbacks_impl);
       break;
     }
     case 'V':
