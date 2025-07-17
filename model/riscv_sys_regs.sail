@@ -223,11 +223,11 @@ function in64BitMode() -> bool = {
   cur_architecture() == RV64
 }
 
-function in32BitSupervisorMode() -> bool = {
+function supervisorModeIs32Bit() -> bool = {
   architecture(get_mstatus_SXL(mstatus)) == RV32
 }
 
-function in64BitSupervisorMode() -> bool = {
+function supervisorModeIs64Bit() -> bool = {
   architecture(get_mstatus_SXL(mstatus)) == RV64
 }
 
@@ -238,10 +238,10 @@ function clause currentlyEnabled(Ext_U) = hartSupports(Ext_U) & misa[U] == 0b1 &
 function clause currentlyEnabled(Ext_S) = hartSupports(Ext_S) & misa[S] == 0b1 & currentlyEnabled(Ext_Zicsr)
 
 function clause currentlyEnabled(Ext_Svbare) = currentlyEnabled(Ext_S)
-function clause currentlyEnabled(Ext_Sv32) = hartSupports(Ext_Sv32) & currentlyEnabled(Ext_S) & in32BitSupervisorMode()
-function clause currentlyEnabled(Ext_Sv39) = hartSupports(Ext_Sv39) & currentlyEnabled(Ext_S) & in64BitSupervisorMode()
-function clause currentlyEnabled(Ext_Sv48) = hartSupports(Ext_Sv48) & currentlyEnabled(Ext_S) & in64BitSupervisorMode()
-function clause currentlyEnabled(Ext_Sv57) = hartSupports(Ext_Sv57) & currentlyEnabled(Ext_S) & in64BitSupervisorMode()
+function clause currentlyEnabled(Ext_Sv32) = hartSupports(Ext_Sv32) & currentlyEnabled(Ext_S) & supervisorModeIs32Bit()
+function clause currentlyEnabled(Ext_Sv39) = hartSupports(Ext_Sv39) & currentlyEnabled(Ext_S) & supervisorModeIs64Bit()
+function clause currentlyEnabled(Ext_Sv48) = hartSupports(Ext_Sv48) & currentlyEnabled(Ext_S) & supervisorModeIs64Bit()
+function clause currentlyEnabled(Ext_Sv57) = hartSupports(Ext_Sv57) & currentlyEnabled(Ext_S) & supervisorModeIs64Bit()
 
 function virtual_memory_supported() -> bool = {
   currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39) | currentlyEnabled(Ext_Sv48) | currentlyEnabled(Ext_Sv57)
