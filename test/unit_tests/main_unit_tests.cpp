@@ -26,6 +26,8 @@ int main()
 
   sail_config_set_string(DEFAULT_JSON);
   sail_set_abstract_xlen();
+  sail_set_abstract_vlen_exp();
   sail_set_abstract_ext_d_supported();
+  sail_set_abstract_elen_exp();
   model_test();
 }
