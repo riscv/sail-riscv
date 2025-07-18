@@ -17,8 +17,8 @@ function csr_name(csr) = csr_name_map(csr)
 overload to_str = {csr_name}
 
 // returns whether a CSR exists
-val is_CSR_defined : (csreg) -> bool
-scattered function is_CSR_defined
+val is_CSR_accessible : (csreg, Privilege, bool) -> bool
+scattered function is_CSR_accessible
 
 // returns the value of the CSR if it is defined
 val read_CSR : csreg -> xlenbits
