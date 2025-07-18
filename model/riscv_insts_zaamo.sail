@@ -49,7 +49,7 @@ mapping encdec_amoop : amoop <-> bits(5) = {
 }
 
 mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)
-  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ size_enc_wide(size) @ encdec_reg(rd) @ 0b0101111
+  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ width_enc_wide(size) @ encdec_reg(rd) @ 0b0101111
   when amo_encoding_valid(size, op, rs2, rd)
 
 /* NOTE: Currently, we only EA if address translation is successful.
@@ -146,4 +146,4 @@ mapping maybe_aqrl : (bool, bool) <-> string = {
 }
 
 mapping clause assembly = AMO(op, aq, rl, rs2, rs1, width, rd)
-  <-> amo_mnemonic(op) ^ "." ^ size_mnemonic_wide(width) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
+  <-> amo_mnemonic(op) ^ "." ^ width_mnemonic_wide(width) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"

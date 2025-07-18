@@ -227,8 +227,8 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
   ent       : TLB_Entry,
 ) -> TR_Result(ppn_bits('v), PTW_Error) = {
 
-  let pte_width = if sv_width == 32 then 4 else 8;
-  let pte       = tlb_get_pte(pte_width, ent);  // Step 2 of VATP.
+  let pte_size  = if sv_width == 32 then 4 else 8;
+  let pte       = tlb_get_pte(pte_size, ent);  // Step 2 of VATP.
   let ext_pte   = ext_bits_of_PTE(pte);
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
   let pte_check = check_PTE_permission(ac, priv, mxr, do_sum, pte_flags,
@@ -248,7 +248,7 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
           else {
             // Writeback the PTE (which has new A/D bits)
             write_TLB(tlb_index, tlb_set_pte(ent, pte'));
-            match write_pte(ent.pteAddr, pte_width, pte') {
+            match write_pte(ent.pteAddr, pte_size, pte') {
               Ok(_)  => (),
               Err(e) => internal_error(__FILE__, __LINE__,
                                        "invalid physical address in TLB")
@@ -274,7 +274,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
   let initial_level = if 'v == 32 then 1 else (if 'v == 39 then 2 else (if 'v == 48 then 3 else 4));
 
   // Step 2 of VATP occurs in pt_walk().
-  let 'pte_width = if sv_width == 32 then 4 else 8;
+  let 'pte_size = if sv_width == 32 then 4 else 8;
   let ptw_result = pt_walk(sv_width, vpn, ac, priv, mxr, do_sum,
                            base_ppn, initial_level, false, ext_ptw);
   match ptw_result {
@@ -295,7 +295,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
             Err(PTW_PTE_Update(), ext_ptw)
           else {
             // Writeback the PTE (which has new A/D bits)
-            match write_pte(pteAddr, pte_width, pte) {
+            match write_pte(pteAddr, pte_size, pte) {
               Ok(_) => {
                 add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
                 Ok(ppn, ext_ptw)
