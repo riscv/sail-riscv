@@ -64,6 +64,7 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
         # Zfa needs to be added after fext, dext and Zfh (as it needs
         # definitions from those)
         "riscv_insts_zfa.sail"
+        "riscv_insts_zfbfmin.sail"
         "riscv_insts_zkn.sail"
         "riscv_insts_zks.sail"
         "riscv_insts_zbkb.sail"
