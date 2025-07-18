@@ -14,6 +14,7 @@
 #include <iostream>
 #include <vector>
 
+#include "CLI11.hpp"
 #include "elf.h"
 #include "sail.h"
 #include "sail_config.h"
@@ -40,62 +41,83 @@ enum {
   OPT_PRINT_ISA,
 };
 
-static bool do_show_times = false;
+bool do_show_times = false;
+bool do_print_version = false;
+bool do_print_build_info = false;
+bool do_print_default_config = false;
 bool do_print_dts = false;
 bool do_validate_config = false;
 bool do_print_isa = false;
 
-char *config_file = NULL;
-char *term_log = NULL;
-static const char *trace_log_path = NULL;
+std::string config_file;
+std::string term_log;
+std::string trace_log_path;
 FILE *trace_log = NULL;
-char *dtb_file = NULL;
+std::string dtb_file;
 unsigned char *dtb = NULL;
 size_t dtb_len = 0;
+int rvfi_dii_port = 0;
 std::optional<rvfi_handler> rvfi;
+std::vector<std::string> elfs;
 
-char *sig_file = NULL;
+std::string sig_file;
 uint64_t mem_sig_start = 0;
 uint64_t mem_sig_end = 0;
-int signature_granularity = 4;
+const int DEFAULT_SIGNATURE_GRANULARITY = 4;
+int signature_granularity = DEFAULT_SIGNATURE_GRANULARITY;
 
 bool config_print_instr = true;
 bool config_print_reg = true;
 bool config_print_mem_access = true;
 bool config_print_platform = true;
-bool config_use_abi_names = false;
 bool config_print_rvfi = false;
 bool config_print_step = false;
+
+bool config_use_abi_names = false;
 bool config_enable_rvfi = false;
 
-void set_config_print(char *var, bool val)
-{
-  if (var == NULL || strcmp("all", var) == 0) {
-    config_print_instr = val;
-    config_print_mem_access = val;
-    config_print_reg = val;
-    config_print_platform = val;
-    config_print_rvfi = val;
-  } else if (strcmp("instr", var) == 0) {
-    config_print_instr = val;
-  } else if (strcmp("reg", var) == 0) {
-    config_print_reg = val;
-  } else if (strcmp("abi", var) == 0) {
-    config_use_abi_names = val;
-  } else if (strcmp("mem", var) == 0) {
-    config_print_mem_access = val;
-  } else if (strcmp("rvfi", var) == 0) {
-    config_print_rvfi = val;
-  } else if (strcmp("platform", var) == 0) {
-    config_print_platform = val;
-  } else if (strcmp("step", var) == 0) {
-    config_print_step = val;
-  } else {
-    fprintf(stderr, "Unknown trace category: '%s' (should be %s)\n", var,
-            "instr|reg|mem|rvfi|platform|step|all");
-    exit(EXIT_FAILURE);
-  }
-}
+std::map<std::string, std::tuple<bool *, std::string>> printers {
+    {"instr",    {&config_print_instr, "Instruction execution"}     },
+    {"reg",      {&config_print_reg, "Register accesses"}           },
+    {"mem",      {&config_print_mem_access, "Memory accesses"}      },
+    {"rvfi",     {&config_print_rvfi, "RVFI tracing"}               },
+    {"platform",
+     {&config_print_platform, "Privilege changes, MMIO, interrupts"}},
+    {"step",     {&config_print_step, "Steps"}                      },
+    {"all",      {NULL, "All of the other tracers"}                 },
+};
+
+std::function<void(const std::string &)> enable_printer {
+    [](const std::string &opt) {
+      auto ent = printers.find(opt);
+      if (ent != printers.end()) {
+        if (opt == "all") {
+          config_print_instr = true;
+          config_print_mem_access = true;
+          config_print_reg = true;
+          config_print_platform = true;
+          config_print_rvfi = true;
+        } else {
+          *std::get<0>(ent->second) = true;
+        }
+      }
+    }};
+
+std::function<void(const std::string &)> disable_printer {
+    [](const std::string &opt) {
+      auto ent = printers.find(opt);
+      if (ent != printers.end()) {
+        if (opt == "all") {
+          config_print_instr = false;
+          config_print_mem_access = false;
+          config_print_reg = false;
+          config_print_platform = false;
+          config_print_rvfi = false;
+        } else {
+          *std::get<0>(ent->second) = false;
+        }
+      }
+    }};
 
 struct timeval init_start, init_end, run_end;
 uint64_t total_insns = 0;
@@ -103,93 +125,6 @@ uint64_t insn_limit = 0;
 #ifdef SAILCOV
 char *sailcov_file = NULL;
 #endif
-
-static struct option options[] = {
-    {"device-tree-blob",               required_argument, 0, 'b'                },
-    {"terminal-log",                   required_argument, 0, 't'                },
-    {"show-times",                     no_argument,       0, 'p'                },
-    {"test-signature",                 required_argument, 0, 'T'                },
-    {"signature-granularity",          required_argument, 0, 'g'                },
-    {"rvfi-dii",                       required_argument, 0, 'r'                },
-    {"help",                           no_argument,       0, 'h'                },
-    {"config",                         required_argument, 0, 'c'                },
-    {"version",                        no_argument,       0, OPT_PRINT_VERSION  },
-    {"build-info",                     no_argument,       0, OPT_BUILD_INFO     },
-    {"print-default-config",           no_argument,       0, OPT_PRINT_CONFIG   },
-    {"validate-config",                no_argument,       0, OPT_VALIDATE_CONFIG},
-    {"trace",                          optional_argument, 0, 'v'                },
-    {"no-trace",                       optional_argument, 0, 'V'                },
-    {"trace-output",                   required_argument, 0, OPT_TRACE_OUTPUT   },
-    {"inst-limit",                     required_argument, 0, 'l'                },
-    {"enable-experimental-extensions", no_argument,       0,
-     OPT_ENABLE_EXPERIMENTAL_EXTENSIONS                                         },
-#ifdef SAILCOV
-    {"sailcov-file",                   required_argument, 0, OPT_SAILCOV        },
-#endif
-    {"print-device-tree",              no_argument,       0, OPT_PRINT_DTS      },
-    {"print-isa-string",               no_argument,       0, OPT_PRINT_ISA      },
-    {0,                                0,                 0, 0                  }
-};
-
-static void print_usage(const char *argv0, int ec)
-{
-  fprintf(stdout, "Usage: %s [options] <elf_file> [<elf_file> ...]\n", argv0);
-  fprintf(stdout, "\nOptions:\n");
-
-  struct option *opt = options;
-  while (opt->name) {
-    if (isprint(opt->val)) {
-      fprintf(stdout, "  -%c, --%-30s", (char)opt->val, opt->name);
-    } else {
-      fprintf(stdout, "      --%-30s", opt->name);
-    }
-
-    if (opt->val == 'b')
-      fprintf(stdout, " <file>     Device tree blob file");
-    else if (opt->val == 't')
-      fprintf(stdout, " <file>     Terminal log output file");
-    else if (opt->val == 'p')
-      fprintf(stdout, "            Show execution times");
-    else if (opt->val == 'T')
-      fprintf(stdout, " <file>     Test signature file");
-    else if (opt->val == 'g')
-      fprintf(stdout, " <size>     Signature granularity");
-    else if (opt->val == 'r')
-      fprintf(stdout, " <port>     RVFI DII port");
-    else if (opt->val == 'h')
-      fprintf(stdout, "            Show this help message");
-    else if (opt->val == 'c')
-      fprintf(stdout, " <file>     Configuration file");
-    else if (opt->val == 'v')
-      fprintf(stdout, " [file]     Enable tracing");
-    else if (opt->val == 'V')
-      fprintf(stdout, " [file]     Disable tracing");
-    else if (opt->val == 'l')
-      fprintf(stdout, " <count>    Instruction limit");
-    else if (strcmp(opt->name, "print-default-config") == 0)
-      fprintf(stdout, "            Print default configuration");
-    else if (strcmp(opt->name, "validate-config") == 0)
-      fprintf(stdout, "            Validate configuration");
-    else if (strcmp(opt->name, "trace-output") == 0)
-      fprintf(stdout, " <file>     Trace output file");
-    else if (strcmp(opt->name, "enable-experimental-extensions") == 0)
-      fprintf(stdout, "            Enable experimental extensions");
-    else if (strcmp(opt->name, "print-device-tree") == 0)
-      fprintf(stdout, "            Print device tree");
-    else if (strcmp(opt->name, "print-isa-string") == 0)
-      fprintf(stdout, "            Print ISA string");
-#ifdef SAILCOV
-    else if (strcmp(opt->name, "sailcov-file") == 0)
-      fprintf(stdout, " <file>     Sailcov output file");
-#endif
-    else
-      fprintf(stdout, "Unknown argument");
-
-    fprintf(stdout, "\n");
-    opt++;
-  }
-  exit(ec);
-}
 
 static void validate_config(const char *conf_file)
 {
@@ -228,6 +163,7 @@ static void print_build_info(void)
   std::cout << "Sail: " << version_info::sail_version << std::endl;
   std::cout << "C++ compiler: " << version_info::cxx_compiler_version
             << std::endl;
+  std::cout << "CLI11: " << CLI11_VERSION << std::endl;
 }
 
 static bool is_32bit_model(void)
@@ -266,207 +202,122 @@ static void read_dtb(const char *path)
 }
 
 /**
- * Parses the command line arguments and returns the argv index for the first
- * ELF file that should be loaded. As getopt transforms the argv array, all
- * argv values following that index are non-options and can be treated as
- * additional ELF files that should be loaded into memory (but not scanned
- * for the magic tohost/{begin,end}_signature symbols).
+ * Set up command line option processing.
  */
-static int process_args(int argc, char **argv)
+
+class HelpFormat : public CLI::Formatter {
+public:
+  // The default footer rendering uses paragraph formatting, removing
+  // all spacing adjustments.  The only way to customize that is to
+  // override the whole `make_help` formatter.  Customizing
+  // `make_help` also allows us to remove the `make_positionals` call
+  // instead of customizing it.
+  std::string make_help(const CLI::App *app, std::string name,
+                        CLI::AppFormatMode mode) const override
+  {
+    // See the comments in the base `make_help`.
+
+    if (mode == CLI::AppFormatMode::Sub)
+      return make_expanded(app, mode);
+
+    std::stringstream out;
+    if ((app->get_name().empty()) && (app->get_parent() != nullptr)) {
+      if (app->get_group() != "SUBCOMMANDS") {
+        out << app->get_group() << ':';
+      }
+    }
+
+    CLI::detail::streamOutAsParagraph(out, make_description(app),
+                                      description_paragraph_width_, "");
+    out << make_usage(app, name);
+    // Suppress the unnecessary "POSITIONALS" options help.
+    // out << make_positionals(app);
+    out << make_groups(app, mode);
+    out << make_subcommands(app, mode);
+
+    // Render the footer without any further formatting.
+    out << make_footer(app);
+
+    return out.str();
+  }
+};
+
+static void setup_options(CLI::App &app)
 {
-  int c;
-  bool have_config = false;
-  while (true) {
-    c = getopt_long(argc, argv,
-                    "a"
-                    "p"
-                    "b:"
-                    "t:"
-                    "T:"
-                    "g:"
-                    "h"
-                    "c:"
-                    "r:"
-                    "V::"
-                    "v::"
-                    "l:",
-                    options, NULL);
-    if (c == -1)
-      break;
-    switch (c) {
-    case 'p':
-      fprintf(stderr, "will show execution times on completion.\n");
-      do_show_times = true;
-      break;
-    case 'b':
-      dtb_file = strdup(optarg);
-      fprintf(stderr, "using %s as DTB file.\n", dtb_file);
-      break;
-    case 't':
-      term_log = strdup(optarg);
-      fprintf(stderr, "using %s for terminal output.\n", term_log);
-      break;
-    case 'T':
-      sig_file = strdup(optarg);
-      fprintf(stderr, "using %s for test-signature output.\n", sig_file);
-      break;
-    case 'g': {
-      char *p;
-      long val = strtol(optarg, &p, 10);
-      if (*p != '\0' || val <= 0 || val > INT_MAX) {
-        fprintf(stderr,
-                "Error: signature-granularity must be a positive number, got "
-                "'%s'\n",
-                optarg);
-        exit(EXIT_FAILURE);
-      }
-      signature_granularity = static_cast<int>(val);
-      fprintf(stderr, "setting signature-granularity to %d bytes\n",
-              signature_granularity);
-    } break;
-    case 'h':
-      print_usage(argv[0], EXIT_SUCCESS);
-      break;
-    case 'c': {
-      if (access(optarg, R_OK) == 0) {
-        sail_config_set_file(optarg);
-        config_file = strdup(optarg);
-        have_config = true;
-      } else {
-        fprintf(stderr, "configuration file '%s' does not exist.\n", optarg);
-        exit(EXIT_FAILURE);
-      }
-      break;
-    }
-    case OPT_PRINT_VERSION:
-      std::cout << version_info::release_version << std::endl;
-      exit(EXIT_SUCCESS);
-    case OPT_BUILD_INFO:
-      print_build_info();
-      exit(EXIT_SUCCESS);
-    case OPT_PRINT_CONFIG:
-      printf("%s", DEFAULT_JSON);
-      exit(EXIT_SUCCESS);
-    case OPT_VALIDATE_CONFIG:
-      do_validate_config = true;
-      break;
-    case OPT_PRINT_DTS:
-      do_print_dts = true;
-      break;
-    case OPT_PRINT_ISA:
-      do_print_isa = true;
-      break;
-    case 'r': {
-      char *p;
-      long val = strtol(optarg, &p, 10);
-      if (*p != '\0' || val <= 0 || val > 65535) {
-        fprintf(stderr,
-                "Error: port number must be between 1 and 65535, got '%s'\n",
-                optarg);
-        exit(EXIT_FAILURE);
-      }
-      config_enable_rvfi = true;
-      int rvfi_dii_port = static_cast<int>(val);
-      rvfi = rvfi_handler(rvfi_dii_port);
-      break;
-    }
-    case 'V':
-      set_config_print(optarg, false);
-      break;
-    case 'v':
-      set_config_print(optarg, true);
-      break;
-    case 'l': {
-      char *p;
-      unsigned long long val;
-      errno = 0;
-      val = strtoull(optarg, &p, 0);
-      if (*p != '\0' || val > UINT64_MAX
-          || (val == ULLONG_MAX && errno == ERANGE)) {
-        fprintf(stderr, "invalid instruction limit %s\n", optarg);
-        exit(EXIT_FAILURE);
-      }
-      insn_limit = val;
-      break;
-    }
-    case OPT_ENABLE_EXPERIMENTAL_EXTENSIONS:
-      fprintf(stderr, "enabling unratified extensions.\n");
-      rv_enable_experimental_extensions = true;
-      break;
+  app.formatter(std::make_shared<HelpFormat>());
+  // The default formatter gives short options 1/3 of `column_width`
+  // and long options 2/3, which is not great for our options.  Use a
+  // smaller left column width than the default {30} to bring the
+  // short and long options closer together.  This however pushes some
+  // of the option descriptions into the next line, since the long
+  // options now flow into the descriptions column.
+  app.get_formatter()->column_width(20);
+
+  app.add_flag("-p,--show-times", do_show_times, "Show execution times");
+  app.add_flag("--version", do_print_version, "Print model version");
+  app.add_flag("--build-info", do_print_build_info, "Print build information");
+  app.add_flag("--print-default-config", do_print_default_config,
+               "Print default configuration");
+  app.add_flag("--validate-config", do_validate_config,
+               "Validate configuration");
+  app.add_flag("--print-device-tree", do_print_dts, "Print device tree");
+  app.add_flag("--print-isa-string", do_print_isa, "Print ISA string");
+  app.add_flag("--enable-experimental-extensions",
+               rv_enable_experimental_extensions,
+               "Enable experimental extensions");
+  app.add_flag("-N, --use-abi-names", config_use_abi_names,
+               "Use ABI register names");
+
+  app.add_option("-b,--device-tree-blob", dtb_file, "Device tree blob file")
+      ->check(CLI::ExistingFile)
+      ->option_text("<file>");
+  app.add_option("-t,--terminal-log", term_log, "Terminal log output file")
+      ->option_text("<file>");
+  app.add_option("-T,--test-signature", sig_file, "Test signature file")
+      ->option_text("<file>");
+  app.add_option("-c,--config", config_file, "Configuration file")
+      ->check(CLI::ExistingFile)
+      ->option_text("<file>");
+  app.add_option("--trace-output", trace_log_path, "Trace output file")
+      ->option_text("<file>");
+
+  app.add_option("-g,--signature-granularity", signature_granularity,
+                 "Signature granularity")
+      ->option_text("<uint>");
+  app.add_option("-r,--rvfi-dii", rvfi_dii_port, "RVFI DII port")
+      ->check(CLI::Range(1, 65535))
+      ->option_text("<int> (within [1 - 65535])");
+  app.add_option("-l,--inst-limit", insn_limit, "Instruction limit")
+      ->option_text("<uint>");
 #ifdef SAILCOV
-    case OPT_SAILCOV:
-      sailcov_file = strdup(optarg);
-      break;
+  app.add_option("--sailcov-file", sailcov_file, "Sail coverage output file")
+      ->option_text("<file>");
 #endif
-    case OPT_TRACE_OUTPUT:
-      if (optarg == NULL || strlen(optarg) == 0) {
-        fprintf(stderr,
-                "Error: option '--trace-output' requires an argument <file>\n");
-        fprintf(stderr, "Try '%s --help' for more information.\n", argv[0]);
-        exit(EXIT_FAILURE);
-      }
-      trace_log_path = optarg;
-      fprintf(stderr, "using %s for trace output.\n", trace_log_path);
-      break;
-    case '?':
-      if (optopt == 'b') {
-        fprintf(stderr,
-                "Error: option '-%c/--device-tree-blob' requires an argument "
-                "<file>\n",
-                optopt);
-      } else if (optopt == 't') {
-        fprintf(
-            stderr,
-            "Error: option '-%c/--terminal-log' requires an argument <file>\n",
-            optopt);
-      } else if (optopt == 'T') {
-        fprintf(stderr,
-                "Error: option '-%c/--test-signature' requires an argument "
-                "<file>\n",
-                optopt);
-      } else if (optopt == 'g') {
-        fprintf(stderr,
-                "Error: option '-%c/--signature-granularity' requires an "
-                "argument <size>\n",
-                optopt);
-      } else if (optopt == 'r') {
-        fprintf(stderr,
-                "Error: option '-%c/--rvfi-dii' requires an argument <port>\n",
-                optopt);
-      } else if (optopt == 'c') {
-        fprintf(stderr,
-                "Error: option '-%c/--config' requires an argument <file>\n",
-                optopt);
-      } else if (optopt == 'l') {
-        fprintf(
-            stderr,
-            "Error: option '-%c/--inst-limit' requires an argument <count>\n",
-            optopt);
-      } else {
-        fprintf(stderr, "Error: unknown option '-%c'\n", optopt);
-      }
-      fprintf(stderr, "Try '%s --help' for more information.\n", argv[0]);
-      exit(EXIT_FAILURE);
-      break;
-    }
-  }
 
-  if (!have_config) {
-    sail_config_set_string(DEFAULT_JSON);
-  }
+  app.add_option_function("-v,--trace", enable_printer, "Enable tracing option")
+      ->check(CLI::IsMember(printers))
+      ->option_text("<tracer>");
+  app.add_option_function("-V,--no-trace", disable_printer,
+                          "Disable tracing option")
+      ->check(CLI::IsMember(printers))
+      ->option_text("<tracer>");
 
-  if (dtb_file)
-    read_dtb(dtb_file);
+  // All positional arguments are treated as ELF files.  All ELF files
+  // are loaded into memory, but only the first is scanned for the
+  // magic `tohost/{begin,end}_signature` symbols.
+  app.add_option("elfs", elfs, "<elf_file> [<elf_file> ...]");
 
-  bool no_elf_file_arg
-      = rvfi || do_print_dts || do_print_isa || do_validate_config;
-  if (optind > argc || (optind == argc && !no_elf_file_arg)) {
-    fprintf(stderr, "No elf file provided.\n");
-    print_usage(argv[0], EXIT_SUCCESS);
+  // Add help for tracing options in the footer in the absence of a
+  // better place to put it.  Unfortunately, the footer is rendered as
+  // a paragraph, without a way of customizing it without overriding
+  // the whole `make_help` function as above.
+  std::ostringstream buf;
+  buf << " where <tracer> is one of the following in the left column: "
+      << std::endl;
+  for (auto const &p : printers) {
+    buf << "   " << p.first << " : " << std::get<1>(p.second) << std::endl;
   }
-  if (!no_elf_file_arg)
-    fprintf(stdout, "Running file %s.\n", argv[optind]);
-  return optind;
+  app.footer(buf.str());
 }
 
 void check_elf(bool is32bit)
@@ -485,12 +336,13 @@ void check_elf(bool is32bit)
     }
   }
 }
-uint64_t load_sail(char *f, bool main_file)
+uint64_t load_sail(const char *f, bool main_file)
 {
   bool is32bit;
   uint64_t entry;
   uint64_t begin_sig, end_sig;
-  load_elf(f, &is32bit, &entry);
+  // Needs a change in Sail lib API to remove const_cast.
+  load_elf(const_cast<char *>(f), &is32bit, &entry);
   check_elf(is32bit);
   if (!main_file) {
     /* Don't scan for test-signature/htif symbols for additional ELF files. */
@@ -638,8 +490,8 @@ void close_logs(void)
 
 void finish(int ec)
 {
-  if (sig_file)
-    write_signature(sig_file);
+  if (!sig_file.empty())
+    write_signature(sig_file.c_str());
 
   model_fini();
   if (gettimeofday(&run_end, NULL) < 0) {
@@ -766,20 +618,20 @@ step_exception:
 
 void init_logs()
 {
-  if (term_log != NULL
-      && (term_fd = open(term_log, O_WRONLY | O_CREAT | O_TRUNC,
+  if (!term_log.empty()
+      && (term_fd = open(term_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
                          S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR))
           < 0) {
-    fprintf(stderr, "Cannot create terminal log '%s': %s\n", term_log,
+    fprintf(stderr, "Cannot create terminal log '%s': %s\n", term_log.c_str(),
             strerror(errno));
     exit(EXIT_FAILURE);
   }
 
-  if (trace_log_path == NULL) {
+  if (trace_log_path.empty()) {
     trace_log = stdout;
-  } else if ((trace_log = fopen(trace_log_path, "w+")) == NULL) {
-    fprintf(stderr, "Cannot create trace log '%s': %s\n", trace_log_path,
-            strerror(errno));
+  } else if ((trace_log = fopen(trace_log_path.c_str(), "w+")) == NULL) {
+    fprintf(stderr, "Cannot create trace log '%s': %s\n",
+            trace_log_path.c_str(), strerror(errno));
     exit(EXIT_FAILURE);
   }
 
@@ -792,14 +644,67 @@ void init_logs()
 
 int main(int argc, char **argv)
 {
-  int files_start = process_args(argc, argv);
+  CLI::App app("Sail RISC-V Model");
+  argv = app.ensure_utf8(argv);
+  setup_options(app);
+  try {
+    app.parse(argc, argv);
+  } catch (const CLI::ParseError &e) {
+    return app.exit(e);
+  }
 
+  if (do_print_version) {
+    std::cout << version_info::release_version << std::endl;
+    exit(EXIT_SUCCESS);
+  }
+  if (do_print_build_info) {
+    print_build_info();
+    exit(EXIT_SUCCESS);
+  }
+  if (do_print_default_config) {
+    printf("%s", DEFAULT_JSON);
+    exit(EXIT_SUCCESS);
+  }
+  if (rvfi_dii_port != 0) {
+    config_enable_rvfi = true;
+    rvfi = rvfi_handler(rvfi_dii_port);
+  }
+  if (do_show_times) {
+    fprintf(stderr, "will show execution times on completion.\n");
+  }
+  if (!term_log.empty()) {
+    fprintf(stderr, "using %s for terminal output.\n", term_log.c_str());
+  }
+  if (!sig_file.empty()) {
+    fprintf(stderr, "using %s for test-signature output.\n", sig_file.c_str());
+  }
+  if (signature_granularity != DEFAULT_SIGNATURE_GRANULARITY) {
+    fprintf(stderr, "setting signature-granularity to %d bytes\n",
+            signature_granularity);
+  }
+  if (rv_enable_experimental_extensions) {
+    fprintf(stderr, "enabling unratified extensions.\n");
+  }
+  if (!trace_log_path.empty()) {
+    fprintf(stderr, "using %s for trace output.\n", trace_log_path.c_str());
+  }
+  if (!dtb_file.empty()) {
+    fprintf(stderr, "using %s as DTB file.\n", dtb_file.c_str());
+    read_dtb(dtb_file.c_str());
+  }
+
+  // Initialize the model.
+  if (!config_file.empty()) {
+    sail_config_set_file(config_file.c_str());
+  } else {
+    sail_config_set_string(DEFAULT_JSON);
+  }
   sail_set_abstract_xlen();
   sail_set_abstract_ext_d_supported();
   model_init();
 
   if (do_validate_config) {
-    validate_config(config_file);
+    validate_config(config_file.c_str());
   }
   if (do_print_dts) {
     print_dts();
@@ -808,7 +713,12 @@ int main(int argc, char **argv)
     print_isa();
   }
 
-  char *initial_elf_file = argv[files_start];
+  // If we get here, we need to have ELF files to run.
+  if (elfs.empty()) {
+    fprintf(stderr, "No elf file provided.\n");
+    exit(EXIT_FAILURE);
+  }
+
   init_logs();
 
   if (gettimeofday(&init_start, NULL) < 0) {
@@ -821,16 +731,20 @@ int main(int argc, char **argv)
       return 1;
   }
 
-  uint64_t entry = rvfi ? rvfi->get_entry()
-                        : load_sail(initial_elf_file, /*main_file=*/true);
+  const std::string &initial_elf_file = elfs[0];
+  uint64_t entry = rvfi
+      ? rvfi->get_entry()
+      : load_sail(initial_elf_file.c_str(), /*main_file=*/true);
 
   /* Load any additional ELF files into memory */
-  for (int i = files_start + 1; i < argc; i++) {
-    fprintf(stdout, "Loading additional ELF file %s.\n", argv[i]);
-    (void)load_sail(argv[i], /*main_file=*/false);
+  std::vector<std::string>::const_iterator it = elfs.begin();
+  std::advance(it, 1);
+  for (; it != elfs.end(); it++) {
+    fprintf(stdout, "Loading additional ELF file %s.\n", it->c_str());
+    (void)load_sail(it->c_str(), /*main_file=*/false);
   }
 
-  init_sail(entry, config_file);
+  init_sail(entry, config_file.c_str());
 
   if (gettimeofday(&init_end, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
@@ -841,7 +755,7 @@ int main(int argc, char **argv)
     run_sail();
     if (rvfi) {
       /* Reset for next test */
-      reinit_sail(entry, config_file);
+      reinit_sail(entry, config_file.c_str());
     }
   } while (rvfi);
 

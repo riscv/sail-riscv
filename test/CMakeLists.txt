@@ -90,7 +90,7 @@ foreach(vlen IN ITEMS 128 256 512)
                         NAME "${arch}_${elf_name}"
                         COMMAND
                             $<TARGET_FILE:sail_riscv_sim>
-                            --no-trace
+                            --no-trace all
                             --config "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
                             ${elf}
                     )
@@ -129,7 +129,7 @@ if(ENABLE_RISCV_TESTS)
                 NAME "${arch}_${elf_name}"
                 COMMAND
                     $<TARGET_FILE:sail_riscv_sim>
-                    --no-trace
+                    --no-trace all
                     --config "${CMAKE_SOURCE_DIR}/config/${arch}.json"
                     ${elf}
             )
