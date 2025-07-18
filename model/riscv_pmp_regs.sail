@@ -85,22 +85,37 @@ function pmpReadAddrReg(n : range(0, 63)) -> xlenbits = {
 }
 
 /* Helpers to handle locked entries */
-function pmpLocked(cfg: Pmpcfg_ent) -> bool =
-   cfg[L] == 0b1
+function pmpLocked(cfg: Pmpcfg_ent) -> bool = (cfg[L] == 0b1) & (not(currentlyEnabled(Ext_Smepmp)) | mseccfg[RLB] == 0b0)
 
 function pmpTORLocked(cfg: Pmpcfg_ent) -> bool =
    (cfg[L] == 0b1) & (pmpAddrMatchType_encdec(cfg[A]) == TOR)
 
-function pmpWriteCfg(n: range(0, 63), cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
-  if pmpLocked(cfg) then cfg
+function pmpWriteCfg(n: range(0, 63), cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent = {
+  /* If locked then configuration is unchanged */
+  if pmpLocked(cfg)
+  then cfg
+  /* To prevent adding a rule with execution privileges if MML is enabled unless RLB is set */
   else {
-    // Bits 5 and 6 are zero.
-    let cfg = Mk_Pmpcfg_ent(v & 0x9f);
-
+    /* Constructing legal Pmpcfg_ent by making bit 5 and 6 zero */
+    let legal_v : Pmpcfg_ent = Mk_Pmpcfg_ent([v with 6 .. 5 = zeros()]);
     // "The R, W, and X fields form a collective WARL field for which the combinations with R=0 and W=1 are reserved."
     // In this implementation if R=0 and W=1 then R, W and X are all set to 0.
     // This is the least risky option from a security perspective.
-    let cfg = if cfg[W] == 0b1 & cfg[R] == 0b0 then [cfg with X = 0b0, W = 0b0, R = 0b0] else cfg;
+    let legal_v : Pmpcfg_ent = match (mseccfg[MML], legal_v[R], legal_v[W]) {
+      (0b0, 0b0, 0b1) => [legal_v with W = 0b0],
+      (_, _, _)       => legal_v
+    };
+
+    let legal_v : Pmpcfg_ent = if (mseccfg[MML] == 0b1 & mseccfg[RLB] == 0b0 & legal_v[L] == 0b1)
+    then {
+      match (legal_v[R], legal_v[W], legal_v[X]) {
+        (0b0, 0b0, 0b1) => cfg,
+        (0b0, 0b1, 0b0) => cfg,
+        (0b0, 0b1, 0b1) => cfg,
+        (0b1, 0b0, 0b1) => cfg,
+        (_, _, _)       => legal_v
+      }
+    } else legal_v;
 
     // We support disabling all modes globally, which is allowed since this
     // is a WARL field.
@@ -120,6 +135,7 @@ function pmpWriteCfg(n: range(0, 63), cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent
 
     cfg
   }
+}
 
 function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
   if xlen == 32

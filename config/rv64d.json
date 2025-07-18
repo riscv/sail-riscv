@@ -241,6 +241,9 @@
     "Smcntrpmf": {
       "supported": true
     },
+    "Smepmp": {
+      "supported": true
+    },
     "Sstc": {
       "supported": true
     },
