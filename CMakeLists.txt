@@ -146,6 +146,9 @@ include(GNUInstallDirs)
 # Softfloat support.
 add_subdirectory("dependencies/softfloat")
 
+# CLI11
+add_subdirectory("dependencies/CLIUtils")
+
 # Sail C runtime.
 add_subdirectory("sail_runtime")
 

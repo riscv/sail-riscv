@@ -52,7 +52,7 @@ target_include_directories(riscv_model
 )
 
 target_link_libraries(riscv_model
-    PUBLIC softfloat sail_runtime
+    PUBLIC softfloat CLI11 sail_runtime
 )
 
 add_dependencies(riscv_model generated_sail_riscv_model)
