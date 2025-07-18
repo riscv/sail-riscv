@@ -89,6 +89,7 @@ axiom extern_f32ToF64 : BitVec 3 → BitVec 32 → Unit
 axiom extern_f32ToF16 : BitVec 3 → BitVec 32 → Unit
 axiom extern_f64ToF16 : BitVec 3 → BitVec 64 → Unit
 axiom extern_f64ToF32 : BitVec 3 → BitVec 64 → Unit
+axiom extern_f32ToBF16 : BitVec 3 → BitVec 32 → Unit
 axiom extern_f16Lt : BitVec 16 → BitVec 16 → Unit
 axiom extern_f16Lt_quiet : BitVec 16 → BitVec 16 → Unit
 axiom extern_f16Le : BitVec 16 → BitVec 16 → Unit

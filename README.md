@@ -92,6 +92,7 @@ For booting operating system images, see the information under the
 - F and D extensions for single and double-precision floating-point, v2.2
 - Zfh and Zfhmin extensions for half-precision floating-point, v1.0
 - Zfa extension for additional floating-point instructions, v1.0
+- Zfbfmin extension for scalar bf16 converts, v1.0
 - Zfinx, Zdinx, Zhinx, and Zhinxmin extensions for floating-point in integer registers, v1.0
 - C extension for compressed instructions, v2.0
 - Zca, Zcf, Zcd, and Zcb extensions for code size reduction, v1.0

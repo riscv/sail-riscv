@@ -209,6 +209,16 @@ function wF_bits(Fregidx(i) : fregidx, data: flenbits) -> unit = {
 
 overload F = {rF_bits, wF_bits, rF, wF}
 
+val rF_BF16 : fregidx -> bits(16)
+function rF_BF16(i) = {
+  nan_unbox(F(i))
+}
+
+val wF_BF16 : (fregidx, bits(16)) -> unit
+function wF_BF16(i, data) = {
+  F(i) = nan_box(data)
+}
+
 val rF_H : fregidx -> bits(16)
 function rF_H(i) = {
   assert(flen >= 16);
@@ -251,6 +261,7 @@ function wF_D(i, data) = {
   F(i) = data
 }
 
+overload F_BF16 = { rF_BF16, wF_BF16 }
 overload F_H = { rF_H, wF_H }
 overload F_S = { rF_S, wF_S }
 overload F_D = { rF_D, wF_D }
