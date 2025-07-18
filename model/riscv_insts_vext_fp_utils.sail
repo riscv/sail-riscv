@@ -16,8 +16,8 @@
  */
 val valid_fp_op : (sew_bitsize, bits(3)) -> bool
 function valid_fp_op(SEW, rm_3b) = {
-  /* 128-bit floating-point values will be supported in future extensions */
-  let valid_sew = (SEW >= 16 & SEW <= 128);
+  /* 8-bit valid for conversion from INT8 to FP16(vfwcvt.f.x[u].v), 128-bit floating-point values will be supported in future extensions */
+  let valid_sew = (SEW >= 8 & SEW <= 128);
   let valid_rm = not(rm_3b == 0b101 | rm_3b == 0b110 | rm_3b == 0b111);
   valid_sew & valid_rm
 }

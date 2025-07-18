@@ -35,9 +35,7 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
         "riscv_insts_vext_mem.sail"
         "riscv_insts_vext_mask.sail"
         "riscv_insts_vext_vm.sail"
-        "riscv_insts_vext_fp_vm.sail"
         "riscv_insts_vext_red.sail"
-        "riscv_insts_vext_fp_red.sail"
     )
 
     set(sail_default_inst
