@@ -6,16 +6,16 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_Zvl32b)   = hartSupports(Ext_Zvl32b)   & (VLEN >= 32)
-function clause currentlyEnabled(Ext_Zvl64b)   = hartSupports(Ext_Zvl64b)   & (VLEN >= 64)
-function clause currentlyEnabled(Ext_Zvl128b)  = hartSupports(Ext_Zvl128b)  & (VLEN >= 128)
-function clause currentlyEnabled(Ext_Zvl256b)  = hartSupports(Ext_Zvl256b)  & (VLEN >= 256)
-function clause currentlyEnabled(Ext_Zvl512b)  = hartSupports(Ext_Zvl512b)  & (VLEN >= 512)
-function clause currentlyEnabled(Ext_Zvl1024b) = hartSupports(Ext_Zvl1024b) & (VLEN >= 1024)
+function clause currentlyEnabled(Ext_Zvl32b)   = hartSupports(Ext_Zvl32b)  
+function clause currentlyEnabled(Ext_Zvl64b)   = hartSupports(Ext_Zvl64b)  
+function clause currentlyEnabled(Ext_Zvl128b)  = hartSupports(Ext_Zvl128b) 
+function clause currentlyEnabled(Ext_Zvl256b)  = hartSupports(Ext_Zvl256b) 
+function clause currentlyEnabled(Ext_Zvl512b)  = hartSupports(Ext_Zvl512b) 
+function clause currentlyEnabled(Ext_Zvl1024b) = hartSupports(Ext_Zvl1024b)
 
-function clause currentlyEnabled(Ext_Zve32x)   = hartSupports(Ext_Zve32x)
+function clause currentlyEnabled(Ext_Zve32x)   = hartSupports(Ext_Zve32x)   & currentlyEnabled(Ext_Zvl32b)
 function clause currentlyEnabled(Ext_Zve32f)   = hartSupports(Ext_Zve32f)   & currentlyEnabled(Ext_Zve32x)   & currentlyEnabled(Ext_F)
-function clause currentlyEnabled(Ext_Zve64x)   = hartSupports(Ext_Zve64x)   & currentlyEnabled(Ext_Zve32x)
+function clause currentlyEnabled(Ext_Zve64x)   = hartSupports(Ext_Zve64x)   & currentlyEnabled(Ext_Zvl64b)   & currentlyEnabled(Ext_Zve32x)
 function clause currentlyEnabled(Ext_Zve64f)   = hartSupports(Ext_Zve64f)   & currentlyEnabled(Ext_Zve64x)   & currentlyEnabled(Ext_Zve32f)
 function clause currentlyEnabled(Ext_Zve64d)   = hartSupports(Ext_Zve64d)   & currentlyEnabled(Ext_Zve64f)   & currentlyEnabled(Ext_D)
 
