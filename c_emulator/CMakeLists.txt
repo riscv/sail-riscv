@@ -101,6 +101,5 @@ if (COVERAGE)
 endif()
 
 install(TARGETS sail_riscv_sim
-    OPTIONAL
     RUNTIME DESTINATION "bin"
 )

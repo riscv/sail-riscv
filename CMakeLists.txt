@@ -13,7 +13,10 @@ if(POLICY CMP0135)
 endif()
 
 include(cmake/project_version.cmake)
-project(sail_riscv VERSION ${sail_riscv_release_version})
+project(sail-riscv
+  VERSION ${sail_riscv_release_version}
+  HOMEPAGE_URL "https://github.com/riscv/sail-riscv"
+)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
@@ -138,6 +141,8 @@ message(STATUS "Sail library directory: ${sail_dir}")
 
 option(COVERAGE "Compile with Sail coverage collection enabled.")
 
+include(GNUInstallDirs)
+
 # Softfloat support.
 add_subdirectory("dependencies/softfloat")
 
@@ -159,25 +164,12 @@ add_subdirectory("test")
 # Handwritten support files for provers
 add_subdirectory("handwritten_support")
 
-# Release packaging.
-if (NOT CPACK_GENERATOR)
-    if (WINDOWS)
-        set(CPACK_GENERATOR "ZIP")
-    else()
-        set(CPACK_GENERATOR "TGZ")
-    endif()
-endif()
-if (DARWIN)
-    # ${CMAKE_SYSTEM_NAME} is unfortunately "Darwin", but we want "Mac".
-    set(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-Mac-${CMAKE_HOST_SYSTEM_PROCESSOR}")
-else()
-    set(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${CMAKE_SYSTEM_NAME}-${CMAKE_HOST_SYSTEM_PROCESSOR}")
-endif()
-include(CPack)
-
 # Convenience targets.
 add_custom_target(csim DEPENDS sail_riscv_sim)
 add_custom_target(check DEPENDS generated_model_rv)
 
 # TODO: Add `interpret` target.
 # TODO: Add hol4 target.
+
+# Release packaging.
+include(cmake/packaging.cmake)
