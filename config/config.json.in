@@ -1,6 +1,6 @@
 {
   "base": {
-    "xlen": 32,
+    "xlen": @CONFIG__BASE__XLEN@,
     "E": false,
     "writable_misa": true,
     "writable_fiom": true,
@@ -66,8 +66,8 @@
     },
     "V": {
       "supported": true,
-      "vlen_exp": 9,
-      "elen_exp": 6,
+      "vlen_exp": @CONFIG__V__VLEN_EXP@,
+      "elen_exp": @CONFIG__V__ELEN_EXP@,
       "vl_use_ceil": false
     },
     "B": {
@@ -149,7 +149,7 @@
       "supported": true
     },
     "Zcf": {
-      "supported": true
+      "supported": @CONFIG_XLEN_IS_32@
     },
     "Zcd": {
       "supported": true
@@ -259,16 +259,16 @@
       "sfence_vma_illegal_if_svbare_only": true
     },
     "Sv32": {
-      "supported": true
+      "supported": @CONFIG_XLEN_IS_32@
     },
     "Sv39": {
-      "supported": false
+      "supported": @CONFIG_XLEN_IS_64@
     },
     "Sv48": {
-      "supported": false
+      "supported": @CONFIG_XLEN_IS_64@
     },
     "Sv57": {
-      "supported": false
+      "supported": @CONFIG_XLEN_IS_64@
     }
   }
 }

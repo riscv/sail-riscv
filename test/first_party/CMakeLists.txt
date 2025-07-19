@@ -96,11 +96,10 @@ foreach (xlen IN ITEMS 32 64)
     else()
         set(mabi "lp64")
     endif()
-    set(default_config "${CMAKE_SOURCE_DIR}/config/${arch}.json")
+    set(config "${CMAKE_BINARY_DIR}/config/${arch}_v256_e${xlen}.json")
 
     foreach (test_source IN LISTS tests)
         set(elf "${arch}_${test_source}.elf")
-        set(config "${arch}_${test_source}.json")
 
         add_custom_command(
             OUTPUT ${elf}
@@ -142,31 +141,6 @@ foreach (xlen IN ITEMS 32 64)
             VERBATIM
             COMMENT "Compiling ${test_source}"
         )
-
-        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}.filter")
-            add_custom_command(
-                OUTPUT ${config}
-                DEPENDS
-                    ${default_config}
-                    "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}.filter"
-                COMMAND jq
-                    -f "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}.filter"
-                    ${default_config}
-                    > ${config}
-                VERBATIM
-                COMMENT "Creating ${config}"
-            )
-        else()
-            add_custom_command(
-                OUTPUT ${config}
-                DEPENDS
-                    ${default_config}
-                COMMAND ${CMAKE_COMMAND} -E copy
-                    ${default_config}
-                    "${config}"
-                VERBATIM
-            )
-        endif()
 
         add_custom_target(build_${arch}_${test_source} ALL DEPENDS ${elf} ${config})
 
