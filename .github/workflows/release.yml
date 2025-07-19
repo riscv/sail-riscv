@@ -70,6 +70,7 @@ jobs:
 
       - name: Build simulators and JSON
         run: |
+          git config --global --add safe.directory '*'
           cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DSTATIC=TRUE -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE
           cd build
           ninja all generated_sail_riscv_docs
