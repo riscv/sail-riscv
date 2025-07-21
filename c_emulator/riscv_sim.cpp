@@ -205,7 +205,7 @@ static void read_dtb(const char *path)
  * Set up command line option processing.
  */
 
-class HelpFormat : public CLI::Formatter {
+class HelpFormatter : public CLI::Formatter {
 public:
   // The default footer rendering uses paragraph formatting, removing
   // all spacing adjustments.  The only way to customize that is to
@@ -244,7 +244,7 @@ public:
 
 static void setup_options(CLI::App &app)
 {
-  app.formatter(std::make_shared<HelpFormat>());
+  app.formatter(std::make_shared<HelpFormatter>());
   // The default formatter gives short options 1/3 of `column_width`
   // and long options 2/3, which is not great for our options.  Use a
   // smaller left column width than the default {30} to bring the
