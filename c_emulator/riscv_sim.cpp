@@ -253,7 +253,7 @@ static void setup_options(CLI::App &app)
   // options now flow into the descriptions column.
   app.get_formatter()->column_width(20);
 
-  app.add_flag("-p,--show-times", do_show_times, "Show execution times");
+  app.add_flag("--show-times", do_show_times, "Show execution times");
   app.add_flag("--version", do_print_version, "Print model version");
   app.add_flag("--build-info", do_print_build_info, "Print build information");
   app.add_flag("--print-default-config", do_print_default_config,
@@ -265,39 +265,39 @@ static void setup_options(CLI::App &app)
   app.add_flag("--enable-experimental-extensions",
                rv_enable_experimental_extensions,
                "Enable experimental extensions");
-  app.add_flag("-N, --use-abi-names", config_use_abi_names,
-               "Use ABI register names");
+  app.add_flag("--use-abi-names", config_use_abi_names,
+               "Use ABI register names in trace log");
 
-  app.add_option("-b,--device-tree-blob", dtb_file, "Device tree blob file")
+  app.add_option("--device-tree-blob", dtb_file, "Device tree blob file")
       ->check(CLI::ExistingFile)
       ->option_text("<file>");
-  app.add_option("-t,--terminal-log", term_log, "Terminal log output file")
+  app.add_option("--terminal-log", term_log, "Terminal log output file")
       ->option_text("<file>");
-  app.add_option("-T,--test-signature", sig_file, "Test signature file")
+  app.add_option("--test-signature", sig_file, "Test signature file")
       ->option_text("<file>");
-  app.add_option("-c,--config", config_file, "Configuration file")
+  app.add_option("--config", config_file, "Configuration file")
       ->check(CLI::ExistingFile)
       ->option_text("<file>");
   app.add_option("--trace-output", trace_log_path, "Trace output file")
       ->option_text("<file>");
 
-  app.add_option("-g,--signature-granularity", signature_granularity,
+  app.add_option("--signature-granularity", signature_granularity,
                  "Signature granularity")
       ->option_text("<uint>");
-  app.add_option("-r,--rvfi-dii", rvfi_dii_port, "RVFI DII port")
+  app.add_option("--rvfi-dii", rvfi_dii_port, "RVFI DII port")
       ->check(CLI::Range(1, 65535))
       ->option_text("<int> (within [1 - 65535])");
-  app.add_option("-l,--inst-limit", insn_limit, "Instruction limit")
+  app.add_option("--inst-limit", insn_limit, "Instruction limit")
       ->option_text("<uint>");
 #ifdef SAILCOV
   app.add_option("--sailcov-file", sailcov_file, "Sail coverage output file")
       ->option_text("<file>");
 #endif
 
-  app.add_option_function("-v,--trace", enable_printer, "Enable tracing option")
+  app.add_option_function("--trace", enable_printer, "Enable tracing option")
       ->check(CLI::IsMember(printers))
       ->option_text("<tracer>");
-  app.add_option_function("-V,--no-trace", disable_printer,
+  app.add_option_function("--no-trace", disable_printer,
                           "Disable tracing option")
       ->check(CLI::IsMember(printers))
       ->option_text("<tracer>");
