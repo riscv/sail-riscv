@@ -185,11 +185,6 @@ static void print_build_info(void)
             << std::endl;
 }
 
-static bool is_32bit_model(void)
-{
-  return zxlen == 32;
-}
-
 static void read_dtb(const char *path)
 {
   int fd = open(path, O_RDONLY);
@@ -413,34 +408,49 @@ uint64_t load_sail(char *f, bool main_file)
 
 void init_sail_reset_vector(uint64_t entry)
 {
-#define RST_VEC_SIZE 8
-  uint32_t reset_vec[RST_VEC_SIZE]
-      = {0x297,                              // auipc  t0,0x0
-         0x28593 + (RST_VEC_SIZE * 4 << 20), // addi   a1, t0, &dtb
-         0xf1402573,                         // csrr   a0, mhartid
-         is_32bit_model() ? 0x0182a283u :    // lw     t0,24(t0)
-             0x0182b283u,                    // ld     t0,24(t0)
-         0x28067,                            // jr     t0
-         0,
-         (uint32_t)(entry & 0xffffffff),
-         (uint32_t)(entry >> 32)};
+  // Generated from reset_vec.s - see that file for details.
+
+  std::vector<uint32_t> reset_vec = {
+      0x00000297, // auipc   t0,0x0
+      0x04028593, // add     a1,t0,64 # 40 <.text+0x40>
+      0xf1402573, // csrr    a0,mhartid
+      0x0382a303, // lw      t1,56(t0)
+      0xfff04393, // not     t2,zero
+      0x0103d393, // srl     t2,t2,0x10
+      0x0103d393, // srl     t2,t2,0x10
+      0x00737333, // and     t1,t1,t2
+      0x03c2a383, // lw      t2,60(t0)
+      0x01039393, // sll     t2,t2,0x10
+      0x01039393, // sll     t2,t2,0x10
+      0x00736333, // or      t1,t1,t2
+      0x00030067, // jr      t1
+      0xc0001073, // unimp
+      static_cast<uint32_t>(entry),
+      static_cast<uint32_t>(entry >> 32),
+  };
 
   uint64_t rom_base = get_config_uint64({"platform", "reset_vector"});
   uint64_t addr = rom_base;
 
-  for (int i = 0; i < sizeof(reset_vec); i++)
-    write_mem(addr++, (uint64_t)((char *)reset_vec)[i]);
+  for (uint32_t word : reset_vec) {
+    write_mem(addr++, static_cast<uint8_t>(word >> 0));
+    write_mem(addr++, static_cast<uint8_t>(word >> 8));
+    write_mem(addr++, static_cast<uint8_t>(word >> 16));
+    write_mem(addr++, static_cast<uint8_t>(word >> 24));
+  }
 
-  if (dtb && dtb_len) {
-    for (size_t i = 0; i < dtb_len; i++)
+  if (dtb != nullptr) {
+    for (size_t i = 0; i < dtb_len; i++) {
       write_mem(addr++, dtb[i]);
+    }
   }
 
   /* zero-fill to page boundary */
   const int align = 0x1000;
   uint64_t rom_end = (addr + align - 1) / align * align;
-  for (uint64_t i = addr; i < rom_end; i++)
+  for (uint64_t i = addr; i < rom_end; i++) {
     write_mem(addr++, 0);
+  }
 
   /* calculate rom size */
   uint64_t rom_size = rom_end - rom_base;
