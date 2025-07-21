@@ -6,7 +6,6 @@ file(GLOB riscv_source
     "${source_dir}/source/include/*.h"
     "${source_dir}/source/RISCV/*.c"
     "${source_dir}/source/RISCV/*.h"
-    "${source_dir}/build/Linux-RISCV-GCC/platform.h"
 )
 
 # Some files do not work with SOFTFLOAT_FAST_INT64
@@ -47,4 +46,12 @@ target_compile_options(softfloat PRIVATE
         -Wno-unused-variable
         $<$<BOOL:${HAVE_WIMPLICIT_FALLTHROUGH}>:-Wno-implicit-fallthrough>
 )
-target_compile_definitions(softfloat PRIVATE SOFTFLOAT_ROUND_ODD)
+
+target_compile_definitions(softfloat PRIVATE
+    LITTLEENDIAN=1
+    INLINE_LEVEL=5
+    INLINE=static\ inline
+    SOFTFLOAT_FAST_INT64
+    SOFTFLOAT_FAST_DIV64TO32
+    SOFTFLOAT_ROUND_ODD
+)
