@@ -54,7 +54,7 @@ void
 {
 
     if (
-        f128M_isSignalingNaN( (const float128_t *) aWPtr );
+        f128M_isSignalingNaN( (const float128_t *) aWPtr )
             || (bWPtr && f128M_isSignalingNaN( (const float128_t *) bWPtr ))
     ) {
         softfloat_raiseFlags( softfloat_flag_invalid );

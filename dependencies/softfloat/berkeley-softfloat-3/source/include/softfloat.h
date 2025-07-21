@@ -81,13 +81,13 @@ enum {
 | Software floating-point exception flags.
 *----------------------------------------------------------------------------*/
 extern THREAD_LOCAL uint_fast8_t softfloat_exceptionFlags;
-enum {
+typedef enum {
     softfloat_flag_inexact   =  1,
     softfloat_flag_underflow =  2,
     softfloat_flag_overflow  =  4,
     softfloat_flag_infinite  =  8,
     softfloat_flag_invalid   = 16
-};
+} exceptionFlag_t;
 
 /*----------------------------------------------------------------------------
 | Routine to raise any or all of the software floating-point exception flags.
@@ -168,6 +168,13 @@ bool f16_eq_signaling( float16_t, float16_t );
 bool f16_le_quiet( float16_t, float16_t );
 bool f16_lt_quiet( float16_t, float16_t );
 bool f16_isSignalingNaN( float16_t );
+
+/*----------------------------------------------------------------------------
+| 16-bit (brain float 16) floating-point operations.
+*----------------------------------------------------------------------------*/
+float32_t bf16_to_f32( bfloat16_t );
+bfloat16_t f32_to_bf16( float32_t );
+bool bf16_isSignalingNaN( bfloat16_t );
 
 /*----------------------------------------------------------------------------
 | 32-bit (single-precision) floating-point operations.

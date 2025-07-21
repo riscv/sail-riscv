@@ -508,7 +508,7 @@ significant extra cost.
 On computers where the word size is <NOBR>64 bits</NOBR> or larger, both
 function versions (<CODE>f128M_add</CODE> and <CODE>f128_add</CODE>) are
 provided, because the cost of passing by value is then more reasonable.
-Applications that must be portable accross both classes of computers must use
+Applications that must be portable across both classes of computers must use
 the pointer-based functions, as these are always implemented.
 However, if it is known that SoftFloat includes the by-value functions for all
 platforms of interest, programmers can use whichever version they prefer.

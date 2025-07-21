@@ -21,3 +21,4 @@ subdirectory:
 * [SoftFloat-history.html](http://www.jhauser.us/arithmetic/SoftFloat-3/doc/SoftFloat-history.html) History of the major changes to SoftFloat.
 
 Other files in the package comprise the source code for SoftFloat.
+

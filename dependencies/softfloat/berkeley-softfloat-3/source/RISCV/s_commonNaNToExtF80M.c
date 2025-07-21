@@ -1,11 +1,11 @@
 
 /*============================================================================
 
-This C header file is part of the SoftFloat IEEE Floating-Point Arithmetic
-Package, Release 3a, by John R. Hauser.
+This C source file is part of the SoftFloat IEEE Floating-Point Arithmetic
+Package, Release 3e, by John R. Hauser.
 
-Copyright 2011, 2012, 2013, 2014 The Regents of the University of California.
-All rights reserved.
+Copyright 2011, 2012, 2013, 2014, 2015 The Regents of the University of
+California.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -34,15 +34,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =============================================================================*/
 
-/*----------------------------------------------------------------------------
-*----------------------------------------------------------------------------*/
-#define LITTLEENDIAN 1
+#include "platform.h"
+#include "softfloat_types.h"
 
-#define INLINE_LEVEL 5
-#define SOFTFLOAT_FAST_INT64
-#define SOFTFLOAT_FAST_DIV64TO32
+#define softfloat_commonNaNToExtF80M softfloat_commonNaNToExtF80M
+#include "specialize.h"
 
 /*----------------------------------------------------------------------------
+| Converts the common NaN pointed to by `aPtr' into an 80-bit extended
+| floating-point NaN, and stores this NaN at the location pointed to by
+| `zSPtr'.
 *----------------------------------------------------------------------------*/
-#define INLINE static inline
+void
+ softfloat_commonNaNToExtF80M(
+     const struct commonNaN *aPtr, struct extFloat80M *zSPtr )
+{
+
+    zSPtr->signExp = defaultNaNExtF80UI64;
+    zSPtr->signif  = defaultNaNExtF80UI0;
+
+}
 
