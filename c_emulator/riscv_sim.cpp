@@ -737,9 +737,7 @@ int main(int argc, char **argv)
       : load_sail(initial_elf_file.c_str(), /*main_file=*/true);
 
   /* Load any additional ELF files into memory */
-  std::vector<std::string>::const_iterator it = elfs.begin();
-  std::advance(it, 1);
-  for (; it != elfs.end(); it++) {
+  for (auto it = elfs.cbegin() + 1; it != elfs.cend(); it++) {
     fprintf(stdout, "Loading additional ELF file %s.\n", it->c_str());
     (void)load_sail(it->c_str(), /*main_file=*/false);
   }
