@@ -23,7 +23,6 @@ repos:
     hooks:
       - id: clang-format
         types_or: [c, c++] # Don't try running clang-format on .json files
-        exclude: "dependencies/.*" # We should really not reformat any dependencies.
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.5
     hooks:
