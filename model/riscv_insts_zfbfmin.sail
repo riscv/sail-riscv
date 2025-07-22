@@ -6,6 +6,9 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
+val      split_BF16 : bits(16) -> (bits(1), bits(8), bits(7))
+function split_BF16 (v) = (v[15..15], v[14..7], v[6..0])
+
 function clause currentlyEnabled(Ext_Zfbfmin) = hartSupports(Ext_Zfbfmin) & currentlyEnabled(Ext_Zfh)
 
 union clause instruction = FCVT_BF16_S : (fregidx, rounding_mode, fregidx)
@@ -41,15 +44,29 @@ mapping clause encdec = FCVT_S_BF16(rs1, rm, rd)
 
 function clause execute (FCVT_S_BF16(rs1, rm, rd)) = {
     let rs1_val_BF16 = F_or_X_BF16(rs1);
-    match(select_instr_or_fcsr_rm (rm)) {
-      None () => Illegal_Instruction(),
-      Some(rm') => {
-        let rm_3b = encdec_rounding_mode(rm');
-        let (fflags, rd_val_S) = riscv_bf16ToF32(rm_3b, rs1_val_BF16);
 
-        accrue_fflags(fflags);
-        F_or_X_S(rd) = rd_val_S;
-        RETIRE_SUCCESS
+    let (sign, exp, mant) = split_BF16(rs1_val_BF16);
+
+    if select_instr_or_fcsr_rm(rm) == None() then {
+      return Illegal_Instruction();
+    };
+
+    match exp {
+      0xFF => {
+        if unsigned(mant) != 0 then {
+          if mant[6] == bitzero then {
+            // Set invalid flag
+            accrue_fflags(0b10000);
+          };
+          F_or_X_S(rd) = sign @ 0xFF @ 0b1 @ zeros(22)
+        } else {
+          F_or_X_S(rd) = sign @ 0xFF @ zeros(23)
+        }
+      },
+      _ => {
+        F_or_X_S(rd) = sign @ exp @ mant @ zeros(16)
       }
-    }
+    };
+
+    RETIRE_SUCCESS
 }
