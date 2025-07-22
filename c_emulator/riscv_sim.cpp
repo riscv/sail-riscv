@@ -293,13 +293,15 @@ static void setup_options(CLI::App &app)
          "--trace", [](const std::string &var) { set_config_print(var, true); },
          "Enable tracing option")
       ->check(CLI::IsMember(printers))
-      ->option_text("<tracer>");
+      ->option_text("<tracer>")
+      ->expected(1, -1);
   app.add_option_function<std::string>(
          "--no-trace",
          [](const std::string &var) { set_config_print(var, false); },
          "Disable tracing option")
       ->check(CLI::IsMember(printers))
-      ->option_text("<tracer>");
+      ->option_text("<tracer>")
+      ->expected(1, -1);
 
   // All positional arguments are treated as ELF files.  All ELF files
   // are loaded into memory, but only the first is scanned for the
