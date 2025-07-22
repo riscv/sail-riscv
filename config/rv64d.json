@@ -1,7 +1,6 @@
 {
   "base": {
-    "xlen": @CONFIG__BASE__XLEN@,
-    "E": false,
+    "xlen": 64,
     "writable_misa": true,
     "writable_fiom": true,
     "writable_hpm_counters": {
@@ -33,6 +32,7 @@
     "archid": 0,
     "impid": 0,
     "hartid": 0,
+    "reset_vector": 4096,
     "cache_block_size_exp": 6,
     "ram": {
       "base": 2147483648,
@@ -65,8 +65,8 @@
     },
     "V": {
       "supported": true,
-      "vlen_exp": @CONFIG__V__VLEN_EXP@,
-      "elen_exp": @CONFIG__V__ELEN_EXP@,
+      "vlen_exp": 9,
+      "elen_exp": 6,
       "vl_use_ceil": false
     },
     "B": {
@@ -94,12 +94,6 @@
       "supported": true
     },
     "Zifencei": {
-      "supported": true
-    },
-    "Zihintntl": {
-      "supported": true
-    },
-    "Zihintpause": {
       "supported": true
     },
     "Zihpm": {
@@ -148,7 +142,7 @@
       "supported": true
     },
     "Zcf": {
-      "supported": @CONFIG_XLEN_IS_32@
+      "supported": false
     },
     "Zcd": {
       "supported": true
@@ -279,16 +273,16 @@
       "sfence_vma_illegal_if_svbare_only": true
     },
     "Sv32": {
-      "supported": @CONFIG_XLEN_IS_32@
+      "supported": false
     },
     "Sv39": {
-      "supported": @CONFIG_XLEN_IS_64@
+      "supported": true
     },
     "Sv48": {
-      "supported": @CONFIG_XLEN_IS_64@
+      "supported": true
     },
     "Sv57": {
-      "supported": @CONFIG_XLEN_IS_64@
+      "supported": true
     }
   }
 }
