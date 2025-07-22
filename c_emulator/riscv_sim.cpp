@@ -1,3 +1,4 @@
+#include <cassert>
 #include <ctype.h>
 #include <climits>
 #include <getopt.h>
@@ -76,48 +77,42 @@ bool config_print_step = false;
 bool config_use_abi_names = false;
 bool config_enable_rvfi = false;
 
-std::map<std::string, std::tuple<bool *, std::string>> printers {
-    {"instr",    {&config_print_instr, "Instruction execution"}     },
-    {"reg",      {&config_print_reg, "Register accesses"}           },
-    {"mem",      {&config_print_mem_access, "Memory accesses"}      },
-    {"rvfi",     {&config_print_rvfi, "RVFI tracing"}               },
-    {"platform",
-     {&config_print_platform, "Privilege changes, MMIO, interrupts"}},
-    {"step",     {&config_print_step, "Steps"}                      },
-    {"all",      {NULL, "All of the other tracers"}                 },
+std::map<std::string, std::string> printers {
+    {"instr",    "Instruction execution"              },
+    {"reg",      "Register accesses"                  },
+    {"mem",      "Memory accesses"                    },
+    {"rvfi",     "RVFI tracing"                       },
+    {"platform", "Privilege changes, MMIO, interrupts"},
+    {"step",     "Steps"                              },
+    {"all",      "All of the other tracers"           },
 };
 
-std::function<void(const std::string &)> enable_printer {
-    [](const std::string &opt) {
-      auto ent = printers.find(opt);
-      if (ent != printers.end()) {
-        if (opt == "all") {
-          config_print_instr = true;
-          config_print_mem_access = true;
-          config_print_reg = true;
-          config_print_platform = true;
-          config_print_rvfi = true;
-        } else {
-          *std::get<0>(ent->second) = true;
-        }
-      }
-    }};
-
-std::function<void(const std::string &)> disable_printer {
-    [](const std::string &opt) {
-      auto ent = printers.find(opt);
-      if (ent != printers.end()) {
-        if (opt == "all") {
-          config_print_instr = false;
-          config_print_mem_access = false;
-          config_print_reg = false;
-          config_print_platform = false;
-          config_print_rvfi = false;
-        } else {
-          *std::get<0>(ent->second) = false;
-        }
-      }
-    }};
+void set_config_print(const std::string &var, bool val)
+{
+  if (var == "all") {
+    config_print_instr = val;
+    config_print_mem_access = val;
+    config_print_reg = val;
+    config_print_platform = val;
+    config_print_rvfi = val;
+  } else if (var == "instr") {
+    config_print_instr = val;
+  } else if (var == "reg") {
+    config_print_reg = val;
+  } else if (var == "mem") {
+    config_print_mem_access = val;
+  } else if (var == "rvfi") {
+    config_print_rvfi = val;
+  } else if (var == "platform") {
+    config_print_platform = val;
+  } else if (var == "step") {
+    config_print_step = val;
+  } else {
+    // Should be detected by `->check(CLI::IsMember(printers))`.
+    std::cerr << "Unexpected --trace option: " << val << std::endl;
+    assert(false);
+  }
+}
 
 struct timeval init_start, init_end, run_end;
 uint64_t total_insns = 0;
@@ -294,11 +289,15 @@ static void setup_options(CLI::App &app)
       ->option_text("<file>");
 #endif
 
-  app.add_option_function("--trace", enable_printer, "Enable tracing option")
+  app.add_option_function<std::string>(
+         "--trace", [](const std::string &var) { set_config_print(var, true); },
+         "Enable tracing option")
       ->check(CLI::IsMember(printers))
       ->option_text("<tracer>");
-  app.add_option_function("--no-trace", disable_printer,
-                          "Disable tracing option")
+  app.add_option_function<std::string>(
+         "--no-trace",
+         [](const std::string &var) { set_config_print(var, false); },
+         "Disable tracing option")
       ->check(CLI::IsMember(printers))
       ->option_text("<tracer>");
 
@@ -314,8 +313,8 @@ static void setup_options(CLI::App &app)
   std::ostringstream buf;
   buf << " where <tracer> is one of the following in the left column: "
       << std::endl;
-  for (auto const &p : printers) {
-    buf << "   " << p.first << " : " << std::get<1>(p.second) << std::endl;
+  for (const auto &p : printers) {
+    buf << "   " << p.first << " : " << p.second << std::endl;
   }
   app.footer(buf.str());
 }
