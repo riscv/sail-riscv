@@ -35,9 +35,9 @@ add_library(softfloat
 )
 
 target_include_directories(softfloat PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}"
     "${source_dir}/source/include"
     "${source_dir}/source/RISCV"
-    "${source_dir}/build/Linux-RISCV-GCC"
 )
 
 target_compile_options(softfloat PRIVATE
