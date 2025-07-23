@@ -100,6 +100,7 @@ For booting operating system images, see the information under the
 - Zkr extension for entropy source, v1.0
 - Zkt extension for data independent execution latency, v1.0 (no impact on model)
 - V extension for vector operations, v1.0
+- Zvfbfmin extension for vector BF16 Converts, v1.0
 - Zvbb extension for vector basic bit-manipulation, v1.0
 - Zvbc extension for vector carryless multiplication, v1.0
 - Zvkb extension for vector cryptography bit-manipulation, v1.0

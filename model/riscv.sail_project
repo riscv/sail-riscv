@@ -207,6 +207,13 @@ extensions {
     }
   }
 
+  vector_bfloat16 {
+    Zvfbfmin {
+      requires riscv, FD, V
+      files riscv_insts_zvfbfmin.sail
+    }
+  }
+
   vector_crypto {
     Zvk_core {
       requires V_core, K_core
