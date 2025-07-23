@@ -267,7 +267,7 @@ extensions {
   }
 
   Sstc {
-    requires riscv, Zihpm
+    requires riscv
     files riscv_sstc.sail
   }
 
