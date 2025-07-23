@@ -254,7 +254,6 @@ extensions {
   }
 
   Zihpm {
-    requires riscv
     files riscv_zihpm.sail
   }
 
@@ -263,7 +262,7 @@ extensions {
   }
 
   Sscofpmf {
-    requires riscv, Zihpm
+    requires Zihpm
     files riscv_sscofpmf.sail
   }
 
@@ -283,7 +282,6 @@ extensions {
   }
 
   Zicntr {
-    requires riscv
     files riscv_zicntr_control.sail
   }
 
