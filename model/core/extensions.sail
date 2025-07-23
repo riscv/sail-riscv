@@ -306,6 +306,10 @@ function clause hartSupports(Ext_Zve64f) = sizeof(elen_exp) >= 6 & vector_suppor
 enum clause extension = Ext_Zve64x
 mapping clause extensionName = Ext_Zve64x <-> "zve64x"
 function clause hartSupports(Ext_Zve64x) = sizeof(elen_exp) >= 6 & vector_support_config_level() >= vector_support_level(Integer)
+// Vector BF16 Converts
+enum clause extension = Ext_Zvfbfmin
+mapping clause extensionName = Ext_Zvfbfmin <-> "zvfbfmin"
+function clause hartSupports(Ext_Zvfbfmin) = config extensions.Zvfbfmin.supported
 // Vector Extension for Half-Precision Floating-Point
 enum clause extension = Ext_Zvfh
 mapping clause extensionName = Ext_Zvfh <-> "zvfh"
@@ -531,7 +535,10 @@ let extensions_ordered_for_isa_string = [
   Ext_Zve64f,
   Ext_Zve64x,
 
-  // Zvf
+  // Zvfbf
+  Ext_Zvfbfmin,
+
+  // Zvfh
   Ext_Zvfh,
   Ext_Zvfhmin,
 
