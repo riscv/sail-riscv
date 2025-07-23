@@ -274,6 +274,10 @@ function clause hartSupports(Ext_Zvbb) = config extensions.Zvbb.supported
 enum clause extension = Ext_Zvbc
 mapping clause extensionName = Ext_Zvbc <-> "zvbc"
 function clause hartSupports(Ext_Zvbc) = config extensions.Zvbc.supported
+// Vector BF16 Converts
+enum clause extension = Ext_Zvfbfmin
+mapping clause extensionName = Ext_Zvfbfmin <-> "zvfbfmin"
+function clause hartSupports(Ext_Zvfbfmin) = config extensions.Zvfbfmin.supported
 // Vector Cryptography Bit-manipulation
 enum clause extension = Ext_Zvkb
 mapping clause extensionName = Ext_Zvkb <-> "zvkb"
@@ -473,6 +477,7 @@ let extensions_ordered_for_isa_string = [
   // Zv
   Ext_Zvbb,
   Ext_Zvbc,
+  Ext_Zvfbfmin,
   Ext_Zvkb,
   Ext_Zvkg,
   Ext_Zvkn,
