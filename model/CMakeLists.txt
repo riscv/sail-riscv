@@ -35,6 +35,7 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
             --list-files
         OUTPUT_VARIABLE sail_list_files
         OUTPUT_STRIP_TRAILING_WHITESPACE
+        COMMAND_ERROR_IS_FATAL ANY
     )
 
     separate_arguments(sail_srcs UNIX_COMMAND "${sail_list_files}")
