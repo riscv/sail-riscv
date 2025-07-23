@@ -66,8 +66,10 @@ riscv {
 }
 
 extensions {
+  requires riscv_core
+
   I {
-    requires riscv_core, riscv_exceptions, riscv
+    requires riscv_exceptions, riscv
 
     files
       riscv_insts_base.sail,
@@ -76,7 +78,7 @@ extensions {
   }
 
   A {
-    requires riscv_core, riscv_exceptions, riscv, I
+    requires riscv_exceptions, riscv, I
     Zaamo {
       files riscv_insts_zaamo.sail
     }
@@ -87,13 +89,13 @@ extensions {
   }
 
   M {
-    requires riscv_core, riscv, I
+    requires riscv, I
     files riscv_insts_mext.sail
   }
 
   // RISC-V Bit manipulation extensions
   B {
-    requires riscv_core, riscv
+    requires riscv
 
     Zba {
       files riscv_insts_zba.sail
@@ -112,27 +114,23 @@ extensions {
   // Compressed instructions
   C {
     Zca {
-      requires riscv_core, riscv_exceptions, riscv, I
+      requires riscv_exceptions, riscv, I
       files riscv_insts_zca.sail
     }
     Zcb {
-      requires riscv_core, riscv_exceptions, riscv, I, B, M
+      requires riscv_exceptions, riscv, I, B, M
       files riscv_insts_zcb.sail
     }
   }
 
   // Hypervisor
   H {
-    requires riscv_core
-
     files
       riscv_insts_hext.sail
   }
 
   // Floating point (F and D extensions)
   FD {
-    requires riscv_core
-
     FD_core {
       before riscv
       files
@@ -155,8 +153,6 @@ extensions {
 
   // RISC-V vector extension
   V {
-    requires riscv_core
-
     V_core {
       requires FD_core
       files
@@ -184,8 +180,6 @@ extensions {
 
   // RISC-V Cryptography Extension
   K {
-    requires riscv_core
-
     K_core {
       files riscv_types_kext.sail
     }
@@ -212,8 +206,6 @@ extensions {
   }
 
   vector_crypto {
-    requires riscv_core
-
     Zvk_core {
       requires V_core, K_core
       before riscv
@@ -252,62 +244,61 @@ extensions {
 
   // Control and Status Register (CSR) Instructions
   Zicsr {
-    requires riscv_core, riscv, riscv_exceptions, pmp, V_core
+    requires riscv, riscv_exceptions, pmp, V_core
     files riscv_insts_zicsr.sail
   }
 
   Svinval {
-    requires riscv_core, riscv, I
+    requires riscv, I
     files riscv_insts_svinval.sail
   }
 
   Zihpm {
-    requires riscv_core, riscv
+    requires riscv
     files riscv_zihpm.sail
   }
 
   Smcntrpmf {
-    requires riscv_core
     files riscv_smcntrpmf.sail
   }
 
   Sscofpmf {
-    requires riscv_core, riscv, Zihpm
+    requires riscv, Zihpm
     files riscv_sscofpmf.sail
   }
 
   Sstc {
-    requires riscv_core, riscv, Zihpm
+    requires riscv, Zihpm
     files riscv_sstc.sail
   }
 
   Zawrs {
-    requires riscv_core, riscv
+    requires riscv
     files riscv_insts_zawrs.sail
   }
 
   Zicond {
-    requires riscv_core, riscv
+    requires riscv
     files riscv_insts_zicond.sail
   }
 
   Zicntr {
-    requires riscv_core, riscv
+    requires riscv
     files riscv_zicntr_control.sail
   }
 
   Zicbom {
-    requires riscv_core, riscv
+    requires riscv
     files riscv_insts_zicbom.sail
   }
 
   Zicboz {
-    requires riscv_core, riscv
+    requires riscv
     files riscv_insts_zicboz.sail
   }
 
   Zifenci {
-    requires riscv_core, riscv
+    requires riscv
     files riscv_insts_zifencei.sail
   }
 }
