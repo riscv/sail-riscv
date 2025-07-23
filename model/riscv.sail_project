@@ -357,8 +357,18 @@ riscv_termination {
     else []
 }
 
-riscv_main {
+unit_tests {
   after riscv_termination
+  requires riscv_core, riscv, riscv_exceptions, riscv_postlude
+
+  files
+    unit_tests/test_mstatus.sail,
+}
+
+riscv_main {
+  // Currently this must be the very last thing due to limitations
+  // in the Sail compiler's Lean backend.
+  after unit_tests
   requires riscv_core, riscv, riscv_exceptions, riscv_postlude
 
   files main.sail
