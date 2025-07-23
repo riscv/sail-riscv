@@ -316,14 +316,13 @@ extensions {
 // overriden by earlier extensions
 mops {
   after extensions
+  requires riscv_core, riscv
 
   Zimop {
-    requires riscv_core, riscv
     files riscv_insts_zimop.sail
   }
 
   Zcmop {
-    requires riscv_core, riscv
     files riscv_insts_zcmop.sail
   }
 }
