@@ -16,9 +16,6 @@ union clause instruction = FCVT_BF16_S : (fregidx, rounding_mode, fregidx)
 mapping clause encdec = FCVT_BF16_S(rs1, rm, rd)
  <-> 0b01000 @ 0b10 @ 0b01000 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b1010011 when currentlyEnabled(Ext_Zfbfmin)
 
- mapping clause assembly = FCVT_BF16_S(rs1, rm, rd)
-  <-> "fcvt.bf16.s" ^ spc() ^ freg_name(rd) ^ spc() ^ freg_name(rs1) ^ spc() ^ frm_mnemonic(rm)
-
 function clause execute (FCVT_BF16_S(rs1, rm, rd)) = {
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
@@ -34,39 +31,35 @@ function clause execute (FCVT_BF16_S(rs1, rm, rd)) = {
   }
 }
 
+mapping clause assembly = FCVT_BF16_S(rs1, rm, rd)
+  <-> "fcvt.bf16.s" ^ spc() ^ freg_name(rd) ^ sep() ^ freg_name(rs1) ^ sep() ^ frm_mnemonic(rm)
+
 union clause instruction = FCVT_S_BF16 : (fregidx, rounding_mode, fregidx)
 
 mapping clause encdec = FCVT_S_BF16(rs1, rm, rd)
  <-> 0b01000 @ 0b00 @ 0b00110 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b1010011 when currentlyEnabled(Ext_Zfbfmin)
 
- mapping clause assembly = FCVT_S_BF16(rs1, rm, rd)
-  <-> "fcvt.s.bf16" ^ spc() ^ freg_name(rd) ^ spc() ^ freg_name(rs1) ^ spc() ^ frm_mnemonic(rm)
-
 function clause execute (FCVT_S_BF16(rs1, rm, rd)) = {
-    let rs1_val_BF16 = F_or_X_BF16(rs1);
+  let rs1_val_BF16 = F_or_X_BF16(rs1);
 
-    let (sign, exp, mant) = split_BF16(rs1_val_BF16);
+  let (sign, exp, mant) = split_BF16(rs1_val_BF16);
 
-    if select_instr_or_fcsr_rm(rm) == None() then {
-      return Illegal_Instruction();
-    };
+  if select_instr_or_fcsr_rm(rm) == None() then return Illegal_Instruction();
 
-    match exp {
-      0xFF => {
-        if unsigned(mant) != 0 then {
-          if mant[6] == bitzero then {
-            // Set invalid flag
-            accrue_fflags(0b10000);
-          };
-          F_or_X_S(rd) = sign @ 0xFF @ 0b1 @ zeros(22)
-        } else {
-          F_or_X_S(rd) = sign @ 0xFF @ zeros(23)
-        }
-      },
-      _ => {
-        F_or_X_S(rd) = sign @ exp @ mant @ zeros(16)
+  F_or_X_S(rd) = match exp {
+    0xFF => {
+      if mant != 0b0000000 then {
+        if mant[6] == bitzero then accrue_fflags(0b10000);
+        sign @ 0xFF @ 0b1 @ zeros(22)
+      } else {
+        sign @ 0xFF @ zeros(23)
       }
-    };
+    },
+    _ => sign @ exp @ mant @ zeros(16)
+  };
 
-    RETIRE_SUCCESS
+  RETIRE_SUCCESS
 }
+
+mapping clause assembly = FCVT_S_BF16(rs1, rm, rd)
+  <-> "fcvt.s.bf16" ^ spc() ^ freg_name(rd) ^ sep() ^ freg_name(rs1) ^ sep() ^ frm_mnemonic(rm)
