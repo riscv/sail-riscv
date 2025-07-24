@@ -10,14 +10,6 @@
 /* This file implements functions used by vector instructions.                     */
 /* ******************************************************************************* */
 
-/* NFIELDS Encoding
- * typically, nf is in range 1 to 8, but for 'Vector Load/Store Whole Register Instructions',
- * only NFIELDS values of 1, 2, 4, 8 are supported, with other values reserved.
- */
-type nfields_range('q) = 'q > 0 & 'q <= 8
-type nfields_range_pow2('q) = 'q in { 1, 2, 4, 8 }
-type nfields = { 'q, nfields_range('q). int('q) }
-
 /* Vector mask mapping */
 mapping maybe_vmask : string <-> bits(1) = {
   ""              <-> 0b1, /* unmasked by default */
