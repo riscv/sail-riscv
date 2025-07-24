@@ -37,6 +37,7 @@
 SOURCE_DIR ?= ../../source
 SPECIALIZE_TYPE ?= RISCV
 
+
 SOFTFLOAT_OPTS ?= \
   -DSOFTFLOAT_ROUND_ODD
 
@@ -91,20 +92,33 @@ OBJS_PRIMITIVES = \
 
 OBJS_SPECIALIZE = \
   softfloat_raiseFlags$(OBJ) \
+  s_f16UIToCommonNaN$(OBJ) \
+  s_commonNaNToF16UI$(OBJ) \
   s_propagateNaNF16UI$(OBJ) \
+  s_bf16UIToCommonNaN$(OBJ) \
+  s_commonNaNToBF16UI$(OBJ) \
   s_f32UIToCommonNaN$(OBJ) \
   s_commonNaNToF32UI$(OBJ) \
   s_propagateNaNF32UI$(OBJ) \
   s_f64UIToCommonNaN$(OBJ) \
   s_commonNaNToF64UI$(OBJ) \
   s_propagateNaNF64UI$(OBJ) \
-  s_propagateNaNF128UI$(OBJ)
+  extF80M_isSignalingNaN$(OBJ) \
+  s_extF80UIToCommonNaN$(OBJ) \
+  s_commonNaNToExtF80UI$(OBJ) \
+  s_propagateNaNExtF80UI$(OBJ) \
+  f128M_isSignalingNaN$(OBJ) \
+  s_f128UIToCommonNaN$(OBJ) \
+  s_commonNaNToF128UI$(OBJ) \
+  s_propagateNaNF128UI$(OBJ) \
 
 OBJS_OTHERS = \
   s_roundToUI32$(OBJ) \
   s_roundToUI64$(OBJ) \
   s_roundToI32$(OBJ) \
   s_roundToI64$(OBJ) \
+  s_normSubnormalBF16Sig$(OBJ) \
+  s_roundPackToBF16$(OBJ) \
   s_normSubnormalF16Sig$(OBJ) \
   s_roundPackToF16$(OBJ) \
   s_normRoundPackToF16$(OBJ) \
@@ -163,6 +177,8 @@ OBJS_OTHERS = \
   i64_to_extF80M$(OBJ) \
   i64_to_f128$(OBJ) \
   i64_to_f128M$(OBJ) \
+  bf16_isSignalingNaN$(OBJ) \
+  bf16_to_f32$(OBJ) \
   f16_to_ui32$(OBJ) \
   f16_to_ui64$(OBJ) \
   f16_to_i32$(OBJ) \
@@ -200,6 +216,7 @@ OBJS_OTHERS = \
   f32_to_ui64_r_minMag$(OBJ) \
   f32_to_i32_r_minMag$(OBJ) \
   f32_to_i64_r_minMag$(OBJ) \
+  f32_to_bf16$(OBJ) \
   f32_to_f16$(OBJ) \
   f32_to_f64$(OBJ) \
   f32_to_extF80$(OBJ) \
@@ -378,4 +395,3 @@ softfloat$(LIB): $(OBJS_ALL)
 .PHONY: clean
 clean:
 	$(DELETE) $(OBJS_ALL) softfloat$(LIB)
-

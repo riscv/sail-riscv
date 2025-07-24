@@ -2,10 +2,10 @@
 /*============================================================================
 
 This C header file is part of the SoftFloat IEEE Floating-Point Arithmetic
-Package, Release 3a, by John R. Hauser.
+Package, Release 3e, by John R. Hauser.
 
-Copyright 2011, 2012, 2013, 2014 The Regents of the University of California.
-All rights reserved.
+Copyright 2011, 2012, 2013, 2014, 2015, 2016, 2017 The Regents of the
+University of California.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -35,7 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 =============================================================================*/
 
 /*----------------------------------------------------------------------------
-*----------------------------------------------------------------------------*/
+ *----------------------------------------------------------------------------*/
 #define LITTLEENDIAN 1
 
 #define INLINE_LEVEL 5
@@ -43,6 +43,5 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SOFTFLOAT_FAST_DIV64TO32
 
 /*----------------------------------------------------------------------------
-*----------------------------------------------------------------------------*/
+ *----------------------------------------------------------------------------*/
 #define INLINE static inline
-

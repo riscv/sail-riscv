@@ -1,6 +1,6 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
-exclude: "^(prover_snapshots)|(generated_definitions)|(dependencies/[^/]+/)"
+exclude: "^(prover_snapshots)|(generated_definitions)|(dependencies/)"
 minimum_pre_commit_version: 3.2.0
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
