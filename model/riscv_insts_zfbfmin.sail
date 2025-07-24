@@ -6,8 +6,25 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-val      split_BF16 : bits(16) -> (bits(1), bits(8), bits(7))
-function split_BF16 (v) = (v[15..15], v[14..7], v[6..0])
+function split_BF16 (v : bits(16)) -> (bits(1), bits(8), bits(7)) = (v[15..15], v[14..7], v[6..0])
+
+function bf16_to_f32 (v : bits(16)) -> bits(32) = {
+  let (sign, exp, mant) = split_BF16(v);
+  let is_nan = exp == 0xFF & mant != 0b0000000;
+  let is_inf = exp == 0xFF & mant == 0b0000000;
+
+  if is_nan then {
+    if mant[6] == bitzero then accrue_fflags(FFLAGS_NV);
+    // 32-Bit Floating-Point NaN
+    canonical_NaN_S()
+  } else if is_inf then {
+    // Infinity
+    sign @ 0xFF @ zeros(23)
+  } else {
+    // Normal/Subnormal
+    sign @ exp @ mant @ zeros(16)
+  }
+}
 
 function clause currentlyEnabled(Ext_Zfbfmin) = hartSupports(Ext_Zfbfmin) & currentlyEnabled(Ext_Zfh)
 
@@ -40,23 +57,10 @@ mapping clause encdec = FCVT_S_BF16(rs1, rm, rd)
  <-> 0b01000 @ 0b00 @ 0b00110 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b1010011 when currentlyEnabled(Ext_Zfbfmin)
 
 function clause execute (FCVT_S_BF16(rs1, rm, rd)) = {
-  let rs1_val_BF16 = F_or_X_BF16(rs1);
+  if select_instr_or_fcsr_rm(rm) == None()
+    then return Illegal_Instruction();
 
-  let (sign, exp, mant) = split_BF16(rs1_val_BF16);
-
-  if select_instr_or_fcsr_rm(rm) == None() then return Illegal_Instruction();
-
-  F_or_X_S(rd) = match exp {
-    0xFF => {
-      if mant != 0b0000000 then {
-        if mant[6] == bitzero then accrue_fflags(0b10000);
-        sign @ 0xFF @ 0b1 @ zeros(22)
-      } else {
-        sign @ 0xFF @ zeros(23)
-      }
-    },
-    _ => sign @ exp @ mant @ zeros(16)
-  };
+  F_or_X_S(rd) = bf16_to_f32(F_or_X_BF16(rs1));
 
   RETIRE_SUCCESS
 }
