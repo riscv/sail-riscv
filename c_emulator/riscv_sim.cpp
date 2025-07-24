@@ -27,6 +27,12 @@
 #include "default_config.h"
 #include "config_utils.h"
 #include "sail_riscv_version.h"
+// JSON validation
+#include <valijson/adapters/nlohmann_json_adapter.hpp>
+#include <valijson/utils/nlohmann_json_utils.hpp>
+#include <valijson/schema.hpp>
+#include <valijson/schema_parser.hpp>
+#include <valijson/validator.hpp>
 
 enum {
   OPT_TRACE_OUTPUT = 1000,
@@ -220,6 +226,69 @@ static void read_dtb(const char *path)
   fprintf(stdout, "Read %zd bytes of DTB from %s.\n", dtb_len, path);
 }
 
+static std::string validate_json(bool haveconfig)
+{
+  using namespace valijson;
+  using namespace valijson::adapters;
+  nlohmann::json schemaDocument;
+  try {
+    schemaDocument = nlohmann::json::parse(JSON_SCHEMA);
+  } catch (std::exception const &exception) {
+    std::cerr << "nlohmann::json failed to parse the schemaDocument\n"
+              << "Parse error:" << exception.what() << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  // Load the document that is to be validated
+  nlohmann::json targetDocument;
+
+  try {
+    if (haveconfig) {
+      if (!valijson::utils::loadDocument(config_file, targetDocument)) {
+        std::cerr << "Failed to load config" << config_file << std::endl;
+        exit(EXIT_FAILURE);
+      }
+    } else {
+      targetDocument = nlohmann::json::parse(DEFAULT_JSON);
+    }
+  } catch (std::exception const &exception) {
+    std::cerr << "nlohmann::json failed to parse the config file" << std::endl
+              << "Parse error:" << exception.what() << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  // Parse the json schema into an internal schema format
+  Schema schema;
+  SchemaParser parser;
+  NlohmannJsonAdapter schemaDocumentAdapter(schemaDocument);
+  try {
+    parser.populateSchema(schemaDocumentAdapter, schema);
+  } catch (std::exception &e) {
+    std::cerr << "Failed to parse schema: " << e.what() << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  // Perform validation
+  Validator validator(Validator::kStrongTypes);
+  ValidationResults results;
+  NlohmannJsonAdapter targetDocumentAdapter(targetDocument);
+  if (!validator.validate(schema, targetDocumentAdapter, &results)) {
+    std::cerr << "Unable to validate config file." << std::endl;
+    ValidationResults::Error error;
+    unsigned int errorNum = 1;
+    while (results.popError(error)) {
+      std::string context;
+      std::vector<std::string>::iterator itr = error.context.begin();
+      for (; itr != error.context.end(); itr++) {
+        context += *itr;
+      }
+      std::cerr << "Error #" << errorNum << std::endl
+                << "  context: " << context << std::endl
+                << "  desc:    " << error.description << std::endl;
+      errorNum++;
+    }
+    exit(EXIT_FAILURE);
+  }
+  return targetDocument.dump();
+}
+
 /**
  * Parses the command line arguments and returns the argv index for the first
  * ELF file that should be loaded. As getopt transforms the argv array, all
@@ -275,7 +344,6 @@ static int process_args(int argc, char **argv)
       break;
     case 'c': {
       if (access(optarg, R_OK) == 0) {
-        sail_config_set_file(optarg);
         config_file = strdup(optarg);
         have_config = true;
       } else {
@@ -346,9 +414,10 @@ static int process_args(int argc, char **argv)
     }
   }
 
-  if (!have_config) {
-    sail_config_set_string(DEFAULT_JSON);
-  }
+  // Validate JSON
+  std::string resconfig = validate_json(have_config);
+  // Load JSON
+  sail_config_set_string(resconfig.c_str());
 
   if (dtb_file)
     read_dtb(dtb_file);
