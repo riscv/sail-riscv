@@ -19,6 +19,7 @@ riscv_core {
     riscv_types_ext.sail,
     riscv_types.sail,
     riscv_vmem_types.sail,
+    riscv_vext_types.sail,
     riscv_csr_begin.sail,
     riscv_callbacks.sail,
     riscv_reg_type.sail,
