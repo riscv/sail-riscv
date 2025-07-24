@@ -43,7 +43,8 @@ mapping clause assembly = UTYPE(imm, rd, op)
 /* ****************************************************************** */
 
 // Jump execution to a specified target address. This can fail
-// due to the target being misaligned, or due to extension checks.
+// due to the target not being 4-byte aligned, or due to extension checks.
+// Callers must ensure that the target address is 2-byte aligned.
 function jump_to(target : xlenbits) -> ExecutionResult = {
   // Extensions get the first checks on the prospective target address.
   match ext_control_check_pc(target) {
@@ -51,6 +52,11 @@ function jump_to(target : xlenbits) -> ExecutionResult = {
     Ext_ControlAddr_OK(target) => {
       // Perform standard alignment check.
       let target_bits = bits_of(target);
+      // Check target is at least 2-byte aligned (callers must ensure
+      // this so it can be an assertion).
+      assert(target_bits[0] == bitone);
+      // If it is not 4-byte aligned an compressed instructions are
+      // not enabled then raise an alignment exception.
       if bit_to_bool(target_bits[1]) & not(currentlyEnabled(Ext_Zca)) then {
         Memory_Exception(target, E_Fetch_Addr_Align())
       } else {
