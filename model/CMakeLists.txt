@@ -167,6 +167,7 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
         "riscv_types_ext.sail"
         "riscv_types.sail"
         "riscv_vmem_types.sail"
+        "riscv_vext_types.sail"
         ${sail_regs_srcs}
         ${sail_sys_srcs}
         "riscv_platform.sail"
