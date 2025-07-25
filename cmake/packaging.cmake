@@ -21,6 +21,34 @@ install(FILES "${CMAKE_SOURCE_DIR}/dependencies/CLIUtils/LICENSE"
     RENAME "CLI11-LICENSE.txt"
 )
 
+# `file(ARCHIVE_CREATE COMPRESSION Gzip)` creates files with
+# timestamps without a way of turning them off.  Instead, just use
+# gzip directly to pass -n.
+
+# https://lintian.debian.org/tags/changelog-file-not-compressed
+set(src_changelog "${CMAKE_SOURCE_DIR}/doc/ChangeLog.md")
+set(gzip_changelog "${CMAKE_BINARY_DIR}/changelog.gz")
+add_custom_command(
+    DEPENDS ${src_changelog}
+    OUTPUT ${gzip_changelog}
+    VERBATIM
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND
+        gzip
+        # https://lintian.debian.org/tags/package-contains-timestamped-gzip
+        -n
+        # Write to stdout
+        -c
+        # https://lintian.debian.org/tags/changelog-not-compressed-with-max-compression
+        -9
+        ${src_changelog} > ${gzip_changelog}
+)
+add_custom_target(compressed_changelog DEPENDS ${gzip_changelog})
+
+# https://lintian.debian.org/tags/no-changelog
+install(FILES "${CMAKE_BINARY_DIR}/changelog.gz"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/${CMAKE_PROJECT_NAME}")
+
 # CPack configuration
 
 if (NOT CPACK_GENERATOR)
