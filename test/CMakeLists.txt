@@ -70,7 +70,7 @@ foreach(vlen IN ITEMS 128 256 512)
             add_custom_command(
                 OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
                 COMMAND jq
-                    '.base.xlen = ${elen} |
+                    '.base.mxlen = ${elen} |
                      .extensions.V.vlen_exp = (${vlen} | log2) |
                      .extensions.V.elen_exp = (${elen} | log2) '
                     "${CMAKE_CURRENT_SOURCE_DIR}/../config/rv${elen}d.json"
