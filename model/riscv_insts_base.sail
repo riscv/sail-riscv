@@ -41,39 +41,43 @@ mapping clause assembly = UTYPE(imm, rd, op)
   <-> utype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_20(imm)
 
 /* ****************************************************************** */
+
+// Jump execution to a specified target address. This can fail
+// due to the target not being 4-byte aligned, or due to extension checks.
+// Callers must ensure that the target address is 2-byte aligned.
+function jump_to(target : xlenbits) -> ExecutionResult = {
+  // Extensions get the first checks on the prospective target address.
+  match ext_control_check_pc(target) {
+    Ext_ControlAddr_Error(e) => Ext_ControlAddr_Check_Failure(e),
+    Ext_ControlAddr_OK(target) => {
+      // Perform standard alignment check.
+      let target_bits = bits_of(target);
+      // Check target is at least 2-byte aligned (callers must ensure
+      // this so it can be an assertion).
+      assert(target_bits[0] == bitzero);
+      // If it is not 4-byte aligned and compressed instructions are
+      // not enabled then raise an alignment exception.
+      if bit_to_bool(target_bits[1]) & not(currentlyEnabled(Ext_Zca)) then {
+        Memory_Exception(target, E_Fetch_Addr_Align())
+      } else {
+        set_next_pc(target_bits);
+        RETIRE_SUCCESS
+      }
+    }
+  }
+}
+
+/* ****************************************************************** */
 union clause instruction = JAL : (bits(21), regidx)
 
 mapping clause encdec = JAL(imm_19 @ imm_7_0 @ imm_8 @ imm_18_13 @ imm_12_9 @ 0b0, rd)
   <-> imm_19 : bits(1) @ imm_18_13 : bits(6) @ imm_12_9 : bits(4) @ imm_8 : bits(1) @ imm_7_0 : bits(8) @ encdec_reg(rd) @ 0b1101111
 
-/*
-ideally we want some syntax like
-
-mapping clause encdec = JAL(imm @ 0b0, rd) <-> imm[19] @ imm[9..0] @ imm[10] @ imm[18..11] @ encdec_reg(rd) @ 0b1101111
-
-match bv {
-  imm[19] @ imm[9..0] @ imm[10] @ imm[18..11] -> imm @ 0b0
-}
-
-but this is difficult
-*/
-
 function clause execute (JAL(imm, rd)) = {
-  let target = PC + sign_extend(imm);
-  /* Extensions get the first checks on the prospective target address. */
-  match ext_control_check_pc(target) {
-    Ext_ControlAddr_Error(e) => Ext_ControlAddr_Check_Failure(e),
-    Ext_ControlAddr_OK(target) => {
-      /* Perform standard alignment check */
-      let target_bits = bits_of(target);
-      if bit_to_bool(target_bits[1]) & not(currentlyEnabled(Ext_Zca)) then {
-        Memory_Exception(target, E_Fetch_Addr_Align())
-      } else {
-        X(rd) = get_next_pc();
-        set_next_pc(target_bits);
-        RETIRE_SUCCESS
-      }
-    }
+  let link_address = get_next_pc();
+  match jump_to(PC + sign_extend(imm)) {
+    Retire_Success() => { X(rd) = link_address; Retire_Success() },
+    failure => failure,
   }
 }
 
@@ -117,22 +121,9 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
     BLTU => X(rs1) <_u X(rs2),
     BGEU => X(rs1) >=_u X(rs2)
   };
-  if taken then {
-    let target = PC + sign_extend(imm);
-    /* Extensions get the first checks on the prospective target address. */
-    match ext_control_check_pc(target) {
-      Ext_ControlAddr_Error(e) => Ext_ControlAddr_Check_Failure(e),
-      Ext_ControlAddr_OK(target) => {
-        let target_bits = bits_of(target);
-        if bit_to_bool(target_bits[1]) & not(currentlyEnabled(Ext_Zca)) then {
-          Memory_Exception(target, E_Fetch_Addr_Align())
-        } else {
-          set_next_pc(target_bits);
-          RETIRE_SUCCESS
-        }
-      }
-    }
-  } else RETIRE_SUCCESS
+  if taken
+  then jump_to(PC + sign_extend(imm))
+  else RETIRE_SUCCESS
 }
 
 mapping btype_mnemonic : bop <-> string = {
