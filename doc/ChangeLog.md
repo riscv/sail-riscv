@@ -70,20 +70,30 @@ With the latter extensions, the model now provides complete coverage of
 the suite of vector extensions needed to pass the
 `chipsalliance/riscv-vector-tests` testsuite.
 
+## CLI changes
+
+Backwards-incompatible changes have been made to the CLI. As mentioned
+above, options for model configuration have been removed. In addition,
+all short (single-character) options have been removed.
+
+The help message has been improved and now mentions the supported
+tracing options.
+
+The simulator can now generate a device-tree (using
+`--print-device-tree`) and ISA string (using `--print-isa-string`)
+corresponding to the specified configuration.
+
+A `--version` option prints the release version of the model.
+
+A `--build-info` option prints more build information for the model.
+This should be used when reporting issues in the model.
+
 ## Other changes
 
 - The model now requires the Sail 0.19.1 compiler version.
 
-- The simulator can now generate a device-tree (using
-  `--print-device-tree`) and ISA string (using `--print-isa-string`)
-  corresponding to the specified configuration.
-
-- A `--version` option prints the release version of the model.
-
-- A `--build-info` option prints more build information for the model.
-  This should be used when reporting issues in the model.
-
-- The CLI help message for the simulator has been improved.
+- The Berkeley SoftFloat dependency has been updated to the latest
+  upstream version.
 
 # Release notes for version 0.7
 
