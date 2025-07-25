@@ -168,7 +168,7 @@ function clause hartSupports(Ext_Zcd) = config extensions.Zcd.supported
 // Code Size Reduction: compressed single precision floating point loads and stores
 enum clause extension = Ext_Zcf
 mapping clause extensionName = Ext_Zcf <-> "zcf"
-function clause hartSupports(Ext_Zcf) = config extensions.Zcf.supported : bool & (xlen == 32)
+function clause hartSupports(Ext_Zcf) = config extensions.Zcf.supported : bool
 // Compressed May-Be-Operations
 enum clause extension = Ext_Zcmop
 mapping clause extensionName = Ext_Zcmop <-> "zcmop"
@@ -359,16 +359,16 @@ mapping clause extensionName = Ext_Svbare <-> "svbare"
 function clause hartSupports(Ext_Svbare) = config extensions.Svbare.supported
 enum clause extension = Ext_Sv32
 mapping clause extensionName = Ext_Sv32 <-> "sv32"
-function clause hartSupports(Ext_Sv32) = config extensions.Sv32.supported : bool & (xlen == 32)
+function clause hartSupports(Ext_Sv32) = config extensions.Sv32.supported : bool
 enum clause extension = Ext_Sv39
 mapping clause extensionName = Ext_Sv39 <-> "sv39"
-function clause hartSupports(Ext_Sv39) = config extensions.Sv39.supported : bool & (xlen == 64)
+function clause hartSupports(Ext_Sv39) = config extensions.Sv39.supported : bool
 enum clause extension = Ext_Sv48
 mapping clause extensionName = Ext_Sv48 <-> "sv48"
-function clause hartSupports(Ext_Sv48) = config extensions.Sv48.supported : bool & (xlen == 64)
+function clause hartSupports(Ext_Sv48) = config extensions.Sv48.supported : bool
 enum clause extension = Ext_Sv57
 mapping clause extensionName = Ext_Sv57 <-> "sv57"
-function clause hartSupports(Ext_Sv57) = config extensions.Sv57.supported : bool & (xlen == 64)
+function clause hartSupports(Ext_Sv57) = config extensions.Sv57.supported : bool
 
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
