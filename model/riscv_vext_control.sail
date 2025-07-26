@@ -23,7 +23,7 @@ function clause currentlyEnabled(Ext_V) = hartSupports(Ext_V) & (misa[V] == 0b1)
 
 function clause currentlyEnabled(Ext_Zvfh)     = hartSupports(Ext_Zvfh)     & currentlyEnabled(Ext_Zve32f) & currentlyEnabled(Ext_Zfhmin)
 
-function clause currentlyEnabled(Ext_Zvfhmin)  = hartSupports(Ext_Zvfhmin)  & currentlyEnabled(Ext_Zve32f) | currentlyEnabled(Ext_Zvfh)
+function clause currentlyEnabled(Ext_Zvfhmin)  = (hartSupports(Ext_Zvfhmin)  & currentlyEnabled(Ext_Zve32f)) | currentlyEnabled(Ext_Zvfh)
 
 
 /* num_elem means max(VLMAX,VLEN/SEW)) according to Section 5.4 of RVV spec */
