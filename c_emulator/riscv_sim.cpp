@@ -13,6 +13,8 @@
 #include <optional>
 #include <iostream>
 #include <vector>
+#include <cassert>
+#include <csignal>
 
 #include "elf.h"
 #include "sail.h"
@@ -684,7 +686,12 @@ void init_logs()
   }
 #endif
 }
-
+void close_sig_handler(int sig)
+{
+  finish(1);
+  fprintf(stderr, "SIGINT %d detected, closd.", sig);
+  exit(EXIT_FAILURE);
+}
 int main(int argc, char **argv)
 {
   int files_start = process_args(argc, argv);
@@ -731,7 +738,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
     exit(EXIT_FAILURE);
   }
-
+  signal(SIGINT, close_sig_handler);
   do {
     run_sail();
     if (rvfi) {
