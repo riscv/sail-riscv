@@ -128,8 +128,8 @@ static struct option options[] = {
 #endif
     {"print-device-tree",              no_argument,       0, OPT_PRINT_DTS      },
     {"print-isa-string",               no_argument,       0, OPT_PRINT_ISA      },
-    {0,                                0,                 0, 0                  },
-    {"dynamic",                        required_argument, 0, 'd'                }
+    {"dynamic",                        required_argument, 0, 'd'                },
+    {0,                                0,                 0, 0                  }
 };
 
 static void print_usage(const char *argv0, int ec)
