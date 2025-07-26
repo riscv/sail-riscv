@@ -38,7 +38,7 @@ build/linux/arch/riscv/boot/Image: build/linux/Makefile build/gcc/bin/$(RISCV_CO
 # FW_TEXT_START is 0 by default which doesn't leave space for the emulator bootloader.
 # 0x80000000 is the default start of Spike's memory.
 $(elf): build/opensbi/Makefile build/linux/arch/riscv/boot/Image build/gcc/bin/$(RISCV_COMPILER_PREFIX)gcc
-	$(MAKE) -C build/opensbi FW_TEXT_START=0x80000000 FW_PAYLOAD=y FW_PAYLOAD_PATH=../linux/arch/riscv/boot/Image PLATFORM=generic CROSS_COMPILE=$(CROSS_COMPILE)
+	$(MAKE) -C build/opensbi FW_PAYLOAD=y FW_PAYLOAD_PATH=../linux/arch/riscv/boot/Image PLATFORM=generic CROSS_COMPILE=$(CROSS_COMPILE)
 	cp build/opensbi/build/platform/generic/firmware/fw_payload.elf $(elf)
 
 # Path to Sail emulator.
@@ -72,7 +72,7 @@ LIMIT_INSTRUCTIONS := 20000000
 # Run with the Sail emulator from this repo.
 .PHONY: sail
 sail: build/sail.dtb $(elf) $(SAIL_SIM)
-	$(SAIL_SIM) --no-trace -p -l $(LIMIT_INSTRUCTIONS) --device-tree-blob build/sail.dtb $(elf)
+	$(SAIL_SIM) --no-trace -p -l $(LIMIT_INSTRUCTIONS) --device-tree-blob build/sail.dtb $(elf) -d 0x80000000
 
 # Run the profiler. This requires gperftools and pprof:
 #
