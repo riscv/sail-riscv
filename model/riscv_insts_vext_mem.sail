@@ -635,7 +635,7 @@ union clause instruction = VSRETYPE : (bits(3), regidx, vregidx)
 
 mapping clause encdec = VSRETYPE(nf, rs1, vs3)
   <-> nf @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vs3) @ 0b0100111
-  when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5) | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
+  when currentlyEnabled(Ext_Zve32x)
 
 val process_vsre : forall 'f 'b 'n, nfields_range_pow2('f) & is_mem_width('b) & ('n >= 0). (int('f), int('b), regidx, vregidx, int('n)) -> ExecutionResult
 function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
@@ -707,7 +707,7 @@ mapping encdec_lsop : vmlsop <-> bits(7) = {
 
 mapping clause encdec = VMTYPE(rs1, vd_or_vs3, op)
   <-> 0b000 @ 0b0 @ 0b00 @ 0b1 @ 0b01011 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vd_or_vs3) @ encdec_lsop(op)
-  when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5) | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
+  when currentlyEnabled(Ext_Zve32x)
 
 val process_vm : forall 'n 'l, ('n >= 0 & 'l >= 0). (vregidx, regidx, int('n), int('l), vmlsop) -> ExecutionResult
 function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
