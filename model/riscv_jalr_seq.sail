@@ -9,26 +9,15 @@
 /* The definition for the sequential model. */
 
 function clause execute (JALR(imm, rs1, rd)) = {
-/* For the sequential model, the memory-model definition doesn't work directly
- * if rs1 = rd.  We would effectively have to keep a regfile for reads and another for
- * writes, and swap on instruction completion.  This could perhaps be optimized in
- * some manner, but for now, we just keep a reordered definition to improve simulator
- * performance.
- */
-  let t : xlenbits = X(rs1) + sign_extend(imm);
-  /* Extensions get the first checks on the prospective target address. */
-  match ext_control_check_addr(t) {
-    Ext_ControlAddr_Error(e) =>
-      Ext_ControlAddr_Check_Failure(e),
-    Ext_ControlAddr_OK(addr) => {
-      let target = [bits_of(addr) with 0 = bitzero];  /* clear addr[0] */
-      if bit_to_bool(target[1]) & not(currentlyEnabled(Ext_Zca)) then {
-        Memory_Exception(addr, E_Fetch_Addr_Align())
-      } else {
-        X(rd) = get_next_pc();
-        set_next_pc(target);
-        RETIRE_SUCCESS
-      }
-    }
+  // For the sequential model, the memory-model definition doesn't work directly
+  // if rs1 = rd. We would effectively have to keep a regfile for reads and another for
+  // writes, and swap on instruction completion. This could perhaps be optimized in
+  // some manner, but for now, we just keep a reordered definition to improve simulator
+  // performance.
+  let link_address = get_next_pc();
+  let target = X(rs1) + sign_extend(imm);
+  match jump_to([target with 0 = bitzero]) {
+    Retire_Success() => { X(rd) = link_address; Retire_Success() },
+    failure => failure,
   }
 }
