@@ -21,7 +21,13 @@ function clause currentlyEnabled(Ext_Zve64d) = hartSupports(Ext_Zve64d) & curren
 
 function clause currentlyEnabled(Ext_V) = hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b) & currentlyEnabled(Ext_Zve64d)
 
+<<<<<<< HEAD
 function clause currentlyEnabled(Ext_Zvfh) = hartSupports(Ext_Zvfh) & currentlyEnabled(Ext_Zve32f) & currentlyEnabled(Ext_Zfhmin)
+=======
+function clause currentlyEnabled(Ext_Zvfh)     = hartSupports(Ext_Zvfh)     & currentlyEnabled(Ext_Zve32f) & currentlyEnabled(Ext_Zfhmin)
+
+function clause currentlyEnabled(Ext_Zvfhmin)  = (hartSupports(Ext_Zvfhmin)  & currentlyEnabled(Ext_Zve32f)) | currentlyEnabled(Ext_Zvfh)
+>>>>>>> b76ad137 (Fix currentlyEnabled(Ext_Zvfhmin) and add Zve*, Zvfh* to README.)
 
 function clause currentlyEnabled(Ext_Zvfhmin) = (hartSupports(Ext_Zvfhmin) & currentlyEnabled(Ext_Zve32f)) | currentlyEnabled(Ext_Zvfh)
 
