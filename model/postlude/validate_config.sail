@@ -140,9 +140,9 @@ function check_vext_config() -> bool = {
     valid = false;
     print_endline("Zvbb is enabled but Zve32x is disabled: Zvbb requires Zve32x.");
   };
-  if hartSupports(Ext_Zvbc) & not(hartSupports(Ext_Zve64x)) then {
+  if hartSupports(Ext_Zvbc) & not(hartSupports(Ext_Zve64x) | hartSupports(Ext_V)) then {
     valid = false;
-    print_endline("Zvbc is enabled but Zve64x is disabled: Zvbc requires Zve64x.");
+    print_endline("Zvbc is enabled but Zve64x and V are disabled: Zvbc requires Zve64x or V.");
   };
   if hartSupports(Ext_Zvkb) & not(hartSupports(Ext_Zve32x)) then {
     valid = false;
@@ -160,9 +160,9 @@ function check_vext_config() -> bool = {
     valid = false;
     print_endline("Zvknha is enabled but Zve32x is disabled: Zvknha requires Zve32x.");
   };
-  if hartSupports(Ext_Zvknhb) & not(hartSupports(Ext_Zve64x)) then {
+  if hartSupports(Ext_Zvknhb) & not(hartSupports(Ext_Zve64x) | hartSupports(Ext_V)) then {
     valid = false;
-    print_endline("Zvknhb is enabled but Zve64x is disabled: Zvknhb requires Zve64x.");
+    print_endline("Zvknhb is enabled but Zve64x and V are disabled: Zvknhb requires Zve64x or V.");
   };
   if hartSupports(Ext_Zvksed) & not(hartSupports(Ext_Zve32x)) then {
     valid = false;

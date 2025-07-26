@@ -157,7 +157,7 @@
       "supported": true
     },
     "Zfhmin": {
-      "supported": false
+      "supported": true
     },
     "Zfinx": {
       "supported": false
@@ -254,7 +254,7 @@
       "supported": true
     },
     "Zvbc": {
-      "supported": true
+      "supported": @CONFIG_ELEN_IS_64@
     },
     "Zvkb": {
       "supported": false
@@ -269,7 +269,7 @@
       "supported": true
     },
     "Zvknhb": {
-      "supported": true
+      "supported": @CONFIG_ELEN_IS_64@
     },
     "Zvksed": {
       "supported": true
