@@ -65,6 +65,51 @@ function check_vlen_elen() -> bool = {
   true
 }
 
+function check_vext_config() -> bool = {
+  var valid : bool = true;
+  if hartSupports(Ext_Zve32x)  & not(hartSupports(Ext_Zvl32b)) then {
+    valid = false;
+    print_endline("VLEN (set to 2^" ^ dec_str(VLEN_pow) ^ ") is below the minimum required for Zve32x (need Zvl32b).");
+  };
+  if hartSupports(Ext_Zve32f)  & (not(hartSupports(Ext_Zve32x)) | not(hartSupports(Ext_F))) then {
+    valid = false;
+    print_endline("Zve32f is enabled but Zve32x and/or F are disabled: supporting Zve32f requires Zve32x and F.");
+  };
+  if hartSupports(Ext_Zve64x) & not(hartSupports(Ext_Zvl64b)) then {
+    valid = false;
+    print_endline("VLEN (set to 2^" ^ dec_str(VLEN_pow) ^ ") is below the minimum required for Zve64x (need Zvl64b).");
+  };
+  if hartSupports(Ext_Zve64x) & not(hartSupports(Ext_Zve32x)) then {
+    valid = false;
+    print_endline("Zve64x is enabled but Zve32x is disabled: supporting Zve64x requires Zve32x.");
+  };
+  if hartSupports(Ext_Zve64f)  & (not(hartSupports(Ext_Zve64x)) | not(hartSupports(Ext_Zve32f))) then {
+    valid = false;
+    print_endline("Zve64f is enabled but Zve64x and/or Zve32f are disabled: Zve64f requires Zve64x and Zve32f.");
+  };
+  if hartSupports(Ext_Zve64d)  & (not(hartSupports(Ext_Zve64f)) | not(hartSupports(Ext_D))) then {
+    valid = false;
+    print_endline("Zve64d is enabled but Zve64f and/or D are disabled: Zve64d requires Zve64f and D.");
+  };
+  if hartSupports(Ext_V) & not(hartSupports(Ext_Zvl128b)) then {
+    valid = false;
+    print_endline("VLEN (set to 2^" ^ dec_str(VLEN_pow) ^ ") is below the minimum required for V (need Zvl128b).");
+  };
+  if hartSupports(Ext_V) & not(hartSupports(Ext_Zve64d)) then {
+    valid = false;
+    print_endline("V is enabled but Zve64d is disabled: V requires Zve64d.");
+  };
+  if hartSupports(Ext_Zvfhmin) & not(hartSupports(Ext_Zve32f)) then {
+    valid = false;
+    print_endline("Zvfhmin is enabled but Zve32f is disabled: Zvfhmin requires Zve32f.");
+  };
+  if hartSupports(Ext_Zvfh)    & (not(hartSupports(Ext_Zve32f)) | not(hartSupports(Ext_Zfhmin))) then {
+    valid = false;
+    print_endline("Zvfh is enabled but Zve32f and/or Zfhmin are disabled: Zvfh requires Zve32f and Zfhmin.");
+  };
+  valid;
+}
+
 function has_overlap(a_lo : nat, a_hi : nat, b_lo : nat, b_hi : nat) -> bool = {
   not((a_lo < b_lo & a_hi < b_lo) | (b_lo < a_lo & b_hi < a_lo))
 }
@@ -114,5 +159,6 @@ function config_is_valid() -> bool = {
   & check_mmu_config()
   & check_mem_layout()
   & check_vlen_elen()
+  & check_vext_config()
   & check_pmp()
 }
