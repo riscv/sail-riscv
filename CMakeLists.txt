@@ -146,6 +146,34 @@ include(GNUInstallDirs)
 # Softfloat support.
 add_subdirectory("dependencies/softfloat")
 
+#JSON validation
+set(valijson_BUILD_TESTS OFF CACHE BOOL "don't build valijson tests")
+add_definitions(-DVALIJSON_USE_EXCEPTIONS=1)
+find_package(valijson QUIET)
+if(NOT valijson_FOUND)
+    # Download from source if no system lib detected.
+    include(FetchContent)
+    FetchContent_Declare(
+        valijson
+        GIT_REPOSITORY https://github.com/tristanpenman/valijson.git
+        GIT_TAG master
+    )
+    message(STATUS "Downloading valijson from remote...")
+    FetchContent_MakeAvailable(valijson)
+endif()
+find_package(nlohmann_json QUIET)
+if(NOT nlohmann_json_FOUND)
+    # Download from source if no system lib detected.
+    include(FetchContent)
+    FetchContent_Declare(
+        nlohmann_json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG develop
+    )
+    message(STATUS "Downloading nlohmann_json from remote...")
+    FetchContent_MakeAvailable(nlohmann_json)
+endif()
+
 # Sail C runtime.
 add_subdirectory("sail_runtime")
 
