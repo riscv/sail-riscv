@@ -43,6 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "softfloat_types.h"
 
 union ui16_f16 { uint16_t ui; float16_t f; };
+union ui16_bf16 { uint16_t ui; bfloat16_t f; };
 union ui32_f32 { uint32_t ui; float32_t f; };
 union ui64_f64 { uint64_t ui; float64_t f; };
 
@@ -98,6 +99,18 @@ float16_t softfloat_subMagsF16( uint_fast16_t, uint_fast16_t );
 float16_t
  softfloat_mulAddF16(
      uint_fast16_t, uint_fast16_t, uint_fast16_t, uint_fast8_t );
+
+/*----------------------------------------------------------------------------
+*----------------------------------------------------------------------------*/
+#define signBF16UI( a ) ((bool) ((uint16_t) (a)>>15))
+#define expBF16UI( a ) ((int_fast16_t) ((a)>>7) & 0xFF)
+#define fracBF16UI( a ) ((a) & 0x07F)
+#define packToBF16UI( sign, exp, sig ) (((uint16_t) (sign)<<15) + ((uint16_t) (exp)<<7) + (sig))
+
+#define isNaNBF16UI( a ) (((~(a) & 0x7FC0) == 0) && ((a) & 0x07F))
+
+bfloat16_t softfloat_roundPackToBF16( bool, int_fast16_t, uint_fast16_t );
+struct exp8_sig16 softfloat_normSubnormalBF16Sig( uint_fast16_t );
 
 /*----------------------------------------------------------------------------
 *----------------------------------------------------------------------------*/

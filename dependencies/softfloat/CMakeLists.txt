@@ -6,7 +6,7 @@ file(GLOB riscv_source
     "${source_dir}/source/include/*.h"
     "${source_dir}/source/RISCV/*.c"
     "${source_dir}/source/RISCV/*.h"
-    "${source_dir}/build/Linux-RISCV-GCC/platform.h"
+    "${source_dir}/build/Linux-x86_64-GCC/*.h"
 )
 
 # Some files do not work with SOFTFLOAT_FAST_INT64
@@ -36,15 +36,23 @@ add_library(softfloat
 )
 
 target_include_directories(softfloat PUBLIC
+    "${source_dir}/build/Linux-x86_64-GCC"
     "${source_dir}/source/include"
     "${source_dir}/source/RISCV"
-    "${source_dir}/build/Linux-RISCV-GCC"
 )
 
 target_compile_options(softfloat PRIVATE
-        -Werror=implicit-function-declaration
-        -Wno-unused-parameter
-        -Wno-unused-variable
-        $<$<BOOL:${HAVE_WIMPLICIT_FALLTHROUGH}>:-Wno-implicit-fallthrough>
+    -Werror=implicit-function-declaration
+    -Wno-unused-parameter
+    -Wno-unused-variable
+    $<$<BOOL:${HAVE_WIMPLICIT_FALLTHROUGH}>:-Wno-implicit-fallthrough>
 )
-target_compile_definitions(softfloat PRIVATE SOFTFLOAT_ROUND_ODD)
+
+# Taken from build/Linux-x86_64-GCC/Makefile
+target_compile_definitions(softfloat PRIVATE
+    SOFTFLOAT_ROUND_ODD
+    INLINE_LEVEL=5
+    SOFTFLOAT_FAST_DIV32TO16
+    SOFTFLOAT_FAST_DIV64TO32
+    SOFTFLOAT_FAST_INT64
+)
