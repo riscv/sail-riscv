@@ -162,14 +162,6 @@ static void read_dtb(const char *path)
 // Set up command line option processing.
 static void setup_options(CLI::App &app)
 {
-  // The default formatter gives short options 1/3 of `column_width`
-  // and long options 2/3, which is not great for our options.  Use a
-  // smaller left column width than the default {30} to bring the
-  // short and long options closer together.  This however pushes some
-  // of the option descriptions into the next line, since the long
-  // options now flow into the descriptions column.
-  app.get_formatter()->column_width(20);
-
   app.add_flag("--show-times", do_show_times, "Show execution times");
   app.add_flag("--version", do_print_version, "Print model version");
   app.add_flag("--build-info", do_print_build_info, "Print build information");
