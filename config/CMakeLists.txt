@@ -19,7 +19,7 @@ install(FILES "rv64d.json" "rv32d.json"
 
 add_custom_command(
   DEPENDS "default_config.h.in" "generate_default_config_h.cmake" "rv64d.json" "${CMAKE_BINARY_DIR}/sail_riscv_config_schema.json"
-  COMMAND cmake -e "${CMAKE_CURRENT_SOURCE_DIR}/generate_default_config_h.cmake"
+  COMMAND cmake -P "${CMAKE_CURRENT_SOURCE_DIR}/generate_default_config_h.cmake"
   OUTPUT "default_config.h"
   VERBATIM
 )

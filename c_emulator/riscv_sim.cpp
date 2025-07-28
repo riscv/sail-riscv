@@ -28,11 +28,7 @@
 #include "config_utils.h"
 #include "sail_riscv_version.h"
 // JSON validation
-#include <valijson/adapters/nlohmann_json_adapter.hpp>
-#include <valijson/utils/nlohmann_json_utils.hpp>
-#include <valijson/schema.hpp>
-#include <valijson/schema_parser.hpp>
-#include <valijson/validator.hpp>
+#include <valijson/valijson_nlohmann_bundled.hpp>
 
 enum {
   OPT_TRACE_OUTPUT = 1000,
