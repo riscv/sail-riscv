@@ -143,7 +143,7 @@ function check_vext_config() -> bool = {
   };
   if hartSupports(Ext_Zvksh) & not(hartSupports(Ext_Zve32x)) then {
     valid = false;
-    print_endline("Zvksh is enabled but Zve32x is disabled: Zv ksh requires Zve32x.");
+    print_endline("Zvksh is enabled but Zve32x is disabled: Zvksh requires Zve32x.");
   };
   if hartSupports(Ext_Zvkt)  & not(hartSupports(Ext_Zve32x)) then {
     valid = false;
