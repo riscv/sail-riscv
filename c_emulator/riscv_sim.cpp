@@ -67,52 +67,15 @@ uint64_t mem_sig_end = 0;
 const int DEFAULT_SIGNATURE_GRANULARITY = 4;
 int signature_granularity = DEFAULT_SIGNATURE_GRANULARITY;
 
-bool config_print_instr = true;
-bool config_print_reg = true;
-bool config_print_mem_access = true;
-bool config_print_platform = true;
+bool config_print_instr = false;
+bool config_print_reg = false;
+bool config_print_mem_access = false;
+bool config_print_platform = false;
 bool config_print_rvfi = false;
 bool config_print_step = false;
 
 bool config_use_abi_names = false;
 bool config_enable_rvfi = false;
-
-std::map<std::string, std::string> printers {
-    {"instr",    "Instruction execution"              },
-    {"reg",      "Register accesses"                  },
-    {"mem",      "Memory accesses"                    },
-    {"rvfi",     "RVFI tracing"                       },
-    {"platform", "Privilege changes, MMIO, interrupts"},
-    {"step",     "Steps"                              },
-    {"all",      "All of the other tracers"           },
-};
-
-void set_config_print(const std::string &var, bool val)
-{
-  if (var == "all") {
-    config_print_instr = val;
-    config_print_mem_access = val;
-    config_print_reg = val;
-    config_print_platform = val;
-    config_print_rvfi = val;
-  } else if (var == "instr") {
-    config_print_instr = val;
-  } else if (var == "reg") {
-    config_print_reg = val;
-  } else if (var == "mem") {
-    config_print_mem_access = val;
-  } else if (var == "rvfi") {
-    config_print_rvfi = val;
-  } else if (var == "platform") {
-    config_print_platform = val;
-  } else if (var == "step") {
-    config_print_step = val;
-  } else {
-    // Should be detected by `->check(CLI::IsMember(printers))`.
-    std::cerr << "Unexpected --trace option: " << val << std::endl;
-    assert(false);
-  }
-}
 
 struct timeval init_start, init_end, run_end;
 uint64_t total_insns = 0;
@@ -196,50 +159,9 @@ static void read_dtb(const char *path)
   fprintf(stdout, "Read %zd bytes of DTB from %s.\n", dtb_len, path);
 }
 
-/**
- * Set up command line option processing.
- */
-
-class HelpFormatter : public CLI::Formatter {
-public:
-  // The default footer rendering uses paragraph formatting, removing
-  // all spacing adjustments.  The only way to customize that is to
-  // override the whole `make_help` formatter.  Customizing
-  // `make_help` also allows us to remove the `make_positionals` call
-  // instead of customizing it.
-  std::string make_help(const CLI::App *app, std::string name,
-                        CLI::AppFormatMode mode) const override
-  {
-    // See the comments in the base `make_help`.
-
-    if (mode == CLI::AppFormatMode::Sub)
-      return make_expanded(app, mode);
-
-    std::stringstream out;
-    if ((app->get_name().empty()) && (app->get_parent() != nullptr)) {
-      if (app->get_group() != "SUBCOMMANDS") {
-        out << app->get_group() << ':';
-      }
-    }
-
-    CLI::detail::streamOutAsParagraph(out, make_description(app),
-                                      description_paragraph_width_, "");
-    out << make_usage(app, name);
-    // Suppress the unnecessary "POSITIONALS" options help.
-    // out << make_positionals(app);
-    out << make_groups(app, mode);
-    out << make_subcommands(app, mode);
-
-    // Render the footer without any further formatting.
-    out << make_footer(app);
-
-    return out.str();
-  }
-};
-
+// Set up command line option processing.
 static void setup_options(CLI::App &app)
 {
-  app.formatter(std::make_shared<HelpFormatter>());
   // The default formatter gives short options 1/3 of `column_width`
   // and long options 2/3, which is not great for our options.  Use a
   // smaller left column width than the default {30} to bring the
@@ -289,36 +211,35 @@ static void setup_options(CLI::App &app)
       ->option_text("<file>");
 #endif
 
-  app.add_option_function<std::string>(
-         "--trace", [](const std::string &var) { set_config_print(var, true); },
-         "Enable tracing option")
-      ->check(CLI::IsMember(printers))
-      ->option_text("<tracer>")
-      ->expected(1, -1);
-  app.add_option_function<std::string>(
-         "--no-trace",
-         [](const std::string &var) { set_config_print(var, false); },
-         "Disable tracing option")
-      ->check(CLI::IsMember(printers))
-      ->option_text("<tracer>")
-      ->expected(1, -1);
+  app.add_flag("--trace-instr", config_print_instr,
+               "Enable trace output for instruction execution");
+  app.add_flag("--trace-reg", config_print_reg,
+               "Enable trace output for register access");
+  app.add_flag("--trace-mem", config_print_mem_access,
+               "Enable trace output for memory accesses");
+  app.add_flag("--trace-rvfi", config_print_rvfi,
+               "Enable trace output for RVFI");
+  app.add_flag("--trace-platform", config_print_platform,
+               "Enable trace output for privilege changes, MMIO, interrupts");
+  app.add_flag("--trace-step", config_print_step,
+               "Add a blank line between steps in the trace output");
+
+  app.add_flag_callback(
+      "--trace-all",
+      [] {
+        config_print_instr = true;
+        config_print_reg = true;
+        config_print_mem_access = true;
+        config_print_rvfi = true;
+        config_print_platform = true;
+        config_print_step = true;
+      },
+      "Enable all trace output");
 
   // All positional arguments are treated as ELF files.  All ELF files
   // are loaded into memory, but only the first is scanned for the
   // magic `tohost/{begin,end}_signature` symbols.
   app.add_option("elfs", elfs, "<elf_file> [<elf_file> ...]");
-
-  // Add help for tracing options in the footer in the absence of a
-  // better place to put it.  Unfortunately, the footer is rendered as
-  // a paragraph, without a way of customizing it without overriding
-  // the whole `make_help` function as above.
-  std::ostringstream buf;
-  buf << " where <tracer> is one of the following in the left column: "
-      << std::endl;
-  for (const auto &p : printers) {
-    buf << "   " << p.first << " : " << p.second << std::endl;
-  }
-  app.footer(buf.str());
 }
 
 void check_elf(bool is32bit)
@@ -337,6 +258,7 @@ void check_elf(bool is32bit)
     }
   }
 }
+
 uint64_t load_sail(const char *f, bool main_file)
 {
   bool is32bit;
