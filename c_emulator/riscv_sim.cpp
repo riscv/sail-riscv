@@ -239,7 +239,11 @@ static void setup_options(CLI::App &app)
   // All positional arguments are treated as ELF files.  All ELF files
   // are loaded into memory, but only the first is scanned for the
   // magic `tohost/{begin,end}_signature` symbols.
-  app.add_option("elfs", elfs, "<elf_file> [<elf_file> ...]");
+  app.add_option(
+      "elfs", elfs,
+      "List of ELF files to load. They will be loaded in order, possibly "
+      "overwriting each other. PC will be set to the entry point of the first "
+      "file. This is optional with some arguments, e.g. --print-isa-string.");
 }
 
 void check_elf(bool is32bit)
