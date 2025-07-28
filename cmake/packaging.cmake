@@ -49,6 +49,10 @@ add_custom_target(compressed_changelog DEPENDS ${gzip_changelog})
 install(FILES "${CMAKE_BINARY_DIR}/changelog.gz"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/${CMAKE_PROJECT_NAME}")
 
+# RPM doesn't need a compressed changelog.
+install(FILES ${src_changelog}
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/${CMAKE_PROJECT_NAME}")
+
 # CPack configuration
 
 if (NOT CPACK_GENERATOR)
