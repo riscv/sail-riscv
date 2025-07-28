@@ -69,6 +69,17 @@ function check_vlen_elen() -> bool = {
     print_endline("VLEN (set to 2^" ^ dec_str(vlen_exp) ^ ") cannot be less than ELEN (set to 2^" ^ dec_str(elen_exp) ^ ").");
     return false;
   };
+  // The above comment about dead code elimination applies here too.
+  if (vlen_exp : nat) < 3 | (vlen_exp : nat) > 16
+  then {
+    print_endline("VLEN set to 2^" ^ dec_str(vlen_exp) ^ " but must be within [2^3, 2^16].");
+    return false;
+  };
+  if (elen_exp : nat) < 3 | (elen_exp : nat) > 16
+  then {
+    print_endline("ELEN set to 2^" ^ dec_str(elen_exp) ^ " but must be within [2^3, 2^16].");
+    return false;
+  };
   true
 }
 
