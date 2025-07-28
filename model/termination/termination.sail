@@ -58,7 +58,7 @@ termination_measure pt_walk(_,_,_,_,_,_,_,level,_, _) = level
 // When adding a new extension X, we need to make sure that if X being enabled
 // depends on Y being enabled, then the value associated to X is _greater_ than
 // the value associated to Y. The default value is 2, so that if it does not
-// depend on anything or only on extensions A, B, C, D, F, M, S, V, or Zicsr,
+// depend on anything or only on extensions A, B, C, D, F, M, S, Zve32x, Zvl* or Zicsr,
 // nothing needs to be done.
 function currentlyEnabled_measure(ext : extension) -> int =
   match ext {
