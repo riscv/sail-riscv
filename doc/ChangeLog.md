@@ -74,10 +74,15 @@ the suite of vector extensions needed to pass the
 
 Backwards-incompatible changes have been made to the CLI. As mentioned
 above, options for model configuration have been removed. In addition,
-all short (single-character) options have been removed.
+all short (single-character) options have been removed, and tracing
+options have changed.
 
 The help message has been improved and now mentions the supported
 tracing options.
+
+All tracing is now disabled by default. Each tracer (such as `instr`,
+`mem`, `reg`, `platform`) has its own option to enable it. A
+`--trace-all` option enables all tracers.
 
 The simulator can now generate a device-tree (using
 `--print-device-tree`) and ISA string (using `--print-isa-string`)
