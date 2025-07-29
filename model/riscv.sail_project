@@ -210,7 +210,9 @@ extensions {
   vector_bfloat16 {
     Zvfbfmin {
       requires riscv, FD, V
-      files riscv_insts_zvfbfmin.sail
+      files
+        riscv_insts_zvfbfmin.sail,
+        riscv_insts_zvfbfwma.sail
     }
   }
 

@@ -70,6 +70,7 @@ SAIL_DEFAULT_INST += riscv_insts_vext_fp_red.sail
 SAIL_DEFAULT_INST += riscv_insts_zicbom.sail
 SAIL_DEFAULT_INST += riscv_insts_zicboz.sail
 SAIL_DEFAULT_INST += riscv_insts_zvfbfmin.sail
+SAIL_DEFAULT_INST += riscv_insts_zvfbfwma.sail
 SAIL_DEFAULT_INST += riscv_insts_zvbb.sail
 SAIL_DEFAULT_INST += riscv_insts_zvbc.sail
 SAIL_DEFAULT_INST += riscv_insts_zvknhab.sail

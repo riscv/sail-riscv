@@ -208,6 +208,12 @@
     "Zhinxmin": {
       "supported": false
     },
+    "Zvfbfmin": {
+      "supported": true
+    },
+    "Zvfbfwma": {
+      "supported": true
+    },
     "Zvbb": {
       "supported": true
     },
@@ -236,9 +242,6 @@
       "supported": true
     },
     "Zvkt": {
-      "supported": true
-    },
-    "Zvfbfmin": {
       "supported": true
     },
     "Sscofpmf": {

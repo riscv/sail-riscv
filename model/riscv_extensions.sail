@@ -340,6 +340,10 @@ function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg)
 enum clause extension = Ext_Zvfbfmin
 mapping clause extensionName = Ext_Zvfbfmin <-> "zvfbfmin"
 function clause hartSupports(Ext_Zvfbfmin) = config extensions.Zvfbfmin.supported
+// Vector BF16 widening mul-add
+enum clause extension = Ext_Zvfbfwma
+mapping clause extensionName = Ext_Zvfbfwma <-> "zvfbfwma"
+function clause hartSupports(Ext_Zvfbfwma) = config extensions.Zvfbfwma.supported
 
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
@@ -457,6 +461,7 @@ let extensions_ordered_for_isa_string = [
 
   // Zv
   Ext_Zvfbfmin,
+  Ext_Zvfbfwma,
   Ext_Zvbb,
   Ext_Zvbc,
   Ext_Zvkb,
