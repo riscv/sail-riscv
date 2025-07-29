@@ -6,11 +6,11 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-function clause currentlyEnabled(Ext_Zvl32b)   = hartSupports(Ext_Zvl32b)
-function clause currentlyEnabled(Ext_Zvl64b)   = hartSupports(Ext_Zvl64b)
-function clause currentlyEnabled(Ext_Zvl128b)  = hartSupports(Ext_Zvl128b)
-function clause currentlyEnabled(Ext_Zvl256b)  = hartSupports(Ext_Zvl256b)
-function clause currentlyEnabled(Ext_Zvl512b)  = hartSupports(Ext_Zvl512b)
+function clause currentlyEnabled(Ext_Zvl32b) = hartSupports(Ext_Zvl32b)
+function clause currentlyEnabled(Ext_Zvl64b) = hartSupports(Ext_Zvl64b)
+function clause currentlyEnabled(Ext_Zvl128b) = hartSupports(Ext_Zvl128b)
+function clause currentlyEnabled(Ext_Zvl256b) = hartSupports(Ext_Zvl256b)
+function clause currentlyEnabled(Ext_Zvl512b) = hartSupports(Ext_Zvl512b)
 function clause currentlyEnabled(Ext_Zvl1024b) = hartSupports(Ext_Zvl1024b)
 
 function clause currentlyEnabled(Ext_Zve32x) = hartSupports(Ext_Zve32x) & currentlyEnabled(Ext_Zvl32b) & (mstatus[VS] != 0b00) & (not(hartSupports(Ext_V)) | misa[V] == 0b1) & currentlyEnabled(Ext_Zicsr)
@@ -21,14 +21,7 @@ function clause currentlyEnabled(Ext_Zve64d) = hartSupports(Ext_Zve64d) & curren
 
 function clause currentlyEnabled(Ext_V) = hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b) & currentlyEnabled(Ext_Zve64d)
 
-<<<<<<< HEAD
 function clause currentlyEnabled(Ext_Zvfh) = hartSupports(Ext_Zvfh) & currentlyEnabled(Ext_Zve32f) & currentlyEnabled(Ext_Zfhmin)
-=======
-function clause currentlyEnabled(Ext_Zvfh)     = hartSupports(Ext_Zvfh)     & currentlyEnabled(Ext_Zve32f) & currentlyEnabled(Ext_Zfhmin)
-
-function clause currentlyEnabled(Ext_Zvfhmin)  = (hartSupports(Ext_Zvfhmin)  & currentlyEnabled(Ext_Zve32f)) | currentlyEnabled(Ext_Zvfh)
->>>>>>> b76ad137 (Fix currentlyEnabled(Ext_Zvfhmin) and add Zve*, Zvfh* to README.)
-
 function clause currentlyEnabled(Ext_Zvfhmin) = (hartSupports(Ext_Zvfhmin) & currentlyEnabled(Ext_Zve32f)) | currentlyEnabled(Ext_Zvfh)
 
 // num_elem means max(VLMAX,VLEN/SEW)) according to Section 5.4 of RVV spec
