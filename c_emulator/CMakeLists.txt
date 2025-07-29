@@ -65,6 +65,10 @@ add_executable(sail_riscv_sim
     "rvfi_dii.cpp"
 )
 
+# JSON validation
+target_link_libraries(sail_riscv_sim PRIVATE valijson)
+target_link_libraries(sail_riscv_sim PRIVATE nlohmann_json)
+
 # The generated C model is not warnings-clean, silence them.
 set(_generated_c_warning_opt_out
     -Wno-extra
