@@ -146,6 +146,9 @@ include(GNUInstallDirs)
 # Softfloat support.
 add_subdirectory("dependencies/softfloat")
 
+#JSON validation
+add_subdirectory("dependencies/valijson")
+
 # Sail C runtime.
 add_subdirectory("sail_runtime")
 
