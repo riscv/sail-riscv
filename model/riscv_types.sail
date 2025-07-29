@@ -61,7 +61,7 @@ mapping privLevel_bits : Privilege <-> priv_level = {
   User       <-> 0b00,
   Supervisor <-> 0b01,
   Machine    <-> 0b11,
-  backwards 0b10 => internal_error(__FILE__, __LINE__, "Invalid privilege level: " ^ BitStr(0b10))
+  backwards 0b10 => internal_error(__FILE__, __LINE__, "Invalid privilege level: " ^ bits_str(0b10))
 }
 
 function privLevel_to_bits(p : Privilege) -> priv_level = privLevel_bits(p)

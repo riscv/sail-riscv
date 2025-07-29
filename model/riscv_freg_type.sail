@@ -16,7 +16,7 @@ let zero_freg : fregtype = zeros()
 
 /* default register printer */
 val FRegStr : fregtype -> string
-function FRegStr(r) = BitStr(r)
+function FRegStr(r) = bits_str(r)
 
 /* conversions */
 
