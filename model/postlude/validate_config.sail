@@ -223,6 +223,10 @@ function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Zvfbfmin extension is enabled but Zve32f is disabled: supporting Zvfbfmin requires Zve32f.")
   };
+  if hartSupports(Ext_Zvfbfwma) & (not(hartSupports(Ext_Zfbfmin)) | not(hartSupports(Ext_Zvfbfmin))) then {
+    valid = false;
+    print_endline("The Zvfbfwma extension is enabled but either Zfbfmin or Zvfbfmin is disabled: supporting Zvfbfwma requires Zfbfmin and Zvfbfmin.")
+  };
   valid
 }
 
