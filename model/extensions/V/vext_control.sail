@@ -6,11 +6,11 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-function clause currentlyEnabled(Ext_Zvl32b)   = hartSupports(Ext_Zvl32b)
-function clause currentlyEnabled(Ext_Zvl64b)   = hartSupports(Ext_Zvl64b)
-function clause currentlyEnabled(Ext_Zvl128b)  = hartSupports(Ext_Zvl128b)
-function clause currentlyEnabled(Ext_Zvl256b)  = hartSupports(Ext_Zvl256b)
-function clause currentlyEnabled(Ext_Zvl512b)  = hartSupports(Ext_Zvl512b)
+function clause currentlyEnabled(Ext_Zvl32b) = hartSupports(Ext_Zvl32b)
+function clause currentlyEnabled(Ext_Zvl64b) = hartSupports(Ext_Zvl64b)
+function clause currentlyEnabled(Ext_Zvl128b) = hartSupports(Ext_Zvl128b)
+function clause currentlyEnabled(Ext_Zvl256b) = hartSupports(Ext_Zvl256b)
+function clause currentlyEnabled(Ext_Zvl512b) = hartSupports(Ext_Zvl512b)
 function clause currentlyEnabled(Ext_Zvl1024b) = hartSupports(Ext_Zvl1024b)
 
 function clause currentlyEnabled(Ext_Zve32x) = hartSupports(Ext_Zve32x) & currentlyEnabled(Ext_Zvl32b) & (mstatus[VS] != 0b00) & (not(hartSupports(Ext_V)) | misa[V] == 0b1) & currentlyEnabled(Ext_Zicsr)
