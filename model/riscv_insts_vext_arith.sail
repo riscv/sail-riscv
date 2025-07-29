@@ -379,11 +379,10 @@ function clause execute(MOVETYPEV(vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, 0b1, zvreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, ones()) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
   };
@@ -822,10 +821,9 @@ function clause execute(MOVETYPEX(rs1, vd)) = {
   let 'm = SEW;
 
   let rs1_val : bits('m)             = get_scalar(rs1, 'm);
-  let vm_val  : bits('n)             = read_vmask(num_elem, 0b1, zvreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, ones()) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
   };
@@ -1231,11 +1229,10 @@ function clause execute(MOVETYPEI(vd, simm)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)             = read_vmask(num_elem, 0b1, zvreg);
   let imm_val : bits('m)             = sign_extend(simm);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, ones()) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
   };
@@ -1286,7 +1283,6 @@ function clause execute(VMVRTYPE(vs2, nreg, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)             = read_vmask(num_elem, 0b1, zvreg);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, EMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, EMUL_pow, vd);
   var result  : vector('n, bits('m)) = vector_init(zeros());
@@ -2316,11 +2312,10 @@ function clause execute(VMVSX(rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)             = read_vmask(num_elem, 0b1, zvreg);
   let rs1_val : bits('m)             = get_scalar(rs1, 'm);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, 0, vd);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, 0, vd_val, vm_val) {
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, 0, vd_val, ones()) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
   };

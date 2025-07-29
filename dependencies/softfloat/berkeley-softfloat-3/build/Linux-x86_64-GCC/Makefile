@@ -94,6 +94,8 @@ OBJS_SPECIALIZE = \
   s_f16UIToCommonNaN$(OBJ) \
   s_commonNaNToF16UI$(OBJ) \
   s_propagateNaNF16UI$(OBJ) \
+  s_bf16UIToCommonNaN$(OBJ) \
+  s_commonNaNToBF16UI$(OBJ) \
   s_f32UIToCommonNaN$(OBJ) \
   s_commonNaNToF32UI$(OBJ) \
   s_propagateNaNF32UI$(OBJ) \
@@ -114,6 +116,8 @@ OBJS_OTHERS = \
   s_roundToUI64$(OBJ) \
   s_roundToI32$(OBJ) \
   s_roundToI64$(OBJ) \
+  s_normSubnormalBF16Sig$(OBJ) \
+  s_roundPackToBF16$(OBJ) \
   s_normSubnormalF16Sig$(OBJ) \
   s_roundPackToF16$(OBJ) \
   s_normRoundPackToF16$(OBJ) \
@@ -172,6 +176,8 @@ OBJS_OTHERS = \
   i64_to_extF80M$(OBJ) \
   i64_to_f128$(OBJ) \
   i64_to_f128M$(OBJ) \
+  bf16_isSignalingNaN$(OBJ) \
+  bf16_to_f32$(OBJ) \
   f16_to_ui32$(OBJ) \
   f16_to_ui64$(OBJ) \
   f16_to_i32$(OBJ) \
@@ -209,6 +215,7 @@ OBJS_OTHERS = \
   f32_to_ui64_r_minMag$(OBJ) \
   f32_to_i32_r_minMag$(OBJ) \
   f32_to_i64_r_minMag$(OBJ) \
+  f32_to_bf16$(OBJ) \
   f32_to_f16$(OBJ) \
   f32_to_f64$(OBJ) \
   f32_to_extF80$(OBJ) \

@@ -72,6 +72,9 @@ float16_t f32_to_f16( float32_t a )
     }
     /*------------------------------------------------------------------------
     *------------------------------------------------------------------------*/
+    // frac is a 24-bit significand, the bottom 9 bits LSB are extracted and OR-red
+    // into a sticky flag, the top 15 MSBs are extracted, the LSB of this top slice
+    // is OR-red with the sticky 
     frac16 = frac>>9 | ((frac & 0x1FF) != 0);
     if ( ! (exp | frac16) ) {
         uiZ = packToF16UI( sign, 0, 0 );
