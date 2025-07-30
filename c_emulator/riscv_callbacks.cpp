@@ -7,8 +7,9 @@ std::vector<callbacks_if *> callbacks;
 
 void register_callback(callbacks_if *cb)
 {
-  if (std::find(callbacks.begin(), callbacks.end(), cb) == callbacks.end())
+  if (std::find(callbacks.begin(), callbacks.end(), cb) == callbacks.end()) {
     callbacks.push_back(cb);
+  }
 }
 
 void remove_callback(callbacks_if *cb)
