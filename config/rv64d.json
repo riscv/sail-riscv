@@ -205,6 +205,27 @@
     "Zhinxmin": {
       "supported": false
     },
+    "Zve32f": {
+      "supported": true
+    },
+    "Zve32x": {
+      "supported": true
+    },
+    "Zve64d": {
+      "supported": true
+    },
+    "Zve64f": {
+      "supported": true
+    },
+    "Zve64x": {
+      "supported": true
+    },
+    "Zvfh": {
+      "supported": true
+    },
+    "Zvfhmin": {
+      "supported": true
+    },
     "Zvbb": {
       "supported": true
     },
