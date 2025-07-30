@@ -954,11 +954,11 @@ mapping encdec_nisfunct6 : nisfunct6 <-> bits(6) = {
   NIS_VNSRA       <-> 0b101101
 }
 
-mapping clause encdec = NISTYPE(funct6, vm, vs2, simm, vd)
-  <-> encdec_nisfunct6(funct6) @ vm @ encdec_vreg(vs2) @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
+mapping clause encdec = NISTYPE(funct6, vm, vs2, uimm, vd)
+  <-> encdec_nisfunct6(funct6) @ vm @ encdec_vreg(vs2) @ uimm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_V)
 
-function clause execute(NISTYPE(funct6, vm, vs2, simm, vd)) = {
+function clause execute(NISTYPE(funct6, vm, vs2, uimm, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -977,7 +977,7 @@ function clause execute(NISTYPE(funct6, vm, vs2, simm, vd)) = {
 
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let imm_val : bits('m)             = sign_extend(simm);
+  let imm_val : bits('m)             = zero_extend(uimm);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
@@ -1013,8 +1013,8 @@ mapping nistype_mnemonic : nisfunct6 <-> string = {
   NIS_VNSRA       <-> "vnsra.wi"
 }
 
-mapping clause assembly = NISTYPE(funct6, vm, vs2, simm, vd)
-  <-> nistype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm) ^ maybe_vmask(vm)
+mapping clause assembly = NISTYPE(funct6, vm, vs2, uimm, vd)
+  <-> nistype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(uimm) ^ maybe_vmask(vm)
 
 /* ************************** OPIVI (WITYPE Narrowing) *************************** */
 /* *************** Vector Narrowing Fixed-Point Clip Instructions **************** */
@@ -1025,11 +1025,11 @@ mapping encdec_nifunct6 : nifunct6 <-> bits(6) = {
   NI_VNCLIP      <-> 0b101111
 }
 
-mapping clause encdec = NITYPE(funct6, vm, vs2, simm, vd)
-  <-> encdec_nifunct6(funct6) @ vm @ encdec_vreg(vs2) @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
+mapping clause encdec = NITYPE(funct6, vm, vs2, uimm, vd)
+  <-> encdec_nifunct6(funct6) @ vm @ encdec_vreg(vs2) @ uimm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_V)
 
-function clause execute(NITYPE(funct6, vm, vs2, simm, vd)) = {
+function clause execute(NITYPE(funct6, vm, vs2, uimm, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -1048,7 +1048,7 @@ function clause execute(NITYPE(funct6, vm, vs2, simm, vd)) = {
 
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
-  let imm_val : bits('m)             = sign_extend(simm);
+  let imm_val : bits('m)             = zero_extend(uimm);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
@@ -1085,8 +1085,8 @@ mapping nitype_mnemonic : nifunct6 <-> string = {
   NI_VNCLIP      <-> "vnclip.wi"
 }
 
-mapping clause assembly = NITYPE(funct6, vm, vs2, simm, vd)
-  <-> nitype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm) ^ maybe_vmask(vm)
+mapping clause assembly = NITYPE(funct6, vm, vs2, uimm, vd)
+  <-> nitype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(uimm) ^ maybe_vmask(vm)
 
 /* ***************** OPIVI (Vector Slide & Gather Instructions) ****************** */
 /* Slide and gather instructions extend rs1/imm to XLEN instead of SEW bits */
