@@ -8,10 +8,7 @@
 
 /* Definitions for vector registers (V extension) */
 
-type vreglenbits = bits(vlenmax) /* use the largest possible register length */
-
-/* default vector register type */
-type vregtype = vreglenbits
+type vlenbits = bits(vlen)
 
 /* vector instruction types */
 

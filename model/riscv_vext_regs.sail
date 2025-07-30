@@ -16,45 +16,44 @@ function vregidx_bits (Vregidx(b) : vregidx) -> bits(5) = b
 
 mapping encdec_vreg : vregidx <-> bits(5) = { Vregidx(r) <-> r }
 
-val vreg_write_callback = pure {c: "vreg_write_callback"} : (vregidx, vregtype) -> unit
+val vreg_write_callback = pure {c: "vreg_write_callback"} : (vregidx, vlenbits) -> unit
 function vreg_write_callback(_) = ()
 
 let zvreg : vregidx = Vregidx(0b00000) /* v0, zero register  */
 
 /* vector registers */
-
-register vr0 : vregtype
-register vr1 : vregtype
-register vr2 : vregtype
-register vr3 : vregtype
-register vr4 : vregtype
-register vr5 : vregtype
-register vr6 : vregtype
-register vr7 : vregtype
-register vr8 : vregtype
-register vr9 : vregtype
-register vr10 : vregtype
-register vr11 : vregtype
-register vr12 : vregtype
-register vr13 : vregtype
-register vr14 : vregtype
-register vr15 : vregtype
-register vr16 : vregtype
-register vr17 : vregtype
-register vr18 : vregtype
-register vr19 : vregtype
-register vr20 : vregtype
-register vr21 : vregtype
-register vr22 : vregtype
-register vr23 : vregtype
-register vr24 : vregtype
-register vr25 : vregtype
-register vr26 : vregtype
-register vr27 : vregtype
-register vr28 : vregtype
-register vr29 : vregtype
-register vr30 : vregtype
-register vr31 : vregtype
+register vr0 : vlenbits
+register vr1 : vlenbits
+register vr2 : vlenbits
+register vr3 : vlenbits
+register vr4 : vlenbits
+register vr5 : vlenbits
+register vr6 : vlenbits
+register vr7 : vlenbits
+register vr8 : vlenbits
+register vr9 : vlenbits
+register vr10 : vlenbits
+register vr11 : vlenbits
+register vr12 : vlenbits
+register vr13 : vlenbits
+register vr14 : vlenbits
+register vr15 : vlenbits
+register vr16 : vlenbits
+register vr17 : vlenbits
+register vr18 : vlenbits
+register vr19 : vlenbits
+register vr20 : vlenbits
+register vr21 : vlenbits
+register vr22 : vlenbits
+register vr23 : vlenbits
+register vr24 : vlenbits
+register vr25 : vlenbits
+register vr26 : vlenbits
+register vr27 : vlenbits
+register vr28 : vlenbits
+register vr29 : vlenbits
+register vr30 : vlenbits
+register vr31 : vlenbits
 
 mapping vreg_name_raw : bits(5) <-> string = {
     0b00000 <-> "v0",
@@ -93,7 +92,7 @@ mapping vreg_name_raw : bits(5) <-> string = {
 
 mapping vreg_name : vregidx <-> string = { Vregidx(i) <-> vreg_name_raw(i) }
 
-function rV (Vregno(r) : vregno) -> vregtype = {
+function rV (Vregno(r) : vregno) -> vlenbits = {
   match r {
     0 => vr0,
     1 => vr1,
@@ -137,7 +136,7 @@ function dirty_v_context() -> unit = {
   long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 }
 
-function wV (Vregno(r) : vregno, v : vregtype) -> unit = {
+function wV (Vregno(r) : vregno, v : vlenbits) -> unit = {
   match r {
     0 => vr0 = v,
     1 => vr1 = v,
@@ -175,13 +174,12 @@ function wV (Vregno(r) : vregno, v : vregtype) -> unit = {
 
   dirty_v_context();
 
-  assert(0 < VLEN & VLEN <= sizeof(vlenmax));
   vreg_write_callback(vregno_to_vregidx(Vregno(r)), v);
 }
 
-function rV_bits(i: vregidx) -> vregtype = rV(vregidx_to_vregno(i))
+function rV_bits(i: vregidx) -> vlenbits = rV(vregidx_to_vregno(i))
 
-function wV_bits(i: vregidx, data: vregtype) -> unit = {
+function wV_bits(i: vregidx, data: vlenbits) -> unit = {
   wV(vregidx_to_vregno(i)) = data
 }
 
@@ -189,7 +187,7 @@ overload V = {rV_bits, wV_bits, rV, wV}
 
 val init_vregs : unit -> unit
 function init_vregs () = {
-  let zero_vreg : vregtype = zeros();
+  let zero_vreg : vlenbits = zeros();
   vr0  = zero_vreg;
   vr1  = zero_vreg;
   vr2  = zero_vreg;
@@ -229,8 +227,7 @@ function init_vregs () = {
 register vstart : xlenbits
 register vl     : xlenbits
 
-let VLENB : xlenbits =
-  to_bits(2 ^ VLEN_pow / 8)
+let VLENB : xlenbits = to_bits(vlen / 8)
 
 bitfield Vtype  : xlenbits = {
   vill      : xlen - 1,
@@ -347,7 +344,7 @@ function clause read_CSR(0xC22) = VLENB
 
 function set_vstart(value : bits(16)) -> unit = {
   dirty_v_context();
-  vstart = zero_extend(value[(VLEN_pow - 1) .. 0]);
+  vstart = zero_extend(value[(vlen_exp - 1) .. 0]);
   csr_write_callback("vstart", vstart);
 }
 

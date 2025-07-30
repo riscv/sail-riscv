@@ -57,9 +57,27 @@ function check_mmu_config() -> bool = {
 
 function check_vlen_elen() -> bool = {
   // Should this be conditioned on a vector extension being enabled?
-  if VLEN_pow < ELEN_pow
+
+  // Due to the `constraint elen_exp <= vlen_exp` the Sail compiler will
+  // dead-code eliminate this check without the `: nat` type annotations.
+  // Technically it could still eliminate the check even with `: nat`, and
+  // by running any code that violates the `constraint` we're invoking UB.
+  // However this does work in practice for now so it's probably better
+  // than nothing. The proper fix is: https://github.com/rems-project/sail/issues/1387
+  if (vlen_exp : nat) < (elen_exp : nat)
   then {
-    print_endline("VLEN (set to 2^" ^ dec_str(VLEN_pow) ^ ") cannot be less than ELEN (set to 2^" ^ dec_str(ELEN_pow) ^ ").");
+    print_endline("VLEN (set to 2^" ^ dec_str(vlen_exp) ^ ") cannot be less than ELEN (set to 2^" ^ dec_str(elen_exp) ^ ").");
+    return false;
+  };
+  // The above comment about dead code elimination applies here too.
+  if (vlen_exp : nat) < 3 | (vlen_exp : nat) > 16
+  then {
+    print_endline("VLEN set to 2^" ^ dec_str(vlen_exp) ^ " but must be within [2^3, 2^16].");
+    return false;
+  };
+  if (elen_exp : nat) < 3 | (elen_exp : nat) > 16
+  then {
+    print_endline("ELEN set to 2^" ^ dec_str(elen_exp) ^ " but must be within [2^3, 2^16].");
     return false;
   };
   true
