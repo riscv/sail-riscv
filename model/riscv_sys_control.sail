@@ -275,11 +275,14 @@ function reset_misa() -> unit = {
   misa[A]   = bool_to_bits(hartSupports(Ext_A));   /* atomics */
   misa[C]   = bool_to_bits(hartSupports(Ext_C));   /* RVC */
   misa[B]   = bool_to_bits(hartSupports(Ext_B));   /* Bit-manipulation */
-  misa[I]   = 0b1;                                 /* base integer ISA */
   misa[M]   = bool_to_bits(hartSupports(Ext_M));   /* integer multiply/divide */
   misa[U]   = bool_to_bits(hartSupports(Ext_U));   /* user-mode */
   misa[S]   = bool_to_bits(hartSupports(Ext_S));   /* supervisor-mode */
   misa[V]   = bool_to_bits(hartSupports(Ext_V));   /* vector extension */
+
+  // Base integer ISA (disabled if we only support the 16-register E base).
+  misa[E] = bool_to_bits(base_E_enabled);
+  misa[I] = ~(misa[E]);
 
   if   hartSupports(Ext_F) & hartSupports(Ext_Zfinx)
   then internal_error(__FILE__, __LINE__, "F and Zfinx cannot both be enabled!");
