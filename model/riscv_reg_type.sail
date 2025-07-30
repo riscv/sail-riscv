@@ -14,7 +14,7 @@ let zero_reg : regtype = zeros()
 
 /* default register printer */
 val RegStr : regtype -> string
-function RegStr(r) = BitStr(r)
+function RegStr(r) = bits_str(r)
 
 /* conversions */
 

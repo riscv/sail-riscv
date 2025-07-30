@@ -157,8 +157,8 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
   trap_callback();
   if   get_config_print_platform()
   then print_platform("handling " ^ (if intr then "int#" else "exc#")
-                      ^ BitStr(c) ^ " at priv " ^ to_str(del_priv)
-                      ^ " with tval " ^ BitStr(tval(info)));
+                      ^ bits_str(c) ^ " at priv " ^ to_str(del_priv)
+                      ^ " with tval " ^ bits_str(tval(info)));
 
   match (del_priv) {
     Machine => {

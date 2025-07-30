@@ -22,7 +22,7 @@ function run_hart_waiting(step_no : int, wr: WaitReason, instbits : instbits, ex
   // successfully interrupted waits
   if shouldWakeForInterrupt() then {
     if   get_config_print_instr()
-    then print_instr("interrupt exit from " ^ wait_name(wr) ^ " state at PC " ^ BitStr(PC));
+    then print_instr("interrupt exit from " ^ wait_name(wr) ^ " state at PC " ^ bits_str(PC));
 
     // The waiting instruction retires successfully.  The
     // pending interrupts will be handled in the next step.
@@ -33,14 +33,14 @@ function run_hart_waiting(step_no : int, wr: WaitReason, instbits : instbits, ex
   match (wr, valid_reservation(), exit_wait) {
     (WAIT_WRS_STO, false, _) => {
       if   get_config_print_instr()
-      then print_instr("reservation invalid exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ BitStr(PC));
+      then print_instr("reservation invalid exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
       Step_Execute(Retire_Success(), instbits)
     },
     (WAIT_WRS_NTO, false, _) => {
       if   get_config_print_instr()
-      then print_instr("reservation invalid exit from " ^ wait_name(WAIT_WRS_NTO) ^ " state at PC " ^ BitStr(PC));
+      then print_instr("reservation invalid exit from " ^ wait_name(WAIT_WRS_NTO) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
       Step_Execute(Retire_Success(), instbits)
@@ -48,7 +48,7 @@ function run_hart_waiting(step_no : int, wr: WaitReason, instbits : instbits, ex
     // Transition out of waiting states as instructed.
     (WAIT_WFI, _, true) => {
       if   get_config_print_instr()
-      then print_instr("forced exit from " ^ wait_name(WAIT_WFI) ^ " state at PC " ^ BitStr(PC));
+      then print_instr("forced exit from " ^ wait_name(WAIT_WFI) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
       // "When TW=1, then if WFI is executed in any
@@ -61,14 +61,14 @@ function run_hart_waiting(step_no : int, wr: WaitReason, instbits : instbits, ex
     },
     (WAIT_WRS_STO, _, true) => {
       if   get_config_print_instr()
-      then print_instr("timed-out exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ BitStr(PC));
+      then print_instr("timed-out exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
       Step_Execute(Retire_Success(), instbits)
     },
     (WAIT_WRS_NTO, _, true) => {
       if   get_config_print_instr()
-      then print_instr("timed-out exit from " ^ wait_name(WAIT_WRS_NTO) ^ " state at PC " ^ BitStr(PC));
+      then print_instr("timed-out exit from " ^ wait_name(WAIT_WRS_NTO) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
       // TODO: This is similar to WFI above for now, but will change to handle
@@ -80,7 +80,7 @@ function run_hart_waiting(step_no : int, wr: WaitReason, instbits : instbits, ex
     // remain waiting
     (_, _, false) => {
       if   get_config_print_instr()
-      then print_instr("remaining in " ^ wait_name(wr) ^ " state at PC " ^ BitStr(PC));
+      then print_instr("remaining in " ^ wait_name(wr) ^ " state at PC " ^ bits_str(PC));
       Step_Waiting(wr)
     }
   }
@@ -101,7 +101,7 @@ function run_hart_active(step_no: nat) -> Step = {
         let instruction = ext_decode_compressed(h);
         if   get_config_print_instr()
         then {
-          print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(h) ^ ") " ^ to_str(instruction));
+          print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(h) ^ ") " ^ to_str(instruction));
         };
         /* check for RVC once here instead of every RVC execute clause. */
         if currentlyEnabled(Ext_Zca) then {
@@ -118,7 +118,7 @@ function run_hart_active(step_no: nat) -> Step = {
         let instruction = ext_decode(w);
         if   get_config_print_instr()
         then {
-          print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ BitStr(PC) ^ " (" ^ BitStr(w) ^ ") " ^ to_str(instruction));
+          print_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(w) ^ ") " ^ to_str(instruction));
         };
         nextPC = PC + 4;
         let r = execute(instruction);
@@ -199,7 +199,7 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       } else {
         // Transition into the wait state.
         if   get_config_print_instr()
-        then print_instr("entering " ^ wait_name(wr) ^ " state at PC " ^ BitStr(PC));
+        then print_instr("entering " ^ wait_name(wr) ^ " state at PC " ^ bits_str(PC));
 
         hart_state = HART_WAITING(wr, instbits);
       }
