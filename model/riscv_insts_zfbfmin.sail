@@ -14,7 +14,7 @@ function bf16_to_f32 (v : bits(16)) -> bits(32) = {
   let is_inf = exp == 0xFF & mant == 0b0000000;
 
   if is_nan then {
-    if mant[6] == bitzero then accrue_fflags(FFLAGS_NV);
+    if mant[6] == bitzero then accrue_fflags(nvFlag());
     // 32-Bit Floating-Point NaN
     canonical_NaN_S()
   } else if is_inf then {
