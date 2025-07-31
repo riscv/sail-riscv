@@ -16,7 +16,7 @@ function zvk_valid_reg_overlap(rs, rd, emul_pow) = {
 
 function zvk_check_encdec(EGW: nat, EGS: nat1) -> bool = {
   let LMUL_pow = get_lmul_pow();
-  let LMUL_times_VLEN : int = if LMUL_pow < 0 then vlen / (2 ^ abs_int(LMUL_pow)) else (2 ^ LMUL_pow) * vlen in
+  let LMUL_times_VLEN = if LMUL_pow < 0 then vlen / (2 ^ abs_int(LMUL_pow)) else (2 ^ LMUL_pow) * vlen in
   (unsigned(vl) % EGS == 0) & (unsigned(vstart) % EGS == 0) & LMUL_times_VLEN >= EGW
 }
 
