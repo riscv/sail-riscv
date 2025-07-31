@@ -57,6 +57,16 @@ add_compile_options(-Wall -Wextra -Wno-sign-compare)
 include(CheckCCompilerFlag)
 check_c_compiler_flag(-Wimplicit-fallthrough HAVE_WIMPLICIT_FALLTHROUGH)
 
+# Ensure we globally build with assertions enabled even in non-Debug
+# builds, following the approach of LLVM in
+#   llvm/cmake/modules/HandleLLVMOptions.cmake
+string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
+# On non-Debug builds cmake automatically defines NDEBUG; so
+# explicitly undefine it:
+if(NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+    add_compile_options($<$<OR:$<COMPILE_LANGUAGE:C>,$<COMPILE_LANGUAGE:CXX>>:-UNDEBUG>)
+endif()
+
 # Extra CMake files.
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
