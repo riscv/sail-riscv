@@ -63,7 +63,8 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
     /* vrid must be a multiple of emul */
     assert(false, "invalid register group: vrid is not a multiple of EMUL")
   } else {
-    if LMUL_pow < 0 then {
+    /* Check if a single register read suffices. */
+    if num_elem * SEW < vlen then {
       result = read_single_vreg('n, SEW, vrid);
     } else {
       let 'num_elem_single = vlen / SEW;
