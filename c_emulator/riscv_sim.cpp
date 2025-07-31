@@ -14,6 +14,8 @@
 #include <optional>
 #include <iostream>
 #include <vector>
+#include <cassert>
+#include <csignal>
 
 #include "CLI11.hpp"
 #include "elf.h"
@@ -562,7 +564,12 @@ void init_logs()
   }
 #endif
 }
-
+void close_sig_handler(int sig)
+{
+  finish(1);
+  fprintf(stderr, "SIGINT %d detected, closd.", sig);
+  exit(EXIT_FAILURE);
+}
 int main(int argc, char **argv)
 {
   CLI::App app("Sail RISC-V Model");
@@ -671,7 +678,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
     exit(EXIT_FAILURE);
   }
-
+  signal(SIGINT, close_sig_handler);
   do {
     run_sail();
     if (rvfi) {
