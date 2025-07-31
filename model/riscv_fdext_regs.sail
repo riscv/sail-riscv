@@ -479,10 +479,3 @@ function accrue_fflags(flags) = {
     dirty_fd_context_if_present();
   }
 }
-
-// Floating-point exception flag bit masks
-let FFLAGS_NV : bits(5) = 0b10000
-let FFLAGS_DZ : bits(5) = 0b01000
-let FFLAGS_OF : bits(5) = 0b00100
-let FFLAGS_UF : bits(5) = 0b00010
-let FFLAGS_NX : bits(5) = 0b00001
