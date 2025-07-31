@@ -32,14 +32,6 @@ overload operator & = {and_vec}
 
 overload operator | = {or_vec}
 
-function bit_str(b: bit) -> string =
-  match b {
-    bitzero => "0b0",
-    bitone => "0b1"
-  }
-
-overload BitStr = {bits_str, bit_str}
-
 overload operator ^ = {xor_vec, concat_str}
 
 val sub_vec = pure {c: "sub_bits", lean: "_lean_sub", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)

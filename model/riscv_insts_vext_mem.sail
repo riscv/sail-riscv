@@ -11,36 +11,6 @@
 /* Chapter 7: Vector Loads and Stores                                              */
 /* ******************************************************************************* */
 
-
-mapping nfields_int : bits(3) <-> nfields = {
-  0b000     <-> 1,
-  0b001     <-> 2,
-  0b010     <-> 3,
-  0b011     <-> 4,
-  0b100     <-> 5,
-  0b101     <-> 6,
-  0b110     <-> 7,
-  0b111     <-> 8
-}
-
-mapping nfields_string : bits(3) <-> string = {
-  0b000     <-> "",
-  0b001     <-> "seg2",
-  0b010     <-> "seg3",
-  0b011     <-> "seg4",
-  0b100     <-> "seg5",
-  0b101     <-> "seg6",
-  0b110     <-> "seg7",
-  0b111     <-> "seg8"
-}
-
-mapping nfields_int_string : bits(3) <-> string = {
-  0b000 <-> "1",
-  0b001 <-> "2",
-  0b011 <-> "4",
-  0b111 <-> "8",
-}
-
 mapping vlewidth_bitsnumberstr : vlewidth <-> string = {
   VLE8      <-> "8",
   VLE16     <-> "16",
@@ -70,10 +40,10 @@ mapping vlewidth_pow : vlewidth <-> {3, 4, 5, 6} = {
 }
 
 /* ******************** Vector Load Unit-Stride Normal & Segment (mop=0b00, lumop=0b00000) ********************* */
-union clause instruction = VLSEGTYPE : (bits(3), bits(1), regidx, vlewidth, vregidx)
+union clause instruction = VLSEGTYPE : (nfields, bits(1), regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd)
-  <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
+  <-> encdec_nfields(nf) @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_V)
 
 val process_vlseg : forall 'f 'b 'n 'p, nfields_range('f) & is_mem_width('b) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, int('p), int('n)) -> ExecutionResult
@@ -118,23 +88,22 @@ function clause execute(VLSEGTYPE(nf, vm, rs1, width, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW); /* # of element of each register group */
-  let nf_int = nfields_int(nf);
 
   assert(num_elem > 0);
 
-  if illegal_load(vd, vm, nf_int, EEW, EMUL_pow) then return Illegal_Instruction();
+  if illegal_load(vd, vm, nf, EEW, EMUL_pow) then return Illegal_Instruction();
 
-  process_vlseg(nf_int, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
+  process_vlseg(nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
 
 mapping clause assembly = VLSEGTYPE(nf, vm, rs1, width, vd)
   <-> "vl" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
 /* ************ Vector Load Unit-Stride Normal & Segment Fault-Only-First (mop=0b00, lumop=0b10000) ************ */
-union clause instruction = VLSEGFFTYPE : (bits(3), bits(1), regidx, vlewidth, vregidx)
+union clause instruction = VLSEGFFTYPE : (nfields, bits(1), regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd)
-  <-> nf @ 0b0 @ 0b00 @ vm @ 0b10000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
+  <-> encdec_nfields(nf) @ 0b0 @ 0b00 @ vm @ 0b10000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_V)
 
 val process_vlsegff : forall 'f 'b 'n 'p, nfields_range('f) & is_mem_width('b) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, int('p), int('n)) -> ExecutionResult
@@ -196,23 +165,22 @@ function clause execute(VLSEGFFTYPE(nf, vm, rs1, width, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
-  let nf_int = nfields_int(nf);
 
   assert(num_elem > 0);
 
-  if illegal_load(vd, vm, nf_int, EEW, EMUL_pow) then return Illegal_Instruction();
+  if illegal_load(vd, vm, nf, EEW, EMUL_pow) then return Illegal_Instruction();
 
-  process_vlsegff(nf_int, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
+  process_vlsegff(nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
 
 mapping clause assembly = VLSEGFFTYPE(nf, vm, rs1, width, vd)
   <-> "vl" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ "ff.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
 /* ******************** Vector Store Unit-Stride Normal & Segment (mop=0b00, sumop=0b00000) ******************** */
-union clause instruction = VSSEGTYPE : (bits(3), bits(1), regidx, vlewidth, vregidx)
+union clause instruction = VSSEGTYPE : (nfields, bits(1), regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3)
-  <-> nf @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
+  <-> encdec_nfields(nf) @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_V)
 
 val process_vsseg : forall 'f 'b 'n 'p, nfields_range('f) & is_mem_width('b) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, int('p), int('n)) -> ExecutionResult
@@ -254,23 +222,22 @@ function clause execute(VSSEGTYPE(nf, vm, rs1, width, vs3)) = {
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
-  let nf_int = nfields_int(nf);
 
   assert(num_elem > 0);
 
-  if illegal_store(nf_int, EEW, EMUL_pow) then return Illegal_Instruction();
+  if illegal_store(nf, EEW, EMUL_pow) then return Illegal_Instruction();
 
-  process_vsseg(nf_int, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem)
+  process_vsseg(nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
 
 mapping clause assembly = VSSEGTYPE(nf, vm, rs1, width, vs3)
   <-> "vs" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
 /* ****************************** Vector Load Strided Normal & Segment (mop=0b10) ****************************** */
-union clause instruction = VLSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, vregidx)
+union clause instruction = VLSSEGTYPE : (nfields, bits(1), regidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
-  <-> nf @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
+  <-> encdec_nfields(nf) @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_V)
 
 val process_vlsseg : forall 'f 'b 'n 'p, nfields_range('f) & is_mem_width('b) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, regidx, int('p), int('n)) -> ExecutionResult
@@ -316,23 +283,22 @@ function clause execute(VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)) = {
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
-  let nf_int = nfields_int(nf);
 
   assert(num_elem > 0);
 
-  if illegal_load(vd, vm, nf_int, EEW, EMUL_pow) then return Illegal_Instruction();
+  if illegal_load(vd, vm, nf, EEW, EMUL_pow) then return Illegal_Instruction();
 
-  process_vlsseg(nf_int, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
+  process_vlsseg(nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
 
 mapping clause assembly = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
   <-> "vls" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(rs2) ^ maybe_vmask(vm)
 
 /* ***************************** Vector Store Strided Normal & Segment (mop=0b10) ****************************** */
-union clause instruction = VSSSEGTYPE : (bits(3), bits(1), regidx, regidx, vlewidth, vregidx)
+union clause instruction = VSSSEGTYPE : (nfields, bits(1), regidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
-  <-> nf @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
+  <-> encdec_nfields(nf) @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_V)
 
 val process_vssseg : forall 'f 'b 'n 'p, nfields_range('f) & is_mem_width('b) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, regidx, int('p), int('n)) -> ExecutionResult
@@ -375,23 +341,22 @@ function clause execute(VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)) = {
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
   let num_elem = get_num_elem(EMUL_pow, EEW);
-  let nf_int = nfields_int(nf);
 
   assert(num_elem > 0);
 
-  if illegal_store(nf_int, EEW, EMUL_pow) then return Illegal_Instruction();
+  if illegal_store(nf, EEW, EMUL_pow) then return Illegal_Instruction();
 
-  process_vssseg(nf_int, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
+  process_vssseg(nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
 
 mapping clause assembly = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
   <-> "vss" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(rs2) ^ maybe_vmask(vm)
 
 /* ************************* Vector Load Indexed Unordered Normal & Segment (mop=0b01) ************************* */
-union clause instruction = VLUXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
+union clause instruction = VLUXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
-  <-> nf @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
+  <-> encdec_nfields(nf) @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_V)
 
 val process_vlxseg : forall 'f 'ib 'db 'ip 'dp 'n, nfields_range('f) & is_mem_width('ib) & is_mem_width('db) & ('n > 0). (int('f), bits(1), vregidx, int('ib), int('db), int('ip), int('dp), regidx, vregidx, int('n), int) -> ExecutionResult
@@ -438,24 +403,23 @@ function clause execute(VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
-  let nf_int = nfields_int(nf);
 
   assert(num_elem > 0);
 
-  if illegal_indexed_load(vd, vm, nf_int, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow)
+  if illegal_indexed_load(vd, vm, nf, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow)
   then return Illegal_Instruction();
 
-  process_vlxseg(nf_int, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
+  process_vlxseg(nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
 }
 
 mapping clause assembly = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> "vlux" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************** Vector Load Indexed Ordered Normal & Segment (mop=0b11) ************************** */
-union clause instruction = VLOXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
+union clause instruction = VLOXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
-  <-> nf @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
+  <-> encdec_nfields(nf) @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_V)
 
 function clause execute(VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
@@ -466,24 +430,23 @@ function clause execute(VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
-  let nf_int = nfields_int(nf);
 
   assert(num_elem > 0);
 
-  if illegal_indexed_load(vd, vm, nf_int, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow)
+  if illegal_indexed_load(vd, vm, nf, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow)
   then return Illegal_Instruction();
 
-  process_vlxseg(nf_int, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
+  process_vlxseg(nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
 }
 
 mapping clause assembly = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> "vlox" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************ Vector Store Indexed Unordered Normal & Segment (mop=0b01) ************************* */
-union clause instruction = VSUXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
+union clause instruction = VSUXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
-  <-> nf @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
+  <-> encdec_nfields(nf) @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_V)
 
 val process_vsxseg : forall 'f 'ib 'db 'ip 'dp 'n, nfields_range('f) & is_mem_width('ib) & is_mem_width('db) & ('n > 0). (int('f), bits(1), vregidx, int('ib), int('db), int('ip), int('dp), regidx, vregidx, int('n), int) -> ExecutionResult
@@ -527,24 +490,23 @@ function clause execute(VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
-  let nf_int = nfields_int(nf);
 
   assert(num_elem > 0);
 
-  if illegal_indexed_store(nf_int, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow)
+  if illegal_indexed_store(nf, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow)
   then return Illegal_Instruction();
 
-  process_vsxseg(nf_int, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
+  process_vsxseg(nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
 }
 
 mapping clause assembly = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> "vsux" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ************************* Vector Store Indexed Ordered Normal & Segment (mop=0b11) ************************** */
-union clause instruction = VSOXSEGTYPE : (bits(3), bits(1), vregidx, regidx, vlewidth, vregidx)
+union clause instruction = VSOXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
-  <-> nf @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
+  <-> encdec_nfields(nf) @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_V)
 
 function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
@@ -555,24 +517,23 @@ function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
-  let nf_int = nfields_int(nf);
 
   assert(num_elem > 0);
 
-  if illegal_indexed_store(nf_int, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow)
+  if illegal_indexed_store(nf, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow)
   then return Illegal_Instruction();
 
-  process_vsxseg(nf_int, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
+  process_vsxseg(nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
 }
 
 mapping clause assembly = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> "vsox" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 /* ***************** Vector Load Unit-Stride Whole Register (vm=0b1, mop=0b00, lumop=0b01000) ****************** */
-union clause instruction = VLRETYPE : (bits(3), regidx, vlewidth, vregidx)
+union clause instruction = VLRETYPE : (nfields_pow2, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLRETYPE(nf, rs1, width, vd)
-  <-> nf @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
+  <-> encdec_nfields_pow2(nf) @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_V)
 
 val process_vlre : forall 'f 'b 'n, nfields_range_pow2('f) & is_mem_width('b) & ('n >= 0). (int('f), vregidx, int('b), regidx, int('n)) -> ExecutionResult
@@ -618,23 +579,21 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
 function clause execute(VLRETYPE(nf, rs1, width, vd)) = {
   let load_width_bytes = vlewidth_bytesnumber(width);
   let EEW = load_width_bytes * 8;
-  let elem_per_reg : int = VLEN / EEW;
-  let nf_int = nfields_int(nf);
+  let elem_per_reg = vlen / EEW;
 
   assert(elem_per_reg >= 0);
-  if not(nf_int == 1 | nf_int == 2 | nf_int == 4 | nf_int == 8) then return Illegal_Instruction();
 
-  process_vlre(nf_int, vd, load_width_bytes, rs1, elem_per_reg)
+  process_vlre(nf, vd, load_width_bytes, rs1, elem_per_reg)
 }
 
 mapping clause assembly = VLRETYPE(nf, rs1, width, vd)
-  <-> "vl" ^ nfields_int_string(nf) ^ "re" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
+  <-> "vl" ^ nfields_pow2_string(nf) ^ "re" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ***************** Vector Store Unit-Stride Whole Register (vm=0b1, mop=0b00, lumop=0b01000) ***************** */
-union clause instruction = VSRETYPE : (bits(3), regidx, vregidx)
+union clause instruction = VSRETYPE : (nfields_pow2, regidx, vregidx)
 
 mapping clause encdec = VSRETYPE(nf, rs1, vs3)
-  <-> nf @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vs3) @ 0b0100111
+  <-> encdec_nfields_pow2(nf) @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_V)
 
 val process_vsre : forall 'f 'b 'n, nfields_range_pow2('f) & is_mem_width('b) & ('n >= 0). (int('f), int('b), regidx, vregidx, int('n)) -> ExecutionResult
@@ -685,17 +644,15 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
 function clause execute(VSRETYPE(nf, rs1, vs3)) = {
   let load_width_bytes = 1;
   let EEW = 8;
-  let elem_per_reg : int = VLEN / EEW;
-  let nf_int = nfields_int(nf);
+  let elem_per_reg = vlen / EEW;
 
   assert(elem_per_reg >= 0);
-  if not(nf_int == 1 | nf_int == 2 | nf_int == 4 | nf_int == 8) then return Illegal_Instruction();
 
-  process_vsre(nf_int, load_width_bytes, rs1, vs3, elem_per_reg)
+  process_vsre(nf, load_width_bytes, rs1, vs3, elem_per_reg)
 }
 
 mapping clause assembly = VSRETYPE(nf, rs1, vs3)
-  <-> "vs" ^ nfields_int_string(nf) ^ "r.v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
+  <-> "vs" ^ nfields_pow2_string(nf) ^ "r.v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
 /* ************** Vector Mask Load/Store Unit-Stride (nf=0b000, mop=0b00, lumop or sumop=0b01011) ************** */
 union clause instruction = VMTYPE : (regidx, vregidx, vmlsop)

@@ -6,15 +6,21 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-let ELEN_pow : range(3, 16) = config extensions.V.elen_exp
+type vlen_exp : Int = config extensions.V.vlen_exp
+constraint 3 <= vlen_exp <= 16
 
 /* Note: ELEN=32 requires a different encoding of the CSR vtype.
  * The current version of vtype implementation corresponds to the ELEN=64 configuration.
  * TODO: the configurarion of ELEN and its corresponding vtype implementations.
  */
+type elen_exp : Int = config extensions.V.elen_exp
+constraint 3 <= elen_exp <= 16 & elen_exp <= vlen_exp
 
-let VLEN_pow : range(3, 16) = config extensions.V.vlen_exp
+let vlen_exp = sizeof(vlen_exp)
+let elen_exp = sizeof(elen_exp)
 
-type vlenmax : Int = 65536
+type vlen : Int = 2 ^ vlen_exp
+type elen : Int = 2 ^ elen_exp
 
-let VLEN = 2 ^ VLEN_pow
+let vlen = sizeof(vlen)
+let elen = sizeof(elen)

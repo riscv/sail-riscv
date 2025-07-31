@@ -10,14 +10,6 @@
 /* This file implements functions used by vector instructions.                     */
 /* ******************************************************************************* */
 
-/* NFIELDS Encoding
- * typically, nf is in range 1 to 8, but for 'Vector Load/Store Whole Register Instructions',
- * only NFIELDS values of 1, 2, 4, 8 are supported, with other values reserved.
- */
-type nfields_range('q) = 'q > 0 & 'q <= 8
-type nfields_range_pow2('q) = 'q in { 1, 2, 4, 8 }
-type nfields = { 'q, nfields_range('q). int('q) }
-
 /* Vector mask mapping */
 mapping maybe_vmask : string <-> bits(1) = {
   ""              <-> 0b1, /* unmasked by default */
@@ -30,8 +22,7 @@ mapping maybe_vmask : string <-> bits(1) = {
  */
 val valid_eew_emul : (int, int) -> bool
 function valid_eew_emul(EEW, EMUL_pow) = {
-  let ELEN = 2 ^ ELEN_pow;
-  EEW >= 8 & EEW <= ELEN & EMUL_pow >= -3 & EMUL_pow <= 3
+  EEW >= 8 & EEW <= elen & EMUL_pow >= -3 & EMUL_pow <= 3
 }
 
 /* Check for valid vtype setting
@@ -139,8 +130,7 @@ function illegal_reduction() = {
 /* f. Variable width check for widening reduction instructions */
 val illegal_widening_reduction : (int) -> bool
 function illegal_widening_reduction(EEW) = {
-  let ELEN = 2 ^ ELEN_pow;
-  not(valid_vtype()) | not(assert_vstart(0)) | not(EEW >= 8 & EEW <= ELEN)
+  not(valid_vtype()) | not(assert_vstart(0)) | not(EEW >= 8 & EEW <= elen)
 }
 
 /* g. Non-indexed load instruction check */
@@ -228,7 +218,7 @@ function get_start_element() = {
    * TODO: the bound here might be incorrect.
    * See https://github.com/riscv/sail-riscv/pull/755#discussion_r2035095825
    */
-  if start_element > (2 ^ (3 + VLEN_pow - SEW_pow) - 1)
+  if start_element > (2 ^ (3 + vlen_exp - SEW_pow) - 1)
   then Err(())
   else Ok(start_element)
 }
