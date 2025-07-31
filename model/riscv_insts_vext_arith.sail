@@ -1284,7 +1284,12 @@ function clause execute(VMVRTYPE(vs2, nreg, vd)) = {
   let SEW     = get_sew();
   let EMUL    = nreg;
 
-  let EMUL_pow = log2(EMUL);
+  let EMUL_pow : range(0, 3) = match EMUL {
+    1 => 0,
+    2 => 1,
+    4 => 2,
+    8 => 3,
+  };
   let num_elem = get_num_elem(EMUL_pow, SEW);
   let 'n = num_elem;
   let 'm = SEW;
