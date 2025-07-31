@@ -568,6 +568,13 @@ int main(int argc, char **argv)
   CLI::App app("Sail RISC-V Model");
   argv = app.ensure_utf8(argv);
   setup_options(app);
+
+  // long_options_offset() is a local addition, so when updating CLI11,
+  // see how https://github.com/CLIUtils/CLI11/pull/1185 ended up,
+  // and possibly implement the upstream solution.
+  app.get_formatter()->long_options_offset(6);
+  app.get_formatter()->column_width(45);
+
   try {
     app.parse(argc, argv);
   } catch (const CLI::ParseError &e) {
