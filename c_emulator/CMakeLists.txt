@@ -25,6 +25,7 @@ configure_file(sail_riscv_version.cpp.in sail_riscv_version.cpp @ONLY)
 add_library(riscv_model
     riscv_callbacks.cpp
     riscv_callbacks.h
+    riscv_callbacks_if.h
     riscv_config.h
     riscv_platform.cpp
     riscv_platform.h
@@ -35,8 +36,8 @@ add_library(riscv_model
     riscv_sail.h
     riscv_softfloat.c
     riscv_softfloat.h
-    config_utils.h
     config_utils.cpp
+    config_utils.h
     sail_riscv_version.h
     "${CMAKE_CURRENT_BINARY_DIR}/sail_riscv_version.cpp"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.c"
@@ -60,9 +61,13 @@ add_dependencies(riscv_model generated_sail_riscv_model)
 ## A binary that can load an ELF file into the model and run it.
 
 add_executable(sail_riscv_sim
-    "riscv_sim.cpp"
-    "rvfi_dii.h"
-    "rvfi_dii.cpp"
+    riscv_sim.cpp
+    rvfi_dii.cpp
+    rvfi_dii.h
+    riscv_callbacks_log.cpp
+    riscv_callbacks_log.h
+    riscv_callbacks_rvfi.cpp
+    riscv_callbacks_rvfi.h
 )
 
 # The generated C model is not warnings-clean, silence them.
