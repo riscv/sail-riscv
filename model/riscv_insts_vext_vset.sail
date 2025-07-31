@@ -102,7 +102,7 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   let SEW_pow_new = sew_pow_val(sew);
 
   if SEW_pow_new > (LMUL_pow_new + elen_exp) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
-  let VLMAX = 2 ^ max(0, vlen_exp + LMUL_pow_new - SEW_pow_new);
+  let VLMAX = 2 ^ (LMUL_pow_new + vlen_exp - SEW_pow_new);
 
   /* set vl according to VLMAX and AVL */
   if (rs1 != zreg) then { /* normal stripmining */
@@ -166,7 +166,7 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   let SEW_pow_new = sew_pow_val(sew);
 
   if SEW_pow_new > (LMUL_pow_new + elen_exp) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
-  let VLMAX = 2 ^ max(0, vlen_exp + LMUL_pow_new - SEW_pow_new);
+  let VLMAX = 2 ^ (LMUL_pow_new + vlen_exp - SEW_pow_new);
 
   /* set vl according to VLMAX and AVL */
   if (rs1 != zreg) then { /* normal stripmining */
@@ -216,7 +216,7 @@ function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   let SEW_pow_new = sew_pow_val(sew);
 
   if SEW_pow_new > (LMUL_pow_new + elen_exp) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
-  let VLMAX = 2 ^ max(0, vlen_exp + LMUL_pow_new - SEW_pow_new);
+  let VLMAX = 2 ^ (LMUL_pow_new + vlen_exp - SEW_pow_new);
 
   /* set vl according to VLMAX and AVL */
   let AVL = unsigned(uimm); /* AVL is encoded as 5-bit zero-extended imm in the rs1 field */
