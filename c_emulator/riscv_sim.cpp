@@ -1,7 +1,6 @@
 #include <cassert>
 #include <ctype.h>
 #include <climits>
-#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -33,18 +32,6 @@
 #include "riscv_callbacks_if.h"
 #include "riscv_callbacks_log.h"
 #include "riscv_callbacks_rvfi.h"
-
-enum {
-  OPT_TRACE_OUTPUT = 1000,
-  OPT_PRINT_CONFIG,
-  OPT_VALIDATE_CONFIG,
-  OPT_SAILCOV,
-  OPT_ENABLE_EXPERIMENTAL_EXTENSIONS,
-  OPT_PRINT_VERSION,
-  OPT_BUILD_INFO,
-  OPT_PRINT_DTS,
-  OPT_PRINT_ISA,
-};
 
 bool do_show_times = false;
 bool do_print_version = false;
