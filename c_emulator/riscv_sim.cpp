@@ -90,11 +90,11 @@ uint64_t insn_limit = 0;
 char *sailcov_file = NULL;
 #endif
 
-static void validate_config(const char *conf_file)
+static void validate_config(const std::string &conf_file)
 {
   const char *s = zconfig_is_valid(UNIT) ? "valid" : "invalid";
-  if (conf_file) {
-    fprintf(stdout, "Configuration in %s is %s.\n", conf_file, s);
+  if (!conf_file.empty()) {
+    fprintf(stdout, "Configuration in %s is %s.\n", conf_file.c_str(), s);
   } else {
     fprintf(stdout, "Default configuration is %s.\n", s);
   }
@@ -633,7 +633,7 @@ int main(int argc, char **argv)
   model_init();
 
   if (do_validate_config) {
-    validate_config(config_file.c_str());
+    validate_config(config_file);
   }
   if (do_print_dts) {
     print_dts();
